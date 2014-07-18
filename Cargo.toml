@@ -1,0 +1,18 @@
+
+[package]
+
+name = "bitcoin-rs"
+version = "0.0.1"
+authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
+
+
+[[lib]]
+
+name = "bitcoin"
+path = "src/lib.rs"
+
+
+[dependencies.rust-crypto]
+
+git = "https://github.com/DaGenix/rust-crypto.git"
+
