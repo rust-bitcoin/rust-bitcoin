@@ -62,4 +62,3 @@ pub mod network;
 pub mod blockdata;
 pub mod util;
 
-

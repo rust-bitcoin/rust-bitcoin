@@ -30,7 +30,8 @@ use std::kinds::marker;
 
 use blockdata::block::{Block, BlockHeader};
 use blockdata::transaction::Transaction;
-use blockdata::constants::{DIFFCHANGE_INTERVAL, DIFFCHANGE_TIMESPAN, max_target};
+use blockdata::constants::{DIFFCHANGE_INTERVAL, DIFFCHANGE_TIMESPAN, max_target, genesis_block};
+use network::constants::Network;
 use network::serialize::{Serializable, SerializeIter};
 use util::BitArray;
 use util::error::{BitcoinResult, BlockNotFound, DuplicateHash, PrevHashNotFound};
@@ -134,6 +135,7 @@ impl Serializable for Rc<BlockchainNode> {
 
 /// The blockchain
 pub struct Blockchain {
+  network: Network,
   tree: BlockTree,
   best_tip: Rc<BlockchainNode>,
   best_hash: Sha256dHash,
@@ -143,6 +145,7 @@ pub struct Blockchain {
 impl Serializable for Blockchain {
   fn serialize(&self) -> Vec<u8> {
     let mut ret = vec![];
+    ret.extend(self.network.serialize().move_iter());
     ret.extend(self.tree.serialize().move_iter());
     ret.extend(self.best_hash.serialize().move_iter());
     ret.extend(self.genesis_hash.serialize().move_iter());
@@ -152,7 +155,8 @@ impl Serializable for Blockchain {
   fn serialize_iter<'a>(&'a self) -> SerializeIter<'a> {
     SerializeIter {
       data_iter: None,
-      sub_iter_iter: box vec![ &self.tree as &Serializable,
+      sub_iter_iter: box vec![ &self.network as &Serializable,
+                               &self.tree as &Serializable,
                                &self.best_hash as &Serializable,
                                &self.genesis_hash as &Serializable ].move_iter(),
       sub_iter: None,
@@ -161,6 +165,7 @@ impl Serializable for Blockchain {
   }
 
   fn deserialize<I: Iterator<u8>>(mut iter: I) -> IoResult<Blockchain> {
+    let network: Network = try!(prepend_err("network", Serializable::deserialize(iter.by_ref())));
     let tree: BlockTree = try!(prepend_err("tree", Serializable::deserialize(iter.by_ref())));
     let best_hash: Sha256dHash = try!(prepend_err("best_hash", Serializable::deserialize(iter.by_ref())));
     let genesis_hash: Sha256dHash = try!(prepend_err("genesis_hash", Serializable::deserialize(iter.by_ref())));
@@ -201,6 +206,7 @@ impl Serializable for Blockchain {
     } else {
       // Return the chain
       Ok(Blockchain {
+        network: network,
         tree: tree,
         best_tip: best.clone(),
         best_hash: best_hash,
@@ -367,7 +373,8 @@ fn satoshi_the_precision(n: &Uint256) -> Uint256 {
 
 impl Blockchain {
   /// Constructs a new blockchain
-  pub fn new(genesis: Block) -> Blockchain {
+  pub fn new(network: Network) -> Blockchain {
+    let genesis = genesis_block(network);
     let genhash = genesis.header.hash();
     let rc_gen = Rc::new(BlockchainNode {
       total_work: Zero::zero(),
@@ -379,6 +386,7 @@ impl Blockchain {
       next: RefCell::new(None)
     });
     Blockchain {
+      network: network,
       tree: {
         let mut pat = PatriciaTree::new();
         pat.insert(&genhash.as_uint256(), 256, rc_gen.clone());
@@ -479,7 +487,7 @@ impl Blockchain {
             target = target.mul_u32(timespan);
             target = target / FromPrimitive::from_u64(DIFFCHANGE_TIMESPAN as u64).unwrap();
             // Clamp below MAX_TARGET (difficulty 1)
-            let max = max_target();
+            let max = max_target(self.network);
             if target > max { target = max };
             // Compactify (make expressible in the 8+24 nBits float format
             satoshi_the_precision(&target)
@@ -601,12 +609,14 @@ mod tests {
 
   use blockdata::blockchain::Blockchain;
   use blockdata::constants::genesis_block;
+  use network::constants::Bitcoin;
   use network::serialize::Serializable;
 
   #[test]
   fn blockchain_serialize_test() {
-    let empty_chain = Blockchain::new(genesis_block());
-    assert_eq!(empty_chain.best_tip.hash().serialize(), genesis_block().header.hash().serialize());
+    let empty_chain = Blockchain::new(Bitcoin);
+    assert_eq!(empty_chain.best_tip.hash().serialize(),
+               genesis_block(Bitcoin).header.hash().serialize());
 
     let serial = empty_chain.serialize();
     assert_eq!(serial, empty_chain.serialize_iter().collect());
@@ -614,7 +624,8 @@ mod tests {
     let deserial: IoResult<Blockchain> = Serializable::deserialize(serial.iter().map(|n| *n));
     assert!(deserial.is_ok());
     let read_chain = deserial.unwrap();
-    assert_eq!(read_chain.best_tip.hash().serialize(), genesis_block().header.hash().serialize());
+    assert_eq!(read_chain.best_tip.hash().serialize(),
+               genesis_block(Bitcoin).header.hash().serialize());
   }
 }
 

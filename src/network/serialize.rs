@@ -76,9 +76,6 @@ impl<'a> Iterator<u8> for SerializeIter<'a> {
   }
 }
 
-/// A string which must be encoded as 12 bytes, used in network message headers
-
-
 #[deriving(PartialEq, Clone, Show)]
 /// Data which must be preceded by a 4-byte checksum
 pub struct CheckedData(pub Vec<u8>);

@@ -61,14 +61,14 @@ pub struct Socket {
 impl Socket {
   // TODO: we fix services to 0
   /// Construct a new socket
-  pub fn new(magic: u32) -> Socket {
+  pub fn new(network: constants::Network) -> Socket {
     let mut rng = task_rng();
     Socket {
       stream: None,
       services: 0,
       version_nonce: rng.gen(),
       user_agent: String::from_str(constants::USER_AGENT),
-      magic: magic
+      magic: constants::magic(network)
     }
   }
 

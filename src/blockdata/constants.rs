@@ -19,6 +19,8 @@
 //! single transaction
 //!
 
+use network::constants::{Network, Bitcoin, BitcoinTestnet};
+
 use std::num::from_u64;
 
 use blockdata::opcodes;
@@ -35,12 +37,12 @@ pub static DIFFCHANGE_INTERVAL: u32 = 2016;
 pub static DIFFCHANGE_TIMESPAN: u32 = 14 * 24 * 3600;
 
 /// In Bitcoind this is insanely described as ~((u256)0 >> 32)
-pub fn max_target() -> Uint256 {
+pub fn max_target(_: Network) -> Uint256 {
   from_u64::<Uint256>(0xFFFF).unwrap() << 208u
 }
 
-/// Constructs and returns the coinbase (and only) transaction of the genesis block
-pub fn genesis_tx() -> Transaction {
+/// Constructs and returns the coinbase (and only) transaction of the Bitcoin genesis block
+fn bitcoin_genesis_tx() -> Transaction {
   // Base
   let mut ret = Transaction {
     version: 1,
@@ -75,34 +77,51 @@ pub fn genesis_tx() -> Transaction {
 }
 
 /// Constructs and returns the genesis block
-pub fn genesis_block() -> Block {
-  let txdata = vec![genesis_tx()];
-  let header = BlockHeader {
-    version: 1,
-    prev_blockhash: zero_hash(),
-    merkle_root: merkle_root(txdata.as_slice()),
-    time: 1231006505,
-    bits: 0x1d00ffff,
-    nonce: 2083236893
-  };
-
-  Block {
-    header: header,
-    txdata: txdata
+pub fn genesis_block(network: Network) -> Block {
+  match network {
+    Bitcoin => {
+      let txdata = vec![bitcoin_genesis_tx()];
+      Block {
+        header: BlockHeader {
+          version: 1,
+          prev_blockhash: zero_hash(),
+          merkle_root: merkle_root(txdata.as_slice()),
+          time: 1231006505,
+          bits: 0x1d00ffff,
+          nonce: 2083236893
+        },
+        txdata: txdata
+      }
+    }
+    BitcoinTestnet => {
+      let txdata = vec![bitcoin_genesis_tx()];
+      Block {
+        header: BlockHeader {
+          version: 1,
+          prev_blockhash: zero_hash(),
+          merkle_root: merkle_root(txdata.as_slice()),
+          time: 1296688602,
+          bits: 0x1d00ffff,
+          nonce: 414098458
+        },
+        txdata: txdata
+      }
+    }
   }
 }
 
 #[cfg(test)]
 mod test {
   use network::serialize::Serializable;
-  use blockdata::constants::{genesis_block, genesis_tx};
+  use network::constants::{Bitcoin, BitcoinTestnet};
+  use blockdata::constants::{genesis_block, bitcoin_genesis_tx};
   use blockdata::constants::{MAX_SEQUENCE, COIN_VALUE};
   use util::misc::hex_bytes;
   use util::hash::zero_hash;
 
   #[test]
-  fn genesis_first_transaction() {
-    let gen = genesis_tx();
+  fn bitcoin_genesis_first_transaction() {
+    let gen = bitcoin_genesis_tx();
 
     assert_eq!(gen.version, 1);
     assert_eq!(gen.input.len(), 1);
@@ -123,18 +142,32 @@ mod test {
   }
 
   #[test]
-  fn genesis_full_block() {
-    let gen = genesis_block();
+  fn bitcoin_genesis_full_block() {
+    let gen = genesis_block(Bitcoin);
 
     assert_eq!(gen.header.version, 1);
     assert_eq!(gen.header.prev_blockhash.as_slice(), zero_hash().as_slice());
-    assert_eq!(gen.header.merkle_root.serialize().iter().rev().map(|n| *n).collect::<Vec<u8>>(),
-               hex_bytes("4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b").unwrap());
+    assert_eq!(gen.header.merkle_root.le_hex_string(),
+               "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b".to_string());
     assert_eq!(gen.header.time, 1231006505);
     assert_eq!(gen.header.bits, 0x1d00ffff);
     assert_eq!(gen.header.nonce, 2083236893);
-    assert_eq!(gen.header.hash().serialize().iter().rev().map(|n| *n).collect::<Vec<u8>>(),
-               hex_bytes("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f").unwrap());
+    assert_eq!(gen.header.hash().le_hex_string(),
+               "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f".to_string());
+  }
+
+  #[test]
+  fn testnet_genesis_full_block() {
+    let gen = genesis_block(BitcoinTestnet);
+    assert_eq!(gen.header.version, 1);
+    assert_eq!(gen.header.prev_blockhash.as_slice(), zero_hash().as_slice());
+    assert_eq!(gen.header.merkle_root.le_hex_string(),
+               "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b".to_string());
+    assert_eq!(gen.header.time, 1296688602);
+    assert_eq!(gen.header.bits, 0x1d00ffff);
+    assert_eq!(gen.header.nonce, 414098458);
+    assert_eq!(gen.header.hash().le_hex_string(),
+               "000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943".to_string());
   }
 }
 
