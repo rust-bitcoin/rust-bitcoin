@@ -19,6 +19,7 @@
 //!
 
 pub static MAGIC_BITCOIN: u32       = 0xD9B4BEF9;
+pub static MAGIC_TESTNET: u32       = 0x0709110B;
 
 pub static PROTOCOL_VERSION: u32    = 70001;
 pub static SERVICES: u64            = 0;

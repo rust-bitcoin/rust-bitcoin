@@ -31,10 +31,12 @@ pub trait Listener {
   fn peer<'a>(&'a self) -> &'a str;
   /// Return the port we have connected to the peer on
   fn port(&self) -> u16;
+  /// Return the network magic
+  fn magic(&self) -> u32;
   /// Main listen loop
   fn start(&self) -> IoResult<(Receiver<NetworkMessage>, Socket)> {
     // Open socket
-    let mut ret_sock = Socket::new(constants::MAGIC_BITCOIN);
+    let mut ret_sock = Socket::new(self.magic());
     match ret_sock.connect(self.peer(), self.port()) {
       Ok(_) => {},
       Err(_) => return Err(standard_error(ConnectionFailed))
