@@ -30,8 +30,9 @@ use std::kinds::marker;
 
 use blockdata::block::{Block, BlockHeader};
 use blockdata::transaction::Transaction;
-use blockdata::constants::{DIFFCHANGE_INTERVAL, DIFFCHANGE_TIMESPAN, max_target, genesis_block};
-use network::constants::Network;
+use blockdata::constants::{DIFFCHANGE_INTERVAL, DIFFCHANGE_TIMESPAN,
+                           TARGET_BLOCK_SPACING, max_target, genesis_block};
+use network::constants::{Network, BitcoinTestnet};
 use network::serialize::{Serializable, SerializeIter};
 use util::BitArray;
 use util::error::{BitcoinResult, BlockNotFound, DuplicateHash, PrevHashNotFound};
@@ -491,9 +492,25 @@ impl Blockchain {
             if target > max { target = max };
             // Compactify (make expressible in the 8+24 nBits float format
             satoshi_the_precision(&target)
-          } else {
+          // On non-diffchange blocks, Testnet has a rule that any 20-minute-long
+          // block intervals result the difficulty
+          } else if self.network == BitcoinTestnet &&
+                    block.header.time > prev.block.header.time + 2*TARGET_BLOCK_SPACING {
+            max_target(self.network)
+          // On the other hand, if we are in Testnet and the block interval is less
+          // than 20 minutes, we need to scan backward to find a block for which the
+          // previous rule did not apply, to find the "real" difficulty.
+          } else if self.network == BitcoinTestnet {
+            // Scan back DIFFCHANGE_INTERVAL blocks
+            let mut scan = prev.clone();
+            while scan.height % DIFFCHANGE_INTERVAL != 0 &&
+                  scan.required_difficulty == max_target(self.network) {
+              scan = scan.prev(&self.tree).unwrap();
+            }
+            scan.required_difficulty
           // Otherwise just use the last block's difficulty
-             prev.required_difficulty
+          } else {
+            prev.required_difficulty
           };
         // Create node
         let ret = Rc::new(BlockchainNode {

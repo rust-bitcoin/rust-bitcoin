@@ -33,6 +33,7 @@ use util::uint::Uint256;
 
 pub static MAX_SEQUENCE: u32 = 0xFFFFFFFF;
 pub static COIN_VALUE: u64 = 100000000;
+pub static TARGET_BLOCK_SPACING: u32 = 600;
 pub static DIFFCHANGE_INTERVAL: u32 = 2016;
 pub static DIFFCHANGE_TIMESPAN: u32 = 14 * 24 * 3600;
 
