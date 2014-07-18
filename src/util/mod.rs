@@ -16,6 +16,7 @@
 //!
 //! Functions needed by all parts of the Bitcoin library
 
+pub mod error;
 pub mod hash;
 pub mod iter;
 pub mod misc;

@@ -23,7 +23,6 @@ use std::io::timer;
 
 use network::message::{NetworkMessage, Verack};
 use network::socket::Socket;
-use network::constants;
 
 /// A message which can be sent on the Bitcoin network
 pub trait Listener {

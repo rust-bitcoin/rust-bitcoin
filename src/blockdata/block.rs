@@ -23,6 +23,7 @@
 use std::io::IoResult;
 use std::num::{Zero, from_u64};
 
+use util::error::{BitcoinResult, SpvBadTarget, SpvBadProofOfWork};
 use util::hash::Sha256dHash;
 use util::uint::Uint256;
 use network::serialize::{Serializable, SerializeIter, VarInt};
@@ -95,13 +96,13 @@ impl BlockHeader {
   /// Performs an SPV validation of a block, which confirms that the proof-of-work
   /// is correct, but does not verify that the transactions are valid or encoded
   /// correctly.
-  pub fn spv_validate(&self, required_target: &Uint256) -> bool {
+  pub fn spv_validate(&self, required_target: &Uint256) -> BitcoinResult<()> {
     let ref target = self.target();
     if target != required_target {
-      return false;
+      return Err(SpvBadTarget);
     }
     let ref hash = self.hash().as_uint256();
-    hash <= target
+    if hash <= target { Ok(()) } else { Err(SpvBadProofOfWork) }
   }
 
   /// Returns the total work of the block
