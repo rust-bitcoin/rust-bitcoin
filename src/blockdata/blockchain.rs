@@ -22,8 +22,6 @@
 //! to make sure we are holding the only references.
 //!
 
-use alloc::rc::Rc;
-use std::cell::{Ref, RefCell};
 use std::io::{IoResult, IoError, OtherIoError};
 use std::num::Zero;
 use std::kinds::marker;
@@ -41,8 +39,8 @@ use util::hash::Sha256dHash;
 use util::misc::prepend_err;
 use util::patricia_tree::PatriciaTree;
 
-type BlockTree = PatriciaTree<Rc<BlockchainNode>, Uint256>;
-type NodePtr = Option<Rc<BlockchainNode>>;
+type BlockTree = PatriciaTree<Box<BlockchainNode>, Uint256>;
+type NodePtr = *const BlockchainNode;
 
 /// A link in the blockchain
 pub struct BlockchainNode {
@@ -58,52 +56,31 @@ pub struct BlockchainNode {
   /// Whether the transaction data is stored
   pub has_txdata: bool,
   /// Pointer to block's parent
-  prev: RefCell<NodePtr>,
+  prev: NodePtr,
   /// Pointer to block's child
-  next: RefCell<NodePtr>
+  next: NodePtr
 }
 
 impl BlockchainNode {
-  /// Look up the previous link, caching the result
-  fn prev(&self, tree: &BlockTree) -> NodePtr {
-    let mut cache = self.prev.borrow_mut();
-    if cache.is_some() {
-      return Some(cache.get_ref().clone())
-    }
-    match tree.lookup(&self.block.header.prev_blockhash.as_uint256(), 256) {
-      Some(prev) => { *cache = Some(prev.clone()); return Some(prev.clone()); }
-      None => { return None; }
-    }
-  }
-
-  /// Look up the next link
-  fn next<'a>(&'a self) -> Ref<'a, NodePtr> {
-    self.next.borrow()
-  }
-
-  /// Set the next link
-  fn set_next(&self, next: Rc<BlockchainNode>) {
-    let mut cache = self.next.borrow_mut();
-    *cache = Some(next);
-  }
-
   /// Is the node on the main chain?
   fn is_on_main_chain(&self, chain: &Blockchain) -> bool {
-    if self.block.header == chain.best_tip.block.header {
+    if self.block.header == unsafe { (*chain.best_tip).block.header } {
       return true;
     }
-    let mut scan = self.next().clone();
-    while scan.is_some() {
-      if scan.get_ref().block.header == chain.best_tip.block.header {
-        return true;
+    unsafe {
+      let mut scan = self.next;
+      while scan.is_not_null() {
+        if (*scan).block.header == (*chain.best_tip).block.header {
+          return true;
+        }
+        scan = (*scan).next;
       }
-      scan = scan.get_ref().next().clone();
     }
     return false;
   }
 }
 
-impl Serializable for Rc<BlockchainNode> {
+impl Serializable for BlockchainNode {
   fn serialize(&self) -> Vec<u8> {
     let mut ret = vec![];
     ret.extend(self.block.serialize().move_iter());
@@ -111,20 +88,20 @@ impl Serializable for Rc<BlockchainNode> {
     ret.extend(self.required_difficulty.serialize().move_iter());
     ret.extend(self.height.serialize().move_iter());
     ret.extend(self.has_txdata.serialize().move_iter());
-    // Don't serialize the prev pointer
+    // Don't serialize the prev or next pointers
     ret
   }
 
-  fn deserialize<I: Iterator<u8>>(mut iter: I) -> IoResult<Rc<BlockchainNode>> {
-    Ok(Rc::new(BlockchainNode {
+  fn deserialize<I: Iterator<u8>>(mut iter: I) -> IoResult<BlockchainNode> {
+    Ok(BlockchainNode {
       block: try!(prepend_err("block", Serializable::deserialize(iter.by_ref()))),
       total_work: try!(prepend_err("total_work", Serializable::deserialize(iter.by_ref()))),
       required_difficulty: try!(prepend_err("req_difficulty", Serializable::deserialize(iter.by_ref()))),
       height: try!(prepend_err("height", Serializable::deserialize(iter.by_ref()))),
       has_txdata: try!(prepend_err("has_txdata", Serializable::deserialize(iter.by_ref()))),
-      prev: RefCell::new(None),
-      next: RefCell::new(None)
-    }))
+      prev: RawPtr::null(),
+      next: RawPtr::null()
+    })
   }
 
   // Override Serialize::hash to return the blockheader hash, since the
@@ -138,7 +115,7 @@ impl Serializable for Rc<BlockchainNode> {
 pub struct Blockchain {
   network: Network,
   tree: BlockTree,
-  best_tip: Rc<BlockchainNode>,
+  best_tip: NodePtr,
   best_hash: Sha256dHash,
   genesis_hash: Sha256dHash
 }
@@ -167,12 +144,12 @@ impl Serializable for Blockchain {
 
   fn deserialize<I: Iterator<u8>>(mut iter: I) -> IoResult<Blockchain> {
     let network: Network = try!(prepend_err("network", Serializable::deserialize(iter.by_ref())));
-    let tree: BlockTree = try!(prepend_err("tree", Serializable::deserialize(iter.by_ref())));
+    let mut tree: BlockTree = try!(prepend_err("tree", Serializable::deserialize(iter.by_ref())));
     let best_hash: Sha256dHash = try!(prepend_err("best_hash", Serializable::deserialize(iter.by_ref())));
     let genesis_hash: Sha256dHash = try!(prepend_err("genesis_hash", Serializable::deserialize(iter.by_ref())));
     // Lookup best tip
     let best = match tree.lookup(&best_hash.as_uint256(), 256) {
-      Some(rc) => rc.clone(),
+      Some(node) => &**node as NodePtr,
       None => { return Err(IoError {
           kind: OtherIoError,
           desc: "best tip reference not found in tree",
@@ -188,63 +165,78 @@ impl Serializable for Blockchain {
         detail: Some(format!("genesis {:x} not found", genesis_hash))
       });
     }
-    // Reconnect next and prev pointers back to "genesis", the first node
-    // with no prev pointer.
-    let mut scan = best.clone();
-    let mut prev = best.prev(&tree);
-    while prev.is_some() {
-      prev.get_mut_ref().set_next(scan);
-      scan = prev.get_ref().clone();
-      prev = prev.get_ref().prev(&tree);
+    // Reconnect all prev pointers
+    let raw_tree = &tree as *const _;
+    for node in tree.mut_iter() {
+      let hash = node.block.header.prev_blockhash.as_uint256();
+      let prevptr =
+        match unsafe { (*raw_tree).lookup(&hash, 256) } {
+          Some(node) => &**node as NodePtr,
+          None => RawPtr::null() 
+        };
+      node.prev = prevptr;
     }
-    // Check that "genesis" is the genesis
-    if scan.block.header.hash() != genesis_hash {
-      Err(IoError {
-          kind: OtherIoError,
-          desc: "best tip did not link back to genesis",
-          detail: Some(format!("no path from tip {:x} to genesis {:x}", best_hash, genesis_hash))
-      })
-    } else {
-      // Return the chain
-      Ok(Blockchain {
-        network: network,
-        tree: tree,
-        best_tip: best.clone(),
-        best_hash: best_hash,
-        genesis_hash: genesis_hash
-      })
+    // Reconnect next pointers on the main chain
+    unsafe {
+      let mut scan = best;
+      while (*scan).prev.is_not_null() {
+        let prev = (*scan).prev as *mut BlockchainNode;
+        (*prev).next = scan;
+        scan = prev as NodePtr;
+      }
+
+      // Check that "genesis" is the genesis
+      if (*scan).block.header.hash() != genesis_hash {
+        return Err(IoError {
+            kind: OtherIoError,
+            desc: "best tip did not link back to genesis",
+            detail: Some(format!("no path from tip {:x} to genesis {:x}", best_hash, genesis_hash))
+        });
+      }
     }
+
+    // Return the chain
+    Ok(Blockchain {
+      network: network,
+      tree: tree,
+      best_tip: best,
+      best_hash: best_hash,
+      genesis_hash: genesis_hash
+    })
   }
 }
 
-struct LocatorHashIter<'tree> {
+// TODO: this should maybe be public, in which case it needs to be tagged
+// with a ContravariantLifetime marker tying it to the tree's lifetime.
+struct LocatorHashIter {
   index: NodePtr,
-  tree: &'tree BlockTree,
   count: uint,
   skip: uint
 }
 
-impl<'tree> LocatorHashIter<'tree> {
-  fn new<'tree>(init: Rc<BlockchainNode>, tree: &'tree BlockTree) -> LocatorHashIter<'tree> {
-    LocatorHashIter { index: Some(init), tree: tree, count: 0, skip: 1 }
+impl LocatorHashIter {
+  fn new(init: NodePtr) -> LocatorHashIter {
+    LocatorHashIter { index: init, count: 0, skip: 1 }
   }
 }
 
-impl<'tree> Iterator<Sha256dHash> for LocatorHashIter<'tree> {
+impl Iterator<Sha256dHash> for LocatorHashIter {
   fn next(&mut self) -> Option<Sha256dHash> {
-    let ret = match self.index {
-      Some(ref node) => Some(node.hash()),
-      None => { return None; }
-    };
+    if self.index.is_null() {
+      return None;
+    }
+    let ret = Some(unsafe { (*self.index).hash() });
 
     // Rewind once (if we are at the genesis, this will set self.index to None)
-    self.index = self.index.get_ref().prev(self.tree);
+    self.index = unsafe { (*self.index).prev };
     // If we are not at the genesis, rewind `self.skip` times, or until we are.
-    if self.index.is_some() {
+    if self.index.is_not_null() {
       for _ in range(1, self.skip) {
-        self.index = match self.index.get_ref().prev(self.tree) {
-          Some(rc) => Some(rc),
-          None => { break; }
+        unsafe {
+          if (*self.index).prev.is_null() {
+            break;
+          }
+          self.index = (*self.index).prev;
         }
       }
     }
@@ -276,7 +268,8 @@ pub struct BlockIter<'tree> {
 /// this suprising behaviour we simply use separate iterators.
 pub struct RevBlockIter<'tree> {
   index: NodePtr,
-  tree: &'tree BlockTree
+  // See comment in BlockIter for why we need this
+  marker: marker::ContravariantLifetime<'tree>
 }
 
 /// An iterator over blocks in reverse blockheight order, which yielding only
@@ -299,60 +292,48 @@ pub struct RevStaleBlockIter<'tree> {
 
 impl<'tree> Iterator<&'tree BlockchainNode> for BlockIter<'tree> {
   fn next(&mut self) -> Option<&'tree BlockchainNode> {
-    match self.index.clone() {
-      Some(rc) => {
-        use core::mem::transmute;
-        self.index = rc.next().clone();
-        // This transmute is just to extend the lifetime of rc.block
-        // There is unsafety here because we need to be assured that
-        // another copy of the rc (presumably the one in the tree)
-        // exists and will live as long as 'tree.
-        Some(unsafe { transmute(&*rc) } )
-      },
-      None => None
+    if self.index.is_null() {
+      return None;
+    }
+    unsafe {
+      let ret = Some(&*self.index);
+      self.index = (*self.index).next;
+      ret
     }
   }
 }
 
 impl<'tree> Iterator<&'tree BlockchainNode> for RevBlockIter<'tree> {
   fn next(&mut self) -> Option<&'tree BlockchainNode> {
-    match self.index.clone() {
-      Some(rc) => {
-        use core::mem::transmute;
-        self.index = rc.prev(self.tree).clone();
-        // This transmute is just to extend the lifetime of rc.block
-        // There is unsafety here because we need to be assured that
-        // another copy of the rc (presumably the one in the tree)
-        // exists and will live as long as 'tree.
-        Some(unsafe { transmute(&*rc) } )
-      },
-      None => None
+    if self.index.is_null() {
+      return None;
+    }
+    unsafe {
+      let ret = Some(&*self.index);
+      self.index = (*self.index).prev;
+      ret
     }
   }
 }
 
 impl<'tree> Iterator<&'tree Block> for RevStaleBlockIter<'tree> {
   fn next(&mut self) -> Option<&'tree Block> { 
-    match self.index.clone() {
-      Some(rc) => {
-        use core::mem::transmute;
-        let next_index = rc.prev(&self.chain.tree);
+    if self.index.is_null() {
+      return None;
+    }
 
-        // Check if the next block is going to be on the main chain
-        if next_index.is_some() &&
-           next_index.get_ref().next().get_ref().block.header != rc.block.header &&
-           next_index.get_ref().is_on_main_chain(self.chain) {
-          self.index = None;
-        } else {
-          self.index = next_index.clone();
-        }
-        // This transmute is just to extend the lifetime of rc.block
-        // There is unsafety here because we need to be assured that
-        // another copy of the rc (presumably the one in the tree)
-        // exists and will live as long as 'tree.
-        Some(unsafe { transmute(&rc.block) } )
-      },
-      None => None
+    unsafe {
+      let ret = Some(&(*self.index).block);
+      let next_index = (*self.index).prev;
+      // Check if the next block is going to be on the main chain
+      if next_index.is_not_null() &&
+         (*next_index).next != self.index &&
+         (&*next_index).is_on_main_chain(self.chain) {
+        self.index = RawPtr::null();
+      } else {
+        self.index = next_index;
+      }
+      ret
     }
   }
 }
@@ -377,25 +358,26 @@ impl Blockchain {
   pub fn new(network: Network) -> Blockchain {
     let genesis = genesis_block(network);
     let genhash = genesis.header.hash();
-    let rc_gen = Rc::new(BlockchainNode {
+    let new_node = box BlockchainNode {
       total_work: Zero::zero(),
       required_difficulty: genesis.header.target(),
       block: genesis,
       height: 0,
       has_txdata: true,
-      prev: RefCell::new(None),
-      next: RefCell::new(None)
-    });
+      prev: RawPtr::null(),
+      next: RawPtr::null()
+    };
+    let raw_ptr = &*new_node as NodePtr;
     Blockchain {
       network: network,
       tree: {
         let mut pat = PatriciaTree::new();
-        pat.insert(&genhash.as_uint256(), 256, rc_gen.clone());
+        pat.insert(&genhash.as_uint256(), 256, new_node);
         pat
       },
       best_hash: genhash,
       genesis_hash: genhash,
-      best_tip: rc_gen,
+      best_tip: raw_ptr
     }
   }
 
@@ -433,6 +415,11 @@ impl Blockchain {
     }
   }
 
+  /// Looks up a block in the chain and returns a reference to it
+  pub fn get_block<'a>(&'a self, hash: Sha256dHash) -> Option<&'a Block> {
+    self.tree.lookup(&hash.as_uint256(), 256).as_ref().map(|node| &node.block)
+  }
+
   /// Locates a block in the chain and overwrites its txdata
   pub fn add_txdata(&mut self, block: Block) -> BitcoinResult<()> {
     self.replace_txdata(&block.header.hash().as_uint256(), block.txdata, true)
@@ -455,36 +442,41 @@ impl Blockchain {
 
   fn real_add_block(&mut self, block: Block, has_txdata: bool) -> BitcoinResult<()> {
     // get_prev optimizes the common case where we are extending the best tip
-    fn get_prev<'a>(chain: &'a Blockchain, hash: Sha256dHash) -> Option<&'a Rc<BlockchainNode>> {
-      if hash == chain.best_hash { return Some(&chain.best_tip); }
-      chain.tree.lookup(&hash.as_uint256(), 256)
+    #[inline]
+    fn get_prev<'a>(chain: &'a Blockchain, hash: Sha256dHash) -> Option<NodePtr> {
+      if hash == chain.best_hash { 
+        Some(chain.best_tip)
+      } else {
+        chain.tree.lookup(&hash.as_uint256(), 256).map(|boxptr| &**boxptr as NodePtr)
+      }
     }
     // Check for multiple inserts (bitcoind from c9a09183 to 3c85d2ec doesn't
     // handle locator hashes properly and may return blocks multiple times,
     // and this may also happen in case of a reorg.
     if self.tree.lookup(&block.header.hash().as_uint256(), 256).is_some() {
-      println!("Warning: tried to add block {} twice!", block.header.hash());
       return Err(DuplicateHash);
     }
     // Construct node, if possible
-    let rc_block = match get_prev(self, block.header.prev_blockhash) {
+    let new_block = match get_prev(self, block.header.prev_blockhash) {
       Some(prev) => {
         let difficulty =
           // Compute required difficulty if this is a diffchange block
-          if (prev.height + 1) % DIFFCHANGE_INTERVAL == 0 {
-            // Scan back DIFFCHANGE_INTERVAL blocks
-            let mut scan = prev.clone();
-            for _ in range(0, DIFFCHANGE_INTERVAL - 1) {
-              scan = scan.prev(&self.tree).unwrap();
-            }
-            // Get clamped timespan between first and last blocks
-            let timespan = match prev.block.header.time - scan.block.header.time {
-              n if n < DIFFCHANGE_TIMESPAN / 4 => DIFFCHANGE_TIMESPAN / 4,
-              n if n > DIFFCHANGE_TIMESPAN * 4 => DIFFCHANGE_TIMESPAN * 4,
-              n => n
+          if (unsafe { (*prev).height } + 1) % DIFFCHANGE_INTERVAL == 0 {
+            let timespan = unsafe {
+              // Scan back DIFFCHANGE_INTERVAL blocks
+              let mut scan = prev;
+              for _ in range(0, DIFFCHANGE_INTERVAL - 1) {
+                scan = (*scan).prev;
+              }
+              // Get clamped timespan between first and last blocks
+              match (*prev).block.header.time - (*scan).block.header.time {
+                n if n < DIFFCHANGE_TIMESPAN / 4 => DIFFCHANGE_TIMESPAN / 4,
+                n if n > DIFFCHANGE_TIMESPAN * 4 => DIFFCHANGE_TIMESPAN * 4,
+                n => n
+              }
             };
             // Compute new target
-            let mut target = prev.block.header.target();
+            let mut target = unsafe { (*prev).block.header.target() };
             target = target.mul_u32(timespan);
             target = target / FromPrimitive::from_u64(DIFFCHANGE_TIMESPAN as u64).unwrap();
             // Clamp below MAX_TARGET (difficulty 1)
@@ -495,34 +487,39 @@ impl Blockchain {
           // On non-diffchange blocks, Testnet has a rule that any 20-minute-long
           // block intervals result the difficulty
           } else if self.network == BitcoinTestnet &&
-                    block.header.time > prev.block.header.time + 2*TARGET_BLOCK_SPACING {
+                    block.header.time > unsafe { (*prev).block.header.time } + 2*TARGET_BLOCK_SPACING {
             max_target(self.network)
           // On the other hand, if we are in Testnet and the block interval is less
           // than 20 minutes, we need to scan backward to find a block for which the
           // previous rule did not apply, to find the "real" difficulty.
           } else if self.network == BitcoinTestnet {
             // Scan back DIFFCHANGE_INTERVAL blocks
-            let mut scan = prev.clone();
-            while scan.height % DIFFCHANGE_INTERVAL != 0 &&
-                  scan.required_difficulty == max_target(self.network) {
-              scan = scan.prev(&self.tree).unwrap();
+            unsafe {
+              let mut scan = prev;
+              while (*scan).height % DIFFCHANGE_INTERVAL != 0 &&
+                    (*scan).required_difficulty == max_target(self.network) {
+                scan = (*scan).prev;
+              }
+              (*scan).required_difficulty
             }
-            scan.required_difficulty
           // Otherwise just use the last block's difficulty
           } else {
-            prev.required_difficulty
+            unsafe { (*prev).required_difficulty }
           };
         // Create node
-        let ret = Rc::new(BlockchainNode {
-          total_work: block.header.work().add(&prev.total_work),
+        let ret = box BlockchainNode {
+          total_work: block.header.work().add(unsafe { &(*prev).total_work }),
           block: block,
           required_difficulty: difficulty,
-          height: prev.height + 1,
+          height: unsafe { (*prev).height + 1 },
           has_txdata: has_txdata,
-          prev: RefCell::new(Some(prev.clone())),
-          next: RefCell::new(None)
-        });
-        prev.set_next(ret.clone());
+          prev: prev,
+          next: RawPtr::null()
+        };
+        unsafe {
+          let prev = prev as *mut BlockchainNode;
+          (*prev).next = &*ret as NodePtr;
+        }
         ret
       },
       None => {
@@ -531,51 +528,41 @@ impl Blockchain {
     };
 
     // spv validate the block
-    try!(rc_block.block.header.spv_validate(&rc_block.required_difficulty));
+    try!(new_block.block.header.spv_validate(&new_block.required_difficulty));
 
     // Insert the new block
-    self.tree.insert(&rc_block.block.header.hash().as_uint256(), 256, rc_block.clone());
+    let raw_ptr = &*new_block as NodePtr;
+    self.tree.insert(&new_block.block.header.hash().as_uint256(), 256, new_block);
     // Replace the best tip if necessary
-    if rc_block.total_work > self.best_tip.total_work {
-      self.set_best_tip(rc_block);
+    if unsafe { (*raw_ptr).total_work > (*self.best_tip).total_work } {
+      self.set_best_tip(raw_ptr);
     }
     Ok(())
   }
 
   /// Sets the best tip (not public)
-  fn set_best_tip(&mut self, tip: Rc<BlockchainNode>) {
-    let old_best = self.best_tip.clone();
-    // Set best
-    self.best_hash = tip.hash();
-    self.best_tip = tip;
+  fn set_best_tip(&mut self, tip: NodePtr) {
     // Fix next links
-    let mut scan = self.best_tip.clone();
-    let mut prev = self.best_tip.prev(&self.tree);
-    // Scan backward
-    loop {
-      // If we hit the old best, there is no need to reorg
-      if scan.block.header == old_best.block.header {
-        break;
+    unsafe {
+      let mut scan = self.best_tip;
+      // Scan backward
+      while (*scan).prev.is_not_null() {
+        // If we hit the old best, there is no need to reorg.
+        if scan == self.best_tip { break; }
+        // Otherwise set the next-ptr and carry on
+        let prev = (*scan).prev as *mut BlockchainNode;
+        (*prev).next = scan;
+        scan = (*scan).prev;
       }
-      // If we hit the genesis, stop
-      if prev.is_none() {
-        println!("Warning: reorg past the genesis. This is a bug.");
-        break;
-      }
-      // If we hit something pointing along the wrong chain, this is
-      // a branch point at which we are reorg'ing
-      if prev.get_ref().next().is_none() ||
-         prev.get_ref().next().get_ref().block.header != scan.block.header {
-        prev.get_mut_ref().set_next(scan);
-      }
-      scan = prev.clone().unwrap();
-      prev = prev.unwrap().prev(&self.tree);
     }
+    // Set best
+    self.best_hash = unsafe { (*tip).hash() };
+    self.best_tip = tip;
   }
 
   /// Returns the best tip
   pub fn best_tip<'a>(&'a self) -> &'a Block {
-    &self.best_tip.block
+    unsafe { &(*self.best_tip).block }
   }
 
   /// Returns the best tip's blockhash
@@ -585,33 +572,46 @@ impl Blockchain {
 
   /// Returns an array of locator hashes used in `getheaders` messages
   pub fn locator_hashes(&self) -> Vec<Sha256dHash> {
-    LocatorHashIter::new(self.best_tip.clone(), &self.tree).collect()
+    LocatorHashIter::new(self.best_tip).collect()
   }
 
   /// An iterator over all blocks in the chain starting from `start_hash`
   pub fn iter<'a>(&'a self, start_hash: Sha256dHash) -> BlockIter<'a> {
+    let start = match self.tree.lookup(&start_hash.as_uint256(), 256) {
+        Some(boxptr) => &**boxptr as NodePtr,
+        None => RawPtr::null()
+      };
     BlockIter {
-      index: self.tree.lookup(&start_hash.as_uint256(), 256).map(|rc| rc.clone()),
+      index: start,
       marker: marker::ContravariantLifetime::<'a>
     }
   }
 
   /// An iterator over all blocks in reverse order to the genesis, starting with `start_hash`
   pub fn rev_iter<'a>(&'a self, start_hash: Sha256dHash) -> RevBlockIter<'a> {
+    let start = match self.tree.lookup(&start_hash.as_uint256(), 256) {
+        Some(boxptr) => &**boxptr as NodePtr,
+        None => RawPtr::null()
+      };
     RevBlockIter {
-      index: self.tree.lookup(&start_hash.as_uint256(), 256).map(|rc| rc.clone()),
-      tree: &self.tree
+      index: start,
+      marker: marker::ContravariantLifetime::<'a>
     }
   }
 
   /// An iterator over all blocks -not- in the best chain, in reverse order, starting from `start_hash`
   pub fn rev_stale_iter<'a>(&'a self, start_hash: Sha256dHash) -> RevStaleBlockIter<'a> {
-    let mut start = self.tree.lookup(&start_hash.as_uint256(), 256).map(|rc| rc.clone());
-    // If we are already on the main chain, we have a dead iterator
-    if start.is_some() && start.get_ref().is_on_main_chain(self) {
-      start = None;
-    }
-    // Return iterator
+    let start = match self.tree.lookup(&start_hash.as_uint256(), 256) {
+        Some(boxptr) => {
+          // If we are already on the main chain, we have a dead iterator
+          if boxptr.is_on_main_chain(self) {
+            RawPtr::null()
+          } else {
+            &**boxptr as NodePtr
+          }
+        }
+        None => RawPtr::null()
+      };
     RevStaleBlockIter { 
       index: start,
       chain: self
@@ -632,7 +632,7 @@ mod tests {
   #[test]
   fn blockchain_serialize_test() {
     let empty_chain = Blockchain::new(Bitcoin);
-    assert_eq!(empty_chain.best_tip.hash().serialize(),
+    assert_eq!(empty_chain.best_tip().header.hash().serialize(),
                genesis_block(Bitcoin).header.hash().serialize());
 
     let serial = empty_chain.serialize();
@@ -641,7 +641,7 @@ mod tests {
     let deserial: IoResult<Blockchain> = Serializable::deserialize(serial.iter().map(|n| *n));
     assert!(deserial.is_ok());
     let read_chain = deserial.unwrap();
-    assert_eq!(read_chain.best_tip.hash().serialize(),
+    assert_eq!(read_chain.best_tip().header.hash().serialize(),
                genesis_block(Bitcoin).header.hash().serialize());
   }
 }
