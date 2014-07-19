@@ -98,7 +98,7 @@ pub trait Serializable {
   /// Read an object off the wire
   fn deserialize<I: Iterator<u8>>(iter: I) -> IoResult<Self>;
   /// Obtain a hash of the object
-  fn hash(&self) -> Sha256dHash {
+  fn bitcoin_hash(&self) -> Sha256dHash {
     Sha256dHash::from_data(self.serialize().as_slice())
   }
   /// Dump the object to a file

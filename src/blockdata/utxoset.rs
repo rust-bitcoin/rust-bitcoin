@@ -60,7 +60,7 @@ impl UtxoSet {
     // while the reference client won't, causing us to fork off the network.
     UtxoSet {
       tree: PatriciaTree::new(),
-      last_hash: genesis_block(network).header.hash(),
+      last_hash: genesis_block(network).header.bitcoin_hash(),
       spent_txos: Vec::from_elem(rewind_limit, vec![]),
       spent_idx: 0,
       n_utxos: 0
@@ -69,7 +69,7 @@ impl UtxoSet {
 
   /// Add all the UTXOs of a transaction to the set
   fn add_utxos(&mut self, tx: &Transaction) -> bool {
-    let txid = tx.hash();
+    let txid = tx.bitcoin_hash();
     // Locate node if it's already there
     let mut new_node = ThinVec::with_capacity(tx.output.len() as u32);
     for (vout, txo) in tx.output.iter().enumerate() {
@@ -136,7 +136,7 @@ impl UtxoSet {
 
     // Set the next hash immediately so that if anything goes wrong,
     // we can rewind from the point that we're at.
-    self.last_hash = block.header.hash();
+    self.last_hash = block.header.bitcoin_hash();
     let spent_idx = self.spent_idx as uint;
     self.spent_idx = (self.spent_idx + 1) % self.spent_txos.len() as u64;
     self.spent_txos.get_mut(spent_idx).clear();
@@ -165,11 +165,11 @@ impl UtxoSet {
       //   dupes were noticed. See bitcoind commit `ab91bf39` and BIP30.
       // TODO: add a unit test for these blocks.
       if !self.add_utxos(tx) {
-        let blockhash = block.header.hash().le_hex_string();
+        let blockhash = block.header.bitcoin_hash().le_hex_string();
         if blockhash == "00000000000a4d0a398161ffc163c503763b1f4360639393e0e4c8e300e0caec".to_string() ||
            blockhash == "00000000000743f190a18c5577a3c2d2a1f610ae9601ac046a38084ccb7cd721".to_string() {
           // For these specific blocks, overwrite the old UTXOs.
-          self.tree.delete(&tx.hash().as_uint128(), KEY_LEN);
+          self.tree.delete(&tx.bitcoin_hash().as_uint128(), KEY_LEN);
           self.add_utxos(tx);
         } else {
           // Otherwise fail the block
@@ -185,7 +185,7 @@ impl UtxoSet {
   /// Unapply the transactions contained in a block
   pub fn rewind(&mut self, block: &Block) -> bool {
     // Make sure we are rewinding the latest block
-    if self.last_hash != block.header.hash() {
+    if self.last_hash != block.header.bitcoin_hash() {
       return false;
     }
 
@@ -200,7 +200,7 @@ impl UtxoSet {
     // Delete added txouts
     let mut skipped_genesis = false;
     for tx in block.txdata.iter() {
-      let txhash = tx.hash();
+      let txhash = tx.bitcoin_hash();
       for n in range(0, tx.output.len()) {
         // Just bomb out the whole transaction
         self.take_utxo(txhash, n as u32);
@@ -290,12 +290,12 @@ mod tests {
     for tx in new_block.txdata.iter() {
       empty_set.add_utxos(tx);
     }
-    empty_set.last_hash = new_block.header.hash();
+    empty_set.last_hash = new_block.header.bitcoin_hash();
 
     // Check that all the UTXOs were added
     assert_eq!(empty_set.n_utxos(), 2);
     for tx in new_block.txdata.iter() {
-      let hash = tx.hash();
+      let hash = tx.bitcoin_hash();
       for (n, out) in tx.output.iter().enumerate() {
         let n = n as u32;
         assert_eq!(empty_set.get_utxo(hash, n), Some(&box out.clone()));
@@ -307,7 +307,7 @@ mod tests {
     assert!(!empty_set.update(&new_block));
     assert_eq!(empty_set.n_utxos(), 2);
     for tx in new_block.txdata.iter() {
-      let hash = tx.hash();
+      let hash = tx.bitcoin_hash();
       for (n, out) in tx.output.iter().enumerate() {
         let n = n as u32;
         assert_eq!(empty_set.get_utxo(hash, n), Some(&box out.clone()));
@@ -324,7 +324,7 @@ mod tests {
     // Check that all outputs are there
     let mut read_set = deserial.unwrap();
     for tx in new_block.txdata.iter() {
-      let hash = tx.hash();
+      let hash = tx.bitcoin_hash();
 
       for (n, out) in tx.output.iter().enumerate() {
         let n = n as u32;
@@ -343,7 +343,7 @@ mod tests {
     assert!(read_again.rewind(&new_block));
     assert_eq!(read_again.n_utxos(), 0);
     for tx in new_block.txdata.iter() {
-      let hash = tx.hash();
+      let hash = tx.bitcoin_hash();
 
       for n in range(0, tx.output.len()) {
         let n = n as u32;

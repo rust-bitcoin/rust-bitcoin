@@ -91,16 +91,15 @@ fn test_transaction() {
   assert_eq!(realtx.version, 1);
   assert_eq!(realtx.input.len(), 1);
   // In particular this one is easy to get backward -- in bitcoin hashes are encoded
-  // as little-endian 256-bit numbers rather than as data strings. (This is why we
-  // have this crazy .iter().rev() thing going on in many hash-related tests.
-  assert_eq!(realtx.input[0].prev_hash.as_slice().iter().rev().map(|n| *n).collect::<Vec<u8>>(),
-             hex_bytes("ce9ea9f6f5e422c6a9dbcddb3b9a14d1c78fab9ab520cb281aa2a74a09575da1").unwrap());
+  // as little-endian 256-bit numbers rather than as data strings.
+  assert_eq!(realtx.input[0].prev_hash.le_hex_string(),
+             "ce9ea9f6f5e422c6a9dbcddb3b9a14d1c78fab9ab520cb281aa2a74a09575da1".to_string());
   assert_eq!(realtx.input[0].prev_index, 1);
   assert_eq!(realtx.output.len(), 1);
   assert_eq!(realtx.lock_time, 0);
 
-  assert_eq!(realtx.hash().serialize().iter().rev().map(|n| *n).collect::<Vec<u8>>(),
-             hex_bytes("a6eab3c14ab5272a58a5ba91505ba1a4b6d7a3a9fcbd187b6cd99a7b6d548cb7").unwrap());
+  assert_eq!(realtx.bitcoin_hash().le_hex_string(),
+             "a6eab3c14ab5272a58a5ba91505ba1a4b6d7a3a9fcbd187b6cd99a7b6d548cb7".to_string());
 }
 
 

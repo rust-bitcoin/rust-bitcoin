@@ -28,7 +28,7 @@ use blockdata::script::Script;
 use blockdata::transaction::{Transaction, TxOut, TxIn};
 use blockdata::block::{Block, BlockHeader};
 use util::misc::hex_bytes;
-use util::hash::{merkle_root, zero_hash};
+use util::hash::{MerkleRoot, zero_hash};
 use util::uint::Uint256;
 
 pub static MAX_SEQUENCE: u32 = 0xFFFFFFFF;
@@ -86,7 +86,7 @@ pub fn genesis_block(network: Network) -> Block {
         header: BlockHeader {
           version: 1,
           prev_blockhash: zero_hash(),
-          merkle_root: merkle_root(txdata.as_slice()),
+          merkle_root: txdata.merkle_root(),
           time: 1231006505,
           bits: 0x1d00ffff,
           nonce: 2083236893
@@ -100,7 +100,7 @@ pub fn genesis_block(network: Network) -> Block {
         header: BlockHeader {
           version: 1,
           prev_blockhash: zero_hash(),
-          merkle_root: merkle_root(txdata.as_slice()),
+          merkle_root: txdata.merkle_root(),
           time: 1296688602,
           bits: 0x1d00ffff,
           nonce: 414098458
@@ -138,8 +138,8 @@ mod test {
     assert_eq!(gen.output[0].value, 50 * COIN_VALUE);
     assert_eq!(gen.lock_time, 0);
 
-    assert_eq!(gen.hash().serialize().iter().rev().map(|n| *n).collect::<Vec<u8>>(),
-               hex_bytes("4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b").unwrap());
+    assert_eq!(gen.bitcoin_hash().le_hex_string(),
+               "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b".to_string());
   }
 
   #[test]
@@ -153,7 +153,7 @@ mod test {
     assert_eq!(gen.header.time, 1231006505);
     assert_eq!(gen.header.bits, 0x1d00ffff);
     assert_eq!(gen.header.nonce, 2083236893);
-    assert_eq!(gen.header.hash().le_hex_string(),
+    assert_eq!(gen.header.bitcoin_hash().le_hex_string(),
                "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f".to_string());
   }
 
@@ -167,7 +167,7 @@ mod test {
     assert_eq!(gen.header.time, 1296688602);
     assert_eq!(gen.header.bits, 0x1d00ffff);
     assert_eq!(gen.header.nonce, 414098458);
-    assert_eq!(gen.header.hash().le_hex_string(),
+    assert_eq!(gen.header.bitcoin_hash().le_hex_string(),
                "000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943".to_string());
   }
 }

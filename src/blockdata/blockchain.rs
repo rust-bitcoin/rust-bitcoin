@@ -106,8 +106,8 @@ impl Serializable for BlockchainNode {
 
   // Override Serialize::hash to return the blockheader hash, since the
   // hash of the node itself is pretty much meaningless.
-  fn hash(&self) -> Sha256dHash {
-    self.block.header.hash()
+  fn bitcoin_hash(&self) -> Sha256dHash {
+    self.block.header.bitcoin_hash()
   }
 }
 
@@ -186,7 +186,7 @@ impl Serializable for Blockchain {
       }
 
       // Check that "genesis" is the genesis
-      if (*scan).block.header.hash() != genesis_hash {
+      if (*scan).bitcoin_hash() != genesis_hash {
         return Err(IoError {
             kind: OtherIoError,
             desc: "best tip did not link back to genesis",
@@ -225,7 +225,7 @@ impl Iterator<Sha256dHash> for LocatorHashIter {
     if self.index.is_null() {
       return None;
     }
-    let ret = Some(unsafe { (*self.index).hash() });
+    let ret = Some(unsafe { (*self.index).bitcoin_hash() });
 
     // Rewind once (if we are at the genesis, this will set self.index to None)
     self.index = unsafe { (*self.index).prev };
@@ -357,7 +357,7 @@ impl Blockchain {
   /// Constructs a new blockchain
   pub fn new(network: Network) -> Blockchain {
     let genesis = genesis_block(network);
-    let genhash = genesis.header.hash();
+    let genhash = genesis.header.bitcoin_hash();
     let new_node = box BlockchainNode {
       total_work: Zero::zero(),
       required_difficulty: genesis.header.target(),
@@ -422,7 +422,7 @@ impl Blockchain {
 
   /// Locates a block in the chain and overwrites its txdata
   pub fn add_txdata(&mut self, block: Block) -> BitcoinResult<()> {
-    self.replace_txdata(&block.header.hash().as_uint256(), block.txdata, true)
+    self.replace_txdata(&block.header.bitcoin_hash().as_uint256(), block.txdata, true)
   }
 
   /// Locates a block in the chain and removes its txdata
@@ -453,7 +453,7 @@ impl Blockchain {
     // Check for multiple inserts (bitcoind from c9a09183 to 3c85d2ec doesn't
     // handle locator hashes properly and may return blocks multiple times,
     // and this may also happen in case of a reorg.
-    if self.tree.lookup(&block.header.hash().as_uint256(), 256).is_some() {
+    if self.tree.lookup(&block.header.bitcoin_hash().as_uint256(), 256).is_some() {
       return Err(DuplicateHash);
     }
     // Construct node, if possible
@@ -532,7 +532,7 @@ impl Blockchain {
 
     // Insert the new block
     let raw_ptr = &*new_block as NodePtr;
-    self.tree.insert(&new_block.block.header.hash().as_uint256(), 256, new_block);
+    self.tree.insert(&new_block.block.header.bitcoin_hash().as_uint256(), 256, new_block);
     // Replace the best tip if necessary
     if unsafe { (*raw_ptr).total_work > (*self.best_tip).total_work } {
       self.set_best_tip(raw_ptr);
@@ -556,7 +556,7 @@ impl Blockchain {
       }
     }
     // Set best
-    self.best_hash = unsafe { (*tip).hash() };
+    self.best_hash = unsafe { (*tip).bitcoin_hash() };
     self.best_tip = tip;
   }
 
@@ -632,8 +632,8 @@ mod tests {
   #[test]
   fn blockchain_serialize_test() {
     let empty_chain = Blockchain::new(Bitcoin);
-    assert_eq!(empty_chain.best_tip().header.hash().serialize(),
-               genesis_block(Bitcoin).header.hash().serialize());
+    assert_eq!(empty_chain.best_tip().header.bitcoin_hash().serialize(),
+               genesis_block(Bitcoin).header.bitcoin_hash().serialize());
 
     let serial = empty_chain.serialize();
     assert_eq!(serial, empty_chain.serialize_iter().collect());
@@ -641,8 +641,8 @@ mod tests {
     let deserial: IoResult<Blockchain> = Serializable::deserialize(serial.iter().map(|n| *n));
     assert!(deserial.is_ok());
     let read_chain = deserial.unwrap();
-    assert_eq!(read_chain.best_tip().header.hash().serialize(),
-               genesis_block(Bitcoin).header.hash().serialize());
+    assert_eq!(read_chain.best_tip().header.bitcoin_hash().serialize(),
+               genesis_block(Bitcoin).header.bitcoin_hash().serialize());
   }
 }
 

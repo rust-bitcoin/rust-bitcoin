@@ -21,6 +21,8 @@ use core::cmp::min;
 use std::fmt;
 use std::io::{IoResult, IoError, InvalidInput};
 use std::mem::transmute;
+use std::hash::sip::SipState;
+use std::hash::Hash;
 
 use crypto::digest::Digest;
 use crypto::sha2;
@@ -32,6 +34,16 @@ use util::uint::Uint256;
 
 /// A Bitcoin hash, 32-bytes, computed from x as SHA256(SHA256(x))
 pub struct Sha256dHash([u8, ..32]);
+
+/// Allow this to be used as a key for Rust's HashMap et. al.
+impl Hash for Sha256dHash {
+  fn hash(&self, state: &mut SipState) {
+    let &Sha256dHash(ref data) = self;
+    for ch in data.iter() {
+      ch.hash(state);
+    }
+  }
+}
 
 /// Returns the all-zeroes "hash"
 pub fn zero_hash() -> Sha256dHash { Sha256dHash([0u8, ..32]) }
@@ -148,12 +160,15 @@ impl fmt::Show for Sha256dHash {
   }
 }
 
-//TODO: this should be an impl and the function have first parameter self.
-//See https://github.com/rust-lang/rust/issues/15060 for why this isn't so.
-//impl<T: Serializable> Vec<T> {
-  /// Construct a merkle tree from a vector, with elements ordered as
-  /// they were in the original vector, and return the merkle root.
-  pub fn merkle_root<T: Serializable>(data: &[T]) -> Sha256dHash {
+/// Any collection of objects for which a merkle root makes sense to calculate
+pub trait MerkleRoot {
+  /// Construct a merkle tree from a collection, with elements ordered as
+  /// they were in the original collection, and return the merkle root.
+  fn merkle_root(&self) -> Sha256dHash;
+}
+
+impl<'a, T: Serializable> MerkleRoot for &'a [T] {
+  fn merkle_root(&self) -> Sha256dHash {
     fn merkle_root(data: Vec<Sha256dHash>) -> Sha256dHash {
       // Base case
       if data.len() < 1 {
@@ -167,14 +182,21 @@ impl fmt::Show for Sha256dHash {
       for idx in range(0, (data.len() + 1) / 2) {
         let idx1 = 2 * idx;
         let idx2 = min(idx1 + 1, data.len() - 1);
-        let to_hash = data[idx1].hash().serialize().append(data[idx2].hash().serialize().as_slice());
-        next.push(to_hash.hash());
+        let to_hash = data[idx1].bitcoin_hash().serialize()
+                        .append(data[idx2].bitcoin_hash().serialize().as_slice());
+        next.push(to_hash.bitcoin_hash());
       }
       merkle_root(next)
     }
-    merkle_root(data.iter().map(|obj| obj.hash()).collect())
+    merkle_root(self.iter().map(|obj| obj.bitcoin_hash()).collect())
   }
-//}
+}
+
+impl <T: Serializable> MerkleRoot for Vec<T> {
+  fn merkle_root(&self) -> Sha256dHash {
+    self.as_slice().merkle_root()
+  }
+}
 
 
 #[cfg(test)]
