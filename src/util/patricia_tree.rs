@@ -23,6 +23,7 @@
 use core::fmt::Show;
 use core::iter::ByRef;
 use core::cmp;
+use std::kinds::marker;
 use std::num::{Zero, One};
 use std::io::{IoResult, InvalidInput, standard_error};
 
@@ -329,6 +330,25 @@ impl<T, K:BitArray+Eq+Zero+One+BitXor<K,K>+Shl<uint,K>+Shr<uint,K>> PatriciaTree
     }
     1 + recurse(&self.child_l) + recurse(&self.child_r)
   }
+
+  /// Returns an iterator over all elements in the tree
+  pub fn iter<'a>(&'a self) -> Items<'a, T, K> {
+    Items {
+      node: Some(self),
+      parents: vec![],
+      started: false
+    }
+  }
+
+  /// Returns a mutable iterator over all elements in the tree
+  pub fn mut_iter<'a>(&'a mut self) -> MutItems<'a, T, K> {
+    MutItems {
+      node: self as *mut _,
+      parents: vec![],
+      started: false,
+      marker: marker::ContravariantLifetime::<'a>
+    }
+  }
 }
 
 impl<T:Show, K:BitArray> PatriciaTree<T, K> {
@@ -413,6 +433,117 @@ impl<T:Serializable+'static, K:BitArray+Serializable+'static> Serializable for P
       })
     }
     recurse(&mut iter.by_ref())
+  }
+}
+
+/// Iterator
+pub struct Items<'tree, T, K> {
+  started: bool,
+  node: Option<&'tree PatriciaTree<T, K>>,
+  parents: Vec<&'tree PatriciaTree<T, K>>
+}
+
+/// Mutable iterator
+pub struct MutItems<'tree, T, K> {
+  started: bool,
+  node: *mut PatriciaTree<T, K>,
+  parents: Vec<*mut PatriciaTree<T, K>>,
+  marker: marker::ContravariantLifetime<'tree>
+}
+
+impl<'a, T, K> Iterator<&'a T> for Items<'a, T, K> {
+  fn next(&mut self) -> Option<&'a T> {
+    fn borrow_opt<'a, T, K>(opt_ptr: &'a Option<Box<PatriciaTree<T, K>>>) -> Option<&'a PatriciaTree<T, K>> {
+      opt_ptr.as_ref().map(|b| &**b)
+    }
+
+    // If we haven't started, maybe return the "last" return value,
+    // which will be the root node.
+    if !self.started {
+      if self.node.is_some() && (**self.node.get_ref()).data.is_some() {
+        return self.node.unwrap().data.as_ref();
+      }
+      self.started = true;
+    }
+
+    // Find next data-containing node
+    while self.node.is_some() {
+      let mut node = self.node.take();
+      // Try to go left
+      let child_l = borrow_opt(&node.unwrap().child_l);
+      if child_l.is_some() {
+        self.parents.push(node.unwrap());
+        self.node = child_l;
+      // Try to go right, going back up the tree if necessary
+      } else {
+        while node.is_some() {
+          let child_r = borrow_opt(&node.unwrap().child_r);
+          if child_r.is_some() {
+            self.node = child_r;
+            break;
+          }
+          node = self.parents.pop();
+        }
+      }
+      // Stop if we've found data.
+      if self.node.is_some() && self.node.unwrap().data.is_some() {
+        break;
+      }
+    } // end loop
+    // Return data
+    self.node.and_then(|node| node.data.as_ref())
+  }
+}
+
+impl<'a, T, K> Iterator<&'a mut T> for MutItems<'a, T, K> {
+  fn next(&mut self) -> Option<&'a mut T> {
+    fn borrow_opt<'a, T, K>(opt_ptr: &'a Option<Box<PatriciaTree<T, K>>>) -> *mut PatriciaTree<T, K> {
+      match *opt_ptr {
+        Some(ref data) => &**data as *const _ as *mut _,
+        None => RawPtr::null()
+      }
+    }
+
+    // If we haven't started, maybe return the "last" return value,
+    // which will be the root node.
+    if !self.started {
+      unsafe {
+        if self.node.is_not_null() && (*self.node).data.is_some() {
+          return (*self.node).data.as_mut();
+        }
+      }
+      self.started = true;
+    }
+
+    // Find next data-containing node
+    while self.node.is_not_null() {
+      // Try to go left
+      let child_l = unsafe { borrow_opt(&(*self.node).child_l) };
+      if child_l.is_not_null() {
+        self.parents.push(self.node);
+        self.node = child_l;
+      // Try to go right, going back up the tree if necessary
+      } else {
+        while self.node.is_not_null() {
+          let child_r = unsafe { borrow_opt(&(*self.node).child_r) };
+          if child_r.is_not_null() {
+            self.node = child_r;
+            break;
+          }
+          self.node = self.parents.pop().unwrap_or(RawPtr::null());
+        }
+      }
+      // Stop if we've found data.
+      if self.node.is_not_null() && unsafe { (*self.node).data.is_some() } {
+        break;
+      }
+    } // end loop
+    // Return data
+    if self.node.is_not_null() {
+      unsafe { (*self.node).data.as_mut() }
+    } else { 
+      None
+    }
   }
 }
 
@@ -512,6 +643,55 @@ mod tests {
       let ret = tree.lookup(hash, 128);
       assert_eq!(ret, Some(&ii));
     }
+  }
+
+  #[test]
+  fn patricia_iter_test() {
+    let n_elems = 5000;
+    let mut tree = PatriciaTree::new();
+    let mut data = Vec::from_elem(n_elems, None);
+    // Start by inserting a bunch of stuff
+    for i in range(0, n_elems) {
+      let hash = Sha256dHash::from_data(&[(i / 0x100) as u8, (i % 0x100) as u8]).as_uint128();
+      tree.insert(&hash, 128, i);
+      *data.get_mut(i) = Some(());
+    }
+
+    // Iterate over and try to get everything
+    for &n in tree.iter() {
+      assert!(data[n].is_some());
+      *data.get_mut(n) = None;
+    }
+
+    // Check that we got everything
+    assert!(data.iter().all(|opt| opt.is_none()));
+  }
+
+  #[test]
+  fn patricia_mut_iter_test() {
+    let n_elems = 5000;
+    let mut tree = PatriciaTree::new();
+    let mut data = Vec::from_elem(n_elems, None);
+    // Start by inserting a bunch of stuff
+    for i in range(0, n_elems) {
+      let hash = Sha256dHash::from_data(&[(i / 0x100) as u8, (i % 0x100) as u8]).as_uint128();
+      tree.insert(&hash, 128, i);
+      *data.get_mut(i) = Some(());
+    }
+
+    // Iterate over and flip all the values
+    for n in tree.mut_iter() {
+      *n = n_elems - *n - 1;
+    }
+
+    // Iterate over and try to get everything
+    for &n in tree.mut_iter() {
+      assert!(data[n].is_some());
+      *data.get_mut(n) = None;
+    }
+
+    // Check that we got everything
+    assert!(data.iter().all(|opt| opt.is_none()));
   }
 
   #[test]
