@@ -21,6 +21,9 @@
 
 use collections::Vec;
 use collections::bitv::{Bitv, from_bytes};
+use std::default::Default;
+use std::hash::{Hash, Hasher};
+use std::collections::HashMap;
 use std::io::{IoError, IoResult, InvalidInput, OtherIoError, standard_error};
 use std::io::{BufferedReader, BufferedWriter, File, Truncate, Write};
 use std::io::fs::rename;
@@ -415,6 +418,30 @@ impl<T: Serializable> Serializable for Vec<T> {
       n_elems -= 1;
     }
     Ok(v)
+  }
+}
+
+impl <K: Serializable+Eq+Hash<u64>, T: Serializable, H: Hasher<u64>+Default> Serializable for HashMap<K, T, H> {
+  fn serialize(&self) -> Vec<u8> {
+    let n_elems = u64_to_varint(self.len() as u64);
+    let mut rv = n_elems.serialize();
+    for (key, value) in self.iter() {
+      rv.extend(key.serialize().move_iter());
+      rv.extend(value.serialize().move_iter());
+    }
+    rv
+  }
+
+  fn deserialize<I: Iterator<u8>>(mut iter: I) -> IoResult<HashMap<K, T, H>> {
+    let mut n_elems = varint_to_u64(try!(Serializable::deserialize(iter.by_ref())));
+    let mut ret = HashMap::with_capacity_and_hasher(n_elems as uint, Default::default());
+    while n_elems > 0 {
+      let key: K = try!(Serializable::deserialize(iter.by_ref()));
+      let value: T = try!(Serializable::deserialize(iter.by_ref()));
+      ret.insert(key, value);
+      n_elems -= 1;
+    }
+    Ok(ret)
   }
 }
 

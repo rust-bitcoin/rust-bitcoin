@@ -18,6 +18,7 @@
 //! index of UTXOs.
 //!
 
+use std::collections::HashMap;
 use std::io::IoResult;
 use std::mem;
 
@@ -26,21 +27,16 @@ use blockdata::constants::genesis_block;
 use blockdata::block::Block;
 use network::constants::Network;
 use network::serialize::{Serializable, SerializeIter};
-use util::hash::Sha256dHash;
+use util::hash::{DumbHasher, Sha256dHash};
 use util::uint::Uint128;
-use util::patricia_tree::PatriciaTree;
 use util::thinvec::ThinVec;
-
-/// How much of the hash to use as a key
-static KEY_LEN: uint = 128;
 
 /// Vector of outputs; None indicates a nonexistent or already spent output
 type UtxoNode = ThinVec<Option<Box<TxOut>>>;
 
 /// The UTXO set
 pub struct UtxoSet {
-  // We use a 128-bit indexed tree to save memory
-  tree: PatriciaTree<UtxoNode, Uint128>,
+  table: HashMap<Uint128, UtxoNode, DumbHasher>,
   last_hash: Sha256dHash,
   // A circular buffer of deleted utxos, grouped by block
   spent_txos: Vec<Vec<Box<TxOut>>>,
@@ -49,7 +45,7 @@ pub struct UtxoSet {
   n_utxos: u64
 }
 
-impl_serializable!(UtxoSet, last_hash, n_utxos, spent_txos, spent_idx, tree)
+impl_serializable!(UtxoSet, last_hash, n_utxos, spent_txos, spent_idx, table)
 
 impl UtxoSet {
   /// Constructs a new UTXO set
@@ -59,7 +55,7 @@ impl UtxoSet {
     // must follow suit, otherwise we will accept a transaction spending it
     // while the reference client won't, causing us to fork off the network.
     UtxoSet {
-      tree: PatriciaTree::new(),
+      table: HashMap::with_hasher(DumbHasher),
       last_hash: genesis_block(network).header.bitcoin_hash(),
       spent_txos: Vec::from_elem(rewind_limit, vec![]),
       spent_idx: 0,
@@ -77,7 +73,7 @@ impl UtxoSet {
       unsafe { new_node.init(vout as uint, Some(box txo.clone())); }
     }
     // TODO: insert/lookup should return a Result which we pass along
-    if self.tree.insert(&txid.as_uint128(), KEY_LEN, new_node) {
+    if self.table.insert(txid.as_uint128(), new_node) {
       self.n_utxos += tx.output.len() as u64;
       return true;
     }
@@ -89,7 +85,7 @@ impl UtxoSet {
     // This whole function has awkward scoping thx to lexical borrow scoping :(
     let (ret, should_delete) = {
       // Locate the UTXO, failing if not found
-      let node = match self.tree.lookup_mut(&txid.as_uint128(), KEY_LEN) {
+      let node = match self.table.find_mut(&txid.as_uint128()) {
         Some(node) => node,
         None => return None
       };
@@ -107,7 +103,7 @@ impl UtxoSet {
 
     // Delete the whole node if it is no longer being used
     if should_delete {
-      self.tree.delete(&txid.as_uint128(), KEY_LEN);
+      self.table.remove(&txid.as_uint128());
     }
 
     self.n_utxos -= if ret.is_some() { 1 } else { 0 };
@@ -117,7 +113,7 @@ impl UtxoSet {
   /// Get a reference to a UTXO in the set
   pub fn get_utxo<'a>(&'a mut self, txid: Sha256dHash, vout: u32) -> Option<&'a Box<TxOut>> {
     // Locate the UTXO, failing if not found
-    let node = match self.tree.lookup_mut(&txid.as_uint128(), KEY_LEN) {
+    let node = match self.table.find_mut(&txid.as_uint128()) {
       Some(node) => node,
       None => return None
     };
@@ -169,7 +165,7 @@ impl UtxoSet {
         if blockhash == "00000000000a4d0a398161ffc163c503763b1f4360639393e0e4c8e300e0caec".to_string() ||
            blockhash == "00000000000743f190a18c5577a3c2d2a1f610ae9601ac046a38084ccb7cd721".to_string() {
           // For these specific blocks, overwrite the old UTXOs.
-          self.tree.delete(&tx.bitcoin_hash().as_uint128(), KEY_LEN);
+          self.table.remove(&tx.bitcoin_hash().as_uint128());
           self.add_utxos(tx);
         } else {
           // Otherwise fail the block
@@ -215,7 +211,7 @@ impl UtxoSet {
         for (txo, inp) in extract_vec.move_iter().zip(tx.input.iter()) {
           // Remove the tx's utxo list and patch the txo into place
           let new_node =
-              match self.tree.delete(&inp.prev_hash.as_uint128(), KEY_LEN) {
+              match self.table.pop(&inp.prev_hash.as_uint128()) {
                 Some(mut thinvec) => {
                   let old_len = thinvec.len() as u32;
                   if old_len < inp.prev_index + 1 {
@@ -237,7 +233,7 @@ impl UtxoSet {
                 }
               };
           // Ram it back into the tree
-          self.tree.insert(&inp.prev_hash.as_uint128(), KEY_LEN, new_node);
+          self.table.insert(inp.prev_hash.as_uint128(), new_node);
         }
       }
       skipped_genesis = true;
@@ -258,11 +254,6 @@ impl UtxoSet {
   /// Get the number of UTXOs in the set
   pub fn n_utxos(&self) -> uint {
     self.n_utxos as uint
-  }
-
-  /// Get the number of UTXOs in the set
-  pub fn tree_size(&self) -> uint {
-    self.tree.node_count()
   }
 }
 

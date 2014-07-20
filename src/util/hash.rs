@@ -18,11 +18,11 @@
 use collections::bitv::{Bitv, from_bytes};
 use core::char::from_digit;
 use core::cmp::min;
+use std::default::Default;
 use std::fmt;
 use std::io::{IoResult, IoError, InvalidInput};
 use std::mem::transmute;
-use std::hash::sip::SipState;
-use std::hash::Hash;
+use std::hash::{Hash, Hasher};
 
 use crypto::digest::Digest;
 use crypto::sha2;
@@ -35,14 +35,49 @@ use util::uint::Uint256;
 /// A Bitcoin hash, 32-bytes, computed from x as SHA256(SHA256(x))
 pub struct Sha256dHash([u8, ..32]);
 
-/// Allow this to be used as a key for Rust's HashMap et. al.
-impl Hash for Sha256dHash {
-  fn hash(&self, state: &mut SipState) {
-    let &Sha256dHash(ref data) = self;
-    for ch in data.iter() {
-      ch.hash(state);
-    }
+/// A "hasher" which just truncates
+pub struct DumbHasher;
+
+// Allow these to be used as a key for Rust's HashMap et. al.
+impl Hash<u64> for Sha256dHash {
+  #[inline]
+  fn hash(&self, state: &mut u64) {
+    use std::mem;
+    let myarr: [u64, ..4] = unsafe { mem::transmute(*self) };
+    *state = myarr[0];
   }
+}
+
+impl Hash<u64> for Uint256 {
+  #[inline]
+  fn hash(&self, state: &mut u64) {
+    use std::mem;
+    let myarr: [u64, ..4] = unsafe { mem::transmute(*self) };
+    *state = myarr[0];
+  }
+}
+
+impl Hash<u64> for Uint128 {
+  #[inline]
+  fn hash(&self, state: &mut u64) {
+    use std::mem;
+    let myarr: [u64, ..2] = unsafe { mem::transmute(*self) };
+    *state = myarr[0];
+  }
+}
+
+impl Hasher<u64> for DumbHasher {
+  #[inline]
+  fn hash<T: Hash<u64>>(&self, value: &T) -> u64 {
+    let mut ret = 0u64;
+    value.hash(&mut ret);
+    ret
+  }
+}
+
+impl Default for DumbHasher {
+  #[inline]
+  fn default() -> DumbHasher { DumbHasher }
 }
 
 /// Returns the all-zeroes "hash"
@@ -117,6 +152,8 @@ impl PartialEq for Sha256dHash {
     return true;
   }
 }
+
+impl Eq for Sha256dHash {}
 
 impl Serializable for Sha256dHash {
   fn serialize(&self) -> Vec<u8> {

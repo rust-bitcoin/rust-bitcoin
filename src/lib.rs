@@ -32,6 +32,7 @@
 #![feature(macro_rules)]
 #![feature(overloaded_calls)]
 #![feature(unsafe_destructor)]
+#![feature(default_type_params)]
 
 #![comment = "Rust Bitcoin Library"]
 #![license = "CC0"]
