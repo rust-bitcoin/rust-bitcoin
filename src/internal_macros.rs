@@ -34,9 +34,10 @@ macro_rules! impl_serializable(
 
       fn deserialize<I: Iterator<u8>>(mut iter: I) -> IoResult<$thing> {
         use util::misc::prepend_err;
-        Ok($thing {
+        let ret = Ok($thing {
           $( $field: try!(prepend_err(stringify!($field), Serializable::deserialize(iter.by_ref()))), )+
-        })
+        });
+        ret
       }
     }
   );
