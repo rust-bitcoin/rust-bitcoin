@@ -24,7 +24,7 @@ use collections::bitv::{Bitv, from_bytes};
 use std::default::Default;
 use std::hash::{Hash, Hasher};
 use std::collections::HashMap;
-use std::io::{IoError, IoResult, InvalidInput, OtherIoError, standard_error};
+use std::io::{IoError, IoResult, EndOfFile, InvalidInput, OtherIoError, standard_error};
 use std::io::{BufferedReader, BufferedWriter, File, Truncate, Write};
 use std::io::fs::rename;
 use std::mem::transmute;
@@ -196,7 +196,7 @@ impl Serializable for bool {
   fn deserialize<I: Iterator<u8>>(mut iter: I) -> IoResult<bool> {
     match iter.next() {
       Some(u) => Ok(u != 0),
-      None    => Err(standard_error(InvalidInput))
+      None    => Err(standard_error(EndOfFile))
     }
   }
 }
@@ -209,7 +209,7 @@ impl Serializable for u8 {
   fn deserialize<I: Iterator<u8>>(mut iter: I) -> IoResult<u8> {
     match iter.next() {
       Some(u) => Ok(u as u8),
-      None    => Err(standard_error(InvalidInput))
+      None    => Err(standard_error(EndOfFile))
     }
   }
 }
@@ -222,7 +222,7 @@ impl Serializable for u16 {
   fn deserialize<I: Iterator<u8>>(iter: I) -> IoResult<u16> {
     match read_uint_le(iter.fixed_take(2)) {
       Some(u) => Ok(u as u16),
-      None    => Err(standard_error(InvalidInput))
+      None    => Err(standard_error(EndOfFile))
     }
   }
 }
@@ -235,7 +235,7 @@ impl Serializable for u32 {
   fn deserialize<I: Iterator<u8>>(iter: I) -> IoResult<u32> {
     match read_uint_le(iter.fixed_take(4)) {
       Some(u) => Ok(u as u32),
-      None    => Err(standard_error(InvalidInput))
+      None    => Err(standard_error(EndOfFile))
     }
   }
 }
@@ -248,7 +248,7 @@ impl Serializable for i32 {
   fn deserialize<I: Iterator<u8>>(iter: I) -> IoResult<i32> {
     match read_uint_le(iter.fixed_take(4)) {
       Some(u) => Ok(u as i32),
-      None    => Err(standard_error(InvalidInput))
+      None    => Err(standard_error(EndOfFile))
     }
   }
 }
@@ -261,7 +261,7 @@ impl Serializable for u64 {
   fn deserialize<I: Iterator<u8>>(iter: I) -> IoResult<u64> {
     match read_uint_le(iter.fixed_take(8)) {
       Some(u) => Ok(u as u64),
-      None    => Err(standard_error(InvalidInput))
+      None    => Err(standard_error(EndOfFile))
     }
   }
 }
@@ -274,7 +274,7 @@ impl Serializable for i64 {
   fn deserialize<I: Iterator<u8>>(iter: I) -> IoResult<i64> {
     match read_uint_le(iter.fixed_take(8)) {
       Some(u) => Ok(u as i64),
-      None    => Err(standard_error(InvalidInput))
+      None    => Err(standard_error(EndOfFile))
     }
   }
 }
@@ -295,7 +295,7 @@ impl Serializable for VarInt {
       Some(n) if n == 0xFD => Ok(VarU16(try!(Serializable::deserialize(iter)))),
       Some(n) if n == 0xFE => Ok(VarU32(try!(Serializable::deserialize(iter)))),
       Some(n) if n == 0xFF => Ok(VarU64(try!(Serializable::deserialize(iter)))),
-      _ => Err(standard_error(InvalidInput))
+      _ => unreachable!()
     }
   }
 }
@@ -318,7 +318,7 @@ macro_rules! serialize_fixvec(
           }
           match fixiter.is_err() {
             false => Ok(v),
-            true => Err(standard_error(InvalidInput))
+            true => Err(standard_error(EndOfFile))
           }
         }
       }
@@ -363,9 +363,9 @@ impl Serializable for CheckedData {
     let v: Vec<u8> =  FromIterator::from_iter(fixiter.by_ref());
     if fixiter.is_err() {
       return Err(IoError {
-        kind: InvalidInput,
+        kind: EndOfFile,
         desc: "overrun",
-        detail: Some(format!("data length given as {:}, but read fewer bytes", length))
+        detail: Some(format!("checksummed data length given as {:}, but read fewer bytes", length))
       });
     }
 
@@ -395,7 +395,7 @@ impl Serializable for String {
     let rv: String = FromIterator::from_iter(fixiter.by_ref().map(|u| u as char));
     match fixiter.is_err() {
       false => Ok(rv),
-      true => Err(standard_error(InvalidInput))
+      true => Err(standard_error(EndOfFile))
     }
   }
 }
