@@ -32,14 +32,14 @@ use util::uint::Uint128;
 use util::thinvec::ThinVec;
 
 /// Vector of outputs; None indicates a nonexistent or already spent output
-type UtxoNode = ThinVec<Option<Box<TxOut>>>;
+type UtxoNode = ThinVec<Option<TxOut>>;
 
 /// The UTXO set
 pub struct UtxoSet {
   table: HashMap<Uint128, UtxoNode, DumbHasher>,
   last_hash: Sha256dHash,
   // A circular buffer of deleted utxos, grouped by block
-  spent_txos: Vec<Vec<Box<TxOut>>>,
+  spent_txos: Vec<Vec<TxOut>>,
   // The last index into the above buffer that was assigned to
   spent_idx: u64,
   n_utxos: u64
@@ -70,7 +70,7 @@ impl UtxoSet {
     let mut new_node = ThinVec::with_capacity(tx.output.len() as u32);
     for (vout, txo) in tx.output.iter().enumerate() {
       // Unsafe since we are not uninitializing the old data in the vector
-      unsafe { new_node.init(vout as uint, Some(box txo.clone())); }
+      unsafe { new_node.init(vout as uint, Some(txo.clone())); }
     }
     // TODO: insert/lookup should return a Result which we pass along
     if self.table.insert(txid.as_uint128(), new_node) {
@@ -81,7 +81,7 @@ impl UtxoSet {
   }
 
   /// Remove a UTXO from the set and return it
-  fn take_utxo(&mut self, txid: Sha256dHash, vout: u32) -> Option<Box<TxOut>> {
+  fn take_utxo(&mut self, txid: Sha256dHash, vout: u32) -> Option<TxOut> {
     // This whole function has awkward scoping thx to lexical borrow scoping :(
     let (ret, should_delete) = {
       // Locate the UTXO, failing if not found
@@ -111,7 +111,7 @@ impl UtxoSet {
   }
 
   /// Get a reference to a UTXO in the set
-  pub fn get_utxo<'a>(&'a mut self, txid: Sha256dHash, vout: u32) -> Option<&'a Box<TxOut>> {
+  pub fn get_utxo<'a>(&'a mut self, txid: Sha256dHash, vout: u32) -> Option<&'a TxOut> {
     // Locate the UTXO, failing if not found
     let node = match self.table.find_mut(&txid.as_uint128()) {
       Some(node) => node,
@@ -289,7 +289,7 @@ mod tests {
       let hash = tx.bitcoin_hash();
       for (n, out) in tx.output.iter().enumerate() {
         let n = n as u32;
-        assert_eq!(empty_set.get_utxo(hash, n), Some(&box out.clone()));
+        assert_eq!(empty_set.get_utxo(hash, n), Some(&out.clone()));
       }
     }
 
@@ -301,7 +301,7 @@ mod tests {
       let hash = tx.bitcoin_hash();
       for (n, out) in tx.output.iter().enumerate() {
         let n = n as u32;
-        assert_eq!(empty_set.get_utxo(hash, n), Some(&box out.clone()));
+        assert_eq!(empty_set.get_utxo(hash, n), Some(&out.clone()));
       }
     }
 
@@ -323,7 +323,7 @@ mod tests {
         assert_eq!(read_set.take_utxo(hash, 100 + n), None);
         // Check take of real UTXO
         let ret = read_set.take_utxo(hash, n);
-        assert_eq!(ret, Some(box out.clone()));
+        assert_eq!(ret, Some(out.clone()));
         // Try double-take
         assert_eq!(read_set.take_utxo(hash, n), None);
       }
