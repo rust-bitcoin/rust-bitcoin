@@ -28,6 +28,7 @@ use network::address::Address;
 use network::message::{RawNetworkMessage, NetworkMessage, Version};
 use network::serialize::Serializable;
 use network::message_network::VersionMessage;
+use util::misc::prepend_err;
 
 /// Format an IP address in the 16-byte bitcoin protocol serialization
 fn ipaddr_to_bitcoin_addr(ipaddr: &ip::IpAddr) -> [u8, ..16] {
@@ -182,11 +183,11 @@ impl Socket {
         // Return
         match read_err {
           // Network errors get priority since they are probably more meaningful
-          Some(e) => Err(e),
+          Some(e) => prepend_err("network", Err(e)),
           _ => {
             match ret {
               // Next come parse errors
-              Err(e) => Err(e),
+              Err(e) => prepend_err("decode", Err(e)),
               Ok(ret) => {
                 // Finally magic (this should come before parse error, but we can't
                 // get to it if the deserialization failed). TODO restructure this
