@@ -28,8 +28,6 @@ macro_rules! nu_select(
     use rustrt::task::Task;
     use sync::comm::Packet;
 
-    let task: Box<Task> = Local::take();
-
     // Is anything already ready to receive? Grab it without waiting.
     $(
       if (&$rx as &Packet).can_recv() {
@@ -44,6 +42,8 @@ macro_rules! nu_select(
       // that we started.
       let mut started_count = 0;
       let packets = [ $( &$rx as &Packet, )+ ];
+
+      let task: Box<Task> = Local::take();
       task.deschedule(packets.len(), |task| {
         match packets[started_count].start_selection(task) {
           Ok(()) => {
