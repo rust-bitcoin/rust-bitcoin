@@ -283,9 +283,9 @@ impl Serializable for VarInt {
   fn serialize(&self) -> Vec<u8> {
     match *self {
       VarU8(n)  => Vec::from_slice(&[n]),
-      VarU16(n) => { let mut rv = n.serialize(); rv.unshift(0xFD); rv },
-      VarU32(n) => { let mut rv = n.serialize(); rv.unshift(0xFE); rv },
-      VarU64(n) => { let mut rv = n.serialize(); rv.unshift(0xFF); rv },
+      VarU16(n) => { let mut rv = n.serialize(); rv.insert(0, 0xFD); rv },
+      VarU32(n) => { let mut rv = n.serialize(); rv.insert(0, 0xFE); rv },
+      VarU64(n) => { let mut rv = n.serialize(); rv.insert(0, 0xFF); rv },
     }
   }
 

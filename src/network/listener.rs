@@ -79,7 +79,15 @@ pub trait Listener {
           Err(e) => {
             println!("Received error {:} when decoding message. Pausing for 5 seconds then reconnecting.", e);
             timer::sleep(5000);
-            sock.reconnect();
+            // Reconnect
+            sock.reconnect()
+              // Create version message
+              .and_then(|_| sock.version_message(0))
+              // Send it out
+              .and_then(|msg| sock.send_message(msg))
+              // For now, not much we can do on error
+              .unwrap_or_else(|e| println!("Error {} when reconnecting.", e));
+            handshake_complete = false;
           }
         }
       }
