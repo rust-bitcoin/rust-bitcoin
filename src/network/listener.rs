@@ -77,8 +77,9 @@ pub trait Listener {
             recv_tx.send(payload);
           }
           Err(e) => {
-            println!("Received error {:} when decoding message. Pausing for 1sec.", e);
-            timer::sleep(1000);
+            println!("Received error {:} when decoding message. Pausing for 5 seconds then reconnecting.", e);
+            timer::sleep(5000);
+            sock.reconnect();
           }
         }
       }
