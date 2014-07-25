@@ -485,8 +485,10 @@ impl<T:Serializable, U:Serializable> Serializable for (T, U) {
   }
 
   fn deserialize<I: Iterator<u8>>(mut iter: I) -> IoResult<(T, U)> {
-    Ok((try!(Serializable::deserialize(iter.by_ref())),
-        try!(Serializable::deserialize(iter.by_ref()))))
+    // FIXME: assign then return is a workaround for https://github.com/rust-lang/rust/issues/15763
+    let ret = Ok((try!(Serializable::deserialize(iter.by_ref())),
+                  try!(Serializable::deserialize(iter.by_ref()))));
+    ret
   }
 }
 
