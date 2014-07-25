@@ -141,9 +141,7 @@ impl UtxoSet {
     let mut skipped_genesis = false;
     for tx in block.txdata.iter() {
       let txid = tx.bitcoin_hash();
-      // Put the removed utxos into the stxo cache. Note that the order that
-      // they are pushed onto the stxo cache -must- match the order of the
-      // txos in the block so that rewind() will rewind them properly.
+      // Put the removed utxos into the stxo cache, in case we need to rewind
       if skipped_genesis {
         self.spent_txos.get_mut(spent_idx).reserve_additional(tx.input.len());
         for (n, input) in tx.input.iter().enumerate() {
