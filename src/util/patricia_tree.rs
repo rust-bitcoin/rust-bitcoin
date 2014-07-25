@@ -415,7 +415,7 @@ impl<T:Serializable+'static, K:BitArray+Serializable+'static> Serializable for P
   fn deserialize<I: Iterator<u8>>(mut iter: I) -> IoResult<PatriciaTree<T, K>> {
     // This goofy deserialization routine is to prevent an infinite
     // regress of ByRef<ByRef<...<ByRef<I>>...>>, see #15188
-    fn recurse<T:Serializable, K:Serializable, I: Iterator<u8>>(iter: &mut ByRef<I>) -> IoResult<PatriciaTree<T, K>> {
+    fn recurse<T:Serializable+'static, K:Serializable, I: Iterator<u8>>(iter: &mut ByRef<I>) -> IoResult<PatriciaTree<T, K>> {
       Ok(PatriciaTree {
         skip_prefix: try!(prepend_err("skip_prefix", Serializable::deserialize(iter.by_ref()))),
         skip_len: try!(prepend_err("skip_len", Serializable::deserialize(iter.by_ref()))),
@@ -658,9 +658,9 @@ mod tests {
     }
 
     // Iterate over and try to get everything
-    for &n in tree.iter() {
-      assert!(data[n].is_some());
-      *data.get_mut(n) = None;
+    for n in tree.iter() {
+      assert!(data[*n].is_some());
+      *data.get_mut(*n) = None;
     }
 
     // Check that we got everything
@@ -685,9 +685,9 @@ mod tests {
     }
 
     // Iterate over and try to get everything
-    for &n in tree.mut_iter() {
-      assert!(data[n].is_some());
-      *data.get_mut(n) = None;
+    for n in tree.mut_iter() {
+      assert!(data[*n].is_some());
+      *data.get_mut(*n) = None;
     }
 
     // Check that we got everything

@@ -457,7 +457,13 @@ impl<T: Serializable> Serializable for ThinVec<T> {
 
   fn deserialize<I: Iterator<u8>>(mut iter: I) -> IoResult<ThinVec<T>> {
     let n_elems = varint_to_u64(try!(Serializable::deserialize(iter.by_ref())));
-    assert!(n_elems < u32::MAX as u64);
+    if n_elems >= u32::MAX as u64 {
+      return Err(IoError {
+        kind: InvalidInput,
+        desc: "vector length too large",
+        detail: Some(format!("tried to read ThinVec with len {} > 4bn", n_elems))
+      });
+    }
 
     let mut v: ThinVec<T> = ThinVec::with_capacity(n_elems as u32);
     for i in range(0, n_elems) {
