@@ -39,7 +39,7 @@ pub struct UtxoSet {
   table: HashMap<Uint128, UtxoNode, DumbHasher>,
   last_hash: Sha256dHash,
   // A circular buffer of deleted utxos, grouped by block
-  spent_txos: Vec<Vec<TxOut>>,
+  spent_txos: Vec<Vec<((Sha256dHash, u32), TxOut)>>,
   // The last index into the above buffer that was assigned to
   spent_idx: u64,
   n_utxos: u64
@@ -64,7 +64,7 @@ impl UtxoSet {
   }
 
   /// Add all the UTXOs of a transaction to the set
-  fn add_utxos(&mut self, tx: &Transaction) -> bool {
+  fn add_utxos(&mut self, tx: &Transaction) -> Option<UtxoNode> {
     let txid = tx.bitcoin_hash();
     // Locate node if it's already there
     let mut new_node = ThinVec::with_capacity(tx.output.len() as u32);
@@ -72,12 +72,13 @@ impl UtxoSet {
       // Unsafe since we are not uninitializing the old data in the vector
       unsafe { new_node.init(vout as uint, Some(txo.clone())); }
     }
-    // TODO: insert/lookup should return a Result which we pass along
-    if self.table.insert(txid.as_uint128(), new_node) {
+    // Get the old value, if any (this is suprisingly possible, c.f. BIP30
+    // and the other comments in this file referring to it)
+    let ret = self.table.swap(txid.as_uint128(), new_node);
+    if ret.is_none() {
       self.n_utxos += tx.output.len() as u64;
-      return true;
     }
-    return false;
+    ret
   }
 
   /// Remove a UTXO from the set and return it
@@ -139,39 +140,52 @@ impl UtxoSet {
 
     let mut skipped_genesis = false;
     for tx in block.txdata.iter() {
+      let txid = tx.bitcoin_hash();
       // Put the removed utxos into the stxo cache. Note that the order that
       // they are pushed onto the stxo cache -must- match the order of the
       // txos in the block so that rewind() will rewind them properly.
       if skipped_genesis {
         self.spent_txos.get_mut(spent_idx).reserve_additional(tx.input.len());
-        for input in tx.input.iter() {
+        for (n, input) in tx.input.iter().enumerate() {
           let taken = self.take_utxo(input.prev_hash, input.prev_index);
           match taken {
-            Some(txo) => { self.spent_txos.get_mut(spent_idx).push(txo); }
+            Some(txo) => { self.spent_txos.get_mut(spent_idx).push(((txid, n as u32), txo)); }
             None => { self.rewind(block); }
           }
         }
       }
       skipped_genesis = true;
 
-      // Add outputs
-      //   This will fail in the case of a duplicate transaction. This can only
-      //   happen with coinbases, and in this case the block is invalid, -except-
-      //   for two historic blocks which appeared in the blockchain before the
-      //   dupes were noticed. See bitcoind commit `ab91bf39` and BIP30.
-      // TODO: add a unit test for these blocks.
-      if !self.add_utxos(tx) {
-        let blockhash = block.header.bitcoin_hash().le_hex_string();
-        if blockhash == "00000000000a4d0a398161ffc163c503763b1f4360639393e0e4c8e300e0caec".to_string() ||
-           blockhash == "00000000000743f190a18c5577a3c2d2a1f610ae9601ac046a38084ccb7cd721".to_string() {
-          // For these specific blocks, overwrite the old UTXOs.
-          self.table.remove(&tx.bitcoin_hash().as_uint128());
-          self.add_utxos(tx);
-        } else {
-          // Otherwise fail the block
-          self.rewind(block);
-          return false;
+      let txid = tx.bitcoin_hash();
+      // Add outputs -- add_utxos returns the original transaction if this is a dupe.
+      //   Note that this can only happen with coinbases, and in this case the block
+      //   is invalid, -except- for two historic blocks which appeared in the
+      //   blockchain before the dupes were noticed.
+      //   See bitcoind commit `ab91bf39` and BIP30.
+      match self.add_utxos(tx) {
+        Some(mut replace) => {
+          let blockhash = block.header.bitcoin_hash().le_hex_string();
+          if blockhash == "00000000000a4d0a398161ffc163c503763b1f4360639393e0e4c8e300e0caec".to_string() ||
+             blockhash == "00000000000743f190a18c5577a3c2d2a1f610ae9601ac046a38084ccb7cd721".to_string() {
+            // For these specific blocks, overwrite the old UTXOs.
+            // (Actually add_utxos() already did this, so we do nothing.)
+          } else {
+            // Otherwise put the replaced txouts into the `deleted` cache
+            // so that rewind will put them back.
+            self.spent_txos.get_mut(spent_idx).reserve_additional(replace.len());
+            for (n, input) in replace.mut_iter().enumerate() {
+              match input.take() {
+                Some(txo) => { self.spent_txos.get_mut(spent_idx).push(((txid, n as u32), txo)); }
+                None => {}
+              }
+            }
+            // Otherwise fail the block
+            self.rewind(block);
+            return false;
+          }
         }
+        // Didn't replace anything? Good.
+        None => {}
       }
     }
     // If we made it here, success!
@@ -199,41 +213,47 @@ impl UtxoSet {
       let txhash = tx.bitcoin_hash();
       for n in range(0, tx.output.len()) {
         // Just bomb out the whole transaction
+        // TODO: this does not conform to BIP30: if a duplicate txid occurs,
+        //       the block will be (rightly) rejected, causing it to be
+        //       unwound. But when we get here, we can't see the duplicate,
+        //       so we wind up deleting the old txid! This is very bad, and
+        //       if it occurs, an affected user will have to recreate his
+        //       whole UTXO index to get the original txid back.
         self.take_utxo(txhash, n as u32);
       }
 
-      // Read deleted txouts -- note that we are trusting that these are
-      // in the same order in our cache as they were in the original block.
+      // Read deleted txouts
       if skipped_genesis {
-
         let mut extract_vec = vec![];
         mem::swap(&mut extract_vec, self.spent_txos.get_mut(self.spent_idx as uint));
-        for (txo, inp) in extract_vec.move_iter().zip(tx.input.iter()) {
+        for ((txid, n), txo) in extract_vec.move_iter() {
           // Remove the tx's utxo list and patch the txo into place
           let new_node =
-              match self.table.pop(&inp.prev_hash.as_uint128()) {
+              match self.table.pop(&txid.as_uint128()) {
                 Some(mut thinvec) => {
                   let old_len = thinvec.len() as u32;
-                  if old_len < inp.prev_index + 1 {
-                    thinvec.reserve(inp.prev_index + 1);
-                    for i in range(old_len, inp.prev_index + 1) {
-                      unsafe { thinvec.init(i as uint, None); }
+                  if old_len < n + 1 {
+                    unsafe {
+                      thinvec.reserve(n + 1);
+                      for i in range(old_len, n + 1) {
+                        thinvec.init(i as uint, None);
+                      }
                     }
                   }
-                  unsafe { *thinvec.get_mut(inp.prev_index as uint) = Some(txo); }
+                  unsafe { *thinvec.get_mut(n as uint) = Some(txo); }
                   thinvec
                 }
                 None => {
-                  let mut thinvec = ThinVec::with_capacity(inp.prev_index + 1);
-                  for i in range(0, inp.prev_index + 1) {
+                  let mut thinvec = ThinVec::with_capacity(n + 1);
+                  for i in range(0, n + 1) {
                     unsafe { thinvec.init(i as uint, None); }
                   }
-                  unsafe { *thinvec.get_mut(inp.prev_index as uint) = Some(txo); }
+                  unsafe { *thinvec.get_mut(n as uint) = Some(txo); }
                   thinvec
                 }
               };
           // Ram it back into the tree
-          self.table.insert(inp.prev_hash.as_uint128(), new_node);
+          self.table.insert(txid.as_uint128(), new_node);
         }
       }
       skipped_genesis = true;

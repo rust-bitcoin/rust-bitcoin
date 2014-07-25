@@ -21,7 +21,7 @@
 
 use alloc::heap::{allocate, reallocate, deallocate};
 use std::raw::Slice;
-use std::slice::Items;
+use std::slice::{Items, MutItems};
 use std::{fmt, mem, ptr};
 use std::u32;
 
@@ -55,6 +55,12 @@ impl<T> ThinVec<T> {
   #[inline]
   pub fn iter<'a>(&'a self) -> Items<'a, T> {
     self.as_slice().iter()
+  }
+
+  /// Mutable iterator over elements of the vector
+  #[inline]
+  pub fn mut_iter<'a>(&'a mut self) -> MutItems<'a, T> {
+    self.as_mut_slice().mut_iter()
   }
 
   /// Get vector as mutable slice
@@ -105,25 +111,23 @@ impl<T> ThinVec<T> {
   }
 
   /// Set the length of the vector to the minimum of the current capacity and new capacity
-  pub fn reserve(&mut self, new_cap: u32) {
+  pub unsafe fn reserve(&mut self, new_cap: u32) {
     if new_cap > self.cap {
       let new_size = (new_cap as uint).checked_mul(&mem::size_of::<T>())
                        .expect("ThinVec::reserve: capacity overflow");
-      unsafe {
-        self.ptr =
-          if self.cap == 0 {
-            allocate(new_size, mem::min_align_of::<T>()) as *mut T
-          } else {
-            reallocate(self.ptr as *mut u8, new_size,
-                       mem::min_align_of::<T>(), self.cap as uint) as *mut T
-          };
-      }
+      self.ptr =
+        if self.cap == 0 {
+          allocate(new_size, mem::min_align_of::<T>()) as *mut T
+        } else {
+          reallocate(self.ptr as *mut u8, new_size,
+                     mem::min_align_of::<T>(), self.cap as uint) as *mut T
+        };
       self.cap = new_cap;
     }
   }
 
   /// Increase the length of the vector
-  pub fn reserve_additional(&mut self, extra: u32) {
+  pub unsafe fn reserve_additional(&mut self, extra: u32) {
     let new_cap = self.cap.checked_add(&extra).expect("ThinVec::reserve_additional: length overflow");
     self.reserve(new_cap);
   }
@@ -134,7 +138,7 @@ impl<T:Clone> ThinVec<T> {
   #[inline]
   pub fn push_all(&mut self, other: &[T]) {
     let old_cap = self.cap as uint;
-    self.reserve_additional(other.len() as u32);
+    unsafe { self.reserve_additional(other.len() as u32); }
     // Copied from vec.rs, which claims this will be optimized to a memcpy
     // if T is Copy
     for i in range(0, other.len()) {
@@ -192,7 +196,7 @@ impl<T> Extendable<T> for ThinVec<T> {
   fn extend<I: Iterator<T>>(&mut self, iter: I) {
     let old_cap = self.cap;
     let (lower, _) = iter.size_hint();
-    self.reserve_additional(lower as u32);
+    unsafe { self.reserve_additional(lower as u32); }
     for (n, elem) in iter.enumerate() {
       if n < lower {
         unsafe { self.init(old_cap as uint + n, elem) };
