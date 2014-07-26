@@ -28,6 +28,15 @@ macro_rules! nu_select(
     use rustrt::task::Task;
     use sync::comm::Packet;
 
+    /// Obtains a borrowed reference to an object for an arbitrary amount of
+    /// time (it is on you to make sure the aliasing rules are followed and
+    /// that the borrow does not exceed the object's lifetime!!!!!!!!!!!!!!)
+    /// to subvert the borrow-checker. This is a workaround for the current
+    /// lexical-scope-based borrow times.
+    unsafe fn borrow_without_checking<'a, 'b, T>(obj: &'a T) -> &'b T {
+      &*(obj as *const _)
+    }
+
     // Is anything already ready to receive? Grab it without waiting.
     $(
       if (&$rx as &Packet).can_recv() {
@@ -41,7 +50,8 @@ macro_rules! nu_select(
       // Keep count of how many, since we need to abort every selection
       // that we started.
       let mut started_count = 0;
-      let packets = [ $( &$rx as &Packet, )+ ];
+      // Restrict lifetime of borrows in `packets`
+      let packets = [ $( unsafe { borrow_without_checking(&$rx) } as &Packet, )+ ];
 
       let task: Box<Task> = Local::take();
       task.deschedule(packets.len(), |task| {
@@ -59,9 +69,7 @@ macro_rules! nu_select(
         // Abort every one, but only react to the first
         if { i += 1; i < started_count } &&
            // If start_selection() failed, abort_selection() will fail too,
-           // but it still counts as "data available". FIXME: should we swap
-           // the following two conditions so that packets[started_count - 1].
-           // abort_selection() is never called?
+           // but it still counts as "data available".
            (packets[i].abort_selection() || i == started_count - 1) {
           // Abort the remainder, ignoring their return values
           i += 1;
@@ -69,13 +77,14 @@ macro_rules! nu_select(
             packets[i].abort_selection();
             i += 1;
           }
+          // End manually-tracked borrow of $rx in packets
+          drop(packets);
           // React to the first
           let $name = $rx.$meth();
           $code
         }
       )else+
     else { 
-      println!("i = {} , started_count {}", i, started_count);
       fail!("we didn't find the ready receiver, but we should have had one"); }
     }
   })
