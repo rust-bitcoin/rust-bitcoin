@@ -341,7 +341,7 @@ impl<'tree> Iterator<&'tree Block> for RevStaleBlockIter<'tree> {
 /// This function emulates the GetCompact(SetCompact(n)) in the satoshi code,
 /// which drops the precision to something that can be encoded precisely in
 /// the nBits block header field. Savour the perversity. This is in Bitcoin
-/// consensus code. What. The. Fuck.
+/// consensus code. What. Gaah!
 fn satoshi_the_precision(n: &Uint256) -> Uint256 {
   // Shift by B bits right then left to turn the low bits to zero
   let bits = 8 * ((n.bits() + 7) / 8 - 3);

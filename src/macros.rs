@@ -28,15 +28,6 @@ macro_rules! nu_select(
     use rustrt::task::Task;
     use sync::comm::Packet;
 
-    /// Obtains a borrowed reference to an object for an arbitrary amount of
-    /// time (it is on you to make sure the aliasing rules are followed and
-    /// that the borrow does not exceed the object's lifetime!!!!!!!!!!!!!!)
-    /// to subvert the borrow-checker. This is a workaround for the current
-    /// lexical-scope-based borrow times.
-    unsafe fn borrow_without_checking<'a, 'b, T>(obj: &'a T) -> &'b T {
-      &*(obj as *const _)
-    }
-
     // Is anything already ready to receive? Grab it without waiting.
     $(
       if (&$rx as &Packet).can_recv() {
@@ -51,41 +42,44 @@ macro_rules! nu_select(
       // that we started.
       let mut started_count = 0;
       // Restrict lifetime of borrows in `packets`
-      let packets = [ $( unsafe { borrow_without_checking(&$rx) } as &Packet, )+ ];
+      {
+        let packets = [ $( &$rx as &Packet, )+ ];
 
-      let task: Box<Task> = Local::take();
-      task.deschedule(packets.len(), |task| {
-        match packets[started_count].start_selection(task) {
-          Ok(()) => {
-            started_count += 1;
-            Ok(())
+        let task: Box<Task> = Local::take();
+        task.deschedule(packets.len(), |task| {
+          match packets[started_count].start_selection(task) {
+            Ok(()) => {
+              started_count += 1;
+              Ok(())
+            }
+            Err(task) => Err(task)
           }
-          Err(task) => Err(task)
-        }
-      });
+        });
+      }
 
-      let mut i = -1;
-      $(
-        // Abort every one, but only react to the first
-        if { i += 1; i < started_count } &&
+      let mut i = 0;
+      let ret = $(
+        // Abort the receivers, stopping at the first ready one to get its data.
+        if { i += 1; i <= started_count } &&
            // If start_selection() failed, abort_selection() will fail too,
            // but it still counts as "data available".
-           (packets[i].abort_selection() || i == started_count - 1) {
-          // Abort the remainder, ignoring their return values
-          i += 1;
-          while i < started_count {
-            packets[i].abort_selection();
-            i += 1;
-          }
-          // End manually-tracked borrow of $rx in packets
-          drop(packets);
+           ($rx.abort_selection() || i == started_count) {
           // React to the first
           let $name = $rx.$meth();
           $code
-        }
-      )else+
-    else { 
-      fail!("we didn't find the ready receiver, but we should have had one"); }
+        })else+
+        else {
+          fail!("we didn't find the ready receiver, but we should have had one");
+        };
+      // At this point, the first i receivers have been aborted. We need to abort the rest:
+      $(if i > 0 {
+        i -= 1;
+      } else {
+        $rx.abort_selection();
+      })+
+      let _ = i; // Shut up `i -= 1 but i is never read` warning
+      // Return
+      ret
     }
   })
 )
