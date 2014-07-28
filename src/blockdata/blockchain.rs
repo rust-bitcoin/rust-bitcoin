@@ -560,6 +560,11 @@ impl Blockchain {
     self.best_tip = tip;
   }
 
+  /// Returns the genesis block's blockhash
+  pub fn genesis_hash(&self) -> Sha256dHash {
+    self.genesis_hash
+  }
+
   /// Returns the best tip
   pub fn best_tip<'a>(&'a self) -> &'a Block {
     unsafe { &(*self.best_tip).block }
