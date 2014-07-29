@@ -23,6 +23,7 @@ use std::fmt;
 use std::io::{IoResult, IoError, InvalidInput};
 use std::mem::transmute;
 use std::hash::{Hash, Hasher};
+use serialize::json::{mod, ToJson};
 
 use crypto::digest::Digest;
 use crypto::sha2;
@@ -154,6 +155,16 @@ impl PartialEq for Sha256dHash {
 }
 
 impl Eq for Sha256dHash {}
+
+// Note that this outputs hashes as big endian hex numbers, so this should be
+// used only for user-facing stuff. Internal and network serialization is
+// little-endian and should be done using the consensus `network::serialize`
+// interface.
+impl ToJson for Sha256dHash {
+  fn to_json(&self) -> json::Json {
+    json::String(self.le_hex_string())
+  }
+}
 
 impl Serializable for Sha256dHash {
   fn serialize(&self) -> Vec<u8> {

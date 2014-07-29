@@ -118,6 +118,7 @@ impl BlockHeader {
 }
 
 impl_serializable!(BlockHeader, version, prev_blockhash, merkle_root, time, bits, nonce)
+impl_json!(BlockHeader, version, prev_blockhash, merkle_root, time, bits, nonce)
 impl_serializable!(Block, header, txdata)
 impl_serializable!(LoneBlockHeader, header, tx_count)
 

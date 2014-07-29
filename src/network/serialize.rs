@@ -29,6 +29,7 @@ use std::io::{BufferedReader, BufferedWriter, File, Truncate, Write};
 use std::io::fs::rename;
 use std::mem::transmute;
 use std::u32;
+use serialize::{Encoder, Encodable};
 
 use util::iter::{FixedTake, FixedTakeable, NullIterator};
 use util::hash::Sha256dHash;
@@ -150,6 +151,12 @@ pub enum VarInt {
   VarU32(u32),
   /// 64-bit int
   VarU64(u64)
+}
+
+impl<S:Encoder<E>, E> Encodable<S, E> for VarInt {
+  fn encode(&self, s: &mut S) -> Result<(), E> {
+    s.emit_u64(varint_to_u64(*self))
+  }
 }
 
 // Utility functions

@@ -43,3 +43,17 @@ macro_rules! impl_serializable(
   );
 )
 
+macro_rules! impl_json(
+  ($thing:ident, $($field:ident),+) => (
+    impl ::serialize::json::ToJson for $thing {
+      fn to_json(&self) -> ::serialize::json::Json {
+        use std::collections::TreeMap;
+        use serialize::json::{ToJson, Object};
+        let mut ret = TreeMap::new();
+        $( ret.insert(stringify!($field).to_string(), self.$field.to_json()); )+
+        Object(ret)
+      }
+    }
+  );
+)
+
