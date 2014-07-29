@@ -24,7 +24,7 @@ use network::serialize::Serializable;
 use util::misc::prepend_err;
 
 /// The cryptocurrency to operate on
-#[deriving(PartialEq, Eq, Clone, Show)]
+#[deriving(Encodable, Decodable, PartialEq, Eq, Clone, Show, Hash)]
 pub enum Network {
   /// Classic Bitcoin
   Bitcoin,
