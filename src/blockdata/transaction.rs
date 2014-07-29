@@ -71,8 +71,11 @@ pub struct Transaction {
 }
 
 impl_serializable!(TxIn, prev_hash, prev_index, script_sig, sequence)
+impl_json!(TxIn, prev_hash, prev_index, script_sig, sequence)
 impl_serializable!(TxOut, value, script_pubkey)
+impl_json!(TxOut, value, script_pubkey)
 impl_serializable!(Transaction, version, input, output, lock_time)
+impl_json!(Transaction, version, input, output, lock_time)
 
 #[test]
 fn test_txin() {

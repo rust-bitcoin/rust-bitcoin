@@ -415,9 +415,9 @@ impl Blockchain {
     }
   }
 
-  /// Looks up a block in the chain and returns a reference to it
-  pub fn get_block<'a>(&'a self, hash: Sha256dHash) -> Option<&'a Block> {
-    self.tree.lookup(&hash.as_uint256(), 256).as_ref().map(|node| &node.block)
+  /// Looks up a block in the chain and returns the BlockchainNode containing it
+  pub fn get_block<'a>(&'a self, hash: Sha256dHash) -> Option<&'a BlockchainNode> {
+    self.tree.lookup(&hash.as_uint256(), 256).map(|node| &**node)
   }
 
   /// Locates a block in the chain and overwrites its txdata

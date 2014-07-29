@@ -26,7 +26,7 @@
 
 use std::char::from_digit;
 use std::io::IoResult;
-use serialize::{Encoder, Encodable};
+use serialize::json;
 
 use network::serialize::Serializable;
 use blockdata::opcodes;
@@ -122,16 +122,16 @@ impl Script {
 }
 
 // User-facing serialization
-impl<S:Encoder<E>, E> Encodable<S, E> for Script {
+impl json::ToJson for Script {
   // TODO: put this in a struct alongside an opcode decode
-  fn encode(&self, s: &mut S) -> Result<(), E> {
+  fn to_json(&self) -> json::Json {
     let &Script(ref raw) = self;
     let mut ret = String::new();
     for dat in raw.iter() {
       ret.push_char(from_digit((dat / 0x10) as uint, 16).unwrap());
       ret.push_char(from_digit((dat & 0x0f) as uint, 16).unwrap());
     }
-    s.emit_str(ret.as_slice())
+    json::String(ret)
   }
 }
 

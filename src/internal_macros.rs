@@ -50,6 +50,7 @@ macro_rules! impl_json(
         use std::collections::TreeMap;
         use serialize::json::{ToJson, Object};
         let mut ret = TreeMap::new();
+        ret.insert("hash".to_string(), self.bitcoin_hash().to_json());
         $( ret.insert(stringify!($field).to_string(), self.$field.to_json()); )+
         Object(ret)
       }
