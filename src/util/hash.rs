@@ -134,6 +134,17 @@ impl Sha256dHash {
     }
     ret
   }
+
+  /// Human-readable hex output
+  pub fn be_hex_string(&self) -> String {
+    let &Sha256dHash(data) = self;
+    let mut ret = String::with_capacity(64);
+    for i in range(0u, 32) {
+      ret.push_char(from_digit((data[i] / 0x10) as uint, 16).unwrap());
+      ret.push_char(from_digit((data[i] & 0x0f) as uint, 16).unwrap());
+    }
+    ret
+  }
 }
 
 impl Clone for Sha256dHash {
@@ -171,10 +182,38 @@ impl Index<uint, u8> for Sha256dHash {
 // interface.
 impl ToJson for Sha256dHash {
   fn to_json(&self) -> json::Json {
-    json::String(self.le_hex_string())
+    json::String(self.be_hex_string())
   }
 }
 
+// Non-consensus encoding (big-endian hex string)
+impl<S: ::serialize::Encoder<E>, E> ::serialize::Encodable<S, E> for Sha256dHash {
+  #[inline]
+  fn encode(&self, s: &mut S) -> Result<(), E> {
+    s.emit_str(self.be_hex_string().as_slice())
+  }
+}
+
+impl<D: ::serialize::Decoder<E>, E> ::serialize::Decodable<D, E> for Sha256dHash {
+  #[inline]
+  fn decode(d: &mut D) -> Result<Sha256dHash, E> {
+    use serialize::hex::FromHex;
+
+    let hex_str = try!(d.read_str());
+    if hex_str.len() != 64 {
+      d.error("incorrect hash length");
+    }
+    let raw_str = try!(hex_str.as_slice().from_hex()
+                         .map_err(|_| d.error("non-hexadecimal hash string")));
+    let mut ret = [0u8, ..32];
+    for i in range(0, 32) {
+      ret[i] = raw_str[i];
+    }
+    Ok(Sha256dHash(ret))
+  }
+}
+
+// Consensus encoding (little-endian)
 impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for Sha256dHash {
   #[inline]
   fn consensus_encode(&self, s: &mut S) -> Result<(), E> {
@@ -252,7 +291,11 @@ impl <T: BitcoinHash> MerkleRoot for Vec<T> {
 mod tests {
   use std::prelude::*;
   use collections::bitv::from_bytes;
+  use std::io::{MemWriter, MemReader, Reader, Writer};
+  use std::str::from_utf8;
 
+  use serialize::Encodable;
+  use serialize::json;
   use util::hash::Sha256dHash;
   use util::misc::hex_bytes;
 
@@ -270,6 +313,20 @@ mod tests {
   fn test_hash_to_bitvset() {
     assert_eq!(Sha256dHash::from_data(&[]).as_bitv(),
                from_bytes(hex_bytes("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456").unwrap().as_slice()));
+  }
+
+  #[test]
+  fn test_hash_encode_decode() {
+    let hash = Sha256dHash::from_data(&[]);
+    let mut writer = MemWriter::new();
+    {
+      let mut encoder = json::Encoder::new(&mut writer);
+      assert!(hash.encode(&mut encoder).is_ok());
+    }
+    let res = writer.unwrap();
+    assert_eq!(res.as_slice(),
+               "\"5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456\"".as_bytes());
+    assert_eq!(json::decode(from_utf8(res.as_slice()).unwrap()), Ok(hash));
   }
 }
 
