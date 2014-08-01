@@ -39,4 +39,3 @@ pub trait BitArray {
   fn trailing_zeros(&self) -> uint;
 }
 
-

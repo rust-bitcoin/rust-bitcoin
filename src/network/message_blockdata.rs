@@ -18,14 +18,9 @@
 //! Bitcoin data (blocks and transactions) around.
 //!
 
-use std::io::{IoResult, IoError, InvalidInput};
-#[cfg(test)]
-use serialize::hex::FromHex;
-#[cfg(test)]
-use util::hash::zero_hash;
-
 use network::constants;
-use network::serialize::{Serializable, SerializeIter};
+use network::encodable::{ConsensusDecodable, ConsensusEncodable};
+use network::serialize::{SimpleDecoder, SimpleEncoder};
 use util::hash::Sha256dHash;
 
 #[deriving(Clone, PartialEq, Show)]
@@ -87,7 +82,7 @@ impl GetBlocksMessage {
   }
 }
 
-impl_serializable!(GetBlocksMessage, version, locator_hashes, stop_hash)
+impl_consensus_encoding!(GetBlocksMessage, version, locator_hashes, stop_hash)
 
 impl GetHeadersMessage {
   /// Construct a new `getheaders` message
@@ -100,70 +95,77 @@ impl GetHeadersMessage {
   }
 }
 
-impl_serializable!(GetHeadersMessage, version, locator_hashes, stop_hash)
+impl_consensus_encoding!(GetHeadersMessage, version, locator_hashes, stop_hash)
 
-impl Serializable for Inventory {
-  fn serialize(&self) -> Vec<u8> {
-    let int_type: u32 = match self.inv_type {
-      InvError => 0, 
+impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for Inventory {
+  #[inline]
+  fn consensus_encode(&self, s: &mut S) -> Result<(), E> {
+    try!(match self.inv_type {
+      InvError => 0u32, 
       InvTransaction => 1,
       InvBlock => 2
-    };
-    let mut rv = vec!();
-    rv.extend(int_type.serialize().move_iter());
-    rv.extend(self.hash.serialize().move_iter());
-    rv
+    }.consensus_encode(s));
+    self.hash.consensus_encode(s)
   }
+}
 
-  fn deserialize<I: Iterator<u8>>(mut iter: I) -> IoResult<Inventory> {
-    let int_type: u32 = try!(Serializable::deserialize(iter.by_ref()));
+impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for Inventory {
+  #[inline]
+  fn consensus_decode(d: &mut D) -> Result<Inventory, E> {
+    let int_type: u32 = try!(ConsensusDecodable::consensus_decode(d));
     Ok(Inventory {
       inv_type: match int_type {
         0 => InvError,
         1 => InvTransaction,
         2 => InvBlock,
-        _ => { return Err(IoError {
-          kind: InvalidInput,
-          desc: "bad inventory type field",
-          detail: None
-        })}
+        // TODO do not fail here
+        _ => { fail!("bad inventory type field") }
       },
-      hash: try!(Serializable::deserialize(iter.by_ref()))
+      hash: try!(ConsensusDecodable::consensus_decode(d))
     })
   }
 }
 
-#[test]
-fn getblocks_message_test() {
-  let from_sat = "72110100014a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b0000000000000000000000000000000000000000000000000000000000000000".from_hex().unwrap();
-  let genhash = "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b".from_hex().unwrap();
+#[cfg(test)]
+mod tests {
+  use super::{GetHeadersMessage, GetBlocksMessage};
 
-  let decode: IoResult<GetBlocksMessage> = Serializable::deserialize(from_sat.iter().map(|n| *n));
-  assert!(decode.is_ok());
-  let real_decode = decode.unwrap();
-  assert_eq!(real_decode.version, 70002);
-  assert_eq!(real_decode.locator_hashes.len(), 1);
-  assert_eq!(real_decode.locator_hashes[0].as_slice(), genhash.as_slice());
-  assert_eq!(real_decode.stop_hash.as_slice(), zero_hash().as_slice());
+  use std::io::IoResult;
+  use serialize::hex::FromHex;
 
-  let reserialize = real_decode.serialize();
-  assert_eq!(reserialize.as_slice(), from_sat.as_slice());
-}
+  use network::serialize::{deserialize, serialize};
+  use util::hash::zero_hash;
 
-#[test]
-fn getheaders_message_test() {
-  let from_sat = "72110100014a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b0000000000000000000000000000000000000000000000000000000000000000".from_hex().unwrap();
-  let genhash = "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b".from_hex().unwrap();
+  #[test]
+  fn getblocks_message_test() {
+    let from_sat = "72110100014a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b0000000000000000000000000000000000000000000000000000000000000000".from_hex().unwrap();
+    let genhash = "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b".from_hex().unwrap();
 
-  let decode: IoResult<GetHeadersMessage> = Serializable::deserialize(from_sat.iter().map(|n| *n));
-  assert!(decode.is_ok());
-  let real_decode = decode.unwrap();
-  assert_eq!(real_decode.version, 70002);
-  assert_eq!(real_decode.locator_hashes.len(), 1);
-  assert_eq!(real_decode.locator_hashes[0].as_slice(), genhash.as_slice());
-  assert_eq!(real_decode.stop_hash.as_slice(), zero_hash().as_slice());
+    let decode: IoResult<GetBlocksMessage> = deserialize(from_sat.clone());
+    assert!(decode.is_ok());
+    let real_decode = decode.unwrap();
+    assert_eq!(real_decode.version, 70002);
+    assert_eq!(real_decode.locator_hashes.len(), 1);
+    assert_eq!(real_decode.locator_hashes[0].as_slice(), genhash.as_slice());
+    assert_eq!(real_decode.stop_hash.as_slice(), zero_hash().as_slice());
 
-  let reserialize = real_decode.serialize();
-  assert_eq!(reserialize.as_slice(), from_sat.as_slice());
+    assert_eq!(serialize(&real_decode), Ok(from_sat));
+  }
+
+  #[test]
+  fn getheaders_message_test() {
+    let from_sat = "72110100014a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b0000000000000000000000000000000000000000000000000000000000000000".from_hex().unwrap();
+    let genhash = "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b".from_hex().unwrap();
+
+    let decode: IoResult<GetHeadersMessage> = deserialize(from_sat.clone());
+    assert!(decode.is_ok());
+    let real_decode = decode.unwrap();
+    assert_eq!(real_decode.version, 70002);
+    assert_eq!(real_decode.locator_hashes.len(), 1);
+    assert_eq!(real_decode.locator_hashes[0].as_slice(), genhash.as_slice());
+    assert_eq!(real_decode.stop_hash.as_slice(), zero_hash().as_slice());
+
+    assert_eq!(serialize(&real_decode), Ok(from_sat));
+  }
 }
 

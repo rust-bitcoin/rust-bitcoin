@@ -20,37 +20,38 @@
 //!
 
 use collections::Vec;
-use std::io::{IoError, IoResult, InvalidInput, OtherIoError, standard_error};
+use std::io::{IoError, IoResult, OtherIoError};
+use std::io::MemReader;
 
 use blockdata::block;
 use network::address::Address;
 use network::message_network;
 use network::message_blockdata;
-use network::serialize::{Serializable, CheckedData};
-use util::iter::FixedTakeable;
+use network::encodable::{ConsensusDecodable, ConsensusEncodable};
+use network::encodable::CheckedData;
+use network::serialize::{serialize, RawDecoder, SimpleEncoder, SimpleDecoder};
 use util::misc::prepend_err;
 
 /// Serializer for command string
 #[deriving(PartialEq, Clone, Show)]
 pub struct CommandString(pub String);
 
-impl Serializable for CommandString {
-  fn serialize(&self) -> Vec<u8> {
+impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for CommandString {
+  #[inline]
+  fn consensus_encode(&self, s: &mut S) -> Result<(), E> {
     let &CommandString(ref inner_str) = self;
     let mut rawbytes = [0u8, ..12]; 
     rawbytes.copy_from(inner_str.as_bytes().as_slice());
-    Vec::from_slice(rawbytes.as_slice())
+    rawbytes.consensus_encode(s)
   }
+}
 
-  fn deserialize<I: Iterator<u8>>(iter: I) -> IoResult<CommandString> {
-    let mut fixiter = iter.fixed_take(12);
-    let rv: String = FromIterator::from_iter(fixiter.by_ref().filter_map(|u| if u > 0 { Some(u as char) } else { None }));
-    // Once we've read the string, run out the iterator
-    for _ in fixiter {}
-    match fixiter.is_err() {
-      false => Ok(CommandString(rv)),
-      true => Err(standard_error(InvalidInput))
-    }
+impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for CommandString {
+  #[inline]
+  fn consensus_decode(d: &mut D) -> Result<CommandString, E> {
+    let rawbytes: [u8, ..12] = try!(ConsensusDecodable::consensus_decode(d)); 
+    let rv: String = FromIterator::from_iter(rawbytes.iter().filter_map(|&u| if u > 0 { Some(u as char) } else { None }));
+    Ok(CommandString(rv))
   }
 }
 
@@ -120,46 +121,48 @@ impl RawNetworkMessage {
   }
 }
 
-impl Serializable for RawNetworkMessage {
-  fn serialize(&self) -> Vec<u8> {
-    let mut ret = vec![];
-    ret.extend(self.magic.serialize().move_iter());
-    ret.extend(CommandString(self.command()).serialize().move_iter());
-    let payload_data = match self.payload {
-      Version(ref dat) => dat.serialize(),
-      Verack           => vec![],
-      Addr(ref dat)    => dat.serialize(),
-      Inv(ref dat)     => dat.serialize(),
-      GetData(ref dat) => dat.serialize(),
-      NotFound(ref dat) => dat.serialize(),
-      GetBlocks(ref dat) => dat.serialize(),
-      GetHeaders(ref dat) => dat.serialize(),
-      Block(ref dat)   => dat.serialize(),
-      Headers(ref dat) => dat.serialize(),
-      Ping(ref dat)    => dat.serialize(),
-      Pong(ref dat)    => dat.serialize()
-    };
-    ret.extend(CheckedData(payload_data).serialize().move_iter());
-    ret
+impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for RawNetworkMessage {
+  fn consensus_encode(&self, s: &mut S) -> Result<(), E> {
+    try!(self.magic.consensus_encode(s));
+    try!(CommandString(self.command()).consensus_encode(s));
+    match self.payload {
+      Version(ref dat) => serialize(dat),
+      Verack           => Ok(vec![]),
+      Addr(ref dat)    => serialize(dat),
+      Inv(ref dat)     => serialize(dat),
+      GetData(ref dat) => serialize(dat),
+      NotFound(ref dat) => serialize(dat),
+      GetBlocks(ref dat) => serialize(dat),
+      GetHeaders(ref dat) => serialize(dat),
+      Block(ref dat)   => serialize(dat),
+      Headers(ref dat) => serialize(dat),
+      Ping(ref dat)    => serialize(dat),
+      Pong(ref dat)    => serialize(dat),
+    }.unwrap();
+    Ok(())
   }
+}
 
-  fn deserialize<I: Iterator<u8>>(mut iter: I) -> IoResult<RawNetworkMessage> {
-    let magic = try!(prepend_err("magic", Serializable::deserialize(iter.by_ref())));
-    let CommandString(cmd): CommandString = try!(prepend_err("command", Serializable::deserialize(iter.by_ref())));
-    let CheckedData(raw_payload): CheckedData = try!(prepend_err("payload", Serializable::deserialize(iter.by_ref())));
+impl<D:SimpleDecoder<IoError>> ConsensusDecodable<D, IoError> for RawNetworkMessage {
+  fn consensus_decode(d: &mut D) -> IoResult<RawNetworkMessage> {
+    let magic = try!(ConsensusDecodable::consensus_decode(d));
+    let CommandString(cmd): CommandString= try!(ConsensusDecodable::consensus_decode(d));
+    let CheckedData(raw_payload): CheckedData = try!(ConsensusDecodable::consensus_decode(d));
+
+    let mut mem_d = RawDecoder::new(MemReader::new(raw_payload));
     let payload = match cmd.as_slice() {
-      "version" => Version(try!(prepend_err("version", Serializable::deserialize(raw_payload.iter().map(|n| *n))))),
+      "version" => Version(try!(prepend_err("version", ConsensusDecodable::consensus_decode(&mut mem_d)))),
       "verack"  => Verack,
-      "addr"    => Addr(try!(prepend_err("addr", Serializable::deserialize(raw_payload.iter().map(|n| *n))))),
-      "inv"     => Inv(try!(prepend_err("inv", Serializable::deserialize(raw_payload.iter().map(|n| *n))))),
-      "getdata" => GetData(try!(prepend_err("getdata", Serializable::deserialize(raw_payload.iter().map(|n| *n))))),
-      "notfound" => NotFound(try!(prepend_err("notfound", Serializable::deserialize(raw_payload.iter().map(|n| *n))))),
-      "getblocks" => GetBlocks(try!(prepend_err("getblocks", Serializable::deserialize(raw_payload.iter().map(|n| *n))))),
-      "getheaders" => GetHeaders(try!(prepend_err("getheaders", Serializable::deserialize(raw_payload.iter().map(|n| *n))))),
-      "block"   => Block(try!(prepend_err("block", Serializable::deserialize(raw_payload.iter().map(|n| *n))))),
-      "headers" => Headers(try!(prepend_err("headers", Serializable::deserialize(raw_payload.iter().map(|n| *n))))),
-      "ping"    => Ping(try!(prepend_err("ping", Serializable::deserialize(raw_payload.iter().map(|n| *n))))),
-      "pong"    => Ping(try!(prepend_err("pong", Serializable::deserialize(raw_payload.iter().map(|n| *n))))),
+      "addr"    => Addr(try!(prepend_err("addr", ConsensusDecodable::consensus_decode(&mut mem_d)))),
+      "inv"     => Inv(try!(prepend_err("inv", ConsensusDecodable::consensus_decode(&mut mem_d)))),
+      "getdata" => GetData(try!(prepend_err("getdata", ConsensusDecodable::consensus_decode(&mut mem_d)))),
+      "notfound" => NotFound(try!(prepend_err("notfound", ConsensusDecodable::consensus_decode(&mut mem_d)))),
+      "getblocks" => GetBlocks(try!(prepend_err("getblocks", ConsensusDecodable::consensus_decode(&mut mem_d)))),
+      "getheaders" => GetHeaders(try!(prepend_err("getheaders", ConsensusDecodable::consensus_decode(&mut mem_d)))),
+      "block"   => Block(try!(prepend_err("block", ConsensusDecodable::consensus_decode(&mut mem_d)))),
+      "headers" => Headers(try!(prepend_err("headers", ConsensusDecodable::consensus_decode(&mut mem_d)))),
+      "ping"    => Ping(try!(prepend_err("ping", ConsensusDecodable::consensus_decode(&mut mem_d)))),
+      "pong"    => Ping(try!(prepend_err("pong", ConsensusDecodable::consensus_decode(&mut mem_d)))),
       cmd => {
         return Err(IoError {
                      kind: OtherIoError,
@@ -177,24 +180,25 @@ impl Serializable for RawNetworkMessage {
 
 #[cfg(test)]
 mod test {
+  use super::CommandString;
+
   use std::io::IoResult;
 
-  use network::message::CommandString;
-  use network::serialize::Serializable;
+  use network::serialize::{deserialize, serialize};
 
   #[test]
   fn serialize_commandstring_test() {
     let cs = CommandString(String::from_str("Andrew"));
-    assert_eq!(cs.serialize(), vec![0x41u8, 0x6e, 0x64, 0x72, 0x65, 0x77, 0, 0, 0, 0, 0, 0]);
+    assert_eq!(serialize(&cs), Ok(vec![0x41u8, 0x6e, 0x64, 0x72, 0x65, 0x77, 0, 0, 0, 0, 0, 0]));
   }
 
   #[test]
   fn deserialize_commandstring_test() {
-    let cs: IoResult<CommandString> = Serializable::deserialize([0x41u8, 0x6e, 0x64, 0x72, 0x65, 0x77, 0, 0, 0, 0, 0, 0].iter().map(|n| *n));
+    let cs: IoResult<CommandString> = deserialize(vec![0x41u8, 0x6e, 0x64, 0x72, 0x65, 0x77, 0, 0, 0, 0, 0, 0]);
     assert!(cs.is_ok());
     assert_eq!(cs.unwrap(), CommandString(String::from_str("Andrew")));
 
-    let short_cs: IoResult<CommandString> = Serializable::deserialize([0x41u8, 0x6e, 0x64, 0x72, 0x65, 0x77, 0, 0, 0, 0, 0].iter().map(|n| *n));
+    let short_cs: IoResult<CommandString> = deserialize(vec![0x41u8, 0x6e, 0x64, 0x72, 0x65, 0x77, 0, 0, 0, 0, 0]);
     assert!(short_cs.is_err());
   }
 

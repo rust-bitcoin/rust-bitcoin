@@ -18,10 +18,8 @@
 //! protocol, such as protocol versioning and magic header bytes.
 //!
 
-use std::io::{IoResult, InvalidInput, standard_error};
-
-use network::serialize::Serializable;
-use util::misc::prepend_err;
+use network::encodable::{ConsensusDecodable, ConsensusEncodable};
+use network::serialize::{SimpleEncoder, SimpleDecoder};
 
 /// The cryptocurrency to operate on
 #[deriving(Encodable, Decodable, PartialEq, Eq, Clone, Show, Hash)]
@@ -46,18 +44,21 @@ pub fn magic(network: Network) -> u32 {
   }
 }
 
-// This affects the representation of the `Network` in text files
-impl Serializable for Network {
-  fn serialize(&self) -> Vec<u8> {
-    magic(*self).serialize()
+impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for Network {
+  #[inline]
+  fn consensus_encode(&self, s: &mut S) -> Result<(), E> {
+    magic(*self).consensus_encode(s)
   }
+}
 
-  fn deserialize<I: Iterator<u8>>(iter: I) -> IoResult<Network> {
-    let magic: u32 = try!(prepend_err("magic", Serializable::deserialize(iter)));
+impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for Network {
+  #[inline]
+  fn consensus_decode(d: &mut D) -> Result<Network, E> {
+    let magic: u32 = try!(ConsensusDecodable::consensus_decode(d));
     match magic {
       0xD9B4BEF9 => Ok(Bitcoin),
       0x0709110B => Ok(BitcoinTestnet),
-      _ => Err(standard_error(InvalidInput))
+      x => Err(d.error(format!("Unknown network (magic {:x})", x).as_slice()))
     }
   }
 }

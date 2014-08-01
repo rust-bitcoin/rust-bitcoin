@@ -20,7 +20,7 @@ use core::char::from_digit;
 use core::cmp::min;
 use std::default::Default;
 use std::fmt;
-use std::io::{IoResult, IoError, InvalidInput};
+use std::io::MemWriter;
 use std::mem::transmute;
 use std::hash::{Hash, Hasher};
 use serialize::json::{mod, ToJson};
@@ -28,8 +28,8 @@ use serialize::json::{mod, ToJson};
 use crypto::digest::Digest;
 use crypto::sha2;
 
-use network::serialize::Serializable;
-use util::iter::FixedTakeable;
+use network::encodable::{ConsensusDecodable, ConsensusEncodable};
+use network::serialize::{RawEncoder, BitcoinHash, SimpleDecoder, SimpleEncoder};
 use util::uint::Uint128;
 use util::uint::Uint256;
 
@@ -108,15 +108,16 @@ impl Sha256dHash {
     from_bytes(self.as_slice())
   }
 
-  /// Converts a hash to a Uint256, interpreting it as a little endian encoding.
-  pub fn as_uint256(&self) -> Uint256 {
-    let &Sha256dHash(data) = self;
+  /// Converts a hash to a Uint256, interpreting it as a little endian number.
+  pub fn into_uint256(self) -> Uint256 {
+    let Sha256dHash(data) = self;
     unsafe { Uint256(transmute(data)) }
   }
 
-  /// Converts a hash to a Uint128, interpreting it as a little endian encoding.
-  pub fn as_uint128(&self) -> Uint128 {
-    let &Sha256dHash(data) = self;
+  /// Converts a hash to a Uint128, interpreting it as a little endian number.
+  pub fn into_uint128(self) -> Uint128 {
+    let Sha256dHash(data) = self;
+    // TODO: this function won't work correctly on big-endian machines
     unsafe { Uint128(transmute([data[16], data[17], data[18], data[19], data[20],
                                 data[21], data[22], data[23], data[24], data[25],
                                 data[26], data[27], data[28], data[29], data[30],
@@ -156,9 +157,17 @@ impl PartialEq for Sha256dHash {
 
 impl Eq for Sha256dHash {}
 
+impl Index<uint, u8> for Sha256dHash {
+  #[inline]
+  fn index<'a>(&'a self, idx: &uint) -> &'a u8 {
+    let &Sha256dHash(ref data) = self;
+    &data[*idx]
+  }
+}
+
 // Note that this outputs hashes as big endian hex numbers, so this should be
 // used only for user-facing stuff. Internal and network serialization is
-// little-endian and should be done using the consensus `network::serialize`
+// little-endian and should be done using the consensus `encodable::ConsensusEncodable`
 // interface.
 impl ToJson for Sha256dHash {
   fn to_json(&self) -> json::Json {
@@ -166,26 +175,17 @@ impl ToJson for Sha256dHash {
   }
 }
 
-impl Serializable for Sha256dHash {
-  fn serialize(&self) -> Vec<u8> {
-    let &Sha256dHash(ref data) = self;
-    data.iter().map(|n| *n).collect()
+impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for Sha256dHash {
+  #[inline]
+  fn consensus_encode(&self, s: &mut S) -> Result<(), E> {
+    self.into_uint256().consensus_encode(s)
   }
+}
 
-  fn deserialize<I: Iterator<u8>>(iter: I) -> IoResult<Sha256dHash> {
-    let Sha256dHash(mut ret) = zero_hash();
-    let mut fixediter = iter.enumerate().fixed_take(32);
-    for (n, data) in fixediter {
-      ret[n] = data;
-    }
-    match fixediter.is_err() {
-      false => Ok(Sha256dHash(ret)),
-      true => Err(IoError {
-        kind: InvalidInput,
-        desc: "unexpected end of input",
-        detail: Some(format!("Need 32 bytes, was {:} short.", fixediter.remaining()))
-      })
-    }
+impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for Sha256dHash {
+  #[inline]
+  fn consensus_decode(d: &mut D) -> Result<Sha256dHash, E> {
+    Ok(Sha256dHash(try!(ConsensusDecodable::consensus_decode(d))))
   }
 }
 
@@ -215,7 +215,7 @@ pub trait MerkleRoot {
   fn merkle_root(&self) -> Sha256dHash;
 }
 
-impl<'a, T: Serializable> MerkleRoot for &'a [T] {
+impl<'a, T: BitcoinHash> MerkleRoot for &'a [T] {
   fn merkle_root(&self) -> Sha256dHash {
     fn merkle_root(data: Vec<Sha256dHash>) -> Sha256dHash {
       // Base case
@@ -230,9 +230,10 @@ impl<'a, T: Serializable> MerkleRoot for &'a [T] {
       for idx in range(0, (data.len() + 1) / 2) {
         let idx1 = 2 * idx;
         let idx2 = min(idx1 + 1, data.len() - 1);
-        let to_hash = data[idx1].bitcoin_hash().serialize()
-                        .append(data[idx2].bitcoin_hash().serialize().as_slice());
-        next.push(to_hash.bitcoin_hash());
+        let mut encoder = RawEncoder::new(MemWriter::new());
+        data[idx1].consensus_encode(&mut encoder).unwrap();
+        data[idx2].consensus_encode(&mut encoder).unwrap();
+        next.push(encoder.unwrap().unwrap().bitcoin_hash());
       }
       merkle_root(next)
     }
@@ -240,7 +241,7 @@ impl<'a, T: Serializable> MerkleRoot for &'a [T] {
   }
 }
 
-impl <T: Serializable> MerkleRoot for Vec<T> {
+impl <T: BitcoinHash> MerkleRoot for Vec<T> {
   fn merkle_root(&self) -> Sha256dHash {
     self.as_slice().merkle_root()
   }

@@ -19,14 +19,13 @@
 //!
 
 use std::collections::HashMap;
-use std::io::IoResult;
 use std::mem;
 
 use blockdata::transaction::{Transaction, TxOut};
 use blockdata::constants::genesis_block;
 use blockdata::block::Block;
 use network::constants::Network;
-use network::serialize::{Serializable, SerializeIter};
+use network::serialize::BitcoinHash;
 use util::hash::{DumbHasher, Sha256dHash};
 use util::uint::Uint128;
 use util::thinvec::ThinVec;
@@ -45,7 +44,7 @@ pub struct UtxoSet {
   n_utxos: u64
 }
 
-impl_serializable!(UtxoSet, last_hash, n_utxos, spent_txos, spent_idx, table)
+impl_consensus_encoding!(UtxoSet, last_hash, n_utxos, spent_txos, spent_idx, table)
 
 impl UtxoSet {
   /// Constructs a new UTXO set
@@ -67,14 +66,17 @@ impl UtxoSet {
   fn add_utxos(&mut self, tx: &Transaction) -> Option<UtxoNode> {
     let txid = tx.bitcoin_hash();
     // Locate node if it's already there
-    let mut new_node = ThinVec::with_capacity(tx.output.len() as u32);
-    for (vout, txo) in tx.output.iter().enumerate() {
-      // Unsafe since we are not uninitializing the old data in the vector
-      unsafe { new_node.init(vout as uint, Some(txo.clone())); }
-    }
+    let new_node = unsafe {
+      let mut new_node = ThinVec::with_capacity(tx.output.len() as u32);
+      for (vout, txo) in tx.output.iter().enumerate() {
+        // Unsafe since we are not uninitializing the old data in the vector
+        new_node.init(vout as uint, Some(txo.clone()));
+      }
+      new_node
+    };
     // Get the old value, if any (this is suprisingly possible, c.f. BIP30
     // and the other comments in this file referring to it)
-    let ret = self.table.swap(txid.as_uint128(), new_node);
+    let ret = self.table.swap(txid.into_uint128(), new_node);
     if ret.is_none() {
       self.n_utxos += tx.output.len() as u64;
     }
@@ -86,7 +88,7 @@ impl UtxoSet {
     // This whole function has awkward scoping thx to lexical borrow scoping :(
     let (ret, should_delete) = {
       // Locate the UTXO, failing if not found
-      let node = match self.table.find_mut(&txid.as_uint128()) {
+      let node = match self.table.find_mut(&txid.into_uint128()) {
         Some(node) => node,
         None => return None
       };
@@ -104,7 +106,7 @@ impl UtxoSet {
 
     // Delete the whole node if it is no longer being used
     if should_delete {
-      self.table.remove(&txid.as_uint128());
+      self.table.remove(&txid.into_uint128());
     }
 
     self.n_utxos -= if ret.is_some() { 1 } else { 0 };
@@ -114,7 +116,7 @@ impl UtxoSet {
   /// Get a reference to a UTXO in the set
   pub fn get_utxo<'a>(&'a mut self, txid: Sha256dHash, vout: u32) -> Option<&'a TxOut> {
     // Locate the UTXO, failing if not found
-    let node = match self.table.find_mut(&txid.as_uint128()) {
+    let node = match self.table.find_mut(&txid.into_uint128()) {
       Some(node) => node,
       None => return None
     };
@@ -227,7 +229,7 @@ impl UtxoSet {
         for ((txid, n), txo) in extract_vec.move_iter() {
           // Remove the tx's utxo list and patch the txo into place
           let new_node =
-              match self.table.pop(&txid.as_uint128()) {
+              match self.table.pop(&txid.into_uint128()) {
                 Some(mut thinvec) => {
                   let old_len = thinvec.len() as u32;
                   if old_len < n + 1 {
@@ -242,16 +244,18 @@ impl UtxoSet {
                   thinvec
                 }
                 None => {
-                  let mut thinvec = ThinVec::with_capacity(n + 1);
-                  for i in range(0, n + 1) {
-                    unsafe { thinvec.init(i as uint, None); }
+                  unsafe {
+                    let mut thinvec = ThinVec::with_capacity(n + 1);
+                    for i in range(0, n) {
+                      thinvec.init(i as uint, None);
+                    }
+                    thinvec.init(n as uint, Some(txo));
+                    thinvec
                   }
-                  unsafe { *thinvec.get_mut(n as uint) = Some(txo); }
-                  thinvec
                 }
               };
           // Ram it back into the tree
-          self.table.insert(txid.as_uint128(), new_node);
+          self.table.insert(txid.into_uint128(), new_node);
         }
       }
       skipped_genesis = true;
@@ -284,13 +288,13 @@ mod tests {
   use blockdata::block::Block;
   use blockdata::utxoset::UtxoSet;
   use network::constants::Bitcoin;
-  use network::serialize::Serializable;
+  use network::serialize::{BitcoinHash, deserialize, serialize};
 
   #[test]
   fn utxoset_serialize_test() {
     let mut empty_set = UtxoSet::new(Bitcoin, 100);
 
-    let new_block: Block = Serializable::deserialize("010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914cd74d6e49ffff001d323b3a7b0201000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0804ffff001d026e04ffffffff0100f2052a0100000043410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac00000000010000000321f75f3139a013f50f315b23b0c9a2b6eac31e2bec98e5891c924664889942260000000049483045022100cb2c6b346a978ab8c61b18b5e9397755cbd17d6eb2fe0083ef32e067fa6c785a02206ce44e613f31d9a6b0517e46f3db1576e9812cc98d159bfdaf759a5014081b5c01ffffffff79cda0945903627c3da1f85fc95d0b8ee3e76ae0cfdc9a65d09744b1f8fc85430000000049483045022047957cdd957cfd0becd642f6b84d82f49b6cb4c51a91f49246908af7c3cfdf4a022100e96b46621f1bffcf5ea5982f88cef651e9354f5791602369bf5a82a6cd61a62501fffffffffe09f5fe3ffbf5ee97a54eb5e5069e9da6b4856ee86fc52938c2f979b0f38e82000000004847304402204165be9a4cbab8049e1af9723b96199bfd3e85f44c6b4c0177e3962686b26073022028f638da23fc003760861ad481ead4099312c60030d4cb57820ce4d33812a5ce01ffffffff01009d966b01000000434104ea1feff861b51fe3f5f8a3b12d0f4712db80e919548a80839fc47c6a21e66d957e9c5d8cd108c7a2d2324bad71f9904ac0ae7336507d785b17a2c115e427a32fac00000000".from_hex().unwrap().iter().map(|n| *n)).unwrap();
+    let new_block: Block = deserialize("010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914cd74d6e49ffff001d323b3a7b0201000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0804ffff001d026e04ffffffff0100f2052a0100000043410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac00000000010000000321f75f3139a013f50f315b23b0c9a2b6eac31e2bec98e5891c924664889942260000000049483045022100cb2c6b346a978ab8c61b18b5e9397755cbd17d6eb2fe0083ef32e067fa6c785a02206ce44e613f31d9a6b0517e46f3db1576e9812cc98d159bfdaf759a5014081b5c01ffffffff79cda0945903627c3da1f85fc95d0b8ee3e76ae0cfdc9a65d09744b1f8fc85430000000049483045022047957cdd957cfd0becd642f6b84d82f49b6cb4c51a91f49246908af7c3cfdf4a022100e96b46621f1bffcf5ea5982f88cef651e9354f5791602369bf5a82a6cd61a62501fffffffffe09f5fe3ffbf5ee97a54eb5e5069e9da6b4856ee86fc52938c2f979b0f38e82000000004847304402204165be9a4cbab8049e1af9723b96199bfd3e85f44c6b4c0177e3962686b26073022028f638da23fc003760861ad481ead4099312c60030d4cb57820ce4d33812a5ce01ffffffff01009d966b01000000434104ea1feff861b51fe3f5f8a3b12d0f4712db80e919548a80839fc47c6a21e66d957e9c5d8cd108c7a2d2324bad71f9904ac0ae7336507d785b17a2c115e427a32fac00000000".from_hex().unwrap()).unwrap();
 
     // Make sure we can't add the block directly, since we are missing the inputs
     assert!(!empty_set.update(&new_block));
@@ -324,10 +328,9 @@ mod tests {
     }
 
     // Serialize/deserialize the resulting UTXO set
-    let serial = empty_set.serialize();
-    assert_eq!(serial, empty_set.serialize_iter().collect());
+    let serial = serialize(&empty_set).unwrap();
 
-    let deserial: IoResult<UtxoSet> = Serializable::deserialize(serial.iter().map(|n| *n));
+    let deserial: IoResult<UtxoSet> = deserialize(serial.clone());
     assert!(deserial.is_ok());
 
     // Check that all outputs are there
@@ -347,7 +350,7 @@ mod tests {
       }
     }
 
-    let deserial_again: IoResult<UtxoSet> = Serializable::deserialize(serial.iter().map(|n| *n));
+    let deserial_again: IoResult<UtxoSet> = deserialize(serial);
     let mut read_again = deserial_again.unwrap();
     assert!(read_again.rewind(&new_block));
     assert_eq!(read_again.n_utxos(), 0);

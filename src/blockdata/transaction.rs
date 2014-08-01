@@ -23,12 +23,10 @@
 //! This module provides the structures and functions needed to support transactions.
 //!
 
-use std::io::IoResult;
 use util::hash::Sha256dHash;
-use network::serialize::{Serializable, SerializeIter};
 use blockdata::script::Script;
-#[cfg(test)]
-use util::misc::hex_bytes;
+use network::encodable::ConsensusEncodable;
+use network::serialize::BitcoinHash;
 
 /// A transaction input, which defines old coins to be consumed
 #[deriving(Clone, PartialEq, Show)]
@@ -70,40 +68,57 @@ pub struct Transaction {
   pub output: Vec<TxOut>
 }
 
-impl_serializable!(TxIn, prev_hash, prev_index, script_sig, sequence)
+impl BitcoinHash for Transaction {
+  fn bitcoin_hash(&self) -> Sha256dHash {
+    use network::serialize::serialize;
+    Sha256dHash::from_data(serialize(self).unwrap().as_slice())
+  }
+}
+
+impl_consensus_encoding!(TxIn, prev_hash, prev_index, script_sig, sequence)
 impl_json!(TxIn, prev_hash, prev_index, script_sig, sequence)
-impl_serializable!(TxOut, value, script_pubkey)
+impl_consensus_encoding!(TxOut, value, script_pubkey)
 impl_json!(TxOut, value, script_pubkey)
-impl_serializable!(Transaction, version, input, output, lock_time)
+impl_consensus_encoding!(Transaction, version, input, output, lock_time)
 impl_json!(Transaction, version, input, output, lock_time)
 
-#[test]
-fn test_txin() {
-  let txin: IoResult<TxIn> = Serializable::deserialize(hex_bytes("a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff").unwrap().iter().map(|n| *n));
-  assert!(txin.is_ok());
+
+#[cfg(test)]
+mod tests {
+  use super::{Transaction, TxIn};
+
+  use std::io::IoResult;
+
+  use network::serialize::BitcoinHash;
+  use network::serialize::deserialize;
+  use util::misc::hex_bytes;
+
+  #[test]
+  fn test_txin() {
+    let txin: IoResult<TxIn> = deserialize(hex_bytes("a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff").unwrap());
+    assert!(txin.is_ok());
+  }
+
+  #[test]
+  fn test_transaction() {
+    let hex_tx = hex_bytes("0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000").unwrap();
+    let tx: IoResult<Transaction> = deserialize(hex_tx);
+    assert!(tx.is_ok());
+    let realtx = tx.unwrap();
+    // All these tests aren't really needed because if they fail, the hash check at the end
+    // will also fail. But these will show you where the failure is so I'll leave them in.
+    assert_eq!(realtx.version, 1);
+    assert_eq!(realtx.input.len(), 1);
+    // In particular this one is easy to get backward -- in bitcoin hashes are encoded
+    // as little-endian 256-bit numbers rather than as data strings.
+    assert_eq!(realtx.input[0].prev_hash.le_hex_string(),
+               "ce9ea9f6f5e422c6a9dbcddb3b9a14d1c78fab9ab520cb281aa2a74a09575da1".to_string());
+    assert_eq!(realtx.input[0].prev_index, 1);
+    assert_eq!(realtx.output.len(), 1);
+    assert_eq!(realtx.lock_time, 0);
+
+    assert_eq!(realtx.bitcoin_hash().le_hex_string(),
+               "a6eab3c14ab5272a58a5ba91505ba1a4b6d7a3a9fcbd187b6cd99a7b6d548cb7".to_string());
+  }
 }
-
-#[test]
-fn test_transaction() {
-  let hex_tx = hex_bytes("0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000").unwrap();
-  let tx: IoResult<Transaction> = Serializable::deserialize(hex_tx.iter().map(|n| *n));
-  assert!(tx.is_ok());
-  let realtx = tx.unwrap();
-  // All these tests aren't really needed because if they fail, the hash check at the end
-  // will also fail. But these will show you where the failure is so I'll leave them in.
-  assert_eq!(realtx.version, 1);
-  assert_eq!(realtx.input.len(), 1);
-  // In particular this one is easy to get backward -- in bitcoin hashes are encoded
-  // as little-endian 256-bit numbers rather than as data strings.
-  assert_eq!(realtx.input[0].prev_hash.le_hex_string(),
-             "ce9ea9f6f5e422c6a9dbcddb3b9a14d1c78fab9ab520cb281aa2a74a09575da1".to_string());
-  assert_eq!(realtx.input[0].prev_index, 1);
-  assert_eq!(realtx.output.len(), 1);
-  assert_eq!(realtx.lock_time, 0);
-
-  assert_eq!(realtx.bitcoin_hash().le_hex_string(),
-             "a6eab3c14ab5272a58a5ba91505ba1a4b6d7a3a9fcbd187b6cd99a7b6d548cb7".to_string());
-}
-
-
 

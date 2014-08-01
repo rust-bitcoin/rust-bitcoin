@@ -19,11 +19,9 @@
 //!
 
 use std::fmt;
-use std::io::IoResult;
 use std::num::{Zero, One};
-use std::mem::transmute;
 
-use network::serialize::Serializable;
+use network::serialize::RawEncoder;
 use util::BitArray;
 
 macro_rules! construct_uint(
@@ -308,8 +306,8 @@ macro_rules! construct_uint(
         let &$name(ref me) = self;
         let &$name(ref you) = other;
         for i in range(0, $n_words) {
-          if me[3 - i] < you[3 - i] { return Less; }
-          if me[3 - i] > you[3 - i] { return Greater; }
+          if me[$n_words - 1 - i] < you[$n_words - 1 - i] { return Less; }
+          if me[$n_words - 1 - i] > you[$n_words - 1 - i] { return Greater; }
         }
         return Equal;
       }
@@ -323,19 +321,28 @@ macro_rules! construct_uint(
 
     impl fmt::Show for $name {
       fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.serialize().as_slice())
+        use std::fmt::WriteError;
+        use network::encodable::ConsensusEncodable;
+        let mut encoder = RawEncoder::new(f.by_ref());
+        self.consensus_encode(&mut encoder).map_err(|_| WriteError)
       }
     }
 
-    impl Serializable for $name {
-      fn serialize(&self) -> Vec<u8> {
-        let vec = unsafe { transmute::<$name, [u8, ..($n_words*8)]>(*self) };
-        vec.serialize()
+    impl<S: ::network::serialize::SimpleEncoder<E>, E> ::network::encodable::ConsensusEncodable<S, E> for $name {
+      #[inline]
+      fn consensus_encode(&self, s: &mut S) -> Result<(), E> {
+        use network::encodable::ConsensusEncodable;
+        let &$name(ref data) = self;
+        for word in data.iter() { try!(word.consensus_encode(s)); }
+        Ok(())
       }
+    }
 
-      fn deserialize<I: Iterator<u8>>(mut iter: I) -> IoResult<$name> {
-        let ret: [u8, ..($n_words*8)] = try!(Serializable::deserialize(iter.by_ref()));
-        Ok(unsafe { transmute(ret) })
+    impl<D: ::network::serialize::SimpleDecoder<E>, E> ::network::encodable::ConsensusDecodable<D, E> for $name {
+      fn consensus_decode(d: &mut D) -> Result<$name, E> {
+        use network::encodable::ConsensusDecodable;
+        let ret: [u64, ..$n_words] = try!(ConsensusDecodable::consensus_decode(d));
+        Ok($name(ret))
       }
     }
   );
@@ -367,7 +374,7 @@ mod tests {
   use std::io::IoResult;
   use std::num::from_u64;
 
-  use network::serialize::Serializable;
+  use network::serialize::{deserialize, serialize};
   use util::uint::Uint256;
   use util::BitArray;
 
@@ -471,10 +478,10 @@ mod tests {
   pub fn uint256_serialize_test() {
     let start1 = Uint256([0x8C8C3EE70C644118u64, 0x0209E7378231E632, 0, 0]);
     let start2 = Uint256([0x8C8C3EE70C644118u64, 0x0209E7378231E632, 0xABCD, 0xFFFF]);
-    let serial1 = start1.serialize();
-    let serial2 = start2.serialize();
-    let end1: IoResult<Uint256> = Serializable::deserialize(serial1.iter().map(|n| *n));
-    let end2: IoResult<Uint256> = Serializable::deserialize(serial2.iter().map(|n| *n));
+    let serial1 = serialize(&start1).unwrap();
+    let serial2 = serialize(&start2).unwrap();
+    let end1: IoResult<Uint256> = deserialize(serial1);
+    let end2: IoResult<Uint256> = deserialize(serial2);
 
     assert_eq!(end1, Ok(start1));
     assert_eq!(end2, Ok(start2));

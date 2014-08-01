@@ -25,11 +25,11 @@
 //!
 
 use std::char::from_digit;
-use std::io::IoResult;
 use serialize::json;
 
-use network::serialize::Serializable;
 use blockdata::opcodes;
+use network::encodable::{ConsensusDecodable, ConsensusEncodable};
+use network::serialize::{SimpleDecoder, SimpleEncoder};
 use util::thinvec::ThinVec;
 
 #[deriving(PartialEq, Show, Clone)]
@@ -136,15 +136,18 @@ impl json::ToJson for Script {
 }
 
 // Network serialization
-impl Serializable for Script {
-  fn serialize(&self) -> Vec<u8> {
+impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for Script {
+  #[inline]
+  fn consensus_encode(&self, s: &mut S) -> Result<(), E> {
     let &Script(ref data) = self;
-    data.serialize()
+    data.consensus_encode(s)
   }
+}
 
-  fn deserialize<I: Iterator<u8>>(iter: I) -> IoResult<Script> {
-    let raw = Serializable::deserialize(iter);
-    raw.map(|ok| Script(ok))
+impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for Script {
+  #[inline]
+  fn consensus_decode(d: &mut D) -> Result<Script, E> {
+    Ok(Script(try!(ConsensusDecodable::consensus_decode(d))))
   }
 }
 
@@ -152,7 +155,7 @@ impl Serializable for Script {
 mod test {
   use std::io::IoResult;
 
-  use network::serialize::Serializable;
+  use network::serialize::{deserialize, serialize};
   use blockdata::script::Script;
   use blockdata::opcodes;
   use util::misc::hex_bytes;
@@ -189,9 +192,9 @@ mod test {
   #[test]
   fn script_serialize() {
     let hex_script = hex_bytes("6c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52").unwrap();
-    let script: IoResult<Script> = Serializable::deserialize(hex_script.iter().map(|n| *n));
+    let script: IoResult<Script> = deserialize(hex_script.clone());
     assert!(script.is_ok());
-    assert_eq!(script.unwrap().serialize().as_slice(), hex_script.as_slice());
+    assert_eq!(serialize(&script.unwrap()), Ok(hex_script));
   }
 }
 

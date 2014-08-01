@@ -19,6 +19,7 @@
 //!
 
 pub mod constants;
+pub mod encodable;
 pub mod socket;
 pub mod serialize;
 

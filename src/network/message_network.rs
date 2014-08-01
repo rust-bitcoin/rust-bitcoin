@@ -19,12 +19,9 @@
 //!
 
 use std::io::IoResult;
-#[cfg(test)]
-use serialize::hex::FromHex;
 
 use network::constants;
 use network::address::Address;
-use network::serialize::Serializable;
 use network::socket::Socket;
 
 /// Some simple messages
@@ -83,57 +80,38 @@ impl VersionMessage {
   }
 }
 
-impl Serializable for VersionMessage {
-  fn serialize(&self) -> Vec<u8> {
-    let mut rv = vec!();
-    rv.extend(self.version.serialize().move_iter());
-    rv.extend(self.services.serialize().move_iter());
-    rv.extend(self.timestamp.serialize().move_iter());
-    rv.extend(self.receiver.serialize().move_iter());
-    rv.extend(self.sender.serialize().move_iter());
-    rv.extend(self.nonce.serialize().move_iter());
-    rv.extend(self.user_agent.serialize().move_iter());
-    rv.extend(self.start_height.serialize().move_iter());
-    if self.version >= 70001 {
-      rv.extend(self.relay.serialize().move_iter());
-    }
-    rv
+impl_consensus_encoding!(VersionMessage, version, services, timestamp,
+                                         receiver, sender, nonce,
+                                         user_agent, start_height, relay)
+
+#[cfg(test)]
+mod tests {
+  use super::VersionMessage;
+
+  use std::io::IoResult;
+  use serialize::hex::FromHex;
+
+  use network::serialize::{deserialize, serialize};
+
+  #[test]
+  fn version_message_test() {
+    // This message is from my satoshi node, morning of May 27 2014
+    let from_sat = "721101000100000000000000e6e0845300000000010000000000000000000000000000000000ffff0000000000000100000000000000fd87d87eeb4364f22cf54dca59412db7208d47d920cffce83ee8102f5361746f7368693a302e392e39392f2c9f040001".from_hex().unwrap();
+
+    let decode: IoResult<VersionMessage> = deserialize(from_sat.clone());
+    assert!(decode.is_ok());
+    let real_decode = decode.unwrap();
+    assert_eq!(real_decode.version, 70002);
+    assert_eq!(real_decode.services, 1);
+    assert_eq!(real_decode.timestamp, 1401217254);
+    // address decodes should be covered by Address tests
+    assert_eq!(real_decode.nonce, 16735069437859780935);
+    assert_eq!(real_decode.user_agent, String::from_str("/Satoshi:0.9.99/"));
+    assert_eq!(real_decode.start_height, 302892);
+    assert_eq!(real_decode.relay, true);
+
+    assert_eq!(serialize(&real_decode), Ok(from_sat));
   }
-
-  fn deserialize<I: Iterator<u8>>(mut iter: I) -> IoResult<VersionMessage> {
-    Ok(VersionMessage {
-      version: try!(Serializable::deserialize(iter.by_ref())),
-      services: try!(Serializable::deserialize(iter.by_ref())),
-      timestamp: try!(Serializable::deserialize(iter.by_ref())),
-      receiver: try!(Serializable::deserialize(iter.by_ref())),
-      sender: try!(Serializable::deserialize(iter.by_ref())),
-      nonce: try!(Serializable::deserialize(iter.by_ref())),
-      user_agent: try!(Serializable::deserialize(iter.by_ref())),
-      start_height: try!(Serializable::deserialize(iter.by_ref())),
-      relay: try!(Serializable::deserialize(iter.by_ref()))
-    })
-  }
-}
-
-#[test]
-fn version_message_test() {
-  // This message is from my satoshi node, morning of May 27 2014
-  let from_sat = "721101000100000000000000e6e0845300000000010000000000000000000000000000000000ffff0000000000000100000000000000fd87d87eeb4364f22cf54dca59412db7208d47d920cffce83ee8102f5361746f7368693a302e392e39392f2c9f040001".from_hex().unwrap();
-
-  let decode: IoResult<VersionMessage> = Serializable::deserialize(from_sat.iter().map(|n| *n));
-  assert!(decode.is_ok());
-  let real_decode = decode.unwrap();
-  assert_eq!(real_decode.version, 70002);
-  assert_eq!(real_decode.services, 1);
-  assert_eq!(real_decode.timestamp, 1401217254);
-  // address decodes should be covered by Address tests
-  assert_eq!(real_decode.nonce, 16735069437859780935);
-  assert_eq!(real_decode.user_agent, String::from_str("/Satoshi:0.9.99/"));
-  assert_eq!(real_decode.start_height, 302892);
-  assert_eq!(real_decode.relay, true);
-
-  let reserialize = real_decode.serialize();
-  assert_eq!(reserialize.as_slice(), from_sat.as_slice());
 }
 
 

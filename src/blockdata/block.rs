@@ -20,13 +20,13 @@
 //! these blocks and the blockchain.
 //!
 
-use std::io::IoResult;
 use std::num::{Zero, from_u64};
 
 use util::error::{BitcoinResult, SpvBadTarget, SpvBadProofOfWork};
 use util::hash::Sha256dHash;
 use util::uint::Uint256;
-use network::serialize::{Serializable, SerializeIter, VarInt};
+use network::encodable::{ConsensusEncodable, VarInt};
+use network::serialize::BitcoinHash;
 use blockdata::transaction::Transaction;
 
 /// A block header, which contains all the block's information except
@@ -101,7 +101,7 @@ impl BlockHeader {
     if target != required_target {
       return Err(SpvBadTarget);
     }
-    let ref hash = self.bitcoin_hash().as_uint256();
+    let ref hash = self.bitcoin_hash().into_uint256();
     if hash <= target { Ok(()) } else { Err(SpvBadProofOfWork) }
   }
 
@@ -117,10 +117,23 @@ impl BlockHeader {
   }
 }
 
-impl_serializable!(BlockHeader, version, prev_blockhash, merkle_root, time, bits, nonce)
+impl BitcoinHash for BlockHeader {
+  fn bitcoin_hash(&self) -> Sha256dHash {
+    use network::serialize::serialize;
+    Sha256dHash::from_data(serialize(self).unwrap().as_slice())
+  }
+}
+
+impl BitcoinHash for Block {
+  fn bitcoin_hash(&self) -> Sha256dHash {
+    self.header.bitcoin_hash()
+  }
+}
+
+impl_consensus_encoding!(BlockHeader, version, prev_blockhash, merkle_root, time, bits, nonce)
 impl_json!(BlockHeader, version, prev_blockhash, merkle_root, time, bits, nonce)
-impl_serializable!(Block, header, txdata)
-impl_serializable!(LoneBlockHeader, header, tx_count)
+impl_consensus_encoding!(Block, header, txdata)
+impl_consensus_encoding!(LoneBlockHeader, header, tx_count)
 
 #[cfg(test)]
 mod tests {
@@ -128,7 +141,7 @@ mod tests {
   use serialize::hex::FromHex;
 
   use blockdata::block::Block;
-  use network::serialize::Serializable;
+  use network::serialize::{deserialize, serialize};
 
   #[test]
   fn block_test() {
@@ -138,8 +151,8 @@ mod tests {
     let prevhash = "4ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000".from_hex().unwrap();
     let merkle = "bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914c".from_hex().unwrap();
 
-    let decode: IoResult<Block> = Serializable::deserialize(some_block.iter().map(|n| *n));
-    let bad_decode: IoResult<Block> = Serializable::deserialize(cutoff_block.iter().map(|n| *n));
+    let decode: IoResult<Block> = deserialize(some_block.clone());
+    let bad_decode: IoResult<Block> = deserialize(cutoff_block);
 
     assert!(decode.is_ok());
     assert!(bad_decode.is_err());
@@ -153,8 +166,7 @@ mod tests {
     assert_eq!(real_decode.header.nonce, 2067413810);
     // [test] TODO: check the transaction data
   
-    let reserialize = real_decode.serialize();
-    assert_eq!(reserialize.as_slice(), some_block.as_slice());
+    assert_eq!(serialize(&real_decode), Ok(some_block));
   }
 }
 

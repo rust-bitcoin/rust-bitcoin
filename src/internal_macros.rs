@@ -14,30 +14,23 @@
 
 #![macro_escape]
 
-macro_rules! impl_serializable(
+macro_rules! impl_consensus_encoding(
   ($thing:ident, $($field:ident),+) => (
-    impl Serializable for $thing {
-      fn serialize(&self) -> Vec<u8> {
-        let mut ret = vec![];
-        $( ret.extend(self.$field.serialize().move_iter()); )+
-        ret
+    impl<S: ::network::serialize::SimpleEncoder<E>, E> ::network::encodable::ConsensusEncodable<S, E> for $thing {
+      #[inline]
+      fn consensus_encode(&self, s: &mut S) -> Result<(), E> {
+        $( try!(self.$field.consensus_encode(s)); )+
+        Ok(())
       }
+    }
 
-      fn serialize_iter<'a>(&'a self) -> SerializeIter<'a> {
-        SerializeIter {
-          data_iter: None,
-          sub_iter_iter: box vec![ $( &self.$field as &Serializable, )+ ].move_iter(),
-          sub_iter: None,
-          sub_started: false
-        }
-      }
-
-      fn deserialize<I: Iterator<u8>>(mut iter: I) -> IoResult<$thing> {
-        use util::misc::prepend_err;
-        let ret = Ok($thing {
-          $( $field: try!(prepend_err(stringify!($field), Serializable::deserialize(iter.by_ref()))), )+
-        });
-        ret
+    impl<D: ::network::serialize::SimpleDecoder<E>, E> ::network::encodable::ConsensusDecodable<D, E> for $thing {
+      #[inline]
+      fn consensus_decode(d: &mut D) -> Result<$thing, E> {
+        use network::encodable::ConsensusDecodable;
+        Ok($thing {
+          $( $field: try!(ConsensusDecodable::consensus_decode(d)), )+
+        })
       }
     }
   );
@@ -50,7 +43,6 @@ macro_rules! impl_json(
         use std::collections::TreeMap;
         use serialize::json::{ToJson, Object};
         let mut ret = TreeMap::new();
-        ret.insert("hash".to_string(), self.bitcoin_hash().to_json());
         $( ret.insert(stringify!($field).to_string(), self.$field.to_json()); )+
         Object(ret)
       }

@@ -22,7 +22,6 @@
 //! to make sure we are holding the only references.
 //!
 
-use std::io::{IoResult, IoError, OtherIoError};
 use std::num::Zero;
 use std::kinds::marker;
 
@@ -31,15 +30,15 @@ use blockdata::transaction::Transaction;
 use blockdata::constants::{DIFFCHANGE_INTERVAL, DIFFCHANGE_TIMESPAN,
                            TARGET_BLOCK_SPACING, max_target, genesis_block};
 use network::constants::{Network, BitcoinTestnet};
-use network::serialize::{Serializable, SerializeIter};
+use network::encodable::{ConsensusDecodable, ConsensusEncodable};
+use network::serialize::{BitcoinHash, SimpleDecoder, SimpleEncoder};
 use util::BitArray;
 use util::error::{BitcoinResult, BlockNotFound, DuplicateHash, PrevHashNotFound};
 use util::uint::Uint256;
 use util::hash::Sha256dHash;
-use util::misc::prepend_err;
 use util::patricia_tree::PatriciaTree;
 
-type BlockTree = PatriciaTree<Box<BlockchainNode>, Uint256>;
+type BlockTree = PatriciaTree<Uint256, Box<BlockchainNode>>;
 type NodePtr = *const BlockchainNode;
 
 /// A link in the blockchain
@@ -80,32 +79,35 @@ impl BlockchainNode {
   }
 }
 
-impl Serializable for BlockchainNode {
-  fn serialize(&self) -> Vec<u8> {
-    let mut ret = vec![];
-    ret.extend(self.block.serialize().move_iter());
-    ret.extend(self.total_work.serialize().move_iter());
-    ret.extend(self.required_difficulty.serialize().move_iter());
-    ret.extend(self.height.serialize().move_iter());
-    ret.extend(self.has_txdata.serialize().move_iter());
+impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for BlockchainNode {
+  #[inline]
+  fn consensus_encode(&self, s: &mut S) -> Result<(), E> {
+    try!(self.block.consensus_encode(s));
+    try!(self.total_work.consensus_encode(s));
+    try!(self.required_difficulty.consensus_encode(s));
+    try!(self.height.consensus_encode(s));
+    try!(self.has_txdata.consensus_encode(s));
     // Don't serialize the prev or next pointers
-    ret
+    Ok(())
   }
+}
 
-  fn deserialize<I: Iterator<u8>>(mut iter: I) -> IoResult<BlockchainNode> {
+impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for BlockchainNode {
+  #[inline]
+  fn consensus_decode(d: &mut D) -> Result<BlockchainNode, E> {
     Ok(BlockchainNode {
-      block: try!(prepend_err("block", Serializable::deserialize(iter.by_ref()))),
-      total_work: try!(prepend_err("total_work", Serializable::deserialize(iter.by_ref()))),
-      required_difficulty: try!(prepend_err("req_difficulty", Serializable::deserialize(iter.by_ref()))),
-      height: try!(prepend_err("height", Serializable::deserialize(iter.by_ref()))),
-      has_txdata: try!(prepend_err("has_txdata", Serializable::deserialize(iter.by_ref()))),
+      block: try!(ConsensusDecodable::consensus_decode(d)),
+      total_work: try!(ConsensusDecodable::consensus_decode(d)),
+      required_difficulty: try!(ConsensusDecodable::consensus_decode(d)),
+      height: try!(ConsensusDecodable::consensus_decode(d)),
+      has_txdata: try!(ConsensusDecodable::consensus_decode(d)),
       prev: RawPtr::null(),
       next: RawPtr::null()
     })
   }
+}
 
-  // Override Serialize::hash to return the blockheader hash, since the
-  // hash of the node itself is pretty much meaningless.
+impl BitcoinHash for BlockchainNode {
   fn bitcoin_hash(&self) -> Sha256dHash {
     self.block.header.bitcoin_hash()
   }
@@ -120,55 +122,39 @@ pub struct Blockchain {
   genesis_hash: Sha256dHash
 }
 
-impl Serializable for Blockchain {
-  fn serialize(&self) -> Vec<u8> {
-    let mut ret = vec![];
-    ret.extend(self.network.serialize().move_iter());
-    ret.extend(self.tree.serialize().move_iter());
-    ret.extend(self.best_hash.serialize().move_iter());
-    ret.extend(self.genesis_hash.serialize().move_iter());
-    ret
+impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for Blockchain {
+  #[inline]
+  fn consensus_encode(&self, s: &mut S) -> Result<(), E> {
+    try!(self.network.consensus_encode(s));
+    try!(self.tree.consensus_encode(s));
+    try!(self.best_hash.consensus_encode(s));
+    try!(self.genesis_hash.consensus_encode(s));
+    Ok(())
   }
+}
 
-  fn serialize_iter<'a>(&'a self) -> SerializeIter<'a> {
-    SerializeIter {
-      data_iter: None,
-      sub_iter_iter: box vec![ &self.network as &Serializable,
-                               &self.tree as &Serializable,
-                               &self.best_hash as &Serializable,
-                               &self.genesis_hash as &Serializable ].move_iter(),
-      sub_iter: None,
-      sub_started: false
-    }
-  }
+impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for Blockchain {
+  fn consensus_decode(d: &mut D) -> Result<Blockchain, E> {
+    let network: Network = try!(ConsensusDecodable::consensus_decode(d));
+    let mut tree: BlockTree = try!(ConsensusDecodable::consensus_decode(d));
+    let best_hash: Sha256dHash = try!(ConsensusDecodable::consensus_decode(d));
+    let genesis_hash: Sha256dHash = try!(ConsensusDecodable::consensus_decode(d));
 
-  fn deserialize<I: Iterator<u8>>(mut iter: I) -> IoResult<Blockchain> {
-    let network: Network = try!(prepend_err("network", Serializable::deserialize(iter.by_ref())));
-    let mut tree: BlockTree = try!(prepend_err("tree", Serializable::deserialize(iter.by_ref())));
-    let best_hash: Sha256dHash = try!(prepend_err("best_hash", Serializable::deserialize(iter.by_ref())));
-    let genesis_hash: Sha256dHash = try!(prepend_err("genesis_hash", Serializable::deserialize(iter.by_ref())));
     // Lookup best tip
-    let best = match tree.lookup(&best_hash.as_uint256(), 256) {
+    let best = match tree.lookup(&best_hash.into_uint256(), 256) {
       Some(node) => &**node as NodePtr,
-      None => { return Err(IoError {
-          kind: OtherIoError,
-          desc: "best tip reference not found in tree",
-          detail: Some(format!("best tip {:x} not found", best_hash))
-        });
+      None => {
+        return Err(d.error(format!("best tip {:x} not in tree", best_hash).as_slice()));
       }
     };
     // Lookup genesis
-    if tree.lookup(&genesis_hash.as_uint256(), 256).is_none() {
-      return Err(IoError {
-        kind: OtherIoError,
-        desc: "genesis block not found in tree",
-        detail: Some(format!("genesis {:x} not found", genesis_hash))
-      });
+    if tree.lookup(&genesis_hash.into_uint256(), 256).is_none() {
+      return Err(d.error(format!("genesis {:x} not in tree", genesis_hash).as_slice()));
     }
     // Reconnect all prev pointers
     let raw_tree = &tree as *const _;
     for node in tree.mut_iter() {
-      let hash = node.block.header.prev_blockhash.as_uint256();
+      let hash = node.block.header.prev_blockhash.into_uint256();
       let prevptr =
         match unsafe { (*raw_tree).lookup(&hash, 256) } {
           Some(node) => &**node as NodePtr,
@@ -187,11 +173,8 @@ impl Serializable for Blockchain {
 
       // Check that "genesis" is the genesis
       if (*scan).bitcoin_hash() != genesis_hash {
-        return Err(IoError {
-            kind: OtherIoError,
-            desc: "best tip did not link back to genesis",
-            detail: Some(format!("no path from tip {:x} to genesis {:x}", best_hash, genesis_hash))
-        });
+        return Err(d.error(format!("no path from tip {:x} to genesis {:x}",
+                                   best_hash, genesis_hash).as_slice()));
       }
     }
 
@@ -372,7 +355,7 @@ impl Blockchain {
       network: network,
       tree: {
         let mut pat = PatriciaTree::new();
-        pat.insert(&genhash.as_uint256(), 256, new_node);
+        pat.insert(&genhash.into_uint256(), 256, new_node);
         pat
       },
       best_hash: genhash,
@@ -417,17 +400,17 @@ impl Blockchain {
 
   /// Looks up a block in the chain and returns the BlockchainNode containing it
   pub fn get_block<'a>(&'a self, hash: Sha256dHash) -> Option<&'a BlockchainNode> {
-    self.tree.lookup(&hash.as_uint256(), 256).map(|node| &**node)
+    self.tree.lookup(&hash.into_uint256(), 256).map(|node| &**node)
   }
 
   /// Locates a block in the chain and overwrites its txdata
   pub fn add_txdata(&mut self, block: Block) -> BitcoinResult<()> {
-    self.replace_txdata(&block.header.bitcoin_hash().as_uint256(), block.txdata, true)
+    self.replace_txdata(&block.header.bitcoin_hash().into_uint256(), block.txdata, true)
   }
 
   /// Locates a block in the chain and removes its txdata
   pub fn remove_txdata(&mut self, hash: Sha256dHash) -> BitcoinResult<()> {
-    self.replace_txdata(&hash.as_uint256(), vec![], false)
+    self.replace_txdata(&hash.into_uint256(), vec![], false)
   }
 
   /// Adds a block header to the chain
@@ -447,13 +430,13 @@ impl Blockchain {
       if hash == chain.best_hash { 
         Some(chain.best_tip)
       } else {
-        chain.tree.lookup(&hash.as_uint256(), 256).map(|boxptr| &**boxptr as NodePtr)
+        chain.tree.lookup(&hash.into_uint256(), 256).map(|boxptr| &**boxptr as NodePtr)
       }
     }
     // Check for multiple inserts (bitcoind from c9a09183 to 3c85d2ec doesn't
     // handle locator hashes properly and may return blocks multiple times,
     // and this may also happen in case of a reorg.
-    if self.tree.lookup(&block.header.bitcoin_hash().as_uint256(), 256).is_some() {
+    if self.tree.lookup(&block.header.bitcoin_hash().into_uint256(), 256).is_some() {
       return Err(DuplicateHash);
     }
     // Construct node, if possible
@@ -532,7 +515,7 @@ impl Blockchain {
 
     // Insert the new block
     let raw_ptr = &*new_block as NodePtr;
-    self.tree.insert(&new_block.block.header.bitcoin_hash().as_uint256(), 256, new_block);
+    self.tree.insert(&new_block.block.header.bitcoin_hash().into_uint256(), 256, new_block);
     // Replace the best tip if necessary
     if unsafe { (*raw_ptr).total_work > (*self.best_tip).total_work } {
       self.set_best_tip(raw_ptr);
@@ -582,7 +565,7 @@ impl Blockchain {
 
   /// An iterator over all blocks in the chain starting from `start_hash`
   pub fn iter<'a>(&'a self, start_hash: Sha256dHash) -> BlockIter<'a> {
-    let start = match self.tree.lookup(&start_hash.as_uint256(), 256) {
+    let start = match self.tree.lookup(&start_hash.into_uint256(), 256) {
         Some(boxptr) => &**boxptr as NodePtr,
         None => RawPtr::null()
       };
@@ -594,7 +577,7 @@ impl Blockchain {
 
   /// An iterator over all blocks in reverse order to the genesis, starting with `start_hash`
   pub fn rev_iter<'a>(&'a self, start_hash: Sha256dHash) -> RevBlockIter<'a> {
-    let start = match self.tree.lookup(&start_hash.as_uint256(), 256) {
+    let start = match self.tree.lookup(&start_hash.into_uint256(), 256) {
         Some(boxptr) => &**boxptr as NodePtr,
         None => RawPtr::null()
       };
@@ -606,7 +589,7 @@ impl Blockchain {
 
   /// An iterator over all blocks -not- in the best chain, in reverse order, starting from `start_hash`
   pub fn rev_stale_iter<'a>(&'a self, start_hash: Sha256dHash) -> RevStaleBlockIter<'a> {
-    let start = match self.tree.lookup(&start_hash.as_uint256(), 256) {
+    let start = match self.tree.lookup(&start_hash.into_uint256(), 256) {
         Some(boxptr) => {
           // If we are already on the main chain, we have a dead iterator
           if boxptr.is_on_main_chain(self) {
@@ -626,28 +609,26 @@ impl Blockchain {
 
 #[cfg(test)]
 mod tests {
-  use std::prelude::*;
   use std::io::IoResult;
 
   use blockdata::blockchain::Blockchain;
   use blockdata::constants::genesis_block;
   use network::constants::Bitcoin;
-  use network::serialize::Serializable;
+  use network::serialize::{BitcoinHash, deserialize, serialize};
 
   #[test]
   fn blockchain_serialize_test() {
     let empty_chain = Blockchain::new(Bitcoin);
-    assert_eq!(empty_chain.best_tip().header.bitcoin_hash().serialize(),
-               genesis_block(Bitcoin).header.bitcoin_hash().serialize());
+    assert_eq!(empty_chain.best_tip().header.bitcoin_hash(),
+               genesis_block(Bitcoin).header.bitcoin_hash());
 
-    let serial = empty_chain.serialize();
-    assert_eq!(serial, empty_chain.serialize_iter().collect());
+    let serial = serialize(&empty_chain);
+    let deserial: IoResult<Blockchain> = deserialize(serial.unwrap());
 
-    let deserial: IoResult<Blockchain> = Serializable::deserialize(serial.iter().map(|n| *n));
     assert!(deserial.is_ok());
     let read_chain = deserial.unwrap();
-    assert_eq!(read_chain.best_tip().header.bitcoin_hash().serialize(),
-               genesis_block(Bitcoin).header.bitcoin_hash().serialize());
+    assert_eq!(read_chain.best_tip().header.bitcoin_hash(),
+               genesis_block(Bitcoin).header.bitcoin_hash());
   }
 }
 

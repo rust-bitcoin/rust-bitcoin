@@ -38,7 +38,7 @@ impl<T> ThinVec<T> {
 
   /// Constructor with predetermined capacity
   #[inline]
-  pub fn with_capacity(capacity: u32) -> ThinVec<T> {
+  pub unsafe fn with_capacity(capacity: u32) -> ThinVec<T> {
     if mem::size_of::<T>() == 0 {
       ThinVec { ptr: RawPtr::null(), cap: capacity }
     } else if capacity == 0 {
@@ -46,7 +46,7 @@ impl<T> ThinVec<T> {
     } else {
       let size = (capacity as uint).checked_mul(&mem::size_of::<T>())
                    .expect("ThinVec::reserve: capacity overflow");
-      let ptr = unsafe { allocate(size, mem::min_align_of::<T>()) };
+      let ptr = allocate(size, mem::min_align_of::<T>());
       ThinVec { ptr: ptr as *mut T, cap: capacity }
     }
   }
@@ -159,16 +159,16 @@ impl<T> Vector<T> for ThinVec<T> {
 
 impl<T:Clone> Clone for ThinVec<T> {
   fn clone(&self) -> ThinVec<T> {
-    let mut ret = ThinVec::with_capacity(self.len() as u32);
-    // Copied from vec.rs, which claims this will be optimized to a memcpy
-    // if T is Copy
-    for i in range(0, self.len()) {
-      unsafe {
+    unsafe {
+      let mut ret = ThinVec::with_capacity(self.len() as u32);
+      // Copied from vec.rs, which claims this will be optimized to a memcpy
+      // if T is Copy
+      for i in range(0, self.len()) {
         ptr::write(ret.as_mut_slice().unsafe_mut_ref(i),
                    self.as_slice().unsafe_ref(i).clone());
       }
+      ret
     }
-    ret
   }
 
    // TODO: clone_from
@@ -179,15 +179,17 @@ impl<T> FromIterator<T> for ThinVec<T> {
   fn from_iter<I: Iterator<T>>(iter: I) -> ThinVec<T> {
     let (lower, _) = iter.size_hint();
     assert!(lower < u32::MAX as uint);
-    let mut vector = ThinVec::with_capacity(lower as u32);
-    for (n, elem) in iter.enumerate() {
-      if n < lower {
-        unsafe { vector.init(n, elem) };
-      } else {
-        vector.push(elem);
+    unsafe {
+      let mut vector = ThinVec::with_capacity(lower as u32);
+      for (n, elem) in iter.enumerate() {
+        if n < lower {
+          vector.init(n, elem);
+        } else {
+          vector.push(elem);
+        }
       }
+      vector
     }
-    vector
   }
 }
 
@@ -252,14 +254,14 @@ mod tests {
   #[test]
   fn simple_destructor_thinvec_test() {
     let cap = 2;
-    let mut thinvec = ThinVec::with_capacity(cap);
+    unsafe {
+      let mut thinvec = ThinVec::with_capacity(cap);
 
-    for i in range(0, cap) {
-      unsafe { thinvec.init(i as uint, Some(box i)); }
-    }
+      for i in range(0, cap) {
+        thinvec.init(i as uint, Some(box i));
+      }
 
-    for i in range(0, cap) {
-      unsafe {
+      for i in range(0, cap) {
         assert_eq!(thinvec.get_mut(i as uint).take(), Some(box i));
         assert_eq!(thinvec.get_mut(i as uint).take(), None); 
       }
