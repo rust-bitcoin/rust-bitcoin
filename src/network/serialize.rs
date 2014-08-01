@@ -86,33 +86,52 @@ impl<R:Reader> RawDecoder<R> {
 
 /// A simple Encoder trait
 pub trait SimpleEncoder<E> {
+  /// Output a 64-bit uint
   fn emit_u64(&mut self, v: u64) -> Result<(), E>;
+  /// Output a 32-bit uint
   fn emit_u32(&mut self, v: u32) -> Result<(), E>;
+  /// Output a 16-bit uint
   fn emit_u16(&mut self, v: u16) -> Result<(), E>;
+  /// Output a 8-bit uint
   fn emit_u8(&mut self, v: u8) -> Result<(), E>;
 
+  /// Output a 64-bit int
   fn emit_i64(&mut self, v: i64) -> Result<(), E>;
+  /// Output a 32-bit int
   fn emit_i32(&mut self, v: i32) -> Result<(), E>;
+  /// Output a 16-bit int
   fn emit_i16(&mut self, v: i16) -> Result<(), E>;
+  /// Output a 8-bit int
   fn emit_i8(&mut self, v: i8) -> Result<(), E>;
 
+  /// Output a boolean
   fn emit_bool(&mut self, v: bool) -> Result<(), E>;
 }
 
 /// A simple Decoder trait
 pub trait SimpleDecoder<E> {
+  /// Read a 64-bit uint
   fn read_u64(&mut self) -> Result<u64, E>;
+  /// Read a 32-bit uint
   fn read_u32(&mut self) -> Result<u32, E>;
+  /// Read a 16-bit uint
   fn read_u16(&mut self) -> Result<u16, E>;
+  /// Read a 8-bit uint
   fn read_u8(&mut self) -> Result<u8, E>;
 
+  /// Read a 64-bit int
   fn read_i64(&mut self) -> Result<i64, E>;
+  /// Read a 32-bit int
   fn read_i32(&mut self) -> Result<i32, E>;
+  /// Read a 16-bit int
   fn read_i16(&mut self) -> Result<i16, E>;
+  /// Read a 8-bit int
   fn read_i8(&mut self) -> Result<i8, E>;
 
+  /// Read a boolean
   fn read_bool(&mut self) -> Result<bool, E>;
 
+  /// Signal a decoding error
   fn error(&mut self, err: &str) -> E;
 }
 
