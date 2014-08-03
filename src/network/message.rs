@@ -125,7 +125,7 @@ impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for RawNetworkMessage {
   fn consensus_encode(&self, s: &mut S) -> Result<(), E> {
     try!(self.magic.consensus_encode(s));
     try!(CommandString(self.command()).consensus_encode(s));
-    match self.payload {
+    try!(CheckedData(match self.payload {
       Version(ref dat) => serialize(dat),
       Verack           => Ok(vec![]),
       Addr(ref dat)    => serialize(dat),
@@ -138,7 +138,7 @@ impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for RawNetworkMessage {
       Headers(ref dat) => serialize(dat),
       Ping(ref dat)    => serialize(dat),
       Pong(ref dat)    => serialize(dat),
-    }.unwrap();
+    }.unwrap()).consensus_encode(s));
     Ok(())
   }
 }
@@ -180,7 +180,7 @@ impl<D:SimpleDecoder<IoError>> ConsensusDecodable<D, IoError> for RawNetworkMess
 
 #[cfg(test)]
 mod test {
-  use super::CommandString;
+  use super::{RawNetworkMessage, CommandString, Verack, Ping};
 
   use std::io::IoResult;
 
@@ -202,6 +202,21 @@ mod test {
     assert!(short_cs.is_err());
   }
 
-  // TODO: write tests for full network messages
+  #[test]
+  fn serialize_verack_test() {
+    assert_eq!(serialize(&RawNetworkMessage { magic: 0xd9b4bef9, payload: Verack }),
+               Ok(vec![0xf9, 0xbe, 0xb4, 0xd9, 0x76, 0x65, 0x72, 0x61,
+                       0x63, 0x6B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                       0x00, 0x00, 0x00, 0x00, 0x5d, 0xf6, 0xe0, 0xe2]));
+  }
+
+  #[test]
+  fn serialize_ping_test() {
+    assert_eq!(serialize(&RawNetworkMessage { magic: 0xd9b4bef9, payload: Ping(100) }),
+               Ok(vec![0xf9, 0xbe, 0xb4, 0xd9, 0x70, 0x69, 0x6e, 0x67,
+                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                       0x08, 0x00, 0x00, 0x00, 0x24, 0x67, 0xf1, 0x1d,
+                       0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]));
+  }
 }
 

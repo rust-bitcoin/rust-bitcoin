@@ -291,7 +291,7 @@ impl <T: BitcoinHash> MerkleRoot for Vec<T> {
 mod tests {
   use std::prelude::*;
   use collections::bitv::from_bytes;
-  use std::io::{MemWriter, MemReader, Reader, Writer};
+  use std::io::MemWriter;
   use std::str::from_utf8;
 
   use serialize::Encodable;
