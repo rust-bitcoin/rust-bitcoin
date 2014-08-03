@@ -108,13 +108,13 @@ impl Sha256dHash {
     from_bytes(self.as_slice())
   }
 
-  /// Converts a hash to a Uint256, interpreting it as a little endian number.
+  /// Converts a hash to a little-endian Uint256
   pub fn into_uint256(self) -> Uint256 {
     let Sha256dHash(data) = self;
     unsafe { Uint256(transmute(data)) }
   }
 
-  /// Converts a hash to a Uint128, interpreting it as a little endian number.
+  /// Converts a hash to a little-endian Uint128, using only the "low" bytes
   pub fn into_uint128(self) -> Uint128 {
     let Sha256dHash(data) = self;
     // TODO: this function won't work correctly on big-endian machines
@@ -128,7 +128,7 @@ impl Sha256dHash {
   pub fn le_hex_string(&self) -> String {
     let &Sha256dHash(data) = self;
     let mut ret = String::with_capacity(64);
-    for i in range(0u, 32).rev() {
+    for i in range(0u, 32) {
       ret.push_char(from_digit((data[i] / 0x10) as uint, 16).unwrap());
       ret.push_char(from_digit((data[i] & 0x0f) as uint, 16).unwrap());
     }
@@ -139,7 +139,7 @@ impl Sha256dHash {
   pub fn be_hex_string(&self) -> String {
     let &Sha256dHash(data) = self;
     let mut ret = String::with_capacity(64);
-    for i in range(0u, 32) {
+    for i in range(0u, 32).rev() {
       ret.push_char(from_digit((data[i] / 0x10) as uint, 16).unwrap());
       ret.push_char(from_digit((data[i] & 0x0f) as uint, 16).unwrap());
     }
@@ -293,20 +293,32 @@ mod tests {
   use collections::bitv::from_bytes;
   use std::io::MemWriter;
   use std::str::from_utf8;
-
   use serialize::Encodable;
   use serialize::json;
+
+  use network::serialize::{serialize, deserialize};
   use util::hash::Sha256dHash;
   use util::misc::hex_bytes;
 
   #[test]
   fn test_sha256d() {
+    // nb the 5df6... output is the one you get from sha256sum. this is the
+    // "little-endian" hex string since it matches the in-memory representation
+    // of a Uint256 (which is little-endian) after transmutation
     assert_eq!(Sha256dHash::from_data(&[]).as_slice(),
                hex_bytes("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456").unwrap().as_slice());
     assert_eq!(Sha256dHash::from_data(&[]).le_hex_string(),
+               "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456".to_string());
+    assert_eq!(Sha256dHash::from_data(&[]).be_hex_string(),
                "56944c5d3f98413ef45cf54545538103cc9f298e0575820ad3591376e2e0f65d".to_string());
-    assert_eq!(Sha256dHash::from_data(b"TEST").as_slice(),
-               hex_bytes("d7bd34bfe44a18d2aa755a344fe3e6b06ed0473772e6dfce16ac71ba0b0a241c").unwrap().as_slice());
+  }
+
+  #[test]
+  fn test_consenus_encode_roundtrip() {
+    let hash = Sha256dHash::from_data(&[]);
+    let serial = serialize(&hash).unwrap();
+    let deserial = deserialize(serial).unwrap();
+    assert_eq!(hash, deserial);
   }
 
   #[test]

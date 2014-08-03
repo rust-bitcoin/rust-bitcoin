@@ -164,7 +164,7 @@ impl UtxoSet {
       //   See bitcoind commit `ab91bf39` and BIP30.
       match self.add_utxos(tx) {
         Some(mut replace) => {
-          let blockhash = block.header.bitcoin_hash().le_hex_string();
+          let blockhash = block.header.bitcoin_hash().be_hex_string();
           if blockhash == "00000000000a4d0a398161ffc163c503763b1f4360639393e0e4c8e300e0caec".to_string() ||
              blockhash == "00000000000743f190a18c5577a3c2d2a1f610ae9601ac046a38084ccb7cd721".to_string() {
             // For these specific blocks, overwrite the old UTXOs.

@@ -238,17 +238,18 @@ impl<K:BitArray+Eq+Zero+One+BitXor<K,K>+Shl<uint,K>+Shr<uint,K>, V> PatriciaTree
         }
         match (tree.child_l.take(), tree.child_r.take()) {
           (Some(_), Some(_)) => unreachable!(),
-          (Some(consolidate), None) | (None, Some(consolidate)) => {
-            tree.data = consolidate.data;
-            tree.child_l = consolidate.child_l;
-            tree.child_r = consolidate.child_r;
+          (Some(box PatriciaTree { data, child_l, child_r, skip_prefix, skip_len }), None) |
+          (None, Some(box PatriciaTree { data, child_l, child_r, skip_prefix, skip_len })) => {
+            tree.data = data;
+            tree.child_l = child_l;
+            tree.child_r = child_r;
             let new_bit = if bit { let ret: K = One::one();
                                    ret << (tree.skip_len as uint) }
                           else   { Zero::zero() };
             tree.skip_prefix = tree.skip_prefix + 
                                  new_bit +
-                                 (consolidate.skip_prefix << (1 + tree.skip_len as uint));
-            tree.skip_len += 1 + consolidate.skip_len;
+                                 (skip_prefix << (1 + tree.skip_len as uint));
+            tree.skip_len += 1 + skip_len;
             return (false, ret);
           }
           // No children means this node is deletable
@@ -295,17 +296,18 @@ impl<K:BitArray+Eq+Zero+One+BitXor<K,K>+Shl<uint,K>+Shr<uint,K>, V> PatriciaTree
           return (false, ret);
         }
         // One child? Consolidate
-        (bit, Some(consolidate), None) | (bit, None, Some(consolidate)) => {
-          tree.data = consolidate.data;
-          tree.child_l = consolidate.child_l;
-          tree.child_r = consolidate.child_r;
+        (bit, Some(box PatriciaTree { data, child_l, child_r, skip_prefix, skip_len }), None) |
+        (bit, None, Some(box PatriciaTree { data, child_l, child_r, skip_prefix, skip_len })) => {
+          tree.data = data;
+          tree.child_l = child_l;
+          tree.child_r = child_r;
           let new_bit = if bit { let ret: K = One::one();
                                  ret << (tree.skip_len as uint) }
                         else { Zero::zero() };
           tree.skip_prefix = tree.skip_prefix + 
                                new_bit +
-                               (consolidate.skip_prefix << (1 + tree.skip_len as uint));
-          tree.skip_len += 1 + consolidate.skip_len;
+                               (skip_prefix << (1 + tree.skip_len as uint));
+          tree.skip_len += 1 + skip_len;
           return (false, ret);
         }
         // No children? Delete
