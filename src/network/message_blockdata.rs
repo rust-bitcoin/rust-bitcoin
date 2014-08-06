@@ -134,7 +134,7 @@ mod tests {
   use serialize::hex::FromHex;
 
   use network::serialize::{deserialize, serialize};
-  use util::hash::zero_hash;
+  use std::default::Default;
 
   #[test]
   fn getblocks_message_test() {
@@ -146,8 +146,8 @@ mod tests {
     let real_decode = decode.unwrap();
     assert_eq!(real_decode.version, 70002);
     assert_eq!(real_decode.locator_hashes.len(), 1);
-    assert_eq!(real_decode.locator_hashes[0].as_slice(), genhash.as_slice());
-    assert_eq!(real_decode.stop_hash.as_slice(), zero_hash().as_slice());
+    assert_eq!(serialize(&real_decode.locator_hashes[0]), Ok(genhash));
+    assert_eq!(real_decode.stop_hash, Default::default());
 
     assert_eq!(serialize(&real_decode), Ok(from_sat));
   }
@@ -162,8 +162,8 @@ mod tests {
     let real_decode = decode.unwrap();
     assert_eq!(real_decode.version, 70002);
     assert_eq!(real_decode.locator_hashes.len(), 1);
-    assert_eq!(real_decode.locator_hashes[0].as_slice(), genhash.as_slice());
-    assert_eq!(real_decode.stop_hash.as_slice(), zero_hash().as_slice());
+    assert_eq!(serialize(&real_decode.locator_hashes[0]), Ok(genhash));
+    assert_eq!(real_decode.stop_hash, Default::default());
 
     assert_eq!(serialize(&real_decode), Ok(from_sat));
   }

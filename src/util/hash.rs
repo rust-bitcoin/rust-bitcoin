@@ -15,14 +15,13 @@
 //!
 //! Utility functions related to hashing data, including merkleization
 
-use collections::bitv::{Bitv, from_bytes};
 use core::char::from_digit;
 use core::cmp::min;
 use std::default::Default;
 use std::fmt;
 use std::io::MemWriter;
 use std::mem::transmute;
-use std::hash::{Hash, Hasher};
+use std::hash;
 use serialize::json::{mod, ToJson};
 
 use crypto::digest::Digest;
@@ -36,11 +35,17 @@ use util::uint::Uint256;
 /// A Bitcoin hash, 32-bytes, computed from x as SHA256(SHA256(x))
 pub struct Sha256dHash([u8, ..32]);
 
+/// A boring old Sha256 hash
+pub struct Sha256Hash([u8, ..32]);
+
+/// A RIPEMD-160 hash
+pub struct Ripemd160Hash([u8, ..20]);
+
 /// A "hasher" which just truncates
 pub struct DumbHasher;
 
 // Allow these to be used as a key for Rust's HashMap et. al.
-impl Hash<u64> for Sha256dHash {
+impl hash::Hash<u64> for Sha256dHash {
   #[inline]
   fn hash(&self, state: &mut u64) {
     use std::mem;
@@ -49,7 +54,7 @@ impl Hash<u64> for Sha256dHash {
   }
 }
 
-impl Hash<u64> for Uint256 {
+impl hash::Hash<u64> for Uint256 {
   #[inline]
   fn hash(&self, state: &mut u64) {
     use std::mem;
@@ -58,7 +63,7 @@ impl Hash<u64> for Uint256 {
   }
 }
 
-impl Hash<u64> for Uint128 {
+impl hash::Hash<u64> for Uint128 {
   #[inline]
   fn hash(&self, state: &mut u64) {
     use std::mem;
@@ -67,9 +72,9 @@ impl Hash<u64> for Uint128 {
   }
 }
 
-impl Hasher<u64> for DumbHasher {
+impl hash::Hasher<u64> for DumbHasher {
   #[inline]
-  fn hash<T: Hash<u64>>(&self, value: &T) -> u64 {
+  fn hash<T: hash::Hash<u64>>(&self, value: &T) -> u64 {
     let mut ret = 0u64;
     value.hash(&mut ret);
     ret
@@ -81,13 +86,15 @@ impl Default for DumbHasher {
   fn default() -> DumbHasher { DumbHasher }
 }
 
-/// Returns the all-zeroes "hash"
-pub fn zero_hash() -> Sha256dHash { Sha256dHash([0u8, ..32]) }
+impl Default for Sha256dHash {
+  #[inline]
+  fn default() -> Sha256dHash { Sha256dHash([0u8, ..32]) }
+}
 
 impl Sha256dHash {
   /// Create a hash by hashing some data
   pub fn from_data(data: &[u8]) -> Sha256dHash {
-    let Sha256dHash(mut ret) = zero_hash();
+    let Sha256dHash(mut ret): Sha256dHash = Default::default();
     let mut sha2 = sha2::Sha256::new();
     sha2.input(data);
     sha2.result(ret.as_mut_slice());
@@ -97,24 +104,15 @@ impl Sha256dHash {
     Sha256dHash(ret)
   }
 
-  /// Returns a slice containing the bytes of the has
-  pub fn as_slice<'a>(&'a self) -> &'a [u8] {
-    let &Sha256dHash(ref data) = self;
-    data.as_slice()
-  }
-
-  /// Converts a hash to a bit vector
-  pub fn as_bitv(&self) -> Bitv {
-    from_bytes(self.as_slice())
-  }
-
   /// Converts a hash to a little-endian Uint256
+  #[inline]
   pub fn into_uint256(self) -> Uint256 {
     let Sha256dHash(data) = self;
     unsafe { Uint256(transmute(data)) }
   }
 
   /// Converts a hash to a little-endian Uint128, using only the "low" bytes
+  #[inline]
   pub fn into_uint128(self) -> Uint128 {
     let Sha256dHash(data) = self;
     // TODO: this function won't work correctly on big-endian machines
@@ -148,6 +146,7 @@ impl Sha256dHash {
 }
 
 impl Clone for Sha256dHash {
+  #[inline]
   fn clone(&self) -> Sha256dHash {
     *self
   }
@@ -181,6 +180,7 @@ impl Index<uint, u8> for Sha256dHash {
 // little-endian and should be done using the consensus `encodable::ConsensusEncodable`
 // interface.
 impl ToJson for Sha256dHash {
+  #[inline]
   fn to_json(&self) -> json::Json {
     json::String(self.be_hex_string())
   }
@@ -207,7 +207,7 @@ impl<D: ::serialize::Decoder<E>, E> ::serialize::Decodable<D, E> for Sha256dHash
                          .map_err(|_| d.error("non-hexadecimal hash string")));
     let mut ret = [0u8, ..32];
     for i in range(0, 32) {
-      ret[i] = raw_str[i];
+      ret[i] = raw_str[31 - i];
     }
     Ok(Sha256dHash(ret))
   }
@@ -259,7 +259,7 @@ impl<'a, T: BitcoinHash> MerkleRoot for &'a [T] {
     fn merkle_root(data: Vec<Sha256dHash>) -> Sha256dHash {
       // Base case
       if data.len() < 1 {
-        return zero_hash();
+        return Default::default();
       }
       if data.len() < 2 {
         return data[0];
@@ -290,7 +290,6 @@ impl <T: BitcoinHash> MerkleRoot for Vec<T> {
 #[cfg(test)]
 mod tests {
   use std::prelude::*;
-  use collections::bitv::from_bytes;
   use std::io::MemWriter;
   use std::str::from_utf8;
   use serialize::Encodable;
@@ -298,15 +297,12 @@ mod tests {
 
   use network::serialize::{serialize, deserialize};
   use util::hash::Sha256dHash;
-  use util::misc::hex_bytes;
 
   #[test]
   fn test_sha256d() {
     // nb the 5df6... output is the one you get from sha256sum. this is the
     // "little-endian" hex string since it matches the in-memory representation
     // of a Uint256 (which is little-endian) after transmutation
-    assert_eq!(Sha256dHash::from_data(&[]).as_slice(),
-               hex_bytes("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456").unwrap().as_slice());
     assert_eq!(Sha256dHash::from_data(&[]).le_hex_string(),
                "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456".to_string());
     assert_eq!(Sha256dHash::from_data(&[]).be_hex_string(),
@@ -322,12 +318,6 @@ mod tests {
   }
 
   #[test]
-  fn test_hash_to_bitvset() {
-    assert_eq!(Sha256dHash::from_data(&[]).as_bitv(),
-               from_bytes(hex_bytes("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456").unwrap().as_slice()));
-  }
-
-  #[test]
   fn test_hash_encode_decode() {
     let hash = Sha256dHash::from_data(&[]);
     let mut writer = MemWriter::new();
@@ -337,7 +327,7 @@ mod tests {
     }
     let res = writer.unwrap();
     assert_eq!(res.as_slice(),
-               "\"5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456\"".as_bytes());
+               "\"56944c5d3f98413ef45cf54545538103cc9f298e0575820ad3591376e2e0f65d\"".as_bytes());
     assert_eq!(json::decode(from_utf8(res.as_slice()).unwrap()), Ok(hash));
   }
 }

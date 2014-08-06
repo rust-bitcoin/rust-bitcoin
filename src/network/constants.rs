@@ -98,12 +98,13 @@ mod tests {
 
   use network::serialize::{deserialize, serialize};
 
+  #[test]
   fn serialize_test() {
-    assert_eq!(serialize(&Bitcoin).unwrap().as_slice(), "bitcoin".as_bytes());
-    assert_eq!(serialize(&BitcoinTestnet).unwrap().as_slice(), "testnet".as_bytes());
+    assert_eq!(serialize(&Bitcoin).unwrap(), vec![0xf9, 0xbe, 0xb4, 0xd9]);
+    assert_eq!(serialize(&BitcoinTestnet).unwrap(), vec![0x0b, 0x11, 0x09, 0x07]);
 
-    assert_eq!(deserialize(Vec::from_slice("bitcoin".as_bytes())), Ok(Bitcoin));
-    assert_eq!(deserialize(Vec::from_slice("testnet".as_bytes())), Ok(BitcoinTestnet));
+    assert_eq!(deserialize(vec![0xf9, 0xbe, 0xb4, 0xd9]), Ok(Bitcoin));
+    assert_eq!(deserialize(vec![0x0b, 0x11, 0x09, 0x07]), Ok(BitcoinTestnet));
 
     let bad: Result<Network, _> = deserialize(Vec::from_slice("fakenet".as_bytes()));
     assert!(bad.is_err());

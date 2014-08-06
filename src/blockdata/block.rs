@@ -158,9 +158,9 @@ mod tests {
     assert!(bad_decode.is_err());
     let real_decode = decode.unwrap();
     assert_eq!(real_decode.header.version, 1);
-    assert_eq!(real_decode.header.prev_blockhash.as_slice(), prevhash.as_slice());
+    assert_eq!(serialize(&real_decode.header.prev_blockhash), Ok(prevhash));
     // [test] TODO: actually compute the merkle root
-    assert_eq!(real_decode.header.merkle_root.as_slice(), merkle.as_slice());
+    assert_eq!(serialize(&real_decode.header.merkle_root), Ok(merkle));
     assert_eq!(real_decode.header.time, 1231965655);
     assert_eq!(real_decode.header.bits, 486604799);
     assert_eq!(real_decode.header.nonce, 2067413810);
