@@ -230,7 +230,7 @@ impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for Sha256dHash {
 
 impl fmt::LowerHex for Sha256dHash {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    let &Sha256dHash(ref data) = self;
+    let &Sha256dHash(data) = self;
     let mut rv = [0, ..64];
     let mut hex = data.iter().rev().map(|n| *n).enumerate();
     for (i, ch) in hex {

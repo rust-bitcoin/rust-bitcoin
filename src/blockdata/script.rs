@@ -27,11 +27,22 @@
 use std::char::from_digit;
 use serialize::json;
 
+use crypto::digest::Digest;
+use crypto::ripemd160::Ripemd160;
+use crypto::sha1::Sha1;
+use crypto::sha2::Sha256;
+
+use secp256k1::Secp256k1;
+use secp256k1::key::PublicKey;
+
 use blockdata::opcodes;
 use blockdata::opcodes::Opcode;
 use allops = blockdata::opcodes::all;
+use blockdata::transaction::Transaction;
 use network::encodable::{ConsensusDecodable, ConsensusEncodable};
-use network::serialize::{SimpleDecoder, SimpleEncoder};
+use network::serialize::{SimpleDecoder, SimpleEncoder, serialize};
+use util::hash::Sha256dHash;
+use util::misc::find_and_remove;
 use util::thinvec::ThinVec;
 
 #[deriving(PartialEq, Show, Clone)]
@@ -43,6 +54,8 @@ pub struct Script(ThinVec<u8>);
 /// would help you.
 #[deriving(PartialEq, Eq, Show, Clone)]
 pub enum ScriptError {
+  /// OP_CHECKSIG was called with a bad public key
+  BadPublicKey,
   /// An OP_ELSE happened while not in an OP_IF tree
   ElseWithoutIf,
   /// An OP_ENDIF happened while not in an OP_IF tree
@@ -59,6 +72,8 @@ pub enum ScriptError {
   NegativePick,
   /// Used OP_ROLL with a negative index
   NegativeRoll,
+  /// Tried to execute a signature operation but no transaction context was provided
+  NoTransaction,
   /// Tried to read an array off the stack as a number when it was more than 4 bytes
   NumericOverflow,
   /// Some stack operation was done with an empty stack
@@ -67,6 +82,39 @@ pub enum ScriptError {
   VerifyEmptyStack,
   /// An OP_VERIFY happened with zero on the stack
   VerifyFailed,
+}
+
+/// Hashtype of a transaction, encoded in the last byte of a signature,
+/// specifically in the last 5 bits `byte & 31`
+#[deriving(PartialEq, Eq, Show, Clone)]
+pub enum SignatureHashType {
+  /// 0x1: Sign all outputs
+  SigHashAll,
+  /// 0x2: Sign no outputs --- anyone can choose the destination
+  SigHashNone,
+  /// 0x3: Sign the output whose index matches this input's index. If none exists,
+  /// sign the hash `0000000000000000000000000000000000000000000000000000000000000001`.
+  /// (This rule is probably an unintentional C++ism, but it's consensus so we have
+  /// to follow it.)
+  SigHashSingle,
+  /// ???: Anything else is a non-canonical synonym for SigHashAll, for example
+  /// zero appears a few times in the chain
+  SigHashUnknown
+}
+
+impl SignatureHashType {
+   /// Returns a SignatureHashType along with a boolean indicating whether
+   /// the `ANYONECANPAY` flag is set, read from the last byte of a signature.
+   fn from_signature(signature: &[u8]) -> (SignatureHashType, bool) {
+     let byte = signature[signature.len() - 1];
+     let sighash = match byte & 0x1f {
+       1 => SigHashAll,
+       2 => SigHashNone,
+       3 => SigHashSingle,
+       _ => SigHashUnknown
+     };
+     (sighash, (byte & 0x80) != 0)
+   }
 }
 
 /// Helper to encode an integer in script format
@@ -125,15 +173,16 @@ fn read_scriptint(v: &[u8]) -> Result<i64, ScriptError> {
 /// else as true", except that the overflow rules don't apply.
 #[inline]
 fn read_scriptbool(v: &[u8]) -> bool {
-  v.iter().all(|&w| w == 0)
+  !v.iter().all(|&w| w == 0)
 }
 
 /// Helper to read a script uint
-fn read_uint<'a, I:Iterator<&'a u8>>(mut iter: I, size: uint) -> Result<uint, ScriptError> {
+fn read_uint<'a, I:Iterator<(uint, &'a u8)>>(mut iter: I, size: uint)
+    -> Result<uint, ScriptError> {
   let mut ret = 0;
   for _ in range(0, size) {
     match iter.next() {
-      Some(&n) => { ret = (ret << 8) + n as uint; }
+      Some((_, &n)) => { ret = (ret << 8) + n as uint; }
       None => { return Err(EarlyEndOfScript); }
     }
   }
@@ -173,6 +222,7 @@ macro_rules! stack_opcode(
   });
 )
 
+/// Macro to translate numerical operations into stack ones
 macro_rules! num_opcode(
   ($stack:ident($($var:ident),*): $op:expr) => ({
     $(
@@ -182,6 +232,22 @@ macro_rules! num_opcode(
       }.as_slice()));
     )*
     $stack.push(build_scriptint($op));
+  });
+)
+
+/// Macro to translate hashing operations into stack ones
+macro_rules! hash_opcode(
+  ($stack:ident, $hash:ident) => ({
+    match $stack.pop() {
+      None => { return Err(PopEmptyStack); }
+      Some(v) => {
+        let mut engine = $hash::new();
+        engine.input(v.as_slice());
+        let mut ret = Vec::from_elem(engine.output_bits() / 8, 0);
+        engine.result(ret.as_mut_slice());
+        $stack.push(ret);
+      }
+    }
   });
 )
 
@@ -255,21 +321,25 @@ impl Script {
   }
 
   /// Adds an individual opcode to the script
-  pub fn push_opcode(&mut self, data: Opcode) {
+  pub fn push_opcode(&mut self, data: allops::Opcode) {
     let &Script(ref mut raw) = self;
     raw.push(data as u8);
   }
 
   /// Evaluate the script, modifying the stack in place
-  pub fn evaluate(&self, stack: &mut Vec<Vec<u8>>) -> Result<(), ScriptError> {
+  pub fn evaluate(&self, stack: &mut Vec<Vec<u8>>, input_context: Option<(&Transaction, uint)>)
+                  -> Result<(), ScriptError> {
     let &Script(ref raw) = self;
+    let secp = Secp256k1::new();
 
-    let mut iter = raw.iter();
+    let mut codeseparator_index = 0u;
+    let mut iter = raw.iter().enumerate();
     let mut exec_stack = vec![true];
     let mut alt_stack = vec![];
 
-    for byte in iter {
+    for (index, byte) in iter {
       let executing = exec_stack.iter().all(|e| *e);
+println!("{}, {}   len {} stack {}", index, allops::Opcode::from_u8(*byte), stack.len(), stack);
       // The definitions of all these categories are in opcodes.rs
       match (executing, allops::Opcode::from_u8(*byte).classify()) {
         // Illegal operations mean failure regardless of execution state
@@ -277,7 +347,7 @@ impl Script {
         // Push number
         (true, opcodes::PushNum(n))   => stack.push(build_scriptint(n as i64)),
         // Push data
-        (true, opcodes::PushBytes(n)) => stack.push(iter.take(n).map(|n| *n).collect()),
+        (true, opcodes::PushBytes(n)) => stack.push(iter.by_ref().take(n).map(|(_, n)| *n).collect()),
         // Return operations mean failure, but only if executed
         (true, opcodes::ReturnOp)     => return Err(ExecutedReturn),
         // If-statements take effect when not executing
@@ -300,20 +370,20 @@ impl Script {
         (true, opcodes::Ordinary(op)) => {
           match op {
             opcodes::OP_PUSHDATA1 => {
-              let n = try!(read_uint(iter, 1));
-              let read: Vec<u8> = iter.take(n as uint).map(|n| *n).collect();
+              let n = try!(read_uint(iter.by_ref(), 1));
+              let read: Vec<u8> = iter.by_ref().take(n as uint).map(|(_, n)| *n).collect();
               if read.len() < n as uint { return Err(EarlyEndOfScript); }
               stack.push(read);
             }
             opcodes::OP_PUSHDATA2 => {
-              let n = try!(read_uint(iter, 2));
-              let read: Vec<u8> = iter.take(n as uint).map(|n| *n).collect();
+              let n = try!(read_uint(iter.by_ref(), 2));
+              let read: Vec<u8> = iter.by_ref().take(n as uint).map(|(_, n)| *n).collect();
               if read.len() < n as uint { return Err(EarlyEndOfScript); }
               stack.push(read);
             }
             opcodes::OP_PUSHDATA4 => {
-              let n = try!(read_uint(iter, 4));
-              let read: Vec<u8> = iter.take(n as uint).map(|n| *n).collect();
+              let n = try!(read_uint(iter.by_ref(), 4));
+              let read: Vec<u8> = iter.by_ref().take(n as uint).map(|(_, n)| *n).collect();
               if read.len() < n as uint { return Err(EarlyEndOfScript); }
               stack.push(read);
             }
@@ -404,9 +474,10 @@ impl Script {
             }
             opcodes::OP_EQUAL | opcodes::OP_EQUALVERIFY => {
               if stack.len() < 2 { return Err(PopEmptyStack); }
-              let top = stack.len();
-              let eq = (*stack)[top - 2] == (*stack)[top - 1];
-              stack.push(build_scriptint(if eq { 1 } else { 0 }));
+              let a = stack.pop().unwrap();
+              let b = stack.pop().unwrap();
+println!("comparing {} to {} , eq {}", a, b, a == b)
+              stack.push(build_scriptint(if a == b { 1 } else { 0 }));
               if op == opcodes::OP_EQUALVERIFY { op_verify!(stack); }
             }
             opcodes::OP_1ADD => num_opcode!(stack(a): a + 1),
@@ -432,8 +503,109 @@ impl Script {
             opcodes::OP_MIN => num_opcode!(stack(b, a): if a < b {a} else {b}),
             opcodes::OP_MAX => num_opcode!(stack(b, a): if a > b {a} else {b}),
             opcodes::OP_WITHIN => num_opcode!(stack(c, b, a): if b <= a && a < c {1} else {0}),
-            // TODO: crypto
-            opcodes::OP_CHECKSIG => {}
+            opcodes::OP_RIPEMD160 => hash_opcode!(stack, Ripemd160),
+            opcodes::OP_SHA1 => hash_opcode!(stack, Sha1),
+            opcodes::OP_SHA256 => hash_opcode!(stack, Sha256),
+            opcodes::OP_HASH160 => {
+              hash_opcode!(stack, Sha256);
+              hash_opcode!(stack, Ripemd160);
+            }
+            opcodes::OP_HASH256 => {
+              hash_opcode!(stack, Sha256);
+              hash_opcode!(stack, Sha256);
+            }
+            opcodes::OP_CODESEPARATOR => { codeseparator_index = index; }
+            opcodes::OP_CHECKSIG | opcodes::OP_CHECKSIGVERIFY => {
+              if stack.len() < 2 { return Err(PopEmptyStack); }
+
+              let pubkey = PublicKey::from_slice(stack.pop().unwrap().as_slice());
+              let signature = stack.pop().unwrap();
+
+println!("pubkey {}  sig {}", pubkey, signature);
+              if pubkey.is_err() {
+                stack.push(build_scriptint(0));
+              } else if signature.len() == 0 {
+                stack.push(build_scriptint(0));
+              } else {
+                // This is as far as we can go without a transaction, so fail here
+                if input_context.is_none() { return Err(NoTransaction); }
+                // Otherwise unwrap it
+                let (tx, input_index) = input_context.unwrap();
+                let pubkey = pubkey.unwrap();
+                let (hashtype, anyone_can_pay) =
+                    SignatureHashType::from_signature(signature.as_slice());
+
+                // Compute the section of script that needs to be hashed: everything
+                // from the last CODESEPARATOR, except the signature itself.
+                let mut script = Vec::from_slice(raw.slice_from(codeseparator_index));
+                find_and_remove(&mut script, signature.as_slice());
+
+                // Compute the transaction data to be hashed
+                let mut tx_copy = tx.clone();
+                // Put the script into an Option so that we can move it (via take_unwrap())
+                // in the following branch/loop without the move-checker complaining about
+                // multiple moves.
+                let mut script = Some(script);
+                if anyone_can_pay {
+                  // For anyone-can-pay transactions we replace the whole input array
+                  // with just the current input, to ensure the others have no effect.
+                  let mut old_input = tx_copy.input[input_index].clone();
+                  old_input.script_sig = Script(ThinVec::from_vec(script.take_unwrap()));
+                  tx_copy.input = vec![old_input];
+                } else {
+                  // Otherwise we keep all the inputs, blanking out the others and even
+                  // resetting their sequence no. if appropriate
+                  for (n, input) in tx_copy.input.mut_iter().enumerate() {
+                    // Zero out the scripts of other inputs
+                    if n == input_index {
+                      input.script_sig = Script(ThinVec::from_vec(script.take_unwrap()));
+                    } else {
+                      input.script_sig = Script::new();
+                      // If we aren't signing them, also zero out the sequence number
+                      if hashtype == SigHashSingle || hashtype == SigHashNone {
+                        input.sequence = 0;
+                      }
+                    }
+                  }
+                }
+
+                // Erase outputs as appropriate
+                let mut sighash_single_bug = false;
+                match hashtype {
+                  SigHashNone => { tx_copy.output = vec![]; }
+                  SigHashSingle => {
+                    if input_index < tx_copy.output.len() {
+                      let new_outs = tx_copy.output.move_iter().take(input_index + 1).collect();
+                      tx_copy.output = new_outs;
+                    } else {
+                      sighash_single_bug = true;
+                    }
+                  }
+                  SigHashAll | SigHashUnknown => {}
+                }
+
+                let signature_hash = if sighash_single_bug {
+                  vec![1, 0, 0, 0, 0, 0, 0, 0,
+                       0, 0, 0, 0, 0, 0, 0, 0,
+                       0, 0, 0, 0, 0, 0, 0, 0,
+                       0, 0, 0, 0, 0, 0, 0, 0]
+                } else {
+                  let mut data_to_sign = serialize(&tx_copy).unwrap();
+                  data_to_sign.push(*signature.last().unwrap());
+                  data_to_sign.push(0);
+                  data_to_sign.push(0);
+                  data_to_sign.push(0);
+                  serialize(&Sha256dHash::from_data(data_to_sign.as_slice())).unwrap()
+                };
+
+                match secp.verify(signature_hash.as_slice(), signature.as_slice(), &pubkey) {
+                  Ok(()) => stack.push(build_scriptint(1)),
+                  _ => stack.push(build_scriptint(0)),
+                }
+              }
+
+              if op == opcodes::OP_CHECKSIGVERIFY { op_verify!(stack); }
+            }
           }
         }
       }
@@ -476,10 +648,12 @@ impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for Script {
 mod test {
   use std::io::IoResult;
 
-  use super::{Script, build_scriptint, read_scriptint};
+  use super::{Script, build_scriptint, read_scriptint, read_scriptbool};
+  use super::{NoTransaction, PopEmptyStack, VerifyFailed};
 
   use network::serialize::{deserialize, serialize};
   use blockdata::opcodes;
+  use blockdata::transaction::Transaction;
   use util::misc::hex_bytes;
   use util::thinvec::ThinVec;
 
@@ -507,8 +681,8 @@ mod test {
     script.push_slice("NRA4VR".as_bytes()); comp.push_all([6u8, 78, 82, 65, 52, 86, 82]); assert_eq!(script, Script(comp.clone()));
 
     // opcodes 
-    script.push_opcode(opcodes::OP_CHECKSIG); comp.push(0xACu8); assert_eq!(script, Script(comp.clone()));
-    script.push_opcode(opcodes::OP_CHECKSIG); comp.push(0xACu8); assert_eq!(script, Script(comp.clone()));
+    script.push_opcode(opcodes::all::OP_CHECKSIG); comp.push(0xACu8); assert_eq!(script, Script(comp.clone()));
+    script.push_opcode(opcodes::all::OP_CHECKSIG); comp.push(0xACu8); assert_eq!(script, Script(comp.clone()));
   }
 
   #[test]
@@ -533,6 +707,49 @@ mod test {
     }
     assert!(read_scriptint(build_scriptint(1 << 31).as_slice()).is_err());
     assert!(read_scriptint(build_scriptint(-(1 << 31)).as_slice()).is_err());
+  }
+
+  #[test]
+  fn script_eval_simple() {
+    let mut script = Script::new();
+    assert!(script.evaluate(&mut vec![], None).is_ok());
+
+    script.push_opcode(opcodes::all::OP_RETURN);
+    assert!(script.evaluate(&mut vec![], None).is_err());
+  }
+
+  #[test]
+  fn script_eval_checksig_without_tx() {
+    let hex_pk = hex_bytes("1976a914e729dea4a3a81108e16376d1cc329c91db58999488ac").unwrap();
+    let script_pk: Script = deserialize(hex_pk.clone()).ok().expect("scriptpk");
+    // Should be able to check that the sig is there and pk correct
+    // before needing a transaction
+    assert_eq!(script_pk.evaluate(&mut vec![], None), Err(PopEmptyStack));
+    assert_eq!(script_pk.evaluate(&mut vec![vec![], vec![]], None), Err(VerifyFailed));
+    // A null signature is actually Ok -- this will just push 0 onto the stack
+    // since the signature is guaranteed to fail.
+    assert_eq!(script_pk.evaluate(&mut vec![vec![], hex_bytes("026d5d4cfef5f3d97d2263941b4d8e7aaa82910bf8e6f7c6cf1d8f0d755b9d2d1a").unwrap()], None), Ok(()));
+    // But if the signature is there, we need a tx to check it
+    assert_eq!(script_pk.evaluate(&mut vec![vec![0], hex_bytes("026d5d4cfef5f3d97d2263941b4d8e7aaa82910bf8e6f7c6cf1d8f0d755b9d2d1a").unwrap()], None), Err(NoTransaction));
+  }
+
+  #[test]
+  fn script_eval_pubkeyhash() {
+    // nb these are both prefixed with their length in 1 byte
+    let tx_hex = hex_bytes("010000000125d6681b797691aebba34b9d8e50f769ab1e8807e78405ae505c218cf8e1e9e1a20100006a47304402204c2dd8a9b6f8d425fcd8ee9a20ac73b619906a6367eac6cb93e70375225ec0160220356878eff111ff3663d7e6bf08947f94443845e0dcc54961664d922f7660b80c0121029fa8e8d8e3fd61183ab52f98d65500fd028a5d0a899c6bcd4ecaf1eda9eac284ffffffff0110270000000000001976a914299567077f41bc20059dc21a1eb1ef5a6a43b9c088ac00000000").unwrap();
+
+    let output_hex = hex_bytes("1976a914299567077f41bc20059dc21a1eb1ef5a6a43b9c088ac").unwrap();
+
+    let tx: Transaction = deserialize(tx_hex.clone()).ok().expect("transaction");
+    let script_pk: Script = deserialize(output_hex.clone()).ok().expect("scriptpk");
+
+    let mut stack = vec![];
+    assert_eq!(tx.input[0].script_sig.evaluate(&mut stack, None), Ok(()));
+    assert_eq!(script_pk.evaluate(&mut stack, Some((&tx, 0))), Ok(()));
+    assert_eq!(stack.len(), 1);
+    assert_eq!(read_scriptbool(stack.pop().unwrap().as_slice()), true);
+println!("stack {}", stack);
+
   }
 }
 

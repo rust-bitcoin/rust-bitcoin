@@ -55,6 +55,7 @@ extern crate serialize;
 extern crate sync;
 extern crate time;
 
+extern crate secp256k1 = "bitcoin-secp256k1-rs";
 extern crate crypto = "rust-crypto";
 
 mod internal_macros;

@@ -515,7 +515,7 @@ mod tests {
     assert!(failure64.is_err());
     // TODO: test negative numbers
     assert_eq!(deserialize(vec![0xABu8, 0xCD, 0, 0, 0, 0, 0, 0]), Ok(0xCDABi64));
-    assert_eq!(deserialize(vec![0xA0u8, 0x0D, 0xAB, 0xCD, 0x99, 0, 0, 0x99]), Ok(0x99000099CDAB0DA0i64));
+    assert_eq!(deserialize(vec![0xA0u8, 0x0D, 0xAB, 0xCD, 0x99, 0, 0, 0x99]), Ok(-0x66ffff663254f260i64));
     let failurei64: IoResult<i64> = deserialize(vec![1u8, 2, 3, 4, 5, 6, 7]);
     assert!(failurei64.is_err());
   }

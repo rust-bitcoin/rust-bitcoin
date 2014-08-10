@@ -67,7 +67,7 @@ fn bitcoin_genesis_tx() -> Transaction {
   // Outputs
   let mut out_script = Script::new();
   out_script.push_slice(hex_bytes("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f").unwrap().as_slice());
-  out_script.push_opcode(opcodes::OP_CHECKSIG);
+  out_script.push_opcode(opcodes::all::OP_CHECKSIG);
   ret.output.push(TxOut {
     value: 50 * COIN_VALUE,
     script_pubkey: out_script

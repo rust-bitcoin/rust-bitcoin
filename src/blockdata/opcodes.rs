@@ -643,6 +643,7 @@ pub enum OpcodeClass {
 macro_rules! ordinary_opcode(
   ($($op:ident),*) => (
     #[repr(u8)]
+    #[doc(hidden)]
     #[deriving(Clone, PartialEq, Eq, Show)]
     pub enum Opcode {
       $( $op = all::$op as u8 ),*
@@ -670,12 +671,9 @@ ordinary_opcode!(
   OP_GREATERTHAN, OP_LESSTHANOREQUAL, OP_GREATERTHANOREQUAL,
   OP_MIN, OP_MAX, OP_WITHIN,
   // crypto
-  OP_CHECKSIG
-/*
   OP_RIPEMD160, OP_SHA1, OP_SHA256, OP_HASH160, OP_HASH256,
-  OP_CODESEPARATOR, OP_CHECKSIG, OP_CHECKSIGVERIFY,
-  OP_CHECKMULTISIG, OP_CHECKMULTISIGVERIFY
-*/
+  OP_CODESEPARATOR, OP_CHECKSIG, OP_CHECKSIGVERIFY
+//  OP_CHECKMULTISIG, OP_CHECKMULTISIGVERIFY
 )
 
 

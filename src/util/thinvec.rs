@@ -51,6 +51,16 @@ impl<T> ThinVec<T> {
     }
   }
 
+  /// Constructor from an ordinary vector
+  #[inline]
+  pub fn from_vec(mut v: Vec<T>) -> ThinVec<T> {
+    v.shrink_to_fit();
+    assert!(v.len() <= u32::MAX as uint);
+    let ret = ThinVec { ptr: v.as_mut_ptr(), cap: v.len() as u32 };
+    unsafe { mem::forget(v); }
+    ret
+  }
+
   /// Iterator over elements of the vector
   #[inline]
   pub fn iter<'a>(&'a self) -> Items<'a, T> {
@@ -85,6 +95,12 @@ impl<T> ThinVec<T> {
   #[inline]
   pub unsafe fn init<'a>(&'a mut self, index: uint, value: T) {
     ptr::write(&mut *self.ptr.offset(index as int), value);
+  }
+
+  /// Returns a slice starting from `index`
+  #[inline]
+  pub fn slice_from<'a>(&'a self, index: uint) -> &'a [T] {
+    self.as_slice().slice_from(index)
   }
 
   /// Push: always reallocates, try not to use this
@@ -178,7 +194,7 @@ impl<T> FromIterator<T> for ThinVec<T> {
   #[inline]
   fn from_iter<I: Iterator<T>>(iter: I) -> ThinVec<T> {
     let (lower, _) = iter.size_hint();
-    assert!(lower < u32::MAX as uint);
+    assert!(lower <= u32::MAX as uint);
     unsafe {
       let mut vector = ThinVec::with_capacity(lower as u32);
       for (n, elem) in iter.enumerate() {

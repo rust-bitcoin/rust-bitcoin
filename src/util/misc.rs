@@ -73,11 +73,71 @@ pub fn consume_err<T>(s: &str, res: IoResult<T>) {
   };
 }
 
+/// Search for `needle` in the vector `haystack` and remove every
+/// instance of it, returning the number of instances removed.
+pub fn find_and_remove<T:Eq+::std::fmt::Show>(haystack: &mut Vec<T>, needle: &[T]) -> uint {
+  if needle.len() > haystack.len() { return 0; }
+
+  let mut top = haystack.len() - needle.len();
+  let mut n_deleted = 0;
+
+  let mut i = 0;
+  while i <= top {
+    if haystack.slice(i, i + needle.len()) == needle {
+      let v = haystack.as_mut_slice();
+      for j in range(i, top) {
+        v.swap(j + needle.len(), j);
+      }
+      n_deleted += 1;
+      // This is ugly but prevents infinite loop in case of overflow
+      let overflow = top < needle.len();
+      top -= needle.len();
+      if overflow { break; }
+    } else {
+      i += 1;
+    }
+  }
+  haystack.truncate(top + needle.len());
+  n_deleted
+}
+
 #[cfg(test)]
 mod tests {
   use std::prelude::*;
 
-  use util::misc::hex_bytes;
+  use super::find_and_remove;
+  use super::hex_bytes;
+
+  #[test]
+  fn test_find_and_remove() {
+    let mut v = vec![1u, 2, 3, 4, 2, 3, 4, 2, 3, 4, 5, 6, 7, 8, 9];
+
+    assert_eq!(find_and_remove(&mut v, [5, 5, 5]), 0);
+    assert_eq!(v, vec![1, 2, 3, 4, 2, 3, 4, 2, 3, 4, 5, 6, 7, 8, 9]);
+
+    assert_eq!(find_and_remove(&mut v, [5, 6, 7]), 1);
+    assert_eq!(v, vec![1, 2, 3, 4, 2, 3, 4, 2, 3, 4, 8, 9]);
+
+    assert_eq!(find_and_remove(&mut v, [4, 8, 9]), 1);
+    assert_eq!(v, vec![1, 2, 3, 4, 2, 3, 4, 2, 3]);
+
+    assert_eq!(find_and_remove(&mut v, [1]), 1);
+    assert_eq!(v, vec![2, 3, 4, 2, 3, 4, 2, 3]);
+
+    assert_eq!(find_and_remove(&mut v, [2]), 3);
+    assert_eq!(v, vec![3, 4, 3, 4, 3]);
+
+    assert_eq!(find_and_remove(&mut v, [3, 4]), 2);
+    assert_eq!(v, vec![3]);
+
+    assert_eq!(find_and_remove(&mut v, [5, 5, 5]), 0);
+    assert_eq!(find_and_remove(&mut v, [5]), 0);
+    assert_eq!(find_and_remove(&mut v, [3]), 1);
+    assert_eq!(v, vec![]);
+
+    assert_eq!(find_and_remove(&mut v, [5, 5, 5]), 0);
+    assert_eq!(find_and_remove(&mut v, [5]), 0);
+  }
 
   #[test]
   fn test_hex_bytes() {
