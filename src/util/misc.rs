@@ -77,6 +77,7 @@ pub fn consume_err<T>(s: &str, res: IoResult<T>) {
 /// instance of it, returning the number of instances removed.
 pub fn find_and_remove<T:Eq+::std::fmt::Show>(haystack: &mut Vec<T>, needle: &[T]) -> uint {
   if needle.len() > haystack.len() { return 0; }
+  if needle.len() == 0 { return 0; }
 
   let mut top = haystack.len() - needle.len();
   let mut n_deleted = 0;
@@ -112,6 +113,7 @@ mod tests {
   fn test_find_and_remove() {
     let mut v = vec![1u, 2, 3, 4, 2, 3, 4, 2, 3, 4, 5, 6, 7, 8, 9];
 
+    assert_eq!(find_and_remove(&mut v, []), 0);
     assert_eq!(find_and_remove(&mut v, [5, 5, 5]), 0);
     assert_eq!(v, vec![1, 2, 3, 4, 2, 3, 4, 2, 3, 4, 5, 6, 7, 8, 9]);
 

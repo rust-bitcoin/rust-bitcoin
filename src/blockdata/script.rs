@@ -57,6 +57,10 @@ pub struct Script(ThinVec<u8>);
 pub enum ScriptError {
   /// OP_CHECKSIG was called with a bad public key
   BadPublicKey,
+  /// OP_CHECKSIG was called with a bad signature
+  BadSignature,
+  /// An ECDSA error
+  EcdsaError(::secp256k1::Error),
   /// An OP_ELSE happened while not in an OP_IF tree
   ElseWithoutIf,
   /// An OP_ENDIF happened while not in an OP_IF tree
@@ -69,6 +73,10 @@ pub enum ScriptError {
   EarlyEndOfScript,
   /// An OP_RETURN or synonym was executed
   ExecutedReturn,
+  /// A multisig tx with negative or too many keys
+  MultisigBadKeyCount(int),
+  /// A multisig tx with negative or too many signatures
+  MultisigBadSigCount(int),
   /// Used OP_PICK with a negative index
   NegativePick,
   /// Used OP_ROLL with a negative index
@@ -194,6 +202,90 @@ pub fn read_uint<'a, I:Iterator<(uint, &'a u8)>>(mut iter: I, size: uint)
     }
   }
   Ok(ret)
+}
+
+/// Check a signature -- returns an error that is currently just translated
+/// into a 0/1 to push onto the script stack
+fn check_signature(secp: &Secp256k1, sig_slice: &[u8], pk_slice: &[u8], script: Vec<u8>,
+                   tx: &Transaction, input_index: uint) -> Result<(), ScriptError> {
+
+  // Check public key
+  let pubkey = PublicKey::from_slice(pk_slice);
+  if pubkey.is_err() {
+    return Err(BadPublicKey);
+  }
+  let pubkey = pubkey.unwrap();
+
+  // Check signature and hashtype
+  if sig_slice.len() == 0 {
+    return Err(BadSignature);
+  }
+  let (hashtype, anyone_can_pay) = SignatureHashType::from_signature(sig_slice);
+
+  // Compute the transaction data to be hashed
+  let mut tx_copy = tx.clone();
+
+  // Put the script into an Option so that we can move it (via take_unwrap())
+  // in the following branch/loop without the move-checker complaining about
+  // multiple moves.
+  let mut script = Some(script);
+  if anyone_can_pay {
+    // For anyone-can-pay transactions we replace the whole input array
+    // with just the current input, to ensure the others have no effect.
+    let mut old_input = tx_copy.input[input_index].clone();
+    old_input.script_sig = Script(ThinVec::from_vec(script.take_unwrap()));
+    tx_copy.input = vec![old_input];
+  } else {
+    // Otherwise we keep all the inputs, blanking out the others and even
+    // resetting their sequence no. if appropriate
+    for (n, input) in tx_copy.input.mut_iter().enumerate() {
+      // Zero out the scripts of other inputs
+      if n == input_index {
+        input.script_sig = Script(ThinVec::from_vec(script.take_unwrap()));
+      } else {
+        input.script_sig = Script::new();
+        // If we aren't signing them, also zero out the sequence number
+        if hashtype == SigHashSingle || hashtype == SigHashNone {
+          input.sequence = 0;
+        }
+      }
+    }
+  }
+
+  // Erase outputs as appropriate
+  let mut sighash_single_bug = false;
+  match hashtype {
+    SigHashNone => { tx_copy.output = vec![]; }
+    SigHashSingle => {
+      if input_index < tx_copy.output.len() {
+        let mut new_outs = Vec::with_capacity(input_index + 1);
+        for _ in range(0, input_index) {
+          new_outs.push(Default::default())
+        }
+        new_outs.push(tx_copy.output.swap_remove(input_index).unwrap());
+        tx_copy.output = new_outs;
+      } else {
+        sighash_single_bug = true;
+      }
+    }
+    SigHashAll | SigHashUnknown => {}
+  }
+
+  let signature_hash = if sighash_single_bug {
+    vec![1, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0]
+  } else {
+    let mut data_to_sign = serialize(&tx_copy).unwrap();
+    data_to_sign.push(*sig_slice.last().unwrap());
+    data_to_sign.push(0);
+    data_to_sign.push(0);
+    data_to_sign.push(0);
+    serialize(&Sha256dHash::from_data(data_to_sign.as_slice())).unwrap()
+  };
+
+  secp.verify(signature_hash.as_slice(), sig_slice, &pubkey).map_err(|e| EcdsaError(e))
 }
 
 // Macro to translate English stack instructions into Rust code.
@@ -524,96 +616,99 @@ impl Script {
             opcodes::OP_CHECKSIG | opcodes::OP_CHECKSIGVERIFY => {
               if stack.len() < 2 { return Err(PopEmptyStack); }
 
-              let pubkey = PublicKey::from_slice(stack.pop().unwrap().as_slice());
-              let signature = stack.pop().unwrap();
+              let pk = stack.pop().unwrap();
+              let pk_slice = pk.as_slice();
+              let sig = stack.pop().unwrap();
+              let sig_slice = sig.as_slice();
 
-              if pubkey.is_err() {
-                stack.push(build_scriptint(0));
-              } else if signature.len() == 0 {
-                stack.push(build_scriptint(0));
-              } else {
-                // This is as far as we can go without a transaction, so fail here
-                if input_context.is_none() { return Err(NoTransaction); }
-                // Otherwise unwrap it
-                let (tx, input_index) = input_context.unwrap();
-                let pubkey = pubkey.unwrap();
-                let (hashtype, anyone_can_pay) =
-                    SignatureHashType::from_signature(signature.as_slice());
+              // Compute the section of script that needs to be hashed: everything
+              // from the last CODESEPARATOR, except the signature itself.
+              let mut script = Vec::from_slice(raw.slice_from(codeseparator_index));
+              find_and_remove(&mut script, sig_slice);
 
-                // Compute the section of script that needs to be hashed: everything
-                // from the last CODESEPARATOR, except the signature itself.
-                let mut script = Vec::from_slice(raw.slice_from(codeseparator_index));
-                find_and_remove(&mut script, signature.as_slice());
+              // This is as far as we can go without a transaction, so fail here
+              if input_context.is_none() { return Err(NoTransaction); }
+              // Otherwise unwrap it
+              let (tx, input_index) = input_context.unwrap();
 
-                // Compute the transaction data to be hashed
-                let mut tx_copy = tx.clone();
-                // Put the script into an Option so that we can move it (via take_unwrap())
-                // in the following branch/loop without the move-checker complaining about
-                // multiple moves.
-                let mut script = Some(script);
-                if anyone_can_pay {
-                  // For anyone-can-pay transactions we replace the whole input array
-                  // with just the current input, to ensure the others have no effect.
-                  let mut old_input = tx_copy.input[input_index].clone();
-                  old_input.script_sig = Script(ThinVec::from_vec(script.take_unwrap()));
-                  tx_copy.input = vec![old_input];
-                } else {
-                  // Otherwise we keep all the inputs, blanking out the others and even
-                  // resetting their sequence no. if appropriate
-                  for (n, input) in tx_copy.input.mut_iter().enumerate() {
-                    // Zero out the scripts of other inputs
-                    if n == input_index {
-                      input.script_sig = Script(ThinVec::from_vec(script.take_unwrap()));
-                    } else {
-                      input.script_sig = Script::new();
-                      // If we aren't signing them, also zero out the sequence number
-                      if hashtype == SigHashSingle || hashtype == SigHashNone {
-                        input.sequence = 0;
-                      }
-                    }
-                  }
-                }
-
-                // Erase outputs as appropriate
-                let mut sighash_single_bug = false;
-                match hashtype {
-                  SigHashNone => { tx_copy.output = vec![]; }
-                  SigHashSingle => {
-                    if input_index < tx_copy.output.len() {
-                      let mut new_outs = Vec::with_capacity(input_index + 1);
-                      for _ in range(0, input_index) {
-                        new_outs.push(Default::default())
-                      }
-                      new_outs.push(tx_copy.output.swap_remove(input_index).unwrap());
-                      tx_copy.output = new_outs;
-                    } else {
-                      sighash_single_bug = true;
-                    }
-                  }
-                  SigHashAll | SigHashUnknown => {}
-                }
-
-                let signature_hash = if sighash_single_bug {
-                  vec![1, 0, 0, 0, 0, 0, 0, 0,
-                       0, 0, 0, 0, 0, 0, 0, 0,
-                       0, 0, 0, 0, 0, 0, 0, 0,
-                       0, 0, 0, 0, 0, 0, 0, 0]
-                } else {
-                  let mut data_to_sign = serialize(&tx_copy).unwrap();
-                  data_to_sign.push(*signature.last().unwrap());
-                  data_to_sign.push(0);
-                  data_to_sign.push(0);
-                  data_to_sign.push(0);
-                  serialize(&Sha256dHash::from_data(data_to_sign.as_slice())).unwrap()
-                };
-
-                match secp.verify(signature_hash.as_slice(), signature.as_slice(), &pubkey) {
-                  Ok(()) => stack.push(build_scriptint(1)),
-                  _ => stack.push(build_scriptint(0)),
-                }
+              match check_signature(&secp, sig_slice, pk_slice, script, tx, input_index) {
+                Ok(()) => stack.push(build_scriptint(1)),
+                _ => stack.push(build_scriptint(0)),
+              }
+              if op == opcodes::OP_CHECKSIGVERIFY { op_verify!(stack); }
+            }
+            opcodes::OP_CHECKMULTISIG | opcodes::OP_CHECKMULTISIGVERIFY => {
+              // Read all the keys
+              if stack.len() < 1 { return Err(PopEmptyStack); }
+              let n_keys = try!(read_scriptint(stack.pop().unwrap().as_slice()));
+              if n_keys < 0 || n_keys > 20 {
+                return Err(MultisigBadKeyCount(n_keys as int));
               }
 
-              if op == opcodes::OP_CHECKSIGVERIFY { op_verify!(stack); }
+              if (stack.len() as i64) < n_keys { return Err(PopEmptyStack); }
+              let mut keys = Vec::with_capacity(n_keys as uint);
+              for _ in range(0, n_keys) {
+                keys.push(stack.pop().unwrap());
+              }
+
+              // Read all the signatures
+              if stack.len() < 1 { return Err(PopEmptyStack); }
+              let n_sigs = try!(read_scriptint(stack.pop().unwrap().as_slice()));
+              if n_sigs < 0 || n_sigs > n_keys {
+                return Err(MultisigBadSigCount(n_sigs as int));
+              }
+
+              if (stack.len() as i64) < n_sigs { return Err(PopEmptyStack); }
+              let mut sigs = Vec::with_capacity(n_sigs as uint);
+              for _ in range(0, n_sigs) {
+                sigs.push(stack.pop().unwrap());
+              }
+
+              // Pop one more element off the stack to be replicate a consensus bug
+              if stack.pop().is_none() { return Err(PopEmptyStack); }
+
+              // Compute the section of script that needs to be hashed: everything
+              // from the last CODESEPARATOR, except the signatures themselves.
+              let mut script = Vec::from_slice(raw.slice_from(codeseparator_index));
+              for sig in sigs.iter() {
+                find_and_remove(&mut script, sig.as_slice());
+              }
+
+              // This is as far as we can go without a transaction, so fail here
+              if input_context.is_none() { return Err(NoTransaction); }
+              // Otherwise unwrap it
+              let (tx, input_index) = input_context.unwrap();
+
+              // Check signatures
+              let mut key_iter = keys.iter();
+              let mut sig_iter = sigs.iter();
+              let mut key = key_iter.next();
+              let mut sig = sig_iter.next();
+              loop {
+                match (key, sig) {
+                  // Try to validate the signature with the given key
+                  (Some(k), Some(s)) => {
+                    // Move to the next signature if it is valid for the current key
+                    if check_signature(&secp, s.as_slice(), k.as_slice(),
+                                       script.clone(), tx, input_index).is_ok() {
+                      sig = sig_iter.next();
+                    }
+                    // Move to the next key in any case
+                    key = key_iter.next();
+                  }
+                  // Run out of signatures, success
+                  (_, None) => {
+                    stack.push(build_scriptint(1));
+                    break;
+                  }
+                  // Run out of keys to match to signatures, fail
+                  (None, Some(_)) => {
+                    stack.push(build_scriptint(0));
+                    break;
+                  }
+                }
+              }
+              if op == opcodes::OP_CHECKMULTISIGVERIFY { op_verify!(stack); }
             }
           }
         }
@@ -735,10 +830,8 @@ mod test {
     // before needing a transaction
     assert_eq!(script_pk.evaluate(&mut vec![], None), Err(PopEmptyStack));
     assert_eq!(script_pk.evaluate(&mut vec![vec![], vec![]], None), Err(VerifyFailed));
-    // A null signature is actually Ok -- this will just push 0 onto the stack
-    // since the signature is guaranteed to fail.
-    assert_eq!(script_pk.evaluate(&mut vec![vec![], "026d5d4cfef5f3d97d2263941b4d8e7aaa82910bf8e6f7c6cf1d8f0d755b9d2d1a".from_hex().unwrap()], None), Ok(()));
     // But if the signature is there, we need a tx to check it
+    assert_eq!(script_pk.evaluate(&mut vec![vec![], "026d5d4cfef5f3d97d2263941b4d8e7aaa82910bf8e6f7c6cf1d8f0d755b9d2d1a".from_hex().unwrap()], None), Err(NoTransaction));
     assert_eq!(script_pk.evaluate(&mut vec![vec![0], "026d5d4cfef5f3d97d2263941b4d8e7aaa82910bf8e6f7c6cf1d8f0d755b9d2d1a".from_hex().unwrap()], None), Err(NoTransaction));
   }
 
