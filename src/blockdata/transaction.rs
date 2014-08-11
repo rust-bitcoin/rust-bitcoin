@@ -23,6 +23,8 @@
 //! This module provides the structures and functions needed to support transactions.
 //!
 
+use std::default::Default;
+
 use util::hash::Sha256dHash;
 use blockdata::script::Script;
 use network::encodable::ConsensusEncodable;
@@ -52,6 +54,13 @@ pub struct TxOut {
   pub value: u64,
   /// The script which must satisfy for the output to be spent
   pub script_pubkey: Script
+}
+
+// This is used as a "null txout" in consensus signing code
+impl Default for TxOut {
+  fn default() -> TxOut {
+    TxOut { value: 0xffffffffffffffff, script_pubkey: Script::new() }
+  }
 }
 
 /// A Bitcoin transaction, which describes an authenticated movement of coins

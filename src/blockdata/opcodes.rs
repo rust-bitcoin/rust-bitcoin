@@ -592,7 +592,7 @@ pub mod all {
         super::PushNum(-1)
       // 16 opcodes
       } else if OP_PUSHNUM_1 as u8 <= *self as u8 && *self as u8 <= OP_PUSHNUM_16 as u8 {
-        super::PushNum(1 + OP_PUSHNUM_1 as int - *self as int)
+        super::PushNum(1 + *self as int - OP_PUSHNUM_1 as int)
       // 76 opcodes
       } else if *self as u8 <= OP_PUSHBYTES_75 as u8 {
         super::PushBytes(*self as uint)

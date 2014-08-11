@@ -24,11 +24,25 @@ use std::mem;
 use blockdata::transaction::{Transaction, TxOut};
 use blockdata::constants::genesis_block;
 use blockdata::block::Block;
+use blockdata::script::read_scriptbool;
 use network::constants::Network;
 use network::serialize::BitcoinHash;
 use util::hash::{DumbHasher, Sha256dHash};
 use util::uint::Uint128;
 use util::thinvec::ThinVec;
+
+/// The amount of validation to do when updating the UTXO set
+#[deriving(PartialEq, Eq, PartialOrd, Ord, Clone, Show)]
+pub enum ValidationLevel {
+  /// Blindly update the UTXO set (NOT recommended)
+  NoValidation,
+  /// Check that the blocks are at least in the right order
+  ChainValidation,
+  /// Check that any inputs are actually txouts in the set
+  TxoValidation,
+  /// Execute the scripts and ensure they pass
+  ScriptValidation
+}
 
 /// Vector of outputs; None indicates a nonexistent or already spent output
 type UtxoNode = ThinVec<Option<TxOut>>;
@@ -127,9 +141,10 @@ impl UtxoSet {
   }
 
   /// Apply the transactions contained in a block
-  pub fn update(&mut self, block: &Block) -> bool {
+  pub fn update(&mut self, block: &Block, validation: ValidationLevel) -> bool {
     // Make sure we are extending the UTXO set in order
-    if self.last_hash != block.header.prev_blockhash {
+    if validation >= ChainValidation &&
+       self.last_hash != block.header.prev_blockhash {
       return false;
     }
 
@@ -149,8 +164,54 @@ impl UtxoSet {
         for (n, input) in tx.input.iter().enumerate() {
           let taken = self.take_utxo(input.prev_hash, input.prev_index);
           match taken {
-            Some(txo) => { self.spent_txos.get_mut(spent_idx).push(((txid, n as u32), txo)); }
-            None => { self.rewind(block); }
+            Some(txo) => {
+              if validation >= ScriptValidation {
+                let mut stack = vec![];
+                match input.script_sig.evaluate(&mut stack, None) {
+                  Ok(_) => {},
+                  Err(e) => {
+                      use serialize::json::ToJson;
+                    println!("scriptsig error {}", e);
+                      println!("txid was {}", tx.bitcoin_hash());
+                      println!("tx was {}", tx.to_json().to_string());
+                      println!("script ended with stack {}", stack);
+                    self.rewind(block);
+                    return false;
+                  }
+                }
+                match txo.script_pubkey.evaluate(&mut stack, Some((tx, n))) {
+                  Ok(_) => {},
+                  Err(e) => {
+                      use serialize::json::ToJson;
+                    println!("scriptpubkey error {}", e);
+                      println!("txid was {}", tx.bitcoin_hash());
+                      println!("tx was {}", tx.to_json().to_string());
+                      println!("script ended with stack {}", stack);
+                    self.rewind(block);
+                    return false;
+                  }
+                }
+                match stack.pop() {
+                  Some(v) => {
+                    if !read_scriptbool(v.as_slice()) {
+                      use serialize::json::ToJson;
+                      println!("txid was {}", tx.bitcoin_hash());
+                      println!("tx was {}", tx.to_json().to_string());
+                      println!("script ended with stack {}", stack);
+                      self.rewind(block);
+                      return false;
+                    }
+                  }
+                  None => {
+                    println!("script ended with empty stack");
+                    self.rewind(block);
+                    return false;
+                  }
+                }
+              }
+              self.spent_txos.get_mut(spent_idx).push(((txid, n as u32), txo));
+            }
+            None => { if validation >= TxoValidation { self.rewind(block); return false; } }
           }
         }
       }
@@ -285,8 +346,9 @@ mod tests {
   use std::io::IoResult;
   use serialize::hex::FromHex;
 
+  use super::{UtxoSet, TxoValidation};
+
   use blockdata::block::Block;
-  use blockdata::utxoset::UtxoSet;
   use network::constants::Bitcoin;
   use network::serialize::{BitcoinHash, deserialize, serialize};
 
@@ -297,7 +359,7 @@ mod tests {
     let new_block: Block = deserialize("010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914cd74d6e49ffff001d323b3a7b0201000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0804ffff001d026e04ffffffff0100f2052a0100000043410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac00000000010000000321f75f3139a013f50f315b23b0c9a2b6eac31e2bec98e5891c924664889942260000000049483045022100cb2c6b346a978ab8c61b18b5e9397755cbd17d6eb2fe0083ef32e067fa6c785a02206ce44e613f31d9a6b0517e46f3db1576e9812cc98d159bfdaf759a5014081b5c01ffffffff79cda0945903627c3da1f85fc95d0b8ee3e76ae0cfdc9a65d09744b1f8fc85430000000049483045022047957cdd957cfd0becd642f6b84d82f49b6cb4c51a91f49246908af7c3cfdf4a022100e96b46621f1bffcf5ea5982f88cef651e9354f5791602369bf5a82a6cd61a62501fffffffffe09f5fe3ffbf5ee97a54eb5e5069e9da6b4856ee86fc52938c2f979b0f38e82000000004847304402204165be9a4cbab8049e1af9723b96199bfd3e85f44c6b4c0177e3962686b26073022028f638da23fc003760861ad481ead4099312c60030d4cb57820ce4d33812a5ce01ffffffff01009d966b01000000434104ea1feff861b51fe3f5f8a3b12d0f4712db80e919548a80839fc47c6a21e66d957e9c5d8cd108c7a2d2324bad71f9904ac0ae7336507d785b17a2c115e427a32fac00000000".from_hex().unwrap()).unwrap();
 
     // Make sure we can't add the block directly, since we are missing the inputs
-    assert!(!empty_set.update(&new_block));
+    assert!(!empty_set.update(&new_block, TxoValidation));
     assert_eq!(empty_set.n_utxos(), 0);
     // Add the block manually so that we'll have some UTXOs for the rest of the test
     for tx in new_block.txdata.iter() {
@@ -317,7 +379,7 @@ mod tests {
 
     // Check again that we can't add the block, and that this doesn't mess up the
     // existing UTXOs
-    assert!(!empty_set.update(&new_block));
+    assert!(!empty_set.update(&new_block, TxoValidation));
     assert_eq!(empty_set.n_utxos(), 2);
     for tx in new_block.txdata.iter() {
       let hash = tx.bitcoin_hash();

@@ -25,6 +25,7 @@
 //!
 
 use std::char::from_digit;
+use std::default::Default;
 use serialize::json;
 
 use crypto::digest::Digest;
@@ -119,6 +120,8 @@ impl SignatureHashType {
 
 /// Helper to encode an integer in script format
 fn build_scriptint(n: i64) -> Vec<u8> {
+  if n == 0 { return vec![] }
+
   let neg = n < 0;
 
   let mut abs = if neg { -n } else { n } as uint;
@@ -155,7 +158,7 @@ fn build_scriptint(n: i64) -> Vec<u8> {
 /// don't fit in 64 bits (for efficiency on modern processors) so we
 /// simply say, anything in excess of 32 bits is no longer a number.
 /// This is basically a ranged type implementation.
-fn read_scriptint(v: &[u8]) -> Result<i64, ScriptError> {
+pub fn read_scriptint(v: &[u8]) -> Result<i64, ScriptError> {
   let len = v.len();
   if len == 0 { return Ok(0); }
   if len > 4 { return Err(NumericOverflow); }
@@ -172,17 +175,21 @@ fn read_scriptint(v: &[u8]) -> Result<i64, ScriptError> {
 /// This is like "read_scriptint then map 0 to false and everything
 /// else as true", except that the overflow rules don't apply.
 #[inline]
-fn read_scriptbool(v: &[u8]) -> bool {
+pub fn read_scriptbool(v: &[u8]) -> bool {
   !v.iter().all(|&w| w == 0)
 }
 
-/// Helper to read a script uint
-fn read_uint<'a, I:Iterator<(uint, &'a u8)>>(mut iter: I, size: uint)
+/// Read a script-encoded unsigned integer
+pub fn read_uint<'a, I:Iterator<(uint, &'a u8)>>(mut iter: I, size: uint)
     -> Result<uint, ScriptError> {
+  let mut sh = 0;
   let mut ret = 0;
   for _ in range(0, size) {
     match iter.next() {
-      Some((_, &n)) => { ret = (ret << 8) + n as uint; }
+      Some((_, &n)) => {
+        ret += n as uint << sh;
+        sh += 8;
+      }
       None => { return Err(EarlyEndOfScript); }
     }
   }
@@ -339,8 +346,8 @@ impl Script {
 
     for (index, byte) in iter {
       let executing = exec_stack.iter().all(|e| *e);
-println!("{}, {}   len {} stack {}", index, allops::Opcode::from_u8(*byte), stack.len(), stack);
       // The definitions of all these categories are in opcodes.rs
+//println!("read {} as {}", allops::Opcode::from_u8(*byte), allops::Opcode::from_u8(*byte).classify());
       match (executing, allops::Opcode::from_u8(*byte).classify()) {
         // Illegal operations mean failure regardless of execution state
         (_, opcodes::IllegalOp)       => return Err(IllegalOpcode),
@@ -476,7 +483,6 @@ println!("{}, {}   len {} stack {}", index, allops::Opcode::from_u8(*byte), stac
               if stack.len() < 2 { return Err(PopEmptyStack); }
               let a = stack.pop().unwrap();
               let b = stack.pop().unwrap();
-println!("comparing {} to {} , eq {}", a, b, a == b)
               stack.push(build_scriptint(if a == b { 1 } else { 0 }));
               if op == opcodes::OP_EQUALVERIFY { op_verify!(stack); }
             }
@@ -521,7 +527,6 @@ println!("comparing {} to {} , eq {}", a, b, a == b)
               let pubkey = PublicKey::from_slice(stack.pop().unwrap().as_slice());
               let signature = stack.pop().unwrap();
 
-println!("pubkey {}  sig {}", pubkey, signature);
               if pubkey.is_err() {
                 stack.push(build_scriptint(0));
               } else if signature.len() == 0 {
@@ -575,7 +580,11 @@ println!("pubkey {}  sig {}", pubkey, signature);
                   SigHashNone => { tx_copy.output = vec![]; }
                   SigHashSingle => {
                     if input_index < tx_copy.output.len() {
-                      let new_outs = tx_copy.output.move_iter().take(input_index + 1).collect();
+                      let mut new_outs = Vec::with_capacity(input_index + 1);
+                      for _ in range(0, input_index) {
+                        new_outs.push(Default::default())
+                      }
+                      new_outs.push(tx_copy.output.swap_remove(input_index).unwrap());
                       tx_copy.output = new_outs;
                     } else {
                       sighash_single_bug = true;
@@ -647,6 +656,7 @@ impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for Script {
 #[cfg(test)]
 mod test {
   use std::io::IoResult;
+  use serialize::hex::FromHex;
 
   use super::{Script, build_scriptint, read_scriptint, read_scriptbool};
   use super::{NoTransaction, PopEmptyStack, VerifyFailed};
@@ -654,7 +664,6 @@ mod test {
   use network::serialize::{deserialize, serialize};
   use blockdata::opcodes;
   use blockdata::transaction::Transaction;
-  use util::misc::hex_bytes;
   use util::thinvec::ThinVec;
 
   #[test]
@@ -687,7 +696,7 @@ mod test {
 
   #[test]
   fn script_serialize() {
-    let hex_script = hex_bytes("6c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52").unwrap();
+    let hex_script = "6c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52".from_hex().unwrap();
     let script: IoResult<Script> = deserialize(hex_script.clone());
     assert!(script.is_ok());
     assert_eq!(serialize(&script.unwrap()), Ok(hex_script));
@@ -720,7 +729,7 @@ mod test {
 
   #[test]
   fn script_eval_checksig_without_tx() {
-    let hex_pk = hex_bytes("1976a914e729dea4a3a81108e16376d1cc329c91db58999488ac").unwrap();
+    let hex_pk = "1976a914e729dea4a3a81108e16376d1cc329c91db58999488ac".from_hex().unwrap();
     let script_pk: Script = deserialize(hex_pk.clone()).ok().expect("scriptpk");
     // Should be able to check that the sig is there and pk correct
     // before needing a transaction
@@ -728,17 +737,17 @@ mod test {
     assert_eq!(script_pk.evaluate(&mut vec![vec![], vec![]], None), Err(VerifyFailed));
     // A null signature is actually Ok -- this will just push 0 onto the stack
     // since the signature is guaranteed to fail.
-    assert_eq!(script_pk.evaluate(&mut vec![vec![], hex_bytes("026d5d4cfef5f3d97d2263941b4d8e7aaa82910bf8e6f7c6cf1d8f0d755b9d2d1a").unwrap()], None), Ok(()));
+    assert_eq!(script_pk.evaluate(&mut vec![vec![], "026d5d4cfef5f3d97d2263941b4d8e7aaa82910bf8e6f7c6cf1d8f0d755b9d2d1a".from_hex().unwrap()], None), Ok(()));
     // But if the signature is there, we need a tx to check it
-    assert_eq!(script_pk.evaluate(&mut vec![vec![0], hex_bytes("026d5d4cfef5f3d97d2263941b4d8e7aaa82910bf8e6f7c6cf1d8f0d755b9d2d1a").unwrap()], None), Err(NoTransaction));
+    assert_eq!(script_pk.evaluate(&mut vec![vec![0], "026d5d4cfef5f3d97d2263941b4d8e7aaa82910bf8e6f7c6cf1d8f0d755b9d2d1a".from_hex().unwrap()], None), Err(NoTransaction));
   }
 
   #[test]
   fn script_eval_pubkeyhash() {
     // nb these are both prefixed with their length in 1 byte
-    let tx_hex = hex_bytes("010000000125d6681b797691aebba34b9d8e50f769ab1e8807e78405ae505c218cf8e1e9e1a20100006a47304402204c2dd8a9b6f8d425fcd8ee9a20ac73b619906a6367eac6cb93e70375225ec0160220356878eff111ff3663d7e6bf08947f94443845e0dcc54961664d922f7660b80c0121029fa8e8d8e3fd61183ab52f98d65500fd028a5d0a899c6bcd4ecaf1eda9eac284ffffffff0110270000000000001976a914299567077f41bc20059dc21a1eb1ef5a6a43b9c088ac00000000").unwrap();
+    let tx_hex = "010000000125d6681b797691aebba34b9d8e50f769ab1e8807e78405ae505c218cf8e1e9e1a20100006a47304402204c2dd8a9b6f8d425fcd8ee9a20ac73b619906a6367eac6cb93e70375225ec0160220356878eff111ff3663d7e6bf08947f94443845e0dcc54961664d922f7660b80c0121029fa8e8d8e3fd61183ab52f98d65500fd028a5d0a899c6bcd4ecaf1eda9eac284ffffffff0110270000000000001976a914299567077f41bc20059dc21a1eb1ef5a6a43b9c088ac00000000".from_hex().unwrap();
 
-    let output_hex = hex_bytes("1976a914299567077f41bc20059dc21a1eb1ef5a6a43b9c088ac").unwrap();
+    let output_hex = "1976a914299567077f41bc20059dc21a1eb1ef5a6a43b9c088ac".from_hex().unwrap();
 
     let tx: Transaction = deserialize(tx_hex.clone()).ok().expect("transaction");
     let script_pk: Script = deserialize(output_hex.clone()).ok().expect("scriptpk");
@@ -748,8 +757,112 @@ mod test {
     assert_eq!(script_pk.evaluate(&mut stack, Some((&tx, 0))), Ok(()));
     assert_eq!(stack.len(), 1);
     assert_eq!(read_scriptbool(stack.pop().unwrap().as_slice()), true);
-println!("stack {}", stack);
+  }
 
+
+  #[test]
+  fn script_eval_testnet_failure_1() {
+    // OP_PUSHNUM ops weren't correct, also computed zero must be [], not [0]
+    // txid dc3aad51b4b9ea1ef40755a38b0b4d6e08c72d2ac5e95b8bebe9bd319b6aed7e
+    let tx_hex = "010000000560e0b5061b08a60911c9b2702cc0eba80adbe42f3ec9885c76930837db5380c001000000054f01e40164ffffffff0d2fe5749c96f15e37ceed29002c7f338df4f2781dd79f4d4eea7a08aa69b959000000000351519bffffffff0d2fe5749c96f15e37ceed29002c7f338df4f2781dd79f4d4eea7a08aa69b959020000000452018293ffffffff0d2fe5749c96f15e37ceed29002c7f338df4f2781dd79f4d4eea7a08aa69b95903000000045b5a5193ffffffff0d2fe5749c96f15e37ceed29002c7f338df4f2781dd79f4d4eea7a08aa69b95904000000045b5a5193ffffffff06002d310100000000029f91002d3101000000000401908f87002d31010000000001a0002d3101000000000705feffffff808730d39700000000001976a9140467f85e06a2ef0a479333b47258f4196fb94b2c88ac002d3101000000000604ffffff7f9c00000000".from_hex().unwrap();
+
+    let output_hex = vec![ vec![1, 0xa5], vec![1, 0x61], vec![2, 0x00, 0x87], vec![1, 0x9c], vec![2, 0x9d, 0x51] ];
+
+    let tx: Transaction = deserialize(tx_hex.clone()).ok().expect("transaction");
+    let script_pk: Vec<Script> = output_hex.iter().map(|hex| deserialize(hex.clone()).ok().expect("scriptpk")).collect();
+
+    for (n, script) in script_pk.iter().enumerate() {
+      let mut stack = vec![];
+      assert_eq!(tx.input[n].script_sig.evaluate(&mut stack, None), Ok(()));
+      assert_eq!(script.evaluate(&mut stack, Some((&tx, n))), Ok(()));
+      assert!(stack.len() >= 1);
+      assert_eq!(read_scriptbool(stack.pop().unwrap().as_slice()), true);
+    }
+  }
+
+  #[test]
+  fn script_eval_testnet_failure_2() {
+    // OP_PUSHDATA2 must read its length little-endian
+    // txid c5d4b73af6eed28798473b05d2b227edd4f285069629843e899b52c2d1c165b7)
+    let tx_hex = "010000003422300a976c1f0f6bd6172ded8cb76c23f6e57d3b19e9ff1f403990e70acf19560300000006011601150114ffffffff22300a976c1f0f6bd6172ded8cb76c23f6e57d3b19e9ff1f403990e70acf19560400000006011601150114ffffffff22300a976c1f0f6bd6172ded8cb76c23f6e57d3b19e9ff1f403990e70acf19560900000006050000008000ffffffff42e9e966f8c293ad44c0b726ec85c5338d1f30cee63aedfb6ead49571477f22909000000020051ffffffff42e9e966f8c293ad44c0b726ec85c5338d1f30cee63aedfb6ead49571477f2290a000000034f00a3ffffffff4f0ccb5158e5497900b7563c5e0ab7fad5e169b9f46e8ca24c84b1f2dc91911f030000000151ffffffff4f0ccb5158e5497900b7563c5e0ab7fad5e169b9f46e8ca24c84b1f2dc91911f040000000451525355ffffffff4f0ccb5158e5497900b7563c5e0ab7fad5e169b9f46e8ca24c84b1f2dc91911f0500000003016f8cffffffff4f0ccb5158e5497900b7563c5e0ab7fad5e169b9f46e8ca24c84b1f2dc91911f09000000025d5effffffff5649f4d40acc1720997749ede3abb24105e637dd309fb3deee4a49c49d3b4f1a0400000005016f5a5193ffffffff5649f4d40acc1720997749ede3abb24105e637dd309fb3deee4a49c49d3b4f1a06000000065a005b6b756cffffffff5649f4d40acc1720997749ede3abb24105e637dd309fb3deee4a49c49d3b4f1a080000000100ffffffff67e36cd8a0a57458261704363fc21ce927b8214b381bcf86c0b6bd8f23e5e70c0100000006011601150114ffffffff6ded57e5e632ec542b8ab851df40400c32052ce2b999cf2c6c1352872c5d6537040000000704ffffff7f7693ffffffff6ded57e5e632ec542b8ab851df40400c32052ce2b999cf2c6c1352872c5d6537050000001b1a6162636465666768696a6b6c6d6e6f707172737475767778797affffffff6ded57e5e632ec542b8ab851df40400c32052ce2b999cf2c6c1352872c5d653708000000044d010008ffffffff6ded57e5e632ec542b8ab851df40400c32052ce2b999cf2c6c1352872c5d65370a000000025191ffffffff6f3c0204703766775324115c32fd121a16f0df64f0336490157ebd94b62e059e02000000020075ffffffff8f339185bdf4c571055114df3cbbb9ebfa31b605b99c4088a1b226f88e0295020100000006016f51935c94ffffffff8f339185bdf4c571055114df3cbbb9ebfa31b605b99c4088a1b226f88e029502020000000403008000ffffffff8f339185bdf4c571055114df3cbbb9ebfa31b605b99c4088a1b226f88e029502060000001b1a6162636465666768696a6b6c6d6e6f707172737475767778797affffffff8f339185bdf4c571055114df3cbbb9ebfa31b605b99c4088a1b226f88e02950207000000044f005152ffffffff8f339185bdf4c571055114df3cbbb9ebfa31b605b99c4088a1b226f88e0295020a00000003515193ffffffff925f27a4db9032976b0ed323094dcfd12d521f36f5b64f4879a20750729a330300000000025100ffffffff925f27a4db9032976b0ed323094dcfd12d521f36f5b64f4879a20750729a33030500000006011601150114ffffffff925f27a4db9032976b0ed323094dcfd12d521f36f5b64f4879a20750729a3303080000000100ffffffff925f27a4db9032976b0ed323094dcfd12d521f36f5b64f4879a20750729a33030a00000002010bffffffffadb5b4d9c20de237a2bfa5543d8d53546fdeffed9b114e307b4d6823ef5fcd2203000000014fffffffffb1ecb9e79ce8f54e8529feeeb668a72a7f0c49831f83d76cfbc83155b8b9e1fe010000000100ffffffffb1ecb9e79ce8f54e8529feeeb668a72a7f0c49831f83d76cfbc83155b8b9e1fe0300000006011601150114ffffffffb1ecb9e79ce8f54e8529feeeb668a72a7f0c49831f83d76cfbc83155b8b9e1fe050000000351009affffffffb1ecb9e79ce8f54e8529feeeb668a72a7f0c49831f83d76cfbc83155b8b9e1fe060000000403ffff7fffffffffb1ecb9e79ce8f54e8529feeeb668a72a7f0c49831f83d76cfbc83155b8b9e1fe090000000351009bffffffffb8870d0eb7a246fe332401c2f44c59417d56b30de2640514add2e54132cf4bad0200000006011601150114ffffffffb8870d0eb7a246fe332401c2f44c59417d56b30de2640514add2e54132cf4bad04000000045b5a5193ffffffffc162c5adb8f1675ad3a17b417076efc8495541bcb1cd0f11755f062fb49d1a7a010000000151ffffffffc162c5adb8f1675ad3a17b417076efc8495541bcb1cd0f11755f062fb49d1a7a08000000025d5effffffffc162c5adb8f1675ad3a17b417076efc8495541bcb1cd0f11755f062fb49d1a7a0a000000045b5a5193ffffffffcc68b898c71166468049c9a4130809555908c30f3c88c07e6d28d2f6a6bb486b06000000020051ffffffffcc68b898c71166468049c9a4130809555908c30f3c88c07e6d28d2f6a6bb486b0800000003028000ffffffffce1cba7787ec167235879ca17f46bd4bfa405f9e3e2e35c544537bbd65a5d9620100000006011601150114ffffffffce1cba7787ec167235879ca17f46bd4bfa405f9e3e2e35c544537bbd65a5d962030000000704ffffff7f7693ffffffffd6bb18a96b21035e2d04fcd54f2f503d199aeb86b8033535e06ffdb400fb5829010000000100ffffffffd6bb18a96b21035e2d04fcd54f2f503d199aeb86b8033535e06ffdb400fb582907000000025d5effffffffd6bb18a96b21035e2d04fcd54f2f503d199aeb86b8033535e06ffdb400fb582909000000025b5affffffffd878941d1968d5027129e4b462aead4680bcce392c099d50f294063a528dad9c030000000161ffffffffd878941d1968d5027129e4b462aead4680bcce392c099d50f294063a528dad9c06000000034f4f93ffffffffe7ea17c77cbad48a8caa6ca87749ef887858eb3becc55c65f16733837ad5043a0200000006011601150114ffffffffe7ea17c77cbad48a8caa6ca87749ef887858eb3becc55c65f16733837ad5043a0300000003016f92ffffffffe7ea17c77cbad48a8caa6ca87749ef887858eb3becc55c65f16733837ad5043a050000000704ffffff7f7693ffffffffe7ea17c77cbad48a8caa6ca87749ef887858eb3becc55c65f16733837ad5043a08000000025173fffffffff24629f6d9f2b7753e1b6fe1104f8554de1ce6be0dfb4f262a28c38587ed5b34060000000151ffffffff0290051000000000001976a914954659bcb93fdad012a00d825a9bce69dc7c6a2688ac800c49110000000008517a01158874528700000000".from_hex().unwrap();
+
+    let output_hex = vec![
+      "085279011688745387".from_hex().unwrap(),
+      "08007a011488745287".from_hex().unwrap(),
+      "03825587".from_hex().unwrap(),
+      "0177".from_hex().unwrap(),
+      "024f9c".from_hex().unwrap(),
+      "0476636768".from_hex().unwrap(),
+      "09709393588893935687".from_hex().unwrap(),
+      "03016e87".from_hex().unwrap(),
+      "046e7b8887".from_hex().unwrap(),
+      "019e".from_hex().unwrap(),
+      "0493011587".from_hex().unwrap(),
+      "056362675168".from_hex().unwrap(),
+      "08517a011588745287".from_hex().unwrap(),
+      "0705feffffff0087".from_hex().unwrap(),
+      "0482011a87".from_hex().unwrap(),
+      "066301ba675168".from_hex().unwrap(),
+      "020087".from_hex().unwrap(),
+      // There are 35 more ..
+    ];
+
+    let tx: Transaction = deserialize(tx_hex.clone()).ok().expect("transaction");
+    let script_pk: Vec<Script> = output_hex.iter().map(|hex| deserialize(hex.clone()).ok().expect("scriptpk")).collect();
+
+    for (n, script) in script_pk.iter().enumerate() {
+      let mut stack = vec![];
+      assert_eq!(tx.input[n].script_sig.evaluate(&mut stack, None), Ok(()));
+      assert_eq!(script.evaluate(&mut stack, Some((&tx, n))), Ok(()));
+      assert!(stack.len() >= 1);
+      assert_eq!(read_scriptbool(stack.pop().unwrap().as_slice()), true);
+    }
+  }
+
+  #[test]
+  fn script_eval_testnet_failure_3() {
+    // For SIGHASH_SINGLE signatures, the unsigned txouts are null, that is,
+    // have blank script and value **** (u64)-1 *****
+    // txid 8ccc87b72d766ab3128f03176bb1c98293f2d1f85ebfaf07b82cc81ea6891fa9
+    let tx_hex = "01000000062c4fb29a89bfe568586dd52c4db39c3daed014bce2d94f66d79dadb82bd83000000000004847304402202ea9d51c7173b1d96d331bd41b3d1b4e78e66148e64ed5992abd6ca66290321c0220628c47517e049b3e41509e9d71e480a0cdc766f8cdec265ef0017711c1b5336f01ffffffff5b1015187325285e42c022e0c8388c0bd00a7efb0b28cd0828a5e9575bc040010000000049483045022100bf8e050c85ffa1c313108ad8c482c4849027937916374617af3f2e9a881861c9022023f65814222cab09d5ec41032ce9c72ca96a5676020736614de7b78a4e55325a81ffffffffc0e15d72865802279f4f5cd13fc86749ce27aac9fd4ba5a8b57c973a82d04a01000000004a493046022100839c1fbc5304de944f697c9f4b1d01d1faeba32d751c0f7acb21ac8a0f436a72022100e89bd46bb3a5a62adc679f659b7ce876d83ee297c7a5587b2011c4fcc72eab4502ffffffff4a1b2b51da86ee82eadce5d3b852aa8f9b3e63106d877e129c5cf450b47f5c02000000004a493046022100eaa5f90483eb20224616775891397d47efa64c68b969db1dacb1c30acdfc50aa022100cf9903bbefb1c8000cf482b0aeeb5af19287af20bd794de11d82716f9bae3db182ffffffff61a3e0d8305112ea97d9a2c29b258bd047cf7169c70b4136ba66feffee680f030000000049483045022047d512bc85842ac463ca3b669b62666ab8672ee60725b6c06759e476cebdc6c102210083805e93bd941770109bcc797784a71db9e48913f702c56e60b1c3e2ff379a6003ffffffffc7d6933e5149568d8b77fbd3f88c63e4e2449635c22defe02679492e7cb926030000000048473044022023ee4e95151b2fbbb08a72f35babe02830d14d54bd7ed1320e4751751d1baa4802206235245254f58fd1be6ff19ca291817da76da65c2f6d81d654b5185dd86b8acf83ffffffff0700e1f505000000001976a914c311d13cfbaa1fc8d364a8e89feb1985de58ae3988ac80d1f008000000001976a914eb907923b86af59d3fd918478546c7a234586caf88ac00c2eb0b000000001976a9141c88b9d44e5fc327025157c75af73774758ba68088ac80b2e60e000000001976a914142c0947df1df159b2367a0e1328efb5b76b62bd88ac00a3e111000000001976a914616bffc03acbb416ccf76a048a9bbb974c0504c488ac8093dc14000000001976a9141d5e6e993d168384864c3a92216b9b77560d436488ac804eacab060000001976a914aa9da4a3a4ddc7398ae467eddaf80d743349d6e988ac00000000".from_hex().unwrap();
+
+    let output_hex = vec![
+      "232102715e91d37d239dea832f1460e91e368115d8ca6cc23a7da966795abad9e3b699ac".from_hex().unwrap(),
+      "232102f71546fc597e63e2a72dadeeeb50c0ca64079a5a530cb01dd939716d41e9d480ac".from_hex().unwrap(),
+      "2321031ee99d2b786ab3b0991325f2de8489246a6a3fdb700f6d0511b1d80cf5f4cd43ac".from_hex().unwrap(),
+      "23210249c6a76e37c2fcd56687dde6b75bbdf72fcdeeab6fe81561a9c41ac90d9d1f48ac".from_hex().unwrap(),
+      "2321035c100972ff8c572dc80eaa15a958ab99064d7c6b9e55f0e6408dec11edd4debbac".from_hex().unwrap(),
+      "232103837725cf7377d40a965f082fa6a942d39d9c2433c6d3c7bb4fa262e7d0d19defac".from_hex().unwrap(),
+    ];
+
+    let tx: Transaction = deserialize(tx_hex.clone()).ok().expect("transaction");
+    let script_pk: Vec<Script> = output_hex.iter().map(|hex| deserialize(hex.clone()).ok().expect("scriptpk")).collect();
+
+    for (n, script) in script_pk.iter().enumerate() {
+      let mut stack = vec![];
+      assert_eq!(tx.input[n].script_sig.evaluate(&mut stack, None), Ok(()));
+      assert_eq!(script.evaluate(&mut stack, Some((&tx, n))), Ok(()));
+      assert!(stack.len() >= 1);
+      assert_eq!(read_scriptbool(stack.pop().unwrap().as_slice()), true);
+    }
+  }
+
+  #[test]
+  fn script_eval_testnet_failure_4() {
+    // Multisig
+    // txid 067cb44dcbd1e3b16eed2482cbe462a461896d4eec891935020a97158f1c100b
+    let tx_hex = "01000000018feacff32dfee2218f7873c11087c65b5e7890ad2395da7d4a3e9a7b77bd23f8000000009300483045022100f76f485db0632f4a7fb3c95a5c0eae7b5d0e885f87ac4991e429b3c0f3c444ad0220155a281d7d9bb13ad013df8057a3d43f45de2702ba10b976164fbfcd4be452db014830450221008aa307b332eb0c96bf7c25c7d3c04ae75f071ed652f18dac55dedec7262aef6702203f0a46856b8b9acfac475f1056f04bf50e41aa967c401b85bea3ef20e470d27501ffffffff0100f2052a010000001976a9140550f9aedabdd2ee0424f53f26faeff1b899cc1688ac00000000".from_hex().unwrap();
+
+    let output_hex = "4752210266816de738c62ad789119fdb13131faa13f588359484ca61d0515cdcc7648ecd21025fe4a325d96f109529734af5de80b961274de5720c30646c398202e5d555adca52ae".from_hex().unwrap();
+
+    let tx: Transaction = deserialize(tx_hex.clone()).ok().expect("transaction");
+    let script_pk: Script = deserialize(output_hex.clone()).ok().expect("scriptpk");
+
+    let mut stack = vec![];
+    assert_eq!(tx.input[0].script_sig.evaluate(&mut stack, None), Ok(()));
+    assert_eq!(script_pk.evaluate(&mut stack, Some((&tx, 0))), Ok(()));
+    assert!(stack.len() >= 1);
+    assert_eq!(read_scriptbool(stack.pop().unwrap().as_slice()), true);
   }
 }
 
