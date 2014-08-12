@@ -18,6 +18,8 @@
 
 use std::io::{IoError, IoResult, InvalidInput};
 
+use blockdata::opcodes;
+use blockdata::opcodes::all::Opcode;
 use util::iter::Pairable;
 
 /// Convert a hexadecimal-encoded string to its corresponding bytes
@@ -75,7 +77,8 @@ pub fn consume_err<T>(s: &str, res: IoResult<T>) {
 
 /// Search for `needle` in the vector `haystack` and remove every
 /// instance of it, returning the number of instances removed.
-pub fn find_and_remove<T:Eq+::std::fmt::Show>(haystack: &mut Vec<T>, needle: &[T]) -> uint {
+/// Loops through the vector opcode by opcode, skipping pushed data.
+pub fn script_find_and_remove(haystack: &mut Vec<u8>, needle: &[u8]) -> uint {
   if needle.len() > haystack.len() { return 0; }
   if needle.len() == 0 { return 0; }
 
@@ -95,7 +98,13 @@ pub fn find_and_remove<T:Eq+::std::fmt::Show>(haystack: &mut Vec<T>, needle: &[T
       top -= needle.len();
       if overflow { break; }
     } else {
-      i += 1;
+      i += match Opcode::from_u8((*haystack)[i]).classify() {
+        opcodes::PushBytes(n) => n,
+        opcodes::Ordinary(opcodes::OP_PUSHDATA1) => 2,
+        opcodes::Ordinary(opcodes::OP_PUSHDATA2) => 3,
+        opcodes::Ordinary(opcodes::OP_PUSHDATA4) => 5,
+        _ => 1
+      };
     }
   }
   haystack.truncate(top + needle.len());
@@ -106,39 +115,39 @@ pub fn find_and_remove<T:Eq+::std::fmt::Show>(haystack: &mut Vec<T>, needle: &[T
 mod tests {
   use std::prelude::*;
 
-  use super::find_and_remove;
+  use super::script_find_and_remove;
   use super::hex_bytes;
 
   #[test]
-  fn test_find_and_remove() {
-    let mut v = vec![1u, 2, 3, 4, 2, 3, 4, 2, 3, 4, 5, 6, 7, 8, 9];
+  fn test_script_find_and_remove() {
+    let mut v = vec![101u8, 102, 103, 104, 102, 103, 104, 102, 103, 104, 105, 106, 107, 108, 109];
 
-    assert_eq!(find_and_remove(&mut v, []), 0);
-    assert_eq!(find_and_remove(&mut v, [5, 5, 5]), 0);
-    assert_eq!(v, vec![1, 2, 3, 4, 2, 3, 4, 2, 3, 4, 5, 6, 7, 8, 9]);
+    assert_eq!(script_find_and_remove(&mut v, []), 0);
+    assert_eq!(script_find_and_remove(&mut v, [105, 105, 105]), 0);
+    assert_eq!(v, vec![101, 102, 103, 104, 102, 103, 104, 102, 103, 104, 105, 106, 107, 108, 109]);
 
-    assert_eq!(find_and_remove(&mut v, [5, 6, 7]), 1);
-    assert_eq!(v, vec![1, 2, 3, 4, 2, 3, 4, 2, 3, 4, 8, 9]);
+    assert_eq!(script_find_and_remove(&mut v, [105, 106, 107]), 1);
+    assert_eq!(v, vec![101, 102, 103, 104, 102, 103, 104, 102, 103, 104, 108, 109]);
 
-    assert_eq!(find_and_remove(&mut v, [4, 8, 9]), 1);
-    assert_eq!(v, vec![1, 2, 3, 4, 2, 3, 4, 2, 3]);
+    assert_eq!(script_find_and_remove(&mut v, [104, 108, 109]), 1);
+    assert_eq!(v, vec![101, 102, 103, 104, 102, 103, 104, 102, 103]);
 
-    assert_eq!(find_and_remove(&mut v, [1]), 1);
-    assert_eq!(v, vec![2, 3, 4, 2, 3, 4, 2, 3]);
+    assert_eq!(script_find_and_remove(&mut v, [101]), 1);
+    assert_eq!(v, vec![102, 103, 104, 102, 103, 104, 102, 103]);
 
-    assert_eq!(find_and_remove(&mut v, [2]), 3);
-    assert_eq!(v, vec![3, 4, 3, 4, 3]);
+    assert_eq!(script_find_and_remove(&mut v, [102]), 3);
+    assert_eq!(v, vec![103, 104, 103, 104, 103]);
 
-    assert_eq!(find_and_remove(&mut v, [3, 4]), 2);
-    assert_eq!(v, vec![3]);
+    assert_eq!(script_find_and_remove(&mut v, [103, 104]), 2);
+    assert_eq!(v, vec![103]);
 
-    assert_eq!(find_and_remove(&mut v, [5, 5, 5]), 0);
-    assert_eq!(find_and_remove(&mut v, [5]), 0);
-    assert_eq!(find_and_remove(&mut v, [3]), 1);
+    assert_eq!(script_find_and_remove(&mut v, [105, 105, 5]), 0);
+    assert_eq!(script_find_and_remove(&mut v, [105]), 0);
+    assert_eq!(script_find_and_remove(&mut v, [103]), 1);
     assert_eq!(v, vec![]);
 
-    assert_eq!(find_and_remove(&mut v, [5, 5, 5]), 0);
-    assert_eq!(find_and_remove(&mut v, [5]), 0);
+    assert_eq!(script_find_and_remove(&mut v, [105, 105, 5]), 0);
+    assert_eq!(script_find_and_remove(&mut v, [105]), 0);
   }
 
   #[test]

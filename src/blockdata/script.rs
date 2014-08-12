@@ -43,7 +43,7 @@ use blockdata::transaction::Transaction;
 use network::encodable::{ConsensusDecodable, ConsensusEncodable};
 use network::serialize::{SimpleDecoder, SimpleEncoder, serialize};
 use util::hash::Sha256dHash;
-use util::misc::find_and_remove;
+use util::misc::script_find_and_remove;
 use util::thinvec::ThinVec;
 
 #[deriving(PartialEq, Show, Clone)]
@@ -421,6 +421,12 @@ impl Script {
     raw.push(data as u8);
   }
 
+  /// Returns a view into the script as a slice
+  pub fn as_slice(&self) -> &[u8] {
+    let &Script(ref raw) = self;
+    raw.as_slice()
+  }
+
   /// Evaluate the script, modifying the stack in place
   pub fn evaluate(&self, stack: &mut Vec<Vec<u8>>, input_context: Option<(&Transaction, uint)>)
                   -> Result<(), ScriptError> {
@@ -634,7 +640,9 @@ impl Script {
               // Compute the section of script that needs to be hashed: everything
               // from the last CODESEPARATOR, except the signature itself.
               let mut script = Vec::from_slice(raw.slice_from(codeseparator_index));
-              find_and_remove(&mut script, sig_slice);
+              let mut remove = Script::new();
+              remove.push_slice(sig_slice);
+              script_find_and_remove(&mut script, remove.as_slice());
 
               // This is as far as we can go without a transaction, so fail here
               if input_context.is_none() { return Err(NoTransaction); }
@@ -681,7 +689,9 @@ impl Script {
               // from the last CODESEPARATOR, except the signatures themselves.
               let mut script = Vec::from_slice(raw.slice_from(codeseparator_index));
               for sig in sigs.iter() {
-                find_and_remove(&mut script, sig.as_slice());
+                let mut remove = Script::new();
+                remove.push_slice(sig.as_slice());
+                script_find_and_remove(&mut script, remove.as_slice());
               }
 
               // This is as far as we can go without a transaction, so fail here
@@ -695,7 +705,6 @@ impl Script {
               let mut key = key_iter.next();
               let mut sig = sig_iter.next();
               loop {
-//println!("key({}) {}  sig({}) {}", key.map(|k| k.len()), key, sig.map(|s| s.len()), sig);
                 match (key, sig) {
                   // Try to validate the signature with the given key
                   (Some(k), Some(s)) => {
@@ -1007,6 +1016,7 @@ mod test {
 
   #[test]
   fn script_eval_testnet_failure_7() {
+    // script_find_and_delete needs to drop the entire push operation, not just the signature data
     // txid 2c63aa814701cef5dbd4bbaddab3fea9117028f2434dddcdab8339141e9b14d1
     let tx_hex = "01000000022f196cf1e5bd426a04f07b882c893b5b5edebad67da6eb50f066c372ed736d5f000000006a47304402201f81ac31b52cb4b1ceb83f97d18476f7339b74f4eecd1a32c251d4c3cccfffa402203c9143c18810ce072969e4132fdab91408816c96b423b2be38eec8a3582ade36012102aa5a2b334bd8f135f11bc5c477bf6307ff98ed52d3ed10f857d5c89adf5b02beffffffffff8755f073f1170c0d519457ffc4acaa7cb2988148163b5dc457fae0fe42aa19000000009200483045022015bd0139bcccf990a6af6ec5c1c52ed8222e03a0d51c334df139968525d2fcd20221009f9efe325476eb64c3958e4713e9eefe49bf1d820ed58d2112721b134e2a1a530347304402206da827fb26e569eb740641f9c1a7121ee59141703cbe0f903a22cc7d9a7ec7ac02204729f989b5348b3669ab020b8c4af01acc4deaba7c0d9f8fa9e06b2106cbbfeb01ffffffff010000000000000000016a00000000".from_hex().unwrap();
 
