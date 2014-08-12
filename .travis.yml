@@ -5,6 +5,9 @@ before_install:
   - sudo apt-get update -qq
 install:
   - sudo apt-get install -qq rust-nightly cargo
+  - git clone https://github.com/sipa/secp256k1.git
+  - cd secp256k1
+ - ./configure && make && sudo make install
 script:
   - cargo build
   - cargo test
