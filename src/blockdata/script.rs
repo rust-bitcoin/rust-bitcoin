@@ -129,11 +129,11 @@ fn read_scriptbool(v: &[u8]) -> bool {
 }
 
 /// Helper to read a script uint
-fn read_uint<'a, I:Iterator<&'a u8>>(mut iter: I, size: uint) -> Result<uint, ScriptError> {
+fn read_uint<'a, I:Iterator<&'a u8>>(iter: &mut I, size: uint) -> Result<uint, ScriptError> {
   let mut ret = 0;
-  for _ in range(0, size) {
+  for i in range(0, size) {
     match iter.next() {
-      Some(&n) => { ret = (ret << 8) + n as uint; }
+      Some(&n) => { ret |= (n as uint) << (8 * i); }
       None => { return Err(EarlyEndOfScript); }
     }
   }
@@ -277,7 +277,7 @@ impl Script {
         // Push number
         (true, opcodes::PushNum(n))   => stack.push(build_scriptint(n as i64)),
         // Push data
-        (true, opcodes::PushBytes(n)) => stack.push(iter.take(n).map(|n| *n).collect()),
+        (true, opcodes::PushBytes(n)) => stack.push(iter.by_ref().take(n).map(|n| *n).collect()),
         // Return operations mean failure, but only if executed
         (true, opcodes::ReturnOp)     => return Err(ExecutedReturn),
         // If-statements take effect when not executing
@@ -300,20 +300,20 @@ impl Script {
         (true, opcodes::Ordinary(op)) => {
           match op {
             opcodes::OP_PUSHDATA1 => {
-              let n = try!(read_uint(iter, 1));
-              let read: Vec<u8> = iter.take(n as uint).map(|n| *n).collect();
+              let n = try!(read_uint(&mut iter, 1));
+              let read: Vec<u8> = iter.by_ref().take(n as uint).map(|n| *n).collect();
               if read.len() < n as uint { return Err(EarlyEndOfScript); }
               stack.push(read);
             }
             opcodes::OP_PUSHDATA2 => {
-              let n = try!(read_uint(iter, 2));
-              let read: Vec<u8> = iter.take(n as uint).map(|n| *n).collect();
+              let n = try!(read_uint(&mut iter, 2));
+              let read: Vec<u8> = iter.by_ref().take(n as uint).map(|n| *n).collect();
               if read.len() < n as uint { return Err(EarlyEndOfScript); }
               stack.push(read);
             }
             opcodes::OP_PUSHDATA4 => {
-              let n = try!(read_uint(iter, 4));
-              let read: Vec<u8> = iter.take(n as uint).map(|n| *n).collect();
+              let n = try!(read_uint(&mut iter, 4));
+              let read: Vec<u8> = iter.by_ref().take(n as uint).map(|n| *n).collect();
               if read.len() < n as uint { return Err(EarlyEndOfScript); }
               stack.push(read);
             }
