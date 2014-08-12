@@ -449,6 +449,20 @@ impl Script {
         (true, opcodes::PushBytes(n)) => stack.push(iter.by_ref().take(n).map(|(_, n)| *n).collect()),
         // Return operations mean failure, but only if executed
         (true, opcodes::ReturnOp)     => return Err(ExecutedReturn),
+        // Data-reading statements still need to read, even when not executing
+        (false, opcodes::PushBytes(n)) => { for _ in range(0, n) { iter.next(); } }
+        (false, opcodes::Ordinary(opcodes::OP_PUSHDATA1)) => {
+          let n = try!(read_uint(iter.by_ref(), 1));
+          for _ in range(0, n) { iter.next(); }
+        }
+        (false, opcodes::Ordinary(opcodes::OP_PUSHDATA2)) => {
+          let n = try!(read_uint(iter.by_ref(), 2));
+          for _ in range(0, n) { iter.next(); }
+        }
+        (false, opcodes::Ordinary(opcodes::OP_PUSHDATA4)) => {
+          let n = try!(read_uint(iter.by_ref(), 4));
+          for _ in range(0, n) { iter.next(); }
+        }
         // If-statements take effect when not executing
         (false, opcodes::Ordinary(opcodes::OP_IF)) => exec_stack.push(false),
         (false, opcodes::Ordinary(opcodes::OP_NOTIF)) => exec_stack.push(false),
@@ -685,6 +699,7 @@ impl Script {
               let mut key = key_iter.next();
               let mut sig = sig_iter.next();
               loop {
+//println!("key({}) {}  sig({}) {}", key.map(|k| k.len()), key, sig.map(|s| s.len()), sig);
                 match (key, sig) {
                   // Try to validate the signature with the given key
                   (Some(k), Some(s)) => {
@@ -956,6 +971,64 @@ mod test {
     assert_eq!(script_pk.evaluate(&mut stack, Some((&tx, 0))), Ok(()));
     assert!(stack.len() >= 1);
     assert_eq!(read_scriptbool(stack.pop().unwrap().as_slice()), true);
+  }
+
+  #[test]
+  fn script_eval_testnet_failure_5() {
+    // Pushes in the dead half of OP_IF's should still skip over all the data (OP_PUSH[0..75]
+    // txid 4d0bbf6348726a49600171033e456548a09b246829d649e77b929caf242ae6e7
+    let tx_hex = "01000000017c19a5b0b84188bca5decac0dc8582f5f5ff003b1a4d705181ec5d9620c1f64600000000940048304502207d02ce76875b1b3f2b7af9e45954af1ab531da6ab3edd471aa9148f139c8bad1022100f0f85fd987e90a131f2e311acdfe212925e218ffa5cf79e84e9890c2ddbdbd450148304502207d02ce76875b1b3f2b7af9e45954af1ab531da6ab3edd471aa9148f139c8bad1022100f0f85fd987e90a131f2e311acdfe212925e218ffa5cf79e84e9890c2ddbdbd450151ffffffff0100e1f505000000001976a91403efb01790d098aef3752449a94a1dc593e527cd88ac00000000".from_hex().unwrap();
+
+    let output_hex = "b36352210261411d0de63460bfed73cb871f868bc3064d1db2a09f27b2477852b1811a02ef210261411d0de63460bfed73cb871f868bc3064d1db2a09f27b2477852b1811a02ef52ae67a820080af0b0156c5dd12c820b2b1b4fbfa315d05ac5a0ea2f9a657d4c8881d0869f88a820080af0b0156c5dd12c820b2b1b4fbfa315d05ac5a0ea2f9a657d4c8881d0869f88210261411d0de63460bfed73cb871f868bc3064d1db2a09f27b2477852b1811a02efac68".from_hex().unwrap();
+
+    let tx: Transaction = deserialize(tx_hex.clone()).ok().expect("transaction");
+    let script_pk: Script = deserialize(output_hex.clone()).ok().expect("scriptpk");
+
+    let mut stack = vec![];
+    assert_eq!(tx.input[0].script_sig.evaluate(&mut stack, None), Ok(()));
+    assert_eq!(script_pk.evaluate(&mut stack, Some((&tx, 0))), Ok(()));
+    assert!(stack.len() >= 1);
+    assert_eq!(read_scriptbool(stack.pop().unwrap().as_slice()), true);
+  }
+
+  #[test]
+  fn script_eval_testnet_failure_6() {
+    // Pushes in the dead half of OP_IF's should still skip over all the data (OP_PUSHDATA1 2 4)
+    // txid a2119ab5f90270836643665183b21e114daaa6dfdc1bdd7525e1187aa153a229
+    let tx_hex = "01000000015e0767f6b58b766d922c6ddd6afc46af9d21c613754bd7cb8010adf0c9c090d2010000000401010100ffffffff0180f0fa02000000001976a914993bcb95575ecda9e7106a30f42232b8e89917c388ac00000000".from_hex().unwrap();
+
+    let output_hex = "0c63ff4c0778657274726f7668".from_hex().unwrap();
+
+    let tx: Transaction = deserialize(tx_hex.clone()).ok().expect("transaction");
+    let script_pk: Script = deserialize(output_hex.clone()).ok().expect("scriptpk");
+
+    let mut stack = vec![];
+    assert_eq!(tx.input[0].script_sig.evaluate(&mut stack, None), Ok(()));
+    assert_eq!(script_pk.evaluate(&mut stack, Some((&tx, 0))), Ok(()));
+    assert!(stack.len() >= 1);
+    assert_eq!(read_scriptbool(stack.pop().unwrap().as_slice()), true);
+  }
+
+  #[test]
+  fn script_eval_testnet_failure_7() {
+    // txid 2c63aa814701cef5dbd4bbaddab3fea9117028f2434dddcdab8339141e9b14d1
+    let tx_hex = "01000000022f196cf1e5bd426a04f07b882c893b5b5edebad67da6eb50f066c372ed736d5f000000006a47304402201f81ac31b52cb4b1ceb83f97d18476f7339b74f4eecd1a32c251d4c3cccfffa402203c9143c18810ce072969e4132fdab91408816c96b423b2be38eec8a3582ade36012102aa5a2b334bd8f135f11bc5c477bf6307ff98ed52d3ed10f857d5c89adf5b02beffffffffff8755f073f1170c0d519457ffc4acaa7cb2988148163b5dc457fae0fe42aa19000000009200483045022015bd0139bcccf990a6af6ec5c1c52ed8222e03a0d51c334df139968525d2fcd20221009f9efe325476eb64c3958e4713e9eefe49bf1d820ed58d2112721b134e2a1a530347304402206da827fb26e569eb740641f9c1a7121ee59141703cbe0f903a22cc7d9a7ec7ac02204729f989b5348b3669ab020b8c4af01acc4deaba7c0d9f8fa9e06b2106cbbfeb01ffffffff010000000000000000016a00000000".from_hex().unwrap();
+
+    let output_hex = vec![
+      "1976a91419660c27383b347112e92caba64fb1d07e9f63bf88ac".from_hex().unwrap(),
+      "91483045022015bd0139bcccf990a6af6ec5c1c52ed8222e03a0d51c334df139968525d2fcd20221009f9efe325476eb64c3958e4713e9eefe49bf1d820ed58d2112721b134e2a1a53037552210378d430274f8c5ec1321338151e9f27f4c676a008bdf8638d07c0b6be9ab35c71210378d430274f8c5ec1321338151e9f27f4c676a008bdf8638d07c0b6be9ab35c7152ae".from_hex().unwrap(),
+    ];
+
+    let tx: Transaction = deserialize(tx_hex.clone()).ok().expect("transaction");
+    let script_pk: Vec<Script> = output_hex.iter().map(|hex| deserialize(hex.clone()).ok().expect("scriptpk")).collect();
+
+    for (n, script) in script_pk.iter().enumerate() {
+      let mut stack = vec![];
+      assert_eq!(tx.input[n].script_sig.evaluate(&mut stack, None), Ok(()));
+      assert_eq!(script.evaluate(&mut stack, Some((&tx, n))), Ok(()));
+      assert!(stack.len() >= 1);
+      assert_eq!(read_scriptbool(stack.pop().unwrap().as_slice()), true);
+    }
   }
 }
 
