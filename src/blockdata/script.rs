@@ -190,14 +190,10 @@ pub fn read_scriptbool(v: &[u8]) -> bool {
 /// Read a script-encoded unsigned integer
 pub fn read_uint<'a, I:Iterator<(uint, &'a u8)>>(mut iter: I, size: uint)
     -> Result<uint, ScriptError> {
-  let mut sh = 0;
   let mut ret = 0;
-  for _ in range(0, size) {
+  for i in range(0, size) {
     match iter.next() {
-      Some((_, &n)) => {
-        ret += n as uint << sh;
-        sh += 8;
-      }
+      Some((_, &n)) => ret += n as uint << (i * 8),
       None => { return Err(EarlyEndOfScript); }
     }
   }
