@@ -628,7 +628,7 @@ impl Script {
               hash_opcode!(stack, Sha256);
               hash_opcode!(stack, Sha256);
             }
-            opcodes::OP_CODESEPARATOR => { codeseparator_index = index; }
+            opcodes::OP_CODESEPARATOR => { codeseparator_index = index + 1; }
             opcodes::OP_CHECKSIG | opcodes::OP_CHECKSIGVERIFY => {
               if stack.len() < 2 { return Err(PopEmptyStack); }
 
@@ -1035,6 +1035,24 @@ mod test {
       assert!(stack.len() >= 1);
       assert_eq!(read_scriptbool(stack.pop().unwrap().as_slice()), true);
     }
+  }
+
+  #[test]
+  fn script_eval_testnet_failure_8() {
+    // Fencepost error in OP_CODESEPARATOR
+    // txid 46224764c7870f95b58f155bce1e38d4da8e99d42dbb632d0dd7c07e092ee5aa
+    let tx_hex = "01000000012432b60dc72cebc1a27ce0969c0989c895bdd9e62e8234839117f8fc32d17fbc000000004a493046022100a576b52051962c25e642c0fd3d77ee6c92487048e5d90818bcf5b51abaccd7900221008204f8fb121be4ec3b24483b1f92d89b1b0548513a134e345c5442e86e8617a501ffffffff010000000000000000016a00000000".from_hex().unwrap();
+
+    let output_hex = "24ab21038479a0fa998cd35259a2ef0a7a5c68662c1474f88ccb6d08a7677bbec7f22041ac".from_hex().unwrap();
+
+    let tx: Transaction = deserialize(tx_hex.clone()).ok().expect("transaction");
+    let script_pk: Script = deserialize(output_hex.clone()).ok().expect("scriptpk");
+
+    let mut stack = vec![];
+    assert_eq!(tx.input[0].script_sig.evaluate(&mut stack, None), Ok(()));
+    assert_eq!(script_pk.evaluate(&mut stack, Some((&tx, 0))), Ok(()));
+    assert!(stack.len() >= 1);
+    assert_eq!(read_scriptbool(stack.pop().unwrap().as_slice()), true);
   }
 }
 
