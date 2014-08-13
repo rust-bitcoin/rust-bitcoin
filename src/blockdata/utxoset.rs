@@ -167,7 +167,7 @@ impl UtxoSet {
             Some(txo) => {
               if validation >= ScriptValidation {
                 let mut stack = vec![];
-                match input.script_sig.evaluate(&mut stack, None) {
+                match input.script_sig.evaluate(&mut stack, Some((tx, n))) {
                   Ok(_) => {},
                   Err(e) => {
                       use serialize::json::ToJson;

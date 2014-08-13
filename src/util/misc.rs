@@ -99,7 +99,7 @@ pub fn script_find_and_remove(haystack: &mut Vec<u8>, needle: &[u8]) -> uint {
       if overflow { break; }
     } else {
       i += match Opcode::from_u8((*haystack)[i]).classify() {
-        opcodes::PushBytes(n) => n,
+        opcodes::PushBytes(n) => n + 1,
         opcodes::Ordinary(opcodes::OP_PUSHDATA1) => 2,
         opcodes::Ordinary(opcodes::OP_PUSHDATA2) => 3,
         opcodes::Ordinary(opcodes::OP_PUSHDATA4) => 5,
@@ -148,6 +148,13 @@ mod tests {
 
     assert_eq!(script_find_and_remove(&mut v, [105, 105, 5]), 0);
     assert_eq!(script_find_and_remove(&mut v, [105]), 0);
+  }
+
+  #[test]
+  fn test_script_codesep_remove() {
+    let mut s = vec![33u8, 3, 132, 121, 160, 250, 153, 140, 211, 82, 89, 162, 239, 10, 122, 92, 104, 102, 44, 20, 116, 248, 140, 203, 109, 8, 167, 103, 123, 190, 199, 242, 32, 65, 173, 171, 33, 3, 132, 121, 160, 250, 153, 140, 211, 82, 89, 162, 239, 10, 122, 92, 104, 102, 44, 20, 116, 248, 140, 203, 109, 8, 167, 103, 123, 190, 199, 242, 32, 65, 173, 171, 81];
+    assert_eq!(script_find_and_remove(&mut s, [171]), 2);
+    assert_eq!(s, vec![33, 3, 132, 121, 160, 250, 153, 140, 211, 82, 89, 162, 239, 10, 122, 92, 104, 102, 44, 20, 116, 248, 140, 203, 109, 8, 167, 103, 123, 190, 199, 242, 32, 65, 173, 33, 3, 132, 121, 160, 250, 153, 140, 211, 82, 89, 162, 239, 10, 122, 92, 104, 102, 44, 20, 116, 248, 140, 203, 109, 8, 167, 103, 123, 190, 199, 242, 32, 65, 173, 81]);
   }
 
   #[test]
