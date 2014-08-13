@@ -203,35 +203,35 @@ pub mod all {
     OP_RESERVED = 0x50,
     /// Push the array [0x01] onto the stack
     OP_PUSHNUM_1 = 0x51,
-    /// Push the array [0x01] onto the stack
+    /// Push the array [0x02] onto the stack
     OP_PUSHNUM_2 = 0x52,
-    /// Push the array [0x01] onto the stack
+    /// Push the array [0x03] onto the stack
     OP_PUSHNUM_3 = 0x53,
-    /// Push the array [0x01] onto the stack
+    /// Push the array [0x04] onto the stack
     OP_PUSHNUM_4 = 0x54,
-    /// Push the array [0x01] onto the stack
+    /// Push the array [0x05] onto the stack
     OP_PUSHNUM_5 = 0x55,
-    /// Push the array [0x01] onto the stack
+    /// Push the array [0x06] onto the stack
     OP_PUSHNUM_6 = 0x56,
-    /// Push the array [0x01] onto the stack
+    /// Push the array [0x07] onto the stack
     OP_PUSHNUM_7 = 0x57,
-    /// Push the array [0x01] onto the stack
+    /// Push the array [0x08] onto the stack
     OP_PUSHNUM_8 = 0x58,
-    /// Push the array [0x01] onto the stack
+    /// Push the array [0x09] onto the stack
     OP_PUSHNUM_9 = 0x59,
-    /// Push the array [0x01] onto the stack
+    /// Push the array [0x0a] onto the stack
     OP_PUSHNUM_10 = 0x5a,
-    /// Push the array [0x01] onto the stack
+    /// Push the array [0x0b] onto the stack
     OP_PUSHNUM_11 = 0x5b,
-    /// Push the array [0x01] onto the stack
+    /// Push the array [0x0c] onto the stack
     OP_PUSHNUM_12 = 0x5c,
-    /// Push the array [0x01] onto the stack
+    /// Push the array [0x0d] onto the stack
     OP_PUSHNUM_13 = 0x5d,
-    /// Push the array [0x01] onto the stack
+    /// Push the array [0x0e] onto the stack
     OP_PUSHNUM_14 = 0x5e,
-    /// Push the array [0x01] onto the stack
+    /// Push the array [0x0f] onto the stack
     OP_PUSHNUM_15 = 0x5f,
-    /// Push the array [0x01] onto the stack
+    /// Push the array [0x10] onto the stack
     OP_PUSHNUM_16 = 0x60,
     /// Does nothing
     OP_NOP = 0x61,
