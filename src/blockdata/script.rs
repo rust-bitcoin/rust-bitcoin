@@ -39,7 +39,7 @@ use secp256k1::key::PublicKey;
 use blockdata::opcodes;
 use blockdata::opcodes::Opcode;
 use allops = blockdata::opcodes::all;
-use blockdata::transaction::Transaction;
+use blockdata::transaction::{Transaction, TxIn};
 use network::encodable::{ConsensusDecodable, ConsensusEncodable};
 use network::serialize::{SimpleDecoder, SimpleEncoder, serialize};
 use util::hash::Sha256dHash;
@@ -126,6 +126,43 @@ impl SignatureHashType {
    }
 }
 
+/// A structure that can hold either a slice or vector, as necessary
+#[deriving(Clone, Show)]
+pub enum MaybeOwned<'a> {
+  Owned(Vec<u8>),
+  Slice(&'a [u8])
+}
+
+impl<'a> PartialEq for MaybeOwned<'a> {
+  #[inline]
+  fn eq(&self, other: &MaybeOwned) -> bool { self.as_slice() == other.as_slice() }
+}
+
+impl<'a> Eq for MaybeOwned<'a> {}
+
+impl<'a> Vector<u8> for MaybeOwned<'a> {
+  #[inline]
+  fn as_slice<'a>(&'a self) -> &'a [u8] {
+    match *self {
+      Owned(ref v) => v.as_slice(),
+      Slice(ref s) => s.as_slice()
+    }
+  }
+}
+
+impl<'a> Collection for MaybeOwned<'a> {
+  #[inline]
+  fn len(&self) -> uint {
+    match *self {
+      Owned(ref v) => v.len(),
+      Slice(ref s) => s.len()
+    }
+  }
+}
+
+static script_true: &'static [u8] = &[0x01];
+static script_false: &'static [u8] = &[0x00];
+
 /// Helper to encode an integer in script format
 fn build_scriptint(n: i64) -> Vec<u8> {
   if n == 0 { return vec![] }
@@ -188,12 +225,12 @@ pub fn read_scriptbool(v: &[u8]) -> bool {
 }
 
 /// Read a script-encoded unsigned integer
-pub fn read_uint<'a, I:Iterator<(uint, &'a u8)>>(mut iter: I, size: uint)
+pub fn read_uint<'a, I:Iterator<&'a u8>>(mut iter: I, size: uint)
     -> Result<uint, ScriptError> {
   let mut ret = 0;
   for i in range(0, size) {
     match iter.next() {
-      Some((_, &n)) => ret += n as uint << (i * 8),
+      Some(&n) => ret += n as uint << (i * 8),
       None => { return Err(EarlyEndOfScript); }
     }
   }
@@ -219,7 +256,9 @@ fn check_signature(secp: &Secp256k1, sig_slice: &[u8], pk_slice: &[u8], script: 
   let (hashtype, anyone_can_pay) = SignatureHashType::from_signature(sig_slice);
 
   // Compute the transaction data to be hashed
-  let mut tx_copy = tx.clone();
+  let mut tx_copy = Transaction { version: tx.version, lock_time: tx.lock_time,
+                                  input: Vec::with_capacity(tx.input.len()),
+                                  output: tx.output.clone() };
 
   // Put the script into an Option so that we can move it (via take_unwrap())
   // in the following branch/loop without the move-checker complaining about
@@ -228,23 +267,28 @@ fn check_signature(secp: &Secp256k1, sig_slice: &[u8], pk_slice: &[u8], script: 
   if anyone_can_pay {
     // For anyone-can-pay transactions we replace the whole input array
     // with just the current input, to ensure the others have no effect.
-    let mut old_input = tx_copy.input[input_index].clone();
+    let mut old_input = tx.input[input_index].clone();
     old_input.script_sig = Script(ThinVec::from_vec(script.take_unwrap()));
     tx_copy.input = vec![old_input];
   } else {
     // Otherwise we keep all the inputs, blanking out the others and even
     // resetting their sequence no. if appropriate
-    for (n, input) in tx_copy.input.mut_iter().enumerate() {
+    for (n, input) in tx.input.iter().enumerate() {
       // Zero out the scripts of other inputs
+      let mut new_input = TxIn { prev_hash: input.prev_hash,
+                                 prev_index: input.prev_index,
+                                 sequence: input.sequence,
+                                 script_sig: Script::new() };
       if n == input_index {
-        input.script_sig = Script(ThinVec::from_vec(script.take_unwrap()));
+        new_input.script_sig = Script(ThinVec::from_vec(script.take_unwrap()));
       } else {
-        input.script_sig = Script::new();
+        new_input.script_sig = Script::new();
         // If we aren't signing them, also zero out the sequence number
         if hashtype == SigHashSingle || hashtype == SigHashNone {
-          input.sequence = 0;
+          new_input.sequence = 0;
         }
       }
+      tx_copy.input.push(new_input);
     }
   }
 
@@ -326,7 +370,7 @@ macro_rules! num_opcode(
         None => { return Err(PopEmptyStack); }
       }.as_slice()));
     )*
-    $stack.push(build_scriptint($op));
+    $stack.push(Owned(build_scriptint($op)));
   });
 )
 
@@ -338,9 +382,12 @@ macro_rules! hash_opcode(
       Some(v) => {
         let mut engine = $hash::new();
         engine.input(v.as_slice());
-        let mut ret = Vec::from_elem(engine.output_bits() / 8, 0);
+        let mut ret = Vec::with_capacity(engine.output_bits() / 8);
+        // Force-set the length even though the vector is uninitialized
+        // This is OK only because u8 has no destructor
+        unsafe { ret.set_len(engine.output_bits() / 8); }
         engine.result(ret.as_mut_slice());
-        $stack.push(ret);
+        $stack.push(Owned(ret));
       }
     }
   });
@@ -428,42 +475,55 @@ impl Script {
   }
 
   /// Evaluate the script, modifying the stack in place
-  pub fn evaluate(&self, stack: &mut Vec<Vec<u8>>, input_context: Option<(&Transaction, uint)>)
+  pub fn evaluate<'a>(&'a self, stack: &mut Vec<MaybeOwned<'a>>, input_context: Option<(&Transaction, uint)>)
                   -> Result<(), ScriptError> {
     let &Script(ref raw) = self;
     let secp = Secp256k1::new();
 
     let mut codeseparator_index = 0u;
-    let mut iter = raw.iter().enumerate();
     let mut exec_stack = vec![true];
     let mut alt_stack = vec![];
 
-    for (index, byte) in iter {
+    let mut index = 0;
+    while index < raw.len() {
       let executing = exec_stack.iter().all(|e| *e);
+      let byte = unsafe { *raw.get(index) };
+      index += 1;
       // The definitions of all these categories are in opcodes.rs
-//println!("read {} as {}", allops::Opcode::from_u8(*byte), allops::Opcode::from_u8(*byte).classify());
-      match (executing, allops::Opcode::from_u8(*byte).classify()) {
+//println!("read {} as {} as {}  ...  stack before op is {}", byte, allops::Opcode::from_u8(byte), allops::Opcode::from_u8(byte).classify(), stack);
+      match (executing, allops::Opcode::from_u8(byte).classify()) {
         // Illegal operations mean failure regardless of execution state
         (_, opcodes::IllegalOp)       => return Err(IllegalOpcode),
         // Push number
-        (true, opcodes::PushNum(n))   => stack.push(build_scriptint(n as i64)),
-        // Push data
-        (true, opcodes::PushBytes(n)) => stack.push(iter.by_ref().take(n).map(|(_, n)| *n).collect()),
+        (true, opcodes::PushNum(n))   => stack.push(Owned(build_scriptint(n as i64))),
         // Return operations mean failure, but only if executed
         (true, opcodes::ReturnOp)     => return Err(ExecutedReturn),
         // Data-reading statements still need to read, even when not executing
-        (false, opcodes::PushBytes(n)) => { for _ in range(0, n) { iter.next(); } }
-        (false, opcodes::Ordinary(opcodes::OP_PUSHDATA1)) => {
-          let n = try!(read_uint(iter.by_ref(), 1));
-          for _ in range(0, n) { iter.next(); }
+        (_, opcodes::PushBytes(n)) => {
+          if raw.len() < index + n { return Err(EarlyEndOfScript); }
+          if executing { stack.push(Slice(raw.slice(index, index + n))); }
+          index += n;
         }
-        (false, opcodes::Ordinary(opcodes::OP_PUSHDATA2)) => {
-          let n = try!(read_uint(iter.by_ref(), 2));
-          for _ in range(0, n) { iter.next(); }
+        (_, opcodes::Ordinary(opcodes::OP_PUSHDATA1)) => {
+          if raw.len() < index + 1 { return Err(EarlyEndOfScript); }
+          let n = try!(read_uint(raw.slice_from(index).iter(), 1));
+          if raw.len() < index + 1 + n { return Err(EarlyEndOfScript); }
+          if executing { stack.push(Slice(raw.slice(index + 1, index + n + 1))); }
+          index += 1 + n;
         }
-        (false, opcodes::Ordinary(opcodes::OP_PUSHDATA4)) => {
-          let n = try!(read_uint(iter.by_ref(), 4));
-          for _ in range(0, n) { iter.next(); }
+        (_, opcodes::Ordinary(opcodes::OP_PUSHDATA2)) => {
+          if raw.len() < index + 2 { return Err(EarlyEndOfScript); }
+          let n = try!(read_uint(raw.slice_from(index).iter(), 2));
+          if raw.len() < index + 2 + n { return Err(EarlyEndOfScript); }
+          if executing { stack.push(Slice(raw.slice(index + 2, index + n + 2))); }
+          index += 2 + n;
+        }
+        (_, opcodes::Ordinary(opcodes::OP_PUSHDATA4)) => {
+          if raw.len() < index + 4 { return Err(EarlyEndOfScript); }
+          let n = try!(read_uint(raw.slice_from(index).iter(), 4));
+          if raw.len() < index + 4 + n { return Err(EarlyEndOfScript); }
+          if executing { stack.push(Slice(raw.slice(index + 4, index + n + 4))); }
+          index += 4 + n;
         }
         // If-statements take effect when not executing
         (false, opcodes::Ordinary(opcodes::OP_IF)) => exec_stack.push(false),
@@ -484,23 +544,8 @@ impl Script {
         // Actual opcodes
         (true, opcodes::Ordinary(op)) => {
           match op {
-            opcodes::OP_PUSHDATA1 => {
-              let n = try!(read_uint(iter.by_ref(), 1));
-              let read: Vec<u8> = iter.by_ref().take(n as uint).map(|(_, n)| *n).collect();
-              if read.len() < n as uint { return Err(EarlyEndOfScript); }
-              stack.push(read);
-            }
-            opcodes::OP_PUSHDATA2 => {
-              let n = try!(read_uint(iter.by_ref(), 2));
-              let read: Vec<u8> = iter.by_ref().take(n as uint).map(|(_, n)| *n).collect();
-              if read.len() < n as uint { return Err(EarlyEndOfScript); }
-              stack.push(read);
-            }
-            opcodes::OP_PUSHDATA4 => {
-              let n = try!(read_uint(iter.by_ref(), 4));
-              let read: Vec<u8> = iter.by_ref().take(n as uint).map(|(_, n)| *n).collect();
-              if read.len() < n as uint { return Err(EarlyEndOfScript); }
-              stack.push(read);
+            opcodes::OP_PUSHDATA1 | opcodes::OP_PUSHDATA2 | opcodes::OP_PUSHDATA4 => {
+              // handled above
             }
             opcodes::OP_IF => {
               match stack.pop().map(|v| read_scriptbool(v.as_slice())) {
@@ -579,19 +624,19 @@ impl Script {
             }
             opcodes::OP_DEPTH => {
               let len = stack.len() as i64;
-              stack.push(build_scriptint(len));
+              stack.push(Owned(build_scriptint(len)));
             }
             opcodes::OP_SIZE => {
               match stack.last().map(|v| v.len() as i64) {
                 None => { return Err(IfEmptyStack); }
-                Some(n) => { stack.push(build_scriptint(n)); }
+                Some(n) => { stack.push(Owned(build_scriptint(n))); }
               }
             }
             opcodes::OP_EQUAL | opcodes::OP_EQUALVERIFY => {
               if stack.len() < 2 { return Err(PopEmptyStack); }
               let a = stack.pop().unwrap();
               let b = stack.pop().unwrap();
-              stack.push(build_scriptint(if a == b { 1 } else { 0 }));
+              stack.push(Owned(build_scriptint(if a == b { 1 } else { 0 })));
               if op == opcodes::OP_EQUALVERIFY { op_verify!(stack); }
             }
             opcodes::OP_1ADD => num_opcode!(stack(a): a + 1),
@@ -628,7 +673,7 @@ impl Script {
               hash_opcode!(stack, Sha256);
               hash_opcode!(stack, Sha256);
             }
-            opcodes::OP_CODESEPARATOR => { codeseparator_index = index + 1; }
+            opcodes::OP_CODESEPARATOR => { codeseparator_index = index; }
             opcodes::OP_CHECKSIG | opcodes::OP_CHECKSIGVERIFY => {
               if stack.len() < 2 { return Err(PopEmptyStack); }
 
@@ -651,8 +696,8 @@ impl Script {
               let (tx, input_index) = input_context.unwrap();
 
               match check_signature(&secp, sig_slice, pk_slice, script, tx, input_index) {
-                Ok(()) => stack.push(build_scriptint(1)),
-                _ => stack.push(build_scriptint(0)),
+                Ok(()) => stack.push(Slice(script_true)),
+                _ => stack.push(Slice(script_false)),
               }
               if op == opcodes::OP_CHECKSIGVERIFY { op_verify!(stack); }
             }
@@ -720,12 +765,12 @@ impl Script {
                   }
                   // Run out of signatures, success
                   (_, None) => {
-                    stack.push(build_scriptint(1));
+                    stack.push(Slice(script_true));
                     break;
                   }
                   // Run out of keys to match to signatures, fail
                   (None, Some(_)) => {
-                    stack.push(build_scriptint(0));
+                    stack.push(Slice(script_false));
                     break;
                   }
                 }
@@ -777,6 +822,7 @@ mod test {
 
   use super::{Script, build_scriptint, read_scriptint, read_scriptbool};
   use super::{NoTransaction, PopEmptyStack, VerifyFailed};
+  use super::Owned;
 
   use network::serialize::{deserialize, serialize};
   use blockdata::opcodes;
@@ -797,7 +843,7 @@ mod test {
 
     for (n, script) in script_pk.iter().enumerate() {
       let mut stack = vec![];
-      assert_eq!(tx.input[n].script_sig.evaluate(&mut stack, None), Ok(()));
+      assert_eq!(tx.input[n].script_sig.evaluate(&mut stack, Some((&tx, n))), Ok(()));
       assert_eq!(script.evaluate(&mut stack, Some((&tx, n))), Ok(()));
       assert!(stack.len() >= 1);
       assert_eq!(read_scriptbool(stack.pop().unwrap().as_slice()), true);
@@ -872,10 +918,10 @@ mod test {
     // Should be able to check that the sig is there and pk correct
     // before needing a transaction
     assert_eq!(script_pk.evaluate(&mut vec![], None), Err(PopEmptyStack));
-    assert_eq!(script_pk.evaluate(&mut vec![vec![], vec![]], None), Err(VerifyFailed));
+    assert_eq!(script_pk.evaluate(&mut vec![Owned(vec![]), Owned(vec![])], None), Err(VerifyFailed));
     // But if the signature is there, we need a tx to check it
-    assert_eq!(script_pk.evaluate(&mut vec![vec![], "026d5d4cfef5f3d97d2263941b4d8e7aaa82910bf8e6f7c6cf1d8f0d755b9d2d1a".from_hex().unwrap()], None), Err(NoTransaction));
-    assert_eq!(script_pk.evaluate(&mut vec![vec![0], "026d5d4cfef5f3d97d2263941b4d8e7aaa82910bf8e6f7c6cf1d8f0d755b9d2d1a".from_hex().unwrap()], None), Err(NoTransaction));
+    assert_eq!(script_pk.evaluate(&mut vec![Owned(vec![]), Owned("026d5d4cfef5f3d97d2263941b4d8e7aaa82910bf8e6f7c6cf1d8f0d755b9d2d1a".from_hex().unwrap())], None), Err(NoTransaction));
+    assert_eq!(script_pk.evaluate(&mut vec![Owned(vec![0]), Owned("026d5d4cfef5f3d97d2263941b4d8e7aaa82910bf8e6f7c6cf1d8f0d755b9d2d1a".from_hex().unwrap())], None), Err(NoTransaction));
   }
 
   #[test]
@@ -1013,6 +1059,20 @@ mod test {
     test_tx(
       "010000000144490eda355be7480f2ec828dcc1b9903793a8008fad8cfe9b0c6b4d2f0355a900000000924830450221009c0a27f886a1d8cb87f6f595fbc3163d28f7a81ec3c4b252ee7f3ac77fd13ffa02203caa8dfa09713c8c4d7ef575c75ed97812072405d932bd11e6a1593a98b679370148304502201e3861ef39a526406bad1e20ecad06be7375ad40ddb582c9be42d26c3a0d7b240221009d0a3985e96522e59635d19cc4448547477396ce0ef17a58e7d74c3ef464292301ffffffff010000000000000000016a00000000",
       vec!["21038479a0fa998cd35259a2ef0a7a5c68662c1474f88ccb6d08a7677bbec7f22041adab21038479a0fa998cd35259a2ef0a7a5c68662c1474f88ccb6d08a7677bbec7f22041adab51"]
+    );
+  }
+
+  #[test]
+  fn script_eval_testnet_failure_10() {
+    // In first 500 blocks, started failing after mem changes
+    // txid a44d40b3a14aca3f19ccf47244ef4a70ed02d00f5d840c38756368e9a7cc24b1
+    test_tx(
+      "010000000328ce10c7189026866bcfc1d06b278981ddf21ec0e364e28e294365b5c328cd4301000000fd460100493046022100a78f180f5851ebe9de7e6ae6f88ecf36ed9f165e5df1e17eec16b22e6397dc0b022100c3ae88400294ae464665d63b8035f1de4bb19ddd7cc0cc5c1d5a3fe28f4fcae70147304402206f035ce436fa307038bf4bac15a8b97fadb3c809b6d9289eae7de0d0f9d527b1022026534d695be2d7adbebda5d2c4cdee83e27015eed32a5ff950ecf136a1db85760147304402201a0a6ac0f488e7dc8fc7c9aca5d79b541d60d7ad1aaf61f55ee57e61ff2dab4a02200267bfcce527810d7af54a30ebfb0ced371aa24bf7791ee72474c5ff5703d352014c69532102ca2a810ab17249b6033a038de563983881b4069270183f3c0aba945653e442162103f480f1b648d0d5167804ad4d586e0e757cc33fde0e133fd036e45d60d2db59e12103c18131d8de99d45fb72a774cab0ccc258cd2abd9605610da20b9a232c88a3cb653aeffffffff7ae001aef566f8273a7cd14dcbc1d2bcd7927de792c5042375033991ef5523c301000000fdfe0000483045022100b48f165ae0931a540a5d2151ea9408a551122dbae07ba4fe26b2d840d8812ae002207cc87346c2dea3ad287395176d15a96396141fb1b1bdaabba9dbf346506f601501483045022026f2db95286e9831c2efc60c2a65c3e4928a5fa9f045561540f689d8de856221022100aecd777e17b07eef046d40046da0b90fcea86938b21479ab0ef0d158ab8639dc014c69522102ca2a810ab17249b6033a038de563983881b4069270183f3c0aba945653e442162103f480f1b648d0d5167804ad4d586e0e757cc33fde0e133fd036e45d60d2db59e12103c18131d8de99d45fb72a774cab0ccc258cd2abd9605610da20b9a232c88a3cb653aeffffffffa51be37aee4c76f23461168ee6d82dba07181b318390625b9acb2ec2be1004ba01000000dc00483045022100e4a2e8db8d020fc15ec83961820f021bcedc748075e5b4985eebfa006dec14ec022016ea51461beac82c7aef059a8359015286672963fa571fc3f98497ee3303b374014930460221008e6d8d560e3bd8eae2af62e90cd3439d80f68e4c45327c16d98a445c8ff941aa022100d39bee0fff226c264047264dbb421bf378362c8930bf4463bb09ef1b4fdf8a720147522102ca2a810ab17249b6033a038de563983881b4069270183f3c0aba945653e442162103f480f1b648d0d5167804ad4d586e0e757cc33fde0e133fd036e45d60d2db59e152aeffffffff05c0caad2a0100000017a9141d9ca71efa36d814424ea6ca1437e67287aebe3487c09448660100000017a91424fbc77cdc62702ade74dcf989c15e5d3f9240bc87c05ee3a10100000017a914afbfb74ee994c7d45f6698738bc4226d065266f7876043993b000000001976a914d2a37ce20ac9ec4f15dd05a7c6e8e9fbdb99850e88ac00f2052a010000001976a9146b2044146a4438e6e5bfbc65f147afeb64d14fbb88ac00000000",
+      vec![
+        "a9149eb21980dc9d413d8eac27314938b9da920ee53e87",
+        "a91409f70b896169c37981d2b54b371df0d81a136a2c87",
+        "a914e371782582a4addb541362c55565d2cdf56f649887",
+      ]
     );
   }
 }

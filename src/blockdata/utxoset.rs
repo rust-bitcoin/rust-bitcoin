@@ -166,7 +166,7 @@ impl UtxoSet {
           match taken {
             Some(txo) => {
               if validation >= ScriptValidation {
-                let mut stack = vec![];
+                let mut stack = Vec::with_capacity(6);
                 match input.script_sig.evaluate(&mut stack, Some((tx, n))) {
                   Ok(_) => {},
                   Err(e) => {

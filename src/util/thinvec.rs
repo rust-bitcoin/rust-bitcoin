@@ -103,6 +103,12 @@ impl<T> ThinVec<T> {
     self.as_slice().slice_from(index)
   }
 
+  /// Returns a slice starting from `s` ending in `e`
+  #[inline]
+  pub fn slice<'a>(&'a self, s: uint, e: uint) -> &'a [T] {
+    self.as_slice().slice(s, e)
+  }
+
   /// Push: always reallocates, try not to use this
   #[inline]
   pub fn push(&mut self, value: T) {
