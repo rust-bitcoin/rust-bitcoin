@@ -20,6 +20,7 @@
 
 use std::collections::HashMap;
 use std::mem;
+use std::sync::Future;
 
 use blockdata::transaction::{Transaction, TxOut};
 use blockdata::constants::genesis_block;
@@ -128,9 +129,9 @@ impl UtxoSet {
   }
 
   /// Get a reference to a UTXO in the set
-  pub fn get_utxo<'a>(&'a mut self, txid: Sha256dHash, vout: u32) -> Option<&'a TxOut> {
+  pub fn get_utxo<'a>(&'a self, txid: Sha256dHash, vout: u32) -> Option<&'a TxOut> {
     // Locate the UTXO, failing if not found
-    let node = match self.table.find_mut(&txid.into_uint128()) {
+    let node = match self.table.find(&txid.into_uint128()) {
       Some(node) => node,
       None => return None
     };
@@ -155,68 +156,11 @@ impl UtxoSet {
     self.spent_idx = (self.spent_idx + 1) % self.spent_txos.len() as u64;
     self.spent_txos.get_mut(spent_idx).clear();
 
-    let mut skipped_genesis = false;
+    // Add all the utxos so that we can have chained transactions within the
+    // same block. (Note that Bitcoin requires chained transactions to be in
+    // the correct order, which we do not check, so we are minorly too permissive.
+    // TODO this is a consensus bug.)
     for tx in block.txdata.iter() {
-      let txid = tx.bitcoin_hash();
-      // Put the removed utxos into the stxo cache, in case we need to rewind
-      if skipped_genesis {
-        self.spent_txos.get_mut(spent_idx).reserve_additional(tx.input.len());
-        for (n, input) in tx.input.iter().enumerate() {
-          let taken = self.take_utxo(input.prev_hash, input.prev_index);
-          match taken {
-            Some(txo) => {
-              if validation >= ScriptValidation {
-                let mut stack = Vec::with_capacity(6);
-                match input.script_sig.evaluate(&mut stack, Some((tx, n))) {
-                  Ok(_) => {},
-                  Err(e) => {
-                      use serialize::json::ToJson;
-                    println!("scriptsig error {}", e);
-                      println!("txid was {}", tx.bitcoin_hash());
-                      println!("tx was {}", tx.to_json().to_string());
-                      println!("script ended with stack {}", stack);
-                    self.rewind(block);
-                    return false;
-                  }
-                }
-                match txo.script_pubkey.evaluate(&mut stack, Some((tx, n))) {
-                  Ok(_) => {},
-                  Err(e) => {
-                      use serialize::json::ToJson;
-                    println!("scriptpubkey error {}", e);
-                      println!("txid was {}", tx.bitcoin_hash());
-                      println!("tx was {}", tx.to_json().to_string());
-                      println!("script ended with stack {}", stack);
-                    self.rewind(block);
-                    return false;
-                  }
-                }
-                match stack.pop() {
-                  Some(v) => {
-                    if !read_scriptbool(v.as_slice()) {
-                      use serialize::json::ToJson;
-                      println!("txid was {}", tx.bitcoin_hash());
-                      println!("tx was {}", tx.to_json().to_string());
-                      println!("script ended with stack {}", stack);
-                      self.rewind(block);
-                      return false;
-                    }
-                  }
-                  None => {
-                    println!("script ended with empty stack");
-                    self.rewind(block);
-                    return false;
-                  }
-                }
-              }
-              self.spent_txos.get_mut(spent_idx).push(((txid, n as u32), txo));
-            }
-            None => { if validation >= TxoValidation { self.rewind(block); return false; } }
-          }
-        }
-      }
-      skipped_genesis = true;
-
       let txid = tx.bitcoin_hash();
       // Add outputs -- add_utxos returns the original transaction if this is a dupe.
       //   Note that this can only happen with coinbases, and in this case the block
@@ -248,6 +192,75 @@ impl UtxoSet {
         // Didn't replace anything? Good.
         None => {}
       }
+    }
+
+    // If we are validating scripts, do all that now in parallel
+    if validation >= ScriptValidation {
+      let mut future_vec = Vec::with_capacity(block.txdata.len() - 1);
+      // skip the genesis since we don't validate this script. (TODO this might
+      // be a consensus bug since we don't even check that the opcodes make sense.)
+      for tx in block.txdata.iter().skip(1) {
+let s = self as *mut _ as *const UtxoSet;
+let tx = tx as *const _;
+        future_vec.push(Future::spawn(proc() {
+let tx = unsafe {&*tx};
+          for (n, input) in tx.input.iter().enumerate() {
+            let txo = unsafe { (*s).get_utxo(input.prev_hash, input.prev_index) };
+            match txo {
+              Some(txo) => {
+                let mut stack = Vec::with_capacity(6);
+                match input.script_sig.evaluate(&mut stack, Some((tx, n))) {
+                  Ok(_) => {}
+                  Err(e) => {
+                    println!("txid was {}", tx.bitcoin_hash());
+                    return false;
+                  }
+                }
+                match txo.script_pubkey.evaluate(&mut stack, Some((tx, n))) {
+                  Ok(_) => {},
+                  Err(e) => {
+                    println!("txid was {}", tx.bitcoin_hash());
+                    return false;
+                  }
+                }
+                match stack.pop() {
+                  Some(v) => {
+                    if !read_scriptbool(v.as_slice()) {
+                      use serialize::json::ToJson;
+                      println!("txid was {}", tx.bitcoin_hash());
+                      println!("tx was {}", tx.to_json().to_string());
+                      println!("script ended with stack {}", stack);
+                      return false;
+                    }
+                  }
+                  None => { return false; }
+                }
+              }
+              None => { return false; }
+            }
+          }
+          true
+        }));
+      }
+      if !future_vec.mut_iter().map(|f| f.get()).all(|x| x) { return false; }
+    }
+
+    let mut skipped_genesis = false;
+    for tx in block.txdata.iter() {
+      let txid = tx.bitcoin_hash();
+      // Put the removed utxos into the stxo cache, in case we need to rewind
+      if skipped_genesis {
+        self.spent_txos.get_mut(spent_idx).reserve_additional(tx.input.len());
+        for (n, input) in tx.input.iter().enumerate() {
+          let taken = self.take_utxo(input.prev_hash, input.prev_index);
+          match taken {
+            Some(txo) => { self.spent_txos.get_mut(spent_idx).push(((txid, n as u32), txo)); }
+            None => { if validation >= TxoValidation { self.rewind(block); return false; } }
+          }
+        }
+      }
+      skipped_genesis = true;
+
     }
     // If we made it here, success!
     true
