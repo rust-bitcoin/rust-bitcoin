@@ -129,7 +129,9 @@ impl SignatureHashType {
 /// A structure that can hold either a slice or vector, as necessary
 #[deriving(Clone, Show)]
 pub enum MaybeOwned<'a> {
+  /// Freshly allocated memory
   Owned(Vec<u8>),
+  /// Pointer into the original script
   Slice(&'a [u8])
 }
 
@@ -140,7 +142,7 @@ impl<'a> PartialEq for MaybeOwned<'a> {
 
 impl<'a> Eq for MaybeOwned<'a> {}
 
-impl<'a> Vector<u8> for MaybeOwned<'a> {
+impl<'a> Slice<u8> for MaybeOwned<'a> {
   #[inline]
   fn as_slice<'a>(&'a self) -> &'a [u8] {
     match *self {

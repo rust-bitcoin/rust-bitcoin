@@ -20,6 +20,7 @@
 
 use std::io::{IoResult, standard_error, ConnectionFailed};
 use std::io::timer;
+use std::time::Duration;
 
 use network::constants::Network;
 use network::message::{NetworkMessage, Verack};
@@ -78,7 +79,7 @@ pub trait Listener {
           }
           Err(e) => {
             println!("Received error {:} when decoding message. Pausing for 5 seconds then reconnecting.", e);
-            timer::sleep(5000);
+            timer::sleep(Duration::seconds(5));
             // Reconnect
             sock.reconnect()
               // Create version message

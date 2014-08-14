@@ -20,7 +20,7 @@
 //!
 
 use alloc::heap::{allocate, reallocate, deallocate};
-use std::raw::Slice;
+use std::raw;
 use std::slice::{Items, MutItems};
 use std::{fmt, mem, ptr};
 use std::u32;
@@ -76,7 +76,7 @@ impl<T> ThinVec<T> {
   /// Get vector as mutable slice
   #[inline]
   pub fn as_mut_slice<'a>(&'a mut self) -> &'a mut [T] {
-    unsafe { mem::transmute(Slice { data: self.ptr as *const T, len: self.cap as uint }) }
+    unsafe { mem::transmute(raw::Slice { data: self.ptr as *const T, len: self.cap as uint }) }
   }
 
   /// Accessor
@@ -166,16 +166,16 @@ impl<T:Clone> ThinVec<T> {
     for i in range(0, other.len()) {
       unsafe {
         ptr::write(self.as_mut_slice().unsafe_mut_ref(old_cap + i),
-                   other.unsafe_ref(i).clone());
+                   other.unsafe_get(i).clone());
       }
     }
   }
 }
 
-impl<T> Vector<T> for ThinVec<T> {
+impl<T> Slice<T> for ThinVec<T> {
   #[inline]
   fn as_slice<'a>(&'a self) -> &'a [T] {
-    unsafe { mem::transmute(Slice { data: self.ptr as *const T, len: self.cap as uint }) }
+    unsafe { mem::transmute(raw::Slice { data: self.ptr as *const T, len: self.cap as uint }) }
   }
 }
 
@@ -187,7 +187,7 @@ impl<T:Clone> Clone for ThinVec<T> {
       // if T is Copy
       for i in range(0, self.len()) {
         ptr::write(ret.as_mut_slice().unsafe_mut_ref(i),
-                   self.as_slice().unsafe_ref(i).clone());
+                   self.as_slice().unsafe_get(i).clone());
       }
       ret
     }

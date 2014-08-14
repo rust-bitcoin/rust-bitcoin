@@ -200,28 +200,22 @@ impl UtxoSet {
       // skip the genesis since we don't validate this script. (TODO this might
       // be a consensus bug since we don't even check that the opcodes make sense.)
       for tx in block.txdata.iter().skip(1) {
-let s = self as *mut _ as *const UtxoSet;
-let tx = tx as *const _;
+        let s = self as *mut _ as *const UtxoSet;
+        let tx = tx as *const _;
         future_vec.push(Future::spawn(proc() {
-let tx = unsafe {&*tx};
+          let tx = unsafe {&*tx};
           for (n, input) in tx.input.iter().enumerate() {
             let txo = unsafe { (*s).get_utxo(input.prev_hash, input.prev_index) };
             match txo {
               Some(txo) => {
                 let mut stack = Vec::with_capacity(6);
-                match input.script_sig.evaluate(&mut stack, Some((tx, n))) {
-                  Ok(_) => {}
-                  Err(e) => {
-                    println!("txid was {}", tx.bitcoin_hash());
-                    return false;
-                  }
+                if input.script_sig.evaluate(&mut stack, Some((tx, n))).is_err() {
+                  println!("txid was {}", tx.bitcoin_hash());
+                  return false;
                 }
-                match txo.script_pubkey.evaluate(&mut stack, Some((tx, n))) {
-                  Ok(_) => {},
-                  Err(e) => {
-                    println!("txid was {}", tx.bitcoin_hash());
-                    return false;
-                  }
+                if txo.script_pubkey.evaluate(&mut stack, Some((tx, n))).is_err() {
+                  println!("txid was {}", tx.bitcoin_hash());
+                  return false;
                 }
                 match stack.pop() {
                   Some(v) => {

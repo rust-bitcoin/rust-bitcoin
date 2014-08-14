@@ -41,7 +41,7 @@ impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for CommandString {
   fn consensus_encode(&self, s: &mut S) -> Result<(), E> {
     let &CommandString(ref inner_str) = self;
     let mut rawbytes = [0u8, ..12]; 
-    rawbytes.copy_from(inner_str.as_bytes().as_slice());
+    rawbytes.clone_from_slice(inner_str.as_bytes().as_slice());
     rawbytes.consensus_encode(s)
   }
 }
