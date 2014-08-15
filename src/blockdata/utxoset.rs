@@ -56,10 +56,11 @@ pub struct UtxoSet {
   spent_txos: Vec<Vec<((Sha256dHash, u32), TxOut)>>,
   // The last index into the above buffer that was assigned to
   spent_idx: u64,
-  n_utxos: u64
+  n_utxos: u64,
+  n_pruned: u64
 }
 
-impl_consensus_encoding!(UtxoSet, last_hash, n_utxos, spent_txos, spent_idx, table)
+impl_consensus_encoding!(UtxoSet, last_hash, n_utxos, n_pruned, spent_txos, spent_idx, table)
 
 impl UtxoSet {
   /// Constructs a new UTXO set
@@ -73,7 +74,8 @@ impl UtxoSet {
       last_hash: genesis_block(network).header.bitcoin_hash(),
       spent_txos: Vec::from_elem(rewind_limit, vec![]),
       spent_idx: 0,
-      n_utxos: 0
+      n_utxos: 0,
+      n_pruned: 0
     }
   }
 
@@ -85,7 +87,13 @@ impl UtxoSet {
       let mut new_node = ThinVec::with_capacity(tx.output.len() as u32);
       for (vout, txo) in tx.output.iter().enumerate() {
         // Unsafe since we are not uninitializing the old data in the vector
-        new_node.init(vout as uint, Some(txo.clone()));
+        if txo.script_pubkey.provably_unspendable() {
+          new_node.init(vout as uint, None);
+          self.n_utxos -= 1;
+          self.n_pruned += 1;
+        } else {
+          new_node.init(vout as uint, Some(txo.clone()));
+        }
       }
       new_node
     };
@@ -344,6 +352,12 @@ impl UtxoSet {
   /// Get the number of UTXOs in the set
   pub fn n_utxos(&self) -> uint {
     self.n_utxos as uint
+  }
+
+  /// Get the number of UTXOs ever pruned from the set (this is not updated
+  /// during reorgs, so it may return a higher number than is realistic).
+  pub fn n_pruned(&self) -> uint {
+    self.n_pruned as uint
   }
 }
 

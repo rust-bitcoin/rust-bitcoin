@@ -363,6 +363,32 @@ macro_rules! stack_opcode(
   });
 )
 
+macro_rules! stack_opcode_provable(
+  ($stack:ident($min:expr):
+       $(copy $c:expr)*
+       $(swap ($a:expr, $b:expr))*
+       $(perm ($first:expr $(->$i:expr)*) )*
+       $(drop $d:expr)*
+  ) => ({
+    // Record top
+    let top = $stack.len();
+    // Do copies
+    $( if top >= $c {
+         let elem = $stack[top - $c].clone();
+         $stack.push(elem);
+       } )*
+    // Do swaps
+    $( if top >= $a && top >= $b { $stack.as_mut_slice().swap(top - $a, top - $b); } )*
+    // Do permutations
+    if top >= $min {
+      $( let first = $first;
+         $( $stack.as_mut_slice().swap(top - first, top - $i); )* )*
+    }
+    // Do drops last so that dropped values will be available above
+    $( if top >= $d { $stack.remove(top - $d); } )*
+  });
+)
+
 /// Macro to translate numerical operations into stack ones
 macro_rules! num_opcode(
   ($stack:ident($($var:ident),*): $op:expr) => ({
@@ -373,6 +399,26 @@ macro_rules! num_opcode(
       }.as_slice()));
     )*
     $stack.push(Owned(build_scriptint($op)));
+  });
+)
+
+macro_rules! num_opcode_provable(
+  ($stack:ident($($var:ident),*): $op:expr) => ({
+    let mut failed = false;
+    $(
+      let $var = match read_scriptint(match $stack.pop() {
+        Some(elem) => elem,
+        // Out of stack elems: fine, just don't push a new one
+        None => { failed = true; Slice(script_false) }
+      }.as_slice()) {
+        Ok(n) => n,
+        // Overflow is overflow, "provably unspendable"
+        Err(_) => { return true; }
+      };
+    )*
+    if !failed {
+      $stack.push(Owned(build_scriptint($op)));
+    }
   });
 )
 
@@ -395,12 +441,40 @@ macro_rules! hash_opcode(
   });
 )
 
+macro_rules! hash_opcode_provable(
+  ($stack:ident, $hash:ident) => ({
+    match $stack.pop() {
+      None => { }
+      Some(v) => {
+        let mut engine = $hash::new();
+        engine.input(v.as_slice());
+        let mut ret = Vec::with_capacity(engine.output_bits() / 8);
+        // Force-set the length even though the vector is uninitialized
+        // This is OK only because u8 has no destructor
+        unsafe { ret.set_len(engine.output_bits() / 8); }
+        engine.result(ret.as_mut_slice());
+        $stack.push(Owned(ret));
+      }
+    }
+  });
+)
+
 // OP_VERIFY macro
 macro_rules! op_verify (
   ($stack:expr) => (
     match $stack.last().map(|v| read_scriptbool(v.as_slice())) {
       None => { return Err(VerifyEmptyStack); }
       Some(false) => { return Err(VerifyFailed); }
+      Some(true) => { $stack.pop(); }
+    }
+  )
+)
+
+macro_rules! op_verify_provable (
+  ($stack:expr) => (
+    match $stack.last().map(|v| read_scriptbool(v.as_slice())) {
+      None => { }
+      Some(false) => { return true; }
       Some(true) => { $stack.pop(); }
     }
   )
@@ -638,7 +712,7 @@ impl Script {
               if stack.len() < 2 { return Err(PopEmptyStack); }
               let a = stack.pop().unwrap();
               let b = stack.pop().unwrap();
-              stack.push(Owned(build_scriptint(if a == b { 1 } else { 0 })));
+              stack.push(Slice(if a == b { script_true } else { script_false }));
               if op == opcodes::OP_EQUALVERIFY { op_verify!(stack); }
             }
             opcodes::OP_1ADD => num_opcode!(stack(a): a + 1),
@@ -784,6 +858,283 @@ impl Script {
       }
     }
     Ok(())
+  }
+
+  /// Evaluate the script to determine whether any possible input will cause it
+  /// to accept. Returns true if it is guaranteed to fail; false otherwise.
+  pub fn provably_unspendable(&self) -> bool {
+    let &Script(ref raw) = self;
+
+    fn recurse<'a>(script: &'a [u8], mut stack: Vec<MaybeOwned<'a>>) -> bool {
+      let mut exec_stack = vec![true];
+      let mut alt_stack = vec![];
+
+      let mut index = 0;
+      while index < script.len() {
+        let executing = exec_stack.iter().all(|e| *e);
+        let byte = script[index];
+        index += 1;
+      // The definitions of all these categories are in opcodes.rs
+//println!("read {} as {} as {}  ...  stack before op is {}", byte, allops::Opcode::from_u8(byte), allops::Opcode::from_u8(byte).classify(), stack);
+        match (executing, allops::Opcode::from_u8(byte).classify()) {
+          // Illegal operations mean failure regardless of execution state
+          (_, opcodes::IllegalOp) => { return true; }
+          // Push number
+          (true, opcodes::PushNum(n)) => stack.push(Owned(build_scriptint(n as i64))),
+          // Return operations mean failure, but only if executed
+          (true, opcodes::ReturnOp)   => { return true; }
+          // Data-reading statements still need to read, even when not executing
+          (_, opcodes::PushBytes(n)) => {
+            if script.len() < index + n { return true; }
+            if executing { stack.push(Slice(script.slice(index, index + n))); }
+            index += n;
+          }
+          (_, opcodes::Ordinary(opcodes::OP_PUSHDATA1)) => {
+            if script.len() < index + 1 { return true; }
+            let n = match read_uint(script.slice_from(index).iter(), 1) {
+              Ok(n) => n,
+              Err(_) => { return true; }
+            };
+            if script.len() < index + 1 + n { return true; }
+            if executing { stack.push(Slice(script.slice(index + 1, index + n + 1))); }
+            index += 1 + n;
+          }
+          (_, opcodes::Ordinary(opcodes::OP_PUSHDATA2)) => {
+            if script.len() < index + 2 { return true; }
+            let n = match read_uint(script.slice_from(index).iter(), 2) {
+              Ok(n) => n,
+              Err(_) => { return true; }
+            };
+            if script.len() < index + 2 + n { return true; }
+            if executing { stack.push(Slice(script.slice(index + 2, index + n + 2))); }
+            index += 2 + n;
+          }
+          (_, opcodes::Ordinary(opcodes::OP_PUSHDATA4)) => {
+            let n = match read_uint(script.slice_from(index).iter(), 4) {
+              Ok(n) => n,
+              Err(_) => { return true; }
+            };
+            if script.len() < index + 4 + n { return true; }
+            if executing { stack.push(Slice(script.slice(index + 4, index + n + 4))); }
+            index += 4 + n;
+          }
+          // If-statements take effect when not executing
+          (false, opcodes::Ordinary(opcodes::OP_IF)) => exec_stack.push(false),
+          (false, opcodes::Ordinary(opcodes::OP_NOTIF)) => exec_stack.push(false),
+          (false, opcodes::Ordinary(opcodes::OP_ELSE)) => {
+            match exec_stack.mut_last() {
+              Some(ref_e) => { *ref_e = !*ref_e }
+              None => { return true; }
+            }
+          }
+          (false, opcodes::Ordinary(opcodes::OP_ENDIF)) => {
+            if exec_stack.pop().is_none() {
+              return true;
+            }
+          }
+          // No-ops and non-executed operations do nothing
+          (true, opcodes::NoOp) | (false, _) => {}
+          // Actual opcodes
+          (true, opcodes::Ordinary(op)) => {
+            match op {
+              opcodes::OP_PUSHDATA1 | opcodes::OP_PUSHDATA2 | opcodes::OP_PUSHDATA4 => {
+                // handled above
+              }
+              opcodes::OP_IF => {
+                match stack.pop().map(|v| read_scriptbool(v.as_slice())) {
+                  None => {
+                    let mut stack_true = stack.clone();
+                    stack_true.push(Slice(script_true));
+                    stack.push(Slice(script_false));
+                    return recurse(script.slice_from(index - 1), stack) &&
+                           recurse(script.slice_from(index - 1), stack_true);
+                  }
+                  Some(b) => exec_stack.push(b)
+                }
+              }
+              opcodes::OP_NOTIF => {
+                match stack.pop().map(|v| read_scriptbool(v.as_slice())) {
+                  None => {
+                    let mut stack_true = stack.clone();
+                    stack_true.push(Slice(script_true));
+                    stack.push(Slice(script_false));
+                    return recurse(script.slice_from(index - 1), stack) &&
+                           recurse(script.slice_from(index - 1), stack_true);
+                  }
+                  Some(b) => exec_stack.push(!b),
+                }
+              }
+              opcodes::OP_ELSE => {
+                match exec_stack.mut_last() {
+                  Some(ref_e) => { *ref_e = !*ref_e }
+                  None => { return true; }
+                }
+              }
+              opcodes::OP_ENDIF => {
+                if exec_stack.pop().is_none() {
+                  return true;
+                }
+              }
+              opcodes::OP_VERIFY => op_verify_provable!(stack),
+              opcodes::OP_TOALTSTACK => { stack.pop().map(|elem| alt_stack.push(elem)); }
+              opcodes::OP_FROMALTSTACK => { alt_stack.pop().map(|elem| stack.push(elem)); }
+              opcodes::OP_2DROP => stack_opcode_provable!(stack(2): drop 1 drop 2),
+              opcodes::OP_2DUP  => stack_opcode_provable!(stack(2): copy 2 copy 1),
+              opcodes::OP_3DUP  => stack_opcode_provable!(stack(3): copy 3 copy 2 copy 1),
+              opcodes::OP_2OVER => stack_opcode_provable!(stack(4): copy 4 copy 3),
+              opcodes::OP_2ROT  => stack_opcode_provable!(stack(6): perm (1 -> 3 -> 5)
+                                                                    perm (2 -> 4 -> 6)),
+              opcodes::OP_2SWAP => stack_opcode_provable!(stack(4): swap (2, 4)
+                                                                    swap (1, 3)),
+              opcodes::OP_DROP  => stack_opcode_provable!(stack(1): drop 1),
+              opcodes::OP_DUP   => stack_opcode_provable!(stack(1): copy 1),
+              opcodes::OP_NIP   => stack_opcode_provable!(stack(2): drop 2),
+              opcodes::OP_OVER  => stack_opcode_provable!(stack(2): copy 2),
+              opcodes::OP_PICK => {
+                let n = match stack.pop() {
+                  Some(data) => match read_scriptint(data.as_slice()) {
+                    Ok(n) => n,
+                    Err(_) => { return true; }
+                  },
+                  None => { return false; }
+                };
+                if n < 0 { return true; }
+                let n = n as uint;
+                stack_opcode_provable!(stack(n + 1): copy n + 1)
+              }
+              opcodes::OP_ROLL => {
+                let n = match stack.pop() {
+                  Some(data) => match read_scriptint(data.as_slice()) {
+                    Ok(n) => n,
+                    Err(_) => { return true; }
+                  },
+                  None => { return false; }
+                };
+                if n < 0 { return true; }
+                let n = n as uint;
+                stack_opcode_provable!(stack(n + 1): copy n + 1 drop n + 1)
+              }
+              opcodes::OP_ROT  => stack_opcode_provable!(stack(3): perm (1 -> 2 -> 3)),
+              opcodes::OP_SWAP => stack_opcode_provable!(stack(2): swap (1, 2)),
+              opcodes::OP_TUCK => stack_opcode_provable!(stack(2): copy 2 copy 1 drop 2),
+              opcodes::OP_IFDUP => {
+                match stack.last().map(|v| read_scriptbool(v.as_slice())) {
+                  None => {
+                    let mut stack_true = stack.clone();
+                    stack_true.push(Slice(script_true));
+                    stack.push(Slice(script_false));
+                    return recurse(script.slice_from(index - 1), stack) &&
+                           recurse(script.slice_from(index - 1), stack_true);
+                  }
+                  Some(false) => {}
+                  Some(true) => { stack_opcode_provable!(stack(1): copy 1); }
+                }
+              }
+              // Not clear what we can meaningfully do with these (I guess add an
+              // `Unknown` variant to `MaybeOwned` and change all the code to deal
+              // with it), and they aren't common, so just say "not unspendable".
+              opcodes::OP_DEPTH | opcodes::OP_SIZE => { return false; }
+              opcodes::OP_EQUAL | opcodes::OP_EQUALVERIFY => {
+                if stack.len() < 2 {
+                  stack.pop();
+                  stack.pop();
+                  let mut stack_true = stack.clone();
+                  stack_true.push(Slice(script_true));
+                  stack.push(Slice(script_false));
+                  return (op == opcodes::OP_EQUALVERIFY || recurse(script.slice_from(index), stack)) &&
+                         recurse(script.slice_from(index), stack_true);
+                }
+                let a = stack.pop().unwrap();
+                let b = stack.pop().unwrap();
+                stack.push(Slice(if a == b { script_true } else { script_false }));
+                if op == opcodes::OP_EQUALVERIFY { op_verify_provable!(stack); }
+              }
+              opcodes::OP_1ADD => num_opcode_provable!(stack(a): a + 1),
+              opcodes::OP_1SUB => num_opcode_provable!(stack(a): a - 1),
+              opcodes::OP_NEGATE => num_opcode_provable!(stack(a): -a),
+              opcodes::OP_ABS => num_opcode_provable!(stack(a): a.abs()),
+              opcodes::OP_NOT => num_opcode_provable!(stack(a): if a == 0 {1} else {0}),
+              opcodes::OP_0NOTEQUAL => num_opcode_provable!(stack(a): if a != 0 {1} else {0}),
+              opcodes::OP_ADD => num_opcode_provable!(stack(b, a): a + b),
+              opcodes::OP_SUB => num_opcode_provable!(stack(b, a): a - b),
+              opcodes::OP_BOOLAND => num_opcode_provable!(stack(b, a): if a != 0 && b != 0 {1} else {0}),
+              opcodes::OP_BOOLOR => num_opcode_provable!(stack(b, a): if a != 0 || b != 0 {1} else {0}),
+              opcodes::OP_NUMEQUAL => num_opcode_provable!(stack(b, a): if a == b {1} else {0}),
+              opcodes::OP_NUMNOTEQUAL => num_opcode_provable!(stack(b, a): if a != b {1} else {0}),
+              opcodes::OP_NUMEQUALVERIFY => {
+                num_opcode_provable!(stack(b, a): if a == b {1} else {0});
+                op_verify_provable!(stack);
+              }
+              opcodes::OP_LESSTHAN => num_opcode_provable!(stack(b, a): if a < b {1} else {0}),
+              opcodes::OP_GREATERTHAN => num_opcode_provable!(stack(b, a): if a > b {1} else {0}),
+              opcodes::OP_LESSTHANOREQUAL => num_opcode_provable!(stack(b, a): if a <= b {1} else {0}),
+              opcodes::OP_GREATERTHANOREQUAL => num_opcode_provable!(stack(b, a): if a >= b {1} else {0}),
+              opcodes::OP_MIN => num_opcode_provable!(stack(b, a): if a < b {a} else {b}),
+              opcodes::OP_MAX => num_opcode_provable!(stack(b, a): if a > b {a} else {b}),
+              opcodes::OP_WITHIN => num_opcode_provable!(stack(c, b, a): if b <= a && a < c {1} else {0}),
+              opcodes::OP_RIPEMD160 => hash_opcode_provable!(stack, Ripemd160),
+              opcodes::OP_SHA1 => hash_opcode_provable!(stack, Sha1),
+              opcodes::OP_SHA256 => hash_opcode_provable!(stack, Sha256),
+              opcodes::OP_HASH160 => {
+                hash_opcode_provable!(stack, Sha256);
+                hash_opcode_provable!(stack, Ripemd160);
+              }
+              opcodes::OP_HASH256 => {
+                hash_opcode_provable!(stack, Sha256);
+                hash_opcode_provable!(stack, Sha256);
+              }
+              // Ignore code separators since we won't check signatures
+              opcodes::OP_CODESEPARATOR => {}
+              opcodes::OP_CHECKSIG | opcodes::OP_CHECKSIGVERIFY => {
+                stack.pop();
+                stack.pop();
+                let mut stack_true = stack.clone();
+                stack_true.push(Slice(script_true));
+                stack.push(Slice(script_false));
+                return (op == opcodes::OP_CHECKSIGVERIFY || recurse(script.slice_from(index), stack)) &&
+                         recurse(script.slice_from(index), stack_true);
+              }
+              opcodes::OP_CHECKMULTISIG | opcodes::OP_CHECKMULTISIGVERIFY => {
+                // Read all the keys
+                if stack.len() >= 1 {
+                  let n_keys = match read_scriptint(stack.pop().unwrap().as_slice()) {
+                    Ok(n) => n,
+                    Err(_) => { return true; }
+                  };
+                  if n_keys < 0 || n_keys > 20 {
+                    return true;
+                  }
+                  for _ in range(0, n_keys) { stack.pop(); }
+
+                  // Read all the signatures
+                  if stack.len() >= 1 {
+                    let n_sigs = match read_scriptint(stack.pop().unwrap().as_slice()) {
+                      Ok(n) => n,
+                      Err(_) => { return true; }
+                    };
+                    if n_sigs < 0 || n_sigs > n_keys {
+                      return true;
+                    }
+                    for _ in range(0, n_sigs) { stack.pop(); }
+                  }
+                }
+
+                // Pop one more element off the stack to be replicate a consensus bug
+                stack.pop();
+
+                let mut stack_true = stack.clone();
+                stack_true.push(Slice(script_true));
+                stack.push(Slice(script_false));
+                return (op == opcodes::OP_CHECKMULTISIGVERIFY || recurse(script.slice_from(index), stack)) &&
+                         recurse(script.slice_from(index), stack_true);
+              }
+            }
+          }
+        }
+      }
+      false
+    }
+    recurse(raw.as_slice(), vec![])
   }
 }
 
@@ -1076,6 +1427,12 @@ mod test {
         "a914e371782582a4addb541362c55565d2cdf56f649887",
       ]
     );
+  }
+
+  #[test]
+  fn provably_unspendable_test() {
+    assert_eq!(Script(ThinVec::from_vec("a9149eb21980dc9d413d8eac27314938b9da920ee53e87".from_hex().unwrap())).provably_unspendable(), false);
+    assert_eq!(Script(ThinVec::from_vec("6aa9149eb21980dc9d413d8eac27314938b9da920ee53e87".from_hex().unwrap())).provably_unspendable(), true);
   }
 }
 
