@@ -18,8 +18,10 @@
 //! index of UTXOs.
 //!
 
+use std::cmp;
 use std::collections::HashMap;
 use std::mem;
+use std::os::num_cpus;
 use std::sync::Future;
 
 use blockdata::transaction::{Transaction, TxOut};
@@ -207,38 +209,45 @@ impl UtxoSet {
       let mut future_vec = Vec::with_capacity(block.txdata.len() - 1);
       // skip the genesis since we don't validate this script. (TODO this might
       // be a consensus bug since we don't even check that the opcodes make sense.)
-      for tx in block.txdata.iter().skip(1) {
+      let n_threads = cmp::min(block.txdata.len() - 1, num_cpus());
+      for j in range(0, n_threads) {
+        let n_elems = block.txdata.len() - 1;
+        let start = 1 + j * n_elems / n_threads;
+        let end = cmp::min(n_elems, 1 + (j + 1) * n_elems / n_threads);
+
         let s = self as *mut _ as *const UtxoSet;
-        let tx = tx as *const _;
+        let txes = &block.txdata as *const _;
         future_vec.push(Future::spawn(proc() {
-          let tx = unsafe {&*tx};
-          for (n, input) in tx.input.iter().enumerate() {
-            let txo = unsafe { (*s).get_utxo(input.prev_hash, input.prev_index) };
-            match txo {
-              Some(txo) => {
-                let mut stack = Vec::with_capacity(6);
-                if input.script_sig.evaluate(&mut stack, Some((tx, n))).is_err() {
-                  println!("txid was {}", tx.bitcoin_hash());
-                  return false;
-                }
-                if txo.script_pubkey.evaluate(&mut stack, Some((tx, n))).is_err() {
-                  println!("txid was {}", tx.bitcoin_hash());
-                  return false;
-                }
-                match stack.pop() {
-                  Some(v) => {
-                    if !read_scriptbool(v.as_slice()) {
-                      use serialize::json::ToJson;
-                      println!("txid was {}", tx.bitcoin_hash());
-                      println!("tx was {}", tx.to_json().to_string());
-                      println!("script ended with stack {}", stack);
-                      return false;
-                    }
+          let txes = unsafe {&*txes};
+          for tx in txes.slice(start, end).iter() {
+            for (n, input) in tx.input.iter().enumerate() {
+              let txo = unsafe { (*s).get_utxo(input.prev_hash, input.prev_index) };
+              match txo {
+                Some(txo) => {
+                  let mut stack = Vec::with_capacity(6);
+                  if input.script_sig.evaluate(&mut stack, Some((tx, n))).is_err() {
+                    println!("txid was {}", tx.bitcoin_hash());
+                    return false;
                   }
-                  None => { return false; }
+                  if txo.script_pubkey.evaluate(&mut stack, Some((tx, n))).is_err() {
+                    println!("txid was {}", tx.bitcoin_hash());
+                    return false;
+                  }
+                  match stack.pop() {
+                    Some(v) => {
+                      if !read_scriptbool(v.as_slice()) {
+                        use serialize::json::ToJson;
+                        println!("txid was {}", tx.bitcoin_hash());
+                        println!("tx was {}", tx.to_json().to_string());
+                        println!("script ended with stack {}", stack);
+                        return false;
+                      }
+                    }
+                    None => { return false; }
+                  }
                 }
+                None => { return false; }
               }
-              None => { return false; }
             }
           }
           true
