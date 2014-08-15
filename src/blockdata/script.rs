@@ -372,18 +372,20 @@ macro_rules! stack_opcode_provable(
   ) => ({
     // Record top
     let top = $stack.len();
-    // Do copies
+    // Do copies -- if we can't copy, and there is anything on the stack, return
+    // "not unspendable" since we can no longer predict the top of the stack
     $( if top >= $c {
          let elem = $stack[top - $c].clone();
          $stack.push(elem);
-       } )*
-    // Do swaps
-    $( if top >= $a && top >= $b { $stack.as_mut_slice().swap(top - $a, top - $b); } )*
-    // Do permutations
+       } else if top > 0 { return false; } )*
+    // Do swaps -- if we can't, return "not unspendable"
+    $( if top >= $a && top >= $b { $stack.as_mut_slice().swap(top - $a, top - $b); }
+       else if top > 0 { return false; } )*
+    // Do permutations -- if we can't, return "not unspendable"
     if top >= $min {
       $( let first = $first;
          $( $stack.as_mut_slice().swap(top - first, top - $i); )* )*
-    }
+    } else if top > 0 { return false; }
     // Do drops last so that dropped values will be available above
     $( if top >= $d { $stack.remove(top - $d); } )*
   });
@@ -865,9 +867,12 @@ impl Script {
   pub fn provably_unspendable(&self) -> bool {
     let &Script(ref raw) = self;
 
-    fn recurse<'a>(script: &'a [u8], mut stack: Vec<MaybeOwned<'a>>) -> bool {
+    fn recurse<'a>(script: &'a [u8], mut stack: Vec<MaybeOwned<'a>>, depth: uint) -> bool {
       let mut exec_stack = vec![true];
       let mut alt_stack = vec![];
+
+      // Avoid doing more than 64k forks
+      if depth > 16 { return false; }
 
       let mut index = 0;
       while index < script.len() {
@@ -946,8 +951,8 @@ impl Script {
                     let mut stack_true = stack.clone();
                     stack_true.push(Slice(script_true));
                     stack.push(Slice(script_false));
-                    return recurse(script.slice_from(index - 1), stack) &&
-                           recurse(script.slice_from(index - 1), stack_true);
+                    return recurse(script.slice_from(index - 1), stack, depth + 1) &&
+                           recurse(script.slice_from(index - 1), stack_true, depth + 1);
                   }
                   Some(b) => exec_stack.push(b)
                 }
@@ -958,8 +963,8 @@ impl Script {
                     let mut stack_true = stack.clone();
                     stack_true.push(Slice(script_true));
                     stack.push(Slice(script_false));
-                    return recurse(script.slice_from(index - 1), stack) &&
-                           recurse(script.slice_from(index - 1), stack_true);
+                    return recurse(script.slice_from(index - 1), stack, depth + 1) &&
+                           recurse(script.slice_from(index - 1), stack_true, depth + 1);
                   }
                   Some(b) => exec_stack.push(!b),
                 }
@@ -1023,8 +1028,8 @@ impl Script {
                     let mut stack_true = stack.clone();
                     stack_true.push(Slice(script_true));
                     stack.push(Slice(script_false));
-                    return recurse(script.slice_from(index - 1), stack) &&
-                           recurse(script.slice_from(index - 1), stack_true);
+                    return recurse(script.slice_from(index - 1), stack, depth + 1) &&
+                           recurse(script.slice_from(index - 1), stack_true, depth + 1);
                   }
                   Some(false) => {}
                   Some(true) => { stack_opcode_provable!(stack(1): copy 1); }
@@ -1041,8 +1046,8 @@ impl Script {
                   let mut stack_true = stack.clone();
                   stack_true.push(Slice(script_true));
                   stack.push(Slice(script_false));
-                  return (op == opcodes::OP_EQUALVERIFY || recurse(script.slice_from(index), stack)) &&
-                         recurse(script.slice_from(index), stack_true);
+                  return (op == opcodes::OP_EQUALVERIFY || recurse(script.slice_from(index), stack, depth + 1)) &&
+                         recurse(script.slice_from(index), stack_true, depth + 1);
                 }
                 let a = stack.pop().unwrap();
                 let b = stack.pop().unwrap();
@@ -1091,8 +1096,8 @@ impl Script {
                 let mut stack_true = stack.clone();
                 stack_true.push(Slice(script_true));
                 stack.push(Slice(script_false));
-                return (op == opcodes::OP_CHECKSIGVERIFY || recurse(script.slice_from(index), stack)) &&
-                         recurse(script.slice_from(index), stack_true);
+                return (op == opcodes::OP_CHECKSIGVERIFY || recurse(script.slice_from(index), stack, depth + 1)) &&
+                         recurse(script.slice_from(index), stack_true, depth + 1);
               }
               opcodes::OP_CHECKMULTISIG | opcodes::OP_CHECKMULTISIGVERIFY => {
                 // Read all the keys
@@ -1125,16 +1130,17 @@ impl Script {
                 let mut stack_true = stack.clone();
                 stack_true.push(Slice(script_true));
                 stack.push(Slice(script_false));
-                return (op == opcodes::OP_CHECKMULTISIGVERIFY || recurse(script.slice_from(index), stack)) &&
-                         recurse(script.slice_from(index), stack_true);
+                return (op == opcodes::OP_CHECKMULTISIGVERIFY || recurse(script.slice_from(index), stack, depth + 1)) &&
+                         recurse(script.slice_from(index), stack_true, depth + 1);
               }
             }
           }
         }
       }
-      false
+      // If we finished, we are only unspendable if we have false on the stack
+      stack.last().is_some() && !read_scriptbool(stack.last().unwrap().as_slice())
     }
-    recurse(raw.as_slice(), vec![])
+    recurse(raw.as_slice(), vec![], 1)
   }
 }
 
@@ -1431,8 +1437,27 @@ mod test {
 
   #[test]
   fn provably_unspendable_test() {
-    assert_eq!(Script(ThinVec::from_vec("a9149eb21980dc9d413d8eac27314938b9da920ee53e87".from_hex().unwrap())).provably_unspendable(), false);
+    assert_eq!(Script(ThinVec::from_vec("76a914ee61d57ab51b9d212335b1dba62794ac20d2bcf988ac".from_hex().unwrap())).provably_unspendable(), false);
     assert_eq!(Script(ThinVec::from_vec("6aa9149eb21980dc9d413d8eac27314938b9da920ee53e87".from_hex().unwrap())).provably_unspendable(), true);
+    // if return; else return
+    assert_eq!(Script(ThinVec::from_vec("636a676a68".from_hex().unwrap())).provably_unspendable(), true);
+    // if return; else don't
+    assert_eq!(Script(ThinVec::from_vec("636a6768".from_hex().unwrap())).provably_unspendable(), false);
+    // op_equal
+    assert_eq!(Script(ThinVec::from_vec("87".from_hex().unwrap())).provably_unspendable(), false);
+    assert_eq!(Script(ThinVec::from_vec("000087".from_hex().unwrap())).provably_unspendable(), false);
+    assert_eq!(Script(ThinVec::from_vec("510087".from_hex().unwrap())).provably_unspendable(), true);
+    assert_eq!(Script(ThinVec::from_vec("510088".from_hex().unwrap())).provably_unspendable(), true);
+    // nested ifs
+    assert_eq!(Script(ThinVec::from_vec("6363636363686868686800".from_hex().unwrap())).provably_unspendable(), true);
+    // repeated op_equals
+    assert_eq!(Script(ThinVec::from_vec("8787878787878787".from_hex().unwrap())).provably_unspendable(), false);
+    // op_ifdup
+    assert_eq!(Script(ThinVec::from_vec("73".from_hex().unwrap())).provably_unspendable(), false);
+    assert_eq!(Script(ThinVec::from_vec("5173".from_hex().unwrap())).provably_unspendable(), false);
+    assert_eq!(Script(ThinVec::from_vec("0073".from_hex().unwrap())).provably_unspendable(), true);
+    // this is honest to god tx e411dbebd2f7d64dafeef9b14b5c59ec60c36779d43f850e5e347abee1e1a455 on mainnet
+    assert_eq!(Script(ThinVec::from_vec("76a9144838a081d73cf134e8ff9cfd4015406c73beceb388acacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacac".from_hex().unwrap())).provably_unspendable(), false);
   }
 }
 
