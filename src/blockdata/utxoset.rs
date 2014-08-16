@@ -25,11 +25,9 @@ use std::os::num_cpus;
 use std::sync::Future;
 
 use blockdata::transaction::{Transaction, TxOut};
+use blockdata::transaction::{TransactionError, InputNotFound};
 use blockdata::constants::genesis_block;
 use blockdata::block::Block;
-use blockdata::script::read_scriptbool;
-use blockdata::script::{Script, ScriptError};
-use blockdata::script;
 use network::constants::Network;
 use network::serialize::BitcoinHash;
 use util::hash::{DumbHasher, Sha256dHash};
@@ -56,18 +54,8 @@ pub enum UtxoSetError {
   BadPrevHash(Sha256dHash, Sha256dHash),
   /// A TXID was duplicated
   DuplicatedTxid(Sha256dHash),
-  /// Concatenated script failed in the input half (txid, script error)
-  InputScriptFailure(Sha256dHash, ScriptError),
-  /// Concatenated script failed in the output half (txid, script error)
-  OutputScriptFailure(Sha256dHash, ScriptError),
-  /// P2SH serialized script failed (txid, script error)
-  P2shScriptFailure(Sha256dHash, ScriptError),
-  /// Script ended with false at the top of the stock (txid)
-  ScriptReturnedFalse(Sha256dHash),
-  /// Script ended with nothing in the stack (txid)
-  ScriptReturnedEmptyStack(Sha256dHash),
-  /// Script ended with nothing in the stack (txid, input txid, input vout)
-  InputNotFound(Sha256dHash, Sha256dHash, u32),
+  /// A tx was invalid
+  InvalidTx(TransactionError),
 }
 
 /// Vector of outputs; None indicates a nonexistent or already spent output
@@ -244,48 +232,9 @@ impl UtxoSet {
         future_vec.push(Future::spawn(proc() {
           let txes = unsafe {&*txes};
           for tx in txes.slice(start, end).iter() {
-            let txid = tx.bitcoin_hash();
-            for (n, input) in tx.input.iter().enumerate() {
-              let txo = unsafe { (*s).get_utxo(input.prev_hash, input.prev_index) };
-              match txo {
-                Some(txo) => {
-                  let mut p2sh_stack = Vec::new();
-                  let mut p2sh_script = Script::new();
-
-                  let mut stack = Vec::with_capacity(6);
-                  match input.script_sig.evaluate(&mut stack, Some((tx, n))) {
-                    Ok(_) => {}
-                    Err(e) => { return Err(InputScriptFailure(txid, e)); }
-                  }
-                  if txo.script_pubkey.is_p2sh() && stack.len() > 0 {
-                    p2sh_stack = stack.clone();
-                    p2sh_script = match p2sh_stack.pop() {
-                      Some(script::Owned(v)) => Script::from_vec(v),
-                      Some(script::Slice(s)) => Script::from_vec(Vec::from_slice(s)),
-                      None => unreachable!()
-                    };
-                  }
-                  match txo.script_pubkey.evaluate(&mut stack, Some((tx, n))) {
-                    Ok(_) => {}
-                    Err(e) => { return Err(OutputScriptFailure(txid, e)); }
-                  }
-                  match stack.pop() {
-                    Some(v) => {
-                      if !read_scriptbool(v.as_slice()) {
-                        return Err(ScriptReturnedFalse(txid));
-                      }
-                    }
-                    None => { return Err(ScriptReturnedEmptyStack(txid)); }
-                  }
-                  if txo.script_pubkey.is_p2sh() {
-                    match p2sh_script.evaluate(&mut p2sh_stack, Some((tx, n))) {
-                      Ok(_) => {}
-                      Err(e) => { return Err(P2shScriptFailure(txid, e)); }
-                    }
-                  }
-                }
-                None => { return Err(InputNotFound(txid, input.prev_hash, input.prev_index)); }
-              }
+            match tx.validate(unsafe {&*s}) {
+              Ok(_) => {},
+              Err(e) => { return Err(InvalidTx(e)); }
             }
           }
           Ok(())
@@ -317,7 +266,7 @@ impl UtxoSet {
             None => {
               if validation >= TxoValidation {
                 self.rewind(block);
-                return Err(InputNotFound(txid, input.prev_hash, input.prev_index));
+                return Err(InvalidTx(InputNotFound(txid, input.prev_hash, input.prev_index)));
               }
             }
           }
