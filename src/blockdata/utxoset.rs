@@ -28,7 +28,8 @@ use blockdata::transaction::{Transaction, TxOut};
 use blockdata::constants::genesis_block;
 use blockdata::block::Block;
 use blockdata::script::read_scriptbool;
-use blockdata::script::ScriptError;
+use blockdata::script::{Script, ScriptError};
+use blockdata::script;
 use network::constants::Network;
 use network::serialize::BitcoinHash;
 use util::hash::{DumbHasher, Sha256dHash};
@@ -59,6 +60,8 @@ pub enum UtxoSetError {
   InputScriptFailure(Sha256dHash, ScriptError),
   /// Concatenated script failed in the output half (txid, script error)
   OutputScriptFailure(Sha256dHash, ScriptError),
+  /// P2SH serialized script failed (txid, script error)
+  P2shScriptFailure(Sha256dHash, ScriptError),
   /// Script ended with false at the top of the stock (txid)
   ScriptReturnedFalse(Sha256dHash),
   /// Script ended with nothing in the stack (txid)
@@ -109,7 +112,7 @@ impl UtxoSet {
       let mut new_node = ThinVec::with_capacity(tx.output.len() as u32);
       for (vout, txo) in tx.output.iter().enumerate() {
         // Unsafe since we are not uninitializing the old data in the vector
-        if txo.script_pubkey.provably_unspendable() {
+        if txo.script_pubkey.is_provably_unspendable() {
           new_node.init(vout as uint, None);
           self.n_utxos -= 1;
           self.n_pruned += 1;
@@ -246,10 +249,21 @@ impl UtxoSet {
               let txo = unsafe { (*s).get_utxo(input.prev_hash, input.prev_index) };
               match txo {
                 Some(txo) => {
+                  let mut p2sh_stack = Vec::new();
+                  let mut p2sh_script = Script::new();
+
                   let mut stack = Vec::with_capacity(6);
                   match input.script_sig.evaluate(&mut stack, Some((tx, n))) {
                     Ok(_) => {}
                     Err(e) => { return Err(InputScriptFailure(txid, e)); }
+                  }
+                  if txo.script_pubkey.is_p2sh() && stack.len() > 0 {
+                    p2sh_stack = stack.clone();
+                    p2sh_script = match p2sh_stack.pop() {
+                      Some(script::Owned(v)) => Script::from_vec(v),
+                      Some(script::Slice(s)) => Script::from_vec(Vec::from_slice(s)),
+                      None => unreachable!()
+                    };
                   }
                   match txo.script_pubkey.evaluate(&mut stack, Some((tx, n))) {
                     Ok(_) => {}
@@ -262,6 +276,12 @@ impl UtxoSet {
                       }
                     }
                     None => { return Err(ScriptReturnedEmptyStack(txid)); }
+                  }
+                  if txo.script_pubkey.is_p2sh() {
+                    match p2sh_script.evaluate(&mut p2sh_stack, Some((tx, n))) {
+                      Ok(_) => {}
+                      Err(e) => { return Err(P2shScriptFailure(txid, e)); }
+                    }
                   }
                 }
                 None => { return Err(InputNotFound(txid, input.prev_hash, input.prev_index)); }

@@ -170,6 +170,12 @@ impl<T:Clone> ThinVec<T> {
       }
     }
   }
+
+  /// Constructor from a slice
+  #[inline]
+  pub fn from_slice(v: &[T]) -> ThinVec<T> {
+    ThinVec::from_vec(Vec::from_slice(v))
+  }
 }
 
 impl<T> Slice<T> for ThinVec<T> {
