@@ -81,25 +81,24 @@ pub struct Transaction {
 /// A transaction error
 #[deriving(PartialEq, Eq, Clone, Show)]
 pub enum TransactionError {
-  /// Concatenated script failed in the input half (txid, script error)
-  InputScriptFailure(Sha256dHash, ScriptError),
-  /// Concatenated script failed in the output half (txid, script error)
-  OutputScriptFailure(Sha256dHash, ScriptError),
-  /// P2SH serialized script failed (txid, script error)
-  P2shScriptFailure(Sha256dHash, ScriptError),
-  /// Script ended with false at the top of the stock (txid)
-  ScriptReturnedFalse(Sha256dHash),
-  /// Script ended with nothing in the stack (txid)
-  ScriptReturnedEmptyStack(Sha256dHash),
-  /// Script ended with nothing in the stack (txid, input txid, input vout)
-  InputNotFound(Sha256dHash, Sha256dHash, u32),
+  /// Concatenated script failed in the input half (script error)
+  InputScriptFailure(ScriptError),
+  /// Concatenated script failed in the output half (script error)
+  OutputScriptFailure(ScriptError),
+  /// P2SH serialized script failed (script error)
+  P2shScriptFailure(ScriptError),
+  /// Script ended with false at the top of the stack 
+  ScriptReturnedFalse,
+  /// Script ended with nothing in the stack
+  ScriptReturnedEmptyStack,
+  /// Script ended with nothing in the stack (input txid, input vout)
+  InputNotFound(Sha256dHash, u32),
 }
 
 
 impl Transaction {
   /// Check a transaction for validity
   pub fn validate(&self, utxoset: &UtxoSet) -> Result<(), TransactionError> {
-    let txid = self.bitcoin_hash();
     for (n, input) in self.input.iter().enumerate() {
       let txo = utxoset.get_utxo(input.prev_hash, input.prev_index);
       match txo {
@@ -110,7 +109,7 @@ impl Transaction {
           let mut stack = Vec::with_capacity(6);
           match input.script_sig.evaluate(&mut stack, Some((self, n))) {
             Ok(_) => {}
-            Err(e) => { return Err(InputScriptFailure(txid, e)); }
+            Err(e) => { return Err(InputScriptFailure(e)); }
           }
           if txo.script_pubkey.is_p2sh() && stack.len() > 0 {
             p2sh_stack = stack.clone();
@@ -122,24 +121,24 @@ impl Transaction {
           }
           match txo.script_pubkey.evaluate(&mut stack, Some((self, n))) {
             Ok(_) => {}
-            Err(e) => { return Err(OutputScriptFailure(txid, e)); }
+            Err(e) => { return Err(OutputScriptFailure(e)); }
           }
           match stack.pop() {
             Some(v) => {
               if !read_scriptbool(v.as_slice()) {
-                return Err(ScriptReturnedFalse(txid));
+                return Err(ScriptReturnedFalse);
               }
             }
-            None => { return Err(ScriptReturnedEmptyStack(txid)); }
+            None => { return Err(ScriptReturnedEmptyStack); }
           }
           if txo.script_pubkey.is_p2sh() {
             match p2sh_script.evaluate(&mut p2sh_stack, Some((self, n))) {
               Ok(_) => {}
-              Err(e) => { return Err(P2shScriptFailure(txid, e)); }
+              Err(e) => { return Err(P2shScriptFailure(e)); }
             }
           }
         }
-        None => { return Err(InputNotFound(txid, input.prev_hash, input.prev_index)); }
+        None => { return Err(InputNotFound(input.prev_hash, input.prev_index)); }
       }
     }
     Ok(())

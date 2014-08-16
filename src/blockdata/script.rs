@@ -27,6 +27,7 @@
 use std::char::from_digit;
 use std::default::Default;
 use serialize::json;
+use serialize::hex::ToHex;
 
 use crypto::digest::Digest;
 use crypto::ripemd160::Ripemd160;
@@ -65,6 +66,8 @@ pub enum ScriptError {
   ElseWithoutIf,
   /// An OP_ENDIF happened while not in an OP_IF tree
   EndifWithoutIf,
+  /// An OP_EQUALVERIFY failed (expected, gotten)
+  EqualVerifyFailed(String, String),
   /// An OP_IF happened with an empty stack
   IfEmptyStack,
   /// An illegal opcode appeared in the script (does not need to be executed)
@@ -83,6 +86,8 @@ pub enum ScriptError {
   NegativeRoll,
   /// Tried to execute a signature operation but no transaction context was provided
   NoTransaction,
+  /// An OP_NUMEQUALVERIFY failed (expected, gotten)
+  NumEqualVerifyFailed(i64, i64),
   /// Tried to read an array off the stack as a number when it was more than 4 bytes
   NumericOverflow,
   /// Some stack operation was done with an empty stack
@@ -401,6 +406,8 @@ macro_rules! num_opcode(
       }.as_slice()));
     )*
     $stack.push(Owned(build_scriptint($op)));
+    // Return a tuple of all the variables
+    ($( $var ),*)
   });
 )
 
@@ -463,10 +470,10 @@ macro_rules! hash_opcode_provable(
 
 // OP_VERIFY macro
 macro_rules! op_verify (
-  ($stack:expr) => (
+  ($stack:expr, $err:expr) => (
     match $stack.last().map(|v| read_scriptbool(v.as_slice())) {
       None => { return Err(VerifyEmptyStack); }
-      Some(false) => { return Err(VerifyFailed); }
+      Some(false) => { return Err($err); }
       Some(true) => { $stack.pop(); }
     }
   )
@@ -651,7 +658,7 @@ impl Script {
                 return Err(EndifWithoutIf);
               }
             }
-            opcodes::OP_VERIFY => op_verify!(stack),
+            opcodes::OP_VERIFY => op_verify!(stack, VerifyFailed),
             opcodes::OP_TOALTSTACK => {
               match stack.pop() {
                 None => { return Err(PopEmptyStack); }
@@ -718,31 +725,34 @@ impl Script {
               let a = stack.pop().unwrap();
               let b = stack.pop().unwrap();
               stack.push(Slice(if a == b { script_true } else { script_false }));
-              if op == opcodes::OP_EQUALVERIFY { op_verify!(stack); }
+              if op == opcodes::OP_EQUALVERIFY {
+                op_verify!(stack, EqualVerifyFailed(a.as_slice().to_hex(),
+                                                    b.as_slice().to_hex()));
+              }
             }
-            opcodes::OP_1ADD => num_opcode!(stack(a): a + 1),
-            opcodes::OP_1SUB => num_opcode!(stack(a): a - 1),
-            opcodes::OP_NEGATE => num_opcode!(stack(a): -a),
-            opcodes::OP_ABS => num_opcode!(stack(a): a.abs()),
-            opcodes::OP_NOT => num_opcode!(stack(a): if a == 0 {1} else {0}),
-            opcodes::OP_0NOTEQUAL => num_opcode!(stack(a): if a != 0 {1} else {0}),
-            opcodes::OP_ADD => num_opcode!(stack(b, a): a + b),
-            opcodes::OP_SUB => num_opcode!(stack(b, a): a - b),
-            opcodes::OP_BOOLAND => num_opcode!(stack(b, a): if a != 0 && b != 0 {1} else {0}),
-            opcodes::OP_BOOLOR => num_opcode!(stack(b, a): if a != 0 || b != 0 {1} else {0}),
-            opcodes::OP_NUMEQUAL => num_opcode!(stack(b, a): if a == b {1} else {0}),
-            opcodes::OP_NUMNOTEQUAL => num_opcode!(stack(b, a): if a != b {1} else {0}),
+            opcodes::OP_1ADD => { num_opcode!(stack(a): a + 1); }
+            opcodes::OP_1SUB => { num_opcode!(stack(a): a - 1); }
+            opcodes::OP_NEGATE => { num_opcode!(stack(a): -a); }
+            opcodes::OP_ABS => { num_opcode!(stack(a): a.abs()); }
+            opcodes::OP_NOT => { num_opcode!(stack(a): if a == 0 {1} else {0}); }
+            opcodes::OP_0NOTEQUAL => { num_opcode!(stack(a): if a != 0 {1} else {0}); }
+            opcodes::OP_ADD => { num_opcode!(stack(b, a): a + b); }
+            opcodes::OP_SUB => { num_opcode!(stack(b, a): a - b); }
+            opcodes::OP_BOOLAND => { num_opcode!(stack(b, a): if a != 0 && b != 0 {1} else {0}); }
+            opcodes::OP_BOOLOR => { num_opcode!(stack(b, a): if a != 0 || b != 0 {1} else {0}); }
+            opcodes::OP_NUMEQUAL => { num_opcode!(stack(b, a): if a == b {1} else {0}); }
+            opcodes::OP_NUMNOTEQUAL => { num_opcode!(stack(b, a): if a != b {1} else {0}); }
             opcodes::OP_NUMEQUALVERIFY => {
-              num_opcode!(stack(b, a): if a == b {1} else {0});
-              op_verify!(stack);
+              let (b, a) = num_opcode!(stack(b, a): if a == b {1} else {0});
+              op_verify!(stack, NumEqualVerifyFailed(a, b));
             }
-            opcodes::OP_LESSTHAN => num_opcode!(stack(b, a): if a < b {1} else {0}),
-            opcodes::OP_GREATERTHAN => num_opcode!(stack(b, a): if a > b {1} else {0}),
-            opcodes::OP_LESSTHANOREQUAL => num_opcode!(stack(b, a): if a <= b {1} else {0}),
-            opcodes::OP_GREATERTHANOREQUAL => num_opcode!(stack(b, a): if a >= b {1} else {0}),
-            opcodes::OP_MIN => num_opcode!(stack(b, a): if a < b {a} else {b}),
-            opcodes::OP_MAX => num_opcode!(stack(b, a): if a > b {a} else {b}),
-            opcodes::OP_WITHIN => num_opcode!(stack(c, b, a): if b <= a && a < c {1} else {0}),
+            opcodes::OP_LESSTHAN => { num_opcode!(stack(b, a): if a < b {1} else {0}); }
+            opcodes::OP_GREATERTHAN => { num_opcode!(stack(b, a): if a > b {1} else {0}); }
+            opcodes::OP_LESSTHANOREQUAL => { num_opcode!(stack(b, a): if a <= b {1} else {0}); }
+            opcodes::OP_GREATERTHANOREQUAL => { num_opcode!(stack(b, a): if a >= b {1} else {0}); }
+            opcodes::OP_MIN => { num_opcode!(stack(b, a): if a < b {a} else {b}); }
+            opcodes::OP_MAX => { num_opcode!(stack(b, a): if a > b {a} else {b}); }
+            opcodes::OP_WITHIN => { num_opcode!(stack(c, b, a): if b <= a && a < c {1} else {0}); }
             opcodes::OP_RIPEMD160 => hash_opcode!(stack, Ripemd160),
             opcodes::OP_SHA1 => hash_opcode!(stack, Sha1),
             opcodes::OP_SHA256 => hash_opcode!(stack, Sha256),
@@ -780,7 +790,7 @@ impl Script {
                 Ok(()) => stack.push(Slice(script_true)),
                 _ => stack.push(Slice(script_false)),
               }
-              if op == opcodes::OP_CHECKSIGVERIFY { op_verify!(stack); }
+              if op == opcodes::OP_CHECKSIGVERIFY { op_verify!(stack, VerifyFailed); }
             }
             opcodes::OP_CHECKMULTISIG | opcodes::OP_CHECKMULTISIGVERIFY => {
               // Read all the keys
@@ -856,7 +866,7 @@ impl Script {
                   }
                 }
               }
-              if op == opcodes::OP_CHECKMULTISIGVERIFY { op_verify!(stack); }
+              if op == opcodes::OP_CHECKMULTISIGVERIFY { op_verify!(stack, VerifyFailed); }
             }
           }
         }
@@ -1205,7 +1215,7 @@ mod test {
   use serialize::hex::FromHex;
 
   use super::{Script, build_scriptint, read_scriptint, read_scriptbool};
-  use super::{NoTransaction, PopEmptyStack, VerifyFailed};
+  use super::{EqualVerifyFailed, NoTransaction, PopEmptyStack};
   use super::Owned;
 
   use network::serialize::{deserialize, serialize};
@@ -1302,7 +1312,9 @@ mod test {
     // Should be able to check that the sig is there and pk correct
     // before needing a transaction
     assert_eq!(script_pk.evaluate(&mut vec![], None), Err(PopEmptyStack));
-    assert_eq!(script_pk.evaluate(&mut vec![Owned(vec![]), Owned(vec![])], None), Err(VerifyFailed));
+    assert_eq!(script_pk.evaluate(&mut vec![Owned(vec![]), Owned(vec![])], None),
+                                  Err(EqualVerifyFailed("e729dea4a3a81108e16376d1cc329c91db589994".to_string(),
+                                                        "b472a266d0bd89c13706a4132ccfb16f7c3b9fcb".to_string())));
     // But if the signature is there, we need a tx to check it
     assert_eq!(script_pk.evaluate(&mut vec![Owned(vec![]), Owned("026d5d4cfef5f3d97d2263941b4d8e7aaa82910bf8e6f7c6cf1d8f0d755b9d2d1a".from_hex().unwrap())], None), Err(NoTransaction));
     assert_eq!(script_pk.evaluate(&mut vec![Owned(vec![0]), Owned("026d5d4cfef5f3d97d2263941b4d8e7aaa82910bf8e6f7c6cf1d8f0d755b9d2d1a".from_hex().unwrap())], None), Err(NoTransaction));

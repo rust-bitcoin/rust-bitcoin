@@ -54,8 +54,8 @@ pub enum UtxoSetError {
   BadPrevHash(Sha256dHash, Sha256dHash),
   /// A TXID was duplicated
   DuplicatedTxid(Sha256dHash),
-  /// A tx was invalid
-  InvalidTx(TransactionError),
+  /// A tx was invalid (txid, error)
+  InvalidTx(Sha256dHash, TransactionError),
 }
 
 /// Vector of outputs; None indicates a nonexistent or already spent output
@@ -234,7 +234,7 @@ impl UtxoSet {
           for tx in txes.slice(start, end).iter() {
             match tx.validate(unsafe {&*s}) {
               Ok(_) => {},
-              Err(e) => { return Err(InvalidTx(e)); }
+              Err(e) => { return Err(InvalidTx(tx.bitcoin_hash(), e)); }
             }
           }
           Ok(())
@@ -266,7 +266,8 @@ impl UtxoSet {
             None => {
               if validation >= TxoValidation {
                 self.rewind(block);
-                return Err(InvalidTx(InputNotFound(txid, input.prev_hash, input.prev_index)));
+                return Err(InvalidTx(txid,
+                                     InputNotFound(input.prev_hash, input.prev_index)));
               }
             }
           }
