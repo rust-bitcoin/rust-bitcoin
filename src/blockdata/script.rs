@@ -109,11 +109,12 @@ impl json::ToJson for ScriptError {
 pub struct TraceIteration {
   index: uint,
   opcode: allops::Opcode,
+  executed: bool,
   effect: opcodes::OpcodeClass,
   stack: Vec<String>
 }
 
-impl_json!(TraceIteration, index, opcode, effect, stack)
+impl_json!(TraceIteration, index, opcode, executed, effect, stack)
 
 /// Hashtype of a transaction, encoded in the last byte of a signature,
 /// specifically in the last 5 bits `byte & 31`
@@ -595,6 +596,20 @@ impl Script {
     while index < raw.len() {
       let executing = exec_stack.iter().all(|e| *e);
       let byte = unsafe { *raw.get(index) };
+      // Write out the trace, except the stack which we don't know yet
+      match trace {
+        Some(ref mut t) => {
+          let opcode = allops::Opcode::from_u8(byte);
+          t.push(TraceIteration {
+            index: index,
+            opcode: opcode,
+            executed: executing,
+            effect: opcode.classify(),
+            stack: vec![]
+          });
+        }
+        None => {}
+      }
       index += 1;
       // The definitions of all these categories are in opcodes.rs
 //println!("read {} as {} as {}  ...  stack before op is {}", byte, allops::Opcode::from_u8(byte), allops::Opcode::from_u8(byte).classify(), stack);
@@ -890,18 +905,12 @@ impl Script {
           } // end opcode match
         } // end classification match
       } // end loop
-      match trace {
-        Some(ref mut t) => {
-          let opcode = allops::Opcode::from_u8(byte);
-          t.push(TraceIteration {
-            index: index - 1,
-            opcode: opcode,
-            effect: opcode.classify(),
-            stack: stack.iter().map(|elem| elem.as_slice().to_hex()).collect()
-          });
-        }
-        None => {}
-      }
+      // Store the stack in the trace
+      trace.as_mut().map(|t|
+        t.mut_last().map(|t|
+          t.stack = stack.iter().map(|elem| elem.as_slice().to_hex()).collect()
+        )
+      );
     }
     Ok(())
   }
