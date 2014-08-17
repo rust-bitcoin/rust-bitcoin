@@ -98,6 +98,23 @@ pub enum ScriptError {
   VerifyFailed,
 }
 
+impl json::ToJson for ScriptError {
+  fn to_json(&self) -> json::Json {
+    json::String(self.to_string())
+  }
+}
+
+/// A single iteration of a script execution
+#[deriving(PartialEq, Eq, Show, Clone)]
+pub struct TraceIteration {
+  index: uint,
+  opcode: allops::Opcode,
+  effect: opcodes::OpcodeClass,
+  stack: Vec<String>
+}
+
+impl_json!(TraceIteration, index, opcode, effect, stack)
+
 /// Hashtype of a transaction, encoded in the last byte of a signature,
 /// specifically in the last 5 bits `byte & 31`
 #[deriving(PartialEq, Eq, Show, Clone)]
@@ -563,8 +580,10 @@ impl Script {
   }
 
   /// Evaluate the script, modifying the stack in place
-  pub fn evaluate<'a>(&'a self, stack: &mut Vec<MaybeOwned<'a>>, input_context: Option<(&Transaction, uint)>)
-                  -> Result<(), ScriptError> {
+  pub fn evaluate<'a>(&'a self, stack: &mut Vec<MaybeOwned<'a>>,
+                      input_context: Option<(&Transaction, uint)>,
+                      mut trace: Option<&mut Vec<TraceIteration>>)
+                      -> Result<(), ScriptError> {
     let &Script(ref raw) = self;
     let secp = Secp256k1::new();
 
@@ -868,8 +887,20 @@ impl Script {
               }
               if op == opcodes::OP_CHECKMULTISIGVERIFY { op_verify!(stack, VerifyFailed); }
             }
-          }
+          } // end opcode match
+        } // end classification match
+      } // end loop
+      match trace {
+        Some(ref mut t) => {
+          let opcode = allops::Opcode::from_u8(byte);
+          t.push(TraceIteration {
+            index: index - 1,
+            opcode: opcode,
+            effect: opcode.classify(),
+            stack: stack.iter().map(|elem| elem.as_slice().to_hex()).collect()
+          });
         }
+        None => {}
       }
     }
     Ok(())
@@ -1237,8 +1268,8 @@ mod test {
 
     for (n, script) in script_pk.iter().enumerate() {
       let mut stack = vec![];
-      assert_eq!(tx.input[n].script_sig.evaluate(&mut stack, Some((&tx, n))), Ok(()));
-      assert_eq!(script.evaluate(&mut stack, Some((&tx, n))), Ok(()));
+      assert_eq!(tx.input[n].script_sig.evaluate(&mut stack, Some((&tx, n)), None), Ok(()));
+      assert_eq!(script.evaluate(&mut stack, Some((&tx, n)), None), Ok(()));
       assert!(stack.len() >= 1);
       assert_eq!(read_scriptbool(stack.pop().unwrap().as_slice()), true);
     }
@@ -1299,10 +1330,10 @@ mod test {
   #[test]
   fn script_eval_simple() {
     let mut script = Script::new();
-    assert!(script.evaluate(&mut vec![], None).is_ok());
+    assert!(script.evaluate(&mut vec![], None, None).is_ok());
 
     script.push_opcode(opcodes::all::OP_RETURN);
-    assert!(script.evaluate(&mut vec![], None).is_err());
+    assert!(script.evaluate(&mut vec![], None, None).is_err());
   }
 
   #[test]
@@ -1311,13 +1342,13 @@ mod test {
     let script_pk: Script = deserialize(hex_pk.clone()).ok().expect("scriptpk");
     // Should be able to check that the sig is there and pk correct
     // before needing a transaction
-    assert_eq!(script_pk.evaluate(&mut vec![], None), Err(PopEmptyStack));
-    assert_eq!(script_pk.evaluate(&mut vec![Owned(vec![]), Owned(vec![])], None),
+    assert_eq!(script_pk.evaluate(&mut vec![], None, None), Err(PopEmptyStack));
+    assert_eq!(script_pk.evaluate(&mut vec![Owned(vec![]), Owned(vec![])], None, None),
                                   Err(EqualVerifyFailed("e729dea4a3a81108e16376d1cc329c91db589994".to_string(),
                                                         "b472a266d0bd89c13706a4132ccfb16f7c3b9fcb".to_string())));
     // But if the signature is there, we need a tx to check it
-    assert_eq!(script_pk.evaluate(&mut vec![Owned(vec![]), Owned("026d5d4cfef5f3d97d2263941b4d8e7aaa82910bf8e6f7c6cf1d8f0d755b9d2d1a".from_hex().unwrap())], None), Err(NoTransaction));
-    assert_eq!(script_pk.evaluate(&mut vec![Owned(vec![0]), Owned("026d5d4cfef5f3d97d2263941b4d8e7aaa82910bf8e6f7c6cf1d8f0d755b9d2d1a".from_hex().unwrap())], None), Err(NoTransaction));
+    assert_eq!(script_pk.evaluate(&mut vec![Owned(vec![]), Owned("026d5d4cfef5f3d97d2263941b4d8e7aaa82910bf8e6f7c6cf1d8f0d755b9d2d1a".from_hex().unwrap())], None, None), Err(NoTransaction));
+    assert_eq!(script_pk.evaluate(&mut vec![Owned(vec![0]), Owned("026d5d4cfef5f3d97d2263941b4d8e7aaa82910bf8e6f7c6cf1d8f0d755b9d2d1a".from_hex().unwrap())], None, None), Err(NoTransaction));
   }
 
   #[test]
@@ -1331,8 +1362,8 @@ mod test {
     let script_pk: Script = deserialize(output_hex.clone()).ok().expect("scriptpk");
 
     let mut stack = vec![];
-    assert_eq!(tx.input[0].script_sig.evaluate(&mut stack, None), Ok(()));
-    assert_eq!(script_pk.evaluate(&mut stack, Some((&tx, 0))), Ok(()));
+    assert_eq!(tx.input[0].script_sig.evaluate(&mut stack, None, None), Ok(()));
+    assert_eq!(script_pk.evaluate(&mut stack, Some((&tx, 0)), None), Ok(()));
     assert_eq!(stack.len(), 1);
     assert_eq!(read_scriptbool(stack.pop().unwrap().as_slice()), true);
   }

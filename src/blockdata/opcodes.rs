@@ -20,11 +20,13 @@
 
 #![allow(non_camel_case_types)]
 
+use serialize::json;
 
 /// Submodule to handle -all- opcodes. Outside of this module we use
 /// a restricted set where the push/return/noop/illegal opcodes have
 /// a more convienient representation.
 pub mod all {
+  use serialize::json;
   // Heavy stick to translate between opcode types
   use std::mem::transmute;
 
@@ -617,6 +619,12 @@ pub mod all {
     }
   }
 
+  impl json::ToJson for Opcode {
+    fn to_json(&self) -> json::Json {
+      json::String(self.to_string())
+    }
+  }
+
   /// Empty stack is also FALSE
   pub static OP_FALSE: Opcode = OP_PUSHBYTES_0;
   /// Number 1 is also TRUE
@@ -624,7 +632,7 @@ pub mod all {
 }
 
 /// Broad categories of opcodes with similar behavior
-#[deriving(PartialEq, Eq, Show)]
+#[deriving(Clone, PartialEq, Eq, Show)]
 pub enum OpcodeClass {
   /// Pushes the given number onto the stack
   PushNum(int),
@@ -638,6 +646,12 @@ pub enum OpcodeClass {
   NoOp,
   /// Any opcode not covered above
   Ordinary(Opcode)
+}
+
+impl json::ToJson for OpcodeClass {
+  fn to_json(&self) -> json::Json {
+    json::String(self.to_string())
+  }
 }
 
 macro_rules! ordinary_opcode(
