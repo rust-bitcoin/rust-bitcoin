@@ -110,6 +110,7 @@ impl json::ToJson for TransactionError {
 /// A trace of a script execution
 #[deriving(PartialEq, Eq, Show, Clone)]
 pub struct ScriptTrace {
+  script: Script,
   initial_stack: Vec<String>,
   iterations: Vec<TraceIteration>,
   error: Option<ScriptError>
@@ -124,7 +125,7 @@ pub struct InputTrace {
   error: Option<TransactionError>
 }
 
-impl_json!(ScriptTrace, initial_stack, iterations, error)
+impl_json!(ScriptTrace, script, initial_stack, iterations, error)
 impl_json!(InputTrace, sig_trace, pubkey_trace, p2sh_trace, error)
 
 /// A trace of a transaction's execution
@@ -202,6 +203,7 @@ impl Transaction {
       // Setup trace
       let mut trace = InputTrace {
         sig_trace: ScriptTrace {
+          script: Script::new(),
           initial_stack: vec![],
           iterations: vec![],
           error: None
@@ -218,6 +220,7 @@ impl Transaction {
           let mut p2sh_script = Script::new();
 
           let mut stack = Vec::with_capacity(6);
+          trace.sig_trace.script = input.script_sig.clone();
           match input.script_sig.evaluate(&mut stack,
                                           Some((self, n)),
                                           Some(&mut trace.sig_trace.iterations)) {
@@ -237,6 +240,7 @@ impl Transaction {
           }
           if trace.error.is_none() {
             let mut pk_trace = ScriptTrace {
+              script: txo.script_pubkey.clone(),
               initial_stack: stack.iter().map(|elem| elem.as_slice().to_hex()).collect(),
               iterations: vec![],
               error: None
@@ -261,6 +265,7 @@ impl Transaction {
             trace.pubkey_trace = Some(pk_trace);
             if trace.error.is_none() && txo.script_pubkey.is_p2sh() {
               let mut p2sh_trace = ScriptTrace {
+                script: p2sh_script.clone(),
                 initial_stack: p2sh_stack.iter().map(|elem| elem.as_slice().to_hex()).collect(),
                 iterations: vec![],
                 error: None

@@ -47,7 +47,7 @@ use util::hash::Sha256dHash;
 use util::misc::script_find_and_remove;
 use util::thinvec::ThinVec;
 
-#[deriving(PartialEq, Show, Clone)]
+#[deriving(PartialEq, Eq, Show, Clone)]
 /// A Bitcoin script
 pub struct Script(ThinVec<u8>);
 
