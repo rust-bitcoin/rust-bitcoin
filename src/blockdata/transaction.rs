@@ -119,6 +119,8 @@ pub struct ScriptTrace {
 /// A trace of a transaction input's script execution
 #[deriving(PartialEq, Eq, Clone, Show)]
 pub struct InputTrace {
+  input_txid: Sha256dHash,
+  input_vout: uint,
   sig_trace: ScriptTrace,
   pubkey_trace: Option<ScriptTrace>,
   p2sh_trace: Option<ScriptTrace>,
@@ -126,19 +128,17 @@ pub struct InputTrace {
 }
 
 impl_json!(ScriptTrace, script, initial_stack, iterations, error)
-impl_json!(InputTrace, sig_trace, pubkey_trace, p2sh_trace, error)
+impl_json!(InputTrace, input_txid, input_vout, sig_trace,
+                       pubkey_trace, p2sh_trace, error)
 
 /// A trace of a transaction's execution
 #[deriving(PartialEq, Eq, Clone, Show)]
 pub struct TransactionTrace {
-  input_trace: Vec<InputTrace>
+  txid: Sha256dHash,
+  inputs: Vec<InputTrace>
 }
 
-impl json::ToJson for TransactionTrace {
-  fn to_json(&self) -> json::Json {
-    self.input_trace.to_json()
-  }
-}
+impl_json!(TransactionTrace, txid, inputs)
 
 impl Transaction {
   /// Check a transaction for validity
@@ -198,10 +198,13 @@ impl Transaction {
 
   /// Produce a trace of a transaction's execution
   pub fn trace(&self, utxoset: &UtxoSet) -> TransactionTrace {
-    let mut ret = TransactionTrace { input_trace: Vec::with_capacity(self.input.len()) };
+    let mut ret = TransactionTrace { txid: self.bitcoin_hash(),
+                                     inputs: Vec::with_capacity(self.input.len()) };
     for (n, input) in self.input.iter().enumerate() {
       // Setup trace
       let mut trace = InputTrace {
+        input_txid: input.prev_hash,
+        input_vout: input.prev_index as uint,
         sig_trace: ScriptTrace {
           script: Script::new(),
           initial_stack: vec![],
@@ -295,7 +298,7 @@ impl Transaction {
           trace.error = Some(InputNotFound(input.prev_hash, input.prev_index));
         }
       }
-      ret.input_trace.push(trace);
+      ret.inputs.push(trace);
     }
     ret
   }
