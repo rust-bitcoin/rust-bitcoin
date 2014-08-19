@@ -352,10 +352,10 @@ impl<D:SimpleDecoder<E>, E, T: ConsensusDecodable<D, E>> ConsensusDecodable<D, E
 
 
 // HashMap
-impl<S:SimpleEncoder<E>, E,
-     K:ConsensusEncodable<S,E>+Eq+Hash<u64>,
+impl<S:SimpleEncoder<E>, E, T,
+     K:ConsensusEncodable<S,E>+Eq+Hash<T>,
      V:ConsensusEncodable<S,E>,
-     H:Hasher<u64>+Default> ConsensusEncodable<S, E> for HashMap<K, V, H> {
+     H:Hasher<T>+Default> ConsensusEncodable<S, E> for HashMap<K, V, H> {
   #[inline]
   fn consensus_encode(&self, s: &mut S) -> Result<(), E> {
     try!(VarInt(self.len() as u64).consensus_encode(s));
@@ -367,10 +367,10 @@ impl<S:SimpleEncoder<E>, E,
   }
 }
 
-impl<D:SimpleDecoder<E>, E,
-     K:ConsensusDecodable<D,E>+Eq+Hash<u64>,
+impl<D:SimpleDecoder<E>, E, T,
+     K:ConsensusDecodable<D,E>+Eq+Hash<T>,
      V:ConsensusDecodable<D,E>,
-     H:Hasher<u64>+Default> ConsensusDecodable<D, E> for HashMap<K, V, H> {
+     H:Hasher<T>+Default> ConsensusDecodable<D, E> for HashMap<K, V, H> {
   #[inline]
   fn consensus_decode(d: &mut D) -> Result<HashMap<K, V, H>, E> {
     let VarInt(len): VarInt = try!(ConsensusDecodable::consensus_decode(d));
