@@ -39,7 +39,7 @@ use secp256k1::key::PublicKey;
 
 use blockdata::opcodes;
 use blockdata::opcodes::Opcode;
-use allops = blockdata::opcodes::all;
+use blockdata::opcodes::all as allops;
 use blockdata::transaction::{Transaction, TxIn};
 use network::encodable::{ConsensusDecodable, ConsensusEncodable};
 use network::serialize::{SimpleDecoder, SimpleEncoder, serialize};

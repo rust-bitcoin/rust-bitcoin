@@ -4,7 +4,7 @@ name = "bitcoin"
 version = "0.0.1"
 authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
 
-[[lib]]
+[lib]
 name = "bitcoin"
 path = "src/lib.rs"
 
