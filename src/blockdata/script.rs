@@ -114,6 +114,19 @@ pub struct TraceIteration {
   stack: Vec<String>
 }
 
+/// A full trace of a script execution
+#[deriving(PartialEq, Eq, Show, Clone)]
+pub struct ScriptTrace {
+  /// A copy of the script
+  pub script: Script,
+  /// A copy of the script's initial stack, hex-encoded
+  pub initial_stack: Vec<String>,
+  /// A list of iterations
+  pub iterations: Vec<TraceIteration>,
+  /// An error if one was returned, or None
+  pub error: Option<ScriptError>
+}
+
 impl_json!(TraceIteration, index, opcode, executed, effect, stack)
 
 /// Hashtype of a transaction, encoded in the last byte of a signature,
@@ -578,6 +591,24 @@ impl Script {
   pub fn as_slice(&self) -> &[u8] {
     let &Script(ref raw) = self;
     raw.as_slice()
+  }
+
+  /// Trace a script
+  pub fn trace<'a>(&'a self, stack: &mut Vec<MaybeOwned<'a>>,
+                   input_context: Option<(&Transaction, uint)>)
+                   -> ScriptTrace {
+    let mut trace = ScriptTrace {
+        script: self.clone(),
+        initial_stack: stack.iter().map(|elem| elem.as_slice().to_hex()).collect(),
+        iterations: vec![],
+        error: None
+    };
+
+    match self.evaluate(stack, input_context, Some(&mut trace.iterations)) {
+        Ok(_) => {},
+        Err(e) => { trace.error = Some(e.clone()); }
+    }
+    trace
   }
 
   /// Evaluate the script, modifying the stack in place

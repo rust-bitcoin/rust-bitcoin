@@ -24,11 +24,10 @@
 //!
 
 use std::default::Default;
-use serialize::hex::ToHex;
 use serialize::json;
 
 use util::hash::Sha256dHash;
-use blockdata::script::{mod, Script, ScriptError, TraceIteration, read_scriptbool};
+use blockdata::script::{mod, Script, ScriptError, ScriptTrace, read_scriptbool};
 use blockdata::utxoset::UtxoSet;
 use network::encodable::ConsensusEncodable;
 use network::serialize::BitcoinHash;
@@ -105,15 +104,6 @@ impl json::ToJson for TransactionError {
   fn to_json(&self) -> json::Json {
     json::String(self.to_string())
   }
-}
-
-/// A trace of a script execution
-#[deriving(PartialEq, Eq, Show, Clone)]
-pub struct ScriptTrace {
-  script: Script,
-  initial_stack: Vec<String>,
-  iterations: Vec<TraceIteration>,
-  error: Option<ScriptError>
 }
 
 /// A trace of a transaction input's script execution
@@ -223,16 +213,10 @@ impl Transaction {
           let mut p2sh_script = Script::new();
 
           let mut stack = Vec::with_capacity(6);
-          trace.sig_trace.script = input.script_sig.clone();
-          match input.script_sig.evaluate(&mut stack,
-                                          Some((self, n)),
-                                          Some(&mut trace.sig_trace.iterations)) {
-            Ok(_) => {}
-            Err(e) => {
-              trace.sig_trace.error = Some(e.clone());
-              trace.error = Some(InputScriptFailure(e));
-            }
-          }
+          trace.sig_trace = input.script_sig.trace(&mut stack, Some((self, n)));
+          let err = trace.sig_trace.error.as_ref().map(|e| e.clone());
+          err.map(|e| trace.error = Some(InputScriptFailure(e)));
+
           if txo.script_pubkey.is_p2sh() && stack.len() > 0 {
             p2sh_stack = stack.clone();
             p2sh_script = match p2sh_stack.pop() {
@@ -242,21 +226,9 @@ impl Transaction {
             };
           }
           if trace.error.is_none() {
-            let mut pk_trace = ScriptTrace {
-              script: txo.script_pubkey.clone(),
-              initial_stack: stack.iter().map(|elem| elem.as_slice().to_hex()).collect(),
-              iterations: vec![],
-              error: None
-            };
-            match txo.script_pubkey.evaluate(&mut stack,
-                                             Some((self, n)),
-                                             Some(&mut pk_trace.iterations)) {
-              Ok(_) => {}
-              Err(e) => {
-                pk_trace.error = Some(e.clone());
-                trace.error = Some(OutputScriptFailure(e));
-              }
-            }
+            trace.pubkey_trace = Some(txo.script_pubkey.trace(&mut stack, Some((self, n))));
+            let err = trace.pubkey_trace.get_ref().error.as_ref().map(|e| e.clone());
+            err.map(|e| trace.error = Some(OutputScriptFailure(e)));
             match stack.pop() {
               Some(v) => {
                 if !read_scriptbool(v.as_slice()) {
@@ -265,23 +237,10 @@ impl Transaction {
               }
               None => { trace.error = Some(ScriptReturnedEmptyStack); }
             }
-            trace.pubkey_trace = Some(pk_trace);
             if trace.error.is_none() && txo.script_pubkey.is_p2sh() {
-              let mut p2sh_trace = ScriptTrace {
-                script: p2sh_script.clone(),
-                initial_stack: p2sh_stack.iter().map(|elem| elem.as_slice().to_hex()).collect(),
-                iterations: vec![],
-                error: None
-              };
-              match p2sh_script.evaluate(&mut p2sh_stack,
-                                         Some((self, n)),
-                                         Some(&mut p2sh_trace.iterations)) {
-                Ok(_) => {}
-                Err(e) => {
-                  p2sh_trace.error = Some(e.clone());
-                  trace.error = Some(P2shScriptFailure(e));
-                }
-              }
+              trace.p2sh_trace = Some(p2sh_script.trace(&mut p2sh_stack, Some((self, n))));
+              let err = trace.p2sh_trace.get_ref().error.as_ref().map(|e| e.clone());
+              err.map(|e| trace.error = Some(P2shScriptFailure(e)));
               match p2sh_stack.pop() {
                 Some(v) => {
                   if !read_scriptbool(v.as_slice()) {
@@ -290,7 +249,6 @@ impl Transaction {
                 }
                 None => { trace.error = Some(P2shScriptReturnedEmptyStack); }
               }
-              trace.p2sh_trace = Some(p2sh_trace);
             }
           }
         }
