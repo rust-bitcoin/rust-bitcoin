@@ -34,7 +34,7 @@ use network::encodable::ConsensusEncodable;
 use network::serialize::BitcoinHash;
 
 /// A transaction input, which defines old coins to be consumed
-#[deriving(Clone, PartialEq, Show)]
+#[deriving(Clone, PartialEq, Eq, Show)]
 pub struct TxIn {
   /// The hash of the transaction whose output is being used an an input
   pub prev_hash: Sha256dHash,
@@ -51,7 +51,7 @@ pub struct TxIn {
 }
 
 /// A transaction output, which defines new coins to be created from old ones.
-#[deriving(Clone, PartialEq, Show)]
+#[deriving(Clone, PartialEq, Eq, Show)]
 pub struct TxOut {
   /// The value of the output, in satoshis
   pub value: u64,
@@ -67,7 +67,7 @@ impl Default for TxOut {
 }
 
 /// A Bitcoin transaction, which describes an authenticated movement of coins
-#[deriving(Clone, PartialEq, Show)]
+#[deriving(Clone, PartialEq, Eq, Show)]
 pub struct Transaction {
   /// The protocol version, should always be 1.
   pub version: u32,

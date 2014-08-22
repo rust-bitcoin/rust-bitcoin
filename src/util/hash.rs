@@ -28,7 +28,7 @@ use crypto::digest::Digest;
 use crypto::sha2;
 
 use network::encodable::{ConsensusDecodable, ConsensusEncodable};
-use network::serialize::{RawEncoder, BitcoinHash, SimpleDecoder, SimpleEncoder};
+use network::serialize::{RawEncoder, BitcoinHash, SimpleDecoder};
 use util::uint::Uint128;
 use util::uint::Uint256;
 
@@ -43,6 +43,19 @@ pub struct Ripemd160Hash([u8, ..20]);
 
 /// A "hasher" which just truncates
 pub struct DumbHasher;
+
+/// A 32-bit hash obtained by truncating a real hash
+#[deriving(Clone, PartialEq, Eq, Show)]
+pub struct Hash32((u8, u8, u8, u8));
+
+/// A 48-bit hash obtained by truncating a real hash
+#[deriving(Clone, PartialEq, Eq, Show)]
+pub struct Hash48((u8, u8, u8, u8, u8, u8));
+
+/// A 64-bit hash obtained by truncating a real hash
+#[deriving(Clone, PartialEq, Eq, Show)]
+pub struct Hash64((u8, u8, u8, u8, u8, u8, u8, u8));
+
 
 // Allow these to be used as a key for Rust's HashMap et. al.
 impl hash::Hash<u64> for Sha256dHash {
@@ -69,6 +82,32 @@ impl hash::Hash<u64> for Uint128 {
     use std::mem;
     let myarr: [u64, ..2] = unsafe { mem::transmute(*self) };
     *state = myarr[0];
+  }
+}
+
+impl hash::Hash<u64> for Hash32 {
+  #[inline]
+  fn hash(&self, state: &mut u64) {
+    let &Hash32((a, b, c, d)) = self;
+    *state = a as u64 + (b as u64 << 8) + (c as u64 << 16) + (d as u64 << 24);
+  }
+}
+
+impl hash::Hash<u64> for Hash48 {
+  #[inline]
+  fn hash(&self, state: &mut u64) {
+    let &Hash48((a, b, c, d, e, f)) = self;
+    *state = a as u64 + (b as u64 << 8) + (c as u64 << 16) + (d as u64 << 24) +
+             (e as u64 << 32) + (f as u64 << 40);
+  }
+}
+
+impl hash::Hash<u64> for Hash64 {
+  #[inline]
+  fn hash(&self, state: &mut u64) {
+    let &Hash64((a, b, c, d, e, f, g, h)) = self;
+    *state = a as u64 + (b as u64 << 8) + (c as u64 << 16) + (d as u64 << 24) +
+             (e as u64 << 32) + (f as u64 << 40) + (g as u64 << 48) + (h as u64 << 56);
   }
 }
 
@@ -120,6 +159,30 @@ impl Sha256dHash {
                                 data[21], data[22], data[23], data[24], data[25],
                                 data[26], data[27], data[28], data[29], data[30],
                                 data[31]])) }
+  }
+
+  /// Converts a hash to a Hash32 by truncation
+  #[inline]
+  pub fn into_hash32(self) -> Hash32 {
+    let Sha256dHash(data) = self;
+    unsafe { transmute([data[0], data[8], data[16], data[24]]) }
+  }
+
+  /// Converts a hash to a Hash48 by truncation
+  #[inline]
+  pub fn into_hash48(self) -> Hash48 {
+    let Sha256dHash(data) = self;
+    unsafe { transmute([data[0], data[6], data[12], data[18], data[24], data[30]]) }
+  }
+
+  /// Human-readable hex output
+
+  /// Converts a hash to a Hash64 by truncation
+  #[inline]
+  pub fn into_hash64(self) -> Hash64 {
+    let Sha256dHash(data) = self;
+    unsafe { transmute([data[0], data[4], data[8], data[12],
+                        data[16], data[20], data[24], data[28]]) }
   }
 
   /// Human-readable hex output
@@ -214,19 +277,10 @@ impl<D: ::serialize::Decoder<E>, E> ::serialize::Decodable<D, E> for Sha256dHash
 }
 
 // Consensus encoding (little-endian)
-impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for Sha256dHash {
-  #[inline]
-  fn consensus_encode(&self, s: &mut S) -> Result<(), E> {
-    self.into_uint256().consensus_encode(s)
-  }
-}
-
-impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for Sha256dHash {
-  #[inline]
-  fn consensus_decode(d: &mut D) -> Result<Sha256dHash, E> {
-    Ok(Sha256dHash(try!(ConsensusDecodable::consensus_decode(d))))
-  }
-}
+impl_newtype_consensus_encoding!(Hash32)
+impl_newtype_consensus_encoding!(Hash48)
+impl_newtype_consensus_encoding!(Hash64)
+impl_newtype_consensus_encoding!(Sha256dHash)
 
 impl fmt::LowerHex for Sha256dHash {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

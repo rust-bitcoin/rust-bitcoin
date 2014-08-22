@@ -319,23 +319,33 @@ impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for CheckedData {
 }
 
 // Tuples
-impl<S:SimpleEncoder<E>, E, T: ConsensusEncodable<S, E>, U: ConsensusEncodable<S, E>> ConsensusEncodable<S, E> for (T, U) {
-  #[inline]
-  fn consensus_encode(&self, s: &mut S) -> Result<(), E> {
-    let &(ref s1, ref s2) = self;
-    try!(s1.consensus_encode(s));
-    try!(s2.consensus_encode(s));
-    Ok(())
-  }
-}
+macro_rules! tuple_encode(
+  ($($x:ident),*) => (
+    impl <SS:SimpleEncoder<EE>, EE, $($x: ConsensusEncodable<SS, EE>),*> ConsensusEncodable<SS, EE> for ($($x),*) {
+      #[inline]
+      #[allow(uppercase_variables)]
+      fn consensus_encode(&self, s: &mut SS) -> Result<(), EE> {
+        let &($(ref $x),*) = self;
+        $( try!($x.consensus_encode(s)); )*
+        Ok(())
+      }
+    }
 
-impl<D:SimpleDecoder<E>, E, T: ConsensusDecodable<D, E>, U: ConsensusDecodable<D, E>> ConsensusDecodable<D, E> for (T, U) {
-  #[inline]
-  fn consensus_decode(d: &mut D) -> Result<(T, U), E> {
-    Ok((try!(ConsensusDecodable::consensus_decode(d)),
-        try!(ConsensusDecodable::consensus_decode(d))))
-  }
-}
+    impl<DD:SimpleDecoder<EE>, EE, $($x: ConsensusDecodable<DD, EE>),*> ConsensusDecodable<DD, EE> for ($($x),*) {
+      #[inline]
+      #[allow(uppercase_variables)]
+      fn consensus_decode(d: &mut DD) -> Result<($($x),*), EE> {
+        Ok(($(try!({let $x = ConsensusDecodable::consensus_decode(d); $x })),*))
+      }
+    }
+  );
+)
+
+tuple_encode!(A, B)
+tuple_encode!(A, B, C, D)
+tuple_encode!(A, B, C, D, E, F)
+tuple_encode!(A, B, C, D, E, F, G, H)
+
 
 // References
 impl<S:SimpleEncoder<E>, E, T: ConsensusEncodable<S, E>> ConsensusEncodable<S, E> for Box<T> {
