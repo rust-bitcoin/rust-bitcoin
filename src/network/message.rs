@@ -24,6 +24,7 @@ use std::io::{IoError, IoResult, OtherIoError};
 use std::io::MemReader;
 
 use blockdata::block;
+use blockdata::transaction;
 use network::address::Address;
 use network::message_network;
 use network::message_blockdata;
@@ -83,7 +84,8 @@ pub enum NetworkMessage{
   GetBlocks(message_blockdata::GetBlocksMessage),
   /// `getheaders`
   GetHeaders(message_blockdata::GetHeadersMessage),
-  // TODO: tx,
+  /// tx
+  Tx(transaction::Transaction),
   /// `block`
   Block(block::Block),
   /// `headers`
@@ -113,6 +115,7 @@ impl RawNetworkMessage {
       NotFound(_) => "notfound",
       GetBlocks(_) => "getblocks",
       GetHeaders(_) => "getheaders",
+      Tx(_)      => "tx",
       Block(_)   => "block",
       Headers(_) => "headers",
       Ping(_)    => "ping",
@@ -134,6 +137,7 @@ impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for RawNetworkMessage {
       NotFound(ref dat) => serialize(dat),
       GetBlocks(ref dat) => serialize(dat),
       GetHeaders(ref dat) => serialize(dat),
+      Tx(ref dat)      => serialize(dat),
       Block(ref dat)   => serialize(dat),
       Headers(ref dat) => serialize(dat),
       Ping(ref dat)    => serialize(dat),
@@ -163,6 +167,7 @@ impl<D:SimpleDecoder<IoError>> ConsensusDecodable<D, IoError> for RawNetworkMess
       "headers" => Headers(try!(prepend_err("headers", ConsensusDecodable::consensus_decode(&mut mem_d)))),
       "ping"    => Ping(try!(prepend_err("ping", ConsensusDecodable::consensus_decode(&mut mem_d)))),
       "pong"    => Ping(try!(prepend_err("pong", ConsensusDecodable::consensus_decode(&mut mem_d)))),
+      "tx"      => Tx(try!(prepend_err("tx", ConsensusDecodable::consensus_decode(&mut mem_d)))),
       cmd => {
         return Err(IoError {
                      kind: OtherIoError,
