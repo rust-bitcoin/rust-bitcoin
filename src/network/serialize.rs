@@ -21,6 +21,7 @@
 
 use collections::Vec;
 use std::io::{IoError, IoResult, OtherIoError, MemReader, MemWriter};
+use serialize::hex::ToHex;
 
 use network::encodable::{ConsensusDecodable, ConsensusEncodable};
 use util::hash::Sha256dHash;
@@ -42,6 +43,12 @@ pub fn serialize<T: ConsensusEncodable<RawEncoder<MemWriter>, IoError>>(obj: &T)
   let mut encoder = RawEncoder::new(MemWriter::new());
   try!(obj.consensus_encode(&mut encoder));
   Ok(encoder.unwrap().unwrap())
+}
+
+/// Encode an object into a hex-encoded string
+pub fn serialize_hex<T: ConsensusEncodable<RawEncoder<MemWriter>, IoError>>(obj: &T) -> IoResult<String> {
+  let serial = try!(serialize(obj));
+  Ok(serial.as_slice().to_hex())
 }
 
 /// Deserialize an object from a vector
