@@ -130,58 +130,69 @@ pub struct TransactionTrace {
 
 impl_json!(TransactionTrace, txid, inputs)
 
+impl TxIn {
+  /// Check an input's script for validity
+  pub fn validate(&self,
+                  utxoset: &UtxoSet,
+                  txn: &Transaction,
+                  index: uint) -> Result<(), TransactionError> {
+    let txo = utxoset.get_utxo(self.prev_hash, self.prev_index);
+    match txo {
+      Some(txo) => {
+        let mut p2sh_stack = Vec::new();
+        let mut p2sh_script = Script::new();
+
+        let mut stack = Vec::with_capacity(6);
+        match self.script_sig.evaluate(&mut stack, Some((txn, index)), None) {
+          Ok(_) => {}
+          Err(e) => { return Err(InputScriptFailure(e)); }
+        }
+        if txo.script_pubkey.is_p2sh() && stack.len() > 0 {
+          p2sh_stack = stack.clone();
+          p2sh_script = match p2sh_stack.pop() {
+            Some(script::Owned(v)) => Script::from_vec(v),
+            Some(script::Slice(s)) => Script::from_vec(Vec::from_slice(s)),
+            None => unreachable!()
+          };
+        }
+        match txo.script_pubkey.evaluate(&mut stack, Some((txn, index)), None) {
+          Ok(_) => {}
+          Err(e) => { return Err(OutputScriptFailure(e)); }
+        }
+        match stack.pop() {
+          Some(v) => {
+            if !read_scriptbool(v.as_slice()) {
+              return Err(ScriptReturnedFalse);
+            }
+           }
+          None => { return Err(ScriptReturnedEmptyStack); }
+        }
+        if txo.script_pubkey.is_p2sh() {
+          match p2sh_script.evaluate(&mut p2sh_stack, Some((txn, index)), None) {
+            Ok(_) => {}
+            Err(e) => { return Err(P2shScriptFailure(e)); }
+          }
+          match p2sh_stack.pop() {
+            Some(v) => {
+              if !read_scriptbool(v.as_slice()) {
+                return Err(P2shScriptReturnedFalse);
+              }
+            }
+            None => { return Err(P2shScriptReturnedEmptyStack); }
+          }
+        }
+      }
+      None => { return Err(InputNotFound(self.prev_hash, self.prev_index)); }
+    }
+    Ok(())
+  }
+}
+
 impl Transaction {
   /// Check a transaction for validity
   pub fn validate(&self, utxoset: &UtxoSet) -> Result<(), TransactionError> {
     for (n, input) in self.input.iter().enumerate() {
-      let txo = utxoset.get_utxo(input.prev_hash, input.prev_index);
-      match txo {
-        Some(txo) => {
-          let mut p2sh_stack = Vec::new();
-          let mut p2sh_script = Script::new();
-
-          let mut stack = Vec::with_capacity(6);
-          match input.script_sig.evaluate(&mut stack, Some((self, n)), None) {
-            Ok(_) => {}
-            Err(e) => { return Err(InputScriptFailure(e)); }
-          }
-          if txo.script_pubkey.is_p2sh() && stack.len() > 0 {
-            p2sh_stack = stack.clone();
-            p2sh_script = match p2sh_stack.pop() {
-              Some(script::Owned(v)) => Script::from_vec(v),
-              Some(script::Slice(s)) => Script::from_vec(Vec::from_slice(s)),
-              None => unreachable!()
-            };
-          }
-          match txo.script_pubkey.evaluate(&mut stack, Some((self, n)), None) {
-            Ok(_) => {}
-            Err(e) => { return Err(OutputScriptFailure(e)); }
-          }
-          match stack.pop() {
-            Some(v) => {
-              if !read_scriptbool(v.as_slice()) {
-                return Err(ScriptReturnedFalse);
-              }
-            }
-            None => { return Err(ScriptReturnedEmptyStack); }
-          }
-          if txo.script_pubkey.is_p2sh() {
-            match p2sh_script.evaluate(&mut p2sh_stack, Some((self, n)), None) {
-              Ok(_) => {}
-              Err(e) => { return Err(P2shScriptFailure(e)); }
-            }
-            match p2sh_stack.pop() {
-              Some(v) => {
-                if !read_scriptbool(v.as_slice()) {
-                  return Err(P2shScriptReturnedFalse);
-                }
-              }
-              None => { return Err(P2shScriptReturnedEmptyStack); }
-            }
-          }
-        }
-        None => { return Err(InputNotFound(input.prev_hash, input.prev_index)); }
-      }
+      try!(input.validate(utxoset, self, n));
     }
     Ok(())
   }
