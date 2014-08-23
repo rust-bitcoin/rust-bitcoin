@@ -1250,6 +1250,10 @@ impl Script {
   }
 }
 
+impl Default for Script {
+  fn default() -> Script { Script(ThinVec::new()) }
+}
+
 // User-facing serialization
 impl json::ToJson for Script {
   // TODO: put this in a struct alongside an opcode decode
