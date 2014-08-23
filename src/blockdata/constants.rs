@@ -32,7 +32,7 @@ use util::hash::MerkleRoot;
 use util::uint::Uint256;
 
 pub static MAX_SEQUENCE: u32 = 0xFFFFFFFF;
-pub static COIN_VALUE: u64 = 100000000;
+pub static COIN_VALUE: u64 = 100_000_000;
 pub static TARGET_BLOCK_SPACING: u32 = 600;
 pub static DIFFCHANGE_INTERVAL: u32 = 2016;
 pub static DIFFCHANGE_TIMESPAN: u32 = 14 * 24 * 3600;
@@ -40,6 +40,13 @@ pub static DIFFCHANGE_TIMESPAN: u32 = 14 * 24 * 3600;
 /// In Bitcoind this is insanely described as ~((u256)0 >> 32)
 pub fn max_target(_: Network) -> Uint256 {
   from_u64::<Uint256>(0xFFFF).unwrap() << 208u
+}
+
+/// The maximum value allowed in an output (useful for sanity checking,
+/// since keeping everything below this value should prevent overflows
+/// if you are doing anything remotely sane with monetary values).
+pub fn max_money(_: Network) -> u64 {
+  21_000_000 * COIN_VALUE
 }
 
 /// Constructs and returns the coinbase (and only) transaction of the Bitcoin genesis block
