@@ -367,6 +367,13 @@ impl Uint256 {
       }
     }
   }
+
+  /// Decay to a uint128
+  #[inline]
+  pub fn low_128(&self) -> Uint128 {
+    let &Uint256(data) = self;
+    Uint128([data[0], data[1]])
+  }
 }
 
 #[cfg(test)]

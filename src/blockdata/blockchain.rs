@@ -141,20 +141,20 @@ impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for Blockchain {
     let genesis_hash: Sha256dHash = try!(ConsensusDecodable::consensus_decode(d));
 
     // Lookup best tip
-    let best = match tree.lookup(&best_hash.into_uint256(), 256) {
+    let best = match tree.lookup(&best_hash.into_le(), 256) {
       Some(node) => &**node as NodePtr,
       None => {
         return Err(d.error(format!("best tip {:x} not in tree", best_hash).as_slice()));
       }
     };
     // Lookup genesis
-    if tree.lookup(&genesis_hash.into_uint256(), 256).is_none() {
+    if tree.lookup(&genesis_hash.into_le(), 256).is_none() {
       return Err(d.error(format!("genesis {:x} not in tree", genesis_hash).as_slice()));
     }
     // Reconnect all prev pointers
     let raw_tree = &tree as *const _;
     for node in tree.mut_iter() {
-      let hash = node.block.header.prev_blockhash.into_uint256();
+      let hash = node.block.header.prev_blockhash.into_le();
       let prevptr =
         match unsafe { (*raw_tree).lookup(&hash, 256) } {
           Some(node) => &**node as NodePtr,
@@ -355,7 +355,7 @@ impl Blockchain {
       network: network,
       tree: {
         let mut pat = PatriciaTree::new();
-        pat.insert(&genhash.into_uint256(), 256, new_node);
+        pat.insert(&genhash.into_le(), 256, new_node);
         pat
       },
       best_hash: genhash,
@@ -400,17 +400,17 @@ impl Blockchain {
 
   /// Looks up a block in the chain and returns the BlockchainNode containing it
   pub fn get_block<'a>(&'a self, hash: Sha256dHash) -> Option<&'a BlockchainNode> {
-    self.tree.lookup(&hash.into_uint256(), 256).map(|node| &**node)
+    self.tree.lookup(&hash.into_le(), 256).map(|node| &**node)
   }
 
   /// Locates a block in the chain and overwrites its txdata
   pub fn add_txdata(&mut self, block: Block) -> BitcoinResult<()> {
-    self.replace_txdata(&block.header.bitcoin_hash().into_uint256(), block.txdata, true)
+    self.replace_txdata(&block.header.bitcoin_hash().into_le(), block.txdata, true)
   }
 
   /// Locates a block in the chain and removes its txdata
   pub fn remove_txdata(&mut self, hash: Sha256dHash) -> BitcoinResult<()> {
-    self.replace_txdata(&hash.into_uint256(), vec![], false)
+    self.replace_txdata(&hash.into_le(), vec![], false)
   }
 
   /// Adds a block header to the chain
@@ -430,13 +430,13 @@ impl Blockchain {
       if hash == chain.best_hash { 
         Some(chain.best_tip)
       } else {
-        chain.tree.lookup(&hash.into_uint256(), 256).map(|boxptr| &**boxptr as NodePtr)
+        chain.tree.lookup(&hash.into_le(), 256).map(|boxptr| &**boxptr as NodePtr)
       }
     }
     // Check for multiple inserts (bitcoind from c9a09183 to 3c85d2ec doesn't
     // handle locator hashes properly and may return blocks multiple times,
     // and this may also happen in case of a reorg.
-    if self.tree.lookup(&block.header.bitcoin_hash().into_uint256(), 256).is_some() {
+    if self.tree.lookup(&block.header.bitcoin_hash().into_le(), 256).is_some() {
       return Err(DuplicateHash);
     }
     // Construct node, if possible
@@ -515,7 +515,7 @@ impl Blockchain {
 
     // Insert the new block
     let raw_ptr = &*new_block as NodePtr;
-    self.tree.insert(&new_block.block.header.bitcoin_hash().into_uint256(), 256, new_block);
+    self.tree.insert(&new_block.block.header.bitcoin_hash().into_le(), 256, new_block);
     // Replace the best tip if necessary
     if unsafe { (*raw_ptr).total_work > (*self.best_tip).total_work } {
       self.set_best_tip(raw_ptr);
@@ -565,7 +565,7 @@ impl Blockchain {
 
   /// An iterator over all blocks in the chain starting from `start_hash`
   pub fn iter<'a>(&'a self, start_hash: Sha256dHash) -> BlockIter<'a> {
-    let start = match self.tree.lookup(&start_hash.into_uint256(), 256) {
+    let start = match self.tree.lookup(&start_hash.into_le(), 256) {
         Some(boxptr) => &**boxptr as NodePtr,
         None => RawPtr::null()
       };
@@ -577,7 +577,7 @@ impl Blockchain {
 
   /// An iterator over all blocks in reverse order to the genesis, starting with `start_hash`
   pub fn rev_iter<'a>(&'a self, start_hash: Sha256dHash) -> RevBlockIter<'a> {
-    let start = match self.tree.lookup(&start_hash.into_uint256(), 256) {
+    let start = match self.tree.lookup(&start_hash.into_le(), 256) {
         Some(boxptr) => &**boxptr as NodePtr,
         None => RawPtr::null()
       };
@@ -589,7 +589,7 @@ impl Blockchain {
 
   /// An iterator over all blocks -not- in the best chain, in reverse order, starting from `start_hash`
   pub fn rev_stale_iter<'a>(&'a self, start_hash: Sha256dHash) -> RevStaleBlockIter<'a> {
-    let start = match self.tree.lookup(&start_hash.into_uint256(), 256) {
+    let start = match self.tree.lookup(&start_hash.into_le(), 256) {
         Some(boxptr) => {
           // If we are already on the main chain, we have a dead iterator
           if boxptr.is_on_main_chain(self) {

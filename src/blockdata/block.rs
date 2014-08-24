@@ -101,7 +101,7 @@ impl BlockHeader {
     if target != required_target {
       return Err(SpvBadTarget);
     }
-    let ref hash = self.bitcoin_hash().into_uint256();
+    let ref hash = self.bitcoin_hash().into_le();
     if hash <= target { Ok(()) } else { Err(SpvBadProofOfWork) }
   }
 

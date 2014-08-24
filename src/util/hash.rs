@@ -145,20 +145,21 @@ impl Sha256dHash {
 
   /// Converts a hash to a little-endian Uint256
   #[inline]
-  pub fn into_uint256(self) -> Uint256 {
+  pub fn into_le(self) -> Uint256 {
     let Sha256dHash(data) = self;
-    unsafe { Uint256(transmute(data)) }
+    let mut ret: [u64, ..4] = unsafe { transmute(data) };
+    for x in ret.as_mut_slice().mut_iter() { *x = x.to_le(); }
+    Uint256(ret)
   }
 
-  /// Converts a hash to a little-endian Uint128, using only the "low" bytes
+  /// Converts a hash to a big-endian Uint256
   #[inline]
-  pub fn into_uint128(self) -> Uint128 {
-    let Sha256dHash(data) = self;
-    // TODO: this function won't work correctly on big-endian machines
-    unsafe { Uint128(transmute([data[16], data[17], data[18], data[19], data[20],
-                                data[21], data[22], data[23], data[24], data[25],
-                                data[26], data[27], data[28], data[29], data[30],
-                                data[31]])) }
+  pub fn into_be(self) -> Uint256 {
+    let Sha256dHash(mut data) = self;
+    data.reverse();
+    let mut ret: [u64, ..4] = unsafe { transmute(data) };
+    for x in ret.mut_iter() { *x = x.to_be(); }
+    Uint256(ret)
   }
 
   /// Converts a hash to a Hash32 by truncation
@@ -383,6 +384,16 @@ mod tests {
     assert_eq!(res.as_slice(),
                "\"56944c5d3f98413ef45cf54545538103cc9f298e0575820ad3591376e2e0f65d\"".as_bytes());
     assert_eq!(json::decode(from_utf8(res.as_slice()).unwrap()), Ok(hash));
+  }
+
+  #[test]
+  fn test_sighash_single_vec() {
+    let one = Sha256dHash([1, 0, 0, 0, 0, 0, 0, 0,
+                           0, 0, 0, 0, 0, 0, 0, 0,
+                           0, 0, 0, 0, 0, 0, 0, 0,
+                           0, 0, 0, 0, 0, 0, 0, 0]);
+    assert_eq!(Some(one.into_le()), FromPrimitive::from_u64(1));
+    assert_eq!(Some(one.into_le().low_128()), FromPrimitive::from_u64(1));
   }
 }
 

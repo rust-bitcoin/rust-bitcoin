@@ -553,7 +553,7 @@ mod tests {
     let mut tree = PatriciaTree::new();
     let mut hashes = vec![];
     for i in range(0u32, 5000) {
-      let hash = Sha256dHash::from_data(&[(i / 0x100) as u8, (i % 0x100) as u8]).into_uint128();
+      let hash = Sha256dHash::from_data(&[(i / 0x100) as u8, (i % 0x100) as u8]).into_le().low_128();
       tree.insert(&hash, 250, i);
       hashes.push(hash);
     }
@@ -594,7 +594,7 @@ mod tests {
     let mut hashes = vec![];
     // Start by inserting a bunch of chunder
     for i in range(1u32, 500) {
-      let hash = Sha256dHash::from_data(&[(i / 0x100) as u8, (i % 0x100) as u8]).into_uint128();
+      let hash = Sha256dHash::from_data(&[(i / 0x100) as u8, (i % 0x100) as u8]).into_le().low_128();
       tree.insert(&hash, 128, i * 1000);
       hashes.push(hash);
     }
@@ -626,7 +626,7 @@ mod tests {
     let mut data = Vec::from_elem(n_elems, None);
     // Start by inserting a bunch of stuff
     for i in range(0, n_elems) {
-      let hash = Sha256dHash::from_data(&[(i / 0x100) as u8, (i % 0x100) as u8]).into_uint128();
+      let hash = Sha256dHash::from_data(&[(i / 0x100) as u8, (i % 0x100) as u8]).into_le().low_128();
       tree.insert(&hash, 128, i);
       *data.get_mut(i) = Some(());
     }
@@ -648,7 +648,7 @@ mod tests {
     let mut data = Vec::from_elem(n_elems, None);
     // Start by inserting a bunch of stuff
     for i in range(0, n_elems) {
-      let hash = Sha256dHash::from_data(&[(i / 0x100) as u8, (i % 0x100) as u8]).into_uint128();
+      let hash = Sha256dHash::from_data(&[(i / 0x100) as u8, (i % 0x100) as u8]).into_le().low_128();
       tree.insert(&hash, 128, i);
       *data.get_mut(i) = Some(());
     }
@@ -674,7 +674,7 @@ mod tests {
     let mut tree = PatriciaTree::new();
     let mut hashes = vec![];
     for i in range(0u32, 5000) {
-      let hash = Sha256dHash::from_data(&[(i / 0x100) as u8, (i % 0x100) as u8]).into_uint128();
+      let hash = Sha256dHash::from_data(&[(i / 0x100) as u8, (i % 0x100) as u8]).into_le().low_128();
       tree.insert(&hash, 250, i);
       hashes.push(hash);
     }

@@ -112,7 +112,7 @@ impl UtxoSet {
     };
     // Get the old value, if any (this is suprisingly possible, c.f. BIP30
     // and the other comments in this file referring to it)
-    let ret = self.table.swap(txid.into_uint128(), new_node);
+    let ret = self.table.swap(txid.into_le().low_128(), new_node);
     if ret.is_none() {
       self.n_utxos += tx.output.len() as u64;
     }
@@ -124,7 +124,7 @@ impl UtxoSet {
     // This whole function has awkward scoping thx to lexical borrow scoping :(
     let (ret, should_delete) = {
       // Locate the UTXO, failing if not found
-      let node = match self.table.find_mut(&txid.into_uint128()) {
+      let node = match self.table.find_mut(&txid.into_le().low_128()) {
         Some(node) => node,
         None => return None
       };
@@ -142,7 +142,7 @@ impl UtxoSet {
 
     // Delete the whole node if it is no longer being used
     if should_delete {
-      self.table.remove(&txid.into_uint128());
+      self.table.remove(&txid.into_le().low_128());
     }
 
     self.n_utxos -= if ret.is_some() { 1 } else { 0 };
@@ -152,7 +152,7 @@ impl UtxoSet {
   /// Get a reference to a UTXO in the set
   pub fn get_utxo<'a>(&'a self, txid: Sha256dHash, vout: u32) -> Option<&'a TxOut> {
     // Locate the UTXO, failing if not found
-    let node = match self.table.find(&txid.into_uint128()) {
+    let node = match self.table.find(&txid.into_le().low_128()) {
       Some(node) => node,
       None => return None
     };
@@ -317,7 +317,7 @@ impl UtxoSet {
         for ((txid, n), txo) in extract_vec.move_iter() {
           // Remove the tx's utxo list and patch the txo into place
           let new_node =
-              match self.table.pop(&txid.into_uint128()) {
+              match self.table.pop(&txid.into_le().low_128()) {
                 Some(mut thinvec) => {
                   let old_len = thinvec.len() as u32;
                   if old_len < n + 1 {
@@ -343,7 +343,7 @@ impl UtxoSet {
                 }
               };
           // Ram it back into the tree
-          self.table.insert(txid.into_uint128(), new_node);
+          self.table.insert(txid.into_le().low_128(), new_node);
         }
       }
       skipped_genesis = true;
