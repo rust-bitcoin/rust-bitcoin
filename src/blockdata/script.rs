@@ -110,6 +110,7 @@ pub struct TraceIteration {
   index: uint,
   opcode: allops::Opcode,
   executed: bool,
+  errored: bool,
   effect: opcodes::OpcodeClass,
   stack: Vec<String>
 }
@@ -127,7 +128,7 @@ pub struct ScriptTrace {
   pub error: Option<ScriptError>
 }
 
-impl_json!(TraceIteration, index, opcode, executed, effect, stack)
+impl_json!(TraceIteration, index, opcode, executed, errored, effect, stack)
 
 /// Hashtype of a transaction, encoded in the last byte of a signature,
 /// specifically in the last 5 bits `byte & 31`
@@ -635,8 +636,9 @@ impl Script {
             index: index,
             opcode: opcode,
             executed: executing,
+            errored: true,
             effect: opcode.classify(),
-            stack: vec![]
+            stack: vec!["<failed to execute opcode>".to_string()]
           });
         }
         None => {}
@@ -938,9 +940,10 @@ impl Script {
       } // end loop
       // Store the stack in the trace
       trace.as_mut().map(|t|
-        t.mut_last().map(|t|
-          t.stack = stack.iter().map(|elem| elem.as_slice().to_hex()).collect()
-        )
+        t.mut_last().map(|t| {
+          t.errored = false;
+          t.stack = stack.iter().map(|elem| elem.as_slice().to_hex()).collect();
+        })
       );
     }
     Ok(())
