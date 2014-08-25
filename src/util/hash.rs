@@ -207,6 +207,18 @@ impl Sha256dHash {
     }
     ret
   }
+
+  /// Returns a view into the hash
+  pub fn as_slice<'a>(&'a self) -> &'a [u8] {
+    let &Sha256dHash(ref data) = self;
+    data.as_slice()
+  }
+
+  /// Returns a view of the first `n` bytes of the hash
+  pub fn slice_to<'a>(&'a self, n: uint) -> &'a [u8] {
+    let &Sha256dHash(ref data) = self;
+    data.slice_to(n)
+  }
 }
 
 impl Clone for Sha256dHash {
