@@ -108,6 +108,7 @@ impl json::ToJson for ScriptError {
 #[deriving(PartialEq, Eq, Show, Clone)]
 pub struct TraceIteration {
   index: uint,
+  op_count: uint,
   opcode: allops::Opcode,
   executed: bool,
   errored: bool,
@@ -128,7 +129,7 @@ pub struct ScriptTrace {
   pub error: Option<ScriptError>
 }
 
-impl_json!(TraceIteration, index, opcode, executed, errored, effect, stack)
+impl_json!(TraceIteration, index, opcode, op_count, executed, errored, effect, stack)
 
 /// Hashtype of a transaction, encoded in the last byte of a signature,
 /// specifically in the last 5 bits `byte & 31`
@@ -625,6 +626,7 @@ impl Script {
     let mut alt_stack = vec![];
 
     let mut index = 0;
+    let mut op_count = 0;
     while index < raw.len() {
       let executing = exec_stack.iter().all(|e| *e);
       let byte = unsafe { *raw.get(index) };
@@ -637,12 +639,14 @@ impl Script {
             opcode: opcode,
             executed: executing,
             errored: true,
+            op_count: op_count,
             effect: opcode.classify(),
             stack: vec!["<failed to execute opcode>".to_string()]
           });
         }
         None => {}
       }
+      op_count += 1;
       index += 1;
       // The definitions of all these categories are in opcodes.rs
 //println!("read {} as {} as {}  ...  stack before op is {}", byte, allops::Opcode::from_u8(byte), allops::Opcode::from_u8(byte).classify(), stack);
