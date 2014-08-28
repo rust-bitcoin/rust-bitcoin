@@ -411,7 +411,7 @@ impl<D:SimpleDecoder<E>, E, K:ConsensusDecodable<D, E>, V:ConsensusDecodable<D, 
 }
 
 /// Iterator
-pub struct Items<'tree, K, V> {
+pub struct Items<'tree, K: 'tree, V: 'tree> {
   started: bool,
   node: Option<&'tree PatriciaTree<K, V>>,
   parents: Vec<&'tree PatriciaTree<K, V>>

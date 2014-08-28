@@ -126,8 +126,8 @@ impl ExtendedPrivKey {
         if n >= (1 << 31) { return Err(InvalidChildNumber(i)) }
         // Non-hardened key: compute public data and use that
         secp256k1::init();
-        // Unsafety just because I have to call the init() function
-        hmac.input(unsafe { PublicKey::from_secret_key(&self.secret_key, true).as_slice() });
+        // Note the unwrap: this is fine, we checked the SK when we created it
+        hmac.input(PublicKey::from_secret_key(&self.secret_key, true).as_slice());
         u64_to_be_bytes(n as u64, 4, |raw| hmac.input(raw));
       }
       Hardened(n) => {
@@ -185,8 +185,7 @@ impl ExtendedPubKey {
       depth: sk.depth,
       parent_fingerprint: sk.parent_fingerprint,
       child_number: sk.child_number,
-      // Unsafety because we needed to run `init` above first
-      public_key: unsafe { PublicKey::from_secret_key(&sk.secret_key, true) },
+      public_key: PublicKey::from_secret_key(&sk.secret_key, true),
       chain_code: sk.chain_code
     }
   }
