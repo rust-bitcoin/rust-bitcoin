@@ -463,7 +463,7 @@ mod tests {
   #[test]
   fn serialize_vector_test() {
     assert_eq!(serialize(&vec![1u8, 2, 3]), Ok(vec![3u8, 1, 2, 3]));
-    assert_eq!(serialize(&&[1u8, 2, 3]), Ok(vec![3u8, 1, 2, 3]));
+    assert_eq!(serialize(&[1u8, 2, 3].as_slice()), Ok(vec![3u8, 1, 2, 3]));
     // TODO: test vectors of more interesting objects
   }
 
@@ -481,8 +481,7 @@ mod tests {
 
   #[test]
   fn serialize_option_test() {
-    let none: Option<u8> = None;
-    let none_ser = serialize(&none);
+    let none_ser = serialize(&None::<u8>);
     let some_ser = serialize(&Some(0xFFu8));
     assert_eq!(none_ser, Ok(vec![0]));
     assert_eq!(some_ser, Ok(vec![1, 0xFF]));

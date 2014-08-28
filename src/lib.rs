@@ -63,4 +63,5 @@ pub mod macros;
 pub mod network;
 pub mod blockdata;
 pub mod util;
+pub mod wallet;
 

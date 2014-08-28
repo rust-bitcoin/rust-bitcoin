@@ -34,9 +34,7 @@ use util::uint::Uint256;
 
 /// A Bitcoin hash, 32-bytes, computed from x as SHA256(SHA256(x))
 pub struct Sha256dHash([u8, ..32]);
-
-/// A boring old Sha256 hash
-pub struct Sha256Hash([u8, ..32]);
+impl_array_newtype!(Sha256dHash, u8, 32)
 
 /// A RIPEMD-160 hash
 pub struct Ripemd160Hash([u8, ..20]);
@@ -207,48 +205,6 @@ impl Sha256dHash {
     }
     ret
   }
-
-  /// Returns a view into the hash
-  pub fn as_slice<'a>(&'a self) -> &'a [u8] {
-    let &Sha256dHash(ref data) = self;
-    data.as_slice()
-  }
-
-  /// Returns a view of the first `n` bytes of the hash
-  pub fn slice_to<'a>(&'a self, n: uint) -> &'a [u8] {
-    let &Sha256dHash(ref data) = self;
-    data.slice_to(n)
-  }
-}
-
-impl Clone for Sha256dHash {
-  #[inline]
-  fn clone(&self) -> Sha256dHash {
-    *self
-  }
-}
-
-impl PartialEq for Sha256dHash {
-  fn eq(&self, other: &Sha256dHash) -> bool {
-    let &Sha256dHash(ref mydata) = self;
-    let &Sha256dHash(ref yourdata) = other;
-    for i in range(0u, 32) {
-      if mydata[i] != yourdata[i] {
-        return false;
-      }
-    }
-    return true;
-  }
-}
-
-impl Eq for Sha256dHash {}
-
-impl Index<uint, u8> for Sha256dHash {
-  #[inline]
-  fn index<'a>(&'a self, idx: &uint) -> &'a u8 {
-    let &Sha256dHash(ref data) = self;
-    &data[*idx]
-  }
 }
 
 // Note that this outputs hashes as big endian hex numbers, so this should be
@@ -305,12 +261,6 @@ impl fmt::LowerHex for Sha256dHash {
       rv[2*i + 1] = from_digit(ch as uint % 16, 16).unwrap() as u8;
     }
     f.write(rv.as_slice())
-  }
-}
-
-impl fmt::Show for Sha256dHash {
-  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    write!(f, "{:x}", *self)
   }
 }
 

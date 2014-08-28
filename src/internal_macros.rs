@@ -69,3 +69,99 @@ macro_rules! impl_json(
   );
 )
 
+macro_rules! impl_array_newtype(
+  ($thing:ident, $ty:ty, $len:expr) => {
+    impl $thing {
+      #[inline]
+      /// Provides an immutable view into the object
+      pub fn as_slice<'a>(&'a self) -> &'a [$ty] {
+        let &$thing(ref dat) = self;
+        dat.as_slice()
+      }
+
+      #[inline]
+      /// Provides an immutable view into the object from index `s` inclusive to `e` exclusive
+      pub fn slice<'a>(&'a self, s: uint, e: uint) -> &'a [$ty] {
+        let &$thing(ref dat) = self;
+        dat.slice(s, e)
+      }
+
+      #[inline]
+      /// Provides an immutable view into the object, up to index `n` exclusive
+      pub fn slice_to<'a>(&'a self, n: uint) -> &'a [$ty] {
+        let &$thing(ref dat) = self;
+        dat.slice_to(n)
+      }
+
+      #[inline]
+      /// Provides an immutable view into the object, starting from index `n`
+      pub fn slice_from<'a>(&'a self, n: uint) -> &'a [$ty] {
+        let &$thing(ref dat) = self;
+        dat.slice_from(n)
+      }
+
+      #[inline]
+      /// Converts the object to a raw pointer
+      pub fn as_ptr(&self) -> *const $ty {
+        let &$thing(ref dat) = self;
+        dat.as_ptr()
+      }
+
+      #[inline]
+      /// Converts the object to a mutable raw pointer
+      pub fn as_mut_ptr(&mut self) -> *mut $ty {
+        let &$thing(ref mut dat) = self;
+        dat.as_mut_ptr()
+      }
+
+      #[inline]
+      /// Returns the length of the object as an array
+      pub fn len(&self) -> uint { $len }
+
+      /// Constructs a new object from raw data
+      pub fn from_slice(data: &[$ty]) -> $thing {
+        assert_eq!(data.len(), $len);
+        unsafe {
+          use std::intrinsics::copy_nonoverlapping_memory;
+          use std::mem;
+          let mut ret: $thing = mem::uninitialized();
+          copy_nonoverlapping_memory(ret.as_mut_ptr(),
+                                     data.as_ptr(),
+                                     mem::size_of::<$thing>());
+          ret
+        }
+      }
+    }
+
+    impl Index<uint, $ty> for $thing {
+      #[inline]
+      fn index<'a>(&'a self, idx: &uint) -> &'a $ty {
+        let &$thing(ref data) = self;
+        &data[*idx]
+      }
+    }
+
+    impl PartialEq for $thing {
+      #[inline]
+      fn eq(&self, other: &$thing) -> bool {
+        self.as_slice() == other.as_slice()
+      }
+    }
+
+    impl Eq for $thing {}
+
+    impl Clone for $thing {
+      #[inline]
+      fn clone(&self) -> $thing {
+        $thing::from_slice(self.as_slice())
+      }
+    }
+
+    impl ::std::fmt::Show for $thing {
+      fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+        write!(f, concat!(stringify!($thing), "({})"), self.as_slice())
+      }
+    }
+  }
+)
+

@@ -17,6 +17,7 @@
 use std::io::extensions::{u64_to_le_bytes, u64_from_be_bytes};
 use std::string;
 
+use util::thinvec::ThinVec;
 use util::hash::Sha256dHash;
 
 /// An error that might occur during base58 decoding
@@ -26,8 +27,14 @@ pub enum Base58Error {
   BadByte(u8),
   /// Checksum was not correct (expected, actual)
   BadChecksum(u32, u32),
+  /// The length (in bytes) of the object was not correct
+  InvalidLength(uint),
+  /// Version byte(s) were not recognized
+  InvalidVersion(Vec<u8>),
   /// Checked data was less than 4 bytes
-  TooShort(uint)
+  TooShort(uint),
+  /// Any other error
+  OtherBase58Error(String)
 }
 
 static BASE58_CHARS: &'static [u8] = b"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
@@ -53,70 +60,12 @@ static BASE58_DIGITS: [Option<u8>, ..128] = [
 
 /// Trait for objects which can be read as base58
 pub trait FromBase58 {
+  /// Constructs an object flrom the byte-encoding (base 256)
+  /// representation of its base58 format
+  fn from_base58_layout(data: Vec<u8>) -> Result<Self, Base58Error>;
+
   /// Obtain an object from its base58 encoding
-  fn from_base58(&str) -> Result<Self, Base58Error>;
-
-  /// Obtain an object from its base58check encoding
-  fn from_base58check(&str) -> Result<Self, Base58Error>;
-}
-
-/// Trait for objects which can be written as base58
-pub trait ToBase58 {
-  /// Obtain a string with the base58 encoding of the object
-  fn to_base58(&self) -> String;
-
-  /// Obtain a string with the base58check encoding of the object
-  /// (Tack the first 4 256-digits of the object's Bitcoin hash onto the end.)
-  fn to_base58check(&self) -> String;
-}
-
-impl<'a> ToBase58 for &'a [u8] {
-  fn to_base58(&self) -> String {
-    // 7/5 is just over log_58(256)
-    let mut scratch = Vec::from_elem(1 + self.len() * 7 / 5, 0u8);
-    // Build in base 58
-    for &d256 in self.iter() {
-      // Compute "X = X * 256 + next_digit" in base 58
-      let mut carry = d256 as u32;
-      for d58 in scratch.mut_iter().rev() {
-        carry += *d58 as u32 << 8;
-        *d58 = (carry % 58) as u8;
-        carry /= 58;
-      }
-      assert_eq!(carry, 0);
-    }
-
-    // Unsafely translate the bytes to a utf8 string
-    unsafe {
-      // Copy leading zeroes directly
-      let mut ret = string::raw::from_utf8(self.iter().take_while(|&&x| x == 0)
-                                                      .map(|_|  BASE58_CHARS[0])
-                                                      .collect());
-      // Copy rest of string
-      ret.as_mut_vec().extend(scratch.move_iter().skip_while(|&x| x == 0)
-                                                 .map(|x| BASE58_CHARS[x as uint]));
-      ret
-    }
-  }
-
-  fn to_base58check(&self) -> String {
-    let checksum = Sha256dHash::from_data(*self).into_le().low_u32();
-    u64_to_le_bytes(checksum as u64, 4, |ck| Vec::from_slice(*self).append(ck).to_base58())
-  }
-}
-
-impl ToBase58 for Vec<u8> {
-  fn to_base58(&self) -> String {
-    self.as_slice().to_base58()
-  }
-
-  fn to_base58check(&self) -> String {
-    self.as_slice().to_base58check()
-  }
-}
-
-impl FromBase58 for Vec<u8> {
-  fn from_base58(data: &str) -> Result<Vec<u8>, Base58Error> {
+  fn from_base58(data: &str) -> Result<Self, Base58Error> {
     // 11/15 is just over log_256(58)
     let mut scratch = Vec::from_elem(1 + data.len() * 11 / 15, 0u8);
     // Build in base 256
@@ -143,10 +92,11 @@ impl FromBase58 for Vec<u8> {
                                        .collect();
     // Copy rest of string
     ret.extend(scratch.move_iter().skip_while(|&x| x == 0));
-    Ok(ret)
+    FromBase58::from_base58_layout(ret)
   }
 
-  fn from_base58check(data: &str) -> Result<Vec<u8>, Base58Error> {
+  /// Obtain an object from its base58check encoding
+  fn from_base58check(data: &str) -> Result<Self, Base58Error> {
     let mut ret: Vec<u8> = try!(FromBase58::from_base58(data));
     if ret.len() < 4 {
       return Err(TooShort(ret.len()));
@@ -159,7 +109,84 @@ impl FromBase58 for Vec<u8> {
     }
 
     ret.truncate(ck_start);
-    Ok(ret)
+    FromBase58::from_base58_layout(ret)
+  }
+}
+
+/// Directly encode a slice as base58
+pub fn base58_encode_slice(data: &[u8]) -> String {
+  // 7/5 is just over log_58(256)
+  let mut scratch = Vec::from_elem(1 + data.len() * 7 / 5, 0u8);
+  // Build in base 58
+  for &d256 in data.base58_layout().iter() {
+    // Compute "X = X * 256 + next_digit" in base 58
+    let mut carry = d256 as u32;
+    for d58 in scratch.mut_iter().rev() {
+      carry += *d58 as u32 << 8;
+      *d58 = (carry % 58) as u8;
+      carry /= 58;
+    }
+    assert_eq!(carry, 0);
+  }
+
+  // Unsafely translate the bytes to a utf8 string
+  unsafe {
+    // Copy leading zeroes directly
+    let mut ret = string::raw::from_utf8(data.iter().take_while(|&&x| x == 0)
+                                                    .map(|_|  BASE58_CHARS[0])
+                                                    .collect());
+    // Copy rest of string
+    ret.as_mut_vec().extend(scratch.move_iter().skip_while(|&x| x == 0)
+                                               .map(|x| BASE58_CHARS[x as uint]));
+    ret
+  }
+}
+
+/// Trait for objects which can be written as base58
+pub trait ToBase58 {
+  /// The serialization to be converted into base58
+  fn base58_layout(&self) -> Vec<u8>;
+
+  /// Obtain a string with the base58 encoding of the object
+  fn to_base58(&self) -> String {
+    base58_encode_slice(self.base58_layout().as_slice())
+  }
+
+  /// Obtain a string with the base58check encoding of the object
+  /// (Tack the first 4 256-digits of the object's Bitcoin hash onto the end.)
+  fn to_base58check(&self) -> String {
+    let mut data = self.base58_layout();
+    let checksum = Sha256dHash::from_data(data.as_slice()).into_le().low_u32();
+    u64_to_le_bytes(checksum as u64, 4,
+                    |ck| { data.push_all(ck); base58_encode_slice(data.as_slice()) })
+  }
+}
+
+// Trivial implementations for slices and vectors
+impl<'a> ToBase58 for &'a [u8] {
+  fn base58_layout(&self) -> Vec<u8> { Vec::from_slice(*self) }
+  fn to_base58(&self) -> String { base58_encode_slice(*self) }
+}
+
+impl ToBase58 for Vec<u8> {
+  fn base58_layout(&self) -> Vec<u8> { self.clone() }
+  fn to_base58(&self) -> String { base58_encode_slice(self.as_slice()) }
+}
+
+impl ToBase58 for ThinVec<u8> {
+  fn base58_layout(&self) -> Vec<u8> { Vec::from_slice(self.as_slice()) }
+  fn to_base58(&self) -> String { base58_encode_slice(self.as_slice()) }
+}
+
+impl FromBase58 for Vec<u8> {
+  fn from_base58_layout(data: Vec<u8>) -> Result<Vec<u8>, Base58Error> {
+    Ok(data)
+  }
+}
+
+impl FromBase58 for ThinVec<u8> {
+  fn from_base58_layout(data: Vec<u8>) -> Result<ThinVec<u8>, Base58Error> {
+    Ok(ThinVec::from_vec(data))
   }
 }
 
@@ -203,6 +230,14 @@ mod tests {
     // Addresses
     assert_eq!(FromBase58::from_base58check("1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH"),
                Ok("00f8917303bfa8ef24f292e8fa1419b20460ba064d".from_hex().unwrap()))
+  }
+
+  #[test]
+  fn test_base58_roundtrip() {
+    let s = "xprv9wTYmMFdV23N2TdNG573QoEsfRrWKQgWeibmLntzniatZvR9BmLnvSxqu53Kw1UmYPxLgboyZQaXwTCg8MSY3H2EU4pWcQDnRnrVA1xe8fs";
+    let v: Vec<u8> = FromBase58::from_base58check(s).unwrap();
+    assert_eq!(v.to_base58check().as_slice(), s);
+    assert_eq!(FromBase58::from_base58check(v.to_base58check().as_slice()), Ok(v));
   }
 }
 

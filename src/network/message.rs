@@ -51,7 +51,7 @@ impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for CommandString {
   #[inline]
   fn consensus_decode(d: &mut D) -> Result<CommandString, E> {
     let rawbytes: [u8, ..12] = try!(ConsensusDecodable::consensus_decode(d)); 
-    let rv: String = FromIterator::from_iter(rawbytes.iter().filter_map(|&u| if u > 0 { Some(u as char) } else { None }));
+    let rv = FromIterator::from_iter(rawbytes.iter().filter_map(|&u| if u > 0 { Some(u as char) } else { None }));
     Ok(CommandString(rv))
   }
 }
