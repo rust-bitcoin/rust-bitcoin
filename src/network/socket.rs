@@ -88,8 +88,8 @@ impl Socket {
   pub fn connect(&mut self, host: &str, port: u16) -> IoResult<()> {
     // Boot off any lingering readers or writers
     if self.socket.is_some() {
-      let _ = self.socket.get_mut_ref().close_read();
-      let _ = self.socket.get_mut_ref().close_write();
+      let _ = self.socket.as_mut().unwrap().close_read();
+      let _ = self.socket.as_mut().unwrap().close_write();
     }
     // These locks should just pop open now
     let mut reader_lock = self.buffered_reader.lock();

@@ -38,10 +38,9 @@
 #![license = "CC0"]
 
 // Coding conventions
-#![deny(non_uppercase_pattern_statics)]
-#![deny(uppercase_variables)]
+#![warn(non_uppercase_statics)]
 #![deny(non_camel_case_types)]
-#![deny(non_snake_case_functions)]
+#![deny(non_snake_case)]
 #![deny(unused_mut)]
 #![warn(missing_doc)]
 

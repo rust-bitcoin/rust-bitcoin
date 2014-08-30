@@ -323,7 +323,7 @@ macro_rules! tuple_encode(
   ($($x:ident),*) => (
     impl <SS:SimpleEncoder<EE>, EE, $($x: ConsensusEncodable<SS, EE>),*> ConsensusEncodable<SS, EE> for ($($x),*) {
       #[inline]
-      #[allow(uppercase_variables)]
+      #[allow(non_snake_case)]
       fn consensus_encode(&self, s: &mut SS) -> Result<(), EE> {
         let &($(ref $x),*) = self;
         $( try!($x.consensus_encode(s)); )*
@@ -333,7 +333,7 @@ macro_rules! tuple_encode(
 
     impl<DD:SimpleDecoder<EE>, EE, $($x: ConsensusDecodable<DD, EE>),*> ConsensusDecodable<DD, EE> for ($($x),*) {
       #[inline]
-      #[allow(uppercase_variables)]
+      #[allow(non_snake_case)]
       fn consensus_decode(d: &mut DD) -> Result<($($x),*), EE> {
         Ok(($(try!({let $x = ConsensusDecodable::consensus_decode(d); $x })),*))
       }

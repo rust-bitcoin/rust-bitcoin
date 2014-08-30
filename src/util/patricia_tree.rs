@@ -147,7 +147,7 @@ impl<K:BitArray+Eq+Zero+One+BitXor<K,K>+Shl<uint,K>+Shr<uint,K>, V> PatriciaTree
         tmp.skip_prefix = tmp.skip_prefix.mask(diff);
         // Recurse
         idx += 1 + diff;
-        node = &mut **insert.get_mut_ref();
+        node = &mut **insert.as_mut().unwrap();
       }
       // Prefixes match
       else {
@@ -203,7 +203,7 @@ impl<K:BitArray+Eq+Zero+One+BitXor<K,K>+Shl<uint,K>+Shr<uint,K>, V> PatriciaTree
             });
           }
           // subtree.get_mut_ref is a &mut Box<U> here, so &mut ** gets a &mut U
-          node = &mut **subtree.get_mut_ref();
+          node = &mut **subtree.as_mut().unwrap();
         } // end search_len vs prefix len
       } // end if prefixes match
     } // end loop
@@ -270,7 +270,7 @@ impl<K:BitArray+Eq+Zero+One+BitXor<K,K>+Shl<uint,K>+Shr<uint,K>, V> PatriciaTree
           return (false, None);
         }
         // Otherwise, do it
-        let (delete_child, ret) = recurse(&mut **target.get_mut_ref(),
+        let (delete_child, ret) = recurse(&mut **target.as_mut().unwrap(),
                                           &key.shr(&(tree.skip_len as uint + 1)),
                                           key_len - tree.skip_len as uint - 1);
         if delete_child {
@@ -434,7 +434,7 @@ impl<'a, K, V> Iterator<&'a V> for Items<'a, K, V> {
     // If we haven't started, maybe return the "last" return value,
     // which will be the root node.
     if !self.started {
-      if self.node.is_some() && (**self.node.get_ref()).data.is_some() {
+      if self.node.is_some() && (**self.node.as_ref().unwrap()).data.is_some() {
         return self.node.unwrap().data.as_ref();
       }
       self.started = true;

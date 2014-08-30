@@ -238,7 +238,7 @@ impl Transaction {
           }
           if trace.error.is_none() {
             trace.pubkey_trace = Some(txo.script_pubkey.trace(&mut stack, Some((self, n))));
-            let err = trace.pubkey_trace.get_ref().error.as_ref().map(|e| e.clone());
+            let err = trace.pubkey_trace.as_ref().unwrap().error.as_ref().map(|e| e.clone());
             err.map(|e| trace.error = Some(OutputScriptFailure(e)));
             match stack.pop() {
               Some(v) => {
@@ -250,7 +250,7 @@ impl Transaction {
             }
             if trace.error.is_none() && txo.script_pubkey.is_p2sh() {
               trace.p2sh_trace = Some(p2sh_script.trace(&mut p2sh_stack, Some((self, n))));
-              let err = trace.p2sh_trace.get_ref().error.as_ref().map(|e| e.clone());
+              let err = trace.p2sh_trace.as_ref().unwrap().error.as_ref().map(|e| e.clone());
               err.map(|e| trace.error = Some(P2shScriptFailure(e)));
               match p2sh_stack.pop() {
                 Some(v) => {
