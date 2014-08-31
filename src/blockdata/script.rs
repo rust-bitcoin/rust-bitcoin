@@ -1690,7 +1690,7 @@ impl Script {
     let secp = Secp256k1::new();
 
     let mut codeseparator_index = 0u;
-    let mut exec_stack = vec![true];
+    let mut exec_stack = vec![];
     let mut alt_stack = vec![];
 
     let mut index = 0;
@@ -2051,7 +2051,7 @@ impl Script {
     fn recurse<'a>(script: &'a [u8],
                    mut stack: AbstractStack,
                    depth: uint) -> Result<Vec<AbstractStackElem>, ScriptError> {
-      let mut exec_stack = vec![true];
+      let mut exec_stack = vec![];
 
       // Avoid doing more than 64k forks
       if depth > 16 { return Err(InterpreterStackOverflow); }
