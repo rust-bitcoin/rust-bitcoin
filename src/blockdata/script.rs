@@ -2042,8 +2042,8 @@ impl Script {
   pub fn satisfy(&self) -> Result<Vec<AbstractStackElem>, ScriptError> {
     fn recurse<'a>(script: &'a [u8],
                    mut stack: AbstractStack,
+                   mut exec_stack: Vec<bool>,
                    depth: uint) -> Result<Vec<AbstractStackElem>, ScriptError> {
-      let mut exec_stack = vec![];
 
       // Avoid doing more than 64k forks
       if depth > 16 { return Err(InterpreterStackOverflow); }
@@ -2137,14 +2137,14 @@ impl Script {
                     let mut stack_true = stack.clone();
                     // Try pushing false and see what happens
                     if stack.peek_mut().set_bool_value(false).is_ok() {
-                      match recurse(script.slice_from(index - 1), stack, depth + 1) {
+                      match recurse(script.slice_from(index - 1), stack, exec_stack.clone(), depth + 1) {
                         Ok(res) => { return Ok(res); }
                         Err(_) => {}
                       }
                     }
                     // Failing that, push true
                     try!(stack_true.peek_mut().set_bool_value(true));
-                    return recurse(script.slice_from(index - 1), stack_true, depth + 1);
+                    return recurse(script.slice_from(index - 1), stack_true, exec_stack, depth + 1);
                   }
                   Some(val) => {
                     stack.pop();
@@ -2162,14 +2162,14 @@ impl Script {
                     let mut stack_true = stack.clone();
                     // Try pushing false and see what happens
                     if stack.peek_mut().set_bool_value(false).is_ok() {
-                      match recurse(script.slice_from(index - 1), stack, depth + 1) {
+                      match recurse(script.slice_from(index - 1), stack, exec_stack.clone(), depth + 1) {
                         Ok(res) => { return Ok(res); }
                         Err(_) => {}
                       }
                     }
                     // Failing that, push true
                     try!(stack_true.peek_mut().set_bool_value(true));
-                    return recurse(script.slice_from(index - 1), stack_true, depth + 1);
+                    return recurse(script.slice_from(index - 1), stack_true, exec_stack, depth + 1);
                   }
                   Some(val) => {
                     stack.pop();
@@ -2255,14 +2255,14 @@ impl Script {
                     let mut stack_true = stack.clone();
                     // Try pushing false and see what happens
                     if stack.peek_mut().set_bool_value(false).is_ok() {
-                      match recurse(script.slice_from(index - 1), stack, depth + 1) {
+                      match recurse(script.slice_from(index - 1), stack, exec_stack.clone(), depth + 1) {
                         Ok(res) => { return Ok(res); }
                         Err(_) => {}
                       }
                     }
                     // Failing that, push true
                     try!(stack_true.peek_mut().set_bool_value(true));
-                    return recurse(script.slice_from(index - 1), stack_true, depth + 1);
+                    return recurse(script.slice_from(index - 1), stack_true, exec_stack, depth + 1);
                   }
                 }
               }
@@ -2374,7 +2374,7 @@ impl Script {
     }
 
     let &Script(ref raw) = self;
-    recurse(raw.as_slice(), AbstractStack::new(), 1)
+    recurse(raw.as_slice(), AbstractStack::new(), vec![], 1)
   }
 }
 
@@ -2710,6 +2710,7 @@ mod test {
     assert_eq!(Script(ThinVec::from_vec("03800000".from_hex().unwrap())).is_provably_unspendable(), false);
     // This one is cool -- a 2-of-4 multisig with four pks given, only two of which are legit
     assert_eq!(Script(ThinVec::from_vec("522103bb52138972c48a132fc1f637858c5189607dd0f7fe40c4f20f6ad65f2d389ba42103bb52138972c48a132fc1f637858c5189607dd0f7fe40c4f20f6ad65f2d389ba45f6054ae".from_hex().unwrap())).is_provably_unspendable(), false);
+    assert_eq!(Script(ThinVec::from_vec("64635167006867630067516868".from_hex().unwrap())).is_provably_unspendable(), false);
     // This one is on mainnet oeO
     assert_eq!(Script(ThinVec::from_vec("827651a0698faaa9a8a7a687".from_hex().unwrap())).is_provably_unspendable(), false);
     // gmaxwell found this one
