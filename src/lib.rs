@@ -33,6 +33,9 @@
 #![feature(overloaded_calls)]
 #![feature(unsafe_destructor)]
 #![feature(default_type_params)]
+#![feature(struct_variant)]
+#![feature(unboxed_closure_sugar)]
+#![feature(unboxed_closures)]
 
 #![comment = "Rust Bitcoin Library"]
 #![license = "CC0"]

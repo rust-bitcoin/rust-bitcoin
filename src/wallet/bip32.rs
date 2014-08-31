@@ -36,10 +36,12 @@ use util::base58::{Base58Error,
 /// A chain code
 pub struct ChainCode([u8, ..32]);
 impl_array_newtype!(ChainCode, u8, 32)
+impl_array_newtype_show!(ChainCode)
 
 /// A fingerprint
 pub struct Fingerprint([u8, ..4]);
 impl_array_newtype!(Fingerprint, u8, 4)
+impl_array_newtype_show!(Fingerprint)
 
 impl Default for Fingerprint {
   fn default() -> Fingerprint { Fingerprint([0, 0, 0, 0]) }

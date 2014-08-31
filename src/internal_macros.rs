@@ -156,7 +156,11 @@ macro_rules! impl_array_newtype(
         $thing::from_slice(self.as_slice())
       }
     }
+  }
+)
 
+macro_rules! impl_array_newtype_show(
+  ($thing:ident) => {
     impl ::std::fmt::Show for $thing {
       fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         write!(f, concat!(stringify!($thing), "({})"), self.as_slice())

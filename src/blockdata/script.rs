@@ -56,6 +56,15 @@ pub struct Script(ThinVec<u8>);
 /// would help you.
 #[deriving(PartialEq, Eq, Show, Clone)]
 pub enum ScriptError {
+  /// The script returns false no matter the input
+  AnalyzeAlwaysReturnsFalse,
+  /// Tried to set a boolean to both values, but neither worked
+  AnalyzeNeitherBoolWorks,
+  /// Tried to set a boolean to the given value, but it already
+  /// had the other value
+  AnalyzeSetBoolMismatch(bool),
+  /// Validation of an element failed
+  AnalyzeValidateFailed,
   /// OP_CHECKSIG was called with a bad public key
   BadPublicKey,
   /// OP_CHECKSIG was called with a bad signature
@@ -72,6 +81,9 @@ pub enum ScriptError {
   IfEmptyStack,
   /// An illegal opcode appeared in the script (does not need to be executed)
   IllegalOpcode,
+  /// The interpreter overflowed its stack. This never happens for
+  /// script evaluation, only non-consensus analysis passes.
+  InterpreterStackOverflow,
   /// Some opcode expected a parameter, but it was missing or truncated
   EarlyEndOfScript,
   /// An OP_RETURN or synonym was executed
@@ -92,10 +104,1091 @@ pub enum ScriptError {
   NumericOverflow,
   /// Some stack operation was done with an empty stack
   PopEmptyStack,
+  /// Analysis was unable to determine script input
+  Unanalyzable,
+  /// Analysis showed script cannot be satisfied
+  Unsatisfiable,
   /// An OP_VERIFY happened with an empty stack
   VerifyEmptyStack,
   /// An OP_VERIFY happened with zero on the stack
   VerifyFailed,
+}
+
+/// A rule for validating an abstract stack element
+pub struct Validator {
+  /// List of other elements to pass to both `check` and `update`
+  args: Vec<uint>,
+  /// Function which confirms that the current value is consistent with
+  /// the stack state, returning `false` if not.
+  check: fn(&AbstractStackElem, &[uint]) -> bool,
+  /// Function which updates the current stack based on the element's
+  /// value, if it has a value, otherwise updates the element's value
+  /// based on the current stack, if possible. Returns `false` if it
+  /// is forced to do something inconsistent.
+  update: fn(&mut AbstractStackElem, &[uint]) -> Result<(), ScriptError>
+}
+
+impl Clone for Validator {
+  fn clone(&self) -> Validator {
+    Validator {
+      args: self.args.clone(),
+      check: self.check,
+      update: self.update
+    }
+  }
+}
+
+// Validators
+fn check_op_size(elem: &AbstractStackElem, others: &[uint]) -> bool {
+  let other = unsafe { elem.lookup(others[0]) };
+  elem.num_hi() >= other.len_lo() as i64 &&
+  elem.num_lo() <= other.len_hi() as i64
+}
+
+fn update_op_size(elem: &mut AbstractStackElem, others: &[uint])
+                  -> Result<(), ScriptError> {
+  let (lo, hi) = {
+    let one = unsafe { elem.lookup(others[0]) };
+    (one.len_lo() as i64, one.len_hi() as i64)
+  };
+  try!(elem.set_numeric());
+  try!(elem.set_num_lo(lo));
+  elem.set_num_hi(hi)
+}
+
+fn check_op_equal(elem: &AbstractStackElem, others: &[uint]) -> bool {
+  let one = unsafe { elem.lookup(others[0]) };
+  let two = unsafe { elem.lookup(others[1]) };
+  match elem.bool_value() {
+    None => true,
+    Some(false) => {
+      (one.num_value().is_none() || two.num_value().is_none() ||
+       one.num_value().unwrap() != two.num_value().unwrap()) &&
+      (one.bool_value() != Some(false) || two.bool_value() != Some(false)) &&
+      (one.raw_value().is_none() || two.raw_value().is_none() ||
+       one.raw_value().unwrap() != two.raw_value().unwrap())
+    }
+    Some(true) => {
+      one.len_lo() <= two.len_hi() &&
+      one.len_hi() >= two.len_lo() &&
+      one.num_lo() <= two.num_hi() &&
+      one.num_hi() >= two.num_lo() &&
+      (one.bool_value().is_none() || two.bool_value().is_none() ||
+       one.bool_value().unwrap() == two.bool_value().unwrap()) &&
+      (one.raw_value().is_none() || two.raw_value().is_none() ||
+       one.raw_value().unwrap() == two.raw_value().unwrap())
+    }
+  }
+}
+
+fn update_boolean(elem: &mut AbstractStackElem) 
+                 -> Result<(), ScriptError> {
+  // Test boolean values
+  elem.bool_val = Some(true);
+  let true_works = elem.validate();
+  elem.bool_val = Some(false);
+  let false_works = elem.validate();
+  elem.bool_val = None;
+  // Update according to what worked
+  match (true_works, false_works) {
+    (true,  true)  => Ok(()),
+    (false, false) => Err(AnalyzeNeitherBoolWorks),
+    (true,  false) => elem.set_bool_value(true),
+    (false, true)  => elem.set_bool_value(false)
+  }
+}
+
+fn update_op_equal(elem: &mut AbstractStackElem, others: &[uint])
+                   -> Result<(), ScriptError> {
+  match elem.bool_value() {
+    None => update_boolean(elem),
+    Some(false) => {
+      let one = unsafe { elem.lookup_mut(others[0]) };
+      let two = unsafe { elem.lookup_mut(others[1]) };
+      // Booleans are the only thing we can do something useful with re "not equal"
+      match (one.bool_value(), two.bool_value()) {
+        (None, None) => Ok(()),
+        (None, Some(x)) => one.set_bool_value(!x),
+        (Some(x), None) => two.set_bool_value(!x),
+        (Some(x), Some(y)) if x == y => Err(Unsatisfiable),
+        (Some(_), Some(_)) => Ok(())
+      }
+    }
+    Some(true) => {
+      let one = unsafe { elem.lookup_mut(others[0]) };
+      let two = unsafe { elem.lookup_mut(others[1]) };
+      // Equalize numeric bounds
+      try!(one.set_num_lo(two.num_lo()));
+      try!(one.set_num_hi(two.num_hi()));
+      try!(two.set_num_lo(one.num_lo()));
+      try!(two.set_num_hi(one.num_hi()));
+      // Equalize boolean values
+      match (one.bool_value(), two.bool_value()) {
+        (None, None) => {},
+        (None, Some(x)) => try!(one.set_bool_value(x)),
+        (Some(x), None) => try!(two.set_bool_value(x)),
+        (Some(x), Some(y)) if x == y => {},
+        (Some(_), Some(_)) => { return Err(Unsatisfiable); }
+      }
+      // Equalize full values
+      match (one.raw_value().map(|r| Vec::from_slice(r)),
+             two.raw_value().map(|r| Vec::from_slice(r))) {
+        (None, None) => {},
+        (None, Some(x)) => try!(one.set_value(x.as_slice())),
+        (Some(x), None) => try!(two.set_value(x.as_slice())),
+        (Some(x), Some(y)) => { if x != y { return Err(Unsatisfiable); } }
+      }
+      Ok(())
+    }
+  }
+}
+
+fn check_op_not(elem: &AbstractStackElem, others: &[uint]) -> bool {
+  let one = unsafe { elem.lookup(others[0]) };
+  if !one.may_be_numeric() {
+    return false;
+  }
+
+  match elem.bool_value() {
+    None => true,
+    Some(false) => one.num_hi() != 0 || one.num_lo() != 0,
+    Some(true) => one.num_hi() >= 0 && one.num_lo() <= 0
+  }
+}
+
+fn update_op_not(elem: &mut AbstractStackElem, others: &[uint])
+                 -> Result<(), ScriptError> {
+  match elem.bool_value() {
+    None => update_boolean(elem),
+    Some(false) => {
+      let one = unsafe { elem.lookup_mut(others[0]) };
+      try!(one.set_numeric());
+      match one.bool_value() {
+        None => one.set_bool_value(true),
+        Some(true) => Ok(()),
+        Some(false) => Err(Unsatisfiable)
+      }
+    }
+    Some(true) => {
+      let one = unsafe { elem.lookup_mut(others[0]) };
+      try!(one.set_numeric());
+      match one.bool_value() {
+        None => one.set_num_value(0),
+        Some(true) => Err(Unsatisfiable),
+        Some(false) => Ok(())
+      }
+    }
+  }
+}
+
+fn check_op_0notequal(elem: &AbstractStackElem, others: &[uint]) -> bool {
+  let one = unsafe { elem.lookup(others[0]) };
+  if !one.may_be_numeric() { return false; }
+  match elem.bool_value() {
+    None => true,
+    Some(false) => one.num_hi() >= 0 && one.num_lo() <= 0,
+    Some(true) => one.num_hi() != 0 || one.num_lo() != 0
+  }
+}
+
+fn update_op_0notequal(elem: &mut AbstractStackElem, others: &[uint])
+                       -> Result<(), ScriptError> {
+  match elem.bool_value() {
+    None => update_boolean(elem),
+    Some(false) => {
+      let one = unsafe { elem.lookup_mut(others[0]) };
+      try!(one.set_numeric());
+      match one.bool_value() {
+        None => one.set_num_value(0),
+        Some(true) => Err(Unsatisfiable),
+        Some(false) => Ok(())
+      }
+    }
+    Some(true) => {
+      let one = unsafe { elem.lookup_mut(others[0]) };
+      try!(one.set_numeric());
+      match one.bool_value() {
+        None => one.set_bool_value(true),
+        Some(true) => Ok(()),
+        Some(false) => Err(Unsatisfiable)
+      }
+    }
+  }
+}
+
+fn check_op_numequal(elem: &AbstractStackElem, others: &[uint]) -> bool {
+  let one = unsafe { elem.lookup(others[0]) };
+  let two = unsafe { elem.lookup(others[1]) };
+  if !one.may_be_numeric() { return false; }
+  if !two.may_be_numeric() { return false; }
+  match elem.bool_value() {
+    None => true,
+    Some(false) => {
+      (one.num_value().is_none() || two.num_value().is_none() ||
+       one.num_value().unwrap() != two.num_value().unwrap()) &&
+      (one.bool_value().is_none() || two.bool_value().is_none() ||
+       one.bool_value().unwrap() != two.bool_value().unwrap())
+    }
+    Some(true) => {
+      one.num_lo() <= two.num_hi() &&
+      one.num_hi() >= two.num_lo() &&
+      (one.num_value().is_none() || two.num_value().is_none() ||
+       one.num_value().unwrap() == two.num_value().unwrap()) &&
+      (one.bool_value().is_none() || two.bool_value().is_none() ||
+       one.bool_value().unwrap() == two.bool_value().unwrap())
+    }
+  }
+}
+
+fn update_op_numequal(elem: &mut AbstractStackElem, others: &[uint])
+                      -> Result<(), ScriptError> {
+  match elem.bool_value() {
+    None => update_boolean(elem),
+    Some(false) => {
+      // todo: find a way to force the numbers to be nonequal
+      Ok(())
+    }
+    Some(true) => {
+      let one = unsafe { elem.lookup_mut(others[0]) };
+      let two = unsafe { elem.lookup_mut(others[1]) };
+      try!(one.set_numeric());
+      try!(two.set_numeric());
+      try!(one.set_num_lo(two.num_lo()));
+      try!(one.set_num_hi(two.num_hi()));
+      try!(two.set_num_lo(one.num_lo()));
+      two.set_num_hi(one.num_hi())
+    }
+  }
+}
+
+fn check_op_numnotequal(elem: &AbstractStackElem, others: &[uint]) -> bool {
+  let one = unsafe { elem.lookup(others[0]) };
+  let two = unsafe { elem.lookup(others[1]) };
+  if !one.may_be_numeric() { return false; }
+  if !two.may_be_numeric() { return false; }
+  match elem.bool_value() {
+    None => true,
+    Some(false) => one.may_be_lt(two) || one.may_be_gt(two),
+    Some(true) => one.may_be_lteq(two) && one.may_be_gteq(two)
+  }
+}
+
+fn update_op_numnotequal(elem: &mut AbstractStackElem, others: &[uint])
+                         -> Result<(), ScriptError> {
+  match elem.bool_value() {
+    None => update_boolean(elem),
+    Some(false) => {
+      let one = unsafe { elem.lookup_mut(others[0]) };
+      let two = unsafe { elem.lookup_mut(others[1]) };
+      try!(one.set_numeric());
+      try!(two.set_numeric());
+      try!(one.set_num_lo(two.num_lo()));
+      try!(one.set_num_hi(two.num_hi()));
+      try!(two.set_num_lo(one.num_lo()));
+      two.set_num_hi(one.num_hi())
+    }
+    Some(true) => {
+      // todo: find a way to force the numbers to be nonequal
+      Ok(())
+    }
+  }
+}
+
+fn check_op_numlt(elem: &AbstractStackElem, others: &[uint]) -> bool {
+  let one = unsafe { elem.lookup(others[0]) };
+  let two = unsafe { elem.lookup(others[1]) };
+  if !one.may_be_numeric() { return false; }
+  if !two.may_be_numeric() { return false; }
+  match elem.bool_value() {
+    None => true,
+    Some(true) => one.may_be_lt(two),
+    Some(false) => one.may_be_gteq(two),
+  }
+}
+
+fn update_op_numlt(elem: &mut AbstractStackElem, others: &[uint])
+                   -> Result<(), ScriptError> {
+  match elem.bool_value() {
+    None => update_boolean(elem),
+    Some(true) => {
+      let one = unsafe { elem.lookup_mut(others[0]) };
+      let two = unsafe { elem.lookup_mut(others[1]) };
+      try!(one.set_numeric());
+      try!(two.set_numeric());
+
+      try!(one.set_num_hi(two.num_hi() - 1));
+      two.set_num_lo(one.num_lo() + 1)
+    }
+    Some(false) => {
+      let one = unsafe { elem.lookup_mut(others[0]) };
+      let two = unsafe { elem.lookup_mut(others[1]) };
+      try!(one.set_numeric());
+      try!(two.set_numeric());
+
+      try!(one.set_num_lo(two.num_lo()));
+      two.set_num_hi(one.num_hi())
+    }
+  }
+}
+
+fn check_op_numgt(elem: &AbstractStackElem, others: &[uint]) -> bool {
+  let one = unsafe { elem.lookup(others[0]) };
+  let two = unsafe { elem.lookup(others[1]) };
+  if !one.may_be_numeric() { return false; }
+  if !two.may_be_numeric() { return false; }
+  match elem.bool_value() {
+    None => true,
+    Some(true) => one.may_be_gt(two),
+    Some(false) => one.may_be_lteq(two)
+  }
+}
+
+fn update_op_numgt(elem: &mut AbstractStackElem, others: &[uint])
+                   -> Result<(), ScriptError> {
+  match elem.bool_value() {
+    None => try!(update_boolean(elem)),
+    Some(true) => {
+      let one = unsafe { elem.lookup_mut(others[0]) };
+      let two = unsafe { elem.lookup_mut(others[1]) };
+      try!(one.set_numeric());
+      try!(two.set_numeric());
+
+      try!(one.set_num_lo(two.num_lo() + 1));
+      try!(two.set_num_hi(one.num_hi() - 1));
+    }
+    Some(false) => {
+      let one = unsafe { elem.lookup_mut(others[0]) };
+      let two = unsafe { elem.lookup_mut(others[1]) };
+      try!(one.set_numeric());
+      try!(two.set_numeric());
+
+      try!(one.set_num_hi(two.num_hi()));
+      try!(two.set_num_lo(one.num_lo()));
+    }
+  }
+  Ok(())
+}
+
+fn check_op_numlteq(elem: &AbstractStackElem, others: &[uint]) -> bool {
+  let one = unsafe { elem.lookup(others[0]) };
+  let two = unsafe { elem.lookup(others[1]) };
+  if !one.may_be_numeric() { return false; }
+  if !two.may_be_numeric() { return false; }
+  match elem.bool_value() {
+    None => true,
+    Some(false) => one.may_be_gt(two),
+    Some(true) => one.may_be_lteq(two)
+  }
+}
+
+fn update_op_numlteq(elem: &mut AbstractStackElem, others: &[uint])
+                   -> Result<(), ScriptError> {
+  match elem.bool_value() {
+    None => try!(update_boolean(elem)),
+    Some(true) => {
+      let one = unsafe { elem.lookup_mut(others[0]) };
+      let two = unsafe { elem.lookup_mut(others[1]) };
+      try!(one.set_numeric());
+      try!(two.set_numeric());
+
+      try!(one.set_num_hi(two.num_hi()));
+      try!(two.set_num_lo(one.num_lo()));
+    }
+    Some(false) => {
+      let one = unsafe { elem.lookup_mut(others[0]) };
+      let two = unsafe { elem.lookup_mut(others[1]) };
+      try!(one.set_numeric());
+      try!(two.set_numeric());
+
+      try!(one.set_num_lo(two.num_lo() + 1));
+      try!(two.set_num_hi(one.num_hi() - 1));
+    }
+  }
+  Ok(())
+}
+
+fn check_op_numgteq(elem: &AbstractStackElem, others: &[uint]) -> bool {
+  let one = unsafe { elem.lookup(others[0]) };
+  let two = unsafe { elem.lookup(others[1]) };
+  if !one.may_be_numeric() { return false; }
+  if !two.may_be_numeric() { return false; }
+  match elem.bool_value() {
+    None => true,
+    Some(true) => one.may_be_gteq(two),
+    Some(false) => one.may_be_lt(two)
+  }
+}
+
+fn update_op_numgteq(elem: &mut AbstractStackElem, others: &[uint])
+                   -> Result<(), ScriptError> {
+  match elem.bool_value() {
+    None => try!(update_boolean(elem)),
+    Some(true) => {
+      let one = unsafe { elem.lookup_mut(others[0]) };
+      let two = unsafe { elem.lookup_mut(others[1]) };
+      try!(one.set_numeric());
+      try!(two.set_numeric());
+
+      try!(one.set_num_lo(two.num_lo()));
+      try!(two.set_num_hi(one.num_hi()));
+    }
+    Some(false) => {
+      let one = unsafe { elem.lookup_mut(others[0]) };
+      let two = unsafe { elem.lookup_mut(others[1]) };
+      try!(one.set_numeric());
+      try!(two.set_numeric());
+
+      try!(one.set_num_hi(two.num_hi() - 1));
+      try!(two.set_num_lo(one.num_lo() + 1));
+    }
+  }
+  Ok(())
+}
+
+fn check_op_ripemd160(elem: &AbstractStackElem, _: &[uint]) -> bool {
+  elem.may_be_hash160()
+}
+
+fn update_op_ripemd160(elem: &mut AbstractStackElem, others: &[uint])
+                       -> Result<(), ScriptError> {
+  try!(elem.set_len_lo(20));
+  try!(elem.set_len_hi(20));
+
+  let hash = match unsafe { elem.lookup(others[0]) }.raw_value() {
+    None => None,
+    Some(x) => {
+      let mut out = [0, ..20];
+      let mut engine = Ripemd160::new();
+      engine.input(x);
+      engine.result(out.as_mut_slice());
+      Some(out)
+    }
+  };
+
+  match hash {
+    None => Ok(()),
+    Some(x) => elem.set_value(x.as_slice())
+  }
+}
+
+fn check_op_sha1(elem: &AbstractStackElem, _: &[uint]) -> bool {
+  elem.may_be_hash160()
+}
+
+fn update_op_sha1(elem: &mut AbstractStackElem, others: &[uint])
+                  -> Result<(), ScriptError> {
+  try!(elem.set_len_lo(20));
+  try!(elem.set_len_hi(20));
+
+  let hash = match unsafe { elem.lookup(others[0]) }.raw_value() {
+    None => None,
+    Some(x) => {
+      let mut out = [0, ..20];
+      let mut engine = Sha1::new();
+      engine.input(x);
+      engine.result(out.as_mut_slice());
+      Some(out)
+    }
+  };
+
+  match hash {
+    None => Ok(()),
+    Some(x) => elem.set_value(x.as_slice())
+  }
+}
+
+fn check_op_hash160(elem: &AbstractStackElem, _: &[uint]) -> bool {
+  elem.may_be_hash160()
+}
+
+fn update_op_hash160(elem: &mut AbstractStackElem, others: &[uint])
+                      -> Result<(), ScriptError> {
+  try!(elem.set_len_lo(20));
+  try!(elem.set_len_hi(20));
+
+  let hash = match unsafe { elem.lookup(others[0]) }.raw_value() {
+    None => None,
+    Some(x) => {
+      let mut out1 = [0, ..32];
+      let mut out2 = [0, ..20];
+      let mut engine = Sha256::new();
+      engine.input(x);
+      engine.result(out1.as_mut_slice());
+      let mut engine = Ripemd160::new();
+      engine.input(out1.as_slice());
+      engine.result(out2.as_mut_slice());
+      Some(out2)
+    }
+  };
+
+  match hash {
+    None => Ok(()),
+    Some(x) => elem.set_value(x.as_slice())
+  }
+}
+
+fn check_op_sha256(elem: &AbstractStackElem, _: &[uint]) -> bool {
+  elem.may_be_hash256()
+}
+
+fn update_op_sha256(elem: &mut AbstractStackElem, others: &[uint])
+                    -> Result<(), ScriptError> {
+  try!(elem.set_len_lo(32));
+  try!(elem.set_len_hi(32));
+
+  let hash = match unsafe { elem.lookup(others[0]) }.raw_value() {
+    None => None,
+    Some(x) => {
+      let mut out = [0, ..32];
+      let mut engine = Sha256::new();
+      engine.input(x);
+      engine.result(out.as_mut_slice());
+      Some(out)
+    }
+  };
+
+  match hash {
+    None => Ok(()),
+    Some(x) => elem.set_value(x.as_slice())
+  }
+}
+
+fn check_op_hash256(elem: &AbstractStackElem, _: &[uint]) -> bool {
+  elem.may_be_hash256()
+}
+
+fn update_op_hash256(elem: &mut AbstractStackElem, others: &[uint])
+                    -> Result<(), ScriptError> {
+  try!(elem.set_len_lo(32));
+  try!(elem.set_len_hi(32));
+
+  let hash = match unsafe { elem.lookup(others[0]) }.raw_value() {
+    None => None,
+    Some(x) => {
+      let mut out = [0, ..32];
+      let mut engine = Sha256::new();
+      engine.input(x);
+      engine.result(out.as_mut_slice());
+      let mut engine = Sha256::new();
+      engine.input(out.as_slice());
+      engine.result(out.as_mut_slice());
+      Some(out)
+    }
+  };
+
+  match hash {
+    None => Ok(()),
+    Some(x) => elem.set_value(x.as_slice())
+  }
+}
+
+fn check_op_checksig(elem: &AbstractStackElem, others: &[uint]) -> bool {
+  let one = unsafe { elem.lookup(others[0]) };
+  let two = unsafe { elem.lookup(others[1]) };
+  match elem.bool_value() {
+    None => true,
+    Some(false) => true,
+    Some(true) => one.may_be_signature() && two.may_be_pubkey()
+  }
+}
+
+fn update_op_checksig(elem: &mut AbstractStackElem, others: &[uint])
+                      -> Result<(), ScriptError> {
+  match elem.bool_value() {
+    None => update_boolean(elem),
+    Some(false) => Ok(()), // nothing we can do to enforce an invalid sig
+    Some(true) => {
+      let sig = unsafe { elem.lookup_mut(others[0]) };
+      let pk  = unsafe { elem.lookup_mut(others[1]) };
+
+      // todo add DER encoding enforcement
+      try!(pk.set_len_lo(33));
+      try!(pk.set_len_hi(65));
+      try!(sig.set_len_lo(75));
+      sig.set_len_hi(80)
+    }
+  }
+}
+
+/// An abstract element on the stack, used to describe a satisfying
+/// script input
+#[deriving(Clone)]
+pub struct AbstractStackElem {
+  /// The raw data, if known
+  raw: Option<Vec<u8>>,
+  /// Boolean value, if forced
+  bool_val: Option<bool>,
+  /// Lower bound when read as number
+  num_lo: i64,
+  /// Upper bound when read as number
+  num_hi: i64,
+  /// Length lower bound
+  len_lo: uint,
+  /// Length upper bound
+  len_hi: uint,
+  /// Relations this must satisfy
+  validators: Vec<Validator>,
+  /// Index of the element in its stack allocator
+  alloc_index: Option<uint>
+}
+
+impl AbstractStackElem {
+  /// Create a new exact integer
+  pub fn new_num(n: i64) -> AbstractStackElem {
+    let raw = build_scriptint(n);
+    AbstractStackElem {
+      num_lo: n,
+      num_hi: n,
+      len_lo: raw.len(),
+      len_hi: raw.len(),
+      raw: Some(raw),
+      bool_val: Some(n != 0),
+      validators: vec![],
+      alloc_index: None
+    }
+  }
+
+  /// Create a new exact boolean
+  pub fn new_bool(b: bool) -> AbstractStackElem {
+    AbstractStackElem::new_num(if b { 1 } else { 0 })
+  }
+
+  /// Create a new exact data
+  pub fn new_raw(data: &[u8]) -> AbstractStackElem {
+    let n = read_scriptint(data);
+    AbstractStackElem {
+      num_lo: match n { Ok(n) => n, Err(_) => -(1 << 31) },
+      num_hi: match n { Ok(n) => n, Err(_) => 1 << 31 },
+      len_lo: data.len(),
+      len_hi: data.len(),
+      bool_val: Some(read_scriptbool(data)),
+      raw: Some(Vec::from_slice(data)),
+      validators: vec![],
+      alloc_index: None
+    }
+  }
+
+  /// Create a new unknown element
+  pub fn new_unknown() -> AbstractStackElem {
+    AbstractStackElem {
+      num_lo: -(1 << 31),
+      num_hi: 1 << 31,
+      len_lo: 0,
+      len_hi: 1 << 20,  // blocksize limit
+      bool_val: None,
+      raw: None,
+      validators: vec![],
+      alloc_index: None
+    }
+  }
+
+  /// Looks up another stack item by index
+  unsafe fn lookup<'a>(&'a self, idx: uint) -> &'a AbstractStackElem {
+    let mypos = self as *const _;
+    let myidx = self.alloc_index.unwrap() as int;
+    &*mypos.offset(idx as int - myidx)
+  }
+
+  /// Looks up another stack item by index
+  unsafe fn lookup_mut<'a>(&'a self, idx: uint) -> &'a mut AbstractStackElem {
+    let mypos = self as *const _ as *mut _;
+    let myidx = self.alloc_index.unwrap() as int;
+    &mut *mypos.offset(idx as int - myidx)
+  }
+
+  /// Retrieve the boolean value of the stack element, if it can be determined
+  pub fn bool_value(&self) -> Option<bool> {
+    self.bool_val
+  }
+
+  /// Retrieves the raw value of the stack element, if it can be determined
+  pub fn raw_value<'a>(&'a self) -> Option<&'a [u8]> {
+    self.raw.as_ref().map(|x| x.as_slice())
+  }
+
+  /// Retrieve the upper bound for this element's numeric value.
+  /// This can always be determined since there is a fixed upper
+  /// bound for all numbers.
+  pub fn num_hi(&self) -> i64 {
+    self.num_hi
+  }
+
+  /// Retrieve the lower bound for this element's numeric value.
+  /// This can always be determined since there is a fixed lower
+  /// bound for all numbers.
+  pub fn num_lo(&self) -> i64 {
+    self.num_lo
+  }
+
+  /// Retrieve the upper bound for this element's length. This always
+  /// exists as a finite value, though the default upper limit is some
+  /// impractically large number
+  pub fn len_hi(&self) -> uint {
+    self.len_hi
+  }
+
+  /// Retrieve the lower bound for this element's length. This always
+  /// exists since it is at least zero :)
+  pub fn len_lo(&self) -> uint {
+    self.len_lo
+  }
+
+  /// Retries the element's numeric value, if it can be determined
+  pub fn num_value(&self) -> Option<i64> {
+    let lo = self.num_lo();
+    let hi = self.num_hi();
+    if lo == hi { Some(lo) } else { None }
+  }
+
+  /// Propagate any changes to all nodes which are referenced
+  fn update(&mut self) -> Result<(), ScriptError> {
+    // Check that this node is consistent before doing any propagation
+    if !self.validate() {
+      return Err(AnalyzeValidateFailed);
+    }
+
+    for v in self.validators.iter().map(|v| v.clone()) {
+      try!((v.update)(self, v.args.as_slice()));
+    }
+    Ok(())
+  }
+
+  /// Check that all rules are satisfied
+  fn validate(&mut self) -> bool {
+    if self.num_hi < self.num_lo { return false; }
+    if self.len_hi < self.len_lo { return false; }
+
+    self.validators.iter().all(|rule| (rule.check)(self, rule.args.as_slice()))
+  }
+
+  /// Sets the boolean value
+  pub fn set_bool_value(&mut self, val: bool)
+                    -> Result<(), ScriptError> {
+    match self.bool_val {
+      Some(x) => {
+        if x != val { return Err(AnalyzeSetBoolMismatch(val)); }
+      }
+      None => {
+        self.bool_val = Some(val);
+        if !val {
+          try!(self.set_num_value(0));
+        } else if self.num_lo() == 0 && self.num_hi == 1 {
+          // This seems like a special case but actually everything that
+          // is `set_boolean` satisfies it
+          try!(self.set_num_value(1));
+        }
+        try!(self.update());
+      }
+    }
+    Ok(())
+  }
+
+  /// Sets the numeric value
+  pub fn set_num_value(&mut self, val: i64) -> Result<(), ScriptError> {
+    try!(self.set_num_lo(val));
+    self.set_num_hi(val)
+  }
+
+  /// Sets the entire value of the 
+  pub fn set_value(&mut self, val: &[u8]) -> Result<(), ScriptError> {
+    match self.raw_value().map(|x| Vec::from_slice(x)) {
+      Some(x) => { if x.as_slice() == val { Ok(()) } else { Err(Unsatisfiable) } }
+      None => {
+        try!(self.set_len_lo(val.len()));
+        try!(self.set_len_hi(val.len()));
+        try!(self.set_bool_value(read_scriptbool(val)));
+        match read_scriptint(val) {
+          Ok(n) => {
+            try!(self.set_num_lo(n));
+            try!(self.set_num_hi(n));
+          }
+          Err(_) => {}
+        }
+        try!(self.set_bool_value(read_scriptbool(val)));
+        self.raw = Some(Vec::from_slice(val));
+        Ok(())
+      }
+    }
+  }
+
+  /// Sets a number to be numerically parseable
+  pub fn set_numeric(&mut self) -> Result<(), ScriptError> {
+    self.set_len_hi(4)
+  }
+
+  /// Whether an element could possibly be a number
+  pub fn may_be_numeric(&self) -> bool {
+    self.len_lo() <= 4
+  }
+
+  /// Whether an element could possibly be a signature
+  pub fn may_be_signature(&self) -> bool {
+    self.len_lo() <= 78 && self.len_hi() >= 77
+    // todo check DER encoding
+  }
+
+  /// Whether an element could possibly be a pubkey
+  pub fn may_be_pubkey(&self) -> bool {
+    ((self.len_lo() <= 33 && self.len_hi() >= 33) ||
+     (self.len_lo() <= 65 && self.len_hi() >= 65)) &&
+    (self.raw_value().is_none() || PublicKey::from_slice(self.raw_value().unwrap()).is_ok())
+  }
+
+  /// Whether an element could possibly be less than another
+  pub fn may_be_lt(&self, other: &AbstractStackElem) -> bool {
+    self.num_lo() < other.num_hi() &&
+    (self.num_value().is_none() || other.num_value().is_none() ||
+     self.num_value().unwrap() < other.num_value().unwrap()) &&
+    (self.bool_value().is_none() || other.bool_value().is_none() ||
+     self.bool_value().unwrap() < other.bool_value().unwrap())
+  }
+
+  /// Whether an element could possibly be greater than another
+  pub fn may_be_gt(&self, other: &AbstractStackElem) -> bool {
+    self.num_hi() > other.num_lo() &&
+    (self.num_value().is_none() || other.num_value().is_none() ||
+     self.num_value().unwrap() > other.num_value().unwrap()) &&
+    (self.bool_value().is_none() || other.bool_value().is_none() ||
+     self.bool_value().unwrap() >= other.bool_value().unwrap())
+  }
+
+  /// Whether an element could possibly be less than or equal to another
+  pub fn may_be_lteq(&self, other: &AbstractStackElem) -> bool {
+    self.num_lo() <= other.num_hi() &&
+    (self.num_value().is_none() || other.num_value().is_none() ||
+     self.num_value().unwrap() <= other.num_value().unwrap()) &&
+    (self.bool_value().is_none() || other.bool_value().is_none() ||
+     self.bool_value().unwrap() <= other.bool_value().unwrap())
+  }
+
+  /// Whether an element could possibly be greater than or equal to another
+  pub fn may_be_gteq(&self, other: &AbstractStackElem) -> bool {
+    self.num_hi() >= other.num_lo() &&
+    (self.num_value().is_none() || other.num_value().is_none() ||
+     self.num_value().unwrap() >= other.num_value().unwrap()) &&
+    (self.bool_value().is_none() || other.bool_value().is_none() ||
+     self.bool_value().unwrap() >= other.bool_value().unwrap())
+  }
+
+  /// Whether an element could possibly be a 20-byte hash
+  pub fn may_be_hash160(&self) -> bool {
+    self.len_lo() <= 20 && self.len_hi() >= 20
+  }
+
+  /// Whether an element could possibly be a 32-byte hash
+  pub fn may_be_hash256(&self) -> bool {
+    self.len_lo() <= 32 && self.len_hi() >= 32
+  }
+
+  /// Sets a number to be an opcode-pushed boolean
+  pub fn set_boolean(&mut self) -> Result<(), ScriptError> {
+    try!(self.set_len_hi(1));
+    try!(self.set_num_lo(0));
+    self.set_num_hi(1)
+  }
+
+  /// Sets a numeric lower bound on a value
+  pub fn set_num_lo(&mut self, value: i64) -> Result<(), ScriptError> {
+    if self.num_lo < value {
+      self.num_lo = value;
+      if value > 0 { try!(self.set_bool_value(true)); }
+      if value == 0 && self.num_hi == 0 { try!(self.set_bool_value(false)); }
+      try!(self.update());
+    }
+    Ok(())
+  }
+
+  /// Sets a numeric upper bound on a value
+  pub fn set_num_hi(&mut self, value: i64) -> Result<(), ScriptError> {
+    if self.num_hi > value {
+      self.num_hi = value;
+      if value < 0 { try!(self.set_bool_value(true)); }
+      if value == 0 && self.num_lo == 0 { try!(self.set_bool_value(false)); }
+      try!(self.update());
+    }
+    Ok(())
+  }
+
+  /// Sets a lower length bound on a value
+  pub fn set_len_lo(&mut self, value: uint) -> Result<(), ScriptError> {
+    if self.len_lo < value {
+      self.len_lo = value;
+      if value > 0 { try!(self.set_bool_value(true)); }
+      if value == 0 && self.num_hi == 0 { try!(self.set_bool_value(false)); }
+      try!(self.update());
+    }
+    Ok(())
+  }
+
+  /// Sets a upper length bound on a value
+  pub fn set_len_hi(&mut self, value: uint) -> Result<(), ScriptError> {
+    if self.len_hi > value {
+      self.len_hi = value;
+      try!(self.update());
+    }
+    Ok(())
+  }
+
+  /// Adds some condition on the element
+  pub fn add_validator(&mut self, cond: Validator) -> Result<(), ScriptError> {
+    self.validators.push(cond);
+    self.update()
+  }
+}
+
+
+/// The stack used by the script satisfier
+#[deriving(Clone)]
+pub struct AbstractStack {
+  /// Actual elements on the stack
+  stack: Vec<uint>,
+  /// Actual elements on the altstack
+  alt_stack: Vec<uint>,
+  /// Stack needed to satisfy the script before execution
+  initial_stack: Vec<uint>,
+  /// Local allocator to allow cloning; refs are indices into here
+  alloc: Vec<AbstractStackElem>
+}
+
+impl AbstractStack {
+  /// Construct a new empty abstract stack
+  pub fn new() -> AbstractStack {
+    AbstractStack {
+      stack: vec![],
+      alt_stack: vec![],
+      initial_stack: vec![],
+      alloc: vec![]
+    }
+  }
+
+  fn allocate(&mut self, mut elem: AbstractStackElem) -> uint {
+    elem.alloc_index = Some(self.alloc.len());
+    self.alloc.push(elem);
+    self.alloc.len() - 1
+  }
+
+  fn push_initial(&mut self, elem: AbstractStackElem) {
+    let idx = self.allocate(elem);
+    self.initial_stack.push(idx);
+    self.stack.insert(0, idx);
+  }
+
+  /// Construct the initial stack in the end
+  pub fn build_initial_stack(&self) -> Vec<AbstractStackElem> {
+    let mut res: Vec<AbstractStackElem> =
+        self.initial_stack.iter().map(|&i| self.alloc[i].clone()).collect();
+    res.reverse();
+    res
+  }
+
+  /// Increase the stack size to `n`, adding elements to the initial
+  /// stack as necessary
+  pub fn require_n_elems(&mut self, n: uint) {
+    while self.stack.len() < n {
+      self.push_initial(AbstractStackElem::new_unknown());
+    }
+  }
+
+  /// Lookup an element by index
+  pub fn get_elem(&self, alloc_index: uint) -> &AbstractStackElem {
+    &self.alloc[alloc_index]
+  }
+
+  /// Lookup an element by index
+  pub fn get_elem_mut(&mut self, alloc_index: uint) -> &mut AbstractStackElem {
+    self.alloc.get_mut(alloc_index)
+  }
+
+  /// Push a copy of an existing element by index
+  pub fn push(&mut self, elem: uint) {
+    self.stack.push(elem);
+  }
+
+  /// Push a new element
+  pub fn push_alloc<'a>(&'a mut self, elem: AbstractStackElem) -> &'a mut AbstractStackElem {
+    let idx = self.allocate(elem);
+    self.stack.push(idx);
+    self.alloc.get_mut(idx)
+  }
+
+
+  /// Obtain a mutable element to the top stack element
+  pub fn peek_mut<'a>(&'a mut self) -> &'a mut AbstractStackElem {
+    if self.stack.len() == 0 {
+      self.push_initial(AbstractStackElem::new_unknown());
+    }
+
+    self.alloc.get_mut(*self.stack.last().unwrap())
+  }
+
+  /// Obtain a stackref to the current top element
+  pub fn peek_index(&mut self) -> uint {
+    if self.stack.len() == 0 {
+      self.push_initial(AbstractStackElem::new_unknown());
+    }
+    *self.stack.last().unwrap()
+  }
+
+  /// Drop the top stack item
+  fn pop(&mut self) -> uint {
+    if self.stack.len() == 0 {
+      self.push_initial(AbstractStackElem::new_unknown());
+    }
+    self.stack.pop().unwrap()
+  }
+
+  /// Obtain a mutable reference to the top stack item, but remove it from the stack
+  fn pop_mut<'a>(&'a mut self) -> &'a mut AbstractStackElem {
+    if self.stack.len() == 0 {
+      self.push_initial(AbstractStackElem::new_unknown());
+    }
+
+    self.alloc.get_mut(self.stack.pop().unwrap())
+  }
+
+
+  /// Move the top stack item to the altstack
+  pub fn to_altstack(&mut self) {
+    if self.stack.len() == 0 {
+      self.push_initial(AbstractStackElem::new_unknown());
+    }
+
+    let pop = self.stack.pop().unwrap();
+    self.alt_stack.push(pop);
+  }
+
+  /// Move the top altstack item to the stack, failing if the
+  /// altstack is empty. (Note that input scripts pass their
+  /// stack to the output script but /not/ the altstack, so
+  /// there is no input that can make an empty altstack nonempty.)
+  pub fn from_altstack(&mut self) -> Result<(), ScriptError> {
+    match self.alt_stack.pop() {
+      Some(x) => { self.stack.push(x); Ok(()) }
+      None => Err(PopEmptyStack)
+    }
+  }
+
+  /// Immutable view of the current stack as a slice (to be compatible
+  /// with the `stack_opcode!` macro
+  pub fn as_slice<'a>(&'a self) -> &'a [uint] {
+    self.stack.as_slice()
+  }
+
+  /// Mutable view of the current stack as a slice (to be compatible
+  /// with the `stack_opcode!` macro
+  fn as_mut_slice<'a>(&'a mut self) -> &'a mut [uint] {
+    self.stack.as_mut_slice()
+  }
+
+  /// Length of the current stack
+  fn len(&self) -> uint {
+    self.stack.len()
+  }
+
+  /// Delete an element from the middle of the current stack
+  fn remove(&mut self, idx: uint) {
+    self.stack.remove(idx);
+  }
 }
 
 impl json::ToJson for ScriptError {
@@ -200,8 +1293,8 @@ impl<'a> Collection for MaybeOwned<'a> {
   }
 }
 
-static script_true: &'static [u8] = &[0x01];
-static script_false: &'static [u8] = &[0x00];
+static SCRIPT_TRUE: &'static [u8] = &[0x01];
+static SCRIPT_FALSE: &'static [u8] = &[0x00];
 
 /// Helper to encode an integer in script format
 fn build_scriptint(n: i64) -> Vec<u8> {
@@ -261,7 +1354,9 @@ pub fn read_scriptint(v: &[u8]) -> Result<i64, ScriptError> {
 /// else as true", except that the overflow rules don't apply.
 #[inline]
 pub fn read_scriptbool(v: &[u8]) -> bool {
-  !v.iter().all(|&w| w == 0)
+  !(v.len() == 0 ||
+    ((v[v.len() - 1] == 0 || v[v.len() - 1] == 0x80) &&
+     v.iter().rev().skip(1).all(|&w| w == 0)))
 }
 
 /// Read a script-encoded unsigned integer
@@ -308,7 +1403,7 @@ fn check_signature(secp: &Secp256k1, sig_slice: &[u8], pk_slice: &[u8], script: 
     // For anyone-can-pay transactions we replace the whole input array
     // with just the current input, to ensure the others have no effect.
     let mut old_input = tx.input[input_index].clone();
-    old_input.script_sig = Script(ThinVec::from_vec(script.take_unwrap()));
+    old_input.script_sig = Script(ThinVec::from_vec(script.take().unwrap()));
     tx_copy.input = vec![old_input];
   } else {
     // Otherwise we keep all the inputs, blanking out the others and even
@@ -320,7 +1415,7 @@ fn check_signature(secp: &Secp256k1, sig_slice: &[u8], pk_slice: &[u8], script: 
                                  sequence: input.sequence,
                                  script_sig: Script::new() };
       if n == input_index {
-        new_input.script_sig = Script(ThinVec::from_vec(script.take_unwrap()));
+        new_input.script_sig = Script(ThinVec::from_vec(script.take().unwrap()));
       } else {
         new_input.script_sig = Script::new();
         // If we aren't signing them, also zero out the sequence number
@@ -379,17 +1474,19 @@ fn check_signature(secp: &Secp256k1, sig_slice: &[u8], pk_slice: &[u8], script: 
 // like.
 macro_rules! stack_opcode(
   ($stack:ident($min:expr):
+       $(require $r:expr)*
        $(copy $c:expr)*
        $(swap ($a:expr, $b:expr))*
        $(perm ($first:expr $(->$i:expr)*) )*
        $(drop $d:expr)*
   ) => ({
+    $( $stack.require_n_elems($r); )*
     // Record top
     let top = $stack.len();
     // Check stack size
     if top < $min { return Err(PopEmptyStack); }
     // Do copies
-    $( let elem = (*$stack)[top - $c].clone();
+    $( let elem = $stack.as_slice()[top - $c].clone();
        $stack.push(elem); )*
     // Do swaps
     $( $stack.as_mut_slice().swap(top - $a, top - $b); )*
@@ -398,34 +1495,6 @@ macro_rules! stack_opcode(
        $( $stack.as_mut_slice().swap(top - first, top - $i); )* )*
     // Do drops last so that dropped values will be available above
     $( $stack.remove(top - $d); )*
-  });
-)
-
-macro_rules! stack_opcode_provable(
-  ($stack:ident($min:expr):
-       $(copy $c:expr)*
-       $(swap ($a:expr, $b:expr))*
-       $(perm ($first:expr $(->$i:expr)*) )*
-       $(drop $d:expr)*
-  ) => ({
-    // Record top
-    let top = $stack.len();
-    // Do copies -- if we can't copy, and there is anything on the stack, return
-    // "not unspendable" since we can no longer predict the top of the stack
-    $( if top >= $c {
-         let elem = $stack[top - $c].clone();
-         $stack.push(elem);
-       } else if top > 0 { return false; } )*
-    // Do swaps -- if we can't, return "not unspendable"
-    $( if top >= $a && top >= $b { $stack.as_mut_slice().swap(top - $a, top - $b); }
-       else if top > 0 { return false; } )*
-    // Do permutations -- if we can't, return "not unspendable"
-    if top >= $min {
-      $( let first = $first;
-         $( $stack.as_mut_slice().swap(top - first, top - $i); )* )*
-    } else if top > 0 { return false; }
-    // Do drops last so that dropped values will be available above
-    $( if top >= $d { $stack.remove(top - $d); } )*
   });
 )
 
@@ -444,23 +1513,43 @@ macro_rules! num_opcode(
   });
 )
 
-macro_rules! num_opcode_provable(
-  ($stack:ident($($var:ident),*): $op:expr) => ({
-    let mut failed = false;
-    $(
-      let $var = match read_scriptint(match $stack.pop() {
-        Some(elem) => elem,
-        // Out of stack elems: fine, just don't push a new one
-        None => { failed = true; Slice(script_false) }
-      }.as_slice()) {
-        Ok(n) => n,
-        // Overflow is overflow, "provably unspendable"
-        Err(_) => { return true; }
-      };
-    )*
-    if !failed {
-      $stack.push(Owned(build_scriptint($op)));
-    }
+macro_rules! unary_opcode_satisfy(
+  ($stack:ident, $op:ident) => ({
+    let one = $stack.pop();
+    let cond = $stack.push_alloc(AbstractStackElem::new_unknown());
+    try!(cond.add_validator(Validator { args: vec![one],
+                                        check: concat_idents!(check_, $op),
+                                        update: concat_idents!(update_, $op) }));
+  })
+)
+
+macro_rules! boolean_opcode_satisfy(
+  ($stack:ident, unary $op:ident) => ({
+    let one = $stack.pop();
+    let cond = $stack.push_alloc(AbstractStackElem::new_unknown());
+    try!(cond.set_boolean());
+    try!(cond.add_validator(Validator { args: vec![one],
+                                        check: concat_idents!(check_, $op),
+                                        update: concat_idents!(update_, $op) }));
+  });
+  ($stack:ident, binary $op:ident) => ({
+    let one = $stack.pop();
+    let two = $stack.pop();
+    let cond = $stack.push_alloc(AbstractStackElem::new_unknown());
+    try!(cond.set_boolean());
+    try!(cond.add_validator(Validator { args: vec![two, one],
+                                        check: concat_idents!(check_, $op),
+                                        update: concat_idents!(update_, $op) }));
+  });
+  ($stack:ident, ternary $op:ident) => ({
+    let one = $stack.pop();
+    let two = $stack.pop();
+    let three = $stack.pop();
+    let mut cond = $stack.push_alloc(AbstractStackElem::new_unknown());
+    try!(cond.set_boolean());
+    try!(cond.add_validator(Validator { args: vec![three, two, one],
+                                        check: concat_idents!(check_, $op),
+                                        update: concat_idents!(update_, $op) }));
   });
 )
 
@@ -469,24 +1558,6 @@ macro_rules! hash_opcode(
   ($stack:ident, $hash:ident) => ({
     match $stack.pop() {
       None => { return Err(PopEmptyStack); }
-      Some(v) => {
-        let mut engine = $hash::new();
-        engine.input(v.as_slice());
-        let mut ret = Vec::with_capacity(engine.output_bits() / 8);
-        // Force-set the length even though the vector is uninitialized
-        // This is OK only because u8 has no destructor
-        unsafe { ret.set_len(engine.output_bits() / 8); }
-        engine.result(ret.as_mut_slice());
-        $stack.push(Owned(ret));
-      }
-    }
-  });
-)
-
-macro_rules! hash_opcode_provable(
-  ($stack:ident, $hash:ident) => ({
-    match $stack.pop() {
-      None => { }
       Some(v) => {
         let mut engine = $hash::new();
         engine.input(v.as_slice());
@@ -512,14 +1583,11 @@ macro_rules! op_verify (
   )
 )
 
-macro_rules! op_verify_provable (
-  ($stack:expr) => (
-    match $stack.last().map(|v| read_scriptbool(v.as_slice())) {
-      None => { }
-      Some(false) => { return true; }
-      Some(true) => { $stack.pop(); }
-    }
-  )
+macro_rules! op_verify_satisfy (
+  ($stack:expr) => ({
+    try!($stack.peek_mut().set_bool_value(true));
+    $stack.pop();
+  })
 )
 
 impl Script {
@@ -795,7 +1863,7 @@ impl Script {
               if stack.len() < 2 { return Err(PopEmptyStack); }
               let a = stack.pop().unwrap();
               let b = stack.pop().unwrap();
-              stack.push(Slice(if a == b { script_true } else { script_false }));
+              stack.push(Slice(if a == b { SCRIPT_TRUE } else { SCRIPT_FALSE }));
               if op == opcodes::OP_EQUALVERIFY {
                 op_verify!(stack, EqualVerifyFailed(a.as_slice().to_hex(),
                                                     b.as_slice().to_hex()));
@@ -858,8 +1926,8 @@ impl Script {
               let (tx, input_index) = input_context.unwrap();
 
               match check_signature(&secp, sig_slice, pk_slice, script, tx, input_index) {
-                Ok(()) => stack.push(Slice(script_true)),
-                _ => stack.push(Slice(script_false)),
+                Ok(()) => stack.push(Slice(SCRIPT_TRUE)),
+                _ => stack.push(Slice(SCRIPT_FALSE)),
               }
               if op == opcodes::OP_CHECKSIGVERIFY { op_verify!(stack, VerifyFailed); }
             }
@@ -927,12 +1995,12 @@ impl Script {
                   }
                   // Run out of signatures, success
                   (_, None) => {
-                    stack.push(Slice(script_true));
+                    stack.push(Slice(SCRIPT_TRUE));
                     break;
                   }
                   // Run out of keys to match to signatures, fail
                   (None, Some(_)) => {
-                    stack.push(Slice(script_false));
+                    stack.push(Slice(SCRIPT_FALSE));
                     break;
                   }
                 }
@@ -965,65 +2033,84 @@ impl Script {
     }
   }
 
+  /// Whether a script can be proven to have no satisfying input
+  pub fn is_provably_unspendable(&self) -> bool {
+    match self.satisfy() {
+      Ok(_) => false,
+      Err(Unanalyzable) => false,
+      Err(x) => {
+//println!("ispu ret {}", x);
+        true
+      }
+    }
+  }
+
   /// Evaluate the script to determine whether any possible input will cause it
   /// to accept. Returns true if it is guaranteed to fail; false otherwise.
-  pub fn is_provably_unspendable(&self) -> bool {
-    let &Script(ref raw) = self;
-
-    fn recurse<'a>(script: &'a [u8], mut stack: Vec<MaybeOwned<'a>>, depth: uint) -> bool {
+  pub fn satisfy(&self) -> Result<Vec<AbstractStackElem>, ScriptError> {
+    fn recurse<'a>(script: &'a [u8],
+                   mut stack: AbstractStack,
+                   depth: uint) -> Result<Vec<AbstractStackElem>, ScriptError> {
       let mut exec_stack = vec![true];
-      let mut alt_stack = vec![];
 
       // Avoid doing more than 64k forks
-      if depth > 16 { return false; }
+      if depth > 16 { return Err(InterpreterStackOverflow); }
 
       let mut index = 0;
       while index < script.len() {
         let executing = exec_stack.iter().all(|e| *e);
         let byte = script[index];
         index += 1;
-      // The definitions of all these categories are in opcodes.rs
-//println!("read {} as {} as {}  ...  stack before op is {}", byte, allops::Opcode::from_u8(byte), allops::Opcode::from_u8(byte).classify(), stack);
+        // The definitions of all these categories are in opcodes.rs
+//println!("read {} as {} as {}", byte, allops::Opcode::from_u8(byte), allops::Opcode::from_u8(byte).classify());
         match (executing, allops::Opcode::from_u8(byte).classify()) {
           // Illegal operations mean failure regardless of execution state
-          (_, opcodes::IllegalOp) => { return true; }
+          (_, opcodes::IllegalOp)     => return Err(IllegalOpcode),
           // Push number
-          (true, opcodes::PushNum(n)) => stack.push(Owned(build_scriptint(n as i64))),
+          (true, opcodes::PushNum(n)) => { stack.push_alloc(AbstractStackElem::new_num(n as i64)); },
           // Return operations mean failure, but only if executed
-          (true, opcodes::ReturnOp)   => { return true; }
+          (true, opcodes::ReturnOp)   => return Err(ExecutedReturn),
           // Data-reading statements still need to read, even when not executing
           (_, opcodes::PushBytes(n)) => {
-            if script.len() < index + n { return true; }
-            if executing { stack.push(Slice(script.slice(index, index + n))); }
+            if script.len() < index + n { return Err(EarlyEndOfScript); }
+            if executing {
+              stack.push_alloc(AbstractStackElem::new_raw(script.slice(index, index + n)));
+            }
             index += n;
           }
           (_, opcodes::Ordinary(opcodes::OP_PUSHDATA1)) => {
-            if script.len() < index + 1 { return true; }
+            if script.len() < index + 1 { return Err(EarlyEndOfScript); }
             let n = match read_uint(script.slice_from(index).iter(), 1) {
               Ok(n) => n,
-              Err(_) => { return true; }
+              Err(_) => { return Err(EarlyEndOfScript); }
             };
-            if script.len() < index + 1 + n { return true; }
-            if executing { stack.push(Slice(script.slice(index + 1, index + n + 1))); }
+            if script.len() < index + 1 + n { return Err(EarlyEndOfScript); }
+            if executing {
+              stack.push_alloc(AbstractStackElem::new_raw(script.slice(index + 1, index + n + 1)));
+            }
             index += 1 + n;
           }
           (_, opcodes::Ordinary(opcodes::OP_PUSHDATA2)) => {
-            if script.len() < index + 2 { return true; }
+            if script.len() < index + 2 { return Err(EarlyEndOfScript); }
             let n = match read_uint(script.slice_from(index).iter(), 2) {
               Ok(n) => n,
-              Err(_) => { return true; }
+              Err(_) => { return Err(EarlyEndOfScript); }
             };
-            if script.len() < index + 2 + n { return true; }
-            if executing { stack.push(Slice(script.slice(index + 2, index + n + 2))); }
+            if script.len() < index + 2 + n { return Err(EarlyEndOfScript); }
+            if executing {
+              stack.push_alloc(AbstractStackElem::new_raw(script.slice(index + 2, index + n + 2)));
+            }
             index += 2 + n;
           }
           (_, opcodes::Ordinary(opcodes::OP_PUSHDATA4)) => {
             let n = match read_uint(script.slice_from(index).iter(), 4) {
               Ok(n) => n,
-              Err(_) => { return true; }
+              Err(_) => { return Err(EarlyEndOfScript); }
             };
-            if script.len() < index + 4 + n { return true; }
-            if executing { stack.push(Slice(script.slice(index + 4, index + n + 4))); }
+            if script.len() < index + 4 + n { return Err(EarlyEndOfScript); }
+            if executing {
+              stack.push_alloc(AbstractStackElem::new_raw(script.slice(index + 4, index + n + 4)));
+            }
             index += 4 + n;
           }
           // If-statements take effect when not executing
@@ -1032,12 +2119,12 @@ impl Script {
           (false, opcodes::Ordinary(opcodes::OP_ELSE)) => {
             match exec_stack.mut_last() {
               Some(ref_e) => { *ref_e = !*ref_e }
-              None => { return true; }
+              None => { return Err(ElseWithoutIf); }
             }
           }
           (false, opcodes::Ordinary(opcodes::OP_ENDIF)) => {
             if exec_stack.pop().is_none() {
-              return true;
+              return Err(EndifWithoutIf);
             }
           }
           // No-ops and non-executed operations do nothing
@@ -1049,201 +2136,237 @@ impl Script {
                 // handled above
               }
               opcodes::OP_IF => {
-                match stack.pop().map(|v| read_scriptbool(v.as_slice())) {
+                let top_bool = {
+                  let top = stack.peek_mut();
+                  top.bool_value()
+                };
+                match top_bool {
                   None => {
                     let mut stack_true = stack.clone();
-                    stack_true.push(Slice(script_true));
-                    stack.push(Slice(script_false));
-                    return recurse(script.slice_from(index - 1), stack, depth + 1) &&
-                           recurse(script.slice_from(index - 1), stack_true, depth + 1);
+                    // Try pushing false and see what happens
+                    if stack.peek_mut().set_bool_value(false).is_ok() {
+                      match recurse(script.slice_from(index - 1), stack, depth + 1) {
+                        Ok(res) => { return Ok(res); }
+                        Err(_) => {}
+                      }
+                    }
+                    // Failing that, push true
+                    try!(stack_true.peek_mut().set_bool_value(true));
+                    return recurse(script.slice_from(index - 1), stack_true, depth + 1);
                   }
-                  Some(b) => exec_stack.push(b)
+                  Some(val) => {
+                    stack.pop();
+                    exec_stack.push(val)
+                  }
                 }
               }
               opcodes::OP_NOTIF => {
-                match stack.pop().map(|v| read_scriptbool(v.as_slice())) {
+                let top_bool = {
+                  let top = stack.peek_mut();
+                  top.bool_value()
+                };
+                match top_bool {
                   None => {
                     let mut stack_true = stack.clone();
-                    stack_true.push(Slice(script_true));
-                    stack.push(Slice(script_false));
-                    return recurse(script.slice_from(index - 1), stack, depth + 1) &&
-                           recurse(script.slice_from(index - 1), stack_true, depth + 1);
+                    // Try pushing false and see what happens
+                    if stack.peek_mut().set_bool_value(false).is_ok() {
+                      match recurse(script.slice_from(index - 1), stack, depth + 1) {
+                        Ok(res) => { return Ok(res); }
+                        Err(_) => {}
+                      }
+                    }
+                    // Failing that, push true
+                    try!(stack_true.peek_mut().set_bool_value(true));
+                    return recurse(script.slice_from(index - 1), stack_true, depth + 1);
                   }
-                  Some(b) => exec_stack.push(!b),
+                  Some(val) => {
+                    stack.pop();
+                    exec_stack.push(!val)
+                  }
                 }
               }
               opcodes::OP_ELSE => {
                 match exec_stack.mut_last() {
                   Some(ref_e) => { *ref_e = !*ref_e }
-                  None => { return true; }
+                  None => { return Err(ElseWithoutIf); }
                 }
               }
               opcodes::OP_ENDIF => {
                 if exec_stack.pop().is_none() {
-                  return true;
+                  return Err(EndifWithoutIf);
                 }
               }
-              opcodes::OP_VERIFY => op_verify_provable!(stack),
-              opcodes::OP_TOALTSTACK => { stack.pop().map(|elem| alt_stack.push(elem)); }
-              opcodes::OP_FROMALTSTACK => { alt_stack.pop().map(|elem| stack.push(elem)); }
-              opcodes::OP_2DROP => stack_opcode_provable!(stack(2): drop 1 drop 2),
-              opcodes::OP_2DUP  => stack_opcode_provable!(stack(2): copy 2 copy 1),
-              opcodes::OP_3DUP  => stack_opcode_provable!(stack(3): copy 3 copy 2 copy 1),
-              opcodes::OP_2OVER => stack_opcode_provable!(stack(4): copy 4 copy 3),
-              opcodes::OP_2ROT  => stack_opcode_provable!(stack(6): perm (1 -> 3 -> 5)
-                                                                    perm (2 -> 4 -> 6)),
-              opcodes::OP_2SWAP => stack_opcode_provable!(stack(4): swap (2, 4)
-                                                                    swap (1, 3)),
-              opcodes::OP_DROP  => stack_opcode_provable!(stack(1): drop 1),
-              opcodes::OP_DUP   => stack_opcode_provable!(stack(1): copy 1),
-              opcodes::OP_NIP   => stack_opcode_provable!(stack(2): drop 2),
-              opcodes::OP_OVER  => stack_opcode_provable!(stack(2): copy 2),
+              opcodes::OP_VERIFY => op_verify_satisfy!(stack),
+              opcodes::OP_TOALTSTACK => { stack.to_altstack(); }
+              opcodes::OP_FROMALTSTACK => { try!(stack.from_altstack()); }
+              opcodes::OP_2DROP => stack_opcode!(stack(2): require 2 drop 1 drop 2),
+              opcodes::OP_2DUP  => stack_opcode!(stack(2): require 2 copy 2 copy 1),
+              opcodes::OP_3DUP  => stack_opcode!(stack(3): require 3 copy 3 copy 2 copy 1),
+              opcodes::OP_2OVER => stack_opcode!(stack(4): require 4 copy 4 copy 3),
+              opcodes::OP_2ROT  => stack_opcode!(stack(6): require 6
+                                                           perm (1 -> 3 -> 5)
+                                                           perm (2 -> 4 -> 6)),
+              opcodes::OP_2SWAP => stack_opcode!(stack(4): require 4
+                                                           swap (2, 4)
+                                                           swap (1, 3)),
+              opcodes::OP_DROP  => stack_opcode!(stack(1): require 1 drop 1),
+              opcodes::OP_DUP   => stack_opcode!(stack(1): require 1 copy 1),
+              opcodes::OP_NIP   => stack_opcode!(stack(2): require 2 drop 2),
+              opcodes::OP_OVER  => stack_opcode!(stack(2): require 2 copy 2),
               opcodes::OP_PICK => {
-                let n = match stack.pop() {
-                  Some(data) => match read_scriptint(data.as_slice()) {
-                    Ok(n) => n,
-                    Err(_) => { return true; }
-                  },
-                  None => { return false; }
+                let top_n = {
+                  let top = stack.peek_mut();
+                  try!(top.set_numeric());
+                  try!(top.set_num_lo(0));
+                  top.num_value().map(|n| n as uint)
                 };
-                if n < 0 { return true; }
-                let n = n as uint;
-                stack_opcode_provable!(stack(n + 1): copy n + 1)
+                stack.pop();
+                match top_n {
+                  Some(n) => stack_opcode!(stack(n + 1): require n + 1 copy n + 1),
+                  // The stack will wind up with the 1 and nth inputs being identical
+                  // with n input-dependent. I can imagine scripts which check this
+                  // condition or its negation for various n to get arbitrary finite
+                  // sets of allowable values. It's not clear to me that this is
+                  // feasible to analyze.
+                  None => { return Err(Unanalyzable); }
+                }
               }
               opcodes::OP_ROLL => {
-                let n = match stack.pop() {
-                  Some(data) => match read_scriptint(data.as_slice()) {
-                    Ok(n) => n,
-                    Err(_) => { return true; }
-                  },
-                  None => { return false; }
+                let top_n = {
+                  let top = stack.peek_mut();
+                  try!(top.set_numeric());
+                  try!(top.set_num_lo(0));
+                  top.num_value().map(|n| n as uint)
                 };
-                if n < 0 { return true; }
-                let n = n as uint;
-                stack_opcode_provable!(stack(n + 1): copy n + 1 drop n + 1)
+                stack.pop();
+                match top_n {
+                  Some(n) => stack_opcode!(stack(n + 1): require n + 1 copy n + 1 drop n + 1),
+                  // The stack will wind up reordered, so in principle I could just force
+                  // the input to be zero (other n values can be converted to zero by just
+                  // manually rearranging the input). The problem is if numeric bounds are
+                  // later set on n. I can't analyze that.
+                  None => { return Err(Unanalyzable); }
+                }
               }
-              opcodes::OP_ROT  => stack_opcode_provable!(stack(3): perm (1 -> 2 -> 3)),
-              opcodes::OP_SWAP => stack_opcode_provable!(stack(2): swap (1, 2)),
-              opcodes::OP_TUCK => stack_opcode_provable!(stack(2): copy 2 copy 1 drop 2),
+              opcodes::OP_ROT  => stack_opcode!(stack(3): require 3 perm (1 -> 2 -> 3)),
+              opcodes::OP_SWAP => stack_opcode!(stack(2): require 3 swap (1, 2)),
+              opcodes::OP_TUCK => stack_opcode!(stack(2): require 2 copy 2 copy 1 drop 2),
               opcodes::OP_IFDUP => {
-                match stack.last().map(|v| read_scriptbool(v.as_slice())) {
+                let top_bool = {
+                  let top = stack.peek_mut();
+                  top.bool_value()
+                };
+                match top_bool {
+                  Some(false) => { }
+                  Some(true) => { stack_opcode!(stack(1): require 1 copy 1); }
                   None => {
                     let mut stack_true = stack.clone();
-                    stack_true.push(Slice(script_true));
-                    stack.push(Slice(script_false));
-                    return recurse(script.slice_from(index - 1), stack, depth + 1) &&
-                           recurse(script.slice_from(index - 1), stack_true, depth + 1);
-                  }
-                  Some(false) => {}
-                  Some(true) => { stack_opcode_provable!(stack(1): copy 1); }
-                }
-              }
-              // Not clear what we can meaningfully do with these (I guess add an
-              // `Unknown` variant to `MaybeOwned` and change all the code to deal
-              // with it), and they aren't common, so just say "not unspendable".
-              opcodes::OP_DEPTH | opcodes::OP_SIZE => { return false; }
-              opcodes::OP_EQUAL | opcodes::OP_EQUALVERIFY => {
-                if stack.len() < 2 {
-                  stack.pop();
-                  stack.pop();
-                  let mut stack_true = stack.clone();
-                  if op == opcodes::OP_EQUALVERIFY {
-                    return recurse(script.slice_from(index), stack, depth + 1);
-                  } else {
-                    stack_true.push(Slice(script_true));
-                    stack.push(Slice(script_false));
-                    return recurse(script.slice_from(index), stack, depth + 1) &&
-                           recurse(script.slice_from(index), stack_true, depth + 1);
+                    // Try pushing false and see what happens
+                    if stack.peek_mut().set_bool_value(false).is_ok() {
+                      match recurse(script.slice_from(index - 1), stack, depth + 1) {
+                        Ok(res) => { return Ok(res); }
+                        Err(_) => {}
+                      }
+                    }
+                    // Failing that, push true
+                    try!(stack_true.peek_mut().set_bool_value(true));
+                    return recurse(script.slice_from(index - 1), stack_true, depth + 1);
                   }
                 }
-                let a = stack.pop().unwrap();
-                let b = stack.pop().unwrap();
-                stack.push(Slice(if a == b { script_true } else { script_false }));
-                if op == opcodes::OP_EQUALVERIFY { op_verify_provable!(stack); }
               }
-              opcodes::OP_1ADD => num_opcode_provable!(stack(a): a + 1),
-              opcodes::OP_1SUB => num_opcode_provable!(stack(a): a - 1),
-              opcodes::OP_NEGATE => num_opcode_provable!(stack(a): -a),
-              opcodes::OP_ABS => num_opcode_provable!(stack(a): a.abs()),
-              opcodes::OP_NOT => num_opcode_provable!(stack(a): if a == 0 {1} else {0}),
-              opcodes::OP_0NOTEQUAL => num_opcode_provable!(stack(a): if a != 0 {1} else {0}),
-              opcodes::OP_ADD => num_opcode_provable!(stack(b, a): a + b),
-              opcodes::OP_SUB => num_opcode_provable!(stack(b, a): a - b),
-              opcodes::OP_BOOLAND => num_opcode_provable!(stack(b, a): if a != 0 && b != 0 {1} else {0}),
-              opcodes::OP_BOOLOR => num_opcode_provable!(stack(b, a): if a != 0 || b != 0 {1} else {0}),
-              opcodes::OP_NUMEQUAL => num_opcode_provable!(stack(b, a): if a == b {1} else {0}),
-              opcodes::OP_NUMNOTEQUAL => num_opcode_provable!(stack(b, a): if a != b {1} else {0}),
+              opcodes::OP_DEPTH => {
+                let len = stack.len() as i64;
+                let new_elem = stack.push_alloc(AbstractStackElem::new_unknown());
+                try!(new_elem.set_numeric());
+                try!(new_elem.set_num_lo(len));
+              }
+              opcodes::OP_SIZE => {
+                let top = stack.peek_index();
+                let new_elem = stack.push_alloc(AbstractStackElem::new_unknown());
+                try!(new_elem.set_numeric());
+                try!(new_elem.add_validator(Validator { args: vec![top],
+                                                        check: check_op_size,
+                                                        update: update_op_size }));
+              }
+              opcodes::OP_EQUAL => boolean_opcode_satisfy!(stack, binary op_equal),
+              opcodes::OP_EQUALVERIFY => {
+                boolean_opcode_satisfy!(stack, binary op_equal);
+                op_verify_satisfy!(stack);
+              }
+              opcodes::OP_NOT => boolean_opcode_satisfy!(stack, unary op_not),
+              opcodes::OP_0NOTEQUAL => boolean_opcode_satisfy!(stack, unary op_0notequal),
+              opcodes::OP_NUMEQUAL => boolean_opcode_satisfy!(stack, binary op_numequal),
               opcodes::OP_NUMEQUALVERIFY => {
-                num_opcode_provable!(stack(b, a): if a == b {1} else {0});
-                op_verify_provable!(stack);
+                boolean_opcode_satisfy!(stack, binary op_numequal);
+                op_verify_satisfy!(stack);
               }
-              opcodes::OP_LESSTHAN => num_opcode_provable!(stack(b, a): if a < b {1} else {0}),
-              opcodes::OP_GREATERTHAN => num_opcode_provable!(stack(b, a): if a > b {1} else {0}),
-              opcodes::OP_LESSTHANOREQUAL => num_opcode_provable!(stack(b, a): if a <= b {1} else {0}),
-              opcodes::OP_GREATERTHANOREQUAL => num_opcode_provable!(stack(b, a): if a >= b {1} else {0}),
-              opcodes::OP_MIN => num_opcode_provable!(stack(b, a): if a < b {a} else {b}),
-              opcodes::OP_MAX => num_opcode_provable!(stack(b, a): if a > b {a} else {b}),
-              opcodes::OP_WITHIN => num_opcode_provable!(stack(c, b, a): if b <= a && a < c {1} else {0}),
-              opcodes::OP_RIPEMD160 => hash_opcode_provable!(stack, Ripemd160),
-              opcodes::OP_SHA1 => hash_opcode_provable!(stack, Sha1),
-              opcodes::OP_SHA256 => hash_opcode_provable!(stack, Sha256),
-              opcodes::OP_HASH160 => {
-                hash_opcode_provable!(stack, Sha256);
-                hash_opcode_provable!(stack, Ripemd160);
+              opcodes::OP_NUMNOTEQUAL => boolean_opcode_satisfy!(stack, binary op_numnotequal),
+              opcodes::OP_LESSTHAN => boolean_opcode_satisfy!(stack, binary op_numlt),
+              opcodes::OP_GREATERTHAN => boolean_opcode_satisfy!(stack, binary op_numgt),
+              opcodes::OP_LESSTHANOREQUAL => boolean_opcode_satisfy!(stack, binary op_numlteq),
+              opcodes::OP_GREATERTHANOREQUAL => boolean_opcode_satisfy!(stack, binary op_numgteq),
+              opcodes::OP_1ADD | opcodes::OP_1SUB | opcodes::OP_NEGATE |
+              opcodes::OP_ABS | opcodes::OP_ADD | opcodes::OP_SUB |
+              opcodes::OP_BOOLAND | opcodes::OP_BOOLOR |
+              opcodes::OP_MIN | opcodes::OP_MAX | opcodes::OP_WITHIN => {
+                return Err(Unanalyzable);
               }
-              opcodes::OP_HASH256 => {
-                hash_opcode_provable!(stack, Sha256);
-                hash_opcode_provable!(stack, Sha256);
-              }
-              // Ignore code separators since we won't check signatures
+              opcodes::OP_RIPEMD160 => unary_opcode_satisfy!(stack, op_ripemd160),
+              opcodes::OP_SHA1 => unary_opcode_satisfy!(stack, op_sha1),
+              opcodes::OP_SHA256 => unary_opcode_satisfy!(stack, op_sha256),
+              opcodes::OP_HASH160 => unary_opcode_satisfy!(stack, op_hash160),
+              opcodes::OP_HASH256 => unary_opcode_satisfy!(stack, op_hash256),
+              // Ignore code separators since we don't check signatures
               opcodes::OP_CODESEPARATOR => {}
-              opcodes::OP_CHECKSIG | opcodes::OP_CHECKSIGVERIFY => {
-                stack.pop();
-                stack.pop();
-                // If it's a VERIFY op, assume it passed and carry on
-                if op != opcodes::OP_CHECKSIGVERIFY {
-                  let mut stack_true = stack.clone();
-                  stack_true.push(Slice(script_true));
-                  stack.push(Slice(script_false));
-                  return recurse(script.slice_from(index), stack, depth + 1) &&
-                         recurse(script.slice_from(index), stack_true, depth + 1);
-                }
+              opcodes::OP_CHECKSIG => boolean_opcode_satisfy!(stack, binary op_checksig),
+              opcodes::OP_CHECKSIGVERIFY => {
+                boolean_opcode_satisfy!(stack, binary op_checksig);
+                op_verify_satisfy!(stack);
               }
               opcodes::OP_CHECKMULTISIG | opcodes::OP_CHECKMULTISIGVERIFY => {
-                // Read all the keys
-                if stack.len() >= 1 {
-                  let n_keys = match read_scriptint(stack.pop().unwrap().as_slice()) {
-                    Ok(n) => n,
-                    Err(_) => { return true; }
-                  };
-                  if n_keys < 0 || n_keys > 20 {
-                    return true;
-                  }
-                  for _ in range(0, n_keys) { stack.pop(); }
-
-                  // Read all the signatures
-                  if stack.len() >= 1 {
-                    let n_sigs = match read_scriptint(stack.pop().unwrap().as_slice()) {
-                      Ok(n) => n,
-                      Err(_) => { return true; }
-                    };
-                    if n_sigs < 0 || n_sigs > n_keys {
-                      return true;
-                    }
-                    for _ in range(0, n_sigs) { stack.pop(); }
+                let (n_keys, n_keys_hi) = {
+                  let elem = stack.pop_mut();
+                  try!(elem.set_numeric());
+                  try!(elem.set_num_lo(0));
+                  try!(elem.set_num_hi(20));
+                  (elem.num_lo(), elem.num_hi())
+                };
+                let mut allowable_failures: i64 = 0;
+                for _ in range(0, n_keys) {
+                  let key = stack.pop_mut();
+                  if key.may_be_pubkey() {
+                    allowable_failures += 1;
                   }
                 }
-
-                // Pop one more element off the stack to be replicate a consensus bug
-                stack.pop();
+                if n_keys == n_keys_hi {
+                  let (n_sigs, n_sigs_hi) = {
+                    let elem = stack.pop_mut();
+                    try!(elem.set_numeric());
+                    try!(elem.set_num_lo(0));
+                    try!(elem.set_num_hi(n_keys));
+                    (elem.num_lo(), elem.num_hi())
+                  };
+                  allowable_failures -= n_sigs;
+                  for _ in range(0, n_sigs) {
+                    let sig = stack.pop_mut();
+                    if !sig.may_be_signature() {
+                      allowable_failures -= 1;
+                    }
+                    if allowable_failures < 0 {
+                      return Err(Unsatisfiable);
+                    }
+                    if n_sigs != n_sigs_hi { return Err(Unanalyzable); }
+                  }
+                } else { return Err(Unanalyzable); }
+                // Successful multisig, push an unknown boolean
+                {
+                  let result = stack.push_alloc(AbstractStackElem::new_unknown());
+                  try!(result.set_boolean())
+                }
 
                 // If it's a VERIFY op, assume it passed and carry on
-                if op != opcodes::OP_CHECKSIGVERIFY {
-                  let mut stack_true = stack.clone();
-                  stack_true.push(Slice(script_true));
-                  stack.push(Slice(script_false));
-                  return recurse(script.slice_from(index), stack, depth + 1) &&
-                         recurse(script.slice_from(index), stack_true, depth + 1);
+                if op == opcodes::OP_CHECKMULTISIGVERIFY {
+                  op_verify_satisfy!(stack);
                 }
               }
             }
@@ -1251,9 +2374,15 @@ impl Script {
         }
       }
       // If we finished, we are only unspendable if we have false on the stack
-      stack.last().is_some() && !read_scriptbool(stack.last().unwrap().as_slice())
+      match stack.peek_mut().bool_value() {
+        None => stack.peek_mut().set_bool_value(true).map(|_| stack.build_initial_stack()),
+        Some(true) => Ok(stack.build_initial_stack()),
+        Some(false) => Err(AnalyzeAlwaysReturnsFalse)
+      }
     }
-    recurse(raw.as_slice(), vec![], 1)
+
+    let &Script(ref raw) = self;
+    recurse(raw.as_slice(), AbstractStack::new(), 1)
   }
 }
 
@@ -1556,6 +2685,10 @@ mod test {
 
   #[test]
   fn provably_unspendable_test() {
+    // p2pk
+    assert_eq!(Script(ThinVec::from_vec("410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac".from_hex().unwrap())).is_provably_unspendable(), false);
+    assert_eq!(Script(ThinVec::from_vec("4104ea1feff861b51fe3f5f8a3b12d0f4712db80e919548a80839fc47c6a21e66d957e9c5d8cd108c7a2d2324bad71f9904ac0ae7336507d785b17a2c115e427a32fac".from_hex().unwrap())).is_provably_unspendable(), false);
+    // p2pkhash
     assert_eq!(Script(ThinVec::from_vec("76a914ee61d57ab51b9d212335b1dba62794ac20d2bcf988ac".from_hex().unwrap())).is_provably_unspendable(), false);
     assert_eq!(Script(ThinVec::from_vec("6aa9149eb21980dc9d413d8eac27314938b9da920ee53e87".from_hex().unwrap())).is_provably_unspendable(), true);
     // if return; else return
@@ -1576,9 +2709,17 @@ mod test {
     assert_eq!(Script(ThinVec::from_vec("5173".from_hex().unwrap())).is_provably_unspendable(), false);
     assert_eq!(Script(ThinVec::from_vec("0073".from_hex().unwrap())).is_provably_unspendable(), true);
     // this is honest to god tx e411dbebd2f7d64dafeef9b14b5c59ec60c36779d43f850e5e347abee1e1a455 on mainnet
-    assert_eq!(Script(ThinVec::from_vec("76a9144838a081d73cf134e8ff9cfd4015406c73beceb388acacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacac".from_hex().unwrap())).is_provably_unspendable(), false);
-    // This one is real and spent
+    assert_eq!(Script(ThinVec::from_vec("76a9144838a081d73cf134e8ff9cfd4015406c73beceb388acacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacac".from_hex().unwrap())).is_provably_unspendable(), true);
+    // Real, testnet spent ones that caused me trouble
     assert_eq!(Script(ThinVec::from_vec("7c51880087".from_hex().unwrap())).is_provably_unspendable(), false);
+    assert_eq!(Script(ThinVec::from_vec("9e91".from_hex().unwrap())).is_provably_unspendable(), false);
+    assert_eq!(Script(ThinVec::from_vec("76a97ca8a687".from_hex().unwrap())).is_provably_unspendable(), false);
+    assert_eq!(Script(ThinVec::from_vec("04010203047576a914bfbd43270c1e824c01e27386844d062d2f7518a688ad76a97614d2f7b8a37fb9b46782534078f9748f41d61a22f3877c148d4c6a901a3d87ed680478931dc9b6f0871af0ab879b69ac".from_hex().unwrap())).is_provably_unspendable(), false);
+    assert_eq!(Script(ThinVec::from_vec("03800000".from_hex().unwrap())).is_provably_unspendable(), false);
+    // This one is cool -- a 2-of-4 multisig with four pks given, only two of which are legit
+    assert_eq!(Script(ThinVec::from_vec("522103bb52138972c48a132fc1f637858c5189607dd0f7fe40c4f20f6ad65f2d389ba42103bb52138972c48a132fc1f637858c5189607dd0f7fe40c4f20f6ad65f2d389ba45f6054ae".from_hex().unwrap())).is_provably_unspendable(), false);
+    // This one is on mainnet oeO
+    assert_eq!(Script(ThinVec::from_vec("827651a0698faaa9a8a7a687".from_hex().unwrap())).is_provably_unspendable(), false);
   }
 }
 

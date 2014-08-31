@@ -36,6 +36,12 @@ use util::uint::Uint256;
 pub struct Sha256dHash([u8, ..32]);
 impl_array_newtype!(Sha256dHash, u8, 32)
 
+impl ::std::fmt::Show for Sha256dHash {
+  fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+    write!(f, "{}", self.be_hex_string().as_slice())
+  }
+}
+
 /// A RIPEMD-160 hash
 pub struct Ripemd160Hash([u8, ..20]);
 
