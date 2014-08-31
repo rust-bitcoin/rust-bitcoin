@@ -253,28 +253,23 @@ impl UtxoSet {
       }
     }
 
-    let mut skipped_genesis = false;
-    for tx in block.txdata.iter() {
+    for tx in block.txdata.iter().skip(1) {
       let txid = tx.bitcoin_hash();
       // Put the removed utxos into the stxo cache, in case we need to rewind
-      if skipped_genesis {
-        self.spent_txos.get_mut(spent_idx).reserve_additional(tx.input.len());
-        for (n, input) in tx.input.iter().enumerate() {
-          let taken = self.take_utxo(input.prev_hash, input.prev_index);
-          match taken {
-            Some(txo) => { self.spent_txos.get_mut(spent_idx).push(((txid, n as u32), txo)); }
-            None => {
-              if validation >= TxoValidation {
-                self.rewind(block);
-                return Err(InvalidTx(txid,
-                                     InputNotFound(input.prev_hash, input.prev_index)));
-              }
+      self.spent_txos.get_mut(spent_idx).reserve_additional(tx.input.len());
+      for (n, input) in tx.input.iter().enumerate() {
+        let taken = self.take_utxo(input.prev_hash, input.prev_index);
+        match taken {
+          Some(txo) => { self.spent_txos.get_mut(spent_idx).push(((txid, n as u32), txo)); }
+          None => {
+            if validation >= TxoValidation {
+              self.rewind(block);
+              return Err(InvalidTx(txid,
+                                   InputNotFound(input.prev_hash, input.prev_index)));
             }
           }
         }
       }
-      skipped_genesis = true;
-
     }
     // If we made it here, success!
     Ok(())
