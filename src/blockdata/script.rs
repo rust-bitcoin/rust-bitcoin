@@ -937,37 +937,29 @@ impl AbstractStackElem {
   /// Whether an element could possibly be less than another
   pub fn may_be_lt(&self, other: &AbstractStackElem) -> bool {
     self.num_lo() < other.num_hi() &&
-    (self.num_value().is_none() || other.num_value().is_none() ||
-     self.num_value().unwrap() < other.num_value().unwrap()) &&
-    (self.bool_value().is_none() || other.bool_value().is_none() ||
-     self.bool_value().unwrap() < other.bool_value().unwrap())
+    self.num_value().is_none() || other.num_value().is_none() ||
+      self.num_value().unwrap() < other.num_value().unwrap()
   }
 
   /// Whether an element could possibly be greater than another
   pub fn may_be_gt(&self, other: &AbstractStackElem) -> bool {
     self.num_hi() > other.num_lo() &&
     (self.num_value().is_none() || other.num_value().is_none() ||
-     self.num_value().unwrap() > other.num_value().unwrap()) &&
-    (self.bool_value().is_none() || other.bool_value().is_none() ||
-     self.bool_value().unwrap() >= other.bool_value().unwrap())
+     self.num_value().unwrap() > other.num_value().unwrap())
   }
 
   /// Whether an element could possibly be less than or equal to another
   pub fn may_be_lteq(&self, other: &AbstractStackElem) -> bool {
     self.num_lo() <= other.num_hi() &&
-    (self.num_value().is_none() || other.num_value().is_none() ||
-     self.num_value().unwrap() <= other.num_value().unwrap()) &&
-    (self.bool_value().is_none() || other.bool_value().is_none() ||
-     self.bool_value().unwrap() <= other.bool_value().unwrap())
+    self.num_value().is_none() || other.num_value().is_none() ||
+      self.num_value().unwrap() <= other.num_value().unwrap()
   }
 
   /// Whether an element could possibly be greater than or equal to another
   pub fn may_be_gteq(&self, other: &AbstractStackElem) -> bool {
     self.num_hi() >= other.num_lo() &&
     (self.num_value().is_none() || other.num_value().is_none() ||
-     self.num_value().unwrap() >= other.num_value().unwrap()) &&
-    (self.bool_value().is_none() || other.bool_value().is_none() ||
-     self.bool_value().unwrap() >= other.bool_value().unwrap())
+     self.num_value().unwrap() >= other.num_value().unwrap())
   }
 
   /// Whether an element could possibly be a 20-byte hash
@@ -2720,6 +2712,8 @@ mod test {
     assert_eq!(Script(ThinVec::from_vec("522103bb52138972c48a132fc1f637858c5189607dd0f7fe40c4f20f6ad65f2d389ba42103bb52138972c48a132fc1f637858c5189607dd0f7fe40c4f20f6ad65f2d389ba45f6054ae".from_hex().unwrap())).is_provably_unspendable(), false);
     // This one is on mainnet oeO
     assert_eq!(Script(ThinVec::from_vec("827651a0698faaa9a8a7a687".from_hex().unwrap())).is_provably_unspendable(), false);
+    // gmaxwell found this one
+    assert_eq!(Script(ThinVec::from_vec("76009f69905160a56b210378d430274f8c5ec1321338151e9f27f4c676a008bdf8638d07c0b6be9ab35c71ad6c".from_hex().unwrap())).is_provably_unspendable(), false);
   }
 }
 
