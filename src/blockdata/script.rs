@@ -1061,15 +1061,14 @@ impl AbstractStack {
 
   fn push_initial(&mut self, elem: AbstractStackElem) {
     let idx = self.allocate(elem);
-    self.initial_stack.push(idx);
+    self.initial_stack.insert(0, idx);
     self.stack.insert(0, idx);
   }
 
   /// Construct the initial stack in the end
   pub fn build_initial_stack(&self) -> Vec<AbstractStackElem> {
-    let mut res: Vec<AbstractStackElem> =
+    let res: Vec<AbstractStackElem> =
         self.initial_stack.iter().map(|&i| self.alloc[i].clone()).collect();
-    res.reverse();
     res
   }
 
@@ -2030,10 +2029,7 @@ impl Script {
     match self.satisfy() {
       Ok(_) => false,
       Err(Unanalyzable) => false,
-      Err(x) => {
-//println!("ispu ret {}", x);
-        true
-      }
+      Err(_) => true
     }
   }
 
