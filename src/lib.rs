@@ -55,6 +55,7 @@ extern crate rand;
 extern crate rustrt;
 extern crate serialize;
 extern crate sync;
+extern crate test;
 extern crate time;
 
 extern crate secp256k1 = "bitcoin-secp256k1-rs";

@@ -25,7 +25,8 @@ use std::hash;
 use serialize::json::{mod, ToJson};
 
 use crypto::digest::Digest;
-use crypto::sha2;
+use crypto::sha2::Sha256;
+use crypto::ripemd160::Ripemd160;
 
 use network::encodable::{ConsensusDecodable, ConsensusEncodable};
 use network::serialize::{RawEncoder, BitcoinHash, SimpleDecoder};
@@ -130,6 +131,19 @@ impl Default for DumbHasher {
   fn default() -> DumbHasher { DumbHasher }
 }
 
+impl Ripemd160Hash {
+  /// Create a hash by hashing some data
+  pub fn from_data(data: &[u8]) -> Ripemd160Hash {
+    let mut ret = [0, ..20];
+    let mut rmd = Ripemd160::new();
+    rmd.input(data);
+    rmd.result(ret.as_mut_slice());
+    Ripemd160Hash(ret)
+  }
+}
+
+// This doesn't make much sense to me, but is implicit behaviour
+// in the C++ reference client
 impl Default for Sha256dHash {
   #[inline]
   fn default() -> Sha256dHash { Sha256dHash([0u8, ..32]) }
@@ -139,7 +153,7 @@ impl Sha256dHash {
   /// Create a hash by hashing some data
   pub fn from_data(data: &[u8]) -> Sha256dHash {
     let Sha256dHash(mut ret): Sha256dHash = Default::default();
-    let mut sha2 = sha2::Sha256::new();
+    let mut sha2 = Sha256::new();
     sha2.input(data);
     sha2.result(ret.as_mut_slice());
     sha2.reset();

@@ -1365,7 +1365,7 @@ pub fn read_uint<'a, I:Iterator<&'a u8>>(mut iter: I, size: uint)
 
 /// Check a signature -- returns an error that is currently just translated
 /// into a 0/1 to push onto the script stack
-fn check_signature(secp: &Secp256k1, sig_slice: &[u8], pk_slice: &[u8], script: Vec<u8>,
+fn check_signature(sig_slice: &[u8], pk_slice: &[u8], script: Vec<u8>,
                    tx: &Transaction, input_index: uint) -> Result<(), ScriptError> {
 
   // Check public key
@@ -1451,7 +1451,7 @@ fn check_signature(secp: &Secp256k1, sig_slice: &[u8], pk_slice: &[u8], script: 
     serialize(&Sha256dHash::from_data(data_to_sign.as_slice())).unwrap()
   };
 
-  secp.verify(signature_hash.as_slice(), sig_slice, &pubkey).map_err(|e| EcdsaError(e))
+  Secp256k1::verify(signature_hash.as_slice(), sig_slice, &pubkey).map_err(|e| EcdsaError(e))
 }
 
 // Macro to translate English stack instructions into Rust code.
@@ -1678,7 +1678,6 @@ impl Script {
                       mut trace: Option<&mut Vec<TraceIteration>>)
                       -> Result<(), ScriptError> {
     let &Script(ref raw) = self;
-    let secp = Secp256k1::new();
 
     let mut codeseparator_index = 0u;
     let mut exec_stack = vec![];
@@ -1916,7 +1915,7 @@ impl Script {
               // Otherwise unwrap it
               let (tx, input_index) = input_context.unwrap();
 
-              match check_signature(&secp, sig_slice, pk_slice, script, tx, input_index) {
+              match check_signature( sig_slice, pk_slice, script, tx, input_index) {
                 Ok(()) => stack.push(Slice(SCRIPT_TRUE)),
                 _ => stack.push(Slice(SCRIPT_FALSE)),
               }
@@ -1977,7 +1976,7 @@ impl Script {
                   // Try to validate the signature with the given key
                   (Some(k), Some(s)) => {
                     // Move to the next signature if it is valid for the current key
-                    if check_signature(&secp, s.as_slice(), k.as_slice(),
+                    if check_signature(s.as_slice(), k.as_slice(),
                                        script.clone(), tx, input_index).is_ok() {
                       sig = sig_iter.next();
                     }

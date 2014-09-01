@@ -16,6 +16,12 @@
 //! Support for ordinary base58 Bitcoin addresses
 //!
 
+use secp256k1::key::PublicKey;
+use crypto::digest::Digest;
+use crypto::sha2::Sha256;
+
+use blockdata::script::Script;
+use blockdata::opcodes::all;
 use network::constants::{Network, Bitcoin, BitcoinTestnet};
 use util::hash::Ripemd160Hash;
 use util::base58::{Base58Error,
@@ -27,6 +33,31 @@ use util::base58::{Base58Error,
 pub struct Address {
   network: Network,
   hash: Ripemd160Hash
+}
+
+impl Address {
+  /// Creates an address from a public key
+  pub fn from_key(network: Network, pk: &PublicKey) -> Address {
+    let mut sha = Sha256::new();
+    let mut out = [0, ..32];
+    sha.input(pk.as_slice());
+    sha.result(out.as_mut_slice());
+    Address {
+      network: network,
+      hash: Ripemd160Hash::from_data(out)
+    }
+  }
+
+  /// Generates a script pubkey spending to this address
+  pub fn script_pubkey(&self) -> Script {
+    let mut script = Script::new();
+    script.push_opcode(all::OP_DUP);
+    script.push_opcode(all::OP_HASH160);
+    script.push_slice(self.hash.as_slice());
+    script.push_opcode(all::OP_EQUALVERIFY);
+    script.push_opcode(all::OP_CHECKSIG);
+    script
+  }
 }
 
 impl ToBase58 for Address {
@@ -68,6 +99,9 @@ impl ::std::fmt::Show for Address {
 #[cfg(test)]
 mod tests {
   use serialize::hex::FromHex;
+  use test::{Bencher, black_box};
+
+  use secp256k1::Secp256k1;
 
   use network::constants::Bitcoin;
   use util::hash::Ripemd160Hash;
@@ -83,6 +117,43 @@ mod tests {
 
     assert_eq!(addr.to_base58check().as_slice(), "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM");
     assert_eq!(FromBase58::from_base58check("132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM"), Ok(addr));
+  }
+
+  #[bench]
+  pub fn generate_address(bh: &mut Bencher) {
+    let mut s = Secp256k1::new().unwrap();
+    bh.iter( || {
+      let (sk, pk) = s.generate_keypair(true);
+      black_box(sk);
+      black_box(pk);
+      let addr = Address::from_key(Bitcoin, &pk);
+      black_box(addr);
+    });
+  }
+
+  #[bench]
+  pub fn generate_uncompressed_address(bh: &mut Bencher) {
+    let mut s = Secp256k1::new().unwrap();
+    bh.iter( || {
+      let (sk, pk) = s.generate_keypair(false);
+      black_box(sk);
+      black_box(pk);
+      let addr = Address::from_key(Bitcoin, &pk);
+      black_box(addr);
+    });
+  }
+
+  #[bench]
+  pub fn generate_sequential_address(bh: &mut Bencher) {
+    let mut s = Secp256k1::new().unwrap();
+    let (sk, _) = s.generate_keypair(true);
+    let mut iter = sk.sequence(true);
+    bh.iter( || {
+      let (sk, pk) = iter.next().unwrap();
+      black_box(sk);
+      let addr = Address::from_key(Bitcoin, &pk);
+      black_box(addr);
+    });
   }
 }
 

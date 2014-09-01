@@ -353,6 +353,7 @@ impl FromBase58 for ExtendedPubKey {
 #[cfg(test)]
 mod tests {
   use serialize::hex::FromHex;
+  use test::{Bencher, black_box};
 
   use network::constants::{Network, Bitcoin};
   use util::base58::{FromBase58, ToBase58};
@@ -459,6 +460,57 @@ mod tests {
     test_path(Bitcoin, seed.as_slice(), [Normal(0), Hardened(2147483647), Normal(1), Hardened(2147483646), Normal(2)],
               "xprvA2nrNbFZABcdryreWet9Ea4LvTJcGsqrMzxHx98MMrotbir7yrKCEXw7nadnHM8Dq38EGfSh6dqA9QWTyefMLEcBYJUuekgW4BYPJcr9E7j",
               "xpub6FnCn6nSzZAw5Tw7cgR9bi15UV96gLZhjDstkXXxvCLsUXBGXPdSnLFbdpq8p9HmGsApME5hQTZ3emM2rnY5agb9rXpVGyy3bdW6EEgAtqt");
+  }
+
+  #[bench]
+  pub fn generate_sequential_normal_children(bh: &mut Bencher) {
+    let seed = "000102030405060708090a0b0c0d0e0f".from_hex().unwrap();
+    let msk = ExtendedPrivKey::new_master(Bitcoin, seed.as_slice()).unwrap();
+    let mut i = 0;
+    bh.iter( || {
+      black_box(msk.ckd_priv(Normal(i)));
+      i += 1;
+    })
+  }
+
+  #[bench]
+  pub fn generate_sequential_hardened_children(bh: &mut Bencher) {
+    let seed = "000102030405060708090a0b0c0d0e0f".from_hex().unwrap();
+    let msk = ExtendedPrivKey::new_master(Bitcoin, seed.as_slice()).unwrap();
+    let mut i = 0;
+    bh.iter( || {
+      black_box(msk.ckd_priv(Hardened(i)));
+      i += 1;
+    })
+  }
+
+  #[bench]
+  pub fn generate_sequential_public_children(bh: &mut Bencher) {
+    let seed = "000102030405060708090a0b0c0d0e0f".from_hex().unwrap();
+    let msk = ExtendedPrivKey::new_master(Bitcoin, seed.as_slice()).unwrap();
+    let mpk = ExtendedPubKey::from_private(&msk);
+
+    let mut i = 0;
+    bh.iter( || {
+      black_box(mpk.ckd_pub(Normal(i)));
+      i += 1;
+    })
+  }
+
+  #[bench]
+  pub fn generate_sequential_public_child_addresses(bh: &mut Bencher) {
+    use wallet::address::Address;
+
+    let seed = "000102030405060708090a0b0c0d0e0f".from_hex().unwrap();
+    let msk = ExtendedPrivKey::new_master(Bitcoin, seed.as_slice()).unwrap();
+    let mpk = ExtendedPubKey::from_private(&msk);
+
+    let mut i = 0;
+    bh.iter( || {
+      let epk = mpk.ckd_pub(Normal(i)).unwrap();
+      black_box(Address::from_key(Bitcoin, &epk.public_key));
+      i += 1;
+    })
   }
 }
 
