@@ -44,6 +44,7 @@ impl ::std::fmt::Show for Sha256dHash {
 
 /// A RIPEMD-160 hash
 pub struct Ripemd160Hash([u8, ..20]);
+impl_array_newtype!(Ripemd160Hash, u8, 20)
 
 /// A "hasher" which just truncates
 pub struct DumbHasher;
