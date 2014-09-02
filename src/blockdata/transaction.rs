@@ -76,6 +76,7 @@ pub enum ScriptPubkeyTemplate {
 }
 
 impl TxOut {
+  /// Determines the template that this output adheres to, if any
   pub fn classify(&self, network: Network) -> ScriptPubkeyTemplate {
     if self.script_pubkey.len() == 25 &&
        self.script_pubkey.slice_to(3) == &[0x76, 0xa9, 0x14] &&

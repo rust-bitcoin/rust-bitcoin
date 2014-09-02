@@ -21,10 +21,10 @@
 use std::cmp;
 use std::collections::HashMap;
 use std::collections::hashmap::Entries;
+use std::default::Default;
 use std::mem;
 use std::os::num_cpus;
 use std::sync::Future;
-use std::num::Zero;
 
 use blockdata::transaction::{Transaction, TxOut};
 use blockdata::transaction::{TransactionError, InputNotFound};
@@ -33,7 +33,6 @@ use blockdata::block::Block;
 use network::constants::Network;
 use network::serialize::BitcoinHash;
 use util::hash::{DumbHasher, Sha256dHash};
-use util::uint::Uint128;
 use util::thinvec::ThinVec;
 
 /// The amount of validation to do when updating the UTXO set
@@ -65,14 +64,14 @@ type UtxoNode = ThinVec<Option<TxOut>>;
 
 /// An iterator over UTXOs
 pub struct UtxoIterator<'a> {
-  tx_iter: Entries<'a, Uint128, UtxoNode>,
-  current_key: Uint128,
+  tx_iter: Entries<'a, Sha256dHash, UtxoNode>,
+  current_key: Sha256dHash,
   current: Option<&'a UtxoNode>,
   tx_index: uint
 }
 
-impl<'a> Iterator<(Uint128, uint, &'a TxOut)> for UtxoIterator<'a> {
-  fn next(&mut self) -> Option<(Uint128, uint, &'a TxOut)> {
+impl<'a> Iterator<(Sha256dHash, uint, &'a TxOut)> for UtxoIterator<'a> {
+  fn next(&mut self) -> Option<(Sha256dHash, uint, &'a TxOut)> {
     while self.current.is_some() {
       let current = self.current.unwrap();
       while self.tx_index < current.len() {
@@ -98,7 +97,7 @@ impl<'a> Iterator<(Uint128, uint, &'a TxOut)> for UtxoIterator<'a> {
 
 /// The UTXO set
 pub struct UtxoSet {
-  table: HashMap<Uint128, UtxoNode, DumbHasher>,
+  table: HashMap<Sha256dHash, UtxoNode, DumbHasher>,
   last_hash: Sha256dHash,
   // A circular buffer of deleted utxos, grouped by block
   spent_txos: Vec<Vec<((Sha256dHash, u32), TxOut)>>,
@@ -147,7 +146,7 @@ impl UtxoSet {
     };
     // Get the old value, if any (this is suprisingly possible, c.f. BIP30
     // and the other comments in this file referring to it)
-    let ret = self.table.swap(txid.into_le().low_128(), new_node);
+    let ret = self.table.swap(txid, new_node);
     if ret.is_none() {
       self.n_utxos += tx.output.len() as u64;
     }
@@ -159,7 +158,7 @@ impl UtxoSet {
     // This whole function has awkward scoping thx to lexical borrow scoping :(
     let (ret, should_delete) = {
       // Locate the UTXO, failing if not found
-      let node = match self.table.find_mut(&txid.into_le().low_128()) {
+      let node = match self.table.find_mut(&txid) {
         Some(node) => node,
         None => return None
       };
@@ -177,7 +176,7 @@ impl UtxoSet {
 
     // Delete the whole node if it is no longer being used
     if should_delete {
-      self.table.remove(&txid.into_le().low_128());
+      self.table.remove(&txid);
     }
 
     self.n_utxos -= if ret.is_some() { 1 } else { 0 };
@@ -187,7 +186,7 @@ impl UtxoSet {
   /// Get a reference to a UTXO in the set
   pub fn get_utxo<'a>(&'a self, txid: Sha256dHash, vout: u32) -> Option<&'a TxOut> {
     // Locate the UTXO, failing if not found
-    let node = match self.table.find(&txid.into_le().low_128()) {
+    let node = match self.table.find(&txid) {
       Some(node) => node,
       None => return None
     };
@@ -347,7 +346,7 @@ impl UtxoSet {
         for ((txid, n), txo) in extract_vec.move_iter() {
           // Remove the tx's utxo list and patch the txo into place
           let new_node =
-              match self.table.pop(&txid.into_le().low_128()) {
+              match self.table.pop(&txid) {
                 Some(mut thinvec) => {
                   let old_len = thinvec.len() as u32;
                   if old_len < n + 1 {
@@ -373,7 +372,7 @@ impl UtxoSet {
                 }
               };
           // Ram it back into the tree
-          self.table.insert(txid.into_le().low_128(), new_node);
+          self.table.insert(txid, new_node);
         }
       }
       skipped_genesis = true;
@@ -414,7 +413,7 @@ impl UtxoSet {
           tx_index: 0
         },
       None => UtxoIterator {
-          current_key: Zero::zero(),
+          current_key: Default::default(),
           current: None,
           tx_iter: iter,
           tx_index: 0

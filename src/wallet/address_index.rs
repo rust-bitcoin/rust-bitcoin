@@ -23,12 +23,12 @@ use std::collections::HashMap;
 use blockdata::utxoset::UtxoSet;
 use blockdata::script::Script;
 use wallet::wallet::Wallet;
-use util::uint::Uint128;
+use util::hash::Sha256dHash;
 
 /// An address index
 #[deriving(Clone, PartialEq, Eq, Show)]
 pub struct AddressIndex {
-  index: HashMap<Script, (Uint128, uint)>
+  index: HashMap<Script, (Sha256dHash, uint)>
 }
 
 impl AddressIndex {
@@ -46,6 +46,5 @@ impl AddressIndex {
     ret
   }
 }
-
 
 
