@@ -17,6 +17,7 @@
 //! Wallet, keys and addresses
 
 pub mod address;
+pub mod address_index;
 pub mod bip32;
 pub mod wallet;
 

@@ -103,7 +103,13 @@ impl<T> ThinVec<T> {
     self.as_slice().slice_from(index)
   }
 
-  /// Returns a slice starting from `s` ending in `e`
+  /// Returns a slice ending just before `index`
+  #[inline]
+  pub fn slice_to<'a>(&'a self, index: uint) -> &'a [T] {
+    self.as_slice().slice_to(index)
+  }
+
+  /// Returns a slice starting from `s` ending just before `e`
   #[inline]
   pub fn slice<'a>(&'a self, s: uint, e: uint) -> &'a [T] {
     self.as_slice().slice(s, e)

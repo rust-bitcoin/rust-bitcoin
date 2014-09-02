@@ -29,6 +29,7 @@ macro_rules! construct_uint(
     /// Little-endian large integer type
     #[repr(C)]
     pub struct $name(pub [u64, ..$n_words]);
+    impl_array_newtype!($name, u64, $n_words)
 
     impl $name {
       /// Conversion to u32
@@ -288,18 +289,6 @@ macro_rules! construct_uint(
         $name(ret)
       }
     }
-
-    impl PartialEq for $name {
-      fn eq(&self, other: &$name) -> bool {
-        let &$name(ref arr1) = self;
-        let &$name(ref arr2) = other;
-        for i in range(0, $n_words) {
-          if arr1[i] != arr2[i] { return false; }
-        }
-        return true;
-      }
-    }
-    impl Eq for $name {}
 
     impl Ord for $name {
       fn cmp(&self, other: &$name) -> Ordering {

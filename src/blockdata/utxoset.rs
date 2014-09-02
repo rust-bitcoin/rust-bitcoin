@@ -20,9 +20,11 @@
 
 use std::cmp;
 use std::collections::HashMap;
+use std::collections::hashmap::Entries;
 use std::mem;
 use std::os::num_cpus;
 use std::sync::Future;
+use std::num::Zero;
 
 use blockdata::transaction::{Transaction, TxOut};
 use blockdata::transaction::{TransactionError, InputNotFound};
@@ -60,6 +62,39 @@ pub enum UtxoSetError {
 
 /// Vector of outputs; None indicates a nonexistent or already spent output
 type UtxoNode = ThinVec<Option<TxOut>>;
+
+/// An iterator over UTXOs
+pub struct UtxoIterator<'a> {
+  tx_iter: Entries<'a, Uint128, UtxoNode>,
+  current_key: Uint128,
+  current: Option<&'a UtxoNode>,
+  tx_index: uint
+}
+
+impl<'a> Iterator<(Uint128, uint, &'a TxOut)> for UtxoIterator<'a> {
+  fn next(&mut self) -> Option<(Uint128, uint, &'a TxOut)> {
+    while self.current.is_some() {
+      let current = self.current.unwrap();
+      while self.tx_index < current.len() {
+        self.tx_index += 1;
+        if unsafe { current.get(self.tx_index - 1) }.is_some() {
+          return Some((self.current_key,
+                      self.tx_index,
+                      unsafe { current.get(self.tx_index - 1) }.as_ref().unwrap()));
+        }
+      }
+      match self.tx_iter.next() {
+        Some((&x, y)) => {
+          self.tx_index = 0;
+          self.current_key = x;
+          self.current = Some(y);
+        }
+        None => { self.current = None; }
+      }
+    }
+    return None;
+  }
+}
 
 /// The UTXO set
 pub struct UtxoSet {
@@ -365,6 +400,26 @@ impl UtxoSet {
   /// during reorgs, so it may return a higher number than is realistic).
   pub fn n_pruned(&self) -> uint {
     self.n_pruned as uint
+  }
+
+  /// Get an iterator over all UTXOs
+  pub fn iter<'a>(&'a self) -> UtxoIterator<'a> {
+    let mut iter = self.table.iter();
+    let first = iter.next();
+    match first {
+      Some((&key, val)) => UtxoIterator {
+          current_key: key,
+          current: Some(val),
+          tx_iter: iter,
+          tx_index: 0
+        },
+      None => UtxoIterator {
+          current_key: Zero::zero(),
+          current: None,
+          tx_iter: iter,
+          tx_index: 0
+        }
+    }
   }
 }
 

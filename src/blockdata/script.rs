@@ -24,6 +24,7 @@
 //! This module provides the structures and functions needed to support scripts.
 //!
 
+use std::hash;
 use std::char::from_digit;
 use std::default::Default;
 use serialize::json;
@@ -50,6 +51,14 @@ use util::thinvec::ThinVec;
 #[deriving(PartialEq, Eq, Show, Clone)]
 /// A Bitcoin script
 pub struct Script(ThinVec<u8>);
+
+impl<S: hash::Writer> hash::Hash<S> for Script {
+  #[inline]
+  fn hash(&self, state: &mut S) {
+    let &Script(ref raw) = self;
+    raw.as_slice().hash(state)
+  }
+}
 
 /// Ways that a script might fail. Not everything is split up as
 /// much as it could be; patches welcome if more detailed errors
@@ -1165,6 +1174,11 @@ impl AbstractStack {
     self.stack.as_slice()
   }
 
+  /// Immutable view of the current stack as a slice of bytes
+  pub fn slice_to<'a>(&'a self, n: uint) -> &'a [uint] {
+    self.stack.slice_to(n)
+  }
+
   /// Mutable view of the current stack as a slice (to be compatible
   /// with the `stack_opcode!` macro
   fn as_mut_slice<'a>(&'a mut self) -> &'a mut [uint] {
@@ -1588,6 +1602,12 @@ impl Script {
   /// Creates a new script from an existing vector
   pub fn from_vec(v: Vec<u8>) -> Script { Script(ThinVec::from_vec(v)) }
 
+  /// The length in bytes of the script
+  pub fn len(&self) -> uint {
+    let &Script(ref raw) = self;
+    raw.len()
+  }
+
   /// Adds instructions to push an integer onto the stack. Integers are
   /// encoded as little-endian signed-magnitude numbers, but there are
   /// dedicated opcodes to push some small integers.
@@ -1652,6 +1672,24 @@ impl Script {
   pub fn as_slice(&self) -> &[u8] {
     let &Script(ref raw) = self;
     raw.as_slice()
+  }
+
+  /// Returns a view into the script as a slice
+  pub fn slice_to(&self, n: uint) -> &[u8] {
+    let &Script(ref raw) = self;
+    raw.slice_to(n)
+  }
+
+  /// Returns a view into the script as a slice
+  pub fn slice_from(&self, n: uint) -> &[u8] {
+    let &Script(ref raw) = self;
+    raw.slice_from(n)
+  }
+
+  /// Returns a view into the script as a slice
+  pub fn slice(&self, s: uint, e: uint) -> &[u8] {
+    let &Script(ref raw) = self;
+    raw.slice(s, e)
   }
 
   /// Trace a script

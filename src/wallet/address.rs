@@ -36,7 +36,24 @@ pub struct Address {
 }
 
 impl Address {
+  /// Creates an address the raw 20 bytes of a hash
+  #[inline]
+  pub fn from_slice(network: Network, data: &[u8]) -> Address {
+    Address {
+      network: network,
+      hash: Ripemd160Hash::from_slice(data)
+    }
+  }
+
+  /// Returns a byteslice view of the `Address` --- note that no network information
+  /// is contained in this.
+  #[inline]
+  pub fn as_slice<'a>(&'a self) -> &'a [u8] {
+    self.hash.as_slice()
+  }
+
   /// Creates an address from a public key
+  #[inline]
   pub fn from_key(network: Network, pk: &PublicKey) -> Address {
     let mut sha = Sha256::new();
     let mut out = [0, ..32];
@@ -49,6 +66,7 @@ impl Address {
   }
 
   /// Generates a script pubkey spending to this address
+  #[inline]
   pub fn script_pubkey(&self) -> Script {
     let mut script = Script::new();
     script.push_opcode(all::OP_DUP);

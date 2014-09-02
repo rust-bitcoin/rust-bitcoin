@@ -18,7 +18,10 @@
 
 use std::collections::HashMap;
 use std::default::Default;
+use std::io::extensions::u64_from_be_bytes;
+use collections::hash::sip::hash_with_keys;
 
+use blockdata::transaction::{PayToPubkeyHash, TxOut};
 use network::constants::Network;
 use wallet::bip32::{mod, ChildNumber, ExtendedPrivKey, Normal, Hardened};
 
@@ -56,7 +59,8 @@ pub struct Wallet {
 }
 
 impl Wallet {
-  /// Creates a new wallet from a seed
+  /// Creates a new wallet from a BIP32 seed
+  #[inline]
   pub fn from_seed(network: Network, seed: &[u8]) -> Result<Wallet, bip32::Error> {
     let mut accounts = HashMap::new();
     accounts.insert(String::new(), Default::default());
@@ -81,6 +85,30 @@ impl Wallet {
       external_path: vec![Hardened(idx), Normal(0)]
     });
     Ok(())
+  }
+
+  /// Returns the network of the wallet
+  #[inline]
+  pub fn network(&self) -> Network {
+    self.master.network
+  }
+
+  /// Returns a key suitable for keying hash functions for DoS protection
+  #[inline]
+  pub fn siphash_key(&self) -> (u64, u64) {
+    let ck_slice = self.master.chain_code.as_slice();
+    (u64_from_be_bytes(ck_slice, 0, 8),
+     u64_from_be_bytes(ck_slice, 8, 8))
+  }
+
+  /// A filter used for creating a small address index
+  #[inline]
+  pub fn might_be_mine(&self, out: &TxOut) -> bool {
+    let (k1, k2) = self.siphash_key();
+    match out.classify(self.network()) {
+      PayToPubkeyHash(addr) => hash_with_keys(k1, k2, &addr.as_slice()) & 0xFF == 0,
+      _ => false
+    }
   }
 }
 
