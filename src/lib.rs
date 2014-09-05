@@ -68,3 +68,6 @@ pub mod blockdata;
 pub mod util;
 pub mod wallet;
 
+/// I dunno where else to put this..
+fn assert_type_is_copy<T: Copy>() { }
+

@@ -84,4 +84,35 @@ macro_rules! nu_select(
   })
 )
 
+#[macro_export]
+macro_rules! user_enum(
+  ($(#[$attr:meta])* pub enum $name:ident { $(#[$doc:meta] $elem:ident <-> $txt:expr),* }) => (
+    $(#[$attr])*
+    pub enum $name {
+      $(#[$doc] $elem),*
+    }
+
+    impl ::std::fmt::Show for $name {
+      fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+        f.pad(match *self {
+          $($elem => $txt),*
+        })
+      }
+    }
+
+    impl<S: ::serialize::Encoder<E>, E> ::serialize::Encodable<S, E> for $name {
+      fn encode(&self, s: &mut S) -> Result<(), E> {
+        s.emit_str(self.to_string().as_slice())
+      }
+    }
+
+    impl <D: ::serialize::Decoder<E>, E> ::serialize::Decodable<D, E> for $name {
+      fn decode(d: &mut D) -> Result<$name, E> {
+        let s = try!(d.read_str());
+        $( if s.as_slice() == $txt { Ok($elem) } )else*
+        else { Err(d.error(format!("unknown `{}`", s).as_slice())) }
+      }
+    }
+  );
+)
 

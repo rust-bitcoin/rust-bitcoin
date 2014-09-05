@@ -28,7 +28,7 @@ use util::hash::Sha256dHash;
 /// An address index
 #[deriving(Clone, PartialEq, Eq, Show)]
 pub struct AddressIndex {
-  index: HashMap<Script, (Sha256dHash, uint)>
+  index: HashMap<Script, Vec<(Sha256dHash, uint)>>
 }
 
 impl AddressIndex {
@@ -40,7 +40,9 @@ impl AddressIndex {
     };
     for (key, idx, txo) in utxo_set.iter() {
       if wallet.might_be_mine(txo) {
-        ret.index.insert(txo.script_pubkey.clone(), (key, idx));
+        ret.index.insert_or_update_with(txo.script_pubkey.clone(),
+                                        vec![(key, idx)],
+                                        |_, v| v.push((key, idx)));
       }
     }
     ret

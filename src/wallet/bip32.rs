@@ -37,18 +37,20 @@ use util::base58::{Base58Error,
 pub struct ChainCode([u8, ..32]);
 impl_array_newtype!(ChainCode, u8, 32)
 impl_array_newtype_show!(ChainCode)
+impl_array_newtype_encodable!(ChainCode, u8, 32)
 
 /// A fingerprint
 pub struct Fingerprint([u8, ..4]);
 impl_array_newtype!(Fingerprint, u8, 4)
 impl_array_newtype_show!(Fingerprint)
+impl_array_newtype_encodable!(Fingerprint, u8, 4)
 
 impl Default for Fingerprint {
   fn default() -> Fingerprint { Fingerprint([0, 0, 0, 0]) }
 }
 
 /// Extended private key
-#[deriving(Clone, PartialEq, Eq, Show)]
+#[deriving(Clone, PartialEq, Eq, Encodable, Decodable, Show)]
 pub struct ExtendedPrivKey {
   /// The network this key is to be used on
   pub network: Network,
@@ -65,7 +67,7 @@ pub struct ExtendedPrivKey {
 }
 
 /// Extended public key
-#[deriving(Clone, PartialEq, Eq, Show)]
+#[deriving(Clone, PartialEq, Eq, Encodable, Decodable, Show)]
 pub struct ExtendedPubKey {
   /// The network this key is to be used on
   pub network: Network,
@@ -82,7 +84,7 @@ pub struct ExtendedPubKey {
 }
 
 /// A child number for a derived key
-#[deriving(Clone, PartialEq, Eq, Show)]
+#[deriving(Clone, PartialEq, Eq, Encodable, Decodable, Show)]
 pub enum ChildNumber {
   /// Hardened key index, within [0, 2^31 - 1]
   Hardened(u32),
@@ -98,7 +100,9 @@ pub enum Error {
   /// A secp256k1 error occured
   EcdsaError(secp256k1::Error),
   /// A child number was provided that was out of range
-  InvalidChildNumber(ChildNumber)
+  InvalidChildNumber(ChildNumber),
+  /// Error creating a master seed --- for application use
+  RngError(String)
 }
 
 impl ExtendedPrivKey {

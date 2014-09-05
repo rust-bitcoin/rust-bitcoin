@@ -159,6 +159,39 @@ macro_rules! impl_array_newtype(
   }
 )
 
+macro_rules! impl_array_newtype_encodable(
+  ($thing:ident, $ty:ty, $len:expr) => {
+    impl<D: ::serialize::Decoder<E>, E> ::serialize::Decodable<D, E> for $thing {
+      fn decode(d: &mut D) -> ::std::prelude::Result<$thing, E> {
+        use serialize::Decodable;
+
+        ::assert_type_is_copy::<$ty>();
+
+        d.read_seq(|d, len| {
+          if len != $len {
+            Err(d.error("Invalid length"))
+          } else {
+            unsafe {
+              use std::mem;
+              let mut ret: [$ty, ..$len] = mem::uninitialized();
+              for i in range(0, len) {
+                ret[i] = try!(d.read_seq_elt(i, |d| Decodable::decode(d)));
+              }
+              Ok($thing(ret))
+            }
+          }
+        })
+      }
+    }
+
+    impl<E: ::serialize::Encoder<S>, S> ::serialize::Encodable<E, S> for $thing {
+      fn encode(&self, e: &mut E) -> ::std::prelude::Result<(), S> {
+        self.as_slice().encode(e)
+      }
+    }
+  }
+)
+
 macro_rules! impl_array_newtype_show(
   ($thing:ident) => {
     impl ::std::fmt::Show for $thing {

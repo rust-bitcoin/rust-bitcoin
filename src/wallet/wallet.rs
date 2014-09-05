@@ -34,7 +34,7 @@ pub enum Error {
 }
 
 /// An account
-#[deriving(Clone, PartialEq, Eq, Show)]
+#[deriving(Clone, PartialEq, Eq, Encodable, Decodable, Show)]
 pub struct Account {
   name: String,
   internal_path: Vec<ChildNumber>,
@@ -52,7 +52,7 @@ impl Default for Account {
 }
 
 /// A wallet
-#[deriving(Clone, PartialEq, Eq, Show)]
+#[deriving(Clone, PartialEq, Eq, Encodable, Decodable, Show)]
 pub struct Wallet {
   master: ExtendedPrivKey,
   accounts: HashMap<String, Account>

@@ -18,46 +18,19 @@
 //! protocol, such as protocol versioning and magic header bytes.
 //!
 
-use std::fmt;
-use serialize::{Decoder, Encoder, Encodable, Decodable};
-
 use network::encodable::{ConsensusDecodable, ConsensusEncodable};
 use network::serialize::{SimpleEncoder, SimpleDecoder};
 
-/// The cryptocurrency to operate on
-#[deriving(PartialEq, Eq, Clone, Hash)]
-pub enum Network {
-  /// Classic Bitcoin
-  Bitcoin,
-  /// Bitcoin's testnet
-  BitcoinTestnet,
-}
-
-impl fmt::Show for Network {
-  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    f.pad(match *self {
-        Bitcoin => "bitcoin",
-        BitcoinTestnet => "testnet",
-      })
+user_enum!(
+  #[deriving(PartialEq, Eq, Clone, Hash)]
+  #[doc="The cryptocurrency to act on"]
+  pub enum Network {
+    #[doc="Classic Bitcoin"]
+    Bitcoin <-> "bitcoin",
+    #[doc="Bitcoin's testnet"]
+    BitcoinTestnet <-> "testnet"
   }
-}
-
-impl<S:Encoder<E>, E> Encodable<S, E> for Network {
-  fn encode(&self, s: &mut S) -> Result<(), E> {
-    s.emit_str(self.to_string().as_slice())
-  }
-}
-
-impl <D:Decoder<E>, E> Decodable<D, E> for Network {
-  fn decode(d: &mut D) -> Result<Network, E> {
-    let s = try!(d.read_str());
-    match s.as_slice() {
-      "bitcoin" => Ok(Bitcoin),
-      "testnet" => Ok(BitcoinTestnet),
-      _ => Err(d.error(format!("Unknown network {}", s).as_slice()))
-    }
-  }
-}
+)
 
 pub static PROTOCOL_VERSION: u32    = 70001;
 pub static SERVICES: u64            = 0;
