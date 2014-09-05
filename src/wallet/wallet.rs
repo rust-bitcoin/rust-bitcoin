@@ -20,6 +20,7 @@ use std::collections::HashMap;
 use std::default::Default;
 use std::io::extensions::u64_from_be_bytes;
 use collections::hash::sip::hash_with_keys;
+use serialize::{Decoder, Decodable, Encoder, Encodable};
 
 use blockdata::transaction::{PayToPubkeyHash, TxOut};
 use network::constants::Network;
@@ -52,10 +53,45 @@ impl Default for Account {
 }
 
 /// A wallet
-#[deriving(Clone, PartialEq, Eq, Encodable, Decodable, Show)]
+#[deriving(Clone, PartialEq, Eq, Show)]
 pub struct Wallet {
   master: ExtendedPrivKey,
   accounts: HashMap<String, Account>
+}
+
+impl<S: Encoder<E>, E> Encodable<S, E> for Wallet {
+  fn encode(&self, s: &mut S) -> Result<(), E> {
+    s.emit_struct("wallet", 2, |s| {
+      try!(s.emit_struct_field("master", 0, |s| self.master.encode(s)));
+      s.emit_struct_field("accounts", 1,
+        |s| s.emit_seq(self.accounts.len(), |s| {
+          for (_, account) in self.accounts.iter() {
+            try!(account.encode(s));
+          }
+          Ok(())
+        }))
+    })
+  }
+}
+
+impl<D: Decoder<E>, E> Decodable<D, E> for Wallet {
+  fn decode(d: &mut D) -> Result<Wallet, E> { 
+    d.read_struct("wallet", 2, |d| {
+      Ok(Wallet { 
+        master: try!(d.read_struct_field("master", 0, Decodable::decode)),
+        accounts: try!(d.read_struct_field("accounts", 1, |d| {
+          d.read_seq(|d, len| {
+            let mut ret = HashMap::new();
+            for i in range(0, len) {
+              let accnt: Account = try!(d.read_seq_elt(i, Decodable::decode));
+              ret.insert(accnt.name.clone(), accnt);
+            }
+            Ok(ret)
+          })
+        }))
+      })
+    })
+  }
 }
 
 impl Wallet {
