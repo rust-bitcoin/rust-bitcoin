@@ -58,8 +58,8 @@ extern crate sync;
 extern crate test;
 extern crate time;
 
-extern crate secp256k1 = "bitcoin-secp256k1-rs";
-extern crate crypto = "rust-crypto";
+extern crate "bitcoin-secp256k1-rs" as secp256k1;
+extern crate "rust-crypto" as crypto;
 
 mod internal_macros;
 pub mod macros;

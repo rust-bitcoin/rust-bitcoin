@@ -36,6 +36,7 @@ use crypto::sha1::Sha1;
 use crypto::sha2::Sha256;
 
 use secp256k1::Secp256k1;
+use secp256k1::Signature;
 use secp256k1::key::PublicKey;
 
 use blockdata::opcodes;
@@ -1465,7 +1466,8 @@ fn check_signature(sig_slice: &[u8], pk_slice: &[u8], script: Vec<u8>,
     serialize(&Sha256dHash::from_data(data_to_sign.as_slice())).unwrap()
   };
 
-  Secp256k1::verify(signature_hash.as_slice(), sig_slice, &pubkey).map_err(|e| EcdsaError(e))
+  let sig = try!(Signature::from_slice(sig_slice).map_err(EcdsaError));
+  Secp256k1::verify(signature_hash.as_slice(), &sig, &pubkey).map_err(EcdsaError)
 }
 
 // Macro to translate English stack instructions into Rust code.
