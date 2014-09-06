@@ -123,6 +123,16 @@ impl ExtendedPrivKey {
     })
   }
 
+  /// Creates a privkey from a path
+  pub fn from_path(master: &ExtendedPrivKey, path: &[ChildNumber])
+                   -> Result<ExtendedPrivKey, Error> {
+    let mut sk = *master;
+    for &num in path.iter() {
+      sk = try!(sk.ckd_priv(num));
+    }
+    Ok(sk)
+  }
+
   /// Private->Private child key derivation
   pub fn ckd_priv(&self, i: ChildNumber) -> Result<ExtendedPrivKey, Error> {
     let mut result = [0, ..64];
