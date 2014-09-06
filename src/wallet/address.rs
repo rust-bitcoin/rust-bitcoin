@@ -31,8 +31,10 @@ use util::base58::{Base58Error,
 #[deriving(Clone, PartialEq, Eq)]
 /// A Bitcoin address
 pub struct Address {
-  network: Network,
-  hash: Ripemd160Hash
+  /// The network on which this address is usable
+  pub network: Network,
+  /// The pubkeyhash that this address encodes
+  pub hash: Ripemd160Hash
 }
 
 impl Address {
