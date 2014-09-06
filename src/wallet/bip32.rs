@@ -18,6 +18,7 @@
 
 use std::default::Default;
 use std::io::extensions::{u64_to_be_bytes, u64_from_be_bytes};
+use serialize::{Decoder, Decodable, Encoder, Encodable};
 
 use crypto::digest::Digest;
 use crypto::hmac::Hmac;
@@ -84,12 +85,32 @@ pub struct ExtendedPubKey {
 }
 
 /// A child number for a derived key
-#[deriving(Clone, PartialEq, Eq, Encodable, Decodable, Show)]
+#[deriving(Clone, PartialEq, Eq, Show)]
 pub enum ChildNumber {
   /// Hardened key index, within [0, 2^31 - 1]
   Hardened(u32),
   /// Non-hardened key, within [0, 2^31 - 1]
   Normal(u32),
+}
+
+impl<S: Encoder<E>, E> Encodable<S, E> for ChildNumber {
+  fn encode(&self, s: &mut S) -> Result<(), E> {
+    match *self {
+      Hardened(n) => (n + (1 << 31)).encode(s),
+      Normal(n)   => n.encode(s)
+    }
+  }
+}
+
+impl<D: Decoder<E>, E> Decodable<D, E> for ChildNumber {
+  fn decode(d: &mut D) -> Result<ChildNumber, E> { 
+    let n: u32 = try!(Decodable::decode(d));
+    if n < (1 << 31) {
+      Ok(Normal(n))
+    } else {
+      Ok(Hardened(n - (1 << 31)))
+    }
+  }
 }
 
 /// A BIP32 error
@@ -474,6 +495,25 @@ mod tests {
     test_path(Bitcoin, seed.as_slice(), [Normal(0), Hardened(2147483647), Normal(1), Hardened(2147483646), Normal(2)],
               "xprvA2nrNbFZABcdryreWet9Ea4LvTJcGsqrMzxHx98MMrotbir7yrKCEXw7nadnHM8Dq38EGfSh6dqA9QWTyefMLEcBYJUuekgW4BYPJcr9E7j",
               "xpub6FnCn6nSzZAw5Tw7cgR9bi15UV96gLZhjDstkXXxvCLsUXBGXPdSnLFbdpq8p9HmGsApME5hQTZ3emM2rnY5agb9rXpVGyy3bdW6EEgAtqt");
+  }
+
+  #[test]
+  pub fn encode_decode_childnumber() {
+    use serialize::json;
+
+    let h1 = Hardened(1);
+    let n1 = Normal(1);
+
+    let h1_str = json::encode(&h1);
+    let n1_str = json::encode(&n1);
+
+    assert!(h1 != n1);
+    assert!(h1_str != n1_str);
+
+    let h1_dec = json::decode(h1_str.as_slice()).unwrap();
+    let n1_dec = json::decode(n1_str.as_slice()).unwrap();
+    assert_eq!(h1, h1_dec);
+    assert_eq!(n1, n1_dec);
   }
 
   #[bench]

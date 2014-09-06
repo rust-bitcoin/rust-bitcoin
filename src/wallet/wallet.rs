@@ -30,6 +30,7 @@ use wallet::bip32::{mod, ChildNumber, ExtendedPrivKey, Normal, Hardened};
 use wallet::address::Address;
 
 /// A Wallet error
+#[deriving(Clone, PartialEq, Eq, Show)]
 pub enum Error {
   /// Tried to lookup an account by name, but none was found
   AccountNotFound,
@@ -95,9 +96,6 @@ impl<S: Encoder<E>, E> Encodable<S, E> for Wallet {
         }))
     })
   }
-}
-
-impl Account {
 }
 
 impl<D: Decoder<E>, E> Decodable<D, E> for Wallet {
