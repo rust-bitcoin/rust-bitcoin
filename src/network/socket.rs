@@ -105,18 +105,6 @@ impl Socket {
     }
   }
 
-  /// Reset the connection to the peer
-  pub fn reconnect(&mut self) -> IoResult<()> {
-    let (host, port) = match self.socket {
-      Some(ref mut s) => match s.peer_name() {
-        Ok(addr) => (format!("{}", addr.ip), addr.port),
-        Err(e) => { return Err(e); }
-      },
-      None => { return Err(standard_error(NotConnected)); }
-    };
-    self.connect(host.as_slice(), port)
-  }
-
   /// Peer address
   pub fn receiver_address(&mut self) -> IoResult<Address> {
     match self.socket {

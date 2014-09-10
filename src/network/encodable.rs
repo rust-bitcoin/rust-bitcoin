@@ -51,11 +51,11 @@ pub trait ConsensusDecodable<D:SimpleDecoder<E>, E> {
 }
 
 /// A variable-length unsigned integer
-#[deriving(PartialEq, Show)]
+#[deriving(PartialEq, Eq, PartialOrd, Ord, Clone, Show)]
 pub struct VarInt(pub u64);
 
 /// Data which must be preceded by a 4-byte checksum
-#[deriving(PartialEq, Clone, Show)]
+#[deriving(PartialEq, Eq, Clone, Show)]
 pub struct CheckedData(pub Vec<u8>);
 
 // Primitive types

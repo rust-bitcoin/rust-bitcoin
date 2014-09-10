@@ -31,7 +31,7 @@ use blockdata::transaction::Transaction;
 
 /// A block header, which contains all the block's information except
 /// the actual transactions
-#[deriving(PartialEq, Show)]
+#[deriving(PartialEq, Eq, Clone, Show)]
 pub struct BlockHeader {
   /// The protocol version. Should always be 1.
   pub version: u32,
@@ -50,7 +50,7 @@ pub struct BlockHeader {
 
 /// A Bitcoin block, which is a collection of transactions with an attached
 /// proof of work.
-#[deriving(PartialEq, Show)]
+#[deriving(PartialEq, Eq, Clone, Show)]
 pub struct Block {
   /// The block header
   pub header: BlockHeader,
@@ -60,7 +60,7 @@ pub struct Block {
 
 /// A block header with txcount attached, which is given in the `headers`
 /// network message.
-#[deriving(PartialEq, Show)]
+#[deriving(PartialEq, Eq, Clone, Show)]
 pub struct LoneBlockHeader {
   /// The actual block header
   pub header: BlockHeader,

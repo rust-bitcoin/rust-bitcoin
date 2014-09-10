@@ -34,7 +34,7 @@ use network::serialize::{serialize, RawDecoder, SimpleEncoder, SimpleDecoder};
 use util::misc::prepend_err;
 
 /// Serializer for command string
-#[deriving(PartialEq, Clone, Show)]
+#[deriving(PartialEq, Eq, Clone, Show)]
 pub struct CommandString(pub String);
 
 impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for CommandString {
@@ -64,10 +64,18 @@ pub struct RawNetworkMessage {
   pub payload: NetworkMessage
 }
 
-#[deriving(Show)]
+/// A response from the peer-connected socket
+pub enum SocketResponse {
+  /// A message was received
+  MessageReceived(NetworkMessage),
+  /// An error occured and the socket needs to close
+  ConnectionFailed(IoError, Sender<()>)
+}
+
+#[deriving(Clone, PartialEq, Eq, Show)]
 /// A Network message payload. Proper documentation is available on the Bitcoin
 /// wiki https://en.bitcoin.it/wiki/Protocol_specification
-pub enum NetworkMessage{
+pub enum NetworkMessage {
   /// `version`
   Version(message_network::VersionMessage),
   /// `verack`
@@ -98,7 +106,7 @@ pub enum NetworkMessage{
   /// `ping`
   Ping(u64),
   /// `pong`
-  Pong(u64),
+  Pong(u64)
   // TODO: reject,
   // TODO: bloom filtering
   // TODO: alert
@@ -119,7 +127,7 @@ impl RawNetworkMessage {
       Block(_)   => "block",
       Headers(_) => "headers",
       Ping(_)    => "ping",
-      Pong(_)    => "pong"
+      Pong(_)    => "pong",
     }.to_string()
   }
 }

@@ -27,7 +27,7 @@ use network::socket::Socket;
 /// Some simple messages
 
 /// The `version` message
-#[deriving(Show)]
+#[deriving(PartialEq, Eq, Clone, Show)]
 pub struct VersionMessage {
   /// The P2P network protocol version
   pub version: u32,

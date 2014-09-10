@@ -19,11 +19,9 @@
 //!
 
 use std::io::{IoResult, standard_error, ConnectionFailed};
-use std::io::timer;
-use std::time::Duration;
 
 use network::constants::Network;
-use network::message::{NetworkMessage, Verack};
+use network::message::{mod, SocketResponse, MessageReceived, Verack};
 use network::socket::Socket;
 
 /// A message which can be sent on the Bitcoin network
@@ -35,7 +33,7 @@ pub trait Listener {
   /// Return the network this `Listener` is operating on
   fn network(&self) -> Network;
   /// Main listen loop
-  fn start(&self) -> IoResult<(Receiver<NetworkMessage>, Socket)> {
+  fn start(&self) -> IoResult<(Receiver<SocketResponse>, Socket)> {
     // Open socket
     let mut ret_sock = Socket::new(self.network());
     match ret_sock.connect(self.peer(), self.port()) {
@@ -75,20 +73,17 @@ pub trait Listener {
             // We have to pass the message to the main thread for processing,
             // unfortunately, because sipa says we have to handle everything
             // in order.
-            recv_tx.send(payload);
+            recv_tx.send(MessageReceived(payload));
           }
           Err(e) => {
-            println!("Received error {:} when decoding message. Pausing for 5 seconds then reconnecting.", e);
-            timer::sleep(Duration::seconds(5));
-            // Reconnect
-            sock.reconnect()
-              // Create version message
-              .and_then(|_| sock.version_message(0))
-              // Send it out
-              .and_then(|msg| sock.send_message(msg))
-              // For now, not much we can do on error
-              .unwrap_or_else(|e| println!("Error {} when reconnecting.", e));
-            handshake_complete = false;
+            // On failure we send an error message to the main thread, along with
+            // a channel to receive an acknowledgement that we may tear down this
+            // thread. (If we simply exited immediately, the channel would be torn
+            // down and the main thread would never see the error message.)
+            let (tx, rx) = channel();
+            recv_tx.send(message::ConnectionFailed(e, tx));
+            rx.recv();
+            break;
           }
         }
       }

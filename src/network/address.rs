@@ -69,6 +69,30 @@ impl fmt::Show for Address {
   }
 }
 
+impl Clone for Address {
+  fn clone(&self) -> Address {
+    unsafe {
+      use std::intrinsics::copy_nonoverlapping_memory;
+      use std::mem;
+      let mut ret = mem::uninitialized();
+      copy_nonoverlapping_memory(&mut ret,
+                                 self,
+                                 mem::size_of::<Address>());
+      ret
+    }
+  }
+}
+
+impl PartialEq for Address {
+  fn eq(&self, other: &Address) -> bool {
+    self.services == other.services &&
+    self.address.as_slice() == other.address.as_slice() &&
+    self.port == other.port
+  }
+}
+
+impl Eq for Address {}
+
 #[cfg(test)]
 mod test {
   use super::Address;
