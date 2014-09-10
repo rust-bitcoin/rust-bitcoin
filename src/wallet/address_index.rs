@@ -19,33 +19,66 @@
 //!
 
 use std::collections::HashMap;
+use collections::hash::sip::hash_with_keys;
 
+use blockdata::transaction::{TxOut, PayToPubkeyHash};
 use blockdata::utxoset::UtxoSet;
 use blockdata::script::Script;
+use network::constants::Network;
+use wallet::address::Address;
 use wallet::wallet::Wallet;
 use util::hash::Sha256dHash;
 
 /// An address index
 #[deriving(Clone, PartialEq, Eq, Show)]
 pub struct AddressIndex {
-  index: HashMap<Script, Vec<(Sha256dHash, uint)>>
+  index: HashMap<Script, Vec<(Sha256dHash, uint, TxOut)>>,
+  network: Network,
+  k1: u64,
+  k2: u64
 }
 
 impl AddressIndex {
   /// Creates a new address index from a wallet (which provides an authenticated
   /// hash function for prefix filtering) and UTXO set (which is what gets filtered).
   pub fn new(utxo_set: &UtxoSet, wallet: &Wallet) -> AddressIndex {
+    let (k1, k2) = wallet.siphash_key();
     let mut ret = AddressIndex {
-      index: HashMap::with_capacity(utxo_set.n_utxos() / 256)
+      index: HashMap::with_capacity(utxo_set.n_utxos() / 256),
+      network: wallet.network(),
+      k1: k1,
+      k2: k2
     };
     for (key, idx, txo) in utxo_set.iter() {
-      if wallet.might_be_mine(txo) {
+      if ret.admissible_txo(txo) {
         ret.index.insert_or_update_with(txo.script_pubkey.clone(),
-                                        vec![(key, idx)],
-                                        |_, v| v.push((key, idx)));
+                                        vec![(key, idx, txo.clone())],
+                                        |_, v| v.push((key, idx, txo.clone())));
       }
     }
     ret
+  }
+
+  /// A filtering function used for creating a small address index.
+  #[inline]
+  pub fn admissible_address(&self, addr: &Address) -> bool {
+    hash_with_keys(self.k1, self.k2, &addr.as_slice()) & 0xFF == 0
+  }
+
+  /// A filtering function used for creating a small address index.
+  #[inline]
+  pub fn admissible_txo(&self, out: &TxOut) -> bool {
+    match out.classify(self.network) {
+      PayToPubkeyHash(addr) => self.admissible_address(&addr),
+      _ => false
+    }
+  }
+
+  /// Lookup a txout by its scriptpubkey. Returns a slice because there
+  /// may be more than one for any given scriptpubkey.
+  #[inline]
+  pub fn find_by_script<'a>(&'a self, pubkey: &Script) -> &'a [(Sha256dHash, uint, TxOut)] {
+    self.index.find(pubkey).map(|v| v.as_slice()).unwrap_or(&[])
   }
 }
 

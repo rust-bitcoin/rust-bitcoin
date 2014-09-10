@@ -19,15 +19,15 @@
 use std::collections::HashMap;
 use std::default::Default;
 use std::io::extensions::u64_from_be_bytes;
-use collections::hash::sip::hash_with_keys;
 use serialize::{Decoder, Decodable, Encoder, Encodable};
 
 use secp256k1::key::PublicKey;
 
-use blockdata::transaction::{PayToPubkeyHash, TxOut};
+use blockdata::utxoset::UtxoSet;
 use network::constants::Network;
-use wallet::bip32::{mod, ChildNumber, ExtendedPrivKey, Normal, Hardened};
+use wallet::bip32::{mod, ChildNumber, ExtendedPrivKey, ExtendedPubKey, Normal, Hardened};
 use wallet::address::Address;
+use wallet::address_index::AddressIndex;
 
 /// A Wallet error
 #[deriving(Clone, PartialEq, Eq, Show)]
@@ -37,7 +37,9 @@ pub enum Error {
   /// Tried to add an account when one already exists with that name
   DuplicateAccount,
   /// An error occured in a BIP32 derivation
-  Bip32Error(bip32::Error)
+  Bip32Error(bip32::Error),
+  /// Tried to use a wallet without an address index
+  NoAddressIndex
 }
 
 /// Each account has two chains, as specified in BIP32
@@ -80,7 +82,8 @@ impl Default for Account {
 #[deriving(Clone, PartialEq, Eq, Show)]
 pub struct Wallet {
   master: ExtendedPrivKey,
-  accounts: HashMap<String, Account>
+  accounts: HashMap<String, Account>,
+  index: Option<AddressIndex>
 }
 
 impl<S: Encoder<E>, E> Encodable<S, E> for Wallet {
@@ -112,7 +115,8 @@ impl<D: Decoder<E>, E> Decodable<D, E> for Wallet {
             }
             Ok(ret)
           })
-        }))
+        })),
+        index: None
       })
     })
   }
@@ -127,8 +131,28 @@ impl Wallet {
 
     Ok(Wallet {
       master: try!(ExtendedPrivKey::new_master(network, seed)),
-      accounts: accounts
+      accounts: accounts,
+      index: None
     })
+  }
+
+  /// Creates the address index
+  #[inline]
+  pub fn build_index(&mut self, utxo_set: &UtxoSet) {
+    let new = AddressIndex::new(utxo_set, self);
+    self.index = Some(new);
+  }
+
+  /// Accessor for the wallet's address index
+  #[inline]
+  pub fn index<'a>(&'a self) -> Option<&'a AddressIndex> {
+    self.index.as_ref()
+  }
+
+  /// Mutable accessor for the wallet's address index
+  #[inline]
+  pub fn index_mut<'a>(&'a mut self) -> Option<&'a mut AddressIndex> {
+    self.index.as_mut()
   }
 
   /// Adds an account to a wallet
@@ -152,6 +176,7 @@ impl Wallet {
   }
 
   /// Locates an account in a wallet
+  #[inline]
   pub fn account_find<'a>(&'a self, name: &str)
                           -> Option<&'a Account> {
     self.accounts.find_equiv(&name)
@@ -162,10 +187,10 @@ impl Wallet {
                      account: &str,
                      chain: AccountChain)
                      -> Result<Address, Error> {
-    let (k1, k2) = self.siphash_key();
     // TODO: unnecessary allocation, waiting on *_equiv in stdlib
     let account = self.accounts.find_mut(&account.to_string());
     let account = match account { Some(a) => a, None => return Err(AccountNotFound) };
+    let index = match self.index { Some(ref i) => i, None => return Err(NoAddressIndex) };
 
     let (mut i, master) = match chain {
       Internal => (account.internal_next,
@@ -183,7 +208,7 @@ impl Wallet {
     let mut address = Address::from_key(
                         master.network,
                         &PublicKey::from_secret_key(&sk.secret_key, true));
-    while !admissible_address(k1, k2, &address) {
+    while !index.admissible_address(&address) {
       i += 1;
       sk = try!(master.ckd_priv(Normal(i)).map_err(Bip32Error));
       address = Address::from_key(
@@ -219,22 +244,53 @@ impl Wallet {
      u64_from_be_bytes(ck_slice, 8, 8))
   }
 
-  /// A filter used for creating a small address index
-  #[inline]
-  pub fn might_be_mine(&self, out: &TxOut) -> bool {
-    let (k1, k2) = self.siphash_key();
-    match out.classify(self.network()) {
-      PayToPubkeyHash(addr) => admissible_address(k1, k2, &addr),
-      _ => false
+  /// Total balance
+  pub fn total_balance(&self) -> Result<u64, Error> {
+    let mut ret = 0;
+    for (_, account) in self.accounts.iter() {
+      ret += try!(self.account_balance(account));
     }
+    Ok(ret)
   }
-}
 
-/// A filter used for creating a small address index. Note that this
-/// function, `might_be_mine` and `siphash_key` are used by wizards-wallet
-/// to create a cheap UTXO index
-#[inline]
-pub fn admissible_address(k1: u64, k2: u64, addr: &Address) -> bool {
-  hash_with_keys(k1, k2, &addr.as_slice()) & 0xFF == 0
+  /// Account balance
+  pub fn balance(&self, account: &str) -> Result<u64, Error> {
+    let account = self.accounts.find_equiv(&account);
+    let account = match account { Some(a) => a, None => return Err(AccountNotFound) };
+    self.account_balance(account)
+  }
+
+  fn account_balance(&self, account: &Account) -> Result<u64, Error> {
+    let index = match self.index { Some(ref i) => i, None => return Err(NoAddressIndex) };
+
+    let mut ret = 0;
+
+    // Sum internal balance
+    let master = try!(ExtendedPrivKey::from_path(
+                        &self.master,
+                        account.internal_path.as_slice()).map_err(Bip32Error));
+    for &cnum in account.internal_used.iter() {
+      let sk = try!(master.ckd_priv(cnum).map_err(Bip32Error));
+      let pk = ExtendedPubKey::from_private(&sk);
+      let addr = Address::from_key(pk.network, &pk.public_key);
+      for &(_, _, ref out) in index.find_by_script(&addr.script_pubkey()).iter() {
+        ret += out.value;
+      }
+    }
+    // Sum external balance
+    let master = try!(ExtendedPrivKey::from_path(
+                        &self.master,
+                        account.external_path.as_slice()).map_err(Bip32Error));
+    for &cnum in account.external_used.iter() {
+      let sk = try!(master.ckd_priv(cnum).map_err(Bip32Error));
+      let pk = ExtendedPubKey::from_private(&sk);
+      let addr = Address::from_key(pk.network, &pk.public_key);
+      for &(_, _, ref out) in index.find_by_script(&addr.script_pubkey()).iter() {
+        ret += out.value;
+      }
+    }
+
+    Ok(ret)
+  }
 }
 
