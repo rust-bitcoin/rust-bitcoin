@@ -856,7 +856,8 @@ impl AbstractStackElem {
       return Err(AnalyzeValidateFailed);
     }
 
-    for v in self.validators.iter().map(|v| v.clone()) {
+    let validators = self.validators.clone();
+    for v in validators.iter().map(|v| v.clone()) {
       try!((v.update)(self, v.args.as_slice()));
     }
     Ok(())
