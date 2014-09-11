@@ -273,7 +273,7 @@ impl Wallet {
       let sk = try!(master.ckd_priv(cnum).map_err(Bip32Error));
       let pk = ExtendedPubKey::from_private(&sk);
       let addr = Address::from_key(pk.network, &pk.public_key);
-      for &(_, _, ref out) in index.find_by_script(&addr.script_pubkey()).iter() {
+      for &(_, _, ref out, _) in index.find_by_script(&addr.script_pubkey()).iter() {
         ret += out.value;
       }
     }
@@ -285,7 +285,7 @@ impl Wallet {
       let sk = try!(master.ckd_priv(cnum).map_err(Bip32Error));
       let pk = ExtendedPubKey::from_private(&sk);
       let addr = Address::from_key(pk.network, &pk.public_key);
-      for &(_, _, ref out) in index.find_by_script(&addr.script_pubkey()).iter() {
+      for &(_, _, ref out, _) in index.find_by_script(&addr.script_pubkey()).iter() {
         ret += out.value;
       }
     }

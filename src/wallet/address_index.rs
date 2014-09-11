@@ -32,7 +32,7 @@ use util::hash::Sha256dHash;
 /// An address index
 #[deriving(Clone, PartialEq, Eq, Show)]
 pub struct AddressIndex {
-  index: HashMap<Script, Vec<(Sha256dHash, uint, TxOut)>>,
+  index: HashMap<Script, Vec<(Sha256dHash, uint, TxOut, uint)>>,
   network: Network,
   k1: u64,
   k2: u64
@@ -49,11 +49,11 @@ impl AddressIndex {
       k1: k1,
       k2: k2
     };
-    for (key, idx, txo) in utxo_set.iter() {
+    for (key, idx, txo, height) in utxo_set.iter() {
       if ret.admissible_txo(txo) {
         ret.index.insert_or_update_with(txo.script_pubkey.clone(),
-                                        vec![(key, idx, txo.clone())],
-                                        |_, v| v.push((key, idx, txo.clone())));
+                                        vec![(key, idx, txo.clone(), height)],
+                                        |_, v| v.push((key, idx, txo.clone(), height)));
       }
     }
     ret
@@ -77,7 +77,7 @@ impl AddressIndex {
   /// Lookup a txout by its scriptpubkey. Returns a slice because there
   /// may be more than one for any given scriptpubkey.
   #[inline]
-  pub fn find_by_script<'a>(&'a self, pubkey: &Script) -> &'a [(Sha256dHash, uint, TxOut)] {
+  pub fn find_by_script<'a>(&'a self, pubkey: &Script) -> &'a [(Sha256dHash, uint, TxOut, uint)] {
     self.index.find(pubkey).map(|v| v.as_slice()).unwrap_or(&[])
   }
 }

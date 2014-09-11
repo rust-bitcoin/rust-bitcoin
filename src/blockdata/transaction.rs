@@ -161,7 +161,7 @@ impl TxIn {
                   index: uint) -> Result<(), TransactionError> {
     let txo = utxoset.get_utxo(self.prev_hash, self.prev_index);
     match txo {
-      Some(txo) => {
+      Some((_, txo)) => {
         let mut p2sh_stack = Vec::new();
         let mut p2sh_script = Script::new();
 
@@ -242,7 +242,7 @@ impl Transaction {
       // Run through the input
       let txo = utxoset.get_utxo(input.prev_hash, input.prev_index);
       match txo {
-        Some(txo) => {
+        Some((_, txo)) => {
           let mut p2sh_stack = Vec::new();
           let mut p2sh_script = Script::new();
 
