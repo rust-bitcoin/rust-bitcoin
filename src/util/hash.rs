@@ -210,8 +210,8 @@ impl Sha256dHash {
     let &Sha256dHash(data) = self;
     let mut ret = String::with_capacity(64);
     for i in range(0u, 32) {
-      ret.push_char(from_digit((data[i] / 0x10) as uint, 16).unwrap());
-      ret.push_char(from_digit((data[i] & 0x0f) as uint, 16).unwrap());
+      ret.push(from_digit((data[i] / 0x10) as uint, 16).unwrap());
+      ret.push(from_digit((data[i] & 0x0f) as uint, 16).unwrap());
     }
     ret
   }
@@ -221,8 +221,8 @@ impl Sha256dHash {
     let &Sha256dHash(data) = self;
     let mut ret = String::with_capacity(64);
     for i in range(0u, 32).rev() {
-      ret.push_char(from_digit((data[i] / 0x10) as uint, 16).unwrap());
-      ret.push_char(from_digit((data[i] & 0x0f) as uint, 16).unwrap());
+      ret.push(from_digit((data[i] / 0x10) as uint, 16).unwrap());
+      ret.push(from_digit((data[i] & 0x0f) as uint, 16).unwrap());
     }
     ret
   }

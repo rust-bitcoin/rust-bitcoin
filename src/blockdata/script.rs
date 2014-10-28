@@ -1785,7 +1785,7 @@ impl Script {
         (false, opcodes::Ordinary(opcodes::OP_IF)) => exec_stack.push(false),
         (false, opcodes::Ordinary(opcodes::OP_NOTIF)) => exec_stack.push(false),
         (false, opcodes::Ordinary(opcodes::OP_ELSE)) => {
-          match exec_stack.mut_last() {
+          match exec_stack.last_mut() {
             Some(ref_e) => { *ref_e = !*ref_e }
             None => { return Err(ElseWithoutIf); }
           }
@@ -1816,7 +1816,7 @@ impl Script {
               }
             }
             opcodes::OP_ELSE => {
-              match exec_stack.mut_last() {
+              match exec_stack.last_mut() {
                 Some(ref_e) => { *ref_e = !*ref_e }
                 None => { return Err(ElseWithoutIf); }
               }
@@ -2041,7 +2041,7 @@ impl Script {
       } // end loop
       // Store the stack in the trace
       trace.as_mut().map(|t|
-        t.mut_last().map(|t| {
+        t.last_mut().map(|t| {
           t.errored = false;
           t.stack = stack.iter().map(|elem| elem.as_slice().to_hex()).collect();
         })
@@ -2143,7 +2143,7 @@ impl Script {
           (false, opcodes::Ordinary(opcodes::OP_IF)) => exec_stack.push(false),
           (false, opcodes::Ordinary(opcodes::OP_NOTIF)) => exec_stack.push(false),
           (false, opcodes::Ordinary(opcodes::OP_ELSE)) => {
-            match exec_stack.mut_last() {
+            match exec_stack.last_mut() {
               Some(ref_e) => { *ref_e = !*ref_e }
               None => { return Err(ElseWithoutIf); }
             }
@@ -2212,7 +2212,7 @@ impl Script {
                 }
               }
               opcodes::OP_ELSE => {
-                match exec_stack.mut_last() {
+                match exec_stack.last_mut() {
                   Some(ref_e) => { *ref_e = !*ref_e }
                   None => { return Err(ElseWithoutIf); }
                 }
@@ -2423,8 +2423,8 @@ impl json::ToJson for Script {
     let &Script(ref raw) = self;
     let mut ret = String::new();
     for dat in raw.iter() {
-      ret.push_char(from_digit((dat / 0x10) as uint, 16).unwrap());
-      ret.push_char(from_digit((dat & 0x0f) as uint, 16).unwrap());
+      ret.push(from_digit((dat / 0x10) as uint, 16).unwrap());
+      ret.push(from_digit((dat & 0x0f) as uint, 16).unwrap());
     }
     json::String(ret)
   }
