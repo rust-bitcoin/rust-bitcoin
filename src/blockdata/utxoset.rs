@@ -349,7 +349,7 @@ impl UtxoSet {
       if skipped_genesis {
         let mut extract_vec = vec![];
         mem::swap(&mut extract_vec, self.spent_txos.get_mut(self.spent_idx as uint));
-        for ((txid, n), (height, txo)) in extract_vec.move_iter() {
+        for ((txid, n), (height, txo)) in extract_vec.into_iter() {
           // Remove the tx's utxo list and patch the txo into place
           let new_node =
               match self.table.pop(&txid) {

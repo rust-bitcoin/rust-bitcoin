@@ -91,7 +91,7 @@ pub trait FromBase58 {
                                        .map(|_| 0)
                                        .collect();
     // Copy rest of string
-    ret.extend(scratch.move_iter().skip_while(|&x| x == 0));
+    ret.extend(scratch.into_iter().skip_while(|&x| x == 0));
     FromBase58::from_base58_layout(ret)
   }
 
@@ -136,7 +136,7 @@ pub fn base58_encode_slice(data: &[u8]) -> String {
                                                     .map(|_|  BASE58_CHARS[0])
                                                     .collect());
     // Copy rest of string
-    ret.as_mut_vec().extend(scratch.move_iter().skip_while(|&x| x == 0)
+    ret.as_mut_vec().extend(scratch.into_iter().skip_while(|&x| x == 0)
                                                .map(|x| BASE58_CHARS[x as uint]));
     ret
   }

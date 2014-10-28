@@ -171,7 +171,7 @@ impl<T:Clone> ThinVec<T> {
     // if T is Copy
     for i in range(0, other.len()) {
       unsafe {
-        ptr::write(self.as_mut_slice().unsafe_mut_ref(old_cap + i),
+        ptr::write(self.as_mut_slice().unsafe_mut(old_cap + i),
                    other.unsafe_get(i).clone());
       }
     }
@@ -198,7 +198,7 @@ impl<T:Clone> Clone for ThinVec<T> {
       // Copied from vec.rs, which claims this will be optimized to a memcpy
       // if T is Copy
       for i in range(0, self.len()) {
-        ptr::write(ret.as_mut_slice().unsafe_mut_ref(i),
+        ptr::write(ret.as_mut_slice().unsafe_mut(i),
                    self.as_slice().unsafe_get(i).clone());
       }
       ret
