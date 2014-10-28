@@ -69,8 +69,8 @@ impl<T> ThinVec<T> {
 
   /// Mutable iterator over elements of the vector
   #[inline]
-  pub fn mut_iter<'a>(&'a mut self) -> MutItems<'a, T> {
-    self.as_mut_slice().mut_iter()
+  pub fn iter_mut<'a>(&'a mut self) -> MutItems<'a, T> {
+    self.as_mut_slice().iter_mut()
   }
 
   /// Get vector as mutable slice

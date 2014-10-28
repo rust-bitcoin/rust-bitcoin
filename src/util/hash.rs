@@ -167,7 +167,7 @@ impl Sha256dHash {
   pub fn into_le(self) -> Uint256 {
     let Sha256dHash(data) = self;
     let mut ret: [u64, ..4] = unsafe { transmute(data) };
-    for x in ret.as_mut_slice().mut_iter() { *x = x.to_le(); }
+    for x in ret.as_mut_slice().iter_mut() { *x = x.to_le(); }
     Uint256(ret)
   }
 
@@ -177,7 +177,7 @@ impl Sha256dHash {
     let Sha256dHash(mut data) = self;
     data.reverse();
     let mut ret: [u64, ..4] = unsafe { transmute(data) };
-    for x in ret.mut_iter() { *x = x.to_be(); }
+    for x in ret.iter_mut() { *x = x.to_be(); }
     Uint256(ret)
   }
 

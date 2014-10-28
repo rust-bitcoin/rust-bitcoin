@@ -240,7 +240,7 @@ impl UtxoSet {
             // Otherwise put the replaced txouts into the `deleted` cache
             // so that rewind will put them back.
             self.spent_txos.get_mut(spent_idx).reserve_additional(replace.outputs.len());
-            for (n, input) in replace.outputs.mut_iter().enumerate() {
+            for (n, input) in replace.outputs.iter_mut().enumerate() {
               match input.take() {
                 Some(txo) => { self.spent_txos.get_mut(spent_idx).push(((txid, n as u32), (replace.height, txo))); }
                 None => {}
@@ -283,7 +283,7 @@ impl UtxoSet {
       // Return the last error since we need to finish every future before
       // leaving this function, and given that, it's easier to return the last.
       let mut last_error = Ok(());
-      for res in future_vec.mut_iter().map(|f| f.get()) {
+      for res in future_vec.iter_mut().map(|f| f.get()) {
         if res.is_err() {
           last_error = res;
         }
