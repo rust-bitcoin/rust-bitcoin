@@ -174,7 +174,7 @@ impl TxIn {
           p2sh_stack = stack.clone();
           p2sh_script = match p2sh_stack.pop() {
             Some(script::Owned(v)) => Script::from_vec(v),
-            Some(script::Slice(s)) => Script::from_vec(Vec::from_slice(s)),
+            Some(script::Slice(s)) => Script::from_vec(s.to_vec()),
             None => unreachable!()
           };
         }
@@ -255,7 +255,7 @@ impl Transaction {
             p2sh_stack = stack.clone();
             p2sh_script = match p2sh_stack.pop() {
               Some(script::Owned(v)) => Script::from_vec(v),
-              Some(script::Slice(s)) => Script::from_vec(Vec::from_slice(s)),
+              Some(script::Slice(s)) => Script::from_vec(s.to_vec()),
               None => unreachable!()
             };
           }

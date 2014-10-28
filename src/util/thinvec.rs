@@ -180,11 +180,11 @@ impl<T:Clone> ThinVec<T> {
   /// Constructor from a slice
   #[inline]
   pub fn from_slice(v: &[T]) -> ThinVec<T> {
-    ThinVec::from_vec(Vec::from_slice(v))
+    ThinVec::from_vec(v.to_vec())
   }
 }
 
-impl<T> Slice<T> for ThinVec<T> {
+impl<T> AsSlice<T> for ThinVec<T> {
   #[inline]
   fn as_slice<'a>(&'a self) -> &'a [T] {
     unsafe { mem::transmute(raw::Slice { data: self.ptr as *const T, len: self.cap as uint }) }

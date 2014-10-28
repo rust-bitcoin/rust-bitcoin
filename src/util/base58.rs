@@ -164,7 +164,7 @@ pub trait ToBase58 {
 
 // Trivial implementations for slices and vectors
 impl<'a> ToBase58 for &'a [u8] {
-  fn base58_layout(&self) -> Vec<u8> { Vec::from_slice(*self) }
+  fn base58_layout(&self) -> Vec<u8> { *self.to_vec() }
   fn to_base58(&self) -> String { base58_encode_slice(*self) }
 }
 
@@ -174,7 +174,7 @@ impl ToBase58 for Vec<u8> {
 }
 
 impl ToBase58 for ThinVec<u8> {
-  fn base58_layout(&self) -> Vec<u8> { Vec::from_slice(self.as_slice()) }
+  fn base58_layout(&self) -> Vec<u8> { self.as_slice().to_vec() }
   fn to_base58(&self) -> String { base58_encode_slice(self.as_slice()) }
 }
 

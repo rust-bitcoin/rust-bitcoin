@@ -240,8 +240,8 @@ fn update_op_equal(elem: &mut AbstractStackElem, others: &[uint])
         (Some(_), Some(_)) => { return Err(Unsatisfiable); }
       }
       // Equalize full values
-      match (one.raw_value().map(|r| Vec::from_slice(r)),
-             two.raw_value().map(|r| Vec::from_slice(r))) {
+      match (one.raw_value().map(|r| r.to_vec()),
+             two.raw_value().map(|r| r.to_vec())) {
         (None, None) => {},
         (None, Some(x)) => try!(one.set_value(x.as_slice())),
         (Some(x), None) => try!(two.set_value(x.as_slice())),
@@ -771,7 +771,7 @@ impl AbstractStackElem {
       len_lo: data.len(),
       len_hi: data.len(),
       bool_val: Some(read_scriptbool(data)),
-      raw: Some(Vec::from_slice(data)),
+      raw: Some(data.to_vec()),
       validators: vec![],
       alloc_index: None
     }
@@ -901,7 +901,7 @@ impl AbstractStackElem {
 
   /// Sets the entire value of the 
   pub fn set_value(&mut self, val: &[u8]) -> Result<(), ScriptError> {
-    match self.raw_value().map(|x| Vec::from_slice(x)) {
+    match self.raw_value().map(|x| x.to_vec()) {
       Some(x) => { if x.as_slice() == val { Ok(()) } else { Err(Unsatisfiable) } }
       None => {
         try!(self.set_len_lo(val.len()));
@@ -915,7 +915,7 @@ impl AbstractStackElem {
           Err(_) => {}
         }
         try!(self.set_bool_value(read_scriptbool(val)));
-        self.raw = Some(Vec::from_slice(val));
+        self.raw = Some(val.to_vec());
         Ok(())
       }
     }
@@ -1279,7 +1279,7 @@ impl<'a> PartialEq for MaybeOwned<'a> {
 
 impl<'a> Eq for MaybeOwned<'a> {}
 
-impl<'a> Slice<u8> for MaybeOwned<'a> {
+impl<'a> AsSlice<u8> for MaybeOwned<'a> {
   #[inline]
   fn as_slice<'a>(&'a self) -> &'a [u8] {
     match *self {
@@ -1943,7 +1943,7 @@ impl Script {
 
               // Compute the section of script that needs to be hashed: everything
               // from the last CODESEPARATOR, except the signature itself.
-              let mut script = Vec::from_slice(raw.slice_from(codeseparator_index));
+              let mut script = raw.slice_from(codeseparator_index).to_vec();
               let mut remove = Script::new();
               remove.push_slice(sig_slice);
               script_find_and_remove(&mut script, remove.as_slice());
@@ -1992,7 +1992,7 @@ impl Script {
 
               // Compute the section of script that needs to be hashed: everything
               // from the last CODESEPARATOR, except the signatures themselves.
-              let mut script = Vec::from_slice(raw.slice_from(codeseparator_index));
+              let mut script = raw.slice_from(codeseparator_index).to_vec();
               for sig in sigs.iter() {
                 let mut remove = Script::new();
                 remove.push_slice(sig.as_slice());
@@ -2743,7 +2743,7 @@ mod test {
     assert_eq!(Script(ThinVec::from_vec("04010203047576a914bfbd43270c1e824c01e27386844d062d2f7518a688ad76a97614d2f7b8a37fb9b46782534078f9748f41d61a22f3877c148d4c6a901a3d87ed680478931dc9b6f0871af0ab879b69ac".from_hex().unwrap())).is_provably_unspendable(), false);
     assert_eq!(Script(ThinVec::from_vec("03800000".from_hex().unwrap())).is_provably_unspendable(), false);
     // This one is cool -- a 2-of-4 multisig with four pks given, only two of which are legit
-    assert_eq!(Script(ThinVec::from_vec("522103bb52138972c48a132fc1f637858c5189607dd0f7fe40c4f20f6ad65f2d389ba42103bb52138972c48a132fc1f637858c5189607dd0f7fe40c4f20f6ad65f2d389ba45f6054ae".from_hex().unwrap())).is_provably_unspendable(), false);
+    assert_eq!(Script(ThinVec::from_vec("522103bb52138972c48a132fc1f637858c5189607dd0fg12827fe40c4f20f6ad65f2d389ba42103bb52138972c48a132fc1f637858c5189607dd0f7fe40c4f20f6ad65f2d389ba45f6054ae".from_hex().unwrap())).is_provably_unspendable(), false);
     assert_eq!(Script(ThinVec::from_vec("64635167006867630067516868".from_hex().unwrap())).is_provably_unspendable(), false);
     // This one is on mainnet oeO
     assert_eq!(Script(ThinVec::from_vec("827651a0698faaa9a8a7a687".from_hex().unwrap())).is_provably_unspendable(), false);
