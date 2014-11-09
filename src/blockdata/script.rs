@@ -1289,9 +1289,9 @@ impl<'a> AsSlice<u8> for MaybeOwned<'a> {
   }
 }
 
-impl<'a> Collection for MaybeOwned<'a> {
+impl<'a> MaybeOwned<'a> {
   #[inline]
-  fn len(&self) -> uint {
+  pub fn len(&self) -> uint {
     match *self {
       Owned(ref v) => v.len(),
       Slice(ref s) => s.len()
