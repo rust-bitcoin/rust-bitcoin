@@ -101,7 +101,7 @@ impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for Inventory {
   #[inline]
   fn consensus_encode(&self, s: &mut S) -> Result<(), E> {
     try!(match self.inv_type {
-      InvError => 0u32, 
+      InvError => 0u32,
       InvTransaction => 1,
       InvBlock => 2
     }.consensus_encode(s));
@@ -119,7 +119,7 @@ impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for Inventory {
         1 => InvTransaction,
         2 => InvBlock,
         // TODO do not fail here
-        _ => { fail!("bad inventory type field") }
+        _ => { panic!("bad inventory type field") }
       },
       hash: try!(ConsensusDecodable::consensus_decode(d))
     })

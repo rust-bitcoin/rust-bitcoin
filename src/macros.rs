@@ -69,7 +69,7 @@ macro_rules! nu_select(
           $code
         })else+
         else {
-          fail!("we didn't find the ready receiver, but we should have had one");
+          panic!("we didn't find the ready receiver, but we should have had one");
         };
       // At this point, the first i receivers have been aborted. We need to abort the rest:
       $(if i > 0 {

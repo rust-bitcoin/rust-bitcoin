@@ -190,7 +190,7 @@ fn check_op_equal(elem: &AbstractStackElem, others: &[uint]) -> bool {
   }
 }
 
-fn update_boolean(elem: &mut AbstractStackElem) 
+fn update_boolean(elem: &mut AbstractStackElem)
                  -> Result<(), ScriptError> {
   // Test boolean values
   elem.bool_val = Some(true);
@@ -899,7 +899,7 @@ impl AbstractStackElem {
     self.set_num_hi(val)
   }
 
-  /// Sets the entire value of the 
+  /// Sets the entire value of the
   pub fn set_value(&mut self, val: &[u8]) -> Result<(), ScriptError> {
     match self.raw_value().map(|x| x.to_vec()) {
       Some(x) => { if x.as_slice() == val { Ok(()) } else { Err(Unsatisfiable) } }
@@ -1657,7 +1657,7 @@ impl Script {
         raw.push(((n / 0x10000) % 0x100) as u8);
         raw.push((n / 0x1000000) as u8);
       }
-      _ => fail!("tried to put a 4bn+ sized object into a script!")
+      _ => panic!("tried to put a 4bn+ sized object into a script!")
     }
     // Then push the acraw
     raw.extend(data.iter().map(|n| *n));
@@ -2504,7 +2504,7 @@ mod test {
     // data
     script.push_slice("NRA4VR".as_bytes()); comp.push_all([6u8, 78, 82, 65, 52, 86, 82]); assert_eq!(script, Script(comp.clone()));
 
-    // opcodes 
+    // opcodes
     script.push_opcode(opcodes::all::OP_CHECKSIG); comp.push(0xACu8); assert_eq!(script, Script(comp.clone()));
     script.push_opcode(opcodes::all::OP_CHECKSIG); comp.push(0xACu8); assert_eq!(script, Script(comp.clone()));
   }

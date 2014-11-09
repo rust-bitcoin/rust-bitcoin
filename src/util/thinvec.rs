@@ -124,7 +124,7 @@ impl<T> ThinVec<T> {
     } else {
       let old_size = (self.cap - 1) as uint * mem::size_of::<T>();
       let new_size = self.cap as uint * mem::size_of::<T>();
-      if new_size < old_size { fail!("ThinVec::push: cap overflow") }
+      if new_size < old_size { panic!("ThinVec::push: cap overflow") }
       unsafe {
         self.ptr =
           if old_size == 0 {
@@ -153,6 +153,10 @@ impl<T> ThinVec<T> {
       self.cap = new_cap;
     }
   }
+
+  /// "len" is no longer part of a trait
+  #[inline]
+  pub fn len(&self) -> uint { self.cap as uint }
 
   /// Increase the length of the vector
   pub unsafe fn reserve_additional(&mut self, extra: u32) {
@@ -227,7 +231,7 @@ impl<T> FromIterator<T> for ThinVec<T> {
   }
 }
 
-impl<T> Extendable<T> for ThinVec<T> {
+impl<T> Extend<T> for ThinVec<T> {
   #[inline]
   fn extend<I: Iterator<T>>(&mut self, iter: I) {
     let old_cap = self.cap;
@@ -241,11 +245,6 @@ impl<T> Extendable<T> for ThinVec<T> {
       }
     }
   }
-}
-
-impl<T> Collection for ThinVec<T> {
-  #[inline]
-  fn len(&self) -> uint { self.cap as uint }
 }
 
 impl<T:fmt::Show> fmt::Show for ThinVec<T> {
@@ -297,7 +296,7 @@ mod tests {
 
       for i in range(0, cap) {
         assert_eq!(thinvec.get_mut(i as uint).take(), Some(box i));
-        assert_eq!(thinvec.get_mut(i as uint).take(), None); 
+        assert_eq!(thinvec.get_mut(i as uint).take(), None);
       }
     }
   }

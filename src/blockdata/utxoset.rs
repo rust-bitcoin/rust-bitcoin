@@ -20,7 +20,7 @@
 
 use std::cmp;
 use std::collections::HashMap;
-use std::collections::hashmap::Entries;
+use std::collections::hash_map::Entries;
 use std::default::Default;
 use std::mem;
 use std::os::num_cpus;
