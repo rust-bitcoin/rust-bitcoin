@@ -202,3 +202,8 @@ macro_rules! impl_array_newtype_show(
   }
 )
 
+macro_rules! method(
+  ($name:ident) => { |x|{ x.$name() } };
+  ($name:ident, $arg:expr) => { |x|{ x.$name($arg) } };
+)
+
