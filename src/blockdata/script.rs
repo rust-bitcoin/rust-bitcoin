@@ -2423,8 +2423,8 @@ impl json::ToJson for Script {
     let &Script(ref raw) = self;
     let mut ret = String::new();
     for dat in raw.iter() {
-      ret.push(from_digit((dat / 0x10) as uint, 16).unwrap());
-      ret.push(from_digit((dat & 0x0f) as uint, 16).unwrap());
+      ret.push(from_digit((*dat / 0x10) as uint, 16).unwrap());
+      ret.push(from_digit((*dat & 0x0f) as uint, 16).unwrap());
     }
     json::String(ret)
   }
