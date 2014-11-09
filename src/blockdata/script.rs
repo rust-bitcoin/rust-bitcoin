@@ -1097,7 +1097,7 @@ impl AbstractStack {
 
   /// Lookup an element by index
   pub fn get_elem_mut(&mut self, alloc_index: uint) -> &mut AbstractStackElem {
-    self.alloc.get_mut(alloc_index)
+    self.alloc.get_mut(alloc_index).unwrap()
   }
 
   /// Push a copy of an existing element by index
@@ -1109,7 +1109,7 @@ impl AbstractStack {
   pub fn push_alloc<'a>(&'a mut self, elem: AbstractStackElem) -> &'a mut AbstractStackElem {
     let idx = self.allocate(elem);
     self.stack.push(idx);
-    self.alloc.get_mut(idx)
+    self.alloc.get_mut(idx).unwrap()
   }
 
 
@@ -1119,7 +1119,7 @@ impl AbstractStack {
       self.push_initial(AbstractStackElem::new_unknown());
     }
 
-    self.alloc.get_mut(*self.stack.last().unwrap())
+    self.alloc.get_mut(*self.stack.last().unwrap()).unwrap()
   }
 
   /// Obtain a stackref to the current top element
@@ -1144,7 +1144,7 @@ impl AbstractStack {
       self.push_initial(AbstractStackElem::new_unknown());
     }
 
-    self.alloc.get_mut(self.stack.pop().unwrap())
+    self.alloc.get_mut(self.stack.pop().unwrap()).unwrap()
   }
 
 
