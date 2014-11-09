@@ -94,7 +94,7 @@ impl Socket {
     // These locks should just pop open now
     let mut reader_lock = self.buffered_reader.lock();
     let mut writer_lock = self.buffered_writer.lock();
-    match tcp::TcpStream::connect(host, port) {
+    match tcp::TcpStream::connect((host, port)) {
       Ok(s)  => {
         *reader_lock = Some(BufferedReader::new(s.clone()));
         *writer_lock = Some(BufferedWriter::new(s.clone()));
@@ -174,7 +174,7 @@ impl Socket {
       None => Err(standard_error(NotConnected)),
       Some(ref mut writer) => {
         let message = RawNetworkMessage { magic: self.magic, payload: payload };
-        try!(message.consensus_encode(&mut RawEncoder::new(writer.by_ref())));
+        try!(message.consensus_encode(&mut RawEncoder::new(*writer.get_ref())));
         writer.flush()
       }
     }
@@ -189,7 +189,7 @@ impl Socket {
       Some(ref mut buf) => {
         // We need a new scope since the closure in here borrows read_err,
         // and we try to read it afterward. Letting `iter` go out fixes it.
-        let mut decoder = RawDecoder::new(buf.by_ref());
+        let mut decoder = RawDecoder::new(*buf.get_ref());
         let decode: IoResult<RawNetworkMessage> = ConsensusDecodable::consensus_decode(&mut decoder);
         match decode {
           // Check for parse errors...
