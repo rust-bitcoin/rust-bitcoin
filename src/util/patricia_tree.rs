@@ -473,7 +473,7 @@ impl<'a, K, V> Iterator<&'a mut V> for MutItems<'a, K, V> {
   fn next(&mut self) -> Option<&'a mut V> {
     fn borrow_opt<'a, K, V>(opt_ptr: &'a Option<Box<PatriciaTree<K, V>>>) -> *mut PatriciaTree<K, V> {
       match *opt_ptr {
-        Some(ref data) => &**data as *const _ as *mut _,
+        Some(ref data) => &*data as *const _ as *mut _,
         None => RawPtr::null()
       }
     }
@@ -628,13 +628,13 @@ mod tests {
     for i in range(0, n_elems) {
       let hash = Sha256dHash::from_data(&[(i / 0x100) as u8, (i % 0x100) as u8]).into_le().low_128();
       tree.insert(&hash, 128, i);
-      *data.get_mut(i) = Some(());
+      data[i] = Some(());
     }
 
     // Iterate over and try to get everything
     for n in tree.iter() {
       assert!(data[*n].is_some());
-      *data.get_mut(*n) = None;
+      data[*n] = None;
     }
 
     // Check that we got everything
@@ -650,7 +650,7 @@ mod tests {
     for i in range(0, n_elems) {
       let hash = Sha256dHash::from_data(&[(i / 0x100) as u8, (i % 0x100) as u8]).into_le().low_128();
       tree.insert(&hash, 128, i);
-      *data.get_mut(i) = Some(());
+      data[i] = Some(());
     }
 
     // Iterate over and flip all the values
@@ -661,7 +661,7 @@ mod tests {
     // Iterate over and try to get everything
     for n in tree.mut_iter() {
       assert!(data[*n].is_some());
-      *data.get_mut(*n) = None;
+      data[*n] = None;
     }
 
     // Check that we got everything
