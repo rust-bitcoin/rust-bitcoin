@@ -240,9 +240,10 @@ impl UtxoSet {
             // Otherwise put the replaced txouts into the `deleted` cache
             // so that rewind will put them back.
             self.spent_txos.get_mut(spent_idx).map(method!(reserve_additional, replace.outputs.len()));
+            let height = replace.height;
             for (n, input) in replace.outputs.iter_mut().enumerate() {
               match input.take() {
-                Some(txo) => { self.spent_txos.get_mut(spent_idx).map(method!(push, ((txid, n as u32), (replace.height, txo)))); }
+                Some(txo) => { self.spent_txos.get_mut(spent_idx).map(method!(push, ((txid, n as u32), (height, txo)))); }
                 None => {}
               }
             }
