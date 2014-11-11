@@ -55,7 +55,7 @@ impl AddressIndex {
           let insert = (key, idx, txo.clone(), height);
           if ret.index.contains_key(&pubkey) {
               let vec = ret.index.get_mut(&pubkey);
-              vec.push(insert);
+              vec.map(method!(push, insert));
           } else {
               ret.index.insert(pubkey, vec![insert]);
           }

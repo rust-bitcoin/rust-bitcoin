@@ -119,7 +119,7 @@ impl hash::Hash<u64> for Hash64 {
 
 impl hash::Hasher<u64> for DumbHasher {
   #[inline]
-  fn hash<T: hash::Hash<u64>>(&self, value: &T) -> u64 {
+  fn hash<Sized? T: hash::Hash<u64>>(&self, value: &T) -> u64 {
     let mut ret = 0u64;
     value.hash(&mut ret);
     ret
