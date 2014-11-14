@@ -179,7 +179,7 @@ impl Wallet {
   #[inline]
   pub fn account_find<'a>(&'a self, name: &str)
                           -> Option<&'a Account> {
-    self.accounts.find_equiv(&name)
+    self.accounts.find_equiv(&name.to_string())
   }
 
   /// Create a new address
@@ -255,7 +255,7 @@ impl Wallet {
 
   /// Account balance
   pub fn balance(&self, account: &str) -> Result<u64, Error> {
-    let account = self.accounts.find_equiv(&account);
+    let account = self.accounts.find_equiv(&account.to_string());
     let account = match account { Some(a) => a, None => return Err(AccountNotFound) };
     self.account_balance(account)
   }

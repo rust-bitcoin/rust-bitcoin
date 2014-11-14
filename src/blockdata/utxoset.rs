@@ -20,7 +20,7 @@
 
 use std::cmp;
 use std::collections::HashMap;
-use std::collections::hashmap::Entries;
+use std::collections::hash_map::Entries;
 use std::default::Default;
 use std::mem;
 use std::os::num_cpus;
@@ -216,7 +216,7 @@ impl UtxoSet {
     self.last_hash = block.header.bitcoin_hash();
     let spent_idx = self.spent_idx as uint;
     self.spent_idx = (self.spent_idx + 1) % self.spent_txos.len() as u64;
-    self.spent_txos.get_mut(spent_idx).clear();
+    self.spent_txos.get_mut(spent_idx).map(method!(clear));
 
     // Add all the utxos so that we can have chained transactions within the
     // same block. (Note that Bitcoin requires chained transactions to be in
@@ -239,12 +239,16 @@ impl UtxoSet {
           } else {
             // Otherwise put the replaced txouts into the `deleted` cache
             // so that rewind will put them back.
-            self.spent_txos.get_mut(spent_idx).reserve_additional(replace.outputs.len());
-            for (n, input) in replace.outputs.mut_iter().enumerate() {
-              match input.take() {
-                Some(txo) => { self.spent_txos.get_mut(spent_idx).push(((txid, n as u32), (replace.height, txo))); }
-                None => {}
-              }
+            self.spent_txos.get_mut(spent_idx).map(method!(reserve_additional, replace.outputs.len()));
+            let height = replace.height;
+            for (n, input) in replace.outputs.iter_mut().enumerate() {
+              input.take().map(|txo|{
+                match self.spent_txos.get_mut(spent_idx) {
+                    Some(mut vec) => 
+                      vec.push(((txid, n as u32), (height, txo))),
+                    None => {}
+                }
+              });
             }
             // Otherwise fail the block
             self.rewind(block);
@@ -283,7 +287,7 @@ impl UtxoSet {
       // Return the last error since we need to finish every future before
       // leaving this function, and given that, it's easier to return the last.
       let mut last_error = Ok(());
-      for res in future_vec.mut_iter().map(|f| f.get()) {
+      for res in future_vec.iter_mut().map(|f| f.get()) {
         if res.is_err() {
           last_error = res;
         }
@@ -296,11 +300,16 @@ impl UtxoSet {
     for tx in block.txdata.iter().skip(1) {
       let txid = tx.bitcoin_hash();
       // Put the removed utxos into the stxo cache, in case we need to rewind
-      self.spent_txos.get_mut(spent_idx).reserve_additional(tx.input.len());
+      self.spent_txos.get_mut(spent_idx).map(method!(reserve_additional, tx.input.len())); 
       for (n, input) in tx.input.iter().enumerate() {
         let taken = self.take_utxo(input.prev_hash, input.prev_index);
         match taken {
-          Some(txo) => { self.spent_txos.get_mut(spent_idx).push(((txid, n as u32), txo)); }
+          Some(txo) => { 
+            match self.spent_txos.get_mut(spent_idx) {
+              Some(vec) => vec.push(((txid, n as u32), txo)), 
+              None => {}
+            }
+          }
           None => {
             if validation >= TxoValidation {
               self.rewind(block);
@@ -348,8 +357,8 @@ impl UtxoSet {
       // Read deleted txouts
       if skipped_genesis {
         let mut extract_vec = vec![];
-        mem::swap(&mut extract_vec, self.spent_txos.get_mut(self.spent_idx as uint));
-        for ((txid, n), (height, txo)) in extract_vec.move_iter() {
+        self.spent_txos.get_mut(self.spent_idx as uint).map(|x|{mem::swap(&mut extract_vec, x)});
+        for ((txid, n), (height, txo)) in extract_vec.into_iter() {
           // Remove the tx's utxo list and patch the txo into place
           let new_node =
               match self.table.pop(&txid) {

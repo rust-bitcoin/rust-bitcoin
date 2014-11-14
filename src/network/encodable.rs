@@ -94,9 +94,9 @@ impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for VarInt {
   fn consensus_encode(&self, s: &mut S) -> Result<(), E> {
     let &VarInt(n) = self;
     match n {
-      0..0xFC             => { (n as u8).consensus_encode(s) }
-      0xFD..0xFFFF        => { try!(s.emit_u8(0xFD)); (n as u16).consensus_encode(s) }
-      0x10000..0xFFFFFFFF => { try!(s.emit_u8(0xFE)); (n as u32).consensus_encode(s) }
+      0...0xFC             => { (n as u8).consensus_encode(s) }
+      0xFD...0xFFFF        => { try!(s.emit_u8(0xFD)); (n as u16).consensus_encode(s) }
+      0x10000...0xFFFFFFFF => { try!(s.emit_u8(0xFE)); (n as u32).consensus_encode(s) }
       _                   => { try!(s.emit_u8(0xFF)); (n as u64).consensus_encode(s) }
     }
   }

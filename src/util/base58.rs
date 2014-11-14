@@ -78,7 +78,7 @@ pub trait FromBase58 {
         Some(d58) => d58 as u32,
         None => { return Err(BadByte(d58)); }
       };
-      for d256 in scratch.mut_iter().rev() {
+      for d256 in scratch.iter_mut().rev() {
         carry += *d256 as u32 * 58;
         *d256 = carry as u8;
         carry /= 256;
@@ -91,7 +91,7 @@ pub trait FromBase58 {
                                        .map(|_| 0)
                                        .collect();
     // Copy rest of string
-    ret.extend(scratch.move_iter().skip_while(|&x| x == 0));
+    ret.extend(scratch.into_iter().skip_while(|&x| x == 0));
     FromBase58::from_base58_layout(ret)
   }
 
@@ -121,7 +121,7 @@ pub fn base58_encode_slice(data: &[u8]) -> String {
   for &d256 in data.base58_layout().iter() {
     // Compute "X = X * 256 + next_digit" in base 58
     let mut carry = d256 as u32;
-    for d58 in scratch.mut_iter().rev() {
+    for d58 in scratch.iter_mut().rev() {
       carry += *d58 as u32 << 8;
       *d58 = (carry % 58) as u8;
       carry /= 58;
@@ -136,7 +136,7 @@ pub fn base58_encode_slice(data: &[u8]) -> String {
                                                     .map(|_|  BASE58_CHARS[0])
                                                     .collect());
     // Copy rest of string
-    ret.as_mut_vec().extend(scratch.move_iter().skip_while(|&x| x == 0)
+    ret.as_mut_vec().extend(scratch.into_iter().skip_while(|&x| x == 0)
                                                .map(|x| BASE58_CHARS[x as uint]));
     ret
   }
@@ -164,7 +164,7 @@ pub trait ToBase58 {
 
 // Trivial implementations for slices and vectors
 impl<'a> ToBase58 for &'a [u8] {
-  fn base58_layout(&self) -> Vec<u8> { Vec::from_slice(*self) }
+  fn base58_layout(&self) -> Vec<u8> { (*self).to_vec() }
   fn to_base58(&self) -> String { base58_encode_slice(*self) }
 }
 
@@ -174,7 +174,7 @@ impl ToBase58 for Vec<u8> {
 }
 
 impl ToBase58 for ThinVec<u8> {
-  fn base58_layout(&self) -> Vec<u8> { Vec::from_slice(self.as_slice()) }
+  fn base58_layout(&self) -> Vec<u8> { self.as_slice().to_vec() }
   fn to_base58(&self) -> String { base58_encode_slice(self.as_slice()) }
 }
 

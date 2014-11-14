@@ -69,8 +69,8 @@ impl<T> ThinVec<T> {
 
   /// Mutable iterator over elements of the vector
   #[inline]
-  pub fn mut_iter<'a>(&'a mut self) -> MutItems<'a, T> {
-    self.as_mut_slice().mut_iter()
+  pub fn iter_mut<'a>(&'a mut self) -> MutItems<'a, T> {
+    self.as_mut_slice().iter_mut()
   }
 
   /// Get vector as mutable slice
@@ -124,7 +124,7 @@ impl<T> ThinVec<T> {
     } else {
       let old_size = (self.cap - 1) as uint * mem::size_of::<T>();
       let new_size = self.cap as uint * mem::size_of::<T>();
-      if new_size < old_size { fail!("ThinVec::push: cap overflow") }
+      if new_size < old_size { panic!("ThinVec::push: cap overflow") }
       unsafe {
         self.ptr =
           if old_size == 0 {
@@ -154,6 +154,10 @@ impl<T> ThinVec<T> {
     }
   }
 
+  /// "len" is no longer part of a trait
+  #[inline]
+  pub fn len(&self) -> uint { self.cap as uint }
+
   /// Increase the length of the vector
   pub unsafe fn reserve_additional(&mut self, extra: u32) {
     let new_cap = self.cap.checked_add(&extra).expect("ThinVec::reserve_additional: length overflow");
@@ -171,7 +175,7 @@ impl<T:Clone> ThinVec<T> {
     // if T is Copy
     for i in range(0, other.len()) {
       unsafe {
-        ptr::write(self.as_mut_slice().unsafe_mut_ref(old_cap + i),
+        ptr::write(self.as_mut_slice().unsafe_mut(old_cap + i),
                    other.unsafe_get(i).clone());
       }
     }
@@ -180,11 +184,11 @@ impl<T:Clone> ThinVec<T> {
   /// Constructor from a slice
   #[inline]
   pub fn from_slice(v: &[T]) -> ThinVec<T> {
-    ThinVec::from_vec(Vec::from_slice(v))
+    ThinVec::from_vec(v.to_vec())
   }
 }
 
-impl<T> Slice<T> for ThinVec<T> {
+impl<T> AsSlice<T> for ThinVec<T> {
   #[inline]
   fn as_slice<'a>(&'a self) -> &'a [T] {
     unsafe { mem::transmute(raw::Slice { data: self.ptr as *const T, len: self.cap as uint }) }
@@ -198,7 +202,7 @@ impl<T:Clone> Clone for ThinVec<T> {
       // Copied from vec.rs, which claims this will be optimized to a memcpy
       // if T is Copy
       for i in range(0, self.len()) {
-        ptr::write(ret.as_mut_slice().unsafe_mut_ref(i),
+        ptr::write(ret.as_mut_slice().unsafe_mut(i),
                    self.as_slice().unsafe_get(i).clone());
       }
       ret
@@ -227,7 +231,7 @@ impl<T> FromIterator<T> for ThinVec<T> {
   }
 }
 
-impl<T> Extendable<T> for ThinVec<T> {
+impl<T> Extend<T> for ThinVec<T> {
   #[inline]
   fn extend<I: Iterator<T>>(&mut self, iter: I) {
     let old_cap = self.cap;
@@ -241,11 +245,6 @@ impl<T> Extendable<T> for ThinVec<T> {
       }
     }
   }
-}
-
-impl<T> Collection for ThinVec<T> {
-  #[inline]
-  fn len(&self) -> uint { self.cap as uint }
 }
 
 impl<T:fmt::Show> fmt::Show for ThinVec<T> {
@@ -297,7 +296,7 @@ mod tests {
 
       for i in range(0, cap) {
         assert_eq!(thinvec.get_mut(i as uint).take(), Some(box i));
-        assert_eq!(thinvec.get_mut(i as uint).take(), None); 
+        assert_eq!(thinvec.get_mut(i as uint).take(), None);
       }
     }
   }

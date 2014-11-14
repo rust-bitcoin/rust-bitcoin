@@ -79,7 +79,7 @@ mod tests {
     assert_eq!(deserialize(vec![0xf9, 0xbe, 0xb4, 0xd9]), Ok(Bitcoin));
     assert_eq!(deserialize(vec![0x0b, 0x11, 0x09, 0x07]), Ok(BitcoinTestnet));
 
-    let bad: Result<Network, _> = deserialize(Vec::from_slice("fakenet".as_bytes()));
+    let bad: Result<Network, _> = deserialize("fakenet".as_bytes().to_vec());
     assert!(bad.is_err());
   }
 }

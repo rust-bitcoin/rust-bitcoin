@@ -328,7 +328,7 @@ impl<'tree> Iterator<&'tree Block> for RevStaleBlockIter<'tree> {
 fn satoshi_the_precision(n: &Uint256) -> Uint256 {
   // Shift by B bits right then left to turn the low bits to zero
   let bits = 8 * ((n.bits() + 7) / 8 - 3);
-  let mut ret = n >> bits;
+  let mut ret = *n >> bits;
   // Oh, did I say B was that fucked up formula? I meant sometimes also + 8.
   if ret.bit(23) {
     ret = (ret >> 8) << 8;

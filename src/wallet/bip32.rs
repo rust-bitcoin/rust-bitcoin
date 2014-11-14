@@ -321,7 +321,7 @@ impl FromBase58 for ExtendedPrivKey {
       network: match data.slice_to(4) {
         [0x04, 0x88, 0xAD, 0xE4] => Bitcoin,
         [0x04, 0x35, 0x83, 0x94] => BitcoinTestnet,
-        _ => { return Err(InvalidVersion(Vec::from_slice(data.slice_to(4)))); }
+        _ => { return Err(InvalidVersion(data.slice_to(4).to_vec())); }
       },
       depth: data[4] as uint,
       parent_fingerprint: Fingerprint::from_slice(data.slice(5, 9)),
@@ -372,7 +372,7 @@ impl FromBase58 for ExtendedPubKey {
       network: match data.slice_to(4) {
         [0x04, 0x88, 0xB2, 0x1E] => Bitcoin,
         [0x04, 0x35, 0x87, 0xCF] => BitcoinTestnet,
-        _ => { return Err(InvalidVersion(Vec::from_slice(data.slice_to(4)))); }
+        _ => { return Err(InvalidVersion(data.slice_to(4).to_vec())); }
       },
       depth: data[4] as uint,
       parent_fingerprint: Fingerprint::from_slice(data.slice(5, 9)),

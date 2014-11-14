@@ -121,7 +121,7 @@ macro_rules! construct_uint(
         let mut me = *self;
         // TODO: be more efficient about this
         for i in range(0u, 2 * $n_words) {
-          me = me + me.mul_u32((other >> (32 * i)).low_u32()) << (32 * i);
+          me = me + me.mul_u32((*other >> (32 * i)).low_u32()) << (32 * i);
         }
         me
       }
@@ -170,7 +170,7 @@ macro_rules! construct_uint(
 
       #[inline]
       fn bit_slice(&self, start: uint, end: uint) -> $name {
-        (self >> start).mask(end - start)
+        (*self >> start).mask(end - start)
       }
 
       #[inline]
@@ -312,7 +312,7 @@ macro_rules! construct_uint(
       fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use std::fmt::WriteError;
         use network::encodable::ConsensusEncodable;
-        let mut encoder = RawEncoder::new(f.by_ref());
+        let mut encoder = RawEncoder::new(*f);
         self.consensus_encode(&mut encoder).map_err(|_| WriteError)
       }
     }

@@ -190,7 +190,7 @@ fn check_op_equal(elem: &AbstractStackElem, others: &[uint]) -> bool {
   }
 }
 
-fn update_boolean(elem: &mut AbstractStackElem) 
+fn update_boolean(elem: &mut AbstractStackElem)
                  -> Result<(), ScriptError> {
   // Test boolean values
   elem.bool_val = Some(true);
@@ -240,8 +240,8 @@ fn update_op_equal(elem: &mut AbstractStackElem, others: &[uint])
         (Some(_), Some(_)) => { return Err(Unsatisfiable); }
       }
       // Equalize full values
-      match (one.raw_value().map(|r| Vec::from_slice(r)),
-             two.raw_value().map(|r| Vec::from_slice(r))) {
+      match (one.raw_value().map(|r| r.to_vec()),
+             two.raw_value().map(|r| r.to_vec())) {
         (None, None) => {},
         (None, Some(x)) => try!(one.set_value(x.as_slice())),
         (Some(x), None) => try!(two.set_value(x.as_slice())),
@@ -771,7 +771,7 @@ impl AbstractStackElem {
       len_lo: data.len(),
       len_hi: data.len(),
       bool_val: Some(read_scriptbool(data)),
-      raw: Some(Vec::from_slice(data)),
+      raw: Some(data.to_vec()),
       validators: vec![],
       alloc_index: None
     }
@@ -899,9 +899,9 @@ impl AbstractStackElem {
     self.set_num_hi(val)
   }
 
-  /// Sets the entire value of the 
+  /// Sets the entire value of the
   pub fn set_value(&mut self, val: &[u8]) -> Result<(), ScriptError> {
-    match self.raw_value().map(|x| Vec::from_slice(x)) {
+    match self.raw_value().map(|x| x.to_vec()) {
       Some(x) => { if x.as_slice() == val { Ok(()) } else { Err(Unsatisfiable) } }
       None => {
         try!(self.set_len_lo(val.len()));
@@ -915,7 +915,7 @@ impl AbstractStackElem {
           Err(_) => {}
         }
         try!(self.set_bool_value(read_scriptbool(val)));
-        self.raw = Some(Vec::from_slice(val));
+        self.raw = Some(val.to_vec());
         Ok(())
       }
     }
@@ -1097,7 +1097,7 @@ impl AbstractStack {
 
   /// Lookup an element by index
   pub fn get_elem_mut(&mut self, alloc_index: uint) -> &mut AbstractStackElem {
-    self.alloc.get_mut(alloc_index)
+    self.alloc.get_mut(alloc_index).unwrap()
   }
 
   /// Push a copy of an existing element by index
@@ -1109,7 +1109,7 @@ impl AbstractStack {
   pub fn push_alloc<'a>(&'a mut self, elem: AbstractStackElem) -> &'a mut AbstractStackElem {
     let idx = self.allocate(elem);
     self.stack.push(idx);
-    self.alloc.get_mut(idx)
+    self.alloc.get_mut(idx).unwrap()
   }
 
 
@@ -1119,7 +1119,7 @@ impl AbstractStack {
       self.push_initial(AbstractStackElem::new_unknown());
     }
 
-    self.alloc.get_mut(*self.stack.last().unwrap())
+    self.alloc.get_mut(*self.stack.last().unwrap()).unwrap()
   }
 
   /// Obtain a stackref to the current top element
@@ -1144,7 +1144,7 @@ impl AbstractStack {
       self.push_initial(AbstractStackElem::new_unknown());
     }
 
-    self.alloc.get_mut(self.stack.pop().unwrap())
+    self.alloc.get_mut(self.stack.pop().unwrap()).unwrap()
   }
 
 
@@ -1279,7 +1279,7 @@ impl<'a> PartialEq for MaybeOwned<'a> {
 
 impl<'a> Eq for MaybeOwned<'a> {}
 
-impl<'a> Slice<u8> for MaybeOwned<'a> {
+impl<'a> AsSlice<u8> for MaybeOwned<'a> {
   #[inline]
   fn as_slice<'a>(&'a self) -> &'a [u8] {
     match *self {
@@ -1289,9 +1289,9 @@ impl<'a> Slice<u8> for MaybeOwned<'a> {
   }
 }
 
-impl<'a> Collection for MaybeOwned<'a> {
+impl<'a> MaybeOwned<'a> {
   #[inline]
-  fn len(&self) -> uint {
+  pub fn len(&self) -> uint {
     match *self {
       Owned(ref v) => v.len(),
       Slice(ref s) => s.len()
@@ -1657,7 +1657,7 @@ impl Script {
         raw.push(((n / 0x10000) % 0x100) as u8);
         raw.push((n / 0x1000000) as u8);
       }
-      _ => fail!("tried to put a 4bn+ sized object into a script!")
+      _ => panic!("tried to put a 4bn+ sized object into a script!")
     }
     // Then push the acraw
     raw.extend(data.iter().map(|n| *n));
@@ -1785,7 +1785,7 @@ impl Script {
         (false, opcodes::Ordinary(opcodes::OP_IF)) => exec_stack.push(false),
         (false, opcodes::Ordinary(opcodes::OP_NOTIF)) => exec_stack.push(false),
         (false, opcodes::Ordinary(opcodes::OP_ELSE)) => {
-          match exec_stack.mut_last() {
+          match exec_stack.last_mut() {
             Some(ref_e) => { *ref_e = !*ref_e }
             None => { return Err(ElseWithoutIf); }
           }
@@ -1816,7 +1816,7 @@ impl Script {
               }
             }
             opcodes::OP_ELSE => {
-              match exec_stack.mut_last() {
+              match exec_stack.last_mut() {
                 Some(ref_e) => { *ref_e = !*ref_e }
                 None => { return Err(ElseWithoutIf); }
               }
@@ -1943,7 +1943,7 @@ impl Script {
 
               // Compute the section of script that needs to be hashed: everything
               // from the last CODESEPARATOR, except the signature itself.
-              let mut script = Vec::from_slice(raw.slice_from(codeseparator_index));
+              let mut script = raw.slice_from(codeseparator_index).to_vec();
               let mut remove = Script::new();
               remove.push_slice(sig_slice);
               script_find_and_remove(&mut script, remove.as_slice());
@@ -1992,7 +1992,7 @@ impl Script {
 
               // Compute the section of script that needs to be hashed: everything
               // from the last CODESEPARATOR, except the signatures themselves.
-              let mut script = Vec::from_slice(raw.slice_from(codeseparator_index));
+              let mut script = raw.slice_from(codeseparator_index).to_vec();
               for sig in sigs.iter() {
                 let mut remove = Script::new();
                 remove.push_slice(sig.as_slice());
@@ -2041,7 +2041,7 @@ impl Script {
       } // end loop
       // Store the stack in the trace
       trace.as_mut().map(|t|
-        t.mut_last().map(|t| {
+        t.last_mut().map(|t| {
           t.errored = false;
           t.stack = stack.iter().map(|elem| elem.as_slice().to_hex()).collect();
         })
@@ -2143,7 +2143,7 @@ impl Script {
           (false, opcodes::Ordinary(opcodes::OP_IF)) => exec_stack.push(false),
           (false, opcodes::Ordinary(opcodes::OP_NOTIF)) => exec_stack.push(false),
           (false, opcodes::Ordinary(opcodes::OP_ELSE)) => {
-            match exec_stack.mut_last() {
+            match exec_stack.last_mut() {
               Some(ref_e) => { *ref_e = !*ref_e }
               None => { return Err(ElseWithoutIf); }
             }
@@ -2212,7 +2212,7 @@ impl Script {
                 }
               }
               opcodes::OP_ELSE => {
-                match exec_stack.mut_last() {
+                match exec_stack.last_mut() {
                   Some(ref_e) => { *ref_e = !*ref_e }
                   None => { return Err(ElseWithoutIf); }
                 }
@@ -2423,8 +2423,8 @@ impl json::ToJson for Script {
     let &Script(ref raw) = self;
     let mut ret = String::new();
     for dat in raw.iter() {
-      ret.push_char(from_digit((dat / 0x10) as uint, 16).unwrap());
-      ret.push_char(from_digit((dat & 0x0f) as uint, 16).unwrap());
+      ret.push(from_digit((*dat / 0x10) as uint, 16).unwrap());
+      ret.push(from_digit((*dat & 0x0f) as uint, 16).unwrap());
     }
     json::String(ret)
   }
@@ -2504,7 +2504,7 @@ mod test {
     // data
     script.push_slice("NRA4VR".as_bytes()); comp.push_all([6u8, 78, 82, 65, 52, 86, 82]); assert_eq!(script, Script(comp.clone()));
 
-    // opcodes 
+    // opcodes
     script.push_opcode(opcodes::all::OP_CHECKSIG); comp.push(0xACu8); assert_eq!(script, Script(comp.clone()));
     script.push_opcode(opcodes::all::OP_CHECKSIG); comp.push(0xACu8); assert_eq!(script, Script(comp.clone()));
   }
@@ -2743,7 +2743,7 @@ mod test {
     assert_eq!(Script(ThinVec::from_vec("04010203047576a914bfbd43270c1e824c01e27386844d062d2f7518a688ad76a97614d2f7b8a37fb9b46782534078f9748f41d61a22f3877c148d4c6a901a3d87ed680478931dc9b6f0871af0ab879b69ac".from_hex().unwrap())).is_provably_unspendable(), false);
     assert_eq!(Script(ThinVec::from_vec("03800000".from_hex().unwrap())).is_provably_unspendable(), false);
     // This one is cool -- a 2-of-4 multisig with four pks given, only two of which are legit
-    assert_eq!(Script(ThinVec::from_vec("522103bb52138972c48a132fc1f637858c5189607dd0f7fe40c4f20f6ad65f2d389ba42103bb52138972c48a132fc1f637858c5189607dd0f7fe40c4f20f6ad65f2d389ba45f6054ae".from_hex().unwrap())).is_provably_unspendable(), false);
+    assert_eq!(Script(ThinVec::from_vec("522103bb52138972c48a132fc1f637858c5189607dd0fg12827fe40c4f20f6ad65f2d389ba42103bb52138972c48a132fc1f637858c5189607dd0f7fe40c4f20f6ad65f2d389ba45f6054ae".from_hex().unwrap())).is_provably_unspendable(), false);
     assert_eq!(Script(ThinVec::from_vec("64635167006867630067516868".from_hex().unwrap())).is_provably_unspendable(), false);
     // This one is on mainnet oeO
     assert_eq!(Script(ThinVec::from_vec("827651a0698faaa9a8a7a687".from_hex().unwrap())).is_provably_unspendable(), false);

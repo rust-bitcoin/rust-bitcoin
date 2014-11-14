@@ -51,9 +51,15 @@ impl AddressIndex {
     };
     for (key, idx, txo, height) in utxo_set.iter() {
       if ret.admissible_txo(txo) {
-        ret.index.insert_or_update_with(txo.script_pubkey.clone(),
-                                        vec![(key, idx, txo.clone(), height)],
-                                        |_, v| v.push((key, idx, txo.clone(), height)));
+          let pubkey = txo.script_pubkey.clone();
+          let insert = (key, idx, txo.clone(), height);
+          if ret.index.contains_key(&pubkey) {
+              // we already now it's safe to unwrap this
+              let mut vec = ret.index.get_mut(&pubkey).unwrap();
+              vec.push(insert);
+          } else {
+              ret.index.insert(pubkey, vec![insert]);
+          }
       }
     }
     ret
