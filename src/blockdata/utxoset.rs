@@ -242,10 +242,13 @@ impl UtxoSet {
             self.spent_txos.get_mut(spent_idx).map(method!(reserve_additional, replace.outputs.len()));
             let height = replace.height;
             for (n, input) in replace.outputs.iter_mut().enumerate() {
-              match input.take() {
-                Some(txo) => { self.spent_txos.get_mut(spent_idx).map(method!(push, ((txid, n as u32), (height, txo)))); }
-                None => {}
-              }
+              input.take().map(|txo|{
+                match self.spent_txos.get_mut(spent_idx) {
+                    Some(mut vec) => 
+                      vec.push(((txid, n as u32), (height, txo))),
+                    None => {}
+                }
+              });
             }
             // Otherwise fail the block
             self.rewind(block);
@@ -301,7 +304,12 @@ impl UtxoSet {
       for (n, input) in tx.input.iter().enumerate() {
         let taken = self.take_utxo(input.prev_hash, input.prev_index);
         match taken {
-          Some(txo) => { self.spent_txos.get_mut(spent_idx).map(method!(push, ((txid, n as u32), txo))); }
+          Some(txo) => { 
+            match self.spent_txos.get_mut(spent_idx) {
+              Some(vec) => vec.push(((txid, n as u32), txo)), 
+              None => {}
+            }
+          }
           None => {
             if validation >= TxoValidation {
               self.rewind(block);

@@ -54,8 +54,9 @@ impl AddressIndex {
           let pubkey = txo.script_pubkey.clone();
           let insert = (key, idx, txo.clone(), height);
           if ret.index.contains_key(&pubkey) {
-              let vec = ret.index.get_mut(&pubkey);
-              vec.map(method!(push, insert));
+              // we already now it's safe to unwrap this
+              let mut vec = ret.index.get_mut(&pubkey).unwrap();
+              vec.push(insert);
           } else {
               ret.index.insert(pubkey, vec![insert]);
           }
