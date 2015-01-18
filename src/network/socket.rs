@@ -34,7 +34,7 @@ use network::serialize::{RawEncoder, RawDecoder};
 use util::misc::prepend_err;
 
 /// Format an IP address in the 16-byte bitcoin protocol serialization
-fn ipaddr_to_bitcoin_addr(ipaddr: &ip::IpAddr) -> [u8, ..16] {
+fn ipaddr_to_bitcoin_addr(ipaddr: &ip::IpAddr) -> [u8; 16] {
   match *ipaddr {
     ip::Ipv4Addr(a, b, c, d) =>
         [0, 0, 0, 0, 0, 0, 0, 0,

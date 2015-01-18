@@ -25,7 +25,7 @@ use secp256k1::key::PublicKey;
 
 use blockdata::utxoset::UtxoSet;
 use network::constants::Network;
-use wallet::bip32::{mod, ChildNumber, ExtendedPrivKey, ExtendedPubKey, Normal, Hardened};
+use wallet::bip32::{self, ChildNumber, ExtendedPrivKey, ExtendedPubKey, Normal, Hardened};
 use wallet::address::Address;
 use wallet::address_index::AddressIndex;
 
@@ -273,8 +273,8 @@ impl Wallet {
       let sk = try!(master.ckd_priv(cnum).map_err(Bip32Error));
       let pk = ExtendedPubKey::from_private(&sk);
       let addr = Address::from_key(pk.network, &pk.public_key);
-      for &(_, _, ref out, _) in index.find_by_script(&addr.script_pubkey()).iter() {
-        ret += out.value;
+      for out in index.find_by_script(&addr.script_pubkey()).iter() {
+        ret += out.txo.value;
       }
     }
     // Sum external balance
@@ -285,8 +285,8 @@ impl Wallet {
       let sk = try!(master.ckd_priv(cnum).map_err(Bip32Error));
       let pk = ExtendedPubKey::from_private(&sk);
       let addr = Address::from_key(pk.network, &pk.public_key);
-      for &(_, _, ref out, _) in index.find_by_script(&addr.script_pubkey()).iter() {
-        ret += out.value;
+      for out in index.find_by_script(&addr.script_pubkey()).iter() {
+        ret += out.txo.value;
       }
     }
 

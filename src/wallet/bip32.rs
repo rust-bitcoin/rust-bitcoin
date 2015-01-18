@@ -35,16 +35,16 @@ use util::base58::{Base58Error,
                    FromBase58, ToBase58};
 
 /// A chain code
-pub struct ChainCode([u8, ..32]);
-impl_array_newtype!(ChainCode, u8, 32)
-impl_array_newtype_show!(ChainCode)
-impl_array_newtype_encodable!(ChainCode, u8, 32)
+pub struct ChainCode([u8; 32]);
+impl_array_newtype!(ChainCode, u8, 32);
+impl_array_newtype_show!(ChainCode);
+impl_array_newtype_encodable!(ChainCode, u8, 32);
 
 /// A fingerprint
-pub struct Fingerprint([u8, ..4]);
-impl_array_newtype!(Fingerprint, u8, 4)
-impl_array_newtype_show!(Fingerprint)
-impl_array_newtype_encodable!(Fingerprint, u8, 4)
+pub struct Fingerprint([u8; 4]);
+impl_array_newtype!(Fingerprint, u8, 4);
+impl_array_newtype_show!(Fingerprint);
+impl_array_newtype_encodable!(Fingerprint, u8, 4);
 
 impl Default for Fingerprint {
   fn default() -> Fingerprint { Fingerprint([0, 0, 0, 0]) }
@@ -56,7 +56,7 @@ pub struct ExtendedPrivKey {
   /// The network this key is to be used on
   pub network: Network,
   /// How many derivations this key is from the master (which is 0)
-  pub depth: uint,
+  pub depth: u8,
   /// Fingerprint of the parent key (0 for master)
   pub parent_fingerprint: Fingerprint,
   /// Child number of the key used to derive from parent (0 for master)
@@ -73,7 +73,7 @@ pub struct ExtendedPubKey {
   /// The network this key is to be used on
   pub network: Network,
   /// How many derivations this key is from the master (which is 0)
-  pub depth: uint,
+  pub depth: u8,
   /// Fingerprint of the parent key
   pub parent_fingerprint: Fingerprint,
   /// Child number of the key used to derive from parent (0 for master)
@@ -129,7 +129,7 @@ pub enum Error {
 impl ExtendedPrivKey {
   /// Construct a new master key from a seed value
   pub fn new_master(network: Network, seed: &[u8]) -> Result<ExtendedPrivKey, Error> {
-    let mut result = [0, ..64];
+    let mut result = [0; 64];
     let mut hmac = Hmac::new(Sha512::new(), b"Bitcoin seed".as_slice());
     hmac.input(seed);
     hmac.raw_result(result.as_mut_slice());
@@ -156,7 +156,7 @@ impl ExtendedPrivKey {
 
   /// Private->Private child key derivation
   pub fn ckd_priv(&self, i: ChildNumber) -> Result<ExtendedPrivKey, Error> {
-    let mut result = [0, ..64];
+    let mut result = [0; 64];
     let mut hmac = Hmac::new(Sha512::new(), self.chain_code.as_slice());
     match i {
       Normal(n) => {
@@ -190,9 +190,9 @@ impl ExtendedPrivKey {
   }
 
   /// Returns the HASH160 of the chaincode
-  pub fn identifier(&self) -> [u8, ..20] {
-    let mut sha2_res = [0, ..32];
-    let mut ripemd_res = [0, ..20];
+  pub fn identifier(&self) -> [u8; 20] {
+    let mut sha2_res = [0; 32];
+    let mut ripemd_res = [0; 20];
     // Compute extended public key
     let pk = ExtendedPubKey::from_private(self);
     // Do SHA256 of just the ECDSA pubkey
@@ -242,7 +242,7 @@ impl ExtendedPubKey {
         hmac.input(self.public_key.as_slice());
         u64_to_be_bytes(n as u64, 4, |raw| hmac.input(raw));
 
-        let mut result = [0, ..64];
+        let mut result = [0; 64];
         hmac.raw_result(result.as_mut_slice());
 
         let sk = try!(SecretKey::from_slice(result.slice_to(32)).map_err(EcdsaError));
@@ -262,9 +262,9 @@ impl ExtendedPubKey {
   }
 
   /// Returns the HASH160 of the chaincode
-  pub fn identifier(&self) -> [u8, ..20] {
-    let mut sha2_res = [0, ..32];
-    let mut ripemd_res = [0, ..20];
+  pub fn identifier(&self) -> [u8; 20] {
+    let mut sha2_res = [0; 32];
+    let mut ripemd_res = [0; 20];
     // Do SHA256 of just the ECDSA pubkey
     let mut sha2 = Sha256::new();
     sha2.input(self.public_key.as_slice());
@@ -321,9 +321,9 @@ impl FromBase58 for ExtendedPrivKey {
       network: match data.slice_to(4) {
         [0x04, 0x88, 0xAD, 0xE4] => Bitcoin,
         [0x04, 0x35, 0x83, 0x94] => BitcoinTestnet,
-        _ => { return Err(InvalidVersion(Vec::from_slice(data.slice_to(4)))); }
+        _ => { return Err(InvalidVersion(data.slice_to(4).to_vec())); }
       },
-      depth: data[4] as uint,
+      depth: data[4],
       parent_fingerprint: Fingerprint::from_slice(data.slice(5, 9)),
       child_number: child_number,
       chain_code: ChainCode::from_slice(data.slice(13, 45)),
@@ -372,9 +372,9 @@ impl FromBase58 for ExtendedPubKey {
       network: match data.slice_to(4) {
         [0x04, 0x88, 0xB2, 0x1E] => Bitcoin,
         [0x04, 0x35, 0x87, 0xCF] => BitcoinTestnet,
-        _ => { return Err(InvalidVersion(Vec::from_slice(data.slice_to(4)))); }
+        _ => { return Err(InvalidVersion(data.slice_to(4).to_vec())); }
       },
-      depth: data[4] as uint,
+      depth: data[4],
       parent_fingerprint: Fingerprint::from_slice(data.slice(5, 9)),
       child_number: child_number,
       chain_code: ChainCode::from_slice(data.slice(13, 45)),

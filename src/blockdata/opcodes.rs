@@ -594,10 +594,10 @@ pub mod all {
         super::PushNum(-1)
       // 16 opcodes
       } else if OP_PUSHNUM_1 as u8 <= *self as u8 && *self as u8 <= OP_PUSHNUM_16 as u8 {
-        super::PushNum(1 + *self as int - OP_PUSHNUM_1 as int)
+        super::PushNum(1 + *self as isize - OP_PUSHNUM_1 as isize)
       // 76 opcodes
       } else if *self as u8 <= OP_PUSHBYTES_75 as u8 {
-        super::PushBytes(*self as uint)
+        super::PushBytes(*self as usize)
       // 60 opcodes
       } else {
         super::Ordinary(unsafe { transmute(*self) })
@@ -635,9 +635,9 @@ pub mod all {
 #[deriving(Clone, PartialEq, Eq, Show)]
 pub enum OpcodeClass {
   /// Pushes the given number onto the stack
-  PushNum(int),
+  PushNum(isize),
   /// Pushes the given number of bytes onto the stack
-  PushBytes(uint),
+  PushBytes(usize),
   /// Fails the script if executed
   ReturnOp,
   /// Fails the script even if not executed
@@ -654,7 +654,7 @@ impl json::ToJson for OpcodeClass {
   }
 }
 
-macro_rules! ordinary_opcode(
+macro_rules! ordinary_opcode {
   ($($op:ident),*) => (
     #[repr(u8)]
     #[doc(hidden)]
@@ -663,10 +663,10 @@ macro_rules! ordinary_opcode(
       $( $op = all::$op as u8 ),*
     }
   );
-)
+}
 
 /// "Ordinary" opcodes -- should be 60 of these
-ordinary_opcode!(
+ordinary_opcode! {
   // pushdata
   OP_PUSHDATA1, OP_PUSHDATA2, OP_PUSHDATA4,
   // control flow
@@ -688,6 +688,6 @@ ordinary_opcode!(
   OP_RIPEMD160, OP_SHA1, OP_SHA256, OP_HASH160, OP_HASH256,
   OP_CODESEPARATOR, OP_CHECKSIG, OP_CHECKSIGVERIFY,
   OP_CHECKMULTISIG, OP_CHECKMULTISIGVERIFY
-)
+}
 
 

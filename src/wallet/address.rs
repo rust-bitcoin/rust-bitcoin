@@ -38,15 +38,6 @@ pub struct Address {
 }
 
 impl Address {
-  /// Creates an address the raw 20 bytes of a hash
-  #[inline]
-  pub fn from_slice(network: Network, data: &[u8]) -> Address {
-    Address {
-      network: network,
-      hash: Ripemd160Hash::from_slice(data)
-    }
-  }
-
   /// Returns a byteslice view of the `Address` --- note that no network information
   /// is contained in this.
   #[inline]
@@ -77,6 +68,22 @@ impl Address {
     script.push_opcode(all::OP_EQUALVERIFY);
     script.push_opcode(all::OP_CHECKSIG);
     script
+  }
+}
+
+/// Conversion from other types into an address
+pub trait ToAddress {
+  /// Copies `self` into a new `Address`
+  fn to_address(&self, network: Network) -> Address;
+}
+
+impl<'a> ToAddress for &'a [u8] {
+  #[inline]
+  fn to_address(&self, network: Network) -> Address {
+    Address {
+      network: network,
+      hash: Ripemd160Hash::from_slice(*self)
+    }
   }
 }
 

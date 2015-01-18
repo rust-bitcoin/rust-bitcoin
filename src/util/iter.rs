@@ -41,7 +41,7 @@ impl<A, I: Iterator<A>> Iterator<(A, A)> for Pair<A, I> {
   }
 
   #[inline]
-  fn size_hint(&self) -> (uint, Option<uint>) {
+  fn size_hint(&self) -> (usize, Option<usize>) {
     match self.iter.size_hint() {
       (n, None) => (n/2, None),
       (n, Some(m)) => (n/2, Some(m/2))

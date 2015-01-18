@@ -79,7 +79,7 @@ impl BlockHeader {
     let (mant, expt) = {
       let unshifted_expt = self.bits >> 24;
       if unshifted_expt <= 3 {
-        ((self.bits & 0xFFFFFF) >> 8 * (3 - unshifted_expt as uint), 0)
+        ((self.bits & 0xFFFFFF) >> 8 * (3 - unshifted_expt as usize), 0)
       } else {
         (self.bits & 0xFFFFFF, 8 * ((self.bits >> 24) - 3))
       }
@@ -89,7 +89,7 @@ impl BlockHeader {
     if mant > 0x7FFFFF {
       Zero::zero()
     } else {
-      from_u64::<Uint256>(mant as u64).unwrap() << (expt as uint)
+      from_u64::<Uint256>(mant as u64).unwrap() << (expt as usize)
     }
   }
 
@@ -130,10 +130,10 @@ impl BitcoinHash for Block {
   }
 }
 
-impl_consensus_encoding!(BlockHeader, version, prev_blockhash, merkle_root, time, bits, nonce)
-impl_json!(BlockHeader, version, prev_blockhash, merkle_root, time, bits, nonce)
-impl_consensus_encoding!(Block, header, txdata)
-impl_consensus_encoding!(LoneBlockHeader, header, tx_count)
+impl_consensus_encoding!(BlockHeader, version, prev_blockhash, merkle_root, time, bits, nonce);
+impl_json!(BlockHeader, version, prev_blockhash, merkle_root, time, bits, nonce);
+impl_consensus_encoding!(Block, header, txdata);
+impl_consensus_encoding!(LoneBlockHeader, header, tx_count);
 
 #[cfg(test)]
 mod tests {

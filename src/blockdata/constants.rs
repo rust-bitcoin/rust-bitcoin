@@ -39,7 +39,7 @@ pub static DIFFCHANGE_TIMESPAN: u32 = 14 * 24 * 3600;
 
 /// In Bitcoind this is insanely described as ~((u256)0 >> 32)
 pub fn max_target(_: Network) -> Uint256 {
-  from_u64::<Uint256>(0xFFFF).unwrap() << 208u
+  from_u64::<Uint256>(0xFFFF).unwrap() << 208
 }
 
 /// The maximum value allowed in an output (useful for sanity checking,

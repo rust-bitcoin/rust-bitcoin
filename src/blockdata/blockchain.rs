@@ -193,8 +193,8 @@ impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for Blockchain {
 // with a ContravariantLifetime marker tying it to the tree's lifetime.
 struct LocatorHashIter {
   index: NodePtr,
-  count: uint,
-  skip: uint
+  count: usize,
+  skip: usize
 }
 
 impl LocatorHashIter {
@@ -341,7 +341,7 @@ impl Blockchain {
   pub fn new(network: Network) -> Blockchain {
     let genesis = genesis_block(network);
     let genhash = genesis.header.bitcoin_hash();
-    let new_node = box BlockchainNode {
+    let new_node = Box::new(BlockchainNode {
       total_work: Zero::zero(),
       required_difficulty: genesis.header.target(),
       block: genesis,
@@ -349,7 +349,7 @@ impl Blockchain {
       has_txdata: true,
       prev: RawPtr::null(),
       next: RawPtr::null()
-    };
+    });
     let raw_ptr = &*new_node as NodePtr;
     Blockchain {
       network: network,
@@ -490,7 +490,7 @@ impl Blockchain {
             unsafe { (*prev).required_difficulty }
           };
         // Create node
-        let ret = box BlockchainNode {
+        let ret = Box::new(BlockchainNode {
           total_work: block.header.work().add(unsafe { &(*prev).total_work }),
           block: block,
           required_difficulty: difficulty,
@@ -498,7 +498,7 @@ impl Blockchain {
           has_txdata: has_txdata,
           prev: prev,
           next: RawPtr::null()
-        };
+        });
         unsafe {
           let prev = prev as *mut BlockchainNode;
           (*prev).next = &*ret as NodePtr;

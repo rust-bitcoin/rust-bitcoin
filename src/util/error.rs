@@ -25,7 +25,7 @@ pub type BitcoinResult<T> = Result<T, BitcoinError>;
 #[deriving(PartialEq, Eq, Show, Clone)]
 pub enum BitcoinError {
   /// An I/O error
-  IoError(IoError),
+  InputOutput(IoError),
   /// An object was attempted to be added twice
   DuplicateHash,
   /// Some operation was attempted on a block (or blockheader) that doesn't exist

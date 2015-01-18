@@ -41,7 +41,7 @@ impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for CommandString {
   #[inline]
   fn consensus_encode(&self, s: &mut S) -> Result<(), E> {
     let &CommandString(ref inner_str) = self;
-    let mut rawbytes = [0u8, ..12]; 
+    let mut rawbytes = [0u8; 12]; 
     rawbytes.clone_from_slice(inner_str.as_bytes().as_slice());
     rawbytes.consensus_encode(s)
   }
@@ -50,7 +50,7 @@ impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for CommandString {
 impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for CommandString {
   #[inline]
   fn consensus_decode(d: &mut D) -> Result<CommandString, E> {
-    let rawbytes: [u8, ..12] = try!(ConsensusDecodable::consensus_decode(d)); 
+    let rawbytes: [u8; 12] = try!(ConsensusDecodable::consensus_decode(d)); 
     let rv = FromIterator::from_iter(rawbytes.iter().filter_map(|&u| if u > 0 { Some(u as char) } else { None }));
     Ok(CommandString(rv))
   }

@@ -21,7 +21,7 @@
 use network::encodable::{ConsensusDecodable, ConsensusEncodable};
 use network::serialize::{SimpleEncoder, SimpleDecoder};
 
-user_enum!(
+user_enum! {
   #[deriving(PartialEq, Eq, Clone, Hash)]
   #[doc="The cryptocurrency to act on"]
   pub enum Network {
@@ -30,11 +30,11 @@ user_enum!(
     #[doc="Bitcoin's testnet"]
     BitcoinTestnet <-> "testnet"
   }
-)
+}
 
-pub static PROTOCOL_VERSION: u32    = 70001;
-pub static SERVICES: u64            = 0;
-pub static USER_AGENT: &'static str = "bitcoin-rust v0.1";
+pub const PROTOCOL_VERSION: u32    = 70001;
+pub const SERVICES: u64            = 0;
+pub const USER_AGENT: &'static str = "bitcoin-rust v0.1";
 
 /// Return the network magic bytes, which should be encoded little-endian
 /// at the start of every message
@@ -79,7 +79,7 @@ mod tests {
     assert_eq!(deserialize(vec![0xf9, 0xbe, 0xb4, 0xd9]), Ok(Bitcoin));
     assert_eq!(deserialize(vec![0x0b, 0x11, 0x09, 0x07]), Ok(BitcoinTestnet));
 
-    let bad: Result<Network, _> = deserialize(Vec::from_slice("fakenet".as_bytes()));
+    let bad: Result<Network, _> = deserialize("fakenet".as_bytes().to_vec());
     assert!(bad.is_err());
   }
 }

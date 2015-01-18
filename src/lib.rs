@@ -28,12 +28,8 @@
 #![crate_type = "rlib"]
 
 // Experimental features we need
-#![feature(globs)]
-#![feature(macro_rules)]
 #![feature(overloaded_calls)]
 #![feature(unsafe_destructor)]
-#![feature(default_type_params)]
-#![feature(struct_variant)]
 #![feature(unboxed_closure_sugar)]
 #![feature(unboxed_closures)]
 
@@ -50,18 +46,17 @@
 extern crate alloc;
 extern crate collections;
 extern crate core;
-extern crate num;
 extern crate rand;
-extern crate rustrt;
 extern crate serialize;
-extern crate sync;
 extern crate test;
 extern crate time;
 
 extern crate "bitcoin-secp256k1-rs" as secp256k1;
-extern crate "rust-crypto" as crypto;
+extern crate crypto;
 
+#[macro_use]
 mod internal_macros;
+#[macro_use]
 pub mod macros;
 pub mod network;
 pub mod blockdata;
