@@ -22,7 +22,7 @@ use std::fmt;
 use std::io::MemWriter;
 use std::mem::transmute;
 use std::hash;
-use serialize::json::{mod, ToJson};
+use serialize::json::{self, ToJson};
 
 use crypto::digest::Digest;
 use crypto::sha2::Sha256;
@@ -34,8 +34,8 @@ use util::uint::Uint128;
 use util::uint::Uint256;
 
 /// A Bitcoin hash, 32-bytes, computed from x as SHA256(SHA256(x))
-pub struct Sha256dHash([u8, ..32]);
-impl_array_newtype!(Sha256dHash, u8, 32)
+pub struct Sha256dHash([u8; 32]);
+impl_array_newtype!(Sha256dHash, u8, 32);
 
 impl ::std::fmt::Show for Sha256dHash {
   fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
@@ -44,8 +44,8 @@ impl ::std::fmt::Show for Sha256dHash {
 }
 
 /// A RIPEMD-160 hash
-pub struct Ripemd160Hash([u8, ..20]);
-impl_array_newtype!(Ripemd160Hash, u8, 20)
+pub struct Ripemd160Hash([u8; 0]);
+impl_array_newtype!(Ripemd160Hash, u8, 20);
 
 /// A "hasher" which just truncates
 pub struct DumbHasher;
@@ -68,7 +68,7 @@ impl hash::Hash<u64> for Sha256dHash {
   #[inline]
   fn hash(&self, state: &mut u64) {
     use std::mem;
-    let myarr: [u64, ..4] = unsafe { mem::transmute(*self) };
+    let myarr: [u64; 4] = unsafe { mem::transmute(*self) };
     *state = myarr[0];
   }
 }
@@ -77,7 +77,7 @@ impl hash::Hash<u64> for Uint256 {
   #[inline]
   fn hash(&self, state: &mut u64) {
     use std::mem;
-    let myarr: [u64, ..4] = unsafe { mem::transmute(*self) };
+    let myarr: [u64; 4] = unsafe { mem::transmute(*self) };
     *state = myarr[0];
   }
 }
@@ -86,7 +86,7 @@ impl hash::Hash<u64> for Uint128 {
   #[inline]
   fn hash(&self, state: &mut u64) {
     use std::mem;
-    let myarr: [u64, ..2] = unsafe { mem::transmute(*self) };
+    let myarr: [u64; 2] = unsafe { mem::transmute(*self) };
     *state = myarr[0];
   }
 }
@@ -95,7 +95,7 @@ impl hash::Hash<u64> for Hash32 {
   #[inline]
   fn hash(&self, state: &mut u64) {
     let &Hash32((a, b, c, d)) = self;
-    *state = a as u64 + (b as u64 << 8) + (c as u64 << 16) + (d as u64 << 24);
+    *state = a as u64 + ((b as u64) << 8) + ((c as u64) << 16) + ((d as u64) << 24);
   }
 }
 
@@ -103,8 +103,8 @@ impl hash::Hash<u64> for Hash48 {
   #[inline]
   fn hash(&self, state: &mut u64) {
     let &Hash48((a, b, c, d, e, f)) = self;
-    *state = a as u64 + (b as u64 << 8) + (c as u64 << 16) + (d as u64 << 24) +
-             (e as u64 << 32) + (f as u64 << 40);
+    *state = (a as u64) + ((b as u64) << 8) + ((c as u64) << 16) + ((d as u64) << 24) +
+             ((e as u64) << 32) + ((f as u64) << 40);
   }
 }
 
@@ -112,14 +112,14 @@ impl hash::Hash<u64> for Hash64 {
   #[inline]
   fn hash(&self, state: &mut u64) {
     let &Hash64((a, b, c, d, e, f, g, h)) = self;
-    *state = a as u64 + (b as u64 << 8) + (c as u64 << 16) + (d as u64 << 24) +
-             (e as u64 << 32) + (f as u64 << 40) + (g as u64 << 48) + (h as u64 << 56);
+    *state = (a as u64) + ((b as u64) << 8) + ((c as u64) << 16) + ((d as u64) << 24) +
+             ((e as u64) << 32) + ((f as u64) << 40) + ((g as u64) << 48) + ((h as u64) << 56);
   }
 }
 
 impl hash::Hasher<u64> for DumbHasher {
   #[inline]
-  fn hash<Sized? T: hash::Hash<u64>>(&self, value: &T) -> u64 {
+  fn hash<T: hash::Hash<u64>>(&self, value: &T) -> u64 {
     let mut ret = 0u64;
     value.hash(&mut ret);
     ret
@@ -166,7 +166,7 @@ impl Sha256dHash {
   #[inline]
   pub fn into_le(self) -> Uint256 {
     let Sha256dHash(data) = self;
-    let mut ret: [u64, ..4] = unsafe { transmute(data) };
+    let mut ret: [u64; 4] = unsafe { transmute(data) };
     for x in ret.as_mut_slice().iter_mut() { *x = x.to_le(); }
     Uint256(ret)
   }
@@ -176,7 +176,7 @@ impl Sha256dHash {
   pub fn into_be(self) -> Uint256 {
     let Sha256dHash(mut data) = self;
     data.reverse();
-    let mut ret: [u64, ..4] = unsafe { transmute(data) };
+    let mut ret: [u64; 4] = unsafe { transmute(data) };
     for x in ret.iter_mut() { *x = x.to_be(); }
     Uint256(ret)
   }
@@ -209,9 +209,9 @@ impl Sha256dHash {
   pub fn le_hex_string(&self) -> String {
     let &Sha256dHash(data) = self;
     let mut ret = String::with_capacity(64);
-    for i in range(0u, 32) {
-      ret.push(from_digit((data[i] / 0x10) as uint, 16).unwrap());
-      ret.push(from_digit((data[i] & 0x0f) as uint, 16).unwrap());
+    for i in range(0us, 32) {
+      ret.push(from_digit((data[i] / 0x10) as usize, 16).unwrap());
+      ret.push(from_digit((data[i] & 0x0f) as usize, 16).unwrap());
     }
     ret
   }
@@ -220,9 +220,9 @@ impl Sha256dHash {
   pub fn be_hex_string(&self) -> String {
     let &Sha256dHash(data) = self;
     let mut ret = String::with_capacity(64);
-    for i in range(0u, 32).rev() {
-      ret.push(from_digit((data[i] / 0x10) as uint, 16).unwrap());
-      ret.push(from_digit((data[i] & 0x0f) as uint, 16).unwrap());
+    for i in range(0us, 32).rev() {
+      ret.push(from_digit((data[i] / 0x10) as usize, 16).unwrap());
+      ret.push(from_digit((data[i] & 0x0f) as usize, 16).unwrap());
     }
     ret
   }
@@ -267,10 +267,10 @@ impl<D: ::serialize::Decoder<E>, E> ::serialize::Decodable<D, E> for Sha256dHash
 }
 
 // Consensus encoding (little-endian)
-impl_newtype_consensus_encoding!(Hash32)
-impl_newtype_consensus_encoding!(Hash48)
-impl_newtype_consensus_encoding!(Hash64)
-impl_newtype_consensus_encoding!(Sha256dHash)
+impl_newtype_consensus_encoding!(Hash32);
+impl_newtype_consensus_encoding!(Hash48);
+impl_newtype_consensus_encoding!(Hash64);
+impl_newtype_consensus_encoding!(Sha256dHash);
 
 impl fmt::LowerHex for Sha256dHash {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -278,8 +278,8 @@ impl fmt::LowerHex for Sha256dHash {
     let mut rv = [0, ..64];
     let mut hex = data.iter().rev().map(|n| *n).enumerate();
     for (i, ch) in hex {
-      rv[2*i]     = from_digit(ch as uint / 16, 16).unwrap() as u8;
-      rv[2*i + 1] = from_digit(ch as uint % 16, 16).unwrap() as u8;
+      rv[2*i]     = from_digit(ch as usize / 16, 16).unwrap() as u8;
+      rv[2*i + 1] = from_digit(ch as usize % 16, 16).unwrap() as u8;
     }
     f.write(rv.as_slice())
   }

@@ -12,7 +12,7 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-#![macro_escape]
+#![macro_use]
 
 macro_rules! impl_consensus_encoding(
   ($thing:ident, $($field:ident),+) => (
@@ -34,7 +34,7 @@ macro_rules! impl_consensus_encoding(
       }
     }
   );
-)
+);
 
 macro_rules! impl_newtype_consensus_encoding(
   ($thing:ident) => (
@@ -53,21 +53,21 @@ macro_rules! impl_newtype_consensus_encoding(
       }
     }
   );
-)
+);
 
 macro_rules! impl_json(
   ($thing:ident, $($field:ident),+) => (
     impl ::serialize::json::ToJson for $thing {
       fn to_json(&self) -> ::serialize::json::Json {
-        use std::collections::TreeMap;
+        use std::collections::BTreeMap;
         use serialize::json::{ToJson, Object};
-        let mut ret = TreeMap::new();
+        let mut ret = BTreeMap::new();
         $( ret.insert(stringify!($field).to_string(), self.$field.to_json()); )+
         Object(ret)
       }
     }
   );
-)
+);
 
 macro_rules! impl_array_newtype(
   ($thing:ident, $ty:ty, $len:expr) => {
@@ -81,21 +81,21 @@ macro_rules! impl_array_newtype(
 
       #[inline]
       /// Provides an immutable view into the object from index `s` inclusive to `e` exclusive
-      pub fn slice<'a>(&'a self, s: uint, e: uint) -> &'a [$ty] {
+      pub fn slice<'a>(&'a self, s: usize, e: usize) -> &'a [$ty] {
         let &$thing(ref dat) = self;
         dat.slice(s, e)
       }
 
       #[inline]
       /// Provides an immutable view into the object, up to index `n` exclusive
-      pub fn slice_to<'a>(&'a self, n: uint) -> &'a [$ty] {
+      pub fn slice_to<'a>(&'a self, n: usize) -> &'a [$ty] {
         let &$thing(ref dat) = self;
         dat.slice_to(n)
       }
 
       #[inline]
       /// Provides an immutable view into the object, starting from index `n`
-      pub fn slice_from<'a>(&'a self, n: uint) -> &'a [$ty] {
+      pub fn slice_from<'a>(&'a self, n: usize) -> &'a [$ty] {
         let &$thing(ref dat) = self;
         dat.slice_from(n)
       }
@@ -116,7 +116,7 @@ macro_rules! impl_array_newtype(
 
       #[inline]
       /// Returns the length of the object as an array
-      pub fn len(&self) -> uint { $len }
+      pub fn len(&self) -> usize { $len }
 
       /// Constructs a new object from raw data
       pub fn from_slice(data: &[$ty]) -> $thing {
@@ -133,9 +133,9 @@ macro_rules! impl_array_newtype(
       }
     }
 
-    impl Index<uint, $ty> for $thing {
+    impl Index<usize, $ty> for $thing {
       #[inline]
-      fn index<'a>(&'a self, idx: &uint) -> &'a $ty {
+      fn index<'a>(&'a self, idx: &usize) -> &'a $ty {
         let &$thing(ref data) = self;
         &data[*idx]
       }
@@ -157,7 +157,7 @@ macro_rules! impl_array_newtype(
       }
     }
   }
-)
+);
 
 macro_rules! impl_array_newtype_encodable(
   ($thing:ident, $ty:ty, $len:expr) => {
@@ -173,7 +173,7 @@ macro_rules! impl_array_newtype_encodable(
           } else {
             unsafe {
               use std::mem;
-              let mut ret: [$ty, ..$len] = mem::uninitialized();
+              let mut ret: [$ty; $len] = mem::uninitialized();
               for i in range(0, len) {
                 ret[i] = try!(d.read_seq_elt(i, |d| Decodable::decode(d)));
               }
@@ -190,7 +190,7 @@ macro_rules! impl_array_newtype_encodable(
       }
     }
   }
-)
+);
 
 macro_rules! impl_array_newtype_show(
   ($thing:ident) => {
@@ -200,10 +200,10 @@ macro_rules! impl_array_newtype_show(
       }
     }
   }
-)
+);
 
 macro_rules! method(
   ($name:ident) => { |x| x.$name() };
   ($name:ident, $arg:expr) => { |x| x.$name($arg) };
-)
+);
 

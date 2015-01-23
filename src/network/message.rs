@@ -22,7 +22,9 @@
 use collections::Vec;
 use std::io::{IoError, IoResult, OtherIoError};
 use std::io::MemReader;
+use std::sync::mpsc::Sender;
 
+use std::iter::FromIterator;
 use blockdata::block;
 use blockdata::transaction;
 use network::address::Address;
@@ -32,6 +34,9 @@ use network::encodable::{ConsensusDecodable, ConsensusEncodable};
 use network::encodable::CheckedData;
 use network::serialize::{serialize, RawDecoder, SimpleEncoder, SimpleDecoder};
 use util::misc::prepend_err;
+
+pub use self::SocketResponse::*;
+pub use self::NetworkMessage::*;
 
 /// Serializer for command string
 #[deriving(PartialEq, Eq, Clone, Show)]
@@ -50,7 +55,7 @@ impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for CommandString {
 impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for CommandString {
   #[inline]
   fn consensus_decode(d: &mut D) -> Result<CommandString, E> {
-    let rawbytes: [u8, ..12] = try!(ConsensusDecodable::consensus_decode(d)); 
+    let rawbytes: [u8; 12] = try!(ConsensusDecodable::consensus_decode(d));
     let rv = FromIterator::from_iter(rawbytes.iter().filter_map(|&u| if u > 0 { Some(u as char) } else { None }));
     Ok(CommandString(rv))
   }
@@ -71,6 +76,7 @@ pub enum SocketResponse {
   /// An error occured and the socket needs to close
   ConnectionFailed(IoError, Sender<()>)
 }
+
 
 #[deriving(Clone, PartialEq, Eq, Show)]
 /// A Network message payload. Proper documentation is available on the Bitcoin

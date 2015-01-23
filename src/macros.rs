@@ -16,14 +16,14 @@
 //!
 //! Macros available to users of the Bitcoin library
 
-#![macro_escape]
+#![macro_use]
 
 #[macro_export]
 macro_rules! nu_select(
-  ($($name:pat from $rx:expr => $code:expr),+) => ({
-    nu_select!{ $($name from $rx using recv => $code),+ }
+  ($($name:pat, $rx:expr => $code:expr),+) => ({
+    nu_select!{ $($name, $rx, recv => $code),+ }
   });
-  ($($name:pat from $rx:expr using $meth:ident => $code:expr),+) => ({
+  ($($name:pat, $rx:expr, $meth:ident => $code:expr),+) => ({
     use rustrt::local::Local;
     use rustrt::task::Task;
     use sync::comm::Packet;
@@ -82,7 +82,7 @@ macro_rules! nu_select(
       ret
     }
   })
-)
+);
 
 #[macro_export]
 macro_rules! user_enum(
@@ -114,5 +114,5 @@ macro_rules! user_enum(
       }
     }
   );
-)
+);
 

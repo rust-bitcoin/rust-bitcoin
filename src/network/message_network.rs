@@ -82,7 +82,7 @@ impl VersionMessage {
 
 impl_consensus_encoding!(VersionMessage, version, services, timestamp,
                                          receiver, sender, nonce,
-                                         user_agent, start_height, relay)
+                                         user_agent, start_height, relay);
 
 #[cfg(test)]
 mod tests {

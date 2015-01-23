@@ -21,8 +21,11 @@
 use std::io::{IoResult, standard_error, ConnectionFailed};
 
 use network::constants::Network;
-use network::message::{mod, SocketResponse, MessageReceived, Verack};
+use network::message::{self, SocketResponse, MessageReceived, Verack};
 use network::socket::Socket;
+use std::sync::mpsc::Receiver;
+use std::sync::mpsc::channel;
+use std::thread::Thread;
 
 /// A message which can be sent on the Bitcoin network
 pub trait Listener {
@@ -49,7 +52,7 @@ pub trait Listener {
     try!(sock.send_message(version_message));
 
     // Message loop
-    spawn(proc() {
+    Thread::spawn(move || {
       let mut handshake_complete = false;
       let mut sock = sock;
       loop {

@@ -25,7 +25,7 @@ use secp256k1::key::PublicKey;
 
 use blockdata::utxoset::UtxoSet;
 use network::constants::Network;
-use wallet::bip32::{mod, ChildNumber, ExtendedPrivKey, ExtendedPubKey, Normal, Hardened};
+use wallet::bip32::{self, ChildNumber, ExtendedPrivKey, ExtendedPubKey, Normal, Hardened};
 use wallet::address::Address;
 use wallet::address_index::AddressIndex;
 

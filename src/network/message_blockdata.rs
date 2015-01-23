@@ -23,6 +23,8 @@ use network::encodable::{ConsensusDecodable, ConsensusEncodable};
 use network::serialize::{SimpleDecoder, SimpleEncoder};
 use util::hash::Sha256dHash;
 
+pub use self::InvType::*;
+
 #[deriving(PartialEq, Eq, Clone, Show)]
 /// The type of an inventory object
 pub enum InvType {
@@ -82,7 +84,7 @@ impl GetBlocksMessage {
   }
 }
 
-impl_consensus_encoding!(GetBlocksMessage, version, locator_hashes, stop_hash)
+impl_consensus_encoding!(GetBlocksMessage, version, locator_hashes, stop_hash);
 
 impl GetHeadersMessage {
   /// Construct a new `getheaders` message
@@ -95,7 +97,7 @@ impl GetHeadersMessage {
   }
 }
 
-impl_consensus_encoding!(GetHeadersMessage, version, locator_hashes, stop_hash)
+impl_consensus_encoding!(GetHeadersMessage, version, locator_hashes, stop_hash);
 
 impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for Inventory {
   #[inline]

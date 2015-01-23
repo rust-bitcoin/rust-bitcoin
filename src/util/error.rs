@@ -16,10 +16,12 @@
 //!
 //! Various utility functions
 
+pub use self::BitcoinError::*;
 use std::io;
 
 /// A success/failure return value
 pub type BitcoinResult<T> = Result<T, BitcoinError>;
+
 
 /// A general error code
 #[deriving(PartialEq, Eq, Show, Clone)]

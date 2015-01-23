@@ -28,7 +28,7 @@ pub struct Address {
   /// Services provided by the peer whose address this is
   pub services: u64,
   /// Network byte-order ipv6 address, or ipv4-mapped ipv6 address
-  pub address: [u8, ..16],
+  pub address: [u8; 16],
   /// Network port
   pub port: u16
 }
@@ -117,7 +117,7 @@ mod test {
     let mut addr: IoResult<Address> = deserialize(vec![1u8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                                                        0, 0, 0, 0, 0, 0, 0xff, 0xff, 0x0a, 0,
                                                        0, 1, 0x20, 0x8d]);
-    assert!(addr.is_ok())
+    assert!(addr.is_ok());
     let full = addr.unwrap();
     assert!(full.services == 1);
     assert!(full.address == [0u8,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0x0a, 0, 0, 1]);

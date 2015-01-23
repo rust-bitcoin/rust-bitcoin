@@ -21,6 +21,8 @@
 use network::encodable::{ConsensusDecodable, ConsensusEncodable};
 use network::serialize::{SimpleEncoder, SimpleDecoder};
 
+pub use self::Network::*;
+
 user_enum!(
   #[deriving(PartialEq, Eq, Clone, Hash)]
   #[doc="The cryptocurrency to act on"]
@@ -30,7 +32,7 @@ user_enum!(
     #[doc="Bitcoin's testnet"]
     BitcoinTestnet <-> "testnet"
   }
-)
+);
 
 pub static PROTOCOL_VERSION: u32    = 70001;
 pub static SERVICES: u64            = 0;

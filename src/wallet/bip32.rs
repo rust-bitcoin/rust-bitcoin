@@ -28,6 +28,7 @@ use crypto::sha2::Sha256;
 use crypto::sha2::Sha512;
 use secp256k1::key::{PublicKey, SecretKey};
 use secp256k1;
+pub use self::ChildNumber::*;
 
 use network::constants::{Network, Bitcoin, BitcoinTestnet};
 use util::base58::{Base58Error,
@@ -35,16 +36,16 @@ use util::base58::{Base58Error,
                    FromBase58, ToBase58};
 
 /// A chain code
-pub struct ChainCode([u8, ..32]);
-impl_array_newtype!(ChainCode, u8, 32)
-impl_array_newtype_show!(ChainCode)
-impl_array_newtype_encodable!(ChainCode, u8, 32)
+pub struct ChainCode([u8; 32]);
+impl_array_newtype!(ChainCode, u8, 32);
+impl_array_newtype_show!(ChainCode);
+impl_array_newtype_encodable!(ChainCode, u8, 32);
 
 /// A fingerprint
-pub struct Fingerprint([u8, ..4]);
-impl_array_newtype!(Fingerprint, u8, 4)
-impl_array_newtype_show!(Fingerprint)
-impl_array_newtype_encodable!(Fingerprint, u8, 4)
+pub struct Fingerprint([u8; 4]);
+impl_array_newtype!(Fingerprint, u8, 4);
+impl_array_newtype_show!(Fingerprint);
+impl_array_newtype_encodable!(Fingerprint, u8, 4);
 
 impl Default for Fingerprint {
   fn default() -> Fingerprint { Fingerprint([0, 0, 0, 0]) }
@@ -56,7 +57,7 @@ pub struct ExtendedPrivKey {
   /// The network this key is to be used on
   pub network: Network,
   /// How many derivations this key is from the master (which is 0)
-  pub depth: uint,
+  pub depth: usize,
   /// Fingerprint of the parent key (0 for master)
   pub parent_fingerprint: Fingerprint,
   /// Child number of the key used to derive from parent (0 for master)
@@ -73,7 +74,7 @@ pub struct ExtendedPubKey {
   /// The network this key is to be used on
   pub network: Network,
   /// How many derivations this key is from the master (which is 0)
-  pub depth: uint,
+  pub depth: usize,
   /// Fingerprint of the parent key
   pub parent_fingerprint: Fingerprint,
   /// Child number of the key used to derive from parent (0 for master)
@@ -83,6 +84,7 @@ pub struct ExtendedPubKey {
   /// Chain code
   pub chain_code: ChainCode
 }
+
 
 /// A child number for a derived key
 #[deriving(Clone, PartialEq, Eq, Show)]
@@ -190,9 +192,9 @@ impl ExtendedPrivKey {
   }
 
   /// Returns the HASH160 of the chaincode
-  pub fn identifier(&self) -> [u8, ..20] {
-    let mut sha2_res = [0, ..32];
-    let mut ripemd_res = [0, ..20];
+  pub fn identifier(&self) -> [u8; 20] {
+    let mut sha2_res = [0; 32];
+    let mut ripemd_res = [0; 20];
     // Compute extended public key
     let pk = ExtendedPubKey::from_private(self);
     // Do SHA256 of just the ECDSA pubkey
@@ -262,9 +264,9 @@ impl ExtendedPubKey {
   }
 
   /// Returns the HASH160 of the chaincode
-  pub fn identifier(&self) -> [u8, ..20] {
-    let mut sha2_res = [0, ..32];
-    let mut ripemd_res = [0, ..20];
+  pub fn identifier(&self) -> [u8; 20] {
+    let mut sha2_res = [0; 32];
+    let mut ripemd_res = [0; 20];
     // Do SHA256 of just the ECDSA pubkey
     let mut sha2 = Sha256::new();
     sha2.input(self.public_key.as_slice());
@@ -323,7 +325,7 @@ impl FromBase58 for ExtendedPrivKey {
         [0x04, 0x35, 0x83, 0x94] => BitcoinTestnet,
         _ => { return Err(InvalidVersion(data.slice_to(4).to_vec())); }
       },
-      depth: data[4] as uint,
+      depth: data[4] as usize,
       parent_fingerprint: Fingerprint::from_slice(data.slice(5, 9)),
       child_number: child_number,
       chain_code: ChainCode::from_slice(data.slice(13, 45)),
@@ -374,7 +376,7 @@ impl FromBase58 for ExtendedPubKey {
         [0x04, 0x35, 0x87, 0xCF] => BitcoinTestnet,
         _ => { return Err(InvalidVersion(data.slice_to(4).to_vec())); }
       },
-      depth: data[4] as uint,
+      depth: data[4] as usize,
       parent_fingerprint: Fingerprint::from_slice(data.slice(5, 9)),
       child_number: child_number,
       chain_code: ChainCode::from_slice(data.slice(13, 45)),

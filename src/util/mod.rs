@@ -28,15 +28,15 @@ pub mod uint;
 /// A trait which allows numbers to act as fixed-size bit arrays
 pub trait BitArray {
   /// Is bit set?
-  fn bit(&self, idx: uint) -> bool;
+  fn bit(&self, idx: usize) -> bool;
 
   /// Returns an array which is just the bits from start to end
-  fn bit_slice(&self, start: uint, end: uint) -> Self;
+  fn bit_slice(&self, start: usize, end: usize) -> Self;
 
   /// Bitwise and with `n` ones
-  fn mask(&self, n: uint) -> Self;
+  fn mask(&self, n: usize) -> Self;
 
   /// Trailing zeros
-  fn trailing_zeros(&self) -> uint;
+  fn trailing_zeros(&self) -> usize;
 }
 
