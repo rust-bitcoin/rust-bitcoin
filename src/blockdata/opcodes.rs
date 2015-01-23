@@ -22,10 +22,15 @@
 
 use serialize::json;
 
+pub use self::Opcode::*;
+pub use self::OpcodeClass::*;
+
 /// Submodule to handle -all- opcodes. Outside of this module we use
 /// a restricted set where the push/return/noop/illegal opcodes have
 /// a more convienient representation.
 pub mod all {
+  pub use self::Opcode::*;
+
   use serialize::json;
   // Heavy stick to translate between opcode types
   use std::mem::transmute;
@@ -594,10 +599,10 @@ pub mod all {
         super::PushNum(-1)
       // 16 opcodes
       } else if OP_PUSHNUM_1 as u8 <= *self as u8 && *self as u8 <= OP_PUSHNUM_16 as u8 {
-        super::PushNum(1 + *self as int - OP_PUSHNUM_1 as int)
+        super::PushNum(1 + *self as isize - OP_PUSHNUM_1 as isize)
       // 76 opcodes
       } else if *self as u8 <= OP_PUSHBYTES_75 as u8 {
-        super::PushBytes(*self as uint)
+        super::PushBytes(*self as usize)
       // 60 opcodes
       } else {
         super::Ordinary(unsafe { transmute(*self) })
@@ -621,7 +626,7 @@ pub mod all {
 
   impl json::ToJson for Opcode {
     fn to_json(&self) -> json::Json {
-      json::String(self.to_string())
+      json::Json::String(self.to_string())
     }
   }
 
@@ -635,9 +640,9 @@ pub mod all {
 #[deriving(Clone, PartialEq, Eq, Show)]
 pub enum OpcodeClass {
   /// Pushes the given number onto the stack
-  PushNum(int),
+  PushNum(isize),
   /// Pushes the given number of bytes onto the stack
-  PushBytes(uint),
+  PushBytes(isize),
   /// Fails the script if executed
   ReturnOp,
   /// Fails the script even if not executed
@@ -650,9 +655,10 @@ pub enum OpcodeClass {
 
 impl json::ToJson for OpcodeClass {
   fn to_json(&self) -> json::Json {
-    json::String(self.to_string())
+    json::Json::String(self.to_string())
   }
 }
+
 
 macro_rules! ordinary_opcode(
   ($($op:ident),*) => (
@@ -663,7 +669,7 @@ macro_rules! ordinary_opcode(
       $( $op = all::$op as u8 ),*
     }
   );
-)
+);
 
 /// "Ordinary" opcodes -- should be 60 of these
 ordinary_opcode!(
@@ -688,6 +694,6 @@ ordinary_opcode!(
   OP_RIPEMD160, OP_SHA1, OP_SHA256, OP_HASH160, OP_HASH256,
   OP_CODESEPARATOR, OP_CHECKSIG, OP_CHECKSIGVERIFY,
   OP_CHECKMULTISIG, OP_CHECKMULTISIGVERIFY
-)
+);
 
 

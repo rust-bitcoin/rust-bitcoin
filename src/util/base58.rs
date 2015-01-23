@@ -19,6 +19,7 @@ use std::string;
 
 use util::thinvec::ThinVec;
 use util::hash::Sha256dHash;
+pub use self::Base58Error::*;
 
 /// An error that might occur during base58 decoding
 #[deriving(Show, PartialEq, Eq, Clone)]
@@ -28,18 +29,18 @@ pub enum Base58Error {
   /// Checksum was not correct (expected, actual)
   BadChecksum(u32, u32),
   /// The length (in bytes) of the object was not correct
-  InvalidLength(uint),
+  InvalidLength(usize),
   /// Version byte(s) were not recognized
   InvalidVersion(Vec<u8>),
   /// Checked data was less than 4 bytes
-  TooShort(uint),
+  TooShort(usize),
   /// Any other error
   OtherBase58Error(String)
 }
 
 static BASE58_CHARS: &'static [u8] = b"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
-static BASE58_DIGITS: [Option<u8>, ..128] = [
+static BASE58_DIGITS: [Option<u8>; 128] = [
   None,     None,     None,     None,     None,     None,     None,     None,     // 0-7
   None,     None,     None,     None,     None,     None,     None,     None,     // 8-15
   None,     None,     None,     None,     None,     None,     None,     None,     // 16-23
@@ -71,14 +72,14 @@ pub trait FromBase58 {
     // Build in base 256
     for d58 in data.bytes() {
       // Compute "X = X * 58 + next_digit" in base 256
-      if d58 as uint > BASE58_DIGITS.len() {
+      if d58 as usize > BASE58_DIGITS.len() {
         return Err(BadByte(d58));
       }
-      let mut carry = match BASE58_DIGITS[d58 as uint] {
+      let mut carry = match BASE58_DIGITS[d58 as usize] {
         Some(d58) => d58 as u32,
         None => { return Err(BadByte(d58)); }
       };
-      for d256 in scratch.mut_iter().rev() {
+      for d256 in scratch.iter_mut().rev() {
         carry += *d256 as u32 * 58;
         *d256 = carry as u8;
         carry /= 256;
@@ -91,7 +92,7 @@ pub trait FromBase58 {
                                        .map(|_| 0)
                                        .collect();
     // Copy rest of string
-    ret.extend(scratch.move_iter().skip_while(|&x| x == 0));
+    ret.extend(scratch.into_iter().skip_while(|&x| x == 0));
     FromBase58::from_base58_layout(ret)
   }
 
@@ -121,8 +122,8 @@ pub fn base58_encode_slice(data: &[u8]) -> String {
   for &d256 in data.base58_layout().iter() {
     // Compute "X = X * 256 + next_digit" in base 58
     let mut carry = d256 as u32;
-    for d58 in scratch.mut_iter().rev() {
-      carry += *d58 as u32 << 8;
+    for d58 in scratch.iter_mut().rev() {
+      carry += (*d58 as u32) << 8;
       *d58 = (carry % 58) as u8;
       carry /= 58;
     }
@@ -136,8 +137,8 @@ pub fn base58_encode_slice(data: &[u8]) -> String {
                                                     .map(|_|  BASE58_CHARS[0])
                                                     .collect());
     // Copy rest of string
-    ret.as_mut_vec().extend(scratch.move_iter().skip_while(|&x| x == 0)
-                                               .map(|x| BASE58_CHARS[x as uint]));
+    ret.as_mut_vec().extend(scratch.into_iter().skip_while(|&x| x == 0)
+                                               .map(|x| BASE58_CHARS[x as usize]));
     ret
   }
 }
@@ -164,7 +165,7 @@ pub trait ToBase58 {
 
 // Trivial implementations for slices and vectors
 impl<'a> ToBase58 for &'a [u8] {
-  fn base58_layout(&self) -> Vec<u8> { Vec::from_slice(*self) }
+  fn base58_layout(&self) -> Vec<u8> { (*self).to_vec() }
   fn to_base58(&self) -> String { base58_encode_slice(*self) }
 }
 
@@ -174,7 +175,7 @@ impl ToBase58 for Vec<u8> {
 }
 
 impl ToBase58 for ThinVec<u8> {
-  fn base58_layout(&self) -> Vec<u8> { Vec::from_slice(self.as_slice()) }
+  fn base58_layout(&self) -> Vec<u8> { self.as_slice().to_vec() }
   fn to_base58(&self) -> String { base58_encode_slice(self.as_slice()) }
 }
 

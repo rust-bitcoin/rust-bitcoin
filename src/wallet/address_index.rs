@@ -19,7 +19,7 @@
 //!
 
 use std::collections::HashMap;
-use collections::hash::sip::hash_with_keys;
+use std::hash::SipHasher;
 
 use blockdata::transaction::{TxOut, PayToPubkeyHash};
 use blockdata::utxoset::UtxoSet;
@@ -32,7 +32,7 @@ use util::hash::Sha256dHash;
 /// An address index
 #[deriving(Clone, PartialEq, Eq, Show)]
 pub struct AddressIndex {
-  index: HashMap<Script, Vec<(Sha256dHash, uint, TxOut, uint)>>,
+  index: HashMap<Script, Vec<(Sha256dHash, usize, TxOut, usize)>>,
   network: Network,
   k1: u64,
   k2: u64
@@ -51,9 +51,15 @@ impl AddressIndex {
     };
     for (key, idx, txo, height) in utxo_set.iter() {
       if ret.admissible_txo(txo) {
-        ret.index.insert_or_update_with(txo.script_pubkey.clone(),
-                                        vec![(key, idx, txo.clone(), height)],
-                                        |_, v| v.push((key, idx, txo.clone(), height)));
+          let pubkey = txo.script_pubkey.clone();
+          let insert = (key, idx, txo.clone(), height);
+          if ret.index.contains_key(&pubkey) {
+              // we already now it's safe to unwrap this
+              let mut vec = ret.index.get_mut(&pubkey).unwrap();
+              vec.push(insert);
+          } else {
+              ret.index.insert(pubkey, vec![insert]);
+          }
       }
     }
     ret
@@ -62,7 +68,12 @@ impl AddressIndex {
   /// A filtering function used for creating a small address index.
   #[inline]
   pub fn admissible_address(&self, addr: &Address) -> bool {
-    hash_with_keys(self.k1, self.k2, &addr.as_slice()) & 0xFF == 0
+      // used to be: hash_with_keys(self.k1, self.k2, &addr.as_slice()) & 0xFF == 0
+      let mut hasher = SipHasher::new_with_keys(self.k1, self.k2);
+      hasher.write(&addr.as_slice());
+
+      hasher.result() & 0xFF == 0
+
   }
 
   /// A filtering function used for creating a small address index.
@@ -77,7 +88,7 @@ impl AddressIndex {
   /// Lookup a txout by its scriptpubkey. Returns a slice because there
   /// may be more than one for any given scriptpubkey.
   #[inline]
-  pub fn find_by_script<'a>(&'a self, pubkey: &Script) -> &'a [(Sha256dHash, uint, TxOut, uint)] {
+  pub fn find_by_script<'a>(&'a self, pubkey: &Script) -> &'a [(Sha256dHash, usize, TxOut, usize)] {
     self.index.find(pubkey).map(|v| v.as_slice()).unwrap_or(&[])
   }
 }

@@ -21,7 +21,7 @@
 
 use alloc::heap::{allocate, reallocate, deallocate};
 use std::raw;
-use std::slice::{Items, MutItems};
+use std::slice::{Iter, IterMut};
 use std::{fmt, mem, ptr};
 use std::u32;
 
@@ -44,7 +44,7 @@ impl<T> ThinVec<T> {
     } else if capacity == 0 {
       ThinVec::new()
     } else {
-      let size = (capacity as uint).checked_mul(&mem::size_of::<T>())
+      let size = (capacity as usize).checked_mul(&mem::size_of::<T>())
                    .expect("ThinVec::reserve: capacity overflow");
       let ptr = allocate(size, mem::min_align_of::<T>());
       ThinVec { ptr: ptr as *mut T, cap: capacity }
@@ -55,7 +55,7 @@ impl<T> ThinVec<T> {
   #[inline]
   pub fn from_vec(mut v: Vec<T>) -> ThinVec<T> {
     v.shrink_to_fit();
-    assert!(v.len() <= u32::MAX as uint);
+    assert!(v.len() <= u32::MAX as usize);
     let ret = ThinVec { ptr: v.as_mut_ptr(), cap: v.len() as u32 };
     unsafe { mem::forget(v); }
     ret
@@ -63,55 +63,55 @@ impl<T> ThinVec<T> {
 
   /// Iterator over elements of the vector
   #[inline]
-  pub fn iter<'a>(&'a self) -> Items<'a, T> {
+  pub fn iter<'a>(&'a self) -> Iter<'a, T> {
     self.as_slice().iter()
   }
 
   /// Mutable iterator over elements of the vector
   #[inline]
-  pub fn mut_iter<'a>(&'a mut self) -> MutItems<'a, T> {
-    self.as_mut_slice().mut_iter()
+  pub fn iter_mut<'a>(&'a mut self) -> IterMut<'a, T> {
+    self.as_mut_slice().iter_mut()
   }
 
   /// Get vector as mutable slice
   #[inline]
   pub fn as_mut_slice<'a>(&'a mut self) -> &'a mut [T] {
-    unsafe { mem::transmute(raw::Slice { data: self.ptr as *const T, len: self.cap as uint }) }
+    unsafe { mem::transmute(raw::Slice { data: self.ptr as *const T, len: self.cap as usize }) }
   }
 
   /// Accessor
   #[inline]
-  pub unsafe fn get<'a>(&'a self, index: uint) -> &'a T {
+  pub unsafe fn get<'a>(&'a self, index: usize) -> &'a T {
     &self.as_slice()[index]
   }
 
   /// Mutable accessor NOT for first use
   #[inline]
-  pub unsafe fn get_mut<'a>(&'a mut self, index: uint) -> &'a mut T {
+  pub unsafe fn get_mut<'a>(&'a mut self, index: usize) -> &'a mut T {
     &mut self.as_mut_slice()[index]
   }
 
   /// Mutable accessor for first use
   #[inline]
-  pub unsafe fn init<'a>(&'a mut self, index: uint, value: T) {
-    ptr::write(&mut *self.ptr.offset(index as int), value);
+  pub unsafe fn init<'a>(&'a mut self, index: usize, value: T) {
+    ptr::write(&mut *self.ptr.offset(index as isize), value);
   }
 
   /// Returns a slice starting from `index`
   #[inline]
-  pub fn slice_from<'a>(&'a self, index: uint) -> &'a [T] {
+  pub fn slice_from<'a>(&'a self, index: usize) -> &'a [T] {
     self.as_slice().slice_from(index)
   }
 
   /// Returns a slice ending just before `index`
   #[inline]
-  pub fn slice_to<'a>(&'a self, index: uint) -> &'a [T] {
+  pub fn slice_to<'a>(&'a self, index: usize) -> &'a [T] {
     self.as_slice().slice_to(index)
   }
 
   /// Returns a slice starting from `s` ending just before `e`
   #[inline]
-  pub fn slice<'a>(&'a self, s: uint, e: uint) -> &'a [T] {
+  pub fn slice<'a>(&'a self, s: usize, e: usize) -> &'a [T] {
     self.as_slice().slice(s, e)
   }
 
@@ -122,18 +122,18 @@ impl<T> ThinVec<T> {
     if mem::size_of::<T>() == 0 {
       unsafe { mem::forget(value); }
     } else {
-      let old_size = (self.cap - 1) as uint * mem::size_of::<T>();
-      let new_size = self.cap as uint * mem::size_of::<T>();
-      if new_size < old_size { fail!("ThinVec::push: cap overflow") }
+      let old_size = (self.cap - 1) as usize * mem::size_of::<T>();
+      let new_size = self.cap as usize * mem::size_of::<T>();
+      if new_size < old_size { panic!("ThinVec::push: cap overflow") }
       unsafe {
         self.ptr =
           if old_size == 0 {
             allocate(new_size, mem::min_align_of::<T>()) as *mut T
           } else {
             reallocate(self.ptr as *mut u8, new_size,
-                       mem::min_align_of::<T>(), self.cap as uint) as *mut T
+                       mem::min_align_of::<T>(), self.cap as usize) as *mut T
           };
-        ptr::write(&mut *self.ptr.offset((self.cap - 1) as int), value);
+        ptr::write(&mut *self.ptr.offset((self.cap - 1) as isize), value);
       }
     }
   }
@@ -141,18 +141,22 @@ impl<T> ThinVec<T> {
   /// Set the length of the vector to the minimum of the current capacity and new capacity
   pub unsafe fn reserve(&mut self, new_cap: u32) {
     if new_cap > self.cap {
-      let new_size = (new_cap as uint).checked_mul(&mem::size_of::<T>())
+      let new_size = (new_cap as usize).checked_mul(&mem::size_of::<T>())
                        .expect("ThinVec::reserve: capacity overflow");
       self.ptr =
         if self.cap == 0 {
           allocate(new_size, mem::min_align_of::<T>()) as *mut T
         } else {
           reallocate(self.ptr as *mut u8, new_size,
-                     mem::min_align_of::<T>(), self.cap as uint) as *mut T
+                     mem::min_align_of::<T>(), self.cap as usize) as *mut T
         };
       self.cap = new_cap;
     }
   }
+
+  /// "len" is no longer part of a trait
+  #[inline]
+  pub fn len(&self) -> usize { self.cap as usize }
 
   /// Increase the length of the vector
   pub unsafe fn reserve_additional(&mut self, extra: u32) {
@@ -165,13 +169,13 @@ impl<T:Clone> ThinVec<T> {
   /// Push an entire slice onto the ThinVec
   #[inline]
   pub fn push_all(&mut self, other: &[T]) {
-    let old_cap = self.cap as uint;
+    let old_cap = self.cap as usize;
     unsafe { self.reserve_additional(other.len() as u32); }
     // Copied from vec.rs, which claims this will be optimized to a memcpy
     // if T is Copy
     for i in range(0, other.len()) {
       unsafe {
-        ptr::write(self.as_mut_slice().unsafe_mut_ref(old_cap + i),
+        ptr::write(self.as_mut_slice().unsafe_mut(old_cap + i),
                    other.unsafe_get(i).clone());
       }
     }
@@ -180,14 +184,14 @@ impl<T:Clone> ThinVec<T> {
   /// Constructor from a slice
   #[inline]
   pub fn from_slice(v: &[T]) -> ThinVec<T> {
-    ThinVec::from_vec(Vec::from_slice(v))
+    ThinVec::from_vec(v.to_vec())
   }
 }
 
-impl<T> Slice<T> for ThinVec<T> {
+impl<T> AsSlice<T> for ThinVec<T> {
   #[inline]
   fn as_slice<'a>(&'a self) -> &'a [T] {
-    unsafe { mem::transmute(raw::Slice { data: self.ptr as *const T, len: self.cap as uint }) }
+    unsafe { mem::transmute(raw::Slice { data: self.ptr as *const T, len: self.cap as usize }) }
   }
 }
 
@@ -198,7 +202,7 @@ impl<T:Clone> Clone for ThinVec<T> {
       // Copied from vec.rs, which claims this will be optimized to a memcpy
       // if T is Copy
       for i in range(0, self.len()) {
-        ptr::write(ret.as_mut_slice().unsafe_mut_ref(i),
+        ptr::write(ret.as_mut_slice().unsafe_mut(i),
                    self.as_slice().unsafe_get(i).clone());
       }
       ret
@@ -212,7 +216,7 @@ impl<T> FromIterator<T> for ThinVec<T> {
   #[inline]
   fn from_iter<I: Iterator<T>>(iter: I) -> ThinVec<T> {
     let (lower, _) = iter.size_hint();
-    assert!(lower <= u32::MAX as uint);
+    assert!(lower <= u32::MAX as usize);
     unsafe {
       let mut vector = ThinVec::with_capacity(lower as u32);
       for (n, elem) in iter.enumerate() {
@@ -227,7 +231,7 @@ impl<T> FromIterator<T> for ThinVec<T> {
   }
 }
 
-impl<T> Extendable<T> for ThinVec<T> {
+impl<T> Extend<T> for ThinVec<T> {
   #[inline]
   fn extend<I: Iterator<T>>(&mut self, iter: I) {
     let old_cap = self.cap;
@@ -235,17 +239,12 @@ impl<T> Extendable<T> for ThinVec<T> {
     unsafe { self.reserve_additional(lower as u32); }
     for (n, elem) in iter.enumerate() {
       if n < lower {
-        unsafe { self.init(old_cap as uint + n, elem) };
+        unsafe { self.init(old_cap as usize + n, elem) };
       } else {
         self.push(elem);
       }
     }
   }
-}
-
-impl<T> Collection for ThinVec<T> {
-  #[inline]
-  fn len(&self) -> uint { self.cap as uint }
 }
 
 impl<T:fmt::Show> fmt::Show for ThinVec<T> {
@@ -273,7 +272,7 @@ impl<T> Drop for ThinVec<T> {
         }
         if mem::size_of::<T>() != 0 {
           deallocate(self.ptr as *mut u8,
-                     self.cap as uint * mem::size_of::<T>(),
+                     self.cap as usize * mem::size_of::<T>(),
                      mem::min_align_of::<T>());
         }
       }
@@ -292,12 +291,12 @@ mod tests {
       let mut thinvec = ThinVec::with_capacity(cap);
 
       for i in range(0, cap) {
-        thinvec.init(i as uint, Some(box i));
+        thinvec.init(i as usize, Some(Box::new(i)));
       }
 
       for i in range(0, cap) {
-        assert_eq!(thinvec.get_mut(i as uint).take(), Some(box i));
-        assert_eq!(thinvec.get_mut(i as uint).take(), None); 
+        assert_eq!(thinvec.get_mut(i as usize).take(), Some(Box::new(i)));
+        assert_eq!(thinvec.get_mut(i as usize).take(), None);
       }
     }
   }

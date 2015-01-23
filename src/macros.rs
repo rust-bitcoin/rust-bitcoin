@@ -16,14 +16,14 @@
 //!
 //! Macros available to users of the Bitcoin library
 
-#![macro_escape]
+#![macro_use]
 
 #[macro_export]
 macro_rules! nu_select(
-  ($($name:pat from $rx:expr => $code:expr),+) => ({
-    nu_select!{ $($name from $rx using recv => $code),+ }
+  ($($name:pat, $rx:expr => $code:expr),+) => ({
+    nu_select!{ $($name, $rx, recv => $code),+ }
   });
-  ($($name:pat from $rx:expr using $meth:ident => $code:expr),+) => ({
+  ($($name:pat, $rx:expr, $meth:ident => $code:expr),+) => ({
     use rustrt::local::Local;
     use rustrt::task::Task;
     use sync::comm::Packet;
@@ -69,7 +69,7 @@ macro_rules! nu_select(
           $code
         })else+
         else {
-          fail!("we didn't find the ready receiver, but we should have had one");
+          panic!("we didn't find the ready receiver, but we should have had one");
         };
       // At this point, the first i receivers have been aborted. We need to abort the rest:
       $(if i > 0 {
@@ -82,7 +82,7 @@ macro_rules! nu_select(
       ret
     }
   })
-)
+);
 
 #[macro_export]
 macro_rules! user_enum(
@@ -114,5 +114,5 @@ macro_rules! user_enum(
       }
     }
   );
-)
+);
 

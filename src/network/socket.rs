@@ -18,7 +18,7 @@
 //!
 
 use time::now;
-use std::rand::task_rng;
+use std::rand::thread_rng;
 use rand::Rng;
 use std::io::{BufferedReader, BufferedWriter};
 use std::io::{IoError, IoResult, NotConnected, OtherIoError, standard_error};
@@ -34,7 +34,7 @@ use network::serialize::{RawEncoder, RawDecoder};
 use util::misc::prepend_err;
 
 /// Format an IP address in the 16-byte bitcoin protocol serialization
-fn ipaddr_to_bitcoin_addr(ipaddr: &ip::IpAddr) -> [u8, ..16] {
+fn ipaddr_to_bitcoin_addr(ipaddr: &ip::IpAddr) -> [u8; 16] {
   match *ipaddr {
     ip::Ipv4Addr(a, b, c, d) =>
         [0, 0, 0, 0, 0, 0, 0, 0,
@@ -72,7 +72,7 @@ impl Socket {
   // TODO: we fix services to 0
   /// Construct a new socket
   pub fn new(network: constants::Network) -> Socket {
-    let mut rng = task_rng();
+    let mut rng = thread_rng();
     Socket {
       socket: None,
       buffered_reader: Arc::new(Mutex::new(None)),
@@ -94,7 +94,7 @@ impl Socket {
     // These locks should just pop open now
     let mut reader_lock = self.buffered_reader.lock();
     let mut writer_lock = self.buffered_writer.lock();
-    match tcp::TcpStream::connect(host, port) {
+    match tcp::TcpStream::connect((host, port)) {
       Ok(s)  => {
         *reader_lock = Some(BufferedReader::new(s.clone()));
         *writer_lock = Some(BufferedWriter::new(s.clone()));
@@ -174,7 +174,7 @@ impl Socket {
       None => Err(standard_error(NotConnected)),
       Some(ref mut writer) => {
         let message = RawNetworkMessage { magic: self.magic, payload: payload };
-        try!(message.consensus_encode(&mut RawEncoder::new(writer.by_ref())));
+        try!(message.consensus_encode(&mut RawEncoder::new(*writer.get_ref())));
         writer.flush()
       }
     }
@@ -189,7 +189,7 @@ impl Socket {
       Some(ref mut buf) => {
         // We need a new scope since the closure in here borrows read_err,
         // and we try to read it afterward. Letting `iter` go out fixes it.
-        let mut decoder = RawDecoder::new(buf.by_ref());
+        let mut decoder = RawDecoder::new(*buf.get_ref());
         let decode: IoResult<RawNetworkMessage> = ConsensusDecodable::consensus_decode(&mut decoder);
         match decode {
           // Check for parse errors...

@@ -14,3 +14,8 @@ git = "https://github.com/DaGenix/rust-crypto.git"
 [dependencies.bitcoin-secp256k1-rs]
 git = "https://github.com/apoelstra/bitcoin-secp256k1-rs.git"
 
+[dependencies.num]
+git = "https://github.com/rust-lang/num"
+
+[dependencies.time]
+git = "https://github.com/rust-lang/time.git"

@@ -48,6 +48,9 @@ use util::hash::Sha256dHash;
 use util::misc::script_find_and_remove;
 use util::thinvec::ThinVec;
 
+pub use self::ScriptError::*;
+pub use self::SignatureHashType::*;
+
 #[deriving(PartialEq, Eq, Show, Clone)]
 /// A Bitcoin script
 pub struct Script(ThinVec<u8>);
@@ -98,9 +101,9 @@ pub enum ScriptError {
   /// An OP_RETURN or synonym was executed
   ExecutedReturn,
   /// A multisig tx with negative or too many keys
-  MultisigBadKeyCount(int),
+  MultisigBadKeyCount(isize),
   /// A multisig tx with negative or too many signatures
-  MultisigBadSigCount(int),
+  MultisigBadSigCount(isize),
   /// Used OP_PICK with a negative index
   NegativePick,
   /// Used OP_ROLL with a negative index
@@ -126,15 +129,15 @@ pub enum ScriptError {
 /// A rule for validating an abstract stack element
 pub struct Validator {
   /// List of other elements to pass to both `check` and `update`
-  args: Vec<uint>,
+  args: Vec<usize>,
   /// Function which confirms that the current value is consistent with
   /// the stack state, returning `false` if not.
-  check: fn(&AbstractStackElem, &[uint]) -> bool,
+  check: fn(&AbstractStackElem, &[usize]) -> bool,
   /// Function which updates the current stack based on the element's
   /// value, if it has a value, otherwise updates the element's value
   /// based on the current stack, if possible. Returns `false` if it
   /// is forced to do something inconsistent.
-  update: fn(&mut AbstractStackElem, &[uint]) -> Result<(), ScriptError>
+  update: fn(&mut AbstractStackElem, &[usize]) -> Result<(), ScriptError>
 }
 
 impl Clone for Validator {
@@ -148,13 +151,13 @@ impl Clone for Validator {
 }
 
 // Validators
-fn check_op_size(elem: &AbstractStackElem, others: &[uint]) -> bool {
+fn check_op_size(elem: &AbstractStackElem, others: &[usize]) -> bool {
   let other = unsafe { elem.lookup(others[0]) };
   elem.num_hi() >= other.len_lo() as i64 &&
   elem.num_lo() <= other.len_hi() as i64
 }
 
-fn update_op_size(elem: &mut AbstractStackElem, others: &[uint])
+fn update_op_size(elem: &mut AbstractStackElem, others: &[usize])
                   -> Result<(), ScriptError> {
   let (lo, hi) = {
     let one = unsafe { elem.lookup(others[0]) };
@@ -165,7 +168,7 @@ fn update_op_size(elem: &mut AbstractStackElem, others: &[uint])
   elem.set_num_hi(hi)
 }
 
-fn check_op_equal(elem: &AbstractStackElem, others: &[uint]) -> bool {
+fn check_op_equal(elem: &AbstractStackElem, others: &[usize]) -> bool {
   let one = unsafe { elem.lookup(others[0]) };
   let two = unsafe { elem.lookup(others[1]) };
   match elem.bool_value() {
@@ -190,7 +193,7 @@ fn check_op_equal(elem: &AbstractStackElem, others: &[uint]) -> bool {
   }
 }
 
-fn update_boolean(elem: &mut AbstractStackElem) 
+fn update_boolean(elem: &mut AbstractStackElem)
                  -> Result<(), ScriptError> {
   // Test boolean values
   elem.bool_val = Some(true);
@@ -207,7 +210,7 @@ fn update_boolean(elem: &mut AbstractStackElem)
   }
 }
 
-fn update_op_equal(elem: &mut AbstractStackElem, others: &[uint])
+fn update_op_equal(elem: &mut AbstractStackElem, others: &[usize])
                    -> Result<(), ScriptError> {
   match elem.bool_value() {
     None => update_boolean(elem),
@@ -240,8 +243,8 @@ fn update_op_equal(elem: &mut AbstractStackElem, others: &[uint])
         (Some(_), Some(_)) => { return Err(Unsatisfiable); }
       }
       // Equalize full values
-      match (one.raw_value().map(|r| Vec::from_slice(r)),
-             two.raw_value().map(|r| Vec::from_slice(r))) {
+      match (one.raw_value().map(|r| r.to_vec()),
+             two.raw_value().map(|r| r.to_vec())) {
         (None, None) => {},
         (None, Some(x)) => try!(one.set_value(x.as_slice())),
         (Some(x), None) => try!(two.set_value(x.as_slice())),
@@ -252,7 +255,7 @@ fn update_op_equal(elem: &mut AbstractStackElem, others: &[uint])
   }
 }
 
-fn check_op_not(elem: &AbstractStackElem, others: &[uint]) -> bool {
+fn check_op_not(elem: &AbstractStackElem, others: &[usize]) -> bool {
   let one = unsafe { elem.lookup(others[0]) };
   if !one.may_be_numeric() {
     return false;
@@ -265,7 +268,7 @@ fn check_op_not(elem: &AbstractStackElem, others: &[uint]) -> bool {
   }
 }
 
-fn update_op_not(elem: &mut AbstractStackElem, others: &[uint])
+fn update_op_not(elem: &mut AbstractStackElem, others: &[usize])
                  -> Result<(), ScriptError> {
   match elem.bool_value() {
     None => update_boolean(elem),
@@ -290,7 +293,7 @@ fn update_op_not(elem: &mut AbstractStackElem, others: &[uint])
   }
 }
 
-fn check_op_0notequal(elem: &AbstractStackElem, others: &[uint]) -> bool {
+fn check_op_0notequal(elem: &AbstractStackElem, others: &[usize]) -> bool {
   let one = unsafe { elem.lookup(others[0]) };
   if !one.may_be_numeric() { return false; }
   match elem.bool_value() {
@@ -300,7 +303,7 @@ fn check_op_0notequal(elem: &AbstractStackElem, others: &[uint]) -> bool {
   }
 }
 
-fn update_op_0notequal(elem: &mut AbstractStackElem, others: &[uint])
+fn update_op_0notequal(elem: &mut AbstractStackElem, others: &[usize])
                        -> Result<(), ScriptError> {
   match elem.bool_value() {
     None => update_boolean(elem),
@@ -325,7 +328,7 @@ fn update_op_0notequal(elem: &mut AbstractStackElem, others: &[uint])
   }
 }
 
-fn check_op_numequal(elem: &AbstractStackElem, others: &[uint]) -> bool {
+fn check_op_numequal(elem: &AbstractStackElem, others: &[usize]) -> bool {
   let one = unsafe { elem.lookup(others[0]) };
   let two = unsafe { elem.lookup(others[1]) };
   if !one.may_be_numeric() { return false; }
@@ -349,7 +352,7 @@ fn check_op_numequal(elem: &AbstractStackElem, others: &[uint]) -> bool {
   }
 }
 
-fn update_op_numequal(elem: &mut AbstractStackElem, others: &[uint])
+fn update_op_numequal(elem: &mut AbstractStackElem, others: &[usize])
                       -> Result<(), ScriptError> {
   match elem.bool_value() {
     None => update_boolean(elem),
@@ -370,7 +373,7 @@ fn update_op_numequal(elem: &mut AbstractStackElem, others: &[uint])
   }
 }
 
-fn check_op_numnotequal(elem: &AbstractStackElem, others: &[uint]) -> bool {
+fn check_op_numnotequal(elem: &AbstractStackElem, others: &[usize]) -> bool {
   let one = unsafe { elem.lookup(others[0]) };
   let two = unsafe { elem.lookup(others[1]) };
   if !one.may_be_numeric() { return false; }
@@ -382,7 +385,7 @@ fn check_op_numnotequal(elem: &AbstractStackElem, others: &[uint]) -> bool {
   }
 }
 
-fn update_op_numnotequal(elem: &mut AbstractStackElem, others: &[uint])
+fn update_op_numnotequal(elem: &mut AbstractStackElem, others: &[usize])
                          -> Result<(), ScriptError> {
   match elem.bool_value() {
     None => update_boolean(elem),
@@ -403,7 +406,7 @@ fn update_op_numnotequal(elem: &mut AbstractStackElem, others: &[uint])
   }
 }
 
-fn check_op_numlt(elem: &AbstractStackElem, others: &[uint]) -> bool {
+fn check_op_numlt(elem: &AbstractStackElem, others: &[usize]) -> bool {
   let one = unsafe { elem.lookup(others[0]) };
   let two = unsafe { elem.lookup(others[1]) };
   if !one.may_be_numeric() { return false; }
@@ -415,7 +418,7 @@ fn check_op_numlt(elem: &AbstractStackElem, others: &[uint]) -> bool {
   }
 }
 
-fn update_op_numlt(elem: &mut AbstractStackElem, others: &[uint])
+fn update_op_numlt(elem: &mut AbstractStackElem, others: &[usize])
                    -> Result<(), ScriptError> {
   match elem.bool_value() {
     None => update_boolean(elem),
@@ -440,7 +443,7 @@ fn update_op_numlt(elem: &mut AbstractStackElem, others: &[uint])
   }
 }
 
-fn check_op_numgt(elem: &AbstractStackElem, others: &[uint]) -> bool {
+fn check_op_numgt(elem: &AbstractStackElem, others: &[usize]) -> bool {
   let one = unsafe { elem.lookup(others[0]) };
   let two = unsafe { elem.lookup(others[1]) };
   if !one.may_be_numeric() { return false; }
@@ -452,7 +455,7 @@ fn check_op_numgt(elem: &AbstractStackElem, others: &[uint]) -> bool {
   }
 }
 
-fn update_op_numgt(elem: &mut AbstractStackElem, others: &[uint])
+fn update_op_numgt(elem: &mut AbstractStackElem, others: &[usize])
                    -> Result<(), ScriptError> {
   match elem.bool_value() {
     None => try!(update_boolean(elem)),
@@ -478,7 +481,7 @@ fn update_op_numgt(elem: &mut AbstractStackElem, others: &[uint])
   Ok(())
 }
 
-fn check_op_numlteq(elem: &AbstractStackElem, others: &[uint]) -> bool {
+fn check_op_numlteq(elem: &AbstractStackElem, others: &[usize]) -> bool {
   let one = unsafe { elem.lookup(others[0]) };
   let two = unsafe { elem.lookup(others[1]) };
   if !one.may_be_numeric() { return false; }
@@ -490,7 +493,7 @@ fn check_op_numlteq(elem: &AbstractStackElem, others: &[uint]) -> bool {
   }
 }
 
-fn update_op_numlteq(elem: &mut AbstractStackElem, others: &[uint])
+fn update_op_numlteq(elem: &mut AbstractStackElem, others: &[usize])
                    -> Result<(), ScriptError> {
   match elem.bool_value() {
     None => try!(update_boolean(elem)),
@@ -516,7 +519,7 @@ fn update_op_numlteq(elem: &mut AbstractStackElem, others: &[uint])
   Ok(())
 }
 
-fn check_op_numgteq(elem: &AbstractStackElem, others: &[uint]) -> bool {
+fn check_op_numgteq(elem: &AbstractStackElem, others: &[usize]) -> bool {
   let one = unsafe { elem.lookup(others[0]) };
   let two = unsafe { elem.lookup(others[1]) };
   if !one.may_be_numeric() { return false; }
@@ -528,7 +531,7 @@ fn check_op_numgteq(elem: &AbstractStackElem, others: &[uint]) -> bool {
   }
 }
 
-fn update_op_numgteq(elem: &mut AbstractStackElem, others: &[uint])
+fn update_op_numgteq(elem: &mut AbstractStackElem, others: &[usize])
                    -> Result<(), ScriptError> {
   match elem.bool_value() {
     None => try!(update_boolean(elem)),
@@ -554,11 +557,11 @@ fn update_op_numgteq(elem: &mut AbstractStackElem, others: &[uint])
   Ok(())
 }
 
-fn check_op_ripemd160(elem: &AbstractStackElem, _: &[uint]) -> bool {
+fn check_op_ripemd160(elem: &AbstractStackElem, _: &[usize]) -> bool {
   elem.may_be_hash160()
 }
 
-fn update_op_ripemd160(elem: &mut AbstractStackElem, others: &[uint])
+fn update_op_ripemd160(elem: &mut AbstractStackElem, others: &[usize])
                        -> Result<(), ScriptError> {
   try!(elem.set_len_lo(20));
   try!(elem.set_len_hi(20));
@@ -580,11 +583,11 @@ fn update_op_ripemd160(elem: &mut AbstractStackElem, others: &[uint])
   }
 }
 
-fn check_op_sha1(elem: &AbstractStackElem, _: &[uint]) -> bool {
+fn check_op_sha1(elem: &AbstractStackElem, _: &[usize]) -> bool {
   elem.may_be_hash160()
 }
 
-fn update_op_sha1(elem: &mut AbstractStackElem, others: &[uint])
+fn update_op_sha1(elem: &mut AbstractStackElem, others: &[usize])
                   -> Result<(), ScriptError> {
   try!(elem.set_len_lo(20));
   try!(elem.set_len_hi(20));
@@ -606,11 +609,11 @@ fn update_op_sha1(elem: &mut AbstractStackElem, others: &[uint])
   }
 }
 
-fn check_op_hash160(elem: &AbstractStackElem, _: &[uint]) -> bool {
+fn check_op_hash160(elem: &AbstractStackElem, _: &[usize]) -> bool {
   elem.may_be_hash160()
 }
 
-fn update_op_hash160(elem: &mut AbstractStackElem, others: &[uint])
+fn update_op_hash160(elem: &mut AbstractStackElem, others: &[usize])
                       -> Result<(), ScriptError> {
   try!(elem.set_len_lo(20));
   try!(elem.set_len_hi(20));
@@ -636,11 +639,11 @@ fn update_op_hash160(elem: &mut AbstractStackElem, others: &[uint])
   }
 }
 
-fn check_op_sha256(elem: &AbstractStackElem, _: &[uint]) -> bool {
+fn check_op_sha256(elem: &AbstractStackElem, _: &[usize]) -> bool {
   elem.may_be_hash256()
 }
 
-fn update_op_sha256(elem: &mut AbstractStackElem, others: &[uint])
+fn update_op_sha256(elem: &mut AbstractStackElem, others: &[usize])
                     -> Result<(), ScriptError> {
   try!(elem.set_len_lo(32));
   try!(elem.set_len_hi(32));
@@ -662,11 +665,11 @@ fn update_op_sha256(elem: &mut AbstractStackElem, others: &[uint])
   }
 }
 
-fn check_op_hash256(elem: &AbstractStackElem, _: &[uint]) -> bool {
+fn check_op_hash256(elem: &AbstractStackElem, _: &[usize]) -> bool {
   elem.may_be_hash256()
 }
 
-fn update_op_hash256(elem: &mut AbstractStackElem, others: &[uint])
+fn update_op_hash256(elem: &mut AbstractStackElem, others: &[usize])
                     -> Result<(), ScriptError> {
   try!(elem.set_len_lo(32));
   try!(elem.set_len_hi(32));
@@ -691,7 +694,7 @@ fn update_op_hash256(elem: &mut AbstractStackElem, others: &[uint])
   }
 }
 
-fn check_op_checksig(elem: &AbstractStackElem, others: &[uint]) -> bool {
+fn check_op_checksig(elem: &AbstractStackElem, others: &[usize]) -> bool {
   let one = unsafe { elem.lookup(others[0]) };
   let two = unsafe { elem.lookup(others[1]) };
   match elem.bool_value() {
@@ -701,7 +704,7 @@ fn check_op_checksig(elem: &AbstractStackElem, others: &[uint]) -> bool {
   }
 }
 
-fn update_op_checksig(elem: &mut AbstractStackElem, others: &[uint])
+fn update_op_checksig(elem: &mut AbstractStackElem, others: &[usize])
                       -> Result<(), ScriptError> {
   match elem.bool_value() {
     None => update_boolean(elem),
@@ -732,13 +735,13 @@ pub struct AbstractStackElem {
   /// Upper bound when read as number
   num_hi: i64,
   /// Length lower bound
-  len_lo: uint,
+  len_lo: usize,
   /// Length upper bound
-  len_hi: uint,
+  len_hi: usize,
   /// Relations this must satisfy
   validators: Vec<Validator>,
   /// Index of the element in its stack allocator
-  alloc_index: Option<uint>
+  alloc_index: Option<usize>
 }
 
 impl AbstractStackElem {
@@ -771,7 +774,7 @@ impl AbstractStackElem {
       len_lo: data.len(),
       len_hi: data.len(),
       bool_val: Some(read_scriptbool(data)),
-      raw: Some(Vec::from_slice(data)),
+      raw: Some(data.to_vec()),
       validators: vec![],
       alloc_index: None
     }
@@ -792,17 +795,17 @@ impl AbstractStackElem {
   }
 
   /// Looks up another stack item by index
-  unsafe fn lookup<'a>(&'a self, idx: uint) -> &'a AbstractStackElem {
+  unsafe fn lookup<'a>(&'a self, idx: usize) -> &'a AbstractStackElem {
     let mypos = self as *const _;
-    let myidx = self.alloc_index.unwrap() as int;
-    &*mypos.offset(idx as int - myidx)
+    let myidx = self.alloc_index.unwrap() as isize;
+    &*mypos.offset(idx as isize - myidx)
   }
 
   /// Looks up another stack item by index
-  unsafe fn lookup_mut<'a>(&'a self, idx: uint) -> &'a mut AbstractStackElem {
+  unsafe fn lookup_mut<'a>(&'a self, idx: usize) -> &'a mut AbstractStackElem {
     let mypos = self as *const _ as *mut _;
-    let myidx = self.alloc_index.unwrap() as int;
-    &mut *mypos.offset(idx as int - myidx)
+    let myidx = self.alloc_index.unwrap() as isize;
+    &mut *mypos.offset(idx as isize - myidx)
   }
 
   /// Retrieve the boolean value of the stack element, if it can be determined
@@ -832,13 +835,13 @@ impl AbstractStackElem {
   /// Retrieve the upper bound for this element's length. This always
   /// exists as a finite value, though the default upper limit is some
   /// impractically large number
-  pub fn len_hi(&self) -> uint {
+  pub fn len_hi(&self) -> usize {
     self.len_hi
   }
 
   /// Retrieve the lower bound for this element's length. This always
   /// exists since it is at least zero :)
-  pub fn len_lo(&self) -> uint {
+  pub fn len_lo(&self) -> usize {
     self.len_lo
   }
 
@@ -899,9 +902,9 @@ impl AbstractStackElem {
     self.set_num_hi(val)
   }
 
-  /// Sets the entire value of the 
+  /// Sets the entire value of the
   pub fn set_value(&mut self, val: &[u8]) -> Result<(), ScriptError> {
-    match self.raw_value().map(|x| Vec::from_slice(x)) {
+    match self.raw_value().map(|x| x.to_vec()) {
       Some(x) => { if x.as_slice() == val { Ok(()) } else { Err(Unsatisfiable) } }
       None => {
         try!(self.set_len_lo(val.len()));
@@ -915,7 +918,7 @@ impl AbstractStackElem {
           Err(_) => {}
         }
         try!(self.set_bool_value(read_scriptbool(val)));
-        self.raw = Some(Vec::from_slice(val));
+        self.raw = Some(val.to_vec());
         Ok(())
       }
     }
@@ -1012,7 +1015,7 @@ impl AbstractStackElem {
   }
 
   /// Sets a lower length bound on a value
-  pub fn set_len_lo(&mut self, value: uint) -> Result<(), ScriptError> {
+  pub fn set_len_lo(&mut self, value: usize) -> Result<(), ScriptError> {
     if self.len_lo < value {
       self.len_lo = value;
       if value > 0 { try!(self.set_bool_value(true)); }
@@ -1023,7 +1026,7 @@ impl AbstractStackElem {
   }
 
   /// Sets a upper length bound on a value
-  pub fn set_len_hi(&mut self, value: uint) -> Result<(), ScriptError> {
+  pub fn set_len_hi(&mut self, value: usize) -> Result<(), ScriptError> {
     if self.len_hi > value {
       self.len_hi = value;
       try!(self.update());
@@ -1043,11 +1046,11 @@ impl AbstractStackElem {
 #[deriving(Clone)]
 pub struct AbstractStack {
   /// Actual elements on the stack
-  stack: Vec<uint>,
+  stack: Vec<usize>,
   /// Actual elements on the altstack
-  alt_stack: Vec<uint>,
+  alt_stack: Vec<usize>,
   /// Stack needed to satisfy the script before execution
-  initial_stack: Vec<uint>,
+  initial_stack: Vec<usize>,
   /// Local allocator to allow cloning; refs are indices into here
   alloc: Vec<AbstractStackElem>
 }
@@ -1063,7 +1066,7 @@ impl AbstractStack {
     }
   }
 
-  fn allocate(&mut self, mut elem: AbstractStackElem) -> uint {
+  fn allocate(&mut self, mut elem: AbstractStackElem) -> usize {
     elem.alloc_index = Some(self.alloc.len());
     self.alloc.push(elem);
     self.alloc.len() - 1
@@ -1084,24 +1087,24 @@ impl AbstractStack {
 
   /// Increase the stack size to `n`, adding elements to the initial
   /// stack as necessary
-  pub fn require_n_elems(&mut self, n: uint) {
+  pub fn require_n_elems(&mut self, n: usize) {
     while self.stack.len() < n {
       self.push_initial(AbstractStackElem::new_unknown());
     }
   }
 
   /// Lookup an element by index
-  pub fn get_elem(&self, alloc_index: uint) -> &AbstractStackElem {
+  pub fn get_elem(&self, alloc_index: usize) -> &AbstractStackElem {
     &self.alloc[alloc_index]
   }
 
   /// Lookup an element by index
-  pub fn get_elem_mut(&mut self, alloc_index: uint) -> &mut AbstractStackElem {
-    self.alloc.get_mut(alloc_index)
+  pub fn get_elem_mut(&mut self, alloc_index: usize) -> &mut AbstractStackElem {
+    self.alloc.get_mut(alloc_index).unwrap()
   }
 
   /// Push a copy of an existing element by index
-  pub fn push(&mut self, elem: uint) {
+  pub fn push(&mut self, elem: usize) {
     self.stack.push(elem);
   }
 
@@ -1109,7 +1112,7 @@ impl AbstractStack {
   pub fn push_alloc<'a>(&'a mut self, elem: AbstractStackElem) -> &'a mut AbstractStackElem {
     let idx = self.allocate(elem);
     self.stack.push(idx);
-    self.alloc.get_mut(idx)
+    self.alloc.get_mut(idx).unwrap()
   }
 
 
@@ -1119,11 +1122,11 @@ impl AbstractStack {
       self.push_initial(AbstractStackElem::new_unknown());
     }
 
-    self.alloc.get_mut(*self.stack.last().unwrap())
+    self.alloc.get_mut(*self.stack.last().unwrap()).unwrap()
   }
 
   /// Obtain a stackref to the current top element
-  pub fn peek_index(&mut self) -> uint {
+  pub fn peek_index(&mut self) -> usize {
     if self.stack.len() == 0 {
       self.push_initial(AbstractStackElem::new_unknown());
     }
@@ -1131,7 +1134,7 @@ impl AbstractStack {
   }
 
   /// Drop the top stack item
-  fn pop(&mut self) -> uint {
+  fn pop(&mut self) -> usize {
     if self.stack.len() == 0 {
       self.push_initial(AbstractStackElem::new_unknown());
     }
@@ -1144,7 +1147,7 @@ impl AbstractStack {
       self.push_initial(AbstractStackElem::new_unknown());
     }
 
-    self.alloc.get_mut(self.stack.pop().unwrap())
+    self.alloc.get_mut(self.stack.pop().unwrap()).unwrap()
   }
 
 
@@ -1171,28 +1174,28 @@ impl AbstractStack {
 
   /// Immutable view of the current stack as a slice (to be compatible
   /// with the `stack_opcode!` macro
-  pub fn as_slice<'a>(&'a self) -> &'a [uint] {
+  pub fn as_slice<'a>(&'a self) -> &'a [usize] {
     self.stack.as_slice()
   }
 
   /// Immutable view of the current stack as a slice of bytes
-  pub fn slice_to<'a>(&'a self, n: uint) -> &'a [uint] {
+  pub fn slice_to<'a>(&'a self, n: usize) -> &'a [usize] {
     self.stack.slice_to(n)
   }
 
   /// Mutable view of the current stack as a slice (to be compatible
   /// with the `stack_opcode!` macro
-  fn as_mut_slice<'a>(&'a mut self) -> &'a mut [uint] {
+  fn as_mut_slice<'a>(&'a mut self) -> &'a mut [usize] {
     self.stack.as_mut_slice()
   }
 
   /// Length of the current stack
-  fn len(&self) -> uint {
+  fn len(&self) -> usize  {
     self.stack.len()
   }
 
   /// Delete an element from the middle of the current stack
-  fn remove(&mut self, idx: uint) {
+  fn remove(&mut self, idx: usize) {
     self.stack.remove(idx);
   }
 }
@@ -1206,8 +1209,8 @@ impl json::ToJson for ScriptError {
 /// A single iteration of a script execution
 #[deriving(PartialEq, Eq, Show, Clone)]
 pub struct TraceIteration {
-  index: uint,
-  op_count: uint,
+  index: usize,
+  op_count: usize,
   opcode: allops::Opcode,
   executed: bool,
   errored: bool,
@@ -1228,7 +1231,7 @@ pub struct ScriptTrace {
   pub error: Option<ScriptError>
 }
 
-impl_json!(TraceIteration, index, opcode, op_count, executed, errored, effect, stack)
+impl_json!(TraceIteration, index, opcode, op_count, executed, errored, effect, stack);
 
 /// Hashtype of a transaction, encoded in the last byte of a signature,
 /// specifically in the last 5 bits `byte & 31`
@@ -1279,7 +1282,7 @@ impl<'a> PartialEq for MaybeOwned<'a> {
 
 impl<'a> Eq for MaybeOwned<'a> {}
 
-impl<'a> Slice<u8> for MaybeOwned<'a> {
+impl<'a> AsSlice<u8> for MaybeOwned<'a> {
   #[inline]
   fn as_slice<'a>(&'a self) -> &'a [u8] {
     match *self {
@@ -1289,9 +1292,9 @@ impl<'a> Slice<u8> for MaybeOwned<'a> {
   }
 }
 
-impl<'a> Collection for MaybeOwned<'a> {
+impl<'a> MaybeOwned<'a> {
   #[inline]
-  fn len(&self) -> uint {
+  pub fn len(&self) -> usize {
     match *self {
       Owned(ref v) => v.len(),
       Slice(ref s) => s.len()
@@ -1308,7 +1311,7 @@ fn build_scriptint(n: i64) -> Vec<u8> {
 
   let neg = n < 0;
 
-  let mut abs = if neg { -n } else { n } as uint;
+  let mut abs = if neg { -n } else { n } as usize;
   let mut v = vec![];
   while abs > 0xFF {
     v.push((abs & 0xFF) as u8);
@@ -1348,7 +1351,7 @@ pub fn read_scriptint(v: &[u8]) -> Result<i64, ScriptError> {
   if len > 4 { return Err(NumericOverflow); }
 
   let (mut ret, sh) = v.iter()
-                       .fold((0, 0), |(acc, sh), n| (acc + (*n as i64 << sh), sh + 8));
+                       .fold((0, 0), |(acc, sh), n| (acc + ((*n as i64) << sh), sh + 8));
   if v[len - 1] & 0x80 != 0 {
     ret &= (1 << sh - 1) - 1;
     ret = -ret;
@@ -1366,12 +1369,12 @@ pub fn read_scriptbool(v: &[u8]) -> bool {
 }
 
 /// Read a script-encoded unsigned integer
-pub fn read_uint<'a, I:Iterator<&'a u8>>(mut iter: I, size: uint)
-    -> Result<uint, ScriptError> {
+pub fn read_usize<'a, I:Iterator<&'a u8>>(mut iter: I, size: usize)
+    -> Result<usize, ScriptError> {
   let mut ret = 0;
   for i in range(0, size) {
     match iter.next() {
-      Some(&n) => ret += n as uint << (i * 8),
+      Some(&n) => ret += (n as usize) << (i * 8),
       None => { return Err(EarlyEndOfScript); }
     }
   }
@@ -1381,7 +1384,7 @@ pub fn read_uint<'a, I:Iterator<&'a u8>>(mut iter: I, size: uint)
 /// Check a signature -- returns an error that is currently just translated
 /// into a 0/1 to push onto the script stack
 fn check_signature(sig_slice: &[u8], pk_slice: &[u8], script: Vec<u8>,
-                   tx: &Transaction, input_index: uint) -> Result<(), ScriptError> {
+                   tx: &Transaction, input_index: usize) -> Result<(), ScriptError> {
 
   // Check public key
   let pubkey = PublicKey::from_slice(pk_slice);
@@ -1480,10 +1483,10 @@ fn check_signature(sig_slice: &[u8], pk_slice: &[u8], script: Vec<u8>,
 // like.
 macro_rules! stack_opcode(
   ($stack:ident($min:expr):
-       $(require $r:expr)*
-       $(copy $c:expr)*
-       $(swap ($a:expr, $b:expr))*
-       $(perm ($first:expr $(->$i:expr)*) )*
+       $(require $r:expr)*,
+       $(copy $c:expr)*,
+       $(swap ($a:expr, $b:expr))*,
+       $(perm ($first:expr, $(->$i:expr)*) )*,
        $(drop $d:expr)*
   ) => ({
     $( $stack.require_n_elems($r); )*
@@ -1502,7 +1505,7 @@ macro_rules! stack_opcode(
     // Do drops last so that dropped values will be available above
     $( $stack.remove(top - $d); )*
   });
-)
+);
 
 /// Macro to translate numerical operations into stack ones
 macro_rules! num_opcode(
@@ -1517,7 +1520,7 @@ macro_rules! num_opcode(
     // Return a tuple of all the variables
     ($( $var ),*)
   });
-)
+);
 
 macro_rules! unary_opcode_satisfy(
   ($stack:ident, $op:ident) => ({
@@ -1527,7 +1530,7 @@ macro_rules! unary_opcode_satisfy(
                                         check: concat_idents!(check_, $op),
                                         update: concat_idents!(update_, $op) }));
   })
-)
+);
 
 macro_rules! boolean_opcode_satisfy(
   ($stack:ident, unary $op:ident) => ({
@@ -1557,7 +1560,7 @@ macro_rules! boolean_opcode_satisfy(
                                         check: concat_idents!(check_, $op),
                                         update: concat_idents!(update_, $op) }));
   });
-)
+);
 
 /// Macro to translate hashing operations into stack ones
 macro_rules! hash_opcode(
@@ -1576,7 +1579,7 @@ macro_rules! hash_opcode(
       }
     }
   });
-)
+);
 
 // OP_VERIFY macro
 macro_rules! op_verify (
@@ -1587,14 +1590,14 @@ macro_rules! op_verify (
       Some(true) => { $stack.pop(); }
     }
   )
-)
+);
 
 macro_rules! op_verify_satisfy (
   ($stack:expr) => ({
     try!($stack.peek_mut().set_bool_value(true));
     $stack.pop();
   })
-)
+);
 
 impl Script {
   /// Creates a new empty script
@@ -1604,7 +1607,7 @@ impl Script {
   pub fn from_vec(v: Vec<u8>) -> Script { Script(ThinVec::from_vec(v)) }
 
   /// The length in bytes of the script
-  pub fn len(&self) -> uint {
+  pub fn len(&self) -> usize {
     let &Script(ref raw) = self;
     raw.len()
   }
@@ -1640,7 +1643,7 @@ impl Script {
     let &Script(ref mut raw) = self;
     // Start with a PUSH opcode
     match data.len() {
-      n if n < opcodes::OP_PUSHDATA1 as uint => { raw.push(n as u8); },
+      n if n < opcodes::OP_PUSHDATA1 as usize => { raw.push(n as u8); },
       n if n < 0x100 => {
         raw.push(opcodes::OP_PUSHDATA1 as u8);
         raw.push(n as u8);
@@ -1657,7 +1660,7 @@ impl Script {
         raw.push(((n / 0x10000) % 0x100) as u8);
         raw.push((n / 0x1000000) as u8);
       }
-      _ => fail!("tried to put a 4bn+ sized object into a script!")
+      _ => panic!("tried to put a 4bn+ sized object into a script!")
     }
     // Then push the acraw
     raw.extend(data.iter().map(|n| *n));
@@ -1676,26 +1679,26 @@ impl Script {
   }
 
   /// Returns a view into the script as a slice
-  pub fn slice_to(&self, n: uint) -> &[u8] {
+  pub fn slice_to(&self, n: usize) -> &[u8] {
     let &Script(ref raw) = self;
     raw.slice_to(n)
   }
 
   /// Returns a view into the script as a slice
-  pub fn slice_from(&self, n: uint) -> &[u8] {
+  pub fn slice_from(&self, n: usize) -> &[u8] {
     let &Script(ref raw) = self;
     raw.slice_from(n)
   }
 
   /// Returns a view into the script as a slice
-  pub fn slice(&self, s: uint, e: uint) -> &[u8] {
+  pub fn slice(&self, s: usize, e: usize) -> &[u8] {
     let &Script(ref raw) = self;
     raw.slice(s, e)
   }
 
   /// Trace a script
   pub fn trace<'a>(&'a self, stack: &mut Vec<MaybeOwned<'a>>,
-                   input_context: Option<(&Transaction, uint)>)
+                   input_context: Option<(&Transaction, usize)>)
                    -> ScriptTrace {
     let mut trace = ScriptTrace {
         script: self.clone(),
@@ -1713,12 +1716,12 @@ impl Script {
 
   /// Evaluate the script, modifying the stack in place
   pub fn evaluate<'a>(&'a self, stack: &mut Vec<MaybeOwned<'a>>,
-                      input_context: Option<(&Transaction, uint)>,
+                      input_context: Option<(&Transaction, usize)>,
                       mut trace: Option<&mut Vec<TraceIteration>>)
                       -> Result<(), ScriptError> {
     let &Script(ref raw) = self;
 
-    let mut codeseparator_index = 0u;
+    let mut codeseparator_index = 0us;
     let mut exec_stack = vec![];
     let mut alt_stack = vec![];
 
@@ -1762,21 +1765,21 @@ impl Script {
         }
         (_, opcodes::Ordinary(opcodes::OP_PUSHDATA1)) => {
           if raw.len() < index + 1 { return Err(EarlyEndOfScript); }
-          let n = try!(read_uint(raw.slice_from(index).iter(), 1));
+          let n = try!(read_usize(raw.slice_from(index).iter(), 1));
           if raw.len() < index + 1 + n { return Err(EarlyEndOfScript); }
           if executing { stack.push(Slice(raw.slice(index + 1, index + n + 1))); }
           index += 1 + n;
         }
         (_, opcodes::Ordinary(opcodes::OP_PUSHDATA2)) => {
           if raw.len() < index + 2 { return Err(EarlyEndOfScript); }
-          let n = try!(read_uint(raw.slice_from(index).iter(), 2));
+          let n = try!(read_usize(raw.slice_from(index).iter(), 2));
           if raw.len() < index + 2 + n { return Err(EarlyEndOfScript); }
           if executing { stack.push(Slice(raw.slice(index + 2, index + n + 2))); }
           index += 2 + n;
         }
         (_, opcodes::Ordinary(opcodes::OP_PUSHDATA4)) => {
           if raw.len() < index + 4 { return Err(EarlyEndOfScript); }
-          let n = try!(read_uint(raw.slice_from(index).iter(), 4));
+          let n = try!(read_usize(raw.slice_from(index).iter(), 4));
           if raw.len() < index + 4 + n { return Err(EarlyEndOfScript); }
           if executing { stack.push(Slice(raw.slice(index + 4, index + n + 4))); }
           index += 4 + n;
@@ -1785,7 +1788,7 @@ impl Script {
         (false, opcodes::Ordinary(opcodes::OP_IF)) => exec_stack.push(false),
         (false, opcodes::Ordinary(opcodes::OP_NOTIF)) => exec_stack.push(false),
         (false, opcodes::Ordinary(opcodes::OP_ELSE)) => {
-          match exec_stack.mut_last() {
+          match exec_stack.last_mut() {
             Some(ref_e) => { *ref_e = !*ref_e }
             None => { return Err(ElseWithoutIf); }
           }
@@ -1816,7 +1819,7 @@ impl Script {
               }
             }
             opcodes::OP_ELSE => {
-              match exec_stack.mut_last() {
+              match exec_stack.last_mut() {
                 Some(ref_e) => { *ref_e = !*ref_e }
                 None => { return Err(ElseWithoutIf); }
               }
@@ -1839,25 +1842,25 @@ impl Script {
                 Some(elem) => { stack.push(elem); }
               }
             }
-            opcodes::OP_2DROP => stack_opcode!(stack(2): drop 1 drop 2),
-            opcodes::OP_2DUP  => stack_opcode!(stack(2): copy 2 copy 1),
-            opcodes::OP_3DUP  => stack_opcode!(stack(3): copy 3 copy 2 copy 1),
-            opcodes::OP_2OVER => stack_opcode!(stack(4): copy 4 copy 3),
-            opcodes::OP_2ROT  => stack_opcode!(stack(6): perm (1 -> 3 -> 5)
-                                                         perm (2 -> 4 -> 6)),
-            opcodes::OP_2SWAP => stack_opcode!(stack(4): swap (2, 4) swap (1, 3)),
-            opcodes::OP_DROP  => stack_opcode!(stack(1): drop 1),
-            opcodes::OP_DUP   => stack_opcode!(stack(1): copy 1),
-            opcodes::OP_NIP   => stack_opcode!(stack(2): drop 2),
-            opcodes::OP_OVER  => stack_opcode!(stack(2): copy 2),
+            opcodes::OP_2DROP => stack_opcode!(stack(2): ,,,,drop 1 drop 2),
+            opcodes::OP_2DUP  => stack_opcode!(stack(2): ,copy 2 copy 1,,,),
+            opcodes::OP_3DUP  => stack_opcode!(stack(3): ,copy 3 copy 2 copy 1,,,),
+            opcodes::OP_2OVER => stack_opcode!(stack(4): ,copy 4 copy 3,,,),
+            opcodes::OP_2ROT  => stack_opcode!(stack(6): ,,,perm (1, -> 3 -> 5)
+                                                         perm (2, -> 4 -> 6),),
+            opcodes::OP_2SWAP => stack_opcode!(stack(4): ,,swap (2, 4) swap (1, 3),,),
+            opcodes::OP_DROP  => stack_opcode!(stack(1): ,,,,drop 1),
+            opcodes::OP_DUP   => stack_opcode!(stack(1): ,copy 1,,,),
+            opcodes::OP_NIP   => stack_opcode!(stack(2): ,,,,drop 2),
+            opcodes::OP_OVER  => stack_opcode!(stack(2): ,copy 2,,,),
             opcodes::OP_PICK => {
               let n = match stack.pop() {
                 Some(data) => try!(read_scriptint(data.as_slice())),
                 None => { return Err(PopEmptyStack); }
               };
               if n < 0 { return Err(NegativePick); }
-              let n = n as uint;
-              stack_opcode!(stack(n + 1): copy n + 1)
+              let n = n as usize;
+              stack_opcode!(stack(n + 1): ,copy n + 1,,,)
             }
             opcodes::OP_ROLL => {
               let n = match stack.pop() {
@@ -1865,17 +1868,17 @@ impl Script {
                 None => { return Err(PopEmptyStack); }
               };
               if n < 0 { return Err(NegativeRoll); }
-              let n = n as uint;
-              stack_opcode!(stack(n + 1): copy n + 1 drop n + 1)
+              let n = n as usize;
+              stack_opcode!(stack(n + 1): ,copy n + 1,,, drop n + 1)
             }
-            opcodes::OP_ROT  => stack_opcode!(stack(3): perm (1 -> 2 -> 3)),
-            opcodes::OP_SWAP => stack_opcode!(stack(2): swap (1, 2)),
-            opcodes::OP_TUCK => stack_opcode!(stack(2): copy 2 copy 1 drop 2),
+            opcodes::OP_ROT  => stack_opcode!(stack(3): ,,,perm (1, -> 2 -> 3),),
+            opcodes::OP_SWAP => stack_opcode!(stack(2): ,,swap (1, 2),,),
+            opcodes::OP_TUCK => stack_opcode!(stack(2): ,copy 2 copy 1,,, drop 2),
             opcodes::OP_IFDUP => {
               match stack.last().map(|v| read_scriptbool(v.as_slice())) {
                 None => { return Err(IfEmptyStack); }
                 Some(false) => {}
-                Some(true) => { stack_opcode!(stack(1): copy 1); }
+                Some(true) => { stack_opcode!(stack(1): ,copy 1,,,); }
               }
             }
             opcodes::OP_DEPTH => {
@@ -1943,7 +1946,7 @@ impl Script {
 
               // Compute the section of script that needs to be hashed: everything
               // from the last CODESEPARATOR, except the signature itself.
-              let mut script = Vec::from_slice(raw.slice_from(codeseparator_index));
+              let mut script = raw.slice_from(codeseparator_index).to_vec();
               let mut remove = Script::new();
               remove.push_slice(sig_slice);
               script_find_and_remove(&mut script, remove.as_slice());
@@ -1965,11 +1968,11 @@ impl Script {
               if stack.len() < 1 { return Err(PopEmptyStack); }
               let n_keys = try!(read_scriptint(stack.pop().unwrap().as_slice()));
               if n_keys < 0 || n_keys > 20 {
-                return Err(MultisigBadKeyCount(n_keys as int));
+                return Err(MultisigBadKeyCount(n_keys as isize));
               }
 
               if (stack.len() as i64) < n_keys { return Err(PopEmptyStack); }
-              let mut keys = Vec::with_capacity(n_keys as uint);
+              let mut keys = Vec::with_capacity(n_keys as usize);
               for _ in range(0, n_keys) {
                 keys.push(stack.pop().unwrap());
               }
@@ -1978,11 +1981,11 @@ impl Script {
               if stack.len() < 1 { return Err(PopEmptyStack); }
               let n_sigs = try!(read_scriptint(stack.pop().unwrap().as_slice()));
               if n_sigs < 0 || n_sigs > n_keys {
-                return Err(MultisigBadSigCount(n_sigs as int));
+                return Err(MultisigBadSigCount(n_sigs as isize));
               }
 
               if (stack.len() as i64) < n_sigs { return Err(PopEmptyStack); }
-              let mut sigs = Vec::with_capacity(n_sigs as uint);
+              let mut sigs = Vec::with_capacity(n_sigs as usize);
               for _ in range(0, n_sigs) {
                 sigs.push(stack.pop().unwrap());
               }
@@ -1992,7 +1995,7 @@ impl Script {
 
               // Compute the section of script that needs to be hashed: everything
               // from the last CODESEPARATOR, except the signatures themselves.
-              let mut script = Vec::from_slice(raw.slice_from(codeseparator_index));
+              let mut script = raw.slice_from(codeseparator_index).to_vec();
               for sig in sigs.iter() {
                 let mut remove = Script::new();
                 remove.push_slice(sig.as_slice());
@@ -2041,7 +2044,7 @@ impl Script {
       } // end loop
       // Store the stack in the trace
       trace.as_mut().map(|t|
-        t.mut_last().map(|t| {
+        t.last_mut().map(|t| {
           t.errored = false;
           t.stack = stack.iter().map(|elem| elem.as_slice().to_hex()).collect();
         })
@@ -2077,7 +2080,7 @@ impl Script {
     fn recurse<'a>(script: &'a [u8],
                    mut stack: AbstractStack,
                    mut exec_stack: Vec<bool>,
-                   depth: uint) -> Result<Vec<AbstractStackElem>, ScriptError> {
+                   depth: usize) -> Result<Vec<AbstractStackElem>, ScriptError> {
 
       // Avoid doing more than 64k forks
       if depth > 16 { return Err(InterpreterStackOverflow); }
@@ -2106,7 +2109,7 @@ impl Script {
           }
           (_, opcodes::Ordinary(opcodes::OP_PUSHDATA1)) => {
             if script.len() < index + 1 { return Err(EarlyEndOfScript); }
-            let n = match read_uint(script.slice_from(index).iter(), 1) {
+            let n = match read_usize(script.slice_from(index).iter(), 1) {
               Ok(n) => n,
               Err(_) => { return Err(EarlyEndOfScript); }
             };
@@ -2118,7 +2121,7 @@ impl Script {
           }
           (_, opcodes::Ordinary(opcodes::OP_PUSHDATA2)) => {
             if script.len() < index + 2 { return Err(EarlyEndOfScript); }
-            let n = match read_uint(script.slice_from(index).iter(), 2) {
+            let n = match read_usize(script.slice_from(index).iter(), 2) {
               Ok(n) => n,
               Err(_) => { return Err(EarlyEndOfScript); }
             };
@@ -2129,7 +2132,7 @@ impl Script {
             index += 2 + n;
           }
           (_, opcodes::Ordinary(opcodes::OP_PUSHDATA4)) => {
-            let n = match read_uint(script.slice_from(index).iter(), 4) {
+            let n = match read_usize(script.slice_from(index).iter(), 4) {
               Ok(n) => n,
               Err(_) => { return Err(EarlyEndOfScript); }
             };
@@ -2143,7 +2146,7 @@ impl Script {
           (false, opcodes::Ordinary(opcodes::OP_IF)) => exec_stack.push(false),
           (false, opcodes::Ordinary(opcodes::OP_NOTIF)) => exec_stack.push(false),
           (false, opcodes::Ordinary(opcodes::OP_ELSE)) => {
-            match exec_stack.mut_last() {
+            match exec_stack.last_mut() {
               Some(ref_e) => { *ref_e = !*ref_e }
               None => { return Err(ElseWithoutIf); }
             }
@@ -2212,7 +2215,7 @@ impl Script {
                 }
               }
               opcodes::OP_ELSE => {
-                match exec_stack.mut_last() {
+                match exec_stack.last_mut() {
                   Some(ref_e) => { *ref_e = !*ref_e }
                   None => { return Err(ElseWithoutIf); }
                 }
@@ -2225,30 +2228,30 @@ impl Script {
               opcodes::OP_VERIFY => op_verify_satisfy!(stack),
               opcodes::OP_TOALTSTACK => { stack.to_altstack(); }
               opcodes::OP_FROMALTSTACK => { try!(stack.from_altstack()); }
-              opcodes::OP_2DROP => stack_opcode!(stack(2): require 2 drop 1 drop 2),
-              opcodes::OP_2DUP  => stack_opcode!(stack(2): require 2 copy 2 copy 1),
-              opcodes::OP_3DUP  => stack_opcode!(stack(3): require 3 copy 3 copy 2 copy 1),
-              opcodes::OP_2OVER => stack_opcode!(stack(4): require 4 copy 4 copy 3),
-              opcodes::OP_2ROT  => stack_opcode!(stack(6): require 6
-                                                           perm (1 -> 3 -> 5)
-                                                           perm (2 -> 4 -> 6)),
-              opcodes::OP_2SWAP => stack_opcode!(stack(4): require 4
+              opcodes::OP_2DROP => stack_opcode!(stack(2): require 2,,,, drop 1 drop 2),
+              opcodes::OP_2DUP  => stack_opcode!(stack(2): require 2, copy 2 copy 1,,,),
+              opcodes::OP_3DUP  => stack_opcode!(stack(3): require 3, copy 3 copy 2 copy 1,,,),
+              opcodes::OP_2OVER => stack_opcode!(stack(4): require 4, copy 4 copy 3,,,),
+              opcodes::OP_2ROT  => stack_opcode!(stack(6): require 6,,,
+                                                           perm (1, -> 3 -> 5)
+                                                           perm (2, -> 4 -> 6),),
+              opcodes::OP_2SWAP => stack_opcode!(stack(4): require 4,,
                                                            swap (2, 4)
-                                                           swap (1, 3)),
-              opcodes::OP_DROP  => stack_opcode!(stack(1): require 1 drop 1),
-              opcodes::OP_DUP   => stack_opcode!(stack(1): require 1 copy 1),
-              opcodes::OP_NIP   => stack_opcode!(stack(2): require 2 drop 2),
-              opcodes::OP_OVER  => stack_opcode!(stack(2): require 2 copy 2),
+                                                           swap (1, 3),,),
+              opcodes::OP_DROP  => stack_opcode!(stack(1): require 1,,,, drop 1),
+              opcodes::OP_DUP   => stack_opcode!(stack(1): require 1, copy 1,,,),
+              opcodes::OP_NIP   => stack_opcode!(stack(2): require 2,,,, drop 2),
+              opcodes::OP_OVER  => stack_opcode!(stack(2): require 2, copy 2,,,),
               opcodes::OP_PICK => {
                 let top_n = {
                   let top = stack.peek_mut();
                   try!(top.set_numeric());
                   try!(top.set_num_lo(0));
-                  top.num_value().map(|n| n as uint)
+                  top.num_value().map(|n| n as usize)
                 };
                 stack.pop();
                 match top_n {
-                  Some(n) => stack_opcode!(stack(n + 1): require n + 1 copy n + 1),
+                  Some(n) => stack_opcode!(stack(n + 1): require n + 1, copy n + 1,,,),
                   // The stack will wind up with the 1 and nth inputs being identical
                   // with n input-dependent. I can imagine scripts which check this
                   // condition or its negation for various n to get arbitrary finite
@@ -2262,11 +2265,11 @@ impl Script {
                   let top = stack.peek_mut();
                   try!(top.set_numeric());
                   try!(top.set_num_lo(0));
-                  top.num_value().map(|n| n as uint)
+                  top.num_value().map(|n| n as usize)
                 };
                 stack.pop();
                 match top_n {
-                  Some(n) => stack_opcode!(stack(n + 1): require n + 1 copy n + 1 drop n + 1),
+                  Some(n) => stack_opcode!(stack(n + 1): require n + 1, copy n + 1,,, drop n + 1),
                   // The stack will wind up reordered, so in principle I could just force
                   // the input to be zero (other n values can be converted to zero by just
                   // manually rearranging the input). The problem is if numeric bounds are
@@ -2274,9 +2277,9 @@ impl Script {
                   None => { return Err(Unanalyzable); }
                 }
               }
-              opcodes::OP_ROT  => stack_opcode!(stack(3): require 3 perm (1 -> 2 -> 3)),
-              opcodes::OP_SWAP => stack_opcode!(stack(2): require 3 swap (1, 2)),
-              opcodes::OP_TUCK => stack_opcode!(stack(2): require 2 copy 2 copy 1 drop 2),
+              opcodes::OP_ROT  => stack_opcode!(stack(3): require 3,,, perm (1, -> 2 -> 3),),
+              opcodes::OP_SWAP => stack_opcode!(stack(2): require 3,, swap (1, 2),,),
+              opcodes::OP_TUCK => stack_opcode!(stack(2): require 2, copy 2 copy 1,,, drop 2),
               opcodes::OP_IFDUP => {
                 let top_bool = {
                   let top = stack.peek_mut();
@@ -2284,7 +2287,7 @@ impl Script {
                 };
                 match top_bool {
                   Some(false) => { }
-                  Some(true) => { stack_opcode!(stack(1): require 1 copy 1); }
+                  Some(true) => { stack_opcode!(stack(1): require 1, copy 1,,,); }
                   None => {
                     let mut stack_true = stack.clone();
                     // Try pushing false and see what happens
@@ -2423,8 +2426,8 @@ impl json::ToJson for Script {
     let &Script(ref raw) = self;
     let mut ret = String::new();
     for dat in raw.iter() {
-      ret.push_char(from_digit((dat / 0x10) as uint, 16).unwrap());
-      ret.push_char(from_digit((dat & 0x0f) as uint, 16).unwrap());
+      ret.push(from_digit((*dat / 0x10) as usize, 16).unwrap());
+      ret.push(from_digit((*dat & 0x0f) as usize, 16).unwrap());
     }
     json::String(ret)
   }
@@ -2504,7 +2507,7 @@ mod test {
     // data
     script.push_slice("NRA4VR".as_bytes()); comp.push_all([6u8, 78, 82, 65, 52, 86, 82]); assert_eq!(script, Script(comp.clone()));
 
-    // opcodes 
+    // opcodes
     script.push_opcode(opcodes::all::OP_CHECKSIG); comp.push(0xACu8); assert_eq!(script, Script(comp.clone()));
     script.push_opcode(opcodes::all::OP_CHECKSIG); comp.push(0xACu8); assert_eq!(script, Script(comp.clone()));
   }
@@ -2743,7 +2746,7 @@ mod test {
     assert_eq!(Script(ThinVec::from_vec("04010203047576a914bfbd43270c1e824c01e27386844d062d2f7518a688ad76a97614d2f7b8a37fb9b46782534078f9748f41d61a22f3877c148d4c6a901a3d87ed680478931dc9b6f0871af0ab879b69ac".from_hex().unwrap())).is_provably_unspendable(), false);
     assert_eq!(Script(ThinVec::from_vec("03800000".from_hex().unwrap())).is_provably_unspendable(), false);
     // This one is cool -- a 2-of-4 multisig with four pks given, only two of which are legit
-    assert_eq!(Script(ThinVec::from_vec("522103bb52138972c48a132fc1f637858c5189607dd0f7fe40c4f20f6ad65f2d389ba42103bb52138972c48a132fc1f637858c5189607dd0f7fe40c4f20f6ad65f2d389ba45f6054ae".from_hex().unwrap())).is_provably_unspendable(), false);
+    assert_eq!(Script(ThinVec::from_vec("522103bb52138972c48a132fc1f637858c5189607dd0fg12827fe40c4f20f6ad65f2d389ba42103bb52138972c48a132fc1f637858c5189607dd0f7fe40c4f20f6ad65f2d389ba45f6054ae".from_hex().unwrap())).is_provably_unspendable(), false);
     assert_eq!(Script(ThinVec::from_vec("64635167006867630067516868".from_hex().unwrap())).is_provably_unspendable(), false);
     // This one is on mainnet oeO
     assert_eq!(Script(ThinVec::from_vec("827651a0698faaa9a8a7a687".from_hex().unwrap())).is_provably_unspendable(), false);

@@ -27,12 +27,15 @@ use std::default::Default;
 use serialize::json;
 
 use util::hash::Sha256dHash;
-use blockdata::script::{mod, Script, ScriptError, ScriptTrace, read_scriptbool};
+use blockdata::script::{self, Script, ScriptError, ScriptTrace, read_scriptbool};
 use blockdata::utxoset::UtxoSet;
 use network::encodable::ConsensusEncodable;
 use network::serialize::BitcoinHash;
 use network::constants::Network;
 use wallet::address::Address;
+
+pub use self::TransactionError::*;
+pub use self::ScriptPubkeyTemplate::*;
 
 /// A transaction input, which defines old coins to be consumed
 #[deriving(Clone, PartialEq, Eq, Show)]
@@ -123,6 +126,7 @@ pub enum TransactionError {
   InputNotFound(Sha256dHash, u32),
 }
 
+
 impl json::ToJson for TransactionError {
   fn to_json(&self) -> json::Json {
     json::String(self.to_string())
@@ -133,16 +137,16 @@ impl json::ToJson for TransactionError {
 #[deriving(PartialEq, Eq, Clone, Show)]
 pub struct InputTrace {
   input_txid: Sha256dHash,
-  input_vout: uint,
+  input_vout: usize,
   sig_trace: ScriptTrace,
   pubkey_trace: Option<ScriptTrace>,
   p2sh_trace: Option<ScriptTrace>,
   error: Option<TransactionError>
 }
 
-impl_json!(ScriptTrace, script, initial_stack, iterations, error)
+impl_json!(ScriptTrace, script, initial_stack, iterations, error);
 impl_json!(InputTrace, input_txid, input_vout, sig_trace,
-                       pubkey_trace, p2sh_trace, error)
+                       pubkey_trace, p2sh_trace, error);
 
 /// A trace of a transaction's execution
 #[deriving(PartialEq, Eq, Clone, Show)]
@@ -151,14 +155,14 @@ pub struct TransactionTrace {
   inputs: Vec<InputTrace>
 }
 
-impl_json!(TransactionTrace, txid, inputs)
+impl_json!(TransactionTrace, txid, inputs);
 
 impl TxIn {
   /// Check an input's script for validity
   pub fn validate(&self,
                   utxoset: &UtxoSet,
                   txn: &Transaction,
-                  index: uint) -> Result<(), TransactionError> {
+                  index: usize) -> Result<(), TransactionError> {
     let txo = utxoset.get_utxo(self.prev_hash, self.prev_index);
     match txo {
       Some((_, txo)) => {
@@ -174,7 +178,7 @@ impl TxIn {
           p2sh_stack = stack.clone();
           p2sh_script = match p2sh_stack.pop() {
             Some(script::Owned(v)) => Script::from_vec(v),
-            Some(script::Slice(s)) => Script::from_vec(Vec::from_slice(s)),
+            Some(script::Slice(s)) => Script::from_vec(s.to_vec()),
             None => unreachable!()
           };
         }
@@ -228,7 +232,7 @@ impl Transaction {
       // Setup trace
       let mut trace = InputTrace {
         input_txid: input.prev_hash,
-        input_vout: input.prev_index as uint,
+        input_vout: input.prev_index as usize,
         sig_trace: ScriptTrace {
           script: Script::new(),
           initial_stack: vec![],
@@ -255,7 +259,7 @@ impl Transaction {
             p2sh_stack = stack.clone();
             p2sh_script = match p2sh_stack.pop() {
               Some(script::Owned(v)) => Script::from_vec(v),
-              Some(script::Slice(s)) => Script::from_vec(Vec::from_slice(s)),
+              Some(script::Slice(s)) => Script::from_vec(s.to_vec()),
               None => unreachable!()
             };
           }
@@ -303,12 +307,12 @@ impl BitcoinHash for Transaction {
   }
 }
 
-impl_consensus_encoding!(TxIn, prev_hash, prev_index, script_sig, sequence)
-impl_json!(TxIn, prev_hash, prev_index, script_sig, sequence)
-impl_consensus_encoding!(TxOut, value, script_pubkey)
-impl_json!(TxOut, value, script_pubkey)
-impl_consensus_encoding!(Transaction, version, input, output, lock_time)
-impl_json!(Transaction, version, input, output, lock_time)
+impl_consensus_encoding!(TxIn, prev_hash, prev_index, script_sig, sequence);
+impl_json!(TxIn, prev_hash, prev_index, script_sig, sequence);
+impl_consensus_encoding!(TxOut, value, script_pubkey);
+impl_json!(TxOut, value, script_pubkey);
+impl_consensus_encoding!(Transaction, version, input, output, lock_time);
+impl_json!(Transaction, version, input, output, lock_time);
 
 
 #[cfg(test)]

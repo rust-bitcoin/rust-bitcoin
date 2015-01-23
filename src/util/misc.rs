@@ -62,7 +62,7 @@ pub fn prepend_err<T>(s: &str, res: IoResult<T>) -> IoResult<T> {
     IoError {
       kind: err.kind,
       desc: err.desc,
-      detail: Some(format!("{:s}: {:}", s, match err.detail { Some(s) => s, None => String::new() }))
+      detail: Some(format!("{:}: {:}", s, match err.detail { Some(s) => s, None => String::new() }))
     }
   })
 }
@@ -71,14 +71,14 @@ pub fn prepend_err<T>(s: &str, res: IoResult<T>) -> IoResult<T> {
 pub fn consume_err<T>(s: &str, res: IoResult<T>) {
   match res {
     Ok(_) => {},
-    Err(e) => { println!("{:s}: {:}", s, e); }
+    Err(e) => { println!("{:}: {:}", s, e); }
   };
 }
 
 /// Search for `needle` in the vector `haystack` and remove every
 /// instance of it, returning the number of instances removed.
 /// Loops through the vector opcode by opcode, skipping pushed data.
-pub fn script_find_and_remove(haystack: &mut Vec<u8>, needle: &[u8]) -> uint {
+pub fn script_find_and_remove(haystack: &mut Vec<u8>, needle: &[u8]) -> usize {
   if needle.len() > haystack.len() { return 0; }
   if needle.len() == 0 { return 0; }
 

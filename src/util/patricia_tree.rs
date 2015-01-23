@@ -22,8 +22,8 @@
 
 use core::fmt::Show;
 use core::cmp;
-use std::kinds::marker;
-use std::num::{Zero, One};
+use std::marker;
+use num::{Zero, One};
 
 use network::encodable::{ConsensusDecodable, ConsensusEncodable};
 use network::serialize::{SimpleDecoder, SimpleEncoder};
@@ -38,7 +38,7 @@ pub struct PatriciaTree<K, V> {
   skip_len: u8
 }
 
-impl<K:BitArray+Eq+Zero+One+BitXor<K,K>+Shl<uint,K>+Shr<uint,K>, V> PatriciaTree<K, V> {
+impl<K:BitArray+Eq+Zero+One+BitXor<K,K>+Shl<usize,K>+Shr<usize,K>, V> PatriciaTree<K, V> {
   /// Constructs a new Patricia tree
   pub fn new() -> PatriciaTree<K, V> {
     PatriciaTree {
@@ -51,7 +51,7 @@ impl<K:BitArray+Eq+Zero+One+BitXor<K,K>+Shl<uint,K>+Shr<uint,K>, V> PatriciaTree
   }
 
   /// Lookup a value by exactly matching `key` and return a referenc
-  pub fn lookup_mut<'a>(&'a mut self, key: &K, key_len: uint) -> Option<&'a mut V> {
+  pub fn lookup_mut<'a>(&'a mut self, key: &K, key_len: usize) -> Option<&'a mut V> {
     // Caution: `lookup_mut` never modifies its self parameter (in fact its
     // internal recursion uses a non-mutable self, so we are OK to just
     // transmute our self pointer into a mutable self before passing it in.
@@ -60,28 +60,28 @@ impl<K:BitArray+Eq+Zero+One+BitXor<K,K>+Shl<uint,K>+Shr<uint,K>, V> PatriciaTree
   }
 
   /// Lookup a value by exactly matching `key` and return a mutable reference
-  pub fn lookup<'a>(&'a self, key: &K, key_len: uint) -> Option<&'a V> {
+  pub fn lookup<'a>(&'a self, key: &K, key_len: usize) -> Option<&'a V> {
     let mut node = self;
     let mut key_idx = 0;
 
     loop {
       // If the search key is shorter than the node prefix, there is no
       // way we can match, so fail.
-      if key_len - key_idx < node.skip_len as uint {
+      if key_len - key_idx < node.skip_len as usize {
         return None;
       }
 
       // Key fails to match prefix --- no match
-      if node.skip_prefix != key.bit_slice(key_idx, key_idx + node.skip_len as uint) {
+      if node.skip_prefix != key.bit_slice(key_idx, key_idx + node.skip_len as usize) {
         return None;
       }
 
       // Key matches prefix: if they are an exact match, return the data
-      if node.skip_len as uint == key_len - key_idx {
+      if node.skip_len as usize == key_len - key_idx {
         return node.data.as_ref();
       } else {
         // Key matches prefix: search key longer than node key, recurse
-        key_idx += 1 + node.skip_len as uint;
+        key_idx += 1 + node.skip_len as usize;
         let subtree = if key.bit(key_idx - 1) { &node.child_r } else { &node.child_l };
         match subtree {
           &Some(ref bx) => {
@@ -96,23 +96,23 @@ impl<K:BitArray+Eq+Zero+One+BitXor<K,K>+Shl<uint,K>+Shr<uint,K>, V> PatriciaTree
   /// Inserts a value with key `key`, returning true on success. If a value is already
   /// stored against `key`, do nothing and return false.
   #[inline]
-  pub fn insert(&mut self, key: &K, key_len: uint, value: V) -> bool {
+  pub fn insert(&mut self, key: &K, key_len: usize, value: V) -> bool {
     self.real_insert(key, key_len, value, false)
   }
 
   /// Inserts a value with key `key`, returning true on success. If a value is already
   /// stored against `key`, overwrite it and return false.
   #[inline]
-  pub fn insert_or_update(&mut self, key: &K, key_len: uint, value: V) -> bool {
+  pub fn insert_or_update(&mut self, key: &K, key_len: usize, value: V) -> bool {
     self.real_insert(key, key_len, value, true)
   }
 
-  fn real_insert(&mut self, key: &K, key_len: uint, value: V, overwrite: bool) -> bool {
+  fn real_insert(&mut self, key: &K, key_len: usize, value: V, overwrite: bool) -> bool {
     let mut node = self;
     let mut idx = 0;
     loop {
       // Mask in case search key is shorter than node key
-      let slice_len = cmp::min(node.skip_len as uint, key_len - idx);
+      let slice_len = cmp::min(node.skip_len as usize, key_len - idx);
       let masked_prefix = node.skip_prefix.mask(slice_len);
       let key_slice = key.bit_slice(idx, idx + slice_len);
 
@@ -128,20 +128,20 @@ impl<K:BitArray+Eq+Zero+One+BitXor<K,K>+Shl<uint,K>+Shr<uint,K>, V> PatriciaTree
         let (insert, neighbor) = if key_slice.bit(diff)
                                       { (&mut tmp.child_r, &mut tmp.child_l) }
                                  else { (&mut tmp.child_l, &mut tmp.child_r) };
-        *insert = Some(box PatriciaTree {
+        *insert = Some(Box::new(PatriciaTree {
           data: None,
           child_l: None,
           child_r: None,
           skip_prefix: key.bit_slice(idx + diff + 1, key_len),
           skip_len: (key_len - idx - diff - 1) as u8
-        });
-        *neighbor = Some(box PatriciaTree {
+        }));
+        *neighbor = Some(Box::new(PatriciaTree {
           data: value_neighbor,
           child_l: child_l,
           child_r: child_r,
           skip_prefix: tmp.skip_prefix >> (diff + 1),
           skip_len: tmp.skip_len - diff as u8 - 1
-        });
+        }));
         // Chop the prefix down
         tmp.skip_len = diff as u8;
         tmp.skip_prefix = tmp.skip_prefix.mask(diff);
@@ -154,7 +154,7 @@ impl<K:BitArray+Eq+Zero+One+BitXor<K,K>+Shl<uint,K>+Shr<uint,K>, V> PatriciaTree
         let slice_len = key_len - idx;
         // Search key is shorter than skip prefix: truncate the prefix and attach
         // the old data as a child
-        if node.skip_len as uint > slice_len {
+        if node.skip_len as usize > slice_len {
           // Remove the old node's children
           let child_l = node.child_l.take();
           let child_r = node.child_r.take();
@@ -162,13 +162,13 @@ impl<K:BitArray+Eq+Zero+One+BitXor<K,K>+Shl<uint,K>+Shr<uint,K>, V> PatriciaTree
           // Put the old data in a new child, with the remainder of the prefix
           let new_child = if node.skip_prefix.bit(slice_len)
                             { &mut node.child_r } else { &mut node.child_l };
-          *new_child = Some(box PatriciaTree {
+          *new_child = Some(Box::new(PatriciaTree {
             data: value_neighbor,
             child_l: child_l,
             child_r: child_r,
             skip_prefix: node.skip_prefix >> (slice_len + 1),
             skip_len: node.skip_len - slice_len as u8 - 1
-          });
+          }));
           // Chop the prefix down and put the new data in place
           node.skip_len = slice_len as u8;
           node.skip_prefix = key_slice;
@@ -176,7 +176,7 @@ impl<K:BitArray+Eq+Zero+One+BitXor<K,K>+Shl<uint,K>+Shr<uint,K>, V> PatriciaTree
           return true;
         }
         // If we have an exact match, great, insert it
-        else if node.skip_len as uint == slice_len {
+        else if node.skip_len as usize == slice_len {
           if node.data.is_none() {
             node.data = Some(value);
             return true;
@@ -189,18 +189,18 @@ impl<K:BitArray+Eq+Zero+One+BitXor<K,K>+Shl<uint,K>+Shr<uint,K>, V> PatriciaTree
         // Search key longer than node key, recurse
         else {
           let tmp = node;  // hack to appease borrowck
-          idx += tmp.skip_len as uint + 1;
+          idx += tmp.skip_len as usize + 1;
           let subtree = if key.bit(idx - 1)
                           { &mut tmp.child_r } else { &mut tmp.child_l };
           // Recurse, adding a new node if necessary
           if subtree.is_none() {
-            *subtree = Some(box PatriciaTree {
+            *subtree = Some(Box::new(PatriciaTree {
               data: None,
               child_l: None,
               child_r: None,
               skip_prefix: key.bit_slice(idx, key_len),
               skip_len: key_len as u8 - idx as u8
-            });
+            }));
           }
           // subtree.get_mut_ref is a &mut Box<U> here, so &mut ** gets a &mut U
           node = &mut **subtree.as_mut().unwrap();
@@ -211,23 +211,23 @@ impl<K:BitArray+Eq+Zero+One+BitXor<K,K>+Shl<uint,K>+Shr<uint,K>, V> PatriciaTree
 
   /// Deletes a value with key `key`, returning it on success. If no value with
   /// the given key is found, return None
-  pub fn delete(&mut self, key: &K, key_len: uint) -> Option<V> {
+  pub fn delete(&mut self, key: &K, key_len: usize) -> Option<V> {
     /// Return value is (deletable, actual return value), where `deletable` is true
     /// is true when the entire node can be deleted (i.e. it has no children)
-    fn recurse<K:BitArray+Eq+Zero+One+Add<K,K>+Shr<uint,K>+Shl<uint,K>, V>(tree: &mut PatriciaTree<K, V>, key: &K, key_len: uint) -> (bool, Option<V>) {
+    fn recurse<K:BitArray+Eq+Zero+One+Add<K,K>+Shr<usize,K>+Shl<usize,K>, V>(tree: &mut PatriciaTree<K, V>, key: &K, key_len: usize) -> (bool, Option<V>) {
       // If the search key is shorter than the node prefix, there is no
       // way we can match, so fail.
-      if key_len < tree.skip_len as uint {
+      if key_len < tree.skip_len as usize {
         return (false, None);
       }
 
       // Key fails to match prefix --- no match
-      if tree.skip_prefix != key.mask(tree.skip_len as uint) {
+      if tree.skip_prefix != key.mask(tree.skip_len as usize) {
         return (false, None);
       }
 
       // If we are here, the key matches the prefix
-      if tree.skip_len as uint == key_len {
+      if tree.skip_len as usize == key_len {
         // Exact match -- delete and return
         let ret = tree.data.take();
         let bit = tree.child_r.is_some();
@@ -238,17 +238,17 @@ impl<K:BitArray+Eq+Zero+One+BitXor<K,K>+Shl<uint,K>+Shr<uint,K>, V> PatriciaTree
         }
         match (tree.child_l.take(), tree.child_r.take()) {
           (Some(_), Some(_)) => unreachable!(),
-          (Some(box PatriciaTree { data, child_l, child_r, skip_prefix, skip_len }), None) |
-          (None, Some(box PatriciaTree { data, child_l, child_r, skip_prefix, skip_len })) => {
+          (Some(Box::new(PatriciaTree { data, child_l, child_r, skip_prefix, skip_len })), None) |
+          (None, Some(Box::new(PatriciaTree { data, child_l, child_r, skip_prefix, skip_len }))) => {
             tree.data = data;
             tree.child_l = child_l;
             tree.child_r = child_r;
             let new_bit = if bit { let ret: K = One::one();
-                                   ret << (tree.skip_len as uint) }
+                                   ret << (tree.skip_len as usize) }
                           else   { Zero::zero() };
             tree.skip_prefix = tree.skip_prefix + 
                                  new_bit +
-                                 (skip_prefix << (1 + tree.skip_len as uint));
+                                 (skip_prefix << (1 + tree.skip_len as usize));
             tree.skip_len += 1 + skip_len;
             return (false, ret);
           }
@@ -258,7 +258,7 @@ impl<K:BitArray+Eq+Zero+One+BitXor<K,K>+Shl<uint,K>+Shr<uint,K>, V> PatriciaTree
       }
 
       // Otherwise, the key is longer than the prefix and we need to recurse
-      let next_bit = key.bit(tree.skip_len as uint);
+      let next_bit = key.bit(tree.skip_len as usize);
       // Recursively get the return value. This awkward scope is required
       // to shorten the time we mutably borrow the node's children -- we
       // might want to borrow the sibling later, so the borrow needs to end.
@@ -271,8 +271,8 @@ impl<K:BitArray+Eq+Zero+One+BitXor<K,K>+Shl<uint,K>+Shr<uint,K>, V> PatriciaTree
         }
         // Otherwise, do it
         let (delete_child, ret) = recurse(&mut **target.as_mut().unwrap(),
-                                          &key.shr(&(tree.skip_len as uint + 1)),
-                                          key_len - tree.skip_len as uint - 1);
+                                          &key.shr(&(tree.skip_len as usize + 1)),
+                                          key_len - tree.skip_len as usize - 1);
         if delete_child {
           target.take();
         }
@@ -296,17 +296,17 @@ impl<K:BitArray+Eq+Zero+One+BitXor<K,K>+Shl<uint,K>+Shr<uint,K>, V> PatriciaTree
           return (false, ret);
         }
         // One child? Consolidate
-        (bit, Some(box PatriciaTree { data, child_l, child_r, skip_prefix, skip_len }), None) |
-        (bit, None, Some(box PatriciaTree { data, child_l, child_r, skip_prefix, skip_len })) => {
+        (bit, Some(Box::new(PatriciaTree { data, child_l, child_r, skip_prefix, skip_len })), None) |
+        (bit, None, Some(Box::new(PatriciaTree { data, child_l, child_r, skip_prefix, skip_len }))) => {
           tree.data = data;
           tree.child_l = child_l;
           tree.child_r = child_r;
           let new_bit = if bit { let ret: K = One::one();
-                                 ret << (tree.skip_len as uint) }
+                                 ret << (tree.skip_len as usize) }
                         else { Zero::zero() };
           tree.skip_prefix = tree.skip_prefix + 
                                new_bit +
-                               (skip_prefix << (1 + tree.skip_len as uint));
+                               (skip_prefix << (1 + tree.skip_len as usize));
           tree.skip_len += 1 + skip_len;
           return (false, ret);
         }
@@ -321,8 +321,8 @@ impl<K:BitArray+Eq+Zero+One+BitXor<K,K>+Shl<uint,K>+Shr<uint,K>, V> PatriciaTree
   }
 
   /// Count all the nodes
-  pub fn node_count(&self) -> uint {
-    fn recurse<K, V>(node: &Option<Box<PatriciaTree<K, V>>>) -> uint {
+  pub fn node_count(&self) -> usize {
+    fn recurse<K, V>(node: &Option<Box<PatriciaTree<K, V>>>) -> usize {
       match node {
         &Some(ref node) => { 1 + recurse(&node.child_l) + recurse(&node.child_r) }
         &None => 0
@@ -354,30 +354,30 @@ impl<K:BitArray+Eq+Zero+One+BitXor<K,K>+Shl<uint,K>+Shr<uint,K>, V> PatriciaTree
 impl<K:BitArray, V:Show> PatriciaTree<K, V> {
   /// Print the entire tree
   pub fn print<'a>(&'a self) {
-    fn recurse<'a, K:BitArray, V:Show>(tree: &'a PatriciaTree<K, V>, depth: uint) {
-      for i in range(0, tree.skip_len as uint) {
-        print!("{:}", if tree.skip_prefix.bit(i) { 1u } else { 0 });
+    fn recurse<'a, K:BitArray, V:Show>(tree: &'a PatriciaTree<K, V>, depth: usize) {
+      for i in range(0, tree.skip_len as usize) {
+        print!("{:}", if tree.skip_prefix.bit(i) { 1us } else { 0 });
       }
       println!(": {:}", tree.data);
       // left gets no indentation
       match tree.child_l {
         Some(ref t) => {
-          for _ in range(0, depth + tree.skip_len as uint) {
+          for _ in range(0, depth + tree.skip_len as usize) {
             print!("-");
           }
           print!("0");
-          recurse(&**t, depth + tree.skip_len as uint + 1);
+          recurse(&**t, depth + tree.skip_len as usize + 1);
         }
         None => { }
       }
       // right one gets indentation
       match tree.child_r {
         Some(ref t) => {
-          for _ in range(0, depth + tree.skip_len as uint) {
+          for _ in range(0, depth + tree.skip_len as usize) {
             print!("_");
           }
           print!("1");
-          recurse(&**t, depth + tree.skip_len as uint + 1);
+          recurse(&**t, depth + tree.skip_len as usize + 1);
         }
         None => { }
       }
@@ -473,7 +473,7 @@ impl<'a, K, V> Iterator<&'a mut V> for MutItems<'a, K, V> {
   fn next(&mut self) -> Option<&'a mut V> {
     fn borrow_opt<'a, K, V>(opt_ptr: &'a Option<Box<PatriciaTree<K, V>>>) -> *mut PatriciaTree<K, V> {
       match *opt_ptr {
-        Some(ref data) => &**data as *const _ as *mut _,
+        Some(ref data) => &*data as *const _ as *mut _,
         None => RawPtr::null()
       }
     }
@@ -525,7 +525,7 @@ impl<'a, K, V> Iterator<&'a mut V> for MutItems<'a, K, V> {
 mod tests {
   use std::prelude::*;
   use std::io::IoResult;
-  use std::num::Zero;
+  use num::Zero;
 
   use network::serialize::{deserialize, serialize};
   use util::hash::Sha256dHash;
@@ -601,14 +601,14 @@ mod tests {
     // Do the actual test -- note that we also test insertion and deletion
     // at the root here.
     for i in range(0u32, 10) {
-      tree.insert(&Zero::zero(), i as uint, i);
+      tree.insert(&Zero::zero(), i as usize, i);
     }
     for i in range(0u32, 10) {
-      let m = tree.lookup(&Zero::zero(), i as uint);
+      let m = tree.lookup(&Zero::zero(), i as usize);
       assert_eq!(m, Some(&i));
     }
     for i in range(0u32, 10) {
-      let m = tree.delete(&Zero::zero(), i as uint);
+      let m = tree.delete(&Zero::zero(), i as usize);
       assert_eq!(m, Some(i));
     }
     // Check that the chunder was unharmed
@@ -628,13 +628,13 @@ mod tests {
     for i in range(0, n_elems) {
       let hash = Sha256dHash::from_data(&[(i / 0x100) as u8, (i % 0x100) as u8]).into_le().low_128();
       tree.insert(&hash, 128, i);
-      *data.get_mut(i) = Some(());
+      data[i] = Some(());
     }
 
     // Iterate over and try to get everything
     for n in tree.iter() {
       assert!(data[*n].is_some());
-      *data.get_mut(*n) = None;
+      data[*n] = None;
     }
 
     // Check that we got everything
@@ -650,7 +650,7 @@ mod tests {
     for i in range(0, n_elems) {
       let hash = Sha256dHash::from_data(&[(i / 0x100) as u8, (i % 0x100) as u8]).into_le().low_128();
       tree.insert(&hash, 128, i);
-      *data.get_mut(i) = Some(());
+      data[i] = Some(());
     }
 
     // Iterate over and flip all the values
@@ -661,7 +661,7 @@ mod tests {
     // Iterate over and try to get everything
     for n in tree.mut_iter() {
       assert!(data[*n].is_some());
-      *data.get_mut(*n) = None;
+      data[*n] = None;
     }
 
     // Check that we got everything

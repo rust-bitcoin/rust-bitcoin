@@ -20,12 +20,14 @@
 
 use std::cmp;
 use std::collections::HashMap;
-use std::collections::hashmap::Entries;
+use std::collections::hash_map::Iter;
 use std::default::Default;
 use std::mem;
 use std::os::num_cpus;
 use std::sync::Future;
 
+use blockdata::transaction;
+use blockdata::transaction::Transaction;
 use blockdata::transaction::{Transaction, TxOut};
 use blockdata::transaction::{TransactionError, InputNotFound};
 use blockdata::constants::genesis_block;
@@ -34,6 +36,9 @@ use network::constants::Network;
 use network::serialize::BitcoinHash;
 use util::hash::{DumbHasher, Sha256dHash};
 use util::thinvec::ThinVec;
+
+pub use self::ValidationLevel::*;
+pub use self::UtxoSetError::*;
 
 /// The amount of validation to do when updating the UTXO set
 #[deriving(PartialEq, Eq, PartialOrd, Ord, Clone, Show)]
@@ -65,18 +70,18 @@ struct UtxoNode {
   /// Vector of outputs; None indicates a nonexistent or already spent output
   outputs: ThinVec<Option<TxOut>>
 }
-impl_consensus_encoding!(UtxoNode, height, outputs)
+impl_consensus_encoding!(UtxoNode, height, outputs);
 
 /// An iterator over UTXOs
 pub struct UtxoIterator<'a> {
-  tx_iter: Entries<'a, Sha256dHash, UtxoNode>,
+  tx_iter: Iter<'a, Sha256dHash, UtxoNode>,
   current_key: Sha256dHash,
   current: Option<&'a UtxoNode>,
-  tx_index: uint
+  tx_index: usize
 }
 
-impl<'a> Iterator<(Sha256dHash, uint, &'a TxOut, uint)> for UtxoIterator<'a> {
-  fn next(&mut self) -> Option<(Sha256dHash, uint, &'a TxOut, uint)> {
+impl<'a> Iterator<(Sha256dHash, usize, &'a TxOut, usize)> for UtxoIterator<'a> {
+  fn next(&mut self) -> Option<(Sha256dHash, usize, &'a TxOut, usize)> {
     while self.current.is_some() {
       let current = &self.current.unwrap().outputs;
       while self.tx_index < current.len() {
@@ -85,7 +90,7 @@ impl<'a> Iterator<(Sha256dHash, uint, &'a TxOut, uint)> for UtxoIterator<'a> {
           return Some((self.current_key,
                       self.tx_index,
                       unsafe { current.get(self.tx_index - 1) }.as_ref().unwrap(),
-                      self.current.unwrap().height as uint));
+                      self.current.unwrap().height as usize));
         }
       }
       match self.tx_iter.next() {
@@ -113,11 +118,11 @@ pub struct UtxoSet {
   n_pruned: u64
 }
 
-impl_consensus_encoding!(UtxoSet, last_hash, n_utxos, n_pruned, spent_txos, spent_idx, table)
+impl_consensus_encoding!(UtxoSet, last_hash, n_utxos, n_pruned, spent_txos, spent_idx, table);
 
 impl UtxoSet {
   /// Constructs a new UTXO set
-  pub fn new(network: Network, rewind_limit: uint) -> UtxoSet {
+  pub fn new(network: Network, rewind_limit: usize) -> UtxoSet {
     // There is in fact a transaction in the genesis block, but the Bitcoin
     // reference client does not add its sole output to the UTXO set. We
     // must follow suit, otherwise we will accept a transaction spending it
@@ -141,11 +146,11 @@ impl UtxoSet {
       for (vout, txo) in tx.output.iter().enumerate() {
         // Unsafe since we are not uninitializing the old data in the vector
         if txo.script_pubkey.is_provably_unspendable() {
-          new_node.init(vout as uint, None);
+          new_node.init(vout as usize, None);
           self.n_utxos -= 1;
           self.n_pruned += 1;
         } else {
-          new_node.init(vout as uint, Some(txo.clone()));
+          new_node.init(vout as usize, Some(txo.clone()));
         }
       }
       UtxoNode { outputs: new_node, height: height }
@@ -171,8 +176,8 @@ impl UtxoSet {
 
       let ret = {
         // Check that this specific output is there
-        if vout as uint >= node.outputs.len() { return None; }
-        let replace = unsafe { node.outputs.get_mut(vout as uint) };
+        if vout as usize >= node.outputs.len() { return None; }
+        let replace = unsafe { node.outputs.get_mut(vout as usize) };
         replace.take()
       };
 
@@ -190,20 +195,20 @@ impl UtxoSet {
   }
 
   /// Get a reference to a UTXO in the set
-  pub fn get_utxo<'a>(&'a self, txid: Sha256dHash, vout: u32) -> Option<(uint, &'a TxOut)> {
+  pub fn get_utxo<'a>(&'a self, txid: Sha256dHash, vout: u32) -> Option<(usize, &'a TxOut)> {
     // Locate the UTXO, failing if not found
     let node = match self.table.find(&txid) {
       Some(node) => node,
       None => return None
     };
     // Check that this specific output is there
-    if vout as uint >= node.outputs.len() { return None; }
-    let replace = unsafe { node.outputs.get(vout as uint) };
-    Some((node.height as uint, replace.as_ref().unwrap()))
+    if vout as usize >= node.outputs.len() { return None; }
+    let replace = unsafe { node.outputs.get(vout as usize) };
+    Some((node.height as usize, replace.as_ref().unwrap()))
   }
 
   /// Apply the transactions contained in a block
-  pub fn update(&mut self, block: &Block, blockheight: uint, validation: ValidationLevel)
+  pub fn update(&mut self, block: &Block, blockheight: usize, validation: ValidationLevel)
                 -> Result<(), UtxoSetError> {
     // Make sure we are extending the UTXO set in order
     if validation >= ChainValidation &&
@@ -214,9 +219,9 @@ impl UtxoSet {
     // Set the next hash immediately so that if anything goes wrong,
     // we can rewind from the point that we're at.
     self.last_hash = block.header.bitcoin_hash();
-    let spent_idx = self.spent_idx as uint;
+    let spent_idx = self.spent_idx as usize;
     self.spent_idx = (self.spent_idx + 1) % self.spent_txos.len() as u64;
-    self.spent_txos.get_mut(spent_idx).clear();
+    self.spent_txos.get_mut(spent_idx).map(method!(clear));
 
     // Add all the utxos so that we can have chained transactions within the
     // same block. (Note that Bitcoin requires chained transactions to be in
@@ -239,12 +244,16 @@ impl UtxoSet {
           } else {
             // Otherwise put the replaced txouts into the `deleted` cache
             // so that rewind will put them back.
-            self.spent_txos.get_mut(spent_idx).reserve_additional(replace.outputs.len());
-            for (n, input) in replace.outputs.mut_iter().enumerate() {
-              match input.take() {
-                Some(txo) => { self.spent_txos.get_mut(spent_idx).push(((txid, n as u32), (replace.height, txo))); }
-                None => {}
-              }
+            self.spent_txos.get_mut(spent_idx).map(method!(reserve_additional, replace.outputs.len()));
+            let height = replace.height;
+            for (n, input) in replace.outputs.iter_mut().enumerate() {
+              input.take().map(|txo|{
+                match self.spent_txos.get_mut(spent_idx) {
+                    Some(mut vec) => 
+                      vec.push(((txid, n as u32), (height, txo))),
+                    None => {}
+                }
+              });
             }
             // Otherwise fail the block
             self.rewind(block);
@@ -269,7 +278,7 @@ impl UtxoSet {
 
         let s = self as *mut _ as *const UtxoSet;
         let txes = &block.txdata as *const _;
-        future_vec.push(Future::spawn(proc() {
+        future_vec.push(Future::spawn(move || {
           let txes = unsafe {&*txes};
           for tx in txes.slice(start, end).iter() {
             match tx.validate(unsafe {&*s}) {
@@ -283,7 +292,7 @@ impl UtxoSet {
       // Return the last error since we need to finish every future before
       // leaving this function, and given that, it's easier to return the last.
       let mut last_error = Ok(());
-      for res in future_vec.mut_iter().map(|f| f.get()) {
+      for res in future_vec.iter_mut().map(|f| f.get()) {
         if res.is_err() {
           last_error = res;
         }
@@ -296,11 +305,16 @@ impl UtxoSet {
     for tx in block.txdata.iter().skip(1) {
       let txid = tx.bitcoin_hash();
       // Put the removed utxos into the stxo cache, in case we need to rewind
-      self.spent_txos.get_mut(spent_idx).reserve_additional(tx.input.len());
+      self.spent_txos.get_mut(spent_idx).map(method!(reserve_additional, tx.input.len())); 
       for (n, input) in tx.input.iter().enumerate() {
         let taken = self.take_utxo(input.prev_hash, input.prev_index);
         match taken {
-          Some(txo) => { self.spent_txos.get_mut(spent_idx).push(((txid, n as u32), txo)); }
+          Some(txo) => { 
+            match self.spent_txos.get_mut(spent_idx) {
+              Some(vec) => vec.push(((txid, n as u32), txo)), 
+              None => {}
+            }
+          }
           None => {
             if validation >= TxoValidation {
               self.rewind(block);
@@ -348,8 +362,8 @@ impl UtxoSet {
       // Read deleted txouts
       if skipped_genesis {
         let mut extract_vec = vec![];
-        mem::swap(&mut extract_vec, self.spent_txos.get_mut(self.spent_idx as uint));
-        for ((txid, n), (height, txo)) in extract_vec.move_iter() {
+        self.spent_txos.get_mut(self.spent_idx as usize).map(|x|{mem::swap(&mut extract_vec, x)});
+        for ((txid, n), (height, txo)) in extract_vec.into_iter() {
           // Remove the tx's utxo list and patch the txo into place
           let new_node =
               match self.table.pop(&txid) {
@@ -359,20 +373,20 @@ impl UtxoSet {
                     unsafe {
                       node.outputs.reserve(n + 1);
                       for i in range(old_len, n + 1) {
-                        node.outputs.init(i as uint, None);
+                        node.outputs.init(i as usize, None);
                       }
                     }
                   }
-                  unsafe { *node.outputs.get_mut(n as uint) = Some(txo); }
+                  unsafe { *node.outputs.get_mut(n as usize) = Some(txo); }
                   node
                 }
                 None => {
                   unsafe {
                     let mut thinvec = ThinVec::with_capacity(n + 1);
                     for i in range(0, n) {
-                      thinvec.init(i as uint, None);
+                      thinvec.init(i as usize, None);
                     }
-                    thinvec.init(n as uint, Some(txo));
+                    thinvec.init(n as usize, Some(txo));
                     UtxoNode { outputs: thinvec, height: height }
                   }
                 }
@@ -397,14 +411,14 @@ impl UtxoSet {
   }
 
   /// Get the number of UTXOs in the set
-  pub fn n_utxos(&self) -> uint {
-    self.n_utxos as uint
+  pub fn n_utxos(&self) -> usize {
+    self.n_utxos as usize
   }
 
   /// Get the number of UTXOs ever pruned from the set (this is not updated
   /// during reorgs, so it may return a higher number than is realistic).
-  pub fn n_pruned(&self) -> uint {
-    self.n_pruned as uint
+  pub fn n_pruned(&self) -> usize {
+    self.n_pruned as usize
   }
 
   /// Get an iterator over all UTXOs

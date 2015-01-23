@@ -19,17 +19,17 @@
 //!
 
 use std::fmt;
-use std::num::{Zero, One};
+use num::{Zero, One};
 
 use network::serialize::RawEncoder;
 use util::BitArray;
 
-macro_rules! construct_uint(
+macro_rules! construct_usize(
   ($name:ident, $n_words:expr) => (
     /// Little-endian large integer type
     #[repr(C)]
-    pub struct $name(pub [u64, ..$n_words]);
-    impl_array_newtype!($name, u64, $n_words)
+    pub struct $name(pub [u64; $n_words]);
+    impl_array_newtype!($name, u64, $n_words);
 
     impl $name {
       /// Conversion to u32
@@ -41,12 +41,12 @@ macro_rules! construct_uint(
 
       /// Return the least number of bits needed to represent the number
       #[inline]
-      pub fn bits(&self) -> uint {
+      pub fn bits(&self) -> usize {
         let &$name(ref arr) = self;
-        for i in range(1u, $n_words) {
-          if arr[$n_words - i] > 0 { return (0x40 * ($n_words - i + 1)) - arr[$n_words - i].leading_zeros() as uint; }
+        for i in range(1us, $n_words) {
+          if arr[$n_words - i] > 0 { return (0x40 * ($n_words - i + 1)) - arr[$n_words - i].leading_zeros() as usize; }
         }
-        0x40 - arr[0].leading_zeros() as uint
+        0x40 - arr[0].leading_zeros() as usize
       }
 
       /// Multiplication by u32
@@ -54,7 +54,7 @@ macro_rules! construct_uint(
         let &$name(ref arr) = self;
         let mut carry = [0u64, ..$n_words];
         let mut ret = [0u64, ..$n_words];
-        for i in range(0u, $n_words) {
+        for i in range(0us, $n_words) {
           let upper = other as u64 * (arr[i] >> 32);
           let lower = other as u64 * (arr[i] & 0xFFFFFFFF);
           if i < 3 {
@@ -98,7 +98,7 @@ macro_rules! construct_uint(
         let mut ret = [0u64, ..$n_words];
         let mut carry = [0u64, ..$n_words];
         let mut b_carry = false;
-        for i in range(0u, $n_words) {
+        for i in range(0us, $n_words) {
           ret[i] = me[i] + you[i];
           if i < $n_words - 1 && ret[i] < me[i] {
             carry[i + 1] = 1;
@@ -120,8 +120,8 @@ macro_rules! construct_uint(
       fn mul(&self, other: &$name) -> $name {
         let mut me = *self;
         // TODO: be more efficient about this
-        for i in range(0u, 2 * $n_words) {
-          me = me + me.mul_u32((other >> (32 * i)).low_u32()) << (32 * i);
+        for i in range(0us, 2 * $n_words) {
+          me = me + me.mul_u32((*other >> (32 * i)).low_u32()) << (32 * i);
         }
         me
       }
@@ -163,21 +163,21 @@ macro_rules! construct_uint(
 
     impl BitArray for $name {
       #[inline]
-      fn bit(&self, index: uint) -> bool {
+      fn bit(&self, index: usize) -> bool {
         let &$name(ref arr) = self;
         arr[index / 64] & (1 << (index % 64)) != 0
       }
 
       #[inline]
-      fn bit_slice(&self, start: uint, end: uint) -> $name {
-        (self >> start).mask(end - start)
+      fn bit_slice(&self, start: usize, end: usize) -> $name {
+        (*self >> start).mask(end - start)
       }
 
       #[inline]
-      fn mask(&self, n: uint) -> $name {
+      fn mask(&self, n: usize) -> $name {
         let &$name(ref arr) = self;
         let mut ret = [0, ..$n_words];
-        for i in range(0u, $n_words) {
+        for i in range(0us, $n_words) {
           if n >= 0x40 * (i + 1) {
             ret[i] = arr[i];
           } else {
@@ -189,12 +189,12 @@ macro_rules! construct_uint(
       }
 
       #[inline]
-      fn trailing_zeros(&self) -> uint {
+      fn trailing_zeros(&self) -> usize {
         let &$name(ref arr) = self;
-        for i in range(0u, $n_words - 1) {
-          if arr[i] > 0 { return (0x40 * i) + arr[i].trailing_zeros() as uint; }
+        for i in range(0us, $n_words - 1) {
+          if arr[i] > 0 { return (0x40 * i) + arr[i].trailing_zeros() as usize; }
         }
-        (0x40 * ($n_words - 1)) + arr[3].trailing_zeros() as uint
+        (0x40 * ($n_words - 1)) + arr[3].trailing_zeros() as usize
       }
     }
 
@@ -204,7 +204,7 @@ macro_rules! construct_uint(
         let &$name(ref arr1) = self;
         let &$name(ref arr2) = other;
         let mut ret = [0u64, ..$n_words];
-        for i in range(0u, $n_words) {
+        for i in range(0us, $n_words) {
           ret[i] = arr1[i] & arr2[i];
         }
         $name(ret)
@@ -217,7 +217,7 @@ macro_rules! construct_uint(
         let &$name(ref arr1) = self;
         let &$name(ref arr2) = other;
         let mut ret = [0u64, ..$n_words];
-        for i in range(0u, $n_words) {
+        for i in range(0us, $n_words) {
           ret[i] = arr1[i] ^ arr2[i];
         }
         $name(ret)
@@ -230,7 +230,7 @@ macro_rules! construct_uint(
         let &$name(ref arr1) = self;
         let &$name(ref arr2) = other;
         let mut ret = [0u64, ..$n_words];
-        for i in range(0u, $n_words) {
+        for i in range(0us, $n_words) {
           ret[i] = arr1[i] | arr2[i];
         }
         $name(ret)
@@ -242,20 +242,20 @@ macro_rules! construct_uint(
       fn not(&self) -> $name {
         let &$name(ref arr) = self;
         let mut ret = [0u64, ..$n_words];
-        for i in range(0u, $n_words) {
+        for i in range(0us, $n_words) {
           ret[i] = !arr[i];
         }
         $name(ret)
       }
     }
 
-    impl Shl<uint,$name> for $name {
-      fn shl(&self, shift: &uint) -> $name {
+    impl Shl<usize,$name> for $name {
+      fn shl(&self, shift: &usize) -> $name {
         let &$name(ref original) = self;
         let mut ret = [0u64, ..$n_words];
         let word_shift = *shift / 64;
         let bit_shift = *shift % 64;
-        for i in range(0u, $n_words) {
+        for i in range(0us, $n_words) {
           // Shift
           if bit_shift < 64 && i + word_shift < $n_words {
             ret[i + word_shift] += original[i] << bit_shift;
@@ -269,14 +269,14 @@ macro_rules! construct_uint(
       }
     }
 
-    impl Shr<uint,$name> for $name {
+    impl Shr<usize,$name> for $name {
       #[allow(unsigned_negate)]
-      fn shr(&self, shift: &uint) -> $name {
+      fn shr(&self, shift: &usize) -> $name {
         let &$name(ref original) = self;
         let mut ret = [0u64, ..$n_words];
         let word_shift = *shift / 64;
         let bit_shift = *shift % 64;
-        for i in range(0u, $n_words) {
+        for i in range(0us, $n_words) {
           // Shift
           if bit_shift < 64 && i - word_shift < $n_words {
             ret[i - word_shift] += original[i] >> bit_shift;
@@ -310,10 +310,10 @@ macro_rules! construct_uint(
 
     impl fmt::Show for $name {
       fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use std::fmt::WriteError;
+        use std::fmt::Error;
         use network::encodable::ConsensusEncodable;
-        let mut encoder = RawEncoder::new(f.by_ref());
-        self.consensus_encode(&mut encoder).map_err(|_| WriteError)
+        let mut encoder = RawEncoder::new(*f);
+        self.consensus_encode(&mut encoder).map_err(|_| Error)
       }
     }
 
@@ -330,15 +330,15 @@ macro_rules! construct_uint(
     impl<D: ::network::serialize::SimpleDecoder<E>, E> ::network::encodable::ConsensusDecodable<D, E> for $name {
       fn consensus_decode(d: &mut D) -> Result<$name, E> {
         use network::encodable::ConsensusDecodable;
-        let ret: [u64, ..$n_words] = try!(ConsensusDecodable::consensus_decode(d));
+        let ret: [u64; $n_words] = try!(ConsensusDecodable::consensus_decode(d));
         Ok($name(ret))
       }
     }
   );
-)
+);
 
-construct_uint!(Uint256, 4)
-construct_uint!(Uint128, 2)
+construct_usize!(Uint256, 4);
+construct_usize!(Uint128, 2);
 
 impl Uint256 {
   /// Increment by 1
@@ -357,7 +357,7 @@ impl Uint256 {
     }
   }
 
-  /// Decay to a uint128
+  /// Decay to a usize128
   #[inline]
   pub fn low_128(&self) -> Uint128 {
     let &Uint256(data) = self;
@@ -375,7 +375,7 @@ mod tests {
   use util::BitArray;
 
   #[test]
-  pub fn uint256_bits_test() {
+  pub fn usize256_bits_test() {
     assert_eq!(from_u64::<Uint256>(255).unwrap().bits(), 8);
     assert_eq!(from_u64::<Uint256>(256).unwrap().bits(), 9);
     assert_eq!(from_u64::<Uint256>(300).unwrap().bits(), 9);
@@ -384,11 +384,11 @@ mod tests {
 
     // Try to read the following lines out loud quickly
     let mut shl: Uint256 = from_u64(70000).unwrap();
-    shl = shl << 100u;
+    shl = shl << 100us;
     assert_eq!(shl.bits(), 117);
-    shl = shl << 100u;
+    shl = shl << 100us;
     assert_eq!(shl.bits(), 217);
-    shl = shl << 100u;
+    shl = shl << 100us;
     assert_eq!(shl.bits(), 0);
 
     // Bit set check
@@ -400,7 +400,7 @@ mod tests {
   }
 
   #[test]
-  pub fn uint256_comp_test() {
+  pub fn usize256_comp_test() {
     let small = Uint256([10u64, 0, 0, 0]);
     let big = Uint256([0x8C8C3EE70C644118u64, 0x0209E7378231E632, 0, 0]);
     let bigger = Uint256([0x9C8C3EE70C644118u64, 0x0209E7378231E632, 0, 0]);
@@ -417,16 +417,16 @@ mod tests {
   }
 
   #[test]
-  pub fn uint256_arithmetic_test() {
+  pub fn usize256_arithmetic_test() {
     let init: Uint256 = from_u64(0xDEADBEEFDEADBEEF).unwrap();
     let copy = init;
 
     let add = init.add(&copy);
     assert_eq!(add, Uint256([0xBD5B7DDFBD5B7DDEu64, 1, 0, 0]));
     // Bitshifts
-    let shl = add << 88u;
+    let shl = add << 88us;
     assert_eq!(shl, Uint256([0u64, 0xDFBD5B7DDE000000, 0x1BD5B7D, 0]));
-    let shr = shl >> 40u;
+    let shr = shl >> 40us;
     assert_eq!(shr, Uint256([0x7DDE000000000000u64, 0x0001BD5B7DDFBD5B, 0, 0]));
     // Increment
     let mut incr = shr;
@@ -448,7 +448,7 @@ mod tests {
   }
 
   #[test]
-  pub fn uint256_bitslice_test() {
+  pub fn usize256_bitslice_test() {
     let init = from_u64::<Uint256>(0xDEADBEEFDEADBEEF).unwrap();
     let add = init + (init << 64);
     assert_eq!(add.bit_slice(64, 128), init);
@@ -456,7 +456,7 @@ mod tests {
   }
 
   #[test]
-  pub fn uint256_extreme_bitshift_test() {
+  pub fn usize256_extreme_bitshift_test() {
     // Shifting a u64 by 64 bits gives an undefined value, so make sure that
     // we're doing the Right Thing here
     let init = from_u64::<Uint256>(0xDEADBEEFDEADBEEF).unwrap();
@@ -471,7 +471,7 @@ mod tests {
   }
 
   #[test]
-  pub fn uint256_serialize_test() {
+  pub fn usize256_serialize_test() {
     let start1 = Uint256([0x8C8C3EE70C644118u64, 0x0209E7378231E632, 0, 0]);
     let start2 = Uint256([0x8C8C3EE70C644118u64, 0x0209E7378231E632, 0xABCD, 0xFFFF]);
     let serial1 = serialize(&start1).unwrap();
