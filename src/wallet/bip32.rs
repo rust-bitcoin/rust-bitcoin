@@ -29,10 +29,10 @@ use crypto::sha2::Sha512;
 use secp256k1::key::{PublicKey, SecretKey};
 use secp256k1;
 
-use network::constants::{Network, Bitcoin, BitcoinTestnet};
-use util::base58::{Base58Error,
-                   InvalidLength, InvalidVersion, OtherBase58Error,
-                   FromBase58, ToBase58};
+use network::constants::Network::{self, Bitcoin, BitcoinTestnet};
+use util::base58::Base58Error::{self, InvalidLength, InvalidVersion,
+                                OtherBase58Error};
+use util::base58::{FromBase58, ToBase58};
 
 /// A chain code
 pub struct ChainCode([u8; 32]);
@@ -96,8 +96,8 @@ pub enum ChildNumber {
 impl<S: Encoder<E>, E> Encodable<S, E> for ChildNumber {
   fn encode(&self, s: &mut S) -> Result<(), E> {
     match *self {
-      Hardened(n) => (n + (1 << 31)).encode(s),
-      Normal(n)   => n.encode(s)
+      ChildNumber::Hardened(n) => (n + (1 << 31)).encode(s),
+      ChildNumber::Normal(n)   => n.encode(s)
     }
   }
 }
@@ -106,9 +106,9 @@ impl<D: Decoder<E>, E> Decodable<D, E> for ChildNumber {
   fn decode(d: &mut D) -> Result<ChildNumber, E> { 
     let n: u32 = try!(Decodable::decode(d));
     if n < (1 << 31) {
-      Ok(Normal(n))
+      Ok(ChildNumber::Normal(n))
     } else {
-      Ok(Hardened(n - (1 << 31)))
+      Ok(ChildNumber::Hardened(n - (1 << 31)))
     }
   }
 }
@@ -138,7 +138,7 @@ impl ExtendedPrivKey {
       network: network,
       depth: 0,
       parent_fingerprint: Default::default(),
-      child_number: Normal(0),
+      child_number: ChildNumber::Normal(0),
       secret_key: try!(SecretKey::from_slice(result.slice_to(32)).map_err(EcdsaError)),
       chain_code: ChainCode::from_slice(result.slice_from(32))
     })
@@ -159,7 +159,7 @@ impl ExtendedPrivKey {
     let mut result = [0; 64];
     let mut hmac = Hmac::new(Sha512::new(), self.chain_code.as_slice());
     match i {
-      Normal(n) => {
+      ChildNumber::Normal(n) => {
         if n >= (1 << 31) { return Err(InvalidChildNumber(i)) }
         // Non-hardened key: compute public data and use that
         secp256k1::init();
@@ -167,7 +167,7 @@ impl ExtendedPrivKey {
         hmac.input(PublicKey::from_secret_key(&self.secret_key, true).as_slice());
         u64_to_be_bytes(n as u64, 4, |raw| hmac.input(raw));
       }
-      Hardened(n) => {
+      ChildNumber::Hardened(n) => {
         if n >= (1 << 31) { return Err(InvalidChildNumber(i)) }
         // Hardened key: use only secret data to prevent public derivation
         hmac.input([0]);
@@ -230,14 +230,14 @@ impl ExtendedPubKey {
   /// Public->Public child key derivation
   pub fn ckd_pub(&self, i: ChildNumber) -> Result<ExtendedPubKey, Error> {
     match i {
-      Hardened(n) => {
+      ChildNumber::Hardened(n) => {
         if n >= (1 << 31) {
           Err(InvalidChildNumber(i))
         } else {
           Err(CannotDeriveFromHardenedKey)
         }
       }
-      Normal(n) => {
+      ChildNumber::Normal(n) => {
         let mut hmac = Hmac::new(Sha512::new(), self.chain_code.as_slice());
         hmac.input(self.public_key.as_slice());
         u64_to_be_bytes(n as u64, 4, |raw| hmac.input(raw));
@@ -293,10 +293,10 @@ impl ToBase58 for ExtendedPrivKey {
     ret.push(self.depth as u8);
     ret.push_all(self.parent_fingerprint.as_slice());
     match self.child_number {
-      Hardened(n) => {
+      ChildNumber::Hardened(n) => {
         u64_to_be_bytes(n as u64 + (1 << 31), 4, |raw| ret.push_all(raw));
       }
-      Normal(n) => {
+      ChildNumber::Normal(n) => {
         u64_to_be_bytes(n as u64, 4, |raw| ret.push_all(raw));
       }
     }
@@ -314,8 +314,8 @@ impl FromBase58 for ExtendedPrivKey {
     }
 
     let cn_int = u64_from_be_bytes(data.as_slice(), 9, 4) as u32;
-    let child_number = if cn_int < (1 << 31) { Normal(cn_int) }
-                       else { Hardened(cn_int - (1 << 31)) };
+    let child_number = if cn_int < (1 << 31) { ChildNumber::Normal(cn_int) }
+                       else { ChildNumber::Hardened(cn_int - (1 << 31)) };
 
     Ok(ExtendedPrivKey {
       network: match data.slice_to(4) {
@@ -345,10 +345,10 @@ impl ToBase58 for ExtendedPubKey {
     ret.push(self.depth as u8);
     ret.push_all(self.parent_fingerprint.as_slice());
     match self.child_number {
-      Hardened(n) => {
+      ChildNumber::Hardened(n) => {
         u64_to_be_bytes(n as u64 + (1 << 31), 4, |raw| ret.push_all(raw));
       }
-      Normal(n) => {
+      ChildNumber::Normal(n) => {
         u64_to_be_bytes(n as u64, 4, |raw| ret.push_all(raw));
       }
     }
@@ -365,8 +365,8 @@ impl FromBase58 for ExtendedPubKey {
     }
 
     let cn_int = u64_from_be_bytes(data.as_slice(), 9, 4) as u32;
-    let child_number = if cn_int < (1 << 31) { Normal(cn_int) }
-                       else { Hardened(cn_int - (1 << 31)) };
+    let child_number = if cn_int < (1 << 31) { ChildNumber::Normal(cn_int) }
+                       else { ChildNumber::Hardened(cn_int - (1 << 31)) };
 
     Ok(ExtendedPubKey {
       network: match data.slice_to(4) {
@@ -390,10 +390,11 @@ mod tests {
   use serialize::hex::FromHex;
   use test::{Bencher, black_box};
 
-  use network::constants::{Network, Bitcoin};
+  use network::constants::Network::{self, Bitcoin};
   use util::base58::{FromBase58, ToBase58};
 
-  use super::{ChildNumber, ExtendedPrivKey, ExtendedPubKey, Hardened, Normal};
+  use super::{ChildNumber, ExtendedPrivKey, ExtendedPubKey};
+  use super::ChildNumber::{Hardened, Normal};
 
   fn test_path(network: Network,
                seed: &[u8],

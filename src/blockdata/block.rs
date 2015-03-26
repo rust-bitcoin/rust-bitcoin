@@ -22,7 +22,8 @@
 
 use std::num::{Zero, from_u64};
 
-use util::error::{BitcoinResult, SpvBadTarget, SpvBadProofOfWork};
+use util::error::{BitcoinResult};
+use util::error::BitcoinError::{SpvBadTarget, SpvBadProofOfWork};
 use util::hash::Sha256dHash;
 use util::uint::Uint256;
 use network::encodable::{ConsensusEncodable, VarInt};

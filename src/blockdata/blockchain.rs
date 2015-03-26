@@ -29,11 +29,12 @@ use blockdata::block::{Block, BlockHeader};
 use blockdata::transaction::Transaction;
 use blockdata::constants::{DIFFCHANGE_INTERVAL, DIFFCHANGE_TIMESPAN,
                            TARGET_BLOCK_SPACING, max_target, genesis_block};
-use network::constants::{Network, BitcoinTestnet};
+use network::constants::Network::{self, BitcoinTestnet};
 use network::encodable::{ConsensusDecodable, ConsensusEncodable};
 use network::serialize::{BitcoinHash, SimpleDecoder, SimpleEncoder};
 use util::BitArray;
-use util::error::{BitcoinResult, BlockNotFound, DuplicateHash, PrevHashNotFound};
+use util::error::BitcoinResult;
+use util::error::BitcoinError::{BlockNotFound, DuplicateHash, PrevHashNotFound};
 use util::uint::Uint256;
 use util::hash::Sha256dHash;
 use util::patricia_tree::PatriciaTree;
@@ -613,7 +614,7 @@ mod tests {
 
   use blockdata::blockchain::Blockchain;
   use blockdata::constants::genesis_block;
-  use network::constants::Bitcoin;
+  use network::constants::Network::Bitcoin;
   use network::serialize::{BitcoinHash, deserialize, serialize};
 
   #[test]

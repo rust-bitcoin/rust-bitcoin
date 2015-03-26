@@ -529,8 +529,8 @@ mod tests {
 
   use network::serialize::{deserialize, serialize};
   use util::hash::Sha256dHash;
-  use util::usize::Uint128;
-  use util::usize::Uint256;
+  use util::uint::Uint128;
+  use util::uint::Uint256;
   use util::patricia_tree::PatriciaTree;
 
   #[test]

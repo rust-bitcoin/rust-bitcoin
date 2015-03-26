@@ -21,7 +21,7 @@
 
 use alloc::heap::{allocate, reallocate, deallocate};
 use std::raw;
-use std::slice::{Items, MutItems};
+use std::slice::{Iter, MutIter};
 use std::{fmt, mem, ptr};
 use std::u32;
 
@@ -63,13 +63,13 @@ impl<T> ThinVec<T> {
 
   /// Iterator over elements of the vector
   #[inline]
-  pub fn iter<'a>(&'a self) -> Items<'a, T> {
+  pub fn iter<'a>(&'a self) -> Iter<'a, T> {
     self.as_slice().iter()
   }
 
   /// Mutable iterator over elements of the vector
   #[inline]
-  pub fn iter_mut<'a>(&'a mut self) -> MutItems<'a, T> {
+  pub fn iter_mut<'a>(&'a mut self) -> MutIter<'a, T> {
     self.as_mut_slice().iter_mut()
   }
 

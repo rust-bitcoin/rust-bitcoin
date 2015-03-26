@@ -26,7 +26,7 @@ use blockdata::opcodes;
 use blockdata::script::Script;
 use blockdata::transaction::{Transaction, TxOut, TxIn};
 use blockdata::block::{Block, BlockHeader};
-use network::constants::{Network, Bitcoin, BitcoinTestnet};
+use network::constants::Network::{Bitcoin, BitcoinTestnet};
 use util::misc::hex_bytes;
 use util::hash::MerkleRoot;
 use util::uint::Uint256;
@@ -123,7 +123,7 @@ mod test {
   use std::default::Default;
   use serialize::hex::FromHex;
 
-  use network::constants::{Bitcoin, BitcoinTestnet};
+  use network::constants::Network::{Bitcoin, BitcoinTestnet};
   use network::serialize::{BitcoinHash, serialize};
   use blockdata::constants::{genesis_block, bitcoin_genesis_tx};
   use blockdata::constants::{MAX_SEQUENCE, COIN_VALUE};

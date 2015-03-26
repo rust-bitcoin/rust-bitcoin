@@ -67,7 +67,7 @@ impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for Network {
 
 #[cfg(test)]
 mod tests {
-  use super::{Network, Bitcoin, BitcoinTestnet};
+  use super::Network::{self, Bitcoin, BitcoinTestnet};
 
   use network::serialize::{deserialize, serialize};
 

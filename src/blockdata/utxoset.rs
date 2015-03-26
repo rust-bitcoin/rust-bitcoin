@@ -27,7 +27,7 @@ use std::os::num_cpus;
 use std::sync::Future;
 
 use blockdata::transaction::{Transaction, TxOut};
-use blockdata::transaction::{TransactionError, InputNotFound};
+use blockdata::transaction::TransactionError::{self, InputNotFound};
 use blockdata::constants::genesis_block;
 use blockdata::block::Block;
 use network::constants::Network;
@@ -437,7 +437,7 @@ mod tests {
   use super::{UtxoSet, TxoValidation};
 
   use blockdata::block::Block;
-  use network::constants::Bitcoin;
+  use network::constants::Network::Bitcoin;
   use network::serialize::{BitcoinHash, deserialize, serialize};
 
   #[test]

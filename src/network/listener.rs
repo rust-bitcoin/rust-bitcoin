@@ -21,7 +21,9 @@
 use std::io::{IoResult, standard_error, ConnectionFailed};
 
 use network::constants::Network;
-use network::message::{self, SocketResponse, MessageReceived, Verack};
+use network::message;
+use network::message::SocketResponse::{self, MessageReceived};
+use network::message::NetworkMessage::Verack;
 use network::socket::Socket;
 
 /// A message which can be sent on the Bitcoin network

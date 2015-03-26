@@ -23,7 +23,8 @@ use collections::hash::sip::hash_with_keys;
 
 use secp256k1::key::SecretKey;
 
-use blockdata::transaction::{TxOut, PayToPubkeyHash};
+use blockdata::transaction::TxOut;
+use blockdata::transaction::ScriptPubkeyTemplate::PayToPubkeyHash;
 use blockdata::utxoset::UtxoSet;
 use blockdata::script::Script;
 use network::constants::Network;

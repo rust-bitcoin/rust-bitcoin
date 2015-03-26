@@ -11,6 +11,6 @@ path = "src/lib.rs"
 [dependencies.rust-crypto]
 git = "https://github.com/DaGenix/rust-crypto.git"
 
-[dependencies.bitcoin-secp256k1-rs]
+[dependencies.secp256k1]
 git = "https://github.com/apoelstra/bitcoin-secp256k1-rs.git"
 

@@ -2453,7 +2453,7 @@ mod test {
 
   use super::{Script, build_scriptint, read_scriptint, read_scriptbool};
   use super::{EqualVerifyFailed, NoTransaction, PopEmptyStack};
-  use super::Owned;
+  use super::MaybeOwned::Owned;
 
   use network::serialize::{deserialize, serialize};
   use blockdata::opcodes;

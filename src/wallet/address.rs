@@ -22,11 +22,10 @@ use crypto::sha2::Sha256;
 
 use blockdata::script::Script;
 use blockdata::opcodes::all;
-use network::constants::{Network, Bitcoin, BitcoinTestnet};
+use network::constants::Network::{self, Bitcoin, BitcoinTestnet};
 use util::hash::Ripemd160Hash;
-use util::base58::{Base58Error,
-                   InvalidLength, InvalidVersion,
-                   FromBase58, ToBase58};
+use util::base58::Base58Error::{self, InvalidLength, InvalidVersion};
+use util::base58::{FromBase58, ToBase58};
 
 #[deriving(Clone, PartialEq, Eq)]
 /// A Bitcoin address
@@ -130,7 +129,7 @@ mod tests {
 
   use secp256k1::Secp256k1;
 
-  use network::constants::Bitcoin;
+  use network::constants::Network::Bitcoin;
   use util::hash::Ripemd160Hash;
   use util::base58::{FromBase58, ToBase58};
   use super::Address;
