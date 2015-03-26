@@ -31,7 +31,7 @@ use wallet::address::Address;
 use wallet::address_index::AddressIndex;
 
 /// A Wallet error
-#[deriving(Clone, PartialEq, Eq, Show)]
+#[derive(Clone, PartialEq, Eq, Show)]
 pub enum Error {
   /// Tried to lookup an account by name, but none was found
   AccountNotFound,
@@ -54,7 +54,7 @@ pub enum AccountChain {
 }
 
 /// An account
-#[deriving(Clone, PartialEq, Eq, Encodable, Decodable, Show)]
+#[derive(Clone, PartialEq, Eq, Encodable, Decodable, Show)]
 pub struct Account {
   name: String,
   internal_path: Vec<ChildNumber>,
@@ -80,7 +80,7 @@ impl Default for Account {
 }
 
 /// A wallet
-#[deriving(Clone, PartialEq, Eq, Show)]
+#[derive(Clone, PartialEq, Eq, Show)]
 pub struct Wallet {
   master: ExtendedPrivKey,
   accounts: HashMap<String, Account>,

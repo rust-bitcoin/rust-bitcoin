@@ -33,9 +33,6 @@
 #![feature(unboxed_closure_sugar)]
 #![feature(unboxed_closures)]
 
-#![comment = "Rust Bitcoin Library"]
-#![license = "CC0"]
-
 // Coding conventions
 #![warn(non_uppercase_statics)]
 #![deny(non_camel_case_types)]

@@ -50,22 +50,22 @@ impl_array_newtype!(Ripemd160Hash, u8, 20);
 /// A "hasher" which just truncates and adds data to its state. Should
 /// only be used for hashtables indexed by "already random" data such
 /// as SHA2 hashes
-#[deriving(Clone, PartialEq, Eq, Show)]
+#[derive(Clone, PartialEq, Eq, Show)]
 pub struct DumbHasher;
 
 /// The state of a `DumbHasher`
 pub struct DumbHasherState([u8; 8]);
 
 /// A 32-bit hash obtained by truncating a real hash
-#[deriving(Clone, PartialEq, Eq, Show)]
+#[derive(Clone, PartialEq, Eq, Show)]
 pub struct Hash32((u8, u8, u8, u8));
 
 /// A 48-bit hash obtained by truncating a real hash
-#[deriving(Clone, PartialEq, Eq, Show)]
+#[derive(Clone, PartialEq, Eq, Show)]
 pub struct Hash48((u8, u8, u8, u8, u8, u8));
 
 /// A 64-bit hash obtained by truncating a real hash
-#[deriving(Clone, PartialEq, Eq, Show)]
+#[derive(Clone, PartialEq, Eq, Show)]
 pub struct Hash64((u8, u8, u8, u8, u8, u8, u8, u8));
 
 

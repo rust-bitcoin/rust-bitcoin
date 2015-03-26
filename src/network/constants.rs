@@ -22,7 +22,7 @@ use network::encodable::{ConsensusDecodable, ConsensusEncodable};
 use network::serialize::{SimpleEncoder, SimpleDecoder};
 
 user_enum! {
-  #[deriving(PartialEq, Eq, Clone, Hash)]
+  #[derive(PartialEq, Eq, Clone, Hash)]
   #[doc="The cryptocurrency to act on"]
   pub enum Network {
     #[doc="Classic Bitcoin"]

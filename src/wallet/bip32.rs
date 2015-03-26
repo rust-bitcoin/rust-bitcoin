@@ -51,7 +51,7 @@ impl Default for Fingerprint {
 }
 
 /// Extended private key
-#[deriving(Clone, PartialEq, Eq, Encodable, Decodable, Show)]
+#[derive(Clone, PartialEq, Eq, Encodable, Decodable, Show)]
 pub struct ExtendedPrivKey {
   /// The network this key is to be used on
   pub network: Network,
@@ -68,7 +68,7 @@ pub struct ExtendedPrivKey {
 }
 
 /// Extended public key
-#[deriving(Clone, PartialEq, Eq, Encodable, Decodable, Show)]
+#[derive(Clone, PartialEq, Eq, Encodable, Decodable, Show)]
 pub struct ExtendedPubKey {
   /// The network this key is to be used on
   pub network: Network,
@@ -85,7 +85,7 @@ pub struct ExtendedPubKey {
 }
 
 /// A child number for a derived key
-#[deriving(Clone, PartialEq, Eq, Show)]
+#[derive(Clone, PartialEq, Eq, Show)]
 pub enum ChildNumber {
   /// Hardened key index, within [0, 2^31 - 1]
   Hardened(u32),
@@ -114,7 +114,7 @@ impl<D: Decoder<E>, E> Decodable<D, E> for ChildNumber {
 }
 
 /// A BIP32 error
-#[deriving(Clone, PartialEq, Eq, Show)]
+#[derive(Clone, PartialEq, Eq, Show)]
 pub enum Error {
   /// A pk->pk derivation was attempted on a hardened key
   CannotDeriveFromHardenedKey,

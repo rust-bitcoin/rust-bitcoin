@@ -27,7 +27,7 @@ use util::hash::Ripemd160Hash;
 use util::base58::Base58Error::{self, InvalidLength, InvalidVersion};
 use util::base58::{FromBase58, ToBase58};
 
-#[deriving(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 /// A Bitcoin address
 pub struct Address {
   /// The network on which this address is usable

@@ -21,7 +21,7 @@ use util::thinvec::ThinVec;
 use util::hash::Sha256dHash;
 
 /// An error that might occur during base58 decoding
-#[deriving(Show, PartialEq, Eq, Clone)]
+#[derive(Show, PartialEq, Eq, Clone)]
 pub enum Base58Error {
   /// Invalid character encountered
   BadByte(u8),

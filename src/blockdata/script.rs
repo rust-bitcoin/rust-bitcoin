@@ -48,7 +48,7 @@ use util::hash::Sha256dHash;
 use util::misc::script_find_and_remove;
 use util::thinvec::ThinVec;
 
-#[deriving(PartialEq, Eq, Show, Clone)]
+#[derive(PartialEq, Eq, Show, Clone)]
 /// A Bitcoin script
 pub struct Script(ThinVec<u8>);
 
@@ -63,7 +63,7 @@ impl<S: hash::Writer> hash::Hash<S> for Script {
 /// Ways that a script might fail. Not everything is split up as
 /// much as it could be; patches welcome if more detailed errors
 /// would help you.
-#[deriving(PartialEq, Eq, Show, Clone)]
+#[derive(PartialEq, Eq, Show, Clone)]
 pub enum ScriptError {
   /// The script returns false no matter the input
   AnalyzeAlwaysReturnsFalse,
@@ -721,7 +721,7 @@ fn update_op_checksig(elem: &mut AbstractStackElem, others: &[usize])
 
 /// An abstract element on the stack, used to describe a satisfying
 /// script input
-#[deriving(Clone)]
+#[derive(Clone)]
 pub struct AbstractStackElem {
   /// The raw data, if known
   raw: Option<Vec<u8>>,
@@ -1040,7 +1040,7 @@ impl AbstractStackElem {
 
 
 /// The stack used by the script satisfier
-#[deriving(Clone)]
+#[derive(Clone)]
 pub struct AbstractStack {
   /// Actual elements on the stack
   stack: Vec<usize>,
@@ -1204,7 +1204,7 @@ impl json::ToJson for ScriptError {
 }
 
 /// A single iteration of a script execution
-#[deriving(PartialEq, Eq, Show, Clone)]
+#[derive(PartialEq, Eq, Show, Clone)]
 pub struct TraceIteration {
   index: usize,
   op_count: usize,
@@ -1216,7 +1216,7 @@ pub struct TraceIteration {
 }
 
 /// A full trace of a script execution
-#[deriving(PartialEq, Eq, Show, Clone)]
+#[derive(PartialEq, Eq, Show, Clone)]
 pub struct ScriptTrace {
   /// A copy of the script
   pub script: Script,
@@ -1232,7 +1232,7 @@ impl_json!(TraceIteration, index, opcode, op_count, executed, errored, effect, s
 
 /// Hashtype of a transaction, encoded in the last byte of a signature,
 /// specifically in the last 5 bits `byte & 31`
-#[deriving(PartialEq, Eq, Show, Clone)]
+#[derive(PartialEq, Eq, Show, Clone)]
 pub enum SignatureHashType {
   /// 0x1: Sign all outputs
   SigHashAll,
@@ -1264,7 +1264,7 @@ impl SignatureHashType {
 }
 
 /// A structure that can hold either a slice or vector, as necessary
-#[deriving(Clone, Show)]
+#[derive(Clone, Show)]
 pub enum MaybeOwned<'a> {
   /// Freshly allocated memory
   Owned(Vec<u8>),

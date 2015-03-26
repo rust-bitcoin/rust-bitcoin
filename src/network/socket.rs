@@ -49,7 +49,7 @@ fn ipaddr_to_bitcoin_addr(ipaddr: &ip::IpAddr) -> [u8; 16] {
 }
 
 /// A network socket along with information about the peer
-#[deriving(Clone)]
+#[derive(Clone)]
 pub struct Socket {
   /// The underlying socket, which is only used directly to (a) get
   /// information about the socket, and (b) to close down the socket,
