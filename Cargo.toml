@@ -14,3 +14,6 @@ git = "https://github.com/DaGenix/rust-crypto.git"
 [dependencies.secp256k1]
 git = "https://github.com/apoelstra/bitcoin-secp256k1-rs.git"
 
+[dependencies]
+rustc-serialize = "*"
+

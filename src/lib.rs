@@ -32,6 +32,7 @@
 #![feature(unsafe_destructor)]
 #![feature(unboxed_closure_sugar)]
 #![feature(unboxed_closures)]
+#![feature(concat_idents)]
 
 // Coding conventions
 #![warn(non_uppercase_statics)]
@@ -44,9 +45,8 @@ extern crate alloc;
 extern crate collections;
 extern crate core;
 extern crate rand;
-extern crate serialize;
+extern crate rustc_serialize as serialize;
 extern crate test;
-extern crate time;
 
 extern crate secp256k1;
 extern crate crypto;

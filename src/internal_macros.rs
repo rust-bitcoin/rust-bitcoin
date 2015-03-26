@@ -120,12 +120,12 @@ macro_rules! impl_array_newtype {
       pub fn from_slice(data: &[$ty]) -> $thing {
         assert_eq!(data.len(), $len);
         unsafe {
-          use std::intrinsics::copy_nonoverlapping_memory;
+          use std::intrinsics::copy_nonoverlapping;
           use std::mem;
           let mut ret: $thing = mem::uninitialized();
-          copy_nonoverlapping_memory(ret.as_mut_ptr(),
-                                     data.as_ptr(),
-                                     mem::size_of::<$thing>());
+          copy_nonoverlapping(ret.as_mut_ptr(),
+                              data.as_ptr(),
+                              mem::size_of::<$thing>());
           ret
         }
       }
