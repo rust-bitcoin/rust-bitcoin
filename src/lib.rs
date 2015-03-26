@@ -47,6 +47,7 @@ extern crate core;
 extern crate rand;
 extern crate rustc_serialize as serialize;
 extern crate test;
+extern crate time;
 
 extern crate secp256k1;
 extern crate crypto;
