@@ -310,10 +310,10 @@ macro_rules! construct_uint {
 
     impl fmt::Debug for $name {
       fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use std::fmt::WriteError;
+        use std::fmt::Error;
         use network::encodable::ConsensusEncodable;
         let mut encoder = RawEncoder::new(f.by_ref());
-        self.consensus_encode(&mut encoder).map_err(|_| WriteError)
+        self.consensus_encode(&mut encoder).map_err(|_| Error)
       }
     }
 

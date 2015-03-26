@@ -22,8 +22,8 @@
 
 use std::num::{Zero, from_u64};
 
-use util::error::{BitcoinResult};
-use util::error::BitcoinError::{SpvBadTarget, SpvBadProofOfWork};
+use util::error;
+use util::error::Error::{SpvBadTarget, SpvBadProofOfWork};
 use util::hash::Sha256dHash;
 use util::uint::Uint256;
 use network::encodable::{ConsensusEncodable, VarInt};
@@ -97,7 +97,7 @@ impl BlockHeader {
   /// Performs an SPV validation of a block, which confirms that the proof-of-work
   /// is correct, but does not verify that the transactions are valid or encoded
   /// correctly.
-  pub fn spv_validate(&self, required_target: &Uint256) -> BitcoinResult<()> {
+  pub fn spv_validate(&self, required_target: &Uint256) -> error::Result<()> {
     let ref target = self.target();
     if target != required_target {
       return Err(SpvBadTarget);

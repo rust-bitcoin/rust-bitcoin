@@ -21,7 +21,7 @@ use time::now;
 use std::rand::task_rng;
 use rand::Rng;
 use std::io::{BufferedReader, BufferedWriter};
-use std::io::{IoError, IoResult, NotConnected, OtherIoError, standard_error};
+use std::io::{Error, Result, ErrorKind};
 use std::io::net::{ip, tcp};
 use std::sync::{Arc, Mutex};
 
@@ -86,7 +86,7 @@ impl Socket {
   }
 
   /// Connect to the peer
-  pub fn connect(&mut self, host: &str, port: u16) -> IoResult<()> {
+  pub fn connect(&mut self, host: &str, port: u16) -> Result<()> {
     // Boot off any lingering readers or writers
     if self.socket.is_some() {
       let _ = self.socket.as_mut().unwrap().close_read();
@@ -107,7 +107,7 @@ impl Socket {
   }
 
   /// Peer address
-  pub fn receiver_address(&mut self) -> IoResult<Address> {
+  pub fn receiver_address(&mut self) -> Result<Address> {
     match self.socket {
       Some(ref mut s) => match s.peer_name() {
         Ok(addr) => {
@@ -119,12 +119,13 @@ impl Socket {
         }
         Err(e) => Err(e)
       },
-      None => Err(standard_error(NotConnected))
+      None => Err(Error::new(ErrorKind::NotConnected,
+                             "receiver_address: not connected to peer", None))
     }
   }
 
   /// Our own address
-  pub fn sender_address(&mut self) -> IoResult<Address> {
+  pub fn sender_address(&mut self) -> Result<Address> {
     match self.socket {
       Some(ref mut s) => match s.socket_name() {
         Ok(addr) => {
@@ -136,12 +137,13 @@ impl Socket {
         }
         Err(e) => Err(e)
       },
-      None => Err(standard_error(NotConnected))
+      None => Err(Error::new(ErrorKind::NotConnected,
+                             "sender_address: not connected to peer", None))
     }
   }
 
   /// Produce a version message appropriate for this socket
-  pub fn version_message(&mut self, start_height: i32) -> IoResult<NetworkMessage> {
+  pub fn version_message(&mut self, start_height: i32) -> Result<NetworkMessage> {
     let timestamp = now().to_timespec().sec;
     let recv_addr = self.receiver_address();
     let send_addr = self.sender_address();
@@ -169,10 +171,11 @@ impl Socket {
   }
 
   /// Send a general message across the line
-  pub fn send_message(&mut self, payload: NetworkMessage) -> IoResult<()> {
+  pub fn send_message(&mut self, payload: NetworkMessage) -> Result<()> {
     let mut writer_lock = self.buffered_writer.lock();
     match *writer_lock.deref_mut() {
-      None => Err(standard_error(NotConnected)),
+      None => Err(Error::new(ErrorKind::NotConnected,
+                             "send_message: not connected to peer", None)),
       Some(ref mut writer) => {
         let message = RawNetworkMessage { magic: self.magic, payload: payload };
         try!(message.consensus_encode(&mut RawEncoder::new(writer.by_ref())));
@@ -183,15 +186,16 @@ impl Socket {
 
   /// Receive the next message from the peer, decoding the network header
   /// and verifying its correctness. Returns the undecoded payload.
-  pub fn receive_message(&mut self) -> IoResult<NetworkMessage> {
+  pub fn receive_message(&mut self) -> Result<NetworkMessage> {
     let mut reader_lock = self.buffered_reader.lock();
     match *reader_lock.deref_mut() {
-      None => Err(standard_error(NotConnected)),
+      None => Err(Error::new(ErrorKind::NotConnected,
+                             "receive_message: not connected to peer", None)),
       Some(ref mut buf) => {
         // We need a new scope since the closure in here borrows read_err,
         // and we try to read it afterward. Letting `iter` go out fixes it.
         let mut decoder = RawDecoder::new(buf.by_ref());
-        let decode: IoResult<RawNetworkMessage> = ConsensusDecodable::consensus_decode(&mut decoder);
+        let decode: Result<RawNetworkMessage> = ConsensusDecodable::consensus_decode(&mut decoder);
         match decode {
           // Check for parse errors...
           Err(e) => {
@@ -201,8 +205,8 @@ impl Socket {
             // Then for magic (this should come before parse error, but we can't
             // get to it if the deserialization failed). TODO restructure this
             if ret.magic != self.magic {
-              Err(IoError {
-                kind: OtherIoError,
+              Err(Error {
+                kind: ErrorKind::OtherError,
                 desc: "bad magic",
                 detail: Some(format!("got magic {:x}, expected {:x}", ret.magic, self.magic)),
               })

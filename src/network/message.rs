@@ -20,7 +20,7 @@
 //!
 
 use collections::Vec;
-use std::io::{IoError, IoResult, OtherIoError};
+use std::io;
 use std::io::MemReader;
 
 use blockdata::block;
@@ -69,7 +69,7 @@ pub enum SocketResponse {
   /// A message was received
   MessageReceived(NetworkMessage),
   /// An error occured and the socket needs to close
-  ConnectionFailed(IoError, Sender<()>)
+  ConnectionFailed(io::Error, Sender<()>)
 }
 
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -155,8 +155,8 @@ impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for RawNetworkMessage {
   }
 }
 
-impl<D:SimpleDecoder<IoError>> ConsensusDecodable<D, IoError> for RawNetworkMessage {
-  fn consensus_decode(d: &mut D) -> IoResult<RawNetworkMessage> {
+impl<D:SimpleDecoder<io::Error>> ConsensusDecodable<D, io::Error> for RawNetworkMessage {
+  fn consensus_decode(d: &mut D) -> io::Result<RawNetworkMessage> {
     let magic = try!(ConsensusDecodable::consensus_decode(d));
     let CommandString(cmd): CommandString= try!(ConsensusDecodable::consensus_decode(d));
     let CheckedData(raw_payload): CheckedData = try!(ConsensusDecodable::consensus_decode(d));
@@ -177,8 +177,8 @@ impl<D:SimpleDecoder<IoError>> ConsensusDecodable<D, IoError> for RawNetworkMess
       "pong"    => Ping(try!(prepend_err("pong", ConsensusDecodable::consensus_decode(&mut mem_d)))),
       "tx"      => Tx(try!(prepend_err("tx", ConsensusDecodable::consensus_decode(&mut mem_d)))),
       cmd => {
-        return Err(IoError {
-                     kind: OtherIoError,
+        return Err(io::Error {
+                     kind: io::ErrorKind::OtherError,
                      desc: "unknown message type",
                      detail: Some(format!("`{}` not recognized", cmd))
                   });
@@ -195,7 +195,7 @@ impl<D:SimpleDecoder<IoError>> ConsensusDecodable<D, IoError> for RawNetworkMess
 mod test {
   use super::{RawNetworkMessage, CommandString, Verack, Ping};
 
-  use std::io::IoResult;
+  use std::io::io::Result;
 
   use network::serialize::{deserialize, serialize};
 
@@ -207,11 +207,11 @@ mod test {
 
   #[test]
   fn deserialize_commandstring_test() {
-    let cs: IoResult<CommandString> = deserialize(vec![0x41u8, 0x6e, 0x64, 0x72, 0x65, 0x77, 0, 0, 0, 0, 0, 0]);
+    let cs: io::Result<CommandString> = deserialize(vec![0x41u8, 0x6e, 0x64, 0x72, 0x65, 0x77, 0, 0, 0, 0, 0, 0]);
     assert!(cs.is_ok());
     assert_eq!(cs.unwrap(), CommandString(String::from_str("Andrew")));
 
-    let short_cs: IoResult<CommandString> = deserialize(vec![0x41u8, 0x6e, 0x64, 0x72, 0x65, 0x77, 0, 0, 0, 0, 0]);
+    let short_cs: io::Result<CommandString> = deserialize(vec![0x41u8, 0x6e, 0x64, 0x72, 0x65, 0x77, 0, 0, 0, 0, 0]);
     assert!(short_cs.is_err());
   }
 

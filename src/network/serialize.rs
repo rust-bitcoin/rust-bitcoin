@@ -20,7 +20,7 @@
 //!
 
 use collections::Vec;
-use std::io::{IoError, IoResult, OtherIoError, MemReader, MemWriter};
+use std::io::{self, MemReader, MemWriter};
 use serialize::hex::ToHex;
 
 use network::encodable::{ConsensusDecodable, ConsensusEncodable};
@@ -39,20 +39,20 @@ impl BitcoinHash for Vec<u8> {
 }
 
 /// Encode an object into a vector
-pub fn serialize<T: ConsensusEncodable<RawEncoder<MemWriter>, IoError>>(obj: &T) -> IoResult<Vec<u8>> {
+pub fn serialize<T: ConsensusEncodable<RawEncoder<MemWriter>, io::Error>>(obj: &T) -> io::Result<Vec<u8>> {
   let mut encoder = RawEncoder::new(MemWriter::new());
   try!(obj.consensus_encode(&mut encoder));
   Ok(encoder.unwrap().unwrap())
 }
 
 /// Encode an object into a hex-encoded string
-pub fn serialize_hex<T: ConsensusEncodable<RawEncoder<MemWriter>, IoError>>(obj: &T) -> IoResult<String> {
+pub fn serialize_hex<T: ConsensusEncodable<RawEncoder<MemWriter>, io::Error>>(obj: &T) -> io::Result<String> {
   let serial = try!(serialize(obj));
   Ok(serial.as_slice().to_hex())
 }
 
 /// Deserialize an object from a vector
-pub fn deserialize<T: ConsensusDecodable<RawDecoder<MemReader>, IoError>>(data: Vec<u8>) -> IoResult<T> {
+pub fn deserialize<T: ConsensusDecodable<RawDecoder<MemReader>, io::Error>>(data: Vec<u8>) -> io::Result<T> {
   let mut decoder = RawDecoder::new(MemReader::new(data));
   ConsensusDecodable::consensus_decode(&mut decoder)
 }
@@ -144,55 +144,55 @@ pub trait SimpleDecoder<E> {
 
 // TODO: trait reform: impl SimpleEncoder for every Encoder, ditto for Decoder
 
-impl<W:Writer> SimpleEncoder<IoError> for RawEncoder<W> {
+impl<W:Writer> SimpleEncoder<io::Error> for RawEncoder<W> {
   #[inline]
-  fn emit_u64(&mut self, v: u64) -> IoResult<()> { self.writer.write_le_u64(v) }
+  fn emit_u64(&mut self, v: u64) -> io::Result<()> { self.writer.write_le_u64(v) }
   #[inline]
-  fn emit_u32(&mut self, v: u32) -> IoResult<()> { self.writer.write_le_u32(v) }
+  fn emit_u32(&mut self, v: u32) -> io::Result<()> { self.writer.write_le_u32(v) }
   #[inline]
-  fn emit_u16(&mut self, v: u16) -> IoResult<()> { self.writer.write_le_u16(v) }
+  fn emit_u16(&mut self, v: u16) -> io::Result<()> { self.writer.write_le_u16(v) }
   #[inline]
-  fn emit_u8(&mut self, v: u8) -> IoResult<()> { self.writer.write_u8(v) }
+  fn emit_u8(&mut self, v: u8) -> io::Result<()> { self.writer.write_u8(v) }
 
   #[inline]
-  fn emit_i64(&mut self, v: i64) -> IoResult<()> { self.writer.write_le_i64(v) }
+  fn emit_i64(&mut self, v: i64) -> io::Result<()> { self.writer.write_le_i64(v) }
   #[inline]
-  fn emit_i32(&mut self, v: i32) -> IoResult<()> { self.writer.write_le_i32(v) }
+  fn emit_i32(&mut self, v: i32) -> io::Result<()> { self.writer.write_le_i32(v) }
   #[inline]
-  fn emit_i16(&mut self, v: i16) -> IoResult<()> { self.writer.write_le_i16(v) }
+  fn emit_i16(&mut self, v: i16) -> io::Result<()> { self.writer.write_le_i16(v) }
   #[inline]
-  fn emit_i8(&mut self, v: i8) -> IoResult<()> { self.writer.write_i8(v) }
+  fn emit_i8(&mut self, v: i8) -> io::Result<()> { self.writer.write_i8(v) }
 
   #[inline]
-  fn emit_bool(&mut self, v: bool) -> IoResult<()> { self.writer.write_i8(if v {1} else {0}) }
+  fn emit_bool(&mut self, v: bool) -> io::Result<()> { self.writer.write_i8(if v {1} else {0}) }
 }
 
-impl<R:Reader> SimpleDecoder<IoError> for RawDecoder<R> {
+impl<R:Reader> SimpleDecoder<io::Error> for RawDecoder<R> {
   #[inline]
-  fn read_u64(&mut self) -> IoResult<u64> { self.reader.read_le_u64() }
+  fn read_u64(&mut self) -> io::Result<u64> { self.reader.read_le_u64() }
   #[inline]
-  fn read_u32(&mut self) -> IoResult<u32> { self.reader.read_le_u32() }
+  fn read_u32(&mut self) -> io::Result<u32> { self.reader.read_le_u32() }
   #[inline]
-  fn read_u16(&mut self) -> IoResult<u16> { self.reader.read_le_u16() }
+  fn read_u16(&mut self) -> io::Result<u16> { self.reader.read_le_u16() }
   #[inline]
-  fn read_u8(&mut self) -> IoResult<u8> { self.reader.read_u8() }
+  fn read_u8(&mut self) -> io::Result<u8> { self.reader.read_u8() }
 
   #[inline]
-  fn read_i64(&mut self) -> IoResult<i64> { self.reader.read_le_i64() }
+  fn read_i64(&mut self) -> io::Result<i64> { self.reader.read_le_i64() }
   #[inline]
-  fn read_i32(&mut self) -> IoResult<i32> { self.reader.read_le_i32() }
+  fn read_i32(&mut self) -> io::Result<i32> { self.reader.read_le_i32() }
   #[inline]
-  fn read_i16(&mut self) -> IoResult<i16> { self.reader.read_le_i16() }
+  fn read_i16(&mut self) -> io::Result<i16> { self.reader.read_le_i16() }
   #[inline]
-  fn read_i8(&mut self) -> IoResult<i8> { self.reader.read_i8() }
+  fn read_i8(&mut self) -> io::Result<i8> { self.reader.read_i8() }
 
   #[inline]
-  fn read_bool(&mut self) -> IoResult<bool> { self.reader.read_u8().map(|res| res != 0) }
+  fn read_bool(&mut self) -> io::Result<bool> { self.reader.read_u8().map(|res| res != 0) }
 
   #[inline]
-  fn error(&mut self, err: &str) -> IoError {
-    IoError {
-      kind: OtherIoError,
+  fn error(&mut self, err: &str) -> io::Error {
+    io::Error {
+      kind: io::ErrorKind::OtherError,
       desc: "parse error",
       detail: Some(err.to_string())
     }

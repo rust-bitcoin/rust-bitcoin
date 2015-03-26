@@ -16,16 +16,16 @@
 //!
 //! Various utility functions
 
-use std::io::IoError;
+use std::io;
 
 /// A success/failure return value
-pub type BitcoinResult<T> = Result<T, BitcoinError>;
+pub type Result<T> = Result<T, Error>;
 
 /// A general error code
 #[derive(PartialEq, Eq, Debug, Clone)]
-pub enum BitcoinError {
+pub enum Error {
   /// An I/O error
-  InputOutput(IoError),
+  InputOutput(io::Error),
   /// An object was attempted to be added twice
   DuplicateHash,
   /// Some operation was attempted on a block (or blockheader) that doesn't exist

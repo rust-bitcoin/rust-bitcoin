@@ -33,8 +33,8 @@ use network::constants::Network::{self, BitcoinTestnet};
 use network::encodable::{ConsensusDecodable, ConsensusEncodable};
 use network::serialize::{BitcoinHash, SimpleDecoder, SimpleEncoder};
 use util::BitArray;
-use util::error::BitcoinResult;
-use util::error::BitcoinError::{BlockNotFound, DuplicateHash, PrevHashNotFound};
+use util::error;
+use util::error::Error::{BlockNotFound, DuplicateHash, PrevHashNotFound};
 use util::uint::Uint256;
 use util::hash::Sha256dHash;
 use util::patricia_tree::PatriciaTree;
@@ -365,7 +365,7 @@ impl Blockchain {
     }
   }
 
-  fn replace_txdata(&mut self, hash: &Uint256, txdata: Vec<Transaction>, has_txdata: bool) -> BitcoinResult<()> {
+  fn replace_txdata(&mut self, hash: &Uint256, txdata: Vec<Transaction>, has_txdata: bool) -> error::Result<()> {
     match self.tree.lookup_mut(hash, 256) {
       Some(existing_block) => {
         unsafe {
@@ -405,26 +405,26 @@ impl Blockchain {
   }
 
   /// Locates a block in the chain and overwrites its txdata
-  pub fn add_txdata(&mut self, block: Block) -> BitcoinResult<()> {
+  pub fn add_txdata(&mut self, block: Block) -> error::Result<()> {
     self.replace_txdata(&block.header.bitcoin_hash().into_le(), block.txdata, true)
   }
 
   /// Locates a block in the chain and removes its txdata
-  pub fn remove_txdata(&mut self, hash: Sha256dHash) -> BitcoinResult<()> {
+  pub fn remove_txdata(&mut self, hash: Sha256dHash) -> error::Result<()> {
     self.replace_txdata(&hash.into_le(), vec![], false)
   }
 
   /// Adds a block header to the chain
-  pub fn add_header(&mut self, header: BlockHeader) -> BitcoinResult<()> {
+  pub fn add_header(&mut self, header: BlockHeader) -> error::Result<()> {
     self.real_add_block(Block { header: header, txdata: vec![] }, false)
   }
 
   /// Adds a block to the chain
-  pub fn add_block(&mut self, block: Block) -> BitcoinResult<()> {
+  pub fn add_block(&mut self, block: Block) -> error::Result<()> {
     self.real_add_block(block, true)
   }
 
-  fn real_add_block(&mut self, block: Block, has_txdata: bool) -> BitcoinResult<()> {
+  fn real_add_block(&mut self, block: Block, has_txdata: bool) -> error::Result<()> {
     // get_prev optimizes the common case where we are extending the best tip
     #[inline]
     fn get_prev<'a>(chain: &'a Blockchain, hash: Sha256dHash) -> Option<NodePtr> {

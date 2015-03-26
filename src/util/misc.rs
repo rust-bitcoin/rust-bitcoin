@@ -16,14 +16,14 @@
 //!
 //! Various utility functions
 
-use std::io::{IoError, IoResult, InvalidInput};
+use std::io::{Error, Result, ErrorKind};
 
 use blockdata::opcodes;
 use blockdata::opcodes::all::Opcode;
 use util::iter::Pairable;
 
 /// Convert a hexadecimal-encoded string to its corresponding bytes
-pub fn hex_bytes(s: &str) -> IoResult<Vec<u8>> {
+pub fn hex_bytes(s: &str) -> Result<Vec<u8>> {
   let mut v = vec![];
   let mut iter = s.chars().pair();
   // Do the parsing
@@ -31,13 +31,13 @@ pub fn hex_bytes(s: &str) -> IoResult<Vec<u8>> {
     if e.is_err() { return e; }
     else {
       match (f.to_digit(16), s.to_digit(16)) {
-        (None, _) => return Err(IoError {
-          kind: InvalidInput,
+        (None, _) => return Err(Error {
+          kind: ErrorKind::InvalidInput,
           desc: "invalid hex character",
           detail: Some(format!("expected hex, got {:}", f))
         }),
-        (_, None) => return Err(IoError {
-          kind: InvalidInput,
+        (_, None) => return Err(Error {
+          kind: ErrorKind::InvalidInput,
           desc: "invalid hex character",
           detail: Some(format!("expected hex, got {:}", s))
         }),
@@ -47,8 +47,8 @@ pub fn hex_bytes(s: &str) -> IoResult<Vec<u8>> {
   ));
   // Check that there was no remainder
   match iter.remainder() {
-    Some(_) => Err(IoError {
-      kind: InvalidInput,
+    Some(_) => Err(Error {
+      kind: ErrorKind::InvalidInput,
       desc: "hexstring of odd length",
       detail: None
     }),
@@ -57,9 +57,9 @@ pub fn hex_bytes(s: &str) -> IoResult<Vec<u8>> {
 }
 
 /// Prepend the detail of an IoResult's error with some text to get poor man's backtracing
-pub fn prepend_err<T>(s: &str, res: IoResult<T>) -> IoResult<T> {
+pub fn prepend_err<T>(s: &str, res: Result<T>) -> Result<T> {
   res.map_err(|err| {
-    IoError {
+    Error {
       kind: err.kind,
       desc: err.desc,
       detail: Some(format!("{}: {}", s, match err.detail { Some(s) => s, None => String::new() }))
@@ -68,7 +68,7 @@ pub fn prepend_err<T>(s: &str, res: IoResult<T>) -> IoResult<T> {
 }
 
 /// Dump an error message to the screen
-pub fn consume_err<T>(s: &str, res: IoResult<T>) {
+pub fn consume_err<T>(s: &str, res: Result<T>) {
   match res {
     Ok(_) => {},
     Err(e) => { println!("{}: {}", s, e); }

@@ -18,7 +18,7 @@
 //! to connect to a peer, send network messages, and receive Bitcoin data.
 //!
 
-use std::io::{IoResult, standard_error, ConnectionFailed};
+use std::io::{Result, Error, ErrorKind};
 
 use network::constants::Network;
 use network::message;
@@ -35,12 +35,13 @@ pub trait Listener {
   /// Return the network this `Listener` is operating on
   fn network(&self) -> Network;
   /// Main listen loop
-  fn start(&self) -> IoResult<(Receiver<SocketResponse>, Socket)> {
+  fn start(&self) -> Result<(Receiver<SocketResponse>, Socket)> {
     // Open socket
     let mut ret_sock = Socket::new(self.network());
     match ret_sock.connect(self.peer(), self.port()) {
       Ok(_) => {},
-      Err(_) => return Err(standard_error(ConnectionFailed))
+      Err(_) => return Err(Error::new(ErrorKind::ConnectionFailed,
+                                      "Listener connection failed", None))
     }
     let mut sock = ret_sock.clone();
 
