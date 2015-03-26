@@ -42,6 +42,7 @@
 #![warn(missing_doc)]
 
 extern crate alloc;
+extern crate byteorder;
 extern crate collections;
 extern crate core;
 extern crate rand;

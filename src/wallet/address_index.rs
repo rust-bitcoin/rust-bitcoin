@@ -19,7 +19,7 @@
 //!
 
 use std::collections::HashMap;
-use collections::hash::sip::hash_with_keys;
+use std::hash::{hash, Hash, SipHasher};
 
 use secp256k1::key::SecretKey;
 
@@ -105,7 +105,9 @@ impl AddressIndex {
   /// A filtering function used for creating a small address index.
   #[inline]
   pub fn admissible_address(&self, addr: &Address) -> bool {
-    hash_with_keys(self.k1, self.k2, &addr.as_slice()) & 0xFF == 0
+    let mut hasher = SipHasher::new_with_keys(self.k1, self.k2);
+    addr.hash(&mut hasher);
+    hasher.finish() & 0xFF == 0
   }
 
   /// A filtering function used for creating a small address index.

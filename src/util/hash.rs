@@ -19,12 +19,12 @@ use core::char::from_digit;
 use core::cmp::min;
 use std::default::Default;
 use std::fmt;
-use std::io::extensions::u64_from_be_bytes;
 use std::io::MemWriter;
 use std::mem::transmute;
 use std::hash;
 use serialize::json::{self, ToJson};
 
+use byteorder::{ByteOrder, LittleEndian};
 use crypto::digest::Digest;
 use crypto::sha2::Sha256;
 use crypto::ripemd160::Ripemd160;
@@ -87,7 +87,7 @@ impl hash::Hasher<DumbHasherState> for DumbHasher {
     let mut ret = DumbHasherState([0; 8]);
     value.hash(&mut ret);
     let DumbHasherState(res) = ret;
-    u64_from_be_bytes(res.as_slice(), 0, 8)
+    LittleEndian::read_u64(&res[0..8])
   }
 }
 

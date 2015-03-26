@@ -18,8 +18,7 @@
 //!
 
 use time::now;
-use std::rand::task_rng;
-use rand::Rng;
+use rand::{thread_rng, Rng};
 use std::io::{BufferedReader, BufferedWriter};
 use std::io::{Error, Result, ErrorKind};
 use std::io::net::{ip, tcp};

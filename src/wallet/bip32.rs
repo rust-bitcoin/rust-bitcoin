@@ -17,9 +17,9 @@
 //! at https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki
 
 use std::default::Default;
-use std::io::extensions::{u64_to_be_bytes, u64_from_be_bytes};
 use serialize::{Decoder, Decodable, Encoder, Encodable};
 
+use byteorder::{ByteOrder, BigEndian};
 use crypto::digest::Digest;
 use crypto::hmac::Hmac;
 use crypto::mac::Mac;
@@ -165,14 +165,14 @@ impl ExtendedPrivKey {
         secp256k1::init();
         // Note the unwrap: this is fine, we checked the SK when we created it
         hmac.input(PublicKey::from_secret_key(&self.secret_key, true).as_slice());
-        u64_to_be_bytes(n as u64, 4, |raw| hmac.input(raw));
+        hmac.write_u32::<BigEndian>(n);
       }
       ChildNumber::Hardened(n) => {
         if n >= (1 << 31) { return Err(InvalidChildNumber(i)) }
         // Hardened key: use only secret data to prevent public derivation
         hmac.input([0]);
         hmac.input(self.secret_key.as_slice());
-        u64_to_be_bytes(n as u64 + (1 << 31), 4, |raw| hmac.input(raw));
+        hmac.write_u32::<BigEndian>(n + (1 << 31));
       }
     }
     hmac.raw_result(result.as_mut_slice());
@@ -240,7 +240,7 @@ impl ExtendedPubKey {
       ChildNumber::Normal(n) => {
         let mut hmac = Hmac::new(Sha512::new(), self.chain_code.as_slice());
         hmac.input(self.public_key.as_slice());
-        u64_to_be_bytes(n as u64, 4, |raw| hmac.input(raw));
+        hmac.write_u32::<BigEndian>(n);
 
         let mut result = [0; 64];
         hmac.raw_result(result.as_mut_slice());
@@ -294,10 +294,10 @@ impl ToBase58 for ExtendedPrivKey {
     ret.push_all(self.parent_fingerprint.as_slice());
     match self.child_number {
       ChildNumber::Hardened(n) => {
-        u64_to_be_bytes(n as u64 + (1 << 31), 4, |raw| ret.push_all(raw));
+        ret.write_u32::<BigEndian>(n + (1 << 31));
       }
       ChildNumber::Normal(n) => {
-        u64_to_be_bytes(n as u64, 4, |raw| ret.push_all(raw));
+        ret.write_u32::<BigEndian>(n);
       }
     }
     ret.push_all(self.chain_code.as_slice());
@@ -313,7 +313,7 @@ impl FromBase58 for ExtendedPrivKey {
       return Err(InvalidLength(data.len()));
     }
 
-    let cn_int = u64_from_be_bytes(data.as_slice(), 9, 4) as u32;
+    let cn_int = BigEndian::read_u32(&data[9..13]);
     let child_number = if cn_int < (1 << 31) { ChildNumber::Normal(cn_int) }
                        else { ChildNumber::Hardened(cn_int - (1 << 31)) };
 
@@ -346,10 +346,10 @@ impl ToBase58 for ExtendedPubKey {
     ret.push_all(self.parent_fingerprint.as_slice());
     match self.child_number {
       ChildNumber::Hardened(n) => {
-        u64_to_be_bytes(n as u64 + (1 << 31), 4, |raw| ret.push_all(raw));
+        ret.write_u32::<BigEndian>(n + (1 << 31));
       }
       ChildNumber::Normal(n) => {
-        u64_to_be_bytes(n as u64, 4, |raw| ret.push_all(raw));
+        ret.write_u32::<BigEndian>(n);
       }
     }
     ret.push_all(self.chain_code.as_slice());
@@ -364,7 +364,7 @@ impl FromBase58 for ExtendedPubKey {
       return Err(InvalidLength(data.len()));
     }
 
-    let cn_int = u64_from_be_bytes(data.as_slice(), 9, 4) as u32;
+    let cn_int = BigEndian::read_u32(&data[9..13]);
     let child_number = if cn_int < (1 << 31) { ChildNumber::Normal(cn_int) }
                        else { ChildNumber::Hardened(cn_int - (1 << 31)) };
 

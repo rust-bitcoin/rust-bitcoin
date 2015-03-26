@@ -14,7 +14,8 @@
 
 //! # Base58 encoder and decoder
 
-use std::io::extensions::{u64_to_le_bytes, u64_from_be_bytes};
+use byteorder::{ByteOrder, LittleEndian};
+
 use std::string;
 
 use util::thinvec::ThinVec;
@@ -103,7 +104,7 @@ pub trait FromBase58 {
     }
     let ck_start = ret.len() - 4;
     let expected = Sha256dHash::from_data(ret.slice_to(ck_start)).into_le().low_u32();
-    let actual = Int::from_be(u64_from_be_bytes(ret.as_slice(), ck_start, 4) as u32);
+    let actual = LittleEndian::read_u32(&ret[ck_start..(ck_start + 4)]);
     if expected != actual {
       return Err(BadChecksum(expected, actual));
     }
@@ -157,8 +158,8 @@ pub trait ToBase58 {
   fn to_base58check(&self) -> String {
     let mut data = self.base58_layout();
     let checksum = Sha256dHash::from_data(data.as_slice()).into_le().low_u32();
-    u64_to_le_bytes(checksum as u64, 4,
-                    |ck| { data.push_all(ck); base58_encode_slice(data.as_slice()) })
+    data.write_u32::<LittleEndian>(checksum);
+    base58_encode_slice(data.as_slice())
   }
 }
 

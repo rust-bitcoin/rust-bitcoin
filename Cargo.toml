@@ -8,13 +8,13 @@ authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
 name = "bitcoin"
 path = "src/lib.rs"
 
-[dependencies.rust-crypto]
-git = "https://github.com/DaGenix/rust-crypto.git"
-
 [dependencies.secp256k1]
 git = "https://github.com/apoelstra/bitcoin-secp256k1-rs.git"
 
 [dependencies]
+byteorder = "*"
+rand = "*"
+rust-crypto = "*"
 rustc-serialize = "*"
 time = "*"
 

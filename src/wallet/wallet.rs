@@ -18,11 +18,11 @@
 
 use std::collections::HashMap;
 use std::default::Default;
-use std::io::extensions::u64_from_be_bytes;
 use serialize::{Decoder, Decodable, Encoder, Encodable};
 
 use secp256k1::key::PublicKey;
 
+use byteorder::{ByteOrder, LittleEndian};
 use blockdata::utxoset::UtxoSet;
 use network::constants::Network;
 use wallet::bip32::{self, ChildNumber, ExtendedPrivKey, ExtendedPubKey};
@@ -241,8 +241,8 @@ impl Wallet {
   #[inline]
   pub fn siphash_key(&self) -> (u64, u64) {
     let ck_slice = self.master.chain_code.as_slice();
-    (u64_from_be_bytes(ck_slice, 0, 8),
-     u64_from_be_bytes(ck_slice, 8, 8))
+    (LittleEndian::read_u64(&ret[0..8]),
+     LittleEndian::read_u64(&ret[8..16]))
   }
 
   /// Total balance
