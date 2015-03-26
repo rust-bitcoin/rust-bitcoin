@@ -37,7 +37,7 @@ use util::uint::Uint256;
 pub struct Sha256dHash([u8; 32]);
 impl_array_newtype!(Sha256dHash, u8, 32);
 
-impl ::std::fmt::Show for Sha256dHash {
+impl ::std::fmt::Debug for Sha256dHash {
   fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
     write!(f, "{}", self.be_hex_string().as_slice())
   }
@@ -50,22 +50,22 @@ impl_array_newtype!(Ripemd160Hash, u8, 20);
 /// A "hasher" which just truncates and adds data to its state. Should
 /// only be used for hashtables indexed by "already random" data such
 /// as SHA2 hashes
-#[derive(Clone, PartialEq, Eq, Show)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub struct DumbHasher;
 
 /// The state of a `DumbHasher`
 pub struct DumbHasherState([u8; 8]);
 
 /// A 32-bit hash obtained by truncating a real hash
-#[derive(Clone, PartialEq, Eq, Show)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Hash32((u8, u8, u8, u8));
 
 /// A 48-bit hash obtained by truncating a real hash
-#[derive(Clone, PartialEq, Eq, Show)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Hash48((u8, u8, u8, u8, u8, u8));
 
 /// A 64-bit hash obtained by truncating a real hash
-#[derive(Clone, PartialEq, Eq, Show)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Hash64((u8, u8, u8, u8, u8, u8, u8, u8));
 
 

@@ -33,7 +33,7 @@ use wallet::wallet::Wallet;
 use util::hash::{DumbHasher, Sha256dHash};
 
 /// The type of a wallet-spendable txout
-#[derive(Clone, PartialEq, Eq, Show)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub enum WalletTxOutType {
   /// Pay-to-address transaction redeemable using an ECDSA key
   PayToAddress(SecretKey),
@@ -43,7 +43,7 @@ pub enum WalletTxOutType {
 
 
 /// A txout that is spendable by the wallet
-#[derive(Clone, PartialEq, Eq, Show)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub struct WalletTxOut {
   /// The TXID of the transaction this output is part of 
   pub txid: Sha256dHash,
@@ -58,7 +58,7 @@ pub struct WalletTxOut {
 }
 
 /// An address index
-#[derive(Clone, PartialEq, Eq, Show)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub struct AddressIndex {
   tentative_index: HashMap<Script, Vec<WalletTxOut>>,
   index: HashMap<(Sha256dHash, u32), Vec<WalletTxOut>, DumbHasher>,

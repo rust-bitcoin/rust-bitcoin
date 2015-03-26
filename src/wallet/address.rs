@@ -116,7 +116,7 @@ impl FromBase58 for Address {
   }
 }
 
-impl ::std::fmt::Show for Address {
+impl ::std::fmt::Debug for Address {
   fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
     write!(f, "{}", self.to_base58check())
   }

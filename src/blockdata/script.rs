@@ -48,7 +48,7 @@ use util::hash::Sha256dHash;
 use util::misc::script_find_and_remove;
 use util::thinvec::ThinVec;
 
-#[derive(PartialEq, Eq, Show, Clone)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 /// A Bitcoin script
 pub struct Script(ThinVec<u8>);
 
@@ -63,7 +63,7 @@ impl<S: hash::Writer> hash::Hash<S> for Script {
 /// Ways that a script might fail. Not everything is split up as
 /// much as it could be; patches welcome if more detailed errors
 /// would help you.
-#[derive(PartialEq, Eq, Show, Clone)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub enum ScriptError {
   /// The script returns false no matter the input
   AnalyzeAlwaysReturnsFalse,
@@ -1204,7 +1204,7 @@ impl json::ToJson for ScriptError {
 }
 
 /// A single iteration of a script execution
-#[derive(PartialEq, Eq, Show, Clone)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub struct TraceIteration {
   index: usize,
   op_count: usize,
@@ -1216,7 +1216,7 @@ pub struct TraceIteration {
 }
 
 /// A full trace of a script execution
-#[derive(PartialEq, Eq, Show, Clone)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub struct ScriptTrace {
   /// A copy of the script
   pub script: Script,
@@ -1232,7 +1232,7 @@ impl_json!(TraceIteration, index, opcode, op_count, executed, errored, effect, s
 
 /// Hashtype of a transaction, encoded in the last byte of a signature,
 /// specifically in the last 5 bits `byte & 31`
-#[derive(PartialEq, Eq, Show, Clone)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub enum SignatureHashType {
   /// 0x1: Sign all outputs
   SigHashAll,
@@ -1264,7 +1264,7 @@ impl SignatureHashType {
 }
 
 /// A structure that can hold either a slice or vector, as necessary
-#[derive(Clone, Show)]
+#[derive(Clone, Debug)]
 pub enum MaybeOwned<'a> {
   /// Freshly allocated memory
   Owned(Vec<u8>),

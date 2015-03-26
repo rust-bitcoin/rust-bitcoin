@@ -38,7 +38,7 @@ pub mod all {
   //       write an #[inline] helper function which casts to u8s.
 
   /// A script Opcode
-  #[derive(Clone, PartialEq, Eq, Show)]
+  #[derive(Clone, PartialEq, Eq, Debug)]
   #[repr(u8)]
   pub enum Opcode {
     /// Push an empty array onto the stack
@@ -632,7 +632,7 @@ pub mod all {
 }
 
 /// Broad categories of opcodes with similar behavior
-#[derive(Clone, PartialEq, Eq, Show)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub enum OpcodeClass {
   /// Pushes the given number onto the stack
   PushNum(isize),
@@ -658,7 +658,7 @@ macro_rules! ordinary_opcode {
   ($($op:ident),*) => (
     #[repr(u8)]
     #[doc(hidden)]
-    #[derive(Clone, PartialEq, Eq, Show)]
+    #[derive(Clone, PartialEq, Eq, Debug)]
     pub enum Opcode {
       $( $op = all::$op as u8 ),*
     }

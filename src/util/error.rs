@@ -22,7 +22,7 @@ use std::io::IoError;
 pub type BitcoinResult<T> = Result<T, BitcoinError>;
 
 /// A general error code
-#[derive(PartialEq, Eq, Show, Clone)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub enum BitcoinError {
   /// An I/O error
   InputOutput(IoError),

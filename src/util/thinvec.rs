@@ -252,7 +252,7 @@ impl<T> Collection for ThinVec<T> {
   fn len(&self) -> usize { self.cap as usize }
 }
 
-impl<T:fmt::Show> fmt::Show for ThinVec<T> {
+impl<T:fmt::Debug> fmt::Debug for ThinVec<T> {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     self.as_slice().fmt(f)
   }

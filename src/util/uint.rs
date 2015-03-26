@@ -308,7 +308,7 @@ macro_rules! construct_uint {
       }
     }
 
-    impl fmt::Show for $name {
+    impl fmt::Debug for $name {
       fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use std::fmt::WriteError;
         use network::encodable::ConsensusEncodable;

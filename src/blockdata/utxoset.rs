@@ -36,7 +36,7 @@ use util::hash::{DumbHasher, Sha256dHash};
 use util::thinvec::ThinVec;
 
 /// The amount of validation to do when updating the UTXO set
-#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Show)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]
 pub enum ValidationLevel {
   /// Blindly update the UTXO set (NOT recommended)
   NoValidation,
@@ -49,7 +49,7 @@ pub enum ValidationLevel {
 }
 
 /// An error returned from a UTXO set operation
-#[derive(PartialEq, Eq, Clone, Show)]
+#[derive(PartialEq, Eq, Clone, Debug)]
 pub enum UtxoSetError {
   /// prevhash of the new block is not the hash of the old block (expected, actual)
   BadPrevHash(Sha256dHash, Sha256dHash),

@@ -192,7 +192,7 @@ macro_rules! impl_array_newtype_encodable {
 
 macro_rules! impl_array_newtype_show {
   ($thing:ident) => {
-    impl ::std::fmt::Show for $thing {
+    impl ::std::fmt::Debug for $thing {
       fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         write!(f, concat!(stringify!($thing), "({})"), self.as_slice())
       }

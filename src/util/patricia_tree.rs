@@ -20,7 +20,7 @@
 //! strings; a Patricia tree uses bitstrings.
 //!
 
-use core::fmt::Show;
+use core::fmt::Debug;
 use core::cmp;
 use std::kinds::marker;
 use std::num::{Zero, One};
@@ -351,10 +351,10 @@ impl<K:BitArray+Eq+Zero+One+BitXor<K,K>+Shl<usize,K>+Shr<usize,K>, V> PatriciaTr
   }
 }
 
-impl<K:BitArray, V:Show> PatriciaTree<K, V> {
+impl<K:BitArray, V:Debug> PatriciaTree<K, V> {
   /// Print the entire tree
   pub fn print<'a>(&'a self) {
-    fn recurse<'a, K:BitArray, V:Show>(tree: &'a PatriciaTree<K, V>, depth: usize) {
+    fn recurse<'a, K:BitArray, V:Debug>(tree: &'a PatriciaTree<K, V>, depth: usize) {
       for i in range(0, tree.skip_len as usize) {
         print!("{:}", if tree.skip_prefix.bit(i) { 1 } else { 0 });
       }

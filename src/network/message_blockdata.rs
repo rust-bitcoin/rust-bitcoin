@@ -23,7 +23,7 @@ use network::encodable::{ConsensusDecodable, ConsensusEncodable};
 use network::serialize::{SimpleDecoder, SimpleEncoder};
 use util::hash::Sha256dHash;
 
-#[derive(PartialEq, Eq, Clone, Show)]
+#[derive(PartialEq, Eq, Clone, Debug)]
 /// The type of an inventory object
 pub enum InvType {
   /// Error --- these inventories can be ignored
@@ -37,7 +37,7 @@ pub enum InvType {
 // Some simple messages
 
 /// The `getblocks` message
-#[derive(PartialEq, Eq, Clone, Show)]
+#[derive(PartialEq, Eq, Clone, Debug)]
 pub struct GetBlocksMessage {
   /// The protocol version
   pub version: u32,
@@ -50,7 +50,7 @@ pub struct GetBlocksMessage {
 }
 
 /// The `getheaders` message
-#[derive(PartialEq, Eq, Clone, Show)]
+#[derive(PartialEq, Eq, Clone, Debug)]
 pub struct GetHeadersMessage {
   /// The protocol version
   pub version: u32,
@@ -63,7 +63,7 @@ pub struct GetHeadersMessage {
 }
 
 /// An inventory object --- a reference to a Bitcoin object
-#[derive(PartialEq, Eq, Clone, Show)]
+#[derive(PartialEq, Eq, Clone, Debug)]
 pub struct Inventory {
   /// The type of object that is referenced
   pub inv_type: InvType,

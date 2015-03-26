@@ -90,7 +90,7 @@ macro_rules! user_enum {
       $(#[$doc] $elem),*
     }
 
-    impl ::std::fmt::Show for $name {
+    impl ::std::fmt::Debug for $name {
       fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         f.pad(match *self {
           $($elem => $txt),*
