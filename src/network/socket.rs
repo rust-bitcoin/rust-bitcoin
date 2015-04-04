@@ -21,7 +21,7 @@ use time::now;
 use rand::{thread_rng, Rng};
 use std::io::Cursor;
 use std::io::{Error, Result, ErrorKind};
-use std::io::net::{ip, tcp};
+use std::net::{ip, tcp};
 use std::sync::{Arc, Mutex};
 
 use network::constants;

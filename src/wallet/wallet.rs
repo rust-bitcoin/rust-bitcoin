@@ -160,7 +160,7 @@ impl Wallet {
   pub fn account_insert(&mut self, name: String)
                         -> Result<(), Error> {
     if self.accounts.find(&name).is_some() {
-      return Err(DuplicateAccount);
+      return Err(Error::DuplicateAccount);
     }
 
     let idx = self.accounts.len() as u32;
@@ -190,28 +190,28 @@ impl Wallet {
                      -> Result<Address, Error> {
     // TODO: unnecessary allocation, waiting on *_equiv in stdlib
     let account = self.accounts.find_mut(&account.to_string());
-    let account = match account { Some(a) => a, None => return Err(AccountNotFound) };
-    let index = match self.index { Some(ref i) => i, None => return Err(NoAddressIndex) };
+    let account = match account { Some(a) => a, None => return Err(Error::AccountNotFound) };
+    let index = match self.index { Some(ref i) => i, None => return Err(Error::NoAddressIndex) };
 
     let (mut i, master) = match chain {
       Internal => (account.internal_next,
                    try!(ExtendedPrivKey::from_path(
                           &self.master,
-                          account.internal_path.as_slice()).map_err(Bip32Error))),
+                          account.internal_path.as_slice()).map_err(Error::Bip32Error))),
       External => (account.external_next,
                    try!(ExtendedPrivKey::from_path(
                           &self.master,
-                          account.external_path.as_slice()).map_err(Bip32Error))),
+                          account.external_path.as_slice()).map_err(Error::Bip32Error))),
     };
 
     // Scan for next admissible address
-    let mut sk = try!(master.ckd_priv(Normal(i)).map_err(Bip32Error));
+    let mut sk = try!(master.ckd_priv(Normal(i)).map_err(Error::Bip32Error));
     let mut address = Address::from_key(
                         master.network,
                         &PublicKey::from_secret_key(&sk.secret_key, true));
     while !index.admissible_address(&address) {
       i += 1;
-      sk = try!(master.ckd_priv(Normal(i)).map_err(Bip32Error));
+      sk = try!(master.ckd_priv(Normal(i)).map_err(Error::Bip32Error));
       address = Address::from_key(
                   master.network,
                   &PublicKey::from_secret_key(&sk.secret_key, true));
@@ -240,9 +240,8 @@ impl Wallet {
   /// Returns a key suitable for keying hash functions for DoS protection
   #[inline]
   pub fn siphash_key(&self) -> (u64, u64) {
-    let ck_slice = self.master.chain_code.as_slice();
-    (LittleEndian::read_u64(&ret[0..8]),
-     LittleEndian::read_u64(&ret[8..16]))
+    (LittleEndian::read_u64(&self.master.chain_code[0..8]),
+     LittleEndian::read_u64(&self.master.chain_code[8..16]))
   }
 
   /// Total balance
@@ -257,21 +256,21 @@ impl Wallet {
   /// Account balance
   pub fn balance(&self, account: &str) -> Result<u64, Error> {
     let account = self.accounts.find_equiv(&account);
-    let account = match account { Some(a) => a, None => return Err(AccountNotFound) };
+    let account = match account { Some(a) => a, None => return Err(Error::AccountNotFound) };
     self.account_balance(account)
   }
 
   fn account_balance(&self, account: &Account) -> Result<u64, Error> {
-    let index = match self.index { Some(ref i) => i, None => return Err(NoAddressIndex) };
+    let index = match self.index { Some(ref i) => i, None => return Err(Error::NoAddressIndex) };
 
     let mut ret = 0;
 
     // Sum internal balance
     let master = try!(ExtendedPrivKey::from_path(
                         &self.master,
-                        account.internal_path.as_slice()).map_err(Bip32Error));
+                        account.internal_path.as_slice()).map_err(Error::Bip32Error));
     for &cnum in account.internal_used.iter() {
-      let sk = try!(master.ckd_priv(cnum).map_err(Bip32Error));
+      let sk = try!(master.ckd_priv(cnum).map_err(Error::Bip32Error));
       let pk = ExtendedPubKey::from_private(&sk);
       let addr = Address::from_key(pk.network, &pk.public_key);
       for out in index.find_by_script(&addr.script_pubkey()).iter() {
@@ -281,9 +280,9 @@ impl Wallet {
     // Sum external balance
     let master = try!(ExtendedPrivKey::from_path(
                         &self.master,
-                        account.external_path.as_slice()).map_err(Bip32Error));
+                        account.external_path.as_slice()).map_err(Error::Bip32Error));
     for &cnum in account.external_used.iter() {
-      let sk = try!(master.ckd_priv(cnum).map_err(Bip32Error));
+      let sk = try!(master.ckd_priv(cnum).map_err(Error::Bip32Error));
       let pk = ExtendedPubKey::from_private(&sk);
       let addr = Address::from_key(pk.network, &pk.public_key);
       for out in index.find_by_script(&addr.script_pubkey()).iter() {
