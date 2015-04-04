@@ -13,6 +13,7 @@ git = "https://github.com/apoelstra/bitcoin-secp256k1-rs.git"
 
 [dependencies]
 byteorder = "*"
+num_cpus = "*"
 rand = "*"
 rust-crypto = "*"
 rustc-serialize = "*"

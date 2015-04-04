@@ -20,10 +20,10 @@
 
 use std::cmp;
 use std::collections::HashMap;
-use std::collections::hashmap::Entries;
+use std::collections::hash::map::Iter;
 use std::default::Default;
 use std::mem;
-use std::os::num_cpus;
+use num_cpus;
 use std::sync::Future;
 
 use blockdata::transaction::{Transaction, TxOut};
@@ -69,7 +69,7 @@ impl_consensus_encoding!(UtxoNode, height, outputs);
 
 /// An iterator over UTXOs
 pub struct UtxoIterator<'a> {
-  tx_iter: Entries<'a, Sha256dHash, UtxoNode>,
+  tx_iter: Iter<'a, Sha256dHash, UtxoNode>,
   current_key: Sha256dHash,
   current: Option<&'a UtxoNode>,
   tx_index: u32
@@ -261,7 +261,7 @@ impl UtxoSet {
       let mut future_vec = Vec::with_capacity(block.txdata.len() - 1);
       // skip the genesis since we don't validate this script. (TODO this might
       // be a consensus bug since we don't even check that the opcodes make sense.)
-      let n_threads = cmp::min(block.txdata.len() - 1, num_cpus());
+      let n_threads = cmp::min(block.txdata.len() - 1, num_cpus::get());
       for j in range(0, n_threads) {
         let n_elems = block.txdata.len() - 1;
         let start = 1 + j * n_elems / n_threads;

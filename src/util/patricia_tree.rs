@@ -22,7 +22,7 @@
 
 use core::fmt::Debug;
 use core::cmp;
-use std::kinds::marker;
+use std::marker;
 use std::num::{Zero, One};
 
 use network::encodable::{ConsensusDecodable, ConsensusEncodable};

@@ -23,7 +23,7 @@
 //!
 
 use std::num::Zero;
-use std::kinds::marker;
+use std::marker;
 
 use blockdata::block::{Block, BlockHeader};
 use blockdata::transaction::Transaction;
