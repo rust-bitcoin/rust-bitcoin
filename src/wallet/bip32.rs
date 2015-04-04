@@ -17,7 +17,7 @@
 //! at https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki
 
 use std::default::Default;
-use serialize::{Decoder, Decodable, Encoder, Encodable};
+use serialize::{Decoder, Encoder};
 
 use byteorder::{ByteOrder, BigEndian};
 use crypto::digest::Digest;
@@ -51,7 +51,7 @@ impl Default for Fingerprint {
 }
 
 /// Extended private key
-#[derive(Clone, PartialEq, Eq, Encodable, Decodable, Debug)]
+#[derive(Clone, PartialEq, Eq, RustcEncodable, RustcDecodable, Debug)]
 pub struct ExtendedPrivKey {
   /// The network this key is to be used on
   pub network: Network,
@@ -68,7 +68,7 @@ pub struct ExtendedPrivKey {
 }
 
 /// Extended public key
-#[derive(Clone, PartialEq, Eq, Encodable, Decodable, Debug)]
+#[derive(Clone, PartialEq, Eq, RustcEncodable, RustcDecodable, Debug)]
 pub struct ExtendedPubKey {
   /// The network this key is to be used on
   pub network: Network,
@@ -102,9 +102,9 @@ impl<S: Encoder<E>, E> Encodable<S, E> for ChildNumber {
   }
 }
 
-impl<D: Decoder<E>, E> Decodable<D, E> for ChildNumber {
+impl<D: Decoder<E>, E> RustcDecodable<D, E> for ChildNumber {
   fn decode(d: &mut D) -> Result<ChildNumber, E> { 
-    let n: u32 = try!(Decodable::decode(d));
+    let n: u32 = try!(RustcDecodable::decode(d));
     if n < (1 << 31) {
       Ok(ChildNumber::Normal(n))
     } else {

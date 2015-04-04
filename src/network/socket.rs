@@ -19,7 +19,7 @@
 
 use time::now;
 use rand::{thread_rng, Rng};
-use std::io::{BufferedReader, BufferedWriter};
+use std::io::Cursor;
 use std::io::{Error, Result, ErrorKind};
 use std::io::net::{ip, tcp};
 use std::sync::{Arc, Mutex};
@@ -55,9 +55,9 @@ pub struct Socket {
   /// quickly cancelling any read/writes and unlocking the Mutexes.
   socket: Option<tcp::TcpStream>,
   /// The underlying network data stream read buffer
-  buffered_reader: Arc<Mutex<Option<BufferedReader<tcp::TcpStream>>>>,
+  buffered_reader: Arc<Mutex<Option<tcp::TcpStream>>>,
   /// The underlying network data stream write buffer
-  buffered_writer: Arc<Mutex<Option<BufferedWriter<tcp::TcpStream>>>>,
+  buffered_writer: Arc<Mutex<Option<tcp::TcpStream>>>,
   /// Services supported by us
   pub services: u64,
   /// Our user agent
@@ -96,8 +96,8 @@ impl Socket {
     let mut writer_lock = self.buffered_writer.lock();
     match tcp::TcpStream::connect(host, port) {
       Ok(s)  => {
-        *reader_lock = Some(BufferedReader::new(s.clone()));
-        *writer_lock = Some(BufferedWriter::new(s.clone()));
+        *reader_lock = Some(s.clone());
+        *writer_lock = Some(s.clone());
         self.socket = Some(s);
         Ok(()) 
       }

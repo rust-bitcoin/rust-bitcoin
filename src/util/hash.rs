@@ -19,7 +19,7 @@ use core::char::from_digit;
 use core::cmp::min;
 use std::default::Default;
 use std::fmt;
-use std::io::MemWriter;
+use std::io::Cursor;
 use std::mem::transmute;
 use std::hash;
 use serialize::json::{self, ToJson};
@@ -282,7 +282,7 @@ impl<'a, T: BitcoinHash> MerkleRoot for &'a [T] {
       for idx in range(0, (data.len() + 1) / 2) {
         let idx1 = 2 * idx;
         let idx2 = min(idx1 + 1, data.len() - 1);
-        let mut encoder = RawEncoder::new(MemWriter::new());
+        let mut encoder = RawEncoder::new(Cursor::new(vec![]));
         data[idx1].consensus_encode(&mut encoder).unwrap();
         data[idx2].consensus_encode(&mut encoder).unwrap();
         next.push(encoder.unwrap().unwrap().bitcoin_hash());
@@ -303,7 +303,7 @@ impl <T: BitcoinHash> MerkleRoot for Vec<T> {
 #[cfg(test)]
 mod tests {
   use std::prelude::*;
-  use std::io::MemWriter;
+  use std::io::Cursor;
   use std::str::from_utf8;
   use serialize::Encodable;
   use serialize::json;
@@ -333,7 +333,7 @@ mod tests {
   #[test]
   fn test_hash_encode_decode() {
     let hash = Sha256dHash::from_data(&[]);
-    let mut writer = MemWriter::new();
+    let mut writer = Cursor::new(vec![]);
     {
       let mut encoder = json::Encoder::new(&mut writer);
       assert!(hash.encode(&mut encoder).is_ok());

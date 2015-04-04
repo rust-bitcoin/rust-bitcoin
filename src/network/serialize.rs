@@ -20,7 +20,7 @@
 //!
 
 use collections::Vec;
-use std::io::{self, MemReader, MemWriter};
+use std::io::{self, Cursor};
 use serialize::hex::ToHex;
 
 use network::encodable::{ConsensusDecodable, ConsensusEncodable};
@@ -52,8 +52,8 @@ pub fn serialize_hex<T: ConsensusEncodable<RawEncoder<MemWriter>, io::Error>>(ob
 }
 
 /// Deserialize an object from a vector
-pub fn deserialize<T: ConsensusDecodable<RawDecoder<MemReader>, io::Error>>(data: Vec<u8>) -> io::Result<T> {
-  let mut decoder = RawDecoder::new(MemReader::new(data));
+pub fn deserialize<T: ConsensusDecodable<RawDecoder<Cursor>, io::Error>>(data: Vec<u8>) -> io::Result<T> {
+  let mut decoder = RawDecoder::new(Cursor::new(data));
   ConsensusDecodable::consensus_decode(&mut decoder)
 }
 

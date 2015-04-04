@@ -18,7 +18,7 @@
 
 use std::collections::HashMap;
 use std::default::Default;
-use serialize::{Decoder, Decodable, Encoder, Encodable};
+use serialize::{Decoder, Encoder};
 
 use secp256k1::key::PublicKey;
 
@@ -54,7 +54,7 @@ pub enum AccountChain {
 }
 
 /// An account
-#[derive(Clone, PartialEq, Eq, Encodable, Decodable, Debug)]
+#[derive(Clone, PartialEq, Eq, RustcEncodable, RustcDecodable, Debug)]
 pub struct Account {
   name: String,
   internal_path: Vec<ChildNumber>,

@@ -33,6 +33,7 @@
 #![feature(unboxed_closure_sugar)]
 #![feature(unboxed_closures)]
 #![feature(concat_idents)]
+#![feature(slice_patterns)]
 
 // Coding conventions
 #![warn(non_uppercase_statics)]

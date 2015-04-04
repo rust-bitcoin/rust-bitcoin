@@ -20,8 +20,7 @@
 //!
 
 use collections::Vec;
-use std::io;
-use std::io::MemReader;
+use std::io::{self, Cursor};
 
 use blockdata::block;
 use blockdata::transaction;
@@ -161,7 +160,7 @@ impl<D:SimpleDecoder<io::Error>> ConsensusDecodable<D, io::Error> for RawNetwork
     let CommandString(cmd): CommandString= try!(ConsensusDecodable::consensus_decode(d));
     let CheckedData(raw_payload): CheckedData = try!(ConsensusDecodable::consensus_decode(d));
 
-    let mut mem_d = RawDecoder::new(MemReader::new(raw_payload));
+    let mut mem_d = RawDecoder::new(Cursor::new(raw_payload));
     let payload = match cmd.as_slice() {
       "version" => Version(try!(prepend_err("version", ConsensusDecodable::consensus_decode(&mut mem_d)))),
       "verack"  => Verack,
