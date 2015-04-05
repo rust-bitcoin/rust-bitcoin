@@ -86,7 +86,7 @@ impl AddressIndex {
           vout: idx,
           height: height,
           txo: txo.clone(),
-          kind: Unknown
+          kind: WalletTxOutType::Unknown
         };
         ret.tentative_index.find_or_insert(txo.script_pubkey.clone(), vec![]).push(new);
       }

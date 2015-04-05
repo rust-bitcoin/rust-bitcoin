@@ -41,9 +41,9 @@ macro_rules! construct_uint {
 
       /// Return the least number of bits needed to represent the number
       #[inline]
-      pub fn bits(&self) -> uzise {
+      pub fn bits(&self) -> usize {
         let &$name(ref arr) = self;
-        for i in range(1, $n_words) {
+        for i in 1..$n_words {
           if arr[$n_words - i] > 0 { return (0x40 * ($n_words - i + 1)) - arr[$n_words - i].leading_zeros() as usize; }
         }
         0x40 - arr[0].leading_zeros()
@@ -54,7 +54,7 @@ macro_rules! construct_uint {
         let &$name(ref arr) = self;
         let mut carry = [0u64; $n_words];
         let mut ret = [0u64; $n_words];
-        for i in range(0, $n_words) {
+        for i in 0..$n_words {
           let upper = other as u64 * (arr[i] >> 32);
           let lower = other as u64 * (arr[i] & 0xFFFFFFFF);
           if i < 3 {
@@ -66,7 +66,7 @@ macro_rules! construct_uint {
       }
     }
 
-    impl FromPrimitive for $name {
+    impl ::std::num::FromPrimitive for $name {
       #[inline]
       fn from_u64(init: u64) -> Option<$name> {
         let mut ret = [0; $n_words];
@@ -76,29 +76,28 @@ macro_rules! construct_uint {
 
       #[inline]
       fn from_i64(init: i64) -> Option<$name> {
-        FromPrimitive::from_u64(init as u64)
+        ::std::num::FromPrimitive::from_u64(init as u64)
       }
     }
 
-    impl Zero for $name {
+    impl ::std::num::Zero for $name {
       fn zero() -> $name { $name([0; $n_words]) }
-      fn is_zero(&self) -> bool { *self == Zero::zero() }
     }
 
-    impl One for $name {
+    impl ::std::num::One for $name {
       fn one() -> $name {
         $name({ let mut ret = [0; $n_words]; ret[0] = 1; ret })
       }
     }
 
-    impl Add<$name,$name> for $name {
+    impl ::std::ops::Add<$name,$name> for $name {
       fn add(&self, other: &$name) -> $name {
         let &$name(ref me) = self;
         let &$name(ref you) = other;
         let mut ret = [0u64; $n_words];
         let mut carry = [0u64; $n_words];
         let mut b_carry = false;
-        for i in range(0, $n_words) {
+        for i in 0..$n_words {
           ret[i] = me[i] + you[i];
           if i < $n_words - 1 && ret[i] < me[i] {
             carry[i + 1] = 1;
@@ -109,25 +108,25 @@ macro_rules! construct_uint {
       }
     }
 
-    impl Sub<$name,$name> for $name {
+    impl ::std::ops::Sub<$name,$name> for $name {
       #[inline]
       fn sub(&self, other: &$name) -> $name {
         *self + !*other + One::one()
       }
     }
 
-    impl Mul<$name,$name> for $name {
+    impl ::std::ops::Mul<$name,$name> for $name {
       fn mul(&self, other: &$name) -> $name {
         let mut me = *self;
         // TODO: be more efficient about this
-        for i in range(0, 2 * $n_words) {
+        for i in 0..(2 * $n_words) {
           me = me + me.mul_u32((other >> (32 * i)).low_u32()) << (32 * i);
         }
         me
       }
     }
 
-    impl Div<$name,$name> for $name {
+    impl ::std::ops::Div<$name,$name> for $name {
       fn div(&self, other: &$name) -> $name {
         let mut sub_copy = *self;
         let mut shift_copy = *other;
@@ -177,7 +176,7 @@ macro_rules! construct_uint {
       fn mask(&self, n: usize) -> $name {
         let &$name(ref arr) = self;
         let mut ret = [0; $n_words];
-        for i in range(0, $n_words) {
+        for i in 0..$n_words {
           if n >= 0x40 * (i + 1) {
             ret[i] = arr[i];
           } else {
@@ -191,71 +190,71 @@ macro_rules! construct_uint {
       #[inline]
       fn trailing_zeros(&self) -> usize {
         let &$name(ref arr) = self;
-        for i in range(0, $n_words - 1) {
+        for i in 0..($n_words - 1) {
           if arr[i] > 0 { return (0x40 * i) + arr[i].trailing_zeros(); }
         }
         (0x40 * ($n_words - 1)) + arr[3].trailing_zeros()
       }
     }
 
-    impl BitAnd<$name,$name> for $name {
+    impl ::std::ops::BitAnd<$name,$name> for $name {
       #[inline]
       fn bitand(&self, other: &$name) -> $name {
         let &$name(ref arr1) = self;
         let &$name(ref arr2) = other;
         let mut ret = [0u64; $n_words];
-        for i in range(0, $n_words) {
+        for i in 0..$n_words {
           ret[i] = arr1[i] & arr2[i];
         }
         $name(ret)
       }
     }
 
-    impl BitXor<$name,$name> for $name {
+    impl ::std::ops::BitXor<$name,$name> for $name {
       #[inline]
       fn bitxor(&self, other: &$name) -> $name {
         let &$name(ref arr1) = self;
         let &$name(ref arr2) = other;
         let mut ret = [0u64; $n_words];
-        for i in range(0, $n_words) {
+        for i in 0..$n_words {
           ret[i] = arr1[i] ^ arr2[i];
         }
         $name(ret)
       }
     }
 
-    impl BitOr<$name,$name> for $name {
+    impl ::std::ops::BitOr<$name,$name> for $name {
       #[inline]
       fn bitor(&self, other: &$name) -> $name {
         let &$name(ref arr1) = self;
         let &$name(ref arr2) = other;
         let mut ret = [0u64; $n_words];
-        for i in range(0, $n_words) {
+        for i in 0..$n_words {
           ret[i] = arr1[i] | arr2[i];
         }
         $name(ret)
       }
     }
 
-    impl Not<$name> for $name {
+    impl ::std::ops::Not<$name> for $name {
       #[inline]
       fn not(&self) -> $name {
         let &$name(ref arr) = self;
         let mut ret = [0u64; $n_words];
-        for i in range(0, $n_words) {
+        for i in 0..$n_words {
           ret[i] = !arr[i];
         }
         $name(ret)
       }
     }
 
-    impl Shl<usize, $name> for $name {
+    impl ::std::ops::Shl<usize, $name> for $name {
       fn shl(&self, shift: &usize) -> $name {
         let &$name(ref original) = self;
         let mut ret = [0u64; $n_words];
         let word_shift = *shift / 64;
         let bit_shift = *shift % 64;
-        for i in range(0, $n_words) {
+        for i in 0..$n_words {
           // Shift
           if bit_shift < 64 && i + word_shift < $n_words {
             ret[i + word_shift] += original[i] << bit_shift;
@@ -269,14 +268,14 @@ macro_rules! construct_uint {
       }
     }
 
-    impl Shr<usize, $name> for $name {
+    impl ::std::ops::Shr<usize, $name> for $name {
       #[allow(unsigned_negate)]
       fn shr(&self, shift: &usize) -> $name {
         let &$name(ref original) = self;
         let mut ret = [0u64; $n_words];
         let word_shift = *shift / 64;
         let bit_shift = *shift % 64;
-        for i in range(0, $n_words) {
+        for i in 0..$n_words {
           // Shift
           if bit_shift < 64 && i - word_shift < $n_words {
             ret[i - word_shift] += original[i] >> bit_shift;
@@ -290,20 +289,20 @@ macro_rules! construct_uint {
       }
     }
 
-    impl Ord for $name {
-      fn cmp(&self, other: &$name) -> Ordering {
+    impl ::std::cmp::Ord for $name {
+      fn cmp(&self, other: &$name) -> ::std::cmp::Ordering {
         let &$name(ref me) = self;
         let &$name(ref you) = other;
-        for i in range(0, $n_words) {
-          if me[$n_words - 1 - i] < you[$n_words - 1 - i] { return Less; }
-          if me[$n_words - 1 - i] > you[$n_words - 1 - i] { return Greater; }
+        for i in 0..$n_words {
+          if me[$n_words - 1 - i] < you[$n_words - 1 - i] { return ::std::cmp::Ordering::Less; }
+          if me[$n_words - 1 - i] > you[$n_words - 1 - i] { return ::std::cmp::Ordering::Greater; }
         }
-        return Equal;
+        return ::std::cmp::Ordering::Equal;
       }
     }
 
-    impl PartialOrd for $name {
-      fn partial_cmp(&self, other: &$name) -> Option<Ordering> {
+    impl ::std::cmp::PartialOrd for $name {
+      fn partial_cmp(&self, other: &$name) -> Option<::std::cmp::Ordering> {
         Some(self.cmp(other))
       }
     }

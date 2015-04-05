@@ -22,25 +22,20 @@
 
 use serialize::json;
 
-/// Submodule to handle -all- opcodes. Outside of this module we use
-/// a restricted set where the push/return/noop/illegal opcodes have
-/// a more convienient representation.
-pub mod all {
-  use serialize::json;
-  // Heavy stick to translate between opcode types
-  use std::mem::transmute;
+// Heavy stick to translate between opcode types
+use std::mem::transmute;
 
-  use network::serialize::{SimpleDecoder, SimpleEncoder};
-  use network::encodable::{ConsensusDecodable, ConsensusEncodable};
+use network::serialize::{SimpleDecoder, SimpleEncoder};
+use network::encodable::{ConsensusDecodable, ConsensusEncodable};
 
-  // Note: I am deliberately not implementing PartialOrd or Ord on the
-  //       opcode enum. If you want to check ranges of opcodes, etc.,
-  //       write an #[inline] helper function which casts to u8s.
+// Note: I am deliberately not implementing PartialOrd or Ord on the
+//       opcode enum. If you want to check ranges of opcodes, etc.,
+//       write an #[inline] helper function which casts to u8s.
 
-  /// A script Opcode
-  #[derive(Clone, PartialEq, Eq, Debug)]
-  #[repr(u8)]
-  pub enum Opcode {
+/// A script Opcode
+#[derive(Clone, PartialEq, Eq, Debug)]
+#[repr(u8)]
+pub enum All {
     /// Push an empty array onto the stack
     OP_PUSHBYTES_0 = 0x0,
     /// Push the next byte as an array onto the stack
@@ -558,78 +553,79 @@ pub mod all {
     OP_RETURN_254 = 0xfe,
     /// Synonym for OP_RETURN
     OP_RETURN_255 = 0xff,
-  }
+}
 
-  impl Opcode {
-    /// Translates a u8 to an Opcode
+impl All {
+    /// Translates a u8 to an opcode
     #[inline]
-    pub fn from_u8(b: u8) -> Opcode {
+    pub fn from_u8(b: u8) -> All {
       unsafe { transmute(b) }
     }
 
     /// Classifies an Opcode into a broad class
     #[inline]
-    pub fn classify(&self) -> super::OpcodeClass {
+    pub fn classify(&self) -> OpcodeClass {
       // 17 opcodes
-      if *self == OP_VERIF || *self == OP_VERNOTIF ||
-         *self == OP_CAT || *self == OP_SUBSTR ||
-         *self == OP_LEFT || *self == OP_RIGHT ||
-         *self == OP_INVERT || *self == OP_AND ||
-         *self == OP_OR || *self == OP_XOR ||
-         *self == OP_2MUL || *self == OP_2DIV ||
-         *self == OP_MUL || *self == OP_DIV || *self == OP_MOD ||
-         *self == OP_LSHIFT || *self == OP_RSHIFT {
-        super::IllegalOp
+      if *self == All::OP_VERIF || *self == All::OP_VERNOTIF ||
+         *self == All::OP_CAT || *self == All::OP_SUBSTR ||
+         *self == All::OP_LEFT || *self == All::OP_RIGHT ||
+         *self == All::OP_INVERT || *self == All::OP_AND ||
+         *self == All::OP_OR || *self == All::OP_XOR ||
+         *self == All::OP_2MUL || *self == All::OP_2DIV ||
+         *self == All::OP_MUL || *self == All::OP_DIV || *self == All::OP_MOD ||
+         *self == All::OP_LSHIFT || *self == All::OP_RSHIFT {
+        OpcodeClass::IllegalOp
       // 11 opcodes
-      } else if *self == OP_NOP ||
-                (OP_NOP1 as u8 <= *self as u8 && *self as u8 <= OP_NOP10 as u8) {
-        super::NoOp
+      } else if *self == All::OP_NOP ||
+                (All::OP_NOP1 as u8 <= *self as u8 &&
+                 *self as u8 <= All::OP_NOP10 as u8) {
+        OpcodeClass::NoOp
       // 75 opcodes
-      } else if *self == OP_RESERVED || *self == OP_VER || *self == OP_RETURN ||
-                *self == OP_RESERVED1 || *self == OP_RESERVED2 ||
-                *self as u8 >= OP_RETURN_186 as u8 {
-        super::ReturnOp
+      } else if *self == All::OP_RESERVED || *self == All::OP_VER || *self == All::OP_RETURN ||
+                *self == All::OP_RESERVED1 || *self == All::OP_RESERVED2 ||
+                *self as u8 >= All::OP_RETURN_186 as u8 {
+        OpcodeClass::ReturnOp
       // 1 opcode
-      } else if *self == OP_PUSHNUM_NEG1 {
-        super::PushNum(-1)
+      } else if *self == All::OP_PUSHNUM_NEG1 {
+        OpcodeClass::PushNum(-1)
       // 16 opcodes
-      } else if OP_PUSHNUM_1 as u8 <= *self as u8 && *self as u8 <= OP_PUSHNUM_16 as u8 {
-        super::PushNum(1 + *self as isize - OP_PUSHNUM_1 as isize)
+      } else if All::OP_PUSHNUM_1 as u8 <= *self as u8 &&
+                *self as u8 <= All::OP_PUSHNUM_16 as u8 {
+        OpcodeClass::PushNum(1 + *self as isize - OP_PUSHNUM_1 as isize)
       // 76 opcodes
-      } else if *self as u8 <= OP_PUSHBYTES_75 as u8 {
-        super::PushBytes(*self as usize)
+      } else if *self as u8 <= All::OP_PUSHBYTES_75 as u8 {
+        OpcodeClass::PushBytes(*self as usize)
       // 60 opcodes
       } else {
-        super::Ordinary(unsafe { transmute(*self) })
+        OpcodeClass::Ordinary(unsafe { transmute(*self) })
       }
     }
-  }
+}
 
-  impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for Opcode {
+impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for All {
     #[inline]
-    fn consensus_decode(d: &mut D) -> Result<Opcode, E> {
-      Ok(Opcode::from_u8(try!(d.read_u8())))
+    fn consensus_decode(d: &mut D) -> Result<All, E> {
+      Ok(All::from_u8(try!(d.read_u8())))
     }
-  }
+}
 
-  impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for Opcode {
+impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for All {
     #[inline]
     fn consensus_encode(&self, s: &mut S) -> Result<(), E> {
       s.emit_u8(*self as u8)
     }
-  }
+}
 
-  impl json::ToJson for Opcode {
+impl json::ToJson for All {
     fn to_json(&self) -> json::Json {
       json::String(self.to_string())
     }
-  }
-
-  /// Empty stack is also FALSE
-  pub static OP_FALSE: Opcode = OP_PUSHBYTES_0;
-  /// Number 1 is also TRUE
-  pub static OP_TRUE: Opcode = OP_PUSHNUM_1;
 }
+
+/// Empty stack is also FALSE
+pub static OP_FALSE: All = OP_PUSHBYTES_0;
+/// Number 1 is also TRUE
+pub static OP_TRUE: All = OP_PUSHNUM_1;
 
 /// Broad categories of opcodes with similar behavior
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -645,7 +641,7 @@ pub enum OpcodeClass {
   /// Does nothing
   NoOp,
   /// Any opcode not covered above
-  Ordinary(Opcode)
+  Ordinary(Ordinary)
 }
 
 impl json::ToJson for OpcodeClass {
@@ -659,8 +655,8 @@ macro_rules! ordinary_opcode {
     #[repr(u8)]
     #[doc(hidden)]
     #[derive(Clone, PartialEq, Eq, Debug)]
-    pub enum Opcode {
-      $( $op = all::$op as u8 ),*
+    pub enum Ordinary {
+      $( $op = All::$op as u8 ),*
     }
   );
 }

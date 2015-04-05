@@ -21,7 +21,7 @@ use crypto::digest::Digest;
 use crypto::sha2::Sha256;
 
 use blockdata::script::Script;
-use blockdata::opcodes::all;
+use blockdata::opcodes;
 use network::constants::Network::{self, Bitcoin, BitcoinTestnet};
 use util::hash::Ripemd160Hash;
 use util::base58::Base58Error::{self, InvalidLength, InvalidVersion};
@@ -61,11 +61,11 @@ impl Address {
   #[inline]
   pub fn script_pubkey(&self) -> Script {
     let mut script = Script::new();
-    script.push_opcode(all::OP_DUP);
-    script.push_opcode(all::OP_HASH160);
+    script.push_opcode(opcodes::All::OP_DUP);
+    script.push_opcode(opcodes::All::OP_HASH160);
     script.push_slice(self.hash.as_slice());
-    script.push_opcode(all::OP_EQUALVERIFY);
-    script.push_opcode(all::OP_CHECKSIG);
+    script.push_opcode(opcodes::All::OP_EQUALVERIFY);
+    script.push_opcode(opcodes::All::OP_CHECKSIG);
     script
   }
 }

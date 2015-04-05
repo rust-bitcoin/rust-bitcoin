@@ -17,5 +17,6 @@ num_cpus = "*"
 rand = "*"
 rust-crypto = "*"
 rustc-serialize = "*"
+serde = "*"
 time = "*"
 

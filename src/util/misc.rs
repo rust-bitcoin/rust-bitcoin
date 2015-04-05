@@ -19,7 +19,6 @@
 use std::io::{Error, Result, ErrorKind};
 
 use blockdata::opcodes;
-use blockdata::opcodes::all::Opcode;
 use util::iter::Pairable;
 
 /// Convert a hexadecimal-encoded string to its corresponding bytes

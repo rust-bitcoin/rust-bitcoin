@@ -18,7 +18,7 @@
 
 use std::collections::HashMap;
 use std::default::Default;
-use serialize::{Decoder, Encoder};
+use serde;
 
 use secp256k1::key::PublicKey;
 
@@ -54,9 +54,8 @@ pub enum AccountChain {
 }
 
 /// An account
-#[derive(Clone, PartialEq, Eq, RustcEncodable, RustcDecodable, Debug)]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug)]
 pub struct Account {
-  name: String,
   internal_path: Vec<ChildNumber>,
   internal_used: Vec<ChildNumber>,
   internal_next: u32,
@@ -68,7 +67,6 @@ pub struct Account {
 impl Default for Account {
   fn default() -> Account {
     Account {
-      name: String::new(),
       internal_path: vec![Hardened(0), Normal(1)],
       internal_used: vec![],
       internal_next: 0,
@@ -87,39 +85,23 @@ pub struct Wallet {
   index: Option<AddressIndex>
 }
 
-impl<S: Encoder<E>, E> Encodable<S, E> for Wallet {
-  fn encode(&self, s: &mut S) -> Result<(), E> {
-    s.emit_struct("wallet", 2, |s| {
-      try!(s.emit_struct_field("master", 0, |s| self.master.encode(s)));
-      s.emit_struct_field("accounts", 1,
-        |s| s.emit_seq(self.accounts.len(), |s| {
-          for (_, account) in self.accounts.iter() {
-            try!(account.encode(s));
-          }
-          Ok(())
-        }))
-    })
+impl serde::Serialize for Wallet {
+  fn serialize<S>(&self, s: &mut S) -> Result<(), S::Error>
+      where S: serde::Serializer {
+    let len = self.accounts.len();
+    try!(self.master.serialize(s));
+    self.accounts.serialize(s)
   }
 }
 
-impl<D: Decoder<E>, E> Decodable<D, E> for Wallet {
-  fn decode(d: &mut D) -> Result<Wallet, E> { 
-    d.read_struct("wallet", 2, |d| {
-      Ok(Wallet { 
-        master: try!(d.read_struct_field("master", 0, Decodable::decode)),
-        accounts: try!(d.read_struct_field("accounts", 1, |d| {
-          d.read_seq(|d, len| {
-            let mut ret = HashMap::new();
-            for i in range(0, len) {
-              let accnt: Account = try!(d.read_seq_elt(i, Decodable::decode));
-              ret.insert(accnt.name.clone(), accnt);
-            }
-            Ok(ret)
-          })
-        })),
+impl serde::Deserialize for Wallet {
+  fn deserialize<D>(&self, d: &mut D) -> Result<Wallet, D::Error>
+      where D: serde::Deserializer {
+    Wallet {
+        master: try!(serde::Deserialize::deserialize(d)),
+        accounts: try!(serde::Deserialize::deserialize(d)),
         index: None
-      })
-    })
+    }
   }
 }
 
@@ -164,8 +146,7 @@ impl Wallet {
     }
 
     let idx = self.accounts.len() as u32;
-    self.accounts.insert(name.clone(), Account {
-      name: name,
+    self.accounts.insert(name, Account {
       internal_path: vec![Hardened(idx), Normal(1)],
       internal_used: vec![],
       internal_next: 0,

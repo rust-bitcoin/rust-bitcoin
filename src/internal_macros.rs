@@ -131,13 +131,55 @@ macro_rules! impl_array_newtype {
       }
     }
 
-    impl Index<usize, $ty> for $thing {
-      #[inline]
-      fn index<'a>(&'a self, idx: &usize) -> &'a $ty {
-        let &$thing(ref data) = self;
-        &data[*idx]
-      }
-    }
+        impl ::std::ops::Index<usize> for $thing {
+            type Output = $ty;
+
+            #[inline]
+            fn index(&self, index: usize) -> &$ty {
+                let &$thing(ref dat) = self;
+                &dat[index]
+            }
+        }
+
+        impl ::std::ops::Index<::std::ops::Range<usize>> for $thing {
+            type Output = [$ty];
+
+            #[inline]
+            fn index(&self, index: ::std::ops::Range<usize>) -> &[$ty] {
+                let &$thing(ref dat) = self;
+                &dat[index.start..index.end]
+            }
+        }
+
+        impl ::std::ops::Index<::std::ops::RangeTo<usize>> for $thing {
+            type Output = [$ty];
+
+            #[inline]
+            fn index(&self, index: ::std::ops::RangeTo<usize>) -> &[$ty] {
+                let &$thing(ref dat) = self;
+                &dat[..index.end]
+            }
+        }
+
+        impl ::std::ops::Index<::std::ops::RangeFrom<usize>> for $thing {
+            type Output = [$ty];
+
+            #[inline]
+            fn index(&self, index: ::std::ops::RangeFrom<usize>) -> &[$ty] {
+                let &$thing(ref dat) = self;
+                &dat[index.start..]
+            }
+        }
+
+        impl ::std::ops::Index<::std::ops::RangeFull> for $thing {
+            type Output = [$ty];
+
+            #[inline]
+            fn index(&self, _: ::std::ops::RangeFull) -> &[$ty] {
+                let &$thing(ref dat) = self;
+                &dat[..]
+            }
+        }
 
     impl PartialEq for $thing {
       #[inline]
@@ -160,7 +202,7 @@ macro_rules! impl_array_newtype {
 macro_rules! impl_array_newtype_encodable {
   ($thing:ident, $ty:ty, $len:expr) => {
     impl<D: ::serialize::Decoder<E>, E> ::serialize::Decodable<D, E> for $thing {
-      fn decode(d: &mut D) -> ::std::prelude::Result<$thing, E> {
+      fn decode(d: &mut D) -> Result<$thing, E> {
         use serialize::Decodable;
 
         ::assert_type_is_copy::<$ty>();
@@ -172,7 +214,7 @@ macro_rules! impl_array_newtype_encodable {
             unsafe {
               use std::mem;
               let mut ret: [$ty; $len] = mem::uninitialized();
-              for i in range(0, len) {
+              for i in 0..len {
                 ret[i] = try!(d.read_seq_elt(i, |d| Decodable::decode(d)));
               }
               Ok($thing(ret))
@@ -183,7 +225,7 @@ macro_rules! impl_array_newtype_encodable {
     }
 
     impl<E: ::serialize::Encoder<S>, S> ::serialize::Encodable<E, S> for $thing {
-      fn encode(&self, e: &mut E) -> ::std::prelude::Result<(), S> {
+      fn encode(&self, e: &mut E) -> Result<(), S> {
         self.as_slice().encode(e)
       }
     }

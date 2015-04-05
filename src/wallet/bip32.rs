@@ -17,7 +17,7 @@
 //! at https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki
 
 use std::default::Default;
-use serialize::{Decoder, Encoder};
+use serde;
 
 use byteorder::{ByteOrder, BigEndian};
 use crypto::digest::Digest;
@@ -51,7 +51,7 @@ impl Default for Fingerprint {
 }
 
 /// Extended private key
-#[derive(Clone, PartialEq, Eq, RustcEncodable, RustcDecodable, Debug)]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug)]
 pub struct ExtendedPrivKey {
   /// The network this key is to be used on
   pub network: Network,
@@ -68,7 +68,7 @@ pub struct ExtendedPrivKey {
 }
 
 /// Extended public key
-#[derive(Clone, PartialEq, Eq, RustcEncodable, RustcDecodable, Debug)]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug)]
 pub struct ExtendedPubKey {
   /// The network this key is to be used on
   pub network: Network,
@@ -93,18 +93,20 @@ pub enum ChildNumber {
   Normal(u32),
 }
 
-impl<S: Encoder<E>, E> Encodable<S, E> for ChildNumber {
-  fn encode(&self, s: &mut S) -> Result<(), E> {
+impl serde::Serialize for ChildNumber {
+  fn serialize<S>(&self, s: &mut S) -> Result<(), S::Error>
+      where S: serde::Serializer {
     match *self {
-      ChildNumber::Hardened(n) => (n + (1 << 31)).encode(s),
-      ChildNumber::Normal(n)   => n.encode(s)
+      ChildNumber::Hardened(n) => (n + (1 << 31)).serialize(s),
+      ChildNumber::Normal(n)   => n.serialize(s)
     }
   }
 }
 
-impl<D: Decoder<E>, E> RustcDecodable<D, E> for ChildNumber {
-  fn decode(d: &mut D) -> Result<ChildNumber, E> { 
-    let n: u32 = try!(RustcDecodable::decode(d));
+impl serde::Deserialize for ChildNumber {
+  fn deserialize<D>(&self, d: &mut D) -> Result<ChildNumber, D::Error>
+      where D: serde::Deserializer {
+    let n: u32 = try!(serde::Deserialize::decode(d));
     if n < (1 << 31) {
       Ok(ChildNumber::Normal(n))
     } else {
@@ -139,7 +141,7 @@ impl ExtendedPrivKey {
       depth: 0,
       parent_fingerprint: Default::default(),
       child_number: ChildNumber::Normal(0),
-      secret_key: try!(SecretKey::from_slice(result.slice_to(32)).map_err(EcdsaError)),
+      secret_key: try!(SecretKey::from_slice(result.slice_to(32)).map_err(Error::EcdsaError)),
       chain_code: ChainCode::from_slice(result.slice_from(32))
     })
   }
@@ -160,7 +162,7 @@ impl ExtendedPrivKey {
     let mut hmac = Hmac::new(Sha512::new(), self.chain_code.as_slice());
     match i {
       ChildNumber::Normal(n) => {
-        if n >= (1 << 31) { return Err(InvalidChildNumber(i)) }
+        if n >= (1 << 31) { return Err(Error::InvalidChildNumber(i)) }
         // Non-hardened key: compute public data and use that
         secp256k1::init();
         // Note the unwrap: this is fine, we checked the SK when we created it
@@ -168,7 +170,7 @@ impl ExtendedPrivKey {
         hmac.write_u32::<BigEndian>(n);
       }
       ChildNumber::Hardened(n) => {
-        if n >= (1 << 31) { return Err(InvalidChildNumber(i)) }
+        if n >= (1 << 31) { return Err(Error::InvalidChildNumber(i)) }
         // Hardened key: use only secret data to prevent public derivation
         hmac.input([0]);
         hmac.input(self.secret_key.as_slice());
@@ -176,8 +178,8 @@ impl ExtendedPrivKey {
       }
     }
     hmac.raw_result(result.as_mut_slice());
-    let mut sk = try!(SecretKey::from_slice(result.slice_to(32)).map_err(EcdsaError));
-    try!(sk.add_assign(&self.secret_key).map_err(EcdsaError));
+    let mut sk = try!(SecretKey::from_slice(result.slice_to(32)).map_err(Error::EcdsaError));
+    try!(sk.add_assign(&self.secret_key).map_err(Error::EcdsaError));
 
     Ok(ExtendedPrivKey {
       network: self.network,
@@ -232,9 +234,9 @@ impl ExtendedPubKey {
     match i {
       ChildNumber::Hardened(n) => {
         if n >= (1 << 31) {
-          Err(InvalidChildNumber(i))
+          Err(Error::InvalidChildNumber(i))
         } else {
-          Err(CannotDeriveFromHardenedKey)
+          Err(Error::CannotDeriveFromHardenedKey)
         }
       }
       ChildNumber::Normal(n) => {
@@ -245,9 +247,9 @@ impl ExtendedPubKey {
         let mut result = [0; 64];
         hmac.raw_result(result.as_mut_slice());
 
-        let sk = try!(SecretKey::from_slice(result.slice_to(32)).map_err(EcdsaError));
+        let sk = try!(SecretKey::from_slice(result.slice_to(32)).map_err(Error::EcdsaError));
         let mut pk = self.public_key.clone();
-        try!(pk.add_exp_assign(&sk).map_err(EcdsaError));
+        try!(pk.add_exp_assign(&sk).map_err(Error::EcdsaError));
 
         Ok(ExtendedPubKey {
           network: self.network,

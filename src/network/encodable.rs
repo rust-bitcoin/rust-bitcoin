@@ -34,7 +34,6 @@ use std::default::Default;
 use std::hash::{Hash, Hasher};
 use std::u32;
 
-use util::thinvec::ThinVec;
 use util::hash::Sha256dHash;
 use network::serialize::{SimpleDecoder, SimpleEncoder};
 
@@ -230,25 +229,20 @@ impl<D:SimpleDecoder<E>, E, T:ConsensusDecodable<D, E>> ConsensusDecodable<D, E>
   }
 }
 
-impl<S:SimpleEncoder<E>, E, T:ConsensusEncodable<S, E>> ConsensusEncodable<S, E> for ThinVec<T> {
+impl<S:SimpleEncoder<E>, E, T:ConsensusEncodable<S, E>> ConsensusEncodable<S, E> for Box<[T]> {
   #[inline]
-  fn consensus_encode(&self, s: &mut S) -> Result<(), E> { self.as_slice().consensus_encode(s) }
+  fn consensus_encode(&self, s: &mut S) -> Result<(), E> { (&self[..]).consensus_encode(s) }
 }
 
-impl<D:SimpleDecoder<E>, E, T:ConsensusDecodable<D, E>> ConsensusDecodable<D, E> for ThinVec<T> {
+impl<D:SimpleDecoder<E>, E, T:ConsensusDecodable<D, E>> ConsensusDecodable<D, E> for Box<[T]> {
   #[inline]
-  fn consensus_decode(d: &mut D) -> Result<ThinVec<T>, E> {
+  fn consensus_decode(d: &mut D) -> Result<Box<[T]>, E> {
     let VarInt(len): VarInt = try!(ConsensusDecodable::consensus_decode(d));
-    if len > u32::MAX as u64 {
-      return Err(d.error("ThinVec length out of range!"));
-    }
     unsafe {
-      let mut ret = ThinVec::with_capacity(len as u32);
-      // Huge danger: if this fails, the remaining uninitialized part of the ThinVec
-      // will be freed. This is ok, but only because the memory is u8, which has no
-      // destructor...and assuming there are no trap representations...very fragile.
-      for i in range(0, len as usize) { ret.init(i, try!(ConsensusDecodable::consensus_decode(d))); }
-      Ok(ret)
+      let len = len as usize;
+      let mut ret = Vec::with_capacity(len);
+      for i in 0..len { ret.push(try!(ConsensusDecodable::consensus_decode(d))); }
+      Ok(ret.into_boxed_slice())
     }
   }
 }

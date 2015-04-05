@@ -33,7 +33,6 @@ use blockdata::block::Block;
 use network::constants::Network;
 use network::serialize::BitcoinHash;
 use util::hash::{DumbHasher, Sha256dHash};
-use util::thinvec::ThinVec;
 
 /// The amount of validation to do when updating the UTXO set
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]
@@ -63,7 +62,7 @@ struct UtxoNode {
   /// Blockheight at which this UTXO appeared in the blockchain
   height: u32,
   /// Vector of outputs; None indicates a nonexistent or already spent output
-  outputs: ThinVec<Option<TxOut>>
+  outputs: Box<[Option<TxOut>]>
 }
 impl_consensus_encoding!(UtxoNode, height, outputs);
 
@@ -137,22 +136,22 @@ impl UtxoSet {
     let txid = tx.bitcoin_hash();
     // Locate node if it's already there
     let new_node = unsafe {
-      let mut new_node = ThinVec::with_capacity(tx.output.len() as u32);
-      for (vout, txo) in tx.output.iter().enumerate() {
+      let mut new_node = Vec::with_capacity(tx.output.len());
+      for txo in tx.output.iter() {
         // Unsafe since we are not uninitializing the old data in the vector
         if txo.script_pubkey.is_provably_unspendable() {
-          new_node.init(vout as usize, None);
+          new_node.push(None);
           self.n_utxos -= 1;
           self.n_pruned += 1;
         } else {
-          new_node.init(vout as usize, Some(txo.clone()));
+          new_node.push(Some(txo.clone()));
         }
       }
-      UtxoNode { outputs: new_node, height: height }
+      UtxoNode { outputs: new_node.into_boxed_slice(), height: height }
     };
     // Get the old value, if any (this is suprisingly possible, c.f. BIP30
     // and the other comments in this file referring to it)
-    let ret = self.table.swap(txid, new_node);
+    let ret = self.table.swap(txid, new_node.into_boxed_slice());
     if ret.is_none() {
       self.n_utxos += tx.output.len() as u64;
     }
@@ -354,26 +353,17 @@ impl UtxoSet {
           let new_node =
               match self.table.pop(&txid) {
                 Some(mut node) => {
-                  let old_len = node.outputs.len() as u32;
-                  if old_len < n + 1 {
-                    unsafe {
-                      node.outputs.reserve(n + 1);
-                      for i in range(old_len, n + 1) {
-                        node.outputs.init(i as usize, None);
-                      }
-                    }
-                  }
-                  unsafe { *node.outputs.get_mut(n as usize) = Some(txo); }
+                  node.outputs[n as usize] = Some(txo);
                   node
                 }
                 None => {
                   unsafe {
-                    let mut thinvec = ThinVec::with_capacity(n + 1);
-                    for i in range(0, n) {
-                      thinvec.init(i as usize, None);
+                    let mut thinvec = Vec::with_capacity(n + 1);
+                    for _ in 0..n {
+                      thinvec.push(None);
                     }
-                    thinvec.init(n as usize, Some(txo));
-                    UtxoNode { outputs: thinvec, height: height }
+                    thinvec.push(Some(txo));
+                    UtxoNode { outputs: thinvec.into_boxed_slice(), height: height }
                   }
                 }
               };

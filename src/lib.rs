@@ -28,6 +28,7 @@
 #![crate_type = "rlib"]
 
 // Experimental features we need
+#![feature(custom_derive, plugin)]
 #![feature(overloaded_calls)]
 #![feature(unsafe_destructor)]
 #![feature(unboxed_closure_sugar)]
@@ -49,6 +50,8 @@ extern crate core;
 extern crate num_cpus;
 extern crate rand;
 extern crate rustc_serialize as serialize;
+extern crate serde;
+#[plugin(serde_macros)]
 extern crate test;
 extern crate time;
 

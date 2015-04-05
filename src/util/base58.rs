@@ -18,7 +18,6 @@ use byteorder::{ByteOrder, LittleEndian};
 
 use std::string;
 
-use util::thinvec::ThinVec;
 use util::hash::Sha256dHash;
 
 /// An error that might occur during base58 decoding
@@ -174,23 +173,11 @@ impl ToBase58 for Vec<u8> {
   fn to_base58(&self) -> String { base58_encode_slice(self.as_slice()) }
 }
 
-impl ToBase58 for ThinVec<u8> {
-  fn base58_layout(&self) -> Vec<u8> { self.as_slice().to_vec() }
-  fn to_base58(&self) -> String { base58_encode_slice(self.as_slice()) }
-}
-
 impl FromBase58 for Vec<u8> {
   fn from_base58_layout(data: Vec<u8>) -> Result<Vec<u8>, Base58Error> {
     Ok(data)
   }
 }
-
-impl FromBase58 for ThinVec<u8> {
-  fn from_base58_layout(data: Vec<u8>) -> Result<ThinVec<u8>, Base58Error> {
-    Ok(ThinVec::from_vec(data))
-  }
-}
-
 
 #[cfg(test)]
 mod tests {
