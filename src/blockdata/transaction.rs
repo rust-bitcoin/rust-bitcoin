@@ -173,8 +173,8 @@ impl TxIn {
         if txo.script_pubkey.is_p2sh() && stack.len() > 0 {
           p2sh_stack = stack.clone();
           p2sh_script = match p2sh_stack.pop() {
-            Some(script::Owned(v)) => Script::from_vec(v),
-            Some(script::Borrowed(s)) => Script::from_vec(s.to_vec()),
+            Some(script::MaybeOwned::Owned(v)) => Script::from_vec(v),
+            Some(script::MaybeOwned::Borrowed(s)) => Script::from_vec(s.to_vec()),
             None => unreachable!()
           };
         }
@@ -254,8 +254,8 @@ impl Transaction {
           if txo.script_pubkey.is_p2sh() && stack.len() > 0 {
             p2sh_stack = stack.clone();
             p2sh_script = match p2sh_stack.pop() {
-              Some(script::Owned(v)) => Script::from_vec(v),
-              Some(script::Borrowed(s)) => Script::from_vec(s.to_vec()),
+              Some(script::MaybeOwned::Owned(v)) => Script::from_vec(v),
+              Some(script::MaybeOwned::Borrowed(s)) => Script::from_vec(s.to_vec()),
               None => unreachable!()
             };
           }

@@ -28,6 +28,7 @@
 #![crate_type = "rlib"]
 
 // Experimental features we need
+#![feature(box_patterns)]
 #![feature(custom_derive, plugin)]
 #![feature(overloaded_calls)]
 #![feature(unsafe_destructor)]

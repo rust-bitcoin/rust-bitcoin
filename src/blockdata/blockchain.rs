@@ -23,13 +23,13 @@
 //!
 
 use std::num::Zero;
-use std::{marker, ptr};
+use std::{marker, num, ptr};
 
 use blockdata::block::{Block, BlockHeader};
 use blockdata::transaction::Transaction;
 use blockdata::constants::{DIFFCHANGE_INTERVAL, DIFFCHANGE_TIMESPAN,
                            TARGET_BLOCK_SPACING, max_target, genesis_block};
-use network::constants::Network::{self, BitcoinTestnet};
+use network::constants::Network;
 use network::encodable::{ConsensusDecodable, ConsensusEncodable};
 use network::serialize::{BitcoinHash, SimpleDecoder, SimpleEncoder};
 use util::BitArray;
@@ -462,7 +462,7 @@ impl Blockchain {
             // Compute new target
             let mut target = unsafe { (*prev).block.header.target() };
             target = target.mul_u32(timespan);
-            target = target / FromPrimitive::from_u64(DIFFCHANGE_TIMESPAN as u64).unwrap();
+            target = target / num::FromPrimitive::from_u64(DIFFCHANGE_TIMESPAN as u64).unwrap();
             // Clamp below MAX_TARGET (difficulty 1)
             let max = max_target(self.network);
             if target > max { target = max };
@@ -470,13 +470,13 @@ impl Blockchain {
             satoshi_the_precision(&target)
           // On non-diffchange blocks, Testnet has a rule that any 20-minute-long
           // block intervals result the difficulty
-          } else if self.network == BitcoinTestnet &&
+          } else if self.network == Network::BitcoinTestnet &&
                     block.header.time > unsafe { (*prev).block.header.time } + 2*TARGET_BLOCK_SPACING {
             max_target(self.network)
           // On the other hand, if we are in Testnet and the block interval is less
           // than 20 minutes, we need to scan backward to find a block for which the
           // previous rule did not apply, to find the "real" difficulty.
-          } else if self.network == BitcoinTestnet {
+          } else if self.network == Network::BitcoinTestnet {
             // Scan back DIFFCHANGE_INTERVAL blocks
             unsafe {
               let mut scan = prev;

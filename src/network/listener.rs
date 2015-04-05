@@ -18,11 +18,11 @@
 //! to connect to a peer, send network messages, and receive Bitcoin data.
 //!
 
-use std::io::{Result, Error, ErrorKind};
+use std::{io, thread};
+use std::sync::mpsc::{channel, Receiver};
 
 use network::constants::Network;
 use network::message;
-use network::message::SocketResponse::{self, MessageReceived};
 use network::message::NetworkMessage::Verack;
 use network::socket::Socket;
 
@@ -35,13 +35,13 @@ pub trait Listener {
   /// Return the network this `Listener` is operating on
   fn network(&self) -> Network;
   /// Main listen loop
-  fn start(&self) -> Result<(Receiver<SocketResponse>, Socket)> {
+  fn start(&self) -> io::Result<(Receiver<message::SocketResponse>, Socket)> {
     // Open socket
     let mut ret_sock = Socket::new(self.network());
     match ret_sock.connect(self.peer(), self.port()) {
       Ok(_) => {},
-      Err(_) => return Err(Error::new(ErrorKind::ConnectionFailed,
-                                      "Listener connection failed", None))
+      Err(_) => return Err(io::Error::new(io::ErrorKind::ConnectionFailed,
+                                          "Listener connection failed", None))
     }
     let mut sock = ret_sock.clone();
 
@@ -52,7 +52,7 @@ pub trait Listener {
     try!(sock.send_message(version_message));
 
     // Message loop
-    spawn(move || {
+    thread::spawn(move || {
       let mut handshake_complete = false;
       let mut sock = sock;
       loop {
@@ -76,7 +76,7 @@ pub trait Listener {
             // We have to pass the message to the main thread for processing,
             // unfortunately, because sipa says we have to handle everything
             // in order.
-            recv_tx.send(MessageReceived(payload));
+            recv_tx.send(message::SocketResponse::MessageReceived(payload));
           }
           Err(e) => {
             // On failure we send an error message to the main thread, along with
@@ -84,7 +84,7 @@ pub trait Listener {
             // thread. (If we simply exited immediately, the channel would be torn
             // down and the main thread would never see the error message.)
             let (tx, rx) = channel();
-            recv_tx.send(message::ConnectionFailed(e, tx));
+            recv_tx.send(message::SocketResponse::ConnectionFailed(e, tx));
             rx.recv();
             break;
           }

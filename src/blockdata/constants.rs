@@ -26,7 +26,7 @@ use blockdata::opcodes;
 use blockdata::script::Script;
 use blockdata::transaction::{Transaction, TxOut, TxIn};
 use blockdata::block::{Block, BlockHeader};
-use network::constants::Network::{Bitcoin, BitcoinTestnet};
+use network::constants::Network;
 use util::misc::hex_bytes;
 use util::hash::MerkleRoot;
 use util::uint::Uint256;
@@ -74,7 +74,7 @@ fn bitcoin_genesis_tx() -> Transaction {
   // Outputs
   let mut out_script = Script::new();
   out_script.push_slice(hex_bytes("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f").unwrap().as_slice());
-  out_script.push_opcode(opcodes::all::OP_CHECKSIG);
+  out_script.push_opcode(opcodes::All::OP_CHECKSIG);
   ret.output.push(TxOut {
     value: 50 * COIN_VALUE,
     script_pubkey: out_script
@@ -87,7 +87,7 @@ fn bitcoin_genesis_tx() -> Transaction {
 /// Constructs and returns the genesis block
 pub fn genesis_block(network: Network) -> Block {
   match network {
-    Bitcoin => {
+    Network::Bitcoin => {
       let txdata = vec![bitcoin_genesis_tx()];
       Block {
         header: BlockHeader {
@@ -101,7 +101,7 @@ pub fn genesis_block(network: Network) -> Block {
         txdata: txdata
       }
     }
-    BitcoinTestnet => {
+    Network::Testnet => {
       let txdata = vec![bitcoin_genesis_tx()];
       Block {
         header: BlockHeader {
@@ -123,7 +123,7 @@ mod test {
   use std::default::Default;
   use serialize::hex::FromHex;
 
-  use network::constants::Network::{Bitcoin, BitcoinTestnet};
+  use network::constants::Network;
   use network::serialize::{BitcoinHash, serialize};
   use blockdata::constants::{genesis_block, bitcoin_genesis_tx};
   use blockdata::constants::{MAX_SEQUENCE, COIN_VALUE};
@@ -152,7 +152,7 @@ mod test {
 
   #[test]
   fn bitcoin_genesis_full_block() {
-    let gen = genesis_block(Bitcoin);
+    let gen = genesis_block(network::Bitcoin);
 
     assert_eq!(gen.header.version, 1);
     assert_eq!(gen.header.prev_blockhash, Default::default());
@@ -167,7 +167,7 @@ mod test {
 
   #[test]
   fn testnet_genesis_full_block() {
-    let gen = genesis_block(BitcoinTestnet);
+    let gen = genesis_block(network::Testnet);
     assert_eq!(gen.header.version, 1);
     assert_eq!(gen.header.prev_blockhash, Default::default());
     assert_eq!(gen.header.merkle_root.be_hex_string(),

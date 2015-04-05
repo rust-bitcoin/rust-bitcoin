@@ -30,7 +30,7 @@ use blockdata::script::Script;
 use network::constants::Network;
 use wallet::address::Address;
 use wallet::wallet::Wallet;
-use util::hash::{DumbHasher, Sha256dHash};
+use util::hash::Sha256dHash;
 
 /// The type of a wallet-spendable txout
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -61,7 +61,7 @@ pub struct WalletTxOut {
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct AddressIndex {
   tentative_index: HashMap<Script, Vec<WalletTxOut>>,
-  index: HashMap<(Sha256dHash, u32), Vec<WalletTxOut>, DumbHasher>,
+  index: HashMap<(Sha256dHash, u32), Vec<WalletTxOut>, SipHasher>,
   network: Network,
   k1: u64,
   k2: u64
@@ -74,7 +74,7 @@ impl AddressIndex {
     let (k1, k2) = wallet.siphash_key();
     let mut ret = AddressIndex {
       tentative_index: HashMap::with_capacity(utxo_set.n_utxos() / 256),
-      index: HashMap::with_hasher(DumbHasher),
+      index: HashMap::with_hasher(SipHasher::new()),
       network: wallet.network(),
       k1: k1,
       k2: k2

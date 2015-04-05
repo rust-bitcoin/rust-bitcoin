@@ -623,9 +623,9 @@ impl json::ToJson for All {
 }
 
 /// Empty stack is also FALSE
-pub static OP_FALSE: All = OP_PUSHBYTES_0;
+pub static OP_FALSE: All = All::OP_PUSHBYTES_0;
 /// Number 1 is also TRUE
-pub static OP_TRUE: All = OP_PUSHNUM_1;
+pub static OP_TRUE: All = All::OP_PUSHNUM_1;
 
 /// Broad categories of opcodes with similar behavior
 #[derive(Clone, PartialEq, Eq, Debug)]

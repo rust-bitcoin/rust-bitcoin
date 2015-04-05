@@ -47,15 +47,6 @@ impl ::std::fmt::Debug for Sha256dHash {
 pub struct Ripemd160Hash([u8; 20]);
 impl_array_newtype!(Ripemd160Hash, u8, 20);
 
-/// A "hasher" which just truncates and adds data to its state. Should
-/// only be used for hashtables indexed by "already random" data such
-/// as SHA2 hashes
-#[derive(Clone, PartialEq, Eq, Debug)]
-pub struct DumbHasher;
-
-/// The state of a `DumbHasher`
-pub struct DumbHasherState([u8; 8]);
-
 /// A 32-bit hash obtained by truncating a real hash
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Hash32((u8, u8, u8, u8));
@@ -67,44 +58,6 @@ pub struct Hash48((u8, u8, u8, u8, u8, u8));
 /// A 64-bit hash obtained by truncating a real hash
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Hash64((u8, u8, u8, u8, u8, u8, u8, u8));
-
-
-// Allow these to be used as a key for Rust's HashMap et. al.
-impl hash::Hash<DumbHasherState> for Sha256dHash {
-  #[inline]
-  fn hash(&self, state: &mut DumbHasherState) {
-    let &Sha256dHash(ref hash) = self;
-    let &DumbHasherState(ref mut arr) = state;
-    for i in 0..8 {
-      arr[i] += hash[i];
-    }
-  }
-}
-
-impl hash::Hasher<DumbHasherState> for DumbHasher {
-  #[inline]
-  fn hash<T: hash::Hash<DumbHasherState>>(&self, value: &T) -> u64 {
-    let mut ret = DumbHasherState([0; 8]);
-    value.hash(&mut ret);
-    let DumbHasherState(res) = ret;
-    LittleEndian::read_u64(&res[0..8])
-  }
-}
-
-impl hash::Writer for DumbHasherState {
-  #[inline]
-  fn write(&mut self, msg: &[u8]) {
-    let &DumbHasherState(ref mut arr) = self;
-    for (n, &ch) in msg.iter().enumerate() {
-      arr[n % 8] += ch;
-    }
-  }
-}
-
-impl Default for DumbHasher {
-  #[inline]
-  fn default() -> DumbHasher { DumbHasher }
-}
 
 impl Ripemd160Hash {
   /// Create a hash by hashing some data

@@ -238,8 +238,8 @@ impl<K:BitArray+cmp::Eq+Zero+One+ops::BitXor<K,K>+ops::Shl<usize,K>+ops::Shr<usi
         }
         match (tree.child_l.take(), tree.child_r.take()) {
           (Some(_), Some(_)) => unreachable!(),
-          (Some(Box::new(PatriciaTree { data, child_l, child_r, skip_prefix, skip_len })), None) |
-          (None, Some(Box::new(PatriciaTree { data, child_l, child_r, skip_prefix, skip_len }))) => {
+          (Some(box PatriciaTree { data, child_l, child_r, skip_prefix, skip_len }), None) |
+          (None, Some(box PatriciaTree { data, child_l, child_r, skip_prefix, skip_len })) => {
             tree.data = data;
             tree.child_l = child_l;
             tree.child_r = child_r;
@@ -296,8 +296,8 @@ impl<K:BitArray+cmp::Eq+Zero+One+ops::BitXor<K,K>+ops::Shl<usize,K>+ops::Shr<usi
           return (false, ret);
         }
         // One child? Consolidate
-        (bit, Some(Box::new(PatriciaTree { data, child_l, child_r, skip_prefix, skip_len })), None) |
-        (bit, None, Some(Box::new(PatriciaTree { data, child_l, child_r, skip_prefix, skip_len }))) => {
+        (bit, Some(box PatriciaTree { data, child_l, child_r, skip_prefix, skip_len }), None) |
+        (bit, None, Some(box PatriciaTree { data, child_l, child_r, skip_prefix, skip_len })) => {
           tree.data = data;
           tree.child_l = child_l;
           tree.child_r = child_r;

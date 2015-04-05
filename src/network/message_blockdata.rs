@@ -27,11 +27,11 @@ use util::hash::Sha256dHash;
 /// The type of an inventory object
 pub enum InvType {
   /// Error --- these inventories can be ignored
-  InvError,
+  Error,
   /// Transaction
-  InvTransaction,
+  Transaction,
   /// Block
-  InvBlock
+  Block
 }
 
 // Some simple messages
@@ -101,9 +101,9 @@ impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for Inventory {
   #[inline]
   fn consensus_encode(&self, s: &mut S) -> Result<(), E> {
     try!(match self.inv_type {
-      InvError => 0u32, 
-      InvTransaction => 1,
-      InvBlock => 2
+      InvType::Error => 0u32, 
+      InvType::Transaction => 1,
+      InvType::Block => 2
     }.consensus_encode(s));
     self.hash.consensus_encode(s)
   }
@@ -115,9 +115,9 @@ impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for Inventory {
     let int_type: u32 = try!(ConsensusDecodable::consensus_decode(d));
     Ok(Inventory {
       inv_type: match int_type {
-        0 => InvError,
-        1 => InvTransaction,
-        2 => InvBlock,
+        0 => InvType::Error,
+        1 => InvType::Transaction,
+        2 => InvType::Block,
         // TODO do not fail here
         _ => { panic!("bad inventory type field") }
       },

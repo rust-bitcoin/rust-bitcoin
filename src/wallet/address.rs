@@ -22,7 +22,7 @@ use crypto::sha2::Sha256;
 
 use blockdata::script::Script;
 use blockdata::opcodes;
-use network::constants::Network::{self, Bitcoin, BitcoinTestnet};
+use network::constants::Network;
 use util::hash::Ripemd160Hash;
 use util::base58::{self, FromBase58, ToBase58};
 
@@ -89,8 +89,8 @@ impl ToBase58 for Address {
   fn base58_layout(&self) -> Vec<u8> {
     let mut ret = vec![
       match self.network {
-        Bitcoin => 0,
-        BitcoinTestnet => 111
+        Network::Bitcoin => 0,
+        Network::Testnet => 111
       }
     ];
     ret.push_all(self.hash.as_slice());
@@ -106,8 +106,8 @@ impl FromBase58 for Address {
 
     Ok(Address {
       network: match data[0] {
-        0   => Bitcoin,
-        111 => BitcoinTestnet,
+        0   => Network::Bitcoin,
+        111 => Network::Testnet,
         x   => { return Err(base58::Error::InvalidVersion(vec![x])); }
       },
       hash: Ripemd160Hash::from_slice(data.slice_from(1))

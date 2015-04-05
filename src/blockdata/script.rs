@@ -50,11 +50,23 @@ use util::misc::script_find_and_remove;
 /// A Bitcoin script
 pub struct Script(Box<[u8]>);
 
-impl<S: hash::Writer> hash::Hash<S> for Script {
+impl hash::Hash for Script {
   #[inline]
-  fn hash(&self, state: &mut S) {
+  fn hash<H>(&self, state: &mut H)
+    where H: hash::Hasher
+  {
     let &Script(ref raw) = self;
-    (&raw[..]).hash(state)
+    (&raw[..]).hash(state);
+  }
+
+  #[inline]
+  fn hash_slice<H>(data: &[Script], state: &mut H)
+    where H: hash::Hasher
+  {
+    for s in data.iter() {
+      let &Script(ref raw) = s;
+      (&raw[..]).hash(state);
+    }
   }
 }
 
@@ -1293,7 +1305,7 @@ impl<'a> ops::Index<ops::Range<usize>> for MaybeOwned<'a> {
   type Output = [u8];
 
   #[inline]
-  fn index(&self, index: Range<usize>) -> &[u8] {
+  fn index(&self, index: ops::Range<usize>) -> &[u8] {
     match *self {
       MaybeOwned::Owned(ref v) => &v[index],
       MaybeOwned::Borrowed(ref s) => &s[index]
@@ -1305,7 +1317,7 @@ impl<'a> ops::Index<ops::RangeTo<usize>> for MaybeOwned<'a> {
   type Output = [u8];
 
   #[inline]
-  fn index(&self, index: RangeTo<usize>) -> &[u8] {
+  fn index(&self, index: ops::RangeTo<usize>) -> &[u8] {
     match *self {
       MaybeOwned::Owned(ref v) => &v[index],
       MaybeOwned::Borrowed(ref s) => &s[index]
@@ -1317,7 +1329,7 @@ impl<'a> ops::Index<ops::RangeFrom<usize>> for MaybeOwned<'a> {
   type Output = [u8];
 
   #[inline]
-  fn index(&self, index: RangeFrom<usize>) -> &[u8] {
+  fn index(&self, index: ops::RangeFrom<usize>) -> &[u8] {
     match *self {
       MaybeOwned::Owned(ref v) => &v[index],
       MaybeOwned::Borrowed(ref s) => &s[index]
@@ -1325,11 +1337,11 @@ impl<'a> ops::Index<ops::RangeFrom<usize>> for MaybeOwned<'a> {
   }
 }
 
-impl<'a> ops::Index<ops::RangeAll<usize>> for MaybeOwned<'a> {
+impl<'a> ops::Index<ops::RangeFull<usize>> for MaybeOwned<'a> {
   type Output = [u8];
 
   #[inline]
-  fn index(&self, _: RangeAll<usize>) -> &[u8] {
+  fn index(&self, _: ops::RangeFull<usize>) -> &[u8] {
     match *self {
       MaybeOwned::Owned(ref v) => &v[..],
       MaybeOwned::Borrowed(ref s) => &s[..]
@@ -1833,7 +1845,7 @@ impl Script {
         // If-statements take effect when not executing
         (false, opcodes::Class::Ordinary(opcodes::Ordinary::OP_IF)) => exec_stack.push(false),
         (false, opcodes::Class::Ordinary(opcodes::Ordinary::OP_NOTIF)) => exec_stack.push(false),
-        (false, opcodes::Ordinary(opcodes::Ordinary::OP_ELSE)) => {
+        (false, opcodes::Class::Ordinary(opcodes::Ordinary::OP_ELSE)) => {
           match exec_stack.last_mut() {
             Some(ref_e) => { *ref_e = !*ref_e }
             None => { return Err(Error::ElseWithoutIf); }

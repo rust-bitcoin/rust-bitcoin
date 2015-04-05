@@ -29,7 +29,7 @@ use crypto::sha2::Sha512;
 use secp256k1::key::{PublicKey, SecretKey};
 use secp256k1;
 
-use network::constants::Network::{self, Bitcoin, BitcoinTestnet};
+use network::constants::Network;
 use util::base58;
 use util::base58::{FromBase58, ToBase58};
 
@@ -288,8 +288,8 @@ impl ToBase58 for ExtendedPrivKey {
   fn base58_layout(&self) -> Vec<u8> { 
     let mut ret = Vec::with_capacity(78);
     ret.push_all(match self.network {
-      Bitcoin => [0x04, 0x88, 0xAD, 0xE4],
-      BitcoinTestnet => [0x04, 0x35, 0x83, 0x94]
+      Network::Bitcoin => [0x04, 0x88, 0xAD, 0xE4],
+      Network::Testnet => [0x04, 0x35, 0x83, 0x94]
     });
     ret.push(self.depth as u8);
     ret.push_all(self.parent_fingerprint.as_slice());
@@ -320,8 +320,8 @@ impl FromBase58 for ExtendedPrivKey {
 
     Ok(ExtendedPrivKey {
       network: match data.slice_to(4) {
-        [0x04, 0x88, 0xAD, 0xE4] => Bitcoin,
-        [0x04, 0x35, 0x83, 0x94] => BitcoinTestnet,
+        [0x04, 0x88, 0xAD, 0xE4] => Network::Bitcoin,
+        [0x04, 0x35, 0x83, 0x94] => Network::Testnet,
         _ => { return Err(base58::Error::InvalidVersion(data.slice_to(4).to_vec())); }
       },
       depth: data[4],
@@ -340,8 +340,8 @@ impl ToBase58 for ExtendedPubKey {
     assert!(self.public_key.is_compressed());
     let mut ret = Vec::with_capacity(78);
     ret.push_all(match self.network {
-      Bitcoin => [0x04, 0x88, 0xB2, 0x1E],
-      BitcoinTestnet => [0x04, 0x35, 0x87, 0xCF]
+      Network::Bitcoin => [0x04, 0x88, 0xB2, 0x1E],
+      Network::Testnet => [0x04, 0x35, 0x87, 0xCF]
     });
     ret.push(self.depth as u8);
     ret.push_all(self.parent_fingerprint.as_slice());
@@ -371,8 +371,8 @@ impl FromBase58 for ExtendedPubKey {
 
     Ok(ExtendedPubKey {
       network: match data.slice_to(4) {
-        [0x04, 0x88, 0xB2, 0x1E] => Bitcoin,
-        [0x04, 0x35, 0x87, 0xCF] => BitcoinTestnet,
+        [0x04, 0x88, 0xB2, 0x1E] => Network::Bitcoin,
+        [0x04, 0x35, 0x87, 0xCF] => Network::Testnet,
         _ => { return Err(base58::Error::InvalidVersion(data.slice_to(4).to_vec())); }
       },
       depth: data[4],

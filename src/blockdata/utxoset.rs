@@ -21,6 +21,7 @@
 use std::cmp;
 use std::collections::HashMap;
 use std::collections::hash::map::Iter;
+use std::hash::SipHasher;
 use std::default::Default;
 use std::mem;
 use num_cpus;
@@ -31,7 +32,7 @@ use blockdata::constants::genesis_block;
 use blockdata::block::Block;
 use network::constants::Network;
 use network::serialize::BitcoinHash;
-use util::hash::{DumbHasher, Sha256dHash};
+use util::hash::Sha256dHash;
 
 /// The amount of validation to do when updating the UTXO set
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]
@@ -101,7 +102,7 @@ impl<'a> Iterator<(Sha256dHash, u32, &'a TxOut, u32)> for UtxoIterator<'a> {
 
 /// The UTXO set
 pub struct UtxoSet {
-  table: HashMap<Sha256dHash, UtxoNode, DumbHasher>,
+  table: HashMap<Sha256dHash, UtxoNode, SipHasher>,
   last_hash: Sha256dHash,
   // A circular buffer of deleted utxos, grouped by block
   spent_txos: Vec<Vec<((Sha256dHash, u32), (u32, TxOut))>>,
@@ -121,7 +122,7 @@ impl UtxoSet {
     // must follow suit, otherwise we will accept a transaction spending it
     // while the reference client won't, causing us to fork off the network.
     UtxoSet {
-      table: HashMap::with_hasher(DumbHasher),
+      table: HashMap::with_hasher(SipHasher::new()),
       last_hash: genesis_block(network).header.bitcoin_hash(),
       spent_txos: Vec::from_elem(rewind_limit, vec![]),
       spent_idx: 0,

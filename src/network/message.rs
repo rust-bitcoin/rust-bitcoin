@@ -20,7 +20,9 @@
 //!
 
 use collections::Vec;
+use std::iter;
 use std::io::{self, Cursor};
+use std::sync::mpsc::Sender;
 
 use blockdata::block;
 use blockdata::transaction;
@@ -50,7 +52,7 @@ impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for CommandString {
   #[inline]
   fn consensus_decode(d: &mut D) -> Result<CommandString, E> {
     let rawbytes: [u8; 12] = try!(ConsensusDecodable::consensus_decode(d)); 
-    let rv = FromIterator::from_iter(rawbytes.iter().filter_map(|&u| if u > 0 { Some(u as char) } else { None }));
+    let rv = iter::FromIterator::from_iter(rawbytes.iter().filter_map(|&u| if u > 0 { Some(u as char) } else { None }));
     Ok(CommandString(rv))
   }
 }
