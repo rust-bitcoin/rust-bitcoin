@@ -28,7 +28,7 @@ pub struct Address {
   /// Services provided by the peer whose address this is
   pub services: u64,
   /// Network byte-order ipv6 address, or ipv4-mapped ipv6 address
-  pub address: [u8; 16],
+  pub address: [u16; 8],
   /// Network port
   pub port: u16
 }

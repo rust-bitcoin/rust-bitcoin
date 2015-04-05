@@ -20,7 +20,7 @@
 //!
 
 use collections::Vec;
-use std::io::{self, Cursor};
+use std::io::{self, Cursor, Read, Write};
 use serialize::hex::ToHex;
 
 use network::encodable::{ConsensusDecodable, ConsensusEncodable};
@@ -39,14 +39,14 @@ impl BitcoinHash for Vec<u8> {
 }
 
 /// Encode an object into a vector
-pub fn serialize<T: ConsensusEncodable<RawEncoder<MemWriter>, io::Error>>(obj: &T) -> io::Result<Vec<u8>> {
-  let mut encoder = RawEncoder::new(MemWriter::new());
+pub fn serialize<T: ConsensusEncodable<RawEncoder<Cursor>, io::Error>>(obj: &T) -> io::Result<Vec<u8>> {
+  let mut encoder = RawEncoder::new(Cursor::new(vec![]));
   try!(obj.consensus_encode(&mut encoder));
   Ok(encoder.unwrap().unwrap())
 }
 
 /// Encode an object into a hex-encoded string
-pub fn serialize_hex<T: ConsensusEncodable<RawEncoder<MemWriter>, io::Error>>(obj: &T) -> io::Result<String> {
+pub fn serialize_hex<T: ConsensusEncodable<RawEncoder<Cursor>, io::Error>>(obj: &T) -> io::Result<String> {
   let serial = try!(serialize(obj));
   Ok(serial.as_slice().to_hex())
 }
@@ -67,7 +67,7 @@ pub struct RawDecoder<R> {
   reader: R
 }
 
-impl<W:Writer> RawEncoder<W> {
+impl<W:Write> RawEncoder<W> {
   /// Constructor
   pub fn new(writer: W) -> RawEncoder<W> {
     RawEncoder { writer: writer }
@@ -79,7 +79,7 @@ impl<W:Writer> RawEncoder<W> {
   }
 }
 
-impl<R:Reader> RawDecoder<R> {
+impl<R:Read> RawDecoder<R> {
   /// Constructor
   pub fn new(reader: R) -> RawDecoder<R> {
     RawDecoder { reader: reader }
@@ -144,7 +144,7 @@ pub trait SimpleDecoder<E> {
 
 // TODO: trait reform: impl SimpleEncoder for every Encoder, ditto for Decoder
 
-impl<W:Writer> SimpleEncoder<io::Error> for RawEncoder<W> {
+impl<W:Write> SimpleEncoder<io::Error> for RawEncoder<W> {
   #[inline]
   fn emit_u64(&mut self, v: u64) -> io::Result<()> { self.writer.write_le_u64(v) }
   #[inline]
@@ -167,7 +167,7 @@ impl<W:Writer> SimpleEncoder<io::Error> for RawEncoder<W> {
   fn emit_bool(&mut self, v: bool) -> io::Result<()> { self.writer.write_i8(if v {1} else {0}) }
 }
 
-impl<R:Reader> SimpleDecoder<io::Error> for RawDecoder<R> {
+impl<R:Read> SimpleDecoder<io::Error> for RawDecoder<R> {
   #[inline]
   fn read_u64(&mut self) -> io::Result<u64> { self.reader.read_le_u64() }
   #[inline]

@@ -30,8 +30,7 @@ use secp256k1::key::{PublicKey, SecretKey};
 use secp256k1;
 
 use network::constants::Network::{self, Bitcoin, BitcoinTestnet};
-use util::base58::Base58Error::{self, InvalidLength, InvalidVersion,
-                                OtherBase58Error};
+use util::base58;
 use util::base58::{FromBase58, ToBase58};
 
 /// A chain code
@@ -310,9 +309,9 @@ impl ToBase58 for ExtendedPrivKey {
 }
 
 impl FromBase58 for ExtendedPrivKey {
-  fn from_base58_layout(data: Vec<u8>) -> Result<ExtendedPrivKey, Base58Error> {
+  fn from_base58_layout(data: Vec<u8>) -> Result<ExtendedPrivKey, base58::Error> {
     if data.len() != 78 {
-      return Err(InvalidLength(data.len()));
+      return Err(base58::Error::InvalidLength(data.len()));
     }
 
     let cn_int = BigEndian::read_u32(&data[9..13]);
@@ -323,7 +322,7 @@ impl FromBase58 for ExtendedPrivKey {
       network: match data.slice_to(4) {
         [0x04, 0x88, 0xAD, 0xE4] => Bitcoin,
         [0x04, 0x35, 0x83, 0x94] => BitcoinTestnet,
-        _ => { return Err(InvalidVersion(data.slice_to(4).to_vec())); }
+        _ => { return Err(base58::Error::InvalidVersion(data.slice_to(4).to_vec())); }
       },
       depth: data[4],
       parent_fingerprint: Fingerprint::from_slice(data.slice(5, 9)),
@@ -331,7 +330,7 @@ impl FromBase58 for ExtendedPrivKey {
       chain_code: ChainCode::from_slice(data.slice(13, 45)),
       secret_key: try!(SecretKey::from_slice(
                          data.slice(46, 78)).map_err(|e|
-                           OtherBase58Error(e.to_string())))
+                           base58::Error::Other(e.to_string())))
     })
   }
 }
@@ -361,9 +360,9 @@ impl ToBase58 for ExtendedPubKey {
 }
 
 impl FromBase58 for ExtendedPubKey {
-  fn from_base58_layout(data: Vec<u8>) -> Result<ExtendedPubKey, Base58Error> {
+  fn from_base58_layout(data: Vec<u8>) -> Result<ExtendedPubKey, base58::Error> {
     if data.len() != 78 {
-      return Err(InvalidLength(data.len()));
+      return Err(base58::Error::InvalidLength(data.len()));
     }
 
     let cn_int = BigEndian::read_u32(&data[9..13]);
@@ -374,7 +373,7 @@ impl FromBase58 for ExtendedPubKey {
       network: match data.slice_to(4) {
         [0x04, 0x88, 0xB2, 0x1E] => Bitcoin,
         [0x04, 0x35, 0x87, 0xCF] => BitcoinTestnet,
-        _ => { return Err(InvalidVersion(data.slice_to(4).to_vec())); }
+        _ => { return Err(base58::Error::InvalidVersion(data.slice_to(4).to_vec())); }
       },
       depth: data[4],
       parent_fingerprint: Fingerprint::from_slice(data.slice(5, 9)),
@@ -382,7 +381,7 @@ impl FromBase58 for ExtendedPubKey {
       chain_code: ChainCode::from_slice(data.slice(13, 45)),
       public_key: try!(PublicKey::from_slice(
                          data.slice(45, 78)).map_err(|e|
-                           OtherBase58Error(e.to_string())))
+                           base58::Error::Other(e.to_string())))
     })
   }
 }

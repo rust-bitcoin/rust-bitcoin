@@ -107,7 +107,7 @@ macro_rules! user_enum {
     impl <D: ::serialize::Decoder<E>, E> ::serialize::Decodable<D, E> for $name {
       fn decode(d: &mut D) -> Result<$name, E> {
         let s = try!(d.read_str());
-        $( if s.as_slice() == $txt { Ok($elem) } )else*
+        $( if s.as_slice() == $txt { Ok($name::$elem) } )else*
         else { Err(d.error(format!("unknown `{}`", s).as_slice())) }
       }
     }

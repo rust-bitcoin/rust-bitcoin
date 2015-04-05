@@ -114,19 +114,19 @@ pub enum NetworkMessage {
 impl RawNetworkMessage {
   fn command(&self) -> String {
     match self.payload {
-      Version(_) => "version",
-      Verack     => "verack",
-      Addr(_)    => "addr",
-      Inv(_)     => "inv",
-      GetData(_) => "getdata",
-      NotFound(_) => "notfound",
-      GetBlocks(_) => "getblocks",
-      GetHeaders(_) => "getheaders",
-      Tx(_)      => "tx",
-      Block(_)   => "block",
-      Headers(_) => "headers",
-      Ping(_)    => "ping",
-      Pong(_)    => "pong",
+      NetworkMessage::Version(_) => "version",
+      NetworkMessage::Verack     => "verack",
+      NetworkMessage::Addr(_)    => "addr",
+      NetworkMessage::Inv(_)     => "inv",
+      NetworkMessage::GetData(_) => "getdata",
+      NetworkMessage::NotFound(_) => "notfound",
+      NetworkMessage::GetBlocks(_) => "getblocks",
+      NetworkMessage::GetHeaders(_) => "getheaders",
+      NetworkMessage::Tx(_)      => "tx",
+      NetworkMessage::Block(_)   => "block",
+      NetworkMessage::Headers(_) => "headers",
+      NetworkMessage::Ping(_)    => "ping",
+      NetworkMessage::Pong(_)    => "pong",
     }.to_string()
   }
 }
@@ -136,19 +136,19 @@ impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for RawNetworkMessage {
     try!(self.magic.consensus_encode(s));
     try!(CommandString(self.command()).consensus_encode(s));
     try!(CheckedData(match self.payload {
-      Version(ref dat) => serialize(dat),
-      Verack           => Ok(vec![]),
-      Addr(ref dat)    => serialize(dat),
-      Inv(ref dat)     => serialize(dat),
-      GetData(ref dat) => serialize(dat),
-      NotFound(ref dat) => serialize(dat),
-      GetBlocks(ref dat) => serialize(dat),
-      GetHeaders(ref dat) => serialize(dat),
-      Tx(ref dat)      => serialize(dat),
-      Block(ref dat)   => serialize(dat),
-      Headers(ref dat) => serialize(dat),
-      Ping(ref dat)    => serialize(dat),
-      Pong(ref dat)    => serialize(dat),
+      NetworkMessage::Version(ref dat) => serialize(dat),
+      NetworkMessage::Verack           => Ok(vec![]),
+      NetworkMessage::Addr(ref dat)    => serialize(dat),
+      NetworkMessage::Inv(ref dat)     => serialize(dat),
+      NetworkMessage::GetData(ref dat) => serialize(dat),
+      NetworkMessage::NotFound(ref dat) => serialize(dat),
+      NetworkMessage::GetBlocks(ref dat) => serialize(dat),
+      NetworkMessage::GetHeaders(ref dat) => serialize(dat),
+      NetworkMessage::Tx(ref dat)      => serialize(dat),
+      NetworkMessage::Block(ref dat)   => serialize(dat),
+      NetworkMessage::Headers(ref dat) => serialize(dat),
+      NetworkMessage::Ping(ref dat)    => serialize(dat),
+      NetworkMessage::Pong(ref dat)    => serialize(dat),
     }.unwrap()).consensus_encode(s));
     Ok(())
   }
@@ -162,19 +162,19 @@ impl<D:SimpleDecoder<io::Error>> ConsensusDecodable<D, io::Error> for RawNetwork
 
     let mut mem_d = RawDecoder::new(Cursor::new(raw_payload));
     let payload = match cmd.as_slice() {
-      "version" => Version(try!(prepend_err("version", ConsensusDecodable::consensus_decode(&mut mem_d)))),
-      "verack"  => Verack,
-      "addr"    => Addr(try!(prepend_err("addr", ConsensusDecodable::consensus_decode(&mut mem_d)))),
-      "inv"     => Inv(try!(prepend_err("inv", ConsensusDecodable::consensus_decode(&mut mem_d)))),
-      "getdata" => GetData(try!(prepend_err("getdata", ConsensusDecodable::consensus_decode(&mut mem_d)))),
-      "notfound" => NotFound(try!(prepend_err("notfound", ConsensusDecodable::consensus_decode(&mut mem_d)))),
-      "getblocks" => GetBlocks(try!(prepend_err("getblocks", ConsensusDecodable::consensus_decode(&mut mem_d)))),
-      "getheaders" => GetHeaders(try!(prepend_err("getheaders", ConsensusDecodable::consensus_decode(&mut mem_d)))),
-      "block"   => Block(try!(prepend_err("block", ConsensusDecodable::consensus_decode(&mut mem_d)))),
-      "headers" => Headers(try!(prepend_err("headers", ConsensusDecodable::consensus_decode(&mut mem_d)))),
-      "ping"    => Ping(try!(prepend_err("ping", ConsensusDecodable::consensus_decode(&mut mem_d)))),
-      "pong"    => Ping(try!(prepend_err("pong", ConsensusDecodable::consensus_decode(&mut mem_d)))),
-      "tx"      => Tx(try!(prepend_err("tx", ConsensusDecodable::consensus_decode(&mut mem_d)))),
+      "version" => NetworkMessage::Version(try!(prepend_err("version", ConsensusDecodable::consensus_decode(&mut mem_d)))),
+      "verack"  => NetworkMessage::Verack,
+      "addr"    => NetworkMessage::Addr(try!(prepend_err("addr", ConsensusDecodable::consensus_decode(&mut mem_d)))),
+      "inv"     => NetworkMessage::Inv(try!(prepend_err("inv", ConsensusDecodable::consensus_decode(&mut mem_d)))),
+      "getdata" => NetworkMessage::GetData(try!(prepend_err("getdata", ConsensusDecodable::consensus_decode(&mut mem_d)))),
+      "notfound" => NetworkMessage::NotFound(try!(prepend_err("notfound", ConsensusDecodable::consensus_decode(&mut mem_d)))),
+      "getblocks" => NetworkMessage::GetBlocks(try!(prepend_err("getblocks", ConsensusDecodable::consensus_decode(&mut mem_d)))),
+      "getheaders" => NetworkMessage::GetHeaders(try!(prepend_err("getheaders", ConsensusDecodable::consensus_decode(&mut mem_d)))),
+      "block"   => NetworkMessage::Block(try!(prepend_err("block", ConsensusDecodable::consensus_decode(&mut mem_d)))),
+      "headers" => NetworkMessage::Headers(try!(prepend_err("headers", ConsensusDecodable::consensus_decode(&mut mem_d)))),
+      "ping"    => NetworkMessage::Ping(try!(prepend_err("ping", ConsensusDecodable::consensus_decode(&mut mem_d)))),
+      "pong"    => NetworkMessage::Ping(try!(prepend_err("pong", ConsensusDecodable::consensus_decode(&mut mem_d)))),
+      "tx"      => NetworkMessage::Tx(try!(prepend_err("tx", ConsensusDecodable::consensus_decode(&mut mem_d)))),
       cmd => {
         return Err(io::Error {
                      kind: io::ErrorKind::OtherError,

@@ -22,7 +22,7 @@ use util::hash::Sha256dHash;
 
 /// An error that might occur during base58 decoding
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub enum Base58Error {
+pub enum Error {
   /// Invalid character encountered
   BadByte(u8),
   /// Checksum was not correct (expected, actual)
@@ -34,7 +34,7 @@ pub enum Base58Error {
   /// Checked data was less than 4 bytes
   TooShort(usize),
   /// Any other error
-  OtherBase58Error(String)
+  Other(String)
 }
 
 static BASE58_CHARS: &'static [u8] = b"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
@@ -62,21 +62,21 @@ static BASE58_DIGITS: [Option<u8>; 128] = [
 pub trait FromBase58 {
   /// Constructs an object flrom the byte-encoding (base 256)
   /// representation of its base58 format
-  fn from_base58_layout(data: Vec<u8>) -> Result<Self, Base58Error>;
+  fn from_base58_layout(data: Vec<u8>) -> Result<Self, Error>;
 
   /// Obtain an object from its base58 encoding
-  fn from_base58(data: &str) -> Result<Self, Base58Error> {
+  fn from_base58(data: &str) -> Result<Self, Error> {
     // 11/15 is just over log_256(58)
     let mut scratch = Vec::from_elem(1 + data.len() * 11 / 15, 0u8);
     // Build in base 256
     for d58 in data.bytes() {
       // Compute "X = X * 58 + next_digit" in base 256
       if d58 as usize > BASE58_DIGITS.len() {
-        return Err(BadByte(d58));
+        return Err(Error::BadByte(d58));
       }
       let mut carry = match BASE58_DIGITS[d58 as usize] {
         Some(d58) => d58 as u32,
-        None => { return Err(BadByte(d58)); }
+        None => { return Err(Error::BadByte(d58)); }
       };
       for d256 in scratch.iter_mut().rev() {
         carry += *d256 as u32 * 58;
@@ -96,16 +96,16 @@ pub trait FromBase58 {
   }
 
   /// Obtain an object from its base58check encoding
-  fn from_base58check(data: &str) -> Result<Self, Base58Error> {
+  fn from_base58check(data: &str) -> Result<Self, Error> {
     let mut ret: Vec<u8> = try!(FromBase58::from_base58(data));
     if ret.len() < 4 {
-      return Err(TooShort(ret.len()));
+      return Err(Error::TooShort(ret.len()));
     }
     let ck_start = ret.len() - 4;
     let expected = Sha256dHash::from_data(ret.slice_to(ck_start)).into_le().low_u32();
     let actual = LittleEndian::read_u32(&ret[ck_start..(ck_start + 4)]);
     if expected != actual {
-      return Err(BadChecksum(expected, actual));
+      return Err(Error::BadChecksum(expected, actual));
     }
 
     ret.truncate(ck_start);
@@ -174,7 +174,7 @@ impl ToBase58 for Vec<u8> {
 }
 
 impl FromBase58 for Vec<u8> {
-  fn from_base58_layout(data: Vec<u8>) -> Result<Vec<u8>, Base58Error> {
+  fn from_base58_layout(data: Vec<u8>) -> Result<Vec<u8>, Error> {
     Ok(data)
   }
 }

@@ -20,10 +20,10 @@
 //! strings; a Patricia tree uses bitstrings.
 //!
 
-use core::fmt::Debug;
-use core::cmp;
+use std::fmt::Debug;
 use std::marker;
 use std::num::{Zero, One};
+use std::{cmp, ops, ptr};
 
 use network::encodable::{ConsensusDecodable, ConsensusEncodable};
 use network::serialize::{SimpleDecoder, SimpleEncoder};
@@ -38,7 +38,7 @@ pub struct PatriciaTree<K, V> {
   skip_len: u8
 }
 
-impl<K:BitArray+Eq+Zero+One+BitXor<K,K>+Shl<usize,K>+Shr<usize,K>, V> PatriciaTree<K, V> {
+impl<K:BitArray+cmp::Eq+Zero+One+ops::BitXor<K,K>+ops::Shl<usize,K>+ops::Shr<usize,K>, V> PatriciaTree<K, V> {
   /// Constructs a new Patricia tree
   pub fn new() -> PatriciaTree<K, V> {
     PatriciaTree {
@@ -214,7 +214,7 @@ impl<K:BitArray+Eq+Zero+One+BitXor<K,K>+Shl<usize,K>+Shr<usize,K>, V> PatriciaTr
   pub fn delete(&mut self, key: &K, key_len: usize) -> Option<V> {
     /// Return value is (deletable, actual return value), where `deletable` is true
     /// is true when the entire node can be deleted (i.e. it has no children)
-    fn recurse<K:BitArray+Eq+Zero+One+Add<K,K>+Shr<usize,K>+Shl<usize,K>, V>(tree: &mut PatriciaTree<K, V>, key: &K, key_len: usize) -> (bool, Option<V>) {
+    fn recurse<K:BitArray+cmp::Eq+Zero+One+ops::Add<K,K>+ops::Shr<usize,K>+ops::Shl<usize,K>, V>(tree: &mut PatriciaTree<K, V>, key: &K, key_len: usize) -> (bool, Option<V>) {
       // If the search key is shorter than the node prefix, there is no
       // way we can match, so fail.
       if key_len < tree.skip_len as usize {
@@ -346,7 +346,7 @@ impl<K:BitArray+Eq+Zero+One+BitXor<K,K>+Shl<usize,K>+Shr<usize,K>, V> PatriciaTr
       node: self as *mut _,
       parents: vec![],
       started: false,
-      marker: marker::ContravariantLifetime::<'a>
+      marker: marker::PhantomData
     }
   }
 }
@@ -355,14 +355,14 @@ impl<K:BitArray, V:Debug> PatriciaTree<K, V> {
   /// Print the entire tree
   pub fn print<'a>(&'a self) {
     fn recurse<'a, K:BitArray, V:Debug>(tree: &'a PatriciaTree<K, V>, depth: usize) {
-      for i in range(0, tree.skip_len as usize) {
+      for i in 0..tree.skip_len as usize {
         print!("{:}", if tree.skip_prefix.bit(i) { 1 } else { 0 });
       }
       println!(": {:}", tree.data);
       // left gets no indentation
       match tree.child_l {
         Some(ref t) => {
-          for _ in range(0, depth + tree.skip_len as usize) {
+          for _ in 0..(depth + tree.skip_len as usize) {
             print!("-");
           }
           print!("0");
@@ -373,7 +373,7 @@ impl<K:BitArray, V:Debug> PatriciaTree<K, V> {
       // right one gets indentation
       match tree.child_r {
         Some(ref t) => {
-          for _ in range(0, depth + tree.skip_len as usize) {
+          for _ in 0..(depth + tree.skip_len as usize) {
             print!("_");
           }
           print!("1");
@@ -422,7 +422,7 @@ pub struct MutItems<'tree, K, V> {
   started: bool,
   node: *mut PatriciaTree<K, V>,
   parents: Vec<*mut PatriciaTree<K, V>>,
-  marker: marker::ContravariantLifetime<'tree>
+  marker: marker::PhantomData<&'tree PatriciaTree<K, V>>
 }
 
 impl<'a, K, V> Iterator<&'a V> for Items<'a, K, V> {
@@ -474,7 +474,7 @@ impl<'a, K, V> Iterator<&'a mut V> for MutItems<'a, K, V> {
     fn borrow_opt<'a, K, V>(opt_ptr: &'a Option<Box<PatriciaTree<K, V>>>) -> *mut PatriciaTree<K, V> {
       match *opt_ptr {
         Some(ref data) => &**data as *const _ as *mut _,
-        None => RawPtr::null()
+        None => ptr::null()
       }
     }
 
@@ -504,7 +504,7 @@ impl<'a, K, V> Iterator<&'a mut V> for MutItems<'a, K, V> {
             self.node = child_r;
             break;
           }
-          self.node = self.parents.pop().unwrap_or(RawPtr::null());
+          self.node = self.parents.pop().unwrap_or(ptr::null());
         }
       }
       // Stop if we've found data.
@@ -552,7 +552,7 @@ mod tests {
   fn patricia_insert_lookup_delete_test() {
     let mut tree = PatriciaTree::new();
     let mut hashes = vec![];
-    for i in range(0u32, 5000) {
+    for i in 0u32..5000 {
       let hash = Sha256dHash::from_data(&[(i / 0x100) as u8, (i % 0x100) as u8]).into_le().low_128();
       tree.insert(&hash, 250, i);
       hashes.push(hash);
@@ -593,21 +593,21 @@ mod tests {
     let mut tree = PatriciaTree::new();
     let mut hashes = vec![];
     // Start by inserting a bunch of chunder
-    for i in range(1u32, 500) {
+    for i in 1u32..500 {
       let hash = Sha256dHash::from_data(&[(i / 0x100) as u8, (i % 0x100) as u8]).into_le().low_128();
       tree.insert(&hash, 128, i * 1000);
       hashes.push(hash);
     }
     // Do the actual test -- note that we also test insertion and deletion
     // at the root here.
-    for i in range(0u32, 10) {
+    for i in 0u32..10 {
       tree.insert(&Zero::zero(), i as usize, i);
     }
-    for i in range(0u32, 10) {
+    for i in 0u32..10 {
       let m = tree.lookup(&Zero::zero(), i as usize);
       assert_eq!(m, Some(&i));
     }
-    for i in range(0u32, 10) {
+    for i in 0u32..10 {
       let m = tree.delete(&Zero::zero(), i as usize);
       assert_eq!(m, Some(i));
     }
@@ -625,7 +625,7 @@ mod tests {
     let mut tree = PatriciaTree::new();
     let mut data = Vec::from_elem(n_elems, None);
     // Start by inserting a bunch of stuff
-    for i in range(0, n_elems) {
+    for i in 0..n_elems {
       let hash = Sha256dHash::from_data(&[(i / 0x100) as u8, (i % 0x100) as u8]).into_le().low_128();
       tree.insert(&hash, 128, i);
       *data.get_mut(i) = Some(());
@@ -647,7 +647,7 @@ mod tests {
     let mut tree = PatriciaTree::new();
     let mut data = Vec::from_elem(n_elems, None);
     // Start by inserting a bunch of stuff
-    for i in range(0, n_elems) {
+    for i in 0..n_elems {
       let hash = Sha256dHash::from_data(&[(i / 0x100) as u8, (i % 0x100) as u8]).into_le().low_128();
       tree.insert(&hash, 128, i);
       *data.get_mut(i) = Some(());
@@ -673,7 +673,7 @@ mod tests {
     // Build a tree
     let mut tree = PatriciaTree::new();
     let mut hashes = vec![];
-    for i in range(0u32, 5000) {
+    for i in 0u32..5000 {
       let hash = Sha256dHash::from_data(&[(i / 0x100) as u8, (i % 0x100) as u8]).into_le().low_128();
       tree.insert(&hash, 250, i);
       hashes.push(hash);

@@ -27,7 +27,7 @@ use std::default::Default;
 use serialize::json;
 
 use util::hash::Sha256dHash;
-use blockdata::script::{self, Script, ScriptError, ScriptTrace, read_scriptbool};
+use blockdata::script::{self, Script, ScriptTrace, read_scriptbool};
 use blockdata::utxoset::UtxoSet;
 use network::encodable::ConsensusEncodable;
 use network::serialize::BitcoinHash;
@@ -81,9 +81,9 @@ impl TxOut {
     if self.script_pubkey.len() == 25 &&
        self.script_pubkey.slice_to(3) == &[0x76, 0xa9, 0x14] &&
        self.script_pubkey.slice_from(23) == &[0x88, 0xac] {
-      PayToPubkeyHash(self.script_pubkey.slice(3, 23).to_address(network))
+      ScriptPubkeyTemplate::PayToPubkeyHash(self.script_pubkey.slice(3, 23).to_address(network))
     } else {
-      Unknown
+      ScriptPubkeyTemplate::Unknown
     }
   }
 }
@@ -104,13 +104,13 @@ pub struct Transaction {
 
 /// A transaction error
 #[derive(PartialEq, Eq, Clone, Debug)]
-pub enum TransactionError {
+pub enum Error {
   /// Concatenated script failed in the input half (script error)
-  InputScriptFailure(ScriptError),
+  InputScriptFailure(script::Error),
   /// Concatenated script failed in the output half (script error)
-  OutputScriptFailure(ScriptError),
+  OutputScriptFailure(script::Error),
   /// P2SH serialized script failed (script error)
-  P2shScriptFailure(ScriptError),
+  P2shScriptFailure(script::Error),
   /// P2SH serialized script ended with false at the top of the stack 
   P2shScriptReturnedFalse,
   /// P2SH serialized script ended with nothing in the stack
@@ -123,7 +123,7 @@ pub enum TransactionError {
   InputNotFound(Sha256dHash, u32),
 }
 
-impl json::ToJson for TransactionError {
+impl json::ToJson for Error {
   fn to_json(&self) -> json::Json {
     json::String(self.to_string())
   }
@@ -137,7 +137,7 @@ pub struct InputTrace {
   sig_trace: ScriptTrace,
   pubkey_trace: Option<ScriptTrace>,
   p2sh_trace: Option<ScriptTrace>,
-  error: Option<TransactionError>
+  error: Option<Error>
 }
 
 impl_json!(ScriptTrace, script, initial_stack, iterations, error);
@@ -158,7 +158,7 @@ impl TxIn {
   pub fn validate(&self,
                   utxoset: &UtxoSet,
                   txn: &Transaction,
-                  index: usize) -> Result<(), TransactionError> {
+                  index: usize) -> Result<(), Error> {
     let txo = utxoset.get_utxo(self.prev_hash, self.prev_index);
     match txo {
       Some((_, txo)) => {
@@ -168,7 +168,7 @@ impl TxIn {
         let mut stack = Vec::with_capacity(6);
         match self.script_sig.evaluate(&mut stack, Some((txn, index)), None) {
           Ok(_) => {}
-          Err(e) => { return Err(InputScriptFailure(e)); }
+          Err(e) => { return Err(Error::InputScriptFailure(e)); }
         }
         if txo.script_pubkey.is_p2sh() && stack.len() > 0 {
           p2sh_stack = stack.clone();
@@ -180,32 +180,32 @@ impl TxIn {
         }
         match txo.script_pubkey.evaluate(&mut stack, Some((txn, index)), None) {
           Ok(_) => {}
-          Err(e) => { return Err(OutputScriptFailure(e)); }
+          Err(e) => { return Err(Error::OutputScriptFailure(e)); }
         }
         match stack.pop() {
           Some(v) => {
             if !read_scriptbool(v.as_slice()) {
-              return Err(ScriptReturnedFalse);
+              return Err(Error::ScriptReturnedFalse);
             }
            }
-          None => { return Err(ScriptReturnedEmptyStack); }
+          None => { return Err(Error::ScriptReturnedEmptyStack); }
         }
         if txo.script_pubkey.is_p2sh() {
           match p2sh_script.evaluate(&mut p2sh_stack, Some((txn, index)), None) {
             Ok(_) => {}
-            Err(e) => { return Err(P2shScriptFailure(e)); }
+            Err(e) => { return Err(Error::P2shScriptFailure(e)); }
           }
           match p2sh_stack.pop() {
             Some(v) => {
               if !read_scriptbool(v.as_slice()) {
-                return Err(P2shScriptReturnedFalse);
+                return Err(Error::P2shScriptReturnedFalse);
               }
             }
-            None => { return Err(P2shScriptReturnedEmptyStack); }
+            None => { return Err(Error::P2shScriptReturnedEmptyStack); }
           }
         }
       }
-      None => { return Err(InputNotFound(self.prev_hash, self.prev_index)); }
+      None => { return Err(Error::InputNotFound(self.prev_hash, self.prev_index)); }
     }
     Ok(())
   }
@@ -213,7 +213,7 @@ impl TxIn {
 
 impl Transaction {
   /// Check a transaction for validity
-  pub fn validate(&self, utxoset: &UtxoSet) -> Result<(), TransactionError> {
+  pub fn validate(&self, utxoset: &UtxoSet) -> Result<(), Error> {
     for (n, input) in self.input.iter().enumerate() {
       try!(input.validate(utxoset, self, n));
     }
@@ -249,7 +249,7 @@ impl Transaction {
           let mut stack = Vec::with_capacity(6);
           trace.sig_trace = input.script_sig.trace(&mut stack, Some((self, n)));
           let err = trace.sig_trace.error.as_ref().map(|e| e.clone());
-          err.map(|e| trace.error = Some(InputScriptFailure(e)));
+          err.map(|e| trace.error = Some(Error::InputScriptFailure(e)));
 
           if txo.script_pubkey.is_p2sh() && stack.len() > 0 {
             p2sh_stack = stack.clone();
@@ -262,32 +262,32 @@ impl Transaction {
           if trace.error.is_none() {
             trace.pubkey_trace = Some(txo.script_pubkey.trace(&mut stack, Some((self, n))));
             let err = trace.pubkey_trace.as_ref().unwrap().error.as_ref().map(|e| e.clone());
-            err.map(|e| trace.error = Some(OutputScriptFailure(e)));
+            err.map(|e| trace.error = Some(Error::OutputScriptFailure(e)));
             match stack.pop() {
               Some(v) => {
                 if !read_scriptbool(v.as_slice()) {
-                  trace.error = Some(ScriptReturnedFalse);
+                  trace.error = Some(Error::ScriptReturnedFalse);
                 }
               }
-              None => { trace.error = Some(ScriptReturnedEmptyStack); }
+              None => { trace.error = Some(Error::ScriptReturnedEmptyStack); }
             }
             if trace.error.is_none() && txo.script_pubkey.is_p2sh() {
               trace.p2sh_trace = Some(p2sh_script.trace(&mut p2sh_stack, Some((self, n))));
               let err = trace.p2sh_trace.as_ref().unwrap().error.as_ref().map(|e| e.clone());
-              err.map(|e| trace.error = Some(P2shScriptFailure(e)));
+              err.map(|e| trace.error = Some(Error::P2shScriptFailure(e)));
               match p2sh_stack.pop() {
                 Some(v) => {
                   if !read_scriptbool(v.as_slice()) {
-                    trace.error = Some(P2shScriptReturnedFalse);
+                    trace.error = Some(Error::P2shScriptReturnedFalse);
                   }
                 }
-                None => { trace.error = Some(P2shScriptReturnedEmptyStack); }
+                None => { trace.error = Some(Error::P2shScriptReturnedEmptyStack); }
               }
             }
           }
         }
         None => {
-          trace.error = Some(InputNotFound(input.prev_hash, input.prev_index));
+          trace.error = Some(Error::InputNotFound(input.prev_hash, input.prev_index));
         }
       }
       ret.inputs.push(trace);

@@ -34,17 +34,11 @@ use network::serialize::{RawEncoder, RawDecoder};
 use util::misc::prepend_err;
 
 /// Format an IP address in the 16-byte bitcoin protocol serialization
-fn ipaddr_to_bitcoin_addr(ipaddr: &ip::IpAddr) -> [u8; 16] {
+fn ipaddr_to_bitcoin_addr(ipaddr: &ip::IpAddr) -> [u16; 8] {
   match *ipaddr {
-    ip::Ipv4Addr(a, b, c, d) =>
-        [0, 0, 0, 0, 0, 0, 0, 0,
-         0, 0, 0xff, 0xff, a, b, c, d],
-    ip::Ipv6Addr(a, b, c, d, e, f, g, h) =>
-        [(a / 0x100) as u8, (a % 0x100) as u8, (b / 0x100) as u8, (b % 0x100) as u8,
-         (c / 0x100) as u8, (c % 0x100) as u8, (d / 0x100) as u8, (d % 0x100) as u8,
-         (e / 0x100) as u8, (e % 0x100) as u8, (f / 0x100) as u8, (f % 0x100) as u8,
-         (g / 0x100) as u8, (g % 0x100) as u8, (h / 0x100) as u8, (h % 0x100) as u8 ]
-  } 
+    ip::IpAddr::V4(ref addr) => &addr.to_ipv6_mapped(),
+    ip::IpAddr::V6(ref addr) => addr
+  }.segments()
 }
 
 /// A network socket along with information about the peer
@@ -72,7 +66,7 @@ impl Socket {
   // TODO: we fix services to 0
   /// Construct a new socket
   pub fn new(network: constants::Network) -> Socket {
-    let mut rng = task_rng();
+    let mut rng = thread_rng();
     Socket {
       socket: None,
       buffered_reader: Arc::new(Mutex::new(None)),

@@ -564,7 +564,7 @@ impl All {
 
     /// Classifies an Opcode into a broad class
     #[inline]
-    pub fn classify(&self) -> OpcodeClass {
+    pub fn classify(&self) -> Class {
       // 17 opcodes
       if *self == All::OP_VERIF || *self == All::OP_VERNOTIF ||
          *self == All::OP_CAT || *self == All::OP_SUBSTR ||
@@ -574,30 +574,30 @@ impl All {
          *self == All::OP_2MUL || *self == All::OP_2DIV ||
          *self == All::OP_MUL || *self == All::OP_DIV || *self == All::OP_MOD ||
          *self == All::OP_LSHIFT || *self == All::OP_RSHIFT {
-        OpcodeClass::IllegalOp
+        Class::IllegalOp
       // 11 opcodes
       } else if *self == All::OP_NOP ||
                 (All::OP_NOP1 as u8 <= *self as u8 &&
                  *self as u8 <= All::OP_NOP10 as u8) {
-        OpcodeClass::NoOp
+        Class::NoOp
       // 75 opcodes
       } else if *self == All::OP_RESERVED || *self == All::OP_VER || *self == All::OP_RETURN ||
                 *self == All::OP_RESERVED1 || *self == All::OP_RESERVED2 ||
                 *self as u8 >= All::OP_RETURN_186 as u8 {
-        OpcodeClass::ReturnOp
+        Class::ReturnOp
       // 1 opcode
       } else if *self == All::OP_PUSHNUM_NEG1 {
-        OpcodeClass::PushNum(-1)
+        Class::PushNum(-1)
       // 16 opcodes
       } else if All::OP_PUSHNUM_1 as u8 <= *self as u8 &&
                 *self as u8 <= All::OP_PUSHNUM_16 as u8 {
-        OpcodeClass::PushNum(1 + *self as isize - OP_PUSHNUM_1 as isize)
+        Class::PushNum(1 + *self as isize - All::OP_PUSHNUM_1 as isize)
       // 76 opcodes
       } else if *self as u8 <= All::OP_PUSHBYTES_75 as u8 {
-        OpcodeClass::PushBytes(*self as usize)
+        Class::PushBytes(*self as usize)
       // 60 opcodes
       } else {
-        OpcodeClass::Ordinary(unsafe { transmute(*self) })
+        Class::Ordinary(unsafe { transmute(*self) })
       }
     }
 }
@@ -629,7 +629,7 @@ pub static OP_TRUE: All = OP_PUSHNUM_1;
 
 /// Broad categories of opcodes with similar behavior
 #[derive(Clone, PartialEq, Eq, Debug)]
-pub enum OpcodeClass {
+pub enum Class {
   /// Pushes the given number onto the stack
   PushNum(isize),
   /// Pushes the given number of bytes onto the stack
@@ -644,7 +644,7 @@ pub enum OpcodeClass {
   Ordinary(Ordinary)
 }
 
-impl json::ToJson for OpcodeClass {
+impl json::ToJson for Class {
   fn to_json(&self) -> json::Json {
     json::String(self.to_string())
   }

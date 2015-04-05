@@ -15,8 +15,8 @@
 //!
 //! Utility functions related to hashing data, including merkleization
 
-use core::char::from_digit;
-use core::cmp::min;
+use std::char::from_digit;
+use std::cmp::min;
 use std::default::Default;
 use std::fmt;
 use std::io::Cursor;
@@ -75,7 +75,7 @@ impl hash::Hash<DumbHasherState> for Sha256dHash {
   fn hash(&self, state: &mut DumbHasherState) {
     let &Sha256dHash(ref hash) = self;
     let &DumbHasherState(ref mut arr) = state;
-    for i in range(0, 8) {
+    for i in 0..8 {
       arr[i] += hash[i];
     }
   }
@@ -184,7 +184,7 @@ impl Sha256dHash {
   pub fn le_hex_string(&self) -> String {
     let &Sha256dHash(data) = self;
     let mut ret = String::with_capacity(64);
-    for i in range(0, 32) {
+    for i in 0..32 {
       ret.push_char(from_digit((data[i] / 0x10) as usize, 16).unwrap());
       ret.push_char(from_digit((data[i] & 0x0f) as usize, 16).unwrap());
     }
@@ -195,7 +195,7 @@ impl Sha256dHash {
   pub fn be_hex_string(&self) -> String {
     let &Sha256dHash(data) = self;
     let mut ret = String::with_capacity(64);
-    for i in range(0, 32).rev() {
+    for i in (0..32).rev() {
       ret.push_char(from_digit((data[i] / 0x10) as usize, 16).unwrap());
       ret.push_char(from_digit((data[i] & 0x0f) as usize, 16).unwrap());
     }
@@ -234,7 +234,7 @@ impl<D: ::serialize::Decoder<E>, E> ::serialize::Decodable<D, E> for Sha256dHash
     let raw_str = try!(hex_str.as_slice().from_hex()
                          .map_err(|_| d.error("non-hexadecimal hash string")));
     let mut ret = [0u8; 32];
-    for i in range(0, 32) {
+    for i in 0..32 {
       ret[i] = raw_str[31 - i];
     }
     Ok(Sha256dHash(ret))
@@ -279,7 +279,7 @@ impl<'a, T: BitcoinHash> MerkleRoot for &'a [T] {
       }
       // Recursion
       let mut next = vec![];
-      for idx in range(0, (data.len() + 1) / 2) {
+      for idx in 0..((data.len() + 1) / 2) {
         let idx1 = 2 * idx;
         let idx2 = min(idx1 + 1, data.len() - 1);
         let mut encoder = RawEncoder::new(Cursor::new(vec![]));

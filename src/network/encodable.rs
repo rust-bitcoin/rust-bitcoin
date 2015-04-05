@@ -108,27 +108,27 @@ impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for u8 {
 
 impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for u16 {
   #[inline]
-  fn consensus_decode(d: &mut D) -> Result<u16, E> { d.read_u16().map(|n| Int::from_le(n)) }
+  fn consensus_decode(d: &mut D) -> Result<u16, E> { d.read_u16().map(|n| u16::from_le(n)) }
 }
 
 impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for u32 {
   #[inline]
-  fn consensus_decode(d: &mut D) -> Result<u32, E> { d.read_u32().map(|n| Int::from_le(n)) }
+  fn consensus_decode(d: &mut D) -> Result<u32, E> { d.read_u32().map(|n| u32::from_le(n)) }
 }
 
 impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for u64 {
   #[inline]
-  fn consensus_decode(d: &mut D) -> Result<u64, E> { d.read_u64().map(|n| Int::from_le(n)) }
+  fn consensus_decode(d: &mut D) -> Result<u64, E> { d.read_u64().map(|n| u64::from_le(n)) }
 }
 
 impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for i32 {
   #[inline]
-  fn consensus_decode(d: &mut D) -> Result<i32, E> { d.read_i32().map(|n| Int::from_le(n)) }
+  fn consensus_decode(d: &mut D) -> Result<i32, E> { d.read_i32().map(|n| i32::from_le(n)) }
 }
 
 impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for i64 {
   #[inline]
-  fn consensus_decode(d: &mut D) -> Result<i64, E> { d.read_i64().map(|n| Int::from_le(n)) }
+  fn consensus_decode(d: &mut D) -> Result<i64, E> { d.read_i64().map(|n| i64::from_le(n)) }
 }
 
 impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for VarInt {
@@ -136,9 +136,9 @@ impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for VarInt {
   fn consensus_decode(d: &mut D) -> Result<VarInt, E> {
     let n = try!(d.read_u8());
     match n {
-      0xFF => d.read_u64().map(|n| VarInt(Int::from_le(n))),
-      0xFE => d.read_u32().map(|n| VarInt(Int::from_le(n) as u64)),
-      0xFD => d.read_u16().map(|n| VarInt(Int::from_le(n) as u64)),
+      0xFF => d.read_u64().map(|n| VarInt(u64::from_le(n))),
+      0xFE => d.read_u32().map(|n| VarInt(u32::from_le(n) as u64)),
+      0xFD => d.read_u16().map(|n| VarInt(u16::from_le(n) as u64)),
       n => Ok(VarInt(n as u64))
     }
   }
@@ -188,7 +188,7 @@ macro_rules! impl_array {
         // Set everything to the first decode
         let mut ret = [try!(ConsensusDecodable::consensus_decode(d)); $size];
         // Set the rest
-        for i in range(1, $size) { ret[i] = try!(ConsensusDecodable::consensus_decode(d)); }
+        for i in 1..$size { ret[i] = try!(ConsensusDecodable::consensus_decode(d)); }
         Ok(ret)
       }
     }
@@ -224,7 +224,7 @@ impl<D:SimpleDecoder<E>, E, T:ConsensusDecodable<D, E>> ConsensusDecodable<D, E>
   fn consensus_decode(d: &mut D) -> Result<Vec<T>, E> {
     let VarInt(len): VarInt = try!(ConsensusDecodable::consensus_decode(d));
     let mut ret = Vec::with_capacity(len as usize);
-    for _ in range(0, len) { ret.push(try!(ConsensusDecodable::consensus_decode(d))); }
+    for _ in 0..len { ret.push(try!(ConsensusDecodable::consensus_decode(d))); }
     Ok(ret)
   }
 }
@@ -302,7 +302,7 @@ impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for CheckedData {
     let len: u32 = try!(ConsensusDecodable::consensus_decode(d));
     let checksum: [u8; 4] = try!(ConsensusDecodable::consensus_decode(d));
     let mut ret = Vec::with_capacity(len as usize);
-    for _ in range(0, len) { ret.push(try!(ConsensusDecodable::consensus_decode(d))); }
+    for _ in 0..len { ret.push(try!(ConsensusDecodable::consensus_decode(d))); }
     let expected_checksum = sha2_checksum(ret.as_slice());
     if expected_checksum != checksum {
       Err(d.error("bad checksum"))
@@ -380,7 +380,7 @@ impl<D:SimpleDecoder<E>, E, T,
     let VarInt(len): VarInt = try!(ConsensusDecodable::consensus_decode(d));
 
     let mut ret = HashMap::with_capacity_and_hasher(len as usize, Default::default());
-    for _ in range(0, len) {
+    for _ in 0..len {
       ret.insert(try!(ConsensusDecodable::consensus_decode(d)),
                  try!(ConsensusDecodable::consensus_decode(d)));
     }

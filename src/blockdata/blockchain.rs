@@ -23,7 +23,7 @@
 //!
 
 use std::num::Zero;
-use std::marker;
+use std::{marker, ptr};
 
 use blockdata::block::{Block, BlockHeader};
 use blockdata::transaction::Transaction;
@@ -102,8 +102,8 @@ impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for BlockchainNode {
       required_difficulty: try!(ConsensusDecodable::consensus_decode(d)),
       height: try!(ConsensusDecodable::consensus_decode(d)),
       has_txdata: try!(ConsensusDecodable::consensus_decode(d)),
-      prev: RawPtr::null(),
-      next: RawPtr::null()
+      prev: ptr::null(),
+      next: ptr::null()
     })
   }
 }
@@ -159,7 +159,7 @@ impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for Blockchain {
       let prevptr =
         match unsafe { (*raw_tree).lookup(&hash, 256) } {
           Some(node) => &**node as NodePtr,
-          None => RawPtr::null() 
+          None => ptr::null() 
         };
       node.prev = prevptr;
     }
@@ -191,7 +191,7 @@ impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for Blockchain {
 }
 
 // TODO: this should maybe be public, in which case it needs to be tagged
-// with a ContravariantLifetime marker tying it to the tree's lifetime.
+// with a PhantomData marker tying it to the tree's lifetime.
 struct LocatorHashIter {
   index: NodePtr,
   count: usize,
@@ -215,7 +215,7 @@ impl Iterator<Sha256dHash> for LocatorHashIter {
     self.index = unsafe { (*self.index).prev };
     // If we are not at the genesis, rewind `self.skip` times, or until we are.
     if self.index.is_not_null() {
-      for _ in range(1, self.skip) {
+      for _ in 1..self.skip {
         unsafe {
           if (*self.index).prev.is_null() {
             break;
@@ -241,7 +241,7 @@ pub struct BlockIter<'tree> {
   // mutable blockchain methods call .mut_borrow() on the block
   // links, which would blow up if the iterator did a regular
   // borrow at the same time.
-  marker: marker::ContravariantLifetime<'tree>
+  marker: marker::PhantomData<&'tree Blockchain>
 }
 
 /// An iterator over blocks in reverse blockheight order. Note that this
@@ -253,7 +253,7 @@ pub struct BlockIter<'tree> {
 pub struct RevBlockIter<'tree> {
   index: NodePtr,
   // See comment in BlockIter for why we need this
-  marker: marker::ContravariantLifetime<'tree>
+  marker: marker::PhantomData<&'tree Blockchain>
 }
 
 /// An iterator over blocks in reverse blockheight order, which yielding only
@@ -313,7 +313,7 @@ impl<'tree> Iterator<&'tree Block> for RevStaleBlockIter<'tree> {
       if next_index.is_not_null() &&
          (*next_index).next != self.index &&
          (&*next_index).is_on_main_chain(self.chain) {
-        self.index = RawPtr::null();
+        self.index = ptr::null();
       } else {
         self.index = next_index;
       }
@@ -348,8 +348,8 @@ impl Blockchain {
       block: genesis,
       height: 0,
       has_txdata: true,
-      prev: RawPtr::null(),
-      next: RawPtr::null()
+      prev: ptr::null(),
+      next: ptr::null()
     });
     let raw_ptr = &*new_node as NodePtr;
     Blockchain {
@@ -449,7 +449,7 @@ impl Blockchain {
             let timespan = unsafe {
               // Scan back DIFFCHANGE_INTERVAL blocks
               let mut scan = prev;
-              for _ in range(0, DIFFCHANGE_INTERVAL - 1) {
+              for _ in 0..(DIFFCHANGE_INTERVAL - 1) {
                 scan = (*scan).prev;
               }
               // Get clamped timespan between first and last blocks
@@ -498,7 +498,7 @@ impl Blockchain {
           height: unsafe { (*prev).height + 1 },
           has_txdata: has_txdata,
           prev: prev,
-          next: RawPtr::null()
+          next: ptr::null()
         });
         unsafe {
           let prev = prev as *mut BlockchainNode;
@@ -568,11 +568,11 @@ impl Blockchain {
   pub fn iter<'a>(&'a self, start_hash: Sha256dHash) -> BlockIter<'a> {
     let start = match self.tree.lookup(&start_hash.into_le(), 256) {
         Some(boxptr) => &**boxptr as NodePtr,
-        None => RawPtr::null()
+        None => ptr::null()
       };
     BlockIter {
       index: start,
-      marker: marker::ContravariantLifetime::<'a>
+      marker: marker::PhantomData
     }
   }
 
@@ -580,11 +580,11 @@ impl Blockchain {
   pub fn rev_iter<'a>(&'a self, start_hash: Sha256dHash) -> RevBlockIter<'a> {
     let start = match self.tree.lookup(&start_hash.into_le(), 256) {
         Some(boxptr) => &**boxptr as NodePtr,
-        None => RawPtr::null()
+        None => ptr::null()
       };
     RevBlockIter {
       index: start,
-      marker: marker::ContravariantLifetime::<'a>
+      marker: marker::PhantomData
     }
   }
 
@@ -594,12 +594,12 @@ impl Blockchain {
         Some(boxptr) => {
           // If we are already on the main chain, we have a dead iterator
           if boxptr.is_on_main_chain(self) {
-            RawPtr::null()
+            ptr::null()
           } else {
             &**boxptr as NodePtr
           }
         }
-        None => RawPtr::null()
+        None => ptr::null()
       };
     RevStaleBlockIter { 
       index: start,

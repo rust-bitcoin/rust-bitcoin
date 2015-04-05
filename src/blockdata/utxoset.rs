@@ -26,8 +26,7 @@ use std::mem;
 use num_cpus;
 use std::sync::Future;
 
-use blockdata::transaction::{Transaction, TxOut};
-use blockdata::transaction::TransactionError::{self, InputNotFound};
+use blockdata::transaction::{self, Transaction, TxOut};
 use blockdata::constants::genesis_block;
 use blockdata::block::Block;
 use network::constants::Network;
@@ -38,24 +37,24 @@ use util::hash::{DumbHasher, Sha256dHash};
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]
 pub enum ValidationLevel {
   /// Blindly update the UTXO set (NOT recommended)
-  NoValidation,
+  Nothing,
   /// Check that the blocks are at least in the right order
-  ChainValidation,
+  Chain,
   /// Check that any inputs are actually txouts in the set
-  TxoValidation,
+  Inputs,
   /// Execute the scripts and ensure they pass
-  ScriptValidation
+  Script
 }
 
 /// An error returned from a UTXO set operation
 #[derive(PartialEq, Eq, Clone, Debug)]
-pub enum UtxoSetError {
+pub enum Error {
   /// prevhash of the new block is not the hash of the old block (expected, actual)
   BadPrevHash(Sha256dHash, Sha256dHash),
   /// A TXID was duplicated
   DuplicatedTxid(Sha256dHash),
   /// A tx was invalid (txid, error)
-  InvalidTx(Sha256dHash, TransactionError),
+  InvalidTx(Sha256dHash, transaction::Error),
 }
 
 struct UtxoNode {
@@ -203,11 +202,11 @@ impl UtxoSet {
 
   /// Apply the transactions contained in a block
   pub fn update(&mut self, block: &Block, blockheight: usize, validation: ValidationLevel)
-                -> Result<(), UtxoSetError> {
+                -> Result<(), Error> {
     // Make sure we are extending the UTXO set in order
-    if validation >= ChainValidation &&
+    if validation >= ValidationLevel::Chain &&
        self.last_hash != block.header.prev_blockhash {
-      return Err(BadPrevHash(self.last_hash, block.header.prev_blockhash));
+      return Err(Error::BadPrevHash(self.last_hash, block.header.prev_blockhash));
     }
 
     // Set the next hash immediately so that if anything goes wrong,
@@ -247,7 +246,7 @@ impl UtxoSet {
             }
             // Otherwise fail the block
             self.rewind(block);
-            return Err(DuplicatedTxid(txid));
+            return Err(Error::DuplicatedTxid(txid));
           }
         }
         // Didn't replace anything? Good.
@@ -256,12 +255,12 @@ impl UtxoSet {
     }
 
     // If we are validating scripts, do all that now in parallel
-    if validation >= ScriptValidation {
+    if validation >= ValidationLevel::Script {
       let mut future_vec = Vec::with_capacity(block.txdata.len() - 1);
       // skip the genesis since we don't validate this script. (TODO this might
       // be a consensus bug since we don't even check that the opcodes make sense.)
       let n_threads = cmp::min(block.txdata.len() - 1, num_cpus::get());
-      for j in range(0, n_threads) {
+      for j in 0..n_threads {
         let n_elems = block.txdata.len() - 1;
         let start = 1 + j * n_elems / n_threads;
         let end = cmp::min(n_elems, 1 + (j + 1) * n_elems / n_threads);
@@ -273,7 +272,7 @@ impl UtxoSet {
           for tx in txes.slice(start, end).iter() {
             match tx.validate(unsafe {&*s}) {
               Ok(_) => {},
-              Err(e) => { return Err(InvalidTx(tx.bitcoin_hash(), e)); }
+              Err(e) => { return Err(Error::InvalidTx(tx.bitcoin_hash(), e)); }
             }
           }
           Ok(())
@@ -301,10 +300,10 @@ impl UtxoSet {
         match taken {
           Some(txo) => { self.spent_txos.get_mut(spent_idx).push(((txid, n as u32), txo)); }
           None => {
-            if validation >= TxoValidation {
+            if validation >= ValidationLevel::Inputs {
               self.rewind(block);
-              return Err(InvalidTx(txid,
-                                   InputNotFound(input.prev_hash, input.prev_index)));
+              return Err(Error::InvalidTx(txid,
+                                   transaction::Error::InputNotFound(input.prev_hash, input.prev_index)));
             }
           }
         }
@@ -333,7 +332,7 @@ impl UtxoSet {
     let mut skipped_genesis = false;
     for tx in block.txdata.iter() {
       let txhash = tx.bitcoin_hash();
-      for n in range(0, tx.output.len()) {
+      for n in 0..tx.output.len() {
         // Just bomb out the whole transaction
         // TODO: this does not conform to BIP30: if a duplicate txid occurs,
         //       the block will be (rightly) rejected, causing it to be
@@ -424,7 +423,7 @@ mod tests {
   use std::io::IoResult;
   use serialize::hex::FromHex;
 
-  use super::{UtxoSet, TxoValidation};
+  use super::{UtxoSet, ValidationLevel};
 
   use blockdata::block::Block;
   use network::constants::Network::Bitcoin;
@@ -437,7 +436,7 @@ mod tests {
     let new_block: Block = deserialize("010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914cd74d6e49ffff001d323b3a7b0201000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0804ffff001d026e04ffffffff0100f2052a0100000043410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac00000000010000000321f75f3139a013f50f315b23b0c9a2b6eac31e2bec98e5891c924664889942260000000049483045022100cb2c6b346a978ab8c61b18b5e9397755cbd17d6eb2fe0083ef32e067fa6c785a02206ce44e613f31d9a6b0517e46f3db1576e9812cc98d159bfdaf759a5014081b5c01ffffffff79cda0945903627c3da1f85fc95d0b8ee3e76ae0cfdc9a65d09744b1f8fc85430000000049483045022047957cdd957cfd0becd642f6b84d82f49b6cb4c51a91f49246908af7c3cfdf4a022100e96b46621f1bffcf5ea5982f88cef651e9354f5791602369bf5a82a6cd61a62501fffffffffe09f5fe3ffbf5ee97a54eb5e5069e9da6b4856ee86fc52938c2f979b0f38e82000000004847304402204165be9a4cbab8049e1af9723b96199bfd3e85f44c6b4c0177e3962686b26073022028f638da23fc003760861ad481ead4099312c60030d4cb57820ce4d33812a5ce01ffffffff01009d966b01000000434104ea1feff861b51fe3f5f8a3b12d0f4712db80e919548a80839fc47c6a21e66d957e9c5d8cd108c7a2d2324bad71f9904ac0ae7336507d785b17a2c115e427a32fac00000000".from_hex().unwrap()).unwrap();
 
     // Make sure we can't add the block directly, since we are missing the inputs
-    assert!(empty_set.update(&new_block, 1, TxoValidation).is_err());
+    assert!(empty_set.update(&new_block, 1, ValidationLevel::Inputs).is_err());
     assert_eq!(empty_set.n_utxos(), 0);
     // Add the block manually so that we'll have some UTXOs for the rest of the test
     for tx in new_block.txdata.iter() {
@@ -457,7 +456,7 @@ mod tests {
 
     // Check again that we can't add the block, and that this doesn't mess up the
     // existing UTXOs
-    assert!(empty_set.update(&new_block, 2, TxoValidation).is_err());
+    assert!(empty_set.update(&new_block, 2, ValidationLevel::Inputs).is_err());
     assert_eq!(empty_set.n_utxos(), 2);
     for tx in new_block.txdata.iter() {
       let hash = tx.bitcoin_hash();
@@ -497,7 +496,7 @@ mod tests {
     for tx in new_block.txdata.iter() {
       let hash = tx.bitcoin_hash();
 
-      for n in range(0, tx.output.len()) {
+      for n in 0..tx.output.len() {
         let n = n as u32;
         let ret = read_again.take_utxo(hash, n);
         assert_eq!(ret, None);

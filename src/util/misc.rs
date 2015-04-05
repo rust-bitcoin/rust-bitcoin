@@ -88,7 +88,7 @@ pub fn script_find_and_remove(haystack: &mut Vec<u8>, needle: &[u8]) -> usize {
   while i <= top {
     if haystack.slice(i, i + needle.len()) == needle {
       let v = haystack.as_mut_slice();
-      for j in range(i, top) {
+      for j in i..top {
         v.swap(j + needle.len(), j);
       }
       n_deleted += 1;
@@ -97,11 +97,11 @@ pub fn script_find_and_remove(haystack: &mut Vec<u8>, needle: &[u8]) -> usize {
       top -= needle.len();
       if overflow { break; }
     } else {
-      i += match Opcode::from_u8((*haystack)[i]).classify() {
-        opcodes::PushBytes(n) => n + 1,
-        opcodes::Ordinary(opcodes::OP_PUSHDATA1) => 2,
-        opcodes::Ordinary(opcodes::OP_PUSHDATA2) => 3,
-        opcodes::Ordinary(opcodes::OP_PUSHDATA4) => 5,
+      i += match opcodes::All::from_u8((*haystack)[i]).classify() {
+        opcodes::Class::PushBytes(n) => n + 1,
+        opcodes::Class::Ordinary(opcodes::Ordinary::OP_PUSHDATA1) => 2,
+        opcodes::Class::Ordinary(opcodes::Ordinary::OP_PUSHDATA2) => 3,
+        opcodes::Class::Ordinary(opcodes::Ordinary::OP_PUSHDATA4) => 5,
         _ => 1
       };
     }

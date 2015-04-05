@@ -24,8 +24,7 @@ use blockdata::script::Script;
 use blockdata::opcodes;
 use network::constants::Network::{self, Bitcoin, BitcoinTestnet};
 use util::hash::Ripemd160Hash;
-use util::base58::Base58Error::{self, InvalidLength, InvalidVersion};
-use util::base58::{FromBase58, ToBase58};
+use util::base58::{self, FromBase58, ToBase58};
 
 #[derive(Clone, PartialEq, Eq)]
 /// A Bitcoin address
@@ -100,16 +99,16 @@ impl ToBase58 for Address {
 }
 
 impl FromBase58 for Address {
-  fn from_base58_layout(data: Vec<u8>) -> Result<Address, Base58Error> {
+  fn from_base58_layout(data: Vec<u8>) -> Result<Address, base58::Error> {
     if data.len() != 21 {
-      return Err(InvalidLength(data.len()));
+      return Err(base58::Error::InvalidLength(data.len()));
     }
 
     Ok(Address {
       network: match data[0] {
         0   => Bitcoin,
         111 => BitcoinTestnet,
-        x   => { return Err(InvalidVersion(vec![x])); }
+        x   => { return Err(base58::Error::InvalidVersion(vec![x])); }
       },
       hash: Ripemd160Hash::from_slice(data.slice_from(1))
     })
