@@ -90,7 +90,9 @@ macro_rules! construct_uint {
       }
     }
 
-    impl ::std::ops::Add<$name,$name> for $name {
+    impl ::std::ops::Add<$name> for $name {
+      type Output = $name;
+
       fn add(&self, other: &$name) -> $name {
         let &$name(ref me) = self;
         let &$name(ref you) = other;
@@ -108,14 +110,18 @@ macro_rules! construct_uint {
       }
     }
 
-    impl ::std::ops::Sub<$name,$name> for $name {
+    impl ::std::ops::Sub<$name> for $name {
+      type Output = $name;
+
       #[inline]
       fn sub(&self, other: &$name) -> $name {
         *self + !*other + One::one()
       }
     }
 
-    impl ::std::ops::Mul<$name,$name> for $name {
+    impl ::std::ops::Mul<$name> for $name {
+      type Output = $name;
+
       fn mul(&self, other: &$name) -> $name {
         let mut me = *self;
         // TODO: be more efficient about this
@@ -126,7 +132,9 @@ macro_rules! construct_uint {
       }
     }
 
-    impl ::std::ops::Div<$name,$name> for $name {
+    impl ::std::ops::Div<$name> for $name {
+      type Output = $name;
+
       fn div(&self, other: &$name) -> $name {
         let mut sub_copy = *self;
         let mut shift_copy = *other;
@@ -197,7 +205,9 @@ macro_rules! construct_uint {
       }
     }
 
-    impl ::std::ops::BitAnd<$name,$name> for $name {
+    impl ::std::ops::BitAnd<$name> for $name {
+      type Output = $name;
+
       #[inline]
       fn bitand(&self, other: &$name) -> $name {
         let &$name(ref arr1) = self;
@@ -210,7 +220,9 @@ macro_rules! construct_uint {
       }
     }
 
-    impl ::std::ops::BitXor<$name,$name> for $name {
+    impl ::std::ops::BitXor<$name> for $name {
+      type Output = $name;
+
       #[inline]
       fn bitxor(&self, other: &$name) -> $name {
         let &$name(ref arr1) = self;
@@ -223,7 +235,9 @@ macro_rules! construct_uint {
       }
     }
 
-    impl ::std::ops::BitOr<$name,$name> for $name {
+    impl ::std::ops::BitOr<$name> for $name {
+      type Output = $name;
+
       #[inline]
       fn bitor(&self, other: &$name) -> $name {
         let &$name(ref arr1) = self;
@@ -236,7 +250,9 @@ macro_rules! construct_uint {
       }
     }
 
-    impl ::std::ops::Not<$name> for $name {
+    impl ::std::ops::Not for $name {
+      type Output = $name;
+
       #[inline]
       fn not(&self) -> $name {
         let &$name(ref arr) = self;
@@ -248,7 +264,9 @@ macro_rules! construct_uint {
       }
     }
 
-    impl ::std::ops::Shl<usize, $name> for $name {
+    impl ::std::ops::Shl<usize> for $name {
+      type Output = $name;
+
       fn shl(&self, shift: &usize) -> $name {
         let &$name(ref original) = self;
         let mut ret = [0u64; $n_words];
@@ -268,7 +286,9 @@ macro_rules! construct_uint {
       }
     }
 
-    impl ::std::ops::Shr<usize, $name> for $name {
+    impl ::std::ops::Shr<usize> for $name {
+      type Output = $name;
+
       #[allow(unsigned_negate)]
       fn shr(&self, shift: &usize) -> $name {
         let &$name(ref original) = self;
@@ -316,9 +336,9 @@ macro_rules! construct_uint {
       }
     }
 
-    impl<S: ::network::serialize::SimpleEncoder<E>, E> ::network::encodable::ConsensusEncodable<S, E> for $name {
+    impl<S: ::network::serialize::SimpleEncoder> ::network::encodable::ConsensusEncodable<S> for $name {
       #[inline]
-      fn consensus_encode(&self, s: &mut S) -> Result<(), E> {
+      fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
         use network::encodable::ConsensusEncodable;
         let &$name(ref data) = self;
         for word in data.iter() { try!(word.consensus_encode(s)); }
@@ -326,8 +346,8 @@ macro_rules! construct_uint {
       }
     }
 
-    impl<D: ::network::serialize::SimpleDecoder<E>, E> ::network::encodable::ConsensusDecodable<D, E> for $name {
-      fn consensus_decode(d: &mut D) -> Result<$name, E> {
+    impl<D: ::network::serialize::SimpleDecoder> ::network::encodable::ConsensusDecodable<D> for $name {
+      fn consensus_decode(d: &mut D) -> Result<$name, D::Error> {
         use network::encodable::ConsensusDecodable;
         let ret: [u64; $n_words] = try!(ConsensusDecodable::consensus_decode(d));
         Ok($name(ret))

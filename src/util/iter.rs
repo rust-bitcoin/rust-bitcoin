@@ -18,14 +18,18 @@
 //! standard library.
 
 /// An iterator that returns pairs of elements
-pub struct Pair<A, I> {
+pub struct Pair<I>
+  where I: Iterator
+{
   iter: I,
-  last_elem: Option<A>
+  last_elem: Option<I::Item>
 }
 
-impl<A, I: Iterator<A>> Iterator<(A, A)> for Pair<A, I> {
+impl<I: Iterator> Iterator for Pair<I> {
+  type Item = (I::Item, I::Item);
+
   #[inline]
-  fn next(&mut self) -> Option<(A, A)> {
+  fn next(&mut self) -> Option<(I::Item, I::Item)> {
     let elem1 = self.iter.next();
     if elem1.is_none() {
       None
@@ -49,28 +53,28 @@ impl<A, I: Iterator<A>> Iterator<(A, A)> for Pair<A, I> {
   }
 }
 
-impl<A, I: Iterator<A>> Pair<A, I> {
+impl<I: Iterator> Pair<I> {
   /// Returns the last element of the iterator if there were an odd
   /// number of elements remaining before it was Pair-ified.
   #[inline]
-  pub fn remainder(self) -> Option<A> {
+  pub fn remainder(self) -> Option<I::Item> {
     self.last_elem
   }
 }
 
 /// Returns an iterator that returns elements of the original iterator 2 at a time
-pub trait Pairable<A> {
+pub trait Pairable {
   /// Returns an iterator that returns elements of the original iterator 2 at a time
-  fn pair(self) -> Pair<A, Self>;
+  fn pair(self) -> Pair<Self>;
 }
 
-impl<A, I: Iterator<A>> Pairable<A> for I {
+impl<I: Iterator> Pairable for I {
   /// Creates an iterator that yields pairs ef elements from the underlying
   /// iterator, yielding `None` when there are fewer than two elements to
   /// return.
   #[inline]
-  fn pair(self) -> Pair<A, I> {
-    Pair{iter: self, last_elem: None}
+  fn pair(self) -> Pair<I> {
+    Pair {iter: self, last_elem: None }
   }
 }
 

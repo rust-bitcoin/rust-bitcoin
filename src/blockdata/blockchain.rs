@@ -80,9 +80,9 @@ impl BlockchainNode {
   }
 }
 
-impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for BlockchainNode {
+impl<S: SimpleEncoder> ConsensusEncodable<S> for BlockchainNode {
   #[inline]
-  fn consensus_encode(&self, s: &mut S) -> Result<(), E> {
+  fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
     try!(self.block.consensus_encode(s));
     try!(self.total_work.consensus_encode(s));
     try!(self.required_difficulty.consensus_encode(s));
@@ -93,9 +93,9 @@ impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for BlockchainNode {
   }
 }
 
-impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for BlockchainNode {
+impl<D: SimpleDecoder> ConsensusDecodable<D> for BlockchainNode {
   #[inline]
-  fn consensus_decode(d: &mut D) -> Result<BlockchainNode, E> {
+  fn consensus_decode(d: &mut D) -> Result<BlockchainNode, D::Error> {
     Ok(BlockchainNode {
       block: try!(ConsensusDecodable::consensus_decode(d)),
       total_work: try!(ConsensusDecodable::consensus_decode(d)),
@@ -123,9 +123,9 @@ pub struct Blockchain {
   genesis_hash: Sha256dHash
 }
 
-impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for Blockchain {
+impl<S: SimpleEncoder> ConsensusEncodable<S> for Blockchain {
   #[inline]
-  fn consensus_encode(&self, s: &mut S) -> Result<(), E> {
+  fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
     try!(self.network.consensus_encode(s));
     try!(self.tree.consensus_encode(s));
     try!(self.best_hash.consensus_encode(s));
@@ -134,8 +134,8 @@ impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for Blockchain {
   }
 }
 
-impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for Blockchain {
-  fn consensus_decode(d: &mut D) -> Result<Blockchain, E> {
+impl<D: SimpleDecoder> ConsensusDecodable<D> for Blockchain {
+  fn consensus_decode(d: &mut D) -> Result<Blockchain, D::Error> {
     let network: Network = try!(ConsensusDecodable::consensus_decode(d));
     let mut tree: BlockTree = try!(ConsensusDecodable::consensus_decode(d));
     let best_hash: Sha256dHash = try!(ConsensusDecodable::consensus_decode(d));
@@ -204,7 +204,9 @@ impl LocatorHashIter {
   }
 }
 
-impl Iterator<Sha256dHash> for LocatorHashIter {
+impl Iterator for LocatorHashIter {
+  type Item = Sha256dHash;
+
   fn next(&mut self) -> Option<Sha256dHash> {
     if self.index.is_null() {
       return None;
@@ -274,7 +276,9 @@ pub struct RevStaleBlockIter<'tree> {
   chain: &'tree Blockchain
 }
 
-impl<'tree> Iterator<&'tree BlockchainNode> for BlockIter<'tree> {
+impl<'tree> Iterator for BlockIter<'tree> {
+  type Item = &'tree BlockchainNode;
+
   fn next(&mut self) -> Option<&'tree BlockchainNode> {
     if self.index.is_null() {
       return None;
@@ -287,7 +291,9 @@ impl<'tree> Iterator<&'tree BlockchainNode> for BlockIter<'tree> {
   }
 }
 
-impl<'tree> Iterator<&'tree BlockchainNode> for RevBlockIter<'tree> {
+impl<'tree> Iterator for RevBlockIter<'tree> {
+  type Item = &'tree BlockchainNode;
+
   fn next(&mut self) -> Option<&'tree BlockchainNode> {
     if self.index.is_null() {
       return None;
@@ -300,7 +306,9 @@ impl<'tree> Iterator<&'tree BlockchainNode> for RevBlockIter<'tree> {
   }
 }
 
-impl<'tree> Iterator<&'tree Block> for RevStaleBlockIter<'tree> {
+impl<'tree> Iterator for RevStaleBlockIter<'tree> {
+  type Item = &'tree Block;
+
   fn next(&mut self) -> Option<&'tree Block> { 
     if self.index.is_null() {
       return None;
@@ -365,7 +373,7 @@ impl Blockchain {
     }
   }
 
-  fn replace_txdata(&mut self, hash: &Uint256, txdata: Vec<Transaction>, has_txdata: bool) -> error::Result<()> {
+  fn replace_txdata(&mut self, hash: &Uint256, txdata: Vec<Transaction>, has_txdata: bool) -> Result<(), error::Error> {
     match self.tree.lookup_mut(hash, 256) {
       Some(existing_block) => {
         unsafe {
@@ -405,26 +413,26 @@ impl Blockchain {
   }
 
   /// Locates a block in the chain and overwrites its txdata
-  pub fn add_txdata(&mut self, block: Block) -> error::Result<()> {
+  pub fn add_txdata(&mut self, block: Block) -> Result<(), error::Error> {
     self.replace_txdata(&block.header.bitcoin_hash().into_le(), block.txdata, true)
   }
 
   /// Locates a block in the chain and removes its txdata
-  pub fn remove_txdata(&mut self, hash: Sha256dHash) -> error::Result<()> {
+  pub fn remove_txdata(&mut self, hash: Sha256dHash) -> Result<(), error::Error> {
     self.replace_txdata(&hash.into_le(), vec![], false)
   }
 
   /// Adds a block header to the chain
-  pub fn add_header(&mut self, header: BlockHeader) -> error::Result<()> {
+  pub fn add_header(&mut self, header: BlockHeader) -> Result<(), error::Error> {
     self.real_add_block(Block { header: header, txdata: vec![] }, false)
   }
 
   /// Adds a block to the chain
-  pub fn add_block(&mut self, block: Block) -> error::Result<()> {
+  pub fn add_block(&mut self, block: Block) -> Result<(), error::Error> {
     self.real_add_block(block, true)
   }
 
-  fn real_add_block(&mut self, block: Block, has_txdata: bool) -> error::Result<()> {
+  fn real_add_block(&mut self, block: Block, has_txdata: bool) -> Result<(), error::Error> {
     // get_prev optimizes the common case where we are extending the best tip
     #[inline]
     fn get_prev<'a>(chain: &'a Blockchain, hash: Sha256dHash) -> Option<NodePtr> {

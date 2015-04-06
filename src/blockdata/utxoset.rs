@@ -74,7 +74,9 @@ pub struct UtxoIterator<'a> {
   tx_index: u32
 }
 
-impl<'a> Iterator<(Sha256dHash, u32, &'a TxOut, u32)> for UtxoIterator<'a> {
+impl<'a> Iterator for UtxoIterator<'a> {
+  type Item = (Sha256dHash, u32, &'a TxOut, u32);
+
   fn next(&mut self) -> Option<(Sha256dHash, u32, &'a TxOut, u32)> {
     while self.current.is_some() {
       let current = &self.current.unwrap().outputs;

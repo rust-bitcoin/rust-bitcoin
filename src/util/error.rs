@@ -18,9 +18,6 @@
 
 use std::io;
 
-/// A success/failure return value
-pub type Result<T> = Result<T, Error>;
-
 /// A general error code
 #[derive(PartialEq, Eq, Debug, Clone)]
 pub enum Error {

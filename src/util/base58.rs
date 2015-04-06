@@ -16,7 +16,7 @@
 
 use byteorder::{ByteOrder, LittleEndian};
 
-use std::string;
+use std::str;
 
 use util::hash::Sha256dHash;
 
@@ -132,7 +132,7 @@ pub fn base58_encode_slice(data: &[u8]) -> String {
   // Unsafely translate the bytes to a utf8 string
   unsafe {
     // Copy leading zeroes directly
-    let mut ret = string::raw::from_utf8(data.iter().take_while(|&&x| x == 0)
+    let mut ret = str::from_utf8(data.iter().take_while(|&&x| x == 0)
                                                     .map(|_|  BASE58_CHARS[0])
                                                     .collect());
     // Copy rest of string

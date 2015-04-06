@@ -35,9 +35,9 @@ use crypto::digest::Digest;
 use crypto::ripemd160::Ripemd160;
 use crypto::sha1::Sha1;
 use crypto::sha2::Sha256;
-
 use secp256k1::Secp256k1;
 use secp256k1::key::PublicKey;
+use serde;
 
 use blockdata::opcodes;
 use blockdata::transaction::{Transaction, TxIn};
@@ -1207,9 +1207,11 @@ impl AbstractStack {
   }
 }
 
-impl json::ToJson for Error {
-  fn to_json(&self) -> json::Json {
-    json::String(self.to_string())
+impl serde::Serialize for Error {
+  fn serialize<S>(&self, serializer: &mut S) -> Result<(), S::Error>
+      where S: serde::Serializer,
+  {
+      serializer.visit_str(&self.to_string())
   }
 }
 
@@ -1237,8 +1239,6 @@ pub struct ScriptTrace {
   /// An error if one was returned, or None
   pub error: Option<Error>
 }
-
-impl_json!(TraceIteration, index, opcode, op_count, executed, errored, effect, stack);
 
 /// Hashtype of a transaction, encoded in the last byte of a signature,
 /// specifically in the last 5 bits `byte & 31`
@@ -1337,11 +1337,11 @@ impl<'a> ops::Index<ops::RangeFrom<usize>> for MaybeOwned<'a> {
   }
 }
 
-impl<'a> ops::Index<ops::RangeFull<usize>> for MaybeOwned<'a> {
+impl<'a> ops::Index<ops::RangeFull> for MaybeOwned<'a> {
   type Output = [u8];
 
   #[inline]
-  fn index(&self, _: ops::RangeFull<usize>) -> &[u8] {
+  fn index(&self, _: ops::RangeFull) -> &[u8] {
     match *self {
       MaybeOwned::Owned(ref v) => &v[..],
       MaybeOwned::Borrowed(ref s) => &s[..]
@@ -1427,16 +1427,16 @@ pub fn read_scriptbool(v: &[u8]) -> bool {
 }
 
 /// Read a script-encoded unsigned integer
-pub fn read_uint<'a, I:Iterator<&'a u8>>(mut iter: I, size: usize)
-    -> Result<usize, Error> {
-  let mut ret = 0;
-  for i in 0..size {
-    match iter.next() {
-      Some(&n) => ret += (n as usize) << (i * 8),
-      None => { return Err(Error::EarlyEndOfScript); }
+pub fn read_uint(data: &[u8], size: usize) -> Result<usize, Error> {
+  if data.len() < size {
+    Err(Error::EarlyEndOfScript)
+  } else {
+    let mut ret = 0;
+    for i in 0..size {
+      ret += (data[i] as usize) << (i * 8);
     }
+    Ok(ret)
   }
-  Ok(ret)
 }
 
 /// Check a signature -- returns an error that is currently just translated
@@ -2477,31 +2477,30 @@ impl Default for Script {
 }
 
 // User-facing serialization
-impl json::ToJson for Script {
-  // TODO: put this in a struct alongside an opcode decode
-  fn to_json(&self) -> json::Json {
+impl serde::Serialize for Script {
+  fn serialize<S>(&self, serializer: &mut S) -> Result<(), S::Error>
+      where S: serde::Serializer,
+  {
     let &Script(ref raw) = self;
-    let mut ret = String::new();
     for dat in raw.iter() {
-      ret.push_char(from_digit((dat / 0x10) as usize, 16).unwrap());
-      ret.push_char(from_digit((dat & 0x0f) as usize, 16).unwrap());
+      serializer.visit_char(from_digit((dat / 0x10) as usize, 16).unwrap());
+      serializer.visit_char(from_digit((dat & 0x0f) as usize, 16).unwrap());
     }
-    json::String(ret)
   }
 }
 
 // Network serialization
-impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for Script {
+impl<S: SimpleEncoder> ConsensusEncodable<S> for Script {
   #[inline]
-  fn consensus_encode(&self, s: &mut S) -> Result<(), E> {
+  fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
     let &Script(ref data) = self;
     data.consensus_encode(s)
   }
 }
 
-impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for Script {
+impl<D: SimpleDecoder> ConsensusDecodable<D> for Script {
   #[inline]
-  fn consensus_decode(d: &mut D) -> Result<Script, E> {
+  fn consensus_decode(d: &mut D) -> Result<Script, D::Error> {
     Ok(Script(try!(ConsensusDecodable::consensus_decode(d))))
   }
 }

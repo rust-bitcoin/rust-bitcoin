@@ -46,16 +46,16 @@ pub fn magic(network: Network) -> u32 {
   }
 }
 
-impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for Network {
+impl<S: SimpleEncoder> ConsensusEncodable<S> for Network {
   #[inline]
-  fn consensus_encode(&self, s: &mut S) -> Result<(), E> {
+  fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
     magic(*self).consensus_encode(s)
   }
 }
 
-impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for Network {
+impl<D: SimpleDecoder> ConsensusDecodable<D> for Network {
   #[inline]
-  fn consensus_decode(d: &mut D) -> Result<Network, E> {
+  fn consensus_decode(d: &mut D) -> Result<Network, D::Error> {
     let magic: u32 = try!(ConsensusDecodable::consensus_decode(d));
     match magic {
       0xD9B4BEF9 => Ok(Network::Bitcoin),

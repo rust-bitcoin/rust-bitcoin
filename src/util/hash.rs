@@ -22,7 +22,7 @@ use std::fmt;
 use std::io::Cursor;
 use std::mem::transmute;
 use std::hash;
-use serialize::json::{self, ToJson};
+use serde;
 
 use byteorder::{ByteOrder, LittleEndian};
 use crypto::digest::Digest;
@@ -160,37 +160,48 @@ impl Sha256dHash {
 // used only for user-facing stuff. Internal and network serialization is
 // little-endian and should be done using the consensus `encodable::ConsensusEncodable`
 // interface.
-impl ToJson for Sha256dHash {
-  #[inline]
-  fn to_json(&self) -> json::Json {
-    json::String(self.be_hex_string())
+impl serde::Serialize for Sha256dHash {
+  fn serialize<S>(&self, serializer: &mut S) -> Result<(), S::Error>
+      where S: serde::Serializer,
+  {
+      serializer.visit_str(&self.be_hex_string())
   }
 }
 
-// Non-consensus encoding (big-endian hex string)
-impl<S: ::serialize::Encoder<E>, E> ::serialize::Encodable<S, E> for Sha256dHash {
+impl serde::Deserialize for Sha256dHash {
   #[inline]
-  fn encode(&self, s: &mut S) -> Result<(), E> {
-    s.emit_str(self.be_hex_string().as_slice())
-  }
-}
-
-impl<D: ::serialize::Decoder<E>, E> ::serialize::Decodable<D, E> for Sha256dHash {
-  #[inline]
-  fn decode(d: &mut D) -> Result<Sha256dHash, E> {
+  fn deserialize<D>(d: &mut D) -> Result<Sha256dHash, D::Error>
+    where D: serde::Deserializer
+  {
     use serialize::hex::FromHex;
 
-    let hex_str = try!(d.read_str());
-    if hex_str.len() != 64 {
-      d.error("incorrect hash length");
+    struct Sha256dHashVisitor;
+    impl serde::de::Visitor for Sha256dHashVisitor {
+      type Value = Sha256dHash;
+
+      fn visit_string<E>(&mut self, v: String) -> Result<Sha256dHash, E>
+        where E: serde::de::Error
+      {
+        self.visit_str(&v)
+      }
+
+      fn visit_str<E>(&mut self, hex_str: &str) -> Result<Sha256dHash, E>
+        where E: serde::de::Error
+      {
+        if hex_str.len() != 64 {
+          return Err(serde::de::Error::syntax_error());
+        }
+        let raw_str = try!(hex_str.as_slice().from_hex()
+                             .map_err(|_| serde::de::Error::syntax_error()));
+        let mut ret = [0u8; 32];
+        for i in 0..32 {
+          ret[i] = raw_str[31 - i];
+        }
+        Ok(Sha256dHash(ret))
+      }
     }
-    let raw_str = try!(hex_str.as_slice().from_hex()
-                         .map_err(|_| d.error("non-hexadecimal hash string")));
-    let mut ret = [0u8; 32];
-    for i in 0..32 {
-      ret[i] = raw_str[31 - i];
-    }
-    Ok(Sha256dHash(ret))
+
+    d.visit(Sha256dHashVisitor)
   }
 }
 

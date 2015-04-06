@@ -97,7 +97,7 @@ impl BlockHeader {
   /// Performs an SPV validation of a block, which confirms that the proof-of-work
   /// is correct, but does not verify that the transactions are valid or encoded
   /// correctly.
-  pub fn spv_validate(&self, required_target: &Uint256) -> error::Result<()> {
+  pub fn spv_validate(&self, required_target: &Uint256) -> Result<(), error::Error> {
     let ref target = self.target();
     if target != required_target {
       return Err(SpvBadTarget);
@@ -132,7 +132,6 @@ impl BitcoinHash for Block {
 }
 
 impl_consensus_encoding!(BlockHeader, version, prev_blockhash, merkle_root, time, bits, nonce);
-impl_json!(BlockHeader, version, prev_blockhash, merkle_root, time, bits, nonce);
 impl_consensus_encoding!(Block, header, txdata);
 impl_consensus_encoding!(LoneBlockHeader, header, tx_count);
 

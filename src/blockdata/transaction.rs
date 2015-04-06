@@ -24,7 +24,7 @@
 //!
 
 use std::default::Default;
-use serialize::json;
+use serde;
 
 use util::hash::Sha256dHash;
 use blockdata::script::{self, Script, ScriptTrace, read_scriptbool};
@@ -123,9 +123,11 @@ pub enum Error {
   InputNotFound(Sha256dHash, u32),
 }
 
-impl json::ToJson for Error {
-  fn to_json(&self) -> json::Json {
-    json::String(self.to_string())
+impl serde::Serialize for Error {
+  fn serialize<S>(&self, serializer: &mut S) -> Result<(), S::Error>
+      where S: serde::Serializer,
+  {
+      serializer.visit_str(&self.to_string())
   }
 }
 
@@ -140,18 +142,12 @@ pub struct InputTrace {
   error: Option<Error>
 }
 
-impl_json!(ScriptTrace, script, initial_stack, iterations, error);
-impl_json!(InputTrace, input_txid, input_vout, sig_trace,
-                       pubkey_trace, p2sh_trace, error);
-
 /// A trace of a transaction's execution
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct TransactionTrace {
   txid: Sha256dHash,
   inputs: Vec<InputTrace>
 }
-
-impl_json!(TransactionTrace, txid, inputs);
 
 impl TxIn {
   /// Check an input's script for validity
@@ -304,12 +300,8 @@ impl BitcoinHash for Transaction {
 }
 
 impl_consensus_encoding!(TxIn, prev_hash, prev_index, script_sig, sequence);
-impl_json!(TxIn, prev_hash, prev_index, script_sig, sequence);
 impl_consensus_encoding!(TxOut, value, script_pubkey);
-impl_json!(TxOut, value, script_pubkey);
 impl_consensus_encoding!(Transaction, version, input, output, lock_time);
-impl_json!(Transaction, version, input, output, lock_time);
-
 
 #[cfg(test)]
 mod tests {

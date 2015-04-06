@@ -98,17 +98,38 @@ macro_rules! user_enum {
       }
     }
 
-    impl<S: ::serialize::Encoder<E>, E> ::serialize::Encodable<S, E> for $name {
-      fn encode(&self, s: &mut S) -> Result<(), E> {
-        s.emit_str(self.to_string().as_slice())
+    impl ::serde::Deserialize for $name {
+      #[inline]
+      fn deserialize<D>(d: &mut D) -> Result<$name, D::Error>
+        where D: ::serde::Deserializer
+      {
+        struct Visitor;
+        impl ::serde::de::Visitor for Visitor {
+          type Value = $name;
+
+          fn visit_string<E>(&mut self, v: String) -> Result<$name, E>
+            where E: ::serde::de::Error
+          {
+            self.visit_str(&v)
+          }
+
+          fn visit_str<E>(&mut self, s: &str) -> Result<$name, E>
+            where E: ::serde::de::Error
+          {
+            $( if s == $txt { Ok($name::$elem) } )else*
+            else { Err(::serde::de::Error::syntax_error()) }
+          }
+        }
+
+        d.visit(Visitor)
       }
     }
 
-    impl <D: ::serialize::Decoder<E>, E> ::serialize::Decodable<D, E> for $name {
-      fn decode(d: &mut D) -> Result<$name, E> {
-        let s = try!(d.read_str());
-        $( if s.as_slice() == $txt { Ok($name::$elem) } )else*
-        else { Err(d.error(format!("unknown `{}`", s).as_slice())) }
+    impl ::serde::Serialize for $name {
+      fn serialize<S>(&self, s: &mut S) -> Result<(), S::Error>
+        where S: ::serde::Serializer
+      {
+        s.visit_str(&self.to_string())
       }
     }
   );

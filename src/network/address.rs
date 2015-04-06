@@ -33,9 +33,9 @@ pub struct Address {
   pub port: u16
 }
 
-impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for Address {
+impl<S: SimpleEncoder> ConsensusEncodable<S> for Address {
   #[inline]
-  fn consensus_encode(&self, s: &mut S) -> Result<(), E> {
+  fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
     try!(self.services.consensus_encode(s));
     try!(self.address.consensus_encode(s));
     // Explicitly code the port since it needs to be big-endian
@@ -45,9 +45,9 @@ impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for Address {
   }
 }
 
-impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for Address {
+impl<D: SimpleDecoder> ConsensusDecodable<D> for Address {
   #[inline]
-  fn consensus_decode(d: &mut D) -> Result<Address, E> {
+  fn consensus_decode(d: &mut D) -> Result<Address, D::Error> {
     Ok(Address {
       services: try!(ConsensusDecodable::consensus_decode(d)),
       address: try!(ConsensusDecodable::consensus_decode(d)),

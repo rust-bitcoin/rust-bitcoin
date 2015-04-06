@@ -97,9 +97,9 @@ impl GetHeadersMessage {
 
 impl_consensus_encoding!(GetHeadersMessage, version, locator_hashes, stop_hash);
 
-impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for Inventory {
+impl<S: SimpleEncoder> ConsensusEncodable<S> for Inventory {
   #[inline]
-  fn consensus_encode(&self, s: &mut S) -> Result<(), E> {
+  fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
     try!(match self.inv_type {
       InvType::Error => 0u32, 
       InvType::Transaction => 1,
@@ -109,9 +109,9 @@ impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for Inventory {
   }
 }
 
-impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for Inventory {
+impl<D: SimpleDecoder> ConsensusDecodable<D> for Inventory {
   #[inline]
-  fn consensus_decode(d: &mut D) -> Result<Inventory, E> {
+  fn consensus_decode(d: &mut D) -> Result<Inventory, D::Error> {
     let int_type: u32 = try!(ConsensusDecodable::consensus_decode(d));
     Ok(Inventory {
       inv_type: match int_type {

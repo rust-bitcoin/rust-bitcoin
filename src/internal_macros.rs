@@ -14,17 +14,17 @@
 
 macro_rules! impl_consensus_encoding {
   ($thing:ident, $($field:ident),+) => (
-    impl<S: ::network::serialize::SimpleEncoder<E>, E> ::network::encodable::ConsensusEncodable<S, E> for $thing {
+    impl<S: ::network::serialize::SimpleEncoder> ::network::encodable::ConsensusEncodable<S> for $thing {
       #[inline]
-      fn consensus_encode(&self, s: &mut S) -> Result<(), E> {
+      fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
         $( try!(self.$field.consensus_encode(s)); )+
         Ok(())
       }
     }
 
-    impl<D: ::network::serialize::SimpleDecoder<E>, E> ::network::encodable::ConsensusDecodable<D, E> for $thing {
+    impl<D: ::network::serialize::SimpleDecoder> ::network::encodable::ConsensusDecodable<D> for $thing {
       #[inline]
-      fn consensus_decode(d: &mut D) -> Result<$thing, E> {
+      fn consensus_decode(d: &mut D) -> Result<$thing, D::Error> {
         use network::encodable::ConsensusDecodable;
         Ok($thing {
           $( $field: try!(ConsensusDecodable::consensus_decode(d)), )+
@@ -36,32 +36,18 @@ macro_rules! impl_consensus_encoding {
 
 macro_rules! impl_newtype_consensus_encoding {
   ($thing:ident) => (
-    impl<S: ::network::serialize::SimpleEncoder<E>, E> ::network::encodable::ConsensusEncodable<S, E> for $thing {
+    impl<S: ::network::serialize::SimpleEncoder> ::network::encodable::ConsensusEncodable<S> for $thing {
       #[inline]
-      fn consensus_encode(&self, s: &mut S) -> Result<(), E> {
+      fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
         let &$thing(ref data) = self;
         data.consensus_encode(s)
       }
     }
 
-    impl<D: ::network::serialize::SimpleDecoder<E>, E> ::network::encodable::ConsensusDecodable<D, E> for $thing {
+    impl<D: ::network::serialize::SimpleDecoder> ::network::encodable::ConsensusDecodable<D> for $thing {
       #[inline]
-      fn consensus_decode(d: &mut D) -> Result<$thing, E> {
+      fn consensus_decode(d: &mut D) -> Result<$thing, D::Error> {
         Ok($thing(try!(ConsensusDecodable::consensus_decode(d))))
-      }
-    }
-  );
-}
-
-macro_rules! impl_json {
-  ($thing:ident, $($field:ident),+) => (
-    impl ::serialize::json::ToJson for $thing {
-      fn to_json(&self) -> ::serialize::json::Json {
-        use std::collections::BTreeMap;
-        use serialize::json::{ToJson, Object};
-        let mut ret = BTreeMap::new();
-        $( ret.insert(stringify!($field).to_string(), self.$field.to_json()); )+
-        Object(ret)
       }
     }
   );
@@ -201,32 +187,46 @@ macro_rules! impl_array_newtype {
 
 macro_rules! impl_array_newtype_encodable {
   ($thing:ident, $ty:ty, $len:expr) => {
-    impl<D: ::serialize::Decoder<E>, E> ::serialize::Decodable<D, E> for $thing {
-      fn decode(d: &mut D) -> Result<$thing, E> {
-        use serialize::Decodable;
 
-        ::assert_type_is_copy::<$ty>();
+    impl ::serde::Deserialize for $thing {
+      fn deserialize<D>(d: &mut D) -> Result<$thing, D::Error>
+        where D: ::serde::Deserializer
+      {
+        // We have to define the Visitor struct inside the function
+        // to make it local ... what we really need is that it's
+        // local to the macro, but this is Close Enough.
+        struct Visitor {
+          marker: ::std::marker::PhantomData<$thing>,
+        }
+        impl ::serde::de::Visitor for Visitor {
+          type Value = $thing;
 
-        d.read_seq(|d, len| {
-          if len != $len {
-            Err(d.error("Invalid length"))
-          } else {
+          #[inline]
+          fn visit_seq<V>(&mut self, mut v: V) -> Result<$thing, V::Error>
+            where V: ::serde::de::SeqVisitor
+          {
             unsafe {
               use std::mem;
               let mut ret: [$ty; $len] = mem::uninitialized();
-              for i in 0..len {
-                ret[i] = try!(d.read_seq_elt(i, |d| Decodable::decode(d)));
+              for i in 0..$len {
+                ret[i] = try!(v.visit());
               }
               Ok($thing(ret))
             }
           }
-        })
+        }
+
+        // Begin actual function
+        d.visit(Visitor { marker: ::std::marker::PhantomData })
       }
     }
 
-    impl<E: ::serialize::Encoder<S>, S> ::serialize::Encodable<E, S> for $thing {
-      fn encode(&self, e: &mut E) -> Result<(), S> {
-        self.as_slice().encode(e)
+    impl ::serde::Serialize for $thing {
+      fn serialize<S>(&self, s: &mut S) -> Result<(), S::Error>
+        where S: ::serde::Serializer
+      {
+        let &$thing(ref dat) = self;
+        (&dat[..]).serialize(s)
       }
     }
   }

@@ -38,9 +38,9 @@ use util::misc::prepend_err;
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct CommandString(pub String);
 
-impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for CommandString {
+impl<S: SimpleEncoder> ConsensusEncodable<S> for CommandString {
   #[inline]
-  fn consensus_encode(&self, s: &mut S) -> Result<(), E> {
+  fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
     let &CommandString(ref inner_str) = self;
     let mut rawbytes = [0u8; 12]; 
     rawbytes.clone_from_slice(inner_str.as_bytes().as_slice());
@@ -48,9 +48,9 @@ impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for CommandString {
   }
 }
 
-impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for CommandString {
+impl<D: SimpleDecoder> ConsensusDecodable<D> for CommandString {
   #[inline]
-  fn consensus_decode(d: &mut D) -> Result<CommandString, E> {
+  fn consensus_decode(d: &mut D) -> Result<CommandString, D::Error> {
     let rawbytes: [u8; 12] = try!(ConsensusDecodable::consensus_decode(d)); 
     let rv = iter::FromIterator::from_iter(rawbytes.iter().filter_map(|&u| if u > 0 { Some(u as char) } else { None }));
     Ok(CommandString(rv))
@@ -133,8 +133,8 @@ impl RawNetworkMessage {
   }
 }
 
-impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for RawNetworkMessage {
-  fn consensus_encode(&self, s: &mut S) -> Result<(), E> {
+impl<S: SimpleEncoder> ConsensusEncodable<S> for RawNetworkMessage {
+  fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
     try!(self.magic.consensus_encode(s));
     try!(CommandString(self.command()).consensus_encode(s));
     try!(CheckedData(match self.payload {
@@ -156,7 +156,7 @@ impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for RawNetworkMessage {
   }
 }
 
-impl<D:SimpleDecoder<io::Error>> ConsensusDecodable<D, io::Error> for RawNetworkMessage {
+impl<D: SimpleDecoder<Error=io::Error>> ConsensusDecodable<D> for RawNetworkMessage {
   fn consensus_decode(d: &mut D) -> io::Result<RawNetworkMessage> {
     let magic = try!(ConsensusDecodable::consensus_decode(d));
     let CommandString(cmd): CommandString= try!(ConsensusDecodable::consensus_decode(d));

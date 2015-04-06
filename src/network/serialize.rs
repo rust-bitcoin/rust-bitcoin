@@ -39,20 +39,20 @@ impl BitcoinHash for Vec<u8> {
 }
 
 /// Encode an object into a vector
-pub fn serialize<T: ConsensusEncodable<RawEncoder<Cursor>, io::Error>>(obj: &T) -> io::Result<Vec<u8>> {
+pub fn serialize<T: ConsensusEncodable<RawEncoder<Cursor<Vec<u8>>>>>(obj: &T) -> io::Result<Vec<u8>> {
   let mut encoder = RawEncoder::new(Cursor::new(vec![]));
   try!(obj.consensus_encode(&mut encoder));
   Ok(encoder.unwrap().unwrap())
 }
 
 /// Encode an object into a hex-encoded string
-pub fn serialize_hex<T: ConsensusEncodable<RawEncoder<Cursor>, io::Error>>(obj: &T) -> io::Result<String> {
+pub fn serialize_hex<T: ConsensusEncodable<RawEncoder<Cursor<Vec<u8>>>>>(obj: &T) -> io::Result<String> {
   let serial = try!(serialize(obj));
   Ok(serial.as_slice().to_hex())
 }
 
 /// Deserialize an object from a vector
-pub fn deserialize<T: ConsensusDecodable<RawDecoder<Cursor>, io::Error>>(data: Vec<u8>) -> io::Result<T> {
+pub fn deserialize<T: ConsensusDecodable<RawDecoder<Cursor<Vec<u8>>>>>(data: Vec<u8>) -> io::Result<T> {
   let mut decoder = RawDecoder::new(Cursor::new(data));
   ConsensusDecodable::consensus_decode(&mut decoder)
 }
@@ -92,59 +92,65 @@ impl<R:Read> RawDecoder<R> {
 }
 
 /// A simple Encoder trait
-pub trait SimpleEncoder<E> {
+pub trait SimpleEncoder {
+  type Error;
+
   /// Output a 64-bit uint
-  fn emit_u64(&mut self, v: u64) -> Result<(), E>;
+  fn emit_u64(&mut self, v: u64) -> Result<(), Self::Error>;
   /// Output a 32-bit uint
-  fn emit_u32(&mut self, v: u32) -> Result<(), E>;
+  fn emit_u32(&mut self, v: u32) -> Result<(), Self::Error>;
   /// Output a 16-bit uint
-  fn emit_u16(&mut self, v: u16) -> Result<(), E>;
+  fn emit_u16(&mut self, v: u16) -> Result<(), Self::Error>;
   /// Output a 8-bit uint
-  fn emit_u8(&mut self, v: u8) -> Result<(), E>;
+  fn emit_u8(&mut self, v: u8) -> Result<(), Self::Error>;
 
   /// Output a 64-bit int
-  fn emit_i64(&mut self, v: i64) -> Result<(), E>;
+  fn emit_i64(&mut self, v: i64) -> Result<(), Self::Error>;
   /// Output a 32-bit int
-  fn emit_i32(&mut self, v: i32) -> Result<(), E>;
+  fn emit_i32(&mut self, v: i32) -> Result<(), Self::Error>;
   /// Output a 16-bit int
-  fn emit_i16(&mut self, v: i16) -> Result<(), E>;
+  fn emit_i16(&mut self, v: i16) -> Result<(), Self::Error>;
   /// Output a 8-bit int
-  fn emit_i8(&mut self, v: i8) -> Result<(), E>;
+  fn emit_i8(&mut self, v: i8) -> Result<(), Self::Error>;
 
   /// Output a boolean
-  fn emit_bool(&mut self, v: bool) -> Result<(), E>;
+  fn emit_bool(&mut self, v: bool) -> Result<(), Self::Error>;
 }
 
 /// A simple Decoder trait
-pub trait SimpleDecoder<E> {
+pub trait SimpleDecoder {
+  type Error;
+
   /// Read a 64-bit uint
-  fn read_u64(&mut self) -> Result<u64, E>;
+  fn read_u64(&mut self) -> Result<u64, Self::Error>;
   /// Read a 32-bit uint
-  fn read_u32(&mut self) -> Result<u32, E>;
+  fn read_u32(&mut self) -> Result<u32, Self::Error>;
   /// Read a 16-bit uint
-  fn read_u16(&mut self) -> Result<u16, E>;
+  fn read_u16(&mut self) -> Result<u16, Self::Error>;
   /// Read a 8-bit uint
-  fn read_u8(&mut self) -> Result<u8, E>;
+  fn read_u8(&mut self) -> Result<u8, Self::Error>;
 
   /// Read a 64-bit int
-  fn read_i64(&mut self) -> Result<i64, E>;
+  fn read_i64(&mut self) -> Result<i64, Self::Error>;
   /// Read a 32-bit int
-  fn read_i32(&mut self) -> Result<i32, E>;
+  fn read_i32(&mut self) -> Result<i32, Self::Error>;
   /// Read a 16-bit int
-  fn read_i16(&mut self) -> Result<i16, E>;
+  fn read_i16(&mut self) -> Result<i16, Self::Error>;
   /// Read a 8-bit int
-  fn read_i8(&mut self) -> Result<i8, E>;
+  fn read_i8(&mut self) -> Result<i8, Self::Error>;
 
   /// Read a boolean
-  fn read_bool(&mut self) -> Result<bool, E>;
+  fn read_bool(&mut self) -> Result<bool, Self::Error>;
 
   /// Signal a decoding error
-  fn error(&mut self, err: &str) -> E;
+  fn error(&mut self, err: &str) -> Self::Error;
 }
 
 // TODO: trait reform: impl SimpleEncoder for every Encoder, ditto for Decoder
 
-impl<W:Write> SimpleEncoder<io::Error> for RawEncoder<W> {
+impl<W: Write> SimpleEncoder for RawEncoder<W> {
+  type Error = io::Error;
+
   #[inline]
   fn emit_u64(&mut self, v: u64) -> io::Result<()> { self.writer.write_le_u64(v) }
   #[inline]
@@ -167,7 +173,9 @@ impl<W:Write> SimpleEncoder<io::Error> for RawEncoder<W> {
   fn emit_bool(&mut self, v: bool) -> io::Result<()> { self.writer.write_i8(if v {1} else {0}) }
 }
 
-impl<R:Read> SimpleDecoder<io::Error> for RawDecoder<R> {
+impl<R: Read> SimpleDecoder for RawDecoder<R> {
+  type Error = io::Error;
+
   #[inline]
   fn read_u64(&mut self) -> io::Result<u64> { self.reader.read_le_u64() }
   #[inline]

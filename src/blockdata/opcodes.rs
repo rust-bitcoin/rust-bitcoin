@@ -20,7 +20,7 @@
 
 #![allow(non_camel_case_types)]
 
-use serialize::json;
+use serde;
 
 // Heavy stick to translate between opcode types
 use std::mem::transmute;
@@ -602,24 +602,26 @@ impl All {
     }
 }
 
-impl<D:SimpleDecoder<E>, E> ConsensusDecodable<D, E> for All {
+impl<D: SimpleDecoder> ConsensusDecodable<D> for All {
     #[inline]
-    fn consensus_decode(d: &mut D) -> Result<All, E> {
+    fn consensus_decode(d: &mut D) -> Result<All, D::Error> {
       Ok(All::from_u8(try!(d.read_u8())))
     }
 }
 
-impl<S:SimpleEncoder<E>, E> ConsensusEncodable<S, E> for All {
+impl<S: SimpleEncoder> ConsensusEncodable<S> for All {
     #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), E> {
+    fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
       s.emit_u8(*self as u8)
     }
 }
 
-impl json::ToJson for All {
-    fn to_json(&self) -> json::Json {
-      json::String(self.to_string())
-    }
+impl serde::Serialize for All {
+  fn serialize<S>(&self, serializer: &mut S) -> Result<(), S::Error>
+      where S: serde::Serializer,
+  {
+      serializer.visit_str(&self.to_string())
+  }
 }
 
 /// Empty stack is also FALSE
@@ -644,9 +646,11 @@ pub enum Class {
   Ordinary(Ordinary)
 }
 
-impl json::ToJson for Class {
-  fn to_json(&self) -> json::Json {
-    json::String(self.to_string())
+impl serde::Serialize for Class {
+  fn serialize<S>(&self, serializer: &mut S) -> Result<(), S::Error>
+      where S: serde::Serializer,
+  {
+      serializer.visit_str(&self.to_string())
   }
 }
 

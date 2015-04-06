@@ -38,7 +38,9 @@ pub struct PatriciaTree<K, V> {
   skip_len: u8
 }
 
-impl<K:BitArray+cmp::Eq+Zero+One+ops::BitXor<K,K>+ops::Shl<usize,K>+ops::Shr<usize,K>, V> PatriciaTree<K, V> {
+impl<K, V> PatriciaTree<K, V>
+  where K: BitArray + cmp::Eq + Zero + One + ops::BitXor<K> + ops::Shl<usize> + ops::Shr<usize>
+{
   /// Constructs a new Patricia tree
   pub fn new() -> PatriciaTree<K, V> {
     PatriciaTree {
@@ -214,7 +216,9 @@ impl<K:BitArray+cmp::Eq+Zero+One+ops::BitXor<K,K>+ops::Shl<usize,K>+ops::Shr<usi
   pub fn delete(&mut self, key: &K, key_len: usize) -> Option<V> {
     /// Return value is (deletable, actual return value), where `deletable` is true
     /// is true when the entire node can be deleted (i.e. it has no children)
-    fn recurse<K:BitArray+cmp::Eq+Zero+One+ops::Add<K,K>+ops::Shr<usize,K>+ops::Shl<usize,K>, V>(tree: &mut PatriciaTree<K, V>, key: &K, key_len: usize) -> (bool, Option<V>) {
+    fn recurse<K, V>(tree: &mut PatriciaTree<K, V>, key: &K, key_len: usize) -> (bool, Option<V>)
+      where K: BitArray + cmp::Eq + Zero + One + ops::Add<K> + ops::Shr<usize> + ops::Shl<usize>
+    {
       // If the search key is shorter than the node prefix, there is no
       // way we can match, so fail.
       if key_len < tree.skip_len as usize {
@@ -386,8 +390,12 @@ impl<K:BitArray, V:Debug> PatriciaTree<K, V> {
   }
 }
 
-impl<S:SimpleEncoder<E>, E, K:ConsensusEncodable<S, E>, V:ConsensusEncodable<S, E>> ConsensusEncodable<S, E> for PatriciaTree<K, V> {
-  fn consensus_encode(&self, s: &mut S) -> Result<(), E> {
+impl<S, K, V> ConsensusEncodable<S> for PatriciaTree<K, V>
+  where S: SimpleEncoder,
+        K: ConsensusEncodable<S>,
+        V: ConsensusEncodable<S>
+{
+  fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
     // Depth-first serialization: serialize self, then children
     try!(self.skip_prefix.consensus_encode(s));
     try!(self.skip_len.consensus_encode(s));
@@ -398,8 +406,12 @@ impl<S:SimpleEncoder<E>, E, K:ConsensusEncodable<S, E>, V:ConsensusEncodable<S, 
   }
 }
 
-impl<D:SimpleDecoder<E>, E, K:ConsensusDecodable<D, E>, V:ConsensusDecodable<D, E>> ConsensusDecodable<D, E> for PatriciaTree<K, V> {
-  fn consensus_decode(d: &mut D) -> Result<PatriciaTree<K, V>, E> {
+impl<D, K, V> ConsensusDecodable<D> for PatriciaTree<K, V>
+  where D: SimpleDecoder,
+        K: ConsensusDecodable<D>,
+        V: ConsensusDecodable<D>
+{
+  fn consensus_decode(d: &mut D) -> Result<PatriciaTree<K, V>, D::Error> {
     Ok(PatriciaTree {
       skip_prefix: try!(ConsensusDecodable::consensus_decode(d)),
       skip_len: try!(ConsensusDecodable::consensus_decode(d)),
@@ -425,7 +437,9 @@ pub struct MutItems<'tree, K, V> {
   marker: marker::PhantomData<&'tree PatriciaTree<K, V>>
 }
 
-impl<'a, K, V> Iterator<&'a V> for Items<'a, K, V> {
+impl<'a, K, V> Iterator for Items<'a, K, V> {
+  type Item = &'a V;
+
   fn next(&mut self) -> Option<&'a V> {
     fn borrow_opt<'a, K, V>(opt_ptr: &'a Option<Box<PatriciaTree<K, V>>>) -> Option<&'a PatriciaTree<K, V>> {
       opt_ptr.as_ref().map(|b| &**b)
@@ -469,7 +483,9 @@ impl<'a, K, V> Iterator<&'a V> for Items<'a, K, V> {
   }
 }
 
-impl<'a, K, V> Iterator<&'a mut V> for MutItems<'a, K, V> {
+impl<'a, K, V> Iterator for MutItems<'a, K, V> {
+  type Item = &'a mut V;
+
   fn next(&mut self) -> Option<&'a mut V> {
     fn borrow_opt<'a, K, V>(opt_ptr: &'a Option<Box<PatriciaTree<K, V>>>) -> *mut PatriciaTree<K, V> {
       match *opt_ptr {
