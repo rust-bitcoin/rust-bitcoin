@@ -23,7 +23,7 @@
 use std::fmt::Debug;
 use std::marker;
 use std::num::{Zero, One};
-use std::{cmp, ops, ptr};
+use std::{cmp, fmt, ops, ptr};
 
 use network::encodable::{ConsensusDecodable, ConsensusEncodable};
 use network::serialize::{SimpleDecoder, SimpleEncoder};
@@ -39,7 +39,11 @@ pub struct PatriciaTree<K, V> {
 }
 
 impl<K, V> PatriciaTree<K, V>
-  where K: BitArray + cmp::Eq + Zero + One + ops::BitXor<K> + ops::Shl<usize> + ops::Shr<usize>
+  where K: BitArray + cmp::Eq + Zero + One +
+           ops::BitXor<K, Output=K> +
+           ops::Add<K, Output=K> +
+           ops::Shr<usize, Output=K> +
+           ops::Shl<usize, Output=K>
 {
   /// Constructs a new Patricia tree
   pub fn new() -> PatriciaTree<K, V> {
@@ -217,7 +221,10 @@ impl<K, V> PatriciaTree<K, V>
     /// Return value is (deletable, actual return value), where `deletable` is true
     /// is true when the entire node can be deleted (i.e. it has no children)
     fn recurse<K, V>(tree: &mut PatriciaTree<K, V>, key: &K, key_len: usize) -> (bool, Option<V>)
-      where K: BitArray + cmp::Eq + Zero + One + ops::Add<K> + ops::Shr<usize> + ops::Shl<usize>
+      where K: BitArray + cmp::Eq + Zero + One +
+               ops::Add<K, Output=K> +
+               ops::Shr<usize, Output=K> +
+               ops::Shl<usize, Output=K>
     {
       // If the search key is shorter than the node prefix, there is no
       // way we can match, so fail.
@@ -275,7 +282,7 @@ impl<K, V> PatriciaTree<K, V>
         }
         // Otherwise, do it
         let (delete_child, ret) = recurse(&mut **target.as_mut().unwrap(),
-                                          &key.shr(&(tree.skip_len as usize + 1)),
+                                          &(*key >> (tree.skip_len as usize + 1)),
                                           key_len - tree.skip_len as usize - 1);
         if delete_child {
           target.take();
@@ -355,22 +362,22 @@ impl<K, V> PatriciaTree<K, V>
   }
 }
 
-impl<K:BitArray, V:Debug> PatriciaTree<K, V> {
+impl<K:BitArray, V:Debug> Debug for PatriciaTree<K, V> {
   /// Print the entire tree
-  pub fn print<'a>(&'a self) {
-    fn recurse<'a, K:BitArray, V:Debug>(tree: &'a PatriciaTree<K, V>, depth: usize) {
+  pub fn fmt<'a>(&'a self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn recurse<'a, K:BitArray, V:Debug>(tree: &'a PatriciaTree<K, V>, f: &mut fmt::Formatter, depth: usize) -> Result<(), fmt::Error> {
       for i in 0..tree.skip_len as usize {
-        print!("{:}", if tree.skip_prefix.bit(i) { 1 } else { 0 });
+        try!(write!(f, "{:}", if tree.skip_prefix.bit(i) { 1 } else { 0 }));
       }
-      println!(": {:}", tree.data);
+      try!(writeln!(f, ": {:?}", tree.data));
       // left gets no indentation
       match tree.child_l {
         Some(ref t) => {
           for _ in 0..(depth + tree.skip_len as usize) {
-            print!("-");
+            try!(write!(f, "-"));
           }
-          print!("0");
-          recurse(&**t, depth + tree.skip_len as usize + 1);
+          try!(write!(f, "0"));
+          try!(recurse(&**t, f, depth + tree.skip_len as usize + 1));
         }
         None => { }
       }
@@ -378,15 +385,16 @@ impl<K:BitArray, V:Debug> PatriciaTree<K, V> {
       match tree.child_r {
         Some(ref t) => {
           for _ in 0..(depth + tree.skip_len as usize) {
-            print!("_");
+            try!(write!(f, "_"));
           }
-          print!("1");
-          recurse(&**t, depth + tree.skip_len as usize + 1);
+          try!(write!(f, "1"));
+          try!(recurse(&**t, f, depth + tree.skip_len as usize + 1));
         }
         None => { }
       }
+      Ok(())
     }
-    recurse(self, 0);
+    recurse(self, f, 0);
   }
 }
 
@@ -430,7 +438,7 @@ pub struct Items<'tree, K: 'tree, V: 'tree> {
 }
 
 /// Mutable iterator
-pub struct MutItems<'tree, K, V> {
+pub struct MutItems<'tree, K: 'tree, V: 'tree> {
   started: bool,
   node: *mut PatriciaTree<K, V>,
   parents: Vec<*mut PatriciaTree<K, V>>,
@@ -490,7 +498,7 @@ impl<'a, K, V> Iterator for MutItems<'a, K, V> {
     fn borrow_opt<'a, K, V>(opt_ptr: &'a Option<Box<PatriciaTree<K, V>>>) -> *mut PatriciaTree<K, V> {
       match *opt_ptr {
         Some(ref data) => &**data as *const _ as *mut _,
-        None => ptr::null()
+        None => ptr::null_mut()
       }
     }
 
@@ -498,7 +506,7 @@ impl<'a, K, V> Iterator for MutItems<'a, K, V> {
     // which will be the root node.
     if !self.started {
       unsafe {
-        if self.node.is_not_null() && (*self.node).data.is_some() {
+        if !self.node.is_null() && (*self.node).data.is_some() {
           return (*self.node).data.as_mut();
         }
       }
@@ -506,30 +514,30 @@ impl<'a, K, V> Iterator for MutItems<'a, K, V> {
     }
 
     // Find next data-containing node
-    while self.node.is_not_null() {
+    while !self.node.is_null() {
       // Try to go left
       let child_l = unsafe { borrow_opt(&(*self.node).child_l) };
-      if child_l.is_not_null() {
+      if !child_l.is_null() {
         self.parents.push(self.node);
         self.node = child_l;
       // Try to go right, going back up the tree if necessary
       } else {
-        while self.node.is_not_null() {
+        while !self.node.is_null() {
           let child_r = unsafe { borrow_opt(&(*self.node).child_r) };
-          if child_r.is_not_null() {
+          if !child_r.is_null() {
             self.node = child_r;
             break;
           }
-          self.node = self.parents.pop().unwrap_or(ptr::null());
+          self.node = self.parents.pop().unwrap_or(ptr::null_mut());
         }
       }
       // Stop if we've found data.
-      if self.node.is_not_null() && unsafe { (*self.node).data.is_some() } {
+      if !self.node.is_null() && unsafe { (*self.node).data.is_some() } {
         break;
       }
     } // end loop
     // Return data
-    if self.node.is_not_null() {
+    if !self.node.is_null() {
       unsafe { (*self.node).data.as_mut() }
     } else { 
       None
@@ -540,7 +548,7 @@ impl<'a, K, V> Iterator for MutItems<'a, K, V> {
 #[cfg(test)]
 mod tests {
   use std::prelude::*;
-  use std::io::IoResult;
+  use std::io;
   use std::num::Zero;
 
   use network::serialize::{deserialize, serialize};
@@ -698,7 +706,7 @@ mod tests {
     // Serialize it
     let serialized = serialize(&tree).unwrap();
     // Deserialize it
-    let deserialized: IoResult<PatriciaTree<Uint128, u32>> = deserialize(serialized);
+    let deserialized: io::Result<PatriciaTree<Uint128, u32>> = deserialize(serialized);
     assert!(deserialized.is_ok());
     let new_tree = deserialized.unwrap();
 

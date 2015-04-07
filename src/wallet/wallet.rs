@@ -18,7 +18,7 @@
 
 use std::collections::HashMap;
 use std::default::Default;
-use serde;
+use serde::{Serialize, Deserialize, Serializer, Deserializer};
 
 use secp256k1::key::PublicKey;
 
@@ -85,23 +85,23 @@ pub struct Wallet {
   index: Option<AddressIndex>
 }
 
-impl serde::Serialize for Wallet {
+impl Serialize for Wallet {
   fn serialize<S>(&self, s: &mut S) -> Result<(), S::Error>
-      where S: serde::Serializer {
+      where S: Serializer {
     let len = self.accounts.len();
     try!(self.master.serialize(s));
     self.accounts.serialize(s)
   }
 }
 
-impl serde::Deserialize for Wallet {
-  fn deserialize<D>(&self, d: &mut D) -> Result<Wallet, D::Error>
-      where D: serde::Deserializer {
-    Wallet {
-        master: try!(serde::Deserialize::deserialize(d)),
-        accounts: try!(serde::Deserialize::deserialize(d)),
-        index: None
-    }
+impl Deserialize for Wallet {
+  fn deserialize<D>(d: &mut D) -> Result<Wallet, D::Error>
+      where D: Deserializer {
+    Ok(Wallet {
+      master: try!(Deserialize::deserialize(d)),
+      accounts: try!(Deserialize::deserialize(d)),
+      index: None
+    })
   }
 }
 
@@ -141,7 +141,7 @@ impl Wallet {
   /// Adds an account to a wallet
   pub fn account_insert(&mut self, name: String)
                         -> Result<(), Error> {
-    if self.accounts.find(&name).is_some() {
+    if self.accounts.contains_key(&name) {
       return Err(Error::DuplicateAccount);
     }
 
@@ -159,9 +159,8 @@ impl Wallet {
 
   /// Locates an account in a wallet
   #[inline]
-  pub fn account_find<'a>(&'a self, name: &str)
-                          -> Option<&'a Account> {
-    self.accounts.find_equiv(&name)
+  pub fn account_get<'a>(&'a self, name: &str) -> Option<&'a Account> {
+    self.accounts.get(name)
   }
 
   /// Create a new address
@@ -169,8 +168,7 @@ impl Wallet {
                      account: &str,
                      chain: AccountChain)
                      -> Result<Address, Error> {
-    // TODO: unnecessary allocation, waiting on *_equiv in stdlib
-    let account = self.accounts.find_mut(&account.to_string());
+    let account = self.accounts.get_mut(account);
     let account = match account { Some(a) => a, None => return Err(Error::AccountNotFound) };
     let index = match self.index { Some(ref i) => i, None => return Err(Error::NoAddressIndex) };
 
@@ -236,7 +234,7 @@ impl Wallet {
 
   /// Account balance
   pub fn balance(&self, account: &str) -> Result<u64, Error> {
-    let account = self.accounts.find_equiv(&account);
+    let account = self.accounts.get(account);
     let account = match account { Some(a) => a, None => return Err(Error::AccountNotFound) };
     self.account_balance(account)
   }

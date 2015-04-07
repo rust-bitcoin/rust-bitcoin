@@ -64,8 +64,8 @@ impl<D: SimpleDecoder> ConsensusDecodable<D> for Address {
 impl fmt::Debug for Address {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     // TODO: render services and hex-ize address
-    write!(f, "Address {{services: {}, address: {}, port: {}}}",
-              self.services, self.address.as_slice(), self.port)
+    write!(f, "Address {{services: {:?}, address: {:?}, port: {:?}}}",
+              self.services, &self.address[..], self.port)
   }
 }
 
@@ -75,8 +75,8 @@ impl Clone for Address {
       use std::intrinsics::copy_nonoverlapping;
       use std::mem;
       let mut ret = mem::uninitialized();
-      copy_nonoverlapping(&mut ret,
-                          self,
+      copy_nonoverlapping(self,
+                          &mut ret,
                           mem::size_of::<Address>());
       ret
     }
@@ -86,7 +86,7 @@ impl Clone for Address {
 impl PartialEq for Address {
   fn eq(&self, other: &Address) -> bool {
     self.services == other.services &&
-    self.address.as_slice() == other.address.as_slice() &&
+    &self.address[..] == &other.address[..] &&
     self.port == other.port
   }
 }
@@ -97,7 +97,7 @@ impl Eq for Address {}
 mod test {
   use super::Address;
 
-  use std::io::IoResult;
+  use std::io;
 
   use network::serialize::{deserialize, serialize};
 
@@ -114,7 +114,7 @@ mod test {
 
   #[test]
   fn deserialize_address_test() {
-    let mut addr: IoResult<Address> = deserialize(vec![1u8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    let mut addr: io::Result<Address> = deserialize(vec![1u8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                                                        0, 0, 0, 0, 0, 0, 0xff, 0xff, 0x0a, 0,
                                                        0, 1, 0x20, 0x8d]);
     assert!(addr.is_ok());

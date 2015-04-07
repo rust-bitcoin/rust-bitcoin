@@ -46,12 +46,12 @@ macro_rules! construct_uint {
         for i in 1..$n_words {
           if arr[$n_words - i] > 0 { return (0x40 * ($n_words - i + 1)) - arr[$n_words - i].leading_zeros() as usize; }
         }
-        0x40 - arr[0].leading_zeros()
+        0x40 - arr[0].leading_zeros() as usize
       }
 
       /// Multiplication by u32
-      pub fn mul_u32(&self, other: u32) -> $name {
-        let &$name(ref arr) = self;
+      pub fn mul_u32(self, other: u32) -> $name {
+        let $name(ref arr) = self;
         let mut carry = [0u64; $n_words];
         let mut ret = [0u64; $n_words];
         for i in 0..$n_words {
@@ -93,9 +93,9 @@ macro_rules! construct_uint {
     impl ::std::ops::Add<$name> for $name {
       type Output = $name;
 
-      fn add(&self, other: &$name) -> $name {
-        let &$name(ref me) = self;
-        let &$name(ref you) = other;
+      fn add(self, other: $name) -> $name {
+        let $name(ref me) = self;
+        let $name(ref you) = other;
         let mut ret = [0u64; $n_words];
         let mut carry = [0u64; $n_words];
         let mut b_carry = false;
@@ -114,16 +114,16 @@ macro_rules! construct_uint {
       type Output = $name;
 
       #[inline]
-      fn sub(&self, other: &$name) -> $name {
-        *self + !*other + One::one()
+      fn sub(self, other: $name) -> $name {
+        self + !other + One::one()
       }
     }
 
     impl ::std::ops::Mul<$name> for $name {
       type Output = $name;
 
-      fn mul(&self, other: &$name) -> $name {
-        let mut me = *self;
+      fn mul(self, other: $name) -> $name {
+        let mut me = self;
         // TODO: be more efficient about this
         for i in 0..(2 * $n_words) {
           me = me + me.mul_u32((other >> (32 * i)).low_u32()) << (32 * i);
@@ -135,9 +135,9 @@ macro_rules! construct_uint {
     impl ::std::ops::Div<$name> for $name {
       type Output = $name;
 
-      fn div(&self, other: &$name) -> $name {
-        let mut sub_copy = *self;
-        let mut shift_copy = *other;
+      fn div(self, other: $name) -> $name {
+        let mut sub_copy = self;
+        let mut shift_copy = other;
         let mut ret = [0u64; $n_words];
     
         let my_bits = self.bits();
@@ -157,7 +157,7 @@ macro_rules! construct_uint {
         loop {
           if sub_copy >= shift_copy {
             ret[shift / 64] |= 1 << (shift % 64);
-            sub_copy = sub_copy.sub(&shift_copy);
+            sub_copy = sub_copy - shift_copy;
           }
           shift_copy = shift_copy >> 1;
           if shift == 0 { break; }
@@ -177,7 +177,7 @@ macro_rules! construct_uint {
 
       #[inline]
       fn bit_slice(&self, start: usize, end: usize) -> $name {
-        (self >> start).mask(end - start)
+        (*self >> start).mask(end - start)
       }
 
       #[inline]
@@ -199,9 +199,9 @@ macro_rules! construct_uint {
       fn trailing_zeros(&self) -> usize {
         let &$name(ref arr) = self;
         for i in 0..($n_words - 1) {
-          if arr[i] > 0 { return (0x40 * i) + arr[i].trailing_zeros(); }
+          if arr[i] > 0 { return (0x40 * i) + arr[i].trailing_zeros() as usize; }
         }
-        (0x40 * ($n_words - 1)) + arr[3].trailing_zeros()
+        (0x40 * ($n_words - 1)) + arr[3].trailing_zeros() as usize
       }
     }
 
@@ -209,9 +209,9 @@ macro_rules! construct_uint {
       type Output = $name;
 
       #[inline]
-      fn bitand(&self, other: &$name) -> $name {
-        let &$name(ref arr1) = self;
-        let &$name(ref arr2) = other;
+      fn bitand(self, other: $name) -> $name {
+        let $name(ref arr1) = self;
+        let $name(ref arr2) = other;
         let mut ret = [0u64; $n_words];
         for i in 0..$n_words {
           ret[i] = arr1[i] & arr2[i];
@@ -224,9 +224,9 @@ macro_rules! construct_uint {
       type Output = $name;
 
       #[inline]
-      fn bitxor(&self, other: &$name) -> $name {
-        let &$name(ref arr1) = self;
-        let &$name(ref arr2) = other;
+      fn bitxor(self, other: $name) -> $name {
+        let $name(ref arr1) = self;
+        let $name(ref arr2) = other;
         let mut ret = [0u64; $n_words];
         for i in 0..$n_words {
           ret[i] = arr1[i] ^ arr2[i];
@@ -239,9 +239,9 @@ macro_rules! construct_uint {
       type Output = $name;
 
       #[inline]
-      fn bitor(&self, other: &$name) -> $name {
-        let &$name(ref arr1) = self;
-        let &$name(ref arr2) = other;
+      fn bitor(self, other: $name) -> $name {
+        let $name(ref arr1) = self;
+        let $name(ref arr2) = other;
         let mut ret = [0u64; $n_words];
         for i in 0..$n_words {
           ret[i] = arr1[i] | arr2[i];
@@ -254,8 +254,8 @@ macro_rules! construct_uint {
       type Output = $name;
 
       #[inline]
-      fn not(&self) -> $name {
-        let &$name(ref arr) = self;
+      fn not(self) -> $name {
+        let $name(ref arr) = self;
         let mut ret = [0u64; $n_words];
         for i in 0..$n_words {
           ret[i] = !arr[i];
@@ -267,11 +267,11 @@ macro_rules! construct_uint {
     impl ::std::ops::Shl<usize> for $name {
       type Output = $name;
 
-      fn shl(&self, shift: &usize) -> $name {
-        let &$name(ref original) = self;
+      fn shl(self, shift: usize) -> $name {
+        let $name(ref original) = self;
         let mut ret = [0u64; $n_words];
-        let word_shift = *shift / 64;
-        let bit_shift = *shift % 64;
+        let word_shift = shift / 64;
+        let bit_shift = shift % 64;
         for i in 0..$n_words {
           // Shift
           if bit_shift < 64 && i + word_shift < $n_words {
@@ -290,11 +290,11 @@ macro_rules! construct_uint {
       type Output = $name;
 
       #[allow(unsigned_negate)]
-      fn shr(&self, shift: &usize) -> $name {
-        let &$name(ref original) = self;
+      fn shr(self, shift: usize) -> $name {
+        let $name(ref original) = self;
         let mut ret = [0u64; $n_words];
-        let word_shift = *shift / 64;
-        let bit_shift = *shift % 64;
+        let word_shift = shift / 64;
+        let bit_shift = shift % 64;
         for i in 0..$n_words {
           // Shift
           if bit_shift < 64 && i - word_shift < $n_words {
@@ -329,10 +329,12 @@ macro_rules! construct_uint {
 
     impl fmt::Debug for $name {
       fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use std::fmt::Error;
-        use network::encodable::ConsensusEncodable;
-        let mut encoder = RawEncoder::new(f.by_ref());
-        self.consensus_encode(&mut encoder).map_err(|_| Error)
+        let &$name(ref data) = self;
+        try!(write!(f, "0x"));
+        for ch in data.iter().rev() {
+          try!(write!(f, "{:02x}", ch));
+        }
+        Ok(())
       }
     }
 
@@ -363,7 +365,7 @@ impl Uint256 {
   /// Increment by 1
   #[inline]
   pub fn increment(&mut self) {
-    let &Uint256(ref mut arr) = self;
+    let &mut Uint256(ref mut arr) = self;
     arr[0] += 1;
     if arr[0] == 0 {
       arr[1] += 1;
@@ -386,7 +388,7 @@ impl Uint256 {
 
 #[cfg(test)]
 mod tests {
-  use std::io::IoResult;
+  use std::io;
   use std::num::from_u64;
 
   use network::serialize::{deserialize, serialize};
@@ -440,7 +442,7 @@ mod tests {
     let init: Uint256 = from_u64(0xDEADBEEFDEADBEEF).unwrap();
     let copy = init;
 
-    let add = init.add(&copy);
+    let add = init + copy;
     assert_eq!(add, Uint256([0xBD5B7DDFBD5B7DDEu64, 1, 0, 0]));
     // Bitshifts
     let shl = add << 88;
@@ -452,7 +454,7 @@ mod tests {
     incr.increment();
     assert_eq!(incr, Uint256([0x7DDE000000000001u64, 0x0001BD5B7DDFBD5B, 0, 0]));
     // Subtraction
-    let sub = incr.sub(&init);
+    let sub = incr - init;
     assert_eq!(sub, Uint256([0x9F30411021524112u64, 0x0001BD5B7DDFBD5A, 0, 0]));
     // Multiplication
     let mult = sub.mul_u32(300);
@@ -481,7 +483,7 @@ mod tests {
     let init = from_u64::<Uint256>(0xDEADBEEFDEADBEEF).unwrap();
 
     assert_eq!(init << 64, Uint256([0, 0xDEADBEEFDEADBEEF, 0, 0]));
-    let add = (init << 64).add(&init);
+    let add = (init << 64) + init;
     assert_eq!(add, Uint256([0xDEADBEEFDEADBEEF, 0xDEADBEEFDEADBEEF, 0, 0]));
     assert_eq!(add >> 0, Uint256([0xDEADBEEFDEADBEEF, 0xDEADBEEFDEADBEEF, 0, 0]));
     assert_eq!(add << 0, Uint256([0xDEADBEEFDEADBEEF, 0xDEADBEEFDEADBEEF, 0, 0]));
@@ -495,8 +497,8 @@ mod tests {
     let start2 = Uint256([0x8C8C3EE70C644118u64, 0x0209E7378231E632, 0xABCD, 0xFFFF]);
     let serial1 = serialize(&start1).unwrap();
     let serial2 = serialize(&start2).unwrap();
-    let end1: IoResult<Uint256> = deserialize(serial1);
-    let end2: IoResult<Uint256> = deserialize(serial2);
+    let end1: io::Result<Uint256> = deserialize(serial1);
+    let end2: io::Result<Uint256> = deserialize(serial2);
 
     assert_eq!(end1, Ok(start1));
     assert_eq!(end2, Ok(start2));

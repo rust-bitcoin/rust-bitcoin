@@ -25,73 +25,72 @@ use network::constants::Network;
 use network::message;
 use network::message::NetworkMessage::Verack;
 use network::socket::Socket;
+use util;
 
 /// A message which can be sent on the Bitcoin network
 pub trait Listener {
-  /// Return a string encoding of the peer's network address
-  fn peer<'a>(&'a self) -> &'a str;
-  /// Return the port we have connected to the peer on
-  fn port(&self) -> u16;
-  /// Return the network this `Listener` is operating on
-  fn network(&self) -> Network;
-  /// Main listen loop
-  fn start(&self) -> io::Result<(Receiver<message::SocketResponse>, Socket)> {
-    // Open socket
-    let mut ret_sock = Socket::new(self.network());
-    match ret_sock.connect(self.peer(), self.port()) {
-      Ok(_) => {},
-      Err(_) => return Err(io::Error::new(io::ErrorKind::ConnectionFailed,
-                                          "Listener connection failed", None))
-    }
-    let mut sock = ret_sock.clone();
-
-    let (recv_tx, recv_rx) = channel();
-
-    // Send version message to peer
-    let version_message = try!(sock.version_message(0));
-    try!(sock.send_message(version_message));
-
-    // Message loop
-    thread::spawn(move || {
-      let mut handshake_complete = false;
-      let mut sock = sock;
-      loop {
-        // Receive new message
-        match sock.receive_message() {
-          Ok(payload) => {
-            // React to any network messages that affect our state.
-            match payload {
-              // Make an exception for verack since there is no response required
-              Verack => {
-                // TODO: when the timeout stuff in std::io::net::tcp is sorted out we should
-                // actually time out if the verack doesn't come in in time
-                if handshake_complete {
-                  println!("Received second verack (peer is misbehaving)");
-                } else {
-                  handshake_complete = true;
-                }
-              }
-              _ => {}
-            };
-            // We have to pass the message to the main thread for processing,
-            // unfortunately, because sipa says we have to handle everything
-            // in order.
-            recv_tx.send(message::SocketResponse::MessageReceived(payload));
-          }
-          Err(e) => {
-            // On failure we send an error message to the main thread, along with
-            // a channel to receive an acknowledgement that we may tear down this
-            // thread. (If we simply exited immediately, the channel would be torn
-            // down and the main thread would never see the error message.)
-            let (tx, rx) = channel();
-            recv_tx.send(message::SocketResponse::ConnectionFailed(e, tx));
-            rx.recv();
-            break;
-          }
+    /// Return a string encoding of the peer's network address
+    fn peer<'a>(&'a self) -> &'a str;
+    /// Return the port we have connected to the peer on
+    fn port(&self) -> u16;
+    /// Return the network this `Listener` is operating on
+    fn network(&self) -> Network;
+    /// Main listen loop
+    fn start(&self) -> Result<(Receiver<message::SocketResponse>, Socket), util::Error> {
+        // Open socket
+        let mut ret_sock = Socket::new(self.network());
+        if let Err(e) = ret_sock.connect(self.peer(), self.port()) {
+            return Err(util::Error::Detail("listener".to_string(), Box::new(e)));
         }
-      }
-    });
-    Ok((recv_rx, ret_sock))
-  }
+        let mut sock = ret_sock.clone();
+
+        let (recv_tx, recv_rx) = channel();
+
+        // Send version message to peer
+        let version_message = try!(sock.version_message(0));
+        try!(sock.send_message(version_message));
+
+        // Message loop
+        thread::spawn(move || {
+            let mut handshake_complete = false;
+            let mut sock = sock;
+            loop {
+                // Receive new message
+                match sock.receive_message() {
+                    Ok(payload) => {
+                        // React to any network messages that affect our state.
+                        match payload {
+                            // Make an exception for verack since there is no response required
+                            Verack => {
+                                // TODO: when the timeout stuff in std::io::net::tcp is sorted out we should
+                                // actually time out if the verack doesn't come in in time
+                                if handshake_complete {
+                                    println!("Received second verack (peer is misbehaving)");
+                                } else {
+                                    handshake_complete = true;
+                                }
+                            }
+                            _ => {}
+                        };
+                        // We have to pass the message to the main thread for processing,
+                        // unfortunately, because sipa says we have to handle everything
+                        // in order.
+                        recv_tx.send(message::SocketResponse::MessageReceived(payload));
+                    }
+                    Err(e) => {
+                        // On failure we send an error message to the main thread, along with
+                        // a channel to receive an acknowledgement that we may tear down this
+                        // thread. (If we simply exited immediately, the channel would be torn
+                        // down and the main thread would never see the error message.)
+                        let (tx, rx) = channel();
+                        recv_tx.send(message::SocketResponse::ConnectionFailed(e, tx));
+                        rx.recv();
+                        break;
+                    }
+                }
+            }
+        });
+        Ok((recv_rx, ret_sock))
+    }
 }
 

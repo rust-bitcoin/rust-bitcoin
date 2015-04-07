@@ -16,61 +16,47 @@
 //!
 //! Various utility functions
 
-use std::io::{Error, Result, ErrorKind};
-
 use blockdata::opcodes;
+use util::Error;
 use util::iter::Pairable;
 
 /// Convert a hexadecimal-encoded string to its corresponding bytes
-pub fn hex_bytes(s: &str) -> Result<Vec<u8>> {
+pub fn hex_bytes(s: &str) -> Result<Vec<u8>, Error> {
   let mut v = vec![];
   let mut iter = s.chars().pair();
   // Do the parsing
   try!(iter.fold(Ok(()), |e, (f, s)| 
-    if e.is_err() { return e; }
+    if e.is_err() { e }
     else {
       match (f.to_digit(16), s.to_digit(16)) {
-        (None, _) => return Err(Error {
-          kind: ErrorKind::InvalidInput,
-          desc: "invalid hex character",
-          detail: Some(format!("expected hex, got {:}", f))
-        }),
-        (_, None) => return Err(Error {
-          kind: ErrorKind::InvalidInput,
-          desc: "invalid hex character",
-          detail: Some(format!("expected hex, got {:}", s))
-        }),
+        (None, _) => Err(Error::Detail(
+          format!("expected hex, got {:}", f),
+          Box::new(Error::ParseFailed)
+        )),
+        (_, None) => Err(Error::Detail(
+          format!("expected hex, got {:}", s),
+          Box::new(Error::ParseFailed)
+        )),
         (Some(f), Some(s)) => { v.push((f * 0x10 + s) as u8); Ok(()) }
       }
     }
   ));
   // Check that there was no remainder
   match iter.remainder() {
-    Some(_) => Err(Error {
-      kind: ErrorKind::InvalidInput,
-      desc: "hexstring of odd length",
-      detail: None
-    }),
+    Some(_) => Err(Error::Detail(
+      format!("hexstring of odd length"),
+      Box::new(Error::ParseFailed)
+    )),
     None => Ok(v)
   }
 }
 
-/// Prepend the detail of an IoResult's error with some text to get poor man's backtracing
-pub fn prepend_err<T>(s: &str, res: Result<T>) -> Result<T> {
-  res.map_err(|err| {
-    Error {
-      kind: err.kind,
-      desc: err.desc,
-      detail: Some(format!("{}: {}", s, match err.detail { Some(s) => s, None => String::new() }))
-    }
-  })
-}
-
 /// Dump an error message to the screen
-pub fn consume_err<T>(s: &str, res: Result<T>) {
+/// TODO all uses of this should be replaced with some sort of logging infrastructure
+pub fn consume_err<T>(s: &str, res: Result<T, Error>) {
   match res {
     Ok(_) => {},
-    Err(e) => { println!("{}: {}", s, e); }
+    Err(e) => { println!("{}: {:?}", s, e); }
   };
 }
 
@@ -86,8 +72,8 @@ pub fn script_find_and_remove(haystack: &mut Vec<u8>, needle: &[u8]) -> usize {
 
   let mut i = 0;
   while i <= top {
-    if haystack.slice(i, i + needle.len()) == needle {
-      let v = haystack.as_mut_slice();
+    if &haystack[i..(i + needle.len())] == needle {
+      let v = &mut haystack;
       for j in i..top {
         v.swap(j + needle.len(), j);
       }
@@ -158,7 +144,7 @@ mod tests {
 
   #[test]
   fn test_hex_bytes() {
-    assert_eq!(hex_bytes("abcd").unwrap().as_slice(), [171u8, 205].as_slice());
+    assert_eq!(&hex_bytes("abcd").unwrap(), &[171u8, 205]);
     assert!(hex_bytes("abcde").is_err());
     assert!(hex_bytes("aBcDeF").is_ok());
     assert!(hex_bytes("aBcD4eFL").is_err());

@@ -180,7 +180,7 @@ impl TxIn {
         }
         match stack.pop() {
           Some(v) => {
-            if !read_scriptbool(v.as_slice()) {
+            if !read_scriptbool(&v[..]) {
               return Err(Error::ScriptReturnedFalse);
             }
            }
@@ -193,7 +193,7 @@ impl TxIn {
           }
           match p2sh_stack.pop() {
             Some(v) => {
-              if !read_scriptbool(v.as_slice()) {
+              if !read_scriptbool(&v[..]) {
                 return Err(Error::P2shScriptReturnedFalse);
               }
             }
@@ -261,7 +261,7 @@ impl Transaction {
             err.map(|e| trace.error = Some(Error::OutputScriptFailure(e)));
             match stack.pop() {
               Some(v) => {
-                if !read_scriptbool(v.as_slice()) {
+                if !read_scriptbool(&v[..]) {
                   trace.error = Some(Error::ScriptReturnedFalse);
                 }
               }
@@ -273,7 +273,7 @@ impl Transaction {
               err.map(|e| trace.error = Some(Error::P2shScriptFailure(e)));
               match p2sh_stack.pop() {
                 Some(v) => {
-                  if !read_scriptbool(v.as_slice()) {
+                  if !read_scriptbool(&v[..]) {
                     trace.error = Some(Error::P2shScriptReturnedFalse);
                   }
                 }
@@ -295,7 +295,7 @@ impl Transaction {
 impl BitcoinHash for Transaction {
   fn bitcoin_hash(&self) -> Sha256dHash {
     use network::serialize::serialize;
-    Sha256dHash::from_data(serialize(self).unwrap().as_slice())
+    Sha256dHash::from_data(&serialize(self).unwrap())
   }
 }
 
@@ -307,7 +307,7 @@ impl_consensus_encoding!(Transaction, version, input, output, lock_time);
 mod tests {
   use super::{Transaction, TxIn};
 
-  use std::io::IoResult;
+  use std::io;
 
   use network::serialize::BitcoinHash;
   use network::serialize::deserialize;
@@ -315,14 +315,14 @@ mod tests {
 
   #[test]
   fn test_txin() {
-    let txin: IoResult<TxIn> = deserialize(hex_bytes("a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff").unwrap());
+    let txin: io::Result<TxIn> = deserialize(hex_bytes("a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff").unwrap());
     assert!(txin.is_ok());
   }
 
   #[test]
   fn test_transaction() {
     let hex_tx = hex_bytes("0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000").unwrap();
-    let tx: IoResult<Transaction> = deserialize(hex_tx);
+    let tx: io::Result<Transaction> = deserialize(hex_tx);
     assert!(tx.is_ok());
     let realtx = tx.unwrap();
     // All these tests aren't really needed because if they fail, the hash check at the end

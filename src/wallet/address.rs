@@ -19,6 +19,7 @@
 use secp256k1::key::PublicKey;
 use crypto::digest::Digest;
 use crypto::sha2::Sha256;
+use std::ops;
 
 use blockdata::script::Script;
 use blockdata::opcodes;
@@ -36,23 +37,16 @@ pub struct Address {
 }
 
 impl Address {
-  /// Returns a byteslice view of the `Address` --- note that no network information
-  /// is contained in this.
-  #[inline]
-  pub fn as_slice<'a>(&'a self) -> &'a [u8] {
-    self.hash.as_slice()
-  }
-
   /// Creates an address from a public key
   #[inline]
   pub fn from_key(network: Network, pk: &PublicKey) -> Address {
     let mut sha = Sha256::new();
-    let mut out = [0, ..32];
-    sha.input(pk.as_slice());
-    sha.result(out.as_mut_slice());
+    let mut out = [0;32];
+    sha.input(&pk[..]);
+    sha.result(&mut out);
     Address {
       network: network,
-      hash: Ripemd160Hash::from_data(out)
+      hash: Ripemd160Hash::from_data(&out)
     }
   }
 
@@ -62,10 +56,50 @@ impl Address {
     let mut script = Script::new();
     script.push_opcode(opcodes::All::OP_DUP);
     script.push_opcode(opcodes::All::OP_HASH160);
-    script.push_slice(self.hash.as_slice());
+    script.push_slice(&self.hash[..]);
     script.push_opcode(opcodes::All::OP_EQUALVERIFY);
     script.push_opcode(opcodes::All::OP_CHECKSIG);
     script
+  }
+}
+
+impl ops::Index<usize> for Address {
+  type Output = u8;
+  #[inline]
+  fn index(&self, index: usize) -> &u8 {
+    &self.hash[index]
+  }
+}
+
+impl ops::Index<ops::Range<usize>> for Address {
+  type Output = [u8];
+  #[inline]
+  fn index(&self, index: ops::Range<usize>) -> &[u8] {
+    &self.hash[index]
+  }
+}
+
+impl ops::Index<ops::RangeTo<usize>> for Address {
+  type Output = [u8];
+  #[inline]
+  fn index(&self, index: ops::RangeTo<usize>) -> &[u8] {
+    &self.hash[index]
+  }
+}
+
+impl ops::Index<ops::RangeFrom<usize>> for Address {
+  type Output = [u8];
+  #[inline]
+  fn index(&self, index: ops::RangeFrom<usize>) -> &[u8] {
+    &self.hash[index]
+  }
+}
+
+impl ops::Index<ops::RangeFull> for Address {
+  type Output = [u8];
+  #[inline]
+  fn index(&self, _: ops::RangeFull) -> &[u8] {
+    &self.hash[..]
   }
 }
 
@@ -93,7 +127,7 @@ impl ToBase58 for Address {
         Network::Testnet => 111
       }
     ];
-    ret.push_all(self.hash.as_slice());
+    ret.push_all(&self.hash[..]);
     ret
   }
 }
@@ -110,7 +144,7 @@ impl FromBase58 for Address {
         111 => Network::Testnet,
         x   => { return Err(base58::Error::InvalidVersion(vec![x])); }
       },
-      hash: Ripemd160Hash::from_slice(data.slice_from(1))
+      hash: Ripemd160Hash::from_slice(&data[1..])
     })
   }
 }
@@ -137,10 +171,10 @@ mod tests {
   fn test_address_58() {
     let addr = Address {
       network: Bitcoin,
-      hash: Ripemd160Hash::from_slice("162c5ea71c0b23f5b9022ef047c4a86470a5b070".from_hex().unwrap().as_slice())
+      hash: Ripemd160Hash::from_slice(&"162c5ea71c0b23f5b9022ef047c4a86470a5b070".from_hex().unwrap())
     };
 
-    assert_eq!(addr.to_base58check().as_slice(), "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM");
+    assert_eq!(&addr.to_base58check(), "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM");
     assert_eq!(FromBase58::from_base58check("132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM"), Ok(addr));
   }
 

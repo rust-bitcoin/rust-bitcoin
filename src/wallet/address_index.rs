@@ -19,7 +19,7 @@
 //!
 
 use std::collections::HashMap;
-use std::hash::{hash, Hash, SipHasher};
+use std::hash::{hash, Hash, Hasher, SipHasher};
 
 use secp256k1::key::SecretKey;
 
@@ -61,7 +61,7 @@ pub struct WalletTxOut {
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct AddressIndex {
   tentative_index: HashMap<Script, Vec<WalletTxOut>>,
-  index: HashMap<(Sha256dHash, u32), Vec<WalletTxOut>, SipHasher>,
+  index: HashMap<(Sha256dHash, u32), Vec<WalletTxOut>>,
   network: Network,
   k1: u64,
   k2: u64
@@ -74,7 +74,7 @@ impl AddressIndex {
     let (k1, k2) = wallet.siphash_key();
     let mut ret = AddressIndex {
       tentative_index: HashMap::with_capacity(utxo_set.n_utxos() / 256),
-      index: HashMap::with_hasher(SipHasher::new()),
+      index: HashMap::new(),
       network: wallet.network(),
       k1: k1,
       k2: k2
@@ -88,7 +88,9 @@ impl AddressIndex {
           txo: txo.clone(),
           kind: WalletTxOutType::Unknown
         };
-        ret.tentative_index.find_or_insert(txo.script_pubkey.clone(), vec![]).push(new);
+        let mut entry = ret.tentative_index.entry(txo.script_pubkey.clone());
+        let txos = entry.or_insert(vec![]);
+        txos.push(new);
       }
     }
     ret
@@ -99,14 +101,16 @@ impl AddressIndex {
   pub fn index_wallet_txo(&mut self, wtx: &WalletTxOut, kind: WalletTxOutType) {
     let mut new = wtx.clone();
     new.kind = kind;
-    self.index.find_or_insert((wtx.txid, wtx.vout), vec![]).push(new);
+    let mut entry = self.index.entry((wtx.txid, wtx.vout));
+    let txos = entry.or_insert(vec![]);
+    txos.push(new);
   }
 
   /// A filtering function used for creating a small address index.
   #[inline]
   pub fn admissible_address(&self, addr: &Address) -> bool {
     let mut hasher = SipHasher::new_with_keys(self.k1, self.k2);
-    addr.hash(&mut hasher);
+    (&addr[..]).hash(&mut hasher);
     hasher.finish() & 0xFF == 0
   }
 
@@ -123,7 +127,7 @@ impl AddressIndex {
   /// may be more than one for any given scriptpubkey.
   #[inline]
   pub fn find_by_script<'a>(&'a self, pubkey: &Script) -> &'a [WalletTxOut] {
-    self.tentative_index.find(pubkey).map(|v| v.as_slice()).unwrap_or(&[])
+    self.tentative_index.get(pubkey).map(|v| &v[..]).unwrap_or(&[])
   }
 }
 

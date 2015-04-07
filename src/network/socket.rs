@@ -19,8 +19,7 @@
 
 use time::now;
 use rand::{thread_rng, Rng};
-use std::io::Cursor;
-use std::io::{Error, Result, ErrorKind};
+use std::io::{self, Cursor, Write};
 use std::net::{ip, tcp};
 use std::sync::{Arc, Mutex};
 
@@ -31,7 +30,7 @@ use network::message::{RawNetworkMessage, NetworkMessage};
 use network::message::NetworkMessage::Version;
 use network::message_network::VersionMessage;
 use network::serialize::{RawEncoder, RawDecoder};
-use util::misc::prepend_err;
+use util::{self, propagate_err};
 
 /// Format an IP address in the 16-byte bitcoin protocol serialization
 fn ipaddr_to_bitcoin_addr(ipaddr: &ip::IpAddr) -> [u16; 8] {
@@ -44,14 +43,8 @@ fn ipaddr_to_bitcoin_addr(ipaddr: &ip::IpAddr) -> [u16; 8] {
 /// A network socket along with information about the peer
 #[derive(Clone)]
 pub struct Socket {
-  /// The underlying socket, which is only used directly to (a) get
-  /// information about the socket, and (b) to close down the socket,
-  /// quickly cancelling any read/writes and unlocking the Mutexes.
-  socket: Option<tcp::TcpStream>,
-  /// The underlying network data stream read buffer
-  buffered_reader: Arc<Mutex<Option<tcp::TcpStream>>>,
-  /// The underlying network data stream write buffer
-  buffered_writer: Arc<Mutex<Option<tcp::TcpStream>>>,
+  /// The underlying TCP socket
+  socket: Arc<Mutex<Option<tcp::TcpStream>>>,
   /// Services supported by us
   pub services: u64,
   /// Our user agent
@@ -63,154 +56,136 @@ pub struct Socket {
 }
 
 impl Socket {
-  // TODO: we fix services to 0
-  /// Construct a new socket
-  pub fn new(network: constants::Network) -> Socket {
-    let mut rng = thread_rng();
-    Socket {
-      socket: None,
-      buffered_reader: Arc::new(Mutex::new(None)),
-      buffered_writer: Arc::new(Mutex::new(None)),
-      services: 0,
-      version_nonce: rng.gen(),
-      user_agent: String::from_str(constants::USER_AGENT),
-      magic: constants::magic(network)
-    }
-  }
-
-  /// Connect to the peer
-  pub fn connect(&mut self, host: &str, port: u16) -> Result<()> {
-    // Boot off any lingering readers or writers
-    if self.socket.is_some() {
-      let _ = self.socket.as_mut().unwrap().close_read();
-      let _ = self.socket.as_mut().unwrap().close_write();
-    }
-    // These locks should just pop open now
-    let mut reader_lock = self.buffered_reader.lock();
-    let mut writer_lock = self.buffered_writer.lock();
-    match tcp::TcpStream::connect(host, port) {
-      Ok(s)  => {
-        *reader_lock = Some(s.clone());
-        *writer_lock = Some(s.clone());
-        self.socket = Some(s);
-        Ok(()) 
-      }
-      Err(e) => Err(e)
-    }
-  }
-
-  /// Peer address
-  pub fn receiver_address(&mut self) -> Result<Address> {
-    match self.socket {
-      Some(ref mut s) => match s.peer_name() {
-        Ok(addr) => {
-          Ok(Address {
-            services: self.services,
-            address: ipaddr_to_bitcoin_addr(&addr.ip),
-            port: addr.port
-          })
+    // TODO: we fix services to 0
+    /// Construct a new socket
+    pub fn new(network: constants::Network) -> Socket {
+        let mut rng = thread_rng();
+        Socket {
+            socket: Arc::new(Mutex::new(None)),
+            services: 0,
+            version_nonce: rng.gen(),
+            user_agent: String::from_str(constants::USER_AGENT),
+            magic: constants::magic(network)
         }
-        Err(e) => Err(e)
-      },
-      None => Err(Error::new(ErrorKind::NotConnected,
-                             "receiver_address: not connected to peer", None))
     }
-  }
 
-  /// Our own address
-  pub fn sender_address(&mut self) -> Result<Address> {
-    match self.socket {
-      Some(ref mut s) => match s.socket_name() {
-        Ok(addr) => {
-          Ok(Address {
-            services: self.services,
-            address: ipaddr_to_bitcoin_addr(&addr.ip),
-            port: addr.port
-          })
+    /// (Re)connect to the peer
+    pub fn connect(&mut self, host: &str, port: u16) -> Result<(), util::Error> {
+        // Entirely replace the Mutex, in case it was poisoned;
+        // this will also drop any preexisting socket that might be open
+        match tcp::TcpStream::connect((host, port)) {
+            Ok(s) => {
+                self.socket = Arc::new(Mutex::new(Some(s)));
+                Ok(()) 
+            }
+            Err(e) => {
+                self.socket = Arc::new(Mutex::new(None));
+                Err(util::Error::Io(e))
+            }
         }
-        Err(e) => Err(e)
-      },
-      None => Err(Error::new(ErrorKind::NotConnected,
-                             "sender_address: not connected to peer", None))
-    }
-  }
-
-  /// Produce a version message appropriate for this socket
-  pub fn version_message(&mut self, start_height: i32) -> Result<NetworkMessage> {
-    let timestamp = now().to_timespec().sec;
-    let recv_addr = self.receiver_address();
-    let send_addr = self.sender_address();
-    // If we are not connected, we might not be able to get these address.s
-    match recv_addr {
-      Err(e) => { return Err(e); }
-      _ => {}
-    }
-    match send_addr {
-      Err(e) => { return Err(e); }
-      _ => {}
     }
 
-    Ok(Version(VersionMessage {
-      version: constants::PROTOCOL_VERSION,
-      services: constants::SERVICES,
-      timestamp: timestamp,
-      receiver: recv_addr.unwrap(),
-      sender: send_addr.unwrap(),
-      nonce: self.version_nonce,
-      user_agent: self.user_agent.clone(),
-      start_height: start_height,
-      relay: false
-    }))
-  }
+    fn socket(&mut self) -> Result<&mut tcp::TcpStream, util::Error> {
+        let mut sock_lock = self.socket.lock();
+        match sock_lock {
+            Err(_) => {
+                let io_err = io::Error::new(io::ErrorKind::NotConnected,
+                                            "socket: socket mutex was poisoned");
+                Err(util::Error::Io(io_err))
+            }
+            Ok(guard) => {
+                match *guard {
+                    Some(ref mut sock) => Ok(sock),
+                    None => {
+                        let io_err = io::Error::new(io::ErrorKind::NotConnected,
+                                                    "socket: not connected to peer");
+                        Err(util::Error::Io(io_err))
+                    }
+                }
+            }
+        }
+    }
 
-  /// Send a general message across the line
-  pub fn send_message(&mut self, payload: NetworkMessage) -> Result<()> {
-    let mut writer_lock = self.buffered_writer.lock();
-    match *writer_lock.deref_mut() {
-      None => Err(Error::new(ErrorKind::NotConnected,
-                             "send_message: not connected to peer", None)),
-      Some(ref mut writer) => {
+    /// Peer address
+    pub fn receiver_address(&mut self) -> Result<Address, util::Error> {
+        let sock = try!(self.socket());
+        match sock.peer_addr() {
+            Ok(addr) => {
+                Ok(Address {
+                    services: self.services,
+                    address: ipaddr_to_bitcoin_addr(&addr.ip()),
+                    port: addr.port()
+                })
+            },
+            Err(e) => Err(util::Error::Io(e))
+        }
+    }
+
+    /// Our own address
+    pub fn sender_address(&mut self) -> Result<Address, util::Error> {
+        let sock = try!(self.socket());
+        match sock.local_addr() {
+            Ok(addr) => {
+                Ok(Address {
+                    services: self.services,
+                    address: ipaddr_to_bitcoin_addr(&addr.ip()),
+                    port: addr.port()
+                })
+            },
+            Err(e) => Err(util::Error::Io(e))
+        }
+    }
+
+    /// Produce a version message appropriate for this socket
+    pub fn version_message(&mut self, start_height: i32) -> Result<NetworkMessage, util::Error> {
+        let recv_addr = try!(self.receiver_address());
+        let send_addr = try!(self.sender_address());
+        let timestamp = now().to_timespec().sec;
+
+        Ok(Version(VersionMessage {
+            version: constants::PROTOCOL_VERSION,
+            services: constants::SERVICES,
+            timestamp: timestamp,
+            receiver: recv_addr,
+            sender: send_addr,
+            nonce: self.version_nonce,
+            user_agent: self.user_agent.clone(),
+            start_height: start_height,
+            relay: false
+        }))
+    }
+
+    /// Send a general message across the line
+    pub fn send_message(&mut self, payload: NetworkMessage) -> Result<(), util::Error> {
+        let sock = try!(self.socket());
         let message = RawNetworkMessage { magic: self.magic, payload: payload };
-        try!(message.consensus_encode(&mut RawEncoder::new(writer.by_ref())));
-        writer.flush()
-      }
+        try!(message.consensus_encode(&mut RawEncoder::new(sock)));
+        sock.flush().map_err(util::Error::Io)
     }
-  }
 
-  /// Receive the next message from the peer, decoding the network header
-  /// and verifying its correctness. Returns the undecoded payload.
-  pub fn receive_message(&mut self) -> Result<NetworkMessage> {
-    let mut reader_lock = self.buffered_reader.lock();
-    match *reader_lock.deref_mut() {
-      None => Err(Error::new(ErrorKind::NotConnected,
-                             "receive_message: not connected to peer", None)),
-      Some(ref mut buf) => {
+    /// Receive the next message from the peer, decoding the network header
+    /// and verifying its correctness. Returns the undecoded payload.
+    pub fn receive_message(&mut self) -> Result<NetworkMessage, util::Error> {
+        let sock = try!(self.socket());
         // We need a new scope since the closure in here borrows read_err,
         // and we try to read it afterward. Letting `iter` go out fixes it.
-        let mut decoder = RawDecoder::new(buf.by_ref());
-        let decode: Result<RawNetworkMessage> = ConsensusDecodable::consensus_decode(&mut decoder);
+        let mut decoder = RawDecoder::new(sock);
+        let decode: Result<RawNetworkMessage, _> = ConsensusDecodable::consensus_decode(&mut decoder);
         match decode {
-          // Check for parse errors...
-          Err(e) => {
-            prepend_err("network_decode", Err(e))
-          },
-          Ok(ret) => {
-            // Then for magic (this should come before parse error, but we can't
-            // get to it if the deserialization failed). TODO restructure this
-            if ret.magic != self.magic {
-              Err(Error {
-                kind: ErrorKind::OtherError,
-                desc: "bad magic",
-                detail: Some(format!("got magic {:x}, expected {:x}", ret.magic, self.magic)),
-              })
-            } else {
-              Ok(ret.payload)
+            // Check for parse errors...
+            Err(e) => {
+                propagate_err("receive_message".to_string(), Err(e))
+            },
+            Ok(ret) => {
+                // Then for magic (this should come before parse error, but we can't
+                // get to it if the deserialization failed). TODO restructure this
+                if ret.magic != self.magic {
+                    Err(util::Error::BadNetworkMagic(self.magic, ret.magic))
+                } else {
+                    Ok(ret.payload)
+                }
             }
-          }
         }
-      }
     }
-  }
 }
-
 

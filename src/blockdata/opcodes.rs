@@ -24,6 +24,7 @@ use serde;
 
 // Heavy stick to translate between opcode types
 use std::mem::transmute;
+use std::fmt;
 
 use network::serialize::{SimpleDecoder, SimpleEncoder};
 use network::encodable::{ConsensusDecodable, ConsensusEncodable};
@@ -602,6 +603,8 @@ impl All {
     }
 }
 
+display_from_debug!(All);
+
 impl<D: SimpleDecoder> ConsensusDecodable<D> for All {
     #[inline]
     fn consensus_decode(d: &mut D) -> Result<All, D::Error> {
@@ -645,6 +648,8 @@ pub enum Class {
   /// Any opcode not covered above
   Ordinary(Ordinary)
 }
+
+display_from_debug!(Class);
 
 impl serde::Serialize for Class {
   fn serialize<S>(&self, serializer: &mut S) -> Result<(), S::Error>

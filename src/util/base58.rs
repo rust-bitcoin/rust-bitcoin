@@ -14,7 +14,7 @@
 
 //! # Base58 encoder and decoder
 
-use byteorder::{ByteOrder, LittleEndian};
+use byteorder::{ByteOrder, LittleEndian, WriteBytesExt};
 
 use std::str;
 
@@ -102,7 +102,7 @@ pub trait FromBase58 {
       return Err(Error::TooShort(ret.len()));
     }
     let ck_start = ret.len() - 4;
-    let expected = Sha256dHash::from_data(ret.slice_to(ck_start)).into_le().low_u32();
+    let expected = Sha256dHash::from_data(&ret[..ck_start]).into_le().low_u32();
     let actual = LittleEndian::read_u32(&ret[ck_start..(ck_start + 4)]);
     if expected != actual {
       return Err(Error::BadChecksum(expected, actual));
@@ -116,7 +116,7 @@ pub trait FromBase58 {
 /// Directly encode a slice as base58
 pub fn base58_encode_slice(data: &[u8]) -> String {
   // 7/5 is just over log_58(256)
-  let mut scratch = Vec::from_elem(1 + data.len() * 7 / 5, 0u8);
+  let mut scratch = vec![0u8; 1 + data.len() * 7 / 5];
   // Build in base 58
   for &d256 in data.base58_layout().iter() {
     // Compute "X = X * 256 + next_digit" in base 58
@@ -132,9 +132,9 @@ pub fn base58_encode_slice(data: &[u8]) -> String {
   // Unsafely translate the bytes to a utf8 string
   unsafe {
     // Copy leading zeroes directly
-    let mut ret = str::from_utf8(data.iter().take_while(|&&x| x == 0)
+    let mut ret: Vec<u8> = str::from_utf8(data.iter().take_while(|&&x| x == 0)
                                                     .map(|_|  BASE58_CHARS[0])
-                                                    .collect());
+                                                    .collect()).unwrap();
     // Copy rest of string
     ret.as_mut_vec().extend(scratch.into_iter().skip_while(|&x| x == 0)
                                                .map(|x| BASE58_CHARS[x as usize]));
@@ -149,16 +149,16 @@ pub trait ToBase58 {
 
   /// Obtain a string with the base58 encoding of the object
   fn to_base58(&self) -> String {
-    base58_encode_slice(self.base58_layout().as_slice())
+    base58_encode_slice(&self.base58_layout()[..])
   }
 
   /// Obtain a string with the base58check encoding of the object
   /// (Tack the first 4 256-digits of the object's Bitcoin hash onto the end.)
   fn to_base58check(&self) -> String {
     let mut data = self.base58_layout();
-    let checksum = Sha256dHash::from_data(data.as_slice()).into_le().low_u32();
+    let checksum = Sha256dHash::from_data(&data).into_le().low_u32();
     data.write_u32::<LittleEndian>(checksum);
-    base58_encode_slice(data.as_slice())
+    base58_encode_slice(&data)
   }
 }
 
@@ -166,11 +166,6 @@ pub trait ToBase58 {
 impl<'a> ToBase58 for &'a [u8] {
   fn base58_layout(&self) -> Vec<u8> { self.to_vec() }
   fn to_base58(&self) -> String { base58_encode_slice(*self) }
-}
-
-impl ToBase58 for Vec<u8> {
-  fn base58_layout(&self) -> Vec<u8> { self.clone() }
-  fn to_base58(&self) -> String { base58_encode_slice(self.as_slice()) }
 }
 
 impl FromBase58 for Vec<u8> {

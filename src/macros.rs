@@ -98,6 +98,14 @@ macro_rules! user_enum {
       }
     }
 
+    impl ::std::fmt::Display for $name {
+      fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+        f.pad(match *self {
+          $($elem => $txt),*
+        })
+      }
+    }
+
     impl ::serde::Deserialize for $name {
       #[inline]
       fn deserialize<D>(d: &mut D) -> Result<$name, D::Error>

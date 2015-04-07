@@ -22,14 +22,14 @@ use network::encodable::{ConsensusDecodable, ConsensusEncodable};
 use network::serialize::{SimpleEncoder, SimpleDecoder};
 
 user_enum! {
-  #[derive(PartialEq, Eq, Clone, Hash)]
-  #[doc="The cryptocurrency to act on"]
-  pub enum Network {
-    #[doc="Classic Bitcoin"]
-    Bitcoin <-> "bitcoin",
-    #[doc="Bitcoin's testnet"]
-    Testnet <-> "testnet"
-  }
+    #[derive(PartialEq, Eq, Clone, Hash)]
+    #[doc="The cryptocurrency to act on"]
+    pub enum Network {
+        #[doc="Classic Bitcoin"]
+        Bitcoin <-> "bitcoin",
+        #[doc="Bitcoin's testnet"]
+        Testnet <-> "testnet"
+    }
 }
 
 pub const PROTOCOL_VERSION: u32    = 70001;
@@ -39,30 +39,30 @@ pub const USER_AGENT: &'static str = "bitcoin-rust v0.1";
 /// Return the network magic bytes, which should be encoded little-endian
 /// at the start of every message
 pub fn magic(network: Network) -> u32 {
-  match network {
-    Network::Bitcoin => 0xD9B4BEF9,
-    Network::Testnet => 0x0709110B
-    // Note: any new entries here must be added to `deserialize` below
-  }
+    match network {
+        Network::Bitcoin => 0xD9B4BEF9,
+        Network::Testnet => 0x0709110B
+        // Note: any new entries here must be added to `consensus_decode` below
+    }
 }
 
 impl<S: SimpleEncoder> ConsensusEncodable<S> for Network {
-  #[inline]
-  fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
-    magic(*self).consensus_encode(s)
-  }
+    #[inline]
+    fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
+        magic(*self).consensus_encode(s)
+    }
 }
 
 impl<D: SimpleDecoder> ConsensusDecodable<D> for Network {
-  #[inline]
-  fn consensus_decode(d: &mut D) -> Result<Network, D::Error> {
-    let magic: u32 = try!(ConsensusDecodable::consensus_decode(d));
-    match magic {
-      0xD9B4BEF9 => Ok(Network::Bitcoin),
-      0x0709110B => Ok(Network::Testnet),
-      x => Err(d.error(format!("Unknown network (magic {:x})", x).as_slice()))
+    #[inline]
+    fn consensus_decode(d: &mut D) -> Result<Network, D::Error> {
+        let magic: u32 = try!(ConsensusDecodable::consensus_decode(d));
+        match magic {
+            0xD9B4BEF9 => Ok(Network::Bitcoin),
+            0x0709110B => Ok(Network::Testnet),
+            x => Err(d.error(format!("Unknown network (magic {:x})", x)))
+        }
     }
-  }
 }
 
 #[cfg(test)]

@@ -423,7 +423,7 @@ impl UtxoSet {
 #[cfg(test)]
 mod tests {
   use std::prelude::*;
-  use std::io::IoResult;
+  use std::io;
   use serialize::hex::FromHex;
 
   use super::{UtxoSet, ValidationLevel};
@@ -472,7 +472,7 @@ mod tests {
     // Serialize/deserialize the resulting UTXO set
     let serial = serialize(&empty_set).unwrap();
 
-    let deserial: IoResult<UtxoSet> = deserialize(serial.clone());
+    let deserial: io::Result<UtxoSet> = deserialize(serial.clone());
     assert!(deserial.is_ok());
 
     // Check that all outputs are there
@@ -492,7 +492,7 @@ mod tests {
       }
     }
 
-    let deserial_again: IoResult<UtxoSet> = deserialize(serial);
+    let deserial_again: io::Result<UtxoSet> = deserialize(serial);
     let mut read_again = deserial_again.unwrap();
     assert!(read_again.rewind(&new_block));
     assert_eq!(read_again.n_utxos(), 0);

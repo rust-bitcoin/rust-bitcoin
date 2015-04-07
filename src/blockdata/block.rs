@@ -22,8 +22,8 @@
 
 use std::num::{Zero, from_u64};
 
-use util::error;
-use util::error::Error::{SpvBadTarget, SpvBadProofOfWork};
+use util;
+use util::Error::{SpvBadTarget, SpvBadProofOfWork};
 use util::hash::Sha256dHash;
 use util::uint::Uint256;
 use network::encodable::{ConsensusEncodable, VarInt};
@@ -97,7 +97,7 @@ impl BlockHeader {
   /// Performs an SPV validation of a block, which confirms that the proof-of-work
   /// is correct, but does not verify that the transactions are valid or encoded
   /// correctly.
-  pub fn spv_validate(&self, required_target: &Uint256) -> Result<(), error::Error> {
+  pub fn spv_validate(&self, required_target: &Uint256) -> Result<(), util::Error> {
     let ref target = self.target();
     if target != required_target {
       return Err(SpvBadTarget);
@@ -137,7 +137,7 @@ impl_consensus_encoding!(LoneBlockHeader, header, tx_count);
 
 #[cfg(test)]
 mod tests {
-  use std::io::IoResult;
+  use std::io;
   use serialize::hex::FromHex;
 
   use blockdata::block::Block;
@@ -151,8 +151,8 @@ mod tests {
     let prevhash = "4ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000".from_hex().unwrap();
     let merkle = "bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914c".from_hex().unwrap();
 
-    let decode: IoResult<Block> = deserialize(some_block.clone());
-    let bad_decode: IoResult<Block> = deserialize(cutoff_block);
+    let decode: io::Result<Block> = deserialize(some_block.clone());
+    let bad_decode: io::Result<Block> = deserialize(cutoff_block);
 
     assert!(decode.is_ok());
     assert!(bad_decode.is_err());

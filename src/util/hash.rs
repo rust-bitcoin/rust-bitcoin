@@ -18,7 +18,7 @@
 use std::char::from_digit;
 use std::cmp::min;
 use std::default::Default;
-use std::fmt;
+use std::fmt::{self, Write};
 use std::io::Cursor;
 use std::mem::transmute;
 use std::hash;
@@ -65,7 +65,7 @@ impl Ripemd160Hash {
     let mut ret = [0; 20];
     let mut rmd = Ripemd160::new();
     rmd.input(data);
-    rmd.result(ret.as_mut_slice());
+    rmd.result(&mut ret);
     Ripemd160Hash(ret)
   }
 }
@@ -83,10 +83,10 @@ impl Sha256dHash {
     let Sha256dHash(mut ret): Sha256dHash = Default::default();
     let mut sha2 = Sha256::new();
     sha2.input(data);
-    sha2.result(ret.as_mut_slice());
+    sha2.result(&mut ret);
     sha2.reset();
-    sha2.input(ret.as_slice());
-    sha2.result(ret.as_mut_slice());
+    sha2.input(&ret);
+    sha2.result(&mut ret);
     Sha256dHash(ret)
   }
 
@@ -95,7 +95,7 @@ impl Sha256dHash {
   pub fn into_le(self) -> Uint256 {
     let Sha256dHash(data) = self;
     let mut ret: [u64; 4] = unsafe { transmute(data) };
-    for x in ret.as_mut_slice().iter_mut() { *x = x.to_le(); }
+    for x in (&mut ret).iter_mut() { *x = x.to_le(); }
     Uint256(ret)
   }
 
@@ -105,7 +105,7 @@ impl Sha256dHash {
     let Sha256dHash(mut data) = self;
     data.reverse();
     let mut ret: [u64; 4] = unsafe { transmute(data) };
-    for x in ret.iter_mut() { *x = x.to_be(); }
+    for x in (&mut ret).iter_mut() { *x = x.to_be(); }
     Uint256(ret)
   }
 
@@ -138,8 +138,8 @@ impl Sha256dHash {
     let &Sha256dHash(data) = self;
     let mut ret = String::with_capacity(64);
     for i in 0..32 {
-      ret.push_char(from_digit((data[i] / 0x10) as usize, 16).unwrap());
-      ret.push_char(from_digit((data[i] & 0x0f) as usize, 16).unwrap());
+      ret.push(from_digit((data[i] / 0x10) as u32, 16).unwrap());
+      ret.push(from_digit((data[i] & 0x0f) as u32, 16).unwrap());
     }
     ret
   }
@@ -149,8 +149,8 @@ impl Sha256dHash {
     let &Sha256dHash(data) = self;
     let mut ret = String::with_capacity(64);
     for i in (0..32).rev() {
-      ret.push_char(from_digit((data[i] / 0x10) as usize, 16).unwrap());
-      ret.push_char(from_digit((data[i] & 0x0f) as usize, 16).unwrap());
+      ret.push(from_digit((data[i] / 0x10) as u32, 16).unwrap());
+      ret.push(from_digit((data[i] & 0x0f) as u32, 16).unwrap());
     }
     ret
   }
@@ -191,7 +191,7 @@ impl serde::Deserialize for Sha256dHash {
         if hex_str.len() != 64 {
           return Err(serde::de::Error::syntax_error());
         }
-        let raw_str = try!(hex_str.as_slice().from_hex()
+        let raw_str = try!(hex_str.from_hex()
                              .map_err(|_| serde::de::Error::syntax_error()));
         let mut ret = [0u8; 32];
         for i in 0..32 {
@@ -215,12 +215,10 @@ impl fmt::LowerHex for Sha256dHash {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     let &Sha256dHash(data) = self;
     let mut rv = [0; 64];
-    let mut hex = data.iter().rev().map(|n| *n).enumerate();
-    for (i, ch) in hex {
-      rv[2*i]     = from_digit(ch as usize / 16, 16).unwrap() as u8;
-      rv[2*i + 1] = from_digit(ch as usize % 16, 16).unwrap() as u8;
+    for ch in data.iter().rev() {
+      try!(write!(f, "{:02x}", ch));
     }
-    f.write(rv.as_slice())
+    Ok(())
   }
 }
 
@@ -249,7 +247,7 @@ impl<'a, T: BitcoinHash> MerkleRoot for &'a [T] {
         let mut encoder = RawEncoder::new(Cursor::new(vec![]));
         data[idx1].consensus_encode(&mut encoder).unwrap();
         data[idx2].consensus_encode(&mut encoder).unwrap();
-        next.push(encoder.unwrap().unwrap().bitcoin_hash());
+        next.push(encoder.unwrap().into_inner().bitcoin_hash());
       }
       merkle_root(next)
     }
@@ -259,7 +257,7 @@ impl<'a, T: BitcoinHash> MerkleRoot for &'a [T] {
 
 impl <T: BitcoinHash> MerkleRoot for Vec<T> {
   fn merkle_root(&self) -> Sha256dHash {
-    self.as_slice().merkle_root()
+    (&self[..]).merkle_root()
   }
 }
 
@@ -303,7 +301,7 @@ mod tests {
       assert!(hash.encode(&mut encoder).is_ok());
     }
     let res = writer.unwrap();
-    assert_eq!(res.as_slice(),
+    assert_eq!(&res.as_slice(),
                "\"56944c5d3f98413ef45cf54545538103cc9f298e0575820ad3591376e2e0f65d\"".as_bytes());
     assert_eq!(json::decode(from_utf8(res.as_slice()).unwrap()), Ok(hash));
   }
