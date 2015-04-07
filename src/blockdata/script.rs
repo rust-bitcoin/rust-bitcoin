@@ -35,7 +35,7 @@ use crypto::digest::Digest;
 use crypto::ripemd160::Ripemd160;
 use crypto::sha1::Sha1;
 use crypto::sha2::Sha256;
-use secp256k1::Secp256k1;
+use secp256k1::{self, Secp256k1};
 use secp256k1::key::PublicKey;
 use serde;
 
@@ -56,13 +56,16 @@ impl Clone for Script {
     }
 }
 
+#[derive(PartialEq, Eq, Debug, Clone, Display)]
+/// An object which can be used to construct a script piece by piece
+pub struct ScriptBuilder(Vec<u8>);
+
 impl hash::Hash for Script {
     #[inline]
     fn hash<H>(&self, state: &mut H)
         where H: hash::Hasher
     {
-        let &Script(ref raw) = self;
-        (&raw[..]).hash(state);
+        (&self.0[..]).hash(state);
     }
 
     #[inline]
@@ -70,8 +73,7 @@ impl hash::Hash for Script {
         where H: hash::Hasher
     {
         for s in data.iter() {
-            let &Script(ref raw) = s;
-            (&raw[..]).hash(state);
+            (&s.0[..]).hash(state);
         }
     }
 }
@@ -95,7 +97,7 @@ pub enum Error {
     /// OP_CHECKSIG was called with a bad signature
     BadSignature,
     /// An ECDSA error
-    Ecdsa(::secp256k1::Error),
+    Ecdsa(secp256k1::Error),
     /// An OP_ELSE happened while not in an OP_IF tree
     ElseWithoutIf,
     /// An OP_ENDIF happened while not in an OP_IF tree
@@ -1558,7 +1560,7 @@ fn check_signature(sig_slice: &[u8], pk_slice: &[u8], script: Vec<u8>,
                 for _ in 0..input_index {
                     new_outs.push(Default::default())
                 }
-                new_outs.push(tx_copy.output.swap_remove(input_index).unwrap());
+                new_outs.push(tx_copy.output.swap_remove(input_index));
                 tx_copy.output = new_outs;
             } else {
                 sighash_single_bug = true;
@@ -1581,7 +1583,10 @@ fn check_signature(sig_slice: &[u8], pk_slice: &[u8], script: Vec<u8>,
         serialize(&Sha256dHash::from_data(&data_to_sign[..])).unwrap()
     };
 
-    Secp256k1::verify_raw(&signature_hash[..], sig_slice, &pubkey).map_err(Error::Ecdsa)
+    // We can unwrap -- only failure mode is on length, which is fixed to 32
+    let msg = secp256k1::Message::from_slice(&signature_hash[..]).unwrap();
+
+    Secp256k1::verify_raw(&msg, sig_slice, &pubkey).map_err(Error::Ecdsa)
 }
 
 // Macro to translate English stack instructions into Rust code.
@@ -1719,70 +1724,7 @@ impl Script {
     pub fn from_vec(v: Vec<u8>) -> Script { Script(v.into_boxed_slice()) }
 
     /// The length in bytes of the script
-    pub fn len(&self) -> usize {
-        let &Script(ref raw) = self;
-        raw.len()
-    }
-
-    /// Adds instructions to push an integer onto the stack. Integers are
-    /// encoded as little-endian signed-magnitude numbers, but there are
-    /// dedicated opcodes to push some small integers.
-    pub fn push_int(&mut self, data: i64) {
-        // We can special-case -1, 1-16
-        if data == -1 || (data >= 1 && data <=16) {
-            let &Script(ref mut raw) = self;
-            raw.push(data as u8 + opcodes::All::OP_TRUE as u8);
-            return;
-        }
-        // We can also special-case zero
-        if data == 0 {
-            let &Script(ref mut raw) = self;
-            raw.push(opcodes::All::OP_FALSE as u8);
-            return;
-        }
-        // Otherwise encode it as data
-        self.push_scriptint(data);
-    }
-
-    /// Adds instructions to push an integer onto the stack, using the explicit
-    /// encoding regardless of the availability of dedicated opcodes.
-    pub fn push_scriptint(&mut self, data: i64) {
-        self.push_slice(&build_scriptint(data));
-    }
-
-    /// Adds instructions to push some arbitrary data onto the stack
-    pub fn push_slice(&mut self, data: &[u8]) {
-        let &Script(ref mut raw) = self;
-        // Start with a PUSH opcode
-        match data.len() {
-            n if n < opcodes::Ordinary::OP_PUSHDATA1 as usize => { raw.push(n as u8); },
-            n if n < 0x100 => {
-                raw.push(opcodes::Ordinary::OP_PUSHDATA1 as u8);
-                raw.push(n as u8);
-            },
-            n if n < 0x10000 => {
-                raw.push(opcodes::Ordinary::OP_PUSHDATA2 as u8);
-                raw.push((n % 0x100) as u8);
-                raw.push((n / 0x100) as u8);
-            },
-            n if n < 0x100000000 => {
-                raw.push(opcodes::Ordinary::OP_PUSHDATA4 as u8);
-                raw.push((n % 0x100) as u8);
-                raw.push(((n / 0x100) % 0x100) as u8);
-                raw.push(((n / 0x10000) % 0x100) as u8);
-                raw.push((n / 0x1000000) as u8);
-            }
-            _ => panic!("tried to put a 4bn+ sized object into a script!")
-        }
-        // Then push the acraw
-        raw.extend(data.iter().map(|n| *n));
-    }
-
-    /// Adds an individual opcode to the script
-    pub fn push_opcode(&mut self, data: opcodes::All) {
-        let &Script(ref mut raw) = self;
-        raw.push(data as u8);
-    }
+    pub fn len(&self) -> usize { self.0.len() }
 
     /// Trace a script
     pub fn trace<'a>(&'a self, stack: &mut Vec<MaybeOwned<'a>>,
@@ -1807,21 +1749,19 @@ impl Script {
                         input_context: Option<(&Transaction, usize)>,
                         mut trace: Option<&mut Vec<TraceIteration>>)
                        -> Result<(), Error> {
-        let &Script(ref raw) = self;
-
         let mut codeseparator_index = 0;
         let mut exec_stack = vec![];
         let mut alt_stack = vec![];
 
         let mut index = 0;
         let mut op_count = 0;
-        while index < raw.len() {
+        while index < self.0.len() {
             let executing = exec_stack.iter().all(|e| *e);
-            let byte = unsafe { *raw.get(index) };
+            let byte = self.0[index];
             // Write out the trace, except the stack which we don't know yet
             match trace {
                 Some(ref mut t) => {
-                    let opcode = opcodes::All::Opcode::from_u8(byte);
+                    let opcode = opcodes::All::from_u8(byte);
                     t.push(TraceIteration {
                         index: index,
                         opcode: opcode,
@@ -1837,7 +1777,7 @@ impl Script {
             op_count += 1;
             index += 1;
             // The definitions of all these categories are in opcodes.rs
-            match (executing, opcodes::All::Opcode::from_u8(byte).classify()) {
+            match (executing, opcodes::All::from_u8(byte).classify()) {
                 // Illegal operations mean failure regardless of execution state
                 (_, opcodes::Class::IllegalOp)             => return Err(Error::IllegalOpcode),
                 // Push number
@@ -1846,29 +1786,30 @@ impl Script {
                 (true, opcodes::Class::ReturnOp)         => return Err(Error::ExecutedReturn),
                 // Data-reading statements still need to read, even when not executing
                 (_, opcodes::Class::PushBytes(n)) => {
-                    if raw.len() < index + n { return Err(Error::EarlyEndOfScript); }
-                    if executing { stack.push(MaybeOwned::Borrowed(raw.slice(index, index + n))); }
+                    let n = n as usize;
+                    if self.0.len() < index + n { return Err(Error::EarlyEndOfScript); }
+                    if executing { stack.push(MaybeOwned::Borrowed(&self.0[index..index + n])); }
                     index += n;
                 }
                 (_, opcodes::Class::Ordinary(opcodes::Ordinary::OP_PUSHDATA1)) => {
-                    if raw.len() < index + 1 { return Err(Error::EarlyEndOfScript); }
-                    let n = try!(read_uint(&raw[index..], 1));
-                    if raw.len() < index + 1 + n { return Err(Error::EarlyEndOfScript); }
-                    if executing { stack.push(MaybeOwned::Borrowed(raw.slice(index + 1, index + n + 1))); }
+                    if self.0.len() < index + 1 { return Err(Error::EarlyEndOfScript); }
+                    let n = try!(read_uint(&self.0[index..], 1));
+                    if self.0.len() < index + 1 + n { return Err(Error::EarlyEndOfScript); }
+                    if executing { stack.push(MaybeOwned::Borrowed(&self.0[index + 1..index + n + 1])); }
                     index += 1 + n;
                 }
                 (_, opcodes::Class::Ordinary(opcodes::Ordinary::OP_PUSHDATA2)) => {
-                    if raw.len() < index + 2 { return Err(Error::EarlyEndOfScript); }
-                    let n = try!(read_uint(&raw[index..], 2));
-                    if raw.len() < index + 2 + n { return Err(Error::EarlyEndOfScript); }
-                    if executing { stack.push(MaybeOwned::Borrowed(raw.slice(index + 2, index + n + 2))); }
+                    if self.0.len() < index + 2 { return Err(Error::EarlyEndOfScript); }
+                    let n = try!(read_uint(&self.0[index..], 2));
+                    if self.0.len() < index + 2 + n { return Err(Error::EarlyEndOfScript); }
+                    if executing { stack.push(MaybeOwned::Borrowed(&self.0[index + 2..index + n + 2])); }
                     index += 2 + n;
                 }
                 (_, opcodes::Class::Ordinary(opcodes::Ordinary::OP_PUSHDATA4)) => {
-                    if raw.len() < index + 4 { return Err(Error::EarlyEndOfScript); }
-                    let n = try!(read_uint(&raw[index..], 4));
-                    if raw.len() < index + 4 + n { return Err(Error::EarlyEndOfScript); }
-                    if executing { stack.push(MaybeOwned::Borrowed(raw.slice(index + 4, index + n + 4))); }
+                    if self.0.len() < index + 4 { return Err(Error::EarlyEndOfScript); }
+                    let n = try!(read_uint(&self.0[index..], 4));
+                    if self.0.len() < index + 4 + n { return Err(Error::EarlyEndOfScript); }
+                    if executing { stack.push(MaybeOwned::Borrowed(&self.0[index + 4..index + n + 4])); }
                     index += 4 + n;
                 }
                 // If-statements take effect when not executing
@@ -1942,7 +1883,7 @@ impl Script {
                         opcodes::Ordinary::OP_OVER    => stack_opcode!(stack(2): copy 2),
                         opcodes::Ordinary::OP_PICK => {
                             let n = match stack.pop() {
-                                Some(data) => try!(read_scriptint(&data)),
+                                Some(data) => try!(read_scriptint(&data[..])),
                                 None => { return Err(Error::PopEmptyStack); }
                             };
                             if n < 0 { return Err(Error::NegativePick); }
@@ -1951,7 +1892,7 @@ impl Script {
                         }
                         opcodes::Ordinary::OP_ROLL => {
                             let n = match stack.pop() {
-                                Some(data) => try!(read_scriptint(&data)),
+                                Some(data) => try!(read_scriptint(&data[..])),
                                 None => { return Err(Error::PopEmptyStack); }
                             };
                             if n < 0 { return Err(Error::NegativeRoll); }
@@ -2033,11 +1974,12 @@ impl Script {
 
                             // Compute the section of script that needs to be hashed: everything
                             // from the last CODESEPARATOR, except the signature itself.
-                            let mut script = (&raw[codeseparator_index..]).to_vec();
-                            let mut remove = Script::new();
+                            let mut script = (&self.0[codeseparator_index..]).to_vec();
+                            let mut remove = ScriptBuilder::new();
                             remove.push_slice(sig_slice);
-                            script_find_and_remove(&mut script, &remove);
-                            script_find_and_remove(&mut script, [opcodes::Ordinary::OP_CODESEPARATOR as u8]);
+                            script_find_and_remove(&mut script, &remove[..]);
+                            // Also all of the OP_CODESEPARATORS, even the unevaluated ones
+                            script_find_and_remove(&mut script, &[opcodes::Ordinary::OP_CODESEPARATOR as u8]);
 
                             // This is as far as we can go without a transaction, so fail here
                             if input_context.is_none() { return Err(Error::NoTransaction); }
@@ -2053,7 +1995,7 @@ impl Script {
                         opcodes::Ordinary::OP_CHECKMULTISIG | opcodes::Ordinary::OP_CHECKMULTISIGVERIFY => {
                             // Read all the keys
                             if stack.len() < 1 { return Err(Error::PopEmptyStack); }
-                            let n_keys = try!(read_scriptint(&stack.pop().unwrap()));
+                            let n_keys = try!(read_scriptint(&stack.pop().unwrap()[..]));
                             if n_keys < 0 || n_keys > 20 {
                                 return Err(Error::MultisigBadKeyCount(n_keys as isize));
                             }
@@ -2066,7 +2008,7 @@ impl Script {
 
                             // Read all the signatures
                             if stack.len() < 1 { return Err(Error::PopEmptyStack); }
-                            let n_sigs = try!(read_scriptint(&stack.pop().unwrap()));
+                            let n_sigs = try!(read_scriptint(&stack.pop().unwrap()[..]));
                             if n_sigs < 0 || n_sigs > n_keys {
                                 return Err(Error::MultisigBadSigCount(n_sigs as isize));
                             }
@@ -2082,12 +2024,12 @@ impl Script {
 
                             // Compute the section of script that needs to be hashed: everything
                             // from the last CODESEPARATOR, except the signatures themselves.
-                            let mut script = (&raw[codeseparator_index..]).to_vec();
+                            let mut script = (&self.0[codeseparator_index..]).to_vec();
                             for sig in sigs.iter() {
-                                let mut remove = Script::new();
-                                remove.push_slice(&sig);
-                                script_find_and_remove(&mut script, &remove);
-                                script_find_and_remove(&mut script, [opcodes::Ordinary::OP_CODESEPARATOR as u8]);
+                                let mut remove = ScriptBuilder::new();
+                                remove.push_slice(&sig[..]);
+                                script_find_and_remove(&mut script, &remove[..]);
+                                script_find_and_remove(&mut script, &[opcodes::Ordinary::OP_CODESEPARATOR as u8]);
                             }
 
                             // This is as far as we can go without a transaction, so fail here
@@ -2105,7 +2047,7 @@ impl Script {
                                     // Try to validate the signature with the given key
                                     (Some(k), Some(s)) => {
                                         // Move to the next signature if it is valid for the current key
-                                        if check_signature(&s, &k, script.clone(), tx, input_index).is_ok() {
+                                        if check_signature(&s[..], &k[..], script.clone(), tx, input_index).is_ok() {
                                             sig = sig_iter.next();
                                         }
                                         // Move to the next key in any case
@@ -2142,12 +2084,11 @@ impl Script {
     /// Checks whether a script pubkey is a p2sh output
     #[inline]
     pub fn is_p2sh(&self) -> bool {
-        let &Script(ref raw) = self;
         unsafe {
-            raw.len() == 23 &&
-            *raw.get(0) == opcodes::All::OP_HASH160 as u8 &&
-            *raw.get(1) == opcodes::All::OP_PUSHBYTES_20 as u8 &&
-            *raw.get(22) == opcodes::All::OP_EQUAL as u8
+            self.0.len() == 23 &&
+            self.0[0] == opcodes::All::OP_HASH160 as u8 &&
+            self.0[1] == opcodes::All::OP_PUSHBYTES_20 as u8 &&
+            self.0[22] == opcodes::All::OP_EQUAL as u8
         }
     }
 
@@ -2186,9 +2127,10 @@ impl Script {
                     (true, opcodes::Class::ReturnOp)     => return Err(Error::ExecutedReturn),
                     // Data-reading statements still need to read, even when not executing
                     (_, opcodes::Class::PushBytes(n)) => {
+                        let n = n as usize;
                         if script.len() < index + n { return Err(Error::EarlyEndOfScript); }
                         if executing {
-                            stack.push_alloc(AbstractStackElem::new_raw(script.slice(index, index + n)));
+                            stack.push_alloc(AbstractStackElem::new_raw(&script[index..index + n]));
                         }
                         index += n;
                     }
@@ -2200,7 +2142,7 @@ impl Script {
                         };
                         if script.len() < index + 1 + n { return Err(Error::EarlyEndOfScript); }
                         if executing {
-                            stack.push_alloc(AbstractStackElem::new_raw(script.slice(index + 1, index + n + 1)));
+                            stack.push_alloc(AbstractStackElem::new_raw(&script[index + 1..index + n + 1]));
                         }
                         index += 1 + n;
                     }
@@ -2212,7 +2154,7 @@ impl Script {
                         };
                         if script.len() < index + 2 + n { return Err(Error::EarlyEndOfScript); }
                         if executing {
-                            stack.push_alloc(AbstractStackElem::new_raw(script.slice(index + 2, index + n + 2)));
+                            stack.push_alloc(AbstractStackElem::new_raw(&script[index + 2..index + n + 2]));
                         }
                         index += 2 + n;
                     }
@@ -2223,7 +2165,7 @@ impl Script {
                         };
                         if script.len() < index + 4 + n { return Err(Error::EarlyEndOfScript); }
                         if executing {
-                            stack.push_alloc(AbstractStackElem::new_raw(script.slice(index + 4, index + n + 4)));
+                            stack.push_alloc(AbstractStackElem::new_raw(&script[index + 4..index + n + 4]));
                         }
                         index += 4 + n;
                     }
@@ -2495,8 +2437,7 @@ impl Script {
             }
         }
 
-        let &Script(ref raw) = self;
-        recurse(&raw, AbstractStack::new(), vec![], 1)
+        recurse(&self.0, AbstractStack::new(), vec![], 1)
     }
 }
 
@@ -2504,62 +2445,93 @@ impl Default for Script {
     fn default() -> Script { Script(vec![].into_boxed_slice()) }
 }
 
+impl_index_newtype!(Script, u8);
 
-impl ops::Index<usize> for Script {
-    type Output = u8;
-    #[inline]
-    fn index(&self, index: usize) -> &u8 {
-        let &Script(ref raw) = self;
-        &raw[index]
+impl ScriptBuilder {
+    /// Creates a new empty script
+    pub fn new() -> ScriptBuilder { ScriptBuilder(vec![]) }
+
+    /// Creates a new script from an existing vector
+    pub fn from_vec(v: Vec<u8>) -> ScriptBuilder { ScriptBuilder(v) }
+
+    /// The length in bytes of the script
+    pub fn len(&self) -> usize { self.0.len() }
+
+    /// Adds instructions to push an integer onto the stack. Integers are
+    /// encoded as little-endian signed-magnitude numbers, but there are
+    /// dedicated opcodes to push some small integers.
+    pub fn push_int(&mut self, data: i64) {
+        // We can special-case -1, 1-16
+        if data == -1 || (data >= 1 && data <=16) {
+            self.0.push(data as u8 + opcodes::OP_TRUE as u8);
+        }
+        // We can also special-case zero
+        else if data == 0 {
+            self.0.push(opcodes::OP_FALSE as u8);
+        }
+        // Otherwise encode it as data
+        else { self.push_scriptint(data); }
+    }
+
+    /// Adds instructions to push an integer onto the stack, using the explicit
+    /// encoding regardless of the availability of dedicated opcodes.
+    pub fn push_scriptint(&mut self, data: i64) {
+        self.push_slice(&build_scriptint(data));
+    }
+
+    /// Adds instructions to push some arbitrary data onto the stack
+    pub fn push_slice(&mut self, data: &[u8]) {
+        // Start with a PUSH opcode
+        match data.len() {
+            n if n < opcodes::Ordinary::OP_PUSHDATA1 as usize => { self.0.push(n as u8); },
+            n if n < 0x100 => {
+                self.0.push(opcodes::Ordinary::OP_PUSHDATA1 as u8);
+                self.0.push(n as u8);
+            },
+            n if n < 0x10000 => {
+                self.0.push(opcodes::Ordinary::OP_PUSHDATA2 as u8);
+                self.0.push((n % 0x100) as u8);
+                self.0.push((n / 0x100) as u8);
+            },
+            n if n < 0x100000000 => {
+                self.0.push(opcodes::Ordinary::OP_PUSHDATA4 as u8);
+                self.0.push((n % 0x100) as u8);
+                self.0.push(((n / 0x100) % 0x100) as u8);
+                self.0.push(((n / 0x10000) % 0x100) as u8);
+                self.0.push((n / 0x1000000) as u8);
+            }
+            _ => panic!("tried to put a 4bn+ sized object into a script!")
+        }
+        // Then push the acraw
+        self.0.extend(data.iter().map(|n| *n));
+    }
+
+    pub fn push_opcode(&mut self, data: opcodes::All) {
+        self.0.push(data as u8);
+    }
+
+    pub fn into_script(self) -> Script {
+        Script(self.0.into_boxed_slice())
     }
 }
 
-impl ops::Index<ops::Range<usize>> for Script {
-    type Output = [u8];
-    #[inline]
-    fn index(&self, index: ops::Range<usize>) -> &[u8] {
-        let &Script(ref raw) = self;
-        &raw[index]
-    }
+/// Adds an individual opcode to the script
+impl Default for ScriptBuilder {
+    fn default() -> ScriptBuilder { ScriptBuilder(vec![]) }
 }
 
-impl ops::Index<ops::RangeTo<usize>> for Script {
-    type Output = [u8];
-    #[inline]
-    fn index(&self, index: ops::RangeTo<usize>) -> &[u8] {
-        let &Script(ref raw) = self;
-        &raw[index]
-    }
-}
-
-impl ops::Index<ops::RangeFrom<usize>> for Script {
-    type Output = [u8];
-    #[inline]
-    fn index(&self, index: ops::RangeFrom<usize>) -> &[u8] {
-        let &Script(ref raw) = self;
-        &raw[index]
-    }
-}
-
-impl ops::Index<ops::RangeFull> for Script {
-    type Output = [u8];
-    #[inline]
-    fn index(&self, _: ops::RangeFull) -> &[u8] {
-        let &Script(ref raw) = self;
-        &raw[..]
-    }
-}
+impl_index_newtype!(ScriptBuilder, u8);
 
 // User-facing serialization
 impl serde::Serialize for Script {
     fn serialize<S>(&self, serializer: &mut S) -> Result<(), S::Error>
         where S: serde::Serializer,
     {
-        let &Script(ref raw) = self;
-        for dat in raw.iter() {
-            serializer.visit_char(from_digit((dat / 0x10) as u32, 16).unwrap());
-            serializer.visit_char(from_digit((dat & 0x0f) as u32, 16).unwrap());
+        for dat in self.0.iter() {
+            try!(serializer.visit_char(from_digit((dat / 0x10) as u32, 16).unwrap()));
+            try!(serializer.visit_char(from_digit((dat & 0x0f) as u32, 16).unwrap()));
         }
+        Ok(())
     }
 }
 
@@ -2567,8 +2539,7 @@ impl serde::Serialize for Script {
 impl<S: SimpleEncoder> ConsensusEncodable<S> for Script {
     #[inline]
     fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
-        let &Script(ref data) = self;
-        data.consensus_encode(s)
+        self.0.consensus_encode(s)
     }
 }
 

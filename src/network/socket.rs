@@ -34,24 +34,24 @@ use util::{self, propagate_err};
 
 /// Format an IP address in the 16-byte bitcoin protocol serialization
 fn ipaddr_to_bitcoin_addr(ipaddr: &ip::IpAddr) -> [u16; 8] {
-  match *ipaddr {
-    ip::IpAddr::V4(ref addr) => &addr.to_ipv6_mapped(),
-    ip::IpAddr::V6(ref addr) => addr
-  }.segments()
+    match *ipaddr {
+        ip::IpAddr::V4(ref addr) => &addr.to_ipv6_mapped(),
+        ip::IpAddr::V6(ref addr) => addr
+    }.segments()
 }
 
 /// A network socket along with information about the peer
 #[derive(Clone)]
 pub struct Socket {
-  /// The underlying TCP socket
-  socket: Arc<Mutex<Option<tcp::TcpStream>>>,
-  /// Services supported by us
-  pub services: u64,
-  /// Our user agent
-  pub user_agent: String,
-  /// Nonce to identify our `version` messages
-  pub version_nonce: u64,
-  /// Network magic
+    /// The underlying TCP socket
+    socket: Arc<Mutex<Option<tcp::TcpStream>>>,
+    /// Services supported by us
+    pub services: u64,
+    /// Our user agent
+    pub user_agent: String,
+    /// Nonce to identify our `version` messages
+    pub version_nonce: u64,
+    /// Network magic
   pub magic: u32
 }
 

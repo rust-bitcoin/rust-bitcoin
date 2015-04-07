@@ -47,6 +47,7 @@
 extern crate alloc;
 extern crate byteorder;
 extern crate collections;
+extern crate eventual;
 extern crate num_cpus;
 extern crate rand;
 extern crate rustc_serialize as serialize;

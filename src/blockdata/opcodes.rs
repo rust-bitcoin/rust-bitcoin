@@ -592,10 +592,10 @@ impl All {
       // 16 opcodes
       } else if All::OP_PUSHNUM_1 as u8 <= *self as u8 &&
                 *self as u8 <= All::OP_PUSHNUM_16 as u8 {
-        Class::PushNum(1 + *self as isize - All::OP_PUSHNUM_1 as isize)
+        Class::PushNum(1 + *self as i32 - All::OP_PUSHNUM_1 as i32)
       // 76 opcodes
       } else if *self as u8 <= All::OP_PUSHBYTES_75 as u8 {
-        Class::PushBytes(*self as usize)
+        Class::PushBytes(*self as u32)
       // 60 opcodes
       } else {
         Class::Ordinary(unsafe { transmute(*self) })
@@ -636,9 +636,9 @@ pub static OP_TRUE: All = All::OP_PUSHNUM_1;
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum Class {
   /// Pushes the given number onto the stack
-  PushNum(isize),
+  PushNum(i32),
   /// Pushes the given number of bytes onto the stack
-  PushBytes(usize),
+  PushBytes(u32),
   /// Fails the script if executed
   ReturnOp,
   /// Fails the script even if not executed
