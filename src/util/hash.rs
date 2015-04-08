@@ -266,6 +266,7 @@ impl <T: BitcoinHash> MerkleRoot for Vec<T> {
 mod tests {
     use std::prelude::*;
     use std::io::Cursor;
+    use std::num::FromPrimitive;
     use std::str::from_utf8;
     use serialize::Encodable;
     use serialize::json;
@@ -288,7 +289,7 @@ mod tests {
     fn test_consenus_encode_roundtrip() {
         let hash = Sha256dHash::from_data(&[]);
         let serial = serialize(&hash).unwrap();
-        let deserial = deserialize(serial).unwrap();
+        let deserial = deserialize(&serial).unwrap();
         assert_eq!(hash, deserial);
     }
 
@@ -300,8 +301,8 @@ mod tests {
             let mut encoder = json::Encoder::new(&mut writer);
             assert!(hash.encode(&mut encoder).is_ok());
         }
-        let res = writer.unwrap();
-        assert_eq!(&res.as_slice(),
+        let res = writer.into_inner();
+        assert_eq!(&res[..],
                    "\"56944c5d3f98413ef45cf54545538103cc9f298e0575820ad3591376e2e0f65d\"".as_bytes());
         assert_eq!(json::decode(from_utf8(res.as_slice()).unwrap()), Ok(hash));
     }

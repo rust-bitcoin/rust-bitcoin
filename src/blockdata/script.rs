@@ -2552,10 +2552,9 @@ impl<D: SimpleDecoder> ConsensusDecodable<D> for Script {
 
 #[cfg(test)]
 mod test {
-    use std::io;
     use serialize::hex::FromHex;
 
-    use super::{Error, Script, build_scriptint, read_scriptint, read_scriptbool};
+    use super::{Error, Script, ScriptBuilder, build_scriptint, read_scriptint, read_scriptbool};
     use super::MaybeOwned::Owned;
 
     use network::serialize::{deserialize, serialize};
@@ -2565,11 +2564,11 @@ mod test {
     fn test_tx(tx_hex: &'static str, output_hex: Vec<&'static str>) {
         let tx_hex = tx_hex.from_hex().unwrap();
 
-        let tx: Transaction = deserialize(tx_hex.clone()).ok().expect("transaction");
+        let tx: Transaction = deserialize(&tx_hex).ok().expect("transaction");
         let script_pk: Vec<Script> = output_hex.iter()
                                                 .map(|hex| format!("{:02x}{}", hex.len() / 2, hex))
                                                 .map(|hex| (&hex[..]).from_hex().unwrap())
-                                                .map(|hex| deserialize(hex.clone())
+                                                .map(|hex| deserialize(&hex)
                                                 .ok()
                                                 .expect("scriptpk"))
                                                 .collect();
@@ -2579,44 +2578,44 @@ mod test {
             assert_eq!(tx.input[n].script_sig.evaluate(&mut stack, Some((&tx, n)), None), Ok(()));
             assert_eq!(script.evaluate(&mut stack, Some((&tx, n)), None), Ok(()));
             assert!(stack.len() >= 1);
-            assert_eq!(read_scriptbool(&stack.pop().unwrap()), true);
+            assert_eq!(read_scriptbool(&stack.pop().unwrap()[..]), true);
         }
     }
 
     #[test]
     fn script() {
         let mut comp = vec![];
-        let mut script = Script::new();
-        assert_eq!(script, Script(comp.into_boxed_slice()));
+        let mut script = ScriptBuilder::new();
+        assert_eq!(&script[..], &comp[..]);
 
         // small ints
-        script.push_int(1);    comp.push(82u8); assert_eq!(script, Script(comp.clone()));
-        script.push_int(0);    comp.push(0u8);    assert_eq!(script, Script(comp.clone()));
-        script.push_int(4);    comp.push(85u8); assert_eq!(script, Script(comp.clone()));
-        script.push_int(-1); comp.push(80u8); assert_eq!(script, Script(comp.clone()));
+        script.push_int(1);  comp.push(82u8); assert_eq!(&script[..], &comp[..]);
+        script.push_int(0);  comp.push(0u8);  assert_eq!(&script[..], &comp[..]);
+        script.push_int(4);  comp.push(85u8); assert_eq!(&script[..], &comp[..]);
+        script.push_int(-1); comp.push(80u8); assert_eq!(&script[..], &comp[..]);
         // forced scriptint
-        script.push_scriptint(4);    comp.push_all([1u8, 4]); assert_eq!(script, Script(comp.clone()));
+        script.push_scriptint(4); comp.push_all(&[1u8, 4]); assert_eq!(&script[..], &comp[..]);
         // big ints
-        script.push_int(17); comp.push_all([1u8, 17]); assert_eq!(script, Script(comp.clone()));
-        script.push_int(10000); comp.push_all([2u8, 16, 39]); assert_eq!(script, Script(comp.clone()));
+        script.push_int(17); comp.push_all(&[1u8, 17]); assert_eq!(&script[..], &comp[..]);
+        script.push_int(10000); comp.push_all(&[2u8, 16, 39]); assert_eq!(&script[..], &comp[..]);
         // notice the sign bit set here, hence the extra zero/128 at the end
-        script.push_int(10000000); comp.push_all([4u8, 128, 150, 152, 0]); assert_eq!(script, Script(comp.clone()));
-        script.push_int(-10000000); comp.push_all([4u8, 128, 150, 152, 128]); assert_eq!(script, Script(comp.clone()));
+        script.push_int(10000000); comp.push_all(&[4u8, 128, 150, 152, 0]); assert_eq!(&script[..], &comp[..]);
+        script.push_int(-10000000); comp.push_all(&[4u8, 128, 150, 152, 128]); assert_eq!(&script[..], &comp[..]);
 
         // data
-        script.push_slice("NRA4VR".as_bytes()); comp.push_all([6u8, 78, 82, 65, 52, 86, 82]); assert_eq!(script, Script(comp.clone()));
+        script.push_slice("NRA4VR".as_bytes()); comp.push_all(&[6u8, 78, 82, 65, 52, 86, 82]); assert_eq!(&script[..], &comp[..]);
 
         // opcodes 
-        script.push_opcode(opcodes::all::OP_CHECKSIG); comp.push(0xACu8); assert_eq!(script, Script(comp.clone()));
-        script.push_opcode(opcodes::all::OP_CHECKSIG); comp.push(0xACu8); assert_eq!(script, Script(comp.clone()));
+        script.push_opcode(opcodes::All::OP_CHECKSIG); comp.push(0xACu8); assert_eq!(&script[..], &comp[..]);
+        script.push_opcode(opcodes::All::OP_CHECKSIG); comp.push(0xACu8); assert_eq!(&script[..], &comp[..]);
     }
 
     #[test]
     fn script_serialize() {
         let hex_script = "6c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52".from_hex().unwrap();
-        let script: io::Result<Script> = deserialize(hex_script.clone());
+        let script: Result<Script, _> = deserialize(&hex_script);
         assert!(script.is_ok());
-        assert_eq!(serialize(&script.unwrap()), Ok(hex_script));
+        assert_eq!(serialize(&script.unwrap()).ok(), Some(hex_script));
     }
 
     #[test]
@@ -2637,17 +2636,17 @@ mod test {
 
     #[test]
     fn script_eval_simple() {
-        let mut script = Script::new();
-        assert!(script.evaluate(&mut vec![], None, None).is_ok());
+        let mut script = ScriptBuilder::new();
+        assert!(script.clone().into_script().evaluate(&mut vec![], None, None).is_ok());
 
-        script.push_opcode(opcodes::all::OP_RETURN);
-        assert!(script.evaluate(&mut vec![], None, None).is_err());
+        script.push_opcode(opcodes::All::OP_RETURN);
+        assert!(script.clone().into_script().evaluate(&mut vec![], None, None).is_err());
     }
 
     #[test]
     fn script_eval_checksig_without_tx() {
         let hex_pk = "1976a914e729dea4a3a81108e16376d1cc329c91db58999488ac".from_hex().unwrap();
-        let script_pk: Script = deserialize(hex_pk.clone()).ok().expect("scriptpk");
+        let script_pk: Script = deserialize(&hex_pk).ok().expect("scriptpk");
         // Should be able to check that the sig is there and pk correct
         // before needing a transaction
         assert_eq!(script_pk.evaluate(&mut vec![], None, None), Err(Error::PopEmptyStack));
@@ -2666,14 +2665,14 @@ mod test {
 
         let output_hex = "1976a914299567077f41bc20059dc21a1eb1ef5a6a43b9c088ac".from_hex().unwrap();
 
-        let tx: Transaction = deserialize(tx_hex.clone()).ok().expect("transaction");
-        let script_pk: Script = deserialize(output_hex.clone()).ok().expect("scriptpk");
+        let tx: Transaction = deserialize(&tx_hex).ok().expect("transaction");
+        let script_pk: Script = deserialize(&output_hex).ok().expect("scriptpk");
 
         let mut stack = vec![];
         assert_eq!(tx.input[0].script_sig.evaluate(&mut stack, None, None), Ok(()));
         assert_eq!(script_pk.evaluate(&mut stack, Some((&tx, 0)), None), Ok(()));
         assert_eq!(stack.len(), 1);
-        assert_eq!(read_scriptbool(&stack.pop().unwrap()), true);
+        assert_eq!(read_scriptbool(&stack.pop().unwrap()[..]), true);
     }
 
 

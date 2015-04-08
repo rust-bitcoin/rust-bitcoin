@@ -388,7 +388,6 @@ impl Uint256 {
 
 #[cfg(test)]
 mod tests {
-    use std::io;
     use std::num::from_u64;
 
     use network::serialize::{deserialize, serialize};
@@ -497,11 +496,11 @@ mod tests {
         let start2 = Uint256([0x8C8C3EE70C644118u64, 0x0209E7378231E632, 0xABCD, 0xFFFF]);
         let serial1 = serialize(&start1).unwrap();
         let serial2 = serialize(&start2).unwrap();
-        let end1: io::Result<Uint256> = deserialize(serial1);
-        let end2: io::Result<Uint256> = deserialize(serial2);
+        let end1: Result<Uint256, _> = deserialize(&serial1);
+        let end2: Result<Uint256, _> = deserialize(&serial2);
 
-        assert_eq!(end1, Ok(start1));
-        assert_eq!(end2, Ok(start2));
+        assert_eq!(end1.ok(), Some(start1));
+        assert_eq!(end2.ok(), Some(start2));
     }
 }
 

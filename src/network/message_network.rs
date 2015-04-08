@@ -18,8 +18,6 @@
 //! capabilities
 //!
 
-use std::io;
-
 use network::constants;
 use network::address::Address;
 use network::socket::Socket;
@@ -81,7 +79,6 @@ impl_consensus_encoding!(VersionMessage, version, services, timestamp,
 mod tests {
     use super::VersionMessage;
 
-    use std::io;
     use serialize::hex::FromHex;
 
     use network::serialize::{deserialize, serialize};
@@ -91,7 +88,7 @@ mod tests {
         // This message is from my satoshi node, morning of May 27 2014
         let from_sat = "721101000100000000000000e6e0845300000000010000000000000000000000000000000000ffff0000000000000100000000000000fd87d87eeb4364f22cf54dca59412db7208d47d920cffce83ee8102f5361746f7368693a302e392e39392f2c9f040001".from_hex().unwrap();
 
-        let decode: io::Result<VersionMessage> = deserialize(from_sat.clone());
+        let decode: Result<VersionMessage, _> = deserialize(&from_sat);
         assert!(decode.is_ok());
         let real_decode = decode.unwrap();
         assert_eq!(real_decode.version, 70002);
@@ -103,7 +100,7 @@ mod tests {
         assert_eq!(real_decode.start_height, 302892);
         assert_eq!(real_decode.relay, true);
 
-        assert_eq!(serialize(&real_decode), Ok(from_sat));
+        assert_eq!(serialize(&real_decode).ok(), Some(from_sat));
     }
 }
 

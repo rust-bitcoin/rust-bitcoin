@@ -68,18 +68,20 @@ impl<D: SimpleDecoder> ConsensusDecodable<D> for Network {
 #[cfg(test)]
 mod tests {
   use super::Network;
-
   use network::serialize::{deserialize, serialize};
+
+  use hamcrest::is;
+
 
   #[test]
   fn serialize_test() {
     assert_eq!(serialize(&Network::Bitcoin).unwrap(), vec![0xf9, 0xbe, 0xb4, 0xd9]);
     assert_eq!(serialize(&Network::Testnet).unwrap(), vec![0x0b, 0x11, 0x09, 0x07]);
 
-    assert_eq!(deserialize(vec![0xf9, 0xbe, 0xb4, 0xd9]), Ok(Network::Bitcoin));
-    assert_eq!(deserialize(vec![0x0b, 0x11, 0x09, 0x07]), Ok(Network::Testnet));
+    assert_eq!(deserialize(&[0xf9, 0xbe, 0xb4, 0xd9]).ok(), Some(Network::Bitcoin));
+    assert_eq!(deserialize(&[0x0b, 0x11, 0x09, 0x07]).ok(), Some(Network::Testnet));
 
-    let bad: Result<Network, _> = deserialize("fakenet".as_bytes().to_vec());
+    let bad: Result<Network, _> = deserialize("fakenet".as_bytes());
     assert!(bad.is_err());
   }
 }

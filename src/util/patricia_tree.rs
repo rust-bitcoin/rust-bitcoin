@@ -548,8 +548,8 @@ impl<'a, K, V> Iterator for MutItems<'a, K, V> {
 #[cfg(test)]
 mod tests {
     use std::prelude::*;
-    use std::io;
     use std::num::Zero;
+    use std::num::FromPrimitive;
 
     use network::serialize::{deserialize, serialize};
     use util::hash::Sha256dHash;
@@ -647,18 +647,18 @@ mod tests {
     fn patricia_iter_test() {
         let n_elems = 5000;
         let mut tree = PatriciaTree::new();
-        let mut data = Vec::from_elem(n_elems, None);
+        let mut data = vec![None; n_elems];
         // Start by inserting a bunch of stuff
         for i in 0..n_elems {
             let hash = Sha256dHash::from_data(&[(i / 0x100) as u8, (i % 0x100) as u8]).into_le().low_128();
             tree.insert(&hash, 128, i);
-            *data.get_mut(i) = Some(());
+            data[i] = Some(());
         }
 
         // Iterate over and try to get everything
         for n in tree.iter() {
             assert!(data[*n].is_some());
-            *data.get_mut(*n) = None;
+            data[*n] = None;
         }
 
         // Check that we got everything
@@ -669,12 +669,12 @@ mod tests {
     fn patricia_mut_iter_test() {
         let n_elems = 5000;
         let mut tree = PatriciaTree::new();
-        let mut data = Vec::from_elem(n_elems, None);
+        let mut data = vec![None; n_elems];
         // Start by inserting a bunch of stuff
         for i in 0..n_elems {
             let hash = Sha256dHash::from_data(&[(i / 0x100) as u8, (i % 0x100) as u8]).into_le().low_128();
             tree.insert(&hash, 128, i);
-            *data.get_mut(i) = Some(());
+            data[i] = Some(());
         }
 
         // Iterate over and flip all the values
@@ -685,7 +685,7 @@ mod tests {
         // Iterate over and try to get everything
         for n in tree.mut_iter() {
             assert!(data[*n].is_some());
-            *data.get_mut(*n) = None;
+            data[*n] = None;
         }
 
         // Check that we got everything
@@ -706,7 +706,7 @@ mod tests {
         // Serialize it
         let serialized = serialize(&tree).unwrap();
         // Deserialize it
-        let deserialized: io::Result<PatriciaTree<Uint128, u32>> = deserialize(serialized);
+        let deserialized: Result<PatriciaTree<Uint128, u32>, _> = deserialize(&serialized);
         assert!(deserialized.is_ok());
         let new_tree = deserialized.unwrap();
 

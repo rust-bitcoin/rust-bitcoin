@@ -137,7 +137,6 @@ impl_consensus_encoding!(LoneBlockHeader, header, tx_count);
 
 #[cfg(test)]
 mod tests {
-    use std::io;
     use serialize::hex::FromHex;
 
     use blockdata::block::Block;
@@ -151,22 +150,22 @@ mod tests {
         let prevhash = "4ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000".from_hex().unwrap();
         let merkle = "bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914c".from_hex().unwrap();
 
-        let decode: io::Result<Block> = deserialize(some_block.clone());
-        let bad_decode: io::Result<Block> = deserialize(cutoff_block);
+        let decode: Result<Block, _> = deserialize(&some_block);
+        let bad_decode: Result<Block, _> = deserialize(&cutoff_block);
 
         assert!(decode.is_ok());
         assert!(bad_decode.is_err());
         let real_decode = decode.unwrap();
         assert_eq!(real_decode.header.version, 1);
-        assert_eq!(serialize(&real_decode.header.prev_blockhash), Ok(prevhash));
+        assert_eq!(serialize(&real_decode.header.prev_blockhash).ok(), Some(prevhash));
         // [test] TODO: actually compute the merkle root
-        assert_eq!(serialize(&real_decode.header.merkle_root), Ok(merkle));
+        assert_eq!(serialize(&real_decode.header.merkle_root).ok(), Some(merkle));
         assert_eq!(real_decode.header.time, 1231965655);
         assert_eq!(real_decode.header.bits, 486604799);
         assert_eq!(real_decode.header.nonce, 2067413810);
         // [test] TODO: check the transaction data
     
-        assert_eq!(serialize(&real_decode), Ok(some_block));
+        assert_eq!(serialize(&real_decode).ok(), Some(some_block));
     }
 }
 

@@ -130,7 +130,6 @@ impl<D: SimpleDecoder> ConsensusDecodable<D> for Inventory {
 mod tests {
     use super::{GetHeadersMessage, GetBlocksMessage};
 
-    use std::io;
     use serialize::hex::FromHex;
 
     use network::serialize::{deserialize, serialize};
@@ -141,15 +140,15 @@ mod tests {
         let from_sat = "72110100014a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b0000000000000000000000000000000000000000000000000000000000000000".from_hex().unwrap();
         let genhash = "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b".from_hex().unwrap();
 
-        let decode: io::Result<GetBlocksMessage> = deserialize(from_sat.clone());
+        let decode: Result<GetBlocksMessage, _> = deserialize(&from_sat);
         assert!(decode.is_ok());
         let real_decode = decode.unwrap();
         assert_eq!(real_decode.version, 70002);
         assert_eq!(real_decode.locator_hashes.len(), 1);
-        assert_eq!(serialize(&real_decode.locator_hashes[0]), Ok(genhash));
+        assert_eq!(serialize(&real_decode.locator_hashes[0]).ok(), Some(genhash));
         assert_eq!(real_decode.stop_hash, Default::default());
 
-        assert_eq!(serialize(&real_decode), Ok(from_sat));
+        assert_eq!(serialize(&real_decode).ok(), Some(from_sat));
     }
 
     #[test]
@@ -157,15 +156,15 @@ mod tests {
         let from_sat = "72110100014a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b0000000000000000000000000000000000000000000000000000000000000000".from_hex().unwrap();
         let genhash = "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b".from_hex().unwrap();
 
-        let decode: io::Result<GetHeadersMessage> = deserialize(from_sat.clone());
+        let decode: Result<GetHeadersMessage, _> = deserialize(&from_sat);
         assert!(decode.is_ok());
         let real_decode = decode.unwrap();
         assert_eq!(real_decode.version, 70002);
         assert_eq!(real_decode.locator_hashes.len(), 1);
-        assert_eq!(serialize(&real_decode.locator_hashes[0]), Ok(genhash));
+        assert_eq!(serialize(&real_decode.locator_hashes[0]).ok(), Some(genhash));
         assert_eq!(real_decode.stop_hash, Default::default());
 
-        assert_eq!(serialize(&real_decode), Ok(from_sat));
+        assert_eq!(serialize(&real_decode).ok(), Some(from_sat));
     }
 }
 

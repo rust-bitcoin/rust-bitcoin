@@ -397,167 +397,165 @@ impl<D, K, V, H> ConsensusDecodable<D> for HashMap<K, V, H>
 mod tests {
     use super::{CheckedData, VarInt};
 
-    use std::io;
-
     use network::serialize::{deserialize, serialize};
 
     #[test]
     fn serialize_int_test() {
         // bool
-        assert_eq!(serialize(&false), Ok(vec![0u8]));
-        assert_eq!(serialize(&true), Ok(vec![1u8]));
+        assert_eq!(serialize(&false).ok(), Some(vec![0u8]));
+        assert_eq!(serialize(&true).ok(), Some(vec![1u8]));
         // u8
-        assert_eq!(serialize(&1u8), Ok(vec![1u8]));
-        assert_eq!(serialize(&0u8), Ok(vec![0u8]));
-        assert_eq!(serialize(&255u8), Ok(vec![255u8]));
+        assert_eq!(serialize(&1u8).ok(), Some(vec![1u8]));
+        assert_eq!(serialize(&0u8).ok(), Some(vec![0u8]));
+        assert_eq!(serialize(&255u8).ok(), Some(vec![255u8]));
         // u16
-        assert_eq!(serialize(&1u16), Ok(vec![1u8, 0]));
-        assert_eq!(serialize(&256u16), Ok(vec![0u8, 1]));
-        assert_eq!(serialize(&5000u16), Ok(vec![136u8, 19]));
+        assert_eq!(serialize(&1u16).ok(), Some(vec![1u8, 0]));
+        assert_eq!(serialize(&256u16).ok(), Some(vec![0u8, 1]));
+        assert_eq!(serialize(&5000u16).ok(), Some(vec![136u8, 19]));
         // u32
-        assert_eq!(serialize(&1u32), Ok(vec![1u8, 0, 0, 0]));
-        assert_eq!(serialize(&256u32), Ok(vec![0u8, 1, 0, 0]));
-        assert_eq!(serialize(&5000u32), Ok(vec![136u8, 19, 0, 0]));
-        assert_eq!(serialize(&500000u32), Ok(vec![32u8, 161, 7, 0]));
-        assert_eq!(serialize(&168430090u32), Ok(vec![10u8, 10, 10, 10]));
+        assert_eq!(serialize(&1u32).ok(), Some(vec![1u8, 0, 0, 0]));
+        assert_eq!(serialize(&256u32).ok(), Some(vec![0u8, 1, 0, 0]));
+        assert_eq!(serialize(&5000u32).ok(), Some(vec![136u8, 19, 0, 0]));
+        assert_eq!(serialize(&500000u32).ok(), Some(vec![32u8, 161, 7, 0]));
+        assert_eq!(serialize(&168430090u32).ok(), Some(vec![10u8, 10, 10, 10]));
         // TODO: test negative numbers
-        assert_eq!(serialize(&1i32), Ok(vec![1u8, 0, 0, 0]));
-        assert_eq!(serialize(&256i32), Ok(vec![0u8, 1, 0, 0]));
-        assert_eq!(serialize(&5000i32), Ok(vec![136u8, 19, 0, 0]));
-        assert_eq!(serialize(&500000i32), Ok(vec![32u8, 161, 7, 0]));
-        assert_eq!(serialize(&168430090i32), Ok(vec![10u8, 10, 10, 10]));
+        assert_eq!(serialize(&1i32).ok(), Some(vec![1u8, 0, 0, 0]));
+        assert_eq!(serialize(&256i32).ok(), Some(vec![0u8, 1, 0, 0]));
+        assert_eq!(serialize(&5000i32).ok(), Some(vec![136u8, 19, 0, 0]));
+        assert_eq!(serialize(&500000i32).ok(), Some(vec![32u8, 161, 7, 0]));
+        assert_eq!(serialize(&168430090i32).ok(), Some(vec![10u8, 10, 10, 10]));
         // u64
-        assert_eq!(serialize(&1u64), Ok(vec![1u8, 0, 0, 0, 0, 0, 0, 0]));
-        assert_eq!(serialize(&256u64), Ok(vec![0u8, 1, 0, 0, 0, 0, 0, 0]));
-        assert_eq!(serialize(&5000u64), Ok(vec![136u8, 19, 0, 0, 0, 0, 0, 0]));
-        assert_eq!(serialize(&500000u64), Ok(vec![32u8, 161, 7, 0, 0, 0, 0, 0]));
-        assert_eq!(serialize(&723401728380766730u64), Ok(vec![10u8, 10, 10, 10, 10, 10, 10, 10]));
+        assert_eq!(serialize(&1u64).ok(), Some(vec![1u8, 0, 0, 0, 0, 0, 0, 0]));
+        assert_eq!(serialize(&256u64).ok(), Some(vec![0u8, 1, 0, 0, 0, 0, 0, 0]));
+        assert_eq!(serialize(&5000u64).ok(), Some(vec![136u8, 19, 0, 0, 0, 0, 0, 0]));
+        assert_eq!(serialize(&500000u64).ok(), Some(vec![32u8, 161, 7, 0, 0, 0, 0, 0]));
+        assert_eq!(serialize(&723401728380766730u64).ok(), Some(vec![10u8, 10, 10, 10, 10, 10, 10, 10]));
         // TODO: test negative numbers
-        assert_eq!(serialize(&1i64), Ok(vec![1u8, 0, 0, 0, 0, 0, 0, 0]));
-        assert_eq!(serialize(&256i64), Ok(vec![0u8, 1, 0, 0, 0, 0, 0, 0]));
-        assert_eq!(serialize(&5000i64), Ok(vec![136u8, 19, 0, 0, 0, 0, 0, 0]));
-        assert_eq!(serialize(&500000i64), Ok(vec![32u8, 161, 7, 0, 0, 0, 0, 0]));
-        assert_eq!(serialize(&723401728380766730i64), Ok(vec![10u8, 10, 10, 10, 10, 10, 10, 10]));
+        assert_eq!(serialize(&1i64).ok(), Some(vec![1u8, 0, 0, 0, 0, 0, 0, 0]));
+        assert_eq!(serialize(&256i64).ok(), Some(vec![0u8, 1, 0, 0, 0, 0, 0, 0]));
+        assert_eq!(serialize(&5000i64).ok(), Some(vec![136u8, 19, 0, 0, 0, 0, 0, 0]));
+        assert_eq!(serialize(&500000i64).ok(), Some(vec![32u8, 161, 7, 0, 0, 0, 0, 0]));
+        assert_eq!(serialize(&723401728380766730i64).ok(), Some(vec![10u8, 10, 10, 10, 10, 10, 10, 10]));
     }
 
     #[test]
     fn serialize_varint_test() {
-        assert_eq!(serialize(&VarInt(10)), Ok(vec![10u8]));
-        assert_eq!(serialize(&VarInt(0xFC)), Ok(vec![0xFCu8]));
-        assert_eq!(serialize(&VarInt(0xFD)), Ok(vec![0xFDu8, 0xFD, 0]));
-        assert_eq!(serialize(&VarInt(0xFFF)), Ok(vec![0xFDu8, 0xFF, 0xF]));
-        assert_eq!(serialize(&VarInt(0xF0F0F0F)), Ok(vec![0xFEu8, 0xF, 0xF, 0xF, 0xF]));
-        assert_eq!(serialize(&VarInt(0xF0F0F0F0F0E0)), Ok(vec![0xFFu8, 0xE0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0, 0]));
+        assert_eq!(serialize(&VarInt(10)).ok(), Some(vec![10u8]));
+        assert_eq!(serialize(&VarInt(0xFC)).ok(), Some(vec![0xFCu8]));
+        assert_eq!(serialize(&VarInt(0xFD)).ok(), Some(vec![0xFDu8, 0xFD, 0]));
+        assert_eq!(serialize(&VarInt(0xFFF)).ok(), Some(vec![0xFDu8, 0xFF, 0xF]));
+        assert_eq!(serialize(&VarInt(0xF0F0F0F)).ok(), Some(vec![0xFEu8, 0xF, 0xF, 0xF, 0xF]));
+        assert_eq!(serialize(&VarInt(0xF0F0F0F0F0E0)).ok(), Some(vec![0xFFu8, 0xE0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0, 0]));
     }
 
     #[test]
     fn serialize_checkeddata_test() {
         let cd = CheckedData(vec![1u8, 2, 3, 4, 5]);
-        assert_eq!(serialize(&cd), Ok(vec![5, 0, 0, 0, 162, 107, 175, 90, 1, 2, 3, 4, 5]));
+        assert_eq!(serialize(&cd).ok(), Some(vec![5, 0, 0, 0, 162, 107, 175, 90, 1, 2, 3, 4, 5]));
     }
 
     #[test]
     fn serialize_vector_test() {
-        assert_eq!(serialize(&vec![1u8, 2, 3]), Ok(vec![3u8, 1, 2, 3]));
-        assert_eq!(serialize(&[1u8, 2, 3].as_slice()), Ok(vec![3u8, 1, 2, 3]));
+        assert_eq!(serialize(&vec![1u8, 2, 3]).ok(), Some(vec![3u8, 1, 2, 3]));
+        assert_eq!(serialize(&[1u8, 2, 3].as_slice()).ok(), Some(vec![3u8, 1, 2, 3]));
         // TODO: test vectors of more interesting objects
     }
 
     #[test]
     fn serialize_strbuf_test() {
-        assert_eq!(serialize(&"Andrew".to_string()), Ok(vec![6u8, 0x41, 0x6e, 0x64, 0x72, 0x65, 0x77]));
+        assert_eq!(serialize(&"Andrew".to_string()).ok(), Some(vec![6u8, 0x41, 0x6e, 0x64, 0x72, 0x65, 0x77]));
     }
 
     #[test]
     fn serialize_box_test() {
-        assert_eq!(serialize(&Box::new(1u8)), Ok(vec![1u8]));
-        assert_eq!(serialize(&Box::new(1u16)), Ok(vec![1u8, 0]));
-        assert_eq!(serialize(&Box::new(1u64)), Ok(vec![1u8, 0, 0, 0, 0, 0, 0, 0]));
+        assert_eq!(serialize(&Box::new(1u8)).ok(), Some(vec![1u8]));
+        assert_eq!(serialize(&Box::new(1u16)).ok(), Some(vec![1u8, 0]));
+        assert_eq!(serialize(&Box::new(1u64)).ok(), Some(vec![1u8, 0, 0, 0, 0, 0, 0, 0]));
     }
 
     #[test]
     fn serialize_option_test() {
         let none_ser = serialize(&None::<u8>);
         let some_ser = serialize(&Some(0xFFu8));
-        assert_eq!(none_ser, Ok(vec![0]));
-        assert_eq!(some_ser, Ok(vec![1, 0xFF]));
+        assert_eq!(none_ser.ok(), Some(vec![0]));
+        assert_eq!(some_ser.ok(), Some(vec![1, 0xFF]));
     }
 
     #[test]
     fn deserialize_int_test() {
         // bool
-        assert_eq!(deserialize(vec![58u8, 0]), Ok(true));
-        assert_eq!(deserialize(vec![58u8]), Ok(true));
-        assert_eq!(deserialize(vec![1u8]), Ok(true));
-        assert_eq!(deserialize(vec![0u8]), Ok(false));
-        assert_eq!(deserialize(vec![0u8, 1]), Ok(false));
+        assert_eq!(deserialize(&[58u8, 0]).ok(), Some(true));
+        assert_eq!(deserialize(&[58u8]).ok(), Some(true));
+        assert_eq!(deserialize(&[1u8]).ok(), Some(true));
+        assert_eq!(deserialize(&[0u8]).ok(), Some(false));
+        assert_eq!(deserialize(&[0u8, 1]).ok(), Some(false));
 
         // u8
-        assert_eq!(deserialize(vec![58u8]), Ok(58u8));
+        assert_eq!(deserialize(&[58u8]).ok(), Some(58u8));
 
         // u16
-        assert_eq!(deserialize(vec![0x01u8, 0x02]), Ok(0x0201u16));
-        assert_eq!(deserialize(vec![0xABu8, 0xCD]), Ok(0xCDABu16));
-        assert_eq!(deserialize(vec![0xA0u8, 0x0D]), Ok(0xDA0u16));
-        let failure16: io::Result<u16> = deserialize(vec![1u8]);
+        assert_eq!(deserialize(&[0x01u8, 0x02]).ok(), Some(0x0201u16));
+        assert_eq!(deserialize(&[0xABu8, 0xCD]).ok(), Some(0xCDABu16));
+        assert_eq!(deserialize(&[0xA0u8, 0x0D]).ok(), Some(0xDA0u16));
+        let failure16: Result<u16, _> = deserialize(&[1u8]);
         assert!(failure16.is_err());
 
         // u32
-        assert_eq!(deserialize(vec![0xABu8, 0xCD, 0, 0]), Ok(0xCDABu32));
-        assert_eq!(deserialize(vec![0xA0u8, 0x0D, 0xAB, 0xCD]), Ok(0xCDAB0DA0u32));
-        let failure32: io::Result<u32> = deserialize(vec![1u8, 2, 3]);
+        assert_eq!(deserialize(&[0xABu8, 0xCD, 0, 0]).ok(), Some(0xCDABu32));
+        assert_eq!(deserialize(&[0xA0u8, 0x0D, 0xAB, 0xCD]).ok(), Some(0xCDAB0DA0u32));
+        let failure32: Result<u32, _> = deserialize(&[1u8, 2, 3]);
         assert!(failure32.is_err());
         // TODO: test negative numbers
-        assert_eq!(deserialize(vec![0xABu8, 0xCD, 0, 0]), Ok(0xCDABi32));
-        assert_eq!(deserialize(vec![0xA0u8, 0x0D, 0xAB, 0x2D]), Ok(0x2DAB0DA0i32));
-        let failurei32: io::Result<i32> = deserialize(vec![1u8, 2, 3]);
+        assert_eq!(deserialize(&[0xABu8, 0xCD, 0, 0]).ok(), Some(0xCDABi32));
+        assert_eq!(deserialize(&[0xA0u8, 0x0D, 0xAB, 0x2D]).ok(), Some(0x2DAB0DA0i32));
+        let failurei32: Result<i32, _> = deserialize(&[1u8, 2, 3]);
         assert!(failurei32.is_err());
 
         // u64
-        assert_eq!(deserialize(vec![0xABu8, 0xCD, 0, 0, 0, 0, 0, 0]), Ok(0xCDABu64));
-        assert_eq!(deserialize(vec![0xA0u8, 0x0D, 0xAB, 0xCD, 0x99, 0, 0, 0x99]), Ok(0x99000099CDAB0DA0u64));
-        let failure64: io::Result<u64> = deserialize(vec![1u8, 2, 3, 4, 5, 6, 7]);
+        assert_eq!(deserialize(&[0xABu8, 0xCD, 0, 0, 0, 0, 0, 0]).ok(), Some(0xCDABu64));
+        assert_eq!(deserialize(&[0xA0u8, 0x0D, 0xAB, 0xCD, 0x99, 0, 0, 0x99]).ok(), Some(0x99000099CDAB0DA0u64));
+        let failure64: Result<u64, _> = deserialize(&[1u8, 2, 3, 4, 5, 6, 7]);
         assert!(failure64.is_err());
         // TODO: test negative numbers
-        assert_eq!(deserialize(vec![0xABu8, 0xCD, 0, 0, 0, 0, 0, 0]), Ok(0xCDABi64));
-        assert_eq!(deserialize(vec![0xA0u8, 0x0D, 0xAB, 0xCD, 0x99, 0, 0, 0x99]), Ok(-0x66ffff663254f260i64));
-        let failurei64: io::Result<i64> = deserialize(vec![1u8, 2, 3, 4, 5, 6, 7]);
+        assert_eq!(deserialize(&[0xABu8, 0xCD, 0, 0, 0, 0, 0, 0]).ok(), Some(0xCDABi64));
+        assert_eq!(deserialize(&[0xA0u8, 0x0D, 0xAB, 0xCD, 0x99, 0, 0, 0x99]).ok(), Some(-0x66ffff663254f260i64));
+        let failurei64: Result<i64, _> = deserialize(&[1u8, 2, 3, 4, 5, 6, 7]);
         assert!(failurei64.is_err());
     }
 
     #[test]
     fn deserialize_vec_test() {
-        assert_eq!(deserialize(vec![3u8, 2, 3, 4]), Ok(vec![2u8, 3, 4]));
-        assert_eq!(deserialize(vec![4u8, 2, 3, 4, 5, 6]), Ok(vec![2u8, 3, 4, 5]));
+        assert_eq!(deserialize(&[3u8, 2, 3, 4]).ok(), Some(vec![2u8, 3, 4]));
+        assert_eq!(deserialize(&[4u8, 2, 3, 4, 5, 6]).ok(), Some(vec![2u8, 3, 4, 5]));
     }
 
     #[test]
     fn deserialize_strbuf_test() {
-        assert_eq!(deserialize(vec![6u8, 0x41, 0x6e, 0x64, 0x72, 0x65, 0x77]), Ok(String::from_str("Andrew")));
+        assert_eq!(deserialize(&[6u8, 0x41, 0x6e, 0x64, 0x72, 0x65, 0x77]).ok(), Some(String::from_str("Andrew")));
     }
 
     #[test]
     fn deserialize_checkeddata_test() {
-        let cd: io::Result<CheckedData> = deserialize(vec![5u8, 0, 0, 0, 162, 107, 175, 90, 1, 2, 3, 4, 5]);
-        assert_eq!(cd, Ok(CheckedData(vec![1u8, 2, 3, 4, 5])));
+        let cd: Result<CheckedData, _> = deserialize(&[5u8, 0, 0, 0, 162, 107, 175, 90, 1, 2, 3, 4, 5]);
+        assert_eq!(cd.ok(), Some(CheckedData(vec![1u8, 2, 3, 4, 5])));
     }
 
     #[test]
     fn deserialize_option_test() {
-        let none: io::Result<Option<u8>> = deserialize(vec![0u8]);
-        let good: io::Result<Option<u8>> = deserialize(vec![1u8, 0xFF]);
-        let bad: io::Result<Option<u8>> = deserialize(vec![2u8]);
+        let none: Result<Option<u8>, _> = deserialize(&[0u8]);
+        let good: Result<Option<u8>, _> = deserialize(&[1u8, 0xFF]);
+        let bad: Result<Option<u8>, _> = deserialize(&[2u8]);
         assert!(bad.is_err());
-        assert_eq!(none, Ok(None));
-        assert_eq!(good, Ok(Some(0xFF)));
+        assert_eq!(none.ok(), Some(None));
+        assert_eq!(good.ok(), Some(Some(0xFF)));
     }
 
     #[test]
     fn deserialize_box_test() {
-        let zero: io::Result<Box<u8>> = deserialize(vec![0u8]);
-        let one: io::Result<Box<u8>> = deserialize(vec![1u8]);
-        assert_eq!(zero, Ok(Box::new(0)));
-        assert_eq!(one, Ok(Box::new(1)));
+        let zero: Result<Box<u8>, _> = deserialize(&[0u8]);
+        let one: Result<Box<u8>, _> = deserialize(&[1u8]);
+        assert_eq!(zero.ok(), Some(Box::new(0)));
+        assert_eq!(one.ok(), Some(Box::new(1)));
     }
 }
 

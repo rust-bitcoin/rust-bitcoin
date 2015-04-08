@@ -618,8 +618,6 @@ impl Blockchain {
 
 #[cfg(test)]
 mod tests {
-    use std::io;
-
     use blockdata::blockchain::Blockchain;
     use blockdata::constants::genesis_block;
     use network::constants::Network::Bitcoin;
@@ -632,7 +630,7 @@ mod tests {
                    genesis_block(Bitcoin).header.bitcoin_hash());
 
         let serial = serialize(&empty_chain);
-        let deserial: io::Result<Blockchain> = deserialize(serial.unwrap());
+        let deserial: Result<Blockchain, _> = deserialize(&serial.unwrap());
 
         assert!(deserial.is_ok());
         let read_chain = deserial.unwrap();

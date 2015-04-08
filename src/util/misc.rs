@@ -107,38 +107,38 @@ mod tests {
     fn test_script_find_and_remove() {
         let mut v = vec![101u8, 102, 103, 104, 102, 103, 104, 102, 103, 104, 105, 106, 107, 108, 109];
 
-        assert_eq!(script_find_and_remove(&mut v, []), 0);
-        assert_eq!(script_find_and_remove(&mut v, [105, 105, 105]), 0);
+        assert_eq!(script_find_and_remove(&mut v, &[]), 0);
+        assert_eq!(script_find_and_remove(&mut v, &[105, 105, 105]), 0);
         assert_eq!(v, vec![101, 102, 103, 104, 102, 103, 104, 102, 103, 104, 105, 106, 107, 108, 109]);
 
-        assert_eq!(script_find_and_remove(&mut v, [105, 106, 107]), 1);
+        assert_eq!(script_find_and_remove(&mut v, &[105, 106, 107]), 1);
         assert_eq!(v, vec![101, 102, 103, 104, 102, 103, 104, 102, 103, 104, 108, 109]);
 
-        assert_eq!(script_find_and_remove(&mut v, [104, 108, 109]), 1);
+        assert_eq!(script_find_and_remove(&mut v, &[104, 108, 109]), 1);
         assert_eq!(v, vec![101, 102, 103, 104, 102, 103, 104, 102, 103]);
 
-        assert_eq!(script_find_and_remove(&mut v, [101]), 1);
+        assert_eq!(script_find_and_remove(&mut v, &[101]), 1);
         assert_eq!(v, vec![102, 103, 104, 102, 103, 104, 102, 103]);
 
-        assert_eq!(script_find_and_remove(&mut v, [102]), 3);
+        assert_eq!(script_find_and_remove(&mut v, &[102]), 3);
         assert_eq!(v, vec![103, 104, 103, 104, 103]);
 
-        assert_eq!(script_find_and_remove(&mut v, [103, 104]), 2);
+        assert_eq!(script_find_and_remove(&mut v, &[103, 104]), 2);
         assert_eq!(v, vec![103]);
 
-        assert_eq!(script_find_and_remove(&mut v, [105, 105, 5]), 0);
-        assert_eq!(script_find_and_remove(&mut v, [105]), 0);
-        assert_eq!(script_find_and_remove(&mut v, [103]), 1);
+        assert_eq!(script_find_and_remove(&mut v, &[105, 105, 5]), 0);
+        assert_eq!(script_find_and_remove(&mut v, &[105]), 0);
+        assert_eq!(script_find_and_remove(&mut v, &[103]), 1);
         assert_eq!(v, vec![]);
 
-        assert_eq!(script_find_and_remove(&mut v, [105, 105, 5]), 0);
-        assert_eq!(script_find_and_remove(&mut v, [105]), 0);
+        assert_eq!(script_find_and_remove(&mut v, &[105, 105, 5]), 0);
+        assert_eq!(script_find_and_remove(&mut v, &[105]), 0);
     }
 
     #[test]
     fn test_script_codesep_remove() {
         let mut s = vec![33u8, 3, 132, 121, 160, 250, 153, 140, 211, 82, 89, 162, 239, 10, 122, 92, 104, 102, 44, 20, 116, 248, 140, 203, 109, 8, 167, 103, 123, 190, 199, 242, 32, 65, 173, 171, 33, 3, 132, 121, 160, 250, 153, 140, 211, 82, 89, 162, 239, 10, 122, 92, 104, 102, 44, 20, 116, 248, 140, 203, 109, 8, 167, 103, 123, 190, 199, 242, 32, 65, 173, 171, 81];
-        assert_eq!(script_find_and_remove(&mut s, [171]), 2);
+        assert_eq!(script_find_and_remove(&mut s, &[171]), 2);
         assert_eq!(s, vec![33, 3, 132, 121, 160, 250, 153, 140, 211, 82, 89, 162, 239, 10, 122, 92, 104, 102, 44, 20, 116, 248, 140, 203, 109, 8, 167, 103, 123, 190, 199, 242, 32, 65, 173, 33, 3, 132, 121, 160, 250, 153, 140, 211, 82, 89, 162, 239, 10, 122, 92, 104, 102, 44, 20, 116, 248, 140, 203, 109, 8, 167, 103, 123, 190, 199, 242, 32, 65, 173, 81]);
     }
 

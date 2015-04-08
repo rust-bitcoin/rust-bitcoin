@@ -97,34 +97,32 @@ impl Eq for Address {}
 mod test {
     use super::Address;
 
-    use std::io;
-
     use network::serialize::{deserialize, serialize};
 
     #[test]
     fn serialize_address_test() {
         assert_eq!(serialize(&Address {
             services: 1,
-            address: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0x0a, 0, 0, 1],
+            address: [0, 0, 0, 0, 0, 0xffff, 0x0a00, 0x0001],
             port: 8333
-        }),
-        Ok(vec![1u8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                0, 0, 0, 0xff, 0xff, 0x0a, 0, 0, 1, 0x20, 0x8d]));
+        }).ok(),
+        Some(vec![1u8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                  0, 0, 0, 0xff, 0xff, 0x0a, 0, 0, 1, 0x20, 0x8d]));
     }
 
     #[test]
     fn deserialize_address_test() {
-        let mut addr: io::Result<Address> = deserialize(vec![1u8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                                             0, 0, 0, 0, 0, 0, 0xff, 0xff, 0x0a, 0,
-                                                             0, 1, 0x20, 0x8d]);
+        let mut addr: Result<Address, _> = deserialize(&[1u8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                                       0, 0, 0, 0, 0, 0, 0xff, 0xff, 0x0a, 0,
+                                                       0, 1, 0x20, 0x8d]);
         assert!(addr.is_ok());
         let full = addr.unwrap();
         assert!(full.services == 1);
-        assert!(full.address == [0u8,    0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0x0a, 0, 0, 1]);
+        assert!(full.address == [0, 0, 0, 0, 0, 0xffff, 0x0a00, 0x0001]);
         assert!(full.port == 8333);
 
-        addr = deserialize(vec![1u8, 0, 0, 0, 0, 0, 0, 0,
-                                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0x0a, 0, 0, 1]);
+        addr = deserialize(&[1u8, 0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0x0a, 0, 0, 1]);
         assert!(addr.is_err());
     }
 }

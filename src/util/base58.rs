@@ -16,7 +16,7 @@
 
 use byteorder::{ByteOrder, LittleEndian, WriteBytesExt};
 
-use std::str;
+use std::{iter, str};
 
 use util::hash::Sha256dHash;
 
@@ -60,7 +60,7 @@ static BASE58_DIGITS: [Option<u8>; 128] = [
 
 /// Trait for objects which can be read as base58
 pub trait FromBase58: Sized {
-    /// Constructs an object flrom the byte-encoding (base 256)
+    /// Constructs an object from the byte-encoding (base 256)
     /// representation of its base58 format
     fn from_base58_layout(data: Vec<u8>) -> Result<Self, Error>;
 
@@ -168,6 +168,11 @@ impl<'a> ToBase58 for &'a [u8] {
     fn to_base58(&self) -> String { base58_encode_slice(*self) }
 }
 
+impl<'a> ToBase58 for Vec<u8> {
+    fn base58_layout(&self) -> Vec<u8> { self.clone() }
+    fn to_base58(&self) -> String { base58_encode_slice(&self[..]) }
+}
+
 impl FromBase58 for Vec<u8> {
     fn from_base58_layout(data: Vec<u8>) -> Result<Vec<u8>, Error> {
         Ok(data)
@@ -184,43 +189,43 @@ mod tests {
     #[test]
     fn test_base58_encode() {
         // Basics
-        assert_eq!([0].as_slice().to_base58().as_slice(), "1");
-        assert_eq!([1].as_slice().to_base58().as_slice(), "2");
-        assert_eq!([58].as_slice().to_base58().as_slice(), "21");
-        assert_eq!([13, 36].as_slice().to_base58().as_slice(), "211");
+        assert_eq!(&(&[0][..]).to_base58(), "1");
+        assert_eq!(&(&[1][..]).to_base58(), "2");
+        assert_eq!(&(&[58][..]).to_base58(), "21");
+        assert_eq!(&(&[13, 36][..]).to_base58(), "211");
 
         // Leading zeroes
-        assert_eq!([0, 13, 36].as_slice().to_base58().as_slice(), "1211");
-        assert_eq!([0, 0, 0, 0, 13, 36].as_slice().to_base58().as_slice(), "1111211");
+        assert_eq!(&(&[0, 13, 36][..]).to_base58(), "1211");
+        assert_eq!(&(&[0, 0, 0, 0, 13, 36][..]).to_base58(), "1111211");
 
         // Addresses
-        assert_eq!("00f8917303bfa8ef24f292e8fa1419b20460ba064d".from_hex().unwrap().to_base58check().as_slice(),
+        assert_eq!(&"00f8917303bfa8ef24f292e8fa1419b20460ba064d".from_hex().unwrap().to_base58check(),
                    "1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH");
       }
 
       #[test]
       fn test_base58_decode() {
         // Basics
-        assert_eq!(FromBase58::from_base58("1"), Ok(vec![0u8]));
-        assert_eq!(FromBase58::from_base58("2"), Ok(vec![1u8]));
-        assert_eq!(FromBase58::from_base58("21"), Ok(vec![58u8]));
-        assert_eq!(FromBase58::from_base58("211"), Ok(vec![13u8, 36]));
+        assert_eq!(FromBase58::from_base58("1").ok(), Some(vec![0u8]));
+        assert_eq!(FromBase58::from_base58("2").ok(), Some(vec![1u8]));
+        assert_eq!(FromBase58::from_base58("21").ok(), Some(vec![58u8]));
+        assert_eq!(FromBase58::from_base58("211").ok(), Some(vec![13u8, 36]));
 
         // Leading zeroes
-        assert_eq!(FromBase58::from_base58("1211"), Ok(vec![0u8, 13, 36]));
-        assert_eq!(FromBase58::from_base58("111211"), Ok(vec![0u8, 0, 0, 13, 36]));
+        assert_eq!(FromBase58::from_base58("1211").ok(), Some(vec![0u8, 13, 36]));
+        assert_eq!(FromBase58::from_base58("111211").ok(), Some(vec![0u8, 0, 0, 13, 36]));
 
         // Addresses
-        assert_eq!(FromBase58::from_base58check("1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH"),
-                   Ok("00f8917303bfa8ef24f292e8fa1419b20460ba064d".from_hex().unwrap()))
+        assert_eq!(FromBase58::from_base58check("1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH").ok(),
+                   Some("00f8917303bfa8ef24f292e8fa1419b20460ba064d".from_hex().unwrap()))
     }
 
     #[test]
     fn test_base58_roundtrip() {
         let s = "xprv9wTYmMFdV23N2TdNG573QoEsfRrWKQgWeibmLntzniatZvR9BmLnvSxqu53Kw1UmYPxLgboyZQaXwTCg8MSY3H2EU4pWcQDnRnrVA1xe8fs";
         let v: Vec<u8> = FromBase58::from_base58check(s).unwrap();
-        assert_eq!(v.to_base58check().as_slice(), s);
-         assert_eq!(FromBase58::from_base58check(v.to_base58check().as_slice()), Ok(v));
+        assert_eq!(&v.to_base58check(), s);
+        assert_eq!(FromBase58::from_base58check(&v.to_base58check()).ok(), Some(v));
     }
 }
 

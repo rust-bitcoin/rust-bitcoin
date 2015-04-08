@@ -44,20 +44,21 @@
 #![deny(unused_mut)]
 #![warn(missing_doc)]
 
+#[cfg(test)] extern crate hamcrest;
+
 extern crate alloc;
 extern crate byteorder;
 extern crate collections;
+extern crate crypto;
 extern crate eventual;
 extern crate num_cpus;
 extern crate rand;
 extern crate rustc_serialize as serialize;
+extern crate secp256k1;
 extern crate serde;
 #[plugin(serde_macros)]
 extern crate test;
 extern crate time;
-
-extern crate secp256k1;
-extern crate crypto;
 
 #[macro_use]
 mod internal_macros;
