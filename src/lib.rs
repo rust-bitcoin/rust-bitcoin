@@ -44,7 +44,7 @@
 #![deny(unused_mut)]
 #![warn(missing_doc)]
 
-#[cfg(test)] extern crate hamcrest;
+#![plugin(serde_macros)]
 
 extern crate alloc;
 extern crate byteorder;
@@ -56,7 +56,6 @@ extern crate rand;
 extern crate rustc_serialize as serialize;
 extern crate secp256k1;
 extern crate serde;
-#[plugin(serde_macros)]
 extern crate test;
 extern crate time;
 

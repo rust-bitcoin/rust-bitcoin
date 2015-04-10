@@ -14,9 +14,6 @@ git = "https://github.com/apoelstra/bitcoin-secp256k1-rs.git"
 [dependencies.eventual]
 git = "https://github.com/carllerche/eventual"
 
-[dependencies.hamcrest]
-git = "https://github.com/carllerche/eventual"
-
 [dependencies]
 byteorder = "*"
 num_cpus = "*"
@@ -24,8 +21,6 @@ rand = "*"
 rust-crypto = "*"
 rustc-serialize = "*"
 serde = "*"
+serde_macros = "*"
 time = "*"
-
-[dev-dependencies]
-hamcrest = { git = "https://github.com/carllerche/hamcrest-rust.git" }
 

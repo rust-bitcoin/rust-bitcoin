@@ -70,9 +70,6 @@ mod tests {
   use super::Network;
   use network::serialize::{deserialize, serialize};
 
-  use hamcrest::is;
-
-
   #[test]
   fn serialize_test() {
     assert_eq!(serialize(&Network::Bitcoin).unwrap(), vec![0xf9, 0xbe, 0xb4, 0xd9]);
