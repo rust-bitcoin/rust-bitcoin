@@ -58,7 +58,7 @@ impl Clone for Script {
 
 #[derive(PartialEq, Eq, Debug, Clone, Display)]
 /// An object which can be used to construct a script piece by piece
-pub struct ScriptBuilder(Vec<u8>);
+pub struct Builder(Vec<u8>);
 
 impl hash::Hash for Script {
     #[inline]
@@ -1975,7 +1975,7 @@ impl Script {
                             // Compute the section of script that needs to be hashed: everything
                             // from the last CODESEPARATOR, except the signature itself.
                             let mut script = (&self.0[codeseparator_index..]).to_vec();
-                            let mut remove = ScriptBuilder::new();
+                            let mut remove = Builder::new();
                             remove.push_slice(sig_slice);
                             script_find_and_remove(&mut script, &remove[..]);
                             // Also all of the OP_CODESEPARATORS, even the unevaluated ones
@@ -2026,7 +2026,7 @@ impl Script {
                             // from the last CODESEPARATOR, except the signatures themselves.
                             let mut script = (&self.0[codeseparator_index..]).to_vec();
                             for sig in sigs.iter() {
-                                let mut remove = ScriptBuilder::new();
+                                let mut remove = Builder::new();
                                 remove.push_slice(&sig[..]);
                                 script_find_and_remove(&mut script, &remove[..]);
                                 script_find_and_remove(&mut script, &[opcodes::Ordinary::OP_CODESEPARATOR as u8]);
@@ -2447,12 +2447,12 @@ impl Default for Script {
 
 impl_index_newtype!(Script, u8);
 
-impl ScriptBuilder {
+impl Builder {
     /// Creates a new empty script
-    pub fn new() -> ScriptBuilder { ScriptBuilder(vec![]) }
+    pub fn new() -> Builder { Builder(vec![]) }
 
     /// Creates a new script from an existing vector
-    pub fn from_vec(v: Vec<u8>) -> ScriptBuilder { ScriptBuilder(v) }
+    pub fn from_vec(v: Vec<u8>) -> Builder { Builder(v) }
 
     /// The length in bytes of the script
     pub fn len(&self) -> usize { self.0.len() }
@@ -2516,11 +2516,11 @@ impl ScriptBuilder {
 }
 
 /// Adds an individual opcode to the script
-impl Default for ScriptBuilder {
-    fn default() -> ScriptBuilder { ScriptBuilder(vec![]) }
+impl Default for Builder {
+    fn default() -> Builder { Builder(vec![]) }
 }
 
-impl_index_newtype!(ScriptBuilder, u8);
+impl_index_newtype!(Builder, u8);
 
 // User-facing serialization
 impl serde::Serialize for Script {
@@ -2554,7 +2554,7 @@ impl<D: SimpleDecoder> ConsensusDecodable<D> for Script {
 mod test {
     use serialize::hex::FromHex;
 
-    use super::{Error, Script, ScriptBuilder, build_scriptint, read_scriptint, read_scriptbool};
+    use super::{Error, Script, Builder, build_scriptint, read_scriptint, read_scriptbool};
     use super::MaybeOwned::Owned;
 
     use network::serialize::{deserialize, serialize};
@@ -2585,7 +2585,7 @@ mod test {
     #[test]
     fn script() {
         let mut comp = vec![];
-        let mut script = ScriptBuilder::new();
+        let mut script = Builder::new();
         assert_eq!(&script[..], &comp[..]);
 
         // small ints
@@ -2636,7 +2636,7 @@ mod test {
 
     #[test]
     fn script_eval_simple() {
-        let mut script = ScriptBuilder::new();
+        let mut script = Builder::new();
         assert!(script.clone().into_script().evaluate(&mut vec![], None, None).is_ok());
 
         script.push_opcode(opcodes::All::OP_RETURN);

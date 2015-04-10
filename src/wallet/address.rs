@@ -21,7 +21,7 @@ use crypto::digest::Digest;
 use crypto::sha2::Sha256;
 use std::ops;
 
-use blockdata::script::{Script, ScriptBuilder};
+use blockdata::script;
 use blockdata::opcodes;
 use network::constants::Network;
 use util::hash::Ripemd160Hash;
@@ -52,8 +52,8 @@ impl Address {
 
     /// Generates a script pubkey spending to this address
     #[inline]
-    pub fn script_pubkey(&self) -> Script {
-        let mut script = ScriptBuilder::new();
+    pub fn script_pubkey(&self) -> script::Script {
+        let mut script = script::Builder::new();
         script.push_opcode(opcodes::All::OP_DUP);
         script.push_opcode(opcodes::All::OP_HASH160);
         script.push_slice(&self.hash[..]);
