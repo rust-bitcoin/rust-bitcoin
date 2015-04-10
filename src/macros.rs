@@ -92,7 +92,7 @@ macro_rules! user_enum {
         impl ::std::fmt::Debug for $name {
             fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
                 f.pad(match *self {
-                    $($elem => $txt),*
+                    $($name::$elem => $txt),*
                 })
             }
         }
@@ -100,7 +100,7 @@ macro_rules! user_enum {
         impl ::std::fmt::Display for $name {
             fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
                 f.pad(match *self {
-                    $($elem => $txt),*
+                    $($name::$elem => $txt),*
                 })
             }
         }

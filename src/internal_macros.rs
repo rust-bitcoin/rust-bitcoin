@@ -165,6 +165,7 @@ macro_rules! impl_array_newtype_encodable {
                                     None => return Err(::serde::de::Error::end_of_stream_error())
                                 };
                             }
+                            v.end();
                             Ok($thing(ret))
                         }
                     }

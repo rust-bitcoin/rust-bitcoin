@@ -20,7 +20,7 @@
 use time::now;
 use rand::{thread_rng, Rng};
 use std::io::{self, Cursor, Write};
-use std::net::{ip, tcp};
+use std::net;
 use std::sync::{Arc, Mutex};
 
 use network::constants;
@@ -33,10 +33,10 @@ use network::serialize::{RawEncoder, RawDecoder};
 use util::{self, propagate_err};
 
 /// Format an IP address in the 16-byte bitcoin protocol serialization
-fn ipaddr_to_bitcoin_addr(ipaddr: &ip::IpAddr) -> [u16; 8] {
+fn ipaddr_to_bitcoin_addr(ipaddr: &net::IpAddr) -> [u16; 8] {
     match *ipaddr {
-        ip::IpAddr::V4(ref addr) => &addr.to_ipv6_mapped(),
-        ip::IpAddr::V6(ref addr) => addr
+        net::IpAddr::V4(ref addr) => &addr.to_ipv6_mapped(),
+        net::IpAddr::V6(ref addr) => addr
     }.segments()
 }
 
@@ -44,7 +44,7 @@ fn ipaddr_to_bitcoin_addr(ipaddr: &ip::IpAddr) -> [u16; 8] {
 #[derive(Clone)]
 pub struct Socket {
     /// The underlying TCP socket
-    socket: Arc<Mutex<Option<tcp::TcpStream>>>,
+    socket: Arc<Mutex<Option<net::TcpStream>>>,
     /// Services supported by us
     pub services: u64,
     /// Our user agent
@@ -73,7 +73,7 @@ impl Socket {
     pub fn connect(&mut self, host: &str, port: u16) -> Result<(), util::Error> {
         // Entirely replace the Mutex, in case it was poisoned;
         // this will also drop any preexisting socket that might be open
-        match tcp::TcpStream::connect((host, port)) {
+        match net::TcpStream::connect((host, port)) {
             Ok(s) => {
                 self.socket = Arc::new(Mutex::new(Some(s)));
                 Ok(()) 
@@ -85,7 +85,7 @@ impl Socket {
         }
     }
 
-    fn socket(&mut self) -> Result<&mut tcp::TcpStream, util::Error> {
+    fn socket(&mut self) -> Result<&mut net::TcpStream, util::Error> {
         let mut sock_lock = self.socket.lock();
         match sock_lock {
             Err(_) => {

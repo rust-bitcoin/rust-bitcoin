@@ -173,14 +173,14 @@ impl Wallet {
         let index = match self.index { Some(ref i) => i, None => return Err(Error::NoAddressIndex) };
 
         let (mut i, master) = match chain {
-            Internal => (account.internal_next,
-                         try!(ExtendedPrivKey::from_path(
-                                  &self.master,
-                                  account.internal_path.as_slice()).map_err(Error::Bip32Error))),
-            External => (account.external_next,
-                         try!(ExtendedPrivKey::from_path(
-                                  &self.master,
-                                  account.external_path.as_slice()).map_err(Error::Bip32Error))),
+            AccountChain::Internal => (account.internal_next,
+                                       try!(ExtendedPrivKey::from_path(
+                                                &self.master,
+                                                account.internal_path.as_slice()).map_err(Error::Bip32Error))),
+            AccountChain::External => (account.external_next,
+                                       try!(ExtendedPrivKey::from_path(
+                                                &self.master,
+                                                account.external_path.as_slice()).map_err(Error::Bip32Error))),
         };
 
         // Scan for next admissible address
@@ -197,11 +197,11 @@ impl Wallet {
         }
 
         match chain {
-            Internal => {
+            AccountChain::Internal => {
                 account.internal_used.push(Normal(i));
                 account.internal_next = i + 1;
             }
-            External => {
+            AccountChain::External => {
                 account.external_used.push(Normal(i));
                 account.external_next = i + 1;
             }

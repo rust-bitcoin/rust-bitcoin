@@ -20,7 +20,7 @@
 
 use std::cmp;
 use std::collections::HashMap;
-use std::collections::hash::map::Iter;
+use std::collections::hash_map::Iter;
 use std::default::Default;
 use std::mem;
 use eventual;

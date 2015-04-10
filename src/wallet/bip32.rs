@@ -17,9 +17,10 @@
 //! at https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki
 
 use std::default::Default;
+use std::io::Cursor;
 use serde::{Serialize, Deserialize, Serializer, Deserializer};
 
-use crypto::cryptoutil::{read_u32_be, write_u32_be};
+use byteorder::{BigEndian, ByteOrder, ReadBytesExt};
 use crypto::digest::Digest;
 use crypto::hmac::Hmac;
 use crypto::mac::Mac;
@@ -167,14 +168,14 @@ impl ExtendedPrivKey {
                 secp256k1::init();
                 // Note the unwrap: this is fine, we checked the SK when we created it
                 hmac.input(&PublicKey::from_secret_key(&self.secret_key, true)[..]);
-                write_u32_be(&mut be_n, n);
+                BigEndian::write_u32(&mut be_n, n);
             }
             ChildNumber::Hardened(n) => {
                 if n >= (1 << 31) { return Err(Error::InvalidChildNumber(i)) }
                 // Hardened key: use only secret data to prevent public derivation
                 hmac.input(&[0u8]);
                 hmac.input(&self.secret_key[..]);
-                write_u32_be(&mut be_n, n + (1 << 31));
+                BigEndian::write_u32(&mut be_n, n + (1 << 31));
             }
         }
         hmac.input(&be_n);
@@ -244,7 +245,7 @@ impl ExtendedPubKey {
                 let mut hmac = Hmac::new(Sha512::new(), &self.chain_code[..]);
                 hmac.input(&self.public_key[..]);
                 let mut be_n = [0; 32];
-                write_u32_be(&mut be_n, n);
+                BigEndian::write_u32(&mut be_n, n);
                 hmac.input(&be_n);
 
                 let mut result = [0; 64];
@@ -300,10 +301,10 @@ impl ToBase58 for ExtendedPrivKey {
         let mut be_n = [0; 32];
         match self.child_number {
             ChildNumber::Hardened(n) => {
-                write_u32_be(&mut be_n, n + (1 << 31));
+                BigEndian::write_u32(&mut be_n, n + (1 << 31));
             }
             ChildNumber::Normal(n) => {
-                write_u32_be(&mut be_n, n);
+                BigEndian::write_u32(&mut be_n, n);
             }
         }
         ret.push_all(&be_n);
@@ -320,7 +321,7 @@ impl FromBase58 for ExtendedPrivKey {
             return Err(base58::Error::InvalidLength(data.len()));
         }
 
-        let cn_int = read_u32_be(&data[9..13]);
+        let cn_int = Cursor::new(&data[9..13]).read_u32::<BigEndian>().unwrap();
         let child_number = if cn_int < (1 << 31) { ChildNumber::Normal(cn_int) }
                            else { ChildNumber::Hardened(cn_int - (1 << 31)) };
 
@@ -354,10 +355,10 @@ impl ToBase58 for ExtendedPubKey {
         let mut be_n = [0; 32];
         match self.child_number {
             ChildNumber::Hardened(n) => {
-                write_u32_be(&mut be_n, n + (1 << 31));
+                BigEndian::write_u32(&mut be_n, n + (1 << 31));
             }
             ChildNumber::Normal(n) => {
-                write_u32_be(&mut be_n, n);
+                BigEndian::write_u32(&mut be_n, n);
             }
         }
         ret.push_all(&be_n);
@@ -373,7 +374,7 @@ impl FromBase58 for ExtendedPubKey {
             return Err(base58::Error::InvalidLength(data.len()));
         }
 
-        let cn_int = read_u32_be(&data[9..13]);
+        let cn_int = Cursor::new(&data[9..13]).read_u32::<BigEndian>().unwrap();
         let child_number = if cn_int < (1 << 31) { ChildNumber::Normal(cn_int) }
                            else { ChildNumber::Hardened(cn_int - (1 << 31)) };
 

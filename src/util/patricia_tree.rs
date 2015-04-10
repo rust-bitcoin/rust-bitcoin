@@ -364,7 +364,7 @@ impl<K, V> PatriciaTree<K, V>
 
 impl<K:BitArray, V:Debug> Debug for PatriciaTree<K, V> {
     /// Print the entire tree
-    pub fn fmt<'a>(&'a self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn fmt<'a>(&'a self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         fn recurse<'a, K:BitArray, V:Debug>(tree: &'a PatriciaTree<K, V>, f: &mut fmt::Formatter, depth: usize) -> Result<(), fmt::Error> {
             for i in 0..tree.skip_len as usize {
                 try!(write!(f, "{:}", if tree.skip_prefix.bit(i) { 1 } else { 0 }));
@@ -394,7 +394,7 @@ impl<K:BitArray, V:Debug> Debug for PatriciaTree<K, V> {
             }
             Ok(())
         }
-        recurse(self, f, 0);
+        recurse(self, f, 0)
     }
 }
 
