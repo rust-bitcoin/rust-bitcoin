@@ -48,15 +48,15 @@ pub struct Ripemd160Hash([u8; 20]);
 impl_array_newtype!(Ripemd160Hash, u8, 20);
 
 /// A 32-bit hash obtained by truncating a real hash
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub struct Hash32((u8, u8, u8, u8));
 
 /// A 48-bit hash obtained by truncating a real hash
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub struct Hash48((u8, u8, u8, u8, u8, u8));
 
 /// A 64-bit hash obtained by truncating a real hash
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub struct Hash64((u8, u8, u8, u8, u8, u8, u8, u8));
 
 impl Ripemd160Hash {
@@ -268,8 +268,7 @@ mod tests {
     use std::io::Cursor;
     use std::num::FromPrimitive;
     use std::str::from_utf8;
-    use serialize::Encodable;
-    use serialize::json;
+    use serde::{json, Serialize, Deserialize};
 
     use network::serialize::{serialize, deserialize};
     use util::hash::Sha256dHash;
@@ -296,15 +295,15 @@ mod tests {
     #[test]
     fn test_hash_encode_decode() {
         let hash = Sha256dHash::from_data(&[]);
-        let mut writer = Cursor::new(vec![]);
+        let mut writer = vec![];
         {
-            let mut encoder = json::Encoder::new(&mut writer);
-            assert!(hash.encode(&mut encoder).is_ok());
+            let mut serializer = json::ser::Serializer::new(&mut writer);
+            assert!(hash.serialize(&mut serializer).is_ok());
         }
-        let res = writer.into_inner();
-        assert_eq!(&res[..],
+        assert_eq!(&writer[..],
                    "\"56944c5d3f98413ef45cf54545538103cc9f298e0575820ad3591376e2e0f65d\"".as_bytes());
-        assert_eq!(json::decode(from_utf8(res.as_slice()).unwrap()), Ok(hash));
+        let mut deserializer = json::de::Deserializer::new(writer.iter().map(|c| Ok(*c))).unwrap();
+        assert_eq!(hash, Deserialize::deserialize(&mut deserializer).unwrap());
     }
 
     #[test]

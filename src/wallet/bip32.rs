@@ -51,7 +51,7 @@ impl Default for Fingerprint {
 }
 
 /// Extended private key
-#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Serialize, Deserialize, Debug)]
 pub struct ExtendedPrivKey {
     /// The network this key is to be used on
     pub network: Network,
@@ -68,7 +68,7 @@ pub struct ExtendedPrivKey {
 }
 
 /// Extended public key
-#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Serialize, Deserialize, Debug)]
 pub struct ExtendedPubKey {
     /// The network this key is to be used on
     pub network: Network,
@@ -85,7 +85,7 @@ pub struct ExtendedPubKey {
 }
 
 /// A child number for a derived key
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum ChildNumber {
     /// Hardened key index, within [0, 2^31 - 1]
     Hardened(u32),
@@ -292,9 +292,9 @@ impl ExtendedPubKey {
 impl ToBase58 for ExtendedPrivKey {
     fn base58_layout(&self) -> Vec<u8> { 
         let mut ret = Vec::with_capacity(78);
-        ret.push_all(match self.network {
-            Network::Bitcoin => &[0x04, 0x88, 0xAD, 0xE4],
-            Network::Testnet => &[0x04, 0x35, 0x83, 0x94]
+        ret.push_all(&match self.network {
+            Network::Bitcoin => [0x04, 0x88, 0xAD, 0xE4],
+            Network::Testnet => [0x04, 0x35, 0x83, 0x94]
         });
         ret.push(self.depth as u8);
         ret.push_all(&self.parent_fingerprint[..]);
@@ -346,9 +346,9 @@ impl ToBase58 for ExtendedPubKey {
     fn base58_layout(&self) -> Vec<u8> {
         assert!(self.public_key.is_compressed());
         let mut ret = Vec::with_capacity(78);
-        ret.push_all(match self.network {
-            Network::Bitcoin => &[0x04u8, 0x88, 0xB2, 0x1E],
-            Network::Testnet => &[0x04u8, 0x35, 0x87, 0xCF]
+        ret.push_all(&match self.network {
+            Network::Bitcoin => [0x04u8, 0x88, 0xB2, 0x1E],
+            Network::Testnet => [0x04u8, 0x35, 0x87, 0xCF]
         });
         ret.push(self.depth as u8);
         ret.push_all(&self.parent_fingerprint[..]);
@@ -510,21 +510,12 @@ mod tests {
 
     #[test]
     pub fn encode_decode_childnumber() {
-        use serialize::json;
-
-        let h1 = Hardened(1);
-        let n1 = Normal(1);
-
-        let h1_str = json::encode(&h1);
-        let n1_str = json::encode(&n1);
-
-        assert!(h1 != n1);
-        assert!(h1_str != n1_str);
-
-        let h1_dec = json::decode(&h1_str).unwrap();
-        let n1_dec = json::decode(&n1_str).unwrap();
-        assert_eq!(h1, h1_dec);
-        assert_eq!(n1, n1_dec);
+        serde_round_trip!(Normal(0));
+        serde_round_trip!(Normal(1));
+        serde_round_trip!(Normal((1 << 31) - 1));
+        serde_round_trip!(Hardened(0));
+        serde_round_trip!(Hardened(1));
+        serde_round_trip!(Hardened((1 << 31) - 1));
     }
 
     #[bench]

@@ -117,6 +117,8 @@ macro_rules! impl_array_newtype {
             }
         }
 
+        impl Copy for $thing {}
+
         impl ::std::hash::Hash for $thing {
             #[inline]
             fn hash<H>(&self, state: &mut H)

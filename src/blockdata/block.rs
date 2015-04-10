@@ -32,7 +32,7 @@ use blockdata::transaction::Transaction;
 
 /// A block header, which contains all the block's information except
 /// the actual transactions
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(Copy, PartialEq, Eq, Clone, Debug)]
 pub struct BlockHeader {
     /// The protocol version. Should always be 1.
     pub version: u32,

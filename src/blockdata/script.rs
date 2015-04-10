@@ -1628,10 +1628,10 @@ macro_rules! stack_opcode {
 macro_rules! num_opcode {
     ($stack:ident($($var:ident),*): $op:expr) => ({
         $(
-            let $var = try!(read_scriptint(match $stack.pop() {
-                Some(elem) => &elem[..],
+            let $var = try!(read_scriptint(&match $stack.pop() {
+                Some(elem) => elem,
                 None => { return Err(Error::PopEmptyStack); }
-            }));
+            }[..]));
         )*
         $stack.push(MaybeOwned::Owned(build_scriptint($op)));
         // Return a tuple of all the variables

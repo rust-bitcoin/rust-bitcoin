@@ -35,9 +35,9 @@ use util::{self, propagate_err};
 /// Format an IP address in the 16-byte bitcoin protocol serialization
 fn ipaddr_to_bitcoin_addr(ipaddr: &net::IpAddr) -> [u16; 8] {
     match *ipaddr {
-        net::IpAddr::V4(ref addr) => &addr.to_ipv6_mapped(),
-        net::IpAddr::V6(ref addr) => addr
-    }.segments()
+        net::IpAddr::V4(ref addr) => addr.to_ipv6_mapped().segments(),
+        net::IpAddr::V6(ref addr) => addr.segments()
+    }
 }
 
 /// A network socket along with information about the peer
@@ -54,6 +54,31 @@ pub struct Socket {
     /// Network magic
   pub magic: u32
 }
+
+macro_rules! with_socket(($s:ident, $sock:ident, $body:block) => ({
+    use ::std::ops::DerefMut;
+    let mut sock_lock = $s.socket.lock();
+    match sock_lock {
+        Err(_) => {
+            let io_err = io::Error::new(io::ErrorKind::NotConnected,
+                                        "socket: socket mutex was poisoned");
+            return Err(util::Error::Io(io_err));
+        }
+        Ok(mut guard) => {
+            match *guard.deref_mut() {
+                Some(ref mut $sock) => {
+                    $body
+                }
+                None => {
+                   let io_err = io::Error::new(io::ErrorKind::NotConnected,
+                                                "socket: not connected to peer");
+                   return Err(util::Error::Io(io_err));
+                }
+            }
+        }
+    }
+}));
+
 
 impl Socket {
     // TODO: we fix services to 0
@@ -85,55 +110,36 @@ impl Socket {
         }
     }
 
-    fn socket(&mut self) -> Result<&mut net::TcpStream, util::Error> {
-        let mut sock_lock = self.socket.lock();
-        match sock_lock {
-            Err(_) => {
-                let io_err = io::Error::new(io::ErrorKind::NotConnected,
-                                            "socket: socket mutex was poisoned");
-                Err(util::Error::Io(io_err))
-            }
-            Ok(guard) => {
-                match *guard {
-                    Some(ref mut sock) => Ok(sock),
-                    None => {
-                        let io_err = io::Error::new(io::ErrorKind::NotConnected,
-                                                    "socket: not connected to peer");
-                        Err(util::Error::Io(io_err))
-                    }
-                }
-            }
-        }
-    }
-
     /// Peer address
     pub fn receiver_address(&mut self) -> Result<Address, util::Error> {
-        let sock = try!(self.socket());
-        match sock.peer_addr() {
-            Ok(addr) => {
-                Ok(Address {
-                    services: self.services,
-                    address: ipaddr_to_bitcoin_addr(&addr.ip()),
-                    port: addr.port()
-                })
-            },
-            Err(e) => Err(util::Error::Io(e))
-        }
+        with_socket!(self, sock, {
+            match sock.peer_addr() {
+                Ok(addr) => {
+                    Ok(Address {
+                        services: self.services,
+                        address: ipaddr_to_bitcoin_addr(&addr.ip()),
+                        port: addr.port()
+                    })
+                },
+                Err(e) => Err(util::Error::Io(e))
+            }
+        })
     }
 
     /// Our own address
     pub fn sender_address(&mut self) -> Result<Address, util::Error> {
-        let sock = try!(self.socket());
-        match sock.local_addr() {
-            Ok(addr) => {
-                Ok(Address {
-                    services: self.services,
-                    address: ipaddr_to_bitcoin_addr(&addr.ip()),
-                    port: addr.port()
-                })
-            },
-            Err(e) => Err(util::Error::Io(e))
-        }
+        with_socket!(self, sock, {
+            match sock.local_addr() {
+                Ok(addr) => {
+                    Ok(Address {
+                        services: self.services,
+                        address: ipaddr_to_bitcoin_addr(&addr.ip()),
+                        port: addr.port()
+                    })
+                },
+                Err(e) => Err(util::Error::Io(e))
+            }
+        })
     }
 
     /// Produce a version message appropriate for this socket
@@ -157,35 +163,37 @@ impl Socket {
 
     /// Send a general message across the line
     pub fn send_message(&mut self, payload: NetworkMessage) -> Result<(), util::Error> {
-        let sock = try!(self.socket());
-        let message = RawNetworkMessage { magic: self.magic, payload: payload };
-        try!(message.consensus_encode(&mut RawEncoder::new(sock)));
-        sock.flush().map_err(util::Error::Io)
+        with_socket!(self, sock, {
+            let message = RawNetworkMessage { magic: self.magic, payload: payload };
+            try!(message.consensus_encode(&mut RawEncoder::new(&mut *sock)));
+            sock.flush().map_err(util::Error::Io)
+        })
     }
 
     /// Receive the next message from the peer, decoding the network header
     /// and verifying its correctness. Returns the undecoded payload.
     pub fn receive_message(&mut self) -> Result<NetworkMessage, util::Error> {
-        let sock = try!(self.socket());
-        // We need a new scope since the closure in here borrows read_err,
-        // and we try to read it afterward. Letting `iter` go out fixes it.
-        let mut decoder = RawDecoder::new(sock);
-        let decode: Result<RawNetworkMessage, _> = ConsensusDecodable::consensus_decode(&mut decoder);
-        match decode {
-            // Check for parse errors...
-            Err(e) => {
-                propagate_err("receive_message".to_string(), Err(e))
-            },
-            Ok(ret) => {
-                // Then for magic (this should come before parse error, but we can't
-                // get to it if the deserialization failed). TODO restructure this
-                if ret.magic != self.magic {
-                    Err(util::Error::BadNetworkMagic(self.magic, ret.magic))
-                } else {
-                    Ok(ret.payload)
+        with_socket!(self, sock, {
+            // We need a new scope since the closure in here borrows read_err,
+            // and we try to read it afterward. Letting `iter` go out fixes it.
+            let mut decoder = RawDecoder::new(sock);
+            let decode: Result<RawNetworkMessage, _> = ConsensusDecodable::consensus_decode(&mut decoder);
+            match decode {
+                // Check for parse errors...
+                Err(e) => {
+                    propagate_err("receive_message".to_string(), Err(e))
+                },
+                Ok(ret) => {
+                    // Then for magic (this should come before parse error, but we can't
+                    // get to it if the deserialization failed). TODO restructure this
+                    if ret.magic != self.magic {
+                        Err(util::Error::BadNetworkMagic(self.magic, ret.magic))
+                    } else {
+                        Ok(ret.payload)
+                    }
                 }
             }
-        }
+        })
     }
 }
 

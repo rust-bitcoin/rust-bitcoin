@@ -56,9 +56,12 @@ extern crate rand;
 extern crate rustc_serialize as serialize;
 extern crate secp256k1;
 extern crate serde;
-extern crate test;
+#[cfg(test)] extern crate test;
 extern crate time;
 
+#[cfg(test)]
+#[macro_use]
+mod test_macros;
 #[macro_use]
 mod internal_macros;
 #[macro_use]

@@ -34,7 +34,7 @@ use network::encodable::{ConsensusDecodable, ConsensusEncodable};
 //       write an #[inline] helper function which casts to u8s.
 
 /// A script Opcode
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 #[repr(u8)]
 pub enum All {
     /// Push an empty array onto the stack
@@ -633,7 +633,7 @@ pub static OP_FALSE: All = All::OP_PUSHBYTES_0;
 pub static OP_TRUE: All = All::OP_PUSHNUM_1;
 
 /// Broad categories of opcodes with similar behavior
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum Class {
   /// Pushes the given number onto the stack
   PushNum(i32),
@@ -663,7 +663,7 @@ macro_rules! ordinary_opcode {
   ($($op:ident),*) => (
     #[repr(u8)]
     #[doc(hidden)]
-    #[derive(Clone, PartialEq, Eq, Debug)]
+    #[derive(Copy, Clone, PartialEq, Eq, Debug)]
     pub enum Ordinary {
       $( $op = All::$op as u8 ),*
     }

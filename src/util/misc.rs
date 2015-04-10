@@ -25,7 +25,7 @@ pub fn hex_bytes(s: &str) -> Result<Vec<u8>, Error> {
     let mut v = vec![];
     let mut iter = s.chars().pair();
     // Do the parsing
-    try!(iter.fold(Ok(()), |e, (f, s)| 
+    try!(iter.by_ref().fold(Ok(()), |e, (f, s)| 
         if e.is_err() { e }
         else {
             match (f.to_digit(16), s.to_digit(16)) {
@@ -73,9 +73,8 @@ pub fn script_find_and_remove(haystack: &mut Vec<u8>, needle: &[u8]) -> usize {
     let mut i = 0;
     while i <= top {
         if &haystack[i..(i + needle.len())] == needle {
-            let v = &mut haystack;
             for j in i..top {
-                v.swap(j + needle.len(), j);
+                haystack.swap(j + needle.len(), j);
             }
             n_deleted += 1;
             // This is ugly but prevents infinite loop in case of overflow

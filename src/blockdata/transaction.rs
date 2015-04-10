@@ -153,16 +153,15 @@ pub struct TransactionTrace {
 impl TxIn {
     /// Check an input's script for validity
     pub fn validate(&self,
-                                    utxoset: &UtxoSet,
-                                    txn: &Transaction,
-                                    index: usize) -> Result<(), Error> {
+                    utxoset: &UtxoSet,
+                    txn: &Transaction,
+                    index: usize) -> Result<(), Error> {
         let txo = utxoset.get_utxo(self.prev_hash, self.prev_index);
         match txo {
             Some((_, txo)) => {
-                let mut p2sh_stack = Vec::new();
-                let mut p2sh_script = Script::new();
+                let (mut p2sh_stack, mut p2sh_script) = (vec![], Script::new());
 
-                let mut stack = Vec::with_capacity(6);
+                let mut stack = vec![];
                 match self.script_sig.evaluate(&mut stack, Some((txn, index)), None) {
                     Ok(_) => {}
                     Err(e) => { return Err(Error::InputScriptFailure(e)); }
@@ -220,7 +219,7 @@ impl Transaction {
     /// Produce a trace of a transaction's execution
     pub fn trace(&self, utxoset: &UtxoSet) -> TransactionTrace {
         let mut ret = TransactionTrace { txid: self.bitcoin_hash(),
-                                                                         inputs: Vec::with_capacity(self.input.len()) };
+                                         inputs: Vec::with_capacity(self.input.len()) };
         for (n, input) in self.input.iter().enumerate() {
             // Setup trace
             let mut trace = InputTrace {
@@ -240,8 +239,7 @@ impl Transaction {
             let txo = utxoset.get_utxo(input.prev_hash, input.prev_index);
             match txo {
                 Some((_, txo)) => {
-                    let mut p2sh_stack = Vec::new();
-                    let mut p2sh_script = Script::new();
+                    let (mut p2sh_stack, mut p2sh_script) = (vec![], Script::new());
 
                     let mut stack = Vec::with_capacity(6);
                     trace.sig_trace = input.script_sig.trace(&mut stack, Some((self, n)));

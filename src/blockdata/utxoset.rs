@@ -196,7 +196,7 @@ impl UtxoSet {
         };
         // Check that this specific output is there
         if vout as usize >= node.outputs.len() { return None; }
-        let replace = node.outputs[vout as usize];
+        let replace = &node.outputs[vout as usize];
         Some((node.height as usize, replace.as_ref().unwrap()))
     }
 
@@ -283,7 +283,7 @@ impl UtxoSet {
             // Return the last error since we need to finish every future before
             // leaving this function, and given that, it's easier to return the last.
             let mut last_err = Ok(());
-            for res in future_vec.iter_mut().map(|f| f.await().unwrap()) {
+            for res in future_vec.into_iter().map(|f| f.await().unwrap()) {
                 if res.is_err() { last_err = res; }
             }
             if last_err.is_err() { return last_err; }
@@ -292,7 +292,7 @@ impl UtxoSet {
         for tx in block.txdata.iter().skip(1) {
             let txid = tx.bitcoin_hash();
             // Put the removed utxos into the stxo cache, in case we need to rewind
-            (&self.spent_txos[spent_idx]).reserve(tx.input.len());
+            (&mut self.spent_txos[spent_idx]).reserve(tx.input.len());
             for (n, input) in tx.input.iter().enumerate() {
                 let taken = self.take_utxo(input.prev_hash, input.prev_index);
                 match taken {
