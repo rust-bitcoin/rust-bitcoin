@@ -16,6 +16,7 @@ git = "https://github.com/carllerche/eventual"
 
 [dependencies]
 byteorder = "*"
+num = "*"
 num_cpus = "*"
 rand = "*"
 rust-crypto = "*"

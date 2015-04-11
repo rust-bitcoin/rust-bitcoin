@@ -19,7 +19,7 @@
 
 use time::now;
 use rand::{thread_rng, Rng};
-use std::io::{self, Cursor, Write};
+use std::io::{self, Write};
 use std::net;
 use std::sync::{Arc, Mutex};
 
@@ -57,7 +57,7 @@ pub struct Socket {
 
 macro_rules! with_socket(($s:ident, $sock:ident, $body:block) => ({
     use ::std::ops::DerefMut;
-    let mut sock_lock = $s.socket.lock();
+    let sock_lock = $s.socket.lock();
     match sock_lock {
         Err(_) => {
             let io_err = io::Error::new(io::ErrorKind::NotConnected,
@@ -89,7 +89,7 @@ impl Socket {
             socket: Arc::new(Mutex::new(None)),
             services: 0,
             version_nonce: rng.gen(),
-            user_agent: String::from_str(constants::USER_AGENT),
+            user_agent: constants::USER_AGENT.to_string(),
             magic: constants::magic(network)
         }
     }

@@ -24,7 +24,6 @@ use serde;
 
 // Heavy stick to translate between opcode types
 use std::mem::transmute;
-use std::fmt;
 
 use network::serialize::{SimpleDecoder, SimpleEncoder};
 use network::encodable::{ConsensusDecodable, ConsensusEncodable};

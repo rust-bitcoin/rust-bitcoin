@@ -22,8 +22,8 @@
 
 use std::fmt::Debug;
 use std::marker;
-use std::num::{Zero, One};
 use std::{cmp, fmt, ops, ptr};
+use num::{Zero, One};
 
 use network::encodable::{ConsensusDecodable, ConsensusEncodable};
 use network::serialize::{SimpleDecoder, SimpleEncoder};
@@ -549,9 +549,8 @@ impl<'a, K: Copy, V> Iterator for MutItems<'a, K, V> {
 
 #[cfg(test)]
 mod tests {
-    use std::prelude::*;
-    use std::num::Zero;
-    use std::num::FromPrimitive;
+    use num::Zero;
+    use num::FromPrimitive;
 
     use network::serialize::{deserialize, serialize};
     use util::hash::Sha256dHash;

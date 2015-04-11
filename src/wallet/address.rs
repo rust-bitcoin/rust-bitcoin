@@ -127,7 +127,7 @@ impl ToBase58 for Address {
                 Network::Testnet => 111
             }
         ];
-        ret.push_all(&self.hash[..]);
+        ret.extend(self.hash[..].iter().cloned());
         ret
     }
 }

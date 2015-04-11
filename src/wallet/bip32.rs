@@ -292,12 +292,12 @@ impl ExtendedPubKey {
 impl ToBase58 for ExtendedPrivKey {
     fn base58_layout(&self) -> Vec<u8> { 
         let mut ret = Vec::with_capacity(78);
-        ret.push_all(&match self.network {
+        ret.extend(match self.network {
             Network::Bitcoin => [0x04, 0x88, 0xAD, 0xE4],
             Network::Testnet => [0x04, 0x35, 0x83, 0x94]
-        });
+        }.iter().cloned());
         ret.push(self.depth as u8);
-        ret.push_all(&self.parent_fingerprint[..]);
+        ret.extend(self.parent_fingerprint[..].iter().cloned());
         let mut be_n = [0; 32];
         match self.child_number {
             ChildNumber::Hardened(n) => {
@@ -307,10 +307,10 @@ impl ToBase58 for ExtendedPrivKey {
                 BigEndian::write_u32(&mut be_n, n);
             }
         }
-        ret.push_all(&be_n);
-        ret.push_all(&self.chain_code[..]);
+        ret.extend(be_n.iter().cloned());
+        ret.extend(self.chain_code[..].iter().cloned());
         ret.push(0);
-        ret.push_all(&self.secret_key[..]);
+        ret.extend(self.secret_key[..].iter().cloned());
         ret
     }
 }
@@ -346,12 +346,12 @@ impl ToBase58 for ExtendedPubKey {
     fn base58_layout(&self) -> Vec<u8> {
         assert!(self.public_key.is_compressed());
         let mut ret = Vec::with_capacity(78);
-        ret.push_all(&match self.network {
+        ret.extend(match self.network {
             Network::Bitcoin => [0x04u8, 0x88, 0xB2, 0x1E],
             Network::Testnet => [0x04u8, 0x35, 0x87, 0xCF]
-        });
+        }.iter().cloned());
         ret.push(self.depth as u8);
-        ret.push_all(&self.parent_fingerprint[..]);
+        ret.extend(self.parent_fingerprint[..].iter().cloned());
         let mut be_n = [0; 32];
         match self.child_number {
             ChildNumber::Hardened(n) => {
@@ -361,9 +361,9 @@ impl ToBase58 for ExtendedPubKey {
                 BigEndian::write_u32(&mut be_n, n);
             }
         }
-        ret.push_all(&be_n);
-        ret.push_all(&self.chain_code[..]);
-        ret.push_all(&self.public_key[..]);
+        ret.extend(be_n.iter().cloned());
+        ret.extend(self.chain_code[..].iter().cloned());
+        ret.extend(self.public_key[..].iter().cloned());
         ret
     }
 }
@@ -524,7 +524,7 @@ mod tests {
         let msk = ExtendedPrivKey::new_master(Bitcoin, &seed).unwrap();
         let mut i = 0;
         bh.iter( || {
-            black_box(msk.ckd_priv(Normal(i)));
+            black_box(msk.ckd_priv(Normal(i)).unwrap());
             i += 1;
         })
     }
@@ -535,7 +535,7 @@ mod tests {
         let msk = ExtendedPrivKey::new_master(Bitcoin, &seed).unwrap();
         let mut i = 0;
         bh.iter( || {
-            black_box(msk.ckd_priv(Hardened(i)));
+            black_box(msk.ckd_priv(Hardened(i)).unwrap());
             i += 1;
         })
     }
@@ -548,7 +548,7 @@ mod tests {
 
         let mut i = 0;
         bh.iter( || {
-            black_box(mpk.ckd_pub(Normal(i)));
+            black_box(mpk.ckd_pub(Normal(i)).unwrap());
             i += 1;
         })
     }

@@ -20,7 +20,7 @@
 //! these blocks and the blockchain.
 //!
 
-use std::num::{Zero, from_u64};
+use num::{FromPrimitive, Zero};
 
 use util;
 use util::Error::{SpvBadTarget, SpvBadProofOfWork};
@@ -90,7 +90,7 @@ impl BlockHeader {
         if mant > 0x7FFFFF {
             Zero::zero()
         } else {
-            from_u64::<Uint256>(mant as u64).unwrap() << (expt as usize)
+            <Uint256 as FromPrimitive>::from_u64(mant as u64).unwrap() << (expt as usize)
         }
     }
 

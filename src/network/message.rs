@@ -19,9 +19,8 @@
 //! also defines (de)serialization routines for many primitives.
 //!
 
-use collections::Vec;
 use std::iter;
-use std::io::{self, Cursor};
+use std::io::Cursor;
 use std::sync::mpsc::Sender;
 
 use blockdata::block;
@@ -41,9 +40,14 @@ pub struct CommandString(pub String);
 impl<S: SimpleEncoder> ConsensusEncodable<S> for CommandString {
     #[inline]
     fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
+        use std::intrinsics::copy_nonoverlapping;
+        use std::mem;
+
         let &CommandString(ref inner_str) = self;
         let mut rawbytes = [0u8; 12]; 
-        rawbytes.clone_from_slice(inner_str.as_bytes().as_slice());
+        unsafe { copy_nonoverlapping(inner_str.as_bytes().as_ptr(),
+                                     rawbytes.as_mut_ptr(),
+                                     mem::size_of::<[u8; 12]>()); }
         rawbytes.consensus_encode(s)
     }
 }
@@ -165,7 +169,7 @@ impl<D: SimpleDecoder<Error=util::Error>> ConsensusDecodable<D> for RawNetworkMe
         let CheckedData(raw_payload): CheckedData = try!(ConsensusDecodable::consensus_decode(d));
 
         let mut mem_d = RawDecoder::new(Cursor::new(raw_payload));
-        let payload = match cmd.as_slice() {
+        let payload = match &cmd[..] {
             "version" => NetworkMessage::Version(try!(propagate_err("version".to_string(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
             "verack"  => NetworkMessage::Verack,
             "addr"    => NetworkMessage::Addr(try!(propagate_err("addr".to_string(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
@@ -196,7 +200,7 @@ mod test {
 
     #[test]
     fn serialize_commandstring_test() {
-        let cs = CommandString(String::from_str("Andrew"));
+        let cs = CommandString("Andrew".to_string());
         assert_eq!(serialize(&cs).ok(), Some(vec![0x41u8, 0x6e, 0x64, 0x72, 0x65, 0x77, 0, 0, 0, 0, 0, 0]));
     }
 
@@ -204,7 +208,7 @@ mod test {
     fn deserialize_commandstring_test() {
         let cs: Result<CommandString, _> = deserialize(&[0x41u8, 0x6e, 0x64, 0x72, 0x65, 0x77, 0, 0, 0, 0, 0, 0]);
         assert!(cs.is_ok());
-        assert_eq!(cs.unwrap(), CommandString(String::from_str("Andrew")));
+        assert_eq!(cs.unwrap(), CommandString("Andrew".to_string()));
 
         let short_cs: Result<CommandString, _> = deserialize(&[0x41u8, 0x6e, 0x64, 0x72, 0x65, 0x77, 0, 0, 0, 0, 0]);
         assert!(short_cs.is_err());

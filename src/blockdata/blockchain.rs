@@ -22,8 +22,8 @@
 //! to make sure we are holding the only references.
 //!
 
-use std::num::Zero;
-use std::{marker, num, ptr};
+use num::{FromPrimitive, Zero};
+use std::{marker, ptr};
 
 use blockdata::block::{Block, BlockHeader};
 use blockdata::transaction::Transaction;
@@ -470,7 +470,7 @@ impl Blockchain {
                         // Compute new target
                         let mut target = unsafe { (*prev).block.header.target() };
                         target = target.mul_u32(timespan);
-                        target = target / num::FromPrimitive::from_u64(DIFFCHANGE_TIMESPAN as u64).unwrap();
+                        target = target / FromPrimitive::from_u64(DIFFCHANGE_TIMESPAN as u64).unwrap();
                         // Clamp below MAX_TARGET (difficulty 1)
                         let max = max_target(self.network);
                         if target > max { target = max };

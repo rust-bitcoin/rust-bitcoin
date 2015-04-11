@@ -15,9 +15,6 @@
 //! # Base58 encoder and decoder
 
 use byteorder::{ByteOrder, LittleEndian, WriteBytesExt};
-
-use std::{iter, str};
-
 use util::hash::Sha256dHash;
 
 /// An error that might occur during base58 decoding
@@ -129,17 +126,14 @@ pub fn base58_encode_slice(data: &[u8]) -> String {
         assert_eq!(carry, 0);
     }
 
-    // Unsafely translate the bytes to a utf8 string
-    unsafe {
-        // Copy leading zeroes directly
-        let mut ret: Vec<u8> = data.iter().take_while(|&&x| x == 0)
-                                          .map(|_| BASE58_CHARS[0])
-                                          .collect();
-        // Copy rest of string
-        ret.extend(scratch.into_iter().skip_while(|&x| x == 0)
-                                      .map(|x| BASE58_CHARS[x as usize]));
-        String::from_utf8(ret).unwrap()
-    }
+    // Copy leading zeroes directly
+    let mut ret: Vec<u8> = data.iter().take_while(|&&x| x == 0)
+                                      .map(|_| BASE58_CHARS[0])
+                                      .collect();
+    // Copy rest of string
+    ret.extend(scratch.into_iter().skip_while(|&x| x == 0)
+                                  .map(|x| BASE58_CHARS[x as usize]));
+    String::from_utf8(ret).unwrap()
 }
 
 /// Trait for objects which can be written as base58
@@ -157,7 +151,7 @@ pub trait ToBase58 {
     fn to_base58check(&self) -> String {
         let mut data = self.base58_layout();
         let checksum = Sha256dHash::from_data(&data).into_le().low_u32();
-        data.write_u32::<LittleEndian>(checksum);
+        data.write_u32::<LittleEndian>(checksum).unwrap();
         base58_encode_slice(&data)
     }
 }

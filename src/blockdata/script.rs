@@ -28,7 +28,6 @@ use std::hash;
 use std::char::from_digit;
 use std::default::Default;
 use std::ops;
-use serialize::json;
 use serialize::hex::ToHex;
 
 use crypto::digest::Digest;
@@ -56,9 +55,10 @@ impl Clone for Script {
     }
 }
 
-#[derive(PartialEq, Eq, Debug, Clone, Display)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 /// An object which can be used to construct a script piece by piece
 pub struct Builder(Vec<u8>);
+display_from_debug!(Builder);
 
 impl hash::Hash for Script {
     #[inline]
@@ -875,7 +875,7 @@ impl AbstractStackElem {
         }
 
         let validators = self.validators.clone();
-        for v in validators.iter().map(|v| v.clone()) {
+        for v in validators.iter().cloned() {
             try!((v.update)(self, &v.args));
         }
         Ok(())
@@ -2084,12 +2084,10 @@ impl Script {
     /// Checks whether a script pubkey is a p2sh output
     #[inline]
     pub fn is_p2sh(&self) -> bool {
-        unsafe {
-            self.0.len() == 23 &&
-            self.0[0] == opcodes::All::OP_HASH160 as u8 &&
-            self.0[1] == opcodes::All::OP_PUSHBYTES_20 as u8 &&
-            self.0[22] == opcodes::All::OP_EQUAL as u8
-        }
+        self.0.len() == 23 &&
+        self.0[0] == opcodes::All::OP_HASH160 as u8 &&
+        self.0[1] == opcodes::All::OP_PUSHBYTES_20 as u8 &&
+        self.0[22] == opcodes::All::OP_EQUAL as u8
     }
 
     /// Whether a script can be proven to have no satisfying input
@@ -2503,13 +2501,15 @@ impl Builder {
             _ => panic!("tried to put a 4bn+ sized object into a script!")
         }
         // Then push the acraw
-        self.0.extend(data.iter().map(|n| *n));
+        self.0.extend(data.iter().cloned());
     }
 
+    /// Adds a single opcode to the script
     pub fn push_opcode(&mut self, data: opcodes::All) {
         self.0.push(data as u8);
     }
 
+    /// Converts the `Builder` into an unmodifiable `Script`
     pub fn into_script(self) -> Script {
         Script(self.0.into_boxed_slice())
     }
@@ -2594,16 +2594,16 @@ mod test {
         script.push_int(4);  comp.push(85u8); assert_eq!(&script[..], &comp[..]);
         script.push_int(-1); comp.push(80u8); assert_eq!(&script[..], &comp[..]);
         // forced scriptint
-        script.push_scriptint(4); comp.push_all(&[1u8, 4]); assert_eq!(&script[..], &comp[..]);
+        script.push_scriptint(4); comp.extend([1u8, 4].iter().cloned()); assert_eq!(&script[..], &comp[..]);
         // big ints
-        script.push_int(17); comp.push_all(&[1u8, 17]); assert_eq!(&script[..], &comp[..]);
-        script.push_int(10000); comp.push_all(&[2u8, 16, 39]); assert_eq!(&script[..], &comp[..]);
+        script.push_int(17); comp.extend([1u8, 17].iter().cloned()); assert_eq!(&script[..], &comp[..]);
+        script.push_int(10000); comp.extend([2u8, 16, 39].iter().cloned()); assert_eq!(&script[..], &comp[..]);
         // notice the sign bit set here, hence the extra zero/128 at the end
-        script.push_int(10000000); comp.push_all(&[4u8, 128, 150, 152, 0]); assert_eq!(&script[..], &comp[..]);
-        script.push_int(-10000000); comp.push_all(&[4u8, 128, 150, 152, 128]); assert_eq!(&script[..], &comp[..]);
+        script.push_int(10000000); comp.extend([4u8, 128, 150, 152, 0].iter().cloned()); assert_eq!(&script[..], &comp[..]);
+        script.push_int(-10000000); comp.extend([4u8, 128, 150, 152, 128].iter().cloned()); assert_eq!(&script[..], &comp[..]);
 
         // data
-        script.push_slice("NRA4VR".as_bytes()); comp.push_all(&[6u8, 78, 82, 65, 52, 86, 82]); assert_eq!(&script[..], &comp[..]);
+        script.push_slice("NRA4VR".as_bytes()); comp.extend([6u8, 78, 82, 65, 52, 86, 82].iter().cloned()); assert_eq!(&script[..], &comp[..]);
 
         // opcodes 
         script.push_opcode(opcodes::All::OP_CHECKSIG); comp.push(0xACu8); assert_eq!(&script[..], &comp[..]);

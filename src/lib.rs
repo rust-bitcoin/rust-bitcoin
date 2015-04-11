@@ -29,28 +29,27 @@
 
 // Experimental features we need
 #![feature(box_patterns)]
-#![feature(custom_derive, plugin)]
-#![feature(overloaded_calls)]
-#![feature(unsafe_destructor)]
-#![feature(unboxed_closure_sugar)]
-#![feature(unboxed_closures)]
 #![feature(concat_idents)]
+#![feature(custom_derive, plugin)]
+#![feature(hash)]
+#![feature(ip_addr)]
 #![feature(slice_patterns)]
+#![feature(std_misc)]
+#![cfg_attr(test, feature(test))]
 
 // Coding conventions
-#![warn(non_uppercase_statics)]
+#![deny(non_upper_case_globals)]
 #![deny(non_camel_case_types)]
 #![deny(non_snake_case)]
 #![deny(unused_mut)]
-#![warn(missing_doc)]
+#![deny(missing_docs)]
 
 #![plugin(serde_macros)]
 
-extern crate alloc;
 extern crate byteorder;
-extern crate collections;
 extern crate crypto;
 extern crate eventual;
+extern crate num;
 extern crate num_cpus;
 extern crate rand;
 extern crate rustc_serialize as serialize;
@@ -70,7 +69,4 @@ pub mod network;
 pub mod blockdata;
 pub mod util;
 pub mod wallet;
-
-/// I dunno where else to put this..
-fn assert_type_is_copy<T: Copy>() { }
 

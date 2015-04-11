@@ -21,16 +21,14 @@ use std::default::Default;
 use std::fmt::{self, Write};
 use std::io::Cursor;
 use std::mem::transmute;
-use std::hash;
 use serde;
 
-use byteorder::{ByteOrder, LittleEndian};
 use crypto::digest::Digest;
 use crypto::sha2::Sha256;
 use crypto::ripemd160::Ripemd160;
 
 use network::encodable::{ConsensusDecodable, ConsensusEncodable};
-use network::serialize::{RawEncoder, BitcoinHash, SimpleDecoder};
+use network::serialize::{RawEncoder, BitcoinHash};
 use util::uint::Uint256;
 
 /// A Bitcoin hash, 32-bytes, computed from x as SHA256(SHA256(x))
@@ -39,7 +37,7 @@ impl_array_newtype!(Sha256dHash, u8, 32);
 
 impl ::std::fmt::Debug for Sha256dHash {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "{}", self.be_hex_string().as_slice())
+        write!(f, "{}", self.be_hex_string())
     }
 }
 
@@ -214,7 +212,6 @@ impl_newtype_consensus_encoding!(Sha256dHash);
 impl fmt::LowerHex for Sha256dHash {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let &Sha256dHash(data) = self;
-        let mut rv = [0; 64];
         for ch in data.iter().rev() {
             try!(write!(f, "{:02x}", ch));
         }
@@ -264,10 +261,7 @@ impl <T: BitcoinHash> MerkleRoot for Vec<T> {
 
 #[cfg(test)]
 mod tests {
-    use std::prelude::*;
-    use std::io::Cursor;
-    use std::num::FromPrimitive;
-    use std::str::from_utf8;
+    use num::FromPrimitive;
     use serde::{json, Serialize, Deserialize};
 
     use network::serialize::{serialize, deserialize};

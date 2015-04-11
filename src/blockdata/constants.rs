@@ -20,7 +20,7 @@
 //!
 
 use std::default::Default;
-use std::num::from_u64;
+use num::FromPrimitive;
 
 use blockdata::opcodes;
 use blockdata::script;
@@ -39,7 +39,7 @@ pub static DIFFCHANGE_TIMESPAN: u32 = 14 * 24 * 3600;
 
 /// In Bitcoind this is insanely described as ~((u256)0 >> 32)
 pub fn max_target(_: Network) -> Uint256 {
-    from_u64::<Uint256>(0xFFFF).unwrap() << 208
+    <Uint256 as FromPrimitive>::from_u64(0xFFFF).unwrap() << 208
 }
 
 /// The maximum value allowed in an output (useful for sanity checking,
@@ -73,7 +73,7 @@ fn bitcoin_genesis_tx() -> Transaction {
 
     // Outputs
     let mut out_script = script::Builder::new();
-    out_script.push_slice(hex_bytes("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f").unwrap().as_slice());
+    out_script.push_slice(&hex_bytes("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f").unwrap());
     out_script.push_opcode(opcodes::All::OP_CHECKSIG);
     ret.output.push(TxOut {
         value: 50 * COIN_VALUE,

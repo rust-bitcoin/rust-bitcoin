@@ -96,7 +96,7 @@ mod tests {
         assert_eq!(real_decode.timestamp, 1401217254);
         // address decodes should be covered by Address tests
         assert_eq!(real_decode.nonce, 16735069437859780935);
-        assert_eq!(real_decode.user_agent, String::from_str("/Satoshi:0.9.99/"));
+        assert_eq!(real_decode.user_agent, "/Satoshi:0.9.99/".to_string());
         assert_eq!(real_decode.start_height, 302892);
         assert_eq!(real_decode.relay, true);
 

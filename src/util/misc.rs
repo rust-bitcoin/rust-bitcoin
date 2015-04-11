@@ -97,8 +97,6 @@ pub fn script_find_and_remove(haystack: &mut Vec<u8>, needle: &[u8]) -> usize {
 
 #[cfg(test)]
 mod tests {
-    use std::prelude::*;
-
     use super::script_find_and_remove;
     use super::hex_bytes;
 

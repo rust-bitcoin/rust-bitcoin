@@ -19,7 +19,7 @@
 //!
 
 use std::collections::HashMap;
-use std::hash::{hash, Hash, Hasher, SipHasher};
+use std::hash::{Hash, Hasher, SipHasher};
 
 use secp256k1::key::SecretKey;
 
@@ -88,7 +88,7 @@ impl AddressIndex {
                     txo: txo.clone(),
                     kind: WalletTxOutType::Unknown
                 };
-                let mut entry = ret.tentative_index.entry(txo.script_pubkey.clone());
+                let entry = ret.tentative_index.entry(txo.script_pubkey.clone());
                 let txos = entry.or_insert(vec![]);
                 txos.push(new);
             }
@@ -101,7 +101,7 @@ impl AddressIndex {
     pub fn index_wallet_txo(&mut self, wtx: &WalletTxOut, kind: WalletTxOutType) {
         let mut new = wtx.clone();
         new.kind = kind;
-        let mut entry = self.index.entry((wtx.txid, wtx.vout));
+        let entry = self.index.entry((wtx.txid, wtx.vout));
         let txos = entry.or_insert(vec![]);
         txos.push(new);
     }

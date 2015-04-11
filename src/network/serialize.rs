@@ -19,8 +19,7 @@
 //! It also defines (de)serialization routines for many primitives.
 //!
 
-use collections::Vec;
-use std::io::{self, Cursor, Read, Write};
+use std::io::{Cursor, Read, Write};
 use byteorder::{LittleEndian, WriteBytesExt, ReadBytesExt};
 use serialize::hex::ToHex;
 
@@ -42,7 +41,7 @@ impl BitcoinHash for Vec<u8> {
 }
 
 /// Encode an object into a vector
-pub fn serialize<T>(data: &T) -> Result<Vec<u8>, util::Error>
+pub fn serialize<T: ?Sized>(data: &T) -> Result<Vec<u8>, util::Error>
      where T: ConsensusEncodable<RawEncoder<Cursor<Vec<u8>>>>,
 {
     let mut encoder = RawEncoder::new(Cursor::new(vec![]));
@@ -51,7 +50,7 @@ pub fn serialize<T>(data: &T) -> Result<Vec<u8>, util::Error>
 }
 
 /// Encode an object into a hex-encoded string
-pub fn serialize_hex<T>(data: &T) -> Result<String, util::Error>
+pub fn serialize_hex<T: ?Sized>(data: &T) -> Result<String, util::Error>
      where T: ConsensusEncodable<RawEncoder<Cursor<Vec<u8>>>>
 {
     let serial = try!(serialize(data));
@@ -92,57 +91,59 @@ impl<R: Read> RawDecoder<R> {
 
 /// A simple Encoder trait
 pub trait SimpleEncoder {
-  type Error;
+    /// An encoding error
+    type Error;
+ 
+    /// Output a 64-bit uint
+    fn emit_u64(&mut self, v: u64) -> Result<(), Self::Error>;
+    /// Output a 32-bit uint
+    fn emit_u32(&mut self, v: u32) -> Result<(), Self::Error>;
+    /// Output a 16-bit uint
+    fn emit_u16(&mut self, v: u16) -> Result<(), Self::Error>;
+    /// Output a 8-bit uint
+    fn emit_u8(&mut self, v: u8) -> Result<(), Self::Error>;
 
-  /// Output a 64-bit uint
-  fn emit_u64(&mut self, v: u64) -> Result<(), Self::Error>;
-  /// Output a 32-bit uint
-  fn emit_u32(&mut self, v: u32) -> Result<(), Self::Error>;
-  /// Output a 16-bit uint
-  fn emit_u16(&mut self, v: u16) -> Result<(), Self::Error>;
-  /// Output a 8-bit uint
-  fn emit_u8(&mut self, v: u8) -> Result<(), Self::Error>;
+    /// Output a 64-bit int
+    fn emit_i64(&mut self, v: i64) -> Result<(), Self::Error>;
+    /// Output a 32-bit int
+    fn emit_i32(&mut self, v: i32) -> Result<(), Self::Error>;
+    /// Output a 16-bit int
+    fn emit_i16(&mut self, v: i16) -> Result<(), Self::Error>;
+    /// Output a 8-bit int
+    fn emit_i8(&mut self, v: i8) -> Result<(), Self::Error>;
 
-  /// Output a 64-bit int
-  fn emit_i64(&mut self, v: i64) -> Result<(), Self::Error>;
-  /// Output a 32-bit int
-  fn emit_i32(&mut self, v: i32) -> Result<(), Self::Error>;
-  /// Output a 16-bit int
-  fn emit_i16(&mut self, v: i16) -> Result<(), Self::Error>;
-  /// Output a 8-bit int
-  fn emit_i8(&mut self, v: i8) -> Result<(), Self::Error>;
-
-  /// Output a boolean
-  fn emit_bool(&mut self, v: bool) -> Result<(), Self::Error>;
+    /// Output a boolean
+    fn emit_bool(&mut self, v: bool) -> Result<(), Self::Error>;
 }
 
 /// A simple Decoder trait
 pub trait SimpleDecoder {
-  type Error;
+    /// A decoding error
+    type Error;
 
-  /// Read a 64-bit uint
-  fn read_u64(&mut self) -> Result<u64, Self::Error>;
-  /// Read a 32-bit uint
-  fn read_u32(&mut self) -> Result<u32, Self::Error>;
-  /// Read a 16-bit uint
-  fn read_u16(&mut self) -> Result<u16, Self::Error>;
-  /// Read a 8-bit uint
-  fn read_u8(&mut self) -> Result<u8, Self::Error>;
+    /// Read a 64-bit uint
+    fn read_u64(&mut self) -> Result<u64, Self::Error>;
+    /// Read a 32-bit uint
+    fn read_u32(&mut self) -> Result<u32, Self::Error>;
+    /// Read a 16-bit uint
+    fn read_u16(&mut self) -> Result<u16, Self::Error>;
+    /// Read a 8-bit uint
+    fn read_u8(&mut self) -> Result<u8, Self::Error>;
 
-  /// Read a 64-bit int
-  fn read_i64(&mut self) -> Result<i64, Self::Error>;
-  /// Read a 32-bit int
-  fn read_i32(&mut self) -> Result<i32, Self::Error>;
-  /// Read a 16-bit int
-  fn read_i16(&mut self) -> Result<i16, Self::Error>;
-  /// Read a 8-bit int
-  fn read_i8(&mut self) -> Result<i8, Self::Error>;
+    /// Read a 64-bit int
+    fn read_i64(&mut self) -> Result<i64, Self::Error>;
+    /// Read a 32-bit int
+    fn read_i32(&mut self) -> Result<i32, Self::Error>;
+    /// Read a 16-bit int
+    fn read_i16(&mut self) -> Result<i16, Self::Error>;
+    /// Read a 8-bit int
+    fn read_i8(&mut self) -> Result<i8, Self::Error>;
 
-  /// Read a boolean
-  fn read_bool(&mut self) -> Result<bool, Self::Error>;
+    /// Read a boolean
+    fn read_bool(&mut self) -> Result<bool, Self::Error>;
 
-  /// Signal a decoding error
-  fn error(&mut self, err: String) -> Self::Error;
+    /// Signal a decoding error
+    fn error(&mut self, err: String) -> Self::Error;
 }
 
 macro_rules! encoder_fn {

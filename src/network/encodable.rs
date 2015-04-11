@@ -203,7 +203,7 @@ impl_array!(12);
 impl_array!(16);
 impl_array!(32);
 
-impl<'a, S: SimpleEncoder, T: ConsensusEncodable<S>> ConsensusEncodable<S> for &'a [T] {
+impl<S: SimpleEncoder, T: ConsensusEncodable<S>> ConsensusEncodable<S> for [T] {
     #[inline]
     fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
         try!(VarInt(self.len() as u64).consensus_encode(s));
@@ -239,12 +239,10 @@ impl<D: SimpleDecoder, T: ConsensusDecodable<D>> ConsensusDecodable<D> for Box<[
     #[inline]
     fn consensus_decode(d: &mut D) -> Result<Box<[T]>, D::Error> {
         let VarInt(len): VarInt = try!(ConsensusDecodable::consensus_decode(d));
-        unsafe {
-            let len = len as usize;
-            let mut ret = Vec::with_capacity(len);
-            for i in 0..len { ret.push(try!(ConsensusDecodable::consensus_decode(d))); }
-            Ok(ret.into_boxed_slice())
-        }
+        let len = len as usize;
+        let mut ret = Vec::with_capacity(len);
+        for _ in 0..len { ret.push(try!(ConsensusDecodable::consensus_decode(d))); }
+        Ok(ret.into_boxed_slice())
     }
 }
 
@@ -457,7 +455,7 @@ mod tests {
     #[test]
     fn serialize_vector_test() {
         assert_eq!(serialize(&vec![1u8, 2, 3]).ok(), Some(vec![3u8, 1, 2, 3]));
-        assert_eq!(serialize(&[1u8, 2, 3].as_slice()).ok(), Some(vec![3u8, 1, 2, 3]));
+        assert_eq!(serialize(&[1u8, 2, 3][..]).ok(), Some(vec![3u8, 1, 2, 3]));
         // TODO: test vectors of more interesting objects
     }
 
@@ -531,7 +529,7 @@ mod tests {
 
     #[test]
     fn deserialize_strbuf_test() {
-        assert_eq!(deserialize(&[6u8, 0x41, 0x6e, 0x64, 0x72, 0x65, 0x77]).ok(), Some(String::from_str("Andrew")));
+        assert_eq!(deserialize(&[6u8, 0x41, 0x6e, 0x64, 0x72, 0x65, 0x77]).ok(), Some("Andrew".to_string()));
     }
 
     #[test]

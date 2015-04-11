@@ -134,7 +134,7 @@ impl UtxoSet {
     fn add_utxos(&mut self, tx: &Transaction, height: u32) -> Option<UtxoNode> {
         let txid = tx.bitcoin_hash();
         // Locate node if it's already there
-        let new_node = unsafe {
+        let new_node = {
             let mut new_node = Vec::with_capacity(tx.output.len());
             for txo in tx.output.iter() {
                 // Unsafe since we are not uninitializing the old data in the vector
@@ -353,14 +353,12 @@ impl UtxoSet {
                             node
                         }
                         None => {
-                            unsafe {
-                                let mut thinvec = Vec::with_capacity(n as usize + 1);
-                                for _ in 0..n {
-                                    thinvec.push(None);
-                                }
-                                thinvec.push(Some(txo));
-                                UtxoNode { outputs: thinvec.into_boxed_slice(), height: height }
+                            let mut thinvec = Vec::with_capacity(n as usize + 1);
+                            for _ in 0..n {
+                                thinvec.push(None);
                             }
+                            thinvec.push(Some(txo));
+                            UtxoNode { outputs: thinvec.into_boxed_slice(), height: height }
                         }
                     };
                     // Ram it back into the tree
@@ -416,7 +414,6 @@ impl UtxoSet {
 
 #[cfg(test)]
 mod tests {
-    use std::prelude::*;
     use serialize::hex::FromHex;
 
     use super::{UtxoSet, ValidationLevel};

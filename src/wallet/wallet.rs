@@ -88,7 +88,6 @@ pub struct Wallet {
 impl Serialize for Wallet {
     fn serialize<S>(&self, s: &mut S) -> Result<(), S::Error>
             where S: Serializer {
-        let len = self.accounts.len();
         try!(self.master.serialize(s));
         self.accounts.serialize(s)
     }
@@ -176,11 +175,11 @@ impl Wallet {
             AccountChain::Internal => (account.internal_next,
                                        try!(ExtendedPrivKey::from_path(
                                                 &self.master,
-                                                account.internal_path.as_slice()).map_err(Error::Bip32Error))),
+                                                &account.internal_path).map_err(Error::Bip32Error))),
             AccountChain::External => (account.external_next,
                                        try!(ExtendedPrivKey::from_path(
                                                 &self.master,
-                                                account.external_path.as_slice()).map_err(Error::Bip32Error))),
+                                                &account.external_path).map_err(Error::Bip32Error))),
         };
 
         // Scan for next admissible address
@@ -247,7 +246,7 @@ impl Wallet {
         // Sum internal balance
         let master = try!(ExtendedPrivKey::from_path(
                               &self.master,
-                              account.internal_path.as_slice()).map_err(Error::Bip32Error));
+                              &account.internal_path).map_err(Error::Bip32Error));
         for &cnum in account.internal_used.iter() {
             let sk = try!(master.ckd_priv(cnum).map_err(Error::Bip32Error));
             let pk = ExtendedPubKey::from_private(&sk);
@@ -259,7 +258,7 @@ impl Wallet {
         // Sum external balance
         let master = try!(ExtendedPrivKey::from_path(
                               &self.master,
-                              account.external_path.as_slice()).map_err(Error::Bip32Error));
+                              &account.external_path).map_err(Error::Bip32Error));
         for &cnum in account.external_used.iter() {
             let sk = try!(master.ckd_priv(cnum).map_err(Error::Bip32Error));
             let pk = ExtendedPubKey::from_private(&sk);

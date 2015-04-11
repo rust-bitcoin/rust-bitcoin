@@ -18,7 +18,7 @@
 //! to connect to a peer, send network messages, and receive Bitcoin data.
 //!
 
-use std::{io, thread};
+use std::thread;
 use std::sync::mpsc::{channel, Receiver};
 
 use network::constants::Network;
@@ -75,7 +75,7 @@ pub trait Listener {
                         // We have to pass the message to the main thread for processing,
                         // unfortunately, because sipa says we have to handle everything
                         // in order.
-                        recv_tx.send(message::SocketResponse::MessageReceived(payload));
+                        recv_tx.send(message::SocketResponse::MessageReceived(payload)).unwrap();
                     }
                     Err(e) => {
                         // On failure we send an error message to the main thread, along with
@@ -83,8 +83,8 @@ pub trait Listener {
                         // thread. (If we simply exited immediately, the channel would be torn
                         // down and the main thread would never see the error message.)
                         let (tx, rx) = channel();
-                        recv_tx.send(message::SocketResponse::ConnectionFailed(e, tx));
-                        rx.recv();
+                        recv_tx.send(message::SocketResponse::ConnectionFailed(e, tx)).unwrap();
+                        rx.recv().unwrap();
                         break;
                     }
                 }
