@@ -23,6 +23,7 @@ use std::collections::HashMap;
 use std::collections::hash_map::Iter;
 use std::default::Default;
 use std::mem;
+use secp256k1::Secp256k1;
 use eventual;
 use eventual::Async;
 use num_cpus;
@@ -137,7 +138,6 @@ impl UtxoSet {
         let new_node = {
             let mut new_node = Vec::with_capacity(tx.output.len());
             for txo in tx.output.iter() {
-                // Unsafe since we are not uninitializing the old data in the vector
                 if txo.script_pubkey.is_provably_unspendable() {
                     new_node.push(None);
                     self.n_utxos -= 1;
@@ -201,8 +201,9 @@ impl UtxoSet {
     }
 
     /// Apply the transactions contained in a block
-    pub fn update(&mut self, block: &Block, blockheight: usize, validation: ValidationLevel)
-                                -> Result<(), Error> {
+    pub fn update(&mut self, secp: &Secp256k1, block: &Block, 
+                  blockheight: usize, validation: ValidationLevel)
+                 -> Result<(), Error> {
         // Make sure we are extending the UTXO set in order
         if validation >= ValidationLevel::Chain &&
              self.last_hash != block.header.prev_blockhash {
@@ -270,9 +271,10 @@ impl UtxoSet {
                 //          function or else risk use-after-free in the async threads.
                 let static_txes = unsafe { &*(&block.txdata as *const Vec<Transaction>) };
                 let static_self = unsafe { &*(self as *const UtxoSet) };
+                let static_secp = unsafe { &*(secp as *const Secp256k1) };
                 future_vec.push(eventual::Future::spawn(move || {
                     for tx in static_txes[start..end].iter() {
-                        match tx.validate(static_self) {
+                        match tx.validate(static_secp, static_self) {
                             Ok(_) => {},
                             Err(e) => { return Err(Error::InvalidTx(tx.bitcoin_hash(), e)); }
                         }
@@ -345,7 +347,7 @@ impl UtxoSet {
             if skipped_genesis {
                 let mut extract_vec = vec![];
                 mem::swap(&mut extract_vec, (&mut self.spent_txos[self.spent_idx as usize]));
-                for ((txid, n), (height, txo)) in extract_vec.into_iter() {
+                for ((txid, n), (height, txo)) in extract_vec {
                     // Remove the tx's utxo list and patch the txo into place
                     let new_node = match self.table.remove(&txid) {
                         Some(mut node) => {
@@ -414,6 +416,7 @@ impl UtxoSet {
 
 #[cfg(test)]
 mod tests {
+    use secp256k1::Secp256k1;
     use serialize::hex::FromHex;
 
     use super::{UtxoSet, ValidationLevel};
@@ -424,12 +427,13 @@ mod tests {
 
     #[test]
     fn utxoset_serialize_test() {
+        let s = Secp256k1::new();
         let mut empty_set = UtxoSet::new(Bitcoin, 100);
 
         let new_block: Block = deserialize(&"010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914cd74d6e49ffff001d323b3a7b0201000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0804ffff001d026e04ffffffff0100f2052a0100000043410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac00000000010000000321f75f3139a013f50f315b23b0c9a2b6eac31e2bec98e5891c924664889942260000000049483045022100cb2c6b346a978ab8c61b18b5e9397755cbd17d6eb2fe0083ef32e067fa6c785a02206ce44e613f31d9a6b0517e46f3db1576e9812cc98d159bfdaf759a5014081b5c01ffffffff79cda0945903627c3da1f85fc95d0b8ee3e76ae0cfdc9a65d09744b1f8fc85430000000049483045022047957cdd957cfd0becd642f6b84d82f49b6cb4c51a91f49246908af7c3cfdf4a022100e96b46621f1bffcf5ea5982f88cef651e9354f5791602369bf5a82a6cd61a62501fffffffffe09f5fe3ffbf5ee97a54eb5e5069e9da6b4856ee86fc52938c2f979b0f38e82000000004847304402204165be9a4cbab8049e1af9723b96199bfd3e85f44c6b4c0177e3962686b26073022028f638da23fc003760861ad481ead4099312c60030d4cb57820ce4d33812a5ce01ffffffff01009d966b01000000434104ea1feff861b51fe3f5f8a3b12d0f4712db80e919548a80839fc47c6a21e66d957e9c5d8cd108c7a2d2324bad71f9904ac0ae7336507d785b17a2c115e427a32fac00000000".from_hex().unwrap()).unwrap();
 
         // Make sure we can't add the block directly, since we are missing the inputs
-        assert!(empty_set.update(&new_block, 1, ValidationLevel::Inputs).is_err());
+        assert!(empty_set.update(&s, &new_block, 1, ValidationLevel::Inputs).is_err());
         assert_eq!(empty_set.n_utxos(), 0);
         // Add the block manually so that we'll have some UTXOs for the rest of the test
         for tx in new_block.txdata.iter() {
@@ -449,7 +453,7 @@ mod tests {
 
         // Check again that we can't add the block, and that this doesn't mess up the
         // existing UTXOs
-        assert!(empty_set.update(&new_block, 2, ValidationLevel::Inputs).is_err());
+        assert!(empty_set.update(&s, &new_block, 2, ValidationLevel::Inputs).is_err());
         assert_eq!(empty_set.n_utxos(), 2);
         for tx in new_block.txdata.iter() {
             let hash = tx.bitcoin_hash();

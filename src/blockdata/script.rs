@@ -957,9 +957,10 @@ impl AbstractStackElem {
 
     /// Whether an element could possibly be a pubkey
     pub fn may_be_pubkey(&self) -> bool {
+        let s = Secp256k1::with_caps(secp256k1::ContextFlag::None);
         ((self.len_lo() <= 33 && self.len_hi() >= 33) ||
          (self.len_lo() <= 65 && self.len_hi() >= 65)) &&
-        (self.raw_value().is_none() || PublicKey::from_slice(self.raw_value().unwrap()).is_ok())
+        (self.raw_value().is_none() || PublicKey::from_slice(&s, self.raw_value().unwrap()).is_ok())
     }
 
     /// Whether an element could possibly be less than another
@@ -1497,11 +1498,11 @@ pub fn read_uint(data: &[u8], size: usize) -> Result<usize, Error> {
 
 /// Check a signature -- returns an error that is currently just translated
 /// into a 0/1 to push onto the script stack
-fn check_signature(sig_slice: &[u8], pk_slice: &[u8], script: Vec<u8>,
+fn check_signature(secp: &Secp256k1, sig_slice: &[u8], pk_slice: &[u8], script: Vec<u8>,
                    tx: &Transaction, input_index: usize) -> Result<(), Error> {
 
     // Check public key
-    let pubkey = PublicKey::from_slice(pk_slice);
+    let pubkey = PublicKey::from_slice(secp, pk_slice);
     if pubkey.is_err() {
         return Err(Error::BadPublicKey);
     }
@@ -1586,7 +1587,7 @@ fn check_signature(sig_slice: &[u8], pk_slice: &[u8], script: Vec<u8>,
     // We can unwrap -- only failure mode is on length, which is fixed to 32
     let msg = secp256k1::Message::from_slice(&signature_hash[..]).unwrap();
 
-    Secp256k1::verify_raw(&msg, sig_slice, &pubkey).map_err(Error::Ecdsa)
+    Secp256k1::verify_raw(secp, &msg, sig_slice, &pubkey).map_err(Error::Ecdsa)
 }
 
 // Macro to translate English stack instructions into Rust code.
@@ -1727,7 +1728,7 @@ impl Script {
     pub fn len(&self) -> usize { self.0.len() }
 
     /// Trace a script
-    pub fn trace<'a>(&'a self, stack: &mut Vec<MaybeOwned<'a>>,
+    pub fn trace<'a>(&'a self, secp: &Secp256k1, stack: &mut Vec<MaybeOwned<'a>>,
                      input_context: Option<(&Transaction, usize)>)
                     -> ScriptTrace {
         let mut trace = ScriptTrace {
@@ -1737,7 +1738,7 @@ impl Script {
             error: None
         };
 
-        match self.evaluate(stack, input_context, Some(&mut trace.iterations)) {
+        match self.evaluate(secp, stack, input_context, Some(&mut trace.iterations)) {
             Ok(_) => {},
             Err(e) => { trace.error = Some(e.clone()); }
         }
@@ -1745,7 +1746,7 @@ impl Script {
     }
 
     /// Evaluate the script, modifying the stack in place
-    pub fn evaluate<'a>(&'a self, stack: &mut Vec<MaybeOwned<'a>>,
+    pub fn evaluate<'a>(&'a self, secp: &Secp256k1, stack: &mut Vec<MaybeOwned<'a>>,
                         input_context: Option<(&Transaction, usize)>,
                         mut trace: Option<&mut Vec<TraceIteration>>)
                        -> Result<(), Error> {
@@ -1986,7 +1987,7 @@ impl Script {
                             // Otherwise unwrap it
                             let (tx, input_index) = input_context.unwrap();
 
-                            match check_signature( sig_slice, pk_slice, script, tx, input_index) {
+                            match check_signature(secp, sig_slice, pk_slice, script, tx, input_index) {
                                 Ok(()) => stack.push(MaybeOwned::Borrowed(SCRIPT_TRUE)),
                                 _ => stack.push(MaybeOwned::Borrowed(SCRIPT_FALSE)),
                             }
@@ -2047,7 +2048,7 @@ impl Script {
                                     // Try to validate the signature with the given key
                                     (Some(k), Some(s)) => {
                                         // Move to the next signature if it is valid for the current key
-                                        if check_signature(&s[..], &k[..], script.clone(), tx, input_index).is_ok() {
+                                        if check_signature(secp, &s[..], &k[..], script.clone(), tx, input_index).is_ok() {
                                             sig = sig_iter.next();
                                         }
                                         // Move to the next key in any case
@@ -2552,6 +2553,7 @@ impl<D: SimpleDecoder> ConsensusDecodable<D> for Script {
 
 #[cfg(test)]
 mod test {
+    use secp256k1::Secp256k1;
     use serialize::hex::FromHex;
 
     use super::{Error, Script, Builder, build_scriptint, read_scriptint, read_scriptbool};
@@ -2562,6 +2564,7 @@ mod test {
     use blockdata::transaction::Transaction;
 
     fn test_tx(tx_hex: &'static str, output_hex: Vec<&'static str>) {
+        let s = Secp256k1::new();
         let tx_hex = tx_hex.from_hex().unwrap();
 
         let tx: Transaction = deserialize(&tx_hex).ok().expect("transaction");
@@ -2575,8 +2578,8 @@ mod test {
 
         for (n, script) in script_pk.iter().enumerate() {
             let mut stack = vec![];
-            assert_eq!(tx.input[n].script_sig.evaluate(&mut stack, Some((&tx, n)), None), Ok(()));
-            assert_eq!(script.evaluate(&mut stack, Some((&tx, n)), None), Ok(()));
+            assert_eq!(tx.input[n].script_sig.evaluate(&s, &mut stack, Some((&tx, n)), None), Ok(()));
+            assert_eq!(script.evaluate(&s, &mut stack, Some((&tx, n)), None), Ok(()));
             assert!(stack.len() >= 1);
             assert_eq!(read_scriptbool(&stack.pop().unwrap()[..]), true);
         }
@@ -2636,30 +2639,34 @@ mod test {
 
     #[test]
     fn script_eval_simple() {
+        let s = Secp256k1::new();
         let mut script = Builder::new();
-        assert!(script.clone().into_script().evaluate(&mut vec![], None, None).is_ok());
+        assert!(script.clone().into_script().evaluate(&s, &mut vec![], None, None).is_ok());
 
         script.push_opcode(opcodes::All::OP_RETURN);
-        assert!(script.clone().into_script().evaluate(&mut vec![], None, None).is_err());
+        assert!(script.clone().into_script().evaluate(&s, &mut vec![], None, None).is_err());
     }
 
     #[test]
     fn script_eval_checksig_without_tx() {
+        let s = Secp256k1::new();
         let hex_pk = "1976a914e729dea4a3a81108e16376d1cc329c91db58999488ac".from_hex().unwrap();
         let script_pk: Script = deserialize(&hex_pk).ok().expect("scriptpk");
         // Should be able to check that the sig is there and pk correct
         // before needing a transaction
-        assert_eq!(script_pk.evaluate(&mut vec![], None, None), Err(Error::PopEmptyStack));
-        assert_eq!(script_pk.evaluate(&mut vec![Owned(vec![]), Owned(vec![])], None, None),
+        assert_eq!(script_pk.evaluate(&s, &mut vec![], None, None), Err(Error::PopEmptyStack));
+        assert_eq!(script_pk.evaluate(&s, &mut vec![Owned(vec![]), Owned(vec![])], None, None),
                                                                     Err(Error::EqualVerifyFailed("e729dea4a3a81108e16376d1cc329c91db589994".to_string(),
                                                                                                                                          "b472a266d0bd89c13706a4132ccfb16f7c3b9fcb".to_string())));
         // But if the signature is there, we need a tx to check it
-        assert_eq!(script_pk.evaluate(&mut vec![Owned(vec![]), Owned("026d5d4cfef5f3d97d2263941b4d8e7aaa82910bf8e6f7c6cf1d8f0d755b9d2d1a".from_hex().unwrap())], None, None), Err(Error::NoTransaction));
-        assert_eq!(script_pk.evaluate(&mut vec![Owned(vec![0]), Owned("026d5d4cfef5f3d97d2263941b4d8e7aaa82910bf8e6f7c6cf1d8f0d755b9d2d1a".from_hex().unwrap())], None, None), Err(Error::NoTransaction));
+        assert_eq!(script_pk.evaluate(&s, &mut vec![Owned(vec![]), Owned("026d5d4cfef5f3d97d2263941b4d8e7aaa82910bf8e6f7c6cf1d8f0d755b9d2d1a".from_hex().unwrap())], None, None), Err(Error::NoTransaction));
+        assert_eq!(script_pk.evaluate(&s, &mut vec![Owned(vec![0]), Owned("026d5d4cfef5f3d97d2263941b4d8e7aaa82910bf8e6f7c6cf1d8f0d755b9d2d1a".from_hex().unwrap())], None, None), Err(Error::NoTransaction));
     }
 
     #[test]
     fn script_eval_pubkeyhash() {
+        let s = Secp256k1::new();
+
         // nb these are both prefixed with their length in 1 byte
         let tx_hex = "010000000125d6681b797691aebba34b9d8e50f769ab1e8807e78405ae505c218cf8e1e9e1a20100006a47304402204c2dd8a9b6f8d425fcd8ee9a20ac73b619906a6367eac6cb93e70375225ec0160220356878eff111ff3663d7e6bf08947f94443845e0dcc54961664d922f7660b80c0121029fa8e8d8e3fd61183ab52f98d65500fd028a5d0a899c6bcd4ecaf1eda9eac284ffffffff0110270000000000001976a914299567077f41bc20059dc21a1eb1ef5a6a43b9c088ac00000000".from_hex().unwrap();
 
@@ -2669,8 +2676,8 @@ mod test {
         let script_pk: Script = deserialize(&output_hex).ok().expect("scriptpk");
 
         let mut stack = vec![];
-        assert_eq!(tx.input[0].script_sig.evaluate(&mut stack, None, None), Ok(()));
-        assert_eq!(script_pk.evaluate(&mut stack, Some((&tx, 0)), None), Ok(()));
+        assert_eq!(tx.input[0].script_sig.evaluate(&s, &mut stack, None, None), Ok(()));
+        assert_eq!(script_pk.evaluate(&s, &mut stack, Some((&tx, 0)), None), Ok(()));
         assert_eq!(stack.len(), 1);
         assert_eq!(read_scriptbool(&stack.pop().unwrap()[..]), true);
     }

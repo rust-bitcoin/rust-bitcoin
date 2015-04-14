@@ -157,6 +157,7 @@ impl ::std::fmt::Debug for Address {
 
 #[cfg(test)]
 mod tests {
+    use rand::Rng;
     use serialize::hex::FromHex;
     use test::{Bencher, black_box};
 
@@ -180,9 +181,15 @@ mod tests {
 
     #[bench]
     pub fn generate_address(bh: &mut Bencher) {
-        let mut s = Secp256k1::new().unwrap();
+        struct CounterRng(u32);
+        impl Rng for CounterRng {
+            fn next_u32(&mut self) -> u32 { self.0 += 1; self.0 }
+        }
+
+        let s = Secp256k1::new();
+        let mut r = CounterRng(0);
         bh.iter( || {
-            let (sk, pk) = s.generate_keypair(true);
+            let (sk, pk) = s.generate_keypair(&mut r, true).unwrap();
             black_box(sk);
             black_box(pk);
             let addr = Address::from_key(Bitcoin, &pk);
@@ -192,24 +199,17 @@ mod tests {
 
     #[bench]
     pub fn generate_uncompressed_address(bh: &mut Bencher) {
-        let mut s = Secp256k1::new().unwrap();
+        struct CounterRng(u32);
+        impl Rng for CounterRng {
+            fn next_u32(&mut self) -> u32 { self.0 += 1; self.0 }
+        }
+
+        let s = Secp256k1::new();
+        let mut r = CounterRng(0);
         bh.iter( || {
-            let (sk, pk) = s.generate_keypair(false);
+            let (sk, pk) = s.generate_keypair(&mut r, false).unwrap();
             black_box(sk);
             black_box(pk);
-            let addr = Address::from_key(Bitcoin, &pk);
-            black_box(addr);
-        });
-    }
-
-    #[bench]
-    pub fn generate_sequential_address(bh: &mut Bencher) {
-        let mut s = Secp256k1::new().unwrap();
-        let (sk, _) = s.generate_keypair(true);
-        let mut iter = sk.sequence(true);
-        bh.iter( || {
-            let (sk, pk) = iter.next().unwrap();
-            black_box(sk);
             let addr = Address::from_key(Bitcoin, &pk);
             black_box(addr);
         });

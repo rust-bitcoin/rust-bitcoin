@@ -197,7 +197,7 @@ impl<K, V> PatriciaTree<K, V>
                     let tmp = node;    // hack to appease borrowck
                     idx += tmp.skip_len as usize + 1;
                     let subtree = if key.bit(idx - 1)
-                                                    { &mut tmp.child_r } else { &mut tmp.child_l };
+                                      { &mut tmp.child_r } else { &mut tmp.child_l };
                     // Recurse, adding a new node if necessary
                     if subtree.is_none() {
                         *subtree = Some(Box::new(PatriciaTree {
@@ -205,7 +205,7 @@ impl<K, V> PatriciaTree<K, V>
                             child_l: None,
                             child_r: None,
                             skip_prefix: key.bit_slice(idx, key_len),
-                            skip_len: key_len as u8 - idx as u8
+                            skip_len: (key_len - idx) as u8
                         }));
                     }
                     // subtree.get_mut_ref is a &mut Box<U> here, so &mut ** gets a &mut U

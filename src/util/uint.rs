@@ -101,7 +101,7 @@ macro_rules! construct_uint {
                 let mut carry = [0u64; $n_words];
                 let mut b_carry = false;
                 for i in 0..$n_words {
-                    ret[i] = me[i] + you[i];
+                    ret[i] = me[i].wrapping_add(you[i]);
                     if i < $n_words - 1 && ret[i] < me[i] {
                         carry[i + 1] = 1;
                         b_carry = true;
@@ -295,14 +295,12 @@ macro_rules! construct_uint {
                 let mut ret = [0u64; $n_words];
                 let word_shift = shift / 64;
                 let bit_shift = shift % 64;
-                for i in 0..$n_words {
+                for i in word_shift..$n_words {
                     // Shift
-                    if bit_shift < 64 && i - word_shift < $n_words {
-                        ret[i - word_shift] += original[i] >> bit_shift;
-                    }
+                    ret[i - word_shift] += original[i] >> bit_shift;
                     // Carry
-                    if bit_shift > 0 && i - word_shift - 1 < $n_words {
-                        ret[i - word_shift - 1] += original[i] << (64 - bit_shift);
+                    if bit_shift > 0 && i < $n_words - 1 {
+                        ret[i - word_shift] += original[i + 1] << (64 - bit_shift);
                     }
                 }
                 $name(ret)

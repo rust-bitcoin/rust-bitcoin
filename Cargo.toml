@@ -9,7 +9,7 @@ name = "bitcoin"
 path = "src/lib.rs"
 
 [dependencies.secp256k1]
-git = "https://github.com/apoelstra/bitcoin-secp256k1-rs.git"
+git = "https://github.com/apoelstra/rust-secp256k1.git"
 
 [dependencies.eventual]
 git = "https://github.com/carllerche/eventual"
