@@ -79,7 +79,7 @@ pub fn script_find_and_remove(haystack: &mut Vec<u8>, needle: &[u8]) -> usize {
             n_deleted += 1;
             // This is ugly but prevents infinite loop in case of overflow
             let overflow = top < needle.len();
-            top -= needle.len();
+            top = top.wrapping_sub(needle.len());
             if overflow { break; }
         } else {
             i += match opcodes::All::from_u8((*haystack)[i]).classify() {
@@ -91,7 +91,7 @@ pub fn script_find_and_remove(haystack: &mut Vec<u8>, needle: &[u8]) -> usize {
             };
         }
     }
-    haystack.truncate(top + needle.len());
+    haystack.truncate(top.wrapping_add(needle.len()));
     n_deleted
 }
 

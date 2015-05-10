@@ -2461,8 +2461,8 @@ impl Builder {
     /// dedicated opcodes to push some small integers.
     pub fn push_int(&mut self, data: i64) {
         // We can special-case -1, 1-16
-        if data == -1 || (data >= 1 && data <=16) {
-            self.0.push(data as u8 + opcodes::OP_TRUE as u8);
+        if data == -1 || (data >= 1 && data <= 16) {
+            self.0.push((data + opcodes::OP_TRUE as i64) as u8);
         }
         // We can also special-case zero
         else if data == 0 {

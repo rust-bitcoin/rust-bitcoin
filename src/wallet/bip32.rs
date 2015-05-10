@@ -20,7 +20,7 @@ use std::default::Default;
 use std::io::Cursor;
 use serde::{Serialize, Deserialize, Serializer, Deserializer};
 
-use byteorder::{BigEndian, ByteOrder, ReadBytesExt};
+use byteorder::{BigEndian, ByteOrder, ReadBytesExt, WriteBytesExt};
 use crypto::digest::Digest;
 use crypto::hmac::Hmac;
 use crypto::mac::Mac;
@@ -160,7 +160,7 @@ impl ExtendedPrivKey {
     pub fn ckd_priv(&self, secp: &Secp256k1, i: ChildNumber) -> Result<ExtendedPrivKey, Error> {
         let mut result = [0; 64];
         let mut hmac = Hmac::new(Sha512::new(), &self.chain_code[..]);
-        let mut be_n = [0; 32];
+        let mut be_n = [0; 4];
         match i {
             ChildNumber::Normal(n) => {
                 if n >= (1 << 31) { return Err(Error::InvalidChildNumber(i)) }
@@ -241,7 +241,7 @@ impl ExtendedPubKey {
             ChildNumber::Normal(n) => {
                 let mut hmac = Hmac::new(Sha512::new(), &self.chain_code[..]);
                 hmac.input(&self.public_key[..]);
-                let mut be_n = [0; 32];
+                let mut be_n = [0; 4];
                 BigEndian::write_u32(&mut be_n, n);
                 hmac.input(&be_n);
 
@@ -295,16 +295,14 @@ impl ToBase58 for ExtendedPrivKey {
         }.iter().cloned());
         ret.push(self.depth as u8);
         ret.extend(self.parent_fingerprint[..].iter().cloned());
-        let mut be_n = [0; 32];
         match self.child_number {
             ChildNumber::Hardened(n) => {
-                BigEndian::write_u32(&mut be_n, n + (1 << 31));
+                ret.write_u32::<BigEndian>(n + (1 << 31)).unwrap();
             }
             ChildNumber::Normal(n) => {
-                BigEndian::write_u32(&mut be_n, n);
+                ret.write_u32::<BigEndian>(n).unwrap();
             }
         }
-        ret.extend(be_n.iter().cloned());
         ret.extend(self.chain_code[..].iter().cloned());
         ret.push(0);
         ret.extend(self.secret_key[..].iter().cloned());
@@ -351,7 +349,7 @@ impl ToBase58 for ExtendedPubKey {
         }.iter().cloned());
         ret.push(self.depth as u8);
         ret.extend(self.parent_fingerprint[..].iter().cloned());
-        let mut be_n = [0; 32];
+        let mut be_n = [0; 4];
         match self.child_number {
             ChildNumber::Hardened(n) => {
                 BigEndian::write_u32(&mut be_n, n + (1 << 31));
@@ -449,7 +447,7 @@ mod tests {
         // m
         test_path(&secp, Bitcoin, &seed, &[],
                   "xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbPy6cq3jPPqjiChkVvvNKmPGJxWUtg6LnF5kejMRNNU3TGtRBeJgk33yuGBxrMPHi",
-                   "xpub661MyMwAqRbcFtXgS5sYJABqqG9YLmC4Q1Rdap9gSE8NqtwybGhePY2gZ29ESFjqJoCu1Rupje8YtGqsefD265TMg7usUDFdp6W1EGMcet8");
+                  "xpub661MyMwAqRbcFtXgS5sYJABqqG9YLmC4Q1Rdap9gSE8NqtwybGhePY2gZ29ESFjqJoCu1Rupje8YtGqsefD265TMg7usUDFdp6W1EGMcet8");
 
         // m/0h
         test_path(&secp, Bitcoin, &seed, &[Hardened(0)],
