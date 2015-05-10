@@ -375,32 +375,9 @@ impl Blockchain {
 
     fn replace_txdata(&mut self, hash: &Uint256, txdata: Vec<Transaction>, has_txdata: bool) -> Result<(), util::Error> {
         match self.tree.lookup_mut(hash, 256) {
-            Some(existing_block) => {
-                unsafe {
-                    // existing_block is an Rc. Rust will not let us mutate it under
-                    // any circumstances, since if it were to be reallocated, then
-                    // all other references to it would be destroyed. However, we
-                    // just need a mutable pointer to the txdata vector; by calling
-                    // Vec::clone_from() rather than assigning, we can be assured that
-                    // no reallocation can occur, since clone_from() takes an &mut self,
-                    // which it does not own and therefore cannot move.
-                    //
-                    // To be clear: there will undoubtedly be some reallocation within
-                    // the Vec itself. We don't care about this. What we care about is
-                    // that the Vec (and more pointedly, its containing struct) does not
-                    // move, since this would invalidate the Rc that we are snookering.
-                    use std::mem::{forget, transmute};
-                    let mutable_vec: &mut Vec<Transaction> = transmute(&existing_block.block.txdata);
-                    mutable_vec.clone_from(&txdata);
-                    // If mutable_vec went out of scope unhindered, it would deallocate
-                    // the Vec it points to, since Rust assumes that a mutable vector
-                    // is a unique reference (and this one is definitely not).
-                    forget(mutable_vec);
-                    // Do the same thing with the txdata flac
-                    let mutable_bool: &mut bool = transmute(&existing_block.has_txdata);
-                    *mutable_bool = has_txdata;
-                    forget(mutable_bool);
-                }
+            Some(mut existing_block) => {
+                existing_block.block.txdata.clone_from(&txdata);
+                existing_block.has_txdata = has_txdata;
                 Ok(())
             },
             None => Err(BlockNotFound)
