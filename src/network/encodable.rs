@@ -59,35 +59,28 @@ pub struct VarInt(pub u64);
 pub struct CheckedData(pub Vec<u8>);
 
 // Primitive types
-impl<S: SimpleEncoder> ConsensusEncodable<S> for u8 {
-    #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> { s.emit_u8(*self) }
+macro_rules! impl_int_encodable{
+    ($ty:ident, $meth_dec:ident, $meth_enc:ident) => (
+        impl<D: SimpleDecoder> ConsensusDecodable<D> for $ty {
+            #[inline]
+            fn consensus_decode(d: &mut D) -> Result<$ty, D::Error> { d.$meth_dec().map($ty::from_le) }
+        }
+
+        impl<S: SimpleEncoder> ConsensusEncodable<S> for $ty {
+            #[inline]
+            fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> { s.$meth_enc(self.to_le()) }
+        }
+    )
 }
 
-impl<S: SimpleEncoder> ConsensusEncodable<S> for u16 {
-    #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> { s.emit_u16(self.to_le()) }
-}
-
-impl<S: SimpleEncoder> ConsensusEncodable<S> for u32 {
-    #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> { s.emit_u32(self.to_le()) }
-}
-
-impl<S: SimpleEncoder> ConsensusEncodable<S> for u64 {
-    #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> { s.emit_u64(self.to_le()) }
-}
-
-impl<S: SimpleEncoder> ConsensusEncodable<S> for i32 {
-    #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> { s.emit_i32(self.to_le()) }
-}
-
-impl<S: SimpleEncoder> ConsensusEncodable<S> for i64 {
-    #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> { s.emit_i64(self.to_le()) }
-}
+impl_int_encodable!(u8,  read_u8,  emit_u8);
+impl_int_encodable!(u16, read_u16, emit_u16);
+impl_int_encodable!(u32, read_u32, emit_u32);
+impl_int_encodable!(u64, read_u64, emit_u64);
+impl_int_encodable!(i8,  read_i8,  emit_i8);
+impl_int_encodable!(i16, read_i16, emit_i16);
+impl_int_encodable!(i32, read_i32, emit_i32);
+impl_int_encodable!(i64, read_i64, emit_i64);
 
 impl<S: SimpleEncoder> ConsensusEncodable<S> for VarInt {
     #[inline]
@@ -99,36 +92,6 @@ impl<S: SimpleEncoder> ConsensusEncodable<S> for VarInt {
             _                    => { try!(s.emit_u8(0xFF)); (self.0 as u64).consensus_encode(s) }
         }
     }
-}
-
-impl<D: SimpleDecoder> ConsensusDecodable<D> for u8 {
-    #[inline]
-    fn consensus_decode(d: &mut D) -> Result<u8, D::Error> { d.read_u8() }
-}
-
-impl<D: SimpleDecoder> ConsensusDecodable<D> for u16 {
-    #[inline]
-    fn consensus_decode(d: &mut D) -> Result<u16, D::Error> { d.read_u16().map(|n| u16::from_le(n)) }
-}
-
-impl<D: SimpleDecoder> ConsensusDecodable<D> for u32 {
-    #[inline]
-    fn consensus_decode(d: &mut D) -> Result<u32, D::Error> { d.read_u32().map(|n| u32::from_le(n)) }
-}
-
-impl<D: SimpleDecoder> ConsensusDecodable<D> for u64 {
-    #[inline]
-    fn consensus_decode(d: &mut D) -> Result<u64, D::Error> { d.read_u64().map(|n| u64::from_le(n)) }
-}
-
-impl<D: SimpleDecoder> ConsensusDecodable<D> for i32 {
-    #[inline]
-    fn consensus_decode(d: &mut D) -> Result<i32, D::Error> { d.read_i32().map(|n| i32::from_le(n)) }
-}
-
-impl<D: SimpleDecoder> ConsensusDecodable<D> for i64 {
-    #[inline]
-    fn consensus_decode(d: &mut D) -> Result<i64, D::Error> { d.read_i64().map(|n| i64::from_le(n)) }
 }
 
 impl<D: SimpleDecoder> ConsensusDecodable<D> for VarInt {

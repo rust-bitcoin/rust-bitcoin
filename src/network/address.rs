@@ -33,15 +33,17 @@ pub struct Address {
     pub port: u16
 }
 
+fn addr_to_be(addr: [u16; 8]) -> [u16; 8] {
+    [addr[0].to_be(), addr[1].to_be(), addr[2].to_be(), addr[3].to_be(),
+     addr[4].to_be(), addr[5].to_be(), addr[6].to_be(), addr[7].to_be()]
+}
+
 impl<S: SimpleEncoder> ConsensusEncodable<S> for Address {
     #[inline]
     fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
         try!(self.services.consensus_encode(s));
-        try!(self.address.consensus_encode(s));
-        // Explicitly code the port since it needs to be big-endian
-        try!(((self.port / 0x100) as u8).consensus_encode(s));
-        try!(((self.port % 0x100) as u8).consensus_encode(s));
-        Ok(())
+        try!(addr_to_be(self.address).consensus_encode(s));
+        self.port.to_be().consensus_encode(s)
     }
 }
 
@@ -50,13 +52,8 @@ impl<D: SimpleDecoder> ConsensusDecodable<D> for Address {
     fn consensus_decode(d: &mut D) -> Result<Address, D::Error> {
         Ok(Address {
             services: try!(ConsensusDecodable::consensus_decode(d)),
-            address: try!(ConsensusDecodable::consensus_decode(d)),
-            // Explicitly code the port since it needs to be big-endian
-            port: {
-                let b1: u8 = try!(ConsensusDecodable::consensus_decode(d));
-                let b2: u8 = try!(ConsensusDecodable::consensus_decode(d));
-                (b1 as u16 * 0x100) + (b2 as u16)
-            }
+            address: addr_to_be(try!(ConsensusDecodable::consensus_decode(d))),
+            port: u16::from_be(try!(ConsensusDecodable::consensus_decode(d)))
         })
     }
 }
@@ -117,9 +114,9 @@ mod test {
                                                        0, 1, 0x20, 0x8d]);
         assert!(addr.is_ok());
         let full = addr.unwrap();
-        assert!(full.services == 1);
-        assert!(full.address == [0, 0, 0, 0, 0, 0xffff, 0x0a00, 0x0001]);
-        assert!(full.port == 8333);
+        assert_eq!(full.services, 1);
+        assert_eq!(full.address, [0, 0, 0, 0, 0, 0xffff, 0x0a00, 0x0001]);
+        assert_eq!(full.port, 8333);
 
         addr = deserialize(&[1u8, 0, 0, 0, 0, 0, 0, 0, 0,
                              0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0x0a, 0, 0, 1]);
