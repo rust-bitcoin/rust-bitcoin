@@ -31,10 +31,9 @@
 #![feature(box_patterns)]
 #![feature(concat_idents)]
 #![feature(custom_derive, plugin)]
-#![feature(hash)]
+#![feature(hashmap_hasher)]
 #![feature(ip_addr)]
 #![feature(slice_patterns)]
-#![feature(std_misc)]
 #![cfg_attr(test, feature(test))]
 
 // Coding conventions
@@ -43,8 +42,6 @@
 #![deny(non_snake_case)]
 #![deny(unused_mut)]
 #![deny(missing_docs)]
-
-#![plugin(serde_macros)]
 
 extern crate byteorder;
 extern crate crypto;
@@ -68,5 +65,4 @@ pub mod macros;
 pub mod network;
 pub mod blockdata;
 pub mod util;
-pub mod wallet;
 

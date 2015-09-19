@@ -32,8 +32,6 @@ use blockdata::script::{self, Script, ScriptTrace, read_scriptbool};
 use blockdata::utxoset::UtxoSet;
 use network::encodable::ConsensusEncodable;
 use network::serialize::BitcoinHash;
-use network::constants::Network;
-use wallet::address::{Address, ToAddress};
 
 /// A transaction input, which defines old coins to be consumed
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -65,27 +63,6 @@ pub struct TxOut {
 impl Default for TxOut {
     fn default() -> TxOut {
         TxOut { value: 0xffffffffffffffff, script_pubkey: Script::new() }
-    }
-}
-
-/// A classification for script pubkeys 
-pub enum ScriptPubkeyTemplate {
-    /// A pay-to-address output
-    PayToPubkeyHash(Address),
-    /// Another kind of output
-    Unknown
-}
-
-impl TxOut {
-    /// Determines the template that this output adheres to, if any
-    pub fn classify(&self, network: Network) -> ScriptPubkeyTemplate {
-        if self.script_pubkey.len() == 25 &&
-             &self.script_pubkey[0..3] == &[0x76, 0xa9, 0x14] &&
-             &self.script_pubkey[23..] == &[0x88, 0xac] {
-            ScriptPubkeyTemplate::PayToPubkeyHash((&self.script_pubkey[3..23]).to_address(network))
-        } else {
-            ScriptPubkeyTemplate::Unknown
-        }
     }
 }
 

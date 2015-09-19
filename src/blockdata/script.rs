@@ -1586,8 +1586,9 @@ fn check_signature(secp: &Secp256k1, sig_slice: &[u8], pk_slice: &[u8], script: 
 
     // We can unwrap -- only failure mode is on length, which is fixed to 32
     let msg = secp256k1::Message::from_slice(&signature_hash[..]).unwrap();
+    let sig = try!(secp256k1::Signature::from_der(secp, sig_slice).map_err(Error::Ecdsa));
 
-    Secp256k1::verify_raw(secp, &msg, sig_slice, &pubkey).map_err(Error::Ecdsa)
+    Secp256k1::verify(secp, &msg, &sig, &pubkey).map_err(Error::Ecdsa)
 }
 
 // Macro to translate English stack instructions into Rust code.
