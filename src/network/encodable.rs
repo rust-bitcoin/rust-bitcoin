@@ -30,9 +30,7 @@
 //!
 
 use std::collections::HashMap;
-use std::default::Default;
 use std::hash::Hash;
-use std::collections::hash_state::HashState;
 use std::u32;
 
 use util::hash::Sha256dHash;
@@ -315,11 +313,10 @@ impl<D: SimpleDecoder, T: ConsensusDecodable<D>> ConsensusDecodable<D> for Box<T
 }
 
 // HashMap
-impl<S, K, V, H> ConsensusEncodable<S> for HashMap<K, V, H>
+impl<S, K, V> ConsensusEncodable<S> for HashMap<K, V>
     where S: SimpleEncoder,
-                H: HashState + Default,
-                K: ConsensusEncodable<S> + Eq + Hash,
-                V: ConsensusEncodable<S>
+          K: ConsensusEncodable<S> + Eq + Hash,
+          V: ConsensusEncodable<S>
 {
     #[inline]
     fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
@@ -332,17 +329,16 @@ impl<S, K, V, H> ConsensusEncodable<S> for HashMap<K, V, H>
     }
 }
 
-impl<D, K, V, H> ConsensusDecodable<D> for HashMap<K, V, H>
+impl<D, K, V> ConsensusDecodable<D> for HashMap<K, V>
     where D: SimpleDecoder,
-                H: HashState + Default,
-                K: ConsensusDecodable<D> + Eq + Hash,
-                V: ConsensusDecodable<D>
+          K: ConsensusDecodable<D> + Eq + Hash,
+          V: ConsensusDecodable<D>
 {
     #[inline]
-    fn consensus_decode(d: &mut D) -> Result<HashMap<K, V, H>, D::Error> {
+    fn consensus_decode(d: &mut D) -> Result<HashMap<K, V>, D::Error> {
         let VarInt(len): VarInt = try!(ConsensusDecodable::consensus_decode(d));
 
-        let mut ret = HashMap::with_capacity_and_hash_state(len as usize, Default::default());
+        let mut ret = HashMap::with_capacity(len as usize);
         for _ in 0..len {
             ret.insert(try!(ConsensusDecodable::consensus_decode(d)),
                                  try!(ConsensusDecodable::consensus_decode(d)));

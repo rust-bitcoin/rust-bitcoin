@@ -167,572 +167,585 @@ impl Clone for Validator {
 }
 
 // Validators
-fn check_op_size(elem: &AbstractStackElem, others: &[usize]) -> bool {
-    let other = unsafe { elem.lookup(others[0]) };
-    elem.num_hi() >= other.len_lo() as i64 &&
-    elem.num_lo() <= other.len_hi() as i64
-}
+mod check {
+    use super::AbstractStackElem;
 
-fn update_op_size(elem: &mut AbstractStackElem, others: &[usize])
-                                    -> Result<(), Error> {
-    let (lo, hi) = {
+    pub fn op_size(elem: &AbstractStackElem, others: &[usize]) -> bool {
+        let other = unsafe { elem.lookup(others[0]) };
+        elem.num_hi() >= other.len_lo() as i64 &&
+        elem.num_lo() <= other.len_hi() as i64
+    }
+
+    pub fn op_equal(elem: &AbstractStackElem, others: &[usize]) -> bool {
         let one = unsafe { elem.lookup(others[0]) };
-        (one.len_lo() as i64, one.len_hi() as i64)
-    };
-    try!(elem.set_numeric());
-    try!(elem.set_num_lo(lo));
-    elem.set_num_hi(hi)
-}
-
-fn check_op_equal(elem: &AbstractStackElem, others: &[usize]) -> bool {
-    let one = unsafe { elem.lookup(others[0]) };
-    let two = unsafe { elem.lookup(others[1]) };
-    match elem.bool_value() {
-        None => true,
-        Some(false) => {
-            (one.num_value().is_none() || two.num_value().is_none() ||
-             one.num_value().unwrap() != two.num_value().unwrap()) &&
-            (one.bool_value() != Some(false) || two.bool_value() != Some(false)) &&
-            (one.raw_value().is_none() || two.raw_value().is_none() ||
-             one.raw_value().unwrap() != two.raw_value().unwrap())
-        }
-        Some(true) => {
-            one.len_lo() <= two.len_hi() &&
-            one.len_hi() >= two.len_lo() &&
-            one.num_lo() <= two.num_hi() &&
-            one.num_hi() >= two.num_lo() &&
-            (one.bool_value().is_none() || two.bool_value().is_none() ||
-             one.bool_value().unwrap() == two.bool_value().unwrap()) &&
-            (one.raw_value().is_none() || two.raw_value().is_none() ||
-             one.raw_value().unwrap() == two.raw_value().unwrap())
-        }
-    }
-}
-
-fn update_boolean(elem: &mut AbstractStackElem) -> Result<(), Error> {
-    // Test boolean values
-    elem.bool_val = Some(true);
-    let true_works = elem.validate();
-    elem.bool_val = Some(false);
-    let false_works = elem.validate();
-    elem.bool_val = None;
-    // Update according to what worked
-    match (true_works, false_works) {
-        (true,    true)    => Ok(()),
-        (false, false) => Err(Error::AnalyzeNeitherBoolWorks),
-        (true,    false) => elem.set_bool_value(true),
-        (false, true)    => elem.set_bool_value(false)
-    }
-}
-
-fn update_op_equal(elem: &mut AbstractStackElem, others: &[usize])
-                                     -> Result<(), Error> {
-    match elem.bool_value() {
-        None => update_boolean(elem),
-        Some(false) => {
-            let one = unsafe { elem.lookup_mut(others[0]) };
-            let two = unsafe { elem.lookup_mut(others[1]) };
-            // Booleans are the only thing we can do something useful with re "not equal"
-            match (one.bool_value(), two.bool_value()) {
-                (None, None) => Ok(()),
-                (None, Some(x)) => one.set_bool_value(!x),
-                (Some(x), None) => two.set_bool_value(!x),
-                (Some(x), Some(y)) if x == y => Err(Error::Unsatisfiable),
-                (Some(_), Some(_)) => Ok(())
+        let two = unsafe { elem.lookup(others[1]) };
+        match elem.bool_value() {
+            None => true,
+            Some(false) => {
+                (one.num_value().is_none() || two.num_value().is_none() ||
+                 one.num_value().unwrap() != two.num_value().unwrap()) &&
+                (one.bool_value() != Some(false) || two.bool_value() != Some(false)) &&
+                (one.raw_value().is_none() || two.raw_value().is_none() ||
+                 one.raw_value().unwrap() != two.raw_value().unwrap())
             }
-        }
-        Some(true) => {
-            let one = unsafe { elem.lookup_mut(others[0]) };
-            let two = unsafe { elem.lookup_mut(others[1]) };
-            // Equalize numeric bounds
-            try!(one.set_num_lo(two.num_lo()));
-            try!(one.set_num_hi(two.num_hi()));
-            try!(two.set_num_lo(one.num_lo()));
-            try!(two.set_num_hi(one.num_hi()));
-            // Equalize boolean values
-            match (one.bool_value(), two.bool_value()) {
-                (None, None) => {},
-                (None, Some(x)) => try!(one.set_bool_value(x)),
-                (Some(x), None) => try!(two.set_bool_value(x)),
-                (Some(x), Some(y)) if x == y => {},
-                (Some(_), Some(_)) => { return Err(Error::Unsatisfiable); }
-            }
-            // Equalize full values
-            match (one.raw_value().map(|r| r.to_vec()),
-                         two.raw_value().map(|r| r.to_vec())) {
-                (None, None) => {},
-                (None, Some(x)) => try!(one.set_value(&x)),
-                (Some(x), None) => try!(two.set_value(&x)),
-                (Some(x), Some(y)) => { if x != y { return Err(Error::Unsatisfiable); } }
-            }
-            Ok(())
-        }
-    }
-}
-
-fn check_op_not(elem: &AbstractStackElem, others: &[usize]) -> bool {
-    let one = unsafe { elem.lookup(others[0]) };
-    if !one.may_be_numeric() {
-        return false;
-    }
-
-    match elem.bool_value() {
-        None => true,
-        Some(false) => one.num_hi() != 0 || one.num_lo() != 0,
-        Some(true) => one.num_hi() >= 0 && one.num_lo() <= 0
-    }
-}
-
-fn update_op_not(elem: &mut AbstractStackElem, others: &[usize])
-                -> Result<(), Error> {
-    match elem.bool_value() {
-        None => update_boolean(elem),
-        Some(false) => {
-            let one = unsafe { elem.lookup_mut(others[0]) };
-            try!(one.set_numeric());
-            match one.bool_value() {
-                None => one.set_bool_value(true),
-                Some(true) => Ok(()),
-                Some(false) => Err(Error::Unsatisfiable)
-            }
-        }
-        Some(true) => {
-            let one = unsafe { elem.lookup_mut(others[0]) };
-            try!(one.set_numeric());
-            match one.bool_value() {
-                None => one.set_num_value(0),
-                Some(true) => Err(Error::Unsatisfiable),
-                Some(false) => Ok(())
+            Some(true) => {
+                one.len_lo() <= two.len_hi() &&
+                one.len_hi() >= two.len_lo() &&
+                one.num_lo() <= two.num_hi() &&
+                one.num_hi() >= two.num_lo() &&
+                (one.bool_value().is_none() || two.bool_value().is_none() ||
+                 one.bool_value().unwrap() == two.bool_value().unwrap()) &&
+                (one.raw_value().is_none() || two.raw_value().is_none() ||
+                 one.raw_value().unwrap() == two.raw_value().unwrap())
             }
         }
     }
-}
 
-fn check_op_0notequal(elem: &AbstractStackElem, others: &[usize]) -> bool {
-    let one = unsafe { elem.lookup(others[0]) };
-    if !one.may_be_numeric() { return false; }
-    match elem.bool_value() {
-        None => true,
-        Some(false) => one.num_hi() >= 0 && one.num_lo() <= 0,
-        Some(true) => one.num_hi() != 0 || one.num_lo() != 0
+    pub fn op_not(elem: &AbstractStackElem, others: &[usize]) -> bool {
+        let one = unsafe { elem.lookup(others[0]) };
+        if !one.may_be_numeric() {
+            return false;
+        }
+
+        match elem.bool_value() {
+            None => true,
+            Some(false) => one.num_hi() != 0 || one.num_lo() != 0,
+            Some(true) => one.num_hi() >= 0 && one.num_lo() <= 0
+        }
     }
-}
 
-fn update_op_0notequal(elem: &mut AbstractStackElem, others: &[usize])
-                      -> Result<(), Error> {
-    match elem.bool_value() {
-        None => update_boolean(elem),
-        Some(false) => {
-            let one = unsafe { elem.lookup_mut(others[0]) };
-            try!(one.set_numeric());
-            match one.bool_value() {
-                None => one.set_num_value(0),
-                Some(true) => Err(Error::Unsatisfiable),
-                Some(false) => Ok(())
+    pub fn op_0notequal(elem: &AbstractStackElem, others: &[usize]) -> bool {
+        let one = unsafe { elem.lookup(others[0]) };
+        if !one.may_be_numeric() { return false; }
+        match elem.bool_value() {
+            None => true,
+            Some(false) => one.num_hi() >= 0 && one.num_lo() <= 0,
+            Some(true) => one.num_hi() != 0 || one.num_lo() != 0
+        }
+    }
+
+    pub fn op_numequal(elem: &AbstractStackElem, others: &[usize]) -> bool {
+        let one = unsafe { elem.lookup(others[0]) };
+        let two = unsafe { elem.lookup(others[1]) };
+        if !one.may_be_numeric() { return false; }
+        if !two.may_be_numeric() { return false; }
+        match elem.bool_value() {
+            None => true,
+            Some(false) => {
+                (one.num_value().is_none() || two.num_value().is_none() ||
+                 one.num_value().unwrap() != two.num_value().unwrap()) &&
+                (one.bool_value().is_none() || two.bool_value().is_none() ||
+                 one.bool_value().unwrap() != two.bool_value().unwrap())
+            }
+            Some(true) => {
+                one.num_lo() <= two.num_hi() &&
+                one.num_hi() >= two.num_lo() &&
+                (one.num_value().is_none() || two.num_value().is_none() ||
+                 one.num_value().unwrap() == two.num_value().unwrap()) &&
+                (one.bool_value().is_none() || two.bool_value().is_none() ||
+                 one.bool_value().unwrap() == two.bool_value().unwrap())
             }
         }
-        Some(true) => {
-            let one = unsafe { elem.lookup_mut(others[0]) };
-            try!(one.set_numeric());
-            match one.bool_value() {
-                None => one.set_bool_value(true),
-                Some(true) => Ok(()),
-                Some(false) => Err(Error::Unsatisfiable)
+    }
+
+    pub fn op_numnotequal(elem: &AbstractStackElem, others: &[usize]) -> bool {
+        let one = unsafe { elem.lookup(others[0]) };
+        let two = unsafe { elem.lookup(others[1]) };
+        if !one.may_be_numeric() { return false; }
+        if !two.may_be_numeric() { return false; }
+        match elem.bool_value() {
+            None => true,
+            Some(false) => one.may_be_lt(two) || one.may_be_gt(two),
+            Some(true) => one.may_be_lteq(two) && one.may_be_gteq(two)
+        }
+    }
+
+    pub fn op_numlt(elem: &AbstractStackElem, others: &[usize]) -> bool {
+        let one = unsafe { elem.lookup(others[0]) };
+        let two = unsafe { elem.lookup(others[1]) };
+        if !one.may_be_numeric() { return false; }
+        if !two.may_be_numeric() { return false; }
+        match elem.bool_value() {
+            None => true,
+            Some(true) => one.may_be_lt(two),
+            Some(false) => one.may_be_gteq(two),
+        }
+    }
+
+    pub fn op_numgt(elem: &AbstractStackElem, others: &[usize]) -> bool {
+        let one = unsafe { elem.lookup(others[0]) };
+        let two = unsafe { elem.lookup(others[1]) };
+        if !one.may_be_numeric() { return false; }
+        if !two.may_be_numeric() { return false; }
+        match elem.bool_value() {
+            None => true,
+            Some(true) => one.may_be_gt(two),
+            Some(false) => one.may_be_lteq(two)
+        }
+    }
+
+    pub fn op_numlteq(elem: &AbstractStackElem, others: &[usize]) -> bool {
+        let one = unsafe { elem.lookup(others[0]) };
+        let two = unsafe { elem.lookup(others[1]) };
+        if !one.may_be_numeric() { return false; }
+        if !two.may_be_numeric() { return false; }
+        match elem.bool_value() {
+            None => true,
+            Some(false) => one.may_be_gt(two),
+            Some(true) => one.may_be_lteq(two)
+        }
+    }
+
+    pub fn op_numgteq(elem: &AbstractStackElem, others: &[usize]) -> bool {
+        let one = unsafe { elem.lookup(others[0]) };
+        let two = unsafe { elem.lookup(others[1]) };
+        if !one.may_be_numeric() { return false; }
+        if !two.may_be_numeric() { return false; }
+        match elem.bool_value() {
+            None => true,
+            Some(true) => one.may_be_gteq(two),
+            Some(false) => one.may_be_lt(two)
+        }
+    }
+
+    pub fn op_ripemd160(elem: &AbstractStackElem, _: &[usize]) -> bool {
+        elem.may_be_hash160()
+    }
+
+    pub fn op_sha1(elem: &AbstractStackElem, _: &[usize]) -> bool {
+        elem.may_be_hash160()
+    }
+
+    pub fn op_hash160(elem: &AbstractStackElem, _: &[usize]) -> bool {
+        elem.may_be_hash160()
+    }
+    
+    pub fn op_sha256(elem: &AbstractStackElem, _: &[usize]) -> bool {
+        elem.may_be_hash256()
+    }
+
+    pub fn op_hash256(elem: &AbstractStackElem, _: &[usize]) -> bool {
+        elem.may_be_hash256()
+    }
+
+    pub fn op_checksig(elem: &AbstractStackElem, others: &[usize]) -> bool {
+        let one = unsafe { elem.lookup(others[0]) };
+        let two = unsafe { elem.lookup(others[1]) };
+        match elem.bool_value() {
+            None => true,
+            Some(false) => true,
+            Some(true) => one.may_be_signature() && two.may_be_pubkey()
+        }
+    }
+
+}
+
+mod update {
+    use super::{AbstractStackElem, Error};
+    use crypto::digest::Digest;
+    use crypto::ripemd160::Ripemd160;
+    use crypto::sha1::Sha1;
+    use crypto::sha2::Sha256;
+
+    pub fn op_size(elem: &mut AbstractStackElem, others: &[usize])
+              -> Result<(), Error> {
+        let (lo, hi) = {
+            let one = unsafe { elem.lookup(others[0]) };
+            (one.len_lo() as i64, one.len_hi() as i64)
+        };
+        try!(elem.set_numeric());
+        try!(elem.set_num_lo(lo));
+        elem.set_num_hi(hi)
+    }
+
+    fn boolean(elem: &mut AbstractStackElem) -> Result<(), Error> {
+        // Test boolean values
+        elem.bool_val = Some(true);
+        let true_works = elem.validate();
+        elem.bool_val = Some(false);
+        let false_works = elem.validate();
+        elem.bool_val = None;
+        // Update according to what worked
+        match (true_works, false_works) {
+            (true,    true)    => Ok(()),
+            (false, false) => Err(Error::AnalyzeNeitherBoolWorks),
+            (true,    false) => elem.set_bool_value(true),
+            (false, true)    => elem.set_bool_value(false)
+        }
+    }
+
+    pub fn op_equal(elem: &mut AbstractStackElem, others: &[usize])
+               -> Result<(), Error> {
+        match elem.bool_value() {
+            None => boolean(elem),
+            Some(false) => {
+                let one = unsafe { elem.lookup_mut(others[0]) };
+                let two = unsafe { elem.lookup_mut(others[1]) };
+                // Booleans are the only thing we can do something useful with re "not equal"
+                match (one.bool_value(), two.bool_value()) {
+                    (None, None) => Ok(()),
+                    (None, Some(x)) => one.set_bool_value(!x),
+                    (Some(x), None) => two.set_bool_value(!x),
+                    (Some(x), Some(y)) if x == y => Err(Error::Unsatisfiable),
+                    (Some(_), Some(_)) => Ok(())
+                }
+            }
+            Some(true) => {
+                let one = unsafe { elem.lookup_mut(others[0]) };
+                let two = unsafe { elem.lookup_mut(others[1]) };
+                // Equalize numeric bounds
+                try!(one.set_num_lo(two.num_lo()));
+                try!(one.set_num_hi(two.num_hi()));
+                try!(two.set_num_lo(one.num_lo()));
+                try!(two.set_num_hi(one.num_hi()));
+                // Equalize boolean values
+                match (one.bool_value(), two.bool_value()) {
+                    (None, None) => {},
+                    (None, Some(x)) => try!(one.set_bool_value(x)),
+                    (Some(x), None) => try!(two.set_bool_value(x)),
+                    (Some(x), Some(y)) if x == y => {},
+                    (Some(_), Some(_)) => { return Err(Error::Unsatisfiable); }
+                }
+                // Equalize full values
+                match (one.raw_value().map(|r| r.to_vec()),
+                             two.raw_value().map(|r| r.to_vec())) {
+                    (None, None) => {},
+                    (None, Some(x)) => try!(one.set_value(&x)),
+                    (Some(x), None) => try!(two.set_value(&x)),
+                    (Some(x), Some(y)) => { if x != y { return Err(Error::Unsatisfiable); } }
+                }
+                Ok(())
             }
         }
     }
-}
 
-fn check_op_numequal(elem: &AbstractStackElem, others: &[usize]) -> bool {
-    let one = unsafe { elem.lookup(others[0]) };
-    let two = unsafe { elem.lookup(others[1]) };
-    if !one.may_be_numeric() { return false; }
-    if !two.may_be_numeric() { return false; }
-    match elem.bool_value() {
-        None => true,
-        Some(false) => {
-            (one.num_value().is_none() || two.num_value().is_none() ||
-             one.num_value().unwrap() != two.num_value().unwrap()) &&
-            (one.bool_value().is_none() || two.bool_value().is_none() ||
-             one.bool_value().unwrap() != two.bool_value().unwrap())
-        }
-        Some(true) => {
-            one.num_lo() <= two.num_hi() &&
-            one.num_hi() >= two.num_lo() &&
-            (one.num_value().is_none() || two.num_value().is_none() ||
-             one.num_value().unwrap() == two.num_value().unwrap()) &&
-            (one.bool_value().is_none() || two.bool_value().is_none() ||
-             one.bool_value().unwrap() == two.bool_value().unwrap())
-        }
-    }
-}
-
-fn update_op_numequal(elem: &mut AbstractStackElem, others: &[usize])
-                     -> Result<(), Error> {
-    match elem.bool_value() {
-        None => update_boolean(elem),
-        Some(false) => {
-            // todo: find a way to force the numbers to be nonequal
-            Ok(())
-        }
-        Some(true) => {
-            let one = unsafe { elem.lookup_mut(others[0]) };
-            let two = unsafe { elem.lookup_mut(others[1]) };
-            try!(one.set_numeric());
-            try!(two.set_numeric());
-            try!(one.set_num_lo(two.num_lo()));
-            try!(one.set_num_hi(two.num_hi()));
-            try!(two.set_num_lo(one.num_lo()));
-            two.set_num_hi(one.num_hi())
+    pub fn op_not(elem: &mut AbstractStackElem, others: &[usize])
+             -> Result<(), Error> {
+        match elem.bool_value() {
+            None => boolean(elem),
+            Some(false) => {
+                let one = unsafe { elem.lookup_mut(others[0]) };
+                try!(one.set_numeric());
+                match one.bool_value() {
+                    None => one.set_bool_value(true),
+                    Some(true) => Ok(()),
+                    Some(false) => Err(Error::Unsatisfiable)
+                }
+            }
+            Some(true) => {
+                let one = unsafe { elem.lookup_mut(others[0]) };
+                try!(one.set_numeric());
+                match one.bool_value() {
+                    None => one.set_num_value(0),
+                    Some(true) => Err(Error::Unsatisfiable),
+                    Some(false) => Ok(())
+                }
+            }
         }
     }
-}
 
-fn check_op_numnotequal(elem: &AbstractStackElem, others: &[usize]) -> bool {
-    let one = unsafe { elem.lookup(others[0]) };
-    let two = unsafe { elem.lookup(others[1]) };
-    if !one.may_be_numeric() { return false; }
-    if !two.may_be_numeric() { return false; }
-    match elem.bool_value() {
-        None => true,
-        Some(false) => one.may_be_lt(two) || one.may_be_gt(two),
-        Some(true) => one.may_be_lteq(two) && one.may_be_gteq(two)
-    }
-}
-
-fn update_op_numnotequal(elem: &mut AbstractStackElem, others: &[usize])
-                        -> Result<(), Error> {
-    match elem.bool_value() {
-        None => update_boolean(elem),
-        Some(false) => {
-            let one = unsafe { elem.lookup_mut(others[0]) };
-            let two = unsafe { elem.lookup_mut(others[1]) };
-            try!(one.set_numeric());
-            try!(two.set_numeric());
-            try!(one.set_num_lo(two.num_lo()));
-            try!(one.set_num_hi(two.num_hi()));
-            try!(two.set_num_lo(one.num_lo()));
-            two.set_num_hi(one.num_hi())
-        }
-        Some(true) => {
-            // todo: find a way to force the numbers to be nonequal
-            Ok(())
-        }
-    }
-}
-
-fn check_op_numlt(elem: &AbstractStackElem, others: &[usize]) -> bool {
-    let one = unsafe { elem.lookup(others[0]) };
-    let two = unsafe { elem.lookup(others[1]) };
-    if !one.may_be_numeric() { return false; }
-    if !two.may_be_numeric() { return false; }
-    match elem.bool_value() {
-        None => true,
-        Some(true) => one.may_be_lt(two),
-        Some(false) => one.may_be_gteq(two),
-    }
-}
-
-fn update_op_numlt(elem: &mut AbstractStackElem, others: &[usize])
-                  -> Result<(), Error> {
-    match elem.bool_value() {
-        None => update_boolean(elem),
-        Some(true) => {
-            let one = unsafe { elem.lookup_mut(others[0]) };
-            let two = unsafe { elem.lookup_mut(others[1]) };
-            try!(one.set_numeric());
-            try!(two.set_numeric());
-
-            try!(one.set_num_hi(two.num_hi() - 1));
-            two.set_num_lo(one.num_lo() + 1)
-        }
-        Some(false) => {
-            let one = unsafe { elem.lookup_mut(others[0]) };
-            let two = unsafe { elem.lookup_mut(others[1]) };
-            try!(one.set_numeric());
-            try!(two.set_numeric());
-
-            try!(one.set_num_lo(two.num_lo()));
-            two.set_num_hi(one.num_hi())
-        }
-    }
-}
-
-fn check_op_numgt(elem: &AbstractStackElem, others: &[usize]) -> bool {
-    let one = unsafe { elem.lookup(others[0]) };
-    let two = unsafe { elem.lookup(others[1]) };
-    if !one.may_be_numeric() { return false; }
-    if !two.may_be_numeric() { return false; }
-    match elem.bool_value() {
-        None => true,
-        Some(true) => one.may_be_gt(two),
-        Some(false) => one.may_be_lteq(two)
-    }
-}
-
-fn update_op_numgt(elem: &mut AbstractStackElem, others: &[usize])
-                  -> Result<(), Error> {
-    match elem.bool_value() {
-        None => try!(update_boolean(elem)),
-        Some(true) => {
-            let one = unsafe { elem.lookup_mut(others[0]) };
-            let two = unsafe { elem.lookup_mut(others[1]) };
-            try!(one.set_numeric());
-            try!(two.set_numeric());
-
-            try!(one.set_num_lo(two.num_lo() + 1));
-            try!(two.set_num_hi(one.num_hi() - 1));
-        }
-        Some(false) => {
-            let one = unsafe { elem.lookup_mut(others[0]) };
-            let two = unsafe { elem.lookup_mut(others[1]) };
-            try!(one.set_numeric());
-            try!(two.set_numeric());
-
-            try!(one.set_num_hi(two.num_hi()));
-            try!(two.set_num_lo(one.num_lo()));
-        }
-    }
-    Ok(())
-}
-
-fn check_op_numlteq(elem: &AbstractStackElem, others: &[usize]) -> bool {
-    let one = unsafe { elem.lookup(others[0]) };
-    let two = unsafe { elem.lookup(others[1]) };
-    if !one.may_be_numeric() { return false; }
-    if !two.may_be_numeric() { return false; }
-    match elem.bool_value() {
-        None => true,
-        Some(false) => one.may_be_gt(two),
-        Some(true) => one.may_be_lteq(two)
-    }
-}
-
-fn update_op_numlteq(elem: &mut AbstractStackElem, others: &[usize])
-                    -> Result<(), Error> {
-    match elem.bool_value() {
-        None => try!(update_boolean(elem)),
-        Some(true) => {
-            let one = unsafe { elem.lookup_mut(others[0]) };
-            let two = unsafe { elem.lookup_mut(others[1]) };
-            try!(one.set_numeric());
-            try!(two.set_numeric());
-
-            try!(one.set_num_hi(two.num_hi()));
-            try!(two.set_num_lo(one.num_lo()));
-        }
-        Some(false) => {
-            let one = unsafe { elem.lookup_mut(others[0]) };
-            let two = unsafe { elem.lookup_mut(others[1]) };
-            try!(one.set_numeric());
-            try!(two.set_numeric());
-
-            try!(one.set_num_lo(two.num_lo() + 1));
-            try!(two.set_num_hi(one.num_hi() - 1));
-        }
-    }
-    Ok(())
-}
-
-fn check_op_numgteq(elem: &AbstractStackElem, others: &[usize]) -> bool {
-    let one = unsafe { elem.lookup(others[0]) };
-    let two = unsafe { elem.lookup(others[1]) };
-    if !one.may_be_numeric() { return false; }
-    if !two.may_be_numeric() { return false; }
-    match elem.bool_value() {
-        None => true,
-        Some(true) => one.may_be_gteq(two),
-        Some(false) => one.may_be_lt(two)
-    }
-}
-
-fn update_op_numgteq(elem: &mut AbstractStackElem, others: &[usize])
-                    -> Result<(), Error> {
-    match elem.bool_value() {
-        None => try!(update_boolean(elem)),
-        Some(true) => {
-            let one = unsafe { elem.lookup_mut(others[0]) };
-            let two = unsafe { elem.lookup_mut(others[1]) };
-            try!(one.set_numeric());
-            try!(two.set_numeric());
-
-            try!(one.set_num_lo(two.num_lo()));
-            try!(two.set_num_hi(one.num_hi()));
-        }
-        Some(false) => {
-            let one = unsafe { elem.lookup_mut(others[0]) };
-            let two = unsafe { elem.lookup_mut(others[1]) };
-            try!(one.set_numeric());
-            try!(two.set_numeric());
-
-            try!(one.set_num_hi(two.num_hi() - 1));
-            try!(two.set_num_lo(one.num_lo() + 1));
-        }
-    }
-    Ok(())
-}
-
-fn check_op_ripemd160(elem: &AbstractStackElem, _: &[usize]) -> bool {
-    elem.may_be_hash160()
-}
-
-fn update_op_ripemd160(elem: &mut AbstractStackElem, others: &[usize])
-                      -> Result<(), Error> {
-    try!(elem.set_len_lo(20));
-    try!(elem.set_len_hi(20));
-
-    let hash = match unsafe { elem.lookup(others[0]) }.raw_value() {
-        None => None,
-        Some(x) => {
-            let mut out = [0; 20];
-            let mut engine = Ripemd160::new();
-            engine.input(x);
-            engine.result(&mut out);
-            Some(out)
-        }
-    };
-
-    match hash {
-        None => Ok(()),
-        Some(x) => elem.set_value(&x)
-    }
-}
-
-fn check_op_sha1(elem: &AbstractStackElem, _: &[usize]) -> bool {
-    elem.may_be_hash160()
-}
-
-fn update_op_sha1(elem: &mut AbstractStackElem, others: &[usize])
-                 -> Result<(), Error> {
-    try!(elem.set_len_lo(20));
-    try!(elem.set_len_hi(20));
-
-    let hash = match unsafe { elem.lookup(others[0]) }.raw_value() {
-        None => None,
-        Some(x) => {
-            let mut out = [0; 20];
-            let mut engine = Sha1::new();
-            engine.input(x);
-            engine.result(&mut out);
-            Some(out)
-        }
-    };
-
-    match hash {
-        None => Ok(()),
-        Some(x) => elem.set_value(&x)
-    }
-}
-
-fn check_op_hash160(elem: &AbstractStackElem, _: &[usize]) -> bool {
-    elem.may_be_hash160()
-}
-
-fn update_op_hash160(elem: &mut AbstractStackElem, others: &[usize])
-                    -> Result<(), Error> {
-    try!(elem.set_len_lo(20));
-    try!(elem.set_len_hi(20));
-
-    let hash = match unsafe { elem.lookup(others[0]) }.raw_value() {
-        None => None,
-        Some(x) => {
-            let mut out1 = [0; 32];
-            let mut out2 = [0; 20];
-            let mut engine = Sha256::new();
-            engine.input(x);
-            engine.result(&mut out1);
-            let mut engine = Ripemd160::new();
-            engine.input(&out1);
-            engine.result(&mut out2);
-            Some(out2)
-        }
-    };
-
-    match hash {
-        None => Ok(()),
-        Some(x) => elem.set_value(&x)
-    }
-}
-
-fn check_op_sha256(elem: &AbstractStackElem, _: &[usize]) -> bool {
-    elem.may_be_hash256()
-}
-
-fn update_op_sha256(elem: &mut AbstractStackElem, others: &[usize])
+    pub fn op_0notequal(elem: &mut AbstractStackElem, others: &[usize])
                    -> Result<(), Error> {
-    try!(elem.set_len_lo(32));
-    try!(elem.set_len_hi(32));
-
-    let hash = match unsafe { elem.lookup(others[0]) }.raw_value() {
-        None => None,
-        Some(x) => {
-            let mut out = [0; 32];
-            let mut engine = Sha256::new();
-            engine.input(x);
-            engine.result(&mut out);
-            Some(out)
+        match elem.bool_value() {
+            None => boolean(elem),
+            Some(false) => {
+                let one = unsafe { elem.lookup_mut(others[0]) };
+                try!(one.set_numeric());
+                match one.bool_value() {
+                    None => one.set_num_value(0),
+                    Some(true) => Err(Error::Unsatisfiable),
+                    Some(false) => Ok(())
+                }
+            }
+            Some(true) => {
+                let one = unsafe { elem.lookup_mut(others[0]) };
+                try!(one.set_numeric());
+                match one.bool_value() {
+                    None => one.set_bool_value(true),
+                    Some(true) => Ok(()),
+                    Some(false) => Err(Error::Unsatisfiable)
+                }
+            }
         }
-    };
-
-    match hash {
-        None => Ok(()),
-        Some(x) => elem.set_value(&x)
     }
-}
 
-fn check_op_hash256(elem: &AbstractStackElem, _: &[usize]) -> bool {
-    elem.may_be_hash256()
-}
-
-fn update_op_hash256(elem: &mut AbstractStackElem, others: &[usize])
-                    -> Result<(), Error> {
-    try!(elem.set_len_lo(32));
-    try!(elem.set_len_hi(32));
-
-    let hash = match unsafe { elem.lookup(others[0]) }.raw_value() {
-        None => None,
-        Some(x) => {
-            let mut out = [0; 32];
-            let mut engine = Sha256::new();
-            engine.input(x);
-            engine.result(&mut out);
-            let mut engine = Sha256::new();
-            engine.input(&out);
-            engine.result(&mut out);
-            Some(out)
+    pub fn op_numequal(elem: &mut AbstractStackElem, others: &[usize])
+                  -> Result<(), Error> {
+        match elem.bool_value() {
+            None => boolean(elem),
+            Some(false) => {
+                // todo: find a way to force the numbers to be nonequal
+                Ok(())
+            }
+            Some(true) => {
+                let one = unsafe { elem.lookup_mut(others[0]) };
+                let two = unsafe { elem.lookup_mut(others[1]) };
+                try!(one.set_numeric());
+                try!(two.set_numeric());
+                try!(one.set_num_lo(two.num_lo()));
+                try!(one.set_num_hi(two.num_hi()));
+                try!(two.set_num_lo(one.num_lo()));
+                two.set_num_hi(one.num_hi())
+            }
         }
-    };
-
-    match hash {
-        None => Ok(()),
-        Some(x) => elem.set_value(&x)
     }
-}
 
-fn check_op_checksig(elem: &AbstractStackElem, others: &[usize]) -> bool {
-    let one = unsafe { elem.lookup(others[0]) };
-    let two = unsafe { elem.lookup(others[1]) };
-    match elem.bool_value() {
-        None => true,
-        Some(false) => true,
-        Some(true) => one.may_be_signature() && two.may_be_pubkey()
-    }
-}
-
-fn update_op_checksig(elem: &mut AbstractStackElem, others: &[usize])
+    pub fn op_numnotequal(elem: &mut AbstractStackElem, others: &[usize])
                      -> Result<(), Error> {
-    match elem.bool_value() {
-        None => update_boolean(elem),
-        Some(false) => Ok(()), // nothing we can do to enforce an invalid sig
-        Some(true) => {
-            let sig = unsafe { elem.lookup_mut(others[0]) };
-            let pk    = unsafe { elem.lookup_mut(others[1]) };
+        match elem.bool_value() {
+            None => boolean(elem),
+            Some(false) => {
+                let one = unsafe { elem.lookup_mut(others[0]) };
+                let two = unsafe { elem.lookup_mut(others[1]) };
+                try!(one.set_numeric());
+                try!(two.set_numeric());
+                try!(one.set_num_lo(two.num_lo()));
+                try!(one.set_num_hi(two.num_hi()));
+                try!(two.set_num_lo(one.num_lo()));
+                two.set_num_hi(one.num_hi())
+            }
+            Some(true) => {
+                // todo: find a way to force the numbers to be nonequal
+                Ok(())
+            }
+        }
+    }
 
-            // todo add DER encoding enforcement
-            try!(pk.set_len_lo(33));
-            try!(pk.set_len_hi(65));
-            try!(sig.set_len_lo(75));
-            sig.set_len_hi(80)
+    pub fn op_numlt(elem: &mut AbstractStackElem, others: &[usize])
+               -> Result<(), Error> {
+        match elem.bool_value() {
+            None => boolean(elem),
+            Some(true) => {
+                let one = unsafe { elem.lookup_mut(others[0]) };
+                let two = unsafe { elem.lookup_mut(others[1]) };
+                try!(one.set_numeric());
+                try!(two.set_numeric());
+    
+                try!(one.set_num_hi(two.num_hi() - 1));
+                two.set_num_lo(one.num_lo() + 1)
+            }
+            Some(false) => {
+                let one = unsafe { elem.lookup_mut(others[0]) };
+                let two = unsafe { elem.lookup_mut(others[1]) };
+                try!(one.set_numeric());
+                try!(two.set_numeric());
+    
+                try!(one.set_num_lo(two.num_lo()));
+                two.set_num_hi(one.num_hi())
+            }
+        }
+    }
+
+    pub fn op_numgt(elem: &mut AbstractStackElem, others: &[usize])
+               -> Result<(), Error> {
+        match elem.bool_value() {
+            None => try!(boolean(elem)),
+            Some(true) => {
+                let one = unsafe { elem.lookup_mut(others[0]) };
+                let two = unsafe { elem.lookup_mut(others[1]) };
+                try!(one.set_numeric());
+                try!(two.set_numeric());
+    
+                try!(one.set_num_lo(two.num_lo() + 1));
+                try!(two.set_num_hi(one.num_hi() - 1));
+            }
+            Some(false) => {
+                let one = unsafe { elem.lookup_mut(others[0]) };
+                let two = unsafe { elem.lookup_mut(others[1]) };
+                try!(one.set_numeric());
+                try!(two.set_numeric());
+    
+                try!(one.set_num_hi(two.num_hi()));
+                try!(two.set_num_lo(one.num_lo()));
+            }
+        }
+        Ok(())
+    }
+
+    pub fn op_numlteq(elem: &mut AbstractStackElem, others: &[usize])
+                 -> Result<(), Error> {
+        match elem.bool_value() {
+            None => try!(boolean(elem)),
+            Some(true) => {
+                let one = unsafe { elem.lookup_mut(others[0]) };
+                let two = unsafe { elem.lookup_mut(others[1]) };
+                try!(one.set_numeric());
+                try!(two.set_numeric());
+    
+                try!(one.set_num_hi(two.num_hi()));
+                try!(two.set_num_lo(one.num_lo()));
+            }
+            Some(false) => {
+                let one = unsafe { elem.lookup_mut(others[0]) };
+                let two = unsafe { elem.lookup_mut(others[1]) };
+                try!(one.set_numeric());
+                try!(two.set_numeric());
+    
+                try!(one.set_num_lo(two.num_lo() + 1));
+                try!(two.set_num_hi(one.num_hi() - 1));
+            }
+        }
+        Ok(())
+    }
+
+    pub fn op_numgteq(elem: &mut AbstractStackElem, others: &[usize])
+                 -> Result<(), Error> {
+        match elem.bool_value() {
+            None => try!(boolean(elem)),
+            Some(true) => {
+                let one = unsafe { elem.lookup_mut(others[0]) };
+                let two = unsafe { elem.lookup_mut(others[1]) };
+                try!(one.set_numeric());
+                try!(two.set_numeric());
+    
+                try!(one.set_num_lo(two.num_lo()));
+                try!(two.set_num_hi(one.num_hi()));
+            }
+            Some(false) => {
+                let one = unsafe { elem.lookup_mut(others[0]) };
+                let two = unsafe { elem.lookup_mut(others[1]) };
+                try!(one.set_numeric());
+                try!(two.set_numeric());
+    
+                try!(one.set_num_hi(two.num_hi() - 1));
+                try!(two.set_num_lo(one.num_lo() + 1));
+            }
+        }
+        Ok(())
+    }
+
+    pub fn op_ripemd160(elem: &mut AbstractStackElem, others: &[usize])
+                   -> Result<(), Error> {
+        try!(elem.set_len_lo(20));
+        try!(elem.set_len_hi(20));
+    
+        let hash = match unsafe { elem.lookup(others[0]) }.raw_value() {
+            None => None,
+            Some(x) => {
+                let mut out = [0; 20];
+                let mut engine = Ripemd160::new();
+                engine.input(x);
+                engine.result(&mut out);
+                Some(out)
+            }
+        };
+
+        match hash {
+            None => Ok(()),
+            Some(x) => elem.set_value(&x)
+        }
+    }
+
+    pub fn op_sha1(elem: &mut AbstractStackElem, others: &[usize])
+              -> Result<(), Error> {
+        try!(elem.set_len_lo(20));
+        try!(elem.set_len_hi(20));
+    
+        let hash = match unsafe { elem.lookup(others[0]) }.raw_value() {
+            None => None,
+            Some(x) => {
+                let mut out = [0; 20];
+                let mut engine = Sha1::new();
+                engine.input(x);
+                engine.result(&mut out);
+                Some(out)
+            }
+        };
+
+        match hash {
+            None => Ok(()),
+            Some(x) => elem.set_value(&x)
+        }
+    }
+
+    pub fn op_hash160(elem: &mut AbstractStackElem, others: &[usize])
+                 -> Result<(), Error> {
+        try!(elem.set_len_lo(20));
+        try!(elem.set_len_hi(20));
+    
+        let hash = match unsafe { elem.lookup(others[0]) }.raw_value() {
+            None => None,
+            Some(x) => {
+                let mut out1 = [0; 32];
+                let mut out2 = [0; 20];
+                let mut engine = Sha256::new();
+                engine.input(x);
+                engine.result(&mut out1);
+                let mut engine = Ripemd160::new();
+                engine.input(&out1);
+                engine.result(&mut out2);
+                Some(out2)
+            }
+        };
+
+        match hash {
+            None => Ok(()),
+            Some(x) => elem.set_value(&x)
+        }
+    }
+
+    pub fn op_sha256(elem: &mut AbstractStackElem, others: &[usize])
+                -> Result<(), Error> {
+        try!(elem.set_len_lo(32));
+        try!(elem.set_len_hi(32));
+
+        let hash = match unsafe { elem.lookup(others[0]) }.raw_value() {
+            None => None,
+            Some(x) => {
+                let mut out = [0; 32];
+                let mut engine = Sha256::new();
+                engine.input(x);
+                engine.result(&mut out);
+                Some(out)
+            }
+        };
+
+        match hash {
+            None => Ok(()),
+            Some(x) => elem.set_value(&x)
+        }
+    }
+
+    pub fn op_hash256(elem: &mut AbstractStackElem, others: &[usize])
+                 -> Result<(), Error> {
+        try!(elem.set_len_lo(32));
+        try!(elem.set_len_hi(32));
+    
+        let hash = match unsafe { elem.lookup(others[0]) }.raw_value() {
+            None => None,
+            Some(x) => {
+                let mut out = [0; 32];
+                let mut engine = Sha256::new();
+                engine.input(x);
+                engine.result(&mut out);
+                let mut engine = Sha256::new();
+                engine.input(&out);
+                engine.result(&mut out);
+                Some(out)
+            }
+        };
+
+        match hash {
+            None => Ok(()),
+            Some(x) => elem.set_value(&x)
+        }
+    }
+
+    pub fn op_checksig(elem: &mut AbstractStackElem, others: &[usize])
+                  -> Result<(), Error> {
+        match elem.bool_value() {
+            None => boolean(elem),
+            Some(false) => Ok(()), // nothing we can do to enforce an invalid sig
+            Some(true) => {
+                let sig = unsafe { elem.lookup_mut(others[0]) };
+                let pk    = unsafe { elem.lookup_mut(others[1]) };
+    
+                // todo add DER encoding enforcement
+                try!(pk.set_len_lo(33));
+                try!(pk.set_len_hi(65));
+                try!(sig.set_len_lo(75));
+                sig.set_len_hi(80)
+            }
         }
     }
 }
@@ -1646,8 +1659,8 @@ macro_rules! unary_opcode_satisfy {
         let one = $stack.pop();
         let cond = $stack.push_alloc(AbstractStackElem::new_unknown());
         try!(cond.add_validator(Validator { args: vec![one],
-                                            check: concat_idents!(check_, $op),
-                                            update: concat_idents!(update_, $op) }));
+                                            check: check::$op,
+                                            update: update::$op }));
     })
 }
 
@@ -1657,8 +1670,8 @@ macro_rules! boolean_opcode_satisfy {
         let cond = $stack.push_alloc(AbstractStackElem::new_unknown());
         try!(cond.set_boolean());
         try!(cond.add_validator(Validator { args: vec![one],
-                                            check: concat_idents!(check_, $op),
-                                            update: concat_idents!(update_, $op) }));
+                                            check: check::$op,
+                                            update: update::$op }));
     });
     ($stack:ident, binary $op:ident) => ({
         let one = $stack.pop();
@@ -1666,8 +1679,8 @@ macro_rules! boolean_opcode_satisfy {
         let cond = $stack.push_alloc(AbstractStackElem::new_unknown());
         try!(cond.set_boolean());
         try!(cond.add_validator(Validator { args: vec![two, one],
-                                            check: concat_idents!(check_, $op),
-                                            update: concat_idents!(update_, $op) }));
+                                            check: check::$op,
+                                            update: update::$op }));
     });
     ($stack:ident, ternary $op:ident) => ({
         let one = $stack.pop();
@@ -1676,8 +1689,8 @@ macro_rules! boolean_opcode_satisfy {
         let mut cond = $stack.push_alloc(AbstractStackElem::new_unknown());
         try!(cond.set_boolean());
         try!(cond.add_validator(Validator { args: vec![three, two, one],
-                                            check: concat_idents!(check_, $op),
-                                            update: concat_idents!(update_, $op) }));
+                                            check: check::$op,
+                                            update: update::$op }));
     });
 }
 
@@ -2341,8 +2354,8 @@ impl Script {
                                 let new_elem = stack.push_alloc(AbstractStackElem::new_unknown());
                                 try!(new_elem.set_numeric());
                                 try!(new_elem.add_validator(Validator { args: vec![top],
-                                                                                                                check: check_op_size,
-                                                                                                                update: update_op_size }));
+                                                                        check: check::op_size,
+                                                                        update: update::op_size }));
                             }
                             opcodes::Ordinary::OP_EQUAL => boolean_opcode_satisfy!(stack, binary op_equal),
                             opcodes::Ordinary::OP_EQUALVERIFY => {

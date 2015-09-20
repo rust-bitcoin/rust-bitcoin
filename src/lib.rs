@@ -28,13 +28,7 @@
 #![crate_type = "rlib"]
 
 // Experimental features we need
-#![feature(box_patterns)]
-#![feature(concat_idents)]
-#![feature(custom_derive, plugin)]
-#![feature(hashmap_hasher)]
-#![feature(ip_addr)]
-#![feature(slice_patterns)]
-#![cfg_attr(test, feature(test))]
+#![cfg_attr(all(test, feature = "unstable"), feature(test))]
 
 // Coding conventions
 #![deny(non_upper_case_globals)]
@@ -52,7 +46,7 @@ extern crate rand;
 extern crate rustc_serialize as serialize;
 extern crate secp256k1;
 extern crate serde;
-#[cfg(test)] extern crate test;
+#[cfg(all(test, feature = "unstable"))] extern crate test;
 extern crate time;
 
 #[cfg(test)]

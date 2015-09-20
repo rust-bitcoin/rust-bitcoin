@@ -249,8 +249,9 @@ impl<K, V> PatriciaTree<K, V>
                 }
                 match (tree.child_l.take(), tree.child_r.take()) {
                     (Some(_), Some(_)) => unreachable!(),
-                    (Some(box PatriciaTree { data, child_l, child_r, skip_prefix, skip_len }), None) |
-                    (None, Some(box PatriciaTree { data, child_l, child_r, skip_prefix, skip_len })) => {
+                    (Some(child), None) | (None, Some(child)) => {
+                        let child = *child;  /* workaround for rustc #28536 */
+                        let PatriciaTree { data, child_l, child_r, skip_len, skip_prefix } = child;
                         tree.data = data;
                         tree.child_l = child_l;
                         tree.child_r = child_r;
@@ -307,8 +308,9 @@ impl<K, V> PatriciaTree<K, V>
                     return (false, ret);
                 }
                 // One child? Consolidate
-                (bit, Some(box PatriciaTree { data, child_l, child_r, skip_prefix, skip_len }), None) |
-                (bit, None, Some(box PatriciaTree { data, child_l, child_r, skip_prefix, skip_len })) => {
+                (bit, Some(child), None) | (bit, None, Some(child)) => {
+                    let child = *child;  /* workaround for rustc #28536 */
+                    let PatriciaTree { data, child_l, child_r, skip_len, skip_prefix } = child;
                     tree.data = data;
                     tree.child_l = child_l;
                     tree.child_r = child_r;

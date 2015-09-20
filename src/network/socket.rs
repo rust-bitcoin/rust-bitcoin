@@ -33,10 +33,10 @@ use network::serialize::{RawEncoder, RawDecoder};
 use util::{self, propagate_err};
 
 /// Format an IP address in the 16-byte bitcoin protocol serialization
-fn ipaddr_to_bitcoin_addr(ipaddr: &net::IpAddr) -> [u16; 8] {
-    match *ipaddr {
-        net::IpAddr::V4(ref addr) => addr.to_ipv6_mapped().segments(),
-        net::IpAddr::V6(ref addr) => addr.segments()
+fn ipaddr_to_bitcoin_addr(addr: &net::SocketAddr) -> [u16; 8] {
+    match *addr {
+        net::SocketAddr::V4(ref addr) => addr.ip().to_ipv6_mapped().segments(),
+        net::SocketAddr::V6(ref addr) => addr.ip().segments()
     }
 }
 
@@ -117,7 +117,7 @@ impl Socket {
                 Ok(addr) => {
                     Ok(Address {
                         services: self.services,
-                        address: ipaddr_to_bitcoin_addr(&addr.ip()),
+                        address: ipaddr_to_bitcoin_addr(&addr),
                         port: addr.port()
                     })
                 },
@@ -133,7 +133,7 @@ impl Socket {
                 Ok(addr) => {
                     Ok(Address {
                         services: self.services,
-                        address: ipaddr_to_bitcoin_addr(&addr.ip()),
+                        address: ipaddr_to_bitcoin_addr(&addr),
                         port: addr.port()
                     })
                 },
