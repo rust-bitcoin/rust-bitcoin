@@ -16,11 +16,9 @@ readme = "README.md"
 name = "bitcoin"
 path = "src/lib.rs"
 
-[dependencies.eventual]
-git = "https://github.com/carllerche/eventual"
-
 [dependencies]
 byteorder = "0.3"
+eventual = "0.1"
 num = "0.1"
 num_cpus = "0.2"
 rand = "0.3"
