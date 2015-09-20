@@ -1,3 +1,4 @@
+[![Status](https://travis-ci.org/apoelstra/rust-bitcoin.png?branch=master)](https://travis-ci.org/apoelstra/rust-bitcoin)
 
 ### Rust Bitcoin Library
 
