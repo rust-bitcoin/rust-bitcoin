@@ -124,7 +124,7 @@ macro_rules! user_enum {
                         where E: ::serde::de::Error
                     {
                         $( if s == $txt { Ok($name::$elem) } )else*
-                        else { Err(::serde::de::Error::syntax_error()) }
+                        else { Err(::serde::de::Error::syntax(stringify!($name))) }
                     }
                 }
 

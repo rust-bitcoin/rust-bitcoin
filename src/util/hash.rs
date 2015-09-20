@@ -187,10 +187,10 @@ impl serde::Deserialize for Sha256dHash {
                 where E: serde::de::Error
             {
                 if hex_str.len() != 64 {
-                    return Err(serde::de::Error::syntax_error());
+                    return Err(serde::de::Error::syntax(&format!("Hash had character-length {} (should be 64)", hex_str.len())));
                 }
                 let raw_str = try!(hex_str.from_hex()
-                                          .map_err(|_| serde::de::Error::syntax_error()));
+                                          .map_err(|e| serde::de::Error::syntax(&format!("Hash was not hex-encoded: {}", e))));
                 let mut ret = [0u8; 32];
                 for i in 0..32 {
                     ret[i] = raw_str[31 - i];
@@ -262,7 +262,8 @@ impl <T: BitcoinHash> MerkleRoot for Vec<T> {
 #[cfg(test)]
 mod tests {
     use num::FromPrimitive;
-    use serde::{json, Serialize, Deserialize};
+    use serde::{Serialize, Deserialize};
+    use json;
 
     use network::serialize::{serialize, deserialize};
     use util::hash::Sha256dHash;
@@ -296,7 +297,7 @@ mod tests {
         }
         assert_eq!(&writer[..],
                    "\"56944c5d3f98413ef45cf54545538103cc9f298e0575820ad3591376e2e0f65d\"".as_bytes());
-        let mut deserializer = json::de::Deserializer::new(writer.iter().map(|c| Ok(*c))).unwrap();
+        let mut deserializer = json::de::Deserializer::new(writer.iter().map(|c| Ok(*c)));
         assert_eq!(hash, Deserialize::deserialize(&mut deserializer).unwrap());
     }
 

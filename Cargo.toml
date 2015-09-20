@@ -28,5 +28,6 @@ rust-crypto = "0.2"
 rustc-serialize = "0.3"
 secp256k1 = "0.2"
 serde = "0.6"
+serde_json = "0.6"
 time = "0.1"
 
