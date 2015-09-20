@@ -37,13 +37,13 @@ use util::hash::Sha256dHash;
 use network::serialize::{SimpleDecoder, SimpleEncoder};
 
 /// Data which can be encoded in a consensus-consistent way
-pub trait ConsensusEncodable<S: SimpleEncoder> {
+pub trait ConsensusEncodable<S: SimpleEncoder> : Sized {
     /// Encode an object with a well-defined format
     fn consensus_encode(&self, e: &mut S) -> Result<(), S::Error>;
 }
 
 /// Data which can be encoded in a consensus-consistent way
-pub trait ConsensusDecodable<D: SimpleDecoder> {
+pub trait ConsensusDecodable<D: SimpleDecoder>: Sized {
     /// Decode an object with a well-defined format
     fn consensus_decode(d: &mut D) -> Result<Self, D::Error>;
 }

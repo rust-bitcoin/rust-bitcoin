@@ -63,7 +63,7 @@ impl<I: Iterator> Pair<I> {
 }
 
 /// Returns an iterator that returns elements of the original iterator 2 at a time
-pub trait Pairable {
+pub trait Pairable : Sized {
     /// Returns an iterator that returns elements of the original iterator 2 at a time
     fn pair(self) -> Pair<Self>;
 }

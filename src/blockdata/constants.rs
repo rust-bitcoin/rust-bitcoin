@@ -31,10 +31,15 @@ use util::misc::hex_bytes;
 use util::hash::MerkleRoot;
 use util::uint::Uint256;
 
+/// The maximum allowable sequence number
 pub static MAX_SEQUENCE: u32 = 0xFFFFFFFF;
+/// How many satoshis are in "one bitcoin"
 pub static COIN_VALUE: u64 = 100_000_000;
+/// How many seconds between blocks we expect on average
 pub static TARGET_BLOCK_SPACING: u32 = 600;
+/// How many blocks between diffchanges
 pub static DIFFCHANGE_INTERVAL: u32 = 2016;
+/// How much time on average should occur between diffchanges
 pub static DIFFCHANGE_TIMESPAN: u32 = 14 * 24 * 3600;
 
 /// In Bitcoind this is insanely described as ~((u256)0 >> 32)

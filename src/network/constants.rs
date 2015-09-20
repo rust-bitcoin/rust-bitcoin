@@ -32,8 +32,11 @@ user_enum! {
     }
 }
 
+/// Version of the protocol as appearing in network message headers
 pub const PROTOCOL_VERSION: u32    = 70001;
+/// Bitfield of services provided by this node
 pub const SERVICES: u64            = 0;
+/// User agent as it appears in the version message
 pub const USER_AGENT: &'static str = "bitcoin-rust v0.1";
 
 /// Return the network magic bytes, which should be encoded little-endian
