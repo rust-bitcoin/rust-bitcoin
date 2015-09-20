@@ -16,19 +16,17 @@ readme = "README.md"
 name = "bitcoin"
 path = "src/lib.rs"
 
-[dependencies.secp256k1]
-git = "https://github.com/apoelstra/rust-secp256k1.git"
-
 [dependencies.eventual]
 git = "https://github.com/carllerche/eventual"
 
 [dependencies]
-byteorder = "*"
-num = "*"
-num_cpus = "*"
-rand = "*"
-rust-crypto = "*"
-rustc-serialize = "*"
-serde = "*"
-time = "*"
+byteorder = "0.3"
+num = "0.1"
+num_cpus = "0.2"
+rand = "0.3"
+rust-crypto = "0.2"
+rustc-serialize = "0.3"
+secp256k1 = "0.2"
+serde = "0.6"
+time = "0.1"
 
