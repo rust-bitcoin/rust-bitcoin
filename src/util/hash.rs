@@ -45,6 +45,10 @@ impl ::std::fmt::Debug for Sha256dHash {
 pub struct Ripemd160Hash([u8; 20]);
 impl_array_newtype!(Ripemd160Hash, u8, 20);
 
+/// A Bitcoin hash160, 20-bytes, computed from x as RIPEMD160(SHA256(x))
+pub struct Hash160([u8; 20]);
+impl_array_newtype!(Hash160, u8, 20);
+
 /// A 32-bit hash obtained by truncating a real hash
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub struct Hash32((u8, u8, u8, u8));
@@ -68,8 +72,23 @@ impl Ripemd160Hash {
     }
 }
 
+impl Hash160 {
+    /// Create a hash by hashing some data
+    pub fn from_data(data: &[u8]) -> Hash160 {
+        let mut tmp = [0; 32];
+        let mut ret = [0; 20];
+        let mut sha2 = Sha256::new();
+        let mut rmd = Ripemd160::new();
+        sha2.input(data);
+        sha2.result(&mut tmp);
+        rmd.input(&tmp);
+        rmd.result(&mut ret);
+        Hash160(ret)
+    }
+}
+
 // This doesn't make much sense to me, but is implicit behaviour
-// in the C++ reference client
+// in the C++ reference client, so we need it for consensus.
 impl Default for Sha256dHash {
     #[inline]
     fn default() -> Sha256dHash { Sha256dHash([0u8; 32]) }

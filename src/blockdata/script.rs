@@ -27,7 +27,7 @@
 use std::hash;
 use std::char::from_digit;
 use std::default::Default;
-use std::ops;
+use std::{fmt, ops};
 use serialize::hex::ToHex;
 
 use crypto::digest::Digest;
@@ -52,6 +52,16 @@ pub struct Script(Box<[u8]>);
 impl Clone for Script {
     fn clone(&self) -> Script {
         Script(self.0.to_vec().into_boxed_slice())
+    }
+}
+
+impl fmt::LowerHex for Script {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        try!(f.write_str("Script("));
+        for &ch in self.0.iter() {
+            try!(write!(f, "{:02x}", ch));
+        }
+        f.write_str(")")
     }
 }
 
