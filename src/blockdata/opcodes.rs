@@ -556,12 +556,6 @@ pub enum All {
 }
 
 impl All {
-    /// Translates a u8 to an opcode
-    #[inline]
-    pub fn from_u8(b: u8) -> All {
-      unsafe { transmute(b) }
-    }
-
     /// Classifies an Opcode into a broad class
     #[inline]
     pub fn classify(&self) -> Class {
@@ -602,12 +596,20 @@ impl All {
     }
 }
 
+impl From<u8> for All {
+    #[inline]
+    fn from(b: u8) -> All {
+      unsafe { transmute(b) }
+    }
+}
+
+
 display_from_debug!(All);
 
 impl<D: SimpleDecoder> ConsensusDecodable<D> for All {
     #[inline]
     fn consensus_decode(d: &mut D) -> Result<All, D::Error> {
-      Ok(All::from_u8(try!(d.read_u8())))
+      Ok(All::from(try!(d.read_u8())))
     }
 }
 

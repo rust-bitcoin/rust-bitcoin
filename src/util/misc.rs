@@ -82,7 +82,7 @@ pub fn script_find_and_remove(haystack: &mut Vec<u8>, needle: &[u8]) -> usize {
             top = top.wrapping_sub(needle.len());
             if overflow { break; }
         } else {
-            i += match opcodes::All::from_u8((*haystack)[i]).classify() {
+            i += match opcodes::All::from((*haystack)[i]).classify() {
                 opcodes::Class::PushBytes(n) => n as usize + 1,
                 opcodes::Class::Ordinary(opcodes::Ordinary::OP_PUSHDATA1) => 2,
                 opcodes::Class::Ordinary(opcodes::Ordinary::OP_PUSHDATA2) => 3,

@@ -1735,9 +1735,6 @@ impl Script {
     /// Creates a new empty script
     pub fn new() -> Script { Script(vec![].into_boxed_slice()) }
 
-    /// Creates a new script from an existing vector
-    pub fn from_vec(v: Vec<u8>) -> Script { Script(v.into_boxed_slice()) }
-
     /// The length in bytes of the script
     pub fn len(&self) -> usize { self.0.len() }
 
@@ -1776,7 +1773,7 @@ impl Script {
             // Write out the trace, except the stack which we don't know yet
             match trace {
                 Some(ref mut t) => {
-                    let opcode = opcodes::All::from_u8(byte);
+                    let opcode = opcodes::All::from(byte);
                     t.push(TraceIteration {
                         index: index,
                         opcode: opcode,
@@ -1792,7 +1789,7 @@ impl Script {
             op_count += 1;
             index += 1;
             // The definitions of all these categories are in opcodes.rs
-            match (executing, opcodes::All::from_u8(byte).classify()) {
+            match (executing, opcodes::All::from(byte).classify()) {
                 // Illegal operations mean failure regardless of execution state
                 (_, opcodes::Class::IllegalOp)             => return Err(Error::IllegalOpcode),
                 // Push number
@@ -2131,7 +2128,7 @@ impl Script {
                 let byte = script[index];
                 index += 1;
                 // The definitions of all these categories are in opcodes.rs
-                match (executing, opcodes::All::from_u8(byte).classify()) {
+                match (executing, opcodes::All::from(byte).classify()) {
                     // Illegal operations mean failure regardless of execution state
                     (_, opcodes::Class::IllegalOp)         => return Err(Error::IllegalOpcode),
                     // Push number
@@ -2458,14 +2455,16 @@ impl Default for Script {
     fn default() -> Script { Script(vec![].into_boxed_slice()) }
 }
 
+/// Creates a new script from an existing vector
+impl From<Vec<u8>> for Script {
+    fn from(v: Vec<u8>) -> Script { Script(v.into_boxed_slice()) }
+}
+
 impl_index_newtype!(Script, u8);
 
 impl Builder {
     /// Creates a new empty script
     pub fn new() -> Builder { Builder(vec![]) }
-
-    /// Creates a new script from an existing vector
-    pub fn from_vec(v: Vec<u8>) -> Builder { Builder(v) }
 
     /// The length in bytes of the script
     pub fn len(&self) -> usize { self.0.len() }
@@ -2533,6 +2532,11 @@ impl Builder {
 /// Adds an individual opcode to the script
 impl Default for Builder {
     fn default() -> Builder { Builder(vec![]) }
+}
+
+/// Creates a new script from an existing vector
+impl From<Vec<u8>> for Builder {
+    fn from(v: Vec<u8>) -> Builder { Builder(v) }
 }
 
 impl_index_newtype!(Builder, u8);
@@ -2834,43 +2838,43 @@ mod test {
     #[test]
     fn provably_unspendable_test() {
         // p2pk
-        assert_eq!(Script::from_vec("410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac".from_hex().unwrap()).is_provably_unspendable(), false);
-        assert_eq!(Script::from_vec("4104ea1feff861b51fe3f5f8a3b12d0f4712db80e919548a80839fc47c6a21e66d957e9c5d8cd108c7a2d2324bad71f9904ac0ae7336507d785b17a2c115e427a32fac".from_hex().unwrap()).is_provably_unspendable(), false);
+        assert_eq!(Script::from("410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac".from_hex().unwrap()).is_provably_unspendable(), false);
+        assert_eq!(Script::from("4104ea1feff861b51fe3f5f8a3b12d0f4712db80e919548a80839fc47c6a21e66d957e9c5d8cd108c7a2d2324bad71f9904ac0ae7336507d785b17a2c115e427a32fac".from_hex().unwrap()).is_provably_unspendable(), false);
         // p2pkhash
-        assert_eq!(Script::from_vec("76a914ee61d57ab51b9d212335b1dba62794ac20d2bcf988ac".from_hex().unwrap()).is_provably_unspendable(), false);
-        assert_eq!(Script::from_vec("6aa9149eb21980dc9d413d8eac27314938b9da920ee53e87".from_hex().unwrap()).is_provably_unspendable(), true);
+        assert_eq!(Script::from("76a914ee61d57ab51b9d212335b1dba62794ac20d2bcf988ac".from_hex().unwrap()).is_provably_unspendable(), false);
+        assert_eq!(Script::from("6aa9149eb21980dc9d413d8eac27314938b9da920ee53e87".from_hex().unwrap()).is_provably_unspendable(), true);
         // if return; else return
-        assert_eq!(Script::from_vec("636a676a68".from_hex().unwrap()).is_provably_unspendable(), true);
+        assert_eq!(Script::from("636a676a68".from_hex().unwrap()).is_provably_unspendable(), true);
         // if return; else don't
-        assert_eq!(Script::from_vec("636a6768".from_hex().unwrap()).is_provably_unspendable(), false);
+        assert_eq!(Script::from("636a6768".from_hex().unwrap()).is_provably_unspendable(), false);
         // op_equal
-        assert_eq!(Script::from_vec("87".from_hex().unwrap()).is_provably_unspendable(), false);
-        assert_eq!(Script::from_vec("000087".from_hex().unwrap()).is_provably_unspendable(), false);
-        assert_eq!(Script::from_vec("510087".from_hex().unwrap()).is_provably_unspendable(), true);
-        assert_eq!(Script::from_vec("510088".from_hex().unwrap()).is_provably_unspendable(), true);
+        assert_eq!(Script::from("87".from_hex().unwrap()).is_provably_unspendable(), false);
+        assert_eq!(Script::from("000087".from_hex().unwrap()).is_provably_unspendable(), false);
+        assert_eq!(Script::from("510087".from_hex().unwrap()).is_provably_unspendable(), true);
+        assert_eq!(Script::from("510088".from_hex().unwrap()).is_provably_unspendable(), true);
         // nested ifs
-        assert_eq!(Script::from_vec("6363636363686868686800".from_hex().unwrap()).is_provably_unspendable(), true);
+        assert_eq!(Script::from("6363636363686868686800".from_hex().unwrap()).is_provably_unspendable(), true);
         // repeated op_equals
-        assert_eq!(Script::from_vec("8787878787878787".from_hex().unwrap()).is_provably_unspendable(), false);
+        assert_eq!(Script::from("8787878787878787".from_hex().unwrap()).is_provably_unspendable(), false);
         // op_ifdup
-        assert_eq!(Script::from_vec("73".from_hex().unwrap()).is_provably_unspendable(), false);
-        assert_eq!(Script::from_vec("5173".from_hex().unwrap()).is_provably_unspendable(), false);
-        assert_eq!(Script::from_vec("0073".from_hex().unwrap()).is_provably_unspendable(), true);
+        assert_eq!(Script::from("73".from_hex().unwrap()).is_provably_unspendable(), false);
+        assert_eq!(Script::from("5173".from_hex().unwrap()).is_provably_unspendable(), false);
+        assert_eq!(Script::from("0073".from_hex().unwrap()).is_provably_unspendable(), true);
         // this is honest to god tx e411dbebd2f7d64dafeef9b14b5c59ec60c36779d43f850e5e347abee1e1a455 on mainnet
-        assert_eq!(Script::from_vec("76a9144838a081d73cf134e8ff9cfd4015406c73beceb388acacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacac".from_hex().unwrap()).is_provably_unspendable(), true);
+        assert_eq!(Script::from("76a9144838a081d73cf134e8ff9cfd4015406c73beceb388acacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacacac".from_hex().unwrap()).is_provably_unspendable(), true);
         // Real, testnet spent ones that caused me trouble
-        assert_eq!(Script::from_vec("7c51880087".from_hex().unwrap()).is_provably_unspendable(), false);
-        assert_eq!(Script::from_vec("9e91".from_hex().unwrap()).is_provably_unspendable(), false);
-        assert_eq!(Script::from_vec("76a97ca8a687".from_hex().unwrap()).is_provably_unspendable(), false);
-        assert_eq!(Script::from_vec("04010203047576a914bfbd43270c1e824c01e27386844d062d2f7518a688ad76a97614d2f7b8a37fb9b46782534078f9748f41d61a22f3877c148d4c6a901a3d87ed680478931dc9b6f0871af0ab879b69ac".from_hex().unwrap()).is_provably_unspendable(), false);
-        assert_eq!(Script::from_vec("03800000".from_hex().unwrap()).is_provably_unspendable(), false);
+        assert_eq!(Script::from("7c51880087".from_hex().unwrap()).is_provably_unspendable(), false);
+        assert_eq!(Script::from("9e91".from_hex().unwrap()).is_provably_unspendable(), false);
+        assert_eq!(Script::from("76a97ca8a687".from_hex().unwrap()).is_provably_unspendable(), false);
+        assert_eq!(Script::from("04010203047576a914bfbd43270c1e824c01e27386844d062d2f7518a688ad76a97614d2f7b8a37fb9b46782534078f9748f41d61a22f3877c148d4c6a901a3d87ed680478931dc9b6f0871af0ab879b69ac".from_hex().unwrap()).is_provably_unspendable(), false);
+        assert_eq!(Script::from("03800000".from_hex().unwrap()).is_provably_unspendable(), false);
         // This one is cool -- a 2-of-4 multisig with four pks given, only two of which are legit
-        assert_eq!(Script::from_vec("522103bb52138972c48a132fc1f637858c5189607dd0f7fe40c4f20f6ad65f2d389ba42103bb52138972c48a132fc1f637858c5189607dd0f7fe40c4f20f6ad65f2d389ba45f6054ae".from_hex().unwrap()).is_provably_unspendable(), false);
-        assert_eq!(Script::from_vec("64635167006867630067516868".from_hex().unwrap()).is_provably_unspendable(), false);
+        assert_eq!(Script::from("522103bb52138972c48a132fc1f637858c5189607dd0f7fe40c4f20f6ad65f2d389ba42103bb52138972c48a132fc1f637858c5189607dd0f7fe40c4f20f6ad65f2d389ba45f6054ae".from_hex().unwrap()).is_provably_unspendable(), false);
+        assert_eq!(Script::from("64635167006867630067516868".from_hex().unwrap()).is_provably_unspendable(), false);
         // This one is on mainnet oeO
-        assert_eq!(Script::from_vec("827651a0698faaa9a8a7a687".from_hex().unwrap()).is_provably_unspendable(), false);
+        assert_eq!(Script::from("827651a0698faaa9a8a7a687".from_hex().unwrap()).is_provably_unspendable(), false);
         // gmaxwell found this one
-        assert_eq!(Script::from_vec("76009f69905160a56b210378d430274f8c5ec1321338151e9f27f4c676a008bdf8638d07c0b6be9ab35c71ad6c".from_hex().unwrap()).is_provably_unspendable(), false);
+        assert_eq!(Script::from("76009f69905160a56b210378d430274f8c5ec1321338151e9f27f4c676a008bdf8638d07c0b6be9ab35c71ad6c".from_hex().unwrap()).is_provably_unspendable(), false);
     }
 }
 

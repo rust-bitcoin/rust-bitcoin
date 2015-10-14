@@ -73,9 +73,10 @@ macro_rules! impl_array_newtype {
             #[inline]
             /// Returns the length of the object as an array
             pub fn len(&self) -> usize { $len }
+        }
 
-            /// Constructs a new object from raw data
-            pub fn from_slice(data: &[$ty]) -> $thing {
+        impl<'a> From<&'a [$ty]> for $thing {
+            fn from(data: &'a [$ty]) -> $thing {
                 assert_eq!(data.len(), $len);
                 unsafe {
                     use std::intrinsics::copy_nonoverlapping;
@@ -113,7 +114,7 @@ macro_rules! impl_array_newtype {
         impl Clone for $thing {
             #[inline]
             fn clone(&self) -> $thing {
-                $thing::from_slice(&self[..])
+                $thing::from(&self[..])
             }
         }
 
@@ -133,6 +134,13 @@ macro_rules! impl_array_newtype {
                 for d in data.iter() {
                     (&d[..]).hash(state);
                 }
+            }
+        }
+
+        impl ::rand::Rand for $thing {
+            #[inline]
+            fn rand<R: ::rand::Rng>(r: &mut R) -> $thing {
+                $thing(::rand::Rand::rand(r))
             }
         }
     }
