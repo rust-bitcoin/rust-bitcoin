@@ -12,12 +12,11 @@
 //
 
 //! # Addresses
-//!
-//! Support for ordinary base58 Bitcoin addresses
+//! Support for ordinary base58 Bitcoin addresses and private keys
 //!
 
-use secp256k1::Secp256k1;
-use secp256k1::key::PublicKey;
+use secp256k1::{self, Secp256k1};
+use secp256k1::key::{PublicKey, SecretKey};
 
 use blockdata::script;
 use blockdata::opcodes;
@@ -32,6 +31,13 @@ pub enum Type {
     PubkeyHash,
     /// New-fangled P2SH address
     ScriptHash
+}
+
+/// An address-related error
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub enum Error {
+    /// Private key did not represent a valid ECDSA secret key
+    Secp(secp256k1::Error)
 }
 
 #[derive(Clone, PartialEq, Eq)]
@@ -122,6 +128,76 @@ impl ::std::fmt::Debug for Address {
     }
 }
 
+#[derive(Clone, PartialEq, Eq)]
+/// A Bitcoin ECDSA private key
+pub struct Privkey {
+    /// Whether this private key represents a compressed address
+    pub compressed: bool,
+    /// The network on which this key should be used
+    pub network: Network,
+    /// The actual ECDSA key
+    pub key: SecretKey
+}
+
+impl Privkey {
+    /// Creates an address from a public key
+    #[inline]
+    pub fn from_key(network: Network, sk: SecretKey, compressed: bool) -> Privkey {
+        Privkey {
+            compressed: compressed,
+            network: network,
+            key: sk
+        }
+    }
+
+    /// Converts a private key to an address
+    #[inline]
+    pub fn to_address(&self, secp: &Secp256k1) -> Result<Address, Error> {
+        let key = try!(PublicKey::from_secret_key(secp, &self.key).map_err(Error::Secp));
+        Ok(Address::from_key(self.network, &key, self.compressed))
+    }
+}
+
+impl ToBase58 for Privkey {
+    fn base58_layout(&self) -> Vec<u8> {
+        let mut ret = vec![
+            match self.network {
+                Network::Bitcoin => 128,
+                Network::Testnet => 239
+            }
+        ];
+        ret.extend(&self.key[..]);
+        if self.compressed { ret.push(1); }
+        ret
+    }
+}
+
+impl FromBase58 for Privkey {
+    fn from_base58_layout(data: Vec<u8>) -> Result<Privkey, base58::Error> {
+        let compressed = match data.len() {
+            33 => false,
+            34 => true,
+            _ => { return Err(base58::Error::InvalidLength(data.len())); }
+        };
+
+        let network = match data[0] {
+            128 => Network::Bitcoin,
+            239 => Network::Testnet,
+            x   => { return Err(base58::Error::InvalidVersion(vec![x])); }
+        };
+
+        let secp = Secp256k1::without_caps();
+        let key = try!(SecretKey::from_slice(&secp, &data[1..33])
+                           .map_err(|_| base58::Error::Other("Secret key out of range".to_owned())));
+
+        Ok(Privkey {
+            compressed: compressed,
+            network: network,
+            key: key
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use secp256k1::Secp256k1;
@@ -175,6 +251,29 @@ mod tests {
         assert_eq!(addr.script_pubkey(), hex_script!("a914162c5ea71c0b23f5b9022ef047c4a86470a5b07087"));
         assert_eq!(&addr.to_base58check(), "33iFwdLuRpW1uK1RTRqsoi8rR4NpDzk66k");
         assert_eq!(FromBase58::from_base58check("33iFwdLuRpW1uK1RTRqsoi8rR4NpDzk66k"), Ok(addr));
+    }
+
+    #[test]
+    fn test_key_derivation() {
+        // testnet compressed
+        let sk: Privkey = FromBase58::from_base58check("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
+        assert_eq!(sk.network, Testnet);
+        assert_eq!(sk.compressed, true);
+        assert_eq!(&sk.to_base58check(), "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy");
+
+        let secp = Secp256k1::new();
+        let pk = sk.to_address(&secp).unwrap();
+        assert_eq!(&pk.to_base58check(), "mqwpxxvfv3QbM8PU8uBx2jaNt9btQqvQNx");
+
+        // mainnet uncompressed
+        let sk: Privkey = FromBase58::from_base58check("5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3").unwrap();
+        assert_eq!(sk.network, Bitcoin);
+        assert_eq!(sk.compressed, false);
+        assert_eq!(&sk.to_base58check(), "5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3");
+
+        let secp = Secp256k1::new();
+        let pk = sk.to_address(&secp).unwrap();
+        assert_eq!(&pk.to_base58check(), "1GhQvF6dL8xa6wBxLnWmHcQsurx9RxiMc8");
     }
 }
 
