@@ -112,6 +112,23 @@ pub fn tweak_keys(secp: &Secp256k1, keys: &[PublicKey], contract: &[u8]) -> Resu
     Ok(ret)
 }
 
+/// Tweak a secret key using some arbitrary data
+pub fn tweak_secret_key(secp: &Secp256k1, key: &SecretKey, contract: &[u8]) -> Result<SecretKey, Error> {
+    // Compute public key
+    let pk = try!(PublicKey::from_secret_key(secp, &key).map_err(Error::Secp));
+    // Compute HMAC tweak
+    let mut hmac_raw = [0; 32];
+    let mut hmac = hmac::Hmac::new(sha2::Sha256::new(), &pk.serialize_vec(&secp, true));
+    hmac.input(contract);
+    hmac.raw_result(&mut hmac_raw);
+    let hmac_sk = try!(SecretKey::from_slice(&secp, &hmac_raw).map_err(Error::BadTweak));
+    // Execute the tweak
+    let mut key = key.clone();
+    try!(key.add_assign(&secp, &hmac_sk).map_err(Error::Secp));
+    // Return
+    Ok(key)
+}
+
 /// Takes a contract, template and key set and runs through all the steps
 pub fn create_address(secp: &Secp256k1,
                       network: Network,
@@ -201,6 +218,7 @@ mod tests {
     use secp256k1::Secp256k1;
     use secp256k1::key::PublicKey;
     use serialize::hex::FromHex;
+    use rand::thread_rng;
 
     use blockdata::script::Script;
     use network::constants::Network;
@@ -243,6 +261,28 @@ mod tests {
 
         assert_eq!(keys, alpha_keys);
         assert_eq!(template, alpha_template);
+    }
+
+    #[test]
+    fn tweak_secret() {
+        let secp = Secp256k1::new();
+        let (sk1, pk1) = secp.generate_keypair(&mut thread_rng()).unwrap();
+        let (sk2, pk2) = secp.generate_keypair(&mut thread_rng()).unwrap();
+        let (sk3, pk3) = secp.generate_keypair(&mut thread_rng()).unwrap();
+
+        let pks = [pk1, pk2, pk3];
+        let contract = b"if bottle mt dont remembr drink wont pay";
+
+        // Directly compute tweaks on pubkeys
+        let tweaked_pks = tweak_keys(&secp, &pks, &contract[..]).unwrap();
+        // Compute tweaks on secret keys
+        let tweaked_pk1 = PublicKey::from_secret_key(&secp, &tweak_secret_key(&secp, &sk1, &contract[..]).unwrap()).unwrap();
+        let tweaked_pk2 = PublicKey::from_secret_key(&secp, &tweak_secret_key(&secp, &sk2, &contract[..]).unwrap()).unwrap();
+        let tweaked_pk3 = PublicKey::from_secret_key(&secp, &tweak_secret_key(&secp, &sk3, &contract[..]).unwrap()).unwrap();
+        // Check equality
+        assert_eq!(tweaked_pks[0], tweaked_pk1);
+        assert_eq!(tweaked_pks[1], tweaked_pk2);
+        assert_eq!(tweaked_pks[2], tweaked_pk3);
     }
 }
 
