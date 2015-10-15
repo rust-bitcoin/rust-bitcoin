@@ -57,11 +57,19 @@ impl Clone for Script {
 
 impl fmt::LowerHex for Script {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        try!(f.write_str("Script("));
         for &ch in self.0.iter() {
             try!(write!(f, "{:02x}", ch));
         }
-        f.write_str(")")
+        Ok(())
+    }
+}
+
+impl fmt::UpperHex for Script {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        for &ch in self.0.iter() {
+            try!(write!(f, "{:02X}", ch));
+        }
+        Ok(())
     }
 }
 
