@@ -37,17 +37,30 @@ pub enum Error {
     BadTweak(secp256k1::Error),
     /// Other secp256k1 related error
     Secp(secp256k1::Error),
+    /// Script parsing error
+    Script(script::Error),
+    /// Encountered an uncompressed key in a script we were deserializing. The
+    /// reserialization will compress it which might be surprising so we call
+    /// this an error.
+    UncompressedKey,
+    /// Expected a public key when deserializing a script, but we got something else.
+    ExpectedKey,
+    /// Expected some sort of CHECKSIG operator when deserializing a script, but
+    /// we got something else.
+    ExpectedChecksig,
     /// Did not have enough keys to instantiate a script template
     TooFewKeys(usize)
 }
 
 /// An element of a script template
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 enum TemplateElement {
     Op(opcodes::All),
     Key
 }
 
 /// A script template
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Template(Vec<TemplateElement>);
 
 impl Template {
@@ -115,12 +128,81 @@ pub fn create_address(secp: &Secp256k1,
     })
 }
 
+/// Extract the keys and template from a completed script
+pub fn untemplate(script: &script::Script) -> Result<(Template, Vec<PublicKey>), Error> {
+    let mut ret = script::Builder::new();
+    let mut retkeys = vec![];
+    let secp = Secp256k1::without_caps();
+
+    #[derive(Copy, Clone, PartialEq, Eq)]
+    enum Mode {
+        SeekingKeys,
+        CopyingKeys,
+        SeekingCheckMulti
+    }
+
+    let mut mode = Mode::SeekingKeys;
+    for instruction in script.into_iter() {
+        match instruction {
+            script::Instruction::PushBytes(data) => {
+                let n = data.len();
+                match PublicKey::from_slice(&secp, data) {
+                    Ok(key) => {
+                        if n == 65 { return Err(Error::UncompressedKey); }
+                        if mode == Mode::SeekingCheckMulti { return Err(Error::ExpectedChecksig); }
+                        retkeys.push(key);
+                        ret.push_opcode(opcodes::All::from(PUBKEY));
+                        mode = Mode::CopyingKeys;
+                    }
+                    Err(_) => {
+                        // Arbitrary pushes are only allowed before we've found any keys.
+                        // Otherwise we have to wait for a N CHECKSIG pair.
+                        match mode {
+                            Mode::SeekingKeys => { ret.push_slice(data); }
+                            Mode::CopyingKeys => { return Err(Error::ExpectedKey); },
+                            Mode::SeekingCheckMulti => { return Err(Error::ExpectedChecksig); }
+                        }
+                    }
+                }
+            }
+            script::Instruction::Op(op) => {
+                match op.classify() {
+                    // CHECKSIG should only come after a list of keys
+                    opcodes::Class::Ordinary(opcodes::Ordinary::OP_CHECKSIG) |
+                    opcodes::Class::Ordinary(opcodes::Ordinary::OP_CHECKSIGVERIFY) => {
+                        if mode == Mode::SeekingKeys { return Err(Error::ExpectedKey); }
+                        mode = Mode::SeekingKeys;
+                    }
+                    // CHECKMULTISIG should only come after a number
+                    opcodes::Class::Ordinary(opcodes::Ordinary::OP_CHECKMULTISIG) |
+                    opcodes::Class::Ordinary(opcodes::Ordinary::OP_CHECKMULTISIGVERIFY) => {
+                        if mode == Mode::SeekingKeys { return Err(Error::ExpectedKey); }
+                        if mode == Mode::CopyingKeys { return Err(Error::ExpectedKey); }
+                        mode = Mode::SeekingKeys;
+                    }
+                    // Numbers after keys mean we expect a CHECKMULTISIG. 
+                    opcodes::Class::PushNum(_) => {
+                        if mode == Mode::SeekingCheckMulti { return Err(Error::ExpectedChecksig); }
+                        if mode == Mode::CopyingKeys { mode = Mode::SeekingCheckMulti; }
+                    }
+                    // All other opcodes do nothing
+                    _ => {}
+                }
+                ret.push_opcode(op);
+            }
+            script::Instruction::Error(e) => { return Err(Error::Script(e)); }
+        }
+    }
+    Ok((Template::from(&ret[..]), retkeys))
+}
+
 #[cfg(test)]
 mod tests {
     use secp256k1::Secp256k1;
     use secp256k1::key::PublicKey;
     use serialize::hex::FromHex;
 
+    use blockdata::script::Script;
     use network::constants::Network;
     use util::base58::ToBase58;
 
@@ -148,6 +230,19 @@ mod tests {
 
         let addr = create_address(&secp, Network::Testnet, &contract, keys, &alpha_template!()).unwrap();
         assert_eq!(addr.to_base58check(), "2N3zXjbwdTcPsJiy8sUK9FhWJhqQCxA8Jjr".to_owned());
+    }
+
+    #[test]
+    fn script() {
+        let secp = Secp256k1::new();
+        let alpha_keys = alpha_keys!(&secp);
+        let alpha_template = alpha_template!();
+
+        let alpha_redeem = Script::from(hex!("55210269992fb441ae56968e5b77d46a3e53b69f136444ae65a94041fc937bdb28d93321021df31471281d4478df85bfce08a10aab82601dca949a79950f8ddf7002bd915a2102174c82021492c2c6dfcbfa4187d10d38bed06afb7fdcd72c880179fddd641ea121033f96e43d72c33327b6a4631ccaa6ea07f0b106c88b9dc71c9000bb6044d5e88a210313d8748790f2a86fb524579b46ce3c68fedd58d2a738716249a9f7d5458a15c221030b632eeb079eb83648886122a04c7bf6d98ab5dfb94cf353ee3e9382a4c2fab02102fb54a7fcaa73c307cfd70f3fa66a2e4247a71858ca731396343ad30c7c4009ce57ae"));
+        let (template, keys) = untemplate(&alpha_redeem).unwrap();
+
+        assert_eq!(keys, alpha_keys);
+        assert_eq!(template, alpha_template);
     }
 }
 

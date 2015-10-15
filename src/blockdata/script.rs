@@ -2472,6 +2472,88 @@ impl From<Vec<u8>> for Script {
 
 impl_index_newtype!(Script, u8);
 
+/// A "parsed opcode" which allows iterating over a Script in a more sensible way
+pub enum Instruction<'a> {
+    /// Push a bunch of data
+    PushBytes(&'a [u8]),
+    /// Some non-push opcode
+    Op(opcodes::All),
+    /// An opcode we were unable to parse
+    Error(Error)
+}
+
+/// Iterator over a script returning parsed opcodes
+pub struct Instructions<'a> {
+    data: &'a [u8]
+}
+
+impl<'a> IntoIterator for &'a Script {
+    type Item = Instruction<'a>;
+    type IntoIter = Instructions<'a>;
+    fn into_iter(self) -> Instructions<'a> { Instructions { data: &self.0[..] } }
+}
+
+impl<'a> Iterator for Instructions<'a> {
+    type Item = Instruction<'a>;
+
+    fn next(&mut self) -> Option<Instruction<'a>> {
+        if self.data.len() == 0 {
+            return None;
+        }
+
+        match opcodes::All::from(self.data[0]).classify() {
+            opcodes::Class::PushBytes(n) => {
+                let n = n as usize;
+                if self.data.len() < n + 1 {
+                    return Some(Instruction::Error(Error::EarlyEndOfScript));
+                }
+                let ret = Some(Instruction::PushBytes(&self.data[1..n+1]));
+                self.data = &self.data[n + 1..];
+                ret
+            }
+            opcodes::Class::Ordinary(opcodes::Ordinary::OP_PUSHDATA1) => {
+                if self.data.len() < 2 { return Some(Instruction::Error(Error::EarlyEndOfScript)); }
+                let n = match read_uint(&self.data[1..], 1) {
+                    Ok(n) => n,
+                    Err(e) => { return Some(Instruction::Error(e)); }
+                };
+                if self.data.len() < n + 2 { return Some(Instruction::Error(Error::EarlyEndOfScript)); }
+                let ret = Some(Instruction::PushBytes(&self.data[2..n+2]));
+                self.data = &self.data[n + 2..];
+                ret
+            }
+            opcodes::Class::Ordinary(opcodes::Ordinary::OP_PUSHDATA2) => {
+                if self.data.len() < 3 { return Some(Instruction::Error(Error::EarlyEndOfScript)); }
+                let n = match read_uint(&self.data[1..], 2) {
+                    Ok(n) => n,
+                    Err(e) => { return Some(Instruction::Error(e)); }
+                };
+                if self.data.len() < n + 3 { return Some(Instruction::Error(Error::EarlyEndOfScript)); }
+                let ret = Some(Instruction::PushBytes(&self.data[3..n + 3]));
+                self.data = &self.data[n + 3..];
+                ret
+            }
+            opcodes::Class::Ordinary(opcodes::Ordinary::OP_PUSHDATA4) => {
+                if self.data.len() < 5 { return Some(Instruction::Error(Error::EarlyEndOfScript)); }
+                let n = match read_uint(&self.data[1..], 4) {
+                    Ok(n) => n,
+                    Err(e) => { return Some(Instruction::Error(e)); }
+                };
+                if self.data.len() < n + 5 { return Some(Instruction::Error(Error::EarlyEndOfScript)); }
+                let ret = Some(Instruction::PushBytes(&self.data[5..n + 5]));
+                self.data = &self.data[n + 5..];
+                ret
+            }
+            // Everything else we can push right through
+            _ => {
+                let ret = Some(Instruction::Op(opcodes::All::from(self.data[0])));
+                self.data = &self.data[1..];
+                ret
+            }
+        }
+    }
+}
+
 impl Builder {
     /// Creates a new empty script
     pub fn new() -> Builder { Builder(vec![]) }
@@ -2584,7 +2666,8 @@ mod test {
     use secp256k1::Secp256k1;
     use serialize::hex::FromHex;
 
-    use super::{Error, Script, Builder, build_scriptint, read_scriptint, read_scriptbool};
+    use super::*;
+    use super::build_scriptint;
     use super::MaybeOwned::Owned;
 
     use network::serialize::{deserialize, serialize};
@@ -2610,6 +2693,11 @@ mod test {
             assert_eq!(script.evaluate(&s, &mut stack, Some((&tx, n)), None), Ok(()));
             assert!(stack.len() >= 1);
             assert_eq!(read_scriptbool(&stack.pop().unwrap()[..]), true);
+            for instruction in (&script).into_iter() {
+                if let Instruction::Error(_) = instruction {
+                    assert!(false);
+                }
+            }
         }
     }
 
