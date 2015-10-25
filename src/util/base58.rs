@@ -14,6 +14,8 @@
 
 //! # Base58 encoder and decoder
 
+use std::{error, fmt};
+
 use byteorder::{ByteOrder, LittleEndian, WriteBytesExt};
 use util::hash::Sha256dHash;
 
@@ -32,6 +34,33 @@ pub enum Error {
     TooShort(usize),
     /// Any other error
     Other(String)
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Error::BadByte(b) => write!(f, "invalid base58 character 0x{:x}", b),
+            Error::BadChecksum(exp, actual) => write!(f, "base58ck checksum 0x{:x} does not match expected 0x{:x}", actual, exp),
+            Error::InvalidLength(ell) => write!(f, "length {} invalid for this base58 type", ell),
+            Error::InvalidVersion(ref v) => write!(f, "version {:?} invalid for this base58 type", v),
+            Error::TooShort(_) => write!(f, "base58ck data not even long enough for a checksum"),
+            Error::Other(ref s) => f.write_str(s)
+        }
+    }
+}
+
+impl error::Error for Error {
+    fn cause(&self) -> Option<&error::Error> { None }
+    fn description(&self) -> &'static str {
+        match *self {
+            Error::BadByte(_) => "invalid b58 character",
+            Error::BadChecksum(_, _) => "invalid b58ck checksum",
+            Error::InvalidLength(_) => "invalid length for b58 type",
+            Error::InvalidVersion(_) => "invalid version for b58 type",
+            Error::TooShort(_) => "b58ck data less than 4 bytes",
+            Error::Other(_) => "unknown b58 error"
+        }
+    }
 }
 
 static BASE58_CHARS: &'static [u8] = b"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
