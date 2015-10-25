@@ -49,7 +49,9 @@ pub enum Error {
     /// we got something else.
     ExpectedChecksig,
     /// Did not have enough keys to instantiate a script template
-    TooFewKeys(usize)
+    TooFewKeys(usize),
+    /// Had too many keys; template does not match key list
+    TooManyKeys(usize)
 }
 
 /// An element of a script template
@@ -81,7 +83,16 @@ impl Template {
                 }
             }
         }
-        Ok(ret.into_script())
+        if key_index == keys.len() {
+            Ok(ret.into_script())
+        } else {
+            Err(Error::TooManyKeys(keys.len()))
+        }
+    }
+
+    /// Returns the number of keys this template requires to instantiate
+    pub fn required_keys(&self) -> usize {
+        self.0.iter().filter(|e| **e == TemplateElement::Key).count()
     }
 }
 
@@ -283,6 +294,22 @@ mod tests {
         assert_eq!(tweaked_pks[0], tweaked_pk1);
         assert_eq!(tweaked_pks[1], tweaked_pk2);
         assert_eq!(tweaked_pks[2], tweaked_pk3);
+    }
+
+    #[test]
+    fn bad_key_number() {
+        let secp = Secp256k1::new();
+        let alpha_keys = alpha_keys!(&secp);
+        let template_short = Template::from(&hex!("55fefefefefefe57AE")[..]);
+        let template_long = Template::from(&hex!("55fefefefefefefefe57AE")[..]);
+        let template = Template::from(&hex!("55fefefefefefefe57AE")[..]);
+
+        assert_eq!(template_short.required_keys(), 6);
+        assert_eq!(template_long.required_keys(), 8);
+        assert_eq!(template.required_keys(), 7);
+        assert_eq!(template_short.to_script(alpha_keys), Err(Error::TooManyKeys(7)));
+        assert_eq!(template_long.to_script(alpha_keys), Err(Error::TooFewKeys(7)));
+        assert!(template.to_script(alpha_keys).is_ok());
     }
 }
 
