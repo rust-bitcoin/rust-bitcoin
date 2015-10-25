@@ -27,7 +27,7 @@
 use std::hash;
 use std::char::from_digit;
 use std::default::Default;
-use std::{fmt, ops};
+use std::{error, fmt, ops};
 use serialize::hex::ToHex;
 
 use crypto::digest::Digest;
@@ -101,8 +101,6 @@ impl hash::Hash for Script {
 /// would help you.
 #[derive(PartialEq, Eq, Debug, Clone)]
 pub enum Error {
-    /// The script returns false no matter the input
-    AnalyzeAlwaysReturnsFalse,
     /// Tried to set a boolean to both values, but neither worked
     AnalyzeNeitherBoolWorks,
     /// Tried to set a boolean to the given value, but it already
@@ -158,7 +156,59 @@ pub enum Error {
     /// An OP_VERIFY happened with zero on the stack
     VerifyFailed,
 }
-display_from_debug!(Error);
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Error::Ecdsa(ref e) => fmt::Display::fmt(e, f),
+            Error::EqualVerifyFailed(ref exp, ref got) => write!(f, "OP_EQUALVERIFY failed; {} != {}", exp, got),
+            Error::MultisigBadKeyCount(n) => write!(f, "bad number {} of keys for multisignature", n),
+            Error::MultisigBadSigCount(n) => write!(f, "bad number {} of signatures for multisignature", n),
+            Error::NumEqualVerifyFailed(exp, got) => write!(f, "OP_NUMEQUALVERIFY failed; {} != {}", exp, got),
+            _ => f.write_str(error::Error::description(self))
+        }
+    }
+}
+
+impl error::Error for Error {
+    fn cause(&self) -> Option<&error::Error> {
+        match *self {
+            Error::Ecdsa(ref e) => Some(e),
+            _ => None
+        }
+    }
+
+    fn description(&self) -> &'static str {
+        match *self {
+            Error::AnalyzeNeitherBoolWorks => "analyzer: switch on boolean but neither side is satisfiable",
+            Error::AnalyzeSetBoolMismatch(_) => "analyzer: conflicting requirements on boolean",
+            Error::AnalyzeValidateFailed => "analyzer: conflicting requirements on stack element",
+            Error::BadPublicKey => "analyzer: CHECKSIG called with bad public key",
+            Error::BadSignature => "analyzer: CHECKSIG called with bad signature",
+            Error::Ecdsa(_) => "libsecp error",
+            Error::ElseWithoutIf => "unexpected OP_ELSE",
+            Error::EndifWithoutIf => "unexpected OP_ENDIF",
+            Error::EqualVerifyFailed(_, _) => "OP_EQUALVERIFY failed",
+            Error::IfEmptyStack => "OP_IF called with nothing on the stack",
+            Error::IllegalOpcode => "an illegal opcode exists in the script",
+            Error::InterpreterStackOverflow => "analyzer: stack overflow",
+            Error::EarlyEndOfScript => "unexpected end of script",
+            Error::ExecutedReturn => "OP_RETURN or equivalent was executed",
+            Error::MultisigBadKeyCount(_) => "bad key count for multisignature",
+            Error::MultisigBadSigCount(_) => "bad signature count for multisignature",
+            Error::NegativePick => "OP_PICK called with negative index",
+            Error::NegativeRoll => "OP_ROLL called with negative index",
+            Error::NoTransaction => "OP_CHECKSIG evaluated outside of transaction environment",
+            Error::NumEqualVerifyFailed(_, _) => "OP_NUMEQUALVERIFY failed",
+            Error::NumericOverflow => "numeric overflow (number on stack larger than 4 bytes)",
+            Error::PopEmptyStack => "stack was empty but script expected otherwise",
+            Error::Unanalyzable => "analyzer: unable to determine script satisfiability",
+            Error::Unsatisfiable => "analyzer: script is unsatisfiable",
+            Error::VerifyEmptyStack => "OP_VERIFY called on an empty stack",
+            Error::VerifyFailed => "OP_VERIFY called with false on top of stack"
+        }
+    }
+}
 
 /// A rule for validating an abstract stack element
 pub struct Validator {
@@ -2461,7 +2511,7 @@ impl Script {
             match stack.peek_mut().bool_value() {
                 None => stack.peek_mut().set_bool_value(true).map(|_| stack.build_initial_stack()),
                 Some(true) => Ok(stack.build_initial_stack()),
-                Some(false) => Err(Error::AnalyzeAlwaysReturnsFalse)
+                Some(false) => Err(Error::Unsatisfiable)
             }
         }
 

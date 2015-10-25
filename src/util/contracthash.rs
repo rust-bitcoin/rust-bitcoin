@@ -23,6 +23,8 @@ use blockdata::{opcodes, script};
 use crypto::{hmac, sha2};
 use crypto::mac::Mac;
 
+use std::{error, fmt};
+
 use network::constants::Network;
 use util::{address, hash};
 
@@ -52,6 +54,45 @@ pub enum Error {
     TooFewKeys(usize),
     /// Had too many keys; template does not match key list
     TooManyKeys(usize)
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Error::BadTweak(ref e) => fmt::Display::fmt(&e, f),
+            Error::Secp(ref e) => fmt::Display::fmt(&e, f),
+            Error::Script(ref e) => fmt::Display::fmt(&e, f),
+            Error::UncompressedKey => f.write_str("encountered uncompressed secp public key"),
+            Error::ExpectedKey => f.write_str("expected key when deserializing script"),
+            Error::ExpectedChecksig => f.write_str("expected OP_*CHECKSIG* when deserializing script"),
+            Error::TooFewKeys(n) => write!(f, "got {} keys, which was not enough", n),
+            Error::TooManyKeys(n) => write!(f, "got {} keys, which was too many", n)
+        }
+    }
+}
+
+impl error::Error for Error {
+    fn cause(&self) -> Option<&error::Error> {
+        match *self {
+            Error::BadTweak(ref e) => Some(e),
+            Error::Secp(ref e) => Some(e),
+            Error::Script(ref e) => Some(e),
+            _ => None
+        }
+    }
+
+    fn description(&self) -> &'static str {
+        match *self {
+            Error::BadTweak(_) => "bad public key tweak",
+            Error::Secp(_) => "libsecp256k1 error",
+            Error::Script(_) => "script error",
+            Error::UncompressedKey => "encountered uncompressed secp public key",
+            Error::ExpectedKey => "expected key when deserializing script",
+            Error::ExpectedChecksig => "expected OP_*CHECKSIG* when deserializing script",
+            Error::TooFewKeys(_) => "too few keys for template",
+            Error::TooManyKeys(_) => "too many keys for template"
+        }
+    }
 }
 
 /// An element of a script template
