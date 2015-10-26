@@ -1667,7 +1667,10 @@ fn check_signature(secp: &Secp256k1, sig_slice: &[u8], pk_slice: &[u8], script: 
 
     // We can unwrap -- only failure mode is on length, which is fixed to 32
     let msg = secp256k1::Message::from_slice(&signature_hash[..]).unwrap();
-    let sig = try!(secp256k1::Signature::from_der(secp, sig_slice).map_err(Error::Ecdsa));
+    // TODO: both from_der_lax and normalize() should not be used once BIP66 is accepted
+    let mut sig = try!(secp256k1::Signature::from_der_lax(secp, sig_slice).map_err(Error::Ecdsa));
+    // Normalize it
+    sig.normalize_s(secp);
 
     Secp256k1::verify(secp, &msg, &sig, &pubkey).map_err(Error::Ecdsa)
 }
@@ -2068,7 +2071,7 @@ impl Script {
 
                             match check_signature(secp, sig_slice, pk_slice, script, tx, input_index) {
                                 Ok(()) => stack.push(MaybeOwned::Borrowed(SCRIPT_TRUE)),
-                                _ => stack.push(MaybeOwned::Borrowed(SCRIPT_FALSE)),
+                                _ => stack.push(MaybeOwned::Borrowed(SCRIPT_FALSE))
                             }
                             if op == opcodes::Ordinary::OP_CHECKSIGVERIFY { op_verify!(stack, Error::VerifyFailed); }
                         }
