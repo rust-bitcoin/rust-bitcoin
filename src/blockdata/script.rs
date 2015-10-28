@@ -891,14 +891,14 @@ impl AbstractStackElem {
     }
 
     /// Looks up another stack item by index
-    unsafe fn lookup<'a>(&'a self, idx: usize) -> &'a AbstractStackElem {
+    unsafe fn lookup(&self, idx: usize) -> &AbstractStackElem {
         let mypos = self as *const _;
         let myidx = self.alloc_index.unwrap() as isize;
         &*mypos.offset(idx as isize - myidx)
     }
 
     /// Looks up another stack item by index
-    unsafe fn lookup_mut<'a>(&'a self, idx: usize) -> &'a mut AbstractStackElem {
+    unsafe fn lookup_mut(&self, idx: usize) -> &mut AbstractStackElem {
         let mypos = self as *const _ as *mut _;
         let myidx = self.alloc_index.unwrap() as isize;
         &mut *mypos.offset(idx as isize - myidx)
@@ -910,7 +910,7 @@ impl AbstractStackElem {
     }
 
     /// Retrieves the raw value of the stack element, if it can be determined
-    pub fn raw_value<'a>(&'a self) -> Option<&'a [u8]> {
+    pub fn raw_value(&self) -> Option<&[u8]> {
         self.raw.as_ref().map(|x| &x[..])
     }
 
@@ -1177,9 +1177,7 @@ impl AbstractStack {
 
     /// Construct the initial stack in the end
     pub fn build_initial_stack(&self) -> Vec<AbstractStackElem> {
-        let res: Vec<AbstractStackElem> =
-                self.initial_stack.iter().map(|&i| self.alloc[i].clone()).collect();
-        res
+        self.initial_stack.iter().map(|&i| self.alloc[i].clone()).collect()
     }
 
     /// Increase the stack size to `n`, adding elements to the initial
@@ -1196,7 +1194,7 @@ impl AbstractStack {
     }
 
     /// Push a new element
-    pub fn push_alloc<'a>(&'a mut self, elem: AbstractStackElem) -> &'a mut AbstractStackElem {
+    pub fn push_alloc(&mut self, elem: AbstractStackElem) -> &mut AbstractStackElem {
         let idx = self.allocate(elem);
         self.stack.push(idx);
         &mut self.alloc[idx]
@@ -1204,8 +1202,8 @@ impl AbstractStack {
 
 
     /// Obtain a mutable element to the top stack element
-    pub fn peek_mut<'a>(&'a mut self) -> &'a mut AbstractStackElem {
-        if self.stack.len() == 0 {
+    pub fn peek_mut(&mut self) -> &mut AbstractStackElem {
+        if self.stack.is_empty() {
             self.push_initial(AbstractStackElem::new_unknown());
         }
 
@@ -1214,7 +1212,7 @@ impl AbstractStack {
 
     /// Obtain a stackref to the current top element
     pub fn peek_index(&mut self) -> usize {
-        if self.stack.len() == 0 {
+        if self.stack.is_empty() {
             self.push_initial(AbstractStackElem::new_unknown());
         }
         *self.stack.last().unwrap()
@@ -1222,15 +1220,15 @@ impl AbstractStack {
 
     /// Drop the top stack item
     fn pop(&mut self) -> usize {
-        if self.stack.len() == 0 {
+        if self.stack.is_empty() {
             self.push_initial(AbstractStackElem::new_unknown());
         }
         self.stack.pop().unwrap()
     }
 
     /// Obtain a mutable reference to the top stack item, but remove it from the stack
-    fn pop_mut<'a>(&'a mut self) -> &'a mut AbstractStackElem {
-        if self.stack.len() == 0 {
+    fn pop_mut(&mut self) -> &mut AbstractStackElem {
+        if self.stack.is_empty() {
             self.push_initial(AbstractStackElem::new_unknown());
         }
 
@@ -1239,8 +1237,8 @@ impl AbstractStack {
 
 
     /// Move the top stack item to the altstack
-    pub fn to_altstack(&mut self) {
-        if self.stack.len() == 0 {
+    pub fn top_to_altstack(&mut self) {
+        if self.stack.is_empty() {
             self.push_initial(AbstractStackElem::new_unknown());
         }
 
@@ -1252,7 +1250,7 @@ impl AbstractStack {
     /// altstack is empty. (Note that input scripts pass their
     /// stack to the output script but /not/ the altstack, so
     /// there is no input that can make an empty altstack nonempty.)
-    pub fn from_altstack(&mut self) -> Result<(), Error> {
+    pub fn top_from_altstack(&mut self) -> Result<(), Error> {
         match self.alt_stack.pop() {
             Some(x) => { self.stack.push(x); Ok(()) }
             None => Err(Error::PopEmptyStack)
@@ -1549,7 +1547,7 @@ pub fn read_scriptint(v: &[u8]) -> Result<i64, Error> {
     let (mut ret, sh) = v.iter()
                          .fold((0, 0), |(acc, sh), n| (acc + ((*n as i64) << sh), sh + 8));
     if v[len - 1] & 0x80 != 0 {
-        ret &= (1 << sh - 1) - 1;
+        ret &= (1 << (sh - 1)) - 1;
         ret = -ret;
     }
     Ok(ret)
@@ -1559,7 +1557,7 @@ pub fn read_scriptint(v: &[u8]) -> Result<i64, Error> {
 /// else as true", except that the overflow rules don't apply.
 #[inline]
 pub fn read_scriptbool(v: &[u8]) -> bool {
-    !(v.len() == 0 ||
+    !(v.is_empty() ||
         ((v[v.len() - 1] == 0 || v[v.len() - 1] == 0x80) &&
          v.iter().rev().skip(1).all(|&w| w == 0)))
 }
@@ -1809,6 +1807,9 @@ impl Script {
     /// The length in bytes of the script
     pub fn len(&self) -> usize { self.0.len() }
 
+    /// Whether the script is the empty script
+    pub fn is_empty(&self) -> bool { self.0.is_empty() }
+
     /// Trace a script
     pub fn trace<'a>(&'a self, secp: &Secp256k1, stack: &mut Vec<MaybeOwned<'a>>,
                      input_context: Option<(&Transaction, usize)>)
@@ -1852,7 +1853,7 @@ impl Script {
                         errored: true,
                         op_count: op_count,
                         effect: opcode.classify(),
-                        stack: vec!["<failed to execute opcode>".to_string()]
+                        stack: vec!["<failed to execute opcode>".to_owned()]
                     });
                 }
                 None => {}
@@ -1954,16 +1955,16 @@ impl Script {
                             }
                         }
                         opcodes::Ordinary::OP_2DROP => stack_opcode!(stack(2): drop 1; drop 2),
-                        opcodes::Ordinary::OP_2DUP    => stack_opcode!(stack(2): copy 2; copy 1),
-                        opcodes::Ordinary::OP_3DUP    => stack_opcode!(stack(3): copy 3; copy 2; copy 1),
+                        opcodes::Ordinary::OP_2DUP  => stack_opcode!(stack(2): copy 2; copy 1),
+                        opcodes::Ordinary::OP_3DUP  => stack_opcode!(stack(3): copy 3; copy 2; copy 1),
                         opcodes::Ordinary::OP_2OVER => stack_opcode!(stack(4): copy 4; copy 3),
-                        opcodes::Ordinary::OP_2ROT    => stack_opcode!(stack(6): perm (1, 3, 5);
-                                                                                                                 perm (2, 4, 6)),
+                        opcodes::Ordinary::OP_2ROT  => stack_opcode!(stack(6): perm (1, 3, 5);
+                                                                               perm (2, 4, 6)),
                         opcodes::Ordinary::OP_2SWAP => stack_opcode!(stack(4): swap (2, 4); swap (1, 3)),
-                        opcodes::Ordinary::OP_DROP    => stack_opcode!(stack(1): drop 1),
-                        opcodes::Ordinary::OP_DUP     => stack_opcode!(stack(1): copy 1),
-                        opcodes::Ordinary::OP_NIP     => stack_opcode!(stack(2): drop 2),
-                        opcodes::Ordinary::OP_OVER    => stack_opcode!(stack(2): copy 2),
+                        opcodes::Ordinary::OP_DROP  => stack_opcode!(stack(1): drop 1),
+                        opcodes::Ordinary::OP_DUP   => stack_opcode!(stack(1): copy 1),
+                        opcodes::Ordinary::OP_NIP   => stack_opcode!(stack(2): drop 2),
+                        opcodes::Ordinary::OP_OVER  => stack_opcode!(stack(2): copy 2),
                         opcodes::Ordinary::OP_PICK => {
                             let n = match stack.pop() {
                                 Some(data) => try!(read_scriptint(&data[..])),
@@ -2009,7 +2010,7 @@ impl Script {
                             stack.push(MaybeOwned::Borrowed(if a == b { SCRIPT_TRUE } else { SCRIPT_FALSE }));
                             if op == opcodes::Ordinary::OP_EQUALVERIFY {
                                 op_verify!(stack, Error::EqualVerifyFailed((&a[..]).to_hex(),
-                                                                                                                     (&b[..]).to_hex()));
+                                                                           (&b[..]).to_hex()));
                             }
                         }
                         opcodes::Ordinary::OP_1ADD => { num_opcode!(stack(a): a + 1); }
@@ -2108,7 +2109,7 @@ impl Script {
                             // Compute the section of script that needs to be hashed: everything
                             // from the last CODESEPARATOR, except the signatures themselves.
                             let mut script = (&self.0[codeseparator_index..]).to_vec();
-                            for sig in sigs.iter() {
+                            for sig in &sigs {
                                 let mut remove = Builder::new();
                                 remove.push_slice(&sig[..]);
                                 script_find_and_remove(&mut script, &remove[..]);
@@ -2185,10 +2186,10 @@ impl Script {
     /// Evaluate the script to determine whether any possible input will cause it
     /// to accept. Returns true if it is guaranteed to fail; false otherwise.
     pub fn satisfy(&self) -> Result<Vec<AbstractStackElem>, Error> {
-        fn recurse<'a>(script: &'a [u8],
-                       mut stack: AbstractStack,
-                       mut exec_stack: Vec<bool>,
-                       depth: usize) -> Result<Vec<AbstractStackElem>, Error> {
+        fn recurse(script: &[u8],
+                   mut stack: AbstractStack,
+                   mut exec_stack: Vec<bool>,
+                   depth: usize) -> Result<Vec<AbstractStackElem>, Error> {
 
             // Avoid doing more than 64k forks
             if depth > 16 { return Err(Error::InterpreterStackOverflow); }
@@ -2334,8 +2335,8 @@ impl Script {
                                 }
                             }
                             opcodes::Ordinary::OP_VERIFY => op_verify_satisfy!(stack),
-                            opcodes::Ordinary::OP_TOALTSTACK => { stack.to_altstack(); }
-                            opcodes::Ordinary::OP_FROMALTSTACK => { try!(stack.from_altstack()); }
+                            opcodes::Ordinary::OP_TOALTSTACK => { stack.top_to_altstack(); }
+                            opcodes::Ordinary::OP_FROMALTSTACK => { try!(stack.top_from_altstack()); }
                             opcodes::Ordinary::OP_2DROP => stack_opcode!(stack(2): require 2 drop 1; drop 2),
                             opcodes::Ordinary::OP_2DUP    => stack_opcode!(stack(2): require 2 copy 2; copy 1),
                             opcodes::Ordinary::OP_3DUP    => stack_opcode!(stack(3): require 3 copy 3; copy 2; copy 1),
@@ -2558,7 +2559,7 @@ impl<'a> Iterator for Instructions<'a> {
     type Item = Instruction<'a>;
 
     fn next(&mut self) -> Option<Instruction<'a>> {
-        if self.data.len() == 0 {
+        if self.data.is_empty() {
             return None;
         }
 
@@ -2621,6 +2622,9 @@ impl Builder {
 
     /// The length in bytes of the script
     pub fn len(&self) -> usize { self.0.len() }
+
+    /// Whether the script is the empty script
+    pub fn is_empty(&self) -> bool { self.0.is_empty() }
 
     /// Adds instructions to push an integer onto the stack. Integers are
     /// encoded as little-endian signed-magnitude numbers, but there are
@@ -2833,8 +2837,8 @@ mod test {
         // before needing a transaction
         assert_eq!(script_pk.evaluate(&s, &mut vec![], None, None), Err(Error::PopEmptyStack));
         assert_eq!(script_pk.evaluate(&s, &mut vec![Owned(vec![]), Owned(vec![])], None, None),
-                                                                    Err(Error::EqualVerifyFailed("e729dea4a3a81108e16376d1cc329c91db589994".to_string(),
-                                                                                                                                         "b472a266d0bd89c13706a4132ccfb16f7c3b9fcb".to_string())));
+                                                                    Err(Error::EqualVerifyFailed("e729dea4a3a81108e16376d1cc329c91db589994".to_owned(),
+                                                                                                 "b472a266d0bd89c13706a4132ccfb16f7c3b9fcb".to_owned())));
         // But if the signature is there, we need a tx to check it
         assert_eq!(script_pk.evaluate(&s, &mut vec![Owned(vec![]), Owned("026d5d4cfef5f3d97d2263941b4d8e7aaa82910bf8e6f7c6cf1d8f0d755b9d2d1a".from_hex().unwrap())], None, None), Err(Error::NoTransaction));
         assert_eq!(script_pk.evaluate(&s, &mut vec![Owned(vec![0]), Owned("026d5d4cfef5f3d97d2263941b4d8e7aaa82910bf8e6f7c6cf1d8f0d755b9d2d1a".from_hex().unwrap())], None, None), Err(Error::NoTransaction));

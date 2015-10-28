@@ -65,18 +65,19 @@ impl BlockchainNode {
     /// Is the node on the main chain?
     fn is_on_main_chain(&self, chain: &Blockchain) -> bool {
         if self.block.header == unsafe { (*chain.best_tip).block.header } {
-            return true;
-        }
-        unsafe {
-            let mut scan = self.next;
-            while !scan.is_null() {
-                if (*scan).block.header == (*chain.best_tip).block.header {
-                    return true;
+            true
+        } else {
+            unsafe {
+                let mut scan = self.next;
+                while !scan.is_null() {
+                    if (*scan).block.header == (*chain.best_tip).block.header {
+                        return true;
+                    }
+                    scan = (*scan).next;
                 }
-                scan = (*scan).next;
             }
+            false
         }
-        return false;
     }
 }
 
@@ -385,7 +386,7 @@ impl Blockchain {
     }
 
     /// Looks up a block in the chain and returns the BlockchainNode containing it
-    pub fn get_block<'a>(&'a self, hash: Sha256dHash) -> Option<&'a BlockchainNode> {
+    pub fn get_block(&self, hash: Sha256dHash) -> Option<&BlockchainNode> {
         self.tree.lookup(&hash.into_le(), 256).map(|node| &**node)
     }
 
@@ -412,7 +413,7 @@ impl Blockchain {
     fn real_add_block(&mut self, block: Block, has_txdata: bool) -> Result<(), util::Error> {
         // get_prev optimizes the common case where we are extending the best tip
         #[inline]
-        fn get_prev<'a>(chain: &'a Blockchain, hash: Sha256dHash) -> Option<NodePtr> {
+        fn get_prev(chain: &Blockchain, hash: Sha256dHash) -> Option<NodePtr> {
             if hash == chain.best_hash { 
                 Some(chain.best_tip)
             } else {
@@ -535,7 +536,7 @@ impl Blockchain {
     }
 
     /// Returns the best tip
-    pub fn best_tip<'a>(&'a self) -> &'a Block {
+    pub fn best_tip(&self) -> &Block {
         unsafe { &(*self.best_tip).block }
     }
 

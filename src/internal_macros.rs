@@ -73,6 +73,10 @@ macro_rules! impl_array_newtype {
             #[inline]
             /// Returns the length of the object as an array
             pub fn len(&self) -> usize { $len }
+
+            #[inline]
+            /// Returns whether the object, as an array, is empty. Always false.
+            pub fn is_empty(&self) -> bool { false }
         }
 
         impl<'a> From<&'a [$ty]> for $thing {

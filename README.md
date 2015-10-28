@@ -39,7 +39,8 @@ using the same rules to validate data, and this library is simply unable
 to implement the same rules as Core.
 
 Given the complexity of both C++ and Rust, it is unlikely that this will
-ever be fixed, and there are no plans to do so.
+ever be fixed, and there are no plans to do so. Of course, patches to
+fix specific consensus incompatibilities are welcome.
 
 ## Memory Usage
 

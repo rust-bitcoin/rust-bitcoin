@@ -30,7 +30,7 @@ use util;
 /// A message which can be sent on the Bitcoin network
 pub trait Listener {
     /// Return a string encoding of the peer's network address
-    fn peer<'a>(&'a self) -> &'a str;
+    fn peer(&self) -> &str;
     /// Return the port we have connected to the peer on
     fn port(&self) -> u16;
     /// Return the network this `Listener` is operating on
@@ -40,7 +40,7 @@ pub trait Listener {
         // Open socket
         let mut ret_sock = Socket::new(self.network());
         if let Err(e) = ret_sock.connect(self.peer(), self.port()) {
-            return Err(util::Error::Detail("listener".to_string(), Box::new(e)));
+            return Err(util::Error::Detail("listener".to_owned(), Box::new(e)));
         }
         let mut sock = ret_sock.clone();
 
@@ -59,18 +59,15 @@ pub trait Listener {
                 match sock.receive_message() {
                     Ok(payload) => {
                         // React to any network messages that affect our state.
-                        match payload {
+                        if let Verack = payload {
                             // Make an exception for verack since there is no response required
-                            Verack => {
-                                // TODO: when the timeout stuff in std::io::net::tcp is sorted out we should
-                                // actually time out if the verack doesn't come in in time
-                                if handshake_complete {
-                                    println!("Received second verack (peer is misbehaving)");
-                                } else {
-                                    handshake_complete = true;
-                                }
+                            // TODO: when the timeout stuff in std::io::net::tcp is sorted out we should
+                            // actually time out if the verack doesn't come in in time
+                            if handshake_complete {
+                                println!("Received second verack (peer is misbehaving)");
+                            } else {
+                                handshake_complete = true;
                             }
-                            _ => {}
                         };
                         // We have to pass the message to the main thread for processing,
                         // unfortunately, because sipa says we have to handle everything

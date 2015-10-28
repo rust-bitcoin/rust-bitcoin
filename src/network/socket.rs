@@ -62,7 +62,7 @@ macro_rules! with_socket(($s:ident, $sock:ident, $body:block) => ({
         Err(_) => {
             let io_err = io::Error::new(io::ErrorKind::NotConnected,
                                         "socket: socket mutex was poisoned");
-            return Err(util::Error::Io(io_err));
+            Err(util::Error::Io(io_err))
         }
         Ok(mut guard) => {
             match *guard.deref_mut() {
@@ -72,7 +72,7 @@ macro_rules! with_socket(($s:ident, $sock:ident, $body:block) => ({
                 None => {
                    let io_err = io::Error::new(io::ErrorKind::NotConnected,
                                                 "socket: not connected to peer");
-                   return Err(util::Error::Io(io_err));
+                   Err(util::Error::Io(io_err))
                 }
             }
         }
@@ -89,7 +89,7 @@ impl Socket {
             socket: Arc::new(Mutex::new(None)),
             services: 0,
             version_nonce: rng.gen(),
-            user_agent: constants::USER_AGENT.to_string(),
+            user_agent: constants::USER_AGENT.to_owned(),
             magic: constants::magic(network)
         }
     }
@@ -181,7 +181,7 @@ impl Socket {
             match decode {
                 // Check for parse errors...
                 Err(e) => {
-                    propagate_err("receive_message".to_string(), Err(e))
+                    propagate_err("receive_message".to_owned(), Err(e))
                 },
                 Ok(ret) => {
                     // Then for magic (this should come before parse error, but we can't

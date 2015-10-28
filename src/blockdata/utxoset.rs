@@ -96,16 +96,19 @@ impl<'a> Iterator for UtxoIterator<'a> {
                 None => { self.current = None; }
             }
         }
-        return None;
+        None
     }
 }
+
+/// A mapping from a spent-txo to an actual txout ((txid, vout),  (height, txout))
+pub type StxoRef = ((Sha256dHash, u32), (u32, TxOut));
 
 /// The UTXO set
 pub struct UtxoSet {
     table: HashMap<Sha256dHash, UtxoNode>,
     last_hash: Sha256dHash,
     // A circular buffer of deleted utxos, grouped by block
-    spent_txos: Vec<Vec<((Sha256dHash, u32), (u32, TxOut))>>,
+    spent_txos: Vec<Vec<StxoRef>>,
     // The last index into the above buffer that was assigned to
     spent_idx: u64,
     n_utxos: u64,
@@ -137,7 +140,7 @@ impl UtxoSet {
         // Locate node if it's already there
         let new_node = {
             let mut new_node = Vec::with_capacity(tx.output.len());
-            for txo in tx.output.iter() {
+            for txo in &tx.output {
                 if txo.script_pubkey.is_provably_unspendable() {
                     new_node.push(None);
                     self.n_utxos -= 1;
@@ -188,7 +191,7 @@ impl UtxoSet {
     }
 
     /// Get a reference to a UTXO in the set
-    pub fn get_utxo<'a>(&'a self, txid: Sha256dHash, vout: u32) -> Option<(usize, &'a TxOut)> {
+    pub fn get_utxo(&self, txid: Sha256dHash, vout: u32) -> Option<(usize, &TxOut)> {
         // Locate the UTXO, failing if not found
         let node = match self.table.get(&txid) {
             Some(node) => node,
@@ -221,7 +224,7 @@ impl UtxoSet {
         // same block. (Note that Bitcoin requires chained transactions to be in
         // the correct order, which we do not check, so we are minorly too permissive.
         // TODO this is a consensus bug.)
-        for tx in block.txdata.iter() {
+        for tx in &block.txdata {
             let txid = tx.bitcoin_hash();
             // Add outputs -- add_utxos returns the original transaction if this is a dupe.
             //     Note that this can only happen with coinbases, and in this case the block
@@ -231,8 +234,8 @@ impl UtxoSet {
             match self.add_utxos(tx, blockheight as u32) {
                 Some(mut replace) => {
                     let blockhash = block.header.bitcoin_hash().be_hex_string();
-                    if blockhash == "00000000000a4d0a398161ffc163c503763b1f4360639393e0e4c8e300e0caec".to_string() ||
-                         blockhash == "00000000000743f190a18c5577a3c2d2a1f610ae9601ac046a38084ccb7cd721".to_string() {
+                    if blockhash == "00000000000a4d0a398161ffc163c503763b1f4360639393e0e4c8e300e0caec" ||
+                         blockhash == "00000000000743f190a18c5577a3c2d2a1f610ae9601ac046a38084ccb7cd721" {
                         // For these specific blocks, overwrite the old UTXOs.
                         // (Actually add_utxos() already did this, so we do nothing.)
                     } else {
@@ -330,7 +333,7 @@ impl UtxoSet {
 
         // Delete added txouts
         let mut skipped_genesis = false;
-        for tx in block.txdata.iter() {
+        for tx in &block.txdata {
             let txhash = tx.bitcoin_hash();
             for n in 0..tx.output.len() {
                 // Just bomb out the whole transaction
@@ -374,7 +377,7 @@ impl UtxoSet {
         self.spent_idx = (self.spent_idx + self.spent_txos.len() as u64 - 1) %
                                              self.spent_txos.len() as u64;
         self.last_hash = block.header.prev_blockhash;
-        return true;
+        true
     }
 
     /// Get the hash of the last block added to the utxo set

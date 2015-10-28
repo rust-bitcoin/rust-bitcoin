@@ -133,7 +133,7 @@ impl RawNetworkMessage {
             NetworkMessage::Headers(_) => "headers",
             NetworkMessage::Ping(_)    => "ping",
             NetworkMessage::Pong(_)    => "pong",
-        }.to_string()
+        }.to_owned()
     }
 }
 
@@ -170,19 +170,19 @@ impl<D: SimpleDecoder<Error=util::Error>> ConsensusDecodable<D> for RawNetworkMe
 
         let mut mem_d = RawDecoder::new(Cursor::new(raw_payload));
         let payload = match &cmd[..] {
-            "version" => NetworkMessage::Version(try!(propagate_err("version".to_string(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
+            "version" => NetworkMessage::Version(try!(propagate_err("version".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
             "verack"  => NetworkMessage::Verack,
-            "addr"    => NetworkMessage::Addr(try!(propagate_err("addr".to_string(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
-            "inv"     => NetworkMessage::Inv(try!(propagate_err("inv".to_string(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
-            "getdata" => NetworkMessage::GetData(try!(propagate_err("getdata".to_string(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
-            "notfound" => NetworkMessage::NotFound(try!(propagate_err("notfound".to_string(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
-            "getblocks" => NetworkMessage::GetBlocks(try!(propagate_err("getblocks".to_string(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
-            "getheaders" => NetworkMessage::GetHeaders(try!(propagate_err("getheaders".to_string(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
-            "block"   => NetworkMessage::Block(try!(propagate_err("block".to_string(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
-            "headers" => NetworkMessage::Headers(try!(propagate_err("headers".to_string(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
-            "ping"    => NetworkMessage::Ping(try!(propagate_err("ping".to_string(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
-            "pong"    => NetworkMessage::Ping(try!(propagate_err("pong".to_string(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
-            "tx"      => NetworkMessage::Tx(try!(propagate_err("tx".to_string(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
+            "addr"    => NetworkMessage::Addr(try!(propagate_err("addr".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
+            "inv"     => NetworkMessage::Inv(try!(propagate_err("inv".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
+            "getdata" => NetworkMessage::GetData(try!(propagate_err("getdata".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
+            "notfound" => NetworkMessage::NotFound(try!(propagate_err("notfound".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
+            "getblocks" => NetworkMessage::GetBlocks(try!(propagate_err("getblocks".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
+            "getheaders" => NetworkMessage::GetHeaders(try!(propagate_err("getheaders".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
+            "block"   => NetworkMessage::Block(try!(propagate_err("block".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
+            "headers" => NetworkMessage::Headers(try!(propagate_err("headers".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
+            "ping"    => NetworkMessage::Ping(try!(propagate_err("ping".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
+            "pong"    => NetworkMessage::Ping(try!(propagate_err("pong".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
+            "tx"      => NetworkMessage::Tx(try!(propagate_err("tx".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
             cmd => return Err(d.error(format!("unrecognized network command `{}`", cmd)))
         };
         Ok(RawNetworkMessage {
@@ -200,7 +200,7 @@ mod test {
 
     #[test]
     fn serialize_commandstring_test() {
-        let cs = CommandString("Andrew".to_string());
+        let cs = CommandString("Andrew".to_owned());
         assert_eq!(serialize(&cs).ok(), Some(vec![0x41u8, 0x6e, 0x64, 0x72, 0x65, 0x77, 0, 0, 0, 0, 0, 0]));
     }
 
@@ -208,7 +208,7 @@ mod test {
     fn deserialize_commandstring_test() {
         let cs: Result<CommandString, _> = deserialize(&[0x41u8, 0x6e, 0x64, 0x72, 0x65, 0x77, 0, 0, 0, 0, 0, 0]);
         assert!(cs.is_ok());
-        assert_eq!(cs.unwrap(), CommandString("Andrew".to_string()));
+        assert_eq!(cs.unwrap(), CommandString("Andrew".to_owned()));
 
         let short_cs: Result<CommandString, _> = deserialize(&[0x41u8, 0x6e, 0x64, 0x72, 0x65, 0x77, 0, 0, 0, 0, 0]);
         assert!(short_cs.is_err());

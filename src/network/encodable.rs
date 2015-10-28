@@ -128,7 +128,7 @@ impl<D: SimpleDecoder> ConsensusDecodable<D> for String {
     #[inline]
     fn consensus_decode(d: &mut D) -> Result<String, D::Error> {
         String::from_utf8(try!(ConsensusDecodable::consensus_decode(d)))
-            .map_err(|_| d.error("String was not valid UTF8".to_string()))
+            .map_err(|_| d.error("String was not valid UTF8".to_owned()))
     }
 }
 
@@ -248,7 +248,7 @@ impl<S: SimpleEncoder> ConsensusEncodable<S> for CheckedData {
         try!((self.0.len() as u32).consensus_encode(s));
         try!(sha2_checksum(&self.0).consensus_encode(s));
         // We can't just pass to the slice encoder since it'll insert a length
-        for ch in self.0.iter() {
+        for ch in &self.0 {
             try!(ch.consensus_encode(s));
         }
         Ok(())
@@ -308,7 +308,7 @@ impl<S: SimpleEncoder, T: ConsensusEncodable<S>> ConsensusEncodable<S> for Box<T
 impl<D: SimpleDecoder, T: ConsensusDecodable<D>> ConsensusDecodable<D> for Box<T> {
     #[inline]
     fn consensus_decode(d: &mut D) -> Result<Box<T>, D::Error> {
-        ConsensusDecodable::consensus_decode(d).map(|res| Box::new(res))
+        ConsensusDecodable::consensus_decode(d).map(Box::new)
     }
 }
 

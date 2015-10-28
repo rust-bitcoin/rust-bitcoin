@@ -144,7 +144,7 @@ pub fn base58_encode_slice(data: &[u8]) -> String {
     // 7/5 is just over log_58(256)
     let mut scratch = vec![0u8; 1 + data.len() * 7 / 5];
     // Build in base 58
-    for &d256 in data.base58_layout().iter() {
+    for &d256 in &data.base58_layout() {
         // Compute "X = X * 256 + next_digit" in base 58
         let mut carry = d256 as u32;
         for d58 in scratch.iter_mut().rev() {

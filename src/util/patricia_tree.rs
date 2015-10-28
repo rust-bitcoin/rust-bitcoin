@@ -57,7 +57,7 @@ impl<K, V> PatriciaTree<K, V>
     }
 
     /// Lookup a value by exactly matching `key` and return a referenc
-    pub fn lookup_mut<'a>(&'a mut self, key: &K, key_len: usize) -> Option<&'a mut V> {
+    pub fn lookup_mut(&mut self, key: &K, key_len: usize) -> Option<&mut V> {
         // Caution: `lookup_mut` never modifies its self parameter (in fact its
         // internal recursion uses a non-mutable self, so we are OK to just
         // transmute our self pointer into a mutable self before passing it in.
@@ -66,7 +66,7 @@ impl<K, V> PatriciaTree<K, V>
     }
 
     /// Lookup a value by exactly matching `key` and return a mutable reference
-    pub fn lookup<'a>(&'a self, key: &K, key_len: usize) -> Option<&'a V> {
+    pub fn lookup(&self, key: &K, key_len: usize) -> Option<&V> {
         let mut node = self;
         let mut key_idx = 0;
 
@@ -89,11 +89,11 @@ impl<K, V> PatriciaTree<K, V>
                 // Key matches prefix: search key longer than node key, recurse
                 key_idx += 1 + node.skip_len as usize;
                 let subtree = if key.bit(key_idx - 1) { &node.child_r } else { &node.child_l };
-                match subtree {
-                    &Some(ref bx) => {
+                match *subtree {
+                    Some(ref bx) => {
                         node = &**bx;    // bx is a &Box<U> here, so &**bx gets &U
                     }
-                    &None => { return None; }
+                    None => { return None; }
                 }
             }
         } // end loop
@@ -305,7 +305,7 @@ impl<K, V> PatriciaTree<K, V>
                 (_, Some(child_l), Some(child_r)) => {
                     tree.child_l = Some(child_l);
                     tree.child_r = Some(child_r);
-                    return (false, ret);
+                    (false, ret)
                 }
                 // One child? Consolidate
                 (bit, Some(child), None) | (bit, None, Some(child)) => {
@@ -321,11 +321,11 @@ impl<K, V> PatriciaTree<K, V>
                                        new_bit +
                                        (skip_prefix << (1 + tree.skip_len as usize));
                     tree.skip_len += 1 + skip_len;
-                    return (false, ret);
+                    (false, ret)
                 }
                 // No children? Delete
                 (_, None, None) => {
-                    return (true, ret);
+                    (true, ret)
                 }
             }
         }
@@ -336,9 +336,9 @@ impl<K, V> PatriciaTree<K, V>
     /// Count all the nodes
     pub fn node_count(&self) -> usize {
         fn recurse<K: Copy, V>(node: &Option<Box<PatriciaTree<K, V>>>) -> usize {
-            match node {
-                &Some(ref node) => { 1 + recurse(&node.child_l) + recurse(&node.child_r) }
-                &None => 0
+            match *node {
+                Some(ref node) => { 1 + recurse(&node.child_l) + recurse(&node.child_r) }
+                None => 0
             }
         }
         1 + recurse(&self.child_l) + recurse(&self.child_r)
@@ -366,8 +366,8 @@ impl<K, V> PatriciaTree<K, V>
 
 impl<K: Copy + BitArray, V: Debug> Debug for PatriciaTree<K, V> {
     /// Print the entire tree
-    fn fmt<'a>(&'a self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        fn recurse<'a, K, V>(tree: &'a PatriciaTree<K, V>, f: &mut fmt::Formatter, depth: usize) -> Result<(), fmt::Error>
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        fn recurse<K, V>(tree: &PatriciaTree<K, V>, f: &mut fmt::Formatter, depth: usize) -> Result<(), fmt::Error>
             where K: Copy + BitArray, V: Debug
         {
             for i in 0..tree.skip_len as usize {
@@ -453,7 +453,7 @@ impl<'a, K: Copy, V> Iterator for Items<'a, K, V> {
     type Item = &'a V;
 
     fn next(&mut self) -> Option<&'a V> {
-        fn borrow_opt<'a, K: Copy, V>(opt_ptr: &'a Option<Box<PatriciaTree<K, V>>>) -> Option<&'a PatriciaTree<K, V>> {
+        fn borrow_opt<K: Copy, V>(opt_ptr: &Option<Box<PatriciaTree<K, V>>>) -> Option<&PatriciaTree<K, V>> {
             opt_ptr.as_ref().map(|b| &**b)
         }
 
@@ -499,7 +499,7 @@ impl<'a, K: Copy, V> Iterator for MutItems<'a, K, V> {
     type Item = &'a mut V;
 
     fn next(&mut self) -> Option<&'a mut V> {
-        fn borrow_opt<'a, K: Copy, V>(opt_ptr: &'a Option<Box<PatriciaTree<K, V>>>) -> *mut PatriciaTree<K, V> {
+        fn borrow_opt<K: Copy, V>(opt_ptr: &Option<Box<PatriciaTree<K, V>>>) -> *mut PatriciaTree<K, V> {
             match *opt_ptr {
                 Some(ref data) => &**data as *const _ as *mut _,
                 None => ptr::null_mut()

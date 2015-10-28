@@ -145,7 +145,7 @@ impl TxIn {
                     Ok(_) => {}
                     Err(e) => { return Err(Error::InputScriptFailure(e)); }
                 }
-                if txo.script_pubkey.is_p2sh() && stack.len() > 0 {
+                if txo.script_pubkey.is_p2sh() && !stack.is_empty() {
                     p2sh_stack = stack.clone();
                     p2sh_script = match p2sh_stack.pop() {
                         Some(script::MaybeOwned::Owned(v)) => Script::from(v),
@@ -225,7 +225,7 @@ impl Transaction {
                     let err = trace.sig_trace.error.as_ref().map(|e| e.clone());
                     err.map(|e| trace.error = Some(Error::InputScriptFailure(e)));
 
-                    if txo.script_pubkey.is_p2sh() && stack.len() > 0 {
+                    if txo.script_pubkey.is_p2sh() && !stack.is_empty() {
                         p2sh_stack = stack.clone();
                         p2sh_script = match p2sh_stack.pop() {
                             Some(script::MaybeOwned::Owned(v)) => Script::from(v),

@@ -127,7 +127,7 @@ macro_rules! construct_uint {
                 let mut me = self;
                 // TODO: be more efficient about this
                 for i in 0..(2 * $n_words) {
-                    me = me + me.mul_u32((other >> (32 * i)).low_u32()) << (32 * i);
+                    me = (me + me.mul_u32((other >> (32 * i)).low_u32())) << (32 * i);
                 }
                 me
             }
@@ -315,7 +315,7 @@ macro_rules! construct_uint {
                     if me[$n_words - 1 - i] < you[$n_words - 1 - i] { return ::std::cmp::Ordering::Less; }
                     if me[$n_words - 1 - i] > you[$n_words - 1 - i] { return ::std::cmp::Ordering::Greater; }
                 }
-                return ::std::cmp::Ordering::Equal;
+                ::std::cmp::Ordering::Equal
             }
         }
 

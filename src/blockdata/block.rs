@@ -80,7 +80,7 @@ impl BlockHeader {
         let (mant, expt) = {
             let unshifted_expt = self.bits >> 24;
             if unshifted_expt <= 3 {
-                ((self.bits & 0xFFFFFF) >> 8 * (3 - unshifted_expt as usize), 0)
+                ((self.bits & 0xFFFFFF) >> (8 * (3 - unshifted_expt as usize)), 0)
             } else {
                 (self.bits & 0xFFFFFF, 8 * ((self.bits >> 24) - 3))
             }
@@ -98,11 +98,11 @@ impl BlockHeader {
     /// is correct, but does not verify that the transactions are valid or encoded
     /// correctly.
     pub fn spv_validate(&self, required_target: &Uint256) -> Result<(), util::Error> {
-        let ref target = self.target();
+        let target = &self.target();
         if target != required_target {
             return Err(SpvBadTarget);
         }
-        let ref hash = self.bitcoin_hash().into_le();
+        let hash = &self.bitcoin_hash().into_le();
         if hash <= target { Ok(()) } else { Err(SpvBadProofOfWork) }
     }
 
