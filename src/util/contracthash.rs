@@ -113,14 +113,14 @@ impl Template {
         let mut key_index = 0;
         let mut ret = script::Builder::new();
         for elem in &self.0 {
-            match *elem {
+            ret = match *elem {
                 TemplateElement::Op(opcode) => ret.push_opcode(opcode),
                 TemplateElement::Key => {
                     if key_index == keys.len() {
                         return Err(Error::TooFewKeys(key_index));
                     }
-                    ret.push_slice(&keys[key_index].serialize_vec(&secp, true)[..]);
                     key_index += 1;
+                    ret.push_slice(&keys[key_index - 1].serialize_vec(&secp, true)[..])
                 }
             }
         }
@@ -215,19 +215,19 @@ pub fn untemplate(script: &script::Script) -> Result<(Template, Vec<PublicKey>),
         match instruction {
             script::Instruction::PushBytes(data) => {
                 let n = data.len();
-                match PublicKey::from_slice(&secp, data) {
+                ret = match PublicKey::from_slice(&secp, data) {
                     Ok(key) => {
                         if n == 65 { return Err(Error::UncompressedKey); }
                         if mode == Mode::SeekingCheckMulti { return Err(Error::ExpectedChecksig); }
                         retkeys.push(key);
-                        ret.push_opcode(opcodes::All::from(PUBKEY));
                         mode = Mode::CopyingKeys;
+                        ret.push_opcode(opcodes::All::from(PUBKEY))
                     }
                     Err(_) => {
                         // Arbitrary pushes are only allowed before we've found any keys.
                         // Otherwise we have to wait for a N CHECKSIG pair.
                         match mode {
-                            Mode::SeekingKeys => { ret.push_slice(data); }
+                            Mode::SeekingKeys => { ret.push_slice(data) }
                             Mode::CopyingKeys => { return Err(Error::ExpectedKey); },
                             Mode::SeekingCheckMulti => { return Err(Error::ExpectedChecksig); }
                         }
@@ -257,7 +257,7 @@ pub fn untemplate(script: &script::Script) -> Result<(Template, Vec<PublicKey>),
                     // All other opcodes do nothing
                     _ => {}
                 }
-                ret.push_opcode(op);
+                ret = ret.push_opcode(op);
             }
             script::Instruction::Error(e) => { return Err(Error::Script(e)); }
         }

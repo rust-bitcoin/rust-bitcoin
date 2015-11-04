@@ -2059,8 +2059,7 @@ impl Script {
                             // Compute the section of script that needs to be hashed: everything
                             // from the last CODESEPARATOR, except the signature itself.
                             let mut script = (&self.0[codeseparator_index..]).to_vec();
-                            let mut remove = Builder::new();
-                            remove.push_slice(sig_slice);
+                            let remove = Builder::new().push_slice(sig_slice);
                             script_find_and_remove(&mut script, &remove[..]);
                             // Also all of the OP_CODESEPARATORS, even the unevaluated ones
                             script_find_and_remove(&mut script, &[opcodes::Ordinary::OP_CODESEPARATOR as u8]);
@@ -2110,8 +2109,7 @@ impl Script {
                             // from the last CODESEPARATOR, except the signatures themselves.
                             let mut script = (&self.0[codeseparator_index..]).to_vec();
                             for sig in &sigs {
-                                let mut remove = Builder::new();
-                                remove.push_slice(&sig[..]);
+                                let remove = Builder::new().push_slice(&sig[..]);
                                 script_find_and_remove(&mut script, &remove[..]);
                                 script_find_and_remove(&mut script, &[opcodes::Ordinary::OP_CODESEPARATOR as u8]);
                             }
@@ -2629,27 +2627,29 @@ impl Builder {
     /// Adds instructions to push an integer onto the stack. Integers are
     /// encoded as little-endian signed-magnitude numbers, but there are
     /// dedicated opcodes to push some small integers.
-    pub fn push_int(&mut self, data: i64) {
+    pub fn push_int(mut self, data: i64) -> Builder {
         // We can special-case -1, 1-16
         if data == -1 || (data >= 1 && data <= 16) {
             self.0.push((data + opcodes::OP_TRUE as i64) as u8);
+            self
         }
         // We can also special-case zero
         else if data == 0 {
             self.0.push(opcodes::OP_FALSE as u8);
+            self
         }
         // Otherwise encode it as data
-        else { self.push_scriptint(data); }
+        else { self.push_scriptint(data) }
     }
 
     /// Adds instructions to push an integer onto the stack, using the explicit
     /// encoding regardless of the availability of dedicated opcodes.
-    pub fn push_scriptint(&mut self, data: i64) {
-        self.push_slice(&build_scriptint(data));
+    pub fn push_scriptint(self, data: i64) -> Builder {
+        self.push_slice(&build_scriptint(data))
     }
 
     /// Adds instructions to push some arbitrary data onto the stack
-    pub fn push_slice(&mut self, data: &[u8]) {
+    pub fn push_slice(mut self, data: &[u8]) -> Builder {
         // Start with a PUSH opcode
         match data.len() {
             n if n < opcodes::Ordinary::OP_PUSHDATA1 as usize => { self.0.push(n as u8); },
@@ -2673,11 +2673,13 @@ impl Builder {
         }
         // Then push the acraw
         self.0.extend(data.iter().cloned());
+        self
     }
 
     /// Adds a single opcode to the script
-    pub fn push_opcode(&mut self, data: opcodes::All) {
+    pub fn push_opcode(mut self, data: opcodes::All) -> Builder {
         self.0.push(data as u8);
+        self
     }
 
     /// Converts the `Builder` into an unmodifiable `Script`
@@ -2773,25 +2775,37 @@ mod test {
         assert_eq!(&script[..], &comp[..]);
 
         // small ints
-        script.push_int(1);  comp.push(82u8); assert_eq!(&script[..], &comp[..]);
-        script.push_int(0);  comp.push(0u8);  assert_eq!(&script[..], &comp[..]);
-        script.push_int(4);  comp.push(85u8); assert_eq!(&script[..], &comp[..]);
-        script.push_int(-1); comp.push(80u8); assert_eq!(&script[..], &comp[..]);
+        script = script.push_int(1);  comp.push(82u8); assert_eq!(&script[..], &comp[..]);
+        script = script.push_int(0);  comp.push(0u8);  assert_eq!(&script[..], &comp[..]);
+        script = script.push_int(4);  comp.push(85u8); assert_eq!(&script[..], &comp[..]);
+        script = script.push_int(-1); comp.push(80u8); assert_eq!(&script[..], &comp[..]);
         // forced scriptint
-        script.push_scriptint(4); comp.extend([1u8, 4].iter().cloned()); assert_eq!(&script[..], &comp[..]);
+        script = script.push_scriptint(4); comp.extend([1u8, 4].iter().cloned()); assert_eq!(&script[..], &comp[..]);
         // big ints
-        script.push_int(17); comp.extend([1u8, 17].iter().cloned()); assert_eq!(&script[..], &comp[..]);
-        script.push_int(10000); comp.extend([2u8, 16, 39].iter().cloned()); assert_eq!(&script[..], &comp[..]);
+        script = script.push_int(17); comp.extend([1u8, 17].iter().cloned()); assert_eq!(&script[..], &comp[..]);
+        script = script.push_int(10000); comp.extend([2u8, 16, 39].iter().cloned()); assert_eq!(&script[..], &comp[..]);
         // notice the sign bit set here, hence the extra zero/128 at the end
-        script.push_int(10000000); comp.extend([4u8, 128, 150, 152, 0].iter().cloned()); assert_eq!(&script[..], &comp[..]);
-        script.push_int(-10000000); comp.extend([4u8, 128, 150, 152, 128].iter().cloned()); assert_eq!(&script[..], &comp[..]);
+        script = script.push_int(10000000); comp.extend([4u8, 128, 150, 152, 0].iter().cloned()); assert_eq!(&script[..], &comp[..]);
+        script = script.push_int(-10000000); comp.extend([4u8, 128, 150, 152, 128].iter().cloned()); assert_eq!(&script[..], &comp[..]);
 
         // data
-        script.push_slice("NRA4VR".as_bytes()); comp.extend([6u8, 78, 82, 65, 52, 86, 82].iter().cloned()); assert_eq!(&script[..], &comp[..]);
+        script = script.push_slice("NRA4VR".as_bytes()); comp.extend([6u8, 78, 82, 65, 52, 86, 82].iter().cloned()); assert_eq!(&script[..], &comp[..]);
 
         // opcodes 
-        script.push_opcode(opcodes::All::OP_CHECKSIG); comp.push(0xACu8); assert_eq!(&script[..], &comp[..]);
-        script.push_opcode(opcodes::All::OP_CHECKSIG); comp.push(0xACu8); assert_eq!(&script[..], &comp[..]);
+        script = script.push_opcode(opcodes::All::OP_CHECKSIG); comp.push(0xACu8); assert_eq!(&script[..], &comp[..]);
+        script = script.push_opcode(opcodes::All::OP_CHECKSIG); comp.push(0xACu8); assert_eq!(&script[..], &comp[..]);
+    }
+
+    #[test]
+    fn script_builder() {
+        // from txid 3bb5e6434c11fb93f64574af5d116736510717f2c595eb45b52c28e31622dfff which was in my mempool when I wrote the test
+        let script = Builder::new().push_opcode(opcodes::All::OP_DUP)
+                                   .push_opcode(opcodes::All::OP_HASH160)
+                                   .push_slice(&"16e1ae70ff0fa102905d4af297f6912bda6cce19".from_hex().unwrap())
+                                   .push_opcode(opcodes::All::OP_EQUALVERIFY)
+                                   .push_opcode(opcodes::All::OP_CHECKSIG)
+                                   .into_script();
+        assert_eq!(&format!("{:x}", script), "76a91416e1ae70ff0fa102905d4af297f6912bda6cce1988ac");
     }
 
     #[test]
@@ -2824,7 +2838,7 @@ mod test {
         let mut script = Builder::new();
         assert!(script.clone().into_script().evaluate(&s, &mut vec![], None, None).is_ok());
 
-        script.push_opcode(opcodes::All::OP_RETURN);
+        script = script.push_opcode(opcodes::All::OP_RETURN);
         assert!(script.clone().into_script().evaluate(&s, &mut vec![], None, None).is_err());
     }
 

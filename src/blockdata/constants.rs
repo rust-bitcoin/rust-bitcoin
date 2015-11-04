@@ -65,24 +65,25 @@ fn bitcoin_genesis_tx() -> Transaction {
     };
 
     // Inputs
-    let mut in_script = script::Builder::new();
-    in_script.push_scriptint(486604799);
-    in_script.push_scriptint(4);
-    in_script.push_slice("The Times 03/Jan/2009 Chancellor on brink of second bailout for banks".as_bytes());
+    let in_script = script::Builder::new().push_scriptint(486604799)
+                                          .push_scriptint(4)
+                                          .push_slice("The Times 03/Jan/2009 Chancellor on brink of second bailout for banks".as_bytes())
+                                          .into_script();
     ret.input.push(TxIn {
         prev_hash: Default::default(),
         prev_index: 0xFFFFFFFF,
-        script_sig: in_script.into_script(),
+        script_sig: in_script,
         sequence: MAX_SEQUENCE
     });
 
     // Outputs
-    let mut out_script = script::Builder::new();
-    out_script.push_slice(&hex_bytes("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f").unwrap());
-    out_script.push_opcode(opcodes::All::OP_CHECKSIG);
+    let out_script = script::Builder::new()
+        .push_slice(&hex_bytes("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f").unwrap())
+        .push_opcode(opcodes::All::OP_CHECKSIG)
+        .into_script();
     ret.output.push(TxOut {
         value: 50 * COIN_VALUE,
-        script_pubkey: out_script.into_script()
+        script_pubkey: out_script
     });
 
     // end

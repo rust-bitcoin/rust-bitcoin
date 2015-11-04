@@ -76,22 +76,22 @@ impl Address {
     /// Generates a script pubkey spending to this address
     #[inline]
     pub fn script_pubkey(&self) -> script::Script {
-        let mut script = script::Builder::new();
         match self.ty {
             Type::PubkeyHash => {
-                script.push_opcode(opcodes::All::OP_DUP);
-                script.push_opcode(opcodes::All::OP_HASH160);
-                script.push_slice(&self.hash[..]);
-                script.push_opcode(opcodes::All::OP_EQUALVERIFY);
-                script.push_opcode(opcodes::All::OP_CHECKSIG);
+                script::Builder::new()
+                    .push_opcode(opcodes::All::OP_DUP)
+                    .push_opcode(opcodes::All::OP_HASH160)
+                    .push_slice(&self.hash[..])
+                    .push_opcode(opcodes::All::OP_EQUALVERIFY)
+                    .push_opcode(opcodes::All::OP_CHECKSIG)
             }
             Type::ScriptHash => {
-                script.push_opcode(opcodes::All::OP_HASH160);
-                script.push_slice(&self.hash[..]);
-                script.push_opcode(opcodes::All::OP_EQUAL);
+                script::Builder::new()
+                    .push_opcode(opcodes::All::OP_HASH160)
+                    .push_slice(&self.hash[..])
+                    .push_opcode(opcodes::All::OP_EQUAL)
             }
-        }
-        script.into_script()
+        }.into_script()
     }
 }
 
