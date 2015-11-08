@@ -40,14 +40,15 @@ pub struct CommandString(pub String);
 impl<S: SimpleEncoder> ConsensusEncodable<S> for CommandString {
     #[inline]
     fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
-        use std::intrinsics::copy_nonoverlapping;
-        use std::mem;
-
         let &CommandString(ref inner_str) = self;
         let mut rawbytes = [0u8; 12]; 
-        unsafe { copy_nonoverlapping(inner_str.as_bytes().as_ptr(),
-                                     rawbytes.as_mut_ptr(),
-                                     mem::size_of::<[u8; 12]>()); }
+        let strbytes = inner_str.as_bytes();
+        if strbytes.len() > 12 {
+            panic!("Command string longer than 12 bytes");
+        }
+        for x in 0..strbytes.len() {
+            rawbytes[x] = strbytes[x];
+        }
         rawbytes.consensus_encode(s)
     }
 }
