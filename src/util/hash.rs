@@ -281,7 +281,6 @@ impl <T: BitcoinHash> MerkleRoot for Vec<T> {
 #[cfg(test)]
 mod tests {
     use num::FromPrimitive;
-    use serde::{Serialize, Deserialize};
     use strason;
 
     use network::serialize::{serialize, deserialize};
