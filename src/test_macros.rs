@@ -19,17 +19,13 @@
 #[macro_export]
 macro_rules! serde_round_trip (
     ($var:expr) => ({
-        use serde::{json, Serialize, Deserialize};
+        use serde::{Serialize, Deserialize};
+        use strason;
 
         let start = $var;
-        let mut encoded = Vec::new();
-        {
-            let mut serializer = json::ser::Serializer::new(&mut encoded);
-            start.serialize(&mut serializer).unwrap();
-        }
-        let mut deserializer = json::de::Deserializer::new(encoded.iter().map(|c| Ok(*c))).unwrap();
-        let decoded = Deserialize::deserialize(&mut deserializer);
-        assert_eq!(Some(start), decoded.ok());
+        let encoded = strason::from_serialize(start).unwrap();
+        let decoded = encoded.into_deserialize().unwrap();
+        assert_eq!(start, decoded);
     })
 );
 

@@ -282,7 +282,7 @@ impl <T: BitcoinHash> MerkleRoot for Vec<T> {
 mod tests {
     use num::FromPrimitive;
     use serde::{Serialize, Deserialize};
-    use json;
+    use strason;
 
     use network::serialize::{serialize, deserialize};
     use util::hash::Sha256dHash;
@@ -309,15 +309,11 @@ mod tests {
     #[test]
     fn test_hash_encode_decode() {
         let hash = Sha256dHash::from_data(&[]);
-        let mut writer = vec![];
-        {
-            let mut serializer = json::ser::Serializer::new(&mut writer);
-            assert!(hash.serialize(&mut serializer).is_ok());
-        }
-        assert_eq!(&writer[..],
+        let encoded = strason::from_serialize(&hash).unwrap();
+        assert_eq!(encoded.to_bytes(),
                    "\"56944c5d3f98413ef45cf54545538103cc9f298e0575820ad3591376e2e0f65d\"".as_bytes());
-        let mut deserializer = json::de::Deserializer::new(writer.iter().map(|c| Ok(*c)));
-        assert_eq!(hash, Deserialize::deserialize(&mut deserializer).unwrap());
+        let decoded = encoded.into_deserialize().unwrap();
+        assert_eq!(hash, decoded);
     }
 
     #[test]
