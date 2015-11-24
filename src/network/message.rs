@@ -98,6 +98,8 @@ pub enum NetworkMessage {
     GetBlocks(message_blockdata::GetBlocksMessage),
     /// `getheaders`
     GetHeaders(message_blockdata::GetHeadersMessage),
+    /// `mempool`
+    MemPool,
     /// tx
     Tx(transaction::Transaction),
     /// `block`
@@ -105,7 +107,6 @@ pub enum NetworkMessage {
     /// `headers`
     Headers(Vec<block::LoneBlockHeader>),
     // TODO: getaddr,
-    // TODO: mempool,
     // TODO: checkorder,
     // TODO: submitorder,
     // TODO: reply,
@@ -129,6 +130,7 @@ impl RawNetworkMessage {
             NetworkMessage::NotFound(_) => "notfound",
             NetworkMessage::GetBlocks(_) => "getblocks",
             NetworkMessage::GetHeaders(_) => "getheaders",
+            NetworkMessage::MemPool    => "mempool",
             NetworkMessage::Tx(_)      => "tx",
             NetworkMessage::Block(_)   => "block",
             NetworkMessage::Headers(_) => "headers",
@@ -151,6 +153,7 @@ impl<S: SimpleEncoder> ConsensusEncodable<S> for RawNetworkMessage {
             NetworkMessage::NotFound(ref dat) => serialize(dat),
             NetworkMessage::GetBlocks(ref dat) => serialize(dat),
             NetworkMessage::GetHeaders(ref dat) => serialize(dat),
+            NetworkMessage::MemPool          => Ok(vec![]),
             NetworkMessage::Tx(ref dat)      => serialize(dat),
             NetworkMessage::Block(ref dat)   => serialize(dat),
             NetworkMessage::Headers(ref dat) => serialize(dat),
@@ -179,6 +182,7 @@ impl<D: SimpleDecoder<Error=util::Error>> ConsensusDecodable<D> for RawNetworkMe
             "notfound" => NetworkMessage::NotFound(try!(propagate_err("notfound".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
             "getblocks" => NetworkMessage::GetBlocks(try!(propagate_err("getblocks".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
             "getheaders" => NetworkMessage::GetHeaders(try!(propagate_err("getheaders".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
+            "mempool" => NetworkMessage::MemPool,
             "block"   => NetworkMessage::Block(try!(propagate_err("block".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
             "headers" => NetworkMessage::Headers(try!(propagate_err("headers".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
             "ping"    => NetworkMessage::Ping(try!(propagate_err("ping".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
@@ -231,5 +235,15 @@ mod test {
                                        0x08, 0x00, 0x00, 0x00, 0x24, 0x67, 0xf1, 0x1d,
                                        0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]));
     }
+
+
+    #[test]
+    fn serialize_mempool_test() {
+        assert_eq!(serialize(&RawNetworkMessage { magic: 0xd9b4bef9, payload: NetworkMessage::MemPool }).ok(),
+                             Some(vec![0xf9, 0xbe, 0xb4, 0xd9, 0x6d, 0x65, 0x6d, 0x70, 
+                                       0x6f, 0x6f, 0x6c, 0x00, 0x00, 0x00, 0x00, 0x00, 
+                                       0x00, 0x00, 0x00, 0x00, 0x5d, 0xf6, 0xe0, 0xe2]));
+    }
+
 }
 
