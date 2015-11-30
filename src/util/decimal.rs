@@ -99,8 +99,10 @@ impl Decimal {
     }
 
     /// Returns the mantissa
+    #[inline]
     pub fn mantissa(&self) -> i64 { self.mantissa }
     /// Returns the exponent
+    #[inline]
     pub fn exponent(&self) -> usize { self.exponent }
 
     /// Get the decimal's value in an integer type, by multiplying
@@ -113,6 +115,10 @@ impl Decimal {
             self.mantissa * 10i64.pow((exponent - self.exponent) as u32)
         }
     }
+
+    /// Returns whether or not the number is nonnegative
+    #[inline]
+    pub fn nonnegative(&self) -> bool { self.mantissa >= 0 }
 }
 
 impl ser::Serialize for Decimal {
@@ -233,6 +239,12 @@ mod tests {
         let d1 = Decimal::new(5, 1);   //  0.5
         let d2 = Decimal::new(-2, 2);  // -0.02
         let d3 = Decimal::new(3, 0);   //  3.0
+        let d4 = Decimal::new(0, 5);  //   0.00000
+
+        assert!(d1.nonnegative());
+        assert!(!d2.nonnegative());
+        assert!(d3.nonnegative());
+        assert!(d4.nonnegative());
 
         assert_eq!(d1 + d2, Decimal::new(48, 2));
         assert_eq!(d1 - d2, Decimal::new(52, 2));
@@ -240,6 +252,11 @@ mod tests {
         assert_eq!(d1 - d3, Decimal::new(-25, 1));
         assert_eq!(d2 + d3, Decimal::new(298, 2));
         assert_eq!(d2 - d3, Decimal::new(-302, 2));
+
+        assert_eq!(d1 + d4, d1);
+        assert_eq!(d1 - d4, d1);
+        assert_eq!(d1 + d4, d1 - d4);
+        assert_eq!(d4 + d4, d4);
     }
 
     #[test]
