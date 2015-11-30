@@ -21,6 +21,8 @@
 //! altcoins with different granularity may require a wider type.
 //!
 
+use std::ops;
+
 use serde::{ser, de};
 use strason::Json;
 
@@ -45,6 +47,37 @@ impl PartialOrd<Decimal> for Decimal {
         let exp = max(self.exponent(), other.exponent());
         self.integer_value(exp).partial_cmp(&other.integer_value(exp))
     }
+}
+
+impl ops::Add for Decimal {
+    type Output = Decimal;
+
+    #[inline]
+    fn add(self, other: Decimal) -> Decimal {
+        if self.exponent > other.exponent {
+            Decimal {
+                mantissa: other.mantissa * 10i64.pow((self.exponent - other.exponent) as u32) + self.mantissa,
+                exponent: self.exponent
+            }
+        } else {
+            Decimal {
+                mantissa: self.mantissa * 10i64.pow((other.exponent - self.exponent) as u32) + other.mantissa,
+                exponent: other.exponent
+            }
+        }
+    }
+}
+
+impl ops::Neg for Decimal {
+    type Output = Decimal;
+    #[inline]
+    fn neg(self) -> Decimal { Decimal { mantissa: -self.mantissa, exponent: self.exponent } }
+}
+
+impl ops::Sub for Decimal {
+    type Output = Decimal;
+    #[inline]
+    fn sub(self, other: Decimal) -> Decimal { self + (-other) }
 }
 
 impl Decimal {
@@ -188,6 +221,20 @@ mod tests {
         assert!(d1 <= d3);
         assert!(d3 > d1);
         assert!(d3 > d2);
+    }
+
+    #[test]
+    fn arithmetic() {
+        let d1 = Decimal::new(5, 1);   //  0.5
+        let d2 = Decimal::new(-2, 2);  // -0.02
+        let d3 = Decimal::new(3, 0);   //  3.0
+
+        assert_eq!(d1 + d2, Decimal::new(48, 2));
+        assert_eq!(d1 - d2, Decimal::new(52, 2));
+        assert_eq!(d1 + d3, Decimal::new(35, 1));
+        assert_eq!(d1 - d3, Decimal::new(-25, 1));
+        assert_eq!(d2 + d3, Decimal::new(298, 2));
+        assert_eq!(d2 - d3, Decimal::new(-302, 2));
     }
 
     #[test]
