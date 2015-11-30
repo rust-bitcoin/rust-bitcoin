@@ -80,7 +80,8 @@ impl ser::Serialize for Decimal {
     fn serialize<S: ser::Serializer>(&self, s: &mut S) -> Result<(), S::Error> {
         let ten = 10i64.pow(self.exponent as u32);
         let int_part = self.mantissa / ten;
-        let dec_part = self.mantissa % ten;
+        let dec_part = (self.mantissa % ten).abs();
+        println!("{}", format!("{}.{:02$}", int_part, dec_part, self.exponent));
         let json = Json::from_str(&format!("{}.{:02$}", int_part, dec_part, self.exponent)).unwrap();
         ser::Serialize::serialize(&json, s)
     }
@@ -143,24 +144,31 @@ mod tests {
         assert_eq!(d.integer_value(8), 123456780000);
     }
 
+    macro_rules! deserialize_round_trip(
+        ($dec:expr, $s:expr) => ({
+            let d = $dec;
+            let encoded = Json::from_serialize(&d).unwrap();
+            assert_eq!(encoded, Json::from_reader(&$s[..]).unwrap());
+            assert_eq!(encoded.to_bytes(), &$s[..]);
+
+            let decoded: Decimal = encoded.into_deserialize().unwrap();
+            assert_eq!(decoded, d);
+        })
+    );
+
     #[test]
     fn deserialize() {
-        let d = Decimal::new(123456789001, 8);
-        let encoded = Json::from_serialize(&d).unwrap();
-        assert_eq!(encoded, Json::from_str("1234.56789001").unwrap());
-        assert_eq!(encoded.to_bytes(), b"1234.56789001");
+        deserialize_round_trip!(Decimal::new(0, 0), b"0.0");
 
-        let decoded: Decimal = encoded.into_deserialize().unwrap();
-        assert_eq!(decoded, d);
+        deserialize_round_trip!(Decimal::new(123456789001, 8), b"1234.56789001");
+        deserialize_round_trip!(Decimal::new(-123456789001, 8), b"-1234.56789001");
+        deserialize_round_trip!(Decimal::new(123456789001, 1), b"12345678900.1");
+        deserialize_round_trip!(Decimal::new(-123456789001, 1), b"-12345678900.1");
+        deserialize_round_trip!(Decimal::new(123456789001, 0), b"123456789001.0");
+        deserialize_round_trip!(Decimal::new(-123456789001, 0), b"-123456789001.0");
 
-
-        let d = Decimal::new(123400000001, 8);
-        let encoded = Json::from_serialize(&d).unwrap();
-        assert_eq!(encoded, Json::from_str("1234.00000001").unwrap());
-        assert_eq!(encoded.to_bytes(), b"1234.00000001");
-
-        let decoded: Decimal = encoded.into_deserialize().unwrap();
-        assert_eq!(decoded, d);
+        deserialize_round_trip!(Decimal::new(123400000001, 8), b"1234.00000001");
+        deserialize_round_trip!(Decimal::new(-123400000001, 8), b"-1234.00000001");
     }
 
     #[test]
@@ -188,6 +196,11 @@ mod tests {
         assert_eq!(json.to_bytes(), b"0.00980000");
         let dec: Decimal = json.into_deserialize().unwrap();
         assert_eq!(dec, Decimal::new(980000, 8));
+
+        let json = Json::from_str("0.00980").unwrap();
+        assert_eq!(json.to_bytes(), b"0.00980");
+        let dec: Decimal = json.into_deserialize().unwrap();
+        assert_eq!(dec, Decimal::new(98000, 7));
     }
 }
 
