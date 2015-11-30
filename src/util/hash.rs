@@ -18,9 +18,10 @@
 use std::char::from_digit;
 use std::cmp::min;
 use std::default::Default;
+use std::error;
 use std::fmt::{self, Write};
 use std::io::Cursor;
-use std::mem::transmute;
+use std::mem;
 use serde;
 
 use crypto::digest::Digest;
@@ -30,6 +31,34 @@ use crypto::ripemd160::Ripemd160;
 use network::encodable::{ConsensusDecodable, ConsensusEncodable};
 use network::serialize::{RawEncoder, BitcoinHash};
 use util::uint::Uint256;
+
+/// Hex deserialization error
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+pub enum HexError {
+    /// Length was not 64 characters
+    BadLength(usize),
+    /// Non-hex character in string
+    BadCharacter(char)
+}
+
+impl fmt::Display for HexError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            HexError::BadLength(n) => write!(f, "bad length {} for sha256d hex string", n),
+            HexError::BadCharacter(c) => write!(f, "bad character {} in sha256d hex string", c)
+        }
+    }
+}
+
+impl error::Error for HexError {
+    fn cause(&self) -> Option<&error::Error> { None }
+    fn description(&self) -> &str {
+        match *self {
+            HexError::BadLength(_) => "sha256d hex string non-64 length",
+            HexError::BadCharacter(_) => "sha256d bad hex character"
+        }
+    }
+}
 
 /// A Bitcoin hash, 32-bytes, computed from x as SHA256(SHA256(x))
 pub struct Sha256dHash([u8; 32]);
@@ -105,7 +134,7 @@ impl Sha256dHash {
     #[inline]
     pub fn into_le(self) -> Uint256 {
         let Sha256dHash(data) = self;
-        let mut ret: [u64; 4] = unsafe { transmute(data) };
+        let mut ret: [u64; 4] = unsafe { mem::transmute(data) };
         for x in (&mut ret).iter_mut() { *x = x.to_le(); }
         Uint256(ret)
     }
@@ -115,7 +144,7 @@ impl Sha256dHash {
     pub fn into_be(self) -> Uint256 {
         let Sha256dHash(mut data) = self;
         data.reverse();
-        let mut ret: [u64; 4] = unsafe { transmute(data) };
+        let mut ret: [u64; 4] = unsafe { mem::transmute(data) };
         for x in (&mut ret).iter_mut() { *x = x.to_be(); }
         Uint256(ret)
     }
@@ -124,23 +153,50 @@ impl Sha256dHash {
     #[inline]
     pub fn into_hash32(self) -> Hash32 {
         let Sha256dHash(data) = self;
-        unsafe { transmute([data[0], data[8], data[16], data[24]]) }
+        unsafe { mem::transmute([data[0], data[8], data[16], data[24]]) }
     }
 
     /// Converts a hash to a Hash48 by truncation
     #[inline]
     pub fn into_hash48(self) -> Hash48 {
         let Sha256dHash(data) = self;
-        unsafe { transmute([data[0], data[6], data[12], data[18], data[24], data[30]]) }
+        unsafe { mem::transmute([data[0], data[6], data[12], data[18], data[24], data[30]]) }
     }
 
-    /// Human-readable hex output
+    // Human-readable hex output
+
+    /// Decodes a big-endian (i.e. reversed vs sha256sum output) hex string as a Sha256dHash
+    #[inline]
+    pub fn from_hex<'a>(s: &'a str) -> Result<Sha256dHash, HexError> {
+        if s.len() != 64 {
+            return Err(HexError::BadLength(s.len()));
+        }
+
+        let bytes = s.as_bytes();
+        let mut ret: [u8; 32] = unsafe { mem::uninitialized() };
+        for i in 0..32 {
+           let hi = match bytes[2*i] {
+               b @ b'0'...b'9' => (b - b'0') as u8,
+               b @ b'a'...b'f' => (b - b'a' + 10) as u8,
+               b @ b'A'...b'F' => (b - b'A' + 10) as u8,
+               b => return Err(HexError::BadCharacter(b as char))
+           };
+           let lo = match bytes[2*i + 1] {
+               b @ b'0'...b'9' => (b - b'0') as u8,
+               b @ b'a'...b'f' => (b - b'a' + 10) as u8,
+               b @ b'A'...b'F' => (b - b'A' + 10) as u8,
+               b => return Err(HexError::BadCharacter(b as char))
+           };
+           ret[31 - i] = hi * 0x10 + lo;
+        }
+        Ok(Sha256dHash(ret))
+    }
 
     /// Converts a hash to a Hash64 by truncation
     #[inline]
     pub fn into_hash64(self) -> Hash64 {
         let Sha256dHash(data) = self;
-        unsafe { transmute([data[0], data[4], data[8], data[12],
+        unsafe { mem::transmute([data[0], data[4], data[8], data[12],
                             data[16], data[20], data[24], data[28]]) }
     }
 
@@ -175,7 +231,7 @@ impl serde::Serialize for Sha256dHash {
     fn serialize<S>(&self, serializer: &mut S) -> Result<(), S::Error>
             where S: serde::Serializer,
     {
-            serializer.visit_str(&self.be_hex_string())
+        serializer.visit_str(&self.be_hex_string())
     }
 }
 
@@ -199,16 +255,7 @@ impl serde::Deserialize for Sha256dHash {
             fn visit_str<E>(&mut self, hex_str: &str) -> Result<Sha256dHash, E>
                 where E: serde::de::Error
             {
-                if hex_str.len() != 64 {
-                    return Err(serde::de::Error::syntax(&format!("Hash had character-length {} (should be 64)", hex_str.len())));
-                }
-                let raw_str = try!(hex_str.from_hex()
-                                          .map_err(|e| serde::de::Error::syntax(&format!("Hash was not hex-encoded: {}", e))));
-                let mut ret = [0u8; 32];
-                for i in 0..32 {
-                    ret[i] = raw_str[31 - i];
-                }
-                Ok(Sha256dHash(ret))
+                Sha256dHash::from_hex(hex_str).map_err(|e| serde::de::Error::syntax(&e.to_string()))
             }
         }
 
