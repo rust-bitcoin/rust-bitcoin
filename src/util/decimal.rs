@@ -21,7 +21,7 @@
 //! altcoins with different granularity may require a wider type.
 //!
 
-use std::ops;
+use std::{fmt, ops};
 
 use serde::{ser, de};
 use strason::Json;
@@ -46,6 +46,15 @@ impl PartialOrd<Decimal> for Decimal {
         use std::cmp::max;
         let exp = max(self.exponent(), other.exponent());
         self.integer_value(exp).partial_cmp(&other.integer_value(exp))
+    }
+}
+
+impl fmt::Display for Decimal {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let ten = 10i64.pow(self.exponent as u32);
+        let int_part = self.mantissa / ten;
+        let dec_part = (self.mantissa % ten).abs();
+        write!(f, "{}.{:02$}", int_part, dec_part, self.exponent)
     }
 }
 
@@ -111,11 +120,7 @@ impl ser::Serialize for Decimal {
     // to strason itself, the value will be passed through; otherwise it will be
     // encoded as a string)
     fn serialize<S: ser::Serializer>(&self, s: &mut S) -> Result<(), S::Error> {
-        let ten = 10i64.pow(self.exponent as u32);
-        let int_part = self.mantissa / ten;
-        let dec_part = (self.mantissa % ten).abs();
-        println!("{}", format!("{}.{:02$}", int_part, dec_part, self.exponent));
-        let json = Json::from_str(&format!("{}.{:02$}", int_part, dec_part, self.exponent)).unwrap();
+        let json = Json::from_str(&self.to_string()).unwrap();
         ser::Serialize::serialize(&json, s)
     }
 }
