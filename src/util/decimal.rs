@@ -181,6 +181,14 @@ mod tests {
         assert!(d3 > d1);
         assert!(d3 > d2);
     }
+
+    #[test]
+    fn json_parse() {
+        let json = Json::from_str("0.00980000").unwrap();
+        assert_eq!(json.to_bytes(), b"0.00980000");
+        let dec: Decimal = json.into_deserialize().unwrap();
+        assert_eq!(dec, Decimal::new(980000, 8));
+    }
 }
 
 
