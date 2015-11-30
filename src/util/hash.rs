@@ -35,12 +35,6 @@ use util::uint::Uint256;
 pub struct Sha256dHash([u8; 32]);
 impl_array_newtype!(Sha256dHash, u8, 32);
 
-impl ::std::fmt::Debug for Sha256dHash {
-    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "{}", self.be_hex_string())
-    }
-}
-
 /// A RIPEMD-160 hash
 pub struct Ripemd160Hash([u8; 20]);
 impl_array_newtype!(Ripemd160Hash, u8, 20);
@@ -228,6 +222,14 @@ impl_newtype_consensus_encoding!(Hash48);
 impl_newtype_consensus_encoding!(Hash64);
 impl_newtype_consensus_encoding!(Sha256dHash);
 
+impl fmt::Debug for Sha256dHash {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(self, f) }
+}
+
+impl fmt::Display for Sha256dHash {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(self, f) }
+}
+
 impl fmt::LowerHex for Sha256dHash {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let &Sha256dHash(data) = self;
@@ -237,6 +239,17 @@ impl fmt::LowerHex for Sha256dHash {
         Ok(())
     }
 }
+
+impl fmt::UpperHex for Sha256dHash {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let &Sha256dHash(data) = self;
+        for ch in data.iter().rev() {
+            try!(write!(f, "{:02X}", ch));
+        }
+        Ok(())
+    }
+}
+
 
 /// Any collection of objects for which a merkle root makes sense to calculate
 pub trait MerkleRoot {
@@ -292,9 +305,18 @@ mod tests {
         // "little-endian" hex string since it matches the in-memory representation
         // of a Uint256 (which is little-endian) after transmutation
         assert_eq!(Sha256dHash::from_data(&[]).le_hex_string(),
-                   "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456".to_string());
+                   "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456");
         assert_eq!(Sha256dHash::from_data(&[]).be_hex_string(),
-                   "56944c5d3f98413ef45cf54545538103cc9f298e0575820ad3591376e2e0f65d".to_string());
+                   "56944c5d3f98413ef45cf54545538103cc9f298e0575820ad3591376e2e0f65d");
+
+        assert_eq!(format!("{}", Sha256dHash::from_data(&[])),
+                   "56944c5d3f98413ef45cf54545538103cc9f298e0575820ad3591376e2e0f65d");
+        assert_eq!(format!("{:?}", Sha256dHash::from_data(&[])),
+                   "56944c5d3f98413ef45cf54545538103cc9f298e0575820ad3591376e2e0f65d");
+        assert_eq!(format!("{:x}", Sha256dHash::from_data(&[])),
+                   "56944c5d3f98413ef45cf54545538103cc9f298e0575820ad3591376e2e0f65d");
+        assert_eq!(format!("{:X}", Sha256dHash::from_data(&[])),
+                   "56944C5D3F98413EF45CF54545538103CC9F298E0575820AD3591376E2E0F65D");
     }
 
     #[test]
