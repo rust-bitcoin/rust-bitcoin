@@ -166,6 +166,30 @@ impl Privkey {
         let key = try!(PublicKey::from_secret_key(secp, &self.key).map_err(Error::Secp));
         Ok(Address::from_key(self.network, &key, self.compressed))
     }
+
+    /// Accessor for the underlying secp key
+    #[inline]
+    pub fn secret_key(&self) -> &SecretKey {
+        &self.key
+    }
+
+    /// Accessor for the underlying secp key that consumes the privkey
+    #[inline]
+    pub fn into_secret_key(self) -> SecretKey {
+        self.key
+    }
+
+    /// Accessor for the network type
+    #[inline]
+    pub fn network(&self) -> Network {
+        self.network
+    }
+
+    /// Accessor for the compressed flag
+    #[inline]
+    pub fn is_compressed(&self) -> bool {
+        self.compressed
+    }
 }
 
 impl ToBase58 for Privkey {
@@ -276,8 +300,8 @@ mod tests {
     fn test_key_derivation() {
         // testnet compressed
         let sk: Privkey = FromBase58::from_base58check("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
-        assert_eq!(sk.network, Testnet);
-        assert_eq!(sk.compressed, true);
+        assert_eq!(sk.network(), Testnet);
+        assert_eq!(sk.is_compressed(), true);
         assert_eq!(&sk.to_base58check(), "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy");
 
         let secp = Secp256k1::new();
@@ -286,8 +310,8 @@ mod tests {
 
         // mainnet uncompressed
         let sk: Privkey = FromBase58::from_base58check("5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3").unwrap();
-        assert_eq!(sk.network, Bitcoin);
-        assert_eq!(sk.compressed, false);
+        assert_eq!(sk.network(), Bitcoin);
+        assert_eq!(sk.is_compressed(), false);
         assert_eq!(&sk.to_base58check(), "5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3");
 
         let secp = Secp256k1::new();
