@@ -24,6 +24,7 @@
 //!
 
 use std::default::Default;
+use std::fmt;
 use serde;
 use secp256k1::Secp256k1;
 
@@ -32,6 +33,21 @@ use blockdata::script::{self, Script, ScriptTrace, read_scriptbool};
 use blockdata::utxoset::UtxoSet;
 use network::encodable::ConsensusEncodable;
 use network::serialize::BitcoinHash;
+
+/// A reference to a transaction output
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+pub struct TxOutRef {
+    /// The referenced transaction's txid
+    pub txid: Sha256dHash,
+    /// The index of the referenced output in its transaction's vout
+    pub index: usize
+}
+
+impl fmt::Display for TxOutRef {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}:{}", self.txid, self.index)
+    }
+}
 
 /// A transaction input, which defines old coins to be consumed
 #[derive(Clone, PartialEq, Eq, Debug)]
