@@ -17,10 +17,6 @@
 //! This module provides the structures and functions to maintain the
 //! blockchain.
 //!
-//! Note to developers: do not expose any ref-counted pointers in the public
-//! API of this module. Internally we do unsafe mutations of them and we need
-//! to make sure we are holding the only references.
-//!
 
 use num::{FromPrimitive, Zero};
 use std::{marker, ptr};
