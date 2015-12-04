@@ -44,9 +44,87 @@ use network::serialize::{SimpleDecoder, SimpleEncoder, serialize};
 use util::hash::Sha256dHash;
 use util::misc::script_find_and_remove;
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq)]
 /// A Bitcoin script
 pub struct Script(Box<[u8]>);
+
+impl fmt::Debug for Script {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut index = 0;
+
+        try!(f.write_str("Script("));
+        while index < self.0.len() {
+            let opcode = opcodes::All::from(self.0[index]);
+
+            let data_len = if let opcodes::Class::PushBytes(n) = opcode.classify() {
+                n as usize
+            } else {
+                match opcode {
+                    opcodes::All::OP_PUSHDATA1 => {
+                        if self.0.len() < index + 1 {
+                            try!(f.write_str("<unexpected end>"));
+                            break;
+                        }
+                        match read_uint(&self.0[index..], 1) {
+                            Ok(n) => { index += 1; n as usize }
+                            Err(_) => { try!(f.write_str("<bad length>")); break; }
+                        }
+                    }
+                    opcodes::All::OP_PUSHDATA2 => {
+                        if self.0.len() < index + 2 {
+                            try!(f.write_str("<unexpected end>"));
+                            break;
+                        }
+                        match read_uint(&self.0[index..], 2) {
+                            Ok(n) => { index += 2; n as usize }
+                            Err(_) => { try!(f.write_str("<bad length>")); break; }
+                        }
+                    }
+                    opcodes::All::OP_PUSHDATA4 => {
+                        if self.0.len() < index + 4 {
+                            try!(f.write_str("<unexpected end>"));
+                            break;
+                        }
+                        match read_uint(&self.0[index..], 4) {
+                            Ok(n) => { index += 4; n as usize }
+                            Err(_) => { try!(f.write_str("<bad length>")); break; }
+                        }
+                    }
+                    _ => 0
+                }
+            };
+
+            if index > 0 { try!(f.write_str(" ")); }
+            // Write the opcode
+            if opcode == opcodes::All::OP_PUSHBYTES_0 {
+                try!(f.write_str("OP_0"));
+            } else {
+                try!(write!(f, "{:?}", opcode));
+            }
+            index += 1;
+            // Write any pushdata
+            if data_len > 0 {
+                try!(f.write_str(" "));
+                if index + data_len < self.0.len() {
+                    for ch in &self.0[index..index + data_len] {
+                            try!(write!(f, "{:02x}", ch));
+                    }
+                    index += data_len;
+                } else {
+                    try!(f.write_str("<push past end>"));
+                    break;
+                }
+            }
+        }
+        f.write_str(")")
+    }
+}
+
+impl fmt::Display for Script {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Debug::fmt(self, f)
+    }
+}
 
 impl Clone for Script {
     fn clone(&self) -> Script {
@@ -3090,6 +3168,16 @@ mod test {
         assert_eq!(json.string(), Some("827651a0698faaa9a8a7a687"));
         let des = json.into_deserialize().unwrap();
         assert_eq!(original, des);
+    }
+
+    #[test]
+    fn script_debug_display() {
+        assert_eq!(format!("{:?}", hex_script!("6363636363686868686800")),
+                   "Script(OP_IF OP_IF OP_IF OP_IF OP_IF OP_ENDIF OP_ENDIF OP_ENDIF OP_ENDIF OP_ENDIF OP_0)");
+        assert_eq!(format!("{}", hex_script!("6363636363686868686800")),
+                   "Script(OP_IF OP_IF OP_IF OP_IF OP_IF OP_ENDIF OP_ENDIF OP_ENDIF OP_ENDIF OP_ENDIF OP_0)");
+        assert_eq!(format!("{}", hex_script!("2102715e91d37d239dea832f1460e91e368115d8ca6cc23a7da966795abad9e3b699ac")),
+                   "Script(OP_PUSHBYTES_33 02715e91d37d239dea832f1460e91e368115d8ca6cc23a7da966795abad9e3b699 OP_CHECKSIG)");
     }
 }
 
