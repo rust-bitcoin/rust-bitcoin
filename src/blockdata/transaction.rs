@@ -50,7 +50,7 @@ impl fmt::Display for TxOutRef {
 }
 
 /// A transaction input, which defines old coins to be consumed
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub struct TxIn {
     /// The hash of the transaction whose output is being used an an input
     pub prev_hash: Sha256dHash,
@@ -67,7 +67,7 @@ pub struct TxIn {
 }
 
 /// A transaction output, which defines new coins to be created from old ones.
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub struct TxOut {
     /// The value of the output, in satoshis
     pub value: u64,
@@ -83,7 +83,7 @@ impl Default for TxOut {
 }
 
 /// A Bitcoin transaction, which describes an authenticated movement of coins
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub struct Transaction {
     /// The protocol version, should always be 1.
     pub version: u32,
