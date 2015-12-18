@@ -41,7 +41,7 @@ impl<S: SimpleEncoder> ConsensusEncodable<S> for CommandString {
     #[inline]
     fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
         let &CommandString(ref inner_str) = self;
-        let mut rawbytes = [0u8; 12]; 
+        let mut rawbytes = [0u8; 12];
         let strbytes = inner_str.as_bytes();
         if strbytes.len() > 12 {
             panic!("Command string longer than 12 bytes");
@@ -56,7 +56,7 @@ impl<S: SimpleEncoder> ConsensusEncodable<S> for CommandString {
 impl<D: SimpleDecoder> ConsensusDecodable<D> for CommandString {
     #[inline]
     fn consensus_decode(d: &mut D) -> Result<CommandString, D::Error> {
-        let rawbytes: [u8; 12] = try!(ConsensusDecodable::consensus_decode(d)); 
+        let rawbytes: [u8; 12] = try!(ConsensusDecodable::consensus_decode(d));
         let rv = iter::FromIterator::from_iter(rawbytes.iter().filter_map(|&u| if u > 0 { Some(u as char) } else { None }));
         Ok(CommandString(rv))
     }
@@ -186,7 +186,7 @@ impl<D: SimpleDecoder<Error=util::Error>> ConsensusDecodable<D> for RawNetworkMe
             "block"   => NetworkMessage::Block(try!(propagate_err("block".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
             "headers" => NetworkMessage::Headers(try!(propagate_err("headers".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
             "ping"    => NetworkMessage::Ping(try!(propagate_err("ping".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
-            "pong"    => NetworkMessage::Ping(try!(propagate_err("pong".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
+            "pong"    => NetworkMessage::Pong(try!(propagate_err("pong".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
             "tx"      => NetworkMessage::Tx(try!(propagate_err("tx".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
             cmd => return Err(d.error(format!("unrecognized network command `{}`", cmd)))
         };
@@ -240,10 +240,9 @@ mod test {
     #[test]
     fn serialize_mempool_test() {
         assert_eq!(serialize(&RawNetworkMessage { magic: 0xd9b4bef9, payload: NetworkMessage::MemPool }).ok(),
-                             Some(vec![0xf9, 0xbe, 0xb4, 0xd9, 0x6d, 0x65, 0x6d, 0x70, 
+                             Some(vec![0xf9, 0xbe, 0xb4, 0xd9, 0x6d, 0x65, 0x6d, 0x70,
                                        0x6f, 0x6f, 0x6c, 0x00, 0x00, 0x00, 0x00, 0x00, 
                                        0x00, 0x00, 0x00, 0x00, 0x5d, 0xf6, 0xe0, 0xe2]));
     }
 
 }
-
