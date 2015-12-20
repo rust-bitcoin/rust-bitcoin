@@ -33,7 +33,7 @@ use network::encodable::ConsensusEncodable;
 use network::serialize::BitcoinHash;
 
 /// A reference to a transaction output
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 pub struct TxOutRef {
     /// The referenced transaction's txid
     pub txid: Sha256dHash,

@@ -307,24 +307,6 @@ macro_rules! construct_uint {
             }
         }
 
-        impl ::std::cmp::Ord for $name {
-            fn cmp(&self, other: &$name) -> ::std::cmp::Ordering {
-                let &$name(ref me) = self;
-                let &$name(ref you) = other;
-                for i in 0..$n_words {
-                    if me[$n_words - 1 - i] < you[$n_words - 1 - i] { return ::std::cmp::Ordering::Less; }
-                    if me[$n_words - 1 - i] > you[$n_words - 1 - i] { return ::std::cmp::Ordering::Greater; }
-                }
-                ::std::cmp::Ordering::Equal
-            }
-        }
-
-        impl ::std::cmp::PartialOrd for $name {
-            fn partial_cmp(&self, other: &$name) -> Option<::std::cmp::Ordering> {
-                Some(self.cmp(other))
-            }
-        }
-
         impl fmt::Debug for $name {
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
                 let &$name(ref data) = self;

@@ -115,6 +115,28 @@ macro_rules! impl_array_newtype {
 
         impl Eq for $thing {}
 
+        impl PartialOrd for $thing {
+            #[inline]
+            fn partial_cmp(&self, other: &$thing) -> Option<::std::cmp::Ordering> {
+                Some(self.cmp(&other))
+            }
+        }
+
+        impl Ord for $thing {
+            #[inline]
+            fn cmp(&self, other: &$thing) -> ::std::cmp::Ordering {
+                // manually implement comparison to get little-endian ordering
+                // (we need this for our numeric types; non-numeric ones shouldn't
+                // be ordered anyway except to put them in BTrees or whatever, and
+                // they don't care how we order as long as we're consisistent).
+                for i in 0..$len {
+                    if self[$len - 1 - i] < other[$len - 1 - i] { return ::std::cmp::Ordering::Less; }
+                    if self[$len - 1 - i] > other[$len - 1 - i] { return ::std::cmp::Ordering::Greater; }
+                }
+                ::std::cmp::Ordering::Equal
+            }
+        }
+
         impl Clone for $thing {
             #[inline]
             fn clone(&self) -> $thing {
