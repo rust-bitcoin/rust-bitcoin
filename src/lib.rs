@@ -39,7 +39,6 @@
 
 extern crate byteorder;
 extern crate crypto;
-extern crate eventual;
 extern crate num;
 extern crate num_cpus;
 extern crate rand;

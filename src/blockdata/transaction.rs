@@ -26,11 +26,9 @@
 use std::default::Default;
 use std::fmt;
 use serde;
-use secp256k1::Secp256k1;
 
 use util::hash::Sha256dHash;
-use blockdata::script::{self, Script, ScriptTrace, read_scriptbool};
-use blockdata::utxoset::UtxoSet;
+use blockdata::script::{self, Script, ScriptTrace};
 use network::encodable::ConsensusEncodable;
 use network::serialize::BitcoinHash;
 
@@ -142,148 +140,6 @@ pub struct InputTrace {
 pub struct TransactionTrace {
     txid: Sha256dHash,
     inputs: Vec<InputTrace>
-}
-
-impl TxIn {
-    /// Check an input's script for validity
-    pub fn validate(&self,
-                    secp: &Secp256k1,
-                    utxoset: &UtxoSet,
-                    txn: &Transaction,
-                    index: usize) -> Result<(), Error> {
-        let txo = utxoset.get_utxo(self.prev_hash, self.prev_index);
-        match txo {
-            Some((_, txo)) => {
-                let (mut p2sh_stack, mut p2sh_script) = (vec![], Script::new());
-
-                let mut stack = vec![];
-                match self.script_sig.evaluate(secp, &mut stack, Some((txn, index)), None) {
-                    Ok(_) => {}
-                    Err(e) => { return Err(Error::InputScriptFailure(e)); }
-                }
-                if txo.script_pubkey.is_p2sh() && !stack.is_empty() {
-                    p2sh_stack = stack.clone();
-                    p2sh_script = match p2sh_stack.pop() {
-                        Some(script::MaybeOwned::Owned(v)) => Script::from(v),
-                        Some(script::MaybeOwned::Borrowed(s)) => Script::from(s.to_vec()),
-                        None => unreachable!()
-                    };
-                }
-                match txo.script_pubkey.evaluate(secp, &mut stack, Some((txn, index)), None) {
-                    Ok(_) => {}
-                    Err(e) => { return Err(Error::OutputScriptFailure(e)); }
-                }
-                match stack.pop() {
-                    Some(v) => {
-                        if !read_scriptbool(&v[..]) {
-                            return Err(Error::ScriptReturnedFalse);
-                        }
-                     }
-                    None => { return Err(Error::ScriptReturnedEmptyStack); }
-                }
-                if txo.script_pubkey.is_p2sh() {
-                    match p2sh_script.evaluate(secp, &mut p2sh_stack, Some((txn, index)), None) {
-                        Ok(_) => {}
-                        Err(e) => { return Err(Error::P2shScriptFailure(e)); }
-                    }
-                    match p2sh_stack.pop() {
-                        Some(v) => {
-                            if !read_scriptbool(&v[..]) {
-                                return Err(Error::P2shScriptReturnedFalse);
-                            }
-                        }
-                        None => { return Err(Error::P2shScriptReturnedEmptyStack); }
-                    }
-                }
-            }
-            None => { return Err(Error::InputNotFound(self.prev_hash, self.prev_index)); }
-        }
-        Ok(())
-    }
-}
-
-impl Transaction {
-    /// Check a transaction for validity
-    pub fn validate(&self, secp: &Secp256k1, utxoset: &UtxoSet) -> Result<(), Error> {
-        for (n, input) in self.input.iter().enumerate() {
-            try!(input.validate(secp, utxoset, self, n));
-        }
-        Ok(())
-    }
-
-    /// Produce a trace of a transaction's execution
-    pub fn trace(&self, secp: &Secp256k1, utxoset: &UtxoSet) -> TransactionTrace {
-        let mut ret = TransactionTrace { txid: self.bitcoin_hash(),
-                                         inputs: Vec::with_capacity(self.input.len()) };
-        for (n, input) in self.input.iter().enumerate() {
-            // Setup trace
-            let mut trace = InputTrace {
-                input_txid: input.prev_hash,
-                input_vout: input.prev_index as usize,
-                sig_trace: ScriptTrace {
-                    script: Script::new(),
-                    initial_stack: vec![],
-                    iterations: vec![],
-                    error: None
-                },
-                pubkey_trace: None,
-                p2sh_trace: None,
-                error: None
-            };
-            // Run through the input
-            let txo = utxoset.get_utxo(input.prev_hash, input.prev_index);
-            match txo {
-                Some((_, txo)) => {
-                    let (mut p2sh_stack, mut p2sh_script) = (vec![], Script::new());
-
-                    let mut stack = Vec::with_capacity(6);
-                    trace.sig_trace = input.script_sig.trace(secp, &mut stack, Some((self, n)));
-                    let err = trace.sig_trace.error.as_ref().map(|e| e.clone());
-                    err.map(|e| trace.error = Some(Error::InputScriptFailure(e)));
-
-                    if txo.script_pubkey.is_p2sh() && !stack.is_empty() {
-                        p2sh_stack = stack.clone();
-                        p2sh_script = match p2sh_stack.pop() {
-                            Some(script::MaybeOwned::Owned(v)) => Script::from(v),
-                            Some(script::MaybeOwned::Borrowed(s)) => Script::from(s.to_vec()),
-                            None => unreachable!()
-                        };
-                    }
-                    if trace.error.is_none() {
-                        trace.pubkey_trace = Some(txo.script_pubkey.trace(secp, &mut stack, Some((self, n))));
-                        let err = trace.pubkey_trace.as_ref().unwrap().error.as_ref().map(|e| e.clone());
-                        err.map(|e| trace.error = Some(Error::OutputScriptFailure(e)));
-                        match stack.pop() {
-                            Some(v) => {
-                                if !read_scriptbool(&v[..]) {
-                                    trace.error = Some(Error::ScriptReturnedFalse);
-                                }
-                            }
-                            None => { trace.error = Some(Error::ScriptReturnedEmptyStack); }
-                        }
-                        if trace.error.is_none() && txo.script_pubkey.is_p2sh() {
-                            trace.p2sh_trace = Some(p2sh_script.trace(secp, &mut p2sh_stack, Some((self, n))));
-                            let err = trace.p2sh_trace.as_ref().unwrap().error.as_ref().map(|e| e.clone());
-                            err.map(|e| trace.error = Some(Error::P2shScriptFailure(e)));
-                            match p2sh_stack.pop() {
-                                Some(v) => {
-                                    if !read_scriptbool(&v[..]) {
-                                        trace.error = Some(Error::P2shScriptReturnedFalse);
-                                    }
-                                }
-                                None => { trace.error = Some(Error::P2shScriptReturnedEmptyStack); }
-                            }
-                        }
-                    }
-                }
-                None => {
-                    trace.error = Some(Error::InputNotFound(input.prev_hash, input.prev_index));
-                }
-            }
-            ret.inputs.push(trace);
-        }
-        ret
-    }
 }
 
 impl BitcoinHash for Transaction {
