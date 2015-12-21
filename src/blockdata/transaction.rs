@@ -94,6 +94,21 @@ pub struct Transaction {
     pub output: Vec<TxOut>
 }
 
+impl Transaction {
+    /// Computes a "normalized TXID" which does not include any signatures.
+    /// This gives a way to identify a transaction that is ``the same'' as
+    /// another in the sense of having same inputs and outputs.
+    pub fn ntxid(&self) -> Sha256dHash {
+        let cloned_tx = Transaction {
+            version: self.version,
+            lock_time: self.lock_time,
+            input: self.input.iter().map(|txin| TxIn { script_sig: Script::new(), .. *txin }).collect(),
+            output: self.output.clone()
+        };
+        cloned_tx.bitcoin_hash()
+    }
+}
+
 /// A transaction error
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub enum Error {
@@ -157,6 +172,7 @@ impl_consensus_encoding!(Transaction, version, input, output, lock_time);
 mod tests {
     use super::{Transaction, TxIn};
 
+    use blockdata::script::Script;
     use network::serialize::BitcoinHash;
     use network::serialize::deserialize;
     use util::misc::hex_bytes;
@@ -187,6 +203,21 @@ mod tests {
 
         assert_eq!(realtx.bitcoin_hash().be_hex_string(),
                    "a6eab3c14ab5272a58a5ba91505ba1a4b6d7a3a9fcbd187b6cd99a7b6d548cb7".to_string());
+    }
+
+    #[test]
+    fn test_ntxid() {
+        let hex_tx = hex_bytes("0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000").unwrap();
+        let mut tx: Transaction = deserialize(&hex_tx).unwrap();
+
+        let old_ntxid = tx.ntxid();
+        assert_eq!(old_ntxid.be_hex_string(), "c3573dbea28ce24425c59a189391937e00d255150fa973d59d61caf3a06b601d");
+        // changing sigs does not affect it
+        tx.input[0].script_sig = Script::new();
+        assert_eq!(old_ntxid, tx.ntxid());
+        // changing pks does
+        tx.output[0].script_pubkey = Script::new();
+        assert!(old_ntxid != tx.ntxid());
     }
 }
 
