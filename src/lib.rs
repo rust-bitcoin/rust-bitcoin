@@ -39,6 +39,7 @@
 
 extern crate byteorder;
 extern crate crypto;
+#[macro_use] extern crate jsonrpc;
 extern crate num;
 extern crate num_cpus;
 extern crate rand;
