@@ -1759,29 +1759,45 @@ fn check_signature(secp: &Secp256k1, sig_slice: &[u8], pk_slice: &[u8], script: 
 // were really hard to read and verify -- see OP_PICK and OP_ROLL
 // for an example of what Rust vector-stack manipulation looks
 // like.
+// Commands can be given in any order, except that `require` should
+// always come first and `drop` should always come last, to avoid
+// surprises.
 macro_rules! stack_opcode {
-    ($stack:ident($min:expr):
-             $(require $r:expr);*
-             $(copy $c:expr);*
-             $(swap ($a:expr, $b:expr));*
-             $(perm ($first:expr, $($i:expr),*) );*
-             $(drop $d:expr);*
-    ) => ({
-        $( $stack.require_n_elems($r); )*
+    ($stack:ident($min:expr): $($cmd:ident $args:tt);*) => ({
+        $(stack_opcode_internal!($cmd: $stack, $min, $args);)*
+    });
+}
+
+// The actual commands available to the above macro
+macro_rules! stack_opcode_internal {
+    (require: $stack:ident, $min:expr, $r:expr) => ({
+        $stack.require_n_elems($r);
         // Record top
         let top = $stack.len();
         // Check stack size
         if top < $min { return Err(Error::PopEmptyStack); }
-        // Do copies
-        $( let elem = $stack[top - $c].clone();
-             $stack.push(elem); )*
-        // Do swaps
-        $( (&mut $stack[..]).swap(top - $a, top - $b); )*
-        // Do permutations
-        $( let first = $first;
-             $( (&mut $stack[..]).swap(top - first, top - $i); )* )*
-        // Do drops last so that dropped values will be available above
-        $( $stack.remove(top - $d); )*
+    });
+    (copy: $stack:ident, $min:expr, $c:expr) => ({
+        let top = $stack.len();
+        if top < $min { return Err(Error::PopEmptyStack); }
+        let elem = $stack[top - $c].clone();
+        $stack.push(elem);
+    });
+    (swap: $stack:ident, $min:expr, ($a:expr, $b:expr)) => ({
+        let top = $stack.len();
+        if top < $min { return Err(Error::PopEmptyStack); }
+        (&mut $stack[..]).swap(top - $a, top - $b);
+    });
+    (perm: $stack:ident, $min:expr, ($first:expr, $($i:expr),*)) => ({
+        let top = $stack.len();
+        if top < $min { return Err(Error::PopEmptyStack); }
+        let first = $first;
+        $( (&mut $stack[..]).swap(top - first, top - $i); )*
+    });
+    (drop: $stack:ident, $min:expr, $d:expr) => ({
+        let top = $stack.len();
+        if top < $min { return Err(Error::PopEmptyStack); }
+        $stack.remove(top - $d);
     });
 }
 
@@ -2049,7 +2065,7 @@ impl Script {
                             };
                             if n < 0 { return Err(Error::NegativePick); }
                             let n = n as usize;
-                            stack_opcode!(stack(n + 1): copy n + 1)
+                            stack_opcode!(stack(n + 1): copy (n + 1))
                         }
                         opcodes::Ordinary::OP_ROLL => {
                             let n = match stack.pop() {
@@ -2058,11 +2074,11 @@ impl Script {
                             };
                             if n < 0 { return Err(Error::NegativeRoll); }
                             let n = n as usize;
-                            stack_opcode!(stack(n + 1): copy n + 1 drop n + 1)
+                            stack_opcode!(stack(n + 1): copy (n + 1); drop (n + 1))
                         }
                         opcodes::Ordinary::OP_ROT    => stack_opcode!(stack(3): perm (1, 2, 3)),
                         opcodes::Ordinary::OP_SWAP => stack_opcode!(stack(2): swap (1, 2)),
-                        opcodes::Ordinary::OP_TUCK => stack_opcode!(stack(2): copy 2; copy 1 drop 2),
+                        opcodes::Ordinary::OP_TUCK => stack_opcode!(stack(2): copy 2; copy 1; drop 2),
                         opcodes::Ordinary::OP_IFDUP => {
                             match stack.last().map(|v| read_scriptbool(&v[..])) {
                                 None => { return Err(Error::IfEmptyStack); }
@@ -2412,20 +2428,20 @@ impl Script {
                             opcodes::Ordinary::OP_VERIFY => op_verify_satisfy!(stack),
                             opcodes::Ordinary::OP_TOALTSTACK => { stack.top_to_altstack(); }
                             opcodes::Ordinary::OP_FROMALTSTACK => { try!(stack.top_from_altstack()); }
-                            opcodes::Ordinary::OP_2DROP => stack_opcode!(stack(2): require 2 drop 1; drop 2),
-                            opcodes::Ordinary::OP_2DUP    => stack_opcode!(stack(2): require 2 copy 2; copy 1),
-                            opcodes::Ordinary::OP_3DUP    => stack_opcode!(stack(3): require 3 copy 3; copy 2; copy 1),
-                            opcodes::Ordinary::OP_2OVER => stack_opcode!(stack(4): require 4 copy 4; copy 3),
-                            opcodes::Ordinary::OP_2ROT    => stack_opcode!(stack(6): require 6
-                                                                                                                     perm (1, 3, 5);
-                                                                                                                     perm (2, 4, 6)),
-                            opcodes::Ordinary::OP_2SWAP => stack_opcode!(stack(4): require 4
-                                                                                                                     swap (2, 4);
-                                                                                                                     swap (1, 3)),
-                            opcodes::Ordinary::OP_DROP    => stack_opcode!(stack(1): require 1 drop 1),
-                            opcodes::Ordinary::OP_DUP     => stack_opcode!(stack(1): require 1 copy 1),
-                            opcodes::Ordinary::OP_NIP     => stack_opcode!(stack(2): require 2 drop 2),
-                            opcodes::Ordinary::OP_OVER    => stack_opcode!(stack(2): require 2 copy 2),
+                            opcodes::Ordinary::OP_2DROP => stack_opcode!(stack(2): require 2; drop 1; drop 2),
+                            opcodes::Ordinary::OP_2DUP    => stack_opcode!(stack(2): require 2; copy 2; copy 1),
+                            opcodes::Ordinary::OP_3DUP    => stack_opcode!(stack(3): require 3; copy 3; copy 2; copy 1),
+                            opcodes::Ordinary::OP_2OVER => stack_opcode!(stack(4): require 4; copy 4; copy 3),
+                            opcodes::Ordinary::OP_2ROT    => stack_opcode!(stack(6): require 6;
+                                                                                     perm (1, 3, 5);
+                                                                                     perm (2, 4, 6)),
+                            opcodes::Ordinary::OP_2SWAP => stack_opcode!(stack(4): require 4;
+                                                                                   swap (2, 4);
+                                                                                   swap (1, 3)),
+                            opcodes::Ordinary::OP_DROP    => stack_opcode!(stack(1): require 1; drop 1),
+                            opcodes::Ordinary::OP_DUP     => stack_opcode!(stack(1): require 1; copy 1),
+                            opcodes::Ordinary::OP_NIP     => stack_opcode!(stack(2): require 2; drop 2),
+                            opcodes::Ordinary::OP_OVER    => stack_opcode!(stack(2): require 2; copy 2),
                             opcodes::Ordinary::OP_PICK => {
                                 let top_n = {
                                     let top = stack.peek_mut();
@@ -2435,7 +2451,7 @@ impl Script {
                                 };
                                 stack.pop();
                                 match top_n {
-                                    Some(n) => stack_opcode!(stack(n + 1): require n + 1 copy n + 1),
+                                    Some(n) => stack_opcode!(stack(n + 1): require (n + 1); copy (n + 1)),
                                     // The stack will wind up with the 1 and nth inputs being identical
                                     // with n input-dependent. I can imagine scripts which check this
                                     // condition or its negation for various n to get arbitrary finite
@@ -2453,7 +2469,7 @@ impl Script {
                                 };
                                 stack.pop();
                                 match top_n {
-                                    Some(n) => stack_opcode!(stack(n + 1): require n + 1 copy n + 1 drop n + 1),
+                                    Some(n) => stack_opcode!(stack(n + 1): require (n + 1); copy (n + 1); drop (n + 1)),
                                     // The stack will wind up reordered, so in principle I could just force
                                     // the input to be zero (other n values can be converted to zero by just
                                     // manually rearranging the input). The problem is if numeric bounds are
@@ -2461,9 +2477,9 @@ impl Script {
                                     None => { return Err(Error::Unanalyzable); }
                                 }
                             }
-                            opcodes::Ordinary::OP_ROT    => stack_opcode!(stack(3): require 3 perm (1, 2, 3)),
-                            opcodes::Ordinary::OP_SWAP => stack_opcode!(stack(2): require 3 swap (1, 2)),
-                            opcodes::Ordinary::OP_TUCK => stack_opcode!(stack(2): require 2 copy 2; copy 1 drop 2),
+                            opcodes::Ordinary::OP_ROT    => stack_opcode!(stack(3): require 3; perm (1, 2, 3)),
+                            opcodes::Ordinary::OP_SWAP => stack_opcode!(stack(2): require 3; swap (1, 2)),
+                            opcodes::Ordinary::OP_TUCK => stack_opcode!(stack(2): require 2; copy 2; copy 1; drop 2),
                             opcodes::Ordinary::OP_IFDUP => {
                                 let top_bool = {
                                     let top = stack.peek_mut();
@@ -2471,7 +2487,7 @@ impl Script {
                                 };
                                 match top_bool {
                                     Some(false) => { }
-                                    Some(true) => { stack_opcode!(stack(1): require 1 copy 1); }
+                                    Some(true) => { stack_opcode!(stack(1): require 1; copy 1); }
                                     None => {
                                         let mut stack_true = stack.clone();
                                         // Try pushing false and see what happens
