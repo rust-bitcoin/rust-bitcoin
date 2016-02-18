@@ -345,7 +345,7 @@ impl<K, V> PatriciaTree<K, V>
     }
 
     /// Returns an iterator over all elements in the tree
-    pub fn iter<'a>(&'a self) -> Items<'a, K, V> {
+    pub fn iter(&self) -> Items<K, V> {
         Items {
             node: Some(self),
             parents: vec![],
@@ -354,7 +354,7 @@ impl<K, V> PatriciaTree<K, V>
     }
 
     /// Returns a mutable iterator over all elements in the tree
-    pub fn mut_iter<'a>(&'a mut self) -> MutItems<'a, K, V> {
+    pub fn mut_iter(&mut self) -> MutItems<K, V> {
         MutItems {
             node: self as *mut _,
             parents: vec![],

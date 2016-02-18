@@ -167,7 +167,7 @@ impl Sha256dHash {
 
     /// Decodes a big-endian (i.e. reversed vs sha256sum output) hex string as a Sha256dHash
     #[inline]
-    pub fn from_hex<'a>(s: &'a str) -> Result<Sha256dHash, HexError> {
+    pub fn from_hex(s: &str) -> Result<Sha256dHash, HexError> {
         if s.len() != 64 {
             return Err(HexError::BadLength(s.len()));
         }
@@ -204,9 +204,9 @@ impl Sha256dHash {
     pub fn le_hex_string(&self) -> String {
         let &Sha256dHash(data) = self;
         let mut ret = String::with_capacity(64);
-        for i in 0..32 {
-            ret.push(from_digit((data[i] / 0x10) as u32, 16).unwrap());
-            ret.push(from_digit((data[i] & 0x0f) as u32, 16).unwrap());
+        for item in data.iter().take(32) {
+            ret.push(from_digit((*item / 0x10) as u32, 16).unwrap());
+            ret.push(from_digit((*item & 0x0f) as u32, 16).unwrap());
         }
         ret
     }

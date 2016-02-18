@@ -150,7 +150,7 @@ macro_rules! impl_array {
                 // Set everything to the first decode
                 let mut ret = [try!(ConsensusDecodable::consensus_decode(d)); $size];
                 // Set the rest
-                for i in 1..$size { ret[i] = try!(ConsensusDecodable::consensus_decode(d)); }
+                for item in ret.iter_mut().take($size).skip(1) { *item = try!(ConsensusDecodable::consensus_decode(d)); }
                 Ok(ret)
             }
         }

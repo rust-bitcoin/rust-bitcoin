@@ -24,7 +24,6 @@
 //! This module provides the structures and functions needed to support scripts.
 //!
 
-use std::hash;
 use std::default::Default;
 use std::{error, fmt, ops};
 use serialize::hex::ToHex;
@@ -44,7 +43,7 @@ use network::serialize::{SimpleDecoder, SimpleEncoder, serialize};
 use util::hash::Sha256dHash;
 use util::misc::script_find_and_remove;
 
-#[derive(PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 /// A Bitcoin script
 pub struct Script(Box<[u8]>);
 
@@ -126,12 +125,6 @@ impl fmt::Display for Script {
     }
 }
 
-impl Clone for Script {
-    fn clone(&self) -> Script {
-        Script(self.0.to_vec().into_boxed_slice())
-    }
-}
-
 impl fmt::LowerHex for Script {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for &ch in self.0.iter() {
@@ -154,24 +147,6 @@ impl fmt::UpperHex for Script {
 /// An object which can be used to construct a script piece by piece
 pub struct Builder(Vec<u8>);
 display_from_debug!(Builder);
-
-impl hash::Hash for Script {
-    #[inline]
-    fn hash<H>(&self, state: &mut H)
-        where H: hash::Hasher
-    {
-        (&self.0[..]).hash(state);
-    }
-
-    #[inline]
-    fn hash_slice<H>(data: &[Script], state: &mut H)
-        where H: hash::Hasher
-    {
-        for s in data.iter() {
-            (&s.0[..]).hash(state);
-        }
-    }
-}
 
 /// Ways that a script might fail. Not everything is split up as
 /// much as it could be; patches welcome if more detailed errors
@@ -1083,12 +1058,9 @@ impl AbstractStackElem {
                 try!(self.set_len_lo(val.len()));
                 try!(self.set_len_hi(val.len()));
                 try!(self.set_bool_value(read_scriptbool(val)));
-                match read_scriptint(val) {
-                    Ok(n) => {
-                        try!(self.set_num_lo(n));
-                        try!(self.set_num_hi(n));
-                    }
-                    Err(_) => {}
+                if let Ok(n) = read_scriptint(val) {
+                    try!(self.set_num_lo(n));
+                    try!(self.set_num_hi(n));
                 }
                 try!(self.set_bool_value(read_scriptbool(val)));
                 self.raw = Some(val.to_vec());
@@ -1645,8 +1617,8 @@ pub fn read_uint(data: &[u8], size: usize) -> Result<usize, Error> {
         Err(Error::EarlyEndOfScript)
     } else {
         let mut ret = 0;
-        for i in 0..size {
-            ret += (data[i] as usize) << (i * 8);
+        for (i, item) in data.iter().take(size).enumerate() {
+            ret += (*item as usize) << (i * 8);
         }
         Ok(ret)
     }
@@ -1763,41 +1735,40 @@ fn check_signature(secp: &Secp256k1, sig_slice: &[u8], pk_slice: &[u8], script: 
 // always come first and `drop` should always come last, to avoid
 // surprises.
 macro_rules! stack_opcode {
-    ($stack:ident($min:expr): $($cmd:ident $args:tt);*) => ({
-        $(stack_opcode_internal!($cmd: $stack, $min, $args);)*
+    ($stack:ident: $($cmd:ident $args:tt);*) => ({
+        // Record top
+        let mut top = $stack.len();
+        &mut top;  // shut up warnings in case top is either unread or unmutated
+        $(stack_opcode_internal!($cmd: $stack, top, $args);)*
     });
 }
 
 // The actual commands available to the above macro
 macro_rules! stack_opcode_internal {
-    (require: $stack:ident, $min:expr, $r:expr) => ({
+    (require: $stack:ident, $top:ident, $r:expr) => ({
         $stack.require_n_elems($r);
-        // Record top
-        let top = $stack.len();
-        // Check stack size
-        if top < $min { return Err(Error::PopEmptyStack); }
+        $top = $stack.len();
     });
-    (copy: $stack:ident, $min:expr, $c:expr) => ({
-        let top = $stack.len();
-        if top < $min { return Err(Error::PopEmptyStack); }
-        let elem = $stack[top - $c].clone();
+    (copy: $stack:ident, $top:ident, $c:expr) => ({
+        if $top < $c { return Err(Error::PopEmptyStack); }
+        let elem = $stack[$top - $c].clone();
         $stack.push(elem);
     });
-    (swap: $stack:ident, $min:expr, ($a:expr, $b:expr)) => ({
-        let top = $stack.len();
-        if top < $min { return Err(Error::PopEmptyStack); }
-        (&mut $stack[..]).swap(top - $a, top - $b);
+    (swap: $stack:ident, $top:ident, ($a:expr, $b:expr)) => ({
+        if $top < $a || $top < $b { return Err(Error::PopEmptyStack); }
+        (&mut $stack[..]).swap($top - $a, $top - $b);
     });
-    (perm: $stack:ident, $min:expr, ($first:expr, $($i:expr),*)) => ({
-        let top = $stack.len();
-        if top < $min { return Err(Error::PopEmptyStack); }
+    (perm: $stack:ident, $top:ident, ($first:expr, $($i:expr),*)) => ({
+        if $top < $first { return Err(Error::PopEmptyStack); }
         let first = $first;
-        $( (&mut $stack[..]).swap(top - first, top - $i); )*
+        $(
+            if $top < $i { return Err(Error::PopEmptyStack); }
+            (&mut $stack[..]).swap($top - first, $top - $i);
+        )*
     });
-    (drop: $stack:ident, $min:expr, $d:expr) => ({
-        let top = $stack.len();
-        if top < $min { return Err(Error::PopEmptyStack); }
-        $stack.remove(top - $d);
+    (drop: $stack:ident, $top:ident, $d:expr) => ({
+        if $top < $d { return Err(Error::PopEmptyStack); }
+        $stack.remove($top - $d);
     });
 }
 
@@ -1936,20 +1907,17 @@ impl Script {
             let executing = exec_stack.iter().all(|e| *e);
             let byte = self.0[index];
             // Write out the trace, except the stack which we don't know yet
-            match trace {
-                Some(ref mut t) => {
-                    let opcode = opcodes::All::from(byte);
-                    t.push(TraceIteration {
-                        index: index,
-                        opcode: opcode,
-                        executed: executing,
-                        errored: true,
-                        op_count: op_count,
-                        effect: opcode.classify(),
-                        stack: vec!["<failed to execute opcode>".to_owned()]
-                    });
-                }
-                None => {}
+            if let Some(ref mut t) = trace {
+                let opcode = opcodes::All::from(byte);
+                t.push(TraceIteration {
+                    index: index,
+                    opcode: opcode,
+                    executed: executing,
+                    errored: true,
+                    op_count: op_count,
+                    effect: opcode.classify(),
+                    stack: vec!["<failed to execute opcode>".to_owned()]
+                });
             }
             op_count += 1;
             index += 1;
@@ -1990,7 +1958,7 @@ impl Script {
                     index += 4 + n;
                 }
                 // If-statements take effect when not executing
-                (false, opcodes::Class::Ordinary(opcodes::Ordinary::OP_IF)) => exec_stack.push(false),
+                (false, opcodes::Class::Ordinary(opcodes::Ordinary::OP_IF)) |
                 (false, opcodes::Class::Ordinary(opcodes::Ordinary::OP_NOTIF)) => exec_stack.push(false),
                 (false, opcodes::Class::Ordinary(opcodes::Ordinary::OP_ELSE)) => {
                     match exec_stack.last_mut() {
@@ -2047,17 +2015,17 @@ impl Script {
                                 Some(elem) => { stack.push(elem); }
                             }
                         }
-                        opcodes::Ordinary::OP_2DROP => stack_opcode!(stack(2): drop 1; drop 2),
-                        opcodes::Ordinary::OP_2DUP  => stack_opcode!(stack(2): copy 2; copy 1),
-                        opcodes::Ordinary::OP_3DUP  => stack_opcode!(stack(3): copy 3; copy 2; copy 1),
-                        opcodes::Ordinary::OP_2OVER => stack_opcode!(stack(4): copy 4; copy 3),
-                        opcodes::Ordinary::OP_2ROT  => stack_opcode!(stack(6): perm (1, 3, 5);
-                                                                               perm (2, 4, 6)),
-                        opcodes::Ordinary::OP_2SWAP => stack_opcode!(stack(4): swap (2, 4); swap (1, 3)),
-                        opcodes::Ordinary::OP_DROP  => stack_opcode!(stack(1): drop 1),
-                        opcodes::Ordinary::OP_DUP   => stack_opcode!(stack(1): copy 1),
-                        opcodes::Ordinary::OP_NIP   => stack_opcode!(stack(2): drop 2),
-                        opcodes::Ordinary::OP_OVER  => stack_opcode!(stack(2): copy 2),
+                        opcodes::Ordinary::OP_2DROP => stack_opcode!(stack: drop 1; drop 2),
+                        opcodes::Ordinary::OP_2DUP  => stack_opcode!(stack: copy 2; copy 1),
+                        opcodes::Ordinary::OP_3DUP  => stack_opcode!(stack: copy 3; copy 2; copy 1),
+                        opcodes::Ordinary::OP_2OVER => stack_opcode!(stack: copy 4; copy 3),
+                        opcodes::Ordinary::OP_2ROT  => stack_opcode!(stack: perm (1, 3, 5);
+                                                                            perm (2, 4, 6)),
+                        opcodes::Ordinary::OP_2SWAP => stack_opcode!(stack: swap (2, 4); swap (1, 3)),
+                        opcodes::Ordinary::OP_DROP  => stack_opcode!(stack: drop 1),
+                        opcodes::Ordinary::OP_DUP   => stack_opcode!(stack: copy 1),
+                        opcodes::Ordinary::OP_NIP   => stack_opcode!(stack: drop 2),
+                        opcodes::Ordinary::OP_OVER  => stack_opcode!(stack: copy 2),
                         opcodes::Ordinary::OP_PICK => {
                             let n = match stack.pop() {
                                 Some(data) => try!(read_scriptint(&data[..])),
@@ -2065,7 +2033,7 @@ impl Script {
                             };
                             if n < 0 { return Err(Error::NegativePick); }
                             let n = n as usize;
-                            stack_opcode!(stack(n + 1): copy (n + 1))
+                            stack_opcode!(stack: copy (n + 1))
                         }
                         opcodes::Ordinary::OP_ROLL => {
                             let n = match stack.pop() {
@@ -2074,16 +2042,16 @@ impl Script {
                             };
                             if n < 0 { return Err(Error::NegativeRoll); }
                             let n = n as usize;
-                            stack_opcode!(stack(n + 1): copy (n + 1); drop (n + 1))
+                            stack_opcode!(stack: copy (n + 1); drop (n + 1))
                         }
-                        opcodes::Ordinary::OP_ROT    => stack_opcode!(stack(3): perm (1, 2, 3)),
-                        opcodes::Ordinary::OP_SWAP => stack_opcode!(stack(2): swap (1, 2)),
-                        opcodes::Ordinary::OP_TUCK => stack_opcode!(stack(2): copy 2; copy 1; drop 2),
+                        opcodes::Ordinary::OP_ROT  => stack_opcode!(stack: perm (1, 2, 3)),
+                        opcodes::Ordinary::OP_SWAP => stack_opcode!(stack: swap (1, 2)),
+                        opcodes::Ordinary::OP_TUCK => stack_opcode!(stack: copy 2; copy 1; drop 2),
                         opcodes::Ordinary::OP_IFDUP => {
                             match stack.last().map(|v| read_scriptbool(&v[..])) {
                                 None => { return Err(Error::IfEmptyStack); }
                                 Some(false) => {}
-                                Some(true) => { stack_opcode!(stack(1): copy 1); }
+                                Some(true) => { stack_opcode!(stack: copy 1); }
                             }
                         }
                         opcodes::Ordinary::OP_DEPTH => {
@@ -2268,8 +2236,7 @@ impl Script {
     /// Whether a script can be proven to have no satisfying input
     pub fn is_provably_unspendable(&self) -> bool {
         match self.satisfy() {
-            Ok(_) => false,
-            Err(Error::Unanalyzable) => false,
+            Ok(_) | Err(Error::Unanalyzable) => false,
             Err(_) => true
         }
     }
@@ -2343,7 +2310,7 @@ impl Script {
                         index += 4 + n;
                     }
                     // If-statements take effect when not executing
-                    (false, opcodes::Class::Ordinary(opcodes::Ordinary::OP_IF)) => exec_stack.push(false),
+                    (false, opcodes::Class::Ordinary(opcodes::Ordinary::OP_IF)) |
                     (false, opcodes::Class::Ordinary(opcodes::Ordinary::OP_NOTIF)) => exec_stack.push(false),
                     (false, opcodes::Class::Ordinary(opcodes::Ordinary::OP_ELSE)) => {
                         match exec_stack.last_mut() {
@@ -2374,9 +2341,8 @@ impl Script {
                                         let mut stack_true = stack.clone();
                                         // Try pushing false and see what happens
                                         if stack.peek_mut().set_bool_value(false).is_ok() {
-                                            match recurse(&script[index - 1..], stack, exec_stack.clone(), depth + 1) {
-                                                Ok(res) => { return Ok(res); }
-                                                Err(_) => {}
+                                            if let Ok(res) = recurse(&script[index - 1..], stack, exec_stack.clone(), depth + 1) {
+                                                return Ok(res);
                                             }
                                         }
                                         // Failing that, push true
@@ -2399,9 +2365,8 @@ impl Script {
                                         let mut stack_true = stack.clone();
                                         // Try pushing false and see what happens
                                         if stack.peek_mut().set_bool_value(false).is_ok() {
-                                            match recurse(&script[index - 1..], stack, exec_stack.clone(), depth + 1) {
-                                                Ok(res) => { return Ok(res); }
-                                                Err(_) => {}
+                                            if let Ok(res) = recurse(&script[index - 1..], stack, exec_stack.clone(), depth + 1) {
+                                                return Ok(res);
                                             }
                                         }
                                         // Failing that, push true
@@ -2428,20 +2393,20 @@ impl Script {
                             opcodes::Ordinary::OP_VERIFY => op_verify_satisfy!(stack),
                             opcodes::Ordinary::OP_TOALTSTACK => { stack.top_to_altstack(); }
                             opcodes::Ordinary::OP_FROMALTSTACK => { try!(stack.top_from_altstack()); }
-                            opcodes::Ordinary::OP_2DROP => stack_opcode!(stack(2): require 2; drop 1; drop 2),
-                            opcodes::Ordinary::OP_2DUP    => stack_opcode!(stack(2): require 2; copy 2; copy 1),
-                            opcodes::Ordinary::OP_3DUP    => stack_opcode!(stack(3): require 3; copy 3; copy 2; copy 1),
-                            opcodes::Ordinary::OP_2OVER => stack_opcode!(stack(4): require 4; copy 4; copy 3),
-                            opcodes::Ordinary::OP_2ROT    => stack_opcode!(stack(6): require 6;
-                                                                                     perm (1, 3, 5);
-                                                                                     perm (2, 4, 6)),
-                            opcodes::Ordinary::OP_2SWAP => stack_opcode!(stack(4): require 4;
-                                                                                   swap (2, 4);
-                                                                                   swap (1, 3)),
-                            opcodes::Ordinary::OP_DROP    => stack_opcode!(stack(1): require 1; drop 1),
-                            opcodes::Ordinary::OP_DUP     => stack_opcode!(stack(1): require 1; copy 1),
-                            opcodes::Ordinary::OP_NIP     => stack_opcode!(stack(2): require 2; drop 2),
-                            opcodes::Ordinary::OP_OVER    => stack_opcode!(stack(2): require 2; copy 2),
+                            opcodes::Ordinary::OP_2DROP => stack_opcode!(stack: require 2; drop 1; drop 2),
+                            opcodes::Ordinary::OP_2DUP  => stack_opcode!(stack: require 2; copy 2; copy 1),
+                            opcodes::Ordinary::OP_3DUP  => stack_opcode!(stack: require 3; copy 3; copy 2; copy 1),
+                            opcodes::Ordinary::OP_2OVER => stack_opcode!(stack: require 4; copy 4; copy 3),
+                            opcodes::Ordinary::OP_2ROT  => stack_opcode!(stack: require 6;
+                                                                                perm (1, 3, 5);
+                                                                                perm (2, 4, 6)),
+                            opcodes::Ordinary::OP_2SWAP => stack_opcode!(stack: require 4;
+                                                                                swap (2, 4);
+                                                                                swap (1, 3)),
+                            opcodes::Ordinary::OP_DROP  => stack_opcode!(stack: require 1; drop 1),
+                            opcodes::Ordinary::OP_DUP   => stack_opcode!(stack: require 1; copy 1),
+                            opcodes::Ordinary::OP_NIP   => stack_opcode!(stack: require 2; drop 2),
+                            opcodes::Ordinary::OP_OVER  => stack_opcode!(stack: require 2; copy 2),
                             opcodes::Ordinary::OP_PICK => {
                                 let top_n = {
                                     let top = stack.peek_mut();
@@ -2451,7 +2416,7 @@ impl Script {
                                 };
                                 stack.pop();
                                 match top_n {
-                                    Some(n) => stack_opcode!(stack(n + 1): require (n + 1); copy (n + 1)),
+                                    Some(n) => stack_opcode!(stack: require (n + 1); copy (n + 1)),
                                     // The stack will wind up with the 1 and nth inputs being identical
                                     // with n input-dependent. I can imagine scripts which check this
                                     // condition or its negation for various n to get arbitrary finite
@@ -2469,7 +2434,7 @@ impl Script {
                                 };
                                 stack.pop();
                                 match top_n {
-                                    Some(n) => stack_opcode!(stack(n + 1): require (n + 1); copy (n + 1); drop (n + 1)),
+                                    Some(n) => stack_opcode!(stack: require (n + 1); copy (n + 1); drop (n + 1)),
                                     // The stack will wind up reordered, so in principle I could just force
                                     // the input to be zero (other n values can be converted to zero by just
                                     // manually rearranging the input). The problem is if numeric bounds are
@@ -2477,9 +2442,9 @@ impl Script {
                                     None => { return Err(Error::Unanalyzable); }
                                 }
                             }
-                            opcodes::Ordinary::OP_ROT    => stack_opcode!(stack(3): require 3; perm (1, 2, 3)),
-                            opcodes::Ordinary::OP_SWAP => stack_opcode!(stack(2): require 3; swap (1, 2)),
-                            opcodes::Ordinary::OP_TUCK => stack_opcode!(stack(2): require 2; copy 2; copy 1; drop 2),
+                            opcodes::Ordinary::OP_ROT  => stack_opcode!(stack: require 3; perm (1, 2, 3)),
+                            opcodes::Ordinary::OP_SWAP => stack_opcode!(stack: require 3; swap (1, 2)),
+                            opcodes::Ordinary::OP_TUCK => stack_opcode!(stack: require 2; copy 2; copy 1; drop 2),
                             opcodes::Ordinary::OP_IFDUP => {
                                 let top_bool = {
                                     let top = stack.peek_mut();
@@ -2487,14 +2452,13 @@ impl Script {
                                 };
                                 match top_bool {
                                     Some(false) => { }
-                                    Some(true) => { stack_opcode!(stack(1): require 1; copy 1); }
+                                    Some(true) => { stack_opcode!(stack: require 1; copy 1); }
                                     None => {
                                         let mut stack_true = stack.clone();
                                         // Try pushing false and see what happens
                                         if stack.peek_mut().set_bool_value(false).is_ok() {
-                                            match recurse(&script[index - 1..], stack, exec_stack.clone(), depth + 1) {
-                                                Ok(res) => { return Ok(res); }
-                                                Err(_) => {}
+                                            if let Ok(res) = recurse(&script[index - 1..], stack, exec_stack.clone(), depth + 1) {
+                                                return Ok(res);
                                             }
                                         }
                                         // Failing that, push true

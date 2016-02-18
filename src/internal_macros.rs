@@ -195,8 +195,8 @@ macro_rules! impl_array_newtype_encodable {
                         unsafe {
                             use std::mem;
                             let mut ret: [$ty; $len] = mem::uninitialized();
-                            for i in 0..$len {
-                                ret[i] = match try!(v.visit()) {
+                            for item in ret.mut_iter() {
+                                *item = match try!(v.visit()) {
                                     Some(c) => c,
                                     None => return Err(::serde::de::Error::end_of_stream_error())
                                 };

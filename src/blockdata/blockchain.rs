@@ -547,7 +547,7 @@ impl Blockchain {
     }
 
     /// An iterator over all blocks in the chain starting from `start_hash`
-    pub fn iter<'a>(&'a self, start_hash: Sha256dHash) -> BlockIter<'a> {
+    pub fn iter(&self, start_hash: Sha256dHash) -> BlockIter {
         let start = match self.tree.lookup(&start_hash.into_le(), 256) {
                 Some(boxptr) => &**boxptr as NodePtr,
                 None => ptr::null()
@@ -559,7 +559,7 @@ impl Blockchain {
     }
 
     /// An iterator over all blocks in reverse order to the genesis, starting with `start_hash`
-    pub fn rev_iter<'a>(&'a self, start_hash: Sha256dHash) -> RevBlockIter<'a> {
+    pub fn rev_iter(&self, start_hash: Sha256dHash) -> RevBlockIter {
         let start = match self.tree.lookup(&start_hash.into_le(), 256) {
                 Some(boxptr) => &**boxptr as NodePtr,
                 None => ptr::null()
@@ -571,7 +571,7 @@ impl Blockchain {
     }
 
     /// An iterator over all blocks -not- in the best chain, in reverse order, starting from `start_hash`
-    pub fn rev_stale_iter<'a>(&'a self, start_hash: Sha256dHash) -> RevStaleBlockIter<'a> {
+    pub fn rev_stale_iter(&self, start_hash: Sha256dHash) -> RevStaleBlockIter {
         let start = match self.tree.lookup(&start_hash.into_le(), 256) {
                 Some(boxptr) => {
                     // If we are already on the main chain, we have a dead iterator

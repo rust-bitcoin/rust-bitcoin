@@ -59,7 +59,7 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Error::BadTweak(ref e) => fmt::Display::fmt(&e, f),
+            Error::BadTweak(ref e) |
             Error::Secp(ref e) => fmt::Display::fmt(&e, f),
             Error::Script(ref e) => fmt::Display::fmt(&e, f),
             Error::UncompressedKey => f.write_str("encountered uncompressed secp public key"),
@@ -74,7 +74,7 @@ impl fmt::Display for Error {
 impl error::Error for Error {
     fn cause(&self) -> Option<&error::Error> {
         match *self {
-            Error::BadTweak(ref e) => Some(e),
+            Error::BadTweak(ref e) |
             Error::Secp(ref e) => Some(e),
             Error::Script(ref e) => Some(e),
             _ => None
@@ -175,7 +175,7 @@ pub fn tweak_secret_key(secp: &Secp256k1, key: &SecretKey, contract: &[u8]) -> R
     hmac.raw_result(&mut hmac_raw);
     let hmac_sk = try!(SecretKey::from_slice(&secp, &hmac_raw).map_err(Error::BadTweak));
     // Execute the tweak
-    let mut key = key.clone();
+    let mut key = *key;
     try!(key.add_assign(&secp, &hmac_sk).map_err(Error::Secp));
     // Return
     Ok(key)

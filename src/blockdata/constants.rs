@@ -67,7 +67,7 @@ fn bitcoin_genesis_tx() -> Transaction {
     // Inputs
     let in_script = script::Builder::new().push_scriptint(486604799)
                                           .push_scriptint(4)
-                                          .push_slice("The Times 03/Jan/2009 Chancellor on brink of second bailout for banks".as_bytes())
+                                          .push_slice(b"The Times 03/Jan/2009 Chancellor on brink of second bailout for banks")
                                           .into_script();
     ret.input.push(TxIn {
         prev_hash: Default::default(),
