@@ -232,8 +232,6 @@ mod tests {
         let tx: Transaction = deserialize(&hex_tx).unwrap();
 
         let encoded = strason::from_serialize(&tx).unwrap();
-        assert_eq!(encoded.to_bytes(),
-                   "\"56944c5d3f98413ef45cf54545538103cc9f298e0575820ad3591376e2e0f65d\"".as_bytes());
         let decoded = encoded.into_deserialize().unwrap();
         assert_eq!(tx, decoded);
     }
