@@ -135,6 +135,23 @@ impl Template {
     pub fn required_keys(&self) -> usize {
         self.0.iter().filter(|e| **e == TemplateElement::Key).count()
     }
+
+    /// If the first push in the template is a number, return this number. For the
+    /// common case of standard multisig templates, such a number will exist and
+    /// will represent the number of signatures that are required for the script
+    /// to pass.
+    pub fn first_push_as_number(&self) -> Option<usize> {
+        if !self.0.is_empty() {
+            if let TemplateElement::Op(op) = self.0[0] {
+                if let opcodes::Class::PushNum(n) = op.classify() {
+                    if n >= 0 {
+                        return Some(n as usize);
+                    }
+                }
+            }
+        }
+        None
+    }
 }
 
 impl<'a> From<&'a [u8]> for Template {
