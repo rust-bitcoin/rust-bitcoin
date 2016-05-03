@@ -231,7 +231,16 @@ impl serde::Serialize for Sha256dHash {
     fn serialize<S>(&self, serializer: &mut S) -> Result<(), S::Error>
             where S: serde::Serializer,
     {
-        serializer.visit_str(&self.be_hex_string())
+        unsafe {
+            use std::{char, mem, str};
+
+            let mut string: [u8; 64] = mem::uninitialized();
+            for i in 0..32 {
+                string[2 * i] = char::from_digit((self.0[31 - i] / 0x10) as u32, 16).unwrap() as u8;
+                string[2 * i + 1] = char::from_digit((self.0[31 - i] & 0x0f) as u32, 16).unwrap() as u8;
+            }
+            serializer.visit_str(str::from_utf8_unchecked(&string))
+        }
     }
 }
 
