@@ -2590,6 +2590,7 @@ impl From<Vec<u8>> for Script {
 impl_index_newtype!(Script, u8);
 
 /// A "parsed opcode" which allows iterating over a Script in a more sensible way
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Instruction<'a> {
     /// Push a bunch of data
     PushBytes(&'a [u8]),
