@@ -19,7 +19,7 @@ use std::char::from_digit;
 use std::cmp::min;
 use std::default::Default;
 use std::error;
-use std::fmt::{self, Write};
+use std::fmt;
 use std::io::Cursor;
 use std::mem;
 use serde;
@@ -249,8 +249,6 @@ impl serde::Deserialize for Sha256dHash {
     fn deserialize<D>(d: &mut D) -> Result<Sha256dHash, D::Error>
         where D: serde::Deserializer
     {
-        use serialize::hex::FromHex;
-
         struct Sha256dHashVisitor;
         impl serde::de::Visitor for Sha256dHashVisitor {
             type Value = Sha256dHash;

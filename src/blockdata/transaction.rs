@@ -29,7 +29,6 @@ use serde;
 
 use util::hash::Sha256dHash;
 use blockdata::script::{self, Script, ScriptTrace};
-use network::encodable::ConsensusEncodable;
 use network::serialize::BitcoinHash;
 
 /// A reference to a transaction output

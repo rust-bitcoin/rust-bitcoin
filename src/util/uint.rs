@@ -321,7 +321,6 @@ macro_rules! construct_uint {
         impl<S: ::network::serialize::SimpleEncoder> ::network::encodable::ConsensusEncodable<S> for $name {
             #[inline]
             fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
-                use network::encodable::ConsensusEncodable;
                 let &$name(ref data) = self;
                 for word in data.iter() { try!(word.consensus_encode(s)); }
                 Ok(())

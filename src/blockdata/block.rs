@@ -26,7 +26,7 @@ use util;
 use util::Error::{SpvBadTarget, SpvBadProofOfWork};
 use util::hash::Sha256dHash;
 use util::uint::Uint256;
-use network::encodable::{ConsensusEncodable, VarInt};
+use network::encodable::VarInt;
 use network::serialize::BitcoinHash;
 use blockdata::transaction::Transaction;
 
