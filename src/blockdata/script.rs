@@ -1874,6 +1874,9 @@ impl Script {
     /// Whether the script is the empty script
     pub fn is_empty(&self) -> bool { self.0.is_empty() }
 
+    /// Convert the script into a byte vector
+    pub fn into_vec(self) -> Vec<u8> { self.0.into_vec() }
+
     /// Trace a script
     pub fn trace<'a>(&'a self, secp: &Secp256k1, stack: &mut Vec<MaybeOwned<'a>>,
                      input_context: Option<(&Transaction, usize)>)
