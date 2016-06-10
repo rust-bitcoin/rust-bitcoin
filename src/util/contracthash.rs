@@ -181,16 +181,21 @@ pub fn tweak_keys(secp: &Secp256k1, keys: &[PublicKey], contract: &[u8]) -> Resu
     Ok(ret)
 }
 
-/// Tweak a secret key using some arbitrary data
-pub fn tweak_secret_key(secp: &Secp256k1, key: &SecretKey, contract: &[u8]) -> Result<SecretKey, Error> {
-    // Compute public key
-    let pk = try!(PublicKey::from_secret_key(secp, &key).map_err(Error::Secp));
-    // Compute HMAC tweak
+/// Compute a tweak from some given data for the given public key
+pub fn compute_tweak(secp: &Secp256k1, pk: &PublicKey, contract: &[u8]) -> Result<SecretKey, Error> {
     let mut hmac_raw = [0; 32];
     let mut hmac = hmac::Hmac::new(sha2::Sha256::new(), &pk.serialize_vec(&secp, true));
     hmac.input(contract);
     hmac.raw_result(&mut hmac_raw);
-    let hmac_sk = try!(SecretKey::from_slice(&secp, &hmac_raw).map_err(Error::BadTweak));
+    SecretKey::from_slice(&secp, &hmac_raw).map_err(Error::BadTweak)
+}
+
+/// Tweak a secret key using some arbitrary data (calls `compute_tweak` internally)
+pub fn tweak_secret_key(secp: &Secp256k1, key: &SecretKey, contract: &[u8]) -> Result<SecretKey, Error> {
+    // Compute public key
+    let pk = try!(PublicKey::from_secret_key(secp, &key).map_err(Error::Secp));
+    // Compute tweak
+    let hmac_sk = try!(compute_tweak(secp, &pk, contract));
     // Execute the tweak
     let mut key = *key;
     try!(key.add_assign(&secp, &hmac_sk).map_err(Error::Secp));
