@@ -1415,7 +1415,7 @@ pub struct ScriptTrace {
 
 /// Hashtype of a transaction, encoded in the last byte of a signature,
 /// specifically in the last 5 bits `byte & 31`
-#[derive(PartialEq, Eq, Debug, Clone)]
+#[derive(PartialEq, Eq, Debug, Copy, Clone)]
 pub enum SigHashType {
     /// 0x1: Sign all outputs
     All,
