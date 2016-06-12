@@ -1,7 +1,7 @@
 
 [package]
 name = "bitcoin"
-version = "0.5.11"
+version = "0.6.0"
 authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
 license = "CC0-1.0"
 homepage = "https://github.com/apoelstra/rust-bitcoin/"
@@ -14,6 +14,12 @@ readme = "README.md"
 [lib]
 name = "bitcoin"
 path = "src/lib.rs"
+
+[features]
+# Compile broken and complicated script interpreter, as well as
+# an unspendability checker which is not broken (I think) but is
+# a huge pile of unreviewed code
+broken_consensus_code = []
 
 [dependencies]
 byteorder = "0.3"

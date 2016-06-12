@@ -28,7 +28,7 @@ use std::fmt;
 use serde;
 
 use util::hash::Sha256dHash;
-use blockdata::script::{self, Script, ScriptTrace};
+use blockdata::script::Script;
 use network::serialize::BitcoinHash;
 
 /// A reference to a transaction output
@@ -112,60 +112,13 @@ impl Transaction {
     }
 }
 
-/// A transaction error
-#[derive(PartialEq, Eq, Clone, Debug)]
-pub enum Error {
-    /// Concatenated script failed in the input half (script error)
-    InputScriptFailure(script::Error),
-    /// Concatenated script failed in the output half (script error)
-    OutputScriptFailure(script::Error),
-    /// P2SH serialized script failed (script error)
-    P2shScriptFailure(script::Error),
-    /// P2SH serialized script ended with false at the top of the stack 
-    P2shScriptReturnedFalse,
-    /// P2SH serialized script ended with nothing in the stack
-    P2shScriptReturnedEmptyStack,
-    /// Script ended with false at the top of the stack 
-    ScriptReturnedFalse,
-    /// Script ended with nothing in the stack
-    ScriptReturnedEmptyStack,
-    /// Script ended with nothing in the stack (input txid, input vout)
-    InputNotFound(Sha256dHash, u32),
-}
-display_from_debug!(Error);
-
-impl serde::Serialize for Error {
-    fn serialize<S>(&self, serializer: &mut S) -> Result<(), S::Error>
-        where S: serde::Serializer,
-    {
-        serializer.visit_str(&self.to_string())
-    }
-}
-
-/// A trace of a transaction input's script execution
-#[derive(PartialEq, Eq, Clone, Debug)]
-pub struct InputTrace {
-    input_txid: Sha256dHash,
-    input_vout: usize,
-    sig_trace: ScriptTrace,
-    pubkey_trace: Option<ScriptTrace>,
-    p2sh_trace: Option<ScriptTrace>,
-    error: Option<Error>
-}
-
-/// A trace of a transaction's execution
-#[derive(PartialEq, Eq, Clone, Debug)]
-pub struct TransactionTrace {
-    txid: Sha256dHash,
-    inputs: Vec<InputTrace>
-}
-
 impl BitcoinHash for Transaction {
     fn bitcoin_hash(&self) -> Sha256dHash {
         use network::serialize::serialize;
         Sha256dHash::from_data(&serialize(self).unwrap())
     }
 }
+
 
 impl_consensus_encoding!(TxIn, prev_hash, prev_index, script_sig, sequence);
 impl_consensus_encoding!(TxOut, value, script_pubkey);
