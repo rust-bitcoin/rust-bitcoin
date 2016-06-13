@@ -112,7 +112,7 @@ impl Transaction {
         cloned_tx.bitcoin_hash()
     }
 
-    /// Computes a scripthash for a given input index with a given sighash flag.
+    /// Computes a signature hash for a given input index with a given sighash flag.
     /// To actually produce a scriptSig, this hash needs to be run through an
     /// ECDSA signer, the SigHashType appended to the resulting sig, and a
     /// script written around this, but this is the general (and hard) part.
@@ -125,7 +125,7 @@ impl Transaction {
     /// # Panics
     /// Panics if `input_index` is greater than or equal to `self.input.len()`
     ///
-    pub fn scripthash(&self, input_index: usize, script_pubkey: &Script, sighash_u32: u32) -> Sha256dHash {
+    pub fn signature_hash(&self, input_index: usize, script_pubkey: &Script, sighash_u32: u32) -> Sha256dHash {
         assert!(input_index < self.input.len());  // Panic on OOB
 
         let (sighash, anyone_can_pay) = SigHashType::from_u32(sighash_u32).split_anyonecanpay_flag();
@@ -229,7 +229,7 @@ impl SigHashType {
          }
      }
 
-     /// Reads a 4-byte uint32 as a scripthash
+     /// Reads a 4-byte uint32 as a sighash type
      pub fn from_u32(n: u32) -> SigHashType {
          match n & 0x9f {
              // "real" sighashes
@@ -323,7 +323,7 @@ mod tests {
         raw_expected.reverse();
         let expected_result = Sha256dHash::from(&raw_expected[..]);
 
-        let actual_result = tx.scripthash(input_index, &script, hash_type as u32);
+        let actual_result = tx.signature_hash(input_index, &script, hash_type as u32);
 println!("{} outputs {} inputs index {} sighash {:?}", tx.output.len(), tx.input.len(), input_index, sighash);
         assert_eq!(actual_result, expected_result);
     }
