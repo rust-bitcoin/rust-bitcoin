@@ -27,7 +27,7 @@ pub mod patricia_tree;
 pub mod uint;
 
 use byteorder;
-use std::io;
+use std::{error, fmt, io};
 
 /// A trait which allows numbers to act as fixed-size bit arrays
 pub trait BitArray {
@@ -70,7 +70,46 @@ pub enum Error {
     /// Error propagated from subsystem
     Detail(String, Box<Error>)
 }
-display_from_debug!(Error);
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Error::Io(ref e) => fmt::Display::fmt(e, f),
+            Error::ByteOrder(ref e) => fmt::Display::fmt(e, f),
+            Error::BadNetworkMagic(exp, got) => write!(f, "expected network magic 0x{:x}, got 0x{:x}", exp, got),
+            Error::BadNetworkMessage(ref got) => write!(f, "incorrect network message {}", got),
+            Error::Detail(ref s, ref e) => write!(f, "{}: {}", s, e),
+            ref x => f.write_str(error::Error::description(x))
+        }
+    }
+}
+
+impl error::Error for Error {
+    fn cause(&self) -> Option<&error::Error> {
+        match *self {
+            Error::Io(ref e) => Some(e),
+            Error::ByteOrder(ref e) => Some(e),
+            Error::Detail(_, ref e) => Some(e),
+            _ => None
+        }
+    }
+
+    fn description(&self) -> &str {
+        match *self {
+            Error::Io(ref e) => e.description(),
+            Error::ByteOrder(ref e) => e.description(),
+            Error::BadNetworkMagic(_, _) => "incorrect network magic",
+            Error::BadNetworkMessage(_) => "incorrect/unexpected network message",
+            Error::DuplicateHash => "duplicate hash",
+            Error::BlockNotFound => "no such block",
+            Error::ParseFailed => "parsing error",
+            Error::PrevHashNotFound => "prevhash not found",
+            Error::SpvBadTarget => "target incorrect",
+            Error::SpvBadProofOfWork => "target correct but not attained",
+            Error::Detail(_, ref e) => e.description()
+        }
+    }
+}
 
 /// Prepend the detail of an IoResult's error with some text to get poor man's backtracing
 pub fn propagate_err<T>(s: String, res: Result<T, Error>) -> Result<T, Error> {
