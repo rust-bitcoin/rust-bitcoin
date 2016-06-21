@@ -375,26 +375,20 @@ impl<K: Copy + BitArray, V: Debug> Debug for PatriciaTree<K, V> {
             }
             try!(writeln!(f, ": {:?}", tree.data));
             // left gets no indentation
-            match tree.child_l {
-                Some(ref t) => {
-                    for _ in 0..(depth + tree.skip_len as usize) {
-                        try!(write!(f, "-"));
-                    }
-                    try!(write!(f, "0"));
-                    try!(recurse(&**t, f, depth + tree.skip_len as usize + 1));
+            if let Some(ref t) = tree.child_l {
+                for _ in 0..(depth + tree.skip_len as usize) {
+                    try!(write!(f, "-"));
                 }
-                None => { }
+                try!(write!(f, "0"));
+                try!(recurse(&**t, f, depth + tree.skip_len as usize + 1));
             }
             // right one gets indentation
-            match tree.child_r {
-                Some(ref t) => {
-                    for _ in 0..(depth + tree.skip_len as usize) {
-                        try!(write!(f, "_"));
-                    }
-                    try!(write!(f, "1"));
-                    try!(recurse(&**t, f, depth + tree.skip_len as usize + 1));
+            if let Some(ref t) = tree.child_r {
+                for _ in 0..(depth + tree.skip_len as usize) {
+                    try!(write!(f, "_"));
                 }
-                None => { }
+                try!(write!(f, "1"));
+                try!(recurse(&**t, f, depth + tree.skip_len as usize + 1));
             }
             Ok(())
         }

@@ -220,7 +220,7 @@ pub fn read_scriptint(v: &[u8]) -> Result<i64, Error> {
     Ok(ret)
 }
 
-/// This is like "read_scriptint then map 0 to false and everything
+/// This is like "`read_scriptint` then map 0 to false and everything
 /// else as true", except that the overflow rules don't apply.
 #[inline]
 pub fn read_scriptbool(v: &[u8]) -> bool {

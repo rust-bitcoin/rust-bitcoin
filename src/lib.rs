@@ -30,6 +30,10 @@
 // Experimental features we need
 #![cfg_attr(all(test, feature = "unstable"), feature(test))]
 
+// Clippy whitelist
+#![cfg_attr(feature = "clippy", allow(needless_range_loop))] // suggests making a big mess of array newtypes
+#![cfg_attr(feature = "clippy", allow(extend_from_slice))]   // `extend_from_slice` only available since 1.6
+
 // Coding conventions
 #![deny(non_upper_case_globals)]
 #![deny(non_camel_case_types)]

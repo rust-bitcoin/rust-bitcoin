@@ -264,7 +264,7 @@ pub struct RevBlockIter<'tree> {
 ///
 /// So to handle reorgs, you create a `RevStaleBlockIter` starting from the last
 /// known block, and play it until it runs out, rewinding every block except for
-/// the last one. Since the UtxoSet `rewind` function sets its `last_hash()` to
+/// the last one. Since the `UtxoSet` `rewind` function sets its `last_hash()` to
 /// the prevblockhash of the rewinded block (which will be on the main chain at
 /// the end of the iteration), you can then sync it up same as if you were doing
 /// a plain old fast-forward.
@@ -327,7 +327,7 @@ impl<'tree> Iterator for RevStaleBlockIter<'tree> {
     }
 }
 
-/// This function emulates the GetCompact(SetCompact(n)) in the satoshi code,
+/// This function emulates the `GetCompact(SetCompact(n))` in the satoshi code,
 /// which drops the precision to something that can be encoded precisely in
 /// the nBits block header field. Savour the perversity. This is in Bitcoin
 /// consensus code. What. Gaah!

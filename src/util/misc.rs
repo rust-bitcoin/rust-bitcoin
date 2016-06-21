@@ -44,7 +44,7 @@ pub fn hex_bytes(s: &str) -> Result<Vec<u8>, Error> {
     // Check that there was no remainder
     match iter.remainder() {
         Some(_) => Err(Error::Detail(
-            format!("hexstring of odd length"),
+            "hexstring of odd length".to_owned(),
             Box::new(Error::ParseFailed)
         )),
         None => Ok(v)

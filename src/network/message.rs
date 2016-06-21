@@ -79,8 +79,8 @@ pub enum SocketResponse {
 }
 
 #[derive(Clone, PartialEq, Eq, Debug)]
-/// A Network message payload. Proper documentation is available on the Bitcoin
-/// wiki https://en.bitcoin.it/wiki/Protocol_specification
+/// A Network message payload. Proper documentation is available on at
+/// [Bitcoin Wiki: Protocol Specification](https://en.bitcoin.it/wiki/Protocol_specification)
 pub enum NetworkMessage {
     /// `version`
     Version(message_network::VersionMessage),

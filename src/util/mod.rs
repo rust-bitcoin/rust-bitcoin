@@ -111,7 +111,7 @@ impl error::Error for Error {
     }
 }
 
-/// Prepend the detail of an IoResult's error with some text to get poor man's backtracing
+/// Prepend the detail of an `IoResult`'s error with some text to get poor man's backtracing
 pub fn propagate_err<T>(s: String, res: Result<T, Error>) -> Result<T, Error> {
     res.map_err(|err| Error::Detail(s, Box::new(err)))
 }

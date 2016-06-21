@@ -23,7 +23,7 @@
 //! This module provides the structures and functions needed to support transactions.
 //!
 
-use byteorder::{ByteOrder, LittleEndian, WriteBytesExt};
+use byteorder::{LittleEndian, WriteBytesExt};
 use std::default::Default;
 use std::fmt;
 use serde;
