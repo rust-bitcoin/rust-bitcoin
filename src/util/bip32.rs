@@ -128,6 +128,10 @@ pub enum Error {
     RngError(String)
 }
 
+impl From<secp256k1::Error> for Error {
+    fn from(e: secp256k1::Error) -> Error { Error::Ecdsa(e) }
+}
+
 impl ExtendedPrivKey {
     /// Construct a new master key from a seed value
     pub fn new_master(secp: &Secp256k1, network: Network, seed: &[u8]) -> Result<ExtendedPrivKey, Error> {
@@ -228,8 +232,8 @@ impl ExtendedPubKey {
         }
     }
 
-    /// Public->Public child key derivation
-    pub fn ckd_pub(&self, secp: &Secp256k1, i: ChildNumber) -> Result<ExtendedPubKey, Error> {
+    /// Compute the scalar tweak added to this key to get a child key
+    pub fn ckd_pub_tweak(&self, secp: &Secp256k1, i: ChildNumber) -> Result<(SecretKey, ChainCode), Error> {
         match i {
             ChildNumber::Hardened(n) => {
                 if n >= (1 << 31) {
@@ -248,20 +252,27 @@ impl ExtendedPubKey {
                 let mut result = [0; 64];
                 hmac.raw_result(&mut result);
 
-                let sk = try!(SecretKey::from_slice(secp, &result[..32]).map_err(Error::Ecdsa));
-                let mut pk = self.public_key.clone();
-                try!(pk.add_exp_assign(secp, &sk).map_err(Error::Ecdsa));
-
-                Ok(ExtendedPubKey {
-                    network: self.network,
-                    depth: self.depth + 1,
-                    parent_fingerprint: self.fingerprint(),
-                    child_number: i,
-                    public_key: pk,
-                    chain_code: ChainCode::from(&result[32..])
-                })
+                let secret_key = try!(SecretKey::from_slice(secp, &result[..32]));
+                let chain_code = ChainCode::from(&result[32..]);
+                Ok((secret_key, chain_code))
             }
         }
+    }
+
+    /// Public->Public child key derivation
+    pub fn ckd_pub(&self, secp: &Secp256k1, i: ChildNumber) -> Result<ExtendedPubKey, Error> {
+        let (sk, chain_code) = try!(self.ckd_pub_tweak(secp, i));
+        let mut pk = self.public_key.clone();
+        try!(pk.add_exp_assign(secp, &sk).map_err(Error::Ecdsa));
+
+        Ok(ExtendedPubKey {
+            network: self.network,
+            depth: self.depth + 1,
+            parent_fingerprint: self.fingerprint(),
+            child_number: i,
+            public_key: pk,
+            chain_code: chain_code
+        })
     }
 
     /// Returns the HASH160 of the chaincode
