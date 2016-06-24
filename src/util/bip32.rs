@@ -18,6 +18,7 @@
 
 use std::default::Default;
 use std::io::Cursor;
+use std::{error, fmt};
 use serde::{Serialize, Deserialize, Serializer, Deserializer};
 
 use byteorder::{BigEndian, ByteOrder, ReadBytesExt, WriteBytesExt};
@@ -93,6 +94,15 @@ pub enum ChildNumber {
     Normal(u32),
 }
 
+impl fmt::Display for ChildNumber {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            ChildNumber::Hardened(n) => write!(f, "{}h", n),
+            ChildNumber::Normal(n) => write!(f, "{}", n)
+        }
+    }
+}
+
 impl Serialize for ChildNumber {
     fn serialize<S>(&self, s: &mut S) -> Result<(), S::Error>
             where S: Serializer {
@@ -126,6 +136,36 @@ pub enum Error {
     InvalidChildNumber(ChildNumber),
     /// Error creating a master seed --- for application use
     RngError(String)
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Error::CannotDeriveFromHardenedKey => f.write_str("cannot derive hardened key from public key"),
+            Error::Ecdsa(ref e) => fmt::Display::fmt(e, f),
+            Error::InvalidChildNumber(ref n) => write!(f, "child number {} is invalid", n),
+            Error::RngError(ref s) => write!(f, "rng error {}", s)
+        }
+    }
+}
+
+impl error::Error for Error {
+    fn cause(&self) -> Option<&error::Error> {
+       if let Error::Ecdsa(ref e) = *self {
+           Some(e)
+       } else {
+           None
+       }
+    }
+
+    fn description(&self) -> &str {
+        match *self {
+            Error::CannotDeriveFromHardenedKey => "cannot derive hardened key from public key",
+            Error::Ecdsa(ref e) => error::Error::description(e),
+            Error::InvalidChildNumber(_) => "child number is invalid",
+            Error::RngError(_) => "rng error"
+        }
+    }
 }
 
 impl From<secp256k1::Error> for Error {
