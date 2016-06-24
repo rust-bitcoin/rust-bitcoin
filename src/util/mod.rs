@@ -18,6 +18,7 @@
 
 pub mod address;
 pub mod base58;
+pub mod bip32;
 pub mod contracthash;
 pub mod decimal;
 pub mod hash;
