@@ -2679,7 +2679,7 @@ impl Builder {
     pub fn push_int(mut self, data: i64) -> Builder {
         // We can special-case -1, 1-16
         if data == -1 || (data >= 1 && data <= 16) {
-            self.0.push((data + opcodes::OP_TRUE as i64) as u8);
+            self.0.push((data - 1 + opcodes::OP_TRUE as i64) as u8);
             self
         }
         // We can also special-case zero
@@ -2867,10 +2867,10 @@ mod test {
         assert_eq!(&script[..], &comp[..]);
 
         // small ints
-        script = script.push_int(1);  comp.push(82u8); assert_eq!(&script[..], &comp[..]);
+        script = script.push_int(1);  comp.push(81u8); assert_eq!(&script[..], &comp[..]);
         script = script.push_int(0);  comp.push(0u8);  assert_eq!(&script[..], &comp[..]);
-        script = script.push_int(4);  comp.push(85u8); assert_eq!(&script[..], &comp[..]);
-        script = script.push_int(-1); comp.push(80u8); assert_eq!(&script[..], &comp[..]);
+        script = script.push_int(4);  comp.push(84u8); assert_eq!(&script[..], &comp[..]);
+        script = script.push_int(-1); comp.push(79u8); assert_eq!(&script[..], &comp[..]);
         // forced scriptint
         script = script.push_scriptint(4); comp.extend([1u8, 4].iter().cloned()); assert_eq!(&script[..], &comp[..]);
         // big ints
