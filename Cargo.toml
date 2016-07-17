@@ -31,7 +31,6 @@ rustc-serialize = "0.3"
 secp256k1 = "0.5"
 serde = "0.6"
 strason = "0.3"
-time = "0.1"
 
 [dependencies.jsonrpc]
 version = "0.7" # for serde macros

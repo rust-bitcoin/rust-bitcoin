@@ -17,7 +17,7 @@
 //! This module provides support for low-level network communication.
 //!
 
-use time::now;
+use std::time::{UNIX_EPOCH, SystemTime};
 use rand::{thread_rng, Rng};
 use std::io::{self, Write};
 use std::net;
@@ -146,7 +146,10 @@ impl Socket {
     pub fn version_message(&mut self, start_height: i32) -> Result<NetworkMessage, util::Error> {
         let recv_addr = try!(self.receiver_address());
         let send_addr = try!(self.sender_address());
-        let timestamp = now().to_timespec().sec;
+        let timestamp = match SystemTime::now().duration_since(UNIX_EPOCH) {
+            Ok(dur) => dur,
+            Err(err) => err.duration(),
+        }.as_secs() as i64;
 
         Ok(Version(VersionMessage {
             version: constants::PROTOCOL_VERSION,
