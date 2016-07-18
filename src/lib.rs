@@ -52,7 +52,6 @@ extern crate secp256k1;
 extern crate serde;
 extern crate strason;
 #[cfg(all(test, feature = "unstable"))] extern crate test;
-extern crate time;
 
 #[cfg(test)]
 #[macro_use]
