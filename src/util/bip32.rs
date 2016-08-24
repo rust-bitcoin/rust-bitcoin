@@ -209,7 +209,7 @@ impl ExtendedPrivKey {
             ChildNumber::Normal(n) => {
                 if n >= (1 << 31) { return Err(Error::InvalidChildNumber(i)) }
                 // Non-hardened key: compute public data and use that
-                hmac.input(&PublicKey::from_secret_key(secp, &self.secret_key).unwrap().serialize_vec(&secp, true)[..]);
+                hmac.input(&PublicKey::from_secret_key(secp, &self.secret_key).unwrap().serialize_vec(secp, true)[..]);
                 BigEndian::write_u32(&mut be_n, n);
             }
             ChildNumber::Hardened(n) => {

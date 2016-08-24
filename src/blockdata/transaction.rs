@@ -30,7 +30,8 @@ use serde;
 
 use util::hash::Sha256dHash;
 use blockdata::script::Script;
-use network::serialize::{serialize, BitcoinHash};
+use network::serialize::{serialize, BitcoinHash, SimpleEncoder, SimpleDecoder};
+use network::encodable::{ConsensusEncodable, ConsensusDecodable};
 
 /// A reference to a transaction output
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
@@ -94,9 +95,11 @@ pub struct Transaction {
     /// List of inputs
     pub input: Vec<TxIn>,
     /// List of outputs
-    pub output: Vec<TxOut>
+    pub output: Vec<TxOut>,
+    /// Witness data: for each txin, an array of byte-arrays
+    pub witness: Vec<Vec<Vec<u8>>>
 }
-serde_struct_impl!(Transaction, version, lock_time, input, output);
+serde_struct_impl!(Transaction, version, lock_time, input, output, witness);
 
 impl Transaction {
     /// Computes a "normalized TXID" which does not include any signatures.
@@ -107,7 +110,8 @@ impl Transaction {
             version: self.version,
             lock_time: self.lock_time,
             input: self.input.iter().map(|txin| TxIn { script_sig: Script::new(), .. *txin }).collect(),
-            output: self.output.clone()
+            output: self.output.clone(),
+            witness: vec![]
         };
         cloned_tx.bitcoin_hash()
     }
@@ -143,7 +147,8 @@ impl Transaction {
             version: self.version,
             lock_time: self.lock_time,
             input: vec![],
-            output: vec![]
+            output: vec![],
+            witness: vec![]
         };
         // Add all inputs necessary..
         if anyone_can_pay {
@@ -193,7 +198,77 @@ impl BitcoinHash for Transaction {
 
 impl_consensus_encoding!(TxIn, prev_hash, prev_index, script_sig, sequence);
 impl_consensus_encoding!(TxOut, value, script_pubkey);
-impl_consensus_encoding!(Transaction, version, input, output, lock_time);
+
+impl<S: SimpleEncoder> ConsensusEncodable<S> for Transaction {
+    fn consensus_encode(&self, s: &mut S) -> Result <(), S::Error> {
+        try!(self.version.consensus_encode(s));
+        if self.witness.is_empty() {
+            try!(self.input.consensus_encode(s));
+            try!(self.output.consensus_encode(s));
+        } else {
+            try!(0u8.consensus_encode(s));
+            try!(1u8.consensus_encode(s));
+            try!(self.input.consensus_encode(s));
+            try!(self.output.consensus_encode(s));
+            for witness in &self.witness {
+                try!(witness.consensus_encode(s));
+            }
+        }
+        self.lock_time.consensus_encode(s)
+    }
+}
+
+impl<D: SimpleDecoder> ConsensusDecodable<D> for Transaction {
+    fn consensus_decode(d: &mut D) -> Result<Transaction, D::Error> {
+        let version: u32 = try!(ConsensusDecodable::consensus_decode(d));
+        let input: Vec<TxIn> = try!(ConsensusDecodable::consensus_decode(d));
+        // segwit
+        if input.is_empty() {
+            let segwit_flag: u8 = try!(ConsensusDecodable::consensus_decode(d));
+            match segwit_flag {
+                // Empty tx
+                0 => {
+                    Ok(Transaction {
+                        version: version,
+                        input: input,
+                        output: vec![],
+                        lock_time: try!(ConsensusDecodable::consensus_decode(d)),
+                        witness: vec![]
+                    })
+                }
+                // BIP144 input witnesses
+                1 => {
+                    let input: Vec<TxIn> = try!(ConsensusDecodable::consensus_decode(d));
+                    let output: Vec<TxOut> = try!(ConsensusDecodable::consensus_decode(d));
+                    let mut witness: Vec<Vec<Vec<u8>>> = Vec::with_capacity(input.len());
+                    for _ in 0..input.len() {
+                        witness.push(try!(ConsensusDecodable::consensus_decode(d)));
+                    }
+                    Ok(Transaction {
+                        version: version,
+                        input: input,
+                        output: output,
+                        witness: witness,
+                        lock_time: try!(ConsensusDecodable::consensus_decode(d))
+                    })
+                }
+                // We don't support anything else
+                x => {
+                    Err(d.error(format!("segwit flag {:02x} not understood", x)))
+                }
+            }
+        // non-segwit
+        } else {
+            Ok(Transaction {
+                version: version,
+                input: input,
+                output: try!(ConsensusDecodable::consensus_decode(d)),
+                lock_time: try!(ConsensusDecodable::consensus_decode(d)),
+                witness: vec![]
+            })
+        }
+    }
+}
 
 /// Hashtype of a transaction, encoded in the last byte of a signature
 /// Fixed values so they can be casted as integer types for encoding
@@ -254,11 +329,11 @@ impl SigHashType {
 mod tests {
     use strason;
 
-    use super::{Transaction, TxIn, SigHashType};
+    use super::{Transaction, TxIn};
 
     use blockdata::script::Script;
     use network::serialize::BitcoinHash;
-    use network::serialize::deserialize;
+    use network::serialize::{serialize, deserialize};
     use util::hash::Sha256dHash;
     use util::misc::hex_bytes;
 
@@ -318,15 +393,29 @@ mod tests {
     fn run_test_sighash(tx: &str, script: &str, input_index: usize, hash_type: i32, expected_result: &str) {
         let tx: Transaction = deserialize(&hex_bytes(tx).unwrap()[..]).unwrap();
         let script = Script::from(hex_bytes(script).unwrap());
-        let sighash = SigHashType::from_u32(hash_type as u32);
         let mut raw_expected = hex_bytes(expected_result).unwrap();
         raw_expected.reverse();
         let expected_result = Sha256dHash::from(&raw_expected[..]);
 
         let actual_result = tx.signature_hash(input_index, &script, hash_type as u32);
-println!("{} outputs {} inputs index {} sighash {:?}", tx.output.len(), tx.input.len(), input_index, sighash);
         assert_eq!(actual_result, expected_result);
     }
+
+    // Test decoding transaction `4be105f158ea44aec57bf12c5817d073a712ab131df6f37786872cfc70734188`
+    // from testnet, which is the first BIP144-encoded transaction I encountered.
+    #[test]
+    fn test_segwit_tx_decode() {
+        let hex_tx = hex_bytes("010000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff3603da1b0e00045503bd5704c7dd8a0d0ced13bb5785010800000000000a636b706f6f6c122f4e696e6a61506f6f6c2f5345475749542fffffffff02b4e5a212000000001976a914876fbb82ec05caa6af7a3b5e5a983aae6c6cc6d688ac0000000000000000266a24aa21a9edf91c46b49eb8a29089980f02ee6b57e7d63d33b18b4fddac2bcd7db2a39837040120000000000000000000000000000000000000000000000000000000000000000000000000").unwrap();
+        let tx: Transaction = deserialize(&hex_tx).unwrap();
+
+        let encoded = strason::from_serialize(&tx).unwrap();
+        let decoded = encoded.into_deserialize().unwrap();
+        assert_eq!(tx, decoded);
+
+        let consensus_encoded = serialize(&tx).unwrap();
+        assert_eq!(consensus_encoded, hex_tx);
+    }
+
 
     // These test vectors were stolen from libbtc, which is Copyright 2014 Jonas Schnelli MIT
     // They were transformed by replacing {...} with run_test_sighash(...), then the ones containing

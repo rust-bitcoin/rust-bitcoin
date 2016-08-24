@@ -61,7 +61,8 @@ fn bitcoin_genesis_tx() -> Transaction {
         version: 1,
         lock_time: 0,
         input: vec![],
-        output: vec![]
+        output: vec![],
+        witness: vec![]
     };
 
     // Inputs
