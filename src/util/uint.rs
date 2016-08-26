@@ -202,7 +202,7 @@ macro_rules! construct_uint {
                 for i in 0..($n_words - 1) {
                     if arr[i] > 0 { return (0x40 * i) + arr[i].trailing_zeros() as usize; }
                 }
-                (0x40 * ($n_words - 1)) + arr[3].trailing_zeros() as usize
+                (0x40 * ($n_words - 1)) + arr[$n_words - 1].trailing_zeros() as usize
             }
         }
 
