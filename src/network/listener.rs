@@ -20,6 +20,7 @@
 
 use std::thread;
 use std::sync::mpsc::{channel, Receiver};
+use std::time::Duration;
 
 use network::constants::Network;
 use network::message;
@@ -55,6 +56,9 @@ pub trait Listener {
             let mut handshake_complete = false;
             let mut sock = sock;
             loop {
+                // sleep just before receiving to give socket access to threads trying to send
+                thread::sleep(Duration::from_millis(1));
+                
                 // Receive new message
                 match sock.receive_message() {
                     Ok(payload) => {
