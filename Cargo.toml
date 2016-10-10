@@ -24,7 +24,6 @@ broken_consensus_code = []
 [dependencies]
 byteorder = "0.3"
 num = "0.1"
-num_cpus = "0.2"
 rand = "0.3"
 rust-crypto = "0.2"
 rustc-serialize = "0.3"
