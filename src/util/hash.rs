@@ -223,6 +223,12 @@ impl Sha256dHash {
     }
 }
 
+impl BitcoinHash for Sha256dHash {
+    fn bitcoin_hash(&self) -> Sha256dHash {
+        *self
+    }
+}
+
 // Note that this outputs hashes as big endian hex numbers, so this should be
 // used only for user-facing stuff. Internal and network serialization is
 // little-endian and should be done using the consensus `encodable::ConsensusEncodable`
@@ -344,6 +350,47 @@ impl <T: BitcoinHash> MerkleRoot for Vec<T> {
     }
 }
 
+/// A proof that a transaction (leaf), belongs to a merkle root
+#[derive(Debug)]
+pub struct MerkleBranch<T: BitcoinHash> {
+    leaf: T,
+    path: Vec<Sha256dHash>,
+    index: u32,
+}
+
+impl <T: BitcoinHash> MerkleBranch<T> {
+    /// Constructs a merkle branch proof
+    pub fn new(leaf: T, merkle_path: Vec<Sha256dHash>, index: u32) -> MerkleBranch<T> {
+        MerkleBranch {
+            leaf: leaf,
+            path: merkle_path,
+            index: index,
+        }
+    }
+}
+
+impl <T: BitcoinHash> MerkleRoot for MerkleBranch<T> {
+    fn merkle_root(&self) -> Sha256dHash {
+        let mut hash = self.leaf.bitcoin_hash();
+        // A byte buffer that fits 2 Sha256d hashes
+        let mut buffer = Vec::<u8>::with_capacity(2 * 32);
+        for (i, h) in self.path.iter().enumerate() {
+            let mut encoder = RawEncoder::new(Cursor::new(buffer));
+            if ((self.index >> i) & 1) == 1{
+                h.consensus_encode(&mut encoder).unwrap();
+                hash.consensus_encode(&mut encoder).unwrap();
+            } else {
+                hash.consensus_encode(&mut encoder).unwrap();
+                h.consensus_encode(&mut encoder).unwrap();
+            }
+            // Recycle the buffer
+            buffer = encoder.into_inner().into_inner();
+            hash = buffer.bitcoin_hash();
+        }
+        hash
+    }
+}
+
 
 #[cfg(test)]
 mod tests {
@@ -351,7 +398,7 @@ mod tests {
     use strason;
 
     use network::serialize::{serialize, deserialize};
-    use util::hash::Sha256dHash;
+    use util::hash::{MerkleBranch, MerkleRoot, Sha256dHash};
 
     #[test]
     fn test_sha256d() {
@@ -371,6 +418,11 @@ mod tests {
                    "56944c5d3f98413ef45cf54545538103cc9f298e0575820ad3591376e2e0f65d");
         assert_eq!(format!("{:X}", Sha256dHash::from_data(&[])),
                    "56944C5D3F98413EF45CF54545538103CC9F298E0575820AD3591376E2E0F65D");
+        // Test from_hex
+        assert_eq!(format!("{:x}", Sha256dHash::from_hex("56944C5D3F98413EF45CF54545538103CC9F298E0575820AD3591376E2E0F65D").unwrap()),
+                   "56944c5d3f98413ef45cf54545538103cc9f298e0575820ad3591376e2e0f65d");
+        assert_eq!(format!("{:x}", Sha256dHash::from_hex("56944C5D3F98413EF45CF54545538103CC9F298E0575820AD3591376E2E0F65D").unwrap()),
+                   "56944c5d3f98413ef45cf54545538103cc9f298e0575820ad3591376e2e0f65d");
     }
 
     #[test]
@@ -399,6 +451,47 @@ mod tests {
                                0, 0, 0, 0, 0, 0, 0, 0]);
         assert_eq!(Some(one.into_le()), FromPrimitive::from_u64(1));
         assert_eq!(Some(one.into_le().low_128()), FromPrimitive::from_u64(1));
+    }
+
+    #[test]
+    fn test_merkle_tree() {
+        let merkle_root = Sha256dHash::from_hex("f3e94742aca4b5ef85488dc37c06c3282295ffec960994b2c0d5ac2a25a95766").unwrap();
+        let hashes: Vec<Sha256dHash> = vec![
+            "8c14f0db3df150123e6f3dbbf30f8b955a8249b62ac1d1ff16284aefa3d06d87",
+            "fff2525b8931402dd09222c50775608f75787bd2b87e56995a7bdd30f79702c4",
+            "6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4",
+            "e9a66845e05d5abc0ad04ec80f774a7e585c6e8db975962d069a522137b80c1d"
+            ].iter().map(|hex| Sha256dHash::from_hex(hex).unwrap()).collect();
+        assert_eq!(merkle_root, hashes.merkle_root());
+    }
+
+    #[test]
+    fn test_partial_merkle_tree() {
+        let merkle_root = Sha256dHash::from_hex("f3e94742aca4b5ef85488dc37c06c3282295ffec960994b2c0d5ac2a25a95766").unwrap();
+        let hash = Sha256dHash::from_hex("6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4").unwrap();
+        let index = 2;
+        let merkle_path: Vec<Sha256dHash> = vec![
+            "e9a66845e05d5abc0ad04ec80f774a7e585c6e8db975962d069a522137b80c1d",
+            "ccdafb73d8dcd0173d5d5c3c9a0770d0b3953db889dab99ef05b1907518cb815"
+            ].iter().map(|hex| Sha256dHash::from_hex(hex).unwrap()).collect();
+        let branch = MerkleBranch::new(hash, merkle_path, index);
+        assert_eq!(merkle_root, branch.merkle_root());
+
+        let merkle_root = Sha256dHash::from_hex("915c887a2d9ec3f566a648bedcf4ed30d0988e22268cfe43ab5b0cf8638999d3").unwrap();
+        let hash = Sha256dHash::from_hex("3b115dcc8a5d1ae060b9be8bdfc697155f6cf40f10bbfb8ab22d14306a9828cb").unwrap();
+        let index = 236;
+        let merkle_path: Vec<Sha256dHash> = vec![
+            "3b115dcc8a5d1ae060b9be8bdfc697155f6cf40f10bbfb8ab22d14306a9828cb",
+            "d7fdfd5928a91339bac06b7cc2bb19be7740b01e5ac13929b1457bc92831f183",
+            "bff2c94cc089c7a85e3e57fa5c3a202f1e72d707cbb22af9f5320b5d848b412f",
+            "e29cb87920219c257693164e3538f1a3a04c42182f9c5faf08c698ec08480f44",
+            "47ab91bed0c618d459ae4282ee44ec2ed870888184fa026a89916f824bff56cd",
+            "b97526ea70fa66ab6e5f75d5d3e4ab793312cb8e68bae8b01925d554d62ddf7d",
+            "24166c3edeab46f7779cac946228e2e03d06b4b81607c684e423ece2e29ee8b9",
+            "aec0b4d49d190f9ac61d0e32443ade724274de466eed4acb0498207664832d84"
+            ].iter().map(|hex| Sha256dHash::from_hex(hex).unwrap()).collect();
+        let branch = MerkleBranch::new(hash, merkle_path, index);
+        assert_eq!(merkle_root, branch.merkle_root());
     }
 }
 
