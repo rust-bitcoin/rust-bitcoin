@@ -31,10 +31,13 @@
 
 use std::collections::HashMap;
 use std::hash::Hash;
-use std::u32;
+use std::{mem, u32};
 
 use util::hash::Sha256dHash;
 use network::serialize::{SimpleDecoder, SimpleEncoder};
+
+/// Maximum size, in bytes, of a vector we are allowed to decode
+pub const MAX_VEC_SIZE: usize = 32 * 1024 * 1024;
 
 /// Data which can be encoded in a consensus-consistent way
 pub trait ConsensusEncodable<S: SimpleEncoder> {
@@ -185,6 +188,10 @@ impl<D: SimpleDecoder, T: ConsensusDecodable<D>> ConsensusDecodable<D> for Vec<T
     #[inline]
     fn consensus_decode(d: &mut D) -> Result<Vec<T>, D::Error> {
         let VarInt(len): VarInt = try!(ConsensusDecodable::consensus_decode(d));
+        let byte_size = len as usize * mem::size_of::<T>();
+        if byte_size > MAX_VEC_SIZE {
+            return Err(d.error(format!("tried to allocate vec of size {} (max {})", byte_size, MAX_VEC_SIZE)));
+        }
         let mut ret = Vec::with_capacity(len as usize);
         for _ in 0..len { ret.push(try!(ConsensusDecodable::consensus_decode(d))); }
         Ok(ret)
