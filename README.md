@@ -12,10 +12,14 @@ Supports (or should support)
 
 * De/serialization of Bitcoin protocol network messages
 * De/serialization of blocks and transactions
-* Script de/serialization and execution
-* Blockchain validation and utxoset building
+* Script de/serialization
+* Blockchain validation
 * Private keys and address creation, de/serialization and validation (including full BIP32 support)
 * Pay-to-contract support as in Appendix A of the [Blockstream sidechains whitepaper](https://www.blockstream.com/sidechains.pdf)
+
+For JSONRPC interaction with Bitcoin Core, it is recommended to use [rust-jsonrpc](https://github.com/apoelstra/rust-jsonrpc)
+which uses the underlying [strason library](https://github.com/apoelstra/strason)
+which parses decimal numbers as strings, preventing precision errors.
 
 # Usage
 
@@ -23,7 +27,7 @@ To use rust-bitcoin, just add the following to your Cargo.toml.
 
 ```toml
 [dependencies]
-bitcoin = "0.3"
+bitcoin = "0.9"
 ```
 
 # Known limitations
@@ -31,7 +35,8 @@ bitcoin = "0.3"
 ## Consensus
 
 This library **must not** be used for consensus code (i.e. fully validating
-blockchain data). It technically supports doing this, but doing so is very
+blockchain data). It technically supports doing this, using the feature-gated
+script parser, but doing so is very
 ill-advised because there are many deviations, known and unknown, between
 this library and the Bitcoin Core reference implementation. In a consensus
 based cryptocurrency such as Bitcoin it is critical that all parties are
@@ -41,16 +46,6 @@ to implement the same rules as Core.
 Given the complexity of both C++ and Rust, it is unlikely that this will
 ever be fixed, and there are no plans to do so. Of course, patches to
 fix specific consensus incompatibilities are welcome.
-
-## Memory Usage
-
-Currently this library's UTXO-set support is limited to an in-RAM hash tree.
-It can be serialized and deserialized to disk to avoid recomputing it all
-the time, but needs to be in memory to be used, which currently requires
-several gigabytes of RAM.
-
-Patches are welcome. This is a priority but not a high one, due to lack of
-developer time.
 
 ## Documentation
 
