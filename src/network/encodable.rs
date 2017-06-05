@@ -188,7 +188,9 @@ impl<D: SimpleDecoder, T: ConsensusDecodable<D>> ConsensusDecodable<D> for Vec<T
     #[inline]
     fn consensus_decode(d: &mut D) -> Result<Vec<T>, D::Error> {
         let VarInt(len): VarInt = try!(ConsensusDecodable::consensus_decode(d));
-        let byte_size = len as usize * mem::size_of::<T>();
+        let byte_size = try!((len as usize)
+                            .checked_mul(mem::size_of::<T>())
+                            .ok_or(d.error("Invalid length".to_owned())));
         if byte_size > MAX_VEC_SIZE {
             return Err(d.error(format!("tried to allocate vec of size {} (max {})", byte_size, MAX_VEC_SIZE)));
         }
@@ -208,6 +210,9 @@ impl<D: SimpleDecoder, T: ConsensusDecodable<D>> ConsensusDecodable<D> for Box<[
     fn consensus_decode(d: &mut D) -> Result<Box<[T]>, D::Error> {
         let VarInt(len): VarInt = try!(ConsensusDecodable::consensus_decode(d));
         let len = len as usize;
+        if len > MAX_VEC_SIZE {
+            return Err(d.error(format!("tried to allocate vec of size {} (max {})", len, MAX_VEC_SIZE)));
+        }
         let mut ret = Vec::with_capacity(len);
         for _ in 0..len { ret.push(try!(ConsensusDecodable::consensus_decode(d))); }
         Ok(ret.into_boxed_slice())
