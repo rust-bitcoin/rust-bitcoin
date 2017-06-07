@@ -496,6 +496,8 @@ mod tests {
     fn deserialize_vec_test() {
         assert_eq!(deserialize(&[3u8, 2, 3, 4]).ok(), Some(vec![2u8, 3, 4]));
         assert_eq!(deserialize(&[4u8, 2, 3, 4, 5, 6]).ok(), Some(vec![2u8, 3, 4, 5]));
+        // found by cargo fuzz
+        assert!(deserialize::<Vec<u64>>(&[0xff,0xff,0xff,0xff,0x6b,0x6b,0x6b,0x6b,0x6b,0x6b,0x6b,0x6b,0x6b,0x6b,0x6b,0x6b,0xa,0xa,0x3a]).is_err());
     }
 
     #[test]
