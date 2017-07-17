@@ -27,7 +27,6 @@ pub mod misc;
 pub mod patricia_tree;
 pub mod uint;
 
-use byteorder;
 use std::{error, fmt, io};
 
 /// A trait which allows numbers to act as fixed-size bit arrays
@@ -50,8 +49,8 @@ pub trait BitArray {
 pub enum Error {
     /// An I/O error
     Io(io::Error),
-    /// Order from the `byteorder` crate
-    ByteOrder(byteorder::Error),
+    /// Error from the `byteorder` crate
+    ByteOrder(io::Error),
     /// Network magic was not what we expected
     BadNetworkMagic(u32, u32),
     /// Network message was unrecognized

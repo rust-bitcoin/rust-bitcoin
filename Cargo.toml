@@ -22,7 +22,7 @@ path = "src/lib.rs"
 broken_consensus_code = []
 
 [dependencies]
-byteorder = "0.3"
+byteorder = "1.1"
 num = "0.1"
 rand = "0.3"
 rust-crypto = "0.2"
