@@ -32,6 +32,6 @@ serde = "0.6"
 strason = "0.3"
 
 [dependencies.jsonrpc]
-version = "0.7" # for serde macros
+version = "0.8" # for serde macros
 default-features = false
 
