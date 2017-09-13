@@ -1,27 +1,20 @@
-
 [package]
-name = "bitcoin"
-version = "0.10.0"
 authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
-license = "CC0-1.0"
-homepage = "https://github.com/apoelstra/rust-bitcoin/"
-repository = "https://github.com/apoelstra/rust-bitcoin/"
-documentation = "https://www.wpsoftware.net/rustdoc/bitcoin/"
 description = "General purpose library for using and interoperating with Bitcoin and other cryptocurrencies."
-keywords = [ "crypto", "bitcoin" ]
-readme = "README.md"
-
-[lib]
+documentation = "https://www.wpsoftware.net/rustdoc/bitcoin/"
+homepage = "https://github.com/apoelstra/rust-bitcoin/"
+keywords = [
+    "crypto",
+    "bitcoin",
+]
+license = "CC0-1.0"
 name = "bitcoin"
-path = "src/lib.rs"
-
-[features]
-# Compile broken and complicated script interpreter, as well as
-# an unspendability checker which is not broken (I think) but is
-# a huge pile of unreviewed code
-broken_consensus_code = []
+readme = "README.md"
+repository = "https://github.com/apoelstra/rust-bitcoin/"
+version = "0.10.0"
 
 [dependencies]
+bitcoin = "0.10.0"
 byteorder = "1.1"
 num = "0.1"
 rand = "0.3"
@@ -32,6 +25,12 @@ serde = "0.6"
 strason = "0.3"
 
 [dependencies.jsonrpc]
-version = "0.8" # for serde macros
 default-features = false
+version = "0.8"
 
+[features]
+broken_consensus_code = []
+
+[lib]
+name = "bitcoin"
+path = "src/lib.rs"
