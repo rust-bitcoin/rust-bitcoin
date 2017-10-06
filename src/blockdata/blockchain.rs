@@ -372,7 +372,7 @@ impl Blockchain {
 
     fn replace_txdata(&mut self, hash: &Uint256, txdata: Vec<Transaction>, has_txdata: bool) -> Result<(), util::Error> {
         match self.tree.lookup_mut(hash, 256) {
-            Some(mut existing_block) => {
+            Some(existing_block) => {
                 existing_block.block.txdata.clone_from(&txdata);
                 existing_block.has_txdata = has_txdata;
                 Ok(())
