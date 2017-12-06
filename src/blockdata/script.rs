@@ -27,11 +27,14 @@
 use std::default::Default;
 use std::{error, fmt};
 
+use crypto::digest::Digest;
+use crypto::sha2::Sha256;
 use serde;
 
 use blockdata::opcodes;
 use network::encodable::{ConsensusDecodable, ConsensusEncodable};
 use network::serialize::{SimpleDecoder, SimpleEncoder};
+use util::hash::Hash160;
 
 #[derive(Clone, PartialEq, Eq, Hash)]
 /// A Bitcoin script
@@ -255,6 +258,25 @@ impl Script {
     /// Convert the script into a byte vector
     pub fn into_vec(self) -> Vec<u8> { self.0.into_vec() }
 
+    /// Compute the P2SH output corresponding to this redeem script
+    pub fn to_p2sh(&self) -> Script {
+        Builder::new().push_opcode(opcodes::All::OP_HASH160)
+                      .push_slice(&Hash160::from_data(&self.0)[..])
+                      .push_opcode(opcodes::All::OP_EQUAL)
+                      .into_script()
+    }
+
+    /// Compute the P2WSH output corresponding to this redeem script
+    pub fn to_v0_p2wsh(&self) -> Script {
+        let mut tmp = [0; 32];
+        let mut sha2 = Sha256::new();
+        sha2.input(&self.0);
+        sha2.result(&mut tmp);
+        Builder::new().push_int(0)
+                      .push_slice(&tmp)
+                      .into_script()
+    }
+
     /// Checks whether a script pubkey is a p2sh output
     #[inline]
     pub fn is_p2sh(&self) -> bool {
@@ -273,6 +295,14 @@ impl Script {
         self.0[2] == opcodes::All::OP_PUSHBYTES_20 as u8 &&
         self.0[23] == opcodes::All::OP_EQUALVERIFY as u8 &&
         self.0[24] == opcodes::All::OP_CHECKSIG as u8
+    }
+
+    /// Checks whether a script pubkey is a p2wsh output
+    #[inline]
+    pub fn is_v0_p2wsh(&self) -> bool {
+        self.0.len() == 34 &&
+        self.0[0] == opcodes::All::OP_PUSHBYTES_0 as u8 &&
+        self.0[1] == opcodes::All::OP_PUSHBYTES_32 as u8
     }
 
     /// Whether a script can be proven to have no satisfying input
@@ -636,6 +666,31 @@ mod test {
         assert!(hex_script!("a914acc91e6fef5c7f24e5c8b3f11a664aa8f1352ffd87").is_p2sh());
         assert!(!hex_script!("a914acc91e6fef5c7f24e5c8b3f11a664aa8f1352ffd87").is_p2pkh());
         assert!(!hex_script!("a314acc91e6fef5c7f24e5c8b3f11a664aa8f1352ffd87").is_p2sh());
+    }
+
+    #[test]
+    fn p2sh_p2wsh_conversion() {
+        // Test vectors taken from Core tests/data/script_tests.json
+        // bare p2wsh
+        let redeem_script = hex_script!("410479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8ac");
+        let expected_witout = hex_script!("0020b95237b48faaa69eb078e1170be3b5cbb3fddf16d0a991e14ad274f7b33a4f64");
+        assert!(redeem_script.to_v0_p2wsh().is_v0_p2wsh());
+        assert_eq!(redeem_script.to_v0_p2wsh(), expected_witout);
+
+        // p2sh
+        let redeem_script = hex_script!("0479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8");
+        let expected_p2shout = hex_script!("a91491b24bf9f5288532960ac687abb035127b1d28a587");
+        assert!(redeem_script.to_p2sh().is_p2sh());
+        assert_eq!(redeem_script.to_p2sh(), expected_p2shout);
+
+        // p2sh-p2wsh
+        let redeem_script = hex_script!("410479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8ac");
+        let expected_witout = hex_script!("0020b95237b48faaa69eb078e1170be3b5cbb3fddf16d0a991e14ad274f7b33a4f64");
+        let expected_out = hex_script!("a914f386c2ba255cc56d20cfa6ea8b062f8b5994551887");
+        assert!(redeem_script.to_p2sh().is_p2sh());
+        assert!(redeem_script.to_p2sh().to_v0_p2wsh().is_v0_p2wsh());
+        assert_eq!(redeem_script.to_v0_p2wsh(), expected_witout);
+        assert_eq!(redeem_script.to_v0_p2wsh().to_p2sh(), expected_out);
     }
 }
 
