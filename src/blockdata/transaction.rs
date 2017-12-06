@@ -191,8 +191,11 @@ impl Transaction {
 
 impl BitcoinHash for Transaction {
     fn bitcoin_hash(&self) -> Sha256dHash {
-        use network::serialize::serialize;
-        Sha256dHash::from_data(&serialize(self).unwrap())
+        use util::hash::Sha256dEncoder;
+
+        let mut enc = Sha256dEncoder::new();
+        self.consensus_encode(&mut enc).unwrap();
+        enc.into_hash()
     }
 }
 

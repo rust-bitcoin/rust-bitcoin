@@ -24,12 +24,13 @@ use std::io::Cursor;
 use std::mem;
 use serde;
 
+use byteorder::{LittleEndian, WriteBytesExt};
 use crypto::digest::Digest;
 use crypto::sha2::Sha256;
 use crypto::ripemd160::Ripemd160;
 
 use network::encodable::{ConsensusDecodable, ConsensusEncodable};
-use network::serialize::{RawEncoder, BitcoinHash};
+use network::serialize::{SimpleEncoder, RawEncoder, BitcoinHash};
 use util::uint::Uint256;
 
 /// Hex deserialization error
@@ -64,6 +65,9 @@ impl error::Error for HexError {
 pub struct Sha256dHash([u8; 32]);
 impl_array_newtype!(Sha256dHash, u8, 32);
 
+/// An object that allows serializing data into a sha256d
+pub struct Sha256dEncoder(Sha256);
+
 /// A RIPEMD-160 hash
 pub struct Ripemd160Hash([u8; 20]);
 impl_array_newtype!(Ripemd160Hash, u8, 20);
@@ -83,6 +87,84 @@ pub struct Hash48((u8, u8, u8, u8, u8, u8));
 /// A 64-bit hash obtained by truncating a real hash
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub struct Hash64((u8, u8, u8, u8, u8, u8, u8, u8));
+
+impl Sha256dEncoder {
+    /// Create a new encoder
+    pub fn new() -> Sha256dEncoder {
+        Sha256dEncoder(Sha256::new())
+    }
+
+    /// Extract the hash from an encoder
+    pub fn into_hash(mut self) -> Sha256dHash {
+        let mut second_sha = Sha256::new();
+        let mut tmp = [0; 32];
+        self.0.result(&mut tmp);
+        second_sha.input(&tmp);
+        second_sha.result(&mut tmp);
+        Sha256dHash(tmp)
+    }
+}
+
+impl SimpleEncoder for Sha256dEncoder {
+    type Error = ();
+
+    fn emit_u64(&mut self, v: u64) -> Result<(), ()> {
+        let mut data = [0; 8];
+        (&mut data[..]).write_u64::<LittleEndian>(v).unwrap();
+        self.0.input(&data);
+        Ok(())
+    }
+
+    fn emit_u32(&mut self, v: u32) -> Result<(), ()> {
+        let mut data = [0; 4];
+        (&mut data[..]).write_u32::<LittleEndian>(v).unwrap();
+        self.0.input(&data);
+        Ok(())
+    }
+
+    fn emit_u16(&mut self, v: u16) -> Result<(), ()> {
+        let mut data = [0; 2];
+        (&mut data[..]).write_u16::<LittleEndian>(v).unwrap();
+        self.0.input(&data);
+        Ok(())
+    }
+
+    fn emit_i64(&mut self, v: i64) -> Result<(), ()> {
+        let mut data = [0; 8];
+        (&mut data[..]).write_i64::<LittleEndian>(v).unwrap();
+        self.0.input(&data);
+        Ok(())
+    }
+
+    fn emit_i32(&mut self, v: i32) -> Result<(), ()> {
+        let mut data = [0; 4];
+        (&mut data[..]).write_i32::<LittleEndian>(v).unwrap();
+        self.0.input(&data);
+        Ok(())
+    }
+
+    fn emit_i16(&mut self, v: i16) -> Result<(), ()> {
+        let mut data = [0; 2];
+        (&mut data[..]).write_i16::<LittleEndian>(v).unwrap();
+        self.0.input(&data);
+        Ok(())
+    }
+
+    fn emit_i8(&mut self, v: i8) -> Result<(), ()> {
+        self.0.input(&[v as u8]);
+        Ok(())
+    }
+
+    fn emit_u8(&mut self, v: u8) -> Result<(), ()> {
+        self.0.input(&[v]);
+        Ok(())
+    }
+
+    fn emit_bool(&mut self, v: bool) -> Result<(), ()> {
+        self.0.input(&[if v {1} else {0}]);
+        Ok(())
+    }
+}
 
 impl Ripemd160Hash {
     /// Create a hash by hashing some data
@@ -350,8 +432,9 @@ mod tests {
     use num::FromPrimitive;
     use strason;
 
+    use network::encodable::VarInt;
     use network::serialize::{serialize, deserialize};
-    use util::hash::Sha256dHash;
+    use super::*;
 
     #[test]
     fn test_sha256d() {
@@ -371,6 +454,41 @@ mod tests {
                    "56944c5d3f98413ef45cf54545538103cc9f298e0575820ad3591376e2e0f65d");
         assert_eq!(format!("{:X}", Sha256dHash::from_data(&[])),
                    "56944C5D3F98413EF45CF54545538103CC9F298E0575820AD3591376E2E0F65D");
+    }
+
+    #[test]
+    fn sha256d_encoder() {
+        let test = vec![true, false, true, true, false];
+        let mut enc = Sha256dEncoder::new();
+        assert!(test.consensus_encode(&mut enc).is_ok());
+        assert_eq!(enc.into_hash(), Sha256dHash::from_data(&serialize(&test).unwrap()));
+
+        macro_rules! array_encode_test (
+            ($ty:ty) => ({
+                // try serializing the whole array
+                let test: [$ty; 1000] = [1; 1000];
+                let mut enc = Sha256dEncoder::new();
+                assert!((&test[..]).consensus_encode(&mut enc).is_ok());
+                assert_eq!(enc.into_hash(), Sha256dHash::from_data(&serialize(&test[..]).unwrap()));
+
+                // try doing it just one object at a time
+                let mut enc = Sha256dEncoder::new();
+                assert!(VarInt(test.len() as u64).consensus_encode(&mut enc).is_ok());
+                for obj in &test[..] {
+                    assert!(obj.consensus_encode(&mut enc).is_ok());
+                }
+                assert_eq!(enc.into_hash(), Sha256dHash::from_data(&serialize(&test[..]).unwrap()));
+            })
+        );
+
+        array_encode_test!(u64);
+        array_encode_test!(u32);
+        array_encode_test!(u16);
+        array_encode_test!(u8);
+        array_encode_test!(i64);
+        array_encode_test!(i32);
+        array_encode_test!(i16);
+        array_encode_test!(i8);
     }
 
     #[test]
