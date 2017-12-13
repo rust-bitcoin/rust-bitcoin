@@ -27,7 +27,7 @@ To use rust-bitcoin, just add the following to your Cargo.toml.
 
 ```toml
 [dependencies]
-bitcoin = "0.9"
+bitcoin = "0.10"
 ```
 
 # Known limitations
@@ -42,6 +42,9 @@ this library and the Bitcoin Core reference implementation. In a consensus
 based cryptocurrency such as Bitcoin it is critical that all parties are
 using the same rules to validate data, and this library is simply unable
 to implement the same rules as Core.
+
+The script interpreter is now gated behind the `broken_consensus_code` flag
+for this reason.
 
 Given the complexity of both C++ and Rust, it is unlikely that this will
 ever be fixed, and there are no plans to do so. Of course, patches to
