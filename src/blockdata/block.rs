@@ -28,7 +28,9 @@ use util::hash::Sha256dHash;
 use util::uint::Uint256;
 use network::encodable::VarInt;
 use network::serialize::BitcoinHash;
+use network::constants::Network;
 use blockdata::transaction::Transaction;
+use blockdata::constants::max_target;
 
 /// A block header, which contains all the block's information except
 /// the actual transactions
@@ -92,6 +94,11 @@ impl BlockHeader {
         } else {
             <Uint256 as FromPrimitive>::from_u64(mant as u64).unwrap() << (expt as usize)
         }
+    }
+
+    /// Compute the popular "difficulty" measure for mining
+    pub fn difficulty (&self, network: Network) -> u64 {
+        (max_target(network) / self.target()).low_u64()
     }
 
     /// Performs an SPV validation of a block, which confirms that the proof-of-work
