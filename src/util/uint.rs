@@ -312,7 +312,7 @@ macro_rules! construct_uint {
                 let &$name(ref data) = self;
                 try!(write!(f, "0x"));
                 for ch in data.iter().rev() {
-                    try!(write!(f, "{:02x}", ch));
+                    try!(write!(f, "{:016x}", ch));
                 }
                 Ok(())
             }
