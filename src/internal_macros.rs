@@ -88,7 +88,7 @@ macro_rules! impl_array_newtype {
                     let mut ret: $thing = mem::uninitialized();
                     copy_nonoverlapping(data.as_ptr(),
                                         ret.as_mut_ptr(),
-                                        mem::size_of::<$thing>());
+                                        $len);
                     ret
                 }
             }
