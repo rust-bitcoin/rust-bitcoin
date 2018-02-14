@@ -255,7 +255,7 @@ impl Sha256dHash {
         }
 
         let bytes = s.as_bytes();
-        let mut ret: [u8; 32] = unsafe { mem::uninitialized() };
+        let mut ret = [0; 32];
         for i in 0..32 {
            let hi = match bytes[2*i] {
                b @ b'0'...b'9' => (b - b'0') as u8,
@@ -314,9 +314,9 @@ impl serde::Serialize for Sha256dHash {
             where S: serde::Serializer,
     {
         unsafe {
-            use std::{char, mem, str};
+            use std::{char, str};
 
-            let mut string: [u8; 64] = mem::uninitialized();
+            let mut string = [0; 64];
             for i in 0..32 {
                 string[2 * i] = char::from_digit((self.0[31 - i] / 0x10) as u32, 16).unwrap() as u8;
                 string[2 * i + 1] = char::from_digit((self.0[31 - i] & 0x0f) as u32, 16).unwrap() as u8;

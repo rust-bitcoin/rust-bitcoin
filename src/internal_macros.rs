@@ -82,15 +82,9 @@ macro_rules! impl_array_newtype {
         impl<'a> From<&'a [$ty]> for $thing {
             fn from(data: &'a [$ty]) -> $thing {
                 assert_eq!(data.len(), $len);
-                unsafe {
-                    use std::intrinsics::copy_nonoverlapping;
-                    use std::mem;
-                    let mut ret: $thing = mem::uninitialized();
-                    copy_nonoverlapping(data.as_ptr(),
-                                        ret.as_mut_ptr(),
-                                        $len);
-                    ret
-                }
+                let mut ret = [0; $len];
+                ret.copy_from_slice(&data[..]);
+                $thing(ret)
             }
         }
 
@@ -193,18 +187,15 @@ macro_rules! impl_array_newtype_encodable {
                     fn visit_seq<V>(&mut self, mut v: V) -> Result<$thing, V::Error>
                         where V: ::serde::de::SeqVisitor
                     {
-                        unsafe {
-                            use std::mem;
-                            let mut ret: [$ty; $len] = mem::uninitialized();
-                            for item in ret.iter_mut() {
-                                *item = match try!(v.visit()) {
-                                    Some(c) => c,
-                                    None => return Err(::serde::de::Error::end_of_stream())
-                                };
-                            }
-                            try!(v.end());
-                            Ok($thing(ret))
+                        let mut ret: [$ty; $len] = [0; $len];
+                        for item in ret.iter_mut() {
+                            *item = match try!(v.visit()) {
+                                Some(c) => c,
+                                None => return Err(::serde::de::Error::end_of_stream())
+                            };
                         }
+                        try!(v.end());
+                        Ok($thing(ret))
                     }
                 }
 

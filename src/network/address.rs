@@ -68,14 +68,10 @@ impl fmt::Debug for Address {
 
 impl Clone for Address {
     fn clone(&self) -> Address {
-        unsafe {
-            use std::intrinsics::copy_nonoverlapping;
-            use std::mem;
-            let mut ret = mem::uninitialized();
-            copy_nonoverlapping(self,
-                                &mut ret,
-                                mem::size_of::<Address>());
-            ret
+        Address {
+            services: self.services,
+            address: self.address,
+            port: self.port,
         }
     }
 }
