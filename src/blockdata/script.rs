@@ -619,8 +619,6 @@ mod test {
         assert!(read_scriptint(&build_scriptint(-(1 << 31))).is_err());
     }
 
-    macro_rules! hex_script (($s:expr) => (Script::from($s.from_hex().unwrap())));
-
     #[test]
     fn provably_unspendable_test() {
         // p2pk

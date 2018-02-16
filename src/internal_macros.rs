@@ -276,3 +276,9 @@ macro_rules! display_from_debug {
     }
 }
 
+#[cfg(test)]
+macro_rules! hex_script (($s:expr) => (Script::from($s.from_hex().unwrap())));
+
+#[cfg(test)]
+macro_rules! hex_hash (($s:expr) => (Sha256dHash::from(&$s.from_hex().unwrap()[..])));
+
