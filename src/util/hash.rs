@@ -429,11 +429,11 @@ impl <T: BitcoinHash> MerkleRoot for Vec<T> {
 
 #[cfg(test)]
 mod tests {
-    use num::FromPrimitive;
     use strason;
 
     use network::encodable::VarInt;
     use network::serialize::{serialize, deserialize};
+    use util::uint::{Uint128, Uint256};
     use super::*;
 
     #[test]
@@ -515,8 +515,8 @@ mod tests {
                                0, 0, 0, 0, 0, 0, 0, 0,
                                0, 0, 0, 0, 0, 0, 0, 0,
                                0, 0, 0, 0, 0, 0, 0, 0]);
-        assert_eq!(Some(one.into_le()), FromPrimitive::from_u64(1));
-        assert_eq!(Some(one.into_le().low_128()), FromPrimitive::from_u64(1));
+        assert_eq!(Some(one.into_le()), Uint256::from_u64(1));
+        assert_eq!(Some(one.into_le().low_128()), Uint128::from_u64(1));
     }
 }
 

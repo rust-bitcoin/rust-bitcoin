@@ -20,8 +20,6 @@
 //! these blocks and the blockchain.
 //!
 
-use num::{FromPrimitive, Zero};
-
 use util;
 use util::Error::{SpvBadTarget, SpvBadProofOfWork};
 use util::hash::Sha256dHash;
@@ -90,9 +88,9 @@ impl BlockHeader {
 
         // The mantissa is signed but may not be negative
         if mant > 0x7FFFFF {
-            Zero::zero()
+            Default::default()
         } else {
-            <Uint256 as FromPrimitive>::from_u64(mant as u64).unwrap() << (expt as usize)
+            Uint256::from_u64(mant as u64).unwrap() << (expt as usize)
         }
     }
 
