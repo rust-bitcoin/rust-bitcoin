@@ -71,4 +71,13 @@ cross-chain atomic swaps) are more likely to be accepted than things which
 support only a single blockchain.
 
 
+## Release Notes
+
+I will try to document all breaking changes here so that people upgrading will know
+what they need to change.
+
+### 0.11
+
+Remove `num` dependency at Matt's request; agree this is obnoxious to require all
+downstream users to also have a `num` dependency just so they can use `Uint256::from_u64`.
 
