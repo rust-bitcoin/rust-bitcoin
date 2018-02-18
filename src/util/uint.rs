@@ -38,6 +38,14 @@ macro_rules! construct_uint {
                 arr[0] as u32
             }
 
+            /// Conversion to u64
+            #[inline]
+            pub fn low_u64(&self) -> u64 {
+                let &$name(ref arr) = self;
+                arr[0] as u64
+            }
+
+
             /// Return the least number of bits needed to represent the number
             #[inline]
             pub fn bits(&self) -> usize {
