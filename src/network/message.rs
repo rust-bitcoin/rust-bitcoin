@@ -114,10 +114,12 @@ pub enum NetworkMessage {
     /// `ping`
     Ping(u64),
     /// `pong`
-    Pong(u64)
+    Pong(u64),
     // TODO: reject,
     // TODO: bloom filtering
     // TODO: alert
+    /// `alert`
+    Alert(Vec<u8>)
 }
 
 impl RawNetworkMessage {
@@ -138,6 +140,7 @@ impl RawNetworkMessage {
             NetworkMessage::GetAddr    => "getaddr",
             NetworkMessage::Ping(_)    => "ping",
             NetworkMessage::Pong(_)    => "pong",
+            NetworkMessage::Alert(_)    => "alert",
         }.to_owned()
     }
 }
@@ -162,6 +165,7 @@ impl<S: SimpleEncoder> ConsensusEncodable<S> for RawNetworkMessage {
             NetworkMessage::GetAddr          => Ok(vec![]),
             NetworkMessage::Ping(ref dat)    => serialize(dat),
             NetworkMessage::Pong(ref dat)    => serialize(dat),
+            NetworkMessage::Alert(ref dat)    => serialize(dat)
         }.unwrap()).consensus_encode(s));
         Ok(())
     }
@@ -192,6 +196,7 @@ impl<D: SimpleDecoder<Error=util::Error>> ConsensusDecodable<D> for RawNetworkMe
             "ping"    => NetworkMessage::Ping(try!(propagate_err("ping".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
             "pong"    => NetworkMessage::Pong(try!(propagate_err("pong".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
             "tx"      => NetworkMessage::Tx(try!(propagate_err("tx".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
+            "alert"   => NetworkMessage::Alert(try!(propagate_err("alert".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d)))),
             cmd => return Err(d.error(format!("unrecognized network command `{}`", cmd)))
         };
         Ok(RawNetworkMessage {
