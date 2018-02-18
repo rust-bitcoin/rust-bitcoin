@@ -209,7 +209,7 @@ impl ExtendedPrivKey {
             ChildNumber::Normal(n) => {
                 if n >= (1 << 31) { return Err(Error::InvalidChildNumber(i)) }
                 // Non-hardened key: compute public data and use that
-                hmac.input(&PublicKey::from_secret_key(secp, &self.secret_key).unwrap().serialize_vec(secp, true)[..]);
+                hmac.input(&PublicKey::from_secret_key(secp, &self.secret_key).unwrap().serialize()[..]);
                 BigEndian::write_u32(&mut be_n, n);
             }
             ChildNumber::Hardened(n) => {
@@ -243,7 +243,7 @@ impl ExtendedPrivKey {
         let pk = ExtendedPubKey::from_private(secp, self);
         // Do SHA256 of just the ECDSA pubkey
         let mut sha2 = Sha256::new();
-        sha2.input(&pk.public_key.serialize_vec(secp, true)[..]);
+        sha2.input(&pk.public_key.serialize()[..]);
         sha2.result(&mut sha2_res);
         // do RIPEMD160
         let mut ripemd = Ripemd160::new();
@@ -284,7 +284,7 @@ impl ExtendedPubKey {
             }
             ChildNumber::Normal(n) => {
                 let mut hmac = Hmac::new(Sha512::new(), &self.chain_code[..]);
-                hmac.input(&self.public_key.serialize_vec(secp, true)[..]);
+                hmac.input(&self.public_key.serialize()[..]);
                 let mut be_n = [0; 4];
                 BigEndian::write_u32(&mut be_n, n);
                 hmac.input(&be_n);
@@ -317,12 +317,11 @@ impl ExtendedPubKey {
 
     /// Returns the HASH160 of the chaincode
     pub fn identifier(&self) -> [u8; 20] {
-        let s = Secp256k1::with_caps(secp256k1::ContextFlag::None);
         let mut sha2_res = [0; 32];
         let mut ripemd_res = [0; 20];
         // Do SHA256 of just the ECDSA pubkey
         let mut sha2 = Sha256::new();
-        sha2.input(&self.public_key.serialize_vec(&s, true)[..]);
+        sha2.input(&self.public_key.serialize()[..]);
         sha2.result(&mut sha2_res);
         // do RIPEMD160
         let mut ripemd = Ripemd160::new();
@@ -395,7 +394,6 @@ impl FromBase58 for ExtendedPrivKey {
 
 impl ToBase58 for ExtendedPubKey {
     fn base58_layout(&self) -> Vec<u8> {
-        let s = Secp256k1::with_caps(secp256k1::ContextFlag::None);
         let mut ret = Vec::with_capacity(78);
         ret.extend(match self.network {
             Network::Bitcoin => [0x04u8, 0x88, 0xB2, 0x1E],
@@ -414,7 +412,7 @@ impl ToBase58 for ExtendedPubKey {
         }
         ret.extend(be_n.iter().cloned());
         ret.extend(self.chain_code[..].iter().cloned());
-        ret.extend(self.public_key.serialize_vec(&s, true)[..].iter().cloned());
+        ret.extend(self.public_key.serialize()[..].iter().cloned());
         ret
     }
 }

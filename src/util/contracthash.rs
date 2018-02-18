@@ -17,7 +17,7 @@
 //! at http://blockstream.com/sidechains.pdf for details of
 //! what this does.
 
-use secp256k1::{self, ContextFlag, Secp256k1};
+use secp256k1::{self, Secp256k1};
 use secp256k1::key::{PublicKey, SecretKey};
 use blockdata::{opcodes, script};
 use crypto::{hmac, sha2};
@@ -109,7 +109,6 @@ pub struct Template(Vec<TemplateElement>);
 impl Template {
     /// Instantiate a template
     pub fn to_script(&self, keys: &[PublicKey]) -> Result<script::Script, Error> {
-        let secp = Secp256k1::with_caps(ContextFlag::None);
         let mut key_index = 0;
         let mut ret = script::Builder::new();
         for elem in &self.0 {
@@ -120,7 +119,7 @@ impl Template {
                         return Err(Error::TooFewKeys(key_index));
                     }
                     key_index += 1;
-                    ret.push_slice(&keys[key_index - 1].serialize_vec(&secp, true)[..])
+                    ret.push_slice(&keys[key_index - 1].serialize()[..])
                 }
             }
         }
@@ -171,7 +170,7 @@ pub fn tweak_keys(secp: &Secp256k1, keys: &[PublicKey], contract: &[u8]) -> Resu
     let mut ret = Vec::with_capacity(keys.len());
     for mut key in keys.iter().cloned() {
         let mut hmac_raw = [0; 32];
-        let mut hmac = hmac::Hmac::new(sha2::Sha256::new(), &key.serialize_vec(secp, true));
+        let mut hmac = hmac::Hmac::new(sha2::Sha256::new(), &key.serialize());
         hmac.input(contract);
         hmac.raw_result(&mut hmac_raw);
         let hmac_sk = try!(SecretKey::from_slice(secp, &hmac_raw).map_err(Error::BadTweak));
@@ -184,7 +183,7 @@ pub fn tweak_keys(secp: &Secp256k1, keys: &[PublicKey], contract: &[u8]) -> Resu
 /// Compute a tweak from some given data for the given public key
 pub fn compute_tweak(secp: &Secp256k1, pk: &PublicKey, contract: &[u8]) -> Result<SecretKey, Error> {
     let mut hmac_raw = [0; 32];
-    let mut hmac = hmac::Hmac::new(sha2::Sha256::new(), &pk.serialize_vec(secp, true));
+    let mut hmac = hmac::Hmac::new(sha2::Sha256::new(), &pk.serialize());
     hmac.input(contract);
     hmac.raw_result(&mut hmac_raw);
     SecretKey::from_slice(secp, &hmac_raw).map_err(Error::BadTweak)

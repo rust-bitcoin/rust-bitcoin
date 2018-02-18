@@ -55,11 +55,14 @@ impl Address {
     /// Creates an address from a public key
     #[inline]
     pub fn from_key(network: Network, pk: &PublicKey, compressed: bool) -> Address {
-        let secp = Secp256k1::without_caps();
         Address {
             ty: Type::PubkeyHash,
             network: network,
-            hash: Hash160::from_data(&pk.serialize_vec(&secp, compressed)[..])
+            hash: if compressed {
+                Hash160::from_data(&pk.serialize()[..])
+            } else {
+                Hash160::from_data(&pk.serialize_uncompressed()[..])
+            }
         }
     }
 
