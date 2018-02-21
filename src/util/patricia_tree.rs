@@ -23,7 +23,6 @@
 use std::fmt::Debug;
 use std::marker;
 use std::{cmp, fmt, ops, ptr};
-use num::{Zero, One};
 
 use network::encodable::{ConsensusDecodable, ConsensusEncodable};
 use network::serialize::{SimpleDecoder, SimpleEncoder};
@@ -39,7 +38,7 @@ pub struct PatriciaTree<K: Copy, V> {
 }
 
 impl<K, V> PatriciaTree<K, V>
-    where K: Copy + BitArray + cmp::Eq + Zero + One +
+    where K: Copy + BitArray + cmp::Eq +
              ops::BitXor<K, Output=K> +
              ops::Add<K, Output=K> +
              ops::Shr<usize, Output=K> +
@@ -51,7 +50,7 @@ impl<K, V> PatriciaTree<K, V>
             data: None,
             child_l: None,
             child_r: None,
-            skip_prefix: Zero::zero(),
+            skip_prefix: BitArray::zero(),
             skip_len: 0
         }
     }
@@ -221,7 +220,7 @@ impl<K, V> PatriciaTree<K, V>
         /// Return value is (deletable, actual return value), where `deletable` is true
         /// is true when the entire node can be deleted (i.e. it has no children)
         fn recurse<K, V>(tree: &mut PatriciaTree<K, V>, key: &K, key_len: usize) -> (bool, Option<V>)
-            where K: Copy + BitArray + cmp::Eq + Zero + One +
+            where K: Copy + BitArray + cmp::Eq +
                      ops::Add<K, Output=K> +
                      ops::Shr<usize, Output=K> +
                      ops::Shl<usize, Output=K>
@@ -255,9 +254,9 @@ impl<K, V> PatriciaTree<K, V>
                         tree.data = data;
                         tree.child_l = child_l;
                         tree.child_r = child_r;
-                        let new_bit = if bit { let ret: K = One::one();
+                        let new_bit = if bit { let ret: K = BitArray::one();
                                                ret << (tree.skip_len as usize) }
-                                      else   { Zero::zero() };
+                                      else   { BitArray::zero() };
                         tree.skip_prefix = tree.skip_prefix + 
                                            new_bit +
                                            (skip_prefix << (1 + tree.skip_len as usize));
@@ -314,9 +313,9 @@ impl<K, V> PatriciaTree<K, V>
                     tree.data = data;
                     tree.child_l = child_l;
                     tree.child_r = child_r;
-                    let new_bit = if bit { let ret: K = One::one();
+                    let new_bit = if bit { let ret: K = BitArray::one();
                                            ret << (tree.skip_len as usize) }
-                                  else { Zero::zero() };
+                                  else { BitArray::zero() };
                     tree.skip_prefix = tree.skip_prefix + 
                                        new_bit +
                                        (skip_prefix << (1 + tree.skip_len as usize));
@@ -545,18 +544,16 @@ impl<'a, K: Copy, V> Iterator for MutItems<'a, K, V> {
 
 #[cfg(test)]
 mod tests {
-    use num::Zero;
-    use num::FromPrimitive;
-
     use network::serialize::{deserialize, serialize};
     use util::hash::Sha256dHash;
     use util::uint::Uint128;
     use util::uint::Uint256;
     use util::patricia_tree::PatriciaTree;
+    use util::BitArray;
 
     #[test]
     fn patricia_single_insert_lookup_delete_test() {
-        let mut key: Uint256 = FromPrimitive::from_u64(0xDEADBEEFDEADBEEF).unwrap();
+        let mut key = Uint256::from_u64(0xDEADBEEFDEADBEEF).unwrap();
         key = key + (key << 64);
 
         let mut tree = PatriciaTree::new();
@@ -622,14 +619,14 @@ mod tests {
         // Do the actual test -- note that we also test insertion and deletion
         // at the root here.
         for i in 0u32..10 {
-            tree.insert(&Zero::zero(), i as usize, i);
+            tree.insert(&BitArray::zero(), i as usize, i);
         }
         for i in 0u32..10 {
-            let m = tree.lookup(&Zero::zero(), i as usize);
+            let m = tree.lookup(&BitArray::zero(), i as usize);
             assert_eq!(m, Some(&i));
         }
         for i in 0u32..10 {
-            let m = tree.delete(&Zero::zero(), i as usize);
+            let m = tree.delete(&BitArray::zero(), i as usize);
             assert_eq!(m, Some(i));
         }
         // Check that the chunder was unharmed

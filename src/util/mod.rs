@@ -43,6 +43,12 @@ pub trait BitArray {
 
     /// Trailing zeros
     fn trailing_zeros(&self) -> usize;
+
+    /// Create all-zeros value
+    fn zero() -> Self;
+
+    /// Create value represeting one
+    fn one() -> Self;
 }
 
 /// A general error code

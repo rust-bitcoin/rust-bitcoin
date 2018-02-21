@@ -18,7 +18,6 @@
 //! blockchain.
 //!
 
-use num::{FromPrimitive, Zero};
 use std::{marker, ptr};
 
 use blockdata::block::{Block, BlockHeader};
@@ -348,7 +347,7 @@ impl Blockchain {
         let genesis = genesis_block(network);
         let genhash = genesis.header.bitcoin_hash();
         let new_node = Box::new(BlockchainNode {
-            total_work: Zero::zero(),
+            total_work: Default::default(),
             required_difficulty: genesis.header.target(),
             block: genesis,
             height: 0,
@@ -444,7 +443,7 @@ impl Blockchain {
                         // Compute new target
                         let mut target = unsafe { (*prev).block.header.target() };
                         target = target.mul_u32(timespan);
-                        target = target / FromPrimitive::from_u64(DIFFCHANGE_TIMESPAN as u64).unwrap();
+                        target = target / Uint256::from_u64(DIFFCHANGE_TIMESPAN as u64).unwrap();
                         // Clamp below MAX_TARGET (difficulty 1)
                         let max = max_target(self.network);
                         if target > max { target = max };

@@ -19,7 +19,6 @@
 //!
 
 use std::fmt;
-use num::{FromPrimitive, Zero, One};
 
 use util::BitArray;
 
@@ -71,31 +70,18 @@ macro_rules! construct_uint {
                 }
                 $name(ret) + $name(carry)
             }
-        }
 
-        impl FromPrimitive for $name {
-            #[inline]
-            fn from_u64(init: u64) -> Option<$name> {
+            /// Create an object from a given unsigned 64-bit integer
+            pub fn from_u64(init: u64) -> Option<$name> {
                 let mut ret = [0; $n_words];
                 ret[0] = init;
                 Some($name(ret))
             }
 
-            #[inline]
-            fn from_i64(init: i64) -> Option<$name> {
+            /// Create an object from a given signed 64-bit integer
+            pub fn from_i64(init: i64) -> Option<$name> {
                 assert!(init >= 0);
-                FromPrimitive::from_u64(init as u64)
-            }
-        }
-
-        impl Zero for $name {
-            fn zero() -> $name { $name([0; $n_words]) }
-            fn is_zero(&self) -> bool { self.0.iter().all(|&n| n == 0) }
-        }
-
-        impl One for $name {
-            fn one() -> $name {
-                $name({ let mut ret = [0; $n_words]; ret[0] = 1; ret })
+                $name::from_u64(init as u64)
             }
         }
 
@@ -124,7 +110,7 @@ macro_rules! construct_uint {
 
             #[inline]
             fn sub(self, other: $name) -> $name {
-                self + !other + One::one()
+                self + !other + BitArray::one()
             }
         }
 
@@ -211,6 +197,17 @@ macro_rules! construct_uint {
                     if arr[i] > 0 { return (0x40 * i) + arr[i].trailing_zeros() as usize; }
                 }
                 (0x40 * ($n_words - 1)) + arr[$n_words - 1].trailing_zeros() as usize
+            }
+
+            fn zero() -> $name { $name([0; $n_words]) }
+            fn one() -> $name {
+                $name({ let mut ret = [0; $n_words]; ret[0] = 1; ret })
+            }
+        }
+
+        impl ::std::default::Default for $name {
+            fn default() -> $name {
+                BitArray::zero()
             }
         }
 
@@ -375,22 +372,20 @@ impl Uint256 {
 
 #[cfg(test)]
 mod tests {
-    use num::FromPrimitive;
-
     use network::serialize::{deserialize, serialize};
     use util::uint::Uint256;
     use util::BitArray;
 
     #[test]
     pub fn uint256_bits_test() {
-        assert_eq!(<Uint256 as FromPrimitive>::from_u64(255).unwrap().bits(), 8);
-        assert_eq!(<Uint256 as FromPrimitive>::from_u64(256).unwrap().bits(), 9);
-        assert_eq!(<Uint256 as FromPrimitive>::from_u64(300).unwrap().bits(), 9);
-        assert_eq!(<Uint256 as FromPrimitive>::from_u64(60000).unwrap().bits(), 16);
-        assert_eq!(<Uint256 as FromPrimitive>::from_u64(70000).unwrap().bits(), 17);
+        assert_eq!(Uint256::from_u64(255).unwrap().bits(), 8);
+        assert_eq!(Uint256::from_u64(256).unwrap().bits(), 9);
+        assert_eq!(Uint256::from_u64(300).unwrap().bits(), 9);
+        assert_eq!(Uint256::from_u64(60000).unwrap().bits(), 16);
+        assert_eq!(Uint256::from_u64(70000).unwrap().bits(), 17);
 
         // Try to read the following lines out loud quickly
-        let mut shl = <Uint256 as FromPrimitive>::from_u64(70000).unwrap();
+        let mut shl = Uint256::from_u64(70000).unwrap();
         shl = shl << 100;
         assert_eq!(shl.bits(), 117);
         shl = shl << 100;
@@ -399,11 +394,11 @@ mod tests {
         assert_eq!(shl.bits(), 0);
 
         // Bit set check
-        assert!(!<Uint256 as FromPrimitive>::from_u64(10).unwrap().bit(0));
-        assert!(<Uint256 as FromPrimitive>::from_u64(10).unwrap().bit(1));
-        assert!(!<Uint256 as FromPrimitive>::from_u64(10).unwrap().bit(2));
-        assert!(<Uint256 as FromPrimitive>::from_u64(10).unwrap().bit(3));
-        assert!(!<Uint256 as FromPrimitive>::from_u64(10).unwrap().bit(4));
+        assert!(!Uint256::from_u64(10).unwrap().bit(0));
+        assert!(Uint256::from_u64(10).unwrap().bit(1));
+        assert!(!Uint256::from_u64(10).unwrap().bit(2));
+        assert!(Uint256::from_u64(10).unwrap().bit(3));
+        assert!(!Uint256::from_u64(10).unwrap().bit(4));
     }
 
     #[test]
@@ -425,7 +420,7 @@ mod tests {
 
     #[test]
     pub fn uint256_arithmetic_test() {
-        let init = <Uint256 as FromPrimitive>::from_u64(0xDEADBEEFDEADBEEF).unwrap();
+        let init = Uint256::from_u64(0xDEADBEEFDEADBEEF).unwrap();
         let copy = init;
 
         let add = init + copy;
@@ -446,17 +441,17 @@ mod tests {
         let mult = sub.mul_u32(300);
         assert_eq!(mult, Uint256([0x8C8C3EE70C644118u64, 0x0209E7378231E632, 0, 0]));
         // Division
-        assert_eq!(<Uint256 as FromPrimitive>::from_u64(105).unwrap() /
-                   <Uint256 as FromPrimitive>::from_u64(5).unwrap(),
-                   <Uint256 as FromPrimitive>::from_u64(21).unwrap());
-        let div = mult / <Uint256 as FromPrimitive>::from_u64(300).unwrap();
+        assert_eq!(Uint256::from_u64(105).unwrap() /
+                   Uint256::from_u64(5).unwrap(),
+                   Uint256::from_u64(21).unwrap());
+        let div = mult / Uint256::from_u64(300).unwrap();
         assert_eq!(div, Uint256([0x9F30411021524112u64, 0x0001BD5B7DDFBD5A, 0, 0]));
         // TODO: bit inversion
     }
 
     #[test]
     pub fn uint256_bitslice_test() {
-        let init = <Uint256 as FromPrimitive>::from_u64(0xDEADBEEFDEADBEEF).unwrap();
+        let init = Uint256::from_u64(0xDEADBEEFDEADBEEF).unwrap();
         let add = init + (init << 64);
         assert_eq!(add.bit_slice(64, 128), init);
         assert_eq!(add.mask(64), init);
@@ -466,7 +461,7 @@ mod tests {
     pub fn uint256_extreme_bitshift_test() {
         // Shifting a u64 by 64 bits gives an undefined value, so make sure that
         // we're doing the Right Thing here
-        let init = <Uint256 as FromPrimitive>::from_u64(0xDEADBEEFDEADBEEF).unwrap();
+        let init = Uint256::from_u64(0xDEADBEEFDEADBEEF).unwrap();
 
         assert_eq!(init << 64, Uint256([0, 0xDEADBEEFDEADBEEF, 0, 0]));
         let add = (init << 64) + init;
