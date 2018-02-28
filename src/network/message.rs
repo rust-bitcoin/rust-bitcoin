@@ -123,6 +123,7 @@ pub enum NetworkMessage {
 }
 
 impl RawNetworkMessage {
+    /// Return the message command. This is useful for debug outputs.
     pub fn command(&self) -> String {
         match self.payload {
             NetworkMessage::Version(_) => "version",
