@@ -123,7 +123,7 @@ pub enum NetworkMessage {
 }
 
 impl RawNetworkMessage {
-    fn command(&self) -> String {
+    pub fn command(&self) -> String {
         match self.payload {
             NetworkMessage::Version(_) => "version",
             NetworkMessage::Verack     => "verack",
