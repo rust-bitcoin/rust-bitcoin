@@ -58,7 +58,7 @@ pub struct BlockchainNode {
 
 impl BlockchainNode {
     /// Is the node on the main chain?
-    fn is_on_main_chain(&self, chain: &Blockchain) -> bool {
+    pub fn is_on_main_chain(&self, chain: &Blockchain) -> bool {
         if self.block.header == unsafe { (*chain.best_tip).block.header } {
             true
         } else {
