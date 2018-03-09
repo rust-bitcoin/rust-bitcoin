@@ -95,31 +95,21 @@ pub fn genesis_block(network: Network) -> Block {
     match network {
         Network::Bitcoin => {
             let txdata = vec![bitcoin_genesis_tx()];
-            Block {
-                header: BlockHeader {
-                    version: 1,
-                    prev_blockhash: Default::default(),
-                    merkle_root: txdata.merkle_root(),
-                    time: 1231006505,
-                    bits: 0x1d00ffff,
-                    nonce: 2083236893
-                },
-                txdata: txdata
+            Block { header: BlockHeader::new(1, Default::default(),
+                                         txdata.merkle_root(),
+                                         1231006505,
+                                         0x1d00ffff,
+                                         2083236893),
+                        txdata}
             }
-        }
         Network::Testnet => {
             let txdata = vec![bitcoin_genesis_tx()];
-            Block {
-                header: BlockHeader {
-                    version: 1,
-                    prev_blockhash: Default::default(),
-                    merkle_root: txdata.merkle_root(),
-                    time: 1296688602,
-                    bits: 0x1d00ffff,
-                    nonce: 414098458
-                },
-                txdata: txdata
-            }
+            Block { header: BlockHeader::new(1, Default::default(),
+                                        txdata.merkle_root(),
+                                        1296688602,
+                                        0x1d00ffff,
+                                        414098458),
+                       txdata}
         }
     }
 }
