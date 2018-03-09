@@ -352,16 +352,34 @@ impl serde::Deserialize for Sha256dHash {
     }
 }
 
-// Consensus encoding (little-endian)
+// Debug encodings (no reversing)
+impl fmt::Debug for Sha256dHash {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let &Sha256dHash(data) = self;
+        for ch in data.iter() {
+            try!(write!(f, "{:02x}", ch));
+        }
+        Ok(())
+    }
+}
+
+impl fmt::Debug for Hash160 {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let &Hash160(data) = self;
+        for ch in data.iter() {
+            try!(write!(f, "{:02x}", ch));
+        }
+        Ok(())
+    }
+}
+
+// Consensus encoding (no reversing)
 impl_newtype_consensus_encoding!(Hash32);
 impl_newtype_consensus_encoding!(Hash48);
 impl_newtype_consensus_encoding!(Hash64);
 impl_newtype_consensus_encoding!(Sha256dHash);
 
-impl fmt::Debug for Sha256dHash {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(self, f) }
-}
-
+// User RPC/display encoding (reversed)
 impl fmt::Display for Sha256dHash {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(self, f) }
 }
@@ -449,7 +467,7 @@ mod tests {
         assert_eq!(format!("{}", Sha256dHash::from_data(&[])),
                    "56944c5d3f98413ef45cf54545538103cc9f298e0575820ad3591376e2e0f65d");
         assert_eq!(format!("{:?}", Sha256dHash::from_data(&[])),
-                   "56944c5d3f98413ef45cf54545538103cc9f298e0575820ad3591376e2e0f65d");
+                   "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456");
         assert_eq!(format!("{:x}", Sha256dHash::from_data(&[])),
                    "56944c5d3f98413ef45cf54545538103cc9f298e0575820ad3591376e2e0f65d");
         assert_eq!(format!("{:X}", Sha256dHash::from_data(&[])),
