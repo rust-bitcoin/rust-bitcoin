@@ -25,7 +25,6 @@ pub mod decimal;
 pub mod hash;
 pub mod iter;
 pub mod misc;
-pub mod patricia_tree;
 pub mod uint;
 
 use std::{error, fmt, io};
