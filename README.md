@@ -90,3 +90,5 @@ See Transaction::verify and Script::verify methods.
 
 * Un-reversed the Debug output for Sha256dHash
 
+* Add bech32 support
+

@@ -19,6 +19,7 @@ path = "src/lib.rs"
 bitcoinconsenus = ["bitcoinconsensus"]
 
 [dependencies]
+bitcoin-bech32 = "0.5.1"
 byteorder = "1.1"
 rand = "0.3"
 rust-crypto = "0.2"
