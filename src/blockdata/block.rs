@@ -229,13 +229,13 @@ mod tests {
         assert!(decode.is_ok());
         assert!(bad_decode.is_err());
         let real_decode = decode.unwrap();
-        assert_eq!(real_decode.header.version, 1);
-        assert_eq!(serialize(&real_decode.header.prev_blockhash).ok(), Some(prevhash));
+        assert_eq!(real_decode.header.version(), 1);
+        assert_eq!(serialize(&real_decode.header.prev_blockhash()).ok(), Some(prevhash));
         // [test] TODO: actually compute the merkle root
-        assert_eq!(serialize(&real_decode.header.merkle_root).ok(), Some(merkle));
-        assert_eq!(real_decode.header.time, 1231965655);
-        assert_eq!(real_decode.header.bits, 486604799);
-        assert_eq!(real_decode.header.nonce, 2067413810);
+        assert_eq!(serialize(&real_decode.header.merkle_root()).ok(), Some(merkle));
+        assert_eq!(real_decode.header.time(), 1231965655);
+        assert_eq!(real_decode.header.bits(), 486604799);
+        assert_eq!(real_decode.header.nonce(), 2067413810);
         // [test] TODO: check the transaction data
     
         assert_eq!(serialize(&real_decode).ok(), Some(some_block));
@@ -253,12 +253,12 @@ mod tests {
 
         assert!(decode.is_ok());
         let real_decode = decode.unwrap();
-        assert_eq!(real_decode.header.version, 0x20000000);  // VERSIONBITS but no bits set
-        assert_eq!(serialize(&real_decode.header.prev_blockhash).ok(), Some(prevhash));
-        assert_eq!(serialize(&real_decode.header.merkle_root).ok(), Some(merkle));
-        assert_eq!(real_decode.header.time, 1472004949);
-        assert_eq!(real_decode.header.bits, 0x1a06d450);
-        assert_eq!(real_decode.header.nonce, 1879759182);
+        assert_eq!(real_decode.header.version(), 0x20000000);  // VERSIONBITS but no bits set
+        assert_eq!(serialize(&real_decode.header.prev_blockhash()).ok(), Some(prevhash));
+        assert_eq!(serialize(&real_decode.header.merkle_root()).ok(), Some(merkle));
+        assert_eq!(real_decode.header.time(), 1472004949);
+        assert_eq!(real_decode.header.bits(), 0x1a06d450);
+        assert_eq!(real_decode.header.nonce(), 1879759182);
         // [test] TODO: check the transaction data
 
         assert_eq!(serialize(&real_decode).ok(), Some(segwit_block));
