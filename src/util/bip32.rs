@@ -19,9 +19,11 @@
 use std::default::Default;
 use std::io::Cursor;
 use std::{error, fmt};
+use std::str::FromStr;
+use std::string::ToString;
 use serde::{Serialize, Deserialize, Serializer, Deserializer};
 
-use byteorder::{BigEndian, ByteOrder, ReadBytesExt, WriteBytesExt};
+use byteorder::{BigEndian, ByteOrder, ReadBytesExt};
 use crypto::digest::Digest;
 use crypto::hmac::Hmac;
 use crypto::mac::Mac;
@@ -33,7 +35,6 @@ use secp256k1::{self, Secp256k1};
 
 use network::constants::Network;
 use util::base58;
-use util::base58::{FromBase58, ToBase58};
 
 /// A chain code
 pub struct ChainCode([u8; 32]);
@@ -337,33 +338,36 @@ impl ExtendedPubKey {
     }
 }
 
-impl ToBase58 for ExtendedPrivKey {
-    fn base58_layout(&self) -> Vec<u8> { 
-        let mut ret = Vec::with_capacity(78);
-        ret.extend(match self.network {
+impl ToString for ExtendedPrivKey {
+    fn to_string(&self) -> String {
+        let mut ret = [0; 78];
+        ret[0..4].copy_from_slice(&match self.network {
             Network::Bitcoin => [0x04, 0x88, 0xAD, 0xE4],
-            Network::Testnet => [0x04, 0x35, 0x83, 0x94]
-        }.iter().cloned());
-        ret.push(self.depth as u8);
-        ret.extend(self.parent_fingerprint[..].iter().cloned());
+            Network::Testnet => [0x04, 0x35, 0x83, 0x94],
+        }[..]);
+        ret[4] = self.depth as u8;
+        ret[5..9].copy_from_slice(&self.parent_fingerprint[..]);
         match self.child_number {
             ChildNumber::Hardened(n) => {
-                ret.write_u32::<BigEndian>(n + (1 << 31)).unwrap();
+                BigEndian::write_u32(&mut ret[9..13], n + (1 << 31));
             }
             ChildNumber::Normal(n) => {
-                ret.write_u32::<BigEndian>(n).unwrap();
+                BigEndian::write_u32(&mut ret[9..13], n);
             }
         }
-        ret.extend(self.chain_code[..].iter().cloned());
-        ret.push(0);
-        ret.extend(self.secret_key[..].iter().cloned());
-        ret
+        ret[13..45].copy_from_slice(&self.chain_code[..]);
+        ret[45] = 0;
+        ret[46..78].copy_from_slice(&self.secret_key[..]);
+        base58::check_encode_slice(&ret[..])
     }
 }
 
-impl FromBase58 for ExtendedPrivKey {
-    fn from_base58_layout(data: Vec<u8>) -> Result<ExtendedPrivKey, base58::Error> {
+impl FromStr for ExtendedPrivKey {
+    type Err = base58::Error;
+
+    fn from_str(inp: &str) -> Result<ExtendedPrivKey, base58::Error> {
         let s = Secp256k1::with_caps(secp256k1::ContextFlag::None);
+        let data = try!(base58::from_check(inp));
 
         if data.len() != 78 {
             return Err(base58::Error::InvalidLength(data.len()));
@@ -386,40 +390,41 @@ impl FromBase58 for ExtendedPrivKey {
             child_number: child_number,
             chain_code: ChainCode::from(&data[13..45]),
             secret_key: try!(SecretKey::from_slice(&s,
-                                &data[46..78]).map_err(|e|
-                                    base58::Error::Other(e.to_string())))
+                             &data[46..78]).map_err(|e|
+                                 base58::Error::Other(e.to_string())))
         })
     }
 }
 
-impl ToBase58 for ExtendedPubKey {
-    fn base58_layout(&self) -> Vec<u8> {
-        let mut ret = Vec::with_capacity(78);
-        ret.extend(match self.network {
+impl ToString for ExtendedPubKey {
+    fn to_string(&self) -> String {
+        let mut ret = [0; 78];
+        ret[0..4].copy_from_slice(&match self.network {
             Network::Bitcoin => [0x04u8, 0x88, 0xB2, 0x1E],
-            Network::Testnet => [0x04u8, 0x35, 0x87, 0xCF]
-        }.iter().cloned());
-        ret.push(self.depth as u8);
-        ret.extend(self.parent_fingerprint[..].iter().cloned());
-        let mut be_n = [0; 4];
+            Network::Testnet => [0x04u8, 0x35, 0x87, 0xCF],
+        }[..]);
+        ret[4] = self.depth as u8;
+        ret[5..9].copy_from_slice(&self.parent_fingerprint[..]);
         match self.child_number {
             ChildNumber::Hardened(n) => {
-                BigEndian::write_u32(&mut be_n, n + (1 << 31));
+                BigEndian::write_u32(&mut ret[9..13], n + (1 << 31));
             }
             ChildNumber::Normal(n) => {
-                BigEndian::write_u32(&mut be_n, n);
+                BigEndian::write_u32(&mut ret[9..13], n);
             }
         }
-        ret.extend(be_n.iter().cloned());
-        ret.extend(self.chain_code[..].iter().cloned());
-        ret.extend(self.public_key.serialize()[..].iter().cloned());
-        ret
+        ret[13..45].copy_from_slice(&self.chain_code[..]);
+        ret[45..78].copy_from_slice(&self.public_key.serialize()[..]);
+        base58::check_encode_slice(&ret[..])
     }
 }
 
-impl FromBase58 for ExtendedPubKey {
-    fn from_base58_layout(data: Vec<u8>) -> Result<ExtendedPubKey, base58::Error> {
+impl FromStr for ExtendedPubKey {
+    type Err = base58::Error;
+
+    fn from_str(inp: &str) -> Result<ExtendedPubKey, base58::Error> {
         let s = Secp256k1::with_caps(secp256k1::ContextFlag::None);
+        let data = try!(base58::from_check(inp));
 
         if data.len() != 78 {
             return Err(base58::Error::InvalidLength(data.len()));
@@ -442,19 +447,21 @@ impl FromBase58 for ExtendedPubKey {
             child_number: child_number,
             chain_code: ChainCode::from(&data[13..45]),
             public_key: try!(PublicKey::from_slice(&s,
-                                 &data[45..78]).map_err(|e|
-                                     base58::Error::Other(e.to_string())))
+                             &data[45..78]).map_err(|e|
+                                 base58::Error::Other(e.to_string())))
         })
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use std::str::FromStr;
+    use std::string::ToString;
+
     use secp256k1::Secp256k1;
     use serialize::hex::FromHex;
 
     use network::constants::Network::{self, Bitcoin};
-    use util::base58::{FromBase58, ToBase58};
 
     use super::{ChildNumber, ExtendedPrivKey, ExtendedPubKey};
     use super::ChildNumber::{Hardened, Normal};
@@ -484,11 +491,11 @@ mod tests {
         }
 
         // Check result against expected base58
-        assert_eq!(&sk.to_base58check()[..], expected_sk);
-        assert_eq!(&pk.to_base58check()[..], expected_pk);
+        assert_eq!(&sk.to_string()[..], expected_sk);
+        assert_eq!(&pk.to_string()[..], expected_pk);
         // Check decoded base58 against result
-        let decoded_sk = FromBase58::from_base58check(expected_sk);
-        let decoded_pk = FromBase58::from_base58check(expected_pk);
+        let decoded_sk = ExtendedPrivKey::from_str(expected_sk);
+        let decoded_pk = ExtendedPubKey::from_str(expected_pk);
         assert_eq!(Ok(sk), decoded_sk);
         assert_eq!(Ok(pk), decoded_pk);
     }
