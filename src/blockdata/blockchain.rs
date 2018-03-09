@@ -151,7 +151,7 @@ impl<D: SimpleDecoder> ConsensusDecodable<D> for Blockchain {
         // Reconnect all prev pointers
         let raw_tree = &tree as *const BlockTree;
         for node in tree.mut_iter() {
-            let hash = node.block.header.prev_blockhash.into_le();
+            let hash = node.block.header.prev_blockhash().into_le();
             let prevptr =
                 match unsafe { (*raw_tree).lookup(&hash, 256) } {
                     Some(node) => &**node as NodePtr,
@@ -422,7 +422,7 @@ impl Blockchain {
             return Err(DuplicateHash);
         }
         // Construct node, if possible
-        let new_block = match get_prev(self, block.header.prev_blockhash) {
+        let new_block = match get_prev(self, block.header.prev_blockhash()) {
             Some(prev) => {
                 let difficulty =
                     // Compute required difficulty if this is a diffchange block
@@ -434,7 +434,7 @@ impl Blockchain {
                                 scan = (*scan).prev;
                             }
                             // Get clamped timespan between first and last blocks
-                            match (*prev).block.header.time - (*scan).block.header.time {
+                            match (*prev).block.header.time() - (*scan).block.header.time() {
                                 n if n < DIFFCHANGE_TIMESPAN / 4 => DIFFCHANGE_TIMESPAN / 4,
                                 n if n > DIFFCHANGE_TIMESPAN * 4 => DIFFCHANGE_TIMESPAN * 4,
                                 n => n
@@ -452,7 +452,7 @@ impl Blockchain {
                     // On non-diffchange blocks, Testnet has a rule that any 20-minute-long
                     // block intervals result the difficulty
                     } else if self.network == Network::Testnet &&
-                                        block.header.time > unsafe { (*prev).block.header.time } + 2*TARGET_BLOCK_SPACING {
+                                        block.header.time() > unsafe { (*prev).block.header.time() } + 2*TARGET_BLOCK_SPACING {
                         max_target(self.network)
                     // On the other hand, if we are in Testnet and the block interval is less
                     // than 20 minutes, we need to scan backward to find a block for which the

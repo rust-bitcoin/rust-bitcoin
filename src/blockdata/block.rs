@@ -25,15 +25,17 @@ use util::Error::{SpvBadTarget, SpvBadProofOfWork};
 use util::hash::Sha256dHash;
 use util::uint::Uint256;
 use network::encodable::VarInt;
-use network::serialize::BitcoinHash;
 use network::constants::Network;
+use network::encodable::{ConsensusDecodable, ConsensusEncodable};
+use network::serialize::{serialize, BitcoinHash, SimpleDecoder, SimpleEncoder};
 use blockdata::transaction::Transaction;
 use blockdata::constants::max_target;
 
-/// A block header, which contains all the block's information except
+
+/// Block header content, which contains all the block's information except
 /// the actual transactions
 #[derive(Copy, PartialEq, Eq, Clone, Debug)]
-pub struct BlockHeader {
+pub struct BlockHeaderContent {
     /// The protocol version. Should always be 1.
     pub version: u32,
     /// Reference to the previous block in the chain
@@ -47,6 +49,16 @@ pub struct BlockHeader {
     pub bits: u32,
     /// The nonce, selected to obtain a low enough blockhash
     pub nonce: u32,
+}
+
+/// A block header, which contains all the block's information except
+/// the actual transactions
+#[derive(Copy, PartialEq, Eq, Clone, Debug)]
+pub struct BlockHeader {
+    /// the actual content of the block header
+    content: BlockHeaderContent,
+    /// precomputed hash of the content, that also identifies the header
+    hash: Sha256dHash
 }
 
 /// A Bitcoin block, which is a collection of transactions with an attached
@@ -71,6 +83,42 @@ pub struct LoneBlockHeader {
 }
 
 impl BlockHeader {
+    /// Create a new block header from enumerated content
+    pub fn new (version: u32,
+                prev_blockhash: Sha256dHash,
+                merkle_root: Sha256dHash,
+                time: u32, bits: u32, nonce: u32) -> BlockHeader {
+        let content = BlockHeaderContent {
+            version, prev_blockhash, merkle_root, time, bits, nonce };
+        let hash = Sha256dHash::from_data(&serialize(&content).unwrap());
+        BlockHeader { content, hash }
+    }
+
+    /// The protocol version. Used to be 1, now a nonce for ASICBOOST
+    #[inline]
+    pub fn version(&self) -> u32 { self.content.version }
+
+    /// Reference to the previous block in the chain
+    #[inline]
+    pub fn prev_blockhash(&self) -> Sha256dHash { self.content.prev_blockhash }
+
+    /// The root hash of the merkle tree of transactions in the block
+    #[inline]
+    pub fn merkle_root(&self) -> Sha256dHash { self.content.merkle_root }
+
+    /// The timestamp of the block, as claimed by the mainer
+    #[inline]
+    pub fn time(&self) -> u32 { self.content.time }
+
+    /// The target value below which the blockhash must lie, encoded as a
+    /// a float (with well-defined rounding, of course)
+    #[inline]
+    pub fn bits(&self) -> u32 { self.content.bits }
+
+    /// The nonce, selected to obtain a low enough blockhash
+    #[inline]
+    pub fn nonce(&self) -> u32 { self.content.nonce }
+
     /// Computes the target [0, T] that a blockhash must land in to be valid
     pub fn target(&self) -> Uint256 {
         // This is a floating-point "compact" encoding originally used by
@@ -78,11 +126,11 @@ impl BlockHeader {
         // with it. The exponent needs to have 3 subtracted from it, hence
         // this goofy decoding code:
         let (mant, expt) = {
-            let unshifted_expt = self.bits >> 24;
+            let unshifted_expt = self.bits() >> 24;
             if unshifted_expt <= 3 {
-                ((self.bits & 0xFFFFFF) >> (8 * (3 - unshifted_expt as usize)), 0)
+                ((self.bits() & 0xFFFFFF) >> (8 * (3 - unshifted_expt as usize)), 0)
             } else {
-                (self.bits & 0xFFFFFF, 8 * ((self.bits >> 24) - 3))
+                (self.bits() & 0xFFFFFF, 8 * ((self.bits() >> 24) - 3))
             }
         };
 
@@ -124,19 +172,39 @@ impl BlockHeader {
 }
 
 impl BitcoinHash for BlockHeader {
+    #[inline]
     fn bitcoin_hash(&self) -> Sha256dHash {
-        use network::serialize::serialize;
-        Sha256dHash::from_data(&serialize(self).unwrap())
+        self.hash
     }
 }
 
 impl BitcoinHash for Block {
+    #[inline]
     fn bitcoin_hash(&self) -> Sha256dHash {
         self.header.bitcoin_hash()
     }
 }
 
-impl_consensus_encoding!(BlockHeader, version, prev_blockhash, merkle_root, time, bits, nonce);
+
+impl<S: SimpleEncoder> ConsensusEncodable<S> for BlockHeader {
+    #[inline]
+    fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
+        try!(self.content.consensus_encode(s));
+        // Don't serialize the cached hash
+        Ok(())
+    }
+}
+
+impl<D: SimpleDecoder> ConsensusDecodable<D> for BlockHeader {
+    #[inline]
+    fn consensus_decode(d: &mut D) -> Result<BlockHeader, D::Error> {
+        let content: BlockHeaderContent = try!(ConsensusDecodable::consensus_decode(d));
+        let hash = Sha256dHash::from_data(&serialize(&content).unwrap());
+        Ok(BlockHeader { content, hash })
+    }
+}
+
+impl_consensus_encoding!(BlockHeaderContent, version, prev_blockhash, merkle_root, time, bits, nonce);
 impl_consensus_encoding!(Block, header, txdata);
 impl_consensus_encoding!(LoneBlockHeader, header, tx_count);
 
@@ -161,13 +229,13 @@ mod tests {
         assert!(decode.is_ok());
         assert!(bad_decode.is_err());
         let real_decode = decode.unwrap();
-        assert_eq!(real_decode.header.version, 1);
-        assert_eq!(serialize(&real_decode.header.prev_blockhash).ok(), Some(prevhash));
+        assert_eq!(real_decode.header.version(), 1);
+        assert_eq!(serialize(&real_decode.header.prev_blockhash()).ok(), Some(prevhash));
         // [test] TODO: actually compute the merkle root
-        assert_eq!(serialize(&real_decode.header.merkle_root).ok(), Some(merkle));
-        assert_eq!(real_decode.header.time, 1231965655);
-        assert_eq!(real_decode.header.bits, 486604799);
-        assert_eq!(real_decode.header.nonce, 2067413810);
+        assert_eq!(serialize(&real_decode.header.merkle_root()).ok(), Some(merkle));
+        assert_eq!(real_decode.header.time(), 1231965655);
+        assert_eq!(real_decode.header.bits(), 486604799);
+        assert_eq!(real_decode.header.nonce(), 2067413810);
         // [test] TODO: check the transaction data
     
         assert_eq!(serialize(&real_decode).ok(), Some(some_block));
@@ -185,12 +253,12 @@ mod tests {
 
         assert!(decode.is_ok());
         let real_decode = decode.unwrap();
-        assert_eq!(real_decode.header.version, 0x20000000);  // VERSIONBITS but no bits set
-        assert_eq!(serialize(&real_decode.header.prev_blockhash).ok(), Some(prevhash));
-        assert_eq!(serialize(&real_decode.header.merkle_root).ok(), Some(merkle));
-        assert_eq!(real_decode.header.time, 1472004949);
-        assert_eq!(real_decode.header.bits, 0x1a06d450);
-        assert_eq!(real_decode.header.nonce, 1879759182);
+        assert_eq!(real_decode.header.version(), 0x20000000);  // VERSIONBITS but no bits set
+        assert_eq!(serialize(&real_decode.header.prev_blockhash()).ok(), Some(prevhash));
+        assert_eq!(serialize(&real_decode.header.merkle_root()).ok(), Some(merkle));
+        assert_eq!(real_decode.header.time(), 1472004949);
+        assert_eq!(real_decode.header.bits(), 0x1a06d450);
+        assert_eq!(real_decode.header.nonce(), 1879759182);
         // [test] TODO: check the transaction data
 
         assert_eq!(serialize(&real_decode).ok(), Some(segwit_block));
