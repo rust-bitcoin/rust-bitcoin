@@ -535,6 +535,11 @@ impl Blockchain {
         unsafe { &(*self.best_tip).block }
     }
 
+    /// Returns the best tip height
+    pub fn best_tip_height(&self) -> u32 {
+        unsafe { (*self.best_tip).height }
+    }
+
     /// Returns the best tip's blockhash
     pub fn best_tip_hash(&self) -> Sha256dHash {
         self.best_hash
