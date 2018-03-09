@@ -15,12 +15,6 @@ readme = "README.md"
 name = "bitcoin"
 path = "src/lib.rs"
 
-[features]
-# Compile broken and complicated script interpreter, as well as
-# an unspendability checker which is not broken (I think) but is
-# a huge pile of unreviewed code
-broken_consensus_code = []
-
 [dependencies]
 byteorder = "1.1"
 rand = "0.3"
