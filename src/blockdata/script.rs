@@ -35,6 +35,9 @@ use blockdata::opcodes;
 use network::encodable::{ConsensusDecodable, ConsensusEncodable};
 use network::serialize::{SimpleDecoder, SimpleEncoder};
 use util::hash::Hash160;
+#[cfg(feature="bitcoinconsensus")] use bitcoinconsensus;
+#[cfg(feature="bitcoinconsensus")] use std::convert;
+#[cfg(feature="bitcoinconsensus")] use util::hash::Sha256dHash;
 
 #[derive(Clone, PartialEq, Eq, Hash)]
 /// A Bitcoin script
@@ -150,6 +153,18 @@ pub enum Error {
     EarlyEndOfScript,
     /// Tried to read an array off the stack as a number when it was more than 4 bytes
     NumericOverflow,
+    #[cfg(feature="bitcoinconsensus")]
+    /// Error validating the script with bitcoinconsensus library
+    BitcoinConsensus(bitcoinconsensus::Error),
+    #[cfg(feature="bitcoinconsensus")]
+    /// Can not find the spent transaction
+    UnknownSpentTransaction(Sha256dHash),
+    #[cfg(feature="bitcoinconsensus")]
+    /// The spent transaction does not have the referred output
+    WrongSpentOutputIndex(usize),
+    #[cfg(feature="bitcoinconsensus")]
+    /// Can not serialize the spending transaction
+    SerializationError
 }
 
 impl fmt::Display for Error {
@@ -165,10 +180,26 @@ impl error::Error for Error {
         match *self {
             Error::EarlyEndOfScript => "unexpected end of script",
             Error::NumericOverflow => "numeric overflow (number on stack larger than 4 bytes)",
+	        #[cfg(feature="bitcoinconsensus")]
+	        Error::BitcoinConsensus(ref _n) => "bitcoinconsenus verification failed",
+            #[cfg(feature="bitcoinconsensus")]
+            Error::UnknownSpentTransaction (ref _hash) => "unknown transaction referred in Transaction::verify()",
+            #[cfg(feature="bitcoinconsensus")]
+            Error::WrongSpentOutputIndex(ref _ix) => "unknown output index {} referred in Transaction::verify()",
+            #[cfg(feature="bitcoinconsensus")]
+            Error::SerializationError => "can not serialize the spending transaction in Transaction::verify()",
         }
     }
 }
 
+#[cfg(feature="bitcoinconsensus")]
+impl convert::From<bitcoinconsensus::Error> for Error {
+    fn from(err: bitcoinconsensus::Error) -> Error {
+        match err {
+            _ => Error::BitcoinConsensus(err)
+        }
+    }
+}
 /// Helper to encode an integer in script format
 fn build_scriptint(n: i64) -> Vec<u8> {
     if n == 0 { return vec![] }
@@ -309,6 +340,16 @@ impl Script {
     pub fn is_provably_unspendable(&self) -> bool {
         !self.0.is_empty() && (opcodes::All::from(self.0[0]).classify() == opcodes::Class::ReturnOp ||
                                opcodes::All::from(self.0[0]).classify() == opcodes::Class::IllegalOp)
+    }
+
+    #[cfg(feature="bitcoinconsensus")]
+    /// verify spend of an input script
+    /// # Parameters
+    ///  * index - the index of the output holding this script in its own transaction
+    ///  * amount - the amount this script guards
+    ///  * spending - the transaction that attempts to spend the output holding this script
+    pub fn verify (&self, index: usize, amount: u64, spending: &[u8]) -> Result<(), Error> {
+        Ok(bitcoinconsensus::verify (&self.0[..], amount, spending, index)?)
     }
 }
 
@@ -690,5 +731,14 @@ mod test {
         assert_eq!(redeem_script.to_v0_p2wsh(), expected_witout);
         assert_eq!(redeem_script.to_v0_p2wsh().to_p2sh(), expected_out);
     }
+
+	#[test]
+	#[cfg(feature="bitcoinconsensus")]
+	fn test_bitcoinconsensus () {
+		// a random segwit transaction from the blockchain using native segwit
+		let spent = Builder::from("0020701a8d401c84fb13e6baf169d59684e17abd9fa216c8cc5b9fc63d622ff8c58d".from_hex().unwrap()).into_script();
+		let spending = "010000000001011f97548fbbe7a0db7588a66e18d803d0089315aa7d4cc28360b6ec50ef36718a0100000000ffffffff02df1776000000000017a9146c002a686959067f4866b8fb493ad7970290ab728757d29f0000000000220020701a8d401c84fb13e6baf169d59684e17abd9fa216c8cc5b9fc63d622ff8c58d04004730440220565d170eed95ff95027a69b313758450ba84a01224e1f7f130dda46e94d13f8602207bdd20e307f062594022f12ed5017bbf4a055a06aea91c10110a0e3bb23117fc014730440220647d2dc5b15f60bc37dc42618a370b2a1490293f9e5c8464f53ec4fe1dfe067302203598773895b4b16d37485cbe21b337f4e4b650739880098c592553add7dd4355016952210375e00eb72e29da82b89367947f29ef34afb75e8654f6ea368e0acdfd92976b7c2103a1b26313f430c4b15bb1fdce663207659d8cac749a0e53d70eff01874496feff2103c96d495bfdd5ba4145e3e046fee45e84a8a48ad05bd8dbb395c011a32cf9f88053ae00000000".from_hex().unwrap();
+		spent.verify(0, 18393430, spending.as_slice()).unwrap();
+	}
 }
 
