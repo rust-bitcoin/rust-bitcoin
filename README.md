@@ -1,4 +1,4 @@
-[![Status](https://travis-ci.org/apoelstra/rust-bitcoin.png?branch=master)](https://travis-ci.org/apoelstra/rust-bitcoin)
+[![Status](https://travis-ci.org/rust-bitcoin/rust-bitcoin.png?branch=master)](https://travis-ci.org/rust-bitcoin/rust-bitcoin)
 
 # Rust Bitcoin Library
 
@@ -6,7 +6,7 @@ Library with support for de/serialization, parsing and executing on data
 structures and network messages related to Bitcoin and other blockchain-based
 currencies.
 
-[Documentation](https://www.wpsoftware.net/rustdoc/bitcoin/)
+[Documentation](https://docs.rs/bitcoin/)
 
 Supports (or should support)
 
