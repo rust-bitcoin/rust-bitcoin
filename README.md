@@ -13,7 +13,6 @@ Supports (or should support)
 * De/serialization of Bitcoin protocol network messages
 * De/serialization of blocks and transactions
 * Script de/serialization
-* Blockchain validation
 * Private keys and address creation, de/serialization and validation (including full BIP32 support)
 * Pay-to-contract support as in Appendix A of the [Blockstream sidechains whitepaper](https://www.blockstream.com/sidechains.pdf)
 
@@ -27,7 +26,7 @@ To use rust-bitcoin, just add the following to your Cargo.toml.
 
 ```toml
 [dependencies]
-bitcoin = "0.10"
+bitcoin = "0.12"
 ```
 
 # Known limitations
@@ -35,16 +34,12 @@ bitcoin = "0.10"
 ## Consensus
 
 This library **must not** be used for consensus code (i.e. fully validating
-blockchain data). It technically supports doing this, using the feature-gated
-script parser, but doing so is very
+blockchain data). It technically supports doing this, but doing so is very
 ill-advised because there are many deviations, known and unknown, between
 this library and the Bitcoin Core reference implementation. In a consensus
 based cryptocurrency such as Bitcoin it is critical that all parties are
 using the same rules to validate data, and this library is simply unable
 to implement the same rules as Core.
-
-The script interpreter is now gated behind the `broken_consensus_code` flag
-for this reason.
 
 Given the complexity of both C++ and Rust, it is unlikely that this will
 ever be fixed, and there are no plans to do so. Of course, patches to
@@ -80,4 +75,16 @@ what they need to change.
 
 Remove `num` dependency at Matt's request; agree this is obnoxious to require all
 downstream users to also have a `num` dependency just so they can use `Uint256::from_u64`.
+
+### 0.12
+
+* The in-memory blockchain was moved into a dedicated project rust-bitcoin-chain.
+
+* Removed old script interpreter
+
+* A new optional feature "bitcoinconsenus" lets this library use Bitcoin Core's native
+script verifier, wrappend into Rust by the rust-bitcoinconsenus project. 
+See Transaction::verify and Script::verify methods.
+
+* Replaced Base58 traits with encode_slice, check_encode_slice, from and from_check functions in the base58 module.
 
