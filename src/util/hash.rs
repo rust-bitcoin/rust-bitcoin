@@ -354,6 +354,7 @@ impl serde::Deserialize for Sha256dHash {
 
 // Debug encodings (no reversing)
 impl fmt::Debug for Sha256dHash {
+    /// Output the raw sha256d hash, not reversing it (unlike Display and what Core does for user display)
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let &Sha256dHash(data) = self;
         for ch in data.iter() {
@@ -364,6 +365,7 @@ impl fmt::Debug for Sha256dHash {
 }
 
 impl fmt::Debug for Hash160 {
+    /// Output the raw hash160 hash, not reversing it (nothing reverses the output of ripemd160 in Bitcoin)
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let &Hash160(data) = self;
         for ch in data.iter() {
@@ -381,10 +383,12 @@ impl_newtype_consensus_encoding!(Sha256dHash);
 
 // User RPC/display encoding (reversed)
 impl fmt::Display for Sha256dHash {
+    /// Output the sha256d hash in reverse, copying Bitcoin Core's behaviour
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(self, f) }
 }
 
 impl fmt::LowerHex for Sha256dHash {
+    /// Output the sha256d hash in reverse, copying Bitcoin Core's behaviour
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let &Sha256dHash(data) = self;
         for ch in data.iter().rev() {
@@ -395,6 +399,7 @@ impl fmt::LowerHex for Sha256dHash {
 }
 
 impl fmt::UpperHex for Sha256dHash {
+    /// Output the sha256d hash in reverse, copying Bitcoin Core's behaviour
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let &Sha256dHash(data) = self;
         for ch in data.iter().rev() {
