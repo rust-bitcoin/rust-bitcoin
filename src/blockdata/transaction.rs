@@ -268,12 +268,12 @@ impl<D: SimpleDecoder> ConsensusDecodable<D> for Transaction {
         if input.is_empty() {
             let segwit_flag: u8 = try!(ConsensusDecodable::consensus_decode(d));
             match segwit_flag {
-                // Empty tx
+                // No inputs
                 0 => {
                     Ok(Transaction {
                         version: version,
                         input: input,
-                        output: vec![],
+                        output: try!(ConsensusDecodable::consensus_decode(d)),
                         lock_time: try!(ConsensusDecodable::consensus_decode(d)),
                         witness: vec![]
                     })
