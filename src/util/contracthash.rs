@@ -213,8 +213,9 @@ pub fn create_address(secp: &Secp256k1,
     let script = try!(template.to_script(&keys));
     Ok(address::Address {
         network: network,
-        ty: address::Type::ScriptHash,
-        hash: hash::Hash160::from_data(&script[..])
+        payload: address::Payload::ScriptHash(
+            hash::Hash160::from_data(&script[..])
+        ),
     })
 }
 
@@ -295,7 +296,6 @@ mod tests {
 
     use blockdata::script::Script;
     use network::constants::Network;
-    use util::base58::ToBase58;
 
     use super::*;
 
@@ -320,7 +320,7 @@ mod tests {
         let contract = hex!("5032534894ffbf32c1f1c0d3089b27c98fd991d5d7329ebd7d711223e2cde5a9417a1fa3e852c576");
 
         let addr = create_address(&secp, Network::Testnet, &contract, keys, &alpha_template!()).unwrap();
-        assert_eq!(addr.to_base58check(), "2N3zXjbwdTcPsJiy8sUK9FhWJhqQCxA8Jjr".to_owned());
+        assert_eq!(addr.to_string(), "2N3zXjbwdTcPsJiy8sUK9FhWJhqQCxA8Jjr".to_owned());
     }
 
     #[test]

@@ -15,40 +15,38 @@
 //! Support for ordinary base58 Bitcoin addresses and private keys
 //!
 
-use secp256k1::{self, Secp256k1};
+use std::str::FromStr;
+use std::string::ToString;
+
+use bitcoin_bech32::{self, WitnessProgram};
+use secp256k1::Secp256k1;
 use secp256k1::key::{PublicKey, SecretKey};
 
 use blockdata::script;
 use blockdata::opcodes;
 use network::constants::Network;
 use util::hash::Hash160;
-use util::base58::{self, FromBase58, ToBase58};
+use util::base58;
+use util::Error;
 
 /// The method used to produce an address
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
-pub enum Type {
-    /// Standard pay-to-pkhash address
-    PubkeyHash,
-    /// New-fangled P2SH address
-    ScriptHash
+#[derive(Clone, PartialEq, Debug)]
+pub enum Payload {
+    /// pay-to-pkhash address
+    PubkeyHash(Hash160),
+    /// P2SH address
+    ScriptHash(Hash160),
+    /// Segwit address
+    WitnessProgram(WitnessProgram),
 }
 
-/// An address-related error
-#[derive(Clone, PartialEq, Eq, Debug)]
-pub enum Error {
-    /// Private key did not represent a valid ECDSA secret key
-    Secp(secp256k1::Error)
-}
-
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq)]
 /// A Bitcoin address
 pub struct Address {
     /// The type of the address
-    pub ty: Type,
+    pub payload: Payload,
     /// The network on which this address is usable
     pub network: Network,
-    /// The pubkeyhash that this address encodes
-    pub hash: Hash160
 }
 
 impl Address {
@@ -56,13 +54,14 @@ impl Address {
     #[inline]
     pub fn from_key(network: Network, pk: &PublicKey, compressed: bool) -> Address {
         Address {
-            ty: Type::PubkeyHash,
             network: network,
-            hash: if compressed {
-                Hash160::from_data(&pk.serialize()[..])
-            } else {
-                Hash160::from_data(&pk.serialize_uncompressed()[..])
-            }
+            payload: Payload::PubkeyHash(
+                if compressed {
+                    Hash160::from_data(&pk.serialize()[..])
+                } else {
+                    Hash160::from_data(&pk.serialize_uncompressed()[..])
+                }
+            ),
         }
     }
 
@@ -70,74 +69,122 @@ impl Address {
     #[inline]
     pub fn from_script(network: Network, script: &script::Script) -> Address {
         Address {
-            ty: Type::ScriptHash,
             network: network,
-            hash: Hash160::from_data(&script[..])
+            payload: Payload::ScriptHash(Hash160::from_data(&script[..])),
         }
     }
 
     /// Generates a script pubkey spending to this address
     #[inline]
     pub fn script_pubkey(&self) -> script::Script {
-        match self.ty {
-            Type::PubkeyHash => {
+        match self.payload {
+            Payload::PubkeyHash(ref hash) => {
                 script::Builder::new()
                     .push_opcode(opcodes::All::OP_DUP)
                     .push_opcode(opcodes::All::OP_HASH160)
-                    .push_slice(&self.hash[..])
+                    .push_slice(&hash[..])
                     .push_opcode(opcodes::All::OP_EQUALVERIFY)
                     .push_opcode(opcodes::All::OP_CHECKSIG)
-            }
-            Type::ScriptHash => {
+            },
+            Payload::ScriptHash(ref hash) => {
                 script::Builder::new()
                     .push_opcode(opcodes::All::OP_HASH160)
-                    .push_slice(&self.hash[..])
+                    .push_slice(&hash[..])
                     .push_opcode(opcodes::All::OP_EQUAL)
+            },
+            Payload::WitnessProgram(ref witprog) => {
+                script::Builder::new()
+                    .push_int(witprog.version() as i64)
+                    .push_slice(witprog.program())
             }
         }.into_script()
     }
 }
 
-impl ToBase58 for Address {
-    fn base58_layout(&self) -> Vec<u8> {
-        let mut ret = vec![
-            match (self.network, self.ty) {
-                (Network::Bitcoin, Type::PubkeyHash) => 0,
-                (Network::Bitcoin, Type::ScriptHash) => 5,
-                (Network::Testnet, Type::PubkeyHash) => 111,
-                (Network::Testnet, Type::ScriptHash) => 196
+impl ToString for Address {
+    fn to_string(&self) -> String {
+        match self.payload {
+            Payload::PubkeyHash(ref hash) => {
+                let mut prefixed = [0; 21];
+                prefixed[0] = match self.network {
+                    Network::Bitcoin => 0,
+                    Network::Testnet => 111,
+                };
+                prefixed[1..].copy_from_slice(&hash[..]);
+                base58::check_encode_slice(&prefixed[..])
             }
-        ];
-        ret.extend(self.hash[..].iter().cloned());
-        ret
+            Payload::ScriptHash(ref hash) => {
+                let mut prefixed = [0; 21];
+                prefixed[0] = match self.network {
+                    Network::Bitcoin => 5,
+                    Network::Testnet => 196,
+                };
+                prefixed[1..].copy_from_slice(&hash[..]);
+                base58::check_encode_slice(&prefixed[..])
+            }
+            Payload::WitnessProgram(ref witprog) => {
+                witprog.to_address()
+            },
+        }
     }
 }
 
-impl FromBase58 for Address {
-    fn from_base58_layout(data: Vec<u8>) -> Result<Address, base58::Error> {
-        if data.len() != 21 {
-            return Err(base58::Error::InvalidLength(data.len()));
+impl FromStr for Address {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Address, Error> {
+        // bech32 (note that upper or lowercase is allowed but NOT mixed case)
+        if &s.as_bytes()[0..3] == b"bc1" || &s.as_bytes()[0..3] == b"tb1" ||
+           &s.as_bytes()[0..3] == b"BC1" || &s.as_bytes()[0..3] == b"TB1" {
+            let witprog = try!(WitnessProgram::from_address(s));
+            let network = match witprog.network() {
+                bitcoin_bech32::constants::Network::Bitcoin => Network::Bitcoin,
+                bitcoin_bech32::constants::Network::Testnet => Network::Testnet,
+                _ => panic!("unknown network")
+            };
+            return Ok(Address {
+                network: network,
+                payload: Payload::WitnessProgram(witprog),
+            });
         }
 
-        let (network, ty) = match data[0] {
-            0   => (Network::Bitcoin, Type::PubkeyHash),
-            5   => (Network::Bitcoin, Type::ScriptHash),
-            111 => (Network::Testnet, Type::PubkeyHash),
-            196 => (Network::Testnet, Type::ScriptHash),
-            x   => { return Err(base58::Error::InvalidVersion(vec![x])); }
+        // Base 58
+        let data = try!(base58::from_check(s));
+
+        if data.len() != 21 {
+            return Err(Error::Base58(base58::Error::InvalidLength(data.len())));
+        }
+
+        let (network, payload) = match data[0] {
+            0 => (
+                Network::Bitcoin,
+                Payload::PubkeyHash(Hash160::from(&data[1..]))
+            ),
+            5 => (
+                Network::Bitcoin,
+                Payload::ScriptHash(Hash160::from(&data[1..]))
+            ),
+            111 => (
+                Network::Testnet,
+                Payload::PubkeyHash(Hash160::from(&data[1..]))
+            ),
+            196 => (
+                Network::Testnet,
+                Payload::ScriptHash(Hash160::from(&data[1..]))
+            ),
+            x   => return Err(Error::Base58(base58::Error::InvalidVersion(vec![x])))
         };
 
         Ok(Address {
-            ty: ty,
             network: network,
-            hash: Hash160::from(&data[1..])
+            payload: payload,
         })
     }
 }
 
 impl ::std::fmt::Debug for Address {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "{}", self.to_base58check())
+        write!(f, "{}", self.to_string())
     }
 }
 
@@ -166,7 +213,7 @@ impl Privkey {
     /// Converts a private key to an address
     #[inline]
     pub fn to_address(&self, secp: &Secp256k1) -> Result<Address, Error> {
-        let key = try!(PublicKey::from_secret_key(secp, &self.key).map_err(Error::Secp));
+        let key = try!(PublicKey::from_secret_key(secp, &self.key));
         Ok(Address::from_key(self.network, &key, self.compressed))
     }
 
@@ -195,32 +242,39 @@ impl Privkey {
     }
 }
 
-impl ToBase58 for Privkey {
-    fn base58_layout(&self) -> Vec<u8> {
-        let mut ret = vec![
-            match self.network {
-                Network::Bitcoin => 128,
-                Network::Testnet => 239
-            }
-        ];
-        ret.extend(&self.key[..]);
-        if self.compressed { ret.push(1); }
-        ret
+impl ToString for Privkey {
+    fn to_string(&self) -> String {
+        let mut ret = [0; 34];
+        ret[0] = match self.network {
+            Network::Bitcoin => 128,
+            Network::Testnet => 239
+        };
+        ret[1..33].copy_from_slice(&self.key[..]);
+        if self.compressed {
+            ret[33] = 1;
+            base58::check_encode_slice(&ret[..])
+        } else {
+            base58::check_encode_slice(&ret[..33])
+        }
     }
 }
 
-impl FromBase58 for Privkey {
-    fn from_base58_layout(data: Vec<u8>) -> Result<Privkey, base58::Error> {
+impl FromStr for Privkey {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Privkey, Error> {
+        let data = try!(base58::from_check(s));
+
         let compressed = match data.len() {
             33 => false,
             34 => true,
-            _ => { return Err(base58::Error::InvalidLength(data.len())); }
+            _ => { return Err(Error::Base58(base58::Error::InvalidLength(data.len()))); }
         };
 
         let network = match data[0] {
             128 => Network::Bitcoin,
             239 => Network::Testnet,
-            x   => { return Err(base58::Error::InvalidVersion(vec![x])); }
+            x   => { return Err(Error::Base58(base58::Error::InvalidVersion(vec![x]))); }
         };
 
         let secp = Secp256k1::without_caps();
@@ -237,6 +291,9 @@ impl FromBase58 for Privkey {
 
 #[cfg(test)]
 mod tests {
+    use std::str::FromStr;
+    use std::string::ToString;
+
     use secp256k1::Secp256k1;
     use secp256k1::key::PublicKey;
     use serialize::hex::FromHex;
@@ -244,7 +301,6 @@ mod tests {
     use blockdata::script::Script;
     use network::constants::Network::{Bitcoin, Testnet};
     use util::hash::Hash160;
-    use util::base58::{FromBase58, ToBase58};
     use super::*;
 
     macro_rules! hex (($hex:expr) => ($hex.from_hex().unwrap()));
@@ -254,14 +310,15 @@ mod tests {
     #[test]
     fn test_p2pkh_address_58() {
         let addr = Address {
-            ty: Type::PubkeyHash,
             network: Bitcoin,
-            hash: Hash160::from(&"162c5ea71c0b23f5b9022ef047c4a86470a5b070".from_hex().unwrap()[..])
+            payload: Payload::PubkeyHash(
+                Hash160::from(&"162c5ea71c0b23f5b9022ef047c4a86470a5b070".from_hex().unwrap()[..])
+            ),
         };
 
         assert_eq!(addr.script_pubkey(), hex_script!("76a914162c5ea71c0b23f5b9022ef047c4a86470a5b07088ac"));
-        assert_eq!(&addr.to_base58check(), "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM");
-        assert_eq!(FromBase58::from_base58check("132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM"), Ok(addr));
+        assert_eq!(&addr.to_string(), "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM");
+        assert_eq!(Address::from_str("132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM").unwrap(), addr);
     }
 
     #[test]
@@ -270,24 +327,25 @@ mod tests {
 
         let key = hex_key!(&secp, "048d5141948c1702e8c95f438815794b87f706a8d4cd2bffad1dc1570971032c9b6042a0431ded2478b5c9cf2d81c124a5e57347a3c63ef0e7716cf54d613ba183");
         let addr = Address::from_key(Bitcoin, &key, false);
-        assert_eq!(&addr.to_base58check(), "1QJVDzdqb1VpbDK7uDeyVXy9mR27CJiyhY");
+        assert_eq!(&addr.to_string(), "1QJVDzdqb1VpbDK7uDeyVXy9mR27CJiyhY");
 
         let key = hex_key!(&secp, &"03df154ebfcf29d29cc10d5c2565018bce2d9edbab267c31d2caf44a63056cf99f");
         let addr = Address::from_key(Testnet, &key, true);
-        assert_eq!(&addr.to_base58check(), "mqkhEMH6NCeYjFybv7pvFC22MFeaNT9AQC");
+        assert_eq!(&addr.to_string(), "mqkhEMH6NCeYjFybv7pvFC22MFeaNT9AQC");
     }
 
     #[test]
     fn test_p2sh_address_58() {
         let addr = Address {
-            ty: Type::ScriptHash,
             network: Bitcoin,
-            hash: Hash160::from(&"162c5ea71c0b23f5b9022ef047c4a86470a5b070".from_hex().unwrap()[..])
+            payload: Payload::ScriptHash(
+                Hash160::from(&"162c5ea71c0b23f5b9022ef047c4a86470a5b070".from_hex().unwrap()[..])
+            ),
         };
 
         assert_eq!(addr.script_pubkey(), hex_script!("a914162c5ea71c0b23f5b9022ef047c4a86470a5b07087"));
-        assert_eq!(&addr.to_base58check(), "33iFwdLuRpW1uK1RTRqsoi8rR4NpDzk66k");
-        assert_eq!(FromBase58::from_base58check("33iFwdLuRpW1uK1RTRqsoi8rR4NpDzk66k"), Ok(addr));
+        assert_eq!(&addr.to_string(), "33iFwdLuRpW1uK1RTRqsoi8rR4NpDzk66k");
+        assert_eq!(Address::from_str("33iFwdLuRpW1uK1RTRqsoi8rR4NpDzk66k").unwrap(), addr);
     }
 
     #[test]
@@ -295,31 +353,101 @@ mod tests {
         let script = hex_script!("552103a765fc35b3f210b95223846b36ef62a4e53e34e2925270c2c7906b92c9f718eb2103c327511374246759ec8d0b89fa6c6b23b33e11f92c5bc155409d86de0c79180121038cae7406af1f12f4786d820a1466eec7bc5785a1b5e4a387eca6d797753ef6db2103252bfb9dcaab0cd00353f2ac328954d791270203d66c2be8b430f115f451b8a12103e79412d42372c55dd336f2eb6eb639ef9d74a22041ba79382c74da2338fe58ad21035049459a4ebc00e876a9eef02e72a3e70202d3d1f591fc0dd542f93f642021f82102016f682920d9723c61b27f562eb530c926c00106004798b6471e8c52c60ee02057ae");
         let addr = Address::from_script(Testnet, &script);
 
-        assert_eq!(&addr.to_base58check(), "2N3zXjbwdTcPsJiy8sUK9FhWJhqQCxA8Jjr");
-        assert_eq!(FromBase58::from_base58check("2N3zXjbwdTcPsJiy8sUK9FhWJhqQCxA8Jjr"), Ok(addr));
+        assert_eq!(&addr.to_string(), "2N3zXjbwdTcPsJiy8sUK9FhWJhqQCxA8Jjr");
+        assert_eq!(Address::from_str("2N3zXjbwdTcPsJiy8sUK9FhWJhqQCxA8Jjr").unwrap(), addr);
+    }
+
+    #[test]
+    fn test_bip173_vectors() {
+        let addrstr = "BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4";
+        let addr = Address::from_str(addrstr).unwrap();
+        assert_eq!(addr.network, Bitcoin);
+        assert_eq!(addr.script_pubkey(), hex_script!("0014751e76e8199196d454941c45d1b3a323f1433bd6"));
+        // skip round-trip because we'll serialize to lowercase which won't match
+
+        let addrstr = "tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7";
+        let addr = Address::from_str(addrstr).unwrap();
+        assert_eq!(addr.network, Testnet);
+        assert_eq!(addr.script_pubkey(), hex_script!("00201863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262"));
+        assert_eq!(addr.to_string(), addrstr);
+
+        let addrstr = "bc1pw508d6qejxtdg4y5r3zarvary0c5xw7kw508d6qejxtdg4y5r3zarvary0c5xw7k7grplx";
+        let addr = Address::from_str(addrstr).unwrap();
+        assert_eq!(addr.network, Bitcoin);
+        assert_eq!(addr.script_pubkey(), hex_script!("5128751e76e8199196d454941c45d1b3a323f1433bd6751e76e8199196d454941c45d1b3a323f1433bd6"));
+        assert_eq!(addr.to_string(), addrstr);
+
+        let addrstr = "BC1SW50QA3JX3S";
+        let addr = Address::from_str(addrstr).unwrap();
+        assert_eq!(addr.network, Bitcoin);
+        assert_eq!(addr.script_pubkey(), hex_script!("6002751e"));
+        // skip round trip cuz caps
+
+        let addrstr = "bc1zw508d6qejxtdg4y5r3zarvaryvg6kdaj";
+        let addr = Address::from_str(addrstr).unwrap();
+        assert_eq!(addr.network, Bitcoin);
+        assert_eq!(addr.script_pubkey(), hex_script!("5210751e76e8199196d454941c45d1b3a323"));
+        assert_eq!(addr.to_string(), addrstr);
+
+        let addrstr = "tb1qqqqqp399et2xygdj5xreqhjjvcmzhxw4aywxecjdzew6hylgvsesrxh6hy";
+        let addr = Address::from_str(addrstr).unwrap();
+        assert_eq!(addr.network, Testnet);
+        assert_eq!(addr.script_pubkey(), hex_script!("0020000000c4a5cad46221b2a187905e5266362b99d5e91c6ce24d165dab93e86433"));
+        assert_eq!(addr.to_string(), addrstr);
+
+        // bad vectors
+        let addrstr = "tc1qw508d6qejxtdg4y5r3zarvary0c5xw7kg3g4ty"; // invalid hrp
+        assert!(Address::from_str(addrstr).is_err());
+
+        let addrstr = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t5"; // invalid checksum
+        assert!(Address::from_str(addrstr).is_err());
+
+        let addrstr = "BC13W508D6QEJXTDG4Y5R3ZARVARY0C5XW7KN40WF2"; // invalid witness version
+        assert!(Address::from_str(addrstr).is_err());
+
+        let addrstr = "bc1rw5uspcuh"; // invalid program length
+        assert!(Address::from_str(addrstr).is_err());
+
+        let addrstr = "bc10w508d6qejxtdg4y5r3zarvary0c5xw7kw508d6qejxtdg4y5r3zarvary0c5xw7kw5rljs90"; // invalid program length
+        assert!(Address::from_str(addrstr).is_err());
+
+        let addrstr = "BC1QR508D6QEJXTDG4Y5R3ZARVARYV98GJ9P"; // invalid program length for wit v0
+        assert!(Address::from_str(addrstr).is_err());
+
+        let addrstr = "tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sL5k7"; // mixed case
+        assert!(Address::from_str(addrstr).is_err());
+
+        let addrstr = "bc1zw508d6qejxtdg4y5r3zarvaryvqyzf3du"; // zero padding of more than 4 bits
+        assert!(Address::from_str(addrstr).is_err());
+
+        let addrstr = "tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3pjxtptv"; // nonzero padding
+        assert!(Address::from_str(addrstr).is_err());
+
+        let addrstr = "bc1gmk9yu"; // empty data section
+        assert!(Address::from_str(addrstr).is_err());
     }
 
     #[test]
     fn test_key_derivation() {
         // testnet compressed
-        let sk: Privkey = FromBase58::from_base58check("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
+        let sk = Privkey::from_str("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
         assert_eq!(sk.network(), Testnet);
         assert_eq!(sk.is_compressed(), true);
-        assert_eq!(&sk.to_base58check(), "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy");
+        assert_eq!(&sk.to_string(), "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy");
 
         let secp = Secp256k1::new();
         let pk = sk.to_address(&secp).unwrap();
-        assert_eq!(&pk.to_base58check(), "mqwpxxvfv3QbM8PU8uBx2jaNt9btQqvQNx");
+        assert_eq!(&pk.to_string(), "mqwpxxvfv3QbM8PU8uBx2jaNt9btQqvQNx");
 
         // mainnet uncompressed
-        let sk: Privkey = FromBase58::from_base58check("5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3").unwrap();
+        let sk = Privkey::from_str("5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3").unwrap();
         assert_eq!(sk.network(), Bitcoin);
         assert_eq!(sk.is_compressed(), false);
-        assert_eq!(&sk.to_base58check(), "5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3");
+        assert_eq!(&sk.to_string(), "5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3");
 
         let secp = Secp256k1::new();
         let pk = sk.to_address(&secp).unwrap();
-        assert_eq!(&pk.to_base58check(), "1GhQvF6dL8xa6wBxLnWmHcQsurx9RxiMc8");
+        assert_eq!(&pk.to_string(), "1GhQvF6dL8xa6wBxLnWmHcQsurx9RxiMc8");
     }
 }
 
