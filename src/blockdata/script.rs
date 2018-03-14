@@ -328,12 +328,28 @@ impl Script {
         self.0[24] == opcodes::All::OP_CHECKSIG as u8
     }
 
+    /// Checks whether a script pubkey is a p2pkh output
+    #[inline]
+    pub fn is_p2pk(&self) -> bool {
+        self.0.len() == 67 &&
+            self.0[0] == opcodes::All::OP_PUSHBYTES_65 as u8 &&
+            self.0[66] == opcodes::All::OP_CHECKSIG as u8
+    }
+
     /// Checks whether a script pubkey is a p2wsh output
     #[inline]
     pub fn is_v0_p2wsh(&self) -> bool {
         self.0.len() == 34 &&
         self.0[0] == opcodes::All::OP_PUSHBYTES_0 as u8 &&
         self.0[1] == opcodes::All::OP_PUSHBYTES_32 as u8
+    }
+
+    /// Checks whether a script pubkey is a p2wpkh output
+    #[inline]
+    pub fn is_v0_p2wpkh(&self) -> bool {
+        self.0.len() == 22 &&
+            self.0[0] == opcodes::All::OP_PUSHBYTES_0 as u8 &&
+            self.0[1] == opcodes::All::OP_PUSHBYTES_20 as u8
     }
 
     /// Whether a script can be proven to have no satisfying input

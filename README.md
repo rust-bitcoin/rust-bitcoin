@@ -92,3 +92,5 @@ See Transaction::verify and Script::verify methods.
 
 * Add bech32 support
 
+* Support segwit address types
+

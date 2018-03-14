@@ -215,7 +215,7 @@ pub fn create_address(secp: &Secp256k1,
         network: network,
         payload: address::Payload::ScriptHash(
             hash::Hash160::from_data(&script[..])
-        ),
+        )
     })
 }
 
