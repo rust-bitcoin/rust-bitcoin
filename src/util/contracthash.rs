@@ -20,13 +20,16 @@
 use secp256k1::{self, Secp256k1};
 use secp256k1::key::{PublicKey, SecretKey};
 use blockdata::{opcodes, script};
-use crypto::{hmac, sha2};
+use crypto::hmac;
 use crypto::mac::Mac;
 
 use std::{error, fmt};
 
 use network::constants::Network;
 use util::{address, hash};
+
+#[cfg(feature="fuzztarget")]      use util::sha2;
+#[cfg(not(feature="fuzztarget"))] use crypto::sha2;
 
 /// Encoding of "pubkey here" in script; from bitcoin core `src/script/script.h`
 static PUBKEY: u8 = 0xFE;

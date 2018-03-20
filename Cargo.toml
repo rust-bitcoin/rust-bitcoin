@@ -17,6 +17,7 @@ path = "src/lib.rs"
 
 [features]
 bitcoinconsenus = ["bitcoinconsensus"]
+fuzztarget = ["secp256k1/fuzztarget"]
 
 [dependencies]
 bitcoin-bech32 = "0.5.1"

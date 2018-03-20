@@ -26,12 +26,14 @@ use serde;
 
 use byteorder::{LittleEndian, WriteBytesExt};
 use crypto::digest::Digest;
-use crypto::sha2::Sha256;
 use crypto::ripemd160::Ripemd160;
 
 use network::encodable::{ConsensusDecodable, ConsensusEncodable};
 use network::serialize::{SimpleEncoder, RawEncoder, BitcoinHash};
 use util::uint::Uint256;
+
+#[cfg(feature="fuzztarget")]      use util::sha2::Sha256;
+#[cfg(not(feature="fuzztarget"))] use crypto::sha2::Sha256;
 
 /// Hex deserialization error
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
