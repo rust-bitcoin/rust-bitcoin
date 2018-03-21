@@ -37,7 +37,11 @@ impl Privkey {
     /// Creates an address from a public key
     #[inline]
     pub fn from_secret_key(key: SecretKey, compressed: bool, network: Network) -> Privkey {
-        Privkey { compressed, network, key }
+        Privkey {
+            compressed: compressed,
+            network: network,
+            key: key,
+        }
     }
 
     /// Computes the public key as supposed to be used with this secret

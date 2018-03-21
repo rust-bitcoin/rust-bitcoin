@@ -454,7 +454,7 @@ impl <T: BitcoinHash> MerkleRoot for Vec<T> {
 mod tests {
     use strason;
 
-    use network::encodable::VarInt;
+    use network::encodable::{ConsensusEncodable, VarInt};
     use network::serialize::{serialize, deserialize};
     use util::uint::{Uint128, Uint256};
     use super::*;
