@@ -3,6 +3,7 @@ rust:
   - stable
   - beta
   - nightly
+  - 1.14.0
 
 install:
   - git clone https://github.com/bitcoin/secp256k1.git
