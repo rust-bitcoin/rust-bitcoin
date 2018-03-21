@@ -285,7 +285,10 @@ impl FromStr for Address {
             x   => return Err(Error::Base58(base58::Error::InvalidVersion(vec![x])))
         };
 
-        Ok(Address { network, payload })
+        Ok(Address {
+            network: network,
+            payload: payload,
+        })
     }
 }
 
