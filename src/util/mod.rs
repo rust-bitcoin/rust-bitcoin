@@ -16,6 +16,7 @@
 //!
 //! Functions needed by all parts of the Bitcoin library
 
+pub mod privkey;
 pub mod address;
 pub mod base58;
 pub mod bip32;
@@ -83,7 +84,9 @@ pub enum Error {
     /// The header hash is not below the target
     SpvBadProofOfWork,
     /// Error propagated from subsystem
-    Detail(String, Box<Error>)
+    Detail(String, Box<Error>),
+    /// Unsupported witness version
+    UnsupportedWitnessVersion(u8)
 }
 
 impl fmt::Display for Error {
@@ -130,7 +133,8 @@ impl error::Error for Error {
             Error::Secp256k1(ref e) => e.description(),
             Error::SpvBadTarget => "target incorrect",
             Error::SpvBadProofOfWork => "target correct but not attained",
-            Error::Detail(_, ref e) => e.description()
+            Error::Detail(_, ref e) => e.description(),
+            Error::UnsupportedWitnessVersion(_) => "unsupported witness version"
         }
     }
 }
