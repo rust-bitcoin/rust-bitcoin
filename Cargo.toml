@@ -17,6 +17,7 @@ path = "src/lib.rs"
 
 [features]
 bitcoinconsenus = ["bitcoinconsensus"]
+fuzztarget = ["secp256k1/fuzztarget"]
 
 [dependencies]
 bitcoin-bech32 = "0.5.1"
@@ -29,7 +30,5 @@ strason = "0.3"
 bitcoinconsensus = { version = "0.16", optional=true }
 
 [dependencies.secp256k1]
-version = "0.8"
-features = [ "rand", "serde" ]
-
-
+version = "0.9"
+features = [ "rand" ]

@@ -241,8 +241,9 @@ impl FromStr for Address {
 
     fn from_str(s: &str) -> Result<Address, Error> {
         // bech32 (note that upper or lowercase is allowed but NOT mixed case)
-        if &s.as_bytes()[0..3] == b"bc1" || &s.as_bytes()[0..3] == b"tb1" ||
-           &s.as_bytes()[0..3] == b"BC1" || &s.as_bytes()[0..3] == b"TB1" {
+        if s.len() >= 3 &&
+           (&s.as_bytes()[0..3] == b"bc1" || &s.as_bytes()[0..3] == b"tb1" ||
+            &s.as_bytes()[0..3] == b"BC1" || &s.as_bytes()[0..3] == b"TB1") {
             let witprog = try!(WitnessProgram::from_address(s));
             let network = match witprog.network() {
                 bitcoin_bech32::constants::Network::Bitcoin => Network::Bitcoin,

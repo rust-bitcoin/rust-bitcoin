@@ -28,7 +28,6 @@ use std::default::Default;
 use std::{error, fmt};
 
 use crypto::digest::Digest;
-use crypto::sha2::Sha256;
 use serde;
 
 use blockdata::opcodes;
@@ -38,6 +37,9 @@ use util::hash::Hash160;
 #[cfg(feature="bitcoinconsensus")] use bitcoinconsensus;
 #[cfg(feature="bitcoinconsensus")] use std::convert;
 #[cfg(feature="bitcoinconsensus")] use util::hash::Sha256dHash;
+
+#[cfg(feature="fuzztarget")]      use util::sha2::Sha256;
+#[cfg(not(feature="fuzztarget"))] use crypto::sha2::Sha256;
 
 #[derive(Clone, PartialEq, Eq, Hash)]
 /// A Bitcoin script

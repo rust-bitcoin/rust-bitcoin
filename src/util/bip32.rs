@@ -28,13 +28,14 @@ use crypto::digest::Digest;
 use crypto::hmac::Hmac;
 use crypto::mac::Mac;
 use crypto::ripemd160::Ripemd160;
-use crypto::sha2::Sha256;
-use crypto::sha2::Sha512;
 use secp256k1::key::{PublicKey, SecretKey};
 use secp256k1::{self, Secp256k1};
 
 use network::constants::Network;
 use util::base58;
+
+#[cfg(feature="fuzztarget")]      use util::sha2::{Sha256, Sha512};
+#[cfg(not(feature="fuzztarget"))] use crypto::sha2::{Sha256, Sha512};
 
 /// A chain code
 pub struct ChainCode([u8; 32]);
