@@ -84,9 +84,9 @@ downstream users to also have a `num` dependency just so they can use `Uint256::
 
 * A new optional feature "bitcoinconsenus" lets this library use Bitcoin Core's native
 script verifier, wrappend into Rust by the rust-bitcoinconsenus project. 
-See Transaction::verify and Script::verify methods.
+See `Transaction::verify` and `Script::verify` methods.
 
-* Replaced Base58 traits with encode_slice, check_encode_slice, from and from_check functions in the base58 module.
+* Replaced Base58 traits with `encode_slice`, `check_encode_slice`, from and `from_check` functions in the base58 module.
 
 * Un-reversed the Debug output for Sha256dHash
 
