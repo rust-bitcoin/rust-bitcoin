@@ -20,7 +20,7 @@
 //!
 
 use blockdata::script::Script;
-use blockdata::transaction::Transaction;
+use blockdata::transaction::{Transaction, TxIn};
 use network::encodable::ConsensusEncodable;
 use util::hash::{Sha256dHash, Sha256dEncoder};
 
@@ -28,6 +28,8 @@ use util::hash::{Sha256dHash, Sha256dEncoder};
 /// sufficient (in conjunction with a private key) to sign the transaction
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct SighashComponents {
+    tx_version: u32,
+    tx_locktime: u32,
     /// Hash of all the previous outputs
     pub hash_prevouts: Sha256dHash,
     /// Hash of all the input sequence nos
@@ -38,7 +40,9 @@ pub struct SighashComponents {
 
 impl SighashComponents {
     /// Compute the sighash components from an unsigned transaction and auxiliary
-    /// information about its inputs
+    /// information about its inputs.
+    /// For the generated sighashes to be valid, no fields in the transaction may change except for
+    /// script_sig and witnesses.
     pub fn new(tx: &Transaction) -> SighashComponents {
         let hash_prevouts = {
             let mut enc = Sha256dEncoder::new();
@@ -66,6 +70,8 @@ impl SighashComponents {
         };
 
         SighashComponents {
+            tx_version: tx.version,
+            tx_locktime: tx.lock_time,
             hash_prevouts: hash_prevouts,
             hash_sequence: hash_sequence,
             hash_outputs: hash_outputs,
@@ -73,25 +79,25 @@ impl SighashComponents {
     }
 
     /// Compute the BIP143 sighash for a `SIGHASH_ALL` signature for the given
-    /// input index
-    pub fn sighash_all(&self, tx: &Transaction, index: usize, witness_script: &Script, value: u64) -> Sha256dHash {
+    /// input.
+    pub fn sighash_all(&self, txin: &TxIn, witness_script: &Script, value: u64) -> Sha256dHash {
         let mut enc = Sha256dEncoder::new();
-        tx.version.consensus_encode(&mut enc).unwrap();
+        self.tx_version.consensus_encode(&mut enc).unwrap();
         self.hash_prevouts.consensus_encode(&mut enc).unwrap();
         self.hash_sequence.consensus_encode(&mut enc).unwrap();
-        tx.input[index]
+        txin
             .prev_hash
             .consensus_encode(&mut enc)
             .unwrap();
-        tx.input[index]
+        txin
             .prev_index
             .consensus_encode(&mut enc)
             .unwrap();
         witness_script.consensus_encode(&mut enc).unwrap();
         value.consensus_encode(&mut enc).unwrap();
-        tx.input[index].sequence.consensus_encode(&mut enc).unwrap();
+        txin.sequence.consensus_encode(&mut enc).unwrap();
         self.hash_outputs.consensus_encode(&mut enc).unwrap();
-        tx.lock_time.consensus_encode(&mut enc).unwrap();
+        self.tx_locktime.consensus_encode(&mut enc).unwrap();
         1u32.consensus_encode(&mut enc).unwrap(); // hashtype
         enc.into_hash()
     }
@@ -130,6 +136,8 @@ mod tests {
         assert_eq!(
             comp,
             SighashComponents {
+                tx_version: 1,
+                tx_locktime: 0,
                 hash_prevouts: hex_hash!(
                     "74afdc312af5183c4198a40ca3c1a275b485496dd3929bca388c4b5e31f7aaa0"
                 ),
@@ -143,7 +151,7 @@ mod tests {
         );
 
         assert_eq!(
-            comp.sighash_all(&tx, 0, &witness_script, value),
+            comp.sighash_all(&tx.input[0], &witness_script, value),
             hex_hash!("185c0be5263dce5b4bb50a047973c1b6272bfbd0103a89444597dc40b248ee7c")
         );
     }
