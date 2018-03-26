@@ -33,7 +33,7 @@ use util::hash::Sha256dHash;
 #[cfg(feature="bitcoinconsensus")] use blockdata::script;
 use blockdata::script::Script;
 use network::serialize::{serialize, BitcoinHash, SimpleEncoder, SimpleDecoder};
-use network::encodable::{ConsensusEncodable, ConsensusDecodable};
+use network::encodable::{ConsensusEncodable, ConsensusDecodable, VarInt};
 
 /// A reference to a transaction output
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
@@ -207,6 +207,48 @@ impl Transaction {
         let mut raw_vec = serialize(&tx).unwrap();
         raw_vec.write_u32::<LittleEndian>(sighash_u32).unwrap();
         Sha256dHash::from_data(&raw_vec)
+    }
+
+    /// Gets the "weight" of this transaction, as defined by BIP141. For transactions with an empty
+    /// witness, this is simply the consensus-serialized size times 4. For transactions with a
+    /// witness, this is the non-witness consensus-serialized size multiplied by 3 plus the
+    /// with-witness consensus-serialized size.
+    #[inline]
+    pub fn get_weight(&self) -> u64 {
+        let mut input_weight = 0;
+        let mut inputs_with_witnesses = 0;
+        for input in &self.input {
+            input_weight += 4*(32 + 4 + 4 + // outpoint (32+4) + nSequence
+                VarInt(input.script_sig.len() as u64).encoded_length() +
+                input.script_sig.len() as u64);
+            if !input.witness.is_empty() {
+                inputs_with_witnesses += 1;
+                input_weight += VarInt(input.witness.len() as u64).encoded_length();
+                for elem in &input.witness {
+                    input_weight += VarInt(elem.len() as u64).encoded_length() + elem.len() as u64;
+                }
+            }
+        }
+        let mut output_size = 0;
+        for output in &self.output {
+            output_size += 8 + // value
+                VarInt(output.script_pubkey.len() as u64).encoded_length() +
+                output.script_pubkey.len() as u64;
+        }
+        let non_input_size =
+        // version:
+        4 +
+        // count varints:
+        VarInt(self.input.len() as u64).encoded_length() +
+        VarInt(self.output.len() as u64).encoded_length() +
+        output_size +
+        // lock_time
+        4;
+        if inputs_with_witnesses == 0 {
+            non_input_size * 4 + input_weight
+        } else {
+            non_input_size * 4 + input_weight + self.input.len() as u64 - inputs_with_witnesses + 2
+        }
     }
 
     #[cfg(feature="bitcoinconsensus")]
@@ -431,6 +473,7 @@ mod tests {
 
         assert_eq!(realtx.bitcoin_hash().be_hex_string(),
                    "a6eab3c14ab5272a58a5ba91505ba1a4b6d7a3a9fcbd187b6cd99a7b6d548cb7".to_string());
+        assert_eq!(realtx.get_weight(), 193*4);
     }
 
     #[test]
@@ -485,6 +528,7 @@ mod tests {
 
         assert_eq!(tx.bitcoin_hash().be_hex_string(), "d6ac4a5e61657c4c604dcde855a1db74ec6b3e54f32695d72c5e11c7761ea1b4");
         assert_eq!(tx.txid().be_hex_string(), "9652aa62b0e748caeec40c4cb7bc17c6792435cc3dfe447dd1ca24f912a1c6ec");
+        assert_eq!(tx.get_weight(), 2718);
 
         // non-segwit tx from my mempool
         let hex_tx = hex_bytes(
@@ -528,6 +572,7 @@ mod tests {
     fn test_segwit_tx_decode() {
         let hex_tx = hex_bytes("010000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff3603da1b0e00045503bd5704c7dd8a0d0ced13bb5785010800000000000a636b706f6f6c122f4e696e6a61506f6f6c2f5345475749542fffffffff02b4e5a212000000001976a914876fbb82ec05caa6af7a3b5e5a983aae6c6cc6d688ac0000000000000000266a24aa21a9edf91c46b49eb8a29089980f02ee6b57e7d63d33b18b4fddac2bcd7db2a39837040120000000000000000000000000000000000000000000000000000000000000000000000000").unwrap();
         let tx: Transaction = deserialize(&hex_tx).unwrap();
+        assert_eq!(tx.get_weight(), 780);
 
         let encoded = strason::from_serialize(&tx).unwrap();
         let decoded = encoded.into_deserialize().unwrap();
