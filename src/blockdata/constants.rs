@@ -61,7 +61,6 @@ fn bitcoin_genesis_tx() -> Transaction {
         lock_time: 0,
         input: vec![],
         output: vec![],
-        witness: vec![]
     };
 
     // Inputs
@@ -73,7 +72,8 @@ fn bitcoin_genesis_tx() -> Transaction {
         prev_hash: Default::default(),
         prev_index: 0xFFFFFFFF,
         script_sig: in_script,
-        sequence: MAX_SEQUENCE
+        sequence: MAX_SEQUENCE,
+        witness: vec![],
     });
 
     // Outputs

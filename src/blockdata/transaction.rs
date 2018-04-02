@@ -66,8 +66,14 @@ pub struct TxIn {
     /// to ignore this feature. This is generally never used since
     /// the miner behaviour cannot be enforced.
     pub sequence: u32,
+    /// Witness data: an array of byte-arrays.
+    /// Note that this field is *not* (de)serialized with the rest of the TxIn in
+    /// ConsensusEncodable/ConsennsusDecodable, as it is (de)serialized at the end of the full
+    /// Transaction. It *is* (de)serialized with the rest of the TxIn in other (de)serializationn
+    /// routines.
+    pub witness: Vec<Vec<u8>>
 }
-serde_struct_impl!(TxIn, prev_hash, prev_index, script_sig, sequence);
+serde_struct_impl!(TxIn, prev_hash, prev_index, script_sig, sequence, witness);
 
 /// A transaction output, which defines new coins to be created from old ones.
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
@@ -98,10 +104,8 @@ pub struct Transaction {
     pub input: Vec<TxIn>,
     /// List of outputs
     pub output: Vec<TxOut>,
-    /// Witness data: for each txin, an array of byte-arrays
-    pub witness: Vec<Vec<Vec<u8>>>
 }
-serde_struct_impl!(Transaction, version, lock_time, input, output, witness);
+serde_struct_impl!(Transaction, version, lock_time, input, output);
 
 impl Transaction {
     /// Computes a "normalized TXID" which does not include any signatures.
@@ -111,9 +115,8 @@ impl Transaction {
         let cloned_tx = Transaction {
             version: self.version,
             lock_time: self.lock_time,
-            input: self.input.iter().map(|txin| TxIn { script_sig: Script::new(), .. *txin }).collect(),
+            input: self.input.iter().map(|txin| TxIn { script_sig: Script::new(), witness: vec![], .. *txin }).collect(),
             output: self.output.clone(),
-            witness: vec![]
         };
         cloned_tx.bitcoin_hash()
     }
@@ -165,7 +168,6 @@ impl Transaction {
             lock_time: self.lock_time,
             input: vec![],
             output: vec![],
-            witness: vec![]
         };
         // Add all inputs necessary..
         if anyone_can_pay {
@@ -173,7 +175,8 @@ impl Transaction {
                 prev_hash: self.input[input_index].prev_hash,
                 script_sig: script_pubkey.clone(),
                 prev_index: self.input[input_index].prev_index,
-                sequence: self.input[input_index].sequence
+                sequence: self.input[input_index].sequence,
+                witness: vec![],
             }];
         } else {
             tx.input = Vec::with_capacity(self.input.len());
@@ -182,7 +185,8 @@ impl Transaction {
                     prev_hash: input.prev_hash,
                     prev_index: input.prev_index,
                     script_sig: if n == input_index { script_pubkey.clone() } else { Script::new() },
-                    sequence: if n != input_index && (sighash == SigHashType::Single || sighash == SigHashType::None) { 0 } else { input.sequence }
+                    sequence: if n != input_index && (sighash == SigHashType::Single || sighash == SigHashType::None) { 0 } else { input.sequence },
+                    witness: vec![],
                 });
             }
         }
@@ -238,13 +242,39 @@ impl BitcoinHash for Transaction {
     }
 }
 
-impl_consensus_encoding!(TxIn, prev_hash, prev_index, script_sig, sequence);
 impl_consensus_encoding!(TxOut, value, script_pubkey);
+
+impl<S: SimpleEncoder> ConsensusEncodable<S> for TxIn {
+    fn consensus_encode(&self, s: &mut S) -> Result <(), S::Error> {
+        try!(self.prev_hash.consensus_encode(s));
+        try!(self.prev_index.consensus_encode(s));
+        try!(self.script_sig.consensus_encode(s));
+        self.sequence.consensus_encode(s)
+    }
+}
+impl<D: SimpleDecoder> ConsensusDecodable<D> for TxIn {
+    fn consensus_decode(d: &mut D) -> Result<TxIn, D::Error> {
+        Ok(TxIn {
+            prev_hash: try!(ConsensusDecodable::consensus_decode(d)),
+            prev_index: try!(ConsensusDecodable::consensus_decode(d)),
+            script_sig: try!(ConsensusDecodable::consensus_decode(d)),
+            sequence: try!(ConsensusDecodable::consensus_decode(d)),
+            witness: vec![],
+        })
+    }
+}
 
 impl<S: SimpleEncoder> ConsensusEncodable<S> for Transaction {
     fn consensus_encode(&self, s: &mut S) -> Result <(), S::Error> {
         try!(self.version.consensus_encode(s));
-        if self.witness.is_empty() {
+        let mut have_witness = false;
+        for input in &self.input {
+            if !input.witness.is_empty() {
+                have_witness = true;
+                break;
+            }
+        }
+        if !have_witness {
             try!(self.input.consensus_encode(s));
             try!(self.output.consensus_encode(s));
         } else {
@@ -252,8 +282,8 @@ impl<S: SimpleEncoder> ConsensusEncodable<S> for Transaction {
             try!(1u8.consensus_encode(s));
             try!(self.input.consensus_encode(s));
             try!(self.output.consensus_encode(s));
-            for witness in &self.witness {
-                try!(witness.consensus_encode(s));
+            for input in &self.input {
+                try!(input.witness.consensus_encode(s));
             }
         }
         self.lock_time.consensus_encode(s)
@@ -275,22 +305,19 @@ impl<D: SimpleDecoder> ConsensusDecodable<D> for Transaction {
                         input: input,
                         output: vec![],
                         lock_time: try!(ConsensusDecodable::consensus_decode(d)),
-                        witness: vec![]
                     })
                 }
                 // BIP144 input witnesses
                 1 => {
-                    let input: Vec<TxIn> = try!(ConsensusDecodable::consensus_decode(d));
+                    let mut input: Vec<TxIn> = try!(ConsensusDecodable::consensus_decode(d));
                     let output: Vec<TxOut> = try!(ConsensusDecodable::consensus_decode(d));
-                    let mut witness: Vec<Vec<Vec<u8>>> = Vec::with_capacity(input.len());
-                    for _ in 0..input.len() {
-                        witness.push(try!(ConsensusDecodable::consensus_decode(d)));
+                    for txin in input.iter_mut() {
+                        txin.witness = try!(ConsensusDecodable::consensus_decode(d));
                     }
                     Ok(Transaction {
                         version: version,
                         input: input,
                         output: output,
-                        witness: witness,
                         lock_time: try!(ConsensusDecodable::consensus_decode(d))
                     })
                 }
@@ -306,7 +333,6 @@ impl<D: SimpleDecoder> ConsensusDecodable<D> for Transaction {
                 input: input,
                 output: try!(ConsensusDecodable::consensus_decode(d)),
                 lock_time: try!(ConsensusDecodable::consensus_decode(d)),
-                witness: vec![]
             })
         }
     }
