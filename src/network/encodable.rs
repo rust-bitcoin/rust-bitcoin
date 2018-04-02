@@ -83,6 +83,21 @@ impl_int_encodable!(i16, read_i16, emit_i16);
 impl_int_encodable!(i32, read_i32, emit_i32);
 impl_int_encodable!(i64, read_i64, emit_i64);
 
+impl VarInt {
+    /// Gets the length of this VarInt when encoded.
+    /// Returns 1 for 0...0xFC, 3 for 0xFD...(2^16-1), 5 for 0x10000...(2^32-1),
+    /// and 9 otherwise.
+    #[inline]
+    pub fn encoded_length(&self) -> u64 {
+        match self.0 {
+            0...0xFC             => { 1 }
+            0xFD...0xFFFF        => { 3 }
+            0x10000...0xFFFFFFFF => { 5 }
+            _                    => { 9 }
+        }
+    }
+}
+
 impl<S: SimpleEncoder> ConsensusEncodable<S> for VarInt {
     #[inline]
     fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
