@@ -19,4 +19,6 @@ install:
 script:
   - cargo build --verbose
   - cargo test --verbose
+  - cargo build --verbose --features=bitcoinconsensus
+  - cargo test --verbose --features=bitcoinconsensus
   - if [ "$(rustup show | grep default | grep stable)" != "" ]; then cd fuzz && cargo test --verbose && ./travis-fuzz.sh; fi

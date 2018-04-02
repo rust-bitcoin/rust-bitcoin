@@ -363,7 +363,7 @@ impl Script {
     #[cfg(feature="bitcoinconsensus")]
     /// verify spend of an input script
     /// # Parameters
-    ///  * index - the index of the output holding this script in its own transaction
+    ///  * index - the input index in spending which is spending this transaction
     ///  * amount - the amount this script guards
     ///  * spending - the transaction that attempts to spend the output holding this script
     pub fn verify (&self, index: usize, amount: u64, spending: &[u8]) -> Result<(), Error> {
