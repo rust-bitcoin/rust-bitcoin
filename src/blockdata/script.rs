@@ -182,8 +182,8 @@ impl error::Error for Error {
         match *self {
             Error::EarlyEndOfScript => "unexpected end of script",
             Error::NumericOverflow => "numeric overflow (number on stack larger than 4 bytes)",
-	        #[cfg(feature="bitcoinconsensus")]
-	        Error::BitcoinConsensus(ref _n) => "bitcoinconsenus verification failed",
+            #[cfg(feature="bitcoinconsensus")]
+            Error::BitcoinConsensus(ref _n) => "bitcoinconsenus verification failed",
             #[cfg(feature="bitcoinconsensus")]
             Error::UnknownSpentTransaction (ref _hash) => "unknown transaction referred in Transaction::verify()",
             #[cfg(feature="bitcoinconsensus")]
