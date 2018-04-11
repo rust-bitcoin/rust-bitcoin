@@ -40,7 +40,7 @@ pub struct BlockHeader {
     pub prev_blockhash: Sha256dHash,
     /// The root hash of the merkle tree of transactions in the block
     pub merkle_root: Sha256dHash,
-    /// The timestamp of the block, as claimed by the mainer
+    /// The timestamp of the block, as claimed by the miner
     pub time: u32,
     /// The target value below which the blockhash must lie, encoded as a
     /// a float (with well-defined rounding, of course)
