@@ -94,3 +94,11 @@ See `Transaction::verify` and `Script::verify` methods.
 
 * Support segwit address types
 
+### 0.13
+
+* Move witnesses inside the `TxIn` structure
+
+* Add `Transaction::get_weight()`
+
+* Update bip143 `sighash_all` API to be more ergonomic
+
