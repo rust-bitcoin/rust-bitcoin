@@ -9,13 +9,6 @@ before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y binutils-dev libunwind8-dev
 
-install:
-  - git clone https://github.com/bitcoin/secp256k1.git
-  - cd secp256k1
-  - ./autogen.sh && ./configure && make && sudo make install
-  - sudo ldconfig /usr/local/lib
-  - cd ..
-
 script:
   - cargo build --verbose
   - cargo test --verbose

@@ -1,6 +1,10 @@
 target
 Cargo.lock
 
+#fuzz
+fuzz/hfuzz_target
+fuzz/hfuzz_workspace
+
 #IntelliJ project files
 .idea
 *.iml
