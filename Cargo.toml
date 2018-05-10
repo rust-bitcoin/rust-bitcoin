@@ -21,13 +21,14 @@ fuzztarget = ["secp256k1/fuzztarget"]
 
 [dependencies]
 bitcoin-bech32 = "0.5.1"
+bitcoinconsensus = { version = "0.16", optional=true }
 byteorder = "1.1"
+hex = "0.3"
 rand = "0.3"
 rust-crypto = "0.2"
 rustc-serialize = "0.3"
 serde = "0.6"
 strason = "0.3"
-bitcoinconsensus = { version = "0.16", optional=true }
 
 [dependencies.secp256k1]
 version = "0.9"
