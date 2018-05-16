@@ -323,6 +323,12 @@ macro_rules! construct_uint {
             }
         }
 
+        impl fmt::Display for $name {
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                <fmt::Debug>::fmt(self, f)
+            }
+        }
+
         impl<S: ::network::serialize::SimpleEncoder> ::network::encodable::ConsensusEncodable<S> for $name {
             #[inline]
             fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
@@ -399,6 +405,19 @@ mod tests {
         assert!(!Uint256::from_u64(10).unwrap().bit(2));
         assert!(Uint256::from_u64(10).unwrap().bit(3));
         assert!(!Uint256::from_u64(10).unwrap().bit(4));
+    }
+
+    #[test]
+    pub fn uint256_display_test() {
+        assert_eq!(format!("{}", Uint256::from_u64(0xDEADBEEF).unwrap()),
+                   "0x00000000000000000000000000000000000000000000000000000000deadbeef");
+        assert_eq!(format!("{}", Uint256::from_u64(u64::max_value()).unwrap()),
+                   "0x000000000000000000000000000000000000000000000000ffffffffffffffff");
+
+        let max_val = Uint256([0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF,
+                               0xFFFFFFFFFFFFFFFF]);
+        assert_eq!(format!("{}", max_val),
+                   "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
     }
 
     #[test]
