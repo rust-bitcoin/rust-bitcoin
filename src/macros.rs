@@ -105,6 +105,17 @@ macro_rules! user_enum {
             }
         }
 
+        impl ::std::str::FromStr for $name {
+            type Err = ::serde::de::value::Error;
+            #[inline]
+            fn from_str(s: &str) -> Result<Self, Self::Err> {
+                match s {
+                    $($txt => Ok($name::$elem)),*,
+                    _ => Err(::serde::de::Error::syntax(stringify!(s)))
+                }
+            }
+        }
+
         impl ::serde::Deserialize for $name {
             #[inline]
             fn deserialize<D>(d: &mut D) -> Result<$name, D::Error>
