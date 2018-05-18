@@ -18,15 +18,16 @@
 use std::char::from_digit;
 use std::cmp::min;
 use std::default::Default;
-use std::error;
 use std::fmt;
 use std::io::Cursor;
 use std::mem;
+use std::str;
 use serde;
 
 use byteorder::{LittleEndian, WriteBytesExt};
 use crypto::digest::Digest;
 use crypto::ripemd160::Ripemd160;
+use hex;
 
 use network::encodable::{ConsensusDecodable, ConsensusEncodable};
 use network::serialize::{SimpleEncoder, RawEncoder, BitcoinHash};
@@ -34,34 +35,6 @@ use util::uint::Uint256;
 
 #[cfg(feature="fuzztarget")]      use util::sha2::Sha256;
 #[cfg(not(feature="fuzztarget"))] use crypto::sha2::Sha256;
-
-/// Hex deserialization error
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
-pub enum HexError {
-    /// Length was not 64 characters
-    BadLength(usize),
-    /// Non-hex character in string
-    BadCharacter(char)
-}
-
-impl fmt::Display for HexError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            HexError::BadLength(n) => write!(f, "bad length {} for sha256d hex string", n),
-            HexError::BadCharacter(c) => write!(f, "bad character {} in sha256d hex string", c)
-        }
-    }
-}
-
-impl error::Error for HexError {
-    fn cause(&self) -> Option<&error::Error> { None }
-    fn description(&self) -> &str {
-        match *self {
-            HexError::BadLength(_) => "sha256d hex string non-64 length",
-            HexError::BadCharacter(_) => "sha256d bad hex character"
-        }
-    }
-}
 
 /// A Bitcoin hash, 32-bytes, computed from x as SHA256(SHA256(x))
 pub struct Sha256dHash([u8; 32]);
@@ -247,35 +220,6 @@ impl Sha256dHash {
         unsafe { mem::transmute([data[0], data[6], data[12], data[18], data[24], data[30]]) }
     }
 
-    // Human-readable hex output
-
-    /// Decodes a big-endian (i.e. reversed vs sha256sum output) hex string as a Sha256dHash
-    #[inline]
-    pub fn from_hex(s: &str) -> Result<Sha256dHash, HexError> {
-        if s.len() != 64 {
-            return Err(HexError::BadLength(s.len()));
-        }
-
-        let bytes = s.as_bytes();
-        let mut ret = [0; 32];
-        for i in 0..32 {
-           let hi = match bytes[2*i] {
-               b @ b'0'...b'9' => (b - b'0') as u8,
-               b @ b'a'...b'f' => (b - b'a' + 10) as u8,
-               b @ b'A'...b'F' => (b - b'A' + 10) as u8,
-               b => return Err(HexError::BadCharacter(b as char))
-           };
-           let lo = match bytes[2*i + 1] {
-               b @ b'0'...b'9' => (b - b'0') as u8,
-               b @ b'a'...b'f' => (b - b'a' + 10) as u8,
-               b @ b'A'...b'F' => (b - b'A' + 10) as u8,
-               b => return Err(HexError::BadCharacter(b as char))
-           };
-           ret[31 - i] = hi * 0x10 + lo;
-        }
-        Ok(Sha256dHash(ret))
-    }
-
     /// Converts a hash to a Hash64 by truncation
     #[inline]
     pub fn into_hash64(self) -> Hash64 {
@@ -346,6 +290,7 @@ impl serde::Deserialize for Sha256dHash {
             fn visit_str<E>(&mut self, hex_str: &str) -> Result<Sha256dHash, E>
                 where E: serde::de::Error
             {
+                use hex::FromHex;
                 Sha256dHash::from_hex(hex_str).map_err(|e| serde::de::Error::syntax(&e.to_string()))
             }
         }
@@ -411,6 +356,65 @@ impl fmt::UpperHex for Sha256dHash {
     }
 }
 
+impl hex::ToHex for Sha256dHash {
+    fn write_hex<W: fmt::Write>(&self, w: &mut W) -> fmt::Result
+    {
+        write!(w, "{:x}", self)
+    }
+
+    fn write_hex_upper<W: fmt::Write>(&self, w: &mut W) -> fmt::Result
+    {
+        write!(w, "{:X}", self)
+    }
+}
+
+impl hex::FromHex for Sha256dHash {
+    type Error = hex::FromHexError;
+
+    fn from_hex<T: AsRef<[u8]>>(hex: T) -> Result<Self, Self::Error>
+    {
+        let bytes = hex.as_ref();
+        if bytes.len() != 64 {
+            return Err(hex::FromHexError::InvalidStringLength);
+        }
+
+        let mut ret = [0; 32];
+        for i in 0..32 {
+            let hi = match bytes[2 * i] {
+                b @ b'0'...b'9' => (b - b'0') as u8,
+                b @ b'a'...b'f' => (b - b'a' + 10) as u8,
+                b @ b'A'...b'F' => (b - b'A' + 10) as u8,
+                b => {
+                    return Err(hex::FromHexError::InvalidHexCharacter {
+                        c: b as char,
+                        index: i,
+                    })
+                }
+            };
+            let lo = match bytes[2 * i + 1] {
+                b @ b'0'...b'9' => (b - b'0') as u8,
+                b @ b'a'...b'f' => (b - b'a' + 10) as u8,
+                b @ b'A'...b'F' => (b - b'A' + 10) as u8,
+                b => {
+                    return Err(hex::FromHexError::InvalidHexCharacter {
+                        c: b as char,
+                        index: i,
+                    })
+                }
+            };
+            ret[31 - i] = hi * 0x10 + lo;
+        }
+        Ok(Sha256dHash(ret))
+    }
+}
+
+impl str::FromStr for Sha256dHash {
+    type Err = hex::FromHexError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        hex::FromHex::from_hex(s)
+    }
+}
 
 /// Any collection of objects for which a merkle root makes sense to calculate
 pub trait MerkleRoot {
