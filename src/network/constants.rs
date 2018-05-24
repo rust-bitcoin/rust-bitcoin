@@ -90,8 +90,8 @@ mod tests {
       assert_eq!(Network::Bitcoin.to_string(), "bitcoin");
       assert_eq!(Network::Testnet.to_string(), "testnet");
 
-      assert_eq!("bitcoin".parse(), Ok(Network::Bitcoin));
-      assert_eq!("testnet".parse(), Ok(Network::Testnet));
+      assert_eq!("bitcoin".parse::<Network>().unwrap(), Network::Bitcoin);
+      assert_eq!("testnet".parse::<Network>().unwrap(), Network::Testnet);
       assert!("fakenet".parse::<Network>().is_err());
   }
 }

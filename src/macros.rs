@@ -106,12 +106,15 @@ macro_rules! user_enum {
         }
 
         impl ::std::str::FromStr for $name {
-            type Err = ::serde::de::value::Error;
+            type Err = ::std::io::Error;
             #[inline]
             fn from_str(s: &str) -> Result<Self, Self::Err> {
                 match s {
                     $($txt => Ok($name::$elem)),*,
-                    _ => Err(::serde::de::Error::syntax(stringify!(s)))
+                    _ => Err(::std::io::Error::new(
+                        ::std::io::ErrorKind::InvalidInput,
+                        format!("Unknown network (type {})", s),
+                    )),
                 }
             }
         }
