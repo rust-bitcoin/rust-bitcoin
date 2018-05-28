@@ -31,7 +31,11 @@ pub enum InvType {
     /// Transaction
     Transaction,
     /// Block
-    Block
+    Block,
+    /// Witness Block
+    WitnessBlock,
+    /// Witness Transaction
+    WitnessTransaction
 }
 
 // Some simple messages
@@ -103,7 +107,9 @@ impl<S: SimpleEncoder> ConsensusEncodable<S> for Inventory {
         try!(match self.inv_type {
             InvType::Error => 0u32, 
             InvType::Transaction => 1,
-            InvType::Block => 2
+            InvType::Block => 2,
+            InvType::WitnessBlock => 0x40000002,
+            InvType::WitnessTransaction => 0x40000001
         }.consensus_encode(s));
         self.hash.consensus_encode(s)
     }
