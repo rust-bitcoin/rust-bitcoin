@@ -77,6 +77,10 @@ macro_rules! impl_array_newtype {
             #[inline]
             /// Returns whether the object, as an array, is empty. Always false.
             pub fn is_empty(&self) -> bool { false }
+
+            #[inline]
+            /// Returns the underlying data.
+            pub fn data(&self) -> [$ty; $len] { self.0.clone() }
         }
 
         impl<'a> From<&'a [$ty]> for $thing {

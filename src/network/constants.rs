@@ -84,5 +84,15 @@ mod tests {
     let bad: Result<Network, _> = deserialize("fakenet".as_bytes());
     assert!(bad.is_err());
   }
+
+  #[test]
+  fn string_test() {
+      assert_eq!(Network::Bitcoin.to_string(), "bitcoin");
+      assert_eq!(Network::Testnet.to_string(), "testnet");
+
+      assert_eq!("bitcoin".parse::<Network>().unwrap(), Network::Bitcoin);
+      assert_eq!("testnet".parse::<Network>().unwrap(), Network::Testnet);
+      assert!("fakenet".parse::<Network>().is_err());
+  }
 }
 

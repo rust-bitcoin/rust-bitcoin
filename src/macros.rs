@@ -105,6 +105,20 @@ macro_rules! user_enum {
             }
         }
 
+        impl ::std::str::FromStr for $name {
+            type Err = ::std::io::Error;
+            #[inline]
+            fn from_str(s: &str) -> Result<Self, Self::Err> {
+                match s {
+                    $($txt => Ok($name::$elem)),*,
+                    _ => Err(::std::io::Error::new(
+                        ::std::io::ErrorKind::InvalidInput,
+                        format!("Unknown network (type {})", s),
+                    )),
+                }
+            }
+        }
+
         impl ::serde::Deserialize for $name {
             #[inline]
             fn deserialize<D>(d: &mut D) -> Result<$name, D::Error>
