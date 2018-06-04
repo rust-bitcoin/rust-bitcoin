@@ -94,3 +94,11 @@ See `Transaction::verify` and `Script::verify` methods.
 
 * Update bip143 `sighash_all` API to be more ergonomic
 
+#### 0.13.1
+
+* Add `Display` trait to uints, `FromStr` trait to `Network` enum
+
+* Add witness inv types to inv enum, constants for Bitcoin regtest network, `is_coin_base` accessor for tx inputs
+
+* Expose `merkleroot(Vec<Sha256dHash>)`
+
