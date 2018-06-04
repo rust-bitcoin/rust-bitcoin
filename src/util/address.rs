@@ -259,6 +259,10 @@ impl FromStr for Address {
             });
         }
 
+        if s.len() > 50 {
+            return Err(Error::Base58(base58::Error::InvalidLength(s.len() * 11 / 15)));
+        }
+
         // Base 58
         let data = try!(base58::from_check(s));
 

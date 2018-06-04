@@ -27,6 +27,8 @@ pub enum Error {
     /// Checksum was not correct (expected, actual)
     BadChecksum(u32, u32),
     /// The length (in bytes) of the object was not correct
+    /// Note that if the length is excessively long the provided length may be
+    /// an estimate (and the checksum step may be skipped).
     InvalidLength(usize),
     /// Version byte(s) were not recognized
     InvalidVersion(Vec<u8>),
