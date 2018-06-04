@@ -419,29 +419,31 @@ pub trait MerkleRoot {
     fn merkle_root(&self) -> Sha256dHash;
 }
 
+/// Calculates the merkle root of a list of txids hashes directly
+pub fn bitcoin_merkle_root(data: Vec<Sha256dHash>) -> Sha256dHash {
+    // Base case
+    if data.len() < 1 {
+        return Default::default();
+    }
+    if data.len() < 2 {
+        return data[0];
+    }
+    // Recursion
+    let mut next = vec![];
+    for idx in 0..((data.len() + 1) / 2) {
+        let idx1 = 2 * idx;
+        let idx2 = min(idx1 + 1, data.len() - 1);
+        let mut encoder = RawEncoder::new(Cursor::new(vec![]));
+        data[idx1].consensus_encode(&mut encoder).unwrap();
+        data[idx2].consensus_encode(&mut encoder).unwrap();
+        next.push(encoder.into_inner().into_inner().bitcoin_hash());
+    }
+    bitcoin_merkle_root(next)
+}
+
 impl<'a, T: BitcoinHash> MerkleRoot for &'a [T] {
     fn merkle_root(&self) -> Sha256dHash {
-        fn merkle_root(data: Vec<Sha256dHash>) -> Sha256dHash {
-            // Base case
-            if data.len() < 1 {
-                return Default::default();
-            }
-            if data.len() < 2 {
-                return data[0];
-            }
-            // Recursion
-            let mut next = vec![];
-            for idx in 0..((data.len() + 1) / 2) {
-                let idx1 = 2 * idx;
-                let idx2 = min(idx1 + 1, data.len() - 1);
-                let mut encoder = RawEncoder::new(Cursor::new(vec![]));
-                data[idx1].consensus_encode(&mut encoder).unwrap();
-                data[idx2].consensus_encode(&mut encoder).unwrap();
-                next.push(encoder.into_inner().into_inner().bitcoin_hash());
-            }
-            merkle_root(next)
-        }
-        merkle_root(self.iter().map(|obj| obj.bitcoin_hash()).collect())
+        bitcoin_merkle_root(self.iter().map(|obj| obj.bitcoin_hash()).collect())
     }
 }
 
