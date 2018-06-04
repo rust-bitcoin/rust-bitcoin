@@ -291,6 +291,9 @@ impl Script {
     /// Convert the script into a byte vector
     pub fn into_vec(self) -> Vec<u8> { self.0.into_vec() }
 
+    /// returns a copy of the script data
+    pub fn data (&self) -> Vec<u8> { self.0.clone().into_vec() }
+
     /// Compute the P2SH output corresponding to this redeem script
     pub fn to_p2sh(&self) -> Script {
         Builder::new().push_opcode(opcodes::All::OP_HASH160)
