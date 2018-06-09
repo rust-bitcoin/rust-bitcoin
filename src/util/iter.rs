@@ -69,7 +69,7 @@ pub trait Pairable : Sized + Iterator {
 }
 
 impl<I: Iterator> Pairable for I {
-    /// Creates an iterator that yields pairs ef elements from the underlying
+    /// Creates an iterator that yields pairs of elements from the underlying
     /// iterator, yielding `None` when there are fewer than two elements to
     /// return.
     #[inline]
