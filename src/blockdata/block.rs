@@ -66,7 +66,7 @@ pub struct LoneBlockHeader {
     /// The actual block header
     pub header: BlockHeader,
     /// The number of transactions in the block. This will always be zero
-    /// when the LoneBlockHeader is returned as part ef a `headers` message.
+    /// when the LoneBlockHeader is returned as part of a `headers` message.
     pub tx_count: VarInt
 }
 
