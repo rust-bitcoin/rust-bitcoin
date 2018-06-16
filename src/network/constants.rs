@@ -28,9 +28,7 @@ user_enum! {
         #[doc="Classic Bitcoin"]
         Bitcoin <-> "bitcoin",
         #[doc="Bitcoin's testnet"]
-        Testnet <-> "testnet",
-        #[doc="Bitcoin's regtest"]
-        Regtest <-> "regtest"
+        Testnet <-> "testnet"
     }
 }
 
@@ -46,8 +44,7 @@ pub const USER_AGENT: &'static str = "bitcoin-rust v0.1";
 pub fn magic(network: Network) -> u32 {
     match network {
         Network::Bitcoin => 0xD9B4BEF9,
-        Network::Testnet => 0x0709110B,
-        Network::Regtest => 0xDAB5BFFA,
+        Network::Testnet => 0x0709110B
         // Note: any new entries here must be added to `consensus_decode` below
     }
 }
@@ -66,7 +63,6 @@ impl<D: SimpleDecoder> ConsensusDecodable<D> for Network {
         match magic {
             0xD9B4BEF9 => Ok(Network::Bitcoin),
             0x0709110B => Ok(Network::Testnet),
-            0xDAB5BFFA => Ok(Network::Regtest),
             x => Err(d.error(format!("Unknown network (magic {:x})", x)))
         }
     }
@@ -81,11 +77,9 @@ mod tests {
   fn serialize_test() {
     assert_eq!(serialize(&Network::Bitcoin).unwrap(), vec![0xf9, 0xbe, 0xb4, 0xd9]);
     assert_eq!(serialize(&Network::Testnet).unwrap(), vec![0x0b, 0x11, 0x09, 0x07]);
-    assert_eq!(serialize(&Network::Regtest).unwrap(), vec![0xfa, 0xbf, 0xb5, 0xda]);
 
     assert_eq!(deserialize(&[0xf9, 0xbe, 0xb4, 0xd9]).ok(), Some(Network::Bitcoin));
     assert_eq!(deserialize(&[0x0b, 0x11, 0x09, 0x07]).ok(), Some(Network::Testnet));
-    assert_eq!(deserialize(&[0xfa, 0xbf, 0xb5, 0xda]).ok(), Some(Network::Regtest));
 
     let bad: Result<Network, _> = deserialize("fakenet".as_bytes());
     assert!(bad.is_err());

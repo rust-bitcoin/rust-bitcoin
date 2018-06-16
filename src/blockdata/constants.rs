@@ -121,20 +121,6 @@ pub fn genesis_block(network: Network) -> Block {
                 txdata: txdata
             }
         }
-        Network::Regtest => {
-            let txdata = vec![bitcoin_genesis_tx()];
-            Block {
-                header: BlockHeader {
-                    version: 1,
-                    prev_blockhash: Default::default(),
-                    merkle_root: txdata.merkle_root(),
-                    time: 1296688602,
-                    bits: 0x207fffff,
-                    nonce: 2
-                },
-                txdata: txdata
-            }
-        }
     }
 }
 
