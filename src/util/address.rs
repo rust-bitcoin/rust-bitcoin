@@ -18,7 +18,7 @@
 use std::str::FromStr;
 use std::string::ToString;
 
-use bitcoin_bech32::{self, WitnessProgram};
+use bitcoin_bech32::{self, WitnessProgram, u5};
 use secp256k1::key::PublicKey;
 
 use blockdata::script;
@@ -100,7 +100,7 @@ impl Address {
             network: network,
             payload: Payload::WitnessProgram(
                 // unwrap is safe as witness program is known to be correct as above
-                WitnessProgram::new(0,
+                WitnessProgram::new(u5::try_from_u8(0).expect("0<32"),
                                     Hash160::from_data(&pk.serialize()[..])[..].to_vec(),
                                     Address::bech_network(network)).unwrap())
         }
@@ -134,7 +134,11 @@ impl Address {
             network: network,
             payload: Payload::WitnessProgram(
                 // unwrap is safe as witness program is known to be correct as above
-                WitnessProgram::new(0, d.to_vec(), Address::bech_network(network)).unwrap()
+                WitnessProgram::new(
+                    u5::try_from_u8(0).expect("0<32"),
+                    d.to_vec(),
+                    Address::bech_network(network)
+                ).unwrap()
             )
         }
     }
@@ -190,7 +194,7 @@ impl Address {
             },
             Payload::WitnessProgram(ref witprog) => {
                 script::Builder::new()
-                    .push_int(witprog.version() as i64)
+                    .push_int(witprog.version().to_u8() as i64)
                     .push_slice(witprog.program())
             }
         }.into_script()
@@ -250,8 +254,8 @@ impl FromStr for Address {
                 bitcoin_bech32::constants::Network::Testnet => Network::Testnet,
                 _ => panic!("unknown network")
             };
-            if witprog.version() != 0 {
-                return Err(Error::UnsupportedWitnessVersion(witprog.version()));
+            if witprog.version().to_u8() != 0 {
+                return Err(Error::UnsupportedWitnessVersion(witprog.version().to_u8()));
             }
             return Ok(Address {
                 network: network,
