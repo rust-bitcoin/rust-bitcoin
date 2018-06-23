@@ -357,6 +357,11 @@ impl Script {
             self.0[1] == opcodes::All::OP_PUSHBYTES_20 as u8
     }
 
+    /// Check if this is an OP_RETURN output
+    pub fn is_op_return (&self) -> bool {
+        !self.0.is_empty() && (opcodes::All::from(self.0[0]) == opcodes::All::OP_RETURN)
+    }
+
     /// Whether a script can be proven to have no satisfying input
     pub fn is_provably_unspendable(&self) -> bool {
         !self.0.is_empty() && (opcodes::All::from(self.0[0]).classify() == opcodes::Class::ReturnOp ||
@@ -689,6 +694,13 @@ mod test {
         // p2pkhash
         assert_eq!(hex_script!("76a914ee61d57ab51b9d212335b1dba62794ac20d2bcf988ac").is_provably_unspendable(), false);
         assert_eq!(hex_script!("6aa9149eb21980dc9d413d8eac27314938b9da920ee53e87").is_provably_unspendable(), true);
+    }
+
+    #[test]
+    fn op_return_test() {
+        assert_eq!(hex_script!("6aa9149eb21980dc9d413d8eac27314938b9da920ee53e87").is_op_return(), true);
+        assert_eq!(hex_script!("76a914ee61d57ab51b9d212335b1dba62794ac20d2bcf988ac").is_op_return(), false);
+        assert_eq!(hex_script!("").is_op_return(), false);
     }
 
     #[test]
