@@ -157,11 +157,20 @@ impl Template {
 }
 
 impl<'a> From<&'a [u8]> for Template {
-    fn from(slice: &'a [u8]) -> Template { 
+    fn from(slice: &'a [u8]) -> Template {
+        let mut skip = 0;
         Template(slice.iter().map(|&byte| {
-            if byte == PUBKEY {
-                TemplateElement::Key
+            if skip == 0 {
+                if byte == PUBKEY {
+                    TemplateElement::Key
+                } else if byte < 76 {
+                    skip = byte as u32;
+                    TemplateElement::Op(opcodes::All::from(byte))
+                } else {
+                    TemplateElement::Op(opcodes::All::from(byte))
+                }
             } else {
+                skip -= 1;
                 TemplateElement::Op(opcodes::All::from(byte))
             }
         }).collect())
@@ -375,6 +384,28 @@ mod tests {
         assert_eq!(template_short.to_script(alpha_keys), Err(Error::TooManyKeys(7)));
         assert_eq!(template_long.to_script(alpha_keys), Err(Error::TooFewKeys(7)));
         assert!(template.to_script(alpha_keys).is_ok());
+    }
+
+    #[test]
+    fn script_with_fe_in_push() {
+        let secp = Secp256k1::new();
+        let alpha_keys = alpha_keys!(&secp);
+        let template = Template::from(&hex!("7452876353fefefefefefefe536702c00fb2755121030123456789fefefe6789012345678901234567890123456789012345678901235168ae")[..]);
+        assert_eq!(template.required_keys(), 7);
+
+        let res = template.to_script(alpha_keys).unwrap();
+        assert_eq!(
+            format!("{:x}", res),
+            "7452876353210269992fb441ae56968e5b77d46a3e53b69f136444ae65a94041f\
+             c937bdb28d93321021df31471281d4478df85bfce08a10aab82601dca949a7995\
+             0f8ddf7002bd915a2102174c82021492c2c6dfcbfa4187d10d38bed06afb7fdcd\
+             72c880179fddd641ea121033f96e43d72c33327b6a4631ccaa6ea07f0b106c88b\
+             9dc71c9000bb6044d5e88a210313d8748790f2a86fb524579b46ce3c68fedd58d\
+             2a738716249a9f7d5458a15c221030b632eeb079eb83648886122a04c7bf6d98a\
+             b5dfb94cf353ee3e9382a4c2fab02102fb54a7fcaa73c307cfd70f3fa66a2e424\
+             7a71858ca731396343ad30c7c4009ce536702c00fb2755121030123456789fefe\
+             fe6789012345678901234567890123456789012345678901235168ae"
+        );
     }
 }
 
