@@ -28,6 +28,7 @@ rustc-serialize = "0.3"
 serde = "0.6"
 strason = "0.3"
 bitcoinconsensus = { version = "0.16", optional=true }
+lazy_static = "1.0"
 
 [dependencies.secp256k1]
 version = "0.9"
