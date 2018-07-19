@@ -51,6 +51,16 @@ pub fn hex_bytes(s: &str) -> Result<Vec<u8>, Error> {
     }
 }
 
+
+/// Convert a byte array to a hexadecimal string
+pub fn to_hex_string(bytes: &[u8]) -> String {
+  let strs: Vec<String> = bytes.iter()
+                               .map(|b| format!("{:02x}", b))
+                               .collect();
+  strs.join("")
+}
+
+
 /// Dump an error message to the screen
 /// TODO all uses of this should be replaced with some sort of logging infrastructure
 pub fn consume_err<T>(s: &str, res: Result<T, Error>) {
