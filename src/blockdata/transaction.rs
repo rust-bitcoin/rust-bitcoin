@@ -899,7 +899,7 @@ mod tests {
     #[test]
     #[cfg(feature="bitcoinconsensus")]
     fn test_transaction_verify () {
-        use serialize::hex::FromHex;
+        use hex::decode;
         use std::collections::HashMap;
         use blockdata::script;
         // a random recent segwit transaction from blockchain using both old and segwit inputs

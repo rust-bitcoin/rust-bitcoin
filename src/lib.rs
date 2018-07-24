@@ -45,7 +45,7 @@ extern crate bitcoin_bech32;
 extern crate byteorder;
 extern crate crypto;
 extern crate rand;
-extern crate rustc_serialize as serialize;
+extern crate hex;
 extern crate secp256k1;
 extern crate serde;
 extern crate strason;

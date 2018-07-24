@@ -24,10 +24,13 @@ bitcoin-bech32 = "0.5.1"
 byteorder = "1.1"
 rand = "0.3"
 rust-crypto = "0.2"
-rustc-serialize = "0.3"
 serde = "0.6"
 strason = "0.3"
 bitcoinconsensus = { version = "0.16", optional=true }
+
+[dependencies.hex]
+git = "https://github.com/KokaKiwi/rust-hex"
+rev = "19fd37137686c30058bd9d11d21590e726ffdf31"
 
 [dependencies.secp256k1]
 version = "0.9"

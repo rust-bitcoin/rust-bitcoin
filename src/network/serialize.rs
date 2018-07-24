@@ -21,7 +21,7 @@
 
 use std::io::{Cursor, Read, Write};
 use byteorder::{LittleEndian, WriteBytesExt, ReadBytesExt};
-use serialize::hex::ToHex;
+use hex::encode;
 
 use network::encodable::{ConsensusDecodable, ConsensusEncodable};
 use util::hash::Sha256dHash;
@@ -53,8 +53,7 @@ pub fn serialize<T: ?Sized>(data: &T) -> Result<Vec<u8>, util::Error>
 pub fn serialize_hex<T: ?Sized>(data: &T) -> Result<String, util::Error>
      where T: ConsensusEncodable<RawEncoder<Cursor<Vec<u8>>>>
 {
-    let serial = try!(serialize(data));
-    Ok(serial.to_hex())
+    Ok(encode(serialize(data)?))
 }
 
 /// Deserialize an object from a vector
