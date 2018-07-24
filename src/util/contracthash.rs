@@ -157,7 +157,7 @@ impl Template {
 }
 
 impl<'a> From<&'a [u8]> for Template {
-    fn from(slice: &'a [u8]) -> Template { 
+    fn from(slice: &'a [u8]) -> Template {
         Template(slice.iter().map(|&byte| {
             if byte == PUBKEY {
                 TemplateElement::Key
@@ -274,7 +274,7 @@ pub fn untemplate(script: &script::Script) -> Result<(Template, Vec<PublicKey>),
                         if mode == Mode::CopyingKeys { return Err(Error::ExpectedKey); }
                         mode = Mode::SeekingKeys;
                     }
-                    // Numbers after keys mean we expect a CHECKMULTISIG. 
+                    // Numbers after keys mean we expect a CHECKMULTISIG.
                     opcodes::Class::PushNum(_) => {
                         if mode == Mode::SeekingCheckMulti { return Err(Error::ExpectedChecksig); }
                         if mode == Mode::CopyingKeys { mode = Mode::SeekingCheckMulti; }
@@ -294,7 +294,7 @@ pub fn untemplate(script: &script::Script) -> Result<(Template, Vec<PublicKey>),
 mod tests {
     use secp256k1::Secp256k1;
     use secp256k1::key::PublicKey;
-    use serialize::hex::FromHex;
+    use hex::decode as hex_decode;
     use rand::thread_rng;
 
     use blockdata::script::Script;
@@ -302,7 +302,7 @@ mod tests {
 
     use super::*;
 
-    macro_rules! hex (($hex:expr) => ($hex.from_hex().unwrap()));
+    macro_rules! hex (($hex:expr) => (hex_decode($hex).unwrap()));
     macro_rules! hex_key (($secp:expr, $hex:expr) => (PublicKey::from_slice($secp, &hex!($hex)).unwrap()));
     macro_rules! alpha_template(() => (Template::from(&hex!("55fefefefefefefe57AE")[..])));
     macro_rules! alpha_keys(($secp:expr) => (

@@ -281,10 +281,10 @@ macro_rules! display_from_debug {
 }
 
 #[cfg(test)]
-macro_rules! hex_script (($s:expr) => (::blockdata::script::Script::from($s.from_hex().unwrap())));
+macro_rules! hex_script (($s:expr) => (::blockdata::script::Script::from(::hex::decode($s).unwrap())));
 
 #[cfg(test)]
-macro_rules! hex_hash (($s:expr) => (::util::hash::Sha256dHash::from(&$s.from_hex().unwrap()[..])));
+macro_rules! hex_hash (($s:expr) => (::util::hash::Sha256dHash::from(&::hex::decode($s).unwrap()[..])));
 
 
 // Macros to replace serde's codegen while that is not stable
