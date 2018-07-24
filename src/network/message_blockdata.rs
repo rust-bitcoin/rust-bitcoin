@@ -136,15 +136,15 @@ impl<D: SimpleDecoder> ConsensusDecodable<D> for Inventory {
 mod tests {
     use super::{GetHeadersMessage, GetBlocksMessage};
 
-    use serialize::hex::FromHex;
+    use hex::decode;
 
     use network::serialize::{deserialize, serialize};
     use std::default::Default;
 
     #[test]
     fn getblocks_message_test() {
-        let from_sat = "72110100014a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b0000000000000000000000000000000000000000000000000000000000000000".from_hex().unwrap();
-        let genhash = "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b".from_hex().unwrap();
+        let from_sat = decode("72110100014a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b0000000000000000000000000000000000000000000000000000000000000000").unwrap();
+        let genhash = decode("4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b").unwrap();
 
         let decode: Result<GetBlocksMessage, _> = deserialize(&from_sat);
         assert!(decode.is_ok());
@@ -159,8 +159,8 @@ mod tests {
 
     #[test]
     fn getheaders_message_test() {
-        let from_sat = "72110100014a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b0000000000000000000000000000000000000000000000000000000000000000".from_hex().unwrap();
-        let genhash = "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b".from_hex().unwrap();
+        let from_sat = decode("72110100014a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b0000000000000000000000000000000000000000000000000000000000000000").unwrap();
+        let genhash = decode("4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b").unwrap();
 
         let decode: Result<GetHeadersMessage, _> = deserialize(&from_sat);
         assert!(decode.is_ok());

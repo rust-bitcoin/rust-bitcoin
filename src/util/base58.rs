@@ -194,7 +194,7 @@ pub fn check_encode_slice(data: &[u8]) -> String {
 
 #[cfg(test)]
 mod tests {
-    use serialize::hex::FromHex;
+    use hex::decode;
 
     use super::*;
 
@@ -211,7 +211,7 @@ mod tests {
         assert_eq!(&encode_slice(&[0, 0, 0, 0, 13, 36][..]), "1111211");
 
         // Addresses
-        let addr = "00f8917303bfa8ef24f292e8fa1419b20460ba064d".from_hex().unwrap();
+        let addr = decode("00f8917303bfa8ef24f292e8fa1419b20460ba064d").unwrap();
         assert_eq!(&check_encode_slice(&addr[..]), "1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH");
       }
 
@@ -229,7 +229,7 @@ mod tests {
 
         // Addresses
         assert_eq!(from_check("1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH").ok(),
-                   Some("00f8917303bfa8ef24f292e8fa1419b20460ba064d".from_hex().unwrap()))
+                   Some(decode("00f8917303bfa8ef24f292e8fa1419b20460ba064d").unwrap()))
     }
 
     #[test]

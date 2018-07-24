@@ -105,7 +105,7 @@ impl SighashComponents {
 
 #[cfg(test)]
 mod tests {
-    use serialize::hex::FromHex;
+    use hex::decode;
 
     use blockdata::transaction::Transaction;
     use network::serialize::deserialize;

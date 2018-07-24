@@ -294,7 +294,7 @@ pub fn untemplate(script: &script::Script) -> Result<(Template, Vec<PublicKey>),
 mod tests {
     use secp256k1::Secp256k1;
     use secp256k1::key::PublicKey;
-    use serialize::hex::FromHex;
+    use hex::decode;
     use rand::thread_rng;
 
     use blockdata::script::Script;
@@ -302,7 +302,7 @@ mod tests {
 
     use super::*;
 
-    macro_rules! hex (($hex:expr) => ($hex.from_hex().unwrap()));
+    macro_rules! hex (($hex:expr) => (decode($hex).unwrap()));
     macro_rules! hex_key (($secp:expr, $hex:expr) => (PublicKey::from_slice($secp, &hex!($hex)).unwrap()));
     macro_rules! alpha_template(() => (Template::from(&hex!("55fefefefefefefe57AE")[..])));
     macro_rules! alpha_keys(($secp:expr) => (
