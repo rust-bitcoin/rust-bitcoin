@@ -20,7 +20,7 @@ bitcoinconsenus = ["bitcoinconsensus"]
 fuzztarget = ["secp256k1/fuzztarget"]
 
 [dependencies]
-bitcoin-bech32 = "0.5.1"
+bitcoin-bech32 = "0.8.0"
 byteorder = "1.1"
 rand = "0.3"
 rust-crypto = "0.2"
