@@ -95,9 +95,11 @@ mod tests {
   fn string_test() {
       assert_eq!(Network::Bitcoin.to_string(), "bitcoin");
       assert_eq!(Network::Testnet.to_string(), "testnet");
+      assert_eq!(Network::Regtest.to_string(), "regtest");
 
       assert_eq!("bitcoin".parse::<Network>().unwrap(), Network::Bitcoin);
       assert_eq!("testnet".parse::<Network>().unwrap(), Network::Testnet);
+      assert_eq!("regtest".parse::<Network>().unwrap(), Network::Regtest);
       assert!("fakenet".parse::<Network>().is_err());
   }
 }
