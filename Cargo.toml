@@ -32,5 +32,5 @@ git = "https://github.com/KokaKiwi/rust-hex"
 rev = "19fd37137686c30058bd9d11d21590e726ffdf31"
 
 [dependencies.secp256k1]
-version = "0.9"
+version = "0.10"
 features = [ "rand" ]

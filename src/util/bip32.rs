@@ -230,7 +230,7 @@ impl From<secp256k1::Error> for Error {
 
 impl ExtendedPrivKey {
     /// Construct a new master key from a seed value
-    pub fn new_master(secp: &Secp256k1, network: Network, seed: &[u8]) -> Result<ExtendedPrivKey, Error> {
+    pub fn new_master<C>(secp: &Secp256k1<C>, network: Network, seed: &[u8]) -> Result<ExtendedPrivKey, Error> {
         let mut result = [0; 64];
         let mut hmac = Hmac::new(Sha512::new(), b"Bitcoin seed");
         hmac.input(seed);
@@ -247,9 +247,9 @@ impl ExtendedPrivKey {
     }
 
     /// Attempts to derive an extended private key from a path.
-    pub fn derive_priv(
+    pub fn derive_priv<C: secp256k1::Signing>(
         &self,
-        secp: &Secp256k1,
+        secp: &Secp256k1<C>,
         cnums: &[ChildNumber],
     ) -> Result<ExtendedPrivKey, Error> {
         let mut sk: ExtendedPrivKey = *self;
@@ -260,14 +260,14 @@ impl ExtendedPrivKey {
     }
 
     /// Private->Private child key derivation
-    pub fn ckd_priv(&self, secp: &Secp256k1, i: ChildNumber) -> Result<ExtendedPrivKey, Error> {
+    pub fn ckd_priv<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>, i: ChildNumber) -> Result<ExtendedPrivKey, Error> {
         let mut result = [0; 64];
         let mut hmac = Hmac::new(Sha512::new(), &self.chain_code[..]);
         let mut be_n = [0; 4];
         match i {
             ChildNumber::Normal {..} => {
                 // Non-hardened key: compute public data and use that
-                hmac.input(&PublicKey::from_secret_key(secp, &self.secret_key).unwrap().serialize()[..]);
+                hmac.input(&PublicKey::from_secret_key(secp, &self.secret_key).serialize()[..]);
             }
             ChildNumber::Hardened {..} => {
                 // Hardened key: use only secret data to prevent public derivation
@@ -293,7 +293,7 @@ impl ExtendedPrivKey {
     }
 
     /// Returns the HASH160 of the chaincode
-    pub fn identifier(&self, secp: &Secp256k1) -> [u8; 20] {
+    pub fn identifier<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> [u8; 20] {
         let mut sha2_res = [0; 32];
         let mut ripemd_res = [0; 20];
         // Compute extended public key
@@ -311,28 +311,28 @@ impl ExtendedPrivKey {
     }
 
     /// Returns the first four bytes of the identifier
-    pub fn fingerprint(&self, secp: &Secp256k1) -> Fingerprint {
+    pub fn fingerprint<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> Fingerprint {
         Fingerprint::from(&self.identifier(secp)[0..4])
     }
 }
 
 impl ExtendedPubKey {
     /// Derives a public key from a private key
-    pub fn from_private(secp: &Secp256k1, sk: &ExtendedPrivKey) -> ExtendedPubKey {
+    pub fn from_private<C: secp256k1::Signing>(secp: &Secp256k1<C>, sk: &ExtendedPrivKey) -> ExtendedPubKey {
         ExtendedPubKey {
             network: sk.network,
             depth: sk.depth,
             parent_fingerprint: sk.parent_fingerprint,
             child_number: sk.child_number,
-            public_key: PublicKey::from_secret_key(secp, &sk.secret_key).unwrap(),
+            public_key: PublicKey::from_secret_key(secp, &sk.secret_key),
             chain_code: sk.chain_code
         }
     }
 
     /// Attempts to derive an extended public key from a path.
-    pub fn derive_pub(
+    pub fn derive_pub<C: secp256k1::Verification>(
         &self,
-        secp: &Secp256k1,
+        secp: &Secp256k1<C>,
         cnums: &[ChildNumber],
     ) -> Result<ExtendedPubKey, Error> {
         let mut pk: ExtendedPubKey = *self;
@@ -343,7 +343,7 @@ impl ExtendedPubKey {
     }
 
     /// Compute the scalar tweak added to this key to get a child key
-    pub fn ckd_pub_tweak(&self, secp: &Secp256k1, i: ChildNumber) -> Result<(SecretKey, ChainCode), Error> {
+    pub fn ckd_pub_tweak<C>(&self, secp: &Secp256k1<C>, i: ChildNumber) -> Result<(SecretKey, ChainCode), Error> {
         match i {
             ChildNumber::Hardened {..} => {
                 Err(Error::CannotDeriveFromHardenedKey)
@@ -366,7 +366,11 @@ impl ExtendedPubKey {
     }
 
     /// Public->Public child key derivation
-    pub fn ckd_pub(&self, secp: &Secp256k1, i: ChildNumber) -> Result<ExtendedPubKey, Error> {
+    pub fn ckd_pub<C: secp256k1::Verification>(
+        &self,
+        secp: &Secp256k1<C>,
+        i: ChildNumber,
+    ) -> Result<ExtendedPubKey, Error> {
         let (sk, chain_code) = self.ckd_pub_tweak(secp, i)?;
         let mut pk = self.public_key.clone();
         pk.add_exp_assign(secp, &sk).map_err(Error::Ecdsa)?;
@@ -426,7 +430,7 @@ impl FromStr for ExtendedPrivKey {
     type Err = base58::Error;
 
     fn from_str(inp: &str) -> Result<ExtendedPrivKey, base58::Error> {
-        let s = Secp256k1::with_caps(secp256k1::ContextFlag::None);
+        let s = Secp256k1::without_caps();
         let data = base58::from_check(inp)?;
 
         if data.len() != 78 {
@@ -477,7 +481,7 @@ impl FromStr for ExtendedPubKey {
     type Err = base58::Error;
 
     fn from_str(inp: &str) -> Result<ExtendedPubKey, base58::Error> {
-        let s = Secp256k1::with_caps(secp256k1::ContextFlag::None);
+        let s = Secp256k1::without_caps();
         let data = base58::from_check(inp)?;
 
         if data.len() != 78 {
@@ -511,7 +515,7 @@ mod tests {
     use std::str::FromStr;
     use std::string::ToString;
 
-    use secp256k1::Secp256k1;
+    use secp256k1::{self, Secp256k1};
     use hex::decode as hex_decode;
 
     use network::constants::Network::{self, Bitcoin};
@@ -520,7 +524,7 @@ mod tests {
     use super::ChildNumber::{Hardened, Normal};
     use super::Error;
 
-    fn test_path(secp: &Secp256k1,
+    fn test_path<C: secp256k1::Signing + secp256k1::Verification>(secp: &Secp256k1<C>,
                  network: Network,
                  seed: &[u8],
                  path: &[ChildNumber],

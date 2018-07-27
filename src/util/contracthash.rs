@@ -170,7 +170,7 @@ impl<'a> From<&'a [u8]> for Template {
 }
 
 /// Tweak keys using some arbitrary data
-pub fn tweak_keys(secp: &Secp256k1, keys: &[PublicKey], contract: &[u8]) -> Result<Vec<PublicKey>, Error> {
+pub fn tweak_keys<C: secp256k1::Verification>(secp: &Secp256k1<C>, keys: &[PublicKey], contract: &[u8]) -> Result<Vec<PublicKey>, Error> {
     let mut ret = Vec::with_capacity(keys.len());
     for mut key in keys.iter().cloned() {
         let mut hmac_raw = [0; 32];
@@ -185,7 +185,7 @@ pub fn tweak_keys(secp: &Secp256k1, keys: &[PublicKey], contract: &[u8]) -> Resu
 }
 
 /// Compute a tweak from some given data for the given public key
-pub fn compute_tweak(secp: &Secp256k1, pk: &PublicKey, contract: &[u8]) -> Result<SecretKey, Error> {
+pub fn compute_tweak<C>(secp: &Secp256k1<C>, pk: &PublicKey, contract: &[u8]) -> Result<SecretKey, Error> {
     let mut hmac_raw = [0; 32];
     let mut hmac = hmac::Hmac::new(sha2::Sha256::new(), &pk.serialize());
     hmac.input(contract);
@@ -194,9 +194,9 @@ pub fn compute_tweak(secp: &Secp256k1, pk: &PublicKey, contract: &[u8]) -> Resul
 }
 
 /// Tweak a secret key using some arbitrary data (calls `compute_tweak` internally)
-pub fn tweak_secret_key(secp: &Secp256k1, key: &SecretKey, contract: &[u8]) -> Result<SecretKey, Error> {
+pub fn tweak_secret_key<C: secp256k1::Signing>(secp: &Secp256k1<C>, key: &SecretKey, contract: &[u8]) -> Result<SecretKey, Error> {
     // Compute public key
-    let pk = PublicKey::from_secret_key(secp, &key).map_err(Error::Secp)?;
+    let pk = PublicKey::from_secret_key(secp, &key);
     // Compute tweak
     let hmac_sk = compute_tweak(secp, &pk, contract)?;
     // Execute the tweak
@@ -207,7 +207,7 @@ pub fn tweak_secret_key(secp: &Secp256k1, key: &SecretKey, contract: &[u8]) -> R
 }
 
 /// Takes a contract, template and key set and runs through all the steps
-pub fn create_address(secp: &Secp256k1,
+pub fn create_address<C: secp256k1::Verification>(secp: &Secp256k1<C>,
                       network: Network,
                       contract: &[u8],
                       keys: &[PublicKey],
@@ -343,9 +343,9 @@ mod tests {
     #[test]
     fn tweak_secret() {
         let secp = Secp256k1::new();
-        let (sk1, pk1) = secp.generate_keypair(&mut thread_rng()).unwrap();
-        let (sk2, pk2) = secp.generate_keypair(&mut thread_rng()).unwrap();
-        let (sk3, pk3) = secp.generate_keypair(&mut thread_rng()).unwrap();
+        let (sk1, pk1) = secp.generate_keypair(&mut thread_rng());
+        let (sk2, pk2) = secp.generate_keypair(&mut thread_rng());
+        let (sk3, pk3) = secp.generate_keypair(&mut thread_rng());
 
         let pks = [pk1, pk2, pk3];
         let contract = b"if bottle mt dont remembr drink wont pay";
@@ -353,9 +353,9 @@ mod tests {
         // Directly compute tweaks on pubkeys
         let tweaked_pks = tweak_keys(&secp, &pks, &contract[..]).unwrap();
         // Compute tweaks on secret keys
-        let tweaked_pk1 = PublicKey::from_secret_key(&secp, &tweak_secret_key(&secp, &sk1, &contract[..]).unwrap()).unwrap();
-        let tweaked_pk2 = PublicKey::from_secret_key(&secp, &tweak_secret_key(&secp, &sk2, &contract[..]).unwrap()).unwrap();
-        let tweaked_pk3 = PublicKey::from_secret_key(&secp, &tweak_secret_key(&secp, &sk3, &contract[..]).unwrap()).unwrap();
+        let tweaked_pk1 = PublicKey::from_secret_key(&secp, &tweak_secret_key(&secp, &sk1, &contract[..]).unwrap());
+        let tweaked_pk2 = PublicKey::from_secret_key(&secp, &tweak_secret_key(&secp, &sk2, &contract[..]).unwrap());
+        let tweaked_pk3 = PublicKey::from_secret_key(&secp, &tweak_secret_key(&secp, &sk3, &contract[..]).unwrap());
         // Check equality
         assert_eq!(tweaked_pks[0], tweaked_pk1);
         assert_eq!(tweaked_pks[1], tweaked_pk2);
