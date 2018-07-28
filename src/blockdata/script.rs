@@ -302,7 +302,8 @@ impl Script {
                       .into_script()
     }
 
-    /// Compute the P2WSH output corresponding to this witness script
+    /// Compute the P2WSH output corresponding to this witnessScript (aka the "witness redeem
+    /// script")
     pub fn to_v0_p2wsh(&self) -> Script {
         let mut tmp = [0; 32];
         let mut sha2 = Sha256::new();
