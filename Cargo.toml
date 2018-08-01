@@ -27,6 +27,7 @@ rust-crypto = "0.2"
 serde = "0.6"
 strason = "0.3"
 bitcoinconsensus = { version = "0.16", optional=true }
+lazy_static = "1.0"
 
 [dependencies.hex]
 git = "https://github.com/KokaKiwi/rust-hex"

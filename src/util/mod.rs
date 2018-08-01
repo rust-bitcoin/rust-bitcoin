@@ -27,6 +27,7 @@ pub mod hash;
 pub mod iter;
 pub mod misc;
 pub mod uint;
+pub mod mnemonic;
 
 #[cfg(feature = "fuzztarget")]
 pub mod sha2;
