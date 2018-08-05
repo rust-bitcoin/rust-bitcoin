@@ -23,7 +23,7 @@
 
 use std::{fmt, ops};
 
-use serde::{ser, de};
+use serde;
 use strason::Json;
 
 /// A fixed-point decimal type
@@ -128,20 +128,13 @@ impl Decimal {
     pub fn nonnegative(&self) -> bool { self.mantissa >= 0 }
 }
 
-impl ser::Serialize for Decimal {
-    // Serialize through strason since it will not lose precision (when serializing
-    // to strason itself, the value will be passed through; otherwise it will be
-    // encoded as a string)
-    fn serialize<S: ser::Serializer>(&self, s: &mut S) -> Result<(), S::Error> {
-        let json = Json::from_str(&self.to_string()).unwrap();
-        ser::Serialize::serialize(&json, s)
-    }
-}
-
-impl de::Deserialize for Decimal {
-    // Deserialize through strason for the same reason as in `Serialize`
-    fn deserialize<D: de::Deserializer>(d: &mut D) -> Result<Decimal, D::Error> {
-        let json: Json = try!(de::Deserialize::deserialize(d));
+impl<'de> serde::Deserialize<'de> for Decimal {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        // Deserialize through strason for the same reason as in `Serialize`
+        let json = try!(Json::deserialize(deserializer));
         match json.num() {
             Some(s) => {
                  // We know this will be a well-formed Json number, so we can
@@ -168,11 +161,23 @@ impl de::Deserialize for Decimal {
                      exponent: exponent,
                  })
             }
-            None => Err(de::Error::syntax("expected decimal, got non-numeric"))
+            None => Err(serde::de::Error::custom("expected decimal, got non-numeric"))
         }
     }
 }
 
+impl serde::Serialize for Decimal {
+    // Serialize through strason since it will not lose precision (when serializing
+    // to strason itself, the value will be passed through; otherwise it will be
+    // encoded as a string)
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let json = Json::from_str(&self.to_string()).unwrap();
+        json.serialize(serializer)
+    }
+}
 
 impl PartialEq<UDecimal> for UDecimal {
     fn eq(&self, other: &UDecimal) -> bool {
@@ -246,20 +251,13 @@ impl UDecimal {
     }
 }
 
-impl ser::Serialize for UDecimal {
-    // Serialize through strason since it will not lose precision (when serializing
-    // to strason itself, the value will be passed through; otherwise it will be
-    // encoded as a string)
-    fn serialize<S: ser::Serializer>(&self, s: &mut S) -> Result<(), S::Error> {
-        let json = Json::from_str(&self.to_string()).unwrap();
-        ser::Serialize::serialize(&json, s)
-    }
-}
-
-impl de::Deserialize for UDecimal {
+impl<'de> serde::Deserialize<'de> for UDecimal {
     // Deserialize through strason for the same reason as in `Serialize`
-    fn deserialize<D: de::Deserializer>(d: &mut D) -> Result<UDecimal, D::Error> {
-        let json: Json = try!(de::Deserialize::deserialize(d));
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: serde::Deserializer<'de>,
+    {
+        let json = try!(Json::deserialize(deserializer));
         match json.num() {
             Some(s) => {
                  // We know this will be a well-formed Json number, so we can
@@ -283,12 +281,23 @@ impl de::Deserialize for UDecimal {
                      exponent: exponent,
                  })
             }
-            None => Err(de::Error::syntax("expected decimal, got non-numeric"))
+            None => Err(serde::de::Error::custom("expected decimal, got non-numeric"))
         }
     }
 }
 
-
+impl serde::Serialize for UDecimal {
+    // Serialize through strason since it will not lose precision (when serializing
+    // to strason itself, the value will be passed through; otherwise it will be
+    // encoded as a string)
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let json = Json::from_str(&self.to_string()).unwrap();
+        json.serialize(serializer)
+    }
+}
 
 #[cfg(test)]
 mod tests {

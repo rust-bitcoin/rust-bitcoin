@@ -27,7 +27,6 @@ use byteorder::{LittleEndian, WriteBytesExt};
 use std::default::Default;
 use std::fmt;
 #[cfg(feature="bitcoinconsensus")] use std::collections::HashMap;
-use serde;
 
 use util::hash::Sha256dHash;
 #[cfg(feature="bitcoinconsensus")] use blockdata::script;
@@ -36,14 +35,13 @@ use network::serialize::{serialize, BitcoinHash, SimpleEncoder, SimpleDecoder};
 use network::encodable::{ConsensusEncodable, ConsensusDecodable, VarInt};
 
 /// A reference to a transaction output
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash, Deserialize, Serialize)]
 pub struct TxOutRef {
     /// The referenced transaction's txid
     pub txid: Sha256dHash,
     /// The index of the referenced output in its transaction's vout
     pub index: usize
 }
-serde_struct_impl!(TxOutRef, txid, index);
 
 impl fmt::Display for TxOutRef {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -52,7 +50,7 @@ impl fmt::Display for TxOutRef {
 }
 
 /// A transaction input, which defines old coins to be consumed
-#[derive(Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Clone, PartialEq, Eq, Debug, Hash, Deserialize, Serialize)]
 pub struct TxIn {
     /// The hash of the transaction whose output is being used an an input
     pub prev_hash: Sha256dHash,
@@ -73,17 +71,15 @@ pub struct TxIn {
     /// routines.
     pub witness: Vec<Vec<u8>>
 }
-serde_struct_impl!(TxIn, prev_hash, prev_index, script_sig, sequence, witness);
 
 /// A transaction output, which defines new coins to be created from old ones.
-#[derive(Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Clone, PartialEq, Eq, Debug, Hash, Deserialize, Serialize)]
 pub struct TxOut {
     /// The value of the output, in satoshis
     pub value: u64,
     /// The script which must satisfy for the output to be spent
     pub script_pubkey: Script
 }
-serde_struct_impl!(TxOut, value, script_pubkey);
 
 // This is used as a "null txout" in consensus signing code
 impl Default for TxOut {
@@ -93,7 +89,7 @@ impl Default for TxOut {
 }
 
 /// A Bitcoin transaction, which describes an authenticated movement of coins
-#[derive(Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Clone, PartialEq, Eq, Debug, Hash, Deserialize, Serialize)]
 pub struct Transaction {
     /// The protocol version, should always be 1.
     pub version: u32,
@@ -105,7 +101,6 @@ pub struct Transaction {
     /// List of outputs
     pub output: Vec<TxOut>,
 }
-serde_struct_impl!(Transaction, version, lock_time, input, output);
 
 impl Transaction {
     /// Computes a "normalized TXID" which does not include any signatures.
@@ -442,7 +437,7 @@ impl SigHashType {
 
 #[cfg(test)]
 mod tests {
-    use strason;
+    use strason::Json;
 
     use super::{Transaction, TxIn};
 
@@ -567,7 +562,7 @@ mod tests {
         let hex_tx = hex_bytes("0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000").unwrap();
         let tx: Transaction = deserialize(&hex_tx).unwrap();
 
-        let encoded = strason::from_serialize(&tx).unwrap();
+        let encoded = Json::from_serialize(&tx).unwrap();
         let decoded = encoded.into_deserialize().unwrap();
         assert_eq!(tx, decoded);
     }
@@ -591,7 +586,7 @@ mod tests {
         let tx: Transaction = deserialize(&hex_tx).unwrap();
         assert_eq!(tx.get_weight(), 780);
 
-        let encoded = strason::from_serialize(&tx).unwrap();
+        let encoded = Json::from_serialize(&tx).unwrap();
         let decoded = encoded.into_deserialize().unwrap();
         assert_eq!(tx, decoded);
 

@@ -621,11 +621,12 @@ impl<S: SimpleEncoder> ConsensusEncodable<S> for All {
 }
 
 impl serde::Serialize for All {
-  fn serialize<S>(&self, serializer: &mut S) -> Result<(), S::Error>
-      where S: serde::Serializer,
-  {
-      serializer.visit_str(&self.to_string())
-  }
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
 }
 
 /// Empty stack is also FALSE
@@ -657,11 +658,12 @@ pub enum Class {
 display_from_debug!(Class);
 
 impl serde::Serialize for Class {
-  fn serialize<S>(&self, serializer: &mut S) -> Result<(), S::Error>
-      where S: serde::Serializer,
-  {
-      serializer.visit_str(&self.to_string())
-  }
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
 }
 
 macro_rules! ordinary_opcode {

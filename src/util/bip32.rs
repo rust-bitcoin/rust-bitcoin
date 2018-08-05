@@ -21,7 +21,7 @@ use std::io::Cursor;
 use std::{error, fmt};
 use std::str::FromStr;
 use std::string::ToString;
-use serde::{Serialize, Deserialize, Serializer, Deserializer};
+use serde;
 
 use byteorder::{BigEndian, ByteOrder, ReadBytesExt};
 use crypto::digest::Digest;
@@ -105,24 +105,28 @@ impl fmt::Display for ChildNumber {
     }
 }
 
-impl Serialize for ChildNumber {
-    fn serialize<S>(&self, s: &mut S) -> Result<(), S::Error>
-            where S: Serializer {
-        match *self {
-            ChildNumber::Hardened(n) => (n + (1 << 31)).serialize(s),
-            ChildNumber::Normal(n)     => n.serialize(s)
-        }
-    }
-}
-
-impl Deserialize for ChildNumber {
-    fn deserialize<D>(d: &mut D) -> Result<ChildNumber, D::Error>
-            where D: Deserializer {
-        let n: u32 = try!(Deserialize::deserialize(d));
+impl<'de> serde::Deserialize<'de> for ChildNumber {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let n: u32 = try!(u32::deserialize(deserializer));
         if n < (1 << 31) {
             Ok(ChildNumber::Normal(n))
         } else {
             Ok(ChildNumber::Hardened(n - (1 << 31)))
+        }
+    }
+}
+
+impl serde::Serialize for ChildNumber {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        match *self {
+            ChildNumber::Hardened(n) => (n + (1 << 31)).serialize(serializer),
+            ChildNumber::Normal(n) => n.serialize(serializer),
         }
     }
 }
