@@ -35,3 +35,7 @@ path = "fuzz_targets/deserialize_transaction.rs"
 [[bin]]
 name = "deserialize_address"
 path = "fuzz_targets/deserialize_address.rs"
+
+[[bin]]
+name = "rtt_descriptor"
+path = "fuzz_targets/rtt_descriptor.rs"

@@ -24,6 +24,9 @@
 //! This module provides the structures and functions needed to support scripts.
 //!
 
+pub mod descriptor;
+pub mod parse;
+
 use std::default::Default;
 use std::{error, fmt};
 
@@ -40,6 +43,9 @@ use util::hash::Hash160;
 
 #[cfg(feature="fuzztarget")]      use util::sha2::Sha256;
 #[cfg(not(feature="fuzztarget"))] use crypto::sha2::Sha256;
+
+pub use self::descriptor::Descriptor;
+pub use self::parse::ParseTree;
 
 #[derive(Clone, PartialEq, Eq, Hash)]
 /// A Bitcoin script
