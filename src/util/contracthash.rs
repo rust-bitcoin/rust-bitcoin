@@ -237,7 +237,7 @@ pub fn untemplate(script: &script::Script) -> Result<(Template, Vec<PublicKey>),
     }
 
     let mut mode = Mode::SeekingKeys;
-    for instruction in script.into_iter() {
+    for instruction in script.iter(false) {
         match instruction {
             script::Instruction::PushBytes(data) => {
                 let n = data.len();

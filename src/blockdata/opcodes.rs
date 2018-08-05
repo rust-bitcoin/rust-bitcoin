@@ -194,7 +194,7 @@ pub enum All {
     OP_PUSHDATA2 = 0x4d,
     /// Read the next 4 bytes as N; push the next N bytes as an array onto the stack
     OP_PUSHDATA4 = 0x4e,
-    /// Push the array [0x80] onto the stack
+    /// Push the array [0x81] onto the stack
     OP_PUSHNUM_NEG1 = 0x4f,
     /// Synonym for OP_RETURN
     OP_RESERVED = 0x50,
