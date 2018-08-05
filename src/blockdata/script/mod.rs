@@ -151,6 +151,8 @@ display_from_debug!(Builder);
 /// would help you.
 #[derive(PartialEq, Eq, Debug, Clone)]
 pub enum Error {
+    /// Something did a non-minimal push
+    NonMinimalPush,
     /// Some opcode expected a parameter, but it was missing or truncated
     EarlyEndOfScript,
     /// Tried to read an array off the stack as a number when it was more than 4 bytes
@@ -180,6 +182,7 @@ impl error::Error for Error {
 
     fn description(&self) -> &'static str {
         match *self {
+            Error::NonMinimalPush => "non-minimal datapush",
             Error::EarlyEndOfScript => "unexpected end of script",
             Error::NumericOverflow => "numeric overflow (number on stack larger than 4 bytes)",
             #[cfg(feature="bitcoinconsensus")]
@@ -438,6 +441,9 @@ impl<'a> Iterator for Instructions<'a> {
                     Err(e) => { return Some(Instruction::Error(e)); }
                 };
                 if self.data.len() < n + 2 { return Some(Instruction::Error(Error::EarlyEndOfScript)); }
+                if n < 76 {
+                    return Some(Instruction::Error(Error::NonMinimalPush));
+                }
                 let ret = Some(Instruction::PushBytes(&self.data[2..n+2]));
                 self.data = &self.data[n + 2..];
                 ret
@@ -448,6 +454,9 @@ impl<'a> Iterator for Instructions<'a> {
                     Ok(n) => n,
                     Err(e) => { return Some(Instruction::Error(e)); }
                 };
+                if n < 0x100 {
+                    return Some(Instruction::Error(Error::NonMinimalPush));
+                }
                 if self.data.len() < n + 3 { return Some(Instruction::Error(Error::EarlyEndOfScript)); }
                 let ret = Some(Instruction::PushBytes(&self.data[3..n + 3]));
                 self.data = &self.data[n + 3..];
@@ -459,6 +468,9 @@ impl<'a> Iterator for Instructions<'a> {
                     Ok(n) => n,
                     Err(e) => { return Some(Instruction::Error(e)); }
                 };
+                if n < 0x10000 {
+                    return Some(Instruction::Error(Error::NonMinimalPush));
+                }
                 if self.data.len() < n + 5 { return Some(Instruction::Error(Error::EarlyEndOfScript)); }
                 let ret = Some(Instruction::PushBytes(&self.data[5..n + 5]));
                 self.data = &self.data[n + 5..];
