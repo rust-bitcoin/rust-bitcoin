@@ -49,7 +49,7 @@ pub enum Descriptor<P: PublicKey> {
     /// A public key which must sign to satisfy the descriptor
     Key(P),
     /// A SHA256 whose preimage must be provided to satisfy the descriptor
-    Hash(Sha256dHash),
+    Sha256Hash(Sha256dHash),
     /// A list of descriptors, `k` of which must be satisfied
     Threshold(usize, Vec<Descriptor<P>>),
     /// A list of descriptors, all of which must be satisfied
