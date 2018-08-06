@@ -96,9 +96,9 @@ pub enum Token {
     /// <n> EQUALVERIFY
     NumEqualVerify(u32),
     /// <hash> SHA256 EQUAL
-    HashEqual(Sha256dHash),
+    Sha256HashEqual(Sha256dHash),
     /// <hash> SHA256 EQUALVERIFY
-    HashEqualVerify(Sha256dHash),
+    Sha256HashEqualVerify(Sha256dHash),
     /// <pk> CHECKSIG
     CheckSig(secp256k1::PublicKey),
     /// <pk> CHECKSIGVERIFY
@@ -135,7 +135,7 @@ impl Iterator for TokenIter {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum Expr {
-    HashEqual(Sha256dHash),
+    Sha256HashEqual(Sha256dHash),
     CheckSig(secp256k1::PublicKey),
     CheckMultiSig(usize, Vec<secp256k1::PublicKey>),
     ParallelAnd(Vec<Expr>),
@@ -145,7 +145,7 @@ enum Expr {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum Vexpr {
-    HashEqualVerify(Sha256dHash),
+    Sha256HashEqualVerify(Sha256dHash),
     CheckSigVerify(secp256k1::PublicKey),
     CheckMultiSigVerify(usize, Vec<secp256k1::PublicKey>),
     Threshold(Vec<Expr>, usize),
@@ -302,7 +302,7 @@ pub fn reverse_lex(script: &script::Script) -> Result<Vec<Token>, Error> {
                     Ok(n) => ret.push(Token::NumEqual(n)),
                     Err(Error::WantNumberGotHash(hash)) => {
                         match iter.next() {
-                            Some(script::Instruction::Op(opcodes::All::OP_SHA256)) => ret.push(Token::HashEqual(hash)),
+                            Some(script::Instruction::Op(opcodes::All::OP_SHA256)) => ret.push(Token::Sha256HashEqual(hash)),
                             _ => return Err(Error::Expected("OP_SHA256")),
                         }
                     },
@@ -314,7 +314,7 @@ pub fn reverse_lex(script: &script::Script) -> Result<Vec<Token>, Error> {
                     Ok(n) => ret.push(Token::NumEqualVerify(n)),
                     Err(Error::WantNumberGotHash(hash)) => {
                         match iter.next() {
-                            Some(script::Instruction::Op(opcodes::All::OP_SHA256)) => ret.push(Token::HashEqualVerify(hash)),
+                            Some(script::Instruction::Op(opcodes::All::OP_SHA256)) => ret.push(Token::Sha256HashEqualVerify(hash)),
                             _ => return Err(Error::Expected("OP_SHA256")),
                         }
                     },
@@ -452,7 +452,7 @@ impl AstElem for Mexpr {
     fn compile<P: descriptor::PublicKey>(descriptor: &Descriptor<P>) -> (Mexpr, usize) {
         match *descriptor {
             Descriptor::Key(ref key) => (Mexpr::Wrapped(Expr::CheckSig(key.as_pubkey())), 35),
-            Descriptor::Hash(hash) => (Mexpr::Wrapped(Expr::HashEqual(hash)), 35),
+            Descriptor::Sha256Hash(hash) => (Mexpr::Wrapped(Expr::Sha256HashEqual(hash)), 35),
             Descriptor::Csv(n) => (Mexpr::Csv(n), 6),
             Descriptor::And(ref subs) => {
                 // Determine which sub-descriptor we save the most bytes on by moving it to
@@ -506,7 +506,7 @@ impl AstElem for Vexpr {
         match tokens.next() {
             Some(Token::CheckSigVerify(pk)) => Ok(Vexpr::CheckSigVerify(pk)),
             Some(Token::CheckMultiSigVerify(k, pks)) => Ok(Vexpr::CheckMultiSigVerify(k, pks)),
-            Some(Token::HashEqualVerify(hash)) => Ok(Vexpr::HashEqualVerify(hash)),
+            Some(Token::Sha256HashEqualVerify(hash)) => Ok(Vexpr::Sha256HashEqualVerify(hash)),
             Some(Token::Verify) => Mexpr::parse(tokens).map(Vexpr::Wrapped),
             Some(Token::NumEqualVerify(n)) => Ok(Vexpr::Threshold(parse_wexprs(tokens, Token::Add)?, n as usize)),
             Some(x) => Err(Error::UnexpectedToken(x)),
@@ -516,7 +516,7 @@ impl AstElem for Vexpr {
 
     fn serialize(&self, mut builder: script::Builder) -> script::Builder {
         match *self {
-            Vexpr::HashEqualVerify(hash) => {
+            Vexpr::Sha256HashEqualVerify(hash) => {
                 builder.push_opcode(opcodes::All::OP_SHA256)
                        .push_slice(&hash[..])
                        .push_opcode(opcodes::All::OP_EQUALVERIFY)
@@ -544,7 +544,7 @@ impl AstElem for Vexpr {
     fn compile<P: descriptor::PublicKey>(descriptor: &Descriptor<P>) -> (Vexpr, usize) {
         match *descriptor {
             Descriptor::Key(ref key) => (Vexpr::CheckSigVerify(key.as_pubkey()), 35),
-            Descriptor::Hash(hash) => (Vexpr::HashEqualVerify(hash), 35),
+            Descriptor::Sha256Hash(hash) => (Vexpr::Sha256HashEqualVerify(hash), 35),
             Descriptor::Csv(n) => (Vexpr::Wrapped(Mexpr::Csv(n)), 7),
             Descriptor::And(_) => unimplemented!(),
             Descriptor::Or(_, _) => unimplemented!(),
@@ -580,7 +580,7 @@ impl AstElem for Expr {
     fn parse(tokens: &mut TokenIter) -> Result<Expr, Error> {
         match tokens.next() {
             Some(Token::CheckSig(pk)) => Ok(Expr::CheckSig(pk)),
-            Some(Token::HashEqual(hash)) => Ok(Expr::HashEqual(hash)),
+            Some(Token::Sha256HashEqual(hash)) => Ok(Expr::Sha256HashEqual(hash)),
             Some(Token::CheckMultiSig(k, pks)) => Ok(Expr::CheckMultiSig(k, pks)),
             Some(Token::And) => {
                 tokens.un_next(Token::And);
@@ -597,7 +597,7 @@ impl AstElem for Expr {
 
     fn serialize(&self, mut builder: script::Builder) -> script::Builder {
         match *self {
-            Expr::HashEqual(hash) => {
+            Expr::Sha256HashEqual(hash) => {
                 builder.push_opcode(opcodes::All::OP_SHA256)
                        .push_slice(&hash[..])
                        .push_opcode(opcodes::All::OP_EQUAL)
@@ -626,7 +626,7 @@ impl AstElem for Expr {
     fn compile<P: descriptor::PublicKey>(descriptor: &Descriptor<P>) -> (Expr, usize) {
         match *descriptor {
             Descriptor::Key(ref key) => (Expr::CheckSig(key.as_pubkey()), 35),
-            Descriptor::Hash(hash) => (Expr::HashEqual(hash), 35),
+            Descriptor::Sha256Hash(hash) => (Expr::Sha256HashEqual(hash), 35),
 
             Descriptor::Csv(_) => unimplemented!(),
             Descriptor::And(_) => unimplemented!(),
@@ -672,7 +672,7 @@ fn parse_wexprs(tokens: &mut TokenIter, sep: Token) -> Result<Vec<Expr>, Error> 
 
         let (expr, expect_swap) = match tokens.next() {
             Some(Token::CheckSig(pk)) => (Expr::CheckSig(pk), true),
-            Some(Token::HashEqual(hash)) => (Expr::HashEqual(hash), true),
+            Some(Token::Sha256HashEqual(hash)) => (Expr::Sha256HashEqual(hash), true),
             Some(Token::FromAltStack) => {
                 let expr = Expr::parse(tokens)?;
                 match tokens.next() {
@@ -702,7 +702,7 @@ fn serialize_wexprs(wexpr: &[Expr], mut builder: script::Builder, sep: opcodes::
         builder = Expr::serialize(&wexpr[0], builder);
         for expr in &wexpr[1..] {
             builder = match *expr {
-                Expr::CheckSig(_) | Expr::HashEqual(_) => {
+                Expr::CheckSig(_) | Expr::Sha256HashEqual(_) => {
                     builder = builder.push_opcode(opcodes::All::OP_SWAP);
                     Expr::serialize(expr, builder)
                 }
