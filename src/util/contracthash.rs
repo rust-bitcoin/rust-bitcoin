@@ -12,7 +12,8 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! # Pay-to-contract-hash supporte
+//! Pay-to-contract-hash supporte
+//!
 //! See Appendix A of the Blockstream sidechains whitepaper
 //! at http://blockstream.com/sidechains.pdf for details of
 //! what this does.

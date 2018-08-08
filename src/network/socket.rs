@@ -12,7 +12,7 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! # Sockets
+//! Sockets
 //!
 //! This module provides support for low-level network communication.
 //!

@@ -12,7 +12,7 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! # Opcodes
+//! Opcodes
 //!
 //! Bitcoin's script uses a stack-based assembly language. This module defines
 //! all of the opcodes

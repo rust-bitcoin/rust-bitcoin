@@ -12,7 +12,7 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! # Iterator adaptors
+//! Iterator adaptors
 //!
 //! Iterator adaptors needed by Bitcoin but not provided by the Rust
 //! standard library.

@@ -12,7 +12,7 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! # Base58 encoder and decoder
+//! Base58 encoder and decoder
 
 use std::{error, fmt};
 

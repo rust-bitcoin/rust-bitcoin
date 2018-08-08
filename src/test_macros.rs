@@ -12,7 +12,7 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! # Macros
+//! Macros
 //!
 //! Internal macros used for unit tests
 

@@ -12,7 +12,7 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! # Blockdata network messages
+//! Blockdata network messages
 //!
 //! This module describes network messages which are used for passing
 //! Bitcoin data (blocks and transactions) around.

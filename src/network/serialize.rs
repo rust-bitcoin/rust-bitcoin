@@ -12,7 +12,7 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! # Network Serialization
+//! Network Serialization
 //!
 //! This module defines the `Serializable` trait which is used for
 //! (de)serializing Bitcoin objects for transmission on the network.

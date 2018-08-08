@@ -12,7 +12,7 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! # Miscellaneous functions
+//! Miscellaneous functions
 //!
 //! Various utility functions
 

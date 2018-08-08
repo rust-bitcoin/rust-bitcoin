@@ -12,7 +12,7 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! # Network constants
+//! Network constants
 //!
 //! This module provides various constants relating to the Bitcoin network
 //! protocol, such as protocol versioning and magic header bytes.

@@ -12,7 +12,7 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! # Utility functions
+//! Utility functions
 //!
 //! Functions needed by all parts of the Bitcoin library
 

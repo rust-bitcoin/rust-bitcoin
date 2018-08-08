@@ -12,7 +12,7 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! # Consensus-encodable types
+//! Consensus-encodable types
 //!
 //! This is basically a replacement of the `Encodable` trait which does
 //! normalization for endianness, etc., to ensure that the encoding

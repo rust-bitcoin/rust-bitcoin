@@ -12,7 +12,7 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! # Blockdata constants
+//! Blockdata constants
 //!
 //! This module provides various constants relating to the blockchain and
 //! consensus code. In particular, it defines the genesis block and its
