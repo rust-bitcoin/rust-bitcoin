@@ -439,6 +439,17 @@ impl SigHashType {
      pub fn as_u32(&self) -> u32 { *self as u32 }
 }
 
+impl<S: SimpleEncoder> ConsensusEncodable<S> for SigHashType {
+    fn consensus_encode(&self, s: &mut S) -> Result <(), S::Error> {
+        self.as_u32().consensus_encode(s)
+    }
+}
+
+impl<D: SimpleDecoder> ConsensusDecodable<D> for SigHashType {
+    fn consensus_decode(d: &mut D) -> Result<Self, D::Error> {
+        ConsensusDecodable::consensus_decode(d).map(|x| SigHashType::from_u32(x))
+    }
+}
 
 #[cfg(test)]
 mod tests {
