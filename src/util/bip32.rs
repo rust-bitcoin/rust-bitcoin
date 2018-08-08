@@ -20,7 +20,6 @@ use std::default::Default;
 use std::io::Cursor;
 use std::{error, fmt};
 use std::str::FromStr;
-use std::string::ToString;
 use serde::{Serialize, Deserialize, Serializer, Deserializer};
 
 use byteorder::{BigEndian, ByteOrder, ReadBytesExt};
@@ -339,8 +338,8 @@ impl ExtendedPubKey {
     }
 }
 
-impl ToString for ExtendedPrivKey {
-    fn to_string(&self) -> String {
+impl fmt::Display for ExtendedPrivKey {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         let mut ret = [0; 78];
         ret[0..4].copy_from_slice(&match self.network {
             Network::Bitcoin => [0x04, 0x88, 0xAD, 0xE4],
@@ -359,7 +358,7 @@ impl ToString for ExtendedPrivKey {
         ret[13..45].copy_from_slice(&self.chain_code[..]);
         ret[45] = 0;
         ret[46..78].copy_from_slice(&self.secret_key[..]);
-        base58::check_encode_slice(&ret[..])
+        fmt.write_str(&base58::check_encode_slice(&ret[..]))
     }
 }
 
@@ -397,8 +396,8 @@ impl FromStr for ExtendedPrivKey {
     }
 }
 
-impl ToString for ExtendedPubKey {
-    fn to_string(&self) -> String {
+impl fmt::Display for ExtendedPubKey {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         let mut ret = [0; 78];
         ret[0..4].copy_from_slice(&match self.network {
             Network::Bitcoin => [0x04u8, 0x88, 0xB2, 0x1E],
@@ -416,7 +415,7 @@ impl ToString for ExtendedPubKey {
         }
         ret[13..45].copy_from_slice(&self.chain_code[..]);
         ret[45..78].copy_from_slice(&self.public_key.serialize()[..]);
-        base58::check_encode_slice(&ret[..])
+        fmt.write_str(&base58::check_encode_slice(&ret[..]))
     }
 }
 
