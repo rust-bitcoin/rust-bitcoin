@@ -1,4 +1,3 @@
-
 // Rust Bitcoin Library
 // Written in 2018 by
 //     Andrew Poelstra <apoelstra@wpsoftware.net>
@@ -23,101 +22,142 @@
 //! than going directly to script.
 //!
 
+use std::{error, fmt};
 use secp256k1;
+use util::hash::Hash160;
 use util::hash::Sha256dHash; // TODO needs to be sha256, not sha256d
 
-use blockdata::script::descriptor::{self, Descriptor};
 use blockdata::script;
 use blockdata::opcodes;
 
 /// AST-related error
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Error {
-    /// Got push when we expected opcode, or a differently sized push, or something
-    UnexpectedPush(Vec<u8>),
-    /// Got opcode when we expected different opcode
-    UnexpectedOp(opcodes::All),
-    /// Failed to parse script into instructions
-    BadInstruction(script::Error),
-    /// Failed to parse a push as a number
-    BadNumber(script::Error),
-    /// Expected a number, got a 32-byte object instead. Distinct from `BadNumber` mainly so the
-    /// lexer can internally retry parsing as a hash
-    WantNumberGotHash(Sha256dHash),
-    /// Parsed a number out of range for what it was
-    NumberOutOfRange,
-    /// Parsed a number that did not round-trip
-    NonMinimalNumber,
+    /// While parsing backward, hit beginning of script
+    UnexpectedStart,
+    /// Got something we were not expecting
+    Unexpected(String),
     /// Failed to parse a push as a public key
     BadPubkey(secp256k1::Error),
-    /// Script started with opcode that should have been preceded by something
-    UnprefixedOp(opcodes::All),
-    /// Got token we were not expecting
-    UnexpectedToken(Token),
-    /// After parsing there was still stuff left to read
-    LeadingToken(Token),
-    /// Expected something, it wasn't there
-    Expected(&'static str)
 }
 
-impl From<secp256k1::Error> for Error {
-    fn from(e: secp256k1::Error) -> Error {
-        Error::BadPubkey(e)
+impl error::Error for Error {
+    fn cause(&self) -> Option<&error::Error> {
+        match *self {
+            Error::BadPubkey(ref e) => Some(e),
+            _ => None,
+        }
+    }
+
+    fn description(&self) -> &str {
+        match *self {
+            Error::UnexpectedStart => "unexpected start of script",
+            Error::Unexpected(_) => "unexpected token",
+            Error::BadPubkey(ref e) => error::Error::description(e),
+        }
     }
 }
 
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Error::UnexpectedStart => f.write_str("unexpected start of script"),
+            Error::Unexpected(ref s) => write!(f, "unexpected «{}»", s),
+            Error::BadPubkey(ref e) => fmt::Display::fmt(e, f),
+        }
+    }
+
+}
+
 /// Atom of a tokenized version of a script
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[allow(missing_docs)]
 pub enum Token {
-    /// TOALTSTACK
-    ToAltStack,
-    /// FROMALTSTACK
+    BoolAnd,
+    BoolOr,
+    Equal,
+    EqualVerify,
+    CheckSig,
+    CheckSigVerify,
+    CheckMultiSig,
+    CheckMultiSigVerify,
+    CheckSequenceVerify,
     FromAltStack,
-    /// SWAP
-    Swap,
-    /// ADD
-    Add,
-    /// BOOLAND
-    And,
-    /// BOOLOR
-    Or,
-    /// IF
+    ToAltStack,
+    Drop,
+    Dup,
     If,
-    /// IFDUP NOTIF
-    IfDupNotIf,
-    /// ELSE
+    IfDup,
+    NotIf,
     Else,
-    /// ENDIF
     EndIf,
-    /// VERIFY
+    Size,
+    Swap,
+    Tuck,
     Verify,
-    /// <n> EQUAL
-    NumEqual(u32),
-    /// <n> EQUALVERIFY
-    NumEqualVerify(u32),
-    /// <hash> SHA256 EQUAL
-    HashEqual(Sha256dHash),
-    /// <hash> SHA256 EQUALVERIFY
-    HashEqualVerify(Sha256dHash),
-    /// <pk> CHECKSIG
-    CheckSig(secp256k1::PublicKey),
-    /// <pk> CHECKSIGVERIFY
-    CheckSigVerify(secp256k1::PublicKey),
-    /// <k> <pk1> ... <pkn> <len(pk array)> CHECKMULTISIG
-    CheckMultiSig(usize, Vec<secp256k1::PublicKey>),
-    /// <k> <pk1> ... <pkn> <len(pk array)> CHECKMULTISIGVERIFY
-    CheckMultiSigVerify(usize, Vec<secp256k1::PublicKey>),
-    /// <n> CHECKSEQUENCEVERIFY
-    Csv(u32),
+    Hash160,
+    Sha256,
+    Number(u32),
+    Hash160Hash(Hash160),
+    Sha256Hash(Sha256dHash),
+    Pubkey(secp256k1::PublicKey),
+}
+
+impl Token {
+    /// serialize an object into a script
+    fn serialize(&self, builder: script::Builder) -> script::Builder {
+        match *self {
+            Token::BoolAnd => builder.push_opcode(opcodes::All::OP_BOOLAND),
+            Token::BoolOr => builder.push_opcode(opcodes::All::OP_BOOLOR),
+            Token::Equal => builder.push_opcode(opcodes::All::OP_EQUAL),
+            Token::EqualVerify => builder.push_opcode(opcodes::All::OP_EQUALVERIFY),
+            Token::CheckSig => builder.push_opcode(opcodes::All::OP_CHECKSIG),
+            Token::CheckSigVerify => builder.push_opcode(opcodes::All::OP_CHECKSIGVERIFY),
+            Token::CheckMultiSig => builder.push_opcode(opcodes::All::OP_CHECKMULTISIG),
+            Token::CheckMultiSigVerify => builder.push_opcode(opcodes::All::OP_CHECKMULTISIGVERIFY),
+            Token::CheckSequenceVerify => builder.push_opcode(opcodes::OP_CSV),
+            Token::FromAltStack => builder.push_opcode(opcodes::All::OP_FROMALTSTACK),
+            Token::ToAltStack => builder.push_opcode(opcodes::All::OP_TOALTSTACK),
+            Token::Drop => builder.push_opcode(opcodes::All::OP_DROP),
+            Token::Dup => builder.push_opcode(opcodes::All::OP_DUP),
+            Token::If => builder.push_opcode(opcodes::All::OP_IF),
+            Token::IfDup => builder.push_opcode(opcodes::All::OP_IFDUP),
+            Token::NotIf => builder.push_opcode(opcodes::All::OP_NOTIF),
+            Token::Else => builder.push_opcode(opcodes::All::OP_ELSE),
+            Token::EndIf => builder.push_opcode(opcodes::All::OP_ENDIF),
+            Token::Size => builder.push_opcode(opcodes::All::OP_SIZE),
+            Token::Swap => builder.push_opcode(opcodes::All::OP_SWAP),
+            Token::Tuck => builder.push_opcode(opcodes::All::OP_TUCK),
+            Token::Verify => builder.push_opcode(opcodes::All::OP_VERIFY),
+            Token::Hash160 => builder.push_opcode(opcodes::All::OP_HASH160),
+            Token::Sha256 => builder.push_opcode(opcodes::All::OP_SHA256),
+            Token::Number(n) => builder.push_int(n as i64),
+            Token::Hash160Hash(hash) => builder.push_slice(&hash[..]),
+            Token::Sha256Hash(hash) => builder.push_slice(&hash[..]),
+            Token::Pubkey(pk) => builder.push_slice(&pk.serialize()[..]),
+        }
+    }
+}
+
+impl fmt::Display for Token {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let script = self.serialize(script::Builder::new()).into_script();
+        fmt::Display::fmt(&script, f)
+    }
 }
 
 #[derive(Debug, Clone)]
+/// Iterator that goes through a vector of tokens backward (our parser wants to read
+/// backward and this is more efficient anyway since we can use `Vec::pop()`).
 struct TokenIter(Vec<Token>);
 
 impl TokenIter {
-    fn new(mut v: Vec<Token>) -> TokenIter {
-        v.reverse();
+    fn new(v: Vec<Token>) -> TokenIter {
         TokenIter(v)
+    }
+
+    fn peek(&self) -> Option<&Token> {
+        self.0.last()
     }
 
     fn un_next(&mut self, tok: Token) {
@@ -133,480 +173,621 @@ impl Iterator for TokenIter {
     }
 }
 
+/// Expression that may be satisfied or dissatisfied; both cases must
+/// be non-malleable.
 #[derive(Debug, Clone, PartialEq, Eq)]
-enum Expr {
-    HashEqual(Sha256dHash),
-    CheckSig(secp256k1::PublicKey),
+enum E {
+    /// DUP HASH160 <hash> EQUALVERIFY CHECKSIG
+    CheckSigHash(Hash160),
+    /// <k> <pk...> <len(pk)> CHECKMULTISIG
     CheckMultiSig(usize, Vec<secp256k1::PublicKey>),
-    ParallelAnd(Vec<Expr>),
-    ParallelOr(Vec<Expr>),
-    Threshold(Vec<Expr>, usize),
+    /// <E> <W> BOOLAND
+    ParallelAnd(Box<E>, Box<W>),
+    /// <E> IF <F> ELSE 0 ENDIF
+    CascadeAnd(Box<E>, Box<F>),
+    /// SIZE EQUALVERIFY IF <F> ELSE <E> ENDIF
+    SwitchOr(Box<F>, Box<E>),
+    /// <E> IFDUP NOTIF <E> ENDIF
+    CascadeOr(Box<E>, Box<E>),
+    /// <E> <W> BOOLOR
+    ParallelOr(Box<E>, Box<W>),
+    /// SIZE EQUALVERIFY IF <V> ENDIF 1
+    CastV(Box<V>),
+    /// M
+    CastM(Box<M>),
 }
 
+/// Wrapped expression, used as helper for the parallel operations above
 #[derive(Debug, Clone, PartialEq, Eq)]
-enum Vexpr {
-    HashEqualVerify(Sha256dHash),
-    CheckSigVerify(secp256k1::PublicKey),
-    CheckMultiSigVerify(usize, Vec<secp256k1::PublicKey>),
-    Threshold(Vec<Expr>, usize),
-    Wrapped(Mexpr),
+enum W {
+    /// SWAP <pk> CHECKSIG
+    CheckSig(secp256k1::PublicKey),
+    /// SWAP SIZE IF SIZE 32 EQUALVERIFY SHA256 <hash> EQUALVERIFY 1 ENDIF
+    HashEqual(Sha256dHash),
+    /// TOALTSTACK <E> FROMALTSTACK
+    CastE(Box<E>),
 }
 
+/// Same conditions as E, plus dissatisfaction must be met by the empty push
 #[derive(Debug, Clone, PartialEq, Eq)]
-enum Mexpr {
-    Wrapped(Expr),
+enum M {
+    /// <pk> CHECKSIG
+    CheckSig(secp256k1::PublicKey),
+    /// SIZE IF DUP HASH160 <hash> EQUALVERIFY CHECKSIGVERIFY 1 ENDIF
+    CheckSigHash(Hash160),
+    /// <k> <pk...> <len(pk)> CHECKMULTISIG
+    CheckMultiSig(usize, Vec<secp256k1::PublicKey>),
+    /// SIZE IF SIZE 32 EQUALVERIFY SHA256 <hash> EQUALVERIFY 1 ENDIF
+    HashEqual(Sha256dHash),
+    /// <M> IF <F> ELSE 0 ENDIF
+    CascadeAnd(Box<M>, Box<F>),
+    /// SIZE EQUALVERIFY NOTIF <F> ELSE 0 ENDIF
+    CastF(Box<F>),
+}
+
+/// Expression that must succeed and will leave a 1 on the stack after consuming its inputs
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum F {
+    /// <pk> CHECKSIGVERIFY 1
+    CheckSig(secp256k1::PublicKey),
+    /// <k> <pk...> <len(pk)> CHECKMULTISIGVERIFY 1
+    CheckMultiSig(usize, Vec<secp256k1::PublicKey>),
+    /// DUP HASH160 <hash> EQVERIFY CHECKSIGVERIFY 1
+    CheckSigHash(Hash160),
+    /// <n> CSV
     Csv(u32),
-    And(Vec<Vexpr>, Box<Mexpr>),
-    SwitchOr(Box<Mexpr>, Box<Mexpr>),
-    CascadeOr(Expr, Box<Mexpr>),
+    /// SIZE 32 EQUALVERIFY SHA256 <hash> EQUALVERIFY 1
+    HashEqual(Sha256dHash),
+    /// <V> <F>
+    And(Box<V>, Box<F>),
+    /// SIZE EQUALVERIFY IF <F> ELSE <F> ENDIF
+    SwitchOr(Box<F>, Box<F>),
+    /// SIZE EQUALVERIFY IF <V> ELSE <V> ENDIF 1
+    SwitchOrV(Box<V>, Box<V>),
+    /// <E> IFDUP NOTIF <F> ENDIF
+    CascadeOr(Box<E>, Box<F>),
 }
 
-/// Trait describing the various AST components
-trait AstElem: Sized {
-    /// parse a sequence of tokens into the object
-    fn parse(tokens: &mut TokenIter) -> Result<Self, Error>;
+/// Expression that must succeed and will leave nothing on the stack after consuming its inputs
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum V {
+    /// <pk> CHECKSIGVERIFY
+    CheckSig(secp256k1::PublicKey),
+    /// <k> <pk...> <len(pk)> CHECKMULTISIGVERIFY
+    CheckMultiSig(usize, Vec<secp256k1::PublicKey>),
+    /// DUP HASH160 <hash> EQVERIFY CHECKSIGVERIFY
+    CheckSigHash(Hash160),
+    /// <n> CSV DROP
+    Csv(u32),
+    /// SIZE 32 EQUALVERIFY SHA256 <hash> EQUALVERIFY
+    HashEqual(Sha256dHash),
+    /// <V> <V>
+    And(Box<V>, Box<V>),
+    /// <E> <W> BOOLOR VERIFY
+    ParallelOr(Box<E>, Box<W>),
+    /// SIZE EQUALVERIFY IF <V> ELSE <V> ENDIF
+    SwitchOr(Box<V>, Box<V>),
+    /// SIZE EQUALVERIFY IF <F> ELSE <F> ENDIF VERIFY
+    SwitchOrF(Box<F>, Box<F>),
+    /// <E> NOTIF <V> ENDIF
+    CascadeOr(Box<E>, Box<V>),
+}
 
-    /// serialize an object into a script
+/// "Top" expression, which might succeed or not, or fail or not. Occurs only at the top of a
+/// script, such that its failure will fail the entire thing even if it returns a 0.
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum T {
+    /// SIZE 32 EQUALVERIFY SHA256 <hash> EQUAL
+    HashEqual(Sha256dHash),
+    /// <V> <T>
+    And(Box<V>, Box<T>),
+    /// SIZE EQUALVERIFY IF <T> ELSE <T> ENDIF
+    SwitchOr(Box<T>, Box<T>),
+    /// <E> IFDUP NOTIF <T> ENDIF
+    CascadeOr(Box<E>, Box<T>),
+    /// <E>
+    CastE(Box<E>),
+    /// <M>
+    CastM(Box<M>),
+    /// <F>
+    CastF(Box<F>),
+}
+
+trait AstElem: fmt::Display {
     fn serialize(&self, builder: script::Builder) -> script::Builder;
 
-    /// Compile a script descriptor into this type of AST element, along with a byte-cost
-    /// associated with choosing this AST element for the descriptor
-    fn compile<P: descriptor::PublicKey>(descriptor: &Descriptor<P>) -> (Self, usize);
+    fn into_e(self: Box<Self>) -> Result<Box<E>, Error> { Err(Error::Unexpected(self.to_string())) }
+    fn into_w(self: Box<Self>) -> Result<Box<W>, Error> { Err(Error::Unexpected(self.to_string())) }
+    fn into_m(self: Box<Self>) -> Result<Box<M>, Error> { Err(Error::Unexpected(self.to_string())) }
+    fn into_f(self: Box<Self>) -> Result<Box<F>, Error> { Err(Error::Unexpected(self.to_string())) }
+    fn into_v(self: Box<Self>) -> Result<Box<V>, Error> { Err(Error::Unexpected(self.to_string())) }
+    fn into_t(self: Box<Self>) -> Result<Box<T>, Error> { Err(Error::Unexpected(self.to_string())) }
+
+    fn is_e(&self) -> bool { false }
+    fn is_w(&self) -> bool { false }
+    fn is_m(&self) -> bool { false }
+    fn is_f(&self) -> bool { false }
+    fn is_v(&self) -> bool { false }
+    fn is_t(&self) -> bool { false }
 }
 
 /// Top-level script AST type
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ParseTree(Mexpr);
+pub struct ParseTree(Box<T>);
 
 impl ParseTree {
     /// Attempt to parse a script into an AST
-    pub fn parse(script: &script::Script) -> Result<ParseTree, Error> {
-        let tokens = reverse_lex(script)?;
+    pub fn parse(script: &script::Script) -> Result<ParseTree, script::Error> {
+        let tokens = lex(script)?;
         let mut iter = TokenIter::new(tokens);
-        let mexpr = Mexpr::parse(&mut iter)?;
+
+        let top = parse_subexpression(&mut iter)?.into_t()?;
         if let Some(leading) = iter.next() {
-            Err(Error::LeadingToken(leading))
+            Err(script::Error::Parse(Error::Unexpected(leading.to_string())))
         } else {
-            Ok(ParseTree(mexpr))
+            Ok(ParseTree(top))
         }
     }
 
-    /// Serialize out an AST into a script
+    /// Serialize an AST into script form
     pub fn serialize(&self) -> script::Script {
-        Mexpr::serialize(&self.0, script::Builder::new()).into_script()
+        self.0.serialize(script::Builder::new()).into_script()
     }
 
-    /// Compiles a descriptor into an AST tree
-    pub fn compile<P: descriptor::PublicKey>(descriptor: &Descriptor<P>) -> ParseTree {
-        ParseTree(Mexpr::compile(descriptor).0)
+    /// Compile an instantiated descriptor into a parse tree
+    pub fn compile(desc: &script::Descriptor<secp256k1::PublicKey>) -> ParseTree {
+        let t = T::from_descriptor(desc, 1.0);
+        ParseTree(Box::new(t.ast))
     }
 }
 
-fn lex_number(ins: Option<script::Instruction>, postfix: opcodes::All, max: Option<u32>) -> Result<u32, Error> {
-    let ret = match ins {
-        Some(script::Instruction::Op(op)) => {
-            match op {
-                opcodes::All::OP_PUSHNUM_NEG1 => Err(Error::NumberOutOfRange),
-                opcodes::All::OP_PUSHBYTES_0 => Ok(0),
-                opcodes::All::OP_PUSHNUM_1 => Ok(1),
-                opcodes::All::OP_PUSHNUM_2 => Ok(2),
-                opcodes::All::OP_PUSHNUM_3 => Ok(3),
-                opcodes::All::OP_PUSHNUM_4 => Ok(4),
-                opcodes::All::OP_PUSHNUM_5 => Ok(5),
-                opcodes::All::OP_PUSHNUM_6 => Ok(6),
-                opcodes::All::OP_PUSHNUM_7 => Ok(7),
-                opcodes::All::OP_PUSHNUM_8 => Ok(8),
-                opcodes::All::OP_PUSHNUM_9 => Ok(9),
-                opcodes::All::OP_PUSHNUM_10 => Ok(10),
-                opcodes::All::OP_PUSHNUM_11 => Ok(11),
-                opcodes::All::OP_PUSHNUM_12 => Ok(12),
-                opcodes::All::OP_PUSHNUM_13 => Ok(13),
-                opcodes::All::OP_PUSHNUM_14 => Ok(14),
-                opcodes::All::OP_PUSHNUM_15 => Ok(15),
-                opcodes::All::OP_PUSHNUM_16 => Ok(16),
-                x => Err(Error::UnexpectedOp(x)),
-            }
-        }
-        Some(script::Instruction::PushBytes(bytes)) if bytes.len() == 32 => {
-            Err(Error::WantNumberGotHash(Sha256dHash::from(bytes)))
-        }
-        Some(script::Instruction::PushBytes(bytes)) => {
-            match script::read_scriptint(bytes) {
-                Ok(v) if v >= 0 => {
-                    if &script::Builder::new().push_int(v).into_script()[1..] != bytes {
-                        return Err(Error::NonMinimalNumber);
-                    }
-                    Ok(v as u32)
-                }
-                Ok(_) => return Err(Error::NumberOutOfRange),
-                Err(e) => return Err(Error::BadNumber(e)),
-            }
-        }
-        Some(script::Instruction::Error(e)) => Err(Error::BadInstruction(e)),
-        None => Err(Error::UnprefixedOp(postfix)),
-    };
-
-    if let (&Ok(n), &Some(max)) = (&ret, &max) {
-        if n > max {
-            return Err(Error::NumberOutOfRange);
-        }
-    }
-    ret
-}
-
-/// Tokenize a script, in reverse order. The reversal is because our parser works best
-/// backward, and also the lexer has an easier time tokenizing backward (once we've
-/// turned the script into a series of ops and pushes)
-pub fn reverse_lex(script: &script::Script) -> Result<Vec<Token>, Error> {
-    let instructions: Vec<script::Instruction> = {
-        let mut vec = Vec::with_capacity(script.len());
-        for ins in script.into_iter() {
-            if let script::Instruction::Error(e) = ins {
-                return Err(Error::BadInstruction(e));
-            }
-            vec.push(ins);
-        }
-        vec
-    };
-    let mut ret = Vec::with_capacity(instructions.len());
+/// Tokenize a script
+pub fn lex(script: &script::Script) -> Result<Vec<Token>, script::Error> {
+    let mut ret = Vec::with_capacity(script.len());
     let secp = secp256k1::Secp256k1::with_caps(secp256k1::ContextFlag::None);
 
-    let mut iter = instructions.into_iter().rev();
-    while let Some(ins) = iter.next() {
-        match ins {
-            script::Instruction::Error(_) => unreachable!(),
-            script::Instruction::PushBytes(bytes) => return Err(Error::UnexpectedPush(bytes.to_owned())),
-            script::Instruction::Op(opcodes::All::OP_TOALTSTACK) => ret.push(Token::ToAltStack),
-            script::Instruction::Op(opcodes::All::OP_FROMALTSTACK) => ret.push(Token::FromAltStack),
-            script::Instruction::Op(opcodes::All::OP_SWAP) => ret.push(Token::Swap),
-            script::Instruction::Op(opcodes::All::OP_ADD) => ret.push(Token::Add),
-            script::Instruction::Op(opcodes::All::OP_BOOLAND) => ret.push(Token::And),
-            script::Instruction::Op(opcodes::All::OP_BOOLOR) => ret.push(Token::Or),
-            script::Instruction::Op(opcodes::All::OP_IF) => ret.push(Token::If),
-            script::Instruction::Op(opcodes::All::OP_ELSE) => ret.push(Token::Else),
-            script::Instruction::Op(opcodes::All::OP_ENDIF) => ret.push(Token::EndIf),
-            script::Instruction::Op(opcodes::All::OP_VERIFY) => ret.push(Token::Verify),
-
-            script::Instruction::Op(opcodes::All::OP_NOTIF) => {
-                match iter.next() {
-                    Some(script::Instruction::Op(opcodes::All::OP_IFDUP)) => ret.push(Token::IfDupNotIf),
-                    Some(script::Instruction::Op(op)) => return Err(Error::UnexpectedOp(op)),
-                    Some(script::Instruction::PushBytes(bytes)) => return Err(Error::UnexpectedPush(bytes.to_owned())),
-                    Some(script::Instruction::Error(e)) => return Err(Error::BadInstruction(e)),
-                    None => return Err(Error::UnprefixedOp(opcodes::All::OP_NOTIF)),
-                }
-            }
-
-            script::Instruction::Op(opcodes::All::OP_EQUAL) => {
-                match lex_number(iter.next(), opcodes::All::OP_EQUAL, None) {
-                    Ok(n) => ret.push(Token::NumEqual(n)),
-                    Err(Error::WantNumberGotHash(hash)) => {
-                        match iter.next() {
-                            Some(script::Instruction::Op(opcodes::All::OP_SHA256)) => ret.push(Token::HashEqual(hash)),
-                            _ => return Err(Error::Expected("OP_SHA256")),
-                        }
-                    },
-                    Err(e) => return Err(e),
-                }
-            }
-            script::Instruction::Op(opcodes::All::OP_EQUALVERIFY) => {
-                match lex_number(iter.next(), opcodes::All::OP_EQUALVERIFY, None) {
-                    Ok(n) => ret.push(Token::NumEqualVerify(n)),
-                    Err(Error::WantNumberGotHash(hash)) => {
-                        match iter.next() {
-                            Some(script::Instruction::Op(opcodes::All::OP_SHA256)) => ret.push(Token::HashEqualVerify(hash)),
-                            _ => return Err(Error::Expected("OP_SHA256")),
-                        }
-                    },
-                    Err(e) => return Err(e),
-                }
-            }
-
-            script::Instruction::Op(op @ opcodes::All::OP_CHECKSIG) |
-            script::Instruction::Op(op @ opcodes::All::OP_CHECKSIGVERIFY) => {
-                match iter.next() {
-                    Some(script::Instruction::PushBytes(bytes)) => {
-                        if op == opcodes::All::OP_CHECKSIG {
-                            ret.push(Token::CheckSig(secp256k1::PublicKey::from_slice(&secp, bytes)?));
-                        } else {
-                            ret.push(Token::CheckSigVerify(secp256k1::PublicKey::from_slice(&secp, bytes)?));
+    for ins in script {
+        ret.push(match ins {
+            script::Instruction::Error(e) => return Err(e),
+            script::Instruction::Op(opcodes::All::OP_BOOLAND) => Token::BoolAnd,
+            script::Instruction::Op(opcodes::All::OP_BOOLOR) => Token::BoolOr,
+            script::Instruction::Op(opcodes::All::OP_EQUAL) => Token::Equal,
+            script::Instruction::Op(opcodes::All::OP_EQUALVERIFY) => Token::EqualVerify,
+            script::Instruction::Op(opcodes::All::OP_CHECKSIG) => Token::CheckSig,
+            script::Instruction::Op(opcodes::All::OP_CHECKSIGVERIFY) => Token::CheckSigVerify,
+            script::Instruction::Op(opcodes::All::OP_CHECKMULTISIG) => Token::CheckMultiSig,
+            script::Instruction::Op(opcodes::All::OP_CHECKMULTISIGVERIFY) => Token::CheckMultiSigVerify,
+            script::Instruction::Op(op) if op == opcodes::OP_CSV => Token::CheckSequenceVerify,
+            script::Instruction::Op(opcodes::All::OP_FROMALTSTACK) => Token::FromAltStack,
+            script::Instruction::Op(opcodes::All::OP_TOALTSTACK) => Token::ToAltStack,
+            script::Instruction::Op(opcodes::All::OP_DROP) => Token::Drop,
+            script::Instruction::Op(opcodes::All::OP_DUP) => Token::Dup,
+            script::Instruction::Op(opcodes::All::OP_IF) => Token::If,
+            script::Instruction::Op(opcodes::All::OP_IFDUP) => Token::IfDup,
+            script::Instruction::Op(opcodes::All::OP_NOTIF) => Token::NotIf,
+            script::Instruction::Op(opcodes::All::OP_ELSE) => Token::Else,
+            script::Instruction::Op(opcodes::All::OP_ENDIF) => Token::EndIf,
+            script::Instruction::Op(opcodes::All::OP_SIZE) => Token::Size,
+            script::Instruction::Op(opcodes::All::OP_SWAP) => Token::Swap,
+            script::Instruction::Op(opcodes::All::OP_TUCK) => Token::Tuck,
+            script::Instruction::Op(opcodes::All::OP_VERIFY) => Token::Verify,
+            script::Instruction::Op(opcodes::All::OP_HASH160) => Token::Hash160,
+            script::Instruction::Op(opcodes::All::OP_SHA256) => Token::Sha256,
+            script::Instruction::PushBytes(bytes) => {
+                match bytes.len() {
+                    20 => Token::Hash160Hash(Hash160::from(bytes)),
+                    32 => Token::Sha256Hash(Sha256dHash::from(bytes)),
+                    33 => Token::Pubkey(secp256k1::PublicKey::from_slice(&secp, bytes).map_err(Error::BadPubkey)?),
+                    _ => {
+                        match script::read_scriptint(bytes) {
+                            Ok(v) if v >= 0 => {
+                                // check minimality of the number
+                                if &script::Builder::new().push_int(v).into_script()[1..] != bytes {
+                                    return Err(script::Error::InvalidPush(bytes.to_owned()));
+                                }
+                                Token::Number(v as u32)
+                            }
+                            Ok(_) => return Err(script::Error::InvalidPush(bytes.to_owned())),
+                            Err(e) => return Err(e),
                         }
                     }
-                    Some(script::Instruction::Op(op)) => return Err(Error::UnexpectedOp(op)),
-                    Some(script::Instruction::Error(e)) => return Err(Error::BadInstruction(e)),
-                    None => return Err(Error::UnprefixedOp(op))
                 }
             }
-
-            script::Instruction::Op(op @ opcodes::All::OP_CHECKMULTISIG) |
-            script::Instruction::Op(op @ opcodes::All::OP_CHECKMULTISIGVERIFY) => {
-                let m = lex_number(iter.next(), op, Some(20))?;
-                let mut key_vec = Vec::with_capacity(m as usize);
-                for _ in 0..m {
-                    match iter.next() {
-                        Some(script::Instruction::PushBytes(bytes)) => {
-                            key_vec.push(secp256k1::PublicKey::from_slice(&secp, bytes)?);
-                        }
-                        Some(script::Instruction::Op(op)) => return Err(Error::UnexpectedOp(op)),
-                        Some(script::Instruction::Error(e)) => return Err(Error::BadInstruction(e)),
-                        None => return Err(Error::UnprefixedOp(op)),
-                    }
-                }
-                key_vec.reverse();
-                let n = lex_number(iter.next(), op, Some(m))?;
-                if op == opcodes::All::OP_CHECKMULTISIG {
-                    ret.push(Token::CheckMultiSig(n as usize, key_vec));
-                } else {
-                    ret.push(Token::CheckMultiSigVerify(n as usize, key_vec));
-                }
-            }
-
-            script::Instruction::Op(op) if op == opcodes::OP_CSV => {
-                ret.push(Token::Csv(lex_number(iter.next(), opcodes::OP_CSV, None)?));
-            }
-
-            script::Instruction::Op(op) => return Err(Error::UnexpectedOp(op)),
-        }
+            script::Instruction::Op(opcodes::All::OP_PUSHBYTES_0) => Token::Number(0),
+            script::Instruction::Op(opcodes::All::OP_PUSHNUM_1) => Token::Number(1),
+            script::Instruction::Op(opcodes::All::OP_PUSHNUM_2) => Token::Number(2),
+            script::Instruction::Op(opcodes::All::OP_PUSHNUM_3) => Token::Number(3),
+            script::Instruction::Op(opcodes::All::OP_PUSHNUM_4) => Token::Number(4),
+            script::Instruction::Op(opcodes::All::OP_PUSHNUM_5) => Token::Number(5),
+            script::Instruction::Op(opcodes::All::OP_PUSHNUM_6) => Token::Number(6),
+            script::Instruction::Op(opcodes::All::OP_PUSHNUM_7) => Token::Number(7),
+            script::Instruction::Op(opcodes::All::OP_PUSHNUM_8) => Token::Number(8),
+            script::Instruction::Op(opcodes::All::OP_PUSHNUM_9) => Token::Number(9),
+            script::Instruction::Op(opcodes::All::OP_PUSHNUM_10) => Token::Number(10),
+            script::Instruction::Op(opcodes::All::OP_PUSHNUM_11) => Token::Number(11),
+            script::Instruction::Op(opcodes::All::OP_PUSHNUM_12) => Token::Number(12),
+            script::Instruction::Op(opcodes::All::OP_PUSHNUM_13) => Token::Number(13),
+            script::Instruction::Op(opcodes::All::OP_PUSHNUM_14) => Token::Number(14),
+            script::Instruction::Op(opcodes::All::OP_PUSHNUM_15) => Token::Number(15),
+            script::Instruction::Op(opcodes::All::OP_PUSHNUM_16) => Token::Number(16),
+            script::Instruction::Op(op) => return Err(script::Error::InvalidOpcode(op)),
+        });
     }
     Ok(ret)
 }
 
-impl AstElem for Mexpr {
-    fn parse(tokens: &mut TokenIter) -> Result<Mexpr, Error> {
-        let mexpr = match tokens.next() {
-            Some(Token::Csv(n)) => Mexpr::Csv(n),
-            Some(Token::EndIf) => {
-                let or_right = Mexpr::parse(tokens)?;
+macro_rules! into_fn(
+    (E) => (AstElem::into_e);
+    (M) => (AstElem::into_m);
+    (W) => (AstElem::into_w);
+    (V) => (AstElem::into_v);
+    (F) => (AstElem::into_f);
+    (T) => (AstElem::into_t);
+);
+
+macro_rules! is_fn(
+    (E) => (AstElem::is_e);
+    (M) => (AstElem::is_m);
+    (W) => (AstElem::is_w);
+    (V) => (AstElem::is_v);
+    (F) => (AstElem::is_f);
+    (T) => (AstElem::is_t);
+);
+
+macro_rules! expect_token(
+    ($tokens:expr, $expected:pat => $b:block) => ({
+        match $tokens.next() {
+            Some($expected) => $b,
+            Some(tok) => return Err(Error::Unexpected(tok.to_string())),
+            None => return Err(Error::UnexpectedStart),
+        }
+    });
+    ($tokens:expr, $expected:pat) => (expect_token!($tokens, $expected => {}));
+);
+
+macro_rules! parse_tree(
+    // Tree
+    (
+        // list of tokens passed into macro scope
+        $tokens:expr,
+        // list of expected tokens
+        $($expected:pat $(, $more:pat)* => { $($sub:tt)* }),*
+        // list of expected subexpressions. The whole thing is surrounded
+        // in a $(..)* because it's optional. But it should only be used once.
+        $(
+        #subexpression $($parse_expected:tt: $name:ident $(, $parse_more:pat)* => { $($parse_sub:tt)* }),*
+        )*
+    ) => ({
+        match $tokens.next() {
+            $(Some($expected) => {
+                $(expect_token!($tokens, $more);)*
+                parse_tree!($tokens, $($sub)*)
+            },)*
+            Some(tok) => {
+                #[allow(unused_assignments)]
+                #[allow(unused_mut)]
+                let mut ret: Result<Box<AstElem>, Error> = Err(Error::Unexpected(tok.to_string()));
+                $(
+                $tokens.un_next(tok);
+                let subexpr = parse_subexpression($tokens)?;
+                ret =
+                $(if is_fn!($parse_expected)(&*subexpr) {
+                    let $name = into_fn!($parse_expected)(subexpr).unwrap();
+                    $(expect_token!($tokens, $parse_more);)*
+                    parse_tree!($tokens, $($parse_sub)*)
+                } else)* {
+                    Err(Error::Unexpected(subexpr.to_string()))
+                };
+                )*
+                ret
+            }
+            None => return Err(Error::UnexpectedStart),
+        }
+    });
+    // Not a tree; must be a block
+    ($tokens:expr, $($b:tt)*) => ({ $($b)* });
+);
+
+
+/// Parse a subexpression that is -not- a wexpr (wexpr is special-cased
+/// to avoid splitting expr into expr0 and exprn in the AST structure).
+fn parse_subexpression(tokens: &mut TokenIter) -> Result<Box<AstElem>, Error> {
+    if let Some(tok) = tokens.next() {
+        tokens.un_next(tok);
+    }
+    let ret: Result<Box<AstElem>, Error> = parse_tree!(tokens,
+        Token::BoolAnd => {
+            #subexpression
+            W: wexpr => {
+                #subexpression
+                E: expr => {
+                    Ok(Box::new(E::ParallelAnd(expr, wexpr)))
+                }
+            }
+        },
+        Token::BoolOr => {
+            #subexpression
+            W: wexpr => {
+                #subexpression
+                E: expr => {
+                    Ok(Box::new(E::ParallelOr(expr, wexpr)))
+                }
+            }
+        },
+        Token::Equal => {
+            Token::Sha256Hash(hash), Token::Sha256, Token::EqualVerify, Token::Number(32), Token::Size => {
+                Ok(Box::new(T::HashEqual(hash)))
+            }
+        },
+        Token::EqualVerify => {
+            Token::Sha256Hash(hash), Token::Sha256, Token::EqualVerify, Token::Number(32), Token::Size => {
+                Ok(Box::new(V::HashEqual(hash)))
+            }
+        },
+        Token::CheckSig => {
+            Token::EqualVerify => {
+                Token::Hash160Hash(hash), Token::Hash160, Token::Dup => {
+                    Ok(Box::new(E::CheckSigHash(hash)))
+                }
+            },
+            Token::Pubkey(pk) => {{
                 match tokens.next() {
-                    Some(Token::Else) => {
-                        let or_left = Mexpr::parse(tokens)?;
-                        match tokens.next() {
-                            Some(Token::If) => {}
-                            _ => return Err(Error::Expected("OP_IF"))
+                    Some(Token::Swap) => Ok(Box::new(W::CheckSig(pk))),
+                    Some(x) => {
+                        tokens.un_next(x);
+                        Ok(Box::new(M::CheckSig(pk)))
+                    }
+                    None => Ok(Box::new(M::CheckSig(pk))),
+                }
+            }}
+        },
+        Token::CheckSigVerify => {
+            Token::EqualVerify => {
+                Token::Hash160Hash(hash), Token::Hash160, Token::Dup => {
+                    Ok(Box::new(V::CheckSigHash(hash)))
+                }
+            },
+            Token::Pubkey(pk) => {
+                Ok(Box::new(V::CheckSig(pk)))
+            }
+        },
+        Token::CheckMultiSig => {{
+            let n = expect_token!(tokens, Token::Number(n) => { n });
+            let mut pks = vec![];
+            for _ in 0..n {
+                pks.push(expect_token!(tokens, Token::Pubkey(pk) => { pk }));
+            }
+            pks.reverse();
+            let k = expect_token!(tokens, Token::Number(n) => { n });
+            Ok(Box::new(E::CheckMultiSig(k as usize, pks)))
+        }},
+        Token::CheckMultiSigVerify => {{
+            let n = expect_token!(tokens, Token::Number(n) => { n });
+            let mut pks = vec![];
+            for _ in 0..n {
+                pks.push(expect_token!(tokens, Token::Pubkey(pk) => { pk }));
+            }
+            pks.reverse();
+            let k = expect_token!(tokens, Token::Number(n) => { n });
+            Ok(Box::new(V::CheckMultiSig(k as usize, pks)))
+        }},
+        Token::CheckSequenceVerify => {
+            Token::Number(n) => {
+                Ok(Box::new(F::Csv(n)))
+            }
+        },
+        Token::FromAltStack => {
+            #subexpression
+            E: expr, Token::ToAltStack => {
+                Ok(Box::new(W::CastE(expr)))
+            }
+        },
+        Token::Drop, Token::CheckSequenceVerify => {
+            Token::Number(n) => {
+                Ok(Box::new(V::Csv(n)))
+            }
+        },
+        Token::EndIf => {
+            Token::Number(0), Token::Else => {
+                #subexpression
+                F: fexpr => {
+                    Token::NotIf => {
+                        Token::EqualVerify, Token::Size => {
+                            Ok(Box::new(M::CastF(fexpr)))
                         }
-                        Mexpr::SwitchOr(Box::new(or_left), Box::new(or_right))
+                        #subexpression
+                        M: left => {
+                            Ok(Box::new(M::CascadeAnd(left, fexpr)))
+                        },
+                        E: left => {
+                            Ok(Box::new(E::CascadeAnd(left, fexpr)))
+                        }
                     }
-                    Some(Token::IfDupNotIf) => {
-                        let or_left = Expr::parse(tokens)?;
-                        Mexpr::CascadeOr(or_left, Box::new(or_right))
-                    }
-                    _ => return Err(Error::Expected("OP_ELSE or OP_NOTIF"))
                 }
             }
-            Some(x) => {
-                tokens.un_next(x);
-                Expr::parse(tokens).map(Mexpr::Wrapped)?
-            }
-            None => return Err(Error::Expected("expression"))
-        };
-
-        let mut and_vexprs = vec![];
-        while let Some(more) = tokens.next() {
-            tokens.un_next(more);
-            match Vexpr::parse(tokens) {
-                Ok(vexpr) => and_vexprs.push(vexpr),
-                Err(Error::UnexpectedToken(t)) => {
-                    tokens.un_next(t);
-                    break;
+            #subexpression
+            E: right => {
+                Token::Else => {
+                    #subexpression
+                    F: left, Token::If, Token::EqualVerify, Token::Size => {
+                        Ok(Box::new(E::SwitchOr(left, right)))
+                    }
+                },
+                Token::NotIf, Token::IfDup => {
+                    #subexpression
+                    E: left => {
+                        Ok(Box::new(E::CascadeOr(left, right)))
+                    }
                 }
-                Err(e) => return Err(e),
+            },
+            F: right => {
+                Token::If, Token::Size => {{
+                    match *right {
+                        F::CheckSigHash(hash) => Ok(Box::new(M::CheckSigHash(hash))),
+                        F::CheckMultiSig(k, keys) => Ok(Box::new(M::CheckMultiSig(k, keys))),
+                        F::HashEqual(hash) => {
+                            match tokens.next() {
+                                Some(Token::Swap) => Ok(Box::new(W::HashEqual(hash))),
+                                Some(x) => {
+                                    tokens.un_next(x);
+                                    Ok(Box::new(M::HashEqual(hash)))
+                                }
+                                None => Ok(Box::new(M::HashEqual(hash))),
+                            }
+                        }
+                        x => Err(Error::Unexpected(x.to_string())),
+                    }
+                }},
+                Token::Else => {
+                    #subexpression
+                    F: left, Token::If, Token::EqualVerify, Token::Size => {
+                        Ok(Box::new(F::SwitchOr(left, right)))
+                    }
+                },
+                Token::NotIf, Token::IfDup => {
+                    #subexpression
+                    E: left => {
+                        Ok(Box::new(F::CascadeOr(left, right)))
+                    }
+                }
+            },
+            V: right => {
+                Token::Else => {
+                    #subexpression
+                    V: left, Token::If, Token::EqualVerify, Token::Size => {
+                        Ok(Box::new(V::SwitchOr(left, right)))
+                    }
+                },
+                Token::NotIf => {
+                    #subexpression
+                    E: left => {
+                        Ok(Box::new(V::CascadeOr(left, right)))
+                    }
+                }
+            },
+            T: right => {
+                Token::Else => {
+                    #subexpression
+                    T: left, Token::If, Token::EqualVerify, Token::Size => {
+                        Ok(Box::new(T::SwitchOr(left, right)))
+                    }
+                },
+                Token::NotIf, Token::IfDup => {
+                    #subexpression
+                    E: left => {
+                        Ok(Box::new(T::CascadeOr(left, right)))
+                    }
+                }
             }
+        },
+        Token::Verify => { 
+            Token::EndIf => {
+                #subexpression
+                F: right, Token::Else => {
+                    #subexpression
+                    F: left, Token::If, Token::EqualVerify, Token::Size => {
+                        Ok(Box::new(V::SwitchOrF(left, right)))
+                    }
+                }
+            },
+            Token::BoolOr => {
+                #subexpression
+                W: wexpr => {
+                    #subexpression
+                    E: expr => {
+                        Ok(Box::new(V::ParallelOr(expr, wexpr)))
+                    }
+                }
+            }
+        },
+        Token::Number(1) => {
+            Token::EndIf => {
+                #subexpression
+                V: right => {
+                    Token::Else => {
+                        #subexpression
+                        V: left, Token::If, Token::EqualVerify, Token::Size => {
+                            Ok(Box::new(F::SwitchOrV(left, right)))
+                        }
+                    },
+                    Token::If, Token::EqualVerify, Token::Size => {
+                        Ok(Box::new(E::CastV(right)))
+                    }
+                }
+            }
+            #subexpression
+            V: vexpr => {{
+                match *vexpr {
+                    V::CheckSig(pk) => Ok(Box::new(F::CheckSig(pk))),
+                    V::CheckSigHash(hash) => Ok(Box::new(F::CheckSigHash(hash))),
+                    V::CheckMultiSig(k, keys) => Ok(Box::new(F::CheckMultiSig(k, keys))),
+                    V::HashEqual(hash) => Ok(Box::new(F::HashEqual(hash))),
+                    x => Err(Error::Unexpected(x.to_string())),
+                }
+            }}
         }
+    );
 
-        if and_vexprs.is_empty() {
-            Ok(mexpr)
+    if let Ok(ret) = ret {
+        // vexpr [tfv]expr AND
+        if ret.is_t() || ret.is_f() || ret.is_v() {
+            match tokens.peek() {
+                None | Some(&Token::If) | Some(&Token::NotIf) | Some(&Token::Else) => Ok(ret),
+                _ => {
+                    let left = parse_subexpression(tokens)?.into_v()?;
+
+                    if ret.is_t() {
+                        let right = ret.into_t().unwrap();
+                        Ok(Box::new(T::And(left, right)))
+                    } else if ret.is_f() {
+                        let right = ret.into_f().unwrap();
+                        Ok(Box::new(F::And(left, right)))
+                    } else if ret.is_v() {
+                        let right = ret.into_v().unwrap();
+                        Ok(Box::new(V::And(left, right)))
+                    } else {
+                        unreachable!()
+                    }
+                }
+            }
         } else {
-            and_vexprs.reverse();
-            Ok(Mexpr::And(and_vexprs, Box::new(mexpr)))
+            Ok(ret)
         }
-    }
-
-    fn serialize(&self, mut builder: script::Builder) -> script::Builder {
-        match *self {
-            Mexpr::Wrapped(ref expr) => Expr::serialize(expr, builder),
-            Mexpr::Csv(n) => builder.push_int(n as i64)
-                                    .push_opcode(opcodes::OP_CSV),
-            Mexpr::And(ref vexpr, ref mexpr) => {
-                for v in vexpr {
-                    builder = Vexpr::serialize(v, builder);
-                }
-                Mexpr::serialize(mexpr, builder)
-            }
-            Mexpr::SwitchOr(ref left, ref right) => {
-                builder = builder.push_opcode(opcodes::All::OP_IF);
-                builder = Mexpr::serialize(left, builder);
-                builder = builder.push_opcode(opcodes::All::OP_ELSE);
-                builder = Mexpr::serialize(right, builder);
-                builder.push_opcode(opcodes::All::OP_ENDIF)
-            }
-            Mexpr::CascadeOr(ref left, ref right) => {
-                builder = Expr::serialize(left, builder);
-                builder = builder.push_opcode(opcodes::All::OP_IFDUP)
-                                 .push_opcode(opcodes::All::OP_NOTIF);
-                builder = Mexpr::serialize(right, builder);
-                builder.push_opcode(opcodes::All::OP_ENDIF)
-            }
-        }
-    }
-
-    fn compile<P: descriptor::PublicKey>(descriptor: &Descriptor<P>) -> (Mexpr, usize) {
-        match *descriptor {
-            Descriptor::Key(ref key) => (Mexpr::Wrapped(Expr::CheckSig(key.as_pubkey())), 35),
-            Descriptor::Hash(hash) => (Mexpr::Wrapped(Expr::HashEqual(hash)), 35),
-            Descriptor::Csv(n) => (Mexpr::Csv(n), 6),
-            Descriptor::And(ref subs) => {
-                // Determine which sub-descriptor we save the most bytes on by moving it to
-                // the last in line.
-                let (min_mexpr_idx, _) = subs
-                    .iter()
-                    .enumerate()
-                    .rev()  // reverse the list so `min_by_key` will prefer the currently last element
-                    .min_by_key(|(_, x)| Mexpr::compile(x).1 as isize - Vexpr::compile(x).1 as isize)
-                    .expect("nonempty and clause");
-
-                let mut cost = 0;
-                let mut vexprs = Vec::with_capacity(subs.len() - 1);
-                for (n, sub) in subs.iter().enumerate() {
-                    if n != min_mexpr_idx {
-                        let (vexpr, c) = Vexpr::compile(sub);
-                        vexprs.push(vexpr);
-                        cost += c + 1;
-                    }
-                }
-                let (mexpr, c) = Mexpr::compile(&subs[min_mexpr_idx]);
-                (Mexpr::And(vexprs, Box::new(mexpr)), cost + c)
-            }
-            Descriptor::AsymmetricOr(ref a, ref b) => {
-                let (expr_a, cost_a) = Expr::compile(a);
-                let (mexpr_b, cost_b) = Mexpr::compile(b);
-                // TODO check cost of expr_a
-                (Mexpr::CascadeOr(expr_a, Box::new(mexpr_b)), 3 + cost_a + cost_b)
-            }
-            Descriptor::Or(_, _) => unimplemented!(),
-            Descriptor::Threshold(_, ref subs) => {
-                let is_expr = subs.iter().all(|x|
-                    match *x {
-                        Descriptor::Key(_) => true,
-                        _ => false,
-                    }
-                );
-                if is_expr {
-                    let (expr, cost) = Expr::compile(descriptor);
-                    (Mexpr::Wrapped(expr), cost)
-                } else {
-                    unimplemented!()
-                }
-            }
-        }
+    } else {
+        ret
     }
 }
 
-impl AstElem for Vexpr {
-    fn parse(tokens: &mut TokenIter) -> Result<Vexpr, Error> {
-        match tokens.next() {
-            Some(Token::CheckSigVerify(pk)) => Ok(Vexpr::CheckSigVerify(pk)),
-            Some(Token::CheckMultiSigVerify(k, pks)) => Ok(Vexpr::CheckMultiSigVerify(k, pks)),
-            Some(Token::HashEqualVerify(hash)) => Ok(Vexpr::HashEqualVerify(hash)),
-            Some(Token::Verify) => Mexpr::parse(tokens).map(Vexpr::Wrapped),
-            Some(Token::NumEqualVerify(n)) => Ok(Vexpr::Threshold(parse_wexprs(tokens, Token::Add)?, n as usize)),
-            Some(x) => Err(Error::UnexpectedToken(x)),
-            None => Err(Error::Expected("OP_CHECKSIGVERIFY or OP_CHECKMULTISIGVERIFY or OP_EQUALVERIFY or OP_VERIFY"))
-        }
+struct Cost<T> {
+    ast: T,
+    pk_cost: usize,
+    sat_cost: usize,
+    dissat_cost: usize,
+}
+
+impl fmt::Display for E {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let script = self.serialize(script::Builder::new()).into_script();
+        fmt::Display::fmt(&script, f)
     }
+}
+
+impl AstElem for E {
+    fn into_e(self: Box<E>) -> Result<Box<E>, Error> { Ok(self) }
+    fn into_t(self: Box<E>) -> Result<Box<T>, Error> { Ok(Box::new(T::CastE(self))) }
+    fn is_e(&self) -> bool { true }
+    fn is_t(&self) -> bool { true }
 
     fn serialize(&self, mut builder: script::Builder) -> script::Builder {
         match *self {
-            Vexpr::HashEqualVerify(hash) => {
-                builder.push_opcode(opcodes::All::OP_SHA256)
+            E::CheckSigHash(ref hash) => {
+                builder.push_opcode(opcodes::All::OP_DUP)
+                       .push_opcode(opcodes::All::OP_HASH160)
                        .push_slice(&hash[..])
                        .push_opcode(opcodes::All::OP_EQUALVERIFY)
-            }
-            Vexpr::CheckSigVerify(ref pk) => {
-                builder.push_slice(&pk.serialize()[..])
-                       .push_opcode(opcodes::All::OP_CHECKSIGVERIFY)
-            }
-            Vexpr::CheckMultiSigVerify(k, ref pks) => {
-                builder = builder.push_int(k as i64);
-                for pk in pks {
-                    builder = builder.push_slice(&pk.serialize()[..]);
-                }
-                builder.push_int(pks.len() as i64)
-                       .push_opcode(opcodes::All::OP_CHECKMULTISIGVERIFY)
-            }
-            Vexpr::Threshold(ref exprs, k) => {
-                serialize_wexprs(exprs, builder, opcodes::All::OP_ADD).push_int(k as i64)
-                                                                      .push_opcode(opcodes::All::OP_EQUALVERIFY)
-            }
-            Vexpr::Wrapped(ref mexpr) => Mexpr::serialize(mexpr, builder).push_opcode(opcodes::All::OP_VERIFY),
-        }
-    }
-
-    fn compile<P: descriptor::PublicKey>(descriptor: &Descriptor<P>) -> (Vexpr, usize) {
-        match *descriptor {
-            Descriptor::Key(ref key) => (Vexpr::CheckSigVerify(key.as_pubkey()), 35),
-            Descriptor::Hash(hash) => (Vexpr::HashEqualVerify(hash), 35),
-            Descriptor::Csv(n) => (Vexpr::Wrapped(Mexpr::Csv(n)), 7),
-            Descriptor::And(_) => unimplemented!(),
-            Descriptor::Or(_, _) => unimplemented!(),
-            Descriptor::AsymmetricOr(_, _) => unimplemented!(),
-            Descriptor::Threshold(k, ref subs) => {
-                let all_keys = subs.iter().all(|x| if let Descriptor::Key(_) = *x { true } else { false });
-
-                if all_keys && subs.len() <= 20 {
-                    let mut keys = Vec::with_capacity(subs.len());
-                    for sub in subs {
-                        match *sub {
-                            Descriptor::Key(ref key) => keys.push(key.as_pubkey()),
-                            _ => unreachable!(),
-                        }
-                    }
-
-                    let len = 3 + 34 * keys.len() + match (k > 16, subs.len() > 16) {
-                        (true, true) => 2,
-                        (false, true) => 1,
-                        (true, false) => 1,
-                        (false, false) => 0,
-                    };
-                    (Vexpr::CheckMultiSigVerify(k, keys), len)
-                } else {
-                    unimplemented!()
-                }
-            }
-        }
-    }
-}
-
-impl AstElem for Expr {
-    fn parse(tokens: &mut TokenIter) -> Result<Expr, Error> {
-        match tokens.next() {
-            Some(Token::CheckSig(pk)) => Ok(Expr::CheckSig(pk)),
-            Some(Token::HashEqual(hash)) => Ok(Expr::HashEqual(hash)),
-            Some(Token::CheckMultiSig(k, pks)) => Ok(Expr::CheckMultiSig(k, pks)),
-            Some(Token::And) => {
-                tokens.un_next(Token::And);
-                Ok(Expr::ParallelAnd(parse_wexprs(tokens, Token::And)?))
-            },
-            Some(Token::Or) => {
-                tokens.un_next(Token::Or);
-                Ok(Expr::ParallelOr(parse_wexprs(tokens, Token::Or)?))
-            },
-            Some(Token::NumEqual(n)) => Ok(Expr::Threshold(parse_wexprs(tokens, Token::Add)?, n as usize)),
-            _ => return Err(Error::Expected("OP_CHECKSIG or OP_CHECKMULTISIG or OP_EQUAL or OP_BOOLOR or wexpr"))
-        }
-    }
-
-    fn serialize(&self, mut builder: script::Builder) -> script::Builder {
-        match *self {
-            Expr::HashEqual(hash) => {
-                builder.push_opcode(opcodes::All::OP_SHA256)
-                       .push_slice(&hash[..])
-                       .push_opcode(opcodes::All::OP_EQUAL)
-            }
-            Expr::CheckSig(ref pk) => {
-                builder.push_slice(&pk.serialize()[..])
                        .push_opcode(opcodes::All::OP_CHECKSIG)
             }
-            Expr::CheckMultiSig(k, ref pks) => {
+            E::CheckMultiSig(k, ref pks) => {
                 builder = builder.push_int(k as i64);
                 for pk in pks {
                     builder = builder.push_slice(&pk.serialize()[..]);
@@ -614,112 +795,878 @@ impl AstElem for Expr {
                 builder.push_int(pks.len() as i64)
                        .push_opcode(opcodes::All::OP_CHECKMULTISIG)
             }
-            Expr::ParallelAnd(ref exprs) => serialize_wexprs(exprs, builder, opcodes::All::OP_BOOLAND),
-            Expr::ParallelOr(ref exprs) => serialize_wexprs(exprs, builder, opcodes::All::OP_BOOLOR),
-            Expr::Threshold(ref exprs, k) => {
-                serialize_wexprs(exprs, builder, opcodes::All::OP_ADD).push_int(k as i64)
-                                                                      .push_opcode(opcodes::All::OP_EQUAL)
+            E::ParallelAnd(ref left, ref right) => {
+                builder = left.serialize(builder);
+                builder = right.serialize(builder);
+                builder.push_opcode(opcodes::All::OP_BOOLAND)
+            }
+            E::CascadeAnd(ref left, ref right) => {
+                builder = left.serialize(builder);
+                builder = builder.push_opcode(opcodes::All::OP_IF);
+                builder = right.serialize(builder);
+                builder.push_opcode(opcodes::All::OP_ELSE)
+                       .push_int(0)
+                       .push_opcode(opcodes::All::OP_ENDIF)
+            }
+            E::SwitchOr(ref left, ref right) => {
+                builder = builder.push_opcode(opcodes::All::OP_SIZE)
+                                 .push_opcode(opcodes::All::OP_EQUALVERIFY)
+                                 .push_opcode(opcodes::All::OP_IF);
+                builder = left.serialize(builder);
+                builder = builder.push_opcode(opcodes::All::OP_ELSE);
+                builder = right.serialize(builder);
+                builder.push_opcode(opcodes::All::OP_ENDIF)
+            }
+            E::CascadeOr(ref left, ref right) => {
+                builder = left.serialize(builder);
+                builder = builder.push_opcode(opcodes::All::OP_IFDUP)
+                                 .push_opcode(opcodes::All::OP_NOTIF);
+                builder = right.serialize(builder);
+                builder.push_opcode(opcodes::All::OP_ENDIF)
+            }
+            E::ParallelOr(ref left, ref right) => {
+                builder = left.serialize(builder);
+                builder = right.serialize(builder);
+                builder.push_opcode(opcodes::All::OP_BOOLOR)
+            }
+            E::CastV(ref vexpr) => {
+                builder = builder.push_opcode(opcodes::All::OP_SIZE)
+                                 .push_opcode(opcodes::All::OP_EQUALVERIFY)
+                                 .push_opcode(opcodes::All::OP_IF);
+                vexpr.serialize(builder).push_opcode(opcodes::All::OP_ENDIF)
+                                        .push_int(1)
+            }
+            E::CastM(ref mexpr) => mexpr.serialize(builder)
+        }
+    }
+}
+
+fn min_cost<T, S, F: FnOnce(S) -> T>(one: Cost<T>, two: Cost<S>, sat_prob: f64, cast: F) -> Cost<T> {
+    let weight_one = one.pk_cost as f64 + sat_prob * one.sat_cost as f64 + (1.0 - sat_prob) * one.dissat_cost as f64;
+    let weight_two = two.pk_cost as f64 + sat_prob * two.sat_cost as f64 + (1.0 - sat_prob) * two.dissat_cost as f64;
+    if weight_one < weight_two {
+        one
+    } else {
+        Cost {
+            ast: cast(two.ast),
+            pk_cost: two.pk_cost,
+            sat_cost: two.sat_cost,
+            dissat_cost: two.dissat_cost,
+        }
+    }
+}
+
+macro_rules! compare_rules(
+    ($sat_prob:expr, $left:expr, $right:expr;
+     $($L:ident: $lty:ident, $lweight:expr; $R:ident: $rty:ident, $rweight:expr; $pk_cost:expr, $sat_cost:expr, $dissat_cost:expr; $result:expr;)*
+    ) => ({
+        let mut ret = vec![];
+        $({
+        #[allow(non_snake_case)]
+        let $L = $lty::from_descriptor($left, $lweight);
+        #[allow(non_snake_case)]
+        let $R = $rty::from_descriptor($right, $rweight);
+
+        ret.push(Cost {
+            ast: $result,
+            pk_cost: $pk_cost,
+            sat_cost: $sat_cost,
+            dissat_cost: $dissat_cost,
+        });
+        })*
+
+        let last = ret.pop().unwrap();
+        ret.into_iter().fold(last, |acc, n| min_cost(acc, n, $sat_prob, |x| x))
+    })
+);
+
+impl E {
+    fn from_descriptor(desc: &script::Descriptor<secp256k1::PublicKey>, satisfaction_probability: f64) -> Cost<E> {
+        match *desc {
+            script::Descriptor::Key(_) | script::Descriptor::Time(_) | script::Descriptor::Hash(_) => {
+                let mcost = M::from_descriptor(desc, satisfaction_probability);
+                Cost {
+                    ast: E::CastM(Box::new(mcost.ast)),
+                    pk_cost: mcost.pk_cost,
+                    sat_cost: mcost.sat_cost,
+                    dissat_cost: mcost.sat_cost,
+                }
+            }
+            script::Descriptor::KeyHash(ref key) => {
+                let hash = Hash160::from_data(&key.serialize()[..]);
+                Cost {
+                    ast: E::CheckSigHash(hash),
+                    pk_cost: 25,
+                    sat_cost: 34 + 73,
+                    dissat_cost: 34 + 1,
+                }
+            }
+            script::Descriptor::Multi(k, ref keys) => {
+                let num_cost = match(k > 16, keys.len() > 16) {
+                    (true, true) => 4,
+                    (false, true) => 3,
+                    (true, false) => 3,
+                    (false, false) => 2,
+                };
+                Cost {
+                    ast: E::CheckMultiSig(k, keys.clone()),
+                    pk_cost: num_cost + 34 * keys.len() + 1,
+                    sat_cost: 1 + 73*k,
+                    dissat_cost: 1 + k,
+                }
+            }
+            script::Descriptor::And(ref left, ref right) => {
+                let e = compare_rules!(satisfaction_probability, left, right;
+                    // e1 w2 BOOLAND
+                    L: E, satisfaction_probability; R: W, satisfaction_probability;
+                    L.pk_cost + R.pk_cost + 1,
+                    L.sat_cost + R.sat_cost,
+                    L.dissat_cost + R.dissat_cost;
+                    E::ParallelAnd(Box::new(L.ast), Box::new(R.ast));
+                    // e2 w1 BOOLAND
+                    L: W, satisfaction_probability; R: E, satisfaction_probability;
+                    L.pk_cost + R.pk_cost + 1,
+                    L.sat_cost + R.sat_cost,
+                    L.dissat_cost + R.dissat_cost;
+                    E::ParallelAnd(Box::new(R.ast), Box::new(L.ast));
+                    // e1 IF f2 ELSE 0 ENDIF
+                    L: E, satisfaction_probability; R: F, 1.0;
+                    L.pk_cost + R.pk_cost + 4,
+                    L.sat_cost + R.sat_cost,
+                    L.dissat_cost;
+                    E::CascadeAnd(Box::new(L.ast), Box::new(R.ast));
+                    // e2 IF f1 ELSE 0 ENDIF
+                    L: F, 1.0; R: E, satisfaction_probability;
+                    L.pk_cost + R.pk_cost + 4,
+                    L.sat_cost + R.sat_cost,
+                    R.dissat_cost;
+                    E::CascadeAnd(Box::new(R.ast), Box::new(L.ast));
+                );
+                // Take minimum of this and the M result
+                let m = M::from_descriptor(desc, satisfaction_probability);
+                min_cost(e, m, satisfaction_probability, |m| E::CastM(Box::new(m)))
+            }
+            script::Descriptor::Or(ref left, ref right) => unimplemented!(),
+            script::Descriptor::AsymmetricOr(ref left, ref right) => {
+                let e = compare_rules!(satisfaction_probability, left, right;
+                    // e1 w2 BOOLOR
+                    L: E, satisfaction_probability; R: W, 0.0;
+                    L.pk_cost + R.pk_cost + 1,
+                    L.sat_cost + R.dissat_cost,
+                    L.dissat_cost + R.dissat_cost;
+                    E::ParallelOr(Box::new(L.ast), Box::new(R.ast));
+                    // e2 w1 BOOLOR
+                    L: W, satisfaction_probability; R: E, 0.0;
+                    L.pk_cost + R.pk_cost + 1,
+                    L.sat_cost + R.dissat_cost,
+                    L.dissat_cost + R.dissat_cost;
+                    E::ParallelOr(Box::new(R.ast), Box::new(L.ast));
+                );
+                // Take minimum of this and the M result
+                let m = M::from_descriptor(desc, satisfaction_probability);
+                min_cost(e, m, satisfaction_probability, |m| E::CastM(Box::new(m)))
+            }
+            script::Descriptor::Wpkh(_) | script::Descriptor::Sh(_) | script::Descriptor::Wsh(_) => {
+                // handled at at the ParseTree::from_descriptor layer
+                unreachable!()
             }
         }
     }
+}
 
-    fn compile<P: descriptor::PublicKey>(descriptor: &Descriptor<P>) -> (Expr, usize) {
-        match *descriptor {
-            Descriptor::Key(ref key) => (Expr::CheckSig(key.as_pubkey()), 35),
-            Descriptor::Hash(hash) => (Expr::HashEqual(hash), 35),
+impl fmt::Display for W {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let script = self.serialize(script::Builder::new()).into_script();
+        fmt::Display::fmt(&script, f)
+    }
+}
 
-            Descriptor::Csv(_) => unimplemented!(),
-            Descriptor::And(_) => unimplemented!(),
-            Descriptor::Or(_, _) => unimplemented!(),
-            Descriptor::AsymmetricOr(_, _) => unimplemented!(),
-            Descriptor::Threshold(k, ref subs) => {
-                let all_keys = subs.iter().all(|x| if let Descriptor::Key(_) = *x { true } else { false });
+impl AstElem for W {
+    fn into_w(self: Box<W>) -> Result<Box<W>, Error> { Ok(self) }
+    fn is_w(&self) -> bool { true }
 
-                if all_keys && subs.len() <= 20 {
-                    let mut keys = Vec::with_capacity(subs.len());
-                    for sub in subs {
-                        match *sub {
-                            Descriptor::Key(ref key) => keys.push(key.as_pubkey()),
-                            _ => unreachable!(),
-                        }
+    fn serialize(&self, mut builder: script::Builder) -> script::Builder {
+        match *self {
+            W::CheckSig(pk) => {
+                builder.push_opcode(opcodes::All::OP_SWAP)
+                       .push_slice(&pk.serialize()[..])
+                       .push_opcode(opcodes::All::OP_CHECKSIG)
+            }
+            W::HashEqual(hash) => {
+                builder.push_opcode(opcodes::All::OP_SWAP)
+                       .push_opcode(opcodes::All::OP_SIZE)
+                       .push_opcode(opcodes::All::OP_IF)
+                       .push_opcode(opcodes::All::OP_SIZE)
+                       .push_int(32)
+                       .push_opcode(opcodes::All::OP_EQUALVERIFY)
+                       .push_opcode(opcodes::All::OP_SHA256)
+                       .push_slice(&hash[..])
+                       .push_opcode(opcodes::All::OP_EQUALVERIFY)
+                       .push_int(1)
+                       .push_opcode(opcodes::All::OP_ENDIF)
+            }
+            W::CastE(ref expr) => {
+                builder = builder.push_opcode(opcodes::All::OP_TOALTSTACK);
+                expr.serialize(builder).push_opcode(opcodes::All::OP_FROMALTSTACK)
+            }
+        }
+    }
+}
+
+impl W {
+    fn from_descriptor(desc: &script::Descriptor<secp256k1::PublicKey>, satisfaction_probability: f64) -> Cost<W> {
+        match *desc {
+            script::Descriptor::Key(ref key) => {
+                Cost {
+                    ast: W::CheckSig(key.clone()),
+                    pk_cost: 36,
+                    sat_cost: 73,
+                    dissat_cost: 1,
+                }
+            }
+            script::Descriptor::Hash(hash) => {
+                Cost {
+                    ast: W::HashEqual(hash),
+                    pk_cost: 32,
+                    sat_cost: 33,
+                    dissat_cost: 1,
+                }
+            }
+            script::Descriptor::KeyHash(_) | script::Descriptor::Time(_) |
+            script::Descriptor::Multi(_, _) | script::Descriptor::And(_, _) |
+            script::Descriptor::Or(_, _) | script::Descriptor::AsymmetricOr(_, _) => { let e = E::from_descriptor(desc, satisfaction_probability);
+                Cost {
+                    ast: W::CastE(Box::new(e.ast)),
+                    pk_cost: e.pk_cost + 2,
+                    sat_cost: e.sat_cost,
+                    dissat_cost: e.sat_cost,
+                }
+            }
+            script::Descriptor::Wpkh(_) | script::Descriptor::Sh(_) | script::Descriptor::Wsh(_) => {
+                // handled at at the ParseTree::from_descriptor layer
+                unreachable!()
+            }
+        }
+    }
+}
+impl fmt::Display for M {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let script = self.serialize(script::Builder::new()).into_script();
+        fmt::Display::fmt(&script, f)
+    }
+}
+
+impl AstElem for M {
+    fn into_m(self: Box<M>) -> Result<Box<M>, Error> { Ok(self) }
+    fn into_e(self: Box<M>) -> Result<Box<E>, Error> { Ok(Box::new(E::CastM(self))) }
+    fn into_t(self: Box<M>) -> Result<Box<T>, Error> { Ok(Box::new(T::CastM(self))) }
+    fn is_m(&self) -> bool { true }
+    fn is_e(&self) -> bool { true }
+    fn is_t(&self) -> bool { true }
+
+    fn serialize(&self, mut builder: script::Builder) -> script::Builder {
+        match *self {
+            M::CheckSig(ref pk) => {
+                builder.push_slice(&pk.serialize()[..])
+                       .push_opcode(opcodes::All::OP_CHECKSIG)
+            }
+            M::CheckSigHash(hash) => {
+                builder.push_opcode(opcodes::All::OP_SIZE)
+                       .push_opcode(opcodes::All::OP_IF)
+                       .push_opcode(opcodes::All::OP_DUP)
+                       .push_opcode(opcodes::All::OP_HASH160)
+                       .push_slice(&hash[..])
+                       .push_opcode(opcodes::All::OP_EQUALVERIFY)
+                       .push_opcode(opcodes::All::OP_CHECKSIGVERIFY)
+                       .push_int(1)
+                       .push_opcode(opcodes::All::OP_ENDIF)
+            }
+            M::CheckMultiSig(k, ref pks) => {
+                builder = builder.push_opcode(opcodes::All::OP_SIZE)
+                                 .push_opcode(opcodes::All::OP_IF)
+                                 .push_int(k as i64);
+                for pk in pks {
+                    builder = builder.push_slice(&pk.serialize()[..]);
+                }
+                builder.push_int(pks.len() as i64)
+                       .push_opcode(opcodes::All::OP_CHECKMULTISIGVERIFY)
+                       .push_int(1)
+                       .push_opcode(opcodes::All::OP_ENDIF)
+            }
+            M::HashEqual(hash) => {
+                builder.push_opcode(opcodes::All::OP_SIZE)
+                       .push_opcode(opcodes::All::OP_IF)
+                       .push_opcode(opcodes::All::OP_SIZE)
+                       .push_int(32)
+                       .push_opcode(opcodes::All::OP_EQUALVERIFY)
+                       .push_opcode(opcodes::All::OP_SHA256)
+                       .push_slice(&hash[..])
+                       .push_opcode(opcodes::All::OP_EQUALVERIFY)
+                       .push_int(1)
+                       .push_opcode(opcodes::All::OP_ENDIF)
+            }
+            M::CascadeAnd(ref left, ref right) => {
+                builder = left.serialize(builder);
+                builder = builder.push_opcode(opcodes::All::OP_IF);
+                builder = right.serialize(builder);
+                builder.push_opcode(opcodes::All::OP_ELSE)
+                       .push_int(0)
+                       .push_opcode(opcodes::All::OP_ENDIF)
+            }
+            M::CastF(ref fexpr) => {
+                builder = builder.push_opcode(opcodes::All::OP_SIZE)
+                                 .push_opcode(opcodes::All::OP_EQUALVERIFY)
+                                 .push_opcode(opcodes::All::OP_NOTIF);
+                builder = fexpr.serialize(builder);
+                builder.push_opcode(opcodes::All::OP_ELSE)
+                       .push_int(0)
+                       .push_opcode(opcodes::All::OP_ENDIF)
+            }
+        }
+    }
+}
+
+impl M {
+    fn from_descriptor(desc: &script::Descriptor<secp256k1::PublicKey>, satisfaction_probability: f64) -> Cost<M> {
+        match *desc {
+            script::Descriptor::Key(ref key) => {
+                Cost {
+                    ast: M::CheckSig(key.clone()),
+                    pk_cost: 35,
+                    sat_cost: 73,
+                    dissat_cost: 1,
+                }
+            }
+            script::Descriptor::KeyHash(ref key) => {
+                let hash = Hash160::from_data(&key.serialize()[..]);
+                Cost {
+                    ast: M::CheckSigHash(hash),
+                    pk_cost: 29,
+                    sat_cost: 34 + 73,
+                    dissat_cost: 1,
+                }
+            }
+            script::Descriptor::Multi(k, ref keys) => {
+                let num_cost = match(k > 16, keys.len() > 16) {
+                    (true, true) => 4,
+                    (false, true) => 3,
+                    (true, false) => 3,
+                    (false, false) => 2,
+                };
+                Cost {
+                    ast: M::CheckMultiSig(k, keys.clone()),
+                    pk_cost: num_cost + 34 * keys.len() + 5,
+                    sat_cost: 1 + 73*k,
+                    dissat_cost: 1,
+                }
+            }
+            script::Descriptor::Hash(hash) => {
+                Cost {
+                    ast: M::HashEqual(hash),
+                    pk_cost: 31,
+                    sat_cost: 33,
+                    dissat_cost: 1,
+                }
+            }
+            script::Descriptor::And(ref left, ref right) => {
+                compare_rules!(satisfaction_probability, left, right;
+                    // m1 IF f2 ELSE 0 ENDIF
+                    L: M, satisfaction_probability; R: F, 1.0;
+                    L.pk_cost + R.pk_cost + 4,
+                    L.sat_cost + R.sat_cost,
+                    L.dissat_cost;
+                    M::CascadeAnd(Box::new(L.ast), Box::new(R.ast));
+                    // m2 IF f1 ELSE 0 ENDIF
+                    L: F, 1.0; R: M, satisfaction_probability;
+                    L.pk_cost + R.pk_cost + 4,
+                    L.sat_cost + R.sat_cost,
+                    R.dissat_cost;
+                    M::CascadeAnd(Box::new(R.ast), Box::new(L.ast));
+                    // SIZE EQUALVERIFY IF v1 f2 ELSE 0 ENDIF
+                    L: V, 1.0; R: F, 1.0;
+                    L.pk_cost + R.pk_cost + 6,
+                    L.sat_cost + R.sat_cost,
+                    1;
+                    M::CastF(Box::new(F::And(Box::new(L.ast), Box::new(R.ast))));
+                    // SIZE EQUALVERIFY IF v2 f1 ELSE 0 ENDIF
+                    L: F, 1.0; R: V, 1.0;
+                    L.pk_cost + R.pk_cost + 6,
+                    L.sat_cost + R.sat_cost,
+                    1;
+                    M::CastF(Box::new(F::And(Box::new(R.ast), Box::new(L.ast))));
+                )
+            }
+            script::Descriptor::Time(_) |
+            script::Descriptor::Or(_, _) | script::Descriptor::AsymmetricOr(_, _) => {
+                let f = F::from_descriptor(desc, 1.0);
+                Cost {
+                    ast: M::CastF(Box::new(f.ast)),
+                    pk_cost: f.pk_cost + 6,
+                    sat_cost: f.sat_cost + 1,
+                    dissat_cost: 2,
+                }
+            }
+            script::Descriptor::Wpkh(_) | script::Descriptor::Sh(_) | script::Descriptor::Wsh(_) => {
+                // handled at at the ParseTree::from_descriptor layer
+                unreachable!()
+            }
+        }
+    }
+}
+
+impl fmt::Display for F {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let script = self.serialize(script::Builder::new()).into_script();
+        fmt::Display::fmt(&script, f)
+    }
+}
+
+impl AstElem for F {
+    fn into_f(self: Box<F>) -> Result<Box<F>, Error> { Ok(self) }
+    fn into_t(self: Box<F>) -> Result<Box<T>, Error> { Ok(Box::new(T::CastF(self))) }
+    fn is_f(&self) -> bool { true }
+    fn is_t(&self) -> bool { true }
+
+    fn serialize(&self, mut builder: script::Builder) -> script::Builder {
+        match *self {
+            F::CheckSig(ref pk) => {
+                builder.push_slice(&pk.serialize()[..])
+                       .push_opcode(opcodes::All::OP_CHECKSIGVERIFY)
+                       .push_int(1)
+            }
+            F::CheckSigHash(hash) => {
+                builder.push_opcode(opcodes::All::OP_DUP)
+                       .push_opcode(opcodes::All::OP_HASH160)
+                       .push_slice(&hash[..])
+                       .push_opcode(opcodes::All::OP_EQUALVERIFY)
+                       .push_opcode(opcodes::All::OP_CHECKSIGVERIFY)
+                       .push_int(1)
+            }
+            F::CheckMultiSig(k, ref pks) => {
+                builder = builder.push_int(k as i64);
+                for pk in pks {
+                    builder = builder.push_slice(&pk.serialize()[..]);
+                }
+                builder.push_int(pks.len() as i64)
+                       .push_opcode(opcodes::All::OP_CHECKMULTISIGVERIFY)
+                       .push_int(1)
+            }
+            F::Csv(n) => {
+                builder.push_int(n as i64)
+                       .push_opcode(opcodes::OP_CSV)
+            }
+            F::HashEqual(hash) => {
+                builder.push_opcode(opcodes::All::OP_SIZE)
+                       .push_int(32)
+                       .push_opcode(opcodes::All::OP_EQUAL)
+                       .push_opcode(opcodes::All::OP_SHA256)
+                       .push_slice(&hash[..])
+                       .push_opcode(opcodes::All::OP_EQUALVERIFY)
+                       .push_int(1)
+            }
+            F::And(ref left, ref right) => {
+                builder = left.serialize(builder);
+                right.serialize(builder)
+            }
+            F::SwitchOr(ref left, ref right) => {
+                builder = builder.push_opcode(opcodes::All::OP_SIZE)
+                                 .push_opcode(opcodes::All::OP_EQUALVERIFY)
+                                 .push_opcode(opcodes::All::OP_IF);
+                builder = left.serialize(builder);
+                builder = builder.push_opcode(opcodes::All::OP_ELSE);
+                builder = right.serialize(builder);
+                builder.push_opcode(opcodes::All::OP_ENDIF)
+            }
+            F::SwitchOrV(ref left, ref right) => {
+                builder = builder.push_opcode(opcodes::All::OP_SIZE)
+                                 .push_opcode(opcodes::All::OP_EQUALVERIFY)
+                                 .push_opcode(opcodes::All::OP_IF);
+                builder = left.serialize(builder);
+                builder = builder.push_opcode(opcodes::All::OP_ELSE);
+                builder = right.serialize(builder);
+                builder.push_opcode(opcodes::All::OP_ENDIF)
+                       .push_int(1)
+            }
+            F::CascadeOr(ref left, ref right) => {
+                builder = left.serialize(builder);
+                builder = builder.push_opcode(opcodes::All::OP_IFDUP)
+                                 .push_opcode(opcodes::All::OP_NOTIF);
+                builder = right.serialize(builder);
+                builder.push_opcode(opcodes::All::OP_ENDIF)
+            }
+        }
+    }
+}
+
+impl F {
+    fn from_descriptor(desc: &script::Descriptor<secp256k1::PublicKey>, satisfaction_probability: f64) -> Cost<F> {
+        debug_assert_eq!(satisfaction_probability, 1.0);
+        match *desc {
+            script::Descriptor::Key(ref key) => {
+                Cost {
+                    ast: F::CheckSig(key.clone()),
+                    pk_cost: 36,
+                    sat_cost: 73,
+                    dissat_cost: 0,
+                }
+            }
+            script::Descriptor::KeyHash(ref key) => {
+                let hash = Hash160::from_data(&key.serialize()[..]);
+                Cost {
+                    ast: F::CheckSigHash(hash),
+                    pk_cost: 26,
+                    sat_cost: 34 + 73,
+                    dissat_cost: 0,
+                }
+            }
+            script::Descriptor::Multi(k, ref keys) => {
+                let num_cost = match(k > 16, keys.len() > 16) {
+                    (true, true) => 4,
+                    (false, true) => 3,
+                    (true, false) => 3,
+                    (false, false) => 2,
+                };
+                Cost {
+                    ast: F::CheckMultiSig(k, keys.clone()),
+                    pk_cost: num_cost + 34 * keys.len() + 2,
+                    sat_cost: 1 + 73*k,
+                    dissat_cost: 0,
+                }
+            }
+            script::Descriptor::Time(n) => {
+                let num_cost = script::Builder::new().push_int(n as i64).into_script().len();
+                Cost {
+                    ast: F::Csv(n),
+                    pk_cost: 1 + num_cost,
+                    sat_cost: 0,
+                    dissat_cost: 0,
+                }
+            }
+            script::Descriptor::Hash(hash) => {
+                Cost {
+                    ast: F::HashEqual(hash),
+                    pk_cost: 28,
+                    sat_cost: 33,
+                    dissat_cost: 0,
+                }
+            }
+            script::Descriptor::And(ref left, ref right) => {
+                let vl = V::from_descriptor(left, satisfaction_probability);
+                let vr = V::from_descriptor(right, satisfaction_probability);
+                let fl = F::from_descriptor(left, satisfaction_probability);
+                let fr = F::from_descriptor(right, satisfaction_probability);
+
+                if vl.pk_cost + fr.pk_cost + vl.sat_cost + fr.sat_cost <
+                   vr.pk_cost + fl.pk_cost + vr.sat_cost + fl.sat_cost {
+                    Cost {
+                        ast: F::And(Box::new(vl.ast), Box::new(fr.ast)),
+                        pk_cost: vl.pk_cost + fr.pk_cost,
+                        sat_cost: vl.sat_cost + fr.sat_cost,
+                        dissat_cost: 0,
                     }
-
-                    let len = 3 + 34 * keys.len() + match (k > 16, subs.len() > 16) {
-                        (true, true) => 2,
-                        (false, true) => 1,
-                        (true, false) => 1,
-                        (false, false) => 0,
-                    };
-                    (Expr::CheckMultiSig(k, keys), len)
                 } else {
-                    unimplemented!()
+                    Cost {
+                        ast: F::And(Box::new(vr.ast), Box::new(fl.ast)),
+                        pk_cost: vr.pk_cost + fl.pk_cost,
+                        sat_cost: vr.sat_cost + fl.sat_cost,
+                        dissat_cost: 0,
+                    }
                 }
+            }
+            script::Descriptor::Or(_, _) => unimplemented!(),
+            script::Descriptor::AsymmetricOr(ref left, ref right) => {
+                compare_rules!(satisfaction_probability, left, right;
+                    // e1 IFDUP NOTIF f2 ENDIF
+                    L: E, satisfaction_probability; R: F, 1.0;
+                    L.pk_cost + R.pk_cost + 3,
+                    L.sat_cost,
+                    0;
+                    F::CascadeOr(Box::new(L.ast), Box::new(R.ast));
+                    // SIZE EQUALVERIFY IF f2 ELSE f1 ENDIF
+                    L: F, 1.0; R: F, 1.0;
+                    L.pk_cost + R.pk_cost + 5,
+                    L.sat_cost + 1,
+                    0;
+                    F::SwitchOr(Box::new(R.ast), Box::new(L.ast));
+                )
+            }
+            script::Descriptor::Wpkh(_) | script::Descriptor::Sh(_) | script::Descriptor::Wsh(_) => {
+                // handled at at the ParseTree::from_descriptor layer
+                unreachable!()
             }
         }
     }
 }
 
-fn parse_wexprs(tokens: &mut TokenIter, sep: Token) -> Result<Vec<Expr>, Error> {
-    let mut ret = vec![];
 
-    loop {
-        if let Some(tok) = tokens.next() {
-            if tok != sep {
-                tokens.un_next(tok);
-                break;
+impl fmt::Display for V {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let script = self.serialize(script::Builder::new()).into_script();
+        fmt::Display::fmt(&script, f)
+    }
+}
+
+impl AstElem for V {
+    fn into_v(self: Box<V>) -> Result<Box<V>, Error> { Ok(self) }
+    fn is_v(&self) -> bool { true }
+
+    fn serialize(&self, mut builder: script::Builder) -> script::Builder {
+        match *self {
+            V::CheckSig(ref pk) => {
+                builder.push_slice(&pk.serialize()[..])
+                       .push_opcode(opcodes::All::OP_CHECKSIGVERIFY)
             }
-        }
-
-        let (expr, expect_swap) = match tokens.next() {
-            Some(Token::CheckSig(pk)) => (Expr::CheckSig(pk), true),
-            Some(Token::HashEqual(hash)) => (Expr::HashEqual(hash), true),
-            Some(Token::FromAltStack) => {
-                let expr = Expr::parse(tokens)?;
-                match tokens.next() {
-                    Some(Token::ToAltStack) => (expr, false),
-                    _ => return Err(Error::Expected("OP_TOALTSTACK")),
+            V::CheckSigHash(hash) => {
+                builder.push_opcode(opcodes::All::OP_DUP)
+                       .push_opcode(opcodes::All::OP_HASH160)
+                       .push_slice(&hash[..])
+                       .push_opcode(opcodes::All::OP_EQUALVERIFY)
+                       .push_opcode(opcodes::All::OP_CHECKSIGVERIFY)
+            }
+            V::CheckMultiSig(k, ref pks) => {
+                builder = builder.push_int(k as i64);
+                for pk in pks {
+                    builder = builder.push_slice(&pk.serialize()[..]);
                 }
+                builder.push_int(pks.len() as i64)
+                       .push_opcode(opcodes::All::OP_CHECKMULTISIGVERIFY)
             }
-            _ => return Err(Error::Expected("expression or wrapped expression")),
-        };
-        ret.push(expr);
-
-        if expect_swap {
-            match tokens.next() {
-                Some(Token::Swap) => {},
-                _ => return Err(Error::Expected("OP_SWAP"))
+            V::Csv(n) => {
+                builder.push_int(n as i64)
+                       .push_opcode(opcodes::OP_CSV)
+                       .push_opcode(opcodes::All::OP_DROP)
+            }
+            V::HashEqual(hash) => {
+                builder.push_opcode(opcodes::All::OP_SIZE)
+                       .push_int(32)
+                       .push_opcode(opcodes::All::OP_EQUAL)
+                       .push_opcode(opcodes::All::OP_SHA256)
+                       .push_slice(&hash[..])
+                       .push_opcode(opcodes::All::OP_EQUALVERIFY)
+            }
+            V::And(ref left, ref right) => {
+                builder = left.serialize(builder);
+                right.serialize(builder)
+            }
+            V::ParallelOr(ref left, ref right) => {
+                builder = left.serialize(builder);
+                builder = right.serialize(builder);
+                builder.push_opcode(opcodes::All::OP_BOOLOR)
+                       .push_opcode(opcodes::All::OP_VERIFY)
+            }
+            V::SwitchOr(ref left, ref right) => {
+                builder = builder.push_opcode(opcodes::All::OP_SIZE)
+                                 .push_opcode(opcodes::All::OP_EQUALVERIFY)
+                                 .push_opcode(opcodes::All::OP_IF);
+                builder = left.serialize(builder);
+                builder = builder.push_opcode(opcodes::All::OP_ELSE);
+                builder = right.serialize(builder);
+                builder.push_opcode(opcodes::All::OP_ENDIF)
+            }
+            V::SwitchOrF(ref left, ref right) => {
+                builder = builder.push_opcode(opcodes::All::OP_SIZE)
+                                 .push_opcode(opcodes::All::OP_EQUALVERIFY)
+                                 .push_opcode(opcodes::All::OP_IF);
+                builder = left.serialize(builder);
+                builder = builder.push_opcode(opcodes::All::OP_ELSE);
+                builder = right.serialize(builder);
+                builder.push_opcode(opcodes::All::OP_ENDIF)
+                       .push_opcode(opcodes::All::OP_VERIFY)
+            }
+            V::CascadeOr(ref left, ref right) => {
+                builder = left.serialize(builder);
+                builder = builder.push_opcode(opcodes::All::OP_NOTIF);
+                builder = right.serialize(builder);
+                builder.push_opcode(opcodes::All::OP_ENDIF)
             }
         }
     }
-    ret.push(Expr::parse(tokens)?);
-
-    ret.reverse();
-    Ok(ret)
 }
 
-fn serialize_wexprs(wexpr: &[Expr], mut builder: script::Builder, sep: opcodes::All) -> script::Builder {
-    if !wexpr.is_empty() {
-        builder = Expr::serialize(&wexpr[0], builder);
-        for expr in &wexpr[1..] {
-            builder = match *expr {
-                Expr::CheckSig(_) | Expr::HashEqual(_) => {
-                    builder = builder.push_opcode(opcodes::All::OP_SWAP);
-                    Expr::serialize(expr, builder)
+impl V {
+    fn from_descriptor(desc: &script::Descriptor<secp256k1::PublicKey>, satisfaction_probability: f64) -> Cost<V> {
+        debug_assert_eq!(satisfaction_probability, 1.0);
+        match *desc {
+            script::Descriptor::Key(ref key) => {
+                Cost {
+                    ast: V::CheckSig(key.clone()),
+                    pk_cost: 35,
+                    sat_cost: 73,
+                    dissat_cost: 0,
                 }
-                _ => {
-                    builder = builder.push_opcode(opcodes::All::OP_TOALTSTACK);
-                    builder = Expr::serialize(expr, builder);
-                    builder.push_opcode(opcodes::All::OP_FROMALTSTACK)
+            }
+            script::Descriptor::KeyHash(ref key) => {
+                let hash = Hash160::from_data(&key.serialize()[..]);
+                Cost {
+                    ast: V::CheckSigHash(hash),
+                    pk_cost: 25,
+                    sat_cost: 34 + 73,
+                    dissat_cost: 0,
                 }
-            }.push_opcode(sep);
+            }
+            script::Descriptor::Multi(k, ref keys) => {
+                let num_cost = match(k > 16, keys.len() > 16) {
+                    (true, true) => 4,
+                    (false, true) => 3,
+                    (true, false) => 3,
+                    (false, false) => 2,
+                };
+                Cost {
+                    ast: V::CheckMultiSig(k, keys.clone()),
+                    pk_cost: num_cost + 34 * keys.len() + 1,
+                    sat_cost: 1 + 73*k,
+                    dissat_cost: 0,
+                }
+            }
+            script::Descriptor::Time(n) => {
+                let num_cost = script::Builder::new().push_int(n as i64).into_script().len();
+                Cost {
+                    ast: V::Csv(n),
+                    pk_cost: 2 + num_cost,
+                    sat_cost: 0,
+                    dissat_cost: 0,
+                }
+            }
+            script::Descriptor::Hash(hash) => {
+                Cost {
+                    ast: V::HashEqual(hash),
+                    pk_cost: 27,
+                    sat_cost: 33,
+                    dissat_cost: 1,
+                }
+            }
+            script::Descriptor::And(ref left, ref right) => {
+                let l = V::from_descriptor(left, satisfaction_probability);
+                let r = V::from_descriptor(right, satisfaction_probability);
+                Cost {
+                    pk_cost: l.pk_cost + r.pk_cost,
+                    sat_cost: l.sat_cost + r.sat_cost,
+                    dissat_cost: 0,
+                    ast: V::And(Box::new(l.ast), Box::new(r.ast)),
+                }
+            }
+            script::Descriptor::Or(_, _) => unimplemented!(),
+            script::Descriptor::AsymmetricOr(_, _) => unimplemented!(),
+            script::Descriptor::Wpkh(_) | script::Descriptor::Sh(_) | script::Descriptor::Wsh(_) => {
+                // handled at at the ParseTree::from_descriptor layer
+                unreachable!()
+            }
         }
     }
-    builder
 }
+
+impl fmt::Display for T {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let script = self.serialize(script::Builder::new()).into_script();
+        fmt::Display::fmt(&script, f)
+    }
+}
+
+impl AstElem for T {
+    fn into_t(self: Box<T>) -> Result<Box<T>, Error> { Ok(self) }
+    fn is_t(&self) -> bool { true }
+
+    fn serialize(&self, mut builder: script::Builder) -> script::Builder {
+        match *self {
+            T::HashEqual(hash) => {
+                builder.push_opcode(opcodes::All::OP_SIZE)
+                       .push_int(32)
+                       .push_opcode(opcodes::All::OP_EQUALVERIFY)
+                       .push_opcode(opcodes::All::OP_SHA256)
+                       .push_slice(&hash[..])
+                       .push_opcode(opcodes::All::OP_EQUAL)
+            }
+            T::And(ref vexpr, ref top) => {
+                builder = vexpr.serialize(builder);
+                top.serialize(builder)
+            }
+            T::SwitchOr(ref left, ref right) => {
+                builder = builder.push_opcode(opcodes::All::OP_SIZE)
+                                 .push_opcode(opcodes::All::OP_EQUALVERIFY)
+                                 .push_opcode(opcodes::All::OP_IF);
+                builder = left.serialize(builder);
+                builder = builder.push_opcode(opcodes::All::OP_ELSE);
+                builder = right.serialize(builder);
+                builder.push_opcode(opcodes::All::OP_ENDIF)
+            }
+            T::CascadeOr(ref left, ref right) => {
+                builder = left.serialize(builder);
+                builder = builder.push_opcode(opcodes::All::OP_IFDUP)
+                                 .push_opcode(opcodes::All::OP_NOTIF);
+                builder = right.serialize(builder);
+                builder.push_opcode(opcodes::All::OP_ENDIF)
+            }
+            T::CastE(ref expr) => expr.serialize(builder),
+            T::CastM(ref expr) => expr.serialize(builder),
+            T::CastF(ref expr) => expr.serialize(builder),
+        }
+    }
+}
+
+impl T {
+    fn from_descriptor(desc: &script::Descriptor<secp256k1::PublicKey>, satisfaction_probability: f64) -> Cost<T> {
+        debug_assert_eq!(satisfaction_probability, 1.0);
+
+        match *desc {
+            script::Descriptor::Key(_) | script::Descriptor::KeyHash(_) | script::Descriptor::Multi(_, _) => {
+                let e = E::from_descriptor(desc, satisfaction_probability);
+                Cost {
+                    ast: T::CastE(Box::new(e.ast)),
+                    pk_cost: e.pk_cost,
+                    sat_cost: e.sat_cost,
+                    dissat_cost: 0,
+                }
+            }
+            script::Descriptor::Time(_) => {
+                let f = F::from_descriptor(desc, satisfaction_probability);
+                Cost {
+                    ast: T::CastF(Box::new(f.ast)),
+                    pk_cost: f.pk_cost,
+                    sat_cost: f.sat_cost,
+                    dissat_cost: 0,
+                }
+            }
+            script::Descriptor::Hash(hash) => {
+                Cost {
+                    ast: T::HashEqual(hash),
+                    pk_cost: 27,
+                    sat_cost: 33,
+                    dissat_cost: 0,
+                }
+            }
+            script::Descriptor::And(_, _) | script::Descriptor::Or(_, _) | script::Descriptor::AsymmetricOr(_, _) => {
+                let e = E::from_descriptor(desc, 1.0);
+                let f = F::from_descriptor(desc, 1.0);
+                if e.pk_cost + e.sat_cost < f.pk_cost + f.sat_cost {
+                    Cost {
+                        ast: T::CastE(Box::new(e.ast)),
+                        pk_cost: e.pk_cost,
+                        sat_cost: e.sat_cost,
+                        dissat_cost: 0,
+                    }
+                } else {
+                    Cost {
+                        ast: T::CastF(Box::new(f.ast)),
+                        pk_cost: f.pk_cost,
+                        sat_cost: f.sat_cost,
+                        dissat_cost: 0,
+                    }
+                }
+            }
+            script::Descriptor::Wpkh(_) | script::Descriptor::Sh(_) | script::Descriptor::Wsh(_) => {
+                // handled at at the ParseTree::from_descriptor layer
+                unreachable!()
+            }
+        }
+    }
+}
+
+
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use util::hash::Sha256dHash; // TODO needs to be sha256, not sha256d
 
     use secp256k1;
 
@@ -753,23 +1700,29 @@ mod tests {
         let keys = pubkeys(5);
 
         roundtrip(
-            &ParseTree(Mexpr::Wrapped(Expr::CheckSig(keys[0].clone()))),
+            &ParseTree(Box::new(T::CastM(Box::new(M::CheckSig(keys[0].clone()))))),
             "Script(OP_PUSHBYTES_33 028c28a97bf8298bc0d23d8c749452a32e694b65e30a9472a3954ab30fe5324caa OP_CHECKSIG)"
         );
         roundtrip(
-            &ParseTree(Mexpr::Wrapped(Expr::CheckMultiSig(3, keys.clone()))),
+            &ParseTree(Box::new(T::CastE(Box::new(E::CheckMultiSig(3, keys.clone()))))),
             "Script(OP_PUSHNUM_3 OP_PUSHBYTES_33 028c28a97bf8298bc0d23d8c749452a32e694b65e30a9472a3954ab30fe5324caa OP_PUSHBYTES_33 03ab1ac1872a38a2f196bed5a6047f0da2c8130fe8de49fc4d5dfb201f7611d8e2 OP_PUSHBYTES_33 039729247032c0dfcf45b4841fcd72f6e9a2422631fc3466cf863e87154754dd40 OP_PUSHBYTES_33 032564fe9b5beef82d3703a607253f31ef8ea1b365772df434226aee642651b3fa OP_PUSHBYTES_33 0289637f97580a796e050791ad5a2f27af1803645d95df021a3c2d82eb8c2ca7ff OP_PUSHNUM_5 OP_CHECKMULTISIG)"
+        );
+
+        let hash = Hash160::from_data(&keys[0].serialize());
+        roundtrip(
+            &ParseTree(Box::new(T::CastE(Box::new(E::CheckSigHash(hash))))),
+            "Script(OP_DUP OP_HASH160 OP_PUSHBYTES_20 60afcdec519698a263417ddfe7cea936737a0ee7 OP_EQUALVERIFY OP_CHECKSIG)"
         );
 
         // Liquid policy
         roundtrip(
-            &ParseTree(Mexpr::CascadeOr(
-                Expr::CheckMultiSig(2, keys[0..2].to_owned()),
-                Box::new(Mexpr::And(
-                     vec![Vexpr::CheckMultiSigVerify(2, keys[3..5].to_owned())],
-                     Box::new(Mexpr::Csv(10000)),
+            &ParseTree(Box::new(T::CascadeOr(
+                Box::new(E::CheckMultiSig(2, keys[0..2].to_owned())),
+                Box::new(T::And(
+                     Box::new(V::CheckMultiSig(2, keys[3..5].to_owned())),
+                     Box::new(T::CastF(Box::new(F::Csv(10000)))),
                  )),
-             )),
+             ))),
              "Script(OP_PUSHNUM_2 OP_PUSHBYTES_33 028c28a97bf8298bc0d23d8c749452a32e694b65e30a9472a3954ab30fe5324caa \
                                   OP_PUSHBYTES_33 03ab1ac1872a38a2f196bed5a6047f0da2c8130fe8de49fc4d5dfb201f7611d8e2 \
                                   OP_PUSHNUM_2 OP_CHECKMULTISIG \
@@ -782,44 +1735,73 @@ mod tests {
          );
 
         roundtrip(
-            &ParseTree(Mexpr::Csv(921)),
+            &ParseTree(Box::new(T::CastF(Box::new(F::Csv(921))))),
             "Script(OP_PUSHBYTES_2 9903 OP_NOP3)"
         );
 
         roundtrip(
-            &ParseTree(Mexpr::Wrapped(Expr::Threshold(vec![Expr::CheckSig(keys[0].clone())], 1))),
-            "Script(OP_PUSHBYTES_33 028c28a97bf8298bc0d23d8c749452a32e694b65e30a9472a3954ab30fe5324caa OP_CHECKSIG \
-                    OP_PUSHNUM_1 OP_EQUAL)"
+            &ParseTree(Box::new(T::HashEqual(Sha256dHash::from_data(&[])))),
+            "Script(OP_SIZE OP_PUSHBYTES_1 20 OP_EQUALVERIFY OP_SHA256 OP_PUSHBYTES_32 5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456 OP_EQUAL)"
         );
 
         roundtrip(
-            &ParseTree(Mexpr::Wrapped(Expr::Threshold(vec![
-                Expr::CheckSig(keys[0].clone()),
-                Expr::CheckSig(keys[1].clone()),
-                Expr::CheckSig(keys[2].clone()),
-                Expr::CheckSig(keys[3].clone()),
-                Expr::CheckSig(keys[4].clone()),
-            ], 3))),
-            "Script(OP_PUSHBYTES_33 028c28a97bf8298bc0d23d8c749452a32e694b65e30a9472a3954ab30fe5324caa OP_CHECKSIG \
-                    OP_SWAP OP_PUSHBYTES_33 03ab1ac1872a38a2f196bed5a6047f0da2c8130fe8de49fc4d5dfb201f7611d8e2 OP_CHECKSIG OP_ADD \
-                    OP_SWAP OP_PUSHBYTES_33 039729247032c0dfcf45b4841fcd72f6e9a2422631fc3466cf863e87154754dd40 OP_CHECKSIG OP_ADD \
-                    OP_SWAP OP_PUSHBYTES_33 032564fe9b5beef82d3703a607253f31ef8ea1b365772df434226aee642651b3fa OP_CHECKSIG OP_ADD \
-                    OP_SWAP OP_PUSHBYTES_33 0289637f97580a796e050791ad5a2f27af1803645d95df021a3c2d82eb8c2ca7ff OP_CHECKSIG OP_ADD \
-                    OP_PUSHNUM_3 OP_EQUAL)"
+            &ParseTree(Box::new(T::CastE(Box::new(E::CheckMultiSig(3, keys[0..5].to_owned()))))),
+            "Script(OP_PUSHNUM_3 \
+                    OP_PUSHBYTES_33 028c28a97bf8298bc0d23d8c749452a32e694b65e30a9472a3954ab30fe5324caa \
+                    OP_PUSHBYTES_33 03ab1ac1872a38a2f196bed5a6047f0da2c8130fe8de49fc4d5dfb201f7611d8e2 \
+                    OP_PUSHBYTES_33 039729247032c0dfcf45b4841fcd72f6e9a2422631fc3466cf863e87154754dd40 \
+                    OP_PUSHBYTES_33 032564fe9b5beef82d3703a607253f31ef8ea1b365772df434226aee642651b3fa \
+                    OP_PUSHBYTES_33 0289637f97580a796e050791ad5a2f27af1803645d95df021a3c2d82eb8c2ca7ff \
+                    OP_PUSHNUM_5 OP_CHECKMULTISIG)"
         );
 
-        // Check ordering of Mexpr::And vector (caught by fuzzing)
         roundtrip(
-            &ParseTree(Mexpr::And(
-                vec![
-                    Vexpr::CheckMultiSigVerify(0, vec![]),
-                    Vexpr::Threshold(vec![
-                        Expr::CheckMultiSig(0, vec![])
-                    ], 0),
-                ],
-                Box::new(Mexpr::Csv(0))
+            &ParseTree(Box::new(T::HashEqual(Sha256dHash::from_data(&[])))),
+            "Script(OP_SIZE OP_PUSHBYTES_1 20 OP_EQUALVERIFY OP_SHA256 OP_PUSHBYTES_32 5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456 OP_EQUAL)"
+        );
+
+        roundtrip(
+            &ParseTree(Box::new(T::CastF(Box::new(F::SwitchOrV(
+                Box::new(V::CheckSig(keys[0].clone())),
+                Box::new(V::And(
+                    Box::new(V::CheckSig(keys[1].clone())),
+                    Box::new(V::CheckSig(keys[2].clone())),
+                ))))),
             )),
-            "Script(OP_0 OP_0 OP_CHECKMULTISIGVERIFY OP_0 OP_0 OP_CHECKMULTISIG OP_0 OP_EQUALVERIFY OP_0 OP_NOP3)"
+            "Script(OP_SIZE OP_EQUALVERIFY OP_IF \
+                OP_PUSHBYTES_33 028c28a97bf8298bc0d23d8c749452a32e694b65e30a9472a3954ab30fe5324caa OP_CHECKSIGVERIFY \
+                OP_ELSE \
+                OP_PUSHBYTES_33 03ab1ac1872a38a2f196bed5a6047f0da2c8130fe8de49fc4d5dfb201f7611d8e2 OP_CHECKSIGVERIFY \
+                OP_PUSHBYTES_33 039729247032c0dfcf45b4841fcd72f6e9a2422631fc3466cf863e87154754dd40 OP_CHECKSIGVERIFY \
+                OP_ENDIF OP_PUSHNUM_1)"
+        );
+
+        // fuzzer
+        roundtrip(
+            &ParseTree(Box::new(T::CastF(Box::new(F::SwitchOr(
+                Box::new(F::Csv(9)),
+                Box::new(F::Csv(7)),
+            ))))),
+            "Script(OP_SIZE OP_EQUALVERIFY OP_IF OP_PUSHNUM_9 OP_NOP3 OP_ELSE OP_PUSHNUM_7 OP_NOP3 OP_ENDIF)"
+        );
+
+        roundtrip(
+            &ParseTree(Box::new(T::And(
+                Box::new(V::SwitchOrF(
+                    Box::new(F::Csv(9)),
+                    Box::new(F::Csv(7)),
+                )),
+                Box::new(T::CastF(Box::new(F::Csv(7))))
+            ))),
+            "Script(OP_SIZE OP_EQUALVERIFY OP_IF OP_PUSHNUM_9 OP_NOP3 OP_ELSE OP_PUSHNUM_7 OP_NOP3 OP_ENDIF OP_VERIFY OP_PUSHNUM_7 OP_NOP3)"
+        );
+
+        roundtrip(
+            &ParseTree(Box::new(T::CastE(Box::new(E::ParallelOr(
+                Box::new(E::CheckMultiSig(0, vec![])),
+                Box::new(W::CheckSig(keys[0].clone())),
+            ))))),
+            "Script(OP_0 OP_0 OP_CHECKMULTISIG OP_SWAP OP_PUSHBYTES_33 028c28a97bf8298bc0d23d8c749452a32e694b65e30a9472a3954ab30fe5324caa OP_CHECKSIG OP_BOOLOR)"
         );
     }
 

@@ -159,6 +159,12 @@ display_from_debug!(Builder);
 pub enum Error {
     /// Something did a non-minimal push
     NonMinimalPush,
+    /// Opcode was illegal in some context
+    InvalidOpcode(opcodes::All),
+    /// Push was illegal in some context
+    InvalidPush(Vec<u8>),
+    /// Parser error
+    Parse(parse::Error),
     /// Some opcode expected a parameter, but it was missing or truncated
     EarlyEndOfScript,
     /// Tried to read an array off the stack as a number when it was more than 4 bytes
@@ -179,18 +185,31 @@ pub enum Error {
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str(error::Error::description(self))
+        match *self {
+            Error::InvalidOpcode(ref op) => write!(f, "invalid opcode {}", op),
+            Error::InvalidPush(ref push) => write!(f, "invalid push {:?}", push), // TODO hexify this
+            Error::Parse(ref e) => write!(f, "{}", e),
+            _ => f.write_str(error::Error::description(self)),
+        }
     }
 }
 
 impl error::Error for Error {
-    fn cause(&self) -> Option<&error::Error> { None }
+    fn cause(&self) -> Option<&error::Error> {
+        match *self {
+            Error::Parse(ref e) => Some(e),
+            _ => None,
+        }
+    }
 
-    fn description(&self) -> &'static str {
+    fn description(&self) -> &str {
         match *self {
             Error::NonMinimalPush => "non-minimal datapush",
             Error::EarlyEndOfScript => "unexpected end of script",
             Error::NumericOverflow => "numeric overflow (number on stack larger than 4 bytes)",
+            Error::InvalidOpcode(_) => "invalid opcode",
+            Error::InvalidPush(_) => "invalid push",
+            Error::Parse(ref e) => error::Error::description(e),
             #[cfg(feature="bitcoinconsensus")]
             Error::BitcoinConsensus(ref _n) => "bitcoinconsenus verification failed",
             #[cfg(feature="bitcoinconsensus")]
@@ -211,6 +230,13 @@ impl convert::From<bitcoinconsensus::Error> for Error {
         }
     }
 }
+
+impl From<parse::Error> for Error {
+    fn from(e: parse::Error) -> Error {
+        Error::Parse(e)
+    }
+}
+
 /// Helper to encode an integer in script format
 fn build_scriptint(n: i64) -> Vec<u8> {
     if n == 0 { return vec![] }
