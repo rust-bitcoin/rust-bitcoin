@@ -33,6 +33,8 @@ use std::collections::HashMap;
 use std::hash::Hash;
 use std::{mem, u32};
 
+use secp256k1::{PublicKey, Secp256k1};
+
 use util::hash::Sha256dHash;
 use network::serialize::{SimpleDecoder, SimpleEncoder};
 
@@ -181,6 +183,7 @@ impl_array!(8);
 impl_array!(12);
 impl_array!(16);
 impl_array!(32);
+impl_array!(33);
 
 impl<S: SimpleEncoder, T: ConsensusEncodable<S>> ConsensusEncodable<S> for [T] {
     #[inline]
@@ -295,6 +298,22 @@ impl<D: SimpleDecoder> ConsensusDecodable<D> for CheckedData {
         } else {
             Ok(CheckedData(ret))
         }
+    }
+}
+
+impl<S: SimpleEncoder> ConsensusEncodable<S> for PublicKey {
+    #[inline]
+    fn consensus_encode(&self, s: &mut S) -> Result <(), S::Error> {
+        self.serialize().consensus_encode(s)
+    }
+}
+
+impl<D: SimpleDecoder> ConsensusDecodable<D> for PublicKey {
+    #[inline]
+    fn consensus_decode(d: &mut D) -> Result<Self, D::Error> {
+        let serialized: [u8; 33] = ConsensusDecodable::consensus_decode(d)?;
+        PublicKey::from_slice(&Secp256k1::new(), &serialized)
+            .map_err(|_| d.error("invalid public key".to_owned()))
     }
 }
 
