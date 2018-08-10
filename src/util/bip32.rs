@@ -90,10 +90,29 @@ pub struct ExtendedPubKey {
 /// A child number for a derived key
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum ChildNumber {
-    /// Hardened key index, within [0, 2^31 - 1]
-    Hardened(u32),
     /// Non-hardened key, within [0, 2^31 - 1]
     Normal(u32),
+    /// Hardened key index, within [2^31, 2^32 - 1]
+    Hardened(u32),
+}
+
+impl From<u32> for ChildNumber {
+    fn from(index: u32) -> Self {
+        if index & (1 << 31) != 0 {
+            ChildNumber::Hardened(index)
+        } else {
+            ChildNumber::Normal(index)
+        }
+    }
+}
+
+impl From<ChildNumber> for u32 {
+    fn from(cnum: ChildNumber) -> Self {
+        match cnum {
+            ChildNumber::Normal(index) => index,
+            ChildNumber::Hardened(index) => index,
+        }
+    }
 }
 
 impl fmt::Display for ChildNumber {
