@@ -2,6 +2,7 @@ use std::error;
 use std::fmt;
 
 use blockdata::transaction::Transaction;
+use util::psbt::raw;
 
 /// Ways that a Partially Signed Transaction might fail.
 #[derive(Debug)]
@@ -12,9 +13,9 @@ pub enum Error {
     /// The separator for a PSBT must be `0xff`.
     InvalidSeparator,
     /// Known keys must be according to spec.
-    InvalidKey,
+    InvalidKey(raw::Key),
     /// Keys within key-value map should never be duplicated.
-    DuplicateKey,
+    DuplicateKey(raw::Key),
     /// The scriptSigs for the unsigned transaction must be empty.
     UnsignedTxHasScriptSigs,
     /// The scriptWitnesses for the unsigned transaction must be empty.
@@ -38,12 +39,12 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
+            Error::InvalidKey(ref rkey) => write!(f, "{}: {}", error::Error::description(self), rkey),
+            Error::DuplicateKey(ref rkey) => write!(f, "{}: {}", error::Error::description(self), rkey),
             Error::UnexpectedUnsignedTx { expected: ref e, actual: ref a } => write!(f, "{}: expected {}, actual {}", error::Error::description(self), e.txid(), a.txid()),
             Error::NonStandardSigHashType(ref sht) => write!(f, "{}: {}", error::Error::description(self), sht),
             Error::InvalidMagic
             | Error::InvalidSeparator
-            | Error::InvalidKey
-            | Error::DuplicateKey
             | Error::UnsignedTxHasScriptSigs
             | Error::UnsignedTxHasScriptWitnesses
             | Error::MustHaveUnsignedTx
@@ -57,8 +58,8 @@ impl error::Error for Error {
         match *self {
             Error::InvalidMagic => "invalid magic",
             Error::InvalidSeparator => "invalid separator",
-            Error::InvalidKey => "invalid key",
-            Error::DuplicateKey => "duplicate key",
+            Error::InvalidKey(..) => "invalid key",
+            Error::DuplicateKey(..) => "duplicate key",
             Error::UnsignedTxHasScriptSigs => "the unsigned transaction has script sigs",
             Error::UnsignedTxHasScriptWitnesses => "the unsigned transaction has script witnesses",
             Error::MustHaveUnsignedTx => {
