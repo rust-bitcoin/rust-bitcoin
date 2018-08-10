@@ -4,6 +4,10 @@
 //! defined at https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki
 //! except we define PSBTs containing non-standard SigHash types as invalid.
 
+use blockdata::script::Script;
+use blockdata::transaction::Transaction;
+use consensus::encode::{self, Encodable, Decodable, Encoder, Decoder};
+
 mod error;
 pub use self::error::Error;
 
@@ -16,6 +20,125 @@ pub mod serialize;
 
 mod map;
 pub use self::map::{Map, Global, Input, Output};
+
+/// A Partially Signed Transaction.
+#[derive(Debug, Clone, PartialEq)]
+pub struct PartiallySignedTransaction {
+    /// The key-value pairs for all global data.
+    pub global: Global,
+    /// The corresponding key-value map for each input in the unsigned
+    /// transaction.
+    pub inputs: Vec<Input>,
+    /// The corresponding key-value map for each output in the unsigned
+    /// transaction.
+    pub outputs: Vec<Output>,
+}
+
+impl PartiallySignedTransaction {
+    /// Create a PartiallySignedTransaction from an unsigned transaction, error
+    /// if not unsigned
+    pub fn from_unsigned_tx(tx: Transaction) -> Result<Self, encode::Error> {
+        Ok(PartiallySignedTransaction {
+            inputs: vec![Default::default(); tx.input.len()],
+            outputs: vec![Default::default(); tx.output.len()],
+            global: Global::from_unsigned_tx(tx)?,
+        })
+    }
+
+    /// Extract the Transaction from a PartiallySignedTransaction by filling in
+    /// the available signature information in place.
+    pub fn extract_tx(self) -> Transaction {
+        let mut tx: Transaction = self.global.unsigned_tx;
+
+        for (vin, psbtin) in tx.input.iter_mut().zip(self.inputs.into_iter()) {
+            vin.script_sig = psbtin.final_script_sig.unwrap_or_else(|| Script::new());
+            vin.witness = psbtin.final_script_witness.unwrap_or_else(|| Vec::new());
+        }
+
+        tx
+    }
+
+    /// Attempt to merge with another `PartiallySignedTransaction`.
+    pub fn merge(&mut self, other: Self) -> Result<(), self::Error> {
+        self.global.merge(other.global)?;
+
+        for (self_input, other_input) in self.inputs.iter_mut().zip(other.inputs.into_iter()) {
+            self_input.merge(other_input)?;
+        }
+
+        for (self_output, other_output) in self.outputs.iter_mut().zip(other.outputs.into_iter()) {
+            self_output.merge(other_output)?;
+        }
+
+        Ok(())
+    }
+}
+
+impl<S: Encoder> Encodable<S> for PartiallySignedTransaction {
+    fn consensus_encode(&self, s: &mut S) -> Result<(), encode::Error> {
+        b"psbt".consensus_encode(s)?;
+
+        0xff_u8.consensus_encode(s)?;
+
+        self.global.consensus_encode(s)?;
+
+        for i in &self.inputs {
+            i.consensus_encode(s)?;
+        }
+
+        for i in &self.outputs {
+            i.consensus_encode(s)?;
+        }
+
+        Ok(())
+    }
+}
+
+impl<D: Decoder> Decodable<D> for PartiallySignedTransaction {
+    fn consensus_decode(d: &mut D) -> Result<Self, encode::Error> {
+        let magic: [u8; 4] = Decodable::consensus_decode(d)?;
+
+        if *b"psbt" != magic {
+            return Err(Error::InvalidMagic.into());
+        }
+
+        if 0xff_u8 != Decodable::consensus_decode(d)? {
+            return Err(Error::InvalidSeparator.into());
+        }
+
+        let global: Global = Decodable::consensus_decode(d)?;
+
+        let inputs: Vec<Input> = {
+            let inputs_len: usize = (&global.unsigned_tx.input).len();
+
+            let mut inputs: Vec<Input> = Vec::with_capacity(inputs_len);
+
+            for _ in 0..inputs_len {
+                inputs.push(Decodable::consensus_decode(d)?);
+            }
+
+            inputs
+        };
+
+        let outputs: Vec<Output> = {
+            let outputs_len: usize = (&global.unsigned_tx.output).len();
+
+            let mut outputs: Vec<Output> = Vec::with_capacity(outputs_len);
+
+            for _ in 0..outputs_len {
+                outputs.push(Decodable::consensus_decode(d)?);
+            }
+
+            outputs
+        };
+
+        Ok(PartiallySignedTransaction {
+            global: global,
+            inputs: inputs,
+            outputs: outputs,
+        })
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -36,6 +159,29 @@ mod tests {
     use util::key::PublicKey;
     use util::psbt::map::{Global, Output};
     use util::psbt::raw;
+
+    use super::PartiallySignedTransaction;
+
+    #[test]
+    fn trivial_psbt() {
+        let psbt = PartiallySignedTransaction {
+            global: Global {
+                unsigned_tx: Transaction {
+                    version: 2,
+                    lock_time: 0,
+                    input: vec![],
+                    output: vec![],
+                },
+                unknown: HashMap::new(),
+            },
+            inputs: vec![],
+            outputs: vec![],
+        };
+        assert_eq!(
+            serialize_hex(&psbt),
+            "70736274ff01000a0200000000000000000000"
+        );
+    }
 
     #[test]
     fn serialize_then_deserialize_output() {
