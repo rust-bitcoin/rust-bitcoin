@@ -1,3 +1,8 @@
+#[allow(unused_macros)]
+macro_rules! hex_psbt {
+    ($s:expr) => { ::consensus::encode::deserialize(&::hex::decode($s).unwrap()) };
+}
+
 macro_rules! merge {
     ($thing:ident, $slf:ident, $other:ident) => {
         if let (&None, Some($thing)) = (&$slf.$thing, $other.$thing) {
