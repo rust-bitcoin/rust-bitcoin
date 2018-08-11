@@ -167,7 +167,8 @@ impl Address {
     fn bech_network (network: Network) -> bitcoin_bech32::constants::Network {
         match network {
             Network::Bitcoin => bitcoin_bech32::constants::Network::Bitcoin,
-            Network::Testnet | Network::Regtest => bitcoin_bech32::constants::Network::Testnet,
+            Network::Testnet => bitcoin_bech32::constants::Network::Testnet,
+            Network::Regtest => bitcoin_bech32::constants::Network::Regtest,
         }
     }
 
@@ -246,13 +247,17 @@ impl FromStr for Address {
 
     fn from_str(s: &str) -> Result<Address, Error> {
         // bech32 (note that upper or lowercase is allowed but NOT mixed case)
-        if s.len() >= 3 &&
-           (&s.as_bytes()[0..3] == b"bc1" || &s.as_bytes()[0..3] == b"tb1" ||
-            &s.as_bytes()[0..3] == b"BC1" || &s.as_bytes()[0..3] == b"TB1") {
-            let witprog = try!(WitnessProgram::from_address(s));
+        if (s.len() >= 3 &&
+            (&s.as_bytes()[0..3] == b"bc1" || &s.as_bytes()[0..3] == b"BC1" ||
+             &s.as_bytes()[0..3] == b"tb1" || &s.as_bytes()[0..3] == b"TB1" )) ||
+           (s.len() >= 5 &&
+            (&s.as_bytes()[0..5] == b"bcrt1" || &s.as_bytes()[0..5] == b"BCRT1"))
+        {
+            let witprog = WitnessProgram::from_address(s)?;
             let network = match witprog.network() {
                 bitcoin_bech32::constants::Network::Bitcoin => Network::Bitcoin,
                 bitcoin_bech32::constants::Network::Testnet => Network::Testnet,
+                bitcoin_bech32::constants::Network::Regtest => Network::Regtest,
                 _ => panic!("unknown network")
             };
             if witprog.version().to_u8() != 0 {
@@ -319,7 +324,7 @@ mod tests {
     use hex::decode as hex_decode;
 
     use blockdata::script::Script;
-    use network::constants::Network::{Bitcoin, Testnet};
+    use network::constants::Network::{Bitcoin, Testnet, Regtest};
     use util::hash::Hash160;
     use super::*;
 
@@ -423,6 +428,12 @@ mod tests {
         let addr = Address::from_str(addrstr).unwrap();
         assert_eq!(addr.network, Testnet);
         assert_eq!(addr.script_pubkey(), hex_script!("0020000000c4a5cad46221b2a187905e5266362b99d5e91c6ce24d165dab93e86433"));
+        assert_eq!(addr.to_string(), addrstr);
+
+        let addrstr = "bcrt1q2nfxmhd4n3c8834pj72xagvyr9gl57n5r94fsl";
+        let addr = Address::from_str(addrstr).unwrap();
+        assert_eq!(addr.network, Regtest);
+        assert_eq!(addr.script_pubkey(), hex_script!("001454d26dddb59c7073c6a197946ea1841951fa7a74"));
         assert_eq!(addr.to_string(), addrstr);
 
         // bad vectors
