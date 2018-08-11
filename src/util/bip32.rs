@@ -90,18 +90,40 @@ pub struct ExtendedPubKey {
 /// A child number for a derived key
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum ChildNumber {
-    /// Non-hardened key, within [0, 2^31 - 1]
-    Normal(u32),
-    /// Hardened key index, within [2^31, 2^32 - 1]
-    Hardened(u32),
+    /// Non-hardened key
+    Normal {
+        /// Key index, within [0, 2^31 - 1]
+        index: u32
+    },
+    /// Hardened key
+    Hardened {
+        /// Key index, within [0, 2^31 - 1]
+        index: u32
+    },
+}
+
+impl ChildNumber {
+    /// Create a [ChildNumber::Normal] from an index, panics if the index is not
+    /// within [0, 2^31 - 1]
+    pub fn from_normal_idx(index: u32) -> Self {
+        assert_eq!(index & (1 << 31),  0, "ChildNumber indices have to be within [0, 2^31 - 1], is: {}", index);
+        ChildNumber::Normal { index: index }
+    }
+
+    /// Create a [ChildNumber::Hardened] from an index, panics if the index is
+    /// not within [0, 2^31 - 1]
+    pub fn from_hardened_idx(index: u32) -> Self {
+        assert_eq!(index & (1 << 31),  0, "ChildNumber indices have to be within [0, 2^31 - 1], is: {}", index);
+        ChildNumber::Hardened { index: index }
+    }
 }
 
 impl From<u32> for ChildNumber {
-    fn from(index: u32) -> Self {
-        if index & (1 << 31) != 0 {
-            ChildNumber::Hardened(index)
+    fn from(number: u32) -> Self {
+        if number & (1 << 31) != 0 {
+            ChildNumber::Hardened { index: number ^ (1 << 31) }
         } else {
-            ChildNumber::Normal(index)
+            ChildNumber::Normal { index: number }
         }
     }
 }
@@ -109,8 +131,8 @@ impl From<u32> for ChildNumber {
 impl From<ChildNumber> for u32 {
     fn from(cnum: ChildNumber) -> Self {
         match cnum {
-            ChildNumber::Normal(index) => index,
-            ChildNumber::Hardened(index) => index,
+            ChildNumber::Normal { index } => index,
+            ChildNumber::Hardened { index } => index | (1 << 31),
         }
     }
 }
@@ -118,31 +140,23 @@ impl From<ChildNumber> for u32 {
 impl fmt::Display for ChildNumber {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            ChildNumber::Hardened(n) => write!(f, "{}h", n),
-            ChildNumber::Normal(n) => write!(f, "{}", n)
+            ChildNumber::Hardened { index } => write!(f, "{}'", index),
+            ChildNumber::Normal { index } => write!(f, "{}", index),
         }
     }
 }
 
 impl Serialize for ChildNumber {
-    fn serialize<S>(&self, s: &mut S) -> Result<(), S::Error>
-            where S: Serializer {
-        match *self {
-            ChildNumber::Hardened(n) => (n + (1 << 31)).serialize(s),
-            ChildNumber::Normal(n)     => n.serialize(s)
-        }
+    fn serialize<S: Serializer>(&self, s: &mut S) -> Result<(), S::Error> {
+        u32::from(*self).serialize(s)
     }
 }
 
 impl Deserialize for ChildNumber {
-    fn deserialize<D>(d: &mut D) -> Result<ChildNumber, D::Error>
-            where D: Deserializer {
-        let n: u32 = try!(Deserialize::deserialize(d));
-        if n < (1 << 31) {
-            Ok(ChildNumber::Normal(n))
-        } else {
-            Ok(ChildNumber::Hardened(n - (1 << 31)))
-        }
+    fn deserialize<D: Deserializer>(d: &mut D) -> Result<ChildNumber, D::Error> {
+        let n: u32 = Deserialize::deserialize(d)?;
+
+        Ok(ChildNumber::from(n))
     }
 }
 
@@ -205,7 +219,7 @@ impl ExtendedPrivKey {
             network: network,
             depth: 0,
             parent_fingerprint: Default::default(),
-            child_number: ChildNumber::Normal(0),
+            child_number: ChildNumber::from_normal_idx(0),
             secret_key: try!(SecretKey::from_slice(secp, &result[..32]).map_err(Error::Ecdsa)),
             chain_code: ChainCode::from(&result[32..])
         })
@@ -227,20 +241,18 @@ impl ExtendedPrivKey {
         let mut hmac = Hmac::new(Sha512::new(), &self.chain_code[..]);
         let mut be_n = [0; 4];
         match i {
-            ChildNumber::Normal(n) => {
-                if n >= (1 << 31) { return Err(Error::InvalidChildNumber(i)) }
+            ChildNumber::Normal {..} => {
                 // Non-hardened key: compute public data and use that
                 hmac.input(&PublicKey::from_secret_key(secp, &self.secret_key).unwrap().serialize()[..]);
-                BigEndian::write_u32(&mut be_n, n);
             }
-            ChildNumber::Hardened(n) => {
-                if n >= (1 << 31) { return Err(Error::InvalidChildNumber(i)) }
+            ChildNumber::Hardened {..} => {
                 // Hardened key: use only secret data to prevent public derivation
                 hmac.input(&[0u8]);
                 hmac.input(&self.secret_key[..]);
-                BigEndian::write_u32(&mut be_n, n + (1 << 31));
             }
         }
+        BigEndian::write_u32(&mut be_n, u32::from(i));
+
         hmac.input(&be_n);
         hmac.raw_result(&mut result);
         let mut sk = try!(SecretKey::from_slice(secp, &result[..32]).map_err(Error::Ecdsa));
@@ -296,14 +308,10 @@ impl ExtendedPubKey {
     /// Compute the scalar tweak added to this key to get a child key
     pub fn ckd_pub_tweak(&self, secp: &Secp256k1, i: ChildNumber) -> Result<(SecretKey, ChainCode), Error> {
         match i {
-            ChildNumber::Hardened(n) => {
-                if n >= (1 << 31) {
-                    Err(Error::InvalidChildNumber(i))
-                } else {
-                    Err(Error::CannotDeriveFromHardenedKey)
-                }
+            ChildNumber::Hardened {..} => {
+                Err(Error::CannotDeriveFromHardenedKey)
             }
-            ChildNumber::Normal(n) => {
+            ChildNumber::Normal { index: n } => {
                 let mut hmac = Hmac::new(Sha512::new(), &self.chain_code[..]);
                 hmac.input(&self.public_key.serialize()[..]);
                 let mut be_n = [0; 4];
@@ -367,14 +375,9 @@ impl ToString for ExtendedPrivKey {
         }[..]);
         ret[4] = self.depth as u8;
         ret[5..9].copy_from_slice(&self.parent_fingerprint[..]);
-        match self.child_number {
-            ChildNumber::Hardened(n) => {
-                BigEndian::write_u32(&mut ret[9..13], n + (1 << 31));
-            }
-            ChildNumber::Normal(n) => {
-                BigEndian::write_u32(&mut ret[9..13], n);
-            }
-        }
+
+        BigEndian::write_u32(&mut ret[9..13], u32::from(self.child_number));
+
         ret[13..45].copy_from_slice(&self.chain_code[..]);
         ret[45] = 0;
         ret[46..78].copy_from_slice(&self.secret_key[..]);
@@ -393,9 +396,8 @@ impl FromStr for ExtendedPrivKey {
             return Err(base58::Error::InvalidLength(data.len()));
         }
 
-        let cn_int = Cursor::new(&data[9..13]).read_u32::<BigEndian>().unwrap();
-        let child_number = if cn_int < (1 << 31) { ChildNumber::Normal(cn_int) }
-                           else { ChildNumber::Hardened(cn_int - (1 << 31)) };
+        let cn_int: u32 = Cursor::new(&data[9..13]).read_u32::<BigEndian>().unwrap();
+        let child_number: ChildNumber = ChildNumber::from(cn_int);
 
         Ok(ExtendedPrivKey {
             network: if &data[0..4] == [0x04u8, 0x88, 0xAD, 0xE4] {
@@ -425,14 +427,9 @@ impl ToString for ExtendedPubKey {
         }[..]);
         ret[4] = self.depth as u8;
         ret[5..9].copy_from_slice(&self.parent_fingerprint[..]);
-        match self.child_number {
-            ChildNumber::Hardened(n) => {
-                BigEndian::write_u32(&mut ret[9..13], n + (1 << 31));
-            }
-            ChildNumber::Normal(n) => {
-                BigEndian::write_u32(&mut ret[9..13], n);
-            }
-        }
+
+        BigEndian::write_u32(&mut ret[9..13], u32::from(self.child_number));
+
         ret[13..45].copy_from_slice(&self.chain_code[..]);
         ret[45..78].copy_from_slice(&self.public_key.serialize()[..]);
         base58::check_encode_slice(&ret[..])
@@ -450,9 +447,8 @@ impl FromStr for ExtendedPubKey {
             return Err(base58::Error::InvalidLength(data.len()));
         }
 
-        let cn_int = Cursor::new(&data[9..13]).read_u32::<BigEndian>().unwrap();
-        let child_number = if cn_int < (1 << 31) { ChildNumber::Normal(cn_int) }
-                           else { ChildNumber::Hardened(cn_int - (1 << 31)) };
+        let cn_int: u32 = Cursor::new(&data[9..13]).read_u32::<BigEndian>().unwrap();
+        let child_number: ChildNumber = ChildNumber::from(cn_int);
 
         Ok(ExtendedPubKey {
             network: if &data[0..4] == [0x04u8, 0x88, 0xB2, 0x1E] {
@@ -499,12 +495,12 @@ mod tests {
         for &num in path.iter() {
             sk = sk.ckd_priv(secp, num).unwrap();
             match num {
-                Normal(_) => {
+                Normal {..} => {
                     let pk2 = pk.ckd_pub(secp, num).unwrap();
                     pk = ExtendedPubKey::from_private(secp, &sk);
                     assert_eq!(pk, pk2);
                 }
-                Hardened(_) => {
+                Hardened {..} => {
                     pk = ExtendedPubKey::from_private(secp, &sk);
                 }
             }
@@ -530,27 +526,27 @@ mod tests {
                   "xpub661MyMwAqRbcFtXgS5sYJABqqG9YLmC4Q1Rdap9gSE8NqtwybGhePY2gZ29ESFjqJoCu1Rupje8YtGqsefD265TMg7usUDFdp6W1EGMcet8");
 
         // m/0h
-        test_path(&secp, Bitcoin, &seed, &[Hardened(0)],
+        test_path(&secp, Bitcoin, &seed, &[ChildNumber::from_hardened_idx(0)],
                   "xprv9uHRZZhk6KAJC1avXpDAp4MDc3sQKNxDiPvvkX8Br5ngLNv1TxvUxt4cV1rGL5hj6KCesnDYUhd7oWgT11eZG7XnxHrnYeSvkzY7d2bhkJ7",
                   "xpub68Gmy5EdvgibQVfPdqkBBCHxA5htiqg55crXYuXoQRKfDBFA1WEjWgP6LHhwBZeNK1VTsfTFUHCdrfp1bgwQ9xv5ski8PX9rL2dZXvgGDnw");
 
         // m/0h/1
-        test_path(&secp, Bitcoin, &seed, &[Hardened(0), Normal(1)],
+        test_path(&secp, Bitcoin, &seed, &[ChildNumber::from_hardened_idx(0), ChildNumber::from_normal_idx(1)],
                    "xprv9wTYmMFdV23N2TdNG573QoEsfRrWKQgWeibmLntzniatZvR9BmLnvSxqu53Kw1UmYPxLgboyZQaXwTCg8MSY3H2EU4pWcQDnRnrVA1xe8fs",
                    "xpub6ASuArnXKPbfEwhqN6e3mwBcDTgzisQN1wXN9BJcM47sSikHjJf3UFHKkNAWbWMiGj7Wf5uMash7SyYq527Hqck2AxYysAA7xmALppuCkwQ");
 
         // m/0h/1/2h
-        test_path(&secp, Bitcoin, &seed, &[Hardened(0), Normal(1), Hardened(2)],
+        test_path(&secp, Bitcoin, &seed, &[ChildNumber::from_hardened_idx(0), ChildNumber::from_normal_idx(1), ChildNumber::from_hardened_idx(2)],
                   "xprv9z4pot5VBttmtdRTWfWQmoH1taj2axGVzFqSb8C9xaxKymcFzXBDptWmT7FwuEzG3ryjH4ktypQSAewRiNMjANTtpgP4mLTj34bhnZX7UiM",
                   "xpub6D4BDPcP2GT577Vvch3R8wDkScZWzQzMMUm3PWbmWvVJrZwQY4VUNgqFJPMM3No2dFDFGTsxxpG5uJh7n7epu4trkrX7x7DogT5Uv6fcLW5");
 
         // m/0h/1/2h/2
-        test_path(&secp, Bitcoin, &seed, &[Hardened(0), Normal(1), Hardened(2), Normal(2)],
+        test_path(&secp, Bitcoin, &seed, &[ChildNumber::from_hardened_idx(0), ChildNumber::from_normal_idx(1), ChildNumber::from_hardened_idx(2), ChildNumber::from_normal_idx(2)],
                   "xprvA2JDeKCSNNZky6uBCviVfJSKyQ1mDYahRjijr5idH2WwLsEd4Hsb2Tyh8RfQMuPh7f7RtyzTtdrbdqqsunu5Mm3wDvUAKRHSC34sJ7in334",
                   "xpub6FHa3pjLCk84BayeJxFW2SP4XRrFd1JYnxeLeU8EqN3vDfZmbqBqaGJAyiLjTAwm6ZLRQUMv1ZACTj37sR62cfN7fe5JnJ7dh8zL4fiyLHV");
 
         // m/0h/1/2h/2/1000000000
-        test_path(&secp, Bitcoin, &seed, &[Hardened(0), Normal(1), Hardened(2), Normal(2), Normal(1000000000)],
+        test_path(&secp, Bitcoin, &seed, &[ChildNumber::from_hardened_idx(0), ChildNumber::from_normal_idx(1), ChildNumber::from_hardened_idx(2), ChildNumber::from_normal_idx(2), ChildNumber::from_normal_idx(1000000000)],
                   "xprvA41z7zogVVwxVSgdKUHDy1SKmdb533PjDz7J6N6mV6uS3ze1ai8FHa8kmHScGpWmj4WggLyQjgPie1rFSruoUihUZREPSL39UNdE3BBDu76",
                   "xpub6H1LXWLaKsWFhvm6RVpEL9P4KfRZSW7abD2ttkWP3SSQvnyA8FSVqNTEcYFgJS2UaFcxupHiYkro49S8yGasTvXEYBVPamhGW6cFJodrTHy");
     }
@@ -566,39 +562,39 @@ mod tests {
                   "xpub661MyMwAqRbcFW31YEwpkMuc5THy2PSt5bDMsktWQcFF8syAmRUapSCGu8ED9W6oDMSgv6Zz8idoc4a6mr8BDzTJY47LJhkJ8UB7WEGuduB");
 
         // m/0
-        test_path(&secp, Bitcoin, &seed, &[Normal(0)],
+        test_path(&secp, Bitcoin, &seed, &[ChildNumber::from_normal_idx(0)],
                   "xprv9vHkqa6EV4sPZHYqZznhT2NPtPCjKuDKGY38FBWLvgaDx45zo9WQRUT3dKYnjwih2yJD9mkrocEZXo1ex8G81dwSM1fwqWpWkeS3v86pgKt",
                   "xpub69H7F5d8KSRgmmdJg2KhpAK8SR3DjMwAdkxj3ZuxV27CprR9LgpeyGmXUbC6wb7ERfvrnKZjXoUmmDznezpbZb7ap6r1D3tgFxHmwMkQTPH");
 
         // m/0/2147483647h
-        test_path(&secp, Bitcoin, &seed, &[Normal(0), Hardened(2147483647)],
+        test_path(&secp, Bitcoin, &seed, &[ChildNumber::from_normal_idx(0), ChildNumber::from_hardened_idx(2147483647)],
                   "xprv9wSp6B7kry3Vj9m1zSnLvN3xH8RdsPP1Mh7fAaR7aRLcQMKTR2vidYEeEg2mUCTAwCd6vnxVrcjfy2kRgVsFawNzmjuHc2YmYRmagcEPdU9",
                   "xpub6ASAVgeehLbnwdqV6UKMHVzgqAG8Gr6riv3Fxxpj8ksbH9ebxaEyBLZ85ySDhKiLDBrQSARLq1uNRts8RuJiHjaDMBU4Zn9h8LZNnBC5y4a");
 
         // m/0/2147483647h/1
-        test_path(&secp, Bitcoin, &seed, &[Normal(0), Hardened(2147483647), Normal(1)],
+        test_path(&secp, Bitcoin, &seed, &[ChildNumber::from_normal_idx(0), ChildNumber::from_hardened_idx(2147483647), ChildNumber::from_normal_idx(1)],
                   "xprv9zFnWC6h2cLgpmSA46vutJzBcfJ8yaJGg8cX1e5StJh45BBciYTRXSd25UEPVuesF9yog62tGAQtHjXajPPdbRCHuWS6T8XA2ECKADdw4Ef",
                   "xpub6DF8uhdarytz3FWdA8TvFSvvAh8dP3283MY7p2V4SeE2wyWmG5mg5EwVvmdMVCQcoNJxGoWaU9DCWh89LojfZ537wTfunKau47EL2dhHKon");
 
         // m/0/2147483647h/1/2147483646h
-        test_path(&secp, Bitcoin, &seed, &[Normal(0), Hardened(2147483647), Normal(1), Hardened(2147483646)],
+        test_path(&secp, Bitcoin, &seed, &[ChildNumber::from_normal_idx(0), ChildNumber::from_hardened_idx(2147483647), ChildNumber::from_normal_idx(1), ChildNumber::from_hardened_idx(2147483646)],
                   "xprvA1RpRA33e1JQ7ifknakTFpgNXPmW2YvmhqLQYMmrj4xJXXWYpDPS3xz7iAxn8L39njGVyuoseXzU6rcxFLJ8HFsTjSyQbLYnMpCqE2VbFWc",
                   "xpub6ERApfZwUNrhLCkDtcHTcxd75RbzS1ed54G1LkBUHQVHQKqhMkhgbmJbZRkrgZw4koxb5JaHWkY4ALHY2grBGRjaDMzQLcgJvLJuZZvRcEL");
 
         // m/0/2147483647h/1/2147483646h/2
-        test_path(&secp, Bitcoin, &seed, &[Normal(0), Hardened(2147483647), Normal(1), Hardened(2147483646), Normal(2)],
+        test_path(&secp, Bitcoin, &seed, &[ChildNumber::from_normal_idx(0), ChildNumber::from_hardened_idx(2147483647), ChildNumber::from_normal_idx(1), ChildNumber::from_hardened_idx(2147483646), ChildNumber::from_normal_idx(2)],
                   "xprvA2nrNbFZABcdryreWet9Ea4LvTJcGsqrMzxHx98MMrotbir7yrKCEXw7nadnHM8Dq38EGfSh6dqA9QWTyefMLEcBYJUuekgW4BYPJcr9E7j",
                   "xpub6FnCn6nSzZAw5Tw7cgR9bi15UV96gLZhjDstkXXxvCLsUXBGXPdSnLFbdpq8p9HmGsApME5hQTZ3emM2rnY5agb9rXpVGyy3bdW6EEgAtqt");
     }
 
     #[test]
     pub fn encode_decode_childnumber() {
-        serde_round_trip!(Normal(0));
-        serde_round_trip!(Normal(1));
-        serde_round_trip!(Normal((1 << 31) - 1));
-        serde_round_trip!(Hardened(0));
-        serde_round_trip!(Hardened(1));
-        serde_round_trip!(Hardened((1 << 31) - 1));
+        serde_round_trip!(ChildNumber::from_normal_idx(0));
+        serde_round_trip!(ChildNumber::from_normal_idx(1));
+        serde_round_trip!(ChildNumber::from_normal_idx((1 << 31) - 1));
+        serde_round_trip!(ChildNumber::from_hardened_idx(0));
+        serde_round_trip!(ChildNumber::from_hardened_idx(1));
+        serde_round_trip!(ChildNumber::from_hardened_idx((1 << 31) - 1));
     }
 }
 
