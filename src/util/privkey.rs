@@ -34,7 +34,7 @@ pub struct Privkey {
 }
 
 impl Privkey {
-    /// Creates an address from a public key
+    /// Creates a `Privkey` from a raw secp256k1 secret key
     #[inline]
     pub fn from_secret_key(key: SecretKey, compressed: bool, network: Network) -> Privkey {
         Privkey {
