@@ -103,19 +103,41 @@ pub enum ChildNumber {
 }
 
 impl ChildNumber {
-    /// Create a [ChildNumber::Normal] from an index, panics if the index is not
-    /// within [0, 2^31 - 1]
+    /// Create a [`Normal`] from an index, panics if the index is not within
+    /// [0, 2^31 - 1].
+    ///
+    /// [`Normal`]: #variant.Normal
     pub fn from_normal_idx(index: u32) -> Self {
         assert_eq!(index & (1 << 31),  0, "ChildNumber indices have to be within [0, 2^31 - 1], is: {}", index);
         ChildNumber::Normal { index: index }
     }
 
-    /// Create a [ChildNumber::Hardened] from an index, panics if the index is
-    /// not within [0, 2^31 - 1]
+    /// Create a [`Hardened`] from an index, panics if the index is not within
+    /// [0, 2^31 - 1].
+    ///
+    /// [`Hardened`]: #variant.Hardened
     pub fn from_hardened_idx(index: u32) -> Self {
         assert_eq!(index & (1 << 31),  0, "ChildNumber indices have to be within [0, 2^31 - 1], is: {}", index);
         ChildNumber::Hardened { index: index }
     }
+
+    /// Returns `true` if the child number is a [`Normal`] value.
+    ///
+    /// [`Normal`]: #variant.Normal
+    pub fn is_normal(&self) -> bool {
+        !self.is_hardened()
+    }
+
+    /// Returns `true` if the child number is a [`Hardened`] value.
+    ///
+    /// [`Hardened`]: #variant.Hardened
+    pub fn is_hardened(&self) -> bool {
+        match *self {
+            ChildNumber::Hardened {..} => true,
+            ChildNumber::Normal {..} => false,
+        }
+    }
+
 }
 
 impl From<u32> for ChildNumber {
