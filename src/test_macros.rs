@@ -19,10 +19,10 @@
 #[macro_export]
 macro_rules! serde_round_trip (
     ($var:expr) => ({
-        use strason;
+        use strason::Json;
 
         let start = $var;
-        let encoded = strason::from_serialize(&start).unwrap();
+        let encoded = Json::from_serialize(&start).unwrap();
         let decoded = encoded.into_deserialize().unwrap();
         assert_eq!(start, decoded);
     })

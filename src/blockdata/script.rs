@@ -25,7 +25,8 @@
 //!
 
 use std::default::Default;
-use std::{error, fmt};
+use std::error;
+use std::fmt::{self, Formatter};
 
 use crypto::digest::Digest;
 use serde;
@@ -562,37 +563,51 @@ impl_index_newtype!(Builder, u8);
 
 // User-facing serialization
 impl serde::Serialize for Script {
-    fn serialize<S>(&self, s: &mut S) -> Result<(), S::Error>
-        where S: serde::Serializer,
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
     {
-        s.visit_str(&format!("{:x}", self))
+        serializer.serialize_str(&format!("{:x}", self))
     }
 }
 
-impl serde::Deserialize for Script {
-    fn deserialize<D>(d: &mut D) -> Result<Script, D::Error>
-        where D: serde::Deserializer
+impl<'de> serde::Deserialize<'de> for Script {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
     {
-        struct ScriptVisitor;
-        impl serde::de::Visitor for ScriptVisitor {
+        struct Visitor;
+        impl<'de> serde::de::Visitor<'de> for Visitor {
             type Value = Script;
 
-            fn visit_string<E>(&mut self, v: String) -> Result<Script, E>
-                where E: serde::de::Error
+            fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
+                write!(formatter, "an hex-encoded script")
+            }
+
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                let raw: Vec<u8> = ::hex::decode(v).map_err(serde::de::Error::custom)?;
+                Ok(Script::from(raw))
+            }
+
+            fn visit_borrowed_str<E>(self, v: &'de str) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                self.visit_str(v)
+            }
+
+            fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
             {
                 self.visit_str(&v)
             }
-
-            fn visit_str<E>(&mut self, hex_str: &str) -> Result<Script, E>
-                where E: serde::de::Error
-            {
-                let raw_vec: Vec<u8> = try!(::hex::decode(hex_str)
-                                                   .map_err(|_| serde::de::Error::syntax("bad script hex")));
-                Ok(Script::from(raw_vec))
-            }
         }
 
-        d.visit(ScriptVisitor)
+        deserializer.deserialize_str(Visitor)
     }
 }
 
@@ -704,10 +719,10 @@ mod test {
 
     #[test]
     fn script_json_serialize() {
-        use strason;
+        use strason::Json;
 
         let original = hex_script!("827651a0698faaa9a8a7a687");
-        let json = strason::from_serialize(&original).unwrap();
+        let json = Json::from_serialize(&original).unwrap();
         assert_eq!(json.to_bytes(), b"\"827651a0698faaa9a8a7a687\"");
         assert_eq!(json.string(), Some("827651a0698faaa9a8a7a687"));
         let des = json.into_deserialize().unwrap();

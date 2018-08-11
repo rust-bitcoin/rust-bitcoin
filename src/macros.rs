@@ -119,38 +119,54 @@ macro_rules! user_enum {
             }
         }
 
-        impl ::serde::Deserialize for $name {
-            #[inline]
-            fn deserialize<D>(d: &mut D) -> Result<$name, D::Error>
-                where D: ::serde::Deserializer
+        impl<'de> ::serde::Deserialize<'de> for $name {
+            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+            where
+                D: ::serde::Deserializer<'de>,
             {
+                use std::fmt::{self, Formatter};
+
                 struct Visitor;
-                impl ::serde::de::Visitor for Visitor {
+                impl<'de> ::serde::de::Visitor<'de> for Visitor {
                     type Value = $name;
 
-                    fn visit_string<E>(&mut self, v: String) -> Result<$name, E>
-                        where E: ::serde::de::Error
+                    fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
+                        write!(formatter, "a string value")
+                    }
+
+                    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+                    where
+                        E: ::serde::de::Error,
+                    {
+                        $( if v == $txt { Ok($name::$elem) } )else*
+                        else { Err(::serde::de::Error::custom(stringify!($name))) }
+                    }
+
+                    fn visit_borrowed_str<E>(self, v: &'de str) -> Result<Self::Value, E>
+                    where
+                        E: ::serde::de::Error,
+                    {
+                        self.visit_str(v)
+                    }
+
+                    fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+                    where
+                        E: ::serde::de::Error,
                     {
                         self.visit_str(&v)
                     }
-
-                    fn visit_str<E>(&mut self, s: &str) -> Result<$name, E>
-                        where E: ::serde::de::Error
-                    {
-                        $( if s == $txt { Ok($name::$elem) } )else*
-                        else { Err(::serde::de::Error::syntax(stringify!($name))) }
-                    }
                 }
 
-                d.visit(Visitor)
+                deserializer.deserialize_str(Visitor)
             }
         }
 
         impl ::serde::Serialize for $name {
-            fn serialize<S>(&self, s: &mut S) -> Result<(), S::Error>
-                where S: ::serde::Serializer
+            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+            where
+                S: ::serde::Serializer,
             {
-                s.visit_str(&self.to_string())
+                serializer.serialize_str(&self.to_string())
             }
         }
     );

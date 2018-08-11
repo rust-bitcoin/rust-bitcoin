@@ -48,6 +48,8 @@ extern crate hex;
 extern crate rand;
 extern crate secp256k1;
 extern crate serde;
+#[macro_use]
+extern crate serde_derive;
 extern crate strason;
 #[cfg(all(test, feature = "unstable"))] extern crate test;
 #[cfg(feature="bitcoinconsensus")] extern crate bitcoinconsensus;

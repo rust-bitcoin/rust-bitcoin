@@ -24,8 +24,9 @@ bitcoin-bech32 = "0.8.0"
 byteorder = "1.1"
 rand = "0.3"
 rust-crypto = "0.2"
-serde = "0.6"
-strason = "0.3"
+serde = "1"
+serde_derive = "1"
+strason = "0.4"
 bitcoinconsensus = { version = "0.16", optional=true }
 
 [dependencies.hex]
