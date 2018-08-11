@@ -12,7 +12,7 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! # Bitcoin Block
+//! Bitcoin Block
 //!
 //! A block is a bundle of transactions with a proof-of-work attached,
 //! which attaches to an earlier block to form the blockchain. This

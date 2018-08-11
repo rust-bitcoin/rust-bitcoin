@@ -11,7 +11,7 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! # Hash functions
+//! Hash functions
 //!
 //! Utility functions related to hashing data, including merkleization
 

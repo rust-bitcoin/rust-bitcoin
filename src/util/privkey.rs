@@ -11,8 +11,9 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! # private key
-//!  A private key represents the secret data associated with its proposed use
+//! Private key
+//!
+//! A private key represents the secret data associated with its proposed use
 //!
 use std::str::FromStr;
 use util::Error;

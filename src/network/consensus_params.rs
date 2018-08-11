@@ -12,7 +12,7 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! # Consensus parameters
+//! Consensus parameters
 //!
 //! This module provides predefined set of parameters for different chains.
 //!

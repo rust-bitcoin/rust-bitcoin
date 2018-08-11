@@ -12,7 +12,7 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! # Network message
+//! Network message
 //!
 //! This module defines the `Message` traits which are used
 //! for (de)serializing Bitcoin objects for transmission on the network. It

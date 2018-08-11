@@ -12,7 +12,7 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! # Floating-point decimal type
+//! Floating-point decimal type
 //!
 //! `i64`-based floating-point decimal type designed to hold Bitcoin
 //! amounts. For satoshi amounts (8 decimal places) the maximum

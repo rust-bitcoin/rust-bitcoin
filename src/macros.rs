@@ -12,7 +12,7 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! # Macros
+//! Macros
 //!
 //! Macros available to users of the Bitcoin library
 

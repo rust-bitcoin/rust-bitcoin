@@ -12,7 +12,7 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! # Abstract Bitcoin listener
+//! Abstract Bitcoin listener
 //!
 //! This module defines a listener on the Bitcoin network which is able
 //! to connect to a peer, send network messages, and receive Bitcoin data.

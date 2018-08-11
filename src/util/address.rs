@@ -11,7 +11,8 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! # Addresses
+//! Addresses
+//!
 //! Support for ordinary base58 Bitcoin addresses and private keys
 //!
 
