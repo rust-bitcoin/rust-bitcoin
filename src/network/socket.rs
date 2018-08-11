@@ -52,7 +52,7 @@ pub struct Socket {
     /// Nonce to identify our `version` messages
     pub version_nonce: u64,
     /// Network magic
-  pub magic: u32
+    pub magic: u32
 }
 
 macro_rules! with_socket(($s:ident, $sock:ident, $body:block) => ({
@@ -90,7 +90,7 @@ impl Socket {
             services: 0,
             version_nonce: rng.gen(),
             user_agent: constants::USER_AGENT.to_owned(),
-            magic: constants::magic(network)
+            magic: network.magic(),
         }
     }
 
