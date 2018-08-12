@@ -25,7 +25,7 @@ pub fn hex_bytes(s: &str) -> Result<Vec<u8>, Error> {
     let mut v = vec![];
     let mut iter = s.chars().pair();
     // Do the parsing
-    try!(iter.by_ref().fold(Ok(()), |e, (f, s)| 
+    iter.by_ref().fold(Ok(()), |e, (f, s)| 
         if e.is_err() { e }
         else {
             match (f.to_digit(16), s.to_digit(16)) {
@@ -40,7 +40,7 @@ pub fn hex_bytes(s: &str) -> Result<Vec<u8>, Error> {
                 (Some(f), Some(s)) => { v.push((f * 0x10 + s) as u8); Ok(()) }
             }
         }
-    ));
+    )?;
     // Check that there was no remainder
     match iter.remainder() {
         Some(_) => Err(Error::Detail(

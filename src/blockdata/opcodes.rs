@@ -609,7 +609,7 @@ display_from_debug!(All);
 impl<D: SimpleDecoder> ConsensusDecodable<D> for All {
     #[inline]
     fn consensus_decode(d: &mut D) -> Result<All, D::Error> {
-      Ok(All::from(try!(d.read_u8())))
+      Ok(All::from(d.read_u8()?))
     }
 }
 

@@ -293,19 +293,19 @@ impl_consensus_encoding!(TxOut, value, script_pubkey);
 
 impl<S: SimpleEncoder> ConsensusEncodable<S> for TxIn {
     fn consensus_encode(&self, s: &mut S) -> Result <(), S::Error> {
-        try!(self.prev_hash.consensus_encode(s));
-        try!(self.prev_index.consensus_encode(s));
-        try!(self.script_sig.consensus_encode(s));
+        self.prev_hash.consensus_encode(s)?;
+        self.prev_index.consensus_encode(s)?;
+        self.script_sig.consensus_encode(s)?;
         self.sequence.consensus_encode(s)
     }
 }
 impl<D: SimpleDecoder> ConsensusDecodable<D> for TxIn {
     fn consensus_decode(d: &mut D) -> Result<TxIn, D::Error> {
         Ok(TxIn {
-            prev_hash: try!(ConsensusDecodable::consensus_decode(d)),
-            prev_index: try!(ConsensusDecodable::consensus_decode(d)),
-            script_sig: try!(ConsensusDecodable::consensus_decode(d)),
-            sequence: try!(ConsensusDecodable::consensus_decode(d)),
+            prev_hash: ConsensusDecodable::consensus_decode(d)?,
+            prev_index: ConsensusDecodable::consensus_decode(d)?,
+            script_sig: ConsensusDecodable::consensus_decode(d)?,
+            sequence: ConsensusDecodable::consensus_decode(d)?,
             witness: vec![],
         })
     }
@@ -313,7 +313,7 @@ impl<D: SimpleDecoder> ConsensusDecodable<D> for TxIn {
 
 impl<S: SimpleEncoder> ConsensusEncodable<S> for Transaction {
     fn consensus_encode(&self, s: &mut S) -> Result <(), S::Error> {
-        try!(self.version.consensus_encode(s));
+        self.version.consensus_encode(s)?;
         let mut have_witness = false;
         for input in &self.input {
             if !input.witness.is_empty() {
@@ -322,15 +322,15 @@ impl<S: SimpleEncoder> ConsensusEncodable<S> for Transaction {
             }
         }
         if !have_witness {
-            try!(self.input.consensus_encode(s));
-            try!(self.output.consensus_encode(s));
+            self.input.consensus_encode(s)?;
+            self.output.consensus_encode(s)?;
         } else {
-            try!(0u8.consensus_encode(s));
-            try!(1u8.consensus_encode(s));
-            try!(self.input.consensus_encode(s));
-            try!(self.output.consensus_encode(s));
+            0u8.consensus_encode(s)?;
+            1u8.consensus_encode(s)?;
+            self.input.consensus_encode(s)?;
+            self.output.consensus_encode(s)?;
             for input in &self.input {
-                try!(input.witness.consensus_encode(s));
+                input.witness.consensus_encode(s)?;
             }
         }
         self.lock_time.consensus_encode(s)
@@ -339,11 +339,11 @@ impl<S: SimpleEncoder> ConsensusEncodable<S> for Transaction {
 
 impl<D: SimpleDecoder> ConsensusDecodable<D> for Transaction {
     fn consensus_decode(d: &mut D) -> Result<Transaction, D::Error> {
-        let version: u32 = try!(ConsensusDecodable::consensus_decode(d));
-        let input: Vec<TxIn> = try!(ConsensusDecodable::consensus_decode(d));
+        let version: u32 = ConsensusDecodable::consensus_decode(d)?;
+        let input: Vec<TxIn> = ConsensusDecodable::consensus_decode(d)?;
         // segwit
         if input.is_empty() {
-            let segwit_flag: u8 = try!(ConsensusDecodable::consensus_decode(d));
+            let segwit_flag: u8 = ConsensusDecodable::consensus_decode(d)?;
             match segwit_flag {
                 // Empty tx
                 0 => {
@@ -351,21 +351,21 @@ impl<D: SimpleDecoder> ConsensusDecodable<D> for Transaction {
                         version: version,
                         input: input,
                         output: vec![],
-                        lock_time: try!(ConsensusDecodable::consensus_decode(d)),
+                        lock_time: ConsensusDecodable::consensus_decode(d)?,
                     })
                 }
                 // BIP144 input witnesses
                 1 => {
-                    let mut input: Vec<TxIn> = try!(ConsensusDecodable::consensus_decode(d));
-                    let output: Vec<TxOut> = try!(ConsensusDecodable::consensus_decode(d));
+                    let mut input: Vec<TxIn> = ConsensusDecodable::consensus_decode(d)?;
+                    let output: Vec<TxOut> = ConsensusDecodable::consensus_decode(d)?;
                     for txin in input.iter_mut() {
-                        txin.witness = try!(ConsensusDecodable::consensus_decode(d));
+                        txin.witness = ConsensusDecodable::consensus_decode(d)?;
                     }
                     Ok(Transaction {
                         version: version,
                         input: input,
                         output: output,
-                        lock_time: try!(ConsensusDecodable::consensus_decode(d))
+                        lock_time: ConsensusDecodable::consensus_decode(d)?,
                     })
                 }
                 // We don't support anything else
@@ -378,8 +378,8 @@ impl<D: SimpleDecoder> ConsensusDecodable<D> for Transaction {
             Ok(Transaction {
                 version: version,
                 input: input,
-                output: try!(ConsensusDecodable::consensus_decode(d)),
-                lock_time: try!(ConsensusDecodable::consensus_decode(d)),
+                output: ConsensusDecodable::consensus_decode(d)?,
+                lock_time: ConsensusDecodable::consensus_decode(d)?,
             })
         }
     }

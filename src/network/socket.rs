@@ -144,8 +144,8 @@ impl Socket {
 
     /// Produce a version message appropriate for this socket
     pub fn version_message(&mut self, start_height: i32) -> Result<NetworkMessage, util::Error> {
-        let recv_addr = try!(self.receiver_address());
-        let send_addr = try!(self.sender_address());
+        let recv_addr = self.receiver_address()?;
+        let send_addr = self.sender_address()?;
         let timestamp = match SystemTime::now().duration_since(UNIX_EPOCH) {
             Ok(dur) => dur,
             Err(err) => err.duration(),
@@ -168,7 +168,7 @@ impl Socket {
     pub fn send_message(&mut self, payload: NetworkMessage) -> Result<(), util::Error> {
         with_socket!(self, sock, {
             let message = RawNetworkMessage { magic: self.magic, payload: payload };
-            try!(message.consensus_encode(&mut RawEncoder::new(&mut *sock)));
+            message.consensus_encode(&mut RawEncoder::new(&mut *sock))?;
             sock.flush().map_err(util::Error::Io)
         })
     }

@@ -119,7 +119,7 @@ pub fn from(data: &str) -> Result<Vec<u8>, Error> {
 
 /// Decode a base58check-encoded string
 pub fn from_check(data: &str) -> Result<Vec<u8>, Error> {
-    let mut ret: Vec<u8> = try!(from(data));
+    let mut ret: Vec<u8> = from(data)?;
     if ret.len() < 4 {
         return Err(Error::TooShort(ret.len()));
     }

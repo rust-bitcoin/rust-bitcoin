@@ -141,7 +141,7 @@ impl ser::Serialize for Decimal {
 impl de::Deserialize for Decimal {
     // Deserialize through strason for the same reason as in `Serialize`
     fn deserialize<D: de::Deserializer>(d: &mut D) -> Result<Decimal, D::Error> {
-        let json: Json = try!(de::Deserialize::deserialize(d));
+        let json: Json = de::Deserialize::deserialize(d)?;
         match json.num() {
             Some(s) => {
                  // We know this will be a well-formed Json number, so we can
@@ -259,7 +259,7 @@ impl ser::Serialize for UDecimal {
 impl de::Deserialize for UDecimal {
     // Deserialize through strason for the same reason as in `Serialize`
     fn deserialize<D: de::Deserializer>(d: &mut D) -> Result<UDecimal, D::Error> {
-        let json: Json = try!(de::Deserialize::deserialize(d));
+        let json: Json = de::Deserialize::deserialize(d)?;
         match json.num() {
             Some(s) => {
                  // We know this will be a well-formed Json number, so we can

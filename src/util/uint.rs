@@ -321,9 +321,9 @@ macro_rules! construct_uint {
         impl fmt::Debug for $name {
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
                 let &$name(ref data) = self;
-                try!(write!(f, "0x"));
+                write!(f, "0x")?;
                 for ch in data.iter().rev() {
-                    try!(write!(f, "{:016x}", ch));
+                    write!(f, "{:016x}", ch)?;
                 }
                 Ok(())
             }
@@ -339,7 +339,7 @@ macro_rules! construct_uint {
             #[inline]
             fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
                 let &$name(ref data) = self;
-                for word in data.iter() { try!(word.consensus_encode(s)); }
+                for word in data.iter() { word.consensus_encode(s)?; }
                 Ok(())
             }
         }
@@ -347,7 +347,7 @@ macro_rules! construct_uint {
         impl<D: ::network::serialize::SimpleDecoder> ::network::encodable::ConsensusDecodable<D> for $name {
             fn consensus_decode(d: &mut D) -> Result<$name, D::Error> {
                 use network::encodable::ConsensusDecodable;
-                let ret: [u64; $n_words] = try!(ConsensusDecodable::consensus_decode(d));
+                let ret: [u64; $n_words] = ConsensusDecodable::consensus_decode(d)?;
                 Ok($name(ret))
             }
         }

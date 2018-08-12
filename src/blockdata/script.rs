@@ -49,7 +49,7 @@ impl fmt::Debug for Script {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut index = 0;
 
-        try!(f.write_str("Script("));
+        f.write_str("Script(")?;
         while index < self.0.len() {
             let opcode = opcodes::All::from(self.0[index]);
             index += 1;
@@ -60,55 +60,55 @@ impl fmt::Debug for Script {
                 match opcode {
                     opcodes::All::OP_PUSHDATA1 => {
                         if self.0.len() < index + 1 {
-                            try!(f.write_str("<unexpected end>"));
+                            f.write_str("<unexpected end>")?;
                             break;
                         }
                         match read_uint(&self.0[index..], 1) {
                             Ok(n) => { index += 1; n as usize }
-                            Err(_) => { try!(f.write_str("<bad length>")); break; }
+                            Err(_) => { f.write_str("<bad length>")?; break; }
                         }
                     }
                     opcodes::All::OP_PUSHDATA2 => {
                         if self.0.len() < index + 2 {
-                            try!(f.write_str("<unexpected end>"));
+                            f.write_str("<unexpected end>")?;
                             break;
                         }
                         match read_uint(&self.0[index..], 2) {
                             Ok(n) => { index += 2; n as usize }
-                            Err(_) => { try!(f.write_str("<bad length>")); break; }
+                            Err(_) => { f.write_str("<bad length>")?; break; }
                         }
                     }
                     opcodes::All::OP_PUSHDATA4 => {
                         if self.0.len() < index + 4 {
-                            try!(f.write_str("<unexpected end>"));
+                            f.write_str("<unexpected end>")?;
                             break;
                         }
                         match read_uint(&self.0[index..], 4) {
                             Ok(n) => { index += 4; n as usize }
-                            Err(_) => { try!(f.write_str("<bad length>")); break; }
+                            Err(_) => { f.write_str("<bad length>")?; break; }
                         }
                     }
                     _ => 0
                 }
             };
 
-            if index > 1 { try!(f.write_str(" ")); }
+            if index > 1 { f.write_str(" ")?; }
             // Write the opcode
             if opcode == opcodes::All::OP_PUSHBYTES_0 {
-                try!(f.write_str("OP_0"));
+                f.write_str("OP_0")?;
             } else {
-                try!(write!(f, "{:?}", opcode));
+                write!(f, "{:?}", opcode)?;
             }
             // Write any pushdata
             if data_len > 0 {
-                try!(f.write_str(" "));
+                f.write_str(" ")?;
                 if index + data_len <= self.0.len() {
                     for ch in &self.0[index..index + data_len] {
-                            try!(write!(f, "{:02x}", ch));
+                            write!(f, "{:02x}", ch)?;
                     }
                     index += data_len;
                 } else {
-                    try!(f.write_str("<push past end>"));
+                    f.write_str("<push past end>")?;
                     break;
                 }
             }
@@ -126,7 +126,7 @@ impl fmt::Display for Script {
 impl fmt::LowerHex for Script {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for &ch in self.0.iter() {
-            try!(write!(f, "{:02x}", ch));
+            write!(f, "{:02x}", ch)?;
         }
         Ok(())
     }
@@ -135,7 +135,7 @@ impl fmt::LowerHex for Script {
 impl fmt::UpperHex for Script {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for &ch in self.0.iter() {
-            try!(write!(f, "{:02X}", ch));
+            write!(f, "{:02X}", ch)?;
         }
         Ok(())
     }
@@ -587,8 +587,8 @@ impl serde::Deserialize for Script {
             fn visit_str<E>(&mut self, hex_str: &str) -> Result<Script, E>
                 where E: serde::de::Error
             {
-                let raw_vec: Vec<u8> = try!(::hex::decode(hex_str)
-                                                   .map_err(|_| serde::de::Error::syntax("bad script hex")));
+                let raw_vec: Vec<u8> = ::hex::decode(hex_str)
+                                                   .map_err(|_| serde::de::Error::syntax("bad script hex"))?;
                 Ok(Script::from(raw_vec))
             }
         }
@@ -608,7 +608,7 @@ impl<S: SimpleEncoder> ConsensusEncodable<S> for Script {
 impl<D: SimpleDecoder> ConsensusDecodable<D> for Script {
     #[inline]
     fn consensus_decode(d: &mut D) -> Result<Script, D::Error> {
-        Ok(Script(try!(ConsensusDecodable::consensus_decode(d))))
+        Ok(Script(ConsensusDecodable::consensus_decode(d)?))
     }
 }
 

@@ -177,8 +177,8 @@ pub fn tweak_keys(secp: &Secp256k1, keys: &[PublicKey], contract: &[u8]) -> Resu
         let mut hmac = hmac::Hmac::new(sha2::Sha256::new(), &key.serialize());
         hmac.input(contract);
         hmac.raw_result(&mut hmac_raw);
-        let hmac_sk = try!(SecretKey::from_slice(secp, &hmac_raw).map_err(Error::BadTweak));
-        try!(key.add_exp_assign(secp, &hmac_sk).map_err(Error::Secp));
+        let hmac_sk = SecretKey::from_slice(secp, &hmac_raw).map_err(Error::BadTweak)?;
+        key.add_exp_assign(secp, &hmac_sk).map_err(Error::Secp)?;
         ret.push(key);
     }
     Ok(ret)
@@ -196,12 +196,12 @@ pub fn compute_tweak(secp: &Secp256k1, pk: &PublicKey, contract: &[u8]) -> Resul
 /// Tweak a secret key using some arbitrary data (calls `compute_tweak` internally)
 pub fn tweak_secret_key(secp: &Secp256k1, key: &SecretKey, contract: &[u8]) -> Result<SecretKey, Error> {
     // Compute public key
-    let pk = try!(PublicKey::from_secret_key(secp, &key).map_err(Error::Secp));
+    let pk = PublicKey::from_secret_key(secp, &key).map_err(Error::Secp)?;
     // Compute tweak
-    let hmac_sk = try!(compute_tweak(secp, &pk, contract));
+    let hmac_sk = compute_tweak(secp, &pk, contract)?;
     // Execute the tweak
     let mut key = *key;
-    try!(key.add_assign(&secp, &hmac_sk).map_err(Error::Secp));
+    key.add_assign(&secp, &hmac_sk).map_err(Error::Secp)?;
     // Return
     Ok(key)
 }
@@ -213,8 +213,8 @@ pub fn create_address(secp: &Secp256k1,
                       keys: &[PublicKey],
                       template: &Template)
                       -> Result<address::Address, Error> {
-    let keys = try!(tweak_keys(secp, keys, contract));
-    let script = try!(template.to_script(&keys));
+    let keys = tweak_keys(secp, keys, contract)?;
+    let script = template.to_script(&keys)?;
     Ok(address::Address {
         network: network,
         payload: address::Payload::ScriptHash(

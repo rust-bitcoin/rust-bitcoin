@@ -54,8 +54,8 @@ impl VersionMessage {
     // TODO: we have fixed services and relay to 0
     /// Constructs a new `version` message
     pub fn new(timestamp: i64, mut socket: Socket, nonce: u64, start_height: i32) -> Result<VersionMessage, util::Error> {
-        let recv_addr = try!(socket.receiver_address());
-        let send_addr = try!(socket.sender_address());
+        let recv_addr = socket.receiver_address()?;
+        let send_addr = socket.sender_address()?;
 
         Ok(VersionMessage {
             version: constants::PROTOCOL_VERSION,
