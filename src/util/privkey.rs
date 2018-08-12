@@ -113,7 +113,7 @@ impl FromStr for Privkey {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Privkey, Error> {
-        let data = try!(base58::from_check(s));
+        let data = base58::from_check(s)?;
 
         let compressed = match data.len() {
             33 => false,
@@ -128,8 +128,8 @@ impl FromStr for Privkey {
         };
 
         let secp = Secp256k1::without_caps();
-        let key = try!(SecretKey::from_slice(&secp, &data[1..33])
-            .map_err(|_| base58::Error::Other("Secret key out of range".to_owned())));
+        let key = SecretKey::from_slice(&secp, &data[1..33])
+            .map_err(|_| base58::Error::Other("Secret key out of range".to_owned()))?;
 
         Ok(Privkey {
             compressed: compressed,

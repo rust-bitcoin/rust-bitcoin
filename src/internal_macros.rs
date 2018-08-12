@@ -17,7 +17,7 @@ macro_rules! impl_consensus_encoding {
         impl<S: ::network::serialize::SimpleEncoder> ::network::encodable::ConsensusEncodable<S> for $thing {
             #[inline]
             fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
-                $( try!(self.$field.consensus_encode(s)); )+
+                $( self.$field.consensus_encode(s)?; )+
                 Ok(())
             }
         }
@@ -27,7 +27,7 @@ macro_rules! impl_consensus_encoding {
             fn consensus_decode(d: &mut D) -> Result<$thing, D::Error> {
                 use network::encodable::ConsensusDecodable;
                 Ok($thing {
-                    $( $field: try!(ConsensusDecodable::consensus_decode(d)), )+
+                    $( $field: ConsensusDecodable::consensus_decode(d)?, )+
                 })
             }
         }
@@ -47,7 +47,7 @@ macro_rules! impl_newtype_consensus_encoding {
         impl<D: ::network::serialize::SimpleDecoder> ::network::encodable::ConsensusDecodable<D> for $thing {
             #[inline]
             fn consensus_decode(d: &mut D) -> Result<$thing, D::Error> {
-                Ok($thing(try!(ConsensusDecodable::consensus_decode(d))))
+                Ok($thing(ConsensusDecodable::consensus_decode(d)?))
             }
         }
     );
@@ -193,12 +193,12 @@ macro_rules! impl_array_newtype_encodable {
                     {
                         let mut ret: [$ty; $len] = [0; $len];
                         for item in ret.iter_mut() {
-                            *item = match try!(v.visit()) {
+                            *item = match v.visit()? {
                                 Some(c) => c,
                                 None => return Err(::serde::de::Error::end_of_stream())
                             };
                         }
-                        try!(v.end());
+                        v.end()?;
                         Ok($thing(ret))
                     }
                 }
@@ -312,13 +312,13 @@ macro_rules! __rust_jsonrpc_internal__define_anything_type {
             }
 
             fn visit_seq<V: ::serde::de::SeqVisitor>(&mut self, v: V) -> Result<Anything, V::Error> {
-                let _: Vec<Anything> = try!(::serde::de::impls::VecVisitor::new().visit_seq(v));
+                let _: Vec<Anything> = ::serde::de::impls::VecVisitor::new().visit_seq(v)?;
                 Ok(Anything)
             }
 
             fn visit_map<V: ::serde::de::MapVisitor>(&mut self, mut v: V) -> Result<Anything, V::Error> {
-                while let Some((Anything, Anything)) = try!(v.visit()) { }
-                try!(v.end());
+                while let Some((Anything, Anything)) = v.visit()? { }
+                v.end()?;
                 Ok(Anything)
             }
         }
@@ -382,18 +382,18 @@ macro_rules! serde_struct_impl {
                         $(let mut $fe = None;)*
 
                         loop {
-                            match try!(v.visit_key()) {
-                                Some(Enum::Unknown__Field) => { let _: Anything = try!(v.visit_value()); }
-                                $(Some(Enum::$fe) => { $fe = Some(try!(v.visit_value())); })*
+                            match v.visit_key()? {
+                                Some(Enum::Unknown__Field) => { let _: Anything = v.visit_value()?; }
+                                $(Some(Enum::$fe) => { $fe = Some(v.visit_value()?); })*
                                 None => { break; }
                             }
                         }
 
                         $(let $fe = match $fe {
                             Some(x) => x,
-                            None => try!(v.missing_field(stringify!($fe))),
+                            None => v.missing_field(stringify!($fe))?,
                         };)*
-                        try!(v.end());
+                        v.end()?;
                         Ok($name{ $($fe: $fe),* })
                     }
                 }
@@ -431,7 +431,7 @@ macro_rules! serde_struct_impl {
                                 // Use the last alternate name for serialization; in the common case
                                 // with zero or one alternates this does the RIght Thing
                                 let names = [stringify!($fe), $($alt),*];
-                                Ok(Some(try!(serializer.visit_struct_elt(names[names.len() - 1], &self.value.$fe))))
+                                Ok(Some(serializer.visit_struct_elt(names[names.len() - 1], &self.value.$fe)?))
                             })*
                             State::Finished => {
                                 Ok(None)
@@ -513,10 +513,10 @@ macro_rules! serde_struct_enum_impl {
                         )*
 
                         loop {
-                            match try!(v.visit_key()) {
-                                Some(Enum::Unknown__Field) => { let _: Anything = try!(v.visit_value()); }
+                            match v.visit_key()? {
+                                Some(Enum::Unknown__Field) => { let _: Anything = v.visit_value()?; }
                                 $($(Some(Enum::$varname($varname::$fe)) => {
-                                    $fe = Some(try!(v.visit_value())); })*)*
+                                    $fe = Some(v.visit_value()?); })*)*
                                 None => { break; }
                             }
                         }
@@ -530,7 +530,7 @@ macro_rules! serde_struct_enum_impl {
                             // sets otherwise.
                             if $structname {
                                 $(let $fe = $fe.unwrap();)*
-                                try!(v.end());
+                                v.end()?;
                                 return Ok($name::$varname($structname { $($fe: $fe),* }))
                             }
                         )*

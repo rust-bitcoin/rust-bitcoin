@@ -360,7 +360,7 @@ impl fmt::Debug for Sha256dHash {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let &Sha256dHash(data) = self;
         for ch in data.iter() {
-            try!(write!(f, "{:02x}", ch));
+            write!(f, "{:02x}", ch)?;
         }
         Ok(())
     }
@@ -371,7 +371,7 @@ impl fmt::Debug for Hash160 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let &Hash160(data) = self;
         for ch in data.iter() {
-            try!(write!(f, "{:02x}", ch));
+            write!(f, "{:02x}", ch)?;
         }
         Ok(())
     }
@@ -394,7 +394,7 @@ impl fmt::LowerHex for Sha256dHash {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let &Sha256dHash(data) = self;
         for ch in data.iter().rev() {
-            try!(write!(f, "{:02x}", ch));
+            write!(f, "{:02x}", ch)?;
         }
         Ok(())
     }
@@ -405,7 +405,7 @@ impl fmt::UpperHex for Sha256dHash {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let &Sha256dHash(data) = self;
         for ch in data.iter().rev() {
-            try!(write!(f, "{:02X}", ch));
+            write!(f, "{:02X}", ch)?;
         }
         Ok(())
     }

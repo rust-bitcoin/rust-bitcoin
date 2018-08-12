@@ -103,9 +103,9 @@ impl<S: SimpleEncoder> ConsensusEncodable<S> for VarInt {
     fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
         match self.0 {
             0...0xFC             => { (self.0 as u8).consensus_encode(s) }
-            0xFD...0xFFFF        => { try!(s.emit_u8(0xFD)); (self.0 as u16).consensus_encode(s) }
-            0x10000...0xFFFFFFFF => { try!(s.emit_u8(0xFE)); (self.0 as u32).consensus_encode(s) }
-            _                    => { try!(s.emit_u8(0xFF)); (self.0 as u64).consensus_encode(s) }
+            0xFD...0xFFFF        => { s.emit_u8(0xFD)?; (self.0 as u16).consensus_encode(s) }
+            0x10000...0xFFFFFFFF => { s.emit_u8(0xFE)?; (self.0 as u32).consensus_encode(s) }
+            _                    => { s.emit_u8(0xFF)?; (self.0 as u64).consensus_encode(s) }
         }
     }
 }
@@ -113,7 +113,7 @@ impl<S: SimpleEncoder> ConsensusEncodable<S> for VarInt {
 impl<D: SimpleDecoder> ConsensusDecodable<D> for VarInt {
     #[inline]
     fn consensus_decode(d: &mut D) -> Result<VarInt, D::Error> {
-        let n = try!(d.read_u8());
+        let n = d.read_u8()?;
         match n {
             0xFF => d.read_u64().map(|n| VarInt(u64::from_le(n))),
             0xFE => d.read_u32().map(|n| VarInt(u32::from_le(n) as u64)),
@@ -145,7 +145,7 @@ impl<S: SimpleEncoder> ConsensusEncodable<S> for String {
 impl<D: SimpleDecoder> ConsensusDecodable<D> for String {
     #[inline]
     fn consensus_decode(d: &mut D) -> Result<String, D::Error> {
-        String::from_utf8(try!(ConsensusDecodable::consensus_decode(d)))
+        String::from_utf8(ConsensusDecodable::consensus_decode(d)?)
             .map_err(|_| d.error("String was not valid UTF8".to_owned()))
     }
 }
@@ -157,7 +157,7 @@ macro_rules! impl_array {
         impl<S: SimpleEncoder, T: ConsensusEncodable<S>> ConsensusEncodable<S> for [T; $size] {
             #[inline]
             fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
-                for i in self.iter() { try!(i.consensus_encode(s)); }
+                for i in self.iter() { i.consensus_encode(s)?; }
                 Ok(())
             }
         }
@@ -166,9 +166,9 @@ macro_rules! impl_array {
             #[inline]
             fn consensus_decode(d: &mut D) -> Result<[T; $size], D::Error> {
                 // Set everything to the first decode
-                let mut ret = [try!(ConsensusDecodable::consensus_decode(d)); $size];
+                let mut ret = [ConsensusDecodable::consensus_decode(d)?; $size];
                 // Set the rest
-                for item in ret.iter_mut().take($size).skip(1) { *item = try!(ConsensusDecodable::consensus_decode(d)); }
+                for item in ret.iter_mut().take($size).skip(1) { *item = ConsensusDecodable::consensus_decode(d)?; }
                 Ok(ret)
             }
         }
@@ -185,8 +185,8 @@ impl_array!(32);
 impl<S: SimpleEncoder, T: ConsensusEncodable<S>> ConsensusEncodable<S> for [T] {
     #[inline]
     fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
-        try!(VarInt(self.len() as u64).consensus_encode(s));
-        for c in self.iter() { try!(c.consensus_encode(s)); }
+        VarInt(self.len() as u64).consensus_encode(s)?;
+        for c in self.iter() { c.consensus_encode(s)?; }
         Ok(())
     }
 }
@@ -202,15 +202,15 @@ impl<S: SimpleEncoder, T: ConsensusEncodable<S>> ConsensusEncodable<S> for Vec<T
 impl<D: SimpleDecoder, T: ConsensusDecodable<D>> ConsensusDecodable<D> for Vec<T> {
     #[inline]
     fn consensus_decode(d: &mut D) -> Result<Vec<T>, D::Error> {
-        let VarInt(len): VarInt = try!(ConsensusDecodable::consensus_decode(d));
-        let byte_size = try!((len as usize)
+        let VarInt(len): VarInt = ConsensusDecodable::consensus_decode(d)?;
+        let byte_size = (len as usize)
                             .checked_mul(mem::size_of::<T>())
-                            .ok_or(d.error("Invalid length".to_owned())));
+                            .ok_or(d.error("Invalid length".to_owned()))?;
         if byte_size > MAX_VEC_SIZE {
             return Err(d.error(format!("tried to allocate vec of size {} (max {})", byte_size, MAX_VEC_SIZE)));
         }
         let mut ret = Vec::with_capacity(len as usize);
-        for _ in 0..len { ret.push(try!(ConsensusDecodable::consensus_decode(d))); }
+        for _ in 0..len { ret.push(ConsensusDecodable::consensus_decode(d)?); }
         Ok(ret)
     }
 }
@@ -223,13 +223,13 @@ impl<S: SimpleEncoder, T: ConsensusEncodable<S>> ConsensusEncodable<S> for Box<[
 impl<D: SimpleDecoder, T: ConsensusDecodable<D>> ConsensusDecodable<D> for Box<[T]> {
     #[inline]
     fn consensus_decode(d: &mut D) -> Result<Box<[T]>, D::Error> {
-        let VarInt(len): VarInt = try!(ConsensusDecodable::consensus_decode(d));
+        let VarInt(len): VarInt = ConsensusDecodable::consensus_decode(d)?;
         let len = len as usize;
         if len > MAX_VEC_SIZE {
             return Err(d.error(format!("tried to allocate vec of size {} (max {})", len, MAX_VEC_SIZE)));
         }
         let mut ret = Vec::with_capacity(len);
-        for _ in 0..len { ret.push(try!(ConsensusDecodable::consensus_decode(d))); }
+        for _ in 0..len { ret.push(ConsensusDecodable::consensus_decode(d)?); }
         Ok(ret.into_boxed_slice())
     }
 }
@@ -240,10 +240,10 @@ impl<S: SimpleEncoder, T: ConsensusEncodable<S>> ConsensusEncodable<S> for Optio
     fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
         match *self {
             Some(ref data) => {
-                try!(1u8.consensus_encode(s));
-                try!(data.consensus_encode(s));
+                1u8.consensus_encode(s)?;
+                data.consensus_encode(s)?;
             }
-            None => { try!(0u8.consensus_encode(s)); }
+            None => { 0u8.consensus_encode(s)?; }
         }
         Ok(())
     }
@@ -252,9 +252,9 @@ impl<S: SimpleEncoder, T: ConsensusEncodable<S>> ConsensusEncodable<S> for Optio
 impl<D: SimpleDecoder, T:ConsensusDecodable<D>> ConsensusDecodable<D> for Option<T> {
     #[inline]
     fn consensus_decode(d: &mut D) -> Result<Option<T>, D::Error> {
-        let bit: u8 = try!(ConsensusDecodable::consensus_decode(d));
+        let bit: u8 = ConsensusDecodable::consensus_decode(d)?;
         Ok(if bit != 0 {
-            Some(try!(ConsensusDecodable::consensus_decode(d)))
+            Some(ConsensusDecodable::consensus_decode(d)?)
         } else {
             None
         })
@@ -272,11 +272,11 @@ fn sha2_checksum(data: &[u8]) -> [u8; 4] {
 impl<S: SimpleEncoder> ConsensusEncodable<S> for CheckedData {
     #[inline]
     fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
-        try!((self.0.len() as u32).consensus_encode(s));
-        try!(sha2_checksum(&self.0).consensus_encode(s));
+        (self.0.len() as u32).consensus_encode(s)?;
+        sha2_checksum(&self.0).consensus_encode(s)?;
         // We can't just pass to the slice encoder since it'll insert a length
         for ch in &self.0 {
-            try!(ch.consensus_encode(s));
+            ch.consensus_encode(s)?;
         }
         Ok(())
     }
@@ -285,10 +285,10 @@ impl<S: SimpleEncoder> ConsensusEncodable<S> for CheckedData {
 impl<D: SimpleDecoder> ConsensusDecodable<D> for CheckedData {
     #[inline]
     fn consensus_decode(d: &mut D) -> Result<CheckedData, D::Error> {
-        let len: u32 = try!(ConsensusDecodable::consensus_decode(d));
-        let checksum: [u8; 4] = try!(ConsensusDecodable::consensus_decode(d));
+        let len: u32 = ConsensusDecodable::consensus_decode(d)?;
+        let checksum: [u8; 4] = ConsensusDecodable::consensus_decode(d)?;
         let mut ret = Vec::with_capacity(len as usize);
-        for _ in 0..len { ret.push(try!(ConsensusDecodable::consensus_decode(d))); }
+        for _ in 0..len { ret.push(ConsensusDecodable::consensus_decode(d)?); }
         let expected_checksum = sha2_checksum(&ret);
         if expected_checksum != checksum {
             Err(d.error(format!("bad checksum {:?} (expected {:?})", checksum, expected_checksum)))
@@ -306,7 +306,7 @@ macro_rules! tuple_encode {
             #[allow(non_snake_case)]
             fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
                 let &($(ref $x),*) = self;
-                $( try!($x.consensus_encode(s)); )*
+                $( $x.consensus_encode(s)?; )*
                 Ok(())
             }
         }
@@ -315,7 +315,7 @@ macro_rules! tuple_encode {
             #[inline]
             #[allow(non_snake_case)]
             fn consensus_decode(d: &mut D) -> Result<($($x),*), D::Error> {
-                Ok(($(try!({let $x = ConsensusDecodable::consensus_decode(d); $x })),*))
+                Ok(($({let $x = ConsensusDecodable::consensus_decode(d)?; $x }),*))
             }
         }
     );
@@ -347,10 +347,10 @@ impl<S, K, V> ConsensusEncodable<S> for HashMap<K, V>
 {
     #[inline]
     fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
-        try!(VarInt(self.len() as u64).consensus_encode(s));
+        VarInt(self.len() as u64).consensus_encode(s)?;
         for (key, value) in self.iter() {
-            try!(key.consensus_encode(s));
-            try!(value.consensus_encode(s));
+            key.consensus_encode(s)?;
+            value.consensus_encode(s)?;
         }
         Ok(())
     }
@@ -363,12 +363,12 @@ impl<D, K, V> ConsensusDecodable<D> for HashMap<K, V>
 {
     #[inline]
     fn consensus_decode(d: &mut D) -> Result<HashMap<K, V>, D::Error> {
-        let VarInt(len): VarInt = try!(ConsensusDecodable::consensus_decode(d));
+        let VarInt(len): VarInt = ConsensusDecodable::consensus_decode(d)?;
 
         let mut ret = HashMap::with_capacity(len as usize);
         for _ in 0..len {
-            ret.insert(try!(ConsensusDecodable::consensus_decode(d)),
-                                 try!(ConsensusDecodable::consensus_decode(d)));
+            ret.insert(ConsensusDecodable::consensus_decode(d)?,
+                                 ConsensusDecodable::consensus_decode(d)?);
         }
         Ok(ret)
     }

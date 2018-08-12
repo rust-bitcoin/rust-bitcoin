@@ -241,7 +241,7 @@ impl ExtendedPrivKey {
             depth: 0,
             parent_fingerprint: Default::default(),
             child_number: ChildNumber::from_normal_idx(0),
-            secret_key: try!(SecretKey::from_slice(secp, &result[..32]).map_err(Error::Ecdsa)),
+            secret_key: SecretKey::from_slice(secp, &result[..32]).map_err(Error::Ecdsa)?,
             chain_code: ChainCode::from(&result[32..])
         })
     }
@@ -251,7 +251,7 @@ impl ExtendedPrivKey {
                      -> Result<ExtendedPrivKey, Error> {
         let mut sk = *master;
         for &num in path.iter() {
-            sk = try!(sk.ckd_priv(secp, num));
+            sk = sk.ckd_priv(secp, num)?;
         }
         Ok(sk)
     }
@@ -276,8 +276,8 @@ impl ExtendedPrivKey {
 
         hmac.input(&be_n);
         hmac.raw_result(&mut result);
-        let mut sk = try!(SecretKey::from_slice(secp, &result[..32]).map_err(Error::Ecdsa));
-        try!(sk.add_assign(secp, &self.secret_key).map_err(Error::Ecdsa));
+        let mut sk = SecretKey::from_slice(secp, &result[..32]).map_err(Error::Ecdsa)?;
+        sk.add_assign(secp, &self.secret_key).map_err(Error::Ecdsa)?;
 
         Ok(ExtendedPrivKey {
             network: self.network,
@@ -342,7 +342,7 @@ impl ExtendedPubKey {
                 let mut result = [0; 64];
                 hmac.raw_result(&mut result);
 
-                let secret_key = try!(SecretKey::from_slice(secp, &result[..32]));
+                let secret_key = SecretKey::from_slice(secp, &result[..32])?;
                 let chain_code = ChainCode::from(&result[32..]);
                 Ok((secret_key, chain_code))
             }
@@ -351,9 +351,9 @@ impl ExtendedPubKey {
 
     /// Public->Public child key derivation
     pub fn ckd_pub(&self, secp: &Secp256k1, i: ChildNumber) -> Result<ExtendedPubKey, Error> {
-        let (sk, chain_code) = try!(self.ckd_pub_tweak(secp, i));
+        let (sk, chain_code) = self.ckd_pub_tweak(secp, i)?;
         let mut pk = self.public_key.clone();
-        try!(pk.add_exp_assign(secp, &sk).map_err(Error::Ecdsa));
+        pk.add_exp_assign(secp, &sk).map_err(Error::Ecdsa)?;
 
         Ok(ExtendedPubKey {
             network: self.network,
@@ -411,7 +411,7 @@ impl FromStr for ExtendedPrivKey {
 
     fn from_str(inp: &str) -> Result<ExtendedPrivKey, base58::Error> {
         let s = Secp256k1::with_caps(secp256k1::ContextFlag::None);
-        let data = try!(base58::from_check(inp));
+        let data = base58::from_check(inp)?;
 
         if data.len() != 78 {
             return Err(base58::Error::InvalidLength(data.len()));
@@ -432,9 +432,9 @@ impl FromStr for ExtendedPrivKey {
             parent_fingerprint: Fingerprint::from(&data[5..9]),
             child_number: child_number,
             chain_code: ChainCode::from(&data[13..45]),
-            secret_key: try!(SecretKey::from_slice(&s,
+            secret_key: SecretKey::from_slice(&s,
                              &data[46..78]).map_err(|e|
-                                 base58::Error::Other(e.to_string())))
+                                 base58::Error::Other(e.to_string()))?
         })
     }
 }
@@ -462,7 +462,7 @@ impl FromStr for ExtendedPubKey {
 
     fn from_str(inp: &str) -> Result<ExtendedPubKey, base58::Error> {
         let s = Secp256k1::with_caps(secp256k1::ContextFlag::None);
-        let data = try!(base58::from_check(inp));
+        let data = base58::from_check(inp)?;
 
         if data.len() != 78 {
             return Err(base58::Error::InvalidLength(data.len()));
@@ -483,9 +483,9 @@ impl FromStr for ExtendedPubKey {
             parent_fingerprint: Fingerprint::from(&data[5..9]),
             child_number: child_number,
             chain_code: ChainCode::from(&data[13..45]),
-            public_key: try!(PublicKey::from_slice(&s,
+            public_key: PublicKey::from_slice(&s,
                              &data[45..78]).map_err(|e|
-                                 base58::Error::Other(e.to_string())))
+                                 base58::Error::Other(e.to_string()))?
         })
     }
 }

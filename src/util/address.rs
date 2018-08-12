@@ -274,7 +274,7 @@ impl FromStr for Address {
         }
 
         // Base 58
-        let data = try!(base58::from_check(s));
+        let data = base58::from_check(s)?;
 
         if data.len() != 21 {
             return Err(Error::Base58(base58::Error::InvalidLength(data.len())));

@@ -75,8 +75,8 @@ fn addr_to_be(addr: [u16; 8]) -> [u16; 8] {
 impl<S: SimpleEncoder> ConsensusEncodable<S> for Address {
     #[inline]
     fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
-        try!(self.services.consensus_encode(s));
-        try!(addr_to_be(self.address).consensus_encode(s));
+        self.services.consensus_encode(s)?;
+        addr_to_be(self.address).consensus_encode(s)?;
         self.port.to_be().consensus_encode(s)
     }
 }
@@ -85,9 +85,9 @@ impl<D: SimpleDecoder> ConsensusDecodable<D> for Address {
     #[inline]
     fn consensus_decode(d: &mut D) -> Result<Address, D::Error> {
         Ok(Address {
-            services: try!(ConsensusDecodable::consensus_decode(d)),
-            address: addr_to_be(try!(ConsensusDecodable::consensus_decode(d))),
-            port: u16::from_be(try!(ConsensusDecodable::consensus_decode(d)))
+            services: ConsensusDecodable::consensus_decode(d)?,
+            address: addr_to_be(ConsensusDecodable::consensus_decode(d)?),
+            port: u16::from_be(ConsensusDecodable::consensus_decode(d)?)
         })
     }
 }

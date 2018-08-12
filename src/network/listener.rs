@@ -47,8 +47,8 @@ pub trait Listener {
         let (recv_tx, recv_rx) = channel();
 
         // Send version message to peer
-        let version_message = try!(sock.version_message(0));
-        try!(sock.send_message(version_message));
+        let version_message = sock.version_message(0)?;
+        sock.send_message(version_message)?;
 
         // Message loop
         thread::spawn(move || {

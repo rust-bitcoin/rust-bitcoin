@@ -45,7 +45,7 @@ pub fn serialize<T: ?Sized>(data: &T) -> Result<Vec<u8>, util::Error>
      where T: ConsensusEncodable<RawEncoder<Cursor<Vec<u8>>>>,
 {
     let mut encoder = RawEncoder::new(Cursor::new(vec![]));
-    try!(data.consensus_encode(&mut encoder));
+    data.consensus_encode(&mut encoder)?;
     Ok(encoder.into_inner().into_inner())
 }
 
@@ -53,7 +53,7 @@ pub fn serialize<T: ?Sized>(data: &T) -> Result<Vec<u8>, util::Error>
 pub fn serialize_hex<T: ?Sized>(data: &T) -> Result<String, util::Error>
      where T: ConsensusEncodable<RawEncoder<Cursor<Vec<u8>>>>
 {
-    let serial = try!(serialize(data));
+    let serial = serialize(data)?;
     Ok(hex_encode(serial))
 }
 
