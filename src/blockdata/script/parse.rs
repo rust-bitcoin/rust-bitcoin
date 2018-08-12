@@ -181,6 +181,8 @@ enum E {
     CheckSigHash(Hash160),
     /// <k> <pk...> <len(pk)> CHECKMULTISIG
     CheckMultiSig(usize, Vec<secp256k1::PublicKey>),
+    /// <E> <W> ADD ... <W> ADD <k> EQUAL
+    Threshold(usize, Box<E>, Vec<W>),
     /// <E> <W> BOOLAND
     ParallelAnd(Box<E>, Box<W>),
     /// <E> IF <F> ELSE 0 ENDIF
@@ -238,6 +240,8 @@ enum F {
     Csv(u32),
     /// SIZE 32 EQUALVERIFY SHA256 <hash> EQUALVERIFY 1
     HashEqual(Sha256dHash),
+    /// <E> <W> ADD ... <W> ADD <k> EQUALVERIFY 1
+    Threshold(usize, Box<E>, Vec<W>),
     /// <V> <F>
     And(Box<V>, Box<F>),
     /// SIZE EQUALVERIFY IF <F> ELSE <F> ENDIF
@@ -261,6 +265,8 @@ enum V {
     Csv(u32),
     /// SIZE 32 EQUALVERIFY SHA256 <hash> EQUALVERIFY
     HashEqual(Sha256dHash),
+    /// <E> <W> ADD ... <W> ADD <k> EQUALVERIFY
+    Threshold(usize, Box<E>, Vec<W>),
     /// <V> <V>
     And(Box<V>, Box<V>),
     /// <E> <W> BOOLOR VERIFY
@@ -517,12 +523,44 @@ fn parse_subexpression(tokens: &mut TokenIter) -> Result<Box<AstElem>, Error> {
         Token::Equal => {
             Token::Sha256Hash(hash), Token::Sha256, Token::EqualVerify, Token::Number(32), Token::Size => {
                 Ok(Box::new(T::HashEqual(hash)))
-            }
+            },
+            Token::Number(k) => {{
+                let mut ws = vec![];
+                let e;
+                loop {
+                    let next_sub = parse_subexpression(tokens)?;
+                    if next_sub.is_w() {
+                        ws.push(*next_sub.into_w().unwrap());
+                    } else if next_sub.is_e() {
+                        e = next_sub.into_e().unwrap();
+                        break;
+                    } else {
+                        return Err(Error::Unexpected(next_sub.to_string()));
+                    }
+                }
+                Ok(Box::new(E::Threshold(k as usize, e, ws)))
+            }}
         },
         Token::EqualVerify => {
             Token::Sha256Hash(hash), Token::Sha256, Token::EqualVerify, Token::Number(32), Token::Size => {
                 Ok(Box::new(V::HashEqual(hash)))
-            }
+            },
+            Token::Number(k) => {{
+                let mut ws = vec![];
+                let e;
+                loop {
+                    let next_sub = parse_subexpression(tokens)?;
+                    if next_sub.is_w() {
+                        ws.push(*next_sub.into_w().unwrap());
+                    } else if next_sub.is_e() {
+                        e = next_sub.into_e().unwrap();
+                        break;
+                    } else {
+                        return Err(Error::Unexpected(next_sub.to_string()));
+                    }
+                }
+                Ok(Box::new(V::Threshold(k as usize, e, ws)))
+            }}
         },
         Token::CheckSig => {
             Token::EqualVerify => {
@@ -717,11 +755,13 @@ fn parse_subexpression(tokens: &mut TokenIter) -> Result<Box<AstElem>, Error> {
             }
             #subexpression
             V: vexpr => {{
-                match *vexpr {
+                let unboxed = *vexpr; // need this variable, cannot directly match on *vexpr, see https://github.com/rust-lang/rust/issues/16223
+                match unboxed {
                     V::CheckSig(pk) => Ok(Box::new(F::CheckSig(pk))),
                     V::CheckSigHash(hash) => Ok(Box::new(F::CheckSigHash(hash))),
                     V::CheckMultiSig(k, keys) => Ok(Box::new(F::CheckMultiSig(k, keys))),
                     V::HashEqual(hash) => Ok(Box::new(F::HashEqual(hash))),
+                    V::Threshold(k, e, ws) => Ok(Box::new(F::Threshold(k, e, ws))),
                     x => Err(Error::Unexpected(x.to_string())),
                 }
             }}
@@ -794,6 +834,14 @@ impl AstElem for E {
                 }
                 builder.push_int(pks.len() as i64)
                        .push_opcode(opcodes::All::OP_CHECKMULTISIG)
+            }
+            E::Threshold(k, ref e, ref ws) => {
+                builder = e.serialize(builder);
+                for w in ws {
+                    builder = w.serialize(builder).push_opcode(opcodes::All::OP_ADD);
+                }
+                builder.push_int(k as i64)
+                       .push_opcode(opcodes::All::OP_EQUAL)
             }
             E::ParallelAnd(ref left, ref right) => {
                 builder = left.serialize(builder);
@@ -915,6 +963,33 @@ impl E {
                     dissat_cost: 1 + k,
                 }
             }
+            script::Descriptor::Threshold(k, ref exprs) => {
+                let num_cost = script::Builder::new().push_int(k as i64).into_script().len();
+                if exprs.is_empty() {
+                    panic!("Cannot have empty threshold in a descriptor");
+                }
+
+                let e = E::from_descriptor(&exprs[0], satisfaction_probability * k as f64 / exprs.len() as f64);
+                let mut pk_cost = 1 + num_cost + e.pk_cost;
+                let mut sat_cost = e.sat_cost;
+                let mut dissat_cost = e.dissat_cost;
+                let mut ws = vec![];
+
+                for expr in &exprs[1..] {
+                    let w = W::from_descriptor(expr, satisfaction_probability * k as f64 / exprs.len() as f64);
+                    pk_cost += w.pk_cost;
+                    sat_cost += w.sat_cost;
+                    dissat_cost += w.dissat_cost;
+                    ws.push(w.ast);
+                }
+
+                Cost {
+                    ast: E::Threshold(k, Box::new(e.ast), ws),
+                    pk_cost: pk_cost,
+                    sat_cost: sat_cost * k / exprs.len(),  // TODO is simply averaging here the right thing to do?
+                    dissat_cost: dissat_cost * k / exprs.len(),
+                }
+            }
             script::Descriptor::And(ref left, ref right) => {
                 let e = compare_rules!(satisfaction_probability, left, right;
                     // e1 w2 BOOLAND
@@ -946,7 +1021,7 @@ impl E {
                 let m = M::from_descriptor(desc, satisfaction_probability);
                 min_cost(e, m, satisfaction_probability, |m| E::CastM(Box::new(m)))
             }
-            script::Descriptor::Or(ref left, ref right) => unimplemented!(),
+            script::Descriptor::Or(_, _) => unimplemented!(),
             script::Descriptor::AsymmetricOr(ref left, ref right) => {
                 let e = compare_rules!(satisfaction_probability, left, right;
                     // e1 w2 BOOLOR
@@ -1034,7 +1109,9 @@ impl W {
             }
             script::Descriptor::KeyHash(_) | script::Descriptor::Time(_) |
             script::Descriptor::Multi(_, _) | script::Descriptor::And(_, _) |
-            script::Descriptor::Or(_, _) | script::Descriptor::AsymmetricOr(_, _) => { let e = E::from_descriptor(desc, satisfaction_probability);
+            script::Descriptor::Or(_, _) | script::Descriptor::AsymmetricOr(_, _) |
+            script::Descriptor::Threshold(_, _) => {
+                let e = E::from_descriptor(desc, satisfaction_probability);
                 Cost {
                     ast: W::CastE(Box::new(e.ast)),
                     pk_cost: e.pk_cost + 2,
@@ -1197,7 +1274,9 @@ impl M {
                 )
             }
             script::Descriptor::Time(_) |
-            script::Descriptor::Or(_, _) | script::Descriptor::AsymmetricOr(_, _) => {
+            script::Descriptor::Or(_, _) |
+            script::Descriptor::AsymmetricOr(_, _) |
+            script::Descriptor::Threshold(_, _) => {
                 let f = F::from_descriptor(desc, 1.0);
                 Cost {
                     ast: M::CastF(Box::new(f.ast)),
@@ -1261,6 +1340,15 @@ impl AstElem for F {
                        .push_opcode(opcodes::All::OP_EQUAL)
                        .push_opcode(opcodes::All::OP_SHA256)
                        .push_slice(&hash[..])
+                       .push_opcode(opcodes::All::OP_EQUALVERIFY)
+                       .push_int(1)
+            }
+            F::Threshold(k, ref e, ref ws) => {
+                builder = e.serialize(builder);
+                for w in ws {
+                    builder = w.serialize(builder).push_opcode(opcodes::All::OP_ADD);
+                }
+                builder.push_int(k as i64)
                        .push_opcode(opcodes::All::OP_EQUALVERIFY)
                        .push_int(1)
             }
@@ -1331,6 +1419,33 @@ impl F {
                     pk_cost: num_cost + 34 * keys.len() + 2,
                     sat_cost: 1 + 73*k,
                     dissat_cost: 0,
+                }
+            }
+            script::Descriptor::Threshold(k, ref exprs) => {
+                let num_cost = script::Builder::new().push_int(k as i64).into_script().len();
+                if exprs.is_empty() {
+                    panic!("Cannot have empty threshold in a descriptor");
+                }
+
+                let e = E::from_descriptor(&exprs[0], satisfaction_probability * k as f64 / exprs.len() as f64);
+                let mut pk_cost = 2 + num_cost + e.pk_cost;
+                let mut sat_cost = e.sat_cost;
+                let mut dissat_cost = e.dissat_cost;
+                let mut ws = vec![];
+
+                for expr in &exprs[1..] {
+                    let w = W::from_descriptor(expr, satisfaction_probability * k as f64 / exprs.len() as f64);
+                    pk_cost += w.pk_cost;
+                    sat_cost += w.sat_cost;
+                    dissat_cost += w.dissat_cost;
+                    ws.push(w.ast);
+                }
+
+                Cost {
+                    ast: F::Threshold(k, Box::new(e.ast), ws),
+                    pk_cost: pk_cost,
+                    sat_cost: sat_cost * k / exprs.len(),  // TODO is simply averaging here the right thing to do?
+                    dissat_cost: dissat_cost * k / exprs.len(),
                 }
             }
             script::Descriptor::Time(n) => {
@@ -1444,6 +1559,14 @@ impl AstElem for V {
                        .push_slice(&hash[..])
                        .push_opcode(opcodes::All::OP_EQUALVERIFY)
             }
+            V::Threshold(k, ref e, ref ws) => {
+                builder = e.serialize(builder);
+                for w in ws {
+                    builder = w.serialize(builder).push_opcode(opcodes::All::OP_ADD);
+                }
+                builder.push_int(k as i64)
+                       .push_opcode(opcodes::All::OP_EQUALVERIFY)
+            }
             V::And(ref left, ref right) => {
                 builder = left.serialize(builder);
                 right.serialize(builder)
@@ -1533,6 +1656,33 @@ impl V {
                     pk_cost: 27,
                     sat_cost: 33,
                     dissat_cost: 1,
+                }
+            }
+            script::Descriptor::Threshold(k, ref exprs) => {
+                let num_cost = script::Builder::new().push_int(k as i64).into_script().len();
+                if exprs.is_empty() {
+                    panic!("Cannot have empty threshold in a descriptor");
+                }
+
+                let e = E::from_descriptor(&exprs[0], satisfaction_probability * k as f64 / exprs.len() as f64);
+                let mut pk_cost = 1 + num_cost + e.pk_cost;
+                let mut sat_cost = e.sat_cost;
+                let mut dissat_cost = e.dissat_cost;
+                let mut ws = vec![];
+
+                for expr in &exprs[1..] {
+                    let w = W::from_descriptor(expr, satisfaction_probability * k as f64 / exprs.len() as f64);
+                    pk_cost += w.pk_cost;
+                    sat_cost += w.sat_cost;
+                    dissat_cost += w.dissat_cost;
+                    ws.push(w.ast);
+                }
+
+                Cost {
+                    ast: V::Threshold(k, Box::new(e.ast), ws),
+                    pk_cost: pk_cost,
+                    sat_cost: sat_cost * k / exprs.len(),  // TODO is simply averaging here the right thing to do?
+                    dissat_cost: dissat_cost * k / exprs.len(),
                 }
             }
             script::Descriptor::And(ref left, ref right) => {
@@ -1634,7 +1784,10 @@ impl T {
                     dissat_cost: 0,
                 }
             }
-            script::Descriptor::And(_, _) | script::Descriptor::Or(_, _) | script::Descriptor::AsymmetricOr(_, _) => {
+            script::Descriptor::And(_, _) |
+            script::Descriptor::Or(_, _) |
+            script::Descriptor::AsymmetricOr(_, _) |
+            script::Descriptor::Threshold(_, _) => {
                 let e = E::from_descriptor(desc, 1.0);
                 let f = F::from_descriptor(desc, 1.0);
                 if e.pk_cost + e.sat_cost < f.pk_cost + f.sat_cost {

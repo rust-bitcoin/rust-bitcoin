@@ -60,6 +60,8 @@ pub enum Descriptor<P: PublicKey> {
     KeyHash(P),
     /// A set of keys, signatures must be provided for `k` of them
     Multi(usize, Vec<P>),
+    /// A set of descriptors, satisfactions must be provided for `k` of them
+    Threshold(usize, Vec<Descriptor<P>>),
     /// A SHA256 whose preimage must be provided to satisfy the descriptor
     Hash(Sha256dHash),
     /// A list of descriptors, all of which must be satisfied
@@ -97,6 +99,13 @@ impl<P: PublicKey> Descriptor<P> {
                     new_keys.push(secp_pk);
                 }
                 Ok(Descriptor::Multi(k, new_keys))
+            }
+            Descriptor::Threshold(k, ref subs) => {
+                let mut new_subs = Vec::with_capacity(subs.len());
+                for sub in subs {
+                    new_subs.push(sub.instantiate(keymap)?);
+                }
+                Ok(Descriptor::Threshold(k, new_subs))
             }
             Descriptor::Hash(hash) => Ok(Descriptor::Hash(hash)),
             Descriptor::And(ref left, ref right) => {
