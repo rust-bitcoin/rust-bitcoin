@@ -147,18 +147,21 @@ pub fn propagate_err<T>(s: String, res: Result<T, Error>) -> Result<T, Error> {
     res.map_err(|err| Error::Detail(s, Box::new(err)))
 }
 
+#[doc(hidden)]
 impl From<base58::Error> for Error {
     fn from(e: base58::Error) -> Error {
         Error::Base58(e)
     }
 }
 
+#[doc(hidden)]
 impl From<bitcoin_bech32::Error> for Error {
     fn from(e: bitcoin_bech32::Error) -> Error {
         Error::Bech32(e)
     }
 }
 
+#[doc(hidden)]
 impl From<secp256k1::Error> for Error {
     fn from(e: secp256k1::Error) -> Error {
         Error::Secp256k1(e)

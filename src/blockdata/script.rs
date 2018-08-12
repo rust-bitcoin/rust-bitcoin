@@ -195,6 +195,7 @@ impl error::Error for Error {
 }
 
 #[cfg(feature="bitcoinconsensus")]
+#[doc(hidden)]
 impl convert::From<bitcoinconsensus::Error> for Error {
     fn from(err: bitcoinconsensus::Error) -> Error {
         match err {
