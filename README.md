@@ -74,7 +74,7 @@ downstream users to also have a `num` dependency just so they can use `Uint256::
 
 * Removed old script interpreter
 
-* A new optional feature "bitcoinconsenus" lets this library use Bitcoin Core's native
+* A new optional feature "bitcoinconsensus" lets this library use Bitcoin Core's native
 script verifier, wrappend into Rust by the rust-bitcoinconsenus project. 
 See `Transaction::verify` and `Script::verify` methods.
 
