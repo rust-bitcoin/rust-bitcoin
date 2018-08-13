@@ -246,12 +246,15 @@ impl ExtendedPrivKey {
         })
     }
 
-    /// Creates a privkey from a path
-    pub fn from_path(secp: &Secp256k1, master: &ExtendedPrivKey, path: &[ChildNumber])
-                     -> Result<ExtendedPrivKey, Error> {
-        let mut sk = *master;
-        for &num in path.iter() {
-            sk = sk.ckd_priv(secp, num)?;
+    /// Attempts to derive an extended private key from a path.
+    pub fn derive_priv(
+        &self,
+        secp: &Secp256k1,
+        cnums: &[ChildNumber],
+    ) -> Result<ExtendedPrivKey, Error> {
+        let mut sk: ExtendedPrivKey = *self;
+        for cnum in cnums {
+            sk = sk.ckd_priv(secp, *cnum)?;
         }
         Ok(sk)
     }
@@ -324,6 +327,19 @@ impl ExtendedPubKey {
             public_key: PublicKey::from_secret_key(secp, &sk.secret_key).unwrap(),
             chain_code: sk.chain_code
         }
+    }
+
+    /// Attempts to derive an extended public key from a path.
+    pub fn derive_pub(
+        &self,
+        secp: &Secp256k1,
+        cnums: &[ChildNumber],
+    ) -> Result<ExtendedPubKey, Error> {
+        let mut pk: ExtendedPubKey = *self;
+        for cnum in cnums {
+            pk = pk.ckd_pub(secp, *cnum)?
+        }
+        Ok(pk)
     }
 
     /// Compute the scalar tweak added to this key to get a child key
@@ -502,6 +518,7 @@ mod tests {
 
     use super::{ChildNumber, ExtendedPrivKey, ExtendedPubKey};
     use super::ChildNumber::{Hardened, Normal};
+    use super::Error;
 
     fn test_path(secp: &Secp256k1,
                  network: Network,
@@ -512,7 +529,28 @@ mod tests {
 
         let mut sk = ExtendedPrivKey::new_master(secp, network, seed).unwrap();
         let mut pk = ExtendedPubKey::from_private(secp, &sk);
-        // Derive keys, checking hardened and non-hardened derivation
+
+        // Check derivation convenience method for ExtendedPrivKey
+        assert_eq!(
+            &sk.derive_priv(secp, path).unwrap().to_string()[..],
+            expected_sk
+        );
+
+        // Check derivation convenience method for ExtendedPubKey, should error
+        // appropriately if any ChildNumber is hardened
+        if path.iter().any(|cnum| cnum.is_hardened()) {
+            assert_eq!(
+                pk.derive_pub(secp, path),
+                Err(Error::CannotDeriveFromHardenedKey)
+            );
+        } else {
+            assert_eq!(
+                &pk.derive_pub(secp, path).unwrap().to_string()[..],
+                expected_pk
+            );
+        }
+
+        // Derive keys, checking hardened and non-hardened derivation one-by-one
         for &num in path.iter() {
             sk = sk.ckd_priv(secp, num).unwrap();
             match num {
@@ -522,6 +560,10 @@ mod tests {
                     assert_eq!(pk, pk2);
                 }
                 Hardened {..} => {
+                    assert_eq!(
+                        pk.ckd_pub(secp, num),
+                        Err(Error::CannotDeriveFromHardenedKey)
+                    );
                     pk = ExtendedPubKey::from_private(secp, &sk);
                 }
             }
@@ -541,6 +583,7 @@ mod tests {
     fn test_vector_1() {
         let secp = Secp256k1::new();
         let seed = hex_decode("000102030405060708090a0b0c0d0e0f").unwrap();
+
         // m
         test_path(&secp, Bitcoin, &seed, &[],
                   "xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbPy6cq3jPPqjiChkVvvNKmPGJxWUtg6LnF5kejMRNNU3TGtRBeJgk33yuGBxrMPHi",
@@ -606,6 +649,23 @@ mod tests {
         test_path(&secp, Bitcoin, &seed, &[ChildNumber::from_normal_idx(0), ChildNumber::from_hardened_idx(2147483647), ChildNumber::from_normal_idx(1), ChildNumber::from_hardened_idx(2147483646), ChildNumber::from_normal_idx(2)],
                   "xprvA2nrNbFZABcdryreWet9Ea4LvTJcGsqrMzxHx98MMrotbir7yrKCEXw7nadnHM8Dq38EGfSh6dqA9QWTyefMLEcBYJUuekgW4BYPJcr9E7j",
                   "xpub6FnCn6nSzZAw5Tw7cgR9bi15UV96gLZhjDstkXXxvCLsUXBGXPdSnLFbdpq8p9HmGsApME5hQTZ3emM2rnY5agb9rXpVGyy3bdW6EEgAtqt");
+    }
+
+    #[test]
+    fn test_vector_3() {
+        let secp = Secp256k1::new();
+        let seed = hex_decode("4b381541583be4423346c643850da4b320e46a87ae3d2a4e6da11eba819cd4acba45d239319ac14f863b8d5ab5a0d0c64d2e8a1e7d1457df2e5a3c51c73235be").unwrap();
+
+        // m
+        test_path(&secp, Bitcoin, &seed, &[],
+                  "xprv9s21ZrQH143K25QhxbucbDDuQ4naNntJRi4KUfWT7xo4EKsHt2QJDu7KXp1A3u7Bi1j8ph3EGsZ9Xvz9dGuVrtHHs7pXeTzjuxBrCmmhgC6",
+                  "xpub661MyMwAqRbcEZVB4dScxMAdx6d4nFc9nvyvH3v4gJL378CSRZiYmhRoP7mBy6gSPSCYk6SzXPTf3ND1cZAceL7SfJ1Z3GC8vBgp2epUt13");
+
+        // m/0h
+        test_path(&secp, Bitcoin, &seed, &[ChildNumber::from_hardened_idx(0)],
+                  "xprv9uPDJpEQgRQfDcW7BkF7eTya6RPxXeJCqCJGHuCJ4GiRVLzkTXBAJMu2qaMWPrS7AANYqdq6vcBcBUdJCVVFceUvJFjaPdGZ2y9WACViL4L",
+                  "xpub68NZiKmJWnxxS6aaHmn81bvJeTESw724CRDs6HbuccFQN9Ku14VQrADWgqbhhTHBaohPX4CjNLf9fq9MYo6oDaPPLPxSb7gwQN3ih19Zm4Y");
+
     }
 
     #[test]
