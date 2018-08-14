@@ -57,12 +57,20 @@ pub fn serialize_hex<T: ?Sized>(data: &T) -> Result<String, util::Error>
     Ok(hex_encode(serial))
 }
 
-/// Deserialize an object from a vector
+/// Deserialize an object from a vector, will error if said deserialization
+/// doesn't consume the entire vector.
 pub fn deserialize<'a, T>(data: &'a [u8]) -> Result<T, util::Error>
      where T: ConsensusDecodable<RawDecoder<Cursor<&'a [u8]>>>
 {
     let mut decoder = RawDecoder::new(Cursor::new(data));
-    ConsensusDecodable::consensus_decode(&mut decoder)
+    let rv = ConsensusDecodable::consensus_decode(&mut decoder)?;
+
+    // Fail if data is not consumed entirely.
+    if decoder.into_inner().position() == data.len() as u64 {
+        Ok(rv)
+    } else {
+        Err(util::Error::ParseFailed)
+    }
 }
 
 /// An encoder for raw binary data
