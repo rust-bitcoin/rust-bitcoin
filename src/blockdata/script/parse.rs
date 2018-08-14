@@ -23,6 +23,7 @@
 //!
 
 use std::{error, fmt};
+use std::collections::HashMap;
 use secp256k1;
 use util::hash::Hash160;
 use util::hash::Sha256dHash; // TODO needs to be sha256, not sha256d
@@ -39,6 +40,10 @@ pub enum Error {
     Unexpected(String),
     /// Failed to parse a push as a public key
     BadPubkey(secp256k1::Error),
+    /// Could not satisfy a script (fragment) because of a missing signature
+    MissingSig(secp256k1::PublicKey),
+    /// Could not satisfy a script (fragment) because of a missing (pk, signature) pair
+    MissingSigPkh(Hash160),
 }
 
 impl error::Error for Error {
@@ -52,7 +57,9 @@ impl error::Error for Error {
     fn description(&self) -> &str {
         match *self {
             Error::UnexpectedStart => "unexpected start of script",
-            Error::Unexpected(_) => "unexpected token",
+            Error::Unexpected(..) => "unexpected token",
+            Error::MissingSig(..) => "missing signature (checksig)",
+            Error::MissingSigPkh(..) => "missing signature (p2pkh)",
             Error::BadPubkey(ref e) => error::Error::description(e),
         }
     }
@@ -63,6 +70,8 @@ impl fmt::Display for Error {
         match *self {
             Error::UnexpectedStart => f.write_str("unexpected start of script"),
             Error::Unexpected(ref s) => write!(f, "unexpected «{}»", s),
+            Error::MissingSig(ref pk) => write!(f, "missing signature for key {:?}", pk),
+            Error::MissingSigPkh(ref hash) => write!(f, "missing (key, signature) for hash {:?}", hash),
             Error::BadPubkey(ref e) => fmt::Display::fmt(e, f),
         }
     }
@@ -75,6 +84,7 @@ impl fmt::Display for Error {
 pub enum Token {
     BoolAnd,
     BoolOr,
+    Add,
     Equal,
     EqualVerify,
     CheckSig,
@@ -109,6 +119,7 @@ impl Token {
         match *self {
             Token::BoolAnd => builder.push_opcode(opcodes::All::OP_BOOLAND),
             Token::BoolOr => builder.push_opcode(opcodes::All::OP_BOOLOR),
+            Token::Add => builder.push_opcode(opcodes::All::OP_ADD),
             Token::Equal => builder.push_opcode(opcodes::All::OP_EQUAL),
             Token::EqualVerify => builder.push_opcode(opcodes::All::OP_EQUALVERIFY),
             Token::CheckSig => builder.push_opcode(opcodes::All::OP_CHECKSIG),
@@ -199,8 +210,9 @@ enum E {
     ParallelOr(Box<E>, Box<W>),
     /// `<E> IFDUP NOTIF <E> ENDIF`
     CascadeOr(Box<E>, Box<E>),
-    /// `SIZE EQUALVERIFY IFDUP NOTIF <F> ENDIF`
+    /// `SIZE EQUALVERIFY IF <F> ELSE 0 ENDIF`
     CastF(Box<F>),
+    // TODO missing SIZE EQUALVERIFY IF 0 ELSE F ENDIF which should be there at lesat for F::And
 }
 
 /// Wrapped expression, used as helper for the parallel operations above
@@ -210,6 +222,8 @@ enum W {
     CheckSig(secp256k1::PublicKey),
     /// `SWAP SIZE IF SIZE 32 EQUALVERIFY SHA256 <hash> EQUALVERIFY 1 ENDIF`
     HashEqual(Sha256dHash),
+    /// `SWAP SIZE EQUALVERIFY IF <n> CSV ELSE 0 ENDIF`
+    Csv(u32),
     /// `TOALTSTACK <E> FROMALTSTACK`
     CastE(Box<E>),
 }
@@ -231,12 +245,16 @@ enum F {
     Threshold(usize, Box<E>, Vec<W>),
     /// `<V> <F>`
     And(Box<V>, Box<F>),
+    /// `<E> <W> BOOLOR VERIFY 1`
+    ParallelOr(Box<E>, Box<W>),
     /// `SIZE EQUALVERIFY IF <F> ELSE <F> ENDIF`
     SwitchOr(Box<F>, Box<F>),
     /// `SIZE EQUALVERIFY IF <V> ELSE <V> ENDIF 1`
     SwitchOrV(Box<V>, Box<V>),
     /// `<E> IFDUP NOTIF <F> ENDIF`
     CascadeOr(Box<E>, Box<F>),
+    /// `<E> NOTIF <V> ENDIF 1`
+    CascadeOrV(Box<E>, Box<V>),
 }
 
 /// Expression that must succeed and will leave nothing on the stack after consuming its inputs
@@ -260,8 +278,8 @@ enum V {
     ParallelOr(Box<E>, Box<W>),
     /// `SIZE EQUALVERIFY IF <V> ELSE <V> ENDIF`
     SwitchOr(Box<V>, Box<V>),
-    /// `SIZE EQUALVERIFY IF <F> ELSE <F> ENDIF VERIFY`
-    SwitchOrF(Box<F>, Box<F>),
+    /// `SIZE EQUALVERIFY IF <T> ELSE <T> ENDIF VERIFY`
+    SwitchOrT(Box<T>, Box<T>),
     /// `<E> NOTIF <V> ENDIF`
     CascadeOr(Box<E>, Box<V>),
 }
@@ -509,14 +527,26 @@ fn parse_subexpression(tokens: &mut TokenIter) -> Result<Box<AstElem>, Error> {
                 let mut ws = vec![];
                 let e;
                 loop {
-                    let next_sub = parse_subexpression(tokens)?;
-                    if next_sub.is_w() {
-                        ws.push(*next_sub.into_w().unwrap());
-                    } else if next_sub.is_e() {
-                        e = next_sub.into_e().unwrap();
-                        break;
-                    } else {
-                        return Err(Error::Unexpected(next_sub.to_string()));
+                    match tokens.next() {
+                        Some(Token::Add) => {
+                            let next_sub = parse_subexpression(tokens)?;
+                            if next_sub.is_w() {
+                                ws.push(*next_sub.into_w().unwrap());
+                            } else {
+                                return Err(Error::Unexpected(next_sub.to_string()));
+                            }
+                        }
+                        Some(x) => {
+                            tokens.un_next(x);
+                            let next_sub = parse_subexpression(tokens)?;
+                            if next_sub.is_e() {
+                                e = next_sub.into_e().unwrap();
+                                break;
+                            } else {
+                                return Err(Error::Unexpected(next_sub.to_string()));
+                            }
+                        }
+                        None => return Err(Error::UnexpectedStart)
                     }
                 }
                 Ok(Box::new(E::Threshold(k as usize, e, ws)))
@@ -611,6 +641,25 @@ fn parse_subexpression(tokens: &mut TokenIter) -> Result<Box<AstElem>, Error> {
                 #subexpression
                 F: right => {
                     Token::If => {
+                        Token::EqualVerify, Token::Size => {{
+                            match *right {
+                                F::Csv(n) => {{
+                                    match tokens.next() {
+                                        Some(Token::Swap) => Ok(Box::new(W::Csv(n))),
+                                        Some(x) => {
+                                            tokens.un_next(x);
+                                            Ok(Box::new(E::CastF(right)))
+                                        }
+                                        None => Ok(Box::new(E::CastF(right)))
+                                    }
+                                }}
+                                F::And(..) | F::SwitchOr(..) |
+                                F::SwitchOrV(..) | F::CascadeOr(..) => {
+                                    Ok(Box::new(E::CastF(right)))
+                                }
+                                _ => Err(Error::Unexpected(right.to_string())),
+                            }
+                        }}
                         #subexpression
                         E: left => {
                             Ok(Box::new(E::CascadeAnd(left, right)))
@@ -629,9 +678,6 @@ fn parse_subexpression(tokens: &mut TokenIter) -> Result<Box<AstElem>, Error> {
             },
             F: right => {
                 Token::NotIf, Token::IfDup => {
-                    Token::EqualVerify, Token::Size => {
-                        Ok(Box::new(E::CastF(right)))
-                    }
                     #subexpression
                     E: left => {
                         Ok(Box::new(F::CascadeOr(left, right)))
@@ -697,10 +743,10 @@ fn parse_subexpression(tokens: &mut TokenIter) -> Result<Box<AstElem>, Error> {
         Token::Verify => { 
             Token::EndIf => {
                 #subexpression
-                F: right, Token::Else => {
+                T: right, Token::Else => {
                     #subexpression
-                    F: left, Token::If, Token::EqualVerify, Token::Size => {
-                        Ok(Box::new(V::SwitchOrF(left, right)))
+                    T: left, Token::If, Token::EqualVerify, Token::Size => {
+                        Ok(Box::new(V::SwitchOrT(left, right)))
                     }
                 }
             },
@@ -724,7 +770,9 @@ fn parse_subexpression(tokens: &mut TokenIter) -> Result<Box<AstElem>, Error> {
                     V::CheckMultiSig(k, keys) => Ok(Box::new(F::CheckMultiSig(k, keys))),
                     V::HashEqual(hash) => Ok(Box::new(F::HashEqual(hash))),
                     V::Threshold(k, e, ws) => Ok(Box::new(F::Threshold(k, e, ws))),
+                    V::ParallelOr(left, right) => Ok(Box::new(F::ParallelOr(left, right))),
                     V::SwitchOr(left, right) => Ok(Box::new(F::SwitchOrV(left, right))),
+                    V::CascadeOr(left, right) => Ok(Box::new(F::CascadeOrV(left, right))),
                     x => Err(Error::Unexpected(x.to_string())),
                 }
             }}
@@ -761,6 +809,7 @@ fn parse_subexpression(tokens: &mut TokenIter) -> Result<Box<AstElem>, Error> {
     }
 }
 
+#[derive(Clone, PartialEq, Eq, Debug)]
 struct Cost<T> {
     ast: T,
     pk_cost: usize,
@@ -873,9 +922,11 @@ impl AstElem for E {
             E::CastF(ref fexpr) => {
                 builder = builder.push_opcode(opcodes::All::OP_SIZE)
                                  .push_opcode(opcodes::All::OP_EQUALVERIFY)
-                                 .push_opcode(opcodes::All::OP_IFDUP)
-                                 .push_opcode(opcodes::All::OP_NOTIF);
-                fexpr.serialize(builder).push_opcode(opcodes::All::OP_ENDIF)
+                                 .push_opcode(opcodes::All::OP_IF);
+                builder = fexpr.serialize(builder);
+                builder.push_opcode(opcodes::All::OP_ELSE)
+                       .push_int(0)
+                       .push_opcode(opcodes::All::OP_ENDIF)
             }
         }
     }
@@ -907,6 +958,7 @@ macro_rules! compare_rules(
         #[allow(non_snake_case)]
         let $R = $rty::from_descriptor($right, $rweight);
 
+        println!("(Debug: level {:?} considering {} (pk {} sat {} dissat {}))", &ret as *const _, stringify!($result), $pk_cost, $sat_cost, $dissat_cost);
         ret.push(Cost {
             ast: $result,
             pk_cost: $pk_cost,
@@ -972,7 +1024,7 @@ impl E {
                 let f = F::from_descriptor(desc, 1.0);
                 Cost {
                     ast: E::CastF(Box::new(f.ast)),
-                    pk_cost: f.pk_cost + 5,
+                    pk_cost: f.pk_cost + 6,
                     sat_cost: 1,
                     dissat_cost: 2,
                 }
@@ -1040,21 +1092,46 @@ impl E {
                     E::CascadeAnd(Box::new(R.ast), Box::new(L.ast));
                     // SIZE EQUALVERIFY IFDUP NOTIF v1 f2 ENDIF
                     L: V, 1.0; R: F, 1.0;
-                    L.pk_cost + R.pk_cost + 5,
+                    L.pk_cost + R.pk_cost + 6,
                     L.sat_cost + R.sat_cost + 1,
                     2;
                     E::CastF(Box::new(F::And(Box::new(L.ast), Box::new(R.ast))));
                     // SIZE EQUALVERIFY IFDUP NOTIF v2 f1 ENDIF
                     L: F, 1.0; R: V, 1.0;
-                    L.pk_cost + R.pk_cost + 5,
+                    L.pk_cost + R.pk_cost + 6,
                     L.sat_cost + R.sat_cost + 1,
                     2;
                     E::CastF(Box::new(F::And(Box::new(R.ast), Box::new(L.ast))));
                 )
             }
-            script::Descriptor::Or(_, _) => unimplemented!(),
+            script::Descriptor::Or(ref left, ref right) => {
+                let e = compare_rules!(satisfaction_probability, left, right;
+                    // e1 w2 BOOLOR
+                    L: E, satisfaction_probability / 2.0; R: W, satisfaction_probability / 2.0;
+                    L.pk_cost + R.pk_cost + 1,
+                    (L.sat_cost + R.sat_cost + L.dissat_cost + R.dissat_cost) / 2,
+                    L.dissat_cost + R.dissat_cost;
+                    E::ParallelOr(Box::new(L.ast), Box::new(R.ast));
+                    // e2 w1 BOOLOR
+                    L: W, satisfaction_probability / 2.0; R: E, satisfaction_probability / 2.0;
+                    L.pk_cost + R.pk_cost + 1,
+                    (L.sat_cost + R.sat_cost + L.dissat_cost + R.dissat_cost) / 2,
+                    L.dissat_cost + R.dissat_cost;
+                    E::ParallelOr(Box::new(R.ast), Box::new(L.ast));
+                );
+                let f = {
+                    let fcost = F::from_descriptor(desc, satisfaction_probability);
+                    Cost {
+                        ast: E::CastF(Box::new(fcost.ast)),
+                        pk_cost: fcost.pk_cost + 6,
+                        sat_cost: 1 + fcost.sat_cost,
+                        dissat_cost: 2,
+                    }
+                };
+                min_cost(e, f, satisfaction_probability, |x|x)
+            }
             script::Descriptor::AsymmetricOr(ref left, ref right) => {
-                compare_rules!(satisfaction_probability, left, right;
+                let e = compare_rules!(satisfaction_probability, left, right;
                     // e1 w2 BOOLOR
                     L: E, satisfaction_probability; R: W, 0.0;
                     L.pk_cost + R.pk_cost + 1,
@@ -1067,12 +1144,52 @@ impl E {
                     L.sat_cost + R.dissat_cost,
                     L.dissat_cost + R.dissat_cost;
                     E::ParallelOr(Box::new(R.ast), Box::new(L.ast));
-                )
+                );
+                let f = {
+                    let fcost = F::from_descriptor(desc, satisfaction_probability);
+                    Cost {
+                        ast: E::CastF(Box::new(fcost.ast)),
+                        pk_cost: fcost.pk_cost + 6,
+                        sat_cost: 1 + fcost.sat_cost,
+                        dissat_cost: 2,
+                    }
+                };
+                min_cost(e, f, satisfaction_probability, |x|x)
             }
             script::Descriptor::Wpkh(_) | script::Descriptor::Sh(_) | script::Descriptor::Wsh(_) => {
                 // handled at at the ParseTree::from_descriptor layer
                 unreachable!()
             }
+        }
+    }
+
+    fn satisfy(
+        &self,
+        key_map: &HashMap<secp256k1::PublicKey, secp256k1::Signature>,
+        pkh_map: &HashMap<Hash160, (secp256k1::PublicKey, secp256k1::Signature)>,
+        hash_map: &HashMap<Sha256dHash, [u8; 32]>
+    ) -> Result<Vec<Vec<u8>>, Error> {
+        let secp = secp256k1::Secp256k1::without_caps();
+
+        match *self {
+            E::CheckSig(pk) => {
+                if let Some(sig) = key_map.get(&pk) {
+                    Ok(vec![sig.serialize_der(&secp)])
+                } else {
+                    Err(Error::MissingSig(pk))
+                }
+            }
+            E::CheckSigHash(hash) | E::CheckSigHashF(hash) => {
+                if let Some((pk, sig)) = pkh_map.get(&hash) {
+                    Ok(vec![
+                        sig.serialize_der(&secp),
+                        pk.serialize()[..].to_owned(),
+                    ])
+                } else {
+                    Err(Error::MissingSigPkh(hash))
+                }
+            }
+            _ => unimplemented!()
         }
     }
 }
@@ -1108,6 +1225,17 @@ impl AstElem for W {
                        .push_int(1)
                        .push_opcode(opcodes::All::OP_ENDIF)
             }
+            W::Csv(n) => {
+                builder.push_opcode(opcodes::All::OP_SWAP)
+                       .push_opcode(opcodes::All::OP_SIZE)
+                       .push_opcode(opcodes::All::OP_EQUALVERIFY)
+                       .push_opcode(opcodes::All::OP_IF)
+                       .push_int(n as i64)
+                       .push_opcode(opcodes::OP_CSV)
+                       .push_opcode(opcodes::All::OP_ELSE)
+                       .push_int(0)
+                       .push_opcode(opcodes::All::OP_ENDIF)
+            }
             W::CastE(ref expr) => {
                 builder = builder.push_opcode(opcodes::All::OP_TOALTSTACK);
                 expr.serialize(builder).push_opcode(opcodes::All::OP_FROMALTSTACK)
@@ -1135,7 +1263,16 @@ impl W {
                     dissat_cost: 1,
                 }
             }
-            script::Descriptor::KeyHash(_) | script::Descriptor::Time(_) |
+            script::Descriptor::Time(n) => {
+                let num_cost = script::Builder::new().push_int(n as i64).into_script().len();
+                Cost {
+                    ast: W::Csv(n),
+                    pk_cost: 8 + num_cost,
+                    sat_cost: 1,
+                    dissat_cost: 2,
+                }
+            }
+            script::Descriptor::KeyHash(_) |
             script::Descriptor::Multi(_, _) | script::Descriptor::And(_, _) |
             script::Descriptor::Or(_, _) | script::Descriptor::AsymmetricOr(_, _) |
             script::Descriptor::Threshold(_, _) => {
@@ -1218,6 +1355,13 @@ impl AstElem for F {
                 builder = left.serialize(builder);
                 right.serialize(builder)
             }
+            F::ParallelOr(ref left, ref right) => {
+                builder = left.serialize(builder);
+                builder = right.serialize(builder);
+                builder.push_opcode(opcodes::All::OP_BOOLOR)
+                       .push_opcode(opcodes::All::OP_VERIFY)
+                       .push_int(1)
+            }
             F::SwitchOr(ref left, ref right) => {
                 builder = builder.push_opcode(opcodes::All::OP_SIZE)
                                  .push_opcode(opcodes::All::OP_EQUALVERIFY)
@@ -1243,6 +1387,13 @@ impl AstElem for F {
                                  .push_opcode(opcodes::All::OP_NOTIF);
                 builder = right.serialize(builder);
                 builder.push_opcode(opcodes::All::OP_ENDIF)
+            }
+            F::CascadeOrV(ref left, ref right) => {
+                builder = left.serialize(builder);
+                builder = builder.push_opcode(opcodes::All::OP_NOTIF);
+                builder = right.serialize(builder);
+                builder.push_opcode(opcodes::All::OP_ENDIF)
+                       .push_int(1)
             }
         }
     }
@@ -1350,21 +1501,114 @@ impl F {
                     }
                 }
             }
-            script::Descriptor::Or(_, _) => unimplemented!(),
+            script::Descriptor::Or(ref left, ref right) => {
+                compare_rules!(satisfaction_probability, left, right;
+                    // e1 w2 BOOLOR VERIFY 1
+                    L: E, satisfaction_probability / 2.0; R: W, satisfaction_probability / 2.0;
+                    L.pk_cost + R.pk_cost + 3,
+                    (L.sat_cost + R.sat_cost + L.dissat_cost + R.dissat_cost) / 2,
+                    0;
+                    F::ParallelOr(Box::new(L.ast), Box::new(R.ast));
+                    // e2 w1 BOOLOR VERIFY 1
+                    L: W, satisfaction_probability / 2.0; R: E, satisfaction_probability / 2.0;
+                    L.pk_cost + R.pk_cost + 3,
+                    (L.sat_cost + R.sat_cost + L.dissat_cost + R.dissat_cost) / 2,
+                    0;
+                    F::ParallelOr(Box::new(R.ast), Box::new(L.ast));
+
+                    // e1 IFDUP NOTIF f2 ENDIF
+                    L: E, satisfaction_probability / 2.0; R: F, 1.0;
+                    L.pk_cost + R.pk_cost + 3,
+                    (L.sat_cost + L.dissat_cost + R.sat_cost) / 2,
+                    0;
+                    F::CascadeOr(Box::new(L.ast), Box::new(R.ast));
+                    // e2 IFDUP NOTIF f1 ENDIF
+                    L: F, 1.0; R: E, satisfaction_probability / 2.0;
+                    L.pk_cost + R.pk_cost + 3,
+                    (R.sat_cost + R.dissat_cost + L.sat_cost) / 2,
+                    0;
+                    F::CascadeOr(Box::new(R.ast), Box::new(L.ast));
+
+                    // e1 NOTIF v2 ENDIF 1
+                    L: E, satisfaction_probability / 2.0; R: V, 1.0;
+                    L.pk_cost + R.pk_cost + 3,
+                    (L.sat_cost + L.dissat_cost + R.sat_cost) / 2,
+                    0;
+                    F::CascadeOrV(Box::new(L.ast), Box::new(R.ast));
+                    // e2 NOTIF v1 ENDIF 1
+                    L: V, 1.0; R: E, satisfaction_probability / 2.0;
+                    L.pk_cost + R.pk_cost + 3,
+                    (R.sat_cost + R.dissat_cost + L.sat_cost) / 2,
+                    0;
+                    F::CascadeOrV(Box::new(R.ast), Box::new(L.ast));
+
+                    // SIZE EQUALVERIFY IF f1 ELSE f2 ENDIF
+                    L: F, 1.0; R: F, 1.0;
+                    L.pk_cost + R.pk_cost + 5,
+                    (L.sat_cost + R.sat_cost + 3) / 2,
+                    0;
+                    F::SwitchOr(Box::new(L.ast), Box::new(R.ast));
+                    // SIZE EQUALVERIFY IF v1 ELSE v2 ENDIF 1
+                    L: V, 1.0; R: V, 1.0;
+                    L.pk_cost + R.pk_cost + 6,
+                    (L.sat_cost + R.sat_cost + 3) / 2,
+                    0;
+                    F::SwitchOrV(Box::new(L.ast), Box::new(R.ast));
+                )
+            }
             script::Descriptor::AsymmetricOr(ref left, ref right) => {
                 compare_rules!(satisfaction_probability, left, right;
+                    // e1 w2 BOOLOR VERIFY 1
+                    L: E, satisfaction_probability; R: W, 0.0;
+                    L.pk_cost + R.pk_cost + 3,
+                    L.sat_cost + R.dissat_cost,
+                    0;
+                    F::ParallelOr(Box::new(L.ast), Box::new(R.ast));
+                    // e2 w1 BOOLOR VERIFY 1
+                    L: W, satisfaction_probability; R: E, 0.0;
+                    L.pk_cost + R.pk_cost + 3,
+                    L.sat_cost + R.dissat_cost,
+                    0;
+                    F::ParallelOr(Box::new(R.ast), Box::new(L.ast));
+
                     // e1 IFDUP NOTIF f2 ENDIF
                     L: E, satisfaction_probability; R: F, 1.0;
                     L.pk_cost + R.pk_cost + 3,
                     L.sat_cost,
                     0;
                     F::CascadeOr(Box::new(L.ast), Box::new(R.ast));
+                    // e2 IFDUP NOTIF f1 ENDIF
+                    L: F, 1.0; R: E, 0.0;
+                    L.pk_cost + R.pk_cost + 3,
+                    R.dissat_cost + L.sat_cost,
+                    0;
+                    F::CascadeOr(Box::new(R.ast), Box::new(L.ast));
+
+                    // e1 NOTIF v2 ENDIF 1
+                    L: E, satisfaction_probability; R: V, 1.0;
+                    L.pk_cost + R.pk_cost + 3,
+                    L.sat_cost,
+                    0;
+                    F::CascadeOrV(Box::new(L.ast), Box::new(R.ast));
+                    // e2 NOTIF v1 ENDIF 1
+                    L: V, 1.0; R: E, 0.0;
+                    L.pk_cost + R.pk_cost + 3,
+                    R.dissat_cost + L.sat_cost,
+                    0;
+                    F::CascadeOrV(Box::new(R.ast), Box::new(L.ast));
+
                     // SIZE EQUALVERIFY IF f2 ELSE f1 ENDIF
                     L: F, 1.0; R: F, 1.0;
                     L.pk_cost + R.pk_cost + 5,
                     L.sat_cost + 1,
                     0;
                     F::SwitchOr(Box::new(R.ast), Box::new(L.ast));
+                    // SIZE EQUALVERIFY IF v2 ELSE v1 ENDIF 1
+                    L: V, 1.0; R: V, 1.0;
+                    L.pk_cost + R.pk_cost + 6,
+                    L.sat_cost + 1,
+                    0;
+                    F::SwitchOrV(Box::new(R.ast), Box::new(L.ast));
                 )
             }
             script::Descriptor::Wpkh(_) | script::Descriptor::Sh(_) | script::Descriptor::Wsh(_) => {
@@ -1448,7 +1692,7 @@ impl AstElem for V {
                 builder = right.serialize(builder);
                 builder.push_opcode(opcodes::All::OP_ENDIF)
             }
-            V::SwitchOrF(ref left, ref right) => {
+            V::SwitchOrT(ref left, ref right) => {
                 builder = builder.push_opcode(opcodes::All::OP_SIZE)
                                  .push_opcode(opcodes::All::OP_EQUALVERIFY)
                                  .push_opcode(opcodes::All::OP_IF);
@@ -1669,24 +1913,88 @@ impl T {
                         }
                     },
                 ];
-                if let script::Descriptor::And(ref left, ref right) = *desc {
-                    let lv = V::from_descriptor(left, 1.0);
-                    let rv = V::from_descriptor(right, 1.0);
-                    let lt = T::from_descriptor(left, 1.0);
-                    let rt = T::from_descriptor(right, 1.0);
 
-                    options.push(Cost {
-                        ast: T::And(Box::new(lv.ast), Box::new(rt.ast)),
-                        pk_cost: lv.pk_cost + rt.pk_cost,
-                        sat_cost: lv.sat_cost + rt.sat_cost,
-                        dissat_cost: 0,
-                    });
-                    options.push(Cost {
-                        ast: T::And(Box::new(rv.ast), Box::new(lt.ast)),
-                        pk_cost: lt.pk_cost + rv.pk_cost,
-                        sat_cost: lt.sat_cost + rv.sat_cost,
-                        dissat_cost: 0,
-                    });
+                match *desc {
+                    script::Descriptor::And(ref left, ref right) => {
+                        let lv = V::from_descriptor(left, 1.0);
+                        let rv = V::from_descriptor(right, 1.0);
+                        let lt = T::from_descriptor(left, 1.0);
+                        let rt = T::from_descriptor(right, 1.0);
+
+                        options.push(Cost {
+                            ast: T::And(Box::new(lv.ast), Box::new(rt.ast)),
+                            pk_cost: lv.pk_cost + rt.pk_cost,
+                            sat_cost: lv.sat_cost + rt.sat_cost,
+                            dissat_cost: 0,
+                        });
+                        options.push(Cost {
+                            ast: T::And(Box::new(rv.ast), Box::new(lt.ast)),
+                            pk_cost: lt.pk_cost + rv.pk_cost,
+                            sat_cost: lt.sat_cost + rv.sat_cost,
+                            dissat_cost: 0,
+                        });
+                    }
+                    script::Descriptor::Or(ref left, ref right) => {
+                        let le = E::from_descriptor(left, satisfaction_probability / 2.0);
+                        let re = E::from_descriptor(right, satisfaction_probability / 2.0);
+                        let lt = T::from_descriptor(left, 1.0);
+                        let rt = T::from_descriptor(right, 1.0);
+
+                        let lt1 = lt.clone();
+                        let rt1 = rt.clone();
+
+                        options.push(Cost {
+                            ast: T::CascadeOr(Box::new(le.ast), Box::new(rt.ast)),
+                            pk_cost: le.pk_cost + rt.pk_cost + 3,
+                            sat_cost: (le.sat_cost + le.dissat_cost + rt.sat_cost) / 2,
+                            dissat_cost: 0,
+                        });
+                        options.push(Cost {
+                            ast: T::CascadeOr(Box::new(re.ast), Box::new(lt.ast)),
+                            pk_cost: lt.pk_cost + re.pk_cost + 3,
+                            sat_cost: (re.sat_cost + re.dissat_cost + lt.sat_cost) / 2,
+                            dissat_cost: 0,
+                        });
+
+                        // TODO ask sipa about switchor here
+                        options.push(Cost {
+                            ast: T::SwitchOr(Box::new(lt1.ast), Box::new(rt1.ast)),
+                            pk_cost: le.pk_cost + rt.pk_cost + 5,
+                            sat_cost: (le.sat_cost + re.sat_cost + 3) / 2,
+                            dissat_cost: 0,
+                        });
+                    }
+                    script::Descriptor::AsymmetricOr(ref left, ref right) => {
+                        let le = E::from_descriptor(left, satisfaction_probability);
+                        let re = E::from_descriptor(right, 0.0);
+                        let lt = T::from_descriptor(left, 1.0);
+                        let rt = T::from_descriptor(right, 1.0);
+
+                        let lt1 = lt.clone();
+                        let rt1 = rt.clone();
+
+                        options.push(Cost {
+                            ast: T::CascadeOr(Box::new(le.ast), Box::new(rt.ast)),
+                            pk_cost: le.pk_cost + rt.pk_cost + 3,
+                            sat_cost: le.sat_cost,
+                            dissat_cost: 0,
+                        });
+                        options.push(Cost {
+                            ast: T::CascadeOr(Box::new(re.ast), Box::new(lt.ast)),
+                            pk_cost: lt.pk_cost + re.pk_cost + 3,
+                            sat_cost: re.dissat_cost + lt.sat_cost,
+                            dissat_cost: 0,
+                        });
+
+                        // TODO ask sipa about switchor here
+                        options.push(Cost {
+                            ast: T::SwitchOr(Box::new(rt1.ast), Box::new(lt1.ast)),
+                            pk_cost: le.pk_cost + rt.pk_cost + 5,
+                            sat_cost: le.sat_cost + 1,
+                            dissat_cost: 0,
+                        });
+                    }
+                    _ => {}
                 }
                 options.into_iter().min_by_key(|c| c.pk_cost + c.sat_cost).unwrap()
             }
@@ -1824,9 +2132,9 @@ mod tests {
 
         roundtrip(
             &ParseTree(Box::new(T::And(
-                Box::new(V::SwitchOrF(
-                    Box::new(F::Csv(9)),
-                    Box::new(F::Csv(7)),
+                Box::new(V::SwitchOrT(
+                    Box::new(T::CastF(Box::new(F::Csv(9)))),
+                    Box::new(T::CastF(Box::new(F::Csv(7)))),
                 )),
                 Box::new(T::CastF(Box::new(F::Csv(7))))
             ))),
