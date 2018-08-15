@@ -468,11 +468,11 @@ mod tests {
     #[test]
     fn deserialize_int_test() {
         // bool
-        assert_eq!(deserialize(&[58u8, 0]).ok(), Some(true));
+        assert!((deserialize(&[58u8, 0]) as Result<bool, _>).is_err());
         assert_eq!(deserialize(&[58u8]).ok(), Some(true));
         assert_eq!(deserialize(&[1u8]).ok(), Some(true));
         assert_eq!(deserialize(&[0u8]).ok(), Some(false));
-        assert_eq!(deserialize(&[0u8, 1]).ok(), Some(false));
+        assert!((deserialize(&[0u8, 1]) as Result<bool, _>).is_err());
 
         // u8
         assert_eq!(deserialize(&[58u8]).ok(), Some(58u8));
@@ -510,7 +510,7 @@ mod tests {
     #[test]
     fn deserialize_vec_test() {
         assert_eq!(deserialize(&[3u8, 2, 3, 4]).ok(), Some(vec![2u8, 3, 4]));
-        assert_eq!(deserialize(&[4u8, 2, 3, 4, 5, 6]).ok(), Some(vec![2u8, 3, 4, 5]));
+        assert!((deserialize(&[4u8, 2, 3, 4, 5, 6]) as Result<Vec<u8>, _>).is_err());
         // found by cargo fuzz
         assert!(deserialize::<Vec<u64>>(&[0xff,0xff,0xff,0xff,0x6b,0x6b,0x6b,0x6b,0x6b,0x6b,0x6b,0x6b,0x6b,0x6b,0x6b,0x6b,0xa,0xa,0x3a]).is_err());
     }
