@@ -53,7 +53,6 @@ pub trait Listener {
         // Message loop
         thread::spawn(move || {
             let mut handshake_complete = false;
-            let mut sock = sock;
             loop {
                 // Receive new message
                 match sock.receive_message() {
