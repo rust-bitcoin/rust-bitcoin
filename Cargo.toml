@@ -16,7 +16,6 @@ name = "bitcoin"
 path = "src/lib.rs"
 
 [features]
-bitcoinconsenus = ["bitcoinconsensus"]
 fuzztarget = ["secp256k1/fuzztarget"]
 
 [dependencies]
@@ -26,7 +25,7 @@ rand = "0.3"
 rust-crypto = "0.2"
 serde = "0.6"
 strason = "0.3"
-bitcoinconsensus = { version = "0.16", optional=true }
+bitcoinconsensus = { version = "0.16", optional = true }
 
 [dependencies.hex]
 git = "https://github.com/KokaKiwi/rust-hex"
