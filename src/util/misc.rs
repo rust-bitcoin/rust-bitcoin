@@ -17,11 +17,11 @@
 //! Various utility functions
 
 use blockdata::opcodes;
-use util::Error;
 use util::iter::Pairable;
+use network::serialize;
 
 /// Convert a hexadecimal-encoded string to its corresponding bytes
-pub fn hex_bytes(s: &str) -> Result<Vec<u8>, Error> {
+pub fn hex_bytes(s: &str) -> Result<Vec<u8>, serialize::Error> {
     let mut v = vec![];
     let mut iter = s.chars().pair();
     // Do the parsing
@@ -29,13 +29,13 @@ pub fn hex_bytes(s: &str) -> Result<Vec<u8>, Error> {
         if e.is_err() { e }
         else {
             match (f.to_digit(16), s.to_digit(16)) {
-                (None, _) => Err(Error::Detail(
+                (None, _) => Err(serialize::Error::Detail(
                     format!("expected hex, got {:}", f),
-                    Box::new(Error::ParseFailed)
+                    Box::new(serialize::Error::ParseFailed)
                 )),
-                (_, None) => Err(Error::Detail(
+                (_, None) => Err(serialize::Error::Detail(
                     format!("expected hex, got {:}", s),
-                    Box::new(Error::ParseFailed)
+                    Box::new(serialize::Error::ParseFailed)
                 )),
                 (Some(f), Some(s)) => { v.push((f * 0x10 + s) as u8); Ok(()) }
             }
@@ -43,21 +43,12 @@ pub fn hex_bytes(s: &str) -> Result<Vec<u8>, Error> {
     )?;
     // Check that there was no remainder
     match iter.remainder() {
-        Some(_) => Err(Error::Detail(
+        Some(_) => Err(serialize::Error::Detail(
             "hexstring of odd length".to_owned(),
-            Box::new(Error::ParseFailed)
+            Box::new(serialize::Error::ParseFailed)
         )),
         None => Ok(v)
     }
-}
-
-/// Dump an error message to the screen
-/// TODO all uses of this should be replaced with some sort of logging infrastructure
-pub fn consume_err<T>(s: &str, res: Result<T, Error>) {
-    match res {
-        Ok(_) => {},
-        Err(e) => { println!("{}: {:?}", s, e); }
-    };
 }
 
 /// Search for `needle` in the vector `haystack` and remove every

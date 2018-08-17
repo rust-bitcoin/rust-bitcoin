@@ -20,6 +20,7 @@
 
 use std::fmt;
 
+use network::serialize;
 use util::BitArray;
 
 macro_rules! construct_uint {
@@ -337,7 +338,7 @@ macro_rules! construct_uint {
 
         impl<S: ::network::serialize::SimpleEncoder> ::network::encodable::ConsensusEncodable<S> for $name {
             #[inline]
-            fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
+            fn consensus_encode(&self, s: &mut S) -> Result<(), serialize::Error> {
                 let &$name(ref data) = self;
                 for word in data.iter() { word.consensus_encode(s)?; }
                 Ok(())
@@ -345,7 +346,7 @@ macro_rules! construct_uint {
         }
 
         impl<D: ::network::serialize::SimpleDecoder> ::network::encodable::ConsensusDecodable<D> for $name {
-            fn consensus_decode(d: &mut D) -> Result<$name, D::Error> {
+            fn consensus_decode(d: &mut D) -> Result<$name, serialize::Error> {
                 use network::encodable::ConsensusDecodable;
                 let ret: [u64; $n_words] = ConsensusDecodable::consensus_decode(d)?;
                 Ok($name(ret))

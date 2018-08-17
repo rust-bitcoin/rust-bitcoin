@@ -31,7 +31,7 @@ use std::fmt;
 use util::hash::Sha256dHash;
 #[cfg(feature="bitcoinconsensus")] use blockdata::script;
 use blockdata::script::Script;
-use network::serialize::{serialize, BitcoinHash, SimpleEncoder, SimpleDecoder};
+use network::serialize::{self, serialize, BitcoinHash, SimpleEncoder, SimpleDecoder};
 use network::encodable::{ConsensusEncodable, ConsensusDecodable, VarInt};
 
 /// A reference to a transaction output
@@ -326,13 +326,13 @@ impl BitcoinHash for Transaction {
 impl_consensus_encoding!(TxOut, value, script_pubkey);
 
 impl<S: SimpleEncoder> ConsensusEncodable<S> for OutPoint {
-    fn consensus_encode(&self, s: &mut S) -> Result <(), S::Error> {
+    fn consensus_encode(&self, s: &mut S) -> Result <(), serialize::Error> {
         self.txid.consensus_encode(s)?;
         self.vout.consensus_encode(s)
     }
 }
 impl<D: SimpleDecoder> ConsensusDecodable<D> for OutPoint {
-    fn consensus_decode(d: &mut D) -> Result<OutPoint, D::Error> {
+    fn consensus_decode(d: &mut D) -> Result<OutPoint, serialize::Error> {
         Ok(OutPoint {
             txid: ConsensusDecodable::consensus_decode(d)?,
             vout: ConsensusDecodable::consensus_decode(d)?,
@@ -341,14 +341,14 @@ impl<D: SimpleDecoder> ConsensusDecodable<D> for OutPoint {
 }
 
 impl<S: SimpleEncoder> ConsensusEncodable<S> for TxIn {
-    fn consensus_encode(&self, s: &mut S) -> Result <(), S::Error> {
+    fn consensus_encode(&self, s: &mut S) -> Result <(), serialize::Error> {
         self.previous_output.consensus_encode(s)?;
         self.script_sig.consensus_encode(s)?;
         self.sequence.consensus_encode(s)
     }
 }
 impl<D: SimpleDecoder> ConsensusDecodable<D> for TxIn {
-    fn consensus_decode(d: &mut D) -> Result<TxIn, D::Error> {
+    fn consensus_decode(d: &mut D) -> Result<TxIn, serialize::Error> {
         Ok(TxIn {
             previous_output: ConsensusDecodable::consensus_decode(d)?,
             script_sig: ConsensusDecodable::consensus_decode(d)?,
@@ -359,7 +359,7 @@ impl<D: SimpleDecoder> ConsensusDecodable<D> for TxIn {
 }
 
 impl<S: SimpleEncoder> ConsensusEncodable<S> for Transaction {
-    fn consensus_encode(&self, s: &mut S) -> Result <(), S::Error> {
+    fn consensus_encode(&self, s: &mut S) -> Result <(), serialize::Error> {
         self.version.consensus_encode(s)?;
         let mut have_witness = false;
         for input in &self.input {
@@ -385,7 +385,7 @@ impl<S: SimpleEncoder> ConsensusEncodable<S> for Transaction {
 }
 
 impl<D: SimpleDecoder> ConsensusDecodable<D> for Transaction {
-    fn consensus_decode(d: &mut D) -> Result<Transaction, D::Error> {
+    fn consensus_decode(d: &mut D) -> Result<Transaction, serialize::Error> {
         let version: u32 = ConsensusDecodable::consensus_decode(d)?;
         let input: Vec<TxIn> = ConsensusDecodable::consensus_decode(d)?;
         // segwit

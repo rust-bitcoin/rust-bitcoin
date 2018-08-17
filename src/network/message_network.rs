@@ -20,6 +20,7 @@
 
 use network::constants;
 use network::address::Address;
+use network::serialize;
 use network::socket::Socket;
 use util;
 

@@ -19,18 +19,19 @@
 
 use std::time::{UNIX_EPOCH, SystemTime};
 use rand::{thread_rng, Rng};
-use std::io::{self, Write};
+use std::io::Write;
 use std::net;
 use std::sync::{Arc, Mutex};
 
+use network;
 use network::constants;
 use network::address::Address;
 use network::encodable::{ConsensusEncodable, ConsensusDecodable};
 use network::message::{RawNetworkMessage, NetworkMessage};
 use network::message::NetworkMessage::Version;
 use network::message_network::VersionMessage;
-use network::serialize::{RawEncoder, RawDecoder};
-use util::{self, propagate_err};
+use network::serialize::{self, RawEncoder, RawDecoder};
+use util;
 
 /// Format an IP address in the 16-byte bitcoin protocol serialization
 fn ipaddr_to_bitcoin_addr(addr: &net::SocketAddr) -> [u16; 8] {
@@ -60,9 +61,7 @@ macro_rules! with_socket(($s:ident, $sock:ident, $body:block) => ({
     let sock_lock = $s.socket.lock();
     match sock_lock {
         Err(_) => {
-            let io_err = io::Error::new(io::ErrorKind::NotConnected,
-                                        "socket: socket mutex was poisoned");
-            Err(util::Error::Io(io_err))
+            Err(network::Error::SocketMutexPoisoned.into())
         }
         Ok(mut guard) => {
             match *guard.deref_mut() {
@@ -70,15 +69,12 @@ macro_rules! with_socket(($s:ident, $sock:ident, $body:block) => ({
                     $body
                 }
                 None => {
-                   let io_err = io::Error::new(io::ErrorKind::NotConnected,
-                                                "socket: not connected to peer");
-                   Err(util::Error::Io(io_err))
+                    Err(network::Error::SocketNotConnectedToPeer.into())
                 }
             }
         }
     }
 }));
-
 
 impl Socket {
     // TODO: we fix services to 0
@@ -95,7 +91,7 @@ impl Socket {
     }
 
     /// (Re)connect to the peer
-    pub fn connect(&mut self, host: &str, port: u16) -> Result<(), util::Error> {
+    pub fn connect(&mut self, host: &str, port: u16) -> Result<(), network::Error> {
         // Entirely replace the Mutex, in case it was poisoned;
         // this will also drop any preexisting socket that might be open
         match net::TcpStream::connect((host, port)) {
@@ -105,13 +101,13 @@ impl Socket {
             }
             Err(e) => {
                 self.socket = Arc::new(Mutex::new(None));
-                Err(util::Error::Io(e))
+                Err(network::Error::Io(e))
             }
         }
     }
 
     /// Peer address
-    pub fn receiver_address(&mut self) -> Result<Address, util::Error> {
+    pub fn receiver_address(&mut self) -> Result<Address, network::Error> {
         with_socket!(self, sock, {
             match sock.peer_addr() {
                 Ok(addr) => {
@@ -121,13 +117,13 @@ impl Socket {
                         port: addr.port()
                     })
                 },
-                Err(e) => Err(util::Error::Io(e))
+                Err(e) => Err(network::Error::Io(e))
             }
         })
     }
 
     /// Our own address
-    pub fn sender_address(&mut self) -> Result<Address, util::Error> {
+    pub fn sender_address(&mut self) -> Result<Address, network::Error> {
         with_socket!(self, sock, {
             match sock.local_addr() {
                 Ok(addr) => {
@@ -137,13 +133,13 @@ impl Socket {
                         port: addr.port()
                     })
                 },
-                Err(e) => Err(util::Error::Io(e))
+                Err(e) => Err(network::Error::Io(e))
             }
         })
     }
 
     /// Produce a version message appropriate for this socket
-    pub fn version_message(&mut self, start_height: i32) -> Result<NetworkMessage, util::Error> {
+    pub fn version_message(&mut self, start_height: i32) -> Result<NetworkMessage, network::Error> {
         let recv_addr = self.receiver_address()?;
         let send_addr = self.sender_address()?;
         let timestamp = match SystemTime::now().duration_since(UNIX_EPOCH) {
@@ -169,7 +165,7 @@ impl Socket {
         with_socket!(self, sock, {
             let message = RawNetworkMessage { magic: self.magic, payload: payload };
             message.consensus_encode(&mut RawEncoder::new(&mut *sock))?;
-            sock.flush().map_err(util::Error::Io)
+            sock.flush().map_err(network::Error::Io).map_err(util::Error::Network)
         })
     }
 
@@ -180,21 +176,15 @@ impl Socket {
             // We need a new scope since the closure in here borrows read_err,
             // and we try to read it afterward. Letting `iter` go out fixes it.
             let mut decoder = RawDecoder::new(sock);
-            let decode: Result<RawNetworkMessage, _> = ConsensusDecodable::consensus_decode(&mut decoder);
-            match decode {
-                // Check for parse errors...
-                Err(e) => {
-                    propagate_err("receive_message".to_owned(), Err(e))
-                },
-                Ok(ret) => {
-                    // Then for magic (this should come before parse error, but we can't
-                    // get to it if the deserialization failed). TODO restructure this
-                    if ret.magic != self.magic {
-                        Err(util::Error::BadNetworkMagic(self.magic, ret.magic))
-                    } else {
-                        Ok(ret.payload)
-                    }
-                }
+
+            let decoded: RawNetworkMessage = ConsensusDecodable::consensus_decode(&mut decoder)?;
+
+            // Then for magic (this should come before parse error, but we can't
+            // get to it if the deserialization failed). TODO restructure this
+            if decoded.magic != self.magic {
+                Err(util::Error::Serialize(serialize::Error::BadNetworkMagic(self.magic, decoded.magic)))
+            } else {
+                Ok(decoded.payload)
             }
         })
     }

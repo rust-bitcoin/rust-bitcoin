@@ -25,7 +25,7 @@
 // Heavy stick to translate between opcode types
 use std::mem::transmute;
 
-use network::serialize::{SimpleDecoder, SimpleEncoder};
+use network::serialize::{self, SimpleDecoder, SimpleEncoder};
 use network::encodable::{ConsensusDecodable, ConsensusEncodable};
 
 // Note: I am deliberately not implementing PartialOrd or Ord on the
@@ -608,14 +608,14 @@ display_from_debug!(All);
 
 impl<D: SimpleDecoder> ConsensusDecodable<D> for All {
     #[inline]
-    fn consensus_decode(d: &mut D) -> Result<All, D::Error> {
+    fn consensus_decode(d: &mut D) -> Result<All, serialize::Error> {
       Ok(All::from(d.read_u8()?))
     }
 }
 
 impl<S: SimpleEncoder> ConsensusEncodable<S> for All {
     #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
+    fn consensus_encode(&self, s: &mut S) -> Result<(), serialize::Error> {
       s.emit_u8(*self as u8)
     }
 }

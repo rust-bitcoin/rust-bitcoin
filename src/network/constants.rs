@@ -38,7 +38,7 @@
 //! ```
 
 use network::encodable::{ConsensusDecodable, ConsensusEncodable};
-use network::serialize::{SimpleEncoder, SimpleDecoder};
+use network::serialize::{self, SimpleEncoder, SimpleDecoder};
 
 /// Version of the protocol as appearing in network message headers
 pub const PROTOCOL_VERSION: u32 = 70001;
@@ -105,7 +105,7 @@ impl Network {
 impl<S: SimpleEncoder> ConsensusEncodable<S> for Network {
     /// Encodes the magic bytes of `Network`.
     #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
+    fn consensus_encode(&self, s: &mut S) -> Result<(), serialize::Error> {
         self.magic().consensus_encode(s)
     }
 }
@@ -113,7 +113,7 @@ impl<S: SimpleEncoder> ConsensusEncodable<S> for Network {
 impl<D: SimpleDecoder> ConsensusDecodable<D> for Network {
     /// Decodes the magic bytes of `Network`.
     #[inline]
-    fn consensus_decode(d: &mut D) -> Result<Network, D::Error> {
+    fn consensus_decode(d: &mut D) -> Result<Network, serialize::Error> {
         u32::consensus_decode(d)
             .and_then(|m| {
                 Network::from_magic(m)

@@ -32,7 +32,7 @@ use crypto::digest::Digest;
 
 use blockdata::opcodes;
 use network::encodable::{ConsensusDecodable, ConsensusEncodable};
-use network::serialize::{SimpleDecoder, SimpleEncoder};
+use network::serialize::{self, SimpleDecoder, SimpleEncoder};
 use util::hash::Hash160;
 #[cfg(feature="bitcoinconsensus")] use bitcoinconsensus;
 #[cfg(feature="bitcoinconsensus")] use std::convert;
@@ -621,14 +621,14 @@ impl serde::Serialize for Script {
 // Network serialization
 impl<S: SimpleEncoder> ConsensusEncodable<S> for Script {
     #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
+    fn consensus_encode(&self, s: &mut S) -> Result<(), serialize::Error> {
         self.0.consensus_encode(s)
     }
 }
 
 impl<D: SimpleDecoder> ConsensusDecodable<D> for Script {
     #[inline]
-    fn consensus_decode(d: &mut D) -> Result<Script, D::Error> {
+    fn consensus_decode(d: &mut D) -> Result<Script, serialize::Error> {
         Ok(Script(ConsensusDecodable::consensus_decode(d)?))
     }
 }

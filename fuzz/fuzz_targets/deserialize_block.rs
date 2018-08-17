@@ -1,7 +1,7 @@
 extern crate bitcoin;
-type BResult = Result<bitcoin::blockdata::block::Block, bitcoin::util::Error>;
+
 fn do_test(data: &[u8]) {
-    let _: BResult = bitcoin::network::serialize::deserialize(data);
+    let _: Result<bitcoin::blockdata::block::Block, _>= bitcoin::network::serialize::deserialize(data);
 }
 
 #[cfg(feature = "afl")]

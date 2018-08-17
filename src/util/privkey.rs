@@ -16,10 +16,10 @@
 //! A private key represents the secret data associated with its proposed use
 //!
 use std::str::FromStr;
-use util::Error;
 use secp256k1::{self, Secp256k1};
 use secp256k1::key::{PublicKey, SecretKey};
 use util::address::Address;
+use network::serialize;
 use network::constants::Network;
 use util::base58;
 
@@ -110,21 +110,21 @@ impl ToString for Privkey {
 }
 
 impl FromStr for Privkey {
-    type Err = Error;
+    type Err = serialize::Error;
 
-    fn from_str(s: &str) -> Result<Privkey, Error> {
+    fn from_str(s: &str) -> Result<Privkey, serialize::Error> {
         let data = base58::from_check(s)?;
 
         let compressed = match data.len() {
             33 => false,
             34 => true,
-            _ => { return Err(Error::Base58(base58::Error::InvalidLength(data.len()))); }
+            _ => { return Err(serialize::Error::Base58(base58::Error::InvalidLength(data.len()))); }
         };
 
         let network = match data[0] {
             128 => Network::Bitcoin,
             239 => Network::Testnet,
-            x   => { return Err(Error::Base58(base58::Error::InvalidVersion(vec![x]))); }
+            x   => { return Err(serialize::Error::Base58(base58::Error::InvalidVersion(vec![x]))); }
         };
 
         let secp = Secp256k1::without_caps();

@@ -22,7 +22,7 @@ use std::thread;
 use std::sync::mpsc::{channel, Receiver};
 
 use network::constants::Network;
-use network::message;
+use network::{self, message};
 use network::message::NetworkMessage::Verack;
 use network::socket::Socket;
 use util;
@@ -40,7 +40,7 @@ pub trait Listener {
         // Open socket
         let mut ret_sock = Socket::new(self.network());
         if let Err(e) = ret_sock.connect(self.peer(), self.port()) {
-            return Err(util::Error::Detail("listener".to_owned(), Box::new(e)));
+            return Err(util::Error::Network(network::Error::Detail("listener".to_owned(), Box::new(e))));
         }
         let mut sock = ret_sock.clone();
 
