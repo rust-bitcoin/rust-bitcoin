@@ -15,6 +15,8 @@
 //!
 //! A private key represents the secret data associated with its proposed use
 //!
+
+use std::fmt::{self, Display, Formatter};
 use std::str::FromStr;
 use util::Error;
 use secp256k1::{self, Secp256k1};
@@ -92,20 +94,21 @@ impl Privkey {
     }
 }
 
-impl ToString for Privkey {
-    fn to_string(&self) -> String {
+impl Display for Privkey {
+    fn fmt(&self, fmt: &mut Formatter) -> fmt::Result {
         let mut ret = [0; 34];
         ret[0] = match self.network {
             Network::Bitcoin => 128,
             Network::Testnet | Network::Regtest => 239,
         };
         ret[1..33].copy_from_slice(&self.key[..]);
-        if self.compressed {
+        let privkey = if self.compressed {
             ret[33] = 1;
             base58::check_encode_slice(&ret[..])
         } else {
             base58::check_encode_slice(&ret[..33])
-        }
+        };
+        fmt.write_str(&privkey)
     }
 }
 
