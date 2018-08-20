@@ -23,7 +23,7 @@ use std::default::Default;
 
 use blockdata::opcodes;
 use blockdata::script;
-use blockdata::transaction::{Transaction, TxOut, TxIn};
+use blockdata::transaction::{OutPoint, Transaction, TxOut, TxIn};
 use blockdata::block::{Block, BlockHeader};
 use network::constants::Network;
 use util::misc::hex_bytes;
@@ -69,8 +69,7 @@ fn bitcoin_genesis_tx() -> Transaction {
                                           .push_slice(b"The Times 03/Jan/2009 Chancellor on brink of second bailout for banks")
                                           .into_script();
     ret.input.push(TxIn {
-        prev_hash: Default::default(),
-        prev_index: 0xFFFFFFFF,
+        previous_output: OutPoint::null(),
         script_sig: in_script,
         sequence: MAX_SEQUENCE,
         witness: vec![],
@@ -154,8 +153,8 @@ mod test {
 
         assert_eq!(gen.version, 1);
         assert_eq!(gen.input.len(), 1);
-        assert_eq!(gen.input[0].prev_hash, Default::default());
-        assert_eq!(gen.input[0].prev_index, 0xFFFFFFFF);
+        assert_eq!(gen.input[0].previous_output.txid, Default::default());
+        assert_eq!(gen.input[0].previous_output.vout, 0xFFFFFFFF);
         assert_eq!(serialize(&gen.input[0].script_sig).ok(),
                    Some(hex_decode("4d04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73").unwrap()));
 
