@@ -116,7 +116,7 @@ impl Address {
         Address {
             network: network,
             payload: Payload::ScriptHash(
-                Hash160::from_data(builder.into_script().into_vec().as_slice())
+                Hash160::from_data(builder.into_script().as_bytes())
             )
         }
     }
@@ -127,7 +127,7 @@ impl Address {
         use crypto::digest::Digest;
 
         let mut digest = Sha256::new();
-        digest.input(script.clone().into_vec().as_slice());
+        digest.input(script.as_bytes());
         let mut d = [0u8; 32];
         digest.result(&mut d);
 
@@ -151,14 +151,14 @@ impl Address {
         use crypto::digest::Digest;
 
         let mut digest = Sha256::new();
-        digest.input(script.clone().into_vec().as_slice());
+        digest.input(script.as_bytes());
         let mut d = [0u8; 32];
         digest.result(&mut d);
         let ws = script::Builder::new().push_int(0).push_slice(&d).into_script();
 
         Address {
             network: network,
-            payload: Payload::ScriptHash(Hash160::from_data(ws.into_vec().as_slice()))
+            payload: Payload::ScriptHash(Hash160::from_data(ws.as_bytes()))
         }
     }
 
