@@ -22,7 +22,7 @@ use std::error;
 use std::fmt;
 use std::io::Cursor;
 use std::mem;
-use serde;
+#[cfg(feature = "serde")] use serde;
 
 use byteorder::{LittleEndian, WriteBytesExt};
 use crypto::digest::Digest;
@@ -307,50 +307,73 @@ impl Sha256dHash {
     }
 }
 
-// Note that this outputs hashes as big endian hex numbers, so this should be
-// used only for user-facing stuff. Internal and network serialization is
-// little-endian and should be done using the consensus `encodable::ConsensusEncodable`
-// interface.
-impl serde::Serialize for Sha256dHash {
-    fn serialize<S>(&self, serializer: &mut S) -> Result<(), S::Error>
-            where S: serde::Serializer,
-    {
-        unsafe {
-            use std::{char, str};
-
-            let mut string = [0; 64];
-            for i in 0..32 {
-                string[2 * i] = char::from_digit((self.0[31 - i] / 0x10) as u32, 16).unwrap() as u8;
-                string[2 * i + 1] = char::from_digit((self.0[31 - i] & 0x0f) as u32, 16).unwrap() as u8;
-            }
-            serializer.visit_str(str::from_utf8_unchecked(&string))
-        }
-    }
-}
-
-impl serde::Deserialize for Sha256dHash {
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for Sha256dHash {
     #[inline]
-    fn deserialize<D>(d: &mut D) -> Result<Sha256dHash, D::Error>
-        where D: serde::Deserializer
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
     {
-        struct Sha256dHashVisitor;
-        impl serde::de::Visitor for Sha256dHashVisitor {
+        use std::fmt::{self, Formatter};
+
+        struct Visitor;
+        impl<'de> serde::de::Visitor<'de> for Visitor {
             type Value = Sha256dHash;
 
-            fn visit_string<E>(&mut self, v: String) -> Result<Sha256dHash, E>
-                where E: serde::de::Error
+            fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
+                formatter.write_str("a SHA256d hash")
+            }
+
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Sha256dHash::from_hex(v).map_err(E::custom)
+            }
+
+            fn visit_borrowed_str<E>(self, v: &'de str) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                self.visit_str(v)
+            }
+            
+            fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
             {
                 self.visit_str(&v)
             }
-
-            fn visit_str<E>(&mut self, hex_str: &str) -> Result<Sha256dHash, E>
-                where E: serde::de::Error
-            {
-                Sha256dHash::from_hex(hex_str).map_err(|e| serde::de::Error::syntax(&e.to_string()))
-            }
         }
 
-        d.visit(Sha256dHashVisitor)
+        deserializer.deserialize_str(Visitor)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for Sha256dHash {
+    /// Serialize a `Sha256dHash`.
+    ///
+    /// Note that this outputs hashes as big endian hex numbers, so this should be
+    /// used only for user-facing stuff. Internal and network serialization is
+    /// little-endian and should be done using the consensus
+    /// [`ConsensusEncodable`][1] interface.
+    ///
+    /// [1]: ../../network/encodable/trait.ConsensusEncodable.html
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use std::{char, str};
+
+        let mut string = [0; 64];
+        for i in 0..32 {
+            string[2 * i] = char::from_digit((self.0[31 - i] / 0x10) as u32, 16).unwrap() as u8;
+            string[2 * i + 1] = char::from_digit((self.0[31 - i] & 0x0f) as u32, 16).unwrap() as u8;
+        }
+
+        let hex_str = unsafe { str::from_utf8_unchecked(&string) };
+        serializer.serialize_str(hex_str)
     }
 }
 
@@ -456,7 +479,8 @@ impl <T: BitcoinHash> MerkleRoot for Vec<T> {
 
 #[cfg(test)]
 mod tests {
-    use strason;
+    #[cfg(all(feature = "serde", feature = "strason"))]
+    use strason::Json;
 
     use network::encodable::{ConsensusEncodable, VarInt};
     use network::serialize::{serialize, deserialize};
@@ -539,9 +563,10 @@ mod tests {
     }
 
     #[test]
+    #[cfg(all(feature = "serde", feature = "strason"))]
     fn test_hash_encode_decode() {
         let hash = Sha256dHash::from_data(&[]);
-        let encoded = strason::from_serialize(&hash).unwrap();
+        let encoded = Json::from_serialize(&hash).unwrap();
         assert_eq!(encoded.to_bytes(),
                    "\"56944c5d3f98413ef45cf54545538103cc9f298e0575820ad3591376e2e0f65d\"".as_bytes());
         let decoded = encoded.into_deserialize().unwrap();

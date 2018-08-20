@@ -23,8 +23,8 @@
 
 use std::{fmt, ops};
 
-use serde::{ser, de};
-use strason::Json;
+#[cfg(feature = "serde-decimal")] use serde;
+#[cfg(feature = "serde-decimal")] use strason::Json;
 
 /// A fixed-point decimal type
 #[derive(Copy, Clone, Debug, Eq, Ord)]
@@ -128,20 +128,19 @@ impl Decimal {
     pub fn nonnegative(&self) -> bool { self.mantissa >= 0 }
 }
 
-impl ser::Serialize for Decimal {
-    // Serialize through strason since it will not lose precision (when serializing
-    // to strason itself, the value will be passed through; otherwise it will be
-    // encoded as a string)
-    fn serialize<S: ser::Serializer>(&self, s: &mut S) -> Result<(), S::Error> {
-        let json = Json::from_str(&self.to_string()).unwrap();
-        ser::Serialize::serialize(&json, s)
-    }
-}
-
-impl de::Deserialize for Decimal {
-    // Deserialize through strason for the same reason as in `Serialize`
-    fn deserialize<D: de::Deserializer>(d: &mut D) -> Result<Decimal, D::Error> {
-        let json: Json = de::Deserialize::deserialize(d)?;
+#[cfg(feature = "serde-decimal")]
+impl<'de> serde::Deserialize<'de> for Decimal {
+    /// Deserialize a `Decimal`.
+    ///
+    /// This type is deserialized through [`strason`][1] for the same reason as
+    /// it's explained in the `Serialize` implementation.
+    ///
+    /// [1]: https://github.com/apoelstra/strason
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let json = Json::deserialize(deserializer)?;
         match json.num() {
             Some(s) => {
                  // We know this will be a well-formed Json number, so we can
@@ -168,11 +167,28 @@ impl de::Deserialize for Decimal {
                      exponent: exponent,
                  })
             }
-            None => Err(de::Error::syntax("expected decimal, got non-numeric"))
+            None => Err(serde::de::Error::custom("expected decimal, got non-numeric"))
         }
     }
 }
 
+#[cfg(feature = "serde-decimal")]
+impl serde::Serialize for Decimal {
+    /// Serialize a `Decimal`.
+    ///
+    /// This type is serialized through [`strason`][1] since it will not lose
+    /// precision (when serializing to [`strason`][1] itself, the value will be
+    /// passed through; otherwise it will be encoded as a string).
+    ///
+    /// [1]: https://github.com/apoelstra/strason
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let json = Json::from_str(&self.to_string()).unwrap();
+        json.serialize(serializer)
+    }
+}
 
 impl PartialEq<UDecimal> for UDecimal {
     fn eq(&self, other: &UDecimal) -> bool {
@@ -246,20 +262,19 @@ impl UDecimal {
     }
 }
 
-impl ser::Serialize for UDecimal {
-    // Serialize through strason since it will not lose precision (when serializing
-    // to strason itself, the value will be passed through; otherwise it will be
-    // encoded as a string)
-    fn serialize<S: ser::Serializer>(&self, s: &mut S) -> Result<(), S::Error> {
-        let json = Json::from_str(&self.to_string()).unwrap();
-        ser::Serialize::serialize(&json, s)
-    }
-}
-
-impl de::Deserialize for UDecimal {
-    // Deserialize through strason for the same reason as in `Serialize`
-    fn deserialize<D: de::Deserializer>(d: &mut D) -> Result<UDecimal, D::Error> {
-        let json: Json = de::Deserialize::deserialize(d)?;
+#[cfg(feature = "serde-decimal")]
+impl<'de> serde::Deserialize<'de> for UDecimal {
+    /// Deserialize an `UDecimal`.
+    ///
+    /// This type is deserialized through [`strason`][1] for the same reason as
+    /// it's explained in the `Serialize` implementation.
+    ///
+    /// [1]: https://github.com/apoelstra/strason
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let json = Json::deserialize(deserializer)?;
         match json.num() {
             Some(s) => {
                  // We know this will be a well-formed Json number, so we can
@@ -283,16 +298,33 @@ impl de::Deserialize for UDecimal {
                      exponent: exponent,
                  })
             }
-            None => Err(de::Error::syntax("expected decimal, got non-numeric"))
+            None => Err(serde::de::Error::custom("expected decimal, got non-numeric"))
         }
     }
 }
 
-
+#[cfg(feature = "serde-decimal")]
+impl serde::Serialize for UDecimal {
+    /// Serialize an `UDecimal`.
+    ///
+    /// This type is serialized through [`strason`][1] since it will not lose
+    /// precision (when serializing to [`strason`][1] itself, the value will be
+    /// passed through; otherwise it will be encoded as a string).
+    ///
+    /// [1]: https://github.com/apoelstra/strason
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let json = Json::from_str(&self.to_string()).unwrap();
+        json.serialize(serializer)
+    }
+}
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(feature = "serde-decimal")]
     use strason::Json;
 
     #[test]
@@ -326,6 +358,7 @@ mod tests {
         assert_eq!(u.integer_value(8), 123456780000);
     }
 
+    #[cfg(feature = "serde-decimal")]
     macro_rules! deserialize_round_trip(
         ($dec:expr, $s:expr) => ({
             let d = $dec;
@@ -342,6 +375,7 @@ mod tests {
     );
 
     #[test]
+    #[cfg(feature = "serde-decimal")]
     fn deserialize() {
         deserialize_round_trip!(Decimal::new(0, 0), b"0.0");
         deserialize_round_trip!(UDecimal::new(0, 0), b"0.0");
@@ -412,6 +446,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "serde-decimal")]
     fn json_parse() {
         let json = Json::from_str("0.00980000").unwrap();
         assert_eq!(json.to_bytes(), b"0.00980000");
@@ -434,5 +469,3 @@ mod tests {
         assert_eq!(dec, UDecimal::new(98000, 7));
     }
 }
-
-

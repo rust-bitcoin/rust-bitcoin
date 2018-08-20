@@ -17,15 +17,23 @@ path = "src/lib.rs"
 
 [features]
 fuzztarget = ["secp256k1/fuzztarget"]
+serde-decimal = ["serde", "strason"]
 
 [dependencies]
 bitcoin-bech32 = "0.8.0"
 byteorder = "1.1"
 rand = "0.3"
 rust-crypto = "0.2"
-serde = "0.6"
-strason = "0.3"
 bitcoinconsensus = { version = "0.16", optional = true }
+
+[dependencies.serde]
+version = "1"
+optional = true
+
+[dependencies.strason]
+version = "0.4"
+optional = true
+default-features = false
 
 [dependencies.hex]
 git = "https://github.com/KokaKiwi/rust-hex"
