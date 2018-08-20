@@ -17,7 +17,7 @@
 //!
 use std::str::FromStr;
 use util::Error;
-use secp256k1::Secp256k1;
+use secp256k1::{self, Secp256k1};
 use secp256k1::key::{PublicKey, SecretKey};
 use util::address::Address;
 use network::constants::Network;
@@ -46,24 +46,24 @@ impl Privkey {
     }
 
     /// Computes the public key as supposed to be used with this secret
-    pub fn public_key(&self, secp: &Secp256k1) -> Result<PublicKey, Error> {
-        Ok(PublicKey::from_secret_key(secp, &self.key)?)
+    pub fn public_key<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> PublicKey {
+        PublicKey::from_secret_key(secp, &self.key)
     }
 
     /// Converts a private key to a segwit address
     #[inline]
-    pub fn to_address(&self, secp: &Secp256k1) -> Result<Address, Error> {
-        Ok(Address::p2wpkh(&self.public_key(secp)?, self.network))
+    pub fn to_address<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> Address {
+        Address::p2wpkh(&self.public_key(secp), self.network)
     }
 
     /// Converts a private key to a legacy (non-segwit) address
     #[inline]
-    pub fn to_legacy_address(&self, secp: &Secp256k1) -> Result<Address, Error> {
+    pub fn to_legacy_address<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> Address {
         if self.compressed {
-            Ok(Address::p2pkh(&self.public_key(secp)?, self.network))
+            Address::p2pkh(&self.public_key(secp), self.network)
         }
         else {
-            Ok(Address::p2upkh(&self.public_key(secp)?, self.network))
+            Address::p2upkh(&self.public_key(secp), self.network)
         }
     }
 
@@ -156,7 +156,7 @@ mod tests {
         assert_eq!(&sk.to_string(), "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy");
 
         let secp = Secp256k1::new();
-        let pk = sk.to_legacy_address(&secp).unwrap();
+        let pk = sk.to_legacy_address(&secp);
         assert_eq!(&pk.to_string(), "mqwpxxvfv3QbM8PU8uBx2jaNt9btQqvQNx");
 
         // mainnet uncompressed
@@ -166,7 +166,7 @@ mod tests {
         assert_eq!(&sk.to_string(), "5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3");
 
         let secp = Secp256k1::new();
-        let pk = sk.to_legacy_address(&secp).unwrap();
+        let pk = sk.to_legacy_address(&secp);
         assert_eq!(&pk.to_string(), "1GhQvF6dL8xa6wBxLnWmHcQsurx9RxiMc8");
     }
 }
