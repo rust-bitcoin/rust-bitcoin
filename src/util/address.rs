@@ -247,11 +247,9 @@ impl FromStr for Address {
 
     fn from_str(s: &str) -> Result<Address, Error> {
         // bech32 (note that upper or lowercase is allowed but NOT mixed case)
-        if (s.len() >= 3 &&
-            (&s.as_bytes()[0..3] == b"bc1" || &s.as_bytes()[0..3] == b"BC1" ||
-             &s.as_bytes()[0..3] == b"tb1" || &s.as_bytes()[0..3] == b"TB1" )) ||
-           (s.len() >= 5 &&
-            (&s.as_bytes()[0..5] == b"bcrt1" || &s.as_bytes()[0..5] == b"BCRT1"))
+        if s.starts_with("bc1") || s.starts_with("BC1") ||
+           s.starts_with("tb1") || s.starts_with("TB1") ||
+           s.starts_with("bcrt1") || s.starts_with("BCRT1")
         {
             let witprog = WitnessProgram::from_address(s)?;
             let network = match witprog.network() {
