@@ -30,7 +30,7 @@ use util::base58;
 use util::Error;
 
 /// The method used to produce an address
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Payload {
     /// pay-to-pubkey
     Pubkey(PublicKey),
@@ -42,7 +42,7 @@ pub enum Payload {
     WitnessProgram(WitnessProgram),
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 /// A Bitcoin address
 pub struct Address {
     /// The type of the address
