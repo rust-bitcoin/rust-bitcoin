@@ -20,7 +20,7 @@
 
 #![allow(non_camel_case_types)]
 
-use serde;
+#[cfg(feature = "serde")] use serde;
 
 // Heavy stick to translate between opcode types
 use std::mem::transmute;
@@ -620,11 +620,13 @@ impl<S: SimpleEncoder> ConsensusEncodable<S> for All {
     }
 }
 
+#[cfg(feature = "serde")]
 impl serde::Serialize for All {
-  fn serialize<S>(&self, serializer: &mut S) -> Result<(), S::Error>
-      where S: serde::Serializer,
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+      S: serde::Serializer,
   {
-      serializer.visit_str(&self.to_string())
+      serializer.serialize_str(&self.to_string())
   }
 }
 
@@ -656,11 +658,13 @@ pub enum Class {
 
 display_from_debug!(Class);
 
+#[cfg(feature = "serde")]
 impl serde::Serialize for Class {
-  fn serialize<S>(&self, serializer: &mut S) -> Result<(), S::Error>
-      where S: serde::Serializer,
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+      S: serde::Serializer,
   {
-      serializer.visit_str(&self.to_string())
+      serializer.serialize_str(&self.to_string())
   }
 }
 

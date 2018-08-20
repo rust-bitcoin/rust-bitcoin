@@ -83,7 +83,13 @@ macro_rules! nu_select {
 
 #[macro_export]
 macro_rules! user_enum {
-    ($(#[$attr:meta])* pub enum $name:ident { $(#[$doc:meta] $elem:ident <-> $txt:expr),* }) => (
+    (
+        $(#[$attr:meta])*
+        pub enum $name:ident {
+            $(#[$doc:meta]
+              $elem:ident <-> $txt:expr),*
+        }
+    ) => (
         $(#[$attr])*
         pub enum $name {
             $(#[$doc] $elem),*
@@ -119,38 +125,62 @@ macro_rules! user_enum {
             }
         }
 
-        impl ::serde::Deserialize for $name {
+        #[cfg(feature = "serde")]
+        impl<'de> $crate::serde::Deserialize<'de> for $name {
             #[inline]
-            fn deserialize<D>(d: &mut D) -> Result<$name, D::Error>
-                where D: ::serde::Deserializer
+            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+            where
+                D: $crate::serde::Deserializer<'de>,
             {
+                use $crate::std::fmt::{self, Formatter};
+
                 struct Visitor;
-                impl ::serde::de::Visitor for Visitor {
+                impl<'de> $crate::serde::de::Visitor<'de> for Visitor {
                     type Value = $name;
 
-                    fn visit_string<E>(&mut self, v: String) -> Result<$name, E>
-                        where E: ::serde::de::Error
+                    fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
+                        formatter.write_str("an enum value")
+                    }
+
+                    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+                    where
+                        E: $crate::serde::de::Error,
+                    {
+                        static FIELDS: &'static [&'static str] = &[$(stringify!($txt)),*];
+
+                        $( if v == $txt { Ok($name::$elem) } )else*
+                        else {
+                            Err(E::unknown_variant(v, FIELDS))
+                        }
+                    }
+
+                    fn visit_borrowed_str<E>(self, v: &'de str) -> Result<Self::Value, E>
+                    where
+                        E: $crate::serde::de::Error,
+                    {
+                        self.visit_str(v)
+                    }
+
+                    fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+                    where
+                        E: $crate::serde::de::Error,
                     {
                         self.visit_str(&v)
                     }
 
-                    fn visit_str<E>(&mut self, s: &str) -> Result<$name, E>
-                        where E: ::serde::de::Error
-                    {
-                        $( if s == $txt { Ok($name::$elem) } )else*
-                        else { Err(::serde::de::Error::syntax(stringify!($name))) }
-                    }
                 }
 
-                d.visit(Visitor)
+                deserializer.deserialize_str(Visitor)
             }
         }
 
+        #[cfg(feature = "serde")]
         impl ::serde::Serialize for $name {
-            fn serialize<S>(&self, s: &mut S) -> Result<(), S::Error>
-                where S: ::serde::Serializer
+            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+            where
+                S: ::serde::Serializer,
             {
-                s.visit_str(&self.to_string())
+                serializer.serialize_str(&self.to_string())
             }
         }
     );

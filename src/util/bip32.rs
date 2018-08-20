@@ -20,7 +20,7 @@ use std::default::Default;
 use std::io::Cursor;
 use std::{error, fmt};
 use std::str::FromStr;
-use serde::{Serialize, Deserialize, Serializer, Deserializer};
+#[cfg(feature = "serde")] use serde;
 
 use byteorder::{BigEndian, ByteOrder, ReadBytesExt};
 use crypto::digest::Digest;
@@ -167,17 +167,23 @@ impl fmt::Display for ChildNumber {
     }
 }
 
-impl Serialize for ChildNumber {
-    fn serialize<S: Serializer>(&self, s: &mut S) -> Result<(), S::Error> {
-        u32::from(*self).serialize(s)
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for ChildNumber {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        u32::deserialize(deserializer).map(ChildNumber::from)
     }
 }
 
-impl Deserialize for ChildNumber {
-    fn deserialize<D: Deserializer>(d: &mut D) -> Result<ChildNumber, D::Error> {
-        let n: u32 = Deserialize::deserialize(d)?;
-
-        Ok(ChildNumber::from(n))
+#[cfg(feature = "serde")]
+impl serde::Serialize for ChildNumber {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        u32::from(*self).serialize(serializer)
     }
 }
 
@@ -673,6 +679,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(all(feature = "serde", feature = "strason"))]
     pub fn encode_decode_childnumber() {
         serde_round_trip!(ChildNumber::from_normal_idx(0));
         serde_round_trip!(ChildNumber::from_normal_idx(1));
