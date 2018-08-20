@@ -47,8 +47,7 @@ impl SighashComponents {
         let hash_prevouts = {
             let mut enc = Sha256dEncoder::new();
             for txin in &tx.input {
-                txin.prev_hash.consensus_encode(&mut enc).unwrap();
-                txin.prev_index.consensus_encode(&mut enc).unwrap();
+                txin.previous_output.consensus_encode(&mut enc).unwrap();
             }
             enc.into_hash()
         };
@@ -86,11 +85,7 @@ impl SighashComponents {
         self.hash_prevouts.consensus_encode(&mut enc).unwrap();
         self.hash_sequence.consensus_encode(&mut enc).unwrap();
         txin
-            .prev_hash
-            .consensus_encode(&mut enc)
-            .unwrap();
-        txin
-            .prev_index
+            .previous_output
             .consensus_encode(&mut enc)
             .unwrap();
         witness_script.consensus_encode(&mut enc).unwrap();

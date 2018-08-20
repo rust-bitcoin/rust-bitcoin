@@ -36,28 +36,65 @@ use network::serialize::{serialize, BitcoinHash, SimpleEncoder, SimpleDecoder};
 use network::encodable::{ConsensusEncodable, ConsensusDecodable, VarInt};
 
 /// A reference to a transaction output
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
-pub struct TxOutRef {
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
+pub struct OutPoint {
     /// The referenced transaction's txid
     pub txid: Sha256dHash,
     /// The index of the referenced output in its transaction's vout
-    pub index: usize
+    pub vout: u32,
 }
-serde_struct_impl!(TxOutRef, txid, index);
+serde_struct_impl!(OutPoint, txid, vout);
 
-impl fmt::Display for TxOutRef {
+impl OutPoint {
+    /// Creates a "null" `OutPoint`.
+    ///
+    /// This value is used for coinbase transactions because they don't have
+    /// any previous outputs.
+    #[inline]
+    pub fn null() -> OutPoint {
+        OutPoint {
+            txid: Default::default(),
+            vout: u32::max_value(),
+        }
+    }
+
+    /// Checks if an `OutPoint` is "null".
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use bitcoin::blockdata::constants::genesis_block;
+    /// use bitcoin::network::constants::Network;
+    ///
+    /// let block = genesis_block(Network::Bitcoin);
+    /// let tx = &block.txdata[0];
+    ///
+    /// // Coinbase transactions don't have any previous output.
+    /// assert_eq!(tx.input[0].previous_output.is_null(), true);
+    /// ```
+    #[inline]
+    pub fn is_null(&self) -> bool {
+        *self == OutPoint::null()
+    }
+}
+
+impl Default for OutPoint {
+    fn default() -> Self {
+        OutPoint::null()
+    }
+}
+
+impl fmt::Display for OutPoint {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}:{}", self.txid, self.index)
+        write!(f, "{}:{}", self.txid, self.vout)
     }
 }
 
 /// A transaction input, which defines old coins to be consumed
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub struct TxIn {
-    /// The hash of the transaction whose output is being used an an input
-    pub prev_hash: Sha256dHash,
-    /// The index of the output in the previous transaction, which may have several
-    pub prev_index: u32,
+    /// The reference to the previous output that is being used an an input
+    pub previous_output: OutPoint,
     /// The script which pushes values on the stack which will cause
     /// the referenced output's script to accept
     pub script_sig: Script,
@@ -73,7 +110,7 @@ pub struct TxIn {
     /// routines.
     pub witness: Vec<Vec<u8>>
 }
-serde_struct_impl!(TxIn, prev_hash, prev_index, script_sig, sequence, witness);
+serde_struct_impl!(TxIn, previous_output, script_sig, sequence, witness);
 
 /// A transaction output, which defines new coins to be created from old ones.
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
@@ -172,9 +209,8 @@ impl Transaction {
         // Add all inputs necessary..
         if anyone_can_pay {
             tx.input = vec![TxIn {
-                prev_hash: self.input[input_index].prev_hash,
+                previous_output: self.input[input_index].previous_output,
                 script_sig: script_pubkey.clone(),
-                prev_index: self.input[input_index].prev_index,
                 sequence: self.input[input_index].sequence,
                 witness: vec![],
             }];
@@ -182,8 +218,7 @@ impl Transaction {
             tx.input = Vec::with_capacity(self.input.len());
             for (n, input) in self.input.iter().enumerate() {
                 tx.input.push(TxIn {
-                    prev_hash: input.prev_hash,
-                    prev_index: input.prev_index,
+                    previous_output: input.previous_output,
                     script_sig: if n == input_index { script_pubkey.clone() } else { Script::new() },
                     sequence: if n != input_index && (sighash == SigHashType::Single || sighash == SigHashType::None) { 0 } else { input.sequence },
                     witness: vec![],
@@ -253,17 +288,17 @@ impl Transaction {
 
     #[cfg(feature="bitcoinconsensus")]
     /// Verify that this transaction is able to spend some outputs of spent transactions
-    pub fn verify (&self, spent : &HashMap<Sha256dHash, Transaction>) -> Result<(), script::Error> {
+    pub fn verify(&self, spent: &HashMap<Sha256dHash, Transaction>) -> Result<(), script::Error> {
         if let Ok(tx) = serialize(&*self) {
             for (idx, input) in self.input.iter().enumerate() {
-                if let Some(ref s) = spent.get(&input.prev_hash) {
-                    if let Some(ref output) = s.output.get(input.prev_index as usize) {
+                if let Some(ref s) = spent.get(&input.previous_output.txid) {
+                    if let Some(ref output) = s.output.get(input.previous_output.vout as usize) {
                         output.script_pubkey.verify(idx, output.value, tx.as_slice())?;
                     } else {
-                        return Err(script::Error::WrongSpentOutputIndex(input.prev_index as usize));
+                        return Err(script::Error::WrongSpentOutputIndex(input.previous_output.vout as usize));
                     }
                 } else {
-                    return Err(script::Error::UnknownSpentTransaction(input.prev_hash));
+                    return Err(script::Error::UnknownSpentTransaction(input.previous_output.txid));
                 }
             }
             Ok(())
@@ -273,9 +308,9 @@ impl Transaction {
         }
     }
 
-    /// is this a coin base transaction?
-    pub fn is_coin_base (&self) -> bool {
-        self.input.len() == 1 && self.input[0].prev_index == 0xFFFFFFFF && self.input [0].prev_hash == Sha256dHash::default()
+    /// Is this a coin base transaction?
+    pub fn is_coin_base(&self) -> bool {
+        self.input.len() == 1 && self.input[0].previous_output.is_null()
     }
 }
 
@@ -291,10 +326,24 @@ impl BitcoinHash for Transaction {
 
 impl_consensus_encoding!(TxOut, value, script_pubkey);
 
+impl<S: SimpleEncoder> ConsensusEncodable<S> for OutPoint {
+    fn consensus_encode(&self, s: &mut S) -> Result <(), S::Error> {
+        self.txid.consensus_encode(s)?;
+        self.vout.consensus_encode(s)
+    }
+}
+impl<D: SimpleDecoder> ConsensusDecodable<D> for OutPoint {
+    fn consensus_decode(d: &mut D) -> Result<OutPoint, D::Error> {
+        Ok(OutPoint {
+            txid: ConsensusDecodable::consensus_decode(d)?,
+            vout: ConsensusDecodable::consensus_decode(d)?,
+        })
+    }
+}
+
 impl<S: SimpleEncoder> ConsensusEncodable<S> for TxIn {
     fn consensus_encode(&self, s: &mut S) -> Result <(), S::Error> {
-        self.prev_hash.consensus_encode(s)?;
-        self.prev_index.consensus_encode(s)?;
+        self.previous_output.consensus_encode(s)?;
         self.script_sig.consensus_encode(s)?;
         self.sequence.consensus_encode(s)
     }
@@ -302,8 +351,7 @@ impl<S: SimpleEncoder> ConsensusEncodable<S> for TxIn {
 impl<D: SimpleDecoder> ConsensusDecodable<D> for TxIn {
     fn consensus_decode(d: &mut D) -> Result<TxIn, D::Error> {
         Ok(TxIn {
-            prev_hash: ConsensusDecodable::consensus_decode(d)?,
-            prev_index: ConsensusDecodable::consensus_decode(d)?,
+            previous_output: ConsensusDecodable::consensus_decode(d)?,
             script_sig: ConsensusDecodable::consensus_decode(d)?,
             sequence: ConsensusDecodable::consensus_decode(d)?,
             witness: vec![],
@@ -482,9 +530,9 @@ mod tests {
         assert_eq!(realtx.input.len(), 1);
         // In particular this one is easy to get backward -- in bitcoin hashes are encoded
         // as little-endian 256-bit numbers rather than as data strings.
-        assert_eq!(realtx.input[0].prev_hash.be_hex_string(),
+        assert_eq!(realtx.input[0].previous_output.txid.be_hex_string(),
                    "ce9ea9f6f5e422c6a9dbcddb3b9a14d1c78fab9ab520cb281aa2a74a09575da1".to_string());
-        assert_eq!(realtx.input[0].prev_index, 1);
+        assert_eq!(realtx.input[0].previous_output.vout, 1);
         assert_eq!(realtx.output.len(), 1);
         assert_eq!(realtx.lock_time, 0);
 
