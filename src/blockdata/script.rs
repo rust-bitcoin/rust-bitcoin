@@ -289,11 +289,14 @@ impl Script {
     /// Whether the script is the empty script
     pub fn is_empty(&self) -> bool { self.0.is_empty() }
 
-    /// Convert the script into a byte vector
-    pub fn into_vec(self) -> Vec<u8> { self.0.into_vec() }
+    /// Returns the script data
+    pub fn as_bytes(&self) -> &[u8] { &*self.0 }
 
-    /// returns a copy of the script data
-    pub fn data (&self) -> Vec<u8> { self.0.clone().into_vec() }
+    /// Returns a copy of the script data
+    pub fn to_bytes(&self) -> Vec<u8> { self.0.clone().into_vec() }
+
+    /// Convert the script into a byte vector
+    pub fn into_bytes(self) -> Vec<u8> { self.0.into_vec() }
 
     /// Compute the P2SH output corresponding to this redeem script
     pub fn to_p2sh(&self) -> Script {

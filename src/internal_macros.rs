@@ -79,8 +79,16 @@ macro_rules! impl_array_newtype {
             pub fn is_empty(&self) -> bool { false }
 
             #[inline]
-            /// Returns the underlying data.
-            pub fn data(&self) -> [$ty; $len] { self.0.clone() }
+            /// Returns the underlying bytes.
+            pub fn as_bytes(&self) -> &[$ty; $len] { &self.0 }
+
+            #[inline]
+            /// Returns the underlying bytes.
+            pub fn to_bytes(&self) -> [$ty; $len] { self.0.clone() }
+
+            #[inline]
+            /// Returns the underlying bytes.
+            pub fn into_bytes(self) -> [$ty; $len] { self.0 }
         }
 
         impl<'a> From<&'a [$ty]> for $thing {
