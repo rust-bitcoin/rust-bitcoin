@@ -1,7 +1,37 @@
 extern crate bitcoin;
 
+use bitcoin::blockdata::script;
+use bitcoin::network::serialize;
+
 fn do_test(data: &[u8]) {
-    let _: Result<bitcoin::blockdata::script::Script, _> = bitcoin::network::serialize::deserialize(data);
+    let s: Result<script::Script, _> = serialize::deserialize(data);
+    if let Ok(script) = s {
+        let _: Vec<script::Instruction> = script.iter(false).collect();
+        let enforce_min: Vec<script::Instruction> = script.iter(true).collect();
+
+        let mut b = script::Builder::new();
+        for ins in enforce_min {
+            match ins {
+                script::Instruction::Error(_) => return,
+                script::Instruction::Op(op) => { b = b.push_opcode(op); }
+                script::Instruction::PushBytes(bytes) => {
+                    // Any one-byte pushes, except -0, which can be interpreted as numbers, should be
+                    // reserialized as numbers. (For -1 through 16, this will use special ops; for
+                    // others it'll just reserialize them as pushes.)
+                    if bytes.len() == 1 && bytes[0] != 0x80 && bytes[0] != 0x00 {
+                        if let Ok(num) = script::read_scriptint(bytes) {
+                            b = b.push_int(num);
+                        } else {
+                            b = b.push_slice(bytes);
+                        }
+                    } else {
+                        b = b.push_slice(bytes);
+                    }
+                }
+            }
+        }
+        assert_eq!(b.into_script(), script);
+    }
 }
 
 #[cfg(feature = "afl")]
