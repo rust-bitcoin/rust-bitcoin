@@ -80,7 +80,8 @@ impl fmt::Display for Error {
         match *self {
             Error::Secp256k1(ref e) => fmt::Display::fmt(e, f),
             Error::Serialize(ref e) => fmt::Display::fmt(e, f),
-            ref x => f.write_str(error::Error::description(x))
+            Error::Network(ref e) => fmt::Display::fmt(e, f),
+            Error::SpvBadProofOfWork | Error::SpvBadTarget => f.write_str(error::Error::description(self)),
         }
     }
 }
@@ -90,7 +91,8 @@ impl error::Error for Error {
         match *self {
             Error::Secp256k1(ref e) => Some(e),
             Error::Serialize(ref e) => Some(e),
-            _ => None
+            Error::Network(ref e) => Some(e),
+            Error::SpvBadProofOfWork | Error::SpvBadTarget => None
         }
     }
 

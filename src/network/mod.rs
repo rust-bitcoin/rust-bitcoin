@@ -49,7 +49,7 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Error::Io(ref e) => fmt::Display::fmt(e, f),
-            ref x => f.write_str(error::Error::description(x)),
+            Error::SocketMutexPoisoned | Error::SocketNotConnectedToPeer => f.write_str(error::Error::description(self)),
         }
     }
 }
@@ -58,7 +58,7 @@ impl error::Error for Error {
     fn cause(&self) -> Option<&error::Error> {
         match *self {
             Error::Io(ref e) => Some(e),
-            _ => None
+            Error::SocketMutexPoisoned | Error::SocketNotConnectedToPeer => None,
         }
     }
 

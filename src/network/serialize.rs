@@ -105,7 +105,15 @@ impl error::Error for Error {
             Error::Base58(ref e) => Some(e),
             Error::Bech32(ref e) => Some(e),
             Error::ByteOrder(ref e) => Some(e),
-            _ => None
+            Error::UnexpectedNetworkMagic { .. }
+            | Error::OversizedVectorAllocation { .. }
+            | Error::InvalidChecksum { .. }
+            | Error::UnknownNetworkMagic(..)
+            | Error::ParseFailed(..)
+            | Error::UnsupportedWitnessVersion(..)
+            | Error::UnsupportedSegwitFlag(..)
+            | Error::UnrecognizedNetworkCommand(..)
+            | Error::UnexpectedHexDigit(..) => None,
         }
     }
 
