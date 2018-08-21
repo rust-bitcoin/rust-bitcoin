@@ -14,7 +14,7 @@
 
 //! Base58 encoder and decoder
 
-use std::{error, fmt};
+use std::{error, fmt, str};
 
 use byteorder::{ByteOrder, LittleEndian};
 use util::hash::Sha256dHash;
@@ -134,7 +134,7 @@ pub fn from_check(data: &str) -> Result<Vec<u8>, Error> {
     Ok(ret)
 }
 
-fn encode_iter<I>(data: I) -> String
+fn encode_iter_utf8<I>(data: I) -> Vec<u8>
 where
     I: Iterator<Item = u8> + Clone,
 {
@@ -173,7 +173,24 @@ where
     for ch in ret.iter_mut() {
         *ch = BASE58_CHARS[*ch as usize];
     }
+    ret
+}
+
+fn encode_iter<I>(data: I) -> String
+where
+    I: Iterator<Item = u8> + Clone,
+{
+    let ret = encode_iter_utf8(data);
     String::from_utf8(ret).unwrap()
+}
+
+/// Directly encode a slice as base58 into a `Formatter`.
+fn encode_iter_to_fmt<I>(fmt: &mut fmt::Formatter, data: I) -> fmt::Result
+where
+    I: Iterator<Item = u8> + Clone,
+{
+    let ret = encode_iter_utf8(data);
+    fmt.write_str(str::from_utf8(&ret).unwrap())
 }
 
 /// Directly encode a slice as base58
@@ -190,6 +207,16 @@ pub fn check_encode_slice(data: &[u8]) -> String {
             .cloned()
             .chain(checksum[0..4].iter().cloned())
     )
+}
+
+/// Obtain a string with the base58check encoding of a slice
+/// (Tack the first 4 256-digits of the object's Bitcoin hash onto the end.)
+pub fn check_encode_slice_to_fmt(fmt: &mut fmt::Formatter, data: &[u8]) -> fmt::Result {
+    let checksum = Sha256dHash::from_data(&data);
+    let iter = data.iter()
+        .cloned()
+        .chain(checksum[0..4].iter().cloned());
+    encode_iter_to_fmt(fmt, iter)
 }
 
 #[cfg(test)]

@@ -16,8 +16,8 @@
 //! Support for ordinary base58 Bitcoin addresses and private keys
 //!
 
+use std::fmt::{self, Display, Formatter};
 use std::str::FromStr;
-use std::string::ToString;
 
 use bitcoin_bech32::{self, WitnessProgram, u5};
 use secp256k1::key::PublicKey;
@@ -203,8 +203,8 @@ impl Address {
     }
 }
 
-impl ToString for Address {
-    fn to_string(&self) -> String {
+impl Display for Address {
+    fn fmt(&self, fmt: &mut Formatter) -> fmt::Result {
         match self.payload {
             // note: serialization for pay-to-pk is defined, but is irreversible
             Payload::Pubkey(ref pk) => {
@@ -215,7 +215,7 @@ impl ToString for Address {
                     Network::Testnet | Network::Regtest => 111,
                 };
                 prefixed[1..].copy_from_slice(&hash[..]);
-                base58::check_encode_slice(&prefixed[..])
+                base58::check_encode_slice_to_fmt(fmt, &prefixed[..])
             },
             Payload::PubkeyHash(ref hash) => {
                 let mut prefixed = [0; 21];
@@ -224,7 +224,7 @@ impl ToString for Address {
                     Network::Testnet | Network::Regtest => 111,
                 };
                 prefixed[1..].copy_from_slice(&hash[..]);
-                base58::check_encode_slice(&prefixed[..])
+                base58::check_encode_slice_to_fmt(fmt, &prefixed[..])
             },
             Payload::ScriptHash(ref hash) => {
                 let mut prefixed = [0; 21];
@@ -233,10 +233,10 @@ impl ToString for Address {
                     Network::Testnet | Network::Regtest => 196,
                 };
                 prefixed[1..].copy_from_slice(&hash[..]);
-                base58::check_encode_slice(&prefixed[..])
+                base58::check_encode_slice_to_fmt(fmt, &prefixed[..])
             },
             Payload::WitnessProgram(ref witprog) => {
-                witprog.to_address()
+                fmt.write_str(&witprog.to_address())
             },
         }
     }
