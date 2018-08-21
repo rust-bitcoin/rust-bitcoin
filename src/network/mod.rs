@@ -43,15 +43,12 @@ pub enum Error {
     SocketMutexPoisoned,
     /// Not connected to peer
     SocketNotConnectedToPeer,
-    /// Error propagated from subsystem
-    Detail(String, Box<Error>),
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Error::Io(ref e) => fmt::Display::fmt(e, f),
-            Error::Detail(ref s, ref e) => write!(f, "{}: {}", s, e),
             ref x => f.write_str(error::Error::description(x)),
         }
     }
@@ -61,7 +58,6 @@ impl error::Error for Error {
     fn cause(&self) -> Option<&error::Error> {
         match *self {
             Error::Io(ref e) => Some(e),
-            Error::Detail(_, ref e) => Some(e),
             _ => None
         }
     }
@@ -71,7 +67,6 @@ impl error::Error for Error {
             Error::Io(ref e) => e.description(),
             Error::SocketMutexPoisoned => "socket mutex was poisoned",
             Error::SocketNotConnectedToPeer => "not connected to peer",
-            Error::Detail(_, ref e) => e.description(),
         }
     }
 }
