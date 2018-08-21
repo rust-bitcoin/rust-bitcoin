@@ -146,7 +146,7 @@ impl<D: SimpleDecoder> ConsensusDecodable<D> for String {
     #[inline]
     fn consensus_decode(d: &mut D) -> Result<String, serialize::Error> {
         String::from_utf8(ConsensusDecodable::consensus_decode(d)?)
-            .map_err(|_| d.error("String was not valid UTF8".to_owned()))
+            .map_err(|_| serialize::Error::ParseFailed("String was not valid UTF8"))
     }
 }
 
@@ -205,9 +205,9 @@ impl<D: SimpleDecoder, T: ConsensusDecodable<D>> ConsensusDecodable<D> for Vec<T
         let VarInt(len): VarInt = ConsensusDecodable::consensus_decode(d)?;
         let byte_size = (len as usize)
                             .checked_mul(mem::size_of::<T>())
-                            .ok_or(d.error("Invalid length".to_owned()))?;
+                            .ok_or(serialize::Error::ParseFailed("Invalid length"))?;
         if byte_size > MAX_VEC_SIZE {
-            return Err(d.error(format!("tried to allocate vec of size {} (max {})", byte_size, MAX_VEC_SIZE)));
+            return Err(serialize::Error::OversizedVectorAllocation { requested: byte_size, max: MAX_VEC_SIZE })
         }
         let mut ret = Vec::with_capacity(len as usize);
         for _ in 0..len { ret.push(ConsensusDecodable::consensus_decode(d)?); }
@@ -226,7 +226,7 @@ impl<D: SimpleDecoder, T: ConsensusDecodable<D>> ConsensusDecodable<D> for Box<[
         let VarInt(len): VarInt = ConsensusDecodable::consensus_decode(d)?;
         let len = len as usize;
         if len > MAX_VEC_SIZE {
-            return Err(d.error(format!("tried to allocate vec of size {} (max {})", len, MAX_VEC_SIZE)));
+            return Err(serialize::Error::OversizedVectorAllocation { requested: len, max: MAX_VEC_SIZE })
         }
         let mut ret = Vec::with_capacity(len);
         for _ in 0..len { ret.push(ConsensusDecodable::consensus_decode(d)?); }
@@ -291,7 +291,10 @@ impl<D: SimpleDecoder> ConsensusDecodable<D> for CheckedData {
         for _ in 0..len { ret.push(ConsensusDecodable::consensus_decode(d)?); }
         let expected_checksum = sha2_checksum(&ret);
         if expected_checksum != checksum {
-            Err(d.error(format!("bad checksum {:?} (expected {:?})", checksum, expected_checksum)))
+            Err(serialize::Error::InvalidChecksum {
+                expected: expected_checksum,
+                actual: checksum,
+            })
         } else {
             Ok(CheckedData(ret))
         }

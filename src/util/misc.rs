@@ -29,24 +29,15 @@ pub fn hex_bytes(s: &str) -> Result<Vec<u8>, serialize::Error> {
         if e.is_err() { e }
         else {
             match (f.to_digit(16), s.to_digit(16)) {
-                (None, _) => Err(serialize::Error::Detail(
-                    format!("expected hex, got {:}", f),
-                    Box::new(serialize::Error::ParseFailed)
-                )),
-                (_, None) => Err(serialize::Error::Detail(
-                    format!("expected hex, got {:}", s),
-                    Box::new(serialize::Error::ParseFailed)
-                )),
+                (None, _) => Err(serialize::Error::UnexpectedHexDigit(f)),
+                (_, None) => Err(serialize::Error::UnexpectedHexDigit(s)),
                 (Some(f), Some(s)) => { v.push((f * 0x10 + s) as u8); Ok(()) }
             }
         }
     )?;
     // Check that there was no remainder
     match iter.remainder() {
-        Some(_) => Err(serialize::Error::Detail(
-            "hexstring of odd length".to_owned(),
-            Box::new(serialize::Error::ParseFailed)
-        )),
+        Some(_) => Err(serialize::Error::ParseFailed("hexstring of odd length")),
         None => Ok(v)
     }
 }

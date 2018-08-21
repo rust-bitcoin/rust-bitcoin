@@ -417,7 +417,7 @@ impl<D: SimpleDecoder> ConsensusDecodable<D> for Transaction {
                 }
                 // We don't support anything else
                 x => {
-                    Err(d.error(format!("segwit flag {:02x} not understood", x)))
+                    Err(serialize::Error::UnsupportedSegwitFlag(x))
                 }
             }
         // non-segwit

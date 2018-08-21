@@ -117,7 +117,7 @@ impl<D: SimpleDecoder> ConsensusDecodable<D> for Network {
         u32::consensus_decode(d)
             .and_then(|m| {
                 Network::from_magic(m)
-                    .ok_or(d.error(format!("Unknown network (magic {:x})", m)))
+                    .ok_or(serialize::Error::UnknownNetworkMagic(m))
             })
     }
 }

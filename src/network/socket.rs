@@ -182,7 +182,10 @@ impl Socket {
             // Then for magic (this should come before parse error, but we can't
             // get to it if the deserialization failed). TODO restructure this
             if decoded.magic != self.magic {
-                Err(util::Error::Serialize(serialize::Error::BadNetworkMagic(self.magic, decoded.magic)))
+                Err(serialize::Error::UnexpectedNetworkMagic {
+                    expected: self.magic,
+                    actual: decoded.magic,
+                }.into())
             } else {
                 Ok(decoded.payload)
             }

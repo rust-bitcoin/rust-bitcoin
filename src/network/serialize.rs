@@ -43,24 +43,57 @@ pub enum Error {
     Bech32(bitcoin_bech32::Error),
     /// Error from the `byteorder` crate
     ByteOrder(io::Error),
-    /// Network magic was not what we expected
-    BadNetworkMagic(u32, u32),
-    /// Network message was unrecognized
-    BadNetworkMessage(String),
+    /// Network magic was not expected
+    UnexpectedNetworkMagic {
+        /// The expected network magic
+        expected: u32,
+        /// The unexpected network magic
+        actual: u32,
+    },
+    /// Tried to allocate an oversized vector
+    OversizedVectorAllocation{
+        /// The capacity requested
+        requested: usize,
+        /// The maximum capacity
+        max: usize,
+    },
+    /// Checksum was invalid
+    InvalidChecksum {
+        /// The expected checksum
+        expected: [u8; 4],
+        /// The invalid checksum
+        actual: [u8; 4],
+    },
+    /// Network magic was unknown
+    UnknownNetworkMagic(u32),
     /// Parsing error
-    ParseFailed,
-    /// Error propagated from subsystem
-    Detail(String, Box<Error>),
+    ParseFailed(&'static str),
     /// Unsupported witness version
     UnsupportedWitnessVersion(u8),
+    /// Unsupported Segwit flag
+    UnsupportedSegwitFlag(u8),
+    /// Unrecognized network command
+    UnrecognizedNetworkCommand(String),
+    /// Unexpected hex digit
+    UnexpectedHexDigit(char),
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Error::Io(ref e) => fmt::Display::fmt(e, f),
-            Error::Detail(ref s, ref e) => write!(f, "{}: {}", s, e),
-            ref x => f.write_str(error::Error::description(x)),
+            Error::Base58(ref e) => fmt::Display::fmt(e, f),
+            Error::Bech32(ref e) => fmt::Display::fmt(e, f),
+            Error::ByteOrder(ref e) => fmt::Display::fmt(e, f),
+            Error::UnexpectedNetworkMagic { expected: ref e, actual: ref a } => write!(f, "{}: expected {}, actual {}", error::Error::description(self), e, a),
+            Error::OversizedVectorAllocation { requested: ref r, max: ref m } => write!(f, "{}: requested {}, maximum {}", error::Error::description(self), r, m),
+            Error::InvalidChecksum { expected: ref e, actual: ref a } => write!(f, "{}: expected {}, actual {}", error::Error::description(self), hex_encode(e), hex_encode(a)),
+            Error::UnknownNetworkMagic(ref m) => write!(f, "{}: {}", error::Error::description(self), m),
+            Error::ParseFailed(ref e) => write!(f, "{}: {}", error::Error::description(self), e),
+            Error::UnsupportedWitnessVersion(ref wver) => write!(f, "{}: {}", error::Error::description(self), wver),
+            Error::UnsupportedSegwitFlag(ref swflag) => write!(f, "{}: {}", error::Error::description(self), swflag),
+            Error::UnrecognizedNetworkCommand(ref nwcmd) => write!(f, "{}: {}", error::Error::description(self), nwcmd),
+            Error::UnexpectedHexDigit(ref d) => write!(f, "{}: {}", error::Error::description(self), d),
         }
     }
 }
@@ -72,7 +105,6 @@ impl error::Error for Error {
             Error::Base58(ref e) => Some(e),
             Error::Bech32(ref e) => Some(e),
             Error::ByteOrder(ref e) => Some(e),
-            Error::Detail(_, ref e) => Some(e),
             _ => None
         }
     }
@@ -80,14 +112,18 @@ impl error::Error for Error {
     fn description(&self) -> &str {
         match *self {
             Error::Io(ref e) => e.description(),
-            Error::ParseFailed => "parsing error",
-            Error::Detail(_, ref e) => e.description(),
             Error::Base58(ref e) => e.description(),
             Error::Bech32(ref e) => e.description(),
             Error::ByteOrder(ref e) => e.description(),
-            Error::BadNetworkMagic(_, _) => "incorrect network magic",
-            Error::BadNetworkMessage(_) => "incorrect/unexpected network message",
-            Error::UnsupportedWitnessVersion(_) => "unsupported witness version",
+            Error::UnexpectedNetworkMagic { .. } => "unexpected network magic",
+            Error::OversizedVectorAllocation { .. } => "allocation of oversized vector requested",
+            Error::InvalidChecksum { .. } => "invalid checksum",
+            Error::UnknownNetworkMagic(..) => "unknown network magic",
+            Error::ParseFailed(..) => "parse failed",
+            Error::UnsupportedWitnessVersion(..) => "unsupported witness version",
+            Error::UnsupportedSegwitFlag(..) => "unsupported segwit version",
+            Error::UnrecognizedNetworkCommand(..) => "unrecognized network command",
+            Error::UnexpectedHexDigit(..) => "unexpected hex digit",
         }
     }
 }
@@ -156,7 +192,7 @@ pub fn deserialize<'a, T>(data: &'a [u8]) -> Result<T, Error>
     if decoder.into_inner().position() == data.len() as u64 {
         Ok(rv)
     } else {
-        Err(Error::ParseFailed)
+        Err(Error::ParseFailed("data not consumed entirely when explicitly deserializing"))
     }
 }
 
@@ -230,9 +266,6 @@ pub trait SimpleDecoder {
 
     /// Read a boolean
     fn read_bool(&mut self) -> Result<bool, Error>;
-
-    /// Signal a decoding error
-    fn error(&mut self, err: String) -> Error;
 }
 
 macro_rules! encoder_fn {
@@ -297,11 +330,6 @@ impl<R: Read> SimpleDecoder for RawDecoder<R> {
             Ok(bit) => Ok(bit != 0),
             Err(e) => Err(Error::Io(e))
         }
-    }
-
-    #[inline]
-    fn error(&mut self, err: String) -> Error {
-        Error::Detail(err, Box::new(Error::ParseFailed))
     }
 }
 

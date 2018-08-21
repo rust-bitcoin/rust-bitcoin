@@ -59,19 +59,20 @@ pub trait BitArray {
     fn one() -> Self;
 }
 
-/// A general error code
+/// A general error code, other errors should implement conversions to/from this
+/// if appropriate.
 #[derive(Debug)]
 pub enum Error {
-    /// The `target` field of a block header did not match the expected difficulty
-    SpvBadTarget,
-    /// The header hash is not below the target
-    SpvBadProofOfWork,
     /// secp-related error
     Secp256k1(secp256k1::Error),
     /// Serialization error
     Serialize(serialize::Error),
     /// Network error
     Network(network::Error),
+    /// The header hash is not below the target
+    SpvBadProofOfWork,
+    /// The `target` field of a block header did not match the expected difficulty
+    SpvBadTarget,
 }
 
 impl fmt::Display for Error {
@@ -96,10 +97,10 @@ impl error::Error for Error {
     fn description(&self) -> &str {
         match *self {
             Error::Secp256k1(ref e) => e.description(),
-            Error::SpvBadTarget => "target incorrect",
-            Error::SpvBadProofOfWork => "target correct but not attained",
             Error::Serialize(ref e) => e.description(),
             Error::Network(ref e) => e.description(),
+            Error::SpvBadProofOfWork => "target correct but not attained",
+            Error::SpvBadTarget => "target incorrect",
         }
     }
 }

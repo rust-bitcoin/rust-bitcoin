@@ -196,7 +196,7 @@ impl<D: SimpleDecoder> ConsensusDecodable<D> for RawNetworkMessage {
             "pong"    => NetworkMessage::Pong(ConsensusDecodable::consensus_decode(&mut mem_d)?),
             "tx"      => NetworkMessage::Tx(ConsensusDecodable::consensus_decode(&mut mem_d)?),
             "alert"   => NetworkMessage::Alert(ConsensusDecodable::consensus_decode(&mut mem_d)?),
-            cmd => return Err(d.error(format!("unrecognized network command `{}`", cmd)))
+            _ => return Err(serialize::Error::UnrecognizedNetworkCommand(cmd)),
         };
         Ok(RawNetworkMessage {
             magic: magic,
