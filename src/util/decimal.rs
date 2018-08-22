@@ -63,7 +63,11 @@ impl fmt::Display for Decimal {
         let ten = 10i64.pow(self.exponent as u32);
         let int_part = self.mantissa / ten;
         let dec_part = (self.mantissa % ten).abs();
-        write!(f, "{}.{:02$}", int_part, dec_part, self.exponent)
+        if int_part == 0 && self.mantissa < 0 {
+            write!(f, "-{}.{:02$}", int_part, dec_part, self.exponent)
+        } else {
+            write!(f, "{}.{:02$}", int_part, dec_part, self.exponent)
+        }
     }
 }
 
