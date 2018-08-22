@@ -287,29 +287,29 @@ impl UDecimal {
     // Converts a JSON number to a Decimal previously parsed by strason
     #[cfg(feature = "serde-decimal")]
     fn parse_udecimal(s: &str) -> Result<UDecimal, ParseDecimalError> {
-         // We know this will be a well-formed Json number, so we can
-         // be pretty lax about parsing
-         let mut past_dec = false;
-         let mut exponent = 0;
-         let mut mantissa = 0u64;
+        // We know this will be a well-formed Json number, so we can
+        // be pretty lax about parsing
+        let mut past_dec = false;
+        let mut exponent = 0;
+        let mut mantissa = 0u64;
 
-         for b in s.as_bytes() {
-             match *b {
-                 b'0'...b'9' => {
-                     match 10u64.overflowing_mul(mantissa + (b - b'0') as u64) {
-                         (_, true) => return Err(ParseDecimalError::TooBig),
-                         (n, false) => mantissa = n,
-                     }
-                     if past_dec { exponent += 1; }
-                 }
-                 b'.' => { past_dec = true; }
-                 _ => { /* whitespace or something, just ignore it */ }
-             }
-         }
-         Ok(UDecimal {
-             mantissa: mantissa,
-             exponent: exponent,
-         })
+        for b in s.as_bytes() {
+            match *b {
+                b'0'...b'9' => {
+                    match 10u64.overflowing_mul(mantissa + (b - b'0') as u64) {
+                        (_, true) => return Err(ParseDecimalError::TooBig),
+                        (n, false) => mantissa = n,
+                    }
+                    if past_dec { exponent += 1; }
+                }
+                b'.' => { past_dec = true; }
+                _ => { /* whitespace or something, just ignore it */ }
+            }
+        }
+        Ok(UDecimal {
+            mantissa: mantissa,
+            exponent: exponent,
+        })
     }
 }
 
