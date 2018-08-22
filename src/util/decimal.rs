@@ -143,9 +143,14 @@ impl Decimal {
             match *b {
                 b'-' => { negative = true; }
                 b'0'...b'9' => {
-                    match 10i64.overflowing_mul(mantissa + (b - b'0') as i64) {
-                        (_, true) => return Err(ParseDecimalError::TooBig),
-                        (n, false) => mantissa = n,
+                    match 10i64.checked_mul(mantissa) {
+                        None => return Err(ParseDecimalError::TooBig),
+                        Some(n) => {
+                            match n.checked_add((b - b'0') as i64) {
+                                None => return Err(ParseDecimalError::TooBig),
+                                Some(n) => mantissa = n,
+                            }
+                        }
                     }
                     if past_dec { exponent += 1; }
                 }
@@ -296,9 +301,14 @@ impl UDecimal {
         for b in s.as_bytes() {
             match *b {
                 b'0'...b'9' => {
-                    match 10u64.overflowing_mul(mantissa + (b - b'0') as u64) {
-                        (_, true) => return Err(ParseDecimalError::TooBig),
-                        (n, false) => mantissa = n,
+                    match 10u64.checked_mul(mantissa) {
+                        None => return Err(ParseDecimalError::TooBig),
+                        Some(n) => {
+                            match n.checked_add((b - b'0') as u64) {
+                                None => return Err(ParseDecimalError::TooBig),
+                                Some(n) => mantissa = n,
+                            }
+                        }
                     }
                     if past_dec { exponent += 1; }
                 }
