@@ -36,8 +36,7 @@ optional = true
 default-features = false
 
 [dependencies.hex]
-git = "https://github.com/KokaKiwi/rust-hex"
-rev = "19fd37137686c30058bd9d11d21590e726ffdf31"
+version = "=0.3.2"
 
 [dependencies.secp256k1]
 version = "0.11"
