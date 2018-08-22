@@ -1,7 +1,7 @@
 extern crate bitcoin;
-type BResult = Result<bitcoin::blockdata::transaction::Transaction, bitcoin::util::Error>;
+
 fn do_test(data: &[u8]) {
-    let tx_result: BResult = bitcoin::network::serialize::deserialize(data);
+    let tx_result: Result<bitcoin::blockdata::transaction::Transaction, _> = bitcoin::network::serialize::deserialize(data);
     match tx_result {
         Err(_) => {},
         Ok(mut tx) => {

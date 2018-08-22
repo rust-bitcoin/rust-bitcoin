@@ -29,7 +29,7 @@ use crypto::digest::Digest;
 use crypto::ripemd160::Ripemd160;
 
 use network::encodable::{ConsensusDecodable, ConsensusEncodable};
-use network::serialize::{SimpleEncoder, RawEncoder, BitcoinHash};
+use network::serialize::{self, SimpleEncoder, RawEncoder, BitcoinHash};
 use util::uint::Uint256;
 
 #[cfg(feature="fuzztarget")]      use util::sha2::Sha256;
@@ -108,61 +108,59 @@ impl Sha256dEncoder {
 }
 
 impl SimpleEncoder for Sha256dEncoder {
-    type Error = ();
-
-    fn emit_u64(&mut self, v: u64) -> Result<(), ()> {
+    fn emit_u64(&mut self, v: u64) -> Result<(), serialize::Error> {
         let mut data = [0; 8];
         (&mut data[..]).write_u64::<LittleEndian>(v).unwrap();
         self.0.input(&data);
         Ok(())
     }
 
-    fn emit_u32(&mut self, v: u32) -> Result<(), ()> {
+    fn emit_u32(&mut self, v: u32) -> Result<(), serialize::Error> {
         let mut data = [0; 4];
         (&mut data[..]).write_u32::<LittleEndian>(v).unwrap();
         self.0.input(&data);
         Ok(())
     }
 
-    fn emit_u16(&mut self, v: u16) -> Result<(), ()> {
+    fn emit_u16(&mut self, v: u16) -> Result<(), serialize::Error> {
         let mut data = [0; 2];
         (&mut data[..]).write_u16::<LittleEndian>(v).unwrap();
         self.0.input(&data);
         Ok(())
     }
 
-    fn emit_i64(&mut self, v: i64) -> Result<(), ()> {
+    fn emit_i64(&mut self, v: i64) -> Result<(), serialize::Error> {
         let mut data = [0; 8];
         (&mut data[..]).write_i64::<LittleEndian>(v).unwrap();
         self.0.input(&data);
         Ok(())
     }
 
-    fn emit_i32(&mut self, v: i32) -> Result<(), ()> {
+    fn emit_i32(&mut self, v: i32) -> Result<(), serialize::Error> {
         let mut data = [0; 4];
         (&mut data[..]).write_i32::<LittleEndian>(v).unwrap();
         self.0.input(&data);
         Ok(())
     }
 
-    fn emit_i16(&mut self, v: i16) -> Result<(), ()> {
+    fn emit_i16(&mut self, v: i16) -> Result<(), serialize::Error> {
         let mut data = [0; 2];
         (&mut data[..]).write_i16::<LittleEndian>(v).unwrap();
         self.0.input(&data);
         Ok(())
     }
 
-    fn emit_i8(&mut self, v: i8) -> Result<(), ()> {
+    fn emit_i8(&mut self, v: i8) -> Result<(), serialize::Error> {
         self.0.input(&[v as u8]);
         Ok(())
     }
 
-    fn emit_u8(&mut self, v: u8) -> Result<(), ()> {
+    fn emit_u8(&mut self, v: u8) -> Result<(), serialize::Error> {
         self.0.input(&[v]);
         Ok(())
     }
 
-    fn emit_bool(&mut self, v: bool) -> Result<(), ()> {
+    fn emit_bool(&mut self, v: bool) -> Result<(), serialize::Error> {
         self.0.input(&[if v {1} else {0}]);
         Ok(())
     }

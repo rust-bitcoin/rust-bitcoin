@@ -30,8 +30,8 @@ use network::message_network;
 use network::message_blockdata;
 use network::encodable::{ConsensusDecodable, ConsensusEncodable};
 use network::encodable::CheckedData;
-use network::serialize::{serialize, RawDecoder, SimpleEncoder, SimpleDecoder};
-use util::{self, propagate_err};
+use network::serialize::{self, serialize, RawDecoder, SimpleEncoder, SimpleDecoder};
+use util;
 
 /// Serializer for command string
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -39,7 +39,7 @@ pub struct CommandString(pub String);
 
 impl<S: SimpleEncoder> ConsensusEncodable<S> for CommandString {
     #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
+    fn consensus_encode(&self, s: &mut S) -> Result<(), serialize::Error> {
         let &CommandString(ref inner_str) = self;
         let mut rawbytes = [0u8; 12];
         let strbytes = inner_str.as_bytes();
@@ -55,7 +55,7 @@ impl<S: SimpleEncoder> ConsensusEncodable<S> for CommandString {
 
 impl<D: SimpleDecoder> ConsensusDecodable<D> for CommandString {
     #[inline]
-    fn consensus_decode(d: &mut D) -> Result<CommandString, D::Error> {
+    fn consensus_decode(d: &mut D) -> Result<CommandString, serialize::Error> {
         let rawbytes: [u8; 12] = ConsensusDecodable::consensus_decode(d)?;
         let rv = iter::FromIterator::from_iter(rawbytes.iter().filter_map(|&u| if u > 0 { Some(u as char) } else { None }));
         Ok(CommandString(rv))
@@ -147,7 +147,7 @@ impl RawNetworkMessage {
 }
 
 impl<S: SimpleEncoder> ConsensusEncodable<S> for RawNetworkMessage {
-    fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
+    fn consensus_encode(&self, s: &mut S) -> Result<(), serialize::Error> {
         self.magic.consensus_encode(s)?;
         CommandString(self.command()).consensus_encode(s)?;
         CheckedData(match self.payload {
@@ -172,33 +172,31 @@ impl<S: SimpleEncoder> ConsensusEncodable<S> for RawNetworkMessage {
     }
 }
 
-// TODO: restriction on D::Error is so that `propagate_err` will work;
-//       is there a more generic way to handle this?
-impl<D: SimpleDecoder<Error=util::Error>> ConsensusDecodable<D> for RawNetworkMessage {
-    fn consensus_decode(d: &mut D) -> Result<RawNetworkMessage, D::Error> {
+impl<D: SimpleDecoder> ConsensusDecodable<D> for RawNetworkMessage {
+    fn consensus_decode(d: &mut D) -> Result<RawNetworkMessage, serialize::Error> {
         let magic = ConsensusDecodable::consensus_decode(d)?;
         let CommandString(cmd): CommandString= ConsensusDecodable::consensus_decode(d)?;
         let CheckedData(raw_payload): CheckedData = ConsensusDecodable::consensus_decode(d)?;
 
         let mut mem_d = RawDecoder::new(Cursor::new(raw_payload));
         let payload = match &cmd[..] {
-            "version" => NetworkMessage::Version(propagate_err("version".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d))?),
+            "version" => NetworkMessage::Version(ConsensusDecodable::consensus_decode(&mut mem_d)?),
             "verack"  => NetworkMessage::Verack,
-            "addr"    => NetworkMessage::Addr(propagate_err("addr".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d))?),
-            "inv"     => NetworkMessage::Inv(propagate_err("inv".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d))?),
-            "getdata" => NetworkMessage::GetData(propagate_err("getdata".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d))?),
-            "notfound" => NetworkMessage::NotFound(propagate_err("notfound".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d))?),
-            "getblocks" => NetworkMessage::GetBlocks(propagate_err("getblocks".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d))?),
-            "getheaders" => NetworkMessage::GetHeaders(propagate_err("getheaders".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d))?),
+            "addr"    => NetworkMessage::Addr(ConsensusDecodable::consensus_decode(&mut mem_d)?),
+            "inv"     => NetworkMessage::Inv(ConsensusDecodable::consensus_decode(&mut mem_d)?),
+            "getdata" => NetworkMessage::GetData(ConsensusDecodable::consensus_decode(&mut mem_d)?),
+            "notfound" => NetworkMessage::NotFound(ConsensusDecodable::consensus_decode(&mut mem_d)?),
+            "getblocks" => NetworkMessage::GetBlocks(ConsensusDecodable::consensus_decode(&mut mem_d)?),
+            "getheaders" => NetworkMessage::GetHeaders(ConsensusDecodable::consensus_decode(&mut mem_d)?),
             "mempool" => NetworkMessage::MemPool,
-            "block"   => NetworkMessage::Block(propagate_err("block".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d))?),
-            "headers" => NetworkMessage::Headers(propagate_err("headers".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d))?),
+            "block"   => NetworkMessage::Block(ConsensusDecodable::consensus_decode(&mut mem_d)?),
+            "headers" => NetworkMessage::Headers(ConsensusDecodable::consensus_decode(&mut mem_d)?),
             "getaddr" => NetworkMessage::GetAddr,
-            "ping"    => NetworkMessage::Ping(propagate_err("ping".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d))?),
-            "pong"    => NetworkMessage::Pong(propagate_err("pong".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d))?),
-            "tx"      => NetworkMessage::Tx(propagate_err("tx".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d))?),
-            "alert"   => NetworkMessage::Alert(propagate_err("alert".to_owned(), ConsensusDecodable::consensus_decode(&mut mem_d))?),
-            cmd => return Err(d.error(format!("unrecognized network command `{}`", cmd)))
+            "ping"    => NetworkMessage::Ping(ConsensusDecodable::consensus_decode(&mut mem_d)?),
+            "pong"    => NetworkMessage::Pong(ConsensusDecodable::consensus_decode(&mut mem_d)?),
+            "tx"      => NetworkMessage::Tx(ConsensusDecodable::consensus_decode(&mut mem_d)?),
+            "alert"   => NetworkMessage::Alert(ConsensusDecodable::consensus_decode(&mut mem_d)?),
+            _ => return Err(serialize::Error::UnrecognizedNetworkCommand(cmd)),
         };
         Ok(RawNetworkMessage {
             magic: magic,

@@ -20,7 +20,7 @@
 
 use network::constants;
 use network::encodable::{ConsensusDecodable, ConsensusEncodable};
-use network::serialize::{SimpleDecoder, SimpleEncoder};
+use network::serialize::{self, SimpleDecoder, SimpleEncoder};
 use util::hash::Sha256dHash;
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -103,7 +103,7 @@ impl_consensus_encoding!(GetHeadersMessage, version, locator_hashes, stop_hash);
 
 impl<S: SimpleEncoder> ConsensusEncodable<S> for Inventory {
     #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
+    fn consensus_encode(&self, s: &mut S) -> Result<(), serialize::Error> {
         match self.inv_type {
             InvType::Error => 0u32, 
             InvType::Transaction => 1,
@@ -117,7 +117,7 @@ impl<S: SimpleEncoder> ConsensusEncodable<S> for Inventory {
 
 impl<D: SimpleDecoder> ConsensusDecodable<D> for Inventory {
     #[inline]
-    fn consensus_decode(d: &mut D) -> Result<Inventory, D::Error> {
+    fn consensus_decode(d: &mut D) -> Result<Inventory, serialize::Error> {
         let int_type: u32 = ConsensusDecodable::consensus_decode(d)?;
         Ok(Inventory {
             inv_type: match int_type {
