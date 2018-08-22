@@ -156,7 +156,12 @@ impl Decimal {
                             }
                         }
                     }
-                    if past_dec { exponent += 1; }
+                    if past_dec {
+                        exponent += 1;
+                        if exponent > 18 {
+                            return Err(ParseDecimalError::TooBig);
+                        }
+                    }
                 }
                 b'.' => { past_dec = true; }
                 _ => { /* whitespace or something, just ignore it */ }
@@ -314,7 +319,12 @@ impl UDecimal {
                             }
                         }
                     }
-                    if past_dec { exponent += 1; }
+                    if past_dec {
+                        exponent += 1;
+                        if exponent > 18 {
+                            return Err(ParseDecimalError::TooBig);
+                        }
+                    }
                 }
                 b'.' => { past_dec = true; }
                 _ => { /* whitespace or something, just ignore it */ }
