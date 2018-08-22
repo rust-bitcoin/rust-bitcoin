@@ -22,9 +22,11 @@
 //!
 
 use std::{fmt, ops};
+#[cfg(feature = "serde-decimal")] use std::error;
+#[cfg(feature = "serde-decimal")] use std::str::FromStr;
 
 #[cfg(feature = "serde-decimal")] use serde;
-#[cfg(feature = "serde-decimal")] use strason::Json;
+#[cfg(feature = "serde-decimal")] use strason::{self, Json};
 
 /// A fixed-point decimal type
 #[derive(Copy, Clone, Debug, Eq, Ord)]
@@ -61,7 +63,11 @@ impl fmt::Display for Decimal {
         let ten = 10i64.pow(self.exponent as u32);
         let int_part = self.mantissa / ten;
         let dec_part = (self.mantissa % ten).abs();
-        write!(f, "{}.{:02$}", int_part, dec_part, self.exponent)
+        if int_part == 0 && self.mantissa < 0 {
+            write!(f, "-{}.{:02$}", int_part, dec_part, self.exponent)
+        } else {
+            write!(f, "{}.{:02$}", int_part, dec_part, self.exponent)
+        }
     }
 }
 
@@ -126,6 +132,60 @@ impl Decimal {
     /// Returns whether or not the number is nonnegative
     #[inline]
     pub fn nonnegative(&self) -> bool { self.mantissa >= 0 }
+
+    // Converts a JSON number to a Decimal previously parsed by strason
+    #[cfg(feature = "serde-decimal")]
+    fn parse_decimal(s: &str) -> Result<Decimal, ParseDecimalError> {
+        // We know this will be a well-formed Json number, so we can
+        // be pretty lax about parsing
+        let mut negative = false;
+        let mut past_dec = false;
+        let mut exponent = 0;
+        let mut mantissa = 0i64;
+
+        for b in s.as_bytes() {
+            match *b {
+                b'-' => { negative = true; }
+                b'0'...b'9' => {
+                    match 10i64.checked_mul(mantissa) {
+                        None => return Err(ParseDecimalError::TooBig),
+                        Some(n) => {
+                            match n.checked_add((b - b'0') as i64) {
+                                None => return Err(ParseDecimalError::TooBig),
+                                Some(n) => mantissa = n,
+                            }
+                        }
+                    }
+                    if past_dec {
+                        exponent += 1;
+                        if exponent > 18 {
+                            return Err(ParseDecimalError::TooBig);
+                        }
+                    }
+                }
+                b'.' => { past_dec = true; }
+                _ => { /* whitespace or something, just ignore it */ }
+            }
+        }
+        if negative { mantissa *= -1; }
+        Ok(Decimal {
+            mantissa: mantissa,
+            exponent: exponent,
+        })
+    }
+}
+
+#[cfg(feature = "serde-decimal")]
+impl FromStr for Decimal {
+    type Err = ParseDecimalError;
+
+    /// Parses a `Decimal` from the given amount string.
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Json::from_str(s)?
+            .num()
+            .ok_or(ParseDecimalError::NotANumber)
+            .and_then(Decimal::parse_decimal)
+    }
 }
 
 #[cfg(feature = "serde-decimal")]
@@ -140,35 +200,12 @@ impl<'de> serde::Deserialize<'de> for Decimal {
     where
         D: serde::Deserializer<'de>,
     {
-        let json = Json::deserialize(deserializer)?;
-        match json.num() {
-            Some(s) => {
-                 // We know this will be a well-formed Json number, so we can
-                 // be pretty lax about parsing
-                 let mut negative = false;
-                 let mut past_dec = false;
-                 let mut exponent = 0;
-                 let mut mantissa = 0i64;
+        use serde::de;
 
-                 for b in s.as_bytes() {
-                     match *b {
-                         b'-' => { negative = true; }
-                         b'0'...b'9' => {
-                             mantissa = 10 * mantissa + (b - b'0') as i64;
-                             if past_dec { exponent += 1; }
-                         }
-                         b'.' => { past_dec = true; }
-                         _ => { /* whitespace or something, just ignore it */ }
-                     }
-                 }
-                 if negative { mantissa *= -1; }
-                 Ok(Decimal {
-                     mantissa: mantissa,
-                     exponent: exponent,
-                 })
-            }
-            None => Err(serde::de::Error::custom("expected decimal, got non-numeric"))
-        }
+        Json::deserialize(deserializer)?
+            .num()
+            .ok_or(de::Error::custom("expected decimal, got non-numeric"))
+            .and_then(|s| Decimal::parse_decimal(s).map_err(de::Error::custom))
     }
 }
 
@@ -260,6 +297,57 @@ impl UDecimal {
             self.mantissa * 10u64.pow((exponent - self.exponent) as u32)
         }
     }
+
+    // Converts a JSON number to a Decimal previously parsed by strason
+    #[cfg(feature = "serde-decimal")]
+    fn parse_udecimal(s: &str) -> Result<UDecimal, ParseDecimalError> {
+        // We know this will be a well-formed Json number, so we can
+        // be pretty lax about parsing
+        let mut past_dec = false;
+        let mut exponent = 0;
+        let mut mantissa = 0u64;
+
+        for b in s.as_bytes() {
+            match *b {
+                b'0'...b'9' => {
+                    match 10u64.checked_mul(mantissa) {
+                        None => return Err(ParseDecimalError::TooBig),
+                        Some(n) => {
+                            match n.checked_add((b - b'0') as u64) {
+                                None => return Err(ParseDecimalError::TooBig),
+                                Some(n) => mantissa = n,
+                            }
+                        }
+                    }
+                    if past_dec {
+                        exponent += 1;
+                        if exponent > 18 {
+                            return Err(ParseDecimalError::TooBig);
+                        }
+                    }
+                }
+                b'.' => { past_dec = true; }
+                _ => { /* whitespace or something, just ignore it */ }
+            }
+        }
+        Ok(UDecimal {
+            mantissa: mantissa,
+            exponent: exponent,
+        })
+    }
+}
+
+#[cfg(feature = "serde-decimal")]
+impl FromStr for UDecimal {
+    type Err = ParseDecimalError;
+
+    /// Parses a `UDecimal` from the given amount string.
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Json::from_str(s)?
+            .num()
+            .ok_or(ParseDecimalError::NotANumber)
+            .and_then(UDecimal::parse_udecimal)
+    }
 }
 
 #[cfg(feature = "serde-decimal")]
@@ -274,32 +362,12 @@ impl<'de> serde::Deserialize<'de> for UDecimal {
     where
         D: serde::Deserializer<'de>,
     {
-        let json = Json::deserialize(deserializer)?;
-        match json.num() {
-            Some(s) => {
-                 // We know this will be a well-formed Json number, so we can
-                 // be pretty lax about parsing
-                 let mut past_dec = false;
-                 let mut exponent = 0;
-                 let mut mantissa = 0u64;
+        use serde::de;
 
-                 for b in s.as_bytes() {
-                     match *b {
-                         b'0'...b'9' => {
-                             mantissa = 10 * mantissa + (b - b'0') as u64;
-                             if past_dec { exponent += 1; }
-                         }
-                         b'.' => { past_dec = true; }
-                         _ => { /* whitespace or something, just ignore it */ }
-                     }
-                 }
-                 Ok(UDecimal {
-                     mantissa: mantissa,
-                     exponent: exponent,
-                 })
-            }
-            None => Err(serde::de::Error::custom("expected decimal, got non-numeric"))
-        }
+        Json::deserialize(deserializer)?
+            .num()
+            .ok_or(de::Error::custom("expected decimal, got non-numeric"))
+            .and_then(|s| UDecimal::parse_udecimal(s).map_err(de::Error::custom))
     }
 }
 
@@ -318,6 +386,55 @@ impl serde::Serialize for UDecimal {
     {
         let json = Json::from_str(&self.to_string()).unwrap();
         json.serialize(serializer)
+    }
+}
+
+/// Errors that occur during `Decimal`/`UDecimal` parsing.
+#[cfg(feature = "serde-decimal")]
+#[derive(Debug)]
+pub enum ParseDecimalError {
+    /// An error ocurred while parsing the JSON number.
+    Json(strason::Error),
+    /// Not a number.
+    NotANumber,
+    /// The number is too big to fit in a `Decimal` or `UDecimal`.
+    TooBig,
+}
+
+#[cfg(feature = "serde-decimal")]
+#[doc(hidden)]
+impl From<strason::Error> for ParseDecimalError {
+    fn from(e: strason::Error) -> ParseDecimalError {
+        ParseDecimalError::Json(e)
+    }
+}
+
+#[cfg(feature = "serde-decimal")]
+impl fmt::Display for ParseDecimalError {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            ParseDecimalError::Json(ref e) => fmt::Display::fmt(e, fmt),
+            ParseDecimalError::NotANumber => fmt.write_str("not a valid JSON number"),
+            ParseDecimalError::TooBig => fmt.write_str("number is too big"),
+        }
+    }
+}
+
+#[cfg(feature = "serde-decimal")]
+impl error::Error for ParseDecimalError {
+    fn description(&self) -> &str {
+        match *self {
+            ParseDecimalError::Json(ref e) => e.description(),
+            ParseDecimalError::NotANumber => "not a valid JSON number",
+            ParseDecimalError::TooBig => "number is too big",
+        }
+    }
+
+    fn cause(&self) -> Option<&error::Error> {
+        match *self {
+            ParseDecimalError::Json(ref e) => Some(e),
+            _ => None,
+        }
     }
 }
 
@@ -466,6 +583,22 @@ mod tests {
         let json = Json::from_str("0.00980").unwrap();
         assert_eq!(json.to_bytes(), b"0.00980");
         let dec: UDecimal = json.into_deserialize().unwrap();
+        assert_eq!(dec, UDecimal::new(98000, 7));
+    }
+
+    #[test]
+    #[cfg(feature = "serde-decimal")]
+    fn parse_decimal_udecimal() {
+        let dec = "0.00980000".parse::<Decimal>().unwrap();
+        assert_eq!(dec, Decimal::new(980000, 8));
+
+        let dec = "0.00980000".parse::<UDecimal>().unwrap();
+        assert_eq!(dec, UDecimal::new(980000, 8));
+
+        let dec = "0.00980".parse::<Decimal>().unwrap();
+        assert_eq!(dec, Decimal::new(98000, 7));
+
+        let dec = "0.00980".parse::<UDecimal>().unwrap();
         assert_eq!(dec, UDecimal::new(98000, 7));
     }
 }
