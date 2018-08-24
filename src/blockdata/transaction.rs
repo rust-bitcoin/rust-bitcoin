@@ -128,7 +128,18 @@ impl Default for TxOut {
     }
 }
 
-/// A Bitcoin transaction, which describes an authenticated movement of coins
+/// A Bitcoin transaction, which describes an authenticated movement of coins.
+///
+/// If any inputs have nonempty witnesses, the entire transaction is serialized
+/// in the post-BIP141 Segwit format which includes a list of witnesses. If all
+/// inputs have empty witnesses, the transaction is serialized in the pre-BIP141
+/// format.
+///
+/// There is one major exception to this: to avoid deserialization ambiguity,
+/// if the transaction has no inputs, it is serialized in the BIP141 style. Be
+/// aware that this differs from the transaction format in PSBT, which _never_
+/// uses BIP141. (Ordinarily there is no conflict, since in PSBT transactions
+/// are always unsigned and therefore their inputs have empty witnesses.)
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub struct Transaction {
     /// The protocol version, should always be 1.
@@ -357,7 +368,7 @@ impl<D: Decoder> Decodable<D> for TxIn {
 impl<S: Encoder> Encodable<S> for Transaction {
     fn consensus_encode(&self, s: &mut S) -> Result <(), encode::Error> {
         self.version.consensus_encode(s)?;
-        let mut have_witness = false;
+        let mut have_witness = self.input.is_empty();
         for input in &self.input {
             if !input.witness.is_empty() {
                 have_witness = true;
@@ -495,7 +506,6 @@ mod tests {
     use super::{Transaction, TxIn};
 
     use blockdata::script::Script;
-    #[cfg(all(feature = "serde", feature = "strason"))]
     use consensus::encode::serialize;
     use consensus::encode::deserialize;
     use util::hash::{BitcoinHash, Sha256dHash};
@@ -540,6 +550,20 @@ mod tests {
         assert_eq!(realtx.bitcoin_hash().be_hex_string(),
                    "a6eab3c14ab5272a58a5ba91505ba1a4b6d7a3a9fcbd187b6cd99a7b6d548cb7".to_string());
         assert_eq!(realtx.get_weight(), 193*4);
+    }
+
+    #[test]
+    fn tx_no_input_deserialization() {
+        let hex_tx = hex_bytes(
+            "010000000001000100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000"
+        ).unwrap();
+        let tx: Transaction = deserialize(&hex_tx).expect("deserialize tx");
+
+        assert_eq!(tx.input.len(), 0);
+        assert_eq!(tx.output.len(), 1);
+
+        let reser = serialize(&tx);
+        assert_eq!(hex_tx, reser);
     }
 
     #[test]
