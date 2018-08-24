@@ -41,7 +41,7 @@ use util::hash::Hash160;
 #[cfg(feature="fuzztarget")]      use util::sha2::Sha256;
 #[cfg(not(feature="fuzztarget"))] use crypto::sha2::Sha256;
 
-#[derive(Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, Default, PartialOrd, Ord, PartialEq, Eq, Hash)]
 /// A Bitcoin script
 pub struct Script(Box<[u8]>);
 
@@ -397,10 +397,6 @@ impl Script {
     pub fn verify (&self, index: usize, amount: u64, spending: &[u8]) -> Result<(), Error> {
         Ok(bitcoinconsensus::verify (&self.0[..], amount, spending, index)?)
     }
-}
-
-impl Default for Script {
-    fn default() -> Script { Script(vec![].into_boxed_slice()) }
 }
 
 /// Creates a new script from an existing vector
