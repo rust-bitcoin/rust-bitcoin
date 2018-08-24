@@ -408,12 +408,16 @@ impl<D: SimpleDecoder> ConsensusDecodable<D> for Transaction {
                     for txin in input.iter_mut() {
                         txin.witness = ConsensusDecodable::consensus_decode(d)?;
                     }
-                    Ok(Transaction {
-                        version: version,
-                        input: input,
-                        output: output,
-                        lock_time: ConsensusDecodable::consensus_decode(d)?,
-                    })
+                    if !input.is_empty() && input.iter().all(|input| input.witness.is_empty()) {
+                        Err(serialize::Error::ParseFailed("witness flag set but no witnesses present"))
+                    } else {
+                        Ok(Transaction {
+                            version: version,
+                            input: input,
+                            output: output,
+                            lock_time: ConsensusDecodable::consensus_decode(d)?,
+                        })
+                    }
                 }
                 // We don't support anything else
                 x => {

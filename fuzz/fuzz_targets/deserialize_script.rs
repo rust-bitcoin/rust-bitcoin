@@ -31,6 +31,7 @@ fn do_test(data: &[u8]) {
             }
         }
         assert_eq!(b.into_script(), script);
+        assert_eq!(data, &serialize::serialize(&script).unwrap()[..]);
     }
 }
 
