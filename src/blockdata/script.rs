@@ -900,6 +900,25 @@ mod test {
     }
 
 	#[test]
+    fn script_ord() {
+        let script_1 = Builder::new().push_slice(&[1,2,3,4]).into_script();
+        let script_2 = Builder::new().push_int(10).into_script();
+        let script_3 = Builder::new().push_int(15).into_script();
+        let script_4 = Builder::new().push_opcode(opcodes::All::OP_RETURN).into_script();
+
+        assert!(script_1 < script_2);
+        assert!(script_2 < script_3);
+        assert!(script_3 < script_4);
+
+        assert!(script_1 <= script_1);
+        assert!(script_1 >= script_1);
+
+        assert!(script_4 > script_3);
+        assert!(script_3 > script_2);
+        assert!(script_2 > script_1);
+    }
+
+	#[test]
 	#[cfg(feature="bitcoinconsensus")]
 	fn test_bitcoinconsensus () {
 		// a random segwit transaction from the blockchain using native segwit
