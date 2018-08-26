@@ -41,7 +41,7 @@ use util::hash::Hash160;
 #[cfg(feature="fuzztarget")]      use util::sha2::Sha256;
 #[cfg(not(feature="fuzztarget"))] use crypto::sha2::Sha256;
 
-#[derive(Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, Default, PartialOrd, Ord, PartialEq, Eq, Hash)]
 /// A Bitcoin script
 pub struct Script(Box<[u8]>);
 
@@ -397,10 +397,6 @@ impl Script {
     pub fn verify (&self, index: usize, amount: u64, spending: &[u8]) -> Result<(), Error> {
         Ok(bitcoinconsensus::verify (&self.0[..], amount, spending, index)?)
     }
-}
-
-impl Default for Script {
-    fn default() -> Script { Script(vec![].into_boxed_slice()) }
 }
 
 /// Creates a new script from an existing vector
@@ -901,6 +897,25 @@ mod test {
         assert_eq!(v_min, slop_v_min);
         assert_eq!(v_min, slop_v_nonmin);
         assert_eq!(v_nonmin_alt, slop_v_nonmin_alt);
+    }
+
+	#[test]
+    fn script_ord() {
+        let script_1 = Builder::new().push_slice(&[1,2,3,4]).into_script();
+        let script_2 = Builder::new().push_int(10).into_script();
+        let script_3 = Builder::new().push_int(15).into_script();
+        let script_4 = Builder::new().push_opcode(opcodes::All::OP_RETURN).into_script();
+
+        assert!(script_1 < script_2);
+        assert!(script_2 < script_3);
+        assert!(script_3 < script_4);
+
+        assert!(script_1 <= script_1);
+        assert!(script_1 >= script_1);
+
+        assert!(script_4 > script_3);
+        assert!(script_3 > script_2);
+        assert!(script_2 > script_1);
     }
 
 	#[test]
