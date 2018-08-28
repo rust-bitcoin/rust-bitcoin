@@ -62,3 +62,20 @@ pub mod macros;
 pub mod network;
 pub mod blockdata;
 pub mod util;
+
+pub use blockdata::block::Block;
+pub use blockdata::block::BlockHeader;
+pub use blockdata::script::Script;
+pub use blockdata::transaction::Transaction;
+pub use blockdata::transaction::TxIn;
+pub use blockdata::transaction::TxOut;
+pub use blockdata::transaction::OutPoint;
+pub use blockdata::transaction::SigHashType;
+pub use network::encodable::VarInt;
+pub use network::serialize::BitcoinHash;
+pub use util::Error;
+pub use util::address::Address;
+pub use util::privkey::Privkey;
+pub use util::decimal::Decimal;
+pub use util::decimal::UDecimal;
+
