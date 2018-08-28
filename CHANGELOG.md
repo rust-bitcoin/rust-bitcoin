@@ -1,4 +1,10 @@
 
+# 0.14.1 - 2018-08-28
+
+* Reject non-compact `VarInt`s on various types
+* Expose many types at the top level of the crate
+* Add `Ord`, `PartialOrd` impls for `Script`
+
 # 0.14.0 - 2018-08-22
 
 * Add [regtest network](https://github.com/rust-bitcoin/rust-bitcoin/pull/84) to `Network` enum
