@@ -22,8 +22,11 @@ use std::str::FromStr;
 use bitcoin_bech32::{self, WitnessProgram, u5};
 use secp256k1::key::PublicKey;
 
-use blockdata::script;
+#[cfg(feature = "serde")]
+use serde;
+
 use blockdata::opcodes;
+use blockdata::script;
 use network::constants::Network;
 use network::serialize;
 use util::hash::Hash160;
@@ -311,6 +314,58 @@ impl ::std::fmt::Debug for Address {
     }
 }
 
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for Address {
+    #[inline]
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use std::fmt::{self, Formatter};
+
+        struct Visitor;
+        impl<'de> serde::de::Visitor<'de> for Visitor {
+            type Value = Address;
+
+            fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
+                formatter.write_str("a Bitcoin address")
+            }
+
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Address::from_str(v).map_err(E::custom)
+            }
+
+            fn visit_borrowed_str<E>(self, v: &'de str) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                self.visit_str(v)
+            }
+
+            fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                self.visit_str(&v)
+            }
+        }
+
+        deserializer.deserialize_str(Visitor)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for Address {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -465,5 +520,50 @@ mod tests {
         let addrstr = "bc1gmk9yu"; // empty data section
         assert!(Address::from_str(addrstr).is_err());
     }
-}
 
+    #[test]
+    #[cfg(all(feature = "serde", feature = "strason"))]
+    fn test_json_serialize() {
+        use strason::Json;
+
+        let addr = Address::from_str("132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM").unwrap();
+        let json = Json::from_serialize(&addr).unwrap();
+        assert_eq!(json.string(), Some("132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM"));
+        let into: Address = json.into_deserialize().unwrap();
+        assert_eq!(addr.to_string(), into.to_string());
+        assert_eq!(
+            into.script_pubkey(),
+            hex_script!("76a914162c5ea71c0b23f5b9022ef047c4a86470a5b07088ac")
+        );
+
+        let addr = Address::from_str("33iFwdLuRpW1uK1RTRqsoi8rR4NpDzk66k").unwrap();
+        let json = Json::from_serialize(&addr).unwrap();
+        assert_eq!(json.string(), Some("33iFwdLuRpW1uK1RTRqsoi8rR4NpDzk66k"));
+        let into: Address = json.into_deserialize().unwrap();
+        assert_eq!(addr.to_string(), into.to_string());
+        assert_eq!(
+            into.script_pubkey(),
+            hex_script!("a914162c5ea71c0b23f5b9022ef047c4a86470a5b07087")
+        );
+
+        let addr = Address::from_str("tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7").unwrap();
+        let json = Json::from_serialize(&addr).unwrap();
+        assert_eq!(json.string(), Some("tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7"));
+        let into: Address = json.into_deserialize().unwrap();
+        assert_eq!(addr.to_string(), into.to_string());
+        assert_eq!(
+            into.script_pubkey(),
+            hex_script!("00201863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262")
+        );
+
+        let addr = Address::from_str("bcrt1q2nfxmhd4n3c8834pj72xagvyr9gl57n5r94fsl").unwrap();
+        let json = Json::from_serialize(&addr).unwrap();
+        assert_eq!(json.string(), Some("bcrt1q2nfxmhd4n3c8834pj72xagvyr9gl57n5r94fsl"));
+        let into: Address = json.into_deserialize().unwrap();
+        assert_eq!(addr.to_string(), into.to_string());
+        assert_eq!(
+            into.script_pubkey(),
+            hex_script!("001454d26dddb59c7073c6a197946ea1841951fa7a74")
+        );
+    }
+}
