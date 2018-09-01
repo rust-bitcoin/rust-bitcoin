@@ -22,7 +22,7 @@ serde-decimal = ["serde", "strason"]
 [dependencies]
 bitcoin-bech32 = "0.8.0"
 byteorder = "1.1"
-rand = "0.3"
+rand = "0.4"
 rust-crypto = "0.2"
 bitcoinconsensus = { version = "0.16", optional = true }
 
