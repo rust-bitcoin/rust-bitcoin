@@ -172,24 +172,43 @@ impl Socket {
     /// Receive the next message from the peer, decoding the network header
     /// and verifying its correctness. Returns the undecoded payload.
     pub fn receive_message(&mut self) -> Result<NetworkMessage, util::Error> {
+        with_socket!(self, sock, { Socket::do_receive_message(sock, self.magic) })
+    }
+
+    /// Tries to receive message from the peer if there is some. If there is no message
+    /// waiting, returns immediately.
+    pub fn try_receive_message(&mut self) -> Result<Option<NetworkMessage>, util::Error> {
         with_socket!(self, sock, {
-            // We need a new scope since the closure in here borrows read_err,
-            // and we try to read it afterward. Letting `iter` go out fixes it.
-            let mut decoder = RawDecoder::new(sock);
-
-            let decoded: RawNetworkMessage = ConsensusDecodable::consensus_decode(&mut decoder)?;
-
-            // Then for magic (this should come before parse error, but we can't
-            // get to it if the deserialization failed). TODO restructure this
-            if decoded.magic != self.magic {
-                Err(serialize::Error::UnexpectedNetworkMagic {
-                    expected: self.magic,
-                    actual: decoded.magic,
-                }.into())
-            } else {
-                Ok(decoded.payload)
+            let buf = &mut [0; 32];
+            match sock.peek(buf) {
+                Err(reason) => Err(util::Error::Network(network::Error::Io(reason))),
+                Ok(0) => Ok(None),
+                Ok(_) => match Socket::do_receive_message(sock, self.magic) {
+                    Ok(payload) => Ok(Some(payload)),
+                    Err(reason) => Err(reason)
+                }
             }
         })
     }
+    
+    fn do_receive_message(stream: &net::TcpStream, magic: u32) -> Result<NetworkMessage, util::Error> {
+        // We need a new scope since the closure in here borrows read_err,
+        // and we try to read it afterward. Letting `iter` go out fixes it.
+        let mut decoder = RawDecoder::new(stream);
+
+        let decoded: RawNetworkMessage = ConsensusDecodable::consensus_decode(&mut decoder)?;
+
+        // Then for magic (this should come before parse error, but we can't
+        // get to it if the deserialization failed). TODO restructure this
+        if decoded.magic != magic {
+            Err(serialize::Error::UnexpectedNetworkMagic {
+                expected: magic,
+                actual: decoded.magic,
+            }.into())
+        } else {
+            Ok(decoded.payload)
+        }
+    }
+    
 }
 
