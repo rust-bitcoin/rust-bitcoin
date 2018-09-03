@@ -25,11 +25,9 @@ use std::error;
 pub mod constants;
 pub mod consensus_params;
 pub mod encodable;
-pub mod socket;
 pub mod serialize;
 
 pub mod address;
-pub mod listener;
 pub mod message;
 pub mod message_blockdata;
 pub mod message_network;
