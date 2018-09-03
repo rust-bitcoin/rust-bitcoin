@@ -23,7 +23,6 @@ use std::io;
 use std::error;
 
 pub mod constants;
-pub mod consensus_params;
 pub mod encodable;
 pub mod serialize;
 
