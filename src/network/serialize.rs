@@ -30,7 +30,6 @@ use bitcoin_bech32;
 
 use network::encodable::{ConsensusDecodable, ConsensusEncodable};
 use util::base58;
-use util::hash::Sha256dHash;
 
 /// Serialization error
 #[derive(Debug)]
@@ -155,19 +154,6 @@ impl From<bitcoin_bech32::Error> for Error {
 impl From<io::Error> for Error {
     fn from(error: io::Error) -> Self {
         Error::Io(error)
-    }
-}
-
-/// Objects which are referred to by hash
-pub trait BitcoinHash {
-    /// Produces a Sha256dHash which can be used to refer to the object
-    fn bitcoin_hash(&self) -> Sha256dHash;
-}
-
-impl BitcoinHash for Vec<u8> {
-    #[inline]
-    fn bitcoin_hash(&self) -> Sha256dHash {
-        Sha256dHash::from_data(&self[..])
     }
 }
 

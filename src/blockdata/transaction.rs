@@ -28,10 +28,10 @@ use std::default::Default;
 use std::fmt;
 #[cfg(feature="bitcoinconsensus")] use std::collections::HashMap;
 
-use util::hash::Sha256dHash;
+use util::hash::{BitcoinHash, Sha256dHash};
 #[cfg(feature="bitcoinconsensus")] use blockdata::script;
 use blockdata::script::Script;
-use network::serialize::{self, serialize, BitcoinHash, SimpleEncoder, SimpleDecoder};
+use network::serialize::{self, serialize, SimpleEncoder, SimpleDecoder};
 use network::encodable::{ConsensusEncodable, ConsensusDecodable, VarInt};
 
 /// A reference to a transaction output
@@ -499,11 +499,10 @@ mod tests {
     use super::{Transaction, TxIn};
 
     use blockdata::script::Script;
-    use network::serialize::BitcoinHash;
     #[cfg(all(feature = "serde", feature = "strason"))]
     use network::serialize::serialize;
     use network::serialize::deserialize;
-    use util::hash::Sha256dHash;
+    use util::hash::{BitcoinHash, Sha256dHash};
     use util::misc::hex_bytes;
 
     #[test]

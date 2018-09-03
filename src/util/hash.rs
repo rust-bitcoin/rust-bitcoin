@@ -20,7 +20,6 @@ use std::cmp::min;
 use std::default::Default;
 use std::error;
 use std::fmt;
-use std::io::Cursor;
 use std::mem;
 #[cfg(feature = "serde")] use serde;
 
@@ -29,7 +28,7 @@ use crypto::digest::Digest;
 use crypto::ripemd160::Ripemd160;
 
 use network::encodable::{ConsensusDecodable, ConsensusEncodable};
-use network::serialize::{self, SimpleEncoder, RawEncoder, BitcoinHash};
+use network::serialize::{self, SimpleEncoder};
 use util::uint::Uint256;
 
 #[cfg(feature="fuzztarget")]      use util::sha2::Sha256;
@@ -462,10 +461,10 @@ pub fn bitcoin_merkle_root(data: Vec<Sha256dHash>) -> Sha256dHash {
     for idx in 0..((data.len() + 1) / 2) {
         let idx1 = 2 * idx;
         let idx2 = min(idx1 + 1, data.len() - 1);
-        let mut encoder = RawEncoder::new(Cursor::new(vec![]));
+        let mut encoder = Sha256dEncoder::new();
         data[idx1].consensus_encode(&mut encoder).unwrap();
         data[idx2].consensus_encode(&mut encoder).unwrap();
-        next.push(encoder.into_inner().into_inner().bitcoin_hash());
+        next.push(encoder.into_hash());
     }
     bitcoin_merkle_root(next)
 }
@@ -482,6 +481,11 @@ impl <T: BitcoinHash> MerkleRoot for Vec<T> {
     }
 }
 
+/// Objects which are referred to by hash
+pub trait BitcoinHash {
+    /// Produces a Sha256dHash which can be used to refer to the object
+    fn bitcoin_hash(&self) -> Sha256dHash;
+}
 
 #[cfg(test)]
 mod tests {

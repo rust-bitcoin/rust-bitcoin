@@ -143,9 +143,10 @@ mod test {
     use hex::decode as hex_decode;
 
     use network::constants::Network;
-    use network::serialize::{BitcoinHash, serialize};
+    use network::serialize::serialize;
     use blockdata::constants::{genesis_block, bitcoin_genesis_tx};
     use blockdata::constants::{MAX_SEQUENCE, COIN_VALUE};
+    use util::hash::BitcoinHash;
 
     #[test]
     fn bitcoin_genesis_first_transaction() {
