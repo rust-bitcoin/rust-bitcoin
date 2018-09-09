@@ -9,6 +9,9 @@ pub use self::error::Error;
 
 pub mod raw;
 
+mod map;
+pub use self::map::Map;
+
 #[cfg(test)]
 mod tests {
     use consensus::encode::{deserialize, serialize};
