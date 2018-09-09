@@ -13,3 +13,8 @@ pub trait Map {
     /// Attempt to merge with another key-value map of the same type.
     fn merge(&mut self, other: Self) -> Result<(), psbt::Error>;
 }
+
+// place at end to pick up macros
+mod global;
+
+pub use self::global::Global;
