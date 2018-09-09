@@ -15,7 +15,7 @@ mod macros;
 pub mod serialize;
 
 mod map;
-pub use self::map::{Map, Global, Output};
+pub use self::map::{Map, Global, Input, Output};
 
 #[cfg(test)]
 mod tests {
