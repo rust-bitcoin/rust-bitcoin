@@ -15,18 +15,71 @@ mod macros;
 pub mod serialize;
 
 mod map;
-pub use self::map::{Map, Global};
+pub use self::map::{Map, Global, Output};
 
 #[cfg(test)]
 mod tests {
     use bitcoin_hashes::hex::FromHex;
     use bitcoin_hashes::sha256d;
 
+    use std::collections::HashMap;
+
+    use hex::decode as hex_decode;
+
+    use secp256k1::Secp256k1;
+
     use blockdata::script::Script;
     use blockdata::transaction::{Transaction, TxIn, TxOut, OutPoint};
-    use consensus::encode::{deserialize, serialize};
-    use util::psbt::map::Global;
+    use network::constants::Network::Bitcoin;
+    use consensus::encode::{deserialize, serialize, serialize_hex};
+    use util::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint};
+    use util::key::PublicKey;
+    use util::psbt::map::{Global, Output};
     use util::psbt::raw;
+
+    #[test]
+    fn serialize_then_deserialize_output() {
+        let secp = &Secp256k1::new();
+        let seed = hex_decode("000102030405060708090a0b0c0d0e0f").unwrap();
+
+        let mut hd_keypaths: HashMap<PublicKey, (Fingerprint, DerivationPath)> = Default::default();
+
+        let mut sk: ExtendedPrivKey = ExtendedPrivKey::new_master(Bitcoin, &seed).unwrap();
+
+        let fprint: Fingerprint = sk.fingerprint(&secp);
+
+        let dpath: Vec<ChildNumber> = vec![
+            ChildNumber::from_normal_idx(0).unwrap(),
+            ChildNumber::from_normal_idx(1).unwrap(),
+            ChildNumber::from_normal_idx(2).unwrap(),
+            ChildNumber::from_normal_idx(4).unwrap(),
+            ChildNumber::from_normal_idx(42).unwrap(),
+            ChildNumber::from_hardened_idx(69).unwrap(),
+            ChildNumber::from_normal_idx(420).unwrap(),
+            ChildNumber::from_normal_idx(31337).unwrap(),
+        ];
+
+        sk = sk.derive_priv(secp, &dpath).unwrap();
+
+        let pk: ExtendedPubKey = ExtendedPubKey::from_private(&secp, &sk);
+
+        hd_keypaths.insert(pk.public_key, (fprint, dpath.into()));
+
+        let expected: Output = Output {
+            redeem_script: Some(hex_script!(
+                "76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac"
+            )),
+            witness_script: Some(hex_script!(
+                "a9143545e6e33b832c47050f24d3eeb93c9c03948bc787"
+            )),
+            hd_keypaths: hd_keypaths,
+            ..Default::default()
+        };
+
+        let actual: Output = deserialize(&serialize(&expected)).unwrap();
+
+        assert_eq!(expected, actual);
+    }
 
     #[test]
     fn serialize_then_deserialize_global() {

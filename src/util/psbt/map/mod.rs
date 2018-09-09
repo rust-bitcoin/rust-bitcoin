@@ -16,5 +16,7 @@ pub trait Map {
 
 // place at end to pick up macros
 mod global;
+mod output;
 
 pub use self::global::Global;
+pub use self::output::Output;

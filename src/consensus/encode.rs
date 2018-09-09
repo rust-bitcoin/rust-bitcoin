@@ -518,6 +518,7 @@ impl_array!(8);
 impl_array!(12);
 impl_array!(16);
 impl_array!(32);
+impl_array!(33);
 
 impl<S: Encoder, T: Encodable<S>> Encodable<S> for [T] {
     #[inline]
