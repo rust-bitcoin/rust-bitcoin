@@ -1,4 +1,8 @@
 
+# 0.14.2 - 2018-09-11
+
+* Add serde support for `Address`
+
 # 0.14.1 - 2018-08-28
 
 * Reject non-compact `VarInt`s on various types
