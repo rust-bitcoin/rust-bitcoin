@@ -27,7 +27,7 @@ use util::base58;
 
 #[derive(Clone, PartialEq, Eq)]
 /// A Bitcoin ECDSA private key
-pub struct Privkey {
+pub struct PrivateKey {
     /// Whether this private key represents a compressed address
     pub compressed: bool,
     /// The network on which this key should be used
@@ -36,11 +36,11 @@ pub struct Privkey {
     pub key: SecretKey
 }
 
-impl Privkey {
-    /// Creates a `Privkey` from a raw secp256k1 secret key
+impl PrivateKey {
+    /// Creates a `PrivateKey` from a raw secp256k1 secret key
     #[inline]
-    pub fn from_secret_key(key: SecretKey, compressed: bool, network: Network) -> Privkey {
-        Privkey {
+    pub fn from_secret_key(key: SecretKey, compressed: bool, network: Network) -> PrivateKey {
+        PrivateKey {
             compressed: compressed,
             network: network,
             key: key,
@@ -94,7 +94,7 @@ impl Privkey {
     }
 }
 
-impl Display for Privkey {
+impl Display for PrivateKey {
     fn fmt(&self, fmt: &mut Formatter) -> fmt::Result {
         let mut ret = [0; 34];
         ret[0] = match self.network {
@@ -112,10 +112,10 @@ impl Display for Privkey {
     }
 }
 
-impl FromStr for Privkey {
+impl FromStr for PrivateKey {
     type Err = serialize::Error;
 
-    fn from_str(s: &str) -> Result<Privkey, serialize::Error> {
+    fn from_str(s: &str) -> Result<PrivateKey, serialize::Error> {
         let data = base58::from_check(s)?;
 
         let compressed = match data.len() {
@@ -134,7 +134,7 @@ impl FromStr for Privkey {
         let key = SecretKey::from_slice(&secp, &data[1..33])
             .map_err(|_| base58::Error::Other("Secret key out of range".to_owned()))?;
 
-        Ok(Privkey {
+        Ok(PrivateKey {
             compressed: compressed,
             network: network,
             key: key
@@ -144,7 +144,7 @@ impl FromStr for Privkey {
 
 #[cfg(test)]
 mod tests {
-    use super::Privkey;
+    use super::PrivateKey;
     use secp256k1::Secp256k1;
     use std::str::FromStr;
     use network::constants::Network::Testnet;
@@ -153,7 +153,7 @@ mod tests {
     #[test]
     fn test_key_derivation() {
         // testnet compressed
-        let sk = Privkey::from_str("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
+        let sk = PrivateKey::from_str("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
         assert_eq!(sk.network(), Testnet);
         assert_eq!(sk.is_compressed(), true);
         assert_eq!(&sk.to_string(), "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy");
@@ -163,7 +163,7 @@ mod tests {
         assert_eq!(&pk.to_string(), "mqwpxxvfv3QbM8PU8uBx2jaNt9btQqvQNx");
 
         // mainnet uncompressed
-        let sk = Privkey::from_str("5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3").unwrap();
+        let sk = PrivateKey::from_str("5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3").unwrap();
         assert_eq!(sk.network(), Bitcoin);
         assert_eq!(sk.is_compressed(), false);
         assert_eq!(&sk.to_string(), "5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3");

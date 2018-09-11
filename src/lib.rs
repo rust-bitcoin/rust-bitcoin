@@ -75,7 +75,7 @@ pub use network::encodable::VarInt;
 pub use network::serialize::BitcoinHash;
 pub use util::Error;
 pub use util::address::Address;
-pub use util::privkey::Privkey;
+pub use util::privkey::PrivateKey;
 pub use util::decimal::Decimal;
 pub use util::decimal::UDecimal;
 
