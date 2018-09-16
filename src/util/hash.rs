@@ -20,14 +20,14 @@ use std::cmp::min;
 use std::default::Default;
 use std::error;
 use std::fmt;
+use std::io::{self, Write};
 use std::mem;
 #[cfg(feature = "serde")] use serde;
 
-use byteorder::{LittleEndian, WriteBytesExt};
 use crypto::digest::Digest;
 use crypto::ripemd160::Ripemd160;
 
-use consensus::encode::{self, Encodable, Decodable, Encoder};
+use consensus::encode::{Encodable, Decodable};
 use util::uint::Uint256;
 
 #[cfg(feature="fuzztarget")]      use util::sha2::Sha256;
@@ -106,61 +106,13 @@ impl Sha256dEncoder {
     }
 }
 
-impl Encoder for Sha256dEncoder {
-    fn emit_u64(&mut self, v: u64) -> Result<(), encode::Error> {
-        let mut data = [0; 8];
-        (&mut data[..]).write_u64::<LittleEndian>(v).unwrap();
-        self.0.input(&data);
-        Ok(())
+impl Write for Sha256dEncoder {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        self.0.input(buf);
+        Ok(buf.len())
     }
 
-    fn emit_u32(&mut self, v: u32) -> Result<(), encode::Error> {
-        let mut data = [0; 4];
-        (&mut data[..]).write_u32::<LittleEndian>(v).unwrap();
-        self.0.input(&data);
-        Ok(())
-    }
-
-    fn emit_u16(&mut self, v: u16) -> Result<(), encode::Error> {
-        let mut data = [0; 2];
-        (&mut data[..]).write_u16::<LittleEndian>(v).unwrap();
-        self.0.input(&data);
-        Ok(())
-    }
-
-    fn emit_i64(&mut self, v: i64) -> Result<(), encode::Error> {
-        let mut data = [0; 8];
-        (&mut data[..]).write_i64::<LittleEndian>(v).unwrap();
-        self.0.input(&data);
-        Ok(())
-    }
-
-    fn emit_i32(&mut self, v: i32) -> Result<(), encode::Error> {
-        let mut data = [0; 4];
-        (&mut data[..]).write_i32::<LittleEndian>(v).unwrap();
-        self.0.input(&data);
-        Ok(())
-    }
-
-    fn emit_i16(&mut self, v: i16) -> Result<(), encode::Error> {
-        let mut data = [0; 2];
-        (&mut data[..]).write_i16::<LittleEndian>(v).unwrap();
-        self.0.input(&data);
-        Ok(())
-    }
-
-    fn emit_i8(&mut self, v: i8) -> Result<(), encode::Error> {
-        self.0.input(&[v as u8]);
-        Ok(())
-    }
-
-    fn emit_u8(&mut self, v: u8) -> Result<(), encode::Error> {
-        self.0.input(&[v]);
-        Ok(())
-    }
-
-    fn emit_bool(&mut self, v: bool) -> Result<(), encode::Error> {
-        self.0.input(&[if v {1} else {0}]);
+    fn flush(&mut self) -> io::Result<()> {
         Ok(())
     }
 }
