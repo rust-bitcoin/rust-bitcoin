@@ -23,8 +23,6 @@ use std::io;
 use std::error;
 
 pub mod constants;
-pub mod encodable;
-pub mod serialize;
 
 pub mod address;
 pub mod message;

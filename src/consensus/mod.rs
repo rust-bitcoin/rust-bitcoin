@@ -18,4 +18,8 @@
 //! conform to Bitcoin consensus.
 //!
 
+pub mod encode;
 pub mod params;
+
+pub use self::encode::{Encodable, Decodable, Encoder, Decoder, serialize, deserialize};
+pub use self::params::Params;

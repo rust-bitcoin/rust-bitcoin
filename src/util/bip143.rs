@@ -21,7 +21,7 @@
 
 use blockdata::script::Script;
 use blockdata::transaction::{Transaction, TxIn};
-use network::encodable::ConsensusEncodable;
+use consensus::encode::Encodable;
 use util::hash::{Sha256dHash, Sha256dEncoder};
 
 /// Parts of a sighash which are common across inputs or signatures, and which are
@@ -101,7 +101,7 @@ impl SighashComponents {
 #[cfg(test)]
 mod tests {
     use blockdata::transaction::Transaction;
-    use network::serialize::deserialize;
+    use consensus::encode::deserialize;
     use util::misc::hex_bytes;
 
     use super::*;

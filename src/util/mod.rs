@@ -36,7 +36,7 @@ use std::{error, fmt};
 use secp256k1;
 
 use network;
-use network::serialize;
+use consensus::encode;
 
 /// A trait which allows numbers to act as fixed-size bit arrays
 pub trait BitArray {
@@ -65,8 +65,8 @@ pub trait BitArray {
 pub enum Error {
     /// secp-related error
     Secp256k1(secp256k1::Error),
-    /// Serialization error
-    Serialize(serialize::Error),
+    /// Encoding error
+    Encode(encode::Error),
     /// Network error
     Network(network::Error),
     /// The header hash is not below the target
@@ -79,7 +79,7 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Error::Secp256k1(ref e) => fmt::Display::fmt(e, f),
-            Error::Serialize(ref e) => fmt::Display::fmt(e, f),
+            Error::Encode(ref e) => fmt::Display::fmt(e, f),
             Error::Network(ref e) => fmt::Display::fmt(e, f),
             Error::SpvBadProofOfWork | Error::SpvBadTarget => f.write_str(error::Error::description(self)),
         }
@@ -90,7 +90,7 @@ impl error::Error for Error {
     fn cause(&self) -> Option<&error::Error> {
         match *self {
             Error::Secp256k1(ref e) => Some(e),
-            Error::Serialize(ref e) => Some(e),
+            Error::Encode(ref e) => Some(e),
             Error::Network(ref e) => Some(e),
             Error::SpvBadProofOfWork | Error::SpvBadTarget => None
         }
@@ -99,7 +99,7 @@ impl error::Error for Error {
     fn description(&self) -> &str {
         match *self {
             Error::Secp256k1(ref e) => e.description(),
-            Error::Serialize(ref e) => e.description(),
+            Error::Encode(ref e) => e.description(),
             Error::Network(ref e) => e.description(),
             Error::SpvBadProofOfWork => "target correct but not attained",
             Error::SpvBadTarget => "target incorrect",
@@ -115,9 +115,9 @@ impl From<secp256k1::Error> for Error {
 }
 
 #[doc(hidden)]
-impl From<serialize::Error> for Error {
-    fn from(e: serialize::Error) -> Error {
-        Error::Serialize(e)
+impl From<encode::Error> for Error {
+    fn from(e: encode::Error) -> Error {
+        Error::Encode(e)
     }
 }
 

@@ -84,7 +84,7 @@ mod tests {
 
     use hex::decode as hex_decode;
 
-    use network::serialize::{deserialize, serialize};
+    use consensus::encode::{deserialize, serialize};
 
     #[test]
     fn version_message_test() {
@@ -103,6 +103,6 @@ mod tests {
         assert_eq!(real_decode.start_height, 302892);
         assert_eq!(real_decode.relay, true);
 
-        assert_eq!(serialize(&real_decode).ok(), Some(from_sat));
+        assert_eq!(serialize(&real_decode), from_sat);
     }
 }

@@ -27,8 +27,7 @@ use byteorder::{LittleEndian, WriteBytesExt};
 use crypto::digest::Digest;
 use crypto::ripemd160::Ripemd160;
 
-use network::encodable::{ConsensusDecodable, ConsensusEncodable};
-use network::serialize::{self, SimpleEncoder};
+use consensus::encode::{self, Encodable, Decodable, Encoder};
 use util::uint::Uint256;
 
 #[cfg(feature="fuzztarget")]      use util::sha2::Sha256;
@@ -107,60 +106,60 @@ impl Sha256dEncoder {
     }
 }
 
-impl SimpleEncoder for Sha256dEncoder {
-    fn emit_u64(&mut self, v: u64) -> Result<(), serialize::Error> {
+impl Encoder for Sha256dEncoder {
+    fn emit_u64(&mut self, v: u64) -> Result<(), encode::Error> {
         let mut data = [0; 8];
         (&mut data[..]).write_u64::<LittleEndian>(v).unwrap();
         self.0.input(&data);
         Ok(())
     }
 
-    fn emit_u32(&mut self, v: u32) -> Result<(), serialize::Error> {
+    fn emit_u32(&mut self, v: u32) -> Result<(), encode::Error> {
         let mut data = [0; 4];
         (&mut data[..]).write_u32::<LittleEndian>(v).unwrap();
         self.0.input(&data);
         Ok(())
     }
 
-    fn emit_u16(&mut self, v: u16) -> Result<(), serialize::Error> {
+    fn emit_u16(&mut self, v: u16) -> Result<(), encode::Error> {
         let mut data = [0; 2];
         (&mut data[..]).write_u16::<LittleEndian>(v).unwrap();
         self.0.input(&data);
         Ok(())
     }
 
-    fn emit_i64(&mut self, v: i64) -> Result<(), serialize::Error> {
+    fn emit_i64(&mut self, v: i64) -> Result<(), encode::Error> {
         let mut data = [0; 8];
         (&mut data[..]).write_i64::<LittleEndian>(v).unwrap();
         self.0.input(&data);
         Ok(())
     }
 
-    fn emit_i32(&mut self, v: i32) -> Result<(), serialize::Error> {
+    fn emit_i32(&mut self, v: i32) -> Result<(), encode::Error> {
         let mut data = [0; 4];
         (&mut data[..]).write_i32::<LittleEndian>(v).unwrap();
         self.0.input(&data);
         Ok(())
     }
 
-    fn emit_i16(&mut self, v: i16) -> Result<(), serialize::Error> {
+    fn emit_i16(&mut self, v: i16) -> Result<(), encode::Error> {
         let mut data = [0; 2];
         (&mut data[..]).write_i16::<LittleEndian>(v).unwrap();
         self.0.input(&data);
         Ok(())
     }
 
-    fn emit_i8(&mut self, v: i8) -> Result<(), serialize::Error> {
+    fn emit_i8(&mut self, v: i8) -> Result<(), encode::Error> {
         self.0.input(&[v as u8]);
         Ok(())
     }
 
-    fn emit_u8(&mut self, v: u8) -> Result<(), serialize::Error> {
+    fn emit_u8(&mut self, v: u8) -> Result<(), encode::Error> {
         self.0.input(&[v]);
         Ok(())
     }
 
-    fn emit_bool(&mut self, v: bool) -> Result<(), serialize::Error> {
+    fn emit_bool(&mut self, v: bool) -> Result<(), encode::Error> {
         self.0.input(&[if v {1} else {0}]);
         Ok(())
     }
@@ -355,9 +354,9 @@ impl serde::Serialize for Sha256dHash {
     /// Note that this outputs hashes as big endian hex numbers, so this should be
     /// used only for user-facing stuff. Internal and network serialization is
     /// little-endian and should be done using the consensus
-    /// [`ConsensusEncodable`][1] interface.
+    /// [`Encodable`][1] interface.
     ///
-    /// [1]: ../../network/encodable/trait.ConsensusEncodable.html
+    /// [1]: ../../network/encodable/trait.Encodable.html
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
@@ -492,8 +491,8 @@ mod tests {
     #[cfg(all(feature = "serde", feature = "strason"))]
     use strason::Json;
 
-    use network::encodable::{ConsensusEncodable, VarInt};
-    use network::serialize::{serialize, deserialize};
+    use consensus::encode::{Encodable, VarInt};
+    use consensus::encode::{serialize, deserialize};
     use util::uint::{Uint128, Uint256};
     use super::*;
 
@@ -545,7 +544,7 @@ mod tests {
         let test = vec![true, false, true, true, false];
         let mut enc = Sha256dEncoder::new();
         assert!(test.consensus_encode(&mut enc).is_ok());
-        assert_eq!(enc.into_hash(), Sha256dHash::from_data(&serialize(&test).unwrap()));
+        assert_eq!(enc.into_hash(), Sha256dHash::from_data(&serialize(&test)));
 
         macro_rules! array_encode_test (
             ($ty:ty) => ({
@@ -553,7 +552,7 @@ mod tests {
                 let test: [$ty; 1000] = [1; 1000];
                 let mut enc = Sha256dEncoder::new();
                 assert!((&test[..]).consensus_encode(&mut enc).is_ok());
-                assert_eq!(enc.into_hash(), Sha256dHash::from_data(&serialize(&test[..]).unwrap()));
+                assert_eq!(enc.into_hash(), Sha256dHash::from_data(&serialize(&test[..])));
 
                 // try doing it just one object at a time
                 let mut enc = Sha256dEncoder::new();
@@ -561,7 +560,7 @@ mod tests {
                 for obj in &test[..] {
                     assert!(obj.consensus_encode(&mut enc).is_ok());
                 }
-                assert_eq!(enc.into_hash(), Sha256dHash::from_data(&serialize(&test[..]).unwrap()));
+                assert_eq!(enc.into_hash(), Sha256dHash::from_data(&serialize(&test[..])));
             })
         );
 
@@ -578,7 +577,7 @@ mod tests {
     #[test]
     fn test_consenus_encode_roundtrip() {
         let hash = Sha256dHash::from_data(&[]);
-        let serial = serialize(&hash).unwrap();
+        let serial = serialize(&hash);
         let deserial = deserialize(&serial).unwrap();
         assert_eq!(hash, deserial);
     }

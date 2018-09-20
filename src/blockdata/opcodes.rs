@@ -25,8 +25,8 @@
 // Heavy stick to translate between opcode types
 use std::mem::transmute;
 
-use network::serialize::{self, SimpleDecoder, SimpleEncoder};
-use network::encodable::{ConsensusDecodable, ConsensusEncodable};
+use consensus::encode::{self, Decoder, Encoder};
+use consensus::encode::{Decodable, Encodable};
 
 // Note: I am deliberately not implementing PartialOrd or Ord on the
 //       opcode enum. If you want to check ranges of opcodes, etc.,
@@ -606,16 +606,16 @@ impl From<u8> for All {
 
 display_from_debug!(All);
 
-impl<D: SimpleDecoder> ConsensusDecodable<D> for All {
+impl<D: Decoder> Decodable<D> for All {
     #[inline]
-    fn consensus_decode(d: &mut D) -> Result<All, serialize::Error> {
+    fn consensus_decode(d: &mut D) -> Result<All, encode::Error> {
       Ok(All::from(d.read_u8()?))
     }
 }
 
-impl<S: SimpleEncoder> ConsensusEncodable<S> for All {
+impl<S: Encoder> Encodable<S> for All {
     #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), serialize::Error> {
+    fn consensus_encode(&self, s: &mut S) -> Result<(), encode::Error> {
       s.emit_u8(*self as u8)
     }
 }

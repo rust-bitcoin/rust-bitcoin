@@ -18,10 +18,10 @@
 
 use blockdata::opcodes;
 use util::iter::Pairable;
-use network::serialize;
+use consensus::encode;
 
 /// Convert a hexadecimal-encoded string to its corresponding bytes
-pub fn hex_bytes(s: &str) -> Result<Vec<u8>, serialize::Error> {
+pub fn hex_bytes(s: &str) -> Result<Vec<u8>, encode::Error> {
     let mut v = vec![];
     let mut iter = s.chars().pair();
     // Do the parsing
@@ -29,15 +29,15 @@ pub fn hex_bytes(s: &str) -> Result<Vec<u8>, serialize::Error> {
         if e.is_err() { e }
         else {
             match (f.to_digit(16), s.to_digit(16)) {
-                (None, _) => Err(serialize::Error::UnexpectedHexDigit(f)),
-                (_, None) => Err(serialize::Error::UnexpectedHexDigit(s)),
+                (None, _) => Err(encode::Error::UnexpectedHexDigit(f)),
+                (_, None) => Err(encode::Error::UnexpectedHexDigit(s)),
                 (Some(f), Some(s)) => { v.push((f * 0x10 + s) as u8); Ok(()) }
             }
         }
     )?;
     // Check that there was no remainder
     match iter.remainder() {
-        Some(_) => Err(serialize::Error::ParseFailed("hexstring of odd length")),
+        Some(_) => Err(encode::Error::ParseFailed("hexstring of odd length")),
         None => Ok(v)
     }
 }

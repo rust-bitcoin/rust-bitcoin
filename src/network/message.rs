@@ -28,18 +28,18 @@ use blockdata::transaction;
 use network::address::Address;
 use network::message_network;
 use network::message_blockdata;
-use network::encodable::{ConsensusDecodable, ConsensusEncodable};
-use network::encodable::CheckedData;
-use network::serialize::{self, serialize, RawDecoder, SimpleEncoder, SimpleDecoder};
+use consensus::encode::{Decodable, Encodable};
+use consensus::encode::CheckedData;
+use consensus::encode::{self, serialize, Encoder, Decoder};
 use util;
 
 /// Serializer for command string
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct CommandString(pub String);
 
-impl<S: SimpleEncoder> ConsensusEncodable<S> for CommandString {
+impl<S: Encoder> Encodable<S> for CommandString {
     #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), serialize::Error> {
+    fn consensus_encode(&self, s: &mut S) -> Result<(), encode::Error> {
         let &CommandString(ref inner_str) = self;
         let mut rawbytes = [0u8; 12];
         let strbytes = inner_str.as_bytes();
@@ -53,10 +53,10 @@ impl<S: SimpleEncoder> ConsensusEncodable<S> for CommandString {
     }
 }
 
-impl<D: SimpleDecoder> ConsensusDecodable<D> for CommandString {
+impl<D: Decoder> Decodable<D> for CommandString {
     #[inline]
-    fn consensus_decode(d: &mut D) -> Result<CommandString, serialize::Error> {
-        let rawbytes: [u8; 12] = ConsensusDecodable::consensus_decode(d)?;
+    fn consensus_decode(d: &mut D) -> Result<CommandString, encode::Error> {
+        let rawbytes: [u8; 12] = Decodable::consensus_decode(d)?;
         let rv = iter::FromIterator::from_iter(rawbytes.iter().filter_map(|&u| if u > 0 { Some(u as char) } else { None }));
         Ok(CommandString(rv))
     }
@@ -146,57 +146,56 @@ impl RawNetworkMessage {
     }
 }
 
-impl<S: SimpleEncoder> ConsensusEncodable<S> for RawNetworkMessage {
-    fn consensus_encode(&self, s: &mut S) -> Result<(), serialize::Error> {
+impl<S: Encoder> Encodable<S> for RawNetworkMessage {
+    fn consensus_encode(&self, s: &mut S) -> Result<(), encode::Error> {
         self.magic.consensus_encode(s)?;
         CommandString(self.command()).consensus_encode(s)?;
         CheckedData(match self.payload {
             NetworkMessage::Version(ref dat) => serialize(dat),
-            NetworkMessage::Verack           => Ok(vec![]),
             NetworkMessage::Addr(ref dat)    => serialize(dat),
             NetworkMessage::Inv(ref dat)     => serialize(dat),
             NetworkMessage::GetData(ref dat) => serialize(dat),
             NetworkMessage::NotFound(ref dat) => serialize(dat),
             NetworkMessage::GetBlocks(ref dat) => serialize(dat),
             NetworkMessage::GetHeaders(ref dat) => serialize(dat),
-            NetworkMessage::MemPool          => Ok(vec![]),
             NetworkMessage::Tx(ref dat)      => serialize(dat),
             NetworkMessage::Block(ref dat)   => serialize(dat),
             NetworkMessage::Headers(ref dat) => serialize(dat),
-            NetworkMessage::GetAddr          => Ok(vec![]),
             NetworkMessage::Ping(ref dat)    => serialize(dat),
             NetworkMessage::Pong(ref dat)    => serialize(dat),
-            NetworkMessage::Alert(ref dat)    => serialize(dat)
-        }.unwrap()).consensus_encode(s)?;
-        Ok(())
+            NetworkMessage::Alert(ref dat)    => serialize(dat),
+            NetworkMessage::Verack
+            | NetworkMessage::MemPool
+            | NetworkMessage::GetAddr => vec![],
+        }).consensus_encode(s)
     }
 }
 
-impl<D: SimpleDecoder> ConsensusDecodable<D> for RawNetworkMessage {
-    fn consensus_decode(d: &mut D) -> Result<RawNetworkMessage, serialize::Error> {
-        let magic = ConsensusDecodable::consensus_decode(d)?;
-        let CommandString(cmd): CommandString= ConsensusDecodable::consensus_decode(d)?;
-        let CheckedData(raw_payload): CheckedData = ConsensusDecodable::consensus_decode(d)?;
+impl<D: Decoder> Decodable<D> for RawNetworkMessage {
+    fn consensus_decode(d: &mut D) -> Result<RawNetworkMessage, encode::Error> {
+        let magic = Decodable::consensus_decode(d)?;
+        let CommandString(cmd): CommandString= Decodable::consensus_decode(d)?;
+        let CheckedData(raw_payload): CheckedData = Decodable::consensus_decode(d)?;
 
-        let mut mem_d = RawDecoder::new(Cursor::new(raw_payload));
+        let mut mem_d = Cursor::new(raw_payload);
         let payload = match &cmd[..] {
-            "version" => NetworkMessage::Version(ConsensusDecodable::consensus_decode(&mut mem_d)?),
+            "version" => NetworkMessage::Version(Decodable::consensus_decode(&mut mem_d)?),
             "verack"  => NetworkMessage::Verack,
-            "addr"    => NetworkMessage::Addr(ConsensusDecodable::consensus_decode(&mut mem_d)?),
-            "inv"     => NetworkMessage::Inv(ConsensusDecodable::consensus_decode(&mut mem_d)?),
-            "getdata" => NetworkMessage::GetData(ConsensusDecodable::consensus_decode(&mut mem_d)?),
-            "notfound" => NetworkMessage::NotFound(ConsensusDecodable::consensus_decode(&mut mem_d)?),
-            "getblocks" => NetworkMessage::GetBlocks(ConsensusDecodable::consensus_decode(&mut mem_d)?),
-            "getheaders" => NetworkMessage::GetHeaders(ConsensusDecodable::consensus_decode(&mut mem_d)?),
+            "addr"    => NetworkMessage::Addr(Decodable::consensus_decode(&mut mem_d)?),
+            "inv"     => NetworkMessage::Inv(Decodable::consensus_decode(&mut mem_d)?),
+            "getdata" => NetworkMessage::GetData(Decodable::consensus_decode(&mut mem_d)?),
+            "notfound" => NetworkMessage::NotFound(Decodable::consensus_decode(&mut mem_d)?),
+            "getblocks" => NetworkMessage::GetBlocks(Decodable::consensus_decode(&mut mem_d)?),
+            "getheaders" => NetworkMessage::GetHeaders(Decodable::consensus_decode(&mut mem_d)?),
             "mempool" => NetworkMessage::MemPool,
-            "block"   => NetworkMessage::Block(ConsensusDecodable::consensus_decode(&mut mem_d)?),
-            "headers" => NetworkMessage::Headers(ConsensusDecodable::consensus_decode(&mut mem_d)?),
+            "block"   => NetworkMessage::Block(Decodable::consensus_decode(&mut mem_d)?),
+            "headers" => NetworkMessage::Headers(Decodable::consensus_decode(&mut mem_d)?),
             "getaddr" => NetworkMessage::GetAddr,
-            "ping"    => NetworkMessage::Ping(ConsensusDecodable::consensus_decode(&mut mem_d)?),
-            "pong"    => NetworkMessage::Pong(ConsensusDecodable::consensus_decode(&mut mem_d)?),
-            "tx"      => NetworkMessage::Tx(ConsensusDecodable::consensus_decode(&mut mem_d)?),
-            "alert"   => NetworkMessage::Alert(ConsensusDecodable::consensus_decode(&mut mem_d)?),
-            _ => return Err(serialize::Error::UnrecognizedNetworkCommand(cmd)),
+            "ping"    => NetworkMessage::Ping(Decodable::consensus_decode(&mut mem_d)?),
+            "pong"    => NetworkMessage::Pong(Decodable::consensus_decode(&mut mem_d)?),
+            "tx"      => NetworkMessage::Tx(Decodable::consensus_decode(&mut mem_d)?),
+            "alert"   => NetworkMessage::Alert(Decodable::consensus_decode(&mut mem_d)?),
+            _ => return Err(encode::Error::UnrecognizedNetworkCommand(cmd)),
         };
         Ok(RawNetworkMessage {
             magic: magic,
@@ -209,12 +208,12 @@ impl<D: SimpleDecoder> ConsensusDecodable<D> for RawNetworkMessage {
 mod test {
     use super::{RawNetworkMessage, NetworkMessage, CommandString};
 
-    use network::serialize::{deserialize, serialize};
+    use consensus::encode::{deserialize, serialize};
 
     #[test]
     fn serialize_commandstring_test() {
         let cs = CommandString("Andrew".to_owned());
-        assert_eq!(serialize(&cs).ok(), Some(vec![0x41u8, 0x6e, 0x64, 0x72, 0x65, 0x77, 0, 0, 0, 0, 0, 0]));
+        assert_eq!(serialize(&cs), vec![0x41u8, 0x6e, 0x64, 0x72, 0x65, 0x77, 0, 0, 0, 0, 0, 0]);
     }
 
     #[test]
@@ -229,36 +228,36 @@ mod test {
 
     #[test]
     fn serialize_verack_test() {
-        assert_eq!(serialize(&RawNetworkMessage { magic: 0xd9b4bef9, payload: NetworkMessage::Verack }).ok(),
-                             Some(vec![0xf9, 0xbe, 0xb4, 0xd9, 0x76, 0x65, 0x72, 0x61,
-                                       0x63, 0x6B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                                       0x00, 0x00, 0x00, 0x00, 0x5d, 0xf6, 0xe0, 0xe2]));
+        assert_eq!(serialize(&RawNetworkMessage { magic: 0xd9b4bef9, payload: NetworkMessage::Verack }),
+                             vec![0xf9, 0xbe, 0xb4, 0xd9, 0x76, 0x65, 0x72, 0x61,
+                                  0x63, 0x6B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                  0x00, 0x00, 0x00, 0x00, 0x5d, 0xf6, 0xe0, 0xe2]);
     }
 
     #[test]
     fn serialize_ping_test() {
-        assert_eq!(serialize(&RawNetworkMessage { magic: 0xd9b4bef9, payload: NetworkMessage::Ping(100) }).ok(),
-                             Some(vec![0xf9, 0xbe, 0xb4, 0xd9, 0x70, 0x69, 0x6e, 0x67,
-                                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                                       0x08, 0x00, 0x00, 0x00, 0x24, 0x67, 0xf1, 0x1d,
-                                       0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]));
+        assert_eq!(serialize(&RawNetworkMessage { magic: 0xd9b4bef9, payload: NetworkMessage::Ping(100) }),
+                             vec![0xf9, 0xbe, 0xb4, 0xd9, 0x70, 0x69, 0x6e, 0x67,
+                                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                  0x08, 0x00, 0x00, 0x00, 0x24, 0x67, 0xf1, 0x1d,
+                                  0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
     }
 
 
     #[test]
     fn serialize_mempool_test() {
-        assert_eq!(serialize(&RawNetworkMessage { magic: 0xd9b4bef9, payload: NetworkMessage::MemPool }).ok(),
-                             Some(vec![0xf9, 0xbe, 0xb4, 0xd9, 0x6d, 0x65, 0x6d, 0x70,
-                                       0x6f, 0x6f, 0x6c, 0x00, 0x00, 0x00, 0x00, 0x00, 
-                                       0x00, 0x00, 0x00, 0x00, 0x5d, 0xf6, 0xe0, 0xe2]));
+        assert_eq!(serialize(&RawNetworkMessage { magic: 0xd9b4bef9, payload: NetworkMessage::MemPool }),
+                             vec![0xf9, 0xbe, 0xb4, 0xd9, 0x6d, 0x65, 0x6d, 0x70,
+                                  0x6f, 0x6f, 0x6c, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                  0x00, 0x00, 0x00, 0x00, 0x5d, 0xf6, 0xe0, 0xe2]);
     }
 
     #[test]
     fn serialize_getaddr_test() {
-        assert_eq!(serialize(&RawNetworkMessage { magic: 0xd9b4bef9, payload: NetworkMessage::GetAddr }).ok(),
-                             Some(vec![0xf9, 0xbe, 0xb4, 0xd9, 0x67, 0x65, 0x74, 0x61,
-                                       0x64, 0x64, 0x72, 0x00, 0x00, 0x00, 0x00, 0x00,
-                                       0x00, 0x00, 0x00, 0x00, 0x5d, 0xf6, 0xe0, 0xe2]));
+        assert_eq!(serialize(&RawNetworkMessage { magic: 0xd9b4bef9, payload: NetworkMessage::GetAddr }),
+                             vec![0xf9, 0xbe, 0xb4, 0xd9, 0x67, 0x65, 0x74, 0x61,
+                                  0x64, 0x64, 0x72, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                  0x00, 0x00, 0x00, 0x00, 0x5d, 0xf6, 0xe0, 0xe2]);
     }
 
 }

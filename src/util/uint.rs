@@ -20,7 +20,7 @@
 
 use std::fmt;
 
-use network::serialize;
+use consensus::encode;
 use util::BitArray;
 
 macro_rules! construct_uint {
@@ -336,19 +336,19 @@ macro_rules! construct_uint {
             }
         }
 
-        impl<S: ::network::serialize::SimpleEncoder> ::network::encodable::ConsensusEncodable<S> for $name {
+        impl<S: ::consensus::encode::Encoder> ::consensus::encode::Encodable<S> for $name {
             #[inline]
-            fn consensus_encode(&self, s: &mut S) -> Result<(), serialize::Error> {
+            fn consensus_encode(&self, s: &mut S) -> Result<(), encode::Error> {
                 let &$name(ref data) = self;
                 for word in data.iter() { word.consensus_encode(s)?; }
                 Ok(())
             }
         }
 
-        impl<D: ::network::serialize::SimpleDecoder> ::network::encodable::ConsensusDecodable<D> for $name {
-            fn consensus_decode(d: &mut D) -> Result<$name, serialize::Error> {
-                use network::encodable::ConsensusDecodable;
-                let ret: [u64; $n_words] = ConsensusDecodable::consensus_decode(d)?;
+        impl<D: ::consensus::encode::Decoder> ::consensus::encode::Decodable<D> for $name {
+            fn consensus_decode(d: &mut D) -> Result<$name, encode::Error> {
+                use consensus::encode::Decodable;
+                let ret: [u64; $n_words] = Decodable::consensus_decode(d)?;
                 Ok($name(ret))
             }
         }
@@ -385,7 +385,7 @@ impl Uint256 {
 
 #[cfg(test)]
 mod tests {
-    use network::serialize::{deserialize, serialize};
+    use consensus::encode::{deserialize, serialize};
     use util::uint::Uint256;
     use util::BitArray;
 
@@ -535,8 +535,8 @@ mod tests {
     pub fn uint256_serialize_test() {
         let start1 = Uint256([0x8C8C3EE70C644118u64, 0x0209E7378231E632, 0, 0]);
         let start2 = Uint256([0x8C8C3EE70C644118u64, 0x0209E7378231E632, 0xABCD, 0xFFFF]);
-        let serial1 = serialize(&start1).unwrap();
-        let serial2 = serialize(&start2).unwrap();
+        let serial1 = serialize(&start1);
+        let serial2 = serialize(&start2);
         let end1: Result<Uint256, _> = deserialize(&serial1);
         let end2: Result<Uint256, _> = deserialize(&serial2);
 

@@ -31,8 +31,8 @@ use crypto::digest::Digest;
 #[cfg(feature = "serde")] use serde;
 
 use blockdata::opcodes;
-use network::encodable::{ConsensusDecodable, ConsensusEncodable};
-use network::serialize::{self, SimpleDecoder, SimpleEncoder};
+use consensus::encode::{Decodable, Encodable};
+use consensus::encode::{self, Decoder, Encoder};
 use util::hash::Hash160;
 #[cfg(feature="bitcoinconsensus")] use bitcoinconsensus;
 #[cfg(feature="bitcoinconsensus")] use std::convert;
@@ -671,17 +671,17 @@ impl serde::Serialize for Script {
 }
 
 // Network serialization
-impl<S: SimpleEncoder> ConsensusEncodable<S> for Script {
+impl<S: Encoder> Encodable<S> for Script {
     #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), serialize::Error> {
+    fn consensus_encode(&self, s: &mut S) -> Result<(), encode::Error> {
         self.0.consensus_encode(s)
     }
 }
 
-impl<D: SimpleDecoder> ConsensusDecodable<D> for Script {
+impl<D: Decoder> Decodable<D> for Script {
     #[inline]
-    fn consensus_decode(d: &mut D) -> Result<Script, serialize::Error> {
-        Ok(Script(ConsensusDecodable::consensus_decode(d)?))
+    fn consensus_decode(d: &mut D) -> Result<Script, encode::Error> {
+        Ok(Script(Decodable::consensus_decode(d)?))
     }
 }
 
@@ -692,7 +692,7 @@ mod test {
     use super::*;
     use super::build_scriptint;
 
-    use network::serialize::{deserialize, serialize};
+    use consensus::encode::{deserialize, serialize};
     use blockdata::opcodes;
 
     #[test]
@@ -740,7 +740,7 @@ mod test {
         let hex_script = hex_decode("6c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52").unwrap();
         let script: Result<Script, _> = deserialize(&hex_script);
         assert!(script.is_ok());
-        assert_eq!(serialize(&script.unwrap()).ok(), Some(hex_script));
+        assert_eq!(serialize(&script.unwrap()), hex_script);
     }
 
     #[test]
