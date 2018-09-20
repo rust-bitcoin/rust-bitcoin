@@ -34,6 +34,7 @@ use util::uint::Uint256;
 
 #[cfg(feature="fuzztarget")]      use util::sha2::Sha256;
 #[cfg(not(feature="fuzztarget"))] use crypto::sha2::Sha256;
+use std::str::FromStr;
 
 /// Hex deserialization error
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -432,6 +433,13 @@ impl fmt::UpperHex for Sha256dHash {
     }
 }
 
+impl FromStr for Sha256dHash {
+    type Err = HexError;
+
+    fn from_str(s: &str) -> Result<Self, <Self as FromStr>::Err> {
+        Sha256dHash::from_hex(s)
+    }
+}
 
 /// Any collection of objects for which a merkle root makes sense to calculate
 pub trait MerkleRoot {
@@ -503,6 +511,17 @@ mod tests {
                    "56944c5d3f98413ef45cf54545538103cc9f298e0575820ad3591376e2e0f65d");
         assert_eq!(format!("{:X}", Sha256dHash::from_data(&[])),
                    "56944C5D3F98413EF45CF54545538103CC9F298E0575820AD3591376E2E0F65D");
+    }
+
+    #[test]
+    fn sha256d_from_str_parses_from_human_readable_hex() {
+
+        let human_readable_hex_tx_id = "56944c5d3f98413ef45cf54545538103cc9f298e0575820ad3591376e2e0f65d";
+
+        let from_hex = Sha256dHash::from_hex(human_readable_hex_tx_id).unwrap();
+        let from_str = human_readable_hex_tx_id.parse().unwrap();
+
+        assert_eq!(from_hex, from_str)
     }
 
     #[test]
