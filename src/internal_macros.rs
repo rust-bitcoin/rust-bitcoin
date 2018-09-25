@@ -14,20 +14,20 @@
 
 macro_rules! impl_consensus_encoding {
     ($thing:ident, $($field:ident),+) => (
-        impl<S: ::network::serialize::SimpleEncoder> ::network::encodable::ConsensusEncodable<S> for $thing {
+        impl<S: ::consensus::encode::Encoder> ::consensus::encode::Encodable<S> for $thing {
             #[inline]
-            fn consensus_encode(&self, s: &mut S) -> Result<(), ::network::serialize::Error> {
+            fn consensus_encode(&self, s: &mut S) -> Result<(), ::consensus::encode::Error> {
                 $( self.$field.consensus_encode(s)?; )+
                 Ok(())
             }
         }
 
-        impl<D: ::network::serialize::SimpleDecoder> ::network::encodable::ConsensusDecodable<D> for $thing {
+        impl<D: ::consensus::encode::Decoder> ::consensus::encode::Decodable<D> for $thing {
             #[inline]
-            fn consensus_decode(d: &mut D) -> Result<$thing, ::network::serialize::Error> {
-                use network::encodable::ConsensusDecodable;
+            fn consensus_decode(d: &mut D) -> Result<$thing, ::consensus::encode::Error> {
+                use consensus::encode::Decodable;
                 Ok($thing {
-                    $( $field: ConsensusDecodable::consensus_decode(d)?, )+
+                    $( $field: Decodable::consensus_decode(d)?, )+
                 })
             }
         }
@@ -36,18 +36,18 @@ macro_rules! impl_consensus_encoding {
 
 macro_rules! impl_newtype_consensus_encoding {
     ($thing:ident) => (
-        impl<S: ::network::serialize::SimpleEncoder> ::network::encodable::ConsensusEncodable<S> for $thing {
+        impl<S: ::consensus::encode::Encoder> ::consensus::encode::Encodable<S> for $thing {
             #[inline]
-            fn consensus_encode(&self, s: &mut S) -> Result<(), ::network::serialize::Error> {
+            fn consensus_encode(&self, s: &mut S) -> Result<(), ::consensus::encode::Error> {
                 let &$thing(ref data) = self;
                 data.consensus_encode(s)
             }
         }
 
-        impl<D: ::network::serialize::SimpleDecoder> ::network::encodable::ConsensusDecodable<D> for $thing {
+        impl<D: ::consensus::encode::Decoder> ::consensus::encode::Decodable<D> for $thing {
             #[inline]
-            fn consensus_decode(d: &mut D) -> Result<$thing, ::network::serialize::Error> {
-                Ok($thing(ConsensusDecodable::consensus_decode(d)?))
+            fn consensus_decode(d: &mut D) -> Result<$thing, ::consensus::encode::Error> {
+                Ok($thing(Decodable::consensus_decode(d)?))
             }
         }
     );

@@ -19,8 +19,8 @@
 //!
 
 use network::constants;
-use network::encodable::{ConsensusDecodable, ConsensusEncodable};
-use network::serialize::{self, SimpleDecoder, SimpleEncoder};
+use consensus::encode::{Decodable, Encodable};
+use consensus::encode::{self, Decoder, Encoder};
 use util::hash::Sha256dHash;
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -101,9 +101,9 @@ impl GetHeadersMessage {
 
 impl_consensus_encoding!(GetHeadersMessage, version, locator_hashes, stop_hash);
 
-impl<S: SimpleEncoder> ConsensusEncodable<S> for Inventory {
+impl<S: Encoder> Encodable<S> for Inventory {
     #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), serialize::Error> {
+    fn consensus_encode(&self, s: &mut S) -> Result<(), encode::Error> {
         match self.inv_type {
             InvType::Error => 0u32, 
             InvType::Transaction => 1,
@@ -115,10 +115,10 @@ impl<S: SimpleEncoder> ConsensusEncodable<S> for Inventory {
     }
 }
 
-impl<D: SimpleDecoder> ConsensusDecodable<D> for Inventory {
+impl<D: Decoder> Decodable<D> for Inventory {
     #[inline]
-    fn consensus_decode(d: &mut D) -> Result<Inventory, serialize::Error> {
-        let int_type: u32 = ConsensusDecodable::consensus_decode(d)?;
+    fn consensus_decode(d: &mut D) -> Result<Inventory, encode::Error> {
+        let int_type: u32 = Decodable::consensus_decode(d)?;
         Ok(Inventory {
             inv_type: match int_type {
                 0 => InvType::Error,
@@ -127,7 +127,7 @@ impl<D: SimpleDecoder> ConsensusDecodable<D> for Inventory {
                 // TODO do not fail here
                 _ => { panic!("bad inventory type field") }
             },
-            hash: ConsensusDecodable::consensus_decode(d)?
+            hash: Decodable::consensus_decode(d)?
         })
     }
 }
@@ -138,7 +138,7 @@ mod tests {
 
     use hex::decode as hex_decode;
 
-    use network::serialize::{deserialize, serialize};
+    use consensus::encode::{deserialize, serialize};
     use std::default::Default;
 
     #[test]
@@ -151,10 +151,10 @@ mod tests {
         let real_decode = decode.unwrap();
         assert_eq!(real_decode.version, 70002);
         assert_eq!(real_decode.locator_hashes.len(), 1);
-        assert_eq!(serialize(&real_decode.locator_hashes[0]).ok(), Some(genhash));
+        assert_eq!(serialize(&real_decode.locator_hashes[0]), genhash);
         assert_eq!(real_decode.stop_hash, Default::default());
 
-        assert_eq!(serialize(&real_decode).ok(), Some(from_sat));
+        assert_eq!(serialize(&real_decode), from_sat);
     }
 
     #[test]
@@ -167,10 +167,10 @@ mod tests {
         let real_decode = decode.unwrap();
         assert_eq!(real_decode.version, 70002);
         assert_eq!(real_decode.locator_hashes.len(), 1);
-        assert_eq!(serialize(&real_decode.locator_hashes[0]).ok(), Some(genhash));
+        assert_eq!(serialize(&real_decode.locator_hashes[0]), genhash);
         assert_eq!(real_decode.stop_hash, Default::default());
 
-        assert_eq!(serialize(&real_decode).ok(), Some(from_sat));
+        assert_eq!(serialize(&real_decode), from_sat);
     }
 }
 

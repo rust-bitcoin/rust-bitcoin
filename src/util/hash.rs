@@ -20,16 +20,14 @@ use std::cmp::min;
 use std::default::Default;
 use std::error;
 use std::fmt;
-use std::io::Cursor;
+use std::io::{self, Write};
 use std::mem;
 #[cfg(feature = "serde")] use serde;
 
-use byteorder::{LittleEndian, WriteBytesExt};
 use crypto::digest::Digest;
 use crypto::ripemd160::Ripemd160;
 
-use network::encodable::{ConsensusDecodable, ConsensusEncodable};
-use network::serialize::{self, SimpleEncoder, RawEncoder, BitcoinHash};
+use consensus::encode::{Encodable, Decodable};
 use util::uint::Uint256;
 
 #[cfg(feature="fuzztarget")]      use util::sha2::Sha256;
@@ -108,61 +106,13 @@ impl Sha256dEncoder {
     }
 }
 
-impl SimpleEncoder for Sha256dEncoder {
-    fn emit_u64(&mut self, v: u64) -> Result<(), serialize::Error> {
-        let mut data = [0; 8];
-        (&mut data[..]).write_u64::<LittleEndian>(v).unwrap();
-        self.0.input(&data);
-        Ok(())
+impl Write for Sha256dEncoder {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        self.0.input(buf);
+        Ok(buf.len())
     }
 
-    fn emit_u32(&mut self, v: u32) -> Result<(), serialize::Error> {
-        let mut data = [0; 4];
-        (&mut data[..]).write_u32::<LittleEndian>(v).unwrap();
-        self.0.input(&data);
-        Ok(())
-    }
-
-    fn emit_u16(&mut self, v: u16) -> Result<(), serialize::Error> {
-        let mut data = [0; 2];
-        (&mut data[..]).write_u16::<LittleEndian>(v).unwrap();
-        self.0.input(&data);
-        Ok(())
-    }
-
-    fn emit_i64(&mut self, v: i64) -> Result<(), serialize::Error> {
-        let mut data = [0; 8];
-        (&mut data[..]).write_i64::<LittleEndian>(v).unwrap();
-        self.0.input(&data);
-        Ok(())
-    }
-
-    fn emit_i32(&mut self, v: i32) -> Result<(), serialize::Error> {
-        let mut data = [0; 4];
-        (&mut data[..]).write_i32::<LittleEndian>(v).unwrap();
-        self.0.input(&data);
-        Ok(())
-    }
-
-    fn emit_i16(&mut self, v: i16) -> Result<(), serialize::Error> {
-        let mut data = [0; 2];
-        (&mut data[..]).write_i16::<LittleEndian>(v).unwrap();
-        self.0.input(&data);
-        Ok(())
-    }
-
-    fn emit_i8(&mut self, v: i8) -> Result<(), serialize::Error> {
-        self.0.input(&[v as u8]);
-        Ok(())
-    }
-
-    fn emit_u8(&mut self, v: u8) -> Result<(), serialize::Error> {
-        self.0.input(&[v]);
-        Ok(())
-    }
-
-    fn emit_bool(&mut self, v: bool) -> Result<(), serialize::Error> {
-        self.0.input(&[if v {1} else {0}]);
+    fn flush(&mut self) -> io::Result<()> {
         Ok(())
     }
 }
@@ -356,9 +306,9 @@ impl serde::Serialize for Sha256dHash {
     /// Note that this outputs hashes as big endian hex numbers, so this should be
     /// used only for user-facing stuff. Internal and network serialization is
     /// little-endian and should be done using the consensus
-    /// [`ConsensusEncodable`][1] interface.
+    /// [`Encodable`][1] interface.
     ///
-    /// [1]: ../../network/encodable/trait.ConsensusEncodable.html
+    /// [1]: ../../network/encodable/trait.Encodable.html
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
@@ -462,10 +412,10 @@ pub fn bitcoin_merkle_root(data: Vec<Sha256dHash>) -> Sha256dHash {
     for idx in 0..((data.len() + 1) / 2) {
         let idx1 = 2 * idx;
         let idx2 = min(idx1 + 1, data.len() - 1);
-        let mut encoder = RawEncoder::new(Cursor::new(vec![]));
+        let mut encoder = Sha256dEncoder::new();
         data[idx1].consensus_encode(&mut encoder).unwrap();
         data[idx2].consensus_encode(&mut encoder).unwrap();
-        next.push(encoder.into_inner().into_inner().bitcoin_hash());
+        next.push(encoder.into_hash());
     }
     bitcoin_merkle_root(next)
 }
@@ -482,14 +432,19 @@ impl <T: BitcoinHash> MerkleRoot for Vec<T> {
     }
 }
 
+/// Objects which are referred to by hash
+pub trait BitcoinHash {
+    /// Produces a Sha256dHash which can be used to refer to the object
+    fn bitcoin_hash(&self) -> Sha256dHash;
+}
 
 #[cfg(test)]
 mod tests {
     #[cfg(all(feature = "serde", feature = "strason"))]
     use strason::Json;
 
-    use network::encodable::{ConsensusEncodable, VarInt};
-    use network::serialize::{serialize, deserialize};
+    use consensus::encode::{Encodable, VarInt};
+    use consensus::encode::{serialize, deserialize};
     use util::uint::{Uint128, Uint256};
     use super::*;
 
@@ -541,7 +496,7 @@ mod tests {
         let test = vec![true, false, true, true, false];
         let mut enc = Sha256dEncoder::new();
         assert!(test.consensus_encode(&mut enc).is_ok());
-        assert_eq!(enc.into_hash(), Sha256dHash::from_data(&serialize(&test).unwrap()));
+        assert_eq!(enc.into_hash(), Sha256dHash::from_data(&serialize(&test)));
 
         macro_rules! array_encode_test (
             ($ty:ty) => ({
@@ -549,7 +504,7 @@ mod tests {
                 let test: [$ty; 1000] = [1; 1000];
                 let mut enc = Sha256dEncoder::new();
                 assert!((&test[..]).consensus_encode(&mut enc).is_ok());
-                assert_eq!(enc.into_hash(), Sha256dHash::from_data(&serialize(&test[..]).unwrap()));
+                assert_eq!(enc.into_hash(), Sha256dHash::from_data(&serialize(&test[..])));
 
                 // try doing it just one object at a time
                 let mut enc = Sha256dEncoder::new();
@@ -557,7 +512,7 @@ mod tests {
                 for obj in &test[..] {
                     assert!(obj.consensus_encode(&mut enc).is_ok());
                 }
-                assert_eq!(enc.into_hash(), Sha256dHash::from_data(&serialize(&test[..]).unwrap()));
+                assert_eq!(enc.into_hash(), Sha256dHash::from_data(&serialize(&test[..])));
             })
         );
 
@@ -574,7 +529,7 @@ mod tests {
     #[test]
     fn test_consenus_encode_roundtrip() {
         let hash = Sha256dHash::from_data(&[]);
-        let serial = serialize(&hash).unwrap();
+        let serial = serialize(&hash);
         let deserial = deserialize(&serial).unwrap();
         assert_eq!(hash, deserial);
     }

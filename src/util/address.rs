@@ -28,7 +28,7 @@ use serde;
 use blockdata::opcodes;
 use blockdata::script;
 use network::constants::Network;
-use network::serialize;
+use consensus::encode;
 use util::hash::Hash160;
 use util::base58;
 
@@ -246,9 +246,9 @@ impl Display for Address {
 }
 
 impl FromStr for Address {
-    type Err = serialize::Error;
+    type Err = encode::Error;
 
-    fn from_str(s: &str) -> Result<Address, serialize::Error> {
+    fn from_str(s: &str) -> Result<Address, encode::Error> {
         // bech32 (note that upper or lowercase is allowed but NOT mixed case)
         if s.starts_with("bc1") || s.starts_with("BC1") ||
            s.starts_with("tb1") || s.starts_with("TB1") ||
@@ -262,7 +262,7 @@ impl FromStr for Address {
                 _ => panic!("unknown network")
             };
             if witprog.version().to_u8() != 0 {
-                return Err(serialize::Error::UnsupportedWitnessVersion(witprog.version().to_u8()));
+                return Err(encode::Error::UnsupportedWitnessVersion(witprog.version().to_u8()));
             }
             return Ok(Address {
                 network: network,
@@ -271,14 +271,14 @@ impl FromStr for Address {
         }
 
         if s.len() > 50 {
-            return Err(serialize::Error::Base58(base58::Error::InvalidLength(s.len() * 11 / 15)));
+            return Err(encode::Error::Base58(base58::Error::InvalidLength(s.len() * 11 / 15)));
         }
 
         // Base 58
         let data = base58::from_check(s)?;
 
         if data.len() != 21 {
-            return Err(serialize::Error::Base58(base58::Error::InvalidLength(data.len())));
+            return Err(encode::Error::Base58(base58::Error::InvalidLength(data.len())));
         }
 
         let (network, payload) = match data[0] {
@@ -298,7 +298,7 @@ impl FromStr for Address {
                 Network::Testnet,
                 Payload::ScriptHash(Hash160::from(&data[1..]))
             ),
-            x   => return Err(serialize::Error::Base58(base58::Error::InvalidVersion(vec![x])))
+            x   => return Err(encode::Error::Base58(base58::Error::InvalidVersion(vec![x])))
         };
 
         Ok(Address {

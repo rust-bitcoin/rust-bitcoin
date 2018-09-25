@@ -1,10 +1,10 @@
 extern crate bitcoin;
 
 use bitcoin::blockdata::script;
-use bitcoin::network::serialize;
+use bitcoin::consensus::encode;
 
 fn do_test(data: &[u8]) {
-    let s: Result<script::Script, _> = serialize::deserialize(data);
+    let s: Result<script::Script, _> = encode::deserialize(data);
     if let Ok(script) = s {
         let _: Vec<script::Instruction> = script.iter(false).collect();
         let enforce_min: Vec<script::Instruction> = script.iter(true).collect();
@@ -31,7 +31,7 @@ fn do_test(data: &[u8]) {
             }
         }
         assert_eq!(b.into_script(), script);
-        assert_eq!(data, &serialize::serialize(&script).unwrap()[..]);
+        assert_eq!(data, &encode::serialize(&script)[..]);
     }
 }
 

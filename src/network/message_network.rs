@@ -18,10 +18,8 @@
 //! capabilities
 //!
 
-use network::constants;
 use network::address::Address;
-use network::socket::Socket;
-use util;
+use network::constants;
 
 /// Some simple messages
 
@@ -53,21 +51,26 @@ pub struct VersionMessage {
 impl VersionMessage {
     // TODO: we have fixed services and relay to 0
     /// Constructs a new `version` message
-    pub fn new(timestamp: i64, mut socket: Socket, nonce: u64, start_height: i32) -> Result<VersionMessage, util::Error> {
-        let recv_addr = socket.receiver_address()?;
-        let send_addr = socket.sender_address()?;
-
-        Ok(VersionMessage {
+    pub fn new(
+        services: u64,
+        timestamp: i64,
+        receiver: Address,
+        sender: Address,
+        nonce: u64,
+        user_agent: String,
+        start_height: i32,
+    ) -> VersionMessage {
+        VersionMessage {
             version: constants::PROTOCOL_VERSION,
-            services: socket.services,
+            services: services,
             timestamp: timestamp,
-            receiver: recv_addr,
-            sender: send_addr,
+            receiver: receiver,
+            sender: sender,
             nonce: nonce,
-            user_agent: socket.user_agent,
+            user_agent: user_agent,
             start_height: start_height,
-            relay: false
-        })
+            relay: false,
+        }
     }
 }
 
@@ -81,7 +84,7 @@ mod tests {
 
     use hex::decode as hex_decode;
 
-    use network::serialize::{deserialize, serialize};
+    use consensus::encode::{deserialize, serialize};
 
     #[test]
     fn version_message_test() {
@@ -100,9 +103,6 @@ mod tests {
         assert_eq!(real_decode.start_height, 302892);
         assert_eq!(real_decode.relay, true);
 
-        assert_eq!(serialize(&real_decode).ok(), Some(from_sat));
+        assert_eq!(serialize(&real_decode), from_sat);
     }
 }
-
-
-

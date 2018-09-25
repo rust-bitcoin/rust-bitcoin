@@ -44,7 +44,7 @@ const MAX_BITS_REGTEST: Uint256 = Uint256([
 
 #[derive(Debug, Clone)]
 /// Parameters that influence chain consensus.
-pub struct ConsensusParams {
+pub struct Params {
     /// Network for which parameters are valid.
     pub network: Network,
     /// Time when BIP16 becomes active.
@@ -73,11 +73,11 @@ pub struct ConsensusParams {
     pub no_pow_retargeting: bool,
 }
 
-impl ConsensusParams {
+impl Params {
     /// Creates parameters set for the given network.
     pub fn new(network: Network) -> Self {
         match network {
-            Network::Bitcoin => ConsensusParams {
+            Network::Bitcoin => Params {
                 network: Network::Bitcoin,
                 bip16_time: 1333238400,                 // Apr 1 2012
                 bip34_height: 227931, // 000000000000024b89b42a942fe0d9fea3bb44ab7bd1b19115dd6a759c0808b8
@@ -91,7 +91,7 @@ impl ConsensusParams {
                 allow_min_difficulty_blocks: false,
                 no_pow_retargeting: false,
             },
-            Network::Testnet => ConsensusParams {
+            Network::Testnet => Params {
                 network: Network::Testnet,
                 bip16_time: 1333238400,                 // Apr 1 2012
                 bip34_height: 21111, // 0000000023b3a96d3484e5abb3755c413e7d41500f8e2a5c3f0dd01299cd8ef8
@@ -105,7 +105,7 @@ impl ConsensusParams {
                 allow_min_difficulty_blocks: true,
                 no_pow_retargeting: false,
             },
-            Network::Regtest => ConsensusParams {
+            Network::Regtest => Params {
                 network: Network::Regtest,
                 bip16_time: 1333238400,  // Apr 1 2012
                 bip34_height: 100000000, // not activated on regtest

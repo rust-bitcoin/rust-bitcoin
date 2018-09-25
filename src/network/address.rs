@@ -22,8 +22,8 @@ use std::io;
 use std::fmt;
 use std::net::{SocketAddr, Ipv6Addr, SocketAddrV4, SocketAddrV6};
 
-use network::serialize::{self, SimpleEncoder, SimpleDecoder};
-use network::encodable::{ConsensusDecodable, ConsensusEncodable};
+use consensus::encode::{self, Encoder, Decoder};
+use consensus::encode::{Decodable, Encodable};
 
 /// A message which can be sent on the Bitcoin network
 pub struct Address {
@@ -72,22 +72,22 @@ fn addr_to_be(addr: [u16; 8]) -> [u16; 8] {
      addr[4].to_be(), addr[5].to_be(), addr[6].to_be(), addr[7].to_be()]
 }
 
-impl<S: SimpleEncoder> ConsensusEncodable<S> for Address {
+impl<S: Encoder> Encodable<S> for Address {
     #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), serialize::Error> {
+    fn consensus_encode(&self, s: &mut S) -> Result<(), encode::Error> {
         self.services.consensus_encode(s)?;
         addr_to_be(self.address).consensus_encode(s)?;
         self.port.to_be().consensus_encode(s)
     }
 }
 
-impl<D: SimpleDecoder> ConsensusDecodable<D> for Address {
+impl<D: Decoder> Decodable<D> for Address {
     #[inline]
-    fn consensus_decode(d: &mut D) -> Result<Address, serialize::Error> {
+    fn consensus_decode(d: &mut D) -> Result<Address, encode::Error> {
         Ok(Address {
-            services: ConsensusDecodable::consensus_decode(d)?,
-            address: addr_to_be(ConsensusDecodable::consensus_decode(d)?),
-            port: u16::from_be(ConsensusDecodable::consensus_decode(d)?)
+            services: Decodable::consensus_decode(d)?,
+            address: addr_to_be(Decodable::consensus_decode(d)?),
+            port: u16::from_be(Decodable::consensus_decode(d)?)
         })
     }
 }
@@ -126,7 +126,7 @@ mod test {
     use super::Address;
     use std::net::{SocketAddr, IpAddr, Ipv4Addr, Ipv6Addr};
 
-    use network::serialize::{deserialize, serialize};
+    use consensus::encode::{deserialize, serialize};
 
     #[test]
     fn serialize_address_test() {
@@ -134,9 +134,9 @@ mod test {
             services: 1,
             address: [0, 0, 0, 0, 0, 0xffff, 0x0a00, 0x0001],
             port: 8333
-        }).ok(),
-        Some(vec![1u8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                  0, 0, 0, 0xff, 0xff, 0x0a, 0, 0, 1, 0x20, 0x8d]));
+        }),
+        vec![1u8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+             0, 0, 0, 0xff, 0xff, 0x0a, 0, 0, 1, 0x20, 0x8d]);
     }
 
     #[test]

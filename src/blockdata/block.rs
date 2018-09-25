@@ -22,10 +22,9 @@
 
 use util;
 use util::Error::{SpvBadTarget, SpvBadProofOfWork};
-use util::hash::Sha256dHash;
+use util::hash::{BitcoinHash, Sha256dHash};
 use util::uint::Uint256;
-use network::encodable::VarInt;
-use network::serialize::BitcoinHash;
+use consensus::encode::VarInt;
 use network::constants::Network;
 use blockdata::transaction::Transaction;
 use blockdata::constants::max_target;
@@ -143,8 +142,8 @@ impl BlockHeader {
 
 impl BitcoinHash for BlockHeader {
     fn bitcoin_hash(&self) -> Sha256dHash {
-        use network::serialize::serialize;
-        Sha256dHash::from_data(&serialize(self).unwrap())
+        use consensus::encode::serialize;
+        Sha256dHash::from_data(&serialize(self))
     }
 }
 
@@ -163,7 +162,7 @@ mod tests {
     use hex::decode as hex_decode;
 
     use blockdata::block::{Block, BlockHeader};
-    use network::serialize::{deserialize, serialize};
+    use consensus::encode::{deserialize, serialize};
 
     #[test]
     fn block_test() {
@@ -180,15 +179,15 @@ mod tests {
         assert!(bad_decode.is_err());
         let real_decode = decode.unwrap();
         assert_eq!(real_decode.header.version, 1);
-        assert_eq!(serialize(&real_decode.header.prev_blockhash).ok(), Some(prevhash));
+        assert_eq!(serialize(&real_decode.header.prev_blockhash), prevhash);
         // [test] TODO: actually compute the merkle root
-        assert_eq!(serialize(&real_decode.header.merkle_root).ok(), Some(merkle));
+        assert_eq!(serialize(&real_decode.header.merkle_root), merkle);
         assert_eq!(real_decode.header.time, 1231965655);
         assert_eq!(real_decode.header.bits, 486604799);
         assert_eq!(real_decode.header.nonce, 2067413810);
         // [test] TODO: check the transaction data
     
-        assert_eq!(serialize(&real_decode).ok(), Some(some_block));
+        assert_eq!(serialize(&real_decode), some_block);
     }
 
     // Check testnet block 000000000000045e0b1660b6445b5e5c5ab63c9a4f956be7e1e69be04fa4497b
@@ -204,14 +203,14 @@ mod tests {
         assert!(decode.is_ok());
         let real_decode = decode.unwrap();
         assert_eq!(real_decode.header.version, 0x20000000);  // VERSIONBITS but no bits set
-        assert_eq!(serialize(&real_decode.header.prev_blockhash).ok(), Some(prevhash));
-        assert_eq!(serialize(&real_decode.header.merkle_root).ok(), Some(merkle));
+        assert_eq!(serialize(&real_decode.header.prev_blockhash), prevhash);
+        assert_eq!(serialize(&real_decode.header.merkle_root), merkle);
         assert_eq!(real_decode.header.time, 1472004949);
         assert_eq!(real_decode.header.bits, 0x1a06d450);
         assert_eq!(real_decode.header.nonce, 1879759182);
         // [test] TODO: check the transaction data
 
-        assert_eq!(serialize(&real_decode).ok(), Some(segwit_block));
+        assert_eq!(serialize(&real_decode), segwit_block);
     }
 
     #[test]

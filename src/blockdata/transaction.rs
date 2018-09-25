@@ -28,11 +28,11 @@ use std::default::Default;
 use std::fmt;
 #[cfg(feature="bitcoinconsensus")] use std::collections::HashMap;
 
-use util::hash::Sha256dHash;
+use util::hash::{BitcoinHash, Sha256dHash};
 #[cfg(feature="bitcoinconsensus")] use blockdata::script;
 use blockdata::script::Script;
-use network::serialize::{self, serialize, BitcoinHash, SimpleEncoder, SimpleDecoder};
-use network::encodable::{ConsensusEncodable, ConsensusDecodable, VarInt};
+use consensus::encode::{self, serialize, Encoder, Decoder};
+use consensus::encode::{Encodable, Decodable, VarInt};
 
 /// A reference to a transaction output
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
@@ -104,9 +104,9 @@ pub struct TxIn {
     pub sequence: u32,
     /// Witness data: an array of byte-arrays.
     /// Note that this field is *not* (de)serialized with the rest of the TxIn in
-    /// ConsensusEncodable/ConsennsusDecodable, as it is (de)serialized at the end of the full
-    /// Transaction. It *is* (de)serialized with the rest of the TxIn in other (de)serializationn
-    /// routines.
+    /// Encodable/Decodable, as it is (de)serialized at the end of the full
+    /// Transaction. It *is* (de)serialized with the rest of the TxIn in other
+    /// (de)serialization routines.
     pub witness: Vec<Vec<u8>>
 }
 serde_struct_impl!(TxIn, previous_output, script_sig, sequence, witness);
@@ -238,7 +238,7 @@ impl Transaction {
             _ => unreachable!()
         };
         // hash the result
-        let mut raw_vec = serialize(&tx).unwrap();
+        let mut raw_vec = serialize(&tx);
         raw_vec.write_u32::<LittleEndian>(sighash_u32).unwrap();
         Sha256dHash::from_data(&raw_vec)
     }
@@ -288,23 +288,19 @@ impl Transaction {
     #[cfg(feature="bitcoinconsensus")]
     /// Verify that this transaction is able to spend some outputs of spent transactions
     pub fn verify(&self, spent: &HashMap<Sha256dHash, Transaction>) -> Result<(), script::Error> {
-        if let Ok(tx) = serialize(&*self) {
-            for (idx, input) in self.input.iter().enumerate() {
-                if let Some(ref s) = spent.get(&input.previous_output.txid) {
-                    if let Some(ref output) = s.output.get(input.previous_output.vout as usize) {
-                        output.script_pubkey.verify(idx, output.value, tx.as_slice())?;
-                    } else {
-                        return Err(script::Error::WrongSpentOutputIndex(input.previous_output.vout as usize));
-                    }
+        let tx = serialize(&*self);
+        for (idx, input) in self.input.iter().enumerate() {
+            if let Some(ref s) = spent.get(&input.previous_output.txid) {
+                if let Some(ref output) = s.output.get(input.previous_output.vout as usize) {
+                    output.script_pubkey.verify(idx, output.value, tx.as_slice())?;
                 } else {
-                    return Err(script::Error::UnknownSpentTransaction(input.previous_output.txid));
+                    return Err(script::Error::WrongSpentOutputIndex(input.previous_output.vout as usize));
                 }
+            } else {
+                return Err(script::Error::UnknownSpentTransaction(input.previous_output.txid));
             }
-            Ok(())
         }
-        else {
-            Err(script::Error::SerializationError)
-        }
+        Ok(())
     }
 
     /// Is this a coin base transaction?
@@ -325,41 +321,41 @@ impl BitcoinHash for Transaction {
 
 impl_consensus_encoding!(TxOut, value, script_pubkey);
 
-impl<S: SimpleEncoder> ConsensusEncodable<S> for OutPoint {
-    fn consensus_encode(&self, s: &mut S) -> Result <(), serialize::Error> {
+impl<S: Encoder> Encodable<S> for OutPoint {
+    fn consensus_encode(&self, s: &mut S) -> Result <(), encode::Error> {
         self.txid.consensus_encode(s)?;
         self.vout.consensus_encode(s)
     }
 }
-impl<D: SimpleDecoder> ConsensusDecodable<D> for OutPoint {
-    fn consensus_decode(d: &mut D) -> Result<OutPoint, serialize::Error> {
+impl<D: Decoder> Decodable<D> for OutPoint {
+    fn consensus_decode(d: &mut D) -> Result<OutPoint, encode::Error> {
         Ok(OutPoint {
-            txid: ConsensusDecodable::consensus_decode(d)?,
-            vout: ConsensusDecodable::consensus_decode(d)?,
+            txid: Decodable::consensus_decode(d)?,
+            vout: Decodable::consensus_decode(d)?,
         })
     }
 }
 
-impl<S: SimpleEncoder> ConsensusEncodable<S> for TxIn {
-    fn consensus_encode(&self, s: &mut S) -> Result <(), serialize::Error> {
+impl<S: Encoder> Encodable<S> for TxIn {
+    fn consensus_encode(&self, s: &mut S) -> Result <(), encode::Error> {
         self.previous_output.consensus_encode(s)?;
         self.script_sig.consensus_encode(s)?;
         self.sequence.consensus_encode(s)
     }
 }
-impl<D: SimpleDecoder> ConsensusDecodable<D> for TxIn {
-    fn consensus_decode(d: &mut D) -> Result<TxIn, serialize::Error> {
+impl<D: Decoder> Decodable<D> for TxIn {
+    fn consensus_decode(d: &mut D) -> Result<TxIn, encode::Error> {
         Ok(TxIn {
-            previous_output: ConsensusDecodable::consensus_decode(d)?,
-            script_sig: ConsensusDecodable::consensus_decode(d)?,
-            sequence: ConsensusDecodable::consensus_decode(d)?,
+            previous_output: Decodable::consensus_decode(d)?,
+            script_sig: Decodable::consensus_decode(d)?,
+            sequence: Decodable::consensus_decode(d)?,
             witness: vec![],
         })
     }
 }
 
-impl<S: SimpleEncoder> ConsensusEncodable<S> for Transaction {
-    fn consensus_encode(&self, s: &mut S) -> Result <(), serialize::Error> {
+impl<S: Encoder> Encodable<S> for Transaction {
+    fn consensus_encode(&self, s: &mut S) -> Result <(), encode::Error> {
         self.version.consensus_encode(s)?;
         let mut have_witness = false;
         for input in &self.input {
@@ -384,13 +380,13 @@ impl<S: SimpleEncoder> ConsensusEncodable<S> for Transaction {
     }
 }
 
-impl<D: SimpleDecoder> ConsensusDecodable<D> for Transaction {
-    fn consensus_decode(d: &mut D) -> Result<Transaction, serialize::Error> {
-        let version: u32 = ConsensusDecodable::consensus_decode(d)?;
-        let input: Vec<TxIn> = ConsensusDecodable::consensus_decode(d)?;
+impl<D: Decoder> Decodable<D> for Transaction {
+    fn consensus_decode(d: &mut D) -> Result<Transaction, encode::Error> {
+        let version: u32 = Decodable::consensus_decode(d)?;
+        let input: Vec<TxIn> = Decodable::consensus_decode(d)?;
         // segwit
         if input.is_empty() {
-            let segwit_flag: u8 = ConsensusDecodable::consensus_decode(d)?;
+            let segwit_flag: u8 = Decodable::consensus_decode(d)?;
             match segwit_flag {
                 // Empty tx
                 0 => {
@@ -398,30 +394,30 @@ impl<D: SimpleDecoder> ConsensusDecodable<D> for Transaction {
                         version: version,
                         input: input,
                         output: vec![],
-                        lock_time: ConsensusDecodable::consensus_decode(d)?,
+                        lock_time: Decodable::consensus_decode(d)?,
                     })
                 }
                 // BIP144 input witnesses
                 1 => {
-                    let mut input: Vec<TxIn> = ConsensusDecodable::consensus_decode(d)?;
-                    let output: Vec<TxOut> = ConsensusDecodable::consensus_decode(d)?;
+                    let mut input: Vec<TxIn> = Decodable::consensus_decode(d)?;
+                    let output: Vec<TxOut> = Decodable::consensus_decode(d)?;
                     for txin in input.iter_mut() {
-                        txin.witness = ConsensusDecodable::consensus_decode(d)?;
+                        txin.witness = Decodable::consensus_decode(d)?;
                     }
                     if !input.is_empty() && input.iter().all(|input| input.witness.is_empty()) {
-                        Err(serialize::Error::ParseFailed("witness flag set but no witnesses present"))
+                        Err(encode::Error::ParseFailed("witness flag set but no witnesses present"))
                     } else {
                         Ok(Transaction {
                             version: version,
                             input: input,
                             output: output,
-                            lock_time: ConsensusDecodable::consensus_decode(d)?,
+                            lock_time: Decodable::consensus_decode(d)?,
                         })
                     }
                 }
                 // We don't support anything else
                 x => {
-                    Err(serialize::Error::UnsupportedSegwitFlag(x))
+                    Err(encode::Error::UnsupportedSegwitFlag(x))
                 }
             }
         // non-segwit
@@ -429,8 +425,8 @@ impl<D: SimpleDecoder> ConsensusDecodable<D> for Transaction {
             Ok(Transaction {
                 version: version,
                 input: input,
-                output: ConsensusDecodable::consensus_decode(d)?,
-                lock_time: ConsensusDecodable::consensus_decode(d)?,
+                output: Decodable::consensus_decode(d)?,
+                lock_time: Decodable::consensus_decode(d)?,
             })
         }
     }
@@ -499,11 +495,10 @@ mod tests {
     use super::{Transaction, TxIn};
 
     use blockdata::script::Script;
-    use network::serialize::BitcoinHash;
     #[cfg(all(feature = "serde", feature = "strason"))]
-    use network::serialize::serialize;
-    use network::serialize::deserialize;
-    use util::hash::Sha256dHash;
+    use consensus::encode::serialize;
+    use consensus::encode::deserialize;
+    use util::hash::{BitcoinHash, Sha256dHash};
     use util::misc::hex_bytes;
 
     #[test]
@@ -651,7 +646,7 @@ mod tests {
         let decoded = encoded.into_deserialize().unwrap();
         assert_eq!(tx, decoded);
 
-        let consensus_encoded = serialize(&tx).unwrap();
+        let consensus_encoded = serialize(&tx);
         assert_eq!(consensus_encoded, hex_tx);
     }
 

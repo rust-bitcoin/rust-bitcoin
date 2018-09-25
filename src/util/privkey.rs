@@ -21,7 +21,7 @@ use std::str::FromStr;
 use secp256k1::{self, Secp256k1};
 use secp256k1::key::{PublicKey, SecretKey};
 use util::address::Address;
-use network::serialize;
+use consensus::encode;
 use network::constants::Network;
 use util::base58;
 
@@ -113,21 +113,21 @@ impl Display for Privkey {
 }
 
 impl FromStr for Privkey {
-    type Err = serialize::Error;
+    type Err = encode::Error;
 
-    fn from_str(s: &str) -> Result<Privkey, serialize::Error> {
+    fn from_str(s: &str) -> Result<Privkey, encode::Error> {
         let data = base58::from_check(s)?;
 
         let compressed = match data.len() {
             33 => false,
             34 => true,
-            _ => { return Err(serialize::Error::Base58(base58::Error::InvalidLength(data.len()))); }
+            _ => { return Err(encode::Error::Base58(base58::Error::InvalidLength(data.len()))); }
         };
 
         let network = match data[0] {
             128 => Network::Bitcoin,
             239 => Network::Testnet,
-            x   => { return Err(serialize::Error::Base58(base58::Error::InvalidVersion(vec![x]))); }
+            x   => { return Err(encode::Error::Base58(base58::Error::InvalidVersion(vec![x]))); }
         };
 
         let secp = Secp256k1::without_caps();
