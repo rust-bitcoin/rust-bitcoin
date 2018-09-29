@@ -15,6 +15,37 @@
 //!
 //! Support for ordinary base58 Bitcoin addresses and private keys
 //!
+//! # Example: creating a new address from a randomly-generated key pair
+//!
+//! ```rust
+//! extern crate rand;
+//! extern crate secp256k1;
+//! extern crate bitcoin;
+//! 
+//! use bitcoin::network::constants::Network;
+//! use bitcoin::util::address::Payload;
+//! use bitcoin::util::address::Address;
+//! use secp256k1::Secp256k1;
+//! use secp256k1::key::PublicKey;
+//! use rand::thread_rng;
+//! 
+//! fn main() {
+//!     let network = Network::Bitcoin;
+//! 
+//!     // Generate random key pair
+//!     let s = Secp256k1::new();
+//!     let (secret_key, public_key) = s.generate_keypair(&mut thread_rng());
+//! 
+//!     // Generate pay-to-pubkey address
+//!     let address = Address::p2pk(&public_key, network);
+//! 
+//!     // Check address payload is public key given
+//!     assert_eq!(address.payload, Payload::Pubkey(public_key));
+//! 
+//!     // Check address can be unlocked by secret_key
+//!     assert_eq!(address.payload, Payload::Pubkey(PublicKey::from_secret_key(&s, &secret_key)));
+//! }
+//! ```
 
 use std::fmt::{self, Display, Formatter};
 use std::str::FromStr;
