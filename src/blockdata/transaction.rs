@@ -399,15 +399,6 @@ impl<D: Decoder> Decodable<D> for Transaction {
         if input.is_empty() {
             let segwit_flag: u8 = Decodable::consensus_decode(d)?;
             match segwit_flag {
-                // Empty tx
-                0 => {
-                    Ok(Transaction {
-                        version: version,
-                        input: input,
-                        output: vec![],
-                        lock_time: Decodable::consensus_decode(d)?,
-                    })
-                }
                 // BIP144 input witnesses
                 1 => {
                     let mut input: Vec<TxIn> = Decodable::consensus_decode(d)?;
