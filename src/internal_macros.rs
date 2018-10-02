@@ -350,6 +350,23 @@ macro_rules! serde_struct_impl {
                         formatter.write_str("a struct")
                     }
 
+                    fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+                    where
+                        A: $crate::serde::de::SeqAccess<'de>,
+                    {
+                        use $crate::serde::de::Error;
+
+                        let size: usize = seq.size_hint().unwrap_or(0);
+
+                        let ret = $name {
+                            $(
+                                $fe: seq.next_element()?.ok_or_else(|| Error::invalid_length(size, &self))?,
+                            )*
+                        };
+
+                        Ok(ret)
+                    }
+
                     fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
                     where
                         A: $crate::serde::de::MapAccess<'de>,
