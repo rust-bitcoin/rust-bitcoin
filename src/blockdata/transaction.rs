@@ -140,6 +140,24 @@ impl Default for TxOut {
 /// aware that this differs from the transaction format in PSBT, which _never_
 /// uses BIP141. (Ordinarily there is no conflict, since in PSBT transactions
 /// are always unsigned and therefore their inputs have empty witnesses.)
+///
+/// The specific ambiguity is that Segwit uses the flag bytes `0001` where an old
+/// serializer would read the number of transaction inputs. The old serializer
+/// would interpret this as "no inputs, one output", which means the transaction
+/// is invalid, and simply reject it. Segwit further specifies that this encoding
+/// should *only* be used when some input has a nonempty witness; that is,
+/// witness-less transactions should be encoded in the traditional format.
+///
+/// However, in protocols where transactions may legitimately have 0 inputs, e.g.
+/// when parties are cooperatively funding a transaction, the "00 means Segwit"
+/// heuristic does not work. Since Segwit requires such a transaction be encoded
+/// in the the original transaction format (since it has no inputs and therefore
+/// no input witnesses), a traditionally encoded transaction may have the `0001`
+/// Segwit flag in it, which confuses most Segwit parsers including the one in
+/// Bitcoin Core.
+///
+/// We therefore deviate from the spec by always using the Segwit witness encoding
+/// for 0-input transactions, which results in unambiguously parseable transactions.
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub struct Transaction {
     /// The protocol version, should always be 1.
