@@ -43,3 +43,7 @@ path = "fuzz_targets/deserialize_decimal.rs"
 [[bin]]
 name = "deserialize_udecimal"
 path = "fuzz_targets/deserialize_udecimal.rs"
+
+[[bin]]
+name = "outpoint_string"
+path = "fuzz_targets/outpoint_string.rs"
