@@ -28,7 +28,7 @@ use std::default::Default;
 use std::fmt;
 #[cfg(feature="bitcoinconsensus")] use std::collections::HashMap;
 
-use util::hash::{BitcoinHash, Sha256dHash};
+use util::hash::{BitcoinHash, Sha256dHash, HexError};
 #[cfg(feature="bitcoinconsensus")] use blockdata::script;
 use blockdata::script::Script;
 use consensus::encode::{self, serialize, Encoder, Decoder};
@@ -86,6 +86,87 @@ impl Default for OutPoint {
 impl fmt::Display for OutPoint {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}:{}", self.txid, self.vout)
+    }
+}
+
+/// An error in parsing an OutPoint.
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub enum ParseOutPointError {
+    /// Error in TXID part.
+    Txid(HexError),
+    /// Error in vout part.
+    Vout(::std::num::ParseIntError),
+    /// Error in general format.
+    Format,
+    /// Size exceeds max.
+    TooLong,
+    /// Vout part is not strictly numeric without leading zeroes.
+    VoutNotCanonical,
+}
+
+impl fmt::Display for ParseOutPointError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            ParseOutPointError::Txid(ref e) => write!(f, "error parsing TXID: {}", e),
+            ParseOutPointError::Vout(ref e) => write!(f, "error parsing vout: {}", e),
+            ParseOutPointError::Format => write!(f, "OutPoint not in <txid>:<vout> format"),
+            ParseOutPointError::TooLong => write!(f, "vout should be at most 10 digits"),
+            ParseOutPointError::VoutNotCanonical => write!(f, "no leading zeroes or + allowed in vout part"),
+        }
+    }
+}
+
+impl ::std::error::Error for ParseOutPointError {
+    fn description(&self) -> &str {
+        match *self {
+            ParseOutPointError::Txid(_) => "TXID parse error",
+            ParseOutPointError::Vout(_) => "vout parse error",
+            ParseOutPointError::Format => "outpoint format error",
+            ParseOutPointError::TooLong => "size error",
+            ParseOutPointError::VoutNotCanonical => "vout canonical error",
+        }
+    }
+
+    fn cause(&self) -> Option<&::std::error::Error> {
+        match *self {
+            ParseOutPointError::Txid(ref e) => Some(e),
+            ParseOutPointError::Vout(ref e) => Some(e),
+            _ => None,
+        }
+    }
+}
+
+/// Parses a string-encoded transaction index (vout).
+/// It does not permit leading zeroes or non-digit characters.
+fn parse_vout(s: &str) -> Result<u32, ParseOutPointError> {
+    if s.len() > 1 {
+        let first = s.chars().nth(0).unwrap();
+        if first == '0' || first == '+' {
+            return Err(ParseOutPointError::VoutNotCanonical);
+        }
+    }
+    Ok(s.parse().map_err(ParseOutPointError::Vout)?)
+}
+
+impl ::std::str::FromStr for OutPoint {
+    type Err = ParseOutPointError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.len() > 75 { // 64 + 1 + 10
+            return Err(ParseOutPointError::TooLong);
+        }
+        let find = s.find(':');
+        if find == None || find != s.rfind(':') {
+            return Err(ParseOutPointError::Format);
+        }
+        let colon = find.unwrap();
+        if colon == 0 || colon == s.len() - 1 {
+            return Err(ParseOutPointError::Format);
+        }
+        Ok(OutPoint {
+            txid: Sha256dHash::from_hex(&s[..colon]).map_err(ParseOutPointError::Txid)?,
+            vout: parse_vout(&s[colon+1..])?,
+        })
     }
 }
 
@@ -492,14 +573,48 @@ mod tests {
     #[cfg(all(feature = "serde", feature = "strason"))]
     use strason::Json;
 
-    use super::{Transaction, TxIn};
+    use super::{OutPoint, ParseOutPointError, Transaction, TxIn};
 
+    use std::str::FromStr;
     use blockdata::script::Script;
     #[cfg(all(feature = "serde", feature = "strason"))]
     use consensus::encode::serialize;
     use consensus::encode::deserialize;
     use util::hash::{BitcoinHash, Sha256dHash};
     use util::misc::hex_bytes;
+
+    #[test]
+    fn test_outpoint() {
+        assert_eq!(OutPoint::from_str("i don't care"),
+                   Err(ParseOutPointError::Format));
+        assert_eq!(OutPoint::from_str("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456:1:1"),
+                   Err(ParseOutPointError::Format));
+        assert_eq!(OutPoint::from_str("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456:"),
+                   Err(ParseOutPointError::Format));
+        assert_eq!(OutPoint::from_str("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456:11111111111"),
+                   Err(ParseOutPointError::TooLong));
+        assert_eq!(OutPoint::from_str("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456:01"),
+                   Err(ParseOutPointError::VoutNotCanonical));
+        assert_eq!(OutPoint::from_str("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456:+42"),
+                   Err(ParseOutPointError::VoutNotCanonical));
+        assert_eq!(OutPoint::from_str("i don't care:1"),
+                   Err(ParseOutPointError::Txid(Sha256dHash::from_hex("i don't care").unwrap_err())));
+        assert_eq!(OutPoint::from_str("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c945X:1"),
+                   Err(ParseOutPointError::Txid(Sha256dHash::from_hex("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c945X").unwrap_err())));
+        assert_eq!(OutPoint::from_str("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456:lol"),
+                   Err(ParseOutPointError::Vout(u32::from_str("lol").unwrap_err())));
+ 
+        assert_eq!(OutPoint::from_str("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456:42"),
+                   Ok(OutPoint{
+                       txid: Sha256dHash::from_hex("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456").unwrap(),
+                       vout: 42,
+                   }));
+        assert_eq!(OutPoint::from_str("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456:0"),
+                   Ok(OutPoint{
+                       txid: Sha256dHash::from_hex("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456").unwrap(),
+                       vout: 0,
+                   }));
+    }
 
     #[test]
     fn test_txin() {
