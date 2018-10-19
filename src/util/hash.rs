@@ -365,7 +365,8 @@ impl fmt::LowerHex for Sha256dHash {
     /// Output the sha256d hash in reverse, copying Bitcoin Core's behaviour
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let &Sha256dHash(data) = self;
-        for ch in data.iter().rev() {
+        let width = f.width().unwrap_or(32);
+        for ch in data.iter().rev().take(width) {
             write!(f, "{:02x}", ch)?;
         }
         Ok(())
@@ -376,7 +377,8 @@ impl fmt::UpperHex for Sha256dHash {
     /// Output the sha256d hash in reverse, copying Bitcoin Core's behaviour
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let &Sha256dHash(data) = self;
-        for ch in data.iter().rev() {
+        let width = f.width().unwrap_or(32);
+        for ch in data.iter().rev().take(width) {
             write!(f, "{:02X}", ch)?;
         }
         Ok(())
@@ -466,6 +468,11 @@ mod tests {
                    "56944c5d3f98413ef45cf54545538103cc9f298e0575820ad3591376e2e0f65d");
         assert_eq!(format!("{:X}", Sha256dHash::from_data(&[])),
                    "56944C5D3F98413EF45CF54545538103CC9F298E0575820AD3591376E2E0F65D");
+
+        assert_eq!(format!("{:2x}", Sha256dHash::from_data(&[])),
+                   "5694");
+        assert_eq!(format!("{:6X}", Sha256dHash::from_data(&[])),
+                   "56944C5D3F98");
     }
 
     #[test]
