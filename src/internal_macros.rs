@@ -433,3 +433,24 @@ macro_rules! serde_struct_impl {
         }
     )
 }
+
+#[cfg(test)]
+#[cfg(feature = "serde")]
+mod test {
+    extern crate bincode;
+
+    use util::hash::Sha256dHash;
+    use OutPoint;
+
+    #[test]
+    fn test_serde_struct_impl_visit_seq() {
+        let txid = [1u8; 32];
+        let txid: Sha256dHash = From::from(&txid[..]);
+        let op = OutPoint {
+            txid,
+            vout: 1,
+        };
+        let rez: Vec<u8> = bincode::serialize(&op).unwrap();
+        let _rez: OutPoint = bincode::deserialize(&rez[..]).unwrap();
+    }
+}
