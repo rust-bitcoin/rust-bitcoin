@@ -153,6 +153,12 @@ impl fmt::Display for Privkey {
     }
 }
 
+impl fmt::Debug for Privkey {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "[private key data]")
+    }
+}
+
 impl FromStr for Privkey {
     type Err = encode::Error;
     fn from_str(s: &str) -> Result<Privkey, encode::Error> {
