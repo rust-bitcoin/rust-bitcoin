@@ -16,7 +16,7 @@
 //! A private key represents the secret data associated with its proposed use
 //!
 
-use std::fmt::{self, Display, Formatter};
+use std::fmt::{self, Write};
 use std::str::FromStr;
 use secp256k1::{self, Secp256k1};
 use secp256k1::key::{PublicKey, SecretKey};
@@ -92,10 +92,9 @@ impl Privkey {
     pub fn is_compressed(&self) -> bool {
         self.compressed
     }
-}
 
-impl Display for Privkey {
-    fn fmt(&self, fmt: &mut Formatter) -> fmt::Result {
+    /// Format the private key to WIF format.
+    pub fn fmt_wif(&self, fmt: &mut fmt::Write) -> fmt::Result {
         let mut ret = [0; 34];
         ret[0] = match self.network {
             Network::Bitcoin => 128,
@@ -110,13 +109,19 @@ impl Display for Privkey {
         };
         fmt.write_str(&privkey)
     }
-}
 
-impl FromStr for Privkey {
-    type Err = encode::Error;
+    /// Get WIF encoding of this private key.
+    #[inline]
+    pub fn to_wif(&self) -> String {
+        let mut buf = String::new();
+        buf.write_fmt(format_args!("{}", self)).unwrap();
+        buf.shrink_to_fit();
+        buf
+    }
 
-    fn from_str(s: &str) -> Result<Privkey, encode::Error> {
-        let data = base58::from_check(s)?;
+    /// Parse WIF encoded private key.
+    pub fn from_wif(wif: &str) -> Result<Privkey, encode::Error> {
+        let data = base58::from_check(wif)?;
 
         let compressed = match data.len() {
             33 => false,
@@ -142,6 +147,25 @@ impl FromStr for Privkey {
     }
 }
 
+impl fmt::Display for Privkey {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.fmt_wif(f)
+    }
+}
+
+impl fmt::Debug for Privkey {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "[private key data]")
+    }
+}
+
+impl FromStr for Privkey {
+    type Err = encode::Error;
+    fn from_str(s: &str) -> Result<Privkey, encode::Error> {
+        Privkey::from_wif(s)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::Privkey;
@@ -153,20 +177,26 @@ mod tests {
     #[test]
     fn test_key_derivation() {
         // testnet compressed
-        let sk = Privkey::from_str("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
+        let sk = Privkey::from_wif("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
         assert_eq!(sk.network(), Testnet);
         assert_eq!(sk.is_compressed(), true);
-        assert_eq!(&sk.to_string(), "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy");
+        assert_eq!(&sk.to_wif(), "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy");
 
         let secp = Secp256k1::new();
         let pk = sk.to_legacy_address(&secp);
         assert_eq!(&pk.to_string(), "mqwpxxvfv3QbM8PU8uBx2jaNt9btQqvQNx");
 
+        // test string conversion
+        assert_eq!(&sk.to_string(), "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy");
+        let sk_str =
+            Privkey::from_str("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
+        assert_eq!(&sk.to_wif(), &sk_str.to_wif());
+
         // mainnet uncompressed
-        let sk = Privkey::from_str("5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3").unwrap();
+        let sk = Privkey::from_wif("5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3").unwrap();
         assert_eq!(sk.network(), Bitcoin);
         assert_eq!(sk.is_compressed(), false);
-        assert_eq!(&sk.to_string(), "5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3");
+        assert_eq!(&sk.to_wif(), "5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3");
 
         let secp = Secp256k1::new();
         let pk = sk.to_legacy_address(&secp);
