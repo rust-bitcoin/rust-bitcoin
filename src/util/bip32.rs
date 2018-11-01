@@ -167,6 +167,21 @@ impl fmt::Display for ChildNumber {
     }
 }
 
+impl FromStr for ChildNumber {
+    type Err = Error;
+
+    fn from_str(inp: &str) -> Result<ChildNumber, Error> {
+        Ok(match inp.chars().last().map_or(false, |l| l == '\'' || l == 'h') {
+            true => ChildNumber::from_hardened_idx(
+                inp[0..inp.len() - 1].parse().map_err(|_| Error::InvalidChildNumberFormat)?
+            ),
+            false => ChildNumber::from_normal_idx(
+                inp.parse().map_err(|_| Error::InvalidChildNumberFormat)?
+            ),
+        })
+    }
+}
+
 #[cfg(feature = "serde")]
 impl<'de> serde::Deserialize<'de> for ChildNumber {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
@@ -187,6 +202,22 @@ impl serde::Serialize for ChildNumber {
     }
 }
 
+/// Parse a BIP32 derivation path.
+pub fn parse_derivation_path(path: &str) -> Result<Vec<ChildNumber>, Error> {
+    let mut parts = path.split("/");
+    // First parts must be `m`.
+    if parts.next().unwrap() != "m" {
+        return Err(Error::InvalidDerivationPathFormat);
+    }
+
+    // Empty parts are a format error.
+    if parts.clone().any(|p| p.len() == 0) {
+        return Err(Error::InvalidDerivationPathFormat);
+    }
+
+    parts.map(str::parse).collect()
+}
+
 /// A BIP32 error
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum Error {
@@ -197,7 +228,11 @@ pub enum Error {
     /// A child number was provided that was out of range
     InvalidChildNumber(ChildNumber),
     /// Error creating a master seed --- for application use
-    RngError(String)
+    RngError(String),
+    /// Invalid childnumber format.
+    InvalidChildNumberFormat,
+    /// Invalid derivation path format.
+    InvalidDerivationPathFormat,
 }
 
 impl fmt::Display for Error {
@@ -206,7 +241,9 @@ impl fmt::Display for Error {
             Error::CannotDeriveFromHardenedKey => f.write_str("cannot derive hardened key from public key"),
             Error::Ecdsa(ref e) => fmt::Display::fmt(e, f),
             Error::InvalidChildNumber(ref n) => write!(f, "child number {} is invalid", n),
-            Error::RngError(ref s) => write!(f, "rng error {}", s)
+            Error::RngError(ref s) => write!(f, "rng error {}", s),
+            Error::InvalidChildNumberFormat => f.write_str("invalid child number format"),
+            Error::InvalidDerivationPathFormat => f.write_str("invalid derivation path format"), 
         }
     }
 }
@@ -225,7 +262,9 @@ impl error::Error for Error {
             Error::CannotDeriveFromHardenedKey => "cannot derive hardened key from public key",
             Error::Ecdsa(ref e) => error::Error::description(e),
             Error::InvalidChildNumber(_) => "child number is invalid",
-            Error::RngError(_) => "rng error"
+            Error::RngError(_) => "rng error",
+            Error::InvalidChildNumberFormat => "invalid child number format",
+            Error::InvalidDerivationPathFormat => "invalid derivation path format",
         }
     }
 }
@@ -526,9 +565,53 @@ mod tests {
 
     use network::constants::Network::{self, Bitcoin};
 
+    use super::parse_derivation_path;
     use super::{ChildNumber, ExtendedPrivKey, ExtendedPubKey};
     use super::ChildNumber::{Hardened, Normal};
     use super::Error;
+
+    #[test]
+    fn test_parse_derivation_path() {
+        assert_eq!(parse_derivation_path("42"), Err(Error::InvalidDerivationPathFormat));
+        assert_eq!(parse_derivation_path("n/0'/0"), Err(Error::InvalidDerivationPathFormat));
+        assert_eq!(parse_derivation_path("m//3/0'"), Err(Error::InvalidDerivationPathFormat));
+        assert_eq!(parse_derivation_path("4/m/5"), Err(Error::InvalidDerivationPathFormat));
+        assert_eq!(parse_derivation_path("m/0h/0x"), Err(Error::InvalidChildNumberFormat));
+
+        assert_eq!(parse_derivation_path("m"), Ok(vec![]));
+        assert_eq!(parse_derivation_path("m/0'"), Ok(vec![ChildNumber::from_hardened_idx(0)]));
+        assert_eq!(
+            parse_derivation_path("m/0'/1"),
+            Ok(vec![ChildNumber::from_hardened_idx(0), ChildNumber::from_normal_idx(1)])
+        );
+        assert_eq!(
+            parse_derivation_path("m/0h/1/2'"),
+            Ok(vec![
+                ChildNumber::from_hardened_idx(0),
+                ChildNumber::from_normal_idx(1),
+                ChildNumber::from_hardened_idx(2)
+            ])
+        );
+        assert_eq!(
+            parse_derivation_path("m/0'/1/2h/2"),
+            Ok(vec![
+                ChildNumber::from_hardened_idx(0),
+                ChildNumber::from_normal_idx(1),
+                ChildNumber::from_hardened_idx(2),
+                ChildNumber::from_normal_idx(2)
+            ])
+        );
+        assert_eq!(
+            parse_derivation_path("m/0'/1/2'/2/1000000000"),
+            Ok(vec![
+                ChildNumber::from_hardened_idx(0),
+                ChildNumber::from_normal_idx(1),
+                ChildNumber::from_hardened_idx(2),
+                ChildNumber::from_normal_idx(2),
+                ChildNumber::from_normal_idx(1000000000)
+            ])
+        );
+    }
 
     fn test_path<C: secp256k1::Signing + secp256k1::Verification>(secp: &Secp256k1<C>,
                  network: Network,
