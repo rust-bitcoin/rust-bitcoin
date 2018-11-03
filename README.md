@@ -60,45 +60,5 @@ support only a single blockchain.
 
 ## Release Notes
 
-I will try to document all breaking changes here so that people upgrading will know
-what they need to change.
-
-### 0.11
-
-Remove `num` dependency at Matt's request; agree this is obnoxious to require all
-downstream users to also have a `num` dependency just so they can use `Uint256::from_u64`.
-
-### 0.12
-
-* The in-memory blockchain was moved into a dedicated project rust-bitcoin-chain.
-
-* Removed old script interpreter
-
-* A new optional feature "bitcoinconsensus" lets this library use Bitcoin Core's native
-script verifier, wrappend into Rust by the rust-bitcoinconsenus project. 
-See `Transaction::verify` and `Script::verify` methods.
-
-* Replaced Base58 traits with `encode_slice`, `check_encode_slice`, from and `from_check` functions in the base58 module.
-
-* Un-reversed the Debug output for Sha256dHash
-
-* Add bech32 support
-
-* Support segwit address types
-
-### 0.13
-
-* Move witnesses inside the `TxIn` structure
-
-* Add `Transaction::get_weight()`
-
-* Update bip143 `sighash_all` API to be more ergonomic
-
-#### 0.13.1
-
-* Add `Display` trait to uints, `FromStr` trait to `Network` enum
-
-* Add witness inv types to inv enum, constants for Bitcoin regtest network, `is_coin_base` accessor for tx inputs
-
-* Expose `merkleroot(Vec<Sha256dHash>)`
+See CHANGELOG.md
 
