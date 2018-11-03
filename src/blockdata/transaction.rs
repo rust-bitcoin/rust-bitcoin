@@ -209,7 +209,36 @@ impl Default for TxOut {
     }
 }
 
-/// A Bitcoin transaction, which describes an authenticated movement of coins
+/// A Bitcoin transaction, which describes an authenticated movement of coins.
+///
+/// If any inputs have nonempty witnesses, the entire transaction is serialized
+/// in the post-BIP141 Segwit format which includes a list of witnesses. If all
+/// inputs have empty witnesses, the transaction is serialized in the pre-BIP141
+/// format.
+///
+/// There is one major exception to this: to avoid deserialization ambiguity,
+/// if the transaction has no inputs, it is serialized in the BIP141 style. Be
+/// aware that this differs from the transaction format in PSBT, which _never_
+/// uses BIP141. (Ordinarily there is no conflict, since in PSBT transactions
+/// are always unsigned and therefore their inputs have empty witnesses.)
+///
+/// The specific ambiguity is that Segwit uses the flag bytes `0001` where an old
+/// serializer would read the number of transaction inputs. The old serializer
+/// would interpret this as "no inputs, one output", which means the transaction
+/// is invalid, and simply reject it. Segwit further specifies that this encoding
+/// should *only* be used when some input has a nonempty witness; that is,
+/// witness-less transactions should be encoded in the traditional format.
+///
+/// However, in protocols where transactions may legitimately have 0 inputs, e.g.
+/// when parties are cooperatively funding a transaction, the "00 means Segwit"
+/// heuristic does not work. Since Segwit requires such a transaction be encoded
+/// in the the original transaction format (since it has no inputs and therefore
+/// no input witnesses), a traditionally encoded transaction may have the `0001`
+/// Segwit flag in it, which confuses most Segwit parsers including the one in
+/// Bitcoin Core.
+///
+/// We therefore deviate from the spec by always using the Segwit witness encoding
+/// for 0-input transactions, which results in unambiguously parseable transactions.
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub struct Transaction {
     /// The protocol version, should always be 1.
@@ -438,7 +467,7 @@ impl<D: Decoder> Decodable<D> for TxIn {
 impl<S: Encoder> Encodable<S> for Transaction {
     fn consensus_encode(&self, s: &mut S) -> Result <(), encode::Error> {
         self.version.consensus_encode(s)?;
-        let mut have_witness = false;
+        let mut have_witness = self.input.is_empty();
         for input in &self.input {
             if !input.witness.is_empty() {
                 have_witness = true;
@@ -469,15 +498,6 @@ impl<D: Decoder> Decodable<D> for Transaction {
         if input.is_empty() {
             let segwit_flag: u8 = Decodable::consensus_decode(d)?;
             match segwit_flag {
-                // Empty tx
-                0 => {
-                    Ok(Transaction {
-                        version: version,
-                        input: input,
-                        output: vec![],
-                        lock_time: Decodable::consensus_decode(d)?,
-                    })
-                }
                 // BIP144 input witnesses
                 1 => {
                     let mut input: Vec<TxIn> = Decodable::consensus_decode(d)?;
@@ -577,7 +597,6 @@ mod tests {
 
     use std::str::FromStr;
     use blockdata::script::Script;
-    #[cfg(all(feature = "serde", feature = "strason"))]
     use consensus::encode::serialize;
     use consensus::encode::deserialize;
     use util::hash::{BitcoinHash, Sha256dHash};
@@ -655,6 +674,20 @@ mod tests {
         assert_eq!(realtx.bitcoin_hash().be_hex_string(),
                    "a6eab3c14ab5272a58a5ba91505ba1a4b6d7a3a9fcbd187b6cd99a7b6d548cb7".to_string());
         assert_eq!(realtx.get_weight(), 193*4);
+    }
+
+    #[test]
+    fn tx_no_input_deserialization() {
+        let hex_tx = hex_bytes(
+            "010000000001000100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000"
+        ).unwrap();
+        let tx: Transaction = deserialize(&hex_tx).expect("deserialize tx");
+
+        assert_eq!(tx.input.len(), 0);
+        assert_eq!(tx.output.len(), 1);
+
+        let reser = serialize(&tx);
+        assert_eq!(hex_tx, reser);
     }
 
     #[test]
