@@ -1,4 +1,18 @@
 
+# 0.15.0 - 2018-11-03
+
+* [Significant API overhaul](https://github.com/rust-bitcoin/rust-bitcoin/pull/156):
+    * Remove `nu_select` macro and low-level networking support
+    * Move `network::consensus_params` to `consensus::params`
+    * Move many other things into `consensus::params`
+    * Move `BitcoinHash` from `network::serialize` to `util::hash`; remove impl for `Vec<u8>`
+    * Rename/restructure error types
+    * Rename `Consensus{De,En}coder` to `consensus::{De,En}coder`
+    * Replace `Raw{De,En}coder` with blanket impls of `consensus::{De,En}coder` on `io::Read` and `io::Write`
+    * make `serialize` and `serialize_hex` infallible
+* Make 0-input transaction de/serialization [always use segwit](https://github.com/rust-bitcoin/rust-bitcoin/pull/153)
+* Implement `FromStr` and `Display` for many more types
+
 # 0.14.2 - 2018-09-11
 
 * Add serde support for `Address`
