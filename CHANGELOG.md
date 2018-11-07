@@ -1,4 +1,18 @@
 
+# 0.15.0 - 2018-11-03
+
+* [Significant API overhaul](https://github.com/rust-bitcoin/rust-bitcoin/pull/156):
+    * Remove `nu_select` macro and low-level networking support
+    * Move `network::consensus_params` to `consensus::params`
+    * Move many other things into `consensus::params`
+    * Move `BitcoinHash` from `network::serialize` to `util::hash`; remove impl for `Vec<u8>`
+    * Rename/restructure error types
+    * Rename `Consensus{De,En}coder` to `consensus::{De,En}coder`
+    * Replace `Raw{De,En}coder` with blanket impls of `consensus::{De,En}coder` on `io::Read` and `io::Write`
+    * make `serialize` and `serialize_hex` infallible
+* Make 0-input transaction de/serialization [always use segwit](https://github.com/rust-bitcoin/rust-bitcoin/pull/153)
+* Implement `FromStr` and `Display` for many more types
+
 # 0.14.2 - 2018-09-11
 
 * Add serde support for `Address`
@@ -32,4 +46,33 @@
 * [Update to serde 1.0 and strason 0.4](https://github.com/rust-bitcoin/rust-bitcoin/pull/125)
 * Update to secp256k1 0.11.0
 * Many, many documentation and test improvements.
+
+# 0.13.1
+
+* Add `Display` trait to uints, `FromStr` trait to `Network` enum
+* Add witness inv types to inv enum, constants for Bitcoin regtest network, `is_coin_base` accessor for tx inputs
+* Expose `merkleroot(Vec<Sha256dHash>)`
+
+# 0.13
+
+* Move witnesses inside the `TxIn` structure
+* Add `Transaction::get_weight()`
+* Update bip143 `sighash_all` API to be more ergonomic
+
+# 0.12
+
+* The in-memory blockchain was moved into a dedicated project rust-bitcoin-chain.
+* Removed old script interpreter
+* A new optional feature "bitcoinconsensus" lets this library use Bitcoin Core's native
+script verifier, wrappend into Rust by the rust-bitcoinconsenus project.
+See `Transaction::verify` and `Script::verify` methods.
+* Replaced Base58 traits with `encode_slice`, `check_encode_slice`, from and `from_check` functions in the base58 module.
+* Un-reversed the Debug output for Sha256dHash
+* Add bech32 support
+* Support segwit address types
+
+### 0.11
+
+* Remove `num` dependency at Matt's request; agree this is obnoxious to require all
+downstream users to also have a `num` dependency just so they can use `Uint256::from_u64`.
 
