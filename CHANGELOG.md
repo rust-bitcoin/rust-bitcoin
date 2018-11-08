@@ -1,4 +1,8 @@
 
+# 0.15.1 - 2018-11-08
+
+* [Detect p2pk addresses with compressed keys](https://github.com/rust-bitcoin/rust-bitcoin/pull/189)
+
 # 0.15.0 - 2018-11-03
 
 * [Significant API overhaul](https://github.com/rust-bitcoin/rust-bitcoin/pull/156):
