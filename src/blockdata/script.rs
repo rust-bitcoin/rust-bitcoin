@@ -345,9 +345,12 @@ impl Script {
     /// Checks whether a script pubkey is a p2pkh output
     #[inline]
     pub fn is_p2pk(&self) -> bool {
-        self.0.len() == 67 &&
+        (self.0.len() == 67 &&
             self.0[0] == opcodes::All::OP_PUSHBYTES_65 as u8 &&
-            self.0[66] == opcodes::All::OP_CHECKSIG as u8
+            self.0[66] == opcodes::All::OP_CHECKSIG as u8)
+     || (self.0.len() == 35 &&
+            self.0[0] == opcodes::All::OP_PUSHBYTES_33 as u8 &&
+            self.0[34] == opcodes::All::OP_CHECKSIG as u8)
     }
 
     /// Checks whether a script pubkey is a p2wsh output
@@ -812,6 +815,12 @@ mod test {
         assert!(hex_script!("a914acc91e6fef5c7f24e5c8b3f11a664aa8f1352ffd87").is_p2sh());
         assert!(!hex_script!("a914acc91e6fef5c7f24e5c8b3f11a664aa8f1352ffd87").is_p2pkh());
         assert!(!hex_script!("a314acc91e6fef5c7f24e5c8b3f11a664aa8f1352ffd87").is_p2sh());
+    }
+
+    #[test]
+    fn script_p2pk() {
+        assert!(hex_script!("21021aeaf2f8638a129a3156fbe7e5ef635226b0bafd495ff03afe2c843d7e3a4b51ac").is_p2pk());
+        assert!(hex_script!("410496b538e853519c726a2c91e61ec11600ae1390813a627c66fb8be7947be63c52da7589379515d4e0a604f8141781e62294721166bf621e73a82cbf2342c858eeac").is_p2pk());
     }
 
     #[test]
