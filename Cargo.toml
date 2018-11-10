@@ -18,7 +18,7 @@ path = "src/lib.rs"
 fuzztarget = ["secp256k1/fuzztarget", "bitcoin_hashes/fuzztarget"]
 serde-decimal = ["use-serde", "strason"]
 unstable = []
-use-serde = ["serde", "serde_test", "bitcoin_hashes/serde"]
+use-serde = ["serde", "bitcoin_hashes/serde"]
 
 [dependencies]
 bitcoin-bech32 = "0.9.0"
@@ -27,11 +27,9 @@ rand = "0.3"
 bitcoin_hashes = "0.3"
 bitcoinconsensus = { version = "0.16", optional = true }
 
-[dev-dependencies]
-tempfile = "3"
-
 [dependencies.serde]
 version = "1"
+features = ["derive"]
 optional = true
 
 [dependencies.serde_test]
@@ -49,3 +47,9 @@ version = "=0.3.2"
 [dependencies.secp256k1]
 version = "0.12"
 features = [ "rand" ]
+
+[dev-dependencies]
+serde_derive = "1"
+serde_json = "1"
+serde_test = "1"
+tempfile = "3"
