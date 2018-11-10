@@ -47,10 +47,22 @@ extern crate crypto;
 extern crate hex;
 extern crate rand;
 extern crate secp256k1;
-#[cfg(feature = "serde")] extern crate serde;
-#[cfg(feature = "strason")] extern crate strason;
-#[cfg(all(test, feature = "unstable"))] extern crate test;
-#[cfg(feature="bitcoinconsensus")] extern crate bitcoinconsensus;
+
+#[cfg(feature = "serde")]
+extern crate serde;
+#[cfg(feature = "strason")]
+extern crate strason;
+#[cfg(feature = "bitcoinconsensus")]
+extern crate bitcoinconsensus;
+
+// only for tests:
+#[cfg(all(test, feature = "unstable"))]
+extern crate test;
+#[cfg(all(test, feature = "serde"))]
+#[macro_use]
+extern crate serde_derive;
+#[cfg(all(test, feature = "serde"))]
+extern crate serde_test;
 
 #[cfg(test)]
 #[macro_use]
