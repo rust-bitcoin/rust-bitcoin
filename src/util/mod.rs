@@ -18,6 +18,7 @@
 
 pub mod key;
 pub mod address;
+pub mod amount;
 pub mod base58;
 pub mod bip32;
 pub mod bip143;

@@ -49,8 +49,10 @@ extern crate hex;
 extern crate rand;
 extern crate secp256k1;
 #[cfg(feature = "serde")] extern crate serde;
-#[cfg(feature = "serde_test")] extern crate serde_test;
 #[cfg(feature = "strason")] extern crate strason;
+#[cfg(all(test, feature = "serde"))] #[macro_use] extern crate serde_derive; // for 1.22.0 compat
+#[cfg(all(test, feature = "serde"))] extern crate serde_json;
+#[cfg(all(test, feature = "serde"))] extern crate serde_test;
 #[cfg(all(test, feature = "unstable"))] extern crate test;
 #[cfg(feature="bitcoinconsensus")] extern crate bitcoinconsensus;
 
@@ -77,6 +79,8 @@ pub use consensus::encode::VarInt;
 pub use network::constants::Network;
 pub use util::Error;
 pub use util::address::Address;
+pub use util::amount::Amount;
+pub use util::amount::SignedAmount;
 pub use util::hash::BitcoinHash;
 pub use util::key::PrivateKey;
 pub use util::key::PublicKey;
