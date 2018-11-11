@@ -212,21 +212,21 @@ impl Address {
             Payload::Pubkey(ref pk) => {
                 script::Builder::new()
                     .push_slice(&pk.serialize_uncompressed()[..])
-                    .push_opcode(opcodes::All::OP_CHECKSIG)
+                    .push_opcode(opcodes::all::OP_CHECKSIG)
             },
             Payload::PubkeyHash(ref hash) => {
                 script::Builder::new()
-                    .push_opcode(opcodes::All::OP_DUP)
-                    .push_opcode(opcodes::All::OP_HASH160)
+                    .push_opcode(opcodes::all::OP_DUP)
+                    .push_opcode(opcodes::all::OP_HASH160)
                     .push_slice(&hash[..])
-                    .push_opcode(opcodes::All::OP_EQUALVERIFY)
-                    .push_opcode(opcodes::All::OP_CHECKSIG)
+                    .push_opcode(opcodes::all::OP_EQUALVERIFY)
+                    .push_opcode(opcodes::all::OP_CHECKSIG)
             },
             Payload::ScriptHash(ref hash) => {
                 script::Builder::new()
-                    .push_opcode(opcodes::All::OP_HASH160)
+                    .push_opcode(opcodes::all::OP_HASH160)
                     .push_slice(&hash[..])
-                    .push_opcode(opcodes::All::OP_EQUAL)
+                    .push_opcode(opcodes::all::OP_EQUAL)
             },
             Payload::WitnessProgram(ref witprog) => {
                 script::Builder::new()

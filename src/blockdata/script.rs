@@ -58,7 +58,7 @@ impl fmt::Debug for Script {
                 n as usize
             } else {
                 match opcode {
-                    opcodes::All::OP_PUSHDATA1 => {
+                    opcodes::all::OP_PUSHDATA1 => {
                         if self.0.len() < index + 1 {
                             f.write_str("<unexpected end>")?;
                             break;
@@ -68,7 +68,7 @@ impl fmt::Debug for Script {
                             Err(_) => { f.write_str("<bad length>")?; break; }
                         }
                     }
-                    opcodes::All::OP_PUSHDATA2 => {
+                    opcodes::all::OP_PUSHDATA2 => {
                         if self.0.len() < index + 2 {
                             f.write_str("<unexpected end>")?;
                             break;
@@ -78,7 +78,7 @@ impl fmt::Debug for Script {
                             Err(_) => { f.write_str("<bad length>")?; break; }
                         }
                     }
-                    opcodes::All::OP_PUSHDATA4 => {
+                    opcodes::all::OP_PUSHDATA4 => {
                         if self.0.len() < index + 4 {
                             f.write_str("<unexpected end>")?;
                             break;
@@ -94,7 +94,7 @@ impl fmt::Debug for Script {
 
             if index > 1 { f.write_str(" ")?; }
             // Write the opcode
-            if opcode == opcodes::All::OP_PUSHBYTES_0 {
+            if opcode == opcodes::all::OP_PUSHBYTES_0 {
                 f.write_str("OP_0")?;
             } else {
                 write!(f, "{:?}", opcode)?;
@@ -304,9 +304,9 @@ impl Script {
 
     /// Compute the P2SH output corresponding to this redeem script
     pub fn to_p2sh(&self) -> Script {
-        Builder::new().push_opcode(opcodes::All::OP_HASH160)
+        Builder::new().push_opcode(opcodes::all::OP_HASH160)
                       .push_slice(&Hash160::from_data(&self.0)[..])
-                      .push_opcode(opcodes::All::OP_EQUAL)
+                      .push_opcode(opcodes::all::OP_EQUAL)
                       .into_script()
     }
 
@@ -326,52 +326,52 @@ impl Script {
     #[inline]
     pub fn is_p2sh(&self) -> bool {
         self.0.len() == 23 &&
-        self.0[0] == opcodes::All::OP_HASH160.into_u8() &&
-        self.0[1] == opcodes::All::OP_PUSHBYTES_20.into_u8() &&
-        self.0[22] == opcodes::All::OP_EQUAL.into_u8()
+        self.0[0] == opcodes::all::OP_HASH160.into_u8() &&
+        self.0[1] == opcodes::all::OP_PUSHBYTES_20.into_u8() &&
+        self.0[22] == opcodes::all::OP_EQUAL.into_u8()
     }
 
     /// Checks whether a script pubkey is a p2pkh output
     #[inline]
     pub fn is_p2pkh(&self) -> bool {
         self.0.len() == 25 &&
-        self.0[0] == opcodes::All::OP_DUP.into_u8() &&
-        self.0[1] == opcodes::All::OP_HASH160.into_u8() &&
-        self.0[2] == opcodes::All::OP_PUSHBYTES_20.into_u8() &&
-        self.0[23] == opcodes::All::OP_EQUALVERIFY.into_u8() &&
-        self.0[24] == opcodes::All::OP_CHECKSIG.into_u8()
+        self.0[0] == opcodes::all::OP_DUP.into_u8() &&
+        self.0[1] == opcodes::all::OP_HASH160.into_u8() &&
+        self.0[2] == opcodes::all::OP_PUSHBYTES_20.into_u8() &&
+        self.0[23] == opcodes::all::OP_EQUALVERIFY.into_u8() &&
+        self.0[24] == opcodes::all::OP_CHECKSIG.into_u8()
     }
 
     /// Checks whether a script pubkey is a p2pkh output
     #[inline]
     pub fn is_p2pk(&self) -> bool {
         (self.0.len() == 67 &&
-            self.0[0] == opcodes::All::OP_PUSHBYTES_65.into_u8() &&
-            self.0[66] == opcodes::All::OP_CHECKSIG.into_u8())
+            self.0[0] == opcodes::all::OP_PUSHBYTES_65.into_u8() &&
+            self.0[66] == opcodes::all::OP_CHECKSIG.into_u8())
      || (self.0.len() == 35 &&
-            self.0[0] == opcodes::All::OP_PUSHBYTES_33.into_u8() &&
-            self.0[34] == opcodes::All::OP_CHECKSIG.into_u8())
+            self.0[0] == opcodes::all::OP_PUSHBYTES_33.into_u8() &&
+            self.0[34] == opcodes::all::OP_CHECKSIG.into_u8())
     }
 
     /// Checks whether a script pubkey is a p2wsh output
     #[inline]
     pub fn is_v0_p2wsh(&self) -> bool {
         self.0.len() == 34 &&
-        self.0[0] == opcodes::All::OP_PUSHBYTES_0.into_u8() &&
-        self.0[1] == opcodes::All::OP_PUSHBYTES_32.into_u8()
+        self.0[0] == opcodes::all::OP_PUSHBYTES_0.into_u8() &&
+        self.0[1] == opcodes::all::OP_PUSHBYTES_32.into_u8()
     }
 
     /// Checks whether a script pubkey is a p2wpkh output
     #[inline]
     pub fn is_v0_p2wpkh(&self) -> bool {
         self.0.len() == 22 &&
-            self.0[0] == opcodes::All::OP_PUSHBYTES_0.into_u8() &&
-            self.0[1] == opcodes::All::OP_PUSHBYTES_20.into_u8()
+            self.0[0] == opcodes::all::OP_PUSHBYTES_0.into_u8() &&
+            self.0[1] == opcodes::all::OP_PUSHBYTES_20.into_u8()
     }
 
     /// Check if this is an OP_RETURN output
     pub fn is_op_return (&self) -> bool {
-        !self.0.is_empty() && (opcodes::All::from(self.0[0]) == opcodes::All::OP_RETURN)
+        !self.0.is_empty() && (opcodes::All::from(self.0[0]) == opcodes::all::OP_RETURN)
     }
 
     /// Whether a script can be proven to have no satisfying input
@@ -722,18 +722,18 @@ mod test {
         script = script.push_slice("NRA4VR".as_bytes()); comp.extend([6u8, 78, 82, 65, 52, 86, 82].iter().cloned()); assert_eq!(&script[..], &comp[..]);
 
         // opcodes
-        script = script.push_opcode(opcodes::All::OP_CHECKSIG); comp.push(0xACu8); assert_eq!(&script[..], &comp[..]);
-        script = script.push_opcode(opcodes::All::OP_CHECKSIG); comp.push(0xACu8); assert_eq!(&script[..], &comp[..]);
+        script = script.push_opcode(opcodes::all::OP_CHECKSIG); comp.push(0xACu8); assert_eq!(&script[..], &comp[..]);
+        script = script.push_opcode(opcodes::all::OP_CHECKSIG); comp.push(0xACu8); assert_eq!(&script[..], &comp[..]);
     }
 
     #[test]
     fn script_builder() {
         // from txid 3bb5e6434c11fb93f64574af5d116736510717f2c595eb45b52c28e31622dfff which was in my mempool when I wrote the test
-        let script = Builder::new().push_opcode(opcodes::All::OP_DUP)
-                                   .push_opcode(opcodes::All::OP_HASH160)
+        let script = Builder::new().push_opcode(opcodes::all::OP_DUP)
+                                   .push_opcode(opcodes::all::OP_HASH160)
                                    .push_slice(&hex_decode("16e1ae70ff0fa102905d4af297f6912bda6cce19").unwrap())
-                                   .push_opcode(opcodes::All::OP_EQUALVERIFY)
-                                   .push_opcode(opcodes::All::OP_CHECKSIG)
+                                   .push_opcode(opcodes::all::OP_EQUALVERIFY)
+                                   .push_opcode(opcodes::all::OP_CHECKSIG)
                                    .into_script();
         assert_eq!(&format!("{:x}", script), "76a91416e1ae70ff0fa102905d4af297f6912bda6cce1988ac");
     }
@@ -884,7 +884,7 @@ mod test {
             v_min,
             vec![
                 Instruction::PushBytes(&[105]),
-                Instruction::Op(opcodes::All::OP_NOP3),
+                Instruction::Op(opcodes::all::OP_NOP3),
             ]
         );
 
@@ -899,7 +899,7 @@ mod test {
             v_nonmin_alt,
             vec![
                 Instruction::PushBytes(&[105, 0]),
-                Instruction::Op(opcodes::All::OP_NOP3),
+                Instruction::Op(opcodes::all::OP_NOP3),
             ]
         );
 
@@ -913,7 +913,7 @@ mod test {
         let script_1 = Builder::new().push_slice(&[1,2,3,4]).into_script();
         let script_2 = Builder::new().push_int(10).into_script();
         let script_3 = Builder::new().push_int(15).into_script();
-        let script_4 = Builder::new().push_opcode(opcodes::All::OP_RETURN).into_script();
+        let script_4 = Builder::new().push_opcode(opcodes::all::OP_RETURN).into_script();
 
         assert!(script_1 < script_2);
         assert!(script_2 < script_3);
