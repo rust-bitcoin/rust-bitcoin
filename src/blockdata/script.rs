@@ -326,47 +326,47 @@ impl Script {
     #[inline]
     pub fn is_p2sh(&self) -> bool {
         self.0.len() == 23 &&
-        self.0[0] == opcodes::All::OP_HASH160 as u8 &&
-        self.0[1] == opcodes::All::OP_PUSHBYTES_20 as u8 &&
-        self.0[22] == opcodes::All::OP_EQUAL as u8
+        self.0[0] == opcodes::All::OP_HASH160.into_u8() &&
+        self.0[1] == opcodes::All::OP_PUSHBYTES_20.into_u8() &&
+        self.0[22] == opcodes::All::OP_EQUAL.into_u8()
     }
 
     /// Checks whether a script pubkey is a p2pkh output
     #[inline]
     pub fn is_p2pkh(&self) -> bool {
         self.0.len() == 25 &&
-        self.0[0] == opcodes::All::OP_DUP as u8 &&
-        self.0[1] == opcodes::All::OP_HASH160 as u8 &&
-        self.0[2] == opcodes::All::OP_PUSHBYTES_20 as u8 &&
-        self.0[23] == opcodes::All::OP_EQUALVERIFY as u8 &&
-        self.0[24] == opcodes::All::OP_CHECKSIG as u8
+        self.0[0] == opcodes::All::OP_DUP.into_u8() &&
+        self.0[1] == opcodes::All::OP_HASH160.into_u8() &&
+        self.0[2] == opcodes::All::OP_PUSHBYTES_20.into_u8() &&
+        self.0[23] == opcodes::All::OP_EQUALVERIFY.into_u8() &&
+        self.0[24] == opcodes::All::OP_CHECKSIG.into_u8()
     }
 
     /// Checks whether a script pubkey is a p2pkh output
     #[inline]
     pub fn is_p2pk(&self) -> bool {
         (self.0.len() == 67 &&
-            self.0[0] == opcodes::All::OP_PUSHBYTES_65 as u8 &&
-            self.0[66] == opcodes::All::OP_CHECKSIG as u8)
+            self.0[0] == opcodes::All::OP_PUSHBYTES_65.into_u8() &&
+            self.0[66] == opcodes::All::OP_CHECKSIG.into_u8())
      || (self.0.len() == 35 &&
-            self.0[0] == opcodes::All::OP_PUSHBYTES_33 as u8 &&
-            self.0[34] == opcodes::All::OP_CHECKSIG as u8)
+            self.0[0] == opcodes::All::OP_PUSHBYTES_33.into_u8() &&
+            self.0[34] == opcodes::All::OP_CHECKSIG.into_u8())
     }
 
     /// Checks whether a script pubkey is a p2wsh output
     #[inline]
     pub fn is_v0_p2wsh(&self) -> bool {
         self.0.len() == 34 &&
-        self.0[0] == opcodes::All::OP_PUSHBYTES_0 as u8 &&
-        self.0[1] == opcodes::All::OP_PUSHBYTES_32 as u8
+        self.0[0] == opcodes::All::OP_PUSHBYTES_0.into_u8() &&
+        self.0[1] == opcodes::All::OP_PUSHBYTES_32.into_u8()
     }
 
     /// Checks whether a script pubkey is a p2wpkh output
     #[inline]
     pub fn is_v0_p2wpkh(&self) -> bool {
         self.0.len() == 22 &&
-            self.0[0] == opcodes::All::OP_PUSHBYTES_0 as u8 &&
-            self.0[1] == opcodes::All::OP_PUSHBYTES_20 as u8
+            self.0[0] == opcodes::All::OP_PUSHBYTES_0.into_u8() &&
+            self.0[1] == opcodes::All::OP_PUSHBYTES_20.into_u8()
     }
 
     /// Check if this is an OP_RETURN output
@@ -549,12 +549,12 @@ impl Builder {
     pub fn push_int(mut self, data: i64) -> Builder {
         // We can special-case -1, 1-16
         if data == -1 || (data >= 1 && data <= 16) {
-            self.0.push((data - 1 + opcodes::OP_TRUE as i64) as u8);
+            self.0.push((data - 1 + opcodes::OP_TRUE.into_u8() as i64) as u8);
             self
         }
         // We can also special-case zero
         else if data == 0 {
-            self.0.push(opcodes::OP_FALSE as u8);
+            self.0.push(opcodes::OP_FALSE.into_u8());
             self
         }
         // Otherwise encode it as data
@@ -573,16 +573,16 @@ impl Builder {
         match data.len() as u64 {
             n if n < opcodes::Ordinary::OP_PUSHDATA1 as u64 => { self.0.push(n as u8); },
             n if n < 0x100 => {
-                self.0.push(opcodes::Ordinary::OP_PUSHDATA1 as u8);
+                self.0.push(opcodes::Ordinary::OP_PUSHDATA1.into_u8());
                 self.0.push(n as u8);
             },
             n if n < 0x10000 => {
-                self.0.push(opcodes::Ordinary::OP_PUSHDATA2 as u8);
+                self.0.push(opcodes::Ordinary::OP_PUSHDATA2.into_u8());
                 self.0.push((n % 0x100) as u8);
                 self.0.push((n / 0x100) as u8);
             },
             n if n < 0x100000000 => {
-                self.0.push(opcodes::Ordinary::OP_PUSHDATA4 as u8);
+                self.0.push(opcodes::Ordinary::OP_PUSHDATA4.into_u8());
                 self.0.push((n % 0x100) as u8);
                 self.0.push(((n / 0x100) % 0x100) as u8);
                 self.0.push(((n / 0x10000) % 0x100) as u8);
@@ -597,7 +597,7 @@ impl Builder {
 
     /// Adds a single opcode to the script
     pub fn push_opcode(mut self, data: opcodes::All) -> Builder {
-        self.0.push(data as u8);
+        self.0.push(data.into_u8());
         self
     }
 
