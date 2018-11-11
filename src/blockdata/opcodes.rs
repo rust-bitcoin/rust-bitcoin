@@ -22,9 +22,6 @@
 
 #[cfg(feature = "serde")] use serde;
 
-// Heavy stick to translate between opcode types
-use std::mem::transmute;
-
 use std::fmt;
 
 use consensus::encode::{self, Decoder, Encoder};
@@ -690,7 +687,7 @@ impl All {
         Class::PushBytes(self.0 as u32)
       // 60 opcodes
       } else {
-        Class::Ordinary(unsafe { transmute(self.0) })
+        Class::Ordinary(Ordinary::try_from_all(*self).unwrap())
       }
     }
 
@@ -780,6 +777,16 @@ macro_rules! ordinary_opcode {
     #[derive(Copy, Clone, PartialEq, Eq, Debug)]
     pub enum Ordinary {
       $( $op = All::$op.0 ),*
+    }
+
+    impl Ordinary {
+      /// Try to create from an All
+      pub fn try_from_all(b: All) -> Option<Self> {
+        match b {
+          $( All::$op => { Some(Ordinary::$op) } ),*
+          _ => None,
+        }
+      }
     }
   );
 }
