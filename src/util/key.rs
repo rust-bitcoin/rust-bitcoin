@@ -11,18 +11,57 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! Private key
+//! Bitcoin Keys
 //!
-//! A private key represents the secret data associated with its proposed use
+//! Structures and methods representing the public/secret data associated with
+//! its proposed use
 //!
 
 use std::fmt::{self, Write};
+use std::io;
 use std::str::FromStr;
 use secp256k1::{self, Secp256k1};
-use secp256k1::key::{PublicKey, SecretKey};
 use consensus::encode;
 use network::constants::Network;
 use util::base58;
+
+/// A Bitcoin ECDSA public key
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct PublicKey {
+    /// Whether this public key represents a compressed address
+    pub compressed: bool,
+    /// The actual ECDSA key
+    pub key: secp256k1::PublicKey,
+}
+
+impl PublicKey {
+    /// Write the public key into a writer
+    pub fn write_into<W: io::Write>(&self, writer: &mut W) {
+        let write_res: io::Result<()> = if self.compressed {
+            writer.write_all(&self.key.serialize())
+        } else {
+            writer.write_all(&self.key.serialize_uncompressed())
+        };
+        debug_assert!(write_res.is_ok());
+    }
+
+    /// Deserialize a public key from a slice
+    pub fn from_slice<C>(secp: &Secp256k1<C>, data: &[u8]) -> Result<PublicKey, encode::Error> {
+        let key: secp256k1::PublicKey = secp256k1::PublicKey::from_slice(&secp, data)
+            .map_err(|_| base58::Error::Other("Public key out of range".to_owned()))?;
+
+        let compressed: bool = match data.len() {
+            33 => true,
+            65 => false,
+            _ =>  { return Err(base58::Error::InvalidLength(data.len()).into()); },
+        };
+
+        Ok(PublicKey {
+            compressed: compressed,
+            key: key,
+        })
+    }
+}
 
 #[derive(Clone, PartialEq, Eq)]
 /// A Bitcoin ECDSA private key
@@ -32,13 +71,13 @@ pub struct PrivateKey {
     /// The network on which this key should be used
     pub network: Network,
     /// The actual ECDSA key
-    pub key: SecretKey
+    pub key: secp256k1::SecretKey,
 }
 
 impl PrivateKey {
     /// Computes the public key as supposed to be used with this secret
-    pub fn public_key<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> PublicKey {
-        PublicKey::from_secret_key(secp, &self.key)
+    pub fn public_key<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> secp256k1::PublicKey {
+        secp256k1::PublicKey::from_secret_key(secp, &self.key)
     }
 
     /// Format the private key to WIF format.
@@ -83,7 +122,7 @@ impl PrivateKey {
         };
 
         let secp = Secp256k1::without_caps();
-        let key = SecretKey::from_slice(&secp, &data[1..33])
+        let key = secp256k1::SecretKey::from_slice(&secp, &data[1..33])
             .map_err(|_| base58::Error::Other("Secret key out of range".to_owned()))?;
 
         Ok(PrivateKey {
