@@ -20,14 +20,13 @@ use std::fmt::{self, Write};
 use std::str::FromStr;
 use secp256k1::{self, Secp256k1};
 use secp256k1::key::{PublicKey, SecretKey};
-use util::address::Address;
 use consensus::encode;
 use network::constants::Network;
 use util::base58;
 
 #[derive(Clone, PartialEq, Eq)]
 /// A Bitcoin ECDSA private key
-pub struct Privkey {
+pub struct PrivateKey {
     /// Whether this private key represents a compressed address
     pub compressed: bool,
     /// The network on which this key should be used
@@ -36,61 +35,10 @@ pub struct Privkey {
     pub key: SecretKey
 }
 
-impl Privkey {
-    /// Creates a `Privkey` from a raw secp256k1 secret key
-    #[inline]
-    pub fn from_secret_key(key: SecretKey, compressed: bool, network: Network) -> Privkey {
-        Privkey {
-            compressed: compressed,
-            network: network,
-            key: key,
-        }
-    }
-
+impl PrivateKey {
     /// Computes the public key as supposed to be used with this secret
     pub fn public_key<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> PublicKey {
         PublicKey::from_secret_key(secp, &self.key)
-    }
-
-    /// Converts a private key to a segwit address
-    #[inline]
-    pub fn to_address<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> Address {
-        Address::p2wpkh(&self.public_key(secp), self.network)
-    }
-
-    /// Converts a private key to a legacy (non-segwit) address
-    #[inline]
-    pub fn to_legacy_address<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> Address {
-        if self.compressed {
-            Address::p2pkh(&self.public_key(secp), self.network)
-        }
-        else {
-            Address::p2upkh(&self.public_key(secp), self.network)
-        }
-    }
-
-    /// Accessor for the underlying secp key
-    #[inline]
-    pub fn secret_key(&self) -> &SecretKey {
-        &self.key
-    }
-
-    /// Accessor for the underlying secp key that consumes the privkey
-    #[inline]
-    pub fn into_secret_key(self) -> SecretKey {
-        self.key
-    }
-
-    /// Accessor for the network type
-    #[inline]
-    pub fn network(&self) -> Network {
-        self.network
-    }
-
-    /// Accessor for the compressed flag
-    #[inline]
-    pub fn is_compressed(&self) -> bool {
-        self.compressed
     }
 
     /// Format the private key to WIF format.
@@ -111,7 +59,6 @@ impl Privkey {
     }
 
     /// Get WIF encoding of this private key.
-    #[inline]
     pub fn to_wif(&self) -> String {
         let mut buf = String::new();
         buf.write_fmt(format_args!("{}", self)).unwrap();
@@ -120,7 +67,7 @@ impl Privkey {
     }
 
     /// Parse WIF encoded private key.
-    pub fn from_wif(wif: &str) -> Result<Privkey, encode::Error> {
+    pub fn from_wif(wif: &str) -> Result<PrivateKey, encode::Error> {
         let data = base58::from_check(wif)?;
 
         let compressed = match data.len() {
@@ -139,7 +86,7 @@ impl Privkey {
         let key = SecretKey::from_slice(&secp, &data[1..33])
             .map_err(|_| base58::Error::Other("Secret key out of range".to_owned()))?;
 
-        Ok(Privkey {
+        Ok(PrivateKey {
             compressed: compressed,
             network: network,
             key: key
@@ -147,59 +94,60 @@ impl Privkey {
     }
 }
 
-impl fmt::Display for Privkey {
+impl fmt::Display for PrivateKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.fmt_wif(f)
     }
 }
 
-impl fmt::Debug for Privkey {
+impl fmt::Debug for PrivateKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "[private key data]")
     }
 }
 
-impl FromStr for Privkey {
+impl FromStr for PrivateKey {
     type Err = encode::Error;
-    fn from_str(s: &str) -> Result<Privkey, encode::Error> {
-        Privkey::from_wif(s)
+    fn from_str(s: &str) -> Result<PrivateKey, encode::Error> {
+        PrivateKey::from_wif(s)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::Privkey;
+    use super::PrivateKey;
     use secp256k1::Secp256k1;
     use std::str::FromStr;
     use network::constants::Network::Testnet;
     use network::constants::Network::Bitcoin;
+    use util::address::Address;
 
     #[test]
     fn test_key_derivation() {
         // testnet compressed
-        let sk = Privkey::from_wif("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
-        assert_eq!(sk.network(), Testnet);
-        assert_eq!(sk.is_compressed(), true);
+        let sk = PrivateKey::from_wif("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
+        assert_eq!(sk.network, Testnet);
+        assert_eq!(sk.compressed, true);
         assert_eq!(&sk.to_wif(), "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy");
 
         let secp = Secp256k1::new();
-        let pk = sk.to_legacy_address(&secp);
+        let pk = Address::p2pkh(&sk.public_key(&secp), sk.network);
         assert_eq!(&pk.to_string(), "mqwpxxvfv3QbM8PU8uBx2jaNt9btQqvQNx");
 
         // test string conversion
         assert_eq!(&sk.to_string(), "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy");
         let sk_str =
-            Privkey::from_str("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
+            PrivateKey::from_str("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
         assert_eq!(&sk.to_wif(), &sk_str.to_wif());
 
         // mainnet uncompressed
-        let sk = Privkey::from_wif("5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3").unwrap();
-        assert_eq!(sk.network(), Bitcoin);
-        assert_eq!(sk.is_compressed(), false);
+        let sk = PrivateKey::from_wif("5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3").unwrap();
+        assert_eq!(sk.network, Bitcoin);
+        assert_eq!(sk.compressed, false);
         assert_eq!(&sk.to_wif(), "5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3");
 
         let secp = Secp256k1::new();
-        let pk = sk.to_legacy_address(&secp);
+        let pk = Address::p2pk(&sk.public_key(&secp), sk.network);
         assert_eq!(&pk.to_string(), "1GhQvF6dL8xa6wBxLnWmHcQsurx9RxiMc8");
     }
 }
