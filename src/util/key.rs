@@ -25,7 +25,7 @@ use network::constants::Network;
 use util::base58;
 
 /// A Bitcoin ECDSA public key
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PublicKey {
     /// Whether this public key represents a compressed address
     pub compressed: bool,
@@ -60,6 +60,11 @@ impl PublicKey {
             key: key,
         })
     }
+
+    /// Computes the public key as supposed to be used with this secret
+    pub fn from_private_key<C: secp256k1::Signing>(secp: &Secp256k1<C>, sk: &PrivateKey) -> PublicKey {
+        sk.public_key(secp)
+    }
 }
 
 #[derive(Clone, PartialEq, Eq)]
@@ -75,8 +80,11 @@ pub struct PrivateKey {
 
 impl PrivateKey {
     /// Computes the public key as supposed to be used with this secret
-    pub fn public_key<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> secp256k1::PublicKey {
-        secp256k1::PublicKey::from_secret_key(secp, &self.key)
+    pub fn public_key<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> PublicKey {
+        PublicKey {
+            compressed: self.compressed,
+            key: secp256k1::PublicKey::from_secret_key(secp, &self.key)
+        }
     }
 
     /// Format the private key to WIF format.
@@ -184,7 +192,7 @@ mod tests {
         assert_eq!(&sk.to_wif(), "5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3");
 
         let secp = Secp256k1::new();
-        let pk = Address::p2upkh(&sk.public_key(&secp), sk.network);
+        let pk = Address::p2pkh(&sk.public_key(&secp), sk.network);
         assert_eq!(&pk.to_string(), "1GhQvF6dL8xa6wBxLnWmHcQsurx9RxiMc8");
     }
 }

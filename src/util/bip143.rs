@@ -107,8 +107,8 @@ mod tests {
     use network::constants::Network;
     use util::misc::hex_bytes;
     use util::address::Address;
+    use util::key::PublicKey;
     use hex;
-    use secp256k1::PublicKey;
 
     use super::*;
 

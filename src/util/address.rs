@@ -24,13 +24,17 @@
 //! 
 //! use bitcoin::network::constants::Network;
 //! use bitcoin::util::address::Address;
+//! use bitcoin::util::key;
 //! use secp256k1::Secp256k1;
 //! use rand::thread_rng;
 //! 
 //! fn main() {
 //!     // Generate random key pair
 //!     let s = Secp256k1::new();
-//!     let (_, public_key) = s.generate_keypair(&mut thread_rng());
+//!     let public_key = key::PublicKey {
+//!         compressed: true,
+//!         key: s.generate_keypair(&mut thread_rng()).1,
+//!     };
 //! 
 //!     // Generate pay-to-pubkey-hash address
 //!     let address = Address::p2pkh(&public_key, Network::Bitcoin);
@@ -42,7 +46,6 @@ use std::str::FromStr;
 
 use bitcoin_bech32::{self, WitnessProgram, u5};
 use bitcoin_hashes::{hash160, Hash};
-use secp256k1::key::PublicKey;
 
 #[cfg(feature = "serde")]
 use serde;
@@ -52,6 +55,7 @@ use blockdata::script;
 use network::constants::Network;
 use consensus::encode;
 use util::base58;
+use util::key;
 
 /// The method used to produce an address
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -70,28 +74,20 @@ pub struct Address {
     /// The type of the address
     pub payload: Payload,
     /// The network on which this address is usable
-    pub network: Network
+    pub network: Network,
 }
 
 impl Address {
     /// Creates a pay to (compressed) public key hash address from a public key
     /// This is the preferred non-witness type address
     #[inline]
-    pub fn p2pkh(pk: &PublicKey, network: Network) -> Address {
-        Address {
-            network: network,
-            payload: Payload::PubkeyHash(hash160::Hash::hash(&pk.serialize()[..]))
-        }
-    }
+    pub fn p2pkh(pk: &key::PublicKey, network: Network) -> Address {
+        let mut hash_engine = hash160::Hash::engine();
+        pk.write_into(&mut hash_engine);
 
-    /// Creates a pay to uncompressed public key hash address from a public key
-    /// This address type is discouraged as it uses more space but otherwise equivalent to p2pkh
-    /// therefore only adds ambiguity
-    #[inline]
-    pub fn p2upkh(pk: &PublicKey, network: Network) -> Address {
         Address {
             network: network,
-            payload: Payload::PubkeyHash(hash160::Hash::hash(&pk.serialize_uncompressed()[..]))
+            payload: Payload::PubkeyHash(hash160::Hash::from_engine(hash_engine))
         }
     }
 
@@ -107,23 +103,30 @@ impl Address {
 
     /// Create a witness pay to public key address from a public key
     /// This is the native segwit address type for an output redeemable with a single signature
-    pub fn p2wpkh (pk: &PublicKey, network: Network) -> Address {
+    pub fn p2wpkh (pk: &key::PublicKey, network: Network) -> Address {
+        let mut hash_engine = hash160::Hash::engine();
+        pk.write_into(&mut hash_engine);
+
         Address {
             network: network,
             payload: Payload::WitnessProgram(
                 // unwrap is safe as witness program is known to be correct as above
                 WitnessProgram::new(u5::try_from_u8(0).expect("0<32"),
-                                    hash160::Hash::hash(&pk.serialize()[..])[..].to_vec(),
+                                    hash160::Hash::from_engine(hash_engine)[..].to_vec(),
                                     Address::bech_network(network)).unwrap())
         }
     }
 
     /// Create a pay to script address that embeds a witness pay to public key
     /// This is a segwit address type that looks familiar (as p2sh) to legacy clients
-    pub fn p2shwpkh (pk: &PublicKey, network: Network) -> Address {
+    pub fn p2shwpkh (pk: &key::PublicKey, network: Network) -> Address {
+        let mut hash_engine = hash160::Hash::engine();
+        pk.write_into(&mut hash_engine);
+
         let builder = script::Builder::new()
             .push_int(0)
-            .push_slice(&hash160::Hash::hash(&pk.serialize()[..])[..]);
+            .push_slice(&hash160::Hash::from_engine(hash_engine)[..]);
+
         Address {
             network: network,
             payload: Payload::ScriptHash(
@@ -146,7 +149,7 @@ impl Address {
                     sha256::Hash::hash(&script[..])[..].to_vec(),
                     Address::bech_network(network)
                 ).unwrap()
-            )
+            ),
         }
     }
 
@@ -252,7 +255,7 @@ impl FromStr for Address {
             }
             return Ok(Address {
                 network: network,
-                payload: Payload::WitnessProgram(witprog)
+                payload: Payload::WitnessProgram(witprog),
             });
         }
 
@@ -359,11 +362,12 @@ mod tests {
     use std::string::ToString;
 
     use bitcoin_hashes::{hash160, Hash};
-    use secp256k1::key::PublicKey;
     use hex::decode as hex_decode;
 
     use blockdata::script::Script;
     use network::constants::Network::{Bitcoin, Testnet, Regtest};
+    use util::key::PublicKey;
+
     use super::*;
 
     macro_rules! hex (($hex:expr) => (hex_decode($hex).unwrap()));
@@ -388,7 +392,7 @@ mod tests {
     #[test]
     fn test_p2pkh_from_key() {
         let key = hex_key!("048d5141948c1702e8c95f438815794b87f706a8d4cd2bffad1dc1570971032c9b6042a0431ded2478b5c9cf2d81c124a5e57347a3c63ef0e7716cf54d613ba183");
-        let addr = Address::p2upkh(&key, Bitcoin);
+        let addr = Address::p2pkh(&key, Bitcoin);
         assert_eq!(&addr.to_string(), "1QJVDzdqb1VpbDK7uDeyVXy9mR27CJiyhY");
 
         let key = hex_key!(&"03df154ebfcf29d29cc10d5c2565018bce2d9edbab267c31d2caf44a63056cf99f");
