@@ -25,6 +25,7 @@
 //! use bitcoin::network::constants::Network;
 //! use bitcoin::util::address::{Address, Payload};
 //! use bitcoin::util::key;
+//! use bitcoin::util::hash::Hash160;
 //! use secp256k1::Secp256k1;
 //! use rand::thread_rng;
 //! 
@@ -42,13 +43,15 @@
 //!     };
 //! 
 //!     // Generate pay-to-pubkey address
-//!     let address = Address::p2pk(&public_key, network);
+//!     let address = Address::p2pkh(&public_key, network);
 //! 
-//!     // Check address payload is public key given
-//!     assert_eq!(address.payload, Payload::Pubkey(public_key));
+//!     // Check address payload is the hash of the public key given
+//!     let pk_bytes = &public_key.serialize()[..];
+//!     assert_eq!(address.payload, Payload::PubkeyHash(Hash160::from_data(pk_bytes)));
 //! 
 //!     // Check address can be unlocked by secret_key
-//!     assert_eq!(address.payload, Payload::Pubkey(key::PublicKey::from_private_key(&s, &private_key)));
+//!     assert_eq!(address.payload, Payload::PubkeyHash(
+//!             Hash160::from_data(&PublicKey::from_secret_key(&s, &secret_key).serialize()[..])));
 //! }
 //! ```
 
@@ -71,8 +74,6 @@ use util::key;
 /// The method used to produce an address
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Payload {
-    /// pay-to-pubkey
-    Pubkey(key::PublicKey),
     /// pay-to-pkhash address
     PubkeyHash(Hash160),
     /// P2SH address
@@ -101,17 +102,6 @@ impl Address {
         Address {
             network: network,
             payload: Payload::PubkeyHash(Hash160::from_data(&hash)),
-        }
-    }
-
-    /// Creates a pay to public key address from a public key
-    /// This address type was used in the early history of Bitcoin.
-    /// Satoshi's coins are still on addresses of this type.
-    #[inline]
-    pub fn p2pk(pk: &key::PublicKey, network: Network) -> Address {
-        Address {
-            network: network,
-            payload: Payload::Pubkey(*pk),
         }
     }
 
@@ -212,14 +202,6 @@ impl Address {
     /// Generates a script pubkey spending to this address
     pub fn script_pubkey(&self) -> script::Script {
         match self.payload {
-            Payload::Pubkey(ref pk) => {
-                let mut hash = Vec::new();
-                pk.write_into(&mut hash);
-
-                script::Builder::new()
-                    .push_slice(&hash)
-                    .push_opcode(opcodes::All::OP_CHECKSIG)
-            },
             Payload::PubkeyHash(ref hash) => {
                 script::Builder::new()
                     .push_opcode(opcodes::All::OP_DUP)
@@ -246,20 +228,6 @@ impl Address {
 impl Display for Address {
     fn fmt(&self, fmt: &mut Formatter) -> fmt::Result {
         match self.payload {
-            // note: serialization for pay-to-pk is defined, but is irreversible
-            Payload::Pubkey(ref pk) => {
-                let mut bytes = Vec::new();
-                pk.write_into(&mut bytes);
-
-                let hash = &Hash160::from_data(&bytes);
-                let mut prefixed = [0; 21];
-                prefixed[0] = match self.network {
-                    Network::Bitcoin => 0,
-                    Network::Testnet | Network::Regtest => 111,
-                };
-                prefixed[1..].copy_from_slice(&hash[..]);
-                base58::check_encode_slice_to_fmt(fmt, &prefixed[..])
-            },
             Payload::PubkeyHash(ref hash) => {
                 let mut prefixed = [0; 21];
                 prefixed[0] = match self.network {
@@ -450,15 +418,6 @@ mod tests {
         let key = hex_key!(&secp, &"03df154ebfcf29d29cc10d5c2565018bce2d9edbab267c31d2caf44a63056cf99f");
         let addr = Address::p2pkh(&key, Testnet);
         assert_eq!(&addr.to_string(), "mqkhEMH6NCeYjFybv7pvFC22MFeaNT9AQC");
-    }
-
-    #[test]
-    fn test_p2pk () {
-        // one of Satoshi's coins, from Bitcoin transaction 9b0fc92260312ce44e74ef369f5c66bbb85848f2eddd5a7a1cde251e54ccfdd5
-        let secp = Secp256k1::without_caps();
-        let key = hex_key!(&secp, "047211a824f55b505228e4c3d5194c1fcfaa15a456abdf37f9b9d97a4040afc073dee6c89064984f03385237d92167c13e236446b417ab79a0fcae412ae3316b77");
-        let addr = Address::p2pk(&key, Bitcoin);
-        assert_eq!(&addr.to_string(), "1HLoD9E4SDFFPDiYfNYnkBLQ85Y51J3Zb1");
     }
 
     #[test]
