@@ -202,7 +202,7 @@ mod tests {
         );
 
         let secp = Secp256k1::new();
-        let pk = Address::p2pkh(&sk.public_key(&secp), network, compressed);
+        let pk = Address::p2pkh(&sk.public_key(&secp), network);
         assert_eq!(&pk.to_string(), "mqwpxxvfv3QbM8PU8uBx2jaNt9btQqvQNx");
 
         // mainnet uncompressed

@@ -41,7 +41,7 @@
 //!     };
 //! 
 //!     // Generate pay-to-pubkey address that can be used on Bitcoin mainnet.
-//!     let address = Address::p2pkh(&public_key, Network::Bitcoin, true);
+//!     let address = Address::p2pkh(&public_key, Network::Bitcoin);
 //! 
 //!     // Check address payload is the hash of the public key given
 //!     let pk_bytes = public_key.to_bytes();
@@ -90,19 +90,22 @@ pub struct Address {
 }
 
 impl Address {
-    /// Creates a pay to (compressed) public key hash address from a public key
-    /// This is the preferred non-witness type address
+    /// Creates a pay to a (compressed) public key hash address from a public key.
+    /// This is the preferred non-witness type address.
     #[inline]
-    pub fn p2pkh(pk: &key::PublicKey, network: Network, compressed: bool) -> Address {
-        let pk_bytes = if compressed {
-            pk.to_bytes()
-        } else {
-            pk.to_bytes_uncompressed()
-        };
-
+    pub fn p2pkh(pk: &key::PublicKey, network: Network) -> Address {
         Address {
             network: network,
-            payload: Payload::PubkeyHash(Hash160::from_data(&pk_bytes)),
+            payload: Payload::PubkeyHash(Hash160::from_data(&pk.to_bytes())),
+        }
+    }
+
+    /// Creates a pay to an uncompressed public key hash address from a public key.
+    #[inline]
+    pub fn p2pkh_uncompressed(pk: &key::PublicKey, network: Network) -> Address {
+        Address {
+            network: network,
+            payload: Payload::PubkeyHash(Hash160::from_data(&pk.to_bytes_uncompressed())),
         }
     }
 
@@ -116,37 +119,52 @@ impl Address {
         }
     }
 
-    /// Create a witness pay to public key address from a public key
-    /// This is the native segwit address type for an output redemable with a single signature
-    pub fn p2wpkh (pk: &key::PublicKey, network: Network, compressed: bool) -> Address {
-        let pk_bytes = if compressed {
-            pk.to_bytes()
-        } else {
-            pk.to_bytes_uncompressed()
-        };
-
+    /// Create a witness pay to public key address from a (compressed) public key.
+    /// This is the native segwit address type for an output redemable with a single signature.
+    pub fn p2wpkh(pk: &key::PublicKey, network: Network) -> Address {
         Address {
             network: network,
             payload: Payload::WitnessProgram(
                 // unwrap is safe as witness program is known to be correct as above
                 WitnessProgram::new(u5::try_from_u8(0).expect("0<32"),
-                                    Hash160::from_data(&pk_bytes)[..].to_vec(),
+                                    Hash160::from_data(&pk.to_bytes())[..].to_vec(),
                                     Address::bech_network(network)).unwrap()),
         }
     }
 
-    /// Create a pay to script address that embeds a witness pay to public key
-    /// This is a segwit address type that looks familiar (as p2sh) to legacy clients
-    pub fn p2shwpkh (pk: &key::PublicKey, network: Network, compressed: bool) -> Address {
-        let pk_bytes = if compressed {
-            pk.to_bytes()
-        } else {
-            pk.to_bytes_uncompressed()
-        };
+    /// Create a witness pay to public key address from an uncompressed public key.
+    /// This is a native segwit address type for an output redemable with a single signature.
+    pub fn p2wpkh_uncompressed(pk: &key::PublicKey, network: Network) -> Address {
+        Address {
+            network: network,
+            payload: Payload::WitnessProgram(
+                // unwrap is safe as witness program is known to be correct as above
+                WitnessProgram::new(u5::try_from_u8(0).expect("0<32"),
+                                    Hash160::from_data(&pk.to_bytes_uncompressed())[..].to_vec(),
+                                    Address::bech_network(network)).unwrap()),
+        }
+    }
 
+    /// Create a pay to script address that embeds a witness pay to a (compressed) public key.
+    /// This is a segwit address type that looks familiar (as p2sh) to legacy clients.
+    pub fn p2shwpkh(pk: &key::PublicKey, network: Network) -> Address {
         let builder = script::Builder::new()
             .push_int(0)
-            .push_slice(&Hash160::from_data(&pk_bytes)[..]);
+            .push_slice(&Hash160::from_data(&pk.to_bytes())[..]);
+        Address {
+            network: network,
+            payload: Payload::ScriptHash(
+                Hash160::from_data(builder.into_script().as_bytes())
+            ),
+        }
+    }
+
+    /// Create a pay to script address that embeds a witness pay to an uncompressed public key.
+    /// This is a segwit address type that looks familiar (as p2sh) to legacy clients.
+    pub fn p2shwpkh_uncompressed(pk: &key::PublicKey, network: Network) -> Address {
+        let builder = script::Builder::new()
+            .push_int(0)
+            .push_slice(&Hash160::from_data(&pk.to_bytes_uncompressed())[..]);
         Address {
             network: network,
             payload: Payload::ScriptHash(
@@ -419,11 +437,13 @@ mod tests {
         let secp = Secp256k1::without_caps();
 
         let (key, compressed) = hex_key!(&secp, "048d5141948c1702e8c95f438815794b87f706a8d4cd2bffad1dc1570971032c9b6042a0431ded2478b5c9cf2d81c124a5e57347a3c63ef0e7716cf54d613ba183");
-        let addr = Address::p2pkh(&key, Bitcoin, compressed);
+        assert_eq!(compressed, false);
+        let addr = Address::p2pkh_uncompressed(&key, Bitcoin);
         assert_eq!(&addr.to_string(), "1QJVDzdqb1VpbDK7uDeyVXy9mR27CJiyhY");
 
         let (key, compressed) = hex_key!(&secp, &"03df154ebfcf29d29cc10d5c2565018bce2d9edbab267c31d2caf44a63056cf99f");
-        let addr = Address::p2pkh(&key, Testnet, compressed);
+        assert_eq!(compressed, true);
+        let addr = Address::p2pkh(&key, Testnet);
         assert_eq!(&addr.to_string(), "mqkhEMH6NCeYjFybv7pvFC22MFeaNT9AQC");
     }
 
@@ -455,7 +475,8 @@ mod tests {
         // stolen from Bitcoin transaction: b3c8c2b6cfc335abbcb2c7823a8453f55d64b2b5125a9a61e8737230cdb8ce20
         let secp = Secp256k1::without_caps();
         let (key, compressed) = hex_key!(&secp, "033bc8c83c52df5712229a2f72206d90192366c36428cb0c12b6af98324d97bfbc");
-        let addr = Address::p2wpkh(&key, Bitcoin, compressed);
+        assert_eq!(compressed, true);
+        let addr = Address::p2wpkh(&key, Bitcoin);
         assert_eq!(&addr.to_string(), "bc1qvzvkjn4q3nszqxrv3nraga2r822xjty3ykvkuw");
     }
 

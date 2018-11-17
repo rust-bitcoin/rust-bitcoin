@@ -116,7 +116,8 @@ mod tests {
         let ctx = Secp256k1::new();
         let pk = hex::decode(pk).unwrap();
         let (pk, compressed) = PublicKey::from_slice(&ctx, pk.as_slice()).unwrap();
-        let witness_script = Address::p2pkh(&pk, Network::Bitcoin, compressed).script_pubkey();
+        assert_eq!(compressed, true);
+        let witness_script = Address::p2pkh(&pk, Network::Bitcoin).script_pubkey();
         witness_script
     }
 
