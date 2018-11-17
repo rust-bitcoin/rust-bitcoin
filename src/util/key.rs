@@ -28,37 +28,31 @@ use util::base58;
 pub struct PublicKey {
     /// The actual ECDSA key
     pub key: secp256k1::PublicKey,
+    /// Wether or not this key is supposed to be used
+    /// in compressed or uncompressed form.
+    pub compressed: bool,
 }
 
 impl PublicKey {
-    /// Write the public key into a writer in compressed form.
+    /// Write the public key into a writer.
     pub fn write_into<W: io::Write>(&self, writer: &mut W) {
-        let write_res: io::Result<()> = writer.write_all(&self.key.serialize());
+        let write_res: io::Result<()> = if self.compressed {
+            writer.write_all(&self.key.serialize())
+        } else {
+            writer.write_all(&self.key.serialize_uncompressed())
+        };
         debug_assert!(write_res.is_ok());
     }
 
-    /// Write the public key into a writer in uncompressed form.
-    pub fn write_into_uncompressed<W: io::Write>(&self, writer: &mut W) {
-        let write_res: io::Result<()> = writer.write_all(&self.key.serialize_uncompressed());
-        debug_assert!(write_res.is_ok());
-    }
-
-    /// Serialize the public key in compressed form.
+    /// Serialize the public key.
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut buf = Vec::new();
         self.write_into(&mut buf);
         buf
     }
 
-    /// Serialize the public key in uncompressed form.
-    pub fn to_bytes_uncompressed(&self) -> Vec<u8> {
-        let mut buf = Vec::new();
-        self.write_into_uncompressed(&mut buf);
-        buf
-    }
-
     /// Deserialize a public key from a slice.  Also returns whether the public key was compressed.
-    pub fn from_slice<C>(secp: &Secp256k1<C>, data: &[u8]) -> Result<(PublicKey, bool), encode::Error> {
+    pub fn from_slice<C>(secp: &Secp256k1<C>, data: &[u8]) -> Result<PublicKey, encode::Error> {
         let key: secp256k1::PublicKey = secp256k1::PublicKey::from_slice(&secp, data)
             .map_err(|_| base58::Error::Other("Public key out of range".to_owned()))?;
 
@@ -67,10 +61,11 @@ impl PublicKey {
             65 => false,
             _ =>  { return Err(base58::Error::InvalidLength(data.len()).into()); },
         };
-        let pk = PublicKey {
+
+        Ok(PublicKey {
             key: key,
-        };
-        Ok((pk, compressed))
+            compressed: compressed,
+        })
     }
 
     /// Computes the public key as supposed to be used with this secret
@@ -94,6 +89,15 @@ impl PrivateKey {
     pub fn public_key<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> PublicKey {
         PublicKey {
             key: secp256k1::PublicKey::from_secret_key(secp, &self.key),
+            compressed: true,
+        }
+    }
+
+    /// Computes the public key as supposed to be used with this secret
+    pub fn public_key_uncompressed<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> PublicKey {
+        PublicKey {
+            key: secp256k1::PublicKey::from_secret_key(secp, &self.key),
+            compressed: false,
         }
     }
 
@@ -150,7 +154,7 @@ mod tests {
         assert_eq!(compressed, false);
 
         let secp = Secp256k1::new();
-        let pk = Address::p2pkh_uncompressed(&sk.public_key(&secp), network);
+        let pk = Address::p2pkh(&sk.public_key_uncompressed(&secp), network);
         assert_eq!(&pk.to_string(), "1GhQvF6dL8xa6wBxLnWmHcQsurx9RxiMc8");
     }
 }
