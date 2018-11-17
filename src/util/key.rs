@@ -17,36 +17,49 @@
 //! its proposed use
 //!
 
-use std::fmt::{self, Write};
-use std::io;
-use std::str::FromStr;
-use secp256k1::{self, Secp256k1};
 use consensus::encode;
 use network::constants::Network;
+use secp256k1::{self, Secp256k1};
+use std::fmt;
+use std::io;
 use util::base58;
 
 /// A Bitcoin ECDSA public key
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PublicKey {
-    /// Whether this public key represents a compressed address
-    pub compressed: bool,
     /// The actual ECDSA key
     pub key: secp256k1::PublicKey,
 }
 
 impl PublicKey {
-    /// Write the public key into a writer
+    /// Write the public key into a writer in compressed form.
     pub fn write_into<W: io::Write>(&self, writer: &mut W) {
-        let write_res: io::Result<()> = if self.compressed {
-            writer.write_all(&self.key.serialize())
-        } else {
-            writer.write_all(&self.key.serialize_uncompressed())
-        };
+        let write_res: io::Result<()> = writer.write_all(&self.key.serialize());
         debug_assert!(write_res.is_ok());
     }
 
-    /// Deserialize a public key from a slice
-    pub fn from_slice<C>(secp: &Secp256k1<C>, data: &[u8]) -> Result<PublicKey, encode::Error> {
+    /// Write the public key into a writer in uncompressed form.
+    pub fn write_into_uncompressed<W: io::Write>(&self, writer: &mut W) {
+        let write_res: io::Result<()> = writer.write_all(&self.key.serialize_uncompressed());
+        debug_assert!(write_res.is_ok());
+    }
+
+    /// Serialize the public key in compressed form.
+    pub fn to_bytes(&self) -> Vec<u8> {
+        let mut buf = Vec::new();
+        self.write_into(&mut buf);
+        buf
+    }
+
+    /// Serialize the public key in uncompressed form.
+    pub fn to_bytes_uncompressed(&self) -> Vec<u8> {
+        let mut buf = Vec::new();
+        self.write_into_uncompressed(&mut buf);
+        buf
+    }
+
+    /// Deserialize a public key from a slice.  Also returns whether the public key was compressed.
+    pub fn from_slice<C>(secp: &Secp256k1<C>, data: &[u8]) -> Result<(PublicKey, bool), encode::Error> {
         let key: secp256k1::PublicKey = secp256k1::PublicKey::from_slice(&secp, data)
             .map_err(|_| base58::Error::Other("Public key out of range".to_owned()))?;
 
@@ -55,15 +68,17 @@ impl PublicKey {
             65 => false,
             _ =>  { return Err(base58::Error::InvalidLength(data.len()).into()); },
         };
-
-        Ok(PublicKey {
-            compressed: compressed,
+        let pk = PublicKey {
             key: key,
-        })
+        };
+        Ok((pk, compressed))
     }
 
     /// Computes the public key as supposed to be used with this secret
-    pub fn from_private_key<C: secp256k1::Signing>(secp: &Secp256k1<C>, sk: &PrivateKey) -> PublicKey {
+    pub fn from_private_key<C: secp256k1::Signing>(
+        secp: &Secp256k1<C>,
+        sk: &PrivateKey,
+    ) -> PublicKey {
         sk.public_key(secp)
     }
 }
@@ -71,10 +86,6 @@ impl PublicKey {
 #[derive(Clone, PartialEq, Eq)]
 /// A Bitcoin ECDSA private key
 pub struct PrivateKey {
-    /// Whether this private key represents a compressed address
-    pub compressed: bool,
-    /// The network on which this key should be used
-    pub network: Network,
     /// The actual ECDSA key
     pub key: secp256k1::SecretKey,
 }
@@ -83,20 +94,32 @@ impl PrivateKey {
     /// Computes the public key as supposed to be used with this secret
     pub fn public_key<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> PublicKey {
         PublicKey {
-            compressed: self.compressed,
-            key: secp256k1::PublicKey::from_secret_key(secp, &self.key)
+            key: secp256k1::PublicKey::from_secret_key(secp, &self.key),
         }
     }
 
+    /// Write the private key into a writer.
+    pub fn write_into<W: io::Write>(&self, writer: &mut W) {
+        let write_res: io::Result<()> = writer.write_all(&self.key[..]);
+        debug_assert!(write_res.is_ok());
+    }
+
+    /// Serialize the private key.
+    pub fn to_bytes(&self) -> Vec<u8> {
+        let mut buf = Vec::new();
+        self.write_into(&mut buf);
+        buf
+    }
+
     /// Format the private key to WIF format.
-    pub fn fmt_wif(&self, fmt: &mut fmt::Write) -> fmt::Result {
+    pub fn fmt_wif(&self, fmt: &mut fmt::Write, network: Network, compressed: bool) -> fmt::Result {
         let mut ret = [0; 34];
-        ret[0] = match self.network {
+        ret[0] = match network {
             Network::Bitcoin => 128,
             Network::Testnet | Network::Regtest => 239,
         };
         ret[1..33].copy_from_slice(&self.key[..]);
-        let privkey = if self.compressed {
+        let privkey = if compressed {
             ret[33] = 1;
             base58::check_encode_slice(&ret[..])
         } else {
@@ -106,44 +129,49 @@ impl PrivateKey {
     }
 
     /// Get WIF encoding of this private key.
-    pub fn to_wif(&self) -> String {
+    pub fn to_wif(&self, network: Network, compressed: bool) -> String {
         let mut buf = String::new();
-        buf.write_fmt(format_args!("{}", self)).unwrap();
+        self.fmt_wif(&mut buf, network, compressed).unwrap();
         buf.shrink_to_fit();
         buf
     }
 
-    /// Parse WIF encoded private key.
-    pub fn from_wif(wif: &str) -> Result<PrivateKey, encode::Error> {
+    /// Parse WIF encoded private key.  Returns a tuple containing the private key,
+    /// the network the key is intended to be used with and whether the public key should be
+    /// compressed when creating an address with this key.
+    pub fn from_wif(wif: &str) -> Result<(PrivateKey, Network, bool), encode::Error> {
         let data = base58::from_check(wif)?;
 
         let compressed = match data.len() {
             33 => false,
             34 => true,
-            _ => { return Err(encode::Error::Base58(base58::Error::InvalidLength(data.len()))); }
+            _ => {
+                return Err(encode::Error::Base58(base58::Error::InvalidLength(data.len())));
+            }
         };
 
         let network = match data[0] {
             128 => Network::Bitcoin,
             239 => Network::Testnet,
-            x   => { return Err(encode::Error::Base58(base58::Error::InvalidVersion(vec![x]))); }
+            x => {
+                return Err(encode::Error::Base58(base58::Error::InvalidVersion(vec![x])));
+            }
         };
 
         let secp = Secp256k1::without_caps();
         let key = secp256k1::SecretKey::from_slice(&secp, &data[1..33])
             .map_err(|_| base58::Error::Other("Secret key out of range".to_owned()))?;
 
-        Ok(PrivateKey {
-            compressed: compressed,
-            network: network,
-            key: key
-        })
+        let pk = PrivateKey {
+            key: key,
+        };
+        Ok((pk, network, compressed))
     }
 }
 
 impl fmt::Display for PrivateKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.fmt_wif(f)
+        write!(f, "[private key data]")
     }
 }
 
@@ -153,48 +181,38 @@ impl fmt::Debug for PrivateKey {
     }
 }
 
-impl FromStr for PrivateKey {
-    type Err = encode::Error;
-    fn from_str(s: &str) -> Result<PrivateKey, encode::Error> {
-        PrivateKey::from_wif(s)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::PrivateKey;
-    use secp256k1::Secp256k1;
-    use std::str::FromStr;
-    use network::constants::Network::Testnet;
     use network::constants::Network::Bitcoin;
+    use network::constants::Network::Testnet;
+    use secp256k1::Secp256k1;
     use util::address::Address;
 
     #[test]
     fn test_key_derivation() {
         // testnet compressed
-        let sk = PrivateKey::from_wif("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
-        assert_eq!(sk.network, Testnet);
-        assert_eq!(sk.compressed, true);
-        assert_eq!(&sk.to_wif(), "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy");
+        let (sk, network, compressed) =
+            PrivateKey::from_wif("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
+        assert_eq!(network, Testnet);
+        assert_eq!(compressed, true);
+        assert_eq!(
+            &sk.to_wif(network, compressed),
+            "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy"
+        );
 
         let secp = Secp256k1::new();
-        let pk = Address::p2pkh(&sk.public_key(&secp), sk.network);
+        let pk = Address::p2pkh(&sk.public_key(&secp), network, compressed);
         assert_eq!(&pk.to_string(), "mqwpxxvfv3QbM8PU8uBx2jaNt9btQqvQNx");
 
-        // test string conversion
-        assert_eq!(&sk.to_string(), "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy");
-        let sk_str =
-            PrivateKey::from_str("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
-        assert_eq!(&sk.to_wif(), &sk_str.to_wif());
-
         // mainnet uncompressed
-        let sk = PrivateKey::from_wif("5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3").unwrap();
-        assert_eq!(sk.network, Bitcoin);
-        assert_eq!(sk.compressed, false);
-        assert_eq!(&sk.to_wif(), "5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3");
-
-        let secp = Secp256k1::new();
-        let pk = Address::p2pk(&sk.public_key(&secp), sk.network);
-        assert_eq!(&pk.to_string(), "1GhQvF6dL8xa6wBxLnWmHcQsurx9RxiMc8");
+        let (sk, network, compressed) =
+            PrivateKey::from_wif("5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3").unwrap();
+        assert_eq!(network, Bitcoin);
+        assert_eq!(compressed, false);
+        assert_eq!(
+            &sk.to_wif(network, compressed),
+            "5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3"
+        );
     }
 }

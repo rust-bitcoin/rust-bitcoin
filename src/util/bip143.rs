@@ -115,8 +115,8 @@ mod tests {
     fn p2pkh_hex(pk: &str) -> Script {
         let ctx = Secp256k1::new();
         let pk = hex::decode(pk).unwrap();
-        let pk = PublicKey::from_slice(&ctx, pk.as_slice()).unwrap();
-        let witness_script = Address::p2pkh(&pk, Network::Bitcoin).script_pubkey();
+        let (pk, compressed) = PublicKey::from_slice(&ctx, pk.as_slice()).unwrap();
+        let witness_script = Address::p2pkh(&pk, Network::Bitcoin, compressed).script_pubkey();
         witness_script
     }
 
