@@ -177,20 +177,20 @@ pub fn tweak_keys<C: secp256k1::Verification>(secp: &Secp256k1<C>, keys: &[Publi
         let mut hmac = hmac::Hmac::new(sha2::Sha256::new(), &key.serialize());
         hmac.input(contract);
         hmac.raw_result(&mut hmac_raw);
-        let hmac_sk = SecretKey::from_slice(secp, &hmac_raw).map_err(Error::BadTweak)?;
-        key.add_exp_assign(secp, &hmac_sk).map_err(Error::Secp)?;
+        let hmac_sk = SecretKey::from_slice(&hmac_raw).map_err(Error::BadTweak)?;
+        key.add_exp_assign(secp, &hmac_sk[..]).map_err(Error::Secp)?;
         ret.push(key);
     }
     Ok(ret)
 }
 
 /// Compute a tweak from some given data for the given public key
-pub fn compute_tweak<C>(secp: &Secp256k1<C>, pk: &PublicKey, contract: &[u8]) -> Result<SecretKey, Error> {
+pub fn compute_tweak(pk: &PublicKey, contract: &[u8]) -> Result<SecretKey, Error> {
     let mut hmac_raw = [0; 32];
     let mut hmac = hmac::Hmac::new(sha2::Sha256::new(), &pk.serialize());
     hmac.input(contract);
     hmac.raw_result(&mut hmac_raw);
-    SecretKey::from_slice(secp, &hmac_raw).map_err(Error::BadTweak)
+    SecretKey::from_slice(&hmac_raw).map_err(Error::BadTweak)
 }
 
 /// Tweak a secret key using some arbitrary data (calls `compute_tweak` internally)
@@ -198,10 +198,10 @@ pub fn tweak_secret_key<C: secp256k1::Signing>(secp: &Secp256k1<C>, key: &Secret
     // Compute public key
     let pk = PublicKey::from_secret_key(secp, &key);
     // Compute tweak
-    let hmac_sk = compute_tweak(secp, &pk, contract)?;
+    let hmac_sk = compute_tweak(&pk, contract)?;
     // Execute the tweak
     let mut key = *key;
-    key.add_assign(&secp, &hmac_sk).map_err(Error::Secp)?;
+    key.add_assign(&hmac_sk[..]).map_err(Error::Secp)?;
     // Return
     Ok(key)
 }
@@ -227,7 +227,6 @@ pub fn create_address<C: secp256k1::Verification>(secp: &Secp256k1<C>,
 pub fn untemplate(script: &script::Script) -> Result<(Template, Vec<PublicKey>), Error> {
     let mut ret = script::Builder::new();
     let mut retkeys = vec![];
-    let secp = Secp256k1::without_caps();
 
     #[derive(Copy, Clone, PartialEq, Eq)]
     enum Mode {
@@ -241,7 +240,7 @@ pub fn untemplate(script: &script::Script) -> Result<(Template, Vec<PublicKey>),
         match instruction {
             script::Instruction::PushBytes(data) => {
                 let n = data.len();
-                ret = match PublicKey::from_slice(&secp, data) {
+                ret = match PublicKey::from_slice(data) {
                     Ok(key) => {
                         if n == 65 { return Err(Error::UncompressedKey); }
                         if mode == Mode::SeekingCheckMulti { return Err(Error::ExpectedChecksig); }
@@ -304,22 +303,22 @@ mod tests {
     use super::*;
 
     macro_rules! hex (($hex:expr) => (hex_decode($hex).unwrap()));
-    macro_rules! hex_key (($secp:expr, $hex:expr) => (PublicKey::from_slice($secp, &hex!($hex)).unwrap()));
+    macro_rules! hex_key (($hex:expr) => (PublicKey::from_slice(&hex!($hex)).unwrap()));
     macro_rules! alpha_template(() => (Template::from(&hex!("55fefefefefefefe57AE")[..])));
-    macro_rules! alpha_keys(($secp:expr) => (
-        &[hex_key!($secp, "0269992fb441ae56968e5b77d46a3e53b69f136444ae65a94041fc937bdb28d933"),
-          hex_key!($secp, "021df31471281d4478df85bfce08a10aab82601dca949a79950f8ddf7002bd915a"),
-          hex_key!($secp, "02174c82021492c2c6dfcbfa4187d10d38bed06afb7fdcd72c880179fddd641ea1"),
-          hex_key!($secp, "033f96e43d72c33327b6a4631ccaa6ea07f0b106c88b9dc71c9000bb6044d5e88a"),
-          hex_key!($secp, "0313d8748790f2a86fb524579b46ce3c68fedd58d2a738716249a9f7d5458a15c2"),
-          hex_key!($secp, "030b632eeb079eb83648886122a04c7bf6d98ab5dfb94cf353ee3e9382a4c2fab0"),
-          hex_key!($secp, "02fb54a7fcaa73c307cfd70f3fa66a2e4247a71858ca731396343ad30c7c4009ce")]
+    macro_rules! alpha_keys(() => (
+        &[hex_key!("0269992fb441ae56968e5b77d46a3e53b69f136444ae65a94041fc937bdb28d933"),
+          hex_key!("021df31471281d4478df85bfce08a10aab82601dca949a79950f8ddf7002bd915a"),
+          hex_key!("02174c82021492c2c6dfcbfa4187d10d38bed06afb7fdcd72c880179fddd641ea1"),
+          hex_key!("033f96e43d72c33327b6a4631ccaa6ea07f0b106c88b9dc71c9000bb6044d5e88a"),
+          hex_key!("0313d8748790f2a86fb524579b46ce3c68fedd58d2a738716249a9f7d5458a15c2"),
+          hex_key!("030b632eeb079eb83648886122a04c7bf6d98ab5dfb94cf353ee3e9382a4c2fab0"),
+          hex_key!("02fb54a7fcaa73c307cfd70f3fa66a2e4247a71858ca731396343ad30c7c4009ce")]
     ));
 
     #[test]
     fn sanity() {
         let secp = Secp256k1::new();
-        let keys = alpha_keys!(&secp);
+        let keys = alpha_keys!();
         // This is the first withdraw ever, in alpha a94f95cc47b444c10449c0eed51d895e4970560c4a1a9d15d46124858abc3afe
         let contract = hex!("5032534894ffbf32c1f1c0d3089b27c98fd991d5d7329ebd7d711223e2cde5a9417a1fa3e852c576");
 
@@ -329,8 +328,7 @@ mod tests {
 
     #[test]
     fn script() {
-        let secp = Secp256k1::new();
-        let alpha_keys = alpha_keys!(&secp);
+        let alpha_keys = alpha_keys!();
         let alpha_template = alpha_template!();
 
         let alpha_redeem = Script::from(hex!("55210269992fb441ae56968e5b77d46a3e53b69f136444ae65a94041fc937bdb28d93321021df31471281d4478df85bfce08a10aab82601dca949a79950f8ddf7002bd915a2102174c82021492c2c6dfcbfa4187d10d38bed06afb7fdcd72c880179fddd641ea121033f96e43d72c33327b6a4631ccaa6ea07f0b106c88b9dc71c9000bb6044d5e88a210313d8748790f2a86fb524579b46ce3c68fedd58d2a738716249a9f7d5458a15c221030b632eeb079eb83648886122a04c7bf6d98ab5dfb94cf353ee3e9382a4c2fab02102fb54a7fcaa73c307cfd70f3fa66a2e4247a71858ca731396343ad30c7c4009ce57ae"));
@@ -364,8 +362,7 @@ mod tests {
 
     #[test]
     fn bad_key_number() {
-        let secp = Secp256k1::new();
-        let alpha_keys = alpha_keys!(&secp);
+        let alpha_keys = alpha_keys!();
         let template_short = Template::from(&hex!("55fefefefefefe57AE")[..]);
         let template_long = Template::from(&hex!("55fefefefefefefefe57AE")[..]);
         let template = Template::from(&hex!("55fefefefefefefe57AE")[..]);

@@ -107,14 +107,13 @@ mod tests {
     use util::misc::hex_bytes;
     use util::address::Address;
     use hex;
-    use secp256k1::{Secp256k1, PublicKey};
+    use secp256k1::PublicKey;
 
     use super::*;
 
     fn p2pkh_hex(pk: &str) -> Script {
-        let ctx = Secp256k1::new();
         let pk = hex::decode(pk).unwrap();
-        let pk = PublicKey::from_slice(&ctx, pk.as_slice()).unwrap();
+        let pk = PublicKey::from_slice(&pk[..]).unwrap();
         let witness_script = Address::p2pkh(&pk, Network::Bitcoin).script_pubkey();
         witness_script
     }

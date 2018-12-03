@@ -135,8 +135,7 @@ impl Privkey {
             x   => { return Err(encode::Error::Base58(base58::Error::InvalidVersion(vec![x]))); }
         };
 
-        let secp = Secp256k1::without_caps();
-        let key = SecretKey::from_slice(&secp, &data[1..33])
+        let key = SecretKey::from_slice(&data[1..33])
             .map_err(|_| base58::Error::Other("Secret key out of range".to_owned()))?;
 
         Ok(Privkey {

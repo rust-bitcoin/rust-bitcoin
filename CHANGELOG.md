@@ -1,4 +1,8 @@
 
+# 0.16.0 - 2018-12-03
+
+* Upgrade `secp256k1` to 0.12.0; remove precomputation-free context objects from API
+
 # 0.15.1 - 2018-11-08
 
 * [Detect p2pk addresses with compressed keys](https://github.com/rust-bitcoin/rust-bitcoin/pull/189)
