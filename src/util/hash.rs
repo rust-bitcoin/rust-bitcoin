@@ -30,7 +30,7 @@ use crypto::ripemd160::Ripemd160;
 use consensus::encode::{Encodable, Decodable};
 use util::uint::Uint256;
 
-#[cfg(feature="fuzztarget")]      use util::sha2::Sha256;
+#[cfg(feature="fuzztarget")]      use fuzz_util::sha2::Sha256;
 #[cfg(not(feature="fuzztarget"))] use crypto::sha2::Sha256;
 use std::str::FromStr;
 

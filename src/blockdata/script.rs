@@ -38,7 +38,7 @@ use util::hash::Hash160;
 #[cfg(feature="bitcoinconsensus")] use std::convert;
 #[cfg(feature="bitcoinconsensus")] use util::hash::Sha256dHash;
 
-#[cfg(feature="fuzztarget")]      use util::sha2::Sha256;
+#[cfg(feature="fuzztarget")]      use fuzz_util::sha2::Sha256;
 #[cfg(not(feature="fuzztarget"))] use crypto::sha2::Sha256;
 
 #[derive(Clone, Default, PartialOrd, Ord, PartialEq, Eq, Hash)]
