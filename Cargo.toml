@@ -25,6 +25,7 @@ byteorder = "1.2"
 rand = "0.3"
 rust-crypto = "0.2"
 bitcoinconsensus = { version = "0.16", optional = true }
+bitcoin-constants = { git = "https://github.com/rust-bitcoin/constants.git" }
 
 [dependencies.serde]
 version = "1"
