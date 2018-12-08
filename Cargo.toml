@@ -20,12 +20,12 @@ fuzztarget = ["secp256k1/fuzztarget"]
 serde-decimal = ["serde", "strason"]
 
 [dependencies]
-bitcoin-bech32 = "0.8.0"
+bitcoin-bech32 = { git = "https://github.com/sgeisler/rust-bech32-bitcoin", branch = "bitcoin-constants"}
 byteorder = "1.2"
 rand = "0.3"
 rust-crypto = "0.2"
 bitcoinconsensus = { version = "0.16", optional = true }
-bitcoin-constants = { git = "https://github.com/rust-bitcoin/constants.git" }
+bitcoin-constants = { git = "https://github.com/sgeisler/bitcoin-constants.git", branch = "chain_params_impl" }
 
 [dependencies.serde]
 version = "1"

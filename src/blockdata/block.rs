@@ -25,7 +25,7 @@ use util::Error::{SpvBadTarget, SpvBadProofOfWork};
 use util::hash::{BitcoinHash, Sha256dHash};
 use util::uint::Uint256;
 use consensus::encode::VarInt;
-use network::constants::Network;
+use bitcoin_constants::Network;
 use blockdata::transaction::Transaction;
 use blockdata::constants::max_target;
 

@@ -62,14 +62,54 @@ impl OutPoint {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin::blockdata::constants::genesis_block;
-    /// use bitcoin::network::constants::Network;
+    /// # extern crate bitcoin;
     ///
-    /// let block = genesis_block(Network::Bitcoin);
-    /// let tx = &block.txdata[0];
+    /// use bitcoin::Network;
+    /// # use bitcoin::blockdata::{script, opcodes};
+    /// # use bitcoin::blockdata::constants::{MAX_SEQUENCE, COIN_VALUE};
+    /// # use bitcoin::blockdata::transaction::{OutPoint, Transaction, TxIn, TxOut};
+    /// # use bitcoin::util::misc::hex_bytes;
+    /// # fn bitcoin_genesis_tx() -> Transaction {
+    /// #     // Base
+    /// #     let mut ret = Transaction {
+    /// #         version: 1,
+    /// #         lock_time: 0,
+    /// #         input: vec![],
+    /// #         output: vec![],
+    /// #     };
+    /// #
+    /// #     // Inputs
+    /// #     let in_script = script::Builder::new().push_scriptint(486604799)
+    /// #         .push_scriptint(4)
+    /// #         .push_slice(b"The Times 03/Jan/2009 Chancellor on brink of second bailout for banks")
+    /// #         .into_script();
+    /// #     ret.input.push(TxIn {
+    /// #         previous_output: OutPoint::null(),
+    /// #         script_sig: in_script,
+    /// #         sequence: MAX_SEQUENCE,
+    /// #         witness: vec![],
+    /// #     });
+    /// #
+    /// #     // Outputs
+    /// #     let out_script = script::Builder::new()
+    /// #         .push_slice(&hex_bytes("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f").unwrap())
+    /// #         .push_opcode(opcodes::All::OP_CHECKSIG)
+    /// #         .into_script();
+    /// #     ret.output.push(TxOut {
+    /// #         value: 50 * COIN_VALUE,
+    /// #         script_pubkey: out_script
+    /// #     });
+    /// #
+    /// #     // end
+    /// #     ret
+    /// # }
+    /// #
+    /// # pub fn main() {
+    /// let tx = bitcoin_genesis_tx();
     ///
     /// // Coinbase transactions don't have any previous output.
     /// assert_eq!(tx.input[0].previous_output.is_null(), true);
+    /// # }
     /// ```
     #[inline]
     pub fn is_null(&self) -> bool {
@@ -593,14 +633,116 @@ mod tests {
     #[cfg(all(feature = "serde", feature = "strason"))]
     use strason::Json;
 
-    use super::{OutPoint, ParseOutPointError, Transaction, TxIn};
+    use super::{OutPoint, ParseOutPointError, Transaction, TxOut, TxIn};
 
     use std::str::FromStr;
+    use blockdata::constants::{COIN_VALUE, MAX_SEQUENCE};
+    use blockdata::opcodes;
+    use blockdata::script;
+    use blockdata::block::{Block, BlockHeader};
     use blockdata::script::Script;
     use consensus::encode::serialize;
     use consensus::encode::deserialize;
-    use util::hash::{BitcoinHash, Sha256dHash};
+    use util::hash::{BitcoinHash, MerkleRoot, Sha256dHash};
     use util::misc::hex_bytes;
+
+
+    /// Constructs and returns the coinbase (and only) transaction of the Bitcoin genesis block
+    fn bitcoin_genesis_tx() -> Transaction {
+        // Base
+        let mut ret = Transaction {
+            version: 1,
+            lock_time: 0,
+            input: vec![],
+            output: vec![],
+        };
+
+        // Inputs
+        let in_script = script::Builder::new().push_scriptint(486604799)
+            .push_scriptint(4)
+            .push_slice(b"The Times 03/Jan/2009 Chancellor on brink of second bailout for banks")
+            .into_script();
+        ret.input.push(TxIn {
+            previous_output: OutPoint::null(),
+            script_sig: in_script,
+            sequence: MAX_SEQUENCE,
+            witness: vec![],
+        });
+
+        // Outputs
+        let out_script = script::Builder::new()
+            .push_slice(&hex_bytes("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f").unwrap())
+            .push_opcode(opcodes::All::OP_CHECKSIG)
+            .into_script();
+        ret.output.push(TxOut {
+            value: 50 * COIN_VALUE,
+            script_pubkey: out_script
+        });
+
+        // end
+        ret
+    }
+
+    /// Constructs and returns the genesis block
+    pub fn genesis_block() -> Block {
+        let txdata = vec![bitcoin_genesis_tx()];
+        Block {
+            header: BlockHeader {
+                version: 1,
+                prev_blockhash: Default::default(),
+                merkle_root: txdata.merkle_root(),
+                time: 1231006505,
+                bits: 0x1d00ffff,
+                nonce: 2083236893
+            },
+            txdata: txdata
+        }
+
+    }
+
+    #[cfg(test)]
+    mod test {
+        use std::default::Default;
+        use hex::decode as hex_decode;
+
+        use bitcoin_constants::Network;
+        use consensus::encode::serialize;
+        use super::{genesis_block, bitcoin_genesis_tx};
+        use blockdata::constants::{MAX_SEQUENCE, COIN_VALUE};
+        use util::hash::BitcoinHash;
+
+        #[test]
+        fn bitcoin_genesis_first_transaction() {
+            let gen = bitcoin_genesis_tx();
+
+            assert_eq!(gen.version, 1);
+            assert_eq!(gen.input.len(), 1);
+            assert_eq!(gen.input[0].previous_output.txid, Default::default());
+            assert_eq!(gen.input[0].previous_output.vout, 0xFFFFFFFF);
+            assert_eq!(serialize(&gen.input[0].script_sig),
+                       hex_decode("4d04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73").unwrap());
+
+            assert_eq!(gen.input[0].sequence, MAX_SEQUENCE);
+            assert_eq!(gen.output.len(), 1);
+            assert_eq!(serialize(&gen.output[0].script_pubkey),
+                       hex_decode("434104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac").unwrap());
+            assert_eq!(gen.output[0].value, 50 * COIN_VALUE);
+            assert_eq!(gen.lock_time, 0);
+
+            assert_eq!(gen.bitcoin_hash().be_hex_string(),
+                       "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b".to_string());
+        }
+
+        #[test]
+        fn bitcoin_genesis_full_block() {
+            let gen = genesis_block();
+
+            assert_eq!(gen.bitcoin_hash()[..], Network::bitcoin().genesis_block()[..])
+        }
+    }
+
+
+
 
     #[test]
     fn test_outpoint() {
@@ -643,10 +785,7 @@ mod tests {
 
     #[test]
     fn test_is_coinbase () {
-        use network::constants::Network;
-        use blockdata::constants;
-
-        let genesis = constants::genesis_block(Network::Bitcoin);
+        let genesis = genesis_block();
         assert! (genesis.txdata[0].is_coin_base());
         let hex_tx = hex_bytes("0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000").unwrap();
         let tx: Transaction = deserialize(&hex_tx).unwrap();

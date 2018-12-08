@@ -103,7 +103,7 @@ mod tests {
     use blockdata::script::Script;
     use blockdata::transaction::Transaction;
     use consensus::encode::deserialize;
-    use network::constants::Network;
+    use bitcoin_constants::Network;
     use util::misc::hex_bytes;
     use util::address::Address;
     use hex;
@@ -115,7 +115,7 @@ mod tests {
         let ctx = Secp256k1::new();
         let pk = hex::decode(pk).unwrap();
         let pk = PublicKey::from_slice(&ctx, pk.as_slice()).unwrap();
-        let witness_script = Address::p2pkh(&pk, Network::Bitcoin).script_pubkey();
+        let witness_script = Address::p2pkh(&pk, Network::bitcoin()).script_pubkey();
         witness_script
     }
 

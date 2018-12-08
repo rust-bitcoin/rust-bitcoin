@@ -26,7 +26,7 @@ use crypto::mac::Mac;
 
 use std::{error, fmt};
 
-use network::constants::Network;
+use bitcoin_constants::Network;
 use util::{address, hash};
 
 #[cfg(feature="fuzztarget")]      use fuzz_util::sha2;
@@ -299,7 +299,7 @@ mod tests {
     use rand::thread_rng;
 
     use blockdata::script::Script;
-    use network::constants::Network;
+    use bitcoin_constants::Network;
 
     use super::*;
 
@@ -323,7 +323,7 @@ mod tests {
         // This is the first withdraw ever, in alpha a94f95cc47b444c10449c0eed51d895e4970560c4a1a9d15d46124858abc3afe
         let contract = hex!("5032534894ffbf32c1f1c0d3089b27c98fd991d5d7329ebd7d711223e2cde5a9417a1fa3e852c576");
 
-        let addr = create_address(&secp, Network::Testnet, &contract, keys, &alpha_template!()).unwrap();
+        let addr = create_address(&secp, Network::bitcoin_testnet(), &contract, keys, &alpha_template!()).unwrap();
         assert_eq!(addr.to_string(), "2N3zXjbwdTcPsJiy8sUK9FhWJhqQCxA8Jjr".to_owned());
     }
 

@@ -42,6 +42,7 @@
 #![deny(missing_docs)]
 
 extern crate bitcoin_bech32;
+extern crate bitcoin_constants;
 extern crate byteorder;
 extern crate crypto;
 extern crate hex;
@@ -64,6 +65,8 @@ pub mod blockdata;
 pub mod util;
 pub mod consensus;
 
+pub use bitcoin_constants::Network;
+
 pub use blockdata::block::Block;
 pub use blockdata::block::BlockHeader;
 pub use blockdata::script::Script;
@@ -73,7 +76,6 @@ pub use blockdata::transaction::TxOut;
 pub use blockdata::transaction::OutPoint;
 pub use blockdata::transaction::SigHashType;
 pub use consensus::encode::VarInt;
-pub use network::constants::Network;
 pub use util::Error;
 pub use util::address::Address;
 pub use util::hash::BitcoinHash;
