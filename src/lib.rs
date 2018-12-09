@@ -80,3 +80,6 @@ pub use util::hash::BitcoinHash;
 pub use util::privkey::Privkey;
 pub use util::decimal::Decimal;
 pub use util::decimal::UDecimal;
+
+#[cfg(feature = "fuzztarget")]
+pub mod fuzz_util;

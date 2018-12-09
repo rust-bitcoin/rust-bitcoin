@@ -29,7 +29,7 @@ use std::{error, fmt};
 use network::constants::Network;
 use util::{address, hash};
 
-#[cfg(feature="fuzztarget")]      use util::sha2;
+#[cfg(feature="fuzztarget")]      use fuzz_util::sha2;
 #[cfg(not(feature="fuzztarget"))] use crypto::sha2;
 
 /// Encoding of "pubkey here" in script; from bitcoin core `src/script/script.h`

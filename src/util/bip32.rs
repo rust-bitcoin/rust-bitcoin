@@ -33,7 +33,7 @@ use secp256k1::{self, Secp256k1};
 use network::constants::Network;
 use util::base58;
 
-#[cfg(feature="fuzztarget")]      use util::sha2::{Sha256, Sha512};
+#[cfg(feature="fuzztarget")]      use fuzz_util::sha2::{Sha256, Sha512};
 #[cfg(not(feature="fuzztarget"))] use crypto::sha2::{Sha256, Sha512};
 
 /// A chain code
