@@ -179,6 +179,30 @@ macro_rules! impl_array_newtype {
     }
 }
 
+macro_rules! impl_array_fmt_hex {
+    ($thing:ident) => {
+        impl ::std::fmt::LowerHex for $thing {
+            #[inline]
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                for &ch in self.0.iter() {
+                    write!(f, "{:02x}", ch)?;
+                }
+                Ok(())
+            }
+        }
+
+        impl ::std::fmt::UpperHex for $thing {
+            #[inline]
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                for &ch in self.0.iter() {
+                    write!(f, "{:02X}", ch)?;
+                }
+                Ok(())
+            }
+        }
+    }
+}
+
 macro_rules! impl_array_newtype_encodable {
     ($thing:ident, $ty:ty, $len:expr) => {
         #[cfg(feature = "serde")]

@@ -72,10 +72,12 @@ pub struct Sha256dEncoder(Sha256);
 /// A RIPEMD-160 hash
 pub struct Ripemd160Hash([u8; 20]);
 impl_array_newtype!(Ripemd160Hash, u8, 20);
+impl_array_fmt_hex!(Ripemd160Hash);
 
 /// A Bitcoin hash160, 20-bytes, computed from x as RIPEMD160(SHA256(x))
 pub struct Hash160([u8; 20]);
 impl_array_newtype!(Hash160, u8, 20);
+impl_array_fmt_hex!(Hash160);
 
 /// A 32-bit hash obtained by truncating a real hash
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
