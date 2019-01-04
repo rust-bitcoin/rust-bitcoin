@@ -17,29 +17,59 @@
 //! Various utility functions
 
 use blockdata::opcodes;
-use util::iter::Pairable;
 use consensus::encode;
 
+/// Helper function to convert hex nibble characters to their respective value
+#[inline]
+fn hex_val(c: u8) -> Result<u8, encode::Error> {
+    let res = match c {
+        b'0' ... b'9' => c - '0' as u8,
+        b'a' ... b'f' => c - 'a' as u8 + 10,
+        b'A' ... b'F' => c - 'A' as u8 + 10,
+        _ => return Err(encode::Error::UnexpectedHexDigit(c as char)),
+    };
+    Ok(res)
+}
+
 /// Convert a hexadecimal-encoded string to its corresponding bytes
-pub fn hex_bytes(s: &str) -> Result<Vec<u8>, encode::Error> {
-    let mut v = vec![];
-    let mut iter = s.chars().pair();
-    // Do the parsing
-    iter.by_ref().fold(Ok(()), |e, (f, s)| 
-        if e.is_err() { e }
-        else {
-            match (f.to_digit(16), s.to_digit(16)) {
-                (None, _) => Err(encode::Error::UnexpectedHexDigit(f)),
-                (_, None) => Err(encode::Error::UnexpectedHexDigit(s)),
-                (Some(f), Some(s)) => { v.push((f * 0x10 + s) as u8); Ok(()) }
-            }
-        }
-    )?;
-    // Check that there was no remainder
-    match iter.remainder() {
-        Some(_) => Err(encode::Error::ParseFailed("hexstring of odd length")),
-        None => Ok(v)
+pub fn hex_bytes(data: &str) -> Result<Vec<u8>, encode::Error> {
+    // This code is optimized to be as fast as possible without using unsafe or platform specific
+    // features. If you want to refactor it please make sure you don't introduce performance
+    // regressions (see benches/from_hex.rs).
+
+    // If the hex string has an uneven length fail early
+    if data.len() % 2 != 0 {
+        return Err(encode::Error::ParseFailed("hexstring of odd length"));
     }
+
+    // Preallocate the uninitialized memory for the byte array
+    let mut res = Vec::with_capacity(data.len() / 2);
+
+    let mut hex_it = data.bytes();
+    loop {
+        // Get most significant nibble of current byte or end iteration
+        let msn = match hex_it.next() {
+            None => break,
+            Some(x) => x,
+        };
+
+        // Get least significant nibble of current byte
+        let lsn = match hex_it.next() {
+            None => unreachable!("len % 2 == 0"),
+            Some(x) => x,
+        };
+
+        // Convert bytes representing characters to their represented value and combine lsn and msn.
+        // The and_then and map are crucial for performance, in comparision to using ? and then
+        // using the results of that for the calculation it's nearly twice as fast. Using bit
+        // shifting and or instead of multiply and add on the other hand doesn't show a significant
+        // increase in performance.
+        match hex_val(msn).and_then(|msn_val| hex_val(lsn).map(|lsn_val| msn_val * 16 + lsn_val)) {
+            Ok(x) => res.push(x),
+            Err(e) => return Err(e),
+        }
+    }
+    Ok(res)
 }
 
 /// Search for `needle` in the vector `haystack` and remove every
