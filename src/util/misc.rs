@@ -35,7 +35,7 @@ fn hex_val(c: u8) -> Result<u8, encode::Error> {
 pub fn hex_bytes(data: &str) -> Result<Vec<u8>, encode::Error> {
     // This code is optimized to be as fast as possible without using unsafe or platform specific
     // features. If you want to refactor it please make sure you don't introduce performance
-    // regressions (see benches/from_hex.rs).
+    // regressions (run the benchmark with `cargo bench --features unstable`).
 
     // If the hex string has an uneven length fail early
     if data.len() % 2 != 0 {
@@ -105,6 +105,55 @@ pub fn script_find_and_remove(haystack: &mut Vec<u8>, needle: &[u8]) -> usize {
     }
     haystack.truncate(top.wrapping_add(needle.len()));
     n_deleted
+}
+
+#[cfg(all(test, feature="unstable"))]
+mod benches {
+    use rand::{Rng, thread_rng};
+    use super::hex_bytes;
+    use test::Bencher;
+
+    fn join<I: Iterator<Item=IT>, IT: AsRef<str>>(iter: I, expected_len: usize) -> String {
+        let mut res = String::with_capacity(expected_len);
+        for s in iter {
+            res.push_str(s.as_ref());
+        }
+        res
+    }
+
+    fn bench_from_hex(b: &mut Bencher, data_size: usize) {
+        let data_bytes = thread_rng()
+            .gen_iter()
+            .take(data_size)
+            .collect::<Vec<u8>>();
+        let data = join(data_bytes.iter().map(|x| format!("{:02x}", x)), data_size * 2);
+
+        assert_eq!(hex_bytes(&data).unwrap(), data_bytes);
+
+        b.iter(move || {
+            hex_bytes(&data).unwrap()
+        })
+    }
+
+    #[bench]
+    fn from_hex_16_bytes(b: &mut Bencher) {
+        bench_from_hex(b, 16);
+    }
+
+    #[bench]
+    fn from_hex_64_bytes(b: &mut Bencher) {
+        bench_from_hex(b, 64);
+    }
+
+    #[bench]
+    fn from_hex_256_bytes(b: &mut Bencher) {
+        bench_from_hex(b, 256);
+    }
+
+    #[bench]
+    fn from_hex_4m_bytes(b: &mut Bencher) {
+        bench_from_hex(b, 1024 * 1024 * 4);
+    }
 }
 
 #[cfg(test)]
