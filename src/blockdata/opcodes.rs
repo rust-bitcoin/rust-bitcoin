@@ -660,8 +660,20 @@ impl All {
     /// Classifies an Opcode into a broad class
     #[inline]
     pub fn classify(&self) -> Class {
-        // 17 opcodes
-        if *self == all::OP_VERIF || *self == all::OP_VERNOTIF ||
+        // 16 opcodes
+        if all::OP_PUSHNUM_1.code <= self.code &&
+            self.code <= all::OP_PUSHNUM_16.code {
+            Class::PushNum(1 + self.code as i32 - all::OP_PUSHNUM_1.code as i32)
+        // 76 opcodes
+        } else if self.code <= all::OP_PUSHBYTES_75.code {
+            Class::PushBytes(self.code as u32)
+            // 75 opcodes
+        }else if *self == all::OP_RETURN || *self == all::OP_RESERVED || *self == all::OP_VER ||
+            *self == all::OP_RESERVED1 || *self == all::OP_RESERVED2 ||
+            self.code >= all::OP_RETURN_186.code {
+            Class::ReturnOp
+            // 17 opcodes
+        } else if *self == all::OP_VERIF || *self == all::OP_VERNOTIF ||
            *self == all::OP_CAT || *self == all::OP_SUBSTR ||
            *self == all::OP_LEFT || *self == all::OP_RIGHT ||
            *self == all::OP_INVERT || *self == all::OP_AND ||
@@ -675,21 +687,9 @@ impl All {
                   (all::OP_NOP1.code <= self.code &&
                    self.code <= all::OP_NOP10.code) {
             Class::NoOp
-        // 75 opcodes
-        } else if *self == all::OP_RESERVED || *self == all::OP_VER || *self == all::OP_RETURN ||
-                  *self == all::OP_RESERVED1 || *self == all::OP_RESERVED2 ||
-                  self.code >= all::OP_RETURN_186.code {
-            Class::ReturnOp
         // 1 opcode
         } else if *self == all::OP_PUSHNUM_NEG1 {
             Class::PushNum(-1)
-        // 16 opcodes
-        } else if all::OP_PUSHNUM_1.code <= self.code &&
-                  self.code <= all::OP_PUSHNUM_16.code {
-            Class::PushNum(1 + self.code as i32 - all::OP_PUSHNUM_1.code as i32)
-        // 76 opcodes
-        } else if self.code <= all::OP_PUSHBYTES_75.code {
-            Class::PushBytes(self.code as u32)
         // 60 opcodes
         } else {
             Class::Ordinary(Ordinary::try_from_all(*self).unwrap())
