@@ -130,7 +130,7 @@ mod benches {
 
         assert_eq!(hex_bytes(&data).unwrap(), data_bytes);
 
-        b.iter(move || {
+        b.iter(|| {
             hex_bytes(&data).unwrap()
         })
     }
