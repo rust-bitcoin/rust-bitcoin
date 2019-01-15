@@ -1,4 +1,12 @@
 
+# 0.16.0 - 2019-01-15
+
+* Reorganize opcode types to eliminate unsafe code
+* Un-expose some macros that were unintentionally exported
+* Update rust-secp256k1 dependency to 0.12
+* Remove `util::iter::Pair` type which does not belong in this library
+* Minor bugfixes and optimizations
+
 # 0.15.1 - 2018-11-08
 
 * [Detect p2pk addresses with compressed keys](https://github.com/rust-bitcoin/rust-bitcoin/pull/189)
