@@ -16,7 +16,6 @@
 //!
 //! Internal macros used for unit tests
 
-#[macro_export]
 #[cfg(all(feature = "serde", feature = "strason"))]
 macro_rules! serde_round_trip (
     ($var:expr) => ({
