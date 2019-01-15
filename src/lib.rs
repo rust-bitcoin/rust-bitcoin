@@ -58,7 +58,6 @@ mod test_macros;
 #[macro_use]
 mod internal_macros;
 #[macro_use]
-pub mod macros;
 pub mod network;
 pub mod blockdata;
 pub mod util;
