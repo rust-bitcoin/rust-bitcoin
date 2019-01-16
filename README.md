@@ -20,7 +20,6 @@ For JSONRPC interaction with Bitcoin Core, it is recommended to use [rust-jsonrp
 which uses the underlying [strason library](https://github.com/apoelstra/strason)
 which parses decimal numbers as strings, preventing precision errors.
 
-
 # Known limitations
 
 ## Consensus
@@ -43,8 +42,39 @@ Currently the [documentation](https://www.wpsoftware.net/rustdoc/bitcoin/)
 is very sparse. Patches to add usage examples and to expand on existing
 docs would be extremely appreciated.
 
+# Contributing
+Contributions are generally welcome. If you intend to make larger changes please discuss them in an issue before PRing 
+them to avoid duplicate work and architectural mismatches.
 
-# Policy on Altcoins/Altchains
+## Installing Rust
+Rust can be installed using your package manager of choice or [rustup.rs](https://rustup.rs). The former way is
+considered more secure since it typically doesn't involve trust in the CA system. But you should be aware that the version
+of Rust shipped by your distribution might be out of date. Generally this isn't a problem for `rust-bitcoin` since
+we support much older versions (>=1.22) than the current stable one.
+
+## Building
+The library can be built and tested using [`cargo`](https://github.com/rust-lang/cargo/):
+
+```
+git clone git@github.com:rust-bitcoin/rust-bitcoin.git
+cd rust-bitcoin
+cargo build
+```
+
+You can run tests with:
+
+```
+cargo test
+```
+
+Please refer to the [`cargo` documentation](https://doc.rust-lang.org/stable/cargo/) for more detailed instructions. 
+
+## Pull Requests
+Every PR needs at least two reviews to get merged. During the review phase maintainers and contributors are likely to
+leave comments and request changes. Please try to address them, otherwise your PR might get closed without merging after
+a longer time of inactivity. If your PR isn't ready for review yet please mark it by prefixing the title with `WIP: `.
+
+## Policy on Altcoins/Altchains
 
 Patches which add support for non-Bitcoin cryptocurrencies by adding constants
 to existing enums (e.g. to set the network message magic-byte sequence) are
@@ -58,7 +88,7 @@ cross-chain atomic swaps) are more likely to be accepted than things which
 support only a single blockchain.
 
 
-## Release Notes
+# Release Notes
 
 See CHANGELOG.md
 
