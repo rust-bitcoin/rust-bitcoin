@@ -20,6 +20,26 @@ For JSONRPC interaction with Bitcoin Core, it is recommended to use [rust-jsonrp
 which uses the underlying [strason library](https://github.com/apoelstra/strason)
 which parses decimal numbers as strings, preventing precision errors.
 
+## Building
+
+This project uses [`cargo`](https://github.com/rust-lang/cargo/), so cloning the repo and building locally on a Ubuntu system looks like:
+
+```
+sudo apt-get update
+sudo apt-get install -y cargo
+git clone git@github.com:rust-bitcoin/rust-bitcoin.git
+cd rust-bitcoin
+cargo build
+```
+
+You can run tests with:
+
+```
+cargo test
+```
+
+Please refer to the [`cargo` documentation](https://doc.rust-lang.org/stable/cargo/) for more detailed instructions, or for building on other systems. 
+
 
 # Known limitations
 
