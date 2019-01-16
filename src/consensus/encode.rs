@@ -33,8 +33,6 @@ use std::collections::HashMap;
 use std::hash::Hash;
 use std::{mem, u32};
 
-use util::hash::Sha256dHash;
-
 use std::error;
 use std::fmt;
 use std::io;
@@ -566,7 +564,7 @@ impl<D: Decoder, T:Decodable<D>> Decodable<D> for Option<T> {
 
 /// Do a double-SHA256 on some data and return the first 4 bytes
 fn sha2_checksum(data: &[u8]) -> [u8; 4] {
-    let checksum = Sha256dHash::from_data(data);
+    let checksum = <sha256d::Hash as HashTrait>::hash(data);
     [checksum[0], checksum[1], checksum[2], checksum[3]]
 }
 

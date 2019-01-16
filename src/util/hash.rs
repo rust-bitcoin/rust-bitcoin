@@ -26,6 +26,7 @@ use std::mem;
 
 use crypto::digest::Digest;
 use crypto::ripemd160::Ripemd160;
+use bitcoin_hashes::{sha256d, Hash};
 
 use consensus::encode::{Encodable, Decodable};
 use util::uint::Uint256;
@@ -390,11 +391,11 @@ impl FromStr for Sha256dHash {
 pub trait MerkleRoot {
     /// Construct a merkle tree from a collection, with elements ordered as
     /// they were in the original collection, and return the merkle root.
-    fn merkle_root(&self) -> Sha256dHash;
+    fn merkle_root(&self) -> sha256d::Hash;
 }
 
 /// Calculates the merkle root of a list of txids hashes directly
-pub fn bitcoin_merkle_root(data: Vec<Sha256dHash>) -> Sha256dHash {
+pub fn bitcoin_merkle_root(data: Vec<sha256d::Hash>) -> sha256d::Hash {
     // Base case
     if data.len() < 1 {
         return Default::default();
@@ -407,22 +408,22 @@ pub fn bitcoin_merkle_root(data: Vec<Sha256dHash>) -> Sha256dHash {
     for idx in 0..((data.len() + 1) / 2) {
         let idx1 = 2 * idx;
         let idx2 = min(idx1 + 1, data.len() - 1);
-        let mut encoder = Sha256dEncoder::new();
+        let mut encoder = sha256d::Hash::engine();
         data[idx1].consensus_encode(&mut encoder).unwrap();
         data[idx2].consensus_encode(&mut encoder).unwrap();
-        next.push(encoder.into_hash());
+        next.push(sha256d::Hash::from_engine(encoder));
     }
     bitcoin_merkle_root(next)
 }
 
 impl<'a, T: BitcoinHash> MerkleRoot for &'a [T] {
-    fn merkle_root(&self) -> Sha256dHash {
+    fn merkle_root(&self) -> sha256d::Hash {
         bitcoin_merkle_root(self.iter().map(|obj| obj.bitcoin_hash()).collect())
     }
 }
 
 impl <T: BitcoinHash> MerkleRoot for Vec<T> {
-    fn merkle_root(&self) -> Sha256dHash {
+    fn merkle_root(&self) -> sha256d::Hash {
         (&self[..]).merkle_root()
     }
 }
@@ -430,7 +431,7 @@ impl <T: BitcoinHash> MerkleRoot for Vec<T> {
 /// Objects which are referred to by hash
 pub trait BitcoinHash {
     /// Produces a Sha256dHash which can be used to refer to the object
-    fn bitcoin_hash(&self) -> Sha256dHash;
+    fn bitcoin_hash(&self) -> sha256d::Hash;
 }
 
 #[cfg(test)]

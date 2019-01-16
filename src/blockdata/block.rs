@@ -20,9 +20,11 @@
 //! these blocks and the blockchain.
 //!
 
+use bitcoin_hashes::{sha256d, Hash};
+
 use util;
 use util::Error::{SpvBadTarget, SpvBadProofOfWork};
-use util::hash::{BitcoinHash, Sha256dHash};
+use util::hash::BitcoinHash;
 use util::uint::Uint256;
 use consensus::encode::VarInt;
 use network::constants::Network;
@@ -36,9 +38,9 @@ pub struct BlockHeader {
     /// The protocol version. Should always be 1.
     pub version: u32,
     /// Reference to the previous block in the chain
-    pub prev_blockhash: Sha256dHash,
+    pub prev_blockhash: sha256d::Hash,
     /// The root hash of the merkle tree of transactions in the block
-    pub merkle_root: Sha256dHash,
+    pub merkle_root: sha256d::Hash,
     /// The timestamp of the block, as claimed by the miner
     pub time: u32,
     /// The target value below which the blockhash must lie, encoded as a
@@ -120,11 +122,16 @@ impl BlockHeader {
     /// is correct, but does not verify that the transactions are valid or encoded
     /// correctly.
     pub fn spv_validate(&self, required_target: &Uint256) -> Result<(), util::Error> {
+        use byteorder::{ByteOrder, LittleEndian};
+
         let target = &self.target();
         if target != required_target {
             return Err(SpvBadTarget);
         }
-        let hash = &self.bitcoin_hash().into_le();
+        let data: [u8; 32] = self.bitcoin_hash().into_inner();
+        let mut ret = [0u64; 4];
+        LittleEndian::read_u64_into(&data, &mut ret);
+        let hash = &Uint256(ret);
         if hash <= target { Ok(()) } else { Err(SpvBadProofOfWork) }
     }
 
@@ -141,14 +148,14 @@ impl BlockHeader {
 }
 
 impl BitcoinHash for BlockHeader {
-    fn bitcoin_hash(&self) -> Sha256dHash {
+    fn bitcoin_hash(&self) -> sha256d::Hash {
         use consensus::encode::serialize;
-        Sha256dHash::from_data(&serialize(self))
+        sha256d::Hash::hash(&serialize(self))
     }
 }
 
 impl BitcoinHash for Block {
-    fn bitcoin_hash(&self) -> Sha256dHash {
+    fn bitcoin_hash(&self) -> sha256d::Hash {
         self.header.bitcoin_hash()
     }
 }
