@@ -43,6 +43,7 @@ use byteorder::{LittleEndian, WriteBytesExt, ReadBytesExt};
 use hex::encode as hex_encode;
 
 use bitcoin_bech32;
+use bitcoin_hashes::{sha256d, Hash as HashTrait};
 
 use util::base58;
 
@@ -678,7 +679,18 @@ impl<D, K, V> Decodable<D> for HashMap<K, V>
     }
 }
 
+impl<S: Encoder> Encodable<S> for sha256d::Hash {
+    fn consensus_encode(&self, s: &mut S) -> Result<(), self::Error> {
+        self.into_inner().consensus_encode(s)
+    }
+}
 
+impl<D: Decoder> Decodable<D> for sha256d::Hash {
+    fn consensus_decode(d: &mut D) -> Result<sha256d::Hash, self::Error> {
+        let inner: [u8; 32] = Decodable::consensus_decode(d)?;
+        Ok(sha256d::Hash::from_slice(&inner).unwrap())
+    }
+}
 
 // Tests
 #[cfg(test)]
