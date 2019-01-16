@@ -38,25 +38,6 @@ macro_rules! impl_consensus_encoding {
     );
 }
 
-macro_rules! impl_newtype_consensus_encoding {
-    ($thing:ident) => (
-        impl<S: ::consensus::encode::Encoder> ::consensus::encode::Encodable<S> for $thing {
-            #[inline]
-            fn consensus_encode(&self, s: &mut S) -> Result<(), ::consensus::encode::Error> {
-                let &$thing(ref data) = self;
-                data.consensus_encode(s)
-            }
-        }
-
-        impl<D: ::consensus::encode::Decoder> ::consensus::encode::Decodable<D> for $thing {
-            #[inline]
-            fn consensus_decode(d: &mut D) -> Result<$thing, ::consensus::encode::Error> {
-                Ok($thing(Decodable::consensus_decode(d)?))
-            }
-        }
-    );
-}
-
 macro_rules! impl_array_newtype {
     ($thing:ident, $ty:ty, $len:expr) => {
         impl $thing {
