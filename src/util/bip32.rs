@@ -210,11 +210,6 @@ pub fn parse_derivation_path(path: &str) -> Result<Vec<ChildNumber>, Error> {
         return Err(Error::InvalidDerivationPathFormat);
     }
 
-    // Empty parts are a format error.
-    if parts.clone().any(|p| p.len() == 0) {
-        return Err(Error::InvalidDerivationPathFormat);
-    }
-
     parts.map(str::parse).collect()
 }
 
@@ -574,8 +569,8 @@ mod tests {
     fn test_parse_derivation_path() {
         assert_eq!(parse_derivation_path("42"), Err(Error::InvalidDerivationPathFormat));
         assert_eq!(parse_derivation_path("n/0'/0"), Err(Error::InvalidDerivationPathFormat));
-        assert_eq!(parse_derivation_path("m//3/0'"), Err(Error::InvalidDerivationPathFormat));
         assert_eq!(parse_derivation_path("4/m/5"), Err(Error::InvalidDerivationPathFormat));
+        assert_eq!(parse_derivation_path("m//3/0'"), Err(Error::InvalidChildNumberFormat));
         assert_eq!(parse_derivation_path("m/0h/0x"), Err(Error::InvalidChildNumberFormat));
 
         assert_eq!(parse_derivation_path("m"), Ok(vec![]));
