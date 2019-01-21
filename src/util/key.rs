@@ -27,7 +27,7 @@ use util::base58;
 /// A Bitcoin ECDSA public key
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PublicKey {
-    /// Whether this public key represents a compressed address
+    /// Whether this public key should be serialized as compressed
     pub compressed: bool,
     /// The actual ECDSA key
     pub key: secp256k1::PublicKey,
@@ -70,7 +70,7 @@ impl PublicKey {
 #[derive(Clone, PartialEq, Eq)]
 /// A Bitcoin ECDSA private key
 pub struct PrivateKey {
-    /// Whether this private key represents a compressed address
+    /// Whether this private key should be serialized as compressed
     pub compressed: bool,
     /// The network on which this key should be used
     pub network: Network,
@@ -79,7 +79,7 @@ pub struct PrivateKey {
 }
 
 impl PrivateKey {
-    /// Computes the public key as supposed to be used with this secret
+    /// Creates a public key from this private key
     pub fn public_key<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> PublicKey {
         PublicKey {
             compressed: self.compressed,
