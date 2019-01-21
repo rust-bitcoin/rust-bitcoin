@@ -26,6 +26,7 @@ pub mod decimal;
 pub mod hash;
 pub mod misc;
 pub mod uint;
+pub mod wif;
 
 use std::{error, fmt};
 
