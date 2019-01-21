@@ -46,18 +46,15 @@ impl PublicKey {
 
     /// Deserialize a public key from a slice
     pub fn from_slice(data: &[u8]) -> Result<PublicKey, encode::Error> {
-        let key: secp256k1::PublicKey = secp256k1::PublicKey::from_slice(data)
-            .map_err(|_| base58::Error::Other("Public key out of range".to_owned()))?;
-
         let compressed: bool = match data.len() {
             33 => true,
             65 => false,
-            _ =>  { return Err(base58::Error::InvalidLength(data.len()).into()); },
+            len =>  { return Err(base58::Error::InvalidLength(len).into()); },
         };
 
         Ok(PublicKey {
             compressed: compressed,
-            key: key,
+            key: secp256k1::PublicKey::from_slice(data)?,
         })
     }
 
@@ -128,13 +125,10 @@ impl PrivateKey {
             x   => { return Err(encode::Error::Base58(base58::Error::InvalidVersion(vec![x]))); }
         };
 
-        let key = secp256k1::SecretKey::from_slice(&data[1..33])
-            .map_err(|_| base58::Error::Other("Secret key out of range".to_owned()))?;
-
         Ok(PrivateKey {
             compressed: compressed,
             network: network,
-            key: key
+            key: secp256k1::SecretKey::from_slice(&data[1..33])?,
         })
     }
 }

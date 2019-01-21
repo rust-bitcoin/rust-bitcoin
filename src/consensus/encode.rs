@@ -42,6 +42,7 @@ use hex::encode as hex_encode;
 
 use bitcoin_bech32;
 use bitcoin_hashes::{sha256d, Hash as HashTrait};
+use secp256k1;
 
 use util::base58;
 
@@ -56,6 +57,8 @@ pub enum Error {
     Bech32(bitcoin_bech32::Error),
     /// Error from the `byteorder` crate
     ByteOrder(io::Error),
+    /// secp-related error
+    Secp256k1(secp256k1::Error),
     /// Network magic was not expected
     UnexpectedNetworkMagic {
         /// The expected network magic
@@ -98,6 +101,7 @@ impl fmt::Display for Error {
             Error::Base58(ref e) => fmt::Display::fmt(e, f),
             Error::Bech32(ref e) => fmt::Display::fmt(e, f),
             Error::ByteOrder(ref e) => fmt::Display::fmt(e, f),
+            Error::Secp256k1(ref e) => fmt::Display::fmt(e, f),
             Error::UnexpectedNetworkMagic { expected: ref e, actual: ref a } => write!(f, "{}: expected {}, actual {}", error::Error::description(self), e, a),
             Error::OversizedVectorAllocation { requested: ref r, max: ref m } => write!(f, "{}: requested {}, maximum {}", error::Error::description(self), r, m),
             Error::InvalidChecksum { expected: ref e, actual: ref a } => write!(f, "{}: expected {}, actual {}", error::Error::description(self), hex_encode(e), hex_encode(a)),
@@ -118,6 +122,7 @@ impl error::Error for Error {
             Error::Base58(ref e) => Some(e),
             Error::Bech32(ref e) => Some(e),
             Error::ByteOrder(ref e) => Some(e),
+            Error::Secp256k1(ref e) => Some(e),
             Error::UnexpectedNetworkMagic { .. }
             | Error::OversizedVectorAllocation { .. }
             | Error::InvalidChecksum { .. }
@@ -136,6 +141,7 @@ impl error::Error for Error {
             Error::Base58(ref e) => e.description(),
             Error::Bech32(ref e) => e.description(),
             Error::ByteOrder(ref e) => e.description(),
+            Error::Secp256k1(ref e) => e.description(),
             Error::UnexpectedNetworkMagic { .. } => "unexpected network magic",
             Error::OversizedVectorAllocation { .. } => "allocation of oversized vector requested",
             Error::InvalidChecksum { .. } => "invalid checksum",
@@ -163,6 +169,12 @@ impl From<bitcoin_bech32::Error> for Error {
     }
 }
 
+#[doc(hidden)]
+impl From<secp256k1::Error> for Error {
+    fn from(e: secp256k1::Error) -> Error {
+        Error::Secp256k1(e)
+    }
+}
 
 #[doc(hidden)]
 impl From<io::Error> for Error {
