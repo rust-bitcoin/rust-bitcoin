@@ -16,7 +16,6 @@
 //!
 //! Functions needed by all parts of the Bitcoin library
 
-pub mod privkey;
 pub mod address;
 pub mod base58;
 pub mod bip32;

@@ -23,11 +23,9 @@
 //! extern crate bitcoin;
 //! 
 //! use bitcoin::network::constants::Network;
-//! use bitcoin::util::address::Payload;
-//! use bitcoin::util::address::Address;
-//! use secp256k1::Secp256k1;
-//! use secp256k1::key::PublicKey;
+//! use bitcoin::util::address::{Address, Payload};
 //! use rand::thread_rng;
+//! use secp256k1::{Secp256k1, PublicKey};
 //! 
 //! fn main() {
 //!     let network = Network::Bitcoin;
@@ -51,7 +49,6 @@ use std::fmt::{self, Display, Formatter};
 use std::str::FromStr;
 
 use bitcoin_bech32::{self, WitnessProgram, u5};
-use secp256k1::key::PublicKey;
 
 #[cfg(feature = "serde")]
 use serde;
@@ -60,6 +57,7 @@ use blockdata::opcodes;
 use blockdata::script;
 use network::constants::Network;
 use consensus::encode;
+use secp256k1::PublicKey;
 use util::hash::Hash160;
 use util::base58;
 
@@ -86,7 +84,7 @@ pub struct Address {
 }
 
 impl Address {
-    /// Creates a pay to (compressed) public key hash address from a public key
+    /// Creates a pay to compressed public key hash address from a public key
     /// This is the preferred non-witness type address
     #[inline]
     pub fn p2pkh(pk: &PublicKey, network: Network) -> Address {
@@ -100,7 +98,7 @@ impl Address {
     /// This address type is discouraged as it uses more space but otherwise equivalent to p2pkh
     /// therefore only adds ambiguity
     #[inline]
-    pub fn p2upkh(pk: &PublicKey, network: Network) -> Address {
+    pub fn p2pkh_uncompressed(pk: &PublicKey, network: Network) -> Address {
         Address {
             network: network,
             payload: Payload::PubkeyHash(Hash160::from_data(&pk.serialize_uncompressed()[..]))
@@ -152,6 +150,19 @@ impl Address {
             payload: Payload::ScriptHash(
                 Hash160::from_data(builder.into_script().as_bytes())
             )
+        }
+    }
+
+    /// Create a pay to script address that embeds a witness pay to (uncompressed) public key
+    pub fn p2shwpkh_uncompressed (pk: &PublicKey, network: Network) -> Address {
+        let builder = script::Builder::new()
+            .push_int(0)
+            .push_slice(&Hash160::from_data(&pk.serialize_uncompressed()[..])[..]);
+        Address {
+            network: network,
+            payload: Payload::ScriptHash(
+                Hash160::from_data(builder.into_script().as_bytes())
+            ),
         }
     }
 
@@ -242,7 +253,7 @@ impl Display for Address {
         match self.payload {
             // note: serialization for pay-to-pk is defined, but is irreversible
             Payload::Pubkey(ref pk) => {
-                let hash = &Hash160::from_data(&pk.serialize_uncompressed()[..]);
+                let hash = &Hash160::from_data(&pk.serialize()[..]);
                 let mut prefixed = [0; 21];
                 prefixed[0] = match self.network {
                     Network::Bitcoin => 0,
@@ -403,8 +414,8 @@ mod tests {
     use std::str::FromStr;
     use std::string::ToString;
 
-    use secp256k1::key::PublicKey;
     use hex::decode as hex_decode;
+    use secp256k1::PublicKey;
 
     use blockdata::script::Script;
     use network::constants::Network::{Bitcoin, Testnet, Regtest};
@@ -432,20 +443,12 @@ mod tests {
     #[test]
     fn test_p2pkh_from_key() {
         let key = hex_key!("048d5141948c1702e8c95f438815794b87f706a8d4cd2bffad1dc1570971032c9b6042a0431ded2478b5c9cf2d81c124a5e57347a3c63ef0e7716cf54d613ba183");
-        let addr = Address::p2upkh(&key, Bitcoin);
+        let addr = Address::p2pkh_uncompressed(&key, Bitcoin);
         assert_eq!(&addr.to_string(), "1QJVDzdqb1VpbDK7uDeyVXy9mR27CJiyhY");
 
         let key = hex_key!(&"03df154ebfcf29d29cc10d5c2565018bce2d9edbab267c31d2caf44a63056cf99f");
         let addr = Address::p2pkh(&key, Testnet);
         assert_eq!(&addr.to_string(), "mqkhEMH6NCeYjFybv7pvFC22MFeaNT9AQC");
-    }
-
-    #[test]
-    fn test_p2pk () {
-        // one of Satoshi's coins, from Bitcoin transaction 9b0fc92260312ce44e74ef369f5c66bbb85848f2eddd5a7a1cde251e54ccfdd5
-        let key = hex_key!("047211a824f55b505228e4c3d5194c1fcfaa15a456abdf37f9b9d97a4040afc073dee6c89064984f03385237d92167c13e236446b417ab79a0fcae412ae3316b77");
-        let addr = Address::p2pk(&key, Bitcoin);
-        assert_eq!(&addr.to_string(), "1HLoD9E4SDFFPDiYfNYnkBLQ85Y51J3Zb1");
     }
 
     #[test]
