@@ -326,15 +326,10 @@ impl serde::Serialize for Sha256dHash {
     }
 }
 
-// Debug encodings (no reversing)
+// Debug encodings
 impl fmt::Debug for Sha256dHash {
-    /// Output the raw sha256d hash, not reversing it (unlike Display and what Core does for user display)
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let &Sha256dHash(data) = self;
-        for ch in data.iter() {
-            write!(f, "{:02x}", ch)?;
-        }
-        Ok(())
+        fmt::LowerHex::fmt(self, f)
     }
 }
 
@@ -461,7 +456,7 @@ mod tests {
         assert_eq!(format!("{}", Sha256dHash::from_data(&[])),
                    "56944c5d3f98413ef45cf54545538103cc9f298e0575820ad3591376e2e0f65d");
         assert_eq!(format!("{:?}", Sha256dHash::from_data(&[])),
-                   "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456");
+                   "56944c5d3f98413ef45cf54545538103cc9f298e0575820ad3591376e2e0f65d");
         assert_eq!(format!("{:x}", Sha256dHash::from_data(&[])),
                    "56944c5d3f98413ef45cf54545538103cc9f298e0575820ad3591376e2e0f65d");
         assert_eq!(format!("{:X}", Sha256dHash::from_data(&[])),
