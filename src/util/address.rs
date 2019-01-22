@@ -415,7 +415,7 @@ mod tests {
     use std::string::ToString;
 
     use hex::decode as hex_decode;
-    use secp256k1::PublicKey;
+    use secp256k1::key::PublicKey;
 
     use blockdata::script::Script;
     use network::constants::Network::{Bitcoin, Testnet, Regtest};
