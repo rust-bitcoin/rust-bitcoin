@@ -14,7 +14,7 @@
 
 //! Base58 encoder and decoder
 
-use std::{error, fmt, str};
+use std::{error, fmt, str, slice, iter};
 
 use byteorder::{ByteOrder, LittleEndian};
 use util::hash::Sha256dHash;
@@ -62,6 +62,43 @@ impl error::Error for Error {
             Error::TooShort(_) => "b58ck data less than 4 bytes",
             Error::Other(_) => "unknown b58 error"
         }
+    }
+}
+
+/// Vector-like object that holds the first 100 elements on the stack. If more space is needed it
+/// will be allocated on the heap.
+struct SmallVec<T> {
+    len: usize,
+    stack: [T; 100],
+    heap: Vec<T>,
+}
+
+impl<T: Default + Copy> SmallVec<T> {
+    pub fn new() -> SmallVec<T> {
+        SmallVec {
+            len: 0,
+            stack: [T::default(); 100],
+            heap: Vec::new(),
+        }
+    }
+
+    pub fn push(&mut self, val: T) {
+        if self.len < 100 {
+            self.stack[self.len] = val;
+            self.len += 1;
+        } else {
+            self.heap.push(val);
+        }
+    }
+
+    pub fn iter(&self) -> iter::Chain<slice::Iter<T>, slice::Iter<T>> {
+        // If len<100 then we just append an empty vec
+        self.stack[0..self.len].iter().chain(self.heap.iter())
+    }
+
+    pub fn iter_mut(&mut self) -> iter::Chain<slice::IterMut<T>, slice::IterMut<T>> {
+        // If len<100 then we just append an empty vec
+        self.stack[0..self.len].iter_mut().chain(self.heap.iter_mut())
     }
 }
 
@@ -134,14 +171,12 @@ pub fn from_check(data: &str) -> Result<Vec<u8>, Error> {
     Ok(ret)
 }
 
-fn encode_iter_utf8<I>(data: I) -> Vec<u8>
+fn format_iter<I, W>(writer: &mut W, data: I) -> Result<(), fmt::Error>
 where
     I: Iterator<Item = u8> + Clone,
+    W: fmt::Write
 {
-    let (len, _) = data.size_hint();
-
-    // 7/5 is just over log_58(256)
-    let mut ret = Vec::with_capacity(1 + len * 7 / 5);
+    let mut ret = SmallVec::new();
 
     let mut leading_zero_count = 0;
     let mut leading_zeroes = true;
@@ -169,29 +204,23 @@ where
     for _ in 0..leading_zero_count {
         ret.push(0);
     }
-    ret.reverse();
-    for ch in ret.iter_mut() {
-        *ch = BASE58_CHARS[*ch as usize];
+
+    for ch in ret.iter().rev() {
+        writer.write_char(BASE58_CHARS[*ch as usize] as char)?;
     }
-    ret
+
+    Ok(())
 }
 
 fn encode_iter<I>(data: I) -> String
 where
     I: Iterator<Item = u8> + Clone,
 {
-    let ret = encode_iter_utf8(data);
-    String::from_utf8(ret).unwrap()
+    let mut ret = String::new();
+    format_iter(&mut ret, data).expect("writing into string shouldn't fail");
+    ret
 }
 
-/// Directly encode a slice as base58 into a `Formatter`.
-fn encode_iter_to_fmt<I>(fmt: &mut fmt::Formatter, data: I) -> fmt::Result
-where
-    I: Iterator<Item = u8> + Clone,
-{
-    let ret = encode_iter_utf8(data);
-    fmt.write_str(str::from_utf8(&ret).unwrap())
-}
 
 /// Directly encode a slice as base58
 pub fn encode_slice(data: &[u8]) -> String {
@@ -216,7 +245,7 @@ pub fn check_encode_slice_to_fmt(fmt: &mut fmt::Formatter, data: &[u8]) -> fmt::
     let iter = data.iter()
         .cloned()
         .chain(checksum[0..4].iter().cloned());
-    encode_iter_to_fmt(fmt, iter)
+    format_iter(fmt, iter)
 }
 
 #[cfg(test)]
@@ -235,6 +264,14 @@ mod tests {
         // Leading zeroes
         assert_eq!(&encode_slice(&[0, 13, 36][..]), "1211");
         assert_eq!(&encode_slice(&[0, 0, 0, 0, 13, 36][..]), "1111211");
+
+        // Long input (>100 bytes => has to use heap)
+        let res = encode_slice(&"BitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBit\
+        coinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoin".as_bytes());
+        let exp = "ZqC5ZdfpZRi7fjA8hbhX5pEE96MdH9hEaC1YouxscPtbJF16qVWksHWR4wwvx7MotFcs2ChbJqK8KJ9X\
+        wZznwWn1JFDhhTmGo9v6GjAVikzCsBWZehu7bm22xL8b5zBR5AsBygYRwbFJsNwNkjpyFuDKwmsUTKvkULCvucPJrN5\
+        QUdxpGakhqkZFL7RU4yT";
+        assert_eq!(&res, exp);
 
         // Addresses
         let addr = hex_decode("00f8917303bfa8ef24f292e8fa1419b20460ba064d").unwrap();

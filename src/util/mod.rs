@@ -24,12 +24,8 @@ pub mod bip143;
 pub mod contracthash;
 pub mod decimal;
 pub mod hash;
-pub mod iter;
 pub mod misc;
 pub mod uint;
-
-#[cfg(feature = "fuzztarget")]
-pub mod sha2;
 
 use std::{error, fmt};
 

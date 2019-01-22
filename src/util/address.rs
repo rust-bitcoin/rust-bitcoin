@@ -212,21 +212,21 @@ impl Address {
             Payload::Pubkey(ref pk) => {
                 script::Builder::new()
                     .push_slice(&pk.serialize_uncompressed()[..])
-                    .push_opcode(opcodes::All::OP_CHECKSIG)
+                    .push_opcode(opcodes::all::OP_CHECKSIG)
             },
             Payload::PubkeyHash(ref hash) => {
                 script::Builder::new()
-                    .push_opcode(opcodes::All::OP_DUP)
-                    .push_opcode(opcodes::All::OP_HASH160)
+                    .push_opcode(opcodes::all::OP_DUP)
+                    .push_opcode(opcodes::all::OP_HASH160)
                     .push_slice(&hash[..])
-                    .push_opcode(opcodes::All::OP_EQUALVERIFY)
-                    .push_opcode(opcodes::All::OP_CHECKSIG)
+                    .push_opcode(opcodes::all::OP_EQUALVERIFY)
+                    .push_opcode(opcodes::all::OP_CHECKSIG)
             },
             Payload::ScriptHash(ref hash) => {
                 script::Builder::new()
-                    .push_opcode(opcodes::All::OP_HASH160)
+                    .push_opcode(opcodes::all::OP_HASH160)
                     .push_slice(&hash[..])
-                    .push_opcode(opcodes::All::OP_EQUAL)
+                    .push_opcode(opcodes::all::OP_EQUAL)
             },
             Payload::WitnessProgram(ref witprog) => {
                 script::Builder::new()
@@ -403,7 +403,6 @@ mod tests {
     use std::str::FromStr;
     use std::string::ToString;
 
-    use secp256k1::Secp256k1;
     use secp256k1::key::PublicKey;
     use hex::decode as hex_decode;
 
@@ -413,7 +412,7 @@ mod tests {
     use super::*;
 
     macro_rules! hex (($hex:expr) => (hex_decode($hex).unwrap()));
-    macro_rules! hex_key (($secp:expr, $hex:expr) => (PublicKey::from_slice($secp, &hex!($hex)).unwrap()));
+    macro_rules! hex_key (($hex:expr) => (PublicKey::from_slice(&hex!($hex)).unwrap()));
     macro_rules! hex_script (($hex:expr) => (Script::from(hex!($hex))));
 
     #[test]
@@ -432,13 +431,11 @@ mod tests {
 
     #[test]
     fn test_p2pkh_from_key() {
-        let secp = Secp256k1::without_caps();
-
-        let key = hex_key!(&secp, "048d5141948c1702e8c95f438815794b87f706a8d4cd2bffad1dc1570971032c9b6042a0431ded2478b5c9cf2d81c124a5e57347a3c63ef0e7716cf54d613ba183");
+        let key = hex_key!("048d5141948c1702e8c95f438815794b87f706a8d4cd2bffad1dc1570971032c9b6042a0431ded2478b5c9cf2d81c124a5e57347a3c63ef0e7716cf54d613ba183");
         let addr = Address::p2upkh(&key, Bitcoin);
         assert_eq!(&addr.to_string(), "1QJVDzdqb1VpbDK7uDeyVXy9mR27CJiyhY");
 
-        let key = hex_key!(&secp, &"03df154ebfcf29d29cc10d5c2565018bce2d9edbab267c31d2caf44a63056cf99f");
+        let key = hex_key!(&"03df154ebfcf29d29cc10d5c2565018bce2d9edbab267c31d2caf44a63056cf99f");
         let addr = Address::p2pkh(&key, Testnet);
         assert_eq!(&addr.to_string(), "mqkhEMH6NCeYjFybv7pvFC22MFeaNT9AQC");
     }
@@ -446,8 +443,7 @@ mod tests {
     #[test]
     fn test_p2pk () {
         // one of Satoshi's coins, from Bitcoin transaction 9b0fc92260312ce44e74ef369f5c66bbb85848f2eddd5a7a1cde251e54ccfdd5
-        let secp = Secp256k1::without_caps();
-        let key = hex_key!(&secp, "047211a824f55b505228e4c3d5194c1fcfaa15a456abdf37f9b9d97a4040afc073dee6c89064984f03385237d92167c13e236446b417ab79a0fcae412ae3316b77");
+        let key = hex_key!("047211a824f55b505228e4c3d5194c1fcfaa15a456abdf37f9b9d97a4040afc073dee6c89064984f03385237d92167c13e236446b417ab79a0fcae412ae3316b77");
         let addr = Address::p2pk(&key, Bitcoin);
         assert_eq!(&addr.to_string(), "1HLoD9E4SDFFPDiYfNYnkBLQ85Y51J3Zb1");
     }
@@ -478,8 +474,7 @@ mod tests {
     #[test]
     fn test_p2wpkh () {
         // stolen from Bitcoin transaction: b3c8c2b6cfc335abbcb2c7823a8453f55d64b2b5125a9a61e8737230cdb8ce20
-        let secp = Secp256k1::without_caps();
-        let key = hex_key!(&secp, "033bc8c83c52df5712229a2f72206d90192366c36428cb0c12b6af98324d97bfbc");
+        let key = hex_key!("033bc8c83c52df5712229a2f72206d90192366c36428cb0c12b6af98324d97bfbc");
         let addr = Address::p2wpkh(&key, Bitcoin);
         assert_eq!(&addr.to_string(), "bc1qvzvkjn4q3nszqxrv3nraga2r822xjty3ykvkuw");
     }

@@ -33,7 +33,7 @@ use secp256k1::{self, Secp256k1};
 use network::constants::Network;
 use util::base58;
 
-#[cfg(feature="fuzztarget")]      use util::sha2::{Sha256, Sha512};
+#[cfg(feature="fuzztarget")]      use fuzz_util::sha2::{Sha256, Sha512};
 #[cfg(not(feature="fuzztarget"))] use crypto::sha2::{Sha256, Sha512};
 
 /// A chain code
@@ -236,7 +236,7 @@ impl From<secp256k1::Error> for Error {
 
 impl ExtendedPrivKey {
     /// Construct a new master key from a seed value
-    pub fn new_master<C>(secp: &Secp256k1<C>, network: Network, seed: &[u8]) -> Result<ExtendedPrivKey, Error> {
+    pub fn new_master(network: Network, seed: &[u8]) -> Result<ExtendedPrivKey, Error> {
         let mut result = [0; 64];
         let mut hmac = Hmac::new(Sha512::new(), b"Bitcoin seed");
         hmac.input(seed);
@@ -247,7 +247,7 @@ impl ExtendedPrivKey {
             depth: 0,
             parent_fingerprint: Default::default(),
             child_number: ChildNumber::from_normal_idx(0),
-            secret_key: SecretKey::from_slice(secp, &result[..32]).map_err(Error::Ecdsa)?,
+            secret_key: SecretKey::from_slice(&result[..32]).map_err(Error::Ecdsa)?,
             chain_code: ChainCode::from(&result[32..])
         })
     }
@@ -285,8 +285,8 @@ impl ExtendedPrivKey {
 
         hmac.input(&be_n);
         hmac.raw_result(&mut result);
-        let mut sk = SecretKey::from_slice(secp, &result[..32]).map_err(Error::Ecdsa)?;
-        sk.add_assign(secp, &self.secret_key).map_err(Error::Ecdsa)?;
+        let mut sk = SecretKey::from_slice(&result[..32]).map_err(Error::Ecdsa)?;
+        sk.add_assign(&self.secret_key[..]).map_err(Error::Ecdsa)?;
 
         Ok(ExtendedPrivKey {
             network: self.network,
@@ -349,7 +349,7 @@ impl ExtendedPubKey {
     }
 
     /// Compute the scalar tweak added to this key to get a child key
-    pub fn ckd_pub_tweak<C>(&self, secp: &Secp256k1<C>, i: ChildNumber) -> Result<(SecretKey, ChainCode), Error> {
+    pub fn ckd_pub_tweak(&self, i: ChildNumber) -> Result<(SecretKey, ChainCode), Error> {
         match i {
             ChildNumber::Hardened {..} => {
                 Err(Error::CannotDeriveFromHardenedKey)
@@ -364,7 +364,7 @@ impl ExtendedPubKey {
                 let mut result = [0; 64];
                 hmac.raw_result(&mut result);
 
-                let secret_key = SecretKey::from_slice(secp, &result[..32])?;
+                let secret_key = SecretKey::from_slice(&result[..32])?;
                 let chain_code = ChainCode::from(&result[32..]);
                 Ok((secret_key, chain_code))
             }
@@ -377,9 +377,9 @@ impl ExtendedPubKey {
         secp: &Secp256k1<C>,
         i: ChildNumber,
     ) -> Result<ExtendedPubKey, Error> {
-        let (sk, chain_code) = self.ckd_pub_tweak(secp, i)?;
+        let (sk, chain_code) = self.ckd_pub_tweak(i)?;
         let mut pk = self.public_key.clone();
-        pk.add_exp_assign(secp, &sk).map_err(Error::Ecdsa)?;
+        pk.add_exp_assign(secp, &sk[..]).map_err(Error::Ecdsa)?;
 
         Ok(ExtendedPubKey {
             network: self.network,
@@ -436,7 +436,6 @@ impl FromStr for ExtendedPrivKey {
     type Err = base58::Error;
 
     fn from_str(inp: &str) -> Result<ExtendedPrivKey, base58::Error> {
-        let s = Secp256k1::without_caps();
         let data = base58::from_check(inp)?;
 
         if data.len() != 78 {
@@ -458,7 +457,7 @@ impl FromStr for ExtendedPrivKey {
             parent_fingerprint: Fingerprint::from(&data[5..9]),
             child_number: child_number,
             chain_code: ChainCode::from(&data[13..45]),
-            secret_key: SecretKey::from_slice(&s,
+            secret_key: SecretKey::from_slice(
                              &data[46..78]).map_err(|e|
                                  base58::Error::Other(e.to_string()))?
         })
@@ -487,7 +486,6 @@ impl FromStr for ExtendedPubKey {
     type Err = base58::Error;
 
     fn from_str(inp: &str) -> Result<ExtendedPubKey, base58::Error> {
-        let s = Secp256k1::without_caps();
         let data = base58::from_check(inp)?;
 
         if data.len() != 78 {
@@ -509,7 +507,7 @@ impl FromStr for ExtendedPubKey {
             parent_fingerprint: Fingerprint::from(&data[5..9]),
             child_number: child_number,
             chain_code: ChainCode::from(&data[13..45]),
-            public_key: PublicKey::from_slice(&s,
+            public_key: PublicKey::from_slice(
                              &data[45..78]).map_err(|e|
                                  base58::Error::Other(e.to_string()))?
         })
@@ -537,7 +535,7 @@ mod tests {
                  expected_sk: &str,
                  expected_pk: &str) {
 
-        let mut sk = ExtendedPrivKey::new_master(secp, network, seed).unwrap();
+        let mut sk = ExtendedPrivKey::new_master(network, seed).unwrap();
         let mut pk = ExtendedPubKey::from_private(secp, &sk);
 
         // Check derivation convenience method for ExtendedPrivKey
