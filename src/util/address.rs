@@ -98,7 +98,7 @@ impl Address {
     /// This address type is discouraged as it uses more space but otherwise equivalent to p2pkh
     /// therefore only adds ambiguity
     #[inline]
-    pub fn p2pkh_uncompressed(pk: &PublicKey, network: Network) -> Address {
+    pub fn p2upkh(pk: &PublicKey, network: Network) -> Address {
         Address {
             network: network,
             payload: Payload::PubkeyHash(Hash160::from_data(&pk.serialize_uncompressed()[..]))
@@ -153,8 +153,8 @@ impl Address {
         }
     }
 
-    /// Create a pay to script address that embeds a witness pay to (uncompressed) public key
-    pub fn p2shwpkh_uncompressed (pk: &PublicKey, network: Network) -> Address {
+    /// Create a pay to script address that embeds a witness pay to uncompressed public key
+    pub fn p2shwupkh (pk: &PublicKey, network: Network) -> Address {
         let builder = script::Builder::new()
             .push_int(0)
             .push_slice(&Hash160::from_data(&pk.serialize_uncompressed()[..])[..]);
@@ -443,7 +443,7 @@ mod tests {
     #[test]
     fn test_p2pkh_from_key() {
         let key = hex_key!("048d5141948c1702e8c95f438815794b87f706a8d4cd2bffad1dc1570971032c9b6042a0431ded2478b5c9cf2d81c124a5e57347a3c63ef0e7716cf54d613ba183");
-        let addr = Address::p2pkh_uncompressed(&key, Bitcoin);
+        let addr = Address::p2upkh(&key, Bitcoin);
         assert_eq!(&addr.to_string(), "1QJVDzdqb1VpbDK7uDeyVXy9mR27CJiyhY");
 
         let key = hex_key!(&"03df154ebfcf29d29cc10d5c2565018bce2d9edbab267c31d2caf44a63056cf99f");
