@@ -232,7 +232,7 @@ impl Default for TxOut {
 /// However, in protocols where transactions may legitimately have 0 inputs, e.g.
 /// when parties are cooperatively funding a transaction, the "00 means Segwit"
 /// heuristic does not work. Since Segwit requires such a transaction be encoded
-/// in the the original transaction format (since it has no inputs and therefore
+/// in the original transaction format (since it has no inputs and therefore
 /// no input witnesses), a traditionally encoded transaction may have the `0001`
 /// Segwit flag in it, which confuses most Segwit parsers including the one in
 /// Bitcoin Core.

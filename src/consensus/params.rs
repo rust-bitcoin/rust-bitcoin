@@ -61,7 +61,7 @@ pub struct Params {
     pub rule_change_activation_threshold: u32,
     /// Number of blocks with the same set of rules.
     pub miner_confirmation_window: u32,
-    /// Proof of work limit value. It cointans the lowest possible difficulty.
+    /// Proof of work limit value. It contains the lowest possible difficulty.
     pub pow_limit: Uint256,
     /// Expected amount of time to mine one block.
     pub pow_target_spacing: u64,

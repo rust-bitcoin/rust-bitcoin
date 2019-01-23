@@ -74,7 +74,7 @@ pub struct RawNetworkMessage {
 pub enum SocketResponse {
     /// A message was received
     MessageReceived(NetworkMessage),
-    /// An error occured and the socket needs to close
+    /// An error occurred and the socket needs to close
     ConnectionFailed(util::Error, Sender<()>)
 }
 

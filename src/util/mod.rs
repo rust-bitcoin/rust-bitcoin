@@ -51,7 +51,7 @@ pub trait BitArray {
     /// Create all-zeros value
     fn zero() -> Self;
 
-    /// Create value represeting one
+    /// Create value representing one
     fn one() -> Self;
 }
 

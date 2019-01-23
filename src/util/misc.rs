@@ -60,7 +60,7 @@ pub fn hex_bytes(data: &str) -> Result<Vec<u8>, encode::Error> {
         };
 
         // Convert bytes representing characters to their represented value and combine lsn and msn.
-        // The and_then and map are crucial for performance, in comparision to using ? and then
+        // The and_then and map are crucial for performance, in comparison to using ? and then
         // using the results of that for the calculation it's nearly twice as fast. Using bit
         // shifting and or instead of multiply and add on the other hand doesn't show a significant
         // increase in performance.
