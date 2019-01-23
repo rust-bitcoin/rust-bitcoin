@@ -28,6 +28,7 @@ use blockdata::transaction;
 use network::address::Address;
 use network::message_network;
 use network::message_blockdata;
+use network::message_filter;
 use consensus::encode::{Decodable, Encodable};
 use consensus::encode::CheckedData;
 use consensus::encode::{self, serialize, Encoder, Decoder};
@@ -117,7 +118,18 @@ pub enum NetworkMessage {
     Pong(u64),
     // TODO: reject,
     // TODO: bloom filtering
-    // TODO: alert
+    /// BIP157 getcfilters
+    GetCFilters(message_filter::GetCFilters),
+    /// BIP157 cfilter
+    CFilter(message_filter::CFilter),
+    /// BIP157 getcfheaders
+    GetCFHeaders(message_filter::GetCFHeaders),
+    /// BIP157 cfheaders
+    CFHeaders(message_filter::CFHeaders),
+    /// BIP157 getcfcheckpt
+    GetCFCheckpt(message_filter::GetCFCheckpt),
+    /// BIP157 cfcheckpt
+    CFCheckpt(message_filter::CFCheckpt),
     /// `alert`
     Alert(Vec<u8>)
 }
@@ -141,6 +153,12 @@ impl RawNetworkMessage {
             NetworkMessage::GetAddr    => "getaddr",
             NetworkMessage::Ping(_)    => "ping",
             NetworkMessage::Pong(_)    => "pong",
+            NetworkMessage::GetCFilters(_) => "getcfilters",
+            NetworkMessage::CFilter(_) => "cfilter",
+            NetworkMessage::GetCFHeaders(_) => "getcfheaders",
+            NetworkMessage::CFHeaders(_) => "cfheaders",
+            NetworkMessage::GetCFCheckpt(_) => "getcfckpt",
+            NetworkMessage::CFCheckpt(_) => "cfcheckpt",
             NetworkMessage::Alert(_)    => "alert",
         }.to_owned()
     }
@@ -163,6 +181,12 @@ impl<S: Encoder> Encodable<S> for RawNetworkMessage {
             NetworkMessage::Headers(ref dat) => serialize(dat),
             NetworkMessage::Ping(ref dat)    => serialize(dat),
             NetworkMessage::Pong(ref dat)    => serialize(dat),
+            NetworkMessage::GetCFilters(ref dat) => serialize(dat),
+            NetworkMessage::CFilter(ref dat) => serialize(dat),
+            NetworkMessage::GetCFHeaders(ref dat) => serialize(dat),
+            NetworkMessage::CFHeaders(ref dat) => serialize(dat),
+            NetworkMessage::GetCFCheckpt(ref dat) => serialize(dat),
+            NetworkMessage::CFCheckpt(ref dat) => serialize(dat),
             NetworkMessage::Alert(ref dat)    => serialize(dat),
             NetworkMessage::Verack
             | NetworkMessage::MemPool
@@ -194,6 +218,12 @@ impl<D: Decoder> Decodable<D> for RawNetworkMessage {
             "ping"    => NetworkMessage::Ping(Decodable::consensus_decode(&mut mem_d)?),
             "pong"    => NetworkMessage::Pong(Decodable::consensus_decode(&mut mem_d)?),
             "tx"      => NetworkMessage::Tx(Decodable::consensus_decode(&mut mem_d)?),
+            "getcfilters" => NetworkMessage::GetCFilters(Decodable::consensus_decode(&mut mem_d)?),
+            "cfilter" => NetworkMessage::CFilter(Decodable::consensus_decode(&mut mem_d)?),
+            "getcfheaders" => NetworkMessage::GetCFHeaders(Decodable::consensus_decode(&mut mem_d)?),
+            "cfheaders" => NetworkMessage::CFHeaders(Decodable::consensus_decode(&mut mem_d)?),
+            "getcfckpt" => NetworkMessage::GetCFCheckpt(Decodable::consensus_decode(&mut mem_d)?),
+            "cfcheckpt" => NetworkMessage::CFCheckpt(Decodable::consensus_decode(&mut mem_d)?),
             "alert"   => NetworkMessage::Alert(Decodable::consensus_decode(&mut mem_d)?),
             _ => return Err(encode::Error::UnrecognizedNetworkCommand(cmd)),
         };
