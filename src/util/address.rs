@@ -129,7 +129,7 @@ impl Address {
     }
 
     /// Create a witness pay to public key address from a public key
-    /// This is the native segwit address type for an output redemable with a single signature
+    /// This is the native segwit address type for an output redeemable with a single signature
     pub fn p2wpkh (pk: &PublicKey, network: Network) -> Address {
         Address {
             network: network,

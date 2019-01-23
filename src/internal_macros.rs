@@ -138,7 +138,7 @@ macro_rules! impl_array_newtype {
                 // manually implement comparison to get little-endian ordering
                 // (we need this for our numeric types; non-numeric ones shouldn't
                 // be ordered anyway except to put them in BTrees or whatever, and
-                // they don't care how we order as long as we're consisistent).
+                // they don't care how we order as long as we're consistent).
                 for i in 0..$len {
                     if self[$len - 1 - i] < other[$len - 1 - i] { return ::std::cmp::Ordering::Less; }
                     if self[$len - 1 - i] > other[$len - 1 - i] { return ::std::cmp::Ordering::Greater; }

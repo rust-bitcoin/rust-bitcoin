@@ -12,7 +12,7 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! Pay-to-contract-hash supporte
+//! Pay-to-contract-hash support
 //!
 //! See Appendix A of the Blockstream sidechains whitepaper
 //! at http://blockstream.com/sidechains.pdf for details of
@@ -32,7 +32,7 @@ use util::{address, hash};
 #[cfg(feature="fuzztarget")]      use fuzz_util::sha2;
 #[cfg(not(feature="fuzztarget"))] use crypto::sha2;
 
-/// Encoding of "pubkey here" in script; from bitcoin core `src/script/script.h`
+/// Encoding of "pubkey here" in script; from Bitcoin Core `src/script/script.h`
 static PUBKEY: u8 = 0xFE;
 
 /// A contract-hash error

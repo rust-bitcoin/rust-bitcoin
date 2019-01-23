@@ -192,7 +192,7 @@ impl serde::Serialize for ChildNumber {
 pub enum Error {
     /// A pk->pk derivation was attempted on a hardened key
     CannotDeriveFromHardenedKey,
-    /// A secp256k1 error occured
+    /// A secp256k1 error occurred
     Ecdsa(secp256k1::Error),
     /// A child number was provided that was out of range
     InvalidChildNumber(ChildNumber),
