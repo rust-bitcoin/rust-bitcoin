@@ -1,7 +1,9 @@
 //! fuzztarget-only Sha2 context with a dummy Sha256 and Sha512 hashers.
 
-pub use digest::Digest;
-use digest::{Input, BlockInput, FixedOutput, Reset}
+pub use sha2::digest::Digest;
+use sha2::digest::{Input, BlockInput, FixedOutput, Reset};
+use sha2::digest::generic_array::GenericArray;
+use sha2::digest::generic_array::typenum::{U32, U64, U128};
 
 #[derive(Clone, Copy)]
 /// Dummy Sha256 that hashes the input, but only returns the first byte of output, masking the
@@ -17,20 +19,37 @@ impl Sha256 {
 			state: 0,
 		}
 	}
+}
 
-	fn result(&mut self) -> [u8; 32] {
-		let mut data = [0_u8; 32];
+impl Default for Sha256 {
+	fn default() -> Self {
+		Self::new()
+	}
+}
+
+impl Input for Sha256 {
+	fn input<B: AsRef<[u8]>>(&mut self, input: B) { for i in input.as_ref() { self.state ^= i; } }
+}
+
+impl BlockInput for Sha256 {
+	type BlockSize = U64;
+}
+
+impl FixedOutput for Sha256 {
+	type OutputSize = U32;
+
+	fn fixed_result(self) -> GenericArray<u8, Self::OutputSize> {
+		let mut data = GenericArray::default();
 		data[0] = self.state;
 		for i in 1..32 {
 			data[i] = 0;
 		}
 		data
 	}
+}
 
-	fn input(&mut self, data: &[u8]) { for i in data { self.state ^= i; } }
+impl Reset for Sha256 {
 	fn reset(&mut self) { self.state = 0; }
-	fn output_bits(&self) -> usize { 256 }
-	fn block_size(&self) -> usize { 64 }
 }
 
 #[derive(Clone, Copy)]
@@ -48,16 +67,36 @@ impl Sha512 {
 		}
 	}
 
-	fn result(&mut self) {
-		let mut data = [0_u8; 64];
+}
+
+impl Default for Sha512 {
+	fn default() -> Self {
+		Self::new()
+	}
+}
+
+impl Input for Sha512 {
+	fn input<B: AsRef<[u8]>>(&mut self, input: B) { for i in input.as_ref() { self.state ^= i; } }
+}
+
+impl BlockInput for Sha512 {
+	type BlockSize = U128;
+}
+
+impl FixedOutput for Sha512 {
+	type OutputSize = U64;
+
+	fn fixed_result(self) -> GenericArray<u8, Self::OutputSize> {
+		let mut data = GenericArray::default();
 		data[0] = self.state;
 		for i in 1..64 {
 			data[i] = 0;
 		}
+		data
 	}
-
-	fn input(&mut self, data: &[u8]) { for i in data { self.state ^= i; } }
-	fn reset(&mut self) { self.state = 0xff; }
-	fn output_bits(&self) -> usize { 512 }
-	fn block_size(&self) -> usize { 128 }
 }
+
+impl Reset for Sha512 {
+	fn reset(&mut self) { self.state = 0xff; }
+}
+
