@@ -19,3 +19,4 @@ script:
   - cargo build --verbose --features=serde-decimal
   - cargo test --verbose --features=serde-decimal
   - if [ "$(rustup show | grep default | grep stable)" != "" ]; then cd fuzz && cargo test --verbose && ./travis-fuzz.sh; fi
+  - if [ "$(rustup show | grep default | grep nightly)" != "" ]; then cargo bench --features unstable; fi
