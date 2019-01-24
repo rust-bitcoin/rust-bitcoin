@@ -157,13 +157,11 @@ impl Address {
 
     /// Create a witness pay to script hash address
     pub fn p2wsh (script: &script::Script, network: Network) -> Address {
-        use crypto::sha2::Sha256;
-        use crypto::digest::Digest;
+        use sha2::{Sha256, Digest};
 
         let mut digest = Sha256::new();
         digest.input(script.as_bytes());
-        let mut d = [0u8; 32];
-        digest.result(&mut d);
+        let d = digest.result();
 
         Address {
             network: network,
@@ -181,13 +179,11 @@ impl Address {
     /// Create a pay to script address that embeds a witness pay to script hash address
     /// This is a segwit address type that looks familiar (as p2sh) to legacy clients
     pub fn p2shwsh (script: &script::Script, network: Network) -> Address {
-        use crypto::sha2::Sha256;
-        use crypto::digest::Digest;
+        use sha2::{Sha256, Digest};
 
         let mut digest = Sha256::new();
         digest.input(script.as_bytes());
-        let mut d = [0u8; 32];
-        digest.result(&mut d);
+        let d = digest.result();
         let ws = script::Builder::new().push_int(0).push_slice(&d).into_script();
 
         Address {

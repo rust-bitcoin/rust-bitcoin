@@ -43,11 +43,13 @@
 
 extern crate bitcoin_bech32;
 extern crate byteorder;
-extern crate crypto;
 extern crate hex;
+extern crate hmac;
 extern crate rand;
+extern crate ripemd160;
 extern crate secp256k1;
 #[cfg(feature = "serde")] extern crate serde;
+extern crate sha2;
 #[cfg(feature = "strason")] extern crate strason;
 #[cfg(all(test, feature = "unstable"))] extern crate test;
 #[cfg(feature="bitcoinconsensus")] extern crate bitcoinconsensus;

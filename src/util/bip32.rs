@@ -23,18 +23,19 @@ use std::str::FromStr;
 #[cfg(feature = "serde")] use serde;
 
 use byteorder::{BigEndian, ByteOrder, ReadBytesExt};
-use crypto::digest::Digest;
-use crypto::hmac::Hmac;
-use crypto::mac::Mac;
-use crypto::ripemd160::Ripemd160;
+use hmac::Hmac;
+use hmac::Mac;
+use ripemd160::Ripemd160;
 use secp256k1::key::{PublicKey, SecretKey};
 use secp256k1::{self, Secp256k1};
 
 use network::constants::Network;
 use util::base58;
 
-#[cfg(feature="fuzztarget")]      use fuzz_util::sha2::{Sha256, Sha512};
-#[cfg(not(feature="fuzztarget"))] use crypto::sha2::{Sha256, Sha512};
+#[cfg(feature="fuzztarget")]      use fuzz_util::sha2::{Sha256, Sha512, Digest};
+#[cfg(not(feature="fuzztarget"))] use sha2::{Sha256, Sha512, Digest};
+
+type HmacSha512 = Hmac<Sha512>;
 
 /// A chain code
 pub struct ChainCode([u8; 32]);
@@ -197,7 +198,9 @@ pub enum Error {
     /// A child number was provided that was out of range
     InvalidChildNumber(ChildNumber),
     /// Error creating a master seed --- for application use
-    RngError(String)
+    RngError(String),
+    /// Key used in hmac was of invalid length
+    InvalidKeyLength,
 }
 
 impl fmt::Display for Error {
@@ -206,7 +209,8 @@ impl fmt::Display for Error {
             Error::CannotDeriveFromHardenedKey => f.write_str("cannot derive hardened key from public key"),
             Error::Ecdsa(ref e) => fmt::Display::fmt(e, f),
             Error::InvalidChildNumber(ref n) => write!(f, "child number {} is invalid", n),
-            Error::RngError(ref s) => write!(f, "rng error {}", s)
+            Error::RngError(ref s) => write!(f, "rng error {}", s),
+            Error::InvalidKeyLength => write!(f, "invalid key length for hmac"),
         }
     }
 }
@@ -225,7 +229,8 @@ impl error::Error for Error {
             Error::CannotDeriveFromHardenedKey => "cannot derive hardened key from public key",
             Error::Ecdsa(ref e) => error::Error::description(e),
             Error::InvalidChildNumber(_) => "child number is invalid",
-            Error::RngError(_) => "rng error"
+            Error::RngError(_) => "rng error",
+            Error::InvalidKeyLength => "invalid key length",
         }
     }
 }
@@ -237,10 +242,9 @@ impl From<secp256k1::Error> for Error {
 impl ExtendedPrivKey {
     /// Construct a new master key from a seed value
     pub fn new_master(network: Network, seed: &[u8]) -> Result<ExtendedPrivKey, Error> {
-        let mut result = [0; 64];
-        let mut hmac = Hmac::new(Sha512::new(), b"Bitcoin seed");
+        let mut hmac = HmacSha512::new_varkey(b"Bitcoin seed").map_err(|_| Error::InvalidKeyLength)?;
         hmac.input(seed);
-        hmac.raw_result(&mut result);
+        let result = hmac.result().code();
 
         Ok(ExtendedPrivKey {
             network: network,
@@ -267,8 +271,7 @@ impl ExtendedPrivKey {
 
     /// Private->Private child key derivation
     pub fn ckd_priv<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>, i: ChildNumber) -> Result<ExtendedPrivKey, Error> {
-        let mut result = [0; 64];
-        let mut hmac = Hmac::new(Sha512::new(), &self.chain_code[..]);
+        let mut hmac = HmacSha512::new_varkey(&self.chain_code[..]).map_err(|_| Error::InvalidKeyLength)?;
         let mut be_n = [0; 4];
         match i {
             ChildNumber::Normal {..} => {
@@ -284,7 +287,7 @@ impl ExtendedPrivKey {
         BigEndian::write_u32(&mut be_n, u32::from(i));
 
         hmac.input(&be_n);
-        hmac.raw_result(&mut result);
+        let result = hmac.result().code();
         let mut sk = SecretKey::from_slice(&result[..32]).map_err(Error::Ecdsa)?;
         sk.add_assign(&self.secret_key[..]).map_err(Error::Ecdsa)?;
 
@@ -300,20 +303,20 @@ impl ExtendedPrivKey {
 
     /// Returns the HASH160 of the chaincode
     pub fn identifier<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> [u8; 20] {
-        let mut sha2_res = [0; 32];
-        let mut ripemd_res = [0; 20];
         // Compute extended public key
         let pk = ExtendedPubKey::from_private(secp, self);
         // Do SHA256 of just the ECDSA pubkey
         let mut sha2 = Sha256::new();
         sha2.input(&pk.public_key.serialize()[..]);
-        sha2.result(&mut sha2_res);
+        let sha2_res = sha2.result();
         // do RIPEMD160
         let mut ripemd = Ripemd160::new();
         ripemd.input(&sha2_res);
-        ripemd.result(&mut ripemd_res);
+        let ripemd_res = ripemd.result();
         // Return
-        ripemd_res
+        let mut ripemd_arr = [0_u8; 20];
+        ripemd_arr.copy_from_slice(&ripemd_res);
+        ripemd_arr
     }
 
     /// Returns the first four bytes of the identifier
@@ -355,14 +358,13 @@ impl ExtendedPubKey {
                 Err(Error::CannotDeriveFromHardenedKey)
             }
             ChildNumber::Normal { index: n } => {
-                let mut hmac = Hmac::new(Sha512::new(), &self.chain_code[..]);
+                let mut hmac = HmacSha512::new_varkey(&self.chain_code[..]).map_err(|_| Error::InvalidKeyLength)?;
                 hmac.input(&self.public_key.serialize()[..]);
                 let mut be_n = [0; 4];
                 BigEndian::write_u32(&mut be_n, n);
                 hmac.input(&be_n);
 
-                let mut result = [0; 64];
-                hmac.raw_result(&mut result);
+                let result = hmac.result().code();
 
                 let secret_key = SecretKey::from_slice(&result[..32])?;
                 let chain_code = ChainCode::from(&result[32..]);
@@ -393,18 +395,18 @@ impl ExtendedPubKey {
 
     /// Returns the HASH160 of the chaincode
     pub fn identifier(&self) -> [u8; 20] {
-        let mut sha2_res = [0; 32];
-        let mut ripemd_res = [0; 20];
         // Do SHA256 of just the ECDSA pubkey
         let mut sha2 = Sha256::new();
         sha2.input(&self.public_key.serialize()[..]);
-        sha2.result(&mut sha2_res);
+        let sha2_res = sha2.result();
         // do RIPEMD160
         let mut ripemd = Ripemd160::new();
         ripemd.input(&sha2_res);
-        ripemd.result(&mut ripemd_res);
+        let ripemd_res = ripemd.result();
         // Return
-        ripemd_res
+        let mut ripemd_arr = [0_u8; 20];
+        ripemd_arr.copy_from_slice(&ripemd_res);
+        ripemd_arr
     }
 
     /// Returns the first four bytes of the identifier

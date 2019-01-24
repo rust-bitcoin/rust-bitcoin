@@ -1,6 +1,7 @@
 //! fuzztarget-only Sha2 context with a dummy Sha256 and Sha512 hashers.
 
-use crypto::digest::Digest;
+pub use digest::Digest;
+use digest::{Input, BlockInput, FixedOutput, Reset}
 
 #[derive(Clone, Copy)]
 /// Dummy Sha256 that hashes the input, but only returns the first byte of output, masking the
@@ -16,14 +17,14 @@ impl Sha256 {
 			state: 0,
 		}
 	}
-}
 
-impl Digest for Sha256 {
-	fn result(&mut self, data: &mut [u8]) {
+	fn result(&mut self) -> [u8; 32] {
+		let mut data = [0_u8; 32];
 		data[0] = self.state;
 		for i in 1..32 {
 			data[i] = 0;
 		}
+		data
 	}
 
 	fn input(&mut self, data: &[u8]) { for i in data { self.state ^= i; } }
@@ -46,10 +47,9 @@ impl Sha512 {
 			state: 0xff,
 		}
 	}
-}
 
-impl Digest for Sha512 {
-	fn result(&mut self, data: &mut [u8]) {
+	fn result(&mut self) {
+		let mut data = [0_u8; 64];
 		data[0] = self.state;
 		for i in 1..64 {
 			data[i] = 0;

@@ -21,16 +21,18 @@
 use secp256k1::{self, Secp256k1};
 use secp256k1::key::{PublicKey, SecretKey};
 use blockdata::{opcodes, script};
-use crypto::hmac;
-use crypto::mac::Mac;
+use hmac;
+use hmac::Mac;
 
 use std::{error, fmt};
 
 use network::constants::Network;
 use util::{address, hash};
 
-#[cfg(feature="fuzztarget")]      use fuzz_util::sha2;
-#[cfg(not(feature="fuzztarget"))] use crypto::sha2;
+#[cfg(feature="fuzztarget")]      use fuzz_util::sha2::{Sha256};
+#[cfg(not(feature="fuzztarget"))] use sha2::{Sha256};
+
+type HmacSha256 = hmac::Hmac<Sha256>;
 
 /// Encoding of "pubkey here" in script; from bitcoin core `src/script/script.h`
 static PUBKEY: u8 = 0xFE;
@@ -57,7 +59,9 @@ pub enum Error {
     /// Did not have enough keys to instantiate a script template
     TooFewKeys(usize),
     /// Had too many keys; template does not match key list
-    TooManyKeys(usize)
+    TooManyKeys(usize),
+    /// Key used in hmac was of wrong length
+    InvalidKeyLength,
 }
 
 impl fmt::Display for Error {
@@ -70,7 +74,8 @@ impl fmt::Display for Error {
             Error::ExpectedKey => f.write_str("expected key when deserializing script"),
             Error::ExpectedChecksig => f.write_str("expected OP_*CHECKSIG* when deserializing script"),
             Error::TooFewKeys(n) => write!(f, "got {} keys, which was not enough", n),
-            Error::TooManyKeys(n) => write!(f, "got {} keys, which was too many", n)
+            Error::TooManyKeys(n) => write!(f, "got {} keys, which was too many", n),
+            Error::InvalidKeyLength => write!(f, "invalid key length for hmac"),
         }
     }
 }
@@ -94,7 +99,8 @@ impl error::Error for Error {
             Error::ExpectedKey => "expected key when deserializing script",
             Error::ExpectedChecksig => "expected OP_*CHECKSIG* when deserializing script",
             Error::TooFewKeys(_) => "too few keys for template",
-            Error::TooManyKeys(_) => "too many keys for template"
+            Error::TooManyKeys(_) => "too many keys for template",
+            Error::InvalidKeyLength => "invalid key length",
         }
     }
 }
@@ -173,10 +179,9 @@ impl<'a> From<&'a [u8]> for Template {
 pub fn tweak_keys<C: secp256k1::Verification>(secp: &Secp256k1<C>, keys: &[PublicKey], contract: &[u8]) -> Result<Vec<PublicKey>, Error> {
     let mut ret = Vec::with_capacity(keys.len());
     for mut key in keys.iter().cloned() {
-        let mut hmac_raw = [0; 32];
-        let mut hmac = hmac::Hmac::new(sha2::Sha256::new(), &key.serialize());
+        let mut hmac = HmacSha256::new_varkey(&key.serialize()).map_err(|_| Error::InvalidKeyLength)?;
         hmac.input(contract);
-        hmac.raw_result(&mut hmac_raw);
+        let hmac_raw = hmac.result().code();
         let hmac_sk = SecretKey::from_slice(&hmac_raw).map_err(Error::BadTweak)?;
         key.add_exp_assign(secp, &hmac_sk[..]).map_err(Error::Secp)?;
         ret.push(key);
@@ -186,10 +191,9 @@ pub fn tweak_keys<C: secp256k1::Verification>(secp: &Secp256k1<C>, keys: &[Publi
 
 /// Compute a tweak from some given data for the given public key
 pub fn compute_tweak(pk: &PublicKey, contract: &[u8]) -> Result<SecretKey, Error> {
-    let mut hmac_raw = [0; 32];
-    let mut hmac = hmac::Hmac::new(sha2::Sha256::new(), &pk.serialize());
+    let mut hmac = HmacSha256::new_varkey(&pk.serialize()).map_err(|_| Error::InvalidKeyLength)?;
     hmac.input(contract);
-    hmac.raw_result(&mut hmac_raw);
+    let hmac_raw = hmac.result().code();
     SecretKey::from_slice(&hmac_raw).map_err(Error::BadTweak)
 }
 

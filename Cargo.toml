@@ -12,6 +12,7 @@ readme = "README.md"
 
 [lib]
 name = "bitcoin"
+crate-type = ["cdylib", "rlib"]
 path = "src/lib.rs"
 
 [features]
@@ -23,8 +24,10 @@ unstable = []
 bitcoin-bech32 = "0.8.0"
 byteorder = "1.2"
 rand = "0.3"
-rust-crypto = "0.2"
 bitcoinconsensus = { version = "0.16", optional = true }
+sha2 = "0.8.0"
+hmac = "0.7.0"
+ripemd160 = "0.8.0"
 
 [dependencies.serde]
 version = "1"

@@ -24,14 +24,13 @@ use std::io::{self, Write};
 use std::mem;
 #[cfg(feature = "serde")] use serde;
 
-use crypto::digest::Digest;
-use crypto::ripemd160::Ripemd160;
+use ripemd160::Ripemd160;
 
 use consensus::encode::{Encodable, Decodable};
 use util::uint::Uint256;
 
-#[cfg(feature="fuzztarget")]      use fuzz_util::sha2::Sha256;
-#[cfg(not(feature="fuzztarget"))] use crypto::sha2::Sha256;
+#[cfg(feature="fuzztarget")]      use fuzz_util::sha2::{Sha256, Digest};
+#[cfg(not(feature="fuzztarget"))] use sha2::{Sha256, Digest};
 use std::str::FromStr;
 
 /// Hex deserialization error
@@ -96,12 +95,12 @@ impl Sha256dEncoder {
     }
 
     /// Extract the hash from an encoder
-    pub fn into_hash(mut self) -> Sha256dHash {
+    pub fn into_hash(self) -> Sha256dHash {
         let mut second_sha = Sha256::new();
-        let mut tmp = [0; 32];
-        self.0.result(&mut tmp);
+        let tmp = self.0.result();
         second_sha.input(&tmp);
-        second_sha.result(&mut tmp);
+        let mut tmp = [0_u8; 32];
+        tmp.clone_from_slice(&second_sha.result());
         Sha256dHash(tmp)
     }
 }
@@ -120,10 +119,10 @@ impl Write for Sha256dEncoder {
 impl Ripemd160Hash {
     /// Create a hash by hashing some data
     pub fn from_data(data: &[u8]) -> Ripemd160Hash {
-        let mut ret = [0; 20];
+        let mut ret = [0_u8; 20];
         let mut rmd = Ripemd160::new();
         rmd.input(data);
-        rmd.result(&mut ret);
+        ret.clone_from_slice(&rmd.result());
         Ripemd160Hash(ret)
     }
 }
@@ -131,14 +130,13 @@ impl Ripemd160Hash {
 impl Hash160 {
     /// Create a hash by hashing some data
     pub fn from_data(data: &[u8]) -> Hash160 {
-        let mut tmp = [0; 32];
-        let mut ret = [0; 20];
+        let mut ret = [0_u8; 20];
         let mut sha2 = Sha256::new();
         let mut rmd = Ripemd160::new();
         sha2.input(data);
-        sha2.result(&mut tmp);
+        let tmp = sha2.result();
         rmd.input(&tmp);
-        rmd.result(&mut ret);
+        ret.clone_from_slice(&rmd.result());
         Hash160(ret)
     }
 }
@@ -156,10 +154,9 @@ impl Sha256dHash {
         let Sha256dHash(mut ret): Sha256dHash = Default::default();
         let mut sha2 = Sha256::new();
         sha2.input(data);
-        sha2.result(&mut ret);
-        sha2.reset();
-        sha2.input(&ret);
-        sha2.result(&mut ret);
+        let tmp = sha2.result_reset();
+        sha2.input(&tmp);
+        ret.clone_from_slice(&sha2.result());
         Sha256dHash(ret)
     }
 

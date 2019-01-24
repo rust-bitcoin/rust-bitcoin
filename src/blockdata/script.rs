@@ -27,7 +27,6 @@
 use std::default::Default;
 use std::{error, fmt};
 
-use crypto::digest::Digest;
 #[cfg(feature = "serde")] use serde;
 
 use blockdata::opcodes;
@@ -39,7 +38,7 @@ use util::hash::Hash160;
 #[cfg(feature="bitcoinconsensus")] use util::hash::Sha256dHash;
 
 #[cfg(feature="fuzztarget")]      use fuzz_util::sha2::Sha256;
-#[cfg(not(feature="fuzztarget"))] use crypto::sha2::Sha256;
+#[cfg(not(feature="fuzztarget"))] use sha2::{Sha256, Digest};
 
 #[derive(Clone, Default, PartialOrd, Ord, PartialEq, Eq, Hash)]
 /// A Bitcoin script
@@ -313,10 +312,9 @@ impl Script {
     /// Compute the P2WSH output corresponding to this witnessScript (aka the "witness redeem
     /// script")
     pub fn to_v0_p2wsh(&self) -> Script {
-        let mut tmp = [0; 32];
         let mut sha2 = Sha256::new();
         sha2.input(&self.0);
-        sha2.result(&mut tmp);
+        let tmp = sha2.result();
         Builder::new().push_int(0)
                       .push_slice(&tmp)
                       .into_script()
