@@ -17,7 +17,8 @@
 use std::{error, fmt, str, slice, iter};
 
 use byteorder::{ByteOrder, LittleEndian};
-use util::hash::Sha256dHash;
+
+use bitcoin_hashes::{sha256d, Hash};
 
 /// An error that might occur during base58 decoding
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -161,7 +162,7 @@ pub fn from_check(data: &str) -> Result<Vec<u8>, Error> {
         return Err(Error::TooShort(ret.len()));
     }
     let ck_start = ret.len() - 4;
-    let expected = Sha256dHash::from_data(&ret[..ck_start]).into_le().low_u32();
+    let expected = LittleEndian::read_u32(&sha256d::Hash::hash(&ret[..ck_start])[..4]);
     let actual = LittleEndian::read_u32(&ret[ck_start..(ck_start + 4)]);
     if expected != actual {
         return Err(Error::BadChecksum(expected, actual));
@@ -230,7 +231,7 @@ pub fn encode_slice(data: &[u8]) -> String {
 /// Obtain a string with the base58check encoding of a slice
 /// (Tack the first 4 256-digits of the object's Bitcoin hash onto the end.)
 pub fn check_encode_slice(data: &[u8]) -> String {
-    let checksum = Sha256dHash::from_data(&data);
+    let checksum = sha256d::Hash::hash(&data);
     encode_iter(
         data.iter()
             .cloned()
@@ -241,7 +242,7 @@ pub fn check_encode_slice(data: &[u8]) -> String {
 /// Obtain a string with the base58check encoding of a slice
 /// (Tack the first 4 256-digits of the object's Bitcoin hash onto the end.)
 pub fn check_encode_slice_to_fmt(fmt: &mut fmt::Formatter, data: &[u8]) -> fmt::Result {
-    let checksum = Sha256dHash::from_data(&data);
+    let checksum = sha256d::Hash::hash(&data);
     let iter = data.iter()
         .cloned()
         .chain(checksum[0..4].iter().cloned());

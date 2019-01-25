@@ -42,8 +42,8 @@
 #![deny(missing_docs)]
 
 extern crate bitcoin_bech32;
+extern crate bitcoin_hashes;
 extern crate byteorder;
-extern crate crypto;
 extern crate hex;
 extern crate rand;
 extern crate secp256k1;
@@ -79,6 +79,3 @@ pub use util::hash::BitcoinHash;
 pub use util::privkey::Privkey;
 pub use util::decimal::Decimal;
 pub use util::decimal::UDecimal;
-
-#[cfg(feature = "fuzztarget")]
-pub mod fuzz_util;

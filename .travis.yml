@@ -14,8 +14,8 @@ script:
   - cargo test --verbose
   - cargo build --verbose --features=bitcoinconsensus
   - cargo test --verbose --features=bitcoinconsensus
-  - cargo build --verbose --features=serde
-  - cargo test --verbose --features=serde
+  - cargo build --verbose --features=use-serde
+  - cargo test --verbose --features=use-serde
   - cargo build --verbose --features=serde-decimal
   - cargo test --verbose --features=serde-decimal
   - if [ "$(rustup show | grep default | grep stable)" != "" ]; then cd fuzz && cargo test --verbose && ./travis-fuzz.sh; fi

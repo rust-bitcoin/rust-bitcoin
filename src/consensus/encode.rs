@@ -33,8 +33,6 @@ use std::collections::HashMap;
 use std::hash::Hash;
 use std::{mem, u32};
 
-use util::hash::Sha256dHash;
-
 use std::error;
 use std::fmt;
 use std::io;
@@ -43,6 +41,7 @@ use byteorder::{LittleEndian, WriteBytesExt, ReadBytesExt};
 use hex::encode as hex_encode;
 
 use bitcoin_bech32;
+use bitcoin_hashes::{sha256d, Hash as HashTrait};
 
 use util::base58;
 
@@ -565,7 +564,7 @@ impl<D: Decoder, T:Decodable<D>> Decodable<D> for Option<T> {
 
 /// Do a double-SHA256 on some data and return the first 4 bytes
 fn sha2_checksum(data: &[u8]) -> [u8; 4] {
-    let checksum = Sha256dHash::from_data(data);
+    let checksum = <sha256d::Hash as HashTrait>::hash(data);
     [checksum[0], checksum[1], checksum[2], checksum[3]]
 }
 
@@ -678,7 +677,18 @@ impl<D, K, V> Decodable<D> for HashMap<K, V>
     }
 }
 
+impl<S: Encoder> Encodable<S> for sha256d::Hash {
+    fn consensus_encode(&self, s: &mut S) -> Result<(), self::Error> {
+        self.into_inner().consensus_encode(s)
+    }
+}
 
+impl<D: Decoder> Decodable<D> for sha256d::Hash {
+    fn consensus_decode(d: &mut D) -> Result<sha256d::Hash, self::Error> {
+        let inner: [u8; 32] = Decodable::consensus_decode(d)?;
+        Ok(sha256d::Hash::from_slice(&inner).unwrap())
+    }
+}
 
 // Tests
 #[cfg(test)]

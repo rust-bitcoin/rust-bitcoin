@@ -23,18 +23,12 @@ use std::str::FromStr;
 #[cfg(feature = "serde")] use serde;
 
 use byteorder::{BigEndian, ByteOrder, ReadBytesExt};
-use crypto::digest::Digest;
-use crypto::hmac::Hmac;
-use crypto::mac::Mac;
-use crypto::ripemd160::Ripemd160;
+use bitcoin_hashes::{hash160, sha512, Hash, HashEngine, Hmac, HmacEngine};
 use secp256k1::key::{PublicKey, SecretKey};
 use secp256k1::{self, Secp256k1};
 
 use network::constants::Network;
 use util::base58;
-
-#[cfg(feature="fuzztarget")]      use fuzz_util::sha2::{Sha256, Sha512};
-#[cfg(not(feature="fuzztarget"))] use crypto::sha2::{Sha256, Sha512};
 
 /// A chain code
 pub struct ChainCode([u8; 32]);
@@ -49,7 +43,7 @@ impl_array_newtype_show!(Fingerprint);
 impl_array_newtype_encodable!(Fingerprint, u8, 4);
 
 impl Default for Fingerprint {
-    fn default() -> Fingerprint { Fingerprint([0, 0, 0, 0]) }
+    fn default() -> Fingerprint { Fingerprint([0; 4]) }
 }
 
 /// Extended private key
@@ -237,18 +231,17 @@ impl From<secp256k1::Error> for Error {
 impl ExtendedPrivKey {
     /// Construct a new master key from a seed value
     pub fn new_master(network: Network, seed: &[u8]) -> Result<ExtendedPrivKey, Error> {
-        let mut result = [0; 64];
-        let mut hmac = Hmac::new(Sha512::new(), b"Bitcoin seed");
-        hmac.input(seed);
-        hmac.raw_result(&mut result);
+        let mut hmac_engine: HmacEngine<sha512::Hash> = HmacEngine::new(b"Bitcoin seed");
+        hmac_engine.input(seed);
+        let hmac_result: Hmac<sha512::Hash> = Hmac::from_engine(hmac_engine);
 
         Ok(ExtendedPrivKey {
             network: network,
             depth: 0,
             parent_fingerprint: Default::default(),
             child_number: ChildNumber::from_normal_idx(0),
-            secret_key: SecretKey::from_slice(&result[..32]).map_err(Error::Ecdsa)?,
-            chain_code: ChainCode::from(&result[32..])
+            secret_key: SecretKey::from_slice(&hmac_result[..32]).map_err(Error::Ecdsa)?,
+            chain_code: ChainCode::from(&hmac_result[32..]),
         })
     }
 
@@ -267,25 +260,24 @@ impl ExtendedPrivKey {
 
     /// Private->Private child key derivation
     pub fn ckd_priv<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>, i: ChildNumber) -> Result<ExtendedPrivKey, Error> {
-        let mut result = [0; 64];
-        let mut hmac = Hmac::new(Sha512::new(), &self.chain_code[..]);
+        let mut hmac_engine: HmacEngine<sha512::Hash> = HmacEngine::new(&self.chain_code[..]);
         let mut be_n = [0; 4];
         match i {
             ChildNumber::Normal {..} => {
                 // Non-hardened key: compute public data and use that
-                hmac.input(&PublicKey::from_secret_key(secp, &self.secret_key).serialize()[..]);
+                hmac_engine.input(&PublicKey::from_secret_key(secp, &self.secret_key).serialize()[..]);
             }
             ChildNumber::Hardened {..} => {
                 // Hardened key: use only secret data to prevent public derivation
-                hmac.input(&[0u8]);
-                hmac.input(&self.secret_key[..]);
+                hmac_engine.input(&[0u8]);
+                hmac_engine.input(&self.secret_key[..]);
             }
         }
         BigEndian::write_u32(&mut be_n, u32::from(i));
 
-        hmac.input(&be_n);
-        hmac.raw_result(&mut result);
-        let mut sk = SecretKey::from_slice(&result[..32]).map_err(Error::Ecdsa)?;
+        hmac_engine.input(&be_n);
+        let hmac_result: Hmac<sha512::Hash> = Hmac::from_engine(hmac_engine);
+        let mut sk = SecretKey::from_slice(&hmac_result[..32]).map_err(Error::Ecdsa)?;
         sk.add_assign(&self.secret_key[..]).map_err(Error::Ecdsa)?;
 
         Ok(ExtendedPrivKey {
@@ -294,26 +286,13 @@ impl ExtendedPrivKey {
             parent_fingerprint: self.fingerprint(secp),
             child_number: i,
             secret_key: sk,
-            chain_code: ChainCode::from(&result[32..])
+            chain_code: ChainCode::from(&hmac_result[32..])
         })
     }
 
     /// Returns the HASH160 of the chaincode
-    pub fn identifier<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> [u8; 20] {
-        let mut sha2_res = [0; 32];
-        let mut ripemd_res = [0; 20];
-        // Compute extended public key
-        let pk = ExtendedPubKey::from_private(secp, self);
-        // Do SHA256 of just the ECDSA pubkey
-        let mut sha2 = Sha256::new();
-        sha2.input(&pk.public_key.serialize()[..]);
-        sha2.result(&mut sha2_res);
-        // do RIPEMD160
-        let mut ripemd = Ripemd160::new();
-        ripemd.input(&sha2_res);
-        ripemd.result(&mut ripemd_res);
-        // Return
-        ripemd_res
+    pub fn identifier<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> hash160::Hash {
+        ExtendedPubKey::from_private(secp, self).identifier()
     }
 
     /// Returns the first four bytes of the identifier
@@ -355,17 +334,16 @@ impl ExtendedPubKey {
                 Err(Error::CannotDeriveFromHardenedKey)
             }
             ChildNumber::Normal { index: n } => {
-                let mut hmac = Hmac::new(Sha512::new(), &self.chain_code[..]);
-                hmac.input(&self.public_key.serialize()[..]);
+                let mut hmac_engine: HmacEngine<sha512::Hash> = HmacEngine::new(&self.chain_code[..]);
+                hmac_engine.input(&self.public_key.serialize()[..]);
                 let mut be_n = [0; 4];
                 BigEndian::write_u32(&mut be_n, n);
-                hmac.input(&be_n);
+                hmac_engine.input(&be_n);
 
-                let mut result = [0; 64];
-                hmac.raw_result(&mut result);
+                let hmac_result: Hmac<sha512::Hash> = Hmac::from_engine(hmac_engine);
 
-                let secret_key = SecretKey::from_slice(&result[..32])?;
-                let chain_code = ChainCode::from(&result[32..]);
+                let secret_key = SecretKey::from_slice(&hmac_result[..32])?;
+                let chain_code = ChainCode::from(&hmac_result[32..]);
                 Ok((secret_key, chain_code))
             }
         }
@@ -392,19 +370,8 @@ impl ExtendedPubKey {
     }
 
     /// Returns the HASH160 of the chaincode
-    pub fn identifier(&self) -> [u8; 20] {
-        let mut sha2_res = [0; 32];
-        let mut ripemd_res = [0; 20];
-        // Do SHA256 of just the ECDSA pubkey
-        let mut sha2 = Sha256::new();
-        sha2.input(&self.public_key.serialize()[..]);
-        sha2.result(&mut sha2_res);
-        // do RIPEMD160
-        let mut ripemd = Ripemd160::new();
-        ripemd.input(&sha2_res);
-        ripemd.result(&mut ripemd_res);
-        // Return
-        ripemd_res
+    pub fn identifier(&self) -> hash160::Hash {
+        hash160::Hash::hash(&self.public_key.serialize())
     }
 
     /// Returns the first four bytes of the identifier

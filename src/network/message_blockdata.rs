@@ -21,7 +21,7 @@
 use network::constants;
 use consensus::encode::{Decodable, Encodable};
 use consensus::encode::{self, Decoder, Encoder};
-use util::hash::Sha256dHash;
+use bitcoin_hashes::sha256d;
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 /// The type of an inventory object
@@ -48,9 +48,9 @@ pub struct GetBlocksMessage {
     /// Locator hashes --- ordered newest to oldest. The remote peer will
     /// reply with its longest known chain, starting from a locator hash
     /// if possible and block 1 otherwise.
-    pub locator_hashes: Vec<Sha256dHash>,
+    pub locator_hashes: Vec<sha256d::Hash>,
     /// References the block to stop at, or zero to just fetch the maximum 500 blocks
-    pub stop_hash: Sha256dHash
+    pub stop_hash: sha256d::Hash,
 }
 
 /// The `getheaders` message
@@ -61,9 +61,9 @@ pub struct GetHeadersMessage {
     /// Locator hashes --- ordered newest to oldest. The remote peer will
     /// reply with its longest known chain, starting from a locator hash
     /// if possible and block 1 otherwise.
-    pub locator_hashes: Vec<Sha256dHash>,
+    pub locator_hashes: Vec<sha256d::Hash>,
     /// References the header to stop at, or zero to just fetch the maximum 2000 headers
-    pub stop_hash: Sha256dHash
+    pub stop_hash: sha256d::Hash
 }
 
 /// An inventory object --- a reference to a Bitcoin object
@@ -72,12 +72,12 @@ pub struct Inventory {
     /// The type of object that is referenced
     pub inv_type: InvType,
     /// The object's hash
-    pub hash: Sha256dHash
+    pub hash: sha256d::Hash
 }
 
 impl GetBlocksMessage {
     /// Construct a new `getblocks` message
-    pub fn new(locator_hashes: Vec<Sha256dHash>, stop_hash: Sha256dHash) -> GetBlocksMessage {
+    pub fn new(locator_hashes: Vec<sha256d::Hash>, stop_hash: sha256d::Hash) -> GetBlocksMessage {
         GetBlocksMessage {
             version: constants::PROTOCOL_VERSION,
             locator_hashes: locator_hashes.clone(),
@@ -90,7 +90,7 @@ impl_consensus_encoding!(GetBlocksMessage, version, locator_hashes, stop_hash);
 
 impl GetHeadersMessage {
     /// Construct a new `getheaders` message
-    pub fn new(locator_hashes: Vec<Sha256dHash>, stop_hash: Sha256dHash) -> GetHeadersMessage {
+    pub fn new(locator_hashes: Vec<sha256d::Hash>, stop_hash: sha256d::Hash) -> GetHeadersMessage {
         GetHeadersMessage {
             version: constants::PROTOCOL_VERSION,
             locator_hashes: locator_hashes,

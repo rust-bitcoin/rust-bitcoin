@@ -19,10 +19,11 @@
 //! signatures, which are placed in the scriptSig.
 //!
 
+use bitcoin_hashes::{sha256d, Hash};
+
 use blockdata::script::Script;
 use blockdata::transaction::{Transaction, TxIn};
 use consensus::encode::Encodable;
-use util::hash::{Sha256dHash, Sha256dEncoder};
 
 /// Parts of a sighash which are common across inputs or signatures, and which are
 /// sufficient (in conjunction with a private key) to sign the transaction
@@ -31,11 +32,11 @@ pub struct SighashComponents {
     tx_version: u32,
     tx_locktime: u32,
     /// Hash of all the previous outputs
-    pub hash_prevouts: Sha256dHash,
+    pub hash_prevouts: sha256d::Hash,
     /// Hash of all the input sequence nos
-    pub hash_sequence: Sha256dHash,
+    pub hash_sequence: sha256d::Hash,
     /// Hash of all the outputs in this transaction
-    pub hash_outputs: Sha256dHash,
+    pub hash_outputs: sha256d::Hash,
 }
 
 impl SighashComponents {
@@ -45,27 +46,27 @@ impl SighashComponents {
     /// script_sig and witnesses.
     pub fn new(tx: &Transaction) -> SighashComponents {
         let hash_prevouts = {
-            let mut enc = Sha256dEncoder::new();
+            let mut enc = sha256d::Hash::engine();
             for txin in &tx.input {
                 txin.previous_output.consensus_encode(&mut enc).unwrap();
             }
-            enc.into_hash()
+            sha256d::Hash::from_engine(enc)
         };
 
         let hash_sequence = {
-            let mut enc = Sha256dEncoder::new();
+            let mut enc = sha256d::Hash::engine();
             for txin in &tx.input {
                 txin.sequence.consensus_encode(&mut enc).unwrap();
             }
-            enc.into_hash()
+            sha256d::Hash::from_engine(enc)
         };
 
         let hash_outputs = {
-            let mut enc = Sha256dEncoder::new();
+            let mut enc = sha256d::Hash::engine();
             for txout in &tx.output {
                 txout.consensus_encode(&mut enc).unwrap();
             }
-            enc.into_hash()
+            sha256d::Hash::from_engine(enc)
         };
 
         SighashComponents {
@@ -79,8 +80,8 @@ impl SighashComponents {
 
     /// Compute the BIP143 sighash for a `SIGHASH_ALL` signature for the given
     /// input.
-    pub fn sighash_all(&self, txin: &TxIn, witness_script: &Script, value: u64) -> Sha256dHash {
-        let mut enc = Sha256dEncoder::new();
+    pub fn sighash_all(&self, txin: &TxIn, witness_script: &Script, value: u64) -> sha256d::Hash {
+        let mut enc = sha256d::Hash::engine();
         self.tx_version.consensus_encode(&mut enc).unwrap();
         self.hash_prevouts.consensus_encode(&mut enc).unwrap();
         self.hash_sequence.consensus_encode(&mut enc).unwrap();
@@ -94,7 +95,7 @@ impl SighashComponents {
         self.hash_outputs.consensus_encode(&mut enc).unwrap();
         self.tx_locktime.consensus_encode(&mut enc).unwrap();
         1u32.consensus_encode(&mut enc).unwrap(); // hashtype
-        enc.into_hash()
+        sha256d::Hash::from_engine(enc)
     }
 }
 
