@@ -21,6 +21,8 @@
 
 use std::iter;
 use std::io::Cursor;
+use std::io::Read;
+use std::net::TcpStream;
 use std::sync::mpsc::Sender;
 
 use blockdata::block;
@@ -162,6 +164,31 @@ impl RawNetworkMessage {
             NetworkMessage::CFCheckpt(_) => "cfcheckpt",
             NetworkMessage::Alert(_)    => "alert",
         }.to_owned()
+    }
+
+    /// Reads stream from a TCP socket and parses first message from it, returing
+    /// the rest of the unparsed buffer for later usage.
+    pub fn from_tcpstream(stream: &mut TcpStream, buffer: &mut [u8]) -> Result<Self, encode::Error> {
+        let mut spliced = buffer.to_vec();
+        let mut buffer2: [u8; 1024] = [0; 1024];
+        loop {
+            let count = stream.read(&mut buffer2)?;
+            if count == 0 {
+                continue;
+            }
+            let mut new_data = buffer2.to_vec();
+            spliced.append(&mut new_data);
+
+            let mut consumed: u64 = 0;
+            let result = encode::deserialize_partial::<RawNetworkMessage>(&spliced.to_vec(), &mut consumed);
+            let index = consumed as usize;
+            buffer.copy_from_slice(&spliced[index..]);
+
+            match result {
+                Err(encode::Error::InvalidChecksum { .. }) => continue,
+                _ => return result,
+            }
+        }
     }
 }
 
