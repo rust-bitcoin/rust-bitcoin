@@ -63,6 +63,7 @@ impl<D: Decoder> Decodable<D> for CommandString {
     }
 }
 
+#[derive(Debug)]
 /// A Network message
 pub struct RawNetworkMessage {
     /// Magic bytes to identify the network these messages are meant for
