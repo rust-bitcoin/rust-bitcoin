@@ -21,6 +21,7 @@
 use std::fmt;
 use std::io;
 use std::error;
+use std::convert;
 
 pub mod constants;
 
@@ -47,6 +48,12 @@ impl fmt::Display for Error {
             Error::Io(ref e) => fmt::Display::fmt(e, f),
             Error::SocketMutexPoisoned | Error::SocketNotConnectedToPeer => f.write_str(error::Error::description(self)),
         }
+    }
+}
+
+impl convert::From<io::Error> for Error {
+    fn from(err: io::Error) -> Self {
+        Error::Io(err)
     }
 }
 
