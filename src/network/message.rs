@@ -22,7 +22,6 @@
 use std::iter;
 use std::io::Cursor;
 use std::io::Read;
-use std::net::TcpStream;
 use std::sync::mpsc::Sender;
 
 use blockdata::block;
@@ -150,7 +149,7 @@ impl RawNetworkMessage {
 
     /// Reads stream from a TCP socket and parses first message from it, returing
     /// the rest of the unparsed buffer for later usage.
-    pub fn from_tcpstream(stream: &mut TcpStream, remaining_part: &mut Vec<u8>) -> Result<Self, encode::Error> {
+    pub fn from_stream(stream: &mut Read, remaining_part: &mut Vec<u8>) -> Result<Self, encode::Error> {
         loop {
             let mut new_data = vec![];
             let count = stream.read(&mut new_data)?;
