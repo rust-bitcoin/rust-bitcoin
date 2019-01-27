@@ -231,9 +231,11 @@ impl<D: Decoder> Decodable<D> for RawNetworkMessage {
 
 #[cfg(test)]
 mod test {
+    extern crate tempfile;
     use super::{RawNetworkMessage, NetworkMessage, CommandString};
-
     use consensus::encode::{deserialize, deserialize_partial, serialize};
+    use std::io::{Write, Seek, SeekFrom};
+    use std::fs::File;
 
     #[test]
     fn serialize_commandstring_test() {
@@ -359,6 +361,44 @@ mod test {
         assert_eq!(consumed as usize, data.to_vec().len() - 2);
 
         let msg = msg.unwrap();
+        assert_eq!(msg.magic, 0xd9b4bef9);
+        if let NetworkMessage::Version(version_msg) = msg.payload {
+            assert_eq!(version_msg.version, 70015);
+            assert_eq!(version_msg.services, 1037);
+            assert_eq!(version_msg.timestamp, 1548554224);
+            assert_eq!(version_msg.nonce, 13952548347456104954);
+            assert_eq!(version_msg.user_agent, "/Satoshi:0.17.1/");
+            assert_eq!(version_msg.start_height, 560275);
+            assert_eq!(version_msg.relay, true);
+        } else {
+            panic!("Wrong message type");
+        }
+    }
+
+    #[test]
+    fn deserealize_from_stream_test() {
+        let mut tmpfile: File = tempfile::tempfile().unwrap();
+        tmpfile.write_all(&[  0xf9, 0xbe, 0xb4, 0xd9, 0x76, 0x65, 0x72, 0x73,
+            0x69, 0x6f, 0x6e, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x66, 0x00, 0x00, 0x00, 0xbe, 0x61, 0xb8, 0x27,
+            0x7f, 0x11, 0x01, 0x00, 0x0d, 0x04, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0xf0, 0x0f, 0x4d, 0x5c,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff,
+            0x5b, 0xf0, 0x8c, 0x80, 0xb4, 0xbd, 0x0d, 0x04,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0xfa, 0xa9, 0x95, 0x59, 0xcc, 0x68, 0xa1, 0xc1,
+            0x10, 0x2f, 0x53, 0x61, 0x74, 0x6f, 0x73, 0x68,
+            0x69, 0x3a, 0x30, 0x2e, 0x31, 0x37, 0x2e, 0x31,
+            0x2f, 0x93, 0x8c, 0x08, 0x00, 0x01, 0, 0 ]).unwrap();
+        tmpfile.flush().unwrap();
+        tmpfile.seek(SeekFrom::Start(0)).unwrap();
+
+        let mut buffer = vec![];
+        let msg = RawNetworkMessage::from_stream(&mut tmpfile, &mut buffer).unwrap();
         assert_eq!(msg.magic, 0xd9b4bef9);
         if let NetworkMessage::Version(version_msg) = msg.payload {
             assert_eq!(version_msg.version, 70015);
