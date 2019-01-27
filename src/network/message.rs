@@ -20,8 +20,7 @@
 //!
 
 use std::iter;
-use std::io::Cursor;
-use std::io::Read;
+use std::io::{Cursor, Read, BufReader};
 use std::net::TcpStream;
 use std::sync::mpsc::Sender;
 
@@ -168,21 +167,17 @@ impl RawNetworkMessage {
 
     /// Reads stream from a TCP socket and parses first message from it, returing
     /// the rest of the unparsed buffer for later usage.
-    pub fn from_tcpstream(stream: &mut TcpStream, buffer: &mut [u8]) -> Result<Self, encode::Error> {
-        let mut spliced = buffer.to_vec();
-        let mut buffer2: [u8; 1024] = [0; 1024];
+    pub fn from_tcpstream(stream: &mut TcpStream, reader: &mut BufReader<TcpStream>) -> Result<Self, encode::Error> {
         loop {
-            let count = stream.read(&mut buffer2)?;
+            let buffer = reader.fill_buf()?;
+            let count = buffer.len();
             if count == 0 {
                 continue;
             }
-            let mut new_data = buffer2.to_vec();
-            spliced.append(&mut new_data);
 
             let mut consumed: u64 = 0;
-            let result = encode::deserialize_partial::<RawNetworkMessage>(&spliced.to_vec(), &mut consumed);
-            let index = consumed as usize;
-            buffer.copy_from_slice(&spliced[index..]);
+            let result = encode::deserialize_partial::<RawNetworkMessage>(buffer, &mut consumed);
+            reader.consume(consumed as usize);
 
             match result {
                 Err(encode::Error::InvalidChecksum { .. }) => continue,
