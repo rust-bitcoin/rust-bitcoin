@@ -204,16 +204,29 @@ pub fn serialize_hex<T: ?Sized>(data: &T) -> String
 pub fn deserialize<'a, T>(data: &'a [u8]) -> Result<T, Error>
      where T: Decodable<Cursor<&'a [u8]>>
 {
-    let mut decoder = Cursor::new(data);
-    let rv = Decodable::consensus_decode(&mut decoder)?;
+    let mut consumed: u64 = 0;
+    let rv = deserialize_partial(data, &mut consumed)?;
 
     // Fail if data is not consumed entirely.
-    if decoder.position() == data.len() as u64 {
+    if consumed == data.len() as u64 {
         Ok(rv)
     } else {
+        eprintln!("total {}, consumed {}", data.len(), consumed);
         Err(Error::ParseFailed("data not consumed entirely when explicitly deserializing"))
     }
 }
+
+pub fn deserialize_partial<'a, T>(data: &'a [u8], consumed: &mut u64) -> Result<T, Error>
+    where T: Decodable<Cursor<&'a [u8]>>
+{
+    let mut decoder = Cursor::new(data);
+    let rv = Decodable::consensus_decode(&mut decoder)?;
+
+    *consumed = decoder.position();
+
+    Ok(rv)
+}
+
 
 /// A simple Encoder trait
 pub trait Encoder {
