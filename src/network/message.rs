@@ -384,7 +384,9 @@ mod test {
     #[test]
     fn deserealize_from_stream_test() {
         let mut tmpfile: File = tempfile::tempfile().unwrap();
-        tmpfile.write_all(&[  0xf9, 0xbe, 0xb4, 0xd9, 0x76, 0x65, 0x72, 0x73,
+        tmpfile.write_all(&[
+            // version message
+            0xf9, 0xbe, 0xb4, 0xd9, 0x76, 0x65, 0x72, 0x73,
             0x69, 0x6f, 0x6e, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x66, 0x00, 0x00, 0x00, 0xbe, 0x61, 0xb8, 0x27,
             0x7f, 0x11, 0x01, 0x00, 0x0d, 0x04, 0x00, 0x00,
@@ -399,12 +401,19 @@ mod test {
             0xfa, 0xa9, 0x95, 0x59, 0xcc, 0x68, 0xa1, 0xc1,
             0x10, 0x2f, 0x53, 0x61, 0x74, 0x6f, 0x73, 0x68,
             0x69, 0x3a, 0x30, 0x2e, 0x31, 0x37, 0x2e, 0x31,
-            0x2f, 0x93, 0x8c, 0x08, 0x00, 0x01, 0, 0 ]).unwrap();
+            0x2f, 0x93, 0x8c, 0x08, 0x00, 0x01,
+            // Ping(100) message
+            0xf9, 0xbe, 0xb4, 0xd9, 0x70, 0x69, 0x6e, 0x67,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x08, 0x00, 0x00, 0x00, 0x24, 0x67, 0xf1, 0x1d,
+            0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        ]).unwrap();
         tmpfile.flush().unwrap();
         tmpfile.seek(SeekFrom::Start(0)).unwrap();
 
         let mut buffer = vec![];
         let msg = RawNetworkMessage::from_stream(&mut tmpfile, &mut buffer).unwrap();
+        assert!(buffer.len() > 0);
         assert_eq!(msg.magic, 0xd9b4bef9);
         if let NetworkMessage::Version(version_msg) = msg.payload {
             assert_eq!(version_msg.version, 70015);
@@ -414,6 +423,16 @@ mod test {
             assert_eq!(version_msg.user_agent, "/Satoshi:0.17.1/");
             assert_eq!(version_msg.start_height, 560275);
             assert_eq!(version_msg.relay, true);
+        } else {
+            panic!("Wrong message type");
+        }
+
+        println!("{:?}", &buffer);
+        let msg = RawNetworkMessage::from_stream(&mut tmpfile, &mut buffer).unwrap();
+        assert_eq!(buffer.len(), 0);
+        assert_eq!(msg.magic, 0xd9b4bef9);
+        if let NetworkMessage::Ping(nonce) = msg.payload {
+            assert_eq!(nonce, 100);
         } else {
             panic!("Wrong message type");
         }
