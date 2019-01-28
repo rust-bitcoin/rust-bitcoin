@@ -204,6 +204,8 @@ pub fn deserialize<'a, T>(data: &'a [u8]) -> Result<T, Error>
     }
 }
 
+/// Deserialize an object from a vector, but will not report an error if said deserialization
+/// doesn't consume the entire vector.
 pub fn deserialize_partial<'a, T>(data: &'a [u8], consumed: &mut u64) -> Result<T, Error>
     where T: Decodable<Cursor<&'a [u8]>>
 {
