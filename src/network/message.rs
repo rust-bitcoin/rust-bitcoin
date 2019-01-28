@@ -150,24 +150,30 @@ impl RawNetworkMessage {
     /// Reads stream from a TCP socket and parses first message from it, returing
     /// the rest of the unparsed buffer for later usage.
     pub fn from_stream(stream: &mut Read, remaining_part: &mut Vec<u8>) -> Result<Self, encode::Error> {
-        loop {
-            let mut new_data = vec![];
-            let count = stream.read(&mut new_data)?;
-            if count == 0 {
-                continue;
+        let mut max_iterations = 16;
+        while max_iterations > 0 {
+            max_iterations -= 1;
+
+            if remaining_part.len() > 0 {
+                let mut consumed: u64 = 0;
+                let result = encode::deserialize_partial::<RawNetworkMessage>(&remaining_part, &mut consumed);
+                let index = consumed as usize;
+                remaining_part.drain(..index);
+
+                match result {
+                    // In this case we just have an incomplete data, so we need to read more
+                    Err(encode::Error::InvalidChecksum { .. }) => (),
+                    _ => return result,
+                }
             }
-            remaining_part.append(&mut new_data);
 
-            let mut consumed: u64 = 0;
-            let result = encode::deserialize_partial::<RawNetworkMessage>(&remaining_part, &mut consumed);
-            let index = consumed as usize;
-            remaining_part.drain(..index);
-
-            match result {
-                Err(encode::Error::InvalidChecksum { .. }) => continue,
-                _ => return result,
+            let mut new_data = vec![0u8; 1024];
+            let count = stream.read(&mut new_data)?;
+            if count > 0 {
+                remaining_part.append(&mut new_data[0..count].to_vec());
             }
         }
+        Err(encode::Error::ParseFailed("Zero-length input"))
     }
 }
 
