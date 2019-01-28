@@ -20,6 +20,7 @@
 //!
 
 use std::iter;
+use std::io;
 use std::io::Cursor;
 use std::io::Read;
 use std::sync::mpsc::Sender;
@@ -180,7 +181,7 @@ impl RawNetworkMessage {
 
                 match result {
                     // In this case we just have an incomplete data, so we need to read more
-                    Err(encode::Error::InvalidChecksum { .. }) => (),
+                    Err(encode::Error::Io(ref err)) if err.kind() == io::ErrorKind::UnexpectedEof => (),
                     _ => return result,
                 }
             }
@@ -412,7 +413,27 @@ mod test {
     }
 
     #[test]
-    fn deserealize_from_stream_test() {
+    fn deserealize_partialmsg_from_stream_test() {
+        let mut tmpfile: File = tempfile::tempfile().unwrap();
+        tmpfile.write_all(&[
+            // version message
+            0xf9, 0xbe, 0xb4, 0xd9, 0x76, 0x65, 0x72, 0x73,
+            0x69, 0x6f, 0x6e, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x66, 0x00, 0x00, 0x00, 0xbe, 0x61, 0xb8, 0x27,
+            0x7f, 0x11, 0x01, 0x00, 0x0d, 0x04, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0xf0, 0x0f, 0x4d, 0x5c,
+        ]).unwrap();
+        tmpfile.flush().unwrap();
+        tmpfile.seek(SeekFrom::Start(0)).unwrap();
+
+        let mut buffer = vec![];
+        let msg = RawNetworkMessage::from_stream(&mut tmpfile, &mut buffer);
+        assert!(buffer.len() > 0);
+        assert!(msg.is_err());
+    }
+
+    #[test]
+    fn deserealize_2msgs_from_stream_test() {
         let mut tmpfile: File = tempfile::tempfile().unwrap();
         tmpfile.write_all(&[
             // version message
