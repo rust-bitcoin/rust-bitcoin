@@ -156,22 +156,21 @@ impl RawNetworkMessage {
             max_iterations -= 1;
 
             if remaining_part.len() > 0 {
-                let mut consumed: u64 = 0;
-                let result = encode::deserialize_partial::<RawNetworkMessage>(&remaining_part, &mut consumed);
-                let index = consumed as usize;
-                remaining_part.drain(..index);
-
-                match result {
+                match encode::deserialize_partial::<RawNetworkMessage>(&remaining_part) {
                     // In this case we just have an incomplete data, so we need to read more
                     Err(encode::Error::Io(ref err)) if err.kind() == io::ErrorKind::UnexpectedEof => (),
-                    _ => return result,
+                    Err(err) => return Err(err),
+                    Ok((message, index)) => {
+                        remaining_part.drain(..index);
+                        return Ok(message)
+                    },
                 }
             }
 
             let mut new_data = vec![0u8; 1024];
             let count = stream.read(&mut new_data)?;
             if count > 0 {
-                remaining_part.append(&mut new_data[0..count].to_vec());
+                remaining_part.extend(new_data[0..count].iter());
             }
         }
         Err(encode::Error::ParseFailed("Zero-length input"))
@@ -345,7 +344,6 @@ mod test {
 
     #[test]
     fn deserialize_partial_message_test() {
-        let mut consumed: u64 = 0;
         let data = [  0xf9, 0xbe, 0xb4, 0xd9, 0x76, 0x65, 0x72, 0x73,
             0x69, 0x6f, 0x6e, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x66, 0x00, 0x00, 0x00, 0xbe, 0x61, 0xb8, 0x27,
@@ -362,12 +360,11 @@ mod test {
             0x10, 0x2f, 0x53, 0x61, 0x74, 0x6f, 0x73, 0x68,
             0x69, 0x3a, 0x30, 0x2e, 0x31, 0x37, 0x2e, 0x31,
             0x2f, 0x93, 0x8c, 0x08, 0x00, 0x01, 0, 0 ];
-        let msg = deserialize_partial::<RawNetworkMessage>(&data, &mut consumed);
-
+        let msg = deserialize_partial::<RawNetworkMessage>(&data);
         assert!(msg.is_ok());
-        assert_eq!(consumed as usize, data.to_vec().len() - 2);
 
-        let msg = msg.unwrap();
+        let (msg, consumed) = msg.unwrap();
+        assert_eq!(consumed, data.to_vec().len() - 2);
         assert_eq!(msg.magic, 0xd9b4bef9);
         if let NetworkMessage::Version(version_msg) = msg.payload {
             assert_eq!(version_msg.version, 70015);
