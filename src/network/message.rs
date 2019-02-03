@@ -20,10 +20,7 @@
 //!
 
 use std::iter;
-use std::io;
 use std::io::Cursor;
-use std::io::Read;
-use std::sync::mpsc::Sender;
 
 use blockdata::block;
 use blockdata::transaction;
@@ -34,7 +31,6 @@ use network::message_filter;
 use consensus::encode::{Decodable, Encodable};
 use consensus::encode::CheckedData;
 use consensus::encode::{self, serialize, Encoder, Decoder};
-use util;
 
 /// Serializer for command string
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -66,34 +62,12 @@ impl<D: Decoder> Decodable<D> for CommandString {
 }
 
 #[derive(Debug)]
-/// Struct used to configure stream reader function
-pub struct StreamReaderConfig {
-    /// Number of attempts to read data from the stream if the reader returns 0 bytes
-    pub iterations: usize,
-    /// Size of allocated buffer for a single read opetaion
-    pub buffer_size: usize
-}
-
-/// Defining default values
-impl Default for StreamReaderConfig {
-    fn default() -> Self { Self { iterations: 16, buffer_size: 64 * 1024 } }
-}
-
-#[derive(Debug)]
 /// A Network message
 pub struct RawNetworkMessage {
     /// Magic bytes to identify the network these messages are meant for
     pub magic: u32,
     /// The actual message data
     pub payload: NetworkMessage
-}
-
-/// A response from the peer-connected socket
-pub enum SocketResponse {
-    /// A message was received
-    MessageReceived(NetworkMessage),
-    /// An error occurred and the socket needs to close
-    ConnectionFailed(util::Error, Sender<()>)
 }
 
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -179,37 +153,6 @@ impl RawNetworkMessage {
             NetworkMessage::Alert(_)    => "alert",
         }.to_owned()
     }
-
-    /// Reads stream from a TCP socket and parses first message from it, returing
-    /// the rest of the unparsed buffer for later usage.
-    pub fn from_stream(stream: &mut Read, remaining_part: &mut Vec<u8>,
-                       StreamReaderConfig { iterations, buffer_size }: StreamReaderConfig) -> Result<Self, encode::Error> {
-        println!("Called with {} iterations and {} ubffer size", iterations, buffer_size);
-        for _ in 0..iterations {
-            if remaining_part.len() > 0 {
-                match encode::deserialize_partial::<RawNetworkMessage>(&remaining_part) {
-                    // In this case we just have an incomplete data, so we need to read more
-                    Err(encode::Error::Io(ref err)) if err.kind() == io::ErrorKind::UnexpectedEof => (),
-                    // All other types of errors should be passed up to the caller
-                    Err(err) => return Err(err),
-                    // We have successfully read from the buffer
-                    Ok((message, index)) => {
-                        println!("Deserialized {} bytes", index);
-                        remaining_part.drain(..index);
-                        return Ok(message)
-                    },
-                }
-            }
-
-            let mut new_data = vec![0u8; buffer_size];
-            let count = stream.read(&mut new_data)?;
-            if count > 0 {
-                remaining_part.extend(new_data[0..count].iter());
-            }
-            println!("Read {} bytes, remaining part now is {} bytes length", count, remaining_part.len());
-        }
-        Err(encode::Error::ParseFailed("Zero-length input"))
-    }
 }
 
 impl<S: Encoder> Encodable<S> for RawNetworkMessage {
@@ -284,11 +227,8 @@ impl<D: Decoder> Decodable<D> for RawNetworkMessage {
 
 #[cfg(test)]
 mod test {
-    extern crate tempfile;
     use super::{RawNetworkMessage, NetworkMessage, CommandString};
     use consensus::encode::{deserialize, deserialize_partial, serialize};
-    use std::io::{Write, Seek, SeekFrom};
-    use std::fs::File;
 
     #[test]
     fn serialize_commandstring_test() {
@@ -421,83 +361,6 @@ mod test {
             assert_eq!(version_msg.user_agent, "/Satoshi:0.17.1/");
             assert_eq!(version_msg.start_height, 560275);
             assert_eq!(version_msg.relay, true);
-        } else {
-            panic!("Wrong message type");
-        }
-    }
-
-    #[test]
-    fn deserealize_partialmsg_from_stream_test() {
-        let mut tmpfile: File = tempfile::tempfile().unwrap();
-        tmpfile.write_all(&[
-            // version message
-            0xf9, 0xbe, 0xb4, 0xd9, 0x76, 0x65, 0x72, 0x73,
-            0x69, 0x6f, 0x6e, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x66, 0x00, 0x00, 0x00, 0xbe, 0x61, 0xb8, 0x27,
-            0x7f, 0x11, 0x01, 0x00, 0x0d, 0x04, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0xf0, 0x0f, 0x4d, 0x5c,
-        ]).unwrap();
-        tmpfile.flush().unwrap();
-        tmpfile.seek(SeekFrom::Start(0)).unwrap();
-
-        let mut buffer = vec![];
-        let msg = RawNetworkMessage::from_stream(&mut tmpfile, &mut buffer, Default::default());
-        assert!(buffer.len() > 0);
-        assert!(msg.is_err());
-    }
-
-    #[test]
-    fn deserealize_2msgs_from_stream_test() {
-        let mut tmpfile: File = tempfile::tempfile().unwrap();
-        tmpfile.write_all(&[
-            // version message
-            0xf9, 0xbe, 0xb4, 0xd9, 0x76, 0x65, 0x72, 0x73,
-            0x69, 0x6f, 0x6e, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x66, 0x00, 0x00, 0x00, 0xbe, 0x61, 0xb8, 0x27,
-            0x7f, 0x11, 0x01, 0x00, 0x0d, 0x04, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0xf0, 0x0f, 0x4d, 0x5c,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff,
-            0x5b, 0xf0, 0x8c, 0x80, 0xb4, 0xbd, 0x0d, 0x04,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0xfa, 0xa9, 0x95, 0x59, 0xcc, 0x68, 0xa1, 0xc1,
-            0x10, 0x2f, 0x53, 0x61, 0x74, 0x6f, 0x73, 0x68,
-            0x69, 0x3a, 0x30, 0x2e, 0x31, 0x37, 0x2e, 0x31,
-            0x2f, 0x93, 0x8c, 0x08, 0x00, 0x01,
-            // Ping(100) message
-            0xf9, 0xbe, 0xb4, 0xd9, 0x70, 0x69, 0x6e, 0x67,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x08, 0x00, 0x00, 0x00, 0x24, 0x67, 0xf1, 0x1d,
-            0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        ]).unwrap();
-        tmpfile.flush().unwrap();
-        tmpfile.seek(SeekFrom::Start(0)).unwrap();
-
-        let mut buffer = vec![];
-        let msg = RawNetworkMessage::from_stream(&mut tmpfile, &mut buffer, Default::default()).unwrap();
-        assert!(buffer.len() > 0);
-        assert_eq!(msg.magic, 0xd9b4bef9);
-        if let NetworkMessage::Version(version_msg) = msg.payload {
-            assert_eq!(version_msg.version, 70015);
-            assert_eq!(version_msg.services, 1037);
-            assert_eq!(version_msg.timestamp, 1548554224);
-            assert_eq!(version_msg.nonce, 13952548347456104954);
-            assert_eq!(version_msg.user_agent, "/Satoshi:0.17.1/");
-            assert_eq!(version_msg.start_height, 560275);
-            assert_eq!(version_msg.relay, true);
-        } else {
-            panic!("Wrong message type");
-        }
-
-        println!("{:?}", &buffer);
-        let msg = RawNetworkMessage::from_stream(&mut tmpfile, &mut buffer,Default::default()).unwrap();
-        assert_eq!(buffer.len(), 0);
-        assert_eq!(msg.magic, 0xd9b4bef9);
-        if let NetworkMessage::Ping(nonce) = msg.payload {
-            assert_eq!(nonce, 100);
         } else {
             panic!("Wrong message type");
         }
