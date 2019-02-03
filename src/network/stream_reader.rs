@@ -65,8 +65,8 @@ impl<'a> StreamReader<'a> {
         }
     }
 
-    /// Reads stream from a TCP socket and parses first message from it, returning
-    /// the rest of the unparsed buffer for later usage.
+    /// Reads stream and parses messages from its current input,
+    /// also taking into account previously unparsed partial message (if there was such).
     pub fn read_messages(&mut self) -> Result<Vec<RawNetworkMessage>, encode::Error> {
         let mut messages: Vec<RawNetworkMessage> = vec![];
         let mut data = vec![0u8; self.buffer_size];
@@ -104,8 +104,10 @@ impl<'a> StreamReader<'a> {
 mod test {
     extern crate tempfile;
 
-    use std::io::{Write, Seek, SeekFrom};
+    use std::thread;
+    use std::time::Duration;
     use std::fs::File;
+    use std::io::{Write, Seek, SeekFrom};
 
     use super::StreamReader;
     use network::message::NetworkMessage;
@@ -143,6 +145,7 @@ mod test {
     }
 
     fn write_file(tmpfile: &mut File, buf: &[u8]) {
+        tmpfile.seek(SeekFrom::End(0)).unwrap();
         tmpfile.write(&buf).unwrap();
         tmpfile.flush().unwrap();
         tmpfile.seek(SeekFrom::Start(0)).unwrap();
@@ -152,8 +155,11 @@ mod test {
     fn read_partialmsg_test() {
         let len = MSG_VERSION.len();
         let mut stream = init_stream(&MSG_VERSION[..len-10]);
-        let messages = StreamReader::new(&mut stream, None).read_messages().unwrap();
-        assert_eq!(messages.len(), 0);
+        thread::spawn(move || {
+            StreamReader::new(&mut stream, None).read_messages().unwrap();
+            panic!("I should never complete");
+        });
+        thread::sleep(Duration::from_secs(1));
     }
 
     #[test]
