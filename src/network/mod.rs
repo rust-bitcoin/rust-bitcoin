@@ -59,18 +59,18 @@ impl From<io::Error> for Error {
 }
 
 impl error::Error for Error {
-    fn cause(&self) -> Option<&error::Error> {
-        match *self {
-            Error::Io(ref e) => Some(e),
-            Error::SocketMutexPoisoned | Error::SocketNotConnectedToPeer => None,
-        }
-    }
-
     fn description(&self) -> &str {
         match *self {
             Error::Io(ref e) => e.description(),
             Error::SocketMutexPoisoned => "socket mutex was poisoned",
             Error::SocketNotConnectedToPeer => "not connected to peer",
+        }
+    }
+
+    fn cause(&self) -> Option<&error::Error> {
+        match *self {
+            Error::Io(ref e) => Some(e),
+            Error::SocketMutexPoisoned | Error::SocketNotConnectedToPeer => None,
         }
     }
 }
