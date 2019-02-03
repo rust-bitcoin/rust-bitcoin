@@ -185,10 +185,7 @@ impl RawNetworkMessage {
     pub fn from_stream(stream: &mut Read, remaining_part: &mut Vec<u8>,
                        StreamReaderConfig { iterations, buffer_size }: StreamReaderConfig) -> Result<Self, encode::Error> {
         println!("Called with {} iterations and {} ubffer size", iterations, buffer_size);
-        let mut iterations = iterations;
-        while iterations > 0 {
-            iterations -= 1;
-
+        for _ in 0..iterations {
             if remaining_part.len() > 0 {
                 match encode::deserialize_partial::<RawNetworkMessage>(&remaining_part) {
                     // In this case we just have an incomplete data, so we need to read more
