@@ -119,7 +119,7 @@ impl Address {
     }
 
     /// Creates a pay to script hash P2SH address from a script
-    /// This address type was introduced with BIP16 and is the popular ty implement multi-sig these days.
+    /// This address type was introduced with BIP16 and is the popular type to implement multi-sig these days.
     #[inline]
     pub fn p2sh(script: &script::Script, network: Network) -> Address {
         Address {

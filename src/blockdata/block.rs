@@ -15,7 +15,7 @@
 //! Bitcoin Block
 //!
 //! A block is a bundle of transactions with a proof-of-work attached,
-//! which attaches to an earlier block to form the blockchain. This
+//! which commits to an earlier block to form the blockchain. This
 //! module describes structures and functions needed to describe
 //! these blocks and the blockchain.
 //!
