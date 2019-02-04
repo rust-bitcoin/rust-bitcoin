@@ -268,8 +268,8 @@ mod test {
         }
     }
 
-    fn serve_tcp(pieces: Vec<Vec<u8>>) {
-        let listener = TcpListener::bind("127.0.0.1:34254").unwrap();
+    fn serve_tcp(port: u16, pieces: Vec<Vec<u8>>) {
+        let listener = TcpListener::bind(format!("127.0.0.1:{}", port)).unwrap();
         for ostream in listener.incoming() {
             let mut ostream = ostream.unwrap();
 
@@ -286,12 +286,13 @@ mod test {
 
     #[test]
     fn read_multipartmsg_test() {
-        let handle = thread::spawn(|| {
-            serve_tcp(vec![MSG_VERSION[..24].to_vec(), MSG_VERSION[24..].to_vec()]);
+        let port: u16 = 34254;
+        let handle = thread::spawn(move || {
+            serve_tcp(port, vec![MSG_VERSION[..24].to_vec(), MSG_VERSION[24..].to_vec()]);
         });
 
         thread::sleep(Duration::from_secs(1));
-        let mut istream = TcpStream::connect("127.0.0.1:34254").unwrap();
+        let mut istream = TcpStream::connect(format!("127.0.0.1:{}", port)).unwrap();
         let messages = StreamReader::new(&mut istream, None).read_messages().unwrap();
         assert_eq!(messages.len(), 1);
 
@@ -303,8 +304,9 @@ mod test {
 
     #[test]
     fn read_sequencemsg_test() {
-        let handle = thread::spawn(|| {
-            serve_tcp(vec![
+        let port: u16 = 34255;
+        let handle = thread::spawn(move || {
+            serve_tcp(port, vec![
                 // Real-world Bitcoin core communication case for /Satoshi:0.17.1/
                 MSG_VERSION[..23].to_vec(), MSG_VERSION[23..].to_vec(),
                 MSG_VERACK.to_vec(),
@@ -313,7 +315,7 @@ mod test {
         });
 
         thread::sleep(Duration::from_secs(1));
-        let mut istream = TcpStream::connect("127.0.0.1:34254").unwrap();
+        let mut istream = TcpStream::connect(format!("127.0.0.1:{}", port)).unwrap();
 
         let messages = StreamReader::new(&mut istream, None).read_messages().unwrap();
         assert_eq!(messages.len(), 1);
