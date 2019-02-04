@@ -105,8 +105,8 @@ mod test {
     extern crate tempfile;
 
     use std::thread;
-    use std::time::Duration;
     use std::fs::File;
+    use std::time::Duration;
     use std::io::{Write, Seek, SeekFrom};
     use std::net::{TcpListener, TcpStream, Shutdown};
 
@@ -130,6 +130,12 @@ mod test {
         0x10, 0x2f, 0x53, 0x61, 0x74, 0x6f, 0x73, 0x68,
         0x69, 0x3a, 0x30, 0x2e, 0x31, 0x37, 0x2e, 0x31,
         0x2f, 0x93, 0x8c, 0x08, 0x00, 0x01
+    ];
+
+    const MSG_VERACK: [u8; 24] = [
+        0xf9, 0xbe, 0xb4, 0xd9, 0x76, 0x65, 0x72, 0x61,
+        0x63, 0x6b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x5d, 0xf6, 0xe0, 0xe2
     ];
 
     const MSG_PING: [u8; 32] = [
@@ -258,26 +264,32 @@ mod test {
         if let NetworkMessage::Ping(nonce) = msg.payload {
             assert_eq!(nonce, 100);
         } else {
-            panic!("Wrong message type");
+            panic!("Wrong message type, expected PingMessage");
+        }
+    }
+
+    fn serve_tcp(pieces: Vec<Vec<u8>>) {
+        let listener = TcpListener::bind("127.0.0.1:34254").unwrap();
+        for ostream in listener.incoming() {
+            let mut ostream = ostream.unwrap();
+
+            for piece in pieces {
+                ostream.write(&piece[..]).unwrap();
+                ostream.flush().unwrap();
+                thread::sleep(Duration::from_secs(1));
+            }
+
+            ostream.shutdown(Shutdown::Both).unwrap();
+            break;
         }
     }
 
     #[test]
     fn read_multipartmsg_test() {
         let handle = thread::spawn(|| {
-            let listener = TcpListener::bind("127.0.0.1:34254").unwrap();
-            for ostream in listener.incoming() {
-                let mut ostream = ostream.unwrap();
-                ostream.write(&MSG_VERSION[..24]).unwrap();
-                ostream.flush().unwrap();
-                thread::sleep(Duration::from_secs(2));
-                ostream.write(&MSG_VERSION[24..]).unwrap();
-                ostream.flush().unwrap();
-                thread::sleep(Duration::from_secs(1));
-                ostream.shutdown(Shutdown::Both).unwrap();
-                break;
-            }
+            serve_tcp(vec![MSG_VERSION[..24].to_vec(), MSG_VERSION[24..].to_vec()]);
         });
+
         thread::sleep(Duration::from_secs(1));
         let mut istream = TcpStream::connect("127.0.0.1:34254").unwrap();
         let messages = StreamReader::new(&mut istream, None).read_messages().unwrap();
@@ -285,6 +297,40 @@ mod test {
 
         let msg = messages.first().unwrap();
         check_version_msg(msg);
+
+        handle.join().unwrap();
+    }
+
+    #[test]
+    fn read_sequencemsg_test() {
+        let handle = thread::spawn(|| {
+            serve_tcp(vec![
+                // Real-world Bitcoin core communication case for /Satoshi:0.17.1/
+                MSG_VERSION[..23].to_vec(), MSG_VERSION[23..].to_vec(),
+                MSG_VERACK.to_vec(),
+                MSG_ALERT[..24].to_vec(), MSG_ALERT[24..].to_vec()
+            ]);
+        });
+
+        thread::sleep(Duration::from_secs(1));
+        let mut istream = TcpStream::connect("127.0.0.1:34254").unwrap();
+
+        let messages = StreamReader::new(&mut istream, None).read_messages().unwrap();
+        assert_eq!(messages.len(), 1);
+        let msg = messages.first().unwrap();
+        check_version_msg(msg);
+
+        let messages = StreamReader::new(&mut istream, None).read_messages().unwrap();
+        assert_eq!(messages.len(), 1);
+        let msg = messages.first().unwrap();
+        assert_eq!(msg.magic, 0xd9b4bef9);
+        assert_eq!(msg.payload, NetworkMessage::Verack, "Wrong message type, expected PingMessage");
+
+        let messages = StreamReader::new(&mut istream, None).read_messages().unwrap();
+        assert_eq!(messages.len(), 1);
+        let msg = messages.first().unwrap();
+        check_alert_msg(msg);
+
         handle.join().unwrap();
     }
 }
