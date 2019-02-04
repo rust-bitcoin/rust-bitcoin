@@ -108,9 +108,10 @@ mod test {
     use std::time::Duration;
     use std::fs::File;
     use std::io::{Write, Seek, SeekFrom};
+    use std::net::{TcpListener, TcpStream, Shutdown};
 
     use super::StreamReader;
-    use network::message::NetworkMessage;
+    use network::message::{NetworkMessage, RawNetworkMessage};
 
     const MSG_VERSION: [u8; 126] = [
         0xf9, 0xbe, 0xb4, 0xd9, 0x76, 0x65, 0x72, 0x73,
@@ -138,6 +139,88 @@ mod test {
         0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     ];
 
+    const MSG_ALERT: [u8; 192] = [
+        0xf9, 0xbe, 0xb4, 0xd9, 0x61, 0x6c, 0x65, 0x72,
+        0x74, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0xa8, 0x00, 0x00, 0x00, 0x1b, 0xf9, 0xaa, 0xea,
+        0x60, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff,
+        0x7f, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff,
+        0x7f, 0xfe, 0xff, 0xff, 0x7f, 0x01, 0xff, 0xff,
+        0xff, 0x7f, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff,
+        0xff, 0x7f, 0x00, 0xff, 0xff, 0xff, 0x7f, 0x00,
+        0x2f, 0x55, 0x52, 0x47, 0x45, 0x4e, 0x54, 0x3a,
+        0x20, 0x41, 0x6c, 0x65, 0x72, 0x74, 0x20, 0x6b,
+        0x65, 0x79, 0x20, 0x63, 0x6f, 0x6d, 0x70, 0x72,
+        0x6f, 0x6d, 0x69, 0x73, 0x65, 0x64, 0x2c, 0x20,
+        0x75, 0x70, 0x67, 0x72, 0x61, 0x64, 0x65, 0x20,
+        0x72, 0x65, 0x71, 0x75, 0x69, 0x72, 0x65, 0x64,
+        0x00, 0x46, 0x30, 0x44, 0x02, 0x20, 0x65, 0x3f,
+        0xeb, 0xd6, 0x41, 0x0f, 0x47, 0x0f, 0x6b, 0xae,
+        0x11, 0xca, 0xd1, 0x9c, 0x48, 0x41, 0x3b, 0xec,
+        0xb1, 0xac, 0x2c, 0x17, 0xf9, 0x08, 0xfd, 0x0f,
+        0xd5, 0x3b, 0xdc, 0x3a, 0xbd, 0x52, 0x02, 0x20,
+        0x6d, 0x0e, 0x9c, 0x96, 0xfe, 0x88, 0xd4, 0xa0,
+        0xf0, 0x1e, 0xd9, 0xde, 0xda, 0xe2, 0xb6, 0xf9,
+        0xe0, 0x0d, 0xa9, 0x4c, 0xad, 0x0f, 0xec, 0xaa,
+        0xe6, 0x6e, 0xcf, 0x68, 0x9b, 0xf7, 0x1b, 0x50
+    ];
+
+    fn check_version_msg(msg: &RawNetworkMessage) {
+        assert_eq!(msg.magic, 0xd9b4bef9);
+        if let NetworkMessage::Version(ref version_msg) = msg.payload {
+            assert_eq!(version_msg.version, 70015);
+            assert_eq!(version_msg.services, 1037);
+            assert_eq!(version_msg.timestamp, 1548554224);
+            assert_eq!(version_msg.nonce, 13952548347456104954);
+            assert_eq!(version_msg.user_agent, "/Satoshi:0.17.1/");
+            assert_eq!(version_msg.start_height, 560275);
+            assert_eq!(version_msg.relay, true);
+        } else {
+            panic!("Wrong message type: expected VersionMessage");
+        }
+    }
+
+    fn check_alert_msg(msg: &RawNetworkMessage) {
+        assert_eq!(msg.magic, 0xd9b4bef9);
+        if let NetworkMessage::Alert(ref alert) = msg.payload {
+            assert_eq!(alert.clone(), [
+                0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff,
+                0x7f, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff,
+                0x7f, 0xfe, 0xff, 0xff, 0x7f, 0x01, 0xff, 0xff,
+                0xff, 0x7f, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff,
+                0xff, 0x7f, 0x00, 0xff, 0xff, 0xff, 0x7f, 0x00,
+                0x2f, 0x55, 0x52, 0x47, 0x45, 0x4e, 0x54, 0x3a,
+                0x20, 0x41, 0x6c, 0x65, 0x72, 0x74, 0x20, 0x6b,
+                0x65, 0x79, 0x20, 0x63, 0x6f, 0x6d, 0x70, 0x72,
+                0x6f, 0x6d, 0x69, 0x73, 0x65, 0x64, 0x2c, 0x20,
+                0x75, 0x70, 0x67, 0x72, 0x61, 0x64, 0x65, 0x20,
+                0x72, 0x65, 0x71, 0x75, 0x69, 0x72, 0x65, 0x64,
+                0x00,
+            ].to_vec());
+        } else {
+            panic!("Wrong message type: expected AlertMessage");
+        }
+    }
+
+    #[test]
+    fn parse_multipartmsg_test() {
+        let mut tmpfile: File = tempfile::tempfile().unwrap();
+        let mut reader = StreamReader::new(&mut tmpfile, None);
+        reader.unparsed = MSG_ALERT[..24].to_vec();
+        let messages = reader.parse().unwrap();
+        assert_eq!(messages.len(), 0);
+        assert_eq!(reader.unparsed.len(), 24);
+
+        reader.unparsed = MSG_ALERT.to_vec();
+        let messages = reader.parse().unwrap();
+        assert_eq!(messages.len(), 1);
+        assert_eq!(reader.unparsed.len(), 0);
+
+        check_alert_msg(messages.first().unwrap());
+    }
+
     fn init_stream(buf: &[u8]) -> File {
         let mut tmpfile: File = tempfile::tempfile().unwrap();
         write_file(&mut tmpfile, &buf);
@@ -152,21 +235,12 @@ mod test {
     }
 
     #[test]
-    fn read_partialmsg_test() {
-        let len = MSG_VERSION.len();
-        let mut stream = init_stream(&MSG_VERSION[..len-10]);
-        thread::spawn(move || {
-            StreamReader::new(&mut stream, None).read_messages().unwrap();
-            panic!("I should never complete");
-        });
-        thread::sleep(Duration::from_secs(1));
-    }
-
-    #[test]
     fn read_singlemsg_test() {
         let mut stream = init_stream(&MSG_VERSION);
         let messages = StreamReader::new(&mut stream, None).read_messages().unwrap();
         assert_eq!(messages.len(), 1);
+
+        check_version_msg(messages.first().unwrap());
     }
 
     #[test]
@@ -177,19 +251,7 @@ mod test {
         let messages = StreamReader::new(&mut stream, None).read_messages().unwrap();
         assert_eq!(messages.len(), 2);
 
-        let msg = messages.first().unwrap();
-        assert_eq!(msg.magic, 0xd9b4bef9);
-        if let NetworkMessage::Version(ref version_msg) = msg.payload {
-            assert_eq!(version_msg.version, 70015);
-            assert_eq!(version_msg.services, 1037);
-            assert_eq!(version_msg.timestamp, 1548554224);
-            assert_eq!(version_msg.nonce, 13952548347456104954);
-            assert_eq!(version_msg.user_agent, "/Satoshi:0.17.1/");
-            assert_eq!(version_msg.start_height, 560275);
-            assert_eq!(version_msg.relay, true);
-        } else {
-            panic!("Wrong message type");
-        }
+        check_version_msg(messages.first().unwrap());
 
         let msg = messages.last().unwrap();
         assert_eq!(msg.magic, 0xd9b4bef9);
@@ -198,5 +260,31 @@ mod test {
         } else {
             panic!("Wrong message type");
         }
+    }
+
+    #[test]
+    fn read_multipartmsg_test() {
+        let handle = thread::spawn(|| {
+            let listener = TcpListener::bind("127.0.0.1:34254").unwrap();
+            for ostream in listener.incoming() {
+                let mut ostream = ostream.unwrap();
+                ostream.write(&MSG_VERSION[..24]).unwrap();
+                ostream.flush().unwrap();
+                thread::sleep(Duration::from_secs(2));
+                ostream.write(&MSG_VERSION[24..]).unwrap();
+                ostream.flush().unwrap();
+                thread::sleep(Duration::from_secs(1));
+                ostream.shutdown(Shutdown::Both).unwrap();
+                break;
+            }
+        });
+        thread::sleep(Duration::from_secs(1));
+        let mut istream = TcpStream::connect("127.0.0.1:34254").unwrap();
+        let messages = StreamReader::new(&mut istream, None).read_messages().unwrap();
+        assert_eq!(messages.len(), 1);
+
+        let msg = messages.first().unwrap();
+        check_version_msg(msg);
+        handle.join().unwrap();
     }
 }
