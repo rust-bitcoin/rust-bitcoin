@@ -67,19 +67,40 @@ impl<'a> StreamReader<'a> {
 
     /// Reads stream and parses messages from its current input,
     /// also taking into account previously unparsed partial message (if there was such).
+    ///
+    /// ## Note:
+    /// The reason why the function returns an array of messages instead of a single message
+    /// is that Bitcoin protocol messages are distributed across TCP packets unevenly:
+    /// one TCP packet can contain several messages (while other messages can be split into
+    /// several TCP packets). Thus, if we will return just a single message per call,
+    /// we will be locking the main process without returning all already delivered packages.
     pub fn read_messages(&mut self) -> Result<Vec<RawNetworkMessage>, encode::Error> {
         let mut messages: Vec<RawNetworkMessage> = vec![];
         let mut data = vec![0u8; self.buffer_size];
+
+        // 4. Reiterating only if we were not able to parse even a single message, so we need
+        //    to listen for more data from the stream (initially there is always zero messages)
         while messages.len() == 0 {
+            // 1. First, we are waiting for a new network packet
+            //    (even if we have some remaining parts in the self.unparsed buffer from last reads,
+            //    we can't assemble a whole message from it, so we need to get some new data)
             let count = self.stream.read(&mut data)?;
             if count > 0 {
                 self.unparsed.extend(data[0..count].iter());
             }
+            // 2. Then we append it to the end of self.unparsed and parsing all the messages
+            //    (there can be few of them in a single network packet) -
+            //    this functionality is brought into a separate private fn `parse`
             messages.append(&mut self.parse()?);
         }
+        // 3. We return all the messages we were able to assemble and do not wait for new packages
+        //    from the network: the client needs to parse already received messages
+        //    and when he will need new once he will simply call read_messages once again.
         return Ok(messages)
     }
 
+    // Performs actual parsing of the block into separate messages (can be several within a
+    // single block)
     fn parse(&mut self) -> Result<Vec<RawNetworkMessage>, encode::Error> {
         let mut messages: Vec<RawNetworkMessage> = vec![];
         while self.unparsed.len() > 0 {
