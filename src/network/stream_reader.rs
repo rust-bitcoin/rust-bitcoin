@@ -29,20 +29,12 @@ use util;
 use network::message::{NetworkMessage, RawNetworkMessage};
 use consensus::encode;
 
-/// A response from the peer-connected socket
-pub enum SocketResponse {
-    /// A message was received
-    MessageReceived(NetworkMessage),
-    /// An error occurred and the socket needs to close
-    ConnectionFailed(util::Error, Sender<()>)
-}
-
 /// Struct used to configure stream reader function
 pub struct StreamReader<'a> {
-    /// Size of allocated buffer for a single read opetaion
-    pub buffer_size: usize,
     /// Stream to read from
     pub stream: &'a mut Read,
+    /// I/O buffer
+    data: Vec<u8>,
     /// Buffer containing unparsed message part
     unparsed: Vec<u8>
 }
@@ -50,7 +42,7 @@ pub struct StreamReader<'a> {
 impl<'a> fmt::Debug for StreamReader<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "StreamReader with buffer_size={} and unparsed content {:?}",
-               self.buffer_size, self.unparsed)
+               self.data.capacity(), self.unparsed)
     }
 }
 
@@ -60,64 +52,35 @@ impl<'a> StreamReader<'a> {
     pub fn new(stream: &mut Read, buffer_size: Option<usize>) -> StreamReader {
         StreamReader {
             stream,
-            buffer_size: buffer_size.unwrap_or(64 * 1024),
+            data: vec![0u8; buffer_size.unwrap_or(64 * 1024)],
             unparsed: vec![]
         }
     }
 
-    /// Reads stream and parses messages from its current input,
+    /// Reads stream and parses next message from its current input,
     /// also taking into account previously unparsed partial message (if there was such).
     ///
-    /// ## Note:
-    /// The reason why the function returns an array of messages instead of a single message
-    /// is that Bitcoin protocol messages are distributed across TCP packets unevenly:
-    /// one TCP packet can contain several messages (while other messages can be split into
-    /// several TCP packets). Thus, if we will return just a single message per call,
-    /// we will be locking the main process without returning all already delivered packages.
-    pub fn read_messages(&mut self) -> Result<Vec<RawNetworkMessage>, encode::Error> {
-        let mut messages: Vec<RawNetworkMessage> = vec![];
-        let mut data = vec![0u8; self.buffer_size];
-
-        // 4. Reiterating only if we were not able to parse even a single message, so we need
-        //    to listen for more data from the stream (initially there is always zero messages)
-        while messages.len() == 0 {
-            // 1. First, we are waiting for a new network packet
-            //    (even if we have some remaining parts in the self.unparsed buffer from last reads,
-            //    we can't assemble a whole message from it, so we need to get some new data)
-            let count = self.stream.read(&mut data)?;
-            if count > 0 {
-                self.unparsed.extend(data[0..count].iter());
-            }
-            // 2. Then we append it to the end of self.unparsed and parsing all the messages
-            //    (there can be few of them in a single network packet) -
-            //    this functionality is brought into a separate private fn `parse`
-            messages.append(&mut self.parse()?);
-        }
-        // 3. We return all the messages we were able to assemble and do not wait for new packages
-        //    from the network: the client needs to parse already received messages
-        //    and when he will need new once he will simply call read_messages once again.
-        return Ok(messages)
-    }
-
-    // Performs actual parsing of the block into separate messages (can be several within a
-    // single block)
-    fn parse(&mut self) -> Result<Vec<RawNetworkMessage>, encode::Error> {
-        let mut messages: Vec<RawNetworkMessage> = vec![];
-        while self.unparsed.len() > 0 {
+    pub fn next_message(&mut self) -> Result<RawNetworkMessage, encode::Error> {
+        loop {
             match encode::deserialize_partial::<RawNetworkMessage>(&self.unparsed) {
                 // In this case we just have an incomplete data, so we need to read more
-                Err(encode::Error::Io(ref err)) if err.kind() == io::ErrorKind::UnexpectedEof =>
-                    return Ok(messages),
-                // All other types of errors should be passed up to the caller
+                Err(encode::Error::Io(ref err)) if err.kind () == io::ErrorKind::UnexpectedEof => {
+                    let count = self.stream.read(&mut self.data)?;
+                    if count > 0 {
+                        self.unparsed.extend(self.data[0..count].iter());
+                    }
+                    else {
+                        return Err(encode::Error::Io(io::Error::from(io::ErrorKind::UnexpectedEof)));
+                    }
+                },
                 Err(err) => return Err(err),
                 // We have successfully read from the buffer
                 Ok((message, index)) => {
-                    messages.push(message);
                     self.unparsed.drain(..index);
+                    return Ok(message)
                 },
             }
         }
-        Ok(messages)
     }
 }
 
@@ -236,16 +199,14 @@ mod test {
         let mut tmpfile: File = tempfile::tempfile().unwrap();
         let mut reader = StreamReader::new(&mut tmpfile, None);
         reader.unparsed = MSG_ALERT[..24].to_vec();
-        let messages = reader.parse().unwrap();
-        assert_eq!(messages.len(), 0);
+        assert!(reader.next_message().is_err());
         assert_eq!(reader.unparsed.len(), 24);
 
         reader.unparsed = MSG_ALERT.to_vec();
-        let messages = reader.parse().unwrap();
-        assert_eq!(messages.len(), 1);
+        let message = reader.next_message().unwrap();
         assert_eq!(reader.unparsed.len(), 0);
 
-        check_alert_msg(messages.first().unwrap());
+        check_alert_msg(&message);
     }
 
     fn init_stream(buf: &[u8]) -> File {
@@ -264,10 +225,9 @@ mod test {
     #[test]
     fn read_singlemsg_test() {
         let mut stream = init_stream(&MSG_VERSION);
-        let messages = StreamReader::new(&mut stream, None).read_messages().unwrap();
-        assert_eq!(messages.len(), 1);
+        let message = StreamReader::new(&mut stream, None).next_message().unwrap();
 
-        check_version_msg(messages.first().unwrap());
+        check_version_msg(&message);
     }
 
     #[test]
@@ -275,12 +235,11 @@ mod test {
         let mut stream = init_stream(&MSG_VERSION);
         write_file(&mut stream, &MSG_PING);
 
-        let messages = StreamReader::new(&mut stream, None).read_messages().unwrap();
-        assert_eq!(messages.len(), 2);
+        let mut reader = StreamReader::new(&mut stream, None);
+        let message = reader.next_message().unwrap();
+        check_version_msg(&message);
 
-        check_version_msg(messages.first().unwrap());
-
-        let msg = messages.last().unwrap();
+        let msg = reader.next_message().unwrap();
         assert_eq!(msg.magic, 0xd9b4bef9);
         if let NetworkMessage::Ping(nonce) = msg.payload {
             assert_eq!(nonce, 100);
@@ -314,11 +273,8 @@ mod test {
 
         thread::sleep(Duration::from_secs(1));
         let mut istream = TcpStream::connect(format!("127.0.0.1:{}", port)).unwrap();
-        let messages = StreamReader::new(&mut istream, None).read_messages().unwrap();
-        assert_eq!(messages.len(), 1);
-
-        let msg = messages.first().unwrap();
-        check_version_msg(msg);
+        let message = StreamReader::new(&mut istream, None).next_message().unwrap();
+        check_version_msg(&message);
 
         handle.join().unwrap();
     }
@@ -338,21 +294,16 @@ mod test {
         thread::sleep(Duration::from_secs(1));
         let mut istream = TcpStream::connect(format!("127.0.0.1:{}", port)).unwrap();
 
-        let messages = StreamReader::new(&mut istream, None).read_messages().unwrap();
-        assert_eq!(messages.len(), 1);
-        let msg = messages.first().unwrap();
-        check_version_msg(msg);
+        let mut reader = StreamReader::new(&mut istream, None);
+        let message = reader.next_message().unwrap();
+        check_version_msg(&message);
 
-        let messages = StreamReader::new(&mut istream, None).read_messages().unwrap();
-        assert_eq!(messages.len(), 1);
-        let msg = messages.first().unwrap();
+        let msg = reader.next_message().unwrap();
         assert_eq!(msg.magic, 0xd9b4bef9);
         assert_eq!(msg.payload, NetworkMessage::Verack, "Wrong message type, expected PingMessage");
 
-        let messages = StreamReader::new(&mut istream, None).read_messages().unwrap();
-        assert_eq!(messages.len(), 1);
-        let msg = messages.first().unwrap();
-        check_alert_msg(msg);
+        let msg = reader.next_message().unwrap();
+        check_alert_msg(&msg);
 
         handle.join().unwrap();
     }
