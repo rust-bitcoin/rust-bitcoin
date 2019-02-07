@@ -23,27 +23,17 @@
 //! extern crate bitcoin;
 //! 
 //! use bitcoin::network::constants::Network;
-//! use bitcoin::util::address::Payload;
 //! use bitcoin::util::address::Address;
 //! use secp256k1::Secp256k1;
-//! use secp256k1::key::PublicKey;
 //! use rand::thread_rng;
 //! 
 //! fn main() {
-//!     let network = Network::Bitcoin;
-//! 
 //!     // Generate random key pair
 //!     let s = Secp256k1::new();
-//!     let (secret_key, public_key) = s.generate_keypair(&mut thread_rng());
+//!     let (_, public_key) = s.generate_keypair(&mut thread_rng());
 //! 
-//!     // Generate pay-to-pubkey address
-//!     let address = Address::p2pk(&public_key, network);
-//! 
-//!     // Check address payload is public key given
-//!     assert_eq!(address.payload, Payload::Pubkey(public_key));
-//! 
-//!     // Check address can be unlocked by secret_key
-//!     assert_eq!(address.payload, Payload::Pubkey(PublicKey::from_secret_key(&s, &secret_key)));
+//!     // Generate pay-to-pubkey-hash address
+//!     let address = Address::p2pkh(&public_key, Network::Bitcoin);
 //! }
 //! ```
 
@@ -66,8 +56,6 @@ use util::base58;
 /// The method used to produce an address
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Payload {
-    /// pay-to-pubkey
-    Pubkey(PublicKey),
     /// pay-to-pkhash address
     PubkeyHash(hash160::Hash),
     /// P2SH address
@@ -104,17 +92,6 @@ impl Address {
         Address {
             network: network,
             payload: Payload::PubkeyHash(hash160::Hash::hash(&pk.serialize_uncompressed()[..]))
-        }
-    }
-
-    /// Creates a pay to public key address from a public key
-    /// This address type was used in the early history of Bitcoin.
-    /// Satoshi's coins are still on addresses of this type.
-    #[inline]
-    pub fn p2pk(pk: &PublicKey, network: Network) -> Address {
-        Address {
-            network: network,
-            payload: Payload::Pubkey(*pk)
         }
     }
 
@@ -203,11 +180,6 @@ impl Address {
     /// Generates a script pubkey spending to this address
     pub fn script_pubkey(&self) -> script::Script {
         match self.payload {
-            Payload::Pubkey(ref pk) => {
-                script::Builder::new()
-                    .push_slice(&pk.serialize_uncompressed()[..])
-                    .push_opcode(opcodes::all::OP_CHECKSIG)
-            },
             Payload::PubkeyHash(ref hash) => {
                 script::Builder::new()
                     .push_opcode(opcodes::all::OP_DUP)
@@ -234,17 +206,6 @@ impl Address {
 impl Display for Address {
     fn fmt(&self, fmt: &mut Formatter) -> fmt::Result {
         match self.payload {
-            // note: serialization for pay-to-pk is defined, but is irreversible
-            Payload::Pubkey(ref pk) => {
-                let hash = &hash160::Hash::hash(&pk.serialize_uncompressed()[..]);
-                let mut prefixed = [0; 21];
-                prefixed[0] = match self.network {
-                    Network::Bitcoin => 0,
-                    Network::Testnet | Network::Regtest => 111,
-                };
-                prefixed[1..].copy_from_slice(&hash[..]);
-                base58::check_encode_slice_to_fmt(fmt, &prefixed[..])
-            },
             Payload::PubkeyHash(ref hash) => {
                 let mut prefixed = [0; 21];
                 prefixed[0] = match self.network {
@@ -433,14 +394,6 @@ mod tests {
         let key = hex_key!(&"03df154ebfcf29d29cc10d5c2565018bce2d9edbab267c31d2caf44a63056cf99f");
         let addr = Address::p2pkh(&key, Testnet);
         assert_eq!(&addr.to_string(), "mqkhEMH6NCeYjFybv7pvFC22MFeaNT9AQC");
-    }
-
-    #[test]
-    fn test_p2pk () {
-        // one of Satoshi's coins, from Bitcoin transaction 9b0fc92260312ce44e74ef369f5c66bbb85848f2eddd5a7a1cde251e54ccfdd5
-        let key = hex_key!("047211a824f55b505228e4c3d5194c1fcfaa15a456abdf37f9b9d97a4040afc073dee6c89064984f03385237d92167c13e236446b417ab79a0fcae412ae3316b77");
-        let addr = Address::p2pk(&key, Bitcoin);
-        assert_eq!(&addr.to_string(), "1HLoD9E4SDFFPDiYfNYnkBLQ85Y51J3Zb1");
     }
 
     #[test]
