@@ -44,7 +44,8 @@ docs would be extremely appreciated.
 
 # Contributing
 Contributions are generally welcome. If you intend to make larger changes please discuss them in an issue before PRing 
-them to avoid duplicate work and architectural mismatches.
+them to avoid duplicate work and architectural mismatches. If you have any questions or ideas you want to discuss
+please join us in [#rust-bitcoin](http://webchat.freenode.net/?channels=%23rust-bitcoin) on freenode.
 
 ## Installing Rust
 Rust can be installed using your package manager of choice or [rustup.rs](https://rustup.rs). The former way is
