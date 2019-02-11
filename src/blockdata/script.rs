@@ -43,72 +43,8 @@ pub struct Script(Box<[u8]>);
 
 impl fmt::Debug for Script {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut index = 0;
-
         f.write_str("Script(")?;
-        while index < self.0.len() {
-            let opcode = opcodes::All::from(self.0[index]);
-            index += 1;
-
-            let data_len = if let opcodes::Class::PushBytes(n) = opcode.classify() {
-                n as usize
-            } else {
-                match opcode {
-                    opcodes::all::OP_PUSHDATA1 => {
-                        if self.0.len() < index + 1 {
-                            f.write_str("<unexpected end>")?;
-                            break;
-                        }
-                        match read_uint(&self.0[index..], 1) {
-                            Ok(n) => { index += 1; n as usize }
-                            Err(_) => { f.write_str("<bad length>")?; break; }
-                        }
-                    }
-                    opcodes::all::OP_PUSHDATA2 => {
-                        if self.0.len() < index + 2 {
-                            f.write_str("<unexpected end>")?;
-                            break;
-                        }
-                        match read_uint(&self.0[index..], 2) {
-                            Ok(n) => { index += 2; n as usize }
-                            Err(_) => { f.write_str("<bad length>")?; break; }
-                        }
-                    }
-                    opcodes::all::OP_PUSHDATA4 => {
-                        if self.0.len() < index + 4 {
-                            f.write_str("<unexpected end>")?;
-                            break;
-                        }
-                        match read_uint(&self.0[index..], 4) {
-                            Ok(n) => { index += 4; n as usize }
-                            Err(_) => { f.write_str("<bad length>")?; break; }
-                        }
-                    }
-                    _ => 0
-                }
-            };
-
-            if index > 1 { f.write_str(" ")?; }
-            // Write the opcode
-            if opcode == opcodes::all::OP_PUSHBYTES_0 {
-                f.write_str("OP_0")?;
-            } else {
-                write!(f, "{:?}", opcode)?;
-            }
-            // Write any pushdata
-            if data_len > 0 {
-                f.write_str(" ")?;
-                if index + data_len <= self.0.len() {
-                    for ch in &self.0[index..index + data_len] {
-                            write!(f, "{:02x}", ch)?;
-                    }
-                    index += data_len;
-                } else {
-                    f.write_str("<push past end>")?;
-                    break;
-                }
-            }
-        }
+        self.fmt_asm(f)?;
         f.write_str(")")
     }
 }
@@ -391,6 +327,82 @@ impl Script {
     ///  * spending - the transaction that attempts to spend the output holding this script
     pub fn verify (&self, index: usize, amount: u64, spending: &[u8]) -> Result<(), Error> {
         Ok(bitcoinconsensus::verify (&self.0[..], amount, spending, index)?)
+    }
+
+    /// Write the assembly decoding of the script to the formatter.
+    pub fn fmt_asm(&self, f: &mut fmt::Write) -> fmt::Result {
+        let mut index = 0;
+        while index < self.0.len() {
+            let opcode = opcodes::All::from(self.0[index]);
+            index += 1;
+
+            let data_len = if let opcodes::Class::PushBytes(n) = opcode.classify() {
+                n as usize
+            } else {
+                match opcode {
+                    opcodes::all::OP_PUSHDATA1 => {
+                        if self.0.len() < index + 1 {
+                            f.write_str("<unexpected end>")?;
+                            break;
+                        }
+                        match read_uint(&self.0[index..], 1) {
+                            Ok(n) => { index += 1; n as usize }
+                            Err(_) => { f.write_str("<bad length>")?; break; }
+                        }
+                    }
+                    opcodes::all::OP_PUSHDATA2 => {
+                        if self.0.len() < index + 2 {
+                            f.write_str("<unexpected end>")?;
+                            break;
+                        }
+                        match read_uint(&self.0[index..], 2) {
+                            Ok(n) => { index += 2; n as usize }
+                            Err(_) => { f.write_str("<bad length>")?; break; }
+                        }
+                    }
+                    opcodes::all::OP_PUSHDATA4 => {
+                        if self.0.len() < index + 4 {
+                            f.write_str("<unexpected end>")?;
+                            break;
+                        }
+                        match read_uint(&self.0[index..], 4) {
+                            Ok(n) => { index += 4; n as usize }
+                            Err(_) => { f.write_str("<bad length>")?; break; }
+                        }
+                    }
+                    _ => 0
+                }
+            };
+
+            if index > 1 { f.write_str(" ")?; }
+            // Write the opcode
+            if opcode == opcodes::all::OP_PUSHBYTES_0 {
+                f.write_str("OP_0")?;
+            } else {
+                write!(f, "{:?}", opcode)?;
+            }
+            // Write any pushdata
+            if data_len > 0 {
+                f.write_str(" ")?;
+                if index + data_len <= self.0.len() {
+                    for ch in &self.0[index..index + data_len] {
+                            write!(f, "{:02x}", ch)?;
+                    }
+                    index += data_len;
+                } else {
+                    f.write_str("<push past end>")?;
+                    break;
+                }
+            }
+        }
+        Ok(())
+    }
+
+    /// Get the assembly decoding of the script.
+    pub fn asm(&self) -> String {
+        let mut buf = String::new();
+        self.fmt_asm(&mut buf).unwrap();
+        buf
     }
 }
 
@@ -785,16 +797,16 @@ mod test {
     }
 
     #[test]
-    fn script_debug_display() {
-        assert_eq!(format!("{:?}", hex_script!("6363636363686868686800")),
-                   "Script(OP_IF OP_IF OP_IF OP_IF OP_IF OP_ENDIF OP_ENDIF OP_ENDIF OP_ENDIF OP_ENDIF OP_0)");
-        assert_eq!(format!("{}", hex_script!("6363636363686868686800")),
-                   "Script(OP_IF OP_IF OP_IF OP_IF OP_IF OP_ENDIF OP_ENDIF OP_ENDIF OP_ENDIF OP_ENDIF OP_0)");
-        assert_eq!(format!("{}", hex_script!("2102715e91d37d239dea832f1460e91e368115d8ca6cc23a7da966795abad9e3b699ac")),
-                   "Script(OP_PUSHBYTES_33 02715e91d37d239dea832f1460e91e368115d8ca6cc23a7da966795abad9e3b699 OP_CHECKSIG)");
+    fn script_asm() {
+        assert_eq!(hex_script!("6363636363686868686800").asm(),
+                   "OP_IF OP_IF OP_IF OP_IF OP_IF OP_ENDIF OP_ENDIF OP_ENDIF OP_ENDIF OP_ENDIF OP_0");
+        assert_eq!(hex_script!("6363636363686868686800").asm(),
+                   "OP_IF OP_IF OP_IF OP_IF OP_IF OP_ENDIF OP_ENDIF OP_ENDIF OP_ENDIF OP_ENDIF OP_0");
+        assert_eq!(hex_script!("2102715e91d37d239dea832f1460e91e368115d8ca6cc23a7da966795abad9e3b699ac").asm(),
+                   "OP_PUSHBYTES_33 02715e91d37d239dea832f1460e91e368115d8ca6cc23a7da966795abad9e3b699 OP_CHECKSIG");
         // Elements Alpha peg-out transaction with some signatures removed for brevity. Mainly to test PUSHDATA1
-        assert_eq!(format!("{}", hex_script!("0047304402202457e78cc1b7f50d0543863c27de75d07982bde8359b9e3316adec0aec165f2f02200203fd331c4e4a4a02f48cf1c291e2c0d6b2f7078a784b5b3649fca41f8794d401004cf1552103244e602b46755f24327142a0517288cebd159eccb6ccf41ea6edf1f601e9af952103bbbacc302d19d29dbfa62d23f37944ae19853cf260c745c2bea739c95328fcb721039227e83246bd51140fe93538b2301c9048be82ef2fb3c7fc5d78426ed6f609ad210229bf310c379b90033e2ecb07f77ecf9b8d59acb623ab7be25a0caed539e2e6472103703e2ed676936f10b3ce9149fa2d4a32060fb86fa9a70a4efe3f21d7ab90611921031e9b7c6022400a6bb0424bbcde14cff6c016b91ee3803926f3440abf5c146d05210334667f975f55a8455d515a2ef1c94fdfa3315f12319a14515d2a13d82831f62f57ae")),
-                   "Script(OP_0 OP_PUSHBYTES_71 304402202457e78cc1b7f50d0543863c27de75d07982bde8359b9e3316adec0aec165f2f02200203fd331c4e4a4a02f48cf1c291e2c0d6b2f7078a784b5b3649fca41f8794d401 OP_0 OP_PUSHDATA1 552103244e602b46755f24327142a0517288cebd159eccb6ccf41ea6edf1f601e9af952103bbbacc302d19d29dbfa62d23f37944ae19853cf260c745c2bea739c95328fcb721039227e83246bd51140fe93538b2301c9048be82ef2fb3c7fc5d78426ed6f609ad210229bf310c379b90033e2ecb07f77ecf9b8d59acb623ab7be25a0caed539e2e6472103703e2ed676936f10b3ce9149fa2d4a32060fb86fa9a70a4efe3f21d7ab90611921031e9b7c6022400a6bb0424bbcde14cff6c016b91ee3803926f3440abf5c146d05210334667f975f55a8455d515a2ef1c94fdfa3315f12319a14515d2a13d82831f62f57ae)");
+        assert_eq!(hex_script!("0047304402202457e78cc1b7f50d0543863c27de75d07982bde8359b9e3316adec0aec165f2f02200203fd331c4e4a4a02f48cf1c291e2c0d6b2f7078a784b5b3649fca41f8794d401004cf1552103244e602b46755f24327142a0517288cebd159eccb6ccf41ea6edf1f601e9af952103bbbacc302d19d29dbfa62d23f37944ae19853cf260c745c2bea739c95328fcb721039227e83246bd51140fe93538b2301c9048be82ef2fb3c7fc5d78426ed6f609ad210229bf310c379b90033e2ecb07f77ecf9b8d59acb623ab7be25a0caed539e2e6472103703e2ed676936f10b3ce9149fa2d4a32060fb86fa9a70a4efe3f21d7ab90611921031e9b7c6022400a6bb0424bbcde14cff6c016b91ee3803926f3440abf5c146d05210334667f975f55a8455d515a2ef1c94fdfa3315f12319a14515d2a13d82831f62f57ae").asm(),
+                   "OP_0 OP_PUSHBYTES_71 304402202457e78cc1b7f50d0543863c27de75d07982bde8359b9e3316adec0aec165f2f02200203fd331c4e4a4a02f48cf1c291e2c0d6b2f7078a784b5b3649fca41f8794d401 OP_0 OP_PUSHDATA1 552103244e602b46755f24327142a0517288cebd159eccb6ccf41ea6edf1f601e9af952103bbbacc302d19d29dbfa62d23f37944ae19853cf260c745c2bea739c95328fcb721039227e83246bd51140fe93538b2301c9048be82ef2fb3c7fc5d78426ed6f609ad210229bf310c379b90033e2ecb07f77ecf9b8d59acb623ab7be25a0caed539e2e6472103703e2ed676936f10b3ce9149fa2d4a32060fb86fa9a70a4efe3f21d7ab90611921031e9b7c6022400a6bb0424bbcde14cff6c016b91ee3803926f3440abf5c146d05210334667f975f55a8455d515a2ef1c94fdfa3315f12319a14515d2a13d82831f62f57ae");
     }
 
     #[test]
