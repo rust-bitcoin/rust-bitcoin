@@ -204,7 +204,8 @@ impl serde::Serialize for ChildNumber {
 
 /// A BIP-32 derivation path.
 #[derive(Clone, PartialEq, Eq)]
-pub struct DerivationPath(pub Vec<ChildNumber>);
+pub struct DerivationPath(Vec<ChildNumber>);
+impl_index_newtype!(DerivationPath, ChildNumber);
 
 impl From<Vec<ChildNumber>> for DerivationPath {
     fn from(numbers: Vec<ChildNumber>) -> Self {
@@ -215,6 +216,32 @@ impl From<Vec<ChildNumber>> for DerivationPath {
 impl Into<Vec<ChildNumber>> for DerivationPath {
     fn into(self) -> Vec<ChildNumber> {
         self.0
+    }
+}
+
+impl<'a> From<&'a [ChildNumber]> for DerivationPath {
+    fn from(numbers: &'a [ChildNumber]) -> Self {
+        DerivationPath(numbers.to_vec())
+    }
+}
+
+impl ::std::iter::FromIterator<ChildNumber> for DerivationPath {
+    fn from_iter<T>(iter: T) -> Self where T: IntoIterator<Item = ChildNumber> {
+        DerivationPath(Vec::from_iter(iter))
+    }
+}
+
+impl<'a> ::std::iter::IntoIterator for &'a DerivationPath {
+    type Item = &'a ChildNumber;
+    type IntoIter = ::std::slice::Iter<'a, ChildNumber>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.iter()
+    }
+}
+
+impl AsRef<[ChildNumber]> for DerivationPath {
+    fn as_ref(&self) -> &[ChildNumber] {
+        &self.0
     }
 }
 
@@ -230,6 +257,22 @@ impl FromStr for DerivationPath {
 
         let ret: Result<Vec<ChildNumber>, Error> = parts.map(str::parse).collect();
         Ok(DerivationPath(ret?))
+    }
+}
+
+impl DerivationPath {
+    /// Create a new DerivationPath that is a child of this one.
+    pub fn child(&self, cn: ChildNumber) -> DerivationPath {
+        let mut path = self.0.clone();
+        path.push(cn);
+        DerivationPath(path)
+    }
+
+    /// Convert into a DerivationPath that is a child of this one.
+    pub fn into_child(self, cn: ChildNumber) -> DerivationPath {
+        let mut path = self.0;
+        path.push(cn);
+        DerivationPath(path)
     }
 }
 
@@ -361,13 +404,15 @@ impl ExtendedPrivKey {
     }
 
     /// Attempts to derive an extended private key from a path.
-    pub fn derive_priv<C: secp256k1::Signing>(
+    ///
+    /// The `path` argument can be both of type `DerivationPath` or `Vec<ChildNumber>`.
+    pub fn derive_priv<C: secp256k1::Signing, P: AsRef<[ChildNumber]>>(
         &self,
         secp: &Secp256k1<C>,
-        path: &DerivationPath,
+        path: &P,
     ) -> Result<ExtendedPrivKey, Error> {
         let mut sk: ExtendedPrivKey = *self;
-        for cnum in &path.0 {
+        for cnum in path.as_ref() {
             sk = sk.ckd_priv(secp, *cnum)?;
         }
         Ok(sk)
@@ -430,13 +475,15 @@ impl ExtendedPubKey {
     }
 
     /// Attempts to derive an extended public key from a path.
-    pub fn derive_pub<C: secp256k1::Verification>(
+    ///
+    /// The `path` argument can be both of type `DerivationPath` or `Vec<ChildNumber>`.
+    pub fn derive_pub<C: secp256k1::Verification, P: AsRef<[ChildNumber]>>(
         &self,
         secp: &Secp256k1<C>,
-        path: &DerivationPath,
+        path: &P,
     ) -> Result<ExtendedPubKey, Error> {
         let mut pk: ExtendedPubKey = *self;
-        for cnum in &path.0 {
+        for cnum in path.as_ref() {
             pk = pk.ckd_pub(secp, *cnum)?
         }
         Ok(pk)
@@ -655,6 +702,18 @@ mod tests {
                 ChildNumber::from_normal_idx(1000000000).unwrap(),
             ].into())
         );
+    }
+
+    #[test]
+    fn test_derivation_path_convertion_index() {
+        let path = DerivationPath::from_str("m/0h/1/2'").unwrap();
+        let numbers: Vec<ChildNumber> = path.clone().into();
+        let path2: DerivationPath = numbers.into();
+        assert_eq!(path, path2);
+        assert_eq!(&path[..2], &[ChildNumber::from_hardened_idx(0).unwrap(), ChildNumber::from_normal_idx(1).unwrap()]);
+        let indexed: DerivationPath = path[..2].into();
+        assert_eq!(indexed, DerivationPath::from_str("m/0h/1").unwrap());
+        assert_eq!(indexed.child(ChildNumber::from_hardened_idx(2).unwrap()), path);
     }
 
     fn test_path<C: secp256k1::Signing + secp256k1::Verification>(secp: &Secp256k1<C>,
