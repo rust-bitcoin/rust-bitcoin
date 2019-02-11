@@ -76,6 +76,7 @@ pub use network::constants::Network;
 pub use util::Error;
 pub use util::address::Address;
 pub use util::hash::BitcoinHash;
-pub use util::privkey::Privkey;
+pub use util::key::PrivateKey;
+pub use util::key::PublicKey;
 pub use util::decimal::Decimal;
 pub use util::decimal::UDecimal;
