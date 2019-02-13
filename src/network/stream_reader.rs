@@ -23,10 +23,8 @@
 use std::fmt;
 use std::io;
 use std::io::Read;
-use std::sync::mpsc::Sender;
 
-use util;
-use network::message::{NetworkMessage, RawNetworkMessage};
+use network::message::RawNetworkMessage;
 use consensus::encode;
 
 /// Struct used to configure stream reader function
@@ -93,10 +91,13 @@ mod test {
     use std::time::Duration;
     use std::io::{Write, Seek, SeekFrom};
     use std::net::{TcpListener, TcpStream, Shutdown};
+    use std::thread::JoinHandle;
 
     use super::StreamReader;
     use network::message::{NetworkMessage, RawNetworkMessage};
 
+    // First, let's define some byte arrays for sample messages - dumps are taken from live
+    // Bitcoin Core node v0.17.1 with Wireshark
     const MSG_VERSION: [u8; 126] = [
         0xf9, 0xbe, 0xb4, 0xd9, 0x76, 0x65, 0x72, 0x73,
         0x69, 0x6f, 0x6e, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -156,6 +157,7 @@ mod test {
         0xe6, 0x6e, 0xcf, 0x68, 0x9b, 0xf7, 0x1b, 0x50
     ];
 
+    // Helper functions that checks parsed versions of the messages from the byte arrays above
     fn check_version_msg(msg: &RawNetworkMessage) {
         assert_eq!(msg.magic, 0xd9b4bef9);
         if let NetworkMessage::Version(ref version_msg) = msg.payload {
@@ -248,63 +250,78 @@ mod test {
         }
     }
 
-    fn serve_tcp(port: u16, pieces: Vec<Vec<u8>>) {
-        let listener = TcpListener::bind(format!("127.0.0.1:{}", port)).unwrap();
-        for ostream in listener.incoming() {
-            let mut ostream = ostream.unwrap();
+    // Helper function that set ups emulation of client-server TCP connection for
+    // testing message transfer via TCP packets
+    fn serve_tcp(pieces: Vec<Vec<u8>>) -> (JoinHandle<()>, TcpStream) {
+        // 1. Creating server part (emulating Bitcoin Core node)
+        let listener = TcpListener::bind(format!("127.0.0.1:{}", 0)).unwrap();
+        let port = listener.local_addr().unwrap().port();
+        // 2. Spawning thread that will be writing our messages to the TCP Stream at the server side
+        // in async mode
+        let handle = thread::spawn(move || {
+            for ostream in listener.incoming() {
+                let mut ostream = ostream.unwrap();
 
-            for piece in pieces {
-                ostream.write(&piece[..]).unwrap();
-                ostream.flush().unwrap();
-                thread::sleep(Duration::from_secs(1));
+                for piece in pieces {
+                    ostream.write(&piece[..]).unwrap();
+                    ostream.flush().unwrap();
+                    thread::sleep(Duration::from_secs(1));
+                }
+
+                ostream.shutdown(Shutdown::Both).unwrap();
+                break;
             }
+        });
 
-            ostream.shutdown(Shutdown::Both).unwrap();
-            break;
-        }
+        // 3. Creating client side of the TCP socket connection
+        thread::sleep(Duration::from_secs(1));
+        let istream = TcpStream::connect(format!("127.0.0.1:{}", port)).unwrap();
+
+        return (handle, istream)
     }
 
     #[test]
     fn read_multipartmsg_test() {
-        let port: u16 = 34254;
-        let handle = thread::spawn(move || {
-            serve_tcp(port, vec![MSG_VERSION[..24].to_vec(), MSG_VERSION[24..].to_vec()]);
-        });
+        // Setting up TCP connection emulation
+        let (handle, mut istream) = serve_tcp(vec![
+            // single message split in two parts to emulate real network conditions
+            MSG_VERSION[..24].to_vec(), MSG_VERSION[24..].to_vec()
+        ]);
+        let mut reader = StreamReader::new(&mut istream, None);
 
-        thread::sleep(Duration::from_secs(1));
-        let mut istream = TcpStream::connect(format!("127.0.0.1:{}", port)).unwrap();
-        let message = StreamReader::new(&mut istream, None).next_message().unwrap();
+        // Reading and checking the whole message back
+        let message = reader.next_message().unwrap();
         check_version_msg(&message);
 
+        // Waiting TCP server thread to terminate
         handle.join().unwrap();
     }
 
     #[test]
     fn read_sequencemsg_test() {
-        let port: u16 = 34255;
-        let handle = thread::spawn(move || {
-            serve_tcp(port, vec![
-                // Real-world Bitcoin core communication case for /Satoshi:0.17.1/
-                MSG_VERSION[..23].to_vec(), MSG_VERSION[23..].to_vec(),
-                MSG_VERACK.to_vec(),
-                MSG_ALERT[..24].to_vec(), MSG_ALERT[24..].to_vec()
-            ]);
-        });
-
-        thread::sleep(Duration::from_secs(1));
-        let mut istream = TcpStream::connect(format!("127.0.0.1:{}", port)).unwrap();
-
+        // Setting up TCP connection emulation
+        let (handle, mut istream) = serve_tcp(vec![
+            // Real-world Bitcoin core communication case for /Satoshi:0.17.1/
+            MSG_VERSION[..23].to_vec(), MSG_VERSION[23..].to_vec(),
+            MSG_VERACK.to_vec(),
+            MSG_ALERT[..24].to_vec(), MSG_ALERT[24..].to_vec()
+        ]);
         let mut reader = StreamReader::new(&mut istream, None);
+
+        // Reading and checking the first message (Version)
         let message = reader.next_message().unwrap();
         check_version_msg(&message);
 
+        // Reading and checking the second message (Verack)
         let msg = reader.next_message().unwrap();
         assert_eq!(msg.magic, 0xd9b4bef9);
-        assert_eq!(msg.payload, NetworkMessage::Verack, "Wrong message type, expected PingMessage");
+        assert_eq!(msg.payload, NetworkMessage::Verack, "Wrong message type, expected VerackMessage");
 
+        // Reading and checking the third message (Alert)
         let msg = reader.next_message().unwrap();
         check_alert_msg(&msg);
 
+        // Waiting TCP server thread to terminate
         handle.join().unwrap();
     }
 }
