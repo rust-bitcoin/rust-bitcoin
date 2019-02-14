@@ -96,22 +96,28 @@ pub enum ChildNumber {
 }
 
 impl ChildNumber {
-    /// Create a [`Normal`] from an index, panics if the index is not within
+    /// Create a [`Normal`] from an index, returns an error if the index is not within
     /// [0, 2^31 - 1].
     ///
     /// [`Normal`]: #variant.Normal
-    pub fn from_normal_idx(index: u32) -> Self {
-        assert_eq!(index & (1 << 31),  0, "ChildNumber indices have to be within [0, 2^31 - 1], is: {}", index);
-        ChildNumber::Normal { index: index }
+    pub fn from_normal_idx(index: u32) -> Result<Self, Error> {
+        if index & (1 << 31) == 0 {
+            Ok(ChildNumber::Normal { index: index })
+        } else {
+            Err(Error::InvalidChildNumber(index))
+        }
     }
 
-    /// Create a [`Hardened`] from an index, panics if the index is not within
+    /// Create a [`Hardened`] from an index, returns an error if the index is not within
     /// [0, 2^31 - 1].
     ///
     /// [`Hardened`]: #variant.Hardened
-    pub fn from_hardened_idx(index: u32) -> Self {
-        assert_eq!(index & (1 << 31),  0, "ChildNumber indices have to be within [0, 2^31 - 1], is: {}", index);
-        ChildNumber::Hardened { index: index }
+    pub fn from_hardened_idx(index: u32) -> Result<Self, Error> {
+        if index & (1 << 31) == 0 {
+            Ok(ChildNumber::Hardened { index: index })
+        } else {
+            Err(Error::InvalidChildNumber(index))
+        }
     }
 
     /// Returns `true` if the child number is a [`Normal`] value.
@@ -189,7 +195,7 @@ pub enum Error {
     /// A secp256k1 error occurred
     Ecdsa(secp256k1::Error),
     /// A child number was provided that was out of range
-    InvalidChildNumber(ChildNumber),
+    InvalidChildNumber(u32),
     /// Error creating a master seed --- for application use
     RngError(String)
 }
@@ -199,8 +205,8 @@ impl fmt::Display for Error {
         match *self {
             Error::CannotDeriveFromHardenedKey => f.write_str("cannot derive hardened key from public key"),
             Error::Ecdsa(ref e) => fmt::Display::fmt(e, f),
-            Error::InvalidChildNumber(ref n) => write!(f, "child number {} is invalid", n),
-            Error::RngError(ref s) => write!(f, "rng error {}", s)
+            Error::InvalidChildNumber(ref n) => write!(f, "child number {} is invalid (not within [0, 2^31 - 1])", n),
+            Error::RngError(ref s) => write!(f, "rng error {}", s),
         }
     }
 }
@@ -239,7 +245,7 @@ impl ExtendedPrivKey {
             network: network,
             depth: 0,
             parent_fingerprint: Default::default(),
-            child_number: ChildNumber::from_normal_idx(0),
+            child_number: ChildNumber::from_normal_idx(0)?,
             secret_key: SecretKey::from_slice(&hmac_result[..32]).map_err(Error::Ecdsa)?,
             chain_code: ChainCode::from(&hmac_result[32..]),
         })
@@ -646,12 +652,12 @@ mod tests {
     #[test]
     #[cfg(all(feature = "serde", feature = "strason"))]
     pub fn encode_decode_childnumber() {
-        serde_round_trip!(ChildNumber::from_normal_idx(0));
-        serde_round_trip!(ChildNumber::from_normal_idx(1));
-        serde_round_trip!(ChildNumber::from_normal_idx((1 << 31) - 1));
-        serde_round_trip!(ChildNumber::from_hardened_idx(0));
-        serde_round_trip!(ChildNumber::from_hardened_idx(1));
-        serde_round_trip!(ChildNumber::from_hardened_idx((1 << 31) - 1));
+        serde_round_trip!(ChildNumber::from_normal_idx(0).unwrap());
+        serde_round_trip!(ChildNumber::from_normal_idx(1).unwrap());
+        serde_round_trip!(ChildNumber::from_normal_idx((1 << 31) - 1).unwrap());
+        serde_round_trip!(ChildNumber::from_hardened_idx(0).unwrap());
+        serde_round_trip!(ChildNumber::from_hardened_idx(1).unwrap());
+        serde_round_trip!(ChildNumber::from_hardened_idx((1 << 31) - 1).unwrap());
     }
 }
 
