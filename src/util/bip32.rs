@@ -96,22 +96,28 @@ pub enum ChildNumber {
 }
 
 impl ChildNumber {
-    /// Create a [`Normal`] from an index, panics if the index is not within
+    /// Create a [`Normal`] from an index, returns an error if the index is not within
     /// [0, 2^31 - 1].
     ///
     /// [`Normal`]: #variant.Normal
-    pub fn from_normal_idx(index: u32) -> Self {
-        assert_eq!(index & (1 << 31),  0, "ChildNumber indices have to be within [0, 2^31 - 1], is: {}", index);
-        ChildNumber::Normal { index: index }
+    pub fn from_normal_idx(index: u32) -> Result<Self, Error> {
+        if index & (1 << 31) == 0 {
+            Ok(ChildNumber::Normal { index: index })
+        } else {
+            Err(Error::InvalidChildNumber(index))
+        }
     }
 
-    /// Create a [`Hardened`] from an index, panics if the index is not within
+    /// Create a [`Hardened`] from an index, returns an error if the index is not within
     /// [0, 2^31 - 1].
     ///
     /// [`Hardened`]: #variant.Hardened
-    pub fn from_hardened_idx(index: u32) -> Self {
-        assert_eq!(index & (1 << 31),  0, "ChildNumber indices have to be within [0, 2^31 - 1], is: {}", index);
-        ChildNumber::Hardened { index: index }
+    pub fn from_hardened_idx(index: u32) -> Result<Self, Error> {
+        if index & (1 << 31) == 0 {
+            Ok(ChildNumber::Hardened { index: index })
+        } else {
+            Err(Error::InvalidChildNumber(index))
+        }
     }
 
     /// Returns `true` if the child number is a [`Normal`] value.
@@ -161,6 +167,21 @@ impl fmt::Display for ChildNumber {
     }
 }
 
+impl FromStr for ChildNumber {
+    type Err = Error;
+
+    fn from_str(inp: &str) -> Result<ChildNumber, Error> {
+        Ok(match inp.chars().last().map_or(false, |l| l == '\'' || l == 'h') {
+            true => ChildNumber::from_hardened_idx(
+                inp[0..inp.len() - 1].parse().map_err(|_| Error::InvalidChildNumberFormat)?
+            )?,
+            false => ChildNumber::from_normal_idx(
+                inp.parse().map_err(|_| Error::InvalidChildNumberFormat)?
+            )?,
+        })
+    }
+}
+
 #[cfg(feature = "serde")]
 impl<'de> serde::Deserialize<'de> for ChildNumber {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
@@ -181,6 +202,135 @@ impl serde::Serialize for ChildNumber {
     }
 }
 
+/// A BIP-32 derivation path.
+#[derive(Clone, PartialEq, Eq)]
+pub struct DerivationPath(Vec<ChildNumber>);
+impl_index_newtype!(DerivationPath, ChildNumber);
+
+impl From<Vec<ChildNumber>> for DerivationPath {
+    fn from(numbers: Vec<ChildNumber>) -> Self {
+        DerivationPath(numbers)
+    }
+}
+
+impl Into<Vec<ChildNumber>> for DerivationPath {
+    fn into(self) -> Vec<ChildNumber> {
+        self.0
+    }
+}
+
+impl<'a> From<&'a [ChildNumber]> for DerivationPath {
+    fn from(numbers: &'a [ChildNumber]) -> Self {
+        DerivationPath(numbers.to_vec())
+    }
+}
+
+impl ::std::iter::FromIterator<ChildNumber> for DerivationPath {
+    fn from_iter<T>(iter: T) -> Self where T: IntoIterator<Item = ChildNumber> {
+        DerivationPath(Vec::from_iter(iter))
+    }
+}
+
+impl<'a> ::std::iter::IntoIterator for &'a DerivationPath {
+    type Item = &'a ChildNumber;
+    type IntoIter = ::std::slice::Iter<'a, ChildNumber>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.iter()
+    }
+}
+
+impl AsRef<[ChildNumber]> for DerivationPath {
+    fn as_ref(&self) -> &[ChildNumber] {
+        &self.0
+    }
+}
+
+impl FromStr for DerivationPath {
+    type Err = Error;
+
+    fn from_str(path: &str) -> Result<DerivationPath, Error> {
+        let mut parts = path.split("/");
+        // First parts must be `m`.
+        if parts.next().unwrap() != "m" {
+            return Err(Error::InvalidDerivationPathFormat);
+        }
+
+        let ret: Result<Vec<ChildNumber>, Error> = parts.map(str::parse).collect();
+        Ok(DerivationPath(ret?))
+    }
+}
+
+impl DerivationPath {
+    /// Create a new DerivationPath that is a child of this one.
+    pub fn child(&self, cn: ChildNumber) -> DerivationPath {
+        let mut path = self.0.clone();
+        path.push(cn);
+        DerivationPath(path)
+    }
+
+    /// Convert into a DerivationPath that is a child of this one.
+    pub fn into_child(self, cn: ChildNumber) -> DerivationPath {
+        let mut path = self.0;
+        path.push(cn);
+        DerivationPath(path)
+    }
+}
+
+impl fmt::Display for DerivationPath {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str("m")?;
+        for cn in self.0.iter() {
+            f.write_str("/")?;
+            fmt::Display::fmt(cn, f)?;
+        }
+        Ok(())
+    }
+}
+
+impl fmt::Debug for DerivationPath {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Display::fmt(&self, f)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for DerivationPath {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        use std::fmt;
+        use serde::de;
+
+        struct Visitor;
+        impl<'de> de::Visitor<'de> for Visitor {
+            type Value = DerivationPath;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("a Bitcoin address")
+            }
+
+            fn visit_str<E: de::Error>(self, v: &str) -> Result<Self::Value, E> {
+                DerivationPath::from_str(v).map_err(E::custom)
+            }
+
+            fn visit_borrowed_str<E: de::Error>(self, v: &'de str) -> Result<Self::Value, E> {
+                self.visit_str(v)
+            }
+
+            fn visit_string<E: de::Error>(self, v: String) -> Result<Self::Value, E> {
+                self.visit_str(&v)
+            }
+        }
+
+        deserializer.deserialize_str(Visitor)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for DerivationPath {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(&self.to_string())
+    }
+}
+
 /// A BIP32 error
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum Error {
@@ -189,9 +339,13 @@ pub enum Error {
     /// A secp256k1 error occurred
     Ecdsa(secp256k1::Error),
     /// A child number was provided that was out of range
-    InvalidChildNumber(ChildNumber),
+    InvalidChildNumber(u32),
     /// Error creating a master seed --- for application use
-    RngError(String)
+    RngError(String),
+    /// Invalid childnumber format.
+    InvalidChildNumberFormat,
+    /// Invalid derivation path format.
+    InvalidDerivationPathFormat,
 }
 
 impl fmt::Display for Error {
@@ -199,8 +353,10 @@ impl fmt::Display for Error {
         match *self {
             Error::CannotDeriveFromHardenedKey => f.write_str("cannot derive hardened key from public key"),
             Error::Ecdsa(ref e) => fmt::Display::fmt(e, f),
-            Error::InvalidChildNumber(ref n) => write!(f, "child number {} is invalid", n),
-            Error::RngError(ref s) => write!(f, "rng error {}", s)
+            Error::InvalidChildNumber(ref n) => write!(f, "child number {} is invalid (not within [0, 2^31 - 1])", n),
+            Error::RngError(ref s) => write!(f, "rng error {}", s),
+            Error::InvalidChildNumberFormat => f.write_str("invalid child number format"),
+            Error::InvalidDerivationPathFormat => f.write_str("invalid derivation path format"),
         }
     }
 }
@@ -219,7 +375,9 @@ impl error::Error for Error {
             Error::CannotDeriveFromHardenedKey => "cannot derive hardened key from public key",
             Error::Ecdsa(ref e) => error::Error::description(e),
             Error::InvalidChildNumber(_) => "child number is invalid",
-            Error::RngError(_) => "rng error"
+            Error::RngError(_) => "rng error",
+            Error::InvalidChildNumberFormat => "invalid child number format",
+            Error::InvalidDerivationPathFormat => "invalid derivation path format",
         }
     }
 }
@@ -239,20 +397,22 @@ impl ExtendedPrivKey {
             network: network,
             depth: 0,
             parent_fingerprint: Default::default(),
-            child_number: ChildNumber::from_normal_idx(0),
+            child_number: ChildNumber::from_normal_idx(0)?,
             secret_key: SecretKey::from_slice(&hmac_result[..32]).map_err(Error::Ecdsa)?,
             chain_code: ChainCode::from(&hmac_result[32..]),
         })
     }
 
     /// Attempts to derive an extended private key from a path.
-    pub fn derive_priv<C: secp256k1::Signing>(
+    ///
+    /// The `path` argument can be both of type `DerivationPath` or `Vec<ChildNumber>`.
+    pub fn derive_priv<C: secp256k1::Signing, P: AsRef<[ChildNumber]>>(
         &self,
         secp: &Secp256k1<C>,
-        cnums: &[ChildNumber],
+        path: &P,
     ) -> Result<ExtendedPrivKey, Error> {
         let mut sk: ExtendedPrivKey = *self;
-        for cnum in cnums {
+        for cnum in path.as_ref() {
             sk = sk.ckd_priv(secp, *cnum)?;
         }
         Ok(sk)
@@ -315,13 +475,15 @@ impl ExtendedPubKey {
     }
 
     /// Attempts to derive an extended public key from a path.
-    pub fn derive_pub<C: secp256k1::Verification>(
+    ///
+    /// The `path` argument can be both of type `DerivationPath` or `Vec<ChildNumber>`.
+    pub fn derive_pub<C: secp256k1::Verification, P: AsRef<[ChildNumber]>>(
         &self,
         secp: &Secp256k1<C>,
-        cnums: &[ChildNumber],
+        path: &P,
     ) -> Result<ExtendedPubKey, Error> {
         let mut pk: ExtendedPubKey = *self;
-        for cnum in cnums {
+        for cnum in path.as_ref() {
             pk = pk.ckd_pub(secp, *cnum)?
         }
         Ok(pk)
@@ -491,14 +653,73 @@ mod tests {
 
     use network::constants::Network::{self, Bitcoin};
 
-    use super::{ChildNumber, ExtendedPrivKey, ExtendedPubKey};
+    use super::{ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey};
     use super::ChildNumber::{Hardened, Normal};
     use super::Error;
+
+    #[test]
+    fn test_parse_derivation_path() {
+        assert_eq!(DerivationPath::from_str("42"), Err(Error::InvalidDerivationPathFormat));
+        assert_eq!(DerivationPath::from_str("n/0'/0"), Err(Error::InvalidDerivationPathFormat));
+        assert_eq!(DerivationPath::from_str("4/m/5"), Err(Error::InvalidDerivationPathFormat));
+        assert_eq!(DerivationPath::from_str("m//3/0'"), Err(Error::InvalidChildNumberFormat));
+        assert_eq!(DerivationPath::from_str("m/0h/0x"), Err(Error::InvalidChildNumberFormat));
+        assert_eq!(DerivationPath::from_str("m/2147483648"), Err(Error::InvalidChildNumber(2147483648)));
+
+        assert_eq!(DerivationPath::from_str("m"), Ok(vec![].into()));
+        assert_eq!(
+            DerivationPath::from_str("m/0'"),
+            Ok(vec![ChildNumber::from_hardened_idx(0).unwrap()].into())
+        );
+        assert_eq!(
+            DerivationPath::from_str("m/0'/1"),
+            Ok(vec![ChildNumber::from_hardened_idx(0).unwrap(), ChildNumber::from_normal_idx(1).unwrap()].into())
+        );
+        assert_eq!(
+            DerivationPath::from_str("m/0h/1/2'"),
+            Ok(vec![
+                ChildNumber::from_hardened_idx(0).unwrap(),
+                ChildNumber::from_normal_idx(1).unwrap(),
+                ChildNumber::from_hardened_idx(2).unwrap(),
+            ].into())
+        );
+        assert_eq!(
+            DerivationPath::from_str("m/0'/1/2h/2"),
+            Ok(vec![
+                ChildNumber::from_hardened_idx(0).unwrap(),
+                ChildNumber::from_normal_idx(1).unwrap(),
+                ChildNumber::from_hardened_idx(2).unwrap(),
+                ChildNumber::from_normal_idx(2).unwrap(),
+            ].into())
+        );
+        assert_eq!(
+            DerivationPath::from_str("m/0'/1/2'/2/1000000000"),
+            Ok(vec![
+                ChildNumber::from_hardened_idx(0).unwrap(),
+                ChildNumber::from_normal_idx(1).unwrap(),
+                ChildNumber::from_hardened_idx(2).unwrap(),
+                ChildNumber::from_normal_idx(2).unwrap(),
+                ChildNumber::from_normal_idx(1000000000).unwrap(),
+            ].into())
+        );
+    }
+
+    #[test]
+    fn test_derivation_path_convertion_index() {
+        let path = DerivationPath::from_str("m/0h/1/2'").unwrap();
+        let numbers: Vec<ChildNumber> = path.clone().into();
+        let path2: DerivationPath = numbers.into();
+        assert_eq!(path, path2);
+        assert_eq!(&path[..2], &[ChildNumber::from_hardened_idx(0).unwrap(), ChildNumber::from_normal_idx(1).unwrap()]);
+        let indexed: DerivationPath = path[..2].into();
+        assert_eq!(indexed, DerivationPath::from_str("m/0h/1").unwrap());
+        assert_eq!(indexed.child(ChildNumber::from_hardened_idx(2).unwrap()), path);
+    }
 
     fn test_path<C: secp256k1::Signing + secp256k1::Verification>(secp: &Secp256k1<C>,
                  network: Network,
                  seed: &[u8],
-                 path: &[ChildNumber],
+                 path: DerivationPath,
                  expected_sk: &str,
                  expected_pk: &str) {
 
@@ -507,26 +728,26 @@ mod tests {
 
         // Check derivation convenience method for ExtendedPrivKey
         assert_eq!(
-            &sk.derive_priv(secp, path).unwrap().to_string()[..],
+            &sk.derive_priv(secp, &path).unwrap().to_string()[..],
             expected_sk
         );
 
         // Check derivation convenience method for ExtendedPubKey, should error
         // appropriately if any ChildNumber is hardened
-        if path.iter().any(|cnum| cnum.is_hardened()) {
+        if path.0.iter().any(|cnum| cnum.is_hardened()) {
             assert_eq!(
-                pk.derive_pub(secp, path),
+                pk.derive_pub(secp, &path),
                 Err(Error::CannotDeriveFromHardenedKey)
             );
         } else {
             assert_eq!(
-                &pk.derive_pub(secp, path).unwrap().to_string()[..],
+                &pk.derive_pub(secp, &path).unwrap().to_string()[..],
                 expected_pk
             );
         }
 
         // Derive keys, checking hardened and non-hardened derivation one-by-one
-        for &num in path.iter() {
+        for &num in path.0.iter() {
             sk = sk.ckd_priv(secp, num).unwrap();
             match num {
                 Normal {..} => {
@@ -560,32 +781,32 @@ mod tests {
         let seed = hex_decode("000102030405060708090a0b0c0d0e0f").unwrap();
 
         // m
-        test_path(&secp, Bitcoin, &seed, &[],
+        test_path(&secp, Bitcoin, &seed, "m".parse().unwrap(),
                   "xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbPy6cq3jPPqjiChkVvvNKmPGJxWUtg6LnF5kejMRNNU3TGtRBeJgk33yuGBxrMPHi",
                   "xpub661MyMwAqRbcFtXgS5sYJABqqG9YLmC4Q1Rdap9gSE8NqtwybGhePY2gZ29ESFjqJoCu1Rupje8YtGqsefD265TMg7usUDFdp6W1EGMcet8");
 
         // m/0h
-        test_path(&secp, Bitcoin, &seed, &[ChildNumber::from_hardened_idx(0)],
+        test_path(&secp, Bitcoin, &seed, "m/0h".parse().unwrap(),
                   "xprv9uHRZZhk6KAJC1avXpDAp4MDc3sQKNxDiPvvkX8Br5ngLNv1TxvUxt4cV1rGL5hj6KCesnDYUhd7oWgT11eZG7XnxHrnYeSvkzY7d2bhkJ7",
                   "xpub68Gmy5EdvgibQVfPdqkBBCHxA5htiqg55crXYuXoQRKfDBFA1WEjWgP6LHhwBZeNK1VTsfTFUHCdrfp1bgwQ9xv5ski8PX9rL2dZXvgGDnw");
 
         // m/0h/1
-        test_path(&secp, Bitcoin, &seed, &[ChildNumber::from_hardened_idx(0), ChildNumber::from_normal_idx(1)],
+        test_path(&secp, Bitcoin, &seed, "m/0h/1".parse().unwrap(),
                    "xprv9wTYmMFdV23N2TdNG573QoEsfRrWKQgWeibmLntzniatZvR9BmLnvSxqu53Kw1UmYPxLgboyZQaXwTCg8MSY3H2EU4pWcQDnRnrVA1xe8fs",
                    "xpub6ASuArnXKPbfEwhqN6e3mwBcDTgzisQN1wXN9BJcM47sSikHjJf3UFHKkNAWbWMiGj7Wf5uMash7SyYq527Hqck2AxYysAA7xmALppuCkwQ");
 
         // m/0h/1/2h
-        test_path(&secp, Bitcoin, &seed, &[ChildNumber::from_hardened_idx(0), ChildNumber::from_normal_idx(1), ChildNumber::from_hardened_idx(2)],
+        test_path(&secp, Bitcoin, &seed, "m/0h/1/2h".parse().unwrap(),
                   "xprv9z4pot5VBttmtdRTWfWQmoH1taj2axGVzFqSb8C9xaxKymcFzXBDptWmT7FwuEzG3ryjH4ktypQSAewRiNMjANTtpgP4mLTj34bhnZX7UiM",
                   "xpub6D4BDPcP2GT577Vvch3R8wDkScZWzQzMMUm3PWbmWvVJrZwQY4VUNgqFJPMM3No2dFDFGTsxxpG5uJh7n7epu4trkrX7x7DogT5Uv6fcLW5");
 
         // m/0h/1/2h/2
-        test_path(&secp, Bitcoin, &seed, &[ChildNumber::from_hardened_idx(0), ChildNumber::from_normal_idx(1), ChildNumber::from_hardened_idx(2), ChildNumber::from_normal_idx(2)],
+        test_path(&secp, Bitcoin, &seed, "m/0h/1/2h/2".parse().unwrap(),
                   "xprvA2JDeKCSNNZky6uBCviVfJSKyQ1mDYahRjijr5idH2WwLsEd4Hsb2Tyh8RfQMuPh7f7RtyzTtdrbdqqsunu5Mm3wDvUAKRHSC34sJ7in334",
                   "xpub6FHa3pjLCk84BayeJxFW2SP4XRrFd1JYnxeLeU8EqN3vDfZmbqBqaGJAyiLjTAwm6ZLRQUMv1ZACTj37sR62cfN7fe5JnJ7dh8zL4fiyLHV");
 
         // m/0h/1/2h/2/1000000000
-        test_path(&secp, Bitcoin, &seed, &[ChildNumber::from_hardened_idx(0), ChildNumber::from_normal_idx(1), ChildNumber::from_hardened_idx(2), ChildNumber::from_normal_idx(2), ChildNumber::from_normal_idx(1000000000)],
+        test_path(&secp, Bitcoin, &seed, "m/0h/1/2h/2/1000000000".parse().unwrap(),
                   "xprvA41z7zogVVwxVSgdKUHDy1SKmdb533PjDz7J6N6mV6uS3ze1ai8FHa8kmHScGpWmj4WggLyQjgPie1rFSruoUihUZREPSL39UNdE3BBDu76",
                   "xpub6H1LXWLaKsWFhvm6RVpEL9P4KfRZSW7abD2ttkWP3SSQvnyA8FSVqNTEcYFgJS2UaFcxupHiYkro49S8yGasTvXEYBVPamhGW6cFJodrTHy");
     }
@@ -596,32 +817,32 @@ mod tests {
         let seed = hex_decode("fffcf9f6f3f0edeae7e4e1dedbd8d5d2cfccc9c6c3c0bdbab7b4b1aeaba8a5a29f9c999693908d8a8784817e7b7875726f6c696663605d5a5754514e4b484542").unwrap();
 
         // m
-        test_path(&secp, Bitcoin, &seed, &[],
+        test_path(&secp, Bitcoin, &seed, "m".parse().unwrap(),
                   "xprv9s21ZrQH143K31xYSDQpPDxsXRTUcvj2iNHm5NUtrGiGG5e2DtALGdso3pGz6ssrdK4PFmM8NSpSBHNqPqm55Qn3LqFtT2emdEXVYsCzC2U",
                   "xpub661MyMwAqRbcFW31YEwpkMuc5THy2PSt5bDMsktWQcFF8syAmRUapSCGu8ED9W6oDMSgv6Zz8idoc4a6mr8BDzTJY47LJhkJ8UB7WEGuduB");
 
         // m/0
-        test_path(&secp, Bitcoin, &seed, &[ChildNumber::from_normal_idx(0)],
+        test_path(&secp, Bitcoin, &seed, "m/0".parse().unwrap(),
                   "xprv9vHkqa6EV4sPZHYqZznhT2NPtPCjKuDKGY38FBWLvgaDx45zo9WQRUT3dKYnjwih2yJD9mkrocEZXo1ex8G81dwSM1fwqWpWkeS3v86pgKt",
                   "xpub69H7F5d8KSRgmmdJg2KhpAK8SR3DjMwAdkxj3ZuxV27CprR9LgpeyGmXUbC6wb7ERfvrnKZjXoUmmDznezpbZb7ap6r1D3tgFxHmwMkQTPH");
 
         // m/0/2147483647h
-        test_path(&secp, Bitcoin, &seed, &[ChildNumber::from_normal_idx(0), ChildNumber::from_hardened_idx(2147483647)],
+        test_path(&secp, Bitcoin, &seed, "m/0/2147483647h".parse().unwrap(),
                   "xprv9wSp6B7kry3Vj9m1zSnLvN3xH8RdsPP1Mh7fAaR7aRLcQMKTR2vidYEeEg2mUCTAwCd6vnxVrcjfy2kRgVsFawNzmjuHc2YmYRmagcEPdU9",
                   "xpub6ASAVgeehLbnwdqV6UKMHVzgqAG8Gr6riv3Fxxpj8ksbH9ebxaEyBLZ85ySDhKiLDBrQSARLq1uNRts8RuJiHjaDMBU4Zn9h8LZNnBC5y4a");
 
         // m/0/2147483647h/1
-        test_path(&secp, Bitcoin, &seed, &[ChildNumber::from_normal_idx(0), ChildNumber::from_hardened_idx(2147483647), ChildNumber::from_normal_idx(1)],
+        test_path(&secp, Bitcoin, &seed, "m/0/2147483647h/1".parse().unwrap(),
                   "xprv9zFnWC6h2cLgpmSA46vutJzBcfJ8yaJGg8cX1e5StJh45BBciYTRXSd25UEPVuesF9yog62tGAQtHjXajPPdbRCHuWS6T8XA2ECKADdw4Ef",
                   "xpub6DF8uhdarytz3FWdA8TvFSvvAh8dP3283MY7p2V4SeE2wyWmG5mg5EwVvmdMVCQcoNJxGoWaU9DCWh89LojfZ537wTfunKau47EL2dhHKon");
 
         // m/0/2147483647h/1/2147483646h
-        test_path(&secp, Bitcoin, &seed, &[ChildNumber::from_normal_idx(0), ChildNumber::from_hardened_idx(2147483647), ChildNumber::from_normal_idx(1), ChildNumber::from_hardened_idx(2147483646)],
+        test_path(&secp, Bitcoin, &seed, "m/0/2147483647h/1/2147483646h".parse().unwrap(),
                   "xprvA1RpRA33e1JQ7ifknakTFpgNXPmW2YvmhqLQYMmrj4xJXXWYpDPS3xz7iAxn8L39njGVyuoseXzU6rcxFLJ8HFsTjSyQbLYnMpCqE2VbFWc",
                   "xpub6ERApfZwUNrhLCkDtcHTcxd75RbzS1ed54G1LkBUHQVHQKqhMkhgbmJbZRkrgZw4koxb5JaHWkY4ALHY2grBGRjaDMzQLcgJvLJuZZvRcEL");
 
         // m/0/2147483647h/1/2147483646h/2
-        test_path(&secp, Bitcoin, &seed, &[ChildNumber::from_normal_idx(0), ChildNumber::from_hardened_idx(2147483647), ChildNumber::from_normal_idx(1), ChildNumber::from_hardened_idx(2147483646), ChildNumber::from_normal_idx(2)],
+        test_path(&secp, Bitcoin, &seed, "m/0/2147483647h/1/2147483646h/2".parse().unwrap(),
                   "xprvA2nrNbFZABcdryreWet9Ea4LvTJcGsqrMzxHx98MMrotbir7yrKCEXw7nadnHM8Dq38EGfSh6dqA9QWTyefMLEcBYJUuekgW4BYPJcr9E7j",
                   "xpub6FnCn6nSzZAw5Tw7cgR9bi15UV96gLZhjDstkXXxvCLsUXBGXPdSnLFbdpq8p9HmGsApME5hQTZ3emM2rnY5agb9rXpVGyy3bdW6EEgAtqt");
     }
@@ -632,12 +853,12 @@ mod tests {
         let seed = hex_decode("4b381541583be4423346c643850da4b320e46a87ae3d2a4e6da11eba819cd4acba45d239319ac14f863b8d5ab5a0d0c64d2e8a1e7d1457df2e5a3c51c73235be").unwrap();
 
         // m
-        test_path(&secp, Bitcoin, &seed, &[],
+        test_path(&secp, Bitcoin, &seed, "m".parse().unwrap(),
                   "xprv9s21ZrQH143K25QhxbucbDDuQ4naNntJRi4KUfWT7xo4EKsHt2QJDu7KXp1A3u7Bi1j8ph3EGsZ9Xvz9dGuVrtHHs7pXeTzjuxBrCmmhgC6",
                   "xpub661MyMwAqRbcEZVB4dScxMAdx6d4nFc9nvyvH3v4gJL378CSRZiYmhRoP7mBy6gSPSCYk6SzXPTf3ND1cZAceL7SfJ1Z3GC8vBgp2epUt13");
 
         // m/0h
-        test_path(&secp, Bitcoin, &seed, &[ChildNumber::from_hardened_idx(0)],
+        test_path(&secp, Bitcoin, &seed, "m/0h".parse().unwrap(),
                   "xprv9uPDJpEQgRQfDcW7BkF7eTya6RPxXeJCqCJGHuCJ4GiRVLzkTXBAJMu2qaMWPrS7AANYqdq6vcBcBUdJCVVFceUvJFjaPdGZ2y9WACViL4L",
                   "xpub68NZiKmJWnxxS6aaHmn81bvJeTESw724CRDs6HbuccFQN9Ku14VQrADWgqbhhTHBaohPX4CjNLf9fq9MYo6oDaPPLPxSb7gwQN3ih19Zm4Y");
 
@@ -646,12 +867,12 @@ mod tests {
     #[test]
     #[cfg(all(feature = "serde", feature = "strason"))]
     pub fn encode_decode_childnumber() {
-        serde_round_trip!(ChildNumber::from_normal_idx(0));
-        serde_round_trip!(ChildNumber::from_normal_idx(1));
-        serde_round_trip!(ChildNumber::from_normal_idx((1 << 31) - 1));
-        serde_round_trip!(ChildNumber::from_hardened_idx(0));
-        serde_round_trip!(ChildNumber::from_hardened_idx(1));
-        serde_round_trip!(ChildNumber::from_hardened_idx((1 << 31) - 1));
+        serde_round_trip!(ChildNumber::from_normal_idx(0).unwrap());
+        serde_round_trip!(ChildNumber::from_normal_idx(1).unwrap());
+        serde_round_trip!(ChildNumber::from_normal_idx((1 << 31) - 1).unwrap());
+        serde_round_trip!(ChildNumber::from_hardened_idx(0).unwrap());
+        serde_round_trip!(ChildNumber::from_hardened_idx(1).unwrap());
+        serde_round_trip!(ChildNumber::from_hardened_idx((1 << 31) - 1).unwrap());
     }
 }
 
