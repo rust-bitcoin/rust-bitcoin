@@ -27,7 +27,6 @@ use blockdata::transaction::{OutPoint, Transaction, TxOut, TxIn};
 use blockdata::block::{Block, BlockHeader};
 use network::constants::Network;
 use util::misc::hex_bytes;
-use util::hash::MerkleRoot;
 use util::uint::Uint256;
 
 /// The maximum allowable sequence number
@@ -98,7 +97,7 @@ pub fn genesis_block(network: Network) -> Block {
                 header: BlockHeader {
                     version: 1,
                     prev_blockhash: Default::default(),
-                    merkle_root: txdata.merkle_root(),
+                    merkle_root: txdata[0].txid(),
                     time: 1231006505,
                     bits: 0x1d00ffff,
                     nonce: 2083236893
@@ -112,7 +111,7 @@ pub fn genesis_block(network: Network) -> Block {
                 header: BlockHeader {
                     version: 1,
                     prev_blockhash: Default::default(),
-                    merkle_root: txdata.merkle_root(),
+                    merkle_root: txdata[0].txid(),
                     time: 1296688602,
                     bits: 0x1d00ffff,
                     nonce: 414098458
@@ -126,7 +125,7 @@ pub fn genesis_block(network: Network) -> Block {
                 header: BlockHeader {
                     version: 1,
                     prev_blockhash: Default::default(),
-                    merkle_root: txdata.merkle_root(),
+                    merkle_root: txdata[0].txid(),
                     time: 1296688602,
                     bits: 0x207fffff,
                     nonce: 2
