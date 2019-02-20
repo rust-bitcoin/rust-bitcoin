@@ -85,7 +85,7 @@ impl Params {
                 bip66_height: 363725, // 00000000000000000379eaa19dce8c9b722d46ae6a57c2f1a988119488b50931
                 rule_change_activation_threshold: 1916, // 95%
                 miner_confirmation_window: 2016,
-                pow_limit: MAX_BITS_BITCOIN.clone(),
+                pow_limit: MAX_BITS_BITCOIN,
                 pow_target_spacing: 10 * 60,            // 10 minutes.
                 pow_target_timespan: 14 * 24 * 60 * 60, // 2 weeks.
                 allow_min_difficulty_blocks: false,
@@ -99,7 +99,7 @@ impl Params {
                 bip66_height: 330776, // 000000002104c8c45e99a8853285a3b592602a3ccde2b832481da85e9e4ba182
                 rule_change_activation_threshold: 1512, // 75%
                 miner_confirmation_window: 2016,
-                pow_limit: MAX_BITS_TESTNET.clone(),
+                pow_limit: MAX_BITS_TESTNET,
                 pow_target_spacing: 10 * 60,            // 10 minutes.
                 pow_target_timespan: 14 * 24 * 60 * 60, // 2 weeks.
                 allow_min_difficulty_blocks: true,
@@ -113,7 +113,7 @@ impl Params {
                 bip66_height: 1251,                    // used only in rpc tests
                 rule_change_activation_threshold: 108, // 75%
                 miner_confirmation_window: 144,
-                pow_limit: MAX_BITS_REGTEST.clone(),
+                pow_limit: MAX_BITS_REGTEST,
                 pow_target_spacing: 10 * 60,            // 10 minutes.
                 pow_target_timespan: 14 * 24 * 60 * 60, // 2 weeks.
                 allow_min_difficulty_blocks: true,
