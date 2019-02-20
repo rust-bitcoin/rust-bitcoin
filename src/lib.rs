@@ -35,6 +35,7 @@
 #![cfg_attr(feature = "clippy", allow(extend_from_slice))]   // `extend_from_slice` only available since 1.6
 
 // Coding conventions
+#![forbid(unsafe_code)]
 #![deny(non_upper_case_globals)]
 #![deny(non_camel_case_types)]
 #![deny(non_snake_case)]
