@@ -546,33 +546,6 @@ impl<D: Decoder, T: Decodable<D>> Decodable<D> for Box<[T]> {
     }
 }
 
-// Options (encoded as vectors of length 0 or 1)
-impl<S: Encoder, T: Encodable<S>> Encodable<S> for Option<T> {
-    #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), self::Error> {
-        match *self {
-            Some(ref data) => {
-                1u8.consensus_encode(s)?;
-                data.consensus_encode(s)?;
-            }
-            None => { 0u8.consensus_encode(s)?; }
-        }
-        Ok(())
-    }
-}
-
-impl<D: Decoder, T:Decodable<D>> Decodable<D> for Option<T> {
-    #[inline]
-    fn consensus_decode(d: &mut D) -> Result<Option<T>, self::Error> {
-        let bit: u8 = Decodable::consensus_decode(d)?;
-        Ok(if bit != 0 {
-            Some(Decodable::consensus_decode(d)?)
-        } else {
-            None
-        })
-    }
-}
-
 
 /// Do a double-SHA256 on some data and return the first 4 bytes
 fn sha2_checksum(data: &[u8]) -> [u8; 4] {
@@ -824,12 +797,6 @@ mod tests {
     }
 
     #[test]
-    fn serialize_option_test() {
-        assert_eq!(serialize(&None::<u8>), vec![0]);
-        assert_eq!(serialize(&Some(0xFFu8)), vec![1, 0xFF]);
-    }
-
-    #[test]
     fn deserialize_int_test() {
         // bool
         assert!((deserialize(&[58u8, 0]) as Result<bool, _>).is_err());
@@ -888,16 +855,6 @@ mod tests {
     fn deserialize_checkeddata_test() {
         let cd: Result<CheckedData, _> = deserialize(&[5u8, 0, 0, 0, 162, 107, 175, 90, 1, 2, 3, 4, 5]);
         assert_eq!(cd.ok(), Some(CheckedData(vec![1u8, 2, 3, 4, 5])));
-    }
-
-    #[test]
-    fn deserialize_option_test() {
-        let none: Result<Option<u8>, _> = deserialize(&[0u8]);
-        let good: Result<Option<u8>, _> = deserialize(&[1u8, 0xFF]);
-        let bad: Result<Option<u8>, _> = deserialize(&[2u8]);
-        assert!(bad.is_err());
-        assert_eq!(none.ok(), Some(None));
-        assert_eq!(good.ok(), Some(Some(0xFF)));
     }
 
     #[test]
