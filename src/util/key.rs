@@ -17,7 +17,7 @@
 //!
 
 use std::fmt::{self, Write};
-use std::io;
+use std::{io, ops};
 use std::str::FromStr;
 use secp256k1::{self, Secp256k1};
 use consensus::encode;
@@ -35,7 +35,7 @@ pub struct PublicKey {
 
 impl PublicKey {
     /// Write the public key into a writer
-    pub fn write_into<W: io::Write>(&self, writer: &mut W) {
+    pub fn write_into<W: io::Write>(&self, mut writer: W) {
         let write_res: io::Result<()> = if self.compressed {
             writer.write_all(&self.key.serialize())
         } else {
@@ -64,7 +64,7 @@ impl PublicKey {
     }
 }
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 /// A Bitcoin ECDSA private key
 pub struct PrivateKey {
     /// Whether this private key should be serialized as compressed
@@ -149,6 +149,13 @@ impl FromStr for PrivateKey {
     type Err = encode::Error;
     fn from_str(s: &str) -> Result<PrivateKey, encode::Error> {
         PrivateKey::from_wif(s)
+    }
+}
+
+impl ops::Index<ops::RangeFull> for PrivateKey {
+    type Output = [u8];
+    fn index(&self, _: ops::RangeFull) -> &[u8] {
+        &self.key[..]
     }
 }
 
