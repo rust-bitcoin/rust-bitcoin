@@ -24,11 +24,11 @@ use std::str::FromStr;
 
 use byteorder::{BigEndian, ByteOrder, ReadBytesExt};
 use bitcoin_hashes::{hash160, sha512, Hash, HashEngine, Hmac, HmacEngine};
-use secp256k1::key::{PublicKey, SecretKey};
 use secp256k1::{self, Secp256k1};
 
 use network::constants::Network;
 use util::base58;
+use util::key::{PublicKey, PrivateKey};
 
 /// A chain code
 pub struct ChainCode([u8; 32]);
@@ -57,8 +57,8 @@ pub struct ExtendedPrivKey {
     pub parent_fingerprint: Fingerprint,
     /// Child number of the key used to derive from parent (0 for master)
     pub child_number: ChildNumber,
-    /// Secret key
-    pub secret_key: SecretKey,
+    /// Private key
+    pub private_key: PrivateKey,
     /// Chain code
     pub chain_code: ChainCode
 }
@@ -398,7 +398,13 @@ impl ExtendedPrivKey {
             depth: 0,
             parent_fingerprint: Default::default(),
             child_number: ChildNumber::from_normal_idx(0)?,
-            secret_key: SecretKey::from_slice(&hmac_result[..32]).map_err(Error::Ecdsa)?,
+            private_key: PrivateKey {
+                compressed: true,
+                network: network,
+                key: secp256k1::SecretKey::from_slice(
+                    &hmac_result[..32]
+                ).map_err(Error::Ecdsa)?,
+            },
             chain_code: ChainCode::from(&hmac_result[32..]),
         })
     }
@@ -425,27 +431,31 @@ impl ExtendedPrivKey {
         match i {
             ChildNumber::Normal {..} => {
                 // Non-hardened key: compute public data and use that
-                hmac_engine.input(&PublicKey::from_secret_key(secp, &self.secret_key).serialize()[..]);
+                hmac_engine.input(&PublicKey::from_private_key(secp, &self.private_key).key.serialize()[..]);
             }
             ChildNumber::Hardened {..} => {
                 // Hardened key: use only secret data to prevent public derivation
                 hmac_engine.input(&[0u8]);
-                hmac_engine.input(&self.secret_key[..]);
+                hmac_engine.input(&self.private_key[..]);
             }
         }
         BigEndian::write_u32(&mut be_n, u32::from(i));
 
         hmac_engine.input(&be_n);
         let hmac_result: Hmac<sha512::Hash> = Hmac::from_engine(hmac_engine);
-        let mut sk = SecretKey::from_slice(&hmac_result[..32]).map_err(Error::Ecdsa)?;
-        sk.add_assign(&self.secret_key[..]).map_err(Error::Ecdsa)?;
+        let mut sk = PrivateKey {
+            compressed: true,
+            network: self.network,
+            key: secp256k1::SecretKey::from_slice(&hmac_result[..32]).map_err(Error::Ecdsa)?,
+        };
+        sk.key.add_assign(&self.private_key[..]).map_err(Error::Ecdsa)?;
 
         Ok(ExtendedPrivKey {
             network: self.network,
             depth: self.depth + 1,
             parent_fingerprint: self.fingerprint(secp),
             child_number: i,
-            secret_key: sk,
+            private_key: sk,
             chain_code: ChainCode::from(&hmac_result[32..])
         })
     }
@@ -469,7 +479,7 @@ impl ExtendedPubKey {
             depth: sk.depth,
             parent_fingerprint: sk.parent_fingerprint,
             child_number: sk.child_number,
-            public_key: PublicKey::from_secret_key(secp, &sk.secret_key),
+            public_key: PublicKey::from_private_key(secp, &sk.private_key),
             chain_code: sk.chain_code
         }
     }
@@ -490,23 +500,27 @@ impl ExtendedPubKey {
     }
 
     /// Compute the scalar tweak added to this key to get a child key
-    pub fn ckd_pub_tweak(&self, i: ChildNumber) -> Result<(SecretKey, ChainCode), Error> {
+    pub fn ckd_pub_tweak(&self, i: ChildNumber) -> Result<(PrivateKey, ChainCode), Error> {
         match i {
             ChildNumber::Hardened {..} => {
                 Err(Error::CannotDeriveFromHardenedKey)
             }
             ChildNumber::Normal { index: n } => {
                 let mut hmac_engine: HmacEngine<sha512::Hash> = HmacEngine::new(&self.chain_code[..]);
-                hmac_engine.input(&self.public_key.serialize()[..]);
+                hmac_engine.input(&self.public_key.key.serialize()[..]);
                 let mut be_n = [0; 4];
                 BigEndian::write_u32(&mut be_n, n);
                 hmac_engine.input(&be_n);
 
                 let hmac_result: Hmac<sha512::Hash> = Hmac::from_engine(hmac_engine);
 
-                let secret_key = SecretKey::from_slice(&hmac_result[..32])?;
+                let private_key = PrivateKey {
+                    compressed: true,
+                    network: self.network,
+                    key: secp256k1::SecretKey::from_slice(&hmac_result[..32])?,
+                };
                 let chain_code = ChainCode::from(&hmac_result[32..]);
-                Ok((secret_key, chain_code))
+                Ok((private_key, chain_code))
             }
         }
     }
@@ -519,7 +533,7 @@ impl ExtendedPubKey {
     ) -> Result<ExtendedPubKey, Error> {
         let (sk, chain_code) = self.ckd_pub_tweak(i)?;
         let mut pk = self.public_key.clone();
-        pk.add_exp_assign(secp, &sk[..]).map_err(Error::Ecdsa)?;
+        pk.key.add_exp_assign(secp, &sk[..]).map_err(Error::Ecdsa)?;
 
         Ok(ExtendedPubKey {
             network: self.network,
@@ -533,7 +547,9 @@ impl ExtendedPubKey {
 
     /// Returns the HASH160 of the chaincode
     pub fn identifier(&self) -> hash160::Hash {
-        hash160::Hash::hash(&self.public_key.serialize())
+        let mut engine = hash160::Hash::engine();
+        self.public_key.write_into(&mut engine);
+        hash160::Hash::from_engine(engine)
     }
 
     /// Returns the first four bytes of the identifier
@@ -556,7 +572,7 @@ impl fmt::Display for ExtendedPrivKey {
 
         ret[13..45].copy_from_slice(&self.chain_code[..]);
         ret[45] = 0;
-        ret[46..78].copy_from_slice(&self.secret_key[..]);
+        ret[46..78].copy_from_slice(&self.private_key[..]);
         fmt.write_str(&base58::check_encode_slice(&ret[..]))
     }
 }
@@ -574,21 +590,29 @@ impl FromStr for ExtendedPrivKey {
         let cn_int: u32 = Cursor::new(&data[9..13]).read_u32::<BigEndian>().unwrap();
         let child_number: ChildNumber = ChildNumber::from(cn_int);
 
+        let network = if &data[0..4] == [0x04u8, 0x88, 0xAD, 0xE4] {
+            Network::Bitcoin
+        } else if &data[0..4] == [0x04u8, 0x35, 0x83, 0x94] {
+            Network::Testnet
+        } else {
+            return Err(base58::Error::InvalidVersion((&data[0..4]).to_vec()));
+        };
+
         Ok(ExtendedPrivKey {
-            network: if &data[0..4] == [0x04u8, 0x88, 0xAD, 0xE4] {
-                Network::Bitcoin
-            } else if &data[0..4] == [0x04u8, 0x35, 0x83, 0x94] {
-                Network::Testnet
-            } else {
-                return Err(base58::Error::InvalidVersion((&data[0..4]).to_vec()));
-            },
+            network: network,
             depth: data[4],
             parent_fingerprint: Fingerprint::from(&data[5..9]),
             child_number: child_number,
             chain_code: ChainCode::from(&data[13..45]),
-            secret_key: SecretKey::from_slice(
-                             &data[46..78]).map_err(|e|
-                                 base58::Error::Other(e.to_string()))?
+            private_key: PrivateKey {
+                compressed: true,
+                network: network,
+                key: secp256k1::SecretKey::from_slice(
+                    &data[46..78]
+                ).map_err(|e|
+                        base58::Error::Other(e.to_string())
+                )?,
+            },
         })
     }
 }
@@ -606,7 +630,7 @@ impl fmt::Display for ExtendedPubKey {
         BigEndian::write_u32(&mut ret[9..13], u32::from(self.child_number));
 
         ret[13..45].copy_from_slice(&self.chain_code[..]);
-        ret[45..78].copy_from_slice(&self.public_key.serialize()[..]);
+        ret[45..78].copy_from_slice(&self.public_key.key.serialize()[..]);
         fmt.write_str(&base58::check_encode_slice(&ret[..]))
     }
 }
