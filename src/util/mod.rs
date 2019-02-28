@@ -25,6 +25,7 @@ pub mod contracthash;
 pub mod decimal;
 pub mod hash;
 pub mod misc;
+pub mod psbt;
 pub mod uint;
 
 use std::{error, fmt};

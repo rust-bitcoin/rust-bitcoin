@@ -47,3 +47,7 @@ path = "fuzz_targets/deserialize_udecimal.rs"
 [[bin]]
 name = "outpoint_string"
 path = "fuzz_targets/outpoint_string.rs"
+
+[[bin]]
+name = "deserialize_psbt"
+path = "fuzz_targets/deserialize_psbt.rs"
