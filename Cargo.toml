@@ -1,6 +1,6 @@
 [package]
 name = "bitcoin"
-version = "0.16.0"
+version = "0.17.0"
 authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
 license = "CC0-1.0"
 homepage = "https://github.com/rust-bitcoin/rust-bitcoin/"
