@@ -15,10 +15,13 @@ name = "bitcoin"
 path = "src/lib.rs"
 
 [features]
+default = ["secp"]
+
 fuzztarget = ["secp256k1/fuzztarget", "bitcoin_hashes/fuzztarget"]
 serde-decimal = ["use-serde", "strason"]
 unstable = []
 use-serde = ["serde", "bitcoin_hashes/serde"]
+secp = ["secp256k1"]
 
 [dependencies]
 bitcoin-bech32 = "0.8.0"
@@ -44,4 +47,5 @@ version = "=0.3.2"
 
 [dependencies.secp256k1]
 version = "0.12"
+optional = true
 features = [ "rand" ]

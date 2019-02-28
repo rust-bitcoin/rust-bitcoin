@@ -55,7 +55,7 @@ use blockdata::script;
 use network::constants::Network;
 use consensus::encode;
 use util::base58;
-use util::key;
+#[cfg(feature = "secp")] use util::key;
 
 /// The method used to produce an address
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -80,6 +80,7 @@ pub struct Address {
 impl Address {
     /// Creates a pay to (compressed) public key hash address from a public key
     /// This is the preferred non-witness type address
+    #[cfg(feature = "secp")]
     #[inline]
     pub fn p2pkh(pk: &key::PublicKey, network: Network) -> Address {
         let mut hash_engine = hash160::Hash::engine();
@@ -93,6 +94,7 @@ impl Address {
 
     /// Creates a pay to script hash P2SH address from a script
     /// This address type was introduced with BIP16 and is the popular type to implement multi-sig these days.
+    #[cfg(feature = "secp")]
     #[inline]
     pub fn p2sh(script: &script::Script, network: Network) -> Address {
         Address {
@@ -103,6 +105,7 @@ impl Address {
 
     /// Create a witness pay to public key address from a public key
     /// This is the native segwit address type for an output redeemable with a single signature
+    #[cfg(feature = "secp")]
     pub fn p2wpkh (pk: &key::PublicKey, network: Network) -> Address {
         let mut hash_engine = hash160::Hash::engine();
         pk.write_into(&mut hash_engine);
@@ -119,6 +122,7 @@ impl Address {
 
     /// Create a pay to script address that embeds a witness pay to public key
     /// This is a segwit address type that looks familiar (as p2sh) to legacy clients
+    #[cfg(feature = "secp")]
     pub fn p2shwpkh (pk: &key::PublicKey, network: Network) -> Address {
         let mut hash_engine = hash160::Hash::engine();
         pk.write_into(&mut hash_engine);
