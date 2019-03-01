@@ -15,8 +15,6 @@ name = "bitcoin"
 path = "src/lib.rs"
 
 [features]
-default = ["secp"]
-
 fuzztarget = ["secp256k1/fuzztarget", "bitcoin_hashes/fuzztarget"]
 serde-decimal = ["use-serde", "strason"]
 unstable = []
