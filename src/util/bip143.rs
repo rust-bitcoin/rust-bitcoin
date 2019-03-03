@@ -101,17 +101,23 @@ impl SighashComponents {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "secp")]
     use blockdata::script::Script;
     use blockdata::transaction::Transaction;
     use consensus::encode::deserialize;
+    #[cfg(feature = "secp")]
     use network::constants::Network;
     use util::misc::hex_bytes;
+    #[cfg(feature = "secp")]
     use util::address::Address;
+    #[cfg(feature = "secp")]
     use util::key::PublicKey;
+    #[cfg(feature = "secp")]
     use hex;
 
     use super::*;
 
+    #[cfg(feature = "secp")]
     fn p2pkh_hex(pk: &str) -> Script {
         let pk = hex::decode(pk).unwrap();
         let pk = PublicKey::from_slice(pk.as_slice()).unwrap();
@@ -120,6 +126,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "secp")]
     fn bip143_p2wpkh() {
         let tx = deserialize::<Transaction>(
             &hex_bytes(
@@ -158,6 +165,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "secp")]
     fn bip143_p2wpkh_nested_in_p2sh() {
         let tx = deserialize::<Transaction>(
             &hex_bytes(

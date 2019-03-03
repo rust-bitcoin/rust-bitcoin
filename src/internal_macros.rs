@@ -164,6 +164,7 @@ macro_rules! impl_array_newtype {
     }
 }
 
+#[cfg(feature = "secp")]
 macro_rules! impl_array_newtype_encodable {
     ($thing:ident, $ty:ty, $len:expr) => {
         #[cfg(feature = "serde")]
@@ -215,6 +216,7 @@ macro_rules! impl_array_newtype_encodable {
     }
 }
 
+#[cfg(feature = "secp")]
 macro_rules! impl_array_newtype_show {
     ($thing:ident) => {
         impl ::std::fmt::Debug for $thing {

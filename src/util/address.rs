@@ -19,24 +19,30 @@
 //!
 //! ```rust
 //! extern crate rand;
+//! # #[cfg(feature = "secp")]
 //! extern crate secp256k1;
 //! extern crate bitcoin;
 //! 
 //! use bitcoin::network::constants::Network;
 //! use bitcoin::util::address::Address;
+//! # #[cfg(feature = "secp")]
 //! use bitcoin::util::key;
+//! # #[cfg(feature = "secp")]
 //! use secp256k1::Secp256k1;
 //! use rand::thread_rng;
 //! 
 //! fn main() {
 //!     // Generate random key pair
+//! # #[cfg(feature = "secp")]
 //!     let s = Secp256k1::new();
+//! # #[cfg(feature = "secp")]
 //!     let public_key = key::PublicKey {
 //!         compressed: true,
 //!         key: s.generate_keypair(&mut thread_rng()).1,
 //!     };
 //! 
 //!     // Generate pay-to-pubkey-hash address
+//! # #[cfg(feature = "secp")]
 //!     let address = Address::p2pkh(&public_key, Network::Bitcoin);
 //! }
 //! ```
@@ -370,16 +376,19 @@ mod tests {
 
     use blockdata::script::Script;
     use network::constants::Network::{Bitcoin, Testnet, Regtest};
+    #[cfg(feature = "secp")]
     use util::key::PublicKey;
 
     use super::*;
 
     macro_rules! hex (($hex:expr) => (hex_decode($hex).unwrap()));
+    #[cfg(feature = "secp")]
     macro_rules! hex_key (($hex:expr) => (PublicKey::from_slice(&hex!($hex)).unwrap()));
     macro_rules! hex_script (($hex:expr) => (Script::from(hex!($hex))));
     macro_rules! hex_hash160 (($hex:expr) => (hash160::Hash::from_slice(&hex!($hex)).unwrap()));
 
     #[test]
+    #[cfg(feature = "secp")]
     fn test_p2pkh_address_58() {
         let addr = Address {
             network: Bitcoin,
@@ -394,6 +403,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "secp")]
     fn test_p2pkh_from_key() {
         let key = hex_key!("048d5141948c1702e8c95f438815794b87f706a8d4cd2bffad1dc1570971032c9b6042a0431ded2478b5c9cf2d81c124a5e57347a3c63ef0e7716cf54d613ba183");
         let addr = Address::p2pkh(&key, Bitcoin);
@@ -419,6 +429,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "secp")]
     fn test_p2sh_parse() {
         let script = hex_script!("552103a765fc35b3f210b95223846b36ef62a4e53e34e2925270c2c7906b92c9f718eb2103c327511374246759ec8d0b89fa6c6b23b33e11f92c5bc155409d86de0c79180121038cae7406af1f12f4786d820a1466eec7bc5785a1b5e4a387eca6d797753ef6db2103252bfb9dcaab0cd00353f2ac328954d791270203d66c2be8b430f115f451b8a12103e79412d42372c55dd336f2eb6eb639ef9d74a22041ba79382c74da2338fe58ad21035049459a4ebc00e876a9eef02e72a3e70202d3d1f591fc0dd542f93f642021f82102016f682920d9723c61b27f562eb530c926c00106004798b6471e8c52c60ee02057ae");
         let addr = Address::p2sh(&script, Testnet);
@@ -428,6 +439,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "secp")]
     fn test_p2wpkh () {
         // stolen from Bitcoin transaction: b3c8c2b6cfc335abbcb2c7823a8453f55d64b2b5125a9a61e8737230cdb8ce20
         let key = hex_key!("033bc8c83c52df5712229a2f72206d90192366c36428cb0c12b6af98324d97bfbc");
