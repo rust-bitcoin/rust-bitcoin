@@ -1,6 +1,6 @@
 #!/bin/sh -ex
 
-FEATURES="bitcoinconsensus use-serde serde-decimal"
+FEATURES="secp256k1 consensus use-serde,secp256k1 serde-decimal,secp256k1"
 
 # Use toolchain if explicitly specified
 if [ -n "$TOOLCHAIN" ]

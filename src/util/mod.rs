@@ -16,16 +16,16 @@
 //!
 //! Functions needed by all parts of the Bitcoin library
 
-#[cfg(feature = "secp")] pub mod key;
+#[cfg(feature = "secp256k1")] pub mod key;
 pub mod address;
 pub mod base58;
-#[cfg(feature = "secp")] pub mod bip32;
+#[cfg(feature = "secp256k1")] pub mod bip32;
 pub mod bip143;
-#[cfg(feature = "secp")] pub mod contracthash;
+#[cfg(feature = "secp256k1")] pub mod contracthash;
 pub mod decimal;
 pub mod hash;
 pub mod misc;
-#[cfg(feature = "secp")] pub mod psbt;
+#[cfg(feature = "secp256k1")] pub mod psbt;
 pub mod uint;
 
 use std::{error, fmt};

@@ -19,7 +19,7 @@ fuzztarget = ["secp256k1/fuzztarget", "bitcoin_hashes/fuzztarget"]
 serde-decimal = ["use-serde", "strason"]
 unstable = []
 use-serde = ["serde", "bitcoin_hashes/serde"]
-secp = ["secp256k1"]
+consensus = ["bitcoinconsensus", "secp256k1"]
 
 [dependencies]
 bitcoin-bech32 = "0.8.0"

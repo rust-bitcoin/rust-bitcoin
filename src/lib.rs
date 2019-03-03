@@ -47,11 +47,11 @@ extern crate bitcoin_hashes;
 extern crate byteorder;
 extern crate hex;
 extern crate rand;
-#[cfg(feature = "secp")] extern crate secp256k1;
+#[cfg(feature = "secp256k1")] extern crate secp256k1;
 #[cfg(feature = "serde")] extern crate serde;
 #[cfg(feature = "strason")] extern crate strason;
 #[cfg(all(test, feature = "unstable"))] extern crate test;
-#[cfg(feature="bitcoinconsensus")] extern crate bitcoinconsensus;
+#[cfg(feature="consensus")] extern crate bitcoinconsensus;
 
 #[cfg(test)]
 #[macro_use]
@@ -77,7 +77,7 @@ pub use network::constants::Network;
 pub use util::Error;
 pub use util::address::Address;
 pub use util::hash::BitcoinHash;
-#[cfg(feature = "secp")] pub use util::key::PrivateKey;
-#[cfg(feature = "secp")] pub use util::key::PublicKey;
+#[cfg(feature = "secp256k1")] pub use util::key::PrivateKey;
+#[cfg(feature = "secp256k1")] pub use util::key::PublicKey;
 pub use util::decimal::Decimal;
 pub use util::decimal::UDecimal;
