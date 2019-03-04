@@ -37,6 +37,8 @@ use bitcoin_hashes::{hash160, sha256, Hash};
 #[cfg(feature="bitcoinconsensus")] use std::convert;
 #[cfg(feature="bitcoinconsensus")] use bitcoin_hashes::sha256d;
 
+use util::key::PublicKey;
+
 #[derive(Clone, Default, PartialOrd, Ord, PartialEq, Eq, Hash)]
 /// A Bitcoin script
 pub struct Script(Box<[u8]>);
@@ -599,6 +601,15 @@ impl Builder {
         self
     }
 
+    /// Pushes a public key
+    pub fn push_key(self, key: &PublicKey) -> Builder {
+        if key.compressed {
+            self.push_slice(&key.key.serialize()[..])
+        } else {
+            self.push_slice(&key.key.serialize_uncompressed()[..])
+        }
+    }
+
     /// Adds a single opcode to the script
     pub fn push_opcode(mut self, data: opcodes::All) -> Builder {
         self.0.push(data.into_u8());
@@ -694,6 +705,7 @@ impl<D: Decoder> Decodable<D> for Script {
 
 #[cfg(test)]
 mod test {
+    use std::str::FromStr;
     use hex::decode as hex_decode;
 
     use super::*;
@@ -701,6 +713,7 @@ mod test {
 
     use consensus::encode::{deserialize, serialize};
     use blockdata::opcodes;
+    use util::key::PublicKey;
 
     #[test]
     fn script() {
@@ -724,6 +737,14 @@ mod test {
 
         // data
         script = script.push_slice("NRA4VR".as_bytes()); comp.extend([6u8, 78, 82, 65, 52, 86, 82].iter().cloned()); assert_eq!(&script[..], &comp[..]);
+
+        // keys
+        let keystr = "21032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af";
+        let key = PublicKey::from_str(&keystr[2..]).unwrap();
+        script = script.push_key(&key); comp.extend(hex_decode(keystr).unwrap().iter().cloned()); assert_eq!(&script[..], &comp[..]);
+        let keystr = "41042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133";
+        let key = PublicKey::from_str(&keystr[2..]).unwrap();
+        script = script.push_key(&key); comp.extend(hex_decode(keystr).unwrap().iter().cloned()); assert_eq!(&script[..], &comp[..]);
 
         // opcodes
         script = script.push_opcode(opcodes::all::OP_CHECKSIG); comp.push(0xACu8); assert_eq!(&script[..], &comp[..]);
