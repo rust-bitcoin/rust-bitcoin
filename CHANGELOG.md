@@ -1,4 +1,8 @@
 
+# 0.17.1 - 2019-03-04
+
+* Add some trait impls to `PublicKey` for miniscript interoperability
+
 # 0.17.0 - 2019-02-28 - ``The PSBT Release''
 
 * **Update minimum rustc version to 1.22**.
