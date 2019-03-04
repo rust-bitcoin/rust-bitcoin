@@ -64,6 +64,32 @@ impl PublicKey {
     }
 }
 
+impl fmt::Display for PublicKey {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if self.compressed {
+            for ch in &self.key.serialize()[..] {
+                write!(f, "{:02x}", ch)?;
+            }
+        } else {
+            for ch in &self.key.serialize_uncompressed()[..] {
+                write!(f, "{:02x}", ch)?;
+            }
+        }
+        Ok(())
+    }
+}
+
+impl FromStr for PublicKey {
+    type Err = encode::Error;
+    fn from_str(s: &str) -> Result<PublicKey, encode::Error> {
+        let key = secp256k1::PublicKey::from_str(s)?;
+        Ok(PublicKey {
+            key: key,
+            compressed: s.len() == 66
+        })
+    }
+}
+
 #[derive(Copy, Clone, PartialEq, Eq)]
 /// A Bitcoin ECDSA private key
 pub struct PrivateKey {
@@ -161,7 +187,7 @@ impl ops::Index<ops::RangeFull> for PrivateKey {
 
 #[cfg(test)]
 mod tests {
-    use super::PrivateKey;
+    use super::{PrivateKey, PublicKey};
     use secp256k1::Secp256k1;
     use std::str::FromStr;
     use network::constants::Network::Testnet;
@@ -193,7 +219,14 @@ mod tests {
         assert_eq!(&sk.to_wif(), "5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3");
 
         let secp = Secp256k1::new();
-        let pk = Address::p2pkh(&sk.public_key(&secp), sk.network);
-        assert_eq!(&pk.to_string(), "1GhQvF6dL8xa6wBxLnWmHcQsurx9RxiMc8");
+        let mut pk = sk.public_key(&secp);
+        assert_eq!(pk.compressed, false);
+        assert_eq!(&pk.to_string(), "042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133");
+        assert_eq!(pk, PublicKey::from_str("042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133").unwrap());
+        let addr = Address::p2pkh(&pk, sk.network);
+        assert_eq!(&addr.to_string(), "1GhQvF6dL8xa6wBxLnWmHcQsurx9RxiMc8");
+        pk.compressed = true;
+        assert_eq!(&pk.to_string(), "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af");
+        assert_eq!(pk, PublicKey::from_str("032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af").unwrap());
     }
 }
