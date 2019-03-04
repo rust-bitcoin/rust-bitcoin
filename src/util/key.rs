@@ -44,6 +44,13 @@ impl PublicKey {
         debug_assert!(write_res.is_ok());
     }
 
+    /// Serialize the public key to bytes
+    pub fn to_bytes(&self) -> Vec<u8> {
+        let mut buf = Vec::new();
+        self.write_into(&mut buf);
+        buf
+    }
+
     /// Deserialize a public key from a slice
     pub fn from_slice(data: &[u8]) -> Result<PublicKey, encode::Error> {
         let compressed: bool = match data.len() {
@@ -108,6 +115,11 @@ impl PrivateKey {
             compressed: self.compressed,
             key: secp256k1::PublicKey::from_secret_key(secp, &self.key)
         }
+    }
+
+    /// Serialize the private key to bytes
+    pub fn to_bytes(&self) -> Vec<u8> {
+        self.key[..].to_vec()
     }
 
     /// Format the private key to WIF format.
