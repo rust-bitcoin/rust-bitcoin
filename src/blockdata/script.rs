@@ -33,11 +33,11 @@ use blockdata::opcodes;
 use consensus::encode::{Decodable, Encodable};
 use consensus::encode::{self, Decoder, Encoder};
 use bitcoin_hashes::{hash160, sha256, Hash};
-#[cfg(feature="bitcoinconsensus")] use bitcoinconsensus;
-#[cfg(feature="bitcoinconsensus")] use std::convert;
-#[cfg(feature="bitcoinconsensus")] use bitcoin_hashes::sha256d;
+#[cfg(feature="consensus")] use bitcoinconsensus;
+#[cfg(feature="consensus")] use std::convert;
+#[cfg(feature="consensus")] use bitcoin_hashes::sha256d;
 
-use util::key::PublicKey;
+#[cfg(feature = "secp256k1")] use util::key::PublicKey;
 
 #[derive(Clone, Default, PartialOrd, Ord, PartialEq, Eq, Hash)]
 /// A Bitcoin script
@@ -92,16 +92,16 @@ pub enum Error {
     EarlyEndOfScript,
     /// Tried to read an array off the stack as a number when it was more than 4 bytes
     NumericOverflow,
-    #[cfg(feature="bitcoinconsensus")]
+    #[cfg(feature="consensus")]
     /// Error validating the script with bitcoinconsensus library
     BitcoinConsensus(bitcoinconsensus::Error),
-    #[cfg(feature="bitcoinconsensus")]
+    #[cfg(feature="consensus")]
     /// Can not find the spent transaction
     UnknownSpentTransaction(sha256d::Hash),
-    #[cfg(feature="bitcoinconsensus")]
+    #[cfg(feature="consensus")]
     /// The spent transaction does not have the referred output
     WrongSpentOutputIndex(usize),
-    #[cfg(feature="bitcoinconsensus")]
+    #[cfg(feature="consensus")]
     /// Can not serialize the spending transaction
     SerializationError
 }
@@ -120,19 +120,19 @@ impl error::Error for Error {
             Error::NonMinimalPush => "non-minimal datapush",
             Error::EarlyEndOfScript => "unexpected end of script",
             Error::NumericOverflow => "numeric overflow (number on stack larger than 4 bytes)",
-            #[cfg(feature="bitcoinconsensus")]
+            #[cfg(feature="consensus")]
             Error::BitcoinConsensus(ref _n) => "bitcoinconsensus verification failed",
-            #[cfg(feature="bitcoinconsensus")]
+            #[cfg(feature="consensus")]
             Error::UnknownSpentTransaction (ref _hash) => "unknown transaction referred in Transaction::verify()",
-            #[cfg(feature="bitcoinconsensus")]
+            #[cfg(feature="consensus")]
             Error::WrongSpentOutputIndex(ref _ix) => "unknown output index {} referred in Transaction::verify()",
-            #[cfg(feature="bitcoinconsensus")]
+            #[cfg(feature="consensus")]
             Error::SerializationError => "can not serialize the spending transaction in Transaction::verify()",
         }
     }
 }
 
-#[cfg(feature="bitcoinconsensus")]
+#[cfg(feature="consensus")]
 #[doc(hidden)]
 impl convert::From<bitcoinconsensus::Error> for Error {
     fn from(err: bitcoinconsensus::Error) -> Error {
@@ -321,7 +321,7 @@ impl Script {
         }
     }
 
-    #[cfg(feature="bitcoinconsensus")]
+    #[cfg(feature="consensus")]
     /// verify spend of an input script
     /// # Parameters
     ///  * index - the input index in spending which is spending this transaction
@@ -601,6 +601,7 @@ impl Builder {
         self
     }
 
+    #[cfg(feature = "secp256k1")]
     /// Pushes a public key
     pub fn push_key(self, key: &PublicKey) -> Builder {
         if key.compressed {
@@ -705,7 +706,7 @@ impl<D: Decoder> Decodable<D> for Script {
 
 #[cfg(test)]
 mod test {
-    use std::str::FromStr;
+    #[cfg(feature = "secp256k1")] use std::str::FromStr;
     use hex::decode as hex_decode;
 
     use super::*;
@@ -713,7 +714,7 @@ mod test {
 
     use consensus::encode::{deserialize, serialize};
     use blockdata::opcodes;
-    use util::key::PublicKey;
+    #[cfg(feature = "secp256k1")] use util::key::PublicKey;
 
     #[test]
     fn script() {
@@ -738,13 +739,16 @@ mod test {
         // data
         script = script.push_slice("NRA4VR".as_bytes()); comp.extend([6u8, 78, 82, 65, 52, 86, 82].iter().cloned()); assert_eq!(&script[..], &comp[..]);
 
+        #[cfg(feature = "secp256k1")]
         // keys
-        let keystr = "21032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af";
-        let key = PublicKey::from_str(&keystr[2..]).unwrap();
-        script = script.push_key(&key); comp.extend(hex_decode(keystr).unwrap().iter().cloned()); assert_eq!(&script[..], &comp[..]);
-        let keystr = "41042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133";
-        let key = PublicKey::from_str(&keystr[2..]).unwrap();
-        script = script.push_key(&key); comp.extend(hex_decode(keystr).unwrap().iter().cloned()); assert_eq!(&script[..], &comp[..]);
+        {
+            let keystr = "21032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af";
+            let key = PublicKey::from_str(&keystr[2..]).unwrap();
+            script = script.push_key(&key); comp.extend(hex_decode(keystr).unwrap().iter().cloned()); assert_eq!(&script[..], &comp[..]);
+            let keystr = "41042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133";
+            let key = PublicKey::from_str(&keystr[2..]).unwrap();
+            script = script.push_key(&key); comp.extend(hex_decode(keystr).unwrap().iter().cloned()); assert_eq!(&script[..], &comp[..]);
+        }
 
         // opcodes
         script = script.push_opcode(opcodes::all::OP_CHECKSIG); comp.push(0xACu8); assert_eq!(&script[..], &comp[..]);
@@ -953,7 +957,7 @@ mod test {
     }
 
 	#[test]
-	#[cfg(feature="bitcoinconsensus")]
+	#[cfg(feature="consensus")]
 	fn test_bitcoinconsensus () {
 		// a random segwit transaction from the blockchain using native segwit
 		let spent = Builder::from(hex_decode("0020701a8d401c84fb13e6baf169d59684e17abd9fa216c8cc5b9fc63d622ff8c58d").unwrap()).into_script();
