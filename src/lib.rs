@@ -49,6 +49,7 @@ extern crate hex;
 extern crate rand;
 extern crate secp256k1;
 #[cfg(feature = "serde")] extern crate serde;
+#[cfg(feature = "serde_test")] extern crate serde_test;
 #[cfg(feature = "strason")] extern crate strason;
 #[cfg(all(test, feature = "unstable"))] extern crate test;
 #[cfg(feature="bitcoinconsensus")] extern crate bitcoinconsensus;
