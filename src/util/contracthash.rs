@@ -290,6 +290,7 @@ mod tests {
     use secp256k1::key::PublicKey;
     use hex::decode as hex_decode;
     use rand::thread_rng;
+    use std::str::FromStr;
 
     use blockdata::script::Script;
     use network::constants::Network;
@@ -352,6 +353,29 @@ mod tests {
         assert_eq!(tweaked_pks[0], tweaked_pk1);
         assert_eq!(tweaked_pks[1], tweaked_pk2);
         assert_eq!(tweaked_pks[2], tweaked_pk3);
+    }
+
+    #[test]
+    fn tweak_fixed_vector() {
+        let secp = Secp256k1::new();
+
+        let pks = [
+            PublicKey::from_str("02ba604e6ad9d3864eda8dc41c62668514ef7d5417d3b6db46e45cc4533bff001c").unwrap(),
+            PublicKey::from_str("0365c0755ea55ce85d8a1900c68a524dbfd1c0db45ac3b3840dbb10071fe55e7a8").unwrap(),
+            PublicKey::from_str("0202313ca315889b2e69c94cf86901119321c7288139ba53ac022b7af3dc250054").unwrap(),
+        ];
+        let tweaked_pks = [
+            PublicKey::from_str("03b3597221b5982a3f1a77aed50f0015d1b6edfc69023ef7f25cfac0e8af1b2041").unwrap(),
+            PublicKey::from_str("0296ece1fd954f7ae94f8d6bad19fd6d583f5b36335cf13135a3053a22f3c1fb05").unwrap(),
+            PublicKey::from_str("0230bb1ca5dbc7fcf49294c2c3e582e5582eabf7c87e885735dc774da45d610e51").unwrap(),
+        ];
+        let contract = b"if bottle mt dont remembr drink wont pay";
+
+        // Directly compute tweaks on pubkeys
+        assert_eq!(
+            tweak_keys(&secp, &pks, &contract[..]).unwrap(),
+            tweaked_pks
+        );
     }
 
     #[test]
