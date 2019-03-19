@@ -16,7 +16,7 @@
 //!
 //! Internal macros used for unit tests
 
-#[cfg(all(feature = "serde", feature = "strason"))]
+#[cfg(all(feature = "serde", feature = "secp256k1", feature = "strason"))]
 macro_rules! serde_round_trip (
     ($var:expr) => ({
         use $crate::strason::Json;

@@ -1,6 +1,6 @@
 #!/bin/sh -ex
 
-FEATURES="secp256k1 consensus use-serde,secp256k1 serde-decimal,secp256k1"
+FEATURES="secp256k1 consensus use-serde use-serde,secp256k1 serde-decimal serde-decimal,secp256k1"
 
 # Use toolchain if explicitly specified
 if [ -n "$TOOLCHAIN" ]
@@ -9,12 +9,12 @@ then
 fi
 
 # Test without any features first
-cargo test --verbose
+cargo test --no-default-features --verbose
 
 # Test each feature
 for feature in ${FEATURES}
 do
-    cargo test --verbose --features="$feature"
+    cargo test --no-default-features --verbose --features="$feature"
 done
 
 # Fuzz if told to
