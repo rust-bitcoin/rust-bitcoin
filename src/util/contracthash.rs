@@ -160,15 +160,16 @@ impl<'a> From<&'a [u8]> for Template {
     }
 }
 
+/// Tweak a single key using some arbitrary data
+pub fn tweak_key<C: secp256k1::Verification>(secp: &Secp256k1<C>, mut key: PublicKey, contract: &[u8]) -> PublicKey {
+    let hmac_result = compute_tweak(&key, contract);
+    key.key.add_exp_assign(secp, &hmac_result[..]).expect("HMAC cannot produce invalid tweak");
+    key
+}
+
 /// Tweak keys using some arbitrary data
-pub fn tweak_keys<C: secp256k1::Verification>(secp: &Secp256k1<C>, keys: &[PublicKey], contract: &[u8]) -> Result<Vec<PublicKey>, Error> {
-    let mut ret = Vec::with_capacity(keys.len());
-    for mut key in keys.iter().cloned() {
-        let hmac_result = compute_tweak(&key, contract);
-        key.key.add_exp_assign(secp, &hmac_result[..]).map_err(Error::Secp)?;
-        ret.push(key);
-    }
-    Ok(ret)
+pub fn tweak_keys<C: secp256k1::Verification>(secp: &Secp256k1<C>, keys: &[PublicKey], contract: &[u8]) -> Vec<PublicKey> {
+    keys.iter().cloned().map(|key| tweak_key(secp, key, contract)).collect()
 }
 
 /// Compute a tweak from some given data for the given public key
@@ -202,7 +203,7 @@ pub fn create_address<C: secp256k1::Verification>(secp: &Secp256k1<C>,
                       keys: &[PublicKey],
                       template: &Template)
                       -> Result<address::Address, Error> {
-    let keys = tweak_keys(secp, keys, contract)?;
+    let keys = tweak_keys(secp, keys, contract);
     let script = template.to_script(&keys)?;
     Ok(address::Address {
         network: network,
@@ -358,7 +359,7 @@ mod tests {
         let contract = b"if bottle mt dont remembr drink wont pay";
 
         // Directly compute tweaks on pubkeys
-        let tweaked_pks = tweak_keys(&secp, &pks, &contract[..]).unwrap();
+        let tweaked_pks = tweak_keys(&secp, &pks, &contract[..]);
         // Compute tweaks on secret keys
         let tweaked_pk1 = PublicKey::from_private_key(&secp, &tweak_secret_key(&secp, &sk1, &contract[..]).unwrap());
         let tweaked_pk2 = PublicKey::from_private_key(&secp, &tweak_secret_key(&secp, &sk2, &contract[..]).unwrap());
@@ -387,7 +388,7 @@ mod tests {
 
         // Directly compute tweaks on pubkeys
         assert_eq!(
-            tweak_keys(&secp, &pks, &contract[..]).unwrap(),
+            tweak_keys(&secp, &pks, &contract[..]),
             tweaked_pks
         );
     }
