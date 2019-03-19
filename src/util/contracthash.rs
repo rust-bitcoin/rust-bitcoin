@@ -19,7 +19,8 @@
 //! what this does.
 
 use secp256k1::{self, Secp256k1};
-use secp256k1::key::{PublicKey, SecretKey};
+use PrivateKey;
+use PublicKey;
 use bitcoin_hashes::{hash160, sha256, Hash, HashEngine, Hmac, HmacEngine};
 use blockdata::{opcodes, script};
 
@@ -34,9 +35,6 @@ static PUBKEY: u8 = 0xFE;
 /// A contract-hash error
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Error {
-    /// Contract hashed to an out-of-range value (this is basically impossible
-    /// and much more likely suggests memory corruption or hardware failure)
-    BadTweak(secp256k1::Error),
     /// Other secp256k1 related error
     Secp(secp256k1::Error),
     /// Script parsing error
@@ -59,7 +57,6 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Error::BadTweak(ref e) |
             Error::Secp(ref e) => fmt::Display::fmt(&e, f),
             Error::Script(ref e) => fmt::Display::fmt(&e, f),
             Error::UncompressedKey => f.write_str("encountered uncompressed secp public key"),
@@ -74,7 +71,6 @@ impl fmt::Display for Error {
 impl error::Error for Error {
     fn cause(&self) -> Option<&error::Error> {
         match *self {
-            Error::BadTweak(ref e) |
             Error::Secp(ref e) => Some(e),
             Error::Script(ref e) => Some(e),
             _ => None
@@ -83,7 +79,6 @@ impl error::Error for Error {
 
     fn description(&self) -> &'static str {
         match *self {
-            Error::BadTweak(_) => "bad public key tweak",
             Error::Secp(_) => "libsecp256k1 error",
             Error::Script(_) => "script error",
             Error::UncompressedKey => "encountered uncompressed secp public key",
@@ -119,7 +114,7 @@ impl Template {
                         return Err(Error::TooFewKeys(key_index));
                     }
                     key_index += 1;
-                    ret.push_slice(&keys[key_index - 1].serialize()[..])
+                    ret.push_key(&keys[key_index - 1])
                 }
             }
         }
@@ -169,33 +164,33 @@ impl<'a> From<&'a [u8]> for Template {
 pub fn tweak_keys<C: secp256k1::Verification>(secp: &Secp256k1<C>, keys: &[PublicKey], contract: &[u8]) -> Result<Vec<PublicKey>, Error> {
     let mut ret = Vec::with_capacity(keys.len());
     for mut key in keys.iter().cloned() {
-        let mut hmac_engine: HmacEngine<sha256::Hash> = HmacEngine::new(&key.serialize());
-        hmac_engine.input(contract);
-        let hmac_result: Hmac<sha256::Hash> = Hmac::from_engine(hmac_engine);
-        let hmac_sk = SecretKey::from_slice(&hmac_result[..]).map_err(Error::BadTweak)?;
-        key.add_exp_assign(secp, &hmac_sk[..]).map_err(Error::Secp)?;
+        let hmac_result = compute_tweak(&key, contract);
+        key.key.add_exp_assign(secp, &hmac_result[..]).map_err(Error::Secp)?;
         ret.push(key);
     }
     Ok(ret)
 }
 
 /// Compute a tweak from some given data for the given public key
-pub fn compute_tweak(pk: &PublicKey, contract: &[u8]) -> Result<SecretKey, Error> {
-    let mut hmac_engine: HmacEngine<sha256::Hash> = HmacEngine::new(&pk.serialize());
+pub fn compute_tweak(pk: &PublicKey, contract: &[u8]) -> Hmac<sha256::Hash> {
+    let mut hmac_engine: HmacEngine<sha256::Hash> = if pk.compressed {
+        HmacEngine::new(&pk.key.serialize())
+    } else {
+        HmacEngine::new(&pk.key.serialize_uncompressed())
+    };
     hmac_engine.input(contract);
-    let hmac_result: Hmac<sha256::Hash> = Hmac::from_engine(hmac_engine);
-    SecretKey::from_slice(&hmac_result[..]).map_err(Error::BadTweak)
+    Hmac::from_engine(hmac_engine)
 }
 
 /// Tweak a secret key using some arbitrary data (calls `compute_tweak` internally)
-pub fn tweak_secret_key<C: secp256k1::Signing>(secp: &Secp256k1<C>, key: &SecretKey, contract: &[u8]) -> Result<SecretKey, Error> {
+pub fn tweak_secret_key<C: secp256k1::Signing>(secp: &Secp256k1<C>, key: &PrivateKey, contract: &[u8]) -> Result<PrivateKey, Error> {
     // Compute public key
-    let pk = PublicKey::from_secret_key(secp, &key);
+    let pk = PublicKey::from_private_key(secp, &key);
     // Compute tweak
-    let hmac_sk = compute_tweak(&pk, contract)?;
+    let hmac_sk = compute_tweak(&pk, contract);
     // Execute the tweak
     let mut key = *key;
-    key.add_assign(&hmac_sk[..]).map_err(Error::Secp)?;
+    key.key.add_assign(&hmac_sk[..]).map_err(Error::Secp)?;
     // Return
     Ok(key)
 }
@@ -287,7 +282,6 @@ pub fn untemplate(script: &script::Script) -> Result<(Template, Vec<PublicKey>),
 #[cfg(test)]
 mod tests {
     use secp256k1::Secp256k1;
-    use secp256k1::key::PublicKey;
     use hex::decode as hex_decode;
     use rand::thread_rng;
     use std::str::FromStr;
@@ -296,6 +290,7 @@ mod tests {
     use network::constants::Network;
 
     use super::*;
+    use PublicKey;
 
     macro_rules! hex (($hex:expr) => (hex_decode($hex).unwrap()));
     macro_rules! hex_key (($hex:expr) => (PublicKey::from_slice(&hex!($hex)).unwrap()));
@@ -340,15 +335,34 @@ mod tests {
         let (sk2, pk2) = secp.generate_keypair(&mut thread_rng());
         let (sk3, pk3) = secp.generate_keypair(&mut thread_rng());
 
-        let pks = [pk1, pk2, pk3];
+        let sk1 = PrivateKey {
+            key: sk1,
+            compressed: true,
+            network: Network::Bitcoin,
+        };
+        let sk2 = PrivateKey {
+            key: sk2,
+            compressed: false,
+            network: Network::Bitcoin,
+        };
+        let sk3 = PrivateKey {
+            key: sk3,
+            compressed: true,
+            network: Network::Bitcoin,
+        };
+        let pks = [
+            PublicKey { key: pk1, compressed: true },
+            PublicKey { key: pk2, compressed: false },
+            PublicKey { key: pk3, compressed: true },
+        ];
         let contract = b"if bottle mt dont remembr drink wont pay";
 
         // Directly compute tweaks on pubkeys
         let tweaked_pks = tweak_keys(&secp, &pks, &contract[..]).unwrap();
         // Compute tweaks on secret keys
-        let tweaked_pk1 = PublicKey::from_secret_key(&secp, &tweak_secret_key(&secp, &sk1, &contract[..]).unwrap());
-        let tweaked_pk2 = PublicKey::from_secret_key(&secp, &tweak_secret_key(&secp, &sk2, &contract[..]).unwrap());
-        let tweaked_pk3 = PublicKey::from_secret_key(&secp, &tweak_secret_key(&secp, &sk3, &contract[..]).unwrap());
+        let tweaked_pk1 = PublicKey::from_private_key(&secp, &tweak_secret_key(&secp, &sk1, &contract[..]).unwrap());
+        let tweaked_pk2 = PublicKey::from_private_key(&secp, &tweak_secret_key(&secp, &sk2, &contract[..]).unwrap());
+        let tweaked_pk3 = PublicKey::from_private_key(&secp, &tweak_secret_key(&secp, &sk3, &contract[..]).unwrap());
         // Check equality
         assert_eq!(tweaked_pks[0], tweaked_pk1);
         assert_eq!(tweaked_pks[1], tweaked_pk2);
