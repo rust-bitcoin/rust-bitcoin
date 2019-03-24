@@ -25,6 +25,7 @@ pub mod amount;
 pub mod base58;
 pub mod bip32;
 pub mod bip143;
+pub mod bip152;
 pub mod contracthash;
 pub mod hash;
 pub mod merkleblock;

@@ -523,6 +523,7 @@ macro_rules! impl_array {
 
 impl_array!(2);
 impl_array!(4);
+impl_array!(6);
 impl_array!(8);
 impl_array!(10);
 impl_array!(12);
@@ -596,6 +597,9 @@ impl_vec!(TxIn);
 impl_vec!(Vec<u8>);
 impl_vec!(u64);
 impl_vec!(TapLeafHash);
+impl_vec!(VarInt);
+impl_vec!(::util::bip152::ShortId);
+impl_vec!(::util::bip152::PrefilledTransaction);
 
 #[cfg(feature = "std")] impl_vec!(Inventory);
 #[cfg(feature = "std")] impl_vec!((u32, Address));
