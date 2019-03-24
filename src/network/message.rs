@@ -19,6 +19,7 @@ use crate::network::address::{Address, AddrV2Message};
 use crate::network::{message_network, message_bloom};
 use crate::network::message_blockdata;
 use crate::network::message_filter;
+use crate::network::message_compact_blocks;
 use crate::consensus::encode::{CheckedData, Decodable, Encodable, VarInt};
 use crate::consensus::{encode, serialize};
 use crate::util::merkleblock::MerkleBlock;
@@ -181,6 +182,14 @@ pub enum NetworkMessage {
     GetCFCheckpt(message_filter::GetCFCheckpt),
     /// BIP157 cfcheckpt
     CFCheckpt(message_filter::CFCheckpt),
+    /// BIP152 sendcmpct
+    SendCmpct(message_compact_blocks::SendCmpct),
+    /// BIP152 cmpctblock
+    CmpctBlock(message_compact_blocks::CmpctBlock),
+    /// BIP152 getblocktxn
+    GetBlockTxn(message_compact_blocks::GetBlockTxn),
+    /// BIP152 blocktxn
+    BlockTxn(message_compact_blocks::BlockTxn),
     /// `alert`
     Alert(Vec<u8>),
     /// `reject`
@@ -237,6 +246,10 @@ impl NetworkMessage {
             NetworkMessage::CFHeaders(_) => "cfheaders",
             NetworkMessage::GetCFCheckpt(_) => "getcfcheckpt",
             NetworkMessage::CFCheckpt(_) => "cfcheckpt",
+            NetworkMessage::SendCmpct(_) => "sendcmpct",
+            NetworkMessage::CmpctBlock(_) => "cmpctblock",
+            NetworkMessage::GetBlockTxn(_) => "getblocktxn",
+            NetworkMessage::BlockTxn(_) => "blocktxn",
             NetworkMessage::Alert(_)    => "alert",
             NetworkMessage::Reject(_)    => "reject",
             NetworkMessage::FeeFilter(_) => "feefilter",
@@ -314,6 +327,10 @@ impl Encodable for RawNetworkMessage {
             NetworkMessage::CFHeaders(ref dat) => serialize(dat),
             NetworkMessage::GetCFCheckpt(ref dat) => serialize(dat),
             NetworkMessage::CFCheckpt(ref dat) => serialize(dat),
+            NetworkMessage::SendCmpct(ref dat) => serialize(dat),
+            NetworkMessage::CmpctBlock(ref dat) => serialize(dat),
+            NetworkMessage::GetBlockTxn(ref dat) => serialize(dat),
+            NetworkMessage::BlockTxn(ref dat) => serialize(dat),
             NetworkMessage::Alert(ref dat)    => serialize(dat),
             NetworkMessage::Reject(ref dat) => serialize(dat),
             NetworkMessage::FeeFilter(ref data) => serialize(data),
@@ -394,6 +411,10 @@ impl Decodable for RawNetworkMessage {
             "reject" => NetworkMessage::Reject(Decodable::consensus_decode_from_finite_reader(&mut mem_d)?),
             "alert"   => NetworkMessage::Alert(Decodable::consensus_decode_from_finite_reader(&mut mem_d)?),
             "feefilter" => NetworkMessage::FeeFilter(Decodable::consensus_decode_from_finite_reader(&mut mem_d)?),
+            "sendcmpct" => NetworkMessage::SendCmpct(Decodable::consensus_decode_from_finite_reader(&mut mem_d)?),
+            "cmpctblock" => NetworkMessage::CmpctBlock(Decodable::consensus_decode_from_finite_reader(&mut mem_d)?),
+            "getblocktxn" => NetworkMessage::GetBlockTxn(Decodable::consensus_decode_from_finite_reader(&mut mem_d)?),
+            "blocktxn" => NetworkMessage::BlockTxn(Decodable::consensus_decode_from_finite_reader(&mut mem_d)?),
             "wtxidrelay" => NetworkMessage::WtxidRelay,
             "addrv2" => NetworkMessage::AddrV2(Decodable::consensus_decode_from_finite_reader(&mut mem_d)?),
             "sendaddrv2" => NetworkMessage::SendAddrV2,
