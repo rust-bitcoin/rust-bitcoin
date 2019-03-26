@@ -805,15 +805,14 @@ mod test {
     }
 
     #[test]
-    #[cfg(all(feature = "serde", feature = "strason"))]
+    #[cfg(feature = "serde")]
     fn script_json_serialize() {
-        use strason::Json;
+        use serde_json;
 
         let original = hex_script!("827651a0698faaa9a8a7a687");
-        let json = Json::from_serialize(&original).unwrap();
-        assert_eq!(json.to_bytes(), b"\"827651a0698faaa9a8a7a687\"");
-        assert_eq!(json.string(), Some("827651a0698faaa9a8a7a687"));
-        let des = json.into_deserialize().unwrap();
+        let json = serde_json::to_value(&original).unwrap();
+        assert_eq!(json, serde_json::Value::String("827651a0698faaa9a8a7a687".to_owned()));
+        let des = serde_json::from_value(json).unwrap();
         assert_eq!(original, des);
     }
 

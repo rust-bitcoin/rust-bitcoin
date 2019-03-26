@@ -49,7 +49,6 @@ extern crate hex;
 extern crate rand;
 extern crate secp256k1;
 #[cfg(feature = "serde")] extern crate serde;
-#[cfg(feature = "strason")] extern crate strason;
 #[cfg(all(test, feature = "serde"))] #[macro_use] extern crate serde_derive; // for 1.22.0 compat
 #[cfg(all(test, feature = "serde"))] extern crate serde_json;
 #[cfg(all(test, feature = "serde"))] extern crate serde_test;
@@ -84,5 +83,3 @@ pub use util::amount::SignedAmount;
 pub use util::hash::BitcoinHash;
 pub use util::key::PrivateKey;
 pub use util::key::PublicKey;
-pub use util::decimal::Decimal;
-pub use util::decimal::UDecimal;

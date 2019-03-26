@@ -1,6 +1,6 @@
 #!/bin/sh -ex
 
-FEATURES="bitcoinconsensus use-serde serde-decimal"
+FEATURES="bitcoinconsensus use-serde"
 
 # Use toolchain if explicitly specified
 if [ -n "$TOOLCHAIN" ]

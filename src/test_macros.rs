@@ -16,15 +16,14 @@
 //!
 //! Internal macros used for unit tests
 
-#[cfg(all(feature = "serde", feature = "strason"))]
+#[cfg(feature = "serde")]
 macro_rules! serde_round_trip (
     ($var:expr) => ({
-        use $crate::strason::Json;
+        use serde_json;
 
-        let start = $var;
-        let encoded = Json::from_serialize(&start).unwrap();
-        let decoded = encoded.into_deserialize().unwrap();
-        assert_eq!(start, decoded);
+        let encoded = serde_json::to_value(&$var).unwrap();
+        let decoded = serde_json::from_value(encoded).unwrap();
+        assert_eq!($var, decoded);
     })
 );
 
