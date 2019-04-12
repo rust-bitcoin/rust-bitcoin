@@ -187,7 +187,7 @@ mod tests {
         assert_eq!(script_find_and_remove(&mut v, &[105, 105, 5]), 0);
         assert_eq!(script_find_and_remove(&mut v, &[105]), 0);
         assert_eq!(script_find_and_remove(&mut v, &[103]), 1);
-        assert_eq!(v, vec![]);
+        assert_eq!(v, Vec::<u8>::new());
 
         assert_eq!(script_find_and_remove(&mut v, &[105, 105, 5]), 0);
         assert_eq!(script_find_and_remove(&mut v, &[105]), 0);
