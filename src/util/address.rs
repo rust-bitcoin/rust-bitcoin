@@ -180,6 +180,38 @@ impl Address {
         }
     }
 
+    /// Get an [Address] from an output script.
+    pub fn from_script(script: &script::Script, network: Network) -> Option<Address> {
+        Some(Address {
+            payload: if script.is_p2pkh() {
+                Payload::PubkeyHash(Hash::from_slice(&script.as_bytes()[3..23]).unwrap())
+            } else if script.is_p2sh() {
+                Payload::ScriptHash(Hash::from_slice(&script.as_bytes()[2..22]).unwrap())
+            } else if script.is_v0_p2wpkh() {
+                match bitcoin_bech32::WitnessProgram::new(
+                    bitcoin_bech32::u5::try_from_u8(0).expect("0<32"),
+                    script.as_bytes()[2..22].to_vec(),
+                    Address::bech_network(network),
+                ) {
+                    Ok(prog) => Payload::WitnessProgram(prog),
+                    Err(_) => return None,
+                }
+            } else if script.is_v0_p2wsh() {
+                match bitcoin_bech32::WitnessProgram::new(
+                    bitcoin_bech32::u5::try_from_u8(0).expect("0<32"),
+                    script.as_bytes()[2..34].to_vec(),
+                    Address::bech_network(network),
+                ) {
+                    Ok(prog) => Payload::WitnessProgram(prog),
+                    Err(_) => return None,
+                }
+            } else {
+                return None;
+            },
+            network: network,
+        })
+    }
+
     /// Generates a script pubkey spending to this address
     pub fn script_pubkey(&self) -> script::Script {
         match self.payload {
@@ -379,6 +411,10 @@ mod tests {
         assert_eq!(
             Address::from_str(&addr.to_string()).ok().as_ref(), Some(addr),
             "string round-trip failed for {}", addr,
+        );
+        assert_eq!(
+            Address::from_script(&addr.script_pubkey(), addr.network).as_ref(), Some(addr),
+            "script round-trip failed for {}", addr,
         );
         //TODO: add serde roundtrip after no-strason PR
     }
