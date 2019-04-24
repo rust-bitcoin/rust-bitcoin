@@ -44,7 +44,7 @@
 #![forbid(unsafe_code)]
 
 
-extern crate bitcoin_bech32;
+extern crate bech32;
 extern crate bitcoin_hashes;
 extern crate byteorder;
 extern crate hex;

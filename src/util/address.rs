@@ -43,15 +43,84 @@
 use std::fmt::{self, Display, Formatter};
 use std::str::FromStr;
 
-use bitcoin_bech32::{self, WitnessProgram, u5};
+use bech32::{self, u5, FromBase32, ToBase32};
 use bitcoin_hashes::{hash160, Hash};
 
 use blockdata::opcodes;
 use blockdata::script;
 use network::constants::Network;
-use consensus::encode;
 use util::base58;
 use util::key;
+
+/// Address error.
+#[derive(Debug, PartialEq)]
+pub enum Error {
+    /// Base58 encoding error
+    Base58(base58::Error),
+    /// Bech32 encoding error
+    Bech32(bech32::Error),
+    /// The bech32 payload was empty
+    EmptyBech32Payload,
+    /// Script version must be 0 to 16 inclusive
+    InvalidWitnessVersion(u8),
+    /// The witness program must be between 2 and 40 bytes in length.
+    InvalidWitnessProgramLength(usize),
+    /// A v0 witness program must be either of length 20 or 32.
+    InvalidSegwitV0ProgramLength(usize),
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let desc = ::std::error::Error::description(self);
+        match *self {
+            Error::Base58(ref e) => write!(f, "{}: {}", desc, e),
+            Error::Bech32(ref e) => write!(f, "{}: {}", desc, e),
+            Error::InvalidWitnessVersion(v) => write!(f, "{}: {}", desc, v),
+            Error::InvalidWitnessProgramLength(l) => write!(f, "{}: {}", desc, l),
+            Error::InvalidSegwitV0ProgramLength(l) => write!(f, "{}: {}", desc, l),
+            _ => f.write_str(desc),
+        }
+    }
+}
+
+impl ::std::error::Error for Error {
+    fn cause(&self) -> Option<&::std::error::Error> {
+        match *self {
+            Error::Base58(ref e) => Some(e),
+            Error::Bech32(ref e) => Some(e),
+            _ => None,
+        }
+    }
+
+    fn description(&self) -> &str {
+        match *self {
+            Error::Base58(..) => "base58 error",
+            Error::Bech32(..) => "bech32 error",
+            Error::EmptyBech32Payload => "the bech32 payload was empty",
+            Error::InvalidWitnessVersion(..) => "invalid witness script version",
+            Error::InvalidWitnessProgramLength(..) => {
+                "the witness program must be between 2 and 40 bytes in length"
+            },
+            Error::InvalidSegwitV0ProgramLength(..) => {
+                "a v0 witness program must be either of length 20 or 32"
+            },
+        }
+    }
+}
+
+#[doc(hidden)]
+impl From<base58::Error> for Error {
+    fn from(e: base58::Error) -> Error {
+        Error::Base58(e)
+    }
+}
+
+#[doc(hidden)]
+impl From<bech32::Error> for Error {
+    fn from(e: bech32::Error) -> Error {
+        Error::Bech32(e)
+    }
+}
 
 /// The method used to produce an address
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -61,7 +130,12 @@ pub enum Payload {
     /// P2SH address
     ScriptHash(hash160::Hash),
     /// Segwit address
-    WitnessProgram(WitnessProgram),
+    WitnessProgram {
+        /// The witness program version
+        version: u5,
+        /// The witness program
+        program: Vec<u8>,
+    },
 }
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -106,11 +180,10 @@ impl Address {
 
         Address {
             network: network,
-            payload: Payload::WitnessProgram(
-                // unwrap is safe as witness program is known to be correct as above
-                WitnessProgram::new(u5::try_from_u8(0).expect("0<32"),
-                                    hash160::Hash::from_engine(hash_engine)[..].to_vec(),
-                                    Address::bech_network(network)).unwrap())
+            payload: Payload::WitnessProgram {
+                version: u5::try_from_u8(0).expect("0<32"),
+                program: hash160::Hash::from_engine(hash_engine)[..].to_vec(),
+            },
         }
     }
 
@@ -138,14 +211,10 @@ impl Address {
 
         Address {
             network: network,
-            payload: Payload::WitnessProgram(
-                // unwrap is safe as witness program is known to be correct as above
-                WitnessProgram::new(
-                    u5::try_from_u8(0).expect("0<32"),
-                    sha256::Hash::hash(&script[..])[..].to_vec(),
-                    Address::bech_network(network)
-                ).unwrap()
-            ),
+            payload: Payload::WitnessProgram {
+                version: u5::try_from_u8(0).expect("0<32"),
+                program: sha256::Hash::hash(&script[..])[..].to_vec(),
+            },
         }
     }
 
@@ -164,39 +233,44 @@ impl Address {
         }
     }
 
-    #[inline]
-    /// convert Network to bech32 network (this should go away soon)
-    fn bech_network (network: Network) -> bitcoin_bech32::constants::Network {
-        match network {
-            Network::Bitcoin => bitcoin_bech32::constants::Network::Bitcoin,
-            Network::Testnet => bitcoin_bech32::constants::Network::Testnet,
-            Network::Regtest => bitcoin_bech32::constants::Network::Regtest,
+    /// Check whether or not the address is following Bitcoin
+    /// standardness rules.
+    ///
+    /// Segwit addresses with unassigned witness versions or non-standard
+    /// program sizes are considered non-standard.
+    pub fn is_standard(&self) -> bool {
+        match self.payload {
+            Payload::WitnessProgram {
+                version: ver,
+                program: ref prog,
+            } => {
+                // BIP-141 p2wpkh or p2wsh addresses.
+                ver.to_u8() == 0 && (prog.len() == 20 || prog.len() == 32)
+            }
+            Payload::PubkeyHash(_) => true,
+            Payload::ScriptHash(_) => true,
         }
     }
 
     /// Generates a script pubkey spending to this address
     pub fn script_pubkey(&self) -> script::Script {
         match self.payload {
-            Payload::PubkeyHash(ref hash) => {
-                script::Builder::new()
-                    .push_opcode(opcodes::all::OP_DUP)
-                    .push_opcode(opcodes::all::OP_HASH160)
-                    .push_slice(&hash[..])
-                    .push_opcode(opcodes::all::OP_EQUALVERIFY)
-                    .push_opcode(opcodes::all::OP_CHECKSIG)
-            },
-            Payload::ScriptHash(ref hash) => {
-                script::Builder::new()
-                    .push_opcode(opcodes::all::OP_HASH160)
-                    .push_slice(&hash[..])
-                    .push_opcode(opcodes::all::OP_EQUAL)
-            },
-            Payload::WitnessProgram(ref witprog) => {
-                script::Builder::new()
-                    .push_int(witprog.version().to_u8() as i64)
-                    .push_slice(witprog.program())
-            }
-        }.into_script()
+            Payload::PubkeyHash(ref hash) => script::Builder::new()
+                .push_opcode(opcodes::all::OP_DUP)
+                .push_opcode(opcodes::all::OP_HASH160)
+                .push_slice(&hash[..])
+                .push_opcode(opcodes::all::OP_EQUALVERIFY)
+                .push_opcode(opcodes::all::OP_CHECKSIG),
+            Payload::ScriptHash(ref hash) => script::Builder::new()
+                .push_opcode(opcodes::all::OP_HASH160)
+                .push_slice(&hash[..])
+                .push_opcode(opcodes::all::OP_EQUAL),
+            Payload::WitnessProgram {
+                version: ver,
+                program: ref prog,
+            } => script::Builder::new().push_int(ver.to_u8() as i64).push_slice(&prog),
+        }
+        .into_script()
     }
 }
 
@@ -220,48 +294,88 @@ impl Display for Address {
                 };
                 prefixed[1..].copy_from_slice(&hash[..]);
                 base58::check_encode_slice_to_fmt(fmt, &prefixed[..])
-            },
-            Payload::WitnessProgram(ref witprog) => {
-                fmt.write_str(&witprog.to_address())
-            },
+            }
+            Payload::WitnessProgram {
+                version: ver,
+                program: ref prog,
+            } => {
+                let mut b32_data = vec![ver];
+                b32_data.extend_from_slice(&prog.to_base32());
+                let hrp = match self.network {
+                    Network::Bitcoin => "bc",
+                    Network::Testnet => "tb",
+                    Network::Regtest => "bcrt",
+                };
+                bech32::encode_to_fmt(fmt, &hrp, &b32_data).expect("only errors on invalid HRP")
+            }
         }
     }
 }
 
-impl FromStr for Address {
-    type Err = encode::Error;
+/// Extract the bech32 prefix.
+/// Returns the same slice when no prefix is found.
+fn find_bech32_prefix(bech32: &str) -> &str {
+    // Split at the last occurrence of the separator character '1'.
+    match bech32.rfind("1") {
+        None => bech32,
+        Some(sep) => bech32.split_at(sep).0,
+    }
+}
 
-    fn from_str(s: &str) -> Result<Address, encode::Error> {
-        // bech32 (note that upper or lowercase is allowed but NOT mixed case)
-        if s.starts_with("bc1") || s.starts_with("BC1") ||
-           s.starts_with("tb1") || s.starts_with("TB1") ||
-           s.starts_with("bcrt1") || s.starts_with("BCRT1")
-        {
-            let witprog = WitnessProgram::from_address(s)?;
-            let network = match witprog.network() {
-                bitcoin_bech32::constants::Network::Bitcoin => Network::Bitcoin,
-                bitcoin_bech32::constants::Network::Testnet => Network::Testnet,
-                bitcoin_bech32::constants::Network::Regtest => Network::Regtest,
-                _ => panic!("unknown network")
-            };
-            if witprog.version().to_u8() != 0 {
-                return Err(encode::Error::UnsupportedWitnessVersion(witprog.version().to_u8()));
+impl FromStr for Address {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Address, Error> {
+        // try bech32
+        let bech32_network = match find_bech32_prefix(s) {
+            // note that upper or lowercase is allowed but NOT mixed case
+            "bc" | "BC" => Some(Network::Bitcoin),
+            "tb" | "TB" => Some(Network::Testnet),
+            "bcrt" | "BCRT" => Some(Network::Regtest),
+            _ => None,
+        };
+        if let Some(network) = bech32_network {
+            // decode as bech32
+            let (_, payload) = bech32::decode(s)?;
+            if payload.len() == 0 {
+                return Err(Error::EmptyBech32Payload);
             }
+
+            // Get the script version and program (converted from 5-bit to 8-bit)
+            let (version, program) = {
+                let (v, p5) = payload.split_at(1);
+                (v[0], Vec::from_base32(p5)?)
+            };
+
+            // Generic segwit checks.
+            if version.to_u8() > 16 {
+                return Err(Error::InvalidWitnessVersion(version.to_u8()));
+            }
+            if program.len() < 2 || program.len() > 40 {
+                return Err(Error::InvalidWitnessProgramLength(program.len()));
+            }
+
+            // Specific segwit v0 check.
+            if version.to_u8() == 0 && (program.len() != 20 && program.len() != 32) {
+                return Err(Error::InvalidSegwitV0ProgramLength(program.len()));
+            }
+
             return Ok(Address {
+                payload: Payload::WitnessProgram {
+                    version: version,
+                    program: program,
+                },
                 network: network,
-                payload: Payload::WitnessProgram(witprog),
             });
         }
 
+        // Base58
         if s.len() > 50 {
-            return Err(encode::Error::Base58(base58::Error::InvalidLength(s.len() * 11 / 15)));
+            return Err(Error::Base58(base58::Error::InvalidLength(s.len() * 11 / 15)));
         }
-
-        // Base 58
         let data = base58::from_check(s)?;
-
         if data.len() != 21 {
-            return Err(encode::Error::Base58(base58::Error::InvalidLength(data.len())));
+            return Err(Error::Base58(base58::Error::InvalidLength(data.len())));
         }
 
         let (network, payload) = match data[0] {
@@ -281,7 +395,7 @@ impl FromStr for Address {
                 Network::Testnet,
                 Payload::ScriptHash(hash160::Hash::from_slice(&data[1..]).unwrap())
             ),
-            x   => return Err(encode::Error::Base58(base58::Error::InvalidVersion(vec![x])))
+            x => return Err(Error::Base58(base58::Error::InvalidVersion(vec![x]))),
         };
 
         Ok(Address {
