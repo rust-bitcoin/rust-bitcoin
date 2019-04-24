@@ -476,6 +476,14 @@ mod tests {
     macro_rules! hex_script (($hex:expr) => (Script::from(hex!($hex))));
     macro_rules! hex_hash160 (($hex:expr) => (hash160::Hash::from_slice(&hex!($hex)).unwrap()));
 
+    fn roundtrips(addr: &Address) {
+        assert_eq!(
+            Address::from_str(&addr.to_string()).unwrap(), *addr,
+            "string round-trip failed for {}", addr,
+        );
+        //TODO: add serde roundtrip after no-strason PR
+    }
+
     #[test]
     fn test_p2pkh_address_58() {
         let addr = Address {
@@ -487,8 +495,8 @@ mod tests {
 
         assert_eq!(addr.script_pubkey(), hex_script!("76a914162c5ea71c0b23f5b9022ef047c4a86470a5b07088ac"));
         assert_eq!(&addr.to_string(), "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM");
-        assert_eq!(Address::from_str("132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM").unwrap(), addr);
         assert_eq!(addr.address_type(), Some(AddressType::P2pkh));
+        roundtrips(&addr);
     }
 
     #[test]
@@ -501,6 +509,7 @@ mod tests {
         let addr = Address::p2pkh(&key, Testnet);
         assert_eq!(&addr.to_string(), "mqkhEMH6NCeYjFybv7pvFC22MFeaNT9AQC");
         assert_eq!(addr.address_type(), Some(AddressType::P2pkh));
+        roundtrips(&addr);
     }
 
     #[test]
@@ -514,8 +523,8 @@ mod tests {
 
         assert_eq!(addr.script_pubkey(), hex_script!("a914162c5ea71c0b23f5b9022ef047c4a86470a5b07087"));
         assert_eq!(&addr.to_string(), "33iFwdLuRpW1uK1RTRqsoi8rR4NpDzk66k");
-        assert_eq!(Address::from_str("33iFwdLuRpW1uK1RTRqsoi8rR4NpDzk66k").unwrap(), addr);
         assert_eq!(addr.address_type(), Some(AddressType::P2sh));
+        roundtrips(&addr);
     }
 
     #[test]
@@ -524,8 +533,8 @@ mod tests {
         let addr = Address::p2sh(&script, Testnet);
 
         assert_eq!(&addr.to_string(), "2N3zXjbwdTcPsJiy8sUK9FhWJhqQCxA8Jjr");
-        assert_eq!(Address::from_str("2N3zXjbwdTcPsJiy8sUK9FhWJhqQCxA8Jjr").unwrap(), addr);
         assert_eq!(addr.address_type(), Some(AddressType::P2sh));
+        roundtrips(&addr);
     }
 
     #[test]
@@ -535,6 +544,7 @@ mod tests {
         let addr = Address::p2wpkh(&key, Bitcoin);
         assert_eq!(&addr.to_string(), "bc1qvzvkjn4q3nszqxrv3nraga2r822xjty3ykvkuw");
         assert_eq!(addr.address_type(), Some(AddressType::P2wpkh));
+        roundtrips(&addr);
     }
 
     #[test]
@@ -544,6 +554,7 @@ mod tests {
         let addr = Address::p2wsh(&script, Bitcoin);
         assert_eq!(&addr.to_string(), "bc1qwqdg6squsna38e46795at95yu9atm8azzmyvckulcc7kytlcckxswvvzej");
         assert_eq!(addr.address_type(), Some(AddressType::P2wsh));
+        roundtrips(&addr);
     }
 
     #[test]
@@ -559,18 +570,21 @@ mod tests {
         assert_eq!(addr.network, Testnet);
         assert_eq!(addr.script_pubkey(), hex_script!("00201863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262"));
         assert_eq!(addr.to_string(), addrstr);
+        roundtrips(&addr);
 
         let addrstr = "tb1qqqqqp399et2xygdj5xreqhjjvcmzhxw4aywxecjdzew6hylgvsesrxh6hy";
         let addr = Address::from_str(addrstr).unwrap();
         assert_eq!(addr.network, Testnet);
         assert_eq!(addr.script_pubkey(), hex_script!("0020000000c4a5cad46221b2a187905e5266362b99d5e91c6ce24d165dab93e86433"));
         assert_eq!(addr.to_string(), addrstr);
+        roundtrips(&addr);
 
         let addrstr = "bcrt1q2nfxmhd4n3c8834pj72xagvyr9gl57n5r94fsl";
         let addr = Address::from_str(addrstr).unwrap();
         assert_eq!(addr.network, Regtest);
         assert_eq!(addr.script_pubkey(), hex_script!("001454d26dddb59c7073c6a197946ea1841951fa7a74"));
         assert_eq!(addr.to_string(), addrstr);
+        roundtrips(&addr);
 
         // bad vectors
         let addrstr = "tc1qw508d6qejxtdg4y5r3zarvary0c5xw7kg3g4ty"; // invalid hrp
