@@ -175,6 +175,62 @@ pub enum Payload {
     },
 }
 
+impl Payload {
+    /// Get a [Payload] from an output script (scriptPubkey).
+    pub fn from_script(script: &script::Script) -> Option<Payload> {
+        Some(if script.is_p2pkh() {
+            Payload::PubkeyHash(Hash::from_slice(&script.as_bytes()[3..23]).unwrap())
+        } else if script.is_p2sh() {
+            Payload::ScriptHash(Hash::from_slice(&script.as_bytes()[2..22]).unwrap())
+        } else if script.is_witness_program() {
+            // We can unwrap the u5 check and assume script length
+            // because [Script::is_witness_program] makes sure of this.
+            Payload::WitnessProgram {
+                version: {
+                    // Since we passed the [is_witness_program] check,
+                    // the first byte is either 0x00 or 0x50 + version.
+                    let mut verop = script.as_bytes()[0];
+                    if verop > 0x50 {
+                        verop -= 0x50;
+                    }
+                    bech32::u5::try_from_u8(verop).expect("checked before")
+                },
+                program: script.as_bytes()[2..].to_vec(),
+            }
+        } else {
+            return None;
+        })
+    }
+
+    /// Generates a script pubkey spending to this [Payload].
+    pub fn script_pubkey(&self) -> script::Script {
+        match *self {
+            Payload::PubkeyHash(ref hash) => script::Builder::new()
+                .push_opcode(opcodes::all::OP_DUP)
+                .push_opcode(opcodes::all::OP_HASH160)
+                .push_slice(&hash[..])
+                .push_opcode(opcodes::all::OP_EQUALVERIFY)
+                .push_opcode(opcodes::all::OP_CHECKSIG),
+            Payload::ScriptHash(ref hash) => script::Builder::new()
+                .push_opcode(opcodes::all::OP_HASH160)
+                .push_slice(&hash[..])
+                .push_opcode(opcodes::all::OP_EQUAL),
+            Payload::WitnessProgram {
+                version: ver,
+                program: ref prog,
+            } => {
+                assert!(ver.to_u8() <= 16);
+                let mut verop = ver.to_u8();
+                if verop > 0 {
+                    verop = 0x50 + verop;
+                }
+                script::Builder::new().push_opcode(verop.into()).push_slice(&prog)
+            }
+        }
+        .into_script()
+    }
+}
+
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 /// A Bitcoin address
 pub struct Address {
@@ -298,25 +354,17 @@ impl Address {
         self.address_type().is_some()
     }
 
+    /// Get an [Address] from an output script (scriptPubkey).
+    pub fn from_script(script: &script::Script, network: Network) -> Option<Address> {
+        Some(Address {
+            payload: Payload::from_script(script)?,
+            network: network,
+        })
+    }
+
     /// Generates a script pubkey spending to this address
     pub fn script_pubkey(&self) -> script::Script {
-        match self.payload {
-            Payload::PubkeyHash(ref hash) => script::Builder::new()
-                .push_opcode(opcodes::all::OP_DUP)
-                .push_opcode(opcodes::all::OP_HASH160)
-                .push_slice(&hash[..])
-                .push_opcode(opcodes::all::OP_EQUALVERIFY)
-                .push_opcode(opcodes::all::OP_CHECKSIG),
-            Payload::ScriptHash(ref hash) => script::Builder::new()
-                .push_opcode(opcodes::all::OP_HASH160)
-                .push_slice(&hash[..])
-                .push_opcode(opcodes::all::OP_EQUAL),
-            Payload::WitnessProgram {
-                version: ver,
-                program: ref prog,
-            } => script::Builder::new().push_int(ver.to_u8() as i64).push_slice(&prog),
-        }
-        .into_script()
+        self.payload.script_pubkey()
     }
 }
 
@@ -481,6 +529,10 @@ mod tests {
             Address::from_str(&addr.to_string()).unwrap(), *addr,
             "string round-trip failed for {}", addr,
         );
+        assert_eq!(
+            Address::from_script(&addr.script_pubkey(), addr.network).as_ref(), Some(addr),
+            "script round-trip failed for {}", addr,
+        );
         //TODO: add serde roundtrip after no-strason PR
     }
 
@@ -554,6 +606,21 @@ mod tests {
         let addr = Address::p2wsh(&script, Bitcoin);
         assert_eq!(&addr.to_string(), "bc1qwqdg6squsna38e46795at95yu9atm8azzmyvckulcc7kytlcckxswvvzej");
         assert_eq!(addr.address_type(), Some(AddressType::P2wsh));
+        roundtrips(&addr);
+    }
+
+    #[test]
+    fn test_non_existent_segwit_version() {
+        let version = 13;
+        // 40-byte program
+        let program = hex!("654f6ea368e0acdfd92976b7c2103a1b26313f430654f6ea368e0acdfd92976b7c2103a1b26313f4");
+        let addr = Address {
+            payload: Payload::WitnessProgram {
+                version: u5::try_from_u8(version).expect("0<32"),
+                program: program,
+            },
+            network: Network::Bitcoin,
+        };
         roundtrips(&addr);
     }
 
