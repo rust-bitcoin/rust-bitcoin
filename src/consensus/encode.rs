@@ -86,8 +86,6 @@ pub enum Error {
     UnknownNetworkMagic(u32),
     /// Parsing error
     ParseFailed(&'static str),
-    /// Unsupported witness version
-    UnsupportedWitnessVersion(u8),
     /// Unsupported Segwit flag
     UnsupportedSegwitFlag(u8),
     /// Unrecognized network command
@@ -109,7 +107,6 @@ impl fmt::Display for Error {
             Error::InvalidChecksum { expected: ref e, actual: ref a } => write!(f, "{}: expected {}, actual {}", error::Error::description(self), hex_encode(e), hex_encode(a)),
             Error::UnknownNetworkMagic(ref m) => write!(f, "{}: {}", error::Error::description(self), m),
             Error::ParseFailed(ref e) => write!(f, "{}: {}", error::Error::description(self), e),
-            Error::UnsupportedWitnessVersion(ref wver) => write!(f, "{}: {}", error::Error::description(self), wver),
             Error::UnsupportedSegwitFlag(ref swflag) => write!(f, "{}: {}", error::Error::description(self), swflag),
             Error::UnrecognizedNetworkCommand(ref nwcmd) => write!(f, "{}: {}", error::Error::description(self), nwcmd),
             Error::UnexpectedHexDigit(ref d) => write!(f, "{}: {}", error::Error::description(self), d),
@@ -130,7 +127,6 @@ impl error::Error for Error {
             | Error::InvalidChecksum { .. }
             | Error::UnknownNetworkMagic(..)
             | Error::ParseFailed(..)
-            | Error::UnsupportedWitnessVersion(..)
             | Error::UnsupportedSegwitFlag(..)
             | Error::UnrecognizedNetworkCommand(..)
             | Error::UnexpectedHexDigit(..) => None,
@@ -149,7 +145,6 @@ impl error::Error for Error {
             Error::InvalidChecksum { .. } => "invalid checksum",
             Error::UnknownNetworkMagic(..) => "unknown network magic",
             Error::ParseFailed(..) => "parse failed",
-            Error::UnsupportedWitnessVersion(..) => "unsupported witness version",
             Error::UnsupportedSegwitFlag(..) => "unsupported segwit version",
             Error::UnrecognizedNetworkCommand(..) => "unrecognized network command",
             Error::UnexpectedHexDigit(..) => "unexpected hex digit",
