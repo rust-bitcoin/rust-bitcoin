@@ -1,7 +1,7 @@
 
 # 0.18.0 - 2019-03-21
 
-* Update `bitcoin-bech32` version to 0.18
+* Update `bitcoin-bech32` version to 0.9
 * add `to_bytes` method for `util::key` types
 * add serde impls for `util::key` types
 * contracthash: minor cleanups, use `util::key` types instead of `secp256k1` types
