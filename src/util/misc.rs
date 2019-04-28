@@ -16,8 +16,11 @@
 //!
 //! Various utility functions
 
+use bitcoin_hashes::{sha256d, Hash};
 use blockdata::opcodes;
 use consensus::encode;
+
+static MSG_SIGN_PREFIX: &'static [u8] = b"\x18Bitcoin Signed Message:\n";
 
 /// Helper function to convert hex nibble characters to their respective value
 #[inline]
@@ -107,6 +110,18 @@ pub fn script_find_and_remove(haystack: &mut Vec<u8>, needle: &[u8]) -> usize {
     n_deleted
 }
 
+/// Hash message for signature using Bitcoin's message signing format
+pub fn signed_msg_hash(msg: &str) -> sha256d::Hash {
+    sha256d::Hash::hash(
+        &[
+            MSG_SIGN_PREFIX,
+            &encode::serialize(&encode::VarInt(msg.len() as u64)),
+            msg.as_bytes(),
+        ]
+        .concat(),
+    )
+}
+
 #[cfg(all(test, feature="unstable"))]
 mod benches {
     use rand::{Rng, thread_rng};
@@ -158,8 +173,10 @@ mod benches {
 
 #[cfg(test)]
 mod tests {
+    use bitcoin_hashes::hex::ToHex;
     use super::script_find_and_remove;
     use super::hex_bytes;
+    use super::signed_msg_hash;
 
     #[test]
     fn test_script_find_and_remove() {
@@ -206,6 +223,12 @@ mod tests {
         assert!(hex_bytes("abcde").is_err());
         assert!(hex_bytes("aBcDeF").is_ok());
         assert!(hex_bytes("aBcD4eFL").is_err());
+    }
+
+    #[test]
+    fn test_signed_msg_hash() {
+        let hash = signed_msg_hash("test");
+        assert_eq!(hash.to_hex(), "a6f87fe6d58a032c320ff8d1541656f0282c2c7bfcc69d61af4c8e8ed528e49c");
     }
 }
 
