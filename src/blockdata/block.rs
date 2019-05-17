@@ -26,7 +26,7 @@ use util;
 use util::Error::{SpvBadTarget, SpvBadProofOfWork};
 use util::hash::{BitcoinHash, MerkleRoot, bitcoin_merkle_root};
 use util::uint::Uint256;
-use consensus::encode::{VarInt, Encodable};
+use consensus::encode::Encodable;
 use network::constants::Network;
 use blockdata::transaction::Transaction;
 use blockdata::constants::max_target;
@@ -114,17 +114,6 @@ impl MerkleRoot for Block {
     fn merkle_root(&self) -> sha256d::Hash {
         bitcoin_merkle_root(self.txdata.iter().map(|obj| obj.txid()).collect())
     }
-}
-
-/// A block header with txcount attached, which is given in the `headers`
-/// network message.
-#[derive(PartialEq, Eq, Clone, Debug)]
-pub struct LoneBlockHeader {
-    /// The actual block header
-    pub header: BlockHeader,
-    /// The number of transactions in the block. This will always be zero
-    /// when the LoneBlockHeader is returned as part of a `headers` message.
-    pub tx_count: VarInt
 }
 
 impl BlockHeader {
@@ -218,7 +207,6 @@ impl BitcoinHash for Block {
 
 impl_consensus_encoding!(BlockHeader, version, prev_blockhash, merkle_root, time, bits, nonce);
 impl_consensus_encoding!(Block, header, txdata);
-impl_consensus_encoding!(LoneBlockHeader, header, tx_count);
 
 #[cfg(test)]
 mod tests {

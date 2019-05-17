@@ -19,7 +19,7 @@
 //! also defines (de)serialization routines for many primitives.
 //!
 
-use std::iter;
+use std::{iter, mem};
 use std::io::Cursor;
 
 use blockdata::block;
@@ -29,8 +29,9 @@ use network::message_network;
 use network::message_blockdata;
 use network::message_filter;
 use consensus::encode::{Decodable, Encodable};
-use consensus::encode::CheckedData;
+use consensus::encode::{CheckedData, VarInt};
 use consensus::encode::{self, serialize, Encoder, Decoder};
+use consensus::encode::MAX_VEC_SIZE;
 
 /// Serializer for command string
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -97,7 +98,7 @@ pub enum NetworkMessage {
     /// `block`
     Block(block::Block),
     /// `headers`
-    Headers(Vec<block::LoneBlockHeader>),
+    Headers(Vec<block::BlockHeader>),
     /// `getaddr`
     GetAddr,
     // TODO: checkorder,
@@ -155,6 +156,19 @@ impl RawNetworkMessage {
     }
 }
 
+struct HeaderSerializationWrapper<'a>(&'a Vec<block::BlockHeader>);
+impl <'a, S: Encoder> Encodable<S> for HeaderSerializationWrapper<'a> {
+    #[inline]
+    fn consensus_encode(&self, s: &mut S) -> Result<(), encode::Error> {
+        VarInt(self.0.len() as u64).consensus_encode(s)?;
+        for header in self.0.iter() {
+            header.consensus_encode(s)?;
+            0u8.consensus_encode(s)?;
+        }
+        Ok(())
+    }
+}
+
 impl<S: Encoder> Encodable<S> for RawNetworkMessage {
     fn consensus_encode(&self, s: &mut S) -> Result<(), encode::Error> {
         self.magic.consensus_encode(s)?;
@@ -169,7 +183,7 @@ impl<S: Encoder> Encodable<S> for RawNetworkMessage {
             NetworkMessage::GetHeaders(ref dat) => serialize(dat),
             NetworkMessage::Tx(ref dat)      => serialize(dat),
             NetworkMessage::Block(ref dat)   => serialize(dat),
-            NetworkMessage::Headers(ref dat) => serialize(dat),
+            NetworkMessage::Headers(ref dat) => serialize(&HeaderSerializationWrapper(dat)),
             NetworkMessage::Ping(ref dat)    => serialize(dat),
             NetworkMessage::Pong(ref dat)    => serialize(dat),
             NetworkMessage::GetCFilters(ref dat) => serialize(dat),
@@ -183,6 +197,28 @@ impl<S: Encoder> Encodable<S> for RawNetworkMessage {
             | NetworkMessage::MemPool
             | NetworkMessage::GetAddr => vec![],
         }).consensus_encode(s)
+    }
+}
+
+struct HeaderDeserializationWrapper(Vec<block::BlockHeader>);
+impl<D: Decoder> Decodable<D> for HeaderDeserializationWrapper {
+    #[inline]
+    fn consensus_decode(d: &mut D) -> Result<HeaderDeserializationWrapper, encode::Error> {
+        let len = VarInt::consensus_decode(d)?.0;
+        let byte_size = (len as usize)
+                            .checked_mul(mem::size_of::<block::BlockHeader>())
+                            .ok_or(encode::Error::ParseFailed("Invalid length"))?;
+        if byte_size > MAX_VEC_SIZE {
+            return Err(encode::Error::OversizedVectorAllocation { requested: byte_size, max: MAX_VEC_SIZE })
+        }
+        let mut ret = Vec::with_capacity(len as usize);
+        for _ in 0..len {
+            ret.push(Decodable::consensus_decode(d)?);
+            if <u8 as Decodable<D>>::consensus_decode(d)? != 0u8 {
+                return Err(encode::Error::ParseFailed("Headers message should not contain transactions"));
+            }
+        }
+        Ok(HeaderDeserializationWrapper(ret))
     }
 }
 
@@ -204,7 +240,9 @@ impl<D: Decoder> Decodable<D> for RawNetworkMessage {
             "getheaders" => NetworkMessage::GetHeaders(Decodable::consensus_decode(&mut mem_d)?),
             "mempool" => NetworkMessage::MemPool,
             "block"   => NetworkMessage::Block(Decodable::consensus_decode(&mut mem_d)?),
-            "headers" => NetworkMessage::Headers(Decodable::consensus_decode(&mut mem_d)?),
+            "headers" =>
+                NetworkMessage::Headers(<HeaderDeserializationWrapper as Decodable<Cursor<Vec<u8>>>>
+                                        ::consensus_decode(&mut mem_d)?.0),
             "getaddr" => NetworkMessage::GetAddr,
             "ping"    => NetworkMessage::Ping(Decodable::consensus_decode(&mut mem_d)?),
             "pong"    => NetworkMessage::Pong(Decodable::consensus_decode(&mut mem_d)?),
