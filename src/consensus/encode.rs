@@ -659,6 +659,12 @@ impl<D: Decoder> Decodable<D> for CheckedData {
     #[inline]
     fn consensus_decode(d: &mut D) -> Result<CheckedData, self::Error> {
         let len: u32 = Decodable::consensus_decode(d)?;
+        if len > MAX_VEC_SIZE as u32 {
+            return Err(self::Error::OversizedVectorAllocation {
+                requested: len as usize,
+                max: MAX_VEC_SIZE
+            });
+        }
         let checksum: [u8; 4] = Decodable::consensus_decode(d)?;
         let mut ret = Vec::with_capacity(len as usize);
         ret.resize(len as usize, 0);
