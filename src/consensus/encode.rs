@@ -583,21 +583,25 @@ impl<D: Decoder, T: Decodable<D>> Decodable<D> for Vec<T> {
     }
 }
 
-impl<S: Encoder, T: Encodable<S>> Encodable<S> for Box<[T]> {
+impl<S: Encoder> Encodable<S> for Box<[u8]> {
     #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), self::Error> { (&self[..]).consensus_encode(s) }
+    fn consensus_encode(&self, s: &mut S) -> Result<(), self::Error> {
+        VarInt(self.len() as u64).consensus_encode(s)?;
+        s.emit_slice(&self)
+    }
 }
 
-impl<D: Decoder, T: Decodable<D>> Decodable<D> for Box<[T]> {
+impl<D: Decoder> Decodable<D> for Box<[u8]> {
     #[inline]
-    fn consensus_decode(d: &mut D) -> Result<Box<[T]>, self::Error> {
+    fn consensus_decode(d: &mut D) -> Result<Box<[u8]>, self::Error> {
         let len = VarInt::consensus_decode(d)?.0;
         let len = len as usize;
         if len > MAX_VEC_SIZE {
             return Err(self::Error::OversizedVectorAllocation { requested: len, max: MAX_VEC_SIZE })
         }
         let mut ret = Vec::with_capacity(len);
-        for _ in 0..len { ret.push(Decodable::consensus_decode(d)?); }
+        ret.resize(len, 0);
+        d.read_slice(&mut ret)?;
         Ok(ret.into_boxed_slice())
     }
 }
@@ -615,11 +619,7 @@ impl<S: Encoder> Encodable<S> for CheckedData {
     fn consensus_encode(&self, s: &mut S) -> Result<(), self::Error> {
         (self.0.len() as u32).consensus_encode(s)?;
         sha2_checksum(&self.0).consensus_encode(s)?;
-        // We can't just pass to the slice encoder since it'll insert a length
-        for ch in &self.0 {
-            ch.consensus_encode(s)?;
-        }
-        Ok(())
+        s.emit_slice(&self.0)
     }
 }
 
@@ -629,7 +629,8 @@ impl<D: Decoder> Decodable<D> for CheckedData {
         let len: u32 = Decodable::consensus_decode(d)?;
         let checksum: [u8; 4] = Decodable::consensus_decode(d)?;
         let mut ret = Vec::with_capacity(len as usize);
-        for _ in 0..len { ret.push(Decodable::consensus_decode(d)?); }
+        ret.resize(len as usize, 0);
+        d.read_slice(&mut ret)?;
         let expected_checksum = sha2_checksum(&ret);
         if expected_checksum != checksum {
             Err(self::Error::InvalidChecksum {
