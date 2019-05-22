@@ -262,6 +262,9 @@ pub trait Encoder {
 
     /// Output a boolean
     fn emit_bool(&mut self, v: bool) -> Result<(), Error>;
+
+    /// Output a byte slice
+    fn emit_slice(&mut self, v: &[u8]) -> Result<(), Error>;
 }
 
 /// A simple Decoder trait
@@ -286,6 +289,9 @@ pub trait Decoder {
 
     /// Read a boolean
     fn read_bool(&mut self) -> Result<bool, Error>;
+
+    /// Read a byte slice
+    fn read_slice(&mut self, slice: &mut [u8]) -> Result<(), Error>;
 }
 
 macro_rules! encoder_fn {
@@ -326,6 +332,10 @@ impl<W: Write> Encoder for W {
     fn emit_bool(&mut self, v: bool) -> Result<(), Error> {
         self.write_i8(if v {1} else {0}).map_err(Error::Io)
     }
+    #[inline]
+    fn emit_slice(&mut self, v: &[u8]) -> Result<(), Error> {
+        self.write_all(v).map_err(Error::Io)
+    }
 }
 
 impl<R: Read> Decoder for R {
@@ -347,6 +357,10 @@ impl<R: Read> Decoder for R {
     #[inline]
     fn read_bool(&mut self) -> Result<bool, Error> {
         Decoder::read_i8(self).map(|bit| bit != 0)
+    }
+    #[inline]
+    fn read_slice(&mut self, slice: &mut [u8]) -> Result<(), Error> {
+        self.read_exact(slice).map_err(Error::Io)
     }
 }
 
@@ -491,21 +505,18 @@ impl<D: Decoder> Decodable<D> for String {
 // Arrays
 macro_rules! impl_array {
     ( $size:expr ) => (
-        impl<S: Encoder, T: Encodable<S>> Encodable<S> for [T; $size] {
+        impl<S: Encoder> Encodable<S> for [u8; $size] {
             #[inline]
             fn consensus_encode(&self, s: &mut S) -> Result<(), self::Error> {
-                for i in self.iter() { i.consensus_encode(s)?; }
-                Ok(())
+                s.emit_slice(&self[..])
             }
         }
 
-        impl<D: Decoder, T:Decodable<D> + Copy> Decodable<D> for [T; $size] {
+        impl<D: Decoder> Decodable<D> for [u8; $size] {
             #[inline]
-            fn consensus_decode(d: &mut D) -> Result<[T; $size], self::Error> {
-                // Set everything to the first decode
-                let mut ret = [Decodable::consensus_decode(d)?; $size];
-                // Set the rest
-                for item in ret.iter_mut().take($size).skip(1) { *item = Decodable::consensus_decode(d)?; }
+            fn consensus_decode(d: &mut D) -> Result<[u8; $size], self::Error> {
+                let mut ret = [0; $size];
+                d.read_slice(&mut ret)?;
                 Ok(ret)
             }
         }
@@ -519,6 +530,25 @@ impl_array!(12);
 impl_array!(16);
 impl_array!(32);
 impl_array!(33);
+
+impl<D: Decoder> Decodable<D> for [u16; 8] {
+    #[inline]
+    fn consensus_decode(d: &mut D) -> Result<[u16; 8], self::Error> {
+        let mut res = [0; 8];
+        for i in 0..8 {
+            res[i] = Decodable::consensus_decode(d)?;
+        }
+        Ok(res)
+    }
+}
+
+impl<S: Encoder> Encodable<S> for [u16; 8] {
+    #[inline]
+    fn consensus_encode(&self, s: &mut S) -> Result<(), self::Error> {
+        for c in self.iter() { c.consensus_encode(s)?; }
+        Ok(())
+    }
+}
 
 impl<S: Encoder, T: Encodable<S>> Encodable<S> for [T] {
     #[inline]
