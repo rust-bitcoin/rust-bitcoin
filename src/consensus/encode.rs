@@ -29,8 +29,6 @@
 //! big-endian decimals, etc.)
 //!
 
-use std::collections::HashMap;
-use std::hash::Hash;
 use std::{mem, u32};
 
 use std::error;
@@ -489,7 +487,9 @@ impl<D: Decoder> Decodable<D> for bool {
 impl<S: Encoder> Encodable<S> for String {
     #[inline]
     fn consensus_encode(&self, s: &mut S) -> Result<(), self::Error> {
-        self.as_bytes().consensus_encode(s)
+        let b = self.as_bytes();
+        VarInt(b.len() as u64).consensus_encode(s)?;
+        s.emit_slice(&b)
     }
 }
 
@@ -550,21 +550,14 @@ impl<S: Encoder> Encodable<S> for [u16; 8] {
     }
 }
 
-impl<S: Encoder, T: Encodable<S>> Encodable<S> for [T] {
+// Vectors
+impl<S: Encoder, T: Encodable<S>> Encodable<S> for Vec<T> {
     #[inline]
     fn consensus_encode(&self, s: &mut S) -> Result<(), self::Error> {
         VarInt(self.len() as u64).consensus_encode(s)?;
         for c in self.iter() { c.consensus_encode(s)?; }
         Ok(())
     }
-}
-
-// Cannot decode a slice
-
-// Vectors
-impl<S: Encoder, T: Encodable<S>> Encodable<S> for Vec<T> {
-    #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), self::Error> { (&self[..]).consensus_encode(s) }
 }
 
 impl<D: Decoder, T: Decodable<D>> Decodable<D> for Vec<T> {
@@ -670,54 +663,6 @@ tuple_encode!(T0, T1);
 tuple_encode!(T0, T1, T2, T3);
 tuple_encode!(T0, T1, T2, T3, T4, T5);
 tuple_encode!(T0, T1, T2, T3, T4, T5, T6, T7);
-
-// References
-impl<S: Encoder, T: Encodable<S>> Encodable<S> for Box<T> {
-    #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), self::Error> { (**self).consensus_encode(s) }
-}
-
-impl<D: Decoder, T: Decodable<D>> Decodable<D> for Box<T> {
-    #[inline]
-    fn consensus_decode(d: &mut D) -> Result<Box<T>, self::Error> {
-        Decodable::consensus_decode(d).map(Box::new)
-    }
-}
-
-// HashMap
-impl<S, K, V> Encodable<S> for HashMap<K, V>
-    where S: Encoder,
-          K: Encodable<S> + Eq + Hash,
-          V: Encodable<S>
-{
-    #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), self::Error> {
-        VarInt(self.len() as u64).consensus_encode(s)?;
-        for (key, value) in self.iter() {
-            key.consensus_encode(s)?;
-            value.consensus_encode(s)?;
-        }
-        Ok(())
-    }
-}
-
-impl<D, K, V> Decodable<D> for HashMap<K, V>
-    where D: Decoder,
-          K: Decodable<D> + Eq + Hash,
-          V: Decodable<D>
-{
-    #[inline]
-    fn consensus_decode(d: &mut D) -> Result<HashMap<K, V>, self::Error> {
-        let len = VarInt::consensus_decode(d)?.0;
-
-        let mut ret = HashMap::with_capacity(len as usize);
-        for _ in 0..len {
-            ret.insert(Decodable::consensus_decode(d)?,
-                                 Decodable::consensus_decode(d)?);
-        }
-        Ok(ret)
-    }
-}
 
 impl<S: Encoder> Encodable<S> for sha256d::Hash {
     fn consensus_encode(&self, s: &mut S) -> Result<(), self::Error> {
@@ -837,20 +782,12 @@ mod tests {
     #[test]
     fn serialize_vector_test() {
         assert_eq!(serialize(&vec![1u8, 2, 3]), vec![3u8, 1, 2, 3]);
-        assert_eq!(serialize(&[1u8, 2, 3][..]), vec![3u8, 1, 2, 3]);
         // TODO: test vectors of more interesting objects
     }
 
     #[test]
     fn serialize_strbuf_test() {
         assert_eq!(serialize(&"Andrew".to_string()), vec![6u8, 0x41, 0x6e, 0x64, 0x72, 0x65, 0x77]);
-    }
-
-    #[test]
-    fn serialize_box_test() {
-        assert_eq!(serialize(&Box::new(1u8)), vec![1u8]);
-        assert_eq!(serialize(&Box::new(1u16)), vec![1u8, 0]);
-        assert_eq!(serialize(&Box::new(1u64)), vec![1u8, 0, 0, 0, 0, 0, 0, 0]);
     }
 
     #[test]
@@ -912,14 +849,6 @@ mod tests {
     fn deserialize_checkeddata_test() {
         let cd: Result<CheckedData, _> = deserialize(&[5u8, 0, 0, 0, 162, 107, 175, 90, 1, 2, 3, 4, 5]);
         assert_eq!(cd.ok(), Some(CheckedData(vec![1u8, 2, 3, 4, 5])));
-    }
-
-    #[test]
-    fn deserialize_box_test() {
-        let zero: Result<Box<u8>, _> = deserialize(&[0u8]);
-        let one: Result<Box<u8>, _> = deserialize(&[1u8]);
-        assert_eq!(zero.ok(), Some(Box::new(0)));
-        assert_eq!(one.ok(), Some(Box::new(1)));
     }
 }
 
