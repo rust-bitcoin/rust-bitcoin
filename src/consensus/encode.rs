@@ -419,7 +419,7 @@ impl VarInt {
     /// Returns 1 for 0...0xFC, 3 for 0xFD...(2^16-1), 5 for 0x10000...(2^32-1),
     /// and 9 otherwise.
     #[inline]
-    pub fn encoded_length(&self) -> u64 {
+    pub fn len(&self) -> usize {
         match self.0 {
             0...0xFC             => { 1 }
             0xFD...0xFFFF        => { 3 }

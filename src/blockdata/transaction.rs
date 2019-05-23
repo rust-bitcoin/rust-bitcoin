@@ -368,40 +368,40 @@ impl Transaction {
     /// witness, this is the non-witness consensus-serialized size multiplied by 3 plus the
     /// with-witness consensus-serialized size.
     #[inline]
-    pub fn get_weight(&self) -> u64 {
+    pub fn get_weight(&self) -> usize {
         let mut input_weight = 0;
         let mut inputs_with_witnesses = 0;
         for input in &self.input {
             input_weight += 4*(32 + 4 + 4 + // outpoint (32+4) + nSequence
-                VarInt(input.script_sig.len() as u64).encoded_length() +
-                input.script_sig.len() as u64);
+                VarInt(input.script_sig.len() as u64).len() +
+                input.script_sig.len());
             if !input.witness.is_empty() {
                 inputs_with_witnesses += 1;
-                input_weight += VarInt(input.witness.len() as u64).encoded_length();
+                input_weight += VarInt(input.witness.len() as u64).len();
                 for elem in &input.witness {
-                    input_weight += VarInt(elem.len() as u64).encoded_length() + elem.len() as u64;
+                    input_weight += VarInt(elem.len() as u64).len() + elem.len();
                 }
             }
         }
         let mut output_size = 0;
         for output in &self.output {
             output_size += 8 + // value
-                VarInt(output.script_pubkey.len() as u64).encoded_length() +
-                output.script_pubkey.len() as u64;
+                VarInt(output.script_pubkey.len() as u64).len() +
+                output.script_pubkey.len();
         }
         let non_input_size =
         // version:
         4 +
         // count varints:
-        VarInt(self.input.len() as u64).encoded_length() +
-        VarInt(self.output.len() as u64).encoded_length() +
+        VarInt(self.input.len() as u64).len() +
+        VarInt(self.output.len() as u64).len() +
         output_size +
         // lock_time
         4;
         if inputs_with_witnesses == 0 {
             non_input_size * 4 + input_weight
         } else {
-            non_input_size * 4 + input_weight + self.input.len() as u64 - inputs_with_witnesses + 2
+            non_input_size * 4 + input_weight + self.input.len() - inputs_with_witnesses + 2
         }
     }
 
