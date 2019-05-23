@@ -81,23 +81,24 @@ impl<D: ReadExt> Decodable<D> for Key {
 }
 
 impl<S: WriteExt> Encodable<S> for Key {
-    fn consensus_encode(&self, s: &mut S) -> Result<(), encode::Error> {
-        VarInt((self.key.len() + 1) as u64).consensus_encode(s)?;
+    fn consensus_encode(&self, s: &mut S) -> Result<usize, encode::Error> {
+        let mut len = 0;
+        len += VarInt((self.key.len() + 1) as u64).consensus_encode(s)?;
 
-        self.type_value.consensus_encode(s)?;
+        len += self.type_value.consensus_encode(s)?;
 
         for key in &self.key {
-            key.consensus_encode(s)?
+            len += key.consensus_encode(s)?
         }
 
-        Ok(())
+        Ok(len)
     }
 }
 
 impl<S: WriteExt> Encodable<S> for Pair {
-    fn consensus_encode(&self, s: &mut S) -> Result<(), encode::Error> {
-        self.key.consensus_encode(s)?;
-        self.value.consensus_encode(s)
+    fn consensus_encode(&self, s: &mut S) -> Result<usize, encode::Error> {
+        let len = self.key.consensus_encode(s)?;
+        Ok(len + self.value.consensus_encode(s)?)
     }
 }
 

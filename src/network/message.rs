@@ -39,7 +39,7 @@ pub struct CommandString(pub String);
 
 impl<S: WriteExt> Encodable<S> for CommandString {
     #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), encode::Error> {
+    fn consensus_encode(&self, s: &mut S) -> Result<usize, encode::Error> {
         let &CommandString(ref inner_str) = self;
         let mut rawbytes = [0u8; 12];
         let strbytes = inner_str.as_bytes();
@@ -162,21 +162,23 @@ impl RawNetworkMessage {
 struct HeaderSerializationWrapper<'a>(&'a Vec<block::BlockHeader>);
 impl <'a, S: WriteExt> Encodable<S> for HeaderSerializationWrapper<'a> {
     #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), encode::Error> {
-        VarInt(self.0.len() as u64).consensus_encode(s)?;
+    fn consensus_encode(&self, s: &mut S) -> Result<usize, encode::Error> {
+        let mut len = 0;
+        len += VarInt(self.0.len() as u64).consensus_encode(s)?;
         for header in self.0.iter() {
-            header.consensus_encode(s)?;
-            0u8.consensus_encode(s)?;
+            len += header.consensus_encode(s)?;
+            len += 0u8.consensus_encode(s)?;
         }
-        Ok(())
+        Ok(len)
     }
 }
 
 impl<S: WriteExt> Encodable<S> for RawNetworkMessage {
-    fn consensus_encode(&self, s: &mut S) -> Result<(), encode::Error> {
-        self.magic.consensus_encode(s)?;
-        CommandString(self.command()).consensus_encode(s)?;
-        CheckedData(match self.payload {
+    fn consensus_encode(&self, s: &mut S) -> Result<usize, encode::Error> {
+        let mut len = 0;
+        len += self.magic.consensus_encode(s)?;
+        len += CommandString(self.command()).consensus_encode(s)?;
+        len += CheckedData(match self.payload {
             NetworkMessage::Version(ref dat) => serialize(dat),
             NetworkMessage::Addr(ref dat)    => serialize(dat),
             NetworkMessage::Inv(ref dat)     => serialize(dat),
@@ -200,7 +202,8 @@ impl<S: WriteExt> Encodable<S> for RawNetworkMessage {
             | NetworkMessage::SendHeaders
             | NetworkMessage::MemPool
             | NetworkMessage::GetAddr => vec![],
-        }).consensus_encode(s)
+        }).consensus_encode(s)?;
+        Ok(len)
     }
 }
 

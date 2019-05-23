@@ -372,8 +372,9 @@ pub const MAX_VEC_SIZE: usize = 32 * 1024 * 1024;
 /// Data which can be encoded in a consensus-consistent way
 pub trait Encodable<S: WriteExt> {
     /// Encode an object with a well-defined format, should only ever error if
-    /// the underlying WriteExt errors.
-    fn consensus_encode(&self, e: &mut S) -> Result<(), self::Error>;
+    /// the underlying WriteExt errors. Returns the number of bytes written on
+    /// success
+    fn consensus_encode(&self, e: &mut S) -> Result<usize, self::Error>;
 }
 
 /// Data which can be encoded in a consensus-consistent way
@@ -400,7 +401,10 @@ macro_rules! impl_int_encodable{
 
         impl<S: WriteExt> Encodable<S> for $ty {
             #[inline]
-            fn consensus_encode(&self, s: &mut S) -> Result<(), self::Error> { s.$meth_enc(self.to_le()) }
+            fn consensus_encode(&self, s: &mut S) -> Result<usize, self::Error> {
+                s.$meth_enc(self.to_le())?;
+                Ok(mem::size_of::<$ty>())
+            }
         }
     )
 }
@@ -431,12 +435,12 @@ impl VarInt {
 
 impl<S: WriteExt> Encodable<S> for VarInt {
     #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), self::Error> {
+    fn consensus_encode(&self, s: &mut S) -> Result<usize, self::Error> {
         match self.0 {
-            0...0xFC             => { (self.0 as u8).consensus_encode(s) }
-            0xFD...0xFFFF        => { s.emit_u8(0xFD)?; (self.0 as u16).consensus_encode(s) }
-            0x10000...0xFFFFFFFF => { s.emit_u8(0xFE)?; (self.0 as u32).consensus_encode(s) }
-            _                    => { s.emit_u8(0xFF)?; (self.0 as u64).consensus_encode(s) }
+            0...0xFC             => { (self.0 as u8).consensus_encode(s)?; Ok(1) }
+            0xFD...0xFFFF        => { s.emit_u8(0xFD)?; (self.0 as u16).consensus_encode(s)?; Ok(3) }
+            0x10000...0xFFFFFFFF => { s.emit_u8(0xFE)?; (self.0 as u32).consensus_encode(s)?; Ok(5) }
+            _                    => { s.emit_u8(0xFF)?; (self.0 as u64).consensus_encode(s)?; Ok(9) }
         }
     }
 }
@@ -479,7 +483,10 @@ impl<D: ReadExt> Decodable<D> for VarInt {
 // Booleans
 impl<S: WriteExt> Encodable<S> for bool {
     #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), self::Error> { s.emit_u8(if *self {1} else {0}) }
+    fn consensus_encode(&self, s: &mut S) -> Result<usize, self::Error> {
+        s.emit_u8(if *self {1} else {0})?;
+        Ok(1)
+    }
 }
 
 impl<D: ReadExt> Decodable<D> for bool {
@@ -490,10 +497,11 @@ impl<D: ReadExt> Decodable<D> for bool {
 // Strings
 impl<S: WriteExt> Encodable<S> for String {
     #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), self::Error> {
+    fn consensus_encode(&self, s: &mut S) -> Result<usize, self::Error> {
         let b = self.as_bytes();
-        VarInt(b.len() as u64).consensus_encode(s)?;
-        s.emit_slice(&b)
+        let vi_len = VarInt(b.len() as u64).consensus_encode(s)?;
+        s.emit_slice(&b)?;
+        Ok(vi_len + b.len())
     }
 }
 
@@ -511,8 +519,9 @@ macro_rules! impl_array {
     ( $size:expr ) => (
         impl<S: WriteExt> Encodable<S> for [u8; $size] {
             #[inline]
-            fn consensus_encode(&self, s: &mut S) -> Result<(), self::Error> {
-                s.emit_slice(&self[..])
+            fn consensus_encode(&self, s: &mut S) -> Result<usize, self::Error> {
+                s.emit_slice(&self[..])?;
+                Ok(self.len())
             }
         }
 
@@ -548,9 +557,9 @@ impl<D: ReadExt> Decodable<D> for [u16; 8] {
 
 impl<S: WriteExt> Encodable<S> for [u16; 8] {
     #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), self::Error> {
+    fn consensus_encode(&self, s: &mut S) -> Result<usize, self::Error> {
         for c in self.iter() { c.consensus_encode(s)?; }
-        Ok(())
+        Ok(16)
     }
 }
 
@@ -559,10 +568,13 @@ macro_rules! impl_vec {
     ($type: ty) => {
         impl<S: WriteExt> Encodable<S> for Vec<$type> {
             #[inline]
-            fn consensus_encode(&self, s: &mut S) -> Result<(), self::Error> {
-                VarInt(self.len() as u64).consensus_encode(s)?;
-                for c in self.iter() { c.consensus_encode(s)?; }
-                Ok(())
+            fn consensus_encode(&self, s: &mut S) -> Result<usize, self::Error> {
+                let mut len = 0;
+                len += VarInt(self.len() as u64).consensus_encode(s)?;
+                for c in self.iter() {
+                    len += c.consensus_encode(s)?;
+                }
+                Ok(len)
             }
         }
 
@@ -594,9 +606,10 @@ impl_vec!(u64);
 
 impl<S: WriteExt> Encodable<S> for Vec<u8> {
     #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), self::Error> {
-        VarInt(self.len() as u64).consensus_encode(s)?;
-        s.emit_slice(&self)
+    fn consensus_encode(&self, s: &mut S) -> Result<usize, self::Error> {
+        let vi_len = VarInt(self.len() as u64).consensus_encode(s)?;
+        s.emit_slice(&self)?;
+        Ok(vi_len + self.len())
     }
 }
 
@@ -617,9 +630,10 @@ impl<D: ReadExt> Decodable<D> for Vec<u8> {
 
 impl<S: WriteExt> Encodable<S> for Box<[u8]> {
     #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), self::Error> {
-        VarInt(self.len() as u64).consensus_encode(s)?;
-        s.emit_slice(&self)
+    fn consensus_encode(&self, s: &mut S) -> Result<usize, self::Error> {
+        let vi_len = VarInt(self.len() as u64).consensus_encode(s)?;
+        s.emit_slice(&self)?;
+        Ok(vi_len + self.len())
     }
 }
 
@@ -648,10 +662,11 @@ fn sha2_checksum(data: &[u8]) -> [u8; 4] {
 // Checked data
 impl<S: WriteExt> Encodable<S> for CheckedData {
     #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), self::Error> {
+    fn consensus_encode(&self, s: &mut S) -> Result<usize, self::Error> {
         (self.0.len() as u32).consensus_encode(s)?;
         sha2_checksum(&self.0).consensus_encode(s)?;
-        s.emit_slice(&self.0)
+        s.emit_slice(&self.0)?;
+        Ok(8 + self.0.len())
     }
 }
 
@@ -687,10 +702,11 @@ macro_rules! tuple_encode {
         impl <S: WriteExt, $($x: Encodable<S>),*> Encodable<S> for ($($x),*) {
             #[inline]
             #[allow(non_snake_case)]
-            fn consensus_encode(&self, s: &mut S) -> Result<(), self::Error> {
+            fn consensus_encode(&self, s: &mut S) -> Result<usize, self::Error> {
                 let &($(ref $x),*) = self;
-                $( $x.consensus_encode(s)?; )*
-                Ok(())
+                let mut len = 0;
+                $(len += $x.consensus_encode(s)?;)*
+                Ok(len)
             }
         }
 
@@ -710,7 +726,7 @@ tuple_encode!(T0, T1, T2, T3, T4, T5);
 tuple_encode!(T0, T1, T2, T3, T4, T5, T6, T7);
 
 impl<S: WriteExt> Encodable<S> for sha256d::Hash {
-    fn consensus_encode(&self, s: &mut S) -> Result<(), self::Error> {
+    fn consensus_encode(&self, s: &mut S) -> Result<usize, self::Error> {
         self.into_inner().consensus_encode(s)
     }
 }

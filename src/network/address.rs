@@ -74,10 +74,12 @@ fn addr_to_be(addr: [u16; 8]) -> [u16; 8] {
 
 impl<S: WriteExt> Encodable<S> for Address {
     #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), encode::Error> {
-        self.services.consensus_encode(s)?;
-        addr_to_be(self.address).consensus_encode(s)?;
-        self.port.to_be().consensus_encode(s)
+    fn consensus_encode(&self, s: &mut S) -> Result<usize, encode::Error> {
+        let mut len = 0;
+        len += self.services.consensus_encode(s)?;
+        len += addr_to_be(self.address).consensus_encode(s)?;
+        len += self.port.to_be().consensus_encode(s)?;
+        Ok(len)
     }
 }
 

@@ -20,9 +20,10 @@ macro_rules! impl_consensus_encoding {
     ($thing:ident, $($field:ident),+) => (
         impl<S: ::consensus::WriteExt> ::consensus::Encodable<S> for $thing {
             #[inline]
-            fn consensus_encode(&self, s: &mut S) -> Result<(), ::consensus::encode::Error> {
-                $( self.$field.consensus_encode(s)?; )+
-                Ok(())
+            fn consensus_encode(&self, s: &mut S) -> Result<usize, ::consensus::encode::Error> {
+                let mut len = 0;
+                $(len += self.$field.consensus_encode(s)?;)+
+                Ok(len)
             }
         }
 

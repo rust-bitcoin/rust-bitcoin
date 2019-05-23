@@ -440,9 +440,9 @@ impl BitcoinHash for Transaction {
 impl_consensus_encoding!(TxOut, value, script_pubkey);
 
 impl<S: WriteExt> Encodable<S> for OutPoint {
-    fn consensus_encode(&self, s: &mut S) -> Result <(), encode::Error> {
-        self.txid.consensus_encode(s)?;
-        self.vout.consensus_encode(s)
+    fn consensus_encode(&self, s: &mut S) -> Result <usize, encode::Error> {
+        let len = self.txid.consensus_encode(s)?;
+        Ok(len + self.vout.consensus_encode(s)?)
     }
 }
 impl<D: ReadExt> Decodable<D> for OutPoint {
@@ -455,10 +455,12 @@ impl<D: ReadExt> Decodable<D> for OutPoint {
 }
 
 impl<S: WriteExt> Encodable<S> for TxIn {
-    fn consensus_encode(&self, s: &mut S) -> Result <(), encode::Error> {
-        self.previous_output.consensus_encode(s)?;
-        self.script_sig.consensus_encode(s)?;
-        self.sequence.consensus_encode(s)
+    fn consensus_encode(&self, s: &mut S) -> Result <usize, encode::Error> {
+        let mut len = 0;
+        len += self.previous_output.consensus_encode(s)?;
+        len += self.script_sig.consensus_encode(s)?;
+        len += self.sequence.consensus_encode(s)?;
+        Ok(len)
     }
 }
 impl<D: ReadExt> Decodable<D> for TxIn {
@@ -473,8 +475,9 @@ impl<D: ReadExt> Decodable<D> for TxIn {
 }
 
 impl<S: WriteExt> Encodable<S> for Transaction {
-    fn consensus_encode(&self, s: &mut S) -> Result <(), encode::Error> {
-        self.version.consensus_encode(s)?;
+    fn consensus_encode(&self, s: &mut S) -> Result <usize, encode::Error> {
+        let mut len = 0;
+        len += self.version.consensus_encode(s)?;
         let mut have_witness = self.input.is_empty();
         for input in &self.input {
             if !input.witness.is_empty() {
@@ -483,18 +486,19 @@ impl<S: WriteExt> Encodable<S> for Transaction {
             }
         }
         if !have_witness {
-            self.input.consensus_encode(s)?;
-            self.output.consensus_encode(s)?;
+            len += self.input.consensus_encode(s)?;
+            len += self.output.consensus_encode(s)?;
         } else {
-            0u8.consensus_encode(s)?;
-            1u8.consensus_encode(s)?;
-            self.input.consensus_encode(s)?;
-            self.output.consensus_encode(s)?;
+            len += 0u8.consensus_encode(s)?;
+            len += 1u8.consensus_encode(s)?;
+            len += self.input.consensus_encode(s)?;
+            len += self.output.consensus_encode(s)?;
             for input in &self.input {
-                input.witness.consensus_encode(s)?;
+                len += input.witness.consensus_encode(s)?;
             }
         }
-        self.lock_time.consensus_encode(s)
+        len += self.lock_time.consensus_encode(s)?;
+        Ok(len)
     }
 }
 

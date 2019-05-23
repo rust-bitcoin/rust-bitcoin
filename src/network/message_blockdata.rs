@@ -103,15 +103,15 @@ impl_consensus_encoding!(GetHeadersMessage, version, locator_hashes, stop_hash);
 
 impl<S: WriteExt> Encodable<S> for Inventory {
     #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), encode::Error> {
-        match self.inv_type {
+    fn consensus_encode(&self, s: &mut S) -> Result<usize, encode::Error> {
+        let inv_len = match self.inv_type {
             InvType::Error => 0u32, 
             InvType::Transaction => 1,
             InvType::Block => 2,
             InvType::WitnessBlock => 0x40000002,
             InvType::WitnessTransaction => 0x40000001
         }.consensus_encode(s)?;
-        self.hash.consensus_encode(s)
+        Ok(inv_len + self.hash.consensus_encode(s)?)
     }
 }
 

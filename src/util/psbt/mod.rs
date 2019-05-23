@@ -89,22 +89,23 @@ impl PartiallySignedTransaction {
 }
 
 impl<S: WriteExt> Encodable<S> for PartiallySignedTransaction {
-    fn consensus_encode(&self, s: &mut S) -> Result<(), encode::Error> {
-        b"psbt".consensus_encode(s)?;
+    fn consensus_encode(&self, s: &mut S) -> Result<usize, encode::Error> {
+        let mut len = 0;
+        len += b"psbt".consensus_encode(s)?;
 
-        0xff_u8.consensus_encode(s)?;
+        len += 0xff_u8.consensus_encode(s)?;
 
-        self.global.consensus_encode(s)?;
+        len += self.global.consensus_encode(s)?;
 
         for i in &self.inputs {
-            i.consensus_encode(s)?;
+            len += i.consensus_encode(s)?;
         }
 
         for i in &self.outputs {
-            i.consensus_encode(s)?;
+            len += i.consensus_encode(s)?;
         }
 
-        Ok(())
+        Ok(len)
     }
 }
 

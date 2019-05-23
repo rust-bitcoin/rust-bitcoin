@@ -727,7 +727,7 @@ impl serde::Serialize for Script {
 // Network serialization
 impl<S: WriteExt> Encodable<S> for Script {
     #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), encode::Error> {
+    fn consensus_encode(&self, s: &mut S) -> Result<usize, encode::Error> {
         self.0.consensus_encode(s)
     }
 }

@@ -55,12 +55,13 @@ macro_rules! impl_psbt_serialize {
 macro_rules! impl_psbtmap_consensus_encoding {
     ($thing:ty) => {
         impl<S: ::consensus::WriteExt> ::consensus::Encodable<S> for $thing {
-            fn consensus_encode(&self, s: &mut S) -> Result<(), ::consensus::encode::Error> {
+            fn consensus_encode(&self, s: &mut S) -> Result<usize, ::consensus::encode::Error> {
+                let mut len = 0;
                 for pair in ::util::psbt::Map::get_pairs(self)? {
-                    ::consensus::Encodable::consensus_encode(&pair, s)?
+                    len += ::consensus::Encodable::consensus_encode(&pair, s)?;
                 }
 
-                ::consensus::Encodable::consensus_encode(&0x00_u8, s)
+                Ok(len + ::consensus::Encodable::consensus_encode(&0x00_u8, s)?)
             }
         }
     };

@@ -338,10 +338,13 @@ macro_rules! construct_uint {
 
         impl<S: ::consensus::WriteExt> ::consensus::Encodable<S> for $name {
             #[inline]
-            fn consensus_encode(&self, s: &mut S) -> Result<(), encode::Error> {
+            fn consensus_encode(&self, s: &mut S) -> Result<usize, encode::Error> {
                 let &$name(ref data) = self;
-                for word in data.iter() { word.consensus_encode(s)?; }
-                Ok(())
+                let mut len = 0;
+                for word in data.iter() {
+                    len += word.consensus_encode(s)?;
+                }
+                Ok(len)
             }
         }
 

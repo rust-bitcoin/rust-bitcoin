@@ -354,14 +354,14 @@ impl PartialMerkleTree {
 }
 
 impl<S: WriteExt> Encodable<S> for PartialMerkleTree {
-    fn consensus_encode(&self, s: &mut S) -> Result<(), Error> {
-        self.num_transactions.consensus_encode(s)?;
-        self.hashes.consensus_encode(s)?;
+    fn consensus_encode(&self, s: &mut S) -> Result<usize, Error> {
+        let ret = self.num_transactions.consensus_encode(s)?
+            + self.hashes.consensus_encode(s)?;
         let mut bytes: Vec<u8> = vec![0; (self.bits.len() + 7) / 8];
         for p in 0..self.bits.len() {
             bytes[p / 8] |= (self.bits[p] as u8) << (p % 8) as u8;
         }
-        bytes.consensus_encode(s)
+        Ok(ret + bytes.consensus_encode(s)?)
     }
 }
 
@@ -472,9 +472,8 @@ impl MerkleBlock {
 }
 
 impl<S: WriteExt> Encodable<S> for MerkleBlock {
-    fn consensus_encode(&self, s: &mut S) -> Result<(), Error> {
-        self.header.consensus_encode(s)?;
-        self.txn.consensus_encode(s)
+    fn consensus_encode(&self, s: &mut S) -> Result<usize, Error> {
+        Ok(self.header.consensus_encode(s)? + self.txn.consensus_encode(s)?)
     }
 }
 
