@@ -20,7 +20,7 @@
 use std::fmt;
 
 use consensus::encode::{Decodable, Encodable, VarInt, MAX_VEC_SIZE};
-use consensus::encode::{self, Decoder, Encoder};
+use consensus::{encode, ReadExt, WriteExt};
 use util::psbt::Error;
 
 /// A PSBT key in its raw byte form.
@@ -52,7 +52,7 @@ impl fmt::Display for Key {
     }
 }
 
-impl<D: Decoder> Decodable<D> for Key {
+impl<D: ReadExt> Decodable<D> for Key {
     fn consensus_decode(d: &mut D) -> Result<Self, encode::Error> {
         let VarInt(byte_size): VarInt = Decodable::consensus_decode(d)?;
 
@@ -80,7 +80,7 @@ impl<D: Decoder> Decodable<D> for Key {
     }
 }
 
-impl<S: Encoder> Encodable<S> for Key {
+impl<S: WriteExt> Encodable<S> for Key {
     fn consensus_encode(&self, s: &mut S) -> Result<(), encode::Error> {
         VarInt((self.key.len() + 1) as u64).consensus_encode(s)?;
 
@@ -94,14 +94,14 @@ impl<S: Encoder> Encodable<S> for Key {
     }
 }
 
-impl<S: Encoder> Encodable<S> for Pair {
+impl<S: WriteExt> Encodable<S> for Pair {
     fn consensus_encode(&self, s: &mut S) -> Result<(), encode::Error> {
         self.key.consensus_encode(s)?;
         self.value.consensus_encode(s)
     }
 }
 
-impl<D: Decoder> Decodable<D> for Pair {
+impl<D: ReadExt> Decodable<D> for Pair {
     fn consensus_decode(d: &mut D) -> Result<Self, encode::Error> {
         Ok(Pair {
             key: Decodable::consensus_decode(d)?,

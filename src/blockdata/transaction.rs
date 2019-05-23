@@ -34,8 +34,8 @@ use bitcoin_hashes::hex::FromHex;
 use util::hash::BitcoinHash;
 #[cfg(feature="bitcoinconsensus")] use blockdata::script;
 use blockdata::script::Script;
-use consensus::encode::{self, serialize, Encoder, Decoder};
-use consensus::encode::{Encodable, Decodable, VarInt};
+use consensus::{encode, serialize, Decodable, Encodable, ReadExt, WriteExt};
+use VarInt;
 
 /// A reference to a transaction output
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
@@ -439,13 +439,13 @@ impl BitcoinHash for Transaction {
 
 impl_consensus_encoding!(TxOut, value, script_pubkey);
 
-impl<S: Encoder> Encodable<S> for OutPoint {
+impl<S: WriteExt> Encodable<S> for OutPoint {
     fn consensus_encode(&self, s: &mut S) -> Result <(), encode::Error> {
         self.txid.consensus_encode(s)?;
         self.vout.consensus_encode(s)
     }
 }
-impl<D: Decoder> Decodable<D> for OutPoint {
+impl<D: ReadExt> Decodable<D> for OutPoint {
     fn consensus_decode(d: &mut D) -> Result<OutPoint, encode::Error> {
         Ok(OutPoint {
             txid: Decodable::consensus_decode(d)?,
@@ -454,14 +454,14 @@ impl<D: Decoder> Decodable<D> for OutPoint {
     }
 }
 
-impl<S: Encoder> Encodable<S> for TxIn {
+impl<S: WriteExt> Encodable<S> for TxIn {
     fn consensus_encode(&self, s: &mut S) -> Result <(), encode::Error> {
         self.previous_output.consensus_encode(s)?;
         self.script_sig.consensus_encode(s)?;
         self.sequence.consensus_encode(s)
     }
 }
-impl<D: Decoder> Decodable<D> for TxIn {
+impl<D: ReadExt> Decodable<D> for TxIn {
     fn consensus_decode(d: &mut D) -> Result<TxIn, encode::Error> {
         Ok(TxIn {
             previous_output: Decodable::consensus_decode(d)?,
@@ -472,7 +472,7 @@ impl<D: Decoder> Decodable<D> for TxIn {
     }
 }
 
-impl<S: Encoder> Encodable<S> for Transaction {
+impl<S: WriteExt> Encodable<S> for Transaction {
     fn consensus_encode(&self, s: &mut S) -> Result <(), encode::Error> {
         self.version.consensus_encode(s)?;
         let mut have_witness = self.input.is_empty();
@@ -498,7 +498,7 @@ impl<S: Encoder> Encodable<S> for Transaction {
     }
 }
 
-impl<D: Decoder> Decodable<D> for Transaction {
+impl<D: ReadExt> Decodable<D> for Transaction {
     fn consensus_decode(d: &mut D) -> Result<Transaction, encode::Error> {
         let version: u32 = Decodable::consensus_decode(d)?;
         let input: Vec<TxIn> = Decodable::consensus_decode(d)?;

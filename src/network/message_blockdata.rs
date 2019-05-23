@@ -20,7 +20,7 @@
 
 use network::constants;
 use consensus::encode::{Decodable, Encodable};
-use consensus::encode::{self, Decoder, Encoder};
+use consensus::{encode, ReadExt, WriteExt};
 use bitcoin_hashes::sha256d;
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -101,7 +101,7 @@ impl GetHeadersMessage {
 
 impl_consensus_encoding!(GetHeadersMessage, version, locator_hashes, stop_hash);
 
-impl<S: Encoder> Encodable<S> for Inventory {
+impl<S: WriteExt> Encodable<S> for Inventory {
     #[inline]
     fn consensus_encode(&self, s: &mut S) -> Result<(), encode::Error> {
         match self.inv_type {
@@ -115,7 +115,7 @@ impl<S: Encoder> Encodable<S> for Inventory {
     }
 }
 
-impl<D: Decoder> Decodable<D> for Inventory {
+impl<D: ReadExt> Decodable<D> for Inventory {
     #[inline]
     fn consensus_decode(d: &mut D) -> Result<Inventory, encode::Error> {
         let int_type: u32 = Decodable::consensus_decode(d)?;

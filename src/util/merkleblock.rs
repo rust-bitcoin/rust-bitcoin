@@ -62,7 +62,7 @@ use bitcoin_hashes::{sha256d, Hash};
 
 use blockdata::constants::{MAX_BLOCK_WEIGHT, MIN_TRANSACTION_WEIGHT};
 use consensus::encode::{Encodable, Error};
-use consensus::{Decodable, Decoder, Encoder};
+use consensus::{Decodable, ReadExt, WriteExt};
 use util::hash::BitcoinHash;
 use util::merkleblock::MerkleBlockError::*;
 use {Block, BlockHeader};
@@ -353,7 +353,7 @@ impl PartialMerkleTree {
     }
 }
 
-impl<S: Encoder> Encodable<S> for PartialMerkleTree {
+impl<S: WriteExt> Encodable<S> for PartialMerkleTree {
     fn consensus_encode(&self, s: &mut S) -> Result<(), Error> {
         self.num_transactions.consensus_encode(s)?;
         self.hashes.consensus_encode(s)?;
@@ -365,7 +365,7 @@ impl<S: Encoder> Encodable<S> for PartialMerkleTree {
     }
 }
 
-impl<D: Decoder> Decodable<D> for PartialMerkleTree {
+impl<D: ReadExt> Decodable<D> for PartialMerkleTree {
     fn consensus_decode(d: &mut D) -> Result<Self, Error> {
         let num_transactions: u32 = Decodable::consensus_decode(d)?;
         let hashes: Vec<sha256d::Hash> = Decodable::consensus_decode(d)?;
@@ -471,14 +471,14 @@ impl MerkleBlock {
     }
 }
 
-impl<S: Encoder> Encodable<S> for MerkleBlock {
+impl<S: WriteExt> Encodable<S> for MerkleBlock {
     fn consensus_encode(&self, s: &mut S) -> Result<(), Error> {
         self.header.consensus_encode(s)?;
         self.txn.consensus_encode(s)
     }
 }
 
-impl<D: Decoder> Decodable<D> for MerkleBlock {
+impl<D: ReadExt> Decodable<D> for MerkleBlock {
     fn consensus_decode(d: &mut D) -> Result<Self, Error> {
         Ok(MerkleBlock {
             header: Decodable::consensus_decode(d)?,

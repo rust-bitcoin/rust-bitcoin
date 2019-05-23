@@ -20,7 +20,7 @@
 
 use blockdata::script::Script;
 use blockdata::transaction::Transaction;
-use consensus::encode::{self, Encodable, Decodable, Encoder, Decoder};
+use consensus::{encode, Encodable, Decodable, WriteExt, ReadExt};
 
 mod error;
 pub use self::error::Error;
@@ -88,7 +88,7 @@ impl PartiallySignedTransaction {
     }
 }
 
-impl<S: Encoder> Encodable<S> for PartiallySignedTransaction {
+impl<S: WriteExt> Encodable<S> for PartiallySignedTransaction {
     fn consensus_encode(&self, s: &mut S) -> Result<(), encode::Error> {
         b"psbt".consensus_encode(s)?;
 
@@ -108,7 +108,7 @@ impl<S: Encoder> Encodable<S> for PartiallySignedTransaction {
     }
 }
 
-impl<D: Decoder> Decodable<D> for PartiallySignedTransaction {
+impl<D: ReadExt> Decodable<D> for PartiallySignedTransaction {
     fn consensus_decode(d: &mut D) -> Result<Self, encode::Error> {
         let magic: [u8; 4] = Decodable::consensus_decode(d)?;
 

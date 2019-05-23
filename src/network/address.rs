@@ -22,7 +22,7 @@ use std::io;
 use std::fmt;
 use std::net::{SocketAddr, Ipv6Addr, SocketAddrV4, SocketAddrV6};
 
-use consensus::encode::{self, Encoder, Decoder};
+use consensus::{encode, ReadExt, WriteExt};
 use consensus::encode::{Decodable, Encodable};
 
 /// A message which can be sent on the Bitcoin network
@@ -72,7 +72,7 @@ fn addr_to_be(addr: [u16; 8]) -> [u16; 8] {
      addr[4].to_be(), addr[5].to_be(), addr[6].to_be(), addr[7].to_be()]
 }
 
-impl<S: Encoder> Encodable<S> for Address {
+impl<S: WriteExt> Encodable<S> for Address {
     #[inline]
     fn consensus_encode(&self, s: &mut S) -> Result<(), encode::Error> {
         self.services.consensus_encode(s)?;
@@ -81,7 +81,7 @@ impl<S: Encoder> Encodable<S> for Address {
     }
 }
 
-impl<D: Decoder> Decodable<D> for Address {
+impl<D: ReadExt> Decodable<D> for Address {
     #[inline]
     fn consensus_decode(d: &mut D) -> Result<Address, encode::Error> {
         Ok(Address {

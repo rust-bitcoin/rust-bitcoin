@@ -37,8 +37,7 @@
 //! assert_eq!(&bytes[..], &[0xF9, 0xBE, 0xB4, 0xD9]);
 //! ```
 
-use consensus::encode::{Decodable, Encodable};
-use consensus::encode::{self, Encoder, Decoder};
+use consensus::{encode, Decodable, Encodable, ReadExt, WriteExt};
 
 /// Version of the protocol as appearing in network message headers
 pub const PROTOCOL_VERSION: u32 = 70001;
@@ -102,7 +101,7 @@ impl Network {
     }
 }
 
-impl<S: Encoder> Encodable<S> for Network {
+impl<S: WriteExt> Encodable<S> for Network {
     /// Encodes the magic bytes of `Network`.
     #[inline]
     fn consensus_encode(&self, s: &mut S) -> Result<(), encode::Error> {
@@ -110,7 +109,7 @@ impl<S: Encoder> Encodable<S> for Network {
     }
 }
 
-impl<D: Decoder> Decodable<D> for Network {
+impl<D: ReadExt> Decodable<D> for Network {
     /// Decodes the magic bytes of `Network`.
     #[inline]
     fn consensus_decode(d: &mut D) -> Result<Network, encode::Error> {

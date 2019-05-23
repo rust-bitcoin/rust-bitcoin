@@ -30,14 +30,14 @@ use network::message_blockdata;
 use network::message_filter;
 use consensus::encode::{Decodable, Encodable};
 use consensus::encode::{CheckedData, VarInt};
-use consensus::encode::{self, serialize, Encoder, Decoder};
+use consensus::{encode, serialize, ReadExt, WriteExt};
 use consensus::encode::MAX_VEC_SIZE;
 
 /// Serializer for command string
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct CommandString(pub String);
 
-impl<S: Encoder> Encodable<S> for CommandString {
+impl<S: WriteExt> Encodable<S> for CommandString {
     #[inline]
     fn consensus_encode(&self, s: &mut S) -> Result<(), encode::Error> {
         let &CommandString(ref inner_str) = self;
@@ -53,7 +53,7 @@ impl<S: Encoder> Encodable<S> for CommandString {
     }
 }
 
-impl<D: Decoder> Decodable<D> for CommandString {
+impl<D: ReadExt> Decodable<D> for CommandString {
     #[inline]
     fn consensus_decode(d: &mut D) -> Result<CommandString, encode::Error> {
         let rawbytes: [u8; 12] = Decodable::consensus_decode(d)?;
@@ -160,7 +160,7 @@ impl RawNetworkMessage {
 }
 
 struct HeaderSerializationWrapper<'a>(&'a Vec<block::BlockHeader>);
-impl <'a, S: Encoder> Encodable<S> for HeaderSerializationWrapper<'a> {
+impl <'a, S: WriteExt> Encodable<S> for HeaderSerializationWrapper<'a> {
     #[inline]
     fn consensus_encode(&self, s: &mut S) -> Result<(), encode::Error> {
         VarInt(self.0.len() as u64).consensus_encode(s)?;
@@ -172,7 +172,7 @@ impl <'a, S: Encoder> Encodable<S> for HeaderSerializationWrapper<'a> {
     }
 }
 
-impl<S: Encoder> Encodable<S> for RawNetworkMessage {
+impl<S: WriteExt> Encodable<S> for RawNetworkMessage {
     fn consensus_encode(&self, s: &mut S) -> Result<(), encode::Error> {
         self.magic.consensus_encode(s)?;
         CommandString(self.command()).consensus_encode(s)?;
@@ -205,7 +205,7 @@ impl<S: Encoder> Encodable<S> for RawNetworkMessage {
 }
 
 struct HeaderDeserializationWrapper(Vec<block::BlockHeader>);
-impl<D: Decoder> Decodable<D> for HeaderDeserializationWrapper {
+impl<D: ReadExt> Decodable<D> for HeaderDeserializationWrapper {
     #[inline]
     fn consensus_decode(d: &mut D) -> Result<HeaderDeserializationWrapper, encode::Error> {
         let len = VarInt::consensus_decode(d)?.0;
@@ -226,7 +226,7 @@ impl<D: Decoder> Decodable<D> for HeaderDeserializationWrapper {
     }
 }
 
-impl<D: Decoder> Decodable<D> for RawNetworkMessage {
+impl<D: ReadExt> Decodable<D> for RawNetworkMessage {
     fn consensus_decode(d: &mut D) -> Result<RawNetworkMessage, encode::Error> {
         let magic = Decodable::consensus_decode(d)?;
         let CommandString(cmd): CommandString= Decodable::consensus_decode(d)?;

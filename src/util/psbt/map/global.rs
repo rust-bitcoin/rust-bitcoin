@@ -16,7 +16,7 @@ use std::collections::HashMap;
 use std::io::Cursor;
 
 use blockdata::transaction::Transaction;
-use consensus::encode::{self, Encodable, Decodable, Decoder};
+use consensus::{encode, Encodable, Decodable, ReadExt};
 use util::psbt::map::Map;
 use util::psbt::raw;
 use util::psbt;
@@ -120,7 +120,7 @@ impl Map for Global {
 
 impl_psbtmap_consensus_encoding!(Global);
 
-impl<D: Decoder> Decodable<D> for Global {
+impl<D: ReadExt> Decodable<D> for Global {
     fn consensus_decode(d: &mut D) -> Result<Self, encode::Error> {
 
         let mut tx: Option<Transaction> = None;
