@@ -45,6 +45,10 @@ use secp256k1;
 use util::base58;
 use util::psbt;
 
+use blockdata::transaction::{TxOut, Transaction, TxIn};
+use network::message_blockdata::Inventory;
+use network::address::Address;
+
 /// Encoding error
 #[derive(Debug)]
 pub enum Error {
@@ -551,27 +555,62 @@ impl<S: Encoder> Encodable<S> for [u16; 8] {
 }
 
 // Vectors
-impl<S: Encoder, T: Encodable<S>> Encodable<S> for Vec<T> {
+macro_rules! impl_vec {
+    ($type: ty) => {
+        impl<S: Encoder> Encodable<S> for Vec<$type> {
+            #[inline]
+            fn consensus_encode(&self, s: &mut S) -> Result<(), self::Error> {
+                VarInt(self.len() as u64).consensus_encode(s)?;
+                for c in self.iter() { c.consensus_encode(s)?; }
+                Ok(())
+            }
+        }
+
+        impl<D: Decoder> Decodable<D> for Vec<$type> {
+            #[inline]
+            fn consensus_decode(d: &mut D) -> Result<Vec<$type>, self::Error> {
+                let len = VarInt::consensus_decode(d)?.0;
+                let byte_size = (len as usize)
+                                    .checked_mul(mem::size_of::<$type>())
+                                    .ok_or(self::Error::ParseFailed("Invalid length"))?;
+                if byte_size > MAX_VEC_SIZE {
+                    return Err(self::Error::OversizedVectorAllocation { requested: byte_size, max: MAX_VEC_SIZE })
+                }
+                let mut ret = Vec::with_capacity(len as usize);
+                for _ in 0..len { ret.push(Decodable::consensus_decode(d)?); }
+                Ok(ret)
+            }
+        }
+    }
+}
+impl_vec!(sha256d::Hash);
+impl_vec!(Transaction);
+impl_vec!(TxOut);
+impl_vec!(TxIn);
+impl_vec!(Inventory);
+impl_vec!(Vec<u8>);
+impl_vec!((u32, Address));
+impl_vec!(u64);
+
+impl<S: Encoder> Encodable<S> for Vec<u8> {
     #[inline]
     fn consensus_encode(&self, s: &mut S) -> Result<(), self::Error> {
         VarInt(self.len() as u64).consensus_encode(s)?;
-        for c in self.iter() { c.consensus_encode(s)?; }
-        Ok(())
+        s.emit_slice(&self)
     }
 }
 
-impl<D: Decoder, T: Decodable<D>> Decodable<D> for Vec<T> {
+impl<D: Decoder> Decodable<D> for Vec<u8> {
     #[inline]
-    fn consensus_decode(d: &mut D) -> Result<Vec<T>, self::Error> {
+    fn consensus_decode(d: &mut D) -> Result<Vec<u8>, self::Error> {
         let len = VarInt::consensus_decode(d)?.0;
-        let byte_size = (len as usize)
-                            .checked_mul(mem::size_of::<T>())
-                            .ok_or(self::Error::ParseFailed("Invalid length"))?;
-        if byte_size > MAX_VEC_SIZE {
-            return Err(self::Error::OversizedVectorAllocation { requested: byte_size, max: MAX_VEC_SIZE })
+        let len = len as usize;
+        if len > MAX_VEC_SIZE {
+            return Err(self::Error::OversizedVectorAllocation { requested: len, max: MAX_VEC_SIZE })
         }
-        let mut ret = Vec::with_capacity(len as usize);
-        for _ in 0..len { ret.push(Decodable::consensus_decode(d)?); }
+        let mut ret = Vec::with_capacity(len);
+        ret.resize(len, 0);
+        d.read_slice(&mut ret)?;
         Ok(ret)
     }
 }
