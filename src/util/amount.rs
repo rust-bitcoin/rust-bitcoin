@@ -170,9 +170,41 @@ impl Amount {
         Amount::from_inner(satoshi)
     }
 
+    /// Try to create an [Amount] with satoshi precision and the given number
+    /// of satoshis.
+    /// Returns [None] if the satoshis is larger than [Amount::max_value()].
+    pub fn try_from_usat(satoshi: u64) -> Option<Amount> {
+        match satoshi > Inner::max_value() as u64 {
+            true => None,
+            false => Some(Amount::from_inner(satoshi as i64)),
+        }
+    }
+
+    /// Try to create an [Amount] with satoshi precision and the given number
+    /// of satoshis.
+    /// Panics if the satoshis is larger than [Amount::max_value()].
+    pub fn from_usat(satoshi: u64) -> Amount {
+        Amount::try_from_usat(satoshi).expect("amount overflow")
+    }
+
     /// Get the number of satoshis in this [Amount].
     pub fn as_sat(self) -> i64 {
         self.0
+    }
+
+    /// Try to get the number of satoshis as a [u64].
+    /// Returns [None] if [is_negative] returns true.
+    pub fn try_as_usat(self) -> Option<u64> {
+        match self.is_negative() {
+            true => None,
+            false => Some(self.0 as u64),
+        }
+    }
+
+    /// Get the number of satoshis as a [u64].
+    /// Panics if [is_negative] returns true.
+    pub fn as_usat(self) -> u64 {
+        self.try_as_usat().expect("Amount is negative")
     }
 
     /// The maximum value of an [Amount].
@@ -658,14 +690,27 @@ pub mod serde {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::panic;
     use std::str::FromStr;
 
     #[cfg(feature = "serde")]
     use serde_test;
 
     #[test]
+    fn basics() {
+        assert_eq!(Amount::from_usat(42), Amount::from_sat(42));
+        assert_eq!(Amount::try_from_usat(9223372036854775808), None);
+        let result = panic::catch_unwind(|| Amount::from_usat(9223372036854775808));
+        assert!(result.is_err());
+
+        let a = Amount::from_sat(-4);
+        assert_eq!(a.try_as_usat(), None);
+        let result = panic::catch_unwind(|| Amount::from_sat(-4).as_usat());
+        assert!(result.is_err());
+    }
+
+    #[test]
     fn add_sub_mul_div() {
-        use std::panic;
         let sat = Amount::from_sat;
 
         assert_eq!(sat(15) + sat(15), sat(30));
@@ -787,7 +832,10 @@ mod tests {
         assert_eq!(Amount::ONE_SAT.to_string_with_denomination(D::MilliSatoshi), "1000 msat");
         assert_eq!(Amount::ONE_BTC.to_string_with_denomination(D::Satoshi), "100000000 satoshi");
         assert_eq!(Amount::ONE_SAT.to_string_with_denomination(D::Bitcoin), "0.00000001 BTC");
-        assert_eq!(Amount::from_sat(-42).to_string_with_denomination(D::Bitcoin), "-0.00000042 BTC");
+        assert_eq!(
+            Amount::from_sat(-42).to_string_with_denomination(D::Bitcoin),
+            "-0.00000042 BTC"
+        );
     }
 
     #[test]
@@ -878,11 +926,6 @@ mod tests {
         assert_eq!(t, serde_json::from_value(value).unwrap());
 
         // errors
-        let t: Result<T, serde_json::Error> = serde_json::from_str("{\"amt\": -42.0.0}");
-        assert!(t
-            .unwrap_err()
-            .to_string()
-            .contains(&ParseAmountError::InvalidCharacter('.').to_string()));
         let t: Result<T, serde_json::Error> = serde_json::from_str("{\"amt\": 1000000.000000001}");
         assert!(t.unwrap_err().to_string().contains(&ParseAmountError::TooPrecise.to_string()));
     }
