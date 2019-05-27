@@ -24,6 +24,7 @@ pub mod bip143;
 pub mod contracthash;
 pub mod decimal;
 pub mod hash;
+pub mod merkleblock;
 pub mod misc;
 pub mod psbt;
 pub mod uint;
