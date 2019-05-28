@@ -46,9 +46,6 @@ use std::str::FromStr;
 use bitcoin_bech32::{self, WitnessProgram, u5};
 use bitcoin_hashes::{hash160, Hash};
 
-#[cfg(feature = "serde")]
-use serde;
-
 use blockdata::opcodes;
 use blockdata::script;
 use network::constants::Network;
@@ -75,6 +72,7 @@ pub struct Address {
     /// The network on which this address is usable
     pub network: Network,
 }
+serde_string_impl!(Address, "a Bitcoin address");
 
 impl Address {
     /// Creates a pay to (compressed) public key hash address from a public key
@@ -296,59 +294,6 @@ impl FromStr for Address {
 impl ::std::fmt::Debug for Address {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         write!(f, "{}", self.to_string())
-    }
-}
-
-#[cfg(feature = "serde")]
-impl<'de> serde::Deserialize<'de> for Address {
-    #[inline]
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        use std::fmt::{self, Formatter};
-
-        struct Visitor;
-        impl<'de> serde::de::Visitor<'de> for Visitor {
-            type Value = Address;
-
-            fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
-                formatter.write_str("a Bitcoin address")
-            }
-
-            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-            where
-                E: serde::de::Error,
-            {
-                Address::from_str(v).map_err(E::custom)
-            }
-
-            fn visit_borrowed_str<E>(self, v: &'de str) -> Result<Self::Value, E>
-            where
-                E: serde::de::Error,
-            {
-                self.visit_str(v)
-            }
-
-            fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
-            where
-                E: serde::de::Error,
-            {
-                self.visit_str(&v)
-            }
-        }
-
-        deserializer.deserialize_str(Visitor)
-    }
-}
-
-#[cfg(feature = "serde")]
-impl serde::Serialize for Address {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        serializer.serialize_str(&self.to_string())
     }
 }
 
