@@ -62,6 +62,7 @@ pub struct ExtendedPrivKey {
     /// Chain code
     pub chain_code: ChainCode
 }
+serde_string_impl!(ExtendedPrivKey, "a BIP-32 extended private key");
 
 /// Extended public key
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -79,6 +80,7 @@ pub struct ExtendedPubKey {
     /// Chain code
     pub chain_code: ChainCode
 }
+serde_string_impl!(ExtendedPubKey, "a BIP-32 extended public key");
 
 /// A child number for a derived key
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -213,6 +215,7 @@ impl serde::Serialize for ChildNumber {
 #[derive(Clone, PartialEq, Eq)]
 pub struct DerivationPath(Vec<ChildNumber>);
 impl_index_newtype!(DerivationPath, ChildNumber);
+serde_string_impl!(DerivationPath, "a BIP-32 derivation path");
 
 impl From<Vec<ChildNumber>> for DerivationPath {
     fn from(numbers: Vec<ChildNumber>) -> Self {
@@ -346,44 +349,6 @@ impl fmt::Display for DerivationPath {
 impl fmt::Debug for DerivationPath {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::Display::fmt(&self, f)
-    }
-}
-
-#[cfg(feature = "serde")]
-impl<'de> serde::Deserialize<'de> for DerivationPath {
-    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        use std::fmt;
-        use serde::de;
-
-        struct Visitor;
-        impl<'de> de::Visitor<'de> for Visitor {
-            type Value = DerivationPath;
-
-            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                formatter.write_str("a Bitcoin address")
-            }
-
-            fn visit_str<E: de::Error>(self, v: &str) -> Result<Self::Value, E> {
-                DerivationPath::from_str(v).map_err(E::custom)
-            }
-
-            fn visit_borrowed_str<E: de::Error>(self, v: &'de str) -> Result<Self::Value, E> {
-                self.visit_str(v)
-            }
-
-            fn visit_string<E: de::Error>(self, v: String) -> Result<Self::Value, E> {
-                self.visit_str(&v)
-            }
-        }
-
-        deserializer.deserialize_str(Visitor)
-    }
-}
-
-#[cfg(feature = "serde")]
-impl serde::Serialize for DerivationPath {
-    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        serializer.serialize_str(&self.to_string())
     }
 }
 
