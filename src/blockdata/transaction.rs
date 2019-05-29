@@ -45,7 +45,7 @@ pub struct OutPoint {
     /// The index of the referenced output in its transaction's vout
     pub vout: u32,
 }
-serde_struct_impl!(OutPoint, txid, vout);
+serde_struct_human_string_impl!(OutPoint, "an OutPoint", txid, vout);
 
 impl OutPoint {
     /// Create a new [OutPoint].
