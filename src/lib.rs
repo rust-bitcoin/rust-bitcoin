@@ -54,6 +54,9 @@ extern crate secp256k1;
 #[cfg(all(test, feature = "unstable"))] extern crate test;
 #[cfg(feature="bitcoinconsensus")] extern crate bitcoinconsensus;
 
+#[cfg(target_pointer_width = "16")]
+compile_error!("rust-bitcoin cannot be used on 16-bit architectures");
+
 #[cfg(test)]
 #[macro_use]
 mod test_macros;
