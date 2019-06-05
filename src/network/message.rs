@@ -99,6 +99,8 @@ pub enum NetworkMessage {
     Block(block::Block),
     /// `headers`
     Headers(Vec<block::BlockHeader>),
+    /// `sendheaders`
+    SendHeaders,
     /// `getaddr`
     GetAddr,
     // TODO: checkorder,
@@ -142,6 +144,7 @@ impl RawNetworkMessage {
             NetworkMessage::Tx(_)      => "tx",
             NetworkMessage::Block(_)   => "block",
             NetworkMessage::Headers(_) => "headers",
+            NetworkMessage::SendHeaders => "sendheaders",
             NetworkMessage::GetAddr    => "getaddr",
             NetworkMessage::Ping(_)    => "ping",
             NetworkMessage::Pong(_)    => "pong",
@@ -194,6 +197,7 @@ impl<S: Encoder> Encodable<S> for RawNetworkMessage {
             NetworkMessage::CFCheckpt(ref dat) => serialize(dat),
             NetworkMessage::Alert(ref dat)    => serialize(dat),
             NetworkMessage::Verack
+            | NetworkMessage::SendHeaders
             | NetworkMessage::MemPool
             | NetworkMessage::GetAddr => vec![],
         }).consensus_encode(s)
@@ -243,6 +247,7 @@ impl<D: Decoder> Decodable<D> for RawNetworkMessage {
             "headers" =>
                 NetworkMessage::Headers(<HeaderDeserializationWrapper as Decodable<Cursor<Vec<u8>>>>
                                         ::consensus_decode(&mut mem_d)?.0),
+            "sendheaders" => NetworkMessage::SendHeaders,
             "getaddr" => NetworkMessage::GetAddr,
             "ping"    => NetworkMessage::Ping(Decodable::consensus_decode(&mut mem_d)?),
             "pong"    => NetworkMessage::Pong(Decodable::consensus_decode(&mut mem_d)?),

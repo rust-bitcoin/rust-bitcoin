@@ -7,7 +7,7 @@ for TARGET in fuzz_targets/*; do
 	if [ -d hfuzz_input/$FILE ]; then
 	    HFUZZ_INPUT_ARGS="-f hfuzz_input/$FILE/input"
 	fi
-	HFUZZ_BUILD_ARGS="--features honggfuzz_fuzz" HFUZZ_RUN_ARGS="-N1000000 --exit_upon_crash -v $HFUZZ_INPUT_ARGS" cargo hfuzz run $FILE
+	HFUZZ_BUILD_ARGS="--features honggfuzz_fuzz" HFUZZ_RUN_ARGS="-N200000 --exit_upon_crash -v $HFUZZ_INPUT_ARGS" cargo hfuzz run $FILE
 
 	if [ -f hfuzz_workspace/$FILE/HONGGFUZZ.REPORT.TXT ]; then
 		cat hfuzz_workspace/$FILE/HONGGFUZZ.REPORT.TXT

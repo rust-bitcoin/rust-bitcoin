@@ -348,7 +348,10 @@ macro_rules! construct_uint {
         impl<D: ::consensus::encode::Decoder> ::consensus::encode::Decodable<D> for $name {
             fn consensus_decode(d: &mut D) -> Result<$name, encode::Error> {
                 use consensus::encode::Decodable;
-                let ret: [u64; $n_words] = Decodable::consensus_decode(d)?;
+                let mut ret: [u64; $n_words] = [0; $n_words];
+                for i in 0..$n_words {
+                    ret[i] = Decodable::consensus_decode(d)?;
+                }
                 Ok($name(ret))
             }
         }

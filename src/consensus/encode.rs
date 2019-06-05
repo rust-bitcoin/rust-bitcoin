@@ -29,8 +29,6 @@
 //! big-endian decimals, etc.)
 //!
 
-use std::collections::HashMap;
-use std::hash::Hash;
 use std::{mem, u32};
 
 use std::error;
@@ -46,6 +44,10 @@ use secp256k1;
 
 use util::base58;
 use util::psbt;
+
+use blockdata::transaction::{TxOut, Transaction, TxIn};
+use network::message_blockdata::Inventory;
+use network::address::Address;
 
 /// Encoding error
 #[derive(Debug)]
@@ -262,6 +264,9 @@ pub trait Encoder {
 
     /// Output a boolean
     fn emit_bool(&mut self, v: bool) -> Result<(), Error>;
+
+    /// Output a byte slice
+    fn emit_slice(&mut self, v: &[u8]) -> Result<(), Error>;
 }
 
 /// A simple Decoder trait
@@ -286,6 +291,9 @@ pub trait Decoder {
 
     /// Read a boolean
     fn read_bool(&mut self) -> Result<bool, Error>;
+
+    /// Read a byte slice
+    fn read_slice(&mut self, slice: &mut [u8]) -> Result<(), Error>;
 }
 
 macro_rules! encoder_fn {
@@ -326,6 +334,10 @@ impl<W: Write> Encoder for W {
     fn emit_bool(&mut self, v: bool) -> Result<(), Error> {
         self.write_i8(if v {1} else {0}).map_err(Error::Io)
     }
+    #[inline]
+    fn emit_slice(&mut self, v: &[u8]) -> Result<(), Error> {
+        self.write_all(v).map_err(Error::Io)
+    }
 }
 
 impl<R: Read> Decoder for R {
@@ -347,6 +359,10 @@ impl<R: Read> Decoder for R {
     #[inline]
     fn read_bool(&mut self) -> Result<bool, Error> {
         Decoder::read_i8(self).map(|bit| bit != 0)
+    }
+    #[inline]
+    fn read_slice(&mut self, slice: &mut [u8]) -> Result<(), Error> {
+        self.read_exact(slice).map_err(Error::Io)
     }
 }
 
@@ -475,7 +491,9 @@ impl<D: Decoder> Decodable<D> for bool {
 impl<S: Encoder> Encodable<S> for String {
     #[inline]
     fn consensus_encode(&self, s: &mut S) -> Result<(), self::Error> {
-        self.as_bytes().consensus_encode(s)
+        let b = self.as_bytes();
+        VarInt(b.len() as u64).consensus_encode(s)?;
+        s.emit_slice(&b)
     }
 }
 
@@ -491,21 +509,18 @@ impl<D: Decoder> Decodable<D> for String {
 // Arrays
 macro_rules! impl_array {
     ( $size:expr ) => (
-        impl<S: Encoder, T: Encodable<S>> Encodable<S> for [T; $size] {
+        impl<S: Encoder> Encodable<S> for [u8; $size] {
             #[inline]
             fn consensus_encode(&self, s: &mut S) -> Result<(), self::Error> {
-                for i in self.iter() { i.consensus_encode(s)?; }
-                Ok(())
+                s.emit_slice(&self[..])
             }
         }
 
-        impl<D: Decoder, T:Decodable<D> + Copy> Decodable<D> for [T; $size] {
+        impl<D: Decoder> Decodable<D> for [u8; $size] {
             #[inline]
-            fn consensus_decode(d: &mut D) -> Result<[T; $size], self::Error> {
-                // Set everything to the first decode
-                let mut ret = [Decodable::consensus_decode(d)?; $size];
-                // Set the rest
-                for item in ret.iter_mut().take($size).skip(1) { *item = Decodable::consensus_decode(d)?; }
+            fn consensus_decode(d: &mut D) -> Result<[u8; $size], self::Error> {
+                let mut ret = [0; $size];
+                d.read_slice(&mut ret)?;
                 Ok(ret)
             }
         }
@@ -520,54 +535,105 @@ impl_array!(16);
 impl_array!(32);
 impl_array!(33);
 
-impl<S: Encoder, T: Encodable<S>> Encodable<S> for [T] {
+impl<D: Decoder> Decodable<D> for [u16; 8] {
+    #[inline]
+    fn consensus_decode(d: &mut D) -> Result<[u16; 8], self::Error> {
+        let mut res = [0; 8];
+        for i in 0..8 {
+            res[i] = Decodable::consensus_decode(d)?;
+        }
+        Ok(res)
+    }
+}
+
+impl<S: Encoder> Encodable<S> for [u16; 8] {
     #[inline]
     fn consensus_encode(&self, s: &mut S) -> Result<(), self::Error> {
-        VarInt(self.len() as u64).consensus_encode(s)?;
         for c in self.iter() { c.consensus_encode(s)?; }
         Ok(())
     }
 }
 
-// Cannot decode a slice
-
 // Vectors
-impl<S: Encoder, T: Encodable<S>> Encodable<S> for Vec<T> {
-    #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), self::Error> { (&self[..]).consensus_encode(s) }
-}
-
-impl<D: Decoder, T: Decodable<D>> Decodable<D> for Vec<T> {
-    #[inline]
-    fn consensus_decode(d: &mut D) -> Result<Vec<T>, self::Error> {
-        let len = VarInt::consensus_decode(d)?.0;
-        let byte_size = (len as usize)
-                            .checked_mul(mem::size_of::<T>())
-                            .ok_or(self::Error::ParseFailed("Invalid length"))?;
-        if byte_size > MAX_VEC_SIZE {
-            return Err(self::Error::OversizedVectorAllocation { requested: byte_size, max: MAX_VEC_SIZE })
+macro_rules! impl_vec {
+    ($type: ty) => {
+        impl<S: Encoder> Encodable<S> for Vec<$type> {
+            #[inline]
+            fn consensus_encode(&self, s: &mut S) -> Result<(), self::Error> {
+                VarInt(self.len() as u64).consensus_encode(s)?;
+                for c in self.iter() { c.consensus_encode(s)?; }
+                Ok(())
+            }
         }
-        let mut ret = Vec::with_capacity(len as usize);
-        for _ in 0..len { ret.push(Decodable::consensus_decode(d)?); }
-        Ok(ret)
+
+        impl<D: Decoder> Decodable<D> for Vec<$type> {
+            #[inline]
+            fn consensus_decode(d: &mut D) -> Result<Vec<$type>, self::Error> {
+                let len = VarInt::consensus_decode(d)?.0;
+                let byte_size = (len as usize)
+                                    .checked_mul(mem::size_of::<$type>())
+                                    .ok_or(self::Error::ParseFailed("Invalid length"))?;
+                if byte_size > MAX_VEC_SIZE {
+                    return Err(self::Error::OversizedVectorAllocation { requested: byte_size, max: MAX_VEC_SIZE })
+                }
+                let mut ret = Vec::with_capacity(len as usize);
+                for _ in 0..len { ret.push(Decodable::consensus_decode(d)?); }
+                Ok(ret)
+            }
+        }
+    }
+}
+impl_vec!(sha256d::Hash);
+impl_vec!(Transaction);
+impl_vec!(TxOut);
+impl_vec!(TxIn);
+impl_vec!(Inventory);
+impl_vec!(Vec<u8>);
+impl_vec!((u32, Address));
+impl_vec!(u64);
+
+impl<S: Encoder> Encodable<S> for Vec<u8> {
+    #[inline]
+    fn consensus_encode(&self, s: &mut S) -> Result<(), self::Error> {
+        VarInt(self.len() as u64).consensus_encode(s)?;
+        s.emit_slice(&self)
     }
 }
 
-impl<S: Encoder, T: Encodable<S>> Encodable<S> for Box<[T]> {
+impl<D: Decoder> Decodable<D> for Vec<u8> {
     #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), self::Error> { (&self[..]).consensus_encode(s) }
-}
-
-impl<D: Decoder, T: Decodable<D>> Decodable<D> for Box<[T]> {
-    #[inline]
-    fn consensus_decode(d: &mut D) -> Result<Box<[T]>, self::Error> {
+    fn consensus_decode(d: &mut D) -> Result<Vec<u8>, self::Error> {
         let len = VarInt::consensus_decode(d)?.0;
         let len = len as usize;
         if len > MAX_VEC_SIZE {
             return Err(self::Error::OversizedVectorAllocation { requested: len, max: MAX_VEC_SIZE })
         }
         let mut ret = Vec::with_capacity(len);
-        for _ in 0..len { ret.push(Decodable::consensus_decode(d)?); }
+        ret.resize(len, 0);
+        d.read_slice(&mut ret)?;
+        Ok(ret)
+    }
+}
+
+impl<S: Encoder> Encodable<S> for Box<[u8]> {
+    #[inline]
+    fn consensus_encode(&self, s: &mut S) -> Result<(), self::Error> {
+        VarInt(self.len() as u64).consensus_encode(s)?;
+        s.emit_slice(&self)
+    }
+}
+
+impl<D: Decoder> Decodable<D> for Box<[u8]> {
+    #[inline]
+    fn consensus_decode(d: &mut D) -> Result<Box<[u8]>, self::Error> {
+        let len = VarInt::consensus_decode(d)?.0;
+        let len = len as usize;
+        if len > MAX_VEC_SIZE {
+            return Err(self::Error::OversizedVectorAllocation { requested: len, max: MAX_VEC_SIZE })
+        }
+        let mut ret = Vec::with_capacity(len);
+        ret.resize(len, 0);
+        d.read_slice(&mut ret)?;
         Ok(ret.into_boxed_slice())
     }
 }
@@ -585,11 +651,7 @@ impl<S: Encoder> Encodable<S> for CheckedData {
     fn consensus_encode(&self, s: &mut S) -> Result<(), self::Error> {
         (self.0.len() as u32).consensus_encode(s)?;
         sha2_checksum(&self.0).consensus_encode(s)?;
-        // We can't just pass to the slice encoder since it'll insert a length
-        for ch in &self.0 {
-            ch.consensus_encode(s)?;
-        }
-        Ok(())
+        s.emit_slice(&self.0)
     }
 }
 
@@ -599,7 +661,8 @@ impl<D: Decoder> Decodable<D> for CheckedData {
         let len: u32 = Decodable::consensus_decode(d)?;
         let checksum: [u8; 4] = Decodable::consensus_decode(d)?;
         let mut ret = Vec::with_capacity(len as usize);
-        for _ in 0..len { ret.push(Decodable::consensus_decode(d)?); }
+        ret.resize(len as usize, 0);
+        d.read_slice(&mut ret)?;
         let expected_checksum = sha2_checksum(&ret);
         if expected_checksum != checksum {
             Err(self::Error::InvalidChecksum {
@@ -639,54 +702,6 @@ tuple_encode!(T0, T1);
 tuple_encode!(T0, T1, T2, T3);
 tuple_encode!(T0, T1, T2, T3, T4, T5);
 tuple_encode!(T0, T1, T2, T3, T4, T5, T6, T7);
-
-// References
-impl<S: Encoder, T: Encodable<S>> Encodable<S> for Box<T> {
-    #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), self::Error> { (**self).consensus_encode(s) }
-}
-
-impl<D: Decoder, T: Decodable<D>> Decodable<D> for Box<T> {
-    #[inline]
-    fn consensus_decode(d: &mut D) -> Result<Box<T>, self::Error> {
-        Decodable::consensus_decode(d).map(Box::new)
-    }
-}
-
-// HashMap
-impl<S, K, V> Encodable<S> for HashMap<K, V>
-    where S: Encoder,
-          K: Encodable<S> + Eq + Hash,
-          V: Encodable<S>
-{
-    #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), self::Error> {
-        VarInt(self.len() as u64).consensus_encode(s)?;
-        for (key, value) in self.iter() {
-            key.consensus_encode(s)?;
-            value.consensus_encode(s)?;
-        }
-        Ok(())
-    }
-}
-
-impl<D, K, V> Decodable<D> for HashMap<K, V>
-    where D: Decoder,
-          K: Decodable<D> + Eq + Hash,
-          V: Decodable<D>
-{
-    #[inline]
-    fn consensus_decode(d: &mut D) -> Result<HashMap<K, V>, self::Error> {
-        let len = VarInt::consensus_decode(d)?.0;
-
-        let mut ret = HashMap::with_capacity(len as usize);
-        for _ in 0..len {
-            ret.insert(Decodable::consensus_decode(d)?,
-                                 Decodable::consensus_decode(d)?);
-        }
-        Ok(ret)
-    }
-}
 
 impl<S: Encoder> Encodable<S> for sha256d::Hash {
     fn consensus_encode(&self, s: &mut S) -> Result<(), self::Error> {
@@ -806,20 +821,12 @@ mod tests {
     #[test]
     fn serialize_vector_test() {
         assert_eq!(serialize(&vec![1u8, 2, 3]), vec![3u8, 1, 2, 3]);
-        assert_eq!(serialize(&[1u8, 2, 3][..]), vec![3u8, 1, 2, 3]);
         // TODO: test vectors of more interesting objects
     }
 
     #[test]
     fn serialize_strbuf_test() {
         assert_eq!(serialize(&"Andrew".to_string()), vec![6u8, 0x41, 0x6e, 0x64, 0x72, 0x65, 0x77]);
-    }
-
-    #[test]
-    fn serialize_box_test() {
-        assert_eq!(serialize(&Box::new(1u8)), vec![1u8]);
-        assert_eq!(serialize(&Box::new(1u16)), vec![1u8, 0]);
-        assert_eq!(serialize(&Box::new(1u64)), vec![1u8, 0, 0, 0, 0, 0, 0, 0]);
     }
 
     #[test]
@@ -881,14 +888,6 @@ mod tests {
     fn deserialize_checkeddata_test() {
         let cd: Result<CheckedData, _> = deserialize(&[5u8, 0, 0, 0, 162, 107, 175, 90, 1, 2, 3, 4, 5]);
         assert_eq!(cd.ok(), Some(CheckedData(vec![1u8, 2, 3, 4, 5])));
-    }
-
-    #[test]
-    fn deserialize_box_test() {
-        let zero: Result<Box<u8>, _> = deserialize(&[0u8]);
-        let one: Result<Box<u8>, _> = deserialize(&[1u8]);
-        assert_eq!(zero.ok(), Some(Box::new(0)));
-        assert_eq!(one.ok(), Some(Box::new(1)));
     }
 }
 
