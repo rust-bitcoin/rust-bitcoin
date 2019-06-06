@@ -451,7 +451,7 @@ macro_rules! serde_string_impl {
             where
                 S: $crate::serde::Serializer,
             {
-                serializer.serialize_str(&self.to_string())
+                serializer.collect_str(&self)
             }
         }
     };
@@ -601,7 +601,7 @@ macro_rules! serde_struct_human_string_impl {
                 S: $crate::serde::Serializer,
             {
                 if serializer.is_human_readable() {
-                    serializer.serialize_str(&self.to_string())
+                    serializer.collect_str(&self)
                 } else {
                     use $crate::serde::ser::SerializeStruct;
 
@@ -719,7 +719,7 @@ macro_rules! user_enum {
             where
                 S: ::serde::Serializer,
             {
-                serializer.serialize_str(&self.to_string())
+                serializer.collect_str(&self)
             }
         }
     );
