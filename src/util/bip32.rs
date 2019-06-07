@@ -46,11 +46,73 @@ impl Default for Fingerprint {
     fn default() -> Fingerprint { Fingerprint([0; 4]) }
 }
 
+/// Script type for addresses
+#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+pub enum ScriptType {
+    /// Pay to pubkey hash
+    P2pkh,
+    /// Pay to witness pubkey hash
+    P2wpkh,
+    /// Pay to witness pubkey hash, wrapped in pay to script hash
+    P2shP2wpkh,
+}
+
+/// A version number
+pub struct Version([u8; 4]);
+impl_array_newtype!(Version, u8, 4);
+impl_array_newtype_show!(Version);
+impl_array_newtype_encodable!(Version, u8, 4);
+
+impl Version {
+    fn default_for(network: Network) -> Version {
+        Version::from(&match network {
+            Network::Bitcoin => [0x04u8, 0x88, 0xB2, 0x1E], // P2PKH
+            Network::Testnet | Network::Regtest => [0x06u8, 0x35, 0x87, 0xCF], // P2PKH
+        }[..])
+    }
+
+    fn public_params(&self) -> Result<(Network, ScriptType), base58::Error> {
+        Ok(match self.0 {
+            [0x04u8, 0x88, 0xB2, 0x1E] => (Network::Bitcoin, ScriptType::P2pkh),
+            [0x04u8, 0xB2, 0x47, 0x46] => (Network::Bitcoin, ScriptType::P2wpkh),
+            [0x04u8, 0x9D, 0x7C, 0xB2] => (Network::Bitcoin, ScriptType::P2shP2wpkh),
+
+            [0x04u8, 0x35, 0x87, 0xCF] => (Network::Testnet, ScriptType::P2pkh),
+            [0x04u8, 0x5F, 0x1C, 0xF6] => (Network::Testnet, ScriptType::P2wpkh),
+            [0x04u8, 0x4A, 0x52, 0x62] => (Network::Testnet, ScriptType::P2shP2wpkh),
+
+            _ => return Err(base58::Error::InvalidVersion(self.0.to_vec()))
+        })
+    }
+
+    fn private_params(&self) -> Result<(Network, ScriptType), base58::Error> {
+        Ok(match self.0 {
+            [0x04u8, 0x88, 0xAD, 0xE4] => (Network::Bitcoin, ScriptType::P2pkh),
+            [0x04u8, 0xB2, 0x43, 0x0C] => (Network::Bitcoin, ScriptType::P2wpkh),
+            [0x04u8, 0x9D, 0x78, 0x78] => (Network::Bitcoin, ScriptType::P2shP2wpkh),
+
+            [0x04u8, 0x35, 0x83, 0x94] => (Network::Testnet, ScriptType::P2pkh),
+            [0x04u8, 0x5F, 0x18, 0xBC] => (Network::Testnet, ScriptType::P2wpkh),
+            [0x04u8, 0x4A, 0x4E, 0x28] => (Network::Testnet, ScriptType::P2shP2wpkh),
+
+            _ => return Err(base58::Error::InvalidVersion(self.0.to_vec()))
+        })
+    }
+}
+
+impl Default for Version {
+    fn default() -> Self { Self::default_for(Network::Bitcoin) }
+}
+
 /// Extended private key
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub struct ExtendedPrivKey {
+    /// The version bytes for this key
+    pub version: Version,
     /// The network this key is to be used on
     pub network: Network,
+    /// The script type for addresses derived from this key
+    pub script_type: ScriptType,
     /// How many derivations this key is from the master (which is 0)
     pub depth: u8,
     /// Fingerprint of the parent key (0 for master)
@@ -66,8 +128,12 @@ pub struct ExtendedPrivKey {
 /// Extended public key
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub struct ExtendedPubKey {
+    /// The version bytes for this key
+    pub version: Version,
     /// The network this key is to be used on
     pub network: Network,
+    /// The script type for addresses derived from this key
+    pub script_type: ScriptType,
     /// How many derivations this key is from the master (which is 0)
     pub depth: u8,
     /// Fingerprint of the parent key
@@ -449,8 +515,13 @@ impl ExtendedPrivKey {
         hmac_engine.input(seed);
         let hmac_result: Hmac<sha512::Hash> = Hmac::from_engine(hmac_engine);
 
+        let version = Version::default_for(network);
+        let (_, script_type) = version.private_params().unwrap(); // cannot fail, its the default
+
         Ok(ExtendedPrivKey {
+            version: version,
             network: network,
+            script_type: script_type,
             depth: 0,
             parent_fingerprint: Default::default(),
             child_number: ChildNumber::from_normal_idx(0)?,
@@ -507,7 +578,9 @@ impl ExtendedPrivKey {
         sk.key.add_assign(&self.private_key[..]).map_err(Error::Ecdsa)?;
 
         Ok(ExtendedPrivKey {
+            version: self.version,
             network: self.network,
+            script_type: self.script_type,
             depth: self.depth + 1,
             parent_fingerprint: self.fingerprint(secp),
             child_number: i,
@@ -531,7 +604,9 @@ impl ExtendedPubKey {
     /// Derives a public key from a private key
     pub fn from_private<C: secp256k1::Signing>(secp: &Secp256k1<C>, sk: &ExtendedPrivKey) -> ExtendedPubKey {
         ExtendedPubKey {
+            version: sk.version,
             network: sk.network,
+            script_type: sk.script_type,
             depth: sk.depth,
             parent_fingerprint: sk.parent_fingerprint,
             child_number: sk.child_number,
@@ -592,7 +667,9 @@ impl ExtendedPubKey {
         pk.key.add_exp_assign(secp, &sk[..]).map_err(Error::Ecdsa)?;
 
         Ok(ExtendedPubKey {
+            version: self.version,
             network: self.network,
+            script_type: self.script_type,
             depth: self.depth + 1,
             parent_fingerprint: self.fingerprint(),
             child_number: i,
@@ -617,10 +694,7 @@ impl ExtendedPubKey {
 impl fmt::Display for ExtendedPrivKey {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         let mut ret = [0; 78];
-        ret[0..4].copy_from_slice(&match self.network {
-            Network::Bitcoin => [0x04, 0x88, 0xAD, 0xE4],
-            Network::Testnet | Network::Regtest => [0x04, 0x35, 0x83, 0x94],
-        }[..]);
+        ret[0..4].copy_from_slice(&self.version[..]);
         ret[4] = self.depth as u8;
         ret[5..9].copy_from_slice(&self.parent_fingerprint[..]);
 
@@ -646,16 +720,13 @@ impl FromStr for ExtendedPrivKey {
         let cn_int: u32 = Cursor::new(&data[9..13]).read_u32::<BigEndian>().unwrap();
         let child_number: ChildNumber = ChildNumber::from(cn_int);
 
-        let network = if &data[0..4] == [0x04u8, 0x88, 0xAD, 0xE4] {
-            Network::Bitcoin
-        } else if &data[0..4] == [0x04u8, 0x35, 0x83, 0x94] {
-            Network::Testnet
-        } else {
-            return Err(base58::Error::InvalidVersion((&data[0..4]).to_vec()));
-        };
+        let version = Version::from(&data[0..4]);
+        let (network, script_type) = version.private_params()?;
 
         Ok(ExtendedPrivKey {
+            version: version,
             network: network,
+            script_type: script_type,
             depth: data[4],
             parent_fingerprint: Fingerprint::from(&data[5..9]),
             child_number: child_number,
@@ -676,10 +747,7 @@ impl FromStr for ExtendedPrivKey {
 impl fmt::Display for ExtendedPubKey {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         let mut ret = [0; 78];
-        ret[0..4].copy_from_slice(&match self.network {
-            Network::Bitcoin => [0x04u8, 0x88, 0xB2, 0x1E],
-            Network::Testnet | Network::Regtest => [0x04u8, 0x35, 0x87, 0xCF],
-        }[..]);
+        ret[0..4].copy_from_slice(&self.version[..]);
         ret[4] = self.depth as u8;
         ret[5..9].copy_from_slice(&self.parent_fingerprint[..]);
 
@@ -704,14 +772,13 @@ impl FromStr for ExtendedPubKey {
         let cn_int: u32 = Cursor::new(&data[9..13]).read_u32::<BigEndian>().unwrap();
         let child_number: ChildNumber = ChildNumber::from(cn_int);
 
+        let version = Version::from(&data[0..4]);
+        let (network, script_type) = version.public_params()?;
+
         Ok(ExtendedPubKey {
-            network: if &data[0..4] == [0x04u8, 0x88, 0xB2, 0x1E] {
-                Network::Bitcoin
-            } else if &data[0..4] == [0x04u8, 0x35, 0x87, 0xCF] {
-                Network::Testnet
-            } else {
-                return Err(base58::Error::InvalidVersion((&data[0..4]).to_vec()));
-            },
+            version: version,
+            network: network,
+            script_type: script_type,
             depth: data[4],
             parent_fingerprint: Fingerprint::from(&data[5..9]),
             child_number: child_number,
