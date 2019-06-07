@@ -116,7 +116,7 @@ impl<D: Decoder> Decodable<D> for PartiallySignedTransaction {
             return Err(Error::InvalidMagic.into());
         }
 
-        if 0xff_u8 != Decodable::consensus_decode(d)? {
+        if 0xff_u8 != u8::consensus_decode(d)? {
             return Err(Error::InvalidSeparator.into());
         }
 
