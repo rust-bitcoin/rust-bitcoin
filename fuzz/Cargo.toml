@@ -55,3 +55,7 @@ path = "fuzz_targets/outpoint_string.rs"
 [[bin]]
 name = "deserialize_psbt"
 path = "fuzz_targets/deserialize_psbt.rs"
+
+[[bin]]
+name = "deser_net_msg"
+path = "fuzz_targets/deser_net_msg.rs"
