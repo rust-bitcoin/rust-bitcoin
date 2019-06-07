@@ -163,10 +163,8 @@ impl BlockHeader {
         (max_target(network) / self.target()).low_u64()
     }
 
-    /// Performs an SPV validation of a block, which confirms that the proof-of-work
-    /// is correct, but does not verify that the transactions are valid or encoded
-    /// correctly.
-    pub fn spv_validate(&self, required_target: &Uint256) -> Result<(), util::Error> {
+    /// Checks that the proof-of-work for the block is valid.
+    pub fn validate_pow(&self, required_target: &Uint256) -> Result<(), util::Error> {
         use byteorder::{ByteOrder, LittleEndian};
 
         let target = &self.target();
