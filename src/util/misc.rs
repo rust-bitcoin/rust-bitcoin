@@ -124,7 +124,7 @@ pub fn signed_msg_hash(msg: &str) -> sha256d::Hash {
 
 #[cfg(all(test, feature="unstable"))]
 mod benches {
-    use rand::{Rng, thread_rng};
+    use secp256k1::rand::{Rng, thread_rng};
     use super::hex_bytes;
     use test::Bencher;
 

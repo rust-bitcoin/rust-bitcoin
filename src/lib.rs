@@ -46,7 +46,6 @@ extern crate bitcoin_bech32;
 extern crate bitcoin_hashes;
 extern crate byteorder;
 extern crate hex;
-extern crate rand;
 extern crate secp256k1;
 #[cfg(feature = "serde")] extern crate serde;
 #[cfg(feature = "strason")] extern crate strason;

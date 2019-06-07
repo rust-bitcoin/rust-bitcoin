@@ -18,7 +18,6 @@
 //! # Example: creating a new address from a randomly-generated key pair
 //!
 //! ```rust
-//! extern crate rand;
 //! extern crate secp256k1;
 //! extern crate bitcoin;
 //! 
@@ -26,7 +25,7 @@
 //! use bitcoin::util::address::Address;
 //! use bitcoin::util::key;
 //! use secp256k1::Secp256k1;
-//! use rand::thread_rng;
+//! use secp256k1::rand::thread_rng;
 //! 
 //! fn main() {
 //!     // Generate random key pair
