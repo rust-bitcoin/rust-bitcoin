@@ -23,7 +23,7 @@
 use bitcoin_hashes::{sha256d, Hash};
 
 use util;
-use util::Error::{SpvBadTarget, SpvBadProofOfWork};
+use util::Error::{BlockBadTarget, BlockBadProofOfWork};
 use util::hash::{BitcoinHash, MerkleRoot, bitcoin_merkle_root};
 use util::uint::Uint256;
 use consensus::encode::Encodable;
@@ -169,13 +169,13 @@ impl BlockHeader {
 
         let target = &self.target();
         if target != required_target {
-            return Err(SpvBadTarget);
+            return Err(BlockBadTarget);
         }
         let data: [u8; 32] = self.bitcoin_hash().into_inner();
         let mut ret = [0u64; 4];
         LittleEndian::read_u64_into(&data, &mut ret);
         let hash = &Uint256(ret);
-        if hash <= target { Ok(()) } else { Err(SpvBadProofOfWork) }
+        if hash <= target { Ok(()) } else { Err(BlockBadProofOfWork) }
     }
 
     /// Returns the total work of the block
