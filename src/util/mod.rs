@@ -28,6 +28,7 @@ pub mod merkleblock;
 pub mod misc;
 pub mod psbt;
 pub mod uint;
+pub mod bip158;
 
 use std::{error, fmt};
 
