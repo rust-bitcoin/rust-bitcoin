@@ -909,7 +909,7 @@ mod test {
             v_min,
             vec![
                 Instruction::PushBytes(&[105]),
-                Instruction::Op(opcodes::all::OP_NOP3),
+                Instruction::Op(opcodes::OP_NOP3),
             ]
         );
 
@@ -924,7 +924,7 @@ mod test {
             v_nonmin_alt,
             vec![
                 Instruction::PushBytes(&[105, 0]),
-                Instruction::Op(opcodes::all::OP_NOP3),
+                Instruction::Op(opcodes::OP_NOP3),
             ]
         );
 
