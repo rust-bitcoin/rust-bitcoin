@@ -399,10 +399,10 @@ pub mod all {
     pub const OP_CHECKMULTISIGVERIFY: All = All {code: 0xaf};
     /// Does nothing
     pub const OP_NOP1: All = All {code: 0xb0};
-    /// Does nothing
-    pub const OP_NOP2: All = All {code: 0xb1};
-    /// Does nothing
-    pub const OP_NOP3: All = All {code: 0xb2};
+    /// https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki
+    pub const OP_CLTV: All = All {code: 0xb1};
+    /// https://github.com/bitcoin/bips/blob/master/bip-0112.mediawiki
+    pub const OP_CSV: All = All {code: 0xb2};
     /// Does nothing
     pub const OP_NOP4: All = All {code: 0xb3};
     /// Does nothing
@@ -650,6 +650,8 @@ impl fmt::Debug for All {
             all::OP_CHECKSIGVERIFY => write!(f, "CHECKSIGVERIFY"),
             all::OP_CHECKMULTISIG => write!(f, "CHECKMULTISIG"),
             all::OP_CHECKMULTISIGVERIFY => write!(f, "CHECKMULTISIGVERIFY"),
+            all::OP_CLTV => write!(f, "CLTV"),
+            all::OP_CSV => write!(f, "CSV"),
             All {code: x} if x >= all::OP_NOP1.code && x <= all::OP_NOP10.code => write!(f, "NOP{}", x - all::OP_NOP1.code + 1),
             All {code: x} => write!(f, "RETURN_{}", x),
         }
@@ -741,10 +743,10 @@ impl serde::Serialize for All {
 pub static OP_FALSE: All = all::OP_PUSHBYTES_0;
 /// Number 1 is also TRUE
 pub static OP_TRUE: All = all::OP_PUSHNUM_1;
-/// check locktime verify
-pub static OP_CLTV: All = all::OP_NOP2;
-/// check sequence verify
-pub static OP_CSV: All = all::OP_NOP3;
+/// previously called OP_NOP2
+pub static OP_NOP2: All = all::OP_CLTV;
+/// previously called OP_NOP3
+pub static OP_NOP3: All = all::OP_CSV;
 
 /// Broad categories of opcodes with similar behavior
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -1031,8 +1033,8 @@ mod tests {
         roundtrip!(unique, OP_CHECKMULTISIG);
         roundtrip!(unique, OP_CHECKMULTISIGVERIFY);
         roundtrip!(unique, OP_NOP1);
-        roundtrip!(unique, OP_NOP2);
-        roundtrip!(unique, OP_NOP3);
+        roundtrip!(unique, OP_CLTV);
+        roundtrip!(unique, OP_CSV);
         roundtrip!(unique, OP_NOP4);
         roundtrip!(unique, OP_NOP5);
         roundtrip!(unique, OP_NOP6);
