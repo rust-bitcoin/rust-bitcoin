@@ -214,6 +214,27 @@ pub fn serialize_hex<T: ?Sized>(data: &T) -> String
     hex_encode(serialize(data))
 }
 
+/// An `io::Write` that just keeps track of the number of bytes written.
+/// Only used internally for the `serialized_len` method.
+pub struct CounterWriter(usize);
+
+impl io::Write for CounterWriter {
+    fn write(&mut self, buf: &[u8]) -> Result<usize, io::Error> {
+        self.0 += buf.len();
+        Ok(buf.len())
+    }
+    fn flush(&mut self) -> Result<(), io::Error> {
+        Ok(())
+    }
+}
+
+/// Calculate the encoded length of the object.
+pub fn serialized_len<T: ?Sized>(data: &T) -> usize where T: Encodable<CounterWriter> {
+    let mut counter = CounterWriter(0);
+    data.consensus_encode(&mut counter).unwrap();
+    counter.0
+}
+
 /// Deserialize an object from a vector, will error if said deserialization
 /// doesn't consume the entire vector.
 pub fn deserialize<'a, T>(data: &'a [u8]) -> Result<T, Error>
@@ -727,7 +748,7 @@ impl<D: Decoder> Decodable<D> for sha256d::Hash {
 mod tests {
     use super::{CheckedData, VarInt};
 
-    use super::{deserialize, serialize, Error};
+    use super::{deserialize, serialize, serialized_len, Error};
 
     #[test]
     fn serialize_int_test() {
@@ -833,6 +854,16 @@ mod tests {
     #[test]
     fn serialize_strbuf_test() {
         assert_eq!(serialize(&"Andrew".to_string()), vec![6u8, 0x41, 0x6e, 0x64, 0x72, 0x65, 0x77]);
+    }
+
+    #[test]
+    fn serialized_len_test() {
+        let obj = VarInt(0xF0F0F0F0F0E0);
+        assert_eq!(serialized_len(&obj), serialize(&obj).len());
+        let obj = 723401728380766730i64;
+        assert_eq!(serialized_len(&obj), serialize(&obj).len());
+        let obj = CheckedData(vec![1u8, 2, 3, 4, 5]);
+        assert_eq!(serialized_len(&obj), serialize(&obj).len());
     }
 
     #[test]
