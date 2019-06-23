@@ -48,6 +48,15 @@ pub struct OutPoint {
 serde_struct_impl!(OutPoint, txid, vout);
 
 impl OutPoint {
+    /// Create a new [OutPoint].
+    #[inline]
+    pub fn new(txid: sha256d::Hash, vout: u32) -> OutPoint {
+        OutPoint {
+            txid: txid,
+            vout: vout,
+        }
+    }
+
     /// Creates a "null" `OutPoint`.
     ///
     /// This value is used for coinbase transactions because they don't have
