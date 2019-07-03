@@ -77,7 +77,7 @@ impl fmt::UpperHex for Script {
 
 #[derive(PartialEq, Eq, Debug, Clone)]
 /// An object which can be used to construct a script piece by piece
-pub struct Builder(Vec<u8>);
+pub struct Builder(Vec<u8>, Option<opcodes::All>);
 display_from_debug!(Builder);
 
 /// Ways that a script might fail. Not everything is split up as
@@ -541,7 +541,9 @@ impl<'a> Iterator for Instructions<'a> {
 
 impl Builder {
     /// Creates a new empty script
-    pub fn new() -> Builder { Builder(vec![]) }
+    pub fn new() -> Builder {
+        Builder(vec![], None)
+    }
 
     /// The length in bytes of the script
     pub fn len(&self) -> usize { self.0.len() }
@@ -552,16 +554,17 @@ impl Builder {
     /// Adds instructions to push an integer onto the stack. Integers are
     /// encoded as little-endian signed-magnitude numbers, but there are
     /// dedicated opcodes to push some small integers.
-    pub fn push_int(mut self, data: i64) -> Builder {
+    pub fn push_int(self, data: i64) -> Builder {
         // We can special-case -1, 1-16
         if data == -1 || (data >= 1 && data <= 16) {
-            self.0.push((data - 1 + opcodes::OP_TRUE.into_u8() as i64) as u8);
-            self
+            let opcode = opcodes::All::from(
+                (data - 1 + opcodes::OP_TRUE.into_u8() as i64) as u8
+            );
+            self.push_opcode(opcode)
         }
         // We can also special-case zero
         else if data == 0 {
-            self.0.push(opcodes::OP_FALSE.into_u8());
-            self
+            self.push_opcode(opcodes::OP_FALSE)
         }
         // Otherwise encode it as data
         else { self.push_scriptint(data) }
@@ -596,8 +599,9 @@ impl Builder {
             }
             _ => panic!("tried to put a 4bn+ sized object into a script!")
         }
-        // Then push the acraw
+        // Then push the raw bytes
         self.0.extend(data.iter().cloned());
+        self.1 = None;
         self
     }
 
@@ -613,7 +617,33 @@ impl Builder {
     /// Adds a single opcode to the script
     pub fn push_opcode(mut self, data: opcodes::All) -> Builder {
         self.0.push(data.into_u8());
+        self.1 = Some(data);
         self
+    }
+
+    /// Adds an `OP_VERIFY` to the script, unless the most-recently-added
+    /// opcode has an alternate `VERIFY` form, in which case that opcode
+    /// is replaced. e.g. `OP_CHECKSIG` will become `OP_CHECKSIGVERIFY`.
+    pub fn push_verify(mut self) -> Builder {
+        match self.1 {
+            Some(opcodes::all::OP_EQUAL) => {
+                self.0.pop();
+                self.push_opcode(opcodes::all::OP_EQUALVERIFY)
+            },
+            Some(opcodes::all::OP_NUMEQUAL) => {
+                self.0.pop();
+                self.push_opcode(opcodes::all::OP_NUMEQUALVERIFY)
+            },
+            Some(opcodes::all::OP_CHECKSIG) => {
+                self.0.pop();
+                self.push_opcode(opcodes::all::OP_CHECKSIGVERIFY)
+            },
+            Some(opcodes::all::OP_CHECKMULTISIG) => {
+                self.0.pop();
+                self.push_opcode(opcodes::all::OP_CHECKMULTISIGVERIFY)
+            },
+            _ => self.push_opcode(opcodes::all::OP_VERIFY),
+        }
     }
 
     /// Converts the `Builder` into an unmodifiable `Script`
@@ -624,12 +654,19 @@ impl Builder {
 
 /// Adds an individual opcode to the script
 impl Default for Builder {
-    fn default() -> Builder { Builder(vec![]) }
+    fn default() -> Builder { Builder::new() }
 }
 
 /// Creates a new script from an existing vector
 impl From<Vec<u8>> for Builder {
-    fn from(v: Vec<u8>) -> Builder { Builder(v) }
+    fn from(v: Vec<u8>) -> Builder {
+        let script = Script(v.into_boxed_slice());
+        let last_op = match script.iter(false).last() {
+            Some(Instruction::Op(op)) => Some(op),
+            _ => None,
+        };
+        Builder(script.into_bytes(), last_op)
+    }
 }
 
 impl_index_newtype!(Builder, u8);
@@ -762,6 +799,78 @@ mod test {
                                    .into_script();
         assert_eq!(&format!("{:x}", script), "76a91416e1ae70ff0fa102905d4af297f6912bda6cce1988ac");
     }
+
+    #[test]
+    fn script_builder_verify() {
+        let simple = Builder::new()
+            .push_verify()
+            .into_script();
+        assert_eq!(format!("{:x}", simple), "69");
+        let simple2 = Builder::from(vec![])
+            .push_verify()
+            .into_script();
+        assert_eq!(format!("{:x}", simple2), "69");
+
+        let nonverify = Builder::new()
+            .push_verify()
+            .push_verify()
+            .into_script();
+        assert_eq!(format!("{:x}", nonverify), "6969");
+        let nonverify2 = Builder::from(vec![0x69])
+            .push_verify()
+            .into_script();
+        assert_eq!(format!("{:x}", nonverify2), "6969");
+
+        let equal = Builder::new()
+            .push_opcode(opcodes::all::OP_EQUAL)
+            .push_verify()
+            .into_script();
+        assert_eq!(format!("{:x}", equal), "88");
+        let equal2 = Builder::from(vec![0x87])
+            .push_verify()
+            .into_script();
+        assert_eq!(format!("{:x}", equal2), "88");
+
+        let numequal = Builder::new()
+            .push_opcode(opcodes::all::OP_NUMEQUAL)
+            .push_verify()
+            .into_script();
+        assert_eq!(format!("{:x}", numequal), "9d");
+        let numequal2 = Builder::from(vec![0x9c])
+            .push_verify()
+            .into_script();
+        assert_eq!(format!("{:x}", numequal2), "9d");
+
+        let checksig = Builder::new()
+            .push_opcode(opcodes::all::OP_CHECKSIG)
+            .push_verify()
+            .into_script();
+        assert_eq!(format!("{:x}", checksig), "ad");
+        let checksig2 = Builder::from(vec![0xac])
+            .push_verify()
+            .into_script();
+        assert_eq!(format!("{:x}", checksig2), "ad");
+
+        let checkmultisig = Builder::new()
+            .push_opcode(opcodes::all::OP_CHECKMULTISIG)
+            .push_verify()
+            .into_script();
+        assert_eq!(format!("{:x}", checkmultisig), "af");
+        let checkmultisig2 = Builder::from(vec![0xae])
+            .push_verify()
+            .into_script();
+        assert_eq!(format!("{:x}", checkmultisig2), "af");
+
+        let trick_slice = Builder::new()
+            .push_slice(&[0xae]) // OP_CHECKMULTISIG
+            .push_verify()
+            .into_script();
+        assert_eq!(format!("{:x}", trick_slice), "01ae69");
+        let trick_slice2 = Builder::from(vec![0x01, 0xae])
+            .push_verify()
+            .into_script();
+        assert_eq!(format!("{:x}", trick_slice2), "01ae69");
+   }
 
     #[test]
     fn script_serialize() {
