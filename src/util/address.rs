@@ -500,14 +500,14 @@ mod tests {
     }
 
     #[test]
-    #[cfg(all(feature = "serde", feature = "strason"))]
+    #[cfg(feature = "serde")]
     fn test_json_serialize() {
-        use strason::Json;
+        use serde_json;
 
         let addr = Address::from_str("132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM").unwrap();
-        let json = Json::from_serialize(&addr).unwrap();
-        assert_eq!(json.string(), Some("132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM"));
-        let into: Address = json.into_deserialize().unwrap();
+        let json = serde_json::to_value(&addr).unwrap();
+        assert_eq!(json, serde_json::Value::String("132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM".to_owned()));
+        let into: Address = serde_json::from_value(json).unwrap();
         assert_eq!(addr.to_string(), into.to_string());
         assert_eq!(
             into.script_pubkey(),
@@ -515,9 +515,9 @@ mod tests {
         );
 
         let addr = Address::from_str("33iFwdLuRpW1uK1RTRqsoi8rR4NpDzk66k").unwrap();
-        let json = Json::from_serialize(&addr).unwrap();
-        assert_eq!(json.string(), Some("33iFwdLuRpW1uK1RTRqsoi8rR4NpDzk66k"));
-        let into: Address = json.into_deserialize().unwrap();
+        let json = serde_json::to_value(&addr).unwrap();
+        assert_eq!(json, serde_json::Value::String("33iFwdLuRpW1uK1RTRqsoi8rR4NpDzk66k".to_owned()));
+        let into: Address = serde_json::from_value(json).unwrap();
         assert_eq!(addr.to_string(), into.to_string());
         assert_eq!(
             into.script_pubkey(),
@@ -525,9 +525,9 @@ mod tests {
         );
 
         let addr = Address::from_str("tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7").unwrap();
-        let json = Json::from_serialize(&addr).unwrap();
-        assert_eq!(json.string(), Some("tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7"));
-        let into: Address = json.into_deserialize().unwrap();
+        let json = serde_json::to_value(&addr).unwrap();
+        assert_eq!(json, serde_json::Value::String("tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7".to_owned()));
+        let into: Address = serde_json::from_value(json).unwrap();
         assert_eq!(addr.to_string(), into.to_string());
         assert_eq!(
             into.script_pubkey(),
@@ -535,9 +535,9 @@ mod tests {
         );
 
         let addr = Address::from_str("bcrt1q2nfxmhd4n3c8834pj72xagvyr9gl57n5r94fsl").unwrap();
-        let json = Json::from_serialize(&addr).unwrap();
-        assert_eq!(json.string(), Some("bcrt1q2nfxmhd4n3c8834pj72xagvyr9gl57n5r94fsl"));
-        let into: Address = json.into_deserialize().unwrap();
+        let json = serde_json::to_value(&addr).unwrap();
+        assert_eq!(json, serde_json::Value::String("bcrt1q2nfxmhd4n3c8834pj72xagvyr9gl57n5r94fsl".to_owned()));
+        let into: Address = serde_json::from_value(json).unwrap();
         assert_eq!(addr.to_string(), into.to_string());
         assert_eq!(
             into.script_pubkey(),

@@ -988,7 +988,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(all(feature = "serde", feature = "strason"))]
+    #[cfg(feature = "serde")]
     pub fn encode_decode_childnumber() {
         serde_round_trip!(ChildNumber::from_normal_idx(0).unwrap());
         serde_round_trip!(ChildNumber::from_normal_idx(1).unwrap());

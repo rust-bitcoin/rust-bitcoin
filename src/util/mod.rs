@@ -23,7 +23,6 @@ pub mod base58;
 pub mod bip32;
 pub mod bip143;
 pub mod contracthash;
-pub mod decimal;
 pub mod hash;
 pub mod misc;
 pub mod psbt;

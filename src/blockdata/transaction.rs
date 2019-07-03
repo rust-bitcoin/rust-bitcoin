@@ -598,9 +598,6 @@ impl SigHashType {
 
 #[cfg(test)]
 mod tests {
-    #[cfg(all(feature = "serde", feature = "strason"))]
-    use strason::Json;
-
     use super::{OutPoint, ParseOutPointError, Transaction, TxIn};
 
     use std::str::FromStr;
@@ -771,14 +768,11 @@ mod tests {
     }
 
     #[test]
-    #[cfg(all(feature = "serde", feature = "strason"))]
+    #[cfg(feature = "serde")]
     fn test_txn_encode_decode() {
         let hex_tx = hex_bytes("0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000").unwrap();
         let tx: Transaction = deserialize(&hex_tx).unwrap();
-
-        let encoded = Json::from_serialize(&tx).unwrap();
-        let decoded = encoded.into_deserialize().unwrap();
-        assert_eq!(tx, decoded);
+        serde_round_trip!(tx);
     }
 
     fn run_test_sighash(tx: &str, script: &str, input_index: usize, hash_type: i32, expected_result: &str) {
@@ -795,15 +789,12 @@ mod tests {
     // Test decoding transaction `4be105f158ea44aec57bf12c5817d073a712ab131df6f37786872cfc70734188`
     // from testnet, which is the first BIP144-encoded transaction I encountered.
     #[test]
-    #[cfg(all(feature = "serde", feature = "strason"))]
+    #[cfg(feature = "serde")]
     fn test_segwit_tx_decode() {
         let hex_tx = hex_bytes("010000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff3603da1b0e00045503bd5704c7dd8a0d0ced13bb5785010800000000000a636b706f6f6c122f4e696e6a61506f6f6c2f5345475749542fffffffff02b4e5a212000000001976a914876fbb82ec05caa6af7a3b5e5a983aae6c6cc6d688ac0000000000000000266a24aa21a9edf91c46b49eb8a29089980f02ee6b57e7d63d33b18b4fddac2bcd7db2a39837040120000000000000000000000000000000000000000000000000000000000000000000000000").unwrap();
         let tx: Transaction = deserialize(&hex_tx).unwrap();
         assert_eq!(tx.get_weight(), 780);
-
-        let encoded = Json::from_serialize(&tx).unwrap();
-        let decoded = encoded.into_deserialize().unwrap();
-        assert_eq!(tx, decoded);
+        serde_round_trip!(tx);
 
         let consensus_encoded = serialize(&tx);
         assert_eq!(consensus_encoded, hex_tx);
