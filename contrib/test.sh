@@ -14,6 +14,13 @@ then
     alias cargo="cargo +$TOOLCHAIN"
 fi
 
+if [ "$DO_FMT" = true ]
+then
+    rustup component add rustfmt
+    # Test if correctly formatted.
+    cargo fmt -- --check
+fi
+
 # Test without any features first
 cargo test --verbose
 

@@ -18,9 +18,9 @@ addons:
 matrix:
   include:
     - rust: stable
-      env: DO_FUZZ=true DO_COV=true AS_DEPENDENCY=true
+      env: DO_FMT=true DO_FUZZ=true DO_COV=true AS_DEPENDENCY=true
     - rust: beta
-      env: AS_DEPENDENCY=true
+      env: DO_FMT=true AS_DEPENDENCY=true
     - rust: nightly
       env: DO_BENCH=true AS_DEPENDENCY=true
     - rust: 1.22.0
