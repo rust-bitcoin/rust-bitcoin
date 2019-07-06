@@ -25,10 +25,9 @@
 //! # Examples
 //!
 //! ```rust
-//! extern crate bitcoin_hashes;
 //! extern crate bitcoin;
-//! use bitcoin_hashes::sha256d;
-//! use bitcoin_hashes::hex::FromHex;
+//! use bitcoin::hashes::sha256d;
+//! use bitcoin::hashes::hex::FromHex;
 //! use bitcoin::{Block, MerkleBlock};
 //!
 //! # fn main() {
@@ -133,10 +132,9 @@ impl PartialMerkleTree {
     /// # Examples
     ///
     /// ```rust
-    /// extern crate bitcoin_hashes;
     /// extern crate bitcoin;
-    /// use bitcoin_hashes::sha256d;
-    /// use bitcoin_hashes::hex::FromHex;
+    /// use bitcoin::hashes::sha256d;
+    /// use bitcoin::hashes::hex::FromHex;
     /// use bitcoin::util::merkleblock::PartialMerkleTree;
     ///
     /// # fn main() {
@@ -408,10 +406,9 @@ impl MerkleBlock {
     /// # Examples
     ///
     /// ```rust
-    /// extern crate bitcoin_hashes;
     /// extern crate bitcoin;
-    /// use bitcoin_hashes::sha256d;
-    /// use bitcoin_hashes::hex::FromHex;
+    /// use bitcoin::hashes::sha256d;
+    /// use bitcoin::hashes::hex::FromHex;
     /// use bitcoin::{Block, MerkleBlock};
     ///
     /// # fn main() {
