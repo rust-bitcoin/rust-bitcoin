@@ -38,7 +38,7 @@ use std::io::{Cursor, Read, Write};
 use byteorder::{LittleEndian, WriteBytesExt, ReadBytesExt};
 use hex::encode as hex_encode;
 
-use bitcoin_hashes::{sha256d, Hash as HashTrait};
+use hashes::{sha256d, Hash as HashTrait};
 use secp256k1;
 
 use util::base58;

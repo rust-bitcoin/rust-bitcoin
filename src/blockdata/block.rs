@@ -20,7 +20,7 @@
 //! these blocks and the blockchain.
 //!
 
-use bitcoin_hashes::{sha256d, Hash};
+use hashes::{sha256d, Hash};
 
 use util;
 use util::Error::{BlockBadTarget, BlockBadProofOfWork};
@@ -30,7 +30,7 @@ use consensus::encode::Encodable;
 use network::constants::Network;
 use blockdata::transaction::Transaction;
 use blockdata::constants::max_target;
-use bitcoin_hashes::HashEngine;
+use hashes::HashEngine;
 
 /// A block header, which contains all the block's information except
 /// the actual transactions

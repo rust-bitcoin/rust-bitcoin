@@ -31,10 +31,10 @@ use std::{error, fmt, io};
 
 use blockdata::opcodes;
 use consensus::{encode, Decodable, Encodable};
-use bitcoin_hashes::{hash160, sha256, Hash};
+use hashes::{hash160, sha256, Hash};
 #[cfg(feature="bitcoinconsensus")] use bitcoinconsensus;
 #[cfg(feature="bitcoinconsensus")] use std::convert;
-#[cfg(feature="bitcoinconsensus")] use bitcoin_hashes::sha256d;
+#[cfg(feature="bitcoinconsensus")] use hashes::sha256d;
 
 use util::key::PublicKey;
 

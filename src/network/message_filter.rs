@@ -1,7 +1,7 @@
 //!
 //! BIP157  Client Side Block Filtering network messages
 //!
-use bitcoin_hashes::sha256d;
+use hashes::sha256d;
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 /// getcfilters message

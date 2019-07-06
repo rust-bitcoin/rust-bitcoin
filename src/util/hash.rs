@@ -18,7 +18,7 @@
 use std::cmp::min;
 use std::default::Default;
 
-use bitcoin_hashes::{sha256d, Hash};
+use hashes::{sha256d, Hash};
 
 use consensus::encode::Encodable;
 

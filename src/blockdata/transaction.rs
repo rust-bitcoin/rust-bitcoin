@@ -28,8 +28,8 @@ use std::default::Default;
 use std::{fmt, io};
 #[cfg(feature="bitcoinconsensus")] use std::collections::HashMap;
 
-use bitcoin_hashes::{self, sha256d, Hash};
-use bitcoin_hashes::hex::FromHex;
+use hashes::{self, sha256d, Hash};
+use hashes::hex::FromHex;
 
 use util::hash::BitcoinHash;
 #[cfg(feature="bitcoinconsensus")] use blockdata::script;
@@ -105,7 +105,7 @@ impl fmt::Display for OutPoint {
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum ParseOutPointError {
     /// Error in TXID part.
-    Txid(bitcoin_hashes::hex::Error),
+    Txid(hashes::hex::Error),
     /// Error in vout part.
     Vout(::std::num::ParseIntError),
     /// Error in general format.
@@ -620,8 +620,8 @@ mod tests {
     use util::hash::BitcoinHash;
     use util::misc::hex_bytes;
 
-    use bitcoin_hashes::{sha256d, Hash};
-    use bitcoin_hashes::hex::FromHex;
+    use hashes::{sha256d, Hash};
+    use hashes::hex::FromHex;
 
     #[test]
     fn test_outpoint() {

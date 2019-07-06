@@ -59,7 +59,7 @@
 use std::collections::HashSet;
 use std::io;
 
-use bitcoin_hashes::{sha256d, Hash};
+use hashes::{sha256d, Hash};
 
 use blockdata::constants::{MAX_BLOCK_WEIGHT, MIN_TRANSACTION_WEIGHT};
 use consensus::encode::{self, Decodable, Encodable};
@@ -498,8 +498,8 @@ impl Decodable for MerkleBlock {
 mod tests {
     use std::cmp::min;
 
-    use bitcoin_hashes::hex::{FromHex, ToHex};
-    use bitcoin_hashes::{sha256d, Hash};
+    use hashes::hex::{FromHex, ToHex};
+    use hashes::{sha256d, Hash};
     use secp256k1::rand::{weak_rng, Rng, XorShiftRng};
 
     use consensus::encode::{deserialize, serialize};

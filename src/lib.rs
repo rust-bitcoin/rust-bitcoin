@@ -45,7 +45,7 @@
 
 
 extern crate bech32;
-extern crate bitcoin_hashes;
+extern crate bitcoin_hashes as hashes;
 extern crate byteorder;
 extern crate hex;
 extern crate secp256k1;

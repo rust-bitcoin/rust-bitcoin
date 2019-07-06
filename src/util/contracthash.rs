@@ -21,7 +21,7 @@
 use secp256k1::{self, Secp256k1};
 use PrivateKey;
 use PublicKey;
-use bitcoin_hashes::{hash160, sha256, Hash, HashEngine, Hmac, HmacEngine};
+use hashes::{hash160, sha256, Hash, HashEngine, Hmac, HmacEngine};
 use blockdata::{opcodes, script};
 
 use std::{error, fmt};
