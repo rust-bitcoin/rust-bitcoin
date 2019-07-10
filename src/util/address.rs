@@ -365,7 +365,7 @@ impl Display for Address {
                 let mut prefixed = [0; 21];
                 prefixed[0] = match self.network {
                     Network::Bitcoin => 0,
-                    Network::Testnet | Network::Regtest => 111,
+                    Network::Testnet | Network::Signet | Network::Regtest => 111,
                 };
                 prefixed[1..].copy_from_slice(&hash[..]);
                 base58::check_encode_slice_to_fmt(fmt, &prefixed[..])
@@ -374,7 +374,7 @@ impl Display for Address {
                 let mut prefixed = [0; 21];
                 prefixed[0] = match self.network {
                     Network::Bitcoin => 5,
-                    Network::Testnet | Network::Regtest => 196,
+                    Network::Testnet | Network::Signet | Network::Regtest => 196,
                 };
                 prefixed[1..].copy_from_slice(&hash[..]);
                 base58::check_encode_slice_to_fmt(fmt, &prefixed[..])
@@ -385,7 +385,7 @@ impl Display for Address {
             } => {
                 let hrp = match self.network {
                     Network::Bitcoin => "bc",
-                    Network::Testnet => "tb",
+                    Network::Testnet | Network::Signet  => "tb",
                     Network::Regtest => "bcrt",
                 };
                 let mut bech32_writer = bech32::Bech32Writer::new(hrp, fmt)?;
@@ -414,7 +414,7 @@ impl FromStr for Address {
         let bech32_network = match find_bech32_prefix(s) {
             // note that upper or lowercase is allowed but NOT mixed case
             "bc" | "BC" => Some(Network::Bitcoin),
-            "tb" | "TB" => Some(Network::Testnet),
+            "tb" | "TB" => Some(Network::Testnet), // this may also be signet
             "bcrt" | "BCRT" => Some(Network::Regtest),
             _ => None,
         };
