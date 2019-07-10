@@ -82,3 +82,4 @@ pub use util::amount::SignedAmount;
 pub use util::hash::BitcoinHash;
 pub use util::key::PrivateKey;
 pub use util::key::PublicKey;
+pub use util::merkleblock::MerkleBlock;
