@@ -34,6 +34,13 @@ const MAX_BITS_TESTNET: Uint256 = Uint256([
     0xffffffffffffffffu64,
     0x00000000ffffffffu64,
 ]);
+/// Lowest possible difficulty for Signet.
+const MAX_BITS_SIGNET: Uint256 = Uint256([
+    0x62a429192f9e8ce5u64,
+    0xc63b5f100aa5d8dfu64,
+    0x3c82faa55d83e40au64,
+    0x00002adc28cf53b6u64,
+]);
 /// Lowest possible difficulty for Regtest.
 const MAX_BITS_REGTEST: Uint256 = Uint256([
     0xffffffffffffffffu64,
@@ -103,6 +110,20 @@ impl Params {
                 pow_target_spacing: 10 * 60,            // 10 minutes.
                 pow_target_timespan: 14 * 24 * 60 * 60, // 2 weeks.
                 allow_min_difficulty_blocks: true,
+                no_pow_retargeting: false,
+            },
+            Network::Signet => Params {
+                network: Network::Signet,
+                bip16_time: 1333238400,                 // Apr 1 2012
+                bip34_height: 1,
+                bip65_height: 1,
+                bip66_height: 1,
+                rule_change_activation_threshold: 1916, // 95%
+                miner_confirmation_window: 2016,
+                pow_limit: MAX_BITS_SIGNET,
+                pow_target_spacing: 10 * 60,            // 10 minutes.
+                pow_target_timespan: 14 * 24 * 60 * 60, // 2 weeks.
+                allow_min_difficulty_blocks: false,
                 no_pow_retargeting: false,
             },
             Network::Regtest => Params {

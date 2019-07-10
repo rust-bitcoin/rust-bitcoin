@@ -128,6 +128,21 @@ pub fn genesis_block(network: Network) -> Block {
                 txdata: txdata
             }
         }
+        Network::Signet => {
+            // TODO: somehow obtain the block script and generate coinbase tx from it
+            let txdata = vec![bitcoin_genesis_tx()];
+            Block {
+                header: BlockHeader {
+                    version: 1,
+                    prev_blockhash: Default::default(),
+                    merkle_root,
+                    time: 1534313275,
+                    bits: 0x1e2adc28,
+                    nonce: 621297
+                },
+                txdata: txdata
+            }
+        }
         Network::Regtest => {
             Block {
                 header: BlockHeader {

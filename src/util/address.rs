@@ -371,6 +371,7 @@ impl Display for Address {
                 let mut prefixed = [0; 21];
                 prefixed[0] = match self.network {
                     Network::Bitcoin => 0,
+                    Network::Signet => 125,
                     Network::Testnet | Network::Regtest => 111,
                 };
                 prefixed[1..].copy_from_slice(&hash[..]);
@@ -380,6 +381,7 @@ impl Display for Address {
                 let mut prefixed = [0; 21];
                 prefixed[0] = match self.network {
                     Network::Bitcoin => 5,
+                    Network::Signet => 87,
                     Network::Testnet | Network::Regtest => 196,
                 };
                 prefixed[1..].copy_from_slice(&hash[..]);
@@ -392,6 +394,7 @@ impl Display for Address {
                 let hrp = match self.network {
                     Network::Bitcoin => "bc",
                     Network::Testnet => "tb",
+                    Network::Signet  => "sb",
                     Network::Regtest => "bcrt",
                 };
                 let mut bech32_writer = bech32::Bech32Writer::new(hrp, fmt)?;
@@ -421,6 +424,7 @@ impl FromStr for Address {
             // note that upper or lowercase is allowed but NOT mixed case
             "bc" | "BC" => Some(Network::Bitcoin),
             "tb" | "TB" => Some(Network::Testnet),
+            "sb" | "SB" => Some(Network::Signet),
             "bcrt" | "BCRT" => Some(Network::Regtest),
             _ => None,
         };
@@ -484,6 +488,14 @@ impl FromStr for Address {
             196 => (
                 Network::Testnet,
                 Payload::ScriptHash(ScriptHash::from_slice(&data[1..]).unwrap()),
+            ),
+            125 => (
+                Network::Signet,
+                Payload::PubkeyHash(PubkeyHash::from_slice(&data[1..]).unwrap())
+            ),
+            87 => (
+                Network::Signet,
+                Payload::ScriptHash(ScriptHash::from_slice(&data[1..]).unwrap())
             ),
             x => return Err(Error::Base58(base58::Error::InvalidVersion(vec![x]))),
         };
