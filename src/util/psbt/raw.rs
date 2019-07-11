@@ -17,10 +17,10 @@
 //! Raw PSBT key-value pairs as defined at
 //! https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki.
 
-use std::fmt;
+use std::{fmt, io};
 
 use consensus::encode::{Decodable, Encodable, VarInt, MAX_VEC_SIZE};
-use consensus::{encode, ReadExt, WriteExt};
+use consensus::{encode, ReadExt};
 use util::psbt::Error;
 
 /// A PSBT key in its raw byte form.
@@ -80,24 +80,30 @@ impl<D: ReadExt> Decodable<D> for Key {
     }
 }
 
-impl<S: WriteExt> Encodable<S> for Key {
-    fn consensus_encode(&self, s: &mut S) -> Result<usize, encode::Error> {
+impl Encodable for Key {
+    fn consensus_encode<S: io::Write>(
+        &self,
+        mut s: S,
+    ) -> Result<usize, encode::Error> {
         let mut len = 0;
-        len += VarInt((self.key.len() + 1) as u64).consensus_encode(s)?;
+        len += VarInt((self.key.len() + 1) as u64).consensus_encode(&mut s)?;
 
-        len += self.type_value.consensus_encode(s)?;
+        len += self.type_value.consensus_encode(&mut s)?;
 
         for key in &self.key {
-            len += key.consensus_encode(s)?
+            len += key.consensus_encode(&mut s)?
         }
 
         Ok(len)
     }
 }
 
-impl<S: WriteExt> Encodable<S> for Pair {
-    fn consensus_encode(&self, s: &mut S) -> Result<usize, encode::Error> {
-        let len = self.key.consensus_encode(s)?;
+impl Encodable for Pair {
+    fn consensus_encode<S: io::Write>(
+        &self,
+        mut s: S,
+    ) -> Result<usize, encode::Error> {
+        let len = self.key.consensus_encode(&mut s)?;
         Ok(len + self.value.consensus_encode(s)?)
     }
 }

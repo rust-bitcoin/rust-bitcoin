@@ -25,7 +25,7 @@
 
 use byteorder::{LittleEndian, WriteBytesExt};
 use std::default::Default;
-use std::fmt;
+use std::{fmt, io};
 #[cfg(feature="bitcoinconsensus")] use std::collections::HashMap;
 
 use bitcoin_hashes::{self, sha256d, Hash};
@@ -34,7 +34,7 @@ use bitcoin_hashes::hex::FromHex;
 use util::hash::BitcoinHash;
 #[cfg(feature="bitcoinconsensus")] use blockdata::script;
 use blockdata::script::Script;
-use consensus::{encode, serialize, Decodable, Encodable, ReadExt, WriteExt};
+use consensus::{encode, serialize, Decodable, Encodable, ReadExt};
 use VarInt;
 
 /// A reference to a transaction output
@@ -439,9 +439,12 @@ impl BitcoinHash for Transaction {
 
 impl_consensus_encoding!(TxOut, value, script_pubkey);
 
-impl<S: WriteExt> Encodable<S> for OutPoint {
-    fn consensus_encode(&self, s: &mut S) -> Result <usize, encode::Error> {
-        let len = self.txid.consensus_encode(s)?;
+impl Encodable for OutPoint {
+    fn consensus_encode<S: io::Write>(
+        &self,
+        mut s: S,
+    ) -> Result<usize, encode::Error> {
+        let len = self.txid.consensus_encode(&mut s)?;
         Ok(len + self.vout.consensus_encode(s)?)
     }
 }
@@ -454,11 +457,14 @@ impl<D: ReadExt> Decodable<D> for OutPoint {
     }
 }
 
-impl<S: WriteExt> Encodable<S> for TxIn {
-    fn consensus_encode(&self, s: &mut S) -> Result <usize, encode::Error> {
+impl Encodable for TxIn {
+    fn consensus_encode<S: io::Write>(
+        &self,
+        mut s: S,
+    ) -> Result<usize, encode::Error> {
         let mut len = 0;
-        len += self.previous_output.consensus_encode(s)?;
-        len += self.script_sig.consensus_encode(s)?;
+        len += self.previous_output.consensus_encode(&mut s)?;
+        len += self.script_sig.consensus_encode(&mut s)?;
         len += self.sequence.consensus_encode(s)?;
         Ok(len)
     }
@@ -474,10 +480,13 @@ impl<D: ReadExt> Decodable<D> for TxIn {
     }
 }
 
-impl<S: WriteExt> Encodable<S> for Transaction {
-    fn consensus_encode(&self, s: &mut S) -> Result <usize, encode::Error> {
+impl Encodable for Transaction {
+    fn consensus_encode<S: io::Write>(
+        &self,
+        mut s: S,
+    ) -> Result<usize, encode::Error> {
         let mut len = 0;
-        len += self.version.consensus_encode(s)?;
+        len += self.version.consensus_encode(&mut s)?;
         let mut have_witness = self.input.is_empty();
         for input in &self.input {
             if !input.witness.is_empty() {
@@ -486,15 +495,15 @@ impl<S: WriteExt> Encodable<S> for Transaction {
             }
         }
         if !have_witness {
-            len += self.input.consensus_encode(s)?;
-            len += self.output.consensus_encode(s)?;
+            len += self.input.consensus_encode(&mut s)?;
+            len += self.output.consensus_encode(&mut s)?;
         } else {
-            len += 0u8.consensus_encode(s)?;
-            len += 1u8.consensus_encode(s)?;
-            len += self.input.consensus_encode(s)?;
-            len += self.output.consensus_encode(s)?;
+            len += 0u8.consensus_encode(&mut s)?;
+            len += 1u8.consensus_encode(&mut s)?;
+            len += self.input.consensus_encode(&mut s)?;
+            len += self.output.consensus_encode(&mut s)?;
             for input in &self.input {
-                len += input.witness.consensus_encode(s)?;
+                len += input.witness.consensus_encode(&mut s)?;
             }
         }
         len += self.lock_time.consensus_encode(s)?;

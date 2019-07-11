@@ -18,11 +18,14 @@
 
 macro_rules! impl_consensus_encoding {
     ($thing:ident, $($field:ident),+) => (
-        impl<S: ::consensus::WriteExt> ::consensus::Encodable<S> for $thing {
+        impl ::consensus::Encodable for $thing {
             #[inline]
-            fn consensus_encode(&self, s: &mut S) -> Result<usize, ::consensus::encode::Error> {
+            fn consensus_encode<S: ::std::io::Write>(
+                &self,
+                mut s: S,
+            ) -> Result<usize, ::consensus::encode::Error> {
                 let mut len = 0;
-                $(len += self.$field.consensus_encode(s)?;)+
+                $(len += self.$field.consensus_encode(&mut s)?;)+
                 Ok(len)
             }
         }

@@ -20,7 +20,9 @@
 
 use blockdata::script::Script;
 use blockdata::transaction::Transaction;
-use consensus::{encode, Encodable, Decodable, WriteExt, ReadExt};
+use consensus::{encode, Encodable, Decodable, ReadExt};
+
+use std::io;
 
 mod error;
 pub use self::error::Error;
@@ -88,21 +90,24 @@ impl PartiallySignedTransaction {
     }
 }
 
-impl<S: WriteExt> Encodable<S> for PartiallySignedTransaction {
-    fn consensus_encode(&self, s: &mut S) -> Result<usize, encode::Error> {
+impl Encodable for PartiallySignedTransaction {
+    fn consensus_encode<S: io::Write>(
+        &self,
+        mut s: S,
+    ) -> Result<usize, encode::Error> {
         let mut len = 0;
-        len += b"psbt".consensus_encode(s)?;
+        len += b"psbt".consensus_encode(&mut s)?;
 
-        len += 0xff_u8.consensus_encode(s)?;
+        len += 0xff_u8.consensus_encode(&mut s)?;
 
-        len += self.global.consensus_encode(s)?;
+        len += self.global.consensus_encode(&mut s)?;
 
         for i in &self.inputs {
-            len += i.consensus_encode(s)?;
+            len += i.consensus_encode(&mut s)?;
         }
 
         for i in &self.outputs {
-            len += i.consensus_encode(s)?;
+            len += i.consensus_encode(&mut s)?;
         }
 
         Ok(len)

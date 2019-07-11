@@ -19,7 +19,7 @@
 //! also defines (de)serialization routines for many primitives.
 //!
 
-use std::{iter, mem};
+use std::{io, iter, mem};
 use std::io::Cursor;
 
 use blockdata::block;
@@ -30,16 +30,19 @@ use network::message_blockdata;
 use network::message_filter;
 use consensus::encode::{Decodable, Encodable};
 use consensus::encode::{CheckedData, VarInt};
-use consensus::{encode, serialize, ReadExt, WriteExt};
+use consensus::{encode, serialize, ReadExt};
 use consensus::encode::MAX_VEC_SIZE;
 
 /// Serializer for command string
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct CommandString(pub String);
 
-impl<S: WriteExt> Encodable<S> for CommandString {
+impl Encodable for CommandString {
     #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<usize, encode::Error> {
+    fn consensus_encode<S: io::Write>(
+        &self,
+        s: S,
+    ) -> Result<usize, encode::Error> {
         let &CommandString(ref inner_str) = self;
         let mut rawbytes = [0u8; 12];
         let strbytes = inner_str.as_bytes();
@@ -160,24 +163,31 @@ impl RawNetworkMessage {
 }
 
 struct HeaderSerializationWrapper<'a>(&'a Vec<block::BlockHeader>);
-impl <'a, S: WriteExt> Encodable<S> for HeaderSerializationWrapper<'a> {
+
+impl<'a> Encodable for HeaderSerializationWrapper<'a> {
     #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<usize, encode::Error> {
+    fn consensus_encode<S: io::Write>(
+        &self,
+        mut s: S,
+    ) -> Result<usize, encode::Error> {
         let mut len = 0;
-        len += VarInt(self.0.len() as u64).consensus_encode(s)?;
+        len += VarInt(self.0.len() as u64).consensus_encode(&mut s)?;
         for header in self.0.iter() {
-            len += header.consensus_encode(s)?;
-            len += 0u8.consensus_encode(s)?;
+            len += header.consensus_encode(&mut s)?;
+            len += 0u8.consensus_encode(&mut s)?;
         }
         Ok(len)
     }
 }
 
-impl<S: WriteExt> Encodable<S> for RawNetworkMessage {
-    fn consensus_encode(&self, s: &mut S) -> Result<usize, encode::Error> {
+impl Encodable for RawNetworkMessage {
+    fn consensus_encode<S: io::Write>(
+        &self,
+        mut s: S,
+    ) -> Result<usize, encode::Error> {
         let mut len = 0;
-        len += self.magic.consensus_encode(s)?;
-        len += CommandString(self.command()).consensus_encode(s)?;
+        len += self.magic.consensus_encode(&mut s)?;
+        len += CommandString(self.command()).consensus_encode(&mut s)?;
         len += CheckedData(match self.payload {
             NetworkMessage::Version(ref dat) => serialize(dat),
             NetworkMessage::Addr(ref dat)    => serialize(dat),
@@ -202,7 +212,7 @@ impl<S: WriteExt> Encodable<S> for RawNetworkMessage {
             | NetworkMessage::SendHeaders
             | NetworkMessage::MemPool
             | NetworkMessage::GetAddr => vec![],
-        }).consensus_encode(s)?;
+        }).consensus_encode(&mut s)?;
         Ok(len)
     }
 }

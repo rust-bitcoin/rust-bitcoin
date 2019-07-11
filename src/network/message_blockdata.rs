@@ -20,8 +20,10 @@
 
 use network::constants;
 use consensus::encode::{Decodable, Encodable};
-use consensus::{encode, ReadExt, WriteExt};
+use consensus::{encode, ReadExt};
 use bitcoin_hashes::sha256d;
+
+use std::io;
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 /// The type of an inventory object
@@ -101,17 +103,20 @@ impl GetHeadersMessage {
 
 impl_consensus_encoding!(GetHeadersMessage, version, locator_hashes, stop_hash);
 
-impl<S: WriteExt> Encodable<S> for Inventory {
+impl Encodable for Inventory {
     #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<usize, encode::Error> {
+    fn consensus_encode<S: io::Write>(
+        &self,
+        mut s: S,
+    ) -> Result<usize, encode::Error> {
         let inv_len = match self.inv_type {
-            InvType::Error => 0u32, 
+            InvType::Error => 0u32,
             InvType::Transaction => 1,
             InvType::Block => 2,
             InvType::WitnessBlock => 0x40000002,
             InvType::WitnessTransaction => 0x40000001
-        }.consensus_encode(s)?;
-        Ok(inv_len + self.hash.consensus_encode(s)?)
+        }.consensus_encode(&mut s)?;
+        Ok(inv_len + self.hash.consensus_encode(&mut s)?)
     }
 }
 
