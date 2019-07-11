@@ -137,7 +137,6 @@ impl Address {
     /// Create a witness pay to script hash address
     pub fn p2wsh (script: &script::Script, network: Network) -> Address {
         use bitcoin_hashes::sha256;
-        use bitcoin_hashes::Hash;
 
         Address {
             network: network,
@@ -156,8 +155,6 @@ impl Address {
     /// This is a segwit address type that looks familiar (as p2sh) to legacy clients
     pub fn p2shwsh (script: &script::Script, network: Network) -> Address {
         use bitcoin_hashes::sha256;
-        use bitcoin_hashes::Hash;
-        use bitcoin_hashes::hash160;
 
         let ws = script::Builder::new().push_int(0)
                                        .push_slice(&sha256::Hash::hash(&script[..])[..])

@@ -43,9 +43,12 @@ pub struct Pair {
 
 impl fmt::Display for Key {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use hex;
-
-        write!(f, "type: {:#x}, key: {}", self.type_value, hex::encode(&self.key))
+        write!(
+            f,
+            "type: {:#x}, key: {}",
+            self.type_value,
+            ::hex::encode(&self.key)
+        )
     }
 }
 
