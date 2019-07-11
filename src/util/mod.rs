@@ -21,6 +21,7 @@ pub mod address;
 pub mod amount;
 pub mod base58;
 pub mod bip32;
+pub mod bip39;
 pub mod bip143;
 pub mod contracthash;
 pub mod hash;
