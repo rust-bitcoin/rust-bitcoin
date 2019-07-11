@@ -34,7 +34,7 @@ use bitcoin_hashes::hex::FromHex;
 use util::hash::BitcoinHash;
 #[cfg(feature="bitcoinconsensus")] use blockdata::script;
 use blockdata::script::Script;
-use consensus::{encode, serialize, Decodable, Encodable, ReadExt};
+use consensus::{encode, serialize, Decodable, Encodable};
 use VarInt;
 
 /// A reference to a transaction output
@@ -448,10 +448,10 @@ impl Encodable for OutPoint {
         Ok(len + self.vout.consensus_encode(s)?)
     }
 }
-impl<D: ReadExt> Decodable<D> for OutPoint {
-    fn consensus_decode(d: &mut D) -> Result<OutPoint, encode::Error> {
+impl Decodable for OutPoint {
+    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
         Ok(OutPoint {
-            txid: Decodable::consensus_decode(d)?,
+            txid: Decodable::consensus_decode(&mut d)?,
             vout: Decodable::consensus_decode(d)?,
         })
     }
@@ -469,11 +469,11 @@ impl Encodable for TxIn {
         Ok(len)
     }
 }
-impl<D: ReadExt> Decodable<D> for TxIn {
-    fn consensus_decode(d: &mut D) -> Result<TxIn, encode::Error> {
+impl Decodable for TxIn {
+    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
         Ok(TxIn {
-            previous_output: Decodable::consensus_decode(d)?,
-            script_sig: Decodable::consensus_decode(d)?,
+            previous_output: Decodable::consensus_decode(&mut d)?,
+            script_sig: Decodable::consensus_decode(&mut d)?,
             sequence: Decodable::consensus_decode(d)?,
             witness: vec![],
         })
@@ -511,20 +511,20 @@ impl Encodable for Transaction {
     }
 }
 
-impl<D: ReadExt> Decodable<D> for Transaction {
-    fn consensus_decode(d: &mut D) -> Result<Transaction, encode::Error> {
-        let version: u32 = Decodable::consensus_decode(d)?;
-        let input: Vec<TxIn> = Decodable::consensus_decode(d)?;
+impl Decodable for Transaction {
+    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
+        let version = u32::consensus_decode(&mut d)?;
+        let input = Vec::<TxIn>::consensus_decode(&mut d)?;
         // segwit
         if input.is_empty() {
-            let segwit_flag: u8 = Decodable::consensus_decode(d)?;
+            let segwit_flag = u8::consensus_decode(&mut d)?;
             match segwit_flag {
                 // BIP144 input witnesses
                 1 => {
-                    let mut input: Vec<TxIn> = Decodable::consensus_decode(d)?;
-                    let output: Vec<TxOut> = Decodable::consensus_decode(d)?;
+                    let mut input = Vec::<TxIn>::consensus_decode(&mut d)?;
+                    let output = Vec::<TxOut>::consensus_decode(&mut d)?;
                     for txin in input.iter_mut() {
-                        txin.witness = Decodable::consensus_decode(d)?;
+                        txin.witness = Decodable::consensus_decode(&mut d)?;
                     }
                     if !input.is_empty() && input.iter().all(|input| input.witness.is_empty()) {
                         Err(encode::Error::ParseFailed("witness flag set but no witnesses present"))
@@ -547,7 +547,7 @@ impl<D: ReadExt> Decodable<D> for Transaction {
             Ok(Transaction {
                 version: version,
                 input: input,
-                output: Decodable::consensus_decode(d)?,
+                output: Decodable::consensus_decode(&mut d)?,
                 lock_time: Decodable::consensus_decode(d)?,
             })
         }

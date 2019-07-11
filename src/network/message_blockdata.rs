@@ -19,8 +19,7 @@
 //!
 
 use network::constants;
-use consensus::encode::{Decodable, Encodable};
-use consensus::{encode, ReadExt};
+use consensus::encode::{self, Decodable, Encodable};
 use bitcoin_hashes::sha256d;
 
 use std::io;
@@ -120,10 +119,10 @@ impl Encodable for Inventory {
     }
 }
 
-impl<D: ReadExt> Decodable<D> for Inventory {
+impl Decodable for Inventory {
     #[inline]
-    fn consensus_decode(d: &mut D) -> Result<Inventory, encode::Error> {
-        let int_type: u32 = Decodable::consensus_decode(d)?;
+    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
+        let int_type: u32 = Decodable::consensus_decode(&mut d)?;
         Ok(Inventory {
             inv_type: match int_type {
                 0 => InvType::Error,

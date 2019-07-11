@@ -20,13 +20,13 @@
 //! ```rust
 //! extern crate secp256k1;
 //! extern crate bitcoin;
-//! 
+//!
 //! use bitcoin::network::constants::Network;
 //! use bitcoin::util::address::Address;
 //! use bitcoin::util::key;
 //! use secp256k1::Secp256k1;
 //! use secp256k1::rand::thread_rng;
-//! 
+//!
 //! fn main() {
 //!     // Generate random key pair
 //!     let s = Secp256k1::new();
@@ -34,7 +34,7 @@
 //!         compressed: true,
 //!         key: s.generate_keypair(&mut thread_rng()).1,
 //!     };
-//! 
+//!
 //!     // Generate pay-to-pubkey-hash address
 //!     let address = Address::p2pkh(&public_key, Network::Bitcoin);
 //! }
@@ -427,7 +427,6 @@ mod tests {
         assert_eq!(&addr.to_string(), "bc1qvzvkjn4q3nszqxrv3nraga2r822xjty3ykvkuw");
     }
 
-
     #[test]
     fn test_p2wsh () {
         // stolen from Bitcoin transaction 5df912fda4becb1c29e928bec8d64d93e9ba8efa9b5b405bd683c86fd2c65667
@@ -435,7 +434,6 @@ mod tests {
         let addr = Address::p2wsh(&script, Bitcoin);
         assert_eq!(&addr.to_string(), "bc1qwqdg6squsna38e46795at95yu9atm8azzmyvckulcc7kytlcckxswvvzej");
     }
-
 
     #[test]
     fn test_bip173_vectors() {

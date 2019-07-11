@@ -13,10 +13,10 @@
 //
 
 use std::collections::HashMap;
-use std::io::Cursor;
+use std::io::{self, Cursor};
 
 use blockdata::transaction::Transaction;
-use consensus::{encode, Encodable, Decodable, ReadExt};
+use consensus::{encode, Encodable, Decodable};
 use util::psbt::map::Map;
 use util::psbt::raw;
 use util::psbt;
@@ -120,14 +120,14 @@ impl Map for Global {
 
 impl_psbtmap_consensus_encoding!(Global);
 
-impl<D: ReadExt> Decodable<D> for Global {
-    fn consensus_decode(d: &mut D) -> Result<Self, encode::Error> {
+impl Decodable for Global {
+    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
 
         let mut tx: Option<Transaction> = None;
         let mut unknowns: HashMap<raw::Key, Vec<u8>> = Default::default();
 
         loop {
-            match raw::Pair::consensus_decode(d) {
+            match raw::Pair::consensus_decode(&mut d) {
                 Ok(pair) => {
                     match pair.key.type_value {
                         0u8 => {

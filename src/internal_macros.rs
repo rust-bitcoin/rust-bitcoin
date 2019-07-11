@@ -30,11 +30,13 @@ macro_rules! impl_consensus_encoding {
             }
         }
 
-        impl<D: ::consensus::ReadExt> ::consensus::Decodable<D> for $thing {
+        impl ::consensus::Decodable for $thing {
             #[inline]
-            fn consensus_decode(d: &mut D) -> Result<$thing, ::consensus::encode::Error> {
+            fn consensus_decode<D: ::std::io::Read>(
+                mut d: D,
+            ) -> Result<$thing, ::consensus::encode::Error> {
                 Ok($thing {
-                    $( $field: ::consensus::Decodable::consensus_decode(d)?, )+
+                    $($field: ::consensus::Decodable::consensus_decode(&mut d)?),+
                 })
             }
         }

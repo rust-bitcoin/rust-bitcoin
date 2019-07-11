@@ -22,8 +22,7 @@ use std::io;
 use std::fmt;
 use std::net::{SocketAddr, Ipv6Addr, SocketAddrV4, SocketAddrV6};
 
-use consensus::{encode, ReadExt};
-use consensus::encode::{Decodable, Encodable};
+use consensus::encode::{self, Decodable, Encodable};
 
 /// A message which can be sent on the Bitcoin network
 pub struct Address {
@@ -85,12 +84,12 @@ impl Encodable for Address {
     }
 }
 
-impl<D: ReadExt> Decodable<D> for Address {
+impl Decodable for Address {
     #[inline]
-    fn consensus_decode(d: &mut D) -> Result<Address, encode::Error> {
+    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
         Ok(Address {
-            services: Decodable::consensus_decode(d)?,
-            address: addr_to_be(Decodable::consensus_decode(d)?),
+            services: Decodable::consensus_decode(&mut d)?,
+            address: addr_to_be(Decodable::consensus_decode(&mut d)?),
             port: u16::from_be(Decodable::consensus_decode(d)?)
         })
     }

@@ -19,8 +19,7 @@
 
 use std::{fmt, io};
 
-use consensus::encode::{Decodable, Encodable, VarInt, MAX_VEC_SIZE};
-use consensus::{encode, ReadExt};
+use consensus::encode::{self, Decodable, Encodable, VarInt, MAX_VEC_SIZE};
 use util::psbt::Error;
 
 /// A PSBT key in its raw byte form.
@@ -52,9 +51,9 @@ impl fmt::Display for Key {
     }
 }
 
-impl<D: ReadExt> Decodable<D> for Key {
-    fn consensus_decode(d: &mut D) -> Result<Self, encode::Error> {
-        let VarInt(byte_size): VarInt = Decodable::consensus_decode(d)?;
+impl Decodable for Key {
+    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
+        let VarInt(byte_size): VarInt = Decodable::consensus_decode(&mut d)?;
 
         if byte_size == 0 {
             return Err(Error::NoMorePairs.into());
@@ -63,14 +62,17 @@ impl<D: ReadExt> Decodable<D> for Key {
         let key_byte_size: u64 = byte_size - 1;
 
         if key_byte_size > MAX_VEC_SIZE as u64 {
-            return Err(encode::Error::OversizedVectorAllocation { requested: key_byte_size as usize, max: MAX_VEC_SIZE } )
+            return Err(encode::Error::OversizedVectorAllocation {
+                requested: key_byte_size as usize,
+                max: MAX_VEC_SIZE,
+            })
         }
 
-        let type_value: u8 = Decodable::consensus_decode(d)?;
+        let type_value: u8 = Decodable::consensus_decode(&mut d)?;
 
         let mut key = Vec::with_capacity(key_byte_size as usize);
         for _ in 0..key_byte_size {
-            key.push(Decodable::consensus_decode(d)?);
+            key.push(Decodable::consensus_decode(&mut d)?);
         }
 
         Ok(Key {
@@ -108,10 +110,10 @@ impl Encodable for Pair {
     }
 }
 
-impl<D: ReadExt> Decodable<D> for Pair {
-    fn consensus_decode(d: &mut D) -> Result<Self, encode::Error> {
+impl Decodable for Pair {
+    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
         Ok(Pair {
-            key: Decodable::consensus_decode(d)?,
+            key: Decodable::consensus_decode(&mut d)?,
             value: Decodable::consensus_decode(d)?,
         })
     }

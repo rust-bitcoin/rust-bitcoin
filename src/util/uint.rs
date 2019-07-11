@@ -351,12 +351,14 @@ macro_rules! construct_uint {
             }
         }
 
-        impl<D: ::consensus::ReadExt> ::consensus::Decodable<D> for $name {
-            fn consensus_decode(d: &mut D) -> Result<$name, encode::Error> {
+        impl ::consensus::Decodable for $name {
+            fn consensus_decode<D: ::std::io::Read>(
+                mut d: D,
+            ) -> Result<$name, encode::Error> {
                 use consensus::Decodable;
                 let mut ret: [u64; $n_words] = [0; $n_words];
                 for i in 0..$n_words {
-                    ret[i] = Decodable::consensus_decode(d)?;
+                    ret[i] = Decodable::consensus_decode(&mut d)?;
                 }
                 Ok($name(ret))
             }
