@@ -80,7 +80,7 @@ impl SighashComponents {
 
     /// Compute the BIP143 sighash for a `SIGHASH_ALL` signature for the given
     /// input.
-    pub fn sighash_all(&self, txin: &TxIn, witness_script: &Script, value: u64) -> sha256d::Hash {
+    pub fn sighash_all(&self, txin: &TxIn, script_code: &Script, value: u64) -> sha256d::Hash {
         let mut enc = sha256d::Hash::engine();
         self.tx_version.consensus_encode(&mut enc).unwrap();
         self.hash_prevouts.consensus_encode(&mut enc).unwrap();
@@ -89,7 +89,7 @@ impl SighashComponents {
             .previous_output
             .consensus_encode(&mut enc)
             .unwrap();
-        witness_script.consensus_encode(&mut enc).unwrap();
+        script_code.consensus_encode(&mut enc).unwrap();
         value.consensus_encode(&mut enc).unwrap();
         txin.sequence.consensus_encode(&mut enc).unwrap();
         self.hash_outputs.consensus_encode(&mut enc).unwrap();
