@@ -162,57 +162,6 @@ macro_rules! impl_array_newtype {
     }
 }
 
-macro_rules! impl_array_newtype_encodable {
-    ($thing:ident, $ty:ty, $len:expr) => {
-        #[cfg(feature = "serde")]
-        impl<'de> $crate::serde::Deserialize<'de> for $thing {
-            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-            where
-                D: $crate::serde::Deserializer<'de>,
-            {
-                use $crate::std::fmt::{self, Formatter};
-
-                struct Visitor;
-                impl<'de> $crate::serde::de::Visitor<'de> for Visitor {
-                    type Value = $thing;
-
-                    fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
-                        formatter.write_str("a fixed size array")
-                    }
-
-                    #[inline]
-                    fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
-                    where
-                        A: $crate::serde::de::SeqAccess<'de>,
-                    {
-                        let mut ret: [$ty; $len] = [0; $len];
-                        for item in ret.iter_mut() {
-                            *item = match seq.next_element()? {
-                                Some(c) => c,
-                                None => return Err($crate::serde::de::Error::custom("end of stream"))
-                            };
-                        }
-                        Ok($thing(ret))
-                    }
-                }
-
-                deserializer.deserialize_seq(Visitor)
-            }
-        }
-
-        #[cfg(feature = "serde")]
-        impl $crate::serde::Serialize for $thing {
-            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-            where
-                S: $crate::serde::Serializer,
-            {
-                let &$thing(ref dat) = self;
-                (&dat[..]).serialize(serializer)
-            }
-        }
-    }
-}
-
 macro_rules! impl_array_newtype_show {
     ($thing:ident) => {
         impl ::std::fmt::Debug for $thing {
@@ -615,6 +564,130 @@ macro_rules! serde_struct_human_string_impl {
                     )*
 
                     st.end()
+                }
+            }
+        }
+    )
+}
+
+/// Implements several traits for byte-based newtypes.
+/// Implements:
+/// - std::fmt::LowerHex (implies bitcoin_hashes::hex::ToHex)
+/// - std::fmt::Display
+/// - std::str::FromStr
+/// - bitcoin_hashes::hex::FromHex
+macro_rules! impl_bytes_newtype {
+    ($t:ident, $len:expr) => (
+
+        impl ::std::fmt::LowerHex for $t {
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                for &ch in self.0.iter() {
+                    write!(f, "{:02x}", ch)?;
+                }
+                Ok(())
+            }
+        }
+
+        impl ::std::fmt::Display for $t {
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                fmt::LowerHex::fmt(self, f)
+            }
+        }
+
+        impl ::bitcoin_hashes::hex::FromHex for $t {
+            fn from_byte_iter<I>(iter: I) -> Result<Self, bitcoin_hashes::hex::Error>
+                where I: Iterator<Item=Result<u8, bitcoin_hashes::hex::Error>> +
+                    ExactSizeIterator +
+                    DoubleEndedIterator,
+            {
+                if iter.len() == $len {
+                    let mut ret = [0; $len];
+                    for (n, byte) in iter.enumerate() {
+                        ret[n] = byte?;
+                    }
+                    Ok($t(ret))
+                } else {
+                    Err(::bitcoin_hashes::hex::Error::InvalidLength(2 * $len, 2 * iter.len()))
+                }
+            }
+        }
+
+        impl ::std::str::FromStr for $t {
+            type Err = bitcoin_hashes::hex::Error;
+            fn from_str(s: &str) -> Result<Self, Self::Err> {
+                hex::FromHex::from_hex(s)
+            }
+        }
+
+        #[cfg(feature="serde")]
+        impl ::serde::Serialize for $t {
+            fn serialize<S: ::serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+                if s.is_human_readable() {
+                    s.serialize_str(&::bitcoin_hashes::hex::ToHex::to_hex(self))
+                } else {
+                    s.serialize_bytes(&self[..])
+                }
+            }
+        }
+
+        #[cfg(feature="serde")]
+        impl<'de> ::serde::Deserialize<'de> for $t {
+            fn deserialize<D: ::serde::Deserializer<'de>>(d: D) -> Result<$t, D::Error> {
+                if d.is_human_readable() {
+                    struct HexVisitor;
+
+                    impl<'de> ::serde::de::Visitor<'de> for HexVisitor {
+                        type Value = $t;
+
+                        fn expecting(&self, formatter: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+                            formatter.write_str("an ASCII hex string")
+                        }
+
+                        fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
+                        where
+                            E: ::serde::de::Error,
+                        {
+                            if let Ok(hex) = ::std::str::from_utf8(v) {
+                                ::bitcoin_hashes::hex::FromHex::from_hex(hex).map_err(E::custom)
+                            } else {
+                                return Err(E::invalid_value(::serde::de::Unexpected::Bytes(v), &self));
+                            }
+                        }
+
+                        fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+                        where
+                            E: ::serde::de::Error,
+                        {
+                            ::bitcoin_hashes::hex::FromHex::from_hex(v).map_err(E::custom)
+                        }
+                    }
+
+                    d.deserialize_str(HexVisitor)
+                } else {
+                    struct BytesVisitor;
+
+                    impl<'de> ::serde::de::Visitor<'de> for BytesVisitor {
+                        type Value = $t;
+
+                        fn expecting(&self, formatter: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+                            formatter.write_str("a bytestring")
+                        }
+
+                        fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
+                        where
+                            E: ::serde::de::Error,
+                        {
+                            if v.len() != $len {
+                                Err(E::invalid_length(v.len(), &stringify!($len)))
+                            } else {
+                                let mut ret = [0; $len];
+                                ret.copy_from_slice(v);
+                                Ok($t(ret))
+                            }
+                        }
+                    }
+
+                    d.deserialize_bytes(BytesVisitor)
                 }
             }
         }
