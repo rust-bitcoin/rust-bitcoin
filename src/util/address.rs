@@ -44,7 +44,7 @@ use std::fmt::{self, Display, Formatter};
 use std::str::FromStr;
 
 use bech32::{self, u5, FromBase32, ToBase32};
-use bitcoin_hashes::{hash160, Hash};
+use bitcoin_hashes::{hash160, Hash, sha256};
 
 use blockdata::opcodes;
 use blockdata::script;
@@ -119,6 +119,43 @@ impl From<base58::Error> for Error {
 impl From<bech32::Error> for Error {
     fn from(e: bech32::Error) -> Error {
         Error::Bech32(e)
+    }
+}
+
+/// The different types of addresses.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum AddressType {
+    /// pay-to-pubkey-hash
+    P2pkh,
+    /// pay-to-script-hash
+    P2sh,
+    /// pay-to-witness-pubkey-hash
+    P2wpkh,
+    /// pay-to-witness-script-hash
+    P2wsh,
+}
+
+impl fmt::Display for AddressType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str(match *self {
+            AddressType::P2pkh => "p2pkh",
+            AddressType::P2sh => "p2sh",
+            AddressType::P2wpkh => "p2wpkh",
+            AddressType::P2wsh => "p2wsh",
+        })
+    }
+}
+
+impl FromStr for AddressType {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "p2pkh" => Ok(AddressType::P2pkh),
+            "p2sh" => Ok(AddressType::P2sh),
+            "p2wpkh" => Ok(AddressType::P2wpkh),
+            "p2wsh" => Ok(AddressType::P2wsh),
+            _ => Err(()),
+        }
     }
 }
 
@@ -207,8 +244,6 @@ impl Address {
 
     /// Create a witness pay to script hash address
     pub fn p2wsh (script: &script::Script, network: Network) -> Address {
-        use bitcoin_hashes::sha256;
-
         Address {
             network: network,
             payload: Payload::WitnessProgram {
@@ -221,8 +256,6 @@ impl Address {
     /// Create a pay to script address that embeds a witness pay to script hash address
     /// This is a segwit address type that looks familiar (as p2sh) to legacy clients
     pub fn p2shwsh (script: &script::Script, network: Network) -> Address {
-        use bitcoin_hashes::sha256;
-
         let ws = script::Builder::new().push_int(0)
                                        .push_slice(&sha256::Hash::hash(&script[..])[..])
                                        .into_script();
@@ -233,23 +266,36 @@ impl Address {
         }
     }
 
+    /// Get the address type of the address.
+    /// None if unknown or non-standard.
+    pub fn address_type(&self) -> Option<AddressType> {
+        match self.payload {
+            Payload::PubkeyHash(_) => Some(AddressType::P2pkh),
+            Payload::ScriptHash(_) => Some(AddressType::P2sh),
+            Payload::WitnessProgram {
+                version: ver,
+                program: ref prog,
+            } => {
+                // BIP-141 p2wpkh or p2wsh addresses.
+                match ver.to_u8() {
+                    0 => match prog.len() {
+                        20 => Some(AddressType::P2wpkh),
+                        32 => Some(AddressType::P2wsh),
+                        _ => None,
+                    },
+                    _ => None,
+                }
+            },
+        }
+    }
+
     /// Check whether or not the address is following Bitcoin
     /// standardness rules.
     ///
     /// Segwit addresses with unassigned witness versions or non-standard
     /// program sizes are considered non-standard.
     pub fn is_standard(&self) -> bool {
-        match self.payload {
-            Payload::WitnessProgram {
-                version: ver,
-                program: ref prog,
-            } => {
-                // BIP-141 p2wpkh or p2wsh addresses.
-                ver.to_u8() == 0 && (prog.len() == 20 || prog.len() == 32)
-            }
-            Payload::PubkeyHash(_) => true,
-            Payload::ScriptHash(_) => true,
-        }
+        self.address_type().is_some()
     }
 
     /// Generates a script pubkey spending to this address
@@ -442,6 +488,7 @@ mod tests {
         assert_eq!(addr.script_pubkey(), hex_script!("76a914162c5ea71c0b23f5b9022ef047c4a86470a5b07088ac"));
         assert_eq!(&addr.to_string(), "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM");
         assert_eq!(Address::from_str("132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM").unwrap(), addr);
+        assert_eq!(addr.address_type(), Some(AddressType::P2pkh));
     }
 
     #[test]
@@ -453,6 +500,7 @@ mod tests {
         let key = hex_key!(&"03df154ebfcf29d29cc10d5c2565018bce2d9edbab267c31d2caf44a63056cf99f");
         let addr = Address::p2pkh(&key, Testnet);
         assert_eq!(&addr.to_string(), "mqkhEMH6NCeYjFybv7pvFC22MFeaNT9AQC");
+        assert_eq!(addr.address_type(), Some(AddressType::P2pkh));
     }
 
     #[test]
@@ -467,6 +515,7 @@ mod tests {
         assert_eq!(addr.script_pubkey(), hex_script!("a914162c5ea71c0b23f5b9022ef047c4a86470a5b07087"));
         assert_eq!(&addr.to_string(), "33iFwdLuRpW1uK1RTRqsoi8rR4NpDzk66k");
         assert_eq!(Address::from_str("33iFwdLuRpW1uK1RTRqsoi8rR4NpDzk66k").unwrap(), addr);
+        assert_eq!(addr.address_type(), Some(AddressType::P2sh));
     }
 
     #[test]
@@ -476,6 +525,7 @@ mod tests {
 
         assert_eq!(&addr.to_string(), "2N3zXjbwdTcPsJiy8sUK9FhWJhqQCxA8Jjr");
         assert_eq!(Address::from_str("2N3zXjbwdTcPsJiy8sUK9FhWJhqQCxA8Jjr").unwrap(), addr);
+        assert_eq!(addr.address_type(), Some(AddressType::P2sh));
     }
 
     #[test]
@@ -484,6 +534,7 @@ mod tests {
         let key = hex_key!("033bc8c83c52df5712229a2f72206d90192366c36428cb0c12b6af98324d97bfbc");
         let addr = Address::p2wpkh(&key, Bitcoin);
         assert_eq!(&addr.to_string(), "bc1qvzvkjn4q3nszqxrv3nraga2r822xjty3ykvkuw");
+        assert_eq!(addr.address_type(), Some(AddressType::P2wpkh));
     }
 
     #[test]
@@ -492,6 +543,7 @@ mod tests {
         let script = hex_script!("52210375e00eb72e29da82b89367947f29ef34afb75e8654f6ea368e0acdfd92976b7c2103a1b26313f430c4b15bb1fdce663207659d8cac749a0e53d70eff01874496feff2103c96d495bfdd5ba4145e3e046fee45e84a8a48ad05bd8dbb395c011a32cf9f88053ae");
         let addr = Address::p2wsh(&script, Bitcoin);
         assert_eq!(&addr.to_string(), "bc1qwqdg6squsna38e46795at95yu9atm8azzmyvckulcc7kytlcckxswvvzej");
+        assert_eq!(addr.address_type(), Some(AddressType::P2wsh));
     }
 
     #[test]
