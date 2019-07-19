@@ -71,14 +71,21 @@ pub enum Error {
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let desc = ::std::error::Error::description(self);
         match *self {
-            Error::Base58(ref e) => write!(f, "{}: {}", desc, e),
-            Error::Bech32(ref e) => write!(f, "{}: {}", desc, e),
-            Error::InvalidWitnessVersion(v) => write!(f, "{}: {}", desc, v),
-            Error::InvalidWitnessProgramLength(l) => write!(f, "{}: {}", desc, l),
-            Error::InvalidSegwitV0ProgramLength(l) => write!(f, "{}: {}", desc, l),
-            _ => f.write_str(desc),
+            Error::Base58(ref e) => write!(f, "base58: {}", e),
+            Error::Bech32(ref e) => write!(f, "bech32: {}", e),
+            Error::EmptyBech32Payload => write!(f, "the bech32 payload was empty"),
+            Error::InvalidWitnessVersion(v) => write!(f, "invalid witness script version: {}", v),
+            Error::InvalidWitnessProgramLength(l) => write!(
+                f,
+                "the witness program must be between 2 and 40 bytes in length: lengh={}",
+                l
+            ),
+            Error::InvalidSegwitV0ProgramLength(l) => write!(
+                f,
+                "a v0 witness program must be either of length 20 or 32 bytes: length={}",
+                l
+            ),
         }
     }
 }
@@ -92,19 +99,8 @@ impl ::std::error::Error for Error {
         }
     }
 
-    fn description(&self) -> &str {
-        match *self {
-            Error::Base58(..) => "base58 error",
-            Error::Bech32(..) => "bech32 error",
-            Error::EmptyBech32Payload => "the bech32 payload was empty",
-            Error::InvalidWitnessVersion(..) => "invalid witness script version",
-            Error::InvalidWitnessProgramLength(..) => {
-                "the witness program must be between 2 and 40 bytes in length"
-            },
-            Error::InvalidSegwitV0ProgramLength(..) => {
-                "a v0 witness program must be either of length 20 or 32"
-            },
-        }
+    fn description(&self) -> &'static str {
+        "std::error::Error::description is deprecated"
     }
 }
 
