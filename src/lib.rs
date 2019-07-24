@@ -41,6 +41,8 @@
 #![deny(non_snake_case)]
 #![deny(unused_mut)]
 #![deny(missing_docs)]
+#![forbid(unsafe_code)]
+
 
 extern crate bitcoin_bech32;
 extern crate bitcoin_hashes;
