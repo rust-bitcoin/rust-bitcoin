@@ -105,7 +105,7 @@ impl fmt::Display for OutPoint {
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum ParseOutPointError {
     /// Error in TXID part.
-    Txid(bitcoin_hashes::Error),
+    Txid(bitcoin_hashes::hex::Error),
     /// Error in vout part.
     Vout(::std::num::ParseIntError),
     /// Error in general format.
