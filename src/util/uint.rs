@@ -336,21 +336,29 @@ macro_rules! construct_uint {
             }
         }
 
-        impl<S: ::consensus::encode::Encoder> ::consensus::encode::Encodable<S> for $name {
+        impl ::consensus::Encodable for $name {
             #[inline]
-            fn consensus_encode(&self, s: &mut S) -> Result<(), encode::Error> {
+            fn consensus_encode<S: ::std::io::Write>(
+                &self,
+                mut s: S,
+            ) -> Result<usize, encode::Error> {
                 let &$name(ref data) = self;
-                for word in data.iter() { word.consensus_encode(s)?; }
-                Ok(())
+                let mut len = 0;
+                for word in data.iter() {
+                    len += word.consensus_encode(&mut s)?;
+                }
+                Ok(len)
             }
         }
 
-        impl<D: ::consensus::encode::Decoder> ::consensus::encode::Decodable<D> for $name {
-            fn consensus_decode(d: &mut D) -> Result<$name, encode::Error> {
-                use consensus::encode::Decodable;
+        impl ::consensus::Decodable for $name {
+            fn consensus_decode<D: ::std::io::Read>(
+                mut d: D,
+            ) -> Result<$name, encode::Error> {
+                use consensus::Decodable;
                 let mut ret: [u64; $n_words] = [0; $n_words];
                 for i in 0..$n_words {
-                    ret[i] = Decodable::consensus_decode(d)?;
+                    ret[i] = Decodable::consensus_decode(&mut d)?;
                 }
                 Ok($name(ret))
             }
@@ -388,7 +396,7 @@ impl Uint256 {
 
 #[cfg(test)]
 mod tests {
-    use consensus::encode::{deserialize, serialize};
+    use consensus::{deserialize, serialize};
     use util::uint::Uint256;
     use util::BitArray;
 

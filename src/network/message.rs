@@ -19,7 +19,7 @@
 //! also defines (de)serialization routines for many primitives.
 //!
 
-use std::{iter, mem};
+use std::{io, iter, mem};
 use std::io::Cursor;
 
 use blockdata::block;
@@ -28,18 +28,20 @@ use network::address::Address;
 use network::message_network;
 use network::message_blockdata;
 use network::message_filter;
-use consensus::encode::{Decodable, Encodable};
-use consensus::encode::{CheckedData, VarInt};
-use consensus::encode::{self, serialize, Encoder, Decoder};
+use consensus::encode::{CheckedData, Decodable, Encodable, VarInt};
+use consensus::{encode, serialize};
 use consensus::encode::MAX_VEC_SIZE;
 
 /// Serializer for command string
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct CommandString(pub String);
 
-impl<S: Encoder> Encodable<S> for CommandString {
+impl Encodable for CommandString {
     #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), encode::Error> {
+    fn consensus_encode<S: io::Write>(
+        &self,
+        s: S,
+    ) -> Result<usize, encode::Error> {
         let &CommandString(ref inner_str) = self;
         let mut rawbytes = [0u8; 12];
         let strbytes = inner_str.as_bytes();
@@ -53,11 +55,15 @@ impl<S: Encoder> Encodable<S> for CommandString {
     }
 }
 
-impl<D: Decoder> Decodable<D> for CommandString {
+impl Decodable for CommandString {
     #[inline]
-    fn consensus_decode(d: &mut D) -> Result<CommandString, encode::Error> {
+    fn consensus_decode<D: io::Read>(d: D) -> Result<Self, encode::Error> {
         let rawbytes: [u8; 12] = Decodable::consensus_decode(d)?;
-        let rv = iter::FromIterator::from_iter(rawbytes.iter().filter_map(|&u| if u > 0 { Some(u as char) } else { None }));
+        let rv = iter::FromIterator::from_iter(
+            rawbytes
+                .iter()
+                .filter_map(|&u| if u > 0 { Some(u as char) } else { None })
+        );
         Ok(CommandString(rv))
     }
 }
@@ -160,23 +166,32 @@ impl RawNetworkMessage {
 }
 
 struct HeaderSerializationWrapper<'a>(&'a Vec<block::BlockHeader>);
-impl <'a, S: Encoder> Encodable<S> for HeaderSerializationWrapper<'a> {
+
+impl<'a> Encodable for HeaderSerializationWrapper<'a> {
     #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), encode::Error> {
-        VarInt(self.0.len() as u64).consensus_encode(s)?;
+    fn consensus_encode<S: io::Write>(
+        &self,
+        mut s: S,
+    ) -> Result<usize, encode::Error> {
+        let mut len = 0;
+        len += VarInt(self.0.len() as u64).consensus_encode(&mut s)?;
         for header in self.0.iter() {
-            header.consensus_encode(s)?;
-            0u8.consensus_encode(s)?;
+            len += header.consensus_encode(&mut s)?;
+            len += 0u8.consensus_encode(&mut s)?;
         }
-        Ok(())
+        Ok(len)
     }
 }
 
-impl<S: Encoder> Encodable<S> for RawNetworkMessage {
-    fn consensus_encode(&self, s: &mut S) -> Result<(), encode::Error> {
-        self.magic.consensus_encode(s)?;
-        CommandString(self.command()).consensus_encode(s)?;
-        CheckedData(match self.payload {
+impl Encodable for RawNetworkMessage {
+    fn consensus_encode<S: io::Write>(
+        &self,
+        mut s: S,
+    ) -> Result<usize, encode::Error> {
+        let mut len = 0;
+        len += self.magic.consensus_encode(&mut s)?;
+        len += CommandString(self.command()).consensus_encode(&mut s)?;
+        len += CheckedData(match self.payload {
             NetworkMessage::Version(ref dat) => serialize(dat),
             NetworkMessage::Addr(ref dat)    => serialize(dat),
             NetworkMessage::Inv(ref dat)     => serialize(dat),
@@ -200,15 +215,17 @@ impl<S: Encoder> Encodable<S> for RawNetworkMessage {
             | NetworkMessage::SendHeaders
             | NetworkMessage::MemPool
             | NetworkMessage::GetAddr => vec![],
-        }).consensus_encode(s)
+        }).consensus_encode(&mut s)?;
+        Ok(len)
     }
 }
 
 struct HeaderDeserializationWrapper(Vec<block::BlockHeader>);
-impl<D: Decoder> Decodable<D> for HeaderDeserializationWrapper {
+
+impl Decodable for HeaderDeserializationWrapper {
     #[inline]
-    fn consensus_decode(d: &mut D) -> Result<HeaderDeserializationWrapper, encode::Error> {
-        let len = VarInt::consensus_decode(d)?.0;
+    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
+        let len = VarInt::consensus_decode(&mut d)?.0;
         let byte_size = (len as usize)
                             .checked_mul(mem::size_of::<block::BlockHeader>())
                             .ok_or(encode::Error::ParseFailed("Invalid length"))?;
@@ -217,8 +234,8 @@ impl<D: Decoder> Decodable<D> for HeaderDeserializationWrapper {
         }
         let mut ret = Vec::with_capacity(len as usize);
         for _ in 0..len {
-            ret.push(Decodable::consensus_decode(d)?);
-            if <u8 as Decodable<D>>::consensus_decode(d)? != 0u8 {
+            ret.push(Decodable::consensus_decode(&mut d)?);
+            if u8::consensus_decode(&mut d)? != 0u8 {
                 return Err(encode::Error::ParseFailed("Headers message should not contain transactions"));
             }
         }
@@ -226,11 +243,11 @@ impl<D: Decoder> Decodable<D> for HeaderDeserializationWrapper {
     }
 }
 
-impl<D: Decoder> Decodable<D> for RawNetworkMessage {
-    fn consensus_decode(d: &mut D) -> Result<RawNetworkMessage, encode::Error> {
-        let magic = Decodable::consensus_decode(d)?;
-        let CommandString(cmd): CommandString= Decodable::consensus_decode(d)?;
-        let CheckedData(raw_payload): CheckedData = Decodable::consensus_decode(d)?;
+impl Decodable for RawNetworkMessage {
+    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
+        let magic = Decodable::consensus_decode(&mut d)?;
+        let cmd = CommandString::consensus_decode(&mut d)?.0;
+        let raw_payload = CheckedData::consensus_decode(&mut d)?.0;
 
         let mut mem_d = Cursor::new(raw_payload);
         let payload = match &cmd[..] {
@@ -244,9 +261,9 @@ impl<D: Decoder> Decodable<D> for RawNetworkMessage {
             "getheaders" => NetworkMessage::GetHeaders(Decodable::consensus_decode(&mut mem_d)?),
             "mempool" => NetworkMessage::MemPool,
             "block"   => NetworkMessage::Block(Decodable::consensus_decode(&mut mem_d)?),
-            "headers" =>
-                NetworkMessage::Headers(<HeaderDeserializationWrapper as Decodable<Cursor<Vec<u8>>>>
-                                        ::consensus_decode(&mut mem_d)?.0),
+            "headers" => NetworkMessage::Headers(
+                HeaderDeserializationWrapper::consensus_decode(&mut mem_d)?.0
+            ),
             "sendheaders" => NetworkMessage::SendHeaders,
             "getaddr" => NetworkMessage::GetAddr,
             "ping"    => NetworkMessage::Ping(Decodable::consensus_decode(&mut mem_d)?),

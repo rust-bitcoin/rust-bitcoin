@@ -22,8 +22,7 @@ use std::io;
 use std::fmt;
 use std::net::{SocketAddr, Ipv6Addr, SocketAddrV4, SocketAddrV6};
 
-use consensus::encode::{self, Encoder, Decoder};
-use consensus::encode::{Decodable, Encodable};
+use consensus::encode::{self, Decodable, Encodable};
 
 /// A message which can be sent on the Bitcoin network
 pub struct Address {
@@ -72,21 +71,25 @@ fn addr_to_be(addr: [u16; 8]) -> [u16; 8] {
      addr[4].to_be(), addr[5].to_be(), addr[6].to_be(), addr[7].to_be()]
 }
 
-impl<S: Encoder> Encodable<S> for Address {
+impl Encodable for Address {
     #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), encode::Error> {
-        self.services.consensus_encode(s)?;
-        addr_to_be(self.address).consensus_encode(s)?;
-        self.port.to_be().consensus_encode(s)
+    fn consensus_encode<S: io::Write>(
+        &self,
+        mut s: S,
+    ) -> Result<usize, encode::Error> {
+        let len = self.services.consensus_encode(&mut s)?
+            + addr_to_be(self.address).consensus_encode(&mut s)?
+            + self.port.to_be().consensus_encode(s)?;
+        Ok(len)
     }
 }
 
-impl<D: Decoder> Decodable<D> for Address {
+impl Decodable for Address {
     #[inline]
-    fn consensus_decode(d: &mut D) -> Result<Address, encode::Error> {
+    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
         Ok(Address {
-            services: Decodable::consensus_decode(d)?,
-            address: addr_to_be(Decodable::consensus_decode(d)?),
+            services: Decodable::consensus_decode(&mut d)?,
+            address: addr_to_be(Decodable::consensus_decode(&mut d)?),
             port: u16::from_be(Decodable::consensus_decode(d)?)
         })
     }

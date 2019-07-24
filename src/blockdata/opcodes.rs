@@ -24,9 +24,6 @@
 
 use std::fmt;
 
-use consensus::encode::{self, Decoder, Encoder};
-use consensus::encode::{Decodable, Encodable};
-
 // Note: I am deliberately not implementing PartialOrd or Ord on the
 //       opcode enum. If you want to check ranges of opcodes, etc.,
 //       write an #[inline] helper function which casts to u8s.
@@ -715,20 +712,6 @@ impl From<u8> for All {
 
 display_from_debug!(All);
 
-impl<D: Decoder> Decodable<D> for All {
-    #[inline]
-    fn consensus_decode(d: &mut D) -> Result<All, encode::Error> {
-        Ok(All::from(d.read_u8()?))
-    }
-}
-
-impl<S: Encoder> Encodable<S> for All {
-    #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), encode::Error> {
-        s.emit_u8(self.code)
-    }
-}
-
 #[cfg(feature = "serde")]
 impl serde::Serialize for All {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -835,7 +818,6 @@ impl Ordinary {
 mod tests {
     use std::collections::HashSet;
 
-    use consensus::encode::{serialize, deserialize};
     use super::*;
 
     macro_rules! roundtrip {
@@ -847,9 +829,6 @@ mod tests {
             assert_eq!(s1, s2);
             assert_eq!(s1, stringify!($op));
             assert!($unique.insert(s1));
-
-            let enc = serialize(&all::$op);
-            assert_eq!(all::$op, deserialize(&enc).unwrap());
         }
     }
 

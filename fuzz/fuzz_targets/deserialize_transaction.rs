@@ -7,12 +7,12 @@ fn do_test(data: &[u8]) {
         Ok(mut tx) => {
             let ser = bitcoin::consensus::encode::serialize(&tx);
             assert_eq!(&ser[..], data);
-            let len = ser.len() as u64;
+            let len = ser.len();
             let calculated_weight = tx.get_weight();
             for input in &mut tx.input {
                 input.witness = vec![];
             }
-            let no_witness_len = bitcoin::consensus::encode::serialize(&tx).len() as u64;
+            let no_witness_len = bitcoin::consensus::encode::serialize(&tx).len();
             // For 0-input transactions, `no_witness_len` will be incorrect because
             // we serialize as segwit even after "stripping the witnesses". We need
             // to drop two bytes (i.e. eight weight)

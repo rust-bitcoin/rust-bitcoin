@@ -19,9 +19,10 @@
 //!
 
 use network::constants;
-use consensus::encode::{Decodable, Encodable};
-use consensus::encode::{self, Decoder, Encoder};
+use consensus::encode::{self, Decodable, Encodable};
 use bitcoin_hashes::sha256d;
+
+use std::io;
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 /// The type of an inventory object
@@ -101,24 +102,27 @@ impl GetHeadersMessage {
 
 impl_consensus_encoding!(GetHeadersMessage, version, locator_hashes, stop_hash);
 
-impl<S: Encoder> Encodable<S> for Inventory {
+impl Encodable for Inventory {
     #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), encode::Error> {
-        match self.inv_type {
-            InvType::Error => 0u32, 
+    fn consensus_encode<S: io::Write>(
+        &self,
+        mut s: S,
+    ) -> Result<usize, encode::Error> {
+        let inv_len = match self.inv_type {
+            InvType::Error => 0u32,
             InvType::Transaction => 1,
             InvType::Block => 2,
             InvType::WitnessBlock => 0x40000002,
             InvType::WitnessTransaction => 0x40000001
-        }.consensus_encode(s)?;
-        self.hash.consensus_encode(s)
+        }.consensus_encode(&mut s)?;
+        Ok(inv_len + self.hash.consensus_encode(&mut s)?)
     }
 }
 
-impl<D: Decoder> Decodable<D> for Inventory {
+impl Decodable for Inventory {
     #[inline]
-    fn consensus_decode(d: &mut D) -> Result<Inventory, encode::Error> {
-        let int_type: u32 = Decodable::consensus_decode(d)?;
+    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
+        let int_type: u32 = Decodable::consensus_decode(&mut d)?;
         Ok(Inventory {
             inv_type: match int_type {
                 0 => InvType::Error,

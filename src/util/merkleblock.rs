@@ -57,12 +57,12 @@
 //! ```
 
 use std::collections::HashSet;
+use std::io;
 
 use bitcoin_hashes::{sha256d, Hash};
 
 use blockdata::constants::{MAX_BLOCK_WEIGHT, MIN_TRANSACTION_WEIGHT};
-use consensus::encode::{Encodable, Error};
-use consensus::{Decodable, Decoder, Encoder};
+use consensus::encode::{self, Decodable, Encodable};
 use util::hash::BitcoinHash;
 use util::merkleblock::MerkleBlockError::*;
 use {Block, BlockHeader};
@@ -353,22 +353,25 @@ impl PartialMerkleTree {
     }
 }
 
-impl<S: Encoder> Encodable<S> for PartialMerkleTree {
-    fn consensus_encode(&self, s: &mut S) -> Result<(), Error> {
-        self.num_transactions.consensus_encode(s)?;
-        self.hashes.consensus_encode(s)?;
+impl Encodable for PartialMerkleTree {
+    fn consensus_encode<S: io::Write>(
+        &self,
+        mut s: S,
+    ) -> Result<usize, encode::Error> {
+        let ret = self.num_transactions.consensus_encode(&mut s)?
+            + self.hashes.consensus_encode(&mut s)?;
         let mut bytes: Vec<u8> = vec![0; (self.bits.len() + 7) / 8];
         for p in 0..self.bits.len() {
             bytes[p / 8] |= (self.bits[p] as u8) << (p % 8) as u8;
         }
-        bytes.consensus_encode(s)
+        Ok(ret + bytes.consensus_encode(s)?)
     }
 }
 
-impl<D: Decoder> Decodable<D> for PartialMerkleTree {
-    fn consensus_decode(d: &mut D) -> Result<Self, Error> {
-        let num_transactions: u32 = Decodable::consensus_decode(d)?;
-        let hashes: Vec<sha256d::Hash> = Decodable::consensus_decode(d)?;
+impl Decodable for PartialMerkleTree {
+    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
+        let num_transactions: u32 = Decodable::consensus_decode(&mut d)?;
+        let hashes: Vec<sha256d::Hash> = Decodable::consensus_decode(&mut d)?;
 
         let bytes: Vec<u8> = Decodable::consensus_decode(d)?;
         let mut bits: Vec<bool> = vec![false; bytes.len() * 8];
@@ -471,17 +474,21 @@ impl MerkleBlock {
     }
 }
 
-impl<S: Encoder> Encodable<S> for MerkleBlock {
-    fn consensus_encode(&self, s: &mut S) -> Result<(), Error> {
-        self.header.consensus_encode(s)?;
-        self.txn.consensus_encode(s)
+impl Encodable for MerkleBlock {
+    fn consensus_encode<S: io::Write>(
+        &self,
+        mut s: S,
+    ) -> Result<usize, encode::Error> {
+        let len = self.header.consensus_encode(&mut s)?
+            + self.txn.consensus_encode(s)?;
+        Ok(len)
     }
 }
 
-impl<D: Decoder> Decodable<D> for MerkleBlock {
-    fn consensus_decode(d: &mut D) -> Result<Self, Error> {
+impl Decodable for MerkleBlock {
+    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
         Ok(MerkleBlock {
-            header: Decodable::consensus_decode(d)?,
+            header: Decodable::consensus_decode(&mut d)?,
             txn: Decodable::consensus_decode(d)?,
         })
     }

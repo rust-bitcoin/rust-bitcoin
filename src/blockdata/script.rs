@@ -25,13 +25,12 @@
 //!
 
 use std::default::Default;
-use std::{error, fmt};
+use std::{error, fmt, io};
 
 #[cfg(feature = "serde")] use serde;
 
 use blockdata::opcodes;
-use consensus::encode::{Decodable, Encodable};
-use consensus::encode::{self, Decoder, Encoder};
+use consensus::{encode, Decodable, Encodable};
 use bitcoin_hashes::{hash160, sha256, Hash};
 #[cfg(feature="bitcoinconsensus")] use bitcoinconsensus;
 #[cfg(feature="bitcoinconsensus")] use std::convert;
@@ -726,16 +725,19 @@ impl serde::Serialize for Script {
 }
 
 // Network serialization
-impl<S: Encoder> Encodable<S> for Script {
+impl Encodable for Script {
     #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), encode::Error> {
+    fn consensus_encode<S: io::Write>(
+        &self,
+        s: S,
+    ) -> Result<usize, encode::Error> {
         self.0.consensus_encode(s)
     }
 }
 
-impl<D: Decoder> Decodable<D> for Script {
+impl Decodable for Script {
     #[inline]
-    fn consensus_decode(d: &mut D) -> Result<Script, encode::Error> {
+    fn consensus_decode<D: io::Read>(d: D) -> Result<Self, encode::Error> {
         Ok(Script(Decodable::consensus_decode(d)?))
     }
 }

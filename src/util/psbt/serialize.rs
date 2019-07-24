@@ -17,7 +17,7 @@
 //! Defines traits used for (de)serializing PSBT values into/from raw
 //! bytes in PSBT key-value pairs.
 
-use std::io::{self, Cursor};
+use std::io;
 
 use blockdata::script::Script;
 use blockdata::transaction::{SigHashType, Transaction, TxOut};
@@ -93,16 +93,10 @@ impl Deserialize for (Fingerprint, DerivationPath) {
         let fprint: Fingerprint = Fingerprint::from(&bytes[0..4]);
         let mut dpath: Vec<ChildNumber> = Default::default();
 
-        let d = &mut Cursor::new(&bytes[4..]);
-        loop {
-            match Decodable::consensus_decode(d) {
-                Ok(index) => {
-                    dpath.push(<ChildNumber as From<u32>>::from(index));
-
-                    if d.position() == (bytes.len() - 4) as u64 {
-                        break;
-                    }
-                },
+        let mut d = &bytes[4..];
+        while !d.is_empty() {
+            match u32::consensus_decode(&mut d) {
+                Ok(index) => dpath.push(index.into()),
                 Err(e) => return Err(e),
             }
         }

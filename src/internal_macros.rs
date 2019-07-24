@@ -18,20 +18,25 @@
 
 macro_rules! impl_consensus_encoding {
     ($thing:ident, $($field:ident),+) => (
-        impl<S: ::consensus::encode::Encoder> ::consensus::encode::Encodable<S> for $thing {
+        impl ::consensus::Encodable for $thing {
             #[inline]
-            fn consensus_encode(&self, s: &mut S) -> Result<(), ::consensus::encode::Error> {
-                $( self.$field.consensus_encode(s)?; )+
-                Ok(())
+            fn consensus_encode<S: ::std::io::Write>(
+                &self,
+                mut s: S,
+            ) -> Result<usize, ::consensus::encode::Error> {
+                let mut len = 0;
+                $(len += self.$field.consensus_encode(&mut s)?;)+
+                Ok(len)
             }
         }
 
-        impl<D: ::consensus::encode::Decoder> ::consensus::encode::Decodable<D> for $thing {
+        impl ::consensus::Decodable for $thing {
             #[inline]
-            fn consensus_decode(d: &mut D) -> Result<$thing, ::consensus::encode::Error> {
-                use consensus::encode::Decodable;
+            fn consensus_decode<D: ::std::io::Read>(
+                mut d: D,
+            ) -> Result<$thing, ::consensus::encode::Error> {
                 Ok($thing {
-                    $( $field: Decodable::consensus_decode(d)?, )+
+                    $($field: ::consensus::Decodable::consensus_decode(&mut d)?),+
                 })
             }
         }

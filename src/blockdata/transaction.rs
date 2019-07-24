@@ -25,7 +25,7 @@
 
 use byteorder::{LittleEndian, WriteBytesExt};
 use std::default::Default;
-use std::fmt;
+use std::{fmt, io};
 #[cfg(feature="bitcoinconsensus")] use std::collections::HashMap;
 
 use bitcoin_hashes::{self, sha256d, Hash};
@@ -34,8 +34,8 @@ use bitcoin_hashes::hex::FromHex;
 use util::hash::BitcoinHash;
 #[cfg(feature="bitcoinconsensus")] use blockdata::script;
 use blockdata::script::Script;
-use consensus::encode::{self, serialize, Encoder, Decoder};
-use consensus::encode::{Encodable, Decodable, VarInt};
+use consensus::{encode, serialize, Decodable, Encodable};
+use VarInt;
 
 /// A reference to a transaction output
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
@@ -368,40 +368,40 @@ impl Transaction {
     /// witness, this is the non-witness consensus-serialized size multiplied by 3 plus the
     /// with-witness consensus-serialized size.
     #[inline]
-    pub fn get_weight(&self) -> u64 {
+    pub fn get_weight(&self) -> usize {
         let mut input_weight = 0;
         let mut inputs_with_witnesses = 0;
         for input in &self.input {
             input_weight += 4*(32 + 4 + 4 + // outpoint (32+4) + nSequence
-                VarInt(input.script_sig.len() as u64).encoded_length() +
-                input.script_sig.len() as u64);
+                VarInt(input.script_sig.len() as u64).len() +
+                input.script_sig.len());
             if !input.witness.is_empty() {
                 inputs_with_witnesses += 1;
-                input_weight += VarInt(input.witness.len() as u64).encoded_length();
+                input_weight += VarInt(input.witness.len() as u64).len();
                 for elem in &input.witness {
-                    input_weight += VarInt(elem.len() as u64).encoded_length() + elem.len() as u64;
+                    input_weight += VarInt(elem.len() as u64).len() + elem.len();
                 }
             }
         }
         let mut output_size = 0;
         for output in &self.output {
             output_size += 8 + // value
-                VarInt(output.script_pubkey.len() as u64).encoded_length() +
-                output.script_pubkey.len() as u64;
+                VarInt(output.script_pubkey.len() as u64).len() +
+                output.script_pubkey.len();
         }
         let non_input_size =
         // version:
         4 +
         // count varints:
-        VarInt(self.input.len() as u64).encoded_length() +
-        VarInt(self.output.len() as u64).encoded_length() +
+        VarInt(self.input.len() as u64).len() +
+        VarInt(self.output.len() as u64).len() +
         output_size +
         // lock_time
         4;
         if inputs_with_witnesses == 0 {
             non_input_size * 4 + input_weight
         } else {
-            non_input_size * 4 + input_weight + self.input.len() as u64 - inputs_with_witnesses + 2
+            non_input_size * 4 + input_weight + self.input.len() - inputs_with_witnesses + 2
         }
     }
 
@@ -439,42 +439,54 @@ impl BitcoinHash for Transaction {
 
 impl_consensus_encoding!(TxOut, value, script_pubkey);
 
-impl<S: Encoder> Encodable<S> for OutPoint {
-    fn consensus_encode(&self, s: &mut S) -> Result <(), encode::Error> {
-        self.txid.consensus_encode(s)?;
-        self.vout.consensus_encode(s)
+impl Encodable for OutPoint {
+    fn consensus_encode<S: io::Write>(
+        &self,
+        mut s: S,
+    ) -> Result<usize, encode::Error> {
+        let len = self.txid.consensus_encode(&mut s)?;
+        Ok(len + self.vout.consensus_encode(s)?)
     }
 }
-impl<D: Decoder> Decodable<D> for OutPoint {
-    fn consensus_decode(d: &mut D) -> Result<OutPoint, encode::Error> {
+impl Decodable for OutPoint {
+    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
         Ok(OutPoint {
-            txid: Decodable::consensus_decode(d)?,
+            txid: Decodable::consensus_decode(&mut d)?,
             vout: Decodable::consensus_decode(d)?,
         })
     }
 }
 
-impl<S: Encoder> Encodable<S> for TxIn {
-    fn consensus_encode(&self, s: &mut S) -> Result <(), encode::Error> {
-        self.previous_output.consensus_encode(s)?;
-        self.script_sig.consensus_encode(s)?;
-        self.sequence.consensus_encode(s)
+impl Encodable for TxIn {
+    fn consensus_encode<S: io::Write>(
+        &self,
+        mut s: S,
+    ) -> Result<usize, encode::Error> {
+        let mut len = 0;
+        len += self.previous_output.consensus_encode(&mut s)?;
+        len += self.script_sig.consensus_encode(&mut s)?;
+        len += self.sequence.consensus_encode(s)?;
+        Ok(len)
     }
 }
-impl<D: Decoder> Decodable<D> for TxIn {
-    fn consensus_decode(d: &mut D) -> Result<TxIn, encode::Error> {
+impl Decodable for TxIn {
+    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
         Ok(TxIn {
-            previous_output: Decodable::consensus_decode(d)?,
-            script_sig: Decodable::consensus_decode(d)?,
+            previous_output: Decodable::consensus_decode(&mut d)?,
+            script_sig: Decodable::consensus_decode(&mut d)?,
             sequence: Decodable::consensus_decode(d)?,
             witness: vec![],
         })
     }
 }
 
-impl<S: Encoder> Encodable<S> for Transaction {
-    fn consensus_encode(&self, s: &mut S) -> Result <(), encode::Error> {
-        self.version.consensus_encode(s)?;
+impl Encodable for Transaction {
+    fn consensus_encode<S: io::Write>(
+        &self,
+        mut s: S,
+    ) -> Result<usize, encode::Error> {
+        let mut len = 0;
+        len += self.version.consensus_encode(&mut s)?;
         let mut have_witness = self.input.is_empty();
         for input in &self.input {
             if !input.witness.is_empty() {
@@ -483,35 +495,36 @@ impl<S: Encoder> Encodable<S> for Transaction {
             }
         }
         if !have_witness {
-            self.input.consensus_encode(s)?;
-            self.output.consensus_encode(s)?;
+            len += self.input.consensus_encode(&mut s)?;
+            len += self.output.consensus_encode(&mut s)?;
         } else {
-            0u8.consensus_encode(s)?;
-            1u8.consensus_encode(s)?;
-            self.input.consensus_encode(s)?;
-            self.output.consensus_encode(s)?;
+            len += 0u8.consensus_encode(&mut s)?;
+            len += 1u8.consensus_encode(&mut s)?;
+            len += self.input.consensus_encode(&mut s)?;
+            len += self.output.consensus_encode(&mut s)?;
             for input in &self.input {
-                input.witness.consensus_encode(s)?;
+                len += input.witness.consensus_encode(&mut s)?;
             }
         }
-        self.lock_time.consensus_encode(s)
+        len += self.lock_time.consensus_encode(s)?;
+        Ok(len)
     }
 }
 
-impl<D: Decoder> Decodable<D> for Transaction {
-    fn consensus_decode(d: &mut D) -> Result<Transaction, encode::Error> {
-        let version: u32 = Decodable::consensus_decode(d)?;
-        let input: Vec<TxIn> = Decodable::consensus_decode(d)?;
+impl Decodable for Transaction {
+    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
+        let version = u32::consensus_decode(&mut d)?;
+        let input = Vec::<TxIn>::consensus_decode(&mut d)?;
         // segwit
         if input.is_empty() {
-            let segwit_flag: u8 = Decodable::consensus_decode(d)?;
+            let segwit_flag = u8::consensus_decode(&mut d)?;
             match segwit_flag {
                 // BIP144 input witnesses
                 1 => {
-                    let mut input: Vec<TxIn> = Decodable::consensus_decode(d)?;
-                    let output: Vec<TxOut> = Decodable::consensus_decode(d)?;
+                    let mut input = Vec::<TxIn>::consensus_decode(&mut d)?;
+                    let output = Vec::<TxOut>::consensus_decode(&mut d)?;
                     for txin in input.iter_mut() {
-                        txin.witness = Decodable::consensus_decode(d)?;
+                        txin.witness = Decodable::consensus_decode(&mut d)?;
                     }
                     if !input.is_empty() && input.iter().all(|input| input.witness.is_empty()) {
                         Err(encode::Error::ParseFailed("witness flag set but no witnesses present"))
@@ -534,7 +547,7 @@ impl<D: Decoder> Decodable<D> for Transaction {
             Ok(Transaction {
                 version: version,
                 input: input,
-                output: Decodable::consensus_decode(d)?,
+                output: Decodable::consensus_decode(&mut d)?,
                 lock_time: Decodable::consensus_decode(d)?,
             })
         }

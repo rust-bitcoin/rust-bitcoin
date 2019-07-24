@@ -17,10 +17,9 @@
 //! Raw PSBT key-value pairs as defined at
 //! https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki.
 
-use std::fmt;
+use std::{fmt, io};
 
-use consensus::encode::{Decodable, Encodable, VarInt, MAX_VEC_SIZE};
-use consensus::encode::{self, Decoder, Encoder};
+use consensus::encode::{self, Decodable, Encodable, VarInt, MAX_VEC_SIZE};
 use util::psbt::Error;
 
 /// A PSBT key in its raw byte form.
@@ -43,15 +42,18 @@ pub struct Pair {
 
 impl fmt::Display for Key {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use hex;
-
-        write!(f, "type: {:#x}, key: {}", self.type_value, hex::encode(&self.key))
+        write!(
+            f,
+            "type: {:#x}, key: {}",
+            self.type_value,
+            ::hex::encode(&self.key)
+        )
     }
 }
 
-impl<D: Decoder> Decodable<D> for Key {
-    fn consensus_decode(d: &mut D) -> Result<Self, encode::Error> {
-        let VarInt(byte_size): VarInt = Decodable::consensus_decode(d)?;
+impl Decodable for Key {
+    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
+        let VarInt(byte_size): VarInt = Decodable::consensus_decode(&mut d)?;
 
         if byte_size == 0 {
             return Err(Error::NoMorePairs.into());
@@ -60,14 +62,17 @@ impl<D: Decoder> Decodable<D> for Key {
         let key_byte_size: u64 = byte_size - 1;
 
         if key_byte_size > MAX_VEC_SIZE as u64 {
-            return Err(encode::Error::OversizedVectorAllocation { requested: key_byte_size as usize, max: MAX_VEC_SIZE } )
+            return Err(encode::Error::OversizedVectorAllocation {
+                requested: key_byte_size as usize,
+                max: MAX_VEC_SIZE,
+            })
         }
 
-        let type_value: u8 = Decodable::consensus_decode(d)?;
+        let type_value: u8 = Decodable::consensus_decode(&mut d)?;
 
         let mut key = Vec::with_capacity(key_byte_size as usize);
         for _ in 0..key_byte_size {
-            key.push(Decodable::consensus_decode(d)?);
+            key.push(Decodable::consensus_decode(&mut d)?);
         }
 
         Ok(Key {
@@ -77,31 +82,38 @@ impl<D: Decoder> Decodable<D> for Key {
     }
 }
 
-impl<S: Encoder> Encodable<S> for Key {
-    fn consensus_encode(&self, s: &mut S) -> Result<(), encode::Error> {
-        VarInt((self.key.len() + 1) as u64).consensus_encode(s)?;
+impl Encodable for Key {
+    fn consensus_encode<S: io::Write>(
+        &self,
+        mut s: S,
+    ) -> Result<usize, encode::Error> {
+        let mut len = 0;
+        len += VarInt((self.key.len() + 1) as u64).consensus_encode(&mut s)?;
 
-        self.type_value.consensus_encode(s)?;
+        len += self.type_value.consensus_encode(&mut s)?;
 
         for key in &self.key {
-            key.consensus_encode(s)?
+            len += key.consensus_encode(&mut s)?
         }
 
-        Ok(())
+        Ok(len)
     }
 }
 
-impl<S: Encoder> Encodable<S> for Pair {
-    fn consensus_encode(&self, s: &mut S) -> Result<(), encode::Error> {
-        self.key.consensus_encode(s)?;
-        self.value.consensus_encode(s)
+impl Encodable for Pair {
+    fn consensus_encode<S: io::Write>(
+        &self,
+        mut s: S,
+    ) -> Result<usize, encode::Error> {
+        let len = self.key.consensus_encode(&mut s)?;
+        Ok(len + self.value.consensus_encode(s)?)
     }
 }
 
-impl<D: Decoder> Decodable<D> for Pair {
-    fn consensus_decode(d: &mut D) -> Result<Self, encode::Error> {
+impl Decodable for Pair {
+    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
         Ok(Pair {
-            key: Decodable::consensus_decode(d)?,
+            key: Decodable::consensus_decode(&mut d)?,
             value: Decodable::consensus_decode(d)?,
         })
     }

@@ -14,7 +14,7 @@
 
 #[allow(unused_macros)]
 macro_rules! hex_psbt {
-    ($s:expr) => { ::consensus::encode::deserialize(&::hex::decode($s).unwrap()) };
+    ($s:expr) => { ::consensus::deserialize(&::hex::decode($s).unwrap()) };
 }
 
 macro_rules! merge {
@@ -36,7 +36,7 @@ macro_rules! impl_psbt_deserialize {
     ($thing:ty) => {
         impl ::util::psbt::serialize::Deserialize for $thing {
             fn deserialize(bytes: &[u8]) -> Result<Self, ::consensus::encode::Error> {
-                ::consensus::encode::deserialize(&bytes[..])
+                ::consensus::deserialize(&bytes[..])
             }
         }
     };
@@ -46,7 +46,7 @@ macro_rules! impl_psbt_serialize {
     ($thing:ty) => {
         impl ::util::psbt::serialize::Serialize for $thing {
             fn serialize(&self) -> Vec<u8> {
-                ::consensus::encode::serialize(self)
+                ::consensus::serialize(self)
             }
         }
     };
@@ -54,13 +54,20 @@ macro_rules! impl_psbt_serialize {
 
 macro_rules! impl_psbtmap_consensus_encoding {
     ($thing:ty) => {
-        impl<S: ::consensus::encode::Encoder> ::consensus::encode::Encodable<S> for $thing {
-            fn consensus_encode(&self, s: &mut S) -> Result<(), ::consensus::encode::Error> {
+        impl ::consensus::Encodable for $thing {
+            fn consensus_encode<S: ::std::io::Write>(
+                &self,
+                mut s: S,
+            ) -> Result<usize, ::consensus::encode::Error> {
+                let mut len = 0;
                 for pair in ::util::psbt::Map::get_pairs(self)? {
-                    ::consensus::encode::Encodable::consensus_encode(&pair, s)?
+                    len += ::consensus::Encodable::consensus_encode(
+                        &pair,
+                        &mut s,
+                    )?;
                 }
 
-                ::consensus::encode::Encodable::consensus_encode(&0x00_u8, s)
+                Ok(len + ::consensus::Encodable::consensus_encode(&0x00_u8, s)?)
             }
         }
     };
@@ -68,12 +75,14 @@ macro_rules! impl_psbtmap_consensus_encoding {
 
 macro_rules! impl_psbtmap_consensus_decoding {
     ($thing:ty) => {
-        impl<D: ::consensus::encode::Decoder> ::consensus::encode::Decodable<D> for $thing {
-            fn consensus_decode(d: &mut D) -> Result<Self, ::consensus::encode::Error> {
+        impl ::consensus::Decodable for $thing {
+            fn consensus_decode<D: ::std::io::Read>(
+                mut d: D,
+            ) -> Result<Self, ::consensus::encode::Error> {
                 let mut rv: Self = ::std::default::Default::default();
 
                 loop {
-                    match ::consensus::encode::Decodable::consensus_decode(d) {
+                    match ::consensus::Decodable::consensus_decode(&mut d) {
                         Ok(pair) => ::util::psbt::Map::insert_pair(&mut rv, pair)?,
                         Err(::consensus::encode::Error::Psbt(::util::psbt::Error::NoMorePairs)) => return Ok(rv),
                         Err(e) => return Err(e),
