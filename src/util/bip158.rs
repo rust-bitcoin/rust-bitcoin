@@ -124,9 +124,9 @@ impl BlockFilter {
     }
 
     /// create a new filter from pre-computed data
-    pub fn new (block_hash: sha256d::Hash, filter_type: u8, content: &[u8]) -> BlockFilter {
-        let filter_reader = BlockFilterReader::new(&block_hash);
-        BlockFilter { block_hash, filter_type, content: content.to_vec(), filter_reader }
+    pub fn new (block_hash: &sha256d::Hash, filter_type: u8, content: &[u8]) -> BlockFilter {
+        let filter_reader = BlockFilterReader::new(block_hash);
+        BlockFilter { block_hash: block_hash.clone(), filter_type, content: content.to_vec(), filter_reader }
     }
 
     /// Compute a SCRIPT_FILTER that contains spent and output scripts
@@ -250,17 +250,19 @@ impl GCSFilterReader {
     /// match any query pattern
     pub fn match_any(&self, reader: &mut io::Read, query: &mut Iterator<Item=&[u8]>) -> Result<bool, io::Error> {
         let mut decoder = reader;
-        let n_elements: VarInt = Decodable::consensus_decode(&mut decoder)
-            .map_err(|_| io::Error::new(io::ErrorKind::UnexpectedEof, "unexpected EOF"))?;
+        let n_elements: VarInt = Decodable::consensus_decode(&mut decoder).unwrap_or(VarInt(0));
         let ref mut reader = decoder;
-        if n_elements.0 == 0 {
-            return Ok(false);
-        }
         // map hashes to [0, n_elements << grp]
         let nm = n_elements.0 * self.m;
         let mut mapped = query.map(|e| map_to_range(self.filter.hash(e), nm)).collect::<Vec<_>>();
         // sort
         mapped.sort();
+        if mapped.is_empty() {
+            return Ok(true);
+        }
+        if n_elements.0 == 0 {
+            return Ok(false);
+        }
 
         // find first match in two sorted arrays in one read pass
         let mut reader = BitStreamReader::new(reader);
@@ -288,18 +290,20 @@ impl GCSFilterReader {
     /// match all query pattern
     pub fn match_all(&self, reader: &mut io::Read, query: &mut Iterator<Item=&[u8]>) -> Result<bool, io::Error> {
         let mut decoder = reader;
-        let n_elements: VarInt = Decodable::consensus_decode(&mut decoder)
-            .map_err(|_| io::Error::new(io::ErrorKind::UnexpectedEof, "unexpected EOF"))?;
+        let n_elements: VarInt = Decodable::consensus_decode(&mut decoder).unwrap_or(VarInt(0));
         let ref mut reader = decoder;
-        if n_elements.0 == 0 {
-            return Ok(false);
-        }
         // map hashes to [0, n_elements << grp]
         let nm = n_elements.0 * self.m;
         let mut mapped = query.map(|e| map_to_range(self.filter.hash(e), nm)).collect::<Vec<_>>();
         // sort
         mapped.sort();
         mapped.dedup();
+        if mapped.is_empty() {
+            return Ok(true);
+        }
+        if n_elements.0 == 0 {
+            return Ok(false);
+        }
 
         // figure if all mapped are there in one read pass
         let mut reader = BitStreamReader::new(reader);
@@ -566,7 +570,7 @@ mod test {
             assert_eq!(block.bitcoin_hash(), block_hash);
             let scripts = t.get(3).unwrap().as_array().unwrap();
             let previous_filter_id = sha256d::Hash::from_hex(&t.get(4).unwrap().as_str().unwrap()).unwrap();
-            let test_filter = hex::decode(&t.get(5).unwrap().as_str().unwrap().as_bytes()).unwrap();
+            let filter_content = hex::decode(&t.get(5).unwrap().as_str().unwrap().as_bytes()).unwrap();
             let filter_id = sha256d::Hash::from_hex(&t.get(6).unwrap().as_str().unwrap()).unwrap();
 
             let mut txmap = HashMap::new();
@@ -584,7 +588,22 @@ mod test {
                                             Err(Error::UtxoMissing(o.clone()))
                                         }).unwrap();
 
-            assert_eq!(test_filter, filter.content);
+            let test_filter = BlockFilter::new(&block.header.bitcoin_hash(),
+                SCRIPT_FILTER, filter_content.as_slice());
+
+            assert_eq!(test_filter.content, filter.content);
+
+            assert!(filter.match_all(&mut txmap.iter()
+                .filter_map(|(_, s)| if !s.is_empty() { Some(s.as_bytes()) } else { None })).unwrap());
+
+            for (_, script) in &txmap {
+                let query = vec![script];
+                if !script.is_empty () {
+                    assert!(filter.match_any(&mut query.iter()
+                        .map(|s| s.as_bytes())).unwrap());
+                }
+            }
+
             assert_eq!(filter_id, filter.filter_id(&previous_filter_id));
         }
     }
