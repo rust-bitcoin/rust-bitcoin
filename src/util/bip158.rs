@@ -114,6 +114,15 @@ pub struct BlockFilter {
 }
 
 impl BlockFilter {
+    /// compute this filter's id in a chain of filters
+    pub fn filter_id(&self, previous_filter_id: &sha256d::Hash) -> sha256d::Hash {
+        let filter_hash = sha256d::Hash::hash(self.content.as_slice());
+        let mut header_data = [0u8; 64];
+        header_data[0..32].copy_from_slice(&filter_hash[..]);
+        header_data[32..64].copy_from_slice(&previous_filter_id[..]);
+        sha256d::Hash::hash(&header_data)
+    }
+
     /// create a new filter from pre-computed data
     pub fn new (block_hash: sha256d::Hash, filter_type: u8, content: &[u8]) -> BlockFilter {
         let filter_reader = BlockFilterReader::new(&block_hash);
@@ -522,9 +531,6 @@ mod test {
 
     use bitcoin_hashes::hex::FromHex;
 
-    use blockdata;
-    use blockdata::transaction::OutPoint;
-
     use super::*;
 
     extern crate hex;
@@ -559,9 +565,9 @@ mod test {
             let block: Block = deserialize(hex::decode(&t.get(2).unwrap().as_str().unwrap().as_bytes()).unwrap().as_slice()).unwrap();
             assert_eq!(block.bitcoin_hash(), block_hash);
             let scripts = t.get(3).unwrap().as_array().unwrap();
-            let previous_header_hash = sha256d::Hash::from_hex(&t.get(4).unwrap().as_str().unwrap()).unwrap();
+            let previous_filter_id = sha256d::Hash::from_hex(&t.get(4).unwrap().as_str().unwrap()).unwrap();
             let test_filter = hex::decode(&t.get(5).unwrap().as_str().unwrap().as_bytes()).unwrap();
-            let header_hash = sha256d::Hash::from_hex(&t.get(6).unwrap().as_str().unwrap()).unwrap();
+            let filter_id = sha256d::Hash::from_hex(&t.get(6).unwrap().as_str().unwrap()).unwrap();
 
             let mut txmap = HashMap::new();
             let mut si = scripts.iter();
@@ -571,28 +577,15 @@ mod test {
                 }
             }
 
-            let mut constructed_filter = Cursor::new(Vec::new());
-            {
-                let mut writer = BlockFilterWriter::new(&mut constructed_filter, &block);
-                writer.add_output_scripts();
-                writer.add_input_scripts(
-                    |o| if let Some(s) = txmap.get(o) {
-                        Ok(s.clone())
-                    } else {
-                        Err(Error::UtxoMissing(o.clone()))
-                    }).unwrap();
-                writer.finish().unwrap();
-            }
+            let filter = BlockFilter::new_script_filter(&block,
+                                        |o| if let Some(s) = txmap.get(o) {
+                                            Ok(s.clone())
+                                        } else {
+                                            Err(Error::UtxoMissing(o.clone()))
+                                        }).unwrap();
 
-            let filter = constructed_filter.into_inner();
-
-            assert_eq!(test_filter, filter);
-            let filter_hash = sha256d::Hash::hash(filter.as_slice());
-            let mut header_data = [0u8; 64];
-            header_data[0..32].copy_from_slice(&filter_hash[..]);
-            header_data[32..64].copy_from_slice(&previous_header_hash[..]);
-            let filter_header_hash = sha256d::Hash::hash(&header_data);
-            assert_eq!(filter_header_hash, header_hash);
+            assert_eq!(test_filter, filter.content);
+            assert_eq!(filter_id, filter.filter_id(&previous_filter_id));
         }
     }
 
