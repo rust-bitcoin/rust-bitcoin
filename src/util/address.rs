@@ -507,7 +507,7 @@ mod tests {
     use std::string::ToString;
 
     use bitcoin_hashes::{hash160, Hash};
-    use hex::decode as hex_decode;
+    use hex::{decode as hex_decode, encode as hex_encode};
 
     use blockdata::script::Script;
     use network::constants::Network::{Bitcoin, Testnet, Regtest};
@@ -622,63 +622,35 @@ mod tests {
 
     #[test]
     fn test_bip173_vectors() {
-        let addrstr = "BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4";
-        let addr = Address::from_str(addrstr).unwrap();
-        assert_eq!(addr.network, Bitcoin);
-        assert_eq!(addr.script_pubkey(), hex_script!("0014751e76e8199196d454941c45d1b3a323f1433bd6"));
-        // skip round-trip because we'll serialize to lowercase which won't match
+        let valid_vectors = [
+            ("BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4", "0014751e76e8199196d454941c45d1b3a323f1433bd6"),
+            ("tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7", "00201863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262"),
+            ("bc1pw508d6qejxtdg4y5r3zarvary0c5xw7kw508d6qejxtdg4y5r3zarvary0c5xw7k7grplx", "5128751e76e8199196d454941c45d1b3a323f1433bd6751e76e8199196d454941c45d1b3a323f1433bd6"),
+            ("BC1SW50QA3JX3S", "6002751e"),
+            ("bc1zw508d6qejxtdg4y5r3zarvaryvg6kdaj", "5210751e76e8199196d454941c45d1b3a323"),
+            ("tb1qqqqqp399et2xygdj5xreqhjjvcmzhxw4aywxecjdzew6hylgvsesrxh6hy", "0020000000c4a5cad46221b2a187905e5266362b99d5e91c6ce24d165dab93e86433"),
+        ];
+        for vector in &valid_vectors {
+            let addr: Address = vector.0.parse().unwrap();
+            assert_eq!(&hex_encode(addr.script_pubkey().as_bytes()), vector.1);
+            roundtrips(&addr);
+        }
 
-        let addrstr = "tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7";
-        let addr = Address::from_str(addrstr).unwrap();
-        assert_eq!(addr.network, Testnet);
-        assert_eq!(addr.script_pubkey(), hex_script!("00201863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262"));
-        assert_eq!(addr.to_string(), addrstr);
-        roundtrips(&addr);
-
-        let addrstr = "tb1qqqqqp399et2xygdj5xreqhjjvcmzhxw4aywxecjdzew6hylgvsesrxh6hy";
-        let addr = Address::from_str(addrstr).unwrap();
-        assert_eq!(addr.network, Testnet);
-        assert_eq!(addr.script_pubkey(), hex_script!("0020000000c4a5cad46221b2a187905e5266362b99d5e91c6ce24d165dab93e86433"));
-        assert_eq!(addr.to_string(), addrstr);
-        roundtrips(&addr);
-
-        let addrstr = "bcrt1q2nfxmhd4n3c8834pj72xagvyr9gl57n5r94fsl";
-        let addr = Address::from_str(addrstr).unwrap();
-        assert_eq!(addr.network, Regtest);
-        assert_eq!(addr.script_pubkey(), hex_script!("001454d26dddb59c7073c6a197946ea1841951fa7a74"));
-        assert_eq!(addr.to_string(), addrstr);
-        roundtrips(&addr);
-
-        // bad vectors
-        let addrstr = "tc1qw508d6qejxtdg4y5r3zarvary0c5xw7kg3g4ty"; // invalid hrp
-        assert!(Address::from_str(addrstr).is_err());
-
-        let addrstr = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t5"; // invalid checksum
-        assert!(Address::from_str(addrstr).is_err());
-
-        let addrstr = "BC13W508D6QEJXTDG4Y5R3ZARVARY0C5XW7KN40WF2"; // invalid witness version
-        assert!(Address::from_str(addrstr).is_err());
-
-        let addrstr = "bc1rw5uspcuh"; // invalid program length
-        assert!(Address::from_str(addrstr).is_err());
-
-        let addrstr = "bc10w508d6qejxtdg4y5r3zarvary0c5xw7kw508d6qejxtdg4y5r3zarvary0c5xw7kw5rljs90"; // invalid program length
-        assert!(Address::from_str(addrstr).is_err());
-
-        let addrstr = "BC1QR508D6QEJXTDG4Y5R3ZARVARYV98GJ9P"; // invalid program length for wit v0
-        assert!(Address::from_str(addrstr).is_err());
-
-        let addrstr = "tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sL5k7"; // mixed case
-        assert!(Address::from_str(addrstr).is_err());
-
-        let addrstr = "bc1zw508d6qejxtdg4y5r3zarvaryvqyzf3du"; // zero padding of more than 4 bits
-        assert!(Address::from_str(addrstr).is_err());
-
-        let addrstr = "tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3pjxtptv"; // nonzero padding
-        assert!(Address::from_str(addrstr).is_err());
-
-        let addrstr = "bc1gmk9yu"; // empty data section
-        assert!(Address::from_str(addrstr).is_err());
+        let invalid_vectors = [
+            "tc1qw508d6qejxtdg4y5r3zarvary0c5xw7kg3g4ty",
+            "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t5",
+            "BC13W508D6QEJXTDG4Y5R3ZARVARY0C5XW7KN40WF2",
+            "bc1rw5uspcuh",
+            "bc10w508d6qejxtdg4y5r3zarvary0c5xw7kw508d6qejxtdg4y5r3zarvary0c5xw7kw5rljs90",
+            "BC1QR508D6QEJXTDG4Y5R3ZARVARYV98GJ9P",
+            "tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sL5k7",
+            "bc1zw508d6qejxtdg4y5r3zarvaryvqyzf3du",
+            "tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3pjxtptv",
+            "bc1gmk9yu",
+        ];
+        for vector in &invalid_vectors {
+            assert!(vector.parse::<Address>().is_err());
+        }
     }
 
     #[test]
