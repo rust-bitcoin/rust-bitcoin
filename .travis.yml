@@ -1,12 +1,23 @@
 language: rust
-before_install:
-  - sudo apt-get -qq update
-  - sudo apt-get install -y binutils-dev libunwind8-dev
+
+addons:
+  apt:
+    update: true
+    packages:
+      - binutils-dev
+      - libunwind8-dev
+      - libcurl4-openssl-dev
+      - libelf-dev
+      - libdw-dev
+      - cmake
+      - gcc
+      - libiberty-dev
+
 
 matrix:
   include:
     - rust: stable
-      env: DO_FUZZ=true
+      env: DO_FUZZ=true DO_COV=true
     - rust: beta
     - rust: nightly
       env: DO_BENCH=true
@@ -14,3 +25,19 @@ matrix:
 
 script:
   - ./contrib/test.sh
+
+after_success: |
+  if [ "$DO_COV" = true ]; then
+    wget https://github.com/SimonKagstrom/kcov/archive/master.tar.gz &&
+    tar xzf master.tar.gz &&
+    cd kcov-master &&
+    mkdir build &&
+    cd build &&
+    cmake .. &&
+    make &&
+    make install DESTDIR=../../kcov-build &&
+    cd ../.. &&
+    rm -rf kcov-master &&
+    for file in target/debug/bitcoin-*; do [ -x "${file}" ] || continue; mkdir -p "target/cov/$(basename $file)"; ./kcov-build/usr/local/bin/kcov --exclude-pattern=/.cargo,/usr/lib --verify "target/cov/$(basename $file)" "$file"; done &&
+    bash <(curl -s https://codecov.io/bash) &&
+    echo "Uploaded code coverage"; fi
