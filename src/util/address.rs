@@ -306,8 +306,6 @@ impl<'de> serde::Deserialize<'de> for Address {
     where
         D: serde::Deserializer<'de>,
     {
-        use std::fmt::{self, Formatter};
-
         struct Visitor;
         impl<'de> serde::de::Visitor<'de> for Visitor {
             type Value = Address;

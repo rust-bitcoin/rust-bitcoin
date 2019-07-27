@@ -352,7 +352,6 @@ impl fmt::Debug for DerivationPath {
 #[cfg(feature = "serde")]
 impl<'de> serde::Deserialize<'de> for DerivationPath {
     fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        use std::fmt;
         use serde::de;
 
         struct Visitor;
