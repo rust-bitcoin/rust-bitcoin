@@ -29,7 +29,7 @@ use consensus::encode::Encodable;
 /// sufficient (in conjunction with a private key) to sign the transaction
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct SighashComponents {
-    tx_version: u32,
+    tx_version: i32,
     tx_locktime: u32,
     /// Hash of all the previous outputs
     pub hash_prevouts: sha256d::Hash,

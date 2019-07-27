@@ -254,7 +254,7 @@ impl Default for TxOut {
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub struct Transaction {
     /// The protocol version, is currently expected to be 1 or 2 (BIP 68).
-    pub version: u32,
+    pub version: i32,
     /// Block number before which this transaction is valid, or 0 for
     /// valid immediately.
     pub lock_time: u32,
@@ -513,7 +513,7 @@ impl Encodable for Transaction {
 
 impl Decodable for Transaction {
     fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
-        let version = u32::consensus_decode(&mut d)?;
+        let version = i32::consensus_decode(&mut d)?;
         let input = Vec::<TxIn>::consensus_decode(&mut d)?;
         // segwit
         if input.is_empty() {
