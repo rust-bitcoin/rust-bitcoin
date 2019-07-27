@@ -125,6 +125,7 @@ pub fn signed_msg_hash(msg: &str) -> sha256d::Hash {
 #[cfg(all(test, feature="unstable"))]
 mod benches {
     use secp256k1::rand::{Rng, thread_rng};
+    use secp256k1::rand::distributions::Standard;
     use super::hex_bytes;
     use test::Bencher;
 
@@ -138,7 +139,7 @@ mod benches {
 
     fn bench_from_hex(b: &mut Bencher, data_size: usize) {
         let data_bytes = thread_rng()
-            .gen_iter()
+            .sample_iter(&Standard)
             .take(data_size)
             .collect::<Vec<u8>>();
         let data = join(data_bytes.iter().map(|x| format!("{:02x}", x)), data_size * 2);

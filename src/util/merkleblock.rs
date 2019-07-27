@@ -497,7 +497,7 @@ mod tests {
 
     use hashes::hex::{FromHex, ToHex};
     use hashes::{sha256d, Hash};
-    use secp256k1::rand::{weak_rng, Rng, XorShiftRng};
+    use secp256k1::rand::prelude::*;
 
     use consensus::encode::{deserialize, serialize};
     use util::hash::{bitcoin_merkle_root, BitcoinHash};
@@ -506,7 +506,7 @@ mod tests {
 
     #[test]
     fn pmt_tests() {
-        let mut rng = weak_rng();
+        let mut rng = thread_rng();
         let tx_counts = vec![1, 4, 7, 17, 56, 100, 127, 256, 312, 513, 1000, 4095];
 
         for num_tx in tx_counts {
@@ -693,7 +693,7 @@ mod tests {
 
     impl PartialMerkleTree {
         /// Flip one bit in one of the hashes - this should break the authentication
-        fn damage(&mut self, rng: &mut XorShiftRng) {
+        fn damage(&mut self, rng: &mut ThreadRng) {
             let n = rng.gen_range(0, self.hashes.len());
             let bit = rng.gen::<u8>();
             let hashes = &mut self.hashes;
