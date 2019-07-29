@@ -357,8 +357,8 @@ macro_rules! serde_string_impl {
             where
                 D: $crate::serde::de::Deserializer<'de>,
             {
-                use std::fmt::{self, Formatter};
-                use std::str::FromStr;
+                use $crate::std::fmt::{self, Formatter};
+                use $crate::std::str::FromStr;
 
                 struct Visitor;
                 impl<'de> $crate::serde::de::Visitor<'de> for Visitor {
@@ -418,8 +418,8 @@ macro_rules! serde_struct_human_string_impl {
                 D: $crate::serde::de::Deserializer<'de>,
             {
                 if deserializer.is_human_readable() {
-                    use std::fmt::{self, Formatter};
-                    use std::str::FromStr;
+                    use $crate::std::fmt::{self, Formatter};
+                    use $crate::std::str::FromStr;
 
                     struct Visitor;
                     impl<'de> $crate::serde::de::Visitor<'de> for Visitor {
