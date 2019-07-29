@@ -2,6 +2,12 @@
 
 FEATURES="bitcoinconsensus use-serde"
 
+if [ "$DO_COV" = true ]
+then
+    export RUSTFLAGS="-C link-dead-code"
+fi
+
+
 # Use toolchain if explicitly specified
 if [ -n "$TOOLCHAIN" ]
 then
