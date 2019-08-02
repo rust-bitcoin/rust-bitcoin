@@ -23,7 +23,7 @@ use std::str::FromStr;
 #[cfg(feature = "serde")] use serde;
 
 use byteorder::{BigEndian, ByteOrder, ReadBytesExt};
-use bitcoin_hashes::{hash160, sha512, Hash, HashEngine, Hmac, HmacEngine};
+use bitcoin_hashes::{self, hex, hash160, sha512, Hash, HashEngine, Hmac, HmacEngine};
 use secp256k1::{self, Secp256k1};
 
 use network::constants::Network;
@@ -34,13 +34,13 @@ use util::key::{PublicKey, PrivateKey};
 pub struct ChainCode([u8; 32]);
 impl_array_newtype!(ChainCode, u8, 32);
 impl_array_newtype_show!(ChainCode);
-impl_array_newtype_encodable!(ChainCode, u8, 32);
+impl_bytes_newtype!(ChainCode, 32);
 
 /// A fingerprint
 pub struct Fingerprint([u8; 4]);
 impl_array_newtype!(Fingerprint, u8, 4);
 impl_array_newtype_show!(Fingerprint);
-impl_array_newtype_encodable!(Fingerprint, u8, 4);
+impl_bytes_newtype!(Fingerprint, 4);
 
 impl Default for Fingerprint {
     fn default() -> Fingerprint { Fingerprint([0; 4]) }
@@ -62,6 +62,7 @@ pub struct ExtendedPrivKey {
     /// Chain code
     pub chain_code: ChainCode
 }
+serde_string_impl!(ExtendedPrivKey, "a BIP-32 extended private key");
 
 /// Extended public key
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -79,6 +80,7 @@ pub struct ExtendedPubKey {
     /// Chain code
     pub chain_code: ChainCode
 }
+serde_string_impl!(ExtendedPubKey, "a BIP-32 extended public key");
 
 /// A child number for a derived key
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -213,6 +215,7 @@ impl serde::Serialize for ChildNumber {
 #[derive(Clone, PartialEq, Eq)]
 pub struct DerivationPath(Vec<ChildNumber>);
 impl_index_newtype!(DerivationPath, ChildNumber);
+serde_string_impl!(DerivationPath, "a BIP-32 derivation path");
 
 impl From<Vec<ChildNumber>> for DerivationPath {
     fn from(numbers: Vec<ChildNumber>) -> Self {
@@ -346,44 +349,6 @@ impl fmt::Display for DerivationPath {
 impl fmt::Debug for DerivationPath {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::Display::fmt(&self, f)
-    }
-}
-
-#[cfg(feature = "serde")]
-impl<'de> serde::Deserialize<'de> for DerivationPath {
-    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        use std::fmt;
-        use serde::de;
-
-        struct Visitor;
-        impl<'de> de::Visitor<'de> for Visitor {
-            type Value = DerivationPath;
-
-            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                formatter.write_str("a Bitcoin address")
-            }
-
-            fn visit_str<E: de::Error>(self, v: &str) -> Result<Self::Value, E> {
-                DerivationPath::from_str(v).map_err(E::custom)
-            }
-
-            fn visit_borrowed_str<E: de::Error>(self, v: &'de str) -> Result<Self::Value, E> {
-                self.visit_str(v)
-            }
-
-            fn visit_string<E: de::Error>(self, v: String) -> Result<Self::Value, E> {
-                self.visit_str(&v)
-            }
-        }
-
-        deserializer.deserialize_str(Visitor)
-    }
-}
-
-#[cfg(feature = "serde")]
-impl serde::Serialize for DerivationPath {
-    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        serializer.serialize_str(&self.to_string())
     }
 }
 
@@ -725,6 +690,9 @@ impl FromStr for ExtendedPubKey {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+    use super::ChildNumber::{Hardened, Normal};
+
     use std::str::FromStr;
     use std::string::ToString;
 
@@ -732,10 +700,6 @@ mod tests {
     use hex::decode as hex_decode;
 
     use network::constants::Network::{self, Bitcoin};
-
-    use super::{ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey};
-    use super::ChildNumber::{Hardened, Normal};
-    use super::Error;
 
     #[test]
     fn test_parse_derivation_path() {
@@ -996,6 +960,30 @@ mod tests {
         serde_round_trip!(ChildNumber::from_hardened_idx(0).unwrap());
         serde_round_trip!(ChildNumber::from_hardened_idx(1).unwrap());
         serde_round_trip!(ChildNumber::from_hardened_idx((1 << 31) - 1).unwrap());
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    pub fn encode_fingerprint_chaincode() {
+        use serde_json;
+        let fp = Fingerprint::from(&[1u8,2,3,42][..]);
+        let cc = ChainCode::from(
+            &[1u8,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2][..]
+        );
+
+        serde_round_trip!(fp);
+        serde_round_trip!(cc);
+
+        assert_eq!("\"0102032a\"", serde_json::to_string(&fp).unwrap());
+        assert_eq!(
+            "\"0102030405060708090001020304050607080900010203040506070809000102\"",
+            serde_json::to_string(&cc).unwrap()
+        );
+        assert_eq!("0102032a", fp.to_string());
+        assert_eq!(
+            "0102030405060708090001020304050607080900010203040506070809000102",
+            cc.to_string()
+        );
     }
 }
 
