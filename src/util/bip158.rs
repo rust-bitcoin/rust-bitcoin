@@ -103,14 +103,8 @@ impl From<io::Error> for Error {
 
 /// a computed or read block filter
 pub struct BlockFilter {
-    /// id of the block
-    pub block_hash: sha256d::Hash,
-    /// filte type (see SCRIPT_FILTER)
-    pub filter_type: u8,
     /// Golomb encoded filter
-    pub content: Vec<u8>,
-    // a reader of the filter
-    filter_reader: BlockFilterReader
+    pub content: Vec<u8>
 }
 
 impl BlockFilter {
@@ -124,9 +118,8 @@ impl BlockFilter {
     }
 
     /// create a new filter from pre-computed data
-    pub fn new (block_hash: &sha256d::Hash, filter_type: u8, content: &[u8]) -> BlockFilter {
-        let filter_reader = BlockFilterReader::new(block_hash);
-        BlockFilter { block_hash: block_hash.clone(), filter_type, content: content.to_vec(), filter_reader }
+    pub fn new (content: &[u8]) -> BlockFilter {
+        BlockFilter { content: content.to_vec() }
     }
 
     /// Compute a SCRIPT_FILTER that contains spent and output scripts
@@ -139,19 +132,19 @@ impl BlockFilter {
             writer.add_input_scripts(script_for_coin)?;
             writer.finish()?;
         }
-        let block_hash = block.bitcoin_hash();
-        let filter_reader = BlockFilterReader::new(&block_hash);
-        Ok(BlockFilter { block_hash, filter_type: SCRIPT_FILTER, content: out.into_inner(), filter_reader })
+        Ok(BlockFilter { content: out.into_inner() })
     }
 
     /// match any query pattern
-    pub fn match_any(&self, query: &mut Iterator<Item=&[u8]>) -> Result<bool, Error> {
-        self.filter_reader.match_any(&mut Cursor::new(self.content.as_slice()), query)
+    pub fn match_any(&self, block_hash: &sha256d::Hash, query: &mut Iterator<Item=&[u8]>) -> Result<bool, Error> {
+        let filter_reader = BlockFilterReader::new(block_hash);
+        filter_reader.match_any(&mut Cursor::new(self.content.as_slice()), query)
     }
 
     /// match all query pattern
-    pub fn match_all(&self, query: &mut Iterator<Item=&[u8]>) -> Result<bool, Error> {
-        self.filter_reader.match_all(&mut Cursor::new(self.content.as_slice()), query)
+    pub fn match_all(&self, block_hash: &sha256d::Hash, query: &mut Iterator<Item=&[u8]>) -> Result<bool, Error> {
+        let filter_reader = BlockFilterReader::new(block_hash);
+        filter_reader.match_all(&mut Cursor::new(self.content.as_slice()), query)
     }
 }
 
@@ -588,18 +581,18 @@ mod test {
                                             Err(Error::UtxoMissing(o.clone()))
                                         }).unwrap();
 
-            let test_filter = BlockFilter::new(&block.header.bitcoin_hash(),
-                SCRIPT_FILTER, filter_content.as_slice());
+            let test_filter = BlockFilter::new(filter_content.as_slice());
 
             assert_eq!(test_filter.content, filter.content);
 
-            assert!(filter.match_all(&mut txmap.iter()
+            let block_hash = &block.header.bitcoin_hash();
+            assert!(filter.match_all(&block_hash, &mut txmap.iter()
                 .filter_map(|(_, s)| if !s.is_empty() { Some(s.as_bytes()) } else { None })).unwrap());
 
             for (_, script) in &txmap {
                 let query = vec![script];
                 if !script.is_empty () {
-                    assert!(filter.match_any(&mut query.iter()
+                    assert!(filter.match_any(&block_hash, &mut query.iter()
                         .map(|s| s.as_bytes())).unwrap());
                 }
             }
