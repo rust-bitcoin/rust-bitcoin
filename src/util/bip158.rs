@@ -33,12 +33,12 @@
 //!   let filter = BlockFilter::new_script_filter (&block, get_script_for_coin)?;
 //!
 //!   // or create a filter from known raw data
-//!   let filter = BlockFilter::new(&block_hash, filter_type, content);
+//!   let filter = BlockFilter::new(content);
 //!
 //!   // read and evaluate a filter
 //!
 //!   let query: Iterator<Item=Script> = // .. some scripts you care about
-//!   if filter.match_any (&mut query.map(|s| s.as_bytes())) {
+//!   if filter.match_any (&block_hash, &mut query.map(|s| s.as_bytes())) {
 //!     // get this block
 //!   }
 //!
