@@ -158,7 +158,7 @@ fn parse_signed_to_satoshi(
             // If precision diff is negative, this means we are parsing
             // into a less precise amount. That is not allowed unless
             // there are no decimals and the last digits are zeroes as
-            // many as the diffence in precision.
+            // many as the difference in precision.
             let last_n = precision_diff.abs() as usize;
             if s.contains(".") || s.chars().rev().take(last_n).any(|d| d != '0') {
                 return Err(ParseAmountError::TooPrecise);
@@ -252,7 +252,7 @@ fn fmt_satoshi_in(
 /// Amount
 ///
 /// The [Amount] type can be used to express Bitcoin amounts that supports
-/// arithmetic and convertion to various denominations.
+/// arithmetic and conversion to various denominations.
 ///
 ///
 /// Warning!
@@ -387,7 +387,7 @@ impl Amount {
         buf
     }
 
-    // Some arithmethic that doesn't fit in `std::ops` traits.
+    // Some arithmetic that doesn't fit in `std::ops` traits.
 
     /// Checked addition.
     /// Returns [None] if overflow occurred.
@@ -552,7 +552,7 @@ impl FromStr for Amount {
 /// SignedAmount
 ///
 /// The [SignedAmount] type can be used to express Bitcoin amounts that supports
-/// arithmetic and convertion to various denominations.
+/// arithmetic and conversion to various denominations.
 ///
 ///
 /// Warning!
@@ -684,7 +684,7 @@ impl SignedAmount {
         buf
     }
 
-    // Some arithmethic that doesn't fit in `std::ops` traits.
+    // Some arithmetic that doesn't fit in `std::ops` traits.
 
     /// Get the absolute value of this [SignedAmount].
     pub fn abs(self) -> SignedAmount {

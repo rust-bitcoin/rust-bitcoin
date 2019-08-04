@@ -749,7 +749,7 @@ mod tests {
     }
 
     #[test]
-    fn test_derivation_path_convertion_index() {
+    fn test_derivation_path_conversion_index() {
         let path = DerivationPath::from_str("m/0h/1/2'").unwrap();
         let numbers: Vec<ChildNumber> = path.clone().into();
         let path2: DerivationPath = numbers.into();
