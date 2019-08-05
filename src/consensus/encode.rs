@@ -790,7 +790,12 @@ mod tests {
         assert_eq!(serialize(&5000u32), vec![136u8, 19, 0, 0]);
         assert_eq!(serialize(&500000u32), vec![32u8, 161, 7, 0]);
         assert_eq!(serialize(&168430090u32), vec![10u8, 10, 10, 10]);
-        // TODO: test negative numbers
+        // i32
+        assert_eq!(serialize(&-1i32), vec![255u8, 255, 255, 255]);
+        assert_eq!(serialize(&-256i32), vec![0u8, 255, 255, 255]);
+        assert_eq!(serialize(&-5000i32), vec![120u8, 236, 255, 255]);
+        assert_eq!(serialize(&-500000i32), vec![224u8, 94, 248, 255]);
+        assert_eq!(serialize(&-168430090i32), vec![246u8, 245, 245, 245]);
         assert_eq!(serialize(&1i32), vec![1u8, 0, 0, 0]);
         assert_eq!(serialize(&256i32), vec![0u8, 1, 0, 0]);
         assert_eq!(serialize(&5000i32), vec![136u8, 19, 0, 0]);
@@ -802,7 +807,12 @@ mod tests {
         assert_eq!(serialize(&5000u64), vec![136u8, 19, 0, 0, 0, 0, 0, 0]);
         assert_eq!(serialize(&500000u64), vec![32u8, 161, 7, 0, 0, 0, 0, 0]);
         assert_eq!(serialize(&723401728380766730u64), vec![10u8, 10, 10, 10, 10, 10, 10, 10]);
-        // TODO: test negative numbers
+        // i64
+        assert_eq!(serialize(&-1i64), vec![255u8, 255, 255, 255, 255, 255, 255, 255]);
+        assert_eq!(serialize(&-256i64), vec![0u8, 255, 255, 255, 255, 255, 255, 255]);
+        assert_eq!(serialize(&-5000i64), vec![120u8, 236, 255, 255, 255, 255, 255, 255]);
+        assert_eq!(serialize(&-500000i64), vec![224u8, 94, 248, 255, 255, 255, 255, 255]);
+        assert_eq!(serialize(&-723401728380766730i64), vec![246u8, 245, 245, 245, 245, 245, 245, 245]);
         assert_eq!(serialize(&1i64), vec![1u8, 0, 0, 0, 0, 0, 0, 0]);
         assert_eq!(serialize(&256i64), vec![0u8, 1, 0, 0, 0, 0, 0, 0]);
         assert_eq!(serialize(&5000i64), vec![136u8, 19, 0, 0, 0, 0, 0, 0]);
