@@ -274,7 +274,7 @@ fn fmt_satoshi_in(
 /// zero is considered an underflow and will cause a panic if you're not using
 /// the checked arithmetic methods.
 ///
-#[derive(Copy, Clone, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Amount(u64);
 
 impl Amount {
@@ -445,25 +445,6 @@ impl default::Default for Amount {
     }
 }
 
-impl PartialEq for Amount {
-    fn eq(&self, other: &Amount) -> bool {
-        PartialEq::eq(&self.0, &other.0)
-    }
-}
-impl Eq for Amount {}
-
-impl PartialOrd for Amount {
-    fn partial_cmp(&self, other: &Amount) -> Option<::std::cmp::Ordering> {
-        PartialOrd::partial_cmp(&self.0, &other.0)
-    }
-}
-
-impl Ord for Amount {
-    fn cmp(&self, other: &Amount) -> ::std::cmp::Ordering {
-        Ord::cmp(&self.0, &other.0)
-    }
-}
-
 impl fmt::Debug for Amount {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Amount({} satoshi)", self.as_sat())
@@ -571,7 +552,7 @@ impl FromStr for Amount {
 /// start with `checked_`.  The operations from [std::ops] that [Amount]
 /// implements will panic when overflow or underflow occurs.
 ///
-#[derive(Copy, Clone, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct SignedAmount(i64);
 
 impl SignedAmount {
@@ -786,25 +767,6 @@ impl SignedAmount {
 impl default::Default for SignedAmount {
     fn default() -> Self {
         SignedAmount::ZERO
-    }
-}
-
-impl PartialEq for SignedAmount {
-    fn eq(&self, other: &SignedAmount) -> bool {
-        PartialEq::eq(&self.0, &other.0)
-    }
-}
-impl Eq for SignedAmount {}
-
-impl PartialOrd for SignedAmount {
-    fn partial_cmp(&self, other: &SignedAmount) -> Option<::std::cmp::Ordering> {
-        PartialOrd::partial_cmp(&self.0, &other.0)
-    }
-}
-
-impl Ord for SignedAmount {
-    fn cmp(&self, other: &SignedAmount) -> ::std::cmp::Ordering {
-        Ord::cmp(&self.0, &other.0)
     }
 }
 
