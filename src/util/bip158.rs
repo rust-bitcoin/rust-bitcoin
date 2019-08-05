@@ -49,6 +49,8 @@ use std::collections::HashSet;
 use std::error;
 use std::fmt::{Display, Formatter};
 use std::io::Cursor;
+use std::cmp::Ordering;
+
 
 use hashes::{Hash, siphash24};
 use hash_types::{BlockHash, FilterHash};
@@ -260,17 +262,17 @@ impl GCSFilterReader {
         let mut remaining = n_elements.0 - 1;
         for p in mapped {
             loop {
-                if data == p {
-                    return Ok(true);
-                } else if data < p {
-                    if remaining > 0 {
-                        data += self.filter.golomb_rice_decode(&mut reader)?;
-                        remaining -= 1;
-                    } else {
-                        return Ok(false);
+                match data.cmp(&p) {
+                    Ordering::Equal => return Ok(true),
+                    Ordering::Less => {
+                        if remaining > 0 {
+                            data += self.filter.golomb_rice_decode(&mut reader)?;
+                            remaining -= 1;
+                        } else {
+                            return Ok(false);
+                        }
                     }
-                } else {
-                    break;
+                    Ordering::Greater => break,
                 }
             }
         }
@@ -301,17 +303,17 @@ impl GCSFilterReader {
         let mut remaining = n_elements.0 - 1;
         for p in mapped {
             loop {
-                if data == p {
-                    break;
-                } else if data < p {
-                    if remaining > 0 {
-                        data += self.filter.golomb_rice_decode(&mut reader)?;
-                        remaining -= 1;
-                    } else {
-                        return Ok(false);
-                    }
-                } else {
-                    return Ok(false);
+                match data.cmp(&p) {
+                    Ordering::Equal => break,
+                    Ordering::Less => {
+                        if remaining > 0 {
+                            data += self.filter.golomb_rice_decode(&mut reader)?;
+                            remaining -= 1;
+                        } else {
+                            return Ok(false);
+                        }
+                    },
+                    Ordering::Greater => return Ok(false),
                 }
             }
         }
@@ -423,7 +425,7 @@ impl GCSFilter {
             q += 1;
         }
         let r = reader.read(self.p)?;
-        return Ok((q << self.p) + r);
+        Ok((q << self.p) + r)
     }
 
     /// Hash an arbitrary slice with siphash using parameters of this filter

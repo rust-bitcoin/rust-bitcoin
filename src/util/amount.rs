@@ -19,6 +19,7 @@ use std::error;
 use std::fmt::{self, Write};
 use std::ops;
 use std::str::FromStr;
+use std::cmp::Ordering;
 
 /// A set of denominations in which amounts can be expressed.
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
@@ -131,7 +132,7 @@ impl error::Error for ParseAmountError {
 
 
 fn is_too_precise(s: &str, precision: usize) -> bool {
-    s.contains(".") || precision >= s.len() || s.chars().rev().take(precision).any(|d| d != '0')
+    s.contains('.') || precision >= s.len() || s.chars().rev().take(precision).any(|d| d != '0')
 }
 
 /// Parse decimal string in the given denomination into a satoshi value and a
@@ -140,14 +141,14 @@ fn parse_signed_to_satoshi(
     mut s: &str,
     denom: Denomination,
 ) -> Result<(bool, u64), ParseAmountError> {
-    if s.len() == 0 {
+    if s.is_empty() {
         return Err(ParseAmountError::InvalidFormat);
     }
     if s.len() > 50 {
         return Err(ParseAmountError::InputTooLarge);
     }
 
-    let is_negative = s.chars().next().unwrap() == '-';
+    let is_negative = s.starts_with('-');
     if is_negative {
         if s.len() == 1 {
             return Err(ParseAmountError::InvalidFormat);
@@ -229,27 +230,29 @@ fn fmt_satoshi_in(
         f.write_str("-")?;
     }
 
-    if denom.precision() > 0 {
-        // add zeroes in the end
-        let width = denom.precision() as usize;
-        write!(f, "{}{:0width$}", satoshi, 0, width = width)?;
-    } else if denom.precision() < 0 {
-        // need to inject a comma in the number
-        let nb_decimals = denom.precision().abs() as usize;
-        let real = format!("{:0width$}", satoshi, width = nb_decimals);
-        if real.len() == nb_decimals {
-            write!(f, "0.{}", &real[real.len() - nb_decimals..])?;
-        } else {
-            write!(
-                f,
-                "{}.{}",
-                &real[0..(real.len() - nb_decimals)],
-                &real[real.len() - nb_decimals..]
-            )?;
+    let precision = denom.precision();
+    match precision.cmp(&0) {
+        Ordering::Greater => {
+            // add zeroes in the end
+            let width = precision as usize;
+            write!(f, "{}{:0width$}", satoshi, 0, width = width)?;
         }
-    } else {
-        // denom.precision() == 0
-        write!(f, "{}", satoshi)?;
+        Ordering::Less => {
+            // need to inject a comma in the number
+            let nb_decimals = precision.abs() as usize;
+            let real = format!("{:0width$}", satoshi, width = nb_decimals);
+            if real.len() == nb_decimals {
+                write!(f, "0.{}", &real[real.len() - nb_decimals..])?;
+            } else {
+                write!(
+                    f,
+                    "{}.{}",
+                    &real[0..(real.len() - nb_decimals)],
+                    &real[real.len() - nb_decimals..]
+                )?;
+            }
+        }
+        Ordering::Equal => write!(f, "{}", satoshi)?,
     }
     Ok(())
 }
@@ -327,7 +330,7 @@ impl Amount {
     /// If you want to parse only the amount without the denomination,
     /// use [from_str_in].
     pub fn from_str_with_denomination(s: &str) -> Result<Amount, ParseAmountError> {
-        let mut split = s.splitn(3, " ");
+        let mut split = s.splitn(3, ' ');
         let amt_str = split.next().unwrap();
         let denom_str = split.next().ok_or(ParseAmountError::InvalidFormat)?;
         if split.next().is_some() {
@@ -614,7 +617,7 @@ impl SignedAmount {
             return Err(ParseAmountError::TooBig);
         }
         Ok(match negative {
-            true => SignedAmount(-1 * satoshi as i64),
+            true => SignedAmount(-(satoshi as i64)),
             false => SignedAmount(satoshi as i64),
         })
     }
@@ -624,7 +627,7 @@ impl SignedAmount {
     /// If you want to parse only the amount without the denomination,
     /// use [from_str_in].
     pub fn from_str_with_denomination(s: &str) -> Result<SignedAmount, ParseAmountError> {
-        let mut split = s.splitn(3, " ");
+        let mut split = s.splitn(3, ' ');
         let amt_str = split.next().unwrap();
         let denom_str = split.next().ok_or(ParseAmountError::InvalidFormat)?;
         if split.next().is_some() {

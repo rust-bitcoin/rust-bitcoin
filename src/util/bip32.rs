@@ -179,13 +179,11 @@ impl FromStr for ChildNumber {
     type Err = Error;
 
     fn from_str(inp: &str) -> Result<ChildNumber, Error> {
-        Ok(match inp.chars().last().map_or(false, |l| l == '\'' || l == 'h') {
-            true => ChildNumber::from_hardened_idx(
-                inp[0..inp.len() - 1].parse().map_err(|_| Error::InvalidChildNumberFormat)?
-            )?,
-            false => ChildNumber::from_normal_idx(
-                inp.parse().map_err(|_| Error::InvalidChildNumberFormat)?
-            )?,
+        let is_hardened = inp.chars().last().map_or(false, |l| l == '\'' || l == 'h');
+        Ok(if is_hardened {
+            ChildNumber::from_hardened_idx(inp[0..inp.len() - 1].parse().map_err(|_| Error::InvalidChildNumberFormat)?)?
+        } else {
+            ChildNumber::from_normal_idx(inp.parse().map_err(|_| Error::InvalidChildNumberFormat)?)?
         })
     }
 }
@@ -258,7 +256,7 @@ impl FromStr for DerivationPath {
     type Err = Error;
 
     fn from_str(path: &str) -> Result<DerivationPath, Error> {
-        let mut parts = path.split("/");
+        let mut parts = path.split('/');
         // First parts must be `m`.
         if parts.next().unwrap() != "m" {
             return Err(Error::InvalidDerivationPathFormat);
@@ -292,11 +290,7 @@ impl<'a> Iterator for DerivationPathIterator<'a> {
     type Item = DerivationPath;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.next_child.is_none() {
-            return None;
-        }
-
-        let ret = self.next_child.unwrap();
+        let ret = self.next_child?;
         self.next_child = ret.increment().ok();
         Some(self.base.child(ret))
     }

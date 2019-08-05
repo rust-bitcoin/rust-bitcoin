@@ -104,7 +104,7 @@ macro_rules! impl_psbtmap_consensus_enc_dec_oding {
 macro_rules! impl_psbt_insert_pair {
     ($slf:ident.$unkeyed_name:ident <= <$raw_key:ident: _>|<$raw_value:ident: $unkeyed_value_type:ty>) => {
         if $raw_key.key.is_empty() {
-            if let None = $slf.$unkeyed_name {
+            if $slf.$unkeyed_name.is_none() {
                 let val: $unkeyed_value_type = ::util::psbt::serialize::Deserialize::deserialize(&$raw_value)?;
 
                 $slf.$unkeyed_name = Some(val)
