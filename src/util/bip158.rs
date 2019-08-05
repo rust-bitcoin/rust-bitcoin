@@ -436,7 +436,7 @@ impl GCSFilter {
         return Ok((q << self.p) + r);
     }
 
-    /// Hash an arbitary slice with siphash using parameters of this filter
+    /// Hash an arbitrary slice with siphash using parameters of this filter
     fn hash(&self, element: &[u8]) -> u64 {
         siphash24::Hash::hash_to_u64_with_keys(self.k0, self.k1, element)
     }

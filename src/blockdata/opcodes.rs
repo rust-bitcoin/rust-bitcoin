@@ -273,7 +273,7 @@ pub mod all {
     pub const OP_2SWAP: All = All {code: 0x72};
     /// Duplicate the top stack element unless it is zero
     pub const OP_IFDUP: All = All {code: 0x73};
-    /// Push the current number of stack items onto te stack
+    /// Push the current number of stack items onto the stack
     pub const OP_DEPTH: All = All {code: 0x74};
     /// Drops the top stack item
     pub const OP_DROP: All = All {code: 0x75};
