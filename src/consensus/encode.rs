@@ -543,8 +543,8 @@ impl Decodable for [u16; 8] {
     #[inline]
     fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, Error> {
         let mut res = [0; 8];
-        for i in 0..8 {
-            res[i] = Decodable::consensus_decode(&mut d)?;
+        for item in &mut res {
+            *item = Decodable::consensus_decode(&mut d)?;
         }
         Ok(res)
     }

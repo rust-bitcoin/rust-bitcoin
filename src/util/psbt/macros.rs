@@ -119,12 +119,12 @@ macro_rules! impl_psbt_insert_pair {
         if !$raw_key.key.is_empty() {
             let key_val: $keyed_key_type = ::util::psbt::serialize::Deserialize::deserialize(&$raw_key.key)?;
 
-            if $slf.$keyed_name.contains_key(&key_val) {
-                return Err(::util::psbt::Error::DuplicateKey($raw_key).into());
-            } else {
-                let val: $keyed_value_type = ::util::psbt::serialize::Deserialize::deserialize(&$raw_value)?;
-
-                $slf.$keyed_name.insert(key_val, val);
+            match $slf.$keyed_name.entry(key_val) {
+                ::std::collections::btree_map::Entry::Vacant(empty_key) => {
+                    let val: $keyed_value_type = ::util::psbt::serialize::Deserialize::deserialize(&$raw_value)?;
+                    empty_key.insert(val);
+                }
+                ::std::collections::btree_map::Entry::Occupied(_) => return Err(::util::psbt::Error::DuplicateKey($raw_key).into()),
             }
         } else {
             return Err(::util::psbt::Error::InvalidKey($raw_key).into());
