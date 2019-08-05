@@ -658,29 +658,29 @@ impl fmt::Debug for All {
 impl All {
     /// Classifies an Opcode into a broad class
     #[inline]
-    pub fn classify(&self) -> Class {
+    pub fn classify(self) -> Class {
         // 17 opcodes
-        if *self == all::OP_VERIF || *self == all::OP_VERNOTIF ||
-           *self == all::OP_CAT || *self == all::OP_SUBSTR ||
-           *self == all::OP_LEFT || *self == all::OP_RIGHT ||
-           *self == all::OP_INVERT || *self == all::OP_AND ||
-           *self == all::OP_OR || *self == all::OP_XOR ||
-           *self == all::OP_2MUL || *self == all::OP_2DIV ||
-           *self == all::OP_MUL || *self == all::OP_DIV || *self == all::OP_MOD ||
-           *self == all::OP_LSHIFT || *self == all::OP_RSHIFT {
+        if self == all::OP_VERIF || self == all::OP_VERNOTIF ||
+           self == all::OP_CAT || self == all::OP_SUBSTR ||
+           self == all::OP_LEFT || self == all::OP_RIGHT ||
+           self == all::OP_INVERT || self == all::OP_AND ||
+           self == all::OP_OR || self == all::OP_XOR ||
+           self == all::OP_2MUL || self == all::OP_2DIV ||
+           self == all::OP_MUL || self == all::OP_DIV || self == all::OP_MOD ||
+           self == all::OP_LSHIFT || self == all::OP_RSHIFT {
             Class::IllegalOp
         // 11 opcodes
-        } else if *self == all::OP_NOP ||
+        } else if self == all::OP_NOP ||
                   (all::OP_NOP1.code <= self.code &&
                    self.code <= all::OP_NOP10.code) {
             Class::NoOp
         // 75 opcodes
-        } else if *self == all::OP_RESERVED || *self == all::OP_VER || *self == all::OP_RETURN ||
-                  *self == all::OP_RESERVED1 || *self == all::OP_RESERVED2 ||
+        } else if self == all::OP_RESERVED || self == all::OP_VER || self == all::OP_RETURN ||
+                  self == all::OP_RESERVED1 || self == all::OP_RESERVED2 ||
                   self.code >= all::OP_RETURN_186.code {
             Class::ReturnOp
         // 1 opcode
-        } else if *self == all::OP_PUSHNUM_NEG1 {
+        } else if self == all::OP_PUSHNUM_NEG1 {
             Class::PushNum(-1)
         // 16 opcodes
         } else if all::OP_PUSHNUM_1.code <= self.code &&
@@ -691,13 +691,13 @@ impl All {
             Class::PushBytes(self.code as u32)
         // 60 opcodes
         } else {
-            Class::Ordinary(Ordinary::try_from_all(*self).unwrap())
+            Class::Ordinary(Ordinary::try_from_all(self).unwrap())
         }
     }
 
     /// Encode as a byte
     #[inline]
-    pub fn into_u8(&self) -> u8 {
+    pub fn into_u8(self) -> u8 {
         self.code
     }
 }
@@ -809,8 +809,8 @@ ordinary_opcode! {
 impl Ordinary {
     /// Encode as a byte
     #[inline]
-    pub fn into_u8(&self) -> u8 {
-      *self as u8
+    pub fn into_u8(self) -> u8 {
+      self as u8
   }
 }
 

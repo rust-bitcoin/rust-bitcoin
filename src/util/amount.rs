@@ -340,7 +340,7 @@ impl Amount {
     /// Express this [Amount] as a floating-point value in the given denomination.
     ///
     /// Please be aware of the risk of using floating-point numbers.
-    pub fn to_float_in(&self, denom: Denomination) -> f64 {
+    pub fn to_float_in(self, denom: Denomination) -> f64 {
         f64::from_str(&self.to_string_in(denom)).unwrap()
     }
 
@@ -349,7 +349,7 @@ impl Amount {
     /// Equivalent to `to_float_in(Denomination::Bitcoin)`.
     ///
     /// Please be aware of the risk of using floating-point numbers.
-    pub fn as_btc(&self) -> f64 {
+    pub fn as_btc(self) -> f64 {
         self.to_float_in(Denomination::Bitcoin)
     }
 
@@ -370,14 +370,14 @@ impl Amount {
     /// Format the value of this [Amount] in the given denomination.
     ///
     /// Does not include the denomination.
-    pub fn fmt_value_in(&self, f: &mut fmt::Write, denom: Denomination) -> fmt::Result {
+    pub fn fmt_value_in(self, f: &mut fmt::Write, denom: Denomination) -> fmt::Result {
         fmt_satoshi_in(self.as_sat(), false, f, denom)
     }
 
     /// Get a string number of this [Amount] in the given denomination.
     ///
     /// Does not include the denomination.
-    pub fn to_string_in(&self, denom: Denomination) -> String {
+    pub fn to_string_in(self, denom: Denomination) -> String {
         let mut buf = String::new();
         self.fmt_value_in(&mut buf, denom).unwrap();
         buf
@@ -385,7 +385,7 @@ impl Amount {
 
     /// Get a formatted string of this [Amount] in the given denomination,
     /// suffixed with the abbreviation for the denomination.
-    pub fn to_string_with_denomination(&self, denom: Denomination) -> String {
+    pub fn to_string_with_denomination(self, denom: Denomination) -> String {
         let mut buf = String::new();
         self.fmt_value_in(&mut buf, denom).unwrap();
         write!(buf, " {}", denom).unwrap();
@@ -637,7 +637,7 @@ impl SignedAmount {
     /// Express this [SignedAmount] as a floating-point value in the given denomination.
     ///
     /// Please be aware of the risk of using floating-point numbers.
-    pub fn to_float_in(&self, denom: Denomination) -> f64 {
+    pub fn to_float_in(self, denom: Denomination) -> f64 {
         f64::from_str(&self.to_string_in(denom)).unwrap()
     }
 
@@ -646,7 +646,7 @@ impl SignedAmount {
     /// Equivalent to `to_float_in(Denomination::Bitcoin)`.
     ///
     /// Please be aware of the risk of using floating-point numbers.
-    pub fn as_btc(&self) -> f64 {
+    pub fn as_btc(self) -> f64 {
         self.to_float_in(Denomination::Bitcoin)
     }
 
@@ -667,7 +667,7 @@ impl SignedAmount {
     /// Format the value of this [SignedAmount] in the given denomination.
     ///
     /// Does not include the denomination.
-    pub fn fmt_value_in(&self, f: &mut fmt::Write, denom: Denomination) -> fmt::Result {
+    pub fn fmt_value_in(self, f: &mut fmt::Write, denom: Denomination) -> fmt::Result {
         let sats = self.as_sat().checked_abs().map(|a: i64| a as u64).unwrap_or_else(|| {
             // We could also hard code this into `9223372036854775808`
             u64::max_value() - self.as_sat() as u64 +1
@@ -678,7 +678,7 @@ impl SignedAmount {
     /// Get a string number of this [SignedAmount] in the given denomination.
     ///
     /// Does not include the denomination.
-    pub fn to_string_in(&self, denom: Denomination) -> String {
+    pub fn to_string_in(self, denom: Denomination) -> String {
         let mut buf = String::new();
         self.fmt_value_in(&mut buf, denom).unwrap();
         buf
@@ -686,7 +686,7 @@ impl SignedAmount {
 
     /// Get a formatted string of this [SignedAmount] in the given denomination,
     /// suffixed with the abbreviation for the denomination.
-    pub fn to_string_with_denomination(&self, denom: Denomination) -> String {
+    pub fn to_string_with_denomination(self, denom: Denomination) -> String {
         let mut buf = String::new();
         self.fmt_value_in(&mut buf, denom).unwrap();
         write!(buf, " {}", denom).unwrap();
@@ -1313,12 +1313,12 @@ mod tests {
         use super::Denomination as D;
         let amt = Amount::from_sat(42);
         let denom = Amount::to_string_with_denomination;
-        assert_eq!(Amount::from_str(&denom(&amt, D::Bitcoin)), Ok(amt));
-        assert_eq!(Amount::from_str(&denom(&amt, D::MilliBitcoin)), Ok(amt));
-        assert_eq!(Amount::from_str(&denom(&amt, D::MicroBitcoin)), Ok(amt));
-        assert_eq!(Amount::from_str(&denom(&amt, D::Bit)), Ok(amt));
-        assert_eq!(Amount::from_str(&denom(&amt, D::Satoshi)), Ok(amt));
-        assert_eq!(Amount::from_str(&denom(&amt, D::MilliSatoshi)), Ok(amt));
+        assert_eq!(Amount::from_str(&denom(amt, D::Bitcoin)), Ok(amt));
+        assert_eq!(Amount::from_str(&denom(amt, D::MilliBitcoin)), Ok(amt));
+        assert_eq!(Amount::from_str(&denom(amt, D::MicroBitcoin)), Ok(amt));
+        assert_eq!(Amount::from_str(&denom(amt, D::Bit)), Ok(amt));
+        assert_eq!(Amount::from_str(&denom(amt, D::Satoshi)), Ok(amt));
+        assert_eq!(Amount::from_str(&denom(amt, D::MilliSatoshi)), Ok(amt));
 
         assert_eq!(Amount::from_str("42 satoshi BTC"), Err(ParseAmountError::InvalidFormat));
         assert_eq!(SignedAmount::from_str("-42 satoshi BTC"), Err(ParseAmountError::InvalidFormat));

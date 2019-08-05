@@ -124,15 +124,15 @@ impl ChildNumber {
     /// Returns `true` if the child number is a [`Normal`] value.
     ///
     /// [`Normal`]: #variant.Normal
-    pub fn is_normal(&self) -> bool {
+    pub fn is_normal(self) -> bool {
         !self.is_hardened()
     }
 
     /// Returns `true` if the child number is a [`Hardened`] value.
     ///
     /// [`Hardened`]: #variant.Hardened
-    pub fn is_hardened(&self) -> bool {
-        match *self {
+    pub fn is_hardened(self) -> bool {
+        match self {
             ChildNumber::Hardened {..} => true,
             ChildNumber::Normal {..} => false,
         }
@@ -548,7 +548,7 @@ impl ExtendedPubKey {
         i: ChildNumber,
     ) -> Result<ExtendedPubKey, Error> {
         let (sk, chain_code) = self.ckd_pub_tweak(i)?;
-        let mut pk = self.public_key.clone();
+        let mut pk = self.public_key;
         pk.key.add_exp_assign(secp, &sk[..]).map_err(Error::Ecdsa)?;
 
         Ok(ExtendedPubKey {
@@ -604,9 +604,9 @@ impl FromStr for ExtendedPrivKey {
         let cn_int: u32 = endian::slice_to_u32_be(&data[9..13]);
         let child_number: ChildNumber = ChildNumber::from(cn_int);
 
-        let network = if &data[0..4] == [0x04u8, 0x88, 0xAD, 0xE4] {
+        let network = if data[0..4] == [0x04u8, 0x88, 0xAD, 0xE4] {
             Network::Bitcoin
-        } else if &data[0..4] == [0x04u8, 0x35, 0x83, 0x94] {
+        } else if data[0..4] == [0x04u8, 0x35, 0x83, 0x94] {
             Network::Testnet
         } else {
             return Err(base58::Error::InvalidVersion((&data[0..4]).to_vec()));
@@ -661,9 +661,9 @@ impl FromStr for ExtendedPubKey {
         let child_number: ChildNumber = ChildNumber::from(cn_int);
 
         Ok(ExtendedPubKey {
-            network: if &data[0..4] == [0x04u8, 0x88, 0xB2, 0x1E] {
+            network: if data[0..4] == [0x04u8, 0x88, 0xB2, 0x1E] {
                 Network::Bitcoin
-            } else if &data[0..4] == [0x04u8, 0x35, 0x87, 0xCF] {
+            } else if data[0..4] == [0x04u8, 0x35, 0x87, 0xCF] {
                 Network::Testnet
             } else {
                 return Err(base58::Error::InvalidVersion((&data[0..4]).to_vec()));
