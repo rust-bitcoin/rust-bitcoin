@@ -60,9 +60,6 @@ use consensus::{Decodable, Encodable};
 use consensus::encode::VarInt;
 use util::hash::BitcoinHash;
 
-/// BIP158 base filter type 0: input and output scripts
-pub const SCRIPT_FILTER: u8 = 0;
-
 /// Golomb encoding parameter as in BIP-158, see also https://gist.github.com/sipa/576d5f09c3b86c3b1b75598d799fc845
 const P: u8 = 19;
 const M: u64 = 784931;
