@@ -165,7 +165,7 @@ mod tests {
     use bitcoin_hashes::hex::FromHex;
     use bitcoin_hashes::sha256d;
 
-    use std::collections::HashMap;
+    use std::collections::BTreeMap;
 
     use hex::decode as hex_decode;
 
@@ -192,7 +192,7 @@ mod tests {
                     input: vec![],
                     output: vec![],
                 },
-                unknown: HashMap::new(),
+                unknown: BTreeMap::new(),
             },
             inputs: vec![],
             outputs: vec![],
@@ -208,7 +208,7 @@ mod tests {
         let secp = &Secp256k1::new();
         let seed = hex_decode("000102030405060708090a0b0c0d0e0f").unwrap();
 
-        let mut hd_keypaths: HashMap<PublicKey, (Fingerprint, DerivationPath)> = Default::default();
+        let mut hd_keypaths: BTreeMap<PublicKey, (Fingerprint, DerivationPath)> = Default::default();
 
         let mut sk: ExtendedPrivKey = ExtendedPrivKey::new_master(Bitcoin, &seed).unwrap();
 
@@ -302,8 +302,16 @@ mod tests {
         assert_eq!(expected, actual);
     }
 
+    #[test]
+    fn deserialize_and_serialize_psbt_with_two_partial_sigs() {
+        use consensus::encode::serialize;
+        let hex = "70736274ff0100890200000001207ae985d787dfe6143d5c58fad79cc7105e0e799fcf033b7f2ba17e62d7b3200000000000ffffffff02563d03000000000022002019899534b9a011043c0dd57c3ff9a381c3522c5f27c6a42319085b56ca543a1d6adc020000000000220020618b47a07ebecca4e156edb1b9ea7c24bdee0139fc049237965ffdaf56d5ee73000000000001012b801a0600000000002200201148e93e9315e37dbed2121be5239257af35adc03ffdfc5d914b083afa44dab82202025fe7371376d53cf8a2783917c28bf30bd690b0a4d4a207690093ca2b920ee076473044022007e06b362e89912abd4661f47945430739b006a85d1b2a16c01dc1a4bd07acab022061576d7aa834988b7ab94ef21d8eebd996ea59ea20529a19b15f0c9cebe3d8ac01220202b3fe93530020a8294f0e527e33fbdff184f047eb6b5a1558a352f62c29972f8a473044022002787f926d6817504431ee281183b8119b6845bfaa6befae45e13b6d430c9d2f02202859f149a6cd26ae2f03a107e7f33c7d91730dade305fe077bae677b5d44952a01010547522102b3fe93530020a8294f0e527e33fbdff184f047eb6b5a1558a352f62c29972f8a21025fe7371376d53cf8a2783917c28bf30bd690b0a4d4a207690093ca2b920ee07652ae0001014752210283ef76537f2d58ae3aa3a4bd8ae41c3f230ccadffb1a0bd3ca504d871cff05e7210353d79cc0cb1396f4ce278d005f16d948e02a6aec9ed1109f13747ecb1507b37b52ae00010147522102b3937241777b6665e0d694e52f9c1b188433641df852da6fc42187b5d8a368a321034cdd474f01cc5aa7ff834ad8bcc882a87e854affc775486bc2a9f62e8f49bd7852ae00";
+        let psbt: PartiallySignedTransaction = hex_psbt!(hex).unwrap();
+        assert_eq!(hex, hex::encode(serialize(&psbt)));
+    }
+
     mod bip_vectors {
-        use std::collections::HashMap;
+        use std::collections::BTreeMap;
 
         use hex::decode as hex_decode;
 
@@ -376,7 +384,7 @@ mod tests {
                             },
                         ],
                     },
-                    unknown: HashMap::new(),
+                    unknown: BTreeMap::new(),
                 },
                 inputs: vec![Input {
                     non_witness_utxo: Some(Transaction {
@@ -546,7 +554,7 @@ mod tests {
                 ).unwrap()
             );
 
-            let mut unknown: HashMap<raw::Key, Vec<u8>> = HashMap::new();
+            let mut unknown: BTreeMap<raw::Key, Vec<u8>> = BTreeMap::new();
             let key: raw::Key = raw::Key {
                 type_value: 0x0fu8,
                 key: hex_decode("010203040506070809").unwrap(),

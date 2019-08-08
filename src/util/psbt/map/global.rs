@@ -12,7 +12,7 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::io::{self, Cursor};
 
 use blockdata::transaction::Transaction;
@@ -29,7 +29,7 @@ pub struct Global {
     /// empty.
     pub unsigned_tx: Transaction,
     /// Unknown global key-value pairs.
-    pub unknown: HashMap<raw::Key, Vec<u8>>,
+    pub unknown: BTreeMap<raw::Key, Vec<u8>>,
 }
 
 impl Global {
@@ -124,7 +124,7 @@ impl Decodable for Global {
     fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
 
         let mut tx: Option<Transaction> = None;
-        let mut unknowns: HashMap<raw::Key, Vec<u8>> = Default::default();
+        let mut unknowns: BTreeMap<raw::Key, Vec<u8>> = Default::default();
 
         loop {
             match raw::Pair::consensus_decode(&mut d) {

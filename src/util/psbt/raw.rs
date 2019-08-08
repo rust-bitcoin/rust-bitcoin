@@ -23,7 +23,7 @@ use consensus::encode::{self, Decodable, Encodable, VarInt, MAX_VEC_SIZE};
 use util::psbt::Error;
 
 /// A PSBT key in its raw byte form.
-#[derive(Debug, PartialEq, Hash, Eq, Clone)]
+#[derive(Debug, PartialEq, Hash, Eq, Clone, Ord, PartialOrd)]
 pub struct Key {
     /// The type of this PSBT key.
     pub type_value: u8,

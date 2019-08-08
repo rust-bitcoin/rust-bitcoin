@@ -12,7 +12,7 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use blockdata::script::Script;
 use blockdata::transaction::{SigHashType, Transaction, TxOut};
@@ -38,7 +38,7 @@ pub struct Input {
     pub witness_utxo: Option<TxOut>,
     /// A map from public keys to their corresponding signature as would be
     /// pushed to the stack from a scriptSig or witness.
-    pub partial_sigs: HashMap<PublicKey, Vec<u8>>,
+    pub partial_sigs: BTreeMap<PublicKey, Vec<u8>>,
     /// The sighash type to be used for this input. Signatures for this input
     /// must use the sighash type.
     pub sighash_type: Option<SigHashType>,
@@ -48,7 +48,7 @@ pub struct Input {
     pub witness_script: Option<Script>,
     /// A map from public keys needed to sign this input to their corresponding
     /// master key fingerprints and derivation paths.
-    pub hd_keypaths: HashMap<PublicKey, (Fingerprint, DerivationPath)>,
+    pub hd_keypaths: BTreeMap<PublicKey, (Fingerprint, DerivationPath)>,
     /// The finalized, fully-constructed scriptSig with signatures and any other
     /// scripts necessary for this input to pass validation.
     pub final_script_sig: Option<Script>,
@@ -56,7 +56,7 @@ pub struct Input {
     /// other scripts necessary for this input to pass validation.
     pub final_script_witness: Option<Vec<Vec<u8>>>,
     /// Unknown key-value pairs for this input.
-    pub unknown: HashMap<raw::Key, Vec<u8>>,
+    pub unknown: BTreeMap<raw::Key, Vec<u8>>,
 }
 
 impl Map for Input {
