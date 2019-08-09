@@ -12,7 +12,7 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use blockdata::script::Script;
 use consensus::encode;
@@ -33,9 +33,9 @@ pub struct Output {
     pub witness_script: Option<Script>,
     /// A map from public keys needed to spend this output to their
     /// corresponding master key fingerprints and derivation paths.
-    pub hd_keypaths: HashMap<PublicKey, (Fingerprint, DerivationPath)>,
+    pub hd_keypaths: BTreeMap<PublicKey, (Fingerprint, DerivationPath)>,
     /// Unknown key-value pairs for this output.
-    pub unknown: HashMap<raw::Key, Vec<u8>>,
+    pub unknown: BTreeMap<raw::Key, Vec<u8>>,
 }
 
 impl Map for Output {
