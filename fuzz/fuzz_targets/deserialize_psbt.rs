@@ -1,7 +1,14 @@
 extern crate bitcoin;
 
 fn do_test(data: &[u8]) {
-    let _: Result<bitcoin::util::psbt::PartiallySignedTransaction, _> = bitcoin::consensus::encode::deserialize(data);
+    let psbt: Result<bitcoin::util::psbt::PartiallySignedTransaction, _> = bitcoin::consensus::encode::deserialize(data);
+    match psbt {
+        Err(_) => {},
+        Ok(psbt) => {
+            let ser = bitcoin::consensus::encode::serialize(&psbt);
+            assert_eq!(&ser[..], data);
+        }
+    }
 }
 
 #[cfg(feature = "afl")]
