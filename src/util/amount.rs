@@ -129,6 +129,11 @@ impl error::Error for ParseAmountError {
     }
 }
 
+
+fn is_too_precise(s: &str, precision: usize) -> bool {
+    s.contains(".") || precision >= s.len() || s.chars().rev().take(precision).any(|d| d != '0')
+}
+
 /// Parse decimal string in the given denomination into a satoshi value and a
 /// bool indicator for a negative amount.
 fn parse_signed_to_satoshi(
@@ -142,8 +147,8 @@ fn parse_signed_to_satoshi(
         return Err(ParseAmountError::InputTooLarge);
     }
 
-    let negative = s.chars().next().unwrap() == '-';
-    if negative {
+    let is_negative = s.chars().next().unwrap() == '-';
+    if is_negative {
         if s.len() == 1 {
             return Err(ParseAmountError::InvalidFormat);
         }
@@ -160,7 +165,7 @@ fn parse_signed_to_satoshi(
             // there are no decimals and the last digits are zeroes as
             // many as the difference in precision.
             let last_n = precision_diff.abs() as usize;
-            if s.contains(".") || s.chars().rev().take(last_n).any(|d| d != '0') {
+            if is_too_precise(s, last_n) {
                 return Err(ParseAmountError::TooPrecise);
             }
             s = &s[0..s.len() - last_n];
@@ -208,7 +213,7 @@ fn parse_signed_to_satoshi(
         };
     }
 
-    Ok((negative, value))
+    Ok((is_negative, value))
 }
 
 /// Format the given satoshi amount in the given denomination.
@@ -1207,6 +1212,15 @@ mod tests {
         assert_eq!(sp("-1.001 bits"), Err(E::TooPrecise));
         assert_eq!(sp("-200000000000 BTC"), Err(E::TooBig));
         assert_eq!(p("18446744073709551616 sat"), Err(E::TooBig));
+
+        assert_eq!(sp("0 msat"), Err(E::TooPrecise));
+        assert_eq!(sp("-0 msat"), Err(E::TooPrecise));
+        assert_eq!(sp("000 msat"), Err(E::TooPrecise));
+        assert_eq!(sp("-000 msat"), Err(E::TooPrecise));
+        assert_eq!(p("0 msat"), Err(E::TooPrecise));
+        assert_eq!(p("-0 msat"), Err(E::TooPrecise));
+        assert_eq!(p("000 msat"), Err(E::TooPrecise));
+        assert_eq!(p("-000 msat"), Err(E::TooPrecise));
 
         assert_eq!(p(".5 bits"), Ok(Amount::from_sat(50)));
         assert_eq!(sp("-.5 bits"), Ok(SignedAmount::from_sat(-50)));
