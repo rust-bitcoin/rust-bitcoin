@@ -43,7 +43,7 @@
 use std::fmt::{self, Display, Formatter};
 use std::str::FromStr;
 
-use bech32::{self, u5, FromBase32, ToBase32};
+use bech32;
 use bitcoin_hashes::{hash160, sha256, Hash};
 
 use blockdata::opcodes;
@@ -165,7 +165,7 @@ pub enum Payload {
     /// Segwit address
     WitnessProgram {
         /// The witness program version
-        version: u5,
+        version: bech32::u5,
         /// The witness program
         program: Vec<u8>,
     },
@@ -270,7 +270,7 @@ impl Address {
         Address {
             network: network,
             payload: Payload::WitnessProgram {
-                version: u5::try_from_u8(0).expect("0<32"),
+                version: bech32::u5::try_from_u8(0).expect("0<32"),
                 program: hash160::Hash::from_engine(hash_engine)[..].to_vec(),
             },
         }
@@ -297,7 +297,7 @@ impl Address {
         Address {
             network: network,
             payload: Payload::WitnessProgram {
-                version: u5::try_from_u8(0).expect("0<32"),
+                version: bech32::u5::try_from_u8(0).expect("0<32"),
                 program: sha256::Hash::hash(&script[..])[..].to_vec(),
             },
         }
@@ -388,14 +388,14 @@ impl Display for Address {
                 version: ver,
                 program: ref prog,
             } => {
-                let mut b32_data = vec![ver];
-                b32_data.extend_from_slice(&prog.to_base32());
                 let hrp = match self.network {
                     Network::Bitcoin => "bc",
                     Network::Testnet => "tb",
                     Network::Regtest => "bcrt",
                 };
-                bech32::encode_to_fmt(fmt, &hrp, &b32_data).expect("only errors on invalid HRP")
+                let mut bech32_writer = bech32::Bech32Writer::new(hrp, fmt)?;
+                bech32::WriteBase32::write_u5(&mut bech32_writer, ver)?;
+                bech32::ToBase32::write_base32(&prog, &mut bech32_writer)
             }
         }
     }
@@ -431,9 +431,9 @@ impl FromStr for Address {
             }
 
             // Get the script version and program (converted from 5-bit to 8-bit)
-            let (version, program) = {
+            let (version, program): (bech32::u5, Vec<u8>) = {
                 let (v, p5) = payload.split_at(1);
-                (v[0], Vec::from_base32(p5)?)
+                (v[0], bech32::FromBase32::from_base32(p5)?)
             };
 
             // Generic segwit checks.
@@ -622,7 +622,7 @@ mod tests {
         );
         let addr = Address {
             payload: Payload::WitnessProgram {
-                version: u5::try_from_u8(version).expect("0<32"),
+                version: bech32::u5::try_from_u8(version).expect("0<32"),
                 program: program,
             },
             network: Network::Bitcoin,
