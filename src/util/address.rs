@@ -614,6 +614,26 @@ mod tests {
     }
 
     #[test]
+    fn test_p2shwpkh() {
+        // stolen from Bitcoin transaction: ad3fd9c6b52e752ba21425435ff3dd361d6ac271531fc1d2144843a9f550ad01
+        let key = hex_key!("026c468be64d22761c30cd2f12cbc7de255d592d7904b1bab07236897cc4c2e766");
+        let addr = Address::p2shwpkh(&key, Bitcoin);
+        assert_eq!(&addr.to_string(), "3QBRmWNqqBGme9er7fMkGqtZtp4gjMFxhE");
+        assert_eq!(addr.address_type(), Some(AddressType::P2sh));
+        roundtrips(&addr);
+    }
+
+    #[test]
+    fn test_p2shwsh() {
+        // stolen from Bitcoin transaction f9ee2be4df05041d0e0a35d7caa3157495ca4f93b233234c9967b6901dacf7a9
+        let script = hex_script!("522103e5529d8eaa3d559903adb2e881eb06c86ac2574ffa503c45f4e942e2a693b33e2102e5f10fcdcdbab211e0af6a481f5532536ec61a5fdbf7183770cf8680fe729d8152ae");
+        let addr = Address::p2shwsh(&script, Bitcoin);
+        assert_eq!(&addr.to_string(), "36EqgNnsWW94SreZgBWc1ANC6wpFZwirHr");
+        assert_eq!(addr.address_type(), Some(AddressType::P2sh));
+        roundtrips(&addr);
+    }
+
+    #[test]
     fn test_non_existent_segwit_version() {
         let version = 13;
         // 40-byte program
