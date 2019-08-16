@@ -16,7 +16,7 @@
 //!
 //! Various utility functions
 
-use bitcoin_hashes::{sha256d, Hash};
+use hashes::{sha256d, Hash};
 use blockdata::opcodes;
 use consensus::encode;
 
@@ -173,7 +173,7 @@ mod benches {
 
 #[cfg(test)]
 mod tests {
-    use bitcoin_hashes::hex::ToHex;
+    use hashes::hex::ToHex;
     use super::script_find_and_remove;
     use super::hex_bytes;
     use super::signed_msg_hash;

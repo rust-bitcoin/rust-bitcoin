@@ -23,7 +23,7 @@ use std::str::FromStr;
 #[cfg(feature = "serde")] use serde;
 
 use byteorder::{BigEndian, ByteOrder, ReadBytesExt};
-use bitcoin_hashes::{self, hex, hash160, sha512, Hash, HashEngine, Hmac, HmacEngine};
+use hashes::{hex, hash160, sha512, Hash, HashEngine, Hmac, HmacEngine};
 use secp256k1::{self, Secp256k1};
 
 use network::constants::Network;

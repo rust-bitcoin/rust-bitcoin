@@ -50,7 +50,7 @@ use std::error;
 use std::fmt::{Display, Formatter};
 use std::io::Cursor;
 
-use bitcoin_hashes::{Hash, sha256d, siphash24};
+use hashes::{Hash, sha256d, siphash24};
 use byteorder::{ByteOrder, LittleEndian};
 
 use blockdata::block::Block;
@@ -523,7 +523,7 @@ mod test {
     use std::collections::{HashSet, HashMap};
     use std::io::Cursor;
 
-    use bitcoin_hashes::hex::FromHex;
+    use hashes::hex::FromHex;
 
     use super::*;
 

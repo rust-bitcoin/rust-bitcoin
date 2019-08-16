@@ -18,7 +18,7 @@ use std::{error, fmt, str, slice, iter};
 
 use byteorder::{ByteOrder, LittleEndian};
 
-use bitcoin_hashes::{sha256d, Hash};
+use hashes::{sha256d, Hash};
 
 /// An error that might occur during base58 decoding
 #[derive(Debug, PartialEq, Eq, Clone)]

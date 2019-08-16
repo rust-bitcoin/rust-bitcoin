@@ -20,7 +20,7 @@
 
 use network::constants;
 use consensus::encode::{self, Decodable, Encodable};
-use bitcoin_hashes::sha256d;
+use hashes::sha256d;
 
 use std::io;
 

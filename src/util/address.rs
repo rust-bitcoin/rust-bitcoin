@@ -44,7 +44,7 @@ use std::fmt::{self, Display, Formatter};
 use std::str::FromStr;
 
 use bech32;
-use bitcoin_hashes::{hash160, sha256, Hash};
+use hashes::{hash160, sha256, Hash};
 
 use blockdata::opcodes;
 use blockdata::script;
@@ -505,7 +505,7 @@ mod tests {
     use std::str::FromStr;
     use std::string::ToString;
 
-    use bitcoin_hashes::{hash160, Hash};
+    use hashes::{hash160, Hash};
     use hex::{decode as hex_decode, encode as hex_encode};
 
     use blockdata::script::Script;

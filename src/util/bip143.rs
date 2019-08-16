@@ -19,7 +19,7 @@
 //! signatures, which are placed in the scriptSig.
 //!
 
-use bitcoin_hashes::{sha256d, Hash};
+use hashes::{sha256d, Hash};
 
 use blockdata::script::Script;
 use blockdata::transaction::{Transaction, TxIn};

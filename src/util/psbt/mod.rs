@@ -162,8 +162,8 @@ impl Decodable for PartiallySignedTransaction {
 
 #[cfg(test)]
 mod tests {
-    use bitcoin_hashes::hex::FromHex;
-    use bitcoin_hashes::sha256d;
+    use hashes::hex::FromHex;
+    use hashes::sha256d;
 
     use std::collections::BTreeMap;
 
@@ -314,8 +314,8 @@ mod tests {
 
         use hex::decode as hex_decode;
 
-        use bitcoin_hashes::hex::FromHex;
-        use bitcoin_hashes::sha256d;
+        use hashes::hex::FromHex;
+        use hashes::sha256d;
 
         use blockdata::script::Script;
         use blockdata::transaction::{SigHashType, Transaction, TxIn, TxOut, OutPoint};

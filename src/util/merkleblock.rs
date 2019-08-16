@@ -25,10 +25,9 @@
 //! # Examples
 //!
 //! ```rust
-//! extern crate bitcoin_hashes;
 //! extern crate bitcoin;
-//! use bitcoin_hashes::sha256d;
-//! use bitcoin_hashes::hex::FromHex;
+//! use bitcoin::hashes::sha256d;
+//! use bitcoin::hashes::hex::FromHex;
 //! use bitcoin::{Block, MerkleBlock};
 //!
 //! # fn main() {
@@ -59,7 +58,7 @@
 use std::collections::HashSet;
 use std::io;
 
-use bitcoin_hashes::{sha256d, Hash};
+use hashes::{sha256d, Hash};
 
 use blockdata::constants::{MAX_BLOCK_WEIGHT, MIN_TRANSACTION_WEIGHT};
 use consensus::encode::{self, Decodable, Encodable};
@@ -133,10 +132,9 @@ impl PartialMerkleTree {
     /// # Examples
     ///
     /// ```rust
-    /// extern crate bitcoin_hashes;
     /// extern crate bitcoin;
-    /// use bitcoin_hashes::sha256d;
-    /// use bitcoin_hashes::hex::FromHex;
+    /// use bitcoin::hashes::sha256d;
+    /// use bitcoin::hashes::hex::FromHex;
     /// use bitcoin::util::merkleblock::PartialMerkleTree;
     ///
     /// # fn main() {
@@ -408,10 +406,9 @@ impl MerkleBlock {
     /// # Examples
     ///
     /// ```rust
-    /// extern crate bitcoin_hashes;
     /// extern crate bitcoin;
-    /// use bitcoin_hashes::sha256d;
-    /// use bitcoin_hashes::hex::FromHex;
+    /// use bitcoin::hashes::sha256d;
+    /// use bitcoin::hashes::hex::FromHex;
     /// use bitcoin::{Block, MerkleBlock};
     ///
     /// # fn main() {
@@ -498,8 +495,8 @@ impl Decodable for MerkleBlock {
 mod tests {
     use std::cmp::min;
 
-    use bitcoin_hashes::hex::{FromHex, ToHex};
-    use bitcoin_hashes::{sha256d, Hash};
+    use hashes::hex::{FromHex, ToHex};
+    use hashes::{sha256d, Hash};
     use secp256k1::rand::{weak_rng, Rng, XorShiftRng};
 
     use consensus::encode::{deserialize, serialize};

@@ -227,7 +227,7 @@ macro_rules! display_from_debug {
 macro_rules! hex_script (($s:expr) => (::blockdata::script::Script::from(::hex::decode($s).unwrap())));
 
 #[cfg(test)]
-macro_rules! hex_hash (($s:expr) => (::bitcoin_hashes::sha256d::Hash::from_slice(&::hex::decode($s).unwrap()).unwrap()));
+macro_rules! hex_hash (($s:expr) => (::hashes::sha256d::Hash::from_slice(&::hex::decode($s).unwrap()).unwrap()));
 
 macro_rules! serde_struct_impl {
     ($name:ident, $($fe:ident),*) => (
@@ -572,10 +572,10 @@ macro_rules! serde_struct_human_string_impl {
 
 /// Implements several traits for byte-based newtypes.
 /// Implements:
-/// - std::fmt::LowerHex (implies bitcoin_hashes::hex::ToHex)
+/// - std::fmt::LowerHex (implies hashes::hex::ToHex)
 /// - std::fmt::Display
 /// - std::str::FromStr
-/// - bitcoin_hashes::hex::FromHex
+/// - hashes::hex::FromHex
 macro_rules! impl_bytes_newtype {
     ($t:ident, $len:expr) => (
 
@@ -594,9 +594,9 @@ macro_rules! impl_bytes_newtype {
             }
         }
 
-        impl ::bitcoin_hashes::hex::FromHex for $t {
-            fn from_byte_iter<I>(iter: I) -> Result<Self, bitcoin_hashes::hex::Error>
-                where I: Iterator<Item=Result<u8, bitcoin_hashes::hex::Error>> +
+        impl ::hashes::hex::FromHex for $t {
+            fn from_byte_iter<I>(iter: I) -> Result<Self, ::hashes::hex::Error>
+                where I: Iterator<Item=Result<u8, ::hashes::hex::Error>> +
                     ExactSizeIterator +
                     DoubleEndedIterator,
             {
@@ -607,13 +607,13 @@ macro_rules! impl_bytes_newtype {
                     }
                     Ok($t(ret))
                 } else {
-                    Err(::bitcoin_hashes::hex::Error::InvalidLength(2 * $len, 2 * iter.len()))
+                    Err(::hashes::hex::Error::InvalidLength(2 * $len, 2 * iter.len()))
                 }
             }
         }
 
         impl ::std::str::FromStr for $t {
-            type Err = bitcoin_hashes::hex::Error;
+            type Err = ::hashes::hex::Error;
             fn from_str(s: &str) -> Result<Self, Self::Err> {
                 hex::FromHex::from_hex(s)
             }
@@ -623,7 +623,7 @@ macro_rules! impl_bytes_newtype {
         impl ::serde::Serialize for $t {
             fn serialize<S: ::serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
                 if s.is_human_readable() {
-                    s.serialize_str(&::bitcoin_hashes::hex::ToHex::to_hex(self))
+                    s.serialize_str(&::hashes::hex::ToHex::to_hex(self))
                 } else {
                     s.serialize_bytes(&self[..])
                 }
@@ -648,7 +648,7 @@ macro_rules! impl_bytes_newtype {
                             E: ::serde::de::Error,
                         {
                             if let Ok(hex) = ::std::str::from_utf8(v) {
-                                ::bitcoin_hashes::hex::FromHex::from_hex(hex).map_err(E::custom)
+                                ::hashes::hex::FromHex::from_hex(hex).map_err(E::custom)
                             } else {
                                 return Err(E::invalid_value(::serde::de::Unexpected::Bytes(v), &self));
                             }
@@ -658,7 +658,7 @@ macro_rules! impl_bytes_newtype {
                         where
                             E: ::serde::de::Error,
                         {
-                            ::bitcoin_hashes::hex::FromHex::from_hex(v).map_err(E::custom)
+                            ::hashes::hex::FromHex::from_hex(v).map_err(E::custom)
                         }
                     }
 
