@@ -1,4 +1,36 @@
 
+# 0.19.0 - 2019-08-16
+
+* Add `Amount` and `SignedAmount` types.
+* Add BIP-158 support with `BlockFilter` and related types.
+* Add `util::misc::signed_msg_hash()` for signing messages.
+* Add `MerkleBlock` and `PartialMerkleTree` types.
+* bip32: Support serde serializaton for types and add some utility methods:
+    * `ChildNumber::increment`
+    * `DerivationPath::children_from`
+    * `DerivationPath::normal_children`
+    * `DerivationPath::hardened_children`
+* Add `blockdata::script::Builder::push_verify` to verify-ify an opcode.
+* Add `sendheaders` network message.
+* Add `OutPoint::new()` method and JSON-serialize as `<txid>:<vout>`.
+* Refactor `Address` type:
+    * Now supports segwit addresses with version >0.
+    * Add `Address::from_script` constructor.
+    * Add `Address::address_type` inspector.
+    * Parsing now returns an `address::Error` instead of `encode::Error`.
+    * Removed `bitcoin_bech32` dependency for bech32 payloads.
+* bip143: Rename `witness_script` to `script_code`
+* Rename `BlockHeader::spv_validate` to `validate_pow`
+* Rename `OP_NOP2` and `OP_NOP3` to `OP_CLTV` and `OP_CSV`
+* psbt: Use `BTreeMap` instead of `HashMap` to ensure serialization roundtrips.
+* Drop `Decimal` type.
+* Drop `LoneHeaders` type.
+* Replace `strason` dependency with (optional) `serde_json`.
+* Export the `bitcoin_hashes` and `secp256k1` dependent crates.
+* Updated `bitcoin_hashes` dependency to v0.7.
+* Removed `rand` and `serde_test` dependencies.
+* Internal improvements to consensus encoding logic.
+
 # 0.18.0 - 2019-03-21
 
 * Update `bitcoin-bech32` version to 0.9
