@@ -18,6 +18,7 @@
     * Add `Address::from_script` constructor.
     * Add `Address::address_type` inspector.
     * Parsing now returns an `address::Error` instead of `encode::Error`.
+    * Removed `bitcoin_bech32` dependency for bech32 payloads.
 * bip143: Rename `witness_script` to `script_code`
 * Rename `BlockHeader::spv_validate` to `validate_pow`
 * Rename `OP_NOP2` and `OP_NOP3` to `OP_CLTV` and `OP_CSV`
@@ -26,6 +27,8 @@
 * Drop `LoneHeaders` type.
 * Replace `strason` dependency with (optional) `serde_json`.
 * Export the `bitcoin_hashes` and `secp256k1` dependent crates.
+* Updated `bitcoin_hashes` dependency to v0.7.
+* Removed `rand` and `serde_test` dependencies.
 * Internal improvements to consensus encoding logic.
 
 # 0.18.0 - 2019-03-21
