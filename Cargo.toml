@@ -20,7 +20,7 @@ unstable = []
 use-serde = ["serde", "bitcoin_hashes/serde"]
 
 [dependencies]
-bitcoin-bech32 = "0.9.0"
+bech32 = "0.7.1"
 byteorder = "1.2"
 bitcoin_hashes = "0.7"
 bitcoinconsensus = { version = "0.16", optional = true }

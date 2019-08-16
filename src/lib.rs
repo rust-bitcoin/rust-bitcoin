@@ -44,7 +44,7 @@
 #![forbid(unsafe_code)]
 
 
-extern crate bitcoin_bech32;
+extern crate bech32;
 extern crate bitcoin_hashes;
 extern crate byteorder;
 extern crate hex;
@@ -82,6 +82,7 @@ pub use consensus::encode::VarInt;
 pub use network::constants::Network;
 pub use util::Error;
 pub use util::address::Address;
+pub use util::address::AddressType;
 pub use util::amount::Amount;
 pub use util::amount::SignedAmount;
 pub use util::hash::BitcoinHash;

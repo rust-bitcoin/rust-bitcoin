@@ -282,6 +282,26 @@ impl Script {
             self.0[34] == opcodes::all::OP_CHECKSIG.into_u8())
     }
 
+    /// Checks whether a script pubkey is a Segregated Witness (segwit) program.
+    #[inline]
+    pub fn is_witness_program(&self) -> bool {
+        // A scriptPubKey (or redeemScript as defined in BIP16/P2SH) that consists of a 1-byte
+        // push opcode (for 0 to 16) followed by a data push between 2 and 40 bytes gets a new
+        // special meaning. The value of the first push is called the "version byte". The following
+        // byte vector pushed is called the "witness program".
+        let min_vernum: u8 = opcodes::all::OP_PUSHNUM_1.into_u8();
+        let max_vernum: u8 = opcodes::all::OP_PUSHNUM_16.into_u8();
+        self.0.len() >= 4
+            && self.0.len() <= 42
+            // Version 0 or PUSHNUM_1-PUSHNUM_16
+            && (self.0[0] == 0 || self.0[0] >= min_vernum && self.0[0] <= max_vernum)
+            // Second byte push opcode 2-40 bytes
+            && self.0[1] >= opcodes::all::OP_PUSHBYTES_2.into_u8()
+            && self.0[1] <= opcodes::all::OP_PUSHBYTES_40.into_u8()
+            // Check that the rest of the script has the correct size
+            && self.0.len() - 2 == self.0[1] as usize
+    }
+
     /// Checks whether a script pubkey is a p2wsh output
     #[inline]
     pub fn is_v0_p2wsh(&self) -> bool {

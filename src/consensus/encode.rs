@@ -38,7 +38,6 @@ use std::io::{Cursor, Read, Write};
 use byteorder::{LittleEndian, WriteBytesExt, ReadBytesExt};
 use hex::encode as hex_encode;
 
-use bitcoin_bech32;
 use bitcoin_hashes::{sha256d, Hash as HashTrait};
 use secp256k1;
 
@@ -56,8 +55,6 @@ pub enum Error {
     Io(io::Error),
     /// Base58 encoding error
     Base58(base58::Error),
-    /// Bech32 encoding error
-    Bech32(bitcoin_bech32::Error),
     /// Error from the `byteorder` crate
     ByteOrder(io::Error),
     /// secp-related error
@@ -89,8 +86,6 @@ pub enum Error {
     UnknownNetworkMagic(u32),
     /// Parsing error
     ParseFailed(&'static str),
-    /// Unsupported witness version
-    UnsupportedWitnessVersion(u8),
     /// Unsupported Segwit flag
     UnsupportedSegwitFlag(u8),
     /// Unrecognized network command
@@ -104,7 +99,6 @@ impl fmt::Display for Error {
         match *self {
             Error::Io(ref e) => fmt::Display::fmt(e, f),
             Error::Base58(ref e) => fmt::Display::fmt(e, f),
-            Error::Bech32(ref e) => fmt::Display::fmt(e, f),
             Error::ByteOrder(ref e) => fmt::Display::fmt(e, f),
             Error::Secp256k1(ref e) => fmt::Display::fmt(e, f),
             Error::Psbt(ref e) => fmt::Display::fmt(e, f),
@@ -113,7 +107,6 @@ impl fmt::Display for Error {
             Error::InvalidChecksum { expected: ref e, actual: ref a } => write!(f, "{}: expected {}, actual {}", error::Error::description(self), hex_encode(e), hex_encode(a)),
             Error::UnknownNetworkMagic(ref m) => write!(f, "{}: {}", error::Error::description(self), m),
             Error::ParseFailed(ref e) => write!(f, "{}: {}", error::Error::description(self), e),
-            Error::UnsupportedWitnessVersion(ref wver) => write!(f, "{}: {}", error::Error::description(self), wver),
             Error::UnsupportedSegwitFlag(ref swflag) => write!(f, "{}: {}", error::Error::description(self), swflag),
             Error::UnrecognizedNetworkCommand(ref nwcmd) => write!(f, "{}: {}", error::Error::description(self), nwcmd),
             Error::UnexpectedHexDigit(ref d) => write!(f, "{}: {}", error::Error::description(self), d),
@@ -126,7 +119,6 @@ impl error::Error for Error {
         match *self {
             Error::Io(ref e) => Some(e),
             Error::Base58(ref e) => Some(e),
-            Error::Bech32(ref e) => Some(e),
             Error::ByteOrder(ref e) => Some(e),
             Error::Secp256k1(ref e) => Some(e),
             Error::Psbt(ref e) => Some(e),
@@ -135,7 +127,6 @@ impl error::Error for Error {
             | Error::InvalidChecksum { .. }
             | Error::UnknownNetworkMagic(..)
             | Error::ParseFailed(..)
-            | Error::UnsupportedWitnessVersion(..)
             | Error::UnsupportedSegwitFlag(..)
             | Error::UnrecognizedNetworkCommand(..)
             | Error::UnexpectedHexDigit(..) => None,
@@ -146,7 +137,6 @@ impl error::Error for Error {
         match *self {
             Error::Io(ref e) => e.description(),
             Error::Base58(ref e) => e.description(),
-            Error::Bech32(ref e) => e.description(),
             Error::ByteOrder(ref e) => e.description(),
             Error::Secp256k1(ref e) => e.description(),
             Error::Psbt(ref e) => e.description(),
@@ -155,7 +145,6 @@ impl error::Error for Error {
             Error::InvalidChecksum { .. } => "invalid checksum",
             Error::UnknownNetworkMagic(..) => "unknown network magic",
             Error::ParseFailed(..) => "parse failed",
-            Error::UnsupportedWitnessVersion(..) => "unsupported witness version",
             Error::UnsupportedSegwitFlag(..) => "unsupported segwit version",
             Error::UnrecognizedNetworkCommand(..) => "unrecognized network command",
             Error::UnexpectedHexDigit(..) => "unexpected hex digit",
@@ -167,13 +156,6 @@ impl error::Error for Error {
 impl From<base58::Error> for Error {
     fn from(e: base58::Error) -> Error {
         Error::Base58(e)
-    }
-}
-
-#[doc(hidden)]
-impl From<bitcoin_bech32::Error> for Error {
-    fn from(e: bitcoin_bech32::Error) -> Error {
-        Error::Bech32(e)
     }
 }
 
