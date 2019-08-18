@@ -956,7 +956,7 @@ pub mod serde {
         //! Serialize and deserialize [Amount] as real numbers denominated in satoshi.
         //! Use with `#[serde(with = "amount::serde::as_sat")]`.
 
-        use serde::{Deserialize, Deserializer, Serialize, Serializer};
+        use serde::{Deserializer, Serializer};
         use util::amount::serde::SerdeAmount;
 
         pub fn serialize<A: SerdeAmount, S: Serializer>(a: &A, s: S) -> Result<S::Ok, S::Error> {
@@ -971,7 +971,7 @@ pub mod serde {
             //! Serialize and deserialize [Optoin<Amount>] as real numbers denominated in satoshi.
             //! Use with `#[serde(default, with = "amount::serde::as_sat::opt")]`.
 
-            use serde::{Deserialize, Deserializer, Serializer};
+            use serde::{Deserializer, Serializer};
             use util::amount::serde::SerdeAmount;
 
             pub fn serialize<A: SerdeAmount, S: Serializer>(
@@ -996,7 +996,7 @@ pub mod serde {
         //! Serialize and deserialize [Amount] as JSON numbers denominated in BTC.
         //! Use with `#[serde(with = "amount::serde::as_btc")]`.
 
-        use serde::{Deserialize, Deserializer, Serialize, Serializer};
+        use serde::{Deserializer, Serializer};
         use util::amount::serde::SerdeAmount;
 
         pub fn serialize<A: SerdeAmount, S: Serializer>(a: &A, s: S) -> Result<S::Ok, S::Error> {
@@ -1011,7 +1011,7 @@ pub mod serde {
             //! Serialize and deserialize [Option<Amount>] as JSON numbers denominated in BTC.
             //! Use with `#[serde(default, with = "amount::serde::as_btc::opt")]`.
 
-            use serde::{Deserialize, Deserializer, Serializer};
+            use serde::{Deserializer, Serializer};
             use util::amount::serde::SerdeAmount;
 
             pub fn serialize<A: SerdeAmount, S: Serializer>(
@@ -1247,7 +1247,6 @@ mod tests {
     #[cfg(feature = "serde")]
     #[test]
     fn serde_as_sat() {
-        use serde::{Deserialize, Serialize};
 
         #[derive(Serialize, Deserialize, PartialEq, Debug)]
         struct T {
@@ -1279,7 +1278,6 @@ mod tests {
     #[cfg(feature = "serde")]
     #[test]
     fn serde_as_btc() {
-        use serde::{Deserialize, Serialize};
         use serde_json;
 
         #[derive(Serialize, Deserialize, PartialEq, Debug)]
@@ -1314,7 +1312,6 @@ mod tests {
     #[cfg(feature = "serde")]
     #[test]
     fn serde_as_btc_opt() {
-        use serde::{Deserialize, Serialize};
         use serde_json;
 
         #[derive(Serialize, Deserialize, PartialEq, Debug)]
