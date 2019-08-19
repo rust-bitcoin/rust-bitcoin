@@ -24,8 +24,7 @@ use std::fmt;
 use std::io;
 use std::io::Read;
 
-use network::message::RawNetworkMessage;
-use consensus::encode;
+use consensus::{encode, Decodable};
 
 /// Struct used to configure stream reader function
 pub struct StreamReader<R> {
@@ -58,9 +57,9 @@ impl<R: Read> StreamReader<R> {
     /// Reads stream and parses next message from its current input,
     /// also taking into account previously unparsed partial message (if there was such).
     ///
-    pub fn next_message(&mut self) -> Result<RawNetworkMessage, encode::Error> {
+    pub fn read_next<D: Decodable>(&mut self) -> Result<D, encode::Error> {
         loop {
-            match encode::deserialize_partial::<RawNetworkMessage>(&self.unparsed) {
+            match encode::deserialize_partial::<D>(&self.unparsed) {
                 // In this case we just have an incomplete data, so we need to read more
                 Err(encode::Error::Io(ref err)) if err.kind () == io::ErrorKind::UnexpectedEof => {
                     let count = self.stream.read(&mut self.data)?;
@@ -198,11 +197,12 @@ mod test {
     fn parse_multipartmsg_test() {
         let mut reader = StreamReader::new(io::empty(), None);
         reader.unparsed = MSG_ALERT[..24].to_vec();
-        assert!(reader.next_message().is_err());
+        let message: Result<RawNetworkMessage, _> = reader.read_next();
+        assert!(message.is_err());
         assert_eq!(reader.unparsed.len(), 24);
 
         reader.unparsed = MSG_ALERT.to_vec();
-        let message = reader.next_message().unwrap();
+        let message = reader.read_next().unwrap();
         assert_eq!(reader.unparsed.len(), 0);
 
         check_alert_msg(&message);
@@ -210,7 +210,7 @@ mod test {
 
     #[test]
     fn read_singlemsg_test() {
-        let message = StreamReader::new(&MSG_VERSION[..], None).next_message().unwrap();
+        let message = StreamReader::new(&MSG_VERSION[..], None).read_next().unwrap();
         check_version_msg(&message);
     }
 
@@ -220,10 +220,10 @@ mod test {
         stream.extend(&MSG_PING);
 
         let mut reader = StreamReader::new(&stream[..], None);
-        let message = reader.next_message().unwrap();
+        let message = reader.read_next().unwrap();
         check_version_msg(&message);
 
-        let msg = reader.next_message().unwrap();
+        let msg: RawNetworkMessage = reader.read_next().unwrap();
         assert_eq!(msg.magic, 0xd9b4bef9);
         if let NetworkMessage::Ping(nonce) = msg.payload {
             assert_eq!(nonce, 100);
@@ -272,7 +272,7 @@ mod test {
         let mut reader = StreamReader::new(istream, None);
 
         // Reading and checking the whole message back
-        let message = reader.next_message().unwrap();
+        let message = reader.read_next().unwrap();
         check_version_msg(&message);
 
         // Waiting TCP server thread to terminate
@@ -291,16 +291,16 @@ mod test {
         let mut reader = StreamReader::new(istream, None);
 
         // Reading and checking the first message (Version)
-        let message = reader.next_message().unwrap();
+        let message = reader.read_next().unwrap();
         check_version_msg(&message);
 
         // Reading and checking the second message (Verack)
-        let msg = reader.next_message().unwrap();
+        let msg: RawNetworkMessage = reader.read_next().unwrap();
         assert_eq!(msg.magic, 0xd9b4bef9);
         assert_eq!(msg.payload, NetworkMessage::Verack, "Wrong message type, expected VerackMessage");
 
         // Reading and checking the third message (Alert)
-        let msg = reader.next_message().unwrap();
+        let msg = reader.read_next().unwrap();
         check_alert_msg(&msg);
 
         // Waiting TCP server thread to terminate
