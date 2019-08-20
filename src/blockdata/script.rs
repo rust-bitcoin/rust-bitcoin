@@ -696,7 +696,7 @@ impl<'de> serde::Deserialize<'de> for Script {
     where
         D: serde::Deserializer<'de>,
     {
-        use std::fmt::{self, Formatter};
+        use std::fmt::Formatter;
 
         struct Visitor;
         impl<'de> serde::de::Visitor<'de> for Visitor {
