@@ -34,7 +34,7 @@ use consensus::{encode, Decodable, Encodable};
 use hashes::{hash160, sha256, Hash};
 #[cfg(feature="bitcoinconsensus")] use bitcoinconsensus;
 #[cfg(feature="bitcoinconsensus")] use std::convert;
-#[cfg(feature="bitcoinconsensus")] use hashes::sha256d;
+#[cfg(feature="bitcoinconsensus")] use OutPoint;
 
 use util::key::PublicKey;
 
@@ -95,11 +95,8 @@ pub enum Error {
     /// Error validating the script with bitcoinconsensus library
     BitcoinConsensus(bitcoinconsensus::Error),
     #[cfg(feature="bitcoinconsensus")]
-    /// Can not find the spent transaction
-    UnknownSpentTransaction(sha256d::Hash),
-    #[cfg(feature="bitcoinconsensus")]
-    /// The spent transaction does not have the referred output
-    WrongSpentOutputIndex(usize),
+    /// Can not find the spent output
+    UnknownSpentOutput(OutPoint),
     #[cfg(feature="bitcoinconsensus")]
     /// Can not serialize the spending transaction
     SerializationError
@@ -122,9 +119,7 @@ impl error::Error for Error {
             #[cfg(feature="bitcoinconsensus")]
             Error::BitcoinConsensus(ref _n) => "bitcoinconsensus verification failed",
             #[cfg(feature="bitcoinconsensus")]
-            Error::UnknownSpentTransaction (ref _hash) => "unknown transaction referred in Transaction::verify()",
-            #[cfg(feature="bitcoinconsensus")]
-            Error::WrongSpentOutputIndex(ref _ix) => "unknown output index {} referred in Transaction::verify()",
+            Error::UnknownSpentOutput(ref _point) => "unknown spent output Transaction::verify()",
             #[cfg(feature="bitcoinconsensus")]
             Error::SerializationError => "can not serialize the spending transaction in Transaction::verify()",
         }

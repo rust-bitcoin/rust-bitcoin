@@ -26,7 +26,6 @@
 use byteorder::{LittleEndian, WriteBytesExt};
 use std::default::Default;
 use std::{fmt, io};
-#[cfg(feature="bitcoinconsensus")] use std::collections::HashMap;
 
 use hashes::{self, sha256d, Hash};
 use hashes::hex::FromHex;
@@ -407,17 +406,14 @@ impl Transaction {
 
     #[cfg(feature="bitcoinconsensus")]
     /// Verify that this transaction is able to spend some outputs of spent transactions
-    pub fn verify(&self, spent: &HashMap<sha256d::Hash, Transaction>) -> Result<(), script::Error> {
+    pub fn verify<S>(&self, spent: S) -> Result<(), script::Error>
+        where S: Fn(&OutPoint) -> Option<TxOut> {
         let tx = serialize(&*self);
         for (idx, input) in self.input.iter().enumerate() {
-            if let Some(ref s) = spent.get(&input.previous_output.txid) {
-                if let Some(ref output) = s.output.get(input.previous_output.vout as usize) {
-                    output.script_pubkey.verify(idx, output.value, tx.as_slice())?;
-                } else {
-                    return Err(script::Error::WrongSpentOutputIndex(input.previous_output.vout as usize));
-                }
+            if let Some(ref output) = spent(&input.previous_output) {
+                output.script_pubkey.verify(idx, output.value, tx.as_slice())?;
             } else {
-                return Err(script::Error::UnknownSpentTransaction(input.previous_output.txid));
+                return Err(script::Error::UnknownSpentOutput(input.previous_output.clone()));
             }
         }
         Ok(())
@@ -1131,11 +1127,18 @@ mod tests {
         spent.insert(spent2.txid(), spent2);
         spent.insert(spent3.txid(), spent3);
 
-        spending.verify(&spent).unwrap();
+        let resolver = |point: &OutPoint| {
+            if let Some(tx) = spent.get(&point.txid) {
+                return tx.output.get(point.vout as usize).cloned();
+            }
+            None
+        };
+
+        spending.verify(resolver).unwrap();
 
         // test that we get a failure if we corrupt a signature
         spending.input[1].witness[0][10] = 42;
-        match spending.verify(&spent).err().unwrap() {
+        match spending.verify(resolver).err().unwrap() {
             script::Error::BitcoinConsensus(_) => {},
             _ => panic!("Wrong error type"),
         }
