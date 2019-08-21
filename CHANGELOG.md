@@ -1,3 +1,6 @@
+# 0.20.0
+
+* Update `secp256k1` 0.15 and `bitcoinconsensus` 0.17
 
 # 0.19.0 - 2019-08-16
 
