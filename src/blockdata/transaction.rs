@@ -405,12 +405,13 @@ impl Transaction {
     }
 
     #[cfg(feature="bitcoinconsensus")]
-    /// Verify that this transaction is able to spend some outputs of spent transactions
-    pub fn verify<S>(&self, spent: S) -> Result<(), script::Error>
-        where S: Fn(&OutPoint) -> Option<TxOut> {
+    /// Verify that this transaction is able to spend its inputs
+    /// The lambda spent should not return the same TxOut twice!
+    pub fn verify<S>(&self, mut spent: S) -> Result<(), script::Error>
+        where S: FnMut(&OutPoint) -> Option<TxOut> {
         let tx = serialize(&*self);
         for (idx, input) in self.input.iter().enumerate() {
-            if let Some(ref output) = spent(&input.previous_output) {
+            if let Some(output) = spent(&input.previous_output) {
                 output.script_pubkey.verify(idx, output.value, tx.as_slice())?;
             } else {
                 return Err(script::Error::UnknownSpentOutput(input.previous_output.clone()));
@@ -1126,19 +1127,36 @@ mod tests {
         spent.insert(spent1.txid(), spent1);
         spent.insert(spent2.txid(), spent2);
         spent.insert(spent3.txid(), spent3);
+        let mut spent2 = spent.clone();
+        let mut spent3 = spent.clone();
 
-        let resolver = |point: &OutPoint| {
-            if let Some(tx) = spent.get(&point.txid) {
+        spending.verify(|point: &OutPoint| {
+            if let Some(tx) = spent.remove(&point.txid) {
                 return tx.output.get(point.vout as usize).cloned();
             }
             None
-        };
+        }).unwrap();
 
-        spending.verify(resolver.clone()).unwrap();
+        // test that we fail with repeated use of same input
+        let mut double_spending = spending.clone();
+        let re_use = double_spending.input[0].clone();
+        double_spending.input.push (re_use);
+
+        assert!(double_spending.verify(|point: &OutPoint| {
+            if let Some(tx) = spent2.remove(&point.txid) {
+                return tx.output.get(point.vout as usize).cloned();
+            }
+            None
+        }).is_err());
 
         // test that we get a failure if we corrupt a signature
         spending.input[1].witness[0][10] = 42;
-        match spending.verify(resolver).err().unwrap() {
+        match spending.verify(|point: &OutPoint| {
+            if let Some(tx) = spent3.remove(&point.txid) {
+                return tx.output.get(point.vout as usize).cloned();
+            }
+            None
+        }).err().unwrap() {
             script::Error::BitcoinConsensus(_) => {},
             _ => panic!("Wrong error type"),
         }
