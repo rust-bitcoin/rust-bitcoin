@@ -1,6 +1,6 @@
 [package]
 name = "bitcoin"
-version = "0.19.2"
+version = "0.20.0"
 authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
 license = "CC0-1.0"
 homepage = "https://github.com/rust-bitcoin/rust-bitcoin/"
@@ -25,13 +25,8 @@ byteorder = "1.2"
 bitcoin_hashes = "0.7"
 bitcoinconsensus = { version = "0.17", optional = true }
 serde = { version = "1", optional = true }
-
-[dependencies.hex]
-version = "=0.3.2"
-
-[dependencies.secp256k1]
-version = "0.15"
-features = [ "rand" ]
+secp256k1 = { version = "0.15", features = ["rand"] }
+hex = {version="=0.3.2"}
 
 [dev-dependencies]
 serde_derive = "<1.0.99"
