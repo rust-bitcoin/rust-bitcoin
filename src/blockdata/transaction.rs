@@ -1134,7 +1134,7 @@ mod tests {
             None
         };
 
-        spending.verify(resolver).unwrap();
+        spending.verify(resolver.clone()).unwrap();
 
         // test that we get a failure if we corrupt a signature
         spending.input[1].witness[0][10] = 42;
