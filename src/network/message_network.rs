@@ -20,6 +20,12 @@
 
 use network::address::Address;
 use network::constants;
+use consensus::{Encodable, Decodable, ReadExt};
+use consensus::encode;
+use std::io;
+use byteorder::WriteBytesExt;
+use network::message_network::RejectReason::{MALFORMED, INVALID, OBSOLETE, DUPLICATE, NONSTANDARD, DUST, CHECKPOINT, FEE};
+use hashes::sha256d;
 
 /// Some simple messages
 
@@ -77,6 +83,66 @@ impl VersionMessage {
 impl_consensus_encoding!(VersionMessage, version, services, timestamp,
                          receiver, sender, nonce,
                          user_agent, start_height, relay);
+
+#[repr(u8)]
+#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+/// message rejection reason as a code
+pub enum RejectReason {
+    /// malformed message
+    MALFORMED = 0x01,
+    /// invalid message
+    INVALID = 0x10,
+    /// obsolete message
+    OBSOLETE = 0x11,
+    /// duplicate message
+    DUPLICATE = 0x12,
+    /// nonstandard transaction
+    NONSTANDARD = 0x40,
+    /// an output is belw dust limit
+    DUST = 0x41,
+    /// insufficient fee
+    FEE = 0x42,
+    /// checkpoint
+    CHECKPOINT = 0x43
+}
+
+impl Encodable for RejectReason {
+    fn consensus_encode<W: io::Write>(&self, mut e: W) -> Result<usize, encode::Error> {
+        e.write_u8(*self as u8)?;
+        Ok(1)
+    }
+}
+
+impl Decodable for RejectReason {
+    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
+        Ok(match d.read_u8()? {
+            0x01 => MALFORMED,
+            0x10 => INVALID,
+            0x11 => OBSOLETE,
+            0x12 => DUPLICATE,
+            0x40 => NONSTANDARD,
+            0x41 => DUST,
+            0x42 => FEE,
+            0x43 => CHECKPOINT,
+            _ => return Err(encode::Error::ParseFailed("unknonw reject code"))
+        })
+    }
+}
+
+/// Reject message might be sent by peers rejecting one of our messages
+#[derive(PartialEq, Eq, Clone, Debug)]
+pub struct Reject {
+    /// message type rejected
+    pub message: String,
+    /// reason of rejection as code
+    pub ccode: RejectReason,
+    /// reason of rejectection
+    pub reason: String,
+    /// reference to rejected item
+    pub hash: sha256d::Hash
+}
+
+impl_consensus_encoding!(Reject, message, ccode, reason, hash);
 
 #[cfg(test)]
 mod tests {
