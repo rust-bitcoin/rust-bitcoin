@@ -40,10 +40,67 @@
 use consensus::encode::{Decodable, Encodable};
 use consensus::encode::{self, Encoder, Decoder};
 
-pub use bitcoin::network::constants::{PROTOCOL_VERSION, SERVICES, Network};
-
+/// Version of the protocol as appearing in network message headers
+pub const PROTOCOL_VERSION: u32 = 70001;
+/// Bitfield of services provided by this node
+pub const SERVICES: u64 = 0;
 /// User agent as it appears in the version message
 pub const USER_AGENT: &'static str = "bitcoin-rust v0.1";
+
+user_enum! {
+    /// The cryptocurrency to act on
+    #[derive(Copy, PartialEq, Eq, PartialOrd, Ord, Clone, Hash)]
+    pub enum Network {
+        /// Classic Bitcoin
+        Bitcoin <-> "bitcoin",
+        /// Bitcoin's testnet
+        Testnet <-> "testnet",
+        /// Bitcoin's regtest
+        Regtest <-> "regtest"
+    }
+}
+
+impl Network {
+    /// Creates a `Network` from the magic bytes.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use bitcoin::network::constants::Network;
+    ///
+    /// assert_eq!(Some(Network::Bitcoin), Network::from_magic(0xD9B4BEF9));
+    /// assert_eq!(None, Network::from_magic(0xFFFFFFFF));
+    /// ```
+    pub fn from_magic(magic: u32) -> Option<Network> {
+        // Note: any new entries here must be added to `magic` below
+        match magic {
+            0xD9B4BEF9 => Some(Network::Bitcoin),
+            0x0709110B => Some(Network::Testnet),
+            0xDAB5BFFA => Some(Network::Regtest),
+            _ => None
+        }
+    }
+
+    /// Return the network magic bytes, which should be encoded little-endian
+    /// at the start of every message
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use bitcoin::network::constants::Network;
+    ///
+    /// let network = Network::Bitcoin;
+    /// assert_eq!(network.magic(), 0xD9B4BEF9);
+    /// ```
+    pub fn magic(&self) -> u32 {
+        // Note: any new entries here must be added to `from_magic` above
+        match *self {
+            Network::Bitcoin => 0xD9B4BEF9,
+            Network::Testnet => 0x0709110B,
+            Network::Regtest => 0xDAB5BFFA,
+        }
+    }
+}
 
 impl<S: Encoder> Encodable<S> for Network {
     /// Encodes the magic bytes of `Network`.
