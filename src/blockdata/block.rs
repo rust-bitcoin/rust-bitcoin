@@ -205,6 +205,8 @@ impl BitcoinHash for Block {
 
 impl_consensus_encoding!(BlockHeader, version, prev_blockhash, merkle_root, time, bits, nonce);
 impl_consensus_encoding!(Block, header, txdata);
+serde_struct_impl!(BlockHeader, version, prev_blockhash, merkle_root, time, bits, nonce);
+serde_struct_impl!(Block, header, txdata);
 
 #[cfg(test)]
 mod tests {
