@@ -23,10 +23,10 @@
 //! This module provides the structures and functions needed to support transactions.
 //!
 
-use byteorder::{LittleEndian, WriteBytesExt};
 use std::default::Default;
 use std::{fmt, io};
 
+use byteorder::{LittleEndian, WriteBytesExt};
 use hashes::{self, sha256d, Hash};
 use hashes::hex::FromHex;
 
@@ -406,15 +406,20 @@ impl Transaction {
 
     #[cfg(feature="bitcoinconsensus")]
     /// Verify that this transaction is able to spend its inputs
-    /// The lambda spent should not return the same TxOut twice!
-    pub fn verify<S>(&self, mut spent: S) -> Result<(), script::Error>
-        where S: FnMut(&OutPoint) -> Option<TxOut> {
-        let tx = serialize(&*self);
+    pub fn verify<'a, S>(&self, mut get_utxo: S) -> Result<(), script::Error>
+        where S: FnMut(OutPoint) -> Option<&'a TxOut> {
+        use std::collections::HashSet;
+
+        let serialized_tx = serialize(&*self);
+        let mut spent_inputs = HashSet::new();
         for (idx, input) in self.input.iter().enumerate() {
-            if let Some(output) = spent(&input.previous_output) {
-                output.script_pubkey.verify(idx, output.value, tx.as_slice())?;
+            if !spent_inputs.insert(input.previous_output) {
+                return Err(script::Error::UnknownSpentOutput(input.previous_output));
+            }
+            if let Some(output) = get_utxo(input.previous_output) {
+                output.script_pubkey.verify(idx, output.value, serialized_tx.as_slice())?;
             } else {
-                return Err(script::Error::UnknownSpentOutput(input.previous_output.clone()));
+                return Err(script::Error::UnknownSpentOutput(input.previous_output));
             }
         }
         Ok(())
@@ -1127,35 +1132,26 @@ mod tests {
         spent.insert(spent1.txid(), spent1);
         spent.insert(spent2.txid(), spent2);
         spent.insert(spent3.txid(), spent3);
-        let mut spent2 = spent.clone();
-        let mut spent3 = spent.clone();
+        let spent2 = spent.clone();
+        let spent3 = spent.clone();
 
-        spending.verify(|point: &OutPoint| {
-            if let Some(tx) = spent.remove(&point.txid) {
-                return tx.output.get(point.vout as usize).cloned();
-            }
-            None
+        spending.verify(|point: OutPoint| {
+            spent.get(&point.txid).and_then(|tx| tx.output.get(point.vout as usize))
         }).unwrap();
 
         // test that we fail with repeated use of same input
         let mut double_spending = spending.clone();
         let re_use = double_spending.input[0].clone();
-        double_spending.input.push (re_use);
+        double_spending.input.push(re_use);
 
-        assert!(double_spending.verify(|point: &OutPoint| {
-            if let Some(tx) = spent2.remove(&point.txid) {
-                return tx.output.get(point.vout as usize).cloned();
-            }
-            None
+        assert!(double_spending.verify(|point: OutPoint| {
+            spent2.get(&point.txid).and_then(|tx| tx.output.get(point.vout as usize))
         }).is_err());
 
         // test that we get a failure if we corrupt a signature
         spending.input[1].witness[0][10] = 42;
-        match spending.verify(|point: &OutPoint| {
-            if let Some(tx) = spent3.remove(&point.txid) {
-                return tx.output.get(point.vout as usize).cloned();
-            }
-            None
+        match spending.verify(|point: OutPoint| {
+            spent3.get(&point.txid).and_then(|tx| tx.output.get(point.vout as usize))
         }).err().unwrap() {
             script::Error::BitcoinConsensus(_) => {},
             _ => panic!("Wrong error type"),
