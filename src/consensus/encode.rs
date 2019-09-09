@@ -38,7 +38,6 @@ use std::io::{Cursor, Read, Write};
 use hashes::hex::ToHex;
 
 use hashes::{sha256d, Hash as HashTrait};
-use secp256k1;
 
 use util::endian;
 use util::psbt;
@@ -54,8 +53,6 @@ pub enum Error {
     Io(io::Error),
     /// Error from the `byteorder` crate
     ByteOrder(io::Error),
-    /// secp-related error
-    Secp256k1(secp256k1::Error),
     /// PSBT-related error
     Psbt(psbt::Error),
     /// Network magic was not expected
@@ -96,7 +93,6 @@ impl fmt::Display for Error {
         match *self {
             Error::Io(ref e) => fmt::Display::fmt(e, f),
             Error::ByteOrder(ref e) => fmt::Display::fmt(e, f),
-            Error::Secp256k1(ref e) => fmt::Display::fmt(e, f),
             Error::Psbt(ref e) => fmt::Display::fmt(e, f),
             Error::UnexpectedNetworkMagic { expected: ref e, actual: ref a } => write!(f, "{}: expected {}, actual {}", error::Error::description(self), e, a),
             Error::OversizedVectorAllocation { requested: ref r, max: ref m } => write!(f, "{}: requested {}, maximum {}", error::Error::description(self), r, m),
@@ -115,7 +111,6 @@ impl error::Error for Error {
         match *self {
             Error::Io(ref e) => Some(e),
             Error::ByteOrder(ref e) => Some(e),
-            Error::Secp256k1(ref e) => Some(e),
             Error::Psbt(ref e) => Some(e),
             Error::UnexpectedNetworkMagic { .. }
             | Error::OversizedVectorAllocation { .. }
@@ -132,7 +127,6 @@ impl error::Error for Error {
         match *self {
             Error::Io(ref e) => e.description(),
             Error::ByteOrder(ref e) => e.description(),
-            Error::Secp256k1(ref e) => e.description(),
             Error::Psbt(ref e) => e.description(),
             Error::UnexpectedNetworkMagic { .. } => "unexpected network magic",
             Error::OversizedVectorAllocation { .. } => "allocation of oversized vector requested",
@@ -147,13 +141,6 @@ impl error::Error for Error {
 }
 
 #[doc(hidden)]
-
-#[doc(hidden)]
-impl From<secp256k1::Error> for Error {
-    fn from(e: secp256k1::Error) -> Error {
-        Error::Secp256k1(e)
-    }
-}
 
 #[doc(hidden)]
 impl From<io::Error> for Error {
