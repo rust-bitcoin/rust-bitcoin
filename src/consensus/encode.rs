@@ -51,8 +51,6 @@ use network::address::Address;
 pub enum Error {
     /// And I/O error
     Io(io::Error),
-    /// Error from the `byteorder` crate
-    ByteOrder(io::Error),
     /// PSBT-related error
     Psbt(psbt::Error),
     /// Network magic was not expected
@@ -92,7 +90,6 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Error::Io(ref e) => write!(f, "I/O error: {}", e),
-            Error::ByteOrder(ref e) => write!(f, "byteorder error: {}", e),
             Error::Psbt(ref e) => write!(f, "PSBT error: {}", e),
             Error::UnexpectedNetworkMagic { expected: ref e, actual: ref a } => write!(f,
                 "unexpected network magic: expected {}, actual {}", e, a),
@@ -115,7 +112,6 @@ impl error::Error for Error {
     fn cause(&self) -> Option<&error::Error> {
         match *self {
             Error::Io(ref e) => Some(e),
-            Error::ByteOrder(ref e) => Some(e),
             Error::Psbt(ref e) => Some(e),
             Error::UnexpectedNetworkMagic { .. }
             | Error::OversizedVectorAllocation { .. }
