@@ -105,9 +105,9 @@ mod tests {
     use blockdata::transaction::Transaction;
     use consensus::encode::deserialize;
     use network::constants::Network;
-    use util::misc::hex_bytes;
     use util::address::Address;
     use util::key::PublicKey;
+    use hashes::hex::FromHex;
     use hex;
 
     use super::*;
@@ -122,7 +122,7 @@ mod tests {
     #[test]
     fn bip143_p2wpkh() {
         let tx = deserialize::<Transaction>(
-            &hex_bytes(
+            &Vec::<u8>::from_hex(
                 "0100000002fff7f7881a8099afa6940d42d1e7f6362bec38171ea3edf433541db4e4ad969f000000\
                 0000eeffffffef51e1b804cc89d182d279655c3aa89e815b1b309fe287d9b2b55d57b90ec68a01000000\
                 00ffffffff02202cb206000000001976a9148280b37df378db99f66f85c95a783a76ac7a6d5988ac9093\
@@ -160,7 +160,7 @@ mod tests {
     #[test]
     fn bip143_p2wpkh_nested_in_p2sh() {
         let tx = deserialize::<Transaction>(
-            &hex_bytes(
+            &Vec::<u8>::from_hex(
                 "0100000001db6b1b20aa0fd7b23880be2ecbd4a98130974cf4748fb66092ac4d3ceb1a5477010000\
                 0000feffffff02b8b4eb0b000000001976a914a457b684d7f0d539a46a45bbc043f35b59d0d96388ac00\
                 08af2f000000001976a914fd270b1ee6abcaea97fea7ad0402e8bd8ad6d77c88ac92040000",
@@ -197,7 +197,7 @@ mod tests {
     #[test]
     fn bip143_p2wsh_nested_in_p2sh() {
         let tx = deserialize::<Transaction>(
-            &hex_bytes(
+            &Vec::<u8>::from_hex(
             "010000000136641869ca081e70f394c6948e8af409e18b619df2ed74aa106c1ca29787b96e0100000000\
              ffffffff0200e9a435000000001976a914389ffce9cd9ae88dcc0631e88a821ffdbe9bfe2688acc0832f\
              05000000001976a9147480a33f950689af511e6e84c138dbbd3c3ee41588ac00000000").unwrap()[..],

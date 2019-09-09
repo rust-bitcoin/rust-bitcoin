@@ -86,8 +86,6 @@ pub enum Error {
     UnsupportedSegwitFlag(u8),
     /// Unrecognized network command
     UnrecognizedNetworkCommand(String),
-    /// Unexpected hex digit
-    UnexpectedHexDigit(char),
 }
 
 impl fmt::Display for Error {
@@ -109,7 +107,6 @@ impl fmt::Display for Error {
                 "unsupported segwit version: {}", swflag),
             Error::UnrecognizedNetworkCommand(ref nwcmd) => write!(f,
                 "unrecognized network command: {}", nwcmd),
-            Error::UnexpectedHexDigit(ref d) => write!(f, "unexpected hex digit: {}", d),
         }
     }
 }
@@ -127,8 +124,7 @@ impl error::Error for Error {
             | Error::UnknownNetworkMagic(..)
             | Error::ParseFailed(..)
             | Error::UnsupportedSegwitFlag(..)
-            | Error::UnrecognizedNetworkCommand(..)
-            | Error::UnexpectedHexDigit(..) => None,
+            | Error::UnrecognizedNetworkCommand(..) => None,
         }
     }
 
