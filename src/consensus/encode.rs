@@ -41,7 +41,6 @@ use hashes::{sha256d, Hash as HashTrait};
 use secp256k1;
 
 use util::endian;
-use util::base58;
 use util::psbt;
 
 use blockdata::transaction::{TxOut, Transaction, TxIn};
@@ -53,8 +52,6 @@ use network::address::Address;
 pub enum Error {
     /// And I/O error
     Io(io::Error),
-    /// Base58 encoding error
-    Base58(base58::Error),
     /// Error from the `byteorder` crate
     ByteOrder(io::Error),
     /// secp-related error
@@ -98,7 +95,6 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Error::Io(ref e) => fmt::Display::fmt(e, f),
-            Error::Base58(ref e) => fmt::Display::fmt(e, f),
             Error::ByteOrder(ref e) => fmt::Display::fmt(e, f),
             Error::Secp256k1(ref e) => fmt::Display::fmt(e, f),
             Error::Psbt(ref e) => fmt::Display::fmt(e, f),
@@ -118,7 +114,6 @@ impl error::Error for Error {
     fn cause(&self) -> Option<&error::Error> {
         match *self {
             Error::Io(ref e) => Some(e),
-            Error::Base58(ref e) => Some(e),
             Error::ByteOrder(ref e) => Some(e),
             Error::Secp256k1(ref e) => Some(e),
             Error::Psbt(ref e) => Some(e),
@@ -136,7 +131,6 @@ impl error::Error for Error {
     fn description(&self) -> &str {
         match *self {
             Error::Io(ref e) => e.description(),
-            Error::Base58(ref e) => e.description(),
             Error::ByteOrder(ref e) => e.description(),
             Error::Secp256k1(ref e) => e.description(),
             Error::Psbt(ref e) => e.description(),
@@ -153,11 +147,6 @@ impl error::Error for Error {
 }
 
 #[doc(hidden)]
-impl From<base58::Error> for Error {
-    fn from(e: base58::Error) -> Error {
-        Error::Base58(e)
-    }
-}
 
 #[doc(hidden)]
 impl From<secp256k1::Error> for Error {
