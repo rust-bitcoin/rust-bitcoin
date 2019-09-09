@@ -76,6 +76,8 @@ pub enum Error {
         /// The invalid checksum
         actual: [u8; 4],
     },
+	/// VarInt was encoded in a non-minimal way
+	NonMinimalVarInt,
     /// Network magic was unknown
     UnknownNetworkMagic(u32),
     /// Parsing error
@@ -100,6 +102,7 @@ impl fmt::Display for Error {
                 "allocation of oversized vector: requested {}, maximum {}", r, m),
             Error::InvalidChecksum { expected: ref e, actual: ref a } => write!(f,
                 "invalid checksum: expected {}, actual {}", e.to_hex(), a.to_hex()),
+			Error::NonMinimalVarInt => write!(f, "non-minimal varint"),
             Error::UnknownNetworkMagic(ref m) => write!(f, "unknown network magic: {}", m),
             Error::ParseFailed(ref e) => write!(f, "parse failed: {}", e),
             Error::UnsupportedSegwitFlag(ref swflag) => write!(f,
@@ -120,6 +123,7 @@ impl error::Error for Error {
             Error::UnexpectedNetworkMagic { .. }
             | Error::OversizedVectorAllocation { .. }
             | Error::InvalidChecksum { .. }
+			| Error::NonMinimalVarInt
             | Error::UnknownNetworkMagic(..)
             | Error::ParseFailed(..)
             | Error::UnsupportedSegwitFlag(..)
@@ -425,7 +429,7 @@ impl Decodable for VarInt {
             0xFF => {
                 let x = ReadExt::read_u64(&mut d)?;
                 if x < 0x100000000 {
-                    Err(self::Error::ParseFailed("non-minimal varint"))
+                    Err(self::Error::NonMinimalVarInt)
                 } else {
                     Ok(VarInt(x))
                 }
@@ -433,7 +437,7 @@ impl Decodable for VarInt {
             0xFE => {
                 let x = ReadExt::read_u32(&mut d)?;
                 if x < 0x10000 {
-                    Err(self::Error::ParseFailed("non-minimal varint"))
+                    Err(self::Error::NonMinimalVarInt)
                 } else {
                     Ok(VarInt(x as u64))
                 }
@@ -441,7 +445,7 @@ impl Decodable for VarInt {
             0xFD => {
                 let x = ReadExt::read_u16(&mut d)?;
                 if x < 0xFD {
-                    Err(self::Error::ParseFailed("non-minimal varint"))
+                    Err(self::Error::NonMinimalVarInt)
                 } else {
                     Ok(VarInt(x as u64))
                 }
@@ -791,27 +795,27 @@ mod tests {
     #[test]
     fn deserialize_nonminimal_vec() {
         match deserialize::<Vec<u8>>(&[0xfd, 0x00, 0x00]) {
-            Err(Error::ParseFailed("non-minimal varint")) => {},
+            Err(Error::NonMinimalVarInt) => {},
             x => panic!(x)
         }
         match deserialize::<Vec<u8>>(&[0xfd, 0xfc, 0x00]) {
-            Err(Error::ParseFailed("non-minimal varint")) => {},
+            Err(Error::NonMinimalVarInt) => {},
             x => panic!(x)
         }
         match deserialize::<Vec<u8>>(&[0xfe, 0xff, 0x00, 0x00, 0x00]) {
-            Err(Error::ParseFailed("non-minimal varint")) => {},
+            Err(Error::NonMinimalVarInt) => {},
             x => panic!(x)
         }
         match deserialize::<Vec<u8>>(&[0xfe, 0xff, 0xff, 0x00, 0x00]) {
-            Err(Error::ParseFailed("non-minimal varint")) => {},
+            Err(Error::NonMinimalVarInt) => {},
             x => panic!(x)
         }
         match deserialize::<Vec<u8>>(&[0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]) {
-            Err(Error::ParseFailed("non-minimal varint")) => {},
+            Err(Error::NonMinimalVarInt) => {},
             x => panic!(x)
         }
         match deserialize::<Vec<u8>>(&[0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00]) {
-            Err(Error::ParseFailed("non-minimal varint")) => {},
+            Err(Error::NonMinimalVarInt) => {},
             x => panic!(x)
         }
 
