@@ -84,7 +84,6 @@ impl_consensus_encoding!(VersionMessage, version, services, timestamp,
                          receiver, sender, nonce,
                          user_agent, start_height, relay);
 
-#[repr(u8)]
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 /// message rejection reason as a code
 pub enum RejectReason {
@@ -124,7 +123,7 @@ impl Decodable for RejectReason {
             0x41 => DUST,
             0x42 => FEE,
             0x43 => CHECKPOINT,
-            _ => return Err(encode::Error::ParseFailed("unknonw reject code"))
+            _ => return Err(encode::Error::ParseFailed("unknown reject code"))
         })
     }
 }
