@@ -266,7 +266,7 @@ impl Script {
         self.0[24] == opcodes::all::OP_CHECKSIG.into_u8()
     }
 
-    /// Checks whether a script pubkey is a p2pkh output
+    /// Checks whether a script pubkey is a p2pk output
     #[inline]
     pub fn is_p2pk(&self) -> bool {
         (self.0.len() == 67 &&
