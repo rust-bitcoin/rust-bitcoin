@@ -97,7 +97,7 @@ pub enum RejectReason {
     DUPLICATE = 0x12,
     /// nonstandard transaction
     NONSTANDARD = 0x40,
-    /// an output is belw dust limit
+    /// an output is below dust limit
     DUST = 0x41,
     /// insufficient fee
     FEE = 0x42,
