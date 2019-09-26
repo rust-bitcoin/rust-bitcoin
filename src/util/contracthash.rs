@@ -138,7 +138,7 @@ pub enum TemplateElement {
 
 /// A script template
 #[derive(Clone, PartialEq, Eq, Debug)]
-pub struct Template(Vec<TemplateElement>);
+pub struct Template(pub Vec<TemplateElement>);
 
 impl Template {
     /// Returns template for P2PKH output
