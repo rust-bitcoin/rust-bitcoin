@@ -27,6 +27,7 @@ bitcoinconsensus = { version = "0.17", optional = true }
 serde = { version = "1", optional = true }
 secp256k1 = "0.15"
 hex = "=0.3.2"
+enum-display-derive = "~0.1.0"
 
 [dev-dependencies]
 serde_derive = "<1.0.99"

@@ -25,6 +25,7 @@ use hashes::{hash160, sha256, Hash, HashEngine, Hmac, HmacEngine};
 use blockdata::{opcodes, script};
 
 use std::{error, fmt};
+use std::fmt::Display;
 
 use network::constants::Network;
 use util::address;
@@ -51,7 +52,9 @@ pub enum Error {
     /// Did not have enough keys to instantiate a script template
     TooFewKeys(usize),
     /// Had too many keys; template does not match key list
-    TooManyKeys(usize)
+    TooManyKeys(usize),
+    /// Can't generate script template for a given script type (arbitrary `P2S` or `Invalid` types)
+    WrongScriptPubkeyType(ScriptPubkeyType),
 }
 
 impl fmt::Display for Error {
@@ -63,20 +66,13 @@ impl fmt::Display for Error {
             Error::ExpectedKey => f.write_str("expected key when deserializing script"),
             Error::ExpectedChecksig => f.write_str("expected OP_*CHECKSIG* when deserializing script"),
             Error::TooFewKeys(n) => write!(f, "got {} keys, which was not enough", n),
-            Error::TooManyKeys(n) => write!(f, "got {} keys, which was too many", n)
+            Error::TooManyKeys(n) => write!(f, "got {} keys, which was too many", n),
+            Error::WrongScriptPubkeyType(ref t) => write!(f, "Can't generate script template for a given scriptPubkey type {}", t),
         }
     }
 }
 
 impl error::Error for Error {
-    fn cause(&self) -> Option<&error::Error> {
-        match *self {
-            Error::Secp(ref e) => Some(e),
-            Error::Script(ref e) => Some(e),
-            _ => None
-        }
-    }
-
     fn description(&self) -> &'static str {
         match *self {
             Error::Secp(_) => "libsecp256k1 error",
@@ -85,15 +81,58 @@ impl error::Error for Error {
             Error::ExpectedKey => "expected key when deserializing script",
             Error::ExpectedChecksig => "expected OP_*CHECKSIG* when deserializing script",
             Error::TooFewKeys(_) => "too few keys for template",
-            Error::TooManyKeys(_) => "too many keys for template"
+            Error::TooManyKeys(_) => "too many keys for template",
+            Error::WrongScriptPubkeyType(_) => "unsupported scriptPubkey type"
+        }
+    }
+
+    fn cause(&self) -> Option<&error::Error> {
+        match *self {
+            Error::Secp(ref e) => Some(e),
+            Error::Script(ref e) => Some(e),
+            _ => None
         }
     }
 }
 
+/// Version used by `scriptPubKey` with SegWit support
+#[derive(Debug, Display, Clone, Copy, Eq, PartialEq)]
+pub enum WitnessScriptVersion {
+    /// Legacy P2SH-wrapped representation for witnessScript
+    LegacyP2SH = -1,
+    /// V0 of witnessScript
+    V0 = 0
+}
+
+/// Transaction `scriptPubKey` formats
+#[derive(Debug, Display, Clone, Eq, PartialEq)]
+pub enum ScriptPubkeyType {
+    /// Pay-to-public key (legacy, deprecated)
+    P2PK,
+    /// Pay-to-public key hash
+    P2PKH,
+    /// Pay-to-witness public key hash (including P2SH wrapped version)
+    P2WPKH(WitnessScriptVersion),
+    /// Pay-to-script hash
+    P2SH,
+    /// Pay-to-witness script hash (including P2SH wrapped version)
+    P2WSH(WitnessScriptVersion),
+    /// scriptPubKey with a single OP_RETURN code
+    OpReturn,
+    /// Empty scriptPubKey
+    Empty,
+    /// Malformed scriptPubKey
+    Invalid,
+    /// Other scriptPubKey script (non-standard, not P2SH and not OP_RETURN)
+    OtherP2S(script::Script)
+}
+
 /// An element of a script template
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
-enum TemplateElement {
+pub enum TemplateElement {
+    /// Template element for an OP-code operation
     Op(opcodes::All),
+    /// Template element for some key
     Key
 }
 
@@ -102,6 +141,29 @@ enum TemplateElement {
 pub struct Template(Vec<TemplateElement>);
 
 impl Template {
+    /// Returns template for P2PKH output
+    pub fn for_scriptpubkey_type(spkt: ScriptPubkeyType) -> Result<Self, Error> {
+        use self::TemplateElement::*;
+        use self::ScriptPubkeyType::*;
+        use blockdata::opcodes::all::*;
+
+        match spkt {
+            P2PK => Ok(Template(vec![
+                Key,
+                Op(OP_EQUALVERIFY),
+                Op(OP_CHECKSIG),
+            ])),
+            P2PKH => Ok(Template(vec![
+                Op(OP_DUP),
+                Op(OP_HASH160),
+                Key,
+                Op(OP_EQUALVERIFY),
+                Op(OP_CHECKSIG),
+            ])),
+            _ => Err(Error::WrongScriptPubkeyType(spkt))
+        }
+    }
+
     /// Instantiate a template
     pub fn to_script(&self, keys: &[PublicKey]) -> Result<script::Script, Error> {
         let mut key_index = 0;
