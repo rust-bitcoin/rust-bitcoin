@@ -63,6 +63,23 @@ pub fn verify_script(
         .map_err(Error::ScriptVerification)
 }
 
+/// verify spend of an input script with specific verification flags
+/// # Parameters
+///  * index - the input index in spending which is spending this transaction
+///  * amount - the amount this script guards
+///  * spending - the transaction that attempts to spend the output holding this script
+///  * flags - the verification flags
+pub fn verify_script_with_flags(
+    script: &Script,
+    index: usize,
+    amount: u64,
+    spending: &[u8],
+    flags: u32,
+) -> Result<(), Error> {
+    ::bitcoinconsensus::verify_with_flags(&script[..], amount, spending, index, flags)
+        .map_err(Error::ScriptVerification)
+}
+
 /// Verify that this transaction is able to spend its inputs
 pub fn verify_transaction<'a, S>(tx: &Transaction, mut get_utxo: S) -> Result<(), Error>
 where
