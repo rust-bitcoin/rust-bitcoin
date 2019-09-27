@@ -42,7 +42,7 @@ pub extern crate secp256k1;
 pub extern crate bech32;
 #[cfg(feature = "base64")] pub extern crate base64;
 
-#[cfg(feature="bitcoinconsensus")] extern crate bitcoinconsensus;
+#[cfg(feature="bitcoinconsensus")] pub extern crate bitcoinconsensus;
 #[cfg(feature = "serde")] extern crate serde;
 #[cfg(all(test, feature = "serde"))] #[macro_use] extern crate serde_derive; // for 1.22.0 compat
 #[cfg(all(test, feature = "serde"))] extern crate serde_json;
