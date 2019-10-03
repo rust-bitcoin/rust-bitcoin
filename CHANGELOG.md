@@ -1,4 +1,11 @@
-# 0.20.0
+
+# 0.21.0 - 2019-10-02
+
+* Add [serde to `BlockHeader` and `Block`](https://github.com/rust-bitcoin/rust-bitcoin/pull/321)
+* [Clean up `StreamReader` API](https://github.com/rust-bitcoin/rust-bitcoin/pull/318) (breaking change)
+* Add [reject message](https://github.com/rust-bitcoin/rust-bitcoin/pull/323) to p2p messages
+
+# 0.20.0 - 2019-08-23
 
 * Update `secp256k1` 0.15 and `bitcoinconsensus` 0.17
 
