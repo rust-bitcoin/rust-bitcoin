@@ -20,7 +20,7 @@
 
 use blockdata::script::Script;
 use blockdata::transaction::Transaction;
-use consensus::{encode, Encodable, Decodable};
+use consensus::{encode, Decodable, Encodable};
 
 use std::io;
 
@@ -35,7 +35,7 @@ mod macros;
 pub mod serialize;
 
 mod map;
-pub use self::map::{Map, Global, Input, Output};
+pub use self::map::{Global, Input, Map, Output};
 
 /// A Partially Signed Transaction.
 #[derive(Debug, Clone, PartialEq)]
@@ -91,10 +91,7 @@ impl PartiallySignedTransaction {
 }
 
 impl Encodable for PartiallySignedTransaction {
-    fn consensus_encode<S: io::Write>(
-        &self,
-        mut s: S,
-    ) -> Result<usize, encode::Error> {
+    fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, encode::Error> {
         let mut len = 0;
         len += b"psbt".consensus_encode(&mut s)?;
 
@@ -172,9 +169,9 @@ mod tests {
     use secp256k1::Secp256k1;
 
     use blockdata::script::Script;
-    use blockdata::transaction::{Transaction, TxIn, TxOut, OutPoint};
-    use network::constants::Network::Bitcoin;
+    use blockdata::transaction::{OutPoint, Transaction, TxIn, TxOut};
     use consensus::encode::{deserialize, serialize, serialize_hex};
+    use network::constants::Network::Bitcoin;
     use util::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint};
     use util::key::PublicKey;
     use util::psbt::map::{Global, Output};
@@ -197,10 +194,7 @@ mod tests {
             inputs: vec![],
             outputs: vec![],
         };
-        assert_eq!(
-            serialize_hex(&psbt),
-            "70736274ff01000a0200000000000000000000"
-        );
+        assert_eq!(serialize_hex(&psbt), "70736274ff01000a0200000000000000000000");
     }
 
     #[test]
@@ -208,7 +202,8 @@ mod tests {
         let secp = &Secp256k1::new();
         let seed = hex_decode("000102030405060708090a0b0c0d0e0f").unwrap();
 
-        let mut hd_keypaths: BTreeMap<PublicKey, (Fingerprint, DerivationPath)> = Default::default();
+        let mut hd_keypaths: BTreeMap<PublicKey, (Fingerprint, DerivationPath)> =
+            Default::default();
 
         let mut sk: ExtendedPrivKey = ExtendedPrivKey::new_master(Bitcoin, &seed).unwrap();
 
@@ -232,12 +227,8 @@ mod tests {
         hd_keypaths.insert(pk.public_key, (fprint, dpath.into()));
 
         let expected: Output = Output {
-            redeem_script: Some(hex_script!(
-                "76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac"
-            )),
-            witness_script: Some(hex_script!(
-                "a9143545e6e33b832c47050f24d3eeb93c9c03948bc787"
-            )),
+            redeem_script: Some(hex_script!("76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac")),
+            witness_script: Some(hex_script!("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787")),
             hd_keypaths: hd_keypaths,
             ..Default::default()
         };
@@ -257,7 +248,8 @@ mod tests {
                     previous_output: OutPoint {
                         txid: sha256d::Hash::from_hex(
                             "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126",
-                        ).unwrap(),
+                        )
+                        .unwrap(),
                         vout: 0,
                     },
                     script_sig: Script::new(),
@@ -318,9 +310,9 @@ mod tests {
         use hashes::sha256d;
 
         use blockdata::script::Script;
-        use blockdata::transaction::{SigHashType, Transaction, TxIn, TxOut, OutPoint};
+        use blockdata::transaction::{OutPoint, SigHashType, Transaction, TxIn, TxOut};
         use consensus::encode::serialize_hex;
-        use util::psbt::map::{Map, Global, Input, Output};
+        use util::psbt::map::{Global, Input, Map, Output};
         use util::psbt::raw;
         use util::psbt::PartiallySignedTransaction;
 
@@ -481,15 +473,10 @@ mod tests {
             let psbt_non_witness_utxo = (&psbt.inputs[0].non_witness_utxo).as_ref().unwrap();
 
             assert_eq!(tx_input.previous_output.txid, psbt_non_witness_utxo.txid());
-            assert!(
-                psbt_non_witness_utxo.output[tx_input.previous_output.vout as usize]
-                    .script_pubkey
-                    .is_p2pkh()
-            );
-            assert_eq!(
-                (&psbt.inputs[0].sighash_type).as_ref().unwrap(),
-                &SigHashType::All
-            );
+            assert!(psbt_non_witness_utxo.output[tx_input.previous_output.vout as usize]
+                .script_pubkey
+                .is_p2pkh());
+            assert_eq!((&psbt.inputs[0].sighash_type).as_ref().unwrap(), &SigHashType::All);
         }
 
         #[test]
@@ -550,7 +537,8 @@ mod tests {
                 tx.txid(),
                 sha256d::Hash::from_hex(
                     "75c5c9665a570569ad77dd1279e6fd4628a093c4dcbf8d41532614044c14c115"
-                ).unwrap()
+                )
+                .unwrap()
             );
 
             let mut unknown: BTreeMap<raw::Key, Vec<u8>> = BTreeMap::new();

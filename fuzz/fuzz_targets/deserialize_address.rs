@@ -10,7 +10,8 @@ fn do_test(data: &[u8]) {
 }
 
 #[cfg(feature = "afl")]
-#[macro_use] extern crate afl;
+#[macro_use]
+extern crate afl;
 #[cfg(feature = "afl")]
 fn main() {
     fuzz!(|data| {
@@ -19,7 +20,8 @@ fn main() {
 }
 
 #[cfg(feature = "honggfuzz")]
-#[macro_use] extern crate honggfuzz;
+#[macro_use]
+extern crate honggfuzz;
 #[cfg(feature = "honggfuzz")]
 fn main() {
     loop {

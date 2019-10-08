@@ -1,4 +1,3 @@
-
 extern crate bitcoin;
 
 use bitcoin::blockdata::transaction::OutPoint;
@@ -7,15 +6,18 @@ use bitcoin::consensus::encode;
 use std::str::FromStr;
 
 fn do_test(data: &[u8]) {
-    let lowercase: Vec<u8> = data.iter().map(|c| match *c {
-        b'A' => b'a',
-        b'B' => b'b',
-        b'C' => b'c',
-        b'D' => b'd',
-        b'E' => b'e',
-        b'F' => b'f',
-        x => x
-    }).collect();
+    let lowercase: Vec<u8> = data
+        .iter()
+        .map(|c| match *c {
+            b'A' => b'a',
+            b'B' => b'b',
+            b'C' => b'c',
+            b'D' => b'd',
+            b'E' => b'e',
+            b'F' => b'f',
+            x => x,
+        })
+        .collect();
     let data_str = match String::from_utf8(lowercase) {
         Err(_) => return,
         Ok(s) => s,
@@ -33,7 +35,7 @@ fn do_test(data: &[u8]) {
                 let string = deser.to_string();
                 match OutPoint::from_str(&string) {
                     Ok(destring) => assert_eq!(destring, deser),
-                    Err(_) => panic!()
+                    Err(_) => panic!(),
                 }
             }
         }
@@ -41,7 +43,8 @@ fn do_test(data: &[u8]) {
 }
 
 #[cfg(feature = "afl")]
-#[macro_use] extern crate afl;
+#[macro_use]
+extern crate afl;
 #[cfg(feature = "afl")]
 fn main() {
     fuzz!(|data| {
@@ -50,7 +53,8 @@ fn main() {
 }
 
 #[cfg(feature = "honggfuzz")]
-#[macro_use] extern crate honggfuzz;
+#[macro_use]
+extern crate honggfuzz;
 #[cfg(feature = "honggfuzz")]
 fn main() {
     loop {

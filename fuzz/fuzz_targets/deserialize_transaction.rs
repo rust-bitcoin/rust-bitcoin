@@ -1,9 +1,10 @@
 extern crate bitcoin;
 
 fn do_test(data: &[u8]) {
-    let tx_result: Result<bitcoin::blockdata::transaction::Transaction, _> = bitcoin::consensus::encode::deserialize(data);
+    let tx_result: Result<bitcoin::blockdata::transaction::Transaction, _> =
+        bitcoin::consensus::encode::deserialize(data);
     match tx_result {
-        Err(_) => {},
+        Err(_) => {}
         Ok(mut tx) => {
             let ser = bitcoin::consensus::encode::serialize(&tx);
             assert_eq!(&ser[..], data);
@@ -21,12 +22,13 @@ fn do_test(data: &[u8]) {
             } else {
                 assert_eq!(no_witness_len * 3 + len, calculated_weight);
             }
-        },
+        }
     }
 }
 
 #[cfg(feature = "afl")]
-#[macro_use] extern crate afl;
+#[macro_use]
+extern crate afl;
 #[cfg(feature = "afl")]
 fn main() {
     fuzz!(|data| {
@@ -35,7 +37,8 @@ fn main() {
 }
 
 #[cfg(feature = "honggfuzz")]
-#[macro_use] extern crate honggfuzz;
+#[macro_use]
+extern crate honggfuzz;
 #[cfg(feature = "honggfuzz")]
 fn main() {
     loop {

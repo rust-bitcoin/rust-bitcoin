@@ -74,7 +74,7 @@ impl Network {
             0xD9B4BEF9 => Some(Network::Bitcoin),
             0x0709110B => Some(Network::Testnet),
             0xDAB5BFFA => Some(Network::Regtest),
-            _ => None
+            _ => None,
         }
     }
 
@@ -106,43 +106,24 @@ mod tests {
 
     #[test]
     fn serialize_test() {
-        assert_eq!(
-            serialize(&Network::Bitcoin.magic()),
-            &[0xf9, 0xbe, 0xb4, 0xd9]
-        );
-        assert_eq!(
-            serialize(&Network::Testnet.magic()),
-            &[0x0b, 0x11, 0x09, 0x07]
-        );
-        assert_eq!(
-            serialize(&Network::Regtest.magic()),
-            &[0xfa, 0xbf, 0xb5, 0xda]
-        );
+        assert_eq!(serialize(&Network::Bitcoin.magic()), &[0xf9, 0xbe, 0xb4, 0xd9]);
+        assert_eq!(serialize(&Network::Testnet.magic()), &[0x0b, 0x11, 0x09, 0x07]);
+        assert_eq!(serialize(&Network::Regtest.magic()), &[0xfa, 0xbf, 0xb5, 0xda]);
 
-        assert_eq!(
-            deserialize(&[0xf9, 0xbe, 0xb4, 0xd9]).ok(),
-            Some(Network::Bitcoin.magic())
-        );
-        assert_eq!(
-            deserialize(&[0x0b, 0x11, 0x09, 0x07]).ok(),
-            Some(Network::Testnet.magic())
-        );
-        assert_eq!(
-            deserialize(&[0xfa, 0xbf, 0xb5, 0xda]).ok(),
-            Some(Network::Regtest.magic())
-        );
+        assert_eq!(deserialize(&[0xf9, 0xbe, 0xb4, 0xd9]).ok(), Some(Network::Bitcoin.magic()));
+        assert_eq!(deserialize(&[0x0b, 0x11, 0x09, 0x07]).ok(), Some(Network::Testnet.magic()));
+        assert_eq!(deserialize(&[0xfa, 0xbf, 0xb5, 0xda]).ok(), Some(Network::Regtest.magic()));
     }
 
-  #[test]
-  fn string_test() {
-      assert_eq!(Network::Bitcoin.to_string(), "bitcoin");
-      assert_eq!(Network::Testnet.to_string(), "testnet");
-      assert_eq!(Network::Regtest.to_string(), "regtest");
+    #[test]
+    fn string_test() {
+        assert_eq!(Network::Bitcoin.to_string(), "bitcoin");
+        assert_eq!(Network::Testnet.to_string(), "testnet");
+        assert_eq!(Network::Regtest.to_string(), "regtest");
 
-      assert_eq!("bitcoin".parse::<Network>().unwrap(), Network::Bitcoin);
-      assert_eq!("testnet".parse::<Network>().unwrap(), Network::Testnet);
-      assert_eq!("regtest".parse::<Network>().unwrap(), Network::Regtest);
-      assert!("fakenet".parse::<Network>().is_err());
-  }
+        assert_eq!("bitcoin".parse::<Network>().unwrap(), Network::Bitcoin);
+        assert_eq!("testnet".parse::<Network>().unwrap(), Network::Testnet);
+        assert_eq!("regtest".parse::<Network>().unwrap(), Network::Regtest);
+        assert!("fakenet".parse::<Network>().is_err());
+    }
 }
-

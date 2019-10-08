@@ -85,10 +85,7 @@ impl SighashComponents {
         self.tx_version.consensus_encode(&mut enc).unwrap();
         self.hash_prevouts.consensus_encode(&mut enc).unwrap();
         self.hash_sequence.consensus_encode(&mut enc).unwrap();
-        txin
-            .previous_output
-            .consensus_encode(&mut enc)
-            .unwrap();
+        txin.previous_output.consensus_encode(&mut enc).unwrap();
         script_code.consensus_encode(&mut enc).unwrap();
         value.consensus_encode(&mut enc).unwrap();
         txin.sequence.consensus_encode(&mut enc).unwrap();
@@ -104,11 +101,11 @@ mod tests {
     use blockdata::script::Script;
     use blockdata::transaction::Transaction;
     use consensus::encode::deserialize;
+    use hex;
     use network::constants::Network;
-    use util::misc::hex_bytes;
     use util::address::Address;
     use util::key::PublicKey;
-    use hex;
+    use util::misc::hex_bytes;
 
     use super::*;
 
@@ -130,7 +127,8 @@ mod tests {
             ).unwrap()[..],
         ).unwrap();
 
-        let witness_script = p2pkh_hex("025476c2e83188368da1ff3e292e7acafcdb3566bb0ad253f62fc70f07aeee6357");
+        let witness_script =
+            p2pkh_hex("025476c2e83188368da1ff3e292e7acafcdb3566bb0ad253f62fc70f07aeee6357");
         let value = 600_000_000;
 
         let comp = SighashComponents::new(&tx);
@@ -167,7 +165,8 @@ mod tests {
             ).unwrap()[..],
         ).unwrap();
 
-        let witness_script = p2pkh_hex("03ad1d8e89212f0b92c74d23bb710c00662ad1470198ac48c43f7d6f93a2a26873");
+        let witness_script =
+            p2pkh_hex("03ad1d8e89212f0b92c74d23bb710c00662ad1470198ac48c43f7d6f93a2a26873");
         let value = 1_000_000_000;
 
         let comp = SighashComponents::new(&tx);

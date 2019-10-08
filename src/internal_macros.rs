@@ -62,23 +62,33 @@ macro_rules! impl_array_newtype {
 
             #[inline]
             /// Returns the length of the object as an array
-            pub fn len(&self) -> usize { $len }
+            pub fn len(&self) -> usize {
+                $len
+            }
 
             #[inline]
             /// Returns whether the object, as an array, is empty. Always false.
-            pub fn is_empty(&self) -> bool { false }
+            pub fn is_empty(&self) -> bool {
+                false
+            }
 
             #[inline]
             /// Returns the underlying bytes.
-            pub fn as_bytes(&self) -> &[$ty; $len] { &self.0 }
+            pub fn as_bytes(&self) -> &[$ty; $len] {
+                &self.0
+            }
 
             #[inline]
             /// Returns the underlying bytes.
-            pub fn to_bytes(&self) -> [$ty; $len] { self.0.clone() }
+            pub fn to_bytes(&self) -> [$ty; $len] {
+                self.0.clone()
+            }
 
             #[inline]
             /// Returns the underlying bytes.
-            pub fn into_bytes(self) -> [$ty; $len] { self.0 }
+            pub fn into_bytes(self) -> [$ty; $len] {
+                self.0
+            }
         }
 
         impl<'a> From<&'a [$ty]> for $thing {
@@ -126,8 +136,12 @@ macro_rules! impl_array_newtype {
                 // be ordered anyway except to put them in BTrees or whatever, and
                 // they don't care how we order as long as we're consistent).
                 for i in 0..$len {
-                    if self[$len - 1 - i] < other[$len - 1 - i] { return ::std::cmp::Ordering::Less; }
-                    if self[$len - 1 - i] > other[$len - 1 - i] { return ::std::cmp::Ordering::Greater; }
+                    if self[$len - 1 - i] < other[$len - 1 - i] {
+                        return ::std::cmp::Ordering::Less;
+                    }
+                    if self[$len - 1 - i] > other[$len - 1 - i] {
+                        return ::std::cmp::Ordering::Greater;
+                    }
                 }
                 ::std::cmp::Ordering::Equal
             }
@@ -146,20 +160,22 @@ macro_rules! impl_array_newtype {
         impl ::std::hash::Hash for $thing {
             #[inline]
             fn hash<H>(&self, state: &mut H)
-                where H: ::std::hash::Hasher
+            where
+                H: ::std::hash::Hasher,
             {
                 (&self[..]).hash(state);
             }
 
             fn hash_slice<H>(data: &[$thing], state: &mut H)
-                where H: ::std::hash::Hasher
+            where
+                H: ::std::hash::Hasher,
             {
                 for d in data.iter() {
                     (&d[..]).hash(state);
                 }
             }
         }
-    }
+    };
 }
 
 macro_rules! impl_array_newtype_show {
@@ -169,7 +185,7 @@ macro_rules! impl_array_newtype_show {
                 write!(f, concat!(stringify!($thing), "({:?})"), &self[..])
             }
         }
-    }
+    };
 }
 
 macro_rules! impl_index_newtype {
@@ -209,8 +225,7 @@ macro_rules! impl_index_newtype {
                 &self.0[..]
             }
         }
-
-    }
+    };
 }
 
 macro_rules! display_from_debug {
@@ -220,7 +235,7 @@ macro_rules! display_from_debug {
                 ::std::fmt::Debug::fmt(self, f)
             }
         }
-    }
+    };
 }
 
 #[cfg(test)]
@@ -577,8 +592,7 @@ macro_rules! serde_struct_human_string_impl {
 /// - std::str::FromStr
 /// - hashes::hex::FromHex
 macro_rules! impl_bytes_newtype {
-    ($t:ident, $len:expr) => (
-
+    ($t:ident, $len:expr) => {
         impl ::std::fmt::LowerHex for $t {
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
                 for &ch in self.0.iter() {
@@ -596,9 +610,10 @@ macro_rules! impl_bytes_newtype {
 
         impl ::hashes::hex::FromHex for $t {
             fn from_byte_iter<I>(iter: I) -> Result<Self, ::hashes::hex::Error>
-                where I: Iterator<Item=Result<u8, ::hashes::hex::Error>> +
-                    ExactSizeIterator +
-                    DoubleEndedIterator,
+            where
+                I: Iterator<Item = Result<u8, ::hashes::hex::Error>>
+                    + ExactSizeIterator
+                    + DoubleEndedIterator,
             {
                 if iter.len() == $len {
                     let mut ret = [0; $len];
@@ -619,7 +634,7 @@ macro_rules! impl_bytes_newtype {
             }
         }
 
-        #[cfg(feature="serde")]
+        #[cfg(feature = "serde")]
         impl ::serde::Serialize for $t {
             fn serialize<S: ::serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
                 if s.is_human_readable() {
@@ -630,7 +645,7 @@ macro_rules! impl_bytes_newtype {
             }
         }
 
-        #[cfg(feature="serde")]
+        #[cfg(feature = "serde")]
         impl<'de> ::serde::Deserialize<'de> for $t {
             fn deserialize<D: ::serde::Deserializer<'de>>(d: D) -> Result<$t, D::Error> {
                 if d.is_human_readable() {
@@ -639,7 +654,10 @@ macro_rules! impl_bytes_newtype {
                     impl<'de> ::serde::de::Visitor<'de> for HexVisitor {
                         type Value = $t;
 
-                        fn expecting(&self, formatter: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+                        fn expecting(
+                            &self,
+                            formatter: &mut ::std::fmt::Formatter,
+                        ) -> ::std::fmt::Result {
                             formatter.write_str("an ASCII hex string")
                         }
 
@@ -650,7 +668,10 @@ macro_rules! impl_bytes_newtype {
                             if let Ok(hex) = ::std::str::from_utf8(v) {
                                 ::hashes::hex::FromHex::from_hex(hex).map_err(E::custom)
                             } else {
-                                return Err(E::invalid_value(::serde::de::Unexpected::Bytes(v), &self));
+                                return Err(E::invalid_value(
+                                    ::serde::de::Unexpected::Bytes(v),
+                                    &self,
+                                ));
                             }
                         }
 
@@ -669,7 +690,10 @@ macro_rules! impl_bytes_newtype {
                     impl<'de> ::serde::de::Visitor<'de> for BytesVisitor {
                         type Value = $t;
 
-                        fn expecting(&self, formatter: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+                        fn expecting(
+                            &self,
+                            formatter: &mut ::std::fmt::Formatter,
+                        ) -> ::std::fmt::Result {
                             formatter.write_str("a bytestring")
                         }
 
@@ -691,7 +715,7 @@ macro_rules! impl_bytes_newtype {
                 }
             }
         }
-    )
+    };
 }
 
 macro_rules! user_enum {

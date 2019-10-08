@@ -16,10 +16,10 @@ use std::collections::BTreeMap;
 use std::io::{self, Cursor};
 
 use blockdata::transaction::Transaction;
-use consensus::{encode, Encodable, Decodable};
+use consensus::{encode, Decodable, Encodable};
+use util::psbt;
 use util::psbt::map::Map;
 use util::psbt::raw;
-use util::psbt;
 use util::psbt::Error;
 
 /// A key-value map for global data.
@@ -122,7 +122,6 @@ impl_psbtmap_consensus_encoding!(Global);
 
 impl Decodable for Global {
     fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
-
         let mut tx: Option<Transaction> = None;
         let mut unknowns: BTreeMap<raw::Key, Vec<u8>> = Default::default();
 
@@ -149,13 +148,13 @@ impl Decodable for Global {
                                     });
 
                                     if decoder.position() != vlen as u64 {
-                                        return Err(encode::Error::ParseFailed("data not consumed entirely when explicitly deserializing"))
+                                        return Err(encode::Error::ParseFailed("data not consumed entirely when explicitly deserializing"));
                                     }
                                 } else {
-                                    return Err(Error::DuplicateKey(pair.key).into())
+                                    return Err(Error::DuplicateKey(pair.key).into());
                                 }
                             } else {
-                                return Err(Error::InvalidKey(pair.key).into())
+                                return Err(Error::InvalidKey(pair.key).into());
                             }
                         }
                         _ => {

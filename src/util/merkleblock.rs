@@ -193,9 +193,7 @@ impl PartialMerkleTree {
         }
         // there can never be more hashes provided than one for every txid
         if self.hashes.len() as u32 > self.num_transactions {
-            return Err(BadFormat(
-                "Proof contains more hashes than transactions".to_owned(),
-            ));
+            return Err(BadFormat("Proof contains more hashes than transactions".to_owned()));
         };
         // there must be at least one bit per node in the partial tree, and at least one node per hash
         if self.bits.len() < self.hashes.len() {
@@ -352,10 +350,7 @@ impl PartialMerkleTree {
 }
 
 impl Encodable for PartialMerkleTree {
-    fn consensus_encode<S: io::Write>(
-        &self,
-        mut s: S,
-    ) -> Result<usize, encode::Error> {
+    fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, encode::Error> {
         let ret = self.num_transactions.consensus_encode(&mut s)?
             + self.hashes.consensus_encode(&mut s)?;
         let mut bytes: Vec<u8> = vec![0; (self.bits.len() + 7) / 8];
@@ -450,7 +445,10 @@ impl MerkleBlock {
         }
 
         let pmt = PartialMerkleTree::from_txids(&hashes, &matches);
-        MerkleBlock { header, txn: pmt }
+        MerkleBlock {
+            header,
+            txn: pmt,
+        }
     }
 
     /// Extract the matching txid's represented by this partial merkle tree
@@ -472,12 +470,8 @@ impl MerkleBlock {
 }
 
 impl Encodable for MerkleBlock {
-    fn consensus_encode<S: io::Write>(
-        &self,
-        mut s: S,
-    ) -> Result<usize, encode::Error> {
-        let len = self.header.consensus_encode(&mut s)?
-            + self.txn.consensus_encode(s)?;
+    fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, encode::Error> {
+        let len = self.header.consensus_encode(&mut s)? + self.txn.consensus_encode(s)?;
         Ok(len)
     }
 }
@@ -573,9 +567,8 @@ mod tests {
                     let mut pmt3: PartialMerkleTree = deserialize(&serialized).unwrap();
                     pmt3.damage(&mut rng);
                     let mut match_txid3 = vec![];
-                    let merkle_root_3 = pmt3
-                        .extract_matches(&mut match_txid3, &mut indexes)
-                        .unwrap();
+                    let merkle_root_3 =
+                        pmt3.extract_matches(&mut match_txid3, &mut indexes).unwrap();
                     assert_ne!(merkle_root_3, merkle_root_1);
                 }
             }
@@ -590,9 +583,8 @@ mod tests {
             .map(|i| sha256d::Hash::from_hex(&format!("{:064x}", i)).unwrap())
             .collect();
 
-        let matches = vec![
-            false, false, false, false, false, false, false, false, false, true, true, false,
-        ];
+        let matches =
+            vec![false, false, false, false, false, false, false, false, false, true, true, false];
 
         let tree = PartialMerkleTree::from_txids(&txids, &matches);
         // Should fail due to duplicate txs found
@@ -648,10 +640,7 @@ mod tests {
         let mut index: Vec<u32> = vec![];
 
         assert_eq!(
-            merkle_block
-                .txn
-                .extract_matches(&mut matches, &mut index)
-                .unwrap(),
+            merkle_block.txn.extract_matches(&mut matches, &mut index).unwrap(),
             block.header.merkle_root
         );
         assert_eq!(matches.len(), 2);
@@ -681,10 +670,7 @@ mod tests {
         let mut index: Vec<u32> = vec![];
 
         assert_eq!(
-            merkle_block
-                .txn
-                .extract_matches(&mut matches, &mut index)
-                .unwrap(),
+            merkle_block.txn.extract_matches(&mut matches, &mut index).unwrap(),
             block.header.merkle_root
         );
         assert_eq!(matches.len(), 0);

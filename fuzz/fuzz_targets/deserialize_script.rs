@@ -1,9 +1,9 @@
 extern crate bitcoin;
 
-use bitcoin::util::address::Address;
-use bitcoin::network::constants::Network;
 use bitcoin::blockdata::script;
 use bitcoin::consensus::encode;
+use bitcoin::network::constants::Network;
+use bitcoin::util::address::Address;
 
 fn do_test(data: &[u8]) {
     let s: Result<script::Script, _> = encode::deserialize(data);
@@ -15,7 +15,9 @@ fn do_test(data: &[u8]) {
         for ins in enforce_min {
             match ins {
                 script::Instruction::Error(_) => return,
-                script::Instruction::Op(op) => { b = b.push_opcode(op); }
+                script::Instruction::Op(op) => {
+                    b = b.push_opcode(op);
+                }
                 script::Instruction::PushBytes(bytes) => {
                     // Any one-byte pushes, except -0, which can be interpreted as numbers, should be
                     // reserialized as numbers. (For -1 through 16, this will use special ops; for
@@ -43,7 +45,8 @@ fn do_test(data: &[u8]) {
 }
 
 #[cfg(feature = "afl")]
-#[macro_use] extern crate afl;
+#[macro_use]
+extern crate afl;
 #[cfg(feature = "afl")]
 fn main() {
     fuzz!(|data| {
@@ -52,7 +55,8 @@ fn main() {
 }
 
 #[cfg(feature = "honggfuzz")]
-#[macro_use] extern crate honggfuzz;
+#[macro_use]
+extern crate honggfuzz;
 #[cfg(feature = "honggfuzz")]
 fn main() {
     loop {

@@ -26,13 +26,11 @@
 #![crate_name = "bitcoin"]
 #![crate_type = "dylib"]
 #![crate_type = "rlib"]
-
 // Experimental features we need
 #![cfg_attr(all(test, feature = "unstable"), feature(test))]
-
 // Clippy whitelist
 #![cfg_attr(feature = "clippy", allow(needless_range_loop))] // suggests making a big mess of array newtypes
-#![cfg_attr(feature = "clippy", allow(extend_from_slice))]   // `extend_from_slice` only available since 1.6
+#![cfg_attr(feature = "clippy", allow(extend_from_slice))] // `extend_from_slice` only available since 1.6
 
 // Coding conventions
 #![forbid(unsafe_code)]
@@ -45,20 +43,26 @@
 #![deny(missing_docs)]
 #![forbid(unsafe_code)]
 
-
 // Re-exported dependencies.
+pub extern crate bech32;
 pub extern crate bitcoin_hashes as hashes;
 pub extern crate secp256k1;
-pub extern crate bech32;
 
 extern crate byteorder;
 extern crate hex;
-#[cfg(feature = "serde")] extern crate serde;
-#[cfg(all(test, feature = "serde"))] #[macro_use] extern crate serde_derive; // for 1.22.0 compat
-#[cfg(all(test, feature = "serde"))] extern crate serde_json;
-#[cfg(all(test, feature = "serde"))] extern crate serde_test;
-#[cfg(all(test, feature = "unstable"))] extern crate test;
-#[cfg(feature="bitcoinconsensus")] extern crate bitcoinconsensus;
+#[cfg(feature = "serde")]
+extern crate serde;
+#[cfg(all(test, feature = "serde"))]
+#[macro_use]
+extern crate serde_derive; // for 1.22.0 compat
+#[cfg(feature = "bitcoinconsensus")]
+extern crate bitcoinconsensus;
+#[cfg(all(test, feature = "serde"))]
+extern crate serde_json;
+#[cfg(all(test, feature = "serde"))]
+extern crate serde_test;
+#[cfg(all(test, feature = "unstable"))]
+extern crate test;
 
 #[cfg(target_pointer_width = "16")]
 compile_error!("rust-bitcoin cannot be used on 16-bit architectures");
@@ -71,20 +75,19 @@ mod internal_macros;
 #[macro_use]
 pub mod network;
 pub mod blockdata;
-pub mod util;
 pub mod consensus;
+pub mod util;
 
 pub use blockdata::block::Block;
 pub use blockdata::block::BlockHeader;
 pub use blockdata::script::Script;
+pub use blockdata::transaction::OutPoint;
+pub use blockdata::transaction::SigHashType;
 pub use blockdata::transaction::Transaction;
 pub use blockdata::transaction::TxIn;
 pub use blockdata::transaction::TxOut;
-pub use blockdata::transaction::OutPoint;
-pub use blockdata::transaction::SigHashType;
 pub use consensus::encode::VarInt;
 pub use network::constants::Network;
-pub use util::Error;
 pub use util::address::Address;
 pub use util::address::AddressType;
 pub use util::amount::Amount;
@@ -93,3 +96,4 @@ pub use util::hash::BitcoinHash;
 pub use util::key::PrivateKey;
 pub use util::key::PublicKey;
 pub use util::merkleblock::MerkleBlock;
+pub use util::Error;

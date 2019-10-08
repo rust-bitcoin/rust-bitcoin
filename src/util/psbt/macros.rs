@@ -14,7 +14,9 @@
 
 #[allow(unused_macros)]
 macro_rules! hex_psbt {
-    ($s:expr) => { ::consensus::deserialize(&::hex::decode($s).unwrap()) };
+    ($s:expr) => {
+        ::consensus::deserialize(&::hex::decode($s).unwrap())
+    };
 }
 
 macro_rules! merge {
@@ -61,10 +63,7 @@ macro_rules! impl_psbtmap_consensus_encoding {
             ) -> Result<usize, ::consensus::encode::Error> {
                 let mut len = 0;
                 for pair in ::util::psbt::Map::get_pairs(self)? {
-                    len += ::consensus::Encodable::consensus_encode(
-                        &pair,
-                        &mut s,
-                    )?;
+                    len += ::consensus::Encodable::consensus_encode(&pair, &mut s)?;
                 }
 
                 Ok(len + ::consensus::Encodable::consensus_encode(&0x00_u8, s)?)
@@ -84,7 +83,9 @@ macro_rules! impl_psbtmap_consensus_decoding {
                 loop {
                     match ::consensus::Decodable::consensus_decode(&mut d) {
                         Ok(pair) => ::util::psbt::Map::insert_pair(&mut rv, pair)?,
-                        Err(::consensus::encode::Error::Psbt(::util::psbt::Error::NoMorePairs)) => return Ok(rv),
+                        Err(::consensus::encode::Error::Psbt(::util::psbt::Error::NoMorePairs)) => {
+                            return Ok(rv)
+                        }
                         Err(e) => return Err(e),
                     }
                 }
