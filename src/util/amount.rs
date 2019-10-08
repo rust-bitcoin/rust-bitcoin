@@ -129,7 +129,6 @@ impl error::Error for ParseAmountError {
     }
 }
 
-
 fn is_too_precise(s: &str, precision: usize) -> bool {
     s.contains(".") || precision >= s.len() || s.chars().rev().take(precision).any(|d| d != '0')
 }
@@ -1247,7 +1246,6 @@ mod tests {
     #[cfg(feature = "serde")]
     #[test]
     fn serde_as_sat() {
-
         #[derive(Serialize, Deserialize, PartialEq, Debug)]
         struct T {
             #[serde(with = "::util::amount::serde::as_sat")]

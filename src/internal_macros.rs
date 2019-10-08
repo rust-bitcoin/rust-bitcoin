@@ -146,20 +146,22 @@ macro_rules! impl_array_newtype {
         impl ::std::hash::Hash for $thing {
             #[inline]
             fn hash<H>(&self, state: &mut H)
-                where H: ::std::hash::Hasher
+            where
+                H: ::std::hash::Hasher,
             {
                 (&self[..]).hash(state);
             }
 
             fn hash_slice<H>(data: &[$thing], state: &mut H)
-                where H: ::std::hash::Hasher
+            where
+                H: ::std::hash::Hasher,
             {
                 for d in data.iter() {
                     (&d[..]).hash(state);
                 }
             }
         }
-    }
+    };
 }
 
 macro_rules! impl_array_newtype_show {
@@ -169,7 +171,7 @@ macro_rules! impl_array_newtype_show {
                 write!(f, concat!(stringify!($thing), "({:?})"), &self[..])
             }
         }
-    }
+    };
 }
 
 macro_rules! impl_index_newtype {
@@ -209,8 +211,7 @@ macro_rules! impl_index_newtype {
                 &self.0[..]
             }
         }
-
-    }
+    };
 }
 
 macro_rules! display_from_debug {
@@ -220,7 +221,7 @@ macro_rules! display_from_debug {
                 ::std::fmt::Debug::fmt(self, f)
             }
         }
-    }
+    };
 }
 
 #[cfg(test)]
@@ -577,8 +578,7 @@ macro_rules! serde_struct_human_string_impl {
 /// - std::str::FromStr
 /// - hashes::hex::FromHex
 macro_rules! impl_bytes_newtype {
-    ($t:ident, $len:expr) => (
-
+    ($t:ident, $len:expr) => {
         impl ::std::fmt::LowerHex for $t {
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
                 for &ch in self.0.iter() {
@@ -596,9 +596,10 @@ macro_rules! impl_bytes_newtype {
 
         impl ::hashes::hex::FromHex for $t {
             fn from_byte_iter<I>(iter: I) -> Result<Self, ::hashes::hex::Error>
-                where I: Iterator<Item=Result<u8, ::hashes::hex::Error>> +
-                    ExactSizeIterator +
-                    DoubleEndedIterator,
+            where
+                I: Iterator<Item = Result<u8, ::hashes::hex::Error>>
+                    + ExactSizeIterator
+                    + DoubleEndedIterator,
             {
                 if iter.len() == $len {
                     let mut ret = [0; $len];
@@ -619,7 +620,7 @@ macro_rules! impl_bytes_newtype {
             }
         }
 
-        #[cfg(feature="serde")]
+        #[cfg(feature = "serde")]
         impl ::serde::Serialize for $t {
             fn serialize<S: ::serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
                 if s.is_human_readable() {
@@ -630,7 +631,7 @@ macro_rules! impl_bytes_newtype {
             }
         }
 
-        #[cfg(feature="serde")]
+        #[cfg(feature = "serde")]
         impl<'de> ::serde::Deserialize<'de> for $t {
             fn deserialize<D: ::serde::Deserializer<'de>>(d: D) -> Result<$t, D::Error> {
                 if d.is_human_readable() {
@@ -691,7 +692,7 @@ macro_rules! impl_bytes_newtype {
                 }
             }
         }
-    )
+    };
 }
 
 macro_rules! user_enum {

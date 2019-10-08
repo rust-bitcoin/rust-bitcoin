@@ -42,12 +42,7 @@ pub struct Pair {
 
 impl fmt::Display for Key {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "type: {:#x}, key: {}",
-            self.type_value,
-            ::hex::encode(&self.key)
-        )
+        write!(f, "type: {:#x}, key: {}", self.type_value, ::hex::encode(&self.key))
     }
 }
 
@@ -65,7 +60,7 @@ impl Decodable for Key {
             return Err(encode::Error::OversizedVectorAllocation {
                 requested: key_byte_size as usize,
                 max: MAX_VEC_SIZE,
-            })
+            });
         }
 
         let type_value: u8 = Decodable::consensus_decode(&mut d)?;
@@ -83,10 +78,7 @@ impl Decodable for Key {
 }
 
 impl Encodable for Key {
-    fn consensus_encode<S: io::Write>(
-        &self,
-        mut s: S,
-    ) -> Result<usize, encode::Error> {
+    fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, encode::Error> {
         let mut len = 0;
         len += VarInt((self.key.len() + 1) as u64).consensus_encode(&mut s)?;
 
@@ -101,10 +93,7 @@ impl Encodable for Key {
 }
 
 impl Encodable for Pair {
-    fn consensus_encode<S: io::Write>(
-        &self,
-        mut s: S,
-    ) -> Result<usize, encode::Error> {
+    fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, encode::Error> {
         let len = self.key.consensus_encode(&mut s)?;
         Ok(len + self.value.consensus_encode(s)?)
     }

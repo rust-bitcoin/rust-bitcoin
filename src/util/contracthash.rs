@@ -18,11 +18,11 @@
 //! at http://blockstream.com/sidechains.pdf for details of
 //! what this does.
 
+use blockdata::{opcodes, script};
+use hashes::{hash160, sha256, Hash, HashEngine, Hmac, HmacEngine};
 use secp256k1::{self, Secp256k1};
 use PrivateKey;
 use PublicKey;
-use hashes::{hash160, sha256, Hash, HashEngine, Hmac, HmacEngine};
-use blockdata::{opcodes, script};
 
 use std::{error, fmt};
 
@@ -51,7 +51,7 @@ pub enum Error {
     /// Did not have enough keys to instantiate a script template
     TooFewKeys(usize),
     /// Had too many keys; template does not match key list
-    TooManyKeys(usize)
+    TooManyKeys(usize),
 }
 
 impl fmt::Display for Error {
@@ -63,7 +63,7 @@ impl fmt::Display for Error {
             Error::ExpectedKey => f.write_str("expected key when deserializing script"),
             Error::ExpectedChecksig => f.write_str("expected OP_*CHECKSIG* when deserializing script"),
             Error::TooFewKeys(n) => write!(f, "got {} keys, which was not enough", n),
-            Error::TooManyKeys(n) => write!(f, "got {} keys, which was too many", n)
+            Error::TooManyKeys(n) => write!(f, "got {} keys, which was too many", n),
         }
     }
 }
@@ -73,7 +73,7 @@ impl error::Error for Error {
         match *self {
             Error::Secp(ref e) => Some(e),
             Error::Script(ref e) => Some(e),
-            _ => None
+            _ => None,
         }
     }
 
@@ -85,7 +85,7 @@ impl error::Error for Error {
             Error::ExpectedKey => "expected key when deserializing script",
             Error::ExpectedChecksig => "expected OP_*CHECKSIG* when deserializing script",
             Error::TooFewKeys(_) => "too few keys for template",
-            Error::TooManyKeys(_) => "too many keys for template"
+            Error::TooManyKeys(_) => "too many keys for template",
         }
     }
 }
@@ -94,7 +94,7 @@ impl error::Error for Error {
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 enum TemplateElement {
     Op(opcodes::All),
-    Key
+    Key,
 }
 
 /// A script template
@@ -222,7 +222,7 @@ pub fn untemplate(script: &script::Script) -> Result<(Template, Vec<PublicKey>),
     enum Mode {
         SeekingKeys,
         CopyingKeys,
-        SeekingCheckMulti
+        SeekingCheckMulti,
     }
 
     let mut mode = Mode::SeekingKeys;
@@ -282,9 +282,9 @@ pub fn untemplate(script: &script::Script) -> Result<(Template, Vec<PublicKey>),
 
 #[cfg(test)]
 mod tests {
-    use secp256k1::Secp256k1;
     use hex::decode as hex_decode;
     use secp256k1::rand::thread_rng;
+    use secp256k1::Secp256k1;
     use std::str::FromStr;
 
     use blockdata::script::Script;
@@ -408,5 +408,3 @@ mod tests {
         assert!(template.to_script(alpha_keys).is_ok());
     }
 }
-
-

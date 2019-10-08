@@ -21,6 +21,6 @@
 pub mod encode;
 pub mod params;
 
-pub use self::encode::{Encodable, Decodable, WriteExt, ReadExt};
-pub use self::encode::{serialize, deserialize, deserialize_partial};
+pub use self::encode::{deserialize, deserialize_partial, serialize};
+pub use self::encode::{Decodable, Encodable, ReadExt, WriteExt};
 pub use self::params::Params;

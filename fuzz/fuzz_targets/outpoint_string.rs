@@ -1,4 +1,3 @@
-
 extern crate bitcoin;
 
 use bitcoin::blockdata::transaction::OutPoint;
@@ -33,7 +32,7 @@ fn do_test(data: &[u8]) {
                 let string = deser.to_string();
                 match OutPoint::from_str(&string) {
                     Ok(destring) => assert_eq!(destring, deser),
-                    Err(_) => panic!()
+                    Err(_) => panic!(),
                 }
             }
         }

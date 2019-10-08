@@ -18,14 +18,16 @@
 //! capabilities
 //!
 
+use byteorder::WriteBytesExt;
+use consensus::encode;
+use consensus::{Decodable, Encodable, ReadExt};
+use hashes::sha256d;
 use network::address::Address;
 use network::constants;
-use consensus::{Encodable, Decodable, ReadExt};
-use consensus::encode;
+use network::message_network::RejectReason::{
+    CHECKPOINT, DUPLICATE, DUST, FEE, INVALID, MALFORMED, NONSTANDARD, OBSOLETE,
+};
 use std::io;
-use byteorder::WriteBytesExt;
-use network::message_network::RejectReason::{MALFORMED, INVALID, OBSOLETE, DUPLICATE, NONSTANDARD, DUST, CHECKPOINT, FEE};
-use hashes::sha256d;
 
 /// Some simple messages
 
@@ -51,7 +53,7 @@ pub struct VersionMessage {
     /// Whether the receiving peer should relay messages to the sender; used
     /// if the sender is bandwidth-limited and would like to support bloom
     /// filtering. Defaults to true.
-    pub relay: bool
+    pub relay: bool,
 }
 
 impl VersionMessage {
@@ -102,7 +104,7 @@ pub enum RejectReason {
     /// insufficient fee
     FEE = 0x42,
     /// checkpoint
-    CHECKPOINT = 0x43
+    CHECKPOINT = 0x43,
 }
 
 impl Encodable for RejectReason {
@@ -123,7 +125,7 @@ impl Decodable for RejectReason {
             0x41 => DUST,
             0x42 => FEE,
             0x43 => CHECKPOINT,
-            _ => return Err(encode::Error::ParseFailed("unknown reject code"))
+            _ => return Err(encode::Error::ParseFailed("unknown reject code")),
         })
     }
 }
@@ -138,7 +140,7 @@ pub struct Reject {
     /// reason of rejectection
     pub reason: String,
     /// reference to rejected item
-    pub hash: sha256d::Hash
+    pub hash: sha256d::Hash,
 }
 
 impl_consensus_encoding!(Reject, message, ccode, reason, hash);

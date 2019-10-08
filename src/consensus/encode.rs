@@ -31,12 +31,12 @@
 
 use std::{mem, u32};
 
+use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
+use hex::encode as hex_encode;
 use std::error;
 use std::fmt;
 use std::io;
 use std::io::{Cursor, Read, Write};
-use byteorder::{LittleEndian, WriteBytesExt, ReadBytesExt};
-use hex::encode as hex_encode;
 
 use hashes::{sha256d, Hash as HashTrait};
 use secp256k1;
@@ -44,9 +44,9 @@ use secp256k1;
 use util::base58;
 use util::psbt;
 
-use blockdata::transaction::{TxOut, Transaction, TxIn};
-use network::message_blockdata::Inventory;
+use blockdata::transaction::{Transaction, TxIn, TxOut};
 use network::address::Address;
+use network::message_blockdata::Inventory;
 
 /// Encoding error
 #[derive(Debug)]
@@ -69,7 +69,7 @@ pub enum Error {
         actual: u32,
     },
     /// Tried to allocate an oversized vector
-    OversizedVectorAllocation{
+    OversizedVectorAllocation {
         /// The capacity requested
         requested: usize,
         /// The maximum capacity
@@ -207,16 +207,13 @@ pub fn deserialize<'a, T: Decodable>(data: &'a [u8]) -> Result<T, Error> {
 
 /// Deserialize an object from a vector, but will not report an error if said deserialization
 /// doesn't consume the entire vector.
-pub fn deserialize_partial<'a, T: Decodable>(
-    data: &'a [u8],
-) -> Result<(T, usize), Error> {
+pub fn deserialize_partial<'a, T: Decodable>(data: &'a [u8]) -> Result<(T, usize), Error> {
     let mut decoder = Cursor::new(data);
     let rv = Decodable::consensus_decode(&mut decoder)?;
     let consumed = decoder.position() as usize;
 
     Ok((rv, consumed))
 }
-
 
 /// Extensions of `Write` to encode data as per Bitcoin consensus
 pub trait WriteExt {
@@ -379,22 +376,19 @@ macro_rules! impl_int_encodable{
 
         impl Encodable for $ty {
             #[inline]
-            fn consensus_encode<S: WriteExt>(
-                &self,
-                mut s: S,
-            ) -> Result<usize, self::Error> {
+            fn consensus_encode<S: WriteExt>(&self, mut s: S) -> Result<usize, self::Error> {
                 s.$meth_enc(self.to_le())?;
                 Ok(mem::size_of::<$ty>())
             }
         }
-    )
+    };
 }
 
-impl_int_encodable!(u8,  read_u8,  emit_u8);
+impl_int_encodable!(u8, read_u8, emit_u8);
 impl_int_encodable!(u16, read_u16, emit_u16);
 impl_int_encodable!(u32, read_u32, emit_u32);
 impl_int_encodable!(u64, read_u64, emit_u64);
-impl_int_encodable!(i8,  read_i8,  emit_i8);
+impl_int_encodable!(i8, read_i8, emit_i8);
 impl_int_encodable!(i16, read_i16, emit_i16);
 impl_int_encodable!(i32, read_i32, emit_i32);
 impl_int_encodable!(i64, read_i64, emit_i64);
@@ -421,22 +415,22 @@ impl Encodable for VarInt {
             0...0xFC => {
                 (self.0 as u8).consensus_encode(s)?;
                 Ok(1)
-            },
+            }
             0xFD...0xFFFF => {
                 s.emit_u8(0xFD)?;
                 (self.0 as u16).consensus_encode(s)?;
                 Ok(3)
-            },
+            }
             0x10000...0xFFFFFFFF => {
                 s.emit_u8(0xFE)?;
                 (self.0 as u32).consensus_encode(s)?;
                 Ok(5)
-            },
+            }
             _ => {
                 s.emit_u8(0xFF)?;
                 (self.0 as u64).consensus_encode(s)?;
                 Ok(9)
-            },
+            }
         }
     }
 }
@@ -511,16 +505,12 @@ impl Decodable for String {
     }
 }
 
-
 // Arrays
 macro_rules! impl_array {
-    ( $size:expr ) => (
+    ( $size:expr ) => {
         impl Encodable for [u8; $size] {
             #[inline]
-            fn consensus_encode<S: WriteExt>(
-                &self,
-                mut s: S,
-            ) -> Result<usize, Error> {
+            fn consensus_encode<S: WriteExt>(&self, mut s: S) -> Result<usize, Error> {
                 s.emit_slice(&self[..])?;
                 Ok(self.len())
             }
@@ -534,7 +524,7 @@ macro_rules! impl_array {
                 Ok(ret)
             }
         }
-    );
+    };
 }
 
 impl_array!(2);
@@ -569,10 +559,7 @@ macro_rules! impl_vec {
     ($type: ty) => {
         impl Encodable for Vec<$type> {
             #[inline]
-            fn consensus_encode<S: io::Write>(
-                &self,
-                mut s: S,
-            ) -> Result<usize, Error> {
+            fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, Error> {
                 let mut len = 0;
                 len += VarInt(self.len() as u64).consensus_encode(&mut s)?;
                 for c in self.iter() {
@@ -599,7 +586,7 @@ macro_rules! impl_vec {
                 Ok(ret)
             }
         }
-    }
+    };
 }
 impl_vec!(sha256d::Hash);
 impl_vec!(Transaction);
@@ -657,7 +644,6 @@ impl Decodable for Box<[u8]> {
     }
 }
 
-
 /// Do a double-SHA256 on some data and return the first 4 bytes
 fn sha2_checksum(data: &[u8]) -> [u8; 4] {
     let checksum = <sha256d::Hash as HashTrait>::hash(data);
@@ -682,7 +668,7 @@ impl Decodable for CheckedData {
         if len > MAX_VEC_SIZE as u32 {
             return Err(self::Error::OversizedVectorAllocation {
                 requested: len as usize,
-                max: MAX_VEC_SIZE
+                max: MAX_VEC_SIZE,
             });
         }
         let checksum = <[u8; 4]>::consensus_decode(&mut d)?;

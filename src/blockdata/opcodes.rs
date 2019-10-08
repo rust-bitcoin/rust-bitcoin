@@ -630,10 +630,10 @@ impl fmt::Debug for All {
             all::OP_NUMEQUAL => write!(f, "NUMEQUAL"),
             all::OP_NUMEQUALVERIFY => write!(f, "NUMEQUALVERIFY"),
             all::OP_NUMNOTEQUAL => write!(f, "NUMNOTEQUAL"),
-            all::OP_LESSTHAN  => write!(f, "LESSTHAN"),
-            all::OP_GREATERTHAN  => write!(f, "GREATERTHAN"),
-            all::OP_LESSTHANOREQUAL  => write!(f, "LESSTHANOREQUAL"),
-            all::OP_GREATERTHANOREQUAL  => write!(f, "GREATERTHANOREQUAL"),
+            all::OP_LESSTHAN => write!(f, "LESSTHAN"),
+            all::OP_GREATERTHAN => write!(f, "GREATERTHAN"),
+            all::OP_LESSTHANOREQUAL => write!(f, "LESSTHANOREQUAL"),
+            all::OP_GREATERTHANOREQUAL => write!(f, "GREATERTHANOREQUAL"),
             all::OP_MIN => write!(f, "MIN"),
             all::OP_MAX => write!(f, "MAX"),
             all::OP_WITHIN => write!(f, "WITHIN"),
@@ -745,7 +745,7 @@ pub enum Class {
     /// Does nothing
     NoOp,
     /// Any opcode not covered above
-    Ordinary(Ordinary)
+    Ordinary(Ordinary),
 }
 
 display_from_debug!(Class);
@@ -810,8 +810,8 @@ impl Ordinary {
     /// Encode as a byte
     #[inline]
     pub fn into_u8(&self) -> u8 {
-      *self as u8
-  }
+        *self as u8
+    }
 }
 
 #[cfg(test)]
@@ -994,10 +994,10 @@ mod tests {
         roundtrip!(unique, OP_NUMEQUAL);
         roundtrip!(unique, OP_NUMEQUALVERIFY);
         roundtrip!(unique, OP_NUMNOTEQUAL);
-        roundtrip!(unique, OP_LESSTHAN );
-        roundtrip!(unique, OP_GREATERTHAN );
-        roundtrip!(unique, OP_LESSTHANOREQUAL );
-        roundtrip!(unique, OP_GREATERTHANOREQUAL );
+        roundtrip!(unique, OP_LESSTHAN);
+        roundtrip!(unique, OP_GREATERTHAN);
+        roundtrip!(unique, OP_LESSTHANOREQUAL);
+        roundtrip!(unique, OP_GREATERTHANOREQUAL);
         roundtrip!(unique, OP_MIN);
         roundtrip!(unique, OP_MAX);
         roundtrip!(unique, OP_WITHIN);
@@ -1094,4 +1094,3 @@ mod tests {
         assert_eq!(unique.len(), 256);
     }
 }
-

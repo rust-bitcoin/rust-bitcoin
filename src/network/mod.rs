@@ -14,21 +14,21 @@
 
 //! Network Support
 //!
-//! This module defines support for (de)serialization and network transport 
+//! This module defines support for (de)serialization and network transport
 //! of Bitcoin data and network messages.
 //!
 
+use std::error;
 use std::fmt;
 use std::io;
-use std::error;
 
 pub mod constants;
 
 pub mod address;
 pub mod message;
 pub mod message_blockdata;
-pub mod message_network;
 pub mod message_filter;
+pub mod message_network;
 pub mod stream_reader;
 
 /// Network error

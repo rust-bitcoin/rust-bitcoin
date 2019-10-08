@@ -85,10 +85,7 @@ impl SighashComponents {
         self.tx_version.consensus_encode(&mut enc).unwrap();
         self.hash_prevouts.consensus_encode(&mut enc).unwrap();
         self.hash_sequence.consensus_encode(&mut enc).unwrap();
-        txin
-            .previous_output
-            .consensus_encode(&mut enc)
-            .unwrap();
+        txin.previous_output.consensus_encode(&mut enc).unwrap();
         script_code.consensus_encode(&mut enc).unwrap();
         value.consensus_encode(&mut enc).unwrap();
         txin.sequence.consensus_encode(&mut enc).unwrap();
@@ -104,11 +101,11 @@ mod tests {
     use blockdata::script::Script;
     use blockdata::transaction::Transaction;
     use consensus::encode::deserialize;
+    use hex;
     use network::constants::Network;
-    use util::misc::hex_bytes;
     use util::address::Address;
     use util::key::PublicKey;
-    use hex;
+    use util::misc::hex_bytes;
 
     use super::*;
 

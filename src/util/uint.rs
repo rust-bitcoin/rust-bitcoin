@@ -24,7 +24,7 @@ use consensus::encode;
 use util::BitArray;
 
 macro_rules! construct_uint {
-    ($name:ident, $n_words:expr) => (
+    ($name:ident, $n_words:expr) => {
         /// Little-endian large integer type
         #[repr(C)]
         pub struct $name(pub [u64; $n_words]);
@@ -141,7 +141,7 @@ macro_rules! construct_uint {
                 let mut sub_copy = self;
                 let mut shift_copy = other;
                 let mut ret = [0u64; $n_words];
-        
+
                 let my_bits = self.bits();
                 let your_bits = other.bits();
 
@@ -352,9 +352,7 @@ macro_rules! construct_uint {
         }
 
         impl ::consensus::Decodable for $name {
-            fn consensus_decode<D: ::std::io::Read>(
-                mut d: D,
-            ) -> Result<$name, encode::Error> {
+            fn consensus_decode<D: ::std::io::Read>(mut d: D) -> Result<$name, encode::Error> {
                 use consensus::Decodable;
                 let mut ret: [u64; $n_words] = [0; $n_words];
                 for i in 0..$n_words {
@@ -363,7 +361,7 @@ macro_rules! construct_uint {
                 Ok($name(ret))
             }
         }
-    );
+    };
 }
 
 construct_uint!(Uint256, 4);
@@ -478,9 +476,10 @@ mod tests {
         let mult = sub.mul_u32(300);
         assert_eq!(mult, Uint256([0x8C8C3EE70C644118u64, 0x0209E7378231E632, 0, 0]));
         // Division
-        assert_eq!(Uint256::from_u64(105).unwrap() /
-                   Uint256::from_u64(5).unwrap(),
-                   Uint256::from_u64(21).unwrap());
+        assert_eq!(
+            Uint256::from_u64(105).unwrap() / Uint256::from_u64(5).unwrap(),
+            Uint256::from_u64(21).unwrap()
+        );
         let div = mult / Uint256::from_u64(300).unwrap();
         assert_eq!(div, Uint256([0x9F30411021524112u64, 0x0001BD5B7DDFBD5A, 0, 0]));
         // TODO: bit inversion
@@ -555,4 +554,3 @@ mod tests {
         assert_eq!(end2.ok(), Some(start2));
     }
 }
-

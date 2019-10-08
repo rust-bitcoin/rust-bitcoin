@@ -27,13 +27,13 @@ use byteorder::{LittleEndian, WriteBytesExt};
 use std::default::Default;
 use std::{fmt, io};
 
-use hashes::{self, sha256d, Hash};
 use hashes::hex::FromHex;
+use hashes::{self, sha256d, Hash};
 
-use util::hash::BitcoinHash;
 #[cfg(feature="bitcoinconsensus")] use blockdata::script;
 use blockdata::script::Script;
 use consensus::{encode, serialize, Decodable, Encodable};
+use util::hash::BitcoinHash;
 use VarInt;
 
 /// A reference to a transaction output
@@ -176,7 +176,7 @@ impl ::std::str::FromStr for OutPoint {
         }
         Ok(OutPoint {
             txid: sha256d::Hash::from_hex(&s[..colon]).map_err(ParseOutPointError::Txid)?,
-            vout: parse_vout(&s[colon+1..])?,
+            vout: parse_vout(&s[colon + 1..])?,
         })
     }
 }
@@ -199,7 +199,7 @@ pub struct TxIn {
     /// Encodable/Decodable, as it is (de)serialized at the end of the full
     /// Transaction. It *is* (de)serialized with the rest of the TxIn in other
     /// (de)serialization routines.
-    pub witness: Vec<Vec<u8>>
+    pub witness: Vec<Vec<u8>>,
 }
 serde_struct_impl!(TxIn, previous_output, script_sig, sequence, witness);
 
@@ -354,7 +354,7 @@ impl Transaction {
                 output_iter.collect()
             }
             SigHashType::None => vec![],
-            _ => unreachable!()
+            _ => unreachable!(),
         };
         // hash the result
         let mut raw_vec = serialize(&tx);
@@ -404,11 +404,13 @@ impl Transaction {
         }
     }
 
-    #[cfg(feature="bitcoinconsensus")]
+    #[cfg(feature = "bitcoinconsensus")]
     /// Verify that this transaction is able to spend its inputs
     /// The lambda spent should not return the same TxOut twice!
     pub fn verify<S>(&self, mut spent: S) -> Result<(), script::Error>
-        where S: FnMut(&OutPoint) -> Option<TxOut> {
+    where
+        S: FnMut(&OutPoint) -> Option<TxOut>,
+    {
         let tx = serialize(&*self);
         for (idx, input) in self.input.iter().enumerate() {
             if let Some(output) = spent(&input.previous_output) {
@@ -437,10 +439,7 @@ impl BitcoinHash for Transaction {
 impl_consensus_encoding!(TxOut, value, script_pubkey);
 
 impl Encodable for OutPoint {
-    fn consensus_encode<S: io::Write>(
-        &self,
-        mut s: S,
-    ) -> Result<usize, encode::Error> {
+    fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, encode::Error> {
         let len = self.txid.consensus_encode(&mut s)?;
         Ok(len + self.vout.consensus_encode(s)?)
     }
@@ -455,10 +454,7 @@ impl Decodable for OutPoint {
 }
 
 impl Encodable for TxIn {
-    fn consensus_encode<S: io::Write>(
-        &self,
-        mut s: S,
-    ) -> Result<usize, encode::Error> {
+    fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, encode::Error> {
         let mut len = 0;
         len += self.previous_output.consensus_encode(&mut s)?;
         len += self.script_sig.consensus_encode(&mut s)?;
@@ -478,10 +474,7 @@ impl Decodable for TxIn {
 }
 
 impl Encodable for Transaction {
-    fn consensus_encode<S: io::Write>(
-        &self,
-        mut s: S,
-    ) -> Result<usize, encode::Error> {
+    fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, encode::Error> {
         let mut len = 0;
         len += self.version.consensus_encode(&mut s)?;
         let mut have_witness = self.input.is_empty();
@@ -535,9 +528,7 @@ impl Decodable for Transaction {
                     }
                 }
                 // We don't support anything else
-                x => {
-                    Err(encode::Error::UnsupportedSegwitFlag(x))
-                }
+                x => Err(encode::Error::UnsupportedSegwitFlag(x)),
             }
         // non-segwit
         } else {
@@ -660,12 +651,12 @@ mod tests {
     }
 
     #[test]
-    fn test_is_coinbase () {
-        use network::constants::Network;
+    fn test_is_coinbase() {
         use blockdata::constants;
+        use network::constants::Network;
 
         let genesis = constants::genesis_block(Network::Bitcoin);
-        assert! (genesis.txdata[0].is_coin_base());
+        assert!(genesis.txdata[0].is_coin_base());
         let hex_tx = hex_bytes("0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000").unwrap();
         let tx: Transaction = deserialize(&hex_tx).unwrap();
         assert!(!tx.is_coin_base());
@@ -683,15 +674,19 @@ mod tests {
         assert_eq!(realtx.input.len(), 1);
         // In particular this one is easy to get backward -- in bitcoin hashes are encoded
         // as little-endian 256-bit numbers rather than as data strings.
-        assert_eq!(format!("{:x}", realtx.input[0].previous_output.txid),
-                   "ce9ea9f6f5e422c6a9dbcddb3b9a14d1c78fab9ab520cb281aa2a74a09575da1".to_string());
+        assert_eq!(
+            format!("{:x}", realtx.input[0].previous_output.txid),
+            "ce9ea9f6f5e422c6a9dbcddb3b9a14d1c78fab9ab520cb281aa2a74a09575da1".to_string()
+        );
         assert_eq!(realtx.input[0].previous_output.vout, 1);
         assert_eq!(realtx.output.len(), 1);
         assert_eq!(realtx.lock_time, 0);
 
-        assert_eq!(format!("{:x}", realtx.bitcoin_hash()),
-                   "a6eab3c14ab5272a58a5ba91505ba1a4b6d7a3a9fcbd187b6cd99a7b6d548cb7".to_string());
-        assert_eq!(realtx.get_weight(), 193*4);
+        assert_eq!(
+            format!("{:x}", realtx.bitcoin_hash()),
+            "a6eab3c14ab5272a58a5ba91505ba1a4b6d7a3a9fcbd187b6cd99a7b6d548cb7".to_string()
+        );
+        assert_eq!(realtx.get_weight(), 193 * 4);
     }
 
     #[test]
@@ -714,7 +709,10 @@ mod tests {
         let mut tx: Transaction = deserialize(&hex_tx).unwrap();
 
         let old_ntxid = tx.ntxid();
-        assert_eq!(format!("{:x}", old_ntxid), "c3573dbea28ce24425c59a189391937e00d255150fa973d59d61caf3a06b601d");
+        assert_eq!(
+            format!("{:x}", old_ntxid),
+            "c3573dbea28ce24425c59a189391937e00d255150fa973d59d61caf3a06b601d"
+        );
         // changing sigs does not affect it
         tx.input[0].script_sig = Script::new();
         assert_eq!(old_ntxid, tx.ntxid());
@@ -758,8 +756,14 @@ mod tests {
         ).unwrap();
         let tx: Transaction = deserialize(&hex_tx).unwrap();
 
-        assert_eq!(format!("{:x}", tx.bitcoin_hash()), "d6ac4a5e61657c4c604dcde855a1db74ec6b3e54f32695d72c5e11c7761ea1b4");
-        assert_eq!(format!("{:x}", tx.txid()), "9652aa62b0e748caeec40c4cb7bc17c6792435cc3dfe447dd1ca24f912a1c6ec");
+        assert_eq!(
+            format!("{:x}", tx.bitcoin_hash()),
+            "d6ac4a5e61657c4c604dcde855a1db74ec6b3e54f32695d72c5e11c7761ea1b4"
+        );
+        assert_eq!(
+            format!("{:x}", tx.txid()),
+            "9652aa62b0e748caeec40c4cb7bc17c6792435cc3dfe447dd1ca24f912a1c6ec"
+        );
         assert_eq!(tx.get_weight(), 2718);
 
         // non-segwit tx from my mempool
@@ -773,8 +777,14 @@ mod tests {
         ).unwrap();
         let tx: Transaction = deserialize(&hex_tx).unwrap();
 
-        assert_eq!(format!("{:x}", tx.bitcoin_hash()), "971ed48a62c143bbd9c87f4bafa2ef213cfa106c6e140f111931d0be307468dd");
-        assert_eq!(format!("{:x}", tx.txid()), "971ed48a62c143bbd9c87f4bafa2ef213cfa106c6e140f111931d0be307468dd");
+        assert_eq!(
+            format!("{:x}", tx.bitcoin_hash()),
+            "971ed48a62c143bbd9c87f4bafa2ef213cfa106c6e140f111931d0be307468dd"
+        );
+        assert_eq!(
+            format!("{:x}", tx.txid()),
+            "971ed48a62c143bbd9c87f4bafa2ef213cfa106c6e140f111931d0be307468dd"
+        );
     }
 
     #[test]
@@ -809,7 +819,6 @@ mod tests {
         let consensus_encoded = serialize(&tx);
         assert_eq!(consensus_encoded, hex_tx);
     }
-
 
     // These test vectors were stolen from libbtc, which is Copyright 2014 Jonas Schnelli MIT
     // They were transformed by replacing {...} with run_test_sighash(...), then the ones containing
@@ -1108,11 +1117,11 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature="bitcoinconsensus")]
-    fn test_transaction_verify () {
+    #[cfg(feature = "bitcoinconsensus")]
+    fn test_transaction_verify() {
+        use blockdata::script;
         use hex::decode as hex_decode;
         use std::collections::HashMap;
-        use blockdata::script;
         // a random recent segwit transaction from blockchain using both old and segwit inputs
         let mut spending: Transaction = deserialize(hex_decode("020000000001031cfbc8f54fbfa4a33a30068841371f80dbfe166211242213188428f437445c91000000006a47304402206fbcec8d2d2e740d824d3d36cc345b37d9f65d665a99f5bd5c9e8d42270a03a8022013959632492332200c2908459547bf8dbf97c65ab1a28dec377d6f1d41d3d63e012103d7279dfb90ce17fe139ba60a7c41ddf605b25e1c07a4ddcb9dfef4e7d6710f48feffffff476222484f5e35b3f0e43f65fc76e21d8be7818dd6a989c160b1e5039b7835fc00000000171600140914414d3c94af70ac7e25407b0689e0baa10c77feffffffa83d954a62568bbc99cc644c62eb7383d7c2a2563041a0aeb891a6a4055895570000000017160014795d04cc2d4f31480d9a3710993fbd80d04301dffeffffff06fef72f000000000017a91476fd7035cd26f1a32a5ab979e056713aac25796887a5000f00000000001976a914b8332d502a529571c6af4be66399cd33379071c588ac3fda0500000000001976a914fc1d692f8de10ae33295f090bea5fe49527d975c88ac522e1b00000000001976a914808406b54d1044c429ac54c0e189b0d8061667e088ac6eb68501000000001976a914dfab6085f3a8fb3e6710206a5a959313c5618f4d88acbba20000000000001976a914eb3026552d7e3f3073457d0bee5d4757de48160d88ac0002483045022100bee24b63212939d33d513e767bc79300051f7a0d433c3fcf1e0e3bf03b9eb1d70220588dc45a9ce3a939103b4459ce47500b64e23ab118dfc03c9caa7d6bfc32b9c601210354fd80328da0f9ae6eef2b3a81f74f9a6f66761fadf96f1d1d22b1fd6845876402483045022100e29c7e3a5efc10da6269e5fc20b6a1cb8beb92130cc52c67e46ef40aaa5cac5f0220644dd1b049727d991aece98a105563416e10a5ac4221abac7d16931842d5c322012103960b87412d6e169f30e12106bdf70122aabb9eb61f455518322a18b920a4dfa887d30700")
             .unwrap().as_slice()).unwrap();

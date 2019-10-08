@@ -87,7 +87,7 @@ impl Serialize for (Fingerprint, DerivationPath) {
 impl Deserialize for (Fingerprint, DerivationPath) {
     fn deserialize(bytes: &[u8]) -> Result<Self, encode::Error> {
         if bytes.len() < 4 {
-            return Err(io::Error::from(io::ErrorKind::UnexpectedEof).into())
+            return Err(io::Error::from(io::ErrorKind::UnexpectedEof).into());
         }
 
         let fprint: Fingerprint = Fingerprint::from(&bytes[0..4]);

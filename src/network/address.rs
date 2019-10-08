@@ -18,9 +18,9 @@
 //! network addresses in Bitcoin messages.
 //!
 
-use std::io;
 use std::fmt;
-use std::net::{SocketAddr, Ipv6Addr, SocketAddrV4, SocketAddrV6};
+use std::io;
+use std::net::{Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6};
 
 use consensus::encode::{self, Decodable, Encodable};
 
@@ -31,24 +31,28 @@ pub struct Address {
     /// Network byte-order ipv6 address, or ipv4-mapped ipv6 address
     pub address: [u16; 8],
     /// Network port
-    pub port: u16
+    pub port: u16,
 }
 
-const ONION : [u16; 3] = [0xFD87, 0xD87E, 0xEB43];
+const ONION: [u16; 3] = [0xFD87, 0xD87E, 0xEB43];
 
 impl Address {
     /// Create an address message for a socket
-    pub fn new (socket :&SocketAddr, services: u64) -> Address {
+    pub fn new(socket: &SocketAddr, services: u64) -> Address {
         let (address, port) = match socket {
             &SocketAddr::V4(ref addr) => (addr.ip().to_ipv6_mapped().segments(), addr.port()),
-            &SocketAddr::V6(ref addr) => (addr.ip().segments(), addr.port())
+            &SocketAddr::V6(ref addr) => (addr.ip().segments(), addr.port()),
         };
-        Address { address: address, port: port, services: services }
+        Address {
+            address: address,
+            port: port,
+            services: services,
+        }
     }
 
     /// extract socket address from an address message
     /// This will return io::Error ErrorKind::AddrNotAvailable if the message contains a Tor address.
-    pub fn socket_addr (&self) -> Result<SocketAddr, io::Error> {
+    pub fn socket_addr(&self) -> Result<SocketAddr, io::Error> {
         let addr = &self.address;
         if addr[0..3] == ONION {
             return Err(io::Error::from(io::ErrorKind::AddrNotAvailable));
@@ -59,8 +63,7 @@ impl Address {
         );
         if let Some(ipv4) = ipv6.to_ipv4() {
             Ok(SocketAddr::V4(SocketAddrV4::new(ipv4, self.port)))
-        }
-        else {
+        } else {
             Ok(SocketAddr::V6(SocketAddrV6::new(ipv6, self.port, 0, 0)))
         }
     }
@@ -73,10 +76,7 @@ fn addr_to_be(addr: [u16; 8]) -> [u16; 8] {
 
 impl Encodable for Address {
     #[inline]
-    fn consensus_encode<S: io::Write>(
-        &self,
-        mut s: S,
-    ) -> Result<usize, encode::Error> {
+    fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, encode::Error> {
         let len = self.services.consensus_encode(&mut s)?
             + addr_to_be(self.address).consensus_encode(&mut s)?
             + self.port.to_be().consensus_encode(s)?;
@@ -90,7 +90,7 @@ impl Decodable for Address {
         Ok(Address {
             services: Decodable::consensus_decode(&mut d)?,
             address: addr_to_be(Decodable::consensus_decode(&mut d)?),
-            port: u16::from_be(Decodable::consensus_decode(d)?)
+            port: u16::from_be(Decodable::consensus_decode(d)?),
         })
     }
 }

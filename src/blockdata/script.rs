@@ -32,9 +32,9 @@ use std::{error, fmt, io};
 use blockdata::opcodes;
 use consensus::{encode, Decodable, Encodable};
 use hashes::{hash160, sha256, Hash};
-#[cfg(feature="bitcoinconsensus")] use bitcoinconsensus;
-#[cfg(feature="bitcoinconsensus")] use std::convert;
-#[cfg(feature="bitcoinconsensus")] use OutPoint;
+#[cfg(feature = "bitcoinconsensus")] use bitcoinconsensus;
+#[cfg(feature = "bitcoinconsensus")] use std::convert;
+#[cfg(feature = "bitcoinconsensus")] use OutPoint;
 
 use util::key::PublicKey;
 
@@ -91,15 +91,15 @@ pub enum Error {
     EarlyEndOfScript,
     /// Tried to read an array off the stack as a number when it was more than 4 bytes
     NumericOverflow,
-    #[cfg(feature="bitcoinconsensus")]
+    #[cfg(feature = "bitcoinconsensus")]
     /// Error validating the script with bitcoinconsensus library
     BitcoinConsensus(bitcoinconsensus::Error),
-    #[cfg(feature="bitcoinconsensus")]
+    #[cfg(feature = "bitcoinconsensus")]
     /// Can not find the spent output
     UnknownSpentOutput(OutPoint),
-    #[cfg(feature="bitcoinconsensus")]
+    #[cfg(feature = "bitcoinconsensus")]
     /// Can not serialize the spending transaction
-    SerializationError
+    SerializationError,
 }
 
 impl fmt::Display for Error {
@@ -116,22 +116,22 @@ impl error::Error for Error {
             Error::NonMinimalPush => "non-minimal datapush",
             Error::EarlyEndOfScript => "unexpected end of script",
             Error::NumericOverflow => "numeric overflow (number on stack larger than 4 bytes)",
-            #[cfg(feature="bitcoinconsensus")]
+            #[cfg(feature = "bitcoinconsensus")]
             Error::BitcoinConsensus(ref _n) => "bitcoinconsensus verification failed",
-            #[cfg(feature="bitcoinconsensus")]
+            #[cfg(feature = "bitcoinconsensus")]
             Error::UnknownSpentOutput(ref _point) => "unknown spent output Transaction::verify()",
-            #[cfg(feature="bitcoinconsensus")]
+            #[cfg(feature = "bitcoinconsensus")]
             Error::SerializationError => "can not serialize the spending transaction in Transaction::verify()",
         }
     }
 }
 
-#[cfg(feature="bitcoinconsensus")]
+#[cfg(feature = "bitcoinconsensus")]
 #[doc(hidden)]
 impl convert::From<bitcoinconsensus::Error> for Error {
     fn from(err: bitcoinconsensus::Error) -> Error {
         match err {
-            _ => Error::BitcoinConsensus(err)
+            _ => Error::BitcoinConsensus(err),
         }
     }
 }
@@ -232,10 +232,11 @@ impl Script {
 
     /// Compute the P2SH output corresponding to this redeem script
     pub fn to_p2sh(&self) -> Script {
-        Builder::new().push_opcode(opcodes::all::OP_HASH160)
-                      .push_slice(&hash160::Hash::hash(&self.0)[..])
-                      .push_opcode(opcodes::all::OP_EQUAL)
-                      .into_script()
+        Builder::new()
+            .push_opcode(opcodes::all::OP_HASH160)
+            .push_slice(&hash160::Hash::hash(&self.0)[..])
+            .push_opcode(opcodes::all::OP_EQUAL)
+            .into_script()
     }
 
     /// Compute the P2WSH output corresponding to this witnessScript (aka the "witness redeem
@@ -249,32 +250,32 @@ impl Script {
     /// Checks whether a script pubkey is a p2sh output
     #[inline]
     pub fn is_p2sh(&self) -> bool {
-        self.0.len() == 23 &&
-        self.0[0] == opcodes::all::OP_HASH160.into_u8() &&
-        self.0[1] == opcodes::all::OP_PUSHBYTES_20.into_u8() &&
-        self.0[22] == opcodes::all::OP_EQUAL.into_u8()
+        self.0.len() == 23
+            && self.0[0] == opcodes::all::OP_HASH160.into_u8()
+            && self.0[1] == opcodes::all::OP_PUSHBYTES_20.into_u8()
+            && self.0[22] == opcodes::all::OP_EQUAL.into_u8()
     }
 
     /// Checks whether a script pubkey is a p2pkh output
     #[inline]
     pub fn is_p2pkh(&self) -> bool {
-        self.0.len() == 25 &&
-        self.0[0] == opcodes::all::OP_DUP.into_u8() &&
-        self.0[1] == opcodes::all::OP_HASH160.into_u8() &&
-        self.0[2] == opcodes::all::OP_PUSHBYTES_20.into_u8() &&
-        self.0[23] == opcodes::all::OP_EQUALVERIFY.into_u8() &&
-        self.0[24] == opcodes::all::OP_CHECKSIG.into_u8()
+        self.0.len() == 25
+            && self.0[0] == opcodes::all::OP_DUP.into_u8()
+            && self.0[1] == opcodes::all::OP_HASH160.into_u8()
+            && self.0[2] == opcodes::all::OP_PUSHBYTES_20.into_u8()
+            && self.0[23] == opcodes::all::OP_EQUALVERIFY.into_u8()
+            && self.0[24] == opcodes::all::OP_CHECKSIG.into_u8()
     }
 
     /// Checks whether a script pubkey is a p2pk output
     #[inline]
     pub fn is_p2pk(&self) -> bool {
-        (self.0.len() == 67 &&
-            self.0[0] == opcodes::all::OP_PUSHBYTES_65.into_u8() &&
-            self.0[66] == opcodes::all::OP_CHECKSIG.into_u8())
-     || (self.0.len() == 35 &&
-            self.0[0] == opcodes::all::OP_PUSHBYTES_33.into_u8() &&
-            self.0[34] == opcodes::all::OP_CHECKSIG.into_u8())
+        (self.0.len() == 67
+            && self.0[0] == opcodes::all::OP_PUSHBYTES_65.into_u8()
+            && self.0[66] == opcodes::all::OP_CHECKSIG.into_u8())
+            || (self.0.len() == 35
+                && self.0[0] == opcodes::all::OP_PUSHBYTES_33.into_u8()
+                && self.0[34] == opcodes::all::OP_CHECKSIG.into_u8())
     }
 
     /// Checks whether a script pubkey is a Segregated Witness (segwit) program.
@@ -300,21 +301,21 @@ impl Script {
     /// Checks whether a script pubkey is a p2wsh output
     #[inline]
     pub fn is_v0_p2wsh(&self) -> bool {
-        self.0.len() == 34 &&
-        self.0[0] == opcodes::all::OP_PUSHBYTES_0.into_u8() &&
-        self.0[1] == opcodes::all::OP_PUSHBYTES_32.into_u8()
+        self.0.len() == 34
+            && self.0[0] == opcodes::all::OP_PUSHBYTES_0.into_u8()
+            && self.0[1] == opcodes::all::OP_PUSHBYTES_32.into_u8()
     }
 
     /// Checks whether a script pubkey is a p2wpkh output
     #[inline]
     pub fn is_v0_p2wpkh(&self) -> bool {
-        self.0.len() == 22 &&
-            self.0[0] == opcodes::all::OP_PUSHBYTES_0.into_u8() &&
-            self.0[1] == opcodes::all::OP_PUSHBYTES_20.into_u8()
+        self.0.len() == 22
+            && self.0[0] == opcodes::all::OP_PUSHBYTES_0.into_u8()
+            && self.0[1] == opcodes::all::OP_PUSHBYTES_20.into_u8()
     }
 
     /// Check if this is an OP_RETURN output
-    pub fn is_op_return (&self) -> bool {
+    pub fn is_op_return(&self) -> bool {
         !self.0.is_empty() && (opcodes::All::from(self.0[0]) == opcodes::all::OP_RETURN)
     }
 
@@ -335,14 +336,14 @@ impl Script {
         }
     }
 
-    #[cfg(feature="bitcoinconsensus")]
+    #[cfg(feature = "bitcoinconsensus")]
     /// verify spend of an input script
     /// # Parameters
     ///  * index - the input index in spending which is spending this transaction
     ///  * amount - the amount this script guards
     ///  * spending - the transaction that attempts to spend the output holding this script
-    pub fn verify (&self, index: usize, amount: u64, spending: &[u8]) -> Result<(), Error> {
-        Ok(bitcoinconsensus::verify (&self.0[..], amount, spending, index)?)
+    pub fn verify(&self, index: usize, amount: u64, spending: &[u8]) -> Result<(), Error> {
+        Ok(bitcoinconsensus::verify(&self.0[..], amount, spending, index)?)
     }
 
     /// Write the assembly decoding of the script to the formatter.
@@ -402,7 +403,7 @@ impl Script {
                 f.write_str(" ")?;
                 if index + data_len <= self.0.len() {
                     for ch in &self.0[index..index + data_len] {
-                            write!(f, "{:02x}", ch)?;
+                        write!(f, "{:02x}", ch)?;
                     }
                     index += data_len;
                 } else {
@@ -437,7 +438,7 @@ pub enum Instruction<'a> {
     /// Some non-push opcode
     Op(opcodes::All),
     /// An opcode we were unable to parse
-    Error(Error)
+    Error(Error),
 }
 
 /// Iterator over a script returning parsed opcodes
@@ -594,16 +595,16 @@ impl Builder {
     pub fn push_slice(mut self, data: &[u8]) -> Builder {
         // Start with a PUSH opcode
         match data.len() as u64 {
-            n if n < opcodes::Ordinary::OP_PUSHDATA1 as u64 => { self.0.push(n as u8); },
+            n if n < opcodes::Ordinary::OP_PUSHDATA1 as u64 => { self.0.push(n as u8); }
             n if n < 0x100 => {
                 self.0.push(opcodes::Ordinary::OP_PUSHDATA1.into_u8());
                 self.0.push(n as u8);
-            },
+            }
             n if n < 0x10000 => {
                 self.0.push(opcodes::Ordinary::OP_PUSHDATA2.into_u8());
                 self.0.push((n % 0x100) as u8);
                 self.0.push((n / 0x100) as u8);
-            },
+            }
             n if n < 0x100000000 => {
                 self.0.push(opcodes::Ordinary::OP_PUSHDATA4.into_u8());
                 self.0.push((n % 0x100) as u8);
@@ -611,7 +612,7 @@ impl Builder {
                 self.0.push(((n / 0x10000) % 0x100) as u8);
                 self.0.push((n / 0x1000000) as u8);
             }
-            _ => panic!("tried to put a 4bn+ sized object into a script!")
+            _ => panic!("tried to put a 4bn+ sized object into a script!"),
         }
         // Then push the raw bytes
         self.0.extend(data.iter().cloned());
@@ -643,19 +644,19 @@ impl Builder {
             Some(opcodes::all::OP_EQUAL) => {
                 self.0.pop();
                 self.push_opcode(opcodes::all::OP_EQUALVERIFY)
-            },
+            }
             Some(opcodes::all::OP_NUMEQUAL) => {
                 self.0.pop();
                 self.push_opcode(opcodes::all::OP_NUMEQUALVERIFY)
-            },
+            }
             Some(opcodes::all::OP_CHECKSIG) => {
                 self.0.pop();
                 self.push_opcode(opcodes::all::OP_CHECKSIGVERIFY)
-            },
+            }
             Some(opcodes::all::OP_CHECKMULTISIG) => {
                 self.0.pop();
                 self.push_opcode(opcodes::all::OP_CHECKMULTISIGVERIFY)
-            },
+            }
             _ => self.push_opcode(opcodes::all::OP_VERIFY),
         }
     }
@@ -742,10 +743,7 @@ impl serde::Serialize for Script {
 // Network serialization
 impl Encodable for Script {
     #[inline]
-    fn consensus_encode<S: io::Write>(
-        &self,
-        s: S,
-    ) -> Result<usize, encode::Error> {
+    fn consensus_encode<S: io::Write>(&self, s: S) -> Result<usize, encode::Error> {
         self.0.consensus_encode(s)
     }
 }
@@ -759,14 +757,14 @@ impl Decodable for Script {
 
 #[cfg(test)]
 mod test {
-    use std::str::FromStr;
     use hex::decode as hex_decode;
+    use std::str::FromStr;
 
-    use super::*;
     use super::build_scriptint;
+    use super::*;
 
-    use consensus::encode::{deserialize, serialize};
     use blockdata::opcodes;
+    use consensus::encode::{deserialize, serialize};
     use util::key::PublicKey;
 
     #[test]
@@ -887,7 +885,7 @@ mod test {
             .push_verify()
             .into_script();
         assert_eq!(format!("{:x}", trick_slice2), "01ae69");
-   }
+    }
 
     #[test]
     fn script_serialize() {
@@ -1058,9 +1056,9 @@ mod test {
         assert_eq!(v_nonmin_alt, slop_v_nonmin_alt);
     }
 
-	#[test]
+    #[test]
     fn script_ord() {
-        let script_1 = Builder::new().push_slice(&[1,2,3,4]).into_script();
+        let script_1 = Builder::new().push_slice(&[1, 2, 3, 4]).into_script();
         let script_2 = Builder::new().push_int(10).into_script();
         let script_3 = Builder::new().push_int(15).into_script();
         let script_4 = Builder::new().push_opcode(opcodes::all::OP_RETURN).into_script();
@@ -1077,13 +1075,16 @@ mod test {
         assert!(script_2 > script_1);
     }
 
-	#[test]
-	#[cfg(feature="bitcoinconsensus")]
-	fn test_bitcoinconsensus () {
-		// a random segwit transaction from the blockchain using native segwit
-		let spent = Builder::from(hex_decode("0020701a8d401c84fb13e6baf169d59684e17abd9fa216c8cc5b9fc63d622ff8c58d").unwrap()).into_script();
-		let spending = hex_decode("010000000001011f97548fbbe7a0db7588a66e18d803d0089315aa7d4cc28360b6ec50ef36718a0100000000ffffffff02df1776000000000017a9146c002a686959067f4866b8fb493ad7970290ab728757d29f0000000000220020701a8d401c84fb13e6baf169d59684e17abd9fa216c8cc5b9fc63d622ff8c58d04004730440220565d170eed95ff95027a69b313758450ba84a01224e1f7f130dda46e94d13f8602207bdd20e307f062594022f12ed5017bbf4a055a06aea91c10110a0e3bb23117fc014730440220647d2dc5b15f60bc37dc42618a370b2a1490293f9e5c8464f53ec4fe1dfe067302203598773895b4b16d37485cbe21b337f4e4b650739880098c592553add7dd4355016952210375e00eb72e29da82b89367947f29ef34afb75e8654f6ea368e0acdfd92976b7c2103a1b26313f430c4b15bb1fdce663207659d8cac749a0e53d70eff01874496feff2103c96d495bfdd5ba4145e3e046fee45e84a8a48ad05bd8dbb395c011a32cf9f88053ae00000000").unwrap();
-		spent.verify(0, 18393430, spending.as_slice()).unwrap();
-	}
+    #[test]
+    #[cfg(feature = "bitcoinconsensus")]
+    fn test_bitcoinconsensus() {
+        // a random segwit transaction from the blockchain using native segwit
+        let spent = Builder::from(
+            hex_decode("0020701a8d401c84fb13e6baf169d59684e17abd9fa216c8cc5b9fc63d622ff8c58d")
+                .unwrap(),
+        )
+        .into_script();
+        let spending = hex_decode("010000000001011f97548fbbe7a0db7588a66e18d803d0089315aa7d4cc28360b6ec50ef36718a0100000000ffffffff02df1776000000000017a9146c002a686959067f4866b8fb493ad7970290ab728757d29f0000000000220020701a8d401c84fb13e6baf169d59684e17abd9fa216c8cc5b9fc63d622ff8c58d04004730440220565d170eed95ff95027a69b313758450ba84a01224e1f7f130dda46e94d13f8602207bdd20e307f062594022f12ed5017bbf4a055a06aea91c10110a0e3bb23117fc014730440220647d2dc5b15f60bc37dc42618a370b2a1490293f9e5c8464f53ec4fe1dfe067302203598773895b4b16d37485cbe21b337f4e4b650739880098c592553add7dd4355016952210375e00eb72e29da82b89367947f29ef34afb75e8654f6ea368e0acdfd92976b7c2103a1b26313f430c4b15bb1fdce663207659d8cac749a0e53d70eff01874496feff2103c96d495bfdd5ba4145e3e046fee45e84a8a48ad05bd8dbb395c011a32cf9f88053ae00000000").unwrap();
+        spent.verify(0, 18393430, spending.as_slice()).unwrap();
+    }
 }
-

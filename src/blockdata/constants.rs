@@ -21,10 +21,10 @@
 
 use std::default::Default;
 
+use blockdata::block::{Block, BlockHeader};
 use blockdata::opcodes;
 use blockdata::script;
-use blockdata::transaction::{OutPoint, Transaction, TxOut, TxIn};
-use blockdata::block::{Block, BlockHeader};
+use blockdata::transaction::{OutPoint, Transaction, TxIn, TxOut};
 use network::constants::Network;
 use util::misc::hex_bytes;
 use util::uint::Uint256;
@@ -43,7 +43,6 @@ pub const DIFFCHANGE_TIMESPAN: u32 = 14 * 24 * 3600;
 pub const MAX_BLOCK_WEIGHT: u32 = 4_000_000;
 /// The minimum transaction weight for a valid serialized transaction
 pub const MIN_TRANSACTION_WEIGHT: u32 = 4 * 60;
-
 
 /// In Bitcoind this is insanely described as ~((u256)0 >> 32)
 pub fn max_target(_: Network) -> Uint256 {
@@ -68,10 +67,11 @@ fn bitcoin_genesis_tx() -> Transaction {
     };
 
     // Inputs
-    let in_script = script::Builder::new().push_scriptint(486604799)
-                                          .push_scriptint(4)
-                                          .push_slice(b"The Times 03/Jan/2009 Chancellor on brink of second bailout for banks")
-                                          .into_script();
+    let in_script = script::Builder::new()
+        .push_scriptint(486604799)
+        .push_scriptint(4)
+        .push_slice(b"The Times 03/Jan/2009 Chancellor on brink of second bailout for banks")
+        .into_script();
     ret.input.push(TxIn {
         previous_output: OutPoint::null(),
         script_sig: in_script,
@@ -86,7 +86,7 @@ fn bitcoin_genesis_tx() -> Transaction {
         .into_script();
     ret.output.push(TxOut {
         value: 50 * COIN_VALUE,
-        script_pubkey: out_script
+        script_pubkey: out_script,
     });
 
     // end
@@ -105,9 +105,9 @@ pub fn genesis_block(network: Network) -> Block {
                     merkle_root: txdata[0].txid(),
                     time: 1231006505,
                     bits: 0x1d00ffff,
-                    nonce: 2083236893
+                    nonce: 2083236893,
                 },
-                txdata: txdata
+                txdata: txdata,
             }
         }
         Network::Testnet => {
@@ -119,9 +119,9 @@ pub fn genesis_block(network: Network) -> Block {
                     merkle_root: txdata[0].txid(),
                     time: 1296688602,
                     bits: 0x1d00ffff,
-                    nonce: 414098458
+                    nonce: 414098458,
                 },
-                txdata: txdata
+                txdata: txdata,
             }
         }
         Network::Regtest => {
@@ -133,9 +133,9 @@ pub fn genesis_block(network: Network) -> Block {
                     merkle_root: txdata[0].txid(),
                     time: 1296688602,
                     bits: 0x207fffff,
-                    nonce: 2
+                    nonce: 2,
                 },
-                txdata: txdata
+                txdata: txdata,
             }
         }
     }
@@ -143,13 +143,13 @@ pub fn genesis_block(network: Network) -> Block {
 
 #[cfg(test)]
 mod test {
-    use std::default::Default;
     use hex::decode as hex_decode;
+    use std::default::Default;
 
-    use network::constants::Network;
+    use blockdata::constants::{bitcoin_genesis_tx, genesis_block};
+    use blockdata::constants::{COIN_VALUE, MAX_SEQUENCE};
     use consensus::encode::serialize;
-    use blockdata::constants::{genesis_block, bitcoin_genesis_tx};
-    use blockdata::constants::{MAX_SEQUENCE, COIN_VALUE};
+    use network::constants::Network;
     use util::hash::BitcoinHash;
 
     #[test]

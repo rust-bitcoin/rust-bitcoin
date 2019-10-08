@@ -20,7 +20,7 @@
 
 use blockdata::script::Script;
 use blockdata::transaction::Transaction;
-use consensus::{encode, Encodable, Decodable};
+use consensus::{encode, Decodable, Encodable};
 
 use std::io;
 
@@ -35,7 +35,7 @@ mod macros;
 pub mod serialize;
 
 mod map;
-pub use self::map::{Map, Global, Input, Output};
+pub use self::map::{Global, Input, Map, Output};
 
 /// A Partially Signed Transaction.
 #[derive(Debug, Clone, PartialEq)]
@@ -91,10 +91,7 @@ impl PartiallySignedTransaction {
 }
 
 impl Encodable for PartiallySignedTransaction {
-    fn consensus_encode<S: io::Write>(
-        &self,
-        mut s: S,
-    ) -> Result<usize, encode::Error> {
+    fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, encode::Error> {
         let mut len = 0;
         len += b"psbt".consensus_encode(&mut s)?;
 
@@ -172,9 +169,9 @@ mod tests {
     use secp256k1::Secp256k1;
 
     use blockdata::script::Script;
-    use blockdata::transaction::{Transaction, TxIn, TxOut, OutPoint};
-    use network::constants::Network::Bitcoin;
+    use blockdata::transaction::{OutPoint, Transaction, TxIn, TxOut};
     use consensus::encode::{deserialize, serialize, serialize_hex};
+    use network::constants::Network::Bitcoin;
     use util::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint};
     use util::key::PublicKey;
     use util::psbt::map::{Global, Output};
@@ -318,9 +315,9 @@ mod tests {
         use hashes::sha256d;
 
         use blockdata::script::Script;
-        use blockdata::transaction::{SigHashType, Transaction, TxIn, TxOut, OutPoint};
+        use blockdata::transaction::{OutPoint, SigHashType, Transaction, TxIn, TxOut};
         use consensus::encode::serialize_hex;
-        use util::psbt::map::{Map, Global, Input, Output};
+        use util::psbt::map::{Global, Input, Map, Output};
         use util::psbt::raw;
         use util::psbt::PartiallySignedTransaction;
 

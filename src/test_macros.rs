@@ -26,4 +26,3 @@ macro_rules! serde_round_trip (
         assert_eq!($var, decoded);
     })
 );
-

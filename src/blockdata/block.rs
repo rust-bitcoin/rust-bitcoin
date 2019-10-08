@@ -22,15 +22,15 @@
 
 use hashes::{sha256d, Hash};
 
-use util;
-use util::Error::{BlockBadTarget, BlockBadProofOfWork};
-use util::hash::{BitcoinHash, MerkleRoot, bitcoin_merkle_root};
-use util::uint::Uint256;
-use consensus::encode::Encodable;
-use network::constants::Network;
-use blockdata::transaction::Transaction;
 use blockdata::constants::max_target;
+use blockdata::transaction::Transaction;
+use consensus::encode::Encodable;
 use hashes::HashEngine;
+use network::constants::Network;
+use util;
+use util::hash::{bitcoin_merkle_root, BitcoinHash, MerkleRoot};
+use util::uint::Uint256;
+use util::Error::{BlockBadProofOfWork, BlockBadTarget};
 
 /// A block header, which contains all the block's information except
 /// the actual transactions
@@ -58,18 +58,17 @@ pub struct Block {
     /// The block header
     pub header: BlockHeader,
     /// List of transactions contained in the block
-    pub txdata: Vec<Transaction>
+    pub txdata: Vec<Transaction>,
 }
 
 impl Block {
     /// check if merkle root of header matches merkle root of the transaction list
-    pub fn check_merkle_root (&self) -> bool {
+    pub fn check_merkle_root(&self) -> bool {
         self.header.merkle_root == self.merkle_root()
     }
 
     /// check if witness commitment in coinbase is matching the transaction list
     pub fn check_witness_commitment(&self) -> bool {
-
         // witness commitment is optional if there are no transactions using SegWit in the block
         if self.txdata.iter().all(|t| t.input.iter().all(|i| i.witness.is_empty())) {
             return true;
@@ -104,8 +103,8 @@ impl Block {
 
     /// Merkle root of transactions hashed for witness
     pub fn witness_root(&self) -> sha256d::Hash {
-        let mut txhashes = vec!(sha256d::Hash::default());
-        txhashes.extend(self.txdata.iter().skip(1).map(|t|t.bitcoin_hash()));
+        let mut txhashes = vec![sha256d::Hash::default()];
+        txhashes.extend(self.txdata.iter().skip(1).map(|t| t.bitcoin_hash()));
         bitcoin_merkle_root(txhashes)
     }
 }

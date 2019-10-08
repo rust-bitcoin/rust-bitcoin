@@ -44,20 +44,20 @@
 //!
 //!
 
-use std::{cmp, fmt, io};
 use std::collections::HashSet;
 use std::error;
 use std::fmt::{Display, Formatter};
 use std::io::Cursor;
+use std::{cmp, fmt, io};
 
-use hashes::{Hash, sha256d, siphash24};
 use byteorder::{ByteOrder, LittleEndian};
+use hashes::{sha256d, siphash24, Hash};
 
 use blockdata::block::Block;
 use blockdata::script::Script;
 use blockdata::transaction::OutPoint;
-use consensus::{Decodable, Encodable};
 use consensus::encode::VarInt;
+use consensus::{Decodable, Encodable};
 use util::hash::BitcoinHash;
 
 /// Golomb encoding parameter as in BIP-158, see also https://gist.github.com/sipa/576d5f09c3b86c3b1b75598d799fc845
@@ -77,7 +77,7 @@ impl error::Error for Error {
     fn description(&self) -> &str {
         match *self {
             Error::UtxoMissing(_) => "unresolved UTXO",
-            Error::Io(_) => "IO Error"
+            Error::Io(_) => "IO Error",
         }
     }
 }
@@ -86,7 +86,7 @@ impl Display for Error {
     fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
         match *self {
             Error::UtxoMissing(ref coin) => write!(f, "unresolved UTXO {}", coin),
-            Error::Io(ref io) => write!(f, "{}", io)
+            Error::Io(ref io) => write!(f, "{}", io),
         }
     }
 }
@@ -97,11 +97,10 @@ impl From<io::Error> for Error {
     }
 }
 
-
 /// a computed or read block filter
 pub struct BlockFilter {
     /// Golomb encoded filter
-    pub content: Vec<u8>
+    pub content: Vec<u8>,
 }
 
 impl BlockFilter {
@@ -121,7 +120,9 @@ impl BlockFilter {
 
     /// Compute a SCRIPT_FILTER that contains spent and output scripts
     pub fn new_script_filter<M>(block: &Block, script_for_coin: M) -> Result<BlockFilter, Error>
-        where M: Fn(&OutPoint) -> Result<Script, Error> {
+    where
+        M: Fn(&OutPoint) -> Result<Script, Error>,
+    {
         let mut out = Cursor::new(Vec::new());
         {
             let mut writer = BlockFilterWriter::new(&mut out, block);
@@ -174,14 +175,20 @@ impl<'a> BlockFilterWriter<'a> {
 
     /// Add consumed output scripts of a block to filter
     pub fn add_input_scripts<M>(&mut self, script_for_coin: M) -> Result<(), Error>
-        where M: Fn(&OutPoint) -> Result<Script, Error> {
-        for script in self.block.txdata.iter()
+    where
+        M: Fn(&OutPoint) -> Result<Script, Error>,
+    {
+        for script in self
+            .block
+            .txdata
+            .iter()
             .skip(1) // skip coinbase
             .flat_map(|t| t.input.iter().map(|i| &i.previous_output))
-            .map(script_for_coin) {
+            .map(script_for_coin)
+        {
             match script {
                 Ok(script) => self.add_element(script.as_bytes()),
-                Err(e) => return Err(e)
+                Err(e) => return Err(e),
             }
         }
         Ok(())
@@ -198,10 +205,9 @@ impl<'a> BlockFilterWriter<'a> {
     }
 }
 
-
 /// Reads and interpret a block filter
 pub struct BlockFilterReader {
-    reader: GCSFilterReader
+    reader: GCSFilterReader,
 }
 
 impl BlockFilterReader {
@@ -342,7 +348,7 @@ pub struct GCSFilterWriter<'a> {
     filter: GCSFilter,
     writer: &'a mut io::Write,
     elements: HashSet<Vec<u8>>,
-    m: u64
+    m: u64,
 }
 
 impl<'a> GCSFilterWriter<'a> {
@@ -352,7 +358,7 @@ impl<'a> GCSFilterWriter<'a> {
             filter: GCSFilter::new(k0, k1, p),
             writer,
             elements: HashSet::new(),
-            m
+            m,
         }
     }
 
@@ -393,7 +399,7 @@ impl<'a> GCSFilterWriter<'a> {
 struct GCSFilter {
     k0: u64, // sip hash key
     k1: u64, // sip hash key
-    p: u8
+    p: u8,
 }
 
 impl GCSFilter {
@@ -520,7 +526,7 @@ impl<'a> BitStreamWriter<'a> {
 
 #[cfg(test)]
 mod test {
-    use std::collections::{HashSet, HashMap};
+    use std::collections::{HashMap, HashSet};
     use std::io::Cursor;
 
     use hashes::hex::FromHex;
@@ -529,13 +535,12 @@ mod test {
 
     extern crate hex;
     extern crate serde_json;
-    use self::serde_json::{Value};
+    use self::serde_json::Value;
 
     use consensus::encode::deserialize;
 
     #[test]
     fn test_blockfilters() {
-
         // test vectors from: https://github.com/jimpo/bitcoin/blob/c7efb652f3543b001b4dd22186a354605b14f47e/src/test/data/blockfilters.json
         let data = r#"
         [
@@ -599,7 +604,7 @@ mod test {
     }
 
     #[test]
-    fn test_filter () {
+    fn test_filter() {
         let mut patterns = HashSet::new();
 
         patterns.insert(hex::decode("000000").unwrap());
