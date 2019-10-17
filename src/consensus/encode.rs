@@ -35,12 +35,12 @@ use std::error;
 use std::fmt;
 use std::io;
 use std::io::{Cursor, Read, Write};
-use byteorder::{LittleEndian, WriteBytesExt, ReadBytesExt};
 use hashes::hex::ToHex;
 
 use hashes::{sha256d, Hash as HashTrait};
 use secp256k1;
 
+use util::endian;
 use util::base58;
 use util::psbt;
 
@@ -276,39 +276,42 @@ macro_rules! encoder_fn {
     ($name:ident, $val_type:ty, $writefn:ident) => {
         #[inline]
         fn $name(&mut self, v: $val_type) -> Result<(), Error> {
-            WriteBytesExt::$writefn::<LittleEndian>(self, v).map_err(Error::Io)
+            self.write_all(&endian::$writefn(v)).map_err(Error::Io)
         }
     }
 }
 
 macro_rules! decoder_fn {
-    ($name:ident, $val_type:ty, $readfn:ident) => {
+    ($name:ident, $val_type:ty, $readfn:ident, $byte_len: expr) => {
         #[inline]
         fn $name(&mut self) -> Result<$val_type, Error> {
-            ReadBytesExt::$readfn::<LittleEndian>(self).map_err(Error::Io)
+            assert_eq!(::std::mem::size_of::<$val_type>(), $byte_len); // size_of isn't a constfn in 1.22
+            let mut val = [0; $byte_len];
+            self.read_exact(&mut val[..]).map_err(Error::Io)?;
+            Ok(endian::$readfn(&val))
         }
     }
 }
 
 impl<W: Write> WriteExt for W {
-    encoder_fn!(emit_u64, u64, write_u64);
-    encoder_fn!(emit_u32, u32, write_u32);
-    encoder_fn!(emit_u16, u16, write_u16);
-    encoder_fn!(emit_i64, i64, write_i64);
-    encoder_fn!(emit_i32, i32, write_i32);
-    encoder_fn!(emit_i16, i16, write_i16);
+    encoder_fn!(emit_u64, u64, u64_to_array_le);
+    encoder_fn!(emit_u32, u32, u32_to_array_le);
+    encoder_fn!(emit_u16, u16, u16_to_array_le);
+    encoder_fn!(emit_i64, i64, i64_to_array_le);
+    encoder_fn!(emit_i32, i32, i32_to_array_le);
+    encoder_fn!(emit_i16, i16, i16_to_array_le);
 
     #[inline]
     fn emit_i8(&mut self, v: i8) -> Result<(), Error> {
-        self.write_i8(v).map_err(Error::Io)
+        self.write_all(&[v as u8]).map_err(Error::Io)
     }
     #[inline]
     fn emit_u8(&mut self, v: u8) -> Result<(), Error> {
-        self.write_u8(v).map_err(Error::Io)
+        self.write_all(&[v]).map_err(Error::Io)
     }
     #[inline]
     fn emit_bool(&mut self, v: bool) -> Result<(), Error> {
-        self.write_i8(if v {1} else {0}).map_err(Error::Io)
+        self.write_all(&[if v {1} else {0}]).map_err(Error::Io)
     }
     #[inline]
     fn emit_slice(&mut self, v: &[u8]) -> Result<(), Error> {
@@ -317,20 +320,24 @@ impl<W: Write> WriteExt for W {
 }
 
 impl<R: Read> ReadExt for R {
-    decoder_fn!(read_u64, u64, read_u64);
-    decoder_fn!(read_u32, u32, read_u32);
-    decoder_fn!(read_u16, u16, read_u16);
-    decoder_fn!(read_i64, i64, read_i64);
-    decoder_fn!(read_i32, i32, read_i32);
-    decoder_fn!(read_i16, i16, read_i16);
+    decoder_fn!(read_u64, u64, slice_to_u64_le, 8);
+    decoder_fn!(read_u32, u32, slice_to_u32_le, 4);
+    decoder_fn!(read_u16, u16, slice_to_u16_le, 2);
+    decoder_fn!(read_i64, i64, slice_to_i64_le, 8);
+    decoder_fn!(read_i32, i32, slice_to_i32_le, 4);
+    decoder_fn!(read_i16, i16, slice_to_i16_le, 2);
 
     #[inline]
     fn read_u8(&mut self) -> Result<u8, Error> {
-        ReadBytesExt::read_u8(self).map_err(Error::Io)
+        let mut slice = [0u8; 1];
+        self.read_exact(&mut slice)?;
+        Ok(slice[0])
     }
     #[inline]
     fn read_i8(&mut self) -> Result<i8, Error> {
-        ReadBytesExt::read_i8(self).map_err(Error::Io)
+        let mut slice = [0u8; 1];
+        self.read_exact(&mut slice)?;
+        Ok(slice[0] as i8)
     }
     #[inline]
     fn read_bool(&mut self) -> Result<bool, Error> {

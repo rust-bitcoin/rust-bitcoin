@@ -51,13 +51,13 @@ use std::fmt::{Display, Formatter};
 use std::io::Cursor;
 
 use hashes::{Hash, sha256d, siphash24};
-use byteorder::{ByteOrder, LittleEndian};
 
 use blockdata::block::Block;
 use blockdata::script::Script;
 use blockdata::transaction::OutPoint;
 use consensus::{Decodable, Encodable};
 use consensus::encode::VarInt;
+use util::endian;
 use util::hash::BitcoinHash;
 
 /// Golomb encoding parameter as in BIP-158, see also https://gist.github.com/sipa/576d5f09c3b86c3b1b75598d799fc845
@@ -155,8 +155,8 @@ impl<'a> BlockFilterWriter<'a> {
     /// Create a block filter writer
     pub fn new(writer: &'a mut io::Write, block: &'a Block) -> BlockFilterWriter<'a> {
         let block_hash_as_int = block.bitcoin_hash().into_inner();
-        let k0 = LittleEndian::read_u64(&block_hash_as_int[0..8]);
-        let k1 = LittleEndian::read_u64(&block_hash_as_int[8..16]);
+        let k0 = endian::slice_to_u64_le(&block_hash_as_int[0..8]);
+        let k1 = endian::slice_to_u64_le(&block_hash_as_int[8..16]);
         let writer = GCSFilterWriter::new(writer, k0, k1, M, P);
         BlockFilterWriter { block, writer }
     }
@@ -208,8 +208,8 @@ impl BlockFilterReader {
     /// Create a block filter reader
     pub fn new(block_hash: &sha256d::Hash) -> BlockFilterReader {
         let block_hash_as_int = block_hash.into_inner();
-        let k0 = LittleEndian::read_u64(&block_hash_as_int[0..8]);
-        let k1 = LittleEndian::read_u64(&block_hash_as_int[8..16]);
+        let k0 = endian::slice_to_u64_le(&block_hash_as_int[0..8]);
+        let k1 = endian::slice_to_u64_le(&block_hash_as_int[8..16]);
         BlockFilterReader { reader: GCSFilterReader::new(k0, k1, M, P) }
     }
 

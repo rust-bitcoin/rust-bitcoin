@@ -22,7 +22,6 @@ use-serde = ["hex", "serde", "bitcoin_hashes/serde", "secp256k1/serde"]
 
 [dependencies]
 bech32 = "0.7.1"
-byteorder = "1.2"
 bitcoin_hashes = "0.7"
 bitcoinconsensus = { version = "0.17", optional = true }
 serde = { version = "1", optional = true }

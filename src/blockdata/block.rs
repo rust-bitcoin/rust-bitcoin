@@ -165,15 +165,13 @@ impl BlockHeader {
 
     /// Checks that the proof-of-work for the block is valid.
     pub fn validate_pow(&self, required_target: &Uint256) -> Result<(), util::Error> {
-        use byteorder::{ByteOrder, LittleEndian};
-
         let target = &self.target();
         if target != required_target {
             return Err(BlockBadTarget);
         }
         let data: [u8; 32] = self.bitcoin_hash().into_inner();
         let mut ret = [0u64; 4];
-        LittleEndian::read_u64_into(&data, &mut ret);
+        util::endian::bytes_to_u64_slice_le(&data, &mut ret);
         let hash = &Uint256(ret);
         if hash <= target { Ok(()) } else { Err(BlockBadProofOfWork) }
     }

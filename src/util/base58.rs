@@ -16,9 +16,9 @@
 
 use std::{error, fmt, str, slice, iter};
 
-use byteorder::{ByteOrder, LittleEndian};
-
 use hashes::{sha256d, Hash};
+
+use util::endian;
 
 /// An error that might occur during base58 decoding
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -162,8 +162,8 @@ pub fn from_check(data: &str) -> Result<Vec<u8>, Error> {
         return Err(Error::TooShort(ret.len()));
     }
     let ck_start = ret.len() - 4;
-    let expected = LittleEndian::read_u32(&sha256d::Hash::hash(&ret[..ck_start])[..4]);
-    let actual = LittleEndian::read_u32(&ret[ck_start..(ck_start + 4)]);
+    let expected = endian::slice_to_u32_le(&sha256d::Hash::hash(&ret[..ck_start])[..4]);
+    let actual = endian::slice_to_u32_le(&ret[ck_start..(ck_start + 4)]);
     if expected != actual {
         return Err(Error::BadChecksum(expected, actual));
     }
