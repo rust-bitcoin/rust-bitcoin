@@ -180,6 +180,64 @@ impl From<psbt::Error> for Error {
     }
 }
 
+impl PartialEq for Error {
+    fn eq(&self, other: &Self) -> bool {
+        match *self {
+            Error::Io(_) => false,
+            Error::Base58(ref e) => match *other {
+                Error::Base58(ref o) => e == o,
+                _ => false,
+            }
+            Error::ByteOrder(..) => match *other {
+                Error::ByteOrder(..) => true,
+                _ => false,
+            },
+            Error::Secp256k1(ref e) => match *other {
+                Error::Secp256k1(ref o) => e == o,
+                _ => false,
+            }
+            Error::Psbt(ref e) => match *other {
+                Error::Psbt(ref o) => e == o,
+                _ => false,
+            }
+            Error::UnexpectedNetworkMagic{ expected: e1, actual: e2 } => match *other {
+                Error::UnexpectedNetworkMagic{ expected: o1, actual: o2 } => e1 == o1 && e2 == o2,
+                _ => false
+            }
+            Error::OversizedVectorAllocation{ requested: e1, max: e2 } => match *other {
+                Error::OversizedVectorAllocation{ requested: o1, max: o2 } => e1 == o1 && e2 == o2,
+                _ => false
+            }
+            Error::InvalidChecksum{ expected: e1, actual: e2 } => match *other {
+                Error::InvalidChecksum{ expected: o1, actual: o2 } => e1 == o1 && e2 == o2,
+                _ => false
+            }
+            Error::UnknownNetworkMagic(e) => match *other {
+                Error::UnknownNetworkMagic(o) => e == o,
+                _ => false,
+            }
+            Error::ParseFailed(e) => match *other {
+                Error::ParseFailed(o) => e == o,
+                _ => false,
+            }
+            Error::UnsupportedSegwitFlag(e) => match *other {
+                Error::UnsupportedSegwitFlag(o) => e == o,
+                _ => false,
+            }
+            Error::UnrecognizedNetworkCommand(ref e) => match *other {
+                Error::UnrecognizedNetworkCommand(ref o) => e == o,
+                _ => false,
+            }
+            Error::UnexpectedHexDigit(e) => match *other {
+                Error::UnexpectedHexDigit(o) => e == o,
+                _ => false,
+            }
+        }
+    }
+}
+
+impl Eq for Error {}
+
 /// Encode an object into a vector
 pub fn serialize<T: Encodable + ?Sized>(data: &T) -> Vec<u8> {
     let mut encoder = Cursor::new(vec![]);

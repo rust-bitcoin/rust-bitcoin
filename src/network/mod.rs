@@ -74,3 +74,21 @@ impl error::Error for Error {
         }
     }
 }
+
+impl PartialEq for Error {
+    fn eq(&self, other: &Self) -> bool {
+        match *self {
+            Error::Io(_) => false,
+            Error::SocketMutexPoisoned => match *other {
+                Error::SocketMutexPoisoned => true,
+                _ => false,
+            }
+            Error::SocketNotConnectedToPeer => match *other {
+                Error::SocketNotConnectedToPeer => true,
+                _ => false,
+            }
+        }
+    }
+}
+
+impl Eq for Error {}

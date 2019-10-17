@@ -53,7 +53,7 @@ use util::base58;
 use util::key;
 
 /// Address error.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Error {
     /// Base58 encoding error
     Base58(base58::Error),
@@ -117,6 +117,8 @@ impl From<bech32::Error> for Error {
         Error::Bech32(e)
     }
 }
+
+impl Eq for Error {}
 
 /// The different types of addresses.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]

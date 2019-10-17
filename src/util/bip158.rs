@@ -97,6 +97,20 @@ impl From<io::Error> for Error {
     }
 }
 
+impl PartialEq for Error {
+    fn eq(&self, other: &Self) -> bool {
+        match *self {
+            Error::UtxoMissing(ref e) => match *other {
+                Error::UtxoMissing(ref o) => e == o,
+                _ => false,
+            }
+            Error::Io(_) => false,
+        }
+    }
+}
+
+impl Eq for Error {}
+
 
 /// a computed or read block filter
 pub struct BlockFilter {

@@ -19,7 +19,7 @@ use blockdata::transaction::Transaction;
 use util::psbt::raw;
 
 /// Ways that a Partially Signed Transaction might fail.
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Error {
     /// Magic bytes for a PSBT must be the ASCII for "psbt" serialized in most
     /// significant byte order.
