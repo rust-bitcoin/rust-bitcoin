@@ -36,7 +36,7 @@ use std::fmt;
 use std::io;
 use std::io::{Cursor, Read, Write};
 use byteorder::{LittleEndian, WriteBytesExt, ReadBytesExt};
-use hex::encode as hex_encode;
+use hashes::hex::ToHex;
 
 use hashes::{sha256d, Hash as HashTrait};
 use secp256k1;
@@ -104,7 +104,7 @@ impl fmt::Display for Error {
             Error::Psbt(ref e) => fmt::Display::fmt(e, f),
             Error::UnexpectedNetworkMagic { expected: ref e, actual: ref a } => write!(f, "{}: expected {}, actual {}", error::Error::description(self), e, a),
             Error::OversizedVectorAllocation { requested: ref r, max: ref m } => write!(f, "{}: requested {}, maximum {}", error::Error::description(self), r, m),
-            Error::InvalidChecksum { expected: ref e, actual: ref a } => write!(f, "{}: expected {}, actual {}", error::Error::description(self), hex_encode(e), hex_encode(a)),
+            Error::InvalidChecksum { expected: ref e, actual: ref a } => write!(f, "{}: expected {}, actual {}", error::Error::description(self), e[..].to_hex(), a[..].to_hex()),
             Error::UnknownNetworkMagic(ref m) => write!(f, "{}: {}", error::Error::description(self), m),
             Error::ParseFailed(ref e) => write!(f, "{}: {}", error::Error::description(self), e),
             Error::UnsupportedSegwitFlag(ref swflag) => write!(f, "{}: {}", error::Error::description(self), swflag),
@@ -189,7 +189,7 @@ pub fn serialize<T: Encodable + ?Sized>(data: &T) -> Vec<u8> {
 
 /// Encode an object into a hex-encoded string
 pub fn serialize_hex<T: Encodable + ?Sized>(data: &T) -> String {
-    hex_encode(serialize(data))
+    serialize(data)[..].to_hex()
 }
 
 /// Deserialize an object from a vector, will error if said deserialization

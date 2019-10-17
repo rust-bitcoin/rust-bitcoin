@@ -20,6 +20,7 @@
 use std::{fmt, io};
 
 use consensus::encode::{self, Decodable, Encodable, VarInt, MAX_VEC_SIZE};
+use hashes::hex::ToHex;
 use util::psbt::Error;
 
 /// A PSBT key in its raw byte form.
@@ -46,7 +47,7 @@ impl fmt::Display for Key {
             f,
             "type: {:#x}, key: {}",
             self.type_value,
-            ::hex::encode(&self.key)
+            self.key[..].to_hex()
         )
     }
 }
