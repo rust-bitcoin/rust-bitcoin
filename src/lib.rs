@@ -45,6 +45,11 @@
 #![deny(missing_docs)]
 #![forbid(unsafe_code)]
 
+// In general, rust is absolutely horrid at supporting users doing things like,
+// for example, compiling Rust code for real environments. Disable useless lints
+// that don't do anything but annoy us and cant actually ever be resolved.
+#![allow(bare_trait_objects)]
+#![allow(ellipsis_inclusive_range_patterns)]
 
 // Re-exported dependencies.
 pub extern crate bitcoin_hashes as hashes;
