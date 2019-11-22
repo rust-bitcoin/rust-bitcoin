@@ -19,7 +19,7 @@
 //!
 
 use network::address::Address;
-use network::constants;
+use network::constants::{self, ServiceFlags};
 use consensus::{Encodable, Decodable, ReadExt};
 use consensus::encode;
 use std::io;
@@ -35,7 +35,7 @@ pub struct VersionMessage {
     /// The P2P network protocol version
     pub version: u32,
     /// A bitmask describing the services supported by this node
-    pub services: u64,
+    pub services: ServiceFlags,
     /// The time at which the `version` message was sent
     pub timestamp: i64,
     /// The network address of the peer receiving the message
@@ -58,7 +58,7 @@ impl VersionMessage {
     // TODO: we have fixed services and relay to 0
     /// Constructs a new `version` message
     pub fn new(
-        services: u64,
+        services: ServiceFlags,
         timestamp: i64,
         receiver: Address,
         sender: Address,
@@ -160,7 +160,7 @@ mod tests {
         assert!(decode.is_ok());
         let real_decode = decode.unwrap();
         assert_eq!(real_decode.version, 70002);
-        assert_eq!(real_decode.services, 1);
+        assert_eq!(real_decode.services, 1.into());
         assert_eq!(real_decode.timestamp, 1401217254);
         // address decodes should be covered by Address tests
         assert_eq!(real_decode.nonce, 16735069437859780935);
