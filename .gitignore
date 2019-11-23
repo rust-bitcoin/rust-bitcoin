@@ -1,5 +1,6 @@
 target
 Cargo.lock
+*.sw*
 
 #fuzz
 fuzz/hfuzz_target
