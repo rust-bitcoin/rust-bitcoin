@@ -124,7 +124,7 @@ impl PrivateKey {
     }
 
     /// Format the private key to WIF format.
-    pub fn fmt_wif(&self, fmt: &mut fmt::Write) -> fmt::Result {
+    pub fn fmt_wif(&self, fmt: &mut dyn fmt::Write) -> fmt::Result {
         let mut ret = [0; 34];
         ret[0] = match self.network {
             Network::Bitcoin => 128,

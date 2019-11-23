@@ -53,7 +53,7 @@ impl fmt::Display for Error {
 }
 
 impl error::Error for Error {
-    fn cause(&self) -> Option<&error::Error> { None }
+    fn cause(&self) -> Option<&dyn error::Error> { None }
     fn description(&self) -> &'static str {
         match *self {
             Error::BadByte(_) => "invalid b58 character",
@@ -181,7 +181,7 @@ where
 
     let mut leading_zero_count = 0;
     let mut leading_zeroes = true;
-    // Build string in little endian with 0-58 in place of characters...
+    // Build string in little endian with 0-58 in place of characters..=
     for d256 in data {
         let mut carry = d256 as usize;
         if leading_zeroes && carry == 0 {
@@ -201,7 +201,7 @@ where
         }
     }
 
-    // ... then reverse it and convert to chars
+    // ..= then reverse it and convert to chars
     for _ in 0..leading_zero_count {
         ret.push(0);
     }

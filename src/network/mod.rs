@@ -14,7 +14,7 @@
 
 //! Network Support
 //!
-//! This module defines support for (de)serialization and network transport 
+//! This module defines support for (de)serialization and network transport
 //! of Bitcoin data and network messages.
 //!
 
@@ -67,7 +67,7 @@ impl error::Error for Error {
         }
     }
 
-    fn cause(&self) -> Option<&error::Error> {
+    fn cause(&self) -> Option<&dyn error::Error> {
         match *self {
             Error::Io(ref e) => Some(e),
             Error::SocketMutexPoisoned | Error::SocketNotConnectedToPeer => None,

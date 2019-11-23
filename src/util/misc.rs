@@ -26,9 +26,9 @@ static MSG_SIGN_PREFIX: &'static [u8] = b"\x18Bitcoin Signed Message:\n";
 #[inline]
 fn hex_val(c: u8) -> Result<u8, encode::Error> {
     let res = match c {
-        b'0' ... b'9' => c - '0' as u8,
-        b'a' ... b'f' => c - 'a' as u8 + 10,
-        b'A' ... b'F' => c - 'A' as u8 + 10,
+        b'0' ..= b'9' => c - '0' as u8,
+        b'a' ..= b'f' => c - 'a' as u8 + 10,
+        b'A' ..= b'F' => c - 'A' as u8 + 10,
         _ => return Err(encode::Error::UnexpectedHexDigit(c as char)),
     };
     Ok(res)

@@ -524,7 +524,7 @@ mod tests {
                 height += 1;
             }
 
-            // Check with random subsets with inclusion chances 1, 1/2, 1/4, ..., 1/128
+            // Check with random subsets with inclusion chances 1, 1/2, 1/4, ..=, 1/128
             for att in 1..15 {
                 let mut matches = vec![false; num_tx];
                 let mut match_txid1 = vec![];
