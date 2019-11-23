@@ -44,7 +44,8 @@
 #![deny(unused_imports)]
 #![deny(missing_docs)]
 #![forbid(unsafe_code)]
-
+#![allow(bare_trait_objects)]
+#![allow(ellipsis_inclusive_range_patterns)]
 
 // Re-exported dependencies.
 pub extern crate bitcoin_hashes as hashes;
