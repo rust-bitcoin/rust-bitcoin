@@ -50,6 +50,9 @@ please join us in
 [#rust-bitcoin](http://webchat.freenode.net/?channels=%23rust-bitcoin) on
 freenode.
 
+## Minimum Supported Rust Version (MSRV)
+This library should always compile with any combination of features on **Rust 1.22**.
+
 ## Installing Rust
 Rust can be installed using your package manager of choice or
 [rustup.rs](https://rustup.rs). The former way is considered more secure since
