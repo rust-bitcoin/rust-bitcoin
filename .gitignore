@@ -8,3 +8,4 @@ fuzz/hfuzz_workspace
 #IntelliJ project files
 .idea
 *.iml
+*.sw*
