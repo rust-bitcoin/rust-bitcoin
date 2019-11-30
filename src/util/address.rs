@@ -44,9 +44,9 @@ use std::fmt::{self, Display, Formatter};
 use std::str::FromStr;
 
 use bech32;
-use hashes::{hash160, Hash};
+use hashes::Hash;
 
-use hash_types::{PubkeyHash, ScriptHash, WScriptHash};
+use hash_types::{PubkeyHash, WPubkeyHash, ScriptHash, WScriptHash};
 use blockdata::opcodes;
 use blockdata::script;
 use network::constants::Network;
@@ -243,7 +243,7 @@ impl Address {
     /// This is the preferred non-witness type address
     #[inline]
     pub fn p2pkh(pk: &key::PublicKey, network: Network) -> Address {
-        let mut hash_engine = hash160::Hash::engine();
+        let mut hash_engine = PubkeyHash::engine();
         pk.write_into(&mut hash_engine);
 
         Address {
@@ -265,14 +265,14 @@ impl Address {
     /// Create a witness pay to public key address from a public key
     /// This is the native segwit address type for an output redeemable with a single signature
     pub fn p2wpkh(pk: &key::PublicKey, network: Network) -> Address {
-        let mut hash_engine = hash160::Hash::engine();
+        let mut hash_engine = WPubkeyHash::engine();
         pk.write_into(&mut hash_engine);
 
         Address {
             network: network,
             payload: Payload::WitnessProgram {
                 version: bech32::u5::try_from_u8(0).expect("0<32"),
-                program: hash160::Hash::from_engine(hash_engine)[..].to_vec(),
+                program: WPubkeyHash::from_engine(hash_engine)[..].to_vec(),
             },
         }
     }
@@ -280,12 +280,12 @@ impl Address {
     /// Create a pay to script address that embeds a witness pay to public key
     /// This is a segwit address type that looks familiar (as p2sh) to legacy clients
     pub fn p2shwpkh(pk: &key::PublicKey, network: Network) -> Address {
-        let mut hash_engine = hash160::Hash::engine();
+        let mut hash_engine = WPubkeyHash::engine();
         pk.write_into(&mut hash_engine);
 
         let builder = script::Builder::new()
             .push_int(0)
-            .push_slice(&hash160::Hash::from_engine(hash_engine)[..]);
+            .push_slice(&WPubkeyHash::from_engine(hash_engine)[..]);
 
         Address {
             network: network,
