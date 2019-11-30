@@ -50,6 +50,7 @@ use std::error;
 use std::fmt::{Display, Formatter};
 use std::io::Cursor;
 
+use hash_types::BlockHash;
 use hashes::{Hash, sha256d, siphash24};
 
 use blockdata::block::Block;
@@ -133,13 +134,13 @@ impl BlockFilter {
     }
 
     /// match any query pattern
-    pub fn match_any(&self, block_hash: &sha256d::Hash, query: &mut Iterator<Item=&[u8]>) -> Result<bool, Error> {
+    pub fn match_any(&self, block_hash: &BlockHash, query: &mut Iterator<Item=&[u8]>) -> Result<bool, Error> {
         let filter_reader = BlockFilterReader::new(block_hash);
         filter_reader.match_any(&mut Cursor::new(self.content.as_slice()), query)
     }
 
     /// match all query pattern
-    pub fn match_all(&self, block_hash: &sha256d::Hash, query: &mut Iterator<Item=&[u8]>) -> Result<bool, Error> {
+    pub fn match_all(&self, block_hash: &BlockHash, query: &mut Iterator<Item=&[u8]>) -> Result<bool, Error> {
         let filter_reader = BlockFilterReader::new(block_hash);
         filter_reader.match_all(&mut Cursor::new(self.content.as_slice()), query)
     }
@@ -206,7 +207,7 @@ pub struct BlockFilterReader {
 
 impl BlockFilterReader {
     /// Create a block filter reader
-    pub fn new(block_hash: &sha256d::Hash) -> BlockFilterReader {
+    pub fn new(block_hash: &BlockHash) -> BlockFilterReader {
         let block_hash_as_int = block_hash.into_inner();
         let k0 = endian::slice_to_u64_le(&block_hash_as_int[0..8]);
         let k1 = endian::slice_to_u64_le(&block_hash_as_int[8..16]);
@@ -523,6 +524,7 @@ mod test {
     use std::collections::{HashSet, HashMap};
     use std::io::Cursor;
 
+    use hash_types::BlockHash;
     use hashes::hex::FromHex;
 
     use super::*;
@@ -555,7 +557,7 @@ mod test {
 
         let testdata = serde_json::from_str::<Value>(data).unwrap().as_array().unwrap().clone();
         for t in testdata.iter().skip(1) {
-            let block_hash = sha256d::Hash::from_hex(&t.get(1).unwrap().as_str().unwrap()).unwrap();
+            let block_hash = BlockHash::from_hex(&t.get(1).unwrap().as_str().unwrap()).unwrap();
             let block: Block = deserialize(hex::decode(&t.get(2).unwrap().as_str().unwrap().as_bytes()).unwrap().as_slice()).unwrap();
             assert_eq!(block.bitcoin_hash(), block_hash);
             let scripts = t.get(3).unwrap().as_array().unwrap();
@@ -583,7 +585,7 @@ mod test {
             assert_eq!(test_filter.content, filter.content);
 
             let block_hash = &block.header.bitcoin_hash();
-            assert!(filter.match_all(&block_hash, &mut txmap.iter()
+            assert!(filter.match_all(block_hash, &mut txmap.iter()
                 .filter_map(|(_, s)| if !s.is_empty() { Some(s.as_bytes()) } else { None })).unwrap());
 
             for (_, script) in &txmap {

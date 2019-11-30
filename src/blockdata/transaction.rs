@@ -287,7 +287,7 @@ impl Transaction {
             input: self.input.iter().map(|txin| TxIn { script_sig: Script::new(), witness: vec![], .. *txin }).collect(),
             output: self.output.clone(),
         };
-        cloned_tx.bitcoin_hash()
+        cloned_tx.bitcoin_hash().into()
     }
 
     /// Computes the txid. For non-segwit transactions this will be identical
@@ -438,11 +438,11 @@ impl Transaction {
     }
 }
 
-impl BitcoinHash for Transaction {
-    fn bitcoin_hash(&self) -> sha256d::Hash {
+impl BitcoinHash<Txid> for Transaction {
+    fn bitcoin_hash(&self) -> Txid {
         let mut enc = sha256d::Hash::engine();
         self.consensus_encode(&mut enc).unwrap();
-        sha256d::Hash::from_engine(enc)
+        Txid::from_engine(enc)
     }
 }
 

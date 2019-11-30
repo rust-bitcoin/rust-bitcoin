@@ -18,6 +18,7 @@
 use std::cmp::min;
 use std::default::Default;
 
+use hash_types::Txid;
 use hashes::{sha256d, Hash};
 
 use consensus::encode::Encodable;
@@ -30,13 +31,13 @@ pub trait MerkleRoot {
 }
 
 /// Calculates the merkle root of a list of txids hashes directly
-pub fn bitcoin_merkle_root(data: Vec<sha256d::Hash>) -> sha256d::Hash {
+pub fn bitcoin_merkle_root(data: Vec<Txid>) -> sha256d::Hash {
     // Base case
     if data.len() < 1 {
         return Default::default();
     }
     if data.len() < 2 {
-        return data[0];
+        return data[0].into();
     }
     // Recursion
     let mut next = vec![];
@@ -46,13 +47,13 @@ pub fn bitcoin_merkle_root(data: Vec<sha256d::Hash>) -> sha256d::Hash {
         let mut encoder = sha256d::Hash::engine();
         data[idx1].consensus_encode(&mut encoder).unwrap();
         data[idx2].consensus_encode(&mut encoder).unwrap();
-        next.push(sha256d::Hash::from_engine(encoder));
+        next.push(Txid::from_engine(encoder));
     }
     bitcoin_merkle_root(next)
 }
 
 /// Objects which are referred to by hash
-pub trait BitcoinHash {
+pub trait BitcoinHash<T: Hash> {
     /// Produces a Sha256dHash which can be used to refer to the object
-    fn bitcoin_hash(&self) -> sha256d::Hash;
+    fn bitcoin_hash(&self) -> T;
 }

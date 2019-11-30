@@ -44,7 +44,7 @@ use std::fmt::{self, Display, Formatter};
 use std::str::FromStr;
 
 use bech32;
-use hashes::{hash160, sha256, Hash};
+use hashes::{hash160, Hash};
 
 use hash_types::{PubkeyHash, ScriptHash, WScriptHash};
 use blockdata::opcodes;
@@ -309,7 +309,7 @@ impl Address {
     pub fn p2shwsh(script: &script::Script, network: Network) -> Address {
         let ws = script::Builder::new()
             .push_int(0)
-            .push_slice(&sha256::Hash::hash(&script[..])[..])
+            .push_slice(&WScriptHash::hash(&script[..])[..])
             .into_script();
 
         Address {
