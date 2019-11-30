@@ -26,6 +26,7 @@ use util;
 use util::Error::{BlockBadTarget, BlockBadProofOfWork};
 use util::hash::{BitcoinHash, MerkleRoot, bitcoin_merkle_root};
 use util::uint::Uint256;
+use hash_types::BlockHash;
 use consensus::encode::Encodable;
 use network::constants::Network;
 use blockdata::transaction::Transaction;
@@ -39,7 +40,7 @@ pub struct BlockHeader {
     /// The protocol version. Should always be 1.
     pub version: u32,
     /// Reference to the previous block in the chain
-    pub prev_blockhash: sha256d::Hash,
+    pub prev_blockhash: BlockHash,
     /// The root hash of the merkle tree of transactions in the block
     pub merkle_root: sha256d::Hash,
     /// The timestamp of the block, as claimed by the miner

@@ -49,3 +49,5 @@ hash_newtype!(WScriptHash, sha256::Hash, 32, doc="SegWit version of a Bitcoin Sc
 hash_newtype!(XpubIdentifier, hash160::Hash, 20, doc="XpubIdentifier as defined in BIP-32.");
 
 impl_hashencode!(Txid);
+impl_hashencode!(Wtxid);
+impl_hashencode!(BlockHash);

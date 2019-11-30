@@ -46,6 +46,7 @@ use std::str::FromStr;
 use bech32;
 use hashes::{hash160, sha256, Hash};
 
+use hash_types::{PubkeyHash, ScriptHash, WScriptHash};
 use blockdata::opcodes;
 use blockdata::script;
 use network::constants::Network;
@@ -159,9 +160,9 @@ impl FromStr for AddressType {
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Payload {
     /// pay-to-pkhash address
-    PubkeyHash(hash160::Hash),
+    PubkeyHash(PubkeyHash),
     /// P2SH address
-    ScriptHash(hash160::Hash),
+    ScriptHash(ScriptHash),
     /// Segwit address
     WitnessProgram {
         /// The witness program version
@@ -175,9 +176,9 @@ impl Payload {
     /// Get a [Payload] from an output script (scriptPubkey).
     pub fn from_script(script: &script::Script) -> Option<Payload> {
         Some(if script.is_p2pkh() {
-            Payload::PubkeyHash(Hash::from_slice(&script.as_bytes()[3..23]).unwrap())
+            Payload::PubkeyHash(PubkeyHash::from_slice(&script.as_bytes()[3..23]).unwrap())
         } else if script.is_p2sh() {
-            Payload::ScriptHash(Hash::from_slice(&script.as_bytes()[2..22]).unwrap())
+            Payload::ScriptHash(ScriptHash::from_slice(&script.as_bytes()[2..22]).unwrap())
         } else if script.is_witness_program() {
             // We can unwrap the u5 check and assume script length
             // because [Script::is_witness_program] makes sure of this.
@@ -247,7 +248,7 @@ impl Address {
 
         Address {
             network: network,
-            payload: Payload::PubkeyHash(hash160::Hash::from_engine(hash_engine)),
+            payload: Payload::PubkeyHash(PubkeyHash::from_engine(hash_engine)),
         }
     }
 
@@ -257,7 +258,7 @@ impl Address {
     pub fn p2sh(script: &script::Script, network: Network) -> Address {
         Address {
             network: network,
-            payload: Payload::ScriptHash(hash160::Hash::hash(&script[..])),
+            payload: Payload::ScriptHash(ScriptHash::hash(&script[..])),
         }
     }
 
@@ -288,7 +289,7 @@ impl Address {
 
         Address {
             network: network,
-            payload: Payload::ScriptHash(hash160::Hash::hash(builder.into_script().as_bytes())),
+            payload: Payload::ScriptHash(ScriptHash::hash(builder.into_script().as_bytes())),
         }
     }
 
@@ -298,7 +299,7 @@ impl Address {
             network: network,
             payload: Payload::WitnessProgram {
                 version: bech32::u5::try_from_u8(0).expect("0<32"),
-                program: sha256::Hash::hash(&script[..])[..].to_vec(),
+                program: WScriptHash::hash(&script[..])[..].to_vec(),
             },
         }
     }
@@ -313,7 +314,7 @@ impl Address {
 
         Address {
             network: network,
-            payload: Payload::ScriptHash(hash160::Hash::hash(&ws[..])),
+            payload: Payload::ScriptHash(ScriptHash::hash(&ws[..])),
         }
     }
 
@@ -470,19 +471,19 @@ impl FromStr for Address {
         let (network, payload) = match data[0] {
             0 => (
                 Network::Bitcoin,
-                Payload::PubkeyHash(hash160::Hash::from_slice(&data[1..]).unwrap()),
+                Payload::PubkeyHash(PubkeyHash::from_slice(&data[1..]).unwrap()),
             ),
             5 => (
                 Network::Bitcoin,
-                Payload::ScriptHash(hash160::Hash::from_slice(&data[1..]).unwrap()),
+                Payload::ScriptHash(ScriptHash::from_slice(&data[1..]).unwrap()),
             ),
             111 => (
                 Network::Testnet,
-                Payload::PubkeyHash(hash160::Hash::from_slice(&data[1..]).unwrap()),
+                Payload::PubkeyHash(PubkeyHash::from_slice(&data[1..]).unwrap()),
             ),
             196 => (
                 Network::Testnet,
-                Payload::ScriptHash(hash160::Hash::from_slice(&data[1..]).unwrap()),
+                Payload::ScriptHash(ScriptHash::from_slice(&data[1..]).unwrap()),
             ),
             x => return Err(Error::Base58(base58::Error::InvalidVersion(vec![x]))),
         };
@@ -505,7 +506,7 @@ mod tests {
     use std::str::FromStr;
     use std::string::ToString;
 
-    use hashes::{hash160, Hash};
+    use hashes::Hash;
     use hex::{decode as hex_decode, encode as hex_encode};
 
     use blockdata::script::Script;
@@ -517,7 +518,8 @@ mod tests {
     macro_rules! hex (($hex:expr) => (hex_decode($hex).unwrap()));
     macro_rules! hex_key (($hex:expr) => (PublicKey::from_slice(&hex!($hex)).unwrap()));
     macro_rules! hex_script (($hex:expr) => (Script::from(hex!($hex))));
-    macro_rules! hex_hash160 (($hex:expr) => (hash160::Hash::from_slice(&hex!($hex)).unwrap()));
+    macro_rules! hex_pubkeyhash (($hex:expr) => (PubkeyHash::from_slice(&hex!($hex)).unwrap()));
+    macro_rules! hex_scripthash (($hex:expr) => (ScriptHash::from_slice(&hex!($hex)).unwrap()));
 
     fn roundtrips(addr: &Address) {
         assert_eq!(
@@ -539,7 +541,7 @@ mod tests {
     fn test_p2pkh_address_58() {
         let addr = Address {
             network: Bitcoin,
-            payload: Payload::PubkeyHash(hex_hash160!("162c5ea71c0b23f5b9022ef047c4a86470a5b070")),
+            payload: Payload::PubkeyHash(hex_pubkeyhash!("162c5ea71c0b23f5b9022ef047c4a86470a5b070")),
         };
 
         assert_eq!(
@@ -568,7 +570,7 @@ mod tests {
     fn test_p2sh_address_58() {
         let addr = Address {
             network: Bitcoin,
-            payload: Payload::ScriptHash(hex_hash160!("162c5ea71c0b23f5b9022ef047c4a86470a5b070")),
+            payload: Payload::ScriptHash(hex_scripthash!("162c5ea71c0b23f5b9022ef047c4a86470a5b070")),
         };
 
         assert_eq!(
