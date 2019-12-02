@@ -37,6 +37,26 @@ use consensus::{encode, Decodable, Encodable};
 use hash_types::*;
 use VarInt;
 
+/// Errors that may be arisen during transaction-specific computations and evaluations.
+pub enum Error {
+    /// Indicates that the provided spent transaction does not match any of the transaction
+    /// inputs by their ids. Used, for instance, in the `Trnasaction::get_fee()` function
+    UnmatchedTxForInput(Transaction),
+
+    /// Indicates that the provided spent transaction does have less outputs that the target
+    /// transaction input `vout` number for a transaction with the matching `txid`.
+    /// Used, for instance, in the `Trnasaction::get_fee()` function.
+    UnmatchedVoutForInput(Transaction, u32),
+
+    /// Indicates that the some of the inputs of the transaction does not have corresponding
+    /// spent transaction provided. This unmatched input is provided as a parameter of the error.
+    /// Used, for instance, in the `Trnasaction::get_fee()` function.
+    UnmatchedInput(TxIn),
+
+    /// Indicates that the provided transaction is invalid
+    InvalidTransaction,
+}
+
 /// A reference to a transaction output
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
 pub struct OutPoint {
@@ -378,6 +398,42 @@ impl Transaction {
         let sighash_arr = endian::u32_to_array_le(sighash_u32);
         sighash_arr.consensus_encode(&mut engine).unwrap();
         SigHash::from_engine(engine)
+    }
+
+    /// Returns the fee for the transaction by substracting the sum of the output amounts from the
+    /// provided set of transactions `spent_txs` outputs matching the transaction inputs. If some of
+    /// the provided transaction outputs inputs is not matching any of the transaction inputs than
+    /// the `UnmatchedTxForInput` error is returned. If a transaction matching current transaction
+    /// input does not have a corresponding output number, then a `UnmatchedVoutForInput` error is
+    /// returned. If some of the transaction outputs are not covered by any outputs within the
+    /// provided `spent_txs`, then `UnmatchedInput` error is returned. Otherwise, the returned value
+    /// is the amount of the transaction fee in satoshis.
+    pub fn get_fee(&self, spent_txs: Vec<Transaction>) -> Result<u64, Error> {
+        let txid = self.txid();
+        let txins: Result<Vec<u64>, Error> = spent_txs.iter().map(|tx| {
+            match self.input.iter().find(|txin| {
+                txin.previous_output.txid == tx.txid()
+            }) {
+                None => Err(Error::UnmatchedTxForInput(tx.clone())),
+                Some(txin) => match txin.previous_output.vout <= tx.output.len() as u32 {
+                    false => Err(Error::UnmatchedVoutForInput(tx.clone(), txin.previous_output.vout)),
+                    true => Ok(tx.output[txin.previous_output.vout as usize].value),
+                },
+            }
+        }).collect();
+        let txins = txins?;
+        if txins.len() != self.input.len() {
+            return Err(Error::UnmatchedInput(self.input.iter().find(|txin| {
+                txin.previous_output.txid == txid
+            }).unwrap().clone()));
+        }
+        let sum_in: u64 = txins.iter().sum();
+        let sum_out: u64 = self.output.iter().map(|txout| txout.value).sum();
+        if sum_in < sum_out {
+            Err(Error::InvalidTransaction)
+        } else {
+            Ok(sum_in - sum_out)
+        }
     }
 
     /// Gets the "weight" of this transaction, as defined by BIP141. For transactions with an empty
