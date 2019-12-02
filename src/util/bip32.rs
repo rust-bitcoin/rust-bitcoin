@@ -31,12 +31,14 @@ use util::base58;
 use util::key::{PublicKey, PrivateKey};
 
 /// A chain code
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub struct ChainCode([u8; 32]);
 impl_array_newtype!(ChainCode, u8, 32);
 impl_array_newtype_show!(ChainCode);
 impl_bytes_newtype!(ChainCode, 32);
 
 /// A fingerprint
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub struct Fingerprint([u8; 4]);
 impl_array_newtype!(Fingerprint, u8, 4);
 impl_array_newtype_show!(Fingerprint);

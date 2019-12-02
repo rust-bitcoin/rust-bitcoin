@@ -74,7 +74,7 @@ impl Serialize for (Fingerprint, DerivationPath) {
     fn serialize(&self) -> Vec<u8> {
         let mut rv: Vec<u8> = Vec::with_capacity(4 + 4 * (self.1).as_ref().len());
 
-        rv.append(&mut self.0.to_bytes().to_vec());
+        rv.append(&mut (&self.0[..]).to_vec());
 
         for cnum in self.1.into_iter() {
             rv.append(&mut serialize(&u32::from(*cnum)))
