@@ -46,7 +46,7 @@ pub const PROTOCOL_VERSION: u32 = 70001;
 
 user_enum! {
     /// The cryptocurrency to act on
-    #[derive(Copy, PartialEq, Eq, PartialOrd, Ord, Clone, Hash)]
+    #[derive(Copy, PartialEq, Eq, PartialOrd, Ord, Clone, Hash, Debug)]
     pub enum Network {
         /// Classic Bitcoin
         Bitcoin <-> "bitcoin",
