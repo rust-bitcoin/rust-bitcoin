@@ -19,7 +19,8 @@
 //! also defines (de)serialization routines for many primitives.
 //!
 
-use std::{io, iter, mem};
+use std::{io, iter, mem, fmt};
+use std::borrow::Cow;
 use std::io::Cursor;
 
 use blockdata::block;
@@ -34,7 +35,13 @@ use consensus::encode::MAX_VEC_SIZE;
 
 /// Serializer for command string
 #[derive(PartialEq, Eq, Clone, Debug)]
-pub struct CommandString(pub String);
+pub struct CommandString(pub Cow<'static, str>);
+
+impl fmt::Display for CommandString {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str(self.0.as_ref())
+    }
+}
 
 impl Encodable for CommandString {
     #[inline]
@@ -200,7 +207,7 @@ impl Encodable for RawNetworkMessage {
     ) -> Result<usize, encode::Error> {
         let mut len = 0;
         len += self.magic.consensus_encode(&mut s)?;
-        len += CommandString(self.command().to_owned()).consensus_encode(&mut s)?;
+        len += CommandString(self.command().into()).consensus_encode(&mut s)?;
         len += CheckedData(match self.payload {
             NetworkMessage::Version(ref dat) => serialize(dat),
             NetworkMessage::Addr(ref dat)    => serialize(dat),
@@ -288,7 +295,7 @@ impl Decodable for RawNetworkMessage {
             "cfcheckpt" => NetworkMessage::CFCheckpt(Decodable::consensus_decode(&mut mem_d)?),
             "reject" => NetworkMessage::Reject(Decodable::consensus_decode(&mut mem_d)?),
             "alert"   => NetworkMessage::Alert(Decodable::consensus_decode(&mut mem_d)?),
-            _ => return Err(encode::Error::UnrecognizedNetworkCommand(cmd)),
+            _ => return Err(encode::Error::UnrecognizedNetworkCommand(cmd.into_owned())),
         };
         Ok(RawNetworkMessage {
             magic: magic,
@@ -304,7 +311,7 @@ mod test {
 
     #[test]
     fn serialize_commandstring_test() {
-        let cs = CommandString("Andrew".to_owned());
+        let cs = CommandString("Andrew".into());
         assert_eq!(serialize(&cs), vec![0x41u8, 0x6e, 0x64, 0x72, 0x65, 0x77, 0, 0, 0, 0, 0, 0]);
     }
 
@@ -312,7 +319,8 @@ mod test {
     fn deserialize_commandstring_test() {
         let cs: Result<CommandString, _> = deserialize(&[0x41u8, 0x6e, 0x64, 0x72, 0x65, 0x77, 0, 0, 0, 0, 0, 0]);
         assert!(cs.is_ok());
-        assert_eq!(cs.unwrap(), CommandString("Andrew".to_owned()));
+        assert_eq!(cs.as_ref().unwrap().to_string(), "Andrew".to_owned());
+        assert_eq!(cs.unwrap(), CommandString("Andrew".into()));
 
         let short_cs: Result<CommandString, _> = deserialize(&[0x41u8, 0x6e, 0x64, 0x72, 0x65, 0x77, 0, 0, 0, 0, 0]);
         assert!(short_cs.is_err());
