@@ -26,7 +26,6 @@ use network::constants::{self, ServiceFlags};
 use consensus::{Encodable, Decodable, ReadExt};
 use consensus::encode;
 use network::message::CommandString;
-use network::message_network::RejectReason::{MALFORMED, INVALID, OBSOLETE, DUPLICATE, NONSTANDARD, DUST, CHECKPOINT, FEE};
 use hashes::sha256d;
 
 /// Some simple messages
@@ -90,21 +89,21 @@ impl_consensus_encoding!(VersionMessage, version, services, timestamp,
 /// message rejection reason as a code
 pub enum RejectReason {
     /// malformed message
-    MALFORMED = 0x01,
+    Malformed = 0x01,
     /// invalid message
-    INVALID = 0x10,
+    Invalid = 0x10,
     /// obsolete message
-    OBSOLETE = 0x11,
+    Obsolete = 0x11,
     /// duplicate message
-    DUPLICATE = 0x12,
+    Duplicate = 0x12,
     /// nonstandard transaction
-    NONSTANDARD = 0x40,
+    NonStandard = 0x40,
     /// an output is below dust limit
-    DUST = 0x41,
+    Dust = 0x41,
     /// insufficient fee
-    FEE = 0x42,
+    Fee = 0x42,
     /// checkpoint
-    CHECKPOINT = 0x43
+    Checkpoint = 0x43
 }
 
 impl Encodable for RejectReason {
@@ -117,14 +116,14 @@ impl Encodable for RejectReason {
 impl Decodable for RejectReason {
     fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
         Ok(match d.read_u8()? {
-            0x01 => MALFORMED,
-            0x10 => INVALID,
-            0x11 => OBSOLETE,
-            0x12 => DUPLICATE,
-            0x40 => NONSTANDARD,
-            0x41 => DUST,
-            0x42 => FEE,
-            0x43 => CHECKPOINT,
+            0x01 => RejectReason::Malformed,
+            0x10 => RejectReason::Invalid,
+            0x11 => RejectReason::Obsolete,
+            0x12 => RejectReason::Duplicate,
+            0x40 => RejectReason::NonStandard,
+            0x41 => RejectReason::Dust,
+            0x42 => RejectReason::Fee,
+            0x43 => RejectReason::Checkpoint,
             _ => return Err(encode::Error::ParseFailed("unknown reject code"))
         })
     }
