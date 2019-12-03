@@ -43,6 +43,18 @@ impl fmt::Display for CommandString {
     }
 }
 
+impl From<&'static str> for CommandString {
+    fn from(f: &'static str) -> Self {
+        CommandString(f.into())
+    }
+}
+
+impl From<String> for CommandString {
+    fn from(f: String) -> Self {
+        CommandString(f.into())
+    }
+}
+
 impl Encodable for CommandString {
     #[inline]
     fn consensus_encode<S: io::Write>(
@@ -320,7 +332,7 @@ mod test {
         let cs: Result<CommandString, _> = deserialize(&[0x41u8, 0x6e, 0x64, 0x72, 0x65, 0x77, 0, 0, 0, 0, 0, 0]);
         assert!(cs.is_ok());
         assert_eq!(cs.as_ref().unwrap().to_string(), "Andrew".to_owned());
-        assert_eq!(cs.unwrap(), CommandString("Andrew".into()));
+        assert_eq!(cs.unwrap(), "Andrew".into());
 
         let short_cs: Result<CommandString, _> = deserialize(&[0x41u8, 0x6e, 0x64, 0x72, 0x65, 0x77, 0, 0, 0, 0, 0]);
         assert!(short_cs.is_err());
