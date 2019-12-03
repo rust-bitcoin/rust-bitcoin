@@ -156,7 +156,7 @@ pub enum NetworkMessage {
 
 impl NetworkMessage {
     /// Return the message command. This is useful for debug outputs.
-    pub fn command(&self) -> &'static str {
+    pub fn cmd(&self) -> &'static str {
         match *self {
             NetworkMessage::Version(_) => "version",
             NetworkMessage::Verack     => "verack",
@@ -184,11 +184,21 @@ impl NetworkMessage {
             NetworkMessage::Reject(_)    => "reject",
         }
     }
+
+    /// Return the CommandString for the message command.
+    pub fn command(&self) -> CommandString {
+        self.cmd().into()
+    }
 }
 
 impl RawNetworkMessage {
     /// Return the message command. This is useful for debug outputs.
-    pub fn command(&self) -> &'static str {
+    pub fn cmd(&self) -> &'static str {
+        self.payload.cmd()
+    }
+
+    /// Return the CommandString for the message command.
+    pub fn command(&self) -> CommandString {
         self.payload.command()
     }
 }
@@ -218,7 +228,7 @@ impl Encodable for RawNetworkMessage {
     ) -> Result<usize, encode::Error> {
         let mut len = 0;
         len += self.magic.consensus_encode(&mut s)?;
-        len += CommandString(self.command().into()).consensus_encode(&mut s)?;
+        len += self.command().consensus_encode(&mut s)?;
         len += CheckedData(match self.payload {
             NetworkMessage::Version(ref dat) => serialize(dat),
             NetworkMessage::Addr(ref dat)    => serialize(dat),
