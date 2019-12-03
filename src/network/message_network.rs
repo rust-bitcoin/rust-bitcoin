@@ -18,11 +18,14 @@
 //! capabilities
 //!
 
+use std::io;
+use std::borrow::Cow;
+
 use network::address::Address;
 use network::constants::{self, ServiceFlags};
 use consensus::{Encodable, Decodable, ReadExt};
 use consensus::encode;
-use std::io;
+use network::message::CommandString;
 use network::message_network::RejectReason::{MALFORMED, INVALID, OBSOLETE, DUPLICATE, NONSTANDARD, DUST, CHECKPOINT, FEE};
 use hashes::sha256d;
 
@@ -131,11 +134,11 @@ impl Decodable for RejectReason {
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct Reject {
     /// message type rejected
-    pub message: String,
+    pub message: CommandString,
     /// reason of rejection as code
     pub ccode: RejectReason,
     /// reason of rejectection
-    pub reason: String,
+    pub reason: Cow<'static, str>,
     /// reference to rejected item
     pub hash: sha256d::Hash
 }

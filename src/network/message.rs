@@ -61,9 +61,8 @@ impl Encodable for CommandString {
         &self,
         s: S,
     ) -> Result<usize, encode::Error> {
-        let &CommandString(ref inner_str) = self;
         let mut rawbytes = [0u8; 12];
-        let strbytes = inner_str.as_bytes();
+        let strbytes = self.0.as_bytes();
         if strbytes.len() > 12 {
             panic!("Command string longer than 12 bytes");
         }
