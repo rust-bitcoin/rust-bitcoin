@@ -35,7 +35,7 @@ use consensus::encode::MAX_VEC_SIZE;
 
 /// Serializer for command string
 #[derive(PartialEq, Eq, Clone, Debug)]
-pub struct CommandString(pub Cow<'static, str>);
+pub struct CommandString(Cow<'static, str>);
 
 impl fmt::Display for CommandString {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -52,6 +52,12 @@ impl From<&'static str> for CommandString {
 impl From<String> for CommandString {
     fn from(f: String) -> Self {
         CommandString(f.into())
+    }
+}
+
+impl AsRef<str> for CommandString {
+    fn as_ref(&self) -> &str {
+        self.0.as_ref()
     }
 }
 
