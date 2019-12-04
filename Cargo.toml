@@ -17,7 +17,8 @@ path = "src/lib.rs"
 [features]
 fuzztarget = ["secp256k1/fuzztarget", "bitcoin_hashes/fuzztarget"]
 unstable = []
-use-serde = ["serde", "bitcoin_hashes/serde"]
+use-serde = ["serde", "bitcoin_hashes/serde", "secp256k1/serde"]
+rand = ["secp256k1/rand"]
 
 [dependencies]
 bech32 = "0.7.1"
