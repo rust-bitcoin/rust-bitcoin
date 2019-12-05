@@ -50,7 +50,7 @@ pub struct VersionMessage {
     pub start_height: i32,
     /// Whether the receiving peer should relay messages to the sender; used
     /// if the sender is bandwidth-limited and would like to support bloom
-    /// filtering. Defaults to true.
+    /// filtering. Defaults to false.
     pub relay: bool
 }
 
