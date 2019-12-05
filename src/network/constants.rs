@@ -37,7 +37,7 @@
 //! assert_eq!(&bytes[..], &[0xF9, 0xBE, 0xB4, 0xD9]);
 //! ```
 
-use std::{io, ops};
+use std::{fmt, io, ops};
 
 use consensus::encode::{self, Encodable, Decodable};
 
@@ -131,6 +131,8 @@ impl ServiceFlags {
     /// See BIP159 for details on how this is implemented.
     pub const NETWORK_LIMITED: ServiceFlags = ServiceFlags(1 << 10);
 
+    // NOTE: When adding new flags, remember to update the Display impl accordingly.
+
     /// Add [ServiceFlags] together.
     ///
     /// Returns itself.
@@ -155,6 +157,55 @@ impl ServiceFlags {
     /// Get the integer representation of this [ServiceFlags].
     pub fn as_u64(&self) -> u64 {
         self.0
+    }
+}
+
+impl fmt::LowerHex for ServiceFlags {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::LowerHex::fmt(&self.0, f)
+    }
+}
+
+impl fmt::UpperHex for ServiceFlags {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::UpperHex::fmt(&self.0, f)
+    }
+}
+
+impl fmt::Display for ServiceFlags {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if *self == ServiceFlags::NONE {
+            return write!(f, "ServiceFlags(NONE)");
+        }
+
+        let mut flags = self.clone();
+        let mut first = true;
+        macro_rules! write_flag {
+            ($f:ident) => {
+                if flags.has(ServiceFlags::$f) {
+                    if !first {
+                        write!(f, "|")?;
+                    }
+                    first = false;
+                    write!(f, stringify!($f))?;
+                    flags.remove(ServiceFlags::$f);
+                }
+            }
+        }
+        write!(f, "ServiceFlags(")?;
+        write_flag!(NETWORK);
+        write_flag!(GETUTXO);
+        write_flag!(BLOOM);
+        write_flag!(WITNESS);
+        write_flag!(NETWORK_LIMITED);
+        // If there are unknown flags left, we append them in hex.
+        if flags != ServiceFlags::NONE {
+            if !first {
+                write!(f, "|")?;
+            }
+            write!(f, "0x{:x}", flags)?;
+        }
+        write!(f, ")")
     }
 }
 
@@ -286,6 +337,14 @@ mod tests {
 
         flags2 ^= ServiceFlags::WITNESS;
         assert_eq!(flags2, ServiceFlags::GETUTXO);
+
+        // Test formatting.
+        assert_eq!("ServiceFlags(NONE)", ServiceFlags::NONE.to_string());
+        assert_eq!("ServiceFlags(WITNESS)", ServiceFlags::WITNESS.to_string());
+        let flag = ServiceFlags::WITNESS | ServiceFlags::BLOOM | ServiceFlags::NETWORK;
+        assert_eq!("ServiceFlags(NETWORK|BLOOM|WITNESS)", flag.to_string());
+        let flag = ServiceFlags::WITNESS | 0xf0.into();
+        assert_eq!("ServiceFlags(WITNESS|0xf0)", flag.to_string());
     }
 }
 
