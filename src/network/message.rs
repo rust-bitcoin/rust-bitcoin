@@ -383,7 +383,7 @@ mod test {
         assert_eq!(msg.magic, 0xd9b4bef9);
         if let NetworkMessage::Version(version_msg) = msg.payload {
             assert_eq!(version_msg.version, 70015);
-            assert_eq!(version_msg.services, 1037);
+            assert_eq!(version_msg.services, 1037.into());
             assert_eq!(version_msg.timestamp, 1548554224);
             assert_eq!(version_msg.nonce, 13952548347456104954);
             assert_eq!(version_msg.user_agent, "/Satoshi:0.17.1/");
@@ -420,7 +420,7 @@ mod test {
         assert_eq!(msg.magic, 0xd9b4bef9);
         if let NetworkMessage::Version(version_msg) = msg.payload {
             assert_eq!(version_msg.version, 70015);
-            assert_eq!(version_msg.services, 1037);
+            assert_eq!(version_msg.services, 1037.into());
             assert_eq!(version_msg.timestamp, 1548554224);
             assert_eq!(version_msg.nonce, 13952548347456104954);
             assert_eq!(version_msg.user_agent, "/Satoshi:0.17.1/");
