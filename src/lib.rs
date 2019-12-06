@@ -51,6 +51,7 @@ pub extern crate bitcoin_hashes as hashes;
 pub extern crate secp256k1;
 pub extern crate bech32;
 
+#[macro_use] extern crate derive_wrapper;
 extern crate byteorder;
 extern crate hex;
 #[cfg(feature = "serde")] extern crate serde;

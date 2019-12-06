@@ -29,7 +29,8 @@ use std::fmt;
 //       write an #[inline] helper function which casts to u8s.
 
 /// A script Opcode
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq, Display)]
+#[display_from(Debug)]
 pub struct All {
     code: u8,
 }
@@ -710,7 +711,6 @@ impl From<u8> for All {
 }
 
 
-display_from_debug!(All);
 
 #[cfg(feature = "serde")]
 impl serde::Serialize for All {
@@ -732,7 +732,8 @@ pub static OP_NOP2: All = all::OP_CLTV;
 pub static OP_NOP3: All = all::OP_CSV;
 
 /// Broad categories of opcodes with similar behavior
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Display)]
+#[display_from(Debug)]
 pub enum Class {
     /// Pushes the given number onto the stack
     PushNum(i32),
@@ -748,7 +749,6 @@ pub enum Class {
     Ordinary(Ordinary)
 }
 
-display_from_debug!(Class);
 
 #[cfg(feature = "serde")]
 impl serde::Serialize for Class {

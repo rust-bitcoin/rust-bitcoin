@@ -26,7 +26,8 @@ use util::BitArray;
 macro_rules! construct_uint {
     ($name:ident, $n_words:expr) => (
         /// Little-endian large integer type
-        #[repr(C)]
+        #[derive(Copy, Clone, PartialEq, Eq, Hash, Default, Index, From, Display)]
+        #[display_from(Debug)]
         pub struct $name(pub [u64; $n_words]);
         impl_array_newtype!($name, u64, $n_words);
 
@@ -88,6 +89,27 @@ macro_rules! construct_uint {
             pub fn from_i64(init: i64) -> Option<$name> {
                 assert!(init >= 0);
                 $name::from_u64(init as u64)
+            }
+        }
+
+        impl PartialOrd for $name {
+            #[inline]
+            fn partial_cmp(&self, other: &$name) -> Option<::std::cmp::Ordering> {
+                Some(self.cmp(&other))
+            }
+        }
+
+        impl Ord for $name {
+            #[inline]
+            fn cmp(&self, other: &$name) -> ::std::cmp::Ordering {
+                // We need to manually implement ordering because we use little-endian
+                // and the auto derive is a lexicographic ordering(i.e. memcmp)
+                // which with numbers is equivilant to big-endian
+                for i in 0..$n_words {
+                    if self[$n_words - 1 - i] < other[$n_words - 1 - i] { return ::std::cmp::Ordering::Less; }
+                    if self[$n_words - 1 - i] > other[$n_words - 1 - i] { return ::std::cmp::Ordering::Greater; }
+                }
+                ::std::cmp::Ordering::Equal
             }
         }
 
@@ -206,15 +228,9 @@ macro_rules! construct_uint {
                 (0x40 * ($n_words - 1)) + arr[$n_words - 1].trailing_zeros() as usize
             }
 
-            fn zero() -> $name { $name([0; $n_words]) }
+            fn zero() -> $name { Default::default() }
             fn one() -> $name {
                 $name({ let mut ret = [0; $n_words]; ret[0] = 1; ret })
-            }
-        }
-
-        impl ::std::default::Default for $name {
-            fn default() -> $name {
-                BitArray::zero()
             }
         }
 
@@ -327,12 +343,6 @@ macro_rules! construct_uint {
                     write!(f, "{:016x}", ch)?;
                 }
                 Ok(())
-            }
-        }
-
-        impl fmt::Display for $name {
-            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                <fmt::Debug>::fmt(self, f)
             }
         }
 
