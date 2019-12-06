@@ -77,6 +77,7 @@ pub mod network;
 pub mod blockdata;
 pub mod util;
 pub mod consensus;
+// Do not remove: required in order to get hash types implementation macros to work correctly
 #[allow(unused_imports)]
 pub mod hash_types;
 

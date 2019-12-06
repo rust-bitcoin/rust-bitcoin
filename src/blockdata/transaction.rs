@@ -26,7 +26,7 @@
 use std::default::Default;
 use std::{fmt, io};
 
-use hashes::{self, sha256d, Hash};
+use hashes::{self, Hash, sha256d};
 use hashes::hex::FromHex;
 
 use util::endian;
@@ -316,14 +316,14 @@ impl Transaction {
     /// # Panics
     /// Panics if `input_index` is greater than or equal to `self.input.len()`
     ///
-    pub fn signature_hash(&self, input_index: usize, script_pubkey: &Script, sighash_u32: u32) -> sha256d::Hash {
+    pub fn signature_hash(&self, input_index: usize, script_pubkey: &Script, sighash_u32: u32) -> SigHash {
         assert!(input_index < self.input.len());  // Panic on OOB
 
         let (sighash, anyone_can_pay) = SigHashType::from_u32(sighash_u32).split_anyonecanpay_flag();
 
         // Special-case sighash_single bug because this is easy enough.
         if sighash == SigHashType::Single && input_index >= self.output.len() {
-            return sha256d::Hash::from_slice(&[1, 0, 0, 0, 0, 0, 0, 0,
+            return SigHash::from_slice(&[1, 0, 0, 0, 0, 0, 0, 0,
                                                0, 0, 0, 0, 0, 0, 0, 0,
                                                0, 0, 0, 0, 0, 0, 0, 0,
                                                0, 0, 0, 0, 0, 0, 0, 0]).unwrap();
@@ -371,7 +371,7 @@ impl Transaction {
         // hash the result
         let mut raw_vec = serialize(&tx);
         raw_vec.extend_from_slice(&endian::u32_to_array_le(sighash_u32));
-        sha256d::Hash::hash(&raw_vec)
+        SigHash::hash(&raw_vec)
     }
 
     /// Gets the "weight" of this transaction, as defined by BIP141. For transactions with an empty
@@ -628,7 +628,7 @@ mod tests {
     use consensus::encode::deserialize;
     use util::hash::BitcoinHash;
 
-    use hashes::{sha256d, Hash};
+    use hashes::Hash;
     use hashes::hex::FromHex;
 
     use hash_types::*;
@@ -813,7 +813,7 @@ mod tests {
         let script = Script::from(Vec::<u8>::from_hex(script).unwrap());
         let mut raw_expected = Vec::<u8>::from_hex(expected_result).unwrap();
         raw_expected.reverse();
-        let expected_result = sha256d::Hash::from_slice(&raw_expected[..]).unwrap();
+        let expected_result = SigHash::from_slice(&raw_expected[..]).unwrap();
 
         let actual_result = tx.signature_hash(input_index, &script, hash_type as u32);
         assert_eq!(actual_result, expected_result);

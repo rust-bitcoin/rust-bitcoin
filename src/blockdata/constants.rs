@@ -22,7 +22,7 @@
 use std::default::Default;
 
 use hashes::hex::FromHex;
-
+use hashes::sha256d;
 use blockdata::opcodes;
 use blockdata::script;
 use blockdata::transaction::{OutPoint, Transaction, TxOut, TxIn};
@@ -97,7 +97,8 @@ fn bitcoin_genesis_tx() -> Transaction {
 /// Constructs and returns the genesis block
 pub fn genesis_block(network: Network) -> Block {
     let txdata = vec![bitcoin_genesis_tx()];
-    let merkle_root = txdata[0].txid().into();
+    let hash: sha256d::Hash = txdata[0].txid().into();
+    let merkle_root = hash.into();
     match network {
         Network::Bitcoin => {
             Block {

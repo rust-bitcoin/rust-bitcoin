@@ -50,8 +50,8 @@ use std::error;
 use std::fmt::{Display, Formatter};
 use std::io::Cursor;
 
-use hash_types::BlockHash;
-use hashes::{Hash, sha256d, siphash24};
+use hashes::{Hash, siphash24};
+use hash_types::{BlockHash, FilterHash};
 
 use blockdata::block::Block;
 use blockdata::script::Script;
@@ -107,12 +107,12 @@ pub struct BlockFilter {
 
 impl BlockFilter {
     /// compute this filter's id in a chain of filters
-    pub fn filter_id(&self, previous_filter_id: &sha256d::Hash) -> sha256d::Hash {
-        let filter_hash = sha256d::Hash::hash(self.content.as_slice());
+    pub fn filter_id(&self, previous_filter_id: &FilterHash) -> FilterHash {
+        let filter_hash = FilterHash::hash(self.content.as_slice());
         let mut header_data = [0u8; 64];
         header_data[0..32].copy_from_slice(&filter_hash[..]);
         header_data[32..64].copy_from_slice(&previous_filter_id[..]);
-        sha256d::Hash::hash(&header_data)
+        FilterHash::hash(&header_data)
     }
 
     /// create a new filter from pre-computed data
@@ -561,9 +561,9 @@ mod test {
             let block: Block = deserialize(hex::decode(&t.get(2).unwrap().as_str().unwrap().as_bytes()).unwrap().as_slice()).unwrap();
             assert_eq!(block.bitcoin_hash(), block_hash);
             let scripts = t.get(3).unwrap().as_array().unwrap();
-            let previous_filter_id = sha256d::Hash::from_hex(&t.get(4).unwrap().as_str().unwrap()).unwrap();
+            let previous_filter_id = FilterHash::from_hex(&t.get(4).unwrap().as_str().unwrap()).unwrap();
             let filter_content = hex::decode(&t.get(5).unwrap().as_str().unwrap().as_bytes()).unwrap();
-            let filter_id = sha256d::Hash::from_hex(&t.get(6).unwrap().as_str().unwrap()).unwrap();
+            let filter_id = FilterHash::from_hex(&t.get(6).unwrap().as_str().unwrap()).unwrap();
 
             let mut txmap = HashMap::new();
             let mut si = scripts.iter();
