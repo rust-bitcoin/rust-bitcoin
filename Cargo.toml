@@ -17,19 +17,19 @@ path = "src/lib.rs"
 [features]
 fuzztarget = ["secp256k1/fuzztarget", "bitcoin_hashes/fuzztarget"]
 unstable = []
-use-serde = ["serde", "bitcoin_hashes/serde", "secp256k1/serde"]
 rand = ["secp256k1/rand"]
+use-serde = ["hex", "serde", "bitcoin_hashes/serde", "secp256k1/serde"]
 
 [dependencies]
 bech32 = "0.7.1"
-byteorder = "1.2"
 bitcoin_hashes = "0.7"
 bitcoinconsensus = { version = "0.17", optional = true }
 serde = { version = "1", optional = true }
+hex = { version = "=0.3.2", optional = true }
 secp256k1 = "0.15"
-hex = "=0.3.2"
 
 [dev-dependencies]
+hex = "=0.3.2"
 serde_derive = "<1.0.99"
 serde_json = "1"
 serde_test = "1"

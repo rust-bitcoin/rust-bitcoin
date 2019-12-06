@@ -45,14 +45,18 @@
 #![deny(missing_docs)]
 #![forbid(unsafe_code)]
 
+// In general, rust is absolutely horrid at supporting users doing things like,
+// for example, compiling Rust code for real environments. Disable useless lints
+// that don't do anything but annoy us and cant actually ever be resolved.
+#![allow(bare_trait_objects)]
+#![allow(ellipsis_inclusive_range_patterns)]
 
 // Re-exported dependencies.
 pub extern crate bitcoin_hashes as hashes;
 pub extern crate secp256k1;
 pub extern crate bech32;
 
-extern crate byteorder;
-extern crate hex;
+#[cfg(any(test, feature = "serde"))] extern crate hex;
 #[cfg(feature = "serde")] extern crate serde;
 #[cfg(all(test, feature = "serde"))] #[macro_use] extern crate serde_derive; // for 1.22.0 compat
 #[cfg(all(test, feature = "serde"))] extern crate serde_json;

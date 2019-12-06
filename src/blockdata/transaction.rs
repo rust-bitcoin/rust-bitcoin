@@ -23,13 +23,13 @@
 //! This module provides the structures and functions needed to support transactions.
 //!
 
-use byteorder::{LittleEndian, WriteBytesExt};
 use std::default::Default;
 use std::{fmt, io};
 
 use hashes::{self, sha256d, Hash};
 use hashes::hex::FromHex;
 
+use util::endian;
 use util::hash::BitcoinHash;
 #[cfg(feature="bitcoinconsensus")] use blockdata::script;
 use blockdata::script::Script;
@@ -358,7 +358,7 @@ impl Transaction {
         };
         // hash the result
         let mut raw_vec = serialize(&tx);
-        raw_vec.write_u32::<LittleEndian>(sighash_u32).unwrap();
+        raw_vec.extend_from_slice(&endian::u32_to_array_le(sighash_u32));
         sha256d::Hash::hash(&raw_vec)
     }
 

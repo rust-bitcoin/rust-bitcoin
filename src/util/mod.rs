@@ -30,6 +30,8 @@ pub mod psbt;
 pub mod uint;
 pub mod bip158;
 
+pub(crate) mod endian;
+
 use std::{error, fmt};
 
 use network;

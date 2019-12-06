@@ -23,7 +23,6 @@ use network::constants;
 use consensus::{Encodable, Decodable, ReadExt};
 use consensus::encode;
 use std::io;
-use byteorder::WriteBytesExt;
 use network::message_network::RejectReason::{MALFORMED, INVALID, OBSOLETE, DUPLICATE, NONSTANDARD, DUST, CHECKPOINT, FEE};
 use hashes::sha256d;
 
@@ -107,7 +106,7 @@ pub enum RejectReason {
 
 impl Encodable for RejectReason {
     fn consensus_encode<W: io::Write>(&self, mut e: W) -> Result<usize, encode::Error> {
-        e.write_u8(*self as u8)?;
+        e.write_all(&[*self as u8])?;
         Ok(1)
     }
 }
