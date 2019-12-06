@@ -26,7 +26,8 @@ use util::BitArray;
 macro_rules! construct_uint {
     ($name:ident, $n_words:expr) => (
         /// Little-endian large integer type
-        #[derive(Copy, Clone, PartialEq, Eq, Hash, Default)]
+        #[derive(Copy, Clone, PartialEq, Eq, Hash, Default, Index, From, Display)]
+        #[display_from(Debug)]
         pub struct $name(pub [u64; $n_words]);
         impl_array_newtype!($name, u64, $n_words);
 
@@ -344,8 +345,6 @@ macro_rules! construct_uint {
                 Ok(())
             }
         }
-
-        display_from_debug!($name);
 
         impl ::consensus::Encodable for $name {
             #[inline]

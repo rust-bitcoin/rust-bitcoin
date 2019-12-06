@@ -46,7 +46,8 @@ pub const USER_AGENT: &'static str = "bitcoin-rust v0.1";
 
 user_enum! {
     /// The cryptocurrency to act on
-    #[derive(Copy, PartialEq, Eq, PartialOrd, Ord, Clone, Hash, Debug)]
+    #[derive(Copy, PartialEq, Eq, PartialOrd, Ord, Clone, Hash, Debug, Display)]
+    #[display_from(Debug)]
     pub enum Network {
         /// Classic Bitcoin
         Bitcoin <-> "bitcoin",

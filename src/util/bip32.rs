@@ -31,14 +31,14 @@ use util::base58;
 use util::key::{PublicKey, PrivateKey};
 
 /// A chain code
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq, Index, From)]
 pub struct ChainCode([u8; 32]);
 impl_array_newtype!(ChainCode, u8, 32);
 impl_array_newtype_show!(ChainCode);
 impl_bytes_newtype!(ChainCode, 32);
 
 /// A fingerprint
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq, Index, From)]
 pub struct Fingerprint([u8; 4]);
 impl_array_newtype!(Fingerprint, u8, 4);
 impl_array_newtype_show!(Fingerprint);
@@ -214,9 +214,8 @@ impl serde::Serialize for ChildNumber {
 }
 
 /// A BIP-32 derivation path.
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq, Index)]
 pub struct DerivationPath(Vec<ChildNumber>);
-impl_index_newtype!(DerivationPath, ChildNumber);
 serde_string_impl!(DerivationPath, "a BIP-32 derivation path");
 
 impl From<Vec<ChildNumber>> for DerivationPath {

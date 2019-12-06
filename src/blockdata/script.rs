@@ -38,8 +38,9 @@ use hashes::{hash160, sha256, Hash};
 
 use util::key::PublicKey;
 
-#[derive(Clone, Default, PartialOrd, Ord, PartialEq, Eq, Hash)]
 /// A Bitcoin script
+#[derive(Clone, Default, PartialOrd, Ord, PartialEq, Eq, Hash, Index)]
+#[index_output(u8)]
 pub struct Script(Box<[u8]>);
 
 impl fmt::Debug for Script {
@@ -74,10 +75,12 @@ impl fmt::UpperHex for Script {
     }
 }
 
-#[derive(PartialEq, Eq, Debug, Clone)]
 /// An object which can be used to construct a script piece by piece
+#[derive(PartialEq, Eq, Debug, Clone, Display, Index)]
+#[display_from(Debug)]
+#[index_output(u8)]
+#[wrap = "0"]
 pub struct Builder(Vec<u8>, Option<opcodes::All>);
-display_from_debug!(Builder);
 
 /// Ways that a script might fail. Not everything is split up as
 /// much as it could be; patches welcome if more detailed errors
@@ -427,7 +430,7 @@ impl From<Vec<u8>> for Script {
     fn from(v: Vec<u8>) -> Script { Script(v.into_boxed_slice()) }
 }
 
-impl_index_newtype!(Script, u8);
+//impl_index_newtype!(Script, u8);
 
 /// A "parsed opcode" which allows iterating over a Script in a more sensible way
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -683,7 +686,7 @@ impl From<Vec<u8>> for Builder {
     }
 }
 
-impl_index_newtype!(Builder, u8);
+//impl_index_newtype!(Builder, u8);
 
 #[cfg(feature = "serde")]
 impl<'de> serde::Deserialize<'de> for Script {
