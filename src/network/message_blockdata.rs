@@ -24,7 +24,7 @@ use hashes::sha256d;
 
 use std::io;
 
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Eq, Clone, Debug, Copy)]
 /// The type of an inventory object
 pub enum InvType {
     /// Error --- these inventories can be ignored
