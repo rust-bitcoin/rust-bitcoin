@@ -76,6 +76,12 @@ pub struct Inventory {
     pub hash: sha256d::Hash
 }
 
+impl ::std::hash::Hash for Inventory {
+    fn hash<H: ::std::hash::Hasher>(&self, state: &mut H) {
+        self.hash.hash(state)
+    }
+}
+
 impl GetBlocksMessage {
     /// Construct a new `getblocks` message
     pub fn new(locator_hashes: Vec<sha256d::Hash>, stop_hash: sha256d::Hash) -> GetBlocksMessage {
