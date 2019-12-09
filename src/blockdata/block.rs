@@ -112,7 +112,7 @@ impl Block {
 
 impl MerkleRoot for Block {
     fn merkle_root(&self) -> sha256d::Hash {
-        bitcoin_merkle_root(self.txdata.iter().map(|obj| obj.txid()).collect())
+        bitcoin_merkle_root(self.txdata.iter().map(|obj| obj.txid().into()).collect())
     }
 }
 

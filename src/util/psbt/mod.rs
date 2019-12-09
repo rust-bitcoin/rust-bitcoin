@@ -163,7 +163,7 @@ impl Decodable for PartiallySignedTransaction {
 #[cfg(test)]
 mod tests {
     use hashes::hex::FromHex;
-    use hashes::sha256d;
+    use hash_types::Txid;
 
     use std::collections::BTreeMap;
 
@@ -255,7 +255,7 @@ mod tests {
                 lock_time: 1257139,
                 input: vec![TxIn {
                     previous_output: OutPoint {
-                        txid: sha256d::Hash::from_hex(
+                        txid: Txid::from_hex(
                             "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126",
                         ).unwrap(),
                         vout: 0,
@@ -315,7 +315,7 @@ mod tests {
         use hex::decode as hex_decode;
 
         use hashes::hex::FromHex;
-        use hashes::sha256d;
+        use hash_types::Txid;
 
         use blockdata::script::Script;
         use blockdata::transaction::{SigHashType, Transaction, TxIn, TxOut, OutPoint};
@@ -363,7 +363,7 @@ mod tests {
                         lock_time: 1257139,
                         input: vec![TxIn {
                             previous_output: OutPoint {
-                                txid: sha256d::Hash::from_hex(
+                                txid: Txid::from_hex(
                                     "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126",
                                 ).unwrap(),
                                 vout: 0,
@@ -391,7 +391,7 @@ mod tests {
                         lock_time: 0,
                         input: vec![TxIn {
                             previous_output: OutPoint {
-                                txid: sha256d::Hash::from_hex(
+                                txid: Txid::from_hex(
                                     "e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389",
                                 ).unwrap(),
                                 vout: 1,
@@ -405,7 +405,7 @@ mod tests {
                         },
                         TxIn {
                             previous_output: OutPoint {
-                                txid: sha256d::Hash::from_hex(
+                                txid: Txid::from_hex(
                                     "b490486aec3ae671012dddb2bb08466bef37720a533a894814ff1da743aaf886",
                                 ).unwrap(),
                                 vout: 1,
@@ -548,7 +548,7 @@ mod tests {
             let tx = &psbt.global.unsigned_tx;
             assert_eq!(
                 tx.txid(),
-                sha256d::Hash::from_hex(
+                Txid::from_hex(
                     "75c5c9665a570569ad77dd1279e6fd4628a093c4dcbf8d41532614044c14c115"
                 ).unwrap()
             );

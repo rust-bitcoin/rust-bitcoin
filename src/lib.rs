@@ -52,7 +52,7 @@
 #![allow(ellipsis_inclusive_range_patterns)]
 
 // Re-exported dependencies.
-pub extern crate bitcoin_hashes as hashes;
+#[macro_use] pub extern crate bitcoin_hashes as hashes;
 pub extern crate secp256k1;
 pub extern crate bech32;
 
@@ -77,7 +77,10 @@ pub mod network;
 pub mod blockdata;
 pub mod util;
 pub mod consensus;
+#[allow(unused_imports)]
+pub mod hash_types;
 
+pub use hash_types::*;
 pub use blockdata::block::Block;
 pub use blockdata::block::BlockHeader;
 pub use blockdata::script::Script;

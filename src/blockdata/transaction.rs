@@ -34,13 +34,14 @@ use util::hash::BitcoinHash;
 #[cfg(feature="bitcoinconsensus")] use blockdata::script;
 use blockdata::script::Script;
 use consensus::{encode, serialize, Decodable, Encodable};
+use hash_types::*;
 use VarInt;
 
 /// A reference to a transaction output
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
 pub struct OutPoint {
     /// The referenced transaction's txid
-    pub txid: sha256d::Hash,
+    pub txid: Txid,
     /// The index of the referenced output in its transaction's vout
     pub vout: u32,
 }
@@ -49,7 +50,7 @@ serde_struct_human_string_impl!(OutPoint, "an OutPoint", txid, vout);
 impl OutPoint {
     /// Create a new [OutPoint].
     #[inline]
-    pub fn new(txid: sha256d::Hash, vout: u32) -> OutPoint {
+    pub fn new(txid: Txid, vout: u32) -> OutPoint {
         OutPoint {
             txid: txid,
             vout: vout,
@@ -175,7 +176,7 @@ impl ::std::str::FromStr for OutPoint {
             return Err(ParseOutPointError::Format);
         }
         Ok(OutPoint {
-            txid: sha256d::Hash::from_hex(&s[..colon]).map_err(ParseOutPointError::Txid)?,
+            txid: Txid::from_hex(&s[..colon]).map_err(ParseOutPointError::Txid)?,
             vout: parse_vout(&s[colon+1..])?,
         })
     }
@@ -293,13 +294,13 @@ impl Transaction {
     /// to the output of `BitcoinHash::bitcoin_hash()`, but for segwit transactions,
     /// this will give the correct txid (not including witnesses) while `bitcoin_hash`
     /// will also hash witnesses.
-    pub fn txid(&self) -> sha256d::Hash {
+    pub fn txid(&self) -> Txid {
         let mut enc = sha256d::Hash::engine();
         self.version.consensus_encode(&mut enc).unwrap();
         self.input.consensus_encode(&mut enc).unwrap();
         self.output.consensus_encode(&mut enc).unwrap();
         self.lock_time.consensus_encode(&mut enc).unwrap();
-        sha256d::Hash::from_engine(enc)
+        Txid::from_engine(enc)
     }
 
     /// Computes a signature hash for a given input index with a given sighash flag.
@@ -630,6 +631,8 @@ mod tests {
     use hashes::{sha256d, Hash};
     use hashes::hex::FromHex;
 
+    use hash_types::*;
+
     #[test]
     fn test_outpoint() {
         assert_eq!(OutPoint::from_str("i don't care"),
@@ -645,20 +648,20 @@ mod tests {
         assert_eq!(OutPoint::from_str("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456:+42"),
                    Err(ParseOutPointError::VoutNotCanonical));
         assert_eq!(OutPoint::from_str("i don't care:1"),
-                   Err(ParseOutPointError::Txid(sha256d::Hash::from_hex("i don't care").unwrap_err())));
+                   Err(ParseOutPointError::Txid(Txid::from_hex("i don't care").unwrap_err())));
         assert_eq!(OutPoint::from_str("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c945X:1"),
-                   Err(ParseOutPointError::Txid(sha256d::Hash::from_hex("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c945X").unwrap_err())));
+                   Err(ParseOutPointError::Txid(Txid::from_hex("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c945X").unwrap_err())));
         assert_eq!(OutPoint::from_str("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456:lol"),
                    Err(ParseOutPointError::Vout(u32::from_str("lol").unwrap_err())));
  
         assert_eq!(OutPoint::from_str("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456:42"),
                    Ok(OutPoint{
-                       txid: sha256d::Hash::from_hex("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456").unwrap(),
+                       txid: Txid::from_hex("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456").unwrap(),
                        vout: 42,
                    }));
         assert_eq!(OutPoint::from_str("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456:0"),
                    Ok(OutPoint{
-                       txid: sha256d::Hash::from_hex("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456").unwrap(),
+                       txid: Txid::from_hex("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456").unwrap(),
                        vout: 0,
                    }));
     }

@@ -96,14 +96,15 @@ fn bitcoin_genesis_tx() -> Transaction {
 
 /// Constructs and returns the genesis block
 pub fn genesis_block(network: Network) -> Block {
+    let txdata = vec![bitcoin_genesis_tx()];
+    let merkle_root = txdata[0].txid().into();
     match network {
         Network::Bitcoin => {
-            let txdata = vec![bitcoin_genesis_tx()];
             Block {
                 header: BlockHeader {
                     version: 1,
                     prev_blockhash: Default::default(),
-                    merkle_root: txdata[0].txid(),
+                    merkle_root,
                     time: 1231006505,
                     bits: 0x1d00ffff,
                     nonce: 2083236893
@@ -112,12 +113,11 @@ pub fn genesis_block(network: Network) -> Block {
             }
         }
         Network::Testnet => {
-            let txdata = vec![bitcoin_genesis_tx()];
             Block {
                 header: BlockHeader {
                     version: 1,
                     prev_blockhash: Default::default(),
-                    merkle_root: txdata[0].txid(),
+                    merkle_root,
                     time: 1296688602,
                     bits: 0x1d00ffff,
                     nonce: 414098458
@@ -126,12 +126,11 @@ pub fn genesis_block(network: Network) -> Block {
             }
         }
         Network::Regtest => {
-            let txdata = vec![bitcoin_genesis_tx()];
             Block {
                 header: BlockHeader {
                     version: 1,
                     prev_blockhash: Default::default(),
-                    merkle_root: txdata[0].txid(),
+                    merkle_root,
                     time: 1296688602,
                     bits: 0x207fffff,
                     nonce: 2
