@@ -295,7 +295,7 @@ impl Transaction {
     /// this will give the correct txid (not including witnesses) while `bitcoin_hash`
     /// will also hash witnesses.
     pub fn txid(&self) -> Txid {
-        let mut enc = sha256d::Hash::engine();
+        let mut enc = Txid::engine();
         self.version.consensus_encode(&mut enc).unwrap();
         self.input.consensus_encode(&mut enc).unwrap();
         self.output.consensus_encode(&mut enc).unwrap();
@@ -440,7 +440,7 @@ impl Transaction {
 
 impl BitcoinHash<Txid> for Transaction {
     fn bitcoin_hash(&self) -> Txid {
-        let mut enc = sha256d::Hash::engine();
+        let mut enc = Txid::engine();
         self.consensus_encode(&mut enc).unwrap();
         Txid::from_engine(enc)
     }

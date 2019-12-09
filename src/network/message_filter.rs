@@ -1,6 +1,8 @@
 //!
 //! BIP157  Client Side Block Filtering network messages
 //!
+
+use hash_types::BlockHash;
 use hashes::sha256d;
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -11,7 +13,7 @@ pub struct GetCFilters {
     /// The height of the first block in the requested range
     pub start_height: u32,
     /// The hash of the last block in the requested range
-    pub stop_hash: sha256d::Hash,
+    pub stop_hash: BlockHash,
 }
 impl_consensus_encoding!(GetCFilters, filter_type, start_height, stop_hash);
 
@@ -21,7 +23,7 @@ pub struct CFilter {
     /// Byte identifying the type of filter being returned
     pub filter_type: u8,
     /// Block hash of the Bitcoin block for which the filter is being returned
-    pub block_hash: sha256d::Hash,
+    pub block_hash: BlockHash,
     /// The serialized compact filter for this block
     pub filter: Vec<u8>,
 }

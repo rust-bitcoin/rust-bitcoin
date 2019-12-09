@@ -20,6 +20,9 @@ use std::io;
 
 use consensus::encode::{Encodable, Decodable, Error};
 use hashes::{sha256, sha256d, hash160, Hash};
+
+// Do not remove: required in order to get hash types implementation macros to work correctly
+#[allow(unused_imports)]
 use hashes::hex::{ToHex, FromHex};
 
 macro_rules! impl_hashencode {
