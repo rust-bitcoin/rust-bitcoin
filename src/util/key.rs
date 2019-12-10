@@ -17,13 +17,58 @@
 //!
 
 use std::fmt::{self, Write};
-use std::{io, ops};
+use std::{io, ops, error};
 use std::str::FromStr;
 
 use secp256k1::{self, Secp256k1};
-use consensus::encode;
 use network::constants::Network;
 use util::base58;
+
+/// A key-related error.
+#[derive(Debug)]
+pub enum Error {
+    /// Base58 encoding error
+    Base58(base58::Error),
+    /// secp256k1-related error
+    Secp256k1(secp256k1::Error),
+}
+
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Error::Base58(ref e) => write!(f, "base58 error: {}", e),
+            Error::Secp256k1(ref e) => write!(f, "secp256k1 error: {}", e),
+        }
+    }
+}
+
+impl error::Error for Error {
+    fn cause(&self) -> Option<&error::Error> {
+        match *self {
+            Error::Base58(ref e) => Some(e),
+            Error::Secp256k1(ref e) => Some(e),
+        }
+    }
+
+    fn description(&self) -> &str {
+		"Bitcoin key error"
+    }
+}
+
+#[doc(hidden)]
+impl From<base58::Error> for Error {
+    fn from(e: base58::Error) -> Error {
+        Error::Base58(e)
+    }
+}
+
+#[doc(hidden)]
+impl From<secp256k1::Error> for Error {
+    fn from(e: secp256k1::Error) -> Error {
+        Error::Secp256k1(e)
+    }
+}
 
 /// A Bitcoin ECDSA public key
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -53,7 +98,7 @@ impl PublicKey {
     }
 
     /// Deserialize a public key from a slice
-    pub fn from_slice(data: &[u8]) -> Result<PublicKey, encode::Error> {
+    pub fn from_slice(data: &[u8]) -> Result<PublicKey, Error> {
         let compressed: bool = match data.len() {
             33 => true,
             65 => false,
@@ -88,8 +133,8 @@ impl fmt::Display for PublicKey {
 }
 
 impl FromStr for PublicKey {
-    type Err = encode::Error;
-    fn from_str(s: &str) -> Result<PublicKey, encode::Error> {
+    type Err = Error;
+    fn from_str(s: &str) -> Result<PublicKey, Error> {
         let key = secp256k1::PublicKey::from_str(s)?;
         Ok(PublicKey {
             key: key,
@@ -149,19 +194,19 @@ impl PrivateKey {
     }
 
     /// Parse WIF encoded private key.
-    pub fn from_wif(wif: &str) -> Result<PrivateKey, encode::Error> {
+    pub fn from_wif(wif: &str) -> Result<PrivateKey, Error> {
         let data = base58::from_check(wif)?;
 
         let compressed = match data.len() {
             33 => false,
             34 => true,
-            _ => { return Err(encode::Error::Base58(base58::Error::InvalidLength(data.len()))); }
+            _ => { return Err(Error::Base58(base58::Error::InvalidLength(data.len()))); }
         };
 
         let network = match data[0] {
             128 => Network::Bitcoin,
             239 => Network::Testnet,
-            x   => { return Err(encode::Error::Base58(base58::Error::InvalidVersion(vec![x]))); }
+            x   => { return Err(Error::Base58(base58::Error::InvalidVersion(vec![x]))); }
         };
 
         Ok(PrivateKey {
@@ -185,8 +230,8 @@ impl fmt::Debug for PrivateKey {
 }
 
 impl FromStr for PrivateKey {
-    type Err = encode::Error;
-    fn from_str(s: &str) -> Result<PrivateKey, encode::Error> {
+    type Err = Error;
+    fn from_str(s: &str) -> Result<PrivateKey, Error> {
         PrivateKey::from_wif(s)
     }
 }
