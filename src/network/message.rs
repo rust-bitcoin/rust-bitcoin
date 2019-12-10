@@ -70,7 +70,7 @@ impl Encodable for CommandString {
         let mut rawbytes = [0u8; 12];
         let strbytes = self.0.as_bytes();
         if strbytes.len() > 12 {
-            panic!("Command string longer than 12 bytes");
+            return Err(encode::Error::UnrecognizedNetworkCommand(self.0.clone().into_owned()));
         }
         for x in 0..strbytes.len() {
             rawbytes[x] = strbytes[x];
@@ -332,13 +332,18 @@ impl Decodable for RawNetworkMessage {
 
 #[cfg(test)]
 mod test {
+    use std::io;
     use super::{RawNetworkMessage, NetworkMessage, CommandString};
-    use consensus::encode::{deserialize, deserialize_partial, serialize};
+    use consensus::encode::{Encodable, deserialize, deserialize_partial, serialize};
 
     #[test]
     fn serialize_commandstring_test() {
         let cs = CommandString("Andrew".into());
         assert_eq!(serialize(&cs), vec![0x41u8, 0x6e, 0x64, 0x72, 0x65, 0x77, 0, 0, 0, 0, 0, 0]);
+
+        // Test oversized one.
+        let mut encoder = io::Cursor::new(vec![]);
+        assert!(CommandString("AndrewAndrewA".into()).consensus_encode(&mut encoder).is_err());
     }
 
     #[test]
