@@ -1,8 +1,17 @@
 #!/bin/bash
 set -e
+
+# Check that input files are correct Windows file names
+incorrectFilenames=$(find . -type f -name "*,*" -o -name "*:*" -o -name "*<*" -o -name "*>*" -o -name "*|*" -o -name "*\?*" -o -name "*\**" -o -name "*\"*" | wc -l)
+
+if [ ${incorrectFilenames} -gt 0 ]; then
+	exit 2
+fi
+
+# Testing
 cargo install --force honggfuzz
 for TARGET in fuzz_targets/*; do
-    FILENAME=$(basename $TARGET)
+	FILENAME=$(basename $TARGET)
 	FILE="${FILENAME%.*}"
 	if [ -d hfuzz_input/$FILE ]; then
 	    HFUZZ_INPUT_ARGS="-f hfuzz_input/$FILE/input"
