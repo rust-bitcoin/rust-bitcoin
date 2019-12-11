@@ -56,8 +56,7 @@ pub struct VersionMessage {
 }
 
 impl VersionMessage {
-    // TODO: we have fixed services and relay to 0
-    /// Constructs a new `version` message
+    /// Constructs a new `version` message with `relay` set to false
     pub fn new(
         services: ServiceFlags,
         timestamp: i64,
