@@ -148,6 +148,7 @@ mod tests {
     use super::VersionMessage;
 
     use hex::decode as hex_decode;
+    use network::constants::ServiceFlags;
 
     use consensus::encode::{deserialize, serialize};
 
@@ -160,7 +161,7 @@ mod tests {
         assert!(decode.is_ok());
         let real_decode = decode.unwrap();
         assert_eq!(real_decode.version, 70002);
-        assert_eq!(real_decode.services, 1.into());
+        assert_eq!(real_decode.services, ServiceFlags::NETWORK);
         assert_eq!(real_decode.timestamp, 1401217254);
         // address decodes should be covered by Address tests
         assert_eq!(real_decode.nonce, 16735069437859780935);

@@ -334,6 +334,7 @@ impl Decodable for RawNetworkMessage {
 mod test {
     use std::io;
     use super::{RawNetworkMessage, NetworkMessage, CommandString};
+    use network::constants::ServiceFlags;
     use consensus::encode::{Encodable, deserialize, deserialize_partial, serialize};
 
     #[test]
@@ -429,7 +430,7 @@ mod test {
         assert_eq!(msg.magic, 0xd9b4bef9);
         if let NetworkMessage::Version(version_msg) = msg.payload {
             assert_eq!(version_msg.version, 70015);
-            assert_eq!(version_msg.services, 1037.into());
+            assert_eq!(version_msg.services, ServiceFlags::NETWORK | ServiceFlags::BLOOM | ServiceFlags::WITNESS | ServiceFlags::NETWORK_LIMITED);
             assert_eq!(version_msg.timestamp, 1548554224);
             assert_eq!(version_msg.nonce, 13952548347456104954);
             assert_eq!(version_msg.user_agent, "/Satoshi:0.17.1/");
@@ -466,7 +467,7 @@ mod test {
         assert_eq!(msg.magic, 0xd9b4bef9);
         if let NetworkMessage::Version(version_msg) = msg.payload {
             assert_eq!(version_msg.version, 70015);
-            assert_eq!(version_msg.services, 1037.into());
+            assert_eq!(version_msg.services, ServiceFlags::NETWORK | ServiceFlags::BLOOM | ServiceFlags::WITNESS | ServiceFlags::NETWORK_LIMITED);
             assert_eq!(version_msg.timestamp, 1548554224);
             assert_eq!(version_msg.nonce, 13952548347456104954);
             assert_eq!(version_msg.user_agent, "/Satoshi:0.17.1/");
