@@ -29,11 +29,8 @@
 //! big-endian decimals, etc.)
 //!
 
-use std::{mem, u32};
-
-use std::error;
-use std::fmt;
-use std::io;
+use std::{fmt, error, io, mem, u32};
+use std::borrow::Cow;
 use std::io::{Cursor, Read, Write};
 use hashes::hex::ToHex;
 
@@ -483,6 +480,26 @@ impl Decodable for String {
     }
 }
 
+// Cow<'static, str>
+impl Encodable for Cow<'static, str> {
+    #[inline]
+    fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, Error> {
+        let b = self.as_bytes();
+        let vi_len = VarInt(b.len() as u64).consensus_encode(&mut s)?;
+        s.emit_slice(&b)?;
+        Ok(vi_len + b.len())
+    }
+}
+
+impl Decodable for Cow<'static, str> {
+    #[inline]
+    fn consensus_decode<D: io::Read>(d: D) -> Result<Cow<'static, str>, Error> {
+        String::from_utf8(Decodable::consensus_decode(d)?)
+            .map_err(|_| self::Error::ParseFailed("String was not valid UTF8"))
+            .map(Cow::Owned)
+    }
+}
+
 
 // Arrays
 macro_rules! impl_array {
@@ -894,6 +911,10 @@ mod tests {
     #[test]
     fn deserialize_strbuf_test() {
         assert_eq!(deserialize(&[6u8, 0x41, 0x6e, 0x64, 0x72, 0x65, 0x77]).ok(), Some("Andrew".to_string()));
+        assert_eq!(
+            deserialize(&[6u8, 0x41, 0x6e, 0x64, 0x72, 0x65, 0x77]).ok(),
+            Some(::std::borrow::Cow::Borrowed("Andrew"))
+        );
     }
 
     #[test]
