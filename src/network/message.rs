@@ -116,7 +116,6 @@ pub enum NetworkMessage {
     Ping(u64),
     /// `pong`
     Pong(u64),
-    // TODO: reject,
     // TODO: bloom filtering
     /// BIP157 getcfilters
     GetCFilters(message_filter::GetCFilters),
