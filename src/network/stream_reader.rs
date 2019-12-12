@@ -86,6 +86,7 @@ mod test {
     use std::io::{self, BufReader, Write};
     use std::net::{TcpListener, TcpStream, Shutdown};
     use std::thread::JoinHandle;
+    use network::constants::ServiceFlags;
 
     use super::StreamReader;
     use network::message::{NetworkMessage, RawNetworkMessage};
@@ -156,7 +157,7 @@ mod test {
         assert_eq!(msg.magic, 0xd9b4bef9);
         if let NetworkMessage::Version(ref version_msg) = msg.payload {
             assert_eq!(version_msg.version, 70015);
-            assert_eq!(version_msg.services, 1037.into());
+            assert_eq!(version_msg.services, ServiceFlags::NETWORK | ServiceFlags::BLOOM | ServiceFlags::WITNESS | ServiceFlags::NETWORK_LIMITED);
             assert_eq!(version_msg.timestamp, 1548554224);
             assert_eq!(version_msg.nonce, 13952548347456104954);
             assert_eq!(version_msg.user_agent, "/Satoshi:0.17.1/");

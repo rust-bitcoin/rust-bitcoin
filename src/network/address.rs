@@ -109,6 +109,7 @@ impl fmt::Debug for Address {
 mod test {
     use std::str::FromStr;
     use super::Address;
+    use network::constants::ServiceFlags;
     use std::net::{SocketAddr, IpAddr, Ipv4Addr, Ipv6Addr};
 
     use consensus::encode::{deserialize, serialize};
@@ -116,7 +117,7 @@ mod test {
     #[test]
     fn serialize_address_test() {
         assert_eq!(serialize(&Address {
-            services: 1.into(),
+            services: ServiceFlags::NETWORK,
             address: [0, 0, 0, 0, 0, 0xffff, 0x0a00, 0x0001],
             port: 8333
         }),
@@ -136,7 +137,7 @@ mod test {
                     _ => false
                 }
             );
-        assert_eq!(full.services, 1.into());
+        assert_eq!(full.services, ServiceFlags::NETWORK);
         assert_eq!(full.address, [0, 0, 0, 0, 0, 0xffff, 0x0a00, 0x0001]);
         assert_eq!(full.port, 8333);
 
@@ -148,11 +149,11 @@ mod test {
     #[test]
     fn test_socket_addr () {
         let s4 = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(111,222,123,4)), 5555);
-        let a4 = Address::new(&s4, 9.into());
+        let a4 = Address::new(&s4, ServiceFlags::NETWORK | ServiceFlags::WITNESS);
         assert_eq!(a4.socket_addr().unwrap(), s4);
         let s6 = SocketAddr::new(IpAddr::V6(Ipv6Addr::new(0x1111, 0x2222, 0x3333, 0x4444,
         0x5555, 0x6666, 0x7777, 0x8888)), 9999);
-        let a6 = Address::new(&s6, 9.into());
+        let a6 = Address::new(&s6, ServiceFlags::NETWORK | ServiceFlags::WITNESS);
         assert_eq!(a6.socket_addr().unwrap(), s6);
     }
 
@@ -161,7 +162,7 @@ mod test {
         let onionaddr = SocketAddr::new(
             IpAddr::V6(
             Ipv6Addr::from_str("FD87:D87E:EB43:edb1:8e4:3588:e546:35ca").unwrap()), 1111);
-        let addr = Address::new(&onionaddr, 0.into());
+        let addr = Address::new(&onionaddr, ServiceFlags::NONE);
         assert!(addr.socket_addr().is_err());
     }
 }
