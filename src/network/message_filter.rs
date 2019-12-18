@@ -36,7 +36,7 @@ pub struct GetCFHeaders {
     /// The height of the first block in the requested range
     pub start_height: u32,
     /// The hash of the last block in the requested range
-    pub stop_hash: FilterHash,
+    pub stop_hash: BlockHash,
 }
 impl_consensus_encoding!(GetCFHeaders, filter_type, start_height, stop_hash);
 
@@ -46,7 +46,7 @@ pub struct CFHeaders {
     /// Filter type for which headers are requested
     pub filter_type: u8,
     /// The hash of the last block in the requested range
-    pub stop_hash: FilterHash,
+    pub stop_hash: BlockHash,
     /// The filter header preceding the first block in the requested range
     pub previous_filter: FilterHash,
     /// The filter hashes for each block in the requested range
@@ -60,7 +60,7 @@ pub struct GetCFCheckpt {
     /// Filter type for which headers are requested
     pub filter_type: u8,
     /// The hash of the last block in the requested range
-    pub stop_hash: FilterHash,
+    pub stop_hash: BlockHash,
 }
 impl_consensus_encoding!(GetCFCheckpt, filter_type, stop_hash);
 
@@ -70,7 +70,7 @@ pub struct CFCheckpt {
     /// Filter type for which headers are requested
     pub filter_type: u8,
     /// The hash of the last block in the requested range
-    pub stop_hash: FilterHash,
+    pub stop_hash: BlockHash,
     /// The filter headers at intervals of 1,000
     pub filter_headers: Vec<FilterHash>,
 }

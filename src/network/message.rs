@@ -341,7 +341,7 @@ mod test {
     use hashes::Hash as HashTrait;
     use network::address::Address;
     use super::message_network::{Reject, RejectReason, VersionMessage};
-    use network::message_blockdata::{Inventory, GetBlocksMessage, GetHeadersMessage, InvType};
+    use network::message_blockdata::{Inventory, GetBlocksMessage, GetHeadersMessage};
     use blockdata::block::{Block, BlockHeader};
     use network::message_filter::{GetCFilters, CFilter, GetCFHeaders, CFHeaders, GetCFCheckpt, CFCheckpt};
     use blockdata::transaction::Transaction;
@@ -362,9 +362,9 @@ mod test {
             NetworkMessage::Version(version_msg),
             NetworkMessage::Verack,
             NetworkMessage::Addr(vec![(45, Address::new(&([123,255,000,100], 833).into(), ServiceFlags::NETWORK))]),
-            NetworkMessage::Inv(vec![Inventory{inv_type: InvType::Block, hash: hash([8u8; 32]).into()}]),
-            NetworkMessage::GetData(vec![Inventory{inv_type: InvType::Transaction, hash: hash([45u8; 32]).into()}]),
-            NetworkMessage::NotFound(vec![Inventory{inv_type: InvType::Error, hash: hash([45u8; 32]).into()}]),
+            NetworkMessage::Inv(vec![Inventory::Block(hash([8u8; 32]).into())]),
+            NetworkMessage::GetData(vec![Inventory::Transaction(hash([45u8; 32]).into())]),
+            NetworkMessage::NotFound(vec![Inventory::Error]),
             NetworkMessage::GetBlocks(GetBlocksMessage::new(vec![hash([1u8; 32]).into(), hash([4u8; 32]).into()], hash([5u8; 32]).into())),
             NetworkMessage::GetHeaders(GetHeadersMessage::new(vec![hash([10u8; 32]).into(), hash([40u8; 32]).into()], hash([50u8; 32]).into())),
             NetworkMessage::MemPool,
