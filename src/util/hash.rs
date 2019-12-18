@@ -19,9 +19,8 @@ use std::cmp::min;
 use std::default::Default;
 
 use hashes::Hash;
-use hash_types::{Txid, TxMerkleRoot};
+use hash_types::{Txid, TxidType, TxMerkleRoot};
 
-use consensus::encode::Encodable;
 
 /// Any collection of objects for which a merkle root makes sense to calculate
 pub trait MerkleRooted {
@@ -31,7 +30,7 @@ pub trait MerkleRooted {
 }
 
 /// Calculates the merkle root of a list of txids hashes directly
-pub fn bitcoin_merkle_root(data: Vec<Txid>) -> TxMerkleRoot {
+pub fn bitcoin_merkle_root<T: TxidType>(data: Vec<T>) -> TxMerkleRoot {
     // Base case
     if data.len() < 1 {
         return Default::default();

@@ -66,3 +66,9 @@ impl_hashencode!(TxMerkleRoot);
 impl_hashencode!(TxMerkleBranch);
 impl_hashencode!(WitnessMerkleRoot);
 impl_hashencode!(FilterHash);
+
+/// Generic trait for functions which may either take a Txid type of Wtxid type as an imput.
+/// For instance, used for Merklization procedure
+pub trait TxidType: Hash<Inner = [u8; 32]> + Encodable + Decodable { }
+impl TxidType for Txid { }
+impl TxidType for Wtxid { }

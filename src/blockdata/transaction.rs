@@ -30,7 +30,6 @@ use hashes::{self, Hash, sha256d};
 use hashes::hex::FromHex;
 
 use util::endian;
-use util::hash::BitcoinHash;
 #[cfg(feature="bitcoinconsensus")] use blockdata::script;
 use blockdata::script::Script;
 use consensus::{encode, serialize, Decodable, Encodable};
@@ -287,12 +286,12 @@ impl Transaction {
             input: self.input.iter().map(|txin| TxIn { script_sig: Script::new(), witness: vec![], .. *txin }).collect(),
             output: self.output.clone(),
         };
-        cloned_tx.bitcoin_hash().into()
+        cloned_tx.txid().into()
     }
 
     /// Computes the txid. For non-segwit transactions this will be identical
-    /// to the output of `BitcoinHash::bitcoin_hash()`, but for segwit transactions,
-    /// this will give the correct txid (not including witnesses) while `bitcoin_hash`
+    /// to the output of `wtxid()`, but for segwit transactions,
+    /// this will give the correct txid (not including witnesses) while `wtxid`
     /// will also hash witnesses.
     pub fn txid(&self) -> Txid {
         let mut enc = Txid::engine();
@@ -301,6 +300,15 @@ impl Transaction {
         self.output.consensus_encode(&mut enc).unwrap();
         self.lock_time.consensus_encode(&mut enc).unwrap();
         Txid::from_engine(enc)
+    }
+
+    /// Computes SegWit-version of the transaction id (wtxid). For transaction with the witness
+    /// data this hash includes witness, for pre-witness transaction it is equal to the normal
+    /// value returned by txid() function.
+    pub fn wtxid(&self) -> Wtxid {
+        let mut enc = Wtxid::engine();
+        self.consensus_encode(&mut enc).unwrap();
+        Wtxid::from_engine(enc)
     }
 
     /// Computes a signature hash for a given input index with a given sighash flag.
@@ -435,14 +443,6 @@ impl Transaction {
     /// Is this a coin base transaction?
     pub fn is_coin_base(&self) -> bool {
         self.input.len() == 1 && self.input[0].previous_output.is_null()
-    }
-}
-
-impl BitcoinHash<Txid> for Transaction {
-    fn bitcoin_hash(&self) -> Txid {
-        let mut enc = Txid::engine();
-        self.consensus_encode(&mut enc).unwrap();
-        Txid::from_engine(enc)
     }
 }
 
@@ -626,7 +626,6 @@ mod tests {
     use blockdata::script::Script;
     use consensus::encode::serialize;
     use consensus::encode::deserialize;
-    use util::hash::BitcoinHash;
 
     use hashes::Hash;
     use hashes::hex::FromHex;
@@ -712,7 +711,9 @@ mod tests {
         assert_eq!(realtx.output.len(), 1);
         assert_eq!(realtx.lock_time, 0);
 
-        assert_eq!(format!("{:x}", realtx.bitcoin_hash()),
+        assert_eq!(format!("{:x}", realtx.txid()),
+                   "a6eab3c14ab5272a58a5ba91505ba1a4b6d7a3a9fcbd187b6cd99a7b6d548cb7".to_string());
+        assert_eq!(format!("{:x}", realtx.wtxid()),
                    "a6eab3c14ab5272a58a5ba91505ba1a4b6d7a3a9fcbd187b6cd99a7b6d548cb7".to_string());
         assert_eq!(realtx.get_weight(), 193*4);
     }
@@ -781,7 +782,7 @@ mod tests {
         ).unwrap();
         let tx: Transaction = deserialize(&hex_tx).unwrap();
 
-        assert_eq!(format!("{:x}", tx.bitcoin_hash()), "d6ac4a5e61657c4c604dcde855a1db74ec6b3e54f32695d72c5e11c7761ea1b4");
+        assert_eq!(format!("{:x}", tx.wtxid()), "d6ac4a5e61657c4c604dcde855a1db74ec6b3e54f32695d72c5e11c7761ea1b4");
         assert_eq!(format!("{:x}", tx.txid()), "9652aa62b0e748caeec40c4cb7bc17c6792435cc3dfe447dd1ca24f912a1c6ec");
         assert_eq!(tx.get_weight(), 2718);
 
@@ -796,7 +797,7 @@ mod tests {
         ).unwrap();
         let tx: Transaction = deserialize(&hex_tx).unwrap();
 
-        assert_eq!(format!("{:x}", tx.bitcoin_hash()), "971ed48a62c143bbd9c87f4bafa2ef213cfa106c6e140f111931d0be307468dd");
+        assert_eq!(format!("{:x}", tx.wtxid()), "971ed48a62c143bbd9c87f4bafa2ef213cfa106c6e140f111931d0be307468dd");
         assert_eq!(format!("{:x}", tx.txid()), "971ed48a62c143bbd9c87f4bafa2ef213cfa106c6e140f111931d0be307468dd");
     }
 

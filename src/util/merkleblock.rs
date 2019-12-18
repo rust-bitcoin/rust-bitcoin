@@ -61,9 +61,9 @@ use std::io;
 use hashes::Hash;
 use hash_types::{Txid, TxMerkleRoot, TxMerkleBranch};
 
+use blockdata::transaction::Transaction;
 use blockdata::constants::{MAX_BLOCK_WEIGHT, MIN_TRANSACTION_WEIGHT};
 use consensus::encode::{self, Decodable, Encodable};
-use util::hash::BitcoinHash;
 use util::merkleblock::MerkleBlockError::*;
 use {Block, BlockHeader};
 
@@ -445,7 +445,7 @@ impl MerkleBlock {
         let mut matches: Vec<bool> = Vec::with_capacity(block.txdata.len());
         let mut hashes: Vec<Txid> = Vec::with_capacity(block.txdata.len());
 
-        for hash in block.txdata.iter().map(BitcoinHash::bitcoin_hash) {
+        for hash in block.txdata.iter().map(Transaction::txid) {
             matches.push(match_txids.contains(&hash));
             hashes.push(hash);
         }
