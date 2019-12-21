@@ -354,7 +354,7 @@ mod tests {
         let flag = ServiceFlags::WITNESS | ServiceFlags::BLOOM | ServiceFlags::NETWORK;
         assert_eq!("ServiceFlags(NETWORK|BLOOM|WITNESS)", flag.to_string());
         let flag = ServiceFlags::WITNESS | 0xf0.into();
-        assert_eq!("ServiceFlags(WITNESS|0xf0)", flag.to_string());
+        assert_eq!("ServiceFlags(WITNESS|COMPACT_FILTERS|0xb0)", flag.to_string());
     }
 }
 
