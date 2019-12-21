@@ -201,6 +201,7 @@ impl fmt::Display for ServiceFlags {
         write_flag!(GETUTXO);
         write_flag!(BLOOM);
         write_flag!(WITNESS);
+        write_flag!(COMPACT_FILTERS);
         write_flag!(NETWORK_LIMITED);
         // If there are unknown flags left, we append them in hex.
         if flags != ServiceFlags::NONE {
