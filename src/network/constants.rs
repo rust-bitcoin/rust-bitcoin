@@ -125,6 +125,10 @@ impl ServiceFlags {
     /// WITNESS indicates that a node can be asked for blocks and transactions including witness
     /// data.
     pub const WITNESS: ServiceFlags = ServiceFlags(1 << 3);
+    
+    /// COMPACT_FILTERS means the node will service basic block filter requests.
+    /// See BIP157 and BIP158 for details on how this is implemented.
+    pub const COMPACT_FILTERS: ServiceFlags = ServiceFlags(1 << 6);
 
     /// NETWORK_LIMITED means the same as NODE_NETWORK with the limitation of only serving the last
     /// 288 (2 day) blocks.
@@ -197,6 +201,7 @@ impl fmt::Display for ServiceFlags {
         write_flag!(GETUTXO);
         write_flag!(BLOOM);
         write_flag!(WITNESS);
+        write_flag!(COMPACT_FILTERS);
         write_flag!(NETWORK_LIMITED);
         // If there are unknown flags left, we append them in hex.
         if flags != ServiceFlags::NONE {
@@ -319,6 +324,7 @@ mod tests {
             ServiceFlags::GETUTXO,
             ServiceFlags::BLOOM,
             ServiceFlags::WITNESS,
+            ServiceFlags::COMPACT_FILTERS,
             ServiceFlags::NETWORK_LIMITED,
         ];
 
@@ -337,6 +343,10 @@ mod tests {
 
         flags2 ^= ServiceFlags::WITNESS;
         assert_eq!(flags2, ServiceFlags::GETUTXO);
+        
+        flags2 |= ServiceFlags::COMPACT_FILTERS;
+        flags2 ^= ServiceFlags::GETUTXO;
+        assert_eq!(flags2, ServiceFlags::COMPACT_FILTERS);
 
         // Test formatting.
         assert_eq!("ServiceFlags(NONE)", ServiceFlags::NONE.to_string());
@@ -344,7 +354,7 @@ mod tests {
         let flag = ServiceFlags::WITNESS | ServiceFlags::BLOOM | ServiceFlags::NETWORK;
         assert_eq!("ServiceFlags(NETWORK|BLOOM|WITNESS)", flag.to_string());
         let flag = ServiceFlags::WITNESS | 0xf0.into();
-        assert_eq!("ServiceFlags(WITNESS|0xf0)", flag.to_string());
+        assert_eq!("ServiceFlags(WITNESS|COMPACT_FILTERS|0xb0)", flag.to_string());
     }
 }
 
