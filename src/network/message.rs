@@ -160,50 +160,69 @@ pub enum NetworkMessage {
 }
 
 impl NetworkMessage {
-    /// Return the message command. This is useful for debug outputs.
-    pub fn cmd(&self) -> &'static str {
+    /// Return the CommandString for the message command.
+    pub fn command(&self) -> &'static CommandString {
         match *self {
-            NetworkMessage::Version(_) => "version",
-            NetworkMessage::Verack     => "verack",
-            NetworkMessage::Addr(_)    => "addr",
-            NetworkMessage::Inv(_)     => "inv",
-            NetworkMessage::GetData(_) => "getdata",
-            NetworkMessage::NotFound(_) => "notfound",
-            NetworkMessage::GetBlocks(_) => "getblocks",
-            NetworkMessage::GetHeaders(_) => "getheaders",
-            NetworkMessage::MemPool    => "mempool",
-            NetworkMessage::Tx(_)      => "tx",
-            NetworkMessage::Block(_)   => "block",
-            NetworkMessage::Headers(_) => "headers",
-            NetworkMessage::SendHeaders => "sendheaders",
-            NetworkMessage::GetAddr    => "getaddr",
-            NetworkMessage::Ping(_)    => "ping",
-            NetworkMessage::Pong(_)    => "pong",
-            NetworkMessage::GetCFilters(_) => "getcfilters",
-            NetworkMessage::CFilter(_) => "cfilter",
-            NetworkMessage::GetCFHeaders(_) => "getcfheaders",
-            NetworkMessage::CFHeaders(_) => "cfheaders",
-            NetworkMessage::GetCFCheckpt(_) => "getcfcheckpt",
-            NetworkMessage::CFCheckpt(_) => "cfcheckpt",
-            NetworkMessage::Alert(_)    => "alert",
-            NetworkMessage::Reject(_)    => "reject",
+            NetworkMessage::Version(_) => &Self::possibilites()[0],
+            NetworkMessage::Verack => &Self::possibilites()[1],
+            NetworkMessage::Addr(_) => &Self::possibilites()[2],
+            NetworkMessage::Inv(_) => &Self::possibilites()[3],
+            NetworkMessage::GetData(_) => &Self::possibilites()[4],
+            NetworkMessage::NotFound(_) => &Self::possibilites()[5],
+            NetworkMessage::GetBlocks(_) => &Self::possibilites()[6],
+            NetworkMessage::GetHeaders(_) => &Self::possibilites()[7],
+            NetworkMessage::MemPool => &Self::possibilites()[8],
+            NetworkMessage::Tx(_) => &Self::possibilites()[9],
+            NetworkMessage::Block(_) => &Self::possibilites()[10],
+            NetworkMessage::Headers(_) => &Self::possibilites()[11],
+            NetworkMessage::SendHeaders => &Self::possibilites()[12],
+            NetworkMessage::GetAddr => &Self::possibilites()[13],
+            NetworkMessage::Ping(_) => &Self::possibilites()[14],
+            NetworkMessage::Pong(_) => &Self::possibilites()[15],
+            NetworkMessage::GetCFilters(_) => &Self::possibilites()[16],
+            NetworkMessage::CFilter(_) => &Self::possibilites()[17],
+            NetworkMessage::GetCFHeaders(_) => &Self::possibilites()[18],
+            NetworkMessage::CFHeaders(_) => &Self::possibilites()[19],
+            NetworkMessage::GetCFCheckpt(_) => &Self::possibilites()[20],
+            NetworkMessage::CFCheckpt(_) => &Self::possibilites()[21],
+            NetworkMessage::Alert(_) => &Self::possibilites()[22],
+            NetworkMessage::Reject(_) => &Self::possibilites()[23],
         }
     }
-
-    /// Return the CommandString for the message command.
-    pub fn command(&self) -> CommandString {
-        self.cmd().into()
+    /// Returns a list of all supported commands.
+    pub fn possibilites() -> &'static [CommandString] {
+        &[
+            CommandString(Cow::Borrowed("version")),
+            CommandString(Cow::Borrowed("verack")),
+            CommandString(Cow::Borrowed("addr")),
+            CommandString(Cow::Borrowed("inv")),
+            CommandString(Cow::Borrowed("getdata")),
+            CommandString(Cow::Borrowed("notfound")),
+            CommandString(Cow::Borrowed("getblocks")),
+            CommandString(Cow::Borrowed("getheaders")),
+            CommandString(Cow::Borrowed("mempool")),
+            CommandString(Cow::Borrowed("tx")),
+            CommandString(Cow::Borrowed("block")),
+            CommandString(Cow::Borrowed("headers")),
+            CommandString(Cow::Borrowed("sendheaders")),
+            CommandString(Cow::Borrowed("getaddr")),
+            CommandString(Cow::Borrowed("ping")),
+            CommandString(Cow::Borrowed("pong")),
+            CommandString(Cow::Borrowed("getcfilters")),
+            CommandString(Cow::Borrowed("cfilter")),
+            CommandString(Cow::Borrowed("getcfheaders")),
+            CommandString(Cow::Borrowed("cfheaders")),
+            CommandString(Cow::Borrowed("getcfcheckpt")),
+            CommandString(Cow::Borrowed("cfcheckpt")),
+            CommandString(Cow::Borrowed("alert")),
+            CommandString(Cow::Borrowed("reject")),
+        ]
     }
 }
 
 impl RawNetworkMessage {
-    /// Return the message command. This is useful for debug outputs.
-    pub fn cmd(&self) -> &'static str {
-        self.payload.cmd()
-    }
-
     /// Return the CommandString for the message command.
-    pub fn command(&self) -> CommandString {
+    pub fn command(&self) -> &'static CommandString {
         self.payload.command()
     }
 }
