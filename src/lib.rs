@@ -77,6 +77,8 @@ pub mod network;
 pub mod blockdata;
 pub mod util;
 pub mod consensus;
+#[cfg(test)]
+mod test_rand_types;
 
 pub use blockdata::block::Block;
 pub use blockdata::block::BlockHeader;
