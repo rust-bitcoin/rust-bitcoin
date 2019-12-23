@@ -27,7 +27,7 @@
 use std::default::Default;
 use std::{error, fmt, io};
 
-#[cfg(feature = "serde")] use serde;
+#[cfg(feature = "use-serde")] use serde;
 
 use blockdata::opcodes;
 use consensus::{encode, Decodable, Encodable};
@@ -685,7 +685,7 @@ impl From<Vec<u8>> for Builder {
 
 impl_index_newtype!(Builder, u8);
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "use-serde")]
 impl<'de> serde::Deserialize<'de> for Script {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -728,7 +728,7 @@ impl<'de> serde::Deserialize<'de> for Script {
     }
 }
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "use-serde")]
 impl serde::Serialize for Script {
     /// User-facing serialization for `Script`.
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -931,7 +931,7 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "serde")]
+    #[cfg(feature = "use-serde")]
     fn script_json_serialize() {
         use serde_json;
 

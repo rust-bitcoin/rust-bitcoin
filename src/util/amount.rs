@@ -887,7 +887,7 @@ impl FromStr for SignedAmount {
     }
 }
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "use-serde")]
 pub mod serde {
     // methods are implementation of a standardized serde-specific signature
     #![allow(missing_docs)]
@@ -1039,7 +1039,7 @@ mod tests {
     use std::panic;
     use std::str::FromStr;
 
-    #[cfg(feature = "serde")]
+    #[cfg(feature = "use-serde")]
     use serde_test;
 
     #[test]
@@ -1244,7 +1244,7 @@ mod tests {
         assert_eq!(Amount::from_str(&denom(&amt, D::MilliSatoshi)), Ok(amt));
     }
 
-    #[cfg(feature = "serde")]
+    #[cfg(feature = "use-serde")]
     #[test]
     fn serde_as_sat() {
 
@@ -1275,7 +1275,7 @@ mod tests {
         );
     }
 
-    #[cfg(feature = "serde")]
+    #[cfg(feature = "use-serde")]
     #[test]
     fn serde_as_btc() {
         use serde_json;
@@ -1309,7 +1309,7 @@ mod tests {
         assert!(t.unwrap_err().to_string().contains(&ParseAmountError::Negative.to_string()));
     }
 
-    #[cfg(feature = "serde")]
+    #[cfg(feature = "use-serde")]
     #[test]
     fn serde_as_btc_opt() {
         use serde_json;

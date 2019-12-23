@@ -684,7 +684,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "serde")]
+    #[cfg(feature = "use-serde")]
     fn test_json_serialize() {
         use serde_json;
 

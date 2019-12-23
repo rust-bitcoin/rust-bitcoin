@@ -231,7 +231,7 @@ macro_rules! hex_hash (($s:expr) => (::hashes::sha256d::Hash::from_slice(&::hex:
 
 macro_rules! serde_struct_impl {
     ($name:ident, $($fe:ident),*) => (
-        #[cfg(feature = "serde")]
+        #[cfg(feature = "use-serde")]
         impl<'de> $crate::serde::Deserialize<'de> for $name {
             fn deserialize<D>(deserializer: D) -> Result<$name, D::Error>
             where
@@ -326,7 +326,7 @@ macro_rules! serde_struct_impl {
             }
         }
 
-        #[cfg(feature = "serde")]
+        #[cfg(feature = "use-serde")]
         impl<'de> $crate::serde::Serialize for $name {
             fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
             where
@@ -351,7 +351,7 @@ macro_rules! serde_struct_impl {
 
 macro_rules! serde_string_impl {
     ($name:ident, $expecting:expr) => {
-        #[cfg(feature = "serde")]
+        #[cfg(feature = "use-serde")]
         impl<'de> $crate::serde::Deserialize<'de> for $name {
             fn deserialize<D>(deserializer: D) -> Result<$name, D::Error>
             where
@@ -394,7 +394,7 @@ macro_rules! serde_string_impl {
             }
         }
 
-        #[cfg(feature = "serde")]
+        #[cfg(feature = "use-serde")]
         impl<'de> $crate::serde::Serialize for $name {
             fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
             where
@@ -411,7 +411,7 @@ macro_rules! serde_string_impl {
 /// non-human-readable serialization.
 macro_rules! serde_struct_human_string_impl {
     ($name:ident, $expecting:expr, $($fe:ident),*) => (
-        #[cfg(feature = "serde")]
+        #[cfg(feature = "use-serde")]
         impl<'de> $crate::serde::Deserialize<'de> for $name {
             fn deserialize<D>(deserializer: D) -> Result<$name, D::Error>
             where
@@ -543,7 +543,7 @@ macro_rules! serde_struct_human_string_impl {
             }
         }
 
-        #[cfg(feature = "serde")]
+        #[cfg(feature = "use-serde")]
         impl<'de> $crate::serde::Serialize for $name {
             fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
             where
@@ -619,7 +619,7 @@ macro_rules! impl_bytes_newtype {
             }
         }
 
-        #[cfg(feature="serde")]
+        #[cfg(feature = "use-serde")]
         impl ::serde::Serialize for $t {
             fn serialize<S: ::serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
                 if s.is_human_readable() {
@@ -630,7 +630,7 @@ macro_rules! impl_bytes_newtype {
             }
         }
 
-        #[cfg(feature="serde")]
+        #[cfg(feature = "use-serde")]
         impl<'de> ::serde::Deserialize<'de> for $t {
             fn deserialize<D: ::serde::Deserializer<'de>>(d: D) -> Result<$t, D::Error> {
                 if d.is_human_readable() {
@@ -737,7 +737,7 @@ macro_rules! user_enum {
             }
         }
 
-        #[cfg(feature = "serde")]
+        #[cfg(feature = "use-serde")]
         impl<'de> $crate::serde::Deserialize<'de> for $name {
             #[inline]
             fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
@@ -786,7 +786,7 @@ macro_rules! user_enum {
             }
         }
 
-        #[cfg(feature = "serde")]
+        #[cfg(feature = "use-serde")]
         impl ::serde::Serialize for $name {
             fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
             where

@@ -243,14 +243,14 @@ impl ops::Index<ops::RangeFull> for PrivateKey {
     }
 }
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "use-serde")]
 impl ::serde::Serialize for PrivateKey {
     fn serialize<S: ::serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
         s.collect_str(self)
     }
 }
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "use-serde")]
 impl<'de> ::serde::Deserialize<'de> for PrivateKey {
     fn deserialize<D: ::serde::Deserializer<'de>>(d: D) -> Result<PrivateKey, D::Error> {
         struct WifVisitor;
@@ -285,7 +285,7 @@ impl<'de> ::serde::Deserialize<'de> for PrivateKey {
     }
 }
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "use-serde")]
 impl ::serde::Serialize for PublicKey {
     fn serialize<S: ::serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
         if s.is_human_readable() {
@@ -300,7 +300,7 @@ impl ::serde::Serialize for PublicKey {
     }
 }
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "use-serde")]
 impl<'de> ::serde::Deserialize<'de> for PublicKey {
     fn deserialize<D: ::serde::Deserializer<'de>>(d: D) -> Result<PublicKey, D::Error> {
         if d.is_human_readable() {
@@ -400,7 +400,7 @@ mod tests {
         assert_eq!(pk, PublicKey::from_str("032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af").unwrap());
     }
 
-    #[cfg(feature = "serde")]
+    #[cfg(feature = "use-serde")]
     #[test]
     fn test_key_serde() {
         use serde_test::{Configure, Token, assert_tokens};

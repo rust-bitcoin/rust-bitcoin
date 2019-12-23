@@ -16,7 +16,7 @@
 //!
 //! Internal macros used for unit tests
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "use-serde")]
 macro_rules! serde_round_trip (
     ($var:expr) => ({
         use serde_json;

@@ -20,7 +20,7 @@
 
 #![allow(non_camel_case_types)]
 
-#[cfg(feature = "serde")] use serde;
+#[cfg(feature = "use-serde")] use serde;
 
 use std::fmt;
 
@@ -712,7 +712,7 @@ impl From<u8> for All {
 
 display_from_debug!(All);
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "use-serde")]
 impl serde::Serialize for All {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -750,7 +750,7 @@ pub enum Class {
 
 display_from_debug!(Class);
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "use-serde")]
 impl serde::Serialize for Class {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where

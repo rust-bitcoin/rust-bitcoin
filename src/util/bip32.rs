@@ -19,7 +19,7 @@
 use std::default::Default;
 use std::{error, fmt};
 use std::str::FromStr;
-#[cfg(feature = "serde")] use serde;
+#[cfg(feature = "use-serde")] use serde;
 
 use hashes::{hex, hash160, sha512, Hash, HashEngine, Hmac, HmacEngine};
 use secp256k1::{self, Secp256k1};
@@ -189,7 +189,7 @@ impl FromStr for ChildNumber {
     }
 }
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "use-serde")]
 impl<'de> serde::Deserialize<'de> for ChildNumber {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -199,7 +199,7 @@ impl<'de> serde::Deserialize<'de> for ChildNumber {
     }
 }
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "use-serde")]
 impl serde::Serialize for ChildNumber {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -942,7 +942,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "serde")]
+    #[cfg(feature = "use-serde")]
     pub fn encode_decode_childnumber() {
         serde_round_trip!(ChildNumber::from_normal_idx(0).unwrap());
         serde_round_trip!(ChildNumber::from_normal_idx(1).unwrap());
@@ -953,7 +953,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "serde")]
+    #[cfg(feature = "use-serde")]
     pub fn encode_fingerprint_chaincode() {
         use serde_json;
         let fp = Fingerprint::from(&[1u8,2,3,42][..]);
