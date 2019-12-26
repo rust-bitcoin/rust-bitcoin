@@ -282,6 +282,28 @@ macro_rules! serde_struct_impl {
                         formatter.write_str("a struct")
                     }
 
+                    fn visit_seq<V>(self, mut seq: V) -> Result<Self::Value, V::Error>
+                    where
+                        V: $crate::serde::de::SeqAccess<'de>,
+                    {
+                        use $crate::serde::de::Error;
+
+                        let length = 0;
+                        $(
+                            let $fe = seq.next_element()?.ok_or_else(|| {
+                                Error::invalid_length(length, &self)
+                            })?;
+                            #[allow(unused_variables)]
+                            let length = length + 1;
+                        )*
+
+                        let ret = $name {
+                            $($fe: $fe),*
+                        };
+
+                        Ok(ret)
+                    }
+
                     fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
                     where
                         A: $crate::serde::de::MapAccess<'de>,
@@ -496,6 +518,28 @@ macro_rules! serde_struct_human_string_impl {
 
                         fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
                             formatter.write_str("a struct")
+                        }
+
+                        fn visit_seq<V>(self, mut seq: V) -> Result<Self::Value, V::Error>
+                        where
+                            V: $crate::serde::de::SeqAccess<'de>,
+                        {
+                            use $crate::serde::de::Error;
+
+                            let length = 0;
+                            $(
+                                let $fe = seq.next_element()?.ok_or_else(|| {
+                                    Error::invalid_length(length, &self)
+                                })?;
+                                #[allow(unused_variables)]
+                                let length = length + 1;
+                            )*
+
+                            let ret = $name {
+                                $($fe: $fe),*
+                            };
+
+                            Ok(ret)
                         }
 
                         fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
