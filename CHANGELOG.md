@@ -52,7 +52,7 @@
 
 * Add some trait impls to `PublicKey` for miniscript interoperability
 
-# 0.17.0 - 2019-02-28 - ``The PSBT Release''
+# 0.17.0 - 2019-02-28 - "The PSBT Release"
 
 * **Update minimum rustc version to 1.22**.
 * [Replace `rust-crypto` with `bitcoin_hashes`; refactor hash types](https://github.com/rust-bitcoin/rust-bitcoin/pull/215)
@@ -149,7 +149,7 @@ See `Transaction::verify` and `Script::verify` methods.
 * Add bech32 support
 * Support segwit address types
 
-### 0.11
+# 0.11
 
 * Remove `num` dependency at Matt's request; agree this is obnoxious to require all
 downstream users to also have a `num` dependency just so they can use `Uint256::from_u64`.
