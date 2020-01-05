@@ -29,9 +29,10 @@ use std::{error, fmt, io};
 
 #[cfg(feature = "serde")] use serde;
 
+use hash_types::{ScriptHash, WScriptHash};
 use blockdata::opcodes;
 use consensus::{encode, Decodable, Encodable};
-use hashes::{hash160, sha256, Hash};
+use hashes::Hash;
 #[cfg(feature="bitcoinconsensus")] use bitcoinconsensus;
 #[cfg(feature="bitcoinconsensus")] use std::convert;
 #[cfg(feature="bitcoinconsensus")] use OutPoint;
@@ -233,7 +234,7 @@ impl Script {
     /// Compute the P2SH output corresponding to this redeem script
     pub fn to_p2sh(&self) -> Script {
         Builder::new().push_opcode(opcodes::all::OP_HASH160)
-                      .push_slice(&hash160::Hash::hash(&self.0)[..])
+                      .push_slice(&ScriptHash::hash(&self.0)[..])
                       .push_opcode(opcodes::all::OP_EQUAL)
                       .into_script()
     }
@@ -242,7 +243,7 @@ impl Script {
     /// script")
     pub fn to_v0_p2wsh(&self) -> Script {
         Builder::new().push_int(0)
-                      .push_slice(&sha256::Hash::hash(&self.0)[..])
+                      .push_slice(&WScriptHash::hash(&self.0)[..])
                       .into_script()
     }
 

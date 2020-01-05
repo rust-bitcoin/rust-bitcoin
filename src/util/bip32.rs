@@ -21,7 +21,8 @@ use std::{error, fmt};
 use std::str::FromStr;
 #[cfg(feature = "serde")] use serde;
 
-use hashes::{hex, hash160, sha512, Hash, HashEngine, Hmac, HmacEngine};
+use hash_types::XpubIdentifier;
+use hashes::{hex, sha512, Hash, HashEngine, Hmac, HmacEngine};
 use secp256k1::{self, Secp256k1};
 
 use network::constants::Network;
@@ -478,7 +479,7 @@ impl ExtendedPrivKey {
     }
 
     /// Returns the HASH160 of the chaincode
-    pub fn identifier<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> hash160::Hash {
+    pub fn identifier<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> XpubIdentifier {
         ExtendedPubKey::from_private(secp, self).identifier()
     }
 
@@ -561,10 +562,10 @@ impl ExtendedPubKey {
     }
 
     /// Returns the HASH160 of the chaincode
-    pub fn identifier(&self) -> hash160::Hash {
-        let mut engine = hash160::Hash::engine();
+    pub fn identifier(&self) -> XpubIdentifier {
+        let mut engine = XpubIdentifier::engine();
         self.public_key.write_into(&mut engine);
-        hash160::Hash::from_engine(engine)
+        XpubIdentifier::from_engine(engine)
     }
 
     /// Returns the first four bytes of the identifier

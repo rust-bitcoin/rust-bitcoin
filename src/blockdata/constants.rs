@@ -22,7 +22,7 @@
 use std::default::Default;
 
 use hashes::hex::FromHex;
-
+use hashes::sha256d;
 use blockdata::opcodes;
 use blockdata::script;
 use blockdata::transaction::{OutPoint, Transaction, TxOut, TxIn};
@@ -96,14 +96,16 @@ fn bitcoin_genesis_tx() -> Transaction {
 
 /// Constructs and returns the genesis block
 pub fn genesis_block(network: Network) -> Block {
+    let txdata = vec![bitcoin_genesis_tx()];
+    let hash: sha256d::Hash = txdata[0].txid().into();
+    let merkle_root = hash.into();
     match network {
         Network::Bitcoin => {
-            let txdata = vec![bitcoin_genesis_tx()];
             Block {
                 header: BlockHeader {
                     version: 1,
                     prev_blockhash: Default::default(),
-                    merkle_root: txdata[0].txid(),
+                    merkle_root,
                     time: 1231006505,
                     bits: 0x1d00ffff,
                     nonce: 2083236893
@@ -112,12 +114,11 @@ pub fn genesis_block(network: Network) -> Block {
             }
         }
         Network::Testnet => {
-            let txdata = vec![bitcoin_genesis_tx()];
             Block {
                 header: BlockHeader {
                     version: 1,
                     prev_blockhash: Default::default(),
-                    merkle_root: txdata[0].txid(),
+                    merkle_root,
                     time: 1296688602,
                     bits: 0x1d00ffff,
                     nonce: 414098458
@@ -126,12 +127,11 @@ pub fn genesis_block(network: Network) -> Block {
             }
         }
         Network::Regtest => {
-            let txdata = vec![bitcoin_genesis_tx()];
             Block {
                 header: BlockHeader {
                     version: 1,
                     prev_blockhash: Default::default(),
-                    merkle_root: txdata[0].txid(),
+                    merkle_root,
                     time: 1296688602,
                     bits: 0x207fffff,
                     nonce: 2
@@ -171,7 +171,7 @@ mod test {
         assert_eq!(gen.output[0].value, 50 * COIN_VALUE);
         assert_eq!(gen.lock_time, 0);
 
-        assert_eq!(format!("{:x}", gen.bitcoin_hash()),
+        assert_eq!(format!("{:x}", gen.wtxid()),
                    "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b".to_string());
     }
 

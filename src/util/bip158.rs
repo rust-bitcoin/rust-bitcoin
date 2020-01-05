@@ -50,7 +50,8 @@ use std::error;
 use std::fmt::{Display, Formatter};
 use std::io::Cursor;
 
-use hashes::{Hash, sha256d, siphash24};
+use hashes::{Hash, siphash24};
+use hash_types::{BlockHash, FilterHash};
 
 use blockdata::block::Block;
 use blockdata::script::Script;
@@ -106,12 +107,12 @@ pub struct BlockFilter {
 
 impl BlockFilter {
     /// compute this filter's id in a chain of filters
-    pub fn filter_id(&self, previous_filter_id: &sha256d::Hash) -> sha256d::Hash {
-        let filter_hash = sha256d::Hash::hash(self.content.as_slice());
+    pub fn filter_id(&self, previous_filter_id: &FilterHash) -> FilterHash {
+        let filter_hash = FilterHash::hash(self.content.as_slice());
         let mut header_data = [0u8; 64];
         header_data[0..32].copy_from_slice(&filter_hash[..]);
         header_data[32..64].copy_from_slice(&previous_filter_id[..]);
-        sha256d::Hash::hash(&header_data)
+        FilterHash::hash(&header_data)
     }
 
     /// create a new filter from pre-computed data
@@ -133,13 +134,13 @@ impl BlockFilter {
     }
 
     /// match any query pattern
-    pub fn match_any(&self, block_hash: &sha256d::Hash, query: &mut Iterator<Item=&[u8]>) -> Result<bool, Error> {
+    pub fn match_any(&self, block_hash: &BlockHash, query: &mut Iterator<Item=&[u8]>) -> Result<bool, Error> {
         let filter_reader = BlockFilterReader::new(block_hash);
         filter_reader.match_any(&mut Cursor::new(self.content.as_slice()), query)
     }
 
     /// match all query pattern
-    pub fn match_all(&self, block_hash: &sha256d::Hash, query: &mut Iterator<Item=&[u8]>) -> Result<bool, Error> {
+    pub fn match_all(&self, block_hash: &BlockHash, query: &mut Iterator<Item=&[u8]>) -> Result<bool, Error> {
         let filter_reader = BlockFilterReader::new(block_hash);
         filter_reader.match_all(&mut Cursor::new(self.content.as_slice()), query)
     }
@@ -206,7 +207,7 @@ pub struct BlockFilterReader {
 
 impl BlockFilterReader {
     /// Create a block filter reader
-    pub fn new(block_hash: &sha256d::Hash) -> BlockFilterReader {
+    pub fn new(block_hash: &BlockHash) -> BlockFilterReader {
         let block_hash_as_int = block_hash.into_inner();
         let k0 = endian::slice_to_u64_le(&block_hash_as_int[0..8]);
         let k1 = endian::slice_to_u64_le(&block_hash_as_int[8..16]);
@@ -523,6 +524,7 @@ mod test {
     use std::collections::{HashSet, HashMap};
     use std::io::Cursor;
 
+    use hash_types::BlockHash;
     use hashes::hex::FromHex;
 
     use super::*;
@@ -555,13 +557,13 @@ mod test {
 
         let testdata = serde_json::from_str::<Value>(data).unwrap().as_array().unwrap().clone();
         for t in testdata.iter().skip(1) {
-            let block_hash = sha256d::Hash::from_hex(&t.get(1).unwrap().as_str().unwrap()).unwrap();
+            let block_hash = BlockHash::from_hex(&t.get(1).unwrap().as_str().unwrap()).unwrap();
             let block: Block = deserialize(hex::decode(&t.get(2).unwrap().as_str().unwrap().as_bytes()).unwrap().as_slice()).unwrap();
             assert_eq!(block.bitcoin_hash(), block_hash);
             let scripts = t.get(3).unwrap().as_array().unwrap();
-            let previous_filter_id = sha256d::Hash::from_hex(&t.get(4).unwrap().as_str().unwrap()).unwrap();
+            let previous_filter_id = FilterHash::from_hex(&t.get(4).unwrap().as_str().unwrap()).unwrap();
             let filter_content = hex::decode(&t.get(5).unwrap().as_str().unwrap().as_bytes()).unwrap();
-            let filter_id = sha256d::Hash::from_hex(&t.get(6).unwrap().as_str().unwrap()).unwrap();
+            let filter_id = FilterHash::from_hex(&t.get(6).unwrap().as_str().unwrap()).unwrap();
 
             let mut txmap = HashMap::new();
             let mut si = scripts.iter();
@@ -583,7 +585,7 @@ mod test {
             assert_eq!(test_filter.content, filter.content);
 
             let block_hash = &block.header.bitcoin_hash();
-            assert!(filter.match_all(&block_hash, &mut txmap.iter()
+            assert!(filter.match_all(block_hash, &mut txmap.iter()
                 .filter_map(|(_, s)| if !s.is_empty() { Some(s.as_bytes()) } else { None })).unwrap());
 
             for (_, script) in &txmap {

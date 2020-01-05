@@ -19,8 +19,8 @@
 //! signatures, which are placed in the scriptSig.
 //!
 
-use hashes::{sha256d, Hash};
-
+use hashes::Hash;
+use hash_types::SigHash;
 use blockdata::script::Script;
 use blockdata::transaction::{Transaction, TxIn};
 use consensus::encode::Encodable;
@@ -32,11 +32,11 @@ pub struct SighashComponents {
     tx_version: u32,
     tx_locktime: u32,
     /// Hash of all the previous outputs
-    pub hash_prevouts: sha256d::Hash,
+    pub hash_prevouts: SigHash,
     /// Hash of all the input sequence nos
-    pub hash_sequence: sha256d::Hash,
+    pub hash_sequence: SigHash,
     /// Hash of all the outputs in this transaction
-    pub hash_outputs: sha256d::Hash,
+    pub hash_outputs: SigHash,
 }
 
 impl SighashComponents {
@@ -46,27 +46,27 @@ impl SighashComponents {
     /// script_sig and witnesses.
     pub fn new(tx: &Transaction) -> SighashComponents {
         let hash_prevouts = {
-            let mut enc = sha256d::Hash::engine();
+            let mut enc = SigHash::engine();
             for txin in &tx.input {
                 txin.previous_output.consensus_encode(&mut enc).unwrap();
             }
-            sha256d::Hash::from_engine(enc)
+            SigHash::from_engine(enc)
         };
 
         let hash_sequence = {
-            let mut enc = sha256d::Hash::engine();
+            let mut enc = SigHash::engine();
             for txin in &tx.input {
                 txin.sequence.consensus_encode(&mut enc).unwrap();
             }
-            sha256d::Hash::from_engine(enc)
+            SigHash::from_engine(enc)
         };
 
         let hash_outputs = {
-            let mut enc = sha256d::Hash::engine();
+            let mut enc = SigHash::engine();
             for txout in &tx.output {
                 txout.consensus_encode(&mut enc).unwrap();
             }
-            sha256d::Hash::from_engine(enc)
+            SigHash::from_engine(enc)
         };
 
         SighashComponents {
@@ -80,8 +80,8 @@ impl SighashComponents {
 
     /// Compute the BIP143 sighash for a `SIGHASH_ALL` signature for the given
     /// input.
-    pub fn sighash_all(&self, txin: &TxIn, script_code: &Script, value: u64) -> sha256d::Hash {
-        let mut enc = sha256d::Hash::engine();
+    pub fn sighash_all(&self, txin: &TxIn, script_code: &Script, value: u64) -> SigHash {
+        let mut enc = SigHash::engine();
         self.tx_version.consensus_encode(&mut enc).unwrap();
         self.hash_prevouts.consensus_encode(&mut enc).unwrap();
         self.hash_sequence.consensus_encode(&mut enc).unwrap();
@@ -95,12 +95,13 @@ impl SighashComponents {
         self.hash_outputs.consensus_encode(&mut enc).unwrap();
         self.tx_locktime.consensus_encode(&mut enc).unwrap();
         1u32.consensus_encode(&mut enc).unwrap(); // hashtype
-        sha256d::Hash::from_engine(enc)
+        SigHash::from_engine(enc)
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use hash_types::SigHash;
     use blockdata::script::Script;
     use blockdata::transaction::Transaction;
     use consensus::encode::deserialize;
@@ -140,20 +141,20 @@ mod tests {
                 tx_version: 1,
                 tx_locktime: 17,
                 hash_prevouts: hex_hash!(
-                    "96b827c8483d4e9b96712b6713a7b68d6e8003a781feba36c31143470b4efd37"
+                    SigHash, "96b827c8483d4e9b96712b6713a7b68d6e8003a781feba36c31143470b4efd37"
                 ),
                 hash_sequence: hex_hash!(
-                    "52b0a642eea2fb7ae638c36f6252b6750293dbe574a806984b8e4d8548339a3b"
+                    SigHash, "52b0a642eea2fb7ae638c36f6252b6750293dbe574a806984b8e4d8548339a3b"
                 ),
                 hash_outputs: hex_hash!(
-                    "863ef3e1a92afbfdb97f31ad0fc7683ee943e9abcf2501590ff8f6551f47e5e5"
+                    SigHash, "863ef3e1a92afbfdb97f31ad0fc7683ee943e9abcf2501590ff8f6551f47e5e5"
                 ),
             }
         );
 
         assert_eq!(
             comp.sighash_all(&tx.input[1], &witness_script, value),
-            hex_hash!("c37af31116d1b27caf68aae9e3ac82f1477929014d5b917657d0eb49478cb670")
+            hex_hash!(SigHash, "c37af31116d1b27caf68aae9e3ac82f1477929014d5b917657d0eb49478cb670")
         );
     }
 
@@ -177,20 +178,20 @@ mod tests {
                 tx_version: 1,
                 tx_locktime: 1170,
                 hash_prevouts: hex_hash!(
-                    "b0287b4a252ac05af83d2dcef00ba313af78a3e9c329afa216eb3aa2a7b4613a"
+                    SigHash, "b0287b4a252ac05af83d2dcef00ba313af78a3e9c329afa216eb3aa2a7b4613a"
                 ),
                 hash_sequence: hex_hash!(
-                    "18606b350cd8bf565266bc352f0caddcf01e8fa789dd8a15386327cf8cabe198"
+                    SigHash, "18606b350cd8bf565266bc352f0caddcf01e8fa789dd8a15386327cf8cabe198"
                 ),
                 hash_outputs: hex_hash!(
-                    "de984f44532e2173ca0d64314fcefe6d30da6f8cf27bafa706da61df8a226c83"
+                    SigHash, "de984f44532e2173ca0d64314fcefe6d30da6f8cf27bafa706da61df8a226c83"
                 ),
             }
         );
 
         assert_eq!(
             comp.sighash_all(&tx.input[0], &witness_script, value),
-            hex_hash!("64f3b0f4dd2bb3aa1ce8566d220cc74dda9df97d8490cc81d89d735c92e59fb6")
+            hex_hash!(SigHash, "64f3b0f4dd2bb3aa1ce8566d220cc74dda9df97d8490cc81d89d735c92e59fb6")
         );
     }
 
@@ -220,20 +221,20 @@ mod tests {
                 tx_version: 1,
                 tx_locktime: 0,
                 hash_prevouts: hex_hash!(
-                    "74afdc312af5183c4198a40ca3c1a275b485496dd3929bca388c4b5e31f7aaa0"
+                    SigHash, "74afdc312af5183c4198a40ca3c1a275b485496dd3929bca388c4b5e31f7aaa0"
                 ),
                 hash_sequence: hex_hash!(
-                    "3bb13029ce7b1f559ef5e747fcac439f1455a2ec7c5f09b72290795e70665044"
+                    SigHash, "3bb13029ce7b1f559ef5e747fcac439f1455a2ec7c5f09b72290795e70665044"
                 ),
                 hash_outputs: hex_hash!(
-                    "bc4d309071414bed932f98832b27b4d76dad7e6c1346f487a8fdbb8eb90307cc"
+                    SigHash, "bc4d309071414bed932f98832b27b4d76dad7e6c1346f487a8fdbb8eb90307cc"
                 ),
             }
         );
 
         assert_eq!(
             comp.sighash_all(&tx.input[0], &witness_script, value),
-            hex_hash!("185c0be5263dce5b4bb50a047973c1b6272bfbd0103a89444597dc40b248ee7c")
+            hex_hash!(SigHash, "185c0be5263dce5b4bb50a047973c1b6272bfbd0103a89444597dc40b248ee7c")
         );
     }
 }

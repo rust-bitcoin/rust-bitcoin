@@ -227,7 +227,7 @@ macro_rules! display_from_debug {
 macro_rules! hex_script (($s:expr) => (::blockdata::script::Script::from(::hex::decode($s).unwrap())));
 
 #[cfg(test)]
-macro_rules! hex_hash (($s:expr) => (::hashes::sha256d::Hash::from_slice(&::hex::decode($s).unwrap()).unwrap()));
+macro_rules! hex_hash (($h:ident, $s:expr) => ($h::from_slice(&::hex::decode($s).unwrap()).unwrap()));
 
 macro_rules! serde_struct_impl {
     ($name:ident, $($fe:ident),*) => (

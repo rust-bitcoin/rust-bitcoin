@@ -34,7 +34,8 @@ use std::borrow::Cow;
 use std::io::{Cursor, Read, Write};
 use hashes::hex::ToHex;
 
-use hashes::{sha256d, Hash as HashTrait};
+use hashes::{sha256d, Hash};
+use hash_types::{BlockHash, FilterHash, TxMerkleNode};
 
 use util::endian;
 use util::psbt;
@@ -71,8 +72,8 @@ pub enum Error {
         /// The invalid checksum
         actual: [u8; 4],
     },
-	/// VarInt was encoded in a non-minimal way
-	NonMinimalVarInt,
+    /// VarInt was encoded in a non-minimal way
+    NonMinimalVarInt,
     /// Network magic was unknown
     UnknownNetworkMagic(u32),
     /// Parsing error
@@ -81,6 +82,8 @@ pub enum Error {
     UnsupportedSegwitFlag(u8),
     /// Unrecognized network command
     UnrecognizedNetworkCommand(String),
+    /// Invalid Inventory type
+    UnknownInventoryType(u32),
 }
 
 impl fmt::Display for Error {
@@ -94,13 +97,14 @@ impl fmt::Display for Error {
                 "allocation of oversized vector: requested {}, maximum {}", r, m),
             Error::InvalidChecksum { expected: ref e, actual: ref a } => write!(f,
                 "invalid checksum: expected {}, actual {}", e.to_hex(), a.to_hex()),
-			Error::NonMinimalVarInt => write!(f, "non-minimal varint"),
+            Error::NonMinimalVarInt => write!(f, "non-minimal varint"),
             Error::UnknownNetworkMagic(ref m) => write!(f, "unknown network magic: {}", m),
             Error::ParseFailed(ref e) => write!(f, "parse failed: {}", e),
             Error::UnsupportedSegwitFlag(ref swflag) => write!(f,
                 "unsupported segwit version: {}", swflag),
             Error::UnrecognizedNetworkCommand(ref nwcmd) => write!(f,
                 "unrecognized network command: {}", nwcmd),
+            Error::UnknownInventoryType(ref tp) => write!(f, "Unknown Inventory type: {}", tp),
         }
     }
 }
@@ -113,11 +117,12 @@ impl error::Error for Error {
             Error::UnexpectedNetworkMagic { .. }
             | Error::OversizedVectorAllocation { .. }
             | Error::InvalidChecksum { .. }
-			| Error::NonMinimalVarInt
+            | Error::NonMinimalVarInt
             | Error::UnknownNetworkMagic(..)
             | Error::ParseFailed(..)
             | Error::UnsupportedSegwitFlag(..)
-            | Error::UnrecognizedNetworkCommand(..) => None,
+            | Error::UnrecognizedNetworkCommand(..)
+            | Error::UnknownInventoryType(..) => None,
         }
     }
 
@@ -590,7 +595,9 @@ macro_rules! impl_vec {
         }
     }
 }
-impl_vec!(sha256d::Hash);
+impl_vec!(BlockHash);
+impl_vec!(FilterHash);
+impl_vec!(TxMerkleNode);
 impl_vec!(Transaction);
 impl_vec!(TxOut);
 impl_vec!(TxIn);
@@ -649,7 +656,7 @@ impl Decodable for Box<[u8]> {
 
 /// Do a double-SHA256 on some data and return the first 4 bytes
 fn sha2_checksum(data: &[u8]) -> [u8; 4] {
-    let checksum = <sha256d::Hash as HashTrait>::hash(data);
+    let checksum = <sha256d::Hash as Hash>::hash(data);
     [checksum[0], checksum[1], checksum[2], checksum[3]]
 }
 
@@ -730,8 +737,7 @@ impl Encodable for sha256d::Hash {
 
 impl Decodable for sha256d::Hash {
     fn consensus_decode<D: io::Read>(d: D) -> Result<Self, Error> {
-        let inner = <[u8; 32]>::consensus_decode(d)?;
-        Ok(sha256d::Hash::from_slice(&inner).unwrap())
+        Ok(Self::from_inner(<<Self as Hash>::Inner>::consensus_decode(d)?))
     }
 }
 
