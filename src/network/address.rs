@@ -99,9 +99,14 @@ impl Decodable for Address {
 
 impl fmt::Debug for Address {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // TODO: render services and hex-ize address
-        write!(f, "Address {{services: {:?}, address: {:?}, port: {:?}}}",
-               self.services, &self.address[..], self.port)
+        let ipv6 = Ipv6Addr::from(self.address);
+
+        match ipv6.to_ipv4() {
+            Some(addr) => write!(f, "Address {{services: {}, address: {}, port: {}}}", 
+                self.services, addr, self.port),
+            None => write!(f, "Address {{services: {}, address: {}, port: {}}}", 
+                self.services, ipv6, self.port)
+        }
     }
 }
 
@@ -123,6 +128,27 @@ mod test {
         }),
         vec![1u8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
              0, 0, 0, 0xff, 0xff, 0x0a, 0, 0, 1, 0x20, 0x8d]);
+    }
+
+    #[test]
+    fn debug_format_test() {
+        assert_eq!(
+            format!("The address is: {:?}", Address {
+                services: ServiceFlags::NETWORK.add(ServiceFlags::WITNESS),
+                address: [0, 0, 0, 0, 0, 0xffff, 0x0a00, 0x0001],
+                port: 8333
+            }), 
+            "The address is: Address {services: ServiceFlags(NETWORK|WITNESS), address: 10.0.0.1, port: 8333}"
+        );
+
+        assert_eq!(
+            format!("The address is: {:?}", Address {
+                services: ServiceFlags::NETWORK_LIMITED,
+                address: [0xFD87, 0xD87E, 0xEB43, 0, 0, 0xffff, 0x0a00, 0x0001],
+                port: 8333
+            }), 
+            "The address is: Address {services: ServiceFlags(NETWORK_LIMITED), address: fd87:d87e:eb43::ffff:a00:1, port: 8333}"
+        );
     }
 
     #[test]
