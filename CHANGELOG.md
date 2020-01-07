@@ -1,4 +1,34 @@
 
+# 0.22.0 - 2019-12-11
+
+- Add `ServiceFlags` type.
+- Add `NetworkMessage::command`.
+- Add `key::Error`.
+- Add newtypes for specific hashes:
+    - `Txid`
+    - `Wtxid`
+    - `BlockHash`
+    - `SigHash`
+    - `PubkeyHash`
+    - `ScriptHash`
+    - `WPubkeyHash`
+    - `WScriptHash`
+    - `TxMerkleNode`
+    - `WitnessMerkleNode`
+    - `WitnessCommitment`
+    - `XpubIdentifier`
+    - `FilterHash`
+- Refactor `CommandString`.
+- Refactor `Reject` message.
+- Rename `RejectReason` enum variants.
+- Refactor `encode::Error`.
+- Implement `Default` for `TxIn`.
+- Implement `std::hash::Hash` for `Inventory`.
+- Implement `Copy` for `InvType` enum.
+- Use `psbt::Error` in `PartiallySignedTransaction::from_unsigned_tx`.
+- Drop message decode max length to 4_000_000.
+- Drop `hex` and `byteorder` dependencies.
+
 # 0.21.0 - 2019-10-02
 
 * Add [serde to `BlockHeader` and `Block`](https://github.com/rust-bitcoin/rust-bitcoin/pull/321)
