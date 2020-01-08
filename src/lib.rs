@@ -56,7 +56,6 @@
 pub extern crate secp256k1;
 pub extern crate bech32;
 
-#[cfg(any(test, feature = "serde"))] extern crate hex;
 #[cfg(feature = "serde")] extern crate serde;
 #[cfg(all(test, feature = "serde"))] #[macro_use] extern crate serde_derive; // for 1.22.0 compat
 #[cfg(all(test, feature = "serde"))] extern crate serde_json;

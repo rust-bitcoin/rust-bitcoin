@@ -14,7 +14,7 @@
 
 #[allow(unused_macros)]
 macro_rules! hex_psbt {
-    ($s:expr) => { ::consensus::deserialize(&::hex::decode($s).unwrap()) };
+    ($s:expr) => { ::consensus::deserialize(&<Vec<u8> as ::hashes::hex::FromHex>::from_hex($s).unwrap()) };
 }
 
 macro_rules! merge {

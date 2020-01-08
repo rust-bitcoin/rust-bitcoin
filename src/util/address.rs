@@ -506,8 +506,7 @@ mod tests {
     use std::str::FromStr;
     use std::string::ToString;
 
-    use hashes::Hash;
-    use hex::{decode as hex_decode, encode as hex_encode};
+    use hashes::hex::{FromHex, ToHex};
 
     use blockdata::script::Script;
     use network::constants::Network::{Bitcoin, Testnet};
@@ -515,11 +514,11 @@ mod tests {
 
     use super::*;
 
-    macro_rules! hex (($hex:expr) => (hex_decode($hex).unwrap()));
+    macro_rules! hex (($hex:expr) => (Vec::from_hex($hex).unwrap()));
     macro_rules! hex_key (($hex:expr) => (PublicKey::from_slice(&hex!($hex)).unwrap()));
     macro_rules! hex_script (($hex:expr) => (Script::from(hex!($hex))));
-    macro_rules! hex_pubkeyhash (($hex:expr) => (PubkeyHash::from_slice(&hex!($hex)).unwrap()));
-    macro_rules! hex_scripthash (($hex:expr) => (ScriptHash::from_slice(&hex!($hex)).unwrap()));
+    macro_rules! hex_pubkeyhash (($hex:expr) => (PubkeyHash::from_hex(&$hex).unwrap()));
+    macro_rules! hex_scripthash (($hex:expr) => (ScriptHash::from_hex($hex).unwrap()));
 
     fn roundtrips(addr: &Address) {
         assert_eq!(
@@ -664,7 +663,7 @@ mod tests {
         ];
         for vector in &valid_vectors {
             let addr: Address = vector.0.parse().unwrap();
-            assert_eq!(&hex_encode(addr.script_pubkey().as_bytes()), vector.1);
+            assert_eq!(&addr.script_pubkey().as_bytes().to_hex(), vector.1);
             roundtrips(&addr);
         }
 
