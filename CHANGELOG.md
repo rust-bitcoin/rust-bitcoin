@@ -1,5 +1,11 @@
 
-# 0.22.0 - 2019-12-11
+# 0.23.0 - 2020-01-07
+
+- Update `secp256k1` dependency to `0.17.1`.
+- Update `bitcoinconsensus` dependency to `0.19.0-1`.
+- Update `bech32` dependency to `0.7.2`.
+
+# 0.22.0 - 2020-01-07
 
 - Add `ServiceFlags` type.
 - Add `NetworkMessage::command`.
