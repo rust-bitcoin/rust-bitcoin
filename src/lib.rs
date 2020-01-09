@@ -97,7 +97,6 @@ pub use util::address::Address;
 pub use util::address::AddressType;
 pub use util::amount::Amount;
 pub use util::amount::SignedAmount;
-pub use util::hash::BitcoinHash;
 pub use util::key::PrivateKey;
 pub use util::key::PublicKey;
 pub use util::merkleblock::MerkleBlock;

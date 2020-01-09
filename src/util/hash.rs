@@ -75,9 +75,3 @@ pub fn bitcoin_merkle_root<T, I>(mut iter: I) -> T
     }
     bitcoin_merkle_root_inline(&mut alloc)
 }
-
-/// Objects which are referred to by hash
-pub trait BitcoinHash<T: Hash> {
-    /// Produces a Sha256dHash which can be used to refer to the object
-    fn bitcoin_hash(&self) -> T;
-}

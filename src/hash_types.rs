@@ -18,9 +18,11 @@
 
 use std::io;
 
-use consensus::encode::{Encodable, Decodable, Error};
+use consensus::encode::{serialize, Encodable, Decodable, Error};
 use hashes::{sha256, sha256d, hash160, Hash};
 use hashes::hex::{ToHex, FromHex};
+use {Transaction, Block, BlockHeader, PublicKey, Script};
+use util::psbt::serialize::Serialize;
 
 macro_rules! impl_hashencode {
     ($hashtype:ident) => {
@@ -63,3 +65,52 @@ impl_hashencode!(BlockHash);
 impl_hashencode!(TxMerkleNode);
 impl_hashencode!(WitnessMerkleNode);
 impl_hashencode!(FilterHash);
+
+impl From<Transaction> for Txid {
+    fn from(tx: Transaction) -> Txid {
+        tx.txid()
+    }
+}
+
+impl From<Transaction> for Wtxid {
+    fn from(tx: Transaction) -> Wtxid {
+        tx.wtxid()
+    }
+}
+
+impl From<BlockHeader> for BlockHash {
+    fn from(block_header: BlockHeader) -> BlockHash {
+        BlockHash::hash(&serialize(&block_header))
+    }
+}
+
+impl From<Block> for BlockHash {
+    fn from(block: Block) -> BlockHash {
+        block.header.into()
+    }
+}
+
+impl From<PublicKey> for PubkeyHash {
+    fn from(pubkey: PublicKey) -> PubkeyHash {
+        PubkeyHash::hash(&pubkey.serialize())
+    }
+}
+
+impl From<PublicKey> for WPubkeyHash {
+    fn from(pubkey: PublicKey) -> WPubkeyHash {
+        WPubkeyHash::hash(&pubkey.serialize())
+    }
+}
+
+impl From<Script> for ScriptHash {
+    fn from(script: Script) -> ScriptHash {
+        ScriptHash::hash(&script.serialize())
+    }
+}
+
+impl From<Script> for WScriptHash {
+    fn from(script: Script) -> WScriptHash {
+        WScriptHash::hash(&script.serialize())
+    }
+}
+

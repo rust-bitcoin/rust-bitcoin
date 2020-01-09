@@ -22,7 +22,7 @@
 
 use util;
 use util::Error::{BlockBadTarget, BlockBadProofOfWork};
-use util::hash::{BitcoinHash, bitcoin_merkle_root};
+use util::hash::bitcoin_merkle_root;
 use hashes::{Hash, HashEngine};
 use hash_types::{Wtxid, BlockHash, TxMerkleNode, WitnessMerkleNode, WitnessCommitment};
 use util::uint::Uint256;
@@ -174,7 +174,7 @@ impl BlockHeader {
         if target != required_target {
             return Err(BlockBadTarget);
         }
-        let data: [u8; 32] = self.bitcoin_hash().into_inner();
+        let data: [u8; 32] = BlockHash::from(*self).into_inner();
         let mut ret = [0u64; 4];
         util::endian::bytes_to_u64_slice_le(&data, &mut ret);
         let hash = &Uint256(ret);
@@ -190,19 +190,6 @@ impl BlockHeader {
         ret = ret / ret1;
         ret.increment();
         ret
-    }
-}
-
-impl BitcoinHash<BlockHash> for BlockHeader {
-    fn bitcoin_hash(&self) -> BlockHash {
-        use consensus::encode::serialize;
-        BlockHash::hash(&serialize(self))
-    }
-}
-
-impl BitcoinHash<BlockHash> for Block {
-    fn bitcoin_hash(&self) -> BlockHash {
-        self.header.bitcoin_hash()
     }
 }
 
