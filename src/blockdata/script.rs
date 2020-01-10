@@ -38,6 +38,7 @@ use hashes::Hash;
 #[cfg(feature="bitcoinconsensus")] use OutPoint;
 
 use util::key::PublicKey;
+use util::psbt::serialize::Serialize;
 
 #[derive(Clone, Default, PartialOrd, Ord, PartialEq, Eq, Hash)]
 /// A Bitcoin script
@@ -275,6 +276,16 @@ impl Script {
             .into_script()
     }
 
+    /// Returns 160-bit hash of the script
+    pub fn script_hash(&self) -> ScriptHash {
+        ScriptHash::hash(&self.serialize())
+    }
+
+    /// Returns 256-bit hash of the script for P2WSH outputs
+    pub fn wscript_hash(&self) -> WScriptHash {
+        WScriptHash::hash(&self.serialize())
+    }
+
     /// The length in bytes of the script
     pub fn len(&self) -> usize { self.0.len() }
 
@@ -292,13 +303,13 @@ impl Script {
 
     /// Compute the P2SH output corresponding to this redeem script
     pub fn to_p2sh(&self) -> Script {
-        Script::new_p2sh(&ScriptHash::hash(&self.0))
+        Script::new_p2sh(&self.script_hash())
     }
 
     /// Compute the P2WSH output corresponding to this witnessScript (aka the "witness redeem
     /// script")
     pub fn to_v0_p2wsh(&self) -> Script {
-        Script::new_v0_wsh(&WScriptHash::hash(&self.0))
+        Script::new_v0_wsh(&self.wscript_hash())
     }
 
     /// Checks whether a script pubkey is a p2sh output
@@ -1009,6 +1020,13 @@ mod test {
         }
         assert!(read_scriptint(&build_scriptint(1 << 31)).is_err());
         assert!(read_scriptint(&build_scriptint(-(1 << 31))).is_err());
+    }
+
+    #[test]
+    fn script_hashes() {
+        let script = hex_script!("410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac");
+        assert_eq!(script.script_hash().to_hex(), "8292bcfbef1884f73c813dfe9c82fd7e814291ea");
+        assert_eq!(script.wscript_hash().to_hex(), "3e1525eb183ad4f9b3c5fa3175bdca2a52e947b135bbb90383bf9f6408e2c324");
     }
 
     #[test]
