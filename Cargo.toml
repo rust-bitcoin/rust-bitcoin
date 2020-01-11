@@ -22,7 +22,7 @@ use-serde = ["hex", "serde", "bitcoin_hashes/serde", "secp256k1/serde"]
 
 [dependencies]
 bech32 = "0.7.2"
-bitcoin_hashes = "0.7.3"
+bitcoin_hashes = { git = "https://github.com/elichai/bitcoin_hashes", branch = "2020-01-hex" }
 secp256k1 = "0.17.1"
 
 bitcoinconsensus = { version = "0.19.0-1", optional = true }

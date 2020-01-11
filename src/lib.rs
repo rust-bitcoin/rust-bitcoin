@@ -81,6 +81,11 @@ pub mod consensus;
 #[allow(unused_imports)]
 pub mod hash_types;
 
+// Re-exporting macro
+pub use hashes::{hash_newtype, hex_fmt_impl, index_impl, borrow_slice_impl};
+#[cfg(feature = "serde")]
+pub use hashes::serde_impl;
+
 pub use hash_types::*;
 pub use blockdata::block::Block;
 pub use blockdata::block::BlockHeader;
