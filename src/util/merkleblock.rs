@@ -502,7 +502,7 @@ mod tests {
     use secp256k1::rand::prelude::*;
 
     use consensus::encode::{deserialize, serialize};
-    use util::hash::{bitcoin_merkle_root, BitcoinHash};
+    use util::hash::bitcoin_merkle_root;
     use util::merkleblock::{MerkleBlock, PartialMerkleTree};
     use {hex, Block};
 
@@ -616,7 +616,7 @@ mod tests {
             af156d6fc30b55fad4112df2b95531e68114e9ad10011e72f7b7cfdb025700";
 
         let mb: MerkleBlock = deserialize(&hex::decode(mb_hex).unwrap()).unwrap();
-        assert_eq!(get_block_13b8a().bitcoin_hash(), mb.header.bitcoin_hash());
+        assert_eq!(get_block_13b8a().block_hash(), mb.header.block_hash());
         assert_eq!(
             mb.header.merkle_root,
             mb.txn.extract_matches(&mut vec![], &mut vec![]).unwrap()
@@ -645,7 +645,7 @@ mod tests {
 
         let merkle_block = MerkleBlock::from_block(&block, &txids);
 
-        assert_eq!(merkle_block.header.bitcoin_hash(), block.bitcoin_hash());
+        assert_eq!(merkle_block.header.block_hash(), block.block_hash());
 
         let mut matches: Vec<Txid> = vec![];
         let mut index: Vec<u32> = vec![];
@@ -678,7 +678,7 @@ mod tests {
 
         let merkle_block = MerkleBlock::from_block(&block, &txids);
 
-        assert_eq!(merkle_block.header.bitcoin_hash(), block.bitcoin_hash());
+        assert_eq!(merkle_block.header.block_hash(), block.block_hash());
 
         let mut matches: Vec<Txid> = vec![];
         let mut index: Vec<u32> = vec![];

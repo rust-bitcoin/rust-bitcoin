@@ -22,7 +22,7 @@
 
 use util;
 use util::Error::{BlockBadTarget, BlockBadProofOfWork};
-use util::hash::{BitcoinHash, bitcoin_merkle_root};
+use util::hash::bitcoin_merkle_root;
 use hashes::{Hash, HashEngine};
 use hash_types::{Wtxid, BlockHash, TxMerkleNode, WitnessMerkleNode, WitnessCommitment};
 use util::uint::Uint256;
@@ -61,6 +61,11 @@ pub struct Block {
 }
 
 impl Block {
+    /// Return the block hash.
+    pub fn block_hash(&self) -> BlockHash {
+        self.header.block_hash()
+    }
+
     /// check if merkle root of header matches merkle root of the transaction list
     pub fn check_merkle_root (&self) -> bool {
         self.header.merkle_root == self.merkle_root()
@@ -122,6 +127,13 @@ impl Block {
 }
 
 impl BlockHeader {
+    /// Return the block hash.
+    pub fn block_hash(&self) -> BlockHash {
+        let mut engine = BlockHash::engine();
+        self.consensus_encode(&mut engine).expect("engines don't error");
+        BlockHash::from_engine(engine)
+    }
+
     /// Computes the target [0, T] that a blockhash must land in to be valid
     pub fn target(&self) -> Uint256 {
         // This is a floating-point "compact" encoding originally used by
@@ -174,7 +186,7 @@ impl BlockHeader {
         if target != required_target {
             return Err(BlockBadTarget);
         }
-        let data: [u8; 32] = self.bitcoin_hash().into_inner();
+        let data: [u8; 32] = self.block_hash().into_inner();
         let mut ret = [0u64; 4];
         util::endian::bytes_to_u64_slice_le(&data, &mut ret);
         let hash = &Uint256(ret);
@@ -190,19 +202,6 @@ impl BlockHeader {
         ret = ret / ret1;
         ret.increment();
         ret
-    }
-}
-
-impl BitcoinHash<BlockHash> for BlockHeader {
-    fn bitcoin_hash(&self) -> BlockHash {
-        use consensus::encode::serialize;
-        BlockHash::hash(&serialize(self))
-    }
-}
-
-impl BitcoinHash<BlockHash> for Block {
-    fn bitcoin_hash(&self) -> BlockHash {
-        self.header.bitcoin_hash()
     }
 }
 

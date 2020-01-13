@@ -59,7 +59,6 @@ use blockdata::transaction::OutPoint;
 use consensus::{Decodable, Encodable};
 use consensus::encode::VarInt;
 use util::endian;
-use util::hash::BitcoinHash;
 
 /// Golomb encoding parameter as in BIP-158, see also https://gist.github.com/sipa/576d5f09c3b86c3b1b75598d799fc845
 const P: u8 = 19;
@@ -155,7 +154,7 @@ pub struct BlockFilterWriter<'a> {
 impl<'a> BlockFilterWriter<'a> {
     /// Create a block filter writer
     pub fn new(writer: &'a mut io::Write, block: &'a Block) -> BlockFilterWriter<'a> {
-        let block_hash_as_int = block.bitcoin_hash().into_inner();
+        let block_hash_as_int = block.block_hash().into_inner();
         let k0 = endian::slice_to_u64_le(&block_hash_as_int[0..8]);
         let k1 = endian::slice_to_u64_le(&block_hash_as_int[8..16]);
         let writer = GCSFilterWriter::new(writer, k0, k1, M, P);
@@ -559,7 +558,7 @@ mod test {
         for t in testdata.iter().skip(1) {
             let block_hash = BlockHash::from_hex(&t.get(1).unwrap().as_str().unwrap()).unwrap();
             let block: Block = deserialize(hex::decode(&t.get(2).unwrap().as_str().unwrap().as_bytes()).unwrap().as_slice()).unwrap();
-            assert_eq!(block.bitcoin_hash(), block_hash);
+            assert_eq!(block.block_hash(), block_hash);
             let scripts = t.get(3).unwrap().as_array().unwrap();
             let previous_filter_id = FilterHash::from_hex(&t.get(4).unwrap().as_str().unwrap()).unwrap();
             let filter_content = hex::decode(&t.get(5).unwrap().as_str().unwrap().as_bytes()).unwrap();
@@ -584,7 +583,7 @@ mod test {
 
             assert_eq!(test_filter.content, filter.content);
 
-            let block_hash = &block.header.bitcoin_hash();
+            let block_hash = &block.block_hash();
             assert!(filter.match_all(block_hash, &mut txmap.iter()
                 .filter_map(|(_, s)| if !s.is_empty() { Some(s.as_bytes()) } else { None })).unwrap());
 
