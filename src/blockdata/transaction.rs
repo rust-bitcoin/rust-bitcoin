@@ -30,6 +30,7 @@ use hashes::{self, Hash, sha256d};
 use hashes::hex::FromHex;
 
 use util::endian;
+use blockdata::constants::WITNESS_SCALE_FACTOR;
 #[cfg(feature="bitcoinconsensus")] use blockdata::script;
 use blockdata::script::Script;
 use consensus::{encode, serialize, Decodable, Encodable};
@@ -391,7 +392,7 @@ impl Transaction {
         let mut input_weight = 0;
         let mut inputs_with_witnesses = 0;
         for input in &self.input {
-            input_weight += 4*(32 + 4 + 4 + // outpoint (32+4) + nSequence
+            input_weight += WITNESS_SCALE_FACTOR*(32 + 4 + 4 + // outpoint (32+4) + nSequence
                 VarInt(input.script_sig.len() as u64).len() +
                 input.script_sig.len());
             if !input.witness.is_empty() {
@@ -418,9 +419,9 @@ impl Transaction {
         // lock_time
         4;
         if inputs_with_witnesses == 0 {
-            non_input_size * 4 + input_weight
+            non_input_size * WITNESS_SCALE_FACTOR + input_weight
         } else {
-            non_input_size * 4 + input_weight + self.input.len() - inputs_with_witnesses + 2
+            non_input_size * WITNESS_SCALE_FACTOR + input_weight + self.input.len() - inputs_with_witnesses + 2
         }
     }
 
