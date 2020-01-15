@@ -28,6 +28,7 @@ use consensus::encode::Encodable;
 /// Parts of a sighash which are common across inputs or signatures, and which are
 /// sufficient (in conjunction with a private key) to sign the transaction
 #[derive(Clone, PartialEq, Eq, Debug)]
+#[deprecated(since="0.24.0", note="please use `SigHashCache` instead")]
 pub struct SighashComponents {
     tx_version: u32,
     tx_locktime: u32,
@@ -39,6 +40,7 @@ pub struct SighashComponents {
     pub hash_outputs: SigHash,
 }
 
+#[allow(deprecated)]
 impl SighashComponents {
     /// Compute the sighash components from an unsigned transaction and auxiliary
     /// information about its inputs.
@@ -214,6 +216,7 @@ impl<'a> SigHashCache<'a> {
 }
 
 #[cfg(test)]
+#[allow(deprecated)]
 mod tests {
     use hash_types::SigHash;
     use blockdata::script::Script;
