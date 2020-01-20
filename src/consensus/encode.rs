@@ -150,7 +150,8 @@ impl From<psbt::Error> for Error {
 /// Encode an object into a vector
 pub fn serialize<T: Encodable + ?Sized>(data: &T) -> Vec<u8> {
     let mut encoder = Cursor::new(vec![]);
-    data.consensus_encode(&mut encoder).unwrap();
+    let len = data.consensus_encode(&mut encoder).unwrap();
+    assert_eq!(len, encoder.get_ref().len());
     encoder.into_inner()
 }
 
@@ -278,7 +279,7 @@ impl<W: Write> WriteExt for W {
     }
     #[inline]
     fn emit_bool(&mut self, v: bool) -> Result<(), Error> {
-        self.write_all(&[if v {1} else {0}]).map_err(Error::Io)
+        self.write_all(&[v as u8]).map_err(Error::Io)
     }
     #[inline]
     fn emit_slice(&mut self, v: &[u8]) -> Result<(), Error> {
@@ -350,7 +351,6 @@ macro_rules! impl_int_encodable{
                 ReadExt::$meth_dec(&mut d).map($ty::from_le)
             }
         }
-
         impl Encodable for $ty {
             #[inline]
             fn consensus_encode<S: WriteExt>(
@@ -454,7 +454,7 @@ impl Decodable for VarInt {
 impl Encodable for bool {
     #[inline]
     fn consensus_encode<S: WriteExt>(&self, mut s: S) -> Result<usize, Error> {
-        s.emit_u8(if *self {1} else {0})?;
+        s.emit_bool(*self)?;
         Ok(1)
     }
 }
@@ -462,7 +462,7 @@ impl Encodable for bool {
 impl Decodable for bool {
     #[inline]
     fn consensus_decode<D: io::Read>(mut d: D) -> Result<bool, Error> {
-        ReadExt::read_u8(&mut d).map(|n| n != 0)
+        ReadExt::read_bool(&mut d)
     }
 }
 
@@ -575,7 +575,6 @@ macro_rules! impl_vec {
                 Ok(len)
             }
         }
-
         impl Decodable for Vec<$type> {
             #[inline]
             fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, Error> {
@@ -606,12 +605,17 @@ impl_vec!(Vec<u8>);
 impl_vec!((u32, Address));
 impl_vec!(u64);
 
+fn consensus_encode_with_size<S: io::Write>(data: &[u8], mut s: S) -> Result<usize, Error> {
+    let vi_len = VarInt(data.len() as u64).consensus_encode(&mut s)?;
+    s.emit_slice(&data)?;
+    Ok(vi_len + data.len())
+}
+
+
 impl Encodable for Vec<u8> {
     #[inline]
-    fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, Error> {
-        let vi_len = VarInt(self.len() as u64).consensus_encode(&mut s)?;
-        s.emit_slice(&self)?;
-        Ok(vi_len + self.len())
+    fn consensus_encode<S: io::Write>(&self, s: S) -> Result<usize, Error> {
+        consensus_encode_with_size(self, s)
     }
 }
 
@@ -622,8 +626,7 @@ impl Decodable for Vec<u8> {
         if len > MAX_VEC_SIZE {
             return Err(self::Error::OversizedVectorAllocation { requested: len, max: MAX_VEC_SIZE })
         }
-        let mut ret = Vec::with_capacity(len);
-        ret.resize(len, 0);
+        let mut ret = vec![0u8; len];
         d.read_slice(&mut ret)?;
         Ok(ret)
     }
@@ -631,25 +634,15 @@ impl Decodable for Vec<u8> {
 
 impl Encodable for Box<[u8]> {
     #[inline]
-    fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, Error> {
-        let vi_len = VarInt(self.len() as u64).consensus_encode(&mut s)?;
-        s.emit_slice(&self)?;
-        Ok(vi_len + self.len())
+    fn consensus_encode<S: io::Write>(&self, s: S) -> Result<usize, Error> {
+        consensus_encode_with_size(self, s)
     }
 }
 
 impl Decodable for Box<[u8]> {
     #[inline]
-    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, Error> {
-        let len = VarInt::consensus_decode(&mut d)?.0;
-        let len = len as usize;
-        if len > MAX_VEC_SIZE {
-            return Err(self::Error::OversizedVectorAllocation { requested: len, max: MAX_VEC_SIZE })
-        }
-        let mut ret = Vec::with_capacity(len);
-        ret.resize(len, 0);
-        d.read_slice(&mut ret)?;
-        Ok(ret.into_boxed_slice())
+    fn consensus_decode<D: io::Read>(d: D) -> Result<Self, Error> {
+        <Vec<u8>>::consensus_decode(d).map(From::from)
     }
 }
 
@@ -682,8 +675,7 @@ impl Decodable for CheckedData {
             });
         }
         let checksum = <[u8; 4]>::consensus_decode(&mut d)?;
-        let mut ret = Vec::with_capacity(len as usize);
-        ret.resize(len as usize, 0);
+        let mut ret = vec![0u8; len as usize];
         d.read_slice(&mut ret)?;
         let expected_checksum = sha2_checksum(&ret);
         if expected_checksum != checksum {
