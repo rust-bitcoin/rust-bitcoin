@@ -44,6 +44,8 @@ pub const DIFFCHANGE_TIMESPAN: u32 = 14 * 24 * 3600;
 pub const MAX_BLOCK_WEIGHT: u32 = 4_000_000;
 /// The minimum transaction weight for a valid serialized transaction
 pub const MIN_TRANSACTION_WEIGHT: u32 = 4 * 60;
+/// The factor that non-witness serialization data is multiplied by during weight calculation
+pub const WITNESS_SCALE_FACTOR: usize = 4;
 
 
 /// In Bitcoind this is insanely described as ~((u256)0 >> 32)
