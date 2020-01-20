@@ -736,9 +736,15 @@ impl Decodable for sha256d::Hash {
 // Tests
 #[cfg(test)]
 mod tests {
-    use super::{CheckedData, VarInt};
-
-    use super::{deserialize, serialize, Error};
+    use std::{io, mem, fmt};
+    use std::mem::discriminant;
+    use super::{deserialize, serialize, Error, CheckedData, VarInt};
+    use super::{Transaction, BlockHash, FilterHash, TxMerkleNode, TxOut, TxIn};
+    use consensus::{Encodable, deserialize_partial, Decodable};
+    use util::endian::{u64_to_array_le, u32_to_array_le, u16_to_array_le};
+    use secp256k1::rand::{thread_rng, Rng};
+    use network::message_blockdata::Inventory;
+    use network::Address;
 
     #[test]
     fn serialize_int_test() {
@@ -797,34 +803,59 @@ mod tests {
         assert_eq!(serialize(&VarInt(0xFFF)), vec![0xFDu8, 0xFF, 0xF]);
         assert_eq!(serialize(&VarInt(0xF0F0F0F)), vec![0xFEu8, 0xF, 0xF, 0xF, 0xF]);
         assert_eq!(serialize(&VarInt(0xF0F0F0F0F0E0)), vec![0xFFu8, 0xE0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0, 0]);
+        assert_eq!(test_varint_encode(0xFF, &u64_to_array_le(0x100000000)).unwrap(), VarInt(0x100000000));
+        assert_eq!(test_varint_encode(0xFE, &u64_to_array_le(0x10000)).unwrap(), VarInt(0x10000));
+        assert_eq!(test_varint_encode(0xFD, &u64_to_array_le(0xFD)).unwrap(), VarInt(0xFD));
+
+        // Test that length calc is working correctly
+        test_varint_len(VarInt(0), 1);
+        test_varint_len(VarInt(0xFC), 1);
+        test_varint_len(VarInt(0xFD), 3);
+        test_varint_len(VarInt(0xFFFF), 3);
+        test_varint_len(VarInt(0x10000), 5);
+        test_varint_len(VarInt(0xFFFFFFFF), 5);
+        test_varint_len(VarInt(0xFFFFFFFF+1), 9);
+        test_varint_len(VarInt(u64::max_value()), 9);
+    }
+
+    fn test_varint_len(varint: VarInt, expected: usize) {
+        let mut encoder = io::Cursor::new(vec![]);
+        assert_eq!(varint.consensus_encode(&mut encoder).unwrap(), expected);
+        assert_eq!(varint.len(), expected);
+    }
+
+    fn test_varint_encode(n: u8, x: &[u8]) -> Result<VarInt, Error> {
+        let mut input = [0u8; 9];
+        input[0] = n;
+        input[1..x.len()+1].copy_from_slice(x);
+        deserialize_partial::<VarInt>(&input).map(|t|t.0)
     }
 
     #[test]
     fn deserialize_nonminimal_vec() {
-        match deserialize::<Vec<u8>>(&[0xfd, 0x00, 0x00]) {
-            Err(Error::NonMinimalVarInt) => {},
-            x => panic!(x)
-        }
-        match deserialize::<Vec<u8>>(&[0xfd, 0xfc, 0x00]) {
-            Err(Error::NonMinimalVarInt) => {},
-            x => panic!(x)
-        }
-        match deserialize::<Vec<u8>>(&[0xfe, 0xff, 0x00, 0x00, 0x00]) {
-            Err(Error::NonMinimalVarInt) => {},
-            x => panic!(x)
-        }
-        match deserialize::<Vec<u8>>(&[0xfe, 0xff, 0xff, 0x00, 0x00]) {
-            Err(Error::NonMinimalVarInt) => {},
-            x => panic!(x)
-        }
-        match deserialize::<Vec<u8>>(&[0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]) {
-            Err(Error::NonMinimalVarInt) => {},
-            x => panic!(x)
-        }
-        match deserialize::<Vec<u8>>(&[0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00]) {
-            Err(Error::NonMinimalVarInt) => {},
-            x => panic!(x)
-        }
+        // Check the edges for variant int
+        assert_eq!(discriminant(&test_varint_encode(0xFF, &u64_to_array_le(0x100000000-1)).unwrap_err()),
+                   discriminant(&Error::NonMinimalVarInt));
+        assert_eq!(discriminant(&test_varint_encode(0xFE, &u32_to_array_le(0x10000-1)).unwrap_err()),
+                   discriminant(&Error::NonMinimalVarInt));
+        assert_eq!(discriminant(&test_varint_encode(0xFD, &u16_to_array_le(0xFD-1)).unwrap_err()),
+                   discriminant(&Error::NonMinimalVarInt));
+
+        assert_eq!(discriminant(&deserialize::<Vec<u8>>(&[0xfd, 0x00, 0x00]).unwrap_err()),
+                   discriminant(&Error::NonMinimalVarInt));
+        assert_eq!(discriminant(&deserialize::<Vec<u8>>(&[0xfd, 0xfc, 0x00]).unwrap_err()),
+                   discriminant(&Error::NonMinimalVarInt));
+        assert_eq!(discriminant(&deserialize::<Vec<u8>>(&[0xfd, 0xfc, 0x00]).unwrap_err()),
+                   discriminant(&Error::NonMinimalVarInt));
+        assert_eq!(discriminant(&deserialize::<Vec<u8>>(&[0xfe, 0xff, 0x00, 0x00, 0x00]).unwrap_err()),
+                   discriminant(&Error::NonMinimalVarInt));
+        assert_eq!(discriminant(&deserialize::<Vec<u8>>(&[0xfe, 0xff, 0xff, 0x00, 0x00]).unwrap_err()),
+                   discriminant(&Error::NonMinimalVarInt));
+        assert_eq!(discriminant(&deserialize::<Vec<u8>>(&[0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]).unwrap_err()),
+                   discriminant(&Error::NonMinimalVarInt));
+        assert_eq!(discriminant(&deserialize::<Vec<u8>>(&[0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00]).unwrap_err()),
+                   discriminant(&Error::NonMinimalVarInt));
+
 
         let mut vec_256 = vec![0; 259];
         vec_256[0] = 0xfd;
@@ -904,6 +935,32 @@ mod tests {
         assert!((deserialize(&[4u8, 2, 3, 4, 5, 6]) as Result<Vec<u8>, _>).is_err());
         // found by cargo fuzz
         assert!(deserialize::<Vec<u64>>(&[0xff,0xff,0xff,0xff,0x6b,0x6b,0x6b,0x6b,0x6b,0x6b,0x6b,0x6b,0x6b,0x6b,0x6b,0x6b,0xa,0xa,0x3a]).is_err());
+
+        let rand_io_err = Error::Io(io::Error::new(io::ErrorKind::Other, ""));
+
+        // Check serialization that `if len > MAX_VEC_SIZE {return err}` isn't inclusive,
+        // by making sure it fails with IO Error and not an `OversizedVectorAllocation` Error.
+        let err = deserialize::<CheckedData>(&serialize(&(super::MAX_VEC_SIZE as u32))).unwrap_err();
+        assert_eq!(discriminant(&err), discriminant(&rand_io_err));
+
+        test_len_is_max_vec::<u8>();
+        test_len_is_max_vec::<BlockHash>();
+        test_len_is_max_vec::<FilterHash>();
+        test_len_is_max_vec::<TxMerkleNode>();
+        test_len_is_max_vec::<Transaction>();
+        test_len_is_max_vec::<TxOut>();
+        test_len_is_max_vec::<TxIn>();
+        test_len_is_max_vec::<Inventory>();
+        test_len_is_max_vec::<Vec<u8>>();
+        test_len_is_max_vec::<(u32, Address)>();
+        test_len_is_max_vec::<u64>();
+    }
+
+    fn test_len_is_max_vec<T>() where Vec<T>: Decodable, T: fmt::Debug {
+        let rand_io_err = Error::Io(io::Error::new(io::ErrorKind::Other, ""));
+        let varint = VarInt((super::MAX_VEC_SIZE / mem::size_of::<T>()) as u64);
+        let err = deserialize::<Vec<T>>(&serialize(&varint)).unwrap_err();
+        assert_eq!(discriminant(&err), discriminant(&rand_io_err));
     }
 
     #[test]
@@ -919,6 +976,45 @@ mod tests {
     fn deserialize_checkeddata_test() {
         let cd: Result<CheckedData, _> = deserialize(&[5u8, 0, 0, 0, 162, 107, 175, 90, 1, 2, 3, 4, 5]);
         assert_eq!(cd.ok(), Some(CheckedData(vec![1u8, 2, 3, 4, 5])));
+    }
+
+    #[test]
+    fn serialization_round_trips() {
+        macro_rules! round_trip {
+            ($($val_type:ty),*) => {
+                $(
+                    let r: $val_type = thread_rng().gen();
+                    assert_eq!(deserialize::<$val_type>(&serialize(&r)).unwrap(), r);
+                )*
+            };
+        }
+        macro_rules! round_trip_bytes {
+            ($(($val_type:ty, $data:expr)),*) => {
+                $(
+                    thread_rng().fill(&mut $data[..]);
+                    assert_eq!(deserialize::<$val_type>(&serialize(&$data)).unwrap()[..], $data[..]);
+                )*
+            };
+        }
+
+        let mut data = Vec::with_capacity(256);
+        let mut data64 = Vec::with_capacity(256);
+        for _ in 0..10 {
+            round_trip!{bool, i8, u8, i16, u16, i32, u32, i64, u64,
+            (bool, i8, u16, i32), (u64, i64, u32, i32, u16, i16), (i8, u8, i16, u16, i32, u32, i64, u64),
+            [u8; 2], [u8; 4], [u8; 8], [u8; 12], [u8; 16], [u8; 32]};
+
+            data.clear();
+            data64.clear();
+            let len = thread_rng().gen_range(1, 256);
+            data.resize(len, 0u8);
+            data64.resize(len, 0u64);
+            let mut arr33 = [0u8; 33];
+            let mut arr16 = [0u16; 8];
+            round_trip_bytes!{(Vec<u8>, data), ([u8; 33], arr33), ([u16; 8], arr16), (Vec<u64>, data64)};
+
+
+        }
     }
 }
 
