@@ -294,7 +294,9 @@ mod tests {
 
         // Addresses
         assert_eq!(from_check("1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH").ok(),
-                   Some(Vec::from_hex("00f8917303bfa8ef24f292e8fa1419b20460ba064d").unwrap()))
+                   Some(Vec::from_hex("00f8917303bfa8ef24f292e8fa1419b20460ba064d").unwrap()));
+        // Non Base58 char.
+        assert_eq!(from("¢").unwrap_err(), Error::BadByte(194));
     }
 
     #[test]
@@ -303,6 +305,12 @@ mod tests {
         let v: Vec<u8> = from_check(s).unwrap();
         assert_eq!(check_encode_slice(&v[..]), s);
         assert_eq!(from_check(&check_encode_slice(&v[..])).ok(), Some(v));
+
+        // Check that empty slice passes roundtrip.
+        assert_eq!(from_check(&check_encode_slice(&[])), Ok(vec![]));
+        // Check that `len > 4` is enforced.
+        assert_eq!(from_check(&encode_slice(&[1,2,3])), Err(Error::TooShort(3)));
+
     }
 }
 
