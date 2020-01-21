@@ -587,7 +587,7 @@ pub enum SigHashType {
 
 impl SigHashType {
      /// Break the sighash flag into the "real" sighash flag and the ANYONECANPAY boolean
-     fn split_anyonecanpay_flag(&self) -> (SigHashType, bool) {
+     pub(crate) fn split_anyonecanpay_flag(&self) -> (SigHashType, bool) {
          match *self {
              SigHashType::All		=> (SigHashType::All, false),
              SigHashType::None		=> (SigHashType::None, false),
