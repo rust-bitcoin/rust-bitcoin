@@ -131,7 +131,7 @@ pub fn from(data: &str) -> Result<Vec<u8>, Error> {
     // Build in base 256
     for d58 in data.bytes() {
         // Compute "X = X * 58 + next_digit" in base 256
-        if d58 as usize > BASE58_DIGITS.len() {
+        if d58 as usize >= BASE58_DIGITS.len() {
             return Err(Error::BadByte(d58));
         }
         let mut carry = match BASE58_DIGITS[d58 as usize] {
