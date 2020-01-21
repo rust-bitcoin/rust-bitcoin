@@ -18,11 +18,6 @@
 //! The functions here are designed to be fast.
 //!
 
-use std::fmt;
-
-use consensus::encode;
-use util::BitArray;
-
 macro_rules! construct_uint {
     ($name:ident, $n_words:expr) => (
         /// Little-endian large integer type
@@ -116,7 +111,7 @@ macro_rules! construct_uint {
 
             #[inline]
             fn sub(self, other: $name) -> $name {
-                self + !other + BitArray::one()
+                self + !other + $crate::util::BitArray::one()
             }
         }
 
@@ -124,6 +119,7 @@ macro_rules! construct_uint {
             type Output = $name;
 
             fn mul(self, other: $name) -> $name {
+                use $crate::util::BitArray;
                 let mut me = $name::zero();
                 // TODO: be more efficient about this
                 for i in 0..(2 * $n_words) {
@@ -170,7 +166,7 @@ macro_rules! construct_uint {
             }
         }
 
-        impl BitArray for $name {
+        impl $crate::util::BitArray for $name {
             #[inline]
             fn bit(&self, index: usize) -> bool {
                 let &$name(ref arr) = self;
@@ -214,7 +210,7 @@ macro_rules! construct_uint {
 
         impl ::std::default::Default for $name {
             fn default() -> $name {
-                BitArray::zero()
+                $crate::util::BitArray::zero()
             }
         }
 
@@ -319,8 +315,8 @@ macro_rules! construct_uint {
             }
         }
 
-        impl fmt::Debug for $name {
-            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        impl ::std::fmt::Debug for $name {
+            fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
                 let &$name(ref data) = self;
                 write!(f, "0x")?;
                 for ch in data.iter().rev() {
@@ -330,18 +326,18 @@ macro_rules! construct_uint {
             }
         }
 
-        impl fmt::Display for $name {
-            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                <fmt::Debug>::fmt(self, f)
+        impl ::std::fmt::Display for $name {
+            fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+                <::std::fmt::Debug>::fmt(self, f)
             }
         }
 
-        impl ::consensus::Encodable for $name {
+        impl $crate::consensus::Encodable for $name {
             #[inline]
             fn consensus_encode<S: ::std::io::Write>(
                 &self,
                 mut s: S,
-            ) -> Result<usize, encode::Error> {
+            ) -> Result<usize, $crate::consensus::encode::Error> {
                 let &$name(ref data) = self;
                 let mut len = 0;
                 for word in data.iter() {
@@ -351,11 +347,11 @@ macro_rules! construct_uint {
             }
         }
 
-        impl ::consensus::Decodable for $name {
+        impl $crate::consensus::Decodable for $name {
             fn consensus_decode<D: ::std::io::Read>(
                 mut d: D,
-            ) -> Result<$name, encode::Error> {
-                use consensus::Decodable;
+            ) -> Result<$name, $crate::consensus::encode::Error> {
+                use $crate::consensus::Decodable;
                 let mut ret: [u64; $n_words] = [0; $n_words];
                 for i in 0..$n_words {
                     ret[i] = Decodable::consensus_decode(&mut d)?;
