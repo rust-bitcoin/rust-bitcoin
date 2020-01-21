@@ -668,7 +668,11 @@ impl SignedAmount {
     ///
     /// Does not include the denomination.
     pub fn fmt_value_in(&self, f: &mut fmt::Write, denom: Denomination) -> fmt::Result {
-        fmt_satoshi_in(self.as_sat().abs() as u64, self.is_negative(), f, denom)
+        let sats = self.as_sat().checked_abs().map(|a: i64| a as u64).unwrap_or_else(|| {
+            // We could also hard code this into `9223372036854775808`
+            u64::max_value() - self.as_sat() as u64 +1
+        });
+        fmt_satoshi_in(sats, self.is_negative(), f, denom)
     }
 
     /// Get a string number of this [SignedAmount] in the given denomination.
@@ -715,6 +719,13 @@ impl SignedAmount {
     /// this [SignedAmount] is zero or positive.
     pub fn is_negative(self) -> bool {
         self.0.is_negative()
+    }
+
+
+    /// Get the absolute value of this [SignedAmount].
+    /// Returns [None] if overflow occurred. (`self == min_value()`)
+    pub fn checked_abs(self) -> Option<SignedAmount> {
+        self.0.checked_abs().map(SignedAmount)
     }
 
     /// Checked addition.
