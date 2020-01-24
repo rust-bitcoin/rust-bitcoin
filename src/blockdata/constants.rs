@@ -84,7 +84,7 @@ fn bitcoin_genesis_tx() -> Transaction {
 
     // Outputs
     let out_script = script::Builder::new()
-        .push_slice(&Vec::<u8>::from_hex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f").unwrap())
+        .push_slice(&Vec::from_hex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f").unwrap())
         .push_opcode(opcodes::all::OP_CHECKSIG)
         .into_script();
     ret.output.push(TxOut {
@@ -147,7 +147,7 @@ pub fn genesis_block(network: Network) -> Block {
 #[cfg(test)]
 mod test {
     use std::default::Default;
-    use hex::decode as hex_decode;
+    use hashes::hex::FromHex;
 
     use network::constants::Network;
     use consensus::encode::serialize;
@@ -163,12 +163,12 @@ mod test {
         assert_eq!(gen.input[0].previous_output.txid, Default::default());
         assert_eq!(gen.input[0].previous_output.vout, 0xFFFFFFFF);
         assert_eq!(serialize(&gen.input[0].script_sig),
-                   hex_decode("4d04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73").unwrap());
+                   Vec::from_hex("4d04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73").unwrap());
 
         assert_eq!(gen.input[0].sequence, MAX_SEQUENCE);
         assert_eq!(gen.output.len(), 1);
         assert_eq!(serialize(&gen.output[0].script_pubkey),
-                   hex_decode("434104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac").unwrap());
+                   Vec::from_hex("434104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac").unwrap());
         assert_eq!(gen.output[0].value, 50 * COIN_VALUE);
         assert_eq!(gen.lock_time, 0);
 

@@ -284,7 +284,7 @@ pub fn untemplate(script: &script::Script) -> Result<(Template, Vec<PublicKey>),
 #[cfg(test)]
 mod tests {
     use secp256k1::Secp256k1;
-    use hex::decode as hex_decode;
+    use hashes::hex::FromHex;
     use secp256k1::rand::thread_rng;
     use std::str::FromStr;
 
@@ -294,7 +294,7 @@ mod tests {
     use super::*;
     use PublicKey;
 
-    macro_rules! hex (($hex:expr) => (hex_decode($hex).unwrap()));
+    macro_rules! hex (($hex:expr) => (Vec::from_hex($hex).unwrap()));
     macro_rules! hex_key (($hex:expr) => (PublicKey::from_slice(&hex!($hex)).unwrap()));
     macro_rules! alpha_template(() => (Template::from(&hex!("55fefefefefefefe57AE")[..])));
     macro_rules! alpha_keys(() => (

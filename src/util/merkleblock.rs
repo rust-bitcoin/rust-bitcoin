@@ -504,7 +504,7 @@ mod tests {
     use consensus::encode::{deserialize, serialize};
     use util::hash::bitcoin_merkle_root;
     use util::merkleblock::{MerkleBlock, PartialMerkleTree};
-    use {hex, Block};
+    use Block;
 
     #[test]
     fn pmt_tests() {
@@ -615,7 +615,7 @@ mod tests {
             ebe1ae264bc0e2289189ff0316cdc10511da71da757e553cada9f3b5b1434f3923673adb57d83caac392c38\
             af156d6fc30b55fad4112df2b95531e68114e9ad10011e72f7b7cfdb025700";
 
-        let mb: MerkleBlock = deserialize(&hex::decode(mb_hex).unwrap()).unwrap();
+        let mb: MerkleBlock = deserialize(&Vec::from_hex(mb_hex).unwrap()).unwrap();
         assert_eq!(get_block_13b8a().block_hash(), mb.header.block_hash());
         assert_eq!(
             mb.header.merkle_root,
@@ -781,6 +781,6 @@ mod tests {
             058b800a098fc1740ce3012e8fc8a00c96af966ffffffff02c0e1e400000000001976a9144134e75a6fcb60\
             42034aab5e18570cf1f844f54788ac404b4c00000000001976a9142b6ba7c9d796b75eef7942fc9288edd37\
             c32f5c388ac00000000";
-        deserialize(&hex::decode(block_hex).unwrap()).unwrap()
+        deserialize(&Vec::from_hex(block_hex).unwrap()).unwrap()
     }
 }
