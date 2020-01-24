@@ -16,23 +16,22 @@
 //! to avoid mixing data of the same hash format (like SHA256d) but of different meaning
 //! (transaction id, block hash etc).
 
-use std::io;
-
 use consensus::encode::{Encodable, Decodable, Error};
-use hashes::{sha256, sha256d, hash160, Hash};
-use hashes::hex::{ToHex, FromHex};
+use hashes::{Hash, sha256, sha256d, ripemd160, hash160};
+use hashes::hex::{FromHex, ToHex};
 
 macro_rules! impl_hashencode {
     ($hashtype:ident) => {
-        impl Encodable for $hashtype {
-            fn consensus_encode<S: io::Write>(&self, s: S) -> Result<usize, Error> {
+        impl $crate::consensus::Encodable for $hashtype {
+            fn consensus_encode<S: ::std::io::Write>(&self, s: S) -> Result<usize, $crate::consensus::encode::Error> {
                 self.0.consensus_encode(s)
             }
         }
 
-        impl Decodable for $hashtype {
-            fn consensus_decode<D: io::Read>(d: D) -> Result<Self, Error> {
-                Ok(Self::from_inner(<<$hashtype as Hash>::Inner>::consensus_decode(d)?))
+        impl $crate::consensus::Decodable for $hashtype {
+            fn consensus_decode<D: ::std::io::Read>(d: D) -> Result<Self, $crate::consensus::encode::Error> {
+                use $crate::hashes::Hash;
+                Ok(Self::from_inner(<<$hashtype as $crate::hashes::Hash>::Inner>::consensus_decode(d)?))
             }
         }
     }
