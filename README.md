@@ -101,10 +101,10 @@ support only a single blockchain.
 
 # Release Notes
 
-See CHANGELOG.md
+See [CHANGELOG.md](CHANGELOG.md).
 
 
 # Licensing
 
-The code in this project is licensed under the Creative Commons CC0 1.0
-Universal license.
+The code in this project is licensed under the [Creative Commons CC0 1.0
+Universal license](LICENSE).
