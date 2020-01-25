@@ -22,7 +22,7 @@ use std::str::FromStr;
 #[cfg(feature = "serde")] use serde;
 
 use hash_types::XpubIdentifier;
-use hashes::{hex, sha512, Hash, HashEngine, Hmac, HmacEngine};
+use hashes::{sha512, Hash, HashEngine, Hmac, HmacEngine};
 use secp256k1::{self, Secp256k1};
 
 use network::constants::Network;
