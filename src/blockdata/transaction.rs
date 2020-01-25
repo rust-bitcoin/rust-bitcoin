@@ -307,6 +307,10 @@ impl Transaction {
     /// through an ECDSA signer, the SigHashType appended to the resulting sig, and a script
     /// written around this, but this is the general (and hard) part.
     ///
+    /// The `sighash_u32` supports arbitrary `u32` value, instead of just [`SigHashType`],
+    /// because internally 4 bytes are being hashed, even though only lowest byte
+    /// is appended to signature in a transaction.
+    ///
     /// *Warning* This does NOT attempt to support OP_CODESEPARATOR. In general this would require
     /// evaluating `script_pubkey` to determine which separators get evaluated and which don't,
     /// which we don't have the information to determine.
@@ -318,11 +322,11 @@ impl Transaction {
         mut writer: Write,
         input_index: usize,
         script_pubkey: &Script,
-        sighash_u32: u32
+        sighash_type: u32
     ) -> Result<(), encode::Error> {
         assert!(input_index < self.input.len());  // Panic on OOB
 
-        let (sighash, anyone_can_pay) = SigHashType::from_u32(sighash_u32).split_anyonecanpay_flag();
+        let (sighash, anyone_can_pay) = SigHashType::from_u32(sighash_type).split_anyonecanpay_flag();
 
         // Special-case sighash_single bug because this is easy enough.
         if sighash == SigHashType::Single && input_index >= self.output.len() {
@@ -374,7 +378,7 @@ impl Transaction {
         };
         // hash the result
         tx.consensus_encode(&mut writer)?;
-        let sighash_arr = endian::u32_to_array_le(sighash_u32);
+        let sighash_arr = endian::u32_to_array_le(sighash_type);
         sighash_arr.consensus_encode(&mut writer)?;
         Ok(())
     }
