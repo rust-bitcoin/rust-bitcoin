@@ -307,7 +307,7 @@ impl Transaction {
     /// through an ECDSA signer, the SigHashType appended to the resulting sig, and a script
     /// written around this, but this is the general (and hard) part.
     ///
-    /// The `sighash_u32` supports arbitrary `u32` value, instead of just [`SigHashType`],
+    /// The `sighash_type` supports arbitrary `u32` value, instead of just [`SigHashType`],
     /// because internally 4 bytes are being hashed, even though only lowest byte
     /// is appended to signature in a transaction.
     ///
@@ -317,13 +317,14 @@ impl Transaction {
     ///
     /// # Panics Panics if `input_index` is greater than or equal to `self.input.len()`
     ///
-    pub fn encode_signing_data_to<Write: io::Write>(
+    pub fn encode_signing_data_to<Write: io::Write, U: Into<u32>>(
         &self,
         mut writer: Write,
         input_index: usize,
         script_pubkey: &Script,
-        sighash_type: u32
+        sighash_type: U,
     ) -> Result<(), encode::Error> {
+        let sighash_type : u32 = sighash_type.into();
         assert!(input_index < self.input.len());  // Panic on OOB
 
         let (sighash, anyone_can_pay) = SigHashType::from_u32(sighash_type).split_anyonecanpay_flag();
@@ -685,6 +686,11 @@ impl SigHashType {
      pub fn as_u32(self) -> u32 { self as u32 }
 }
 
+impl From<SigHashType> for u32 {
+    fn from(t: SigHashType) -> u32 {
+        t.as_u32()
+    }
+}
 
 #[cfg(test)]
 mod tests {
