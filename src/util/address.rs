@@ -46,7 +46,7 @@ use std::str::FromStr;
 use bech32;
 use hashes::Hash;
 
-use hash_types::{PubkeyHash, WPubkeyHash, ScriptHash, WScriptHash};
+use hash_types::{PubkeyHash, WPubkeyHash, ScriptHash, WitnessProgram};
 use blockdata::opcodes;
 use blockdata::script;
 use network::constants::Network;
@@ -299,7 +299,7 @@ impl Address {
             network: network,
             payload: Payload::WitnessProgram {
                 version: bech32::u5::try_from_u8(0).expect("0<32"),
-                program: WScriptHash::hash(&script[..])[..].to_vec(),
+                program: WitnessProgram::hash(&script[..])[..].to_vec(),
             },
         }
     }
@@ -309,7 +309,7 @@ impl Address {
     pub fn p2shwsh(script: &script::Script, network: Network) -> Address {
         let ws = script::Builder::new()
             .push_int(0)
-            .push_slice(&WScriptHash::hash(&script[..])[..])
+            .push_slice(&WitnessProgram::hash(&script[..])[..])
             .into_script();
 
         Address {

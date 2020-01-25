@@ -29,7 +29,7 @@ use std::{error, fmt, io};
 
 #[cfg(feature = "serde")] use serde;
 
-use hash_types::{ScriptHash, WScriptHash};
+use hash_types::{ScriptHash, WitnessProgram};
 use blockdata::opcodes;
 use consensus::{encode, Decodable, Encodable};
 use hashes::Hash;
@@ -243,7 +243,7 @@ impl Script {
     /// script")
     pub fn to_v0_p2wsh(&self) -> Script {
         Builder::new().push_int(0)
-                      .push_slice(&WScriptHash::hash(&self.0)[..])
+                      .push_slice(&WitnessProgram::hash(&self.0)[..])
                       .into_script()
     }
 
