@@ -317,6 +317,8 @@ impl Transaction {
     /// ECDSA signer, the SigHashType appended to the resulting sig, and a
     /// script written around this, but this is the general (and hard) part.
     ///
+    /// For segwit v0 signatures, use `util::bip143::SighashComponents`.
+    ///
     /// *Warning* This does NOT attempt to support OP_CODESEPARATOR. In general
     /// this would require evaluating `script_pubkey` to determine which separators
     /// get evaluated and which don't, which we don't have the information to
