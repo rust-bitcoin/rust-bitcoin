@@ -724,7 +724,7 @@ impl All {
             || self.code >= all::OP_RETURN_186.code
     }
 
-    /// Indicates whether this opcode fits in the PushNumm class
+    /// Indicates whether this opcode fits in the PushNum class
     fn is_push_num_positive(&self) -> bool {
         all::OP_PUSHNUM_1.code <= self.code && self.code <= all::OP_PUSHNUM_16.code
     }
