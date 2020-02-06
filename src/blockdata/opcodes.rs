@@ -659,46 +659,74 @@ impl All {
     /// Classifies an Opcode into a broad class
     #[inline]
     pub fn classify(&self) -> Class {
-        // 17 opcodes
-        if *self == all::OP_VERIF || *self == all::OP_VERNOTIF ||
-           *self == all::OP_CAT || *self == all::OP_SUBSTR ||
-           *self == all::OP_LEFT || *self == all::OP_RIGHT ||
-           *self == all::OP_INVERT || *self == all::OP_AND ||
-           *self == all::OP_OR || *self == all::OP_XOR ||
-           *self == all::OP_2MUL || *self == all::OP_2DIV ||
-           *self == all::OP_MUL || *self == all::OP_DIV || *self == all::OP_MOD ||
-           *self == all::OP_LSHIFT || *self == all::OP_RSHIFT {
-            Class::IllegalOp
-        // 11 opcodes
-        } else if *self == all::OP_NOP ||
-                  (all::OP_NOP1.code <= self.code &&
-                   self.code <= all::OP_NOP10.code) {
-            Class::NoOp
-        // 75 opcodes
-        } else if *self == all::OP_RESERVED || *self == all::OP_VER || *self == all::OP_RETURN ||
-                  *self == all::OP_RESERVED1 || *self == all::OP_RESERVED2 ||
-                  self.code >= all::OP_RETURN_186.code {
-            Class::ReturnOp
-        // 1 opcode
+        if self.is_illegal_op() {
+            // 17 opcodes
+            return Class::IllegalOp;
+        } else if self.is_no_op() {
+            // 11 opcodes
+            return Class::NoOp;
+        } else if self.is_return_op() {
+            // 75 opcodes
+            return Class::ReturnOp;
         } else if *self == all::OP_PUSHNUM_NEG1 {
-            Class::PushNum(-1)
-        // 16 opcodes
-        } else if all::OP_PUSHNUM_1.code <= self.code &&
-                  self.code <= all::OP_PUSHNUM_16.code {
-            Class::PushNum(1 + self.code as i32 - all::OP_PUSHNUM_1.code as i32)
-        // 76 opcodes
+            // 1 opcode
+            return Class::PushNum(-1);
+        } else if self.is_push_num_positive() {
+            // 16 opcodes
+            return Class::PushNum(1 + self.code as i32 - all::OP_PUSHNUM_1.code as i32);
         } else if self.code <= all::OP_PUSHBYTES_75.code {
-            Class::PushBytes(self.code as u32)
-        // 60 opcodes
-        } else {
-            Class::Ordinary(Ordinary::try_from_all(*self).unwrap())
+            // 76 opcodes
+            return Class::PushBytes(self.code as u32);
         }
+        // 60 opcodes
+        Class::Ordinary(Ordinary::try_from_all(*self).unwrap())
     }
 
     /// Encode as a byte
     #[inline]
     pub fn into_u8(&self) -> u8 {
         self.code
+    }
+
+    /// Indicates whether this opcode fits in the IllegalOp class
+    fn is_illegal_op(&self) -> bool {
+        *self == all::OP_VERIF
+            || *self == all::OP_VERNOTIF
+            || *self == all::OP_CAT
+            || *self == all::OP_SUBSTR
+            || *self == all::OP_LEFT
+            || *self == all::OP_RIGHT
+            || *self == all::OP_INVERT
+            || *self == all::OP_AND
+            || *self == all::OP_OR
+            || *self == all::OP_XOR
+            || *self == all::OP_2MUL
+            || *self == all::OP_2DIV
+            || *self == all::OP_MUL
+            || *self == all::OP_DIV
+            || *self == all::OP_MOD
+            || *self == all::OP_LSHIFT
+            || *self == all::OP_RSHIFT
+    }
+
+    /// Indicates whether this opcode fits in the NoOp class
+    fn is_no_op(&self) -> bool {
+        *self == all::OP_NOP || (all::OP_NOP1.code <= self.code && self.code <= all::OP_NOP10.code)
+    }
+
+    /// Indicates whether this opcode fits in the ReturnOp class
+    fn is_return_op(&self) -> bool {
+        *self == all::OP_RESERVED
+            || *self == all::OP_VER
+            || *self == all::OP_RETURN
+            || *self == all::OP_RESERVED1
+            || *self == all::OP_RESERVED2
+            || self.code >= all::OP_RETURN_186.code
+    }
+
+    /// Indicates whether this opcode fits in the PushNumm class
+    fn is_push_num_positive(&self) -> bool {
+        all::OP_PUSHNUM_1.code <= self.code && self.code <= all::OP_PUSHNUM_16.code
     }
 }
 
@@ -1092,6 +1120,76 @@ mod tests {
         roundtrip!(unique, OP_RETURN_254);
         roundtrip!(unique, OP_RETURN_255);
         assert_eq!(unique.len(), 256);
+    }
+
+    macro_rules! is_in_class {
+        ($op:ident, $cl:expr) => {
+            assert_eq!(All::from(all::$op.into_u8()).classify(), $cl)
+        };
+    }
+
+    #[test]
+    fn classify() {
+        use super::Class as C;
+        is_in_class!(OP_VERIF, C::IllegalOp);
+        is_in_class!(OP_VERNOTIF, C::IllegalOp);
+        is_in_class!(OP_CAT, C::IllegalOp);
+        is_in_class!(OP_SUBSTR, C::IllegalOp);
+        is_in_class!(OP_LEFT, C::IllegalOp);
+        is_in_class!(OP_RIGHT, C::IllegalOp);
+        is_in_class!(OP_INVERT, C::IllegalOp);
+        is_in_class!(OP_AND, C::IllegalOp);
+        is_in_class!(OP_OR, C::IllegalOp);
+        is_in_class!(OP_XOR, C::IllegalOp);
+        is_in_class!(OP_2MUL, C::IllegalOp);
+        is_in_class!(OP_2DIV, C::IllegalOp);
+        is_in_class!(OP_MUL, C::IllegalOp);
+        is_in_class!(OP_DIV, C::IllegalOp);
+        is_in_class!(OP_MOD, C::IllegalOp);
+        is_in_class!(OP_LSHIFT, C::IllegalOp);
+        is_in_class!(OP_RSHIFT, C::IllegalOp);
+
+        is_in_class!(OP_NOP, C::NoOp);
+        is_in_class!(OP_NOP1, C::NoOp);
+        is_in_class!(OP_NOP5, C::NoOp);
+        is_in_class!(OP_NOP10, C::NoOp);
+
+        is_in_class!(OP_RESERVED, C::ReturnOp);
+        is_in_class!(OP_VER, C::ReturnOp);
+        is_in_class!(OP_RETURN, C::ReturnOp);
+        is_in_class!(OP_RESERVED1, C::ReturnOp);
+        is_in_class!(OP_RESERVED2, C::ReturnOp);
+        is_in_class!(OP_RETURN_186, C::ReturnOp);
+        is_in_class!(OP_RETURN_220, C::ReturnOp);
+        is_in_class!(OP_RETURN_255, C::ReturnOp);
+
+        is_in_class!(OP_PUSHNUM_NEG1, C::PushNum(-1));
+
+        is_in_class!(
+            OP_PUSHNUM_1,
+            C::PushNum(1 + all::OP_PUSHNUM_1.code as i32 - all::OP_PUSHNUM_1.code as i32)
+        );
+        is_in_class!(
+            OP_PUSHNUM_8,
+            C::PushNum(1 + all::OP_PUSHNUM_8.code as i32 - all::OP_PUSHNUM_1.code as i32)
+        );
+        is_in_class!(
+            OP_PUSHNUM_16,
+            C::PushNum(1 + all::OP_PUSHNUM_16.code as i32 - all::OP_PUSHNUM_1.code as i32)
+        );
+
+        is_in_class!(
+            OP_PUSHBYTES_1,
+            C::PushBytes(all::OP_PUSHBYTES_1.code as u32)
+        );
+        is_in_class!(
+            OP_PUSHBYTES_38,
+            C::PushBytes(all::OP_PUSHBYTES_38.code as u32)
+        );
+        is_in_class!(
+            OP_PUSHBYTES_75,
+            C::PushBytes(all::OP_PUSHBYTES_75.code as u32)
+        );
     }
 }
 
