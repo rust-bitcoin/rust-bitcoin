@@ -25,7 +25,7 @@ fn main() {
 
     if let Ok(mut stream) = TcpStream::connect(address) {
         // Send the message
-        let _ = stream.write(encode::serialize(&first_message).as_slice());
+        let _ = stream.write_all(encode::serialize(&first_message).as_slice());
         println!("Sent version message");
 
         // Wait for reply and close stream
@@ -42,7 +42,7 @@ fn main() {
                         payload: message::NetworkMessage::Verack,
                     };
 
-                    let _ = stream.write(encode::serialize(&second_message).as_slice());
+                    let _ = stream.write_all(encode::serialize(&second_message).as_slice());
                     println!("Sent verack message");
                 }
                 message::NetworkMessage::Verack => {
