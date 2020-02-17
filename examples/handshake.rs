@@ -16,7 +16,7 @@ fn main() {
 
     let address = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(130, 149, 80, 221)), 8333);
 
-    let version_message = build_version_message(address.clone());
+    let version_message = build_version_message(address);
 
     let first_message = message::RawNetworkMessage {
         magic: constants::Network::Bitcoin.magic(),
