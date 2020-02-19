@@ -1,4 +1,6 @@
-use rand::Rng;
+extern crate bitcoin;
+
+use bitcoin::secp256k1::rand::Rng;
 use std::io::Write;
 use std::net::{IpAddr, Ipv4Addr, Shutdown, SocketAddr, TcpStream};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -81,7 +83,7 @@ fn build_version_message(address: SocketAddr) -> message::NetworkMessage {
     let addr_from = address::Address::new(&my_address, constants::ServiceFlags::NONE);
 
     // "Node random nonce, randomly generated every time a version packet is sent. This nonce is used to detect connections to self."
-    let nonce: u64 = rand::thread_rng().gen();
+    let nonce: u64 = secp256k1::rand::thread_rng().gen();
 
     // "User Agent (0x00 if string is 0 bytes long)"
     let user_agent = String::from("rust-example");
