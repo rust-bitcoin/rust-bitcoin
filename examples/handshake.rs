@@ -2,11 +2,11 @@ extern crate bitcoin;
 
 use std::net::{IpAddr, Ipv4Addr, Shutdown, SocketAddr, TcpStream};
 use std::time::{SystemTime, UNIX_EPOCH};
-use std::{env, process, io::Write};
+use std::{env, io::Write, process};
 
-use bitcoin::secp256k1::rand::Rng;
 use bitcoin::consensus::encode;
 use bitcoin::network::{address, constants, message, message_network, stream_reader::StreamReader};
+use bitcoin::secp256k1::rand::Rng;
 
 fn main() {
     // This example establishes a connection to a Bitcoin node, sends the intial
