@@ -1,22 +1,28 @@
 extern crate bitcoin;
 
-use bitcoin::secp256k1::rand::Rng;
-use std::io::Write;
 use std::net::{IpAddr, Ipv4Addr, Shutdown, SocketAddr, TcpStream};
 use std::time::{SystemTime, UNIX_EPOCH};
+use std::{env, process, io::Write};
 
+use bitcoin::secp256k1::rand::Rng;
 use bitcoin::consensus::encode;
-use bitcoin::network::address;
-use bitcoin::network::constants;
-use bitcoin::network::message;
-use bitcoin::network::message_network;
-use bitcoin::network::stream_reader::StreamReader;
+use bitcoin::network::{address, constants, message, message_network, stream_reader::StreamReader};
 
 fn main() {
     // This example establishes a connection to a Bitcoin node, sends the intial
     // "version" message, waits for the reply, and finally closes the connection.
+    let args: Vec<String> = env::args().collect();
+    if args.len() < 2 {
+        eprintln!("not enough arguments");
+        process::exit(1);
+    }
 
-    let address = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(130, 149, 80, 221)), 8333);
+    let str_address = &args[1];
+
+    let address: SocketAddr = str_address.parse().unwrap_or_else(|error| {
+        eprintln!("Error parsing address: {:?}", error);
+        process::exit(1);
+    });
 
     let version_message = build_version_message(address);
 
