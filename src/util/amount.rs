@@ -668,7 +668,11 @@ impl SignedAmount {
     ///
     /// Does not include the denomination.
     pub fn fmt_value_in(&self, f: &mut fmt::Write, denom: Denomination) -> fmt::Result {
-        fmt_satoshi_in(self.as_sat().abs() as u64, self.is_negative(), f, denom)
+        let sats = self.as_sat().checked_abs().map(|a: i64| a as u64).unwrap_or_else(|| {
+            // We could also hard code this into `9223372036854775808`
+            u64::max_value() - self.as_sat() as u64 +1
+        });
+        fmt_satoshi_in(sats, self.is_negative(), f, denom)
     }
 
     /// Get a string number of this [SignedAmount] in the given denomination.
@@ -715,6 +719,13 @@ impl SignedAmount {
     /// this [SignedAmount] is zero or positive.
     pub fn is_negative(self) -> bool {
         self.0.is_negative()
+    }
+
+
+    /// Get the absolute value of this [SignedAmount].
+    /// Returns [None] if overflow occurred. (`self == min_value()`)
+    pub fn checked_abs(self) -> Option<SignedAmount> {
+        self.0.checked_abs().map(SignedAmount)
     }
 
     /// Checked addition.
@@ -1147,6 +1158,7 @@ mod tests {
     fn parsing() {
         use super::ParseAmountError as E;
         let btc = Denomination::Bitcoin;
+        let sat = Denomination::Satoshi;
         let p = Amount::from_str_in;
         let sp = SignedAmount::from_str_in;
 
@@ -1163,11 +1175,26 @@ mod tests {
         assert_eq!(p("1", btc), Ok(Amount::from_sat(1_000_000_00)));
         assert_eq!(sp("-.5", btc), Ok(SignedAmount::from_sat(-500_000_00)));
         assert_eq!(p("1.1", btc), Ok(Amount::from_sat(1_100_000_00)));
+        assert_eq!(p("100", sat), Ok(Amount::from_sat(100)));
+        assert_eq!(p("55", sat), Ok(Amount::from_sat(55)));
+        assert_eq!(p("5500000000000000000", sat), Ok(Amount::from_sat(5_500_000_000_000_000_000)));
+        // Should this even pass?
+        assert_eq!(p("5500000000000000000.", sat), Ok(Amount::from_sat(5_500_000_000_000_000_000)));
         assert_eq!(
             p("12345678901.12345678", btc),
             Ok(Amount::from_sat(12_345_678_901__123_456_78))
         );
+
+        // make sure satoshi > i64::max_value() is checked.
+        let amount = Amount::from_sat(i64::max_value() as u64);
+        assert_eq!(Amount::from_str_in(&amount.to_string_in(sat), sat), Ok(amount));
+        assert_eq!(Amount::from_str_in(&(amount+Amount(1)).to_string_in(sat), sat), Err(E::TooBig));
+
         assert_eq!(p("12.000", Denomination::MilliSatoshi), Err(E::TooPrecise));
+        // exactly 50 chars.
+        assert_eq!(p("100000000000000.0000000000000000000000000000000000", Denomination::Bitcoin), Err(E::TooBig));
+        // more than 50 chars.
+        assert_eq!(p("100000000000000.00000000000000000000000000000000000", Denomination::Bitcoin), Err(E::InputTooLarge));
     }
 
     #[test]
@@ -1190,6 +1217,27 @@ mod tests {
             SignedAmount::from_sat(-42).to_string_with_denomination(D::Bitcoin),
             "-0.00000042 BTC"
         );
+    }
+
+    #[test]
+    fn test_unsigned_signed_conversion() {
+        use super::ParseAmountError as E;
+        let sa = SignedAmount::from_sat;
+        let ua = Amount::from_sat;
+
+        assert_eq!(Amount::max_value().to_signed(),  Err(E::TooBig));
+        assert_eq!(ua(i64::max_value() as u64).to_signed(),  Ok(sa(i64::max_value())));
+        assert_eq!(ua(0).to_signed(),  Ok(sa(0)));
+        assert_eq!(ua(1).to_signed(), Ok( sa(1)));
+        assert_eq!(ua(1).to_signed(),  Ok(sa(1)));
+        assert_eq!(ua(i64::max_value() as u64 + 1).to_signed(),  Err(E::TooBig));
+
+        assert_eq!(sa(-1).to_unsigned(), Err(E::Negative));
+        assert_eq!(sa(i64::max_value()).to_unsigned(), Ok(ua(i64::max_value() as u64)));
+
+        assert_eq!(sa(0).to_unsigned().unwrap().to_signed(), Ok(sa(0)));
+        assert_eq!(sa(1).to_unsigned().unwrap().to_signed(), Ok(sa(1)));
+        assert_eq!(sa(i64::max_value()).to_unsigned().unwrap().to_signed(), Ok(sa(i64::max_value())));
     }
 
     #[test]
@@ -1231,9 +1279,38 @@ mod tests {
     }
 
     #[test]
+    fn to_from_string_in() {
+        use super::Denomination as D;
+        let ua_str = Amount::from_str_in;
+        let ua_sat = Amount::from_sat;
+        let sa_str = SignedAmount::from_str_in;
+        let sa_sat = SignedAmount::from_sat;
+
+        assert_eq!("0.50", Amount::from_sat(50).to_string_in(D::Bit));
+        assert_eq!("-0.50", SignedAmount::from_sat(-50).to_string_in(D::Bit));
+        assert_eq!("0.00253583", Amount::from_sat(253583).to_string_in(D::Bitcoin));
+        assert_eq!("-5", SignedAmount::from_sat(-5).to_string_in(D::Satoshi));
+        assert_eq!("0.10000000", Amount::from_sat(100_000_00).to_string_in(D::Bitcoin));
+        assert_eq!("-100.00", SignedAmount::from_sat(-10_000).to_string_in(D::Bit));
+
+        assert_eq!(ua_str(&ua_sat(0).to_string_in(D::Satoshi), D::Satoshi), Ok(ua_sat(0)));
+        assert_eq!(ua_str(&ua_sat(500).to_string_in(D::Bitcoin), D::Bitcoin), Ok(ua_sat(500)));
+        assert_eq!(ua_str(&ua_sat(21_000_000).to_string_in(D::Bit), D::Bit), Ok(ua_sat(21_000_000)));
+        assert_eq!(ua_str(&ua_sat(1).to_string_in(D::MicroBitcoin), D::MicroBitcoin), Ok(ua_sat(1)));
+        assert_eq!(ua_str(&ua_sat(1_000_000_000_000).to_string_in(D::MilliBitcoin), D::MilliBitcoin), Ok(ua_sat(1_000_000_000_000)));
+        assert_eq!(ua_str(&ua_sat(u64::max_value()).to_string_in(D::MilliBitcoin), D::MilliBitcoin),  Err(ParseAmountError::TooBig));
+
+        assert_eq!(sa_str(&sa_sat(-1).to_string_in(D::MicroBitcoin), D::MicroBitcoin), Ok(sa_sat(-1)));
+
+        assert_eq!(sa_str(&sa_sat(i64::max_value()).to_string_in(D::Satoshi), D::MicroBitcoin), Err(ParseAmountError::TooBig));
+        // Test an overflow bug in `abs()`
+        assert_eq!(sa_str(&sa_sat(i64::min_value()).to_string_in(D::Satoshi), D::MicroBitcoin), Err(ParseAmountError::TooBig));
+
+    }
+
+    #[test]
     fn to_string_with_denomination_from_str_roundtrip() {
         use super::Denomination as D;
-
         let amt = Amount::from_sat(42);
         let denom = Amount::to_string_with_denomination;
         assert_eq!(Amount::from_str(&denom(&amt, D::Bitcoin)), Ok(amt));
@@ -1242,6 +1319,9 @@ mod tests {
         assert_eq!(Amount::from_str(&denom(&amt, D::Bit)), Ok(amt));
         assert_eq!(Amount::from_str(&denom(&amt, D::Satoshi)), Ok(amt));
         assert_eq!(Amount::from_str(&denom(&amt, D::MilliSatoshi)), Ok(amt));
+
+        assert_eq!(Amount::from_str("42 satoshi BTC"), Err(ParseAmountError::InvalidFormat));
+        assert_eq!(SignedAmount::from_str("-42 satoshi BTC"), Err(ParseAmountError::InvalidFormat));
     }
 
     #[cfg(feature = "serde")]
