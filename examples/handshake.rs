@@ -36,14 +36,15 @@ fn main() {
         let _ = stream.write_all(encode::serialize(&first_message).as_slice());
         println!("Sent version message");
 
-        // Wait for reply and close stream
-
+        // Setup StreamReader
+        let read_stream = stream.try_clone().unwrap();
+        let mut stream_reader = StreamReader::new(read_stream, None);
         loop {
-            let reply = StreamReader::new(&mut stream, None).read_next();
-            let unwrapped: message::RawNetworkMessage = reply.unwrap();
-            match unwrapped.payload {
+            // Loop an retrieve new messages
+            let reply: message::RawNetworkMessage = stream_reader.read_next().unwrap();
+            match reply.payload {
                 message::NetworkMessage::Version(_) => {
-                    println!("Received version message: {:?}", unwrapped.payload);
+                    println!("Received version message: {:?}", reply.payload);
 
                     let second_message = message::RawNetworkMessage {
                         magic: constants::Network::Bitcoin.magic(),
@@ -54,11 +55,11 @@ fn main() {
                     println!("Sent verack message");
                 }
                 message::NetworkMessage::Verack => {
-                    println!("Received verack message: {:?}", unwrapped.payload);
+                    println!("Received verack message: {:?}", reply.payload);
                     break;
                 }
                 _ => {
-                    println!("Received unknown message: {:?}", unwrapped.payload);
+                    println!("Received unknown message: {:?}", reply.payload);
                     break;
                 }
             }
