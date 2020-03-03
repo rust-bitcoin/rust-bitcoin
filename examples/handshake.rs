@@ -2,10 +2,13 @@ extern crate bitcoin;
 
 use std::net::{IpAddr, Ipv4Addr, Shutdown, SocketAddr, TcpStream};
 use std::time::{SystemTime, UNIX_EPOCH};
-use std::{env, io::Write, process};
+use std::{env, process};
+use std::io::Write;
 
 use bitcoin::consensus::encode;
-use bitcoin::network::{address, constants, message, message_network, stream_reader::StreamReader};
+use bitcoin::network::{address, constants, message, message_network};
+use bitcoin::network::stream_reader::StreamReader;
+use bitcoin::secp256k1;
 use bitcoin::secp256k1::rand::Rng;
 
 fn main() {
