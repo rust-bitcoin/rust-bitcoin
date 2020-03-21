@@ -440,18 +440,31 @@ impl MerkleBlock {
     /// # }
     /// ```
     pub fn from_block(block: &Block, match_txids: &HashSet<Txid>) -> Self {
-        let header = block.header;
+        let block_txids: Vec<_> = block.txdata.iter().map(Transaction::txid).collect();
+        Self::from_header_txids(&block.header, &block_txids, match_txids)
+    }
 
-        let mut matches: Vec<bool> = Vec::with_capacity(block.txdata.len());
-        let mut hashes: Vec<Txid> = Vec::with_capacity(block.txdata.len());
+    /// Create a MerkleBlock from the block's header and txids, that should contain proofs for match_txids.
+    ///
+    /// The `header` is the block header, `block_txids` is the full list of txids included in the block and
+    /// `match_txids` is a set containing the transaction ids that should be included in the partial merkle tree.
+    /// ```
 
-        for hash in block.txdata.iter().map(Transaction::txid) {
-            matches.push(match_txids.contains(&hash));
-            hashes.push(hash);
+    pub fn from_header_txids(
+        header: &BlockHeader,
+        block_txids: &[Txid],
+        match_txids: &HashSet<Txid>,
+    ) -> Self {
+        let matches: Vec<bool> = block_txids
+            .into_iter()
+            .map(|txid| match_txids.contains(txid))
+            .collect();
+
+        let pmt = PartialMerkleTree::from_txids(&block_txids, &matches);
+        MerkleBlock {
+            header: *header,
+            txn: pmt,
         }
-
-        let pmt = PartialMerkleTree::from_txids(&hashes, &matches);
-        MerkleBlock { header, txn: pmt }
     }
 
     /// Extract the matching txid's represented by this partial merkle tree
