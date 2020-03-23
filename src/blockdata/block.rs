@@ -29,7 +29,8 @@ use util::uint::Uint256;
 use consensus::encode::Encodable;
 use network::constants::Network;
 use blockdata::transaction::Transaction;
-use blockdata::constants::max_target;
+use blockdata::constants::{max_target, WITNESS_SCALE_FACTOR};
+use VarInt;
 
 /// A block header, which contains all the block's information except
 /// the actual transactions
@@ -123,6 +124,21 @@ impl Block {
             }
         );
         bitcoin_merkle_root(hashes).into()
+    }
+
+    /// Get the size of the block
+    pub fn get_size(&self) -> usize {
+        // The size of the header + the size of the varint with the tx count + the txs themselves
+        let base_size = 80 + VarInt(self.txdata.len() as u64).len();
+        let txs_size: usize = self.txdata.iter().map(Transaction::get_size).sum();
+        base_size + txs_size
+    }
+
+    /// Get the weight of the block
+    pub fn get_weight(&self) -> usize {
+        let base_weight = WITNESS_SCALE_FACTOR * (80 + VarInt(self.txdata.len() as u64).len());
+        let txs_weight: usize = self.txdata.iter().map(Transaction::get_weight).sum();
+        base_weight + txs_weight
     }
 }
 
@@ -240,6 +256,9 @@ mod tests {
         assert_eq!(real_decode.header.nonce, 2067413810);
         // [test] TODO: check the transaction data
 
+        assert_eq!(real_decode.get_size(), some_block.len());
+        assert_eq!(real_decode.get_weight(), some_block.len() * 4);
+
         // should be also ok for a non-witness block as commitment is optional in that case
         assert!(real_decode.check_witness_commitment());
 
@@ -266,6 +285,9 @@ mod tests {
         assert_eq!(real_decode.header.bits, 0x1a06d450);
         assert_eq!(real_decode.header.nonce, 1879759182);
         // [test] TODO: check the transaction data
+
+        assert_eq!(real_decode.get_size(), segwit_block.len());
+        assert_eq!(real_decode.get_weight(), 17168);
 
         assert!(real_decode.check_witness_commitment());
 
