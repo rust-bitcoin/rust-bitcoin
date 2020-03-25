@@ -389,10 +389,21 @@ impl Transaction {
     /// with-witness consensus-serialized size.
     #[inline]
     pub fn get_weight(&self) -> usize {
+        self.get_scaled_size(WITNESS_SCALE_FACTOR)
+    }
+
+    /// Gets the regular byte-wise consensus-serialized size of this transaction.
+    #[inline]
+    pub fn get_size(&self) -> usize {
+        self.get_scaled_size(1)
+    }
+
+    /// Internal utility function for get_{size,weight}
+    fn get_scaled_size(&self, scale_factor: usize) -> usize {
         let mut input_weight = 0;
         let mut inputs_with_witnesses = 0;
         for input in &self.input {
-            input_weight += WITNESS_SCALE_FACTOR*(32 + 4 + 4 + // outpoint (32+4) + nSequence
+            input_weight += scale_factor*(32 + 4 + 4 + // outpoint (32+4) + nSequence
                 VarInt(input.script_sig.len() as u64).len() +
                 input.script_sig.len());
             if !input.witness.is_empty() {
@@ -419,9 +430,9 @@ impl Transaction {
         // lock_time
         4;
         if inputs_with_witnesses == 0 {
-            non_input_size * WITNESS_SCALE_FACTOR + input_weight
+            non_input_size * scale_factor + input_weight
         } else {
-            non_input_size * WITNESS_SCALE_FACTOR + input_weight + self.input.len() - inputs_with_witnesses + 2
+            non_input_size * scale_factor + input_weight + self.input.len() - inputs_with_witnesses + 2
         }
     }
 
@@ -718,6 +729,7 @@ mod tests {
         assert_eq!(format!("{:x}", realtx.wtxid()),
                    "a6eab3c14ab5272a58a5ba91505ba1a4b6d7a3a9fcbd187b6cd99a7b6d548cb7".to_string());
         assert_eq!(realtx.get_weight(), tx_bytes.len()*WITNESS_SCALE_FACTOR);
+        assert_eq!(realtx.get_size(), tx_bytes.len());
     }
 
     #[test]
@@ -749,6 +761,7 @@ mod tests {
         assert_eq!(format!("{:x}", realtx.wtxid()),
                    "80b7d8a82d5d5bf92905b06f2014dd699e03837ca172e3a59d51426ebbe3e7f5".to_string());
         assert_eq!(realtx.get_weight(), 442);
+        assert_eq!(realtx.get_size(), tx_bytes.len());
     }
 
     #[test]
