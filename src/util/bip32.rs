@@ -391,14 +391,7 @@ impl error::Error for Error {
     }
 
     fn description(&self) -> &str {
-        match *self {
-            Error::CannotDeriveFromHardenedKey => "cannot derive hardened key from public key",
-            Error::Ecdsa(ref e) => error::Error::description(e),
-            Error::InvalidChildNumber(_) => "child number is invalid",
-            Error::RngError(_) => "rng error",
-            Error::InvalidChildNumberFormat => "invalid child number format",
-            Error::InvalidDerivationPathFormat => "invalid derivation path format",
-        }
+        "description() is deprecated; use Display"
     }
 }
 

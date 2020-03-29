@@ -69,6 +69,7 @@ impl fmt::Display for Error {
     }
 }
 
+#[allow(deprecated)]
 impl error::Error for Error {
     fn cause(&self) -> Option<&error::Error> {
         match *self {
@@ -78,16 +79,8 @@ impl error::Error for Error {
         }
     }
 
-    fn description(&self) -> &'static str {
-        match *self {
-            Error::Secp(_) => "libsecp256k1 error",
-            Error::Script(_) => "script error",
-            Error::UncompressedKey => "encountered uncompressed secp public key",
-            Error::ExpectedKey => "expected key when deserializing script",
-            Error::ExpectedChecksig => "expected OP_*CHECKSIG* when deserializing script",
-            Error::TooFewKeys(_) => "too few keys for template",
-            Error::TooManyKeys(_) => "too many keys for template"
-        }
+    fn description(&self) -> &str {
+        "description() is deprecated; use Display"
     }
 }
 

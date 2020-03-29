@@ -91,6 +91,7 @@ impl fmt::Display for Error {
     }
 }
 
+#[allow(deprecated)]
 impl ::std::error::Error for Error {
     fn cause(&self) -> Option<&::std::error::Error> {
         match *self {
@@ -100,8 +101,8 @@ impl ::std::error::Error for Error {
         }
     }
 
-    fn description(&self) -> &'static str {
-        "std::error::Error::description is deprecated"
+    fn description(&self) -> &str {
+        "description() is deprecated; use Display"
     }
 }
 

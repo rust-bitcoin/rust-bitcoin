@@ -77,11 +77,13 @@ impl fmt::Display for Error {
         match *self {
             Error::Encode(ref e) => fmt::Display::fmt(e, f),
             Error::Network(ref e) => fmt::Display::fmt(e, f),
-            Error::BlockBadProofOfWork | Error::BlockBadTarget => f.write_str(error::Error::description(self)),
+            Error::BlockBadProofOfWork => f.write_str("block target correct but not attained"),
+            Error::BlockBadTarget => f.write_str("block target incorrect"),
         }
     }
 }
 
+#[allow(deprecated)]
 impl error::Error for Error {
     fn cause(&self) -> Option<&error::Error> {
         match *self {
@@ -92,12 +94,7 @@ impl error::Error for Error {
     }
 
     fn description(&self) -> &str {
-        match *self {
-            Error::Encode(ref e) => e.description(),
-            Error::Network(ref e) => e.description(),
-            Error::BlockBadProofOfWork => "block target correct but not attained",
-            Error::BlockBadTarget => "block target incorrect",
-        }
+        "description() is deprecated; use Display"
     }
 }
 

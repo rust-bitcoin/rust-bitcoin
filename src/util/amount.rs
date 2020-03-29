@@ -102,30 +102,22 @@ pub enum ParseAmountError {
 
 impl fmt::Display for ParseAmountError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let desc = ::std::error::Error::description(self);
         match *self {
-            ParseAmountError::InvalidCharacter(c) => write!(f, "{}: {}", desc, c),
-            ParseAmountError::UnknownDenomination(ref d) => write!(f, "{}: {}", desc, d),
-            _ => f.write_str(desc),
+            ParseAmountError::Negative => f.write_str("amount is negative"),
+            ParseAmountError::TooBig => f.write_str("amount is too big"),
+            ParseAmountError::TooPrecise => f.write_str("amount has a too high precision"),
+            ParseAmountError::InvalidFormat => f.write_str("invalid number format"),
+            ParseAmountError::InputTooLarge => f.write_str("input string was too large"),
+            ParseAmountError::InvalidCharacter(c) => write!(f, "invalid character in input: {}", c),
+            ParseAmountError::UnknownDenomination(ref d) => write!(f, "unknown denomination: {}",d),
         }
     }
 }
 
+#[allow(deprecated)]
 impl error::Error for ParseAmountError {
-    fn cause(&self) -> Option<&error::Error> {
-        None
-    }
-
-    fn description(&self) -> &'static str {
-        match *self {
-            ParseAmountError::Negative => "amount is negative",
-            ParseAmountError::TooBig => "amount is too big",
-            ParseAmountError::TooPrecise => "amount has a too high precision",
-            ParseAmountError::InvalidFormat => "invalid number format",
-            ParseAmountError::InputTooLarge => "input string was too large",
-            ParseAmountError::InvalidCharacter(_) => "invalid character in input",
-            ParseAmountError::UnknownDenomination(_) => "unknown denomination",
-        }
+    fn description(&self) -> &str {
+        "description() is deprecated; use Display"
     }
 }
 
