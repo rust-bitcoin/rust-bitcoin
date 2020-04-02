@@ -452,6 +452,24 @@ impl Transaction {
         Ok(())
     }
 
+    #[cfg(feature="bitcoinconsensus")]
+    /// Verify that this transaction is able to spend its inputs
+    /// with provided script interpreter flags. Flags are applied
+    /// globally for all transaction inputs.
+    /// The lambda spent should not return the same TxOut twice!
+    pub fn verify_with_flags<S>(&self, mut spent: S, flags: u32) -> Result<(), script::Error>
+        where S: FnMut(&OutPoint) -> Option<TxOut> {
+        let tx = serialize(&*self);
+        for (idx, input) in self.input.iter().enumerate() {
+            if let Some(output) = spent(&input.previous_output) {
+                output.script_pubkey.verify_with_flags(idx, output.value, tx.as_slice(), flags)?;
+            } else {
+                return Err(script::Error::UnknownSpentOutput(input.previous_output.clone()));
+            }
+        }
+        Ok(())
+    }
+
     /// Is this a coin base transaction?
     pub fn is_coin_base(&self) -> bool {
         self.input.len() == 1 && self.input[0].previous_output.is_null()

@@ -346,6 +346,17 @@ impl Script {
         Ok(bitcoinconsensus::verify (&self.0[..], amount, spending, index)?)
     }
 
+    #[cfg(feature="bitcoinconsensus")]
+    /// verify spend of an input script
+    /// # Parameters
+    ///  * index - the input index in spending which is spending this transaction
+    ///  * amount - the amount this script guards
+    ///  * spending - the transaction that attempts to spend the output holding this script
+    ///  * flags - the script interpreter flags with which to enforce verification
+    pub fn verify_with_flags (&self, index: usize, amount: u64, spending: &[u8], flags: u32) -> Result<(), Error> {
+        Ok(bitcoinconsensus::verify_with_flags (&self.0[..], amount, spending, index, flags)?)
+    }
+
     /// Write the assembly decoding of the script to the formatter.
     pub fn fmt_asm(&self, f: &mut fmt::Write) -> fmt::Result {
         let mut index = 0;
