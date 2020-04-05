@@ -598,8 +598,8 @@ pub enum SigHashType {
 
 impl SigHashType {
      /// Break the sighash flag into the "real" sighash flag and the ANYONECANPAY boolean
-     pub(crate) fn split_anyonecanpay_flag(&self) -> (SigHashType, bool) {
-         match *self {
+     pub(crate) fn split_anyonecanpay_flag(self) -> (SigHashType, bool) {
+         match self {
              SigHashType::All		=> (SigHashType::All, false),
              SigHashType::None		=> (SigHashType::None, false),
              SigHashType::Single	=> (SigHashType::Single, false),
@@ -626,7 +626,7 @@ impl SigHashType {
      }
 
      /// Converts to a u32
-     pub fn as_u32(&self) -> u32 { *self as u32 }
+     pub fn as_u32(self) -> u32 { self as u32 }
 }
 
 

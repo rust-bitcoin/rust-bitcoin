@@ -13,6 +13,7 @@
 //
 
 use std::collections::BTreeMap;
+use std::collections::btree_map::Entry;
 use std::io::{self, Cursor};
 
 use blockdata::transaction::Transaction;
@@ -60,15 +61,10 @@ impl Map for Global {
         } = pair;
 
         match raw_key.type_value {
-            0u8 => {
-                return Err(Error::DuplicateKey(raw_key).into());
-            }
-            _ => {
-                if self.unknown.contains_key(&raw_key) {
-                    return Err(Error::DuplicateKey(raw_key).into());
-                } else {
-                    self.unknown.insert(raw_key, raw_value);
-                }
+            0u8 => return Err(Error::DuplicateKey(raw_key).into()),
+            _ => match self.unknown.entry(raw_key) {
+                Entry::Vacant(empty_key) => {empty_key.insert(raw_value);},
+                Entry::Occupied(k) => return Err(Error::DuplicateKey(k.key().clone()).into()),
             }
         }
 
@@ -158,12 +154,9 @@ impl Decodable for Global {
                                 return Err(Error::InvalidKey(pair.key).into())
                             }
                         }
-                        _ => {
-                            if unknowns.contains_key(&pair.key) {
-                                return Err(Error::DuplicateKey(pair.key).into());
-                            } else {
-                                unknowns.insert(pair.key, pair.value);
-                            }
+                        _ => match unknowns.entry(pair.key) {
+                            Entry::Vacant(empty_key) => {empty_key.insert(pair.value);},
+                            Entry::Occupied(k) => return Err(Error::DuplicateKey(k.key().clone()).into()),
                         }
                     }
                 }

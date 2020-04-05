@@ -112,12 +112,9 @@ impl Map for Input {
                     self.hd_keypaths <= <raw_key: PublicKey>|<raw_value: (Fingerprint, DerivationPath)>
                 }
             }
-            _ => {
-                if self.unknown.contains_key(&raw_key) {
-                    return Err(Error::DuplicateKey(raw_key).into());
-                } else {
-                    self.unknown.insert(raw_key, raw_value);
-                }
+            _ => match self.unknown.entry(raw_key) {
+                ::std::collections::btree_map::Entry::Vacant(empty_key) => {empty_key.insert(raw_value);},
+                ::std::collections::btree_map::Entry::Occupied(k) => return Err(Error::DuplicateKey(k.key().clone()).into()),
             }
         }
 

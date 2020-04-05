@@ -78,7 +78,7 @@ impl Block {
         if self.txdata.iter().all(|t| t.input.iter().all(|i| i.witness.is_empty())) {
             return true;
         }
-        if self.txdata.len() > 0 {
+        if !self.txdata.is_empty() {
             let coinbase = &self.txdata[0];
             if coinbase.is_coin_base() {
                 // commitment is in the last output that starts with below magic

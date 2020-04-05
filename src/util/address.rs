@@ -18,26 +18,22 @@
 //! # Example: creating a new address from a randomly-generated key pair
 //!
 //! ```rust
-//! extern crate secp256k1;
-//! extern crate bitcoin;
 //!
 //! use bitcoin::network::constants::Network;
 //! use bitcoin::util::address::Address;
 //! use bitcoin::util::key;
-//! use secp256k1::Secp256k1;
-//! use secp256k1::rand::thread_rng;
+//! use bitcoin::secp256k1::Secp256k1;
+//! use bitcoin::secp256k1::rand::thread_rng;
 //!
-//! fn main() {
-//!     // Generate random key pair
-//!     let s = Secp256k1::new();
-//!     let public_key = key::PublicKey {
-//!         compressed: true,
-//!         key: s.generate_keypair(&mut thread_rng()).1,
-//!     };
+//! // Generate random key pair
+//! let s = Secp256k1::new();
+//! let public_key = key::PublicKey {
+//!     compressed: true,
+//!     key: s.generate_keypair(&mut thread_rng()).1,
+//! };
 //!
-//!     // Generate pay-to-pubkey-hash address
-//!     let address = Address::p2pkh(&public_key, Network::Bitcoin);
-//! }
+//! // Generate pay-to-pubkey-hash address
+//! let address = Address::p2pkh(&public_key, Network::Bitcoin);
 //! ```
 
 use std::fmt::{self, Display, Formatter};
@@ -219,7 +215,7 @@ impl Payload {
                 assert!(ver.to_u8() <= 16);
                 let mut verop = ver.to_u8();
                 if verop > 0 {
-                    verop = 0x50 + verop;
+                    verop += 0x50;
                 }
                 script::Builder::new().push_opcode(verop.into()).push_slice(&prog)
             }
@@ -406,7 +402,7 @@ impl Display for Address {
 /// Returns the same slice when no prefix is found.
 fn find_bech32_prefix(bech32: &str) -> &str {
     // Split at the last occurrence of the separator character '1'.
-    match bech32.rfind("1") {
+    match bech32.rfind('1') {
         None => bech32,
         Some(sep) => bech32.split_at(sep).0,
     }
@@ -427,7 +423,7 @@ impl FromStr for Address {
         if let Some(network) = bech32_network {
             // decode as bech32
             let (_, payload) = bech32::decode(s)?;
-            if payload.len() == 0 {
+            if payload.is_empty() {
                 return Err(Error::EmptyBech32Payload);
             }
 

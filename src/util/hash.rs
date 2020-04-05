@@ -30,7 +30,7 @@ pub fn bitcoin_merkle_root_inline<T>(data: &mut [T]) -> T
           <T as Hash>::Engine: io::Write,
 {
     // Base case
-    if data.len() < 1 {
+    if data.is_empty() {
         return Default::default();
     }
     if data.len() < 2 {

@@ -13,6 +13,7 @@
 //
 
 use std::collections::BTreeMap;
+use std::collections::btree_map::Entry;
 
 use blockdata::script::Script;
 use consensus::encode;
@@ -61,12 +62,9 @@ impl Map for Output {
                     self.hd_keypaths <= <raw_key: PublicKey>|<raw_value: (Fingerprint, DerivationPath)>
                 }
             }
-            _ => {
-                if self.unknown.contains_key(&raw_key) {
-                    return Err(Error::DuplicateKey(raw_key).into());
-                } else {
-                    self.unknown.insert(raw_key, raw_value);
-                }
+            _ => match self.unknown.entry(raw_key) {
+                    Entry::Vacant(empty_key) => {empty_key.insert(raw_value);},
+                    Entry::Occupied(k) => return Err(Error::DuplicateKey(k.key().clone()).into()),
             }
         }
 

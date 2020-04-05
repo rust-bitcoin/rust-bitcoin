@@ -72,9 +72,7 @@ impl Encodable for CommandString {
         if strbytes.len() > 12 {
             return Err(encode::Error::UnrecognizedNetworkCommand(self.0.clone().into_owned()));
         }
-        for x in 0..strbytes.len() {
-            rawbytes[x] = strbytes[x];
-        }
+        rawbytes[..strbytes.len()].clone_from_slice(&strbytes[..]);
         rawbytes.consensus_encode(s)
     }
 }

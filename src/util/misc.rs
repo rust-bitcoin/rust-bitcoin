@@ -20,14 +20,14 @@ use hashes::{sha256d, Hash};
 use blockdata::opcodes;
 use consensus::encode;
 
-static MSG_SIGN_PREFIX: &'static [u8] = b"\x18Bitcoin Signed Message:\n";
+static MSG_SIGN_PREFIX: &[u8] = b"\x18Bitcoin Signed Message:\n";
 
 /// Search for `needle` in the vector `haystack` and remove every
 /// instance of it, returning the number of instances removed.
 /// Loops through the vector opcode by opcode, skipping pushed data.
 pub fn script_find_and_remove(haystack: &mut Vec<u8>, needle: &[u8]) -> usize {
     if needle.len() > haystack.len() { return 0; }
-    if needle.len() == 0 { return 0; }
+    if needle.is_empty() { return 0; }
 
     let mut top = haystack.len() - needle.len();
     let mut n_deleted = 0;

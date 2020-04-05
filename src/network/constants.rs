@@ -89,9 +89,9 @@ impl Network {
     /// let network = Network::Bitcoin;
     /// assert_eq!(network.magic(), 0xD9B4BEF9);
     /// ```
-    pub fn magic(&self) -> u32 {
+    pub fn magic(self) -> u32 {
         // Note: any new entries here must be added to `from_magic` above
-        match *self {
+        match self {
             Network::Bitcoin => 0xD9B4BEF9,
             Network::Testnet => 0x0709110B,
             Network::Regtest => 0xDAB5BFFA,
@@ -154,12 +154,12 @@ impl ServiceFlags {
     }
 
     /// Check whether [ServiceFlags] are included in this one.
-    pub fn has(&self, flags: ServiceFlags) -> bool {
+    pub fn has(self, flags: ServiceFlags) -> bool {
         (self.0 | flags.0) == self.0
     }
 
     /// Get the integer representation of this [ServiceFlags].
-    pub fn as_u64(&self) -> u64 {
+    pub fn as_u64(self) -> u64 {
         self.0
     }
 }
@@ -178,11 +178,10 @@ impl fmt::UpperHex for ServiceFlags {
 
 impl fmt::Display for ServiceFlags {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if *self == ServiceFlags::NONE {
+        let mut flags = *self;
+        if flags == ServiceFlags::NONE {
             return write!(f, "ServiceFlags(NONE)");
         }
-
-        let mut flags = self.clone();
         let mut first = true;
         macro_rules! write_flag {
             ($f:ident) => {

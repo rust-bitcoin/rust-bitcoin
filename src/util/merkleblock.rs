@@ -25,12 +25,10 @@
 //! # Examples
 //!
 //! ```rust
-//! extern crate bitcoin;
 //! use bitcoin::hash_types::Txid;
 //! use bitcoin::hashes::hex::FromHex;
 //! use bitcoin::{Block, MerkleBlock};
 //!
-//! # fn main() {
 //! // Get the proof from a bitcoind by running in the terminal:
 //! // $ TXID="5a4ebf66822b0b2d56bd9dc64ece0bc38ee7844a23ff1d7320a88c5fdb2ad3e2"
 //! // $ bitcoin-cli gettxoutproof [\"$TXID\"]
@@ -52,7 +50,6 @@
 //! );
 //! assert_eq!(1, index.len());
 //! assert_eq!(1, index[0]);
-//! # }
 //! ```
 
 use std::collections::HashSet;
@@ -133,12 +130,10 @@ impl PartialMerkleTree {
     /// # Examples
     ///
     /// ```rust
-    /// extern crate bitcoin;
     /// use bitcoin::hash_types::Txid;
     /// use bitcoin::hashes::hex::FromHex;
     /// use bitcoin::util::merkleblock::PartialMerkleTree;
     ///
-    /// # fn main() {
     /// // Block 80000
     /// let txids: Vec<Txid> = [
     ///     "c06fbab289f723c6261d3030ddb6be121f7d2508d77862bb1e484f5cd7f92b25",
@@ -152,7 +147,6 @@ impl PartialMerkleTree {
     /// let matches = vec![false, true];
     /// let tree = PartialMerkleTree::from_txids(&txids, &matches);
     /// assert!(tree.extract_matches(&mut vec![], &mut vec![]).is_ok());
-    /// # }
     /// ```
     pub fn from_txids(txids: &[Txid], matches: &[bool]) -> Self {
         // We can never have zero txs in a merkle block, we always need the coinbase tx
@@ -271,7 +265,7 @@ impl PartialMerkleTree {
         if height == 0 || !parent_of_match {
             // If at height 0, or nothing interesting below, store hash and stop
             let hash = self.calc_hash(height, pos, txids);
-            self.hashes.push(hash.into());
+            self.hashes.push(hash);
         } else {
             // Otherwise, don't store any hash, but descend into the subtrees
             self.traverse_and_build(height - 1, pos * 2, txids, matches);
@@ -407,12 +401,10 @@ impl MerkleBlock {
     /// # Examples
     ///
     /// ```rust
-    /// extern crate bitcoin;
     /// use bitcoin::hash_types::Txid;
     /// use bitcoin::hashes::hex::FromHex;
     /// use bitcoin::{Block, MerkleBlock};
     ///
-    /// # fn main() {
     /// // Block 80000
     /// let block_bytes = Vec::from_hex("01000000ba8b9cda965dd8e536670f9ddec10e53aab14b20bacad2\
     ///     7b9137190000000000190760b278fe7b8565fda3b968b918d5fd997f993b23674c0af3b6fde300b38f33\
@@ -437,7 +429,6 @@ impl MerkleBlock {
     /// let mut index: Vec<u32> = vec![];
     /// assert!(mb.extract_matches(&mut matches, &mut index).is_ok());
     /// assert_eq!(txid, matches[0]);
-    /// # }
     /// ```
     pub fn from_block(block: &Block, match_txids: &HashSet<Txid>) -> Self {
         let header = block.header;

@@ -67,8 +67,8 @@ impl PartiallySignedTransaction {
         let mut tx: Transaction = self.global.unsigned_tx;
 
         for (vin, psbtin) in tx.input.iter_mut().zip(self.inputs.into_iter()) {
-            vin.script_sig = psbtin.final_script_sig.unwrap_or_else(|| Script::new());
-            vin.witness = psbtin.final_script_witness.unwrap_or_else(|| Vec::new());
+            vin.script_sig = psbtin.final_script_sig.unwrap_or_else(Script::new);
+            vin.witness = psbtin.final_script_witness.unwrap_or_else(Vec::new);
         }
 
         tx
