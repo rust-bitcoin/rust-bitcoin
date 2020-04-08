@@ -33,7 +33,7 @@ use util::endian;
 use blockdata::constants::WITNESS_SCALE_FACTOR;
 #[cfg(feature="bitcoinconsensus")] use blockdata::script;
 use blockdata::script::Script;
-use consensus::{encode, serialize, Decodable, Encodable};
+use consensus::{encode, Decodable, Encodable};
 use hash_types::*;
 use VarInt;
 
@@ -378,9 +378,12 @@ impl Transaction {
             _ => unreachable!()
         };
         // hash the result
-        let mut raw_vec = serialize(&tx);
-        raw_vec.extend_from_slice(&endian::u32_to_array_le(sighash_u32));
-        SigHash::hash(&raw_vec)
+        // TODO: Sanity assert that consensus_encode returned length matches the hashed length in the hasher.
+        let sighash_arr = endian::u32_to_array_le(sighash_u32);
+        let mut engine = SigHash::engine();
+        tx.consensus_encode(&mut engine).unwrap();
+        sighash_arr.consensus_encode(&mut engine).unwrap();
+        SigHash::from_engine(engine)
     }
 
     /// Gets the "weight" of this transaction, as defined by BIP141. For transactions with an empty
@@ -441,7 +444,7 @@ impl Transaction {
     /// The lambda spent should not return the same TxOut twice!
     pub fn verify<S>(&self, mut spent: S) -> Result<(), script::Error>
         where S: FnMut(&OutPoint) -> Option<TxOut> {
-        let tx = serialize(&*self);
+        let tx = encode::serialize(&*self);
         for (idx, input) in self.input.iter().enumerate() {
             if let Some(output) = spent(&input.previous_output) {
                 output.script_pubkey.verify(idx, output.value, tx.as_slice())?;
