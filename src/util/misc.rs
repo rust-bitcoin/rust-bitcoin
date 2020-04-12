@@ -59,11 +59,10 @@ pub fn script_find_and_remove(haystack: &mut Vec<u8>, needle: &[u8]) -> usize {
 
 /// Hash message for signature using Bitcoin's message signing format
 pub fn signed_msg_hash(msg: &str) -> sha256d::Hash {
-    let msg_len = encode::VarInt(msg.len() as u64);
 
-    // TODO: Sanity assert that consensus_encode returned length matches the hashed length in the hasher.
     let mut engine = sha256d::Hash::engine();
     engine.input(MSG_SIGN_PREFIX);
+    let msg_len = encode::VarInt(msg.len() as u64);
     msg_len.consensus_encode(&mut engine).unwrap();
     engine.input(msg.as_bytes());
 

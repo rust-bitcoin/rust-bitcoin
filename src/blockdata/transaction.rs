@@ -378,10 +378,9 @@ impl Transaction {
             _ => unreachable!()
         };
         // hash the result
-        // TODO: Sanity assert that consensus_encode returned length matches the hashed length in the hasher.
-        let sighash_arr = endian::u32_to_array_le(sighash_u32);
         let mut engine = SigHash::engine();
         tx.consensus_encode(&mut engine).unwrap();
+        let sighash_arr = endian::u32_to_array_le(sighash_u32);
         sighash_arr.consensus_encode(&mut engine).unwrap();
         SigHash::from_engine(engine)
     }
