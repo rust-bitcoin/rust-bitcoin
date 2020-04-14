@@ -24,7 +24,7 @@ use hashes::sha256d;
 
 use network::constants;
 use consensus::encode::{self, Decodable, Encodable};
-use hash_types::{BlockHash, Txid, Wtxid};
+use hash_types::{BlockHash, Txid};
 
 /// An inventory item.
 #[derive(PartialEq, Eq, Clone, Debug, Copy, Hash)]
@@ -36,7 +36,7 @@ pub enum Inventory {
     /// Block
     Block(BlockHash),
     /// Witness Transaction
-    WitnessTransaction(Wtxid),
+    WitnessTransaction(Txid),
     /// Witness Block
     WitnessBlock(BlockHash),
 }
