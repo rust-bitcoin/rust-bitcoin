@@ -16,9 +16,9 @@
 //!
 //! Various utility functions
 
-use hashes::{sha256d, Hash};
+use hashes::{sha256d, Hash, HashEngine};
 use blockdata::opcodes;
-use consensus::encode;
+use consensus::{encode, Encodable};
 
 static MSG_SIGN_PREFIX: &[u8] = b"\x18Bitcoin Signed Message:\n";
 
@@ -59,14 +59,14 @@ pub fn script_find_and_remove(haystack: &mut Vec<u8>, needle: &[u8]) -> usize {
 
 /// Hash message for signature using Bitcoin's message signing format
 pub fn signed_msg_hash(msg: &str) -> sha256d::Hash {
-    sha256d::Hash::hash(
-        &[
-            MSG_SIGN_PREFIX,
-            &encode::serialize(&encode::VarInt(msg.len() as u64)),
-            msg.as_bytes(),
-        ]
-        .concat(),
-    )
+
+    let mut engine = sha256d::Hash::engine();
+    engine.input(MSG_SIGN_PREFIX);
+    let msg_len = encode::VarInt(msg.len() as u64);
+    msg_len.consensus_encode(&mut engine).unwrap();
+    engine.input(msg.as_bytes());
+
+    sha256d::Hash::from_engine(engine)
 }
 
 #[cfg(test)]
