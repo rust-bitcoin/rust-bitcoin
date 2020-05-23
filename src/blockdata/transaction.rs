@@ -128,15 +128,10 @@ impl fmt::Display for ParseOutPointError {
     }
 }
 
+#[allow(deprecated)]
 impl ::std::error::Error for ParseOutPointError {
     fn description(&self) -> &str {
-        match *self {
-            ParseOutPointError::Txid(_) => "TXID parse error",
-            ParseOutPointError::Vout(_) => "vout parse error",
-            ParseOutPointError::Format => "outpoint format error",
-            ParseOutPointError::TooLong => "size error",
-            ParseOutPointError::VoutNotCanonical => "vout canonical error",
-        }
+        "description() is deprecated; use Display"
     }
 
     fn cause(&self) -> Option<&::std::error::Error> {

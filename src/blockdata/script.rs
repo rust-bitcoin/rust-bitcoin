@@ -105,15 +105,7 @@ pub enum Error {
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str(error::Error::description(self))
-    }
-}
-
-impl error::Error for Error {
-    fn cause(&self) -> Option<&error::Error> { None }
-
-    fn description(&self) -> &'static str {
-        match *self {
+        let str = match *self {
             Error::NonMinimalPush => "non-minimal datapush",
             Error::EarlyEndOfScript => "unexpected end of script",
             Error::NumericOverflow => "numeric overflow (number on stack larger than 4 bytes)",
@@ -123,7 +115,15 @@ impl error::Error for Error {
             Error::UnknownSpentOutput(ref _point) => "unknown spent output Transaction::verify()",
             #[cfg(feature="bitcoinconsensus")]
             Error::SerializationError => "can not serialize the spending transaction in Transaction::verify()",
-        }
+        };
+        f.write_str(str)
+    }
+}
+
+#[allow(deprecated)]
+impl error::Error for Error {
+    fn description(&self) -> &str {
+        "description() is deprecated; use Display"
     }
 }
 

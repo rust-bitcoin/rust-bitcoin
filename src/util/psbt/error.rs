@@ -53,35 +53,25 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Error::InvalidKey(ref rkey) => write!(f, "{}: {}", error::Error::description(self), rkey),
-            Error::DuplicateKey(ref rkey) => write!(f, "{}: {}", error::Error::description(self), rkey),
-            Error::UnexpectedUnsignedTx { expected: ref e, actual: ref a } => write!(f, "{}: expected {}, actual {}", error::Error::description(self), e.txid(), a.txid()),
-            Error::NonStandardSigHashType(ref sht) => write!(f, "{}: {}", error::Error::description(self), sht),
-            Error::InvalidMagic
-            | Error::InvalidSeparator
-            | Error::UnsignedTxHasScriptSigs
-            | Error::UnsignedTxHasScriptWitnesses
-            | Error::MustHaveUnsignedTx
-            | Error::NoMorePairs => f.write_str(error::Error::description(self))
+            Error::InvalidKey(ref rkey) => write!(f, "invalid key: {}", rkey),
+            Error::DuplicateKey(ref rkey) => write!(f, "duplicate key: {}", rkey),
+            Error::UnexpectedUnsignedTx { expected: ref e, actual: ref a } => write!(f, "different unsigned transaction: expected {}, actual {}", e.txid(), a.txid()),
+            Error::NonStandardSigHashType(ref sht) => write!(f, "non-standard sighash type: {}", sht),
+            Error::InvalidMagic => f.write_str("invalid magic"),
+            Error::InvalidSeparator => f.write_str("invalid separator"),
+            Error::UnsignedTxHasScriptSigs => f.write_str("the unsigned transaction has script sigs"),
+            Error::UnsignedTxHasScriptWitnesses => f.write_str("the unsigned transaction has script witnesses"),
+            Error::MustHaveUnsignedTx => {
+                f.write_str("partially signed transactions must have an unsigned transaction")
+            }
+            Error::NoMorePairs => f.write_str("no more key-value pairs for this psbt map"),
         }
     }
 }
 
+#[allow(deprecated)]
 impl error::Error for Error {
     fn description(&self) -> &str {
-        match *self {
-            Error::InvalidMagic => "invalid magic",
-            Error::InvalidSeparator => "invalid separator",
-            Error::InvalidKey(..) => "invalid key",
-            Error::DuplicateKey(..) => "duplicate key",
-            Error::UnsignedTxHasScriptSigs => "the unsigned transaction has script sigs",
-            Error::UnsignedTxHasScriptWitnesses => "the unsigned transaction has script witnesses",
-            Error::MustHaveUnsignedTx => {
-                "partially signed transactions must have an unsigned transaction"
-            }
-            Error::NoMorePairs => "no more key-value pairs for this psbt map",
-            Error::UnexpectedUnsignedTx { .. } => "different unsigned transaction",
-            Error::NonStandardSigHashType(..) =>  "non-standard sighash type",
-        }
+        "description() is deprecated; use Display"
     }
 }

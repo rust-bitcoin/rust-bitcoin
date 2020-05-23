@@ -75,12 +75,10 @@ pub enum Error {
     Io(io::Error),
 }
 
+#[allow(deprecated)]
 impl error::Error for Error {
     fn description(&self) -> &str {
-        match *self {
-            Error::UtxoMissing(_) => "unresolved UTXO",
-            Error::Io(_) => "IO Error"
-        }
+        "description() is deprecated; use Display"
     }
 }
 

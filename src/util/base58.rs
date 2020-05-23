@@ -52,17 +52,10 @@ impl fmt::Display for Error {
     }
 }
 
+#[allow(deprecated)]
 impl error::Error for Error {
-    fn cause(&self) -> Option<&error::Error> { None }
-    fn description(&self) -> &'static str {
-        match *self {
-            Error::BadByte(_) => "invalid b58 character",
-            Error::BadChecksum(_, _) => "invalid b58ck checksum",
-            Error::InvalidLength(_) => "invalid length for b58 type",
-            Error::InvalidVersion(_) => "invalid version for b58 type",
-            Error::TooShort(_) => "b58ck data less than 4 bytes",
-            Error::Other(_) => "unknown b58 error"
-        }
+    fn description(&self) -> &str {
+        "description() is deprecated; use Display"
     }
 }
 
