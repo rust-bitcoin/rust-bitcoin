@@ -73,15 +73,12 @@ impl fmt::Display for Error {
             Error::Bech32(ref e) => write!(f, "bech32: {}", e),
             Error::EmptyBech32Payload => write!(f, "the bech32 payload was empty"),
             Error::InvalidWitnessVersion(v) => write!(f, "invalid witness script version: {}", v),
-            Error::InvalidWitnessProgramLength(l) => write!(
-                f,
-                "the witness program must be between 2 and 40 bytes in length: lengh={}",
-                l
+            Error::InvalidWitnessProgramLength(l) => write!(f,
+                "the witness program must be between 2 and 40 bytes in length: length={}", l,
             ),
-            Error::InvalidSegwitV0ProgramLength(l) => write!(
-                f,
-                "a v0 witness program must be either of length 20 or 32 bytes: length={}",
-                l
+            Error::InvalidSegwitV0ProgramLength(l) => write!(f,
+                "a v0 witness program must be either of length 20 or 32 bytes: length={}", l,
+            ),
             ),
         }
     }
