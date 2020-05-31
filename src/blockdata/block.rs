@@ -152,16 +152,31 @@ impl BlockHeader {
 
     /// Computes the target [0, T] that a blockhash must land in to be valid
     pub fn target(&self) -> Uint256 {
+        Self::u256_from_compact_target(self.bits)
+    }
+
+    /// Computes the target value in Uint256 format, from a compact representation.
+    ///
+    /// ```
+    /// use bitcoin::blockdata::block::BlockHeader;
+    ///
+    /// assert_eq!(0x1d00ffff,
+    ///     BlockHeader::compact_target_from_u256(
+    ///         &BlockHeader::u256_from_compact_target(0x1d00ffff)
+    ///     )
+    /// );
+    /// ```
+    pub fn u256_from_compact_target(bits: u32) -> Uint256 {
         // This is a floating-point "compact" encoding originally used by
         // OpenSSL, which satoshi put into consensus code, so we're stuck
         // with it. The exponent needs to have 3 subtracted from it, hence
         // this goofy decoding code:
         let (mant, expt) = {
-            let unshifted_expt = self.bits >> 24;
+            let unshifted_expt = bits >> 24;
             if unshifted_expt <= 3 {
-                ((self.bits & 0xFFFFFF) >> (8 * (3 - unshifted_expt as usize)), 0)
+                ((bits & 0xFFFFFF) >> (8 * (3 - unshifted_expt as usize)), 0)
             } else {
-                (self.bits & 0xFFFFFF, 8 * ((self.bits >> 24) - 3))
+                (bits & 0xFFFFFF, 8 * ((bits >> 24) - 3))
             }
         };
 
