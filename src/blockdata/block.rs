@@ -155,7 +155,9 @@ impl BlockHeader {
         Self::u256_from_compact_target(self.bits)
     }
 
-    /// Computes the target value in Uint256 format, from a compact representation.
+    /// Computes the target value in [`Uint256`] format, from a compact representation.
+    ///
+    /// [`Uint256`]: ../../util/uint/struct.Uint256.html
     ///
     /// ```
     /// use bitcoin::blockdata::block::BlockHeader;
