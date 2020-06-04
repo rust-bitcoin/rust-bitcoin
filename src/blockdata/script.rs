@@ -37,6 +37,7 @@ use hashes::Hash;
 #[cfg(feature="bitcoinconsensus")] use std::convert;
 #[cfg(feature="bitcoinconsensus")] use OutPoint;
 
+use super::super::secp256k1;
 use util::key::PublicKey;
 
 #[derive(Clone, Default, PartialOrd, Ord, PartialEq, Eq, Hash)]
@@ -92,6 +93,8 @@ pub enum Error {
     EarlyEndOfScript,
     /// Tried to read an array off the stack as a number when it was more than 4 bytes
     NumericOverflow,
+    /// Uncompressed Public Key in Script that is trying to become p2wsh
+    UncompressedPubkey,
     #[cfg(feature="bitcoinconsensus")]
     /// Error validating the script with bitcoinconsensus library
     BitcoinConsensus(bitcoinconsensus::Error),
@@ -109,6 +112,7 @@ impl fmt::Display for Error {
             Error::NonMinimalPush => "non-minimal datapush",
             Error::EarlyEndOfScript => "unexpected end of script",
             Error::NumericOverflow => "numeric overflow (number on stack larger than 4 bytes)",
+            Error::UncompressedPubkey => "can not create p2wsh with uncompressed pubkey",
             #[cfg(feature="bitcoinconsensus")]
             Error::BitcoinConsensus(ref _n) => "bitcoinconsensus verification failed",
             #[cfg(feature="bitcoinconsensus")]
@@ -241,10 +245,15 @@ impl Script {
 
     /// Compute the P2WSH output corresponding to this witnessScript (aka the "witness redeem
     /// script")
-    pub fn to_v0_p2wsh(&self) -> Script {
-        Builder::new().push_int(0)
-                      .push_slice(&WScriptHash::hash(&self.0)[..])
-                      .into_script()
+    pub fn to_v0_p2wsh(&self) -> Result<Script, Error> {
+        if self.has_uncompressed_pubkey() {
+            Err(Error::UncompressedPubkey)
+        } else {
+            Ok(Builder::new()
+                .push_int(0)
+                .push_slice(&WScriptHash::hash(&self.0)[..])
+                .into_script())
+        }
     }
 
     /// Checks whether a script pubkey is a p2sh output
@@ -323,6 +332,29 @@ impl Script {
     pub fn is_provably_unspendable(&self) -> bool {
         !self.0.is_empty() && (opcodes::All::from(self.0[0]).classify() == opcodes::Class::ReturnOp ||
                                opcodes::All::from(self.0[0]).classify() == opcodes::Class::IllegalOp)
+    }
+
+    /// Whether a script contains an uncompressed pubkey
+    pub fn has_uncompressed_pubkey(&self) -> bool {
+        let mut self_iter = self.iter(false);
+        loop {
+            match self_iter.next() {
+                Some(Instruction::PushBytes(data)) => {
+                    // We assume any PushBytes with data of length 65 and first byte that is 4
+                    // is an uncompressed pubkey, which is forbidden in segwit.
+                    if data.len() == 65 && data[0] == 4 as u8 {
+                        // If not a valid pubkey, continue on.
+                        // If a valid pubkey, return true.
+                        match secp256k1::PublicKey::from_slice(data) {
+                            Ok(_) => break true,
+                            Err(_) => {}
+                        }
+                    }
+                }
+                Some(_) => {}
+                None => break false,
+            };
+        }
     }
 
     /// Iterate over the script in the form of `Instruction`s, which are an enum covering
@@ -979,25 +1011,37 @@ mod test {
     fn p2sh_p2wsh_conversion() {
         // Test vectors taken from Core tests/data/script_tests.json
         // bare p2wsh
-        let redeem_script = hex_script!("410479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8ac");
-        let expected_witout = hex_script!("0020b95237b48faaa69eb078e1170be3b5cbb3fddf16d0a991e14ad274f7b33a4f64");
-        assert!(redeem_script.to_v0_p2wsh().is_v0_p2wsh());
-        assert_eq!(redeem_script.to_v0_p2wsh(), expected_witout);
+        let redeem_script = hex_script!("210279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798ac");
+        let expected_witout = hex_script!("00201863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262");
+        assert!(redeem_script.to_v0_p2wsh().unwrap().is_v0_p2wsh());
+        assert_eq!(redeem_script.to_v0_p2wsh().unwrap(), expected_witout);
 
         // p2sh
-        let redeem_script = hex_script!("0479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8");
-        let expected_p2shout = hex_script!("a91491b24bf9f5288532960ac687abb035127b1d28a587");
+        let redeem_script = hex_script!("210279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798ac");
+        let expected_p2shout = hex_script!("a91423b0ad3477f2178bc0b3eed26e4e6316f4e83aa187");
         assert!(redeem_script.to_p2sh().is_p2sh());
         assert_eq!(redeem_script.to_p2sh(), expected_p2shout);
 
         // p2sh-p2wsh
-        let redeem_script = hex_script!("410479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8ac");
-        let expected_witout = hex_script!("0020b95237b48faaa69eb078e1170be3b5cbb3fddf16d0a991e14ad274f7b33a4f64");
-        let expected_out = hex_script!("a914f386c2ba255cc56d20cfa6ea8b062f8b5994551887");
+        let redeem_script = hex_script!("210279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798ac");
+        let expected_witout = hex_script!("00201863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262");
+        let expected_out = hex_script!("a914e4300531190587e3880d4c3004f5355d88ff928d87");
         assert!(redeem_script.to_p2sh().is_p2sh());
-        assert!(redeem_script.to_p2sh().to_v0_p2wsh().is_v0_p2wsh());
-        assert_eq!(redeem_script.to_v0_p2wsh(), expected_witout);
-        assert_eq!(redeem_script.to_v0_p2wsh().to_p2sh(), expected_out);
+        assert!(redeem_script.to_p2sh().to_v0_p2wsh().unwrap().is_v0_p2wsh());
+        assert_eq!(redeem_script.to_v0_p2wsh().unwrap(), expected_witout);
+        assert_eq!(redeem_script.to_v0_p2wsh().unwrap().to_p2sh(), expected_out);
+    }
+
+    #[test]
+    fn test_has_uncompressed_pubkey() {
+        let u_pubkey = hex_script!("410479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8ac");
+        let c_pubkey = hex_script!("210279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798ac");
+        let ux_pubkey = hex_script!("a976757675410479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b876757675ac");
+        let cx_pubkey = hex_script!("a976757675210279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f8179876757675ac");
+        assert_eq!(u_pubkey.has_uncompressed_pubkey(), true);
+        assert_eq!(c_pubkey.has_uncompressed_pubkey(), false);
+        assert_eq!(ux_pubkey.has_uncompressed_pubkey(), true);
+        assert_eq!(cx_pubkey.has_uncompressed_pubkey(), false);
     }
 
     #[test]
@@ -1088,4 +1132,3 @@ mod test {
 		spent.verify(0, 18393430, spending.as_slice()).unwrap();
 	}
 }
-
