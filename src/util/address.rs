@@ -58,8 +58,6 @@ pub enum Error {
     Bech32(bech32::Error),
     /// The bech32 payload was empty
     EmptyBech32Payload,
-    /// Uncompressed Public Key in Script that is trying to become p2wsh
-    UncompressedPubkey,
     /// Script version must be 0 to 16 inclusive
     InvalidWitnessVersion(u8),
     /// The witness program must be between 2 and 40 bytes in length.
@@ -74,7 +72,6 @@ impl fmt::Display for Error {
             Error::Base58(ref e) => write!(f, "base58: {}", e),
             Error::Bech32(ref e) => write!(f, "bech32: {}", e),
             Error::EmptyBech32Payload => write!(f, "the bech32 payload was empty"),
-            Error::UncompressedPubkey => write!(f, "can not create p2wsh with uncompressed pubkey"),
             Error::InvalidWitnessVersion(v) => write!(f, "invalid witness script version: {}", v),
             Error::InvalidWitnessProgramLength(l) => write!(
                 f,
@@ -294,17 +291,13 @@ impl Address {
     }
 
     /// Create a witness pay to script hash address
-    pub fn p2wsh(script: &script::Script, network: Network, check_maybe_uncompressed: bool) -> Result<Address, Error> {
-        if check_maybe_uncompressed && script.maybe_has_uncompressed_pubkey() {
-            Err(Error::UncompressedPubkey)
-        } else {
-            Ok(Address {
-                network: network,
-                payload: Payload::WitnessProgram {
-                    version: bech32::u5::try_from_u8(0).expect("0<32"),
-                    program: WScriptHash::hash(&script[..])[..].to_vec(),
-                },
-            })
+    pub fn p2wsh(script: &script::Script, network: Network) -> Address {
+        Address {
+            network: network,
+            payload: Payload::WitnessProgram {
+                version: bech32::u5::try_from_u8(0).expect("0<32"),
+                program: WScriptHash::hash(&script[..])[..].to_vec(),
+            },
         }
     }
 
@@ -609,7 +602,7 @@ mod tests {
     fn test_p2wsh() {
         // stolen from Bitcoin transaction 5df912fda4becb1c29e928bec8d64d93e9ba8efa9b5b405bd683c86fd2c65667
         let script = hex_script!("52210375e00eb72e29da82b89367947f29ef34afb75e8654f6ea368e0acdfd92976b7c2103a1b26313f430c4b15bb1fdce663207659d8cac749a0e53d70eff01874496feff2103c96d495bfdd5ba4145e3e046fee45e84a8a48ad05bd8dbb395c011a32cf9f88053ae");
-        let addr = Address::p2wsh(&script, Bitcoin, true).unwrap();
+        let addr = Address::p2wsh(&script, Bitcoin);
         assert_eq!(
             &addr.to_string(),
             "bc1qwqdg6squsna38e46795at95yu9atm8azzmyvckulcc7kytlcckxswvvzej"

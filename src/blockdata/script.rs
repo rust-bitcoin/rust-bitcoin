@@ -92,8 +92,6 @@ pub enum Error {
     EarlyEndOfScript,
     /// Tried to read an array off the stack as a number when it was more than 4 bytes
     NumericOverflow,
-    /// Uncompressed Public Key in Script that is trying to become p2wsh
-    UncompressedPubkey,
     #[cfg(feature="bitcoinconsensus")]
     /// Error validating the script with bitcoinconsensus library
     BitcoinConsensus(bitcoinconsensus::Error),
@@ -111,7 +109,6 @@ impl fmt::Display for Error {
             Error::NonMinimalPush => "non-minimal datapush",
             Error::EarlyEndOfScript => "unexpected end of script",
             Error::NumericOverflow => "numeric overflow (number on stack larger than 4 bytes)",
-            Error::UncompressedPubkey => "can not create p2wsh with uncompressed pubkey",
             #[cfg(feature="bitcoinconsensus")]
             Error::BitcoinConsensus(ref _n) => "bitcoinconsensus verification failed",
             #[cfg(feature="bitcoinconsensus")]
@@ -244,16 +241,10 @@ impl Script {
 
     /// Compute the P2WSH output corresponding to this witnessScript (aka the "witness redeem
     /// script")
-    pub fn to_v0_p2wsh(&self, check_maybe_uncompressed: bool) -> Result<Script, Error> {
-        if check_maybe_uncompressed &&
-            self.maybe_has_uncompressed_pubkey() {
-            Err(Error::UncompressedPubkey)
-        } else {
-            Ok(Builder::new()
-                .push_int(0)
-                .push_slice(&WScriptHash::hash(&self.0)[..])
-                .into_script())
-        }
+    pub fn to_v0_p2wsh(&self) -> Script {
+        Builder::new().push_int(0)
+                      .push_slice(&WScriptHash::hash(&self.0)[..])
+                      .into_script()
     }
 
     /// Checks whether a script pubkey is a p2sh output
@@ -332,24 +323,6 @@ impl Script {
     pub fn is_provably_unspendable(&self) -> bool {
         !self.0.is_empty() && (opcodes::All::from(self.0[0]).classify() == opcodes::Class::ReturnOp ||
                                opcodes::All::from(self.0[0]).classify() == opcodes::Class::IllegalOp)
-    }
-
-    /// Whether a script contains an uncompressed pubkey
-    pub fn maybe_has_uncompressed_pubkey(&self) -> bool {
-        let mut self_iter = self.iter(false);
-        loop {
-            match self_iter.next() {
-                Some(Instruction::PushBytes(data)) => {
-                    // We assume any PushBytes with data of length 65 and first byte that is 4
-                    // is an uncompressed pubkey, which is forbidden in segwit.
-                    if data.len() == 65 && data[0] == 4 as u8 {
-                        break true
-                    }
-                }
-                Some(_) => {}
-                None => break false,
-            };
-        }
     }
 
     /// Iterate over the script in the form of `Instruction`s, which are an enum covering
@@ -1008,8 +981,8 @@ mod test {
         // bare p2wsh
         let redeem_script = hex_script!("210279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798ac");
         let expected_witout = hex_script!("00201863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262");
-        assert!(redeem_script.to_v0_p2wsh(true).unwrap().is_v0_p2wsh());
-        assert_eq!(redeem_script.to_v0_p2wsh(true).unwrap(), expected_witout);
+        assert!(redeem_script.to_v0_p2wsh().is_v0_p2wsh());
+        assert_eq!(redeem_script.to_v0_p2wsh(), expected_witout);
 
         // p2sh
         let redeem_script = hex_script!("210279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798ac");
@@ -1022,21 +995,9 @@ mod test {
         let expected_witout = hex_script!("00201863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262");
         let expected_out = hex_script!("a914e4300531190587e3880d4c3004f5355d88ff928d87");
         assert!(redeem_script.to_p2sh().is_p2sh());
-        assert!(redeem_script.to_p2sh().to_v0_p2wsh(true).unwrap().is_v0_p2wsh());
-        assert_eq!(redeem_script.to_v0_p2wsh(true).unwrap(), expected_witout);
-        assert_eq!(redeem_script.to_v0_p2wsh(true).unwrap().to_p2sh(), expected_out);
-    }
-
-    #[test]
-    fn test_maybe_has_uncompressed_pubkey() {
-        let u_pubkey = hex_script!("410479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8ac");
-        let c_pubkey = hex_script!("210279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798ac");
-        let ux_pubkey = hex_script!("a976757675410479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b876757675ac");
-        let cx_pubkey = hex_script!("a976757675210279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f8179876757675ac");
-        assert_eq!(u_pubkey.maybe_has_uncompressed_pubkey(), true);
-        assert_eq!(c_pubkey.maybe_has_uncompressed_pubkey(), false);
-        assert_eq!(ux_pubkey.maybe_has_uncompressed_pubkey(), true);
-        assert_eq!(cx_pubkey.maybe_has_uncompressed_pubkey(), false);
+        assert!(redeem_script.to_p2sh().to_v0_p2wsh().is_v0_p2wsh());
+        assert_eq!(redeem_script.to_v0_p2wsh(), expected_witout);
+        assert_eq!(redeem_script.to_v0_p2wsh().to_p2sh(), expected_out);
     }
 
     #[test]
