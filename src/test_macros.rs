@@ -12,19 +12,18 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! # Macros
+//! Macros
 //!
 //! Internal macros used for unit tests
 
-#[macro_export]
+#[cfg(feature = "serde")]
 macro_rules! serde_round_trip (
     ($var:expr) => ({
-        use strason;
+        use serde_json;
 
-        let start = $var;
-        let encoded = strason::from_serialize(&start).unwrap();
-        let decoded = encoded.into_deserialize().unwrap();
-        assert_eq!(start, decoded);
+        let encoded = serde_json::to_value(&$var).unwrap();
+        let decoded = serde_json::from_value(encoded).unwrap();
+        assert_eq!($var, decoded);
     })
 );
 

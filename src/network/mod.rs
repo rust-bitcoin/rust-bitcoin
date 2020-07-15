@@ -12,20 +12,64 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! # Network Support
+//! Network Support
 //!
-//! This module defines support for (de)serialization and network transport 
+//! This module defines support for (de)serialization and network transport
 //! of Bitcoin data and network messages.
 //!
 
+use std::fmt;
+use std::io;
+use std::error;
+
 pub mod constants;
-pub mod encodable;
-pub mod socket;
-pub mod serialize;
 
 pub mod address;
-pub mod listener;
+pub use self::address::Address;
 pub mod message;
 pub mod message_blockdata;
 pub mod message_network;
+pub mod message_filter;
+pub mod stream_reader;
 
+/// Network error
+#[derive(Debug)]
+pub enum Error {
+    /// And I/O error
+    Io(io::Error),
+    /// Socket mutex was poisoned
+    SocketMutexPoisoned,
+    /// Not connected to peer
+    SocketNotConnectedToPeer,
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Error::Io(ref e) => fmt::Display::fmt(e, f),
+            Error::SocketMutexPoisoned => f.write_str("socket mutex was poisoned"),
+            Error::SocketNotConnectedToPeer => f.write_str("not connected to peer"),
+        }
+    }
+}
+
+#[doc(hidden)]
+impl From<io::Error> for Error {
+    fn from(err: io::Error) -> Self {
+        Error::Io(err)
+    }
+}
+
+#[allow(deprecated)]
+impl error::Error for Error {
+    fn description(&self) -> &str {
+        "description() is deprecated; use Display"
+    }
+
+    fn cause(&self) -> Option<&error::Error> {
+        match *self {
+            Error::Io(ref e) => Some(e),
+            Error::SocketMutexPoisoned | Error::SocketNotConnectedToPeer => None,
+        }
+    }
+}

@@ -1,17 +1,46 @@
 language: rust
-rust:
-  - stable
-  - beta
-  - nightly
-  - 1.14.0
+cache: cargo
 
-before_install:
-  - sudo apt-get -qq update
-  - sudo apt-get install -y binutils-dev libunwind8-dev
+addons:
+  apt:
+    update: true
+    packages:
+      - binutils-dev
+      - libunwind8-dev
+      - libcurl4-openssl-dev
+      - libelf-dev
+      - libdw-dev
+      - cmake
+      - gcc
+      - libiberty-dev
+
+
+matrix:
+  include:
+    - rust: stable
+      env: DO_FUZZ=true DO_COV=true AS_DEPENDENCY=true
+    - rust: beta
+      env: AS_DEPENDENCY=true
+    - rust: nightly
+      env: DO_BENCH=true AS_DEPENDENCY=true
+    - rust: 1.22.0
+      env: AS_DEPENDENCY=true
 
 script:
-  - cargo build --verbose
-  - cargo test --verbose
-  - cargo build --verbose --features=bitcoinconsensus
-  - cargo test --verbose --features=bitcoinconsensus
-  - if [ "$(rustup show | grep default | grep stable)" != "" ]; then cd fuzz && cargo test --verbose && ./travis-fuzz.sh; fi
+  - ./contrib/test.sh
+
+after_success: |
+  if [ "$DO_COV" = true ]; then
+    wget https://github.com/SimonKagstrom/kcov/archive/master.tar.gz &&
+    tar xzf master.tar.gz &&
+    cd kcov-master &&
+    mkdir build &&
+    cd build &&
+    cmake .. &&
+    make &&
+    make install DESTDIR=../../kcov-build &&
+    cd ../.. &&
+    rm -rf kcov-master &&
+    for file in target/debug/bitcoin-*; do [ -x "${file}" ] || continue; mkdir -p "target/cov/$(basename $file)"; ./kcov-build/usr/local/bin/kcov --exclude-pattern=/.cargo,/usr/lib --verify "target/cov/$(basename $file)" "$file"; done &&
+    bash <(curl -s https://codecov.io/bash) &&
+    echo "Uploaded code coverage"; fi

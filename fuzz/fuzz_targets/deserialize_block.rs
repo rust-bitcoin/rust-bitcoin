@@ -1,14 +1,14 @@
 extern crate bitcoin;
-type BResult = Result<bitcoin::blockdata::block::Block, bitcoin::util::Error>;
+
 fn do_test(data: &[u8]) {
-    let _: BResult = bitcoin::network::serialize::deserialize(data);
+    let _: Result<bitcoin::blockdata::block::Block, _>= bitcoin::consensus::encode::deserialize(data);
 }
 
 #[cfg(feature = "afl")]
-extern crate afl;
+#[macro_use] extern crate afl;
 #[cfg(feature = "afl")]
 fn main() {
-    afl::read_stdio_bytes(|data| {
+    fuzz!(|data| {
         do_test(&data);
     });
 }

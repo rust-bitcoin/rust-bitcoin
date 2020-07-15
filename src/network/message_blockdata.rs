@@ -12,30 +12,70 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! # Blockdata network messages
+//! Blockdata network messages
 //!
 //! This module describes network messages which are used for passing
 //! Bitcoin data (blocks and transactions) around.
 //!
 
-use network::constants;
-use network::encodable::{ConsensusDecodable, ConsensusEncodable};
-use network::serialize::{SimpleDecoder, SimpleEncoder};
-use util::hash::Sha256dHash;
+use std::io;
 
-#[derive(PartialEq, Eq, Clone, Debug)]
-/// The type of an inventory object
-pub enum InvType {
+use hashes::sha256d;
+
+use network::constants;
+use consensus::encode::{self, Decodable, Encodable};
+use hash_types::{BlockHash, Txid};
+
+/// An inventory item.
+#[derive(PartialEq, Eq, Clone, Debug, Copy, Hash)]
+pub enum Inventory {
     /// Error --- these inventories can be ignored
     Error,
     /// Transaction
-    Transaction,
+    Transaction(Txid),
     /// Block
-    Block,
-    /// Witness Block
-    WitnessBlock,
+    Block(BlockHash),
     /// Witness Transaction
-    WitnessTransaction
+    WitnessTransaction(Txid),
+    /// Witness Block
+    WitnessBlock(BlockHash),
+}
+
+impl Encodable for Inventory {
+    #[inline]
+    fn consensus_encode<S: io::Write>(
+        &self,
+        mut s: S,
+    ) -> Result<usize, encode::Error> {
+        macro_rules! encode_inv {
+            ($code:expr, $item:expr) => {
+                u32::consensus_encode(&$code, &mut s)? +
+                $item.consensus_encode(&mut s)?
+            }
+        }
+        Ok(match *self {
+            Inventory::Error => encode_inv!(0, sha256d::Hash::default()),
+            Inventory::Transaction(ref t) => encode_inv!(1, t),
+            Inventory::Block(ref b) => encode_inv!(2, b),
+            Inventory::WitnessTransaction(ref t) => encode_inv!(0x40000001, t),
+            Inventory::WitnessBlock(ref b) => encode_inv!(0x40000002, b),
+        })
+    }
+}
+
+impl Decodable for Inventory {
+    #[inline]
+    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
+        let inv_type: u32 = Decodable::consensus_decode(&mut d)?;
+        Ok(match inv_type {
+            0 => Inventory::Error,
+            1 => Inventory::Transaction(Decodable::consensus_decode(&mut d)?),
+            2 => Inventory::Block(Decodable::consensus_decode(&mut d)?),
+            0x40000001 => Inventory::WitnessTransaction(Decodable::consensus_decode(&mut d)?),
+            0x40000002 => Inventory::WitnessBlock(Decodable::consensus_decode(&mut d)?),
+            tp => return Err(encode::Error::UnknownInventoryType(tp)),
+        })
+    }
 }
 
 // Some simple messages
@@ -48,9 +88,9 @@ pub struct GetBlocksMessage {
     /// Locator hashes --- ordered newest to oldest. The remote peer will
     /// reply with its longest known chain, starting from a locator hash
     /// if possible and block 1 otherwise.
-    pub locator_hashes: Vec<Sha256dHash>,
+    pub locator_hashes: Vec<BlockHash>,
     /// References the block to stop at, or zero to just fetch the maximum 500 blocks
-    pub stop_hash: Sha256dHash
+    pub stop_hash: BlockHash,
 }
 
 /// The `getheaders` message
@@ -61,26 +101,17 @@ pub struct GetHeadersMessage {
     /// Locator hashes --- ordered newest to oldest. The remote peer will
     /// reply with its longest known chain, starting from a locator hash
     /// if possible and block 1 otherwise.
-    pub locator_hashes: Vec<Sha256dHash>,
+    pub locator_hashes: Vec<BlockHash>,
     /// References the header to stop at, or zero to just fetch the maximum 2000 headers
-    pub stop_hash: Sha256dHash
-}
-
-/// An inventory object --- a reference to a Bitcoin object
-#[derive(PartialEq, Eq, Clone, Debug)]
-pub struct Inventory {
-    /// The type of object that is referenced
-    pub inv_type: InvType,
-    /// The object's hash
-    pub hash: Sha256dHash
+    pub stop_hash: BlockHash
 }
 
 impl GetBlocksMessage {
     /// Construct a new `getblocks` message
-    pub fn new(locator_hashes: Vec<Sha256dHash>, stop_hash: Sha256dHash) -> GetBlocksMessage {
+    pub fn new(locator_hashes: Vec<BlockHash>, stop_hash: BlockHash) -> GetBlocksMessage {
         GetBlocksMessage {
             version: constants::PROTOCOL_VERSION,
-            locator_hashes: locator_hashes.clone(),
+            locator_hashes: locator_hashes,
             stop_hash: stop_hash
         }
     }
@@ -90,7 +121,7 @@ impl_consensus_encoding!(GetBlocksMessage, version, locator_hashes, stop_hash);
 
 impl GetHeadersMessage {
     /// Construct a new `getheaders` message
-    pub fn new(locator_hashes: Vec<Sha256dHash>, stop_hash: Sha256dHash) -> GetHeadersMessage {
+    pub fn new(locator_hashes: Vec<BlockHash>, stop_hash: BlockHash) -> GetHeadersMessage {
         GetHeadersMessage {
             version: constants::PROTOCOL_VERSION,
             locator_hashes: locator_hashes,
@@ -101,76 +132,45 @@ impl GetHeadersMessage {
 
 impl_consensus_encoding!(GetHeadersMessage, version, locator_hashes, stop_hash);
 
-impl<S: SimpleEncoder> ConsensusEncodable<S> for Inventory {
-    #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
-        try!(match self.inv_type {
-            InvType::Error => 0u32, 
-            InvType::Transaction => 1,
-            InvType::Block => 2,
-            InvType::WitnessBlock => 0x40000002,
-            InvType::WitnessTransaction => 0x40000001
-        }.consensus_encode(s));
-        self.hash.consensus_encode(s)
-    }
-}
-
-impl<D: SimpleDecoder> ConsensusDecodable<D> for Inventory {
-    #[inline]
-    fn consensus_decode(d: &mut D) -> Result<Inventory, D::Error> {
-        let int_type: u32 = try!(ConsensusDecodable::consensus_decode(d));
-        Ok(Inventory {
-            inv_type: match int_type {
-                0 => InvType::Error,
-                1 => InvType::Transaction,
-                2 => InvType::Block,
-                // TODO do not fail here
-                _ => { panic!("bad inventory type field") }
-            },
-            hash: try!(ConsensusDecodable::consensus_decode(d))
-        })
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::{GetHeadersMessage, GetBlocksMessage};
 
-    use serialize::hex::FromHex;
+    use hashes::hex::FromHex;
 
-    use network::serialize::{deserialize, serialize};
+    use consensus::encode::{deserialize, serialize};
     use std::default::Default;
 
     #[test]
     fn getblocks_message_test() {
-        let from_sat = "72110100014a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b0000000000000000000000000000000000000000000000000000000000000000".from_hex().unwrap();
-        let genhash = "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b".from_hex().unwrap();
+        let from_sat = Vec::from_hex("72110100014a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b0000000000000000000000000000000000000000000000000000000000000000").unwrap();
+        let genhash = Vec::from_hex("4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b").unwrap();
 
         let decode: Result<GetBlocksMessage, _> = deserialize(&from_sat);
         assert!(decode.is_ok());
         let real_decode = decode.unwrap();
         assert_eq!(real_decode.version, 70002);
         assert_eq!(real_decode.locator_hashes.len(), 1);
-        assert_eq!(serialize(&real_decode.locator_hashes[0]).ok(), Some(genhash));
+        assert_eq!(serialize(&real_decode.locator_hashes[0]), genhash);
         assert_eq!(real_decode.stop_hash, Default::default());
 
-        assert_eq!(serialize(&real_decode).ok(), Some(from_sat));
+        assert_eq!(serialize(&real_decode), from_sat);
     }
 
     #[test]
     fn getheaders_message_test() {
-        let from_sat = "72110100014a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b0000000000000000000000000000000000000000000000000000000000000000".from_hex().unwrap();
-        let genhash = "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b".from_hex().unwrap();
+        let from_sat = Vec::from_hex("72110100014a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b0000000000000000000000000000000000000000000000000000000000000000").unwrap();
+        let genhash = Vec::from_hex("4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b").unwrap();
 
         let decode: Result<GetHeadersMessage, _> = deserialize(&from_sat);
         assert!(decode.is_ok());
         let real_decode = decode.unwrap();
         assert_eq!(real_decode.version, 70002);
         assert_eq!(real_decode.locator_hashes.len(), 1);
-        assert_eq!(serialize(&real_decode.locator_hashes[0]).ok(), Some(genhash));
+        assert_eq!(serialize(&real_decode.locator_hashes[0]), genhash);
         assert_eq!(real_decode.stop_hash, Default::default());
 
-        assert_eq!(serialize(&real_decode).ok(), Some(from_sat));
+        assert_eq!(serialize(&real_decode), from_sat);
     }
 }
 
