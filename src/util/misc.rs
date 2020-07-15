@@ -12,60 +12,22 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! # Miscellaneous functions
+//! Miscellaneous functions
 //!
 //! Various utility functions
 
+use hashes::{sha256d, Hash, HashEngine};
 use blockdata::opcodes;
-use util::Error;
-use util::iter::Pairable;
+use consensus::{encode, Encodable};
 
-/// Convert a hexadecimal-encoded string to its corresponding bytes
-pub fn hex_bytes(s: &str) -> Result<Vec<u8>, Error> {
-    let mut v = vec![];
-    let mut iter = s.chars().pair();
-    // Do the parsing
-    try!(iter.by_ref().fold(Ok(()), |e, (f, s)| 
-        if e.is_err() { e }
-        else {
-            match (f.to_digit(16), s.to_digit(16)) {
-                (None, _) => Err(Error::Detail(
-                    format!("expected hex, got {:}", f),
-                    Box::new(Error::ParseFailed)
-                )),
-                (_, None) => Err(Error::Detail(
-                    format!("expected hex, got {:}", s),
-                    Box::new(Error::ParseFailed)
-                )),
-                (Some(f), Some(s)) => { v.push((f * 0x10 + s) as u8); Ok(()) }
-            }
-        }
-    ));
-    // Check that there was no remainder
-    match iter.remainder() {
-        Some(_) => Err(Error::Detail(
-            "hexstring of odd length".to_owned(),
-            Box::new(Error::ParseFailed)
-        )),
-        None => Ok(v)
-    }
-}
-
-/// Dump an error message to the screen
-/// TODO all uses of this should be replaced with some sort of logging infrastructure
-pub fn consume_err<T>(s: &str, res: Result<T, Error>) {
-    match res {
-        Ok(_) => {},
-        Err(e) => { println!("{}: {:?}", s, e); }
-    };
-}
+static MSG_SIGN_PREFIX: &[u8] = b"\x18Bitcoin Signed Message:\n";
 
 /// Search for `needle` in the vector `haystack` and remove every
 /// instance of it, returning the number of instances removed.
 /// Loops through the vector opcode by opcode, skipping pushed data.
 pub fn script_find_and_remove(haystack: &mut Vec<u8>, needle: &[u8]) -> usize {
     if needle.len() > haystack.len() { return 0; }
-    if needle.len() == 0 { return 0; }
+    if needle.is_empty() { return 0; }
 
     let mut top = haystack.len() - needle.len();
     let mut n_deleted = 0;
@@ -95,10 +57,23 @@ pub fn script_find_and_remove(haystack: &mut Vec<u8>, needle: &[u8]) -> usize {
     n_deleted
 }
 
+/// Hash message for signature using Bitcoin's message signing format
+pub fn signed_msg_hash(msg: &str) -> sha256d::Hash {
+
+    let mut engine = sha256d::Hash::engine();
+    engine.input(MSG_SIGN_PREFIX);
+    let msg_len = encode::VarInt(msg.len() as u64);
+    msg_len.consensus_encode(&mut engine).unwrap();
+    engine.input(msg.as_bytes());
+
+    sha256d::Hash::from_engine(engine)
+}
+
 #[cfg(test)]
 mod tests {
+    use hashes::hex::ToHex;
     use super::script_find_and_remove;
-    use super::hex_bytes;
+    use super::signed_msg_hash;
 
     #[test]
     fn test_script_find_and_remove() {
@@ -126,7 +101,7 @@ mod tests {
         assert_eq!(script_find_and_remove(&mut v, &[105, 105, 5]), 0);
         assert_eq!(script_find_and_remove(&mut v, &[105]), 0);
         assert_eq!(script_find_and_remove(&mut v, &[103]), 1);
-        assert_eq!(v, vec![]);
+        assert_eq!(v, Vec::<u8>::new());
 
         assert_eq!(script_find_and_remove(&mut v, &[105, 105, 5]), 0);
         assert_eq!(script_find_and_remove(&mut v, &[105]), 0);
@@ -140,11 +115,9 @@ mod tests {
     }
 
     #[test]
-    fn test_hex_bytes() {
-        assert_eq!(&hex_bytes("abcd").unwrap(), &[171u8, 205]);
-        assert!(hex_bytes("abcde").is_err());
-        assert!(hex_bytes("aBcDeF").is_ok());
-        assert!(hex_bytes("aBcD4eFL").is_err());
+    fn test_signed_msg_hash() {
+        let hash = signed_msg_hash("test");
+        assert_eq!(hash.to_hex(), "a6f87fe6d58a032c320ff8d1541656f0282c2c7bfcc69d61af4c8e8ed528e49c");
     }
 }
 

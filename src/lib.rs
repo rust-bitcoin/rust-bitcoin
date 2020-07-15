@@ -35,22 +35,35 @@
 #![cfg_attr(feature = "clippy", allow(extend_from_slice))]   // `extend_from_slice` only available since 1.6
 
 // Coding conventions
+#![forbid(unsafe_code)]
 #![deny(non_upper_case_globals)]
 #![deny(non_camel_case_types)]
 #![deny(non_snake_case)]
 #![deny(unused_mut)]
+#![deny(dead_code)]
+#![deny(unused_imports)]
 #![deny(missing_docs)]
 
-extern crate bitcoin_bech32;
-extern crate byteorder;
-extern crate crypto;
-extern crate rand;
-extern crate rustc_serialize as serialize;
-extern crate secp256k1;
-extern crate serde;
-extern crate strason;
+// In general, rust is absolutely horrid at supporting users doing things like,
+// for example, compiling Rust code for real environments. Disable useless lints
+// that don't do anything but annoy us and cant actually ever be resolved.
+#![allow(bare_trait_objects)]
+#![allow(ellipsis_inclusive_range_patterns)]
+
+// Re-exported dependencies.
+#[macro_use] pub extern crate bitcoin_hashes as hashes;
+pub extern crate secp256k1;
+pub extern crate bech32;
+
+#[cfg(feature = "serde")] extern crate serde;
+#[cfg(all(test, feature = "serde"))] #[macro_use] extern crate serde_derive; // for 1.22.0 compat
+#[cfg(all(test, feature = "serde"))] extern crate serde_json;
+#[cfg(all(test, feature = "serde"))] extern crate serde_test;
 #[cfg(all(test, feature = "unstable"))] extern crate test;
 #[cfg(feature="bitcoinconsensus")] extern crate bitcoinconsensus;
+
+#[cfg(target_pointer_width = "16")]
+compile_error!("rust-bitcoin cannot be used on 16-bit architectures");
 
 #[cfg(test)]
 #[macro_use]
@@ -58,8 +71,31 @@ mod test_macros;
 #[macro_use]
 mod internal_macros;
 #[macro_use]
-pub mod macros;
 pub mod network;
 pub mod blockdata;
 pub mod util;
+pub mod consensus;
+// Do not remove: required in order to get hash types implementation macros to work correctly
+#[allow(unused_imports)]
+pub mod hash_types;
 
+pub use hash_types::*;
+pub use blockdata::block::Block;
+pub use blockdata::block::BlockHeader;
+pub use blockdata::script::Script;
+pub use blockdata::transaction::Transaction;
+pub use blockdata::transaction::TxIn;
+pub use blockdata::transaction::TxOut;
+pub use blockdata::transaction::OutPoint;
+pub use blockdata::transaction::SigHashType;
+pub use consensus::encode::VarInt;
+pub use network::constants::Network;
+pub use util::Error;
+pub use util::address::Address;
+pub use util::address::AddressType;
+pub use util::amount::Amount;
+pub use util::amount::Denomination;
+pub use util::amount::SignedAmount;
+pub use util::key::PrivateKey;
+pub use util::key::PublicKey;
+pub use util::merkleblock::MerkleBlock;

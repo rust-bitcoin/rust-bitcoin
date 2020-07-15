@@ -12,15 +12,11 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! # Big unsigned integer types
+//! Big unsigned integer types
 //!
 //! Implementation of a various large-but-fixed sized unsigned integer types.
 //! The functions here are designed to be fast.
 //!
-
-use std::fmt;
-
-use util::BitArray;
 
 macro_rules! construct_uint {
     ($name:ident, $n_words:expr) => (
@@ -115,7 +111,7 @@ macro_rules! construct_uint {
 
             #[inline]
             fn sub(self, other: $name) -> $name {
-                self + !other + BitArray::one()
+                self + !other + $crate::util::BitArray::one()
             }
         }
 
@@ -123,6 +119,7 @@ macro_rules! construct_uint {
             type Output = $name;
 
             fn mul(self, other: $name) -> $name {
+                use $crate::util::BitArray;
                 let mut me = $name::zero();
                 // TODO: be more efficient about this
                 for i in 0..(2 * $n_words) {
@@ -169,7 +166,7 @@ macro_rules! construct_uint {
             }
         }
 
-        impl BitArray for $name {
+        impl $crate::util::BitArray for $name {
             #[inline]
             fn bit(&self, index: usize) -> bool {
                 let &$name(ref arr) = self;
@@ -213,7 +210,7 @@ macro_rules! construct_uint {
 
         impl ::std::default::Default for $name {
             fn default() -> $name {
-                BitArray::zero()
+                $crate::util::BitArray::zero()
             }
         }
 
@@ -318,36 +315,47 @@ macro_rules! construct_uint {
             }
         }
 
-        impl fmt::Debug for $name {
-            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        impl ::std::fmt::Debug for $name {
+            fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
                 let &$name(ref data) = self;
-                try!(write!(f, "0x"));
+                write!(f, "0x")?;
                 for ch in data.iter().rev() {
-                    try!(write!(f, "{:016x}", ch));
+                    write!(f, "{:016x}", ch)?;
                 }
                 Ok(())
             }
         }
 
-        impl fmt::Display for $name {
-            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                <fmt::Debug>::fmt(self, f)
+        impl ::std::fmt::Display for $name {
+            fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+                <::std::fmt::Debug>::fmt(self, f)
             }
         }
 
-        impl<S: ::network::serialize::SimpleEncoder> ::network::encodable::ConsensusEncodable<S> for $name {
+        impl $crate::consensus::Encodable for $name {
             #[inline]
-            fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
+            fn consensus_encode<S: ::std::io::Write>(
+                &self,
+                mut s: S,
+            ) -> Result<usize, $crate::consensus::encode::Error> {
                 let &$name(ref data) = self;
-                for word in data.iter() { try!(word.consensus_encode(s)); }
-                Ok(())
+                let mut len = 0;
+                for word in data.iter() {
+                    len += word.consensus_encode(&mut s)?;
+                }
+                Ok(len)
             }
         }
 
-        impl<D: ::network::serialize::SimpleDecoder> ::network::encodable::ConsensusDecodable<D> for $name {
-            fn consensus_decode(d: &mut D) -> Result<$name, D::Error> {
-                use network::encodable::ConsensusDecodable;
-                let ret: [u64; $n_words] = try!(ConsensusDecodable::consensus_decode(d));
+        impl $crate::consensus::Decodable for $name {
+            fn consensus_decode<D: ::std::io::Read>(
+                mut d: D,
+            ) -> Result<$name, $crate::consensus::encode::Error> {
+                use $crate::consensus::Decodable;
+                let mut ret: [u64; $n_words] = [0; $n_words];
+                for i in 0..$n_words {
+                    ret[i] = Decodable::consensus_decode(&mut d)?;
+                }
                 Ok($name(ret))
             }
         }
@@ -384,7 +392,7 @@ impl Uint256 {
 
 #[cfg(test)]
 mod tests {
-    use network::serialize::{deserialize, serialize};
+    use consensus::{deserialize, serialize};
     use util::uint::Uint256;
     use util::BitArray;
 
@@ -534,8 +542,8 @@ mod tests {
     pub fn uint256_serialize_test() {
         let start1 = Uint256([0x8C8C3EE70C644118u64, 0x0209E7378231E632, 0, 0]);
         let start2 = Uint256([0x8C8C3EE70C644118u64, 0x0209E7378231E632, 0xABCD, 0xFFFF]);
-        let serial1 = serialize(&start1).unwrap();
-        let serial2 = serialize(&start2).unwrap();
+        let serial1 = serialize(&start1);
+        let serial2 = serialize(&start2);
         let end1: Result<Uint256, _> = deserialize(&serial1);
         let end2: Result<Uint256, _> = deserialize(&serial2);
 

@@ -1,10 +1,10 @@
 [![Status](https://travis-ci.org/rust-bitcoin/rust-bitcoin.png?branch=master)](https://travis-ci.org/rust-bitcoin/rust-bitcoin)
+[![Safety Dance](https://img.shields.io/badge/unsafe-forbidden-success.svg)](https://github.com/rust-secure-code/safety-dance/)
 
 # Rust Bitcoin Library
 
 Library with support for de/serialization, parsing and executing on data
-structures and network messages related to Bitcoin and other blockchain-based
-currencies.
+structures and network messages related to Bitcoin.
 
 [Documentation](https://docs.rs/bitcoin/)
 
@@ -14,12 +14,11 @@ Supports (or should support)
 * De/serialization of blocks and transactions
 * Script de/serialization
 * Private keys and address creation, de/serialization and validation (including full BIP32 support)
+* PSBT creation, manipulation, merging and finalization
 * Pay-to-contract support as in Appendix A of the [Blockstream sidechains whitepaper](https://www.blockstream.com/sidechains.pdf)
 
-For JSONRPC interaction with Bitcoin Core, it is recommended to use [rust-jsonrpc](https://github.com/apoelstra/rust-jsonrpc)
-which uses the underlying [strason library](https://github.com/apoelstra/strason)
-which parses decimal numbers as strings, preventing precision errors.
-
+For JSONRPC interaction with Bitcoin Core, it is recommended to use
+[rust-bitcoincore-rpc](https://github.com/rust-bitcoin/rust-bitcoincore-rpc).
 
 # Known limitations
 
@@ -39,12 +38,54 @@ fix specific consensus incompatibilities are welcome.
 
 ## Documentation
 
-Currently the [documentation](https://www.wpsoftware.net/rustdoc/bitcoin/)
-is very sparse. Patches to add usage examples and to expand on existing
-docs would be extremely appreciated.
+Currently can be found on [docs.rs/bitcoin](https://docs.rs/bitcoin/).
+Patches to add usage examples and to expand on existing docs would be extremely
+appreciated.
 
+# Contributing
+Contributions are generally welcome. If you intend to make larger changes please
+discuss them in an issue before PRing them to avoid duplicate work and
+architectural mismatches. If you have any questions or ideas you want to discuss
+please join us in
+[#rust-bitcoin](http://webchat.freenode.net/?channels=%23rust-bitcoin) on
+freenode.
 
-# Policy on Altcoins/Altchains
+## Minimum Supported Rust Version (MSRV)
+This library should always compile with any combination of features on **Rust 1.22**.
+
+## Installing Rust
+Rust can be installed using your package manager of choice or
+[rustup.rs](https://rustup.rs). The former way is considered more secure since
+it typically doesn't involve trust in the CA system. But you should be aware
+that the version of Rust shipped by your distribution might be out of date.
+Generally this isn't a problem for `rust-bitcoin` since we support much older
+versions (>=1.22) than the current stable one.
+
+## Building
+The library can be built and tested using [`cargo`](https://github.com/rust-lang/cargo/):
+
+```
+git clone git@github.com:rust-bitcoin/rust-bitcoin.git
+cd rust-bitcoin
+cargo build
+```
+
+You can run tests with:
+
+```
+cargo test
+```
+
+Please refer to the [`cargo` documentation](https://doc.rust-lang.org/stable/cargo/) for more detailed instructions. 
+
+## Pull Requests
+Every PR needs at least two reviews to get merged. During the review phase
+maintainers and contributors are likely to leave comments and request changes.
+Please try to address them, otherwise your PR might get closed without merging
+after a longer time of inactivity. If your PR isn't ready for review yet please
+mark it by prefixing the title with `WIP: `.
+
+## Policy on Altcoins/Altchains
 
 Patches which add support for non-Bitcoin cryptocurrencies by adding constants
 to existing enums (e.g. to set the network message magic-byte sequence) are
@@ -58,47 +99,12 @@ cross-chain atomic swaps) are more likely to be accepted than things which
 support only a single blockchain.
 
 
-## Release Notes
+# Release Notes
 
-I will try to document all breaking changes here so that people upgrading will know
-what they need to change.
+See [CHANGELOG.md](CHANGELOG.md).
 
-### 0.11
 
-Remove `num` dependency at Matt's request; agree this is obnoxious to require all
-downstream users to also have a `num` dependency just so they can use `Uint256::from_u64`.
+# Licensing
 
-### 0.12
-
-* The in-memory blockchain was moved into a dedicated project rust-bitcoin-chain.
-
-* Removed old script interpreter
-
-* A new optional feature "bitcoinconsenus" lets this library use Bitcoin Core's native
-script verifier, wrappend into Rust by the rust-bitcoinconsenus project. 
-See `Transaction::verify` and `Script::verify` methods.
-
-* Replaced Base58 traits with `encode_slice`, `check_encode_slice`, from and `from_check` functions in the base58 module.
-
-* Un-reversed the Debug output for Sha256dHash
-
-* Add bech32 support
-
-* Support segwit address types
-
-### 0.13
-
-* Move witnesses inside the `TxIn` structure
-
-* Add `Transaction::get_weight()`
-
-* Update bip143 `sighash_all` API to be more ergonomic
-
-#### 0.13.1
-
-* Add `Display` trait to uints, `FromStr` trait to `Network` enum
-
-* Add witness inv types to inv enum, constants for Bitcoin regtest network, `is_coin_base` accessor for tx inputs
-
-* Expose `merkleroot(Vec<Sha256dHash>)`
-
+The code in this project is licensed under the [Creative Commons CC0 1.0
+Universal license](LICENSE).

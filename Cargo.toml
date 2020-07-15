@@ -1,7 +1,6 @@
-
 [package]
 name = "bitcoin"
-version = "0.13.2"
+version = "0.23.0"
 authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
 license = "CC0-1.0"
 homepage = "https://github.com/rust-bitcoin/rust-bitcoin/"
@@ -16,19 +15,24 @@ name = "bitcoin"
 path = "src/lib.rs"
 
 [features]
-bitcoinconsenus = ["bitcoinconsensus"]
-fuzztarget = ["secp256k1/fuzztarget"]
+fuzztarget = ["secp256k1/fuzztarget", "bitcoin_hashes/fuzztarget"]
+unstable = []
+rand = ["secp256k1/rand-std"]
+use-serde = ["serde", "bitcoin_hashes/serde", "secp256k1/serde"]
 
 [dependencies]
-bitcoin-bech32 = "0.5.1"
-byteorder = "1.1"
-rand = "0.3"
-rust-crypto = "0.2"
-rustc-serialize = "0.3"
-serde = "0.6"
-strason = "0.3"
-bitcoinconsensus = { version = "0.16", optional=true }
+bech32 = "0.7.2"
+bitcoin_hashes = "0.7.3"
+secp256k1 = "0.17.1"
 
-[dependencies.secp256k1]
-version = "0.9"
-features = [ "rand" ]
+bitcoinconsensus = { version = "0.19.0-1", optional = true }
+serde = { version = "1", optional = true }
+
+[dev-dependencies]
+hex = "=0.3.2"
+serde_derive = "<1.0.99"
+serde_json = "<1.0.45"
+serde_test = "1"
+secp256k1 = { version = "0.17.1", features = ["rand-std"] }
+# We need to pin ryu (transitive dep from serde_json) to stay compatible with Rust 1.22.0
+ryu = "<1.0.5"

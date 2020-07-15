@@ -12,7 +12,7 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! # Bitcoin network addresses
+//! Bitcoin network addresses
 //!
 //! This module defines the structures and functions needed to encode
 //! network addresses in Bitcoin messages.
@@ -22,13 +22,14 @@ use std::io;
 use std::fmt;
 use std::net::{SocketAddr, Ipv6Addr, SocketAddrV4, SocketAddrV6};
 
-use network::serialize::{SimpleEncoder, SimpleDecoder};
-use network::encodable::{ConsensusDecodable, ConsensusEncodable};
+use network::constants::ServiceFlags;
+use consensus::encode::{self, Decodable, Encodable};
 
 /// A message which can be sent on the Bitcoin network
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub struct Address {
     /// Services provided by the peer whose address this is
-    pub services: u64,
+    pub services: ServiceFlags,
     /// Network byte-order ipv6 address, or ipv4-mapped ipv6 address
     pub address: [u16; 8],
     /// Network port
@@ -39,10 +40,10 @@ const ONION : [u16; 3] = [0xFD87, 0xD87E, 0xEB43];
 
 impl Address {
     /// Create an address message for a socket
-    pub fn new (socket :&SocketAddr, services: u64) -> Address {
-        let (address, port) = match socket {
-            &SocketAddr::V4(ref addr) => (addr.ip().to_ipv6_mapped().segments(), addr.port()),
-            &SocketAddr::V6(ref addr) => (addr.ip().segments(), addr.port())
+    pub fn new (socket :&SocketAddr, services: ServiceFlags) -> Address {
+        let (address, port) = match *socket {
+            SocketAddr::V4(addr) => (addr.ip().to_ipv6_mapped().segments(), addr.port()),
+            SocketAddr::V6(addr) => (addr.ip().segments(), addr.port())
         };
         Address { address: address, port: port, services: services }
     }
@@ -72,71 +73,82 @@ fn addr_to_be(addr: [u16; 8]) -> [u16; 8] {
      addr[4].to_be(), addr[5].to_be(), addr[6].to_be(), addr[7].to_be()]
 }
 
-impl<S: SimpleEncoder> ConsensusEncodable<S> for Address {
+impl Encodable for Address {
     #[inline]
-    fn consensus_encode(&self, s: &mut S) -> Result<(), S::Error> {
-        try!(self.services.consensus_encode(s));
-        try!(addr_to_be(self.address).consensus_encode(s));
-        self.port.to_be().consensus_encode(s)
+    fn consensus_encode<S: io::Write>(
+        &self,
+        mut s: S,
+    ) -> Result<usize, encode::Error> {
+        let len = self.services.consensus_encode(&mut s)?
+            + addr_to_be(self.address).consensus_encode(&mut s)?
+            + self.port.to_be().consensus_encode(s)?;
+        Ok(len)
     }
 }
 
-impl<D: SimpleDecoder> ConsensusDecodable<D> for Address {
+impl Decodable for Address {
     #[inline]
-    fn consensus_decode(d: &mut D) -> Result<Address, D::Error> {
+    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
         Ok(Address {
-            services: try!(ConsensusDecodable::consensus_decode(d)),
-            address: addr_to_be(try!(ConsensusDecodable::consensus_decode(d))),
-            port: u16::from_be(try!(ConsensusDecodable::consensus_decode(d)))
+            services: Decodable::consensus_decode(&mut d)?,
+            address: addr_to_be(Decodable::consensus_decode(&mut d)?),
+            port: u16::from_be(Decodable::consensus_decode(d)?)
         })
     }
 }
 
 impl fmt::Debug for Address {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // TODO: render services and hex-ize address
-        write!(f, "Address {{services: {:?}, address: {:?}, port: {:?}}}",
-               self.services, &self.address[..], self.port)
-    }
-}
+        let ipv6 = Ipv6Addr::from(self.address);
 
-impl Clone for Address {
-    fn clone(&self) -> Address {
-        Address {
-            services: self.services,
-            address: self.address,
-            port: self.port,
+        match ipv6.to_ipv4() {
+            Some(addr) => write!(f, "Address {{services: {}, address: {}, port: {}}}", 
+                self.services, addr, self.port),
+            None => write!(f, "Address {{services: {}, address: {}, port: {}}}", 
+                self.services, ipv6, self.port)
         }
     }
 }
-
-impl PartialEq for Address {
-    fn eq(&self, other: &Address) -> bool {
-        self.services == other.services &&
-        &self.address[..] == &other.address[..] &&
-        self.port == other.port
-    }
-}
-
-impl Eq for Address {}
 
 #[cfg(test)]
 mod test {
     use std::str::FromStr;
     use super::Address;
+    use network::constants::ServiceFlags;
     use std::net::{SocketAddr, IpAddr, Ipv4Addr, Ipv6Addr};
 
-    use network::serialize::{deserialize, serialize};
+    use consensus::encode::{deserialize, serialize};
 
     #[test]
     fn serialize_address_test() {
         assert_eq!(serialize(&Address {
-            services: 1,
+            services: ServiceFlags::NETWORK,
             address: [0, 0, 0, 0, 0, 0xffff, 0x0a00, 0x0001],
             port: 8333
-        }).ok(),
-        Some(vec![1u8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                  0, 0, 0, 0xff, 0xff, 0x0a, 0, 0, 1, 0x20, 0x8d]));
+        }),
+        vec![1u8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+             0, 0, 0, 0xff, 0xff, 0x0a, 0, 0, 1, 0x20, 0x8d]);
+    }
+
+    #[test]
+    fn debug_format_test() {
+        assert_eq!(
+            format!("The address is: {:?}", Address {
+                services: ServiceFlags::NETWORK.add(ServiceFlags::WITNESS),
+                address: [0, 0, 0, 0, 0, 0xffff, 0x0a00, 0x0001],
+                port: 8333
+            }), 
+            "The address is: Address {services: ServiceFlags(NETWORK|WITNESS), address: 10.0.0.1, port: 8333}"
+        );
+
+        assert_eq!(
+            format!("The address is: {:?}", Address {
+                services: ServiceFlags::NETWORK_LIMITED,
+                address: [0xFD87, 0xD87E, 0xEB43, 0, 0, 0xffff, 0x0a00, 0x0001],
+                port: 8333
+            }), 
+            "The address is: Address {services: ServiceFlags(NETWORK_LIMITED), address: fd87:d87e:eb43::ffff:a00:1, port: 8333}"
+        );
     }
 
     #[test]
@@ -151,7 +163,7 @@ mod test {
                     _ => false
                 }
             );
-        assert_eq!(full.services, 1);
+        assert_eq!(full.services, ServiceFlags::NETWORK);
         assert_eq!(full.address, [0, 0, 0, 0, 0, 0xffff, 0x0a00, 0x0001]);
         assert_eq!(full.port, 8333);
 
@@ -163,11 +175,11 @@ mod test {
     #[test]
     fn test_socket_addr () {
         let s4 = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(111,222,123,4)), 5555);
-        let a4 = Address::new(&s4, 9);
+        let a4 = Address::new(&s4, ServiceFlags::NETWORK | ServiceFlags::WITNESS);
         assert_eq!(a4.socket_addr().unwrap(), s4);
         let s6 = SocketAddr::new(IpAddr::V6(Ipv6Addr::new(0x1111, 0x2222, 0x3333, 0x4444,
         0x5555, 0x6666, 0x7777, 0x8888)), 9999);
-        let a6 = Address::new(&s6, 9);
+        let a6 = Address::new(&s6, ServiceFlags::NETWORK | ServiceFlags::WITNESS);
         assert_eq!(a6.socket_addr().unwrap(), s6);
     }
 
@@ -176,7 +188,7 @@ mod test {
         let onionaddr = SocketAddr::new(
             IpAddr::V6(
             Ipv6Addr::from_str("FD87:D87E:EB43:edb1:8e4:3588:e546:35ca").unwrap()), 1111);
-        let addr = Address::new(&onionaddr, 0);
+        let addr = Address::new(&onionaddr, ServiceFlags::NONE);
         assert!(addr.socket_addr().is_err());
     }
 }
