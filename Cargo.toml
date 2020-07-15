@@ -19,6 +19,7 @@ fuzztarget = ["secp256k1/fuzztarget", "bitcoin_hashes/fuzztarget"]
 unstable = []
 rand = ["secp256k1/rand-std"]
 use-serde = ["serde", "bitcoin_hashes/serde", "secp256k1/serde"]
+bump-decode-max-size = []
 
 [dependencies]
 bech32 = "0.7.2"
