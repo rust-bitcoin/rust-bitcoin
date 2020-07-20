@@ -82,7 +82,7 @@ pub struct ExtendedPubKey {
 serde_string_impl!(ExtendedPubKey, "a BIP-32 extended public key");
 
 /// A child number for a derived key
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
 pub enum ChildNumber {
     /// Non-hardened key
     Normal {
@@ -209,7 +209,7 @@ impl serde::Serialize for ChildNumber {
 }
 
 /// A BIP-32 derivation path.
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub struct DerivationPath(Vec<ChildNumber>);
 impl_index_newtype!(DerivationPath, ChildNumber);
 serde_string_impl!(DerivationPath, "a BIP-32 derivation path");
