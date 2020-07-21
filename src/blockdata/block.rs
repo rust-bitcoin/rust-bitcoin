@@ -51,96 +51,8 @@ pub struct BlockHeader {
     pub nonce: u32,
 }
 
-/// A Bitcoin block, which is a collection of transactions with an attached
-/// proof of work.
-#[derive(PartialEq, Eq, Clone, Debug)]
-pub struct Block {
-    /// The block header
-    pub header: BlockHeader,
-    /// List of transactions contained in the block
-    pub txdata: Vec<Transaction>
-}
-
-impl Block {
-    /// Return the block hash.
-    pub fn block_hash(&self) -> BlockHash {
-        self.header.block_hash()
-    }
-
-    /// check if merkle root of header matches merkle root of the transaction list
-    pub fn check_merkle_root (&self) -> bool {
-        self.header.merkle_root == self.merkle_root()
-    }
-
-    /// check if witness commitment in coinbase is matching the transaction list
-    pub fn check_witness_commitment(&self) -> bool {
-
-        // witness commitment is optional if there are no transactions using SegWit in the block
-        if self.txdata.iter().all(|t| t.input.iter().all(|i| i.witness.is_empty())) {
-            return true;
-        }
-        if !self.txdata.is_empty() {
-            let coinbase = &self.txdata[0];
-            if coinbase.is_coin_base() {
-                // commitment is in the last output that starts with below magic
-                if let Some(pos) = coinbase.output.iter()
-                    .rposition(|o| {
-                        o.script_pubkey.len () >= 38 &&
-                        o.script_pubkey[0..6] == [0x6a, 0x24, 0xaa, 0x21, 0xa9, 0xed] }) {
-                    let commitment = WitnessCommitment::from_slice(&coinbase.output[pos].script_pubkey.as_bytes()[6..38]).unwrap();
-                    // witness reserved value is in coinbase input witness
-                    if coinbase.input[0].witness.len() == 1 && coinbase.input[0].witness[0].len() == 32 {
-                        let witness_root = self.witness_root();
-                        return commitment == Self::compute_witness_commitment(&witness_root, coinbase.input[0].witness[0].as_slice())
-                    }
-                }
-            }
-        }
-        false
-    }
-
-    /// Calculate the transaction merkle root.
-    pub fn merkle_root(&self) -> TxMerkleNode {
-        let hashes = self.txdata.iter().map(|obj| obj.txid().as_hash());
-        bitcoin_merkle_root(hashes).into()
-    }
-
-    /// compute witness commitment for the transaction list
-    pub fn compute_witness_commitment (witness_root: &WitnessMerkleNode, witness_reserved_value: &[u8]) -> WitnessCommitment {
-        let mut encoder = WitnessCommitment::engine();
-        witness_root.consensus_encode(&mut encoder).unwrap();
-        encoder.input(witness_reserved_value);
-        WitnessCommitment::from_engine(encoder)
-    }
-
-    /// Merkle root of transactions hashed for witness
-    pub fn witness_root(&self) -> WitnessMerkleNode {
-        let hashes = self.txdata.iter().enumerate().map(|(i, t)|
-            if i == 0 {
-                // Replace the first hash with zeroes.
-                Wtxid::default().as_hash()
-            } else {
-                t.wtxid().as_hash()
-            }
-        );
-        bitcoin_merkle_root(hashes).into()
-    }
-
-    /// Get the size of the block
-    pub fn get_size(&self) -> usize {
-        // The size of the header + the size of the varint with the tx count + the txs themselves
-        let base_size = 80 + VarInt(self.txdata.len() as u64).len();
-        let txs_size: usize = self.txdata.iter().map(Transaction::get_size).sum();
-        base_size + txs_size
-    }
-
-    /// Get the weight of the block
-    pub fn get_weight(&self) -> usize {
-        let base_weight = WITNESS_SCALE_FACTOR * (80 + VarInt(self.txdata.len() as u64).len());
-        let txs_weight: usize = self.txdata.iter().map(Transaction::get_weight).sum();
-        base_weight + txs_weight
-    }
-}
+impl_consensus_encoding!(BlockHeader, version, prev_blockhash, merkle_root, time, bits, nonce);
+serde_struct_impl!(BlockHeader, version, prev_blockhash, merkle_root, time, bits, nonce);
 
 impl BlockHeader {
     /// Return the block hash.
@@ -238,10 +150,99 @@ impl BlockHeader {
     }
 }
 
-impl_consensus_encoding!(BlockHeader, version, prev_blockhash, merkle_root, time, bits, nonce);
+/// A Bitcoin block, which is a collection of transactions with an attached
+/// proof of work.
+#[derive(PartialEq, Eq, Clone, Debug)]
+pub struct Block {
+    /// The block header
+    pub header: BlockHeader,
+    /// List of transactions contained in the block
+    pub txdata: Vec<Transaction>
+}
+
 impl_consensus_encoding!(Block, header, txdata);
-serde_struct_impl!(BlockHeader, version, prev_blockhash, merkle_root, time, bits, nonce);
 serde_struct_impl!(Block, header, txdata);
+
+impl Block {
+    /// Return the block hash.
+    pub fn block_hash(&self) -> BlockHash {
+        self.header.block_hash()
+    }
+
+    /// check if merkle root of header matches merkle root of the transaction list
+    pub fn check_merkle_root (&self) -> bool {
+        self.header.merkle_root == self.merkle_root()
+    }
+
+    /// check if witness commitment in coinbase is matching the transaction list
+    pub fn check_witness_commitment(&self) -> bool {
+
+        // witness commitment is optional if there are no transactions using SegWit in the block
+        if self.txdata.iter().all(|t| t.input.iter().all(|i| i.witness.is_empty())) {
+            return true;
+        }
+        if !self.txdata.is_empty() {
+            let coinbase = &self.txdata[0];
+            if coinbase.is_coin_base() {
+                // commitment is in the last output that starts with below magic
+                if let Some(pos) = coinbase.output.iter()
+                    .rposition(|o| {
+                        o.script_pubkey.len () >= 38 &&
+                        o.script_pubkey[0..6] == [0x6a, 0x24, 0xaa, 0x21, 0xa9, 0xed] }) {
+                    let commitment = WitnessCommitment::from_slice(&coinbase.output[pos].script_pubkey.as_bytes()[6..38]).unwrap();
+                    // witness reserved value is in coinbase input witness
+                    if coinbase.input[0].witness.len() == 1 && coinbase.input[0].witness[0].len() == 32 {
+                        let witness_root = self.witness_root();
+                        return commitment == Self::compute_witness_commitment(&witness_root, coinbase.input[0].witness[0].as_slice())
+                    }
+                }
+            }
+        }
+        false
+    }
+
+    /// Calculate the transaction merkle root.
+    pub fn merkle_root(&self) -> TxMerkleNode {
+        let hashes = self.txdata.iter().map(|obj| obj.txid().as_hash());
+        bitcoin_merkle_root(hashes).into()
+    }
+
+    /// compute witness commitment for the transaction list
+    pub fn compute_witness_commitment (witness_root: &WitnessMerkleNode, witness_reserved_value: &[u8]) -> WitnessCommitment {
+        let mut encoder = WitnessCommitment::engine();
+        witness_root.consensus_encode(&mut encoder).unwrap();
+        encoder.input(witness_reserved_value);
+        WitnessCommitment::from_engine(encoder)
+    }
+
+    /// Merkle root of transactions hashed for witness
+    pub fn witness_root(&self) -> WitnessMerkleNode {
+        let hashes = self.txdata.iter().enumerate().map(|(i, t)|
+            if i == 0 {
+                // Replace the first hash with zeroes.
+                Wtxid::default().as_hash()
+            } else {
+                t.wtxid().as_hash()
+            }
+        );
+        bitcoin_merkle_root(hashes).into()
+    }
+
+    /// Get the size of the block
+    pub fn get_size(&self) -> usize {
+        // The size of the header + the size of the varint with the tx count + the txs themselves
+        let base_size = 80 + VarInt(self.txdata.len() as u64).len();
+        let txs_size: usize = self.txdata.iter().map(Transaction::get_size).sum();
+        base_size + txs_size
+    }
+
+    /// Get the weight of the block
+    pub fn get_weight(&self) -> usize {
+        let base_weight = WITNESS_SCALE_FACTOR * (80 + VarInt(self.txdata.len() as u64).len());
+        let txs_weight: usize = self.txdata.iter().map(Transaction::get_weight).sum();
+        base_weight + txs_weight
+    }
+}
 
 #[cfg(test)]
 mod tests {
