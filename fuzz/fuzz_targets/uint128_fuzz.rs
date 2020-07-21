@@ -40,6 +40,7 @@ fn do_test(data: &[u8]) {
     check_eq!(a_native.wrapping_sub(b_native), a - b);
     if b_native != 0 {
         check_eq!(a_native.wrapping_div(b_native), a / b);
+        check_eq!(a_native.wrapping_rem(b_native), a % b);
     }
     check_eq!(a_native.wrapping_mul(b_native), a * b);
     check_eq!(a_native & b_native, a & b);
