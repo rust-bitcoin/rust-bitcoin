@@ -157,6 +157,8 @@ pub enum NetworkMessage {
     Reject(message_network::Reject),
     /// `feefilter`
     FeeFilter(i64),
+    /// `wtxidrelay`
+    WtxidRelay,
 }
 
 impl NetworkMessage {
@@ -188,6 +190,7 @@ impl NetworkMessage {
             NetworkMessage::Alert(_)    => "alert",
             NetworkMessage::Reject(_)    => "reject",
             NetworkMessage::FeeFilter(_) => "feefilter",
+            NetworkMessage::WtxidRelay => "wtxidrelay",
         }
     }
 
@@ -260,7 +263,8 @@ impl Encodable for RawNetworkMessage {
             NetworkMessage::Verack
             | NetworkMessage::SendHeaders
             | NetworkMessage::MemPool
-            | NetworkMessage::GetAddr => vec![],
+            | NetworkMessage::GetAddr
+            | NetworkMessage::WtxidRelay => vec![],
         }).consensus_encode(&mut s)?;
         Ok(len)
     }
@@ -324,6 +328,7 @@ impl Decodable for RawNetworkMessage {
             "reject" => NetworkMessage::Reject(Decodable::consensus_decode(&mut mem_d)?),
             "alert"   => NetworkMessage::Alert(Decodable::consensus_decode(&mut mem_d)?),
             "feefilter" => NetworkMessage::FeeFilter(Decodable::consensus_decode(&mut mem_d)?),
+            "wtxidrelay" => NetworkMessage::WtxidRelay,
             _ => return Err(encode::Error::UnrecognizedNetworkCommand(cmd.into_owned())),
         };
         Ok(RawNetworkMessage {
@@ -387,6 +392,7 @@ mod test {
             NetworkMessage::Alert(vec![45,66,3,2,6,8,9,12,3,130]),
             NetworkMessage::Reject(Reject{message: "Test reject".into(), ccode: RejectReason::Duplicate, reason: "Cause".into(), hash: hash([255u8; 32])}),
             NetworkMessage::FeeFilter(1000),
+            NetworkMessage::WtxidRelay,
         ];
 
         for msg in msgs {
