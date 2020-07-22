@@ -166,6 +166,15 @@ macro_rules! construct_uint {
             }
         }
 
+        impl ::std::ops::Rem<$name> for $name {
+            type Output = $name;
+
+            fn rem(self, other: $name) -> $name {
+                let times = self / other;
+                self - (times * other)
+            }
+        }
+
         impl $crate::util::BitArray for $name {
             #[inline]
             fn bit(&self, index: usize) -> bool {
@@ -479,6 +488,14 @@ mod tests {
                    Uint256::from_u64(21).unwrap());
         let div = mult / Uint256::from_u64(300).unwrap();
         assert_eq!(div, Uint256([0x9F30411021524112u64, 0x0001BD5B7DDFBD5A, 0, 0]));
+
+        assert_eq!(Uint256::from_u64(105).unwrap() % Uint256::from_u64(5).unwrap(),
+                   Uint256::from_u64(0).unwrap());
+        assert_eq!(Uint256::from_u64(35498456).unwrap() % Uint256::from_u64(3435).unwrap(),
+                   Uint256::from_u64(1166).unwrap());
+        let rem_src = mult * Uint256::from_u64(39842).unwrap() + Uint256::from_u64(9054).unwrap();
+        assert_eq!(rem_src % Uint256::from_u64(39842).unwrap(),
+                   Uint256::from_u64(9054).unwrap());
         // TODO: bit inversion
     }
 
