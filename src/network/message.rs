@@ -154,7 +154,9 @@ pub enum NetworkMessage {
     /// `alert`
     Alert(Vec<u8>),
     /// `reject`
-    Reject(message_network::Reject)
+    Reject(message_network::Reject),
+    /// `feefilter`
+    FeeFilter(i64),
 }
 
 impl NetworkMessage {
@@ -185,6 +187,7 @@ impl NetworkMessage {
             NetworkMessage::CFCheckpt(_) => "cfcheckpt",
             NetworkMessage::Alert(_)    => "alert",
             NetworkMessage::Reject(_)    => "reject",
+            NetworkMessage::FeeFilter(_) => "feefilter",
         }
     }
 
@@ -253,6 +256,7 @@ impl Encodable for RawNetworkMessage {
             NetworkMessage::CFCheckpt(ref dat) => serialize(dat),
             NetworkMessage::Alert(ref dat)    => serialize(dat),
             NetworkMessage::Reject(ref dat) => serialize(dat),
+            NetworkMessage::FeeFilter(ref data) => serialize(data),
             NetworkMessage::Verack
             | NetworkMessage::SendHeaders
             | NetworkMessage::MemPool
@@ -319,6 +323,7 @@ impl Decodable for RawNetworkMessage {
             "cfcheckpt" => NetworkMessage::CFCheckpt(Decodable::consensus_decode(&mut mem_d)?),
             "reject" => NetworkMessage::Reject(Decodable::consensus_decode(&mut mem_d)?),
             "alert"   => NetworkMessage::Alert(Decodable::consensus_decode(&mut mem_d)?),
+            "feefilter" => NetworkMessage::FeeFilter(Decodable::consensus_decode(&mut mem_d)?),
             _ => return Err(encode::Error::UnrecognizedNetworkCommand(cmd.into_owned())),
         };
         Ok(RawNetworkMessage {
@@ -381,6 +386,7 @@ mod test {
             NetworkMessage::CFCheckpt(CFCheckpt{filter_type: 27, stop_hash: hash([77u8; 32]).into(), filter_headers: vec![hash([3u8; 32]).into(), hash([99u8; 32]).into()]}),
             NetworkMessage::Alert(vec![45,66,3,2,6,8,9,12,3,130]),
             NetworkMessage::Reject(Reject{message: "Test reject".into(), ccode: RejectReason::Duplicate, reason: "Cause".into(), hash: hash([255u8; 32])}),
+            NetworkMessage::FeeFilter(1000),
         ];
 
         for msg in msgs {
