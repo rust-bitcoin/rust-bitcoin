@@ -439,7 +439,7 @@ impl MerkleBlock {
     ///
     /// The `header` is the block header, `block_txids` is the full list of txids included in the block and
     /// `match_txids` is a set containing the transaction ids that should be included in the partial merkle tree.
-    /// ```
+    ///
 
     pub fn from_header_txids(
         header: &BlockHeader,
