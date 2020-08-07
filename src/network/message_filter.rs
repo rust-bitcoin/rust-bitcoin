@@ -2,7 +2,7 @@
 //! BIP157  Client Side Block Filtering network messages
 //!
 
-use hash_types::{BlockHash, FilterHash};
+use hash_types::{BlockHash, FilterHash, FilterHeader};
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 /// getcfilters message
@@ -48,11 +48,11 @@ pub struct CFHeaders {
     /// The hash of the last block in the requested range
     pub stop_hash: BlockHash,
     /// The filter header preceding the first block in the requested range
-    pub previous_filter: FilterHash,
+    pub previous_filter_header: FilterHeader,
     /// The filter hashes for each block in the requested range
     pub filter_hashes: Vec<FilterHash>,
 }
-impl_consensus_encoding!(CFHeaders, filter_type, stop_hash, previous_filter, filter_hashes);
+impl_consensus_encoding!(CFHeaders, filter_type, stop_hash, previous_filter_header, filter_hashes);
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 /// getcfcheckpt message
@@ -72,6 +72,6 @@ pub struct CFCheckpt {
     /// The hash of the last block in the requested range
     pub stop_hash: BlockHash,
     /// The filter headers at intervals of 1,000
-    pub filter_headers: Vec<FilterHash>,
+    pub filter_headers: Vec<FilterHeader>,
 }
 impl_consensus_encoding!(CFCheckpt, filter_type, stop_hash, filter_headers);
