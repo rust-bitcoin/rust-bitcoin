@@ -73,6 +73,7 @@ macro_rules! construct_uint {
             }
 
             /// Create an object from a given unsigned 64-bit integer
+            #[inline]
             pub fn from_u64(init: u64) -> Option<$name> {
                 let mut ret = [0; $n_words];
                 ret[0] = init;
@@ -80,9 +81,21 @@ macro_rules! construct_uint {
             }
 
             /// Create an object from a given signed 64-bit integer
+            #[inline]
             pub fn from_i64(init: i64) -> Option<$name> {
                 assert!(init >= 0);
                 $name::from_u64(init as u64)
+            }
+
+            /// Creates big integer value from a byte slice array using
+            /// big-endian encoding
+            pub fn from_be_bytes(bytes: [u8; $n_words * 8]) -> $name {
+                use super::endian::slice_to_u64_be;
+                let mut slice = [0u64; $n_words];
+                for n in 0..$n_words {
+                    slice[$n_words - n - 1] = slice_to_u64_be(&bytes[(n * 8)..(n * 8 + 8)]);
+                }
+                $name(slice)
             }
 
             // divmod like operation, returns (quotient, remainder)
@@ -409,7 +422,7 @@ impl Uint256 {
 #[cfg(test)]
 mod tests {
     use consensus::{deserialize, serialize};
-    use util::uint::Uint256;
+    use util::uint::{Uint256, Uint128};
     use util::BitArray;
 
     #[test]
@@ -465,6 +478,16 @@ mod tests {
         assert!(bigger >= big);
         assert!(bigger >= small);
         assert!(small <= small);
+    }
+
+    #[test]
+    pub fn uint_from_be_bytes() {
+        assert_eq!(Uint128::from_be_bytes([0x1b, 0xad, 0xca, 0xfe, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xaf, 0xba, 0xbe, 0x2b, 0xed, 0xfe, 0xed]),
+                   Uint128([0xdeafbabe2bedfeed, 0x1badcafedeadbeef]));
+
+        assert_eq!(Uint256::from_be_bytes([0x1b, 0xad, 0xca, 0xfe, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xaf, 0xba, 0xbe, 0x2b, 0xed, 0xfe, 0xed,
+                                           0xba, 0xad, 0xf0, 0x0d, 0xde, 0xfa, 0xce, 0xda, 0x11, 0xfe, 0xd2, 0xba, 0xd1, 0xc0, 0xff, 0xe0]),
+                   Uint256([0x11fed2bad1c0ffe0, 0xbaadf00ddefaceda, 0xdeafbabe2bedfeed, 0x1badcafedeadbeef]));
     }
 
     #[test]

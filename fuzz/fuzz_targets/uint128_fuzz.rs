@@ -1,5 +1,6 @@
 extern crate bitcoin;
 use std::str::FromStr;
+use std::convert::Into;
 
 fn do_test(data: &[u8]) {
     macro_rules! read_ints {
@@ -11,6 +12,12 @@ fn do_test(data: &[u8]) {
             }
             // Note BE:
             let uint128 = bitcoin::util::uint::Uint128::from(&[native as u64, (native >> 8*8) as u64][..]);
+
+            // Checking two conversion methods against each other
+            let mut slice = [0u8; 16];
+            slice.copy_from_slice(&data[$start..$start + 16]);
+            assert_eq!(uint128, bitcoin::util::uint::Uint128::from_be_bytes(slice));
+
             (native, uint128)
         } }
     }
