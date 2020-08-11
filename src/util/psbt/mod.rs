@@ -37,6 +37,9 @@ pub mod serialize;
 mod map;
 pub use self::map::{Map, Global, Input, Output};
 
+pub mod responsibilities;
+pub use self::responsibilities::Responsibility;
+
 /// A Partially Signed Transaction.
 #[derive(Debug, Clone, PartialEq)]
 pub struct PartiallySignedTransaction {
