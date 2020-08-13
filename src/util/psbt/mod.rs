@@ -24,6 +24,9 @@ use consensus::{encode, Encodable, Decodable};
 
 use std::io;
 
+mod responsibilities;
+pub use self::responsibilities::{PsbtCreationError, PsbtSignError, PsbtWallet, SignPsbt};
+
 mod error;
 pub use self::error::Error;
 
