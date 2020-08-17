@@ -37,7 +37,7 @@ use VarInt;
 #[derive(Copy, PartialEq, Eq, Clone, Debug)]
 pub struct BlockHeader {
     /// The protocol version. Should always be 1.
-    pub version: u32,
+    pub version: i32,
     /// Reference to the previous block in the chain
     pub prev_blockhash: BlockHash,
     /// The root hash of the merkle tree of transactions in the block
@@ -320,4 +320,3 @@ mod tests {
         assert_eq!(header.bits, BlockHeader::compact_target_from_u256(&header.target()));
     }
 }
-
