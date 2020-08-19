@@ -762,6 +762,21 @@ mod tests {
     }
 
     #[test]
+    fn test_transaction_version() {
+        let tx_bytes = Vec::from_hex("ffffff7f0100000000000000000000000000000000000000000000000000000000000000000000000000ffffffff0100f2052a01000000434104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac00000000").unwrap();
+        let tx: Result<Transaction, _> = deserialize(&tx_bytes);
+        assert!(tx.is_ok());
+        let realtx = tx.unwrap();
+        assert_eq!(realtx.version, 2147483647);
+
+        let tx2_bytes = Vec::from_hex("000000800100000000000000000000000000000000000000000000000000000000000000000000000000ffffffff0100f2052a01000000434104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac00000000").unwrap();
+        let tx2: Result<Transaction, _> = deserialize(&tx2_bytes);
+        assert!(tx2.is_ok());
+        let realtx2 = tx2.unwrap();
+        assert_eq!(realtx2.version, -2147483648);
+    }
+
+    #[test]
     fn tx_no_input_deserialization() {
         let tx_bytes = Vec::from_hex(
             "010000000001000100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000"
