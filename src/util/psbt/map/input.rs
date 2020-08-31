@@ -12,18 +12,19 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-use std::collections::BTreeMap;
+use std::collections::btree_map::{Entry, BTreeMap};
 
 use blockdata::script::Script;
 use blockdata::transaction::{SigHashType, Transaction, TxOut};
 use consensus::encode;
 use util::bip32::KeySource;
+use hashes::{self, hash160, ripemd160, sha256, sha256d};
 use util::key::PublicKey;
 use util::psbt;
 use util::psbt::map::Map;
 use util::psbt::raw;
-use util::psbt::Error;
-
+use util::psbt::serialize::Deserialize;
+use util::psbt::{Error, error};
 /// A key-value map for an input of the corresponding index in the unsigned
 /// transaction.
 #[derive(Clone, Default, Debug, PartialEq)]
@@ -55,6 +56,15 @@ pub struct Input {
     /// The finalized, fully-constructed scriptWitness with signatures and any
     /// other scripts necessary for this input to pass validation.
     pub final_script_witness: Option<Vec<Vec<u8>>>,
+    /// TODO: Proof of reserves commitment
+    /// RIPEMD hash to preimage map
+    pub ripemd_preimages: BTreeMap<ripemd160::Hash, Vec<u8>>,
+    /// SHA256 hash to preimage map
+    pub sha256_preimages: BTreeMap<sha256::Hash, Vec<u8>>,
+    /// HSAH160 hash to preimage map
+    pub hash160_preimages: BTreeMap<hash160::Hash, Vec<u8>>,
+    /// HAS256 hash to preimage map
+    pub hash256_preimages: BTreeMap<sha256d::Hash, Vec<u8>>,
     /// Unknown key-value pairs for this input.
     pub unknown: BTreeMap<raw::Key, Vec<u8>>,
 }
@@ -112,10 +122,26 @@ impl Map for Input {
                     self.hd_keypaths <= <raw_key: PublicKey>|<raw_value: KeySource>
                 }
             }
-            _ => match self.unknown.entry(raw_key) {
-                ::std::collections::btree_map::Entry::Vacant(empty_key) => {empty_key.insert(raw_value);},
-                ::std::collections::btree_map::Entry::Occupied(k) => return Err(Error::DuplicateKey(k.key().clone()).into()),
+            10u8 => {
+                psbt_insert_hash_pair(&mut self.ripemd_preimages, raw_key, raw_value, error::PsbtHash::Ripemd)?;
             }
+            11u8 => {
+                psbt_insert_hash_pair(&mut self.sha256_preimages, raw_key, raw_value, error::PsbtHash::Sha256)?;
+            }
+            12u8 => {
+                psbt_insert_hash_pair(&mut self.hash160_preimages, raw_key, raw_value, error::PsbtHash::Hash160)?;
+            }
+            13u8 => {
+                psbt_insert_hash_pair(&mut self.hash256_preimages, raw_key, raw_value, error::PsbtHash::Hash256)?;
+            }
+            _ => match self.unknown.entry(raw_key) {
+                ::std::collections::btree_map::Entry::Vacant(empty_key) => {
+                    empty_key.insert(raw_value);
+                }
+                ::std::collections::btree_map::Entry::Occupied(k) => {
+                    return Err(Error::DuplicateKey(k.key().clone()).into())
+                }
+            },
         }
 
         Ok(())
@@ -160,6 +186,22 @@ impl Map for Input {
             rv.push(self.final_script_witness as <8u8, _>|<Script>)
         }
 
+        impl_psbt_get_pair! {
+            rv.push(self.ripemd_preimages as <10u8, ripemd160::Hash>|<Vec<u8>>)
+        }
+
+        impl_psbt_get_pair! {
+            rv.push(self.sha256_preimages as <11u8, sha256::Hash>|<Vec<u8>>)
+        }
+
+        impl_psbt_get_pair! {
+            rv.push(self.hash160_preimages as <12u8, hash160::Hash>|<Vec<u8>>)
+        }
+
+        impl_psbt_get_pair! {
+            rv.push(self.hash256_preimages as <13u8, sha256d::Hash>|<Vec<u8>>)
+        }
+
         for (key, value) in self.unknown.iter() {
             rv.push(raw::Pair {
                 key: key.clone(),
@@ -180,6 +222,10 @@ impl Map for Input {
 
         self.partial_sigs.extend(other.partial_sigs);
         self.hd_keypaths.extend(other.hd_keypaths);
+        self.ripemd_preimages.extend(other.ripemd_preimages);
+        self.sha256_preimages.extend(other.sha256_preimages);
+        self.hash160_preimages.extend(other.hash160_preimages);
+        self.hash256_preimages.extend(other.hash256_preimages);
         self.unknown.extend(other.unknown);
 
         merge!(redeem_script, self, other);
@@ -192,3 +238,34 @@ impl Map for Input {
 }
 
 impl_psbtmap_consensus_enc_dec_oding!(Input);
+
+fn psbt_insert_hash_pair<H>(
+    map: &mut BTreeMap<H, Vec<u8>>,
+    raw_key: raw::Key,
+    raw_value: Vec<u8>,
+    hash_type: error::PsbtHash,
+) -> Result<(), encode::Error>
+where
+    H: hashes::Hash + Deserialize,
+{
+    if raw_key.key.is_empty() {
+        return Err(psbt::Error::InvalidKey(raw_key).into());
+    }
+    let key_val: H = Deserialize::deserialize(&raw_key.key)?;
+    match map.entry(key_val) {
+        Entry::Vacant(empty_key) => {
+            let val: Vec<u8> = Deserialize::deserialize(&raw_value)?;
+            if <H as hashes::Hash>::hash(&val) != key_val {
+                return Err(psbt::Error::InvalidPreimageHashPair {
+                    preimage: val,
+                    hash: Vec::from(key_val.borrow()),
+                    hash_type: hash_type,
+                }
+                .into());
+            }
+            empty_key.insert(val);
+            Ok(())
+        }
+        Entry::Occupied(_) => return Err(psbt::Error::DuplicateKey(raw_key).into()),
+    }
+}

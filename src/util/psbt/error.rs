@@ -18,6 +18,16 @@ use std::fmt;
 use blockdata::transaction::Transaction;
 use util::psbt::raw;
 
+use hashes;
+
+#[derive(Debug)]
+/// Enum for marking psbt hash error
+pub enum PsbtHash {
+    Ripemd,
+    Sha256,
+    Hash160,
+    Hash256,
+}
 /// Ways that a Partially Signed Transaction might fail.
 #[derive(Debug)]
 pub enum Error {
@@ -48,6 +58,17 @@ pub enum Error {
     },
     /// Unable to parse as a standard SigHash type.
     NonStandardSigHashType(u32),
+    /// Parsing errors from bitcoin_hashes
+    HashParseError(hashes::Error),
+    /// The pre-image must hash to the correponding psbt hash
+    InvalidPreimageHashPair {
+        /// Hash-type
+        hash_type: PsbtHash,
+        /// Pre-image
+        preimage: Vec<u8>,
+        /// Hash value
+        hash: Vec<u8>,
+    }
 }
 
 impl fmt::Display for Error {
@@ -65,8 +86,20 @@ impl fmt::Display for Error {
                 f.write_str("partially signed transactions must have an unsigned transaction")
             }
             Error::NoMorePairs => f.write_str("no more key-value pairs for this psbt map"),
+            Error::HashParseError(e) => write!(f, "Hash Parse Error: {}", e),
+            Error::InvalidPreimageHashPair{ref preimage, ref hash, ref hash_type} => {
+                // directly using debug forms of psbthash enums
+                write!(f, "Preimage {:?} does not match {:?} hash {:?}", preimage, hash_type, hash )
+            }
         }
     }
 }
 
 impl error::Error for Error {}
+
+#[doc(hidden)]
+impl From<hashes::Error> for Error {
+    fn from(e: hashes::Error) -> Error {
+        Error::HashParseError(e)
+    }
+}

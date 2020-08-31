@@ -130,6 +130,7 @@ macro_rules! impl_psbt_insert_pair {
     };
 }
 
+
 #[cfg_attr(rustfmt, rustfmt_skip)]
 macro_rules! impl_psbt_get_pair {
     ($rv:ident.push($slf:ident.$unkeyed_name:ident as <$unkeyed_typeval:expr, _>|<$unkeyed_value_type:ty>)) => {
@@ -152,6 +153,36 @@ macro_rules! impl_psbt_get_pair {
                 },
                 value: $crate::util::psbt::serialize::Serialize::serialize(val),
             });
+        }
+    };
+}
+
+// macros for serde of hashes
+macro_rules! impl_psbt_hash_de_serialize {
+    ($hash_type:ty) => {
+        impl_psbt_hash_serialize!($hash_type);
+        impl_psbt_hash_deserialize!($hash_type);
+    };
+}
+
+macro_rules! impl_psbt_hash_deserialize {
+    ($hash_type:ty) => {
+        impl $crate::util::psbt::serialize::Deserialize for $hash_type {
+            fn deserialize(bytes: &[u8]) -> Result<Self, $crate::consensus::encode::Error> {
+                <$hash_type>::from_slice(&bytes[..]).map_err(|e| {
+                    $crate::util::psbt::Error::from(e).into()
+                })
+            }
+        }
+    };
+}
+
+macro_rules! impl_psbt_hash_serialize {
+    ($hash_type:ty) => {
+        impl $crate::util::psbt::serialize::Serialize for $hash_type {
+            fn serialize(&self) -> Vec<u8> {
+                self.into_inner().to_vec()
+            }
         }
     };
 }
