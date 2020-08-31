@@ -90,7 +90,7 @@ impl Decodable for CommandString {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 /// A Network message
 pub struct RawNetworkMessage {
     /// Magic bytes to identify the network these messages are meant for
