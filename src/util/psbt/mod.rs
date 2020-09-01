@@ -163,6 +163,7 @@ impl Decodable for PartiallySignedTransaction {
 #[cfg(test)]
 mod tests {
     use hashes::hex::FromHex;
+    use hashes::{sha256, hash160, Hash, ripemd160};
     use hash_types::Txid;
 
     use std::collections::BTreeMap;
@@ -175,7 +176,7 @@ mod tests {
     use consensus::encode::{deserialize, serialize, serialize_hex};
     use util::bip32::{ChildNumber, ExtendedPrivKey, ExtendedPubKey, Fingerprint, KeySource};
     use util::key::PublicKey;
-    use util::psbt::map::{Global, Output};
+    use util::psbt::map::{Global, Output, Input};
     use util::psbt::raw;
 
     use super::PartiallySignedTransaction;
@@ -560,5 +561,117 @@ mod tests {
 
             assert_eq!(psbt.inputs[0].unknown, unknown)
         }
+    }
+
+    #[test]
+    fn serialize_and_deserialize_preimage_psbt(){
+        // create a sha preimage map
+        let mut sha256_preimages = BTreeMap::new();
+        sha256_preimages.insert(sha256::Hash::hash(&[1u8, 2u8]), vec![1u8, 2u8]);
+        sha256_preimages.insert(sha256::Hash::hash(&[1u8]), vec![1u8]);
+
+        // same for hash160
+        let mut hash160_preimages = BTreeMap::new();
+        hash160_preimages.insert(hash160::Hash::hash(&[1u8, 2u8]), vec![1u8, 2u8]);
+        hash160_preimages.insert(hash160::Hash::hash(&[1u8]), vec![1u8]);
+
+        // same vector as valid_vector_1 from BIPs with added
+        let mut unserialized = PartiallySignedTransaction {
+            global: Global {
+                unsigned_tx: Transaction {
+                    version: 2,
+                    lock_time: 1257139,
+                    input: vec![TxIn {
+                        previous_output: OutPoint {
+                            txid: Txid::from_hex(
+                                "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126",
+                            ).unwrap(),
+                            vout: 0,
+                        },
+                        script_sig: Script::new(),
+                        sequence: 4294967294,
+                        witness: vec![],
+                    }],
+                    output: vec![
+                        TxOut {
+                            value: 99999699,
+                            script_pubkey: hex_script!("76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac"),
+                        },
+                        TxOut {
+                            value: 100000000,
+                            script_pubkey: hex_script!("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787"),
+                        },
+                    ],
+                },
+                unknown: BTreeMap::new(),
+            },
+            inputs: vec![Input {
+                non_witness_utxo: Some(Transaction {
+                    version: 1,
+                    lock_time: 0,
+                    input: vec![TxIn {
+                        previous_output: OutPoint {
+                            txid: Txid::from_hex(
+                                "e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389",
+                            ).unwrap(),
+                            vout: 1,
+                        },
+                        script_sig: hex_script!("160014be18d152a9b012039daf3da7de4f53349eecb985"),
+                        sequence: 4294967295,
+                        witness: vec![
+                            Vec::from_hex("304402202712be22e0270f394f568311dc7ca9a68970b8025fdd3b240229f07f8a5f3a240220018b38d7dcd314e734c9276bd6fb40f673325bc4baa144c800d2f2f02db2765c01").unwrap(),
+                            Vec::from_hex("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105").unwrap(),
+                        ],
+                    },
+                    TxIn {
+                        previous_output: OutPoint {
+                            txid: Txid::from_hex(
+                                "b490486aec3ae671012dddb2bb08466bef37720a533a894814ff1da743aaf886",
+                            ).unwrap(),
+                            vout: 1,
+                        },
+                        script_sig: hex_script!("160014fe3e9ef1a745e974d902c4355943abcb34bd5353"),
+                        sequence: 4294967295,
+                        witness: vec![
+                            Vec::from_hex("3045022100d12b852d85dcd961d2f5f4ab660654df6eedcc794c0c33ce5cc309ffb5fce58d022067338a8e0e1725c197fb1a88af59f51e44e4255b20167c8684031c05d1f2592a01").unwrap(),
+                            Vec::from_hex("0223b72beef0965d10be0778efecd61fcac6f79a4ea169393380734464f84f2ab3").unwrap(),
+                        ],
+                    }],
+                    output: vec![
+                        TxOut {
+                            value: 200000000,
+                            script_pubkey: hex_script!("76a91485cff1097fd9e008bb34af709c62197b38978a4888ac"),
+                        },
+                        TxOut {
+                            value: 190303501938,
+                            script_pubkey: hex_script!("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587"),
+                        },
+                    ],
+                }),
+                ..Default::default()
+            },],
+            outputs: vec![
+                Output {
+                    ..Default::default()
+                },
+                Output {
+                    ..Default::default()
+                },
+            ],
+        };
+        unserialized.inputs[0].hash160_preimages = hash160_preimages;
+        unserialized.inputs[0].sha256_preimages = sha256_preimages;
+
+        let rtt : PartiallySignedTransaction = hex_psbt!(&serialize_hex(&unserialized)).unwrap();
+        assert_eq!(rtt, unserialized);
+
+        // Now add an ripemd160 with incorrect preimage
+        let mut ripemd160_preimages = BTreeMap::new();
+        ripemd160_preimages.insert(ripemd160::Hash::hash(&[17u8]), vec![18u8]);
+        unserialized.inputs[0].ripemd_preimages = ripemd160_preimages;
+
+        // Now the roundtrip should fail as the preimage is incorrect.
+        let rtt : Result<PartiallySignedTransaction, _> = hex_psbt!(&serialize_hex(&unserialized));
+        assert!(rtt.is_err());
     }
 }
