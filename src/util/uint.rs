@@ -92,9 +92,10 @@ macro_rules! construct_uint {
             pub fn from_be_bytes(bytes: [u8; $n_words * 8]) -> $name {
                 use super::endian::slice_to_u64_be;
                 let mut slice = [0u64; $n_words];
-                for n in 0..$n_words {
-                    slice[$n_words - n - 1] = slice_to_u64_be(&bytes[(n * 8)..(n * 8 + 8)]);
-                }
+                slice.iter_mut()
+                    .rev()
+                    .zip(bytes.chunks(8))
+                    .for_each(|(word, bytes)| *word = slice_to_u64_be(bytes));
                 $name(slice)
             }
 
