@@ -38,7 +38,6 @@ use hashes::Hash;
 #[cfg(feature="bitcoinconsensus")] use OutPoint;
 
 use util::key::PublicKey;
-use util::psbt::serialize::Serialize;
 
 #[derive(Clone, Default, PartialOrd, Ord, PartialEq, Eq, Hash)]
 /// A Bitcoin script
@@ -278,12 +277,12 @@ impl Script {
 
     /// Returns 160-bit hash of the script
     pub fn script_hash(&self) -> ScriptHash {
-        ScriptHash::hash(&self.serialize())
+        ScriptHash::hash(&self.as_bytes())
     }
 
     /// Returns 256-bit hash of the script for P2WSH outputs
     pub fn wscript_hash(&self) -> WScriptHash {
-        WScriptHash::hash(&self.serialize())
+        WScriptHash::hash(&self.as_bytes())
     }
 
     /// The length in bytes of the script
