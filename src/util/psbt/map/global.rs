@@ -23,6 +23,9 @@ use util::psbt::raw;
 use util::psbt;
 use util::psbt::Error;
 
+/// Type: Unsigned Transaction PSBT_GLOBAL_UNSIGNED_TX = 0x00
+const PSBT_GLOBAL_UNSIGNED_TX: u8 = 0x00;
+
 /// A key-value map for global data.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Global {
@@ -62,7 +65,7 @@ impl Map for Global {
         } = pair;
 
         match raw_key.type_value {
-            0u8 => return Err(Error::DuplicateKey(raw_key).into()),
+            PSBT_GLOBAL_UNSIGNED_TX => return Err(Error::DuplicateKey(raw_key).into()),
             _ => match self.unknown.entry(raw_key) {
                 Entry::Vacant(empty_key) => {empty_key.insert(raw_value);},
                 Entry::Occupied(k) => return Err(Error::DuplicateKey(k.key().clone()).into()),
@@ -77,7 +80,7 @@ impl Map for Global {
 
         rv.push(raw::Pair {
             key: raw::Key {
-                type_value: 0u8,
+                type_value: PSBT_GLOBAL_UNSIGNED_TX,
                 key: vec![],
             },
             value: {
@@ -127,7 +130,7 @@ impl Decodable for Global {
             match raw::Pair::consensus_decode(&mut d) {
                 Ok(pair) => {
                     match pair.key.type_value {
-                        0u8 => {
+                        PSBT_GLOBAL_UNSIGNED_TX => {
                             // key has to be empty
                             if pair.key.key.is_empty() {
                                 // there can only be one unsigned transaction
