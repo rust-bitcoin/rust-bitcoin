@@ -18,9 +18,12 @@
 //! defined at https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki
 //! except we define PSBTs containing non-standard SigHash types as invalid.
 
-use blockdata::script::Script;
-use blockdata::transaction::Transaction;
+use blockdata::transaction::{SigHashType, Transaction};
+use hash_types::SigHash;
 use consensus::{encode, Encodable, Decodable};
+use util::bip143::SigHashCache;
+use blockdata::script::{Builder, Script};
+use blockdata::opcodes;
 
 use std::io;
 
@@ -87,6 +90,83 @@ impl PartiallySignedTransaction {
         }
 
         Ok(())
+    }
+
+    /// Calculate the Sighash for the Psbt Input at idx depending on whether input spends
+    /// spends a segwit or not
+    /// #Panics:
+    /// Panics if the index >= number of inputs in psbt
+    pub fn signature_hash(&self, idx: usize) -> Result<SigHash, self::Error> {
+        let inp = &self.inputs[idx];
+        let sighash_type = inp.sighash_type.unwrap_or_else(|| SigHashType::All);
+        // Compute Script code for the Script. When this script is used as scriptPubkey,
+        // the Script Code determines what goes into sighash.
+        // For non-p2sh non-segwit outputs and non-p2sh wrapped segwit-outputs
+        // script code is the public key.
+        let sighash = if let Some(ref non_witness_utxo) = inp.non_witness_utxo {
+            let spent_outpoint = self.global.unsigned_tx.input[idx].previous_output;
+            if spent_outpoint.txid != non_witness_utxo.txid() {
+                return Err(Error::InvalidNonWitnessUtxo {
+                    prevout_txid: spent_outpoint.txid,
+                    non_witness_utxo_txid: non_witness_utxo.txid()
+                });
+            }
+            let script_pubkey =  &non_witness_utxo.output[spent_outpoint.vout as usize].script_pubkey;
+            if let Some(ref redeem_script) = inp.redeem_script {
+                if redeem_script.to_p2sh() != *script_pubkey {
+                    return Err(Error::InvalidWitnessScript{
+                        expected: script_pubkey.to_bytes(),
+                        actual: redeem_script.to_p2sh().into_bytes(),
+                    });
+                }
+                self.global.unsigned_tx.signature_hash(
+                    idx, &redeem_script, sighash_type.as_u32()
+                )
+            } else {
+                self.global.unsigned_tx.signature_hash(
+                    idx, &script_pubkey, sighash_type.as_u32()
+                )
+            }
+        } else if let Some(ref witness_utxo) = inp.witness_utxo {
+            let script_pubkey = if let Some(ref redeem_script) = inp.redeem_script {
+                if redeem_script.to_p2sh() != witness_utxo.script_pubkey {
+                    return Err(Error::InvalidWitnessScript{
+                        expected: witness_utxo.script_pubkey.to_bytes(),
+                        actual: redeem_script.to_p2sh().into_bytes(),
+                    });
+                }
+                redeem_script
+            } else {
+                &witness_utxo.script_pubkey
+            };
+
+            let amt = witness_utxo.value;
+            let mut sighash_cache = SigHashCache::new(&self.global.unsigned_tx);
+            if let Some(ref witness_script) = inp.witness_script {
+                if witness_script.to_v0_p2wsh() != *script_pubkey {
+                    return Err(Error::InvalidWitnessScript{
+                        expected: script_pubkey.clone().into_bytes(),
+                        actual: witness_script.to_p2sh().into_bytes(),
+                    });
+                }
+                sighash_cache.signature_hash(idx, &witness_script, amt, sighash_type)
+            } else if script_pubkey.is_v0_p2wpkh() {
+                // Indirect way to get script code
+                let builder = Builder::new();
+                let script_code = builder
+                .push_opcode(opcodes::all::OP_DUP)
+                .push_opcode(opcodes::all::OP_HASH160)
+                .push_slice(&script_pubkey[2..22])
+                .push_opcode(opcodes::all::OP_EQUALVERIFY)
+                .into_script();
+                sighash_cache.signature_hash(idx, &script_code, amt, sighash_type)
+            } else {
+                return Err(Error::UnrecognizedWitnessProgram);
+            }
+        } else {
+            return Err(Error::MustHaveSpendingUtxo);
+        };
+        Ok(sighash)
     }
 }
 

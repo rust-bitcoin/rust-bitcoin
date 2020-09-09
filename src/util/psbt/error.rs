@@ -19,6 +19,7 @@ use blockdata::transaction::Transaction;
 use util::psbt::raw;
 
 use hashes::{self, sha256, hash160, sha256d, ripemd160};
+use hash_types::Txid;
 
 /// Support hash-preimages in psbt
 #[derive(Debug)]
@@ -66,7 +67,29 @@ pub enum Error {
         preimage: Vec<u8>,
         /// Hash value
         hash: PsbtHash,
-    }
+    },
+    /// If NonWitnessUtxo is used, the nonWitnessUtxo txid must
+    /// be the same of prevout txid
+    InvalidNonWitnessUtxo{
+        /// Pre-image
+        prevout_txid: Txid,
+        /// Hash value
+        non_witness_utxo_txid: Txid,
+    },
+    /// Incorrect P2sh/p2wsh script hash for the witness/redeem
+    /// script
+    InvalidWitnessScript{
+        /// Expected Witness/Redeem Script Hash
+        // returns a vec to unify the p2wsh(sha2) and p2sh(hash160)
+        expected: Vec<u8>,
+        /// Actual Witness script Hash
+        actual: Vec<u8>,
+    },
+    /// Currently only p2wpkh and p2wsh scripts are possible in segwit
+    UnrecognizedWitnessProgram,
+    /// The psbt input must either have an associated nonWitnessUtxo or
+    /// a WitnessUtxo
+    MustHaveSpendingUtxo,
 }
 
 impl fmt::Display for Error {
@@ -88,6 +111,18 @@ impl fmt::Display for Error {
             Error::InvalidPreimageHashPair{ref preimage, ref hash} => {
                 // directly using debug forms of psbthash enums
                 write!(f, "Preimage {:?} does not match hash {:?}", preimage, hash )
+            },
+            Error::InvalidNonWitnessUtxo{ref prevout_txid, ref non_witness_utxo_txid} => {
+                write!(f, "NonWitnessUtxo txid {} must be the same as prevout txid {}", non_witness_utxo_txid, prevout_txid)
+            },
+            Error::InvalidWitnessScript{ref expected, ref actual} => {
+                write!(f, "Invalid Witness/Redeem script: Expected {:?}, got {:?}", expected, actual)
+            }
+            Error::UnrecognizedWitnessProgram => {
+                f.write_str("Witness program must be p2wpkh/p2wsh")
+            }
+            Error::MustHaveSpendingUtxo => {
+                f.write_str("Input must either WitnessUtxo/ NonWitnessUtxo")
             }
         }
     }
