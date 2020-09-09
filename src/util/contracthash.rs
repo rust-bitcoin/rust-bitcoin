@@ -18,6 +18,8 @@
 //! at http://blockstream.com/sidechains.pdf for details of
 //! what this does.
 
+#![deprecated]
+
 use secp256k1::{self, Secp256k1};
 use PrivateKey;
 use PublicKey;
