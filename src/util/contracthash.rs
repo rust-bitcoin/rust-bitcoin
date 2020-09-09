@@ -220,8 +220,11 @@ pub fn untemplate(script: &script::Script) -> Result<(Template, Vec<PublicKey>),
     }
 
     let mut mode = Mode::SeekingKeys;
-    for instruction in script.iter(false) {
-        match instruction {
+    for instruction in script.instructions() {
+        if let Err(e) = instruction {
+            return Err(Error::Script(e));
+        }
+        match instruction.unwrap() {
             script::Instruction::PushBytes(data) => {
                 let n = data.len();
                 ret = match PublicKey::from_slice(data) {
@@ -268,7 +271,6 @@ pub fn untemplate(script: &script::Script) -> Result<(Template, Vec<PublicKey>),
                 }
                 ret = ret.push_opcode(op);
             }
-            script::Instruction::Error(e) => { return Err(Error::Script(e)); }
         }
     }
     Ok((Template::from(&ret[..]), retkeys))

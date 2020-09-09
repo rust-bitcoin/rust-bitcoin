@@ -329,10 +329,21 @@ impl Script {
     /// opcodes, datapushes and errors. At most one error will be returned and then the
     /// iterator will end. To instead iterate over the script as sequence of bytes, treat
     /// it as a slice using `script[..]` or convert it to a vector using `into_bytes()`.
-    pub fn iter(&self, enforce_minimal: bool) -> Instructions {
+    ///
+    /// To force minimal pushes, use [instructions_minimal].
+    pub fn instructions(&self) -> Instructions {
         Instructions {
             data: &self.0[..],
-            enforce_minimal: enforce_minimal,
+            enforce_minimal: false,
+        }
+    }
+
+    /// Iterate over the script in the form of `Instruction`s while enforcing
+    /// minimal pushes.
+    pub fn instructions_minimal(&self) -> Instructions {
+        Instructions {
+            data: &self.0[..],
+            enforce_minimal: true,
         }
     }
 
@@ -437,8 +448,6 @@ pub enum Instruction<'a> {
     PushBytes(&'a [u8]),
     /// Some non-push opcode
     Op(opcodes::All),
-    /// An opcode we were unable to parse
-    Error(Error)
 }
 
 /// Iterator over a script returning parsed opcodes
@@ -448,9 +457,9 @@ pub struct Instructions<'a> {
 }
 
 impl<'a> Iterator for Instructions<'a> {
-    type Item = Instruction<'a>;
+    type Item = Result<Instruction<'a>, Error>;
 
-    fn next(&mut self) -> Option<Instruction<'a>> {
+    fn next(&mut self) -> Option<Result<Instruction<'a>, Error>> {
         if self.data.is_empty() {
             return None;
         }
@@ -460,93 +469,93 @@ impl<'a> Iterator for Instructions<'a> {
                 let n = n as usize;
                 if self.data.len() < n + 1 {
                     self.data = &[];  // Kill iterator so that it does not return an infinite stream of errors
-                    return Some(Instruction::Error(Error::EarlyEndOfScript));
+                    return Some(Err(Error::EarlyEndOfScript));
                 }
                 if self.enforce_minimal {
                     if n == 1 && (self.data[1] == 0x81 || (self.data[1] > 0 && self.data[1] <= 16)) {
                         self.data = &[];
-                        return Some(Instruction::Error(Error::NonMinimalPush));
+                        return Some(Err(Error::NonMinimalPush));
                     }
                 }
-                let ret = Some(Instruction::PushBytes(&self.data[1..n+1]));
+                let ret = Some(Ok(Instruction::PushBytes(&self.data[1..n+1])));
                 self.data = &self.data[n + 1..];
                 ret
             }
             opcodes::Class::Ordinary(opcodes::Ordinary::OP_PUSHDATA1) => {
                 if self.data.len() < 2 {
                     self.data = &[];
-                    return Some(Instruction::Error(Error::EarlyEndOfScript));
+                    return Some(Err(Error::EarlyEndOfScript));
                 }
                 let n = match read_uint(&self.data[1..], 1) {
                     Ok(n) => n,
                     Err(e) => {
                         self.data = &[];
-                        return Some(Instruction::Error(e));
+                        return Some(Err(e));
                     }
                 };
                 if self.data.len() < n + 2 {
                     self.data = &[];
-                    return Some(Instruction::Error(Error::EarlyEndOfScript));
+                    return Some(Err(Error::EarlyEndOfScript));
                 }
                 if self.enforce_minimal && n < 76 {
                     self.data = &[];
-                    return Some(Instruction::Error(Error::NonMinimalPush));
+                    return Some(Err(Error::NonMinimalPush));
                 }
-                let ret = Some(Instruction::PushBytes(&self.data[2..n+2]));
+                let ret = Some(Ok(Instruction::PushBytes(&self.data[2..n+2])));
                 self.data = &self.data[n + 2..];
                 ret
             }
             opcodes::Class::Ordinary(opcodes::Ordinary::OP_PUSHDATA2) => {
                 if self.data.len() < 3 {
                     self.data = &[];
-                    return Some(Instruction::Error(Error::EarlyEndOfScript));
+                    return Some(Err(Error::EarlyEndOfScript));
                 }
                 let n = match read_uint(&self.data[1..], 2) {
                     Ok(n) => n,
                     Err(e) => {
                         self.data = &[];
-                        return Some(Instruction::Error(e));
+                        return Some(Err(e));
                     }
                 };
                 if self.enforce_minimal && n < 0x100 {
                     self.data = &[];
-                    return Some(Instruction::Error(Error::NonMinimalPush));
+                    return Some(Err(Error::NonMinimalPush));
                 }
                 if self.data.len() < n + 3 {
                     self.data = &[];
-                    return Some(Instruction::Error(Error::EarlyEndOfScript));
+                    return Some(Err(Error::EarlyEndOfScript));
                 }
-                let ret = Some(Instruction::PushBytes(&self.data[3..n + 3]));
+                let ret = Some(Ok(Instruction::PushBytes(&self.data[3..n + 3])));
                 self.data = &self.data[n + 3..];
                 ret
             }
             opcodes::Class::Ordinary(opcodes::Ordinary::OP_PUSHDATA4) => {
                 if self.data.len() < 5 {
                     self.data = &[];
-                    return Some(Instruction::Error(Error::EarlyEndOfScript));
+                    return Some(Err(Error::EarlyEndOfScript));
                 }
                 let n = match read_uint(&self.data[1..], 4) {
                     Ok(n) => n,
                     Err(e) => {
                         self.data = &[];
-                        return Some(Instruction::Error(e));
+                        return Some(Err(e));
                     }
                 };
                 if self.enforce_minimal && n < 0x10000 {
                     self.data = &[];
-                    return Some(Instruction::Error(Error::NonMinimalPush));
+                    return Some(Err(Error::NonMinimalPush));
                 }
                 if self.data.len() < n + 5 {
                     self.data = &[];
-                    return Some(Instruction::Error(Error::EarlyEndOfScript));
+                    return Some(Err(Error::EarlyEndOfScript));
                 }
-                let ret = Some(Instruction::PushBytes(&self.data[5..n + 5]));
+                let ret = Some(Ok(Instruction::PushBytes(&self.data[5..n + 5])));
                 self.data = &self.data[n + 5..];
                 ret
             }
             // Everything else we can push right through
             _ => {
-                let ret = Some(Instruction::Op(opcodes::All::from(self.data[0])));
+                let ret = Some(Ok(Instruction::Op(opcodes::All::from(self.data[0]))));
                 self.data = &self.data[1..];
                 ret
             }
@@ -676,8 +685,8 @@ impl Default for Builder {
 impl From<Vec<u8>> for Builder {
     fn from(v: Vec<u8>) -> Builder {
         let script = Script(v.into_boxed_slice());
-        let last_op = match script.iter(false).last() {
-            Some(Instruction::Op(op)) => Some(op),
+        let last_op = match script.instructions().last() {
+            Some(Ok(Instruction::Op(op))) => Some(op),
             _ => None,
         };
         Builder(script.into_bytes(), last_op)
@@ -1009,31 +1018,31 @@ mod test {
         let minimal = hex_script!("0169b2");           // minimal
         let nonminimal_alt = hex_script!("026900b2");  // non-minimal number but minimal push (should be OK)
 
-        let v_zero: Vec<Instruction> = zero.iter(true).collect();
-        let v_zeropush: Vec<Instruction> = zeropush.iter(true).collect();
+        let v_zero: Result<Vec<Instruction>, Error> = zero.instructions_minimal().collect();
+        let v_zeropush: Result<Vec<Instruction>, Error> = zeropush.instructions_minimal().collect();
 
-        let v_min: Vec<Instruction> = minimal.iter(true).collect();
-        let v_nonmin: Vec<Instruction> = nonminimal.iter(true).collect();
-        let v_nonmin_alt: Vec<Instruction> = nonminimal_alt.iter(true).collect();
-        let slop_v_min: Vec<Instruction> = minimal.iter(false).collect();
-        let slop_v_nonmin: Vec<Instruction> = nonminimal.iter(false).collect();
-        let slop_v_nonmin_alt: Vec<Instruction> = nonminimal_alt.iter(false).collect();
+        let v_min: Result<Vec<Instruction>, Error> = minimal.instructions_minimal().collect();
+        let v_nonmin: Result<Vec<Instruction>, Error> = nonminimal.instructions_minimal().collect();
+        let v_nonmin_alt: Result<Vec<Instruction>, Error> = nonminimal_alt.instructions_minimal().collect();
+        let slop_v_min: Result<Vec<Instruction>, Error> = minimal.instructions().collect();
+        let slop_v_nonmin: Result<Vec<Instruction>, Error> = nonminimal.instructions().collect();
+        let slop_v_nonmin_alt: Result<Vec<Instruction>, Error> = nonminimal_alt.instructions().collect();
 
         assert_eq!(
-            v_zero,
+            v_zero.unwrap(),
             vec![
                 Instruction::PushBytes(&[]),
             ]
         );
         assert_eq!(
-            v_zeropush,
+            v_zeropush.unwrap(),
             vec![
                 Instruction::PushBytes(&[0]),
             ]
         );
 
         assert_eq!(
-            v_min,
+            v_min.clone().unwrap(),
             vec![
                 Instruction::PushBytes(&[105]),
                 Instruction::Op(opcodes::OP_NOP3),
@@ -1041,23 +1050,21 @@ mod test {
         );
 
         assert_eq!(
-            v_nonmin,
-            vec![
-                Instruction::Error(Error::NonMinimalPush),
-            ]
+            v_nonmin.err().unwrap(),
+            Error::NonMinimalPush
         );
 
         assert_eq!(
-            v_nonmin_alt,
+            v_nonmin_alt.clone().unwrap(),
             vec![
                 Instruction::PushBytes(&[105, 0]),
                 Instruction::Op(opcodes::OP_NOP3),
             ]
         );
 
-        assert_eq!(v_min, slop_v_min);
-        assert_eq!(v_min, slop_v_nonmin);
-        assert_eq!(v_nonmin_alt, slop_v_nonmin_alt);
+        assert_eq!(v_min.clone().unwrap(), slop_v_min.unwrap());
+        assert_eq!(v_min.unwrap(), slop_v_nonmin.unwrap());
+        assert_eq!(v_nonmin_alt.unwrap(), slop_v_nonmin_alt.unwrap());
     }
 
 	#[test]
