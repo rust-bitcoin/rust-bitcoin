@@ -371,6 +371,66 @@ macro_rules! serde_string_impl {
             }
         }
     };
+
+    ($name:ident<$($gen:ident: $gent:ident),*>, $expecting:expr) => {
+        #[cfg(feature = "serde")]
+        impl<'de, $($gen: $gent),*> $crate::serde::Deserialize<'de> for $name<$($gen),*> {
+            fn deserialize<D>(deserializer: D) -> Result<$name<$($gen),*>, D::Error>
+            where
+                D: $crate::serde::de::Deserializer<'de>,
+            {
+                use ::std::fmt::{self, Formatter};
+                use ::std::str::FromStr;
+
+                struct Visitor<$($gen: $gent),*>(::std::marker::PhantomData<$($gen),*>);
+
+                impl<$($gen: $gent),*> Visitor<$($gen),*> {
+                    pub fn new() -> Visitor<$($gen),*> { Visitor(::std::marker::PhantomData::default()) }
+                }
+
+                impl<'de, $($gen: $gent),*> $crate::serde::de::Visitor<'de> for Visitor<$($gen),*> {
+                    type Value = $name::<$($gen),*>;
+
+                    fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
+                        formatter.write_str($expecting)
+                    }
+
+                    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+                    where
+                        E: $crate::serde::de::Error,
+                    {
+                        $name::from_str(v).map_err(E::custom)
+                    }
+
+                    fn visit_borrowed_str<E>(self, v: &'de str) -> Result<Self::Value, E>
+                    where
+                        E: $crate::serde::de::Error,
+                    {
+                        self.visit_str(v)
+                    }
+
+                    fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+                    where
+                        E: $crate::serde::de::Error,
+                    {
+                        self.visit_str(&v)
+                    }
+                }
+
+                deserializer.deserialize_str(Visitor::<$($gen),*>::new())
+            }
+        }
+
+        #[cfg(feature = "serde")]
+        impl<'de, $($gen: $gent),*> $crate::serde::Serialize for $name<$($gen),*> {
+            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+            where
+                S: $crate::serde::Serializer,
+            {
+                serializer.collect_str(&self)
+            }
+        }
+    };
 }
 
 /// A combination of serde_struct_impl and serde_string_impl where string is
