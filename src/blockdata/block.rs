@@ -37,7 +37,7 @@ use VarInt;
 #[derive(Copy, PartialEq, Eq, Clone, Debug)]
 pub struct BlockHeader {
     /// The protocol version. Should always be 1.
-    pub version: u32,
+    pub version: i32,
     /// Reference to the previous block in the chain
     pub prev_blockhash: BlockHash,
     /// The root hash of the merkle tree of transactions in the block
@@ -312,6 +312,21 @@ mod tests {
     }
 
     #[test]
+    fn block_version_test() {
+        let block = Vec::from_hex("ffffff7f0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000").unwrap();
+        let decode: Result<Block, _> = deserialize(&block);
+        assert!(decode.is_ok());
+        let real_decode = decode.unwrap();
+        assert_eq!(real_decode.header.version, 2147483647);
+
+        let block2 = Vec::from_hex("000000800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000").unwrap();
+        let decode2: Result<Block, _> = deserialize(&block2);
+        assert!(decode2.is_ok());
+        let real_decode2 = decode2.unwrap();
+        assert_eq!(real_decode2.header.version, -2147483648);
+    }
+
+    #[test]
     fn compact_roundrtip_test() {
         let some_header = Vec::from_hex("010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914cd74d6e49ffff001d323b3a7b").unwrap();
 
@@ -320,4 +335,3 @@ mod tests {
         assert_eq!(header.bits, BlockHeader::compact_target_from_u256(&header.target()));
     }
 }
-

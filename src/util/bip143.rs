@@ -30,7 +30,7 @@ use consensus::encode::Encodable;
 #[derive(Clone, PartialEq, Eq, Debug)]
 #[deprecated(since="0.24.0", note="please use `SigHashCache` instead")]
 pub struct SighashComponents {
-    tx_version: u32,
+    tx_version: i32,
     tx_locktime: u32,
     /// Hash of all the previous outputs
     pub hash_prevouts: SigHash,
