@@ -29,6 +29,62 @@ use network::constants::Network;
 use util::{base58, endian};
 use util::key::{PublicKey, PrivateKey};
 
+/// Magical version bytes for xpub: bitcoin mainnet public key for P2PKH or P2SH
+pub const VERSION_MAGIC_XPUB: [u8; 4] = [0x04, 0x88, 0xB2, 0x1E];
+/// Magical version bytes for xprv: bitcoin mainnet private key for P2PKH or P2SH
+pub const VERSION_MAGIC_XPRV: [u8; 4] = [0x04, 0x88, 0xAD, 0xE4];
+/// Magical version bytes for ypub: bitcoin mainnet public key for P2WPKH in P2SH
+pub const VERSION_MAGIC_YPUB: [u8; 4] = [0x04, 0x9D, 0x7C, 0xB2];
+/// Magical version bytes for yprv: bitcoin mainnet private key for P2WPKH in P2SH
+pub const VERSION_MAGIC_YPRV: [u8; 4] = [0x04, 0x9D, 0x78, 0x78];
+/// Magical version bytes for zpub: bitcoin mainnet public key for P2WPKH
+pub const VERSION_MAGIC_ZPUB: [u8; 4] = [0x04, 0xB2, 0x47, 0x46];
+/// Magical version bytes for zprv: bitcoin mainnet private key for P2WPKH
+pub const VERSION_MAGIC_ZPRV: [u8; 4] = [0x04, 0xB2, 0x43, 0x0C];
+/// Magical version bytes for Ypub: bitcoin mainnet public key for
+/// multi-signature P2WSH in P2SH
+pub const VERSION_MAGIC_YPUB_MULTISIG: [u8; 4] = [0x02, 0x95, 0xb4, 0x3f];
+/// Magical version bytes for Yprv: bitcoin mainnet private key for
+/// multi-signature P2WSH in P2SH
+pub const VERSION_MAGIC_YPRV_MULTISIG: [u8; 4] = [0x02, 0x95, 0xb0, 0x05];
+/// Magical version bytes for Zpub: bitcoin mainnet public key for
+/// multi-signature P2WSH
+pub const VERSION_MAGIC_ZPUB_MULTISIG: [u8; 4] = [0x02, 0xaa, 0x7e, 0xd3];
+/// Magical version bytes for Zprv: bitcoin mainnet private key for
+/// multi-signature P2WSH
+pub const VERSION_MAGIC_ZPRV_MULTISIG: [u8; 4] = [0x02, 0xaa, 0x7a, 0x99];
+
+/// Magical version bytes for tpub: bitcoin testnet/regtest public key for
+/// P2PKH or P2SH
+pub const VERSION_MAGIC_TPUB: [u8; 4] = [0x04, 0x35, 0x87, 0xCF];
+/// Magical version bytes for tprv: bitcoin testnet/regtest private key for
+/// P2PKH or P2SH
+pub const VERSION_MAGIC_TPRV: [u8; 4] = [0x04, 0x35, 0x83, 0x94];
+/// Magical version bytes for upub: bitcoin testnet/regtest public key for
+/// P2WPKH in P2SH
+pub const VERSION_MAGIC_UPUB: [u8; 4] = [0x04, 0x4A, 0x52, 0x62];
+/// Magical version bytes for uprv: bitcoin testnet/regtest private key for
+/// P2WPKH in P2SH
+pub const VERSION_MAGIC_UPRV: [u8; 4] = [0x04, 0x4A, 0x4E, 0x28];
+/// Magical version bytes for vpub: bitcoin testnet/regtest public key for
+/// P2WPKH
+pub const VERSION_MAGIC_VPUB: [u8; 4] = [0x04, 0x5F, 0x1C, 0xF6];
+/// Magical version bytes for vprv: bitcoin testnet/regtest private key for
+/// P2WPKH
+pub const VERSION_MAGIC_VPRV: [u8; 4] = [0x04, 0x5F, 0x18, 0xBC];
+/// Magical version bytes for Upub: bitcoin testnet/regtest public key for
+/// multi-signature P2WSH in P2SH
+pub const VERSION_MAGIC_UPUB_MULTISIG: [u8; 4] = [0x02, 0x42, 0x89, 0xef];
+/// Magical version bytes for Uprv: bitcoin testnet/regtest private key for
+/// multi-signature P2WSH in P2SH
+pub const VERSION_MAGIC_UPRV_MULTISIG: [u8; 4] = [0x02, 0x42, 0x85, 0xb5];
+/// Magical version bytes for Zpub: bitcoin testnet/regtest public key for
+/// multi-signature P2WSH
+pub const VERSION_MAGIC_VPUB_MULTISIG: [u8; 4] = [0x02, 0x57, 0x54, 0x83];
+/// Magical version bytes for Zprv: bitcoin testnet/regtest private key for
+/// multi-signature P2WSH
+pub const VERSION_MAGIC_VPRV_MULTISIG: [u8; 4] = [0x02, 0x57, 0x50, 0x48];
+
 /// A chain code
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ChainCode([u8; 32]);
@@ -47,11 +103,120 @@ impl Default for Fingerprint {
     fn default() -> Fingerprint { Fingerprint([0; 4]) }
 }
 
+/// Structure holding 4 verion bytes with magical numbers representing different
+/// versions of extended public and private keys according to BIP-32.
+/// Key version stores raw bytes without their check, interpretation or
+/// verification; for these purposes special helpers structures implementing
+/// [VersionResolver] are used.
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+pub struct KeyVersion([u8; 4]);
+
+/// Trait which must be implemented by helpers which do construction,
+/// interpretation, verification and cross-conversion of extended public and
+/// private key version magic bytes from [KeyVersion]
+pub trait VersionResolver: Copy + Clone + PartialEq + Eq + PartialOrd + Ord + ::std::hash::Hash + fmt::Debug {
+    /// Type that defines recognized network options
+    type Network;
+
+    /// Type that defines possible applications fro public and private keys
+    /// (types of scriptPubkey descriptors in which they can be used)
+    type Applications;
+
+    /// Constructor for [KeyVersion] with given network, application scope and
+    /// key type (public or private)
+    fn resolve(network: Self::Network, applicable_for: Self::Applications, is_priv: bool) -> KeyVersion;
+
+    /// Detects whether provided version corresponds to an extended public key.
+    /// Returns `None` if the version is not recognized/unknown to the resolver.
+    fn is_pub(_: &KeyVersion) -> Option<bool> { return None }
+
+    /// Detects whether provided version corresponds to an extended private key.
+    /// Returns `None` if the version is not recognized/unknown to the resolver.
+    fn is_prv(_: &KeyVersion) -> Option<bool> { return None }
+
+    /// Detects network used by the provided key version bytes.
+    /// Returns `None` if the version is not recognized/unknown to the resolver.
+    fn network(_: &KeyVersion) -> Option<Self::Network> { return None }
+
+    /// Detects application scope defined by the provided key version bytes.
+    /// Application scope is a types of scriptPubkey descriptors in which given
+    /// extended public/private keys can be used.
+    /// Returns `None` if the version is not recognized/unknown to the resolver.
+    fn applications(_: &KeyVersion) -> Option<Self::Applications> { return None }
+
+    /// Returns BIP 32 derivation path for the provided key version.
+    /// Returns `None` if the version is not recognized/unknown to the resolver.
+    fn derivation_path(_: &KeyVersion) -> Option<DerivationPath> { return None }
+
+    /// Converts version into version corresponding to an extended public key.
+    /// Returns `None` if the resolver does not know how to perform conversion.
+    fn make_pub(_: &KeyVersion) -> Option<KeyVersion> { return None }
+
+    /// Converts version into version corresponding to an extended private key.
+    /// Returns `None` if the resolver does not know how to perform conversion.
+    fn make_prv(_: &KeyVersion) -> Option<KeyVersion> { return None }
+}
+
+impl KeyVersion {
+    /// Detects whether provided version corresponds to an extended public key.
+    /// Returns `None` if the version is not recognized/unknown to the resolver.
+    pub fn is_pub<R: VersionResolver>(&self) -> Option<bool> { R::is_pub(&self) }
+
+    /// Detects whether provided version corresponds to an extended private key.
+    /// Returns `None` if the version is not recognized/unknown to the resolver.
+    pub fn is_prv<R: VersionResolver>(&self) -> Option<bool> { R::is_prv(&self) }
+
+    /// Detects network used by the provided key version bytes.
+    /// Returns `None` if the version is not recognized/unknown to the resolver.
+    pub fn network<R: VersionResolver>(&self) -> Option<R::Network> { R::network(&self) }
+
+    /// Detects application scope defined by the provided key version bytes.
+    /// Application scope is a types of scriptPubkey descriptors in which given
+    /// extended public/private keys can be used.
+    /// Returns `None` if the version is not recognized/unknown to the resolver.
+    pub fn applications<R: VersionResolver>(&self) -> Option<R::Applications> { R::applications(&self) }
+
+    /// Returns BIP 32 derivation path for the provided key version.
+    /// Returns `None` if the version is not recognized/unknown to the resolver.
+    pub fn derivation_path<R: VersionResolver>(&self) -> Option<DerivationPath> { R::derivation_path(&self) }
+
+    /// Converts version into version corresponding to an extended public key.
+    /// Returns `None` if the resolver does not know how to perform conversion.
+    pub fn try_to_pub<R: VersionResolver>(&self) -> Option<KeyVersion> { R::make_pub(&self) }
+
+    /// Converts version into version corresponding to an extended private key.
+    /// Returns `None` if the resolver does not know how to perform conversion.
+    pub fn try_to_prv<R: VersionResolver>(&self) -> Option<KeyVersion> { R::make_prv(&self) }
+}
+
+/// Default resolver knowing native [bitcoin::network::constants::Network]
+/// and BIP 32 and SLIP 132-defined key applications with [KeyApplications]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+pub struct DefaultResolver;
+
+/// SLIP 132-defined key applications defining types of scriptPubkey descriptors
+/// in which they can be used
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+pub enum KeyApplications {
+    /// xprv/xpub: keys that can be used for P2PKH and multisig P2SH scriptPubkey
+    /// descriptors.
+    Legacy,
+    /// zprv/zpub: keys that can be used for P2WPKH scriptPubkey descriptors
+    SegWitV0Singlesig,
+    /// yprv/ypub: keys that can be used for P2WPKH-in-P2SH scriptPubkey descriptors
+    SegWitLegacySinglesig,
+    /// Zprv/Zpub: keys that can be used for multisig P2WSH scriptPubkey descriptors
+    SegWitV0Miltisig,
+    /// Yprv/Ypub: keys that can be used for multisig P2WSH-in-P2SH scriptPubkey descriptors
+    SegWitLegacyMultisig,
+}
+
 /// Extended private key
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
-pub struct ExtendedPrivKey {
-    /// The network this key is to be used on
-    pub network: Network,
+pub struct ExtendedPrivKey<R: VersionResolver> {
+    /// Version bytes specifying to which network the key belongs
+    /// and for which types of scriptPubkey it may be used
+    pub version: KeyVersion,
     /// How many derivations this key is from the master (which is 0)
     pub depth: u8,
     /// Fingerprint of the parent key (0 for master)
@@ -61,15 +226,17 @@ pub struct ExtendedPrivKey {
     /// Private key
     pub private_key: PrivateKey,
     /// Chain code
-    pub chain_code: ChainCode
+    pub chain_code: ChainCode,
+    _marker: ::std::marker::PhantomData<R>
 }
-serde_string_impl!(ExtendedPrivKey, "a BIP-32 extended private key");
+serde_string_impl!(ExtendedPrivKey<R: VersionResolver>, "a BIP-32 extended private key");
 
 /// Extended public key
 #[derive(Copy, Clone, PartialEq, Eq, Debug, PartialOrd, Ord, Hash)]
-pub struct ExtendedPubKey {
-    /// The network this key is to be used on
-    pub network: Network,
+pub struct ExtendedPubKey<R: VersionResolver> {
+    /// Version bytes specifying to which network the key belongs
+    /// and for which types of scriptPubkey it may be used
+    pub version: KeyVersion,
     /// How many derivations this key is from the master (which is 0)
     pub depth: u8,
     /// Fingerprint of the parent key
@@ -79,9 +246,10 @@ pub struct ExtendedPubKey {
     /// Public key
     pub public_key: PublicKey,
     /// Chain code
-    pub chain_code: ChainCode
+    pub chain_code: ChainCode,
+    _marker: ::std::marker::PhantomData<R>
 }
-serde_string_impl!(ExtendedPubKey, "a BIP-32 extended public key");
+serde_string_impl!(ExtendedPubKey<R: VersionResolver>, "a BIP-32 extended public key");
 
 /// A child number for a derived key
 #[derive(Copy, Clone, PartialEq, Eq, Debug, PartialOrd, Ord, Hash)]
@@ -388,6 +556,8 @@ pub enum Error {
     InvalidChildNumberFormat,
     /// Invalid derivation path format.
     InvalidDerivationPathFormat,
+    /// Unknown version magic bytes
+    UnknownVersion([u8; 4])
 }
 
 impl fmt::Display for Error {
@@ -399,6 +569,7 @@ impl fmt::Display for Error {
             Error::RngError(ref s) => write!(f, "rng error {}", s),
             Error::InvalidChildNumberFormat => f.write_str("invalid child number format"),
             Error::InvalidDerivationPathFormat => f.write_str("invalid derivation path format"),
+            Error::UnknownVersion(ref bytes) => write!(f, "unknown version magic bytes: {:?}", bytes),
         }
     }
 }
@@ -417,26 +588,256 @@ impl From<secp256k1::Error> for Error {
     fn from(e: secp256k1::Error) -> Error { Error::Ecdsa(e) }
 }
 
-impl ExtendedPrivKey {
+impl KeyVersion {
+    /// Tries to construct [KeyVersion] object from a byte slice. If byte slice
+    /// length is not equal to 4, returns `None`
+    pub fn from_slice(version_slice: &[u8]) -> Option<KeyVersion> {
+        if version_slice.len() != 4 {
+            return None;
+        }
+        Some(KeyVersion::from_u32(endian::slice_to_u32_be(version_slice)))
+    }
+
+    /// Constructs [KeyVersion] from a fixed 4 bytes values
+    pub fn from_bytes(version_bytes: [u8; 4]) -> KeyVersion {
+        KeyVersion(version_bytes)
+    }
+
+    /// Constructs [KeyVersion from a `u32`-representation of the version
+    /// bytes (the representation must be in bing endian format)
+    pub fn from_u32(version_bytes: u32) -> KeyVersion {
+        KeyVersion(endian::u32_to_array_be(version_bytes))
+    }
+
+    /// Converts version bytes into `u32` representation in big endian format
+    pub fn to_u32(&self) -> u32 {
+        endian::slice_to_u32_be(&self.0)
+    }
+
+    /// Returns slice representing internal version bytes
+    pub fn as_slice(&self) -> &[u8] {
+        &self.0
+    }
+
+    /// Returns internal representation of version bytes
+    pub fn as_bytes(&self) -> &[u8; 4] {
+        &self.0
+    }
+
+    /// Constructs 4-byte array containing version byte values
+    pub fn to_bytes(&self) -> [u8; 4] {
+        self.0
+    }
+
+    /// Converts into 4-byte array containing version byte values
+    pub fn into_bytes(self) -> [u8; 4] {
+        self.0
+    }
+}
+
+impl VersionResolver for DefaultResolver {
+    type Network = Network;
+    type Applications = KeyApplications;
+
+    fn resolve(network: Self::Network, applicable_for: Self::Applications, is_priv: bool) -> KeyVersion {
+        match (network, applicable_for, is_priv) {
+            (Network::Bitcoin, KeyApplications::Legacy, false) => KeyVersion(VERSION_MAGIC_XPUB),
+            (Network::Bitcoin, KeyApplications::Legacy, true) => KeyVersion(VERSION_MAGIC_XPRV),
+            (Network::Bitcoin, KeyApplications::SegWitLegacySinglesig, false) => KeyVersion(VERSION_MAGIC_YPUB),
+            (Network::Bitcoin, KeyApplications::SegWitLegacySinglesig, true) => KeyVersion(VERSION_MAGIC_YPRV),
+            (Network::Bitcoin, KeyApplications::SegWitV0Singlesig, false) => KeyVersion(VERSION_MAGIC_ZPUB),
+            (Network::Bitcoin, KeyApplications::SegWitV0Singlesig, true) => KeyVersion(VERSION_MAGIC_ZPRV),
+            (Network::Bitcoin, KeyApplications::SegWitLegacyMultisig, false) => KeyVersion(VERSION_MAGIC_YPUB_MULTISIG),
+            (Network::Bitcoin, KeyApplications::SegWitLegacyMultisig, true) => KeyVersion(VERSION_MAGIC_YPRV_MULTISIG),
+            (Network::Bitcoin, KeyApplications::SegWitV0Miltisig, false) => KeyVersion(VERSION_MAGIC_ZPUB_MULTISIG),
+            (Network::Bitcoin, KeyApplications::SegWitV0Miltisig, true) => KeyVersion(VERSION_MAGIC_ZPRV_MULTISIG),
+            (_, KeyApplications::Legacy, false) => KeyVersion(VERSION_MAGIC_TPUB),
+            (_, KeyApplications::Legacy, true) => KeyVersion(VERSION_MAGIC_TPRV),
+            (_, KeyApplications::SegWitLegacySinglesig, false) => KeyVersion(VERSION_MAGIC_UPUB),
+            (_, KeyApplications::SegWitLegacySinglesig, true) => KeyVersion(VERSION_MAGIC_UPRV),
+            (_, KeyApplications::SegWitV0Singlesig, false) => KeyVersion(VERSION_MAGIC_VPUB),
+            (_, KeyApplications::SegWitV0Singlesig, true) => KeyVersion(VERSION_MAGIC_VPRV),
+            (_, KeyApplications::SegWitLegacyMultisig, false) => KeyVersion(VERSION_MAGIC_UPUB_MULTISIG),
+            (_, KeyApplications::SegWitLegacyMultisig, true) => KeyVersion(VERSION_MAGIC_UPRV_MULTISIG),
+            (_, KeyApplications::SegWitV0Miltisig, false) => KeyVersion(VERSION_MAGIC_VPUB_MULTISIG),
+            (_, KeyApplications::SegWitV0Miltisig, true) => KeyVersion(VERSION_MAGIC_VPRV_MULTISIG),
+        }
+    }
+
+    fn is_pub(kv: &KeyVersion) -> Option<bool> {
+        match kv.as_bytes() {
+            &VERSION_MAGIC_XPUB
+            | &VERSION_MAGIC_YPUB
+            | &VERSION_MAGIC_ZPUB
+            | &VERSION_MAGIC_TPUB
+            | &VERSION_MAGIC_UPUB
+            | &VERSION_MAGIC_VPUB
+            | &VERSION_MAGIC_YPUB_MULTISIG
+            | &VERSION_MAGIC_ZPUB_MULTISIG
+            | &VERSION_MAGIC_UPUB_MULTISIG
+            | &VERSION_MAGIC_VPUB_MULTISIG => Some(true),
+            &VERSION_MAGIC_XPRV
+            | &VERSION_MAGIC_YPRV
+            | &VERSION_MAGIC_ZPRV
+            | &VERSION_MAGIC_TPRV
+            | &VERSION_MAGIC_UPRV
+            | &VERSION_MAGIC_VPRV
+            | &VERSION_MAGIC_YPRV_MULTISIG
+            | &VERSION_MAGIC_ZPRV_MULTISIG
+            | &VERSION_MAGIC_UPRV_MULTISIG
+            | &VERSION_MAGIC_VPRV_MULTISIG => Some(false),
+            _ => None,
+        }
+    }
+
+    fn is_prv(kv: &KeyVersion) -> Option<bool> {
+        DefaultResolver::is_pub(kv).map(|v| !v)
+    }
+
+    fn network(kv: &KeyVersion) -> Option<Self::Network> {
+        match kv.as_bytes() {
+            &VERSION_MAGIC_XPRV
+            | &VERSION_MAGIC_XPUB
+            | &VERSION_MAGIC_YPRV
+            | &VERSION_MAGIC_YPUB
+            | &VERSION_MAGIC_ZPRV
+            | &VERSION_MAGIC_ZPUB
+            | &VERSION_MAGIC_YPRV_MULTISIG
+            | &VERSION_MAGIC_YPUB_MULTISIG
+            | &VERSION_MAGIC_ZPRV_MULTISIG
+            | &VERSION_MAGIC_ZPUB_MULTISIG => Some(Network::Bitcoin),
+            &VERSION_MAGIC_TPRV
+            | &VERSION_MAGIC_TPUB
+            | &VERSION_MAGIC_UPRV
+            | &VERSION_MAGIC_UPUB
+            | &VERSION_MAGIC_VPRV
+            | &VERSION_MAGIC_VPUB
+            | &VERSION_MAGIC_UPRV_MULTISIG
+            | &VERSION_MAGIC_UPUB_MULTISIG
+            | &VERSION_MAGIC_VPRV_MULTISIG
+            | &VERSION_MAGIC_VPUB_MULTISIG => Some(Network::Testnet),
+            _ => None,
+        }
+    }
+
+    fn applications(kv: &KeyVersion) -> Option<Self::Applications> {
+        match kv.as_bytes() {
+            &VERSION_MAGIC_XPUB
+            | &VERSION_MAGIC_XPRV
+            | &VERSION_MAGIC_TPUB
+            | &VERSION_MAGIC_TPRV => Some(KeyApplications::Legacy),
+            &VERSION_MAGIC_YPUB
+            | &VERSION_MAGIC_YPRV
+            | &VERSION_MAGIC_UPUB
+            | &VERSION_MAGIC_UPRV => Some(KeyApplications::SegWitLegacySinglesig),
+            &VERSION_MAGIC_YPUB_MULTISIG
+            | &VERSION_MAGIC_YPRV_MULTISIG
+            | &VERSION_MAGIC_UPUB_MULTISIG
+            | &VERSION_MAGIC_UPRV_MULTISIG => Some(KeyApplications::SegWitLegacyMultisig),
+            &VERSION_MAGIC_ZPUB
+            | &VERSION_MAGIC_ZPRV
+            | &VERSION_MAGIC_VPUB
+            | &VERSION_MAGIC_VPRV => Some(KeyApplications::SegWitV0Singlesig),
+            &VERSION_MAGIC_ZPUB_MULTISIG
+            | &VERSION_MAGIC_ZPRV_MULTISIG
+            | &VERSION_MAGIC_VPUB_MULTISIG
+            | &VERSION_MAGIC_VPRV_MULTISIG => Some(KeyApplications::SegWitV0Miltisig),
+            _ => None,
+        }
+    }
+
+    fn derivation_path(kv: &KeyVersion) -> Option<DerivationPath> {
+        match kv.as_bytes() {
+            &VERSION_MAGIC_XPUB
+            | &VERSION_MAGIC_XPRV => Some(DerivationPath::from(vec![ChildNumber::Hardened { index: 44 }, ChildNumber::Hardened { index: 0 }])),
+            &VERSION_MAGIC_TPUB
+            | &VERSION_MAGIC_TPRV => Some(DerivationPath::from(vec![ChildNumber::Hardened { index: 44 }, ChildNumber::Hardened { index: 1 }])),
+            &VERSION_MAGIC_YPUB
+            | &VERSION_MAGIC_YPRV => Some(DerivationPath::from(vec![ChildNumber::Hardened { index: 49 }, ChildNumber::Hardened { index: 0 }])),
+            &VERSION_MAGIC_UPUB
+            | &VERSION_MAGIC_UPRV => Some(DerivationPath::from(vec![ChildNumber::Hardened { index: 49 }, ChildNumber::Hardened { index: 1 }])),
+            &VERSION_MAGIC_ZPUB
+            | &VERSION_MAGIC_ZPRV => Some(DerivationPath::from(vec![ChildNumber::Hardened { index: 84 }, ChildNumber::Hardened { index: 0 }])),
+            &VERSION_MAGIC_VPUB
+            | &VERSION_MAGIC_VPRV => Some(DerivationPath::from(vec![ChildNumber::Hardened { index: 84 }, ChildNumber::Hardened { index: 1 }])),
+            _ => None,
+        }
+    }
+
+    fn make_pub(kv: &KeyVersion) -> Option<KeyVersion> {
+        match kv.as_bytes() {
+            &VERSION_MAGIC_XPRV => Some(KeyVersion::from_bytes(VERSION_MAGIC_XPUB)),
+            &VERSION_MAGIC_YPRV => Some(KeyVersion::from_bytes(VERSION_MAGIC_YPUB)),
+            &VERSION_MAGIC_ZPRV => Some(KeyVersion::from_bytes(VERSION_MAGIC_ZPUB)),
+            &VERSION_MAGIC_TPRV => Some(KeyVersion::from_bytes(VERSION_MAGIC_TPUB)),
+            &VERSION_MAGIC_UPRV => Some(KeyVersion::from_bytes(VERSION_MAGIC_UPUB)),
+            &VERSION_MAGIC_VPRV => Some(KeyVersion::from_bytes(VERSION_MAGIC_VPUB)),
+            &VERSION_MAGIC_YPRV_MULTISIG => Some(KeyVersion::from_bytes(VERSION_MAGIC_YPUB_MULTISIG)),
+            &VERSION_MAGIC_ZPRV_MULTISIG => Some(KeyVersion::from_bytes(VERSION_MAGIC_ZPUB_MULTISIG)),
+            &VERSION_MAGIC_UPRV_MULTISIG => Some(KeyVersion::from_bytes(VERSION_MAGIC_UPUB_MULTISIG)),
+            &VERSION_MAGIC_VPRV_MULTISIG => Some(KeyVersion::from_bytes(VERSION_MAGIC_VPUB_MULTISIG)),
+            &VERSION_MAGIC_XPUB
+            | &VERSION_MAGIC_YPUB
+            | &VERSION_MAGIC_ZPUB
+            | &VERSION_MAGIC_TPUB
+            | &VERSION_MAGIC_UPUB
+            | &VERSION_MAGIC_VPUB
+            | &VERSION_MAGIC_YPUB_MULTISIG
+            | &VERSION_MAGIC_ZPUB_MULTISIG
+            | &VERSION_MAGIC_UPUB_MULTISIG
+            | &VERSION_MAGIC_VPUB_MULTISIG => Some(kv.clone()),
+            _ => None,
+        }
+    }
+
+    fn make_prv(kv: &KeyVersion) -> Option<KeyVersion> {
+        match kv.as_bytes() {
+            &VERSION_MAGIC_XPUB => Some(KeyVersion::from_bytes(VERSION_MAGIC_XPRV)),
+            &VERSION_MAGIC_YPUB => Some(KeyVersion::from_bytes(VERSION_MAGIC_YPRV)),
+            &VERSION_MAGIC_ZPUB => Some(KeyVersion::from_bytes(VERSION_MAGIC_ZPRV)),
+            &VERSION_MAGIC_TPUB => Some(KeyVersion::from_bytes(VERSION_MAGIC_TPRV)),
+            &VERSION_MAGIC_UPUB => Some(KeyVersion::from_bytes(VERSION_MAGIC_UPRV)),
+            &VERSION_MAGIC_VPUB => Some(KeyVersion::from_bytes(VERSION_MAGIC_VPRV)),
+            &VERSION_MAGIC_YPUB_MULTISIG => Some(KeyVersion::from_bytes(VERSION_MAGIC_YPRV_MULTISIG)),
+            &VERSION_MAGIC_ZPUB_MULTISIG => Some(KeyVersion::from_bytes(VERSION_MAGIC_ZPRV_MULTISIG)),
+            &VERSION_MAGIC_UPUB_MULTISIG => Some(KeyVersion::from_bytes(VERSION_MAGIC_UPRV_MULTISIG)),
+            &VERSION_MAGIC_VPUB_MULTISIG => Some(KeyVersion::from_bytes(VERSION_MAGIC_VPRV_MULTISIG)),
+            &VERSION_MAGIC_XPRV
+            | &VERSION_MAGIC_YPRV
+            | &VERSION_MAGIC_ZPRV
+            | &VERSION_MAGIC_TPRV
+            | &VERSION_MAGIC_UPRV
+            | &VERSION_MAGIC_VPRV
+            | &VERSION_MAGIC_YPRV_MULTISIG
+            | &VERSION_MAGIC_ZPRV_MULTISIG
+            | &VERSION_MAGIC_UPRV_MULTISIG
+            | &VERSION_MAGIC_VPRV_MULTISIG => Some(kv.clone()),
+            _ => None,
+        }
+    }
+}
+
+impl<R: VersionResolver<Network=Network>> ExtendedPrivKey<R> {
     /// Construct a new master key from a seed value
-    pub fn new_master(network: Network, seed: &[u8]) -> Result<ExtendedPrivKey, Error> {
+    pub fn new_master(kv: KeyVersion, seed: &[u8]) -> Result<ExtendedPrivKey<R>, Error> {
         let mut hmac_engine: HmacEngine<sha512::Hash> = HmacEngine::new(b"Bitcoin seed");
         hmac_engine.input(seed);
         let hmac_result: Hmac<sha512::Hash> = Hmac::from_engine(hmac_engine);
 
         Ok(ExtendedPrivKey {
-            network: network,
+            version: kv,
             depth: 0,
             parent_fingerprint: Default::default(),
             child_number: ChildNumber::from_normal_idx(0)?,
             private_key: PrivateKey {
                 compressed: true,
-                network: network,
+                network: kv.network::<R>().ok_or(Error::UnknownVersion(kv.as_bytes().clone()))?,
                 key: secp256k1::SecretKey::from_slice(
                     &hmac_result[..32]
                 ).map_err(Error::Ecdsa)?,
             },
             chain_code: ChainCode::from(&hmac_result[32..]),
+            _marker: Default::default()
         })
     }
 
@@ -447,8 +848,8 @@ impl ExtendedPrivKey {
         &self,
         secp: &Secp256k1<C>,
         path: &P,
-    ) -> Result<ExtendedPrivKey, Error> {
-        let mut sk: ExtendedPrivKey = *self;
+    ) -> Result<ExtendedPrivKey<R>, Error> {
+        let mut sk: ExtendedPrivKey<R> = *self;
         for cnum in path.as_ref() {
             sk = sk.ckd_priv(secp, *cnum)?;
         }
@@ -456,14 +857,14 @@ impl ExtendedPrivKey {
     }
 
     /// Private->Private child key derivation
-    pub fn ckd_priv<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>, i: ChildNumber) -> Result<ExtendedPrivKey, Error> {
+    pub fn ckd_priv<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>, i: ChildNumber) -> Result<ExtendedPrivKey<R>, Error> {
         let mut hmac_engine: HmacEngine<sha512::Hash> = HmacEngine::new(&self.chain_code[..]);
         match i {
-            ChildNumber::Normal {..} => {
+            ChildNumber::Normal { .. } => {
                 // Non-hardened key: compute public data and use that
                 hmac_engine.input(&PublicKey::from_private_key(secp, &self.private_key).key.serialize()[..]);
             }
-            ChildNumber::Hardened {..} => {
+            ChildNumber::Hardened { .. } => {
                 // Hardened key: use only secret data to prevent public derivation
                 hmac_engine.input(&[0u8]);
                 hmac_engine.input(&self.private_key[..]);
@@ -474,43 +875,47 @@ impl ExtendedPrivKey {
         let hmac_result: Hmac<sha512::Hash> = Hmac::from_engine(hmac_engine);
         let mut sk = PrivateKey {
             compressed: true,
-            network: self.network,
+            network: self.version.network::<R>().ok_or(Error::UnknownVersion(self.version.as_bytes().clone()))?,
             key: secp256k1::SecretKey::from_slice(&hmac_result[..32]).map_err(Error::Ecdsa)?,
         };
         sk.key.add_assign(&self.private_key[..]).map_err(Error::Ecdsa)?;
 
         Ok(ExtendedPrivKey {
-            network: self.network,
+            version: self.version,
             depth: self.depth + 1,
-            parent_fingerprint: self.fingerprint(secp),
+            parent_fingerprint: self.fingerprint(secp)?,
             child_number: i,
             private_key: sk,
-            chain_code: ChainCode::from(&hmac_result[32..])
+            chain_code: ChainCode::from(&hmac_result[32..]),
+            _marker: Default::default()
         })
     }
 
-    /// Returns the HASH160 of the public key belonging to the xpriv
-    pub fn identifier<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> XpubIdentifier {
-        ExtendedPubKey::from_private(secp, self).identifier()
+    /// Returns the HASH160 of the chaincode
+    pub fn identifier<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> Result<XpubIdentifier, Error> {
+        Ok(ExtendedPubKey::<R>::from_private(secp, self)
+            .ok_or(Error::UnknownVersion(self.version.as_bytes().clone()))?
+            .identifier())
     }
 
     /// Returns the first four bytes of the identifier
-    pub fn fingerprint<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> Fingerprint {
-        Fingerprint::from(&self.identifier(secp)[0..4])
+    pub fn fingerprint<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> Result<Fingerprint, Error> {
+        Ok(Fingerprint::from(&self.identifier(secp)?[0..4]))
     }
 }
 
-impl ExtendedPubKey {
+impl<R: VersionResolver<Network=Network>> ExtendedPubKey<R> {
     /// Derives a public key from a private key
-    pub fn from_private<C: secp256k1::Signing>(secp: &Secp256k1<C>, sk: &ExtendedPrivKey) -> ExtendedPubKey {
-        ExtendedPubKey {
-            network: sk.network,
+    pub fn from_private<C: secp256k1::Signing>(secp: &Secp256k1<C>, sk: &ExtendedPrivKey<R>) -> Option<ExtendedPubKey<R>> {
+        Some(ExtendedPubKey {
+            version: sk.version.try_to_pub::<R>()?,
             depth: sk.depth,
             parent_fingerprint: sk.parent_fingerprint,
             child_number: sk.child_number,
             public_key: PublicKey::from_private_key(secp, &sk.private_key),
-            chain_code: sk.chain_code
-        }
+            chain_code: sk.chain_code,
+            _marker: Default::default()
+        })
     }
 
     /// Attempts to derive an extended public key from a path.
@@ -520,8 +925,8 @@ impl ExtendedPubKey {
         &self,
         secp: &Secp256k1<C>,
         path: &P,
-    ) -> Result<ExtendedPubKey, Error> {
-        let mut pk: ExtendedPubKey = *self;
+    ) -> Result<ExtendedPubKey<R>, Error> {
+        let mut pk: ExtendedPubKey<R> = *self;
         for cnum in path.as_ref() {
             pk = pk.ckd_pub(secp, *cnum)?
         }
@@ -531,7 +936,7 @@ impl ExtendedPubKey {
     /// Compute the scalar tweak added to this key to get a child key
     pub fn ckd_pub_tweak(&self, i: ChildNumber) -> Result<(PrivateKey, ChainCode), Error> {
         match i {
-            ChildNumber::Hardened {..} => {
+            ChildNumber::Hardened { .. } => {
                 Err(Error::CannotDeriveFromHardenedKey)
             }
             ChildNumber::Normal { index: n } => {
@@ -543,7 +948,7 @@ impl ExtendedPubKey {
 
                 let private_key = PrivateKey {
                     compressed: true,
-                    network: self.network,
+                    network: self.version.network::<R>().ok_or(Error::UnknownVersion(self.version.as_bytes().clone()))?,
                     key: secp256k1::SecretKey::from_slice(&hmac_result[..32])?,
                 };
                 let chain_code = ChainCode::from(&hmac_result[32..]);
@@ -557,22 +962,25 @@ impl ExtendedPubKey {
         &self,
         secp: &Secp256k1<C>,
         i: ChildNumber,
-    ) -> Result<ExtendedPubKey, Error> {
+    ) -> Result<ExtendedPubKey<R>, Error> {
         let (sk, chain_code) = self.ckd_pub_tweak(i)?;
         let mut pk = self.public_key;
         pk.key.add_exp_assign(secp, &sk[..]).map_err(Error::Ecdsa)?;
 
         Ok(ExtendedPubKey {
-            network: self.network,
+            version: self.version,
             depth: self.depth + 1,
             parent_fingerprint: self.fingerprint(),
             child_number: i,
             public_key: pk,
-            chain_code: chain_code
+            chain_code: chain_code,
+            _marker: Default::default()
         })
     }
+}
 
-    /// Returns the HASH160 of the public key of the xpub
+impl<R: VersionResolver> ExtendedPubKey<R> {
+    /// Returns the HASH160 of the chaincode
     pub fn identifier(&self) -> XpubIdentifier {
         let mut engine = XpubIdentifier::engine();
         self.public_key.write_into(&mut engine);
@@ -585,13 +993,10 @@ impl ExtendedPubKey {
     }
 }
 
-impl fmt::Display for ExtendedPrivKey {
+impl<R: VersionResolver> fmt::Display for ExtendedPrivKey<R> {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         let mut ret = [0; 78];
-        ret[0..4].copy_from_slice(&match self.network {
-            Network::Bitcoin => [0x04, 0x88, 0xAD, 0xE4],
-            Network::Testnet | Network::Regtest => [0x04, 0x35, 0x83, 0x94],
-        }[..]);
+        ret[0..4].copy_from_slice(self.version.as_bytes());
         ret[4] = self.depth as u8;
         ret[5..9].copy_from_slice(&self.parent_fingerprint[..]);
         ret[9..13].copy_from_slice(&endian::u32_to_array_be(u32::from(self.child_number)));
@@ -602,10 +1007,10 @@ impl fmt::Display for ExtendedPrivKey {
     }
 }
 
-impl FromStr for ExtendedPrivKey {
+impl<R: VersionResolver> FromStr for ExtendedPrivKey<R> {
     type Err = base58::Error;
 
-    fn from_str(inp: &str) -> Result<ExtendedPrivKey, base58::Error> {
+    fn from_str(inp: &str) -> Result<ExtendedPrivKey<R>, base58::Error> {
         let data = base58::from_check(inp)?;
 
         if data.len() != 78 {
@@ -615,40 +1020,38 @@ impl FromStr for ExtendedPrivKey {
         let cn_int: u32 = endian::slice_to_u32_be(&data[9..13]);
         let child_number: ChildNumber = ChildNumber::from(cn_int);
 
-        let network = if data[0..4] == [0x04u8, 0x88, 0xAD, 0xE4] {
-            Network::Bitcoin
-        } else if data[0..4] == [0x04u8, 0x35, 0x83, 0x94] {
-            Network::Testnet
-        } else {
-            return Err(base58::Error::InvalidVersion((&data[0..4]).to_vec()));
-        };
+        let ver_bytes = &data[0..4];
+        let invalid_ver_err = base58::Error::InvalidVersion(ver_bytes.to_vec());
+        let kv = KeyVersion::from_slice(&ver_bytes)
+            .ok_or(invalid_ver_err.clone())?;
+        if !kv.is_prv::<R>().ok_or(invalid_ver_err.clone())? {
+            return Err(invalid_ver_err.clone());
+        }
 
         Ok(ExtendedPrivKey {
-            network: network,
+            version: kv,
             depth: data[4],
             parent_fingerprint: Fingerprint::from(&data[5..9]),
             child_number: child_number,
             chain_code: ChainCode::from(&data[13..45]),
             private_key: PrivateKey {
                 compressed: true,
-                network: network,
+                network: kv.network::<DefaultResolver>().ok_or(invalid_ver_err)?,
                 key: secp256k1::SecretKey::from_slice(
                     &data[46..78]
                 ).map_err(|e|
-                        base58::Error::Other(e.to_string())
+                    base58::Error::Other(e.to_string())
                 )?,
             },
+            _marker: Default::default()
         })
     }
 }
 
-impl fmt::Display for ExtendedPubKey {
+impl<R: VersionResolver> fmt::Display for ExtendedPubKey<R> {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         let mut ret = [0; 78];
-        ret[0..4].copy_from_slice(&match self.network {
-            Network::Bitcoin => [0x04u8, 0x88, 0xB2, 0x1E],
-            Network::Testnet | Network::Regtest => [0x04u8, 0x35, 0x87, 0xCF],
-        }[..]);
+        ret[0..4].copy_from_slice(self.version.as_bytes());
         ret[4] = self.depth as u8;
         ret[5..9].copy_from_slice(&self.parent_fingerprint[..]);
         ret[9..13].copy_from_slice(&endian::u32_to_array_be(u32::from(self.child_number)));
@@ -658,10 +1061,10 @@ impl fmt::Display for ExtendedPubKey {
     }
 }
 
-impl FromStr for ExtendedPubKey {
+impl<R: VersionResolver> FromStr for ExtendedPubKey<R> {
     type Err = base58::Error;
 
-    fn from_str(inp: &str) -> Result<ExtendedPubKey, base58::Error> {
+    fn from_str(inp: &str) -> Result<ExtendedPubKey<R>, base58::Error> {
         let data = base58::from_check(inp)?;
 
         if data.len() != 78 {
@@ -671,21 +1074,24 @@ impl FromStr for ExtendedPubKey {
         let cn_int: u32 = endian::slice_to_u32_be(&data[9..13]);
         let child_number: ChildNumber = ChildNumber::from(cn_int);
 
+        let ver_bytes = &data[0..4];
+        let invalid_ver_err = base58::Error::InvalidVersion(ver_bytes.to_vec());
+        let kv = KeyVersion::from_slice(&ver_bytes)
+            .ok_or(invalid_ver_err.clone())?;
+        if !kv.is_pub::<R>().ok_or(invalid_ver_err.clone())? {
+            return Err(invalid_ver_err);
+        }
+
         Ok(ExtendedPubKey {
-            network: if data[0..4] == [0x04u8, 0x88, 0xB2, 0x1E] {
-                Network::Bitcoin
-            } else if data[0..4] == [0x04u8, 0x35, 0x87, 0xCF] {
-                Network::Testnet
-            } else {
-                return Err(base58::Error::InvalidVersion((&data[0..4]).to_vec()));
-            },
+            version: kv,
             depth: data[4],
             parent_fingerprint: Fingerprint::from(&data[5..9]),
             child_number: child_number,
             chain_code: ChainCode::from(&data[13..45]),
             public_key: PublicKey::from_slice(
                              &data[45..78]).map_err(|e|
-                                 base58::Error::Other(e.to_string()))?
+                                 base58::Error::Other(e.to_string()))?,
+            _marker: Default::default()
         })
     }
 }
@@ -769,8 +1175,8 @@ mod tests {
                  expected_sk: &str,
                  expected_pk: &str) {
 
-        let mut sk = ExtendedPrivKey::new_master(network, seed).unwrap();
-        let mut pk = ExtendedPubKey::from_private(secp, &sk);
+        let mut sk = ExtendedPrivKey::<DefaultResolver>::new_master(DefaultResolver::resolve(network, KeyApplications::Legacy, true), seed).unwrap();
+        let mut pk = ExtendedPubKey::from_private(secp, &sk).unwrap();
 
         // Check derivation convenience method for ExtendedPrivKey
         assert_eq!(
@@ -798,7 +1204,7 @@ mod tests {
             match num {
                 Normal {..} => {
                     let pk2 = pk.ckd_pub(secp, num).unwrap();
-                    pk = ExtendedPubKey::from_private(secp, &sk);
+                    pk = ExtendedPubKey::from_private(secp, &sk).unwrap();
                     assert_eq!(pk, pk2);
                 }
                 Hardened {..} => {
@@ -806,7 +1212,7 @@ mod tests {
                         pk.ckd_pub(secp, num),
                         Err(Error::CannotDeriveFromHardenedKey)
                     );
-                    pk = ExtendedPubKey::from_private(secp, &sk);
+                    pk = ExtendedPubKey::from_private(secp, &sk).unwrap();
                 }
             }
         }

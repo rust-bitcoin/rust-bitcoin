@@ -171,9 +171,8 @@ mod tests {
 
     use blockdata::script::Script;
     use blockdata::transaction::{Transaction, TxIn, TxOut, OutPoint};
-    use network::constants::Network::Bitcoin;
     use consensus::encode::{deserialize, serialize, serialize_hex};
-    use util::bip32::{ChildNumber, ExtendedPrivKey, ExtendedPubKey, Fingerprint, KeySource};
+    use util::bip32::{ChildNumber, KeySource, ExtendedPrivKey, ExtendedPubKey, Fingerprint, DefaultResolver, KeyVersion, VERSION_MAGIC_XPRV};
     use util::key::PublicKey;
     use util::psbt::map::{Global, Output};
     use util::psbt::raw;
@@ -208,9 +207,9 @@ mod tests {
 
         let mut hd_keypaths: BTreeMap<PublicKey, KeySource> = Default::default();
 
-        let mut sk: ExtendedPrivKey = ExtendedPrivKey::new_master(Bitcoin, &seed).unwrap();
+        let mut sk: ExtendedPrivKey<DefaultResolver> = ExtendedPrivKey::new_master(KeyVersion::from_bytes(VERSION_MAGIC_XPRV), &seed).unwrap();
 
-        let fprint: Fingerprint = sk.fingerprint(&secp);
+        let fprint: Fingerprint = sk.fingerprint(&secp).unwrap();
 
         let dpath: Vec<ChildNumber> = vec![
             ChildNumber::from_normal_idx(0).unwrap(),
@@ -225,7 +224,7 @@ mod tests {
 
         sk = sk.derive_priv(secp, &dpath).unwrap();
 
-        let pk: ExtendedPubKey = ExtendedPubKey::from_private(&secp, &sk);
+        let pk: ExtendedPubKey<DefaultResolver> = ExtendedPubKey::from_private(&secp, &sk).unwrap();
 
         hd_keypaths.insert(pk.public_key, (fprint, dpath.into()));
 
