@@ -20,26 +20,26 @@
 use network::constants::Network;
 use util::uint::Uint256;
 
-/// Lowest possible difficulty for Mainnet.
+/// Lowest possible difficulty for Mainnet. See comment on Params::pow_limit for more info.
 const MAX_BITS_BITCOIN: Uint256 = Uint256([
-    0xffffffffffffffffu64,
-    0xffffffffffffffffu64,
-    0xffffffffffffffffu64,
-    0x00000000ffffffffu64,
+    0x0000000000000000u64,
+    0x0000000000000000u64,
+    0x0000000000000000u64,
+    0x00000000ffff0000u64,
 ]);
-/// Lowest possible difficulty for Testnet.
+/// Lowest possible difficulty for Testnet. See comment on Params::pow_limit for more info.
 const MAX_BITS_TESTNET: Uint256 = Uint256([
-    0xffffffffffffffffu64,
-    0xffffffffffffffffu64,
-    0xffffffffffffffffu64,
-    0x00000000ffffffffu64,
+    0x0000000000000000u64,
+    0x0000000000000000u64,
+    0x0000000000000000u64,
+    0x00000000ffff0000u64,
 ]);
-/// Lowest possible difficulty for Regtest.
+/// Lowest possible difficulty for Regtest. See comment on Params::pow_limit for more info.
 const MAX_BITS_REGTEST: Uint256 = Uint256([
-    0xffffffffffffffffu64,
-    0xffffffffffffffffu64,
-    0xffffffffffffffffu64,
-    0x7fffffffffffffffu64,
+    0x0000000000000000u64,
+    0x0000000000000000u64,
+    0x0000000000000000u64,
+    0x7fffff0000000000u64,
 ]);
 
 #[derive(Debug, Clone)]
@@ -62,6 +62,13 @@ pub struct Params {
     /// Number of blocks with the same set of rules.
     pub miner_confirmation_window: u32,
     /// Proof of work limit value. It contains the lowest possible difficulty.
+    ///
+    /// Note that this value differs from Bitcoin Core's powLimit field in that this value is
+    /// attainable, but Bitcoin Core's is not. Specifically, because targets in Bitcoin are always
+    /// rounded to the nearest float expressible in "compact form", not all targets are attainable.
+    /// Still, this should not affect consensus as the only place where the non-compact form of
+    /// this is used in Bitcoin Core's consensus algorithm is in comparison and there are no
+    /// compact-expressible values between Bitcoin Core's and the limit expressed here.
     pub pow_limit: Uint256,
     /// Expected amount of time to mine one block.
     pub pow_target_spacing: u64,
