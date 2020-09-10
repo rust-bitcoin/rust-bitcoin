@@ -213,7 +213,7 @@ pub enum KeyApplications {
 
 /// Extended private key
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
-pub struct ExtendedPrivKey<R: VersionResolver> {
+pub struct ExtendedPrivKey<R: VersionResolver = DefaultResolver> {
     /// Version bytes specifying to which network the key belongs
     /// and for which types of scriptPubkey it may be used
     pub version: KeyVersion,
@@ -233,7 +233,7 @@ serde_string_impl!(ExtendedPrivKey<R: VersionResolver>, "a BIP-32 extended priva
 
 /// Extended public key
 #[derive(Copy, Clone, PartialEq, Eq, Debug, PartialOrd, Ord, Hash)]
-pub struct ExtendedPubKey<R: VersionResolver> {
+pub struct ExtendedPubKey<R: VersionResolver = DefaultResolver> {
     /// Version bytes specifying to which network the key belongs
     /// and for which types of scriptPubkey it may be used
     pub version: KeyVersion,
