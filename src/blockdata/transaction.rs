@@ -25,6 +25,7 @@
 
 use std::default::Default;
 use std::{fmt, io};
+use std::collections::BTreeSet;
 
 use hashes::{self, Hash, sha256d};
 use hashes::hex::FromHex;
@@ -452,6 +453,13 @@ impl Transaction {
     /// Is this a coin base transaction?
     pub fn is_coin_base(&self) -> bool {
         self.input.len() == 1 && self.input[0].previous_output.is_null()
+    }
+
+    /// Checks whether transaction has duplicated inputs; i.e. inputs pointing
+    /// out to the same transaction outpoint.
+    pub fn has_duplicate_inputs(&self) -> bool {
+        let mut index: BTreeSet<OutPoint> = Default::default();
+        self.input.into_iter().find(|input| !index.insert(input.previous_output)).is_some()
     }
 }
 
