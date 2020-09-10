@@ -199,13 +199,13 @@ impl Payload {
     pub fn script_pubkey(&self) -> script::Script {
         match *self {
             Payload::PubkeyHash(ref hash) =>
-                script::Script::with_pkh(hash),
+                script::Script::new_p2pkh(hash),
             Payload::ScriptHash(ref hash) =>
-                script::Script::with_sh(hash),
+                script::Script::new_p2sh(hash),
             Payload::WitnessProgram {
                 version: ver,
                 program: ref prog,
-            } => script::Script::with_witness_program(ver, prog)
+            } => script::Script::new_witness_program(ver, prog)
         }
     }
 }
