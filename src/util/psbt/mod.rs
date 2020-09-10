@@ -18,8 +18,6 @@
 //! defined at https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki
 //! except we define PSBTs containing non-standard SigHash types as invalid.
 
-use blockdata::script::Script;
-use blockdata::transaction::Transaction;
 use consensus::{encode, Encodable, Decodable};
 
 use std::io;
@@ -49,46 +47,6 @@ pub struct PartiallySignedTransaction {
     /// The corresponding key-value map for each output in the unsigned
     /// transaction.
     pub outputs: Vec<Output>,
-}
-
-impl PartiallySignedTransaction {
-    /// Create a PartiallySignedTransaction from an unsigned transaction, error
-    /// if not unsigned
-    pub fn from_unsigned_tx(tx: Transaction) -> Result<Self, self::Error> {
-        Ok(PartiallySignedTransaction {
-            inputs: vec![Default::default(); tx.input.len()],
-            outputs: vec![Default::default(); tx.output.len()],
-            global: Global::from_unsigned_tx(tx)?,
-        })
-    }
-
-    /// Extract the Transaction from a PartiallySignedTransaction by filling in
-    /// the available signature information in place.
-    pub fn extract_tx(self) -> Transaction {
-        let mut tx: Transaction = self.global.unsigned_tx;
-
-        for (vin, psbtin) in tx.input.iter_mut().zip(self.inputs.into_iter()) {
-            vin.script_sig = psbtin.final_script_sig.unwrap_or_else(Script::new);
-            vin.witness = psbtin.final_script_witness.unwrap_or_else(Vec::new);
-        }
-
-        tx
-    }
-
-    /// Attempt to merge with another `PartiallySignedTransaction`.
-    pub fn merge(&mut self, other: Self) -> Result<(), self::Error> {
-        self.global.merge(other.global)?;
-
-        for (self_input, other_input) in self.inputs.iter_mut().zip(other.inputs.into_iter()) {
-            self_input.merge(other_input)?;
-        }
-
-        for (self_output, other_output) in self.outputs.iter_mut().zip(other.outputs.into_iter()) {
-            self_output.merge(other_output)?;
-        }
-
-        Ok(())
-    }
 }
 
 impl Encodable for PartiallySignedTransaction {
