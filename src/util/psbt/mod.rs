@@ -33,6 +33,7 @@ pub mod raw;
 mod macros;
 
 pub mod serialize;
+pub mod roles;
 
 mod map;
 pub use self::map::{Map, Global, Input, Output};
