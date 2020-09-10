@@ -23,7 +23,7 @@ matrix:
       env: AS_DEPENDENCY=true
     - rust: nightly
       env: DO_BENCH=true AS_DEPENDENCY=true
-    - rust: 1.22.0
+    - rust: 1.29.0
       env: AS_DEPENDENCY=true
 
 script:

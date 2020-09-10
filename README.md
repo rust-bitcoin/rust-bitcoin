@@ -51,7 +51,7 @@ please join us in
 freenode.
 
 ## Minimum Supported Rust Version (MSRV)
-This library should always compile with any combination of features on **Rust 1.22**.
+This library should always compile with any combination of features on **Rust 1.29**.
 
 Because some dependencies have broken the build in minor/patch releases, to
 compile with 1.22.0 you will need to run the following version-pinning command:

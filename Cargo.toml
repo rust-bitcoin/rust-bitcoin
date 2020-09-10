@@ -1,6 +1,6 @@
 [package]
 name = "bitcoin"
-version = "0.24.0"
+version = "0.25.0"
 authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
 license = "CC0-1.0"
 homepage = "https://github.com/rust-bitcoin/rust-bitcoin/"
@@ -22,8 +22,8 @@ use-serde = ["serde", "bitcoin_hashes/serde", "secp256k1/serde"]
 
 [dependencies]
 bech32 = "0.7.2"
-bitcoin_hashes = "0.8.0"
-secp256k1 = "0.18.0"
+bitcoin_hashes = "0.9.0"
+secp256k1 = "0.19.0"
 
 bitcoinconsensus = { version = "0.19.0-1", optional = true }
 serde = { version = "1", optional = true }
@@ -33,6 +33,6 @@ hex = "=0.3.2"
 serde_derive = "<1.0.99"
 serde_json = "<1.0.45"
 serde_test = "1"
-secp256k1 = { version = "0.18.0", features = ["rand-std"] }
+secp256k1 = { version = "0.19.0", features = ["rand-std"] }
 # We need to pin ryu (transitive dep from serde_json) to stay compatible with Rust 1.22.0
 ryu = "<1.0.5"
