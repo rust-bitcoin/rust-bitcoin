@@ -18,12 +18,9 @@
 //! defined at https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki
 //! except we define PSBTs containing non-standard SigHash types as invalid.
 
-use blockdata::transaction::{SigHashType, Transaction};
-use hash_types::SigHash;
+use blockdata::script::Script;
+use blockdata::transaction::Transaction;
 use consensus::{encode, Encodable, Decodable};
-use util::bip143::SigHashCache;
-use blockdata::script::{Builder, Script};
-use blockdata::opcodes;
 
 use std::io;
 
@@ -90,83 +87,6 @@ impl PartiallySignedTransaction {
         }
 
         Ok(())
-    }
-
-    /// Calculate the Sighash for the Psbt Input at idx depending on whether input spends
-    /// spends a segwit or not
-    /// #Panics:
-    /// Panics if the index >= number of inputs in psbt
-    pub fn signature_hash(&self, idx: usize) -> Result<SigHash, self::Error> {
-        let inp = &self.inputs[idx];
-        let sighash_type = inp.sighash_type.unwrap_or_else(|| SigHashType::All);
-        // Compute Script code for the Script. When this script is used as scriptPubkey,
-        // the Script Code determines what goes into sighash.
-        // For non-p2sh non-segwit outputs and non-p2sh wrapped segwit-outputs
-        // script code is the public key.
-        let sighash = if let Some(ref non_witness_utxo) = inp.non_witness_utxo {
-            let spent_outpoint = self.global.unsigned_tx.input[idx].previous_output;
-            if spent_outpoint.txid != non_witness_utxo.txid() {
-                return Err(Error::InvalidNonWitnessUtxo {
-                    prevout_txid: spent_outpoint.txid,
-                    non_witness_utxo_txid: non_witness_utxo.txid()
-                });
-            }
-            let script_pubkey =  &non_witness_utxo.output[spent_outpoint.vout as usize].script_pubkey;
-            if let Some(ref redeem_script) = inp.redeem_script {
-                if redeem_script.to_p2sh() != *script_pubkey {
-                    return Err(Error::InvalidWitnessScript{
-                        expected: script_pubkey.to_bytes(),
-                        actual: redeem_script.to_p2sh().into_bytes(),
-                    });
-                }
-                self.global.unsigned_tx.signature_hash(
-                    idx, &redeem_script, sighash_type.as_u32()
-                )
-            } else {
-                self.global.unsigned_tx.signature_hash(
-                    idx, &script_pubkey, sighash_type.as_u32()
-                )
-            }
-        } else if let Some(ref witness_utxo) = inp.witness_utxo {
-            let script_pubkey = if let Some(ref redeem_script) = inp.redeem_script {
-                if redeem_script.to_p2sh() != witness_utxo.script_pubkey {
-                    return Err(Error::InvalidWitnessScript{
-                        expected: witness_utxo.script_pubkey.to_bytes(),
-                        actual: redeem_script.to_p2sh().into_bytes(),
-                    });
-                }
-                redeem_script
-            } else {
-                &witness_utxo.script_pubkey
-            };
-
-            let amt = witness_utxo.value;
-            let mut sighash_cache = SigHashCache::new(&self.global.unsigned_tx);
-            if let Some(ref witness_script) = inp.witness_script {
-                if witness_script.to_v0_p2wsh() != *script_pubkey {
-                    return Err(Error::InvalidWitnessScript{
-                        expected: script_pubkey.clone().into_bytes(),
-                        actual: witness_script.to_p2sh().into_bytes(),
-                    });
-                }
-                sighash_cache.signature_hash(idx, &witness_script, amt, sighash_type)
-            } else if script_pubkey.is_v0_p2wpkh() {
-                // Indirect way to get script code
-                let builder = Builder::new();
-                let script_code = builder
-                .push_opcode(opcodes::all::OP_DUP)
-                .push_opcode(opcodes::all::OP_HASH160)
-                .push_slice(&script_pubkey[2..22])
-                .push_opcode(opcodes::all::OP_EQUALVERIFY)
-                .into_script();
-                sighash_cache.signature_hash(idx, &script_code, amt, sighash_type)
-            } else {
-                return Err(Error::UnrecognizedWitnessProgram);
-            }
-        } else {
-            return Err(Error::MustHaveSpendingUtxo);
-        };
-        Ok(sighash)
     }
 }
 
@@ -243,7 +163,6 @@ impl Decodable for PartiallySignedTransaction {
 #[cfg(test)]
 mod tests {
     use hashes::hex::FromHex;
-    use hashes::{sha256, hash160, Hash, ripemd160};
     use hash_types::Txid;
 
     use std::collections::BTreeMap;
@@ -256,7 +175,7 @@ mod tests {
     use consensus::encode::{deserialize, serialize, serialize_hex};
     use util::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint};
     use util::key::PublicKey;
-    use util::psbt::map::{Global, Output, Input};
+    use util::psbt::map::{Global, Output};
     use util::psbt::raw;
 
     use super::PartiallySignedTransaction;
@@ -641,117 +560,5 @@ mod tests {
 
             assert_eq!(psbt.inputs[0].unknown, unknown)
         }
-    }
-
-    #[test]
-    fn serialize_and_deserialize_preimage_psbt(){
-        // create a sha preimage map
-        let mut sha256_preimages = BTreeMap::new();
-        sha256_preimages.insert(sha256::Hash::hash(&[1u8, 2u8]), vec![1u8, 2u8]);
-        sha256_preimages.insert(sha256::Hash::hash(&[1u8]), vec![1u8]);
-
-        // same for hash160
-        let mut hash160_preimages = BTreeMap::new();
-        hash160_preimages.insert(hash160::Hash::hash(&[1u8, 2u8]), vec![1u8, 2u8]);
-        hash160_preimages.insert(hash160::Hash::hash(&[1u8]), vec![1u8]);
-
-        // same vector as valid_vector_1 from BIPs with added
-        let mut unserialized = PartiallySignedTransaction {
-            global: Global {
-                unsigned_tx: Transaction {
-                    version: 2,
-                    lock_time: 1257139,
-                    input: vec![TxIn {
-                        previous_output: OutPoint {
-                            txid: Txid::from_hex(
-                                "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126",
-                            ).unwrap(),
-                            vout: 0,
-                        },
-                        script_sig: Script::new(),
-                        sequence: 4294967294,
-                        witness: vec![],
-                    }],
-                    output: vec![
-                        TxOut {
-                            value: 99999699,
-                            script_pubkey: hex_script!("76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac"),
-                        },
-                        TxOut {
-                            value: 100000000,
-                            script_pubkey: hex_script!("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787"),
-                        },
-                    ],
-                },
-                unknown: BTreeMap::new(),
-            },
-            inputs: vec![Input {
-                non_witness_utxo: Some(Transaction {
-                    version: 1,
-                    lock_time: 0,
-                    input: vec![TxIn {
-                        previous_output: OutPoint {
-                            txid: Txid::from_hex(
-                                "e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389",
-                            ).unwrap(),
-                            vout: 1,
-                        },
-                        script_sig: hex_script!("160014be18d152a9b012039daf3da7de4f53349eecb985"),
-                        sequence: 4294967295,
-                        witness: vec![
-                            Vec::from_hex("304402202712be22e0270f394f568311dc7ca9a68970b8025fdd3b240229f07f8a5f3a240220018b38d7dcd314e734c9276bd6fb40f673325bc4baa144c800d2f2f02db2765c01").unwrap(),
-                            Vec::from_hex("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105").unwrap(),
-                        ],
-                    },
-                    TxIn {
-                        previous_output: OutPoint {
-                            txid: Txid::from_hex(
-                                "b490486aec3ae671012dddb2bb08466bef37720a533a894814ff1da743aaf886",
-                            ).unwrap(),
-                            vout: 1,
-                        },
-                        script_sig: hex_script!("160014fe3e9ef1a745e974d902c4355943abcb34bd5353"),
-                        sequence: 4294967295,
-                        witness: vec![
-                            Vec::from_hex("3045022100d12b852d85dcd961d2f5f4ab660654df6eedcc794c0c33ce5cc309ffb5fce58d022067338a8e0e1725c197fb1a88af59f51e44e4255b20167c8684031c05d1f2592a01").unwrap(),
-                            Vec::from_hex("0223b72beef0965d10be0778efecd61fcac6f79a4ea169393380734464f84f2ab3").unwrap(),
-                        ],
-                    }],
-                    output: vec![
-                        TxOut {
-                            value: 200000000,
-                            script_pubkey: hex_script!("76a91485cff1097fd9e008bb34af709c62197b38978a4888ac"),
-                        },
-                        TxOut {
-                            value: 190303501938,
-                            script_pubkey: hex_script!("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587"),
-                        },
-                    ],
-                }),
-                ..Default::default()
-            },],
-            outputs: vec![
-                Output {
-                    ..Default::default()
-                },
-                Output {
-                    ..Default::default()
-                },
-            ],
-        };
-        unserialized.inputs[0].hash160_preimages = hash160_preimages;
-        unserialized.inputs[0].sha256_preimages = sha256_preimages;
-
-        let rtt : PartiallySignedTransaction = hex_psbt!(&serialize_hex(&unserialized)).unwrap();
-        assert_eq!(rtt, unserialized);
-
-        // Now add an ripemd160 with incorrect preimage
-        let mut ripemd160_preimages = BTreeMap::new();
-        ripemd160_preimages.insert(ripemd160::Hash::hash(&[17u8]), vec![18u8]);
-        unserialized.inputs[0].ripemd_preimages = ripemd160_preimages;
-
-        // Now the roundtrip should fail as the preimage is incorrect.
-        let rtt : Result<PartiallySignedTransaction, _> = hex_psbt!(&serialize_hex(&unserialized));
-        assert!(rtt.is_err());
     }
 }

@@ -131,30 +131,6 @@ macro_rules! impl_psbt_insert_pair {
 }
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
-macro_rules! impl_psbt_insert_hash_pair {
-    ($slf:ident.$keyed_name:ident <= <$raw_key:ident: $keyed_key_type:ty>|<$raw_value:ident: $keyed_value_type:ty>; $err_name: ident ) => {
-        if !$raw_key.key.is_empty() {
-            let key_val: $keyed_key_type = $crate::util::psbt::serialize::Deserialize::deserialize(&$raw_key.key)?;
-            match $slf.$keyed_name.entry(key_val) {
-                ::std::collections::btree_map::Entry::Vacant(empty_key) => {
-                    let val: $keyed_value_type = $crate::util::psbt::serialize::Deserialize::deserialize(&$raw_value)?;
-                    if <$keyed_key_type>::hash(&val) != key_val{
-                        return Err($crate::util::psbt::Error::InvalidPreimageHashPair{
-                            preimage: val,
-                            hash: $crate::util::psbt::error::PsbtHash::$err_name(key_val),
-                        }.into());
-                    }
-                    empty_key.insert(val);
-                }
-                ::std::collections::btree_map::Entry::Occupied(_) => return Err($crate::util::psbt::Error::DuplicateKey($raw_key).into()),
-            }
-        } else {
-            return Err($crate::util::psbt::Error::InvalidKey($raw_key).into());
-        }
-    };
-}
-
-#[cfg_attr(rustfmt, rustfmt_skip)]
 macro_rules! impl_psbt_get_pair {
     ($rv:ident.push($slf:ident.$unkeyed_name:ident as <$unkeyed_typeval:expr, _>|<$unkeyed_value_type:ty>)) => {
         if let Some(ref $unkeyed_name) = $slf.$unkeyed_name {
@@ -176,36 +152,6 @@ macro_rules! impl_psbt_get_pair {
                 },
                 value: $crate::util::psbt::serialize::Serialize::serialize(val),
             });
-        }
-    };
-}
-
-// macros for serde of hashes
-macro_rules! impl_psbt_hash_de_serialize {
-    ($thing:ty) => {
-        impl_psbt_hash_serialize!($thing);
-        impl_psbt_hash_deserialize!($thing);
-    };
-}
-
-macro_rules! impl_psbt_hash_deserialize {
-    ($thing:ty) => {
-        impl $crate::util::psbt::serialize::Deserialize for $thing {
-            fn deserialize(bytes: &[u8]) -> Result<Self, $crate::consensus::encode::Error> {
-                <$thing>::from_slice(&bytes[..]).map_err(|e| {
-                    $crate::util::psbt::Error::from(e).into()
-                })
-            }
-        }
-    };
-}
-
-macro_rules! impl_psbt_hash_serialize {
-    ($thing:ty) => {
-        impl $crate::util::psbt::serialize::Serialize for $thing {
-            fn serialize(&self) -> Vec<u8> {
-                self.into_inner().to_vec()
-            }
         }
     };
 }
