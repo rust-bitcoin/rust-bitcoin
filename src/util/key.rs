@@ -22,7 +22,7 @@ use std::str::FromStr;
 
 use secp256k1::{self, Secp256k1};
 use network::constants::Network;
-use hashes::Hash;
+use hashes::{Hash, hash160};
 use hash_types::{PubkeyHash, WPubkeyHash};
 use util::base58;
 
@@ -92,11 +92,15 @@ impl PublicKey {
     }
 
     /// Returns bitcoin 160-bit hash of the public key for witness program
-    pub fn wpubkey_hash(&self) -> WPubkeyHash {
+    pub fn wpubkey_hash(&self) -> Option<WPubkeyHash> {
         if self.compressed {
-            WPubkeyHash::hash(&self.key.serialize())
+            Some(WPubkeyHash::from_inner(
+                hash160::Hash::hash(&self.key.serialize()).into_inner()
+            ))
         } else {
-            WPubkeyHash::hash(&self.key.serialize_uncompressed())
+            // We can't create witness pubkey hashes for an uncompressed
+            // public keys
+            None
         }
     }
 
@@ -433,8 +437,8 @@ mod tests {
     fn test_wpubkey_hash() {
         let pk = PublicKey::from_str("032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af").unwrap();
         let upk = PublicKey::from_str("042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133").unwrap();
-        assert_eq!(pk.wpubkey_hash().to_hex(), "9511aa27ef39bbfa4e4f3dd15f4d66ea57f475b4");
-        assert_eq!(upk.wpubkey_hash().to_hex(), "ac2e7daf42d2c97418fd9f78af2de552bb9c6a7a");
+        assert_eq!(pk.wpubkey_hash().unwrap().to_hex(), "9511aa27ef39bbfa4e4f3dd15f4d66ea57f475b4");
+        assert_eq!(upk.wpubkey_hash(), None);
     }
 
     #[cfg(feature = "serde")]
