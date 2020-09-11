@@ -1,4 +1,8 @@
 
+# 0.25.0 - 2020-09-10
+
+- **Bump MSRV to 1.29.0**
+
 # 0.24.0 - 2020-09-10
 
 - [Remove](https://github.com/rust-bitcoin/rust-bitcoin/pull/385) the `BitcoinHash` trait
