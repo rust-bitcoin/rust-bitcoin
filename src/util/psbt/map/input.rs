@@ -17,13 +17,13 @@ use std::collections::BTreeMap;
 use blockdata::script::Script;
 use blockdata::transaction::{SigHashType, Transaction, TxOut};
 use consensus::encode;
-use hashes::{Hash, hash160, ripemd160, sha256, sha256d};
 use util::bip32::{DerivationPath, Fingerprint};
 use util::key::PublicKey;
 use util::psbt;
 use util::psbt::map::Map;
 use util::psbt::raw;
 use util::psbt::Error;
+
 /// A key-value map for an input of the corresponding index in the unsigned
 /// transaction.
 #[derive(Clone, Default, Debug, PartialEq)]
@@ -55,15 +55,6 @@ pub struct Input {
     /// The finalized, fully-constructed scriptWitness with signatures and any
     /// other scripts necessary for this input to pass validation.
     pub final_script_witness: Option<Vec<Vec<u8>>>,
-    /// TODO: Proof of reserves commitment
-    /// RIPEMD hash to preimage map
-    pub ripemd_preimages: BTreeMap<ripemd160::Hash, Vec<u8>>,
-    /// SHA256 hash to preimage map
-    pub sha256_preimages: BTreeMap<sha256::Hash, Vec<u8>>,
-    /// HSAH160 hash to preimage map
-    pub hash160_preimages: BTreeMap<hash160::Hash, Vec<u8>>,
-    /// HAS256 hash to preimage map
-    pub hash256_preimages: BTreeMap<sha256d::Hash, Vec<u8>>,
     /// Unknown key-value pairs for this input.
     pub unknown: BTreeMap<raw::Key, Vec<u8>>,
 }
@@ -121,34 +112,10 @@ impl Map for Input {
                     self.hd_keypaths <= <raw_key: PublicKey>|<raw_value: (Fingerprint, DerivationPath)>
                 }
             }
-            10u8 => {
-                impl_psbt_insert_hash_pair! {
-                    self.ripemd_preimages <= <raw_key: ripemd160::Hash>|<raw_value: Vec<u8>>; Ripemd160
-                }
-            }
-            11u8 => {
-                impl_psbt_insert_hash_pair! {
-                    self.sha256_preimages <= <raw_key: sha256::Hash>|<raw_value: Vec<u8>>; Sha256
-                }
-            }
-            12u8 => {
-                impl_psbt_insert_hash_pair! {
-                    self.hash160_preimages <= <raw_key: hash160::Hash>|<raw_value: Vec<u8>>; Hash160
-                }
-            }
-            13u8 => {
-                impl_psbt_insert_hash_pair! {
-                    self.hash256_preimages <= <raw_key: sha256d::Hash>|<raw_value: Vec<u8>>; Hash256
-                }
-            }
             _ => match self.unknown.entry(raw_key) {
-                ::std::collections::btree_map::Entry::Vacant(empty_key) => {
-                    empty_key.insert(raw_value);
-                }
-                ::std::collections::btree_map::Entry::Occupied(k) => {
-                    return Err(Error::DuplicateKey(k.key().clone()).into())
-                }
-            },
+                ::std::collections::btree_map::Entry::Vacant(empty_key) => {empty_key.insert(raw_value);},
+                ::std::collections::btree_map::Entry::Occupied(k) => return Err(Error::DuplicateKey(k.key().clone()).into()),
+            }
         }
 
         Ok(())
@@ -193,22 +160,6 @@ impl Map for Input {
             rv.push(self.final_script_witness as <8u8, _>|<Script>)
         }
 
-        impl_psbt_get_pair! {
-            rv.push(self.ripemd_preimages as <10u8, ripemd160::Hash>|<Vec<u8>>)
-        }
-
-        impl_psbt_get_pair! {
-            rv.push(self.sha256_preimages as <11u8, sha256::Hash>|<Vec<u8>>)
-        }
-
-        impl_psbt_get_pair! {
-            rv.push(self.hash160_preimages as <12u8, hash160::Hash>|<Vec<u8>>)
-        }
-
-        impl_psbt_get_pair! {
-            rv.push(self.hash256_preimages as <13u8, sha256d::Hash>|<Vec<u8>>)
-        }
-
         for (key, value) in self.unknown.iter() {
             rv.push(raw::Pair {
                 key: key.clone(),
@@ -229,10 +180,6 @@ impl Map for Input {
 
         self.partial_sigs.extend(other.partial_sigs);
         self.hd_keypaths.extend(other.hd_keypaths);
-        self.ripemd_preimages.extend(other.ripemd_preimages);
-        self.sha256_preimages.extend(other.sha256_preimages);
-        self.hash160_preimages.extend(other.hash160_preimages);
-        self.hash256_preimages.extend(other.hash256_preimages);
         self.unknown.extend(other.unknown);
 
         merge!(redeem_script, self, other);
