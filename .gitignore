@@ -8,3 +8,6 @@ fuzz/hfuzz_workspace
 #IntelliJ project files
 .idea
 *.iml
+
+#Vscode project files
+.vscode
