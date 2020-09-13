@@ -347,8 +347,7 @@ impl fmt::Debug for DerivationPath {
 
 /// Full information on the used extended public key: fingerprint of the
 /// master extended public key and a derivation path from it.
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
-pub struct KeySource(pub Fingerprint, pub DerivationPath);
+pub type KeySource = (Fingerprint, DerivationPath);
 
 /// A BIP32 error
 #[derive(Clone, PartialEq, Eq, Debug)]

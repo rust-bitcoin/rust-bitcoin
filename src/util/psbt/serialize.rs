@@ -101,7 +101,7 @@ impl Deserialize for KeySource {
             }
         }
 
-        Ok(KeySource(fprint, dpath.into()))
+        Ok((fprint, dpath.into()))
     }
 }
 

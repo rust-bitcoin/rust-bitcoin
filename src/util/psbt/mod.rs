@@ -227,7 +227,7 @@ mod tests {
 
         let pk: ExtendedPubKey = ExtendedPubKey::from_private(&secp, &sk);
 
-        hd_keypaths.insert(pk.public_key, KeySource(fprint, dpath.into()));
+        hd_keypaths.insert(pk.public_key, (fprint, dpath.into()));
 
         let expected: Output = Output {
             redeem_script: Some(hex_script!(
