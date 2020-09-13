@@ -17,7 +17,7 @@ use std::collections::BTreeMap;
 use blockdata::script::Script;
 use blockdata::transaction::{SigHashType, Transaction, TxOut};
 use consensus::encode;
-use util::bip32::{DerivationPath, Fingerprint};
+use util::bip32::KeySource;
 use util::key::PublicKey;
 use util::psbt;
 use util::psbt::map::Map;
@@ -48,7 +48,7 @@ pub struct Input {
     pub witness_script: Option<Script>,
     /// A map from public keys needed to sign this input to their corresponding
     /// master key fingerprints and derivation paths.
-    pub hd_keypaths: BTreeMap<PublicKey, (Fingerprint, DerivationPath)>,
+    pub hd_keypaths: BTreeMap<PublicKey, KeySource>,
     /// The finalized, fully-constructed scriptSig with signatures and any other
     /// scripts necessary for this input to pass validation.
     pub final_script_sig: Option<Script>,
@@ -109,7 +109,7 @@ impl Map for Input {
             }
             6u8 => {
                 impl_psbt_insert_pair! {
-                    self.hd_keypaths <= <raw_key: PublicKey>|<raw_value: (Fingerprint, DerivationPath)>
+                    self.hd_keypaths <= <raw_key: PublicKey>|<raw_value: KeySource>
                 }
             }
             _ => match self.unknown.entry(raw_key) {
@@ -149,7 +149,7 @@ impl Map for Input {
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.hd_keypaths as <6u8, PublicKey>|<(Fingerprint, DerivationPath)>)
+            rv.push(self.hd_keypaths as <6u8, PublicKey>|<KeySource>)
         }
 
         impl_psbt_get_pair! {
