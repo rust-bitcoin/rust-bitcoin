@@ -376,14 +376,14 @@ impl_int_encodable!(i64, read_i64, emit_i64);
 
 impl VarInt {
     /// Gets the length of this VarInt when encoded.
-    /// Returns 1 for 0...0xFC, 3 for 0xFD...(2^16-1), 5 for 0x10000...(2^32-1),
+    /// Returns 1 for 0..=0xFC, 3 for 0xFD..=(2^16-1), 5 for 0x10000..=(2^32-1),
     /// and 9 otherwise.
     #[inline]
     pub fn len(&self) -> usize {
         match self.0 {
-            0...0xFC             => { 1 }
-            0xFD...0xFFFF        => { 3 }
-            0x10000...0xFFFFFFFF => { 5 }
+            0..=0xFC             => { 1 }
+            0xFD..=0xFFFF        => { 3 }
+            0x10000..=0xFFFFFFFF => { 5 }
             _                    => { 9 }
         }
     }
@@ -393,16 +393,16 @@ impl Encodable for VarInt {
     #[inline]
     fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, Error> {
         match self.0 {
-            0...0xFC => {
+            0..=0xFC => {
                 (self.0 as u8).consensus_encode(s)?;
                 Ok(1)
             },
-            0xFD...0xFFFF => {
+            0xFD..=0xFFFF => {
                 s.emit_u8(0xFD)?;
                 (self.0 as u16).consensus_encode(s)?;
                 Ok(3)
             },
-            0x10000...0xFFFFFFFF => {
+            0x10000..=0xFFFFFFFF => {
                 s.emit_u8(0xFE)?;
                 (self.0 as u32).consensus_encode(s)?;
                 Ok(5)

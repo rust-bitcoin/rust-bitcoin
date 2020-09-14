@@ -172,7 +172,7 @@ fn parse_signed_to_satoshi(
     let mut value: u64 = 0; // as satoshis
     for c in s.chars() {
         match c {
-            '0'...'9' => {
+            '0'..='9' => {
                 // Do `value = 10 * value + digit`, catching overflows.
                 match 10_u64.checked_mul(value) {
                     None => return Err(ParseAmountError::TooBig),
