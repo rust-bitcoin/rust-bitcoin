@@ -528,7 +528,6 @@ mod test {
 
     use super::*;
 
-    extern crate hex;
     extern crate serde_json;
     use self::serde_json::{Value};
 
@@ -557,18 +556,18 @@ mod test {
         let testdata = serde_json::from_str::<Value>(data).unwrap().as_array().unwrap().clone();
         for t in testdata.iter().skip(1) {
             let block_hash = BlockHash::from_hex(&t.get(1).unwrap().as_str().unwrap()).unwrap();
-            let block: Block = deserialize(hex::decode(&t.get(2).unwrap().as_str().unwrap().as_bytes()).unwrap().as_slice()).unwrap();
+            let block: Block = deserialize(&Vec::from_hex(&t.get(2).unwrap().as_str().unwrap()).unwrap()).unwrap();
             assert_eq!(block.block_hash(), block_hash);
             let scripts = t.get(3).unwrap().as_array().unwrap();
             let previous_filter_id = FilterHash::from_hex(&t.get(4).unwrap().as_str().unwrap()).unwrap();
-            let filter_content = hex::decode(&t.get(5).unwrap().as_str().unwrap().as_bytes()).unwrap();
+            let filter_content = Vec::from_hex(&t.get(5).unwrap().as_str().unwrap()).unwrap();
             let filter_id = FilterHash::from_hex(&t.get(6).unwrap().as_str().unwrap()).unwrap();
 
             let mut txmap = HashMap::new();
             let mut si = scripts.iter();
             for tx in block.txdata.iter().skip(1) {
                 for input in tx.input.iter() {
-                    txmap.insert(input.previous_output.clone(), Script::from(hex::decode(si.next().unwrap().as_str().unwrap()).unwrap()));
+                    txmap.insert(input.previous_output.clone(), Script::from(Vec::from_hex(si.next().unwrap().as_str().unwrap()).unwrap()));
                 }
             }
 
@@ -603,22 +602,22 @@ mod test {
     fn test_filter () {
         let mut patterns = HashSet::new();
 
-        patterns.insert(hex::decode("000000").unwrap());
-        patterns.insert(hex::decode("111111").unwrap());
-        patterns.insert(hex::decode("222222").unwrap());
-        patterns.insert(hex::decode("333333").unwrap());
-        patterns.insert(hex::decode("444444").unwrap());
-        patterns.insert(hex::decode("555555").unwrap());
-        patterns.insert(hex::decode("666666").unwrap());
-        patterns.insert(hex::decode("777777").unwrap());
-        patterns.insert(hex::decode("888888").unwrap());
-        patterns.insert(hex::decode("999999").unwrap());
-        patterns.insert(hex::decode("aaaaaa").unwrap());
-        patterns.insert(hex::decode("bbbbbb").unwrap());
-        patterns.insert(hex::decode("cccccc").unwrap());
-        patterns.insert(hex::decode("dddddd").unwrap());
-        patterns.insert(hex::decode("eeeeee").unwrap());
-        patterns.insert(hex::decode("ffffff").unwrap());
+        patterns.insert(Vec::from_hex("000000").unwrap());
+        patterns.insert(Vec::from_hex("111111").unwrap());
+        patterns.insert(Vec::from_hex("222222").unwrap());
+        patterns.insert(Vec::from_hex("333333").unwrap());
+        patterns.insert(Vec::from_hex("444444").unwrap());
+        patterns.insert(Vec::from_hex("555555").unwrap());
+        patterns.insert(Vec::from_hex("666666").unwrap());
+        patterns.insert(Vec::from_hex("777777").unwrap());
+        patterns.insert(Vec::from_hex("888888").unwrap());
+        patterns.insert(Vec::from_hex("999999").unwrap());
+        patterns.insert(Vec::from_hex("aaaaaa").unwrap());
+        patterns.insert(Vec::from_hex("bbbbbb").unwrap());
+        patterns.insert(Vec::from_hex("cccccc").unwrap());
+        patterns.insert(Vec::from_hex("dddddd").unwrap());
+        patterns.insert(Vec::from_hex("eeeeee").unwrap());
+        patterns.insert(Vec::from_hex("ffffff").unwrap());
 
         let mut out = Cursor::new(Vec::new());
         {
@@ -633,8 +632,8 @@ mod test {
 
         {
             let mut query = Vec::new();
-            query.push(hex::decode("abcdef").unwrap());
-            query.push(hex::decode("eeeeee").unwrap());
+            query.push(Vec::from_hex("abcdef").unwrap());
+            query.push(Vec::from_hex("eeeeee").unwrap());
 
             let reader = GCSFilterReader::new(0, 0, M, P);
             let mut input = Cursor::new(bytes.clone());
@@ -642,8 +641,8 @@ mod test {
         }
         {
             let mut query = Vec::new();
-            query.push(hex::decode("abcdef").unwrap());
-            query.push(hex::decode("123456").unwrap());
+            query.push(Vec::from_hex("abcdef").unwrap());
+            query.push(Vec::from_hex("123456").unwrap());
 
             let reader = GCSFilterReader::new(0, 0, M, P);
             let mut input = Cursor::new(bytes.clone());
@@ -664,7 +663,7 @@ mod test {
             for p in &patterns {
                 query.push(p.clone());
             }
-            query.push(hex::decode("abcdef").unwrap());
+            query.push(Vec::from_hex("abcdef").unwrap());
             let mut input = Cursor::new(bytes.clone());
             assert!(!reader.match_all(&mut input, &mut query.iter().map(|v| v.as_slice())).unwrap());
         }
