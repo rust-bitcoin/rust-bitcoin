@@ -115,13 +115,7 @@ impl fmt::Display for ParseAmountError {
     }
 }
 
-#[allow(deprecated)]
-impl error::Error for ParseAmountError {
-    fn description(&self) -> &str {
-        "description() is deprecated; use Display"
-    }
-}
-
+impl error::Error for ParseAmountError {}
 
 fn is_too_precise(s: &str, precision: usize) -> bool {
     s.contains('.') || precision >= s.len() || s.chars().rev().take(precision).any(|d| d != '0')

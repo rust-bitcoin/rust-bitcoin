@@ -411,10 +411,6 @@ impl error::Error for Error {
            None
        }
     }
-
-    fn description(&self) -> &str {
-        "description() is deprecated; use Display"
-    }
 }
 
 impl From<secp256k1::Error> for Error {

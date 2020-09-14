@@ -52,10 +52,6 @@ impl error::Error for Error {
             Error::Secp256k1(ref e) => Some(e),
         }
     }
-
-    fn description(&self) -> &str {
-        "description() is deprecated; use Display"
-    }
 }
 
 #[doc(hidden)]

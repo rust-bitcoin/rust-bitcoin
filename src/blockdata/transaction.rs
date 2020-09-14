@@ -128,12 +128,7 @@ impl fmt::Display for ParseOutPointError {
     }
 }
 
-#[allow(deprecated)]
 impl error::Error for ParseOutPointError {
-    fn description(&self) -> &str {
-        "description() is deprecated; use Display"
-    }
-
     fn cause(&self) -> Option<&dyn error::Error> {
         match *self {
             ParseOutPointError::Txid(ref e) => Some(e),

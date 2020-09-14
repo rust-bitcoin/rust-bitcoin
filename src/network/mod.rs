@@ -60,11 +60,7 @@ impl From<io::Error> for Error {
     }
 }
 
-#[allow(deprecated)]
 impl error::Error for Error {
-    fn description(&self) -> &str {
-        "description() is deprecated; use Display"
-    }
 
     fn cause(&self) -> Option<&dyn error::Error> {
         match *self {

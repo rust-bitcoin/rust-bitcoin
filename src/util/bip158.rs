@@ -75,12 +75,7 @@ pub enum Error {
     Io(io::Error),
 }
 
-#[allow(deprecated)]
-impl error::Error for Error {
-    fn description(&self) -> &str {
-        "description() is deprecated; use Display"
-    }
-}
+impl error::Error for Error {}
 
 impl Display for Error {
     fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {

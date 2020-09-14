@@ -109,7 +109,6 @@ impl fmt::Display for Error {
     }
 }
 
-#[allow(deprecated)]
 impl error::Error for Error {
     fn cause(&self) -> Option<&dyn error::Error> {
         match *self {
@@ -125,10 +124,6 @@ impl error::Error for Error {
             | Error::UnrecognizedNetworkCommand(..)
             | Error::UnknownInventoryType(..) => None,
         }
-    }
-
-    fn description(&self) -> &str {
-        "description() is deprecated; use Display"
     }
 }
 
