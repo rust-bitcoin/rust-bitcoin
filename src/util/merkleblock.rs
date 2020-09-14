@@ -445,7 +445,7 @@ impl MerkleBlock {
         match_txids: &HashSet<Txid>,
     ) -> Self {
         let matches: Vec<bool> = block_txids
-            .into_iter()
+            .iter()
             .map(|txid| match_txids.contains(txid))
             .collect();
 

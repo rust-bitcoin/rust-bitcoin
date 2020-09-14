@@ -142,7 +142,7 @@ impl error::Error for ParseOutPointError {
 /// It does not permit leading zeroes or non-digit characters.
 fn parse_vout(s: &str) -> Result<u32, ParseOutPointError> {
     if s.len() > 1 {
-        let first = s.chars().nth(0).unwrap();
+        let first = s.chars().next().unwrap();
         if first == '0' || first == '+' {
             return Err(ParseOutPointError::VoutNotCanonical);
         }

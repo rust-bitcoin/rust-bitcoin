@@ -60,7 +60,7 @@ pub fn bitcoin_merkle_root<T, I>(mut iter: I) -> T
         return Default::default();
     }
     if iter.len() == 1 {
-        return T::from_inner(iter.nth(0).unwrap().into_inner());
+        return T::from_inner(iter.next().unwrap().into_inner());
     }
     // Recursion
     let half_len = iter.len() / 2 + iter.len() % 2;

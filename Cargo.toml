@@ -10,9 +10,6 @@ description = "General purpose library for using and interoperating with Bitcoin
 keywords = [ "crypto", "bitcoin" ]
 readme = "README.md"
 
-[lib]
-name = "bitcoin"
-path = "src/lib.rs"
 
 [features]
 fuzztarget = ["secp256k1/fuzztarget", "bitcoin_hashes/fuzztarget"]
