@@ -66,7 +66,7 @@ impl error::Error for Error {
         "description() is deprecated; use Display"
     }
 
-    fn cause(&self) -> Option<&error::Error> {
+    fn cause(&self) -> Option<&dyn error::Error> {
         match *self {
             Error::Io(ref e) => Some(e),
             Error::SocketMutexPoisoned | Error::SocketNotConnectedToPeer => None,

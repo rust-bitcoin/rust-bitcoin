@@ -24,7 +24,7 @@
 //!
 
 use std::default::Default;
-use std::{fmt, io};
+use std::{error, fmt, io};
 
 use hashes::{self, Hash, sha256d};
 use hashes::hex::FromHex;
@@ -129,12 +129,12 @@ impl fmt::Display for ParseOutPointError {
 }
 
 #[allow(deprecated)]
-impl ::std::error::Error for ParseOutPointError {
+impl error::Error for ParseOutPointError {
     fn description(&self) -> &str {
         "description() is deprecated; use Display"
     }
 
-    fn cause(&self) -> Option<&::std::error::Error> {
+    fn cause(&self) -> Option<&dyn error::Error> {
         match *self {
             ParseOutPointError::Txid(ref e) => Some(e),
             ParseOutPointError::Vout(ref e) => Some(e),

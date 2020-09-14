@@ -38,6 +38,7 @@
 
 use std::fmt::{self, Display, Formatter};
 use std::str::FromStr;
+use std::error;
 
 use bech32;
 use hashes::Hash;
@@ -87,8 +88,8 @@ impl fmt::Display for Error {
 }
 
 #[allow(deprecated)]
-impl ::std::error::Error for Error {
-    fn cause(&self) -> Option<&::std::error::Error> {
+impl error::Error for Error {
+    fn cause(&self) -> Option<&dyn error::Error> {
         match *self {
             Error::Base58(ref e) => Some(e),
             Error::Bech32(ref e) => Some(e),

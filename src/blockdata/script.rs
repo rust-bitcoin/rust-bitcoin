@@ -422,7 +422,7 @@ impl Script {
     }
 
     /// Write the assembly decoding of the script to the formatter.
-    pub fn fmt_asm(&self, f: &mut fmt::Write) -> fmt::Result {
+    pub fn fmt_asm(&self, f: &mut dyn fmt::Write) -> fmt::Result {
         let mut index = 0;
         while index < self.0.len() {
             let opcode = opcodes::All::from(self.0[index]);
