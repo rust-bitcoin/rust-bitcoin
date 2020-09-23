@@ -307,30 +307,34 @@ impl Transaction {
         Wtxid::from_engine(enc)
     }
 
-    /// Computes a signature hash for a given input index with a given sighash flag.
-    /// To actually produce a scriptSig, this hash needs to be run through an
-    /// ECDSA signer, the SigHashType appended to the resulting sig, and a
-    /// script written around this, but this is the general (and hard) part.
+    /// Encodes the signing data from which a signature hash for a given input index with a given
+    /// sighash flag can be computed.  To actually produce a scriptSig, this hash needs to be run
+    /// through an ECDSA signer, the SigHashType appended to the resulting sig, and a script
+    /// written around this, but this is the general (and hard) part.
     ///
-    /// *Warning* This does NOT attempt to support OP_CODESEPARATOR. In general
-    /// this would require evaluating `script_pubkey` to determine which separators
-    /// get evaluated and which don't, which we don't have the information to
-    /// determine.
+    /// *Warning* This does NOT attempt to support OP_CODESEPARATOR. In general this would require
+    /// evaluating `script_pubkey` to determine which separators get evaluated and which don't,
+    /// which we don't have the information to determine.
     ///
-    /// # Panics
-    /// Panics if `input_index` is greater than or equal to `self.input.len()`
+    /// # Panics Panics if `input_index` is greater than or equal to `self.input.len()`
     ///
-    pub fn signature_hash(&self, input_index: usize, script_pubkey: &Script, sighash_u32: u32) -> SigHash {
+    pub fn encode_signing_data_to<Write: io::Write>(
+        &self,
+        mut writer: Write,
+        input_index: usize,
+        script_pubkey: &Script,
+        sighash_u32: u32
+    ) {
         assert!(input_index < self.input.len());  // Panic on OOB
 
         let (sighash, anyone_can_pay) = SigHashType::from_u32(sighash_u32).split_anyonecanpay_flag();
 
         // Special-case sighash_single bug because this is easy enough.
         if sighash == SigHashType::Single && input_index >= self.output.len() {
-            return SigHash::from_slice(&[1, 0, 0, 0, 0, 0, 0, 0,
-                                               0, 0, 0, 0, 0, 0, 0, 0,
-                                               0, 0, 0, 0, 0, 0, 0, 0,
-                                               0, 0, 0, 0, 0, 0, 0, 0]).unwrap();
+            writer.write_all(&[1, 0, 0, 0, 0, 0, 0, 0,
+                               0, 0, 0, 0, 0, 0, 0, 0,
+                               0, 0, 0, 0, 0, 0, 0, 0,
+                               0, 0, 0, 0, 0, 0, 0, 0]).unwrap();
         }
 
         // Build tx to sign
@@ -373,10 +377,27 @@ impl Transaction {
             _ => unreachable!()
         };
         // hash the result
-        let mut engine = SigHash::engine();
-        tx.consensus_encode(&mut engine).unwrap();
+        tx.consensus_encode(&mut writer).unwrap();
         let sighash_arr = endian::u32_to_array_le(sighash_u32);
-        sighash_arr.consensus_encode(&mut engine).unwrap();
+        sighash_arr.consensus_encode(&mut writer).unwrap();
+    }
+
+    /// Computes a signature hash for a given input index with a given sighash flag.
+    /// To actually produce a scriptSig, this hash needs to be run through an
+    /// ECDSA signer, the SigHashType appended to the resulting sig, and a
+    /// script written around this, but this is the general (and hard) part.
+    ///
+    /// *Warning* This does NOT attempt to support OP_CODESEPARATOR. In general
+    /// this would require evaluating `script_pubkey` to determine which separators
+    /// get evaluated and which don't, which we don't have the information to
+    /// determine.
+    ///
+    /// # Panics
+    /// Panics if `input_index` is greater than or equal to `self.input.len()`
+    ///
+    pub fn signature_hash(&self, input_index: usize, script_pubkey: &Script, sighash_u32: u32) -> SigHash {
+        let mut engine = SigHash::engine();
+        self.encode_signing_data_to(&mut engine, input_index, script_pubkey, sighash_u32);
         SigHash::from_engine(engine)
     }
 
