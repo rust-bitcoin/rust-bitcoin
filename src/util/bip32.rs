@@ -465,7 +465,7 @@ impl ExtendedPrivKey {
         })
     }
 
-    /// Returns the HASH160 of the chaincode
+    /// Returns the HASH160 of the public key belonging to the xpriv
     pub fn identifier<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> XpubIdentifier {
         ExtendedPubKey::from_private(secp, self).identifier()
     }
@@ -548,7 +548,7 @@ impl ExtendedPubKey {
         })
     }
 
-    /// Returns the HASH160 of the chaincode
+    /// Returns the HASH160 of the public key of the xpub
     pub fn identifier(&self) -> XpubIdentifier {
         let mut engine = XpubIdentifier::engine();
         self.public_key.write_into(&mut engine);
