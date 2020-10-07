@@ -65,7 +65,7 @@ Rust can be installed using your package manager of choice or
 it typically doesn't involve trust in the CA system. But you should be aware
 that the version of Rust shipped by your distribution might be out of date.
 Generally this isn't a problem for `rust-bitcoin` since we support much older
-versions (>=1.22) than the current stable one.
+versions than the current stable one (see MSRV section).
 
 ## Building
 The library can be built and tested using [`cargo`](https://github.com/rust-lang/cargo/):
