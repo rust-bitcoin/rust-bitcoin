@@ -367,6 +367,10 @@ impl fmt::Debug for DerivationPath {
     }
 }
 
+/// Full information on the used extended public key: fingerprint of the
+/// master extended public key and a derivation path from it.
+pub type KeySource = (Fingerprint, DerivationPath);
+
 /// A BIP32 error
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum Error {

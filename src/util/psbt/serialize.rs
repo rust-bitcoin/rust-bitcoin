@@ -22,7 +22,7 @@ use std::io;
 use blockdata::script::Script;
 use blockdata::transaction::{SigHashType, Transaction, TxOut};
 use consensus::encode::{self, serialize, Decodable};
-use util::bip32::{ChildNumber, DerivationPath, Fingerprint};
+use util::bip32::{ChildNumber, Fingerprint, KeySource};
 use util::key::PublicKey;
 use util::psbt;
 
@@ -70,7 +70,7 @@ impl Deserialize for PublicKey {
     }
 }
 
-impl Serialize for (Fingerprint, DerivationPath) {
+impl Serialize for KeySource {
     fn serialize(&self) -> Vec<u8> {
         let mut rv: Vec<u8> = Vec::with_capacity(4 + 4 * (self.1).as_ref().len());
 
@@ -84,7 +84,7 @@ impl Serialize for (Fingerprint, DerivationPath) {
     }
 }
 
-impl Deserialize for (Fingerprint, DerivationPath) {
+impl Deserialize for KeySource {
     fn deserialize(bytes: &[u8]) -> Result<Self, encode::Error> {
         if bytes.len() < 4 {
             return Err(io::Error::from(io::ErrorKind::UnexpectedEof).into())

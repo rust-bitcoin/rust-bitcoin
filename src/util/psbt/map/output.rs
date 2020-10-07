@@ -17,7 +17,7 @@ use std::collections::btree_map::Entry;
 
 use blockdata::script::Script;
 use consensus::encode;
-use util::bip32::{DerivationPath, Fingerprint};
+use util::bip32::KeySource;
 use util::key::PublicKey;
 use util::psbt;
 use util::psbt::map::Map;
@@ -34,7 +34,7 @@ pub struct Output {
     pub witness_script: Option<Script>,
     /// A map from public keys needed to spend this output to their
     /// corresponding master key fingerprints and derivation paths.
-    pub hd_keypaths: BTreeMap<PublicKey, (Fingerprint, DerivationPath)>,
+    pub hd_keypaths: BTreeMap<PublicKey, KeySource>,
     /// Unknown key-value pairs for this output.
     pub unknown: BTreeMap<raw::Key, Vec<u8>>,
 }
@@ -59,7 +59,7 @@ impl Map for Output {
             }
             2u8 => {
                 impl_psbt_insert_pair! {
-                    self.hd_keypaths <= <raw_key: PublicKey>|<raw_value: (Fingerprint, DerivationPath)>
+                    self.hd_keypaths <= <raw_key: PublicKey>|<raw_value: KeySource>
                 }
             }
             _ => match self.unknown.entry(raw_key) {
@@ -83,7 +83,7 @@ impl Map for Output {
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.hd_keypaths as <2u8, PublicKey>|<(Fingerprint, DerivationPath)>)
+            rv.push(self.hd_keypaths as <2u8, PublicKey>|<KeySource>)
         }
 
         for (key, value) in self.unknown.iter() {

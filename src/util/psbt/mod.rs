@@ -173,7 +173,7 @@ mod tests {
     use blockdata::transaction::{Transaction, TxIn, TxOut, OutPoint};
     use network::constants::Network::Bitcoin;
     use consensus::encode::{deserialize, serialize, serialize_hex};
-    use util::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint};
+    use util::bip32::{ChildNumber, ExtendedPrivKey, ExtendedPubKey, Fingerprint, KeySource};
     use util::key::PublicKey;
     use util::psbt::map::{Global, Output};
     use util::psbt::raw;
@@ -206,7 +206,7 @@ mod tests {
         let secp = &Secp256k1::new();
         let seed = Vec::from_hex("000102030405060708090a0b0c0d0e0f").unwrap();
 
-        let mut hd_keypaths: BTreeMap<PublicKey, (Fingerprint, DerivationPath)> = Default::default();
+        let mut hd_keypaths: BTreeMap<PublicKey, KeySource> = Default::default();
 
         let mut sk: ExtendedPrivKey = ExtendedPrivKey::new_master(Bitcoin, &seed).unwrap();
 
