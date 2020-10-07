@@ -19,6 +19,7 @@
 use consensus::encode::{Encodable, Decodable, Error};
 use hashes::{Hash, sha256, sha256d, ripemd160, hash160};
 use hashes::hex::{FromHex, ToHex};
+use util::key::PublicKey;
 
 macro_rules! impl_hashencode {
     ($hashtype:ident) => {

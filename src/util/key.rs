@@ -22,6 +22,8 @@ use std::str::FromStr;
 
 use secp256k1::{self, Secp256k1};
 use network::constants::Network;
+use hashes::{Hash, hash160};
+use hash_types::{PubkeyHash, WPubkeyHash};
 use util::base58;
 
 /// A key-related error.
@@ -80,6 +82,28 @@ pub struct PublicKey {
 }
 
 impl PublicKey {
+    /// Returns bitcoin 160-bit hash of the public key
+    pub fn pubkey_hash(&self) -> PubkeyHash {
+        if self.compressed {
+            PubkeyHash::hash(&self.key.serialize())
+        } else {
+            PubkeyHash::hash(&self.key.serialize_uncompressed())
+        }
+    }
+
+    /// Returns bitcoin 160-bit hash of the public key for witness program
+    pub fn wpubkey_hash(&self) -> Option<WPubkeyHash> {
+        if self.compressed {
+            Some(WPubkeyHash::from_inner(
+                hash160::Hash::hash(&self.key.serialize()).into_inner()
+            ))
+        } else {
+            // We can't create witness pubkey hashes for an uncompressed
+            // public keys
+            None
+        }
+    }
+
     /// Write the public key into a writer
     pub fn write_into<W: io::Write>(&self, mut writer: W) {
         let write_res: io::Result<()> = if self.compressed {
@@ -360,6 +384,7 @@ mod tests {
     use super::{PrivateKey, PublicKey};
     use secp256k1::Secp256k1;
     use std::str::FromStr;
+    use hashes::hex::ToHex;
     use network::constants::Network::Testnet;
     use network::constants::Network::Bitcoin;
     use util::address::Address;
@@ -398,6 +423,22 @@ mod tests {
         pk.compressed = true;
         assert_eq!(&pk.to_string(), "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af");
         assert_eq!(pk, PublicKey::from_str("032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af").unwrap());
+    }
+
+    #[test]
+    fn test_pubkey_hash() {
+        let pk = PublicKey::from_str("032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af").unwrap();
+        let upk = PublicKey::from_str("042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133").unwrap();
+        assert_eq!(pk.pubkey_hash().to_hex(), "9511aa27ef39bbfa4e4f3dd15f4d66ea57f475b4");
+        assert_eq!(upk.pubkey_hash().to_hex(), "ac2e7daf42d2c97418fd9f78af2de552bb9c6a7a");
+    }
+
+    #[test]
+    fn test_wpubkey_hash() {
+        let pk = PublicKey::from_str("032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af").unwrap();
+        let upk = PublicKey::from_str("042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133").unwrap();
+        assert_eq!(pk.wpubkey_hash().unwrap().to_hex(), "9511aa27ef39bbfa4e4f3dd15f4d66ea57f475b4");
+        assert_eq!(upk.wpubkey_hash(), None);
     }
 
     #[cfg(feature = "serde")]
