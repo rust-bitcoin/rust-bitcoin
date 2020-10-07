@@ -1,6 +1,6 @@
 #!/bin/sh -ex
 
-FEATURES="bitcoinconsensus use-serde rand"
+FEATURES="base64 bitcoinconsensus use-serde rand"
 
 if [ "$DO_COV" = true ]
 then
@@ -15,6 +15,8 @@ then
 fi
 
 # Test without any features first
+cargo test --verbose --no-default-features
+# Then test with the default features
 cargo test --verbose
 
 # Test each feature
