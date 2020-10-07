@@ -411,6 +411,19 @@ impl Script {
         }
     }
 
+    /// Iterate over the script in the form of `Instruction`s, which are an enum covering
+    /// opcodes, datapushes and errors. At most one error will be returned and then the
+    /// iterator will end. To instead iterate over the script as sequence of bytes, treat
+    /// it as a slice using `script[..]` or convert it to a vector using `into_bytes()`.
+    #[deprecated(since = "0.25.1", note = "use instructions() and instructions_minimal() instead")]
+    pub fn iter(&self, enforce_minimal: bool) -> Instructions {
+        if enforce_minimal {
+            self.instructions_minimal()
+        } else {
+            self.instructions()
+        }
+    }
+
     #[cfg(feature="bitcoinconsensus")]
     /// verify spend of an input script
     /// # Parameters
