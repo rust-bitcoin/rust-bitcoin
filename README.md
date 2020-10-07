@@ -54,7 +54,7 @@ freenode.
 This library should always compile with any combination of features on **Rust 1.29**.
 
 Because some dependencies have broken the build in minor/patch releases, to
-compile with 1.22.0 you will need to run the following version-pinning command:
+compile with 1.29.0 you will need to run the following version-pinning command:
 ```
 cargo update -p cc --precise "1.0.41" --verbose
 ```
@@ -65,7 +65,7 @@ Rust can be installed using your package manager of choice or
 it typically doesn't involve trust in the CA system. But you should be aware
 that the version of Rust shipped by your distribution might be out of date.
 Generally this isn't a problem for `rust-bitcoin` since we support much older
-versions (>=1.22) than the current stable one.
+versions than the current stable one (see MSRV section).
 
 ## Building
 The library can be built and tested using [`cargo`](https://github.com/rust-lang/cargo/):
