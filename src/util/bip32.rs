@@ -326,6 +326,28 @@ impl DerivationPath {
     pub fn hardened_children(&self) -> DerivationPathIterator {
         DerivationPathIterator::start_from(&self, ChildNumber::Hardened{ index: 0 })
     }
+
+    /// Concatenate `self` with `path` and return the resulting new path.
+    ///
+    /// ```
+    /// use bitcoin::util::bip32::{DerivationPath, ChildNumber};
+    /// use std::str::FromStr;
+    ///
+    /// let base = DerivationPath::from_str("m/42").unwrap();
+    ///
+    /// let deriv_1 = base.extend(DerivationPath::from_str("m/0/1").unwrap());
+    /// let deriv_2 = base.extend(&[
+    ///     ChildNumber::from_normal_idx(0).unwrap(),
+    ///     ChildNumber::from_normal_idx(1).unwrap()
+    /// ]);
+    ///
+    /// assert_eq!(deriv_1, deriv_2);
+    /// ```
+    pub fn extend<T: AsRef<[ChildNumber]>>(&self, path: T) -> DerivationPath {
+        let mut new_path = self.clone();
+        new_path.0.extend_from_slice(path.as_ref());
+        new_path
+    }
 }
 
 impl fmt::Display for DerivationPath {
