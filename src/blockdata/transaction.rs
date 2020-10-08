@@ -324,7 +324,7 @@ impl Transaction {
         input_index: usize,
         script_pubkey: &Script,
         sighash_u32: u32
-    ) {
+    ) -> Result<(), encode::Error> {
         assert!(input_index < self.input.len());  // Panic on OOB
 
         let (sighash, anyone_can_pay) = SigHashType::from_u32(sighash_u32).split_anyonecanpay_flag();
@@ -334,7 +334,8 @@ impl Transaction {
             writer.write_all(&[1, 0, 0, 0, 0, 0, 0, 0,
                                0, 0, 0, 0, 0, 0, 0, 0,
                                0, 0, 0, 0, 0, 0, 0, 0,
-                               0, 0, 0, 0, 0, 0, 0, 0]).unwrap();
+                               0, 0, 0, 0, 0, 0, 0, 0])?;
+            return Ok(());
         }
 
         // Build tx to sign
@@ -377,9 +378,10 @@ impl Transaction {
             _ => unreachable!()
         };
         // hash the result
-        tx.consensus_encode(&mut writer).unwrap();
+        tx.consensus_encode(&mut writer)?;
         let sighash_arr = endian::u32_to_array_le(sighash_u32);
-        sighash_arr.consensus_encode(&mut writer).unwrap();
+        sighash_arr.consensus_encode(&mut writer)?;
+        Ok(())
     }
 
     /// Computes a signature hash for a given input index with a given sighash flag.
@@ -395,10 +397,15 @@ impl Transaction {
     /// # Panics
     /// Panics if `input_index` is greater than or equal to `self.input.len()`
     ///
-    pub fn signature_hash(&self, input_index: usize, script_pubkey: &Script, sighash_u32: u32) -> SigHash {
+    pub fn signature_hash(
+        &self,
+        input_index: usize,
+        script_pubkey: &Script,
+        sighash_u32: u32
+    ) -> Result<SigHash, encode::Error> {
         let mut engine = SigHash::engine();
-        self.encode_signing_data_to(&mut engine, input_index, script_pubkey, sighash_u32);
-        SigHash::from_engine(engine)
+        self.encode_signing_data_to(&mut engine, input_index, script_pubkey, sighash_u32)?;
+        Ok(SigHash::from_engine(engine))
     }
 
     /// Gets the "weight" of this transaction, as defined by BIP141. For transactions with an empty
@@ -895,7 +902,7 @@ mod tests {
         raw_expected.reverse();
         let expected_result = SigHash::from_slice(&raw_expected[..]).unwrap();
 
-        let actual_result = tx.signature_hash(input_index, &script, hash_type as u32);
+        let actual_result = tx.signature_hash(input_index, &script, hash_type as u32).unwrap();
         assert_eq!(actual_result, expected_result);
     }
 
