@@ -21,7 +21,7 @@
 macro_rules! construct_uint {
     ($name:ident, $n_words:expr) => (
         /// Little-endian large integer type
-        #[repr(C)]
+        #[derive(Copy, Clone, PartialEq, Eq, Hash, Default)]
         pub struct $name(pub [u64; $n_words]);
         impl_array_newtype!($name, u64, $n_words);
 
@@ -136,6 +136,27 @@ macro_rules! construct_uint {
             }
         }
 
+        impl PartialOrd for $name {
+            #[inline]
+            fn partial_cmp(&self, other: &$name) -> Option<::std::cmp::Ordering> {
+                Some(self.cmp(&other))
+            }
+        }
+
+        impl Ord for $name {
+            #[inline]
+            fn cmp(&self, other: &$name) -> ::std::cmp::Ordering {
+                // We need to manually implement ordering because we use little-endian
+                // and the auto derive is a lexicographic ordering(i.e. memcmp)
+                // which with numbers is equivilant to big-endian
+                for i in 0..$n_words {
+                    if self[$n_words - 1 - i] < other[$n_words - 1 - i] { return ::std::cmp::Ordering::Less; }
+                    if self[$n_words - 1 - i] > other[$n_words - 1 - i] { return ::std::cmp::Ordering::Greater; }
+                }
+                ::std::cmp::Ordering::Equal
+            }
+        }
+
         impl ::std::ops::Add<$name> for $name {
             type Output = $name;
 
@@ -232,15 +253,9 @@ macro_rules! construct_uint {
                 (0x40 * ($n_words - 1)) + arr[$n_words - 1].trailing_zeros() as usize
             }
 
-            fn zero() -> $name { $name([0; $n_words]) }
+            fn zero() -> $name { Default::default() }
             fn one() -> $name {
                 $name({ let mut ret = [0; $n_words]; ret[0] = 1; ret })
-            }
-        }
-
-        impl ::std::default::Default for $name {
-            fn default() -> $name {
-                $crate::util::BitArray::zero()
             }
         }
 
@@ -356,11 +371,7 @@ macro_rules! construct_uint {
             }
         }
 
-        impl ::std::fmt::Display for $name {
-            fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-                <::std::fmt::Debug>::fmt(self, f)
-            }
-        }
+        display_from_debug!($name);
 
         impl $crate::consensus::Encodable for $name {
             #[inline]
