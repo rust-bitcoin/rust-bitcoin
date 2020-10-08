@@ -99,3 +99,33 @@ pub use util::amount::SignedAmount;
 pub use util::key::PrivateKey;
 pub use util::key::PublicKey;
 pub use util::merkleblock::MerkleBlock;
+
+#[cfg(all(test, feature = "unstable"))] use tests::EmptyWrite;
+
+#[cfg(all(test, feature = "unstable"))]
+mod tests {
+    use hashes::core::fmt::Arguments;
+    use std::io::{IoSlice, Result, Write};
+
+    #[derive(Default, Clone, Debug, PartialEq, Eq)]
+    pub struct EmptyWrite;
+
+    impl Write for EmptyWrite {
+        fn write(&mut self, buf: &[u8]) -> Result<usize> {
+            Ok(buf.len())
+        }
+        fn write_vectored(&mut self, bufs: &[IoSlice]) -> Result<usize> {
+            Ok(bufs.iter().map(|s| s.len()).sum())
+        }
+        fn flush(&mut self) -> Result<()> {
+            Ok(())
+        }
+
+        fn write_all(&mut self, _: &[u8]) -> Result<()> {
+            Ok(())
+        }
+        fn write_fmt(&mut self, _: Arguments) -> Result<()> {
+            Ok(())
+        }
+    }
+}
