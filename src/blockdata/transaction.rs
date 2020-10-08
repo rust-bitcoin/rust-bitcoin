@@ -24,7 +24,7 @@
 //!
 
 use std::default::Default;
-use std::{error, fmt, io};
+use std::{error, fmt, io, str};
 
 use hashes::{self, Hash, sha256d};
 use hashes::hex::FromHex;
@@ -616,6 +616,37 @@ pub enum SigHashType {
     /// 0x83: Sign one output and only this input (see `Single` for what "one output" means)
     SinglePlusAnyoneCanPay	= 0x83
 }
+serde_string_impl!(SigHashType, "a SigHashType data");
+
+impl fmt::Display for SigHashType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            SigHashType::All => "SIGHASH_ALL",
+            SigHashType::None => "SIGHASH_NONE",
+            SigHashType::Single => "SIGHASH_SINGLE",
+            SigHashType::AllPlusAnyoneCanPay => "SIGHASH_ALL|SIGHASH_ANYONECANPAY",
+            SigHashType::NonePlusAnyoneCanPay => "SIGHASH_NONE|SIGHASH_ANYONECANPAY",
+            SigHashType::SinglePlusAnyoneCanPay => "SIGHASH_SINGLE|SIGHASH_ANYONECANPAY",
+        };
+        f.write_str(s)
+    }
+}
+
+impl str::FromStr for SigHashType {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.replace(' ', "").to_ascii_uppercase().as_ref() {
+            "SIGHASH_ALL" => Ok(SigHashType::All),
+            "SIGHASH_NONE" => Ok(SigHashType::None),
+            "SIGHASH_SINGLE" => Ok(SigHashType::Single),
+            "SIGHASH_ALL|SIGHASH_ANYONECANPAY" => Ok(SigHashType::AllPlusAnyoneCanPay),
+            "SIGHASH_NONE|SIGHASH_ANYONECANPAY" => Ok(SigHashType::NonePlusAnyoneCanPay),
+            "SIGHASH_SINGLE|SIGHASH_ANYONECANPAY" => Ok(SigHashType::SinglePlusAnyoneCanPay),
+            _ => Err("can't recognize SIGHASH string".to_string())
+        }
+    }
+}
 
 impl SigHashType {
      /// Break the sighash flag into the "real" sighash flag and the ANYONECANPAY boolean
@@ -665,6 +696,7 @@ mod tests {
     use hashes::hex::FromHex;
 
     use hash_types::*;
+    use SigHashType;
 
     #[test]
     fn test_outpoint() {
@@ -916,6 +948,35 @@ mod tests {
         assert_eq!(consensus_encoded, tx_bytes);
     }
 
+    #[test]
+    fn test_sighashtype_fromstr_display() {
+        let sighashtypes = vec![("SIGHASH_ALL", SigHashType::All),
+            ("SIGHASH_NONE", SigHashType::None),
+            ("SIGHASH_SINGLE", SigHashType::Single),
+            ("SIGHASH_ALL|SIGHASH_ANYONECANPAY", SigHashType::AllPlusAnyoneCanPay),
+            ("SIGHASH_NONE|SIGHASH_ANYONECANPAY", SigHashType::NonePlusAnyoneCanPay),
+            ("SIGHASH_SINGLE|SIGHASH_ANYONECANPAY", SigHashType::SinglePlusAnyoneCanPay)];
+        for (s, sht) in sighashtypes {
+            assert_eq!(sht.to_string(), s);
+            assert_eq!(SigHashType::from_str(s).unwrap(), sht);
+        }
+        let sht_spaces = vec![
+            ("SIGHASH_ALL | SIGHASH_ANYONECANPAY", SigHashType::AllPlusAnyoneCanPay),
+            ("SIGHASH_NONE |SIGHASH_ANYONECANPAY", SigHashType::NonePlusAnyoneCanPay),
+            ("SIGHASH_SINGLE| SIGHASH_ANYONECANPAY", SigHashType::SinglePlusAnyoneCanPay)
+        ];
+        for (s, sht) in sht_spaces {
+            assert_eq!(SigHashType::from_str(s).unwrap(), sht);
+        }
+        let sht_mistakes = vec![
+            "SIGHASH_ALL SIGHASH_ANYONECANPAY",
+            "SIGHASH_NONE |",
+            "SIGHASH_SIGNLE"
+        ];
+        for s in sht_mistakes {
+            assert_eq!(SigHashType::from_str(s).unwrap_err(), "can't recognize SIGHASH string");
+        }
+    }
 
     // These test vectors were stolen from libbtc, which is Copyright 2014 Jonas Schnelli MIT
     // They were transformed by replacing {...} with run_test_sighash(...), then the ones containing
