@@ -23,8 +23,9 @@ use hashes::{Hash, sha256d};
 use hash_types::SigHash;
 use blockdata::script::Script;
 use blockdata::transaction::{Transaction, TxIn, SigHashType};
-use consensus::encode::Encodable;
+use consensus::{encode, Encodable};
 
+use std::io;
 use std::ops::{Deref, DerefMut};
 
 /// Parts of a sighash which are common across inputs or signatures, and which are
@@ -168,27 +169,32 @@ impl<R: Deref<Target=Transaction>> SigHashCache<R> {
         })
     }
 
-    /// Compute the BIP143 sighash for any flag type. See SighashComponents::sighash_all simpler
-    /// API for the most common case
-    pub fn signature_hash(&mut self, input_index: usize, script_code: &Script, value: u64, sighash_type: SigHashType) -> SigHash {
-
+    /// Encode the BIP143 signing data for any flag type into a given object implementing a
+    /// std::io::Write trait.
+    pub fn encode_signing_data_to<Write: io::Write>(
+        &mut self,
+        mut writer: Write,
+        input_index: usize,
+        script_code: &Script,
+        value: u64,
+        sighash_type: SigHashType,
+    ) -> Result<(), encode::Error> {
         let zero_hash = sha256d::Hash::default();
 
         let (sighash, anyone_can_pay) = sighash_type.split_anyonecanpay_flag();
 
-        let mut enc = SigHash::engine();
-        self.tx.version.consensus_encode(&mut enc).unwrap();
+        self.tx.version.consensus_encode(&mut writer)?;
 
         if !anyone_can_pay {
-            self.hash_prevouts().consensus_encode(&mut enc).unwrap();
+            self.hash_prevouts().consensus_encode(&mut writer)?;
         } else {
-            zero_hash.consensus_encode(&mut enc).unwrap();
+            zero_hash.consensus_encode(&mut writer)?;
         }
 
         if !anyone_can_pay && sighash != SigHashType::Single && sighash != SigHashType::None {
-            self.hash_sequence().consensus_encode(&mut enc).unwrap();
+            self.hash_sequence().consensus_encode(&mut writer)?;
         } else {
-            zero_hash.consensus_encode(&mut enc).unwrap();
+            zero_hash.consensus_encode(&mut writer)?;
         }
 
         {
@@ -196,26 +202,39 @@ impl<R: Deref<Target=Transaction>> SigHashCache<R> {
 
             txin
                 .previous_output
-                .consensus_encode(&mut enc)
-                .unwrap();
-            script_code.consensus_encode(&mut enc).unwrap();
-            value.consensus_encode(&mut enc).unwrap();
-            txin.sequence.consensus_encode(&mut enc).unwrap();
+                .consensus_encode(&mut writer)?;
+            script_code.consensus_encode(&mut writer)?;
+            value.consensus_encode(&mut writer)?;
+            txin.sequence.consensus_encode(&mut writer)?;
         }
 
         if sighash != SigHashType::Single && sighash != SigHashType::None {
-            self.hash_outputs().consensus_encode(&mut enc).unwrap();
+            self.hash_outputs().consensus_encode(&mut writer)?;
         } else if sighash == SigHashType::Single && input_index < self.tx.output.len() {
             let mut single_enc = SigHash::engine();
-            self.tx.output[input_index].consensus_encode(&mut single_enc).unwrap();
-            SigHash::from_engine(single_enc).consensus_encode(&mut enc).unwrap();
+            self.tx.output[input_index].consensus_encode(&mut single_enc)?;
+            SigHash::from_engine(single_enc).consensus_encode(&mut writer)?;
         } else {
-            zero_hash.consensus_encode(&mut enc).unwrap();
+            zero_hash.consensus_encode(&mut writer)?;
         }
 
-        self.tx.lock_time.consensus_encode(&mut enc).unwrap();
-        sighash_type.as_u32().consensus_encode(&mut enc).unwrap();
-        SigHash::from_engine(enc)
+        self.tx.lock_time.consensus_encode(&mut writer)?;
+        sighash_type.as_u32().consensus_encode(&mut writer)?;
+        Ok(())
+    }
+
+    /// Compute the BIP143 sighash for any flag type. See SighashComponents::sighash_all simpler
+    /// API for the most common case
+    pub fn signature_hash(
+        &mut self,
+        input_index: usize,
+        script_code: &Script,
+        value: u64,
+        sighash_type: SigHashType
+    ) -> Result<SigHash, encode::Error> {
+        let mut enc = SigHash::engine();
+        self.encode_signing_data_to(&mut enc, input_index, script_code, value, sighash_type)?;
+        Ok(SigHash::from_engine(enc))
     }
 }
 
@@ -273,7 +292,7 @@ mod tests {
         let expected_result = SigHash::from_slice(&raw_expected[..]).unwrap();
         let mut cache = SigHashCache::new(&tx);
         let sighash_type = SigHashType::from_u32(hash_type);
-        let actual_result = cache.signature_hash(input_index, &script, value, sighash_type);
+        let actual_result = cache.signature_hash(input_index, &script, value, sighash_type).unwrap();
         assert_eq!(actual_result, expected_result);
     }
 
