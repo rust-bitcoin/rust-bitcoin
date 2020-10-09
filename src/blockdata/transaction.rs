@@ -397,10 +397,11 @@ impl Transaction {
         input_index: usize,
         script_pubkey: &Script,
         sighash_u32: u32
-    ) -> Result<SigHash, encode::Error> {
+    ) -> SigHash {
         let mut engine = SigHash::engine();
-        self.encode_signing_data_to(&mut engine, input_index, script_pubkey, sighash_u32)?;
-        Ok(SigHash::from_engine(engine))
+        self.encode_signing_data_to(&mut engine, input_index, script_pubkey, sighash_u32)
+            .expect("engines don't error");
+        SigHash::from_engine(engine)
     }
 
     /// Gets the "weight" of this transaction, as defined by BIP141. For transactions with an empty
@@ -897,7 +898,7 @@ mod tests {
         raw_expected.reverse();
         let expected_result = SigHash::from_slice(&raw_expected[..]).unwrap();
 
-        let actual_result = tx.signature_hash(input_index, &script, hash_type as u32).unwrap();
+        let actual_result = tx.signature_hash(input_index, &script, hash_type as u32);
         assert_eq!(actual_result, expected_result);
     }
 
