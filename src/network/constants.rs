@@ -276,7 +276,7 @@ impl Encodable for ServiceFlags {
     fn consensus_encode<S: io::Write>(
         &self,
         mut s: S,
-    ) -> Result<usize, encode::Error> {
+    ) -> Result<usize, io::Error> {
         self.0.consensus_encode(&mut s)
     }
 }

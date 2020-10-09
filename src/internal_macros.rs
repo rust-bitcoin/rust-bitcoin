@@ -23,7 +23,7 @@ macro_rules! impl_consensus_encoding {
             fn consensus_encode<S: ::std::io::Write>(
                 &self,
                 mut s: S,
-            ) -> Result<usize, $crate::consensus::encode::Error> {
+            ) -> Result<usize, ::std::io::Error> {
                 let mut len = 0;
                 $(len += self.$field.consensus_encode(&mut s)?;)+
                 Ok(len)

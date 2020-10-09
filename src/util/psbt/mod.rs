@@ -95,7 +95,7 @@ impl Encodable for PartiallySignedTransaction {
     fn consensus_encode<S: io::Write>(
         &self,
         mut s: S,
-    ) -> Result<usize, encode::Error> {
+    ) -> Result<usize, io::Error> {
         let mut len = 0;
         len += b"psbt".consensus_encode(&mut s)?;
 

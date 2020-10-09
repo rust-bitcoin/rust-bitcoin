@@ -12,6 +12,7 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
+use std::io;
 use std::collections::BTreeMap;
 use std::collections::btree_map::Entry;
 
@@ -90,7 +91,7 @@ impl Map for Output {
         Ok(())
     }
 
-    fn get_pairs(&self) -> Result<Vec<raw::Pair>, encode::Error> {
+    fn get_pairs(&self) -> Result<Vec<raw::Pair>, io::Error> {
         let mut rv: Vec<raw::Pair> = Default::default();
 
         impl_psbt_get_pair! {

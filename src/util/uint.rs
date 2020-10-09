@@ -381,7 +381,7 @@ macro_rules! construct_uint {
             fn consensus_encode<S: ::std::io::Write>(
                 &self,
                 mut s: S,
-            ) -> Result<usize, $crate::consensus::encode::Error> {
+            ) -> Result<usize, ::std::io::Error> {
                 let &$name(ref data) = self;
                 let mut len = 0;
                 for word in data.iter() {

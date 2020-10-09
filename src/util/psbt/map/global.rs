@@ -100,7 +100,7 @@ impl Map for Global {
         Ok(())
     }
 
-    fn get_pairs(&self) -> Result<Vec<raw::Pair>, encode::Error> {
+    fn get_pairs(&self) -> Result<Vec<raw::Pair>, io::Error> {
         let mut rv: Vec<raw::Pair> = Default::default();
 
         rv.push(raw::Pair {

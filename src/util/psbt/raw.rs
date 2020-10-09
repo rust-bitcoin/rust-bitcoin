@@ -106,7 +106,7 @@ impl Encodable for Key {
     fn consensus_encode<S: io::Write>(
         &self,
         mut s: S,
-    ) -> Result<usize, encode::Error> {
+    ) -> Result<usize, io::Error> {
         let mut len = 0;
         len += VarInt((self.key.len() + 1) as u64).consensus_encode(&mut s)?;
 
@@ -124,7 +124,7 @@ impl Encodable for Pair {
     fn consensus_encode<S: io::Write>(
         &self,
         mut s: S,
-    ) -> Result<usize, encode::Error> {
+    ) -> Result<usize, io::Error> {
         let len = self.key.consensus_encode(&mut s)?;
         Ok(len + self.value.consensus_encode(s)?)
     }
@@ -140,7 +140,7 @@ impl Decodable for Pair {
 }
 
 impl<Subtype> Encodable for ProprietaryKey<Subtype> where Subtype: Copy + From<u8> + Into<u8> {
-    fn consensus_encode<W: io::Write>(&self, mut e: W) -> Result<usize, encode::Error> {
+    fn consensus_encode<W: io::Write>(&self, mut e: W) -> Result<usize, io::Error> {
         let mut len = self.prefix.consensus_encode(&mut e)? + 1;
         e.emit_u8(self.subtype.into())?;
         len += e.write(&self.key)?;
