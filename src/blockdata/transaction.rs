@@ -24,7 +24,7 @@
 //!
 
 use std::default::Default;
-use std::{fmt, io};
+use std::{error, fmt, io};
 
 use hashes::{self, Hash, sha256d};
 use hashes::hex::FromHex;
@@ -128,13 +128,8 @@ impl fmt::Display for ParseOutPointError {
     }
 }
 
-#[allow(deprecated)]
-impl ::std::error::Error for ParseOutPointError {
-    fn description(&self) -> &str {
-        "description() is deprecated; use Display"
-    }
-
-    fn cause(&self) -> Option<&::std::error::Error> {
+impl error::Error for ParseOutPointError {
+    fn cause(&self) -> Option<&dyn error::Error> {
         match *self {
             ParseOutPointError::Txid(ref e) => Some(e),
             ParseOutPointError::Vout(ref e) => Some(e),
@@ -147,7 +142,7 @@ impl ::std::error::Error for ParseOutPointError {
 /// It does not permit leading zeroes or non-digit characters.
 fn parse_vout(s: &str) -> Result<u32, ParseOutPointError> {
     if s.len() > 1 {
-        let first = s.chars().nth(0).unwrap();
+        let first = s.chars().next().unwrap();
         if first == '0' || first == '+' {
             return Err(ParseOutPointError::VoutNotCanonical);
         }

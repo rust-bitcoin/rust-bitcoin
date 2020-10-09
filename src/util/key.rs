@@ -46,15 +46,11 @@ impl fmt::Display for Error {
 }
 
 impl error::Error for Error {
-    fn cause(&self) -> Option<&error::Error> {
+    fn cause(&self) -> Option<&dyn error::Error> {
         match *self {
             Error::Base58(ref e) => Some(e),
             Error::Secp256k1(ref e) => Some(e),
         }
-    }
-
-    fn description(&self) -> &str {
-        "description() is deprecated; use Display"
     }
 }
 
@@ -193,7 +189,7 @@ impl PrivateKey {
     }
 
     /// Format the private key to WIF format.
-    pub fn fmt_wif(&self, fmt: &mut fmt::Write) -> fmt::Result {
+    pub fn fmt_wif(&self, fmt: &mut dyn fmt::Write) -> fmt::Result {
         let mut ret = [0; 34];
         ret[0] = match self.network {
             Network::Bitcoin => 128,

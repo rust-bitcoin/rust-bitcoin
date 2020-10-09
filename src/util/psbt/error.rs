@@ -69,9 +69,4 @@ impl fmt::Display for Error {
     }
 }
 
-#[allow(deprecated)]
-impl error::Error for Error {
-    fn description(&self) -> &str {
-        "description() is deprecated; use Display"
-    }
-}
+impl error::Error for Error {}

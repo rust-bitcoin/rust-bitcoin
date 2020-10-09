@@ -52,12 +52,7 @@ impl fmt::Display for Error {
     }
 }
 
-#[allow(deprecated)]
-impl error::Error for Error {
-    fn description(&self) -> &str {
-        "description() is deprecated; use Display"
-    }
-}
+impl error::Error for Error {}
 
 /// Vector-like object that holds the first 100 elements on the stack. If more space is needed it
 /// will be allocated on the heap.
