@@ -231,10 +231,11 @@ impl<R: Deref<Target=Transaction>> SigHashCache<R> {
         script_code: &Script,
         value: u64,
         sighash_type: SigHashType
-    ) -> Result<SigHash, encode::Error> {
+    ) -> SigHash {
         let mut enc = SigHash::engine();
-        self.encode_signing_data_to(&mut enc, input_index, script_code, value, sighash_type)?;
-        Ok(SigHash::from_engine(enc))
+        self.encode_signing_data_to(&mut enc, input_index, script_code, value, sighash_type)
+            .expect("engines don't error");
+        SigHash::from_engine(enc)
     }
 }
 
@@ -292,7 +293,7 @@ mod tests {
         let expected_result = SigHash::from_slice(&raw_expected[..]).unwrap();
         let mut cache = SigHashCache::new(&tx);
         let sighash_type = SigHashType::from_u32(hash_type);
-        let actual_result = cache.signature_hash(input_index, &script, value, sighash_type).unwrap();
+        let actual_result = cache.signature_hash(input_index, &script, value, sighash_type);
         assert_eq!(actual_result, expected_result);
     }
 
