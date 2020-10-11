@@ -42,7 +42,7 @@ use util::psbt;
 
 use blockdata::transaction::{TxOut, Transaction, TxIn};
 use network::message_blockdata::Inventory;
-use network::address::Address;
+use network::address::{Address, AddrV2Message};
 
 /// Encoding error
 #[derive(Debug)]
@@ -530,6 +530,7 @@ macro_rules! impl_array {
 impl_array!(2);
 impl_array!(4);
 impl_array!(8);
+impl_array!(10);
 impl_array!(12);
 impl_array!(16);
 impl_array!(32);
@@ -600,6 +601,7 @@ impl_vec!(Inventory);
 impl_vec!(Vec<u8>);
 impl_vec!((u32, Address));
 impl_vec!(u64);
+impl_vec!(AddrV2Message);
 
 fn consensus_encode_with_size<S: io::Write>(data: &[u8], mut s: S) -> Result<usize, Error> {
     let vi_len = VarInt(data.len() as u64).consensus_encode(&mut s)?;
