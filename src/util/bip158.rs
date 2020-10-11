@@ -94,6 +94,7 @@ impl From<io::Error> for Error {
 
 
 /// a computed or read block filter
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BlockFilter {
     /// Golomb encoded filter
     pub content: Vec<u8>
