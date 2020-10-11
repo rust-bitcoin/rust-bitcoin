@@ -58,6 +58,11 @@ pub struct Input {
     /// Unknown key-value pairs for this input.
     pub unknown: BTreeMap<raw::Key, Vec<u8>>,
 }
+serde_struct_impl!(
+    Input, non_witness_utxo, witness_utxo, partial_sigs,
+    sighash_type, redeem_script, witness_script, hd_keypaths,
+    final_script_sig, final_script_witness, unknown
+);
 
 impl Map for Input {
     fn insert_pair(&mut self, pair: raw::Pair) -> Result<(), encode::Error> {

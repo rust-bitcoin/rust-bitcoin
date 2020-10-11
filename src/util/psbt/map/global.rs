@@ -32,6 +32,7 @@ pub struct Global {
     /// Unknown global key-value pairs.
     pub unknown: BTreeMap<raw::Key, Vec<u8>>,
 }
+serde_struct_impl!(Global, unsigned_tx, unknown);
 
 impl Global {
     /// Create a Global from an unsigned transaction, error if not unsigned

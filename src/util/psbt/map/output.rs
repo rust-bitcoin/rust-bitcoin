@@ -38,6 +38,9 @@ pub struct Output {
     /// Unknown key-value pairs for this output.
     pub unknown: BTreeMap<raw::Key, Vec<u8>>,
 }
+serde_struct_impl!(
+    Output, redeem_script, witness_script, hd_keypaths, unknown
+);
 
 impl Map for Output {
     fn insert_pair(&mut self, pair: raw::Pair) -> Result<(), encode::Error> {

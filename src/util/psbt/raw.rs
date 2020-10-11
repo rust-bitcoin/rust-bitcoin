@@ -31,6 +31,7 @@ pub struct Key {
     /// The key itself in raw byte form.
     pub key: Vec<u8>,
 }
+serde_struct_impl!(Key, type_value, key);
 
 /// A PSBT key-value pair in its raw byte form.
 #[derive(Debug, PartialEq)]
@@ -40,6 +41,7 @@ pub struct Pair {
     /// The value of this key-value pair in raw byte form.
     pub value: Vec<u8>,
 }
+serde_struct_impl!(Pair, key, value);
 
 impl fmt::Display for Key {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
