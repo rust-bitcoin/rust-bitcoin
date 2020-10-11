@@ -25,6 +25,8 @@ use network::constants::Network;
 use hashes::{Hash, hash160};
 use hash_types::{PubkeyHash, WPubkeyHash};
 use util::base58;
+#[cfg(feature = "schemars")] use schemars::schema::{Schema, SchemaObject};
+#[cfg(feature = "schemars")] use schemars::{gen::SchemaGenerator, JsonSchema};
 
 /// A key-related error.
 #[derive(Debug)]
@@ -152,6 +154,24 @@ impl fmt::Display for PublicKey {
     }
 }
 
+#[cfg(feature = "schemars")]
+impl JsonSchema for PublicKey {
+    fn schema_name() -> String {
+        "PublicKey".into()
+    }
+    fn json_schema(gen: &mut SchemaGenerator) -> Schema {
+        let mut schema: SchemaObject = <String>::json_schema(gen).into();
+        const PAT: &'static str = "^([0-9a-fA-F]{2})*$";
+        schema.string = Some(Box::new(schemars::schema::StringValidation {
+            max_length: Some(65*2),
+            min_length: Some(33*2),
+            pattern: Some(PAT.to_owned()),
+        }));
+        schema.into()
+    }
+}
+
+
 impl FromStr for PublicKey {
     type Err = Error;
     fn from_str(s: &str) -> Result<PublicKey, Error> {
@@ -240,6 +260,24 @@ impl PrivateKey {
 impl fmt::Display for PrivateKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.fmt_wif(f)
+    }
+}
+
+#[cfg(feature = "schemars")]
+impl JsonSchema for PrivateKey {
+    fn schema_name() -> String {
+        "PrivateKey".into()
+    }
+    fn json_schema(gen: &mut SchemaGenerator) -> Schema {
+        let mut schema: SchemaObject = <String>::json_schema(gen).into();
+        // Base 58 Regex
+        const PAT: &'static str = "^[5KLc9][1-9A-HJ-NP-Za-km-z]{50,51}$";
+        schema.string = Some(Box::new(schemars::schema::StringValidation {
+            max_length: Some(52),
+            min_length: Some(51),
+            pattern: Some(PAT.to_owned()),
+        }));
+        schema.into()
     }
 }
 
@@ -481,5 +519,36 @@ mod tests {
         assert_tokens(&pk.readable(), &[Token::BorrowedStr(PK_STR)]);
         assert_tokens(&pk_u.compact(), &[Token::BorrowedBytes(&PK_BYTES_U[..])]);
         assert_tokens(&pk_u.readable(), &[Token::BorrowedStr(PK_STR_U)]);
+
+        #[cfg(feature = "schemars")] {
+            {
+                let js = serde_json::from_str(&serde_json::to_string(&sk).unwrap()).unwrap();
+                let s = schemars::schema_for!(PrivateKey);
+                let string_schema = serde_json::to_string_pretty(&s).unwrap();
+                let schema = serde_json::from_str(&string_schema).unwrap();
+
+                assert!(jsonschema_valid::is_valid(&js, &schema, None, true));
+            }
+
+            {
+
+                let js = serde_json::from_str(&serde_json::to_string(&pk).unwrap()).unwrap();
+                let s = schemars::schema_for!(PublicKey);
+                let string_schema = serde_json::to_string_pretty(&s).unwrap();
+                let schema = serde_json::from_str(&string_schema).unwrap();
+
+                assert!(jsonschema_valid::is_valid(&js, &schema, None, true));
+            }
+
+            {
+
+                let js = serde_json::from_str(&serde_json::to_string(&pk_u).unwrap()).unwrap();
+                let s = schemars::schema_for!(PublicKey);
+                let string_schema = serde_json::to_string_pretty(&s).unwrap();
+                let schema = serde_json::from_str(&string_schema).unwrap();
+
+                assert!(jsonschema_valid::is_valid(&js, &schema, None, true));
+            }
+        }
     }
 }

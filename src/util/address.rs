@@ -48,6 +48,9 @@ use network::constants::Network;
 use util::base58;
 use util::key;
 
+#[cfg(feature = "schemars")] use schemars::schema::{Schema, SchemaObject};
+#[cfg(feature = "schemars")] use schemars::{gen::SchemaGenerator, JsonSchema};
+
 /// Address error.
 #[derive(Debug, PartialEq)]
 pub enum Error {
@@ -392,6 +395,24 @@ impl Display for Address {
     }
 }
 
+#[cfg(feature = "schemars")]
+impl JsonSchema for Address {
+
+    fn schema_name() -> String {
+        "Address".into()
+    }
+    fn json_schema(gen: &mut SchemaGenerator) -> Schema {
+        let mut schema: SchemaObject = <String>::json_schema(gen).into();
+        const PAT: &'static str = "^(([13]|[mn])[a-km-zA-HJ-NP-Z1-9]{25,34}|(bc|tb|bcrt)1[ac-hj-np-zAC-HJ-NP-Z02-9]{11,71})$";
+        schema.string = Some(Box::new(schemars::schema::StringValidation {
+            max_length: None,
+            min_length: None,
+            pattern: Some(PAT.to_owned()),
+        }));
+        schema.into()
+    }
+}
+
 /// Extract the bech32 prefix.
 /// Returns the same slice when no prefix is found.
 fn find_bech32_prefix(bech32: &str) -> &str {
@@ -686,9 +707,22 @@ mod tests {
     #[cfg(feature = "serde")]
     fn test_json_serialize() {
         use serde_json;
+        #[cfg(feature = "schemars")]
+        let validated = {
+            let s = schemars::schema_for!(Address);
+            let string_schema = serde_json::to_string_pretty(&s).unwrap();
+            let schema = serde_json::from_str(&string_schema).unwrap();
+            move |js| {
+                assert!(jsonschema_valid::is_valid(&js, &schema, None, true));
+                js
+            }
+
+        };
+        #[cfg(not(feature = "schemars"))]
+        let validated = |js| {js};
 
         let addr = Address::from_str("132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM").unwrap();
-        let json = serde_json::to_value(&addr).unwrap();
+        let json = validated(serde_json::to_value(&addr).unwrap());
         assert_eq!(
             json,
             serde_json::Value::String("132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM".to_owned())
@@ -701,7 +735,7 @@ mod tests {
         );
 
         let addr = Address::from_str("33iFwdLuRpW1uK1RTRqsoi8rR4NpDzk66k").unwrap();
-        let json = serde_json::to_value(&addr).unwrap();
+        let json = validated(serde_json::to_value(&addr).unwrap());
         assert_eq!(
             json,
             serde_json::Value::String("33iFwdLuRpW1uK1RTRqsoi8rR4NpDzk66k".to_owned())
@@ -716,7 +750,7 @@ mod tests {
         let addr =
             Address::from_str("tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7")
                 .unwrap();
-        let json = serde_json::to_value(&addr).unwrap();
+        let json = validated(serde_json::to_value(&addr).unwrap());
         assert_eq!(
             json,
             serde_json::Value::String(
@@ -731,7 +765,7 @@ mod tests {
         );
 
         let addr = Address::from_str("bcrt1q2nfxmhd4n3c8834pj72xagvyr9gl57n5r94fsl").unwrap();
-        let json = serde_json::to_value(&addr).unwrap();
+        let json = validated(serde_json::to_value(&addr).unwrap());
         assert_eq!(
             json,
             serde_json::Value::String("bcrt1q2nfxmhd4n3c8834pj72xagvyr9gl57n5r94fsl".to_owned())
