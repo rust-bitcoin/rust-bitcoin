@@ -25,7 +25,7 @@ use std::io::Cursor;
 
 use blockdata::block;
 use blockdata::transaction;
-use network::address::Address;
+use network::address::{Address, AddrV2Message};
 use network::message_network;
 use network::message_blockdata;
 use network::message_filter;
@@ -159,6 +159,10 @@ pub enum NetworkMessage {
     FeeFilter(i64),
     /// `wtxidrelay`
     WtxidRelay,
+    /// `addrv2`
+    AddrV2(Vec<AddrV2Message>),
+    /// `sendaddrv2`
+    SendAddrV2,
 }
 
 impl NetworkMessage {
@@ -191,6 +195,8 @@ impl NetworkMessage {
             NetworkMessage::Reject(_)    => "reject",
             NetworkMessage::FeeFilter(_) => "feefilter",
             NetworkMessage::WtxidRelay => "wtxidrelay",
+            NetworkMessage::AddrV2(_) => "addrv2",
+            NetworkMessage::SendAddrV2 => "sendaddrv2",
         }
     }
 
@@ -260,11 +266,13 @@ impl Encodable for RawNetworkMessage {
             NetworkMessage::Alert(ref dat)    => serialize(dat),
             NetworkMessage::Reject(ref dat) => serialize(dat),
             NetworkMessage::FeeFilter(ref data) => serialize(data),
+            NetworkMessage::AddrV2(ref dat) => serialize(dat),
             NetworkMessage::Verack
             | NetworkMessage::SendHeaders
             | NetworkMessage::MemPool
             | NetworkMessage::GetAddr
             | NetworkMessage::WtxidRelay => vec![],
+            | NetworkMessage::SendAddrV2 => vec![],
         }).consensus_encode(&mut s)?;
         Ok(len)
     }
@@ -329,6 +337,8 @@ impl Decodable for RawNetworkMessage {
             "alert"   => NetworkMessage::Alert(Decodable::consensus_decode(&mut mem_d)?),
             "feefilter" => NetworkMessage::FeeFilter(Decodable::consensus_decode(&mut mem_d)?),
             "wtxidrelay" => NetworkMessage::WtxidRelay,
+            "addrv2" => NetworkMessage::AddrV2(Decodable::consensus_decode(&mut mem_d)?),
+            "sendaddrv2" => NetworkMessage::SendAddrV2,
             _ => return Err(encode::Error::UnrecognizedNetworkCommand(cmd.into_owned())),
         };
         Ok(RawNetworkMessage {
@@ -341,13 +351,14 @@ impl Decodable for RawNetworkMessage {
 #[cfg(test)]
 mod test {
     use std::io;
+    use std::net::Ipv4Addr;
     use super::{RawNetworkMessage, NetworkMessage, CommandString};
     use network::constants::ServiceFlags;
     use consensus::encode::{Encodable, deserialize, deserialize_partial, serialize};
     use hashes::hex::FromHex;
     use hashes::sha256d::Hash;
     use hashes::Hash as HashTrait;
-    use network::address::Address;
+    use network::address::{Address, AddrV2, AddrV2Message};
     use super::message_network::{Reject, RejectReason, VersionMessage};
     use network::message_blockdata::{Inventory, GetBlocksMessage, GetHeadersMessage};
     use blockdata::block::{Block, BlockHeader};
@@ -393,6 +404,8 @@ mod test {
             NetworkMessage::Reject(Reject{message: "Test reject".into(), ccode: RejectReason::Duplicate, reason: "Cause".into(), hash: hash([255u8; 32])}),
             NetworkMessage::FeeFilter(1000),
             NetworkMessage::WtxidRelay,
+            NetworkMessage::AddrV2(vec![AddrV2Message{ addr: AddrV2::Ipv4(Ipv4Addr::new(127, 0, 0, 1)), port: 0, services: ServiceFlags::NONE, time: 0 }]),
+            NetworkMessage::SendAddrV2,
         ];
 
         for msg in msgs {
