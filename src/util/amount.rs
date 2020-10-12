@@ -995,6 +995,184 @@ pub mod serde {
     }
 }
 
+/// Type for dealing with unknown amounts
+#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
+#[derive(Clone, Copy, PartialEq, PartialOrd, Debug)]
+pub enum CoinAmount {
+    /// Sats type
+    Sats(u64),
+    /// Btc type
+    Btc(f64),
+}
+
+/// Derived externally using serde_derive
+#[cfg(feature = "serde")]
+#[doc(hidden)]
+#[allow(non_upper_case_globals, unused_attributes, unused_qualifications)]
+const _: () = {
+    #[allow(rust_2018_idioms, clippy::useless_attribute)]
+    extern crate serde as _serde;
+    impl _serde::Serialize for CoinAmount {
+        fn serialize<__S>(&self, __serializer: __S) -> _serde::export::Result<__S::Ok, __S::Error>
+        where
+            __S: _serde::Serializer,
+        {
+            match *self {
+                CoinAmount::Sats(ref __field0) => _serde::Serializer::serialize_newtype_variant(
+                    __serializer,
+                    "CoinAmount",
+                    0u32,
+                    "Sats",
+                    __field0,
+                ),
+                CoinAmount::Btc(ref __field0) => _serde::Serializer::serialize_newtype_variant(
+                    __serializer,
+                    "CoinAmount",
+                    1u32,
+                    "Btc",
+                    __field0,
+                ),
+            }
+        }
+    }
+    impl<'de> _serde::Deserialize<'de> for CoinAmount {
+        fn deserialize<__D>(__deserializer: __D) -> _serde::export::Result<Self, __D::Error>
+        where
+            __D: _serde::Deserializer<'de>,
+        {
+            #[allow(non_camel_case_types)]
+            enum __Field {
+                __field0,
+                __field1,
+            }
+            struct __FieldVisitor;
+            impl<'de> _serde::de::Visitor<'de> for __FieldVisitor {
+                type Value = __Field;
+                fn expecting(
+                    &self,
+                    __formatter: &mut _serde::export::Formatter,
+                ) -> _serde::export::fmt::Result {
+                    _serde::export::Formatter::write_str(__formatter, "variant identifier")
+                }
+                fn visit_u64<__E>(self, __value: u64) -> _serde::export::Result<Self::Value, __E>
+                where
+                    __E: _serde::de::Error,
+                {
+                    match __value {
+                        0u64 => _serde::export::Ok(__Field::__field0),
+                        1u64 => _serde::export::Ok(__Field::__field1),
+                        _ => _serde::export::Err(_serde::de::Error::invalid_value(
+                            _serde::de::Unexpected::Unsigned(__value),
+                            &"variant index 0 <= i < 2",
+                        )),
+                    }
+                }
+                fn visit_str<__E>(self, __value: &str) -> _serde::export::Result<Self::Value, __E>
+                where
+                    __E: _serde::de::Error,
+                {
+                    match __value {
+                        "Sats" => _serde::export::Ok(__Field::__field0),
+                        "Btc" => _serde::export::Ok(__Field::__field1),
+                        _ => _serde::export::Err(_serde::de::Error::unknown_variant(
+                            __value, VARIANTS,
+                        )),
+                    }
+                }
+                fn visit_bytes<__E>(
+                    self,
+                    __value: &[u8],
+                ) -> _serde::export::Result<Self::Value, __E>
+                where
+                    __E: _serde::de::Error,
+                {
+                    match __value {
+                        b"Sats" => _serde::export::Ok(__Field::__field0),
+                        b"Btc" => _serde::export::Ok(__Field::__field1),
+                        _ => {
+                            let __value = &_serde::export::from_utf8_lossy(__value);
+                            _serde::export::Err(_serde::de::Error::unknown_variant(
+                                __value, VARIANTS,
+                            ))
+                        }
+                    }
+                }
+            }
+            impl<'de> _serde::Deserialize<'de> for __Field {
+                #[inline]
+                fn deserialize<__D>(__deserializer: __D) -> _serde::export::Result<Self, __D::Error>
+                where
+                    __D: _serde::Deserializer<'de>,
+                {
+                    _serde::Deserializer::deserialize_identifier(__deserializer, __FieldVisitor)
+                }
+            }
+            struct __Visitor<'de> {
+                marker: _serde::export::PhantomData<CoinAmount>,
+                lifetime: _serde::export::PhantomData<&'de ()>,
+            }
+            impl<'de> _serde::de::Visitor<'de> for __Visitor<'de> {
+                type Value = CoinAmount;
+                fn expecting(
+                    &self,
+                    __formatter: &mut _serde::export::Formatter,
+                ) -> _serde::export::fmt::Result {
+                    _serde::export::Formatter::write_str(__formatter, "enum CoinAmount")
+                }
+                fn visit_enum<__A>(
+                    self,
+                    __data: __A,
+                ) -> _serde::export::Result<Self::Value, __A::Error>
+                where
+                    __A: _serde::de::EnumAccess<'de>,
+                {
+                    match match _serde::de::EnumAccess::variant(__data) {
+                        _serde::export::Ok(__val) => __val,
+                        _serde::export::Err(__err) => {
+                            return _serde::export::Err(__err);
+                        }
+                    } {
+                        (__Field::__field0, __variant) => _serde::export::Result::map(
+                            _serde::de::VariantAccess::newtype_variant::<u64>(__variant),
+                            CoinAmount::Sats,
+                        ),
+                        (__Field::__field1, __variant) => _serde::export::Result::map(
+                            _serde::de::VariantAccess::newtype_variant::<f64>(__variant),
+                            CoinAmount::Btc,
+                        ),
+                    }
+                }
+            }
+            const VARIANTS: &'static [&'static str] = &["Sats", "Btc"];
+            _serde::Deserializer::deserialize_enum(
+                __deserializer,
+                "CoinAmount",
+                VARIANTS,
+                __Visitor {
+                    marker: _serde::export::PhantomData::<CoinAmount>,
+                    lifetime: _serde::export::PhantomData,
+                },
+            )
+        }
+    }
+};
+
+impl From<CoinAmount> for  Result<Amount, ParseAmountError> {
+    fn from(c: CoinAmount) -> Result<Amount, ParseAmountError> {
+        match c {
+            CoinAmount::Sats(x) => Ok(Amount::from_sat(x)),
+            CoinAmount::Btc(y) => Amount::from_btc(y),
+        }
+    }
+}
+
+impl From<Amount> for CoinAmount {
+    fn from(a:Amount) -> Self {
+        CoinAmount::Sats(a.as_sat())
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1374,5 +1552,37 @@ mod tests {
 
         let value_without: serde_json::Value = serde_json::from_str("{}").unwrap();
         assert_eq!(without, serde_json::from_value(value_without).unwrap());
+    }
+
+    #[cfg(all(feature = "serde", feature = "schemars"))]
+    #[test]
+    fn coinamount() {
+        use serde_json;
+
+        #[derive(Serialize, Deserialize, Debug, PartialEq, schemars::JsonSchema)]
+        struct T(Vec<CoinAmount>);
+
+        let obj_schem = schemars::schema_for!(T);
+        let string_schema = serde_json::to_string_pretty(&obj_schem).unwrap();
+        let schema = serde_json::from_str(&string_schema).unwrap();
+
+        let v = T(vec![CoinAmount::Sats(10), CoinAmount::Btc(5.0)]);
+        let s = "[{\"Sats\":10},{\"Btc\":5.0}]";
+        assert!(jsonschema_valid::is_valid(
+            &serde_json::from_str(s).unwrap(),
+            &schema,
+            None,
+            true
+        ));
+        let t: T = serde_json::from_str(s).unwrap();
+        assert_eq!(t, v);
+        let o = serde_json::to_value(&v).unwrap().to_string();
+        assert!(jsonschema_valid::is_valid(
+            &serde_json::from_str(&o).unwrap(),
+            &schema,
+            None,
+            true
+        ));
+        assert_eq!(s, o);
     }
 }
