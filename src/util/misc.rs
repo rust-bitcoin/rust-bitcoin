@@ -156,11 +156,7 @@ mod message_signing {
                     *address == Address::p2pkh(&pubkey, address.network)
                 }
                 Some(AddressType::P2sh) => false,
-                Some(AddressType::P2wpkh) => {
-                    // Only compressed pubkeys are allowed in p2wpkh.
-                    pubkey.compressed &&
-                        *address == Address::p2wpkh(&pubkey, address.network).expect("compressed pk")
-                }
+                Some(AddressType::P2wpkh) => false,
                 Some(AddressType::P2wsh) => false,
                 None => false,
             })
@@ -323,7 +319,7 @@ mod tests {
         let p2pkh = ::Address::p2pkh(&pubkey, ::Network::Bitcoin);
         assert_eq!(signature2.is_signed_by_address(&secp, &p2pkh, msg_hash), Ok(true));
         let p2wpkh = ::Address::p2wpkh(&pubkey, ::Network::Bitcoin).unwrap();
-        assert_eq!(signature2.is_signed_by_address(&secp, &p2wpkh, msg_hash), Ok(true));
+        assert_eq!(signature2.is_signed_by_address(&secp, &p2wpkh, msg_hash), Ok(false));
         let p2shwpkh = ::Address::p2shwpkh(&pubkey, ::Network::Bitcoin).unwrap();
         assert_eq!(signature2.is_signed_by_address(&secp, &p2shwpkh, msg_hash), Ok(false));
     }
