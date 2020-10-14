@@ -235,6 +235,18 @@ impl<T> IntoDerivationPath for T where T: Into<DerivationPath> {
     }
 }
 
+impl IntoDerivationPath for String {
+    fn into_derivation_path(self) -> Result<DerivationPath, Error> {
+        self.parse()
+    }
+}
+
+impl<'a> IntoDerivationPath for &'a str {
+    fn into_derivation_path(self) -> Result<DerivationPath, Error> {
+        self.parse()
+    }
+}
+
 impl From<Vec<ChildNumber>> for DerivationPath {
     fn from(numbers: Vec<ChildNumber>) -> Self {
         DerivationPath(numbers)
@@ -831,6 +843,9 @@ mod tests {
                 ChildNumber::from_normal_idx(1000000000).unwrap(),
             ].into())
         );
+        let s = "m/0'/50/3'/5/545456";
+        assert_eq!(DerivationPath::from_str(s), s.into_derivation_path());
+        assert_eq!(DerivationPath::from_str(s), s.to_string().into_derivation_path());
     }
 
     #[test]
