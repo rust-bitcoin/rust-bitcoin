@@ -636,7 +636,7 @@ impl str::FromStr for SigHashType {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.replace(' ', "").to_ascii_uppercase().as_ref() {
+        match s.as_ref() {
             "SIGHASH_ALL" => Ok(SigHashType::All),
             "SIGHASH_NONE" => Ok(SigHashType::None),
             "SIGHASH_SINGLE" => Ok(SigHashType::Single),
@@ -960,18 +960,17 @@ mod tests {
             assert_eq!(sht.to_string(), s);
             assert_eq!(SigHashType::from_str(s).unwrap(), sht);
         }
-        let sht_spaces = vec![
-            ("SIGHASH_ALL | SIGHASH_ANYONECANPAY", SigHashType::AllPlusAnyoneCanPay),
-            ("SIGHASH_NONE |SIGHASH_ANYONECANPAY", SigHashType::NonePlusAnyoneCanPay),
-            ("SIGHASH_SINGLE| SIGHASH_ANYONECANPAY", SigHashType::SinglePlusAnyoneCanPay)
-        ];
-        for (s, sht) in sht_spaces {
-            assert_eq!(SigHashType::from_str(s).unwrap(), sht);
-        }
         let sht_mistakes = vec![
+            "SIGHASH_ALL | SIGHASH_ANYONECANPAY",
+            "SIGHASH_NONE |SIGHASH_ANYONECANPAY",
+            "SIGHASH_SINGLE| SIGHASH_ANYONECANPAY",
             "SIGHASH_ALL SIGHASH_ANYONECANPAY",
             "SIGHASH_NONE |",
-            "SIGHASH_SIGNLE"
+            "SIGHASH_SIGNLE",
+            "sighash_none",
+            "Sighash_none",
+            "SigHash_None",
+            "SigHash_NONE",
         ];
         for s in sht_mistakes {
             assert_eq!(SigHashType::from_str(s).unwrap_err(), "can't recognize SIGHASH string");
