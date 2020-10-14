@@ -49,6 +49,7 @@ pub struct PartiallySignedTransaction {
     /// transaction.
     pub outputs: Vec<Output>,
 }
+serde_struct_impl!(PartiallySignedTransaction, global, inputs, outputs);
 
 impl PartiallySignedTransaction {
     /// Create a PartiallySignedTransaction from an unsigned transaction, error
