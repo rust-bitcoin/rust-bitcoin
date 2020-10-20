@@ -743,4 +743,24 @@ mod tests {
             hex_script!("001454d26dddb59c7073c6a197946ea1841951fa7a74")
         );
     }
+
+    #[test]
+    fn test_segwit_v1() {
+        let addr_str = "bc1pmfr3p9j00pfxjh0zmgp99y8zftmd3s5pmedqhyptwy6lm87hf5ss52r5n8";
+        let addr = Address::from_str(&addr_str).unwrap();
+        assert_eq!(addr_str, addr.to_string());
+        assert_eq!(
+            addr.script_pubkey().to_hex(),
+            "5120da4710964f7852695de2da025290e24af6d8c281de5a0b902b7135fd9fd74d21"
+        );
+        if let Payload::WitnessProgram {
+            version: v,
+            program: _p,
+        } = &addr.payload
+        {
+            assert_eq!(v, &bech32::u5::try_from_u8(1).unwrap());
+        } else {
+            assert!(false);
+        }
+    }
 }
