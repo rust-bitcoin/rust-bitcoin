@@ -222,7 +222,7 @@ impl Address {
     #[inline]
     pub fn p2pkh(pk: &key::PublicKey, network: Network) -> Address {
         let mut hash_engine = PubkeyHash::engine();
-        pk.write_into(&mut hash_engine);
+        pk.write_into(&mut hash_engine).expect("engines don't error");
 
         Address {
             network: network,
@@ -250,7 +250,7 @@ impl Address {
         }
 
         let mut hash_engine = WPubkeyHash::engine();
-        pk.write_into(&mut hash_engine);
+        pk.write_into(&mut hash_engine).expect("engines don't error");
 
         Ok(Address {
             network: network,
@@ -271,7 +271,7 @@ impl Address {
         }
 
         let mut hash_engine = WPubkeyHash::engine();
-        pk.write_into(&mut hash_engine);
+        pk.write_into(&mut hash_engine).expect("engines don't error");
 
         let builder = script::Builder::new()
             .push_int(0)
