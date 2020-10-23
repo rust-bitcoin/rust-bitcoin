@@ -102,12 +102,11 @@ impl PublicKey {
 
     /// Write the public key into a writer
     pub fn write_into<W: io::Write>(&self, mut writer: W) {
-        let write_res: io::Result<()> = if self.compressed {
+        let _: io::Result<()> = if self.compressed {
             writer.write_all(&self.key.serialize())
         } else {
             writer.write_all(&self.key.serialize_uncompressed())
         };
-        debug_assert!(write_res.is_ok());
     }
 
     /// Serialize the public key to bytes
