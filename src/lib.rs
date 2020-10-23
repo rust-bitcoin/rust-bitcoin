@@ -35,6 +35,7 @@
 #![deny(dead_code)]
 #![deny(unused_imports)]
 #![deny(missing_docs)]
+#![deny(unused_must_use)]
 
 // Re-exported dependencies.
 #[macro_use] pub extern crate bitcoin_hashes as hashes;
