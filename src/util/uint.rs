@@ -83,8 +83,11 @@ macro_rules! construct_uint {
             /// Create an object from a given signed 64-bit integer
             #[inline]
             pub fn from_i64(init: i64) -> Option<$name> {
-                assert!(init >= 0);
-                $name::from_u64(init as u64)
+                if init >= 0 {
+                    $name::from_u64(init as u64)
+                } else {
+                    None
+                }
             }
 
             /// Creates big integer value from a byte slice array using
