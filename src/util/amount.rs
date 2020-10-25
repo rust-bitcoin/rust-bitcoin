@@ -920,9 +920,19 @@ pub mod serde {
     //! #[derive(Serialize, Deserialize)]
     //! pub struct HasAmount {
     //!     #[serde(with = "bitcoin::util::amount::serde::as_btc")]
-    //!     pub amount: Amount,
+    //!     pub btc_float_amount: Amount,
+    //!     #[serde(with = "bitcoin::util::amount::serde::as_sat")]
+    //!     pub int_sat_amount: Amount,
+    //! }
+    //!
+    //! #[derive(Deserialize)]
+    //! pub struct HasUserInputtedAmount {
+    //!     #[serde(deserialize_with = "bitcoin::util::amount::parse")]
+    //!     pub input_amount: Amount,
     //! }
     //! ```
+
+    use core::str::FromStr;
 
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
     use util::amount::{Amount, Denomination, SignedAmount};
@@ -930,8 +940,8 @@ pub mod serde {
     /// This trait is used only to avoid code duplication and naming collisions
     /// of the different serde serialization crates.
     ///
-    /// TODO: Add the private::Sealed bound in next breaking release
-    pub trait SerdeAmount: Copy + Sized {
+    //TODO: Add the private::Sealed bound in next breaking release
+    pub trait SerdeAmount: Copy + Sized + FromStr {
         fn ser_sat<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error>;
         fn des_sat<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error>;
         fn ser_btc<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error>;
@@ -1007,6 +1017,45 @@ pub mod serde {
         fn ser_btc_opt<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
             s.serialize_some(&self.as_btc())
         }
+    }
+
+    pub fn parse<'d, D, A>(d: D) -> Result<A, D::Error>
+    where
+        D: Deserializer<'d>,
+        A: SerdeAmount,
+        <A as FromStr>::Err: ::core::fmt::Display,
+    {
+        use ::core::fmt::{self, Display, Formatter};
+        use ::core::marker::PhantomData;
+        use ::serde::de;
+
+        struct Visitor<ValueT>(PhantomData<ValueT>);
+
+        impl<'de, ValueT> de::Visitor<'de> for Visitor<ValueT>
+        where
+            ValueT: FromStr,
+            <ValueT as FromStr>::Err: Display,
+        {
+            type Value = ValueT;
+
+            fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
+                formatter.write_str("a Bitcoin amount with denomination")
+            }
+
+            fn visit_str<E: de::Error>(self, v: &str) -> Result<Self::Value, E> {
+                ValueT::from_str(v).map_err(E::custom)
+            }
+
+            fn visit_borrowed_str<E: de::Error>(self, v: &'de str) -> Result<Self::Value, E> {
+                self.visit_str(v)
+            }
+
+            fn visit_string<E: de::Error>(self, v: String) -> Result<Self::Value, E> {
+                self.visit_str(&v)
+            }
+        }
+
+        d.deserialize_str(Visitor(PhantomData))
     }
 
     pub mod as_sat {
@@ -1638,5 +1687,23 @@ mod tests {
         ];
         let sum = amounts.into_iter().checked_sum();
         assert_eq!(Some(SignedAmount::from_sat(3364)), sum);
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn serde_parse() {
+        use serde_json;
+
+        #[derive(Deserialize, PartialEq, Debug)]
+        struct T {
+            #[serde(default, deserialize_with = "::util::amount::serde::parse")]
+            pub amt: Amount,
+            #[serde(default, deserialize_with = "::util::amount::serde::parse")]
+            pub samt: SignedAmount,
+        }
+
+        let t: T = serde_json::from_str("{\"amt\": \"2 BTC\", \"samt\": \"-5 sat\"}").unwrap();
+        assert_eq!(t.amt, Amount::from_btc(2.0).unwrap());
+        assert_eq!(t.samt, SignedAmount::from_sat(-5));
     }
 }
