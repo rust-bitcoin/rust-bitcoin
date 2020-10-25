@@ -315,6 +315,100 @@ mod tests {
         assert_eq!(hex, serialize_hex(&psbt));
     }
 
+    #[cfg(feature = "serde")]
+    #[test]
+    fn test_serde_psbt() {
+        //! Create a full PSBT value with various fields filled and make sure it can be JSONized.
+        use util::psbt::map::Input;
+
+        // create some values to use in the PSBT
+        let tx = Transaction {
+            version: 1,
+            lock_time: 0,
+            input: vec![TxIn {
+                previous_output: OutPoint {
+                    txid: Txid::from_hex("e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389").unwrap(),
+                    vout: 1,
+                },
+                script_sig: hex_script!("160014be18d152a9b012039daf3da7de4f53349eecb985"),
+                sequence: 4294967295,
+                witness: vec![Vec::from_hex("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105").unwrap()],
+            }],
+            output: vec![
+                TxOut {
+                    value: 190303501938,
+                    script_pubkey: hex_script!("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587"),
+                },
+            ],
+        };
+        let unknown: BTreeMap<raw::Key, Vec<u8>> = vec![(
+            raw::Key { type_value: 1, key: vec![0, 1] },
+            vec![3, 4 ,5],
+        )].into_iter().collect();
+        let key_source = ("deadbeef".parse().unwrap(), "m/0'/1".parse().unwrap());
+        let keypaths: BTreeMap<PublicKey, KeySource> = vec![(
+            "0339880dc92394b7355e3d0439fa283c31de7590812ea011c4245c0674a685e883".parse().unwrap(),
+            key_source.clone(),
+        )].into_iter().collect();
+
+        let proprietary: BTreeMap<raw::ProprietaryKey, Vec<u8>> = vec![(
+            raw::ProprietaryKey {
+                prefix: "prefx".as_bytes().to_vec(),
+                subtype: 42,
+                key: "test_key".as_bytes().to_vec(),
+            },
+            vec![5, 6, 7],
+        )].into_iter().collect();
+
+        let psbt = PartiallySignedTransaction {
+            global: Global {
+                version: 0,
+                xpub: {
+                    let xpub: ExtendedPubKey =
+                        "xpub661MyMwAqRbcGoRVtwfvzZsq2VBJR1LAHfQstHUoxqDorV89vRoMxUZ27kLrraAj6MPi\
+                        QfrDb27gigC1VS1dBXi5jGpxmMeBXEkKkcXUTg4".parse().unwrap();
+                    vec![(xpub, key_source.clone())].into_iter().collect()
+                },
+                unsigned_tx: {
+                    let mut unsigned = tx.clone();
+                    unsigned.input[0].script_sig = Script::new();
+                    unsigned.input[0].witness = Vec::new();
+                    unsigned
+                },
+                proprietary: proprietary.clone(),
+                unknown: unknown.clone(),
+            },
+            inputs: vec![Input {
+                non_witness_utxo: Some(tx),
+                witness_utxo: Some(TxOut {
+                    value: 190303501938,
+                    script_pubkey: hex_script!("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587"),
+                }),
+                sighash_type: Some("SIGHASH_SINGLE|SIGHASH_ANYONECANPAY".parse().unwrap()),
+                redeem_script: Some(vec![0x51].into()),
+                witness_script: None,
+                partial_sigs: vec![(
+                    "0339880dc92394b7355e3d0439fa283c31de7590812ea011c4245c0674a685e883".parse().unwrap(),
+                    vec![8, 5, 4],
+                )].into_iter().collect(),
+                bip32_derivation: keypaths.clone(),
+                final_script_witness: Some(vec![vec![1, 3], vec![5]]),
+                proprietary: proprietary.clone(),
+                unknown: unknown.clone(),
+                ..Default::default()
+            }],
+            outputs: vec![Output {
+                bip32_derivation: keypaths.clone(),
+                proprietary: proprietary.clone(),
+                unknown: unknown.clone(),
+                ..Default::default()
+            }],
+        };
+        let encoded = ::serde_json::to_string(&psbt).unwrap();
+        let decoded: PartiallySignedTransaction = ::serde_json::from_str(&encoded).unwrap();
+        assert_eq!(psbt, decoded);
+    }
+
     mod bip_vectors {
         use std::collections::BTreeMap;
 

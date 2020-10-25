@@ -70,6 +70,7 @@ pub struct Input {
     pub witness_utxo: Option<TxOut>,
     /// A map from public keys to their corresponding signature as would be
     /// pushed to the stack from a scriptSig or witness.
+    #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap"))]
     pub partial_sigs: BTreeMap<PublicKey, Vec<u8>>,
     /// The sighash type to be used for this input. Signatures for this input
     /// must use the sighash type.
@@ -80,6 +81,7 @@ pub struct Input {
     pub witness_script: Option<Script>,
     /// A map from public keys needed to sign this input to their corresponding
     /// master key fingerprints and derivation paths.
+    #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap"))]
     pub bip32_derivation: BTreeMap<PublicKey, KeySource>,
     /// The finalized, fully-constructed scriptSig with signatures and any other
     /// scripts necessary for this input to pass validation.
@@ -97,8 +99,10 @@ pub struct Input {
     /// HAS256 hash to preimage map
     pub hash256_preimages: BTreeMap<sha256d::Hash, Vec<u8>>,
     /// Proprietary key-value pairs for this input.
+    #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap"))]
     pub proprietary: BTreeMap<raw::ProprietaryKey, Vec<u8>>,
     /// Unknown key-value pairs for this input.
+    #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap"))]
     pub unknown: BTreeMap<raw::Key, Vec<u8>>,
 }
 

@@ -44,10 +44,13 @@ pub struct Output {
     pub witness_script: Option<Script>,
     /// A map from public keys needed to spend this output to their
     /// corresponding master key fingerprints and derivation paths.
+    #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap"))]
     pub bip32_derivation: BTreeMap<PublicKey, KeySource>,
     /// Proprietary key-value pairs for this output.
+    #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap"))]
     pub proprietary: BTreeMap<raw::ProprietaryKey, Vec<u8>>,
     /// Unknown key-value pairs for this output.
+    #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap"))]
     pub unknown: BTreeMap<raw::Key, Vec<u8>>,
 }
 

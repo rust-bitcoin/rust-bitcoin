@@ -57,6 +57,9 @@ compile_error!("rust-bitcoin cannot be used on 16-bit architectures");
 mod test_macros;
 #[macro_use]
 mod internal_macros;
+#[cfg(feature = "serde")]
+mod serde_utils;
+
 #[macro_use]
 pub mod network;
 pub mod blockdata;
