@@ -58,6 +58,7 @@ const PSBT_IN_PROPRIETARY: u8 = 0xFC;
 /// A key-value map for an input of the corresponding index in the unsigned
 /// transaction.
 #[derive(Clone, Default, Debug, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Input {
     /// The non-witness transaction this input spends from. Should only be
     /// [std::option::Option::Some] for inputs which spend non-segwit outputs or
@@ -100,13 +101,6 @@ pub struct Input {
     /// Unknown key-value pairs for this input.
     pub unknown: BTreeMap<raw::Key, Vec<u8>>,
 }
-serde_struct_impl!(
-    Input, non_witness_utxo, witness_utxo, partial_sigs,
-    sighash_type, redeem_script, witness_script, bip32_derivation,
-    final_script_sig, final_script_witness,
-    ripemd160_preimages, sha256_preimages, hash160_preimages, hash256_preimages,
-    proprietary, unknown
-);
 
 impl Map for Input {
     fn insert_pair(&mut self, pair: raw::Pair) -> Result<(), encode::Error> {

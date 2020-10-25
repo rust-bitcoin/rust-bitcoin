@@ -174,6 +174,7 @@ impl ::std::str::FromStr for OutPoint {
 
 /// A transaction input, which defines old coins to be consumed
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct TxIn {
     /// The reference to the previous output that is being used an an input
     pub previous_output: OutPoint,
@@ -192,7 +193,6 @@ pub struct TxIn {
     /// (de)serialization routines.
     pub witness: Vec<Vec<u8>>
 }
-serde_struct_impl!(TxIn, previous_output, script_sig, sequence, witness);
 
 impl Default for TxIn {
     fn default() -> TxIn {
@@ -207,13 +207,13 @@ impl Default for TxIn {
 
 /// A transaction output, which defines new coins to be created from old ones.
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct TxOut {
     /// The value of the output, in satoshis
     pub value: u64,
     /// The script which must satisfy for the output to be spent
     pub script_pubkey: Script
 }
-serde_struct_impl!(TxOut, value, script_pubkey);
 
 // This is used as a "null txout" in consensus signing code
 impl Default for TxOut {
@@ -253,6 +253,7 @@ impl Default for TxOut {
 /// We therefore deviate from the spec by always using the Segwit witness encoding
 /// for 0-input transactions, which results in unambiguously parseable transactions.
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Transaction {
     /// The protocol version, is currently expected to be 1 or 2 (BIP 68).
     pub version: i32,
@@ -264,7 +265,6 @@ pub struct Transaction {
     /// List of outputs
     pub output: Vec<TxOut>,
 }
-serde_struct_impl!(Transaction, version, lock_time, input, output);
 
 impl Transaction {
     /// Computes a "normalized TXID" which does not include any signatures.

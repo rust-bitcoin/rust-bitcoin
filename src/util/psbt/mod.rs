@@ -39,6 +39,7 @@ pub use self::map::{Map, Global, Input, Output};
 
 /// A Partially Signed Transaction.
 #[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct PartiallySignedTransaction {
     /// The key-value pairs for all global data.
     pub global: Global,
@@ -49,7 +50,6 @@ pub struct PartiallySignedTransaction {
     /// transaction.
     pub outputs: Vec<Output>,
 }
-serde_struct_impl!(PartiallySignedTransaction, global, inputs, outputs);
 
 impl PartiallySignedTransaction {
     /// Create a PartiallySignedTransaction from an unsigned transaction, error

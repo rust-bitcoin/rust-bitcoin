@@ -59,6 +59,13 @@ compile with 1.29.0 you will need to run the following version-pinning command:
 cargo update -p cc --precise "1.0.41" --verbose
 ```
 
+In order to use the `use-serde` feature or to build the unit tests with 1.29.0,
+the following version-pinning commands are also needed:
+```
+cargo update --package "serde" --precise "1.0.98"
+cargo update --package "serde_derive" --precise "1.0.98"
+```
+
 ## Installing Rust
 Rust can be installed using your package manager of choice or
 [rustup.rs](https://rustup.rs). The former way is considered more secure since
