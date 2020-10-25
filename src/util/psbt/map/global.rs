@@ -46,10 +46,13 @@ pub struct Global {
     pub version: u32,
     /// A global map from extended public keys to the used key fingerprint and
     /// derivation path as defined by BIP 32
+    #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap"))]
     pub xpub: BTreeMap<ExtendedPubKey, KeySource>,
     /// Global proprietary key-value pairs.
+    #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap"))]
     pub proprietary: BTreeMap<raw::ProprietaryKey, Vec<u8>>,
     /// Unknown global key-value pairs.
+    #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap"))]
     pub unknown: BTreeMap<raw::Key, Vec<u8>>,
 }
 
