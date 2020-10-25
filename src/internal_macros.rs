@@ -95,17 +95,6 @@ macro_rules! impl_array_newtype {
     }
 }
 
-/// Implements debug formatting for a given wrapper type
-macro_rules! impl_array_newtype_show {
-    ($thing:ident) => {
-        impl ::std::fmt::Debug for $thing {
-            fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-                write!(f, concat!(stringify!($thing), "({:?})"), &self[..])
-            }
-        }
-    }
-}
-
 /// Implements standard indexing methods for a given wrapper type
 macro_rules! impl_index_newtype {
     ($thing:ident, $ty:ty) => {
@@ -578,6 +567,12 @@ macro_rules! impl_bytes_newtype {
         }
 
         impl ::std::fmt::Display for $t {
+            fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+                fmt::LowerHex::fmt(self, f)
+            }
+        }
+
+        impl ::std::fmt::Debug for $t {
             fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
                 fmt::LowerHex::fmt(self, f)
             }
