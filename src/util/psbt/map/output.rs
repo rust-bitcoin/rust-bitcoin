@@ -36,6 +36,7 @@ const PSBT_OUT_PROPRIETARY: u8 = 0xFC;
 /// A key-value map for an output of the corresponding index in the unsigned
 /// transaction.
 #[derive(Clone, Default, Debug, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Output {
     /// The redeem script for this output.
     pub redeem_script: Option<Script>,
@@ -49,9 +50,6 @@ pub struct Output {
     /// Unknown key-value pairs for this output.
     pub unknown: BTreeMap<raw::Key, Vec<u8>>,
 }
-serde_struct_impl!(
-    Output, redeem_script, witness_script, bip32_derivation, proprietary, unknown
-);
 
 impl Map for Output {
     fn insert_pair(&mut self, pair: raw::Pair) -> Result<(), encode::Error> {

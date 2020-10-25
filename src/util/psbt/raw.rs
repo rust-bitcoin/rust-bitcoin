@@ -25,23 +25,23 @@ use util::psbt::Error;
 
 /// A PSBT key in its raw byte form.
 #[derive(Debug, PartialEq, Hash, Eq, Clone, Ord, PartialOrd)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Key {
     /// The type of this PSBT key.
     pub type_value: u8,
     /// The key itself in raw byte form.
     pub key: Vec<u8>,
 }
-serde_struct_impl!(Key, type_value, key);
 
 /// A PSBT key-value pair in its raw byte form.
 #[derive(Debug, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Pair {
     /// The key of this key-value pair.
     pub key: Key,
     /// The value of this key-value pair in raw byte form.
     pub value: Vec<u8>,
 }
-serde_struct_impl!(Pair, key, value);
 
 /// Default implementation for proprietary key subtyping
 pub type ProprietaryType = u8;
@@ -49,6 +49,7 @@ pub type ProprietaryType = u8;
 /// Proprietary keys (i.e. keys starting with 0xFC byte) with their internal
 /// structure according to BIP 174.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ProprietaryKey<Subtype = ProprietaryType> where Subtype: Copy + From<u8> + Into<u8> {
     /// Proprietary type prefix used for grouping together keys under some
     /// application and avoid namespace collision
@@ -58,7 +59,6 @@ pub struct ProprietaryKey<Subtype = ProprietaryType> where Subtype: Copy + From<
     /// Additional key bytes (like serialized public key data etc)
     pub key: Vec<u8>,
 }
-serde_struct_impl!(ProprietaryKey, prefix, subtype, key);
 
 impl fmt::Display for Key {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

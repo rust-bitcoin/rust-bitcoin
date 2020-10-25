@@ -37,6 +37,7 @@ const PSBT_GLOBAL_PROPRIETARY: u8 = 0xFC;
 
 /// A key-value map for global data.
 #[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Global {
     /// The unsigned transaction, scriptSigs and witnesses for each input must be
     /// empty.
@@ -51,7 +52,6 @@ pub struct Global {
     /// Unknown global key-value pairs.
     pub unknown: BTreeMap<raw::Key, Vec<u8>>,
 }
-serde_struct_impl!(Global, unsigned_tx, version, xpub, proprietary, unknown);
 
 impl Global {
     /// Create a Global from an unsigned transaction, error if not unsigned
