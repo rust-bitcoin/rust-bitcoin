@@ -590,7 +590,7 @@ impl fmt::Display for ExtendedPrivKey {
         let mut ret = [0; 78];
         ret[0..4].copy_from_slice(&match self.network {
             Network::Bitcoin => [0x04, 0x88, 0xAD, 0xE4],
-            Network::Testnet | Network::Regtest => [0x04, 0x35, 0x83, 0x94],
+            Network::Testnet | Network::Signet | Network::Regtest => [0x04, 0x35, 0x83, 0x94],
         }[..]);
         ret[4] = self.depth as u8;
         ret[5..9].copy_from_slice(&self.parent_fingerprint[..]);
@@ -647,7 +647,7 @@ impl fmt::Display for ExtendedPubKey {
         let mut ret = [0; 78];
         ret[0..4].copy_from_slice(&match self.network {
             Network::Bitcoin => [0x04u8, 0x88, 0xB2, 0x1E],
-            Network::Testnet | Network::Regtest => [0x04u8, 0x35, 0x87, 0xCF],
+            Network::Testnet | Network::Signet | Network::Regtest => [0x04u8, 0x35, 0x87, 0xCF],
         }[..]);
         ret[4] = self.depth as u8;
         ret[5..9].copy_from_slice(&self.parent_fingerprint[..]);
