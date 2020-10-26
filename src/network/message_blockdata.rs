@@ -24,7 +24,7 @@ use hashes::sha256d;
 
 use network::constants;
 use consensus::encode::{self, Decodable, Encodable};
-use hash_types::{BlockHash, Txid};
+use hash_types::{BlockHash, Txid, Wtxid};
 
 /// An inventory item.
 #[derive(PartialEq, Eq, Clone, Debug, Copy, Hash)]
@@ -35,6 +35,8 @@ pub enum Inventory {
     Transaction(Txid),
     /// Block
     Block(BlockHash),
+    /// Witness Transaction by Wtxid
+    WTx(Wtxid),
     /// Witness Transaction
     WitnessTransaction(Txid),
     /// Witness Block
@@ -57,6 +59,7 @@ impl Encodable for Inventory {
             Inventory::Error => encode_inv!(0, sha256d::Hash::default()),
             Inventory::Transaction(ref t) => encode_inv!(1, t),
             Inventory::Block(ref b) => encode_inv!(2, b),
+            Inventory::WTx(w) => encode_inv!(5, w),
             Inventory::WitnessTransaction(ref t) => encode_inv!(0x40000001, t),
             Inventory::WitnessBlock(ref b) => encode_inv!(0x40000002, b),
         })
@@ -71,6 +74,7 @@ impl Decodable for Inventory {
             0 => Inventory::Error,
             1 => Inventory::Transaction(Decodable::consensus_decode(&mut d)?),
             2 => Inventory::Block(Decodable::consensus_decode(&mut d)?),
+            5 => Inventory::WTx(Decodable::consensus_decode(&mut d)?),
             0x40000001 => Inventory::WitnessTransaction(Decodable::consensus_decode(&mut d)?),
             0x40000002 => Inventory::WitnessBlock(Decodable::consensus_decode(&mut d)?),
             tp => return Err(encode::Error::UnknownInventoryType(tp)),
