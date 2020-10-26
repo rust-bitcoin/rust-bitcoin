@@ -1,4 +1,9 @@
 
+# 0.25.1 - 2020-10-26
+
+- Remove an incorrect `debug_assert` that can cause a panic when running using
+  the dev profile.
+
 # 0.25.1 - 2020-10-07
 
 - [Expose methods on `Script`](https://github.com/rust-bitcoin/rust-bitcoin/pull/387) to generate various scriptpubkeys

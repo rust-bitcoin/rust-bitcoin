@@ -252,7 +252,7 @@ impl Script {
     /// Generates P2WSH-type of scriptPubkey with a given hash of the redeem script
     pub fn new_witness_program(ver: ::bech32::u5, program: &[u8]) -> Script {
         let mut verop = ver.to_u8();
-        assert!(verop <= 16);
+        assert!(verop <= 16, "incorrect witness version provided: {}", verop);
         if verop > 0 {
             verop = 0x50 + verop;
         }

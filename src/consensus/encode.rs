@@ -147,7 +147,7 @@ impl From<psbt::Error> for Error {
 pub fn serialize<T: Encodable + ?Sized>(data: &T) -> Vec<u8> {
     let mut encoder = Vec::new();
     let len = data.consensus_encode(&mut encoder).unwrap();
-    assert_eq!(len, encoder.len());
+    debug_assert_eq!(len, encoder.len());
     encoder
 }
 
@@ -249,7 +249,7 @@ macro_rules! decoder_fn {
     ($name:ident, $val_type:ty, $readfn:ident, $byte_len: expr) => {
         #[inline]
         fn $name(&mut self) -> Result<$val_type, Error> {
-            assert_eq!(::std::mem::size_of::<$val_type>(), $byte_len); // size_of isn't a constfn in 1.22
+            debug_assert_eq!(::std::mem::size_of::<$val_type>(), $byte_len); // size_of isn't a constfn in 1.22
             let mut val = [0; $byte_len];
             self.read_exact(&mut val[..]).map_err(Error::Io)?;
             Ok(endian::$readfn(&val))
