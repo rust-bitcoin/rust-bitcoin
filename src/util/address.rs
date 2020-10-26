@@ -158,10 +158,59 @@ pub enum Payload {
     /// Segwit addresses
     WitnessProgram {
         /// The witness program version
-        version: bech32::u5,
+        version: SegwitVersion,
         /// The witness program
         program: Vec<u8>,
     },
+}
+
+/// The Segwit version from 0 to 16 inclusive
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct SegwitVersion(u8);
+
+impl SegwitVersion {
+    /// Create a new Segwit version checking bounds (from 0 to 16 inclusive) or erroring
+    pub fn new<V: Into<u8>>(ver: V) -> Result<Self, Error> {
+        let ver: u8 = ver.into();
+        if ver <= 16 {
+            Ok(SegwitVersion(ver))
+        } else {
+            Err(Error::InvalidWitnessVersion(ver))
+        }
+    }
+
+    /// Helper method to create Segwit version 0
+    pub fn v0() -> Self {
+        SegwitVersion(0)
+    }
+
+    /// return if the version is 0
+    pub fn is_v0(&self) -> bool {
+        self.0 == 0
+    }
+
+    /// Convert an op code to a Segwit version
+    pub fn from_op(mut verop: u8) -> Result<Self, Error> {
+        if verop > 0x50 {
+            verop -= 0x50;
+        }
+        SegwitVersion::new(verop)
+    }
+
+    /// Convert the Segwit version to an op code
+    pub fn to_op(&self) -> u8 {
+        if self.0 == 0 {
+            0
+        } else {
+            self.0 + 0x50
+        }
+    }
+}
+
+impl Into<bech32::u5> for SegwitVersion {
+    fn into(self) -> bech32::u5 {
+        bech32::u5::try_from_u8(self.0).expect("self.0 always <= 16")
+    }
 }
 
 impl Payload {
@@ -175,15 +224,9 @@ impl Payload {
             // We can unwrap the u5 check and assume script length
             // because [Script::is_witness_program] makes sure of this.
             Payload::WitnessProgram {
-                version: {
-                    // Since we passed the [is_witness_program] check,
-                    // the first byte is either 0x00 or 0x50 + version.
-                    let mut verop = script.as_bytes()[0];
-                    if verop > 0x50 {
-                        verop -= 0x50;
-                    }
-                    bech32::u5::try_from_u8(verop).expect("checked before")
-                },
+                // Since we passed the [is_witness_program] check,
+                // the first byte is either 0x00 or 0x50 + version.
+                version: SegwitVersion::from_op(script.as_bytes()[0]).expect("checked before"),
                 program: script.as_bytes()[2..].to_vec(),
             }
         } else {
@@ -199,9 +242,9 @@ impl Payload {
             Payload::ScriptHash(ref hash) =>
                 script::Script::new_p2sh(hash),
             Payload::WitnessProgram {
-                version: ver,
+                version: ref ver,
                 program: ref prog,
-            } => script::Script::new_witness_program(ver, prog)
+            } => script::Script::new_witness_program(ver.clone(), prog)
         }
     }
 }
@@ -255,7 +298,7 @@ impl Address {
         Ok(Address {
             network: network,
             payload: Payload::WitnessProgram {
-                version: bech32::u5::try_from_u8(0).expect("0<32"),
+                version: SegwitVersion::v0(),
                 program: WPubkeyHash::from_engine(hash_engine)[..].to_vec(),
             },
         })
@@ -288,7 +331,7 @@ impl Address {
         Address {
             network: network,
             payload: Payload::WitnessProgram {
-                version: bech32::u5::try_from_u8(0).expect("0<32"),
+                version: SegwitVersion::v0(),
                 program: WScriptHash::hash(&script[..])[..].to_vec(),
             },
         }
@@ -315,17 +358,18 @@ impl Address {
             Payload::PubkeyHash(_) => Some(AddressType::P2pkh),
             Payload::ScriptHash(_) => Some(AddressType::P2sh),
             Payload::WitnessProgram {
-                version: ver,
+                version: ref ver,
                 program: ref prog,
             } => {
                 // BIP-141 p2wpkh or p2wsh addresses.
-                match ver.to_u8() {
-                    0 => match prog.len() {
+                if ver.is_v0() {
+                    match prog.len() {
                         20 => Some(AddressType::P2wpkh),
                         32 => Some(AddressType::P2wsh),
                         _ => None,
-                    },
-                    _ => None,
+                    }
+                } else {
+                    None
                 }
             }
         }
@@ -376,7 +420,7 @@ impl Display for Address {
                 base58::check_encode_slice_to_fmt(fmt, &prefixed[..])
             }
             Payload::WitnessProgram {
-                version: ver,
+                version: ref ver,
                 program: ref prog,
             } => {
                 let hrp = match self.network {
@@ -385,7 +429,7 @@ impl Display for Address {
                     Network::Regtest => "bcrt",
                 };
                 let mut bech32_writer = bech32::Bech32Writer::new(hrp, fmt)?;
-                bech32::WriteBase32::write_u5(&mut bech32_writer, ver)?;
+                bech32::WriteBase32::write_u5(&mut bech32_writer, ver.clone().into())?;
                 bech32::ToBase32::write_base32(&prog, &mut bech32_writer)
             }
         }
@@ -422,21 +466,20 @@ impl FromStr for Address {
             }
 
             // Get the script version and program (converted from 5-bit to 8-bit)
-            let (version, program): (bech32::u5, Vec<u8>) = {
+            let (version_u5, program): (bech32::u5, Vec<u8>) = {
                 let (v, p5) = payload.split_at(1);
                 (v[0], bech32::FromBase32::from_base32(p5)?)
             };
 
             // Generic segwit checks.
-            if version.to_u8() > 16 {
-                return Err(Error::InvalidWitnessVersion(version.to_u8()));
-            }
+            let version: SegwitVersion = SegwitVersion::new(version_u5.to_u8())?;
+
             if program.len() < 2 || program.len() > 40 {
                 return Err(Error::InvalidWitnessProgramLength(program.len()));
             }
 
             // Specific segwit v0 check.
-            if version.to_u8() == 0 && (program.len() != 20 && program.len() != 32) {
+            if version.is_v0() && (program.len() != 20 && program.len() != 32) {
                 return Err(Error::InvalidSegwitV0ProgramLength(program.len()));
             }
 
@@ -641,7 +684,7 @@ mod tests {
         );
         let addr = Address {
             payload: Payload::WitnessProgram {
-                version: bech32::u5::try_from_u8(version).expect("0<32"),
+                version: SegwitVersion::new(version).expect("13<=16"),
                 program: program,
             },
             network: Network::Bitcoin,
