@@ -50,7 +50,8 @@ hash_newtype!(WitnessMerkleNode, sha256d::Hash, 32, doc="A hash corresponding to
 hash_newtype!(WitnessCommitment, sha256d::Hash, 32, doc="A hash corresponding to the witness structure commitment in the coinbase transaction");
 hash_newtype!(XpubIdentifier, hash160::Hash, 20, doc="XpubIdentifier as defined in BIP-32.");
 
-hash_newtype!(FilterHash, sha256d::Hash, 32, doc="Bloom filter souble-SHA256 locator hash, as defined in BIP-168");
+hash_newtype!(FilterHash, sha256d::Hash, 32, doc="Filter hash, as defined in BIP-157");
+hash_newtype!(FilterHeader, sha256d::Hash, 32, doc="Filter header, as defined in BIP-157");
 
 
 impl_hashencode!(Txid);
@@ -60,3 +61,4 @@ impl_hashencode!(BlockHash);
 impl_hashencode!(TxMerkleNode);
 impl_hashencode!(WitnessMerkleNode);
 impl_hashencode!(FilterHash);
+impl_hashencode!(FilterHeader);

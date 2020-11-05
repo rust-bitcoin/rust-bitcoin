@@ -53,7 +53,7 @@ use std::cmp::Ordering;
 
 
 use hashes::{Hash, siphash24};
-use hash_types::{BlockHash, FilterHash};
+use hash_types::{BlockHash, FilterHash, FilterHeader};
 
 use blockdata::block::Block;
 use blockdata::script::Script;
@@ -100,14 +100,21 @@ pub struct BlockFilter {
     pub content: Vec<u8>
 }
 
+impl FilterHash {
+    /// compute the filter header from a filter hash and previous filter header
+    pub fn filter_header(&self, previous_filter_header: &FilterHeader) -> FilterHeader {
+        let mut header_data = [0u8; 64];
+        header_data[0..32].copy_from_slice(&self[..]);
+        header_data[32..64].copy_from_slice(&previous_filter_header[..]);
+        FilterHeader::hash(&header_data)
+    }
+}
+
 impl BlockFilter {
     /// compute this filter's id in a chain of filters
-    pub fn filter_id(&self, previous_filter_id: &FilterHash) -> FilterHash {
+    pub fn filter_header(&self, previous_filter_header: &FilterHeader) -> FilterHeader {
         let filter_hash = FilterHash::hash(self.content.as_slice());
-        let mut header_data = [0u8; 64];
-        header_data[0..32].copy_from_slice(&filter_hash[..]);
-        header_data[32..64].copy_from_slice(&previous_filter_id[..]);
-        FilterHash::hash(&header_data)
+        filter_hash.filter_header(previous_filter_header)
     }
 
     /// create a new filter from pre-computed data
@@ -555,9 +562,9 @@ mod test {
             let block: Block = deserialize(&Vec::from_hex(&t.get(2).unwrap().as_str().unwrap()).unwrap()).unwrap();
             assert_eq!(block.block_hash(), block_hash);
             let scripts = t.get(3).unwrap().as_array().unwrap();
-            let previous_filter_id = FilterHash::from_hex(&t.get(4).unwrap().as_str().unwrap()).unwrap();
+            let previous_filter_header = FilterHeader::from_hex(&t.get(4).unwrap().as_str().unwrap()).unwrap();
             let filter_content = Vec::from_hex(&t.get(5).unwrap().as_str().unwrap()).unwrap();
-            let filter_id = FilterHash::from_hex(&t.get(6).unwrap().as_str().unwrap()).unwrap();
+            let filter_header = FilterHeader::from_hex(&t.get(6).unwrap().as_str().unwrap()).unwrap();
 
             let mut txmap = HashMap::new();
             let mut si = scripts.iter();
@@ -590,7 +597,7 @@ mod test {
                 }
             }
 
-            assert_eq!(filter_id, filter.filter_id(&previous_filter_id));
+            assert_eq!(filter_header, filter.filter_header(&previous_filter_header));
         }
     }
 
