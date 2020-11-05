@@ -575,7 +575,7 @@ impl ExtendedPubKey {
     /// Returns the HASH160 of the public key of the xpub
     pub fn identifier(&self) -> XpubIdentifier {
         let mut engine = XpubIdentifier::engine();
-        self.public_key.write_into(&mut engine);
+        self.public_key.write_into(&mut engine).expect("engines don't error");
         XpubIdentifier::from_engine(engine)
     }
 

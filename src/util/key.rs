@@ -101,18 +101,18 @@ impl PublicKey {
     }
 
     /// Write the public key into a writer
-    pub fn write_into<W: io::Write>(&self, mut writer: W) {
-        let _: io::Result<()> = if self.compressed {
+    pub fn write_into<W: io::Write>(&self, mut writer: W) -> Result<(), io::Error> {
+        if self.compressed {
             writer.write_all(&self.key.serialize())
         } else {
             writer.write_all(&self.key.serialize_uncompressed())
-        };
+        }
     }
 
     /// Serialize the public key to bytes
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut buf = Vec::new();
-        self.write_into(&mut buf);
+        self.write_into(&mut buf).expect("vecs don't error");
         buf
     }
 
