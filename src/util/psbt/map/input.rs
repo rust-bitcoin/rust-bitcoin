@@ -71,7 +71,9 @@ pub struct Input {
 serde_struct_impl!(
     Input, non_witness_utxo, witness_utxo, partial_sigs,
     sighash_type, redeem_script, witness_script, hd_keypaths,
-    final_script_sig, final_script_witness, unknown
+    final_script_sig, final_script_witness,
+    ripemd_preimages, sha256_preimages, hash160_preimages, hash256_preimages,
+    unknown
 );
 
 impl Map for Input {
