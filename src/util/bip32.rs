@@ -27,7 +27,7 @@ use secp256k1::{self, Secp256k1};
 
 use network::constants::Network;
 use util::{base58, endian};
-use util::key::{PublicKey, PrivateKey};
+use util::key::{self, PublicKey, PrivateKey};
 
 /// A chain code
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -422,6 +422,15 @@ impl error::Error for Error {
     }
 }
 
+impl From<key::Error> for Error {
+    fn from(err: key::Error) -> Self {
+        match err {
+            key::Error::Base58(e) => Error::Base58(e),
+            key::Error::Secp256k1(e) => Error::Ecdsa(e),
+        }
+    }
+}
+
 impl From<secp256k1::Error> for Error {
     fn from(e: secp256k1::Error) -> Error { Error::Ecdsa(e) }
 }
@@ -429,12 +438,6 @@ impl From<secp256k1::Error> for Error {
 impl From<base58::Error> for Error {
     fn from(err: base58::Error) -> Self {
         Error::Base58(err)
-    }
-}
-
-impl From<Error> for base58::Error {
-    fn from(err: Error) -> Self {
-        base58::Error::Other(err.to_string())
     }
 }
 
@@ -516,31 +519,28 @@ impl ExtendedPrivKey {
             return Err(Error::WrongExtendedKeyLength(data.len()))
         }
 
-        let cn_int: u32 = endian::slice_to_u32_be(&data[9..13]);
-        let child_number: ChildNumber = ChildNumber::from(cn_int);
-
         let network = if data[0..4] == [0x04u8, 0x88, 0xAD, 0xE4] {
             Network::Bitcoin
         } else if data[0..4] == [0x04u8, 0x35, 0x83, 0x94] {
             Network::Testnet
         } else {
-            return Err(base58::Error::InvalidVersion((&data[0..4]).to_vec()).into());
+            let mut ver = [0u8; 4];
+            ver.copy_from_slice(&data[0..4]);
+            return Err(Error::UnknownVersion(ver));
         };
 
         Ok(ExtendedPrivKey {
             network: network,
             depth: data[4],
             parent_fingerprint: Fingerprint::from(&data[5..9]),
-            child_number: child_number,
+            child_number: endian::slice_to_u32_be(&data[9..13]).into(),
             chain_code: ChainCode::from(&data[13..45]),
             private_key: PrivateKey {
                 compressed: true,
                 network: network,
                 key: secp256k1::SecretKey::from_slice(
                     &data[46..78]
-                ).map_err(|e|
-                    base58::Error::Other(e.to_string())
-                )?,
+                ).map_err(Error::Ecdsa)?,
             },
         })
     }
@@ -659,15 +659,16 @@ impl ExtendedPubKey {
             } else if data[0..4] == [0x04u8, 0x35, 0x87, 0xCF] {
                 Network::Testnet
             } else {
-                return Err(base58::Error::InvalidVersion((&data[0..4]).to_vec()).into());
+                let mut ver = [0u8; 4];
+                ver.copy_from_slice(&data[0..4]);
+                return Err(Error::UnknownVersion(ver));
             },
             depth: data[4],
             parent_fingerprint: Fingerprint::from(&data[5..9]),
             child_number: child_number,
             chain_code: ChainCode::from(&data[13..45]),
             public_key: PublicKey::from_slice(
-                &data[45..78]).map_err(|e|
-                base58::Error::Other(e.to_string()))?,
+                &data[45..78])?,
         })
     }
 
@@ -706,13 +707,13 @@ impl fmt::Display for ExtendedPrivKey {
 }
 
 impl FromStr for ExtendedPrivKey {
-    type Err = base58::Error;
+    type Err = Error;
 
-    fn from_str(inp: &str) -> Result<ExtendedPrivKey, base58::Error> {
+    fn from_str(inp: &str) -> Result<ExtendedPrivKey, Error> {
         let data = base58::from_check(inp)?;
 
         if data.len() != 78 {
-            return Err(base58::Error::InvalidLength(data.len()));
+            return Err(base58::Error::InvalidLength(data.len()).into());
         }
 
         Ok(ExtendedPrivKey::decode(&data[..])?)
@@ -726,13 +727,13 @@ impl fmt::Display for ExtendedPubKey {
 }
 
 impl FromStr for ExtendedPubKey {
-    type Err = base58::Error;
+    type Err = Error;
 
-    fn from_str(inp: &str) -> Result<ExtendedPubKey, base58::Error> {
+    fn from_str(inp: &str) -> Result<ExtendedPubKey, Error> {
         let data = base58::from_check(inp)?;
 
         if data.len() != 78 {
-            return Err(base58::Error::InvalidLength(data.len()));
+            return Err(base58::Error::InvalidLength(data.len()).into());
         }
 
         Ok(ExtendedPubKey::decode(&data[..])?)
