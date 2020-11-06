@@ -238,7 +238,7 @@ mod tests {
             witness_script: Some(hex_script!(
                 "a9143545e6e33b832c47050f24d3eeb93c9c03948bc787"
             )),
-            hd_keypaths: hd_keypaths,
+            bip32_derivation: hd_keypaths,
             ..Default::default()
         };
 
