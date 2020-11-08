@@ -702,7 +702,7 @@ impl ExtendedPubKey {
 
 impl fmt::Display for ExtendedPrivKey {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        fmt.write_str(&base58::check_encode_slice(&self.encode()[..]))
+        base58::check_encode_slice_to_fmt(fmt, &self.encode()[..])
     }
 }
 
@@ -722,7 +722,7 @@ impl FromStr for ExtendedPrivKey {
 
 impl fmt::Display for ExtendedPubKey {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        fmt.write_str(&base58::check_encode_slice(&self.encode()[..]))
+        base58::check_encode_slice_to_fmt(fmt, &self.encode()[..])
     }
 }
 
