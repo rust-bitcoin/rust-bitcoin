@@ -241,6 +241,19 @@ pub struct AddrV2Message {
     pub port: u16
 }
 
+impl AddrV2Message {
+    /// Extract socket address from an [AddrV2Message] message.
+    /// This will return [io::Error] [ErrorKind::AddrNotAvailable]
+    /// if the address type can't be converted into a [SocketAddr].
+    pub fn socket_addr(&self) -> Result<SocketAddr, io::Error> {
+        match self.addr {
+            AddrV2::Ipv4(addr) => Ok(SocketAddr::V4(SocketAddrV4::new(addr, self.port))),
+            AddrV2::Ipv6(addr) => Ok(SocketAddr::V6(SocketAddrV6::new(addr, self.port, 0, 0))),
+            _ => return Err(io::Error::from(io::ErrorKind::AddrNotAvailable)),
+        }
+    }
+}
+
 impl Encodable for AddrV2Message {
     fn consensus_encode<W: io::Write>(&self, mut e: W) -> Result<usize, encode::Error> {
         let mut len = 0;
