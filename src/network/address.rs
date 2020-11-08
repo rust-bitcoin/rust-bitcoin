@@ -18,9 +18,8 @@
 //! network addresses in Bitcoin messages.
 //!
 
-use std::io;
-use std::fmt;
-use std::net::{SocketAddr, Ipv6Addr, SocketAddrV4, SocketAddrV6, Ipv4Addr};
+use std::{fmt, io, iter};
+use std::net::{SocketAddr, Ipv6Addr, SocketAddrV4, SocketAddrV6, Ipv4Addr, ToSocketAddrs};
 
 use network::constants::ServiceFlags;
 use consensus::encode::{self, Decodable, Encodable, VarInt, ReadExt, WriteExt};
@@ -107,6 +106,13 @@ impl fmt::Debug for Address {
             None => write!(f, "Address {{services: {}, address: {}, port: {}}}", 
                 self.services, ipv6, self.port)
         }
+    }
+}
+
+impl ToSocketAddrs for Address {
+    type Iter = iter::Once<SocketAddr>;
+    fn to_socket_addrs(&self) -> Result<Self::Iter, io::Error> {
+        Ok(iter::once(self.socket_addr()?))
     }
 }
 
@@ -273,6 +279,13 @@ impl Decodable for AddrV2Message {
             addr: Decodable::consensus_decode(&mut d)?,
             port: u16::from_be(Decodable::consensus_decode(d)?),
         })
+    }
+}
+
+impl ToSocketAddrs for AddrV2Message {
+    type Iter = iter::Once<SocketAddr>;
+    fn to_socket_addrs(&self) -> Result<Self::Iter, io::Error> {
+        Ok(iter::once(self.socket_addr()?))
     }
 }
 
