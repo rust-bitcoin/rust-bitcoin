@@ -42,6 +42,24 @@ pub enum Inventory {
     },
 }
 
+impl Inventory {
+    /// Return the item value represented as a SHA256-d hash.
+    ///
+    /// Returns [None] only for [Inventory::Error].
+    pub fn network_hash(&self) -> Option<[u8; 32]> {
+        match self {
+            Inventory::Error => None,
+            Inventory::Transaction(t) => Some(t.to_byte_array()),
+            Inventory::Block(b) => Some(b.to_byte_array()),
+            Inventory::CompactBlock(b) => Some(b.to_byte_array()),
+            Inventory::WTx(t) => Some(t.to_byte_array()),
+            Inventory::WitnessTransaction(t) => Some(t.to_byte_array()),
+            Inventory::WitnessBlock(b) => Some(b.to_byte_array()),
+            Inventory::Unknown { hash, .. } => Some(*hash),
+        }
+    }
+}
+
 impl Encodable for Inventory {
     #[inline]
     fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
