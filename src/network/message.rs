@@ -33,6 +33,11 @@ use consensus::encode::{CheckedData, Decodable, Encodable, VarInt};
 use consensus::{encode, serialize};
 use consensus::encode::MAX_VEC_SIZE;
 
+/// The maximum number of [Inventory] items in an `inv` message.
+///
+/// This limit is not currently enforced by this implementation.
+pub const MAX_INV_SIZE: usize = 50_000;
+
 /// Serializer for command string
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct CommandString(Cow<'static, str>);
