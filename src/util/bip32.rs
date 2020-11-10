@@ -650,9 +650,6 @@ impl ExtendedPubKey {
             return Err(Error::WrongExtendedKeyLength(data.len()))
         }
 
-        let cn_int: u32 = endian::slice_to_u32_be(&data[9..13]);
-        let child_number: ChildNumber = ChildNumber::from(cn_int);
-
         Ok(ExtendedPubKey {
             network: if data[0..4] == [0x04u8, 0x88, 0xB2, 0x1E] {
                 Network::Bitcoin
@@ -665,10 +662,9 @@ impl ExtendedPubKey {
             },
             depth: data[4],
             parent_fingerprint: Fingerprint::from(&data[5..9]),
-            child_number: child_number,
+            child_number: endian::slice_to_u32_be(&data[9..13]).into(),
             chain_code: ChainCode::from(&data[13..45]),
-            public_key: PublicKey::from_slice(
-                &data[45..78])?,
+            public_key: PublicKey::from_slice(&data[45..78])?,
         })
     }
 
