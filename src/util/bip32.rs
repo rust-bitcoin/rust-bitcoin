@@ -390,7 +390,7 @@ pub enum Error {
     InvalidDerivationPathFormat,
     /// Unknown version magic bytes
     UnknownVersion([u8; 4]),
-    /// Encoded extended key data have wrong length
+    /// Encoded extended key data has wrong length
     WrongExtendedKeyLength(usize),
     /// Base58 encoding error
     Base58(base58::Error)
@@ -406,7 +406,7 @@ impl fmt::Display for Error {
             Error::InvalidChildNumberFormat => f.write_str("invalid child number format"),
             Error::InvalidDerivationPathFormat => f.write_str("invalid derivation path format"),
             Error::UnknownVersion(ref bytes) => write!(f, "unknown version magic bytes: {:?}", bytes),
-            Error::WrongExtendedKeyLength(ref len) => write!(f, "encoded extended key data have wrong length {}", len),
+            Error::WrongExtendedKeyLength(ref len) => write!(f, "encoded extended key data has wrong length {}", len),
             Error::Base58(ref err) => write!(f, "base58 encoding error: {}", err),
         }
     }
