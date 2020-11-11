@@ -27,7 +27,7 @@ use consensus::encode::{self, Decodable, Encodable};
 use hash_types::{BlockHash, Txid, Wtxid};
 
 /// An inventory item.
-#[derive(PartialEq, Eq, Clone, Debug, Copy, Hash)]
+#[derive(PartialEq, Eq, Clone, Debug, Copy, Hash, PartialOrd, Ord)]
 pub enum Inventory {
     /// Error --- these inventories can be ignored
     Error,
