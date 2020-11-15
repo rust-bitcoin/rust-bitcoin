@@ -324,20 +324,7 @@ impl GCSFilterReader {
 
 // fast reduction of hash to [0, nm) range
 fn map_to_range(hash: u64, nm: u64) -> u64 {
-    // Use this once we upgrade to rustc >= 1.26
-    // ((hash as u128 * nm as u128) >> 64) as u64
-
-    #[inline]
-    fn l(n: u64) -> u64 { n & 0xffffffff }
-    #[inline]
-    fn h(n: u64) -> u64 { n >> 32 }
-
-    let a = h(hash);
-    let b = l(hash);
-    let c = h(nm);
-    let d = l(nm);
-
-    a * c + h(a * d + c * b + h(b * d))
+    ((hash as u128 * nm as u128) >> 64) as u64
 }
 
 /// Colomb-Rice encoded filter writer
