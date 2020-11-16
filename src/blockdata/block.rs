@@ -29,7 +29,7 @@ use hashes::{Hash, HashEngine};
 use hash_types::{Wtxid, BlockHash, TxMerkleNode, WitnessMerkleNode, WitnessCommitment};
 use util::uint::Uint256;
 use consensus::encode::Encodable;
-use network::constants::Network;
+use network::Network;
 use blockdata::transaction::Transaction;
 use blockdata::constants::{max_target, WITNESS_SCALE_FACTOR};
 use blockdata::script;

@@ -29,7 +29,7 @@ use blockdata::{opcodes, script};
 use std::{error, fmt};
 
 use hash_types::ScriptHash;
-use network::constants::Network;
+use network::Network;
 use util::address;
 
 /// Encoding of "pubkey here" in script; from Bitcoin Core `src/script/script.h`
@@ -281,7 +281,7 @@ mod tests {
     use std::str::FromStr;
 
     use blockdata::script::Script;
-    use network::constants::Network;
+    use network::Network;
 
     use super::*;
     use PublicKey;

@@ -28,7 +28,7 @@
 //! # Example: encoding a network's magic bytes
 //!
 //! ```rust
-//! use bitcoin::network::constants::Network;
+//! use bitcoin::Network;
 //! use bitcoin::consensus::encode::serialize;
 //!
 //! let network = Network::Bitcoin;
@@ -79,7 +79,7 @@ impl Network {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin::network::constants::Network;
+    /// use bitcoin::network::Network;
     ///
     /// assert_eq!(Some(Network::Bitcoin), Network::from_magic(0xD9B4BEF9));
     /// assert_eq!(None, Network::from_magic(0xFFFFFFFF));
@@ -101,7 +101,7 @@ impl Network {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin::network::constants::Network;
+    /// use bitcoin::network::Network;
     ///
     /// let network = Network::Bitcoin;
     /// assert_eq!(network.magic(), 0xD9B4BEF9);

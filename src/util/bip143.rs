@@ -272,7 +272,7 @@ mod tests {
     use blockdata::script::Script;
     use blockdata::transaction::Transaction;
     use consensus::encode::deserialize;
-    use network::constants::Network;
+    use network::Network;
     use util::address::Address;
     use util::key::PublicKey;
     use hashes::hex::FromHex;

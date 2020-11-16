@@ -21,11 +21,9 @@
 use std::io;
 use std::borrow::Cow;
 
-use network::address::Address;
-use network::constants::{self, ServiceFlags};
+use network::{Address, CommandString, PROTOCOL_VERSION, ServiceFlags};
 use consensus::{Encodable, Decodable, ReadExt};
 use consensus::encode;
-use network::message::CommandString;
 use hashes::sha256d;
 
 /// Some simple messages
@@ -67,7 +65,7 @@ impl VersionMessage {
         start_height: i32,
     ) -> VersionMessage {
         VersionMessage {
-            version: constants::PROTOCOL_VERSION,
+            version: PROTOCOL_VERSION,
             services: services,
             timestamp: timestamp,
             receiver: receiver,
@@ -148,7 +146,7 @@ mod tests {
     use super::VersionMessage;
 
     use hashes::hex::FromHex;
-    use network::constants::ServiceFlags;
+    use network::ServiceFlags;
 
     use consensus::encode::{deserialize, serialize};
 

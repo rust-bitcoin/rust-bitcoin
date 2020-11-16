@@ -21,7 +21,7 @@ use std::{io, ops, error};
 use std::str::FromStr;
 
 use secp256k1::{self, Secp256k1};
-use network::constants::Network;
+use network::Network;
 use hashes::{Hash, hash160};
 use hash_types::{PubkeyHash, WPubkeyHash};
 use util::base58;
@@ -380,8 +380,7 @@ mod tests {
     use secp256k1::Secp256k1;
     use std::str::FromStr;
     use hashes::hex::ToHex;
-    use network::constants::Network::Testnet;
-    use network::constants::Network::Bitcoin;
+    use network::Network::{Bitcoin, Testnet};
     use util::address::Address;
 
     #[test]

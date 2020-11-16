@@ -6,8 +6,9 @@ use std::{env, process};
 use std::io::Write;
 
 use bitcoin::consensus::encode;
-use bitcoin::network::{address, constants, message, message_network};
-use bitcoin::network::stream_reader::StreamReader;
+use bitcoin::network::{
+    Address, Network, NetworkMessage, RawNetworkMessage, ServiceFlags, StreamReader, VersionMessage,
+};
 use bitcoin::secp256k1;
 use bitcoin::secp256k1::rand::Rng;
 
@@ -29,8 +30,8 @@ fn main() {
 
     let version_message = build_version_message(address);
 
-    let first_message = message::RawNetworkMessage {
-        magic: constants::Network::Bitcoin.magic(),
+    let first_message = RawNetworkMessage {
+        magic: Network::Bitcoin.magic(),
         payload: version_message,
     };
 
@@ -44,20 +45,20 @@ fn main() {
         let mut stream_reader = StreamReader::new(read_stream, None);
         loop {
             // Loop an retrieve new messages
-            let reply: message::RawNetworkMessage = stream_reader.read_next().unwrap();
+            let reply: RawNetworkMessage = stream_reader.read_next().unwrap();
             match reply.payload {
-                message::NetworkMessage::Version(_) => {
+                NetworkMessage::Version(_) => {
                     println!("Received version message: {:?}", reply.payload);
 
-                    let second_message = message::RawNetworkMessage {
-                        magic: constants::Network::Bitcoin.magic(),
-                        payload: message::NetworkMessage::Verack,
+                    let second_message = RawNetworkMessage {
+                        magic: Network::Bitcoin.magic(),
+                        payload: NetworkMessage::Verack,
                     };
 
                     let _ = stream.write_all(encode::serialize(&second_message).as_slice());
                     println!("Sent verack message");
                 }
-                message::NetworkMessage::Verack => {
+                NetworkMessage::Verack => {
                     println!("Received verack message: {:?}", reply.payload);
                     break;
                 }
@@ -73,12 +74,12 @@ fn main() {
     }
 }
 
-fn build_version_message(address: SocketAddr) -> message::NetworkMessage {
+fn build_version_message(address: SocketAddr) -> NetworkMessage {
     // Building version message, see https://en.bitcoin.it/wiki/Protocol_documentation#version
     let my_address = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), 0);
 
     // "bitfield of features to be enabled for this connection"
-    let services = constants::ServiceFlags::NONE;
+    let services = ServiceFlags::NONE;
 
     // "standard UNIX timestamp in seconds"
     let timestamp = SystemTime::now()
@@ -87,10 +88,10 @@ fn build_version_message(address: SocketAddr) -> message::NetworkMessage {
         .as_secs();
 
     // "The network address of the node receiving this message"
-    let addr_recv = address::Address::new(&address, constants::ServiceFlags::NONE);
+    let addr_recv = Address::new(&address, ServiceFlags::NONE);
 
     // "The network address of the node emitting this message"
-    let addr_from = address::Address::new(&my_address, constants::ServiceFlags::NONE);
+    let addr_from = Address::new(&my_address, ServiceFlags::NONE);
 
     // "Node random nonce, randomly generated every time a version packet is sent. This nonce is used to detect connections to self."
     let nonce: u64 = secp256k1::rand::thread_rng().gen();
@@ -102,7 +103,7 @@ fn build_version_message(address: SocketAddr) -> message::NetworkMessage {
     let start_height: i32 = 0;
 
     // Construct the message
-    message::NetworkMessage::Version(message_network::VersionMessage::new(
+    NetworkMessage::Version(VersionMessage::new(
         services,
         timestamp as i64,
         addr_recv,

@@ -19,7 +19,7 @@
 //!
 //! ```rust
 //!
-//! use bitcoin::network::constants::Network;
+//! use bitcoin::network::Network;
 //! use bitcoin::util::address::Address;
 //! use bitcoin::util::key;
 //! use bitcoin::secp256k1::Secp256k1;
@@ -44,7 +44,7 @@ use bech32;
 use hashes::Hash;
 use hash_types::{PubkeyHash, WPubkeyHash, ScriptHash, WScriptHash};
 use blockdata::script;
-use network::constants::Network;
+use network::Network;
 use util::base58;
 use util::key;
 
@@ -499,7 +499,7 @@ mod tests {
     use hashes::hex::{FromHex, ToHex};
 
     use blockdata::script::Script;
-    use network::constants::Network::{Bitcoin, Testnet};
+    use network::Network::{Bitcoin, Testnet};
     use util::key::PublicKey;
 
     use super::*;

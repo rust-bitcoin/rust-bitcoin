@@ -17,7 +17,7 @@
 //! This module provides predefined set of parameters for different chains.
 //!
 
-use network::constants::Network;
+use network::Network;
 use util::uint::Uint256;
 
 /// Lowest possible difficulty for Mainnet. See comment on Params::pow_limit for more info.

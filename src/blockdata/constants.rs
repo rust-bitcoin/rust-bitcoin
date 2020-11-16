@@ -27,7 +27,7 @@ use blockdata::opcodes;
 use blockdata::script;
 use blockdata::transaction::{OutPoint, Transaction, TxOut, TxIn};
 use blockdata::block::{Block, BlockHeader};
-use network::constants::Network;
+use network::Network;
 use util::uint::Uint256;
 
 /// The maximum allowable sequence number
@@ -162,7 +162,7 @@ mod test {
     use std::default::Default;
     use hashes::hex::FromHex;
 
-    use network::constants::Network;
+    use network::Network;
     use consensus::encode::serialize;
     use blockdata::constants::{genesis_block, bitcoin_genesis_tx};
     use blockdata::constants::{MAX_SEQUENCE, COIN_VALUE};

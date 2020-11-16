@@ -75,7 +75,7 @@ impl OutPoint {
     ///
     /// ```rust
     /// use bitcoin::blockdata::constants::genesis_block;
-    /// use bitcoin::network::constants::Network;
+    /// use bitcoin::network::Network;
     ///
     /// let block = genesis_block(Network::Bitcoin);
     /// let tx = &block.txdata[0];
@@ -749,7 +749,7 @@ mod tests {
 
     #[test]
     fn test_is_coinbase () {
-        use network::constants::Network;
+        use network::Network;
         use blockdata::constants;
 
         let genesis = constants::genesis_block(Network::Bitcoin);

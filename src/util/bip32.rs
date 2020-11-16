@@ -25,7 +25,7 @@ use hash_types::XpubIdentifier;
 use hashes::{sha512, Hash, HashEngine, Hmac, HmacEngine};
 use secp256k1::{self, Secp256k1};
 
-use network::constants::Network;
+use network::Network;
 use util::{base58, endian};
 use util::key::{self, PublicKey, PrivateKey};
 
@@ -747,7 +747,7 @@ mod tests {
     use secp256k1::{self, Secp256k1};
     use hashes::hex::FromHex;
 
-    use network::constants::Network::{self, Bitcoin};
+    use network::Network::{self, Bitcoin};
 
     #[test]
     fn test_parse_derivation_path() {

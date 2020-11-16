@@ -86,7 +86,7 @@ mod test {
     use std::io::{self, BufReader, Write};
     use std::net::{TcpListener, TcpStream, Shutdown};
     use std::thread::JoinHandle;
-    use network::constants::ServiceFlags;
+    use network::ServiceFlags;
 
     use super::StreamReader;
     use network::message::{NetworkMessage, RawNetworkMessage};

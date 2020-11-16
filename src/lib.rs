@@ -75,7 +75,7 @@ pub use blockdata::transaction::TxOut;
 pub use blockdata::transaction::OutPoint;
 pub use blockdata::transaction::SigHashType;
 pub use consensus::encode::VarInt;
-pub use network::constants::Network;
+pub use network::Network;
 pub use util::Error;
 pub use util::address::Address;
 pub use util::address::AddressType;

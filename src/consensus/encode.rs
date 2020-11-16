@@ -41,8 +41,7 @@ use util::endian;
 use util::psbt;
 
 use blockdata::transaction::{TxOut, Transaction, TxIn};
-use network::message_blockdata::Inventory;
-use network::address::{Address, AddrV2Message};
+use network::{Address, AddrV2Message, Inventory};
 
 /// Encoding error
 #[derive(Debug)]
@@ -742,8 +741,7 @@ mod tests {
     use consensus::{Encodable, deserialize_partial, Decodable};
     use util::endian::{u64_to_array_le, u32_to_array_le, u16_to_array_le};
     use secp256k1::rand::{thread_rng, Rng};
-    use network::message_blockdata::Inventory;
-    use network::Address;
+    use network::{Address, Inventory};
 
     #[test]
     fn serialize_int_test() {
