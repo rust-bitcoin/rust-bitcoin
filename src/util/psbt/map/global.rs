@@ -17,11 +17,14 @@ use std::collections::btree_map::Entry;
 use std::io::{self, Cursor};
 
 use blockdata::transaction::Transaction;
-use consensus::{encode, Encodable, Decodable};
+use consensus::{encode, Decodable, Encodable};
+use util::bip32::{ExtendedPubKey, KeySource};
+use util::psbt;
 use util::psbt::map::Map;
 use util::psbt::raw;
-use util::psbt;
+use util::psbt::serialize::Serialize;
 use util::psbt::Error;
+use util::psbt::raw::Key;
 
 /// A key-value map for global data.
 #[derive(Clone, Debug, PartialEq)]
@@ -29,10 +32,12 @@ pub struct Global {
     /// The unsigned transaction, scriptSigs and witnesses for each input must be
     /// empty.
     pub unsigned_tx: Transaction,
+    /// Extended pubkey metadata for PSBT signers
+    pub global_xpub: BTreeMap<ExtendedPubKey, KeySource>,
     /// Unknown global key-value pairs.
     pub unknown: BTreeMap<raw::Key, Vec<u8>>,
 }
-serde_struct_impl!(Global, unsigned_tx, unknown);
+serde_struct_impl!(Global, unsigned_tx, global_xpub, unknown);
 
 impl Global {
     /// Create a Global from an unsigned transaction, error if not unsigned
@@ -47,8 +52,10 @@ impl Global {
             }
         }
 
+        let global_xpub: BTreeMap<ExtendedPubKey, KeySource> = BTreeMap::default();
         Ok(Global {
             unsigned_tx: tx,
+            global_xpub,
             unknown: Default::default(),
         })
     }
@@ -62,6 +69,7 @@ impl Map for Global {
         } = pair;
 
         match raw_key.type_value {
+            1u8 => {}
             0u8 => return Err(Error::DuplicateKey(raw_key).into()),
             _ => match self.unknown.entry(raw_key) {
                 Entry::Vacant(empty_key) => {empty_key.insert(raw_value);},
@@ -92,6 +100,17 @@ impl Map for Global {
             },
         });
 
+        // Glboal xpub
+        for (key, value) in self.global_xpub.iter() {
+            rv.push(raw::Pair {
+                key: Key {
+                    type_value: 1u8,
+                    key: Serialize::serialize(key),
+                },
+                value: Serialize::serialize(value),
+            });
+        }
+
         for (key, value) in self.unknown.iter() {
             rv.push(raw::Pair {
                 key: key.clone(),
@@ -119,14 +138,21 @@ impl_psbtmap_consensus_encoding!(Global);
 
 impl Decodable for Global {
     fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
-
         let mut tx: Option<Transaction> = None;
         let mut unknowns: BTreeMap<raw::Key, Vec<u8>> = Default::default();
+        let mut global_xpub: BTreeMap<ExtendedPubKey, KeySource> = BTreeMap::default();
 
         loop {
             match raw::Pair::consensus_decode(&mut d) {
                 Ok(pair) => {
                     match pair.key.type_value {
+                        1u8 => {
+                            let xpub: ExtendedPubKey =
+                                psbt::serialize::Deserialize::deserialize(&pair.key.key).unwrap();
+                            let keysource: KeySource =
+                                psbt::serialize::Deserialize::deserialize(&pair.value).unwrap();
+                            global_xpub.insert(xpub, keysource);
+                        }
                         0u8 => {
                             // key has to be empty
                             if pair.key.key.is_empty() {
@@ -169,6 +195,7 @@ impl Decodable for Global {
         if let Some(tx) = tx {
             let mut rv: Global = Global::from_unsigned_tx(tx)?;
             rv.unknown = unknowns;
+            rv.global_xpub = global_xpub;
             Ok(rv)
         } else {
             Err(Error::MustHaveUnsignedTx.into())

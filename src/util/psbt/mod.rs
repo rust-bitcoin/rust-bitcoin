@@ -167,7 +167,7 @@ mod tests {
     use hashes::{sha256, hash160, Hash, ripemd160};
     use hash_types::Txid;
 
-    use std::collections::BTreeMap;
+    use std::{collections::BTreeMap, str::FromStr};
 
     use secp256k1::Secp256k1;
 
@@ -179,6 +179,8 @@ mod tests {
     use util::key::PublicKey;
     use util::psbt::map::{Global, Output, Input};
     use util::psbt::raw;
+
+    use crate::util::bip32::DerivationPath;
 
     use super::PartiallySignedTransaction;
 
@@ -192,7 +194,8 @@ mod tests {
                     input: vec![],
                     output: vec![],
                 },
-                unknown: BTreeMap::new(),
+                global_xpub: Default::default(),
+                unknown: Default::default(),
             },
             inputs: vec![],
             outputs: vec![],
@@ -279,6 +282,7 @@ mod tests {
                     },
                 ],
             },
+            global_xpub: Default::default(),
             unknown: Default::default(),
         };
 
@@ -381,7 +385,8 @@ mod tests {
                             },
                         ],
                     },
-                    unknown: BTreeMap::new(),
+                    global_xpub: Default::default(),
+                    unknown: Default::default(),
                 },
                 inputs: vec![Input {
                     non_witness_utxo: Some(Transaction {
@@ -604,7 +609,8 @@ mod tests {
                         },
                     ],
                 },
-                unknown: BTreeMap::new(),
+                global_xpub: Default::default(),
+                unknown: Default::default(),
             },
             inputs: vec![Input {
                 non_witness_utxo: Some(Transaction {
@@ -674,5 +680,23 @@ mod tests {
         // Now the roundtrip should fail as the preimage is incorrect.
         let rtt : Result<PartiallySignedTransaction, _> = hex_psbt!(&serialize_hex(&unserialized));
         assert!(rtt.is_err());
+    }
+
+    #[test]
+    fn global_xpub() {
+        let raw = "70736274ff01009d0100000002710ea76ab45c5cb6438e607e59cc037626981805ae9e0dfd9089012abb0be5350100000000ffffffff190994d6a8b3c8c82ccbcfb2fba4106aa06639b872a8d447465c0d42588d6d670000000000ffffffff0200e1f505000000001976a914b6bc2c0ee5655a843d79afedd0ccc3f7dd64340988ac605af405000000001600141188ef8e4ce0449eaac8fb141cbf5a1176e6a088000000004f010488b21e039e530cac800000003dbc8a5c9769f031b17e77fea1518603221a18fd18f2b9a54c6c8c1ac75cbc3502f230584b155d1c7f1cd45120a653c48d650b431b67c5b2c13f27d7142037c1691027569c503100008000000080000000800001011f00e1f5050000000016001433b982f91b28f160c920b4ab95e58ce50dda3a4a220203309680f33c7de38ea6a47cd4ecd66f1f5a49747c6ffb8808ed09039243e3ad5c47304402202d704ced830c56a909344bd742b6852dccd103e963bae92d38e75254d2bb424502202d86c437195df46c0ceda084f2a291c3da2d64070f76bf9b90b195e7ef28f77201220603309680f33c7de38ea6a47cd4ecd66f1f5a49747c6ffb8808ed09039243e3ad5c1827569c5031000080000000800000008000000000010000000001011f00e1f50500000000160014388fb944307eb77ef45197d0b0b245e079f011de220202c777161f73d0b7c72b9ee7bde650293d13f095bc7656ad1f525da5fd2e10b11047304402204cb1fb5f869c942e0e26100576125439179ae88dca8a9dc3ba08f7953988faa60220521f49ca791c27d70e273c9b14616985909361e25be274ea200d7e08827e514d01220602c777161f73d0b7c72b9ee7bde650293d13f095bc7656ad1f525da5fd2e10b1101827569c5031000080000000800000008000000000000000000000220202d20ca502ee289686d21815bd43a80637b0698e1fbcdbe4caed445f6c1a0a90ef1827569c50310000800000008000000080000000000400000000";
+
+        let xpub = ExtendedPubKey::from_str("xpub6CpGH79LXVkeiux2ZPWMpEubBrRfgcGCgy2HiagyN6NW3qdioJaqFYyD1fG6LDfxWEhMXJqcDuU5VneKt5UQYUGPa5Mfxdw2D2NArwX5TBm").unwrap();
+        let fingerprint = Fingerprint::from(&[39, 86, 156, 80][..]);
+        let path = DerivationPath::from_str("m/49'/0'/0'").unwrap();
+        let psbt: PartiallySignedTransaction = hex_psbt!(&raw).unwrap();
+        assert_eq!(psbt.global.global_xpub.len(), 1);
+        assert_eq!(
+            psbt.global.global_xpub.get(&xpub).unwrap(),
+            &(fingerprint, path)
+        );
+
+        let serialized = serialize_hex(&psbt);
+        assert_eq!(raw, serialized);
     }
 }

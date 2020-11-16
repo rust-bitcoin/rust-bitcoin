@@ -18,14 +18,18 @@
 //! bytes in PSBT key-value pairs.
 
 use std::io;
+use std::str::FromStr;
 
 use blockdata::script::Script;
 use blockdata::transaction::{SigHashType, Transaction, TxOut};
 use consensus::encode::{self, serialize, Decodable};
-use util::bip32::{ChildNumber, Fingerprint, KeySource};
 use hashes::{hash160, ripemd160, sha256, sha256d, Hash};
+use network::constants::Network;
+use util::bip32::{ChildNumber, Fingerprint, KeySource, ExtendedPubKey};
 use util::key::PublicKey;
 use util::psbt;
+use util::base58;
+use util::endian;
 
 /// A trait for serializing a value as raw data for insertion into PSBT
 /// key-value pairs.
@@ -139,5 +143,30 @@ impl Deserialize for SigHashType {
         } else {
             Err(psbt::Error::NonStandardSigHashType(raw).into())
         }
+    }
+}
+
+// global xpubs
+impl Deserialize for ExtendedPubKey {
+    fn deserialize(bytes: &[u8]) -> Result<Self, encode::Error> {
+        let xpub_str = base58::check_encode_slice(bytes);
+        let xpub = Self::from_str(&xpub_str).unwrap();
+        Ok(xpub)
+    }
+}
+
+impl Serialize for ExtendedPubKey {
+    fn serialize(&self) -> Vec<u8> {
+        let mut ret = [0; 78];
+        ret[0..4].copy_from_slice(&match self.network {
+            Network::Bitcoin => [0x04u8, 0x88, 0xB2, 0x1E],
+            Network::Testnet | Network::Signet | Network::Regtest => [0x04u8, 0x35, 0x87, 0xCF],
+        }[..]);
+        ret[4] = self.depth as u8;
+        ret[5..9].copy_from_slice(&self.parent_fingerprint[..]);
+        ret[9..13].copy_from_slice(&endian::u32_to_array_be(u32::from(self.child_number)));
+        ret[13..45].copy_from_slice(&self.chain_code[..]);
+        ret[45..78].copy_from_slice(&self.public_key.key.serialize()[..]);
+        ret.to_vec()
     }
 }
