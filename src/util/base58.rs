@@ -32,8 +32,10 @@ pub enum Error {
     /// Note that if the length is excessively long the provided length may be
     /// an estimate (and the checksum step may be skipped).
     InvalidLength(usize),
-    /// Version byte(s) were not recognized
-    InvalidVersion(Vec<u8>),
+    /// Extended Key version byte(s) were not recognized
+    InvalidExtendedKeyVersion([u8; 4]),
+    /// Address version byte were not recognized
+    InvalidAddressVersion(u8),
     /// Checked data was less than 4 bytes
     TooShort(usize),
     /// Secp256k1 error while parsing a secret key
@@ -46,7 +48,8 @@ impl fmt::Display for Error {
             Error::BadByte(b) => write!(f, "invalid base58 character 0x{:x}", b),
             Error::BadChecksum(exp, actual) => write!(f, "base58ck checksum 0x{:x} does not match expected 0x{:x}", actual, exp),
             Error::InvalidLength(ell) => write!(f, "length {} invalid for this base58 type", ell),
-            Error::InvalidVersion(ref v) => write!(f, "version {:?} invalid for this base58 type", v),
+            Error::InvalidAddressVersion(ref v) => write!(f, "address version {:?} invalid for this base58 type", v),
+            Error::InvalidExtendedKeyVersion(ref v) => write!(f, "extended key version {:?} invalid for this base58 type", v),
             Error::TooShort(_) => write!(f, "base58ck data not even long enough for a checksum"),
             Error::Secp256k1(ref e) => fmt::Display::fmt(&e, f),
         }
