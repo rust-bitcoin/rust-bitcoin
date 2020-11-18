@@ -68,9 +68,9 @@ pub enum Error {
         /// Hash-type
         hash_type: PsbtHash,
         /// Pre-image
-        preimage: Vec<u8>,
+        preimage: Box<[u8]>,
         /// Hash value
-        hash: Vec<u8>,
+        hash: Box<[u8]>,
     },
     /// Data inconsistency/conflicting data during merge procedure
     MergeConflict(String),
