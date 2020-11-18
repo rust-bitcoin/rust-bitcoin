@@ -55,9 +55,9 @@ pub enum Error {
     /// transaction.
     UnexpectedUnsignedTx {
         /// Expected
-        expected: Transaction,
+        expected: Box<Transaction>,
         /// Actual
-        actual: Transaction,
+        actual: Box<Transaction>,
     },
     /// Unable to parse as a standard SigHash type.
     NonStandardSigHashType(u32),
