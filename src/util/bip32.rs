@@ -27,7 +27,7 @@ use secp256k1::{self, Secp256k1};
 
 use network::constants::Network;
 use util::{base58, endian};
-use util::key::{PublicKey, PrivateKey};
+use util::key::{self, PublicKey, PrivateKey};
 
 /// A chain code
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -388,6 +388,12 @@ pub enum Error {
     InvalidChildNumberFormat,
     /// Invalid derivation path format.
     InvalidDerivationPathFormat,
+    /// Unknown version magic bytes
+    UnknownVersion([u8; 4]),
+    /// Encoded extended key data have wrong length
+    WrongExtendedKeyLength(usize),
+    /// Base58 encoding error
+    Base58(base58::Error)
 }
 
 impl fmt::Display for Error {
@@ -399,6 +405,9 @@ impl fmt::Display for Error {
             Error::RngError(ref s) => write!(f, "rng error {}", s),
             Error::InvalidChildNumberFormat => f.write_str("invalid child number format"),
             Error::InvalidDerivationPathFormat => f.write_str("invalid derivation path format"),
+            Error::UnknownVersion(ref bytes) => write!(f, "unknown version magic bytes: {:?}", bytes),
+            Error::WrongExtendedKeyLength(ref len) => write!(f, "encoded extended key data have wrong length {}", len),
+            Error::Base58(ref err) => write!(f, "base58 encoding error: {}", err),
         }
     }
 }
@@ -413,8 +422,23 @@ impl error::Error for Error {
     }
 }
 
+impl From<key::Error> for Error {
+    fn from(err: key::Error) -> Self {
+        match err {
+            key::Error::Base58(e) => Error::Base58(e),
+            key::Error::Secp256k1(e) => Error::Ecdsa(e),
+        }
+    }
+}
+
 impl From<secp256k1::Error> for Error {
     fn from(e: secp256k1::Error) -> Error { Error::Ecdsa(e) }
+}
+
+impl From<base58::Error> for Error {
+    fn from(err: base58::Error) -> Self {
+        Error::Base58(err)
+    }
 }
 
 impl ExtendedPrivKey {
@@ -459,11 +483,11 @@ impl ExtendedPrivKey {
     pub fn ckd_priv<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>, i: ChildNumber) -> Result<ExtendedPrivKey, Error> {
         let mut hmac_engine: HmacEngine<sha512::Hash> = HmacEngine::new(&self.chain_code[..]);
         match i {
-            ChildNumber::Normal {..} => {
+            ChildNumber::Normal { .. } => {
                 // Non-hardened key: compute public data and use that
                 hmac_engine.input(&PublicKey::from_private_key(secp, &self.private_key).key.serialize()[..]);
             }
-            ChildNumber::Hardened {..} => {
+            ChildNumber::Hardened { .. } => {
                 // Hardened key: use only secret data to prevent public derivation
                 hmac_engine.input(&[0u8]);
                 hmac_engine.input(&self.private_key[..]);
@@ -487,6 +511,54 @@ impl ExtendedPrivKey {
             private_key: sk,
             chain_code: ChainCode::from(&hmac_result[32..])
         })
+    }
+
+    /// Decoding extended private key from binary data according to BIP 32
+    pub fn decode(data: &[u8]) -> Result<ExtendedPrivKey, Error> {
+        if data.len() != 78 {
+            return Err(Error::WrongExtendedKeyLength(data.len()))
+        }
+
+        let network = if data[0..4] == [0x04u8, 0x88, 0xAD, 0xE4] {
+            Network::Bitcoin
+        } else if data[0..4] == [0x04u8, 0x35, 0x83, 0x94] {
+            Network::Testnet
+        } else {
+            let mut ver = [0u8; 4];
+            ver.copy_from_slice(&data[0..4]);
+            return Err(Error::UnknownVersion(ver));
+        };
+
+        Ok(ExtendedPrivKey {
+            network: network,
+            depth: data[4],
+            parent_fingerprint: Fingerprint::from(&data[5..9]),
+            child_number: endian::slice_to_u32_be(&data[9..13]).into(),
+            chain_code: ChainCode::from(&data[13..45]),
+            private_key: PrivateKey {
+                compressed: true,
+                network: network,
+                key: secp256k1::SecretKey::from_slice(
+                    &data[46..78]
+                ).map_err(Error::Ecdsa)?,
+            },
+        })
+    }
+
+    /// Extended private key binary encoding according to BIP 32
+    pub fn encode(&self) -> [u8; 78] {
+        let mut ret = [0; 78];
+        ret[0..4].copy_from_slice(&match self.network {
+            Network::Bitcoin => [0x04, 0x88, 0xAD, 0xE4],
+            Network::Testnet | Network::Signet | Network::Regtest => [0x04, 0x35, 0x83, 0x94],
+        }[..]);
+        ret[4] = self.depth as u8;
+        ret[5..9].copy_from_slice(&self.parent_fingerprint[..]);
+        ret[9..13].copy_from_slice(&endian::u32_to_array_be(u32::from(self.child_number)));
+        ret[13..45].copy_from_slice(&self.chain_code[..]);
+        ret[45] = 0;
+        ret[46..78].copy_from_slice(&self.private_key[..]);
+        ret
     }
 
     /// Returns the HASH160 of the public key belonging to the xpriv
@@ -531,7 +603,7 @@ impl ExtendedPubKey {
     /// Compute the scalar tweak added to this key to get a child key
     pub fn ckd_pub_tweak(&self, i: ChildNumber) -> Result<(PrivateKey, ChainCode), Error> {
         match i {
-            ChildNumber::Hardened {..} => {
+            ChildNumber::Hardened { .. } => {
                 Err(Error::CannotDeriveFromHardenedKey)
             }
             ChildNumber::Normal { index: n } => {
@@ -572,7 +644,46 @@ impl ExtendedPubKey {
         })
     }
 
-    /// Returns the HASH160 of the public key of the xpub
+    /// Decoding extended public key from binary data according to BIP 32
+    pub fn decode(data: &[u8]) -> Result<ExtendedPubKey, Error> {
+        if data.len() != 78 {
+            return Err(Error::WrongExtendedKeyLength(data.len()))
+        }
+
+        Ok(ExtendedPubKey {
+            network: if data[0..4] == [0x04u8, 0x88, 0xB2, 0x1E] {
+                Network::Bitcoin
+            } else if data[0..4] == [0x04u8, 0x35, 0x87, 0xCF] {
+                Network::Testnet
+            } else {
+                let mut ver = [0u8; 4];
+                ver.copy_from_slice(&data[0..4]);
+                return Err(Error::UnknownVersion(ver));
+            },
+            depth: data[4],
+            parent_fingerprint: Fingerprint::from(&data[5..9]),
+            child_number: endian::slice_to_u32_be(&data[9..13]).into(),
+            chain_code: ChainCode::from(&data[13..45]),
+            public_key: PublicKey::from_slice(&data[45..78])?,
+        })
+    }
+
+    /// Extended public key binary encoding according to BIP 32
+    pub fn encode(&self) -> [u8; 78] {
+        let mut ret = [0; 78];
+        ret[0..4].copy_from_slice(&match self.network {
+            Network::Bitcoin => [0x04u8, 0x88, 0xB2, 0x1E],
+            Network::Testnet | Network::Signet | Network::Regtest => [0x04u8, 0x35, 0x87, 0xCF],
+        }[..]);
+        ret[4] = self.depth as u8;
+        ret[5..9].copy_from_slice(&self.parent_fingerprint[..]);
+        ret[9..13].copy_from_slice(&endian::u32_to_array_be(u32::from(self.child_number)));
+        ret[13..45].copy_from_slice(&self.chain_code[..]);
+        ret[45..78].copy_from_slice(&self.public_key.key.serialize()[..]);
+        ret
+    }
+
+    /// Returns the HASH160 of the chaincode
     pub fn identifier(&self) -> XpubIdentifier {
         let mut engine = XpubIdentifier::engine();
         self.public_key.write_into(&mut engine).expect("engines don't error");
@@ -587,106 +698,41 @@ impl ExtendedPubKey {
 
 impl fmt::Display for ExtendedPrivKey {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        let mut ret = [0; 78];
-        ret[0..4].copy_from_slice(&match self.network {
-            Network::Bitcoin => [0x04, 0x88, 0xAD, 0xE4],
-            Network::Testnet | Network::Signet | Network::Regtest => [0x04, 0x35, 0x83, 0x94],
-        }[..]);
-        ret[4] = self.depth as u8;
-        ret[5..9].copy_from_slice(&self.parent_fingerprint[..]);
-        ret[9..13].copy_from_slice(&endian::u32_to_array_be(u32::from(self.child_number)));
-        ret[13..45].copy_from_slice(&self.chain_code[..]);
-        ret[45] = 0;
-        ret[46..78].copy_from_slice(&self.private_key[..]);
-        fmt.write_str(&base58::check_encode_slice(&ret[..]))
+        base58::check_encode_slice_to_fmt(fmt, &self.encode()[..])
     }
 }
 
 impl FromStr for ExtendedPrivKey {
-    type Err = base58::Error;
+    type Err = Error;
 
-    fn from_str(inp: &str) -> Result<ExtendedPrivKey, base58::Error> {
+    fn from_str(inp: &str) -> Result<ExtendedPrivKey, Error> {
         let data = base58::from_check(inp)?;
 
         if data.len() != 78 {
-            return Err(base58::Error::InvalidLength(data.len()));
+            return Err(base58::Error::InvalidLength(data.len()).into());
         }
 
-        let cn_int: u32 = endian::slice_to_u32_be(&data[9..13]);
-        let child_number: ChildNumber = ChildNumber::from(cn_int);
-
-        let network = if data[0..4] == [0x04u8, 0x88, 0xAD, 0xE4] {
-            Network::Bitcoin
-        } else if data[0..4] == [0x04u8, 0x35, 0x83, 0x94] {
-            Network::Testnet
-        } else {
-            return Err(base58::Error::InvalidVersion((&data[0..4]).to_vec()));
-        };
-
-        Ok(ExtendedPrivKey {
-            network: network,
-            depth: data[4],
-            parent_fingerprint: Fingerprint::from(&data[5..9]),
-            child_number: child_number,
-            chain_code: ChainCode::from(&data[13..45]),
-            private_key: PrivateKey {
-                compressed: true,
-                network: network,
-                key: secp256k1::SecretKey::from_slice(
-                    &data[46..78]
-                ).map_err(|e|
-                        base58::Error::Other(e.to_string())
-                )?,
-            },
-        })
+        Ok(ExtendedPrivKey::decode(&data[..])?)
     }
 }
 
 impl fmt::Display for ExtendedPubKey {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        let mut ret = [0; 78];
-        ret[0..4].copy_from_slice(&match self.network {
-            Network::Bitcoin => [0x04u8, 0x88, 0xB2, 0x1E],
-            Network::Testnet | Network::Signet | Network::Regtest => [0x04u8, 0x35, 0x87, 0xCF],
-        }[..]);
-        ret[4] = self.depth as u8;
-        ret[5..9].copy_from_slice(&self.parent_fingerprint[..]);
-        ret[9..13].copy_from_slice(&endian::u32_to_array_be(u32::from(self.child_number)));
-        ret[13..45].copy_from_slice(&self.chain_code[..]);
-        ret[45..78].copy_from_slice(&self.public_key.key.serialize()[..]);
-        fmt.write_str(&base58::check_encode_slice(&ret[..]))
+        base58::check_encode_slice_to_fmt(fmt, &self.encode()[..])
     }
 }
 
 impl FromStr for ExtendedPubKey {
-    type Err = base58::Error;
+    type Err = Error;
 
-    fn from_str(inp: &str) -> Result<ExtendedPubKey, base58::Error> {
+    fn from_str(inp: &str) -> Result<ExtendedPubKey, Error> {
         let data = base58::from_check(inp)?;
 
         if data.len() != 78 {
-            return Err(base58::Error::InvalidLength(data.len()));
+            return Err(base58::Error::InvalidLength(data.len()).into());
         }
 
-        let cn_int: u32 = endian::slice_to_u32_be(&data[9..13]);
-        let child_number: ChildNumber = ChildNumber::from(cn_int);
-
-        Ok(ExtendedPubKey {
-            network: if data[0..4] == [0x04u8, 0x88, 0xB2, 0x1E] {
-                Network::Bitcoin
-            } else if data[0..4] == [0x04u8, 0x35, 0x87, 0xCF] {
-                Network::Testnet
-            } else {
-                return Err(base58::Error::InvalidVersion((&data[0..4]).to_vec()));
-            },
-            depth: data[4],
-            parent_fingerprint: Fingerprint::from(&data[5..9]),
-            child_number: child_number,
-            chain_code: ChainCode::from(&data[13..45]),
-            public_key: PublicKey::from_slice(
-                             &data[45..78]).map_err(|e|
-                                 base58::Error::Other(e.to_string()))?
-        })
+        Ok(ExtendedPubKey::decode(&data[..])?)
     }
 }
 
