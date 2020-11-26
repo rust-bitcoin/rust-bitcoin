@@ -24,20 +24,19 @@
 //! This module provides the structures and functions needed to support scripts.
 //!
 
+pub mod opcodes;
+
 use std::default::Default;
 use std::{error, fmt, io};
 
 #[cfg(feature = "serde")] use serde;
 
-use hash_types::{PubkeyHash, WPubkeyHash, ScriptHash, WScriptHash};
-use primitives::opcodes;
 use consensus::{encode, Decodable, Encodable};
 use hashes::Hash;
 #[cfg(feature="bitcoinconsensus")] use bitcoinconsensus;
 #[cfg(feature="bitcoinconsensus")] use std::convert;
 #[cfg(feature="bitcoinconsensus")] use OutPoint;
-
-use util::key::PublicKey;
+use {PublicKey, PubkeyHash, WPubkeyHash, ScriptHash, WScriptHash};
 
 #[derive(Clone, Default, PartialOrd, Ord, PartialEq, Eq, Hash)]
 /// A Bitcoin script
@@ -836,9 +835,8 @@ mod test {
 
     use hashes::hex::{FromHex, ToHex};
     use consensus::encode::{deserialize, serialize};
-    use primitives::opcodes;
-    use util::key::PublicKey;
     use util::psbt::serialize::Serialize;
+    use PublicKey;
 
     #[test]
     fn script() {

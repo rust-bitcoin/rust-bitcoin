@@ -31,8 +31,7 @@ use util::uint::Uint256;
 use consensus::encode::Encodable;
 use network::constants::Network;
 use primitives::constants::{max_target, WITNESS_SCALE_FACTOR};
-use primitives::script;
-use {Transaction, VarInt};
+use {script, Transaction, VarInt};
 
 /// A block header, which contains all the block's information except
 /// the actual transactions

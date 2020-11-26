@@ -1,8 +1,7 @@
 extern crate bitcoin;
 
 use bitcoin::consensus::encode;
-use bitcoin::primitives::script;
-use bitcoin::{Address, Network};
+use bitcoin::{script, Address, Network};
 
 fn do_test(data: &[u8]) {
     let s: Result<script::Script, _> = encode::deserialize(data);

@@ -42,9 +42,7 @@ use std::error;
 
 use bech32;
 use hashes::Hash;
-use hash_types::{PubkeyHash, WPubkeyHash, ScriptHash, WScriptHash};
-use primitives::script;
-use network::constants::Network;
+use {script, Network, PubkeyHash, WPubkeyHash, ScriptHash, WScriptHash};
 use util::base58;
 use util::key;
 
@@ -498,9 +496,7 @@ mod tests {
 
     use hashes::hex::{FromHex, ToHex};
 
-    use primitives::script::Script;
-    use network::constants::Network::{Bitcoin, Testnet};
-    use util::key::PublicKey;
+    use {PublicKey, Script, Network::{Bitcoin, Testnet}};
 
     use super::*;
 

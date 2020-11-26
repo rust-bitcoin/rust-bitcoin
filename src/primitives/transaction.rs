@@ -31,11 +31,10 @@ use hashes::hex::FromHex;
 
 use util::endian;
 use primitives::constants::WITNESS_SCALE_FACTOR;
-#[cfg(feature="bitcoinconsensus")] use primitives::script;
-use primitives::script::Script;
+#[cfg(feature="bitcoinconsensus")] use script;
 use consensus::{encode, Decodable, Encodable};
 use hash_types::*;
-use VarInt;
+use {Script, VarInt};
 
 /// A reference to a transaction output
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
@@ -688,7 +687,6 @@ mod tests {
 
     use std::str::FromStr;
     use primitives::constants::WITNESS_SCALE_FACTOR;
-    use primitives::script::Script;
     use consensus::encode::serialize;
     use consensus::encode::deserialize;
 
@@ -696,7 +694,7 @@ mod tests {
     use hashes::hex::FromHex;
 
     use hash_types::*;
-    use SigHashType;
+    use {Script, SigHashType};
 
     #[test]
     fn test_outpoint() {

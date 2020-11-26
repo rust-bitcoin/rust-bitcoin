@@ -19,7 +19,7 @@
 use hashes::{sha256d, Hash, HashEngine};
 
 use consensus::{encode, Encodable};
-use primitives::opcodes;
+use script::opcodes;
 
 #[cfg(feature = "secp-recovery")]
 pub use self::message_signing::{MessageSignature, MessageSignatureError};

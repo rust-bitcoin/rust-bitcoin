@@ -21,15 +21,12 @@
 #![cfg_attr(not(test), deprecated)]
 
 use secp256k1::{self, Secp256k1};
-use PrivateKey;
-use PublicKey;
 use hashes::{sha256, Hash, HashEngine, Hmac, HmacEngine};
-use primitives::{opcodes, script};
 
 use std::{error, fmt};
 
-use hash_types::ScriptHash;
-use network::constants::Network;
+use {Network, PrivateKey, PublicKey, ScriptHash};
+use script::{self, opcodes};
 use util::address;
 
 /// Encoding of "pubkey here" in script; from Bitcoin Core `src/script/script.h`

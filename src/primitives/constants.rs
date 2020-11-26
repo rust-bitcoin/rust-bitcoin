@@ -23,7 +23,7 @@ use std::default::Default;
 
 use hashes::hex::FromHex;
 use hashes::sha256d;
-use primitives::{opcodes, script};
+use script::{self, opcodes};
 use util::uint::Uint256;
 use {Block, BlockHeader, Network, OutPoint, Transaction, TxOut, TxIn};
 
