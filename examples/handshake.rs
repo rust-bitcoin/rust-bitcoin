@@ -6,7 +6,7 @@ use std::{env, process};
 use std::io::Write;
 
 use bitcoin::consensus::encode;
-use bitcoin::network::{address, constants, message, message_network};
+use bitcoin::network::{address, constants, message};
 use bitcoin::network::stream_reader::StreamReader;
 use bitcoin::secp256k1;
 use bitcoin::secp256k1::rand::Rng;
@@ -102,7 +102,7 @@ fn build_version_message(address: SocketAddr) -> message::NetworkMessage {
     let start_height: i32 = 0;
 
     // Construct the message
-    message::NetworkMessage::Version(message_network::VersionMessage::new(
+    message::NetworkMessage::Version(message::VersionMessage::new(
         services,
         timestamp as i64,
         addr_recv,

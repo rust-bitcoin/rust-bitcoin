@@ -23,12 +23,17 @@ use std::{io, iter, mem, fmt};
 use std::borrow::Cow;
 use std::io::Cursor;
 
+mod blockdata;
+mod filter;
+mod network;
+
+pub use self::blockdata::{GetBlocksMessage, GetHeadersMessage, Inventory};
+pub use self::filter::{CFilter, CFHeaders, CFCheckpt, GetCFilters, GetCFHeaders, GetCFCheckpt};
+pub use self::network::{Reject, RejectReason, VersionMessage};
+
 use primitives::block;
 use primitives::transaction;
 use network::address::{Address, AddrV2Message};
-use network::message_network;
-use network::message_blockdata;
-use network::message_filter;
 use consensus::encode::{CheckedData, Decodable, Encodable, VarInt};
 use consensus::{encode, serialize};
 use consensus::encode::MAX_VEC_SIZE;
@@ -104,21 +109,21 @@ pub struct RawNetworkMessage {
 /// [Bitcoin Wiki: Protocol Specification](https://en.bitcoin.it/wiki/Protocol_specification)
 pub enum NetworkMessage {
     /// `version`
-    Version(message_network::VersionMessage),
+    Version(VersionMessage),
     /// `verack`
     Verack,
     /// `addr`
     Addr(Vec<(u32, Address)>),
     /// `inv`
-    Inv(Vec<message_blockdata::Inventory>),
+    Inv(Vec<Inventory>),
     /// `getdata`
-    GetData(Vec<message_blockdata::Inventory>),
+    GetData(Vec<Inventory>),
     /// `notfound`
-    NotFound(Vec<message_blockdata::Inventory>),
+    NotFound(Vec<Inventory>),
     /// `getblocks`
-    GetBlocks(message_blockdata::GetBlocksMessage),
+    GetBlocks(GetBlocksMessage),
     /// `getheaders`
-    GetHeaders(message_blockdata::GetHeadersMessage),
+    GetHeaders(GetHeadersMessage),
     /// `mempool`
     MemPool,
     /// tx
@@ -140,21 +145,21 @@ pub enum NetworkMessage {
     Pong(u64),
     // TODO: bloom filtering
     /// BIP157 getcfilters
-    GetCFilters(message_filter::GetCFilters),
+    GetCFilters(GetCFilters),
     /// BIP157 cfilter
-    CFilter(message_filter::CFilter),
+    CFilter(CFilter),
     /// BIP157 getcfheaders
-    GetCFHeaders(message_filter::GetCFHeaders),
+    GetCFHeaders(GetCFHeaders),
     /// BIP157 cfheaders
-    CFHeaders(message_filter::CFHeaders),
+    CFHeaders(CFHeaders),
     /// BIP157 getcfcheckpt
-    GetCFCheckpt(message_filter::GetCFCheckpt),
+    GetCFCheckpt(GetCFCheckpt),
     /// BIP157 cfcheckpt
-    CFCheckpt(message_filter::CFCheckpt),
+    CFCheckpt(CFCheckpt),
     /// `alert`
     Alert(Vec<u8>),
     /// `reject`
-    Reject(message_network::Reject),
+    Reject(Reject),
     /// `feefilter`
     FeeFilter(i64),
     /// `wtxidrelay`
@@ -359,11 +364,8 @@ mod test {
     use hashes::sha256d::Hash;
     use hashes::Hash as HashTrait;
     use network::address::{Address, AddrV2, AddrV2Message};
-    use super::message_network::{Reject, RejectReason, VersionMessage};
-    use network::message_blockdata::{Inventory, GetBlocksMessage, GetHeadersMessage};
-    use primitives::block::{Block, BlockHeader};
-    use network::message_filter::{GetCFilters, CFilter, GetCFHeaders, CFHeaders, GetCFCheckpt, CFCheckpt};
-    use primitives::transaction::Transaction;
+    use {Block, BlockHeader, Transaction};
+    use super::*;
 
     fn hash(slice: [u8;32]) -> Hash {
         Hash::from_slice(&slice).unwrap()

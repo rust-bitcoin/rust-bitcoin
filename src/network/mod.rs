@@ -27,9 +27,6 @@ pub mod constants;
 pub mod address;
 pub use self::address::Address;
 pub mod message;
-pub mod message_blockdata;
-pub mod message_network;
-pub mod message_filter;
 pub mod stream_reader;
 
 /// Network error
