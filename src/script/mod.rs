@@ -214,27 +214,27 @@ impl Script {
     pub fn new_p2pk(pubkey: &PublicKey) -> Script {
         Builder::new()
             .push_key(pubkey)
-            .push_opcode(opcodes::all::OP_CHECKSIG)
+            .push_opcode(opcodes::OP_CHECKSIG)
             .into_script()
     }
 
     /// Generates P2PKH-type of scriptPubkey
     pub fn new_p2pkh(pubkey_hash: &PubkeyHash) -> Script {
         Builder::new()
-            .push_opcode(opcodes::all::OP_DUP)
-            .push_opcode(opcodes::all::OP_HASH160)
+            .push_opcode(opcodes::OP_DUP)
+            .push_opcode(opcodes::OP_HASH160)
             .push_slice(&pubkey_hash[..])
-            .push_opcode(opcodes::all::OP_EQUALVERIFY)
-            .push_opcode(opcodes::all::OP_CHECKSIG)
+            .push_opcode(opcodes::OP_EQUALVERIFY)
+            .push_opcode(opcodes::OP_CHECKSIG)
             .into_script()
     }
 
     /// Generates P2SH-type of scriptPubkey with a given hash of the redeem script
     pub fn new_p2sh(script_hash: &ScriptHash) -> Script {
         Builder::new()
-            .push_opcode(opcodes::all::OP_HASH160)
+            .push_opcode(opcodes::OP_HASH160)
             .push_slice(&script_hash[..])
-            .push_opcode(opcodes::all::OP_EQUAL)
+            .push_opcode(opcodes::OP_EQUAL)
             .into_script()
     }
 
@@ -264,7 +264,7 @@ impl Script {
     /// Generates OP_RETURN-type of scriptPubkey for a given data
     pub fn new_op_return(data: &[u8]) -> Script {
         Builder::new()
-            .push_opcode(opcodes::all::OP_RETURN)
+            .push_opcode(opcodes::OP_RETURN)
             .push_slice(data)
             .into_script()
     }
@@ -309,31 +309,31 @@ impl Script {
     #[inline]
     pub fn is_p2sh(&self) -> bool {
         self.0.len() == 23 &&
-        self.0[0] == opcodes::all::OP_HASH160.into_u8() &&
-        self.0[1] == opcodes::all::OP_PUSHBYTES_20.into_u8() &&
-        self.0[22] == opcodes::all::OP_EQUAL.into_u8()
+        self.0[0] == opcodes::OP_HASH160.into_u8() &&
+        self.0[1] == opcodes::OP_PUSHBYTES_20.into_u8() &&
+        self.0[22] == opcodes::OP_EQUAL.into_u8()
     }
 
     /// Checks whether a script pubkey is a p2pkh output
     #[inline]
     pub fn is_p2pkh(&self) -> bool {
         self.0.len() == 25 &&
-        self.0[0] == opcodes::all::OP_DUP.into_u8() &&
-        self.0[1] == opcodes::all::OP_HASH160.into_u8() &&
-        self.0[2] == opcodes::all::OP_PUSHBYTES_20.into_u8() &&
-        self.0[23] == opcodes::all::OP_EQUALVERIFY.into_u8() &&
-        self.0[24] == opcodes::all::OP_CHECKSIG.into_u8()
+        self.0[0] == opcodes::OP_DUP.into_u8() &&
+        self.0[1] == opcodes::OP_HASH160.into_u8() &&
+        self.0[2] == opcodes::OP_PUSHBYTES_20.into_u8() &&
+        self.0[23] == opcodes::OP_EQUALVERIFY.into_u8() &&
+        self.0[24] == opcodes::OP_CHECKSIG.into_u8()
     }
 
     /// Checks whether a script pubkey is a p2pk output
     #[inline]
     pub fn is_p2pk(&self) -> bool {
         (self.0.len() == 67 &&
-            self.0[0] == opcodes::all::OP_PUSHBYTES_65.into_u8() &&
-            self.0[66] == opcodes::all::OP_CHECKSIG.into_u8())
+            self.0[0] == opcodes::OP_PUSHBYTES_65.into_u8() &&
+            self.0[66] == opcodes::OP_CHECKSIG.into_u8())
      || (self.0.len() == 35 &&
-            self.0[0] == opcodes::all::OP_PUSHBYTES_33.into_u8() &&
-            self.0[34] == opcodes::all::OP_CHECKSIG.into_u8())
+            self.0[0] == opcodes::OP_PUSHBYTES_33.into_u8() &&
+            self.0[34] == opcodes::OP_CHECKSIG.into_u8())
     }
 
     /// Checks whether a script pubkey is a Segregated Witness (segwit) program.
@@ -343,15 +343,15 @@ impl Script {
         // push opcode (for 0 to 16) followed by a data push between 2 and 40 bytes gets a new
         // special meaning. The value of the first push is called the "version byte". The following
         // byte vector pushed is called the "witness program".
-        let min_vernum: u8 = opcodes::all::OP_PUSHNUM_1.into_u8();
-        let max_vernum: u8 = opcodes::all::OP_PUSHNUM_16.into_u8();
+        let min_vernum: u8 = opcodes::OP_PUSHNUM_1.into_u8();
+        let max_vernum: u8 = opcodes::OP_PUSHNUM_16.into_u8();
         self.0.len() >= 4
             && self.0.len() <= 42
             // Version 0 or PUSHNUM_1-PUSHNUM_16
             && (self.0[0] == 0 || self.0[0] >= min_vernum && self.0[0] <= max_vernum)
             // Second byte push opcode 2-40 bytes
-            && self.0[1] >= opcodes::all::OP_PUSHBYTES_2.into_u8()
-            && self.0[1] <= opcodes::all::OP_PUSHBYTES_40.into_u8()
+            && self.0[1] >= opcodes::OP_PUSHBYTES_2.into_u8()
+            && self.0[1] <= opcodes::OP_PUSHBYTES_40.into_u8()
             // Check that the rest of the script has the correct size
             && self.0.len() - 2 == self.0[1] as usize
     }
@@ -360,21 +360,21 @@ impl Script {
     #[inline]
     pub fn is_v0_p2wsh(&self) -> bool {
         self.0.len() == 34 &&
-        self.0[0] == opcodes::all::OP_PUSHBYTES_0.into_u8() &&
-        self.0[1] == opcodes::all::OP_PUSHBYTES_32.into_u8()
+        self.0[0] == opcodes::OP_PUSHBYTES_0.into_u8() &&
+        self.0[1] == opcodes::OP_PUSHBYTES_32.into_u8()
     }
 
     /// Checks whether a script pubkey is a p2wpkh output
     #[inline]
     pub fn is_v0_p2wpkh(&self) -> bool {
         self.0.len() == 22 &&
-            self.0[0] == opcodes::all::OP_PUSHBYTES_0.into_u8() &&
-            self.0[1] == opcodes::all::OP_PUSHBYTES_20.into_u8()
+            self.0[0] == opcodes::OP_PUSHBYTES_0.into_u8() &&
+            self.0[1] == opcodes::OP_PUSHBYTES_20.into_u8()
     }
 
     /// Check if this is an OP_RETURN output
     pub fn is_op_return (&self) -> bool {
-        !self.0.is_empty() && (opcodes::All::from(self.0[0]) == opcodes::all::OP_RETURN)
+        !self.0.is_empty() && (opcodes::All::from(self.0[0]) == opcodes::OP_RETURN)
     }
 
     /// Whether a script can be proven to have no satisfying input
@@ -426,7 +426,7 @@ impl Script {
                 n as usize
             } else {
                 match opcode {
-                    opcodes::all::OP_PUSHDATA1 => {
+                    opcodes::OP_PUSHDATA1 => {
                         if self.0.len() < index + 1 {
                             f.write_str("<unexpected end>")?;
                             break;
@@ -436,7 +436,7 @@ impl Script {
                             Err(_) => { f.write_str("<bad length>")?; break; }
                         }
                     }
-                    opcodes::all::OP_PUSHDATA2 => {
+                    opcodes::OP_PUSHDATA2 => {
                         if self.0.len() < index + 2 {
                             f.write_str("<unexpected end>")?;
                             break;
@@ -446,7 +446,7 @@ impl Script {
                             Err(_) => { f.write_str("<bad length>")?; break; }
                         }
                     }
-                    opcodes::all::OP_PUSHDATA4 => {
+                    opcodes::OP_PUSHDATA4 => {
                         if self.0.len() < index + 4 {
                             f.write_str("<unexpected end>")?;
                             break;
@@ -462,7 +462,7 @@ impl Script {
 
             if index > 1 { f.write_str(" ")?; }
             // Write the opcode
-            if opcode == opcodes::all::OP_PUSHBYTES_0 {
+            if opcode == opcodes::OP_PUSHBYTES_0 {
                 f.write_str("OP_0")?;
             } else {
                 write!(f, "{:?}", opcode)?;
@@ -708,23 +708,23 @@ impl Builder {
     /// is replaced. e.g. `OP_CHECKSIG` will become `OP_CHECKSIGVERIFY`.
     pub fn push_verify(mut self) -> Builder {
         match self.1 {
-            Some(opcodes::all::OP_EQUAL) => {
+            Some(opcodes::OP_EQUAL) => {
                 self.0.pop();
-                self.push_opcode(opcodes::all::OP_EQUALVERIFY)
+                self.push_opcode(opcodes::OP_EQUALVERIFY)
             },
-            Some(opcodes::all::OP_NUMEQUAL) => {
+            Some(opcodes::OP_NUMEQUAL) => {
                 self.0.pop();
-                self.push_opcode(opcodes::all::OP_NUMEQUALVERIFY)
+                self.push_opcode(opcodes::OP_NUMEQUALVERIFY)
             },
-            Some(opcodes::all::OP_CHECKSIG) => {
+            Some(opcodes::OP_CHECKSIG) => {
                 self.0.pop();
-                self.push_opcode(opcodes::all::OP_CHECKSIGVERIFY)
+                self.push_opcode(opcodes::OP_CHECKSIGVERIFY)
             },
-            Some(opcodes::all::OP_CHECKMULTISIG) => {
+            Some(opcodes::OP_CHECKMULTISIG) => {
                 self.0.pop();
-                self.push_opcode(opcodes::all::OP_CHECKMULTISIGVERIFY)
+                self.push_opcode(opcodes::OP_CHECKMULTISIGVERIFY)
             },
-            _ => self.push_opcode(opcodes::all::OP_VERIFY),
+            _ => self.push_opcode(opcodes::OP_VERIFY),
         }
     }
 
@@ -870,18 +870,18 @@ mod test {
         script = script.push_key(&key); comp.extend(Vec::from_hex(keystr).unwrap().iter().cloned()); assert_eq!(&script[..], &comp[..]);
 
         // opcodes
-        script = script.push_opcode(opcodes::all::OP_CHECKSIG); comp.push(0xACu8); assert_eq!(&script[..], &comp[..]);
-        script = script.push_opcode(opcodes::all::OP_CHECKSIG); comp.push(0xACu8); assert_eq!(&script[..], &comp[..]);
+        script = script.push_opcode(opcodes::OP_CHECKSIG); comp.push(0xACu8); assert_eq!(&script[..], &comp[..]);
+        script = script.push_opcode(opcodes::OP_CHECKSIG); comp.push(0xACu8); assert_eq!(&script[..], &comp[..]);
     }
 
     #[test]
     fn script_builder() {
         // from txid 3bb5e6434c11fb93f64574af5d116736510717f2c595eb45b52c28e31622dfff which was in my mempool when I wrote the test
-        let script = Builder::new().push_opcode(opcodes::all::OP_DUP)
-                                   .push_opcode(opcodes::all::OP_HASH160)
+        let script = Builder::new().push_opcode(opcodes::OP_DUP)
+                                   .push_opcode(opcodes::OP_HASH160)
                                    .push_slice(&Vec::from_hex("16e1ae70ff0fa102905d4af297f6912bda6cce19").unwrap())
-                                   .push_opcode(opcodes::all::OP_EQUALVERIFY)
-                                   .push_opcode(opcodes::all::OP_CHECKSIG)
+                                   .push_opcode(opcodes::OP_EQUALVERIFY)
+                                   .push_opcode(opcodes::OP_CHECKSIG)
                                    .into_script();
         assert_eq!(&format!("{:x}", script), "76a91416e1ae70ff0fa102905d4af297f6912bda6cce1988ac");
     }
@@ -897,7 +897,7 @@ mod test {
         let wpubkey_hash = WPubkeyHash::hash(&pubkey.serialize());
         assert!(Script::new_v0_wpkh(&wpubkey_hash).is_v0_p2wpkh());
 
-        let script = Builder::new().push_opcode(opcodes::all::OP_NUMEQUAL)
+        let script = Builder::new().push_opcode(opcodes::OP_NUMEQUAL)
                                    .push_verify()
                                    .into_script();
         let script_hash = ScriptHash::hash(&script.serialize());
@@ -940,7 +940,7 @@ mod test {
         assert_eq!(format!("{:x}", nonverify2), "6969");
 
         let equal = Builder::new()
-            .push_opcode(opcodes::all::OP_EQUAL)
+            .push_opcode(opcodes::OP_EQUAL)
             .push_verify()
             .into_script();
         assert_eq!(format!("{:x}", equal), "88");
@@ -950,7 +950,7 @@ mod test {
         assert_eq!(format!("{:x}", equal2), "88");
 
         let numequal = Builder::new()
-            .push_opcode(opcodes::all::OP_NUMEQUAL)
+            .push_opcode(opcodes::OP_NUMEQUAL)
             .push_verify()
             .into_script();
         assert_eq!(format!("{:x}", numequal), "9d");
@@ -960,7 +960,7 @@ mod test {
         assert_eq!(format!("{:x}", numequal2), "9d");
 
         let checksig = Builder::new()
-            .push_opcode(opcodes::all::OP_CHECKSIG)
+            .push_opcode(opcodes::OP_CHECKSIG)
             .push_verify()
             .into_script();
         assert_eq!(format!("{:x}", checksig), "ad");
@@ -970,7 +970,7 @@ mod test {
         assert_eq!(format!("{:x}", checksig2), "ad");
 
         let checkmultisig = Builder::new()
-            .push_opcode(opcodes::all::OP_CHECKMULTISIG)
+            .push_opcode(opcodes::OP_CHECKMULTISIG)
             .push_verify()
             .into_script();
         assert_eq!(format!("{:x}", checkmultisig), "af");
@@ -1169,7 +1169,7 @@ mod test {
         let script_1 = Builder::new().push_slice(&[1,2,3,4]).into_script();
         let script_2 = Builder::new().push_int(10).into_script();
         let script_3 = Builder::new().push_int(15).into_script();
-        let script_4 = Builder::new().push_opcode(opcodes::all::OP_RETURN).into_script();
+        let script_4 = Builder::new().push_opcode(opcodes::OP_RETURN).into_script();
 
         assert!(script_1 < script_2);
         assert!(script_2 < script_3);
