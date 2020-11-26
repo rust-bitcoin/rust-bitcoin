@@ -169,7 +169,7 @@ macro_rules! display_from_debug {
 }
 
 #[cfg(test)]
-macro_rules! hex_script (($s:expr) => ($crate::blockdata::script::Script::from(<Vec<u8> as $crate::hashes::hex::FromHex>::from_hex($s).unwrap())));
+macro_rules! hex_script (($s:expr) => ($crate::Script::from(<Vec<u8> as $crate::hashes::hex::FromHex>::from_hex($s).unwrap())));
 
 #[cfg(test)]
 macro_rules! hex_hash (($h:ident, $s:expr) => ($h::from_slice(&<Vec<u8> as $crate::hashes::hex::FromHex>::from_hex($s).unwrap()).unwrap()));

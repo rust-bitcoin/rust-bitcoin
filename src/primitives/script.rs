@@ -30,7 +30,7 @@ use std::{error, fmt, io};
 #[cfg(feature = "serde")] use serde;
 
 use hash_types::{PubkeyHash, WPubkeyHash, ScriptHash, WScriptHash};
-use blockdata::opcodes;
+use primitives::opcodes;
 use consensus::{encode, Decodable, Encodable};
 use hashes::Hash;
 #[cfg(feature="bitcoinconsensus")] use bitcoinconsensus;
@@ -836,7 +836,7 @@ mod test {
 
     use hashes::hex::{FromHex, ToHex};
     use consensus::encode::{deserialize, serialize};
-    use blockdata::opcodes;
+    use primitives::opcodes;
     use util::key::PublicKey;
     use util::psbt::serialize::Serialize;
 

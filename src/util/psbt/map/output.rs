@@ -15,14 +15,13 @@
 use std::collections::BTreeMap;
 use std::collections::btree_map::Entry;
 
-use blockdata::script::Script;
 use consensus::encode;
 use util::bip32::KeySource;
-use util::key::PublicKey;
 use util::psbt;
 use util::psbt::map::Map;
 use util::psbt::raw;
 use util::psbt::Error;
+use {PublicKey, Script};
 
 /// A key-value map for an output of the corresponding index in the unsigned
 /// transaction.

@@ -43,7 +43,7 @@ use std::error;
 use bech32;
 use hashes::Hash;
 use hash_types::{PubkeyHash, WPubkeyHash, ScriptHash, WScriptHash};
-use blockdata::script;
+use primitives::script;
 use network::constants::Network;
 use util::base58;
 use util::key;
@@ -498,7 +498,7 @@ mod tests {
 
     use hashes::hex::{FromHex, ToHex};
 
-    use blockdata::script::Script;
+    use primitives::script::Script;
     use network::constants::Network::{Bitcoin, Testnet};
     use util::key::PublicKey;
 

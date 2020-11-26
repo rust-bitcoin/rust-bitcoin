@@ -20,10 +20,8 @@
 //!
 
 use hashes::{Hash, sha256d};
-use hash_types::SigHash;
-use blockdata::script::Script;
-use blockdata::transaction::{Transaction, TxIn, SigHashType};
 use consensus::{encode, Encodable};
+use {Transaction, TxIn, Script, SigHash, SigHashType};
 
 use std::io;
 use std::ops::{Deref, DerefMut};
@@ -245,7 +243,7 @@ impl<R: DerefMut<Target=Transaction>> SigHashCache<R> {
     ///
     /// This allows in-line signing such as
     /// ```
-    /// use bitcoin::blockdata::transaction::{Transaction, SigHashType};
+    /// use bitcoin::primitives::transaction::{Transaction, SigHashType};
     /// use bitcoin::util::bip143::SigHashCache;
     /// use bitcoin::Script;
     ///
@@ -268,13 +266,8 @@ impl<R: DerefMut<Target=Transaction>> SigHashCache<R> {
 #[cfg(test)]
 #[allow(deprecated)]
 mod tests {
-    use hash_types::SigHash;
-    use blockdata::script::Script;
-    use blockdata::transaction::Transaction;
+    use {Address, PublicKey, Network, Script, SigHash, Transaction};
     use consensus::encode::deserialize;
-    use network::constants::Network;
-    use util::address::Address;
-    use util::key::PublicKey;
     use hashes::hex::FromHex;
 
     use super::*;

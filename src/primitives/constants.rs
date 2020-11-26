@@ -23,12 +23,9 @@ use std::default::Default;
 
 use hashes::hex::FromHex;
 use hashes::sha256d;
-use blockdata::opcodes;
-use blockdata::script;
-use blockdata::transaction::{OutPoint, Transaction, TxOut, TxIn};
-use blockdata::block::{Block, BlockHeader};
-use network::constants::Network;
+use primitives::{opcodes, script};
 use util::uint::Uint256;
+use {Block, BlockHeader, Network, OutPoint, Transaction, TxOut, TxIn};
 
 /// The maximum allowable sequence number
 pub const MAX_SEQUENCE: u32 = 0xFFFFFFFF;
@@ -164,8 +161,8 @@ mod test {
 
     use network::constants::Network;
     use consensus::encode::serialize;
-    use blockdata::constants::{genesis_block, bitcoin_genesis_tx};
-    use blockdata::constants::{MAX_SEQUENCE, COIN_VALUE};
+    use primitives::constants::{genesis_block, bitcoin_genesis_tx};
+    use primitives::constants::{MAX_SEQUENCE, COIN_VALUE};
 
     #[test]
     fn bitcoin_genesis_first_transaction() {

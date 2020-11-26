@@ -18,8 +18,8 @@
 
 use hashes::{sha256d, Hash, HashEngine};
 
-use blockdata::opcodes;
 use consensus::{encode, Encodable};
+use primitives::opcodes;
 
 #[cfg(feature = "secp-recovery")]
 pub use self::message_signing::{MessageSignature, MessageSignatureError};

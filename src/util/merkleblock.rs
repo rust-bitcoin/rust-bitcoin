@@ -58,11 +58,10 @@ use std::io;
 use hashes::Hash;
 use hash_types::{Txid, TxMerkleNode};
 
-use blockdata::transaction::Transaction;
-use blockdata::constants::{MAX_BLOCK_WEIGHT, MIN_TRANSACTION_WEIGHT};
+use primitives::constants::{MAX_BLOCK_WEIGHT, MIN_TRANSACTION_WEIGHT};
 use consensus::encode::{self, Decodable, Encodable};
 use util::merkleblock::MerkleBlockError::*;
-use {Block, BlockHeader};
+use {Block, BlockHeader, Transaction};
 
 /// An error when verifying the merkle block
 #[derive(Clone, PartialEq, Eq, Debug)]

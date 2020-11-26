@@ -30,10 +30,9 @@ use hash_types::{Wtxid, BlockHash, TxMerkleNode, WitnessMerkleNode, WitnessCommi
 use util::uint::Uint256;
 use consensus::encode::Encodable;
 use network::constants::Network;
-use blockdata::transaction::Transaction;
-use blockdata::constants::{max_target, WITNESS_SCALE_FACTOR};
-use blockdata::script;
-use VarInt;
+use primitives::constants::{max_target, WITNESS_SCALE_FACTOR};
+use primitives::script;
+use {Transaction, VarInt};
 
 /// A block header, which contains all the block's information except
 /// the actual transactions
@@ -75,7 +74,7 @@ impl BlockHeader {
     /// [`Uint256`]: ../../util/uint/struct.Uint256.html
     ///
     /// ```
-    /// use bitcoin::blockdata::block::BlockHeader;
+    /// use bitcoin::primitives::block::BlockHeader;
     ///
     /// assert_eq!(0x1d00ffff,
     ///     BlockHeader::compact_target_from_u256(
@@ -314,7 +313,7 @@ impl ::std::error::Error for Bip34Error {}
 mod tests {
     use hashes::hex::FromHex;
 
-    use blockdata::block::{Block, BlockHeader};
+    use primitives::block::{Block, BlockHeader};
     use consensus::encode::{deserialize, serialize};
 
     #[test]

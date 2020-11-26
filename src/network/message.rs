@@ -23,8 +23,8 @@ use std::{io, iter, mem, fmt};
 use std::borrow::Cow;
 use std::io::Cursor;
 
-use blockdata::block;
-use blockdata::transaction;
+use primitives::block;
+use primitives::transaction;
 use network::address::{Address, AddrV2Message};
 use network::message_network;
 use network::message_blockdata;
@@ -361,9 +361,9 @@ mod test {
     use network::address::{Address, AddrV2, AddrV2Message};
     use super::message_network::{Reject, RejectReason, VersionMessage};
     use network::message_blockdata::{Inventory, GetBlocksMessage, GetHeadersMessage};
-    use blockdata::block::{Block, BlockHeader};
+    use primitives::block::{Block, BlockHeader};
     use network::message_filter::{GetCFilters, CFilter, GetCFHeaders, CFHeaders, GetCFCheckpt, CFCheckpt};
-    use blockdata::transaction::Transaction;
+    use primitives::transaction::Transaction;
 
     fn hash(slice: [u8;32]) -> Hash {
         Hash::from_slice(&slice).unwrap()

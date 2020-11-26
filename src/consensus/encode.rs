@@ -40,7 +40,7 @@ use hash_types::{BlockHash, FilterHash, TxMerkleNode, FilterHeader};
 use util::endian;
 use util::psbt;
 
-use blockdata::transaction::{TxOut, Transaction, TxIn};
+use {TxOut, Transaction, TxIn};
 use network::message_blockdata::Inventory;
 use network::address::{Address, AddrV2Message};
 
