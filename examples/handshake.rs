@@ -102,7 +102,7 @@ fn build_version_message(address: SocketAddr) -> message::NetworkMessage {
     let start_height: i32 = 0;
 
     // Construct the message
-    message::NetworkMessage::Version(message::VersionMessage::new(
+    message::NetworkMessage::Version(message::Version::new(
         services,
         timestamp as i64,
         addr_recv,

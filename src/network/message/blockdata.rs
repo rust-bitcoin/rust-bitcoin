@@ -86,7 +86,7 @@ impl Decodable for Inventory {
 
 /// The `getblocks` message
 #[derive(PartialEq, Eq, Clone, Debug)]
-pub struct GetBlocksMessage {
+pub struct GetBlocks {
     /// The protocol version
     pub version: u32,
     /// Locator hashes --- ordered newest to oldest. The remote peer will
@@ -99,7 +99,7 @@ pub struct GetBlocksMessage {
 
 /// The `getheaders` message
 #[derive(PartialEq, Eq, Clone, Debug)]
-pub struct GetHeadersMessage {
+pub struct GetHeaders {
     /// The protocol version
     pub version: u32,
     /// Locator hashes --- ordered newest to oldest. The remote peer will
@@ -110,10 +110,10 @@ pub struct GetHeadersMessage {
     pub stop_hash: BlockHash
 }
 
-impl GetBlocksMessage {
+impl GetBlocks {
     /// Construct a new `getblocks` message
-    pub fn new(locator_hashes: Vec<BlockHash>, stop_hash: BlockHash) -> GetBlocksMessage {
-        GetBlocksMessage {
+    pub fn new(locator_hashes: Vec<BlockHash>, stop_hash: BlockHash) -> Self {
+        GetBlocks {
             version: constants::PROTOCOL_VERSION,
             locator_hashes: locator_hashes,
             stop_hash: stop_hash
@@ -121,12 +121,12 @@ impl GetBlocksMessage {
     }
 }
 
-impl_consensus_encoding!(GetBlocksMessage, version, locator_hashes, stop_hash);
+impl_consensus_encoding!(GetBlocks, version, locator_hashes, stop_hash);
 
-impl GetHeadersMessage {
+impl GetHeaders {
     /// Construct a new `getheaders` message
-    pub fn new(locator_hashes: Vec<BlockHash>, stop_hash: BlockHash) -> GetHeadersMessage {
-        GetHeadersMessage {
+    pub fn new(locator_hashes: Vec<BlockHash>, stop_hash: BlockHash) -> Self {
+        GetHeaders {
             version: constants::PROTOCOL_VERSION,
             locator_hashes: locator_hashes,
             stop_hash: stop_hash
@@ -134,11 +134,11 @@ impl GetHeadersMessage {
     }
 }
 
-impl_consensus_encoding!(GetHeadersMessage, version, locator_hashes, stop_hash);
+impl_consensus_encoding!(GetHeaders, version, locator_hashes, stop_hash);
 
 #[cfg(test)]
 mod tests {
-    use super::{GetHeadersMessage, GetBlocksMessage};
+    use super::{GetHeaders, GetBlocks};
 
     use hashes::hex::FromHex;
 
@@ -150,7 +150,7 @@ mod tests {
         let from_sat = Vec::from_hex("72110100014a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b0000000000000000000000000000000000000000000000000000000000000000").unwrap();
         let genhash = Vec::from_hex("4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b").unwrap();
 
-        let decode: Result<GetBlocksMessage, _> = deserialize(&from_sat);
+        let decode: Result<GetBlocks, _> = deserialize(&from_sat);
         assert!(decode.is_ok());
         let real_decode = decode.unwrap();
         assert_eq!(real_decode.version, 70002);
@@ -166,7 +166,7 @@ mod tests {
         let from_sat = Vec::from_hex("72110100014a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b0000000000000000000000000000000000000000000000000000000000000000").unwrap();
         let genhash = Vec::from_hex("4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b").unwrap();
 
-        let decode: Result<GetHeadersMessage, _> = deserialize(&from_sat);
+        let decode: Result<GetHeaders, _> = deserialize(&from_sat);
         assert!(decode.is_ok());
         let real_decode = decode.unwrap();
         assert_eq!(real_decode.version, 70002);
