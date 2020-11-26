@@ -29,9 +29,8 @@ use hashes::{Hash, HashEngine};
 use hash_types::{Wtxid, BlockHash, TxMerkleNode, WitnessMerkleNode, WitnessCommitment};
 use util::uint::Uint256;
 use consensus::encode::Encodable;
-use network::constants::Network;
-use primitives::constants::{max_target, WITNESS_SCALE_FACTOR};
-use {script, Transaction, VarInt};
+use primitives::{max_target, WITNESS_SCALE_FACTOR};
+use {script, Network, Transaction, VarInt};
 
 /// A block header, which contains all the block's information except
 /// the actual transactions
