@@ -22,7 +22,7 @@ use std::io;
 use std::borrow::Cow;
 
 use network::address::Address;
-use network::constants::{self, ServiceFlags};
+use network::{self, ServiceFlags};
 use consensus::{Encodable, Decodable, ReadExt};
 use consensus::encode;
 use network::message::CommandString;
@@ -67,7 +67,7 @@ impl Version {
         start_height: i32,
     ) -> Self {
         Version {
-            version: constants::PROTOCOL_VERSION,
+            version: network::PROTOCOL_VERSION,
             services: services,
             timestamp: timestamp,
             receiver: receiver,
@@ -148,7 +148,7 @@ mod tests {
     use super::Version;
 
     use hashes::hex::FromHex;
-    use network::constants::ServiceFlags;
+    use ServiceFlags;
 
     use consensus::encode::{deserialize, serialize};
 

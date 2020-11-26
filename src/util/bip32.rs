@@ -25,9 +25,8 @@ use hash_types::XpubIdentifier;
 use hashes::{sha512, Hash, HashEngine, Hmac, HmacEngine};
 use secp256k1::{self, Secp256k1};
 
-use network::constants::Network;
-use util::{base58, endian};
-use util::key::{self, PublicKey, PrivateKey};
+use util::{base58, endian, key};
+use {Network, PublicKey, PrivateKey};
 
 /// A chain code
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -747,7 +746,7 @@ mod tests {
     use secp256k1::{self, Secp256k1};
     use hashes::hex::FromHex;
 
-    use network::constants::Network::{self, Bitcoin};
+    use Network::{self, Bitcoin};
 
     #[test]
     fn test_parse_derivation_path() {

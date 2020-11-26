@@ -358,13 +358,12 @@ mod test {
     use std::io;
     use std::net::Ipv4Addr;
     use super::{RawNetworkMessage, NetworkMessage, CommandString};
-    use network::constants::ServiceFlags;
     use consensus::encode::{Encodable, deserialize, deserialize_partial, serialize};
     use hashes::hex::FromHex;
     use hashes::sha256d::Hash;
     use hashes::Hash as HashTrait;
     use network::address::{Address, AddrV2, AddrV2Message};
-    use {Block, BlockHeader, Transaction};
+    use {Block, BlockHeader, ServiceFlags, Transaction};
     use super::*;
 
     fn hash(slice: [u8;32]) -> Hash {

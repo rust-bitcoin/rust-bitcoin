@@ -86,10 +86,10 @@ mod test {
     use std::io::{self, BufReader, Write};
     use std::net::{TcpListener, TcpStream, Shutdown};
     use std::thread::JoinHandle;
-    use network::constants::ServiceFlags;
 
     use super::StreamReader;
     use network::message::{NetworkMessage, RawNetworkMessage};
+    use ServiceFlags;
 
     // First, let's define some byte arrays for sample messages - dumps are taken from live
     // Bitcoin Core node v0.17.1 with Wireshark

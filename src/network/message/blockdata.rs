@@ -22,7 +22,7 @@ use std::io;
 
 use hashes::sha256d;
 
-use network::constants;
+use network;
 use consensus::encode::{self, Decodable, Encodable};
 use hash_types::{BlockHash, Txid, Wtxid};
 
@@ -114,7 +114,7 @@ impl GetBlocks {
     /// Construct a new `getblocks` message
     pub fn new(locator_hashes: Vec<BlockHash>, stop_hash: BlockHash) -> Self {
         GetBlocks {
-            version: constants::PROTOCOL_VERSION,
+            version: network::PROTOCOL_VERSION,
             locator_hashes: locator_hashes,
             stop_hash: stop_hash
         }
@@ -127,7 +127,7 @@ impl GetHeaders {
     /// Construct a new `getheaders` message
     pub fn new(locator_hashes: Vec<BlockHash>, stop_hash: BlockHash) -> Self {
         GetHeaders {
-            version: constants::PROTOCOL_VERSION,
+            version: network::PROTOCOL_VERSION,
             locator_hashes: locator_hashes,
             stop_hash: stop_hash
         }
