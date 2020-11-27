@@ -24,6 +24,7 @@ macro_rules! define_slice_to_le {
         }
     }
 }
+#[cfg(feature = "secp256k1")]
 macro_rules! define_be_to_array {
     ($name: ident, $type: ty, $byte_len: expr) => {
         #[inline]
@@ -51,8 +52,10 @@ macro_rules! define_le_to_array {
     }
 }
 
+#[cfg(feature = "secp256k1")]
 define_slice_to_be!(slice_to_u32_be, u32);
 define_slice_to_be!(slice_to_u64_be, u64);
+#[cfg(feature = "secp256k1")]
 define_be_to_array!(u32_to_array_be, u32, 4);
 define_slice_to_le!(slice_to_u16_le, u16);
 define_slice_to_le!(slice_to_u32_le, u32);

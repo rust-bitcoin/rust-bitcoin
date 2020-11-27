@@ -42,10 +42,13 @@ use std::error;
 
 use bech32;
 use hashes::Hash;
-use hash_types::{PubkeyHash, WPubkeyHash, ScriptHash, WScriptHash};
+use hash_types::{PubkeyHash, ScriptHash, WScriptHash};
+#[cfg(feature = "secp256k1")]
+use hash_types::WPubkeyHash;
 use blockdata::script;
 use network::constants::Network;
 use util::base58;
+#[cfg(feature = "secp256k1")]
 use util::key;
 
 /// Address error.
@@ -219,6 +222,7 @@ serde_string_impl!(Address, "a Bitcoin address");
 impl Address {
     /// Creates a pay to (compressed) public key hash address from a public key
     /// This is the preferred non-witness type address
+    #[cfg(feature = "secp256k1")]
     #[inline]
     pub fn p2pkh(pk: &key::PublicKey, network: Network) -> Address {
         let mut hash_engine = PubkeyHash::engine();
@@ -244,6 +248,7 @@ impl Address {
     /// This is the native segwit address type for an output redeemable with a single signature
     ///
     /// Will only return an Error when an uncompressed public key is provided.
+    #[cfg(feature = "secp256k1")]
     pub fn p2wpkh(pk: &key::PublicKey, network: Network) -> Result<Address, Error> {
         if !pk.compressed {
             return Err(Error::UncompressedPubkey);
@@ -265,6 +270,7 @@ impl Address {
     /// This is a segwit address type that looks familiar (as p2sh) to legacy clients
     ///
     /// Will only return an Error when an uncompressed public key is provided.
+    #[cfg(feature = "secp256k1")]
     pub fn p2shwpkh(pk: &key::PublicKey, network: Network) -> Result<Address, Error> {
         if !pk.compressed {
             return Err(Error::UncompressedPubkey);

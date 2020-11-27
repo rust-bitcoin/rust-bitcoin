@@ -16,7 +16,7 @@ use std::error;
 use std::fmt;
 
 use blockdata::transaction::Transaction;
-use util::psbt::raw;
+use util::psbt_no_key::raw;
 
 use hashes;
 

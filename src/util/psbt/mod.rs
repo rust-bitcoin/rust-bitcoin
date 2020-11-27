@@ -24,10 +24,10 @@ use consensus::{encode, Encodable, Decodable};
 
 use std::io;
 
-mod error;
+use super::psbt_no_key::error;
 pub use self::error::Error;
 
-pub mod raw;
+pub use super::psbt_no_key::raw;
 
 #[macro_use]
 mod macros;

@@ -96,6 +96,7 @@ macro_rules! impl_array_newtype {
 }
 
 /// Implements debug formatting for a given wrapper type
+#[cfg(feature = "secp256k1")]
 macro_rules! impl_array_newtype_show {
     ($thing:ident) => {
         impl ::std::fmt::Debug for $thing {
@@ -565,6 +566,7 @@ macro_rules! serde_struct_human_string_impl {
 /// - std::fmt::Display
 /// - std::str::FromStr
 /// - hashes::hex::FromHex
+#[cfg(feature = "secp256k1")]
 macro_rules! impl_bytes_newtype {
     ($t:ident, $len:expr) => (
 

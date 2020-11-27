@@ -37,6 +37,7 @@ use hashes::Hash;
 #[cfg(feature="bitcoinconsensus")] use std::convert;
 #[cfg(feature="bitcoinconsensus")] use OutPoint;
 
+#[cfg(feature = "secp256k1")]
 use util::key::PublicKey;
 
 #[derive(Clone, Default, PartialOrd, Ord, PartialEq, Eq, Hash)]
@@ -212,6 +213,7 @@ impl Script {
     pub fn new() -> Script { Script(vec![].into_boxed_slice()) }
 
     /// Generates P2PK-type of scriptPubkey
+    #[cfg(feature = "secp256k1")]
     pub fn new_p2pk(pubkey: &PublicKey) -> Script {
         Builder::new()
             .push_key(pubkey)
@@ -689,6 +691,7 @@ impl Builder {
     }
 
     /// Pushes a public key
+    #[cfg(feature = "secp256k1")]
     pub fn push_key(self, key: &PublicKey) -> Builder {
         if key.compressed {
             self.push_slice(&key.key.serialize()[..])

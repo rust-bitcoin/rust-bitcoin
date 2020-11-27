@@ -39,6 +39,7 @@
 
 // Re-exported dependencies.
 #[macro_use] pub extern crate bitcoin_hashes as hashes;
+#[cfg(feature = "secp256k1")]
 pub extern crate secp256k1;
 pub extern crate bech32;
 #[cfg(feature = "base64")] pub extern crate base64;
@@ -82,8 +83,8 @@ pub use util::address::AddressType;
 pub use util::amount::Amount;
 pub use util::amount::Denomination;
 pub use util::amount::SignedAmount;
-pub use util::key::PrivateKey;
-pub use util::key::PublicKey;
+#[cfg(feature = "secp256k1")]
+pub use util::key::{PrivateKey, PublicKey};
 pub use util::merkleblock::MerkleBlock;
 
 #[cfg(all(test, feature = "unstable"))] use tests::EmptyWrite;
