@@ -17,8 +17,11 @@
 //! Raw PSBT key-value pairs as defined at
 //! https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki.
 
-use std::{fmt, io};
 
+use alloc::vec::Vec;
+use core::fmt;
+
+use io;
 use consensus::encode::{self, Decodable, Encodable, VarInt, MAX_VEC_SIZE};
 use hashes::hex::ToHex;
 use util::psbt::Error;

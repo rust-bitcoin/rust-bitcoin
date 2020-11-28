@@ -17,7 +17,8 @@
 //! Defines traits used for (de)serializing PSBT values into/from raw
 //! bytes in PSBT key-value pairs.
 
-use std::io;
+use alloc::vec::Vec;
+use io;
 
 use blockdata::script::Script;
 use blockdata::transaction::{SigHashType, Transaction, TxOut};

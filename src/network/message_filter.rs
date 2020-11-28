@@ -2,6 +2,7 @@
 //! BIP157  Client Side Block Filtering network messages
 //!
 
+use alloc::vec::Vec;
 use hash_types::{BlockHash, FilterHash, FilterHeader};
 
 #[derive(PartialEq, Eq, Clone, Debug)]

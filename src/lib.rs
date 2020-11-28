@@ -23,6 +23,8 @@
 //! software.
 //!
 
+#![cfg_attr(not(feature = "std"), no_std)]
+
 // Experimental features we need
 #![cfg_attr(all(test, feature = "unstable"), feature(test))]
 
@@ -37,10 +39,16 @@
 #![deny(missing_docs)]
 #![deny(unused_must_use)]
 
+#[macro_use]
+pub extern crate alloc;
+#[cfg(feature = "std")] pub extern crate core; // FIXME why do we need this?
+
 // Re-exported dependencies.
 #[macro_use] pub extern crate bitcoin_hashes as hashes;
 pub extern crate secp256k1;
 pub extern crate bech32;
+
+#[cfg(feature = "bare-io")] pub extern crate bare_io;
 #[cfg(feature = "base64")] pub extern crate base64;
 
 #[cfg(feature="bitcoinconsensus")] extern crate bitcoinconsensus;
@@ -64,6 +72,7 @@ pub mod blockdata;
 pub mod util;
 pub mod consensus;
 pub mod hash_types;
+pub mod io;
 
 pub use hash_types::*;
 pub use blockdata::block::Block;
@@ -91,7 +100,7 @@ pub use util::merkleblock::MerkleBlock;
 #[cfg(all(test, feature = "unstable"))]
 mod tests {
     use hashes::core::fmt::Arguments;
-    use std::io::{IoSlice, Result, Write};
+    use io::{IoSlice, Result, Write};
 
     #[derive(Default, Clone, Debug, PartialEq, Eq)]
     pub struct EmptyWrite;

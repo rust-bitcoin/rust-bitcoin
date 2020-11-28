@@ -12,7 +12,8 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-use std::collections::btree_map::{Entry, BTreeMap};
+use alloc::vec::Vec;
+use alloc::collections::btree_map::{Entry, BTreeMap};
 
 use blockdata::script::Script;
 use blockdata::transaction::{SigHashType, Transaction, TxOut};
@@ -142,10 +143,10 @@ impl Map for Input {
                 psbt_insert_hash_pair(&mut self.hash256_preimages, raw_key, raw_value, error::PsbtHash::Hash256)?;
             }
             _ => match self.unknown.entry(raw_key) {
-                ::std::collections::btree_map::Entry::Vacant(empty_key) => {
+                ::alloc::collections::btree_map::Entry::Vacant(empty_key) => {
                     empty_key.insert(raw_value);
                 }
-                ::std::collections::btree_map::Entry::Occupied(k) => {
+                ::alloc::collections::btree_map::Entry::Occupied(k) => {
                     return Err(Error::DuplicateKey(k.key().clone()).into())
                 }
             },

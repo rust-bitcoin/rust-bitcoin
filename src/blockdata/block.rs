@@ -20,7 +20,8 @@
 //! these blocks and the blockchain.
 //!
 
-use std::fmt;
+use core::fmt;
+use alloc::vec::Vec;
 
 use util;
 use util::Error::{BlockBadTarget, BlockBadProofOfWork};
@@ -308,12 +309,14 @@ impl fmt::Display for Bip34Error {
     }
 }
 
-impl ::std::error::Error for Bip34Error {}
+#[cfg(feature = "std")]
+impl std::error::Error for Bip34Error {}
 
 #[cfg(test)]
 mod tests {
     use hashes::hex::FromHex;
 
+    use alloc::{vec::Vec, string::ToString};
     use blockdata::block::{Block, BlockHeader};
     use consensus::encode::{deserialize, serialize};
 

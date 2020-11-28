@@ -29,20 +29,22 @@
 //! big-endian decimals, etc.)
 //!
 
-use std::{fmt, error, io, mem, u32};
-use std::borrow::Cow;
-use std::io::{Cursor, Read, Write};
-use hashes::hex::ToHex;
 
+use core::{fmt, mem, u32, convert::From};
+use alloc::{string::String, vec::Vec, borrow::Cow, boxed::Box};
+
+use hashes::hex::ToHex;
 use hashes::{sha256d, Hash};
 use hash_types::{BlockHash, FilterHash, TxMerkleNode, FilterHeader};
+
+use io::{self, Cursor, Read, Write};
 
 use util::endian;
 use util::psbt;
 
 use blockdata::transaction::{TxOut, Transaction, TxIn};
-use network::message_blockdata::Inventory;
-use network::address::{Address, AddrV2Message};
+#[cfg(feature = "std")]
+use network::{message_blockdata::Inventory, address::{Address, AddrV2Message}};
 
 /// Encoding error
 #[derive(Debug)]
@@ -109,8 +111,9 @@ impl fmt::Display for Error {
     }
 }
 
-impl error::Error for Error {
-    fn cause(&self) -> Option<&dyn error::Error> {
+#[cfg(feature = "std")]
+impl std::error::Error for Error {
+    fn cause(&self) -> Option<&dyn std::error::Error> {
         match *self {
             Error::Io(ref e) => Some(e),
             Error::Psbt(ref e) => Some(e),
@@ -249,7 +252,7 @@ macro_rules! decoder_fn {
     ($name:ident, $val_type:ty, $readfn:ident, $byte_len: expr) => {
         #[inline]
         fn $name(&mut self) -> Result<$val_type, Error> {
-            debug_assert_eq!(::std::mem::size_of::<$val_type>(), $byte_len); // size_of isn't a constfn in 1.22
+            debug_assert_eq!(::core::mem::size_of::<$val_type>(), $byte_len); // size_of isn't a constfn in 1.22
             let mut val = [0; $byte_len];
             self.read_exact(&mut val[..]).map_err(Error::Io)?;
             Ok(endian::$readfn(&val))
@@ -598,10 +601,14 @@ impl_vec!(TxMerkleNode);
 impl_vec!(Transaction);
 impl_vec!(TxOut);
 impl_vec!(TxIn);
-impl_vec!(Inventory);
 impl_vec!(Vec<u8>);
-impl_vec!((u32, Address));
 impl_vec!(u64);
+
+#[cfg(feature = "std")] 
+impl_vec!(Inventory);
+#[cfg(feature = "std")] 
+impl_vec!((u32, Address));
+#[cfg(feature = "std")] 
 impl_vec!(AddrV2Message);
 
 fn consensus_encode_with_size<S: io::Write>(data: &[u8], mut s: S) -> Result<usize, Error> {
@@ -735,15 +742,16 @@ impl Decodable for sha256d::Hash {
 // Tests
 #[cfg(test)]
 mod tests {
-    use std::{io, mem, fmt};
-    use std::mem::discriminant;
+    use super::*;
+    use core::{mem::{self, discriminant}, fmt};
+    use alloc::string::ToString;
     use super::{deserialize, serialize, Error, CheckedData, VarInt};
     use super::{Transaction, BlockHash, FilterHash, TxMerkleNode, TxOut, TxIn};
     use consensus::{Encodable, deserialize_partial, Decodable};
     use util::endian::{u64_to_array_le, u32_to_array_le, u16_to_array_le};
     use secp256k1::rand::{thread_rng, Rng};
-    use network::message_blockdata::Inventory;
-    use network::Address;
+    #[cfg(feature = "std")] 
+    use network::{Address, message_blockdata::Inventory};
 
     #[test]
     fn serialize_int_test() {
@@ -818,7 +826,7 @@ mod tests {
     }
 
     fn test_varint_len(varint: VarInt, expected: usize) {
-        let mut encoder = io::Cursor::new(vec![]);
+        let mut encoder = vec![];
         assert_eq!(varint.consensus_encode(&mut encoder).unwrap(), expected);
         assert_eq!(varint.len(), expected);
     }
@@ -949,10 +957,12 @@ mod tests {
         test_len_is_max_vec::<Transaction>();
         test_len_is_max_vec::<TxOut>();
         test_len_is_max_vec::<TxIn>();
-        test_len_is_max_vec::<Inventory>();
         test_len_is_max_vec::<Vec<u8>>();
-        test_len_is_max_vec::<(u32, Address)>();
         test_len_is_max_vec::<u64>();
+        #[cfg(feature = "std")]
+        test_len_is_max_vec::<(u32, Address)>();
+        #[cfg(feature = "std")]
+        test_len_is_max_vec::<Inventory>();
     }
 
     fn test_len_is_max_vec<T>() where Vec<T>: Decodable, T: fmt::Debug {
@@ -967,7 +977,7 @@ mod tests {
         assert_eq!(deserialize(&[6u8, 0x41, 0x6e, 0x64, 0x72, 0x65, 0x77]).ok(), Some("Andrew".to_string()));
         assert_eq!(
             deserialize(&[6u8, 0x41, 0x6e, 0x64, 0x72, 0x65, 0x77]).ok(),
-            Some(::std::borrow::Cow::Borrowed("Andrew"))
+            Some(::alloc::borrow::Cow::Borrowed("Andrew"))
         );
     }
 

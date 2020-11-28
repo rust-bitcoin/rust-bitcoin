@@ -44,13 +44,12 @@
 //!
 //!
 
-use std::{cmp, fmt, io};
-use std::collections::HashSet;
-use std::error;
-use std::fmt::{Display, Formatter};
-use std::io::Cursor;
-use std::cmp::Ordering;
+use alloc::collections::BTreeSet;
 
+use io::{self as io, Cursor};
+use core::fmt::{self, Display, Formatter};
+use core::cmp::{self, Ordering};
+use alloc::vec::Vec;
 
 use hashes::{Hash, siphash24};
 use hash_types::{BlockHash, FilterHash, FilterHeader};
@@ -75,7 +74,8 @@ pub enum Error {
     Io(io::Error),
 }
 
-impl error::Error for Error {}
+#[cfg(feature = "std")]
+impl std::error::Error for Error {}
 
 impl Display for Error {
     fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
@@ -125,14 +125,14 @@ impl BlockFilter {
     /// Compute a SCRIPT_FILTER that contains spent and output scripts
     pub fn new_script_filter<M>(block: &Block, script_for_coin: M) -> Result<BlockFilter, Error>
         where M: Fn(&OutPoint) -> Result<Script, Error> {
-        let mut out = Cursor::new(Vec::new());
+        let mut out = Vec::new();
         {
             let mut writer = BlockFilterWriter::new(&mut out, block);
             writer.add_output_scripts();
             writer.add_input_scripts(script_for_coin)?;
             writer.finish()?;
         }
-        Ok(BlockFilter { content: out.into_inner() })
+        Ok(BlockFilter { content: out })
     }
 
     /// match any query pattern
@@ -331,7 +331,7 @@ fn map_to_range(hash: u64, nm: u64) -> u64 {
 pub struct GCSFilterWriter<'a> {
     filter: GCSFilter,
     writer: &'a mut dyn io::Write,
-    elements: HashSet<Vec<u8>>,
+    elements: BTreeSet<Vec<u8>>,
     m: u64
 }
 
@@ -341,7 +341,7 @@ impl<'a> GCSFilterWriter<'a> {
         GCSFilterWriter {
             filter: GCSFilter::new(k0, k1, p),
             writer,
-            elements: HashSet::new(),
+            elements: BTreeSet::new(),
             m
         }
     }
@@ -363,9 +363,9 @@ impl<'a> GCSFilterWriter<'a> {
         mapped.sort();
 
         // write number of elements as varint
-        let mut encoder = io::Cursor::new(Vec::new());
+        let mut encoder = Vec::new();
         VarInt(mapped.len() as u64).consensus_encode(&mut encoder).unwrap();
-        let mut wrote = self.writer.write(encoder.into_inner().as_slice())?;
+        let mut wrote = self.writer.write(encoder.as_slice())?;
 
         // write out deltas of sorted values into a Golonb-Rice coded bit stream
         let mut writer = BitStreamWriter::new(self.writer);
@@ -510,8 +510,8 @@ impl<'a> BitStreamWriter<'a> {
 
 #[cfg(test)]
 mod test {
-    use std::collections::{HashSet, HashMap};
-    use std::io::Cursor;
+    use alloc::collections::{BTreeSet, BTreeMap};
+    use io::Cursor;
 
     use hash_types::BlockHash;
     use hashes::hex::FromHex;
@@ -553,7 +553,7 @@ mod test {
             let filter_content = Vec::from_hex(&t.get(5).unwrap().as_str().unwrap()).unwrap();
             let filter_header = FilterHeader::from_hex(&t.get(6).unwrap().as_str().unwrap()).unwrap();
 
-            let mut txmap = HashMap::new();
+            let mut txmap = BTreeMap::new();
             let mut si = scripts.iter();
             for tx in block.txdata.iter().skip(1) {
                 for input in tx.input.iter() {
@@ -590,7 +590,7 @@ mod test {
 
     #[test]
     fn test_filter () {
-        let mut patterns = HashSet::new();
+        let mut patterns = BTreeSet::new();
 
         patterns.insert(Vec::from_hex("000000").unwrap());
         patterns.insert(Vec::from_hex("111111").unwrap());
@@ -609,7 +609,7 @@ mod test {
         patterns.insert(Vec::from_hex("eeeeee").unwrap());
         patterns.insert(Vec::from_hex("ffffff").unwrap());
 
-        let mut out = Cursor::new(Vec::new());
+        let mut out = Vec::new();
         {
             let mut writer = GCSFilterWriter::new(&mut out, 0, 0, M, P);
             for p in &patterns {
@@ -618,7 +618,7 @@ mod test {
             writer.finish().unwrap();
         }
 
-        let bytes = out.into_inner();
+        let bytes = out;
 
         {
             let mut query = Vec::new();
@@ -661,7 +661,7 @@ mod test {
 
     #[test]
     fn test_bit_stream() {
-        let mut out = Cursor::new(Vec::new());
+        let mut out = Vec::new();
         {
             let mut writer = BitStreamWriter::new(&mut out);
             writer.write(0, 1).unwrap(); // 0
@@ -673,7 +673,7 @@ mod test {
             writer.write(7, 7).unwrap(); // 0000111
             writer.flush().unwrap();
         }
-        let bytes = out.into_inner();
+        let bytes = out;
         assert_eq!("01011010110000110000000001110000", format!("{:08b}{:08b}{:08b}{:08b}", bytes[0], bytes[1], bytes[2], bytes[3]));
         {
             let mut input = Cursor::new(bytes);

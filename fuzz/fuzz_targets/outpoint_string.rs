@@ -4,7 +4,7 @@ extern crate bitcoin;
 use bitcoin::blockdata::transaction::OutPoint;
 use bitcoin::consensus::encode;
 
-use std::str::FromStr;
+use core::str::FromStr;
 
 fn do_test(data: &[u8]) {
     let lowercase: Vec<u8> = data.iter().map(|c| match *c {

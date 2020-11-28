@@ -25,6 +25,9 @@ do
     cargo test --verbose --features="$feature"
 done
 
+# Test no_std
+cargo test --verbose --features="use-bare-io" --no-default-features
+
 # Fuzz if told to
 if [ "$DO_FUZZ" = true ]
 then

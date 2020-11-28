@@ -16,10 +16,11 @@
 //! Keys used in Bitcoin that can be roundtrip (de)serialized.
 //!
 
-use std::fmt::{self, Write};
-use std::{io, ops, error};
-use std::str::FromStr;
 
+use alloc::{string::String, vec::Vec};
+use core::{str::FromStr, fmt::{self, Write}, ops};
+
+use io;
 use secp256k1::{self, Secp256k1};
 use network::constants::Network;
 use hashes::{Hash, hash160};
@@ -45,8 +46,9 @@ impl fmt::Display for Error {
     }
 }
 
-impl error::Error for Error {
-    fn cause(&self) -> Option<&dyn error::Error> {
+#[cfg(feature = "std")]
+impl std::error::Error for Error {
+    fn cause(&self) -> Option<&dyn std::error::Error> {
         match *self {
             Error::Base58(ref e) => Some(e),
             Error::Secp256k1(ref e) => Some(e),
@@ -277,7 +279,7 @@ impl<'de> ::serde::Deserialize<'de> for PrivateKey {
         impl<'de> ::serde::de::Visitor<'de> for WifVisitor {
             type Value = PrivateKey;
 
-            fn expecting(&self, formatter: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+            fn expecting(&self, formatter: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
                 formatter.write_str("an ASCII WIF string")
             }
 
@@ -285,7 +287,7 @@ impl<'de> ::serde::Deserialize<'de> for PrivateKey {
             where
                 E: ::serde::de::Error,
             {
-                if let Ok(s) = ::std::str::from_utf8(v) {
+                if let Ok(s) = ::core::str::from_utf8(v) {
                     PrivateKey::from_str(s).map_err(E::custom)
                 } else {
                     Err(E::invalid_value(::serde::de::Unexpected::Bytes(v), &self))
@@ -328,7 +330,7 @@ impl<'de> ::serde::Deserialize<'de> for PublicKey {
             impl<'de> ::serde::de::Visitor<'de> for HexVisitor {
                 type Value = PublicKey;
 
-                fn expecting(&self, formatter: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+                fn expecting(&self, formatter: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
                     formatter.write_str("an ASCII hex string")
                 }
 
@@ -336,7 +338,7 @@ impl<'de> ::serde::Deserialize<'de> for PublicKey {
                 where
                     E: ::serde::de::Error,
                 {
-                    if let Ok(hex) = ::std::str::from_utf8(v) {
+                    if let Ok(hex) = ::core::str::from_utf8(v) {
                         PublicKey::from_str(hex).map_err(E::custom)
                     } else {
                         Err(E::invalid_value(::serde::de::Unexpected::Bytes(v), &self))
@@ -357,7 +359,7 @@ impl<'de> ::serde::Deserialize<'de> for PublicKey {
             impl<'de> ::serde::de::Visitor<'de> for BytesVisitor {
                 type Value = PublicKey;
 
-                fn expecting(&self, formatter: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+                fn expecting(&self, formatter: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
                     formatter.write_str("a bytestring")
                 }
 
@@ -378,7 +380,8 @@ impl<'de> ::serde::Deserialize<'de> for PublicKey {
 mod tests {
     use super::{PrivateKey, PublicKey};
     use secp256k1::Secp256k1;
-    use std::str::FromStr;
+    use core::str::FromStr;
+    use alloc::string::ToString;
     use hashes::hex::ToHex;
     use network::constants::Network::Testnet;
     use network::constants::Network::Bitcoin;
