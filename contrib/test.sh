@@ -1,6 +1,6 @@
 #!/bin/sh -ex
 
-FEATURES="base64 bitcoinconsensus use-serde rand"
+FEATURES="base64 bitcoinconsensus use-serde rand secp256k1"
 
 if [ "$DO_COV" = true ]
 then

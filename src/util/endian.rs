@@ -1,6 +1,7 @@
 macro_rules! define_slice_to_be {
     ($name: ident, $type: ty) => {
         #[inline]
+        #[cfg_attr(not(feature = "secp256k1"), allow(dead_code))]
         pub fn $name(slice: &[u8]) -> $type {
             assert_eq!(slice.len(), ::std::mem::size_of::<$type>());
             let mut res = 0;
@@ -24,10 +25,10 @@ macro_rules! define_slice_to_le {
         }
     }
 }
-#[cfg(feature = "secp256k1")]
 macro_rules! define_be_to_array {
     ($name: ident, $type: ty, $byte_len: expr) => {
         #[inline]
+        #[cfg_attr(not(feature = "secp256k1"), allow(dead_code))]
         pub fn $name(val: $type) -> [u8; $byte_len] {
             debug_assert_eq!(::std::mem::size_of::<$type>(), $byte_len); // size_of isn't a constfn in 1.22
             let mut res = [0; $byte_len];
@@ -52,10 +53,10 @@ macro_rules! define_le_to_array {
     }
 }
 
-#[cfg(feature = "secp256k1")]
+#[cfg_attr(not(feature = "secp256k1"), allow(unused))]
 define_slice_to_be!(slice_to_u32_be, u32);
 define_slice_to_be!(slice_to_u64_be, u64);
-#[cfg(feature = "secp256k1")]
+#[cfg_attr(not(feature = "secp256k1"), allow(unused))]
 define_be_to_array!(u32_to_array_be, u32, 4);
 define_slice_to_le!(slice_to_u16_le, u16);
 define_slice_to_le!(slice_to_u32_le, u32);

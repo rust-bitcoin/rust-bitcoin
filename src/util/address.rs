@@ -17,7 +17,7 @@
 //!
 //! # Example: creating a new address from a randomly-generated key pair
 //!
-//! ```rust
+//! ```rust,ignore
 //!
 //! use bitcoin::network::constants::Network;
 //! use bitcoin::util::address::Address;
@@ -506,11 +506,13 @@ mod tests {
 
     use blockdata::script::Script;
     use network::constants::Network::{Bitcoin, Testnet};
+    #[cfg(feature = "secp256k1")]
     use util::key::PublicKey;
 
     use super::*;
 
     macro_rules! hex (($hex:expr) => (Vec::from_hex($hex).unwrap()));
+    #[cfg(feature = "secp256k1")]
     macro_rules! hex_key (($hex:expr) => (PublicKey::from_slice(&hex!($hex)).unwrap()));
     macro_rules! hex_script (($hex:expr) => (Script::from(hex!($hex))));
     macro_rules! hex_pubkeyhash (($hex:expr) => (PubkeyHash::from_hex(&$hex).unwrap()));
@@ -549,6 +551,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "secp256k1")]
     fn test_p2pkh_from_key() {
         let key = hex_key!("048d5141948c1702e8c95f438815794b87f706a8d4cd2bffad1dc1570971032c9b6042a0431ded2478b5c9cf2d81c124a5e57347a3c63ef0e7716cf54d613ba183");
         let addr = Address::p2pkh(&key, Bitcoin);
@@ -588,6 +591,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "secp256k1")]
     fn test_p2wpkh() {
         // stolen from Bitcoin transaction: b3c8c2b6cfc335abbcb2c7823a8453f55d64b2b5125a9a61e8737230cdb8ce20
         let mut key = hex_key!("033bc8c83c52df5712229a2f72206d90192366c36428cb0c12b6af98324d97bfbc");
@@ -615,6 +619,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "secp256k1")]
     fn test_p2shwpkh() {
         // stolen from Bitcoin transaction: ad3fd9c6b52e752ba21425435ff3dd361d6ac271531fc1d2144843a9f550ad01
         let mut key = hex_key!("026c468be64d22761c30cd2f12cbc7de255d592d7904b1bab07236897cc4c2e766");

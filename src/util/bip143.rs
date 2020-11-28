@@ -272,13 +272,17 @@ mod tests {
     use blockdata::script::Script;
     use blockdata::transaction::Transaction;
     use consensus::encode::deserialize;
+    #[cfg(feature = "secp256k1")]
     use network::constants::Network;
+    #[cfg(feature = "secp256k1")]
     use util::address::Address;
+    #[cfg(feature = "secp256k1")]
     use util::key::PublicKey;
     use hashes::hex::FromHex;
 
     use super::*;
 
+    #[cfg(feature = "secp256k1")]
     fn p2pkh_hex(pk: &str) -> Script {
         let pk = Vec::from_hex(pk).unwrap();
         let pk = PublicKey::from_slice(pk.as_slice()).unwrap();
@@ -298,6 +302,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "secp256k1")]
     fn bip143_p2wpkh() {
         let tx = deserialize::<Transaction>(
             &Vec::from_hex(
@@ -336,6 +341,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "secp256k1")]
     fn bip143_p2wpkh_nested_in_p2sh() {
         let tx = deserialize::<Transaction>(
             &Vec::from_hex(

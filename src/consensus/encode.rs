@@ -741,6 +741,7 @@ mod tests {
     use super::{Transaction, BlockHash, FilterHash, TxMerkleNode, TxOut, TxIn};
     use consensus::{Encodable, deserialize_partial, Decodable};
     use util::endian::{u64_to_array_le, u32_to_array_le, u16_to_array_le};
+    #[cfg(feature = "secp256k1")]
     use secp256k1::rand::{thread_rng, Rng};
     use network::message_blockdata::Inventory;
     use network::Address;
@@ -978,6 +979,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "secp256k1")]
     fn serialization_round_trips() {
         macro_rules! round_trip {
             ($($val_type:ty),*) => {

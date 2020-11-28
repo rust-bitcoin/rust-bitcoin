@@ -832,15 +832,15 @@ impl Decodable for Script {
 
 #[cfg(test)]
 mod test {
-    use std::str::FromStr;
-
     use super::*;
     use super::build_scriptint;
 
     use hashes::hex::{FromHex, ToHex};
     use consensus::encode::{deserialize, serialize};
     use blockdata::opcodes;
+    #[cfg(feature = "secp256k1")]
     use util::key::PublicKey;
+    #[cfg(feature = "secp256k1")]
     use util::psbt::serialize::Serialize;
 
     #[test]
@@ -867,12 +867,15 @@ mod test {
         script = script.push_slice("NRA4VR".as_bytes()); comp.extend([6u8, 78, 82, 65, 52, 86, 82].iter().cloned()); assert_eq!(&script[..], &comp[..]);
 
         // keys
-        let keystr = "21032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af";
-        let key = PublicKey::from_str(&keystr[2..]).unwrap();
-        script = script.push_key(&key); comp.extend(Vec::from_hex(keystr).unwrap().iter().cloned()); assert_eq!(&script[..], &comp[..]);
-        let keystr = "41042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133";
-        let key = PublicKey::from_str(&keystr[2..]).unwrap();
-        script = script.push_key(&key); comp.extend(Vec::from_hex(keystr).unwrap().iter().cloned()); assert_eq!(&script[..], &comp[..]);
+        #[cfg(feature = "secp256k1")]
+        {
+            let keystr = "21032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af";
+            let key = (&keystr[2..]).parse::<PublicKey>().unwrap();
+            script = script.push_key(&key); comp.extend(Vec::from_hex(keystr).unwrap().iter().cloned()); assert_eq!(&script[..], &comp[..]);
+            let keystr = "41042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133";
+            let key = (&keystr[2..]).parse::<PublicKey>().unwrap();
+            script = script.push_key(&key); comp.extend(Vec::from_hex(keystr).unwrap().iter().cloned()); assert_eq!(&script[..], &comp[..]);
+        }
 
         // opcodes
         script = script.push_opcode(opcodes::all::OP_CHECKSIG); comp.push(0xACu8); assert_eq!(&script[..], &comp[..]);
@@ -892,8 +895,9 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "secp256k1")]
     fn script_generators() {
-        let pubkey = PublicKey::from_str("0234e6a79c5359c613762d537e0e19d86c77c1666d8c9ab050f23acd198e97f93e").unwrap();
+        let pubkey = "0234e6a79c5359c613762d537e0e19d86c77c1666d8c9ab050f23acd198e97f93e".parse::<PublicKey>().unwrap();
         assert!(Script::new_p2pk(&pubkey).is_p2pk());
 
         let pubkey_hash = PubkeyHash::hash(&pubkey.serialize());

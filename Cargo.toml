@@ -10,6 +10,13 @@ description = "General purpose library for using and interoperating with Bitcoin
 keywords = [ "crypto", "bitcoin" ]
 readme = "README.md"
 
+[[example]]
+name = "bip32"
+required-features = ["secp256k1"]
+
+[[example]]
+name = "handshake"
+required-features = ["secp256k1"]
 
 [features]
 default = [ "secp-recovery" ]
