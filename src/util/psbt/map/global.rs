@@ -23,11 +23,13 @@ use util::psbt::map::Map;
 use util::psbt::raw;
 use util::psbt;
 use util::psbt::Error;
+use util::endian::u32_to_array_le;
 use util::bip32::{ExtendedPubKey, KeySource, Fingerprint, DerivationPath, ChildNumber};
 
 /// Type: Unsigned Transaction PSBT_GLOBAL_UNSIGNED_TX = 0x00
 const PSBT_GLOBAL_UNSIGNED_TX: u8 = 0x00;
-
+const PSBT_GLOBAL_XPUB: u8 = 0x01;
+const PSBT_GLOBAL_VERSION: u8 = 0xFB;
 /// A key-value map for global data.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Global {
@@ -103,6 +105,34 @@ impl Map for Global {
                 ret
             },
         });
+
+        for (xpub, (fingerprint, derivation)) in &self.xpub {
+            rv.push(raw::Pair {
+                key: raw::Key {
+                    type_value: PSBT_GLOBAL_XPUB,
+                    key: xpub.encode().to_vec(),
+                },
+                value: {
+                    let mut ret = Vec::with_capacity(4 + derivation.len() * 4);
+                    ret.extend(fingerprint.as_bytes());
+                    for no in 0..derivation.len() {
+                        ret.extend(&u32_to_array_le(derivation[no].into())[..])
+                    }
+                    ret
+                }
+            });
+        }
+
+        // Serializing version only for non-default value; otherwise test vectors fail
+        if self.version > 0 {
+            rv.push(raw::Pair {
+                key: raw::Key {
+                    type_value: PSBT_GLOBAL_VERSION,
+                    key: vec![],
+                },
+                value: u32_to_array_le(self.version).to_vec()
+            });
+        }
 
         for (key, value) in self.unknown.iter() {
             rv.push(raw::Pair {
@@ -219,8 +249,7 @@ impl Decodable for Global {
                                 return Err(Error::InvalidKey(pair.key).into())
                             }
                         }
-                        // Global Xpub
-                        0x01 => {
+                        PSBT_GLOBAL_XPUB => {
                             if !pair.key.key.is_empty() {
                                 let xpub = ExtendedPubKey::decode(&pair.key.key)
                                     .map_err(|_| {
@@ -248,8 +277,7 @@ impl Decodable for Global {
                                 return Err(encode::Error::ParseFailed("Xpub global key must contain serialized Xpub data"))
                             }
                         }
-                        // Version
-                        0xFB => {
+                        PSBT_GLOBAL_VERSION => {
                             // key has to be empty
                             if pair.key.key.is_empty() {
                                 // there can only be one version

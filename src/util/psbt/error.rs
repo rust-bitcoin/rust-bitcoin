@@ -20,7 +20,7 @@ use util::psbt::raw;
 
 use hashes;
 
-#[derive(Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 /// Enum for marking psbt hash error
 pub enum PsbtHash {
     Ripemd,
@@ -29,7 +29,7 @@ pub enum PsbtHash {
     Hash256,
 }
 /// Ways that a Partially Signed Transaction might fail.
-#[derive(Debug)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub enum Error {
     /// Magic bytes for a PSBT must be the ASCII for "psbt" serialized in most
     /// significant byte order.
