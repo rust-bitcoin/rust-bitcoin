@@ -15,6 +15,7 @@
 use std::collections::BTreeMap;
 use std::collections::btree_map::Entry;
 use std::io::{self, Cursor, Read};
+use std::cmp::Ordering;
 
 use blockdata::transaction::Transaction;
 use consensus::{encode, Encodable, Decodable};
@@ -113,12 +114,62 @@ impl Map for Global {
         Ok(rv)
     }
 
+    // Keep in mind that according to BIP 174 this function must be transitive, i.e.
+    // A.merge(B) == B.merge(A)
     fn merge(&mut self, other: Self) -> Result<(), psbt::Error> {
         if self.unsigned_tx != other.unsigned_tx {
             return Err(psbt::Error::UnexpectedUnsignedTx {
                 expected: self.unsigned_tx.clone(),
                 actual: other.unsigned_tx,
             });
+        }
+
+        // BIP 174: The Combiner must remove any duplicate key-value pairs, in accordance with
+        //          the specification. It can pick arbitrarily when conflicts occur.
+
+        // Keeping the highest version
+        self.version = self.version.max(other.version);
+
+        // Merging xpubs
+        for (xpub, (fingerprint1, derivation1)) in other.xpub {
+            match self.xpub.entry(xpub) {
+                Entry::Vacant(entry) => {
+                    entry.insert((fingerprint1, derivation1));
+                },
+                Entry::Occupied(mut entry) => {
+                    // Here in case of the conflict we select the version with algorithm:
+                    // 1) if fingerprints are equal but derivations are not, we report an error; otherwise
+                    // 2) choose longest unhardened derivation; if equal
+                    // 3) choose longest derivation; if equal
+                    // 4) choose largest fingerprint; if equal
+                    // 5) do nothing
+                    // Clone is required for Rust 1.29 borrow checker
+                    let (fingerprint2, derivation2) = entry.get().clone();
+                    let len1 = derivation1.len();
+                    let len2 = derivation2.len();
+                    let normal_len1 = derivation1.into_iter().rposition(ChildNumber::is_normal);
+                    let normal_len2 = derivation2.into_iter().rposition(ChildNumber::is_normal);
+                    match (normal_len1.cmp(&normal_len2), len1.cmp(&len2), fingerprint1.cmp(&fingerprint2)) {
+                        (Ordering::Equal, Ordering::Equal, Ordering::Equal) => {},
+                        (Ordering::Equal, _, Ordering::Equal) => {
+                            return Err(psbt::Error::MergeConflict(format!(
+                                "global xpub {} has inconsistent key sources",
+                                xpub
+                            ).to_owned()));
+                        }
+                        (Ordering::Greater, _, _)
+                        | (Ordering::Equal, Ordering::Greater, _)
+                        | (Ordering::Equal, Ordering::Equal, Ordering::Greater) => {
+                            entry.insert((fingerprint1, derivation1));
+                        },
+                        (Ordering::Less, _, _)
+                        | (Ordering::Equal, Ordering::Less, _)
+                        | (Ordering::Equal, Ordering::Equal, Ordering::Less) => {
+                            // do nothing here: we already own the proper data
+                        }
+                    }
+                }
+            }
         }
 
         self.unknown.extend(other.unknown);

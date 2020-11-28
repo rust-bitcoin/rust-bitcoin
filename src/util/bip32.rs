@@ -126,14 +126,14 @@ impl ChildNumber {
     /// Returns `true` if the child number is a [`Normal`] value.
     ///
     /// [`Normal`]: #variant.Normal
-    pub fn is_normal(self) -> bool {
+    pub fn is_normal(&self) -> bool {
         !self.is_hardened()
     }
 
     /// Returns `true` if the child number is a [`Hardened`] value.
     ///
     /// [`Hardened`]: #variant.Hardened
-    pub fn is_hardened(self) -> bool {
+    pub fn is_hardened(&self) -> bool {
         match self {
             ChildNumber::Hardened {..} => true,
             ChildNumber::Normal {..} => false,
@@ -299,6 +299,11 @@ impl<'a> Iterator for DerivationPathIterator<'a> {
 }
 
 impl DerivationPath {
+    /// Returns length of the derivation path
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
     /// Create a new [DerivationPath] that is a child of this one.
     pub fn child(&self, cn: ChildNumber) -> DerivationPath {
         let mut path = self.0.clone();

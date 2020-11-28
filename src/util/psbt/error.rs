@@ -68,7 +68,9 @@ pub enum Error {
         preimage: Vec<u8>,
         /// Hash value
         hash: Vec<u8>,
-    }
+    },
+    /// Data inconsistency/conflicting data during merge procedure
+    MergeConflict(String),
 }
 
 impl fmt::Display for Error {
@@ -91,6 +93,7 @@ impl fmt::Display for Error {
                 // directly using debug forms of psbthash enums
                 write!(f, "Preimage {:?} does not match {:?} hash {:?}", preimage, hash_type, hash )
             }
+            Error::MergeConflict(ref s) => { write!(f, "Merge conflict: {}", s) }
         }
     }
 }
