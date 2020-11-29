@@ -6,7 +6,7 @@ use std::{env, process};
 use std::io::Write;
 
 use bitcoin::consensus::encode;
-use bitcoin::network::{address, message};
+use bitcoin::network::{address, msg};
 use bitcoin::network::stream_reader::StreamReader;
 use bitcoin::secp256k1;
 use bitcoin::secp256k1::rand::Rng;
@@ -30,7 +30,7 @@ fn main() {
 
     let version_message = build_version_message(address);
 
-    let first_message = message::RawNetworkMessage {
+    let first_message = msg::RawNetworkMessage {
         magic: Network::Bitcoin.magic(),
         payload: version_message,
     };
@@ -45,20 +45,20 @@ fn main() {
         let mut stream_reader = StreamReader::new(read_stream, None);
         loop {
             // Loop an retrieve new messages
-            let reply: message::RawNetworkMessage = stream_reader.read_next().unwrap();
+            let reply: msg::RawNetworkMessage = stream_reader.read_next().unwrap();
             match reply.payload {
-                message::NetworkMessage::Version(_) => {
+                msg::NetworkMessage::Version(_) => {
                     println!("Received version message: {:?}", reply.payload);
 
-                    let second_message = message::RawNetworkMessage {
+                    let second_message = msg::RawNetworkMessage {
                         magic: Network::Bitcoin.magic(),
-                        payload: message::NetworkMessage::Verack,
+                        payload: msg::NetworkMessage::Verack,
                     };
 
                     let _ = stream.write_all(encode::serialize(&second_message).as_slice());
                     println!("Sent verack message");
                 }
-                message::NetworkMessage::Verack => {
+                msg::NetworkMessage::Verack => {
                     println!("Received verack message: {:?}", reply.payload);
                     break;
                 }
@@ -74,7 +74,7 @@ fn main() {
     }
 }
 
-fn build_version_message(address: SocketAddr) -> message::NetworkMessage {
+fn build_version_message(address: SocketAddr) -> msg::NetworkMessage {
     // Building version message, see https://en.bitcoin.it/wiki/Protocol_documentation#version
     let my_address = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), 0);
 
@@ -103,7 +103,7 @@ fn build_version_message(address: SocketAddr) -> message::NetworkMessage {
     let start_height: i32 = 0;
 
     // Construct the message
-    message::NetworkMessage::Version(message::Version::new(
+    msg::NetworkMessage::Version(msg::Version::new(
         services,
         timestamp as i64,
         addr_recv,

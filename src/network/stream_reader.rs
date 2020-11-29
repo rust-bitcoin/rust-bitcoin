@@ -88,7 +88,7 @@ mod test {
     use std::thread::JoinHandle;
 
     use super::StreamReader;
-    use network::message::{NetworkMessage, RawNetworkMessage};
+    use network::msg::{NetworkMessage, RawNetworkMessage};
     use ServiceFlags;
 
     // First, let's define some byte arrays for sample messages - dumps are taken from live

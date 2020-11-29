@@ -20,7 +20,7 @@
 
 pub mod address;
 pub use self::address::Address;
-pub mod message;
+pub mod msg;
 pub mod stream_reader;
 
 use std::{error, fmt, io, ops};

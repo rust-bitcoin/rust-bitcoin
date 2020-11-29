@@ -25,8 +25,8 @@ use network::address::Address;
 use network::{self, ServiceFlags};
 use consensus::{Encodable, Decodable, ReadExt};
 use consensus::encode;
-use network::message::CommandString;
 use hashes::sha256d;
+use super::CommandString;
 
 /// Some simple messages
 
