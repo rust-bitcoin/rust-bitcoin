@@ -21,13 +21,34 @@
 pub mod transaction;
 pub mod block;
 
-use std::default::Default;
+use std::{error, fmt};
 
 use hashes::hex::FromHex;
 use hashes::sha256d;
 use script::{self, opcodes};
 use util::uint::Uint256;
 use {Block, BlockHeader, Network, OutPoint, Transaction, TxOut, TxIn};
+
+/// Proof-of-work validation error
+#[derive(Debug)]
+pub enum PowError {
+    /// The header hash is not below the target
+    BadProofOfWork,
+    /// The `target` field of a block header did not match the expected difficulty
+    BadTarget,
+}
+
+impl fmt::Display for PowError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            PowError::BadProofOfWork => f.write_str("block target correct but not attained"),
+            PowError::BadTarget => f.write_str("block target incorrect"),
+        }
+    }
+}
+
+impl error::Error for PowError {
+}
 
 /// The maximum allowable sequence number
 pub const MAX_SEQUENCE: u32 = 0xFFFFFFFF;
