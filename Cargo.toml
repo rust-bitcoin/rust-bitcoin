@@ -21,20 +21,26 @@ use-serde = ["serde", "bitcoin_hashes/serde", "secp256k1/serde"]
 secp-endomorphism = ["secp256k1/endomorphism"]
 secp-lowmemory = ["secp256k1/lowmemory"]
 secp-recovery = ["secp256k1/recovery"]
+use-schemars = ["bitcoin_hashes/schemars", "schemars"]
 
 [dependencies]
 base64-compat = { version = "1.0.0", optional = true }
 bech32 = "0.7.2"
-bitcoin_hashes = "0.9.0"
+bitcoin_hashes = "0.9.2"
 secp256k1 = { version = "0.19.0", features = [ "recovery" ] }
 
 bitcoinconsensus = { version = "0.19.0-1", optional = true }
 serde = { version = "1", optional = true }
 
+[dependencies.schemars]
+version = "0.8.0"
+optional = true
+
 [dev-dependencies]
-serde_derive = "<1.0.99"
-serde_json = "<1.0.45"
+serde_derive = "<1.0.99, >= 1.0.0"
+serde_json = "<1.0.45, >= 1.0.0"
 serde_test = "1"
 secp256k1 = { version = "0.19.0", features = [ "recovery", "rand-std" ] }
+jsonschema-valid = "0.2.0"
 # We need to pin ryu (transitive dep from serde_json) to stay compatible with Rust 1.22.0
 ryu = "<1.0.5"
