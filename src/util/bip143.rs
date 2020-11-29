@@ -244,7 +244,7 @@ impl<R: DerefMut<Target=Transaction>> SigHashCache<R> {
     /// This allows in-line signing such as
     /// ```
     /// use bitcoin::primitives::transaction::{Transaction, SigHashType};
-    /// use bitcoin::util::bip143::SigHashCache;
+    /// use bitcoin::bip143::SigHashCache;
     /// use bitcoin::Script;
     ///
     /// let mut tx_to_sign = Transaction { version: 2, lock_time: 0, input: Vec::new(), output: Vec::new() };

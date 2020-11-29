@@ -30,7 +30,7 @@ pub mod psbt;
 pub mod uint;
 pub mod bip158;
 
-pub(crate) mod endian;
+pub mod endian;
 
 /// A trait which allows numbers to act as fixed-size bit arrays
 pub trait BitArray {

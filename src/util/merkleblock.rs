@@ -25,9 +25,8 @@
 //! # Examples
 //!
 //! ```rust
-//! use bitcoin::hash_types::Txid;
 //! use bitcoin::hashes::hex::FromHex;
-//! use bitcoin::{Block, MerkleBlock};
+//! use bitcoin::{Block, MerkleBlock, Txid};
 //!
 //! // Get the proof from a bitcoind by running in the terminal:
 //! // $ TXID="5a4ebf66822b0b2d56bd9dc64ece0bc38ee7844a23ff1d7320a88c5fdb2ad3e2"
@@ -129,9 +128,9 @@ impl PartialMerkleTree {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin::hash_types::Txid;
+    /// use bitcoin::Txid;
     /// use bitcoin::hashes::hex::FromHex;
-    /// use bitcoin::util::merkleblock::PartialMerkleTree;
+    /// use bitcoin::merkleblock::PartialMerkleTree;
     ///
     /// // Block 80000
     /// let txids: Vec<Txid> = [
@@ -400,9 +399,8 @@ impl MerkleBlock {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin::hash_types::Txid;
     /// use bitcoin::hashes::hex::FromHex;
-    /// use bitcoin::{Block, MerkleBlock};
+    /// use bitcoin::{Block, MerkleBlock, Txid};
     ///
     /// // Block 80000
     /// let block_bytes = Vec::from_hex("01000000ba8b9cda965dd8e536670f9ddec10e53aab14b20bacad2\

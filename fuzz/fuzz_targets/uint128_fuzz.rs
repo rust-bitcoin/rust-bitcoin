@@ -9,12 +9,12 @@ fn do_test(data: &[u8]) {
                 native |= (*c) as u128;
             }
             // Note BE:
-            let uint128 = bitcoin::util::uint::Uint128::from(&[native as u64, (native >> 8*8) as u64][..]);
+            let uint128 = bitcoin::uint::Uint128::from(&[native as u64, (native >> 8*8) as u64][..]);
 
             // Checking two conversion methods against each other
             let mut slice = [0u8; 16];
             slice.copy_from_slice(&data[$start..$start + 16]);
-            assert_eq!(uint128, bitcoin::util::uint::Uint128::from_be_bytes(slice));
+            assert_eq!(uint128, bitcoin::uint::Uint128::from_be_bytes(slice));
 
             (native, uint128)
         } }
@@ -36,7 +36,7 @@ fn do_test(data: &[u8]) {
     assert_eq!(a_native as u64, a.low_u64());
     assert_eq!(a_native as u32, a.low_u32());
     assert_eq!(128 - a_native.leading_zeros() as usize, a.bits());
-    assert_eq!(a_native as u64, bitcoin::util::uint::Uint128::from_u64(a_native as u64).unwrap().low_u64());
+    assert_eq!(a_native as u64, bitcoin::uint::Uint128::from_u64(a_native as u64).unwrap().low_u64());
 
     // Checks with two numbers:
     let (b_native, b) = read_ints!(16);

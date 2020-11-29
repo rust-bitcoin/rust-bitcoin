@@ -61,10 +61,10 @@ mod internal_macros;
 #[macro_use]
 pub mod network;
 pub mod primitives;
+mod util;
 pub mod script;
-pub mod util;
 pub mod consensus;
-pub mod hash_types;
+mod hash_types;
 
 pub use hash_types::*;
 pub use primitives::block::Block;
@@ -87,6 +87,10 @@ pub use util::amount::SignedAmount;
 pub use util::key::PrivateKey;
 pub use util::key::PublicKey;
 pub use util::merkleblock::MerkleBlock;
+
+pub use util::{address, amount, base58, bip32, bip143, hash, key, merkleblock, misc, psbt, uint, bip158};
+#[allow(deprecated)]
+pub use util::contracthash;
 
 #[cfg(all(test, feature = "unstable"))] use tests::EmptyWrite;
 

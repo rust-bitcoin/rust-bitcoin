@@ -4,12 +4,11 @@ use std::{env, process};
 use std::str::FromStr;
 
 use bitcoin::secp256k1::Secp256k1;
-use bitcoin::util::key::PrivateKey;
-use bitcoin::util::bip32::ExtendedPrivKey;
-use bitcoin::util::bip32::ExtendedPubKey;
-use bitcoin::util::bip32::DerivationPath;
-use bitcoin::util::bip32::ChildNumber;
-use bitcoin::util::address::Address;
+use bitcoin::bip32::ExtendedPrivKey;
+use bitcoin::bip32::ExtendedPubKey;
+use bitcoin::bip32::DerivationPath;
+use bitcoin::bip32::ChildNumber;
+use bitcoin::{Address, PrivateKey};
 
 fn main() {
     // This example derives root xprv
