@@ -28,6 +28,7 @@ use-serde = ["serde", "bitcoin_hashes/serde"]
 secp-endomorphism = ["secp256k1/endomorphism"]
 secp-lowmemory = ["secp256k1/lowmemory"]
 secp-recovery = ["secp256k1/recovery"]
+secp-serde = ["secp256k1/serde"]
 
 [dependencies]
 base64-compat = { version = "1.0.0", optional = true }
