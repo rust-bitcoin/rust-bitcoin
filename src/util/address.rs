@@ -17,7 +17,7 @@
 //!
 //! # Example: creating a new address from a randomly-generated key pair
 //!
-//! ```rust
+//! ```rust,ignore
 //!
 //! use bitcoin::network::constants::Network;
 //! use bitcoin::util::address::Address;
@@ -42,10 +42,13 @@ use std::error;
 
 use bech32;
 use hashes::Hash;
-use hash_types::{PubkeyHash, WPubkeyHash, ScriptHash, WScriptHash};
+use hash_types::{PubkeyHash, ScriptHash, WScriptHash};
+#[cfg(feature = "secp256k1")]
+use hash_types::WPubkeyHash;
 use blockdata::script;
 use network::constants::Network;
 use util::base58;
+#[cfg(feature = "secp256k1")]
 use util::key;
 
 /// Address error.
@@ -219,6 +222,7 @@ serde_string_impl!(Address, "a Bitcoin address");
 impl Address {
     /// Creates a pay to (compressed) public key hash address from a public key
     /// This is the preferred non-witness type address
+    #[cfg(feature = "secp256k1")]
     #[inline]
     pub fn p2pkh(pk: &key::PublicKey, network: Network) -> Address {
         let mut hash_engine = PubkeyHash::engine();
@@ -244,6 +248,7 @@ impl Address {
     /// This is the native segwit address type for an output redeemable with a single signature
     ///
     /// Will only return an Error when an uncompressed public key is provided.
+    #[cfg(feature = "secp256k1")]
     pub fn p2wpkh(pk: &key::PublicKey, network: Network) -> Result<Address, Error> {
         if !pk.compressed {
             return Err(Error::UncompressedPubkey);
@@ -265,6 +270,7 @@ impl Address {
     /// This is a segwit address type that looks familiar (as p2sh) to legacy clients
     ///
     /// Will only return an Error when an uncompressed public key is provided.
+    #[cfg(feature = "secp256k1")]
     pub fn p2shwpkh(pk: &key::PublicKey, network: Network) -> Result<Address, Error> {
         if !pk.compressed {
             return Err(Error::UncompressedPubkey);
@@ -500,11 +506,13 @@ mod tests {
 
     use blockdata::script::Script;
     use network::constants::Network::{Bitcoin, Testnet};
+    #[cfg(feature = "secp256k1")]
     use util::key::PublicKey;
 
     use super::*;
 
     macro_rules! hex (($hex:expr) => (Vec::from_hex($hex).unwrap()));
+    #[cfg(feature = "secp256k1")]
     macro_rules! hex_key (($hex:expr) => (PublicKey::from_slice(&hex!($hex)).unwrap()));
     macro_rules! hex_script (($hex:expr) => (Script::from(hex!($hex))));
     macro_rules! hex_pubkeyhash (($hex:expr) => (PubkeyHash::from_hex(&$hex).unwrap()));
@@ -543,6 +551,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "secp256k1")]
     fn test_p2pkh_from_key() {
         let key = hex_key!("048d5141948c1702e8c95f438815794b87f706a8d4cd2bffad1dc1570971032c9b6042a0431ded2478b5c9cf2d81c124a5e57347a3c63ef0e7716cf54d613ba183");
         let addr = Address::p2pkh(&key, Bitcoin);
@@ -582,6 +591,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "secp256k1")]
     fn test_p2wpkh() {
         // stolen from Bitcoin transaction: b3c8c2b6cfc335abbcb2c7823a8453f55d64b2b5125a9a61e8737230cdb8ce20
         let mut key = hex_key!("033bc8c83c52df5712229a2f72206d90192366c36428cb0c12b6af98324d97bfbc");
@@ -609,6 +619,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "secp256k1")]
     fn test_p2shwpkh() {
         // stolen from Bitcoin transaction: ad3fd9c6b52e752ba21425435ff3dd361d6ac271531fc1d2144843a9f550ad01
         let mut key = hex_key!("026c468be64d22761c30cd2f12cbc7de255d592d7904b1bab07236897cc4c2e766");

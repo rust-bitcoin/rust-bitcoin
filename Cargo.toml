@@ -10,6 +10,13 @@ description = "General purpose library for using and interoperating with Bitcoin
 keywords = [ "crypto", "bitcoin" ]
 readme = "README.md"
 
+[[example]]
+name = "bip32"
+required-features = ["secp256k1"]
+
+[[example]]
+name = "handshake"
+required-features = ["secp256k1"]
 
 [features]
 default = [ "secp-recovery" ]
@@ -17,16 +24,17 @@ base64 = [ "base64-compat" ]
 fuzztarget = ["secp256k1/fuzztarget", "bitcoin_hashes/fuzztarget"]
 unstable = []
 rand = ["secp256k1/rand-std"]
-use-serde = ["serde", "bitcoin_hashes/serde", "secp256k1/serde"]
+use-serde = ["serde", "bitcoin_hashes/serde"]
 secp-endomorphism = ["secp256k1/endomorphism"]
 secp-lowmemory = ["secp256k1/lowmemory"]
 secp-recovery = ["secp256k1/recovery"]
+secp-serde = ["secp256k1/serde"]
 
 [dependencies]
 base64-compat = { version = "1.0.0", optional = true }
 bech32 = "0.7.2"
 bitcoin_hashes = "0.9.0"
-secp256k1 = { version = "0.19.0", features = [ "recovery" ] }
+secp256k1 = { version = "0.19.0", features = [ "recovery" ], optional = true }
 
 bitcoinconsensus = { version = "0.19.0-1", optional = true }
 serde = { version = "1", optional = true }

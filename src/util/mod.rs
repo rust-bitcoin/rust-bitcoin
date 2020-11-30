@@ -16,21 +16,27 @@
 //!
 //! Functions needed by all parts of the Bitcoin library
 
+#[cfg(feature = "secp256k1")]
 pub mod key;
 pub mod address;
 pub mod amount;
 pub mod base58;
+#[cfg(feature = "secp256k1")]
 pub mod bip32;
 pub mod bip143;
+#[cfg(feature = "secp256k1")]
 pub mod contracthash;
 pub mod hash;
 pub mod merkleblock;
 pub mod misc;
+#[cfg(feature = "secp256k1")]
 pub mod psbt;
 pub mod uint;
 pub mod bip158;
 
 pub(crate) mod endian;
+// A trick to make cutting-out secp256k1 easy
+pub(crate) mod psbt_no_key;
 
 use std::{error, fmt};
 

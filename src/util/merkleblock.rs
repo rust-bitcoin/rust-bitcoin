@@ -496,19 +496,26 @@ impl Decodable for MerkleBlock {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "secp256k1")]
     use std::cmp::min;
 
+    #[cfg(feature = "secp256k1")]
     use hashes::Hash;
     use hashes::hex::{FromHex, ToHex};
-    use hash_types::{Txid, TxMerkleNode};
+    use hash_types::Txid;
+    #[cfg(feature = "secp256k1")]
+    use hash_types::TxMerkleNode;
+    #[cfg(feature = "secp256k1")]
     use secp256k1::rand::prelude::*;
 
     use consensus::encode::{deserialize, serialize};
+    #[cfg(feature = "secp256k1")]
     use util::hash::bitcoin_merkle_root;
     use util::merkleblock::{MerkleBlock, PartialMerkleTree};
     use Block;
 
     #[test]
+    #[cfg(feature = "secp256k1")]
     fn pmt_tests() {
         let mut rng = thread_rng();
         let tx_counts = vec![1, 4, 7, 17, 56, 100, 127, 256, 312, 513, 1000, 4095];
@@ -698,6 +705,7 @@ mod tests {
 
     impl PartialMerkleTree {
         /// Flip one bit in one of the hashes - this should break the authentication
+        #[cfg(feature = "secp256k1")]
         fn damage(&mut self, rng: &mut ThreadRng) {
             let n = rng.gen_range(0, self.hashes.len());
             let bit = rng.gen::<u8>();

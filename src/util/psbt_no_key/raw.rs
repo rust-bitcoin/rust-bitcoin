@@ -21,7 +21,7 @@ use std::{fmt, io};
 
 use consensus::encode::{self, Decodable, Encodable, VarInt, MAX_VEC_SIZE};
 use hashes::hex::ToHex;
-use util::psbt::Error;
+use util::psbt_no_key::error::Error;
 
 /// A PSBT key in its raw byte form.
 #[derive(Debug, PartialEq, Hash, Eq, Clone, Ord, PartialOrd)]
