@@ -1,7 +1,7 @@
 extern crate bitcoin;
 
 fn do_test(data: &[u8]) {
-    let tx_result: Result<bitcoin::blockdata::transaction::Transaction, _> = bitcoin::consensus::encode::deserialize(data);
+    let tx_result: Result<bitcoin::Transaction, _> = bitcoin::consensus::encode::deserialize(data);
     match tx_result {
         Err(_) => {},
         Ok(mut tx) => {

@@ -18,9 +18,8 @@
 //! defined at https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki
 //! except we define PSBTs containing non-standard SigHash types as invalid.
 
-use blockdata::script::Script;
-use blockdata::transaction::Transaction;
 use consensus::{encode, Encodable, Decodable};
+use {Script, Transaction};
 
 use std::io;
 
@@ -171,14 +170,12 @@ mod tests {
 
     use secp256k1::Secp256k1;
 
-    use blockdata::script::Script;
-    use blockdata::transaction::{Transaction, TxIn, TxOut, OutPoint};
-    use network::constants::Network::Bitcoin;
     use consensus::encode::{deserialize, serialize, serialize_hex};
     use util::bip32::{ChildNumber, ExtendedPrivKey, ExtendedPubKey, Fingerprint, KeySource};
     use util::key::PublicKey;
     use util::psbt::map::{Global, Output, Input};
     use util::psbt::raw;
+    use {Network::Bitcoin, OutPoint, Script, Transaction, TxIn, TxOut};
 
     use super::PartiallySignedTransaction;
 
@@ -315,8 +312,7 @@ mod tests {
         use hashes::hex::FromHex;
         use hash_types::Txid;
 
-        use blockdata::script::Script;
-        use blockdata::transaction::{SigHashType, Transaction, TxIn, TxOut, OutPoint};
+        use {Script, SigHashType, Transaction, TxIn, TxOut, OutPoint};
         use consensus::encode::serialize_hex;
         use util::psbt::map::{Map, Global, Input, Output};
         use util::psbt::raw;

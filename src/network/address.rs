@@ -22,8 +22,8 @@ use std::io;
 use std::fmt;
 use std::net::{SocketAddr, Ipv6Addr, SocketAddrV4, SocketAddrV6, Ipv4Addr};
 
-use network::constants::ServiceFlags;
 use consensus::encode::{self, Decodable, Encodable, VarInt, ReadExt, WriteExt};
+use ServiceFlags;
 
 /// A message which can be sent on the Bitcoin network
 #[derive(Clone, PartialEq, Eq, Hash)]
@@ -268,11 +268,11 @@ impl Decodable for AddrV2Message {
 mod test {
     use std::str::FromStr;
     use super::{AddrV2Message, AddrV2, Address};
-    use network::constants::ServiceFlags;
     use std::net::{SocketAddr, IpAddr, Ipv4Addr, Ipv6Addr};
     use hashes::hex::FromHex;
 
     use consensus::encode::{deserialize, serialize};
+    use ServiceFlags;
 
     #[test]
     fn serialize_address_test() {

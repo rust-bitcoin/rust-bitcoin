@@ -60,23 +60,25 @@ mod test_macros;
 mod internal_macros;
 #[macro_use]
 pub mod network;
-pub mod blockdata;
-pub mod util;
+pub mod primitives;
+mod util;
+pub mod script;
 pub mod consensus;
-pub mod hash_types;
+mod hash_types;
 
 pub use hash_types::*;
-pub use blockdata::block::Block;
-pub use blockdata::block::BlockHeader;
-pub use blockdata::script::Script;
-pub use blockdata::transaction::Transaction;
-pub use blockdata::transaction::TxIn;
-pub use blockdata::transaction::TxOut;
-pub use blockdata::transaction::OutPoint;
-pub use blockdata::transaction::SigHashType;
+pub use primitives::block::Block;
+pub use primitives::block::BlockHeader;
+pub use primitives::transaction::Transaction;
+pub use primitives::transaction::TxIn;
+pub use primitives::transaction::TxOut;
+pub use primitives::transaction::OutPoint;
+pub use primitives::transaction::SigHashType;
 pub use consensus::encode::VarInt;
-pub use network::constants::Network;
-pub use util::Error;
+pub use consensus::encode::Error;
+pub use network::Network;
+pub use network::ServiceFlags;
+pub use script::Script;
 pub use util::address::Address;
 pub use util::address::AddressType;
 pub use util::amount::Amount;
@@ -85,6 +87,10 @@ pub use util::amount::SignedAmount;
 pub use util::key::PrivateKey;
 pub use util::key::PublicKey;
 pub use util::merkleblock::MerkleBlock;
+
+pub use util::{address, amount, base58, bip32, bip143, hash, key, merkleblock, misc, psbt, uint, bip158};
+#[allow(deprecated)]
+pub use util::contracthash;
 
 #[cfg(all(test, feature = "unstable"))] use tests::EmptyWrite;
 

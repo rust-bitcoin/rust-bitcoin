@@ -21,10 +21,10 @@ use std::{io, ops, error};
 use std::str::FromStr;
 
 use secp256k1::{self, Secp256k1};
-use network::constants::Network;
 use hashes::{Hash, hash160};
 use hash_types::{PubkeyHash, WPubkeyHash};
 use util::base58;
+use Network;
 
 /// A key-related error.
 #[derive(Debug)]
@@ -376,19 +376,16 @@ impl<'de> ::serde::Deserialize<'de> for PublicKey {
 
 #[cfg(test)]
 mod tests {
-    use super::{PrivateKey, PublicKey};
     use secp256k1::Secp256k1;
     use std::str::FromStr;
     use hashes::hex::ToHex;
-    use network::constants::Network::Testnet;
-    use network::constants::Network::Bitcoin;
-    use util::address::Address;
+    use {Address, Network, PrivateKey, PublicKey};
 
     #[test]
     fn test_key_derivation() {
         // testnet compressed
         let sk = PrivateKey::from_wif("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
-        assert_eq!(sk.network, Testnet);
+        assert_eq!(sk.network, Network::Testnet);
         assert_eq!(sk.compressed, true);
         assert_eq!(&sk.to_wif(), "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy");
 
@@ -404,7 +401,7 @@ mod tests {
 
         // mainnet uncompressed
         let sk = PrivateKey::from_wif("5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3").unwrap();
-        assert_eq!(sk.network, Bitcoin);
+        assert_eq!(sk.network, Network::Bitcoin);
         assert_eq!(sk.compressed, false);
         assert_eq!(&sk.to_wif(), "5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3");
 

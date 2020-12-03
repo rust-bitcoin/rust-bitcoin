@@ -21,15 +21,12 @@
 #![cfg_attr(not(test), deprecated)]
 
 use secp256k1::{self, Secp256k1};
-use PrivateKey;
-use PublicKey;
 use hashes::{sha256, Hash, HashEngine, Hmac, HmacEngine};
-use blockdata::{opcodes, script};
 
 use std::{error, fmt};
 
-use hash_types::ScriptHash;
-use network::constants::Network;
+use {Network, PrivateKey, PublicKey, ScriptHash};
+use script::{self, opcodes};
 use util::address;
 
 /// Encoding of "pubkey here" in script; from Bitcoin Core `src/script/script.h`
@@ -280,11 +277,8 @@ mod tests {
     use secp256k1::rand::thread_rng;
     use std::str::FromStr;
 
-    use blockdata::script::Script;
-    use network::constants::Network;
-
+    use {Network, PublicKey, Script};
     use super::*;
-    use PublicKey;
 
     macro_rules! hex (($hex:expr) => (Vec::from_hex($hex).unwrap()));
     macro_rules! hex_key (($hex:expr) => (PublicKey::from_slice(&hex!($hex)).unwrap()));

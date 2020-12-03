@@ -23,17 +23,13 @@
 use std::fmt;
 
 use util;
-use util::Error::{BlockBadTarget, BlockBadProofOfWork};
 use util::hash::bitcoin_merkle_root;
 use hashes::{Hash, HashEngine};
 use hash_types::{Wtxid, BlockHash, TxMerkleNode, WitnessMerkleNode, WitnessCommitment};
 use util::uint::Uint256;
 use consensus::encode::Encodable;
-use network::constants::Network;
-use blockdata::transaction::Transaction;
-use blockdata::constants::{max_target, WITNESS_SCALE_FACTOR};
-use blockdata::script;
-use VarInt;
+use primitives::{max_target, PowError, WITNESS_SCALE_FACTOR};
+use {script, Network, Transaction, VarInt};
 
 /// A block header, which contains all the block's information except
 /// the actual transactions
@@ -75,7 +71,7 @@ impl BlockHeader {
     /// [`Uint256`]: ../../util/uint/struct.Uint256.html
     ///
     /// ```
-    /// use bitcoin::blockdata::block::BlockHeader;
+    /// use bitcoin::primitives::block::BlockHeader;
     ///
     /// assert_eq!(0x1d00ffff,
     ///     BlockHeader::compact_target_from_u256(
@@ -129,16 +125,16 @@ impl BlockHeader {
     }
 
     /// Checks that the proof-of-work for the block is valid.
-    pub fn validate_pow(&self, required_target: &Uint256) -> Result<(), util::Error> {
+    pub fn validate_pow(&self, required_target: &Uint256) -> Result<(), PowError> {
         let target = &self.target();
         if target != required_target {
-            return Err(BlockBadTarget);
+            return Err(PowError::BadTarget);
         }
         let data: [u8; 32] = self.block_hash().into_inner();
         let mut ret = [0u64; 4];
         util::endian::bytes_to_u64_slice_le(&data, &mut ret);
         let hash = &Uint256(ret);
-        if hash <= target { Ok(()) } else { Err(BlockBadProofOfWork) }
+        if hash <= target { Ok(()) } else { Err(PowError::BadProofOfWork) }
     }
 
     /// Returns the total work of the block
@@ -314,7 +310,7 @@ impl ::std::error::Error for Bip34Error {}
 mod tests {
     use hashes::hex::FromHex;
 
-    use blockdata::block::{Block, BlockHeader};
+    use primitives::block::{Block, BlockHeader};
     use consensus::encode::{deserialize, serialize};
 
     #[test]

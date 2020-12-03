@@ -19,15 +19,13 @@
 //!
 //! ```rust
 //!
-//! use bitcoin::network::constants::Network;
-//! use bitcoin::util::address::Address;
-//! use bitcoin::util::key;
 //! use bitcoin::secp256k1::Secp256k1;
 //! use bitcoin::secp256k1::rand::thread_rng;
+//! use bitcoin::{Address, Network, PublicKey};
 //!
 //! // Generate random key pair
 //! let s = Secp256k1::new();
-//! let public_key = key::PublicKey {
+//! let public_key = PublicKey {
 //!     compressed: true,
 //!     key: s.generate_keypair(&mut thread_rng()).1,
 //! };
@@ -42,9 +40,7 @@ use std::error;
 
 use bech32;
 use hashes::Hash;
-use hash_types::{PubkeyHash, WPubkeyHash, ScriptHash, WScriptHash};
-use blockdata::script;
-use network::constants::Network;
+use {script, Network, PubkeyHash, WPubkeyHash, ScriptHash, WScriptHash};
 use util::base58;
 use util::key;
 
@@ -498,9 +494,7 @@ mod tests {
 
     use hashes::hex::{FromHex, ToHex};
 
-    use blockdata::script::Script;
-    use network::constants::Network::{Bitcoin, Testnet};
-    use util::key::PublicKey;
+    use {PublicKey, Script, Network::{Bitcoin, Testnet}};
 
     use super::*;
 

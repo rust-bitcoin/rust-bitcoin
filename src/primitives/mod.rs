@@ -1,6 +1,6 @@
 // Rust Bitcoin Library
 // Written in 2014 by
-//     Andrew Poelstra <apoelstra@wpsoftware.net>
+//   Andrew Poelstra <apoelstra@wpsoftware.net>
 //
 // To the extent possible under law, the author(s) have dedicated all
 // copyright and related and neighboring rights to this software to
@@ -12,23 +12,43 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! Blockdata constants
+//! Primitives
 //!
-//! This module provides various constants relating to the blockchain and
-//! consensus code. In particular, it defines the genesis block and its
-//! single transaction
+//! This module defines structures and functions for storing the blocks and
+//! transactions which make up the Bitcoin system.
 //!
 
-use std::default::Default;
+pub mod transaction;
+pub mod block;
+
+use std::{error, fmt};
 
 use hashes::hex::FromHex;
 use hashes::sha256d;
-use blockdata::opcodes;
-use blockdata::script;
-use blockdata::transaction::{OutPoint, Transaction, TxOut, TxIn};
-use blockdata::block::{Block, BlockHeader};
-use network::constants::Network;
+use script::{self, opcodes};
 use util::uint::Uint256;
+use {Block, BlockHeader, Network, OutPoint, Transaction, TxOut, TxIn};
+
+/// Proof-of-work validation error
+#[derive(Debug)]
+pub enum PowError {
+    /// The header hash is not below the target
+    BadProofOfWork,
+    /// The `target` field of a block header did not match the expected difficulty
+    BadTarget,
+}
+
+impl fmt::Display for PowError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            PowError::BadProofOfWork => f.write_str("block target correct but not attained"),
+            PowError::BadTarget => f.write_str("block target incorrect"),
+        }
+    }
+}
+
+impl error::Error for PowError {
+}
 
 /// The maximum allowable sequence number
 pub const MAX_SEQUENCE: u32 = 0xFFFFFFFF;
@@ -85,7 +105,7 @@ fn bitcoin_genesis_tx() -> Transaction {
     // Outputs
     let out_script = script::Builder::new()
         .push_slice(&Vec::from_hex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f").unwrap())
-        .push_opcode(opcodes::all::OP_CHECKSIG)
+        .push_opcode(opcodes::OP_CHECKSIG)
         .into_script();
     ret.output.push(TxOut {
         value: 50 * COIN_VALUE,
@@ -162,10 +182,9 @@ mod test {
     use std::default::Default;
     use hashes::hex::FromHex;
 
-    use network::constants::Network;
     use consensus::encode::serialize;
-    use blockdata::constants::{genesis_block, bitcoin_genesis_tx};
-    use blockdata::constants::{MAX_SEQUENCE, COIN_VALUE};
+    use Network;
+    use super::*;
 
     #[test]
     fn bitcoin_genesis_first_transaction() {

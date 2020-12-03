@@ -14,17 +14,16 @@
 
 use std::collections::btree_map::{Entry, BTreeMap};
 
-use blockdata::script::Script;
-use blockdata::transaction::{SigHashType, Transaction, TxOut};
 use consensus::encode;
-use util::bip32::KeySource;
 use hashes::{self, hash160, ripemd160, sha256, sha256d};
-use util::key::PublicKey;
+use util::bip32::KeySource;
 use util::psbt;
 use util::psbt::map::Map;
 use util::psbt::raw;
 use util::psbt::serialize::Deserialize;
 use util::psbt::{Error, error};
+use {PublicKey, Script, SigHashType, Transaction, TxOut};
+
 /// A key-value map for an input of the corresponding index in the unsigned
 /// transaction.
 #[derive(Clone, Default, Debug, PartialEq)]

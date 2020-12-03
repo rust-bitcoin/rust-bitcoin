@@ -40,8 +40,8 @@ use hash_types::{BlockHash, FilterHash, TxMerkleNode, FilterHeader};
 use util::endian;
 use util::psbt;
 
-use blockdata::transaction::{TxOut, Transaction, TxIn};
-use network::message_blockdata::Inventory;
+use {TxOut, Transaction, TxIn};
+use network::msg::Inventory;
 use network::address::{Address, AddrV2Message};
 
 /// Encoding error
@@ -742,7 +742,7 @@ mod tests {
     use consensus::{Encodable, deserialize_partial, Decodable};
     use util::endian::{u64_to_array_le, u32_to_array_le, u16_to_array_le};
     use secp256k1::rand::{thread_rng, Rng};
-    use network::message_blockdata::Inventory;
+    use network::msg::Inventory;
     use network::Address;
 
     #[test]
