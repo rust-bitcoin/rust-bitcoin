@@ -80,10 +80,12 @@ pub enum Error {
     ParseFailed(&'static str),
     /// Unsupported Segwit flag
     UnsupportedSegwitFlag(u8),
-    /// Unrecognized network command
-    UnrecognizedNetworkCommand(String),
+    /// Unrecognized network command with its length
+    UnrecognizedNetworkCommand(String, usize),
     /// Invalid Inventory type
     UnknownInventoryType(u32),
+    /// The network command is longer than the maximum allowed (12 chars)
+    NetworkCommandTooLong(String),
 }
 
 impl fmt::Display for Error {
@@ -102,9 +104,10 @@ impl fmt::Display for Error {
             Error::ParseFailed(ref e) => write!(f, "parse failed: {}", e),
             Error::UnsupportedSegwitFlag(ref swflag) => write!(f,
                 "unsupported segwit version: {}", swflag),
-            Error::UnrecognizedNetworkCommand(ref nwcmd) => write!(f,
+            Error::UnrecognizedNetworkCommand(ref nwcmd, _) => write!(f,
                 "unrecognized network command: {}", nwcmd),
             Error::UnknownInventoryType(ref tp) => write!(f, "Unknown Inventory type: {}", tp),
+            Error::NetworkCommandTooLong(ref cmd) => write!(f, "Network Command too long: {}", cmd),
         }
     }
 }
@@ -122,7 +125,8 @@ impl error::Error for Error {
             | Error::ParseFailed(..)
             | Error::UnsupportedSegwitFlag(..)
             | Error::UnrecognizedNetworkCommand(..)
-            | Error::UnknownInventoryType(..) => None,
+            | Error::UnknownInventoryType(..)
+            | Error::NetworkCommandTooLong(..) => None,
         }
     }
 }

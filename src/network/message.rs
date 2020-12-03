@@ -70,7 +70,7 @@ impl Encodable for CommandString {
         let mut rawbytes = [0u8; 12];
         let strbytes = self.0.as_bytes();
         if strbytes.len() > 12 {
-            return Err(encode::Error::UnrecognizedNetworkCommand(self.0.clone().into_owned()));
+            return Err(encode::Error::NetworkCommandTooLong(self.0.clone().into_owned()));
         }
         rawbytes[..strbytes.len()].clone_from_slice(&strbytes[..]);
         rawbytes.consensus_encode(s)
@@ -306,6 +306,7 @@ impl Decodable for RawNetworkMessage {
         let magic = Decodable::consensus_decode(&mut d)?;
         let cmd = CommandString::consensus_decode(&mut d)?.0;
         let raw_payload = CheckedData::consensus_decode(&mut d)?.0;
+        let raw_payload_len = raw_payload.len();
 
         let mut mem_d = Cursor::new(raw_payload);
         let payload = match &cmd[..] {
@@ -339,7 +340,7 @@ impl Decodable for RawNetworkMessage {
             "wtxidrelay" => NetworkMessage::WtxidRelay,
             "addrv2" => NetworkMessage::AddrV2(Decodable::consensus_decode(&mut mem_d)?),
             "sendaddrv2" => NetworkMessage::SendAddrV2,
-            _ => return Err(encode::Error::UnrecognizedNetworkCommand(cmd.into_owned())),
+            _ => return Err(encode::Error::UnrecognizedNetworkCommand(cmd.into_owned(), 4 + 12 + 4 + 4 + raw_payload_len)), // magic + msg str + payload len + checksum + payload
         };
         Ok(RawNetworkMessage {
             magic: magic,
