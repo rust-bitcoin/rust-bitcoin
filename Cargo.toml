@@ -21,14 +21,15 @@ use-serde = ["serde", "bitcoin_hashes/serde", "secp256k1/serde"]
 secp-endomorphism = ["secp256k1/endomorphism"]
 secp-lowmemory = ["secp256k1/lowmemory"]
 secp-recovery = ["secp256k1/recovery"]
-std = ["secp256k1/std", "bitcoin_hashes/std"]
+std = ["secp256k1/std", "bitcoin_hashes/std", "bech32/std"]
 use-bare-io = ["bare-io", "bitcoin_hashes/bare-io"]
 
 [dependencies]
 base64-compat = { version = "1.0.0", optional = true }
-bech32 = "0.7.2"
-bitcoin_hashes = { git = "https://github.com/justinmoon/bitcoin_hashes.git", branch = "more_no_std", features = [], default-features = false }
-secp256k1 = { version = "0.19.0", features = [ "recovery" ] }
+bech32 = { git = "https://github.com/reuvenpo/rust-bech32.git", branch = "support-no_std", features = [], default-features = false }
+bitcoin_hashes = { git = "https://github.com/justinmoon/bitcoin_hashes.git", branch = "no_std", features = [], default-features = false }
+# FIXME: this used to have recovery and rand-std features enabled
+secp256k1 = { git = "https://github.com/justinmoon/rust-secp256k1.git", branch = "no_std", features = [], default-features = false }
 
 bitcoinconsensus = { version = "0.19.0-1", optional = true }
 serde = { version = "1", optional = true }
@@ -38,7 +39,7 @@ bare-io = { version = "0.2", optional = true }
 serde_derive = "<1.0.99"
 serde_json = "<1.0.45"
 serde_test = "1"
-secp256k1 = { version = "0.19.0", features = [ "recovery", "rand-std" ] }
+secp256k1 = { git = "https://github.com/justinmoon/rust-secp256k1.git", branch = "no_std", features = ["recovery", "rand-std"], default-features = false }
 # We need to pin ryu (transitive dep from serde_json) to stay compatible with Rust 1.22.0
 ryu = "<1.0.5"
 
