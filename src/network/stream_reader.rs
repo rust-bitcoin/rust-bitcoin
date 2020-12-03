@@ -68,6 +68,10 @@ impl<R: Read> StreamReader<R> {
                         return Err(encode::Error::Io(io::Error::from(io::ErrorKind::UnexpectedEof)));
                     }
                 },
+                Err(encode::Error::UnrecognizedNetworkCommand(message, len)) => {
+                    self.unparsed.drain(..len);
+                    return Err(encode::Error::UnrecognizedNetworkCommand(message, len))
+                },
                 Err(err) => return Err(err),
                 // We have successfully read from the buffer
                 Ok((message, index)) => {
