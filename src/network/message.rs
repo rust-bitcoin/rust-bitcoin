@@ -19,10 +19,10 @@
 //! also defines (de)serialization routines for many primitives.
 //!
 
-use std::{io, iter, mem, fmt};
-use std::borrow::Cow;
-use std::io::Cursor;
+use alloc::{string::String, borrow::Cow, vec::Vec};
+use core::{mem, fmt, iter};
 
+use io;
 use blockdata::block;
 use blockdata::transaction;
 use network::address::{Address, AddrV2Message};
@@ -307,7 +307,7 @@ impl Decodable for RawNetworkMessage {
         let cmd = CommandString::consensus_decode(&mut d)?.0;
         let raw_payload = CheckedData::consensus_decode(&mut d)?.0;
 
-        let mut mem_d = Cursor::new(raw_payload);
+        let mut mem_d = io::Cursor::new(raw_payload);
         let payload = match &cmd[..] {
             "version" => NetworkMessage::Version(Decodable::consensus_decode(&mut mem_d)?),
             "verack"  => NetworkMessage::Verack,
@@ -350,7 +350,8 @@ impl Decodable for RawNetworkMessage {
 
 #[cfg(test)]
 mod test {
-    use std::io;
+    use alloc::vec::Vec;
+    use io;
     use std::net::Ipv4Addr;
     use super::{RawNetworkMessage, NetworkMessage, CommandString};
     use network::constants::ServiceFlags;

@@ -21,8 +21,9 @@
 use blockdata::script::Script;
 use blockdata::transaction::Transaction;
 use consensus::{encode, Encodable, Decodable};
+use io;
 
-use std::io;
+use alloc::vec::Vec;
 
 mod error;
 pub use self::error::Error;
@@ -163,11 +164,12 @@ impl Decodable for PartiallySignedTransaction {
 
 #[cfg(test)]
 mod tests {
+    use alloc::vec::Vec;
     use hashes::hex::FromHex;
     use hashes::{sha256, hash160, Hash, ripemd160};
     use hash_types::Txid;
 
-    use std::collections::BTreeMap;
+    use alloc::collections::BTreeMap;
 
     use secp256k1::Secp256k1;
 
@@ -310,7 +312,8 @@ mod tests {
     }
 
     mod bip_vectors {
-        use std::collections::BTreeMap;
+        use alloc::vec::Vec;
+        use alloc::collections::BTreeMap;
 
         use hashes::hex::FromHex;
         use hash_types::Txid;

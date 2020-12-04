@@ -18,8 +18,8 @@
 //! capabilities
 //!
 
-use std::io;
-use std::borrow::Cow;
+use io;
+use alloc::{borrow::Cow, string::String};
 
 use network::address::Address;
 use network::constants::{self, ServiceFlags};
@@ -148,6 +148,7 @@ mod tests {
     use super::VersionMessage;
 
     use hashes::hex::FromHex;
+    use alloc::vec::Vec;
     use network::constants::ServiceFlags;
 
     use consensus::encode::{deserialize, serialize};

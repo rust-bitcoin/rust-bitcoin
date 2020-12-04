@@ -1,6 +1,6 @@
 extern crate bitcoin;
-use std::str::FromStr;
-use std::convert::Into;
+use core::str::FromStr;
+use core::convert::Into;
 
 fn do_test(data: &[u8]) {
     macro_rules! read_ints {

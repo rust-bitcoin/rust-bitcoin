@@ -24,8 +24,10 @@
 //! This module provides the structures and functions needed to support scripts.
 //!
 
-use std::default::Default;
-use std::{error, fmt, io};
+use io;
+
+use core::{fmt, default::Default};
+use alloc::{boxed::Box, vec::Vec, string::String};
 
 #[cfg(feature = "serde")] use serde;
 
@@ -34,7 +36,7 @@ use blockdata::opcodes;
 use consensus::{encode, Decodable, Encodable};
 use hashes::Hash;
 #[cfg(feature="bitcoinconsensus")] use bitcoinconsensus;
-#[cfg(feature="bitcoinconsensus")] use std::convert;
+#[cfg(feature="bitcoinconsensus")] use core::convert::From;
 #[cfg(feature="bitcoinconsensus")] use OutPoint;
 
 use util::key::PublicKey;
@@ -120,11 +122,12 @@ impl fmt::Display for Error {
     }
 }
 
-impl error::Error for Error {}
+#[cfg(feature = "std")]
+impl std::error::Error for Error {}
 
 #[cfg(feature="bitcoinconsensus")]
 #[doc(hidden)]
-impl convert::From<bitcoinconsensus::Error> for Error {
+impl From<bitcoinconsensus::Error> for Error {
     fn from(err: bitcoinconsensus::Error) -> Error {
         match err {
             _ => Error::BitcoinConsensus(err)
@@ -760,7 +763,7 @@ impl<'de> serde::Deserialize<'de> for Script {
     where
         D: serde::Deserializer<'de>,
     {
-        use std::fmt::Formatter;
+        use core::fmt::Formatter;
         use hashes::hex::FromHex;
 
         struct Visitor;
@@ -829,7 +832,7 @@ impl Decodable for Script {
 
 #[cfg(test)]
 mod test {
-    use std::str::FromStr;
+    use core::str::FromStr;
 
     use super::*;
     use super::build_scriptint;

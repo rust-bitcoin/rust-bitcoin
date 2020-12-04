@@ -12,8 +12,8 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-use std::error;
-use std::fmt;
+use alloc::vec::Vec;
+use core::fmt;
 
 use blockdata::transaction::Transaction;
 use util::psbt::raw;
@@ -95,7 +95,8 @@ impl fmt::Display for Error {
     }
 }
 
-impl error::Error for Error {}
+#[cfg(feature = "std")]
+impl std::error::Error for Error {}
 
 #[doc(hidden)]
 impl From<hashes::Error> for Error {

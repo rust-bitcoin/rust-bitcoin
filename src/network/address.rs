@@ -18,10 +18,13 @@
 //! network addresses in Bitcoin messages.
 //!
 
-use std::io;
-use std::fmt;
+
 use std::net::{SocketAddr, Ipv6Addr, SocketAddrV4, SocketAddrV6, Ipv4Addr};
 
+use alloc::vec::Vec;
+use core::fmt;
+
+use io;
 use network::constants::ServiceFlags;
 use consensus::encode::{self, Decodable, Encodable, VarInt, ReadExt, WriteExt};
 
@@ -266,7 +269,7 @@ impl Decodable for AddrV2Message {
 
 #[cfg(test)]
 mod test {
-    use std::str::FromStr;
+    use core::str::FromStr;
     use super::{AddrV2Message, AddrV2, Address};
     use network::constants::ServiceFlags;
     use std::net::{SocketAddr, IpAddr, Ipv4Addr, Ipv6Addr};

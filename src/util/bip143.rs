@@ -25,8 +25,10 @@ use blockdata::script::Script;
 use blockdata::transaction::{Transaction, TxIn, SigHashType};
 use consensus::{encode, Encodable};
 
-use std::io;
-use std::ops::{Deref, DerefMut};
+use io;
+
+use alloc::vec::Vec;
+use core::ops::{Deref, DerefMut};
 
 /// Parts of a sighash which are common across inputs or signatures, and which are
 /// sufficient (in conjunction with a private key) to sign the transaction
@@ -170,7 +172,7 @@ impl<R: Deref<Target=Transaction>> SigHashCache<R> {
     }
 
     /// Encode the BIP143 signing data for any flag type into a given object implementing a
-    /// std::io::Write trait.
+    /// io::Write trait.
     pub fn encode_signing_data_to<Write: io::Write>(
         &mut self,
         mut writer: Write,

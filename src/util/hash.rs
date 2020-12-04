@@ -15,8 +15,9 @@
 //!
 //! Utility functions related to hashing data, including merkleization
 
-use std::cmp::min;
-use std::io;
+use alloc::vec::Vec;
+use core::cmp::min;
+use io;
 
 use hashes::Hash;
 use consensus::encode::Encodable;

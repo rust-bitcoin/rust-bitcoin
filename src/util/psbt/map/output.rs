@@ -12,8 +12,9 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-use std::collections::BTreeMap;
-use std::collections::btree_map::Entry;
+use alloc::vec::Vec;
+use alloc::collections::BTreeMap;
+use alloc::collections::btree_map::Entry;
 
 use blockdata::script::Script;
 use consensus::encode;

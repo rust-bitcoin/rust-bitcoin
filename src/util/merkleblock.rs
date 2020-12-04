@@ -52,8 +52,11 @@
 //! assert_eq!(1, index[0]);
 //! ```
 
-use std::collections::HashSet;
-use std::io;
+use alloc::collections::BTreeSet;
+use alloc::borrow::ToOwned;
+
+use io;
+use alloc::{string::String, vec::Vec};
 
 use hashes::Hash;
 use hash_types::{Txid, TxMerkleNode};
@@ -430,7 +433,7 @@ impl MerkleBlock {
     /// assert!(mb.extract_matches(&mut matches, &mut index).is_ok());
     /// assert_eq!(txid, matches[0]);
     /// ```
-    pub fn from_block(block: &Block, match_txids: &HashSet<Txid>) -> Self {
+    pub fn from_block(block: &Block, match_txids: &BTreeSet<Txid>) -> Self {
         let block_txids: Vec<_> = block.txdata.iter().map(Transaction::txid).collect();
         Self::from_header_txids(&block.header, &block_txids, match_txids)
     }
@@ -442,7 +445,7 @@ impl MerkleBlock {
     pub fn from_header_txids(
         header: &BlockHeader,
         block_txids: &[Txid],
-        match_txids: &HashSet<Txid>,
+        match_txids: &BTreeSet<Txid>,
     ) -> Self {
         let matches: Vec<bool> = block_txids
             .iter()
@@ -496,7 +499,8 @@ impl Decodable for MerkleBlock {
 
 #[cfg(test)]
 mod tests {
-    use std::cmp::min;
+    use alloc::vec::Vec;
+    use core::cmp::min;
 
     use hashes::Hash;
     use hashes::hex::{FromHex, ToHex};
