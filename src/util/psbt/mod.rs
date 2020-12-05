@@ -194,6 +194,7 @@ mod tests {
                 },
                 xpub: Default::default(),
                 version: 0,
+                proprietary: BTreeMap::new(),
                 unknown: BTreeMap::new(),
             },
             inputs: vec![],
@@ -283,6 +284,7 @@ mod tests {
             },
             xpub: Default::default(),
             version: 0,
+            proprietary: Default::default(),
             unknown: Default::default(),
         };
 
@@ -387,6 +389,7 @@ mod tests {
                     },
                     xpub: Default::default(),
                     version: 0,
+                    proprietary: BTreeMap::new(),
                     unknown: BTreeMap::new(),
                 },
                 inputs: vec![Input {
@@ -612,6 +615,7 @@ mod tests {
                 },
                 version: 0,
                 xpub: Default::default(),
+                proprietary: Default::default(),
                 unknown: BTreeMap::new(),
             },
             inputs: vec![Input {
