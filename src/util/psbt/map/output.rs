@@ -45,7 +45,7 @@ pub struct Output {
     /// corresponding master key fingerprints and derivation paths.
     pub bip32_derivation: BTreeMap<PublicKey, KeySource>,
     /// Proprietary key-value pairs for this output.
-    pub proprietary: BTreeMap<raw::Key, Vec<u8>>,
+    pub proprietary: BTreeMap<raw::ProprietaryKey, Vec<u8>>,
     /// Unknown key-value pairs for this output.
     pub unknown: BTreeMap<raw::Key, Vec<u8>>,
 }
@@ -76,9 +76,9 @@ impl Map for Output {
                     self.bip32_derivation <= <raw_key: PublicKey>|<raw_value: KeySource>
                 }
             }
-            PSBT_OUT_PROPRIETARY => match self.proprietary.entry(raw_key) {
+            PSBT_OUT_PROPRIETARY => match self.proprietary.entry(raw::ProprietaryKey::from_key(raw_key.clone())?) {
                 Entry::Vacant(empty_key) => {empty_key.insert(raw_value);},
-                Entry::Occupied(k) => return Err(Error::DuplicateKey(k.key().clone()).into()),
+                Entry::Occupied(_) => return Err(Error::DuplicateKey(raw_key.clone()).into()),
             }
             _ => match self.unknown.entry(raw_key) {
                     Entry::Vacant(empty_key) => {empty_key.insert(raw_value);},
@@ -106,7 +106,7 @@ impl Map for Output {
 
         for (key, value) in self.proprietary.iter() {
             rv.push(raw::Pair {
-                key: key.clone(),
+                key: key.to_key(),
                 value: value.clone(),
             });
         }
