@@ -15,7 +15,7 @@
 use std::collections::BTreeMap;
 use std::collections::btree_map::Entry;
 use std::io::{self, Cursor, Read};
-use std::cmp::Ordering;
+use std::cmp::{self, Ordering};
 
 use blockdata::transaction::Transaction;
 use consensus::{encode, Encodable, Decodable};
@@ -28,8 +28,11 @@ use util::bip32::{ExtendedPubKey, KeySource, Fingerprint, DerivationPath, ChildN
 
 /// Type: Unsigned Transaction PSBT_GLOBAL_UNSIGNED_TX = 0x00
 const PSBT_GLOBAL_UNSIGNED_TX: u8 = 0x00;
+/// Type: Extended Public Key PSBT_GLOBAL_XPUB = 0x01
 const PSBT_GLOBAL_XPUB: u8 = 0x01;
+/// Type: Version Number PSBT_GLOBAL_VERSION = 0xFB
 const PSBT_GLOBAL_VERSION: u8 = 0xFB;
+
 /// A key-value map for global data.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Global {
@@ -115,9 +118,7 @@ impl Map for Global {
                 value: {
                     let mut ret = Vec::with_capacity(4 + derivation.len() * 4);
                     ret.extend(fingerprint.as_bytes());
-                    for no in 0..derivation.len() {
-                        ret.extend(&u32_to_array_le(derivation[no].into())[..])
-                    }
+                    derivation.into_iter().for_each(|n| ret.extend(&u32_to_array_le((*n).into())));
                     ret
                 }
             });
@@ -144,7 +145,7 @@ impl Map for Global {
         Ok(rv)
     }
 
-    // Keep in mind that according to BIP 174 this function must be transitive, i.e.
+    // Keep in mind that according to BIP 174 this function must be commutative, i.e.
     // A.merge(B) == B.merge(A)
     fn merge(&mut self, other: Self) -> Result<(), psbt::Error> {
         if self.unsigned_tx != other.unsigned_tx {
@@ -158,7 +159,7 @@ impl Map for Global {
         //          the specification. It can pick arbitrarily when conflicts occur.
 
         // Keeping the highest version
-        self.version = self.version.max(other.version);
+        self.version = cmp::max(self.version, other.version);
 
         // Merging xpubs
         for (xpub, (fingerprint1, derivation1)) in other.xpub {
@@ -171,7 +172,7 @@ impl Map for Global {
                     // 1) if fingerprints are equal but derivations are not, we report an error; otherwise
                     // 2) choose longest unhardened derivation; if equal
                     // 3) choose longest derivation; if equal
-                    // 4) choose largest fingerprint; if equal
+                    // 4) choose largest fingerprint using binary ordering; if equal
                     // 5) do nothing
                     let (fingerprint2, len2, normal_len2) = {
                         // weird scope needed for rustc 1.29 borrow checker
@@ -184,8 +185,7 @@ impl Map for Global {
                         (Ordering::Equal, Ordering::Equal, Ordering::Equal) => {},
                         (Ordering::Equal, _, Ordering::Equal) => {
                             return Err(psbt::Error::MergeConflict(format!(
-                                "global xpub {} has inconsistent key sources",
-                                xpub
+                                "global xpub {} has inconsistent key sources", xpub
                             ).to_owned()));
                         }
                         (Ordering::Greater, _, _)
@@ -253,9 +253,9 @@ impl Decodable for Global {
                         PSBT_GLOBAL_XPUB => {
                             if !pair.key.key.is_empty() {
                                 let xpub = ExtendedPubKey::decode(&pair.key.key)
-                                    .map_err(|_| {
-                                        encode::Error::ParseFailed("Can't deserialize ExtendedPublicKey from global XPUB key data")
-                                    })?;
+                                    .map_err(|_| encode::Error::ParseFailed(
+                                        "Can't deserialize ExtendedPublicKey from global XPUB key data"
+                                    ))?;
 
                                 if pair.value.len() % 4 != 0 {
                                     return Err(encode::Error::ParseFailed("Incorrect length of global xpub list"))
