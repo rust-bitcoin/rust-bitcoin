@@ -307,22 +307,27 @@ impl Transaction {
     /// through an ECDSA signer, the SigHashType appended to the resulting sig, and a script
     /// written around this, but this is the general (and hard) part.
     ///
+    /// The `sighash_type` supports arbitrary `u32` value, instead of just [`SigHashType`],
+    /// because internally 4 bytes are being hashed, even though only lowest byte
+    /// is appended to signature in a transaction.
+    ///
     /// *Warning* This does NOT attempt to support OP_CODESEPARATOR. In general this would require
     /// evaluating `script_pubkey` to determine which separators get evaluated and which don't,
     /// which we don't have the information to determine.
     ///
     /// # Panics Panics if `input_index` is greater than or equal to `self.input.len()`
     ///
-    pub fn encode_signing_data_to<Write: io::Write>(
+    pub fn encode_signing_data_to<Write: io::Write, U: Into<u32>>(
         &self,
         mut writer: Write,
         input_index: usize,
         script_pubkey: &Script,
-        sighash_u32: u32
+        sighash_type: U,
     ) -> Result<(), encode::Error> {
+        let sighash_type : u32 = sighash_type.into();
         assert!(input_index < self.input.len());  // Panic on OOB
 
-        let (sighash, anyone_can_pay) = SigHashType::from_u32(sighash_u32).split_anyonecanpay_flag();
+        let (sighash, anyone_can_pay) = SigHashType::from_u32(sighash_type).split_anyonecanpay_flag();
 
         // Special-case sighash_single bug because this is easy enough.
         if sighash == SigHashType::Single && input_index >= self.output.len() {
@@ -374,7 +379,7 @@ impl Transaction {
         };
         // hash the result
         tx.consensus_encode(&mut writer)?;
-        let sighash_arr = endian::u32_to_array_le(sighash_u32);
+        let sighash_arr = endian::u32_to_array_le(sighash_type);
         sighash_arr.consensus_encode(&mut writer)?;
         Ok(())
     }
@@ -681,6 +686,11 @@ impl SigHashType {
      pub fn as_u32(self) -> u32 { self as u32 }
 }
 
+impl From<SigHashType> for u32 {
+    fn from(t: SigHashType) -> u32 {
+        t.as_u32()
+    }
+}
 
 #[cfg(test)]
 mod tests {
