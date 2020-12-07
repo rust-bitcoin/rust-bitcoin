@@ -49,7 +49,7 @@ pub struct Input {
     pub witness_script: Option<Script>,
     /// A map from public keys needed to sign this input to their corresponding
     /// master key fingerprints and derivation paths.
-    pub hd_keypaths: BTreeMap<PublicKey, KeySource>,
+    pub bip32_derivation: BTreeMap<PublicKey, KeySource>,
     /// The finalized, fully-constructed scriptSig with signatures and any other
     /// scripts necessary for this input to pass validation.
     pub final_script_sig: Option<Script>,
@@ -57,8 +57,8 @@ pub struct Input {
     /// other scripts necessary for this input to pass validation.
     pub final_script_witness: Option<Vec<Vec<u8>>>,
     /// TODO: Proof of reserves commitment
-    /// RIPEMD hash to preimage map
-    pub ripemd_preimages: BTreeMap<ripemd160::Hash, Vec<u8>>,
+    /// RIPEMD160 hash to preimage map
+    pub ripemd160_preimages: BTreeMap<ripemd160::Hash, Vec<u8>>,
     /// SHA256 hash to preimage map
     pub sha256_preimages: BTreeMap<sha256::Hash, Vec<u8>>,
     /// HSAH160 hash to preimage map
@@ -70,9 +70,9 @@ pub struct Input {
 }
 serde_struct_impl!(
     Input, non_witness_utxo, witness_utxo, partial_sigs,
-    sighash_type, redeem_script, witness_script, hd_keypaths,
+    sighash_type, redeem_script, witness_script, bip32_derivation,
     final_script_sig, final_script_witness,
-    ripemd_preimages, sha256_preimages, hash160_preimages, hash256_preimages,
+    ripemd160_preimages, sha256_preimages, hash160_preimages, hash256_preimages,
     unknown
 );
 
@@ -126,11 +126,11 @@ impl Map for Input {
             }
             6u8 => {
                 impl_psbt_insert_pair! {
-                    self.hd_keypaths <= <raw_key: PublicKey>|<raw_value: KeySource>
+                    self.bip32_derivation <= <raw_key: PublicKey>|<raw_value: KeySource>
                 }
             }
             10u8 => {
-                psbt_insert_hash_pair(&mut self.ripemd_preimages, raw_key, raw_value, error::PsbtHash::Ripemd)?;
+                psbt_insert_hash_pair(&mut self.ripemd160_preimages, raw_key, raw_value, error::PsbtHash::Ripemd)?;
             }
             11u8 => {
                 psbt_insert_hash_pair(&mut self.sha256_preimages, raw_key, raw_value, error::PsbtHash::Sha256)?;
@@ -182,7 +182,7 @@ impl Map for Input {
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.hd_keypaths as <6u8, PublicKey>|<KeySource>)
+            rv.push(self.bip32_derivation as <6u8, PublicKey>|<KeySource>)
         }
 
         impl_psbt_get_pair! {
@@ -194,7 +194,7 @@ impl Map for Input {
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.ripemd_preimages as <10u8, ripemd160::Hash>|<Vec<u8>>)
+            rv.push(self.ripemd160_preimages as <10u8, ripemd160::Hash>|<Vec<u8>>)
         }
 
         impl_psbt_get_pair! {
@@ -228,8 +228,8 @@ impl Map for Input {
         }
 
         self.partial_sigs.extend(other.partial_sigs);
-        self.hd_keypaths.extend(other.hd_keypaths);
-        self.ripemd_preimages.extend(other.ripemd_preimages);
+        self.bip32_derivation.extend(other.bip32_derivation);
+        self.ripemd160_preimages.extend(other.ripemd160_preimages);
         self.sha256_preimages.extend(other.sha256_preimages);
         self.hash160_preimages.extend(other.hash160_preimages);
         self.hash256_preimages.extend(other.hash256_preimages);

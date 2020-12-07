@@ -34,12 +34,12 @@ pub struct Output {
     pub witness_script: Option<Script>,
     /// A map from public keys needed to spend this output to their
     /// corresponding master key fingerprints and derivation paths.
-    pub hd_keypaths: BTreeMap<PublicKey, KeySource>,
+    pub bip32_derivation: BTreeMap<PublicKey, KeySource>,
     /// Unknown key-value pairs for this output.
     pub unknown: BTreeMap<raw::Key, Vec<u8>>,
 }
 serde_struct_impl!(
-    Output, redeem_script, witness_script, hd_keypaths, unknown
+    Output, redeem_script, witness_script, bip32_derivation, unknown
 );
 
 impl Map for Output {
@@ -62,7 +62,7 @@ impl Map for Output {
             }
             2u8 => {
                 impl_psbt_insert_pair! {
-                    self.hd_keypaths <= <raw_key: PublicKey>|<raw_value: KeySource>
+                    self.bip32_derivation <= <raw_key: PublicKey>|<raw_value: KeySource>
                 }
             }
             _ => match self.unknown.entry(raw_key) {
@@ -86,7 +86,7 @@ impl Map for Output {
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.hd_keypaths as <2u8, PublicKey>|<KeySource>)
+            rv.push(self.bip32_derivation as <2u8, PublicKey>|<KeySource>)
         }
 
         for (key, value) in self.unknown.iter() {
@@ -100,7 +100,7 @@ impl Map for Output {
     }
 
     fn merge(&mut self, other: Self) -> Result<(), psbt::Error> {
-        self.hd_keypaths.extend(other.hd_keypaths);
+        self.bip32_derivation.extend(other.bip32_derivation);
         self.unknown.extend(other.unknown);
 
         merge!(redeem_script, self, other);
