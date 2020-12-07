@@ -44,14 +44,14 @@ const PSBT_IN_BIP32_DERIVATION: u8 = 0x06;
 const PSBT_IN_FINAL_SCRIPTSIG: u8 = 0x07;
 /// Type: Finalized scriptWitness PSBT_IN_FINAL_SCRIPTWITNESS = 0x08
 const PSBT_IN_FINAL_SCRIPTWITNESS: u8 = 0x08;
-/// Type: RIPEMD160 preimage
-const PSBT_IN_RIPEMD160_PREIMAGES: u8 = 0x0a;
-/// Type: SHA256 preimage
-const PSBT_IN_SHA256_PREIMAGES: u8 = 0x0b;
-/// Type: HASH160 preimage
-const PSBT_IN_HASH160_PREIMAGES: u8 = 0x0c;
-/// Type: HASH256 preimage
-const PSBT_IN_HASH256_PREIMAGES: u8 = 0x0d;
+/// Type: RIPEMD160 preimage PSBT_IN_RIPEMD160 = 0x0a
+const PSBT_IN_RIPEMD160: u8 = 0x0a;
+/// Type: SHA256 preimage PSBT_IN_SHA256 = 0x0b
+const PSBT_IN_SHA256: u8 = 0x0b;
+/// Type: HASH160 preimage PSBT_IN_HASH160 = 0x0c
+const PSBT_IN_HASH160: u8 = 0x0c;
+/// Type: HASH256 preimage PSBT_IN_HASH256 = 0x0d
+const PSBT_IN_HASH256: u8 = 0x0d;
 
 /// A key-value map for an input of the corresponding index in the unsigned
 /// transaction.
@@ -157,16 +157,16 @@ impl Map for Input {
                     self.final_script_witness <= <raw_key: _>|<raw_value: Vec<Vec<u8>>>
                 }
             }
-            PSBT_IN_RIPEMD160_PREIMAGES => {
+            PSBT_IN_RIPEMD160 => {
                 psbt_insert_hash_pair(&mut self.ripemd160_preimages, raw_key, raw_value, error::PsbtHash::Ripemd)?;
             }
-            PSBT_IN_SHA256_PREIMAGES => {
+            PSBT_IN_SHA256 => {
                 psbt_insert_hash_pair(&mut self.sha256_preimages, raw_key, raw_value, error::PsbtHash::Sha256)?;
             }
-            PSBT_IN_HASH160_PREIMAGES => {
+            PSBT_IN_HASH160 => {
                 psbt_insert_hash_pair(&mut self.hash160_preimages, raw_key, raw_value, error::PsbtHash::Hash160)?;
             }
-            PSBT_IN_HASH256_PREIMAGES => {
+            PSBT_IN_HASH256 => {
                 psbt_insert_hash_pair(&mut self.hash256_preimages, raw_key, raw_value, error::PsbtHash::Hash256)?;
             }
             _ => match self.unknown.entry(raw_key) {
@@ -222,19 +222,19 @@ impl Map for Input {
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.ripemd160_preimages as <PSBT_IN_RIPEMD160_PREIMAGES, ripemd160::Hash>|<Vec<u8>>)
+            rv.push(self.ripemd160_preimages as <PSBT_IN_RIPEMD160, ripemd160::Hash>|<Vec<u8>>)
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.sha256_preimages as <PSBT_IN_SHA256_PREIMAGES, sha256::Hash>|<Vec<u8>>)
+            rv.push(self.sha256_preimages as <PSBT_IN_SHA256, sha256::Hash>|<Vec<u8>>)
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.hash160_preimages as <PSBT_IN_HASH160_PREIMAGES, hash160::Hash>|<Vec<u8>>)
+            rv.push(self.hash160_preimages as <PSBT_IN_HASH160, hash160::Hash>|<Vec<u8>>)
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.hash256_preimages as <PSBT_IN_HASH256_PREIMAGES, sha256d::Hash>|<Vec<u8>>)
+            rv.push(self.hash256_preimages as <PSBT_IN_HASH256, sha256d::Hash>|<Vec<u8>>)
         }
 
         for (key, value) in self.unknown.iter() {
