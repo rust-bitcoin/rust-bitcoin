@@ -173,12 +173,13 @@ impl Map for Global {
                     // 3) choose longest derivation; if equal
                     // 4) choose largest fingerprint; if equal
                     // 5) do nothing
-                    // Clone is required for Rust 1.29 borrow checker
-                    let (fingerprint2, derivation2) = entry.get().clone();
+                    let (fingerprint2, len2, normal_len2) = {
+                        // weird scope needed for rustc 1.29 borrow checker
+                        let (fp, deriv) = entry.get().clone();
+                        (fp, deriv.len(), deriv.into_iter().rposition(ChildNumber::is_normal))
+                    };
                     let len1 = derivation1.len();
-                    let len2 = derivation2.len();
                     let normal_len1 = derivation1.into_iter().rposition(ChildNumber::is_normal);
-                    let normal_len2 = derivation2.into_iter().rposition(ChildNumber::is_normal);
                     match (normal_len1.cmp(&normal_len2), len1.cmp(&len2), fingerprint1.cmp(&fingerprint2)) {
                         (Ordering::Equal, Ordering::Equal, Ordering::Equal) => {},
                         (Ordering::Equal, _, Ordering::Equal) => {
