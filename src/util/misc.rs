@@ -24,7 +24,8 @@ use consensus::{encode, Encodable};
 #[cfg(feature = "secp-recovery")]
 pub use self::message_signing::{MessageSignature, MessageSignatureError};
 
-static MSG_SIGN_PREFIX: &[u8] = b"\x18Bitcoin Signed Message:\n";
+/// The prefix for signed messages using Bitcoin's message signing protocol.
+pub const BITCOIN_SIGNED_MSG_PREFIX: &[u8] = b"\x18Bitcoin Signed Message:\n";
 
 #[cfg(feature = "secp-recovery")]
 mod message_signing {
@@ -230,14 +231,13 @@ pub fn script_find_and_remove(haystack: &mut Vec<u8>, needle: &[u8]) -> usize {
     n_deleted
 }
 
-/// Hash message for signature using Bitcoin's message signing format
+/// Hash message for signature using Bitcoin's message signing format.
 pub fn signed_msg_hash(msg: &str) -> sha256d::Hash {
     let mut engine = sha256d::Hash::engine();
-    engine.input(MSG_SIGN_PREFIX);
+    engine.input(BITCOIN_SIGNED_MSG_PREFIX);
     let msg_len = encode::VarInt(msg.len() as u64);
     msg_len.consensus_encode(&mut engine).unwrap();
     engine.input(msg.as_bytes());
-
     sha256d::Hash::from_engine(engine)
 }
 
