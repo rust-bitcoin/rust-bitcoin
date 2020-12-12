@@ -93,6 +93,7 @@ pub use util::amount::Denomination;
 pub use util::amount::SignedAmount;
 pub use util::key::PrivateKey;
 pub use util::key::PublicKey;
+#[cfg(feature="std")] // uses std::collections::HashSet
 pub use util::merkleblock::MerkleBlock;
 
 #[cfg(all(test, feature = "unstable"))] use tests::EmptyWrite;

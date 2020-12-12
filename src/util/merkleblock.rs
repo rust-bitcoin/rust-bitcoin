@@ -52,7 +52,8 @@
 //! assert_eq!(1, index[0]);
 //! ```
 
-use alloc::collections::BTreeSet;
+#[cfg(feature="std")]
+use std::collections::HashSet;
 use alloc::borrow::ToOwned;
 
 use io;
@@ -433,7 +434,7 @@ impl MerkleBlock {
     /// assert!(mb.extract_matches(&mut matches, &mut index).is_ok());
     /// assert_eq!(txid, matches[0]);
     /// ```
-    pub fn from_block(block: &Block, match_txids: &BTreeSet<Txid>) -> Self {
+    pub fn from_block(block: &Block, match_txids: &HashSet<Txid>) -> Self {
         let block_txids: Vec<_> = block.txdata.iter().map(Transaction::txid).collect();
         Self::from_header_txids(&block.header, &block_txids, match_txids)
     }
@@ -445,7 +446,7 @@ impl MerkleBlock {
     pub fn from_header_txids(
         header: &BlockHeader,
         block_txids: &[Txid],
-        match_txids: &BTreeSet<Txid>,
+        match_txids: &HashSet<Txid>,
     ) -> Self {
         let matches: Vec<bool> = block_txids
             .iter()

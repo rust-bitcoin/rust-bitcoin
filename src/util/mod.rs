@@ -24,6 +24,7 @@ pub mod bip32;
 pub mod bip143;
 pub mod contracthash;
 pub mod hash;
+#[cfg(feature="std")] // uses std::collections::HashSet
 pub mod merkleblock;
 pub mod misc;
 pub mod psbt;
