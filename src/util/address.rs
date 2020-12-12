@@ -37,7 +37,8 @@
 //! ```
 
 use core::str::FromStr;
-use core::fmt::{self, Display, Debug, Formatter};
+// FIXME: Debug was giving a compiler error without std feature. Why? Is Error not used?
+use core::fmt::{self, Display, Formatter};
 use alloc::{string::ToString, vec::Vec};
 
 use bech32;
