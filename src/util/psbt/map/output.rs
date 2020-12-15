@@ -24,6 +24,13 @@ use util::psbt::map::Map;
 use util::psbt::raw;
 use util::psbt::Error;
 
+/// Type: Redeem Script PSBT_OUT_REDEEM_SCRIPT = 0x00
+const PSBT_OUT_REDEEM_SCRIPT: u8 = 0x00;
+/// Type: Witness Script PSBT_OUT_WITNESS_SCRIPT = 0x01
+const PSBT_OUT_WITNESS_SCRIPT: u8 = 0x01;
+/// Type: BIP 32 Derivation Path PSBT_OUT_BIP32_DERIVATION = 0x02
+const PSBT_OUT_BIP32_DERIVATION: u8 = 0x02;
+
 /// A key-value map for an output of the corresponding index in the unsigned
 /// transaction.
 #[derive(Clone, Default, Debug, PartialEq)]
@@ -50,17 +57,17 @@ impl Map for Output {
         } = pair;
 
         match raw_key.type_value {
-            0u8 => {
+            PSBT_OUT_REDEEM_SCRIPT => {
                 impl_psbt_insert_pair! {
                     self.redeem_script <= <raw_key: _>|<raw_value: Script>
                 }
             }
-            1u8 => {
+            PSBT_OUT_WITNESS_SCRIPT => {
                 impl_psbt_insert_pair! {
                     self.witness_script <= <raw_key: _>|<raw_value: Script>
                 }
             }
-            2u8 => {
+            PSBT_OUT_BIP32_DERIVATION => {
                 impl_psbt_insert_pair! {
                     self.bip32_derivation <= <raw_key: PublicKey>|<raw_value: KeySource>
                 }
@@ -78,15 +85,15 @@ impl Map for Output {
         let mut rv: Vec<raw::Pair> = Default::default();
 
         impl_psbt_get_pair! {
-            rv.push(self.redeem_script as <0u8, _>|<Script>)
+            rv.push(self.redeem_script as <PSBT_OUT_REDEEM_SCRIPT, _>|<Script>)
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.witness_script as <1u8, _>|<Script>)
+            rv.push(self.witness_script as <PSBT_OUT_WITNESS_SCRIPT, _>|<Script>)
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.bip32_derivation as <2u8, PublicKey>|<KeySource>)
+            rv.push(self.bip32_derivation as <PSBT_OUT_BIP32_DERIVATION, PublicKey>|<KeySource>)
         }
 
         for (key, value) in self.unknown.iter() {
