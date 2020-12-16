@@ -172,30 +172,36 @@ impl Map for Global {
                     // 1) if fingerprints are equal but derivations are not, we report an error; otherwise
                     // 2) choose longest unhardened derivation; if equal
                     // 3) choose longest derivation; if equal
-                    // 4) choose largest fingerprint using binary ordering; if equal
-                    // 5) do nothing
-                    let (fingerprint2, len2, normal_len2) = {
+                    // 4) choose the largest derivation using binary ordering; if equal
+                    // 5) check that fingerprints are equal, otherwise fail;
+                    // 6) if fingerprints are also equal we do nothing
+                    let (fingerprint2, len2, normal_len2, deriv_cmp) = {
                         // weird scope needed for rustc 1.29 borrow checker
                         let (fp, deriv) = entry.get().clone();
-                        (fp, deriv.len(), deriv.into_iter().rposition(ChildNumber::is_normal))
+                        (
+                            fp,
+                            deriv.len(),
+                            deriv.into_iter().rposition(ChildNumber::is_normal),
+                            derivation1.cmp(&deriv)
+                        )
                     };
                     let len1 = derivation1.len();
                     let normal_len1 = derivation1.into_iter().rposition(ChildNumber::is_normal);
-                    match (normal_len1.cmp(&normal_len2), len1.cmp(&len2), fingerprint1.cmp(&fingerprint2)) {
-                        (Ordering::Equal, Ordering::Equal, Ordering::Equal) => {},
-                        (Ordering::Equal, _, Ordering::Equal) => {
+                    match (normal_len1.cmp(&normal_len2), len1.cmp(&len2), deriv_cmp, fingerprint1.cmp(&fingerprint2)) {
+                        (Ordering::Equal, Ordering::Equal, Ordering::Equal, Ordering::Equal) => {},
+                        (Ordering::Equal, Ordering::Equal, Ordering::Equal, _) => {
                             return Err(psbt::Error::MergeConflict(format!(
                                 "global xpub {} has inconsistent key sources", xpub
                             ).to_owned()));
                         }
-                        (Ordering::Greater, _, _)
-                        | (Ordering::Equal, Ordering::Greater, _)
-                        | (Ordering::Equal, Ordering::Equal, Ordering::Greater) => {
+                        (Ordering::Greater, ..)
+                        | (Ordering::Equal, Ordering::Greater, ..)
+                        | (Ordering::Equal, Ordering::Equal, Ordering::Greater, _) => {
                             entry.insert((fingerprint1, derivation1));
                         },
-                        (Ordering::Less, _, _)
-                        | (Ordering::Equal, Ordering::Less, _)
-                        | (Ordering::Equal, Ordering::Equal, Ordering::Less) => {
+                        (Ordering::Less, ..)
+                        | (Ordering::Equal, Ordering::Less, ..)
+                        | (Ordering::Equal, Ordering::Equal, Ordering::Less, _) => {
                             // do nothing here: we already own the proper data
                         }
                     }
