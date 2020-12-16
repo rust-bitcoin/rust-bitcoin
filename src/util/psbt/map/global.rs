@@ -263,15 +263,15 @@ impl Decodable for Global {
                                         "Can't deserialize ExtendedPublicKey from global XPUB key data"
                                     ))?;
 
-                                if pair.value.len() % 4 != 0 {
-                                    return Err(encode::Error::ParseFailed("Incorrect length of global xpub list"))
+                                if pair.value.is_empty() || pair.value.len() % 4 != 0 {
+                                    return Err(encode::Error::ParseFailed("Incorrect length of global xpub derivation data"))
                                 }
 
-                                let keys_count = pair.value.len() / 4 - 1;
+                                let child_count = pair.value.len() / 4 - 1;
                                 let mut decoder = Cursor::new(pair.value);
                                 let mut fingerprint = [0u8; 4];
                                 decoder.read_exact(&mut fingerprint[..])?;
-                                let mut path = Vec::<ChildNumber>::with_capacity(keys_count);
+                                let mut path = Vec::<ChildNumber>::with_capacity(child_count);
                                 while let Ok(index) = u32::consensus_decode(&mut decoder) {
                                     path.push(ChildNumber::from(index))
                                 }
@@ -295,8 +295,10 @@ impl Decodable for Global {
                                         return Err(encode::Error::ParseFailed("Wrong global version value length (must be 4 bytes)"))
                                     }
                                     version = Some(Decodable::consensus_decode(&mut decoder)?);
-                                    if decoder.position() != vlen as u64 {
-                                        return Err(encode::Error::ParseFailed("data not consumed entirely when explicitly deserializing"))
+                                    // We only understand version 0 PSBTs. According to BIP-174 we
+                                    // should throw an error if we see anything other than version 0.
+                                    if version != Some(0) {
+                                        return Err(encode::Error::ParseFailed("PSBT versions greater than 0 are not supported"))
                                     }
                                 } else {
                                     return Err(Error::DuplicateKey(pair.key).into())
