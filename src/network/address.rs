@@ -18,9 +18,8 @@
 //! network addresses in Bitcoin messages.
 //!
 
-use std::io;
-use std::fmt;
-use std::net::{SocketAddr, Ipv6Addr, SocketAddrV4, SocketAddrV6, Ipv4Addr};
+use std::{fmt, io, iter};
+use std::net::{SocketAddr, Ipv6Addr, SocketAddrV4, SocketAddrV6, Ipv4Addr, ToSocketAddrs};
 
 use network::constants::ServiceFlags;
 use consensus::encode::{self, Decodable, Encodable, VarInt, ReadExt, WriteExt};
@@ -40,7 +39,7 @@ const ONION : [u16; 3] = [0xFD87, 0xD87E, 0xEB43];
 
 impl Address {
     /// Create an address message for a socket
-    pub fn new (socket :&SocketAddr, services: ServiceFlags) -> Address {
+    pub fn new(socket :&SocketAddr, services: ServiceFlags) -> Address {
         let (address, port) = match *socket {
             SocketAddr::V4(addr) => (addr.ip().to_ipv6_mapped().segments(), addr.port()),
             SocketAddr::V6(addr) => (addr.ip().segments(), addr.port())
@@ -48,9 +47,10 @@ impl Address {
         Address { address: address, port: port, services: services }
     }
 
-    /// extract socket address from an address message
-    /// This will return io::Error ErrorKind::AddrNotAvailable if the message contains a Tor address.
-    pub fn socket_addr (&self) -> Result<SocketAddr, io::Error> {
+    /// Extract socket address from an [Address] message.
+    /// This will return [io::Error] [ErrorKind::AddrNotAvailable]
+    /// if the message contains a Tor address.
+    pub fn socket_addr(&self) -> Result<SocketAddr, io::Error> {
         let addr = &self.address;
         if addr[0..3] == ONION {
             return Err(io::Error::from(io::ErrorKind::AddrNotAvailable));
@@ -61,8 +61,7 @@ impl Address {
         );
         if let Some(ipv4) = ipv6.to_ipv4() {
             Ok(SocketAddr::V4(SocketAddrV4::new(ipv4, self.port)))
-        }
-        else {
+        } else {
             Ok(SocketAddr::V6(SocketAddrV6::new(ipv6, self.port, 0, 0)))
         }
     }
@@ -110,17 +109,11 @@ impl fmt::Debug for Address {
     }
 }
 
-/// Address received from BIP155 addrv2 message
-#[derive(Clone, PartialEq, Eq, Hash, Debug)]
-pub struct AddrV2Message {
-    /// Time that this node was last seen as connected to the network
-    pub time: u32,
-    /// Service bits
-    pub services: ServiceFlags,
-    /// Network ID + Network Address
-    pub addr: AddrV2,
-    /// Network port, 0 if not applicable
-    pub port: u16
+impl ToSocketAddrs for Address {
+    type Iter = iter::Once<SocketAddr>;
+    fn to_socket_addrs(&self) -> Result<Self::Iter, io::Error> {
+        Ok(iter::once(self.socket_addr()?))
+    }
 }
 
 /// Supported networks for use in BIP155 addrv2 message
@@ -241,6 +234,32 @@ impl Decodable for AddrV2 {
     }
 }
 
+/// Address received from BIP155 addrv2 message
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
+pub struct AddrV2Message {
+    /// Time that this node was last seen as connected to the network
+    pub time: u32,
+    /// Service bits
+    pub services: ServiceFlags,
+    /// Network ID + Network Address
+    pub addr: AddrV2,
+    /// Network port, 0 if not applicable
+    pub port: u16
+}
+
+impl AddrV2Message {
+    /// Extract socket address from an [AddrV2Message] message.
+    /// This will return [io::Error] [ErrorKind::AddrNotAvailable]
+    /// if the address type can't be converted into a [SocketAddr].
+    pub fn socket_addr(&self) -> Result<SocketAddr, io::Error> {
+        match self.addr {
+            AddrV2::Ipv4(addr) => Ok(SocketAddr::V4(SocketAddrV4::new(addr, self.port))),
+            AddrV2::Ipv6(addr) => Ok(SocketAddr::V6(SocketAddrV6::new(addr, self.port, 0, 0))),
+            _ => return Err(io::Error::from(io::ErrorKind::AddrNotAvailable)),
+        }
+    }
+}
+
 impl Encodable for AddrV2Message {
     fn consensus_encode<W: io::Write>(&self, mut e: W) -> Result<usize, encode::Error> {
         let mut len = 0;
@@ -252,7 +271,6 @@ impl Encodable for AddrV2Message {
     }   
 }
 
-
 impl Decodable for AddrV2Message {
     fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
         Ok(AddrV2Message{
@@ -261,6 +279,13 @@ impl Decodable for AddrV2Message {
             addr: Decodable::consensus_decode(&mut d)?,
             port: u16::from_be(Decodable::consensus_decode(d)?),
         })
+    }
+}
+
+impl ToSocketAddrs for AddrV2Message {
+    type Iter = iter::Once<SocketAddr>;
+    fn to_socket_addrs(&self) -> Result<Self::Iter, io::Error> {
+        Ok(iter::once(self.socket_addr()?))
     }
 }
 
