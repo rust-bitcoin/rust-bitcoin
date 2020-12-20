@@ -126,14 +126,14 @@ impl ChildNumber {
     /// Returns `true` if the child number is a [`Normal`] value.
     ///
     /// [`Normal`]: #variant.Normal
-    pub fn is_normal(self) -> bool {
+    pub fn is_normal(&self) -> bool {
         !self.is_hardened()
     }
 
     /// Returns `true` if the child number is a [`Hardened`] value.
     ///
     /// [`Hardened`]: #variant.Hardened
-    pub fn is_hardened(self) -> bool {
+    pub fn is_hardened(&self) -> bool {
         match self {
             ChildNumber::Hardened {..} => true,
             ChildNumber::Normal {..} => false,
@@ -299,6 +299,11 @@ impl<'a> Iterator for DerivationPathIterator<'a> {
 }
 
 impl DerivationPath {
+    /// Returns length of the derivation path
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
     /// Create a new [DerivationPath] that is a child of this one.
     pub fn child(&self, cn: ChildNumber) -> DerivationPath {
         let mut path = self.0.clone();
@@ -390,7 +395,7 @@ pub enum Error {
     InvalidDerivationPathFormat,
     /// Unknown version magic bytes
     UnknownVersion([u8; 4]),
-    /// Encoded extended key data have wrong length
+    /// Encoded extended key data has wrong length
     WrongExtendedKeyLength(usize),
     /// Base58 encoding error
     Base58(base58::Error)
@@ -406,7 +411,7 @@ impl fmt::Display for Error {
             Error::InvalidChildNumberFormat => f.write_str("invalid child number format"),
             Error::InvalidDerivationPathFormat => f.write_str("invalid derivation path format"),
             Error::UnknownVersion(ref bytes) => write!(f, "unknown version magic bytes: {:?}", bytes),
-            Error::WrongExtendedKeyLength(ref len) => write!(f, "encoded extended key data have wrong length {}", len),
+            Error::WrongExtendedKeyLength(ref len) => write!(f, "encoded extended key data has wrong length {}", len),
             Error::Base58(ref err) => write!(f, "base58 encoding error: {}", err),
         }
     }

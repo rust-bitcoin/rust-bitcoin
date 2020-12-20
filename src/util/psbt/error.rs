@@ -20,7 +20,7 @@ use util::psbt::raw;
 
 use hashes;
 
-#[derive(Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 /// Enum for marking psbt hash error
 pub enum PsbtHash {
     Ripemd,
@@ -29,7 +29,7 @@ pub enum PsbtHash {
     Hash256,
 }
 /// Ways that a Partially Signed Transaction might fail.
-#[derive(Debug)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub enum Error {
     /// Magic bytes for a PSBT must be the ASCII for "psbt" serialized in most
     /// significant byte order.
@@ -68,7 +68,9 @@ pub enum Error {
         preimage: Vec<u8>,
         /// Hash value
         hash: Vec<u8>,
-    }
+    },
+    /// Data inconsistency/conflicting data during merge procedure
+    MergeConflict(String),
 }
 
 impl fmt::Display for Error {
@@ -91,6 +93,7 @@ impl fmt::Display for Error {
                 // directly using debug forms of psbthash enums
                 write!(f, "Preimage {:?} does not match {:?} hash {:?}", preimage, hash_type, hash )
             }
+            Error::MergeConflict(ref s) => { write!(f, "Merge conflict: {}", s) }
         }
     }
 }

@@ -14,7 +14,8 @@
 
 use std::collections::BTreeMap;
 use std::collections::btree_map::Entry;
-use std::io::{self, Cursor};
+use std::io::{self, Cursor, Read};
+use std::cmp;
 
 use blockdata::transaction::Transaction;
 use consensus::{encode, Encodable, Decodable};
@@ -22,9 +23,15 @@ use util::psbt::map::Map;
 use util::psbt::raw;
 use util::psbt;
 use util::psbt::Error;
+use util::endian::u32_to_array_le;
+use util::bip32::{ExtendedPubKey, KeySource, Fingerprint, DerivationPath, ChildNumber};
 
 /// Type: Unsigned Transaction PSBT_GLOBAL_UNSIGNED_TX = 0x00
 const PSBT_GLOBAL_UNSIGNED_TX: u8 = 0x00;
+/// Type: Extended Public Key PSBT_GLOBAL_XPUB = 0x01
+const PSBT_GLOBAL_XPUB: u8 = 0x01;
+/// Type: Version Number PSBT_GLOBAL_VERSION = 0xFB
+const PSBT_GLOBAL_VERSION: u8 = 0xFB;
 
 /// A key-value map for global data.
 #[derive(Clone, Debug, PartialEq)]
@@ -32,10 +39,15 @@ pub struct Global {
     /// The unsigned transaction, scriptSigs and witnesses for each input must be
     /// empty.
     pub unsigned_tx: Transaction,
+    /// The version number of this PSBT. If omitted, the version number is 0.
+    pub version: u32,
+    /// A global map from extended public keys to the used key fingerprint and
+    /// derivation path as defined by BIP 32
+    pub xpub: BTreeMap<ExtendedPubKey, KeySource>,
     /// Unknown global key-value pairs.
     pub unknown: BTreeMap<raw::Key, Vec<u8>>,
 }
-serde_struct_impl!(Global, unsigned_tx, unknown);
+serde_struct_impl!(Global, unsigned_tx, version, xpub, unknown);
 
 impl Global {
     /// Create a Global from an unsigned transaction, error if not unsigned
@@ -52,6 +64,8 @@ impl Global {
 
         Ok(Global {
             unsigned_tx: tx,
+            xpub: Default::default(),
+            version: 0,
             unknown: Default::default(),
         })
     }
@@ -95,6 +109,32 @@ impl Map for Global {
             },
         });
 
+        for (xpub, (fingerprint, derivation)) in &self.xpub {
+            rv.push(raw::Pair {
+                key: raw::Key {
+                    type_value: PSBT_GLOBAL_XPUB,
+                    key: xpub.encode().to_vec(),
+                },
+                value: {
+                    let mut ret = Vec::with_capacity(4 + derivation.len() * 4);
+                    ret.extend(fingerprint.as_bytes());
+                    derivation.into_iter().for_each(|n| ret.extend(&u32_to_array_le((*n).into())));
+                    ret
+                }
+            });
+        }
+
+        // Serializing version only for non-default value; otherwise test vectors fail
+        if self.version > 0 {
+            rv.push(raw::Pair {
+                key: raw::Key {
+                    type_value: PSBT_GLOBAL_VERSION,
+                    key: vec![],
+                },
+                value: u32_to_array_le(self.version).to_vec()
+            });
+        }
+
         for (key, value) in self.unknown.iter() {
             rv.push(raw::Pair {
                 key: key.clone(),
@@ -105,12 +145,60 @@ impl Map for Global {
         Ok(rv)
     }
 
+    // Keep in mind that according to BIP 174 this function must be commutative, i.e.
+    // A.merge(B) == B.merge(A)
     fn merge(&mut self, other: Self) -> Result<(), psbt::Error> {
         if self.unsigned_tx != other.unsigned_tx {
             return Err(psbt::Error::UnexpectedUnsignedTx {
                 expected: self.unsigned_tx.clone(),
                 actual: other.unsigned_tx,
             });
+        }
+
+        // BIP 174: The Combiner must remove any duplicate key-value pairs, in accordance with
+        //          the specification. It can pick arbitrarily when conflicts occur.
+
+        // Keeping the highest version
+        self.version = cmp::max(self.version, other.version);
+
+        // Merging xpubs
+        for (xpub, (fingerprint1, derivation1)) in other.xpub {
+            match self.xpub.entry(xpub) {
+                Entry::Vacant(entry) => {
+                    entry.insert((fingerprint1, derivation1));
+                },
+                Entry::Occupied(mut entry) => {
+                    // Here in case of the conflict we select the version with algorithm:
+                    // 1) if everything is equal we do nothing
+                    // 2) report an error if
+                    //    - derivation paths are equal and fingerprints are not
+                    //    - derivation paths are of the same length, but not equal
+                    //    - derivation paths has different length, but the shorter one
+                    //      is not the strict suffix of the longer one
+                    // 3) choose longest derivation otherwise
+
+                    let (fingerprint2, derivation2) = entry.get().clone();
+
+                    if derivation1 == derivation2 && fingerprint1 == fingerprint2
+                    {
+                        continue
+                    }
+                    else if
+                        derivation1.len() < derivation2.len() &&
+                        derivation1[..] == derivation2[derivation2.len() - derivation1.len()..]
+                    {
+                        continue
+                    }
+                    else if derivation2[..] == derivation1[derivation1.len() - derivation2.len()..]
+                    {
+                        entry.insert((fingerprint1, derivation1));
+                        continue
+                    }
+                    return Err(psbt::Error::MergeConflict(format!(
+                        "global xpub {} has inconsistent key sources", xpub
+                    ).to_owned()));
+                }
+            }
         }
 
         self.unknown.extend(other.unknown);
@@ -124,7 +212,9 @@ impl Decodable for Global {
     fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
 
         let mut tx: Option<Transaction> = None;
+        let mut version: Option<u32> = None;
         let mut unknowns: BTreeMap<raw::Key, Vec<u8>> = Default::default();
+        let mut xpub_map: BTreeMap<ExtendedPubKey, (Fingerprint, DerivationPath)> = Default::default();
 
         loop {
             match raw::Pair::consensus_decode(&mut d) {
@@ -158,6 +248,57 @@ impl Decodable for Global {
                                 return Err(Error::InvalidKey(pair.key).into())
                             }
                         }
+                        PSBT_GLOBAL_XPUB => {
+                            if !pair.key.key.is_empty() {
+                                let xpub = ExtendedPubKey::decode(&pair.key.key)
+                                    .map_err(|_| encode::Error::ParseFailed(
+                                        "Can't deserialize ExtendedPublicKey from global XPUB key data"
+                                    ))?;
+
+                                if pair.value.is_empty() || pair.value.len() % 4 != 0 {
+                                    return Err(encode::Error::ParseFailed("Incorrect length of global xpub derivation data"))
+                                }
+
+                                let child_count = pair.value.len() / 4 - 1;
+                                let mut decoder = Cursor::new(pair.value);
+                                let mut fingerprint = [0u8; 4];
+                                decoder.read_exact(&mut fingerprint[..])?;
+                                let mut path = Vec::<ChildNumber>::with_capacity(child_count);
+                                while let Ok(index) = u32::consensus_decode(&mut decoder) {
+                                    path.push(ChildNumber::from(index))
+                                }
+                                let derivation = DerivationPath::from(path);
+                                // Keys, according to BIP-174, must be unique
+                                if xpub_map.insert(xpub, (Fingerprint::from(&fingerprint[..]), derivation)).is_some() {
+                                    return Err(encode::Error::ParseFailed("Repeated global xpub key"))
+                                }
+                            } else {
+                                return Err(encode::Error::ParseFailed("Xpub global key must contain serialized Xpub data"))
+                            }
+                        }
+                        PSBT_GLOBAL_VERSION => {
+                            // key has to be empty
+                            if pair.key.key.is_empty() {
+                                // there can only be one version
+                                if version.is_none() {
+                                    let vlen: usize = pair.value.len();
+                                    let mut decoder = Cursor::new(pair.value);
+                                    if vlen != 4 {
+                                        return Err(encode::Error::ParseFailed("Wrong global version value length (must be 4 bytes)"))
+                                    }
+                                    version = Some(Decodable::consensus_decode(&mut decoder)?);
+                                    // We only understand version 0 PSBTs. According to BIP-174 we
+                                    // should throw an error if we see anything other than version 0.
+                                    if version != Some(0) {
+                                        return Err(encode::Error::ParseFailed("PSBT versions greater than 0 are not supported"))
+                                    }
+                                } else {
+                                    return Err(Error::DuplicateKey(pair.key).into())
+                                }
+                            } else {
+                                return Err(Error::InvalidKey(pair.key).into())
+                            }
+                        }
                         _ => match unknowns.entry(pair.key) {
                             Entry::Vacant(empty_key) => {empty_key.insert(pair.value);},
                             Entry::Occupied(k) => return Err(Error::DuplicateKey(k.key().clone()).into()),
@@ -171,6 +312,8 @@ impl Decodable for Global {
 
         if let Some(tx) = tx {
             let mut rv: Global = Global::from_unsigned_tx(tx)?;
+            rv.version = version.unwrap_or(0);
+            rv.xpub = xpub_map;
             rv.unknown = unknowns;
             Ok(rv)
         } else {
