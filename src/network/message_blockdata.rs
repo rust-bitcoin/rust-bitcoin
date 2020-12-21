@@ -41,6 +41,13 @@ pub enum Inventory {
     WitnessTransaction(Txid),
     /// Witness Block
     WitnessBlock(BlockHash),
+    /// Unknown inventory type
+    Unknown {
+        /// The inventory item type.
+        inv_type: u32,
+        /// The hash of the inventory item
+        hash: [u8; 32],
+    }
 }
 
 impl Encodable for Inventory {
@@ -62,6 +69,7 @@ impl Encodable for Inventory {
             Inventory::WTx(w) => encode_inv!(5, w),
             Inventory::WitnessTransaction(ref t) => encode_inv!(0x40000001, t),
             Inventory::WitnessBlock(ref b) => encode_inv!(0x40000002, b),
+            Inventory::Unknown { inv_type: t, hash: ref d } => encode_inv!(t, d),
         })
     }
 }
@@ -77,7 +85,10 @@ impl Decodable for Inventory {
             5 => Inventory::WTx(Decodable::consensus_decode(&mut d)?),
             0x40000001 => Inventory::WitnessTransaction(Decodable::consensus_decode(&mut d)?),
             0x40000002 => Inventory::WitnessBlock(Decodable::consensus_decode(&mut d)?),
-            tp => return Err(encode::Error::UnknownInventoryType(tp)),
+            tp => Inventory::Unknown {
+                inv_type: tp,
+                hash: Decodable::consensus_decode(&mut d)?,
+            }
         })
     }
 }

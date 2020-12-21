@@ -109,9 +109,9 @@ pub struct RawNetworkMessage {
     pub payload: NetworkMessage
 }
 
-#[derive(Clone, PartialEq, Eq, Debug)]
 /// A Network message payload. Proper documentation is available on at
 /// [Bitcoin Wiki: Protocol Specification](https://en.bitcoin.it/wiki/Protocol_specification)
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub enum NetworkMessage {
     /// `version`
     Version(message_network::VersionMessage),
@@ -173,10 +173,22 @@ pub enum NetworkMessage {
     AddrV2(Vec<AddrV2Message>),
     /// `sendaddrv2`
     SendAddrV2,
+
+    /// Any other message.
+    Unknown {
+        /// The command of this message.
+        command: CommandString,
+        /// The payload of this message.
+        payload: Vec<u8>,
+    }
 }
 
 impl NetworkMessage {
-    /// Return the message command. This is useful for debug outputs.
+    /// Return the message command as a static string reference.
+    ///
+    /// This returns `"unknown"` for [NetworkMessage::Unknown],
+    /// regardless of the actual command in the unknown message.
+    /// Use the [command] method to get the command for unknown messages.
     pub fn cmd(&self) -> &'static str {
         match *self {
             NetworkMessage::Version(_) => "version",
@@ -207,17 +219,25 @@ impl NetworkMessage {
             NetworkMessage::WtxidRelay => "wtxidrelay",
             NetworkMessage::AddrV2(_) => "addrv2",
             NetworkMessage::SendAddrV2 => "sendaddrv2",
+            NetworkMessage::Unknown { .. } => "unknown",
         }
     }
 
     /// Return the CommandString for the message command.
     pub fn command(&self) -> CommandString {
-        CommandString::try_from(self.cmd()).expect("cmd returns valid commands")
+        match *self {
+            NetworkMessage::Unknown { command: ref c, .. } => c.clone(),
+            _ => CommandString::try_from(self.cmd()).expect("cmd returns valid commands")
+        }
     }
 }
 
 impl RawNetworkMessage {
-    /// Return the message command. This is useful for debug outputs.
+    /// Return the message command as a static string reference.
+    ///
+    /// This returns `"unknown"` for [NetworkMessage::Unknown],
+    /// regardless of the actual command in the unknown message.
+    /// Use the [command] method to get the command for unknown messages.
     pub fn cmd(&self) -> &'static str {
         self.payload.cmd()
     }
@@ -281,8 +301,9 @@ impl Encodable for RawNetworkMessage {
             | NetworkMessage::SendHeaders
             | NetworkMessage::MemPool
             | NetworkMessage::GetAddr
-            | NetworkMessage::WtxidRelay => vec![],
+            | NetworkMessage::WtxidRelay
             | NetworkMessage::SendAddrV2 => vec![],
+            NetworkMessage::Unknown { payload: ref data, .. } => serialize(data),
         }).consensus_encode(&mut s)?;
         Ok(len)
     }
@@ -314,12 +335,11 @@ impl Decodable for HeaderDeserializationWrapper {
 impl Decodable for RawNetworkMessage {
     fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
         let magic = Decodable::consensus_decode(&mut d)?;
-        let cmd = CommandString::consensus_decode(&mut d)?.0;
+        let cmd = CommandString::consensus_decode(&mut d)?;
         let raw_payload = CheckedData::consensus_decode(&mut d)?.0;
-        let raw_payload_len = raw_payload.len();
 
         let mut mem_d = Cursor::new(raw_payload);
-        let payload = match &cmd[..] {
+        let payload = match &cmd.0[..] {
             "version" => NetworkMessage::Version(Decodable::consensus_decode(&mut mem_d)?),
             "verack"  => NetworkMessage::Verack,
             "addr"    => NetworkMessage::Addr(Decodable::consensus_decode(&mut mem_d)?),
@@ -350,7 +370,10 @@ impl Decodable for RawNetworkMessage {
             "wtxidrelay" => NetworkMessage::WtxidRelay,
             "addrv2" => NetworkMessage::AddrV2(Decodable::consensus_decode(&mut mem_d)?),
             "sendaddrv2" => NetworkMessage::SendAddrV2,
-            _ => return Err(encode::Error::UnrecognizedNetworkCommand(cmd.into_owned(), 4 + 12 + 4 + 4 + raw_payload_len)), // magic + msg str + payload len + checksum + payload
+            _ => NetworkMessage::Unknown {
+                command: cmd,
+                payload: mem_d.into_inner(),
+            }
         };
         Ok(RawNetworkMessage {
             magic: magic,

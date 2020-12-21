@@ -84,8 +84,8 @@ impl_consensus_encoding!(VersionMessage, version, services, timestamp,
                          receiver, sender, nonce,
                          user_agent, start_height, relay);
 
-#[derive(PartialEq, Eq, Clone, Copy, Debug)]
 /// message rejection reason as a code
+#[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub enum RejectReason {
     /// malformed message
     Malformed = 0x01,
