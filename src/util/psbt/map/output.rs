@@ -30,6 +30,8 @@ const PSBT_OUT_REDEEM_SCRIPT: u8 = 0x00;
 const PSBT_OUT_WITNESS_SCRIPT: u8 = 0x01;
 /// Type: BIP 32 Derivation Path PSBT_OUT_BIP32_DERIVATION = 0x02
 const PSBT_OUT_BIP32_DERIVATION: u8 = 0x02;
+/// Type: Proprietary Use Type PSBT_IN_PROPRIETARY = 0xFC
+const PSBT_OUT_PROPRIETARY: u8 = 0xFC;
 
 /// A key-value map for an output of the corresponding index in the unsigned
 /// transaction.
@@ -42,11 +44,13 @@ pub struct Output {
     /// A map from public keys needed to spend this output to their
     /// corresponding master key fingerprints and derivation paths.
     pub bip32_derivation: BTreeMap<PublicKey, KeySource>,
+    /// Proprietary key-value pairs for this output.
+    pub proprietary: BTreeMap<raw::ProprietaryKey, Vec<u8>>,
     /// Unknown key-value pairs for this output.
     pub unknown: BTreeMap<raw::Key, Vec<u8>>,
 }
 serde_struct_impl!(
-    Output, redeem_script, witness_script, bip32_derivation, unknown
+    Output, redeem_script, witness_script, bip32_derivation, proprietary, unknown
 );
 
 impl Map for Output {
@@ -72,6 +76,10 @@ impl Map for Output {
                     self.bip32_derivation <= <raw_key: PublicKey>|<raw_value: KeySource>
                 }
             }
+            PSBT_OUT_PROPRIETARY => match self.proprietary.entry(raw::ProprietaryKey::from_key(raw_key.clone())?) {
+                Entry::Vacant(empty_key) => {empty_key.insert(raw_value);},
+                Entry::Occupied(_) => return Err(Error::DuplicateKey(raw_key.clone()).into()),
+            }
             _ => match self.unknown.entry(raw_key) {
                     Entry::Vacant(empty_key) => {empty_key.insert(raw_value);},
                     Entry::Occupied(k) => return Err(Error::DuplicateKey(k.key().clone()).into()),
@@ -96,6 +104,13 @@ impl Map for Output {
             rv.push(self.bip32_derivation as <PSBT_OUT_BIP32_DERIVATION, PublicKey>|<KeySource>)
         }
 
+        for (key, value) in self.proprietary.iter() {
+            rv.push(raw::Pair {
+                key: key.to_key(),
+                value: value.clone(),
+            });
+        }
+
         for (key, value) in self.unknown.iter() {
             rv.push(raw::Pair {
                 key: key.clone(),
@@ -108,6 +123,7 @@ impl Map for Output {
 
     fn merge(&mut self, other: Self) -> Result<(), psbt::Error> {
         self.bip32_derivation.extend(other.bip32_derivation);
+        self.proprietary.extend(other.proprietary);
         self.unknown.extend(other.unknown);
 
         merge!(redeem_script, self, other);
