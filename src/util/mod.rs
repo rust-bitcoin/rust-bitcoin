@@ -16,28 +16,28 @@
 //!
 //! Functions needed by all parts of the Bitcoin library
 
-pub mod key;
 pub mod address;
 pub mod amount;
 pub mod base58;
-pub mod bip32;
 pub mod bip143;
+pub mod bip158;
+pub mod bip32;
 pub mod contracthash;
 pub mod hash;
+pub mod key;
 pub mod merkleblock;
 pub mod misc;
 pub mod psbt;
 pub mod sort_key;
 pub mod taproot;
 pub mod uint;
-pub mod bip158;
 
 pub(crate) mod endian;
 
 use std::{error, fmt};
 
-use network;
 use consensus::encode;
+use network;
 
 /// A trait which allows numbers to act as fixed-size bit arrays
 pub trait BitArray {
@@ -90,7 +90,7 @@ impl error::Error for Error {
         match *self {
             Error::Encode(ref e) => Some(e),
             Error::Network(ref e) => Some(e),
-            Error::BlockBadProofOfWork | Error::BlockBadTarget => None
+            Error::BlockBadProofOfWork | Error::BlockBadTarget => None,
         }
     }
 }
