@@ -69,6 +69,10 @@ impl From<secp256k1::Error> for Error {
 }
 
 /// A Bitcoin ECDSA public key
+/// Warning: The implementation of Ord/PartialOrd does not
+/// match that of bitcoin core, see [util::sort_key::SortKey]
+/// if want compare keys as implemented in bitcoin core or for
+/// BIP67.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PublicKey {
     /// Whether this public key should be serialized as compressed
