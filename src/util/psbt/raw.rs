@@ -20,7 +20,7 @@
 use std::{fmt, io};
 
 use consensus::encode::{self, ReadExt, WriteExt, Decodable, Encodable, VarInt, serialize, deserialize, MAX_VEC_SIZE};
-use hashes::hex::ToHex;
+use hashes::hex;
 use util::psbt::Error;
 
 /// A PSBT key in its raw byte form.
@@ -62,12 +62,8 @@ pub struct ProprietaryKey<Subtype = ProprietaryType> where Subtype: Copy + From<
 
 impl fmt::Display for Key {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "type: {:#x}, key: {}",
-            self.type_value,
-            self.key[..].to_hex()
-        )
+        write!(f, "type: {:#x}, key: ", self.type_value)?;
+        hex::format_hex(&self.key[..], f)
     }
 }
 
