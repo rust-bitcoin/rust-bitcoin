@@ -39,6 +39,7 @@ use VarInt;
 
 /// A reference to a transaction output
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
+#[repr(C)]
 pub struct OutPoint {
     /// The referenced transaction's txid
     pub txid: Txid,
@@ -604,6 +605,7 @@ impl Decodable for Transaction {
 /// Hashtype of a transaction, encoded in the last byte of a signature
 /// Fixed values so they can be casted as integer types for encoding
 #[derive(PartialEq, Eq, Debug, Copy, Clone)]
+#[repr(C)]
 pub enum SigHashType {
     /// 0x1: Sign all outputs
     All		= 0x01,
