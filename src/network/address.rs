@@ -312,9 +312,10 @@ mod test {
 
     #[test]
     fn debug_format_test() {
+        let mut flags = ServiceFlags::NETWORK;
         assert_eq!(
             format!("The address is: {:?}", Address {
-                services: ServiceFlags::NETWORK.add(ServiceFlags::WITNESS),
+                services: flags.add(ServiceFlags::WITNESS),
                 address: [0, 0, 0, 0, 0, 0xffff, 0x0a00, 0x0001],
                 port: 8333
             }), 
