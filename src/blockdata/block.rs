@@ -317,6 +317,7 @@ mod tests {
     use blockdata::block::{Block, BlockHeader};
     use consensus::encode::{deserialize, serialize};
     use util::uint::Uint256;
+    use util::Error::{BlockBadTarget, BlockBadProofOfWork};
 
     #[test]
     fn test_coinbase_and_bip34() {
@@ -361,6 +362,7 @@ mod tests {
         assert_eq!(real_decode.header.bits, 486604799);
         assert_eq!(real_decode.header.nonce, 2067413810);
         assert_eq!(real_decode.header.work(), work);
+        assert_eq!(real_decode.header.validate_pow(&real_decode.header.target()).unwrap(), ());
         // [test] TODO: check the transaction data
 
         assert_eq!(real_decode.get_size(), some_block.len());
@@ -393,6 +395,7 @@ mod tests {
         assert_eq!(real_decode.header.bits, 0x1a06d450);
         assert_eq!(real_decode.header.nonce, 1879759182);
         assert_eq!(real_decode.header.work(), work);
+        assert_eq!(real_decode.header.validate_pow(&real_decode.header.target()).unwrap(), ());
         // [test] TODO: check the transaction data
 
         assert_eq!(real_decode.get_size(), segwit_block.len());
@@ -416,6 +419,27 @@ mod tests {
         assert!(decode2.is_ok());
         let real_decode2 = decode2.unwrap();
         assert_eq!(real_decode2.header.version, -2147483648);
+    }
+
+    #[test]
+    fn validate_pow_test() {
+        let some_header = Vec::from_hex("010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914cd74d6e49ffff001d323b3a7b").unwrap();
+        let some_header: BlockHeader = deserialize(&some_header).expect("Can't deserialize correct block header");
+        assert_eq!(some_header.validate_pow(&some_header.target()).unwrap(), ());
+
+        // test with zero target
+        match some_header.validate_pow(&Uint256::default()) {
+            Err(BlockBadTarget) => (),
+            _ => assert!(false)
+        }
+
+        // test with modified header
+        let mut invalid_header: BlockHeader = some_header.clone();
+        invalid_header.version = invalid_header.version + 1;
+        match invalid_header.validate_pow(&invalid_header.target()) {
+            Err(BlockBadProofOfWork) => (),
+            _ => assert!(false)
+        }
     }
 
     #[test]
