@@ -316,6 +316,7 @@ mod tests {
 
     use blockdata::block::{Block, BlockHeader};
     use consensus::encode::{deserialize, serialize};
+    use util::uint::Uint256;
 
     #[test]
     fn test_coinbase_and_bip34() {
@@ -344,6 +345,7 @@ mod tests {
 
         let prevhash = Vec::from_hex("4ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000").unwrap();
         let merkle = Vec::from_hex("bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914c").unwrap();
+        let work = Uint256([0x100010001u64, 0, 0, 0]);
 
         let decode: Result<Block, _> = deserialize(&some_block);
         let bad_decode: Result<Block, _> = deserialize(&cutoff_block);
@@ -358,6 +360,7 @@ mod tests {
         assert_eq!(real_decode.header.time, 1231965655);
         assert_eq!(real_decode.header.bits, 486604799);
         assert_eq!(real_decode.header.nonce, 2067413810);
+        assert_eq!(real_decode.header.work(), work);
         // [test] TODO: check the transaction data
 
         assert_eq!(real_decode.get_size(), some_block.len());
@@ -378,6 +381,7 @@ mod tests {
 
         let prevhash = Vec::from_hex("2aa2f2ca794ccbd40c16e2f3333f6b8b683f9e7179b2c4d74906000000000000").unwrap();
         let merkle = Vec::from_hex("10bc26e70a2f672ad420a6153dd0c28b40a6002c55531bfc99bf8994a8e8f67e").unwrap();
+        let work = Uint256([0x257c3becdacc64u64, 0, 0, 0]);
 
         assert!(decode.is_ok());
         let real_decode = decode.unwrap();
@@ -388,6 +392,7 @@ mod tests {
         assert_eq!(real_decode.header.time, 1472004949);
         assert_eq!(real_decode.header.bits, 0x1a06d450);
         assert_eq!(real_decode.header.nonce, 1879759182);
+        assert_eq!(real_decode.header.work(), work);
         // [test] TODO: check the transaction data
 
         assert_eq!(real_decode.get_size(), segwit_block.len());
