@@ -1,7 +1,7 @@
 
 //! Module for special serde serializations.
 
-pub mod btreemap {
+pub mod btreemap_as_seq {
     //! Module for serialization of BTreeMaps because serde_json will
     //! not serialize hashmaps with non-string keys be default.
     #![allow(missing_docs)]
@@ -60,7 +60,7 @@ pub mod btreemap {
     }
 }
 
-pub mod btreemap_byte_values {
+pub mod btreemap_as_seq_byte_values {
     //! Module for serialization of BTreeMaps with Vec<u8> values because
     //! serde_json will not serialize hashmaps with non-string keys be default.
     #![allow(missing_docs)]
