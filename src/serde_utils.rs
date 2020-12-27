@@ -60,6 +60,78 @@ pub mod btreemap {
     }
 }
 
+pub mod btreemap_byte_values {
+    //! Module for serialization of BTreeMaps with Vec<u8> values because
+    //! serde_json will not serialize hashmaps with non-string keys be default.
+    #![allow(missing_docs)]
+
+    // NOTE: This module can be exactly copied to use with HashMap.
+
+    use ::std::collections::BTreeMap;
+    use serde;
+
+    /// A custom key-value pair type that serialized the bytes as hex.
+    #[derive(Debug, Deserialize)]
+    struct OwnedPair<T>(
+        T,
+        #[serde(deserialize_with = "::serde_utils::hex_bytes::deserialize")]
+        Vec<u8>,
+    );
+
+    /// A custom key-value pair type that serialized the bytes as hex.
+    #[derive(Debug, Serialize)]
+    struct BorrowedPair<'a, T: 'static>(
+        &'a T,
+        #[serde(serialize_with = "::serde_utils::hex_bytes::serialize")]
+        &'a [u8],
+    );
+
+    pub fn serialize<S, T>(v: &BTreeMap<T, Vec<u8>>, s: S)
+        -> Result<S::Ok, S::Error> where
+        S: serde::Serializer,
+        T: serde::Serialize + ::std::hash::Hash + Eq + Ord + 'static,
+    {
+        use serde::ser::SerializeSeq;
+
+        let mut seq = s.serialize_seq(Some(v.len()))?;
+        for (key, value) in v.iter() {
+            seq.serialize_element(&BorrowedPair(key, value))?;
+        }
+        seq.end()
+    }
+
+    pub fn deserialize<'de, D, T>(d: D)
+        -> Result<BTreeMap<T, Vec<u8>>, D::Error> where
+        D: serde::Deserializer<'de>,
+        T: serde::Deserialize<'de> + ::std::hash::Hash + Eq + Ord,
+    {
+        use ::std::marker::PhantomData;
+
+        struct Visitor<T>(PhantomData<T>);
+        impl<'de, T> serde::de::Visitor<'de> for Visitor<T> where
+            T: serde::Deserialize<'de> + ::std::hash::Hash + Eq + Ord,
+        {
+            type Value = BTreeMap<T, Vec<u8>>;
+
+            fn expecting(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+                write!(f, "a sequence of pairs")
+            }
+
+            fn visit_seq<A: serde::de::SeqAccess<'de>>(self, mut a: A)
+                -> Result<Self::Value, A::Error>
+            {
+                let mut ret = BTreeMap::new();
+                while let Option::Some(OwnedPair(key, value)) = a.next_element()? {
+                    ret.insert(key, value);
+                }
+                Ok(ret)
+            }
+        }
+
+        d.deserialize_seq(Visitor(PhantomData))
+    }
+}
+
 pub mod hex_bytes {
     //! Module for serialization of byte arrays as hex strings.
     #![allow(missing_docs)]

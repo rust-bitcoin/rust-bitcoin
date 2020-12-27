@@ -49,10 +49,10 @@ pub struct Global {
     #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap"))]
     pub xpub: BTreeMap<ExtendedPubKey, KeySource>,
     /// Global proprietary key-value pairs.
-    #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap"))]
+    #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_byte_values"))]
     pub proprietary: BTreeMap<raw::ProprietaryKey, Vec<u8>>,
     /// Unknown global key-value pairs.
-    #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap"))]
+    #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_byte_values"))]
     pub unknown: BTreeMap<raw::Key, Vec<u8>>,
 }
 
