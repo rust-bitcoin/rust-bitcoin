@@ -47,10 +47,10 @@ pub struct Output {
     #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap"))]
     pub bip32_derivation: BTreeMap<PublicKey, KeySource>,
     /// Proprietary key-value pairs for this output.
-    #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap"))]
+    #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_byte_values"))]
     pub proprietary: BTreeMap<raw::ProprietaryKey, Vec<u8>>,
     /// Unknown key-value pairs for this output.
-    #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap"))]
+    #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_byte_values"))]
     pub unknown: BTreeMap<raw::Key, Vec<u8>>,
 }
 
