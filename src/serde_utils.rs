@@ -18,11 +18,16 @@ pub mod btreemap_byte_values {
     {
         use serde::ser::SerializeMap;
 
-        let mut map = s.serialize_map(Some(v.len()))?;
-        for (key, value) in v.iter() {
-            map.serialize_entry(key, &value.to_hex())?;
+        // Don't do anything special when not human readable.
+        if !s.is_human_readable() {
+            serde::Serialize::serialize(v, s)
+        } else {
+            let mut map = s.serialize_map(Some(v.len()))?;
+            for (key, value) in v.iter() {
+                map.serialize_entry(key, &value.to_hex())?;
+            }
+            map.end()
         }
-        map.end()
     }
 
     pub fn deserialize<'de, D, T>(d: D)
@@ -53,7 +58,12 @@ pub mod btreemap_byte_values {
             }
         }
 
-        d.deserialize_map(Visitor(PhantomData))
+        // Don't do anything special when not human readable.
+        if !d.is_human_readable() {
+            serde::Deserialize::deserialize(d)
+        } else {
+            d.deserialize_map(Visitor(PhantomData))
+        }
     }
 }
 
@@ -75,11 +85,16 @@ pub mod btreemap_as_seq {
     {
         use serde::ser::SerializeSeq;
 
-        let mut seq = s.serialize_seq(Some(v.len()))?;
-        for pair in v.iter() {
-            seq.serialize_element(&pair)?;
+        // Don't do anything special when not human readable.
+        if !s.is_human_readable() {
+            serde::Serialize::serialize(v, s)
+        } else {
+            let mut seq = s.serialize_seq(Some(v.len()))?;
+            for pair in v.iter() {
+                seq.serialize_element(&pair)?;
+            }
+            seq.end()
         }
-        seq.end()
     }
 
     pub fn deserialize<'de, D, T, U>(d: D)
@@ -112,7 +127,12 @@ pub mod btreemap_as_seq {
             }
         }
 
-        d.deserialize_seq(Visitor(PhantomData))
+        // Don't do anything special when not human readable.
+        if !d.is_human_readable() {
+            serde::Deserialize::deserialize(d)
+        } else {
+            d.deserialize_seq(Visitor(PhantomData))
+        }
     }
 }
 
@@ -149,11 +169,16 @@ pub mod btreemap_as_seq_byte_values {
     {
         use serde::ser::SerializeSeq;
 
-        let mut seq = s.serialize_seq(Some(v.len()))?;
-        for (key, value) in v.iter() {
-            seq.serialize_element(&BorrowedPair(key, value))?;
+        // Don't do anything special when not human readable.
+        if !s.is_human_readable() {
+            serde::Serialize::serialize(v, s)
+        } else {
+            let mut seq = s.serialize_seq(Some(v.len()))?;
+            for (key, value) in v.iter() {
+                seq.serialize_element(&BorrowedPair(key, value))?;
+            }
+            seq.end()
         }
-        seq.end()
     }
 
     pub fn deserialize<'de, D, T>(d: D)
@@ -184,7 +209,12 @@ pub mod btreemap_as_seq_byte_values {
             }
         }
 
-        d.deserialize_seq(Visitor(PhantomData))
+        // Don't do anything special when not human readable.
+        if !d.is_human_readable() {
+            serde::Deserialize::deserialize(d)
+        } else {
+            d.deserialize_seq(Visitor(PhantomData))
+        }
     }
 }
 
@@ -195,14 +225,19 @@ pub mod hex_bytes {
     use hashes::hex::{FromHex, ToHex};
     use serde;
 
-    pub fn serialize<T, S>(bytes: &T, serializer: S) -> Result<S::Ok, S::Error>
-        where T: AsRef<[u8]>, S: serde::Serializer
+    pub fn serialize<T, S>(bytes: &T, s: S) -> Result<S::Ok, S::Error>
+        where T: serde::Serialize + AsRef<[u8]>, S: serde::Serializer
     {
-        serializer.serialize_str(&bytes.as_ref().to_hex())
+        // Don't do anything special when not human readable.
+        if !s.is_human_readable() {
+            serde::Serialize::serialize(bytes, s)
+        } else {
+            s.serialize_str(&bytes.as_ref().to_hex())
+        }
     }
 
     pub fn deserialize<'de, D, B>(d: D) -> Result<B, D::Error>
-        where D: serde::Deserializer<'de>, B: FromHex,
+        where D: serde::Deserializer<'de>, B: serde::Deserialize<'de> + FromHex,
     {
         struct Visitor<B>(::std::marker::PhantomData<B>);
 
@@ -230,6 +265,11 @@ pub mod hex_bytes {
             }
         }
 
-        d.deserialize_str(Visitor(::std::marker::PhantomData))
+        // Don't do anything special when not human readable.
+        if !d.is_human_readable() {
+            serde::Deserialize::deserialize(d)
+        } else {
+            d.deserialize_str(Visitor(::std::marker::PhantomData))
+        }
     }
 }
