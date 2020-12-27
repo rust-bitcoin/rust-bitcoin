@@ -319,6 +319,7 @@ mod tests {
     #[test]
     fn test_serde_psbt() {
         //! Create a full PSBT value with various fields filled and make sure it can be JSONized.
+        use hashes::sha256d;
         use util::psbt::map::Input;
 
         // create some values to use in the PSBT
@@ -393,6 +394,10 @@ mod tests {
                 )].into_iter().collect(),
                 bip32_derivation: keypaths.clone(),
                 final_script_witness: Some(vec![vec![1, 3], vec![5]]),
+                ripemd160_preimages: vec![(ripemd160::Hash::hash(&[]), vec![1, 2])].into_iter().collect(),
+                sha256_preimages: vec![(sha256::Hash::hash(&[]), vec![1, 2])].into_iter().collect(),
+                hash160_preimages: vec![(hash160::Hash::hash(&[]), vec![1, 2])].into_iter().collect(),
+                hash256_preimages: vec![(sha256d::Hash::hash(&[]), vec![1, 2])].into_iter().collect(),
                 proprietary: proprietary.clone(),
                 unknown: unknown.clone(),
                 ..Default::default()
@@ -405,6 +410,7 @@ mod tests {
             }],
         };
         let encoded = ::serde_json::to_string(&psbt).unwrap();
+        println!("encoded PSBT: {}", encoded);
         let decoded: PartiallySignedTransaction = ::serde_json::from_str(&encoded).unwrap();
         assert_eq!(psbt, decoded);
     }

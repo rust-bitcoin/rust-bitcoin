@@ -1,9 +1,65 @@
 
 //! Module for special serde serializations.
 
+pub mod btreemap_byte_values {
+    //! Module for serialization of BTreeMaps with hex byte values.
+    #![allow(missing_docs)]
+
+    // NOTE: This module can be exactly copied to use with HashMap.
+
+    use ::std::collections::BTreeMap;
+    use hashes::hex::{FromHex, ToHex};
+    use serde;
+
+    pub fn serialize<S, T>(v: &BTreeMap<T, Vec<u8>>, s: S)
+        -> Result<S::Ok, S::Error> where
+        S: serde::Serializer,
+        T: serde::Serialize + ::std::hash::Hash + Eq + Ord,
+    {
+        use serde::ser::SerializeMap;
+
+        let mut map = s.serialize_map(Some(v.len()))?;
+        for (key, value) in v.iter() {
+            map.serialize_entry(key, &value.to_hex())?;
+        }
+        map.end()
+    }
+
+    pub fn deserialize<'de, D, T>(d: D)
+        -> Result<BTreeMap<T, Vec<u8>>, D::Error> where
+        D: serde::Deserializer<'de>,
+        T: serde::Deserialize<'de> + ::std::hash::Hash + Eq + Ord,
+    {
+        use ::std::marker::PhantomData;
+
+        struct Visitor<T>(PhantomData<T>);
+        impl<'de, T> serde::de::Visitor<'de> for Visitor<T> where
+            T: serde::Deserialize<'de> + ::std::hash::Hash + Eq + Ord,
+        {
+            type Value = BTreeMap<T, Vec<u8>>;
+
+            fn expecting(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+                write!(f, "a map with hexadecimal values")
+            }
+
+            fn visit_map<A: serde::de::MapAccess<'de>>(self, mut a: A)
+                -> Result<Self::Value, A::Error>
+            {
+                let mut ret = BTreeMap::new();
+                while let Some((key, value)) = a.next_entry()? {
+                    ret.insert(key, FromHex::from_hex(value).map_err(serde::de::Error::custom)?);
+                }
+                Ok(ret)
+            }
+        }
+
+        d.deserialize_map(Visitor(PhantomData))
+    }
+}
+
 pub mod btreemap_as_seq {
-    //! Module for serialization of BTreeMaps because serde_json will
-    //! not serialize hashmaps with non-string keys be default.
+    //! Module for serialization of BTreeMaps as lists of sequences because
+    //! serde_json will not serialize hashmaps with non-string keys be default.
     #![allow(missing_docs)]
 
     // NOTE: This module can be exactly copied to use with HashMap.
@@ -61,7 +117,7 @@ pub mod btreemap_as_seq {
 }
 
 pub mod btreemap_as_seq_byte_values {
-    //! Module for serialization of BTreeMaps with Vec<u8> values because
+    //! Module for serialization of BTreeMaps as lists of sequences because
     //! serde_json will not serialize hashmaps with non-string keys be default.
     #![allow(missing_docs)]
 
