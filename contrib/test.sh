@@ -2,6 +2,14 @@
 
 FEATURES="base64 bitcoinconsensus use-serde rand"
 
+# Pin `cc` for Rust 1.29
+if [ "$TRAVIS_RUST_VERSION" = "1.29.0" ]; then
+    cargo generate-lockfile --verbose
+    cargo update -p cc --precise "1.0.41" --verbose
+    cargo update -p serde --precise "1.0.98" --verbose
+    cargo update -p serde_derive --precise "1.0.98" --verbose
+fi
+
 if [ "$DO_COV" = true ]
 then
     export RUSTFLAGS="-C link-dead-code"
@@ -52,6 +60,8 @@ then
     if [ "$TRAVIS_RUST_VERSION" = "1.29.0" ]; then
         cargo generate-lockfile --verbose
         cargo update -p cc --precise "1.0.41" --verbose
+        cargo update -p serde --precise "1.0.98" --verbose
+        cargo update -p serde_derive --precise "1.0.98" --verbose
     fi
 
     cargo test --verbose
