@@ -25,14 +25,14 @@
 //!
 
 use std::default::Default;
-use std::{error, fmt, io};
+use std::{error, fmt, io, str};
 
 #[cfg(feature = "serde")] use serde;
 
 use hash_types::{PubkeyHash, WPubkeyHash, ScriptHash, WScriptHash};
 use blockdata::opcodes;
 use consensus::{encode, Decodable, Encodable};
-use hashes::Hash;
+use hashes::{Hash, hex};
 #[cfg(feature="bitcoinconsensus")] use bitcoinconsensus;
 #[cfg(feature="bitcoinconsensus")] use std::convert;
 #[cfg(feature="bitcoinconsensus")] use OutPoint;
@@ -72,6 +72,22 @@ impl fmt::UpperHex for Script {
             write!(f, "{:02X}", ch)?;
         }
         Ok(())
+    }
+}
+
+impl hex::FromHex for Script {
+    fn from_byte_iter<I>(iter: I) -> Result<Self, hex::Error>
+        where I: Iterator<Item=Result<u8, hex::Error>> +
+            ExactSizeIterator +
+            DoubleEndedIterator,
+    {
+        Vec::from_byte_iter(iter).map(|v| Script(Box::<[u8]>::from(v)))
+    }
+}
+impl str::FromStr for Script {
+    type Err = hex::Error;
+    fn from_str(s: &str) -> Result<Self, hex::Error> {
+        hex::FromHex::from_hex(s)
     }
 }
 
