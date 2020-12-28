@@ -210,11 +210,42 @@ impl serde::Serialize for ChildNumber {
     }
 }
 
+/// Trait that allows possibly failable conversion from a type into a
+/// derivation path
+pub trait IntoDerivationPath {
+    /// Convers a given type into a [`DerivationPath`] with possible error
+    fn into_derivation_path(self) -> Result<DerivationPath, Error>;
+}
+
 /// A BIP-32 derivation path.
 #[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Hash)]
 pub struct DerivationPath(Vec<ChildNumber>);
 impl_index_newtype!(DerivationPath, ChildNumber);
 serde_string_impl!(DerivationPath, "a BIP-32 derivation path");
+
+impl Default for DerivationPath {
+    fn default() -> DerivationPath {
+        DerivationPath::master()
+    }
+}
+
+impl<T> IntoDerivationPath for T where T: Into<DerivationPath> {
+    fn into_derivation_path(self) -> Result<DerivationPath, Error> {
+        Ok(self.into())
+    }
+}
+
+impl IntoDerivationPath for String {
+    fn into_derivation_path(self) -> Result<DerivationPath, Error> {
+        self.parse()
+    }
+}
+
+impl<'a> IntoDerivationPath for &'a str {
+    fn into_derivation_path(self) -> Result<DerivationPath, Error> {
+        self.parse()
+    }
+}
 
 impl From<Vec<ChildNumber>> for DerivationPath {
     fn from(numbers: Vec<ChildNumber>) -> Self {
@@ -302,6 +333,17 @@ impl DerivationPath {
     /// Returns length of the derivation path
     pub fn len(&self) -> usize {
         self.0.len()
+    }
+
+    /// Returns derivation path for a master key (i.e. empty derivation path)
+    pub fn master() -> DerivationPath {
+        DerivationPath(vec![])
+    }
+
+    /// Returns whether derivation path represents master key (i.e. it's length
+    /// is empty). True for `m` path.
+    pub fn is_master(&self) -> bool {
+        self.0.is_empty()
     }
 
     /// Create a new [DerivationPath] that is a child of this one.
@@ -763,6 +805,8 @@ mod tests {
         assert_eq!(DerivationPath::from_str("m/0h/0x"), Err(Error::InvalidChildNumberFormat));
         assert_eq!(DerivationPath::from_str("m/2147483648"), Err(Error::InvalidChildNumber(2147483648)));
 
+        assert_eq!(DerivationPath::master(), DerivationPath::from_str("m").unwrap());
+        assert_eq!(DerivationPath::master(), DerivationPath::default());
         assert_eq!(DerivationPath::from_str("m"), Ok(vec![].into()));
         assert_eq!(
             DerivationPath::from_str("m/0'"),
@@ -799,6 +843,9 @@ mod tests {
                 ChildNumber::from_normal_idx(1000000000).unwrap(),
             ].into())
         );
+        let s = "m/0'/50/3'/5/545456";
+        assert_eq!(DerivationPath::from_str(s), s.into_derivation_path());
+        assert_eq!(DerivationPath::from_str(s), s.to_string().into_derivation_path());
     }
 
     #[test]
