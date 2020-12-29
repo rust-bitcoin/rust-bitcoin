@@ -428,6 +428,47 @@ macro_rules! construct_uint {
                 Ok($name(ret))
             }
         }
+
+        #[cfg(feature = "serde")]
+        impl $crate::serde::Serialize for $name {
+            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+            where
+                S: $crate::serde::Serializer,
+            {
+                use $crate::hashes::hex::ToHex;
+                serializer.serialize_str(&self.to_be_bytes().to_hex())
+            }
+        }
+
+        #[cfg(feature = "serde")]
+        impl<'de> $crate::serde::Deserialize<'de> for $name {
+            fn deserialize<D: $crate::serde::Deserializer<'de>>(
+                deserializer: D,
+            ) -> Result<Self, D::Error> {
+                use ::std::fmt;
+                use $crate::hashes::hex::FromHex;
+                use $crate::serde::de;
+                struct Visitor;
+                impl<'de> de::Visitor<'de> for Visitor {
+                    type Value = $name;
+
+                    fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                        write!(f, "hex string with {} characters ({} bytes", $n_words * 8 * 2, $n_words * 8)
+                    }
+
+                    fn visit_str<E>(self, s: &str) -> Result<Self::Value, E>
+                    where
+                        E: de::Error,
+                    {
+                        let bytes = Vec::from_hex(s)
+                            .map_err(|_| de::Error::invalid_value(de::Unexpected::Str(s), &self))?;
+                        $name::from_be_slice(&bytes)
+                            .map_err(|_| de::Error::invalid_length(bytes.len() * 2, &self))
+                    }
+                }
+                deserializer.deserialize_str(Visitor)
+            }
+        }
     );
 }
 
@@ -653,5 +694,40 @@ mod tests {
 
         assert_eq!(end1.ok(), Some(start1));
         assert_eq!(end2.ok(), Some(start2));
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    pub fn uint256_serde_test() {
+        let check = |uint, hex| {
+            let json = format!("\"{}\"", hex);
+            assert_eq!(::serde_json::to_string(&uint).unwrap(), json);
+            assert_eq!(::serde_json::from_str::<Uint256>(&json).unwrap(), uint);
+        };
+
+        check(
+            Uint256::from_u64(0).unwrap(),
+            "0000000000000000000000000000000000000000000000000000000000000000",
+        );
+        check(
+            Uint256::from_u64(0xDEADBEEF).unwrap(),
+            "00000000000000000000000000000000000000000000000000000000deadbeef",
+        );
+        check(
+            Uint256([0xaa11, 0xbb22, 0xcc33, 0xdd44]),
+            "000000000000dd44000000000000cc33000000000000bb22000000000000aa11",
+        );
+        check(
+            Uint256([u64::max_value(), u64::max_value(), u64::max_value(), u64::max_value()]),
+            "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        );
+        check(
+            Uint256([ 0xA69B4555DEADBEEF, 0xA69B455CD41BB662, 0xD41BB662A69B4550, 0xDEADBEEAA69B455C ]),
+            "deadbeeaa69b455cd41bb662a69b4550a69b455cd41bb662a69b4555deadbeef",
+        );
+
+        assert!(::serde_json::from_str::<Uint256>("\"fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffg\"").is_err()); // invalid char
+        assert!(::serde_json::from_str::<Uint256>("\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\"").is_err()); // invalid length
+        assert!(::serde_json::from_str::<Uint256>("\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\"").is_err()); // invalid length
     }
 }
