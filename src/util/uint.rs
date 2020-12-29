@@ -102,6 +102,17 @@ macro_rules! construct_uint {
                 $name(slice)
             }
 
+            /// Convert a big integer into a byte array using big-endian encoding
+            pub fn to_be_bytes(&self) -> [u8; $n_words * 8] {
+                use super::endian::u64_to_array_be;
+                let mut res = [0; $n_words * 8];
+                for i in 0..$n_words {
+                    let start = i * 8;
+                    res[start..start+8].copy_from_slice(&u64_to_array_be(self.0[$n_words - (i+1)]));
+                }
+                res
+            }
+
             // divmod like operation, returns (quotient, remainder)
             #[inline]
             fn div_rem(self, other: Self) -> (Self, Self) {
@@ -503,6 +514,16 @@ mod tests {
         assert_eq!(Uint256::from_be_bytes([0x1b, 0xad, 0xca, 0xfe, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xaf, 0xba, 0xbe, 0x2b, 0xed, 0xfe, 0xed,
                                            0xba, 0xad, 0xf0, 0x0d, 0xde, 0xfa, 0xce, 0xda, 0x11, 0xfe, 0xd2, 0xba, 0xd1, 0xc0, 0xff, 0xe0]),
                    Uint256([0x11fed2bad1c0ffe0, 0xbaadf00ddefaceda, 0xdeafbabe2bedfeed, 0x1badcafedeadbeef]));
+    }
+
+    #[test]
+    pub fn uint_to_be_bytes() {
+        assert_eq!(Uint128([0xdeafbabe2bedfeed, 0x1badcafedeadbeef]).to_be_bytes(),
+                   [0x1b, 0xad, 0xca, 0xfe, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xaf, 0xba, 0xbe, 0x2b, 0xed, 0xfe, 0xed]);
+
+        assert_eq!(Uint256([0x11fed2bad1c0ffe0, 0xbaadf00ddefaceda, 0xdeafbabe2bedfeed, 0x1badcafedeadbeef]).to_be_bytes(),
+                   [0x1b, 0xad, 0xca, 0xfe, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xaf, 0xba, 0xbe, 0x2b, 0xed, 0xfe, 0xed,
+                    0xba, 0xad, 0xf0, 0x0d, 0xde, 0xfa, 0xce, 0xda, 0x11, 0xfe, 0xd2, 0xba, 0xd1, 0xc0, 0xff, 0xe0]);
     }
 
     #[test]
