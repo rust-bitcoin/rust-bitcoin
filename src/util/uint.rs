@@ -90,9 +90,23 @@ macro_rules! construct_uint {
                 }
             }
 
-            /// Creates big integer value from a byte slice array using
+            /// Creates big integer value from a byte array using
             /// big-endian encoding
             pub fn from_be_bytes(bytes: [u8; $n_words * 8]) -> $name {
+                Self::_from_be_slice(&bytes)
+            }
+
+            /// Creates big integer value from a byte slice using
+            /// big-endian encoding
+            pub fn from_be_slice(bytes: &[u8]) -> Result<$name, Error> {
+                if bytes.len() != $n_words * 8 {
+                    Err(Error::InvalidLength(bytes.len(), $n_words*8))
+                } else {
+                    Ok(Self::_from_be_slice(bytes))
+                }
+            }
+
+            fn _from_be_slice(bytes: &[u8]) -> $name {
                 use super::endian::slice_to_u64_be;
                 let mut slice = [0u64; $n_words];
                 slice.iter_mut()
@@ -419,6 +433,13 @@ macro_rules! construct_uint {
 
 construct_uint!(Uint256, 4);
 construct_uint!(Uint128, 2);
+
+/// Uint error
+#[derive(Debug)]
+pub enum Error {
+    /// Invalid slice length (actual, expected)
+    InvalidLength(usize, usize),
+}
 
 impl Uint256 {
     /// Increment by 1
