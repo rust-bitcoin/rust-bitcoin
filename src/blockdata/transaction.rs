@@ -34,7 +34,7 @@ use blockdata::constants::WITNESS_SCALE_FACTOR;
 #[cfg(feature="bitcoinconsensus")] use blockdata::script;
 use blockdata::script::Script;
 use consensus::{encode, Decodable, Encodable};
-use hash_types::*;
+use hash_types::{SigHash, Txid, Wtxid};
 use VarInt;
 
 /// A reference to a transaction output
