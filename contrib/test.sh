@@ -3,7 +3,7 @@
 FEATURES="base64 bitcoinconsensus use-serde rand"
 
 # Pin `cc` for Rust 1.29
-if [ "$TRAVIS_RUST_VERSION" = "1.29.0" ]; then
+if [ -n "$PIN_VERSIONS" ]; then
     cargo generate-lockfile --verbose
     cargo update -p cc --precise "1.0.41" --verbose
     cargo update -p serde --precise "1.0.98" --verbose
@@ -57,7 +57,7 @@ then
     echo 'bitcoin = { path = "..", features = ["use-serde"] }' >> Cargo.toml
 
     # Pin `cc` for Rust 1.29
-    if [ "$TRAVIS_RUST_VERSION" = "1.29.0" ]; then
+    if [ -n "$PIN_VERSIONS" ]; then
         cargo generate-lockfile --verbose
         cargo update -p cc --precise "1.0.41" --verbose
         cargo update -p serde --precise "1.0.98" --verbose
