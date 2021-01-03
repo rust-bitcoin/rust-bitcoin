@@ -268,7 +268,7 @@ pub struct Transaction {
 
 impl Transaction {
     /// Computes a "normalized TXID" which does not include any signatures.
-    /// This gives a way to identify a transaction that is ``the same'' as
+    /// This gives a way to identify a transaction that is "the same" as
     /// another in the sense of having same inputs and outputs.
     pub fn ntxid(&self) -> sha256d::Hash {
         let cloned_tx = Transaction {
