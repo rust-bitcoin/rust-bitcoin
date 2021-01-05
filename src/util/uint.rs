@@ -436,7 +436,12 @@ macro_rules! construct_uint {
                 S: $crate::serde::Serializer,
             {
                 use $crate::hashes::hex::ToHex;
-                serializer.serialize_str(&self.to_be_bytes().to_hex())
+                let bytes = self.to_be_bytes();
+                if serializer.is_human_readable() {
+                    serializer.serialize_str(&bytes.to_hex())
+                } else {
+                    serializer.serialize_bytes(&bytes)
+                }
             }
         }
 
@@ -453,7 +458,7 @@ macro_rules! construct_uint {
                     type Value = $name;
 
                     fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                        write!(f, "hex string with {} characters ({} bytes", $n_words * 8 * 2, $n_words * 8)
+                        write!(f, "{} bytes or a hex string with {} characters", $n_words * 8, $n_words * 8 * 2)
                     }
 
                     fn visit_str<E>(self, s: &str) -> Result<Self::Value, E>
@@ -465,8 +470,21 @@ macro_rules! construct_uint {
                         $name::from_be_slice(&bytes)
                             .map_err(|_| de::Error::invalid_length(bytes.len() * 2, &self))
                     }
+
+                    fn visit_bytes<E>(self, bytes: &[u8]) -> Result<Self::Value, E>
+                    where
+                        E: de::Error,
+                    {
+                        $name::from_be_slice(bytes)
+                            .map_err(|_| de::Error::invalid_length(bytes.len(), &self))
+                    }
                 }
-                deserializer.deserialize_str(Visitor)
+
+                if deserializer.is_human_readable() {
+                    deserializer.deserialize_str(Visitor)
+                } else {
+                    deserializer.deserialize_bytes(Visitor)
+                }
             }
         }
     );
@@ -703,6 +721,10 @@ mod tests {
             let json = format!("\"{}\"", hex);
             assert_eq!(::serde_json::to_string(&uint).unwrap(), json);
             assert_eq!(::serde_json::from_str::<Uint256>(&json).unwrap(), uint);
+
+            let bin_encoded = ::bincode::serialize(&uint).unwrap();
+            let bin_decoded: Uint256 = ::bincode::deserialize(&bin_encoded).unwrap();
+            assert_eq!(bin_decoded, uint);
         };
 
         check(
