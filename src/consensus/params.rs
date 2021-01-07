@@ -27,6 +27,7 @@ const MAX_BITS_BITCOIN: Uint256 = Uint256([
     0x0000000000000000u64,
     0x00000000ffff0000u64,
 ]);
+
 /// Lowest possible difficulty for Testnet. See comment on Params::pow_limit for more info.
 const MAX_BITS_TESTNET: Uint256 = Uint256([
     0x0000000000000000u64,
@@ -34,6 +35,7 @@ const MAX_BITS_TESTNET: Uint256 = Uint256([
     0x0000000000000000u64,
     0x00000000ffff0000u64,
 ]);
+
 /// Lowest possible difficulty for Signet. See comment on Params::pow_limit for more info.
 const MAX_BITS_SIGNET: Uint256 = Uint256([
     0x0000000000000000u64,
@@ -41,6 +43,7 @@ const MAX_BITS_SIGNET: Uint256 = Uint256([
     0x0000000000000000u64,
     0x00000377ae000000u64,
 ]);
+
 /// Lowest possible difficulty for Regtest. See comment on Params::pow_limit for more info.
 const MAX_BITS_REGTEST: Uint256 = Uint256([
     0x0000000000000000u64,

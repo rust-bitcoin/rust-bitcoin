@@ -495,6 +495,7 @@ impl Encodable for OutPoint {
         Ok(len + self.vout.consensus_encode(s)?)
     }
 }
+
 impl Decodable for OutPoint {
     fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
         Ok(OutPoint {
@@ -516,6 +517,7 @@ impl Encodable for TxIn {
         Ok(len)
     }
 }
+
 impl Decodable for TxIn {
     fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
         Ok(TxIn {

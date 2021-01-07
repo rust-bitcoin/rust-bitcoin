@@ -172,7 +172,6 @@ pub fn deserialize_partial<T: Decodable>(
     Ok((rv, consumed))
 }
 
-
 /// Extensions of `Write` to encode data as per Bitcoin consensus
 pub trait WriteExt {
     /// Output a 64-bit uint
@@ -436,7 +435,6 @@ impl Decodable for VarInt {
     }
 }
 
-
 // Booleans
 impl Encodable for bool {
     #[inline]
@@ -491,7 +489,6 @@ impl Decodable for Cow<'static, str> {
             .map(Cow::Owned)
     }
 }
-
 
 // Arrays
 macro_rules! impl_array {
@@ -601,7 +598,6 @@ fn consensus_encode_with_size<S: io::Write>(data: &[u8], mut s: S) -> Result<usi
     Ok(vi_len + data.len())
 }
 
-
 impl Encodable for Vec<u8> {
     #[inline]
     fn consensus_encode<S: io::Write>(&self, s: S) -> Result<usize, Error> {
@@ -635,7 +631,6 @@ impl Decodable for Box<[u8]> {
         <Vec<u8>>::consensus_decode(d).map(From::from)
     }
 }
-
 
 /// Do a double-SHA256 on some data and return the first 4 bytes
 fn sha2_checksum(data: &[u8]) -> [u8; 4] {
@@ -846,7 +841,6 @@ mod tests {
         assert_eq!(discriminant(&deserialize::<Vec<u8>>(&[0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00]).unwrap_err()),
                    discriminant(&Error::NonMinimalVarInt));
 
-
         let mut vec_256 = vec![0; 259];
         vec_256[0] = 0xfd;
         vec_256[1] = 0x00;
@@ -1002,8 +996,6 @@ mod tests {
             let mut arr33 = [0u8; 33];
             let mut arr16 = [0u16; 8];
             round_trip_bytes!{(Vec<u8>, data), ([u8; 33], arr33), ([u16; 8], arr16), (Vec<u64>, data64)};
-
-
         }
     }
 }

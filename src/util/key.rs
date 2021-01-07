@@ -35,7 +35,6 @@ pub enum Error {
     Secp256k1(secp256k1::Error),
 }
 
-
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {

@@ -51,7 +51,6 @@ use std::fmt::{Display, Formatter};
 use std::io::Cursor;
 use std::cmp::Ordering;
 
-
 use hashes::{Hash, siphash24};
 use hash_types::{BlockHash, FilterHash, FilterHeader};
 
@@ -91,7 +90,6 @@ impl From<io::Error> for Error {
         Error::Io(io)
     }
 }
-
 
 /// a computed or read block filter
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -226,7 +224,6 @@ impl BlockFilterReader {
         self.reader.match_all(reader, query)
     }
 }
-
 
 /// Golomb-Rice encoded filter reader
 pub struct GCSFilterReader {

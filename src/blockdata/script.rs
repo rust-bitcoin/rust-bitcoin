@@ -147,6 +147,7 @@ impl convert::From<bitcoinconsensus::Error> for Error {
         }
     }
 }
+
 /// Helper to encode an integer in script format
 fn build_scriptint(n: i64) -> Vec<u8> {
     if n == 0 { return vec![] }

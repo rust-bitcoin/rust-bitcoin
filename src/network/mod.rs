@@ -61,7 +61,6 @@ impl From<io::Error> for Error {
 }
 
 impl error::Error for Error {
-
     fn cause(&self) -> Option<&dyn error::Error> {
         match *self {
             Error::Io(ref e) => Some(e),

@@ -11,6 +11,7 @@ macro_rules! define_slice_to_be {
         }
     }
 }
+
 macro_rules! define_slice_to_le {
     ($name: ident, $type: ty) => {
         #[inline]
@@ -24,6 +25,7 @@ macro_rules! define_slice_to_le {
         }
     }
 }
+
 macro_rules! define_be_to_array {
     ($name: ident, $type: ty, $byte_len: expr) => {
         #[inline]
@@ -37,6 +39,7 @@ macro_rules! define_be_to_array {
         }
     }
 }
+
 macro_rules! define_le_to_array {
     ($name: ident, $type: ty, $byte_len: expr) => {
         #[inline]
