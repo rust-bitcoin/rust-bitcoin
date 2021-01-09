@@ -2,12 +2,17 @@
 
 FEATURES="base64 bitcoinconsensus use-serde rand"
 
-# Pin `cc` for Rust 1.29
-if [ -n "$PIN_VERSIONS" ]; then
+pin_common_verions() {
     cargo generate-lockfile --verbose
     cargo update -p cc --precise "1.0.41" --verbose
     cargo update -p serde --precise "1.0.98" --verbose
     cargo update -p serde_derive --precise "1.0.98" --verbose
+}
+
+# Pin `cc` for Rust 1.29
+if [ -n "$PIN_VERSIONS" ]; then
+    pin_common_verions
+    cargo update -p byteorder --precise "1.3.4"
 fi
 
 if [ "$DO_COV" = true ]
@@ -58,10 +63,7 @@ then
 
     # Pin `cc` for Rust 1.29
     if [ -n "$PIN_VERSIONS" ]; then
-        cargo generate-lockfile --verbose
-        cargo update -p cc --precise "1.0.41" --verbose
-        cargo update -p serde --precise "1.0.98" --verbose
-        cargo update -p serde_derive --precise "1.0.98" --verbose
+        pin_common_verions
     fi
 
     cargo test --verbose
