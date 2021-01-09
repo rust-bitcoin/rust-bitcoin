@@ -679,6 +679,31 @@ impl Decodable for CheckedData {
     }
 }
 
+// References
+impl<'a, T: Encodable> Encodable for &'a T {
+    fn consensus_encode<S: io::Write>(&self, s: S) -> Result<usize, Error> {
+        (&**self).consensus_encode(s)
+    }
+}
+
+impl<'a, T: Encodable> Encodable for &'a mut T {
+    fn consensus_encode<S: io::Write>(&self, s: S) -> Result<usize, Error> {
+        (&**self).consensus_encode(s)
+    }
+}
+
+impl<T: Encodable> Encodable for ::std::rc::Rc<T> {
+    fn consensus_encode<S: io::Write>(&self, s: S) -> Result<usize, Error> {
+        (&**self).consensus_encode(s)
+    }
+}
+
+impl<T: Encodable> Encodable for ::std::sync::Arc<T> {
+    fn consensus_encode<S: io::Write>(&self, s: S) -> Result<usize, Error> {
+        (&**self).consensus_encode(s)
+    }
+}
+
 // Tuples
 macro_rules! tuple_encode {
     ($($x:ident),*) => (
@@ -707,8 +732,11 @@ macro_rules! tuple_encode {
 }
 
 tuple_encode!(T0, T1);
+tuple_encode!(T0, T1, T2);
 tuple_encode!(T0, T1, T2, T3);
+tuple_encode!(T0, T1, T2, T3, T4);
 tuple_encode!(T0, T1, T2, T3, T4, T5);
+tuple_encode!(T0, T1, T2, T3, T4, T5, T6);
 tuple_encode!(T0, T1, T2, T3, T4, T5, T6, T7);
 
 impl Encodable for sha256d::Hash {

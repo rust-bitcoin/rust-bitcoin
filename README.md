@@ -66,6 +66,11 @@ cargo update --package "serde" --precise "1.0.98"
 cargo update --package "serde_derive" --precise "1.0.98"
 ```
 
+For the feature `base64` to work with 1.29.0 we also need to pin `byteorder`:
+```
+cargo update -p byteorder --precise "1.3.4"
+```
+
 ## Installing Rust
 Rust can be installed using your package manager of choice or
 [rustup.rs](https://rustup.rs). The former way is considered more secure since
