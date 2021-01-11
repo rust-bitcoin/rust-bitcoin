@@ -1,4 +1,4 @@
-[![Status](https://travis-ci.org/rust-bitcoin/rust-bitcoin.png?branch=master)](https://travis-ci.org/rust-bitcoin/rust-bitcoin)
+![Continuous integration](https://github.com/rust-bitcoin/rust-bitcoin/workflows/Continuous%20integration/badge.svg)
 [![Safety Dance](https://img.shields.io/badge/unsafe-forbidden-success.svg)](https://github.com/rust-secure-code/safety-dance/)
 
 # Rust Bitcoin Library
