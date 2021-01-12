@@ -14,18 +14,17 @@ readme = "README.md"
 [features]
 default = [ "secp-recovery" ]
 base64 = [ "base64-compat" ]
-fuzztarget = ["secp256k1/fuzztarget", "bitcoin_hashes/fuzztarget"]
+fuzztarget = ["bitcoin_hashes/fuzztarget"]
 unstable = []
 rand = ["secp256k1/rand-std"]
 use-serde = ["serde", "bitcoin_hashes/serde", "secp256k1/serde"]
-secp-endomorphism = ["secp256k1/endomorphism"]
 secp-lowmemory = ["secp256k1/lowmemory"]
 secp-recovery = ["secp256k1/recovery"]
 
 [dependencies]
 bech32 = "0.7.2"
 bitcoin_hashes = "0.9.1"
-secp256k1 = { version = "0.19.0", features = [ "recovery" ] }
+secp256k1 = "0.20.0"
 
 base64-compat = { version = "1.0.0", optional = true }
 bitcoinconsensus = { version = "0.19.0-1", optional = true }
@@ -34,6 +33,6 @@ serde = { version = "1", features = [ "derive" ], optional = true }
 [dev-dependencies]
 serde_json = "<1.0.45"
 serde_test = "1"
-secp256k1 = { version = "0.19.0", features = [ "recovery", "rand-std" ] }
+secp256k1 = { version = "0.20.0", features = [ "recovery", "rand-std" ] }
 # We need to pin ryu (transitive dep from serde_json) to stay compatible with Rust 1.22.0
 ryu = "<1.0.5"
