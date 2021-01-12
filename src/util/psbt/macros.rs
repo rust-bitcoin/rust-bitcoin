@@ -58,7 +58,7 @@ macro_rules! impl_psbtmap_consensus_encoding {
             fn consensus_encode<S: ::std::io::Write>(
                 &self,
                 mut s: S,
-            ) -> Result<usize, $crate::consensus::encode::Error> {
+            ) -> Result<usize, ::std::io::Error> {
                 let mut len = 0;
                 for pair in $crate::util::psbt::Map::get_pairs(self)? {
                     len += $crate::consensus::Encodable::consensus_encode(

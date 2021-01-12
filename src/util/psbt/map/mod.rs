@@ -12,6 +12,8 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
+use std::io;
+
 use consensus::encode;
 use util::psbt;
 use util::psbt::raw;
@@ -22,7 +24,7 @@ pub trait Map {
     fn insert_pair(&mut self, pair: raw::Pair) -> Result<(), encode::Error>;
 
     /// Attempt to get all key-value pairs.
-    fn get_pairs(&self) -> Result<Vec<raw::Pair>, encode::Error>;
+    fn get_pairs(&self) -> Result<Vec<raw::Pair>, io::Error>;
 
     /// Attempt to merge with another key-value map of the same type.
     fn merge(&mut self, other: Self) -> Result<(), psbt::Error>;

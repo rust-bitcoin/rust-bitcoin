@@ -77,7 +77,7 @@ impl Encodable for Address {
     fn consensus_encode<S: io::Write>(
         &self,
         mut s: S,
-    ) -> Result<usize, encode::Error> {
+    ) -> Result<usize, io::Error> {
         let len = self.services.consensus_encode(&mut s)?
             + addr_to_be(self.address).consensus_encode(&mut s)?
             + self.port.to_be().consensus_encode(s)?;
@@ -136,8 +136,8 @@ pub enum AddrV2 {
 }
 
 impl Encodable for AddrV2 {
-    fn consensus_encode<W: io::Write>(&self, e: W) -> Result<usize, encode::Error> {
-        fn encode_addr<W: io::Write>(mut e: W, network: u8, bytes: &[u8]) -> Result<usize, encode::Error> {
+    fn consensus_encode<W: io::Write>(&self, e: W) -> Result<usize, io::Error> {
+        fn encode_addr<W: io::Write>(mut e: W, network: u8, bytes: &[u8]) -> Result<usize, io::Error> {
                 let len = 
                     network.consensus_encode(&mut e)? +
                     VarInt(bytes.len() as u64).consensus_encode(&mut e)? +
@@ -261,7 +261,7 @@ impl AddrV2Message {
 }
 
 impl Encodable for AddrV2Message {
-    fn consensus_encode<W: io::Write>(&self, mut e: W) -> Result<usize, encode::Error> {
+    fn consensus_encode<W: io::Write>(&self, mut e: W) -> Result<usize, io::Error> {
         let mut len = 0;
         len += self.time.consensus_encode(&mut e)?;
         len += VarInt(self.services.as_u64()).consensus_encode(&mut e)?;

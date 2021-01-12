@@ -831,7 +831,7 @@ impl Encodable for Script {
     fn consensus_encode<S: io::Write>(
         &self,
         s: S,
-    ) -> Result<usize, encode::Error> {
+    ) -> Result<usize, io::Error> {
         self.0.consensus_encode(s)
     }
 }

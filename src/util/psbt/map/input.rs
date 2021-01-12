@@ -12,7 +12,8 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-use std::collections::btree_map::{Entry, BTreeMap};
+use std::io;
+use std::collections::btree_map::{BTreeMap, Entry};
 
 use blockdata::script::Script;
 use blockdata::transaction::{SigHashType, Transaction, TxOut};
@@ -180,10 +181,10 @@ impl Map for Input {
                 ::std::collections::btree_map::Entry::Occupied(_) => return Err(Error::DuplicateKey(raw_key).into()),
             }
             _ => match self.unknown.entry(raw_key) {
-                ::std::collections::btree_map::Entry::Vacant(empty_key) => {
+                Entry::Vacant(empty_key) => {
                     empty_key.insert(raw_value);
                 }
-                ::std::collections::btree_map::Entry::Occupied(k) => {
+                Entry::Occupied(k) => {
                     return Err(Error::DuplicateKey(k.key().clone()).into())
                 }
             },
@@ -192,7 +193,7 @@ impl Map for Input {
         Ok(())
     }
 
-    fn get_pairs(&self) -> Result<Vec<raw::Pair>, encode::Error> {
+    fn get_pairs(&self) -> Result<Vec<raw::Pair>, io::Error> {
         let mut rv: Vec<raw::Pair> = Default::default();
 
         impl_psbt_get_pair! {
