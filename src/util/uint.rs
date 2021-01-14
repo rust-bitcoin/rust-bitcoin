@@ -98,9 +98,9 @@ macro_rules! construct_uint {
 
             /// Creates big integer value from a byte slice using
             /// big-endian encoding
-            pub fn from_be_slice(bytes: &[u8]) -> Result<$name, Error> {
+            pub fn from_be_slice(bytes: &[u8]) -> Result<$name, ParseLengthError> {
                 if bytes.len() != $n_words * 8 {
-                    Err(Error::InvalidLength(bytes.len(), $n_words*8))
+                    Err(ParseLengthError { actual: bytes.len(), expected: $n_words*8 })
                 } else {
                     Ok(Self::_from_be_slice(bytes))
                 }
@@ -493,11 +493,20 @@ macro_rules! construct_uint {
 construct_uint!(Uint256, 4);
 construct_uint!(Uint128, 2);
 
-/// Uint error
-#[derive(Debug)]
-pub enum Error {
-    /// Invalid slice length (actual, expected)
-    InvalidLength(usize, usize),
+/// Invalid slice length
+#[derive(Debug, PartialEq, PartialOrd, Clone, Copy, Hash)]
+/// Invalid slice length
+pub struct ParseLengthError {
+    /// The length of the slice de-facto
+    pub actual: usize,
+    /// The required length of the slice
+    pub expected: usize,
+}
+
+impl ::std::fmt::Display for ParseLengthError {
+    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+        write!(f, "Invalid length: got {}, expected {}", self.actual, self.expected)
+    }
 }
 
 impl Uint256 {
