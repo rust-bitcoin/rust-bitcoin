@@ -494,7 +494,7 @@ construct_uint!(Uint256, 4);
 construct_uint!(Uint128, 2);
 
 /// Invalid slice length
-#[derive(Debug, PartialEq, PartialOrd, Clone, Copy, Hash)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Clone, Copy, Hash)]
 /// Invalid slice length
 pub struct ParseLengthError {
     /// The length of the slice de-facto
@@ -508,6 +508,8 @@ impl ::std::fmt::Display for ParseLengthError {
         write!(f, "Invalid length: got {}, expected {}", self.actual, self.expected)
     }
 }
+
+impl ::std::error::Error for ParseLengthError {}
 
 impl Uint256 {
     /// Increment by 1
