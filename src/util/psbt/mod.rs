@@ -91,6 +91,29 @@ impl PartiallySignedTransaction {
     }
 }
 
+#[cfg(feature = "base64")]
+mod _base64encoding {
+    use super::{PartiallySignedTransaction, Error};
+    use std::fmt::{Display, Formatter, self};
+    use std::str::FromStr;
+    use consensus::encode;
+    use ::base64::display::Base64Display;
+
+    impl Display for PartiallySignedTransaction {
+        fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+            write!(f, "{}", Base64Display::with_config(&encode::serialize(self), ::base64::STANDARD))
+        }
+    }
+
+    impl FromStr for PartiallySignedTransaction {
+        type Err = Error;
+
+        fn from_str(s: &str) -> Result<Self, Self::Err> {
+            Ok(encode::deserialize(&::base64::decode(s).map_err(|_| Error::ConsensusEncoding)?)?)
+        }
+    }
+}
+
 impl Encodable for PartiallySignedTransaction {
     fn consensus_encode<S: io::Write>(
         &self,
