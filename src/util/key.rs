@@ -704,7 +704,8 @@ impl<'de> ::serde::Deserialize<'de> for EcdsaPublicKey {
 
 #[cfg(test)]
 mod tests {
-    use super::{PrivateKey, EcdsaPublicKey, Key};
+    use super::{PrivateKey, EcdsaPublicKey, Key, PublicKey};
+    use super::{UNCOMPRESSED_PUBLIC_KEY_SIZE, SCHNORRSIG_PUBLIC_KEY_SIZE, ECDSA_PUBLIC_KEY_SIZE};
     use secp256k1::Secp256k1;
     use std::io;
     use std::str::FromStr;
@@ -777,12 +778,19 @@ mod tests {
             9b6347398505f5ec93826dc61c19f47c66c0283ee9be980e29ce325a0f4679ef\
             87288ed73ce47fc4f5c79d19ebfa57da7cff3aff6e819e4ee971d86b5e61875d\
         ";
+        static PK_STR_S: &'static str = "d69c3509bb99e412e68b0fe8544e72837dfa30746d8be2aa65975f29d22dc7b9";
         static PK_BYTES: [u8; 33] = [
             0x03,
             0x9b, 0x63, 0x47, 0x39, 0x85, 0x05, 0xf5, 0xec,
             0x93, 0x82, 0x6d, 0xc6, 0x1c, 0x19, 0xf4, 0x7c,
             0x66, 0xc0, 0x28, 0x3e, 0xe9, 0xbe, 0x98, 0x0e,
             0x29, 0xce, 0x32, 0x5a, 0x0f, 0x46, 0x79, 0xef,
+        ];
+        static PK_BYTES_S: [u8; 32] = [
+            0xD6, 0x9C, 0x35, 0x09, 0xBB, 0x99, 0xE4, 0x12,
+            0xE6, 0x8B, 0x0F, 0xE8, 0x54, 0x4E, 0x72, 0x83,
+            0x7D, 0xFA, 0x30, 0x74, 0x6D, 0x8B, 0xE2, 0xAA,
+            0x65, 0x97, 0x5F, 0x29, 0xD2, 0x2D, 0xC7, 0xB9
         ];
         static PK_BYTES_U: [u8; 65] = [
             0x04,
@@ -803,30 +811,37 @@ mod tests {
             key: pk.key,
             compressed: false,
         };
+        let pk_s = PublicKey::from_slice(&PK_BYTES_S).unwrap();
 
         assert_tokens(&sk, &[Token::BorrowedStr(KEY_WIF)]);
         assert_tokens(&pk.compact(), &[Token::BorrowedBytes(&PK_BYTES[..])]);
         assert_tokens(&pk.readable(), &[Token::BorrowedStr(PK_STR)]);
         assert_tokens(&pk_u.compact(), &[Token::BorrowedBytes(&PK_BYTES_U[..])]);
         assert_tokens(&pk_u.readable(), &[Token::BorrowedStr(PK_STR_U)]);
+        assert_tokens(&pk_s.compact(), &[Token::BorrowedBytes(&PK_BYTES_S[..])]);
+        assert_tokens(&pk_s.readable(), &[Token::BorrowedStr(PK_STR_S)]);
     }
 
-    fn random_key(mut seed: u8) -> EcdsaPublicKey {
+    fn random_key(mut seed: u8) -> PublicKey {
         loop {
-            let mut data = [0; 65];
+            let mut data = [0; UNCOMPRESSED_PUBLIC_KEY_SIZE];
             for byte in &mut data[..] {
                 *byte = seed;
                 // totally a rng
                 seed = seed.wrapping_mul(41).wrapping_add(43);
             }
-            if data[0] % 2 == 0 {
+            if data[0] % 3 == 0 {
                 data[0] = 4;
-                if let Ok(key) = EcdsaPublicKey::from_slice(&data[..]) {
+                if let Ok(key) = PublicKey::from_slice(&data[..]) {
+                    return key;
+                }
+            } else if data[0] % 3 == 1 {
+                data[0] = 2 + (data[0] >> 7);
+                if let Ok(key) = PublicKey::from_slice(&data[..ECDSA_PUBLIC_KEY_SIZE]) {
                     return key;
                 }
             } else {
-                data[0] = 2 + (data[0] >> 7);
-                if let Ok(key) = EcdsaPublicKey::from_slice(&data[..33]) {
+                if let Ok(key) = PublicKey::from_slice(&data[..SCHNORRSIG_PUBLIC_KEY_SIZE]) {
                     return key;
                 }
             }
@@ -846,17 +861,18 @@ mod tests {
         let mut dec_keys = vec![];
         let mut cursor = io::Cursor::new(&v);
         for _ in 0..N_KEYS {
-            dec_keys.push(EcdsaPublicKey::read_from(&mut cursor).expect("reading from vec"));
+            println!("{}", cursor.position());
+            dec_keys.push(PublicKey::read_from(&mut cursor).expect("reading from vec"));
         }
 
         assert_eq!(keys, dec_keys);
 
         // sanity checks
-        assert!(EcdsaPublicKey::read_from(&mut cursor).is_err());
-        assert!(EcdsaPublicKey::read_from(io::Cursor::new(&[])).is_err());
-        assert!(EcdsaPublicKey::read_from(io::Cursor::new(&[0; 33][..])).is_err());
-        assert!(EcdsaPublicKey::read_from(io::Cursor::new(&[2; 32][..])).is_err());
-        assert!(EcdsaPublicKey::read_from(io::Cursor::new(&[0; 65][..])).is_err());
-        assert!(EcdsaPublicKey::read_from(io::Cursor::new(&[4; 64][..])).is_err());
+        assert!(PublicKey::read_from(&mut cursor).is_err());
+        assert!(PublicKey::read_from(io::Cursor::new(&[])).is_err());
+        assert!(PublicKey::read_from(io::Cursor::new(&[0; ECDSA_PUBLIC_KEY_SIZE][..])).is_err());
+        assert!(PublicKey::read_from(io::Cursor::new(&[2; SCHNORRSIG_PUBLIC_KEY_SIZE][..])).is_err());
+        assert!(PublicKey::read_from(io::Cursor::new(&[0; UNCOMPRESSED_PUBLIC_KEY_SIZE][..])).is_err());
+        assert!(PublicKey::read_from(io::Cursor::new(&[4; UNCOMPRESSED_PUBLIC_KEY_SIZE - 1][..])).is_err());
     }
 }
