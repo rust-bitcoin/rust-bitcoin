@@ -244,6 +244,7 @@ impl EcdsaPublicKey {
     }
 
     /// Returns bitcoin 160-bit hash of the public key
+    #[inline]
     pub fn pubkey_hash(&self) -> PubkeyHash {
         if self.compressed {
             PubkeyHash::hash(&self.key.serialize())
@@ -253,6 +254,7 @@ impl EcdsaPublicKey {
     }
 
     /// Returns bitcoin 160-bit hash of the public key for witness program
+    #[inline]
     pub fn wpubkey_hash(&self) -> Option<WPubkeyHash> {
         if self.compressed {
             Some(WPubkeyHash::from_inner(
@@ -266,6 +268,7 @@ impl EcdsaPublicKey {
     }
 
     /// Computes the public key as supposed to be used with this secret
+    #[inline]
     pub fn from_private_key<C: secp256k1::Signing>(secp: &Secp256k1<C>, sk: &PrivateKey) -> EcdsaPublicKey {
         sk.public_key(secp)
     }
