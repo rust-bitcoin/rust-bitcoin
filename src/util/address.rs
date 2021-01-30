@@ -40,6 +40,7 @@ use core::num::ParseIntError;
 use core::str::FromStr;
 #[cfg(feature = "std")] use std::error;
 
+use secp256k1::schnorrsig;
 use bech32;
 use hashes::Hash;
 use hash_types::{PubkeyHash, WPubkeyHash, ScriptHash, WScriptHash};
@@ -137,6 +138,8 @@ pub enum AddressType {
     P2wpkh,
     /// pay-to-witness-script-hash
     P2wsh,
+    /// pay-to-taproot
+    P2tr,
 }
 
 impl fmt::Display for AddressType {
@@ -146,6 +149,7 @@ impl fmt::Display for AddressType {
             AddressType::P2sh => "p2sh",
             AddressType::P2wpkh => "p2wpkh",
             AddressType::P2wsh => "p2wsh",
+            AddressType::P2tr => "p2tr",
         })
     }
 }
@@ -158,6 +162,7 @@ impl FromStr for AddressType {
             "p2sh" => Ok(AddressType::P2sh),
             "p2wpkh" => Ok(AddressType::P2wpkh),
             "p2wsh" => Ok(AddressType::P2wsh),
+            "p2tr" => Ok(AddressType::P2tr),
             _ => Err(()),
         }
     }
@@ -490,6 +495,17 @@ impl Address {
         }
     }
 
+    /// Create a pay to taproot address
+    pub fn p2tr(taptweaked_key: schnorrsig::PublicKey, network: Network) -> Address {
+        Address {
+            network: network,
+            payload: Payload::WitnessProgram {
+                version: WitnessVersion::V1,
+                program: taptweaked_key.serialize().to_vec()
+            }
+        }
+    }
+
     /// Get the address type of the address.
     /// None if unknown, non-standard or related to the future witness version.
     pub fn address_type(&self) -> Option<AddressType> {
@@ -507,6 +523,7 @@ impl Address {
                         32 => Some(AddressType::P2wsh),
                         _ => None,
                     },
+                    WitnessVersion::V1 if prog.len() == 32 => Some(AddressType::P2tr),
                     _ => None,
                 }
             }
