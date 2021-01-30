@@ -20,11 +20,12 @@ use std::fmt::{self, Write};
 use std::{io, ops, error};
 use std::str::FromStr;
 
-use secp256k1::{self, Secp256k1};
+use secp256k1::{self, Secp256k1, schnorrsig};
 use network::constants::Network;
 use hashes::{Hash, hash160};
 use hash_types::{PubkeyHash, WPubkeyHash};
 use util::base58;
+use secp256k1::schnorrsig::KeyPair;
 
 /// A key-related error.
 #[derive(Debug)]
@@ -65,6 +66,60 @@ impl From<base58::Error> for Error {
 impl From<secp256k1::Error> for Error {
     fn from(e: secp256k1::Error) -> Error {
         Error::Secp256k1(e)
+    }
+}
+
+/// Universal bitcoin public key type representing either ECDSA-compatible key
+/// or Schnorr signature-compatible key.
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum PublicKey {
+    /// ECDSA-compatible public key used in Bitcoin scripts and in P(W)PKH
+    /// types of `scriptPubkey`
+    Ecdsa(EcdsaPublicKey),
+
+    /// Schnorr signature-compatible key that can be used in witness v1
+    /// `scriptPubkey` and inside Tapscript
+    Schnorr(schnorrsig::PublicKey),
+}
+
+impl From<EcdsaPublicKey> for PublicKey {
+    fn from(key: EcdsaPublicKey) -> PublicKey {
+        PublicKey::Ecdsa(key)
+    }
+}
+
+impl From<schnorrsig::PublicKey> for PublicKey {
+    fn from(key: schnorrsig::PublicKey) -> Self {
+        PublicKey::Schnorr(key)
+    }
+}
+
+impl PublicKey {
+    /// Creates a new bitcoin public key from a Schnorr key pair
+    pub fn from_keypair<C: secp256k1::Signing>(secp: &Secp256k1<C>, keypair: &KeyPair) -> PublicKey {
+        PublicKey::Schnorr(schnorrsig::PublicKey::from_keypair(secp, keypair))
+
+    }
+}
+
+impl fmt::Display for PublicKey {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            PublicKey::Ecdsa(key) => fmt::Display::fmt(key, f),
+            PublicKey::Schnorr(key) => fmt::Display::fmt(key, f),
+        }
+    }
+}
+
+impl FromStr for PublicKey {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.len() == secp256k1::constants::SCHNORRSIG_PUBLIC_KEY_SIZE * 2 {
+            Ok(PublicKey::Schnorr(s.parse()?))
+        } else {
+            Ok(PublicKey::Ecdsa(s.parse()?))
+        }
     }
 }
 
