@@ -33,7 +33,7 @@ pub mod message_filter;
 pub mod stream_reader;
 
 /// Network error
-#[derive(Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum Error {
     /// And I/O error
     Io(io::ErrorKind),

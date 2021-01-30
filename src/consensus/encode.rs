@@ -47,7 +47,7 @@ use network::message_blockdata::Inventory;
 use network::address::{Address, AddrV2Message};
 
 /// Encoding error
-#[derive(Debug)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum Error {
     /// And I/O error
     Io(io::ErrorKind),
