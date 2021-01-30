@@ -143,8 +143,64 @@ impl From<schnorrsig::PublicKey> for PublicKey {
 
 impl PublicKey {
     /// Creates a new bitcoin public key from a Schnorr key pair
+    #[inline]
     pub fn from_keypair<C: secp256k1::Signing>(secp: &Secp256k1<C>, keypair: &schnorrsig::KeyPair) -> PublicKey {
         PublicKey::Schnorr(schnorrsig::PublicKey::from_keypair(secp, keypair))
+    }
+
+    /// Returns `true` if an underlying public key is a Schnorr public key
+    #[inline]
+    pub fn is_schnorr(self) -> bool {
+        match self {
+            PublicKey::Ecdsa(_) => false,
+            PublicKey::Schnorr(_) => true,
+        }
+    }
+
+    /// Returns `true` if an underlying public key is a ECDSA public key
+    #[inline]
+    pub fn is_ecdsa(self) -> bool {
+        match self {
+            PublicKey::Ecdsa(_) => true,
+            PublicKey::Schnorr(_) => false,
+        }
+    }
+
+
+    /// Returns `true` if an underlying public key is a compressed ECDSA public key
+    #[inline]
+    pub fn is_ecdsa_comressed(self) -> bool {
+        match self {
+            PublicKey::Ecdsa(key) => key.compressed,
+            PublicKey::Schnorr(_) => false,
+        }
+    }
+
+    /// Unwraps underlying key data into an optional containing Schnorr public key, if any
+    #[inline]
+    pub fn schnorr_key(self) -> Option<schnorrsig::PublicKey> {
+        match self {
+            PublicKey::Ecdsa(_) => None,
+            PublicKey::Schnorr(key) => Some(key),
+        }
+    }
+
+    /// Unwraps underlying key data into an optional containing ECDSA public key, if any
+    #[inline]
+    pub fn ecdsa_key(self) -> Option<EcdsaPublicKey> {
+        match self {
+            PublicKey::Ecdsa(key) => Some(key),
+            PublicKey::Schnorr(_) => None,
+        }
+    }
+
+    /// Unwraps underlying key data into an optional containing ECDSA public key, if any
+    #[inline]
+    pub fn ecdsa_compressed_key(self) -> Option<EcdsaPublicKey> {
+        match self {
+            PublicKey::Ecdsa(key) => Some(key),
+            PublicKey::Schnorr(_) => None,
+        }
     }
 }
 
@@ -236,11 +292,30 @@ pub struct EcdsaPublicKey {
 
 impl EcdsaPublicKey {
     /// Returns a compressed bitcoin representation of [`secp256k1::PublicKey`]
+    #[inline]
     pub fn with_compressed(key: secp256k1::PublicKey) -> EcdsaPublicKey {
         EcdsaPublicKey {
             compressed: true,
             key
         }
+    }
+
+    /// Returns optional representation of the key filled with key data only if the key is compressed
+    #[inline]
+    pub fn compressed(self) -> Option<EcdsaPublicKey> {
+        if self.compressed {
+            Some(self)
+        } else {
+            None
+        }
+    }
+
+
+    /// Returns optional representation of the key filled with key data only if the key is compressed
+    #[inline]
+    pub fn force_compressed(mut self) -> EcdsaPublicKey {
+        self.compressed = true;
+        self
     }
 
     /// Returns bitcoin 160-bit hash of the public key
