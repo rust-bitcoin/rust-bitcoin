@@ -59,13 +59,13 @@ impl<R: Read> StreamReader<R> {
         loop {
             match encode::deserialize_partial::<D>(&self.unparsed) {
                 // In this case we just have an incomplete data, so we need to read more
-                Err(encode::Error::Io(ref err)) if err.kind () == io::ErrorKind::UnexpectedEof => {
+                Err(encode::Error::Io(ref err)) if *err == io::ErrorKind::UnexpectedEof => {
                     let count = self.stream.read(&mut self.data)?;
                     if count > 0 {
                         self.unparsed.extend(self.data[0..count].iter());
                     }
                     else {
-                        return Err(encode::Error::Io(io::Error::from(io::ErrorKind::UnexpectedEof)));
+                        return Err(encode::Error::Io(io::ErrorKind::UnexpectedEof));
                     }
                 },
                 Err(err) => return Err(err),

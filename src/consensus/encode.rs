@@ -50,7 +50,7 @@ use network::address::{Address, AddrV2Message};
 #[derive(Debug)]
 pub enum Error {
     /// And I/O error
-    Io(io::Error),
+    Io(io::ErrorKind),
     /// PSBT-related error
     Psbt(psbt::Error),
     /// Network magic was not expected
@@ -87,7 +87,7 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Error::Io(ref e) => write!(f, "I/O error: {}", e),
+            Error::Io(ref e) => write!(f, "I/O error: {}", io::Error::from(*e)),
             Error::Psbt(ref e) => write!(f, "PSBT error: {}", e),
             Error::UnexpectedNetworkMagic { expected: ref e, actual: ref a } => write!(f,
                 "unexpected network magic: expected {}, actual {}", e, a),
@@ -104,26 +104,12 @@ impl fmt::Display for Error {
     }
 }
 
-impl error::Error for Error {
-    fn cause(&self) -> Option<&dyn error::Error> {
-        match *self {
-            Error::Io(ref e) => Some(e),
-            Error::Psbt(ref e) => Some(e),
-            Error::UnexpectedNetworkMagic { .. }
-            | Error::OversizedVectorAllocation { .. }
-            | Error::InvalidChecksum { .. }
-            | Error::NonMinimalVarInt
-            | Error::UnknownNetworkMagic(..)
-            | Error::ParseFailed(..)
-            | Error::UnsupportedSegwitFlag(..) => None,
-        }
-    }
-}
+impl error::Error for Error {}
 
 #[doc(hidden)]
 impl From<io::Error> for Error {
     fn from(error: io::Error) -> Self {
-        Error::Io(error)
+        Error::Io(error.kind())
     }
 }
 
@@ -242,7 +228,7 @@ macro_rules! decoder_fn {
         fn $name(&mut self) -> Result<$val_type, Error> {
             debug_assert_eq!(::std::mem::size_of::<$val_type>(), $byte_len); // size_of isn't a constfn in 1.22
             let mut val = [0; $byte_len];
-            self.read_exact(&mut val[..]).map_err(Error::Io)?;
+            self.read_exact(&mut val[..]).map_err(Error::from)?;
             Ok(endian::$readfn(&val))
         }
     }
@@ -300,7 +286,7 @@ impl<R: Read> ReadExt for R {
     }
     #[inline]
     fn read_slice(&mut self, slice: &mut [u8]) -> Result<(), Error> {
-        self.read_exact(slice).map_err(Error::Io)
+        self.read_exact(slice).map_err(Error::from)
     }
 }
 
@@ -956,7 +942,7 @@ mod tests {
         // found by cargo fuzz
         assert!(deserialize::<Vec<u64>>(&[0xff,0xff,0xff,0xff,0x6b,0x6b,0x6b,0x6b,0x6b,0x6b,0x6b,0x6b,0x6b,0x6b,0x6b,0x6b,0xa,0xa,0x3a]).is_err());
 
-        let rand_io_err = Error::Io(io::Error::new(io::ErrorKind::Other, ""));
+        let rand_io_err = Error::Io(io::ErrorKind::Other);
 
         // Check serialization that `if len > MAX_VEC_SIZE {return err}` isn't inclusive,
         // by making sure it fails with IO Error and not an `OversizedVectorAllocation` Error.
@@ -977,7 +963,7 @@ mod tests {
     }
 
     fn test_len_is_max_vec<T>() where Vec<T>: Decodable, T: fmt::Debug {
-        let rand_io_err = Error::Io(io::Error::new(io::ErrorKind::Other, ""));
+        let rand_io_err = Error::Io(io::ErrorKind::Other);
         let varint = VarInt((super::MAX_VEC_SIZE / mem::size_of::<T>()) as u64);
         let err = deserialize::<Vec<T>>(&serialize(&varint)).unwrap_err();
         assert_eq!(discriminant(&err), discriminant(&rand_io_err));

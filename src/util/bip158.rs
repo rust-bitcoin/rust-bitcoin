@@ -70,7 +70,7 @@ pub enum Error {
     /// missing UTXO, can not calculate script filter
     UtxoMissing(OutPoint),
     /// some IO error reading or writing binary serialization of the filter
-    Io(io::Error),
+    Io(io::ErrorKind),
 }
 
 impl ::std::error::Error for Error {}
@@ -79,14 +79,14 @@ impl Display for Error {
     fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
         match *self {
             Error::UtxoMissing(ref coin) => write!(f, "unresolved UTXO {}", coin),
-            Error::Io(ref io) => write!(f, "{}", io)
+            Error::Io(ref kind) => write!(f, "{}", io::Error::from(*kind))
         }
     }
 }
 
 impl From<io::Error> for Error {
     fn from(io: io::Error) -> Self {
-        Error::Io(io)
+        Error::Io(io.kind())
     }
 }
 
