@@ -22,7 +22,7 @@
 
 use secp256k1::{self, Secp256k1};
 use PrivateKey;
-use PublicKey;
+use EcdsaPublicKey;
 use hashes::{sha256, Hash, HashEngine, Hmac, HmacEngine};
 use blockdata::{opcodes, script};
 
@@ -94,7 +94,7 @@ pub struct Template(Vec<TemplateElement>);
 
 impl Template {
     /// Instantiate a template
-    pub fn to_script(&self, keys: &[PublicKey]) -> Result<script::Script, Error> {
+    pub fn to_script(&self, keys: &[EcdsaPublicKey]) -> Result<script::Script, Error> {
         let mut key_index = 0;
         let mut ret = script::Builder::new();
         for elem in &self.0 {
@@ -152,19 +152,19 @@ impl<'a> From<&'a [u8]> for Template {
 }
 
 /// Tweak a single key using some arbitrary data
-pub fn tweak_key<C: secp256k1::Verification>(secp: &Secp256k1<C>, mut key: PublicKey, contract: &[u8]) -> PublicKey {
+pub fn tweak_key<C: secp256k1::Verification>(secp: &Secp256k1<C>, mut key: EcdsaPublicKey, contract: &[u8]) -> EcdsaPublicKey {
     let hmac_result = compute_tweak(&key, contract);
     key.key.add_exp_assign(secp, &hmac_result[..]).expect("HMAC cannot produce invalid tweak");
     key
 }
 
 /// Tweak keys using some arbitrary data
-pub fn tweak_keys<C: secp256k1::Verification>(secp: &Secp256k1<C>, keys: &[PublicKey], contract: &[u8]) -> Vec<PublicKey> {
+pub fn tweak_keys<C: secp256k1::Verification>(secp: &Secp256k1<C>, keys: &[EcdsaPublicKey], contract: &[u8]) -> Vec<EcdsaPublicKey> {
     keys.iter().cloned().map(|key| tweak_key(secp, key, contract)).collect()
 }
 
 /// Compute a tweak from some given data for the given public key
-pub fn compute_tweak(pk: &PublicKey, contract: &[u8]) -> Hmac<sha256::Hash> {
+pub fn compute_tweak(pk: &EcdsaPublicKey, contract: &[u8]) -> Hmac<sha256::Hash> {
     let mut hmac_engine: HmacEngine<sha256::Hash> = if pk.compressed {
         HmacEngine::new(&pk.key.serialize())
     } else {
@@ -177,7 +177,7 @@ pub fn compute_tweak(pk: &PublicKey, contract: &[u8]) -> Hmac<sha256::Hash> {
 /// Tweak a secret key using some arbitrary data (calls `compute_tweak` internally)
 pub fn tweak_secret_key<C: secp256k1::Signing>(secp: &Secp256k1<C>, key: &PrivateKey, contract: &[u8]) -> Result<PrivateKey, Error> {
     // Compute public key
-    let pk = PublicKey::from_private_key(secp, &key);
+    let pk = EcdsaPublicKey::from_private_key(secp, &key);
     // Compute tweak
     let hmac_sk = compute_tweak(&pk, contract);
     // Execute the tweak
@@ -189,11 +189,11 @@ pub fn tweak_secret_key<C: secp256k1::Signing>(secp: &Secp256k1<C>, key: &Privat
 
 /// Takes a contract, template and key set and runs through all the steps
 pub fn create_address<C: secp256k1::Verification>(secp: &Secp256k1<C>,
-                      network: Network,
-                      contract: &[u8],
-                      keys: &[PublicKey],
-                      template: &Template)
-                      -> Result<address::Address, Error> {
+                                                  network: Network,
+                                                  contract: &[u8],
+                                                  keys: &[EcdsaPublicKey],
+                                                  template: &Template)
+                                                  -> Result<address::Address, Error> {
     let keys = tweak_keys(secp, keys, contract);
     let script = template.to_script(&keys)?;
     Ok(address::Address {
@@ -205,7 +205,7 @@ pub fn create_address<C: secp256k1::Verification>(secp: &Secp256k1<C>,
 }
 
 /// Extract the keys and template from a completed script
-pub fn untemplate(script: &script::Script) -> Result<(Template, Vec<PublicKey>), Error> {
+pub fn untemplate(script: &script::Script) -> Result<(Template, Vec<EcdsaPublicKey>), Error> {
     let mut ret = script::Builder::new();
     let mut retkeys = vec![];
 
@@ -224,7 +224,7 @@ pub fn untemplate(script: &script::Script) -> Result<(Template, Vec<PublicKey>),
         match instruction.unwrap() {
             script::Instruction::PushBytes(data) => {
                 let n = data.len();
-                ret = match PublicKey::from_slice(data) {
+                ret = match EcdsaPublicKey::from_slice(data) {
                     Ok(key) => {
                         if n == 65 { return Err(Error::UncompressedKey); }
                         if mode == Mode::SeekingCheckMulti { return Err(Error::ExpectedChecksig); }
@@ -284,10 +284,10 @@ mod tests {
     use network::constants::Network;
 
     use super::*;
-    use PublicKey;
+    use EcdsaPublicKey;
 
     macro_rules! hex (($hex:expr) => (Vec::from_hex($hex).unwrap()));
-    macro_rules! hex_key (($hex:expr) => (PublicKey::from_slice(&hex!($hex)).unwrap()));
+    macro_rules! hex_key (($hex:expr) => (EcdsaPublicKey::from_slice(&hex!($hex)).unwrap()));
     macro_rules! alpha_template(() => (Template::from(&hex!("55fefefefefefefe57AE")[..])));
     macro_rules! alpha_keys(() => (
         &[hex_key!("0269992fb441ae56968e5b77d46a3e53b69f136444ae65a94041fc937bdb28d933"),
@@ -345,18 +345,18 @@ mod tests {
             network: Network::Bitcoin,
         };
         let pks = [
-            PublicKey { key: pk1, compressed: true },
-            PublicKey { key: pk2, compressed: false },
-            PublicKey { key: pk3, compressed: true },
+            EcdsaPublicKey { key: pk1, compressed: true },
+            EcdsaPublicKey { key: pk2, compressed: false },
+            EcdsaPublicKey { key: pk3, compressed: true },
         ];
         let contract = b"if bottle mt dont remembr drink wont pay";
 
         // Directly compute tweaks on pubkeys
         let tweaked_pks = tweak_keys(&secp, &pks, &contract[..]);
         // Compute tweaks on secret keys
-        let tweaked_pk1 = PublicKey::from_private_key(&secp, &tweak_secret_key(&secp, &sk1, &contract[..]).unwrap());
-        let tweaked_pk2 = PublicKey::from_private_key(&secp, &tweak_secret_key(&secp, &sk2, &contract[..]).unwrap());
-        let tweaked_pk3 = PublicKey::from_private_key(&secp, &tweak_secret_key(&secp, &sk3, &contract[..]).unwrap());
+        let tweaked_pk1 = EcdsaPublicKey::from_private_key(&secp, &tweak_secret_key(&secp, &sk1, &contract[..]).unwrap());
+        let tweaked_pk2 = EcdsaPublicKey::from_private_key(&secp, &tweak_secret_key(&secp, &sk2, &contract[..]).unwrap());
+        let tweaked_pk3 = EcdsaPublicKey::from_private_key(&secp, &tweak_secret_key(&secp, &sk3, &contract[..]).unwrap());
         // Check equality
         assert_eq!(tweaked_pks[0], tweaked_pk1);
         assert_eq!(tweaked_pks[1], tweaked_pk2);
@@ -368,14 +368,14 @@ mod tests {
         let secp = Secp256k1::new();
 
         let pks = [
-            PublicKey::from_str("02ba604e6ad9d3864eda8dc41c62668514ef7d5417d3b6db46e45cc4533bff001c").unwrap(),
-            PublicKey::from_str("0365c0755ea55ce85d8a1900c68a524dbfd1c0db45ac3b3840dbb10071fe55e7a8").unwrap(),
-            PublicKey::from_str("0202313ca315889b2e69c94cf86901119321c7288139ba53ac022b7af3dc250054").unwrap(),
+            EcdsaPublicKey::from_str("02ba604e6ad9d3864eda8dc41c62668514ef7d5417d3b6db46e45cc4533bff001c").unwrap(),
+            EcdsaPublicKey::from_str("0365c0755ea55ce85d8a1900c68a524dbfd1c0db45ac3b3840dbb10071fe55e7a8").unwrap(),
+            EcdsaPublicKey::from_str("0202313ca315889b2e69c94cf86901119321c7288139ba53ac022b7af3dc250054").unwrap(),
         ];
         let tweaked_pks = [
-            PublicKey::from_str("03b3597221b5982a3f1a77aed50f0015d1b6edfc69023ef7f25cfac0e8af1b2041").unwrap(),
-            PublicKey::from_str("0296ece1fd954f7ae94f8d6bad19fd6d583f5b36335cf13135a3053a22f3c1fb05").unwrap(),
-            PublicKey::from_str("0230bb1ca5dbc7fcf49294c2c3e582e5582eabf7c87e885735dc774da45d610e51").unwrap(),
+            EcdsaPublicKey::from_str("03b3597221b5982a3f1a77aed50f0015d1b6edfc69023ef7f25cfac0e8af1b2041").unwrap(),
+            EcdsaPublicKey::from_str("0296ece1fd954f7ae94f8d6bad19fd6d583f5b36335cf13135a3053a22f3c1fb05").unwrap(),
+            EcdsaPublicKey::from_str("0230bb1ca5dbc7fcf49294c2c3e582e5582eabf7c87e885735dc774da45d610e51").unwrap(),
         ];
         let contract = b"if bottle mt dont remembr drink wont pay";
 

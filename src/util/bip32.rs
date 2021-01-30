@@ -27,7 +27,7 @@ use secp256k1::{self, Secp256k1};
 
 use network::constants::Network;
 use util::{base58, endian};
-use util::key::{self, PublicKey, PrivateKey};
+use util::key::{self, EcdsaPublicKey, PrivateKey};
 
 /// A chain code
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -75,7 +75,7 @@ pub struct ExtendedPubKey {
     /// Child number of the key used to derive from parent (0 for master)
     pub child_number: ChildNumber,
     /// Public key
-    pub public_key: PublicKey,
+    pub public_key: EcdsaPublicKey,
     /// Chain code
     pub chain_code: ChainCode
 }
@@ -530,7 +530,7 @@ impl ExtendedPrivKey {
         match i {
             ChildNumber::Normal { .. } => {
                 // Non-hardened key: compute public data and use that
-                hmac_engine.input(&PublicKey::from_private_key(secp, &self.private_key).key.serialize()[..]);
+                hmac_engine.input(&EcdsaPublicKey::from_private_key(secp, &self.private_key).key.serialize()[..]);
             }
             ChildNumber::Hardened { .. } => {
                 // Hardened key: use only secret data to prevent public derivation
@@ -625,7 +625,7 @@ impl ExtendedPubKey {
             depth: sk.depth,
             parent_fingerprint: sk.parent_fingerprint,
             child_number: sk.child_number,
-            public_key: PublicKey::from_private_key(secp, &sk.private_key),
+            public_key: EcdsaPublicKey::from_private_key(secp, &sk.private_key),
             chain_code: sk.chain_code
         }
     }
@@ -709,7 +709,7 @@ impl ExtendedPubKey {
             parent_fingerprint: Fingerprint::from(&data[5..9]),
             child_number: endian::slice_to_u32_be(&data[9..13]).into(),
             chain_code: ChainCode::from(&data[13..45]),
-            public_key: PublicKey::from_slice(&data[45..78])?,
+            public_key: EcdsaPublicKey::from_slice(&data[45..78])?,
         })
     }
 

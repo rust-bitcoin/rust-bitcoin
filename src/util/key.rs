@@ -70,14 +70,22 @@ impl From<secp256k1::Error> for Error {
 
 /// A Bitcoin ECDSA public key
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct PublicKey {
+pub struct EcdsaPublicKey {
     /// Whether this public key should be serialized as compressed
     pub compressed: bool,
     /// The actual ECDSA key
     pub key: secp256k1::PublicKey,
 }
 
-impl PublicKey {
+impl EcdsaPublicKey {
+    /// Returns a compressed bitcoin representation of [`secp256k1::PublicKey`]
+    pub fn with_compressed(key: secp256k1::PublicKey) -> EcdsaPublicKey {
+        EcdsaPublicKey {
+            compressed: true,
+            key
+        }
+    }
+
     /// Returns bitcoin 160-bit hash of the public key
     pub fn pubkey_hash(&self) -> PubkeyHash {
         if self.compressed {
@@ -135,26 +143,26 @@ impl PublicKey {
     }
 
     /// Deserialize a public key from a slice
-    pub fn from_slice(data: &[u8]) -> Result<PublicKey, Error> {
+    pub fn from_slice(data: &[u8]) -> Result<EcdsaPublicKey, Error> {
         let compressed: bool = match data.len() {
             33 => true,
             65 => false,
             len =>  { return Err(base58::Error::InvalidLength(len).into()); },
         };
 
-        Ok(PublicKey {
+        Ok(EcdsaPublicKey {
             compressed: compressed,
             key: secp256k1::PublicKey::from_slice(data)?,
         })
     }
 
     /// Computes the public key as supposed to be used with this secret
-    pub fn from_private_key<C: secp256k1::Signing>(secp: &Secp256k1<C>, sk: &PrivateKey) -> PublicKey {
+    pub fn from_private_key<C: secp256k1::Signing>(secp: &Secp256k1<C>, sk: &PrivateKey) -> EcdsaPublicKey {
         sk.public_key(secp)
     }
 }
 
-impl fmt::Display for PublicKey {
+impl fmt::Display for EcdsaPublicKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.compressed {
             for ch in &self.key.serialize()[..] {
@@ -169,11 +177,11 @@ impl fmt::Display for PublicKey {
     }
 }
 
-impl FromStr for PublicKey {
+impl FromStr for EcdsaPublicKey {
     type Err = Error;
-    fn from_str(s: &str) -> Result<PublicKey, Error> {
+    fn from_str(s: &str) -> Result<EcdsaPublicKey, Error> {
         let key = secp256k1::PublicKey::from_str(s)?;
-        Ok(PublicKey {
+        Ok(EcdsaPublicKey {
             key: key,
             compressed: s.len() == 66
         })
@@ -193,8 +201,8 @@ pub struct PrivateKey {
 
 impl PrivateKey {
     /// Creates a public key from this private key
-    pub fn public_key<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> PublicKey {
-        PublicKey {
+    pub fn public_key<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> EcdsaPublicKey {
+        EcdsaPublicKey {
             compressed: self.compressed,
             key: secp256k1::PublicKey::from_secret_key(secp, &self.key)
         }
@@ -323,7 +331,7 @@ impl<'de> ::serde::Deserialize<'de> for PrivateKey {
 }
 
 #[cfg(feature = "serde")]
-impl ::serde::Serialize for PublicKey {
+impl ::serde::Serialize for EcdsaPublicKey {
     fn serialize<S: ::serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
         if s.is_human_readable() {
             s.collect_str(self)
@@ -338,13 +346,13 @@ impl ::serde::Serialize for PublicKey {
 }
 
 #[cfg(feature = "serde")]
-impl<'de> ::serde::Deserialize<'de> for PublicKey {
-    fn deserialize<D: ::serde::Deserializer<'de>>(d: D) -> Result<PublicKey, D::Error> {
+impl<'de> ::serde::Deserialize<'de> for EcdsaPublicKey {
+    fn deserialize<D: ::serde::Deserializer<'de>>(d: D) -> Result<EcdsaPublicKey, D::Error> {
         if d.is_human_readable() {
             struct HexVisitor;
 
             impl<'de> ::serde::de::Visitor<'de> for HexVisitor {
-                type Value = PublicKey;
+                type Value = EcdsaPublicKey;
 
                 fn expecting(&self, formatter: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
                     formatter.write_str("an ASCII hex string")
@@ -355,7 +363,7 @@ impl<'de> ::serde::Deserialize<'de> for PublicKey {
                     E: ::serde::de::Error,
                 {
                     if let Ok(hex) = ::std::str::from_utf8(v) {
-                        PublicKey::from_str(hex).map_err(E::custom)
+                        EcdsaPublicKey::from_str(hex).map_err(E::custom)
                     } else {
                         Err(E::invalid_value(::serde::de::Unexpected::Bytes(v), &self))
                     }
@@ -365,7 +373,7 @@ impl<'de> ::serde::Deserialize<'de> for PublicKey {
                 where
                     E: ::serde::de::Error,
                 {
-                    PublicKey::from_str(v).map_err(E::custom)
+                    EcdsaPublicKey::from_str(v).map_err(E::custom)
                 }
             }
             d.deserialize_str(HexVisitor)
@@ -373,7 +381,7 @@ impl<'de> ::serde::Deserialize<'de> for PublicKey {
             struct BytesVisitor;
 
             impl<'de> ::serde::de::Visitor<'de> for BytesVisitor {
-                type Value = PublicKey;
+                type Value = EcdsaPublicKey;
 
                 fn expecting(&self, formatter: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
                     formatter.write_str("a bytestring")
@@ -383,7 +391,7 @@ impl<'de> ::serde::Deserialize<'de> for PublicKey {
                 where
                     E: ::serde::de::Error,
                 {
-                    PublicKey::from_slice(v).map_err(E::custom)
+                    EcdsaPublicKey::from_slice(v).map_err(E::custom)
                 }
             }
 
@@ -394,7 +402,7 @@ impl<'de> ::serde::Deserialize<'de> for PublicKey {
 
 #[cfg(test)]
 mod tests {
-    use super::{PrivateKey, PublicKey};
+    use super::{PrivateKey, EcdsaPublicKey};
     use secp256k1::Secp256k1;
     use std::io;
     use std::str::FromStr;
@@ -431,26 +439,26 @@ mod tests {
         let mut pk = sk.public_key(&secp);
         assert_eq!(pk.compressed, false);
         assert_eq!(&pk.to_string(), "042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133");
-        assert_eq!(pk, PublicKey::from_str("042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133").unwrap());
+        assert_eq!(pk, EcdsaPublicKey::from_str("042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133").unwrap());
         let addr = Address::p2pkh(&pk, sk.network);
         assert_eq!(&addr.to_string(), "1GhQvF6dL8xa6wBxLnWmHcQsurx9RxiMc8");
         pk.compressed = true;
         assert_eq!(&pk.to_string(), "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af");
-        assert_eq!(pk, PublicKey::from_str("032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af").unwrap());
+        assert_eq!(pk, EcdsaPublicKey::from_str("032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af").unwrap());
     }
 
     #[test]
     fn test_pubkey_hash() {
-        let pk = PublicKey::from_str("032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af").unwrap();
-        let upk = PublicKey::from_str("042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133").unwrap();
+        let pk = EcdsaPublicKey::from_str("032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af").unwrap();
+        let upk = EcdsaPublicKey::from_str("042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133").unwrap();
         assert_eq!(pk.pubkey_hash().to_hex(), "9511aa27ef39bbfa4e4f3dd15f4d66ea57f475b4");
         assert_eq!(upk.pubkey_hash().to_hex(), "ac2e7daf42d2c97418fd9f78af2de552bb9c6a7a");
     }
 
     #[test]
     fn test_wpubkey_hash() {
-        let pk = PublicKey::from_str("032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af").unwrap();
-        let upk = PublicKey::from_str("042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133").unwrap();
+        let pk = EcdsaPublicKey::from_str("032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af").unwrap();
+        let upk = EcdsaPublicKey::from_str("042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133").unwrap();
         assert_eq!(pk.wpubkey_hash().unwrap().to_hex(), "9511aa27ef39bbfa4e4f3dd15f4d66ea57f475b4");
         assert_eq!(upk.wpubkey_hash(), None);
     }
@@ -488,8 +496,8 @@ mod tests {
 
         let s = Secp256k1::new();
         let sk = PrivateKey::from_str(&KEY_WIF).unwrap();
-        let pk = PublicKey::from_private_key(&s, &sk);
-        let pk_u = PublicKey {
+        let pk = EcdsaPublicKey::from_private_key(&s, &sk);
+        let pk_u = EcdsaPublicKey {
             key: pk.key,
             compressed: false,
         };
@@ -501,7 +509,7 @@ mod tests {
         assert_tokens(&pk_u.readable(), &[Token::BorrowedStr(PK_STR_U)]);
     }
 
-    fn random_key(mut seed: u8) -> PublicKey {
+    fn random_key(mut seed: u8) -> EcdsaPublicKey {
         loop {
             let mut data = [0; 65];
             for byte in &mut data[..] {
@@ -511,12 +519,12 @@ mod tests {
             }
             if data[0] % 2 == 0 {
                 data[0] = 4;
-                if let Ok(key) = PublicKey::from_slice(&data[..]) {
+                if let Ok(key) = EcdsaPublicKey::from_slice(&data[..]) {
                     return key;
                 }
             } else {
                 data[0] = 2 + (data[0] >> 7);
-                if let Ok(key) = PublicKey::from_slice(&data[..33]) {
+                if let Ok(key) = EcdsaPublicKey::from_slice(&data[..33]) {
                     return key;
                 }
             }
@@ -536,17 +544,17 @@ mod tests {
         let mut dec_keys = vec![];
         let mut cursor = io::Cursor::new(&v);
         for _ in 0..N_KEYS {
-            dec_keys.push(PublicKey::read_from(&mut cursor).expect("reading from vec"));
+            dec_keys.push(EcdsaPublicKey::read_from(&mut cursor).expect("reading from vec"));
         }
 
         assert_eq!(keys, dec_keys);
 
         // sanity checks
-        assert!(PublicKey::read_from(&mut cursor).is_err());
-        assert!(PublicKey::read_from(io::Cursor::new(&[])).is_err());
-        assert!(PublicKey::read_from(io::Cursor::new(&[0; 33][..])).is_err());
-        assert!(PublicKey::read_from(io::Cursor::new(&[2; 32][..])).is_err());
-        assert!(PublicKey::read_from(io::Cursor::new(&[0; 65][..])).is_err());
-        assert!(PublicKey::read_from(io::Cursor::new(&[4; 64][..])).is_err());
+        assert!(EcdsaPublicKey::read_from(&mut cursor).is_err());
+        assert!(EcdsaPublicKey::read_from(io::Cursor::new(&[])).is_err());
+        assert!(EcdsaPublicKey::read_from(io::Cursor::new(&[0; 33][..])).is_err());
+        assert!(EcdsaPublicKey::read_from(io::Cursor::new(&[2; 32][..])).is_err());
+        assert!(EcdsaPublicKey::read_from(io::Cursor::new(&[0; 65][..])).is_err());
+        assert!(EcdsaPublicKey::read_from(io::Cursor::new(&[4; 64][..])).is_err());
     }
 }

@@ -27,7 +27,7 @@
 //!
 //! // Generate random key pair
 //! let s = Secp256k1::new();
-//! let public_key = key::PublicKey {
+//! let public_key = key::EcdsaPublicKey {
 //!     compressed: true,
 //!     key: s.generate_keypair(&mut thread_rng()).1,
 //! };
@@ -220,7 +220,7 @@ impl Address {
     /// Creates a pay to (compressed) public key hash address from a public key
     /// This is the preferred non-witness type address
     #[inline]
-    pub fn p2pkh(pk: &key::PublicKey, network: Network) -> Address {
+    pub fn p2pkh(pk: &key::EcdsaPublicKey, network: Network) -> Address {
         let mut hash_engine = PubkeyHash::engine();
         pk.write_into(&mut hash_engine).expect("engines don't error");
 
@@ -244,7 +244,7 @@ impl Address {
     /// This is the native segwit address type for an output redeemable with a single signature
     ///
     /// Will only return an Error when an uncompressed public key is provided.
-    pub fn p2wpkh(pk: &key::PublicKey, network: Network) -> Result<Address, Error> {
+    pub fn p2wpkh(pk: &key::EcdsaPublicKey, network: Network) -> Result<Address, Error> {
         if !pk.compressed {
             return Err(Error::UncompressedPubkey);
         }
@@ -265,7 +265,7 @@ impl Address {
     /// This is a segwit address type that looks familiar (as p2sh) to legacy clients
     ///
     /// Will only return an Error when an uncompressed public key is provided.
-    pub fn p2shwpkh(pk: &key::PublicKey, network: Network) -> Result<Address, Error> {
+    pub fn p2shwpkh(pk: &key::EcdsaPublicKey, network: Network) -> Result<Address, Error> {
         if !pk.compressed {
             return Err(Error::UncompressedPubkey);
         }
@@ -500,12 +500,12 @@ mod tests {
 
     use blockdata::script::Script;
     use network::constants::Network::{Bitcoin, Testnet};
-    use util::key::PublicKey;
+    use util::key::EcdsaPublicKey;
 
     use super::*;
 
     macro_rules! hex (($hex:expr) => (Vec::from_hex($hex).unwrap()));
-    macro_rules! hex_key (($hex:expr) => (PublicKey::from_slice(&hex!($hex)).unwrap()));
+    macro_rules! hex_key (($hex:expr) => (EcdsaPublicKey::from_slice(&hex!($hex)).unwrap()));
     macro_rules! hex_script (($hex:expr) => (Script::from(hex!($hex))));
     macro_rules! hex_pubkeyhash (($hex:expr) => (PubkeyHash::from_hex(&$hex).unwrap()));
     macro_rules! hex_scripthash (($hex:expr) => (ScriptHash::from_hex($hex).unwrap()));

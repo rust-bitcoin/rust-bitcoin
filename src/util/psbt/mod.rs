@@ -176,7 +176,7 @@ mod tests {
     use network::constants::Network::Bitcoin;
     use consensus::encode::{deserialize, serialize, serialize_hex};
     use util::bip32::{ChildNumber, ExtendedPrivKey, ExtendedPubKey, Fingerprint, KeySource};
-    use util::key::PublicKey;
+    use util::key::EcdsaPublicKey;
     use util::psbt::map::{Global, Output, Input};
     use util::psbt::raw;
 
@@ -211,7 +211,7 @@ mod tests {
         let secp = &Secp256k1::new();
         let seed = Vec::from_hex("000102030405060708090a0b0c0d0e0f").unwrap();
 
-        let mut hd_keypaths: BTreeMap<PublicKey, KeySource> = Default::default();
+        let mut hd_keypaths: BTreeMap<EcdsaPublicKey, KeySource> = Default::default();
 
         let mut sk: ExtendedPrivKey = ExtendedPrivKey::new_master(Bitcoin, &seed).unwrap();
 
@@ -347,7 +347,7 @@ mod tests {
             vec![3, 4 ,5],
         )].into_iter().collect();
         let key_source = ("deadbeef".parse().unwrap(), "m/0'/1".parse().unwrap());
-        let keypaths: BTreeMap<PublicKey, KeySource> = vec![(
+        let keypaths: BTreeMap<EcdsaPublicKey, KeySource> = vec![(
             "0339880dc92394b7355e3d0439fa283c31de7590812ea011c4245c0674a685e883".parse().unwrap(),
             key_source.clone(),
         )].into_iter().collect();

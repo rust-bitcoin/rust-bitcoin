@@ -35,7 +35,7 @@ mod message_signing {
     use secp256k1;
     use secp256k1::recovery::{RecoveryId, RecoverableSignature};
 
-    use util::key::PublicKey;
+    use util::key::EcdsaPublicKey;
     use util::address::{Address, AddressType};
 
     /// An error used for dealing with Bitcoin Signed Messages.
@@ -133,10 +133,10 @@ mod message_signing {
             &self,
             secp_ctx: &secp256k1::Secp256k1<C>,
             msg_hash: sha256d::Hash
-        ) -> Result<PublicKey, secp256k1::Error> {
+        ) -> Result<EcdsaPublicKey, secp256k1::Error> {
             let msg = secp256k1::Message::from_slice(&msg_hash[..])?;
             let pubkey = secp_ctx.recover(&msg, &self.signature)?;
-            Ok(PublicKey {
+            Ok(EcdsaPublicKey {
                 key: pubkey,
                 compressed: self.compressed,
             })

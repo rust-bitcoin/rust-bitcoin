@@ -24,7 +24,7 @@ use blockdata::transaction::{SigHashType, Transaction, TxOut};
 use consensus::encode::{self, serialize, Decodable};
 use util::bip32::{ChildNumber, Fingerprint, KeySource};
 use hashes::{hash160, ripemd160, sha256, sha256d, Hash};
-use util::key::PublicKey;
+use util::key::EcdsaPublicKey;
 use util::psbt;
 
 /// A trait for serializing a value as raw data for insertion into PSBT
@@ -60,7 +60,7 @@ impl Deserialize for Script {
     }
 }
 
-impl Serialize for PublicKey {
+impl Serialize for EcdsaPublicKey {
     fn serialize(&self) -> Vec<u8> {
         let mut buf = Vec::new();
         self.write_into(&mut buf).expect("vecs don't error");
@@ -68,9 +68,9 @@ impl Serialize for PublicKey {
     }
 }
 
-impl Deserialize for PublicKey {
+impl Deserialize for EcdsaPublicKey {
     fn deserialize(bytes: &[u8]) -> Result<Self, encode::Error> {
-        PublicKey::from_slice(bytes)
+        EcdsaPublicKey::from_slice(bytes)
             .map_err(|_| encode::Error::ParseFailed("invalid public key"))
     }
 }
