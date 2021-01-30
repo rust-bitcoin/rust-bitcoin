@@ -21,7 +21,7 @@ use hashes::{sha256d, Hash};
 use util::endian;
 
 /// An error that might occur during base58 decoding
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
 pub enum Error {
     /// Invalid character encountered
     BadByte(u8),
