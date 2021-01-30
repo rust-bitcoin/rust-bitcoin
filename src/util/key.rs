@@ -212,32 +212,45 @@ impl Key for PublicKey {
         }
     }
 
+    /// If the key starts with `02`, `03` or `04` byte it makes the key ambigous, since it may
+    /// represent both a valid Secp and Taproot-encoded key. Thus, in case both representations
+    /// result in a valid keys the function will fail with [`std::io::ErrorKind::InvalidData`]
+    /// error wrapped into a [`std::io::Error`].
+    ///
+    /// There is a BIP-340 PR and discussion on how this can be prevented in a more standard way:
+    /// <https://github.com/bitcoin/bips/pull/1060>
     fn read_from<R: io::Read>(mut reader: R) -> Result<Self, io::Error> where Self: Sized {
-        // This is very imperfect algorithm that can end up in re-interpreting a valid Schnorr
-        // public key starting with `02`, `03` or `04` byte as another valid ECDSA key, which
-        // will lead to the shift in reading cursor...
-        // There is a BIP-340 PR and discussion on how this can be prevented:
-        // <https://github.com/bitcoin/bips/pull/1060>
 
         let mut bytes = [0; UNCOMPRESSED_PUBLIC_KEY_SIZE];
 
         reader.read_exact(&mut bytes[0..SCHNORRSIG_PUBLIC_KEY_SIZE])?;
+        let maybe_schnorr_key = schnorrsig::PublicKey::from_slice(&bytes[0..SCHNORRSIG_PUBLIC_KEY_SIZE]);
 
-        let (len, remaining_bytes) = if bytes[0] == 4 {
-            (UNCOMPRESSED_PUBLIC_KEY_SIZE, &mut bytes[SCHNORRSIG_PUBLIC_KEY_SIZE..UNCOMPRESSED_PUBLIC_KEY_SIZE])
-        } else if bytes[0] == 2 || bytes[0] == 3 {
-            (ECDSA_PUBLIC_KEY_SIZE, &mut bytes[SCHNORRSIG_PUBLIC_KEY_SIZE..ECDSA_PUBLIC_KEY_SIZE])
-        } else {
-            let key = schnorrsig::PublicKey::from_slice(&bytes[0..SCHNORRSIG_PUBLIC_KEY_SIZE])
-                .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
-            return Ok(PublicKey::Schnorr(key));
+        let len = { // Required by 1.29 borrow checker
+            let (len, remaining_bytes) = if bytes[0] == 4 {
+                (UNCOMPRESSED_PUBLIC_KEY_SIZE, &mut bytes[SCHNORRSIG_PUBLIC_KEY_SIZE..UNCOMPRESSED_PUBLIC_KEY_SIZE])
+            } else if bytes[0] == 2 || bytes[0] == 3 {
+                (ECDSA_PUBLIC_KEY_SIZE, &mut bytes[SCHNORRSIG_PUBLIC_KEY_SIZE..ECDSA_PUBLIC_KEY_SIZE])
+            } else {
+                (0, &mut bytes[0..0])
+            };
+
+            reader.read_exact(&mut remaining_bytes[..])?;
+            len
         };
 
-        reader.read_exact(&mut remaining_bytes[..])?;
+        let maybe_ecdsa_key = EcdsaPublicKey::from_slice(&bytes[..len]);
 
-        let key = EcdsaPublicKey::from_slice(&bytes[..len])
-            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
-        Ok(PublicKey::Ecdsa(key))
+        match (maybe_schnorr_key, maybe_ecdsa_key) {
+            (Ok(_), Ok(_)) => Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "ambiguous key data which may represent both Taproot- and Secp-serialized public key. \
+                Use concrete type for deserialization"
+            )),
+            (Err(_), Ok(key)) => Ok(PublicKey::Ecdsa(key)),
+            (Ok(key), Err(_)) => Ok(PublicKey::Schnorr(key)),
+            (Err(_), Err(e)) => Err(io::Error::new(io::ErrorKind::InvalidData, e)),
+        }
     }
 
     fn to_bytes(&self) -> Vec<u8> {
@@ -822,7 +835,7 @@ mod tests {
         assert_tokens(&pk_s.readable(), &[Token::BorrowedStr(PK_STR_S)]);
     }
 
-    fn random_key(mut seed: u8) -> PublicKey {
+    fn ecdsa_random_key(mut seed: u8) -> EcdsaPublicKey {
         loop {
             let mut data = [0; UNCOMPRESSED_PUBLIC_KEY_SIZE];
             for byte in &mut data[..] {
@@ -832,29 +845,71 @@ mod tests {
             }
             if data[0] % 3 == 0 {
                 data[0] = 4;
-                if let Ok(key) = PublicKey::from_slice(&data[..]) {
-                    return key;
-                }
-            } else if data[0] % 3 == 1 {
-                data[0] = 2 + (data[0] >> 7);
-                if let Ok(key) = PublicKey::from_slice(&data[..ECDSA_PUBLIC_KEY_SIZE]) {
+                if let Ok(key) = EcdsaPublicKey::from_slice(&data[..]) {
                     return key;
                 }
             } else {
-                if let Ok(key) = PublicKey::from_slice(&data[..SCHNORRSIG_PUBLIC_KEY_SIZE]) {
+                data[0] = 2 + (data[0] >> 7);
+                if let Ok(key) = EcdsaPublicKey::from_slice(&data[..ECDSA_PUBLIC_KEY_SIZE]) {
                     return key;
                 }
             }
         }
     }
 
+    fn schnorr_random_key(mut seed: u8) -> PublicKey {
+        loop {
+            let mut data = [0; SCHNORRSIG_PUBLIC_KEY_SIZE];
+            for byte in &mut data[..] {
+                *byte = seed;
+                // totally a rng
+                seed = seed.wrapping_mul(41).wrapping_add(43);
+            }
+            if [2, 3, 4].contains(&data[0]) {
+                continue;
+            }
+            if let Ok(key) = PublicKey::from_slice(&data[..SCHNORRSIG_PUBLIC_KEY_SIZE]) {
+                return key;
+            }
+        }
+    }
+
     #[test]
-    fn pubkey_read_write() {
+    fn ecdsa_pubkey_read_write() {
         const N_KEYS: usize = 20;
-        let keys: Vec<_> = (0..N_KEYS).map(|i| random_key(i as u8)).collect();
+        let ecdsa_keys: Vec<_> = (0..N_KEYS).map(|i| ecdsa_random_key(i as u8)).collect();
 
         let mut v = vec![];
-        for k in &keys {
+        for k in &ecdsa_keys {
+            k.write_into(&mut v).expect("writing into vec");
+        }
+
+        let mut dec_keys = vec![];
+        let mut cursor = io::Cursor::new(&v);
+        for _ in 0..N_KEYS {
+            println!("{}", cursor.position());
+            dec_keys.push(EcdsaPublicKey::read_from(&mut cursor).expect("reading from vec"));
+        }
+
+        assert_eq!(ecdsa_keys, dec_keys);
+
+        // sanity checks
+        assert!(PublicKey::read_from(&mut cursor).is_err());
+        assert!(PublicKey::read_from(io::Cursor::new(&[])).is_err());
+        assert!(PublicKey::read_from(io::Cursor::new(&[0; ECDSA_PUBLIC_KEY_SIZE][..])).is_err());
+        assert!(PublicKey::read_from(io::Cursor::new(&[2; SCHNORRSIG_PUBLIC_KEY_SIZE][..])).is_err());
+        assert!(PublicKey::read_from(io::Cursor::new(&[0; UNCOMPRESSED_PUBLIC_KEY_SIZE][..])).is_err());
+        assert!(PublicKey::read_from(io::Cursor::new(&[4; UNCOMPRESSED_PUBLIC_KEY_SIZE - 1][..])).is_err());
+    }
+
+
+    #[test]
+    fn schnorr_pubkey_read_write() {
+        const N_KEYS: usize = 20;
+        let schnorr_keys: Vec<_> = (0..N_KEYS).map(|i| schnorr_random_key(i as u8)).collect();
+
+        let mut v = vec![];
+        for k in &schnorr_keys {
             k.write_into(&mut v).expect("writing into vec");
         }
 
@@ -865,7 +920,7 @@ mod tests {
             dec_keys.push(PublicKey::read_from(&mut cursor).expect("reading from vec"));
         }
 
-        assert_eq!(keys, dec_keys);
+        assert_eq!(schnorr_keys, dec_keys);
 
         // sanity checks
         assert!(PublicKey::read_from(&mut cursor).is_err());
