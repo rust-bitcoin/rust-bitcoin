@@ -20,6 +20,7 @@ use consensus::encode;
 use util::psbt::raw;
 
 use hashes;
+use util::bip32::ExtendedPubKey;
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 /// Enum for marking psbt hash error
@@ -72,8 +73,9 @@ pub enum Error {
         /// Hash value
         hash: Box<[u8]>,
     },
-    /// Data inconsistency/conflicting data during merge procedure
-    MergeConflict(String),
+    /// Conflicting data during merge procedure:
+    /// global extended public key has inconsistent key sources
+    MergeInconsistentKeySources(ExtendedPubKey),
     /// Serialization error in bitcoin consensus-encoded structures
     ConsensusEncoding,
 }
@@ -99,7 +101,7 @@ impl fmt::Display for Error {
                 // directly using debug forms of psbthash enums
                 write!(f, "Preimage {:?} does not match {:?} hash {:?}", preimage, hash_type, hash )
             }
-            Error::MergeConflict(ref s) => { write!(f, "Merge conflict: {}", s) }
+            Error::MergeInconsistentKeySources(ref s) => { write!(f, "merge conflict: {}", s) }
             Error::ConsensusEncoding => f.write_str("bitcoin consensus or BIP-174 encoding error"),
         }
     }
