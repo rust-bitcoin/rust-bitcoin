@@ -213,9 +213,7 @@ impl Map for Global {
                         entry.insert((fingerprint1, derivation1));
                         continue
                     }
-                    return Err(psbt::Error::MergeConflict(format!(
-                        "global xpub {} has inconsistent key sources", xpub
-                    )));
+                    return Err(psbt::Error::MergeInconsistentKeySources(xpub));
                 }
             }
         }
