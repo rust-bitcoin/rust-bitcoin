@@ -36,7 +36,7 @@ use util::address;
 static PUBKEY: u8 = 0xFE;
 
 /// A contract-hash error
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
 pub enum Error {
     /// Other secp256k1 related error
     Secp(secp256k1::Error),

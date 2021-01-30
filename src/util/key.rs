@@ -26,7 +26,7 @@ use secp256k1;
 use util::base58;
 
 /// A key-related error.
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum Error {
     /// Base58 encoding error
     Base58(base58::Error),

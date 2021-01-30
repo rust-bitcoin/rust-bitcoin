@@ -105,7 +105,7 @@ display_from_debug!(Builder);
 /// Ways that a script might fail. Not everything is split up as
 /// much as it could be; patches welcome if more detailed errors
 /// would help you.
-#[derive(PartialEq, Eq, Debug, Clone)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Clone, Copy)]
 pub enum Error {
     /// Something did a non-minimal push; for more information see
     /// `https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki#Push_operators`
