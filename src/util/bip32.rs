@@ -27,7 +27,7 @@ use secp256k1::{self, Secp256k1};
 
 use network::constants::Network;
 use util::{base58, endian};
-use util::key::{self, EcdsaPublicKey, PrivateKey};
+use util::key::{self, EcdsaPublicKey, PrivateKey, Key};
 
 /// A chain code
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -472,6 +472,7 @@ impl From<key::Error> for Error {
         match err {
             key::Error::Base58(e) => Error::Base58(e),
             key::Error::Secp256k1(e) => Error::Ecdsa(e),
+            key::Error::InvalidLength(len) => Error::WrongExtendedKeyLength(len),
         }
     }
 }

@@ -46,7 +46,7 @@ use hash_types::{PubkeyHash, WPubkeyHash, ScriptHash, WScriptHash};
 use blockdata::script;
 use network::constants::Network;
 use util::base58;
-use util::key;
+use util::key::{self, Key};
 
 /// Address error.
 #[derive(Debug, PartialEq)]

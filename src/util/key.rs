@@ -21,11 +21,15 @@ use std::{io, ops, error};
 use std::str::FromStr;
 
 use secp256k1::{self, Secp256k1, schnorrsig};
+use secp256k1::constants::{
+    SCHNORRSIG_PUBLIC_KEY_SIZE,
+    PUBLIC_KEY_SIZE as ECDSA_PUBLIC_KEY_SIZE,
+    UNCOMPRESSED_PUBLIC_KEY_SIZE
+};
 use network::constants::Network;
 use hashes::{Hash, hash160};
 use hash_types::{PubkeyHash, WPubkeyHash};
 use util::base58;
-use secp256k1::schnorrsig::KeyPair;
 
 /// A key-related error.
 #[derive(Debug)]
@@ -34,6 +38,8 @@ pub enum Error {
     Base58(base58::Error),
     /// secp256k1-related error
     Secp256k1(secp256k1::Error),
+    /// invalid public key data length
+    InvalidLength(usize)
 }
 
 
@@ -42,6 +48,7 @@ impl fmt::Display for Error {
         match *self {
             Error::Base58(ref e) => write!(f, "base58 error: {}", e),
             Error::Secp256k1(ref e) => write!(f, "secp256k1 error: {}", e),
+            Error::InvalidLength(len) => write!(f, "invalid key data length: {}", len),
         }
     }
 }
@@ -51,6 +58,7 @@ impl error::Error for Error {
         match *self {
             Error::Base58(ref e) => Some(e),
             Error::Secp256k1(ref e) => Some(e),
+            _ => None,
         }
     }
 }
@@ -66,6 +74,45 @@ impl From<base58::Error> for Error {
 impl From<secp256k1::Error> for Error {
     fn from(e: secp256k1::Error) -> Error {
         Error::Secp256k1(e)
+    }
+}
+
+/// Trait with common key functions which should be implemented bu different
+/// types of private an public key structures
+pub trait Key: Clone + Eq + Ord + fmt::Display + FromStr {
+    /// Write the key into a writer
+    fn write_into<W: io::Write>(&self, writer: W) -> Result<(), io::Error>;
+
+    /// Reads the key from a reader
+    ///
+    /// This internally reads the first byte before reading the rest, so
+    /// use of a `BufReader` is recommended.
+    fn read_from<R: io::Read>(reader: R) -> Result<Self, io::Error> where Self: Sized;
+
+    /// Serialize the key as a vec of bytes
+    fn to_bytes(&self) -> Vec<u8>;
+
+    /// Deserialize a public key from a slice
+    fn from_slice(data: &[u8]) -> Result<Self, Error>;
+}
+
+impl Key for schnorrsig::PublicKey {
+    fn write_into<W: io::Write>(&self, mut writer: W) -> Result<(), io::Error> {
+        Ok(writer.write_all(&self.serialize())?)
+    }
+
+    fn read_from<R: io::Read>(mut reader: R) -> Result<Self, io::Error> where Self: Sized {
+        let mut slice = [0u8; SCHNORRSIG_PUBLIC_KEY_SIZE];
+        reader.read_exact(&mut slice)?;
+        Self::from_slice(&slice).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
+    }
+
+    fn to_bytes(&self) -> Vec<u8> {
+        self.serialize().to_vec()
+    }
+
+    fn from_slice(data: &[u8]) -> Result<schnorrsig::PublicKey, Error> {
+        Ok(schnorrsig::PublicKey::from_slice(data)?)
     }
 }
 
@@ -96,9 +143,64 @@ impl From<schnorrsig::PublicKey> for PublicKey {
 
 impl PublicKey {
     /// Creates a new bitcoin public key from a Schnorr key pair
-    pub fn from_keypair<C: secp256k1::Signing>(secp: &Secp256k1<C>, keypair: &KeyPair) -> PublicKey {
+    pub fn from_keypair<C: secp256k1::Signing>(secp: &Secp256k1<C>, keypair: &schnorrsig::KeyPair) -> PublicKey {
         PublicKey::Schnorr(schnorrsig::PublicKey::from_keypair(secp, keypair))
+    }
+}
 
+impl Key for PublicKey {
+    fn write_into<W: io::Write>(&self, mut writer: W) -> Result<(), io::Error> {
+        match self {
+            PublicKey::Ecdsa(key) => key.write_into(&mut writer),
+            PublicKey::Schnorr(key) => key.write_into(&mut writer),
+        }
+    }
+
+    fn read_from<R: io::Read>(mut reader: R) -> Result<Self, io::Error> where Self: Sized {
+        // This is very imperfect algorithm that can end up in re-interpreting a valid Schnorr
+        // public key starting with `02`, `03` or `04` byte as another valid ECDSA key, which
+        // will lead to the shift in reading cursor...
+        // There is a BIP-340 PR and discussion on how this can be prevented:
+        // <https://github.com/bitcoin/bips/pull/1060>
+
+        let mut bytes = [0; UNCOMPRESSED_PUBLIC_KEY_SIZE];
+
+        reader.read_exact(&mut bytes[0..SCHNORRSIG_PUBLIC_KEY_SIZE])?;
+
+        let (len, remaining_bytes) = if bytes[0] == 4 {
+            (UNCOMPRESSED_PUBLIC_KEY_SIZE, &mut bytes[SCHNORRSIG_PUBLIC_KEY_SIZE..UNCOMPRESSED_PUBLIC_KEY_SIZE])
+        } else if bytes[0] == 2 || bytes[0] == 3 {
+            (ECDSA_PUBLIC_KEY_SIZE, &mut bytes[SCHNORRSIG_PUBLIC_KEY_SIZE..ECDSA_PUBLIC_KEY_SIZE])
+        } else {
+            let key = schnorrsig::PublicKey::from_slice(&bytes[0..SCHNORRSIG_PUBLIC_KEY_SIZE])
+                .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
+            return Ok(PublicKey::Schnorr(key));
+        };
+
+        reader.read_exact(&mut remaining_bytes[..])?;
+
+        let key = EcdsaPublicKey::from_slice(&bytes[..len])
+            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
+        Ok(PublicKey::Ecdsa(key))
+    }
+
+    fn to_bytes(&self) -> Vec<u8> {
+        match self {
+            PublicKey::Ecdsa(key) => key.to_bytes(),
+            PublicKey::Schnorr(key) => key.to_bytes(),
+        }
+    }
+
+    fn from_slice(data: &[u8]) -> Result<Self, Error> {
+        Ok(match data.len() {
+            ECDSA_PUBLIC_KEY_SIZE => PublicKey::Ecdsa(EcdsaPublicKey::with_compressed(secp256k1::PublicKey::from_slice(data)?)),
+            UNCOMPRESSED_PUBLIC_KEY_SIZE => PublicKey::Ecdsa(EcdsaPublicKey {
+                compressed: true,
+                key: secp256k1::PublicKey::from_slice(data)?
+            }),
+            SCHNORRSIG_PUBLIC_KEY_SIZE => PublicKey::Schnorr(schnorrsig::PublicKey::from_slice(&data)?),
+            len => return Err(Error::InvalidLength(len)),
+        })
     }
 }
 
@@ -115,7 +217,7 @@ impl FromStr for PublicKey {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s.len() == secp256k1::constants::SCHNORRSIG_PUBLIC_KEY_SIZE * 2 {
+        if s.len() == SCHNORRSIG_PUBLIC_KEY_SIZE * 2 {
             Ok(PublicKey::Schnorr(s.parse()?))
         } else {
             Ok(PublicKey::Ecdsa(s.parse()?))
@@ -163,8 +265,15 @@ impl EcdsaPublicKey {
         }
     }
 
+    /// Computes the public key as supposed to be used with this secret
+    pub fn from_private_key<C: secp256k1::Signing>(secp: &Secp256k1<C>, sk: &PrivateKey) -> EcdsaPublicKey {
+        sk.public_key(secp)
+    }
+}
+
+impl Key for EcdsaPublicKey {
     /// Write the public key into a writer
-    pub fn write_into<W: io::Write>(&self, mut writer: W) -> Result<(), io::Error> {
+    fn write_into<W: io::Write>(&self, mut writer: W) -> Result<(), io::Error> {
         if self.compressed {
             writer.write_all(&self.key.serialize())
         } else {
@@ -176,14 +285,14 @@ impl EcdsaPublicKey {
     ///
     /// This internally reads the first byte before reading the rest, so
     /// use of a `BufReader` is recommended.
-    pub fn read_from<R: io::Read>(mut reader: R) -> Result<Self, io::Error> {
-        let mut bytes = [0; 65];
+    fn read_from<R: io::Read>(mut reader: R) -> Result<Self, io::Error> where Self: Sized {
+        let mut bytes = [0; UNCOMPRESSED_PUBLIC_KEY_SIZE];
 
         reader.read_exact(&mut bytes[0..1])?;
         let bytes = if bytes[0] < 4 {
-            &mut bytes[..33]
+            &mut bytes[..ECDSA_PUBLIC_KEY_SIZE]
         } else {
-            &mut bytes[..65]
+            &mut bytes[..UNCOMPRESSED_PUBLIC_KEY_SIZE]
         };
 
         reader.read_exact(&mut bytes[1..])?;
@@ -191,29 +300,24 @@ impl EcdsaPublicKey {
     }
 
     /// Serialize the public key to bytes
-    pub fn to_bytes(&self) -> Vec<u8> {
+    fn to_bytes(&self) -> Vec<u8> {
         let mut buf = Vec::new();
         self.write_into(&mut buf).expect("vecs don't error");
         buf
     }
 
     /// Deserialize a public key from a slice
-    pub fn from_slice(data: &[u8]) -> Result<EcdsaPublicKey, Error> {
+    fn from_slice(data: &[u8]) -> Result<EcdsaPublicKey, Error> {
         let compressed: bool = match data.len() {
-            33 => true,
-            65 => false,
-            len =>  { return Err(base58::Error::InvalidLength(len).into()); },
+            ECDSA_PUBLIC_KEY_SIZE => true,
+            UNCOMPRESSED_PUBLIC_KEY_SIZE => false,
+            len =>  { return Err(Error::InvalidLength(len)); },
         };
 
         Ok(EcdsaPublicKey {
             compressed: compressed,
             key: secp256k1::PublicKey::from_slice(data)?,
         })
-    }
-
-    /// Computes the public key as supposed to be used with this secret
-    pub fn from_private_key<C: secp256k1::Signing>(secp: &Secp256k1<C>, sk: &PrivateKey) -> EcdsaPublicKey {
-        sk.public_key(secp)
     }
 }
 
@@ -457,7 +561,7 @@ impl<'de> ::serde::Deserialize<'de> for EcdsaPublicKey {
 
 #[cfg(test)]
 mod tests {
-    use super::{PrivateKey, EcdsaPublicKey};
+    use super::{PrivateKey, EcdsaPublicKey, Key};
     use secp256k1::Secp256k1;
     use std::io;
     use std::str::FromStr;

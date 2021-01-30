@@ -23,6 +23,7 @@
 use secp256k1::{self, Secp256k1};
 use PrivateKey;
 use EcdsaPublicKey;
+use Key;
 use hashes::{sha256, Hash, HashEngine, Hmac, HmacEngine};
 use blockdata::{opcodes, script};
 

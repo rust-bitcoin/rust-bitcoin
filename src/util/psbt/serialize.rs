@@ -24,7 +24,7 @@ use blockdata::transaction::{SigHashType, Transaction, TxOut};
 use consensus::encode::{self, serialize, Decodable};
 use util::bip32::{ChildNumber, Fingerprint, KeySource};
 use hashes::{hash160, ripemd160, sha256, sha256d, Hash};
-use util::key::EcdsaPublicKey;
+use util::key::{EcdsaPublicKey, Key};
 use util::psbt;
 
 /// A trait for serializing a value as raw data for insertion into PSBT
