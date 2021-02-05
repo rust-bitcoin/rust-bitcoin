@@ -90,9 +90,23 @@ macro_rules! construct_uint {
                 }
             }
 
-            /// Creates big integer value from a byte slice array using
+            /// Creates big integer value from a byte array using
             /// big-endian encoding
             pub fn from_be_bytes(bytes: [u8; $n_words * 8]) -> $name {
+                Self::_from_be_slice(&bytes)
+            }
+
+            /// Creates big integer value from a byte slice using
+            /// big-endian encoding
+            pub fn from_be_slice(bytes: &[u8]) -> Result<$name, ParseLengthError> {
+                if bytes.len() != $n_words * 8 {
+                    Err(ParseLengthError { actual: bytes.len(), expected: $n_words*8 })
+                } else {
+                    Ok(Self::_from_be_slice(bytes))
+                }
+            }
+
+            fn _from_be_slice(bytes: &[u8]) -> $name {
                 use super::endian::slice_to_u64_be;
                 let mut slice = [0u64; $n_words];
                 slice.iter_mut()
@@ -100,6 +114,17 @@ macro_rules! construct_uint {
                     .zip(bytes.chunks(8))
                     .for_each(|(word, bytes)| *word = slice_to_u64_be(bytes));
                 $name(slice)
+            }
+
+            /// Convert a big integer into a byte array using big-endian encoding
+            pub fn to_be_bytes(&self) -> [u8; $n_words * 8] {
+                use super::endian::u64_to_array_be;
+                let mut res = [0; $n_words * 8];
+                for i in 0..$n_words {
+                    let start = i * 8;
+                    res[start..start+8].copy_from_slice(&u64_to_array_be(self.0[$n_words - (i+1)]));
+                }
+                res
             }
 
             // divmod like operation, returns (quotient, remainder)
@@ -403,11 +428,88 @@ macro_rules! construct_uint {
                 Ok($name(ret))
             }
         }
+
+        #[cfg(feature = "serde")]
+        impl $crate::serde::Serialize for $name {
+            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+            where
+                S: $crate::serde::Serializer,
+            {
+                use $crate::hashes::hex::ToHex;
+                let bytes = self.to_be_bytes();
+                if serializer.is_human_readable() {
+                    serializer.serialize_str(&bytes.to_hex())
+                } else {
+                    serializer.serialize_bytes(&bytes)
+                }
+            }
+        }
+
+        #[cfg(feature = "serde")]
+        impl<'de> $crate::serde::Deserialize<'de> for $name {
+            fn deserialize<D: $crate::serde::Deserializer<'de>>(
+                deserializer: D,
+            ) -> Result<Self, D::Error> {
+                use ::std::fmt;
+                use $crate::hashes::hex::FromHex;
+                use $crate::serde::de;
+                struct Visitor;
+                impl<'de> de::Visitor<'de> for Visitor {
+                    type Value = $name;
+
+                    fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                        write!(f, "{} bytes or a hex string with {} characters", $n_words * 8, $n_words * 8 * 2)
+                    }
+
+                    fn visit_str<E>(self, s: &str) -> Result<Self::Value, E>
+                    where
+                        E: de::Error,
+                    {
+                        let bytes = Vec::from_hex(s)
+                            .map_err(|_| de::Error::invalid_value(de::Unexpected::Str(s), &self))?;
+                        $name::from_be_slice(&bytes)
+                            .map_err(|_| de::Error::invalid_length(bytes.len() * 2, &self))
+                    }
+
+                    fn visit_bytes<E>(self, bytes: &[u8]) -> Result<Self::Value, E>
+                    where
+                        E: de::Error,
+                    {
+                        $name::from_be_slice(bytes)
+                            .map_err(|_| de::Error::invalid_length(bytes.len(), &self))
+                    }
+                }
+
+                if deserializer.is_human_readable() {
+                    deserializer.deserialize_str(Visitor)
+                } else {
+                    deserializer.deserialize_bytes(Visitor)
+                }
+            }
+        }
     );
 }
 
 construct_uint!(Uint256, 4);
 construct_uint!(Uint128, 2);
+
+/// Invalid slice length
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
+/// Invalid slice length
+pub struct ParseLengthError {
+    /// The length of the slice de-facto
+    pub actual: usize,
+    /// The required length of the slice
+    pub expected: usize,
+}
+
+impl ::std::fmt::Display for ParseLengthError {
+    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+        write!(f, "Invalid length: got {}, expected {}", self.actual, self.expected)
+    }
+}
+
+impl ::std::error::Error for ParseLengthError {}
 
 impl Uint256 {
     /// Increment by 1
@@ -503,6 +605,16 @@ mod tests {
         assert_eq!(Uint256::from_be_bytes([0x1b, 0xad, 0xca, 0xfe, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xaf, 0xba, 0xbe, 0x2b, 0xed, 0xfe, 0xed,
                                            0xba, 0xad, 0xf0, 0x0d, 0xde, 0xfa, 0xce, 0xda, 0x11, 0xfe, 0xd2, 0xba, 0xd1, 0xc0, 0xff, 0xe0]),
                    Uint256([0x11fed2bad1c0ffe0, 0xbaadf00ddefaceda, 0xdeafbabe2bedfeed, 0x1badcafedeadbeef]));
+    }
+
+    #[test]
+    pub fn uint_to_be_bytes() {
+        assert_eq!(Uint128([0xdeafbabe2bedfeed, 0x1badcafedeadbeef]).to_be_bytes(),
+                   [0x1b, 0xad, 0xca, 0xfe, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xaf, 0xba, 0xbe, 0x2b, 0xed, 0xfe, 0xed]);
+
+        assert_eq!(Uint256([0x11fed2bad1c0ffe0, 0xbaadf00ddefaceda, 0xdeafbabe2bedfeed, 0x1badcafedeadbeef]).to_be_bytes(),
+                   [0x1b, 0xad, 0xca, 0xfe, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xaf, 0xba, 0xbe, 0x2b, 0xed, 0xfe, 0xed,
+                    0xba, 0xad, 0xf0, 0x0d, 0xde, 0xfa, 0xce, 0xda, 0x11, 0xfe, 0xd2, 0xba, 0xd1, 0xc0, 0xff, 0xe0]);
     }
 
     #[test]
@@ -611,5 +723,44 @@ mod tests {
 
         assert_eq!(end1.ok(), Some(start1));
         assert_eq!(end2.ok(), Some(start2));
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    pub fn uint256_serde_test() {
+        let check = |uint, hex| {
+            let json = format!("\"{}\"", hex);
+            assert_eq!(::serde_json::to_string(&uint).unwrap(), json);
+            assert_eq!(::serde_json::from_str::<Uint256>(&json).unwrap(), uint);
+
+            let bin_encoded = ::bincode::serialize(&uint).unwrap();
+            let bin_decoded: Uint256 = ::bincode::deserialize(&bin_encoded).unwrap();
+            assert_eq!(bin_decoded, uint);
+        };
+
+        check(
+            Uint256::from_u64(0).unwrap(),
+            "0000000000000000000000000000000000000000000000000000000000000000",
+        );
+        check(
+            Uint256::from_u64(0xDEADBEEF).unwrap(),
+            "00000000000000000000000000000000000000000000000000000000deadbeef",
+        );
+        check(
+            Uint256([0xaa11, 0xbb22, 0xcc33, 0xdd44]),
+            "000000000000dd44000000000000cc33000000000000bb22000000000000aa11",
+        );
+        check(
+            Uint256([u64::max_value(), u64::max_value(), u64::max_value(), u64::max_value()]),
+            "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        );
+        check(
+            Uint256([ 0xA69B4555DEADBEEF, 0xA69B455CD41BB662, 0xD41BB662A69B4550, 0xDEADBEEAA69B455C ]),
+            "deadbeeaa69b455cd41bb662a69b4550a69b455cd41bb662a69b4555deadbeef",
+        );
+
+        assert!(::serde_json::from_str::<Uint256>("\"fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffg\"").is_err()); // invalid char
+        assert!(::serde_json::from_str::<Uint256>("\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\"").is_err()); // invalid length
+        assert!(::serde_json::from_str::<Uint256>("\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\"").is_err()); // invalid length
     }
 }

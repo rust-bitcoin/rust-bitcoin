@@ -54,6 +54,7 @@ macro_rules! define_le_to_array {
 define_slice_to_be!(slice_to_u32_be, u32);
 define_slice_to_be!(slice_to_u64_be, u64);
 define_be_to_array!(u32_to_array_be, u32, 4);
+define_be_to_array!(u64_to_array_be, u64, 8);
 define_slice_to_le!(slice_to_u16_le, u16);
 define_slice_to_le!(slice_to_u32_le, u32);
 define_slice_to_le!(slice_to_u64_le, u64);
