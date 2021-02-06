@@ -482,6 +482,13 @@ impl Transaction {
     pub fn is_coin_base(&self) -> bool {
         self.input.len() == 1 && self.input[0].previous_output.is_null()
     }
+
+    /// Returns `true` if the transaction itself opted in to be BIP-125-replaceable (RBF). This
+    /// **does not** cover the case where a transaction becomes replaceable due to ancestors being
+    /// RBF.
+    pub fn is_explicitly_rbf(&self) -> bool {
+        self.input.iter().any(|input| input.sequence < (0xffffffff - 1))
+    }
 }
 
 impl_consensus_encoding!(TxOut, value, script_pubkey);
