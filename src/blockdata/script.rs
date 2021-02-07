@@ -400,6 +400,26 @@ impl Script {
                                opcodes::All::from(self.0[0]).classify() == opcodes::Class::IllegalOp)
     }
 
+    /// The minimum value an output to a witness script must have in order to be
+    /// broadcastable on today's bitcoin network.
+    pub const WITNESS_OUTPUT_DUST_THRESHOLD: u64 = 294;
+
+    /// The minimum value an output to a non-witness script must have in order to be
+    /// broadcastable on today's bitcoin network.
+    pub const LEGACY_OUTPUT_DUST_THRESHOLD: u64 = 546;
+
+    /// Gets the minimum value an output with this script should have in order to be
+    /// broadcastable on today's bitcoin network.
+    pub fn dust_value(&self) -> u64 {
+        if self.is_op_return() {
+            0
+        } else if self.is_witness_program() {
+            Self::WITNESS_OUTPUT_DUST_THRESHOLD
+        } else {
+            Self::LEGACY_OUTPUT_DUST_THRESHOLD
+        }
+    }
+
     /// Iterate over the script in the form of `Instruction`s, which are an enum covering
     /// opcodes, datapushes and errors. At most one error will be returned and then the
     /// iterator will end. To instead iterate over the script as sequence of bytes, treat
