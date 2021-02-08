@@ -68,3 +68,23 @@ impl_hashencode!(TxMerkleNode);
 impl_hashencode!(WitnessMerkleNode);
 impl_hashencode!(FilterHash);
 impl_hashencode!(FilterHeader);
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use hashes::hex::{FromHex, ToHex};
+    use hashes::core::str::FromStr;
+
+    #[test]
+    fn block_hash() {
+        let genesis = "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f";
+        let block_hash = BlockHash::from_hex(genesis).unwrap();
+        let geneshs_sha256 = sha256::Hash::from_hex(genesis).unwrap();
+        assert_eq!(block_hash, BlockHash::from_str(genesis).unwrap());
+        assert_ne!(block_hash.as_inner(), geneshs_sha256.as_inner());
+        assert_eq!(block_hash.into_inner(), BITCOIN_GENESIS_BLOCKHASH);
+        assert_eq!(BlockHash::from_inner(BITCOIN_GENESIS_BLOCKHASH).to_hex(), genesis);
+        assert_eq!(BlockHash::from_inner(BITCOIN_GENESIS_BLOCKHASH).to_string(), genesis);
+        assert_ne!(sha256::Hash::from_inner(BITCOIN_GENESIS_BLOCKHASH).to_hex(), genesis);
+    }
+}
