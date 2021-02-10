@@ -43,6 +43,12 @@ use util::key::PublicKey;
 /// A Bitcoin script
 pub struct Script(Box<[u8]>);
 
+impl AsRef<[u8]> for Script {
+    fn as_ref(&self) -> &[u8] {
+        &self.0
+    }
+}
+
 impl fmt::Debug for Script {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.write_str("Script(")?;
