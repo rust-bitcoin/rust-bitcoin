@@ -23,26 +23,27 @@
 //! The filter construction proposed is an alternative to Bloom filters, as used in BIP 37,
 //! that minimizes filter size by using Golomb-Rice coding for compression.
 //!
-//!  USE :
-//!   // create a block filter for a block (server side)
+//! ## Example
 //!
-//!   fn get_script_for_coin (coin: &OutPoint) -> Result<Script, BlockFilterError> {
-//!     // get utxo ...
-//!   }
+//! ```ignore
+//! fn get_script_for_coin(coin: &OutPoint) -> Result<Script, BlockFilterError> {
+//!   // get utxo ...
+//! }
+//!  
+//! // create a block filter for a block (server side)
+//! let filter = BlockFilter::new_script_filter(&block, get_script_for_coin)?;
 //!
-//!   let filter = BlockFilter::new_script_filter (&block, get_script_for_coin)?;
-//!
-//!   // or create a filter from known raw data
-//!   let filter = BlockFilter::new(content);
-//!
-//!   // read and evaluate a filter
-//!
-//!   let query: Iterator<Item=Script> = // .. some scripts you care about
-//!   if filter.match_any (&block_hash, &mut query.map(|s| s.as_bytes())) {
-//!     // get this block
-//!   }
-//!
-//!
+//! // or create a filter from known raw data
+//! let filter = BlockFilter::new(content);
+//!  
+//! // read and evaluate a filter
+//!  
+//! let query: Iterator<Item=Script> = // .. some scripts you care about
+//! if filter.match_any(&block_hash, &mut query.map(|s| s.as_bytes())) {
+//!   // get this block
+//! }
+//!  ```
+//!  
 
 use std::{cmp, fmt, io};
 use std::collections::HashSet;
