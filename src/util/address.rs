@@ -60,6 +60,8 @@ pub enum Error {
     Bech32(bech32::Error),
     /// The bech32 payload was empty
     EmptyBech32Payload,
+    /// The wrong checksum algorithm was used. See BIP-0350.
+    InvalidBech32Variant,
     /// Script version must be 0 to 16 inclusive
     InvalidWitnessVersion(u8),
     /// Unable to parse witness version from string
@@ -82,6 +84,7 @@ impl fmt::Display for Error {
             Error::Base58(ref e) => write!(f, "base58: {}", e),
             Error::Bech32(ref e) => write!(f, "bech32: {}", e),
             Error::EmptyBech32Payload => write!(f, "the bech32 payload was empty"),
+            Error::InvalidBech32Variant => write!(f, "invalid bech32 checksum variant"),
             Error::InvalidWitnessVersion(v) => write!(f, "invalid witness script version: {}", v),
             Error::UnparsableWitnessVersion(ref e) => write!(f, "Incorrect format of a witness version byte: {}", e),
             Error::MalformedWitnessVersion => f.write_str("bitcoin script opcode does not match any known witness version, the script is malformed"),
@@ -318,6 +321,14 @@ impl WitnessVersion {
     /// into a byte since the conversion requires context (bitcoin script or just a version number)
     pub fn into_num(self) -> u8 {
         self as u8
+    }
+
+    /// Determine the checksum variant. See BIP-0350 for specification.
+    pub fn bech32_variant(&self) -> bech32::Variant {
+        match self {
+            WitnessVersion::V0 => bech32::Variant::Bech32,
+            _ => bech32::Variant::Bech32m,
+        }
     }
 }
 
@@ -634,7 +645,6 @@ impl fmt::Display for Address {
                     Network::Testnet | Network::Signet => "tb",
                     Network::Regtest => "bcrt",
                 };
-                let bech_ver = if version.into_num() > 0 {  bech32::Variant::Bech32m } else { bech32::Variant::Bech32 };
                 let mut upper_writer;
                 let writer = if fmt.alternate() {
                     upper_writer = UpperWriter(fmt);
@@ -642,7 +652,7 @@ impl fmt::Display for Address {
                 } else {
                     fmt as &mut dyn fmt::Write
                 };
-                let mut bech32_writer = bech32::Bech32Writer::new(hrp, bech_ver, writer)?;
+                let mut bech32_writer = bech32::Bech32Writer::new(hrp, version.bech32_variant(), writer)?;
                 bech32::WriteBase32::write_u5(&mut bech32_writer, version.into())?;
                 bech32::ToBase32::write_base32(&prog, &mut bech32_writer)
             }
@@ -705,10 +715,9 @@ impl FromStr for Address {
                 return Err(Error::InvalidSegwitV0ProgramLength(program.len()));
             }
 
-            // Bech32 encoding check
-            if (version.into_num() > 0 && variant != bech32::Variant::Bech32m) ||
-               (version.into_num() == 0 && variant != bech32::Variant::Bech32) {
-                return Err(Error::InvalidWitnessVersion(version.into_num()))
+            // Encoding check
+            if version.bech32_variant() != variant {
+                return Err(Error::InvalidBech32Variant);
             }
 
             return Ok(Address {
