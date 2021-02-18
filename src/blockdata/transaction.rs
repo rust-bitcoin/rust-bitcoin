@@ -675,7 +675,12 @@ impl SigHashType {
 
      /// Reads a 4-byte uint32 as a sighash type
      pub fn from_u32(n: u32) -> SigHashType {
-         match n & 0x9f {
+         // In Bitcoin Core, the SignatureHash function will mask the (int32) value with
+         // 0x1f to (apparently) deactivate ACP when checking for SINGLE and NONE bits.
+         // We however want to be matching also against on ACP-masked ALL, SINGLE, and NONE.
+         // So here we re-activate ACP.
+         let mask = 0x1f | 0x80;
+         match n & mask {
              // "real" sighashes
              0x01 => SigHashType::All,
              0x02 => SigHashType::None,
