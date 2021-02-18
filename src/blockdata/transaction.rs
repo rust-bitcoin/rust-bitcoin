@@ -608,7 +608,7 @@ impl Decodable for Transaction {
     }
 }
 
-/// Hashtype of a transaction, encoded in the last byte of a signature
+/// Hashtype of an input's signature, encoded in the last byte of the signature
 /// Fixed values so they can be casted as integer types for encoding
 #[derive(PartialEq, Eq, Debug, Copy, Clone)]
 pub enum SigHashType {
