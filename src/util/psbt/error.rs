@@ -76,6 +76,9 @@ pub enum Error {
     MergeConflict(String),
     /// Serialization error in bitcoin consensus-encoded structures
     ConsensusEncoding,
+    #[cfg(feature = "base64")]
+    /// Base58 encoding error of PSBT data
+    Base64(base64::DecodeError),
 }
 
 impl fmt::Display for Error {
@@ -101,6 +104,8 @@ impl fmt::Display for Error {
             }
             Error::MergeConflict(ref s) => { write!(f, "Merge conflict: {}", s) }
             Error::ConsensusEncoding => f.write_str("bitcoin consensus or BIP-174 encoding error"),
+            #[cfg(feature = "base64")]
+            Error::Base64(ref e) => write!(f, "PSBT Base64 decoding error: {}", e),
         }
     }
 }

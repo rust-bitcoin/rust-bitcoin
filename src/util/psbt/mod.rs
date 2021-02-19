@@ -109,7 +109,7 @@ mod _base64encoding {
         type Err = Error;
 
         fn from_str(s: &str) -> Result<Self, Self::Err> {
-            Ok(encode::deserialize(&::base64::decode(s).map_err(|_| Error::ConsensusEncoding)?)?)
+            Ok(encode::deserialize(&::base64::decode(s).map_err(Error::Base64)?)?)
         }
     }
 }
