@@ -128,17 +128,17 @@ impl BlockHeader {
         (max_target(network) / self.target()).low_u64()
     }
 
-    /// Checks that the proof-of-work for the block is valid.
-    pub fn validate_pow(&self, required_target: &Uint256) -> Result<(), util::Error> {
+    /// Checks that the proof-of-work for the block is valid, returning the block hash.
+    pub fn validate_pow(&self, required_target: &Uint256) -> Result<BlockHash, util::Error> {
         let target = &self.target();
         if target != required_target {
             return Err(BlockBadTarget);
         }
-        let data: [u8; 32] = self.block_hash().into_inner();
+        let block_hash = self.block_hash();
         let mut ret = [0u64; 4];
-        util::endian::bytes_to_u64_slice_le(&data, &mut ret);
+        util::endian::bytes_to_u64_slice_le(block_hash.as_inner(), &mut ret);
         let hash = &Uint256(ret);
-        if hash <= target { Ok(()) } else { Err(BlockBadProofOfWork) }
+        if hash <= target { Ok(block_hash) } else { Err(BlockBadProofOfWork) }
     }
 
     /// Returns the total work of the block
@@ -364,7 +364,7 @@ mod tests {
         assert_eq!(real_decode.header.bits, 486604799);
         assert_eq!(real_decode.header.nonce, 2067413810);
         assert_eq!(real_decode.header.work(), work);
-        assert_eq!(real_decode.header.validate_pow(&real_decode.header.target()).unwrap(), ());
+        assert_eq!(real_decode.header.validate_pow(&real_decode.header.target()).unwrap(), real_decode.block_hash());
         assert_eq!(real_decode.header.difficulty(Network::Bitcoin), 1);
         // [test] TODO: check the transaction data
 
@@ -398,7 +398,7 @@ mod tests {
         assert_eq!(real_decode.header.bits, 0x1a06d450);
         assert_eq!(real_decode.header.nonce, 1879759182);
         assert_eq!(real_decode.header.work(), work);
-        assert_eq!(real_decode.header.validate_pow(&real_decode.header.target()).unwrap(), ());
+        assert_eq!(real_decode.header.validate_pow(&real_decode.header.target()).unwrap(), real_decode.block_hash());
         assert_eq!(real_decode.header.difficulty(Network::Testnet), 2456598);
         // [test] TODO: check the transaction data
 
@@ -429,7 +429,7 @@ mod tests {
     fn validate_pow_test() {
         let some_header = Vec::from_hex("010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914cd74d6e49ffff001d323b3a7b").unwrap();
         let some_header: BlockHeader = deserialize(&some_header).expect("Can't deserialize correct block header");
-        assert_eq!(some_header.validate_pow(&some_header.target()).unwrap(), ());
+        assert_eq!(some_header.validate_pow(&some_header.target()).unwrap(), some_header.block_hash());
 
         // test with zero target
         match some_header.validate_pow(&Uint256::default()) {
