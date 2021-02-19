@@ -687,10 +687,16 @@ impl SigHashType {
      }
 
      /// Reads a 4-byte uint32 as a sighash type.
+     #[deprecated(since="0.26.1", note="please use `from_u32_consensus` or `from_u32_standard` instead")]
+     pub fn from_u32(n: u32) -> SigHashType {
+         Self::from_u32_consensus(n)
+     }
+
+     /// Reads a 4-byte uint32 as a sighash type.
      ///
      /// **Note**: this replicates consensus behaviour, for current standardness rules correctness
      /// you probably want [from_u32_standard].
-     pub fn from_u32(n: u32) -> SigHashType {
+     pub fn from_u32_consensus(n: u32) -> SigHashType {
          // In Bitcoin Core, the SignatureHash function will mask the (int32) value with
          // 0x1f to (apparently) deactivate ACP when checking for SINGLE and NONE bits.
          // We however want to be matching also against on ACP-masked ALL, SINGLE, and NONE.
