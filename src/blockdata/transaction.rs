@@ -608,7 +608,20 @@ impl Decodable for Transaction {
     }
 }
 
-/// Hashtype of a transaction, encoded in the last byte of a signature
+/// This type is consensus valid but an input including it would prevent the transaction from
+/// being relayed on today's Bitcoin network.
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct NonStandardSigHashType;
+
+impl fmt::Display for NonStandardSigHashType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Non standard sighash type")
+    }
+}
+
+impl error::Error for NonStandardSigHashType {}
+
+/// Hashtype of an input's signature, encoded in the last byte of the signature
 /// Fixed values so they can be casted as integer types for encoding
 #[derive(PartialEq, Eq, Debug, Copy, Clone)]
 pub enum SigHashType {
@@ -673,9 +686,23 @@ impl SigHashType {
          }
      }
 
-     /// Reads a 4-byte uint32 as a sighash type
+     /// Reads a 4-byte uint32 as a sighash type.
+     #[deprecated(since="0.26.1", note="please use `from_u32_consensus` or `from_u32_standard` instead")]
      pub fn from_u32(n: u32) -> SigHashType {
-         match n & 0x9f {
+         Self::from_u32_consensus(n)
+     }
+
+     /// Reads a 4-byte uint32 as a sighash type.
+     ///
+     /// **Note**: this replicates consensus behaviour, for current standardness rules correctness
+     /// you probably want [from_u32_standard].
+     pub fn from_u32_consensus(n: u32) -> SigHashType {
+         // In Bitcoin Core, the SignatureHash function will mask the (int32) value with
+         // 0x1f to (apparently) deactivate ACP when checking for SINGLE and NONE bits.
+         // We however want to be matching also against on ACP-masked ALL, SINGLE, and NONE.
+         // So here we re-activate ACP.
+         let mask = 0x1f | 0x80;
+         match n & mask {
              // "real" sighashes
              0x01 => SigHashType::All,
              0x02 => SigHashType::None,
@@ -686,6 +713,21 @@ impl SigHashType {
              // catchalls
              x if x & 0x80 == 0x80 => SigHashType::AllPlusAnyoneCanPay,
              _ => SigHashType::All
+         }
+     }
+
+     /// Read a 4-byte uint32 as a standard sighash type, returning an error if the type
+     /// is non standard.
+     pub fn from_u32_standard(n: u32) -> Result<SigHashType, NonStandardSigHashType> {
+         match n {
+             // Standard sighashes, see https://github.com/bitcoin/bitcoin/blob/b805dbb0b9c90dadef0424e5b3bf86ac308e103e/src/script/interpreter.cpp#L189-L198
+             0x01 => Ok(SigHashType::All),
+             0x02 => Ok(SigHashType::None),
+             0x03 => Ok(SigHashType::Single),
+             0x81 => Ok(SigHashType::AllPlusAnyoneCanPay),
+             0x82 => Ok(SigHashType::NonePlusAnyoneCanPay),
+             0x83 => Ok(SigHashType::SinglePlusAnyoneCanPay),
+             _ => Err(NonStandardSigHashType)
          }
      }
 
@@ -701,7 +743,7 @@ impl From<SigHashType> for u32 {
 
 #[cfg(test)]
 mod tests {
-    use super::{OutPoint, ParseOutPointError, Transaction, TxIn};
+    use super::{OutPoint, ParseOutPointError, Transaction, TxIn, NonStandardSigHashType};
 
     use std::str::FromStr;
     use blockdata::constants::WITNESS_SCALE_FACTOR;
@@ -992,6 +1034,15 @@ mod tests {
         for s in sht_mistakes {
             assert_eq!(SigHashType::from_str(s).unwrap_err(), "can't recognize SIGHASH string");
         }
+    }
+
+    #[test]
+    fn test_sighashtype_standard() {
+        let nonstandard_hashtype = 0x04;
+        // This type is not well defined, by consensus it becomes ALL
+        assert_eq!(SigHashType::from_u32(nonstandard_hashtype), SigHashType::All);
+        // But it's policy-invalid to use it!
+        assert_eq!(SigHashType::from_u32_standard(nonstandard_hashtype), Err(NonStandardSigHashType));
     }
 
     // These test vectors were stolen from libbtc, which is Copyright 2014 Jonas Schnelli MIT

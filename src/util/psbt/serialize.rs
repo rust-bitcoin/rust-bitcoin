@@ -132,7 +132,7 @@ impl Serialize for SigHashType {
 impl Deserialize for SigHashType {
     fn deserialize(bytes: &[u8]) -> Result<Self, encode::Error> {
         let raw: u32 = encode::deserialize(bytes)?;
-        let rv: SigHashType = SigHashType::from_u32(raw);
+        let rv: SigHashType = SigHashType::from_u32_consensus(raw);
 
         if rv.as_u32() == raw {
             Ok(rv)
