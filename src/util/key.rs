@@ -27,7 +27,7 @@ use hash_types::{PubkeyHash, WPubkeyHash};
 use util::base58;
 
 /// A key-related error.
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Error {
     /// Base58 encoding error
     Base58(base58::Error),
@@ -39,8 +39,8 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Error::Base58(ref e) => write!(f, "base58 error: {}", e),
-            Error::Secp256k1(ref e) => write!(f, "secp256k1 error: {}", e),
+            Error::Base58(ref e) => write!(f, "Key base58 error: {}", e),
+            Error::Secp256k1(ref e) => write!(f, "Key secp256k1 error: {}", e),
         }
     }
 }
