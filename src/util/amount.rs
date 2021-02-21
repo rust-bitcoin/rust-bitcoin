@@ -433,7 +433,7 @@ impl default::Default for Amount {
 
 impl fmt::Debug for Amount {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Amount({} satoshi)", self.as_sat())
+        write!(f, "Amount({:.8} BTC)", self.as_btc())
     }
 }
 
@@ -758,7 +758,7 @@ impl default::Default for SignedAmount {
 
 impl fmt::Debug for SignedAmount {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "SignedAmount({} satoshi)", self.as_sat())
+        write!(f, "SignedAmount({:.8} BTC)", self.as_btc())
     }
 }
 
