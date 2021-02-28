@@ -875,11 +875,25 @@ pub mod serde {
 
     /// This trait is used only to avoid code duplication and naming collisions
     /// of the different serde serialization crates.
+    ///
+    /// TODO: Add the private::Sealed bound in next breaking release
     pub trait SerdeAmount: Copy + Sized {
         fn ser_sat<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error>;
         fn des_sat<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error>;
         fn ser_btc<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error>;
         fn des_btc<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error>;
+    }
+
+    mod private {
+        /// add this as a trait bound to traits which consumers of this library
+        /// should not be able to implement.
+        pub trait Sealed {}
+        impl Sealed for super::Amount {}
+        impl Sealed for super::SignedAmount {}
+    }
+
+    /// This trait is only for internal Amount type serialization/deserialization
+    pub trait SerdeAmountForOpt: Copy + Sized + SerdeAmount + private::Sealed {
         fn type_prefix() -> &'static str;
         fn ser_sat_opt<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error>;
         fn ser_btc_opt<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error>;
@@ -899,6 +913,9 @@ pub mod serde {
             use serde::de::Error;
             Ok(Amount::from_btc(f64::deserialize(d)?).map_err(D::Error::custom)?)
         }
+    }
+
+    impl SerdeAmountForOpt for Amount {
         fn type_prefix() -> &'static str {
             "u"
         }
@@ -924,6 +941,9 @@ pub mod serde {
             use serde::de::Error;
             Ok(SignedAmount::from_btc(f64::deserialize(d)?).map_err(D::Error::custom)?)
         }
+    }
+
+    impl SerdeAmountForOpt for SignedAmount {
         fn type_prefix() -> &'static str {
             "i"
         }
@@ -955,11 +975,11 @@ pub mod serde {
             //! Use with `#[serde(default, with = "amount::serde::as_sat::opt")]`.
 
             use serde::{Deserializer, Serializer, de};
-            use util::amount::serde::SerdeAmount;
+            use util::amount::serde::SerdeAmountForOpt;
             use std::fmt;
             use std::marker::PhantomData;
 
-            pub fn serialize<A: SerdeAmount, S: Serializer>(
+            pub fn serialize<A: SerdeAmountForOpt, S: Serializer>(
                 a: &Option<A>,
                 s: S,
             ) -> Result<S::Ok, S::Error> {
@@ -969,12 +989,12 @@ pub mod serde {
                 }
             }
 
-            pub fn deserialize<'d, A: SerdeAmount, D: Deserializer<'d>>(
+            pub fn deserialize<'d, A: SerdeAmountForOpt, D: Deserializer<'d>>(
                 d: D,
             ) -> Result<Option<A>, D::Error> {
                 struct VisitOptAmt<X>(PhantomData<X>);
 
-                impl<'de, X: SerdeAmount> de::Visitor<'de> for VisitOptAmt<X> {
+                impl<'de, X: SerdeAmountForOpt> de::Visitor<'de> for VisitOptAmt<X> {
                     type Value = Option<X>;
 
                     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
@@ -1018,11 +1038,11 @@ pub mod serde {
             //! Use with `#[serde(default, with = "amount::serde::as_btc::opt")]`.
 
             use serde::{Deserializer, Serializer, de};
-            use util::amount::serde::SerdeAmount;
+            use util::amount::serde::SerdeAmountForOpt;
             use std::fmt;
             use std::marker::PhantomData;
 
-            pub fn serialize<A: SerdeAmount, S: Serializer>(
+            pub fn serialize<A: SerdeAmountForOpt, S: Serializer>(
                 a: &Option<A>,
                 s: S,
             ) -> Result<S::Ok, S::Error> {
@@ -1032,12 +1052,12 @@ pub mod serde {
                 }
             }
 
-            pub fn deserialize<'d, A: SerdeAmount, D: Deserializer<'d>>(
+            pub fn deserialize<'d, A: SerdeAmountForOpt, D: Deserializer<'d>>(
                 d: D,
             ) -> Result<Option<A>, D::Error> {
                 struct VisitOptAmt<X>(PhantomData<X>);
 
-                impl<'de, X :SerdeAmount> de::Visitor<'de> for VisitOptAmt<X> {
+                impl<'de, X :SerdeAmountForOpt> de::Visitor<'de> for VisitOptAmt<X> {
                     type Value = Option<X>;
 
                     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
