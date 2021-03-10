@@ -327,7 +327,7 @@ impl Transaction {
         let sighash_type : u32 = sighash_type.into();
         assert!(input_index < self.input.len());  // Panic on OOB
 
-        let (sighash, anyone_can_pay) = SigHashType::from_u32(sighash_type).split_anyonecanpay_flag();
+        let (sighash, anyone_can_pay) = SigHashType::from_u32_consensus(sighash_type).split_anyonecanpay_flag();
 
         // Special-case sighash_single bug because this is easy enough.
         if sighash == SigHashType::Single && input_index >= self.output.len() {
@@ -1037,10 +1037,12 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn test_sighashtype_standard() {
         let nonstandard_hashtype = 0x04;
         // This type is not well defined, by consensus it becomes ALL
         assert_eq!(SigHashType::from_u32(nonstandard_hashtype), SigHashType::All);
+        assert_eq!(SigHashType::from_u32_consensus(nonstandard_hashtype), SigHashType::All);
         // But it's policy-invalid to use it!
         assert_eq!(SigHashType::from_u32_standard(nonstandard_hashtype), Err(NonStandardSigHashType));
     }
