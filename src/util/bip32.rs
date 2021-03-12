@@ -169,8 +169,12 @@ impl From<ChildNumber> for u32 {
 impl fmt::Display for ChildNumber {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            ChildNumber::Hardened { index } => write!(f, "{}'", index),
-            ChildNumber::Normal { index } => write!(f, "{}", index),
+            ChildNumber::Hardened { index } => {
+                fmt::Display::fmt(&index, f)?;
+                let alt = f.alternate();
+                f.write_str(if alt { "'" } else { "h" })
+            },
+            ChildNumber::Normal { index } => fmt::Display::fmt(&index, f),
         }
     }
 }
@@ -1082,6 +1086,16 @@ mod tests {
             "0102030405060708090001020304050607080900010203040506070809000102",
             cc.to_string()
         );
+    }
+
+    #[test]
+    fn fmt_child_number() {
+        assert_eq!("000005'", &format!("{:#06}", ChildNumber::from_hardened_idx(5).unwrap()));
+        assert_eq!("5'", &format!("{:#}", ChildNumber::from_hardened_idx(5).unwrap()));
+        assert_eq!("000005h", &format!("{:06}", ChildNumber::from_hardened_idx(5).unwrap()));
+        assert_eq!("5h", &format!("{}", ChildNumber::from_hardened_idx(5).unwrap()));
+        assert_eq!("42", &format!("{}", ChildNumber::from_normal_idx(42).unwrap()));
+        assert_eq!("000042", &format!("{:06}", ChildNumber::from_normal_idx(42).unwrap()));
     }
 }
 
