@@ -339,6 +339,7 @@ impl Decodable for Global {
             rv.version = version.unwrap_or(0);
             rv.xpub = xpub_map;
             rv.unknown = unknowns;
+            rv.proprietary = proprietary;
             Ok(rv)
         } else {
             Err(Error::MustHaveUnsignedTx.into())
