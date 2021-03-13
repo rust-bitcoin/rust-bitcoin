@@ -516,13 +516,13 @@ impl Uint256 {
     #[inline]
     pub fn increment(&mut self) {
         let &mut Uint256(ref mut arr) = self;
-        arr[0] += 1;
+        arr[0] = arr[0].wrapping_add(1);
         if arr[0] == 0 {
-            arr[1] += 1;
+            arr[1] = arr[1].wrapping_add(1);
             if arr[1] == 0 {
-                arr[2] += 1;
+                arr[2] = arr[2].wrapping_add(1);
                 if arr[2] == 0 {
-                    arr[3] += 1;
+                    arr[3] = arr[3].wrapping_add(1);
                 }
             }
         }
@@ -687,6 +687,53 @@ mod tests {
 
         assert_eq!(u256_res, Uint256([0xF4E166AAD40D0A41u64, 0xF5CF7F3618C2C886u64,
                                       0x4AFCFF6F0375C608u64, 0x928D92B4D7F5DF33u64]));
+    }
+
+    #[test]
+    pub fn increment_test() {
+        let mut val = Uint256([
+            0xFFFFFFFFFFFFFFFEu64,
+            0xFFFFFFFFFFFFFFFFu64,
+            0xFFFFFFFFFFFFFFFFu64,
+            0xEFFFFFFFFFFFFFFFu64,
+        ]);
+        val.increment();
+        assert_eq!(
+            val,
+            Uint256([
+                0xFFFFFFFFFFFFFFFFu64,
+                0xFFFFFFFFFFFFFFFFu64,
+                0xFFFFFFFFFFFFFFFFu64,
+                0xEFFFFFFFFFFFFFFFu64,
+            ])
+        );
+        val.increment();
+        assert_eq!(
+            val,
+            Uint256([
+                0x0000000000000000u64,
+                0x0000000000000000u64,
+                0x0000000000000000u64,
+                0xF000000000000000u64,
+            ])
+        );
+
+        let mut val = Uint256([
+            0xFFFFFFFFFFFFFFFFu64,
+            0xFFFFFFFFFFFFFFFFu64,
+            0xFFFFFFFFFFFFFFFFu64,
+            0xFFFFFFFFFFFFFFFFu64,
+        ]);
+        val.increment();
+        assert_eq!(
+            val,
+            Uint256([
+                0x0000000000000000u64,
+                0x0000000000000000u64,
+                0x0000000000000000u64,
+                0x0000000000000000u64,
+            ])
+        );
     }
 
     #[test]
