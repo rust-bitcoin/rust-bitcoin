@@ -100,7 +100,7 @@ impl fmt::Display for Error {
                 write!(f, "Preimage {:?} does not match {:?} hash {:?}", preimage, hash_type, hash )
             }
             Error::MergeConflict(ref s) => { write!(f, "Merge conflict: {}", s) }
-            Error::ConsensusEncoding => f.write_str("bitcoin consensus encoding error"),
+            Error::ConsensusEncoding => f.write_str("bitcoin consensus or BIP-174 encoding error"),
         }
     }
 }
