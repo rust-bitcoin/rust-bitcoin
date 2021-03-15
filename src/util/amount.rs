@@ -875,11 +875,28 @@ pub mod serde {
 
     /// This trait is used only to avoid code duplication and naming collisions
     /// of the different serde serialization crates.
+    ///
+    /// TODO: Add the private::Sealed bound in next breaking release
     pub trait SerdeAmount: Copy + Sized {
         fn ser_sat<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error>;
         fn des_sat<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error>;
         fn ser_btc<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error>;
         fn des_btc<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error>;
+    }
+
+    mod private {
+        /// add this as a trait bound to traits which consumers of this library
+        /// should not be able to implement.
+        pub trait Sealed {}
+        impl Sealed for super::Amount {}
+        impl Sealed for super::SignedAmount {}
+    }
+
+    /// This trait is only for internal Amount type serialization/deserialization
+    pub trait SerdeAmountForOpt: Copy + Sized + SerdeAmount + private::Sealed {
+        fn type_prefix() -> &'static str;
+        fn ser_sat_opt<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error>;
+        fn ser_btc_opt<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error>;
     }
 
     impl SerdeAmount for Amount {
@@ -898,6 +915,18 @@ pub mod serde {
         }
     }
 
+    impl SerdeAmountForOpt for Amount {
+        fn type_prefix() -> &'static str {
+            "u"
+        }
+        fn ser_sat_opt<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
+            s.serialize_some(&self.as_sat())
+        }
+        fn ser_btc_opt<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
+            s.serialize_some(&self.as_btc())
+        }
+    }
+
     impl SerdeAmount for SignedAmount {
         fn ser_sat<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
             i64::serialize(&self.as_sat(), s)
@@ -911,6 +940,18 @@ pub mod serde {
         fn des_btc<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error> {
             use serde::de::Error;
             Ok(SignedAmount::from_btc(f64::deserialize(d)?).map_err(D::Error::custom)?)
+        }
+    }
+
+    impl SerdeAmountForOpt for SignedAmount {
+        fn type_prefix() -> &'static str {
+            "i"
+        }
+        fn ser_sat_opt<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
+            s.serialize_some(&self.as_sat())
+        }
+        fn ser_btc_opt<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
+            s.serialize_some(&self.as_btc())
         }
     }
 
@@ -933,23 +974,46 @@ pub mod serde {
             //! Serialize and deserialize [Optoin<Amount>] as real numbers denominated in satoshi.
             //! Use with `#[serde(default, with = "amount::serde::as_sat::opt")]`.
 
-            use serde::{Deserializer, Serializer};
-            use util::amount::serde::SerdeAmount;
+            use serde::{Deserializer, Serializer, de};
+            use util::amount::serde::SerdeAmountForOpt;
+            use std::fmt;
+            use std::marker::PhantomData;
 
-            pub fn serialize<A: SerdeAmount, S: Serializer>(
+            pub fn serialize<A: SerdeAmountForOpt, S: Serializer>(
                 a: &Option<A>,
                 s: S,
             ) -> Result<S::Ok, S::Error> {
                 match *a {
-                    Some(a) => a.ser_sat(s),
+                    Some(a) => a.ser_sat_opt(s),
                     None => s.serialize_none(),
                 }
             }
 
-            pub fn deserialize<'d, A: SerdeAmount, D: Deserializer<'d>>(
+            pub fn deserialize<'d, A: SerdeAmountForOpt, D: Deserializer<'d>>(
                 d: D,
             ) -> Result<Option<A>, D::Error> {
-                Ok(Some(A::des_sat(d)?))
+                struct VisitOptAmt<X>(PhantomData<X>);
+
+                impl<'de, X: SerdeAmountForOpt> de::Visitor<'de> for VisitOptAmt<X> {
+                    type Value = Option<X>;
+
+                    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                        write!(formatter, "An Option<{}64>", X::type_prefix())
+                    }
+
+                    fn visit_none<E>(self) -> Result<Self::Value, E>
+                    where
+                        E: de::Error {
+                        Ok(None)
+                    }
+                    fn visit_some<D>(self, d: D) -> Result<Self::Value, D::Error>
+                    where
+                        D: Deserializer<'de>
+                    {
+                        Ok(Some(X::des_sat(d)?))
+                    }
+                }
+                d.deserialize_option(VisitOptAmt::<A>(PhantomData))
             }
         }
     }
@@ -973,23 +1037,46 @@ pub mod serde {
             //! Serialize and deserialize [Option<Amount>] as JSON numbers denominated in BTC.
             //! Use with `#[serde(default, with = "amount::serde::as_btc::opt")]`.
 
-            use serde::{Deserializer, Serializer};
-            use util::amount::serde::SerdeAmount;
+            use serde::{Deserializer, Serializer, de};
+            use util::amount::serde::SerdeAmountForOpt;
+            use std::fmt;
+            use std::marker::PhantomData;
 
-            pub fn serialize<A: SerdeAmount, S: Serializer>(
+            pub fn serialize<A: SerdeAmountForOpt, S: Serializer>(
                 a: &Option<A>,
                 s: S,
             ) -> Result<S::Ok, S::Error> {
                 match *a {
-                    Some(a) => a.ser_btc(s),
+                    Some(a) => a.ser_btc_opt(s),
                     None => s.serialize_none(),
                 }
             }
 
-            pub fn deserialize<'d, A: SerdeAmount, D: Deserializer<'d>>(
+            pub fn deserialize<'d, A: SerdeAmountForOpt, D: Deserializer<'d>>(
                 d: D,
             ) -> Result<Option<A>, D::Error> {
-                Ok(Some(A::des_btc(d)?))
+                struct VisitOptAmt<X>(PhantomData<X>);
+
+                impl<'de, X :SerdeAmountForOpt> de::Visitor<'de> for VisitOptAmt<X> {
+                    type Value = Option<X>;
+
+                    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                        write!(formatter, "An Option<f64>")
+                    }
+
+                    fn visit_none<E>(self) -> Result<Self::Value, E>
+                    where
+                        E: de::Error {
+                        Ok(None)
+                    }
+                    fn visit_some<D>(self, d: D) -> Result<Self::Value, D::Error>
+                    where
+                        D: Deserializer<'de>,
+                    {
+                        Ok(Some(X::des_btc(d)?))
+                    }
+                }
+                d.deserialize_option(VisitOptAmt::<A>(PhantomData))
             }
         }
     }
@@ -1345,7 +1432,7 @@ mod tests {
     fn serde_as_btc_opt() {
         use serde_json;
 
-        #[derive(Serialize, Deserialize, PartialEq, Debug)]
+        #[derive(Serialize, Deserialize, PartialEq, Debug, Eq)]
         struct T {
             #[serde(default, with = "::util::amount::serde::as_btc::opt")]
             pub amt: Option<Amount>,
@@ -1362,6 +1449,13 @@ mod tests {
             samt: None,
         };
 
+        // Test Roundtripping
+        for s in [&with, &without].iter() {
+            let v = serde_json::to_string(s).unwrap();
+            let w : T = serde_json::from_str(&v).unwrap();
+            assert_eq!(w, **s);
+        }
+
         let t: T = serde_json::from_str("{\"amt\": 2.5, \"samt\": -2.5}").unwrap();
         assert_eq!(t, with);
 
@@ -1370,6 +1464,49 @@ mod tests {
 
         let value_with: serde_json::Value =
             serde_json::from_str("{\"amt\": 2.5, \"samt\": -2.5}").unwrap();
+        assert_eq!(with, serde_json::from_value(value_with).unwrap());
+
+        let value_without: serde_json::Value = serde_json::from_str("{}").unwrap();
+        assert_eq!(without, serde_json::from_value(value_without).unwrap());
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn serde_as_sat_opt() {
+        use serde_json;
+
+        #[derive(Serialize, Deserialize, PartialEq, Debug, Eq)]
+        struct T {
+            #[serde(default, with = "::util::amount::serde::as_sat::opt")]
+            pub amt: Option<Amount>,
+            #[serde(default, with = "::util::amount::serde::as_sat::opt")]
+            pub samt: Option<SignedAmount>,
+        }
+
+        let with = T {
+            amt: Some(Amount::from_sat(2__500_000_00)),
+            samt: Some(SignedAmount::from_sat(-2__500_000_00)),
+        };
+        let without = T {
+            amt: None,
+            samt: None,
+        };
+
+        // Test Roundtripping
+        for s in [&with, &without].iter() {
+            let v = serde_json::to_string(s).unwrap();
+            let w : T = serde_json::from_str(&v).unwrap();
+            assert_eq!(w, **s);
+        }
+
+        let t: T = serde_json::from_str("{\"amt\": 250000000, \"samt\": -250000000}").unwrap();
+        assert_eq!(t, with);
+
+        let t: T = serde_json::from_str("{}").unwrap();
+        assert_eq!(t, without);
+
+        let value_with: serde_json::Value =
+            serde_json::from_str("{\"amt\": 250000000, \"samt\": -250000000}").unwrap();
         assert_eq!(with, serde_json::from_value(value_with).unwrap());
 
         let value_without: serde_json::Value = serde_json::from_str("{}").unwrap();
