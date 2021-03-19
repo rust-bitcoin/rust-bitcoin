@@ -400,23 +400,31 @@ impl Script {
                                opcodes::All::from(self.0[0]).classify() == opcodes::Class::IllegalOp)
     }
 
-    /// The minimum value an output to a witness script must have in order to be
+    /// The minimum value an output with a P2WPKH script_pubkey must have in order to be
     /// broadcastable on today's bitcoin network.
-    pub const WITNESS_OUTPUT_DUST_THRESHOLD: u64 = 294;
+    pub const P2WPKH_OUTPUT_DUST_THRESHOLD: u64 = 294;
 
-    /// The minimum value an output to a non-witness script must have in order to be
+    /// The minimum value an output with a P2PKH script_pubkey must have in order to be
     /// broadcastable on today's bitcoin network.
-    pub const LEGACY_OUTPUT_DUST_THRESHOLD: u64 = 546;
+    pub const P2PKH_OUTPUT_DUST_THRESHOLD: u64 = 546;
 
     /// Gets the minimum value an output with this script should have in order to be
     /// broadcastable on today's bitcoin network.
     pub fn dust_value(&self) -> u64 {
+        // This must never be lower than Bitcoin Core's GetDustThreshold() (as of v0.21) as it may
+        // otherwise allow users to create transactions which likely can never be
+        // broadcasted/confirmed.
+        3 * // The default dust relay fee is 3000 satoshi/kB (ie 3 sat/vByte)
         if self.is_op_return() {
             0
         } else if self.is_witness_program() {
-            Self::WITNESS_OUTPUT_DUST_THRESHOLD
+            32 + 4 + 1 + (107 / 4) + 4 + // The spend cost copied from Core
+            8 + // The serialized size of the TxOut's amount field
+            self.consensus_encode(&mut ::std::io::sink()).unwrap() as u64 // The serialized size of this script_pubkey
         } else {
-            Self::LEGACY_OUTPUT_DUST_THRESHOLD
+            32 + 4 + 1 + 107 + 4 + // The spend cost copied from Core
+            8 + // The serialized size of the TxOut's amount field
+            self.consensus_encode(&mut ::std::io::sink()).unwrap() as u64 // The serialized size of this script_pubkey
         }
     }
 
@@ -1229,5 +1237,21 @@ mod test {
 		let spending = Vec::from_hex("010000000001011f97548fbbe7a0db7588a66e18d803d0089315aa7d4cc28360b6ec50ef36718a0100000000ffffffff02df1776000000000017a9146c002a686959067f4866b8fb493ad7970290ab728757d29f0000000000220020701a8d401c84fb13e6baf169d59684e17abd9fa216c8cc5b9fc63d622ff8c58d04004730440220565d170eed95ff95027a69b313758450ba84a01224e1f7f130dda46e94d13f8602207bdd20e307f062594022f12ed5017bbf4a055a06aea91c10110a0e3bb23117fc014730440220647d2dc5b15f60bc37dc42618a370b2a1490293f9e5c8464f53ec4fe1dfe067302203598773895b4b16d37485cbe21b337f4e4b650739880098c592553add7dd4355016952210375e00eb72e29da82b89367947f29ef34afb75e8654f6ea368e0acdfd92976b7c2103a1b26313f430c4b15bb1fdce663207659d8cac749a0e53d70eff01874496feff2103c96d495bfdd5ba4145e3e046fee45e84a8a48ad05bd8dbb395c011a32cf9f88053ae00000000").unwrap();
 		spent.verify(0, 18393430, spending.as_slice()).unwrap();
 	}
+
+    #[test]
+    fn defult_dust_value_tests() {
+        let script_p2wpkh = Builder::new().push_int(0).push_slice(&[42; 20]).into_script();
+        assert!(script_p2wpkh.is_v0_p2wpkh());
+        assert_eq!(script_p2wpkh.dust_value(), Script::P2WPKH_OUTPUT_DUST_THRESHOLD);
+        let script_p2pkh = Builder::new()
+            .push_opcode(opcodes::all::OP_DUP)
+            .push_opcode(opcodes::all::OP_HASH160)
+            .push_slice(&[42; 20])
+            .push_opcode(opcodes::all::OP_EQUALVERIFY)
+            .push_opcode(opcodes::all::OP_CHECKSIG)
+            .into_script();
+        assert!(script_p2pkh.is_p2pkh());
+        assert_eq!(script_p2pkh.dust_value(), Script::P2PKH_OUTPUT_DUST_THRESHOLD);
+    }
 }
 
