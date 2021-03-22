@@ -352,6 +352,15 @@ impl Address {
     pub fn script_pubkey(&self) -> script::Script {
         self.payload.script_pubkey()
     }
+
+    /// Creates a string optimized to be encoded in QR codes, meaning it becomes uppercase if bech32
+    pub fn to_qr_string(&self) -> String {
+        let address_string = self.to_string();
+        match self.payload {
+            Payload::WitnessProgram { .. } => address_string.to_ascii_uppercase(),
+            _ => address_string,
+        }
+    }
 }
 
 impl fmt::Display for Address {
@@ -743,4 +752,18 @@ mod tests {
             hex_script!("001454d26dddb59c7073c6a197946ea1841951fa7a74")
         );
     }
+
+    #[test]
+    fn test_qr_string() {
+        for el in  ["132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM", "33iFwdLuRpW1uK1RTRqsoi8rR4NpDzk66k"].iter() {
+            let addr = Address::from_str(el).unwrap();
+            assert_eq!(addr.to_qr_string(), *el);
+        }
+
+        for el in ["bcrt1q2nfxmhd4n3c8834pj72xagvyr9gl57n5r94fsl", "bc1qwqdg6squsna38e46795at95yu9atm8azzmyvckulcc7kytlcckxswvvzej"].iter() {
+            let addr = Address::from_str(el).unwrap();
+            assert_eq!(addr.to_qr_string(), el.to_ascii_uppercase());
+        }
+    }
+
 }
