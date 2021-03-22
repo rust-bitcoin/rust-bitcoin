@@ -36,7 +36,7 @@
 //! let address = Address::p2pkh(&public_key, Network::Bitcoin);
 //! ```
 
-use std::fmt::{self, Display, Formatter};
+use std::fmt;
 use std::str::FromStr;
 use std::error;
 
@@ -354,8 +354,8 @@ impl Address {
     }
 }
 
-impl Display for Address {
-    fn fmt(&self, fmt: &mut Formatter) -> fmt::Result {
+impl fmt::Display for Address {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         match self.payload {
             Payload::PubkeyHash(ref hash) => {
                 let mut prefixed = [0; 21];
