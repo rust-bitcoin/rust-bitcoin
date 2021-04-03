@@ -315,8 +315,8 @@ impl Transaction {
     /// evaluating `script_pubkey` to determine which separators get evaluated and which don't,
     /// which we don't have the information to determine.
     ///
-    /// # Panics Panics if `input_index` is greater than or equal to `self.input.len()`
-    ///
+    /// # Panics
+    /// Panics if `input_index` is greater than or equal to `self.input.len()`
     pub fn encode_signing_data_to<Write: io::Write, U: Into<u32>>(
         &self,
         mut writer: Write,
