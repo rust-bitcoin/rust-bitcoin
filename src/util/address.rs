@@ -211,7 +211,7 @@ impl FromStr for WitnessVersion {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let ver = u8::from_str(s).map_err(|_| Error::UnparsableWitnessVersion)?;
-        WitnessVersion::from_version_no(ver)
+        WitnessVersion::from_ver_u8(ver)
     }
 }
 
@@ -220,13 +220,13 @@ impl WitnessVersion {
     /// the Witness program (for opcodes in range of `OP_0`..`OP_16`) or
     /// [`WitnessVersionError`] error for the rest of opcodes
     pub fn from_u5(value: ::bech32::u5) -> Result<Self, Error> {
-        WitnessVersion::from_version_no(value.to_u8())
+        WitnessVersion::from_ver_u8(value.to_u8())
     }
 
     /// Takes byte value and returns either corresponding version of
     /// the Witness program (for opcodes in range of `OP_0`..`OP_16`) or
     /// [`WitnessVersionError`] error for the rest of opcodes
-    pub fn from_version_no(value: u8) -> Result<Self, Error> {
+    pub fn from_ver_u8(value: u8) -> Result<Self, Error> {
         Ok(match value {
             0 => WitnessVersion::V0,
             1 => WitnessVersion::V1,
@@ -256,7 +256,7 @@ impl WitnessVersion {
         match opcode.into_u8() {
             0 => Ok(WitnessVersion::V0),
             ver if ver >= opcodes::all::OP_PUSHNUM_1.into_u8() && ver <= opcodes::all::OP_PUSHNUM_16.into_u8() =>
-                WitnessVersion::from_version_no(ver - opcodes::all::OP_PUSHNUM_1.into_u8() + 1),
+                WitnessVersion::from_ver_u8(ver - opcodes::all::OP_PUSHNUM_1.into_u8() + 1),
             _ => Err(Error::UnparsableWitnessVersion)
         }
     }
@@ -276,33 +276,15 @@ impl WitnessVersion {
     /// NB: this is not the same as an integer representation of the opcode signifying witness
     /// version in bitcoin script. Thus, there is no function to directly convert witness version
     /// into a byte since the conversion requires context (bitcoin script or just a version number)
-    pub fn into_version_no(self) -> u8 {
-        match self {
-            WitnessVersion::V0 => 0,
-            WitnessVersion::V1 => 1,
-            WitnessVersion::V2 => 2,
-            WitnessVersion::V3 => 3,
-            WitnessVersion::V4 => 4,
-            WitnessVersion::V5 => 5,
-            WitnessVersion::V6 => 6,
-            WitnessVersion::V7 => 7,
-            WitnessVersion::V8 => 8,
-            WitnessVersion::V9 => 9,
-            WitnessVersion::V10 => 10,
-            WitnessVersion::V11 => 11,
-            WitnessVersion::V12 => 12,
-            WitnessVersion::V13 => 13,
-            WitnessVersion::V14 => 14,
-            WitnessVersion::V15 => 15,
-            WitnessVersion::V16 => 16,
-        }
+    pub fn into_ver_u8(self) -> u8 {
+        self as u8
     }
 }
 
 impl From<WitnessVersion> for ::bech32::u5 {
     /// Converts `WitnessVersion` instance into corresponding Bech32 u5-value
     fn from(ver: WitnessVersion) -> Self {
-        ::bech32::u5::try_from_u8(ver.into_version_no()).expect("WitnessVersion must be 0..=16")
+        ::bech32::u5::try_from_u8(ver.into_ver_u8()).expect("WitnessVersion must be 0..=16")
     }
 }
 
@@ -312,7 +294,7 @@ impl From<WitnessVersion> for opcodes::All {
     fn from(ver: WitnessVersion) -> opcodes::All {
         match ver {
             WitnessVersion::V0 => opcodes::all::OP_PUSHBYTES_0,
-            no => opcodes::All::from(opcodes::all::OP_PUSHNUM_1.into_u8() + no.into_version_no() - 1)
+            no => opcodes::All::from(opcodes::all::OP_PUSHNUM_1.into_u8() + no.into_ver_u8() - 1)
         }
     }
 }
@@ -345,16 +327,9 @@ impl Payload {
             hash_inner.copy_from_slice(&script.as_bytes()[2..22]);
             Payload::ScriptHash(ScriptHash::from_inner(hash_inner))
         } else if script.is_witness_program() {
-            // We can unwrap and assume script length
-            // because [Script::is_witness_program] makes sure of this.
-            let instruction = script
-                .instructions_minimal()
-                .next()
-                .expect("Script engine is broken")
-                .expect("Script engine is broken");
             Payload::WitnessProgram {
-                version: WitnessVersion::from_instruction(instruction).expect("Script::is_witness_program must be fixed"),
-                program: script.as_bytes()[2..].to_vec(),
+                version: WitnessVersion::from_opcode(opcodes::All::from(script[0])).ok()?,
+                program: script[2..].to_vec(),
             }
         } else {
             return None;
@@ -479,7 +454,7 @@ impl Address {
     }
 
     /// Get the address type of the address.
-    /// None if unknown or non-standard.
+    /// None if unknown, non-standard or related to the future witness version.
     pub fn address_type(&self) -> Option<AddressType> {
         match self.payload {
             Payload::PubkeyHash(_) => Some(AddressType::P2pkh),
@@ -502,7 +477,7 @@ impl Address {
     }
 
     /// Check whether or not the address is following Bitcoin
-    /// standardness rules.
+    /// standard rules.
     ///
     /// Segwit addresses with unassigned witness versions or non-standard
     /// program sizes are considered non-standard.
