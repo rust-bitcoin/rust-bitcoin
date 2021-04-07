@@ -388,22 +388,33 @@ impl fmt::Display for Address {
                 version: ver,
                 program: ref prog,
             } => {
-                if fmt.alternate() {
-                    //TODO format without allocation when alternate uppercase is in bech32
-                    let lower = self.to_string();
-                    write!(fmt, "{}", lower.to_ascii_uppercase())
-                } else {
-                    let hrp = match self.network {
-                        Network::Bitcoin => "bc",
-                        Network::Testnet | Network::Signet => "tb",
-                        Network::Regtest => "bcrt",
-                    };
-                    let mut bech32_writer = bech32::Bech32Writer::new(hrp, fmt)?;
-                    bech32::WriteBase32::write_u5(&mut bech32_writer, ver)?;
-                    bech32::ToBase32::write_base32(&prog, &mut bech32_writer)
-                }
+                let hrp = match self.network {
+                    Network::Bitcoin => "bc",
+                    Network::Testnet | Network::Signet => "tb",
+                    Network::Regtest => "bcrt",
+                };
+                let is_alternate = fmt.alternate();
+                let mut opt_up_writer = OptionallyUpperWriter(fmt, is_alternate);
+                let mut bech32_writer = bech32::Bech32Writer::new(hrp, &mut opt_up_writer)?;
+                bech32::WriteBase32::write_u5(&mut bech32_writer, ver)?;
+                bech32::ToBase32::write_base32(&prog, &mut bech32_writer)
             }
         }
+    }
+}
+
+struct OptionallyUpperWriter<W: fmt::Write>(W, bool);
+
+impl<W: fmt::Write> fmt::Write for OptionallyUpperWriter<W> {
+    fn write_str(&mut self, s: &str) -> fmt::Result {
+        if self.1 {
+            for c in s.chars() {
+                self.0.write_char(c.to_ascii_uppercase())?;
+            }
+        } else {
+            self.0.write_str(s)?;
+        }
+        Ok(())
     }
 }
 
