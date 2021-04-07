@@ -359,11 +359,7 @@ impl Address {
     /// Even inside Bitcoin URI may be more efficient to use the uppercase address since in QR codes
     /// encoding modes can be mixed as needed within a QR symbol.
     pub fn to_qr_string(&self) -> String {
-        let address_string = self.to_string();
-        match self.payload {
-            Payload::WitnessProgram { .. } => address_string.to_ascii_uppercase(),
-            _ => address_string,
-        }
+        format!("{:#}", self)
     }
 }
 
@@ -392,14 +388,20 @@ impl fmt::Display for Address {
                 version: ver,
                 program: ref prog,
             } => {
-                let hrp = match self.network {
-                    Network::Bitcoin => "bc",
-                    Network::Testnet | Network::Signet  => "tb",
-                    Network::Regtest => "bcrt",
-                };
-                let mut bech32_writer = bech32::Bech32Writer::new(hrp, fmt)?;
-                bech32::WriteBase32::write_u5(&mut bech32_writer, ver)?;
-                bech32::ToBase32::write_base32(&prog, &mut bech32_writer)
+                if fmt.alternate() {
+                    //TODO format without allocation when alternate uppercase is in bech32
+                    let lower = self.to_string();
+                    write!(fmt, "{}", lower.to_ascii_uppercase())
+                } else {
+                    let hrp = match self.network {
+                        Network::Bitcoin => "bc",
+                        Network::Testnet | Network::Signet => "tb",
+                        Network::Regtest => "bcrt",
+                    };
+                    let mut bech32_writer = bech32::Bech32Writer::new(hrp, fmt)?;
+                    bech32::WriteBase32::write_u5(&mut bech32_writer, ver)?;
+                    bech32::ToBase32::write_base32(&prog, &mut bech32_writer)
+                }
             }
         }
     }
