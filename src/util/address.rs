@@ -393,9 +393,14 @@ impl fmt::Display for Address {
                     Network::Testnet | Network::Signet => "tb",
                     Network::Regtest => "bcrt",
                 };
-                let is_alternate = fmt.alternate();
-                let mut opt_up_writer = OptionallyUpperWriter(fmt, is_alternate);
-                let mut bech32_writer = bech32::Bech32Writer::new(hrp, &mut opt_up_writer)?;
+                let mut upper_writer;
+                let writer = if fmt.alternate() {
+                    upper_writer = UpperWriter(fmt);
+                    &mut upper_writer as &mut dyn fmt::Write
+                } else {
+                    fmt as &mut dyn fmt::Write
+                };
+                let mut bech32_writer = bech32::Bech32Writer::new(hrp, writer)?;
                 bech32::WriteBase32::write_u5(&mut bech32_writer, ver)?;
                 bech32::ToBase32::write_base32(&prog, &mut bech32_writer)
             }
@@ -403,16 +408,12 @@ impl fmt::Display for Address {
     }
 }
 
-struct OptionallyUpperWriter<W: fmt::Write>(W, bool);
+struct UpperWriter<W: fmt::Write>(W);
 
-impl<W: fmt::Write> fmt::Write for OptionallyUpperWriter<W> {
+impl<W: fmt::Write> fmt::Write for UpperWriter<W> {
     fn write_str(&mut self, s: &str) -> fmt::Result {
-        if self.1 {
-            for c in s.chars() {
-                self.0.write_char(c.to_ascii_uppercase())?;
-            }
-        } else {
-            self.0.write_str(s)?;
+        for c in s.chars() {
+            self.0.write_char(c.to_ascii_uppercase())?;
         }
         Ok(())
     }
