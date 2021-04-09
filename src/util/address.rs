@@ -354,10 +354,14 @@ impl Address {
     }
 
     /// Creates a string optimized to be encoded in QR codes, meaning it becomes uppercase if bech32.
+    ///
     /// Quoting BIP 173 "inside QR codes uppercase SHOULD be used, as those permit the use of
     /// alphanumeric mode, which is 45% more compact than the normal byte mode."
     /// Even inside Bitcoin URI may be more efficient to use the uppercase address since in QR codes
     /// encoding modes can be mixed as needed within a QR symbol.
+    ///
+    /// This `fn` is a shorthand of the alternate formatting `{:#}` which should be preferred in most
+    /// cases because it avoids the [String] allocation.
     pub fn to_qr_string(&self) -> String {
         format!("{:#}", self)
     }
