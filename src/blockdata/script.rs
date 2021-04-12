@@ -37,7 +37,7 @@ use hashes::{Hash, hex};
 #[cfg(feature="bitcoinconsensus")] use std::convert;
 #[cfg(feature="bitcoinconsensus")] use OutPoint;
 
-use util::key::PublicKey;
+use util::ecdsa::PublicKey;
 
 #[derive(Clone, Default, PartialOrd, Ord, PartialEq, Eq, Hash)]
 /// A Bitcoin script
@@ -889,7 +889,7 @@ mod test {
     use hashes::hex::{FromHex, ToHex};
     use consensus::encode::{deserialize, serialize};
     use blockdata::opcodes;
-    use util::key::PublicKey;
+    use util::ecdsa::PublicKey;
     use util::psbt::serialize::Serialize;
 
     #[test]

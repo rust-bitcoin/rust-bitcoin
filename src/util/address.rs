@@ -21,13 +21,13 @@
 //!
 //! use bitcoin::network::constants::Network;
 //! use bitcoin::util::address::Address;
-//! use bitcoin::util::key;
+//! use bitcoin::util::ecdsa;
 //! use bitcoin::secp256k1::Secp256k1;
 //! use bitcoin::secp256k1::rand::thread_rng;
 //!
 //! // Generate random key pair
 //! let s = Secp256k1::new();
-//! let public_key = key::PublicKey {
+//! let public_key = ecdsa::PublicKey {
 //!     compressed: true,
 //!     key: s.generate_keypair(&mut thread_rng()).1,
 //! };
@@ -46,7 +46,7 @@ use hash_types::{PubkeyHash, WPubkeyHash, ScriptHash, WScriptHash};
 use blockdata::script;
 use network::constants::Network;
 use util::base58;
-use util::key;
+use util::ecdsa;
 
 /// Address error.
 #[derive(Debug, PartialEq)]
@@ -220,7 +220,7 @@ impl Address {
     /// Creates a pay to (compressed) public key hash address from a public key
     /// This is the preferred non-witness type address
     #[inline]
-    pub fn p2pkh(pk: &key::PublicKey, network: Network) -> Address {
+    pub fn p2pkh(pk: &ecdsa::PublicKey, network: Network) -> Address {
         let mut hash_engine = PubkeyHash::engine();
         pk.write_into(&mut hash_engine).expect("engines don't error");
 
@@ -244,7 +244,7 @@ impl Address {
     /// This is the native segwit address type for an output redeemable with a single signature
     ///
     /// Will only return an Error when an uncompressed public key is provided.
-    pub fn p2wpkh(pk: &key::PublicKey, network: Network) -> Result<Address, Error> {
+    pub fn p2wpkh(pk: &ecdsa::PublicKey, network: Network) -> Result<Address, Error> {
         if !pk.compressed {
             return Err(Error::UncompressedPubkey);
         }
@@ -265,7 +265,7 @@ impl Address {
     /// This is a segwit address type that looks familiar (as p2sh) to legacy clients
     ///
     /// Will only return an Error when an uncompressed public key is provided.
-    pub fn p2shwpkh(pk: &key::PublicKey, network: Network) -> Result<Address, Error> {
+    pub fn p2shwpkh(pk: &ecdsa::PublicKey, network: Network) -> Result<Address, Error> {
         if !pk.compressed {
             return Err(Error::UncompressedPubkey);
         }
@@ -500,7 +500,7 @@ mod tests {
 
     use blockdata::script::Script;
     use network::constants::Network::{Bitcoin, Testnet};
-    use util::key::PublicKey;
+    use util::ecdsa::PublicKey;
 
     use super::*;
 

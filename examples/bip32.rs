@@ -4,7 +4,7 @@ use std::{env, process};
 use std::str::FromStr;
 
 use bitcoin::secp256k1::Secp256k1;
-use bitcoin::util::key::PrivateKey;
+use bitcoin::util::ecdsa::PrivateKey;
 use bitcoin::util::bip32::ExtendedPrivKey;
 use bitcoin::util::bip32::ExtendedPubKey;
 use bitcoin::util::bip32::DerivationPath;

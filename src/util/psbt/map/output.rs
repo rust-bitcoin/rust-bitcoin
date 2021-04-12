@@ -19,7 +19,7 @@ use std::collections::btree_map::Entry;
 use blockdata::script::Script;
 use consensus::encode;
 use util::bip32::KeySource;
-use util::key::PublicKey;
+use util::ecdsa::PublicKey;
 use util::psbt;
 use util::psbt::map::Map;
 use util::psbt::raw;
