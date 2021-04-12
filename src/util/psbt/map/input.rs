@@ -16,13 +16,13 @@ use prelude::*;
 
 use ::{EcdsaSig, io};
 
+use secp256k1;
 use blockdata::script::Script;
 use blockdata::transaction::{EcdsaSigHashType, Transaction, TxOut};
 use consensus::encode;
+use hashes::{self, hash160, ripemd160, sha256, sha256d};
 use secp256k1::XOnlyPublicKey;
 use util::bip32::KeySource;
-use hashes::{self, hash160, ripemd160, sha256, sha256d};
-use util::ecdsa::PublicKey;
 use util::psbt;
 use util::psbt::map::Map;
 use util::psbt::raw;
@@ -88,7 +88,7 @@ pub struct Input {
     pub witness_utxo: Option<TxOut>,
     /// A map from public keys to their corresponding signature as would be
     /// pushed to the stack from a scriptSig or witness for a non-taproot inputs.
-    pub partial_sigs: BTreeMap<PublicKey, EcdsaSig>,
+    pub partial_sigs: BTreeMap<secp256k1::PublicKey, EcdsaSig>,
     /// The sighash type to be used for this input. Signatures for this input
     /// must use the sighash type.
     pub sighash_type: Option<EcdsaSigHashType>,
@@ -99,7 +99,7 @@ pub struct Input {
     /// A map from public keys needed to sign this input to their corresponding
     /// master key fingerprints and derivation paths.
     #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_as_seq"))]
-    pub bip32_derivation: BTreeMap<PublicKey, KeySource>,
+    pub bip32_derivation: BTreeMap<secp256k1::PublicKey, KeySource>,
     /// The finalized, fully-constructed scriptSig with signatures and any other
     /// scripts necessary for this input to pass validation.
     pub final_script_sig: Option<Script>,
@@ -162,7 +162,7 @@ impl Map for Input {
             }
             PSBT_IN_PARTIAL_SIG => {
                 impl_psbt_insert_pair! {
-                    self.partial_sigs <= <raw_key: PublicKey>|<raw_value: EcdsaSig>
+                    self.partial_sigs <= <raw_key: secp256k1::PublicKey>|<raw_value: EcdsaSig>
                 }
             }
             PSBT_IN_SIGHASH_TYPE => {
@@ -182,7 +182,7 @@ impl Map for Input {
             }
             PSBT_IN_BIP32_DERIVATION => {
                 impl_psbt_insert_pair! {
-                    self.bip32_derivation <= <raw_key: PublicKey>|<raw_value: KeySource>
+                    self.bip32_derivation <= <raw_key: secp256k1::PublicKey>|<raw_value: KeySource>
                 }
             }
             PSBT_IN_FINAL_SCRIPTSIG => {
@@ -282,7 +282,7 @@ impl Map for Input {
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.bip32_derivation as <PSBT_IN_BIP32_DERIVATION, PublicKey>|<KeySource>)
+            rv.push(self.bip32_derivation as <PSBT_IN_BIP32_DERIVATION, secp256k1::PublicKey>|<KeySource>)
         }
 
         impl_psbt_get_pair! {
