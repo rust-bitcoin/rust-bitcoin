@@ -70,13 +70,14 @@ impl FromStr for Denomination {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "BTC" => Ok(Denomination::Bitcoin),
-            "mBTC" => Ok(Denomination::MilliBitcoin),
-            "uBTC" => Ok(Denomination::MicroBitcoin),
-            "bits" => Ok(Denomination::Bit),
-            "satoshi" => Ok(Denomination::Satoshi),
-            "sat" => Ok(Denomination::Satoshi),
-            "msat" => Ok(Denomination::MilliSatoshi),
+            "Bitcoin" | "bitcoin" | "btc" | "BTC" | "Btc" => Ok(Denomination::Bitcoin),
+            "MilliBitcoin" | "millibitcoin" | "mbtc" | "mBTC" => Ok(Denomination::MilliBitcoin),
+            "MicroBitcoin" | "microbitcoin" | "ubtc" | "uBTC" => Ok(Denomination::MicroBitcoin),
+            "Bit" | "Bits" | "bit" | "bits" => Ok(Denomination::Bit),
+            "Satoshi" | "satoshi" | "sat" | "Sat" | "Sats" | "sats" => Ok(Denomination::Satoshi),
+            "MilliSatoshi" | "millisatoshi" | "millisat" | "millisats" | "msat" | "mSat" | "mSats" | "msats" => {
+            Ok(Denomination::MilliSatoshi)
+            }
             d => Err(ParseAmountError::UnknownDenomination(d.to_owned())),
         }
     }
