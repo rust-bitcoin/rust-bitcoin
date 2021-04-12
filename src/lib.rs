@@ -85,9 +85,14 @@ pub use util::address::AddressType;
 pub use util::amount::Amount;
 pub use util::amount::Denomination;
 pub use util::amount::SignedAmount;
-pub use util::ecdsa::PrivateKey;
-pub use util::ecdsa::PublicKey;
 pub use util::merkleblock::MerkleBlock;
+
+pub use util::ecdsa;
+pub use util::schnorr;
+#[deprecated(since = "0.26.1", note = "Please use `ecdsa::PrivateKey` instead")]
+pub use util::ecdsa::PrivateKey;
+#[deprecated(since = "0.26.1", note = "Please use `ecdsa::PublicKey` instead")]
+pub use util::ecdsa::PublicKey;
 
 #[cfg(all(test, feature = "unstable"))] use tests::EmptyWrite;
 
