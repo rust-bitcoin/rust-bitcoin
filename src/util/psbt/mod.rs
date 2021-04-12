@@ -243,24 +243,23 @@ impl Decodable for PartiallySignedTransaction {
 
 #[cfg(test)]
 mod tests {
+    use super::PartiallySignedTransaction;
+
     use hashes::hex::FromHex;
     use hashes::{sha256, hash160, Hash, ripemd160};
     use hash_types::Txid;
 
-
-    use secp256k1::Secp256k1;
+    use secp256k1::{Secp256k1, self};
 
     use blockdata::script::Script;
     use blockdata::transaction::{Transaction, TxIn, TxOut, OutPoint};
     use network::constants::Network::Bitcoin;
     use consensus::encode::{deserialize, serialize, serialize_hex};
     use util::bip32::{ChildNumber, ExtendedPrivKey, ExtendedPubKey, Fingerprint, KeySource};
-    use util::ecdsa::PublicKey;
+    use util::ecdsa;
     use util::psbt::map::{Output, Input};
     use util::psbt::raw;
 
-    use super::PartiallySignedTransaction;
-    use util::psbt::raw::ProprietaryKey;
     use std::collections::BTreeMap;
     use blockdata::witness::Witness;
 
@@ -292,7 +291,7 @@ mod tests {
         let secp = &Secp256k1::new();
         let seed = Vec::from_hex("000102030405060708090a0b0c0d0e0f").unwrap();
 
-        let mut hd_keypaths: BTreeMap<PublicKey, KeySource> = Default::default();
+        let mut hd_keypaths: BTreeMap<secp256k1::PublicKey, KeySource> = Default::default();
 
         let mut sk: ExtendedPrivKey = ExtendedPrivKey::new_master(Bitcoin, &seed).unwrap();
 
@@ -322,7 +321,10 @@ mod tests {
             witness_script: Some(hex_script!(
                 "a9143545e6e33b832c47050f24d3eeb93c9c03948bc787"
             )),
-            bip32_derivation: hd_keypaths,
+            bip32_derivation: hd_keypaths.into_iter().map(|(key, src)| (ecdsa::PublicKey {
+                compressed: true,
+                key,
+            }, src)).collect(),
             ..Default::default()
         };
 
@@ -435,7 +437,7 @@ mod tests {
             vec![3, 4 ,5],
         )].into_iter().collect();
         let key_source = ("deadbeef".parse().unwrap(), "m/0'/1".parse().unwrap());
-        let keypaths: BTreeMap<PublicKey, KeySource> = vec![(
+        let keypaths: BTreeMap<secp256k1::PublicKey, KeySource> = vec![(
             "0339880dc92394b7355e3d0439fa283c31de7590812ea011c4245c0674a685e883".parse().unwrap(),
             key_source.clone(),
         )].into_iter().collect();
@@ -479,7 +481,10 @@ mod tests {
                     "0339880dc92394b7355e3d0439fa283c31de7590812ea011c4245c0674a685e883".parse().unwrap(),
                     vec![8, 5, 4],
                 )].into_iter().collect(),
-                bip32_derivation: keypaths.clone(),
+                bip32_derivation: keypaths.clone().into_iter().map(|(key, src)| (ecdsa::PublicKey {
+                    compressed: true,
+                    key,
+                }, src)).collect(),
                 final_script_witness: Some(vec![vec![1, 3], vec![5]]),
                 ripemd160_preimages: vec![(ripemd160::Hash::hash(&[]), vec![1, 2])].into_iter().collect(),
                 sha256_preimages: vec![(sha256::Hash::hash(&[]), vec![1, 2])].into_iter().collect(),
@@ -490,7 +495,10 @@ mod tests {
                 ..Default::default()
             }],
             outputs: vec![Output {
-                bip32_derivation: keypaths.clone(),
+                bip32_derivation: keypaths.into_iter().map(|(key, src)| (ecdsa::PublicKey {
+                    compressed: true,
+                    key,
+                }, src)).collect(),
                 proprietary: proprietary.clone(),
                 unknown: unknown.clone(),
                 ..Default::default()
@@ -1012,7 +1020,7 @@ mod tests {
     #[test]
     fn serialize_and_deserialize_proprietary() {
         let mut psbt: PartiallySignedTransaction = hex_psbt!("70736274ff0100a00200000002ab0949a08c5af7c49b8212f417e2f15ab3f5c33dcf153821a8139f877a5b7be40000000000feffffffab0949a08c5af7c49b8212f417e2f15ab3f5c33dcf153821a8139f877a5b7be40100000000feffffff02603bea0b000000001976a914768a40bbd740cbe81d988e71de2a4d5c71396b1d88ac8e240000000000001976a9146f4620b553fa095e721b9ee0efe9fa039cca459788ac000000000001076a47304402204759661797c01b036b25928948686218347d89864b719e1f7fcf57d1e511658702205309eabf56aa4d8891ffd111fdf1336f3a29da866d7f8486d75546ceedaf93190121035cdc61fc7ba971c0b501a646a2a83b102cb43881217ca682dc86e2d73fa882920001012000e1f5050000000017a9143545e6e33b832c47050f24d3eeb93c9c03948bc787010416001485d13537f2e265405a34dbafa9e3dda01fb82308000000").unwrap();
-        psbt.proprietary.insert(ProprietaryKey {
+        psbt.proprietary.insert(raw::ProprietaryKey {
             prefix: b"test".to_vec(),
             subtype: 0u8,
             key: b"test".to_vec(),

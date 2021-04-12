@@ -4,7 +4,7 @@ use std::{env, process};
 use std::str::FromStr;
 
 use bitcoin::secp256k1::Secp256k1;
-use bitcoin::util::ecdsa::PrivateKey;
+use bitcoin::{PrivateKey, PublicKey};
 use bitcoin::util::bip32::ExtendedPrivKey;
 use bitcoin::util::bip32::ExtendedPubKey;
 use bitcoin::util::bip32::DerivationPath;
@@ -58,7 +58,7 @@ fn main() {
     let public_key = xpub.derive_pub(&secp, &vec![zero, zero])
                          .unwrap()
                          .public_key;
-    let address = Address::p2wpkh(&public_key, network).unwrap();
+    let address = Address::p2wpkh(&PublicKey::new(public_key), network).unwrap();
     println!("First receiving address: {}", address);
 
 }
