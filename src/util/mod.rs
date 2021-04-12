@@ -17,6 +17,8 @@
 //! Functions needed by all parts of the Bitcoin library
 
 pub mod ecdsa;
+pub mod key;
+pub mod schnorr;
 pub mod address;
 pub mod amount;
 pub mod base58;
@@ -30,7 +32,6 @@ pub mod psbt;
 pub mod taproot;
 pub mod uint;
 pub mod bip158;
-pub mod key;
 
 pub(crate) mod endian;
 
