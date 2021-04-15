@@ -353,20 +353,24 @@ impl Address {
         self.payload.script_pubkey()
     }
 
-    /// Creates a string optimized to be encoded in QR codes, meaning it becomes uppercase if bech32.
+    /// Creates a URI string *bitcoin:address* optimized to be encoded in QR codes.
+    ///
+    /// If the address is bech32, both the schema and the address become uppercase.
+    /// If the address is base58, the schema is lowercase and the address is left mixed case.
     ///
     /// Quoting BIP 173 "inside QR codes uppercase SHOULD be used, as those permit the use of
     /// alphanumeric mode, which is 45% more compact than the normal byte mode."
-    /// Even inside Bitcoin URI may be more efficient to use the uppercase address since in QR codes
-    /// encoding modes can be mixed as needed within a QR symbol.
-    ///
-    /// This `fn` is a shorthand of the alternate formatting `{:#}` which should be preferred in most
-    /// cases because it avoids the [String] allocation.
-    pub fn to_qr_string(&self) -> String {
-        format!("{:#}", self)
+    pub fn to_qr_uri(&self) -> String {
+        let schema = match self.payload {
+            Payload::WitnessProgram { .. } => "BITCOIN",
+            _ => "bitcoin",
+        };
+        format!("{}:{:#}", schema, self)
     }
 }
 
+// Alternate formatting `{:#}` is used to return uppercase version of bech32 addresses which should
+// be used in QR codes, see [Address::to_qr_uri]
 impl fmt::Display for Address {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         match self.payload {
@@ -779,12 +783,12 @@ mod tests {
     fn test_qr_string() {
         for el in  ["132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM", "33iFwdLuRpW1uK1RTRqsoi8rR4NpDzk66k"].iter() {
             let addr = Address::from_str(el).unwrap();
-            assert_eq!(addr.to_qr_string(), *el);
+            assert_eq!(addr.to_qr_uri(), format!("bitcoin:{}", el));
         }
 
         for el in ["bcrt1q2nfxmhd4n3c8834pj72xagvyr9gl57n5r94fsl", "bc1qwqdg6squsna38e46795at95yu9atm8azzmyvckulcc7kytlcckxswvvzej"].iter() {
             let addr = Address::from_str(el).unwrap();
-            assert_eq!(addr.to_qr_string(), el.to_ascii_uppercase());
+            assert_eq!(addr.to_qr_uri(), format!("BITCOIN:{}", el.to_ascii_uppercase()) );
         }
     }
 
