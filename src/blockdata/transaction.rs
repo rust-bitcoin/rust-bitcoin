@@ -34,6 +34,7 @@ use blockdata::constants::WITNESS_SCALE_FACTOR;
 #[cfg(feature="bitcoinconsensus")] use blockdata::script;
 use blockdata::script::Script;
 use consensus::{encode, Decodable, Encodable};
+use consensus::encode::MAX_VEC_SIZE;
 use hash_types::{SigHash, Txid, Wtxid};
 use VarInt;
 
@@ -566,7 +567,8 @@ impl Encodable for Transaction {
 }
 
 impl Decodable for Transaction {
-    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
+    fn consensus_decode<D: io::Read>(d: D) -> Result<Self, encode::Error> {
+        let mut d = d.take(MAX_VEC_SIZE as u64);
         let version = i32::consensus_decode(&mut d)?;
         let input = Vec::<TxIn>::consensus_decode(&mut d)?;
         // segwit

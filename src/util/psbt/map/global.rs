@@ -19,6 +19,7 @@ use std::cmp;
 
 use blockdata::transaction::Transaction;
 use consensus::{encode, Encodable, Decodable};
+use consensus::encode::MAX_VEC_SIZE;
 use util::psbt::map::Map;
 use util::psbt::raw;
 use util::psbt;
@@ -228,8 +229,8 @@ impl Map for Global {
 impl_psbtmap_consensus_encoding!(Global);
 
 impl Decodable for Global {
-    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
-
+    fn consensus_decode<D: io::Read>(d: D) -> Result<Self, encode::Error> {
+        let mut d = d.take(MAX_VEC_SIZE as u64);
         let mut tx: Option<Transaction> = None;
         let mut version: Option<u32> = None;
         let mut unknowns: BTreeMap<raw::Key, Vec<u8>> = Default::default();
