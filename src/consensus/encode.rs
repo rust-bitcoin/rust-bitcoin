@@ -119,8 +119,6 @@ impl error::Error for Error {
 }
 
 #[doc(hidden)]
-
-#[doc(hidden)]
 impl From<io::Error> for Error {
     fn from(error: io::Error) -> Self {
         Error::Io(error)

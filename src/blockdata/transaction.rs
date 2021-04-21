@@ -173,7 +173,7 @@ impl ::std::str::FromStr for OutPoint {
 }
 
 /// A transaction input, which defines old coins to be consumed
-#[derive(Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct TxIn {
     /// The reference to the previous output that is being used an an input
@@ -206,7 +206,7 @@ impl Default for TxIn {
 }
 
 /// A transaction output, which defines new coins to be created from old ones.
-#[derive(Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct TxOut {
     /// The value of the output, in satoshis
@@ -252,7 +252,7 @@ impl Default for TxOut {
 ///
 /// We therefore deviate from the spec by always using the Segwit witness encoding
 /// for 0-input transactions, which results in unambiguously parseable transactions.
-#[derive(Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Transaction {
     /// The protocol version, is currently expected to be 1 or 2 (BIP 68).
