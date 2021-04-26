@@ -1293,5 +1293,22 @@ mod test {
         assert!(script_p2pkh.is_p2pkh());
         assert_eq!(script_p2pkh.dust_value(), 546);
     }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn test_script_serde_human_and_not() {
+        let script = Script::from(vec![0u8, 1u8, 2u8]);
+
+        // Serialize
+        let json = ::serde_json::to_string(&script).unwrap();
+        assert_eq!(json, "\"000102\"");
+        let bincode = ::bincode::serialize(&script).unwrap();
+        assert_eq!(bincode, [3, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2]); // bincode adds u64 for length, serde_cbor use varint
+
+        // Deserialize
+        assert_eq!(script, ::serde_json::from_str(&json).unwrap());
+        assert_eq!(script, ::bincode::deserialize(&bincode).unwrap());
+    }
+
 }
 
