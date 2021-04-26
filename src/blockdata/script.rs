@@ -819,44 +819,59 @@ impl_index_newtype!(Builder, u8);
 #[cfg(feature = "serde")]
 impl<'de> serde::Deserialize<'de> for Script {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
+    where D: serde::Deserializer<'de>,
     {
         use core::fmt::Formatter;
         use hashes::hex::FromHex;
 
-        struct Visitor;
-        impl<'de> serde::de::Visitor<'de> for Visitor {
-            type Value = Script;
+        if deserializer.is_human_readable() {
 
-            fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
-                formatter.write_str("a script")
-            }
+            struct Visitor;
+            impl<'de> serde::de::Visitor<'de> for Visitor {
+                type Value = Script;
 
-            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-            where
-                E: serde::de::Error,
-            {
-                let v = Vec::from_hex(v).map_err(E::custom)?;
-                Ok(Script::from(v))
-            }
+                fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
+                    formatter.write_str("a script hex")
+                }
 
-            fn visit_borrowed_str<E>(self, v: &'de str) -> Result<Self::Value, E>
-            where
-                E: serde::de::Error,
-            {
-                self.visit_str(v)
-            }
+                fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+                    where E: serde::de::Error,
+                {
+                    let v = Vec::from_hex(v).map_err(E::custom)?;
+                    Ok(Script::from(v))
+                }
 
-            fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
-            where
-                E: serde::de::Error,
-            {
-                self.visit_str(&v)
+                fn visit_borrowed_str<E>(self, v: &'de str) -> Result<Self::Value, E>
+                    where E: serde::de::Error,
+                {
+                    self.visit_str(v)
+                }
+
+                fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+                    where E: serde::de::Error,
+                {
+                    self.visit_str(&v)
+                }
             }
+            deserializer.deserialize_str(Visitor)
+        } else {
+            struct BytesVisitor;
+
+            impl<'de> serde::de::Visitor<'de> for BytesVisitor {
+                type Value = Script;
+
+                fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
+                    formatter.write_str("a script Vec<u8>")
+                }
+
+                fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
+                    where E: serde::de::Error,
+                {
+                    Ok(Script::from(v.to_vec()))
+                }
+            }
+            deserializer.deserialize_bytes(BytesVisitor)
         }
-
-        deserializer.deserialize_str(Visitor)
     }
 }
 
@@ -867,7 +882,11 @@ impl serde::Serialize for Script {
     where
         S: serde::Serializer,
     {
-        serializer.serialize_str(&format!("{:x}", self))
+        if serializer.is_human_readable() {
+            serializer.serialize_str(&format!("{:x}", self))
+        } else {
+            serializer.serialize_bytes(&self.as_bytes())
+        }
     }
 }
 
