@@ -20,7 +20,7 @@ use blockdata::transaction::{SigHashType, Transaction, TxOut};
 use consensus::encode;
 use util::bip32::KeySource;
 use hashes::{self, hash160, ripemd160, sha256, sha256d};
-use util::key::PublicKey;
+use util::ecdsa::PublicKey;
 use util::psbt;
 use util::psbt::map::Map;
 use util::psbt::raw;

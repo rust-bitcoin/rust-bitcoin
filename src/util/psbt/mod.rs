@@ -222,7 +222,7 @@ mod tests {
     use network::constants::Network::Bitcoin;
     use consensus::encode::{deserialize, serialize, serialize_hex};
     use util::bip32::{ChildNumber, ExtendedPrivKey, ExtendedPubKey, Fingerprint, KeySource};
-    use util::key::PublicKey;
+    use util::ecdsa::PublicKey;
     use util::psbt::map::{Global, Output, Input};
     use util::psbt::raw;
 

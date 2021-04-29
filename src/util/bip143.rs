@@ -274,7 +274,7 @@ mod tests {
     use consensus::encode::deserialize;
     use network::constants::Network;
     use util::address::Address;
-    use util::key::PublicKey;
+    use util::ecdsa::PublicKey;
     use hashes::hex::FromHex;
 
     use super::*;

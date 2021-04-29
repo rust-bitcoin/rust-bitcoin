@@ -26,8 +26,8 @@ use hashes::{sha512, Hash, HashEngine, Hmac, HmacEngine};
 use secp256k1::{self, Secp256k1};
 
 use network::constants::Network;
-use util::{base58, endian};
-use util::key::{self, PublicKey, PrivateKey};
+use util::{base58, endian, key};
+use util::ecdsa::{PublicKey, PrivateKey};
 
 /// A chain code
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
