@@ -449,13 +449,20 @@ impl Script {
     }
 
     #[cfg(feature="bitcoinconsensus")]
-    /// verify spend of an input script
-    /// # Parameters
-    ///  * index - the input index in spending which is spending this transaction
-    ///  * amount - the amount this script guards
-    ///  * spending - the transaction that attempts to spend the output holding this script
+    /// Shorthand for [Self::verify_with_flags] with flag [bitcoinconsensus::VERIFY_ALL]
     pub fn verify (&self, index: usize, amount: u64, spending: &[u8]) -> Result<(), Error> {
-        Ok(bitcoinconsensus::verify (&self.0[..], amount, spending, index)?)
+        self.verify_with_flags(index, amount, spending, ::bitcoinconsensus::VERIFY_ALL)
+    }
+
+    #[cfg(feature="bitcoinconsensus")]
+    /// Verify spend of an input script
+    /// # Parameters
+    ///  * `index` - the input index in spending which is spending this transaction
+    ///  * `amount` - the amount this script guards
+    ///  * `spending` - the transaction that attempts to spend the output holding this script
+    ///  * `flags` - verification flags, see [bitcoinconsensus::VERIFY_ALL] and similar
+    pub fn verify_with_flags<F: Into<u32>>(&self, index: usize, amount: u64, spending: &[u8], flags: F) -> Result<(), Error> {
+        Ok(bitcoinconsensus::verify_with_flags (&self.0[..], amount, spending, index, flags.into())?)
     }
 
     /// Write the assembly decoding of the script bytes to the formatter.
