@@ -29,6 +29,7 @@ use blockdata::transaction::{OutPoint, Transaction, TxOut, TxIn};
 use blockdata::block::{Block, BlockHeader};
 use network::constants::Network;
 use util::uint::Uint256;
+use Amount;
 
 /// The maximum allowable sequence number
 pub const MAX_SEQUENCE: u32 = 0xFFFFFFFF;
@@ -88,7 +89,7 @@ fn bitcoin_genesis_tx() -> Transaction {
         .push_opcode(opcodes::all::OP_CHECKSIG)
         .into_script();
     ret.output.push(TxOut {
-        value: 50 * COIN_VALUE,
+        value: Amount::from_sat(50 * COIN_VALUE),
         script_pubkey: out_script
     });
 
@@ -166,6 +167,7 @@ mod test {
     use consensus::encode::serialize;
     use blockdata::constants::{genesis_block, bitcoin_genesis_tx};
     use blockdata::constants::{MAX_SEQUENCE, COIN_VALUE};
+    use Amount;
 
     #[test]
     fn bitcoin_genesis_first_transaction() {
@@ -182,7 +184,7 @@ mod test {
         assert_eq!(gen.output.len(), 1);
         assert_eq!(serialize(&gen.output[0].script_pubkey),
                    Vec::from_hex("434104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac").unwrap());
-        assert_eq!(gen.output[0].value, 50 * COIN_VALUE);
+        assert_eq!(gen.output[0].value, Amount::from_sat(50 * COIN_VALUE));
         assert_eq!(gen.lock_time, 0);
 
         assert_eq!(format!("{:x}", gen.wtxid()),

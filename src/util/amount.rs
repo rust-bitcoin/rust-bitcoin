@@ -17,9 +17,11 @@
 use std::default;
 use std::error;
 use std::fmt::{self, Write};
+use std::io;
 use std::ops;
 use std::str::FromStr;
 use std::cmp::Ordering;
+use consensus::{Encodable, Decodable, encode};
 
 /// A set of denominations in which amounts can be expressed.
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
@@ -443,6 +445,18 @@ impl fmt::Display for Amount {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.fmt_value_in(f, Denomination::Bitcoin)?;
         write!(f, " {}", Denomination::Bitcoin)
+    }
+}
+
+impl Encodable for Amount {
+    fn consensus_encode<W: io::Write>(&self, writer: W) -> Result<usize, io::Error> {
+        self.0.consensus_encode(writer)
+    }
+}
+
+impl Decodable for Amount {
+    fn consensus_decode<D: io::Read>(d: D) -> Result<Self, encode::Error> {
+        Ok(Amount(u64::consensus_decode(d)?))
     }
 }
 

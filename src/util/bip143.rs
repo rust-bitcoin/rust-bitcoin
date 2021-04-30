@@ -27,6 +27,7 @@ use consensus::{encode, Encodable};
 
 use std::io;
 use std::ops::{Deref, DerefMut};
+use Amount;
 
 /// Parts of a sighash which are common across inputs or signatures, and which are
 /// sufficient (in conjunction with a private key) to sign the transaction
@@ -176,7 +177,7 @@ impl<R: Deref<Target=Transaction>> SigHashCache<R> {
         mut writer: Write,
         input_index: usize,
         script_code: &Script,
-        value: u64,
+        value: Amount,
         sighash_type: SigHashType,
     ) -> Result<(), encode::Error> {
         let zero_hash = sha256d::Hash::default();
@@ -229,7 +230,7 @@ impl<R: Deref<Target=Transaction>> SigHashCache<R> {
         &mut self,
         input_index: usize,
         script_code: &Script,
-        value: u64,
+        value: Amount,
         sighash_type: SigHashType
     ) -> SigHash {
         let mut enc = SigHash::engine();
@@ -247,7 +248,7 @@ impl<R: DerefMut<Target=Transaction>> SigHashCache<R> {
     /// ```
     /// use bitcoin::blockdata::transaction::{Transaction, SigHashType};
     /// use bitcoin::util::bip143::SigHashCache;
-    /// use bitcoin::Script;
+    /// use bitcoin::{Script, Amount};
     ///
     /// let mut tx_to_sign = Transaction { version: 2, lock_time: 0, input: Vec::new(), output: Vec::new() };
     /// let input_count = tx_to_sign.input.len();
@@ -255,7 +256,7 @@ impl<R: DerefMut<Target=Transaction>> SigHashCache<R> {
     /// let mut sig_hasher = SigHashCache::new(&mut tx_to_sign);
     /// for inp in 0..input_count {
     ///     let prevout_script = Script::new();
-    ///     let _sighash = sig_hasher.signature_hash(inp, &prevout_script, 42, SigHashType::All);
+    ///     let _sighash = sig_hasher.signature_hash(inp, &prevout_script, Amount::from_sat(42), SigHashType::All);
     ///     // ... sign the sighash
     ///     sig_hasher.access_witness(inp).push(Vec::new());
     /// }
@@ -293,7 +294,7 @@ mod tests {
         let expected_result = SigHash::from_slice(&raw_expected[..]).unwrap();
         let mut cache = SigHashCache::new(&tx);
         let sighash_type = SigHashType::from_u32_consensus(hash_type);
-        let actual_result = cache.signature_hash(input_index, &script, value, sighash_type);
+        let actual_result = cache.signature_hash(input_index, &script, Amount::from_sat(value), sighash_type);
         assert_eq!(actual_result, expected_result);
     }
 
