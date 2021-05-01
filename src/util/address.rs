@@ -27,10 +27,7 @@
 //!
 //! // Generate random key pair
 //! let s = Secp256k1::new();
-//! let public_key = ecdsa::PublicKey {
-//!     compressed: true,
-//!     key: s.generate_keypair(&mut thread_rng()).1,
-//! };
+//! let public_key = ecdsa::PublicKey::new(s.generate_keypair(&mut thread_rng()).1);
 //!
 //! // Generate pay-to-pubkey-hash address
 //! let address = Address::p2pkh(&public_key, Network::Bitcoin);

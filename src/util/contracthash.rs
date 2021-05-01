@@ -329,25 +329,13 @@ mod tests {
         let (sk2, pk2) = secp.generate_keypair(&mut thread_rng());
         let (sk3, pk3) = secp.generate_keypair(&mut thread_rng());
 
-        let sk1 = PrivateKey {
-            key: sk1,
-            compressed: true,
-            network: Network::Bitcoin,
-        };
-        let sk2 = PrivateKey {
-            key: sk2,
-            compressed: false,
-            network: Network::Bitcoin,
-        };
-        let sk3 = PrivateKey {
-            key: sk3,
-            compressed: true,
-            network: Network::Bitcoin,
-        };
+        let sk1 = PrivateKey::new(sk1, Network::Bitcoin);
+        let sk2 = PrivateKey::new_uncompressed(sk2, Network::Bitcoin);
+        let sk3 = PrivateKey::new(sk3, Network::Bitcoin);
         let pks = [
-            PublicKey { key: pk1, compressed: true },
-            PublicKey { key: pk2, compressed: false },
-            PublicKey { key: pk3, compressed: true },
+            PublicKey::new(pk1),
+            PublicKey::new_uncompressed(pk2),
+            PublicKey::new(pk3),
         ];
         let contract = b"if bottle mt dont remembr drink wont pay";
 
