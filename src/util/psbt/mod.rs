@@ -21,6 +21,7 @@
 use blockdata::script::Script;
 use blockdata::transaction::Transaction;
 use consensus::{encode, Encodable, Decodable};
+use consensus::encode::MAX_VEC_SIZE;
 
 use std::io;
 
@@ -162,7 +163,8 @@ impl Encodable for PartiallySignedTransaction {
 }
 
 impl Decodable for PartiallySignedTransaction {
-    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
+    fn consensus_decode<D: io::Read>(d: D) -> Result<Self, encode::Error> {
+        let mut d = d.take(MAX_VEC_SIZE as u64);
         let magic: [u8; 4] = Decodable::consensus_decode(&mut d)?;
 
         if *b"psbt" != magic {

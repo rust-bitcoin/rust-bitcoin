@@ -29,9 +29,8 @@ use network::address::{Address, AddrV2Message};
 use network::message_network;
 use network::message_blockdata;
 use network::message_filter;
-use consensus::encode::{CheckedData, Decodable, Encodable, VarInt};
+use consensus::encode::{CheckedData, Decodable, Encodable, VarInt, MAX_VEC_SIZE};
 use consensus::{encode, serialize};
-use consensus::encode::MAX_VEC_SIZE;
 
 /// The maximum number of [Inventory] items in an `inv` message.
 ///

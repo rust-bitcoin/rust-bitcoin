@@ -573,6 +573,7 @@ macro_rules! impl_vec {
                     return Err(self::Error::OversizedVectorAllocation { requested: byte_size, max: MAX_VEC_SIZE })
                 }
                 let mut ret = Vec::with_capacity(len as usize);
+                let mut d = d.take(MAX_VEC_SIZE as u64);
                 for _ in 0..len {
                     ret.push(Decodable::consensus_decode(&mut d)?);
                 }
@@ -993,6 +994,15 @@ mod tests {
     fn deserialize_checkeddata_test() {
         let cd: Result<CheckedData, _> = deserialize(&[5u8, 0, 0, 0, 162, 107, 175, 90, 1, 2, 3, 4, 5]);
         assert_eq!(cd.ok(), Some(CheckedData(vec![1u8, 2, 3, 4, 5])));
+    }
+
+    #[test]
+    fn limit_read_test() {
+        let witness = vec![vec![0u8; 3_999_999]; 2];
+        let ser = serialize(&witness);
+        let mut reader = io::Cursor::new(ser);
+        let err  = Vec::<Vec<u8>>::consensus_decode(&mut reader);
+        assert!(err.is_err());
     }
 
     #[test]
