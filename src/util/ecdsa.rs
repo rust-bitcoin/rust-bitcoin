@@ -201,6 +201,14 @@ impl PrivateKey {
         self.key[..].to_vec()
     }
 
+    /// Deserialize a private key from a slice
+    pub fn from_slice(data: &[u8], network: Network) -> Result<PrivateKey, Error> {
+        Ok(PrivateKey::new(
+            secp256k1::SecretKey::from_slice(data)?,
+            network,
+        ))
+    }
+
     /// Format the private key to WIF format.
     pub fn fmt_wif(&self, fmt: &mut dyn fmt::Write) -> fmt::Result {
         let mut ret = [0; 34];
