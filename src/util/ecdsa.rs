@@ -37,6 +37,23 @@ pub struct PublicKey {
 }
 
 impl PublicKey {
+    /// Constructs compressed ECDSA public key from the provided generic Secp256k1 public key
+    pub fn new(key: secp256k1::PublicKey) -> PublicKey {
+        PublicKey {
+            compressed: true,
+            key: key,
+        }
+    }
+
+    /// Constructs uncompressed (legacy) ECDSA public key from the provided generic Secp256k1
+    /// public key
+    pub fn new_uncompressed(key: secp256k1::PublicKey) -> PublicKey {
+        PublicKey {
+            compressed: false,
+            key: key,
+        }
+    }
+
     /// Returns bitcoin 160-bit hash of the public key
     pub fn pubkey_hash(&self) -> PubkeyHash {
         if self.compressed {
@@ -151,6 +168,26 @@ pub struct PrivateKey {
 }
 
 impl PrivateKey {
+    /// Constructs compressed ECDSA private key from the provided generic Secp256k1 private key
+    /// and the specified network
+    pub fn new(key: secp256k1::SecretKey, network: Network) -> PrivateKey {
+        PrivateKey {
+            compressed: true,
+            network: network,
+            key: key,
+        }
+    }
+
+    /// Constructs uncompressed (legacy) ECDSA private key from the provided generic Secp256k1
+    /// private key and the specified network
+    pub fn new_uncompressed(key: secp256k1::SecretKey, network: Network) -> PrivateKey {
+        PrivateKey {
+            compressed: false,
+            network: network,
+            key: key,
+        }
+    }
+
     /// Creates a public key from this private key
     pub fn public_key<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> PublicKey {
         PublicKey {
