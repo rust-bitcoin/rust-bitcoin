@@ -473,8 +473,9 @@ impl Transaction {
     /// Verify that this transaction is able to spend its inputs
     /// The lambda spent should not return the same TxOut twice!
     pub fn verify_with_flags<S, F>(&self, mut spent: S, flags: F) -> Result<(), script::Error>
-        where S: FnMut(&OutPoint) -> Option<TxOut>, F : Into<u32> + Copy {
+        where S: FnMut(&OutPoint) -> Option<TxOut>, F : Into<u32> {
         let tx = encode::serialize(&*self);
+        let flags: u32 = flags.into();
         for (idx, input) in self.input.iter().enumerate() {
             if let Some(output) = spent(&input.previous_output) {
                 output.script_pubkey.verify_with_flags(idx, output.value, tx.as_slice(), flags)?;
