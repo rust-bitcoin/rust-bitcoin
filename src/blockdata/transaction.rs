@@ -478,7 +478,7 @@ impl Transaction {
         let flags: u32 = flags.into();
         for (idx, input) in self.input.iter().enumerate() {
             if let Some(output) = spent(&input.previous_output) {
-                output.script_pubkey.verify_with_flags(idx, output.value, tx.as_slice(), flags)?;
+                output.script_pubkey.verify_with_flags(idx, ::Amount::from_sat(output.value), tx.as_slice(), flags)?;
             } else {
                 return Err(script::Error::UnknownSpentOutput(input.previous_output.clone()));
             }
