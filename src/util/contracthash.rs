@@ -15,7 +15,7 @@
 //! Pay-to-contract-hash support
 //!
 //! See Appendix A of the Blockstream sidechains whitepaper
-//! at http://blockstream.com/sidechains.pdf for details of
+//! at <http://blockstream.com/sidechains.pdf> for details of
 //! what this does.
 
 #![cfg_attr(not(test), deprecated)]

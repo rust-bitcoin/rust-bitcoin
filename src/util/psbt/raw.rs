@@ -15,7 +15,7 @@
 //! # Raw PSBT Key-Value Pairs
 //!
 //! Raw PSBT key-value pairs as defined at
-//! https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki.
+//! <https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki>.
 
 use std::{fmt, io};
 

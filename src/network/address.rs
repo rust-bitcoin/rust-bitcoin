@@ -48,7 +48,7 @@ impl Address {
     }
 
     /// Extract socket address from an [Address] message.
-    /// This will return [io::Error] [ErrorKind::AddrNotAvailable]
+    /// This will return [io::Error] [io::ErrorKind::AddrNotAvailable]
     /// if the message contains a Tor address.
     pub fn socket_addr(&self) -> Result<SocketAddr, io::Error> {
         let addr = &self.address;
@@ -249,7 +249,7 @@ pub struct AddrV2Message {
 
 impl AddrV2Message {
     /// Extract socket address from an [AddrV2Message] message.
-    /// This will return [io::Error] [ErrorKind::AddrNotAvailable]
+    /// This will return [io::Error] [io::ErrorKind::AddrNotAvailable]
     /// if the address type can't be converted into a [SocketAddr].
     pub fn socket_addr(&self) -> Result<SocketAddr, io::Error> {
         match self.addr {

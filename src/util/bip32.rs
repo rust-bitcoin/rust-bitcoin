@@ -14,7 +14,7 @@
 //! BIP32 Implementation
 //!
 //! Implementation of BIP32 hierarchical deterministic wallets, as defined
-//! at https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki
+//! at <https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki>
 
 use std::default::Default;
 use std::{error, fmt};
@@ -304,7 +304,7 @@ impl FromStr for DerivationPath {
 
 /// An iterator over children of a [DerivationPath].
 ///
-/// It is returned by the methods [DerivationPath::children_since],
+/// It is returned by the methods [DerivationPath::children_from],
 /// [DerivationPath::normal_children] and [DerivationPath::hardened_children].
 pub struct DerivationPathIterator<'a> {
     base: &'a DerivationPath,

@@ -196,41 +196,41 @@ pub mod all {
     pub const OP_PUSHDATA2: All = All {code: 0x4d};
     /// Read the next 4 bytes as N; push the next N bytes as an array onto the stack
     pub const OP_PUSHDATA4: All = All {code: 0x4e};
-    /// Push the array [0x81] onto the stack
+    /// Push the array `0x81` onto the stack
     pub const OP_PUSHNUM_NEG1: All = All {code: 0x4f};
     /// Synonym for OP_RETURN
     pub const OP_RESERVED: All = All {code: 0x50};
-    /// Push the array [0x01] onto the stack
+    /// Push the array `0x01` onto the stack
     pub const OP_PUSHNUM_1: All = All {code: 0x51};
-    /// Push the array [0x02] onto the stack
+    /// Push the array `0x02` onto the stack
     pub const OP_PUSHNUM_2: All = All {code: 0x52};
-    /// Push the array [0x03] onto the stack
+    /// Push the array `0x03` onto the stack
     pub const OP_PUSHNUM_3: All = All {code: 0x53};
-    /// Push the array [0x04] onto the stack
+    /// Push the array `0x04` onto the stack
     pub const OP_PUSHNUM_4: All = All {code: 0x54};
-    /// Push the array [0x05] onto the stack
+    /// Push the array `0x05` onto the stack
     pub const OP_PUSHNUM_5: All = All {code: 0x55};
-    /// Push the array [0x06] onto the stack
+    /// Push the array `0x06` onto the stack
     pub const OP_PUSHNUM_6: All = All {code: 0x56};
-    /// Push the array [0x07] onto the stack
+    /// Push the array `0x07` onto the stack
     pub const OP_PUSHNUM_7: All = All {code: 0x57};
-    /// Push the array [0x08] onto the stack
+    /// Push the array `0x08` onto the stack
     pub const OP_PUSHNUM_8: All = All {code: 0x58};
-    /// Push the array [0x09] onto the stack
+    /// Push the array `0x09` onto the stack
     pub const OP_PUSHNUM_9: All = All {code: 0x59};
-    /// Push the array [0x0a] onto the stack
+    /// Push the array `0x0a` onto the stack
     pub const OP_PUSHNUM_10: All = All {code: 0x5a};
-    /// Push the array [0x0b] onto the stack
+    /// Push the array `0x0b` onto the stack
     pub const OP_PUSHNUM_11: All = All {code: 0x5b};
-    /// Push the array [0x0c] onto the stack
+    /// Push the array `0x0c` onto the stack
     pub const OP_PUSHNUM_12: All = All {code: 0x5c};
-    /// Push the array [0x0d] onto the stack
+    /// Push the array `0x0d` onto the stack
     pub const OP_PUSHNUM_13: All = All {code: 0x5d};
-    /// Push the array [0x0e] onto the stack
+    /// Push the array `0x0e` onto the stack
     pub const OP_PUSHNUM_14: All = All {code: 0x5e};
-    /// Push the array [0x0f] onto the stack
+    /// Push the array `0x0f` onto the stack
     pub const OP_PUSHNUM_15: All = All {code: 0x5f};
-    /// Push the array [0x10] onto the stack
+    /// Push the array `0x10` onto the stack
     pub const OP_PUSHNUM_16: All = All {code: 0x60};
     /// Does nothing
     pub const OP_NOP: All = All {code: 0x61};
@@ -385,9 +385,9 @@ pub mod all {
     pub const OP_HASH256: All = All {code: 0xaa};
     /// Ignore this and everything preceding when deciding what to sign when signature-checking
     pub const OP_CODESEPARATOR: All = All {code: 0xab};
-    /// https://en.bitcoin.it/wiki/OP_CHECKSIG pushing 1/0 for success/failure
+    /// <https://en.bitcoin.it/wiki/OP_CHECKSIG> pushing 1/0 for success/failure
     pub const OP_CHECKSIG: All = All {code: 0xac};
-    /// https://en.bitcoin.it/wiki/OP_CHECKSIG returning success/failure
+    /// <https://en.bitcoin.it/wiki/OP_CHECKSIG> returning success/failure
     pub const OP_CHECKSIGVERIFY: All = All {code: 0xad};
     /// Pop N, N pubkeys, M, M signatures, a dummy (due to bug in reference code), and verify that all M signatures are valid.
     /// Push 1 for "all valid", 0 otherwise
@@ -396,9 +396,9 @@ pub mod all {
     pub const OP_CHECKMULTISIGVERIFY: All = All {code: 0xaf};
     /// Does nothing
     pub const OP_NOP1: All = All {code: 0xb0};
-    /// https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki
+    /// <https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki>
     pub const OP_CLTV: All = All {code: 0xb1};
-    /// https://github.com/bitcoin/bips/blob/master/bip-0112.mediawiki
+    /// <https://github.com/bitcoin/bips/blob/master/bip-0112.mediawiki>
     pub const OP_CSV: All = All {code: 0xb2};
     /// Does nothing
     pub const OP_NOP4: All = All {code: 0xb3};

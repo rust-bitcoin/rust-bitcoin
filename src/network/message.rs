@@ -32,7 +32,7 @@ use network::message_filter;
 use consensus::encode::{CheckedData, Decodable, Encodable, VarInt, MAX_VEC_SIZE};
 use consensus::{encode, serialize};
 
-/// The maximum number of [Inventory] items in an `inv` message.
+/// The maximum number of [super::message_blockdata::Inventory] items in an `inv` message.
 ///
 /// This limit is not currently enforced by this implementation.
 pub const MAX_INV_SIZE: usize = 50_000;
@@ -187,7 +187,7 @@ impl NetworkMessage {
     ///
     /// This returns `"unknown"` for [NetworkMessage::Unknown],
     /// regardless of the actual command in the unknown message.
-    /// Use the [command] method to get the command for unknown messages.
+    /// Use the [Self::command] method to get the command for unknown messages.
     pub fn cmd(&self) -> &'static str {
         match *self {
             NetworkMessage::Version(_) => "version",
@@ -236,7 +236,7 @@ impl RawNetworkMessage {
     ///
     /// This returns `"unknown"` for [NetworkMessage::Unknown],
     /// regardless of the actual command in the unknown message.
-    /// Use the [command] method to get the command for unknown messages.
+    /// Use the [Self::command] method to get the command for unknown messages.
     pub fn cmd(&self) -> &'static str {
         self.payload.cmd()
     }
