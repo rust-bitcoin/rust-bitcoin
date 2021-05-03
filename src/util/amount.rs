@@ -312,9 +312,9 @@ impl Amount {
     }
 
     /// Parses amounts with denomination suffix like they are produced with
-    /// [to_string_with_denomination] or with [fmt::Display].
+    /// [Self::to_string_with_denomination] or with [fmt::Display].
     /// If you want to parse only the amount without the denomination,
-    /// use [from_str_in].
+    /// use [Self::from_str_in].
     pub fn from_str_with_denomination(s: &str) -> Result<Amount, ParseAmountError> {
         let mut split = s.splitn(3, ' ');
         let amt_str = split.next().unwrap();
@@ -590,9 +590,9 @@ impl SignedAmount {
     }
 
     /// Parses amounts with denomination suffix like they are produced with
-    /// [to_string_with_denomination] or with [fmt::Display].
+    /// [Self::to_string_with_denomination] or with [fmt::Display].
     /// If you want to parse only the amount without the denomination,
-    /// use [from_str_in].
+    /// use [Self::from_str_in].
     pub fn from_str_with_denomination(s: &str) -> Result<SignedAmount, ParseAmountError> {
         let mut split = s.splitn(3, ' ');
         let amt_str = split.next().unwrap();
@@ -731,7 +731,7 @@ impl SignedAmount {
     }
 
     /// Subtraction that doesn't allow negative [SignedAmount]s.
-    /// Returns [None] if either [self], [rhs] or the result is strictly negative.
+    /// Returns [None] if either [self], `rhs` or the result is strictly negative.
     pub fn positive_sub(self, rhs: SignedAmount) -> Option<SignedAmount> {
         if self.is_negative() || rhs.is_negative() || rhs > self {
             None

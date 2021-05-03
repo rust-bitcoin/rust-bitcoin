@@ -431,7 +431,7 @@ impl Script {
     /// iterator will end. To instead iterate over the script as sequence of bytes, treat
     /// it as a slice using `script[..]` or convert it to a vector using `into_bytes()`.
     ///
-    /// To force minimal pushes, use [instructions_minimal].
+    /// To force minimal pushes, use [Self::instructions_minimal].
     pub fn instructions(&self) -> Instructions {
         Instructions {
             data: &self.0[..],

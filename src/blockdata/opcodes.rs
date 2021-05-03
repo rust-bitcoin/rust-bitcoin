@@ -196,41 +196,41 @@ pub mod all {
     pub const OP_PUSHDATA2: All = All {code: 0x4d};
     /// Read the next 4 bytes as N; push the next N bytes as an array onto the stack
     pub const OP_PUSHDATA4: All = All {code: 0x4e};
-    /// Push the array [0x81] onto the stack
+    /// Push the array `0x81` onto the stack
     pub const OP_PUSHNUM_NEG1: All = All {code: 0x4f};
     /// Synonym for OP_RETURN
     pub const OP_RESERVED: All = All {code: 0x50};
-    /// Push the array [0x01] onto the stack
+    /// Push the array `0x01` onto the stack
     pub const OP_PUSHNUM_1: All = All {code: 0x51};
-    /// Push the array [0x02] onto the stack
+    /// Push the array `0x02` onto the stack
     pub const OP_PUSHNUM_2: All = All {code: 0x52};
-    /// Push the array [0x03] onto the stack
+    /// Push the array `0x03` onto the stack
     pub const OP_PUSHNUM_3: All = All {code: 0x53};
-    /// Push the array [0x04] onto the stack
+    /// Push the array `0x04` onto the stack
     pub const OP_PUSHNUM_4: All = All {code: 0x54};
-    /// Push the array [0x05] onto the stack
+    /// Push the array `0x05` onto the stack
     pub const OP_PUSHNUM_5: All = All {code: 0x55};
-    /// Push the array [0x06] onto the stack
+    /// Push the array `0x06` onto the stack
     pub const OP_PUSHNUM_6: All = All {code: 0x56};
-    /// Push the array [0x07] onto the stack
+    /// Push the array `0x07` onto the stack
     pub const OP_PUSHNUM_7: All = All {code: 0x57};
-    /// Push the array [0x08] onto the stack
+    /// Push the array `0x08` onto the stack
     pub const OP_PUSHNUM_8: All = All {code: 0x58};
-    /// Push the array [0x09] onto the stack
+    /// Push the array `0x09` onto the stack
     pub const OP_PUSHNUM_9: All = All {code: 0x59};
-    /// Push the array [0x0a] onto the stack
+    /// Push the array `0x0a` onto the stack
     pub const OP_PUSHNUM_10: All = All {code: 0x5a};
-    /// Push the array [0x0b] onto the stack
+    /// Push the array `0x0b` onto the stack
     pub const OP_PUSHNUM_11: All = All {code: 0x5b};
-    /// Push the array [0x0c] onto the stack
+    /// Push the array `0x0c` onto the stack
     pub const OP_PUSHNUM_12: All = All {code: 0x5c};
-    /// Push the array [0x0d] onto the stack
+    /// Push the array `0x0d` onto the stack
     pub const OP_PUSHNUM_13: All = All {code: 0x5d};
-    /// Push the array [0x0e] onto the stack
+    /// Push the array `0x0e` onto the stack
     pub const OP_PUSHNUM_14: All = All {code: 0x5e};
-    /// Push the array [0x0f] onto the stack
+    /// Push the array `0x0f` onto the stack
     pub const OP_PUSHNUM_15: All = All {code: 0x5f};
-    /// Push the array [0x10] onto the stack
+    /// Push the array `0x10` onto the stack
     pub const OP_PUSHNUM_16: All = All {code: 0x60};
     /// Does nothing
     pub const OP_NOP: All = All {code: 0x61};

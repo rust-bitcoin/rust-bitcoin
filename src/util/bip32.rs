@@ -304,7 +304,7 @@ impl FromStr for DerivationPath {
 
 /// An iterator over children of a [DerivationPath].
 ///
-/// It is returned by the methods [DerivationPath::children_since],
+/// It is returned by the methods [DerivationPath::children_from],
 /// [DerivationPath::normal_children] and [DerivationPath::hardened_children].
 pub struct DerivationPathIterator<'a> {
     base: &'a DerivationPath,
