@@ -14,7 +14,7 @@
 //! BIP32 Implementation
 //!
 //! Implementation of BIP32 hierarchical deterministic wallets, as defined
-//! at https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki
+//! at <https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki>
 
 use std::default::Default;
 use std::{error, fmt};

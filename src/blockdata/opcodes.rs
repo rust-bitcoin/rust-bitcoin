@@ -385,9 +385,9 @@ pub mod all {
     pub const OP_HASH256: All = All {code: 0xaa};
     /// Ignore this and everything preceding when deciding what to sign when signature-checking
     pub const OP_CODESEPARATOR: All = All {code: 0xab};
-    /// https://en.bitcoin.it/wiki/OP_CHECKSIG pushing 1/0 for success/failure
+    /// <https://en.bitcoin.it/wiki/OP_CHECKSIG> pushing 1/0 for success/failure
     pub const OP_CHECKSIG: All = All {code: 0xac};
-    /// https://en.bitcoin.it/wiki/OP_CHECKSIG returning success/failure
+    /// <https://en.bitcoin.it/wiki/OP_CHECKSIG> returning success/failure
     pub const OP_CHECKSIGVERIFY: All = All {code: 0xad};
     /// Pop N, N pubkeys, M, M signatures, a dummy (due to bug in reference code), and verify that all M signatures are valid.
     /// Push 1 for "all valid", 0 otherwise
@@ -396,9 +396,9 @@ pub mod all {
     pub const OP_CHECKMULTISIGVERIFY: All = All {code: 0xaf};
     /// Does nothing
     pub const OP_NOP1: All = All {code: 0xb0};
-    /// https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki
+    /// <https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki>
     pub const OP_CLTV: All = All {code: 0xb1};
-    /// https://github.com/bitcoin/bips/blob/master/bip-0112.mediawiki
+    /// <https://github.com/bitcoin/bips/blob/master/bip-0112.mediawiki>
     pub const OP_CSV: All = All {code: 0xb2};
     /// Does nothing
     pub const OP_NOP4: All = All {code: 0xb3};
