@@ -39,3 +39,18 @@ jobs:
       - name: Running test script
         env: ${{ matrix.env }}
         run: ./contrib/test.sh
+
+  Docs:
+    name: Docs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Crate
+        uses: actions/checkout@v2
+      - name: Checkout Toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - name: Create Doc
+        run: cargo doc
