@@ -398,6 +398,7 @@ impl fmt::Display for Address {
                     Network::Testnet | Network::Signet => "tb",
                     Network::Regtest => "bcrt",
                 };
+                let bech_ver = if ver.to_u8() > 0 {  bech32::Variant::Bech32m } else { bech32::Variant::Bech32 };
                 let mut upper_writer;
                 let writer = if fmt.alternate() {
                     upper_writer = UpperWriter(fmt);
@@ -405,7 +406,7 @@ impl fmt::Display for Address {
                 } else {
                     fmt as &mut dyn fmt::Write
                 };
-                let mut bech32_writer = bech32::Bech32Writer::new(hrp, writer)?;
+                let mut bech32_writer = bech32::Bech32Writer::new(hrp, bech_ver, writer)?;
                 bech32::WriteBase32::write_u5(&mut bech32_writer, ver)?;
                 bech32::ToBase32::write_base32(&prog, &mut bech32_writer)
             }
@@ -448,7 +449,7 @@ impl FromStr for Address {
         };
         if let Some(network) = bech32_network {
             // decode as bech32
-            let (_, payload) = bech32::decode(s)?;
+            let (_, payload, variant) = bech32::decode(s)?;
             if payload.is_empty() {
                 return Err(Error::EmptyBech32Payload);
             }
@@ -470,6 +471,12 @@ impl FromStr for Address {
             // Specific segwit v0 check.
             if version.to_u8() == 0 && (program.len() != 20 && program.len() != 32) {
                 return Err(Error::InvalidSegwitV0ProgramLength(program.len()));
+            }
+
+            // Bech32 encoding check
+            if (version.to_u8() > 0 && variant != bech32::Variant::Bech32m) ||
+               (version.to_u8() == 0 && variant != bech32::Variant::Bech32) {
+                return Err(Error::InvalidWitnessVersion(version.to_u8()))
             }
 
             return Ok(Address {
@@ -686,9 +693,9 @@ mod tests {
         let valid_vectors = [
             ("BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4", "0014751e76e8199196d454941c45d1b3a323f1433bd6"),
             ("tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7", "00201863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262"),
-            ("bc1pw508d6qejxtdg4y5r3zarvary0c5xw7kw508d6qejxtdg4y5r3zarvary0c5xw7k7grplx", "5128751e76e8199196d454941c45d1b3a323f1433bd6751e76e8199196d454941c45d1b3a323f1433bd6"),
-            ("BC1SW50QA3JX3S", "6002751e"),
-            ("bc1zw508d6qejxtdg4y5r3zarvaryvg6kdaj", "5210751e76e8199196d454941c45d1b3a323"),
+            ("bc1pw508d6qejxtdg4y5r3zarvary0c5xw7kw508d6qejxtdg4y5r3zarvary0c5xw7kt5nd6y", "5128751e76e8199196d454941c45d1b3a323f1433bd6751e76e8199196d454941c45d1b3a323f1433bd6"),
+            ("BC1SW50QGDZ25J", "6002751e"),
+            ("bc1zw508d6qejxtdg4y5r3zarvaryvaxxpcs", "5210751e76e8199196d454941c45d1b3a323"),
             ("tb1qqqqqp399et2xygdj5xreqhjjvcmzhxw4aywxecjdzew6hylgvsesrxh6hy", "0020000000c4a5cad46221b2a187905e5266362b99d5e91c6ce24d165dab93e86433"),
         ];
         for vector in &valid_vectors {
