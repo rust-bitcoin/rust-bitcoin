@@ -99,8 +99,8 @@ pub use util::ecdsa::PublicKey;
 
 #[cfg(all(test, feature = "unstable"))]
 mod tests {
-    use hashes::core::fmt::Arguments;
     use std::io::{IoSlice, Result, Write};
+    use std::fmt::Arguments;
 
     #[derive(Default, Clone, Debug, PartialEq, Eq)]
     pub struct EmptyWrite;
