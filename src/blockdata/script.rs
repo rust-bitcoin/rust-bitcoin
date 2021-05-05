@@ -400,14 +400,6 @@ impl Script {
                                opcodes::All::from(self.0[0]).classify() == opcodes::Class::IllegalOp)
     }
 
-    /// The minimum value an output with a P2WPKH script_pubkey must have in order to be
-    /// broadcastable on today's bitcoin network.
-    pub const P2WPKH_OUTPUT_DUST_THRESHOLD: u64 = 294;
-
-    /// The minimum value an output with a P2PKH script_pubkey must have in order to be
-    /// broadcastable on today's bitcoin network.
-    pub const P2PKH_OUTPUT_DUST_THRESHOLD: u64 = 546;
-
     /// Gets the minimum value an output with this script should have in order to be
     /// broadcastable on today's bitcoin network.
     pub fn dust_value(&self) -> u64 {
@@ -1240,9 +1232,12 @@ mod test {
 
     #[test]
     fn defult_dust_value_tests() {
+        // Check that our dust_value() calculator correctly calculates the dust limit on common
+        // well-known scriptPubKey types.
         let script_p2wpkh = Builder::new().push_int(0).push_slice(&[42; 20]).into_script();
         assert!(script_p2wpkh.is_v0_p2wpkh());
-        assert_eq!(script_p2wpkh.dust_value(), Script::P2WPKH_OUTPUT_DUST_THRESHOLD);
+        assert_eq!(script_p2wpkh.dust_value(), 294);
+
         let script_p2pkh = Builder::new()
             .push_opcode(opcodes::all::OP_DUP)
             .push_opcode(opcodes::all::OP_HASH160)
@@ -1251,7 +1246,7 @@ mod test {
             .push_opcode(opcodes::all::OP_CHECKSIG)
             .into_script();
         assert!(script_p2pkh.is_p2pkh());
-        assert_eq!(script_p2pkh.dust_value(), Script::P2PKH_OUTPUT_DUST_THRESHOLD);
+        assert_eq!(script_p2pkh.dust_value(), 546);
     }
 }
 
