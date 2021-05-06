@@ -33,7 +33,7 @@
 //! let address = Address::p2pkh(&public_key, Network::Bitcoin);
 //! ```
 
-use std::fmt::{self, Display, Formatter};
+use std::fmt;
 use std::str::FromStr;
 use std::error;
 
@@ -349,10 +349,27 @@ impl Address {
     pub fn script_pubkey(&self) -> script::Script {
         self.payload.script_pubkey()
     }
+
+    /// Creates a URI string *bitcoin:address* optimized to be encoded in QR codes.
+    ///
+    /// If the address is bech32, both the schema and the address become uppercase.
+    /// If the address is base58, the schema is lowercase and the address is left mixed case.
+    ///
+    /// Quoting BIP 173 "inside QR codes uppercase SHOULD be used, as those permit the use of
+    /// alphanumeric mode, which is 45% more compact than the normal byte mode."
+    pub fn to_qr_uri(&self) -> String {
+        let schema = match self.payload {
+            Payload::WitnessProgram { .. } => "BITCOIN",
+            _ => "bitcoin",
+        };
+        format!("{}:{:#}", schema, self)
+    }
 }
 
-impl Display for Address {
-    fn fmt(&self, fmt: &mut Formatter) -> fmt::Result {
+// Alternate formatting `{:#}` is used to return uppercase version of bech32 addresses which should
+// be used in QR codes, see [Address::to_qr_uri]
+impl fmt::Display for Address {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         match self.payload {
             Payload::PubkeyHash(ref hash) => {
                 let mut prefixed = [0; 21];
@@ -378,14 +395,32 @@ impl Display for Address {
             } => {
                 let hrp = match self.network {
                     Network::Bitcoin => "bc",
-                    Network::Testnet | Network::Signet  => "tb",
+                    Network::Testnet | Network::Signet => "tb",
                     Network::Regtest => "bcrt",
                 };
-                let mut bech32_writer = bech32::Bech32Writer::new(hrp, fmt)?;
+                let mut upper_writer;
+                let writer = if fmt.alternate() {
+                    upper_writer = UpperWriter(fmt);
+                    &mut upper_writer as &mut dyn fmt::Write
+                } else {
+                    fmt as &mut dyn fmt::Write
+                };
+                let mut bech32_writer = bech32::Bech32Writer::new(hrp, writer)?;
                 bech32::WriteBase32::write_u5(&mut bech32_writer, ver)?;
                 bech32::ToBase32::write_base32(&prog, &mut bech32_writer)
             }
         }
+    }
+}
+
+struct UpperWriter<W: fmt::Write>(W);
+
+impl<W: fmt::Write> fmt::Write for UpperWriter<W> {
+    fn write_str(&mut self, s: &str) -> fmt::Result {
+        for c in s.chars() {
+            self.0.write_char(c.to_ascii_uppercase())?;
+        }
+        Ok(())
     }
 }
 
@@ -740,4 +775,18 @@ mod tests {
             hex_script!("001454d26dddb59c7073c6a197946ea1841951fa7a74")
         );
     }
+
+    #[test]
+    fn test_qr_string() {
+        for el in  ["132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM", "33iFwdLuRpW1uK1RTRqsoi8rR4NpDzk66k"].iter() {
+            let addr = Address::from_str(el).unwrap();
+            assert_eq!(addr.to_qr_uri(), format!("bitcoin:{}", el));
+        }
+
+        for el in ["bcrt1q2nfxmhd4n3c8834pj72xagvyr9gl57n5r94fsl", "bc1qwqdg6squsna38e46795at95yu9atm8azzmyvckulcc7kytlcckxswvvzej"].iter() {
+            let addr = Address::from_str(el).unwrap();
+            assert_eq!(addr.to_qr_uri(), format!("BITCOIN:{}", el.to_ascii_uppercase()) );
+        }
+    }
+
 }
