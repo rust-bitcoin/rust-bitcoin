@@ -502,13 +502,7 @@ impl ExtendedPrivKey {
             depth: 0,
             parent_fingerprint: Default::default(),
             child_number: ChildNumber::from_normal_idx(0)?,
-            private_key: PrivateKey {
-                compressed: true,
-                network: network,
-                key: secp256k1::SecretKey::from_slice(
-                    &hmac_result[..32]
-                ).map_err(Error::Ecdsa)?,
-            },
+            private_key: PrivateKey::from_slice(&hmac_result[..32], network)?,
             chain_code: ChainCode::from(&hmac_result[32..]),
         })
     }
@@ -545,12 +539,8 @@ impl ExtendedPrivKey {
 
         hmac_engine.input(&endian::u32_to_array_be(u32::from(i)));
         let hmac_result: Hmac<sha512::Hash> = Hmac::from_engine(hmac_engine);
-        let mut sk = PrivateKey {
-            compressed: true,
-            network: self.network,
-            key: secp256k1::SecretKey::from_slice(&hmac_result[..32]).map_err(Error::Ecdsa)?,
-        };
-        sk.key.add_assign(&self.private_key[..]).map_err(Error::Ecdsa)?;
+        let mut sk = PrivateKey::from_slice(&hmac_result[..32], self.network)?;
+        sk.key.add_assign(&self.private_key[..])?;
 
         Ok(ExtendedPrivKey {
             network: self.network,
@@ -584,13 +574,7 @@ impl ExtendedPrivKey {
             parent_fingerprint: Fingerprint::from(&data[5..9]),
             child_number: endian::slice_to_u32_be(&data[9..13]).into(),
             chain_code: ChainCode::from(&data[13..45]),
-            private_key: PrivateKey {
-                compressed: true,
-                network: network,
-                key: secp256k1::SecretKey::from_slice(
-                    &data[46..78]
-                ).map_err(Error::Ecdsa)?,
-            },
+            private_key: PrivateKey::from_slice(&data[46..78], network)?,
         })
     }
 
@@ -662,11 +646,7 @@ impl ExtendedPubKey {
 
                 let hmac_result: Hmac<sha512::Hash> = Hmac::from_engine(hmac_engine);
 
-                let private_key = PrivateKey {
-                    compressed: true,
-                    network: self.network,
-                    key: secp256k1::SecretKey::from_slice(&hmac_result[..32])?,
-                };
+                let private_key = PrivateKey::from_slice(&hmac_result[..32], self.network)?;
                 let chain_code = ChainCode::from(&hmac_result[32..]);
                 Ok((private_key, chain_code))
             }
@@ -681,7 +661,7 @@ impl ExtendedPubKey {
     ) -> Result<ExtendedPubKey, Error> {
         let (sk, chain_code) = self.ckd_pub_tweak(i)?;
         let mut pk = self.public_key;
-        pk.key.add_exp_assign(secp, &sk[..]).map_err(Error::Ecdsa)?;
+        pk.key.add_exp_assign(secp, &sk[..])?;
 
         Ok(ExtendedPubKey {
             network: self.network,
