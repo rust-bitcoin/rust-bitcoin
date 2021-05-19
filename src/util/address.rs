@@ -46,7 +46,7 @@ use util::base58;
 use util::ecdsa;
 
 /// Address error.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
 pub enum Error {
     /// Base58 encoding error
     Base58(base58::Error),

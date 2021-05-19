@@ -423,16 +423,16 @@ impl fmt::Debug for DerivationPath {
 pub type KeySource = (Fingerprint, DerivationPath);
 
 /// A BIP32 error
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum Error {
     /// A pk->pk derivation was attempted on a hardened key
     CannotDeriveFromHardenedKey,
     /// A secp256k1 error occurred
-    Ecdsa(secp256k1::Error),
+    Ecdsa(secp256k1::Error), // TODO: This is not necessary ECDSA error and should be renamed
     /// A child number was provided that was out of range
     InvalidChildNumber(u32),
     /// Error creating a master seed --- for application use
-    RngError(String),
+    RngError(String), // TODO: This option seems unused and should be removed, opening a way to make this type copiable
     /// Invalid childnumber format.
     InvalidChildNumberFormat,
     /// Invalid derivation path format.
