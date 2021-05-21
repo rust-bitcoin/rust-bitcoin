@@ -28,6 +28,7 @@ pub mod constants;
 #[cfg(feature = "std")] pub use self::address::Address;
 #[cfg(feature = "std")] pub mod message;
 #[cfg(feature = "std")] pub mod message_blockdata;
+#[cfg(feature = "std")] pub mod message_bloom;
 #[cfg(feature = "std")] pub mod message_network;
 #[cfg(feature = "std")] pub mod message_filter;
 #[cfg(feature = "std")] pub mod stream_reader;
