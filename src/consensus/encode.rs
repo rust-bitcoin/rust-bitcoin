@@ -545,6 +545,16 @@ impl Encodable for [u16; 8] {
     }
 }
 
+#[inline]
+fn encode_vec<S: io::Write, T: Encodable>(mut s: S, vec: &Vec<T>) -> Result<usize, io::Error> {
+    let mut len = 0;
+    len += VarInt(vec.len() as u64).consensus_encode(&mut s)?;
+    for c in vec.iter() {
+        len += c.consensus_encode(&mut s)?;
+    }
+    Ok(len)
+}
+
 // Vectors
 macro_rules! impl_vec {
     ($type: ty) => {
@@ -552,14 +562,18 @@ macro_rules! impl_vec {
             #[inline]
             fn consensus_encode<S: io::Write>(
                 &self,
-                mut s: S,
+                s: S,
             ) -> Result<usize, io::Error> {
-                let mut len = 0;
-                len += VarInt(self.len() as u64).consensus_encode(&mut s)?;
-                for c in self.iter() {
-                    len += c.consensus_encode(&mut s)?;
-                }
-                Ok(len)
+                encode_vec(s, self)
+            }
+        }
+        impl<'a> Encodable for Vec<&'a $type> {
+            #[inline]
+            fn consensus_encode<S: io::Write>(
+                &self,
+                s: S,
+            ) -> Result<usize, io::Error> {
+                encode_vec(s, self)
             }
         }
         impl Decodable for Vec<$type> {
@@ -897,6 +911,8 @@ mod tests {
     #[test]
     fn serialize_vector_test() {
         assert_eq!(serialize(&vec![1u8, 2, 3]), vec![3u8, 1, 2, 3]);
+        // Test we can serialize vec of references
+        serialize(&Vec::<&TxOut>::new());
         // TODO: test vectors of more interesting objects
     }
 
