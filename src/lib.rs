@@ -68,6 +68,7 @@ pub mod blockdata;
 pub mod util;
 pub mod consensus;
 pub mod hash_types;
+pub mod policy;
 
 pub use hash_types::*;
 pub use blockdata::block::Block;

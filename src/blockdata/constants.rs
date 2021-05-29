@@ -46,7 +46,8 @@ pub const MAX_BLOCK_WEIGHT: u32 = 4_000_000;
 pub const MIN_TRANSACTION_WEIGHT: u32 = 4 * 60;
 /// The factor that non-witness serialization data is multiplied by during weight calculation
 pub const WITNESS_SCALE_FACTOR: usize = 4;
-
+/// The maximum allowed number of signature check operations in a block
+pub const MAX_BLOCK_SIGOPS_COST: i64 = 80_000;
 
 /// In Bitcoind this is insanely described as ~((u256)0 >> 32)
 pub fn max_target(_: Network) -> Uint256 {

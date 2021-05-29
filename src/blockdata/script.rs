@@ -33,6 +33,7 @@ use hash_types::{PubkeyHash, WPubkeyHash, ScriptHash, WScriptHash};
 use blockdata::opcodes;
 use consensus::{encode, Decodable, Encodable};
 use hashes::{Hash, hex};
+use policy::DUST_RELAY_TX_FEE;
 #[cfg(feature="bitcoinconsensus")] use bitcoinconsensus;
 #[cfg(feature="bitcoinconsensus")] use std::convert;
 #[cfg(feature="bitcoinconsensus")] use OutPoint;
@@ -412,7 +413,7 @@ impl Script {
         // This must never be lower than Bitcoin Core's GetDustThreshold() (as of v0.21) as it may
         // otherwise allow users to create transactions which likely can never be
         // broadcasted/confirmed.
-        3 * // The default dust relay fee is 3000 satoshi/kB (ie 3 sat/vByte)
+        DUST_RELAY_TX_FEE as u64 / 1000 * // The default dust relay fee is 3000 satoshi/kB (ie 3 sat/vByte)
         if self.is_op_return() {
             0
         } else if self.is_witness_program() {
