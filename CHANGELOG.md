@@ -1,5 +1,13 @@
 
-# 0.26.1 - 2020-06-06
+# 0.26.2 - 2021-06-08
+
+- [Fix `Display` impl of `ChildNumber`](https://github.com/rust-bitcoin/rust-bitcoin/pull/611)
+
+The previous release changed the behavior of `Display` for `ChildNumber`, assuming that any correct usage would not be
+affected. [Issue 608](https://github.com/rust-bitcoin/rust-bitcoin/issues/608) goes into the details of why this isn't
+the case and how we broke both `rust-miniscript` and BDK. 
+
+# 0.26.1 - 2021-06-06 (yanked, see explanation above)
 
 - [Change Amount Debug impl to BTC with 8 decimals](https://github.com/rust-bitcoin/rust-bitcoin/pull/414)
 - [Make uint types (un)serializable](https://github.com/rust-bitcoin/rust-bitcoin/pull/511)
