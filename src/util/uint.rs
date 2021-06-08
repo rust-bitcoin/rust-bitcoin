@@ -162,6 +162,16 @@ macro_rules! construct_uint {
 
                 ($name(ret), sub_copy)
             }
+
+            /// Increment by 1
+            #[inline]
+            pub fn increment(&mut self) {
+                let &mut $name(ref mut arr) = self;
+                for i in 0..$n_words {
+                    arr[i] = arr[i].wrapping_add(1);
+                    if arr[i] != 0 { break; }
+                }
+            }
         }
 
         impl PartialOrd for $name {
@@ -512,22 +522,6 @@ impl ::std::fmt::Display for ParseLengthError {
 impl ::std::error::Error for ParseLengthError {}
 
 impl Uint256 {
-    /// Increment by 1
-    #[inline]
-    pub fn increment(&mut self) {
-        let &mut Uint256(ref mut arr) = self;
-        arr[0] = arr[0].wrapping_add(1);
-        if arr[0] == 0 {
-            arr[1] = arr[1].wrapping_add(1);
-            if arr[1] == 0 {
-                arr[2] = arr[2].wrapping_add(1);
-                if arr[2] == 0 {
-                    arr[3] = arr[3].wrapping_add(1);
-                }
-            }
-        }
-    }
-
     /// Decay to a uint128
     #[inline]
     pub fn low_128(&self) -> Uint128 {
