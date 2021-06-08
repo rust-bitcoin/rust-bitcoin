@@ -1,5 +1,5 @@
 
-# 0.26.1 - 2020-06-06
+# 0.26.1 - 2021-06-06
 
 - [Change Amount Debug impl to BTC with 8 decimals](https://github.com/rust-bitcoin/rust-bitcoin/pull/414)
 - [Make uint types (un)serializable](https://github.com/rust-bitcoin/rust-bitcoin/pull/511)
