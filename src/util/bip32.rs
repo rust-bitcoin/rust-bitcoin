@@ -172,7 +172,7 @@ impl fmt::Display for ChildNumber {
             ChildNumber::Hardened { index } => {
                 fmt::Display::fmt(&index, f)?;
                 let alt = f.alternate();
-                f.write_str(if alt { "'" } else { "h" })
+                f.write_str(if alt { "h" } else { "'" })
             },
             ChildNumber::Normal { index } => fmt::Display::fmt(&index, f),
         }
@@ -1070,10 +1070,10 @@ mod tests {
 
     #[test]
     fn fmt_child_number() {
-        assert_eq!("000005'", &format!("{:#06}", ChildNumber::from_hardened_idx(5).unwrap()));
-        assert_eq!("5'", &format!("{:#}", ChildNumber::from_hardened_idx(5).unwrap()));
-        assert_eq!("000005h", &format!("{:06}", ChildNumber::from_hardened_idx(5).unwrap()));
-        assert_eq!("5h", &format!("{}", ChildNumber::from_hardened_idx(5).unwrap()));
+        assert_eq!("000005h", &format!("{:#06}", ChildNumber::from_hardened_idx(5).unwrap()));
+        assert_eq!("5h", &format!("{:#}", ChildNumber::from_hardened_idx(5).unwrap()));
+        assert_eq!("000005'", &format!("{:06}", ChildNumber::from_hardened_idx(5).unwrap()));
+        assert_eq!("5'", &format!("{}", ChildNumber::from_hardened_idx(5).unwrap()));
         assert_eq!("42", &format!("{}", ChildNumber::from_normal_idx(42).unwrap()));
         assert_eq!("000042", &format!("{:06}", ChildNumber::from_normal_idx(42).unwrap()));
     }
