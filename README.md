@@ -47,8 +47,8 @@ Contributions are generally welcome. If you intend to make larger changes please
 discuss them in an issue before PRing them to avoid duplicate work and
 architectural mismatches. If you have any questions or ideas you want to discuss
 please join us in
-[#rust-bitcoin](http://webchat.freenode.net/?channels=%23rust-bitcoin) on
-freenode.
+[#bitcoin-rust](https://web.libera.chat/?channel=#bitcoin-rust) on
+[libera.chat](https://libera.chat).
 
 ## Minimum Supported Rust Version (MSRV)
 This library should always compile with any combination of features on **Rust 1.29**.
