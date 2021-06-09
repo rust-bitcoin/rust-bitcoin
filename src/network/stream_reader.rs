@@ -20,6 +20,8 @@
 //! (like can happen with reading from TCP socket)
 //!
 
+use prelude::*;
+
 use core::fmt;
 use io::{self, Read};
 

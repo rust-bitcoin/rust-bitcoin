@@ -12,8 +12,8 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-use std::collections::BTreeMap;
-use std::collections::btree_map::Entry;
+use prelude::*;
+
 use io::{self, Cursor, Read};
 use core::cmp;
 
@@ -89,12 +89,12 @@ impl Map for Global {
         match raw_key.type_value {
             PSBT_GLOBAL_UNSIGNED_TX => return Err(Error::DuplicateKey(raw_key).into()),
             PSBT_GLOBAL_PROPRIETARY => match self.proprietary.entry(raw::ProprietaryKey::from_key(raw_key.clone())?) {
-                Entry::Vacant(empty_key) => {empty_key.insert(raw_value);},
-                Entry::Occupied(_) => return Err(Error::DuplicateKey(raw_key).into()),
+                btree_map::Entry::Vacant(empty_key) => {empty_key.insert(raw_value);},
+                btree_map::Entry::Occupied(_) => return Err(Error::DuplicateKey(raw_key).into()),
             }
             _ => match self.unknown.entry(raw_key) {
-                Entry::Vacant(empty_key) => {empty_key.insert(raw_value);},
-                Entry::Occupied(k) => return Err(Error::DuplicateKey(k.key().clone()).into()),
+                btree_map::Entry::Vacant(empty_key) => {empty_key.insert(raw_value);},
+                btree_map::Entry::Occupied(k) => return Err(Error::DuplicateKey(k.key().clone()).into()),
             }
         }
 
@@ -183,10 +183,10 @@ impl Map for Global {
         // Merging xpubs
         for (xpub, (fingerprint1, derivation1)) in other.xpub {
             match self.xpub.entry(xpub) {
-                Entry::Vacant(entry) => {
+                btree_map::Entry::Vacant(entry) => {
                     entry.insert((fingerprint1, derivation1));
                 },
-                Entry::Occupied(mut entry) => {
+                btree_map::Entry::Occupied(mut entry) => {
                     // Here in case of the conflict we select the version with algorithm:
                     // 1) if everything is equal we do nothing
                     // 2) report an error if
@@ -215,7 +215,7 @@ impl Map for Global {
                     }
                     return Err(psbt::Error::MergeConflict(format!(
                         "global xpub {} has inconsistent key sources", xpub
-                    ).to_owned()));
+                    )));
                 }
             }
         }
@@ -321,12 +321,12 @@ impl Decodable for Global {
                             }
                         }
                         PSBT_GLOBAL_PROPRIETARY => match proprietary.entry(raw::ProprietaryKey::from_key(pair.key.clone())?) {
-                            Entry::Vacant(empty_key) => {empty_key.insert(pair.value);},
-                            Entry::Occupied(_) => return Err(Error::DuplicateKey(pair.key).into()),
+                            btree_map::Entry::Vacant(empty_key) => {empty_key.insert(pair.value);},
+                            btree_map::Entry::Occupied(_) => return Err(Error::DuplicateKey(pair.key).into()),
                         }
                         _ => match unknowns.entry(pair.key) {
-                            Entry::Vacant(empty_key) => {empty_key.insert(pair.value);},
-                            Entry::Occupied(k) => return Err(Error::DuplicateKey(k.key().clone()).into()),
+                            btree_map::Entry::Vacant(empty_key) => {empty_key.insert(pair.value);},
+                            btree_map::Entry::Occupied(k) => return Err(Error::DuplicateKey(k.key().clone()).into()),
                         }
                     }
                 }

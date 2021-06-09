@@ -23,6 +23,8 @@
 //! software.
 //!
 
+#![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
+
 // Experimental features we need
 #![cfg_attr(all(test, feature = "unstable"), feature(test))]
 
@@ -38,12 +40,26 @@
 #![deny(unused_must_use)]
 #![deny(broken_intra_doc_links)]
 
-extern crate core;
+#[cfg(not(any(feature = "std", feature = "no-std")))]
+compile_error!("at least one of the `std` or `no-std` features must be enabled");
+
+#[cfg(feature = "no-std")]
+#[macro_use]
+extern crate alloc;
+#[cfg(feature = "no-std")]
+extern crate core2;
+
+#[cfg(any(feature = "std", test))]
+extern crate core; // for Rust 1.29 and no-std tests
 
 // Re-exported dependencies.
 #[macro_use] pub extern crate bitcoin_hashes as hashes;
 pub extern crate secp256k1;
 pub extern crate bech32;
+
+#[cfg(feature = "no-std")]
+extern crate hashbrown;
+
 #[cfg(feature = "base64")] pub extern crate base64;
 
 #[cfg(feature="bitcoinconsensus")] extern crate bitcoinconsensus;
@@ -98,14 +114,68 @@ pub use util::ecdsa::PrivateKey;
 #[deprecated(since = "0.26.1", note = "Please use `ecdsa::PublicKey` instead")]
 pub use util::ecdsa::PublicKey;
 
+#[cfg(feature = "std")]
 use std::io;
+#[cfg(not(feature = "std"))]
+use core2::io;
+
+#[cfg(not(feature = "std"))]
+mod io_extras {
+    /// A writer which will move data into the void.
+    pub struct Sink {
+        _priv: (),
+    }
+
+    /// Creates an instance of a writer which will successfully consume all data.
+    pub const fn sink() -> Sink {
+        Sink { _priv: () }
+    }
+
+    impl core2::io::Write for Sink {
+        #[inline]
+        fn write(&mut self, buf: &[u8]) -> core2::io::Result<usize> {
+            Ok(buf.len())
+        }
+
+        #[inline]
+        fn flush(&mut self) -> core2::io::Result<()> {
+            Ok(())
+        }
+    }
+}
+
+mod prelude {
+    #[cfg(all(not(feature = "std"), not(test)))]
+    pub use alloc::{string::{String, ToString}, vec::Vec, boxed::Box, borrow::{Cow, ToOwned}, slice, rc, sync};
+
+    #[cfg(any(feature = "std", test))]
+    pub use std::{string::{String, ToString}, vec::Vec, boxed::Box, borrow::{Cow, ToOwned}, slice, rc, sync};
+
+    #[cfg(all(not(feature = "std"), not(test)))]
+    pub use alloc::collections::{BTreeMap, btree_map};
+
+    #[cfg(any(feature = "std", test))]
+    pub use std::collections::{BTreeMap, btree_map};
+
+    #[cfg(feature = "std")]
+    pub use std::io::sink;
+
+    #[cfg(not(feature = "std"))]
+    pub use io_extras::sink;
+
+    #[cfg(feature = "hashbrown")]
+    pub use hashbrown::HashSet;
+
+    #[cfg(not(feature = "hashbrown"))]
+    pub use std::collections::HashSet;
+}
 
 #[cfg(all(test, feature = "unstable"))] use tests::EmptyWrite;
 
 #[cfg(all(test, feature = "unstable"))]
 mod tests {
-    use std::io::{IoSlice, Result, Write};
-    use std::fmt::Arguments;
+    use core::fmt::Arguments;
+    use io::{IoSlice, Result, Write};
 
     #[derive(Default, Clone, Debug, PartialEq, Eq)]
     pub struct EmptyWrite;

@@ -19,8 +19,9 @@
 //! also defines (de)serialization routines for many primitives.
 //!
 
+use prelude::*;
+
 use core::{mem, fmt, iter};
-use std::borrow::Cow;
 
 use io;
 use blockdata::block;
