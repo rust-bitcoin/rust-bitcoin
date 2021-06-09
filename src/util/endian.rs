@@ -2,10 +2,10 @@ macro_rules! define_slice_to_be {
     ($name: ident, $type: ty) => {
         #[inline]
         pub fn $name(slice: &[u8]) -> $type {
-            assert_eq!(slice.len(), ::std::mem::size_of::<$type>());
+            assert_eq!(slice.len(), ::core::mem::size_of::<$type>());
             let mut res = 0;
-            for i in 0..::std::mem::size_of::<$type>() {
-                res |= (slice[i] as $type) << (::std::mem::size_of::<$type>() - i - 1)*8;
+            for i in 0..::core::mem::size_of::<$type>() {
+                res |= (slice[i] as $type) << (::core::mem::size_of::<$type>() - i - 1)*8;
             }
             res
         }
@@ -15,9 +15,9 @@ macro_rules! define_slice_to_le {
     ($name: ident, $type: ty) => {
         #[inline]
         pub fn $name(slice: &[u8]) -> $type {
-            assert_eq!(slice.len(), ::std::mem::size_of::<$type>());
+            assert_eq!(slice.len(), ::core::mem::size_of::<$type>());
             let mut res = 0;
-            for i in 0..::std::mem::size_of::<$type>() {
+            for i in 0..::core::mem::size_of::<$type>() {
                 res |= (slice[i] as $type) << i*8;
             }
             res
@@ -28,7 +28,7 @@ macro_rules! define_be_to_array {
     ($name: ident, $type: ty, $byte_len: expr) => {
         #[inline]
         pub fn $name(val: $type) -> [u8; $byte_len] {
-            debug_assert_eq!(::std::mem::size_of::<$type>(), $byte_len); // size_of isn't a constfn in 1.22
+            debug_assert_eq!(::core::mem::size_of::<$type>(), $byte_len); // size_of isn't a constfn in 1.22
             let mut res = [0; $byte_len];
             for i in 0..$byte_len {
                 res[i] = ((val >> ($byte_len - i - 1)*8) & 0xff) as u8;
@@ -41,7 +41,7 @@ macro_rules! define_le_to_array {
     ($name: ident, $type: ty, $byte_len: expr) => {
         #[inline]
         pub fn $name(val: $type) -> [u8; $byte_len] {
-            debug_assert_eq!(::std::mem::size_of::<$type>(), $byte_len); // size_of isn't a constfn in 1.22
+            debug_assert_eq!(::core::mem::size_of::<$type>(), $byte_len); // size_of isn't a constfn in 1.22
             let mut res = [0; $byte_len];
             for i in 0..$byte_len {
                 res[i] = ((val >> i*8) & 0xff) as u8;
@@ -91,8 +91,8 @@ macro_rules! define_chunk_slice_to_int {
     ($name: ident, $type: ty, $converter: ident) => {
         #[inline]
         pub fn $name(inp: &[u8], outp: &mut [$type]) {
-            assert_eq!(inp.len(), outp.len() * ::std::mem::size_of::<$type>());
-            for (outp_val, data_bytes) in outp.iter_mut().zip(inp.chunks(::std::mem::size_of::<$type>())) {
+            assert_eq!(inp.len(), outp.len() * ::core::mem::size_of::<$type>());
+            for (outp_val, data_bytes) in outp.iter_mut().zip(inp.chunks(::core::mem::size_of::<$type>())) {
                 *outp_val = $converter(data_bytes);
             }
         }

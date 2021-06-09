@@ -166,26 +166,26 @@ macro_rules! construct_uint {
 
         impl PartialOrd for $name {
             #[inline]
-            fn partial_cmp(&self, other: &$name) -> Option<::std::cmp::Ordering> {
+            fn partial_cmp(&self, other: &$name) -> Option<::core::cmp::Ordering> {
                 Some(self.cmp(&other))
             }
         }
 
         impl Ord for $name {
             #[inline]
-            fn cmp(&self, other: &$name) -> ::std::cmp::Ordering {
+            fn cmp(&self, other: &$name) -> ::core::cmp::Ordering {
                 // We need to manually implement ordering because we use little-endian
                 // and the auto derive is a lexicographic ordering(i.e. memcmp)
                 // which with numbers is equivilant to big-endian
                 for i in 0..$n_words {
-                    if self[$n_words - 1 - i] < other[$n_words - 1 - i] { return ::std::cmp::Ordering::Less; }
-                    if self[$n_words - 1 - i] > other[$n_words - 1 - i] { return ::std::cmp::Ordering::Greater; }
+                    if self[$n_words - 1 - i] < other[$n_words - 1 - i] { return ::core::cmp::Ordering::Less; }
+                    if self[$n_words - 1 - i] > other[$n_words - 1 - i] { return ::core::cmp::Ordering::Greater; }
                 }
-                ::std::cmp::Ordering::Equal
+                ::core::cmp::Ordering::Equal
             }
         }
 
-        impl ::std::ops::Add<$name> for $name {
+        impl ::core::ops::Add<$name> for $name {
             type Output = $name;
 
             fn add(self, other: $name) -> $name {
@@ -205,7 +205,7 @@ macro_rules! construct_uint {
             }
         }
 
-        impl ::std::ops::Sub<$name> for $name {
+        impl ::core::ops::Sub<$name> for $name {
             type Output = $name;
 
             #[inline]
@@ -214,7 +214,7 @@ macro_rules! construct_uint {
             }
         }
 
-        impl ::std::ops::Mul<$name> for $name {
+        impl ::core::ops::Mul<$name> for $name {
             type Output = $name;
 
             fn mul(self, other: $name) -> $name {
@@ -229,7 +229,7 @@ macro_rules! construct_uint {
             }
         }
 
-        impl ::std::ops::Div<$name> for $name {
+        impl ::core::ops::Div<$name> for $name {
             type Output = $name;
 
             fn div(self, other: $name) -> $name {
@@ -237,7 +237,7 @@ macro_rules! construct_uint {
             }
         }
 
-        impl ::std::ops::Rem<$name> for $name {
+        impl ::core::ops::Rem<$name> for $name {
             type Output = $name;
 
             fn rem(self, other: $name) -> $name {
@@ -287,7 +287,7 @@ macro_rules! construct_uint {
             }
         }
 
-        impl ::std::ops::BitAnd<$name> for $name {
+        impl ::core::ops::BitAnd<$name> for $name {
             type Output = $name;
 
             #[inline]
@@ -302,7 +302,7 @@ macro_rules! construct_uint {
             }
         }
 
-        impl ::std::ops::BitXor<$name> for $name {
+        impl ::core::ops::BitXor<$name> for $name {
             type Output = $name;
 
             #[inline]
@@ -317,7 +317,7 @@ macro_rules! construct_uint {
             }
         }
 
-        impl ::std::ops::BitOr<$name> for $name {
+        impl ::core::ops::BitOr<$name> for $name {
             type Output = $name;
 
             #[inline]
@@ -332,7 +332,7 @@ macro_rules! construct_uint {
             }
         }
 
-        impl ::std::ops::Not for $name {
+        impl ::core::ops::Not for $name {
             type Output = $name;
 
             #[inline]
@@ -346,7 +346,7 @@ macro_rules! construct_uint {
             }
         }
 
-        impl ::std::ops::Shl<usize> for $name {
+        impl ::core::ops::Shl<usize> for $name {
             type Output = $name;
 
             fn shl(self, shift: usize) -> $name {
@@ -368,7 +368,7 @@ macro_rules! construct_uint {
             }
         }
 
-        impl ::std::ops::Shr<usize> for $name {
+        impl ::core::ops::Shr<usize> for $name {
             type Output = $name;
 
             fn shr(self, shift: usize) -> $name {
@@ -388,8 +388,8 @@ macro_rules! construct_uint {
             }
         }
 
-        impl ::std::fmt::Debug for $name {
-            fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+        impl ::core::fmt::Debug for $name {
+            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
                 let &$name(ref data) = self;
                 write!(f, "0x")?;
                 for ch in data.iter().rev() {
@@ -403,10 +403,10 @@ macro_rules! construct_uint {
 
         impl $crate::consensus::Encodable for $name {
             #[inline]
-            fn consensus_encode<S: ::std::io::Write>(
+            fn consensus_encode<S: $crate::io::Write>(
                 &self,
                 mut s: S,
-            ) -> Result<usize, ::std::io::Error> {
+            ) -> Result<usize, $crate::io::Error> {
                 let &$name(ref data) = self;
                 let mut len = 0;
                 for word in data.iter() {
@@ -417,7 +417,7 @@ macro_rules! construct_uint {
         }
 
         impl $crate::consensus::Decodable for $name {
-            fn consensus_decode<D: ::std::io::Read>(
+            fn consensus_decode<D: $crate::io::Read>(
                 mut d: D,
             ) -> Result<$name, $crate::consensus::encode::Error> {
                 use $crate::consensus::Decodable;
@@ -503,8 +503,8 @@ pub struct ParseLengthError {
     pub expected: usize,
 }
 
-impl ::std::fmt::Display for ParseLengthError {
-    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+impl ::core::fmt::Display for ParseLengthError {
+    fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         write!(f, "Invalid length: got {}, expected {}", self.actual, self.expected)
     }
 }

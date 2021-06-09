@@ -38,6 +38,8 @@
 #![deny(unused_must_use)]
 #![deny(broken_intra_doc_links)]
 
+extern crate core;
+
 // Re-exported dependencies.
 #[macro_use] pub extern crate bitcoin_hashes as hashes;
 pub extern crate secp256k1;
@@ -95,6 +97,8 @@ pub use util::schnorr;
 pub use util::ecdsa::PrivateKey;
 #[deprecated(since = "0.26.1", note = "Please use `ecdsa::PublicKey` instead")]
 pub use util::ecdsa::PublicKey;
+
+use std::io;
 
 #[cfg(all(test, feature = "unstable"))] use tests::EmptyWrite;
 

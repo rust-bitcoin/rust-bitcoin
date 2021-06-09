@@ -19,7 +19,7 @@
 #[deprecated(since = "0.26.1", note = "Please use `util::ecdsa` instead")]
 pub use util::ecdsa::{PrivateKey, PublicKey};
 
-use std::fmt;
+use core::fmt;
 use std::error;
 
 use secp256k1;

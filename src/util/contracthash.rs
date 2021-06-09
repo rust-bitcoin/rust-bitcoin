@@ -20,13 +20,14 @@
 
 #![cfg_attr(not(test), deprecated)]
 
+use core::fmt;
+use std::error;
+
 use secp256k1::{self, Secp256k1};
 use PrivateKey;
 use PublicKey;
 use hashes::{sha256, Hash, HashEngine, Hmac, HmacEngine};
 use blockdata::{opcodes, script};
-
-use std::{error, fmt};
 
 use hash_types::ScriptHash;
 use network::constants::Network;
@@ -71,7 +72,7 @@ impl fmt::Display for Error {
     }
 }
 
-impl error::Error for Error {
+impl ::std::error::Error for Error {
     fn cause(&self) -> Option<&dyn error::Error> {
         match *self {
             Error::Secp(ref e) => Some(e),
@@ -278,7 +279,7 @@ mod tests {
     use secp256k1::Secp256k1;
     use hashes::hex::FromHex;
     use secp256k1::rand::thread_rng;
-    use std::str::FromStr;
+    use core::str::FromStr;
 
     use blockdata::script::Script;
     use network::constants::Network;

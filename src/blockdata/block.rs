@@ -20,7 +20,7 @@
 //! these blocks and the blockchain.
 //!
 
-use std::fmt;
+use core::fmt;
 
 use util;
 use util::Error::{BlockBadTarget, BlockBadProofOfWork};

@@ -18,8 +18,8 @@
 //! of Bitcoin data and network messages.
 //!
 
-use std::fmt;
-use std::io;
+use io;
+use core::fmt;
 use std::error;
 
 pub mod constants;

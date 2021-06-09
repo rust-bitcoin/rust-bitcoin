@@ -37,8 +37,9 @@
 //! assert_eq!(&bytes[..], &[0xF9, 0xBE, 0xB4, 0xD9]);
 //! ```
 
-use std::{fmt, io, ops};
+use core::{fmt, ops, convert::From};
 
+use io;
 use consensus::encode::{self, Encodable, Decodable};
 
 /// Version of the protocol as appearing in network message headers

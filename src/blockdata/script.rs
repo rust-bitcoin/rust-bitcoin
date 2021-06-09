@@ -24,8 +24,9 @@
 //! This module provides the structures and functions needed to support scripts.
 //!
 
-use std::default::Default;
-use std::{error, fmt, io, str};
+use io;
+
+use core::{fmt, default::Default};
 
 #[cfg(feature = "serde")] use serde;
 
@@ -91,7 +92,8 @@ impl hex::FromHex for Script {
         Vec::from_byte_iter(iter).map(|v| Script(Box::<[u8]>::from(v)))
     }
 }
-impl str::FromStr for Script {
+
+impl ::core::str::FromStr for Script {
     type Err = hex::Error;
     fn from_str(s: &str) -> Result<Self, hex::Error> {
         hex::FromHex::from_hex(s)
@@ -143,7 +145,7 @@ impl fmt::Display for Error {
     }
 }
 
-impl error::Error for Error {}
+impl ::std::error::Error for Error {}
 
 #[cfg(feature="bitcoinconsensus")]
 #[doc(hidden)]
@@ -820,7 +822,7 @@ impl<'de> serde::Deserialize<'de> for Script {
     where
         D: serde::Deserializer<'de>,
     {
-        use std::fmt::Formatter;
+        use core::fmt::Formatter;
         use hashes::hex::FromHex;
 
         struct Visitor;
@@ -889,7 +891,7 @@ impl Decodable for Script {
 
 #[cfg(test)]
 mod test {
-    use std::str::FromStr;
+    use core::str::FromStr;
 
     use super::*;
     use super::build_scriptint;

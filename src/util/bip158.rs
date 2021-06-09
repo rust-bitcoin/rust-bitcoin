@@ -45,13 +45,10 @@
 //!  ```
 //!  
 
-use std::{cmp, fmt, io};
 use std::collections::HashSet;
-use std::error;
-use std::fmt::{Display, Formatter};
-use std::io::Cursor;
-use std::cmp::Ordering;
-
+use io::{self as io, Cursor};
+use core::fmt::{self, Display, Formatter};
+use core::cmp::{self, Ordering};
 
 use hashes::{Hash, siphash24};
 use hash_types::{BlockHash, FilterHash, FilterHeader};
@@ -76,7 +73,7 @@ pub enum Error {
     Io(io::Error),
 }
 
-impl error::Error for Error {}
+impl ::std::error::Error for Error {}
 
 impl Display for Error {
     fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {

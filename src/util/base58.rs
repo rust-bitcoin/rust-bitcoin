@@ -14,7 +14,8 @@
 
 //! Base58 encoder and decoder
 
-use std::{error, fmt, str, slice, iter};
+use std::error;
+use core::{fmt, str, iter, slice};
 
 use hashes::{sha256d, Hash};
 

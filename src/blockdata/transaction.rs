@@ -23,8 +23,9 @@
 //! This module provides the structures and functions needed to support transactions.
 //!
 
-use std::default::Default;
-use std::{error, fmt, io, str};
+use io;
+use core::{fmt, str, default::Default};
+use std::error;
 
 use hashes::{self, Hash, sha256d};
 use hashes::hex::FromHex;
@@ -108,7 +109,7 @@ pub enum ParseOutPointError {
     /// Error in TXID part.
     Txid(hashes::hex::Error),
     /// Error in vout part.
-    Vout(::std::num::ParseIntError),
+    Vout(::core::num::ParseIntError),
     /// Error in general format.
     Format,
     /// Size exceeds max.
@@ -151,7 +152,7 @@ fn parse_vout(s: &str) -> Result<u32, ParseOutPointError> {
     Ok(s.parse().map_err(ParseOutPointError::Vout)?)
 }
 
-impl ::std::str::FromStr for OutPoint {
+impl ::core::str::FromStr for OutPoint {
     type Err = ParseOutPointError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -755,7 +756,7 @@ impl From<SigHashType> for u32 {
 mod tests {
     use super::{OutPoint, ParseOutPointError, Transaction, TxIn, NonStandardSigHashType};
 
-    use std::str::FromStr;
+    use core::str::FromStr;
     use blockdata::constants::WITNESS_SCALE_FACTOR;
     use blockdata::script::Script;
     use consensus::encode::serialize;

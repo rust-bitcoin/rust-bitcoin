@@ -23,7 +23,7 @@ use blockdata::transaction::Transaction;
 use consensus::{encode, Encodable, Decodable};
 use consensus::encode::MAX_VEC_SIZE;
 
-use std::io;
+use io;
 
 mod error;
 pub use self::error::Error;

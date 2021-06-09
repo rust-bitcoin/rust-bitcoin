@@ -29,13 +29,15 @@
 //! big-endian decimals, etc.)
 //!
 
-use std::{fmt, error, io, mem, u32};
+use core::{fmt, mem, u32, convert::From};
 use std::borrow::Cow;
-use std::io::{Cursor, Read, Write};
+use std::error;
 use hashes::hex::ToHex;
 
 use hashes::{sha256d, Hash};
 use hash_types::{BlockHash, FilterHash, TxMerkleNode, FilterHeader};
+
+use io::{self, Cursor, Read, Write};
 
 use util::endian;
 use util::psbt;
@@ -754,8 +756,8 @@ impl Decodable for sha256d::Hash {
 // Tests
 #[cfg(test)]
 mod tests {
-    use std::{io, mem, fmt};
-    use std::mem::discriminant;
+    use super::*;
+    use core::{mem::{self, discriminant}, fmt};
     use super::{deserialize, serialize, Error, CheckedData, VarInt};
     use super::{Transaction, BlockHash, FilterHash, TxMerkleNode, TxOut, TxIn};
     use consensus::{Encodable, deserialize_partial, Decodable};

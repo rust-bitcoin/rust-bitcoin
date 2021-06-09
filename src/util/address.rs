@@ -33,8 +33,8 @@
 //! let address = Address::p2pkh(&public_key, Network::Bitcoin);
 //! ```
 
-use std::fmt;
-use std::str::FromStr;
+use core::fmt;
+use core::str::FromStr;
 use std::error;
 
 use bech32;
@@ -525,8 +525,7 @@ impl ::std::fmt::Debug for Address {
 
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
-    use std::string::ToString;
+    use core::str::FromStr;
 
     use hashes::hex::{FromHex, ToHex};
 

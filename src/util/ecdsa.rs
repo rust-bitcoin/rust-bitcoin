@@ -16,9 +16,9 @@
 //! ECDSA keys used in Bitcoin that can be roundtrip (de)serialized.
 //!
 
-use std::fmt::{self, Write};
-use std::{io, ops};
-use std::str::FromStr;
+use core::{ops, str::FromStr};
+use core::fmt::{self, Write as _fmtWrite};
+use io;
 
 use secp256k1::{self, Secp256k1};
 use network::constants::Network;
@@ -398,9 +398,9 @@ impl<'de> ::serde::Deserialize<'de> for PublicKey {
 
 #[cfg(test)]
 mod tests {
+    use io;
     use super::{PrivateKey, PublicKey};
     use secp256k1::Secp256k1;
-    use std::io;
     use std::str::FromStr;
     use hashes::hex::ToHex;
     use network::constants::Network::Testnet;

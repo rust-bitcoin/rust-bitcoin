@@ -18,7 +18,7 @@
 //! Bitcoin data (blocks and transactions) around.
 //!
 
-use std::io;
+use io;
 
 use hashes::sha256d;
 
@@ -154,7 +154,7 @@ mod tests {
     use hashes::hex::FromHex;
 
     use consensus::encode::{deserialize, serialize};
-    use std::default::Default;
+    use core::default::Default;
 
     #[test]
     fn getblocks_message_test() {
