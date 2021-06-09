@@ -36,7 +36,7 @@ use blockdata::script::Script;
 use consensus::{encode, Decodable, Encodable};
 use consensus::encode::MAX_VEC_SIZE;
 use hash_types::{SigHash, Txid, Wtxid};
-use VarInt;
+use ::{VarInt, Amount};
 
 /// A reference to a transaction output
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
@@ -211,7 +211,8 @@ impl Default for TxIn {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct TxOut {
     /// The value of the output, in satoshis
-    pub value: u64,
+    #[cfg_attr(feature = "serde", serde(with="::util::amount::serde::as_sat"))]
+    pub value: Amount,
     /// The script which must satisfy for the output to be spent
     pub script_pubkey: Script
 }
@@ -219,7 +220,7 @@ pub struct TxOut {
 // This is used as a "null txout" in consensus signing code
 impl Default for TxOut {
     fn default() -> TxOut {
-        TxOut { value: 0xffffffffffffffff, script_pubkey: Script::new() }
+        TxOut { value: Amount::from_sat(0xffffffffffffffff), script_pubkey: Script::new() }
     }
 }
 
@@ -479,7 +480,7 @@ impl Transaction {
         let flags: u32 = flags.into();
         for (idx, input) in self.input.iter().enumerate() {
             if let Some(output) = spent(&input.previous_output) {
-                output.script_pubkey.verify_with_flags(idx, ::Amount::from_sat(output.value), tx.as_slice(), flags)?;
+                output.script_pubkey.verify_with_flags(idx, output.value, tx.as_slice(), flags)?;
             } else {
                 return Err(script::Error::UnknownSpentOutput(input.previous_output.clone()));
             }
