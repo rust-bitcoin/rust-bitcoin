@@ -524,6 +524,13 @@ impl FromStr for Amount {
     }
 }
 
+impl ::std::iter::Sum for Amount {
+    fn sum<I: Iterator<Item=Self>>(iter: I) -> Self {
+        let sats: u64 = iter.map(|amt| amt.0).sum();
+        Amount::from_sat(sats)
+    }
+}
+
 /// SignedAmount
 ///
 /// The [SignedAmount] type can be used to express Bitcoin amounts that supports
@@ -846,6 +853,13 @@ impl FromStr for SignedAmount {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         SignedAmount::from_str_with_denomination(s)
+    }
+}
+
+impl ::std::iter::Sum for SignedAmount {
+    fn sum<I: Iterator<Item=Self>>(iter: I) -> Self {
+        let sats: i64 = iter.map(|amt| amt.0).sum();
+        SignedAmount::from_sat(sats)
     }
 }
 
@@ -1511,5 +1525,27 @@ mod tests {
 
         let value_without: serde_json::Value = serde_json::from_str("{}").unwrap();
         assert_eq!(without, serde_json::from_value(value_without).unwrap());
+    }
+
+    #[test]
+    fn sum_amounts() {
+        assert_eq!(Amount::from_sat(0), vec![].into_iter().sum::<Amount>());
+        assert_eq!(SignedAmount::from_sat(0), vec![].into_iter().sum::<SignedAmount>());
+
+        let amounts = vec![
+            Amount::from_sat(42),
+            Amount::from_sat(1337),
+            Amount::from_sat(21)
+        ];
+        let sum = amounts.into_iter().sum::<Amount>();
+        assert_eq!(Amount::from_sat(1400), sum);
+
+        let amounts = vec![
+            SignedAmount::from_sat(-42),
+            SignedAmount::from_sat(1337),
+            SignedAmount::from_sat(21)
+        ];
+        let sum = amounts.into_iter().sum::<SignedAmount>();
+        assert_eq!(SignedAmount::from_sat(1316), sum);
     }
 }
