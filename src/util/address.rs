@@ -364,6 +364,40 @@ impl Address {
         };
         format!("{}:{:#}", schema, self)
     }
+
+    /// Parsed addresses do not always have *one* network. The problem is that legacy testnet,
+    /// regtest and signet addresse use the same prefix instead of multiple different ones. When
+    /// parsing, such addresses are always assumed to be testnet addresses (the same is true for
+    /// bech32 signet addresses). So if one wants to check if an address belongs to a certain
+    /// network a simple comparison is not enough anymore. Instead this function can be used.
+    ///
+    /// ```rust
+    /// use bitcoin::{Address, Network};
+    ///
+    /// let address: Address = "2N83imGV3gPwBzKJQvWJ7cRUY2SpUyU6A5e".parse().unwrap();
+    /// assert!(address.is_valid_for_network(Network::Testnet));
+    /// assert!(address.is_valid_for_network(Network::Regtest));
+    /// assert!(address.is_valid_for_network(Network::Signet));
+    ///
+    /// assert_eq!(address.is_valid_for_network(Network::Bitcoin), false);
+    ///
+    /// let address: Address = "32iVBEu4dxkUQk9dJbZUiBiQdmypcEyJRf".parse().unwrap();
+    /// assert!(address.is_valid_for_network(Network::Bitcoin));
+    /// assert_eq!(address.is_valid_for_network(Network::Testnet), false);
+    /// ```
+    pub fn is_valid_for_network(&self, network: Network) -> bool {
+        let is_legacy = match self.address_type() {
+            Some(AddressType::P2pkh) | Some(AddressType::P2sh) => true,
+            _ => false
+        };
+
+        match (self.network, network) {
+            (a, b) if a == b => true,
+            (Network::Bitcoin, _) | (_, Network::Bitcoin) => false,
+            (Network::Regtest, _) | (_, Network::Regtest) if !is_legacy => false,
+            (Network::Testnet, _) | (Network::Regtest, _) | (Network::Signet, _) => true
+        }
+    }
 }
 
 // Alternate formatting `{:#}` is used to return uppercase version of bech32 addresses which should
@@ -789,4 +823,60 @@ mod tests {
         }
     }
 
+    #[test]
+    fn test_valid_networks() {
+        let legacy_payload = &[
+            Payload::PubkeyHash(PubkeyHash::default()),
+            Payload::ScriptHash(ScriptHash::default())
+        ];
+        let segwit_payload = (0..=16).map(|version| {
+            Payload::WitnessProgram {
+                version: bech32::u5::try_from_u8(version).unwrap(),
+                program: vec![]
+            }
+        }).collect::<Vec<_>>();
+
+        const LEGACY_EQUIVALENCE_CLASSES: &[&[Network]] = &[
+            &[Network::Bitcoin],
+            &[Network::Testnet, Network::Regtest, Network::Signet],
+        ];
+        const SEGWIT_EQUIVALENCE_CLASSES: &[&[Network]] = &[
+            &[Network::Bitcoin],
+            &[Network::Regtest],
+            &[Network::Testnet, Network::Signet],
+        ];
+
+        fn test_addr_type(payloads: &[Payload], equivalence_classes: &[&[Network]]) {
+            for pl in payloads {
+                for addr_net in equivalence_classes.iter().map(|ec| ec.iter()).flatten() {
+                    for valid_net in equivalence_classes.iter()
+                        .filter(|ec| ec.contains(addr_net))
+                        .map(|ec| ec.iter())
+                        .flatten()
+                    {
+                        let addr = Address {
+                            payload: pl.clone(),
+                            network: *addr_net
+                        };
+                        assert!(addr.is_valid_for_network(*valid_net));
+                    }
+
+                    for invalid_net in equivalence_classes.iter()
+                        .filter(|ec| !ec.contains(addr_net))
+                        .map(|ec| ec.iter())
+                        .flatten()
+                    {
+                        let addr = Address {
+                            payload: pl.clone(),
+                            network: *addr_net
+                        };
+                        assert!(!addr.is_valid_for_network(*invalid_net));
+                    }
+                }
+            }
+        }
+
+        test_addr_type(legacy_payload, LEGACY_EQUIVALENCE_CLASSES);
+        test_addr_type(&segwit_payload, SEGWIT_EQUIVALENCE_CLASSES);
+    }
 }
