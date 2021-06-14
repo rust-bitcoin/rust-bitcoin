@@ -25,8 +25,8 @@ use blockdata::script::Script;
 use blockdata::transaction::{Transaction, TxIn, SigHashType};
 use consensus::{encode, Encodable};
 
-use std::io;
-use std::ops::{Deref, DerefMut};
+use io;
+use core::ops::{Deref, DerefMut};
 
 /// Parts of a sighash which are common across inputs or signatures, and which are
 /// sufficient (in conjunction with a private key) to sign the transaction

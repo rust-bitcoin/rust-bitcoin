@@ -20,8 +20,8 @@
 //! (like can happen with reading from TCP socket)
 //!
 
-use std::fmt;
-use std::io::{self, Read};
+use core::fmt;
+use io::{self, Read};
 
 use consensus::{encode, Decodable};
 
@@ -83,7 +83,7 @@ impl<R: Read> StreamReader<R> {
 mod test {
     use std::thread;
     use std::time::Duration;
-    use std::io::{self, BufReader, Write};
+    use io::{self, BufReader, Write};
     use std::net::{TcpListener, TcpStream, Shutdown};
     use std::thread::JoinHandle;
     use network::constants::ServiceFlags;
@@ -313,7 +313,7 @@ mod test {
 
     #[test]
     fn read_block_from_file_test() {
-        use std::io;
+        use io;
         use consensus::serialize;
         use hashes::hex::FromHex;
         use Block;

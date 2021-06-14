@@ -22,7 +22,7 @@
 
 #[cfg(feature = "serde")] use serde;
 
-use std::fmt;
+use core::{fmt, convert::From};
 
 // Note: I am deliberately not implementing PartialOrd or Ord on the
 //       opcode enum. If you want to check ranges of opcodes, etc.,

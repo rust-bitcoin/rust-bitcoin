@@ -35,7 +35,8 @@ pub mod bip158;
 
 pub(crate) mod endian;
 
-use std::{error, fmt};
+use core::fmt;
+use std::error;
 
 use network;
 use consensus::encode;

@@ -18,7 +18,7 @@
 //! capabilities
 //!
 
-use std::io;
+use io;
 use std::borrow::Cow;
 
 use network::address::Address;

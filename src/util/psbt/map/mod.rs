@@ -12,7 +12,7 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-use std::io;
+use io;
 
 use consensus::encode;
 use util::psbt;

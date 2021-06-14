@@ -14,12 +14,8 @@
 //! We refer to the documentation on the types for more information.
 //!
 
-use std::default;
-use std::error;
-use std::fmt::{self, Write};
-use std::ops;
-use std::str::FromStr;
-use std::cmp::Ordering;
+use core::{ops, default, str::FromStr, cmp::Ordering};
+use core::fmt::{self, Write};
 
 /// A set of denominations in which amounts can be expressed.
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
@@ -115,7 +111,7 @@ impl fmt::Display for ParseAmountError {
     }
 }
 
-impl error::Error for ParseAmountError {}
+impl ::std::error::Error for ParseAmountError {}
 
 fn is_too_precise(s: &str, precision: usize) -> bool {
     s.contains('.') || precision >= s.len() || s.chars().rev().take(precision).any(|d| d != '0')
@@ -251,10 +247,10 @@ fn fmt_satoshi_in(
 ///
 /// Warning!
 ///
-/// This type implements several arithmetic operations from [std::ops].
+/// This type implements several arithmetic operations from [core::ops].
 /// To prevent errors due to overflow or underflow when using these operations,
 /// it is advised to instead use the checked arithmetic methods whose names
-/// start with `checked_`.  The operations from [std::ops] that [Amount]
+/// start with `checked_`.  The operations from [core::ops] that [Amount]
 /// implements will panic when overflow or underflow occurs.  Also note that
 /// since the internal representation of amounts is unsigned, subtracting below
 /// zero is considered an underflow and will cause a panic if you're not using
@@ -381,7 +377,7 @@ impl Amount {
         buf
     }
 
-    // Some arithmetic that doesn't fit in `std::ops` traits.
+    // Some arithmetic that doesn't fit in `core::ops` traits.
 
     /// Checked addition.
     /// Returns [None] if overflow occurred.
@@ -532,10 +528,10 @@ impl FromStr for Amount {
 ///
 /// Warning!
 ///
-/// This type implements several arithmetic operations from [std::ops].
+/// This type implements several arithmetic operations from [core::ops].
 /// To prevent errors due to overflow or underflow when using these operations,
 /// it is advised to instead use the checked arithmetic methods whose names
-/// start with `checked_`.  The operations from [std::ops] that [Amount]
+/// start with `checked_`.  The operations from [core::ops] that [Amount]
 /// implements will panic when overflow or underflow occurs.
 ///
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -663,7 +659,7 @@ impl SignedAmount {
         buf
     }
 
-    // Some arithmetic that doesn't fit in `std::ops` traits.
+    // Some arithmetic that doesn't fit in `core::ops` traits.
 
     /// Get the absolute value of this [SignedAmount].
     pub fn abs(self) -> SignedAmount {
@@ -1086,7 +1082,7 @@ pub mod serde {
 mod tests {
     use super::*;
     use std::panic;
-    use std::str::FromStr;
+    use core::str::FromStr;
 
     #[cfg(feature = "serde")]
     use serde_test;

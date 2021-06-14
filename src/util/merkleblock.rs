@@ -51,9 +51,8 @@
 //! assert_eq!(1, index.len());
 //! assert_eq!(1, index[0]);
 //! ```
-
 use std::collections::HashSet;
-use std::io;
+use io;
 
 use hashes::Hash;
 use hash_types::{Txid, TxMerkleNode};
@@ -496,7 +495,7 @@ impl Decodable for MerkleBlock {
 
 #[cfg(test)]
 mod tests {
-    use std::cmp::min;
+    use core::cmp::min;
 
     use hashes::Hash;
     use hashes::hex::{FromHex, ToHex};

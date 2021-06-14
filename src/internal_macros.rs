@@ -20,10 +20,10 @@ macro_rules! impl_consensus_encoding {
     ($thing:ident, $($field:ident),+) => (
         impl $crate::consensus::Encodable for $thing {
             #[inline]
-            fn consensus_encode<S: ::std::io::Write>(
+            fn consensus_encode<S: $crate::io::Write>(
                 &self,
                 mut s: S,
-            ) -> Result<usize, ::std::io::Error> {
+            ) -> Result<usize, $crate::io::Error> {
                 let mut len = 0;
                 $(len += self.$field.consensus_encode(&mut s)?;)+
                 Ok(len)
@@ -32,7 +32,7 @@ macro_rules! impl_consensus_encoding {
 
         impl $crate::consensus::Decodable for $thing {
             #[inline]
-            fn consensus_decode<D: ::std::io::Read>(
+            fn consensus_decode<D: $crate::io::Read>(
                 d: D,
             ) -> Result<$thing, $crate::consensus::encode::Error> {
                 let mut d = d.take($crate::consensus::encode::MAX_VEC_SIZE as u64);
@@ -83,7 +83,7 @@ macro_rules! impl_array_newtype {
             pub fn into_bytes(self) -> [$ty; $len] { self.0 }
         }
 
-        impl<'a> ::std::convert::From<&'a [$ty]> for $thing {
+        impl<'a> ::core::convert::From<&'a [$ty]> for $thing {
             fn from(data: &'a [$ty]) -> $thing {
                 assert_eq!(data.len(), $len);
                 let mut ret = [0; $len];
@@ -100,7 +100,7 @@ macro_rules! impl_array_newtype {
 macro_rules! impl_index_newtype {
     ($thing:ident, $ty:ty) => {
 
-        impl ::std::ops::Index<usize> for $thing {
+        impl ::core::ops::Index<usize> for $thing {
             type Output = $ty;
 
             #[inline]
@@ -109,38 +109,38 @@ macro_rules! impl_index_newtype {
             }
         }
 
-        impl ::std::ops::Index<::std::ops::Range<usize>> for $thing {
+        impl ::core::ops::Index<::core::ops::Range<usize>> for $thing {
             type Output = [$ty];
 
             #[inline]
-            fn index(&self, index: ::std::ops::Range<usize>) -> &[$ty] {
+            fn index(&self, index: ::core::ops::Range<usize>) -> &[$ty] {
                 &self.0[index]
             }
         }
 
-        impl ::std::ops::Index<::std::ops::RangeTo<usize>> for $thing {
+        impl ::core::ops::Index<::core::ops::RangeTo<usize>> for $thing {
             type Output = [$ty];
 
             #[inline]
-            fn index(&self, index: ::std::ops::RangeTo<usize>) -> &[$ty] {
+            fn index(&self, index: ::core::ops::RangeTo<usize>) -> &[$ty] {
                 &self.0[index]
             }
         }
 
-        impl ::std::ops::Index<::std::ops::RangeFrom<usize>> for $thing {
+        impl ::core::ops::Index<::core::ops::RangeFrom<usize>> for $thing {
             type Output = [$ty];
 
             #[inline]
-            fn index(&self, index: ::std::ops::RangeFrom<usize>) -> &[$ty] {
+            fn index(&self, index: ::core::ops::RangeFrom<usize>) -> &[$ty] {
                 &self.0[index]
             }
         }
 
-        impl ::std::ops::Index<::std::ops::RangeFull> for $thing {
+        impl ::core::ops::Index<::core::ops::RangeFull> for $thing {
             type Output = [$ty];
 
             #[inline]
-            fn index(&self, _: ::std::ops::RangeFull) -> &[$ty] {
+            fn index(&self, _: ::core::ops::RangeFull) -> &[$ty] {
                 &self.0[..]
             }
         }
@@ -150,16 +150,16 @@ macro_rules! impl_index_newtype {
 
 macro_rules! display_from_debug {
     ($thing:ident) => {
-        impl ::std::fmt::Display for $thing {
-            fn fmt(&self, f: &mut ::std::fmt::Formatter) -> Result<(), ::std::fmt::Error> {
-                ::std::fmt::Debug::fmt(self, f)
+        impl ::core::fmt::Display for $thing {
+            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> Result<(), ::core::fmt::Error> {
+                ::core::fmt::Debug::fmt(self, f)
             }
         }
     }
 }
 
 #[cfg(test)]
-macro_rules! hex_script (($s:expr) => (<$crate::Script as ::std::str::FromStr>::from_str($s).unwrap()));
+macro_rules! hex_script (($s:expr) => (<$crate::Script as ::core::str::FromStr>::from_str($s).unwrap()));
 
 #[cfg(test)]
 macro_rules! hex_hash (($h:ident, $s:expr) => ($h::from_slice(&<Vec<u8> as $crate::hashes::hex::FromHex>::from_hex($s).unwrap()).unwrap()));
@@ -172,8 +172,8 @@ macro_rules! serde_string_impl {
             where
                 D: $crate::serde::de::Deserializer<'de>,
             {
-                use ::std::fmt::{self, Formatter};
-                use ::std::str::FromStr;
+                use ::core::fmt::{self, Formatter};
+                use ::core::str::FromStr;
 
                 struct Visitor;
                 impl<'de> $crate::serde::de::Visitor<'de> for Visitor {
@@ -232,8 +232,8 @@ macro_rules! serde_struct_human_string_impl {
                 D: $crate::serde::de::Deserializer<'de>,
             {
                 if deserializer.is_human_readable() {
-                    use ::std::fmt::{self, Formatter};
-                    use ::std::str::FromStr;
+                    use ::core::fmt::{self, Formatter};
+                    use ::core::str::FromStr;
 
                     struct Visitor;
                     impl<'de> $crate::serde::de::Visitor<'de> for Visitor {
@@ -267,7 +267,7 @@ macro_rules! serde_struct_human_string_impl {
 
                     deserializer.deserialize_str(Visitor)
                 } else {
-                    use ::std::fmt::{self, Formatter};
+                    use ::core::fmt::{self, Formatter};
                     use $crate::serde::de::IgnoredAny;
 
                     #[allow(non_camel_case_types)]
@@ -408,15 +408,15 @@ macro_rules! serde_struct_human_string_impl {
 
 /// Implements several traits for byte-based newtypes.
 /// Implements:
-/// - std::fmt::LowerHex (implies hashes::hex::ToHex)
-/// - std::fmt::Display
-/// - std::str::FromStr
+/// - core::fmt::LowerHex (implies hashes::hex::ToHex)
+/// - core::fmt::Display
+/// - core::str::FromStr
 /// - hashes::hex::FromHex
 macro_rules! impl_bytes_newtype {
     ($t:ident, $len:expr) => (
 
-        impl ::std::fmt::LowerHex for $t {
-            fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+        impl ::core::fmt::LowerHex for $t {
+            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
                 for &ch in self.0.iter() {
                     write!(f, "{:02x}", ch)?;
                 }
@@ -424,23 +424,23 @@ macro_rules! impl_bytes_newtype {
             }
         }
 
-        impl ::std::fmt::Display for $t {
-            fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+        impl ::core::fmt::Display for $t {
+            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
                 fmt::LowerHex::fmt(self, f)
             }
         }
 
-        impl ::std::fmt::Debug for $t {
-            fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+        impl ::core::fmt::Debug for $t {
+            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
                 fmt::LowerHex::fmt(self, f)
             }
         }
 
         impl $crate::hashes::hex::FromHex for $t {
             fn from_byte_iter<I>(iter: I) -> Result<Self, $crate::hashes::hex::Error>
-                where I: ::std::iter::Iterator<Item=Result<u8, $crate::hashes::hex::Error>> +
-                    ::std::iter::ExactSizeIterator +
-                    ::std::iter::DoubleEndedIterator,
+                where I: ::core::iter::Iterator<Item=Result<u8, $crate::hashes::hex::Error>> +
+                    ::core::iter::ExactSizeIterator +
+                    ::core::iter::DoubleEndedIterator,
             {
                 if iter.len() == $len {
                     let mut ret = [0; $len];
@@ -454,7 +454,7 @@ macro_rules! impl_bytes_newtype {
             }
         }
 
-        impl ::std::str::FromStr for $t {
+        impl ::core::str::FromStr for $t {
             type Err = $crate::hashes::hex::Error;
             fn from_str(s: &str) -> Result<Self, Self::Err> {
                 $crate::hashes::hex::FromHex::from_hex(s)
@@ -481,7 +481,7 @@ macro_rules! impl_bytes_newtype {
                     impl<'de> $crate::serde::de::Visitor<'de> for HexVisitor {
                         type Value = $t;
 
-                        fn expecting(&self, formatter: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+                        fn expecting(&self, formatter: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
                             formatter.write_str("an ASCII hex string")
                         }
 
@@ -489,7 +489,7 @@ macro_rules! impl_bytes_newtype {
                         where
                             E: $crate::serde::de::Error,
                         {
-                            if let Ok(hex) = ::std::str::from_utf8(v) {
+                            if let Ok(hex) = ::core::str::from_utf8(v) {
                                 $crate::hashes::hex::FromHex::from_hex(hex).map_err(E::custom)
                             } else {
                                 return Err(E::invalid_value($crate::serde::de::Unexpected::Bytes(v), &self));
@@ -511,7 +511,7 @@ macro_rules! impl_bytes_newtype {
                     impl<'de> $crate::serde::de::Visitor<'de> for BytesVisitor {
                         type Value = $t;
 
-                        fn expecting(&self, formatter: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+                        fn expecting(&self, formatter: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
                             formatter.write_str("a bytestring")
                         }
 
@@ -549,22 +549,22 @@ macro_rules! user_enum {
             $(#[$doc] $elem),*
         }
 
-        impl ::std::fmt::Display for $name {
-            fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+        impl ::core::fmt::Display for $name {
+            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
                 f.pad(match *self {
                     $($name::$elem => $txt),*
                 })
             }
         }
 
-        impl ::std::str::FromStr for $name {
-            type Err = ::std::io::Error;
+        impl ::core::str::FromStr for $name {
+            type Err = $crate::io::Error;
             #[inline]
             fn from_str(s: &str) -> Result<Self, Self::Err> {
                 match s {
                     $($txt => Ok($name::$elem)),*,
-                    _ => Err(::std::io::Error::new(
-                        ::std::io::ErrorKind::InvalidInput,
+                    _ => Err($crate::io::Error::new(
+                        $crate::io::ErrorKind::InvalidInput,
                         format!("Unknown network (type {})", s),
                     )),
                 }
@@ -578,7 +578,7 @@ macro_rules! user_enum {
             where
                 D: $crate::serde::Deserializer<'de>,
             {
-                use ::std::fmt::{self, Formatter};
+                use ::core::fmt::{self, Formatter};
 
                 struct Visitor;
                 impl<'de> $crate::serde::de::Visitor<'de> for Visitor {

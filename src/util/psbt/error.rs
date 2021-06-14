@@ -13,7 +13,7 @@
 //
 
 use std::error;
-use std::fmt;
+use core::fmt;
 
 use blockdata::transaction::Transaction;
 use consensus::encode;

@@ -19,7 +19,7 @@
 //! single transaction
 //!
 
-use std::default::Default;
+use core::default::Default;
 
 use hashes::hex::FromHex;
 use hashes::sha256d;
@@ -160,7 +160,7 @@ pub fn genesis_block(network: Network) -> Block {
 
 #[cfg(test)]
 mod test {
-    use std::default::Default;
+    use core::default::Default;
     use hashes::hex::FromHex;
 
     use network::constants::Network;
