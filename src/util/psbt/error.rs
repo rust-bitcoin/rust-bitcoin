@@ -55,9 +55,9 @@ pub enum Error {
     /// transaction.
     UnexpectedUnsignedTx {
         /// Expected
-        expected: Transaction,
+        expected: Box<Transaction>,
         /// Actual
-        actual: Transaction,
+        actual: Box<Transaction>,
     },
     /// Unable to parse as a standard SigHash type.
     NonStandardSigHashType(u32),
@@ -68,9 +68,9 @@ pub enum Error {
         /// Hash-type
         hash_type: PsbtHash,
         /// Pre-image
-        preimage: Vec<u8>,
+        preimage: Box<[u8]>,
         /// Hash value
-        hash: Vec<u8>,
+        hash: Box<[u8]>,
     },
     /// Data inconsistency/conflicting data during merge procedure
     MergeConflict(String),

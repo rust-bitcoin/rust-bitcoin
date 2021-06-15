@@ -430,8 +430,6 @@ pub enum Error {
     Ecdsa(secp256k1::Error), // TODO: This is not necessary ECDSA error and should be renamed
     /// A child number was provided that was out of range
     InvalidChildNumber(u32),
-    /// Error creating a master seed --- for application use
-    RngError(String), // TODO: This option seems unused and should be removed, opening a way to make this type copiable
     /// Invalid childnumber format.
     InvalidChildNumberFormat,
     /// Invalid derivation path format.
@@ -450,7 +448,6 @@ impl fmt::Display for Error {
             Error::CannotDeriveFromHardenedKey => f.write_str("cannot derive hardened key from public key"),
             Error::Ecdsa(ref e) => fmt::Display::fmt(e, f),
             Error::InvalidChildNumber(ref n) => write!(f, "child number {} is invalid (not within [0, 2^31 - 1])", n),
-            Error::RngError(ref s) => write!(f, "rng error {}", s),
             Error::InvalidChildNumberFormat => f.write_str("invalid child number format"),
             Error::InvalidDerivationPathFormat => f.write_str("invalid derivation path format"),
             Error::UnknownVersion(ref bytes) => write!(f, "unknown version magic bytes: {:?}", bytes),

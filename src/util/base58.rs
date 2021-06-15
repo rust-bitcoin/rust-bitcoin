@@ -18,8 +18,9 @@ use std::error;
 use core::{fmt, str, iter, slice};
 
 use hashes::{sha256d, Hash};
+use secp256k1;
 
-use util::endian;
+use util::{endian, key};
 
 /// An error that might occur during base58 decoding
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
@@ -32,12 +33,14 @@ pub enum Error {
     /// Note that if the length is excessively long the provided length may be
     /// an estimate (and the checksum step may be skipped).
     InvalidLength(usize),
-    /// Version byte(s) were not recognized
-    InvalidVersion(Vec<u8>),
+    /// Extended Key version byte(s) were not recognized
+    InvalidExtendedKeyVersion([u8; 4]),
+    /// Address version byte were not recognized
+    InvalidAddressVersion(u8),
     /// Checked data was less than 4 bytes
     TooShort(usize),
-    /// Any other error
-    Other(String)
+    /// Secp256k1 error while parsing a secret key
+    Secp256k1(secp256k1::Error),
 }
 
 impl fmt::Display for Error {
@@ -46,9 +49,10 @@ impl fmt::Display for Error {
             Error::BadByte(b) => write!(f, "invalid base58 character 0x{:x}", b),
             Error::BadChecksum(exp, actual) => write!(f, "base58ck checksum 0x{:x} does not match expected 0x{:x}", actual, exp),
             Error::InvalidLength(ell) => write!(f, "length {} invalid for this base58 type", ell),
-            Error::InvalidVersion(ref v) => write!(f, "version {:?} invalid for this base58 type", v),
+            Error::InvalidAddressVersion(ref v) => write!(f, "address version {} is invalid for this base58 type", v),
+            Error::InvalidExtendedKeyVersion(ref v) => write!(f, "extended key version {:#04x?} is invalid for this base58 type", v),
             Error::TooShort(_) => write!(f, "base58ck data not even long enough for a checksum"),
-            Error::Other(ref s) => f.write_str(s)
+            Error::Secp256k1(ref e) => fmt::Display::fmt(&e, f),
         }
     }
 }
@@ -238,6 +242,15 @@ pub fn check_encode_slice_to_fmt(fmt: &mut fmt::Formatter, data: &[u8]) -> fmt::
     format_iter(fmt, iter)
 }
 
+#[doc(hidden)]
+impl From<key::Error> for Error {
+    fn from(e: key::Error) -> Self {
+        match e {
+            key::Error::Secp256k1(e) => Error::Secp256k1(e),
+            key::Error::Base58(e) => e,
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {

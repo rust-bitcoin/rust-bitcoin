@@ -169,8 +169,8 @@ impl Map for Global {
     fn merge(&mut self, other: Self) -> Result<(), psbt::Error> {
         if self.unsigned_tx != other.unsigned_tx {
             return Err(psbt::Error::UnexpectedUnsignedTx {
-                expected: self.unsigned_tx.clone(),
-                actual: other.unsigned_tx,
+                expected: Box::new(self.unsigned_tx.clone()),
+                actual: Box::new(other.unsigned_tx),
             });
         }
 

@@ -507,7 +507,7 @@ impl FromStr for Address {
                 Network::Testnet,
                 Payload::ScriptHash(ScriptHash::from_slice(&data[1..]).unwrap()),
             ),
-            x => return Err(Error::Base58(base58::Error::InvalidVersion(vec![x]))),
+            x => return Err(Error::Base58(base58::Error::InvalidAddressVersion(x))),
         };
 
         Ok(Address {
