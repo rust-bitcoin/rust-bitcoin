@@ -27,7 +27,7 @@ fn do_test(data: &[u8]) {
         } }
     }
 
-    if data.len() != 16*2 + 1 { return; }
+    if data.len() != 16*2 { return; }
     let (a_native, a) = read_ints!(0);
 
     // Checks using only a:
