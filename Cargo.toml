@@ -22,7 +22,7 @@ secp-lowmemory = ["secp256k1/lowmemory"]
 secp-recovery = ["secp256k1/recovery"]
 
 [dependencies]
-bech32 = "0.7.3"
+bech32 = "0.8.0"
 bitcoin_hashes = "0.9.6"
 secp256k1 = "0.20.2"
 

@@ -160,6 +160,7 @@ mod message_signing {
                 Some(AddressType::P2sh) => false,
                 Some(AddressType::P2wpkh) => false,
                 Some(AddressType::P2wsh) => false,
+                Some(AddressType::P2tr) => false,
                 None => false,
             })
         }

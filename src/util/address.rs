@@ -36,17 +36,20 @@
 use core::fmt;
 use core::str::FromStr;
 use std::error;
+use std::num::ParseIntError;
 
+use secp256k1::schnorrsig;
 use bech32;
 use hashes::Hash;
 use hash_types::{PubkeyHash, WPubkeyHash, ScriptHash, WScriptHash};
-use blockdata::script;
+use blockdata::{script, opcodes};
 use network::constants::Network;
 use util::base58;
 use util::ecdsa;
+use blockdata::script::Instruction;
 
 /// Address error.
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Error {
     /// Base58 encoding error
     Base58(base58::Error),
@@ -54,8 +57,14 @@ pub enum Error {
     Bech32(bech32::Error),
     /// The bech32 payload was empty
     EmptyBech32Payload,
+    /// The wrong checksum algorithm was used. See BIP-0350.
+    InvalidBech32Variant,
     /// Script version must be 0 to 16 inclusive
     InvalidWitnessVersion(u8),
+    /// Unable to parse witness version from string or opcode value
+    UnparsableWitnessVersion(ParseIntError),
+    /// Bitcoin script opcode does not match any known witness version, the script if malformed
+    MalformedWitnessVersion,
     /// The witness program must be between 2 and 40 bytes in length.
     InvalidWitnessProgramLength(usize),
     /// A v0 witness program must be either of length 20 or 32.
@@ -70,7 +79,10 @@ impl fmt::Display for Error {
             Error::Base58(ref e) => write!(f, "base58: {}", e),
             Error::Bech32(ref e) => write!(f, "bech32: {}", e),
             Error::EmptyBech32Payload => write!(f, "the bech32 payload was empty"),
+            Error::InvalidBech32Variant => write!(f, "invalid bech32 checksum variant"),
             Error::InvalidWitnessVersion(v) => write!(f, "invalid witness script version: {}", v),
+            Error::UnparsableWitnessVersion(ref e) => write!(f, "Incorrect format of a witness version byte: {}", e),
+            Error::MalformedWitnessVersion => f.write_str("bitcoin script opcode does not match any known witness version, the script if malformed"),
             Error::InvalidWitnessProgramLength(l) => write!(f,
                 "the witness program must be between 2 and 40 bytes in length: length={}", l,
             ),
@@ -89,6 +101,7 @@ impl error::Error for Error {
         match *self {
             Error::Base58(ref e) => Some(e),
             Error::Bech32(ref e) => Some(e),
+            Error::UnparsableWitnessVersion(ref e) => Some(e),
             _ => None,
         }
     }
@@ -119,6 +132,8 @@ pub enum AddressType {
     P2wpkh,
     /// pay-to-witness-script-hash
     P2wsh,
+    /// pay-to-taproot
+    P2tr,
 }
 
 impl fmt::Display for AddressType {
@@ -128,6 +143,7 @@ impl fmt::Display for AddressType {
             AddressType::P2sh => "p2sh",
             AddressType::P2wpkh => "p2wpkh",
             AddressType::P2wsh => "p2wsh",
+            AddressType::P2tr => "p2tr",
         })
     }
 }
@@ -140,7 +156,183 @@ impl FromStr for AddressType {
             "p2sh" => Ok(AddressType::P2sh),
             "p2wpkh" => Ok(AddressType::P2wpkh),
             "p2wsh" => Ok(AddressType::P2wsh),
+            "p2tr" => Ok(AddressType::P2tr),
             _ => Err(()),
+        }
+    }
+}
+
+/// Version of the WitnessProgram: first byte of `scriptPubkey` in
+/// transaction output for transactions starting with opcodes ranging from 0
+/// to 16 (inclusive).
+///
+/// Structure helps to limit possible version of the witness according to the
+/// specification; if a plain `u8` type will be used instead it will mean that
+/// version > 16, which is incorrect.
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[repr(u8)]
+pub enum WitnessVersion {
+    /// Initial version of Witness Program. Used for P2WPKH and P2WPK outputs
+    V0 = 0,
+    /// Version of Witness Program used for Taproot P2TR outputs
+    V1 = 1,
+    /// Future (unsupported) version of Witness Program
+    V2 = 2,
+    /// Future (unsupported) version of Witness Program
+    V3 = 3,
+    /// Future (unsupported) version of Witness Program
+    V4 = 4,
+    /// Future (unsupported) version of Witness Program
+    V5 = 5,
+    /// Future (unsupported) version of Witness Program
+    V6 = 6,
+    /// Future (unsupported) version of Witness Program
+    V7 = 7,
+    /// Future (unsupported) version of Witness Program
+    V8 = 8,
+    /// Future (unsupported) version of Witness Program
+    V9 = 9,
+    /// Future (unsupported) version of Witness Program
+    V10 = 10,
+    /// Future (unsupported) version of Witness Program
+    V11 = 11,
+    /// Future (unsupported) version of Witness Program
+    V12 = 12,
+    /// Future (unsupported) version of Witness Program
+    V13 = 13,
+    /// Future (unsupported) version of Witness Program
+    V14 = 14,
+    /// Future (unsupported) version of Witness Program
+    V15 = 15,
+    /// Future (unsupported) version of Witness Program
+    V16 = 16,
+}
+
+impl fmt::Display for WitnessVersion {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", *self as u8)
+    }
+}
+
+
+impl FromStr for WitnessVersion {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let version = u8::from_str(s).map_err(|err| Error::UnparsableWitnessVersion(err))?;
+        WitnessVersion::from_no(version)
+    }
+}
+
+impl WitnessVersion {
+    /// Converts 5-bit unsigned integer value matching single symbol from Bech32(m) address encoding
+    /// ([`bech32::u5`]) into [`WitnessVersion`] variant.
+    ///
+    /// # Returns
+    /// Version of the Witness program
+    ///
+    /// # Errors
+    /// If the integer does not corresponds to any witness version, errors with
+    /// [`Error::InvalidWitnessVersion`]
+    pub fn from_u5(value: ::bech32::u5) -> Result<Self, Error> {
+        WitnessVersion::from_no(value.to_u8())
+    }
+
+    /// Converts 8-bit unsigned integer value into [`WitnessVersion`] variant.
+    ///
+    /// # Returns
+    /// Version of the Witness program
+    ///
+    /// # Errors
+    /// If the integer does not corresponds to any witness version, errors with
+    /// [`Error::InvalidWitnessVersion`]
+    pub fn from_no(no: u8) -> Result<Self, Error> {
+        Ok(match no {
+            0 => WitnessVersion::V0,
+            1 => WitnessVersion::V1,
+            2 => WitnessVersion::V2,
+            3 => WitnessVersion::V3,
+            4 => WitnessVersion::V4,
+            5 => WitnessVersion::V5,
+            6 => WitnessVersion::V6,
+            7 => WitnessVersion::V7,
+            8 => WitnessVersion::V8,
+            9 => WitnessVersion::V9,
+            10 => WitnessVersion::V10,
+            11 => WitnessVersion::V11,
+            12 => WitnessVersion::V12,
+            13 => WitnessVersion::V13,
+            14 => WitnessVersion::V14,
+            15 => WitnessVersion::V15,
+            16 => WitnessVersion::V16,
+            wrong => Err(Error::InvalidWitnessVersion(wrong))?,
+        })
+    }
+
+    /// Converts bitcoin script opcode into [`WitnessVersion`] variant.
+    ///
+    /// # Returns
+    /// Version of the Witness program (for opcodes in range of `OP_0`..`OP_16`)
+    ///
+    /// # Errors
+    /// If the opcode does not corresponds to any witness version, errors with
+    /// [`Error::UnparsableWitnessVersion`] for the rest of opcodes
+    pub fn from_opcode(opcode: opcodes::All) -> Result<Self, Error> {
+        match opcode.into_u8() {
+            0 => Ok(WitnessVersion::V0),
+            version if version >= opcodes::all::OP_PUSHNUM_1.into_u8() && version <= opcodes::all::OP_PUSHNUM_16.into_u8() =>
+                WitnessVersion::from_no(version - opcodes::all::OP_PUSHNUM_1.into_u8() + 1),
+            _ => Err(Error::MalformedWitnessVersion)
+        }
+    }
+
+    /// Converts bitcoin script [`Instruction`] (parsed opcode) into [`WitnessVersion`] variant.
+    ///
+    /// # Returns
+    /// Version of the Witness program for [`Instruction::Op`] and [`Instruction::PushBytes`] with
+    /// byte value within `1..=16` range.
+    ///
+    /// # Errors
+    /// If the opcode does not corresponds to any witness version, errors with
+    /// [`Error::UnparsableWitnessVersion`] for the rest of opcodes
+    pub fn from_instruction(instruction: Instruction) -> Result<Self, Error> {
+        match instruction {
+            Instruction::Op(op) => WitnessVersion::from_opcode(op),
+            Instruction::PushBytes(bytes) if bytes.len() == 0 => Ok(WitnessVersion::V0),
+            Instruction::PushBytes(_) => Err(Error::MalformedWitnessVersion),
+        }
+    }
+
+    /// Returns integer version number representation for a given [`WitnessVersion`] value.
+    /// NB: this is not the same as an integer representation of the opcode signifying witness
+    /// version in bitcoin script. Thus, there is no function to directly convert witness version
+    /// into a byte since the conversion requires context (bitcoin script or just a version number)
+    pub fn into_no(self) -> u8 {
+        self as u8
+    }
+
+    /// Determine the checksum variant. See BIP-0350 for specification.
+    pub fn bech32_variant(&self) -> bech32::Variant {
+        match self {
+            WitnessVersion::V0 => bech32::Variant::Bech32,
+            _ => bech32::Variant::Bech32m,
+        }
+    }
+}
+
+impl From<WitnessVersion> for ::bech32::u5 {
+    /// Converts [`WitnessVersion`] instance into corresponding Bech32(m) u5-value ([`bech32::u5`])
+    fn from(version: WitnessVersion) -> Self {
+        ::bech32::u5::try_from_u8(version.into_no()).expect("WitnessVersion must be 0..=16")
+    }
+}
+
+impl From<WitnessVersion> for opcodes::All {
+    /// Converts [`WitnessVersion`] instance into corresponding Bitcoin scriptopcode (`OP_0`..`OP_16`)
+    fn from(version: WitnessVersion) -> opcodes::All {
+        match version {
+            WitnessVersion::V0 => opcodes::all::OP_PUSHBYTES_0,
+            no => opcodes::All::from(opcodes::all::OP_PUSHNUM_1.into_u8() + no.into_no() - 1)
         }
     }
 }
@@ -155,7 +347,7 @@ pub enum Payload {
     /// Segwit addresses
     WitnessProgram {
         /// The witness program version
-        version: bech32::u5,
+        version: WitnessVersion,
         /// The witness program
         program: Vec<u8>,
     },
@@ -165,23 +357,17 @@ impl Payload {
     /// Get a [Payload] from an output script (scriptPubkey).
     pub fn from_script(script: &script::Script) -> Option<Payload> {
         Some(if script.is_p2pkh() {
-            Payload::PubkeyHash(PubkeyHash::from_slice(&script.as_bytes()[3..23]).unwrap())
+            let mut hash_inner = [0u8; 20];
+            hash_inner.copy_from_slice(&script.as_bytes()[3..23]);
+            Payload::PubkeyHash(PubkeyHash::from_inner(hash_inner))
         } else if script.is_p2sh() {
-            Payload::ScriptHash(ScriptHash::from_slice(&script.as_bytes()[2..22]).unwrap())
+            let mut hash_inner = [0u8; 20];
+            hash_inner.copy_from_slice(&script.as_bytes()[2..22]);
+            Payload::ScriptHash(ScriptHash::from_inner(hash_inner))
         } else if script.is_witness_program() {
-            // We can unwrap the u5 check and assume script length
-            // because [Script::is_witness_program] makes sure of this.
             Payload::WitnessProgram {
-                version: {
-                    // Since we passed the [is_witness_program] check,
-                    // the first byte is either 0x00 or 0x50 + version.
-                    let mut verop = script.as_bytes()[0];
-                    if verop > 0x50 {
-                        verop -= 0x50;
-                    }
-                    bech32::u5::try_from_u8(verop).expect("checked before")
-                },
-                program: script.as_bytes()[2..].to_vec(),
+                version: WitnessVersion::from_opcode(opcodes::All::from(script[0])).ok()?,
+                program: script[2..].to_vec(),
             }
         } else {
             return None;
@@ -196,9 +382,9 @@ impl Payload {
             Payload::ScriptHash(ref hash) =>
                 script::Script::new_p2sh(hash),
             Payload::WitnessProgram {
-                version: ver,
+                version,
                 program: ref prog,
-            } => script::Script::new_witness_program(ver, prog)
+            } => script::Script::new_witness_program(version, prog)
         }
     }
 }
@@ -252,7 +438,7 @@ impl Address {
         Ok(Address {
             network: network,
             payload: Payload::WitnessProgram {
-                version: bech32::u5::try_from_u8(0).expect("0<32"),
+                version: WitnessVersion::V0,
                 program: WPubkeyHash::from_engine(hash_engine)[..].to_vec(),
             },
         })
@@ -285,7 +471,7 @@ impl Address {
         Address {
             network: network,
             payload: Payload::WitnessProgram {
-                version: bech32::u5::try_from_u8(0).expect("0<32"),
+                version: WitnessVersion::V0,
                 program: WScriptHash::hash(&script[..])[..].to_vec(),
             },
         }
@@ -305,23 +491,35 @@ impl Address {
         }
     }
 
+    /// Create a pay to taproot address
+    pub fn p2tr(taptweaked_key: schnorrsig::PublicKey, network: Network) -> Address {
+        Address {
+            network: network,
+            payload: Payload::WitnessProgram {
+                version: WitnessVersion::V1,
+                program: taptweaked_key.serialize().to_vec()
+            }
+        }
+    }
+
     /// Get the address type of the address.
-    /// None if unknown or non-standard.
+    /// None if unknown, non-standard or related to the future witness version.
     pub fn address_type(&self) -> Option<AddressType> {
         match self.payload {
             Payload::PubkeyHash(_) => Some(AddressType::P2pkh),
             Payload::ScriptHash(_) => Some(AddressType::P2sh),
             Payload::WitnessProgram {
-                version: ver,
+                version,
                 program: ref prog,
             } => {
                 // BIP-141 p2wpkh or p2wsh addresses.
-                match ver.to_u8() {
-                    0 => match prog.len() {
+                match version {
+                    WitnessVersion::V0 => match prog.len() {
                         20 => Some(AddressType::P2wpkh),
                         32 => Some(AddressType::P2wsh),
                         _ => None,
                     },
+                    WitnessVersion::V1 if prog.len() == 32 => Some(AddressType::P2tr),
                     _ => None,
                 }
             }
@@ -329,7 +527,7 @@ impl Address {
     }
 
     /// Check whether or not the address is following Bitcoin
-    /// standardness rules.
+    /// standard rules.
     ///
     /// Segwit addresses with unassigned witness versions or non-standard
     /// program sizes are considered non-standard.
@@ -390,7 +588,7 @@ impl fmt::Display for Address {
                 base58::check_encode_slice_to_fmt(fmt, &prefixed[..])
             }
             Payload::WitnessProgram {
-                version: ver,
+                version,
                 program: ref prog,
             } => {
                 let hrp = match self.network {
@@ -405,8 +603,8 @@ impl fmt::Display for Address {
                 } else {
                     fmt as &mut dyn fmt::Write
                 };
-                let mut bech32_writer = bech32::Bech32Writer::new(hrp, writer)?;
-                bech32::WriteBase32::write_u5(&mut bech32_writer, ver)?;
+                let mut bech32_writer = bech32::Bech32Writer::new(hrp, version.bech32_variant(), writer)?;
+                bech32::WriteBase32::write_u5(&mut bech32_writer, version.into())?;
                 bech32::ToBase32::write_base32(&prog, &mut bech32_writer)
             }
         }
@@ -448,28 +646,29 @@ impl FromStr for Address {
         };
         if let Some(network) = bech32_network {
             // decode as bech32
-            let (_, payload) = bech32::decode(s)?;
+            let (_, payload, variant) = bech32::decode(s)?;
             if payload.is_empty() {
                 return Err(Error::EmptyBech32Payload);
             }
 
             // Get the script version and program (converted from 5-bit to 8-bit)
-            let (version, program): (bech32::u5, Vec<u8>) = {
+            let (version, program): (WitnessVersion, Vec<u8>) = {
                 let (v, p5) = payload.split_at(1);
-                (v[0], bech32::FromBase32::from_base32(p5)?)
+                (WitnessVersion::from_u5(v[0])?, bech32::FromBase32::from_base32(p5)?)
             };
 
-            // Generic segwit checks.
-            if version.to_u8() > 16 {
-                return Err(Error::InvalidWitnessVersion(version.to_u8()));
-            }
             if program.len() < 2 || program.len() > 40 {
                 return Err(Error::InvalidWitnessProgramLength(program.len()));
             }
 
             // Specific segwit v0 check.
-            if version.to_u8() == 0 && (program.len() != 20 && program.len() != 32) {
+            if version == WitnessVersion::V0 && (program.len() != 20 && program.len() != 32) {
                 return Err(Error::InvalidSegwitV0ProgramLength(program.len()));
+            }
+
+            // Encoding check
+            if version.bech32_variant() != variant {
+                return Err(Error::InvalidBech32Variant);
             }
 
             return Ok(Address {
@@ -665,14 +864,13 @@ mod tests {
 
     #[test]
     fn test_non_existent_segwit_version() {
-        let version = 13;
         // 40-byte program
         let program = hex!(
             "654f6ea368e0acdfd92976b7c2103a1b26313f430654f6ea368e0acdfd92976b7c2103a1b26313f4"
         );
         let addr = Address {
             payload: Payload::WitnessProgram {
-                version: bech32::u5::try_from_u8(version).expect("0<32"),
+                version: WitnessVersion::V13,
                 program: program,
             },
             network: Network::Bitcoin,
@@ -681,14 +879,16 @@ mod tests {
     }
 
     #[test]
-    fn test_bip173_vectors() {
+    fn test_bip350_vectors() {
         let valid_vectors = [
             ("BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4", "0014751e76e8199196d454941c45d1b3a323f1433bd6"),
             ("tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7", "00201863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262"),
-            ("bc1pw508d6qejxtdg4y5r3zarvary0c5xw7kw508d6qejxtdg4y5r3zarvary0c5xw7k7grplx", "5128751e76e8199196d454941c45d1b3a323f1433bd6751e76e8199196d454941c45d1b3a323f1433bd6"),
-            ("BC1SW50QA3JX3S", "6002751e"),
-            ("bc1zw508d6qejxtdg4y5r3zarvaryvg6kdaj", "5210751e76e8199196d454941c45d1b3a323"),
+            ("bc1pw508d6qejxtdg4y5r3zarvary0c5xw7kw508d6qejxtdg4y5r3zarvary0c5xw7kt5nd6y", "5128751e76e8199196d454941c45d1b3a323f1433bd6751e76e8199196d454941c45d1b3a323f1433bd6"),
+            ("BC1SW50QGDZ25J", "6002751e"),
+            ("bc1zw508d6qejxtdg4y5r3zarvaryvaxxpcs", "5210751e76e8199196d454941c45d1b3a323"),
             ("tb1qqqqqp399et2xygdj5xreqhjjvcmzhxw4aywxecjdzew6hylgvsesrxh6hy", "0020000000c4a5cad46221b2a187905e5266362b99d5e91c6ce24d165dab93e86433"),
+            ("tb1pqqqqp399et2xygdj5xreqhjjvcmzhxw4aywxecjdzew6hylgvsesf3hn0c", "5120000000c4a5cad46221b2a187905e5266362b99d5e91c6ce24d165dab93e86433"),
+            ("bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqzk5jj0", "512079be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"),
         ];
         for vector in &valid_vectors {
             let addr: Address = vector.0.parse().unwrap();
@@ -697,15 +897,20 @@ mod tests {
         }
 
         let invalid_vectors = [
-            "tc1qw508d6qejxtdg4y5r3zarvary0c5xw7kg3g4ty",
-            "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t5",
-            "BC13W508D6QEJXTDG4Y5R3ZARVARY0C5XW7KN40WF2",
-            "bc1rw5uspcuh",
-            "bc10w508d6qejxtdg4y5r3zarvary0c5xw7kw508d6qejxtdg4y5r3zarvary0c5xw7kw5rljs90",
+            "tc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vq5zuyut",
+            "bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqh2y7hd",
+            "tb1z0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqglt7rf",
+            "BC1S0XLXVLHEMJA6C4DQV22UAPCTQUPFHLXM9H8Z3K2E72Q4K9HCZ7VQ54WELL",
+            "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kemeawh",
+            "tb1q0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vq24jc47",
+            "bc1p38j9r5y49hruaue7wxjce0updqjuyyx0kh56v8s25huc6995vvpql3jow4",
+            "BC130XLXVLHEMJA6C4DQV22UAPCTQUPFHLXM9H8Z3K2E72Q4K9HCZ7VQ7ZWS8R",
+            "bc1pw5dgrnzv",
+            "bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7v8n0nx0muaewav253zgeav",
             "BC1QR508D6QEJXTDG4Y5R3ZARVARYV98GJ9P",
-            "tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sL5k7",
-            "bc1zw508d6qejxtdg4y5r3zarvaryvqyzf3du",
-            "tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3pjxtptv",
+            "tb1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vq47Zagq",
+            "bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7v07qwwzcrf",
+            "tb1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vpggkg4j",
             "bc1gmk9yu",
         ];
         for vector in &invalid_vectors {
