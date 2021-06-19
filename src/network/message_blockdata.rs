@@ -50,6 +50,20 @@ pub enum Inventory {
     }
 }
 
+impl Inventory {
+    /// Return the item value represented as a SHA256-d hash.
+    pub fn hash(&self) -> sha256d::Hash {
+        match *self {
+            Inventory::Error => sha256d::Hash::default(),
+            Inventory::Transaction(t) => t.as_hash(),
+            Inventory::Block(b) => b.as_hash(),
+            Inventory::WTx(t) => t.as_hash(),
+            Inventory::WitnessTransaction(t) => t.as_hash(),
+            Inventory::WitnessBlock(b) => b.as_hash(),
+        }
+    }
+}
+
 impl Encodable for Inventory {
     #[inline]
     fn consensus_encode<S: io::Write>(
