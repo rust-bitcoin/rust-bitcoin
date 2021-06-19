@@ -2,6 +2,14 @@
 
 FEATURES="base64 bitcoinconsensus use-serde rand"
 
+# Old cargo format is incompatible with a newer ones, so we need to clean this up
+rm -f Cargo.lock
+# Use toolchain if explicitly specified
+if [ -n "$TOOLCHAIN" ]
+then
+    alias cargo='cargo +"${TOOLCHAIN}"'
+fi
+
 pin_common_verions() {
     cargo generate-lockfile --verbose
     cargo update -p cc --precise "1.0.41" --verbose
@@ -20,13 +28,6 @@ then
     export RUSTFLAGS="-C link-dead-code"
 fi
 
-
-# Use toolchain if explicitly specified
-if [ -n "$TOOLCHAIN" ]
-then
-    alias cargo="cargo +$TOOLCHAIN"
-fi
-
 # Test without any features first
 cargo test --verbose --no-default-features
 # Then test with the default features
@@ -38,6 +39,8 @@ do
     cargo test --verbose --features="$feature"
 done
 
+# Ensure that `fuzztarget` builds with no error even if fuzz testing is not used
+cargo build --features fuzztarget
 # Fuzz if told to
 if [ "$DO_FUZZ" = true ]
 then
@@ -67,4 +70,7 @@ then
     fi
 
     cargo test --verbose
+
+    cd ..
+    rm -rf dep_test
 fi
