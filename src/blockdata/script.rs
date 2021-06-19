@@ -40,6 +40,7 @@ use policy::DUST_RELAY_TX_FEE;
 #[cfg(feature="bitcoinconsensus")] use OutPoint;
 
 use util::ecdsa::PublicKey;
+use util::schnorr;
 
 #[derive(Clone, Default, PartialOrd, Ord, PartialEq, Eq, Hash)]
 /// A Bitcoin script
@@ -266,12 +267,17 @@ impl Script {
 
     /// Generates P2WPKH-type of scriptPubkey
     pub fn new_v0_wpkh(pubkey_hash: &WPubkeyHash) -> Script {
-        Script::new_witness_program(::bech32::u5::try_from_u8(0).unwrap(), &pubkey_hash.to_vec())
+        Script::new_witness_program(::bech32::u5::try_from_u8(0).unwrap(), &pubkey_hash)
     }
 
     /// Generates P2WSH-type of scriptPubkey with a given hash of the redeem script
     pub fn new_v0_wsh(script_hash: &WScriptHash) -> Script {
-        Script::new_witness_program(::bech32::u5::try_from_u8(0).unwrap(), &script_hash.to_vec())
+        Script::new_witness_program(::bech32::u5::try_from_u8(0).unwrap(), &script_hash)
+    }
+
+    /// Generates P2TR-type of scriptPubkey
+    pub fn new_v1_tr(public_key: &schnorr::PublicKey) -> Script {
+        Script::new_witness_program(::bech32::u5::try_from_u8(1).unwrap(), &public_key.serialize())
     }
 
     /// Generates P2WSH-type of scriptPubkey with a given hash of the redeem script
@@ -396,6 +402,14 @@ impl Script {
         self.0.len() == 22 &&
             self.0[0] == opcodes::all::OP_PUSHBYTES_0.into_u8() &&
             self.0[1] == opcodes::all::OP_PUSHBYTES_20.into_u8()
+    }
+
+    /// Checks whether a script pubkey is a p2tr output
+    #[inline]
+    pub fn is_v1_p2tr(&self) -> bool {
+        self.0.len() == 34 &&
+        self.0[0] == opcodes::all::OP_PUSHNUM_1.into_u8() &&
+        self.0[1] == opcodes::all::OP_PUSHBYTES_32.into_u8()
     }
 
     /// Check if this is an OP_RETURN output
