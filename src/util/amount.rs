@@ -864,7 +864,7 @@ impl ::std::iter::Sum for SignedAmount {
 }
 
 /// Calculate the sum over the iterator using checked arithmetic.
-pub trait CheckedSum<R> {
+pub trait CheckedSum<R>: private::SumSeal<R> {
     /// Calculate the sum over the iterator using checked arithmetic. If an over or underflow would
     /// happen it returns `None`.
     fn checked_sum(self) -> Option<R>;
@@ -890,6 +890,16 @@ impl<T> CheckedSum<SignedAmount> for T where T: Iterator<Item = SignedAmount> {
             |acc, item| acc.and_then(|acc| acc.checked_add(item))
         )
     }
+}
+
+mod private {
+    use ::{Amount, SignedAmount};
+
+    /// Used to seal the `CheckedSum` trait
+    pub trait SumSeal<A> {}
+
+    impl<T> SumSeal<Amount> for T where T: Iterator<Item = Amount> {}
+    impl<T> SumSeal<SignedAmount> for T where T: Iterator<Item = SignedAmount> {}
 }
 
 #[cfg(feature = "serde")]
