@@ -19,12 +19,13 @@
 
 use io;
 
+use secp256k1;
 use blockdata::script::Script;
 use blockdata::transaction::{SigHashType, Transaction, TxOut};
 use consensus::encode::{self, serialize, Decodable};
 use util::bip32::{ChildNumber, Fingerprint, KeySource};
 use hashes::{hash160, ripemd160, sha256, sha256d, Hash};
-use util::ecdsa::PublicKey;
+use util::ecdsa;
 use util::psbt;
 
 /// A trait for serializing a value as raw data for insertion into PSBT
@@ -60,7 +61,20 @@ impl Deserialize for Script {
     }
 }
 
-impl Serialize for PublicKey {
+impl Serialize for secp256k1::PublicKey {
+    fn serialize(&self) -> Vec<u8> {
+        self.serialize().to_vec()
+    }
+}
+
+impl Deserialize for secp256k1::PublicKey {
+    fn deserialize(bytes: &[u8]) -> Result<Self, encode::Error> {
+        secp256k1::PublicKey::from_slice(bytes)
+            .map_err(|_| encode::Error::ParseFailed("invalid public key"))
+    }
+}
+
+impl Serialize for ecdsa::PublicKey {
     fn serialize(&self) -> Vec<u8> {
         let mut buf = Vec::new();
         self.write_into(&mut buf).expect("vecs don't error");
@@ -68,9 +82,9 @@ impl Serialize for PublicKey {
     }
 }
 
-impl Deserialize for PublicKey {
+impl Deserialize for ecdsa::PublicKey {
     fn deserialize(bytes: &[u8]) -> Result<Self, encode::Error> {
-        PublicKey::from_slice(bytes)
+        ecdsa::PublicKey::from_slice(bytes)
             .map_err(|_| encode::Error::ParseFailed("invalid public key"))
     }
 }

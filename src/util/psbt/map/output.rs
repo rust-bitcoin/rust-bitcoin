@@ -19,7 +19,7 @@ use std::collections::btree_map::Entry;
 use blockdata::script::Script;
 use consensus::encode;
 use util::bip32::KeySource;
-use util::ecdsa::PublicKey;
+use secp256k1;
 use util::psbt;
 use util::psbt::map::Map;
 use util::psbt::raw;
@@ -46,7 +46,7 @@ pub struct Output {
     /// A map from public keys needed to spend this output to their
     /// corresponding master key fingerprints and derivation paths.
     #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_as_seq"))]
-    pub bip32_derivation: BTreeMap<PublicKey, KeySource>,
+    pub bip32_derivation: BTreeMap<secp256k1::PublicKey, KeySource>,
     /// Proprietary key-value pairs for this output.
     #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_as_seq_byte_values"))]
     pub proprietary: BTreeMap<raw::ProprietaryKey, Vec<u8>>,
@@ -75,7 +75,7 @@ impl Map for Output {
             }
             PSBT_OUT_BIP32_DERIVATION => {
                 impl_psbt_insert_pair! {
-                    self.bip32_derivation <= <raw_key: PublicKey>|<raw_value: KeySource>
+                    self.bip32_derivation <= <raw_key: secp256k1::PublicKey>|<raw_value: KeySource>
                 }
             }
             PSBT_OUT_PROPRIETARY => match self.proprietary.entry(raw::ProprietaryKey::from_key(raw_key.clone())?) {
@@ -103,7 +103,7 @@ impl Map for Output {
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.bip32_derivation as <PSBT_OUT_BIP32_DERIVATION, PublicKey>|<KeySource>)
+            rv.push(self.bip32_derivation as <PSBT_OUT_BIP32_DERIVATION, secp256k1::PublicKey>|<KeySource>)
         }
 
         for (key, value) in self.proprietary.iter() {

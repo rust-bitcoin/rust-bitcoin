@@ -217,19 +217,16 @@ mod tests {
 
     use std::collections::BTreeMap;
 
-    use secp256k1::Secp256k1;
+    use secp256k1::{Secp256k1, self};
 
     use blockdata::script::Script;
     use blockdata::transaction::{Transaction, TxIn, TxOut, OutPoint};
     use network::constants::Network::Bitcoin;
     use consensus::encode::{deserialize, serialize, serialize_hex};
     use util::bip32::{ChildNumber, ExtendedPrivKey, ExtendedPubKey, Fingerprint, KeySource};
-    use util::ecdsa::PublicKey;
     use util::psbt::map::{Global, Output, Input};
-    use util::psbt::raw;
-
-    use super::PartiallySignedTransaction;
-    use util::psbt::raw::ProprietaryKey;
+    use util::psbt::raw::{self, ProprietaryKey};
+    use util::psbt::PartiallySignedTransaction;
 
     #[test]
     fn trivial_psbt() {
@@ -260,7 +257,7 @@ mod tests {
         let secp = &Secp256k1::new();
         let seed = Vec::from_hex("000102030405060708090a0b0c0d0e0f").unwrap();
 
-        let mut hd_keypaths: BTreeMap<PublicKey, KeySource> = Default::default();
+        let mut hd_keypaths: BTreeMap<secp256k1::PublicKey, KeySource> = Default::default();
 
         let mut sk: ExtendedPrivKey = ExtendedPrivKey::new_master(Bitcoin, &seed).unwrap();
 
@@ -396,7 +393,7 @@ mod tests {
             vec![3, 4 ,5],
         )].into_iter().collect();
         let key_source = ("deadbeef".parse().unwrap(), "m/0'/1".parse().unwrap());
-        let keypaths: BTreeMap<PublicKey, KeySource> = vec![(
+        let keypaths: BTreeMap<secp256k1::PublicKey, KeySource> = vec![(
             "0339880dc92394b7355e3d0439fa283c31de7590812ea011c4245c0674a685e883".parse().unwrap(),
             key_source.clone(),
         )].into_iter().collect();
@@ -452,7 +449,7 @@ mod tests {
                 ..Default::default()
             }],
             outputs: vec![Output {
-                bip32_derivation: keypaths.clone(),
+                bip32_derivation: keypaths,
                 proprietary: proprietary.clone(),
                 unknown: unknown.clone(),
                 ..Default::default()
