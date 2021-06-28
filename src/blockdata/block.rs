@@ -231,18 +231,20 @@ impl Block {
         bitcoin_merkle_root(hashes).into()
     }
 
+    /// The size of the header + the size of the varint with the tx count + the txs themselves
+    #[inline]
+    fn get_base_size(&self) -> usize {
+        80 + VarInt(self.txdata.len() as u64).len()
+    }
+
     /// Get the size of the block
     pub fn get_size(&self) -> usize {
-        // The size of the header + the size of the varint with the tx count + the txs themselves
-        let base_size = 80 + VarInt(self.txdata.len() as u64).len();
         let txs_size: usize = self.txdata.iter().map(Transaction::get_size).sum();
-        base_size + txs_size
+        self.get_base_size() + txs_size
     }
 
     /// Get the strippedsize of the block
     pub fn get_strippedsize(&self) -> usize {
-        // The size of the header + the size of the varint with the tx count + the txs themselves
-        let base_size = 80 + VarInt(self.txdata.len() as u64).len();
         let txs_size: usize = self.txdata.iter().map(|tx| {
             // size = non_witness_size + witness_size.
             let size = tx.get_size();
@@ -251,12 +253,12 @@ impl Block {
             // weight - size = (WITNESS_SCALE_FACTOR - 1) * non_witness_size.
             (weight - size) / (WITNESS_SCALE_FACTOR - 1)
         }).sum();
-        base_size + txs_size
+        self.get_base_size() + txs_size
     }
 
     /// Get the weight of the block
     pub fn get_weight(&self) -> usize {
-        let base_weight = WITNESS_SCALE_FACTOR * (80 + VarInt(self.txdata.len() as u64).len());
+        let base_weight = WITNESS_SCALE_FACTOR * self.get_base_size();
         let txs_weight: usize = self.txdata.iter().map(Transaction::get_weight).sum();
         base_weight + txs_weight
     }
