@@ -430,7 +430,7 @@ impl Transaction {
     #[inline]
     pub fn get_vsize(&self) -> usize {
         let weight = self.get_weight();
-        (weight / WITNESS_SCALE_FACTOR) + if weight % WITNESS_SCALE_FACTOR == 0 { 0 } else { 1 }
+        (weight + WITNESS_SCALE_FACTOR - 1) / WITNESS_SCALE_FACTOR
     }
 
     /// Internal utility function for get_{size,weight}
