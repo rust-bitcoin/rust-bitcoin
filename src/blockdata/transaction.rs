@@ -426,6 +426,13 @@ impl Transaction {
         self.get_scaled_size(1)
     }
 
+    /// Gets the "vsize" of this transaction. Will be `ceil(weight / 4.0)`.
+    #[inline]
+    pub fn get_vsize(&self) -> usize {
+        let weight = self.get_weight();
+        (weight / WITNESS_SCALE_FACTOR) + if weight % WITNESS_SCALE_FACTOR == 0 { 0 } else { 1 }
+    }
+
     /// Internal utility function for get_{size,weight}
     fn get_scaled_size(&self, scale_factor: usize) -> usize {
         let mut input_weight = 0;
@@ -853,6 +860,7 @@ mod tests {
                    "a6eab3c14ab5272a58a5ba91505ba1a4b6d7a3a9fcbd187b6cd99a7b6d548cb7".to_string());
         assert_eq!(realtx.get_weight(), tx_bytes.len()*WITNESS_SCALE_FACTOR);
         assert_eq!(realtx.get_size(), tx_bytes.len());
+        assert_eq!(realtx.get_vsize(), tx_bytes.len());
     }
 
     #[test]
@@ -885,6 +893,7 @@ mod tests {
                    "80b7d8a82d5d5bf92905b06f2014dd699e03837ca172e3a59d51426ebbe3e7f5".to_string());
         assert_eq!(realtx.get_weight(), 442);
         assert_eq!(realtx.get_size(), tx_bytes.len());
+        assert_eq!(realtx.get_vsize(), 111);
     }
 
     #[test]

@@ -239,6 +239,21 @@ impl Block {
         base_size + txs_size
     }
 
+    /// Get the strippedsize of the block
+    pub fn get_strippedsize(&self) -> usize {
+        // The size of the header + the size of the varint with the tx count + the txs themselves
+        let base_size = 80 + VarInt(self.txdata.len() as u64).len();
+        let txs_size: usize = self.txdata.iter().map(|tx| {
+            // size = non_witness_size + witness_size.
+            let size = tx.get_size();
+            // weight = WITNESS_SCALE_FACTOR * non_witness_size + witness_size.
+            let weight = tx.get_weight();
+            // weight - size = (WITNESS_SCALE_FACTOR - 1) * non_witness_size.
+            (weight - size) / (WITNESS_SCALE_FACTOR - 1)
+        }).sum();
+        base_size + txs_size
+    }
+
     /// Get the weight of the block
     pub fn get_weight(&self) -> usize {
         let base_weight = WITNESS_SCALE_FACTOR * (80 + VarInt(self.txdata.len() as u64).len());
@@ -369,6 +384,7 @@ mod tests {
         // [test] TODO: check the transaction data
 
         assert_eq!(real_decode.get_size(), some_block.len());
+        assert_eq!(real_decode.get_strippedsize(), some_block.len());
         assert_eq!(real_decode.get_weight(), some_block.len() * 4);
 
         // should be also ok for a non-witness block as commitment is optional in that case
@@ -403,6 +419,7 @@ mod tests {
         // [test] TODO: check the transaction data
 
         assert_eq!(real_decode.get_size(), segwit_block.len());
+        assert_eq!(real_decode.get_strippedsize(), 4283);
         assert_eq!(real_decode.get_weight(), 17168);
 
         assert!(real_decode.check_witness_commitment());
