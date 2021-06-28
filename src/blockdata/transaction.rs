@@ -927,7 +927,15 @@ mod tests {
         //     weight = WITNESS_SCALE_FACTOR * stripped_size + witness_size
         // then,
         //     stripped_size = (weight - size) / (WITNESS_SCALE_FACTOR - 1)
-        assert_eq!(realtx.get_strippedsize(), (EXPECTED_WEIGHT - tx_bytes.len()) / (WITNESS_SCALE_FACTOR - 1));
+        let expected_strippedsize = (EXPECTED_WEIGHT - tx_bytes.len()) / (WITNESS_SCALE_FACTOR - 1);
+        assert_eq!(realtx.get_strippedsize(), expected_strippedsize);
+        // Construct a transaction without the witness data.
+        let mut tx_without_witness = realtx.clone();
+        tx_without_witness.input.iter_mut().for_each(|input| input.witness.clear());
+        assert_eq!(tx_without_witness.get_weight(), expected_strippedsize*WITNESS_SCALE_FACTOR);
+        assert_eq!(tx_without_witness.get_size(), expected_strippedsize);
+        assert_eq!(tx_without_witness.get_vsize(), expected_strippedsize);
+        assert_eq!(tx_without_witness.get_strippedsize(), expected_strippedsize);
     }
 
     #[test]
