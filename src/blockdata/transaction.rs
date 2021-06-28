@@ -433,6 +433,33 @@ impl Transaction {
         (weight + WITNESS_SCALE_FACTOR - 1) / WITNESS_SCALE_FACTOR
     }
 
+    /// Gets the size of this transaction excluding the witness data.
+    #[inline]
+    pub fn get_strippedsize(&self) -> usize {
+        let mut input_size = 0;
+        for input in &self.input {
+            input_size += 32 + 4 + 4 + // outpoint (32+4) + nSequence
+                VarInt(input.script_sig.len() as u64).len() +
+                input.script_sig.len();
+        }
+        let mut output_size = 0;
+        for output in &self.output {
+            output_size += 8 + // value
+                VarInt(output.script_pubkey.len() as u64).len() +
+                output.script_pubkey.len();
+        }
+        let non_input_size =
+        // version:
+        4 +
+        // count varints:
+        VarInt(self.input.len() as u64).len() +
+        VarInt(self.output.len() as u64).len() +
+        output_size +
+        // lock_time
+        4;
+        non_input_size + input_size
+    }
+
     /// Internal utility function for get_{size,weight}
     fn get_scaled_size(&self, scale_factor: usize) -> usize {
         let mut input_weight = 0;
@@ -861,6 +888,7 @@ mod tests {
         assert_eq!(realtx.get_weight(), tx_bytes.len()*WITNESS_SCALE_FACTOR);
         assert_eq!(realtx.get_size(), tx_bytes.len());
         assert_eq!(realtx.get_vsize(), tx_bytes.len());
+        assert_eq!(realtx.get_strippedsize(), tx_bytes.len());
     }
 
     #[test]
@@ -891,9 +919,16 @@ mod tests {
                    "f5864806e3565c34d1b41e716f72609d00b55ea5eac5b924c9719a842ef42206".to_string());
         assert_eq!(format!("{:x}", realtx.wtxid()),
                    "80b7d8a82d5d5bf92905b06f2014dd699e03837ca172e3a59d51426ebbe3e7f5".to_string());
-        assert_eq!(realtx.get_weight(), 442);
+        const EXPECTED_WEIGHT: usize = 442;
+        assert_eq!(realtx.get_weight(), EXPECTED_WEIGHT);
         assert_eq!(realtx.get_size(), tx_bytes.len());
         assert_eq!(realtx.get_vsize(), 111);
+        // Since
+        //     size   =                        stripped_size + witness_size
+        //     weight = WITNESS_SCALE_FACTOR * stripped_size + witness_size
+        // then,
+        //     stripped_size = (weight - size) / (WITNESS_SCALE_FACTOR - 1)
+        assert_eq!(realtx.get_strippedsize(), (EXPECTED_WEIGHT - tx_bytes.len()) / (WITNESS_SCALE_FACTOR - 1));
     }
 
     #[test]

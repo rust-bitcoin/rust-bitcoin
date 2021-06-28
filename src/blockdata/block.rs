@@ -245,14 +245,7 @@ impl Block {
 
     /// Get the strippedsize of the block
     pub fn get_strippedsize(&self) -> usize {
-        let txs_size: usize = self.txdata.iter().map(|tx| {
-            // size = non_witness_size + witness_size.
-            let size = tx.get_size();
-            // weight = WITNESS_SCALE_FACTOR * non_witness_size + witness_size.
-            let weight = tx.get_weight();
-            // weight - size = (WITNESS_SCALE_FACTOR - 1) * non_witness_size.
-            (weight - size) / (WITNESS_SCALE_FACTOR - 1)
-        }).sum();
+        let txs_size: usize = self.txdata.iter().map(Transaction::get_strippedsize).sum();
         self.get_base_size() + txs_size
     }
 
