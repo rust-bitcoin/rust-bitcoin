@@ -19,14 +19,15 @@
 use core::{fmt, str::FromStr, default::Default};
 use std::error;
 #[cfg(feature = "serde")] use serde;
+use std::io::Write;
 
 use hash_types::XpubIdentifier;
 use hashes::{sha512, Hash, HashEngine, Hmac, HmacEngine};
 use secp256k1::{self, Secp256k1};
 
 use network::constants::Network;
-use util::{base58, endian, key};
-use util::ecdsa::{PublicKey, PrivateKey};
+use util::{base58, endian};
+use util::{key, ecdsa, schnorr};
 
 /// A chain code
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -56,7 +57,7 @@ pub struct ExtendedPrivKey {
     /// Child number of the key used to derive from parent (0 for master)
     pub child_number: ChildNumber,
     /// Private key
-    pub private_key: PrivateKey,
+    pub private_key: secp256k1::SecretKey,
     /// Chain code
     pub chain_code: ChainCode
 }
@@ -74,7 +75,7 @@ pub struct ExtendedPubKey {
     /// Child number of the key used to derive from parent (0 for master)
     pub child_number: ChildNumber,
     /// Public key
-    pub public_key: PublicKey,
+    pub public_key: secp256k1::PublicKey,
     /// Chain code
     pub chain_code: ChainCode
 }
@@ -498,9 +499,24 @@ impl ExtendedPrivKey {
             depth: 0,
             parent_fingerprint: Default::default(),
             child_number: ChildNumber::from_normal_idx(0)?,
-            private_key: PrivateKey::from_slice(&hmac_result[..32], network)?,
+            private_key: secp256k1::SecretKey::from_slice(&hmac_result[..32])?,
             chain_code: ChainCode::from(&hmac_result[32..]),
         })
+    }
+
+    /// Constructs ECDSA compressed private key matching internal secret key representation.
+    pub fn to_ecdsa_priv(&self) -> ecdsa::PrivateKey {
+        ecdsa::PrivateKey {
+            compressed: true,
+            network: self.network,
+            key: self.private_key
+        }
+    }
+
+    /// Constructs BIP340 keypair for Schnorr signatures and Taproot use matching the internal
+    /// secret key representation.
+    pub fn to_schnorr_keypair<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> schnorr::KeyPair {
+        schnorr::KeyPair::from_seckey_slice(secp, &self.private_key[..]).expect("BIP32 internal private key representation is broken")
     }
 
     /// Attempts to derive an extended private key from a path.
@@ -524,7 +540,7 @@ impl ExtendedPrivKey {
         match i {
             ChildNumber::Normal { .. } => {
                 // Non-hardened key: compute public data and use that
-                hmac_engine.input(&PublicKey::from_private_key(secp, &self.private_key).key.serialize()[..]);
+                hmac_engine.input(&secp256k1::PublicKey::from_secret_key(secp, &self.private_key).serialize()[..]);
             }
             ChildNumber::Hardened { .. } => {
                 // Hardened key: use only secret data to prevent public derivation
@@ -535,8 +551,8 @@ impl ExtendedPrivKey {
 
         hmac_engine.input(&endian::u32_to_array_be(u32::from(i)));
         let hmac_result: Hmac<sha512::Hash> = Hmac::from_engine(hmac_engine);
-        let mut sk = PrivateKey::from_slice(&hmac_result[..32], self.network)?;
-        sk.key.add_assign(&self.private_key[..])?;
+        let mut sk = secp256k1::SecretKey::from_slice(&hmac_result[..32])?;
+        sk.add_assign(&self.private_key[..])?;
 
         Ok(ExtendedPrivKey {
             network: self.network,
@@ -570,7 +586,7 @@ impl ExtendedPrivKey {
             parent_fingerprint: Fingerprint::from(&data[5..9]),
             child_number: endian::slice_to_u32_be(&data[9..13]).into(),
             chain_code: ChainCode::from(&data[13..45]),
-            private_key: PrivateKey::from_slice(&data[46..78], network)?,
+            private_key: secp256k1::SecretKey::from_slice(&data[46..78])?,
         })
     }
 
@@ -592,7 +608,7 @@ impl ExtendedPrivKey {
 
     /// Returns the HASH160 of the public key belonging to the xpriv
     pub fn identifier<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> XpubIdentifier {
-        ExtendedPubKey::from_private(secp, self).identifier()
+        ExtendedPubKey::from_priv(secp, self).identifier()
     }
 
     /// Returns the first four bytes of the identifier
@@ -603,15 +619,29 @@ impl ExtendedPrivKey {
 
 impl ExtendedPubKey {
     /// Derives a public key from a private key
-    pub fn from_private<C: secp256k1::Signing>(secp: &Secp256k1<C>, sk: &ExtendedPrivKey) -> ExtendedPubKey {
+    pub fn from_priv<C: secp256k1::Signing>(secp: &Secp256k1<C>, sk: &ExtendedPrivKey) -> ExtendedPubKey {
         ExtendedPubKey {
             network: sk.network,
             depth: sk.depth,
             parent_fingerprint: sk.parent_fingerprint,
             child_number: sk.child_number,
-            public_key: PublicKey::from_private_key(secp, &sk.private_key),
+            public_key: secp256k1::PublicKey::from_secret_key(secp, &sk.private_key),
             chain_code: sk.chain_code
         }
+    }
+
+    /// Constructs ECDSA compressed public key matching internal public key representation.
+    pub fn to_ecdsa_pub(&self) -> ecdsa::PublicKey {
+        ecdsa::PublicKey {
+            compressed: true,
+            key: self.public_key
+        }
+    }
+
+    /// Constructs BIP340 x-only public key for BIP-340 signatures and Taproot use matching
+    /// the internal public key representation.
+    pub fn to_schnorr_pub(&self) -> schnorr::PublicKey {
+        schnorr::PublicKey::from(self.public_key)
     }
 
     /// Attempts to derive an extended public key from a path.
@@ -630,19 +660,19 @@ impl ExtendedPubKey {
     }
 
     /// Compute the scalar tweak added to this key to get a child key
-    pub fn ckd_pub_tweak(&self, i: ChildNumber) -> Result<(PrivateKey, ChainCode), Error> {
+    pub fn ckd_pub_tweak(&self, i: ChildNumber) -> Result<(secp256k1::SecretKey, ChainCode), Error> {
         match i {
             ChildNumber::Hardened { .. } => {
                 Err(Error::CannotDeriveFromHardenedKey)
             }
             ChildNumber::Normal { index: n } => {
                 let mut hmac_engine: HmacEngine<sha512::Hash> = HmacEngine::new(&self.chain_code[..]);
-                hmac_engine.input(&self.public_key.key.serialize()[..]);
+                hmac_engine.input(&self.public_key.serialize()[..]);
                 hmac_engine.input(&endian::u32_to_array_be(n));
 
                 let hmac_result: Hmac<sha512::Hash> = Hmac::from_engine(hmac_engine);
 
-                let private_key = PrivateKey::from_slice(&hmac_result[..32], self.network)?;
+                let private_key = secp256k1::SecretKey::from_slice(&hmac_result[..32])?;
                 let chain_code = ChainCode::from(&hmac_result[32..]);
                 Ok((private_key, chain_code))
             }
@@ -657,7 +687,7 @@ impl ExtendedPubKey {
     ) -> Result<ExtendedPubKey, Error> {
         let (sk, chain_code) = self.ckd_pub_tweak(i)?;
         let mut pk = self.public_key;
-        pk.key.add_exp_assign(secp, &sk[..])?;
+        pk.add_exp_assign(secp, &sk[..])?;
 
         Ok(ExtendedPubKey {
             network: self.network,
@@ -689,7 +719,7 @@ impl ExtendedPubKey {
             parent_fingerprint: Fingerprint::from(&data[5..9]),
             child_number: endian::slice_to_u32_be(&data[9..13]).into(),
             chain_code: ChainCode::from(&data[13..45]),
-            public_key: PublicKey::from_slice(&data[45..78])?,
+            public_key: secp256k1::PublicKey::from_slice(&data[45..78])?,
         })
     }
 
@@ -704,14 +734,14 @@ impl ExtendedPubKey {
         ret[5..9].copy_from_slice(&self.parent_fingerprint[..]);
         ret[9..13].copy_from_slice(&endian::u32_to_array_be(u32::from(self.child_number)));
         ret[13..45].copy_from_slice(&self.chain_code[..]);
-        ret[45..78].copy_from_slice(&self.public_key.key.serialize()[..]);
+        ret[45..78].copy_from_slice(&self.public_key.serialize()[..]);
         ret
     }
 
     /// Returns the HASH160 of the chaincode
     pub fn identifier(&self) -> XpubIdentifier {
         let mut engine = XpubIdentifier::engine();
-        self.public_key.write_into(&mut engine).expect("engines don't error");
+        engine.write(&self.public_key.serialize()).expect("engines don't error");
         XpubIdentifier::from_engine(engine)
     }
 
@@ -845,7 +875,7 @@ mod tests {
                  expected_pk: &str) {
 
         let mut sk = ExtendedPrivKey::new_master(network, seed).unwrap();
-        let mut pk = ExtendedPubKey::from_private(secp, &sk);
+        let mut pk = ExtendedPubKey::from_priv(secp, &sk);
 
         // Check derivation convenience method for ExtendedPrivKey
         assert_eq!(
@@ -873,7 +903,7 @@ mod tests {
             match num {
                 Normal {..} => {
                     let pk2 = pk.ckd_pub(secp, num).unwrap();
-                    pk = ExtendedPubKey::from_private(secp, &sk);
+                    pk = ExtendedPubKey::from_priv(secp, &sk);
                     assert_eq!(pk, pk2);
                 }
                 Hardened {..} => {
@@ -881,7 +911,7 @@ mod tests {
                         pk.ckd_pub(secp, num),
                         Err(Error::CannotDeriveFromHardenedKey)
                     );
-                    pk = ExtendedPubKey::from_private(secp, &sk);
+                    pk = ExtendedPubKey::from_priv(secp, &sk);
                 }
             }
         }
