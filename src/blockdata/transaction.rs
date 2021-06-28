@@ -434,7 +434,6 @@ impl Transaction {
     }
 
     /// Gets the size of this transaction excluding the witness data.
-    #[inline]
     pub fn get_strippedsize(&self) -> usize {
         let mut input_size = 0;
         for input in &self.input {
