@@ -176,7 +176,7 @@ macro_rules! construct_uint {
             fn cmp(&self, other: &$name) -> ::core::cmp::Ordering {
                 // We need to manually implement ordering because we use little-endian
                 // and the auto derive is a lexicographic ordering(i.e. memcmp)
-                // which with numbers is equivilant to big-endian
+                // which with numbers is equivalent to big-endian
                 for i in 0..$n_words {
                     if self[$n_words - 1 - i] < other[$n_words - 1 - i] { return ::core::cmp::Ordering::Less; }
                     if self[$n_words - 1 - i] > other[$n_words - 1 - i] { return ::core::cmp::Ordering::Greater; }
