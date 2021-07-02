@@ -69,6 +69,8 @@ impl Address {
 }
 
 fn addr_to_be(addr: [u16; 8]) -> [u16; 8] {
+    // consensus_encode always encodes in LE, and we want to encode in BE.
+    // this utility fn swap bytes before encoding so that the encoded result will be BE
     let mut result = addr.clone();
     for i in 0..8 {
         result[i] = result[i].swap_bytes();
@@ -84,6 +86,9 @@ impl Encodable for Address {
     ) -> Result<usize, io::Error> {
         let len = self.services.consensus_encode(&mut s)?
             + addr_to_be(self.address).consensus_encode(&mut s)?
+
+            // consensus_encode always encodes in LE, and we want to encode in BE.
+            //TODO `len += io::Write::write(&mut e, &self.port.to_be_bytes())?;` when MSRV >= 1.32
             + self.port.swap_bytes().consensus_encode(s)?;
         Ok(len)
     }
@@ -270,6 +275,9 @@ impl Encodable for AddrV2Message {
         len += self.time.consensus_encode(&mut e)?;
         len += VarInt(self.services.as_u64()).consensus_encode(&mut e)?;
         len += self.addr.consensus_encode(&mut e)?;
+
+        // consensus_encode always encodes in LE, and we want to encode in BE.
+        //TODO `len += io::Write::write(&mut e, &self.port.to_be_bytes())?;` when MSRV >= 1.32
         len += self.port.swap_bytes().consensus_encode(e)?;
         Ok(len)
     }   
