@@ -69,8 +69,13 @@ impl Address {
 }
 
 fn addr_to_be(addr: [u16; 8]) -> [u16; 8] {
-    [addr[0].to_be(), addr[1].to_be(), addr[2].to_be(), addr[3].to_be(),
-     addr[4].to_be(), addr[5].to_be(), addr[6].to_be(), addr[7].to_be()]
+    // consensus_encode always encodes in LE, and we want to encode in BE.
+    // this utility fn swap bytes before encoding so that the encoded result will be BE
+    let mut result = addr.clone();
+    for i in 0..8 {
+        result[i] = result[i].swap_bytes();
+    }
+    result
 }
 
 impl Encodable for Address {
@@ -81,7 +86,10 @@ impl Encodable for Address {
     ) -> Result<usize, io::Error> {
         let len = self.services.consensus_encode(&mut s)?
             + addr_to_be(self.address).consensus_encode(&mut s)?
-            + self.port.to_be().consensus_encode(s)?;
+
+            // consensus_encode always encodes in LE, and we want to encode in BE.
+            //TODO `len += io::Write::write(&mut e, &self.port.to_be_bytes())?;` when MSRV >= 1.32
+            + self.port.swap_bytes().consensus_encode(s)?;
         Ok(len)
     }
 }
@@ -92,7 +100,7 @@ impl Decodable for Address {
         Ok(Address {
             services: Decodable::consensus_decode(&mut d)?,
             address: addr_to_be(Decodable::consensus_decode(&mut d)?),
-            port: u16::from_be(Decodable::consensus_decode(d)?)
+            port: u16::swap_bytes(Decodable::consensus_decode(d)?)
         })
     }
 }
@@ -267,7 +275,10 @@ impl Encodable for AddrV2Message {
         len += self.time.consensus_encode(&mut e)?;
         len += VarInt(self.services.as_u64()).consensus_encode(&mut e)?;
         len += self.addr.consensus_encode(&mut e)?;
-        len += self.port.to_be().consensus_encode(e)?;
+
+        // consensus_encode always encodes in LE, and we want to encode in BE.
+        //TODO `len += io::Write::write(&mut e, &self.port.to_be_bytes())?;` when MSRV >= 1.32
+        len += self.port.swap_bytes().consensus_encode(e)?;
         Ok(len)
     }   
 }
@@ -278,7 +289,7 @@ impl Decodable for AddrV2Message {
             time: Decodable::consensus_decode(&mut d)?,
             services: ServiceFlags::from(VarInt::consensus_decode(&mut d)?.0),
             addr: Decodable::consensus_decode(&mut d)?,
-            port: u16::from_be(Decodable::consensus_decode(d)?),
+            port: u16::swap_bytes(Decodable::consensus_decode(d)?),
         })
     }
 }

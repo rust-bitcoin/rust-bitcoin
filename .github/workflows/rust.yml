@@ -40,6 +40,25 @@ jobs:
         env: ${{ matrix.env }}
         run: ./contrib/test.sh
 
+  Cross:
+    name: Cross testing
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Crate
+        uses: actions/checkout@v2
+      - name: Checkout Toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - name: Install target
+        run: rustup target add s390x-unknown-linux-gnu
+      - name: install cross
+        run: cargo install cross
+      - name: run cross test
+        run: cross test --target s390x-unknown-linux-gnu
+
   Docs:
     name: Docs
     runs-on: ubuntu-latest
