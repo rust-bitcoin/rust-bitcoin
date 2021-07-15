@@ -20,6 +20,8 @@
 //! these blocks and the blockchain.
 //!
 
+use prelude::*;
+
 use core::fmt;
 
 use util;
@@ -308,6 +310,7 @@ impl fmt::Display for Bip34Error {
     }
 }
 
+#[cfg(feature = "std")]
 impl ::std::error::Error for Bip34Error {}
 
 #[cfg(test)]

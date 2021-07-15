@@ -24,8 +24,9 @@
 //! This module provides the structures and functions needed to support scripts.
 //!
 
-use io;
+use prelude::*;
 
+use io;
 use core::{fmt, default::Default};
 
 #[cfg(feature = "serde")] use serde;
@@ -36,7 +37,7 @@ use consensus::{encode, Decodable, Encodable};
 use hashes::{Hash, hex};
 use policy::DUST_RELAY_TX_FEE;
 #[cfg(feature="bitcoinconsensus")] use bitcoinconsensus;
-#[cfg(feature="bitcoinconsensus")] use std::convert;
+#[cfg(feature="bitcoinconsensus")] use core::convert::From;
 #[cfg(feature="bitcoinconsensus")] use OutPoint;
 
 use util::ecdsa::PublicKey;
@@ -145,11 +146,12 @@ impl fmt::Display for Error {
     }
 }
 
+#[cfg(feature = "std")]
 impl ::std::error::Error for Error {}
 
 #[cfg(feature="bitcoinconsensus")]
 #[doc(hidden)]
-impl convert::From<bitcoinconsensus::Error> for Error {
+impl From<bitcoinconsensus::Error> for Error {
     fn from(err: bitcoinconsensus::Error) -> Error {
         match err {
             _ => Error::BitcoinConsensus(err)
@@ -421,11 +423,11 @@ impl Script {
         } else if self.is_witness_program() {
             32 + 4 + 1 + (107 / 4) + 4 + // The spend cost copied from Core
             8 + // The serialized size of the TxOut's amount field
-            self.consensus_encode(&mut ::std::io::sink()).unwrap() as u64 // The serialized size of this script_pubkey
+            self.consensus_encode(&mut sink()).unwrap() as u64 // The serialized size of this script_pubkey
         } else {
             32 + 4 + 1 + 107 + 4 + // The spend cost copied from Core
             8 + // The serialized size of the TxOut's amount field
-            self.consensus_encode(&mut ::std::io::sink()).unwrap() as u64 // The serialized size of this script_pubkey
+            self.consensus_encode(&mut sink()).unwrap() as u64 // The serialized size of this script_pubkey
         };
 
         ::Amount::from_sat(sats)

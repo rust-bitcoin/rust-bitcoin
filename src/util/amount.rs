@@ -14,6 +14,8 @@
 //! We refer to the documentation on the types for more information.
 //!
 
+use prelude::*;
+
 use core::{ops, default, str::FromStr, cmp::Ordering};
 use core::fmt::{self, Write};
 
@@ -111,6 +113,7 @@ impl fmt::Display for ParseAmountError {
     }
 }
 
+#[cfg(feature = "std")]
 impl ::std::error::Error for ParseAmountError {}
 
 fn is_too_precise(s: &str, precision: usize) -> bool {
@@ -972,8 +975,8 @@ pub mod serde {
 
             use serde::{Deserializer, Serializer, de};
             use util::amount::serde::SerdeAmountForOpt;
-            use std::fmt;
-            use std::marker::PhantomData;
+            use core::fmt;
+            use core::marker::PhantomData;
 
             pub fn serialize<A: SerdeAmountForOpt, S: Serializer>(
                 a: &Option<A>,
@@ -1035,8 +1038,8 @@ pub mod serde {
 
             use serde::{Deserializer, Serializer, de};
             use util::amount::serde::SerdeAmountForOpt;
-            use std::fmt;
-            use std::marker::PhantomData;
+            use core::fmt;
+            use core::marker::PhantomData;
 
             pub fn serialize<A: SerdeAmountForOpt, S: Serializer>(
                 a: &Option<A>,
@@ -1081,6 +1084,7 @@ pub mod serde {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(feature = "std")]
     use std::panic;
     use core::str::FromStr;
 
@@ -1113,7 +1117,11 @@ mod tests {
         assert_eq!(b, ssat(10));
         b %= 3;
         assert_eq!(b, ssat(1));
+    }
 
+    #[cfg(feature = "std")]
+    #[test]
+    fn test_overflows() {
         // panic on overflow
         let result = panic::catch_unwind(|| Amount::max_value() + Amount::from_sat(1));
         assert!(result.is_err());

@@ -12,6 +12,8 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
+use prelude::*;
+
 use io;
 
 use consensus::encode;

@@ -17,12 +17,14 @@
 //! Raw PSBT key-value pairs as defined at
 //! <https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki>.
 
+use prelude::*;
 use core::fmt;
-use io;
 
+use io;
 use consensus::encode::{self, ReadExt, WriteExt, Decodable, Encodable, VarInt, serialize, deserialize, MAX_VEC_SIZE};
 use hashes::hex;
 use util::psbt::Error;
+use util::read_to_end;
 
 /// A PSBT key in its raw byte form.
 #[derive(Debug, PartialEq, Hash, Eq, Clone, Ord, PartialOrd)]
@@ -152,9 +154,8 @@ impl<Subtype> Encodable for ProprietaryKey<Subtype> where Subtype: Copy + From<u
 impl<Subtype> Decodable for ProprietaryKey<Subtype> where Subtype: Copy + From<u8> + Into<u8> {
     fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
         let prefix = Vec::<u8>::consensus_decode(&mut d)?;
-        let mut key = vec![];
         let subtype = Subtype::from(d.read_u8()?);
-        d.read_to_end(&mut key)?;
+        let key = read_to_end(d)?;
 
         Ok(ProprietaryKey {
             prefix,

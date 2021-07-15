@@ -51,7 +51,8 @@
 //! assert_eq!(1, index.len());
 //! assert_eq!(1, index[0]);
 //! ```
-use std::collections::HashSet;
+use prelude::*;
+
 use io;
 
 use hashes::Hash;
@@ -392,10 +393,10 @@ pub struct MerkleBlock {
 }
 
 impl MerkleBlock {
-    /// Create a MerkleBlock from a block, that should contain proofs for the txids.
+    /// Create a MerkleBlock from a block, that contains proofs for specific txids.
     ///
     /// The `block` is a full block containing the header and transactions and `match_txids` is a
-    /// set containing the transaction ids that should be included in the partial merkle tree.
+    /// function that returns true for the ids that should be included in the partial merkle tree.
     ///
     /// # Examples
     ///
@@ -420,8 +421,8 @@ impl MerkleBlock {
     /// // Create a merkle block containing a single transaction
     /// let txid = Txid::from_hex(
     ///     "5a4ebf66822b0b2d56bd9dc64ece0bc38ee7844a23ff1d7320a88c5fdb2ad3e2").unwrap();
-    /// let match_txids = vec![txid].into_iter().collect();
-    /// let mb = MerkleBlock::from_block(&block, &match_txids);
+    /// let match_txids: Vec<Txid> = vec![txid].into_iter().collect();
+    /// let mb = MerkleBlock::from_block_with_predicate(&block, |t| match_txids.contains(t));
     ///
     /// // Authenticate and extract matched transaction ids
     /// let mut matches: Vec<Txid> = vec![];
@@ -429,23 +430,31 @@ impl MerkleBlock {
     /// assert!(mb.extract_matches(&mut matches, &mut index).is_ok());
     /// assert_eq!(txid, matches[0]);
     /// ```
-    pub fn from_block(block: &Block, match_txids: &HashSet<Txid>) -> Self {
+    pub fn from_block_with_predicate<F>(block: &Block, match_txids: F) -> Self
+        where F: Fn(&Txid) -> bool {
         let block_txids: Vec<_> = block.txdata.iter().map(Transaction::txid).collect();
-        Self::from_header_txids(&block.header, &block_txids, match_txids)
+        Self::from_header_txids_with_predicate(&block.header, &block_txids, match_txids)
     }
 
-    /// Create a MerkleBlock from the block's header and txids, that should contain proofs for match_txids.
+    /// Create a MerkleBlock from a block, that contains proofs for specific txids.
+    #[cfg(feature = "std")]
+    #[deprecated(since="0.26.2", note="use from_block_with_predicate")]
+    pub fn from_block(block: &Block, match_txids: &::std::collections::HashSet<Txid>) -> Self {
+        Self::from_block_with_predicate(block, |t| match_txids.contains(t))
+    }
+
+    /// Create a MerkleBlock from the block's header and txids, that contain proofs for specific txids.
     ///
     /// The `header` is the block header, `block_txids` is the full list of txids included in the block and
-    /// `match_txids` is a set containing the transaction ids that should be included in the partial merkle tree.
-    pub fn from_header_txids(
+    /// `match_txids` is a function that returns true for the ids that should be included in the partial merkle tree.
+    pub fn from_header_txids_with_predicate<F>(
         header: &BlockHeader,
         block_txids: &[Txid],
-        match_txids: &HashSet<Txid>,
-    ) -> Self {
+        match_txids: F,
+    ) -> Self where F: Fn(&Txid) -> bool {
         let matches: Vec<bool> = block_txids
             .iter()
-            .map(|txid| match_txids.contains(txid))
+            .map(match_txids)
             .collect();
 
         let pmt = PartialMerkleTree::from_txids(&block_txids, &matches);
@@ -453,6 +462,17 @@ impl MerkleBlock {
             header: *header,
             txn: pmt,
         }
+    }
+
+    /// Create a MerkleBlock from the block's header and txids, that should contain proofs for match_txids.
+    #[cfg(feature = "std")]
+    #[deprecated(since="0.26.2", note="use from_header_txids_with_predicate")]
+    pub fn from_header_txids(
+        header: &BlockHeader,
+        block_txids: &[Txid],
+        match_txids: &::std::collections::HashSet<Txid>,
+    ) -> Self {
+        Self::from_header_txids_with_predicate(header, block_txids, |t| match_txids.contains(t))
     }
 
     /// Extract the matching txid's represented by this partial merkle tree
@@ -642,9 +662,9 @@ mod tests {
 
         let txid1 = txids[0];
         let txid2 = txids[1];
-        let txids = txids.into_iter().collect();
+        let txids = vec![txid1, txid2];
 
-        let merkle_block = MerkleBlock::from_block(&block, &txids);
+        let merkle_block = MerkleBlock::from_block_with_predicate(&block, |t| txids.contains(t));
 
         assert_eq!(merkle_block.header.block_hash(), block.block_hash());
 
@@ -672,12 +692,12 @@ mod tests {
     #[test]
     fn merkleblock_construct_from_txids_not_found() {
         let block = get_block_13b8a();
-        let txids = ["c0ffee00003bafa802c8aa084379aa98d9fcd632ddc2ed9782b586ec87451f20"]
+        let txids: Vec<Txid> = ["c0ffee00003bafa802c8aa084379aa98d9fcd632ddc2ed9782b586ec87451f20"]
             .iter()
             .map(|hex| Txid::from_hex(hex).unwrap())
             .collect();
 
-        let merkle_block = MerkleBlock::from_block(&block, &txids);
+        let merkle_block = MerkleBlock::from_block_with_predicate(&block, |t| txids.contains(t));
 
         assert_eq!(merkle_block.header.block_hash(), block.block_hash());
 

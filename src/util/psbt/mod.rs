@@ -23,6 +23,8 @@ use blockdata::transaction::Transaction;
 use consensus::{encode, Encodable, Decodable};
 use consensus::encode::MAX_VEC_SIZE;
 
+use prelude::*;
+
 use io;
 
 mod error;
@@ -95,8 +97,8 @@ impl PartiallySignedTransaction {
 #[cfg(feature = "base64")]
 mod display_from_str {
     use super::PartiallySignedTransaction;
-    use std::fmt::{Display, Formatter, self};
-    use std::str::FromStr;
+    use core::fmt::{Display, Formatter, self};
+    use core::str::FromStr;
     use consensus::encode::{Error, self};
     use ::base64::display::Base64Display;
 
@@ -118,6 +120,7 @@ mod display_from_str {
         }
     }
 
+    #[cfg(feature = "std")]
     impl ::std::error::Error for PsbtParseError { }
 
     impl Display for PartiallySignedTransaction {
@@ -215,7 +218,6 @@ mod tests {
     use hashes::{sha256, hash160, Hash, ripemd160};
     use hash_types::Txid;
 
-    use std::collections::BTreeMap;
 
     use secp256k1::Secp256k1;
 
@@ -230,6 +232,7 @@ mod tests {
 
     use super::PartiallySignedTransaction;
     use util::psbt::raw::ProprietaryKey;
+    use std::collections::BTreeMap;
 
     #[test]
     fn trivial_psbt() {
@@ -464,7 +467,6 @@ mod tests {
     }
 
     mod bip_vectors {
-        use std::collections::BTreeMap;
         #[cfg(feature = "base64")]
         use std::str::FromStr;
 
@@ -477,6 +479,7 @@ mod tests {
         use util::psbt::map::{Map, Global, Input, Output};
         use util::psbt::raw;
         use util::psbt::{PartiallySignedTransaction, Error};
+        use std::collections::BTreeMap;
 
         #[test]
         #[should_panic(expected = "InvalidMagic")]

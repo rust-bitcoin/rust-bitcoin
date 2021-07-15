@@ -7,14 +7,14 @@ pub mod btreemap_byte_values {
 
     // NOTE: This module can be exactly copied to use with HashMap.
 
-    use ::std::collections::BTreeMap;
+    use prelude::*;
     use hashes::hex::{FromHex, ToHex};
     use serde;
 
     pub fn serialize<S, T>(v: &BTreeMap<T, Vec<u8>>, s: S)
         -> Result<S::Ok, S::Error> where
         S: serde::Serializer,
-        T: serde::Serialize + ::std::hash::Hash + Eq + Ord,
+        T: serde::Serialize + ::core::hash::Hash + Eq + Ord,
     {
         use serde::ser::SerializeMap;
 
@@ -33,17 +33,17 @@ pub mod btreemap_byte_values {
     pub fn deserialize<'de, D, T>(d: D)
         -> Result<BTreeMap<T, Vec<u8>>, D::Error> where
         D: serde::Deserializer<'de>,
-        T: serde::Deserialize<'de> + ::std::hash::Hash + Eq + Ord,
+        T: serde::Deserialize<'de> + ::core::hash::Hash + Eq + Ord,
     {
-        use ::std::marker::PhantomData;
+        use ::core::marker::PhantomData;
 
         struct Visitor<T>(PhantomData<T>);
         impl<'de, T> serde::de::Visitor<'de> for Visitor<T> where
-            T: serde::Deserialize<'de> + ::std::hash::Hash + Eq + Ord,
+            T: serde::Deserialize<'de> + ::core::hash::Hash + Eq + Ord,
         {
             type Value = BTreeMap<T, Vec<u8>>;
 
-            fn expecting(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+            fn expecting(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
                 write!(f, "a map with hexadecimal values")
             }
 
@@ -74,13 +74,13 @@ pub mod btreemap_as_seq {
 
     // NOTE: This module can be exactly copied to use with HashMap.
 
-    use ::std::collections::BTreeMap;
+    use prelude::*;
     use serde;
 
     pub fn serialize<S, T, U>(v: &BTreeMap<T, U>, s: S)
         -> Result<S::Ok, S::Error> where
         S: serde::Serializer,
-        T: serde::Serialize + ::std::hash::Hash + Eq + Ord,
+        T: serde::Serialize + ::core::hash::Hash + Eq + Ord,
         U: serde::Serialize,
     {
         use serde::ser::SerializeSeq;
@@ -100,19 +100,19 @@ pub mod btreemap_as_seq {
     pub fn deserialize<'de, D, T, U>(d: D)
         -> Result<BTreeMap<T, U>, D::Error> where
         D: serde::Deserializer<'de>,
-        T: serde::Deserialize<'de> + ::std::hash::Hash + Eq + Ord,
+        T: serde::Deserialize<'de> + ::core::hash::Hash + Eq + Ord,
         U: serde::Deserialize<'de>,
     {
-        use ::std::marker::PhantomData;
+        use ::core::marker::PhantomData;
 
         struct Visitor<T, U>(PhantomData<(T, U)>);
         impl<'de, T, U> serde::de::Visitor<'de> for Visitor<T, U> where
-            T: serde::Deserialize<'de> + ::std::hash::Hash + Eq + Ord,
+            T: serde::Deserialize<'de> + ::core::hash::Hash + Eq + Ord,
             U: serde::Deserialize<'de>,
         {
             type Value = BTreeMap<T, U>;
 
-            fn expecting(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+            fn expecting(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
                 write!(f, "a sequence of pairs")
             }
 
@@ -143,7 +143,7 @@ pub mod btreemap_as_seq_byte_values {
 
     // NOTE: This module can be exactly copied to use with HashMap.
 
-    use ::std::collections::BTreeMap;
+    use prelude::*;
     use serde;
 
     /// A custom key-value pair type that serialized the bytes as hex.
@@ -165,7 +165,7 @@ pub mod btreemap_as_seq_byte_values {
     pub fn serialize<S, T>(v: &BTreeMap<T, Vec<u8>>, s: S)
         -> Result<S::Ok, S::Error> where
         S: serde::Serializer,
-        T: serde::Serialize + ::std::hash::Hash + Eq + Ord + 'static,
+        T: serde::Serialize + ::core::hash::Hash + Eq + Ord + 'static,
     {
         use serde::ser::SerializeSeq;
 
@@ -184,17 +184,17 @@ pub mod btreemap_as_seq_byte_values {
     pub fn deserialize<'de, D, T>(d: D)
         -> Result<BTreeMap<T, Vec<u8>>, D::Error> where
         D: serde::Deserializer<'de>,
-        T: serde::Deserialize<'de> + ::std::hash::Hash + Eq + Ord,
+        T: serde::Deserialize<'de> + ::core::hash::Hash + Eq + Ord,
     {
-        use ::std::marker::PhantomData;
+        use ::core::marker::PhantomData;
 
         struct Visitor<T>(PhantomData<T>);
         impl<'de, T> serde::de::Visitor<'de> for Visitor<T> where
-            T: serde::Deserialize<'de> + ::std::hash::Hash + Eq + Ord,
+            T: serde::Deserialize<'de> + ::core::hash::Hash + Eq + Ord,
         {
             type Value = BTreeMap<T, Vec<u8>>;
 
-            fn expecting(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+            fn expecting(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
                 write!(f, "a sequence of pairs")
             }
 
@@ -239,19 +239,19 @@ pub mod hex_bytes {
     pub fn deserialize<'de, D, B>(d: D) -> Result<B, D::Error>
         where D: serde::Deserializer<'de>, B: serde::Deserialize<'de> + FromHex,
     {
-        struct Visitor<B>(::std::marker::PhantomData<B>);
+        struct Visitor<B>(::core::marker::PhantomData<B>);
 
         impl<'de, B: FromHex> serde::de::Visitor<'de> for Visitor<B> {
             type Value = B;
 
-            fn expecting(&self, formatter: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+            fn expecting(&self, formatter: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
                 formatter.write_str("an ASCII hex string")
             }
 
             fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
                 where E: serde::de::Error,
             {
-                if let Ok(hex) = ::std::str::from_utf8(v) {
+                if let Ok(hex) = ::core::str::from_utf8(v) {
                     FromHex::from_hex(hex).map_err(E::custom)
                 } else {
                     return Err(E::invalid_value(serde::de::Unexpected::Bytes(v), &self));
@@ -269,7 +269,7 @@ pub mod hex_bytes {
         if !d.is_human_readable() {
             serde::Deserialize::deserialize(d)
         } else {
-            d.deserialize_str(Visitor(::std::marker::PhantomData))
+            d.deserialize_str(Visitor(::core::marker::PhantomData))
         }
     }
 }

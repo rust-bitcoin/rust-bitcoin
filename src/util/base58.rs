@@ -14,7 +14,8 @@
 
 //! Base58 encoder and decoder
 
-use std::error;
+use prelude::*;
+
 use core::{fmt, str, iter, slice};
 
 use hashes::{sha256d, Hash};
@@ -57,7 +58,8 @@ impl fmt::Display for Error {
     }
 }
 
-impl error::Error for Error {}
+#[cfg(feature = "std")]
+impl ::std::error::Error for Error {}
 
 /// Vector-like object that holds the first 100 elements on the stack. If more space is needed it
 /// will be allocated on the heap.

@@ -18,8 +18,9 @@
 //! capabilities
 //!
 
+use prelude::*;
+
 use io;
-use std::borrow::Cow;
 
 use network::address::Address;
 use network::constants::{self, ServiceFlags};

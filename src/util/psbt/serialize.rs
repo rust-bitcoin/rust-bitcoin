@@ -17,6 +17,8 @@
 //! Defines traits used for (de)serializing PSBT values into/from raw
 //! bytes in PSBT key-value pairs.
 
+use prelude::*;
+
 use io;
 
 use blockdata::script::Script;

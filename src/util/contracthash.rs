@@ -20,8 +20,10 @@
 
 #![cfg_attr(not(test), deprecated)]
 
+use prelude::*;
+
 use core::fmt;
-use std::error;
+#[cfg(feature = "std")] use std::error;
 
 use secp256k1::{self, Secp256k1};
 use PrivateKey;
@@ -72,6 +74,7 @@ impl fmt::Display for Error {
     }
 }
 
+#[cfg(feature = "std")]
 impl ::std::error::Error for Error {
     fn cause(&self) -> Option<&dyn error::Error> {
         match *self {

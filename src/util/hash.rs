@@ -15,6 +15,8 @@
 //!
 //! Utility functions related to hashing data, including merkleization
 
+use prelude::*;
+
 use io;
 use core::cmp::min;
 

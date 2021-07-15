@@ -14,7 +14,7 @@
 
 #[allow(unused_macros)]
 macro_rules! hex_psbt {
-    ($s:expr) => { $crate::consensus::deserialize::<$crate::util::psbt::PartiallySignedTransaction>(&<Vec<u8> as $crate::hashes::hex::FromHex>::from_hex($s).unwrap()) };
+    ($s:expr) => { $crate::consensus::deserialize::<$crate::util::psbt::PartiallySignedTransaction>(&<$crate::prelude::Vec<u8> as $crate::hashes::hex::FromHex>::from_hex($s).unwrap()) };
 }
 
 macro_rules! merge {
@@ -45,7 +45,7 @@ macro_rules! impl_psbt_deserialize {
 macro_rules! impl_psbt_serialize {
     ($thing:ty) => {
         impl $crate::util::psbt::serialize::Serialize for $thing {
-            fn serialize(&self) -> Vec<u8> {
+            fn serialize(&self) -> $crate::prelude::Vec<u8> {
                 $crate::consensus::serialize(self)
             }
         }
@@ -118,11 +118,11 @@ macro_rules! impl_psbt_insert_pair {
         if !$raw_key.key.is_empty() {
             let key_val: $keyed_key_type = $crate::util::psbt::serialize::Deserialize::deserialize(&$raw_key.key)?;
             match $slf.$keyed_name.entry(key_val) {
-                ::std::collections::btree_map::Entry::Vacant(empty_key) => {
+                $crate::prelude::btree_map::Entry::Vacant(empty_key) => {
                     let val: $keyed_value_type = $crate::util::psbt::serialize::Deserialize::deserialize(&$raw_value)?;
                     empty_key.insert(val);
                 }
-                ::std::collections::btree_map::Entry::Occupied(_) => return Err($crate::util::psbt::Error::DuplicateKey($raw_key).into()),
+                $crate::prelude::btree_map::Entry::Occupied(_) => return Err($crate::util::psbt::Error::DuplicateKey($raw_key).into()),
             }
         } else {
             return Err($crate::util::psbt::Error::InvalidKey($raw_key).into());
@@ -180,7 +180,7 @@ macro_rules! impl_psbt_hash_deserialize {
 macro_rules! impl_psbt_hash_serialize {
     ($hash_type:ty) => {
         impl $crate::util::psbt::serialize::Serialize for $hash_type {
-            fn serialize(&self) -> Vec<u8> {
+            fn serialize(&self) -> $crate::prelude::Vec<u8> {
                 self.into_inner().to_vec()
             }
         }

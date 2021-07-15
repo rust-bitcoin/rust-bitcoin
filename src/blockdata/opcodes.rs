@@ -22,6 +22,8 @@
 
 #[cfg(feature = "serde")] use serde;
 
+#[cfg(feature = "serde")] use prelude::*;
+
 use core::{fmt, convert::From};
 
 // Note: I am deliberately not implementing PartialOrd or Ord on the

@@ -162,7 +162,7 @@ macro_rules! display_from_debug {
 macro_rules! hex_script (($s:expr) => (<$crate::Script as ::core::str::FromStr>::from_str($s).unwrap()));
 
 #[cfg(test)]
-macro_rules! hex_hash (($h:ident, $s:expr) => ($h::from_slice(&<Vec<u8> as $crate::hashes::hex::FromHex>::from_hex($s).unwrap()).unwrap()));
+macro_rules! hex_hash (($h:ident, $s:expr) => ($h::from_slice(&<$crate::prelude::Vec<u8> as $crate::hashes::hex::FromHex>::from_hex($s).unwrap()).unwrap()));
 
 macro_rules! serde_string_impl {
     ($name:ident, $expecting:expr) => {
@@ -563,10 +563,14 @@ macro_rules! user_enum {
             fn from_str(s: &str) -> Result<Self, Self::Err> {
                 match s {
                     $($txt => Ok($name::$elem)),*,
-                    _ => Err($crate::io::Error::new(
-                        $crate::io::ErrorKind::InvalidInput,
-                        format!("Unknown network (type {})", s),
-                    )),
+                    _ => {
+                        #[cfg(not(feature = "std"))] let message = "Unknown network";
+                        #[cfg(feature = "std")] let message = format!("Unknown network (type {})", s);
+                        Err($crate::io::Error::new(
+                            $crate::io::ErrorKind::InvalidInput,
+                            message,
+                        ))
+                    }
                 }
             }
         }
@@ -607,7 +611,7 @@ macro_rules! user_enum {
                         self.visit_str(v)
                     }
 
-                    fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+                    fn visit_string<E>(self, v: $crate::prelude::String) -> Result<Self::Value, E>
                     where
                         E: $crate::serde::de::Error,
                     {

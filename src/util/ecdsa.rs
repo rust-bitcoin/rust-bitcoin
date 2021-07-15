@@ -16,6 +16,8 @@
 //! ECDSA keys used in Bitcoin that can be roundtrip (de)serialized.
 //!
 
+use prelude::*;
+
 use core::{ops, str::FromStr};
 use core::fmt::{self, Write as _fmtWrite};
 use io;
@@ -100,7 +102,17 @@ impl PublicKey {
         };
 
         reader.read_exact(&mut bytes[1..])?;
-        Self::from_slice(bytes).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
+        Self::from_slice(bytes).map_err(|e|{
+            // Need a static string for core2
+            #[cfg(feature = "std")]
+            let reason = e;
+            #[cfg(not(feature = "std"))]
+            let reason = match e {
+                Error::Base58(_) => "base58 error",
+                Error::Secp256k1(_) => "secp256k1 error",
+            };
+            io::Error::new(io::ErrorKind::InvalidData, reason)
+        })
     }
 
     /// Serialize the public key to bytes
@@ -299,7 +311,7 @@ impl<'de> ::serde::Deserialize<'de> for PrivateKey {
         impl<'de> ::serde::de::Visitor<'de> for WifVisitor {
             type Value = PrivateKey;
 
-            fn expecting(&self, formatter: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+            fn expecting(&self, formatter: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
                 formatter.write_str("an ASCII WIF string")
             }
 
@@ -307,7 +319,7 @@ impl<'de> ::serde::Deserialize<'de> for PrivateKey {
             where
                 E: ::serde::de::Error,
             {
-                if let Ok(s) = ::std::str::from_utf8(v) {
+                if let Ok(s) = ::core::str::from_utf8(v) {
                     PrivateKey::from_str(s).map_err(E::custom)
                 } else {
                     Err(E::invalid_value(::serde::de::Unexpected::Bytes(v), &self))
@@ -350,7 +362,7 @@ impl<'de> ::serde::Deserialize<'de> for PublicKey {
             impl<'de> ::serde::de::Visitor<'de> for HexVisitor {
                 type Value = PublicKey;
 
-                fn expecting(&self, formatter: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+                fn expecting(&self, formatter: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
                     formatter.write_str("an ASCII hex string")
                 }
 
@@ -358,7 +370,7 @@ impl<'de> ::serde::Deserialize<'de> for PublicKey {
                 where
                     E: ::serde::de::Error,
                 {
-                    if let Ok(hex) = ::std::str::from_utf8(v) {
+                    if let Ok(hex) = ::core::str::from_utf8(v) {
                         PublicKey::from_str(hex).map_err(E::custom)
                     } else {
                         Err(E::invalid_value(::serde::de::Unexpected::Bytes(v), &self))
@@ -379,7 +391,7 @@ impl<'de> ::serde::Deserialize<'de> for PublicKey {
             impl<'de> ::serde::de::Visitor<'de> for BytesVisitor {
                 type Value = PublicKey;
 
-                fn expecting(&self, formatter: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+                fn expecting(&self, formatter: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
                     formatter.write_str("a bytestring")
                 }
 
