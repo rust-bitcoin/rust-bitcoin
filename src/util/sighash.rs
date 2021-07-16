@@ -89,6 +89,7 @@ pub enum Prevouts<'u> {
 }
 
 const LEAF_VERSION_TAPSCRIPT: u8 = 0xc0;
+const KEY_VERSION_0: u8 = 0u8;
 
 /// Information related to the script path spending
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
@@ -402,7 +403,7 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
             let hash = TapLeafHash::from_engine(enc);
 
             hash.into_inner().consensus_encode(&mut writer)?;
-            0u8.consensus_encode(&mut writer)?;
+            KEY_VERSION_0.consensus_encode(&mut writer)?;
             code_separator_pos.consensus_encode(&mut writer)?;
         }
 
