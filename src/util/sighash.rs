@@ -124,8 +124,22 @@ pub enum Error {
     /// Should never happen since we are always encoding, thus we are avoiding wrap the IO error
     IoError,
 
-    /// Requested input index is greater than the number of inputs in the given transaction
-    IndexGreaterThanInputsSize,
+    /// Requested index is greater or equal than the number of inputs in the transaction
+    IndexOutOfInputsBounds {
+        /// Requested index
+        index: usize,
+        /// Number of transaction inputs
+        inputs_size: usize,
+    },
+
+    /// Using SIGHASH_SINGLE without a "corresponding output" (an output with the same index as the
+    /// input being verified) is a validation failure
+    SingleWithoutCorrespondingOutput {
+        /// Requested index
+        index: usize,
+        /// Number of transaction outputs
+        outputs_size: usize,
+    },
 
     /// There are mismatches in the number of prevouts provided compared with the number of
     /// inputs in the transaction
@@ -146,7 +160,8 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Error::IoError => write!(f, "IoError"),
-            Error::IndexGreaterThanInputsSize => write!(f, "Requested input index is greater than the number of inputs in the given transaction"),
+            Error::IndexOutOfInputsBounds { index, inputs_size } => write!(f, "Requested index ({}) is greater or equal than the number of transaction inputs ({})", index, inputs_size),
+            Error::SingleWithoutCorrespondingOutput { index, outputs_size } => write!(f, "SIGHASH_SINGLE for input ({}) haven't a corresponding output (#outputs:{})", index, outputs_size),
             Error::PrevoutsSize => write!(f, "Number of supplied prevouts differs from the number of inputs in transaction"),
             Error::PrevoutIndex => write!(f, "The index requested is greater than available prevouts or different from the provided [Provided::Anyone] index"),
             Error::PrevoutKind => write!(f, "A single prevout has been provided but all prevouts are needed without `ANYONECANPAY`"),
@@ -247,14 +262,6 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
         }
     }
 
-    fn check_index(&self, index: usize) -> Result<(), Error> {
-        if index >= self.tx.input.len() {
-            Err(Error::IndexGreaterThanInputsSize)
-        } else {
-            Ok(())
-        }
-    }
-
     /// Encode the BIP341 signing data for any flag type into a given object implementing a
     /// std::io::Write trait.
     pub fn taproot_encode_signing_data_to<Write: io::Write>(
@@ -267,7 +274,6 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
         sighash_type: SigHashType,
     ) -> Result<(), Error> {
         prevouts.check_all(&self.tx)?;
-        self.check_index(input_index)?;
 
         let (sighash, anyone_can_pay) = sighash_type.split_anyonecanpay_flag();
 
@@ -327,7 +333,15 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
         //      scriptPubKey (35): scriptPubKey of the previous output spent by this input, serialized as script inside CTxOut. Its size is always 35 bytes.
         //      nSequence (4): nSequence of this input.
         if anyone_can_pay {
-            let txin = &self.tx.input[input_index];
+            let txin =
+                &self
+                    .tx
+                    .input
+                    .get(input_index)
+                    .ok_or_else(|| Error::IndexOutOfInputsBounds {
+                        index: input_index,
+                        inputs_size: self.tx.input.len(),
+                    })?;
             let previous_output = prevouts.get(input_index)?;
             txin.previous_output.consensus_encode(&mut writer)?;
             previous_output.value.consensus_encode(&mut writer)?;
@@ -354,7 +368,14 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
         //      sha_single_output (32): the SHA256 of the corresponding output in CTxOut format.
         if sighash == SigHashType::Single {
             let mut enc = sha256::Hash::engine();
-            self.tx.output[input_index].consensus_encode(&mut enc)?;
+            self.tx
+                .output
+                .get(input_index)
+                .ok_or_else(|| Error::SingleWithoutCorrespondingOutput {
+                    index: input_index,
+                    outputs_size: self.tx.output.len(),
+                })?
+                .consensus_encode(&mut enc)?;
             let hash = sha256::Hash::from_engine(enc);
             hash.consensus_encode(&mut writer)?;
         }
@@ -413,8 +434,6 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
         value: u64,
         sighash_type: LegacySigHashType,
     ) -> Result<(), Error> {
-        self.check_index(input_index)?;
-
         let zero_hash = sha256d::Hash::default();
 
         let (sighash, anyone_can_pay) = sighash_type.split_anyonecanpay_flag();
@@ -439,7 +458,15 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
         }
 
         {
-            let txin = &self.tx.input[input_index];
+            let txin =
+                &self
+                    .tx
+                    .input
+                    .get(input_index)
+                    .ok_or_else(|| Error::IndexOutOfInputsBounds {
+                        index: input_index,
+                        inputs_size: self.tx.input.len(),
+                    })?;
 
             txin.previous_output.consensus_encode(&mut writer)?;
             script_code.consensus_encode(&mut writer)?;
@@ -490,7 +517,12 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
         script_pubkey: &Script,
         sighash_type: U,
     ) -> Result<(), Error> {
-        self.check_index(input_index)?;
+        if input_index >= self.tx.input.len() {
+            return Err(Error::IndexOutOfInputsBounds {
+                index: input_index,
+                inputs_size: self.tx.input.len(),
+            });
+        }
         self.tx
             .encode_signing_data_to(&mut writer, input_index, script_pubkey, sighash_type.into())
             .expect("writers don't error");
@@ -785,7 +817,25 @@ mod tests {
         );
         assert_eq!(
             c.taproot_signature_hash(10, &prevout, None, None, SigHashType::AllPlusAnyoneCanPay),
-            Err(Error::IndexGreaterThanInputsSize)
+            Err(Error::IndexOutOfInputsBounds {
+                index: 10,
+                inputs_size: 1
+            })
+        );
+        let prevout = Prevouts::One(0, &tx_out);
+        assert_eq!(
+            c.taproot_signature_hash(0, &prevout, None, None, SigHashType::SinglePlusAnyoneCanPay),
+            Err(Error::SingleWithoutCorrespondingOutput {
+                index: 0,
+                outputs_size: 0
+            })
+        );
+        assert_eq!(
+            c.legacy_signature_hash(10, &Script::default(), 0u32),
+            Err(Error::IndexOutOfInputsBounds {
+                index: 10,
+                inputs_size: 1
+            })
         );
     }
 
