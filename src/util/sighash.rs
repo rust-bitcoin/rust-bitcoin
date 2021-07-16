@@ -126,9 +126,6 @@ pub enum SigHashType {
 /// Possible errors in computing the signature message
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum Error {
-    /// Should never happen since we are always encoding, thus we are avoiding wrap the IO error
-    IoError,
-
     /// Requested index is greater or equal than the number of inputs in the transaction
     IndexOutOfInputsBounds {
         /// Requested index
@@ -164,7 +161,6 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Error::IoError => write!(f, "IoError"),
             Error::IndexOutOfInputsBounds { index, inputs_size } => write!(f, "Requested index ({}) is greater or equal than the number of transaction inputs ({})", index, inputs_size),
             Error::SingleWithoutCorrespondingOutput { index, outputs_size } => write!(f, "SIGHASH_SINGLE for input ({}) haven't a corresponding output (#outputs:{})", index, outputs_size),
             Error::PrevoutsSize => write!(f, "Number of supplied prevouts differs from the number of inputs in transaction"),
@@ -282,18 +278,18 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
         let (sighash, anyone_can_pay) = sighash_type.split_anyonecanpay_flag();
 
         // epoch
-        0u8.consensus_encode(&mut writer)?;
+        0u8.consensus_encode(&mut writer).unwrap();
 
         // * Control:
         // hash_type (1).
-        (sighash_type as u8).consensus_encode(&mut writer)?;
+        (sighash_type as u8).consensus_encode(&mut writer).unwrap();
 
         // * Transaction Data:
         // nVersion (4): the nVersion of the transaction.
-        self.tx.version.consensus_encode(&mut writer)?;
+        self.tx.version.consensus_encode(&mut writer).unwrap();
 
         // nLockTime (4): the nLockTime of the transaction.
-        self.tx.lock_time.consensus_encode(&mut writer)?;
+        self.tx.lock_time.consensus_encode(&mut writer).unwrap();
 
         // If the hash_type & 0x80 does not equal SIGHASH_ANYONECANPAY:
         //     sha_prevouts (32): the SHA256 of the serialization of all input outpoints.
@@ -301,22 +297,31 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
         //     sha_scriptpubkeys (32): the SHA256 of the serialization of all spent output scriptPubKeys.
         //     sha_sequences (32): the SHA256 of the serialization of all input nSequence.
         if !anyone_can_pay {
-            self.common_cache().prevouts.consensus_encode(&mut writer)?;
+            self.common_cache()
+                .prevouts
+                .consensus_encode(&mut writer)
+                .unwrap();
             self.taproot_cache(prevouts.get_all()?)
                 .amounts
-                .consensus_encode(&mut writer)?;
+                .consensus_encode(&mut writer)
+                .unwrap();
             self.taproot_cache(prevouts.get_all()?)
                 .script_pubkeys
-                .consensus_encode(&mut writer)?;
+                .consensus_encode(&mut writer)
+                .unwrap();
             self.common_cache()
                 .sequences
-                .consensus_encode(&mut writer)?;
+                .consensus_encode(&mut writer)
+                .unwrap();
         }
 
         // If hash_type & 3 does not equal SIGHASH_NONE or SIGHASH_SINGLE:
         //     sha_outputs (32): the SHA256 of the serialization of all outputs in CTxOut format.
         if sighash != SigHashType::None && sighash != SigHashType::Single {
-            self.common_cache().outputs.consensus_encode(&mut writer)?;
+            self.common_cache()
+                .outputs
+                .consensus_encode(&mut writer)
+                .unwrap();
         }
 
         // * Data about this input:
@@ -329,7 +334,7 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
         if script_path.is_some() {
             spend_type |= 2u8;
         }
-        spend_type.consensus_encode(&mut writer)?;
+        spend_type.consensus_encode(&mut writer).unwrap();
 
         // If hash_type & 0x80 equals SIGHASH_ANYONECANPAY:
         //      outpoint (36): the COutPoint of this input (32-byte hash + 4-byte little-endian).
@@ -347,14 +352,15 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
                         inputs_size: self.tx.input.len(),
                     })?;
             let previous_output = prevouts.get(input_index)?;
-            txin.previous_output.consensus_encode(&mut writer)?;
-            previous_output.value.consensus_encode(&mut writer)?;
+            txin.previous_output.consensus_encode(&mut writer).unwrap();
+            previous_output.value.consensus_encode(&mut writer).unwrap();
             previous_output
                 .script_pubkey
-                .consensus_encode(&mut writer)?;
-            txin.sequence.consensus_encode(&mut writer)?;
+                .consensus_encode(&mut writer)
+                .unwrap();
+            txin.sequence.consensus_encode(&mut writer).unwrap();
         } else {
-            (input_index as u32).consensus_encode(&mut writer)?;
+            (input_index as u32).consensus_encode(&mut writer).unwrap();
         }
 
         // If an annex is present (the lowest bit of spend_type is set):
@@ -362,9 +368,9 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
         //      includes the mandatory 0x50 prefix.
         if let Some(annex) = annex {
             let mut enc = sha256::Hash::engine();
-            annex.consensus_encode(&mut enc)?;
+            annex.consensus_encode(&mut enc).unwrap();
             let hash = sha256::Hash::from_engine(enc);
-            hash.consensus_encode(&mut writer)?;
+            hash.consensus_encode(&mut writer).unwrap();
         }
 
         // * Data about this output:
@@ -379,9 +385,10 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
                     index: input_index,
                     outputs_size: self.tx.output.len(),
                 })?
-                .consensus_encode(&mut enc)?;
+                .consensus_encode(&mut enc)
+                .unwrap();
             let hash = sha256::Hash::from_engine(enc);
-            hash.consensus_encode(&mut writer)?;
+            hash.consensus_encode(&mut writer).unwrap();
         }
 
         //     if (scriptpath):
@@ -395,13 +402,13 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
         }) = script_path
         {
             let mut enc = TapLeafHash::engine();
-            leaf_version.consensus_encode(&mut enc)?;
-            script.consensus_encode(&mut enc)?;
+            leaf_version.consensus_encode(&mut enc).unwrap();
+            script.consensus_encode(&mut enc).unwrap();
             let hash = TapLeafHash::from_engine(enc);
 
-            hash.into_inner().consensus_encode(&mut writer)?;
-            KEY_VERSION_0.consensus_encode(&mut writer)?;
-            code_separator_pos.consensus_encode(&mut writer)?;
+            hash.into_inner().consensus_encode(&mut writer).unwrap();
+            KEY_VERSION_0.consensus_encode(&mut writer).unwrap();
+            code_separator_pos.consensus_encode(&mut writer).unwrap();
         }
 
         Ok(())
@@ -442,12 +449,15 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
 
         let (sighash, anyone_can_pay) = sighash_type.split_anyonecanpay_flag();
 
-        self.tx.version.consensus_encode(&mut writer)?;
+        self.tx.version.consensus_encode(&mut writer).unwrap();
 
         if !anyone_can_pay {
-            self.segwit_cache().prevouts.consensus_encode(&mut writer)?;
+            self.segwit_cache()
+                .prevouts
+                .consensus_encode(&mut writer)
+                .unwrap();
         } else {
-            zero_hash.consensus_encode(&mut writer)?;
+            zero_hash.consensus_encode(&mut writer).unwrap();
         }
 
         if !anyone_can_pay
@@ -456,9 +466,10 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
         {
             self.segwit_cache()
                 .sequences
-                .consensus_encode(&mut writer)?;
+                .consensus_encode(&mut writer)
+                .unwrap();
         } else {
-            zero_hash.consensus_encode(&mut writer)?;
+            zero_hash.consensus_encode(&mut writer).unwrap();
         }
 
         {
@@ -472,24 +483,31 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
                         inputs_size: self.tx.input.len(),
                     })?;
 
-            txin.previous_output.consensus_encode(&mut writer)?;
-            script_code.consensus_encode(&mut writer)?;
-            value.consensus_encode(&mut writer)?;
-            txin.sequence.consensus_encode(&mut writer)?;
+            txin.previous_output.consensus_encode(&mut writer).unwrap();
+            script_code.consensus_encode(&mut writer).unwrap();
+            value.consensus_encode(&mut writer).unwrap();
+            txin.sequence.consensus_encode(&mut writer).unwrap();
         }
 
         if sighash != LegacySigHashType::Single && sighash != LegacySigHashType::None {
-            self.segwit_cache().outputs.consensus_encode(&mut writer)?;
+            self.segwit_cache()
+                .outputs
+                .consensus_encode(&mut writer)
+                .unwrap();
         } else if sighash == LegacySigHashType::Single && input_index < self.tx.output.len() {
             let mut single_enc = SigHash::engine();
-            self.tx.output[input_index].consensus_encode(&mut single_enc)?;
-            SigHash::from_engine(single_enc).consensus_encode(&mut writer)?;
+            self.tx.output[input_index]
+                .consensus_encode(&mut single_enc)
+                .unwrap();
+            SigHash::from_engine(single_enc)
+                .consensus_encode(&mut writer)
+                .unwrap();
         } else {
-            zero_hash.consensus_encode(&mut writer)?;
+            zero_hash.consensus_encode(&mut writer).unwrap();
         }
 
-        self.tx.lock_time.consensus_encode(&mut writer)?;
-        sighash_type.as_u32().consensus_encode(&mut writer)?;
+        self.tx.lock_time.consensus_encode(&mut writer).unwrap();
+        sighash_type.as_u32().consensus_encode(&mut writer).unwrap();
         Ok(())
     }
 
@@ -633,12 +651,6 @@ impl<R: DerefMut<Target = Transaction>> SigHashCache<R> {
     /// ```
     pub fn access_witness(&mut self, input_index: usize) -> &mut Vec<Vec<u8>> {
         &mut self.tx.input[input_index].witness
-    }
-}
-
-impl From<io::Error> for Error {
-    fn from(_: io::Error) -> Self {
-        Error::IoError
     }
 }
 
