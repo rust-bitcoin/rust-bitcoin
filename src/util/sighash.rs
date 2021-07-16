@@ -30,6 +30,7 @@ use SigHash;
 use {Script, Transaction, TxOut};
 
 /// Efficiently calculates signature hash message for legacy, segwit and taproot inputs.
+#[derive(Debug)]
 pub struct SigHashCache<T: Deref<Target = Transaction>> {
     /// Access to transaction required for various introspection, moreover type
     /// `T: Deref<Target=Transaction>` allows to accept borrow and mutable borrow, the
@@ -47,7 +48,8 @@ pub struct SigHashCache<T: Deref<Target = Transaction>> {
 }
 
 /// Values cached common between segwit and taproot inputs
-pub struct CommonCache {
+#[derive(Debug)]
+struct CommonCache {
     prevouts: sha256::Hash,
     sequences: sha256::Hash,
 
@@ -57,20 +59,23 @@ pub struct CommonCache {
 }
 
 /// Values cached for segwit inputs, it's equal to [CommonCache] plus another round of `sha256`
-pub struct SegwitCache {
+#[derive(Debug)]
+struct SegwitCache {
     prevouts: sha256d::Hash,
     sequences: sha256d::Hash,
     outputs: sha256d::Hash,
 }
 
 /// Values cached for taproot inputs
-pub struct TaprootCache {
+#[derive(Debug)]
+struct TaprootCache {
     amounts: sha256::Hash,
     script_pubkeys: sha256::Hash,
 }
 
 /// Contains outputs of previous transactions.
 /// In the case [SigHashType] variant is `ANYONECANPAY`, [Prevouts::One] may be provided
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum Prevouts<'u> {
     /// `One` variant allows to provide the single Prevout needed. It's useful for example
     /// when modifier `ANYONECANPAY` is provided, only prevout of the current input is needed.
@@ -84,6 +89,7 @@ pub enum Prevouts<'u> {
 const LEAF_VERSION_TAPSCRIPT: u8 = 0xc0;
 
 /// Information related to the script path spending
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub struct ScriptPath<'s> {
     script: &'s Script,
     code_separator_pos: u32,
@@ -92,7 +98,7 @@ pub struct ScriptPath<'s> {
 
 /// Hashtype of an input's signature, encoded in the last byte of the signature
 /// Fixed values so they can be casted as integer types for encoding
-#[derive(PartialEq, Eq, Debug, Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum SigHashType {
     /// 0x0: Used when not explicitly specified, defaulting to [SigHashType::All]
     Default = 0x00,
@@ -117,7 +123,7 @@ pub enum SigHashType {
 }
 
 /// Possible errors in computing the signature message
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum Error {
     /// Should never happen since we are always encoding, thus we are avoiding wrap the IO error
     IoError,
