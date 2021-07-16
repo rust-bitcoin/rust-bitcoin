@@ -110,6 +110,9 @@ pub enum SigHashType {
     NonePlusAnyoneCanPay = 0x82,
     /// 0x83: Sign one output and only this input (see `Single` for what "one output" means)
     SinglePlusAnyoneCanPay = 0x83,
+
+    /// Reserved for future use
+    Reserved = 0xFF,
 }
 
 /// Possible errors in computing the signature message
@@ -221,6 +224,7 @@ impl SigHashType {
             SigHashType::AllPlusAnyoneCanPay => (SigHashType::All, true),
             SigHashType::NonePlusAnyoneCanPay => (SigHashType::None, true),
             SigHashType::SinglePlusAnyoneCanPay => (SigHashType::Single, true),
+            SigHashType::Reserved => (SigHashType::Reserved, false),
         }
     }
 }
