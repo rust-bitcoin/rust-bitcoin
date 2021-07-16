@@ -20,7 +20,7 @@
 //!
 
 pub use blockdata::transaction::SigHashType as LegacySigHashType;
-use consensus::Encodable;
+use consensus::{encode, Encodable};
 use core::fmt;
 use core::ops::{Deref, DerefMut};
 use hashes::{sha256, sha256d, Hash};
@@ -344,7 +344,7 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
         //      includes the mandatory 0x50 prefix.
         if let Some(annex) = annex {
             let mut enc = sha256::Hash::engine();
-            annex.as_bytes().to_vec().consensus_encode(&mut enc)?;
+            annex.consensus_encode(&mut enc)?;
             let hash = sha256::Hash::from_engine(enc);
             hash.consensus_encode(&mut writer)?;
         }
@@ -623,6 +623,12 @@ impl<'a> Annex<'a> {
     /// Returns the Annex bytes data (including first byte `0x50`)
     pub fn as_bytes(&self) -> &[u8] {
         &*self.0
+    }
+}
+
+impl<'a> Encodable for Annex<'a> {
+    fn consensus_encode<W: io::Write>(&self, writer: W) -> Result<usize, io::Error> {
+        encode::consensus_encode_with_size(&self.0, writer)
     }
 }
 
