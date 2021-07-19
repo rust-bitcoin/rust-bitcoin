@@ -128,8 +128,9 @@ pub enum SigHashType {
 /// Possible errors in computing the signature message
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum Error {
-    /// Should never happen since we are always encoding, thus we are avoiding wrap the IO error
-    IoError,
+    /// Could happen only by using `*_encode_signing_*` methods with custom writers, engines writers
+    /// like the ones used in methods `*_signature_hash` don't error
+    Io(io::ErrorKind),
 
     /// Requested index is greater or equal than the number of inputs in the transaction
     IndexOutOfInputsBounds {
@@ -166,7 +167,7 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Error::IoError => write!(f, "IoError"),
+            Error::Io(ref e) => write!(f, "Writer errored: {:?}", e),
             Error::IndexOutOfInputsBounds { index, inputs_size } => write!(f, "Requested index ({}) is greater or equal than the number of transaction inputs ({})", index, inputs_size),
             Error::SingleWithoutCorrespondingOutput { index, outputs_size } => write!(f, "SIGHASH_SINGLE for input ({}) haven't a corresponding output (#outputs:{})", index, outputs_size),
             Error::PrevoutsSize => write!(f, "Number of supplied prevouts differs from the number of inputs in transaction"),
@@ -640,8 +641,8 @@ impl<R: DerefMut<Target = Transaction>> SigHashCache<R> {
 }
 
 impl From<io::Error> for Error {
-    fn from(_: io::Error) -> Self {
-        Error::IoError
+    fn from(e: io::Error) -> Self {
+        Error::Io(e.kind())
     }
 }
 
