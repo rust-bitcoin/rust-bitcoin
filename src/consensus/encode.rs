@@ -338,7 +338,7 @@ macro_rules! impl_int_encodable{
         impl Decodable for $ty {
             #[inline]
             fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, Error> {
-                ReadExt::$meth_dec(&mut d).map($ty::from_le)
+                ReadExt::$meth_dec(&mut d)
             }
         }
         impl Encodable for $ty {
@@ -347,7 +347,7 @@ macro_rules! impl_int_encodable{
                 &self,
                 mut s: S,
             ) -> Result<usize, io::Error> {
-                s.$meth_enc(self.to_le())?;
+                s.$meth_enc(*self)?;
                 Ok(mem::size_of::<$ty>())
             }
         }
