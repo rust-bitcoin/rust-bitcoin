@@ -33,9 +33,11 @@
 //! let address = Address::p2pkh(&public_key, Network::Bitcoin);
 //! ```
 
+use prelude::*;
+
 use core::fmt;
 use core::str::FromStr;
-use std::error;
+#[cfg(feature = "std")] use std::error;
 
 use bech32;
 use hashes::Hash;
@@ -84,8 +86,9 @@ impl fmt::Display for Error {
     }
 }
 
-impl error::Error for Error {
-    fn cause(&self) -> Option<&dyn error::Error> {
+#[cfg(feature = "std")]
+impl ::std::error::Error for Error {
+    fn cause(&self) -> Option<&dyn  error::Error> {
         match *self {
             Error::Base58(ref e) => Some(e),
             Error::Bech32(ref e) => Some(e),
@@ -524,8 +527,8 @@ impl FromStr for Address {
     }
 }
 
-impl ::std::fmt::Debug for Address {
-    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+impl fmt::Debug for Address {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.to_string())
     }
 }

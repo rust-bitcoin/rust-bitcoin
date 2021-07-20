@@ -450,7 +450,7 @@ macro_rules! construct_uint {
             fn deserialize<D: $crate::serde::Deserializer<'de>>(
                 deserializer: D,
             ) -> Result<Self, D::Error> {
-                use ::std::fmt;
+                use ::core::fmt;
                 use $crate::hashes::hex::FromHex;
                 use $crate::serde::de;
                 struct Visitor;
@@ -465,7 +465,7 @@ macro_rules! construct_uint {
                     where
                         E: de::Error,
                     {
-                        let bytes = Vec::from_hex(s)
+                        let bytes = $crate::prelude::Vec::from_hex(s)
                             .map_err(|_| de::Error::invalid_value(de::Unexpected::Str(s), &self))?;
                         $name::from_be_slice(&bytes)
                             .map_err(|_| de::Error::invalid_length(bytes.len() * 2, &self))
@@ -509,6 +509,7 @@ impl ::core::fmt::Display for ParseLengthError {
     }
 }
 
+#[cfg(feature = "std")]
 impl ::std::error::Error for ParseLengthError {}
 
 impl Uint256 {

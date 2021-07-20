@@ -25,6 +25,8 @@ use blockdata::script::Script;
 use blockdata::transaction::{Transaction, TxIn, SigHashType};
 use consensus::{encode, Encodable};
 
+use prelude::*;
+
 use io;
 use core::ops::{Deref, DerefMut};
 

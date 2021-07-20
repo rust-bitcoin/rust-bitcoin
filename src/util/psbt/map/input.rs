@@ -12,8 +12,9 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
+use prelude::*;
+
 use io;
-use std::collections::btree_map::{BTreeMap, Entry};
 
 use blockdata::script::Script;
 use blockdata::transaction::{SigHashType, Transaction, TxOut};
@@ -177,14 +178,14 @@ impl Map for Input {
                 psbt_insert_hash_pair(&mut self.hash256_preimages, raw_key, raw_value, error::PsbtHash::Hash256)?;
             }
             PSBT_IN_PROPRIETARY => match self.proprietary.entry(raw::ProprietaryKey::from_key(raw_key.clone())?) {
-                ::std::collections::btree_map::Entry::Vacant(empty_key) => {empty_key.insert(raw_value);},
-                ::std::collections::btree_map::Entry::Occupied(_) => return Err(Error::DuplicateKey(raw_key).into()),
+                btree_map::Entry::Vacant(empty_key) => {empty_key.insert(raw_value);},
+                btree_map::Entry::Occupied(_) => return Err(Error::DuplicateKey(raw_key).into()),
             }
             _ => match self.unknown.entry(raw_key) {
-                Entry::Vacant(empty_key) => {
+                btree_map::Entry::Vacant(empty_key) => {
                     empty_key.insert(raw_value);
                 }
-                Entry::Occupied(k) => {
+                btree_map::Entry::Occupied(k) => {
                     return Err(Error::DuplicateKey(k.key().clone()).into())
                 }
             },
@@ -307,7 +308,7 @@ where
     }
     let key_val: H = Deserialize::deserialize(&raw_key.key)?;
     match map.entry(key_val) {
-        Entry::Vacant(empty_key) => {
+        btree_map::Entry::Vacant(empty_key) => {
             let val: Vec<u8> = Deserialize::deserialize(&raw_value)?;
             if <H as hashes::Hash>::hash(&val) != key_val {
                 return Err(psbt::Error::InvalidPreimageHashPair {
@@ -320,6 +321,6 @@ where
             empty_key.insert(val);
             Ok(())
         }
-        Entry::Occupied(_) => return Err(psbt::Error::DuplicateKey(raw_key).into()),
+        btree_map::Entry::Occupied(_) => return Err(psbt::Error::DuplicateKey(raw_key).into()),
     }
 }

@@ -16,8 +16,10 @@
 //! Implementation of BIP32 hierarchical deterministic wallets, as defined
 //! at <https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki>
 
+use prelude::*;
+
 use core::{fmt, str::FromStr, default::Default};
-use std::error;
+#[cfg(feature = "std")] use std::error;
 #[cfg(feature = "serde")] use serde;
 
 use hash_types::XpubIdentifier;
@@ -274,7 +276,7 @@ impl ::core::iter::FromIterator<ChildNumber> for DerivationPath {
 
 impl<'a> ::core::iter::IntoIterator for &'a DerivationPath {
     type Item = &'a ChildNumber;
-    type IntoIter = ::std::slice::Iter<'a, ChildNumber>;
+    type IntoIter = slice::Iter<'a, ChildNumber>;
     fn into_iter(self) -> Self::IntoIter {
         self.0.iter()
     }
@@ -457,6 +459,7 @@ impl fmt::Display for Error {
     }
 }
 
+#[cfg(feature = "std")]
 impl error::Error for Error {
     fn cause(&self) -> Option<&dyn error::Error> {
        if let Error::Ecdsa(ref e) = *self {

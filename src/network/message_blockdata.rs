@@ -18,6 +18,8 @@
 //! Bitcoin data (blocks and transactions) around.
 //!
 
+use prelude::*;
+
 use io;
 
 use hashes::sha256d;
@@ -149,7 +151,7 @@ impl_consensus_encoding!(GetHeadersMessage, version, locator_hashes, stop_hash);
 
 #[cfg(test)]
 mod tests {
-    use super::{GetHeadersMessage, GetBlocksMessage};
+    use super::{Vec, GetHeadersMessage, GetBlocksMessage};
 
     use hashes::hex::FromHex;
 

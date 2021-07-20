@@ -10,6 +10,7 @@ use bitcoin::util::bip32::ExtendedPubKey;
 use bitcoin::util::bip32::DerivationPath;
 use bitcoin::util::bip32::ChildNumber;
 use bitcoin::util::address::Address;
+use bitcoin::secp256k1::ffi::types::AlignedType;
 
 fn main() {
     // This example derives root xprv
@@ -36,7 +37,9 @@ fn main() {
     let seed = wif.to_bytes();
 
     // we need secp256k1 context for key derivation
-    let secp = Secp256k1::new();
+    let mut buf: Vec<AlignedType> = Vec::new();
+    buf.resize(Secp256k1::preallocate_size(), AlignedType::zeroed());
+    let secp = Secp256k1::preallocated_new(buf.as_mut_slice()).unwrap();
 
     // calculate root key from seed
     let root = ExtendedPrivKey::new_master(network, &seed).unwrap();
