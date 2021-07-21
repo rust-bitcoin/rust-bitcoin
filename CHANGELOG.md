@@ -1,3 +1,11 @@
+# 0.27 - 2020-07-21
+
+- [Bigendian fixes and CI test](https://github.com/rust-bitcoin/rust-bitcoin/pull/627)
+- [no_std support, keeping MSRV](https://github.com/rust-bitcoin/rust-bitcoin/pull/603)
+- [Bech32m adoption](https://github.com/rust-bitcoin/rust-bitcoin/pull/601)
+- [Use Amount type for dust value calculation](https://github.com/rust-bitcoin/rust-bitcoin/pull/616)
+- [Errors enum improvements](https://github.com/rust-bitcoin/rust-bitcoin/pull/521)
+- [std -> core](https://github.com/rust-bitcoin/rust-bitcoin/pull/614)
 
 # 0.26.2 - 2021-06-08
 
