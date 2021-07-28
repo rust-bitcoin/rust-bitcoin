@@ -114,6 +114,7 @@ impl fmt::Display for ParseAmountError {
 }
 
 #[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl ::std::error::Error for ParseAmountError {}
 
 fn is_too_precise(s: &str, precision: usize) -> bool {
@@ -902,6 +903,7 @@ mod private {
 }
 
 #[cfg(feature = "serde")]
+#[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 pub mod serde {
     // methods are implementation of a standardized serde-specific signature
     #![allow(missing_docs)]
@@ -1008,7 +1010,7 @@ pub mod serde {
     }
 
     pub mod as_sat {
-        //! Serialize and deserialize [Amount] as real numbers denominated in satoshi.
+        //! Serialize and deserialize [`Amount`](crate::Amount) as real numbers denominated in satoshi.
         //! Use with `#[serde(with = "amount::serde::as_sat")]`.
 
         use serde::{Deserializer, Serializer};
@@ -1023,7 +1025,7 @@ pub mod serde {
         }
 
         pub mod opt {
-            //! Serialize and deserialize [Optoin<Amount>] as real numbers denominated in satoshi.
+            //! Serialize and deserialize [`Option<Amount>`](crate::Amount) as real numbers denominated in satoshi.
             //! Use with `#[serde(default, with = "amount::serde::as_sat::opt")]`.
 
             use serde::{Deserializer, Serializer, de};
@@ -1071,7 +1073,7 @@ pub mod serde {
     }
 
     pub mod as_btc {
-        //! Serialize and deserialize [Amount] as JSON numbers denominated in BTC.
+        //! Serialize and deserialize [`Amount`](crate::Amount) as JSON numbers denominated in BTC.
         //! Use with `#[serde(with = "amount::serde::as_btc")]`.
 
         use serde::{Deserializer, Serializer};

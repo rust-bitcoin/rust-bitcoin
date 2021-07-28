@@ -119,13 +119,16 @@ pub enum Error {
     EarlyEndOfScript,
     /// Tried to read an array off the stack as a number when it was more than 4 bytes
     NumericOverflow,
-    #[cfg(feature="bitcoinconsensus")]
+    #[cfg(feature = "bitcoinconsensus")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
     /// Error validating the script with bitcoinconsensus library
     BitcoinConsensus(bitcoinconsensus::Error),
-    #[cfg(feature="bitcoinconsensus")]
+    #[cfg(feature = "bitcoinconsensus")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
     /// Can not find the spent output
     UnknownSpentOutput(OutPoint),
-    #[cfg(feature="bitcoinconsensus")]
+    #[cfg(feature = "bitcoinconsensus")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
     /// Can not serialize the spending transaction
     SerializationError
 }
@@ -148,6 +151,7 @@ impl fmt::Display for Error {
 }
 
 #[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl ::std::error::Error for Error {}
 
 #[cfg(feature="bitcoinconsensus")]
@@ -452,12 +456,14 @@ impl Script {
     }
 
     #[cfg(feature="bitcoinconsensus")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
     /// Shorthand for [Self::verify_with_flags] with flag [bitcoinconsensus::VERIFY_ALL]
     pub fn verify (&self, index: usize, amount: ::Amount, spending: &[u8]) -> Result<(), Error> {
         self.verify_with_flags(index, amount, spending, ::bitcoinconsensus::VERIFY_ALL)
     }
 
     #[cfg(feature="bitcoinconsensus")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
     /// Verify spend of an input script
     /// # Parameters
     ///  * `index` - the input index in spending which is spending this transaction
@@ -817,6 +823,7 @@ impl From<Vec<u8>> for Builder {
 impl_index_newtype!(Builder, u8);
 
 #[cfg(feature = "serde")]
+#[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 impl<'de> serde::Deserialize<'de> for Script {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where D: serde::Deserializer<'de>,
@@ -876,6 +883,7 @@ impl<'de> serde::Deserialize<'de> for Script {
 }
 
 #[cfg(feature = "serde")]
+#[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 impl serde::Serialize for Script {
     /// User-facing serialization for `Script`.
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>

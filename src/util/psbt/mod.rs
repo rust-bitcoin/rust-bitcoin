@@ -104,6 +104,7 @@ mod display_from_str {
 
     /// Error happening during PSBT decoding from Base64 string
     #[derive(Debug)]
+    #[cfg_attr(docsrs, doc(cfg(feature = "base64")))]
     pub enum PsbtParseError {
         /// Error in internal PSBT data structure
         PsbtEncoding(Error),
@@ -121,14 +122,17 @@ mod display_from_str {
     }
 
     #[cfg(feature = "std")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
     impl ::std::error::Error for PsbtParseError { }
 
+    #[cfg_attr(docsrs, doc(cfg(feature = "base64")))]
     impl Display for PartiallySignedTransaction {
         fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
             write!(f, "{}", Base64Display::with_config(&encode::serialize(self), ::base64::STANDARD))
         }
     }
 
+    #[cfg_attr(docsrs, doc(cfg(feature = "base64")))]
     impl FromStr for PartiallySignedTransaction {
         type Err = PsbtParseError;
 
@@ -139,6 +143,7 @@ mod display_from_str {
     }
 }
 #[cfg(feature = "base64")]
+#[cfg_attr(docsrs, doc(cfg(feature = "base64")))]
 pub use self::display_from_str::PsbtParseError;
 
 impl Encodable for PartiallySignedTransaction {

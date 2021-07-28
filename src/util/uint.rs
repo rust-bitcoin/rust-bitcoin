@@ -430,6 +430,7 @@ macro_rules! construct_uint {
         }
 
         #[cfg(feature = "serde")]
+        #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
         impl $crate::serde::Serialize for $name {
             fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
             where
@@ -446,6 +447,7 @@ macro_rules! construct_uint {
         }
 
         #[cfg(feature = "serde")]
+        #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
         impl<'de> $crate::serde::Deserialize<'de> for $name {
             fn deserialize<D: $crate::serde::Deserializer<'de>>(
                 deserializer: D,
@@ -510,6 +512,7 @@ impl ::core::fmt::Display for ParseLengthError {
 }
 
 #[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl ::std::error::Error for ParseLengthError {}
 
 impl Uint256 {

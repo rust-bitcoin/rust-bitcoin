@@ -715,6 +715,7 @@ impl From<u8> for All {
 display_from_debug!(All);
 
 #[cfg(feature = "serde")]
+#[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 impl serde::Serialize for All {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -753,6 +754,7 @@ pub enum Class {
 display_from_debug!(Class);
 
 #[cfg(feature = "serde")]
+#[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 impl serde::Serialize for Class {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where

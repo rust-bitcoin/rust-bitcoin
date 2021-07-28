@@ -24,14 +24,30 @@ use core::fmt;
 
 pub mod constants;
 
-#[cfg(feature = "std")] pub mod address;
-#[cfg(feature = "std")] pub use self::address::Address;
-#[cfg(feature = "std")] pub mod message;
-#[cfg(feature = "std")] pub mod message_blockdata;
-#[cfg(feature = "std")] pub mod message_bloom;
-#[cfg(feature = "std")] pub mod message_network;
-#[cfg(feature = "std")] pub mod message_filter;
-#[cfg(feature = "std")] pub mod stream_reader;
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+pub mod address;
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+pub use self::address::Address;
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+pub mod message;
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+pub mod message_blockdata;
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+pub mod message_bloom;
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+pub mod message_network;
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+pub mod message_filter;
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+pub mod stream_reader;
 
 /// Network error
 #[derive(Debug)]
@@ -62,6 +78,7 @@ impl From<io::Error> for Error {
 }
 
 #[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl error::Error for Error {
     fn cause(&self) -> Option<&dyn error::Error> {
         match *self {

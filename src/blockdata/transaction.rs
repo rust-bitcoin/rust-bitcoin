@@ -133,6 +133,7 @@ impl fmt::Display for ParseOutPointError {
 }
 
 #[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl  error::Error for ParseOutPointError {
     fn cause(&self) -> Option<&dyn  error::Error> {
         match *self {
@@ -501,6 +502,7 @@ impl Transaction {
     }
 
     #[cfg(feature="bitcoinconsensus")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
     /// Shorthand for [Self::verify_with_flags] with flag [bitcoinconsensus::VERIFY_ALL]
     pub fn verify<S>(&self, spent: S) -> Result<(), script::Error>
         where S: FnMut(&OutPoint) -> Option<TxOut> {
@@ -508,6 +510,7 @@ impl Transaction {
     }
 
     #[cfg(feature="bitcoinconsensus")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
     /// Verify that this transaction is able to spend its inputs
     /// The lambda spent should not return the same TxOut twice!
     pub fn verify_with_flags<S, F>(&self, mut spent: S, flags: F) -> Result<(), script::Error>
@@ -667,6 +670,7 @@ impl fmt::Display for NonStandardSigHashType {
 }
 
 #[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl error::Error for NonStandardSigHashType {}
 
 /// Hashtype of an input's signature, encoded in the last byte of the signature

@@ -10,7 +10,7 @@ description = "General purpose library for using and interoperating with Bitcoin
 keywords = [ "crypto", "bitcoin" ]
 readme = "README.md"
 
-
+# Please don't forget to add relevant features to docs.rs below
 [features]
 default = [ "std", "secp-recovery" ]
 base64 = [ "base64-compat" ]
@@ -27,6 +27,10 @@ secp-recovery = ["secp256k1/recovery"]
 # As a result, both can be enabled without conflict.
 std = ["secp256k1/std", "bitcoin_hashes/std", "bech32/std"]
 no-std = ["hashbrown", "core2/alloc", "bitcoin_hashes/alloc"]
+
+[package.metadata.docs.rs]
+features = [ "std", "secp-recovery", "base64", "rand", "use-serde", "bitcoinconsensus" ]
+rustc-args = ["--cfg", "docsrs"]
 
 [dependencies]
 bech32 = { version = "0.8.1", default-features = false }
