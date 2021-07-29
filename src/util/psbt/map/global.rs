@@ -12,20 +12,20 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-use prelude::*;
+use crate::prelude::*;
 
-use io::{self, Cursor, Read};
+use crate::io::{self, Cursor, Read};
 use core::cmp;
 
-use blockdata::transaction::Transaction;
-use consensus::{encode, Encodable, Decodable};
-use consensus::encode::MAX_VEC_SIZE;
-use util::psbt::map::Map;
-use util::psbt::raw;
-use util::psbt;
-use util::psbt::Error;
-use util::endian::u32_to_array_le;
-use util::bip32::{ExtendedPubKey, KeySource, Fingerprint, DerivationPath, ChildNumber};
+use crate::blockdata::transaction::Transaction;
+use crate::consensus::{encode, Encodable, Decodable};
+use crate::consensus::encode::MAX_VEC_SIZE;
+use crate::util::psbt::map::Map;
+use crate::util::psbt::raw;
+use crate::util::psbt;
+use crate::util::psbt::Error;
+use crate::util::endian::u32_to_array_le;
+use crate::util::bip32::{ExtendedPubKey, KeySource, Fingerprint, DerivationPath, ChildNumber};
 
 /// Type: Unsigned Transaction PSBT_GLOBAL_UNSIGNED_TX = 0x00
 const PSBT_GLOBAL_UNSIGNED_TX: u8 = 0x00;
@@ -330,7 +330,7 @@ impl Decodable for Global {
                         }
                     }
                 }
-                Err(::consensus::encode::Error::Psbt(::util::psbt::Error::NoMorePairs)) => break,
+                Err(crate::consensus::encode::Error::Psbt(crate::util::psbt::Error::NoMorePairs)) => break,
                 Err(e) => return Err(e),
             }
         }

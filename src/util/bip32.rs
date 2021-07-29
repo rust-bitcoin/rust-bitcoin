@@ -16,19 +16,19 @@
 //! Implementation of BIP32 hierarchical deterministic wallets, as defined
 //! at <https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki>
 
-use prelude::*;
+use crate::prelude::*;
 
 use core::{fmt, str::FromStr, default::Default};
 #[cfg(feature = "std")] use std::error;
 #[cfg(feature = "serde")] use serde;
 
-use hash_types::XpubIdentifier;
-use hashes::{sha512, Hash, HashEngine, Hmac, HmacEngine};
+use crate::hash_types::XpubIdentifier;
+use crate::hashes::{sha512, Hash, HashEngine, Hmac, HmacEngine};
 use secp256k1::{self, Secp256k1};
 
-use network::constants::Network;
-use util::{base58, endian, key};
-use util::ecdsa::{PublicKey, PrivateKey};
+use crate::network::constants::Network;
+use crate::util::{base58, endian, key};
+use crate::util::ecdsa::{PublicKey, PrivateKey};
 
 /// A chain code
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -772,9 +772,9 @@ mod tests {
     use core::str::FromStr;
 
     use secp256k1::{self, Secp256k1};
-    use hashes::hex::FromHex;
+    use crate::hashes::hex::FromHex;
 
-    use network::constants::Network::{self, Bitcoin};
+    use crate::network::constants::Network::{self, Bitcoin};
 
     #[test]
     fn test_parse_derivation_path() {

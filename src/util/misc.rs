@@ -16,12 +16,12 @@
 //!
 //! Various utility functions
 
-use prelude::*;
+use crate::prelude::*;
 
-use hashes::{sha256d, Hash, HashEngine};
+use crate::hashes::{sha256d, Hash, HashEngine};
 
-use blockdata::opcodes;
-use consensus::{encode, Encodable};
+use crate::blockdata::opcodes;
+use crate::consensus::{encode, Encodable};
 
 #[cfg(feature = "secp-recovery")]
 pub use self::message_signing::{MessageSignature, MessageSignatureError};
@@ -31,16 +31,16 @@ pub const BITCOIN_SIGNED_MSG_PREFIX: &[u8] = b"\x18Bitcoin Signed Message:\n";
 
 #[cfg(feature = "secp-recovery")]
 mod message_signing {
-    #[cfg(feature = "base64")] use prelude::*;
+    #[cfg(feature = "base64")] use crate::prelude::*;
     use core::fmt;
     #[cfg(feature = "std")] use std::error;
 
-    use hashes::sha256d;
+    use crate::hashes::sha256d;
     use secp256k1;
     use secp256k1::recovery::{RecoveryId, RecoverableSignature};
 
-    use util::ecdsa::PublicKey;
-    use util::address::{Address, AddressType};
+    use crate::util::ecdsa::PublicKey;
+    use crate::util::address::{Address, AddressType};
 
     /// An error used for dealing with Bitcoin Signed Messages.
     #[derive(Debug, PartialEq, Eq)]
@@ -248,7 +248,7 @@ pub fn signed_msg_hash(msg: &str) -> sha256d::Hash {
 
 #[cfg(test)]
 mod tests {
-    use hashes::hex::ToHex;
+    use crate::hashes::hex::ToHex;
     use super::script_find_and_remove;
     use super::signed_msg_hash;
 
@@ -321,11 +321,11 @@ mod tests {
         assert_eq!(pubkey.compressed, true);
         assert_eq!(pubkey.key, secp256k1::PublicKey::from_secret_key(&secp, &privkey));
 
-        let p2pkh = ::Address::p2pkh(&pubkey, ::Network::Bitcoin);
+        let p2pkh = crate::Address::p2pkh(&pubkey, crate::Network::Bitcoin);
         assert_eq!(signature2.is_signed_by_address(&secp, &p2pkh, msg_hash), Ok(true));
-        let p2wpkh = ::Address::p2wpkh(&pubkey, ::Network::Bitcoin).unwrap();
+        let p2wpkh = crate::Address::p2wpkh(&pubkey, crate::Network::Bitcoin).unwrap();
         assert_eq!(signature2.is_signed_by_address(&secp, &p2wpkh, msg_hash), Ok(false));
-        let p2shwpkh = ::Address::p2shwpkh(&pubkey, ::Network::Bitcoin).unwrap();
+        let p2shwpkh = crate::Address::p2shwpkh(&pubkey, crate::Network::Bitcoin).unwrap();
         assert_eq!(signature2.is_signed_by_address(&secp, &p2shwpkh, msg_hash), Ok(false));
     }
 }

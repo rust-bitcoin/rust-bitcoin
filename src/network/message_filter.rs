@@ -2,7 +2,7 @@
 //! BIP157  Client Side Block Filtering network messages
 //!
 
-use hash_types::{BlockHash, FilterHash, FilterHeader};
+use crate::hash_types::{BlockHash, FilterHash, FilterHeader};
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 /// getcfilters message

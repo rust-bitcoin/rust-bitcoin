@@ -14,7 +14,7 @@
 //! Taproot
 //!
 
-use hashes::{sha256, sha256t, Hash};
+use crate::hashes::{sha256, sha256t, Hash};
 
 /// The SHA-256 midstate value for the TapLeaf hash.
 const MIDSTATE_TAPLEAF: [u8; 32] = [
@@ -79,9 +79,9 @@ sha256t_hash_newtype!(TapSighashHash, TapSighashTag, MIDSTATE_TAPSIGHASH, 64,
 #[cfg(test)]
 mod test {
     use super::*;
-    use hashes::hex::ToHex;
-    use hashes::sha256t::Tag;
-    use hashes::{sha256, Hash, HashEngine};
+    use crate::hashes::hex::ToHex;
+    use crate::hashes::sha256t::Tag;
+    use crate::hashes::{sha256, Hash, HashEngine};
 
     fn tag_engine(tag_name: &str) -> sha256::HashEngine {
         let mut engine = sha256::Hash::engine();

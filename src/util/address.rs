@@ -33,19 +33,19 @@
 //! let address = Address::p2pkh(&public_key, Network::Bitcoin);
 //! ```
 
-use prelude::*;
+use crate::prelude::*;
 
 use core::fmt;
 use core::str::FromStr;
 #[cfg(feature = "std")] use std::error;
 
 use bech32;
-use hashes::Hash;
-use hash_types::{PubkeyHash, WPubkeyHash, ScriptHash, WScriptHash};
-use blockdata::script;
-use network::constants::Network;
-use util::base58;
-use util::ecdsa;
+use crate::hashes::Hash;
+use crate::hash_types::{PubkeyHash, WPubkeyHash, ScriptHash, WScriptHash};
+use crate::blockdata::script;
+use crate::network::constants::Network;
+use crate::util::base58;
+use crate::util::ecdsa;
 
 /// Address error.
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
@@ -537,11 +537,11 @@ impl fmt::Debug for Address {
 mod tests {
     use core::str::FromStr;
 
-    use hashes::hex::{FromHex, ToHex};
+    use crate::hashes::hex::{FromHex, ToHex};
 
-    use blockdata::script::Script;
-    use network::constants::Network::{Bitcoin, Testnet};
-    use util::ecdsa::PublicKey;
+    use crate::blockdata::script::Script;
+    use crate::network::constants::Network::{Bitcoin, Testnet};
+    use crate::util::ecdsa::PublicKey;
 
     use super::*;
 

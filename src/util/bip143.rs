@@ -19,15 +19,15 @@
 //! signatures, which are placed in the scriptSig.
 //!
 
-use hashes::{Hash, sha256d};
-use hash_types::SigHash;
-use blockdata::script::Script;
-use blockdata::transaction::{Transaction, TxIn, SigHashType};
-use consensus::{encode, Encodable};
+use crate::hashes::{Hash, sha256d};
+use crate::hash_types::SigHash;
+use crate::blockdata::script::Script;
+use crate::blockdata::transaction::{Transaction, TxIn, SigHashType};
+use crate::consensus::{encode, Encodable};
 
-use prelude::*;
+use crate::prelude::*;
 
-use io;
+use crate::io;
 use core::ops::{Deref, DerefMut};
 
 /// Parts of a sighash which are common across inputs or signatures, and which are
@@ -270,14 +270,14 @@ impl<R: DerefMut<Target=Transaction>> SigHashCache<R> {
 #[cfg(test)]
 #[allow(deprecated)]
 mod tests {
-    use hash_types::SigHash;
-    use blockdata::script::Script;
-    use blockdata::transaction::Transaction;
-    use consensus::encode::deserialize;
-    use network::constants::Network;
-    use util::address::Address;
-    use util::ecdsa::PublicKey;
-    use hashes::hex::FromHex;
+    use crate::hash_types::SigHash;
+    use crate::blockdata::script::Script;
+    use crate::blockdata::transaction::Transaction;
+    use crate::consensus::encode::deserialize;
+    use crate::network::constants::Network;
+    use crate::util::address::Address;
+    use crate::util::ecdsa::PublicKey;
+    use crate::hashes::hex::FromHex;
 
     use super::*;
 

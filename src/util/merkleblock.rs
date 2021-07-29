@@ -51,18 +51,18 @@
 //! assert_eq!(1, index.len());
 //! assert_eq!(1, index[0]);
 //! ```
-use prelude::*;
+use crate::prelude::*;
 
-use io;
+use crate::io;
 
-use hashes::Hash;
-use hash_types::{Txid, TxMerkleNode};
+use crate::hashes::Hash;
+use crate::hash_types::{Txid, TxMerkleNode};
 
-use blockdata::transaction::Transaction;
-use blockdata::constants::{MAX_BLOCK_WEIGHT, MIN_TRANSACTION_WEIGHT};
-use consensus::encode::{self, Decodable, Encodable};
-use util::merkleblock::MerkleBlockError::*;
-use {Block, BlockHeader};
+use crate::blockdata::transaction::Transaction;
+use crate::blockdata::constants::{MAX_BLOCK_WEIGHT, MIN_TRANSACTION_WEIGHT};
+use crate::consensus::encode::{self, Decodable, Encodable};
+use crate::util::merkleblock::MerkleBlockError::*;
+use crate::{Block, BlockHeader};
 
 /// An error when verifying the merkle block
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -517,15 +517,15 @@ impl Decodable for MerkleBlock {
 mod tests {
     use core::cmp::min;
 
-    use hashes::Hash;
-    use hashes::hex::{FromHex, ToHex};
-    use hash_types::{Txid, TxMerkleNode};
+    use crate::hashes::Hash;
+    use crate::hashes::hex::{FromHex, ToHex};
+    use crate::hash_types::{Txid, TxMerkleNode};
     use secp256k1::rand::prelude::*;
 
-    use consensus::encode::{deserialize, serialize};
-    use util::hash::bitcoin_merkle_root;
-    use util::merkleblock::{MerkleBlock, PartialMerkleTree};
-    use Block;
+    use crate::consensus::encode::{deserialize, serialize};
+    use crate::util::hash::bitcoin_merkle_root;
+    use crate::util::merkleblock::{MerkleBlock, PartialMerkleTree};
+    use crate::Block;
 
     #[test]
     fn pmt_tests() {

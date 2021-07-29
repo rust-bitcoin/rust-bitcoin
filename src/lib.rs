@@ -88,31 +88,31 @@ pub mod consensus;
 pub mod hash_types;
 pub mod policy;
 
-pub use hash_types::*;
-pub use blockdata::block::Block;
-pub use blockdata::block::BlockHeader;
-pub use blockdata::script::Script;
-pub use blockdata::transaction::Transaction;
-pub use blockdata::transaction::TxIn;
-pub use blockdata::transaction::TxOut;
-pub use blockdata::transaction::OutPoint;
-pub use blockdata::transaction::SigHashType;
-pub use consensus::encode::VarInt;
-pub use network::constants::Network;
-pub use util::Error;
-pub use util::address::Address;
-pub use util::address::AddressType;
-pub use util::amount::Amount;
-pub use util::amount::Denomination;
-pub use util::amount::SignedAmount;
-pub use util::merkleblock::MerkleBlock;
+pub use crate::hash_types::*;
+pub use crate::blockdata::block::Block;
+pub use crate::blockdata::block::BlockHeader;
+pub use crate::blockdata::script::Script;
+pub use crate::blockdata::transaction::Transaction;
+pub use crate::blockdata::transaction::TxIn;
+pub use crate::blockdata::transaction::TxOut;
+pub use crate::blockdata::transaction::OutPoint;
+pub use crate::blockdata::transaction::SigHashType;
+pub use crate::consensus::encode::VarInt;
+pub use crate::network::constants::Network;
+pub use crate::util::Error;
+pub use crate::util::address::Address;
+pub use crate::util::address::AddressType;
+pub use crate::util::amount::Amount;
+pub use crate::util::amount::Denomination;
+pub use crate::util::amount::SignedAmount;
+pub use crate::util::merkleblock::MerkleBlock;
 
-pub use util::ecdsa;
-pub use util::schnorr;
+pub use crate::util::ecdsa;
+pub use crate::util::schnorr;
 #[deprecated(since = "0.26.1", note = "Please use `ecdsa::PrivateKey` instead")]
-pub use util::ecdsa::PrivateKey;
+pub use crate::util::ecdsa::PrivateKey;
 #[deprecated(since = "0.26.1", note = "Please use `ecdsa::PublicKey` instead")]
-pub use util::ecdsa::PublicKey;
+pub use crate::util::ecdsa::PublicKey;
 
 #[cfg(feature = "std")]
 use std::io;

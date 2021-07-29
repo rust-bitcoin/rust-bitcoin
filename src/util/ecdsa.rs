@@ -16,18 +16,18 @@
 //! ECDSA keys used in Bitcoin that can be roundtrip (de)serialized.
 //!
 
-use prelude::*;
+use crate::prelude::*;
 
 use core::{ops, str::FromStr};
 use core::fmt::{self, Write as _fmtWrite};
-use io;
+use crate::io;
 
 use secp256k1::{self, Secp256k1};
-use network::constants::Network;
-use hashes::{Hash, hash160};
-use hash_types::{PubkeyHash, WPubkeyHash};
-use util::base58;
-use util::key::Error;
+use crate::network::constants::Network;
+use crate::hashes::{Hash, hash160};
+use crate::hash_types::{PubkeyHash, WPubkeyHash};
+use crate::util::base58;
+use crate::util::key::Error;
 
 /// A Bitcoin ECDSA public key
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -410,14 +410,14 @@ impl<'de> ::serde::Deserialize<'de> for PublicKey {
 
 #[cfg(test)]
 mod tests {
-    use io;
+    use crate::io;
     use super::{PrivateKey, PublicKey};
     use secp256k1::Secp256k1;
     use std::str::FromStr;
-    use hashes::hex::ToHex;
-    use network::constants::Network::Testnet;
-    use network::constants::Network::Bitcoin;
-    use util::address::Address;
+    use crate::hashes::hex::ToHex;
+    use crate::network::constants::Network::Testnet;
+    use crate::network::constants::Network::Bitcoin;
+    use crate::util::address::Address;
 
     #[test]
     fn test_key_derivation() {

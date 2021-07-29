@@ -15,13 +15,13 @@
 //!
 //! Utility functions related to hashing data, including merkleization
 
-use prelude::*;
+use crate::prelude::*;
 
-use io;
+use crate::io;
 use core::cmp::min;
 
-use hashes::Hash;
-use consensus::encode::Encodable;
+use crate::hashes::Hash;
+use crate::consensus::encode::Encodable;
 
 /// Calculates the merkle root of a list of hashes inline
 /// into the allocated slice.

@@ -17,13 +17,13 @@
 //!
 
 #[deprecated(since = "0.26.1", note = "Please use `util::ecdsa` instead")]
-pub use util::ecdsa::{PrivateKey, PublicKey};
+pub use crate::util::ecdsa::{PrivateKey, PublicKey};
 
 use core::fmt;
 #[cfg(feature = "std")] use std::error;
 
 use secp256k1;
-use util::base58;
+use crate::util::base58;
 
 /// A key-related error.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]

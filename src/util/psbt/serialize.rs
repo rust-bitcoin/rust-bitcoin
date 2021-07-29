@@ -17,17 +17,17 @@
 //! Defines traits used for (de)serializing PSBT values into/from raw
 //! bytes in PSBT key-value pairs.
 
-use prelude::*;
+use crate::prelude::*;
 
-use io;
+use crate::io;
 
-use blockdata::script::Script;
-use blockdata::transaction::{SigHashType, Transaction, TxOut};
-use consensus::encode::{self, serialize, Decodable};
-use util::bip32::{ChildNumber, Fingerprint, KeySource};
-use hashes::{hash160, ripemd160, sha256, sha256d, Hash};
-use util::ecdsa::PublicKey;
-use util::psbt;
+use crate::blockdata::script::Script;
+use crate::blockdata::transaction::{SigHashType, Transaction, TxOut};
+use crate::consensus::encode::{self, serialize, Decodable};
+use crate::util::bip32::{ChildNumber, Fingerprint, KeySource};
+use crate::hashes::{hash160, ripemd160, sha256, sha256d, Hash};
+use crate::util::ecdsa::PublicKey;
+use crate::util::psbt;
 
 /// A trait for serializing a value as raw data for insertion into PSBT
 /// key-value pairs.

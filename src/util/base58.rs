@@ -14,14 +14,14 @@
 
 //! Base58 encoder and decoder
 
-use prelude::*;
+use crate::prelude::*;
 
 use core::{fmt, str, iter, slice};
 
-use hashes::{sha256d, Hash};
+use crate::hashes::{sha256d, Hash};
 use secp256k1;
 
-use util::{endian, key};
+use crate::util::{endian, key};
 
 /// An error that might occur during base58 decoding
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
@@ -257,7 +257,7 @@ impl From<key::Error> for Error {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use hashes::hex::FromHex;
+    use crate::hashes::hex::FromHex;
 
     #[test]
     fn test_base58_encode() {

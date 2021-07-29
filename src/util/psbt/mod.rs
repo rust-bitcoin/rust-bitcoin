@@ -18,14 +18,14 @@
 //! defined at <https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki>
 //! except we define PSBTs containing non-standard SigHash types as invalid.
 
-use blockdata::script::Script;
-use blockdata::transaction::Transaction;
-use consensus::{encode, Encodable, Decodable};
-use consensus::encode::MAX_VEC_SIZE;
+use crate::blockdata::script::Script;
+use crate::blockdata::transaction::Transaction;
+use crate::consensus::{encode, Encodable, Decodable};
+use crate::consensus::encode::MAX_VEC_SIZE;
 
-use prelude::*;
+use crate::prelude::*;
 
-use io;
+use crate::io;
 
 mod error;
 pub use self::error::Error;
@@ -99,7 +99,7 @@ mod display_from_str {
     use super::PartiallySignedTransaction;
     use core::fmt::{Display, Formatter, self};
     use core::str::FromStr;
-    use consensus::encode::{Error, self};
+    use crate::consensus::encode::{Error, self};
     use ::base64::display::Base64Display;
 
     /// Error happening during PSBT decoding from Base64 string
@@ -214,24 +214,24 @@ impl Decodable for PartiallySignedTransaction {
 
 #[cfg(test)]
 mod tests {
-    use hashes::hex::FromHex;
-    use hashes::{sha256, hash160, Hash, ripemd160};
-    use hash_types::Txid;
+    use crate::hashes::hex::FromHex;
+    use crate::hashes::{sha256, hash160, Hash, ripemd160};
+    use crate::hash_types::Txid;
 
 
     use secp256k1::Secp256k1;
 
-    use blockdata::script::Script;
-    use blockdata::transaction::{Transaction, TxIn, TxOut, OutPoint};
-    use network::constants::Network::Bitcoin;
-    use consensus::encode::{deserialize, serialize, serialize_hex};
-    use util::bip32::{ChildNumber, ExtendedPrivKey, ExtendedPubKey, Fingerprint, KeySource};
-    use util::ecdsa::PublicKey;
-    use util::psbt::map::{Global, Output, Input};
-    use util::psbt::raw;
+    use crate::blockdata::script::Script;
+    use crate::blockdata::transaction::{Transaction, TxIn, TxOut, OutPoint};
+    use crate::network::constants::Network::Bitcoin;
+    use crate::consensus::encode::{deserialize, serialize, serialize_hex};
+    use crate::util::bip32::{ChildNumber, ExtendedPrivKey, ExtendedPubKey, Fingerprint, KeySource};
+    use crate::util::ecdsa::PublicKey;
+    use crate::util::psbt::map::{Global, Output, Input};
+    use crate::util::psbt::raw;
 
     use super::PartiallySignedTransaction;
-    use util::psbt::raw::ProprietaryKey;
+    use crate::util::psbt::raw::ProprietaryKey;
     use std::collections::BTreeMap;
 
     #[test]
@@ -371,8 +371,8 @@ mod tests {
     #[test]
     fn test_serde_psbt() {
         //! Create a full PSBT value with various fields filled and make sure it can be JSONized.
-        use hashes::sha256d;
-        use util::psbt::map::Input;
+        use crate::hashes::sha256d;
+        use crate::util::psbt::map::Input;
 
         // create some values to use in the PSBT
         let tx = Transaction {
@@ -470,15 +470,15 @@ mod tests {
         #[cfg(feature = "base64")]
         use std::str::FromStr;
 
-        use hashes::hex::FromHex;
-        use hash_types::Txid;
+        use crate::hashes::hex::FromHex;
+        use crate::hash_types::Txid;
 
-        use blockdata::script::Script;
-        use blockdata::transaction::{SigHashType, Transaction, TxIn, TxOut, OutPoint};
-        use consensus::encode::serialize_hex;
-        use util::psbt::map::{Map, Global, Input, Output};
-        use util::psbt::raw;
-        use util::psbt::{PartiallySignedTransaction, Error};
+        use crate::blockdata::script::Script;
+        use crate::blockdata::transaction::{SigHashType, Transaction, TxIn, TxOut, OutPoint};
+        use crate::consensus::encode::serialize_hex;
+        use crate::util::psbt::map::{Map, Global, Input, Output};
+        use crate::util::psbt::raw;
+        use crate::util::psbt::{PartiallySignedTransaction, Error};
         use std::collections::BTreeMap;
 
         #[test]
@@ -507,7 +507,7 @@ mod tests {
         #[test]
         #[should_panic(expected = "ConsensusEncoding")]
         fn invalid_vector_2_base64() {
-            use util::psbt::PsbtParseError;
+            use crate::util::psbt::PsbtParseError;
             PartiallySignedTransaction::from_str("cHNidP8BAHUCAAAAASaBcTce3/KF6Tet7qSze3gADAVmy7OtZGQXE8pCFxv2AAAAAAD+////AtPf9QUAAAAAGXapFNDFmQPFusKGh2DpD9UhpGZap2UgiKwA4fUFAAAAABepFDVF5uM7gyxHBQ8k0+65PJwDlIvHh7MuEwAAAQD9pQEBAAAAAAECiaPHHqtNIOA3G7ukzGmPopXJRjr6Ljl/hTPMti+VZ+UBAAAAFxYAFL4Y0VKpsBIDna89p95PUzSe7LmF/////4b4qkOnHf8USIk6UwpyN+9rRgi7st0tAXHmOuxqSJC0AQAAABcWABT+Pp7xp0XpdNkCxDVZQ6vLNL1TU/////8CAMLrCwAAAAAZdqkUhc/xCX/Z4Ai7NK9wnGIZeziXikiIrHL++E4sAAAAF6kUM5cluiHv1irHU6m80GfWx6ajnQWHAkcwRAIgJxK+IuAnDzlPVoMR3HyppolwuAJf3TskAinwf4pfOiQCIAGLONfc0xTnNMkna9b7QPZzMlvEuqFEyADS8vAtsnZcASED0uFWdJQbrUqZY3LLh+GFbTZSYG2YVi/jnF6efkE/IQUCSDBFAiEA0SuFLYXc2WHS9fSrZgZU327tzHlMDDPOXMMJ/7X85Y0CIGczio4OFyXBl/saiK9Z9R5E5CVbIBZ8hoQDHAXR8lkqASECI7cr7vCWXRC+B3jv7NYfysb3mk6haTkzgHNEZPhPKrMAAAAAAA==")
                 // This weird thing is necessary since rustc 0.29 prints out I/O error in a different format than later versions
                 .map_err(|err| match err {

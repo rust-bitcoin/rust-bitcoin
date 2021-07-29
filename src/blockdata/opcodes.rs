@@ -22,7 +22,7 @@
 
 #[cfg(feature = "serde")] use serde;
 
-#[cfg(feature = "serde")] use prelude::*;
+#[cfg(feature = "serde")] use crate::prelude::*;
 
 use core::{fmt, convert::From};
 
