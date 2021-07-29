@@ -24,7 +24,7 @@ jobs:
               DO_BENCH: true
               AS_DEPENDENCY: true
               DO_NO_STD: true
-          - rust: 1.29.0
+          - rust: 1.36.0
             env:
               AS_DEPENDENCY: true
               PIN_VERSIONS: true
