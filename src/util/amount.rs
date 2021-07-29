@@ -1372,9 +1372,9 @@ mod tests {
 
         #[derive(Serialize, Deserialize, PartialEq, Debug)]
         struct T {
-            #[serde(with = "::util::amount::serde::as_sat")]
+            #[serde(with = "crate::util::amount::serde::as_sat")]
             pub amt: Amount,
-            #[serde(with = "::util::amount::serde::as_sat")]
+            #[serde(with = "crate::util::amount::serde::as_sat")]
             pub samt: SignedAmount,
         }
 
@@ -1404,9 +1404,9 @@ mod tests {
 
         #[derive(Serialize, Deserialize, PartialEq, Debug)]
         struct T {
-            #[serde(with = "::util::amount::serde::as_btc")]
+            #[serde(with = "crate::util::amount::serde::as_btc")]
             pub amt: Amount,
-            #[serde(with = "::util::amount::serde::as_btc")]
+            #[serde(with = "crate::util::amount::serde::as_btc")]
             pub samt: SignedAmount,
         }
 
@@ -1438,9 +1438,9 @@ mod tests {
 
         #[derive(Serialize, Deserialize, PartialEq, Debug, Eq)]
         struct T {
-            #[serde(default, with = "::util::amount::serde::as_btc::opt")]
+            #[serde(default, with = "crate::util::amount::serde::as_btc::opt")]
             pub amt: Option<Amount>,
-            #[serde(default, with = "::util::amount::serde::as_btc::opt")]
+            #[serde(default, with = "crate::util::amount::serde::as_btc::opt")]
             pub samt: Option<SignedAmount>,
         }
 
@@ -1481,9 +1481,9 @@ mod tests {
 
         #[derive(Serialize, Deserialize, PartialEq, Debug, Eq)]
         struct T {
-            #[serde(default, with = "::util::amount::serde::as_sat::opt")]
+            #[serde(default, with = "crate::util::amount::serde::as_sat::opt")]
             pub amt: Option<Amount>,
-            #[serde(default, with = "::util::amount::serde::as_sat::opt")]
+            #[serde(default, with = "crate::util::amount::serde::as_sat::opt")]
             pub samt: Option<SignedAmount>,
         }
 

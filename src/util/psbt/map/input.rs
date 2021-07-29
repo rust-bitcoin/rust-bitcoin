@@ -72,7 +72,7 @@ pub struct Input {
     pub witness_utxo: Option<TxOut>,
     /// A map from public keys to their corresponding signature as would be
     /// pushed to the stack from a scriptSig or witness.
-    #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_byte_values"))]
+    #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_byte_values"))]
     pub partial_sigs: BTreeMap<PublicKey, Vec<u8>>,
     /// The sighash type to be used for this input. Signatures for this input
     /// must use the sighash type.
@@ -83,7 +83,7 @@ pub struct Input {
     pub witness_script: Option<Script>,
     /// A map from public keys needed to sign this input to their corresponding
     /// master key fingerprints and derivation paths.
-    #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_as_seq"))]
+    #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq"))]
     pub bip32_derivation: BTreeMap<PublicKey, KeySource>,
     /// The finalized, fully-constructed scriptSig with signatures and any other
     /// scripts necessary for this input to pass validation.
@@ -93,22 +93,22 @@ pub struct Input {
     pub final_script_witness: Option<Vec<Vec<u8>>>,
     /// TODO: Proof of reserves commitment
     /// RIPEMD160 hash to preimage map
-    #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_byte_values"))]
+    #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_byte_values"))]
     pub ripemd160_preimages: BTreeMap<ripemd160::Hash, Vec<u8>>,
     /// SHA256 hash to preimage map
-    #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_byte_values"))]
+    #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_byte_values"))]
     pub sha256_preimages: BTreeMap<sha256::Hash, Vec<u8>>,
     /// HSAH160 hash to preimage map
-    #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_byte_values"))]
+    #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_byte_values"))]
     pub hash160_preimages: BTreeMap<hash160::Hash, Vec<u8>>,
     /// HAS256 hash to preimage map
-    #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_byte_values"))]
+    #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_byte_values"))]
     pub hash256_preimages: BTreeMap<sha256d::Hash, Vec<u8>>,
     /// Proprietary key-value pairs for this input.
-    #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_as_seq_byte_values"))]
+    #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq_byte_values"))]
     pub proprietary: BTreeMap<raw::ProprietaryKey, Vec<u8>>,
     /// Unknown key-value pairs for this input.
-    #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_as_seq_byte_values"))]
+    #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq_byte_values"))]
     pub unknown: BTreeMap<raw::Key, Vec<u8>>,
 }
 

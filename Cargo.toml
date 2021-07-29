@@ -9,6 +9,7 @@ documentation = "https://docs.rs/bitcoin/"
 description = "General purpose library for using and interoperating with Bitcoin and other cryptocurrencies."
 keywords = [ "crypto", "bitcoin" ]
 readme = "README.md"
+edition = "2018"
 
 
 [features]
