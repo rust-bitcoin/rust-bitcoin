@@ -25,7 +25,6 @@ use crate::consensus::encode::{self, ReadExt, WriteExt, Decodable, Encodable, Va
 use crate::hashes::hex;
 use crate::util::psbt::Error;
 use crate::util::read_to_end;
-#[cfg(feature = "serde")]
 
 /// A PSBT key in its raw byte form.
 #[derive(Debug, PartialEq, Hash, Eq, Clone, Ord, PartialOrd)]
