@@ -168,7 +168,7 @@ impl From<ChildNumber> for u32 {
 }
 
 impl fmt::Display for ChildNumber {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
             ChildNumber::Hardened { index } => {
                 fmt::Display::fmt(&index, f)?;
@@ -268,13 +268,13 @@ impl<'a> From<&'a [ChildNumber]> for DerivationPath {
     }
 }
 
-impl ::core::iter::FromIterator<ChildNumber> for DerivationPath {
+impl core::iter::FromIterator<ChildNumber> for DerivationPath {
     fn from_iter<T>(iter: T) -> Self where T: IntoIterator<Item = ChildNumber> {
         DerivationPath(Vec::from_iter(iter))
     }
 }
 
-impl<'a> ::core::iter::IntoIterator for &'a DerivationPath {
+impl<'a> core::iter::IntoIterator for &'a DerivationPath {
     type Item = &'a ChildNumber;
     type IntoIter = slice::Iter<'a, ChildNumber>;
     fn into_iter(self) -> Self::IntoIter {
@@ -365,17 +365,17 @@ impl DerivationPath {
 
     /// Get an [Iterator] over the children of this [DerivationPath]
     /// starting with the given [ChildNumber].
-    pub fn children_from(&self, cn: ChildNumber) -> DerivationPathIterator {
+    pub fn children_from(&self, cn: ChildNumber) -> DerivationPathIterator<'_> {
         DerivationPathIterator::start_from(&self, cn)
     }
 
     /// Get an [Iterator] over the unhardened children of this [DerivationPath].
-    pub fn normal_children(&self) -> DerivationPathIterator {
+    pub fn normal_children(&self) -> DerivationPathIterator<'_> {
         DerivationPathIterator::start_from(&self, ChildNumber::Normal{ index: 0 })
     }
 
     /// Get an [Iterator] over the hardened children of this [DerivationPath].
-    pub fn hardened_children(&self) -> DerivationPathIterator {
+    pub fn hardened_children(&self) -> DerivationPathIterator<'_> {
         DerivationPathIterator::start_from(&self, ChildNumber::Hardened{ index: 0 })
     }
 
@@ -403,7 +403,7 @@ impl DerivationPath {
 }
 
 impl fmt::Display for DerivationPath {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str("m")?;
         for cn in self.0.iter() {
             f.write_str("/")?;
@@ -414,7 +414,7 @@ impl fmt::Display for DerivationPath {
 }
 
 impl fmt::Debug for DerivationPath {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Display::fmt(&self, f)
     }
 }
@@ -445,7 +445,7 @@ pub enum Error {
 }
 
 impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
             Error::CannotDeriveFromHardenedKey => f.write_str("cannot derive hardened key from public key"),
             Error::Ecdsa(ref e) => fmt::Display::fmt(e, f),
@@ -725,7 +725,7 @@ impl ExtendedPubKey {
 }
 
 impl fmt::Display for ExtendedPrivKey {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
         base58::check_encode_slice_to_fmt(fmt, &self.encode()[..])
     }
 }
@@ -745,7 +745,7 @@ impl FromStr for ExtendedPrivKey {
 }
 
 impl fmt::Display for ExtendedPubKey {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
         base58::check_encode_slice_to_fmt(fmt, &self.encode()[..])
     }
 }

@@ -100,7 +100,7 @@ mod display_from_str {
     use core::fmt::{Display, Formatter, self};
     use core::str::FromStr;
     use crate::consensus::encode::{Error, self};
-    use ::base64::display::Base64Display;
+    use base64::display::Base64Display;
 
     /// Error happening during PSBT decoding from Base64 string
     #[derive(Debug)]
@@ -108,7 +108,7 @@ mod display_from_str {
         /// Error in internal PSBT data structure
         PsbtEncoding(Error),
         /// Error in PSBT Base64 encoding
-        Base64Encoding(::base64::DecodeError)
+        Base64Encoding(base64::DecodeError)
     }
 
     impl Display for PsbtParseError {
@@ -121,11 +121,11 @@ mod display_from_str {
     }
 
     #[cfg(feature = "std")]
-    impl ::std::error::Error for PsbtParseError { }
+    impl std::error::Error for PsbtParseError { }
 
     impl Display for PartiallySignedTransaction {
         fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-            write!(f, "{}", Base64Display::with_config(&encode::serialize(self), ::base64::STANDARD))
+            write!(f, "{}", Base64Display::with_config(&encode::serialize(self), base64::STANDARD))
         }
     }
 
@@ -133,7 +133,7 @@ mod display_from_str {
         type Err = PsbtParseError;
 
         fn from_str(s: &str) -> Result<Self, Self::Err> {
-            let data = ::base64::decode(s).map_err(PsbtParseError::Base64Encoding)?;
+            let data = base64::decode(s).map_err(PsbtParseError::Base64Encoding)?;
             Ok(encode::deserialize(&data).map_err(PsbtParseError::PsbtEncoding)?)
         }
     }
@@ -461,8 +461,8 @@ mod tests {
                 ..Default::default()
             }],
         };
-        let encoded = ::serde_json::to_string(&psbt).unwrap();
-        let decoded: PartiallySignedTransaction = ::serde_json::from_str(&encoded).unwrap();
+        let encoded = serde_json::to_string(&psbt).unwrap();
+        let decoded: PartiallySignedTransaction = serde_json::from_str(&encoded).unwrap();
         assert_eq!(psbt, decoded);
     }
 

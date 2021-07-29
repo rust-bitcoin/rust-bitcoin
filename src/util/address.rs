@@ -67,7 +67,7 @@ pub enum Error {
 }
 
 impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
             Error::Base58(ref e) => write!(f, "base58: {}", e),
             Error::Bech32(ref e) => write!(f, "bech32: {}", e),
@@ -87,7 +87,7 @@ impl fmt::Display for Error {
 }
 
 #[cfg(feature = "std")]
-impl ::std::error::Error for Error {
+impl std::error::Error for Error {
     fn cause(&self) -> Option<&dyn  error::Error> {
         match *self {
             Error::Base58(ref e) => Some(e),
@@ -125,7 +125,7 @@ pub enum AddressType {
 }
 
 impl fmt::Display for AddressType {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(match *self {
             AddressType::P2pkh => "p2pkh",
             AddressType::P2sh => "p2sh",
@@ -372,7 +372,7 @@ impl Address {
 // Alternate formatting `{:#}` is used to return uppercase version of bech32 addresses which should
 // be used in QR codes, see [Address::to_qr_uri]
 impl fmt::Display for Address {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.payload {
             Payload::PubkeyHash(ref hash) => {
                 let mut prefixed = [0; 21];
@@ -528,7 +528,7 @@ impl FromStr for Address {
 }
 
 impl fmt::Debug for Address {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.to_string())
     }
 }

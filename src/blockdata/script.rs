@@ -38,7 +38,7 @@ use crate::hashes::{Hash, hex};
 use crate::policy::DUST_RELAY_TX_FEE;
 #[cfg(feature="bitcoinconsensus")] use bitcoinconsensus;
 #[cfg(feature="bitcoinconsensus")] use core::convert::From;
-#[cfg(feature="bitcoinconsensus")] use OutPoint;
+#[cfg(feature="bitcoinconsensus")] use crate::OutPoint;
 
 use crate::util::ecdsa::PublicKey;
 
@@ -53,7 +53,7 @@ impl AsRef<[u8]> for Script {
 }
 
 impl fmt::Debug for Script {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str("Script(")?;
         self.fmt_asm(f)?;
         f.write_str(")")
@@ -61,13 +61,13 @@ impl fmt::Debug for Script {
 }
 
 impl fmt::Display for Script {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Debug::fmt(self, f)
     }
 }
 
 impl fmt::LowerHex for Script {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for &ch in self.0.iter() {
             write!(f, "{:02x}", ch)?;
         }
@@ -76,7 +76,7 @@ impl fmt::LowerHex for Script {
 }
 
 impl fmt::UpperHex for Script {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for &ch in self.0.iter() {
             write!(f, "{:02X}", ch)?;
         }
@@ -94,7 +94,7 @@ impl hex::FromHex for Script {
     }
 }
 
-impl ::core::str::FromStr for Script {
+impl core::str::FromStr for Script {
     type Err = hex::Error;
     fn from_str(s: &str) -> Result<Self, hex::Error> {
         hex::FromHex::from_hex(s)
@@ -130,7 +130,7 @@ pub enum Error {
 }
 
 impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let str = match *self {
             Error::NonMinimalPush => "non-minimal datapush",
             Error::EarlyEndOfScript => "unexpected end of script",
@@ -147,7 +147,7 @@ impl fmt::Display for Error {
 }
 
 #[cfg(feature = "std")]
-impl ::std::error::Error for Error {}
+impl std::error::Error for Error {}
 
 #[cfg(feature="bitcoinconsensus")]
 #[doc(hidden)]
@@ -268,16 +268,16 @@ impl Script {
 
     /// Generates P2WPKH-type of scriptPubkey
     pub fn new_v0_wpkh(pubkey_hash: &WPubkeyHash) -> Script {
-        Script::new_witness_program(::bech32::u5::try_from_u8(0).unwrap(), &pubkey_hash.to_vec())
+        Script::new_witness_program(bech32::u5::try_from_u8(0).unwrap(), &pubkey_hash.to_vec())
     }
 
     /// Generates P2WSH-type of scriptPubkey with a given hash of the redeem script
     pub fn new_v0_wsh(script_hash: &WScriptHash) -> Script {
-        Script::new_witness_program(::bech32::u5::try_from_u8(0).unwrap(), &script_hash.to_vec())
+        Script::new_witness_program(bech32::u5::try_from_u8(0).unwrap(), &script_hash.to_vec())
     }
 
     /// Generates P2WSH-type of scriptPubkey with a given hash of the redeem script
-    pub fn new_witness_program(ver: ::bech32::u5, program: &[u8]) -> Script {
+    pub fn new_witness_program(ver: bech32::u5, program: &[u8]) -> Script {
         let mut verop = ver.to_u8();
         assert!(verop <= 16, "incorrect witness version provided: {}", verop);
         if verop > 0 {
@@ -439,7 +439,7 @@ impl Script {
     /// it as a slice using `script[..]` or convert it to a vector using `into_bytes()`.
     ///
     /// To force minimal pushes, use [Self::instructions_minimal].
-    pub fn instructions(&self) -> Instructions {
+    pub fn instructions(&self) -> Instructions<'_> {
         Instructions {
             data: &self.0[..],
             enforce_minimal: false,
@@ -448,7 +448,7 @@ impl Script {
 
     /// Iterate over the script in the form of `Instruction`s while enforcing
     /// minimal pushes.
-    pub fn instructions_minimal(&self) -> Instructions {
+    pub fn instructions_minimal(&self) -> Instructions<'_> {
         Instructions {
             data: &self.0[..],
             enforce_minimal: true,
@@ -458,7 +458,7 @@ impl Script {
     #[cfg(feature="bitcoinconsensus")]
     /// Shorthand for [Self::verify_with_flags] with flag [bitcoinconsensus::VERIFY_ALL]
     pub fn verify (&self, index: usize, amount: u64, spending: &[u8]) -> Result<(), Error> {
-        self.verify_with_flags(index, ::Amount::from_sat(amount), spending, ::bitcoinconsensus::VERIFY_ALL)
+        self.verify_with_flags(index, crate::Amount::from_sat(amount), spending, bitcoinconsensus::VERIFY_ALL)
     }
 
     #[cfg(feature="bitcoinconsensus")]
@@ -468,7 +468,7 @@ impl Script {
     ///  * `amount` - the amount this script guards
     ///  * `spending` - the transaction that attempts to spend the output holding this script
     ///  * `flags` - verification flags, see [bitcoinconsensus::VERIFY_ALL] and similar
-    pub fn verify_with_flags<F: Into<u32>>(&self, index: usize, amount: ::Amount, spending: &[u8], flags: F) -> Result<(), Error> {
+    pub fn verify_with_flags<F: Into<u32>>(&self, index: usize, amount: crate::Amount, spending: &[u8], flags: F) -> Result<(), Error> {
         Ok(bitcoinconsensus::verify_with_flags (&self.0[..], amount.as_sat(), spending, index, flags.into())?)
     }
 
@@ -833,7 +833,7 @@ impl<'de> serde::Deserialize<'de> for Script {
         impl<'de> serde::de::Visitor<'de> for Visitor {
             type Value = Script;
 
-            fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
+            fn expecting(&self, formatter: &mut Formatter<'_>) -> fmt::Result {
                 formatter.write_str("a script")
             }
 
@@ -1183,15 +1183,15 @@ mod test {
         let minimal = hex_script!("0169b2");           // minimal
         let nonminimal_alt = hex_script!("026900b2");  // non-minimal number but minimal push (should be OK)
 
-        let v_zero: Result<Vec<Instruction>, Error> = zero.instructions_minimal().collect();
-        let v_zeropush: Result<Vec<Instruction>, Error> = zeropush.instructions_minimal().collect();
+        let v_zero: Result<Vec<Instruction<'_>>, Error> = zero.instructions_minimal().collect();
+        let v_zeropush: Result<Vec<Instruction<'_>>, Error> = zeropush.instructions_minimal().collect();
 
-        let v_min: Result<Vec<Instruction>, Error> = minimal.instructions_minimal().collect();
-        let v_nonmin: Result<Vec<Instruction>, Error> = nonminimal.instructions_minimal().collect();
-        let v_nonmin_alt: Result<Vec<Instruction>, Error> = nonminimal_alt.instructions_minimal().collect();
-        let slop_v_min: Result<Vec<Instruction>, Error> = minimal.instructions().collect();
-        let slop_v_nonmin: Result<Vec<Instruction>, Error> = nonminimal.instructions().collect();
-        let slop_v_nonmin_alt: Result<Vec<Instruction>, Error> = nonminimal_alt.instructions().collect();
+        let v_min: Result<Vec<Instruction<'_>>, Error> = minimal.instructions_minimal().collect();
+        let v_nonmin: Result<Vec<Instruction<'_>>, Error> = nonminimal.instructions_minimal().collect();
+        let v_nonmin_alt: Result<Vec<Instruction<'_>>, Error> = nonminimal_alt.instructions_minimal().collect();
+        let slop_v_min: Result<Vec<Instruction<'_>>, Error> = minimal.instructions().collect();
+        let slop_v_nonmin: Result<Vec<Instruction<'_>>, Error> = nonminimal.instructions().collect();
+        let slop_v_nonmin_alt: Result<Vec<Instruction<'_>>, Error> = nonminimal_alt.instructions().collect();
 
         assert_eq!(
             v_zero.unwrap(),

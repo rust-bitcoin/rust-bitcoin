@@ -69,7 +69,7 @@ pub struct ProprietaryKey<Subtype = ProprietaryType> where Subtype: Copy + From<
 }
 
 impl fmt::Display for Key {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "type: {:#x}, key: ", self.type_value)?;
         hex::format_hex(&self.key[..], f)
     }

@@ -38,7 +38,7 @@ pub struct StreamReader<R: Read> {
 }
 
 impl<R: Read> fmt::Debug for StreamReader<R> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "StreamReader with buffer_size={} and unparsed content {:?}",
                self.data.capacity(), self.unparsed)
     }

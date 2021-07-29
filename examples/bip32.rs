@@ -1,4 +1,4 @@
-extern crate bitcoin;
+
 
 use std::{env, process};
 use std::str::FromStr;

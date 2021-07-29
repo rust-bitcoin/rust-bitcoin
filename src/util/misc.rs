@@ -54,7 +54,7 @@ mod message_signing {
     }
 
     impl fmt::Display for MessageSignatureError {
-        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             match *self {
                 MessageSignatureError::InvalidLength => write!(f, "length not 65 bytes"),
                 MessageSignatureError::InvalidEncoding(ref e) => write!(f, "invalid encoding: {}", e),
@@ -171,29 +171,29 @@ mod message_signing {
         #[cfg(feature = "base64")]
         /// Convert a signature from base64 encoding.
         pub fn from_base64(s: &str) -> Result<MessageSignature, MessageSignatureError> {
-            let bytes = ::base64::decode(s).map_err(|_| MessageSignatureError::InvalidBase64)?;
+            let bytes = base64::decode(s).map_err(|_| MessageSignatureError::InvalidBase64)?;
             MessageSignature::from_slice(&bytes)
         }
 
         #[cfg(feature = "base64")]
         /// Convert to base64 encoding.
         pub fn to_base64(&self) -> String {
-            ::base64::encode(&self.serialize()[..])
+            base64::encode(&self.serialize()[..])
         }
     }
 
     #[cfg(feature = "base64")]
     impl fmt::Display for MessageSignature {
-        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             let bytes = self.serialize();
             // This avoids the allocation of a String.
-            write!(f, "{}", ::base64::display::Base64Display::with_config(
-                    &bytes[..], ::base64::STANDARD))
+            write!(f, "{}", base64::display::Base64Display::with_config(
+                    &bytes[..], base64::STANDARD))
         }
     }
 
     #[cfg(feature = "base64")]
-    impl ::core::str::FromStr for MessageSignature {
+    impl core::str::FromStr for MessageSignature {
         type Err = MessageSignatureError;
         fn from_str(s: &str) -> Result<MessageSignature, MessageSignatureError> {
             MessageSignature::from_base64(s)

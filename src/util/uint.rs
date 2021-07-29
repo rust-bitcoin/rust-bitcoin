@@ -166,26 +166,26 @@ macro_rules! construct_uint {
 
         impl PartialOrd for $name {
             #[inline]
-            fn partial_cmp(&self, other: &$name) -> Option<::core::cmp::Ordering> {
+            fn partial_cmp(&self, other: &$name) -> Option<core::cmp::Ordering> {
                 Some(self.cmp(&other))
             }
         }
 
         impl Ord for $name {
             #[inline]
-            fn cmp(&self, other: &$name) -> ::core::cmp::Ordering {
+            fn cmp(&self, other: &$name) -> core::cmp::Ordering {
                 // We need to manually implement ordering because we use little-endian
                 // and the auto derive is a lexicographic ordering(i.e. memcmp)
                 // which with numbers is equivalent to big-endian
                 for i in 0..$n_words {
-                    if self[$n_words - 1 - i] < other[$n_words - 1 - i] { return ::core::cmp::Ordering::Less; }
-                    if self[$n_words - 1 - i] > other[$n_words - 1 - i] { return ::core::cmp::Ordering::Greater; }
+                    if self[$n_words - 1 - i] < other[$n_words - 1 - i] { return core::cmp::Ordering::Less; }
+                    if self[$n_words - 1 - i] > other[$n_words - 1 - i] { return core::cmp::Ordering::Greater; }
                 }
-                ::core::cmp::Ordering::Equal
+                core::cmp::Ordering::Equal
             }
         }
 
-        impl ::core::ops::Add<$name> for $name {
+        impl core::ops::Add<$name> for $name {
             type Output = $name;
 
             fn add(self, other: $name) -> $name {
@@ -205,7 +205,7 @@ macro_rules! construct_uint {
             }
         }
 
-        impl ::core::ops::Sub<$name> for $name {
+        impl core::ops::Sub<$name> for $name {
             type Output = $name;
 
             #[inline]
@@ -214,7 +214,7 @@ macro_rules! construct_uint {
             }
         }
 
-        impl ::core::ops::Mul<$name> for $name {
+        impl core::ops::Mul<$name> for $name {
             type Output = $name;
 
             fn mul(self, other: $name) -> $name {
@@ -229,7 +229,7 @@ macro_rules! construct_uint {
             }
         }
 
-        impl ::core::ops::Div<$name> for $name {
+        impl core::ops::Div<$name> for $name {
             type Output = $name;
 
             fn div(self, other: $name) -> $name {
@@ -237,7 +237,7 @@ macro_rules! construct_uint {
             }
         }
 
-        impl ::core::ops::Rem<$name> for $name {
+        impl core::ops::Rem<$name> for $name {
             type Output = $name;
 
             fn rem(self, other: $name) -> $name {
@@ -287,7 +287,7 @@ macro_rules! construct_uint {
             }
         }
 
-        impl ::core::ops::BitAnd<$name> for $name {
+        impl core::ops::BitAnd<$name> for $name {
             type Output = $name;
 
             #[inline]
@@ -302,7 +302,7 @@ macro_rules! construct_uint {
             }
         }
 
-        impl ::core::ops::BitXor<$name> for $name {
+        impl core::ops::BitXor<$name> for $name {
             type Output = $name;
 
             #[inline]
@@ -317,7 +317,7 @@ macro_rules! construct_uint {
             }
         }
 
-        impl ::core::ops::BitOr<$name> for $name {
+        impl core::ops::BitOr<$name> for $name {
             type Output = $name;
 
             #[inline]
@@ -332,7 +332,7 @@ macro_rules! construct_uint {
             }
         }
 
-        impl ::core::ops::Not for $name {
+        impl core::ops::Not for $name {
             type Output = $name;
 
             #[inline]
@@ -346,7 +346,7 @@ macro_rules! construct_uint {
             }
         }
 
-        impl ::core::ops::Shl<usize> for $name {
+        impl core::ops::Shl<usize> for $name {
             type Output = $name;
 
             fn shl(self, shift: usize) -> $name {
@@ -368,7 +368,7 @@ macro_rules! construct_uint {
             }
         }
 
-        impl ::core::ops::Shr<usize> for $name {
+        impl core::ops::Shr<usize> for $name {
             type Output = $name;
 
             fn shr(self, shift: usize) -> $name {
@@ -388,8 +388,8 @@ macro_rules! construct_uint {
             }
         }
 
-        impl ::core::fmt::Debug for $name {
-            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+        impl core::fmt::Debug for $name {
+            fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
                 let &$name(ref data) = self;
                 write!(f, "0x")?;
                 for ch in data.iter().rev() {
@@ -450,14 +450,14 @@ macro_rules! construct_uint {
             fn deserialize<D: $crate::serde::Deserializer<'de>>(
                 deserializer: D,
             ) -> Result<Self, D::Error> {
-                use ::core::fmt;
+                use core::fmt;
                 use $crate::hashes::hex::FromHex;
                 use $crate::serde::de;
                 struct Visitor;
                 impl<'de> de::Visitor<'de> for Visitor {
                     type Value = $name;
 
-                    fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                    fn expecting(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                         write!(f, "{} bytes or a hex string with {} characters", $n_words * 8, $n_words * 8 * 2)
                     }
 
@@ -503,14 +503,14 @@ pub struct ParseLengthError {
     pub expected: usize,
 }
 
-impl ::core::fmt::Display for ParseLengthError {
-    fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+impl core::fmt::Display for ParseLengthError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "Invalid length: got {}, expected {}", self.actual, self.expected)
     }
 }
 
 #[cfg(feature = "std")]
-impl ::std::error::Error for ParseLengthError {}
+impl std::error::Error for ParseLengthError {}
 
 impl Uint256 {
     /// Increment by 1
@@ -731,11 +731,11 @@ mod tests {
     pub fn uint256_serde_test() {
         let check = |uint, hex| {
             let json = format!("\"{}\"", hex);
-            assert_eq!(::serde_json::to_string(&uint).unwrap(), json);
-            assert_eq!(::serde_json::from_str::<Uint256>(&json).unwrap(), uint);
+            assert_eq!(serde_json::to_string(&uint).unwrap(), json);
+            assert_eq!(serde_json::from_str::<Uint256>(&json).unwrap(), uint);
 
-            let bin_encoded = ::bincode::serialize(&uint).unwrap();
-            let bin_decoded: Uint256 = ::bincode::deserialize(&bin_encoded).unwrap();
+            let bin_encoded = bincode::serialize(&uint).unwrap();
+            let bin_decoded: Uint256 = bincode::deserialize(&bin_encoded).unwrap();
             assert_eq!(bin_decoded, uint);
         };
 
@@ -760,8 +760,8 @@ mod tests {
             "deadbeeaa69b455cd41bb662a69b4550a69b455cd41bb662a69b4555deadbeef",
         );
 
-        assert!(::serde_json::from_str::<Uint256>("\"fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffg\"").is_err()); // invalid char
-        assert!(::serde_json::from_str::<Uint256>("\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\"").is_err()); // invalid length
-        assert!(::serde_json::from_str::<Uint256>("\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\"").is_err()); // invalid length
+        assert!(serde_json::from_str::<Uint256>("\"fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffg\"").is_err()); // invalid char
+        assert!(serde_json::from_str::<Uint256>("\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\"").is_err()); // invalid length
+        assert!(serde_json::from_str::<Uint256>("\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\"").is_err()); // invalid length
     }
 }

@@ -439,7 +439,7 @@ impl MerkleBlock {
     /// Create a MerkleBlock from a block, that contains proofs for specific txids.
     #[cfg(feature = "std")]
     #[deprecated(since="0.26.2", note="use from_block_with_predicate")]
-    pub fn from_block(block: &Block, match_txids: &::std::collections::HashSet<Txid>) -> Self {
+    pub fn from_block(block: &Block, match_txids: &std::collections::HashSet<Txid>) -> Self {
         Self::from_block_with_predicate(block, |t| match_txids.contains(t))
     }
 
@@ -470,7 +470,7 @@ impl MerkleBlock {
     pub fn from_header_txids(
         header: &BlockHeader,
         block_txids: &[Txid],
-        match_txids: &::std::collections::HashSet<Txid>,
+        match_txids: &std::collections::HashSet<Txid>,
     ) -> Self {
         Self::from_header_txids_with_predicate(header, block_txids, |t| match_txids.contains(t))
     }

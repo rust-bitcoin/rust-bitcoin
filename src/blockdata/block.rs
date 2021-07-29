@@ -299,7 +299,7 @@ pub enum Bip34Error {
 }
 
 impl fmt::Display for Bip34Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
             Bip34Error::Unsupported => write!(f, "block doesn't support BIP34"),
             Bip34Error::NotPresent => write!(f, "BIP34 push not present in block's coinbase"),
@@ -311,7 +311,7 @@ impl fmt::Display for Bip34Error {
 }
 
 #[cfg(feature = "std")]
-impl ::std::error::Error for Bip34Error {}
+impl std::error::Error for Bip34Error {}
 
 #[cfg(test)]
 mod tests {

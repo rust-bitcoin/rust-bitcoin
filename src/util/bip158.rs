@@ -75,10 +75,10 @@ pub enum Error {
 }
 
 #[cfg(feature = "std")]
-impl ::std::error::Error for Error {}
+impl std::error::Error for Error {}
 
 impl Display for Error {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), fmt::Error> {
         match *self {
             Error::UtxoMissing(ref coin) => write!(f, "unresolved UTXO {}", coin),
             Error::Io(ref io) => write!(f, "{}", io)
@@ -393,7 +393,7 @@ impl GCSFilter {
     }
 
     /// Golomb-Rice encode a number n to a bit stream (Parameter 2^k)
-    fn golomb_rice_encode(&self, writer: &mut BitStreamWriter, n: u64) -> Result<usize, io::Error> {
+    fn golomb_rice_encode(&self, writer: &mut BitStreamWriter<'_>, n: u64) -> Result<usize, io::Error> {
         let mut wrote = 0;
         let mut q = n >> self.p;
         while q > 0 {
@@ -407,7 +407,7 @@ impl GCSFilter {
     }
 
     /// Golomb-Rice decode a number from a bit stream (Parameter 2^k)
-    fn golomb_rice_decode(&self, reader: &mut BitStreamReader) -> Result<u64, io::Error> {
+    fn golomb_rice_decode(&self, reader: &mut BitStreamReader<'_>) -> Result<u64, io::Error> {
         let mut q = 0u64;
         while reader.read(1)? == 1 {
             q += 1;
@@ -431,7 +431,7 @@ pub struct BitStreamReader<'a> {
 
 impl<'a> BitStreamReader<'a> {
     /// Create a new BitStreamReader that reads bitwise from a given reader
-    pub fn new(reader: &'a mut dyn io::Read) -> BitStreamReader {
+    pub fn new(reader: &'a mut dyn io::Read) -> BitStreamReader<'_> {
         BitStreamReader {
             buffer: [0u8],
             reader: reader,
@@ -469,7 +469,7 @@ pub struct BitStreamWriter<'a> {
 
 impl<'a> BitStreamWriter<'a> {
     /// Create a new BitStreamWriter that writes bitwise to a given writer
-    pub fn new(writer: &'a mut dyn io::Write) -> BitStreamWriter {
+    pub fn new(writer: &'a mut dyn io::Write) -> BitStreamWriter<'_> {
         BitStreamWriter {
             buffer: [0u8],
             writer: writer,
@@ -517,7 +517,7 @@ mod test {
 
     use super::*;
 
-    extern crate serde_json;
+    use serde_json;
     use self::serde_json::{Value};
 
     use crate::consensus::encode::deserialize;

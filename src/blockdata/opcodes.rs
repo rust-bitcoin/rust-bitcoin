@@ -560,7 +560,7 @@ pub mod all {
 }
 
 impl fmt::Debug for All {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str("OP_")?;
         match *self {
             All {code: x} if x <= 75 => write!(f, "PUSHBYTES_{}", self.code),

@@ -49,13 +49,10 @@ extern crate alloc;
 #[cfg(feature = "no-std")]
 extern crate core2;
 
-#[cfg(any(feature = "std", test))]
-extern crate core; // for Rust 1.29 and no-std tests
-
 // Re-exported dependencies.
 #[macro_use] pub extern crate bitcoin_hashes as hashes;
-pub extern crate secp256k1;
-pub extern crate bech32;
+pub use secp256k1;
+pub use bech32;
 
 #[cfg(feature = "no-std")]
 extern crate hashbrown;
@@ -66,7 +63,7 @@ extern crate hashbrown;
 #[cfg(feature = "serde")] #[macro_use] extern crate serde;
 #[cfg(all(test, feature = "serde"))] extern crate serde_json;
 #[cfg(all(test, feature = "serde"))] extern crate serde_test;
-#[cfg(all(test, feature = "serde"))] extern crate bincode;
+
 #[cfg(all(test, feature = "unstable"))] extern crate test;
 
 #[cfg(target_pointer_width = "16")]

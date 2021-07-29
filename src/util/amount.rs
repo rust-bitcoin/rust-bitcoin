@@ -51,7 +51,7 @@ impl Denomination {
 }
 
 impl fmt::Display for Denomination {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(match *self {
             Denomination::Bitcoin => "BTC",
             Denomination::MilliBitcoin => "mBTC",
@@ -100,7 +100,7 @@ pub enum ParseAmountError {
 }
 
 impl fmt::Display for ParseAmountError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
             ParseAmountError::Negative => f.write_str("amount is negative"),
             ParseAmountError::TooBig => f.write_str("amount is too big"),
@@ -114,7 +114,7 @@ impl fmt::Display for ParseAmountError {
 }
 
 #[cfg(feature = "std")]
-impl ::std::error::Error for ParseAmountError {}
+impl std::error::Error for ParseAmountError {}
 
 fn is_too_precise(s: &str, precision: usize) -> bool {
     s.contains('.') || precision >= s.len() || s.chars().rev().take(precision).any(|d| d != '0')
@@ -431,7 +431,7 @@ impl default::Default for Amount {
 }
 
 impl fmt::Debug for Amount {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "Amount({:.8} BTC)", self.as_btc())
     }
 }
@@ -439,7 +439,7 @@ impl fmt::Debug for Amount {
 // No one should depend on a binding contract for Display for this type.
 // Just using Bitcoin denominated string.
 impl fmt::Display for Amount {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.fmt_value_in(f, Denomination::Bitcoin)?;
         write!(f, " {}", Denomination::Bitcoin)
     }
@@ -756,7 +756,7 @@ impl default::Default for SignedAmount {
 }
 
 impl fmt::Debug for SignedAmount {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "SignedAmount({:.8} BTC)", self.as_btc())
     }
 }
@@ -764,7 +764,7 @@ impl fmt::Debug for SignedAmount {
 // No one should depend on a binding contract for Display for this type.
 // Just using Bitcoin denominated string.
 impl fmt::Display for SignedAmount {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.fmt_value_in(f, Denomination::Bitcoin)?;
         write!(f, " {}", Denomination::Bitcoin)
     }
@@ -996,7 +996,7 @@ pub mod serde {
                 impl<'de, X: SerdeAmountForOpt> de::Visitor<'de> for VisitOptAmt<X> {
                     type Value = Option<X>;
 
-                    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                    fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
                         write!(formatter, "An Option<{}64>", X::type_prefix())
                     }
 
@@ -1059,7 +1059,7 @@ pub mod serde {
                 impl<'de, X :SerdeAmountForOpt> de::Visitor<'de> for VisitOptAmt<X> {
                     type Value = Option<X>;
 
-                    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                    fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
                         write!(formatter, "An Option<f64>")
                     }
 

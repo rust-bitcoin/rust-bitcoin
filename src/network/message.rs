@@ -62,7 +62,7 @@ impl CommandString {
 }
 
 impl fmt::Display for CommandString {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.0.as_ref())
     }
 }

@@ -107,7 +107,7 @@ impl Decodable for Address {
 }
 
 impl fmt::Debug for Address {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let ipv6 = Ipv6Addr::from(self.address);
 
         match ipv6.to_ipv4() {

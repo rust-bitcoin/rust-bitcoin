@@ -45,7 +45,7 @@ pub enum Error {
 }
 
 impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
             Error::BadByte(b) => write!(f, "invalid base58 character 0x{:x}", b),
             Error::BadChecksum(exp, actual) => write!(f, "base58ck checksum 0x{:x} does not match expected 0x{:x}", actual, exp),
@@ -59,7 +59,7 @@ impl fmt::Display for Error {
 }
 
 #[cfg(feature = "std")]
-impl ::std::error::Error for Error {}
+impl std::error::Error for Error {}
 
 /// Vector-like object that holds the first 100 elements on the stack. If more space is needed it
 /// will be allocated on the heap.
@@ -87,12 +87,12 @@ impl<T: Default + Copy> SmallVec<T> {
         }
     }
 
-    pub fn iter(&self) -> iter::Chain<slice::Iter<T>, slice::Iter<T>> {
+    pub fn iter(&self) -> iter::Chain<slice::Iter<'_, T>, slice::Iter<'_, T>> {
         // If len<100 then we just append an empty vec
         self.stack[0..self.len].iter().chain(self.heap.iter())
     }
 
-    pub fn iter_mut(&mut self) -> iter::Chain<slice::IterMut<T>, slice::IterMut<T>> {
+    pub fn iter_mut(&mut self) -> iter::Chain<slice::IterMut<'_, T>, slice::IterMut<'_, T>> {
         // If len<100 then we just append an empty vec
         self.stack[0..self.len].iter_mut().chain(self.heap.iter_mut())
     }
@@ -236,7 +236,7 @@ pub fn check_encode_slice(data: &[u8]) -> String {
 
 /// Obtain a string with the base58check encoding of a slice
 /// (Tack the first 4 256-digits of the object's Bitcoin hash onto the end.)
-pub fn check_encode_slice_to_fmt(fmt: &mut fmt::Formatter, data: &[u8]) -> fmt::Result {
+pub fn check_encode_slice_to_fmt(fmt: &mut fmt::Formatter<'_>, data: &[u8]) -> fmt::Result {
     let checksum = sha256d::Hash::hash(&data);
     let iter = data.iter()
         .cloned()

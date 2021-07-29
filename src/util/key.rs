@@ -36,7 +36,7 @@ pub enum Error {
 
 
 impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
             Error::Base58(ref e) => write!(f, "Key base58 error: {}", e),
             Error::Secp256k1(ref e) => write!(f, "Key secp256k1 error: {}", e),
@@ -45,7 +45,7 @@ impl fmt::Display for Error {
 }
 
 #[cfg(feature = "std")]
-impl ::std::error::Error for Error {
+impl std::error::Error for Error {
     fn cause(&self) -> Option<&dyn error::Error> {
         match *self {
             Error::Base58(ref e) => Some(e),
