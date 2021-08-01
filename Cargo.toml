@@ -14,7 +14,6 @@ readme = "README.md"
 [features]
 default = [ "std", "secp-recovery" ]
 base64 = [ "base64-compat" ]
-fuzztarget = []
 unstable = []
 rand = ["secp256k1/rand-std"]
 use-serde = ["serde", "bitcoin_hashes/serde", "secp256k1/serde"]
