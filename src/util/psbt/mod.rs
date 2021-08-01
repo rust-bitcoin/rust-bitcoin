@@ -310,7 +310,7 @@ mod tests {
 
         sk = sk.derive_priv(secp, &dpath).unwrap();
 
-        let pk: ExtendedPubKey = ExtendedPubKey::from_private(&secp, &sk);
+        let pk: ExtendedPubKey = ExtendedPubKey::from_priv(&secp, &sk);
 
         hd_keypaths.insert(pk.public_key, (fprint, dpath.into()));
 

@@ -25,11 +25,11 @@ use core::{fmt, str::FromStr, default::Default};
 
 use hash_types::XpubIdentifier;
 use hashes::{sha512, Hash, HashEngine, Hmac, HmacEngine};
-use secp256k1::{self, Secp256k1};
+use secp256k1::{self, Secp256k1, XOnlyPublicKey};
 
 use network::constants::Network;
 use util::{base58, endian};
-use util::key;
+use util::{key, ecdsa, schnorr};
 use io::Write;
 
 /// A chain code
@@ -527,6 +527,21 @@ impl ExtendedPrivKey {
         })
     }
 
+    /// Constructs ECDSA compressed private key matching internal secret key representation.
+    pub fn to_priv(&self) -> ecdsa::PrivateKey {
+        ecdsa::PrivateKey {
+            compressed: true,
+            network: self.network,
+            key: self.private_key
+        }
+    }
+
+    /// Constructs BIP340 keypair for Schnorr signatures and Taproot use matching the internal
+    /// secret key representation.
+    pub fn to_keypair<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> schnorr::KeyPair {
+        schnorr::KeyPair::from_seckey_slice(secp, &self.private_key[..]).expect("BIP32 internal private key representation is broken")
+    }
+
     /// Attempts to derive an extended private key from a path.
     ///
     /// The `path` argument can be both of type `DerivationPath` or `Vec<ChildNumber>`.
@@ -616,7 +631,7 @@ impl ExtendedPrivKey {
 
     /// Returns the HASH160 of the public key belonging to the xpriv
     pub fn identifier<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> XpubIdentifier {
-        ExtendedPubKey::from_private(secp, self).identifier()
+        ExtendedPubKey::from_priv(secp, self).identifier()
     }
 
     /// Returns the first four bytes of the identifier
@@ -627,7 +642,13 @@ impl ExtendedPrivKey {
 
 impl ExtendedPubKey {
     /// Derives a public key from a private key
+    #[deprecated(since = "0.28.0", note = "use ExtendedPubKey::from_priv")]
     pub fn from_private<C: secp256k1::Signing>(secp: &Secp256k1<C>, sk: &ExtendedPrivKey) -> ExtendedPubKey {
+        ExtendedPubKey::from_priv(secp, sk)
+    }
+
+    /// Derives a public key from a private key
+    pub fn from_priv<C: secp256k1::Signing>(secp: &Secp256k1<C>, sk: &ExtendedPrivKey) -> ExtendedPubKey {
         ExtendedPubKey {
             network: sk.network,
             depth: sk.depth,
@@ -636,6 +657,20 @@ impl ExtendedPubKey {
             public_key: secp256k1::PublicKey::from_secret_key(secp, &sk.private_key),
             chain_code: sk.chain_code
         }
+    }
+
+    /// Constructs ECDSA compressed public key matching internal public key representation.
+    pub fn to_pub(&self) -> ecdsa::PublicKey {
+        ecdsa::PublicKey {
+            compressed: true,
+            key: self.public_key
+        }
+    }
+
+    /// Constructs BIP340 x-only public key for BIP-340 signatures and Taproot use matching
+    /// the internal public key representation.
+    pub fn to_x_only_pub(&self) -> XOnlyPublicKey {
+        XOnlyPublicKey::from(self.public_key)
     }
 
     /// Attempts to derive an extended public key from a path.
@@ -869,7 +904,7 @@ mod tests {
                  expected_pk: &str) {
 
         let mut sk = ExtendedPrivKey::new_master(network, seed).unwrap();
-        let mut pk = ExtendedPubKey::from_private(secp, &sk);
+        let mut pk = ExtendedPubKey::from_priv(secp, &sk);
 
         // Check derivation convenience method for ExtendedPrivKey
         assert_eq!(
@@ -897,7 +932,7 @@ mod tests {
             match num {
                 Normal {..} => {
                     let pk2 = pk.ckd_pub(secp, num).unwrap();
-                    pk = ExtendedPubKey::from_private(secp, &sk);
+                    pk = ExtendedPubKey::from_priv(secp, &sk);
                     assert_eq!(pk, pk2);
                 }
                 Hardened {..} => {
@@ -905,7 +940,7 @@ mod tests {
                         pk.ckd_pub(secp, num),
                         Err(Error::CannotDeriveFromHardenedKey)
                     );
-                    pk = ExtendedPubKey::from_private(secp, &sk);
+                    pk = ExtendedPubKey::from_priv(secp, &sk);
                 }
             }
         }
