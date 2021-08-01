@@ -32,6 +32,7 @@ use core::{fmt, default::Default};
 #[cfg(feature = "serde")] use serde;
 
 use hash_types::{PubkeyHash, WPubkeyHash, ScriptHash, WScriptHash};
+use blockdata::constants;
 use blockdata::opcodes;
 use consensus::{encode, Decodable, Encodable};
 use hashes::{Hash, hex};
@@ -405,6 +406,11 @@ impl Script {
         !self.0.is_empty() && (opcodes::All::from(self.0[0]) == opcodes::all::OP_RETURN)
     }
 
+    /// Check if this script is guaranteed to fail at execution, regardless of the initial stack.
+    pub fn is_unspendable (&self) -> bool {
+        !self.0.is_empty() && (opcodes::All::from(self.0[0]) == opcodes::all::OP_RETURN) || self.0.len() > constants::MAX_SCRIPT_SIZE
+    }
+
     /// Whether a script can be proven to have no satisfying input
     pub fn is_provably_unspendable(&self) -> bool {
         !self.0.is_empty() && (opcodes::All::from(self.0[0]).classify() == opcodes::Class::ReturnOp ||
@@ -418,7 +424,7 @@ impl Script {
         // otherwise allow users to create transactions which likely can never be
         // broadcasted/confirmed.
         let sats = DUST_RELAY_TX_FEE as u64 / 1000 * // The default dust relay fee is 3000 satoshi/kB (ie 3 sat/vByte)
-        if self.is_op_return() {
+        if self.is_unspendable() {
             0
         } else if self.is_witness_program() {
             32 + 4 + 1 + (107 / 4) + 4 + // The spend cost copied from Core
