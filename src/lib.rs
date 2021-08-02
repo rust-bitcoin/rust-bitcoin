@@ -157,7 +157,7 @@ mod prelude {
     pub use std::io::sink;
 
     #[cfg(not(feature = "std"))]
-    pub use io_extras::sink;
+    pub use crate::io_extras::sink;
 
     #[cfg(feature = "hashbrown")]
     pub use hashbrown::HashSet;
