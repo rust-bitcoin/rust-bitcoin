@@ -1418,8 +1418,8 @@ mod tests {
 #[cfg(all(test, feature = "unstable"))]
 mod benches {
     use super::Transaction;
-    use EmptyWrite;
-    use consensus::{deserialize, Encodable};
+    use crate::EmptyWrite;
+    use crate::consensus::{deserialize, Encodable};
     use hashes::hex::FromHex;
     use test::{black_box, Bencher};
 
