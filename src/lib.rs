@@ -171,7 +171,7 @@ mod prelude {
 #[cfg(all(test, feature = "unstable"))]
 mod tests {
     use core::fmt::Arguments;
-    use io::{IoSlice, Result, Write};
+    use crate::io::{IoSlice, Result, Write};
 
     #[derive(Default, Clone, Debug, PartialEq, Eq)]
     pub struct EmptyWrite;
