@@ -1,4 +1,4 @@
-# 0.27 - 2020-07-21
+# 0.27 - 2021-07-21
 
 - [Bigendian fixes and CI test](https://github.com/rust-bitcoin/rust-bitcoin/pull/627)
 - [no_std support, keeping MSRV](https://github.com/rust-bitcoin/rust-bitcoin/pull/603)
