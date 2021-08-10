@@ -672,7 +672,7 @@ impl fmt::Display for SigHashType {
     }
 }
 
-impl str::FromStr for SigHashType {
+impl core::str::FromStr for SigHashType {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
