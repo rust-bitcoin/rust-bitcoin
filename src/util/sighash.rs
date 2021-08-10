@@ -550,29 +550,28 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
     }
 
     fn common_cache(&mut self) -> &CommonCache {
-        if self.common_cache.is_none() {
+        let tx = &self.tx;
+        self.common_cache.get_or_insert_with(|| {
             let mut enc_prevouts = sha256::Hash::engine();
             let mut enc_sequences = sha256::Hash::engine();
-            for txin in self.tx.input.iter() {
+            for txin in tx.input.iter() {
                 txin.previous_output
                     .consensus_encode(&mut enc_prevouts)
                     .unwrap();
                 txin.sequence.consensus_encode(&mut enc_sequences).unwrap();
             }
-            let cache = CommonCache {
+            CommonCache {
                 prevouts: sha256::Hash::from_engine(enc_prevouts),
                 sequences: sha256::Hash::from_engine(enc_sequences),
                 outputs: {
                     let mut enc = sha256::Hash::engine();
-                    for txout in self.tx.output.iter() {
+                    for txout in tx.output.iter() {
                         txout.consensus_encode(&mut enc).unwrap();
                     }
                     sha256::Hash::from_engine(enc)
                 },
-            };
-            self.common_cache = Some(cache);
-        }
-        self.common_cache.as_ref().unwrap() // safe to unwrap because we checked is_none()
+            }
+        })
     }
 
     fn segwit_cache(&mut self) -> &SegwitCache {
