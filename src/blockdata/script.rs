@@ -27,7 +27,7 @@
 use crate::prelude::*;
 
 use crate::io;
-use core::{fmt, default::Default};
+use core::fmt;
 
 #[cfg(feature = "serde")] use serde;
 

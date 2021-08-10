@@ -18,7 +18,7 @@
 
 use crate::prelude::*;
 
-use core::{fmt, str::FromStr, default::Default};
+use core::{fmt, str::FromStr};
 #[cfg(feature = "std")] use std::error;
 #[cfg(feature = "serde")] use serde;
 

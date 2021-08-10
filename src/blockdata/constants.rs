@@ -21,8 +21,6 @@
 
 use crate::prelude::*;
 
-use core::default::Default;
-
 use crate::hashes::hex::{HexIterator, Error as HexError};
 use crate::hashes::sha256d;
 use crate::blockdata::opcodes;
@@ -165,7 +163,6 @@ pub fn genesis_block(network: Network) -> Block {
 
 #[cfg(test)]
 mod test {
-    use core::default::Default;
     use crate::hashes::hex::FromHex;
 
     use crate::network::constants::Network;

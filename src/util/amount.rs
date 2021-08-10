@@ -16,7 +16,7 @@
 
 use crate::prelude::*;
 
-use core::{ops, default, str::FromStr, cmp::Ordering};
+use core::{ops, str::FromStr, cmp::Ordering};
 use core::fmt::{self, Write};
 
 /// A set of denominations in which amounts can be expressed.
@@ -424,7 +424,7 @@ impl Amount {
     }
 }
 
-impl default::Default for Amount {
+impl Default for Amount {
     fn default() -> Self {
         Amount::ZERO
     }
@@ -749,7 +749,7 @@ impl SignedAmount {
     }
 }
 
-impl default::Default for SignedAmount {
+impl Default for SignedAmount {
     fn default() -> Self {
         SignedAmount::ZERO
     }

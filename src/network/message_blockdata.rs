@@ -156,7 +156,6 @@ mod tests {
     use crate::hashes::hex::FromHex;
 
     use crate::consensus::encode::{deserialize, serialize};
-    use core::default::Default;
 
     #[test]
     fn getblocks_message_test() {

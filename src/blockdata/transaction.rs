@@ -26,7 +26,7 @@
 use crate::prelude::*;
 
 use crate::io;
-use core::{fmt, str, default::Default};
+use core::fmt;
 #[cfg(feature = "std")] use std::error;
 
 use crate::hashes::{self, Hash, sha256d};
