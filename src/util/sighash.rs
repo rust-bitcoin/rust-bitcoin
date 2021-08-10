@@ -594,7 +594,7 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
     }
 
     fn taproot_cache(&mut self, prevouts: &[TxOut]) -> &TaprootCache {
-        if self.taproot_cache.is_none() {
+        self.taproot_cache.get_or_insert_with(|| {
             let mut enc_amounts = sha256::Hash::engine();
             let mut enc_script_pubkeys = sha256::Hash::engine();
             for prevout in prevouts {
@@ -604,13 +604,11 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
                     .consensus_encode(&mut enc_script_pubkeys)
                     .unwrap();
             }
-            let cache = TaprootCache {
+            TaprootCache {
                 amounts: sha256::Hash::from_engine(enc_amounts),
                 script_pubkeys: sha256::Hash::from_engine(enc_script_pubkeys),
-            };
-            self.taproot_cache = Some(cache);
-        }
-        self.taproot_cache.as_ref().unwrap() // safe to unwrap because we checked is_none()
+            }
+        })
     }
 }
 
