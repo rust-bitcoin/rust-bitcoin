@@ -549,9 +549,13 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
         Ok(SigHash::from_engine(enc))
     }
 
+    #[inline]
     fn common_cache(&mut self) -> &CommonCache {
-        let tx = &self.tx;
-        self.common_cache.get_or_insert_with(|| {
+        Self::common_cache_minimal_borrow(&mut self.common_cache, &self.tx)
+    }
+
+    fn common_cache_minimal_borrow<'a>(common_cache: &'a mut Option<CommonCache>, tx: &R) -> &'a CommonCache {
+        common_cache.get_or_insert_with(|| {
             let mut enc_prevouts = sha256::Hash::engine();
             let mut enc_sequences = sha256::Hash::engine();
             for txin in tx.input.iter() {
@@ -575,21 +579,22 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
     }
 
     fn segwit_cache(&mut self) -> &SegwitCache {
-        if self.segwit_cache.is_none() {
-            let cache = SegwitCache {
+        let common_cache = &mut self.common_cache;
+        let tx = &self.tx;
+        self.segwit_cache.get_or_insert_with(|| {
+            let common_cache = Self::common_cache_minimal_borrow(common_cache, tx);
+            SegwitCache {
                 prevouts: sha256d::Hash::from_inner(
-                    sha256::Hash::hash(&self.common_cache().prevouts).into_inner(),
+                    sha256::Hash::hash(&common_cache.prevouts).into_inner(),
                 ),
                 sequences: sha256d::Hash::from_inner(
-                    sha256::Hash::hash(&self.common_cache().sequences).into_inner(),
+                    sha256::Hash::hash(&common_cache.sequences).into_inner(),
                 ),
                 outputs: sha256d::Hash::from_inner(
-                    sha256::Hash::hash(&self.common_cache().outputs).into_inner(),
+                    sha256::Hash::hash(&common_cache.outputs).into_inner(),
                 ),
-            };
-            self.segwit_cache = Some(cache);
-        }
-        self.segwit_cache.as_ref().unwrap() // safe to unwrap because we checked is_none()
+            }
+        })
     }
 
     fn taproot_cache(&mut self, prevouts: &[TxOut]) -> &TaprootCache {
