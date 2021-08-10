@@ -46,24 +46,15 @@ compile_error!("at least one of the `std` or `no-std` features must be enabled")
 #[cfg(feature = "no-std")]
 #[macro_use]
 extern crate alloc;
-#[cfg(feature = "no-std")]
-extern crate core2;
 
 // Re-exported dependencies.
 #[macro_use] pub extern crate bitcoin_hashes as hashes;
-pub use secp256k1;
-pub use bech32;
-
-#[cfg(feature = "no-std")]
-extern crate hashbrown;
+pub extern crate secp256k1;
+pub extern crate bech32;
 
 #[cfg(feature = "base64")] pub extern crate base64;
 
-#[cfg(feature="bitcoinconsensus")] extern crate bitcoinconsensus;
 #[cfg(feature = "serde")] #[macro_use] extern crate serde;
-#[cfg(all(test, feature = "serde"))] extern crate serde_json;
-#[cfg(all(test, feature = "serde"))] extern crate serde_test;
-#[cfg(all(test, feature = "unstable"))] extern crate test;
 
 #[cfg(target_pointer_width = "16")]
 compile_error!("rust-bitcoin cannot be used on 16-bit architectures");
