@@ -47,7 +47,13 @@ const MIDSTATE_TAPSIGHASH: [u8; 32] = [
 /// Internal macro to speficy the different taproot tagged hashes.
 macro_rules! sha256t_hash_newtype {
     ($newtype:ident, $tag:ident, $midstate:ident, $midstate_len:expr, $docs:meta, $reverse: expr) => {
-        /// The tag used for [$newtype].
+        sha256t_hash_newtype!($newtype, $tag, $midstate, $midstate_len, $docs, $reverse, stringify!($newtype));
+    };
+
+    ($newtype:ident, $tag:ident, $midstate:ident, $midstate_len:expr, $docs:meta, $reverse: expr, $sname:expr) => {
+        #[doc = "The tag used for ["]
+        #[doc = $sname]
+        #[doc = "]"]
         pub struct $tag;
 
         impl sha256t::Tag for $tag {
