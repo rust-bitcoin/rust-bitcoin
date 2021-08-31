@@ -36,7 +36,7 @@ use prelude::*;
 pub struct SigHashCache<T: Deref<Target = Transaction>> {
     /// Access to transaction required for various introspection, moreover type
     /// `T: Deref<Target=Transaction>` allows to accept borrow and mutable borrow, the
-    /// latter in particular is necessary for [SigHashCache::access_witness]
+    /// latter in particular is necessary for [SigHashCache::witness_mut]
     tx: T,
 
     /// Common cache for taproot and segwit inputs. It's an option because it's not needed for legacy inputs
@@ -626,7 +626,7 @@ impl<R: DerefMut<Target = Transaction>> SigHashCache<R> {
     /// This allows in-line signing such as
     /// ```
     /// use bitcoin::blockdata::transaction::{Transaction, SigHashType};
-    /// use bitcoin::util::bip143::SigHashCache;
+    /// use bitcoin::util::sighash::SigHashCache;
     /// use bitcoin::Script;
     ///
     /// let mut tx_to_sign = Transaction { version: 2, lock_time: 0, input: Vec::new(), output: Vec::new() };
@@ -635,13 +635,13 @@ impl<R: DerefMut<Target = Transaction>> SigHashCache<R> {
     /// let mut sig_hasher = SigHashCache::new(&mut tx_to_sign);
     /// for inp in 0..input_count {
     ///     let prevout_script = Script::new();
-    ///     let _sighash = sig_hasher.signature_hash(inp, &prevout_script, 42, SigHashType::All);
+    ///     let _sighash = sig_hasher.segwit_signature_hash(inp, &prevout_script, 42, SigHashType::All);
     ///     // ... sign the sighash
-    ///     sig_hasher.access_witness(inp).push(Vec::new());
+    ///     sig_hasher.witness_mut(inp).unwrap().push(Vec::new());
     /// }
     /// ```
-    pub fn access_witness(&mut self, input_index: usize) -> &mut Vec<Vec<u8>> {
-        &mut self.tx.input[input_index].witness
+    pub fn witness_mut(&mut self, input_index: usize) -> Option<&mut Vec<Vec<u8>>> {
+        self.tx.input.get_mut(input_index).map(|i| &mut i.witness)
     }
 }
 

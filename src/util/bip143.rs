@@ -161,6 +161,9 @@ impl<R: DerefMut<Target=Transaction>> SigHashCache<R> {
     /// regular reference, this method is available to allow modification to the witnesses.
     ///
     /// This allows in-line signing such as
+    ///
+    /// panics if `input_index` is out of bounds with respect of the number of inputs
+    ///
     /// ```
     /// use bitcoin::blockdata::transaction::{Transaction, SigHashType};
     /// use bitcoin::util::bip143::SigHashCache;
@@ -178,7 +181,7 @@ impl<R: DerefMut<Target=Transaction>> SigHashCache<R> {
     /// }
     /// ```
     pub fn access_witness(&mut self, input_index: usize) -> &mut Vec<Vec<u8>> {
-        self.cache.access_witness(input_index)
+        self.cache.witness_mut(input_index).unwrap()
     }
 }
 
