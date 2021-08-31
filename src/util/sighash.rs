@@ -16,7 +16,7 @@
 //!
 //! Implementation of the algorithm to compute the message to be signed according to [Bip341](https://github.com/bitcoin/bips/blob/150ab6f5c3aca9da05fccc5b435e9667853407f4/bip-0341.mediawiki),
 //! [Bip143](https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki)
-//! and legacy
+//! and legacy (before Bip143)
 //!
 
 pub use blockdata::transaction::SigHashType as LegacySigHashType;
@@ -36,7 +36,7 @@ use prelude::*;
 pub struct SigHashCache<T: Deref<Target = Transaction>> {
     /// Access to transaction required for various introspection, moreover type
     /// `T: Deref<Target=Transaction>` allows to accept borrow and mutable borrow, the
-    /// latter in particular is necessary for [SigHashCache::witness_mut]
+    /// latter in particular is necessary for [`SigHashCache::witness_mut`]
     tx: T,
 
     /// Common cache for taproot and segwit inputs. It's an option because it's not needed for legacy inputs
@@ -60,7 +60,7 @@ struct CommonCache {
     outputs: sha256::Hash,
 }
 
-/// Values cached for segwit inputs, it's equal to [CommonCache] plus another round of `sha256`
+/// Values cached for segwit inputs, it's equal to [`CommonCache`] plus another round of `sha256`
 #[derive(Debug)]
 struct SegwitCache {
     prevouts: sha256d::Hash,
@@ -76,12 +76,12 @@ struct TaprootCache {
 }
 
 /// Contains outputs of previous transactions.
-/// In the case [SigHashType] variant is `ANYONECANPAY`, [Prevouts::One] may be provided
+/// In the case [`SigHashType`] variant is `ANYONECANPAY`, [`Prevouts::One`] may be provided
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum Prevouts<'u> {
     /// `One` variant allows to provide the single Prevout needed. It's useful for example
     /// when modifier `ANYONECANPAY` is provided, only prevout of the current input is needed.
-    /// The first `usize` argument is the input index this [TxOut] is referring to.
+    /// The first `usize` argument is the input index this [`TxOut`] is referring to.
     One(usize, &'u TxOut),
     /// When `ANYONECANPAY` is not provided, or the caller is handy giving all prevouts so the same
     /// variable can be used for multiple inputs.
@@ -103,7 +103,7 @@ pub struct ScriptPath<'s> {
 /// Fixed values so they can be casted as integer types for encoding
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum SigHashType {
-    /// 0x0: Used when not explicitly specified, defaulting to [SigHashType::All]
+    /// 0x0: Used when not explicitly specified, defaulting to [`SigHashType::All`]
     Default = 0x00,
     /// 0x1: Sign all outputs
     All = 0x01,
@@ -121,7 +121,7 @@ pub enum SigHashType {
     /// 0x83: Sign one output and only this input (see `Single` for what "one output" means)
     SinglePlusAnyoneCanPay = 0x83,
 
-    /// Reserved for future use
+    /// Reserved for future use, `#[non_exhaustive]` is not available with current MSRV
     Reserved = 0xFF,
 }
 
@@ -154,7 +154,7 @@ pub enum Error {
     PrevoutsSize,
 
     /// Requested a prevout index which is greater than the number of prevouts provided or a
-    /// [Prevouts::One] with different index
+    /// [`Prevouts::One`] with different index
     PrevoutIndex,
 
     /// A single prevout has been provided but all prevouts are needed without `ANYONECANPAY`
@@ -271,7 +271,7 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
     }
 
     /// Encode the BIP341 signing data for any flag type into a given object implementing a
-    /// std::io::Write trait.
+    /// io::Write trait.
     pub fn taproot_encode_signing_data_to<Write: io::Write>(
         &mut self,
         mut writer: Write,
@@ -433,7 +433,7 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
     }
 
     /// Encode the BIP143 signing data for any flag type into a given object implementing a
-    /// [std::io::Write] trait.
+    /// [`std::io::Write`] trait.
     pub fn segwit_encode_signing_data_to<Write: io::Write>(
         &mut self,
         mut writer: Write,
@@ -517,7 +517,7 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
     }
 
     /// Encode the legacy signing data for any flag type into a given object implementing a
-    /// [std::io::Write] trait. Internally calls [Transaction::encode_signing_data_to]
+    /// [`std::io::Write`] trait. Internally calls [`Transaction::encode_signing_data_to`]
     pub fn legacy_encode_signing_data_to<Write: io::Write, U: Into<u32>>(
         &self,
         mut writer: Write,
