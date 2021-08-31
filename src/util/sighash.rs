@@ -554,7 +554,10 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
         Self::common_cache_minimal_borrow(&mut self.common_cache, &self.tx)
     }
 
-    fn common_cache_minimal_borrow<'a>(common_cache: &'a mut Option<CommonCache>, tx: &R) -> &'a CommonCache {
+    fn common_cache_minimal_borrow<'a>(
+        common_cache: &'a mut Option<CommonCache>,
+        tx: &R,
+    ) -> &'a CommonCache {
         common_cache.get_or_insert_with(|| {
             let mut enc_prevouts = sha256::Hash::engine();
             let mut enc_sequences = sha256::Hash::engine();
