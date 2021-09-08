@@ -41,6 +41,7 @@ use policy::DUST_RELAY_TX_FEE;
 #[cfg(feature="bitcoinconsensus")] use OutPoint;
 
 use util::ecdsa::PublicKey;
+use util::address::WitnessVersion;
 
 #[derive(Clone, Default, PartialOrd, Ord, PartialEq, Eq, Hash)]
 /// A Bitcoin script
@@ -268,23 +269,18 @@ impl Script {
 
     /// Generates P2WPKH-type of scriptPubkey
     pub fn new_v0_wpkh(pubkey_hash: &WPubkeyHash) -> Script {
-        Script::new_witness_program(::bech32::u5::try_from_u8(0).unwrap(), &pubkey_hash.to_vec())
+        Script::new_witness_program(WitnessVersion::V0, &pubkey_hash.to_vec())
     }
 
     /// Generates P2WSH-type of scriptPubkey with a given hash of the redeem script
     pub fn new_v0_wsh(script_hash: &WScriptHash) -> Script {
-        Script::new_witness_program(::bech32::u5::try_from_u8(0).unwrap(), &script_hash.to_vec())
+        Script::new_witness_program(WitnessVersion::V0, &script_hash.to_vec())
     }
 
     /// Generates P2WSH-type of scriptPubkey with a given hash of the redeem script
-    pub fn new_witness_program(ver: ::bech32::u5, program: &[u8]) -> Script {
-        let mut verop = ver.to_u8();
-        assert!(verop <= 16, "incorrect witness version provided: {}", verop);
-        if verop > 0 {
-            verop = 0x50 + verop;
-        }
+    pub fn new_witness_program(version: WitnessVersion, program: &[u8]) -> Script {
         Builder::new()
-            .push_opcode(verop.into())
+            .push_opcode(version.into())
             .push_slice(&program)
             .into_script()
     }
@@ -371,17 +367,17 @@ impl Script {
         // push opcode (for 0 to 16) followed by a data push between 2 and 40 bytes gets a new
         // special meaning. The value of the first push is called the "version byte". The following
         // byte vector pushed is called the "witness program".
-        let min_vernum: u8 = opcodes::all::OP_PUSHNUM_1.into_u8();
-        let max_vernum: u8 = opcodes::all::OP_PUSHNUM_16.into_u8();
-        self.0.len() >= 4
-            && self.0.len() <= 42
-            // Version 0 or PUSHNUM_1-PUSHNUM_16
-            && (self.0[0] == 0 || self.0[0] >= min_vernum && self.0[0] <= max_vernum)
-            // Second byte push opcode 2-40 bytes
-            && self.0[1] >= opcodes::all::OP_PUSHBYTES_2.into_u8()
-            && self.0[1] <= opcodes::all::OP_PUSHBYTES_40.into_u8()
+        let script_len = self.0.len();
+        if script_len < 4 || script_len > 42 {
+            return false
+        }
+        let ver_opcode = opcodes::All::from(self.0[0]); // Version 0 or PUSHNUM_1-PUSHNUM_16
+        let push_opbyte = self.0[1]; // Second byte push opcode 2-40 bytes
+        WitnessVersion::from_opcode(ver_opcode).is_ok()
+            && push_opbyte >= opcodes::all::OP_PUSHBYTES_2.into_u8()
+            && push_opbyte <= opcodes::all::OP_PUSHBYTES_40.into_u8()
             // Check that the rest of the script has the correct size
-            && self.0.len() - 2 == self.0[1] as usize
+            && script_len - 2 == push_opbyte as usize
     }
 
     /// Checks whether a script pubkey is a p2wsh output
