@@ -407,8 +407,9 @@ impl Script {
 
     /// Whether a script can be proven to have no satisfying input
     pub fn is_provably_unspendable(&self) -> bool {
-        !self.0.is_empty() && (opcodes::All::from(self.0[0]).classify() == opcodes::Class::ReturnOp ||
-                               opcodes::All::from(self.0[0]).classify() == opcodes::Class::IllegalOp)
+        !self.0.is_empty() &&
+            (opcodes::All::from(self.0[0]).classify(opcodes::ClassifyContext::Legacy) == opcodes::Class::ReturnOp ||
+            opcodes::All::from(self.0[0]).classify(opcodes::ClassifyContext::Legacy) == opcodes::Class::IllegalOp)
     }
 
     /// Gets the minimum value an output with this script should have in order to be
@@ -479,7 +480,7 @@ impl Script {
             let opcode = opcodes::All::from(script[index]);
             index += 1;
 
-            let data_len = if let opcodes::Class::PushBytes(n) = opcode.classify() {
+            let data_len = if let opcodes::Class::PushBytes(n) = opcode.classify(opcodes::ClassifyContext::Legacy) {
                 n as usize
             } else {
                 match opcode {
@@ -589,7 +590,9 @@ impl<'a> Iterator for Instructions<'a> {
             return None;
         }
 
-        match opcodes::All::from(self.data[0]).classify() {
+        // classify parameter does not really matter here since we are only using
+        // it for pushes and nums
+        match opcodes::All::from(self.data[0]).classify(opcodes::ClassifyContext::Legacy) {
             opcodes::Class::PushBytes(n) => {
                 let n = n as usize;
                 if self.data.len() < n + 1 {

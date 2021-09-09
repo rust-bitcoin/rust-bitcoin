@@ -417,8 +417,8 @@ pub mod all {
     /// Does nothing
     pub const OP_NOP10: All = All {code: 0xb9};
     // Every other opcode acts as OP_RETURN
-    /// Synonym for OP_RETURN
-    pub const OP_RETURN_186: All = All {code: 0xba};
+    /// OP_CHECKSIGADD post tapscript
+    pub const OP_CHECKSIGADD: All = All {code: 0xba};
     /// Synonym for OP_RETURN
     pub const OP_RETURN_187: All = All {code: 0xbb};
     /// Synonym for OP_RETURN
@@ -556,7 +556,7 @@ pub mod all {
     /// Synonym for OP_RETURN
     pub const OP_RETURN_254: All = All {code: 0xfe};
     /// Synonym for OP_RETURN
-    pub const OP_RETURN_255: All = All {code: 0xff};
+    pub const OP_INVALIDOPCODE: All = All {code: 0xff};
 }
 
 impl fmt::Debug for All {
@@ -652,48 +652,99 @@ impl fmt::Debug for All {
             all::OP_CLTV => write!(f, "CLTV"),
             all::OP_CSV => write!(f, "CSV"),
             All {code: x} if x >= all::OP_NOP1.code && x <= all::OP_NOP10.code => write!(f, "NOP{}", x - all::OP_NOP1.code + 1),
+            all::OP_INVALIDOPCODE => write!(f, "INVALIDOPCODE"),
+            all::OP_CHECKSIGADD => write!(f, "CHECKSIGADD"),
             All {code: x} => write!(f, "RETURN_{}", x),
         }
     }
 }
 
+
+/// Classification context for the opcode. Some opcodes like `OP_RESERVED`
+/// abort the script in [`ClassifyContext::Legacy`] context, but will act as OP_SUCCESS in tapscript
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum ClassifyContext {
+    /// Opcode used in tapscript context
+    TapScript,
+    /// Opcode used in legacy context
+    Legacy,
+}
+
 impl All {
     /// Classifies an Opcode into a broad class
     #[inline]
-    pub fn classify(self) -> Class {
-        // 17 opcodes
-        if self == all::OP_VERIF || self == all::OP_VERNOTIF ||
-           self == all::OP_CAT || self == all::OP_SUBSTR ||
-           self == all::OP_LEFT || self == all::OP_RIGHT ||
-           self == all::OP_INVERT || self == all::OP_AND ||
-           self == all::OP_OR || self == all::OP_XOR ||
-           self == all::OP_2MUL || self == all::OP_2DIV ||
-           self == all::OP_MUL || self == all::OP_DIV || self == all::OP_MOD ||
-           self == all::OP_LSHIFT || self == all::OP_RSHIFT {
-            Class::IllegalOp
-        // 11 opcodes
-        } else if self == all::OP_NOP ||
-                  (all::OP_NOP1.code <= self.code &&
-                   self.code <= all::OP_NOP10.code) {
-            Class::NoOp
-        // 75 opcodes
-        } else if self == all::OP_RESERVED || self == all::OP_VER || self == all::OP_RETURN ||
-                  self == all::OP_RESERVED1 || self == all::OP_RESERVED2 ||
-                  self.code >= all::OP_RETURN_186.code {
-            Class::ReturnOp
-        // 1 opcode
-        } else if self == all::OP_PUSHNUM_NEG1 {
-            Class::PushNum(-1)
-        // 16 opcodes
-        } else if all::OP_PUSHNUM_1.code <= self.code &&
-                  self.code <= all::OP_PUSHNUM_16.code {
-            Class::PushNum(1 + self.code as i32 - all::OP_PUSHNUM_1.code as i32)
-        // 76 opcodes
-        } else if self.code <= all::OP_PUSHBYTES_75.code {
-            Class::PushBytes(self.code as u32)
-        // 60 opcodes
-        } else {
-            Class::Ordinary(Ordinary::try_from_all(self).unwrap())
+    pub fn classify(self, ctx: ClassifyContext) -> Class {
+        // 3 opcodes
+        match ctx {
+            ClassifyContext::TapScript => // 3 opcodes
+                if self == all::OP_VERIF || self == all::OP_VERNOTIF ||
+                    self == all::OP_INVALIDOPCODE {
+                    Class::IllegalOp
+                // 11 opcodes
+                } else if self == all::OP_NOP ||
+                        (all::OP_NOP1.code <= self.code &&
+                        self.code <= all::OP_NOP10.code) {
+                    Class::NoOp
+                // 87 opcodes
+                } else if self.code == 80 || self.code == 98 ||
+                        (self.code >= 126 && self.code <= 129) ||
+                        (self.code >= 131 && self.code <= 134) ||
+                        (self.code >= 137 && self.code <= 138) ||
+                        (self.code >= 141 && self.code <= 142) ||
+                        (self.code >= 149 && self.code <= 153) ||
+                        (self.code >= 187 && self.code <= 254) {
+                    Class::SuccessOp
+                // 1 opcode
+                } else if self == all::OP_RETURN{
+                    Class::ReturnOp
+                // 1 opcode
+                } else if self == all::OP_PUSHNUM_NEG1 {
+                    Class::PushNum(-1)
+                // 16 opcodes
+                } else if all::OP_PUSHNUM_1.code <= self.code &&
+                        self.code <= all::OP_PUSHNUM_16.code {
+                    Class::PushNum(1 + self.code as i32 - all::OP_PUSHNUM_1.code as i32)
+                // 76 opcodes
+                } else if self.code <= all::OP_PUSHBYTES_75.code {
+                    Class::PushBytes(self.code as u32)
+                // 61 opcodes
+                } else {
+                    Class::Ordinary(Ordinary::try_from_all(self).unwrap())
+                },
+            ClassifyContext::Legacy =>
+                if self == all::OP_VERIF || self == all::OP_VERNOTIF ||
+                    self == all::OP_CAT || self == all::OP_SUBSTR ||
+                    self == all::OP_LEFT || self == all::OP_RIGHT ||
+                    self == all::OP_INVERT || self == all::OP_AND ||
+                    self == all::OP_OR || self == all::OP_XOR ||
+                    self == all::OP_2MUL || self == all::OP_2DIV ||
+                    self == all::OP_MUL || self == all::OP_DIV || self == all::OP_MOD ||
+                    self == all::OP_LSHIFT || self == all::OP_RSHIFT {
+                    Class::IllegalOp
+                // 11 opcodes
+                } else if self == all::OP_NOP ||
+                        (all::OP_NOP1.code <= self.code &&
+                            self.code <= all::OP_NOP10.code) {
+                    Class::NoOp
+                // 75 opcodes
+                } else if self == all::OP_RESERVED || self == all::OP_VER || self == all::OP_RETURN ||
+                        self == all::OP_RESERVED1 || self == all::OP_RESERVED2 ||
+                        self.code >= all::OP_CHECKSIGADD.code {
+                    Class::ReturnOp
+                // 1 opcode
+                } else if self == all::OP_PUSHNUM_NEG1 {
+                    Class::PushNum(-1)
+                // 16 opcodes
+                } else if all::OP_PUSHNUM_1.code <= self.code &&
+                        self.code <= all::OP_PUSHNUM_16.code {
+                    Class::PushNum(1 + self.code as i32 - all::OP_PUSHNUM_1.code as i32)
+                // 76 opcodes
+                } else if self.code <= all::OP_PUSHBYTES_75.code {
+                    Class::PushBytes(self.code as u32)
+                // 61 opcodes
+                } else {
+                    Class::Ordinary(Ordinary::try_from_all(self).unwrap())
+                }
         }
     }
 
@@ -742,6 +793,8 @@ pub enum Class {
     PushBytes(u32),
     /// Fails the script if executed
     ReturnOp,
+    /// Succeeds the script even if not executed
+    SuccessOp,
     /// Fails the script even if not executed
     IllegalOp,
     /// Does nothing
@@ -805,7 +858,8 @@ ordinary_opcode! {
     // crypto
     OP_RIPEMD160, OP_SHA1, OP_SHA256, OP_HASH160, OP_HASH256,
     OP_CODESEPARATOR, OP_CHECKSIG, OP_CHECKSIGVERIFY,
-    OP_CHECKMULTISIG, OP_CHECKMULTISIGVERIFY
+    OP_CHECKMULTISIG, OP_CHECKMULTISIGVERIFY,
+    OP_CHECKSIGADD
 }
 
 impl Ordinary {
@@ -1023,7 +1077,7 @@ mod tests {
         roundtrip!(unique, OP_NOP8);
         roundtrip!(unique, OP_NOP9);
         roundtrip!(unique, OP_NOP10);
-        roundtrip!(unique, OP_RETURN_186);
+        roundtrip!(unique, OP_CHECKSIGADD);
         roundtrip!(unique, OP_RETURN_187);
         roundtrip!(unique, OP_RETURN_188);
         roundtrip!(unique, OP_RETURN_189);
@@ -1092,7 +1146,7 @@ mod tests {
         roundtrip!(unique, OP_RETURN_252);
         roundtrip!(unique, OP_RETURN_253);
         roundtrip!(unique, OP_RETURN_254);
-        roundtrip!(unique, OP_RETURN_255);
+        roundtrip!(unique, OP_INVALIDOPCODE);
         assert_eq!(unique.len(), 256);
     }
 }
