@@ -233,17 +233,27 @@ impl Block {
         bitcoin_merkle_root(hashes).into()
     }
 
+    /// The size of the header + the size of the varint with the tx count + the txs themselves
+    #[inline]
+    fn get_base_size(&self) -> usize {
+        80 + VarInt(self.txdata.len() as u64).len()
+    }
+
     /// Get the size of the block
     pub fn get_size(&self) -> usize {
-        // The size of the header + the size of the varint with the tx count + the txs themselves
-        let base_size = 80 + VarInt(self.txdata.len() as u64).len();
         let txs_size: usize = self.txdata.iter().map(Transaction::get_size).sum();
-        base_size + txs_size
+        self.get_base_size() + txs_size
+    }
+
+    /// Get the strippedsize of the block
+    pub fn get_strippedsize(&self) -> usize {
+        let txs_size: usize = self.txdata.iter().map(Transaction::get_strippedsize).sum();
+        self.get_base_size() + txs_size
     }
 
     /// Get the weight of the block
     pub fn get_weight(&self) -> usize {
-        let base_weight = WITNESS_SCALE_FACTOR * (80 + VarInt(self.txdata.len() as u64).len());
+        let base_weight = WITNESS_SCALE_FACTOR * self.get_base_size();
         let txs_weight: usize = self.txdata.iter().map(Transaction::get_weight).sum();
         base_weight + txs_weight
     }
@@ -372,6 +382,7 @@ mod tests {
         // [test] TODO: check the transaction data
 
         assert_eq!(real_decode.get_size(), some_block.len());
+        assert_eq!(real_decode.get_strippedsize(), some_block.len());
         assert_eq!(real_decode.get_weight(), some_block.len() * 4);
 
         // should be also ok for a non-witness block as commitment is optional in that case
@@ -406,6 +417,7 @@ mod tests {
         // [test] TODO: check the transaction data
 
         assert_eq!(real_decode.get_size(), segwit_block.len());
+        assert_eq!(real_decode.get_strippedsize(), 4283);
         assert_eq!(real_decode.get_weight(), 17168);
 
         assert!(real_decode.check_witness_commitment());
