@@ -889,6 +889,17 @@ mod tests {
     }
 
     #[test]
+    fn classify_test() {
+        let op186 = all::OP_CHECKSIGADD;
+        assert_eq!(op186.classify(ClassifyContext::Legacy), Class::ReturnOp);
+        assert_eq!(op186.classify(ClassifyContext::TapScript), Class::Ordinary(Ordinary::OP_CHECKSIGADD));
+
+        let op187 = all::OP_RETURN_187;
+        assert_eq!(op187.classify(ClassifyContext::Legacy), Class::ReturnOp);
+        assert_eq!(op187.classify(ClassifyContext::TapScript), Class::SuccessOp);
+    }
+
+    #[test]
     fn str_roundtrip() {
         let mut unique = HashSet::new();
         roundtrip!(unique, OP_PUSHBYTES_0);
