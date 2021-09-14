@@ -167,6 +167,7 @@ macro_rules! hex_hash (($h:ident, $s:expr) => ($h::from_slice(&<$crate::prelude:
 macro_rules! serde_string_impl {
     ($name:ident, $expecting:expr) => {
         #[cfg(feature = "serde")]
+        #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
         impl<'de> $crate::serde::Deserialize<'de> for $name {
             fn deserialize<D>(deserializer: D) -> Result<$name, D::Error>
             where
@@ -210,6 +211,7 @@ macro_rules! serde_string_impl {
         }
 
         #[cfg(feature = "serde")]
+        #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
         impl<'de> $crate::serde::Serialize for $name {
             fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
             where
@@ -226,6 +228,7 @@ macro_rules! serde_string_impl {
 macro_rules! serde_struct_human_string_impl {
     ($name:ident, $expecting:expr, $($fe:ident),*) => (
         #[cfg(feature = "serde")]
+        #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
         impl<'de> $crate::serde::Deserialize<'de> for $name {
             fn deserialize<D>(deserializer: D) -> Result<$name, D::Error>
             where
@@ -380,6 +383,7 @@ macro_rules! serde_struct_human_string_impl {
         }
 
         #[cfg(feature = "serde")]
+        #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
         impl<'de> $crate::serde::Serialize for $name {
             fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
             where
@@ -461,7 +465,8 @@ macro_rules! impl_bytes_newtype {
             }
         }
 
-        #[cfg(feature="serde")]
+        #[cfg(feature = "serde")]
+        #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
         impl $crate::serde::Serialize for $t {
             fn serialize<S: $crate::serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
                 if s.is_human_readable() {
@@ -472,7 +477,8 @@ macro_rules! impl_bytes_newtype {
             }
         }
 
-        #[cfg(feature="serde")]
+        #[cfg(feature = "serde")]
+        #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
         impl<'de> $crate::serde::Deserialize<'de> for $t {
             fn deserialize<D: $crate::serde::Deserializer<'de>>(d: D) -> Result<$t, D::Error> {
                 if d.is_human_readable() {
@@ -576,6 +582,7 @@ macro_rules! user_enum {
         }
 
         #[cfg(feature = "serde")]
+        #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
         impl<'de> $crate::serde::Deserialize<'de> for $name {
             #[inline]
             fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
@@ -625,6 +632,7 @@ macro_rules! user_enum {
         }
 
         #[cfg(feature = "serde")]
+        #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
         impl $crate::serde::Serialize for $name {
             fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
             where
