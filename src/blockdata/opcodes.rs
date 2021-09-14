@@ -674,77 +674,62 @@ impl All {
     /// Classifies an Opcode into a broad class
     #[inline]
     pub fn classify(self, ctx: ClassifyContext) -> Class {
-        // 3 opcodes
-        match ctx {
-            ClassifyContext::TapScript => // 3 opcodes
-                if self == all::OP_VERIF || self == all::OP_VERNOTIF ||
-                    self == all::OP_INVALIDOPCODE {
-                    Class::IllegalOp
-                // 11 opcodes
-                } else if self == all::OP_NOP ||
-                        (all::OP_NOP1.code <= self.code &&
-                        self.code <= all::OP_NOP10.code) {
-                    Class::NoOp
-                // 87 opcodes
-                } else if self.code == 80 || self.code == 98 ||
-                        (self.code >= 126 && self.code <= 129) ||
-                        (self.code >= 131 && self.code <= 134) ||
-                        (self.code >= 137 && self.code <= 138) ||
-                        (self.code >= 141 && self.code <= 142) ||
-                        (self.code >= 149 && self.code <= 153) ||
-                        (self.code >= 187 && self.code <= 254) {
-                    Class::SuccessOp
-                // 1 opcode
-                } else if self == all::OP_RETURN{
-                    Class::ReturnOp
-                // 1 opcode
-                } else if self == all::OP_PUSHNUM_NEG1 {
-                    Class::PushNum(-1)
-                // 16 opcodes
-                } else if all::OP_PUSHNUM_1.code <= self.code &&
-                        self.code <= all::OP_PUSHNUM_16.code {
-                    Class::PushNum(1 + self.code as i32 - all::OP_PUSHNUM_1.code as i32)
-                // 76 opcodes
-                } else if self.code <= all::OP_PUSHBYTES_75.code {
-                    Class::PushBytes(self.code as u32)
-                // 61 opcodes
-                } else {
-                    Class::Ordinary(Ordinary::try_from_all(self).unwrap())
-                },
-            ClassifyContext::Legacy =>
-                if self == all::OP_VERIF || self == all::OP_VERNOTIF ||
-                    self == all::OP_CAT || self == all::OP_SUBSTR ||
-                    self == all::OP_LEFT || self == all::OP_RIGHT ||
-                    self == all::OP_INVERT || self == all::OP_AND ||
-                    self == all::OP_OR || self == all::OP_XOR ||
-                    self == all::OP_2MUL || self == all::OP_2DIV ||
-                    self == all::OP_MUL || self == all::OP_DIV || self == all::OP_MOD ||
-                    self == all::OP_LSHIFT || self == all::OP_RSHIFT {
-                    Class::IllegalOp
-                // 11 opcodes
-                } else if self == all::OP_NOP ||
-                        (all::OP_NOP1.code <= self.code &&
-                            self.code <= all::OP_NOP10.code) {
-                    Class::NoOp
-                // 75 opcodes
-                } else if self == all::OP_RESERVED || self == all::OP_VER || self == all::OP_RETURN ||
-                        self == all::OP_RESERVED1 || self == all::OP_RESERVED2 ||
-                        self.code >= all::OP_CHECKSIGADD.code {
-                    Class::ReturnOp
-                // 1 opcode
-                } else if self == all::OP_PUSHNUM_NEG1 {
-                    Class::PushNum(-1)
-                // 16 opcodes
-                } else if all::OP_PUSHNUM_1.code <= self.code &&
-                        self.code <= all::OP_PUSHNUM_16.code {
-                    Class::PushNum(1 + self.code as i32 - all::OP_PUSHNUM_1.code as i32)
-                // 76 opcodes
-                } else if self.code <= all::OP_PUSHBYTES_75.code {
-                    Class::PushBytes(self.code as u32)
-                // 61 opcodes
-                } else {
-                    Class::Ordinary(Ordinary::try_from_all(self).unwrap())
-                }
+        use self::all::*;
+        match (self, ctx) {
+            // 3 opcodes illegal in all contexts
+            (OP_VERIF, _) | (OP_VERNOTIF, _) | (OP_INVALIDOPCODE, _) => Class::IllegalOp,
+
+            // 15 opcodes illegal in Legacy context
+            (OP_CAT, ctx) | (OP_SUBSTR, ctx)
+            | (OP_LEFT, ctx) | (OP_RIGHT, ctx)
+            | (OP_INVERT, ctx)
+            | (OP_AND, ctx) | (OP_OR, ctx) | (OP_XOR, ctx)
+            | (OP_2MUL, ctx) | (OP_2DIV, ctx)
+            | (OP_MUL, ctx) | (OP_DIV, ctx) | (OP_MOD, ctx)
+            | (OP_LSHIFT, ctx) | (OP_RSHIFT, ctx) if ctx == ClassifyContext::Legacy => Class::IllegalOp,
+
+            // 87 opcodes of SuccessOp class only in TapScript context
+            (op, ClassifyContext::TapScript)
+            if op.code == 80 || op.code == 98 ||
+                (op.code >= 126 && op.code <= 129) ||
+                (op.code >= 131 && op.code <= 134) ||
+                (op.code >= 137 && op.code <= 138) ||
+                (op.code >= 141 && op.code <= 142) ||
+                (op.code >= 149 && op.code <= 153) ||
+                (op.code >= 187 && op.code <= 254) => Class::SuccessOp,
+
+            // 11 opcodes of NoOp class
+            (OP_NOP, _) => Class::NoOp,
+            (op, _) if op.code >= OP_NOP1.code && op.code <= OP_NOP10.code => Class::NoOp,
+
+            // 1 opcode for `OP_RETURN`
+            (OP_RETURN, _) => Class::ReturnOp,
+
+            // 4 opcodes operating equally to `OP_RETURN` only in Legacy context
+            (OP_RESERVED, ctx)
+            | (OP_RESERVED1, ctx) | (OP_RESERVED2, ctx)
+            | (OP_VER, ctx) if ctx == ClassifyContext::Legacy => Class::ReturnOp,
+
+            // 71 opcodes operating equally to `OP_RETURN` only in Legacy context
+            (op, ClassifyContext::Legacy) if op.code >= OP_CHECKSIGADD.code => Class::ReturnOp,
+
+            // 2 opcodes operating equally to `OP_RETURN` only in TapScript context
+            (OP_CHECKMULTISIG, ClassifyContext::TapScript)
+            | (OP_CHECKMULTISIGVERIFY, ClassifyContext::TapScript) => Class::ReturnOp,
+
+            // 1 opcode of PushNum class
+            (OP_PUSHNUM_NEG1, _) => Class::PushNum(-1),
+
+            // 16 opcodes of PushNum class
+            (op, _) if op.code >= OP_PUSHNUM_1.code && op.code <= OP_PUSHNUM_16.code => {
+                Class::PushNum(1 + self.code as i32 - OP_PUSHNUM_1.code as i32)
+            },
+
+            // 76 opcodes of PushBytes class
+            (op, _) if op.code <= OP_PUSHBYTES_75.code => Class::PushBytes(self.code as u32),
+
+            // opcodes of Ordinary class: 61 for Legacy and 60 for TapScript context
+            (_, _) => Class::Ordinary(Ordinary::with(self)),
         }
     }
 
@@ -825,6 +810,13 @@ macro_rules! ordinary_opcode {
         }
 
         impl Ordinary {
+            fn with(b: All) -> Self {
+                match b {
+                    $( all::$op => { Ordinary::$op } ),*
+                    _ => unreachable!("construction of `Ordinary` type from non-ordinary opcode {}", b),
+                }
+            }
+
             /// Try to create from an All
             pub fn try_from_all(b: All) -> Option<Self> {
                 match b {
@@ -890,6 +882,14 @@ mod tests {
 
     #[test]
     fn classify_test() {
+        let op174 = all::OP_CHECKMULTISIG;
+        assert_eq!(op174.classify(ClassifyContext::Legacy), Class::Ordinary(Ordinary::OP_CHECKMULTISIG));
+        assert_eq!(op174.classify(ClassifyContext::TapScript), Class::ReturnOp);
+
+        let op175 = all::OP_CHECKMULTISIGVERIFY;
+        assert_eq!(op175.classify(ClassifyContext::Legacy),  Class::Ordinary(Ordinary::OP_CHECKMULTISIGVERIFY));
+        assert_eq!(op175.classify(ClassifyContext::TapScript), Class::ReturnOp);
+
         let op186 = all::OP_CHECKSIGADD;
         assert_eq!(op186.classify(ClassifyContext::Legacy), Class::ReturnOp);
         assert_eq!(op186.classify(ClassifyContext::TapScript), Class::Ordinary(Ordinary::OP_CHECKSIGADD));
