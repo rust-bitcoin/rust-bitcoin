@@ -38,14 +38,29 @@ mod macros;
 pub mod serialize;
 
 mod map;
-pub use self::map::{Map, Global, Input, Output};
+pub use self::map::{Map, Input, Output};
+
+use util::bip32::{ExtendedPubKey, KeySource};
 
 /// A Partially Signed Transaction.
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct PartiallySignedTransaction {
-    /// The key-value pairs for all global data.
-    pub global: Global,
+    /// The unsigned transaction, scriptSigs and witnesses for each input must be
+    /// empty.
+    pub unsigned_tx: Transaction,
+    /// The version number of this PSBT. If omitted, the version number is 0.
+    pub version: u32,
+    /// A global map from extended public keys to the used key fingerprint and
+    /// derivation path as defined by BIP 32
+    pub xpub: BTreeMap<ExtendedPubKey, KeySource>,
+    /// Global proprietary key-value pairs.
+    #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_as_seq_byte_values"))]
+    pub proprietary: BTreeMap<raw::ProprietaryKey, Vec<u8>>,
+    /// Unknown global key-value pairs.
+    #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_as_seq_byte_values"))]
+    pub unknown: BTreeMap<raw::Key, Vec<u8>>,
+
     /// The corresponding key-value map for each input in the unsigned
     /// transaction.
     pub inputs: Vec<Input>,
@@ -55,20 +70,43 @@ pub struct PartiallySignedTransaction {
 }
 
 impl PartiallySignedTransaction {
+    /// Checks that unsigned transaction does not have scriptSig's or witness
+    /// data
+    fn unsigned_tx_checks(&self) -> Result<(), Error> {
+        for txin in &self.unsigned_tx.input {
+            if !txin.script_sig.is_empty() {
+                return Err(Error::UnsignedTxHasScriptSigs);
+            }
+
+            if !txin.witness.is_empty() {
+                return Err(Error::UnsignedTxHasScriptWitnesses);
+            }
+        }
+
+        Ok(())
+    }
+
     /// Create a PartiallySignedTransaction from an unsigned transaction, error
     /// if not unsigned
-    pub fn from_unsigned_tx(tx: Transaction) -> Result<Self, self::Error> {
-        Ok(PartiallySignedTransaction {
+    pub fn from_unsigned_tx(tx: Transaction) -> Result<Self, Error> {
+        let psbt = PartiallySignedTransaction {
             inputs: vec![Default::default(); tx.input.len()],
             outputs: vec![Default::default(); tx.output.len()],
-            global: Global::from_unsigned_tx(tx)?,
-        })
+
+            unsigned_tx: tx,
+            xpub: Default::default(),
+            version: 0,
+            proprietary: Default::default(),
+            unknown: Default::default(),
+        };
+        psbt.unsigned_tx_checks()?;
+        Ok(psbt)
     }
 
     /// Extract the Transaction from a PartiallySignedTransaction by filling in
     /// the available signature information in place.
     pub fn extract_tx(self) -> Transaction {
-        let mut tx: Transaction = self.global.unsigned_tx;
+        let mut tx: Transaction = self.unsigned_tx;
 
         for (vin, psbtin) in tx.input.iter_mut().zip(self.inputs.into_iter()) {
             vin.script_sig = psbtin.final_script_sig.unwrap_or_else(Script::new);
@@ -76,21 +114,6 @@ impl PartiallySignedTransaction {
         }
 
         tx
-    }
-
-    /// Attempt to merge with another `PartiallySignedTransaction`.
-    pub fn merge(&mut self, other: Self) -> Result<(), self::Error> {
-        self.global.merge(other.global)?;
-
-        for (self_input, other_input) in self.inputs.iter_mut().zip(other.inputs.into_iter()) {
-            self_input.merge(other_input)?;
-        }
-
-        for (self_output, other_output) in self.outputs.iter_mut().zip(other.outputs.into_iter()) {
-            self_output.merge(other_output)?;
-        }
-
-        Ok(())
     }
 }
 
@@ -151,7 +174,7 @@ impl Encodable for PartiallySignedTransaction {
 
         len += 0xff_u8.consensus_encode(&mut s)?;
 
-        len += self.global.consensus_encode(&mut s)?;
+        len += self.consensus_encode_map(&mut s)?;
 
         for i in &self.inputs {
             len += i.consensus_encode(&mut s)?;
@@ -178,7 +201,8 @@ impl Decodable for PartiallySignedTransaction {
             return Err(Error::InvalidSeparator.into());
         }
 
-        let global: Global = Decodable::consensus_decode(&mut d)?;
+        let mut global = PartiallySignedTransaction::consensus_decode_global(&mut d)?;
+        global.unsigned_tx_checks()?;
 
         let inputs: Vec<Input> = {
             let inputs_len: usize = (&global.unsigned_tx.input).len();
@@ -204,11 +228,9 @@ impl Decodable for PartiallySignedTransaction {
             outputs
         };
 
-        Ok(PartiallySignedTransaction {
-            global: global,
-            inputs: inputs,
-            outputs: outputs,
-        })
+        global.inputs = inputs;
+        global.outputs = outputs;
+        Ok(global)
     }
 }
 
@@ -227,7 +249,7 @@ mod tests {
     use consensus::encode::{deserialize, serialize, serialize_hex};
     use util::bip32::{ChildNumber, ExtendedPrivKey, ExtendedPubKey, Fingerprint, KeySource};
     use util::ecdsa::PublicKey;
-    use util::psbt::map::{Global, Output, Input};
+    use util::psbt::map::{Output, Input};
     use util::psbt::raw;
 
     use super::PartiallySignedTransaction;
@@ -237,18 +259,17 @@ mod tests {
     #[test]
     fn trivial_psbt() {
         let psbt = PartiallySignedTransaction {
-            global: Global {
-                unsigned_tx: Transaction {
-                    version: 2,
-                    lock_time: 0,
-                    input: vec![],
-                    output: vec![],
-                },
-                xpub: Default::default(),
-                version: 0,
-                proprietary: BTreeMap::new(),
-                unknown: BTreeMap::new(),
+            unsigned_tx: Transaction {
+                version: 2,
+                lock_time: 0,
+                input: vec![],
+                output: vec![],
             },
+            xpub: Default::default(),
+            version: 0,
+            proprietary: BTreeMap::new(),
+            unknown: BTreeMap::new(),
+
             inputs: vec![],
             outputs: vec![],
         };
@@ -304,7 +325,7 @@ mod tests {
 
     #[test]
     fn serialize_then_deserialize_global() {
-        let expected = Global {
+        let expected = PartiallySignedTransaction {
             unsigned_tx: Transaction {
                 version: 2,
                 lock_time: 1257139,
@@ -338,9 +359,16 @@ mod tests {
             version: 0,
             proprietary: Default::default(),
             unknown: Default::default(),
+            inputs: vec![
+                Input::default(),
+            ],
+            outputs: vec![
+                Output::default(),
+                Output::default()
+            ]
         };
 
-        let actual: Global = deserialize(&serialize(&expected)).unwrap();
+        let actual: PartiallySignedTransaction = deserialize(&serialize(&expected)).unwrap();
 
         assert_eq!(expected, actual);
     }
@@ -414,23 +442,22 @@ mod tests {
         )].into_iter().collect();
 
         let psbt = PartiallySignedTransaction {
-            global: Global {
-                version: 0,
-                xpub: {
-                    let xpub: ExtendedPubKey =
-                        "xpub661MyMwAqRbcGoRVtwfvzZsq2VBJR1LAHfQstHUoxqDorV89vRoMxUZ27kLrraAj6MPi\
-                        QfrDb27gigC1VS1dBXi5jGpxmMeBXEkKkcXUTg4".parse().unwrap();
-                    vec![(xpub, key_source.clone())].into_iter().collect()
-                },
-                unsigned_tx: {
-                    let mut unsigned = tx.clone();
-                    unsigned.input[0].script_sig = Script::new();
-                    unsigned.input[0].witness = Vec::new();
-                    unsigned
-                },
-                proprietary: proprietary.clone(),
-                unknown: unknown.clone(),
+            version: 0,
+            xpub: {
+                let xpub: ExtendedPubKey =
+                    "xpub661MyMwAqRbcGoRVtwfvzZsq2VBJR1LAHfQstHUoxqDorV89vRoMxUZ27kLrraAj6MPi\
+                    QfrDb27gigC1VS1dBXi5jGpxmMeBXEkKkcXUTg4".parse().unwrap();
+                vec![(xpub, key_source.clone())].into_iter().collect()
             },
+            unsigned_tx: {
+                let mut unsigned = tx.clone();
+                unsigned.input[0].script_sig = Script::new();
+                unsigned.input[0].witness = Vec::new();
+                unsigned
+            },
+            proprietary: proprietary.clone(),
+            unknown: unknown.clone(),
+
             inputs: vec![Input {
                 non_witness_utxo: Some(tx),
                 witness_utxo: Some(TxOut {
@@ -476,7 +503,7 @@ mod tests {
         use blockdata::script::Script;
         use blockdata::transaction::{SigHashType, Transaction, TxIn, TxOut, OutPoint};
         use consensus::encode::serialize_hex;
-        use util::psbt::map::{Map, Global, Input, Output};
+        use util::psbt::map::{Map, Input, Output};
         use util::psbt::raw;
         use util::psbt::{PartiallySignedTransaction, Error};
         use std::collections::BTreeMap;
@@ -560,37 +587,36 @@ mod tests {
         #[test]
         fn valid_vector_1() {
             let unserialized = PartiallySignedTransaction {
-                global: Global {
-                    unsigned_tx: Transaction {
-                        version: 2,
-                        lock_time: 1257139,
-                        input: vec![TxIn {
-                            previous_output: OutPoint {
-                                txid: Txid::from_hex(
-                                    "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126",
-                                ).unwrap(),
-                                vout: 0,
-                            },
-                            script_sig: Script::new(),
-                            sequence: 4294967294,
-                            witness: vec![],
-                        }],
-                        output: vec![
-                            TxOut {
-                                value: 99999699,
-                                script_pubkey: hex_script!("76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac"),
-                            },
-                            TxOut {
-                                value: 100000000,
-                                script_pubkey: hex_script!("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787"),
-                            },
-                        ],
-                    },
-                    xpub: Default::default(),
-                    version: 0,
-                    proprietary: BTreeMap::new(),
-                    unknown: BTreeMap::new(),
+                unsigned_tx: Transaction {
+                    version: 2,
+                    lock_time: 1257139,
+                    input: vec![TxIn {
+                        previous_output: OutPoint {
+                            txid: Txid::from_hex(
+                                "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126",
+                            ).unwrap(),
+                            vout: 0,
+                        },
+                        script_sig: Script::new(),
+                        sequence: 4294967294,
+                        witness: vec![],
+                    }],
+                    output: vec![
+                        TxOut {
+                            value: 99999699,
+                            script_pubkey: hex_script!("76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac"),
+                        },
+                        TxOut {
+                            value: 100000000,
+                            script_pubkey: hex_script!("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787"),
+                        },
+                    ],
                 },
+                xpub: Default::default(),
+                version: 0,
+                proprietary: BTreeMap::new(),
+                unknown: BTreeMap::new(),
+
                 inputs: vec![Input {
                     non_witness_utxo: Some(Transaction {
                         version: 1,
@@ -690,7 +716,7 @@ mod tests {
             assert_eq!(psbt.inputs.len(), 1);
             assert_eq!(psbt.outputs.len(), 2);
 
-            let tx_input = &psbt.global.unsigned_tx.input[0];
+            let tx_input = &psbt.unsigned_tx.input[0];
             let psbt_non_witness_utxo = (&psbt.inputs[0].non_witness_utxo).as_ref().unwrap();
 
             assert_eq!(tx_input.previous_output.txid, psbt_non_witness_utxo.txid());
@@ -758,7 +784,7 @@ mod tests {
             assert_eq!(psbt.inputs.len(), 1);
             assert_eq!(psbt.outputs.len(), 1);
 
-            let tx = &psbt.global.unsigned_tx;
+            let tx = &psbt.unsigned_tx;
             assert_eq!(
                 tx.txid(),
                 Txid::from_hex(
@@ -793,37 +819,36 @@ mod tests {
 
         // same vector as valid_vector_1 from BIPs with added
         let mut unserialized = PartiallySignedTransaction {
-            global: Global {
-                unsigned_tx: Transaction {
-                    version: 2,
-                    lock_time: 1257139,
-                    input: vec![TxIn {
-                        previous_output: OutPoint {
-                            txid: Txid::from_hex(
-                                "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126",
-                            ).unwrap(),
-                            vout: 0,
-                        },
-                        script_sig: Script::new(),
-                        sequence: 4294967294,
-                        witness: vec![],
-                    }],
-                    output: vec![
-                        TxOut {
-                            value: 99999699,
-                            script_pubkey: hex_script!("76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac"),
-                        },
-                        TxOut {
-                            value: 100000000,
-                            script_pubkey: hex_script!("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787"),
-                        },
-                    ],
-                },
-                version: 0,
-                xpub: Default::default(),
-                proprietary: Default::default(),
-                unknown: BTreeMap::new(),
+            unsigned_tx: Transaction {
+                version: 2,
+                lock_time: 1257139,
+                input: vec![TxIn {
+                    previous_output: OutPoint {
+                        txid: Txid::from_hex(
+                            "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126",
+                        ).unwrap(),
+                        vout: 0,
+                    },
+                    script_sig: Script::new(),
+                    sequence: 4294967294,
+                    witness: vec![],
+                }],
+                output: vec![
+                    TxOut {
+                        value: 99999699,
+                        script_pubkey: hex_script!("76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac"),
+                    },
+                    TxOut {
+                        value: 100000000,
+                        script_pubkey: hex_script!("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787"),
+                    },
+                ],
             },
+            version: 0,
+            xpub: Default::default(),
+            proprietary: Default::default(),
+            unknown: BTreeMap::new(),
+
             inputs: vec![Input {
                 non_witness_utxo: Some(Transaction {
                     version: 1,
@@ -897,14 +922,14 @@ mod tests {
     #[test]
     fn serialize_and_deserialize_proprietary() {
         let mut psbt: PartiallySignedTransaction = hex_psbt!("70736274ff0100a00200000002ab0949a08c5af7c49b8212f417e2f15ab3f5c33dcf153821a8139f877a5b7be40000000000feffffffab0949a08c5af7c49b8212f417e2f15ab3f5c33dcf153821a8139f877a5b7be40100000000feffffff02603bea0b000000001976a914768a40bbd740cbe81d988e71de2a4d5c71396b1d88ac8e240000000000001976a9146f4620b553fa095e721b9ee0efe9fa039cca459788ac000000000001076a47304402204759661797c01b036b25928948686218347d89864b719e1f7fcf57d1e511658702205309eabf56aa4d8891ffd111fdf1336f3a29da866d7f8486d75546ceedaf93190121035cdc61fc7ba971c0b501a646a2a83b102cb43881217ca682dc86e2d73fa882920001012000e1f5050000000017a9143545e6e33b832c47050f24d3eeb93c9c03948bc787010416001485d13537f2e265405a34dbafa9e3dda01fb82308000000").unwrap();
-        psbt.global.proprietary.insert(ProprietaryKey {
+        psbt.proprietary.insert(ProprietaryKey {
             prefix: b"test".to_vec(),
             subtype: 0u8,
             key: b"test".to_vec(),
         }, b"test".to_vec());
-        assert!(!psbt.global.proprietary.is_empty());
+        assert!(!psbt.proprietary.is_empty());
         let rtt : PartiallySignedTransaction = hex_psbt!(&serialize_hex(&psbt)).unwrap();
-        assert!(!rtt.global.proprietary.is_empty());
+        assert!(!rtt.proprietary.is_empty());
     }
 
 }
