@@ -34,7 +34,7 @@ use prelude::*;
 use core::{fmt, mem, u32, convert::From};
 #[cfg(feature = "std")] use std::error;
 
-use hashes::{sha256d, Hash};
+use hashes::{sha256d, Hash, sha256};
 use hash_types::{BlockHash, FilterHash, TxMerkleNode, FilterHeader};
 
 use io::{self, Cursor, Read};
@@ -601,7 +601,7 @@ impl_vec!(u64);
 #[cfg(feature = "std")] impl_vec!((u32, Address));
 #[cfg(feature = "std")] impl_vec!(AddrV2Message);
 
-fn consensus_encode_with_size<S: io::Write>(data: &[u8], mut s: S) -> Result<usize, io::Error> {
+pub(crate) fn consensus_encode_with_size<S: io::Write>(data: &[u8], mut s: S) -> Result<usize, io::Error> {
     let vi_len = VarInt(data.len() as u64).consensus_encode(&mut s)?;
     s.emit_slice(&data)?;
     Ok(vi_len + data.len())
@@ -752,6 +752,18 @@ impl Encodable for sha256d::Hash {
 }
 
 impl Decodable for sha256d::Hash {
+    fn consensus_decode<D: io::Read>(d: D) -> Result<Self, Error> {
+        Ok(Self::from_inner(<<Self as Hash>::Inner>::consensus_decode(d)?))
+    }
+}
+
+impl Encodable for sha256::Hash {
+    fn consensus_encode<S: io::Write>(&self, s: S) -> Result<usize, io::Error> {
+        self.into_inner().consensus_encode(s)
+    }
+}
+
+impl Decodable for sha256::Hash {
     fn consensus_decode<D: io::Read>(d: D) -> Result<Self, Error> {
         Ok(Self::from_inner(<<Self as Hash>::Inner>::consensus_decode(d)?))
     }

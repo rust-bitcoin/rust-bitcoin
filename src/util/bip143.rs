@@ -19,7 +19,7 @@
 //! signatures, which are placed in the scriptSig.
 //!
 
-use hashes::{Hash, sha256d};
+use hashes::Hash;
 use hash_types::SigHash;
 use blockdata::script::Script;
 use blockdata::transaction::{Transaction, TxIn, SigHashType};
@@ -29,11 +29,12 @@ use prelude::*;
 
 use io;
 use core::ops::{Deref, DerefMut};
+use util::sighash;
 
 /// Parts of a sighash which are common across inputs or signatures, and which are
 /// sufficient (in conjunction with a private key) to sign the transaction
 #[derive(Clone, PartialEq, Eq, Debug)]
-#[deprecated(since="0.24.0", note="please use `SigHashCache` instead")]
+#[deprecated(since="0.24.0", note="please use [sighash::SigHashCache] instead")]
 pub struct SighashComponents {
     tx_version: i32,
     tx_locktime: u32,
@@ -107,121 +108,34 @@ impl SighashComponents {
 }
 
 /// A replacement for SigHashComponents which supports all sighash modes
+#[deprecated(since="0.27.0", note="please use [sighash::SigHashCache] instead")]
 pub struct SigHashCache<R: Deref<Target=Transaction>> {
-    /// Access to transaction required for various introspection
-    tx: R,
-    /// Hash of all the previous outputs, computed as required
-    hash_prevouts: Option<sha256d::Hash>,
-    /// Hash of all the input sequence nos, computed as required
-    hash_sequence: Option<sha256d::Hash>,
-    /// Hash of all the outputs in this transaction, computed as required
-    hash_outputs: Option<sha256d::Hash>,
+    cache: sighash::SigHashCache<R>,
 }
 
+#[allow(deprecated)]
 impl<R: Deref<Target=Transaction>> SigHashCache<R> {
     /// Compute the sighash components from an unsigned transaction and auxiliary
     /// in a lazy manner when required.
     /// For the generated sighashes to be valid, no fields in the transaction may change except for
     /// script_sig and witnesses.
     pub fn new(tx: R) -> Self {
-        SigHashCache {
-            tx: tx,
-            hash_prevouts: None,
-            hash_sequence: None,
-            hash_outputs: None,
-        }
-    }
-
-    /// Calculate hash for prevouts
-    pub fn hash_prevouts(&mut self) -> sha256d::Hash {
-        let hash_prevout = &mut self.hash_prevouts;
-        let input = &self.tx.input;
-        *hash_prevout.get_or_insert_with(|| {
-            let mut enc = sha256d::Hash::engine();
-            for txin in input {
-                txin.previous_output.consensus_encode(&mut enc).unwrap();
-            }
-            sha256d::Hash::from_engine(enc)
-        })
-    }
-
-    /// Calculate hash for input sequence values
-    pub fn hash_sequence(&mut self) -> sha256d::Hash {
-        let hash_sequence = &mut self.hash_sequence;
-        let input = &self.tx.input;
-        *hash_sequence.get_or_insert_with(|| {
-            let mut enc = sha256d::Hash::engine();
-            for txin in input {
-                txin.sequence.consensus_encode(&mut enc).unwrap();
-            }
-            sha256d::Hash::from_engine(enc)
-        })
-    }
-
-    /// Calculate hash for outputs
-    pub fn hash_outputs(&mut self) -> sha256d::Hash {
-        let hash_output = &mut self.hash_outputs;
-        let output = &self.tx.output;
-        *hash_output.get_or_insert_with(|| {
-            let mut enc = sha256d::Hash::engine();
-            for txout in output {
-                txout.consensus_encode(&mut enc).unwrap();
-            }
-            sha256d::Hash::from_engine(enc)
-        })
+        Self { cache: sighash::SigHashCache::new(tx) }
     }
 
     /// Encode the BIP143 signing data for any flag type into a given object implementing a
     /// std::io::Write trait.
     pub fn encode_signing_data_to<Write: io::Write>(
         &mut self,
-        mut writer: Write,
+        writer: Write,
         input_index: usize,
         script_code: &Script,
         value: u64,
         sighash_type: SigHashType,
     ) -> Result<(), encode::Error> {
-        let zero_hash = sha256d::Hash::default();
-
-        let (sighash, anyone_can_pay) = sighash_type.split_anyonecanpay_flag();
-
-        self.tx.version.consensus_encode(&mut writer)?;
-
-        if !anyone_can_pay {
-            self.hash_prevouts().consensus_encode(&mut writer)?;
-        } else {
-            zero_hash.consensus_encode(&mut writer)?;
-        }
-
-        if !anyone_can_pay && sighash != SigHashType::Single && sighash != SigHashType::None {
-            self.hash_sequence().consensus_encode(&mut writer)?;
-        } else {
-            zero_hash.consensus_encode(&mut writer)?;
-        }
-
-        {
-            let txin = &self.tx.input[input_index];
-
-            txin
-                .previous_output
-                .consensus_encode(&mut writer)?;
-            script_code.consensus_encode(&mut writer)?;
-            value.consensus_encode(&mut writer)?;
-            txin.sequence.consensus_encode(&mut writer)?;
-        }
-
-        if sighash != SigHashType::Single && sighash != SigHashType::None {
-            self.hash_outputs().consensus_encode(&mut writer)?;
-        } else if sighash == SigHashType::Single && input_index < self.tx.output.len() {
-            let mut single_enc = SigHash::engine();
-            self.tx.output[input_index].consensus_encode(&mut single_enc)?;
-            SigHash::from_engine(single_enc).consensus_encode(&mut writer)?;
-        } else {
-            zero_hash.consensus_encode(&mut writer)?;
-        }
-
-        self.tx.lock_time.consensus_encode(&mut writer)?;
-        sighash_type.as_u32().consensus_encode(&mut writer)?;
+        self.cache
+            .segwit_encode_signing_data_to(writer, input_index, script_code, value, sighash_type.into())
+            .expect("input_index greater than tx input len");
         Ok(())
     }
 
@@ -241,11 +155,15 @@ impl<R: Deref<Target=Transaction>> SigHashCache<R> {
     }
 }
 
+#[allow(deprecated)]
 impl<R: DerefMut<Target=Transaction>> SigHashCache<R> {
     /// When the SigHashCache is initialized with a mutable reference to a transaction instead of a
     /// regular reference, this method is available to allow modification to the witnesses.
     ///
     /// This allows in-line signing such as
+    ///
+    /// panics if `input_index` is out of bounds with respect of the number of inputs
+    ///
     /// ```
     /// use bitcoin::blockdata::transaction::{Transaction, SigHashType};
     /// use bitcoin::util::bip143::SigHashCache;
@@ -263,13 +181,14 @@ impl<R: DerefMut<Target=Transaction>> SigHashCache<R> {
     /// }
     /// ```
     pub fn access_witness(&mut self, input_index: usize) -> &mut Vec<Vec<u8>> {
-        &mut self.tx.input[input_index].witness
+        self.cache.witness_mut(input_index).unwrap()
     }
 }
 
 #[cfg(test)]
 #[allow(deprecated)]
 mod tests {
+    use std::str::FromStr;
     use hash_types::SigHash;
     use blockdata::script::Script;
     use blockdata::transaction::Transaction;
@@ -282,8 +201,7 @@ mod tests {
     use super::*;
 
     fn p2pkh_hex(pk: &str) -> Script {
-        let pk = Vec::from_hex(pk).unwrap();
-        let pk = PublicKey::from_slice(pk.as_slice()).unwrap();
+        let pk: PublicKey = PublicKey::from_str(pk).unwrap();
         let witness_script = Address::p2pkh(&pk, Network::Bitcoin).script_pubkey();
         witness_script
     }

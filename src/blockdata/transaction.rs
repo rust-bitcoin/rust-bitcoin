@@ -808,6 +808,7 @@ mod tests {
 
     use hash_types::*;
     use SigHashType;
+    use util::sighash::SigHashCache;
 
     #[test]
     fn test_outpoint() {
@@ -1059,7 +1060,15 @@ mod tests {
         raw_expected.reverse();
         let expected_result = SigHash::from_slice(&raw_expected[..]).unwrap();
 
-        let actual_result = tx.signature_hash(input_index, &script, hash_type as u32);
+        let actual_result = if raw_expected[0] % 2 == 0 {
+            // tx.signature_hash and cache.legacy_signature_hash are the same, this if helps to test
+            // both the codepaths without repeating the test code
+            tx.signature_hash(input_index, &script, hash_type as u32)
+        } else {
+            let cache = SigHashCache::new(&tx);
+            cache.legacy_signature_hash(input_index, &script, hash_type as u32).unwrap()
+        };
+
         assert_eq!(actual_result, expected_result);
     }
 
