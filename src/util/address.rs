@@ -44,7 +44,7 @@ use bech32;
 use hashes::Hash;
 use hash_types::{PubkeyHash, WPubkeyHash, ScriptHash, WScriptHash};
 use blockdata::{script, opcodes};
-use blockdata::constants::{PUBKEY_ADDRESS_PREFIX_MAIN, SCRIPT_ADDRESS_PREFIX_MAIN, PUBKEY_ADDRESS_PREFIX_TEST, SCRIPT_ADDRESS_PREFIX_TEST};
+use blockdata::constants::{PUBKEY_ADDRESS_PREFIX_MAIN, SCRIPT_ADDRESS_PREFIX_MAIN, PUBKEY_ADDRESS_PREFIX_TEST, SCRIPT_ADDRESS_PREFIX_TEST, MAX_SCRIPT_ELEMENT_SIZE};
 use network::constants::Network;
 use util::base58;
 use util::ecdsa;
@@ -71,6 +71,8 @@ pub enum Error {
     InvalidSegwitV0ProgramLength(usize),
     /// An uncompressed pubkey was used where it is not allowed.
     UncompressedPubkey,
+    /// Address size more than 520 bytes is not allowed.
+    ExcessiveScriptSize
 }
 
 impl fmt::Display for Error {
@@ -91,6 +93,8 @@ impl fmt::Display for Error {
             Error::UncompressedPubkey => write!(f,
                 "an uncompressed pubkey was used where it is not allowed",
             ),
+            Error::ExcessiveScriptSize => write!(f,
+                "Script size exceed 520 bytes")
         }
     }
 }
@@ -408,11 +412,14 @@ impl Address {
     /// Creates a pay to script hash P2SH address from a script
     /// This address type was introduced with BIP16 and is the popular type to implement multi-sig these days.
     #[inline]
-    pub fn p2sh(script: &script::Script, network: Network) -> Address {
-        Address {
+    pub fn p2sh(script: &script::Script, network: Network) -> Result<Address, Error> {
+        if script.len() > MAX_SCRIPT_ELEMENT_SIZE{
+            return Err(Error::ExcessiveScriptSize);
+        }
+        Ok(Address {
             network: network,
             payload: Payload::ScriptHash(ScriptHash::hash(&script[..])),
-        }
+        })
     }
 
     /// Create a witness pay to public key address from a public key
@@ -820,11 +827,16 @@ mod tests {
     #[test]
     fn test_p2sh_parse() {
         let script = hex_script!("552103a765fc35b3f210b95223846b36ef62a4e53e34e2925270c2c7906b92c9f718eb2103c327511374246759ec8d0b89fa6c6b23b33e11f92c5bc155409d86de0c79180121038cae7406af1f12f4786d820a1466eec7bc5785a1b5e4a387eca6d797753ef6db2103252bfb9dcaab0cd00353f2ac328954d791270203d66c2be8b430f115f451b8a12103e79412d42372c55dd336f2eb6eb639ef9d74a22041ba79382c74da2338fe58ad21035049459a4ebc00e876a9eef02e72a3e70202d3d1f591fc0dd542f93f642021f82102016f682920d9723c61b27f562eb530c926c00106004798b6471e8c52c60ee02057ae");
-        let addr = Address::p2sh(&script, Testnet);
-
+        let addr = Address::p2sh(&script, Testnet).unwrap();
         assert_eq!(&addr.to_string(), "2N3zXjbwdTcPsJiy8sUK9FhWJhqQCxA8Jjr");
         assert_eq!(addr.address_type(), Some(AddressType::P2sh));
         roundtrips(&addr);
+    }
+
+    #[test]
+    fn test_p2sh_parse_for_large_script(){
+        let script = hex_script!("552103a765fc35b3f210b95223846b36ef62a4e53e34e2925270c2c7906b92c9f718eb2103c327511374246759ec8d0b89fa6c6b23b33e11f92c5bc155409d86de0c79180121038cae7406af1f12f4786d820a1466eec7bc5785a1b5e4a387eca6d797753ef6db2103252bfb9dcaab0cd00353f2ac328954d791270203d66c2be8b430f115f451b8a12103e79412d42372c55dd336f2eb6eb639ef9d74a22041ba79382c74da2338fe58ad21035049459a4ebc00e876a9eef02e72a3e70202d3d1f591fc0dd542f93f642021f82102016f682920d9723c61b27f562eb530c926c00106004798b6471e8c52c60ee02057ae12123122313123123ac1231231231231313123131231231231313212313213123123552103a765fc35b3f210b95223846b36ef62a4e53e34e2925270c2c7906b92c9f718eb2103c327511374246759ec8d0b89fa6c6b23b33e11f92c5bc155409d86de0c79180121038cae7406af1f12f4786d820a1466eec7bc5785a1b5e4a387eca6d797753ef6db2103252bfb9dcaab0cd00353f2ac328954d791270203d66c2be8b430f115f451b8a12103e79412d42372c55dd336f2eb6eb639ef9d74a22041ba79382c74da2338fe58ad21035049459a4ebc00e876a9eef02e72a3e70202d3d1f591fc0dd542f93f642021f82102016f682920d9723c61b27f562eb530c926c00106004798b6471e8c52c60ee02057ae12123122313123123ac1231231231231313123131231231231313212313213123123552103a765fc35b3f210b95223846b36ef62a4e53e34e2925270c2c7906b92c9f718eb2103c327511374246759ec8d0b89fa6c6b23b33e11f92c5bc155409d86de0c79180121038cae7406af1f12f4786d820a1466eec7bc5785a1b5e4a387eca6d797753ef6db2103252bfb9dcaab0cd00353f2ac328954d791270203d66c2be8b430f115f451b8a12103e79412d42372c55dd336f2eb6eb639ef9d74a22041ba79382c74da2338fe58ad21035049459a4ebc00e876a9eef02e72a3e70202d3d1f591fc0dd542f93f642021f82102016f682920d9723c61b27f562eb530c926c00106004798b6471e8c52c60ee02057ae12123122313123123ac1231231231231313123131231231231313212313213123123");
+        assert_eq!(Address::p2sh(&script, Testnet), Err(Error::ExcessiveScriptSize));
     }
 
     #[test]
