@@ -58,6 +58,8 @@ pub const SCRIPT_ADDRESS_PREFIX_MAIN: u8 = 5; // 0x05
 pub const PUBKEY_ADDRESS_PREFIX_TEST: u8 = 111; // 0x6f
 /// Test (tesnet, signet, regtest) script address prefix.
 pub const SCRIPT_ADDRESS_PREFIX_TEST: u8 = 196; // 0xc4
+/// The maximum allowed script size.
+pub const MAX_SCRIPT_ELEMENT_SIZE: usize = 520;
 
 
 /// In Bitcoind this is insanely described as ~((u256)0 >> 32)
