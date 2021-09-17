@@ -42,6 +42,8 @@ use policy::DUST_RELAY_TX_FEE;
 
 use util::ecdsa::PublicKey;
 use util::address::WitnessVersion;
+use blockdata::script::Instruction::{PushBytes, Op};
+use blockdata::opcodes::{all, All};
 
 #[derive(Clone, Default, PartialOrd, Ord, PartialEq, Eq, Hash)]
 /// A Bitcoin script
@@ -410,6 +412,94 @@ impl Script {
         !self.0.is_empty() && (opcodes::All::from(self.0[0]).classify() == opcodes::Class::ReturnOp ||
                                opcodes::All::from(self.0[0]).classify() == opcodes::Class::IllegalOp)
     }
+
+    /// Check if this is a MultiSig output
+    pub fn is_multisig(&self) -> bool {
+        let mut chunks: Vec<Instruction> = Vec::new();
+        for i in self.instructions() {
+            if let Ok(i) = i {
+                chunks.push(i);
+            } else {
+                return false;
+            }
+        }
+        let chunks = chunks;
+        if chunks.len() < 4 {
+            return false;
+        }
+        let last_chunk = chunks.get(chunks.len() - 1).unwrap();
+        // Must end in OP_CHECKMULTISIG[VERIFY].
+        match last_chunk {
+            PushBytes(_) => {
+                return false;
+            }
+            Op(op) => {
+                if !(op.eq(&all::OP_CHECKMULTISIG) || op.eq(&all::OP_CHECKMULTISIGVERIFY)) {
+                    return false;
+                }
+            }
+        }
+        let second_last_chunk = chunks.get(chunks.len() - 2).unwrap();
+        // Second to last chunk must be an OP_N opcode and there should be that many data chunks (keys).
+        match second_last_chunk {
+            PushBytes(_) => {
+                return false;
+            }
+            Op(op) => {
+                if !(op.eq(&all::OP_PUSHNUM_NEG1)
+                    || op.eq(&all::OP_PUSHBYTES_0)
+                    || (op.ge(&all::OP_PUSHNUM_1) && all::OP_PUSHNUM_16.ge(op)))
+                {
+                    return false;
+                } else {
+                    let num_keys = decode_from_op_n(op);
+                    if num_keys < 1 || (num_keys + 3) as usize != chunks.len() {
+                        return false;
+                    }
+                }
+            }
+        }
+        // the rest must be data
+        for i in 1..(chunks.len() - 2) {
+            match chunks.get(i).unwrap() {
+                PushBytes(_) => {}
+                Op(_) => {
+                    return false;
+                }
+            }
+        }
+        let first_chunk = chunks.get(0).unwrap();
+        // First chunk must be an OP_N opcode too.
+        match first_chunk {
+            PushBytes(_) => {
+                return false;
+            }
+            Op(op) => {
+                if !(op.eq(&all::OP_PUSHNUM_NEG1)
+                    || op.eq(&all::OP_PUSHBYTES_0)
+                    || (op.ge(&all::OP_PUSHNUM_1) && all::OP_PUSHNUM_16.ge(op)))
+                {
+                    return false;
+                } else {
+                    if decode_from_op_n(op) < 1 {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    fn decode_from_op_n(op: &All) -> i32 {
+        if op.eq(&all::OP_PUSHBYTES_0) {
+            0
+        } else if op.eq(&all::OP_PUSHNUM_NEG1) {
+            -1
+        } else {
+            op.into_u8() as i32 + 1 - all::OP_PUSHNUM_1.into_u8() as i32
+        }
+    }
+
 
     /// Gets the minimum value an output with this script should have in order to be
     /// broadcastable on today's bitcoin network.
