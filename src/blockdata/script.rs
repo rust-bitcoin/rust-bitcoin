@@ -527,14 +527,17 @@ impl Script {
             // Write any pushdata
             if data_len > 0 {
                 f.write_str(" ")?;
-                if index + data_len <= script.len() {
-                    for ch in &script[index..index + data_len] {
+                match index.checked_add(data_len) {
+                    Some(end) if end <= script.len() => {
+                        for ch in &script[index..end] {
                             write!(f, "{:02x}", ch)?;
-                    }
-                    index += data_len;
-                } else {
-                    f.write_str("<push past end>")?;
-                    break;
+                        }
+                        index = end;
+                    },
+                    _ => {
+                        f.write_str("<push past end>")?;
+                        break;
+                    },
                 }
             }
         }
