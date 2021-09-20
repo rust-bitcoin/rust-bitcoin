@@ -154,6 +154,22 @@ impl fmt::Display for Error {
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl ::std::error::Error for Error {}
 
+// Our internal error proves that we only return these two cases from `read_uint_iter`.
+// Since it's private we don't bother with trait impls besides From.
+enum UintError {
+    EarlyEndOfScript,
+    NumericOverflow,
+}
+
+impl From<UintError> for Error {
+    fn from(error: UintError) -> Self {
+        match error {
+            UintError::EarlyEndOfScript => Error::EarlyEndOfScript,
+            UintError::NumericOverflow => Error::NumericOverflow,
+        }
+    }
+}
+
 #[cfg(feature="bitcoinconsensus")]
 #[doc(hidden)]
 impl From<bitcoinconsensus::Error> for Error {
@@ -227,13 +243,38 @@ pub fn read_scriptbool(v: &[u8]) -> bool {
 }
 
 /// Read a script-encoded unsigned integer
+///
+/// ## Errors
+///
+/// This function returns an error in these cases:
+///
+/// * `data` is shorter than `size` => `EarlyEndOfScript`
+/// * `size` is greater than `u16::max_value / 8` (8191) => `NumericOverflow`
+/// * The number being read overflows `usize` => `NumericOverflow`
+///
+/// Note that this does **not** return an error for `size` between `core::size_of::<usize>()`
+/// and `u16::max_value / 8` if there's no overflow.
 pub fn read_uint(data: &[u8], size: usize) -> Result<usize, Error> {
+    read_uint_iter(&mut data.iter(), size).map_err(Into::into)
+}
+
+// We internally use implementation based on iterator so that it automatically advances as needed
+// Errors are same as above, just different type.
+fn read_uint_iter(data: &mut ::core::slice::Iter<'_, u8>, size: usize) -> Result<usize, UintError> {
     if data.len() < size {
-        Err(Error::EarlyEndOfScript)
+        Err(UintError::EarlyEndOfScript)
+    } else if size > usize::from(u16::max_value() / 8) {
+        // Casting to u32 would overflow
+        Err(UintError::NumericOverflow)
     } else {
         let mut ret = 0;
-        for (i, item) in data.iter().take(size).enumerate() {
-            ret += (*item as usize) << (i * 8);
+        for (i, item) in data.take(size).enumerate() {
+            ret = usize::from(*item)
+                // Casting is safe because we checked above to not repeat the same check in a loop
+                .checked_shl((i * 8) as u32)
+                .ok_or(UintError::NumericOverflow)?
+                .checked_add(ret)
+                .ok_or(UintError::NumericOverflow)?;
         }
         Ok(ret)
     }
@@ -477,50 +518,62 @@ impl Script {
 
     /// Write the assembly decoding of the script bytes to the formatter.
     pub fn bytes_to_asm_fmt(script: &[u8], f: &mut dyn fmt::Write) -> fmt::Result {
-        let mut index = 0;
-        while index < script.len() {
-            let opcode = opcodes::All::from(script[index]);
-            index += 1;
+        // This has to be a macro because it needs to break the loop
+        macro_rules! read_push_data_len {
+            ($iter:expr, $len:expr, $formatter:expr) => {
+                match read_uint_iter($iter, $len) {
+                    Ok(n) => {
+                        n
+                    },
+                    Err(UintError::EarlyEndOfScript) => {
+                        $formatter.write_str("<unexpected end>")?;
+                        break;
+                    }
+                    // We got the data in a slice which implies it being shorter than `usize::max_value()`
+                    // So if we got overflow, we can confidently say the number is higher than length of
+                    // the slice even though we don't know the exact number. This implies attempt to push
+                    // past end.
+                    Err(UintError::NumericOverflow) => {
+                        $formatter.write_str("<push past end>")?;
+                        break;
+                    }
+                }
+            }
+        }
+
+        let mut iter = script.iter();
+        // Was at least one opcode emitted?
+        let mut at_least_one = false;
+        // `iter` needs to be borrowed in `read_push_data_len`, so we have to use `while let` instead
+        // of `for`.
+        while let Some(byte) = iter.next() {
+            let opcode = opcodes::All::from(*byte);
 
             let data_len = if let opcodes::Class::PushBytes(n) = opcode.classify(opcodes::ClassifyContext::Legacy) {
                 n as usize
             } else {
                 match opcode {
                     opcodes::all::OP_PUSHDATA1 => {
-                        if script.len() < index + 1 {
-                            f.write_str("<unexpected end>")?;
-                            break;
-                        }
-                        match read_uint(&script[index..], 1) {
-                            Ok(n) => { index += 1; n as usize }
-                            Err(_) => { f.write_str("<bad length>")?; break; }
-                        }
+                        // side effects: may write and break from the loop
+                        read_push_data_len!(&mut iter, 1, f)
                     }
                     opcodes::all::OP_PUSHDATA2 => {
-                        if script.len() < index + 2 {
-                            f.write_str("<unexpected end>")?;
-                            break;
-                        }
-                        match read_uint(&script[index..], 2) {
-                            Ok(n) => { index += 2; n as usize }
-                            Err(_) => { f.write_str("<bad length>")?; break; }
-                        }
+                        // side effects: may write and break from the loop
+                        read_push_data_len!(&mut iter, 2, f)
                     }
                     opcodes::all::OP_PUSHDATA4 => {
-                        if script.len() < index + 4 {
-                            f.write_str("<unexpected end>")?;
-                            break;
-                        }
-                        match read_uint(&script[index..], 4) {
-                            Ok(n) => { index += 4; n as usize }
-                            Err(_) => { f.write_str("<bad length>")?; break; }
-                        }
+                        // side effects: may write and break from the loop
+                        read_push_data_len!(&mut iter, 4, f)
                     }
                     _ => 0
                 }
             };
 
-            if index > 1 { f.write_str(" ")?; }
+            if at_least_one {
+                f.write_str(" ")?;
+            } else {
+                at_least_one = true;
+            }
             // Write the opcode
             if opcode == opcodes::all::OP_PUSHBYTES_0 {
                 f.write_str("OP_0")?;
@@ -530,17 +583,13 @@ impl Script {
             // Write any pushdata
             if data_len > 0 {
                 f.write_str(" ")?;
-                match index.checked_add(data_len) {
-                    Some(end) if end <= script.len() => {
-                        for ch in &script[index..end] {
-                            write!(f, "{:02x}", ch)?;
-                        }
-                        index = end;
-                    },
-                    _ => {
-                        f.write_str("<push past end>")?;
-                        break;
-                    },
+                if data_len <= iter.len() {
+                    for ch in iter.by_ref().take(data_len) {
+                        write!(f, "{:02x}", ch)?;
+                    }
+                } else {
+                    f.write_str("<push past end>")?;
+                    break;
                 }
             }
         }
@@ -1167,13 +1216,13 @@ mod test {
         assert_eq!(hex_script!("4c").asm(),
                    "<unexpected end>");
         assert_eq!(hex_script!("4c0201").asm(),
-                   " OP_PUSHDATA1 <push past end>");
+                   "OP_PUSHDATA1 <push past end>");
         assert_eq!(hex_script!("4d").asm(),
                    "<unexpected end>");
         assert_eq!(hex_script!("4dffff01").asm(),
-                   " OP_PUSHDATA2 <push past end>");
+                   "OP_PUSHDATA2 <push past end>");
         assert_eq!(hex_script!("4effffffff01").asm(),
-                   " OP_PUSHDATA4 <push past end>");
+                   "OP_PUSHDATA4 <push past end>");
     }
 
     #[test]
