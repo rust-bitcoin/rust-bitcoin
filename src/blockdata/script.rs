@@ -527,14 +527,17 @@ impl Script {
             // Write any pushdata
             if data_len > 0 {
                 f.write_str(" ")?;
-                if index + data_len <= script.len() {
-                    for ch in &script[index..index + data_len] {
+                match index.checked_add(data_len) {
+                    Some(end) if end <= script.len() => {
+                        for ch in &script[index..end] {
                             write!(f, "{:02x}", ch)?;
-                    }
-                    index += data_len;
-                } else {
-                    f.write_str("<push past end>")?;
-                    break;
+                        }
+                        index = end;
+                    },
+                    _ => {
+                        f.write_str("<push past end>")?;
+                        break;
+                    },
                 }
             }
         }
@@ -1129,6 +1132,22 @@ mod test {
         // Elements Alpha peg-out transaction with some signatures removed for brevity. Mainly to test PUSHDATA1
         assert_eq!(hex_script!("0047304402202457e78cc1b7f50d0543863c27de75d07982bde8359b9e3316adec0aec165f2f02200203fd331c4e4a4a02f48cf1c291e2c0d6b2f7078a784b5b3649fca41f8794d401004cf1552103244e602b46755f24327142a0517288cebd159eccb6ccf41ea6edf1f601e9af952103bbbacc302d19d29dbfa62d23f37944ae19853cf260c745c2bea739c95328fcb721039227e83246bd51140fe93538b2301c9048be82ef2fb3c7fc5d78426ed6f609ad210229bf310c379b90033e2ecb07f77ecf9b8d59acb623ab7be25a0caed539e2e6472103703e2ed676936f10b3ce9149fa2d4a32060fb86fa9a70a4efe3f21d7ab90611921031e9b7c6022400a6bb0424bbcde14cff6c016b91ee3803926f3440abf5c146d05210334667f975f55a8455d515a2ef1c94fdfa3315f12319a14515d2a13d82831f62f57ae").asm(),
                    "OP_0 OP_PUSHBYTES_71 304402202457e78cc1b7f50d0543863c27de75d07982bde8359b9e3316adec0aec165f2f02200203fd331c4e4a4a02f48cf1c291e2c0d6b2f7078a784b5b3649fca41f8794d401 OP_0 OP_PUSHDATA1 552103244e602b46755f24327142a0517288cebd159eccb6ccf41ea6edf1f601e9af952103bbbacc302d19d29dbfa62d23f37944ae19853cf260c745c2bea739c95328fcb721039227e83246bd51140fe93538b2301c9048be82ef2fb3c7fc5d78426ed6f609ad210229bf310c379b90033e2ecb07f77ecf9b8d59acb623ab7be25a0caed539e2e6472103703e2ed676936f10b3ce9149fa2d4a32060fb86fa9a70a4efe3f21d7ab90611921031e9b7c6022400a6bb0424bbcde14cff6c016b91ee3803926f3440abf5c146d05210334667f975f55a8455d515a2ef1c94fdfa3315f12319a14515d2a13d82831f62f57ae");
+        // Various weird scripts found in transaction 6d7ed9914625c73c0288694a6819196a27ef6c08f98e1270d975a8e65a3dc09a
+        // which triggerred overflow bugs on 32-bit machines in script formatting in the past.
+        assert_eq!(hex_script!("01").asm(),
+                   "OP_PUSHBYTES_1 <push past end>");
+        assert_eq!(hex_script!("0201").asm(),
+                   "OP_PUSHBYTES_2 <push past end>");
+        assert_eq!(hex_script!("4c").asm(),
+                   "<unexpected end>");
+        assert_eq!(hex_script!("4c0201").asm(),
+                   " OP_PUSHDATA1 <push past end>");
+        assert_eq!(hex_script!("4d").asm(),
+                   "<unexpected end>");
+        assert_eq!(hex_script!("4dffff01").asm(),
+                   " OP_PUSHDATA2 <push past end>");
+        assert_eq!(hex_script!("4effffffff01").asm(),
+                   " OP_PUSHDATA4 <push past end>");
     }
 
     #[test]

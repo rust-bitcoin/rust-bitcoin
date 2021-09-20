@@ -1,4 +1,8 @@
-# 0.27 - 2020-07-21
+# 0.27.1 - 2020-09-20
+
+- [Fix overflow bug in `Script::bytes_to_asm_fmt`](https://github.com/rust-bitcoin/rust-bitcoin/pull/658)
+
+# 0.27.0 - 2020-07-21
 
 - [Bigendian fixes and CI test](https://github.com/rust-bitcoin/rust-bitcoin/pull/627)
 - [no_std support, keeping MSRV](https://github.com/rust-bitcoin/rust-bitcoin/pull/603)
