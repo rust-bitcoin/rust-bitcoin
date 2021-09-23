@@ -1,0 +1,36 @@
+name: Fuzz
+
+on: [push, pull_request]
+
+jobs:
+
+  fuzz:
+    runs-on: ubuntu-20.04
+    env:
+      HFUZZ_BUILD_ARGS: "--features honggfuzz_fuzz"
+    strategy:
+      fail-fast: false
+      matrix:
+        fuzz_target: [deser_net_msg, deserialize_address, deserialize_amount, deserialize_block, deserialize_psbt, deserialize_script, deserialize_transaction, outpoint_string, uint128_fuzz]
+    steps:
+      - name: Install test dependencies
+        run: sudo apt-get update -y && sudo apt-get install -y binutils-dev libunwind8-dev libcurl4-openssl-dev libelf-dev libdw-dev cmake gcc libiberty-dev
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        id: cache-fuzz
+        with:
+          path: |
+            ~/.cargo/bin
+            fuzz/target
+            target
+          key: cache-${{ matrix.target }}-${{ hashFiles('**/Cargo.toml','**/Cargo.lock') }}
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          override: true
+          profile: minimal
+      - run: cargo install honggfuzz
+        if: steps.cache-fuzz.outputs.cache-hit != 'true'
+      - run: echo "HFUZZ_RUN_ARGS=\"--run_time 30 --exit_upon_crash -v -f hfuzz_input/${{ matrix.fuzz_target }}/input\"" >> $GITHUB_ENV
+      - name: fuzz
+        run: cd fuzz && cargo +nightly hfuzz run ${{ matrix.fuzz_target }}
