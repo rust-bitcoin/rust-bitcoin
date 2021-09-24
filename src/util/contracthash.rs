@@ -133,7 +133,7 @@ impl Template {
     pub fn first_push_as_number(&self) -> Option<usize> {
         if !self.0.is_empty() {
             if let TemplateElement::Op(op) = self.0[0] {
-                if let opcodes::Class::PushNum(n) = op.classify() {
+                if let opcodes::Class::PushNum(n) = op.classify(opcodes::ClassifyContext::Legacy) {
                     if n >= 0 {
                         return Some(n as usize);
                     }
@@ -249,7 +249,7 @@ pub fn untemplate(script: &script::Script) -> Result<(Template, Vec<PublicKey>),
                 }
             }
             script::Instruction::Op(op) => {
-                match op.classify() {
+                match op.classify(opcodes::ClassifyContext::Legacy) {
                     // CHECKSIG should only come after a list of keys
                     opcodes::Class::Ordinary(opcodes::Ordinary::OP_CHECKSIG) |
                     opcodes::Class::Ordinary(opcodes::Ordinary::OP_CHECKSIGVERIFY) => {
