@@ -40,6 +40,7 @@ use core::num::ParseIntError;
 use core::str::FromStr;
 #[cfg(feature = "std")] use std::error;
 
+use secp256k1::schnorrsig;
 use bech32;
 use hashes::Hash;
 use hash_types::{PubkeyHash, WPubkeyHash, ScriptHash, WScriptHash};
@@ -59,6 +60,13 @@ pub enum Error {
     Bech32(bech32::Error),
     /// The bech32 payload was empty
     EmptyBech32Payload,
+    /// The wrong checksum algorithm was used. See BIP-0350.
+    InvalidBech32Variant {
+        /// Bech32 variant that is required by the used Witness version
+        expected: bech32::Variant,
+        /// The actual Bech32 variant encoded in the address representation
+        found: bech32::Variant
+    },
     /// Script version must be 0 to 16 inclusive
     InvalidWitnessVersion(u8),
     /// Unable to parse witness version from string
@@ -78,11 +86,12 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Error::Base58(ref e) => write!(f, "base58: {}", e),
-            Error::Bech32(ref e) => write!(f, "bech32: {}", e),
+            Error::Base58(_) => write!(f, "base58 address encoding error"),
+            Error::Bech32(_) => write!(f, "bech32 address encoding error"),
             Error::EmptyBech32Payload => write!(f, "the bech32 payload was empty"),
+            Error::InvalidBech32Variant { expected, found } => write!(f, "invalid bech32 checksum variant found {:?} when {:?} was expected", found, expected),
             Error::InvalidWitnessVersion(v) => write!(f, "invalid witness script version: {}", v),
-            Error::UnparsableWitnessVersion(ref e) => write!(f, "Incorrect format of a witness version byte: {}", e),
+            Error::UnparsableWitnessVersion(_) => write!(f, "incorrect format of a witness version byte"),
             Error::MalformedWitnessVersion => f.write_str("bitcoin script opcode does not match any known witness version, the script is malformed"),
             Error::InvalidWitnessProgramLength(l) => write!(f,
                 "the witness program must be between 2 and 40 bytes in length: length={}", l,
@@ -137,6 +146,8 @@ pub enum AddressType {
     P2wpkh,
     /// pay-to-witness-script-hash
     P2wsh,
+    /// pay-to-taproot
+    P2tr,
 }
 
 impl fmt::Display for AddressType {
@@ -146,6 +157,7 @@ impl fmt::Display for AddressType {
             AddressType::P2sh => "p2sh",
             AddressType::P2wpkh => "p2wpkh",
             AddressType::P2wsh => "p2wsh",
+            AddressType::P2tr => "p2tr",
         })
     }
 }
@@ -158,6 +170,7 @@ impl FromStr for AddressType {
             "p2sh" => Ok(AddressType::P2sh),
             "p2wpkh" => Ok(AddressType::P2wpkh),
             "p2wsh" => Ok(AddressType::P2wsh),
+            "p2tr" => Ok(AddressType::P2tr),
             _ => Err(()),
         }
     }
@@ -313,6 +326,14 @@ impl WitnessVersion {
     /// into a byte since the conversion requires context (bitcoin script or just a version number)
     pub fn into_num(self) -> u8 {
         self as u8
+    }
+
+    /// Determine the checksum variant. See BIP-0350 for specification.
+    pub fn bech32_variant(&self) -> bech32::Variant {
+        match self {
+            WitnessVersion::V0 => bech32::Variant::Bech32,
+            _ => bech32::Variant::Bech32m,
+        }
     }
 }
 
@@ -490,6 +511,17 @@ impl Address {
         }
     }
 
+    /// Create a pay to taproot address
+    pub fn p2tr(taptweaked_key: schnorrsig::PublicKey, network: Network) -> Address {
+        Address {
+            network: network,
+            payload: Payload::WitnessProgram {
+                version: WitnessVersion::V1,
+                program: taptweaked_key.serialize().to_vec()
+            }
+        }
+    }
+
     /// Get the address type of the address.
     /// None if unknown, non-standard or related to the future witness version.
     pub fn address_type(&self) -> Option<AddressType> {
@@ -507,6 +539,7 @@ impl Address {
                         32 => Some(AddressType::P2wsh),
                         _ => None,
                     },
+                    WitnessVersion::V1 if prog.len() == 32 => Some(AddressType::P2tr),
                     _ => None,
                 }
             }
@@ -617,7 +650,6 @@ impl fmt::Display for Address {
                     Network::Testnet | Network::Signet => "tb",
                     Network::Regtest => "bcrt",
                 };
-                let bech_ver = if version.into_num() > 0 {  bech32::Variant::Bech32m } else { bech32::Variant::Bech32 };
                 let mut upper_writer;
                 let writer = if fmt.alternate() {
                     upper_writer = UpperWriter(fmt);
@@ -625,7 +657,7 @@ impl fmt::Display for Address {
                 } else {
                     fmt as &mut dyn fmt::Write
                 };
-                let mut bech32_writer = bech32::Bech32Writer::new(hrp, bech_ver, writer)?;
+                let mut bech32_writer = bech32::Bech32Writer::new(hrp, version.bech32_variant(), writer)?;
                 bech32::WriteBase32::write_u5(&mut bech32_writer, version.into())?;
                 bech32::ToBase32::write_base32(&prog, &mut bech32_writer)
             }
@@ -688,10 +720,10 @@ impl FromStr for Address {
                 return Err(Error::InvalidSegwitV0ProgramLength(program.len()));
             }
 
-            // Bech32 encoding check
-            if (version.into_num() > 0 && variant != bech32::Variant::Bech32m) ||
-               (version.into_num() == 0 && variant != bech32::Variant::Bech32) {
-                return Err(Error::InvalidWitnessVersion(version.into_num()))
+            // Encoding check
+            let expected = version.bech32_variant();
+            if expected != variant {
+                return Err(Error::InvalidBech32Variant { expected, found: variant });
             }
 
             return Ok(Address {
