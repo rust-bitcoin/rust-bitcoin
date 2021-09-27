@@ -15,6 +15,9 @@
 //!
 
 use hashes::{sha256, sha256t, Hash};
+use util::schnorr;
+use Script;
+use prelude::*;
 
 /// The SHA-256 midstate value for the TapLeaf hash.
 const MIDSTATE_TAPLEAF: [u8; 32] = [
@@ -81,6 +84,29 @@ sha256t_hash_newtype!(TapTweakHash, TapTweakTag, MIDSTATE_TAPTWEAK, 64,
 sha256t_hash_newtype!(TapSighashHash, TapSighashTag, MIDSTATE_TAPSIGHASH, 64,
     doc="Taproot-tagged hash for the taproot signature hash", true
 );
+
+/// A leaf of tapscript
+pub enum TapLeaf {
+    /// Known script
+    Script(Script),
+    /// Uknown script hidden behind tapleaf hash
+    Hash(TapLeafHash),
+}
+
+/// Tapscript source, which may be only partially known
+pub struct TapScript(Vec<TapLeaf>);
+
+/// Internal taproot public key with tapscript data
+pub struct ScriptedPubkey {
+    /// Internal taproot key (x-coord-only public key befor tweaking with tagged hash)
+    pub internal_key: schnorr::PublicKey,
+    /// Tapscript source (see [`TapScript`]) used to generate the internal pubkey tweak
+    pub tap_script: TapScript,
+}
+
+/// X-only-coord public key with a proper BIP-342 tweak applied (either key self-tweak or tweak with
+/// a merkle root of tapscript).
+pub struct TweakedPubkey(schnorr::PublicKey);
 
 #[cfg(test)]
 mod test {
