@@ -27,7 +27,7 @@ fn do_test(data: &[u8]) {
         } }
     }
 
-    if data.len() != 16*2 + 1 { return; }
+    if data.len() != 16*2 { return; }
     let (a_native, a) = read_ints!(0);
 
     // Checks using only a:
@@ -39,6 +39,10 @@ fn do_test(data: &[u8]) {
     assert_eq!(a_native as u32, a.low_u32());
     assert_eq!(128 - a_native.leading_zeros() as usize, a.bits());
     assert_eq!(a_native as u64, bitcoin::util::uint::Uint128::from_u64(a_native as u64).unwrap().low_u64());
+
+    let mut a_inc = a.clone();
+    a_inc.increment();
+    check_eq!(a_native.wrapping_add(1), a_inc);
 
     // Checks with two numbers:
     let (b_native, b) = read_ints!(16);
