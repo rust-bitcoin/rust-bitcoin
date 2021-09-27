@@ -15,6 +15,8 @@
 //!
 
 use hashes::{sha256, sha256t, Hash};
+use secp256k1::{Secp256k1, Signing, Verification};
+use util::schnorr;
 
 /// The SHA-256 midstate value for the TapLeaf hash.
 const MIDSTATE_TAPLEAF: [u8; 32] = [
@@ -81,6 +83,31 @@ sha256t_hash_newtype!(TapTweakHash, TapTweakTag, MIDSTATE_TAPTWEAK, 64,
 sha256t_hash_newtype!(TapSighashHash, TapSighashTag, MIDSTATE_TAPSIGHASH, 64,
     doc="Taproot-tagged hash for the taproot signature hash", true
 );
+
+impl From<schnorr::PublicKey> for TapTweakHash {
+    #[inline]
+    fn from(pubkey: schnorr::PublicKey) -> Self {
+        TapTweakHash::hash(&pubkey.serialize())
+    }
+}
+
+impl TapTweakHash {
+    /// Generates [`TapTweakHash`] from a given BIP-340 key pair ([`schnorr::KeyPair`])
+    #[inline]
+    pub fn with<C: Signing>(secp: &Secp256k1<C>, pair: &schnorr::KeyPair) -> Self {
+        let pubkey = schnorr::PublicKey::from_keypair(&secp, pair);
+        TapTweakHash::hash(&pubkey.serialize())
+    }
+}
+
+/// Trait for enabling tweaking methods to BIP-340 keys according to the Taroot rules
+pub trait TaprootKey {
+    /// Self-tweaks the key with its own tagged hash ([`TapTweakHash`])
+    fn self_tweak<C: Verification + Signing>(&mut self, secp: &Secp256k1<C>);
+
+    /// Tweaks the key with a tagged hash of tapscript merkle root ([`TapBranchHash`])
+    fn script_tweak<C: Verification>(&mut self, secp: &Secp256k1<C>, merkle_root: TapBranchHash);
+}
 
 #[cfg(test)]
 mod test {

@@ -42,6 +42,9 @@ use policy::DUST_RELAY_TX_FEE;
 
 use util::ecdsa::PublicKey;
 use util::address::WitnessVersion;
+use util::schnorr;
+use util::taproot::TaprootKey;
+use secp256k1::{Secp256k1, Verification, Signing};
 
 #[derive(Clone, Default, PartialOrd, Ord, PartialEq, Eq, Hash)]
 /// A Bitcoin script
@@ -272,13 +275,20 @@ impl Script {
     }
 
     /// Generates P2WPKH-type of scriptPubkey
-    pub fn new_v0_wpkh(pubkey_hash: &WPubkeyHash) -> Script {
-        Script::new_witness_program(WitnessVersion::V0, &pubkey_hash.to_vec())
+    pub fn new_v0_p2wpkh(pubkey_hash: &WPubkeyHash) -> Script {
+        Script::new_witness_program(WitnessVersion::V0, &pubkey_hash[..])
     }
 
     /// Generates P2WSH-type of scriptPubkey with a given hash of the redeem script
-    pub fn new_v0_wsh(script_hash: &WScriptHash) -> Script {
-        Script::new_witness_program(WitnessVersion::V0, &script_hash.to_vec())
+    pub fn new_v0_p2wsh(script_hash: &WScriptHash) -> Script {
+        Script::new_witness_program(WitnessVersion::V0, &script_hash[..])
+    }
+
+    /// Generates P2TR-type of scriptPubkey from a provided public key value,
+    /// tweaking the key with its own TapTweak-tagged hash according to BIP-341
+    pub fn new_v1_p2tr<C: Verification + Signing>(secp: &Secp256k1<C>, mut internal_key: schnorr::PublicKey) -> Script {
+        internal_key.self_tweak(secp);
+        Script::new_witness_program(WitnessVersion::V1, &internal_key.serialize())
     }
 
     /// Generates P2WSH-type of scriptPubkey with a given hash of the redeem script
@@ -330,7 +340,14 @@ impl Script {
     /// Compute the P2WSH output corresponding to this witnessScript (aka the "witness redeem
     /// script")
     pub fn to_v0_p2wsh(&self) -> Script {
-        Script::new_v0_wsh(&self.wscript_hash())
+        Script::new_v0_p2wsh(&self.wscript_hash())
+    }
+
+    // TODO: Implement `to_p2tr` (requires changes to the script op codes for tapscript)
+
+    #[inline]
+    fn witness_version(&self) -> Option<WitnessVersion> {
+        WitnessVersion::from_opcode(self.0[0].into()).ok()
     }
 
     /// Checks whether a script pubkey is a p2sh output
@@ -388,7 +405,7 @@ impl Script {
     #[inline]
     pub fn is_v0_p2wsh(&self) -> bool {
         self.0.len() == 34 &&
-        self.0[0] == opcodes::all::OP_PUSHBYTES_0.into_u8() &&
+            self.witness_version() == Some(WitnessVersion::V0) &&
         self.0[1] == opcodes::all::OP_PUSHBYTES_32.into_u8()
     }
 
@@ -396,8 +413,16 @@ impl Script {
     #[inline]
     pub fn is_v0_p2wpkh(&self) -> bool {
         self.0.len() == 22 &&
-            self.0[0] == opcodes::all::OP_PUSHBYTES_0.into_u8() &&
+            self.witness_version() == Some(WitnessVersion::V0) &&
             self.0[1] == opcodes::all::OP_PUSHBYTES_20.into_u8()
+    }
+
+    /// Checks whether a script pubkey is a P2TR output
+    #[inline]
+    pub fn is_v1_p2tr(&self) -> bool {
+        self.0.len() == 34 &&
+            self.witness_version() == Some(WitnessVersion::V1) &&
+            self.0[1] == opcodes::all::OP_PUSHBYTES_32.into_u8()
     }
 
     /// Check if this is an OP_RETURN output
@@ -992,7 +1017,7 @@ mod test {
         assert!(Script::new_p2pkh(&pubkey_hash).is_p2pkh());
 
         let wpubkey_hash = WPubkeyHash::hash(&pubkey.serialize());
-        assert!(Script::new_v0_wpkh(&wpubkey_hash).is_v0_p2wpkh());
+        assert!(Script::new_v0_p2wpkh(&wpubkey_hash).is_v0_p2wpkh());
 
         let script = Builder::new().push_opcode(opcodes::all::OP_NUMEQUAL)
                                    .push_verify()
@@ -1003,7 +1028,7 @@ mod test {
         assert_eq!(script.to_p2sh(), p2sh);
 
         let wscript_hash = WScriptHash::hash(&script.serialize());
-        let p2wsh = Script::new_v0_wsh(&wscript_hash);
+        let p2wsh = Script::new_v0_p2wsh(&wscript_hash);
         assert!(p2wsh.is_v0_p2wsh());
         assert_eq!(script.to_v0_p2wsh(), p2wsh);
 

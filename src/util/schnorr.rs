@@ -17,3 +17,36 @@
 //!
 
 pub use secp256k1::schnorrsig::{PublicKey, KeyPair};
+
+use util::taproot::{TaprootKey, TapTweakHash, TapBranchHash};
+use secp256k1::{Verification, Signing, Secp256k1};
+
+impl TaprootKey for PublicKey {
+    #[inline]
+    fn self_tweak<C: Verification + Signing>(&mut self, secp: &Secp256k1<C>) {
+        let hash = &TapTweakHash::from(*self);
+        self.tweak_add_assign(secp, hash)
+            .expect("negligible probability for taproot public key self-tweaked operation");
+    }
+
+    #[inline]
+    fn script_tweak<C: Verification>(&mut self, secp: &Secp256k1<C>, merkle_root: TapBranchHash) {
+        self.tweak_add_assign(secp, &merkle_root)
+            .expect("negligible probability for taproot public key tapscript tweak operation");
+    }
+}
+
+impl TaprootKey for KeyPair {
+    #[inline]
+    fn self_tweak<C: Verification + Signing>(&mut self, secp: &Secp256k1<C>) {
+        let hash = TapTweakHash::with(secp, self);
+        self.tweak_add_assign(secp, &hash)
+            .expect("negligible probability for taproot keypair self-tweaked operation");
+    }
+
+    #[inline]
+    fn script_tweak<C: Verification>(&mut self, secp: &Secp256k1<C>, merkle_root: TapBranchHash) {
+        self.tweak_add_assign(secp, &merkle_root)
+            .expect("negligible probability for taproot keypair tapscript tweak operation");
+    }
+}

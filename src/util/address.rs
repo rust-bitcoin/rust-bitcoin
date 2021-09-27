@@ -40,7 +40,7 @@ use core::num::ParseIntError;
 use core::str::FromStr;
 #[cfg(feature = "std")] use std::error;
 
-use secp256k1::schnorrsig;
+use secp256k1::{schnorrsig, Secp256k1, Verification, Signing};
 use bech32;
 use hashes::Hash;
 use hash_types::{PubkeyHash, WPubkeyHash, ScriptHash, WScriptHash};
@@ -50,6 +50,7 @@ use network::constants::Network;
 use util::base58;
 use util::ecdsa;
 use blockdata::script::Instruction;
+use util::taproot::{TaprootKey, TapBranchHash};
 
 /// Address error.
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -511,13 +512,59 @@ impl Address {
         }
     }
 
-    /// Create a pay to taproot address
-    pub fn p2tr(taptweaked_key: schnorrsig::PublicKey, network: Network) -> Address {
+
+    /// Create a pay to taproot address for a given internal key and merkle root of tascript,
+    /// performing required tweaks according to BIP-342.
+    ///
+    /// Taproot (BIP-342) requires the keys to be tweaked with either tapscript merkle root or
+    /// self-tweaked with its own tagged hash. This function constructs non-tapscript based P2TR
+    /// address from an original untweaked public key value ("internal key"), performing the
+    /// necessary tweak with the merkle root of a tapscript.
+    ///
+    /// For generating P2TR addresses based on single public key please use
+    /// [`Address::p2tr_internal_key`] and [`Address::p2tr_tweaked_key`] methods.
+    #[inline]
+    pub fn p2tr_script<C: Verification>(secp: &Secp256k1<C>, mut internal_key: schnorrsig::PublicKey, merkle_root: TapBranchHash, network: Network) -> Address {
+        internal_key.script_tweak(&secp, merkle_root);
+        Address::p2tr_tweaked_key(internal_key, network)
+    }
+
+    /// Create a pay to taproot address for a given single key, tweaking the key value with its own
+    /// tagged hash according to BIP-342.
+    ///
+    /// Taproot (BIP-342) requires the keys to be tweaked with either tapscript merkle root or
+    /// self-tweaked with its own tagged hash. This function constructs non-tapscript based P2TR
+    /// address from an original untweaked public key value ("internal key"), performing the
+    /// necessary self-tweak.
+    ///
+    /// For generating P2TR addresses based on an already tweaked public key please use
+    /// [`Address::p2tr_tweaked_key`] method.
+    ///
+    /// For generating P2TR addresses with tapscript please use [`Address::p2tr_script`] method.
+    #[inline]
+    pub fn p2tr_internal_key<C: Verification + Signing>(secp: &Secp256k1<C>, mut internal_key: schnorrsig::PublicKey, network: Network) -> Address {
+        internal_key.self_tweak(&secp);
+        Address::p2tr_tweaked_key(internal_key, network)
+    }
+
+    /// Create a pay to taproot address for a given single key, assuming that the key is already
+    /// tweaked with its own tagged hash according to BIP-342.
+    ///
+    /// Taproot (BIP-342) requires the keys to be tweaked with either tapscript merkle root or
+    /// self-tweaked with its own tagged hash. This function constructs non-tapscript based P2TR
+    /// address from a public key that was already tweaked with own tagged hash.
+    ///
+    /// For generating P2TR addresses using an untweaked (internal) public key please use
+    /// [`Address::p2tr_internal_key`] method.
+    ///
+    /// For generating P2TR addresses with tapscript please use [`Address::p2tr_script`] method.
+    #[inline]
+    pub fn p2tr_tweaked_key(tweaked_key: schnorrsig::PublicKey, network: Network) -> Address {
         Address {
             network: network,
             payload: Payload::WitnessProgram {
                 version: WitnessVersion::V1,
-                program: taptweaked_key.serialize().to_vec()
+                program: tweaked_key.serialize().to_vec()
             }
         }
     }
