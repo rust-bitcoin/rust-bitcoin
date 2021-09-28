@@ -442,7 +442,7 @@ impl Script {
     }
 
     /// Check if this is an OP_RETURN output
-    pub fn is_op_return (&self) -> bool {
+    pub fn is_op_return(&self) -> bool {
         !self.0.is_empty() && (opcodes::All::from(self.0[0]) == opcodes::all::OP_RETURN)
     }
 
@@ -500,7 +500,7 @@ impl Script {
     #[cfg(feature="bitcoinconsensus")]
     #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
     /// Shorthand for [Self::verify_with_flags] with flag [bitcoinconsensus::VERIFY_ALL]
-    pub fn verify (&self, index: usize, amount: ::Amount, spending: &[u8]) -> Result<(), Error> {
+    pub fn verify(&self, index: usize, amount: ::Amount, spending: &[u8]) -> Result<(), Error> {
         self.verify_with_flags(index, amount, spending, ::bitcoinconsensus::VERIFY_ALL)
     }
 

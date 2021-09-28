@@ -137,7 +137,107 @@ impl From<bech32::Error> for Error {
     }
 }
 
-/// The different types of addresses.
+/// Detailed address information returned by [`Address::address_info`]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+// #[non_exhaustive]
+pub enum AddressInfo {
+    /// Witness versions recognized by the current consensus
+    Known(AddressType),
+    /// Future witness versions (>1)
+    Future(WitnessVersion, /** witness program length */ usize),
+    /// Witness version is 0 and is known to consensus, but witness program has non-standard length
+    /// which is not supported by consensus rules and can't be spent.
+    NotSpendableWitnessV0(/** witness program length */ usize),
+    /// Witness version is 1 and is known to the consensus rules, but witness program has custom
+    /// length and reserved for the future use outside of Taproot
+    NonTaprootWitnessV1(/** witness program length */ usize),
+}
+
+impl From<AddressType> for AddressInfo {
+    #[inline]
+    fn from(address_type: AddressType) -> Self {
+        AddressInfo::Known(address_type)
+    }
+}
+
+
+impl AddressInfo {
+    /// Constructs pay-to-pubkey-hash variant
+    #[inline]
+    pub fn p2pkh() -> AddressInfo {
+        AddressInfo::Known(AddressType::P2pkh)
+    }
+
+    /// Constructs pay-to-script-hash variant
+    #[inline]
+    pub fn p2sh() -> AddressInfo {
+        AddressInfo::Known(AddressType::P2sh)
+    }
+
+    /// Constructs pay-to-witness-pubkey-hash variant
+    #[inline]
+    pub fn p2wpkh() -> AddressInfo {
+        AddressInfo::Known(AddressType::P2wpkh)
+    }
+
+    /// Constructs pay-to-witness-script-hash variant
+    #[inline]
+    pub fn p2wsh() -> AddressInfo {
+        AddressInfo::Known(AddressType::P2wsh)
+    }
+
+    /// Constructs pay-to-pubkey-hash variant
+    #[inline]
+    pub fn p2tr() -> AddressInfo {
+        AddressInfo::Known(AddressType::P2tr)
+    }
+
+    /// Returns known address type [`AddressType`], if any
+    #[inline]
+    pub fn address_type(self) -> Option<AddressType> {
+        match self {
+            AddressInfo::Known(address_type) => Some(address_type),
+            AddressInfo::Future(_, _) => None,
+            AddressInfo::NonTaprootWitnessV1(_) => None,
+            AddressInfo::NotSpendableWitnessV0(_) => None,
+        }
+    }
+
+    /// Detects if the address can be used for sending funds to.
+    ///
+    /// NB: This does include future addresses which can be spent by anybody without a proper
+    /// signature before some future soft fork.
+    ///
+    /// See also [`AddressInfo::is_valid_destination_address`]
+    #[inline]
+    pub fn is_valid_recipient_address(self) -> bool {
+        match self {
+            AddressInfo::Known(_) => true,
+            AddressInfo::Future(_, _) |
+            AddressInfo::NonTaprootWitnessV1(_) |
+            AddressInfo::NotSpendableWitnessV0(_) => false,
+        }
+    }
+
+
+    /// Detects if the address can be used for security receiving funds, i.e. it can be spent only
+    /// by satisfying certain (address-specific) public key and/or script requirements and this may
+    /// not be changed with any future soft-fork.
+    ///
+    /// See also [`AddressInfo::is_valid_recipient_address`]
+    #[inline]
+    pub fn is_valid_destination_address(self) -> bool {
+        match self {
+            AddressInfo::Known(_) |
+            AddressInfo::Future(_, _) |
+            AddressInfo::NonTaprootWitnessV1(_) => true,
+            AddressInfo::NotSpendableWitnessV0(_) => false,
+        }
+    }
+}
+
+/// The different types of addresses representable with string and currently supported by the
+/// current consensus rules to be spendable only with a valid signature
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum AddressType {
     /// pay-to-pubkey-hash
@@ -150,6 +250,14 @@ pub enum AddressType {
     P2wsh,
     /// pay-to-taproot
     P2tr,
+}
+
+impl AddressType {
+    /// Extracts known [`AddressType`] from [`AddressInfo`], if any
+    #[inline]
+    pub fn from_address_info(address_info: AddressInfo) -> Option<AddressType> {
+        address_info.address_type()
+    }
 }
 
 impl fmt::Display for AddressType {
@@ -545,28 +653,32 @@ impl Address {
         }
     }
 
-    /// Get the address type of the address.
-    /// None if unknown, non-standard or related to the future witness version.
-    pub fn address_type(&self) -> Option<AddressType> {
+    /// Extract address info from the address.
+    pub fn address_info(&self) -> AddressInfo {
         match self.payload {
-            Payload::PubkeyHash(_) => Some(AddressType::P2pkh),
-            Payload::ScriptHash(_) => Some(AddressType::P2sh),
+            Payload::PubkeyHash(_) => AddressInfo::p2pkh(),
+            Payload::ScriptHash(_) => AddressInfo::p2sh(),
             Payload::WitnessProgram {
                 version,
                 program: ref prog,
             } => {
                 // BIP-141 p2wpkh or p2wsh addresses.
-                match version {
-                    WitnessVersion::V0 => match prog.len() {
-                        20 => Some(AddressType::P2wpkh),
-                        32 => Some(AddressType::P2wsh),
-                        _ => None,
-                    },
-                    WitnessVersion::V1 if prog.len() == 32 => Some(AddressType::P2tr),
-                    _ => None,
+                match (version, prog.len()) {
+                    (WitnessVersion::V0, 20) => AddressInfo::p2wpkh(),
+                    (WitnessVersion::V0, 32) => AddressInfo::p2wsh(),
+                    (WitnessVersion::V0, len) => AddressInfo::NotSpendableWitnessV0(len),
+                    (WitnessVersion::V1, 32) => AddressInfo::p2tr(),
+                    (WitnessVersion::V1, len) => AddressInfo::NonTaprootWitnessV1(len),
+                    (version, len) => AddressInfo::Future(version, len),
                 }
             }
         }
+    }
+
+    /// Returns type of the address, if the witness version and program length is known
+    #[inline]
+    pub fn address_type(&self) -> Option<AddressType> {
+        self.address_info().address_type()
     }
 
     /// Check whether or not the address is following Bitcoin
@@ -574,6 +686,7 @@ impl Address {
     ///
     /// SegWit addresses with unassigned witness versions or non-standard
     /// program sizes are considered non-standard.
+    #[inline]
     pub fn is_standard(&self) -> bool {
         self.address_type().is_some()
     }
@@ -587,6 +700,7 @@ impl Address {
     }
 
     /// Generates a script pubkey spending to this address
+    #[inline]
     pub fn script_pubkey(&self) -> script::Script {
         self.payload.script_pubkey()
     }
