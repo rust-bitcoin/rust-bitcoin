@@ -22,6 +22,7 @@ use consensus::encode;
 use util::bip32::KeySource;
 use hashes::{self, hash160, ripemd160, sha256, sha256d};
 use util::ecdsa::PublicKey;
+use util::schnorr;
 use util::psbt;
 use util::psbt::map::Map;
 use util::psbt::raw;
@@ -104,6 +105,10 @@ pub struct Input {
     /// HAS256 hash to preimage map
     #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_byte_values"))]
     pub hash256_preimages: BTreeMap<sha256d::Hash, Vec<u8>>,
+    /// 64- or 65-byte Schnorr signature data for for key path spending a Taproot output
+    pub tap_key_sig: Option<schnorr::SpendingSignature>,
+    /// 64- or 65-byte Schnorr signature data for this pubkey and leaf combination
+    pub tap_script_sig: Option<schnorr::SpendingSignature>,
     /// Proprietary key-value pairs for this input.
     #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_as_seq_byte_values"))]
     pub proprietary: BTreeMap<raw::ProprietaryKey, Vec<u8>>,

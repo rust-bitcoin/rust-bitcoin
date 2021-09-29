@@ -28,6 +28,7 @@ use util::bip32::{ChildNumber, Fingerprint, KeySource};
 use hashes::{hash160, ripemd160, sha256, sha256d, Hash};
 use util::ecdsa::PublicKey;
 use util::psbt;
+use schnorr::{self, SpendingSignature};
 
 /// A trait for serializing a value as raw data for insertion into PSBT
 /// key-value pairs.
@@ -76,6 +77,31 @@ impl Deserialize for PublicKey {
             .map_err(|_| encode::Error::ParseFailed("invalid public key"))
     }
 }
+
+impl Serialize for SpendingSignature {
+    fn serialize(&self) -> Vec<u8> {
+        let mut buf = Vec::with_capacity(65);
+        buf.extend(&self.signature()[..]);
+        if self.requires_sighash() {
+            buf.push(self.sighash_byte());
+        }
+        buf
+    }
+}
+
+impl Deserialize for SpendingSignature {
+    fn deserialize(bytes: &[u8]) -> Result<Self, encode::Error> {
+        let (sig_slice, sighash_type) = match bytes.len() {
+            64 => (bytes, SigHashType::All),
+            65 => (&bytes[..=64], SigHashType::from_u32_consensus(bytes[64] as u32)),
+            _ => return Err(encode::Error::ParseFailed("non-standard partial BIP-341 signature data length"))
+        };
+        let signature = schnorr::Signature::from_slice(sig_slice)
+            .expect("BIP-340 signature reconstruction from 64-byte slice");
+        Ok(SpendingSignature::with(signature, sighash_type))
+    }
+}
+
 
 impl Serialize for KeySource {
     fn serialize(&self) -> Vec<u8> {
