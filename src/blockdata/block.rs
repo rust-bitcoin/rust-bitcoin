@@ -199,9 +199,10 @@ impl Block {
                         o.script_pubkey[0..6] == [0x6a, 0x24, 0xaa, 0x21, 0xa9, 0xed] }) {
                     let commitment = WitnessCommitment::from_slice(&coinbase.output[pos].script_pubkey.as_bytes()[6..38]).unwrap();
                     // witness reserved value is in coinbase input witness
-                    if coinbase.input[0].witness.len() == 1 && coinbase.input[0].witness[0].len() == 32 {
+                    let witness_vec: Vec<_> = coinbase.input[0].witness.iter().collect();
+                    if witness_vec.len() == 1 && witness_vec[0].len() == 32 {
                         match self.witness_root() {
-                            Some(witness_root) => return commitment == Self::compute_witness_commitment(&witness_root, coinbase.input[0].witness[0].as_slice()),
+                            Some(witness_root) => return commitment == Self::compute_witness_commitment(&witness_root, witness_vec[0]),
                             None => return false,
                         }
                     }

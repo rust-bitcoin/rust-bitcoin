@@ -22,10 +22,9 @@
 use hashes::Hash;
 use hash_types::SigHash;
 use blockdata::script::Script;
+use blockdata::witness::Witness;
 use blockdata::transaction::{Transaction, TxIn, EcdsaSigHashType};
 use consensus::{encode, Encodable};
-
-use prelude::*;
 
 use io;
 use core::ops::{Deref, DerefMut};
@@ -177,10 +176,10 @@ impl<R: DerefMut<Target=Transaction>> SigHashCache<R> {
     ///     let prevout_script = Script::new();
     ///     let _sighash = sig_hasher.signature_hash(inp, &prevout_script, 42, EcdsaSigHashType::All);
     ///     // ... sign the sighash
-    ///     sig_hasher.access_witness(inp).push(Vec::new());
+    ///     sig_hasher.access_witness(inp).push(&[]);
     /// }
     /// ```
-    pub fn access_witness(&mut self, input_index: usize) -> &mut Vec<Vec<u8>> {
+    pub fn access_witness(&mut self, input_index: usize) -> &mut Witness {
         self.cache.witness_mut(input_index).unwrap()
     }
 }
