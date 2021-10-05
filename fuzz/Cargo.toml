@@ -59,3 +59,7 @@ path = "fuzz_targets/uint128_fuzz.rs"
 [[bin]]
 name = "script_bytes_to_asm_fmt"
 path = "fuzz_targets/script_bytes_to_asm_fmt.rs"
+
+[[bin]]
+name = "deserialize_witness"
+path = "fuzz_targets/deserialize_witness.rs"
