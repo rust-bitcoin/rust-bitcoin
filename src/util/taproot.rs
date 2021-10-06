@@ -13,8 +13,16 @@
 
 //! Taproot
 //!
+use prelude::*;
+use io;
+
+use core::fmt;
+#[cfg(feature = "std")]
+use std::error;
 
 use hashes::{sha256, sha256t, Hash};
+use schnorr;
+use secp256k1;
 
 /// The SHA-256 midstate value for the TapLeaf hash.
 const MIDSTATE_TAPLEAF: [u8; 32] = [
@@ -82,6 +90,248 @@ sha256t_hash_newtype!(TapSighashHash, TapSighashTag, MIDSTATE_TAPSIGHASH, 64,
     doc="Taproot-tagged hash for the taproot signature hash", true
 );
 
+/// Maximum depth of a Taproot Tree Script spend path
+// https://github.com/bitcoin/bitcoin/blob/e826b22da252e0599c61d21c98ff89f366b3120f/src/script/interpreter.h#L229
+pub const TAPROOT_CONTROL_MAX_NODE_COUNT: usize = 128;
+/// Size of a taproot control node
+// https://github.com/bitcoin/bitcoin/blob/e826b22da252e0599c61d21c98ff89f366b3120f/src/script/interpreter.h#L228
+pub const TAPROOT_CONTROL_NODE_SIZE: usize = 32;
+/// Tapleaf mask for getting the leaf version from first byte of control block
+// https://github.com/bitcoin/bitcoin/blob/e826b22da252e0599c61d21c98ff89f366b3120f/src/script/interpreter.h#L225
+pub const TAPROOT_LEAF_MASK: u8 = 0xfe;
+/// Tapscript leaf version
+// https://github.com/bitcoin/bitcoin/blob/e826b22da252e0599c61d21c98ff89f366b3120f/src/script/interpreter.h#L226
+pub const TAPROOT_LEAF_TAPSCRIPT: u8 = 0xc0;
+/// Tapscript control base size
+// https://github.com/bitcoin/bitcoin/blob/e826b22da252e0599c61d21c98ff89f366b3120f/src/script/interpreter.h#L227
+pub const TAPROOT_CONTROL_BASE_SIZE: usize = 33;
+/// Tapscript control max size
+// https://github.com/bitcoin/bitcoin/blob/e826b22da252e0599c61d21c98ff89f366b3120f/src/script/interpreter.h#L230
+pub const TAPROOT_CONTROL_MAX_SIZE: usize =
+    TAPROOT_CONTROL_BASE_SIZE + TAPROOT_CONTROL_NODE_SIZE * TAPROOT_CONTROL_MAX_NODE_COUNT;
+
+/// The Merkle proof for inclusion of a tree in a taptree hash
+// The type of hash is sha256::Hash because the vector might contain
+// both TapBranchHash and TapLeafHash
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+pub struct TaprootMerkleBranch(Vec<sha256::Hash>);
+
+impl TaprootMerkleBranch {
+    /// Obtain a reference to inner
+    pub fn as_inner(&self) -> &[sha256::Hash] {
+        &self.0
+    }
+
+    /// Create a merkle proof from slice
+    pub fn from_slice(sl: &[u8]) -> Result<Self, TaprootError> {
+        if sl.len() % TAPROOT_CONTROL_NODE_SIZE != 0 {
+            Err(TaprootError::InvalidMerkleBranchSize(sl.len()))
+        } else if sl.len() > TAPROOT_CONTROL_NODE_SIZE * TAPROOT_CONTROL_MAX_NODE_COUNT {
+            Err(TaprootError::InvalidMerkleTreeDepth(
+                sl.len() / TAPROOT_CONTROL_NODE_SIZE,
+            ))
+        } else {
+            let inner = sl
+                // TODO: Use chunks_exact after MSRV changes to 1.31
+                .chunks(TAPROOT_CONTROL_NODE_SIZE)
+                .map(|chunk| {
+                    sha256::Hash::from_slice(chunk)
+                        .expect("chunk exact always returns the correct size")
+                })
+                .collect();
+            Ok(TaprootMerkleBranch(inner))
+        }
+    }
+
+    /// Serialize to a writer. Returns the number of bytes written
+    pub fn encode<Write: io::Write>(&self, mut writer: Write) -> io::Result<usize> {
+        let mut written = 0;
+        for hash in self.0.iter() {
+            written += writer.write(hash)?;
+        }
+        Ok(written)
+    }
+
+    /// Serialize self as bytes
+    pub fn serialize(&self) -> Vec<u8> {
+        self.0.iter().map(|e| e.as_inner()).flatten().map(|x| *x).collect::<Vec<u8>>()
+    }
+
+    /// Create a MerkleProof from Vec<[`sha256::Hash`]>. Returns an error when
+    /// inner proof len is more than TAPROOT_CONTROL_MAX_NODE_COUNT (128)
+    pub fn from_inner(inner: Vec<sha256::Hash>) -> Result<Self, TaprootError> {
+        if inner.len() > TAPROOT_CONTROL_MAX_NODE_COUNT {
+            Err(TaprootError::InvalidMerkleTreeDepth(inner.len()))
+        } else {
+            Ok(TaprootMerkleBranch(inner))
+        }
+    }
+
+    /// Consume Self to get Vec<[`sha256::Hash`]>
+    pub fn into_inner(self) -> Vec<sha256::Hash> {
+        self.0
+    }
+}
+
+/// Control Block data structure used in Tapscript satisfaction
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct ControlBlock {
+    /// The tapleaf version,
+    pub leaf_version: LeafVersion,
+    /// The parity of the output key (NOT THE INTERNAL KEY WHICH IS ALWAYS XONLY)
+    pub output_key_parity: bool,
+    /// The internal key
+    pub internal_key: schnorr::PublicKey,
+    /// The merkle proof of a script associated with this leaf
+    pub merkle_branch: TaprootMerkleBranch,
+}
+
+impl ControlBlock {
+    /// Obtain a ControlBlock from slice. This is an extra witness element
+    /// that provides the proof that taproot script pubkey is correctly computed
+    /// with some specified leaf hash. This is the last element in
+    /// taproot witness when spending a output via script path.
+    ///
+    /// # Errors:
+    /// - If the control block size is not of the form 33 + 32m where
+    /// 0 <= m <= 128, InvalidControlBlock is returned
+    pub fn from_slice(sl: &[u8]) -> Result<ControlBlock, TaprootError> {
+        if sl.len() < TAPROOT_CONTROL_BASE_SIZE
+            || (sl.len() - TAPROOT_CONTROL_BASE_SIZE) % TAPROOT_CONTROL_NODE_SIZE != 0
+        {
+            return Err(TaprootError::InvalidControlBlockSize(sl.len()));
+        }
+        let output_key_parity = (sl[0] & 1) == 1;
+        let leaf_version = LeafVersion::from_u8(sl[0] & TAPROOT_LEAF_MASK)?;
+        let internal_key = schnorr::PublicKey::from_slice(&sl[1..TAPROOT_CONTROL_BASE_SIZE])
+            .map_err(TaprootError::InvalidInternalKey)?;
+        let merkle_branch = TaprootMerkleBranch::from_slice(&sl[TAPROOT_CONTROL_BASE_SIZE..])?;
+        Ok(ControlBlock {
+            leaf_version,
+            output_key_parity,
+            internal_key,
+            merkle_branch,
+        })
+    }
+
+    /// Obtain the size of control block. Faster and more efficient than calling
+    /// serialize() followed by len(). Can be handy for fee estimation
+    pub fn size(&self) -> usize {
+        TAPROOT_CONTROL_BASE_SIZE + TAPROOT_CONTROL_NODE_SIZE * self.merkle_branch.as_inner().len()
+    }
+
+    /// Serialize to a writer. Returns the number of bytes written
+    pub fn encode<Write: io::Write>(&self, mut writer: Write) -> io::Result<usize> {
+        let first_byte: u8 =
+            (if self.output_key_parity { 1 } else { 0 }) | self.leaf_version.as_u8();
+        let mut bytes_written = 0;
+        bytes_written += writer.write(&[first_byte])?;
+        bytes_written += writer.write(&self.internal_key.serialize())?;
+        bytes_written += self.merkle_branch.encode(&mut writer)?;
+        Ok(bytes_written)
+    }
+
+    /// Serialize the control block. This would be required when
+    /// using ControlBlock as a witness element while spending an output via
+    /// script path. This serialization does not include the VarInt prefix that would be
+    /// applied when encoding this element as a witness.
+    pub fn serialize(&self) -> Vec<u8> {
+        let mut buf = Vec::with_capacity(self.size());
+        self.encode(&mut buf)
+            .expect("writers don't error");
+        buf
+    }
+}
+
+/// The leaf version for tapleafs
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct LeafVersion(u8);
+
+impl Default for LeafVersion {
+    fn default() -> Self {
+        LeafVersion(TAPROOT_LEAF_TAPSCRIPT)
+    }
+}
+
+impl LeafVersion {
+    /// Obtain LeafVersion from u8, will error when last bit of ver is even or
+    /// when ver is 0x50 (ANNEX_TAG)
+    // Text from BIP341:
+    // In order to support some forms of static analysis that rely on
+    // being able to identify script spends without access to the output being
+    // spent, it is recommended to avoid using any leaf versions that would conflict
+    // with a valid first byte of either a valid P2WPKH pubkey or a valid P2WSH script
+    // (that is, both v and v | 1 should be an undefined, invalid or disabled opcode
+    // or an opcode that is not valid as the first opcode).
+    // The values that comply to this rule are the 32 even values between
+    // 0xc0 and 0xfe and also 0x66, 0x7e, 0x80, 0x84, 0x96, 0x98, 0xba, 0xbc, 0xbe
+    pub fn from_u8(ver: u8) -> Result<Self, TaprootError> {
+        if ver & TAPROOT_LEAF_MASK == ver && ver != 0x50 {
+            Ok(LeafVersion(ver))
+        } else {
+            Err(TaprootError::InvalidTaprootLeafVersion(ver))
+        }
+    }
+
+    /// Get the inner version from LeafVersion
+    pub fn as_u8(&self) -> u8 {
+        self.0
+    }
+}
+
+impl Into<u8> for LeafVersion {
+    fn into(self) -> u8 {
+        self.0
+    }
+}
+
+/// Detailed error type for taproot utilities
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum TaprootError {
+    /// Proof size must be a multiple of 32
+    InvalidMerkleBranchSize(usize),
+    /// Merkle Tree depth must not be more than 128
+    InvalidMerkleTreeDepth(usize),
+    /// The last bit of tapleaf version must be zero
+    InvalidTaprootLeafVersion(u8),
+    /// Invalid Control Block Size
+    InvalidControlBlockSize(usize),
+    /// Invalid taproot internal key
+    InvalidInternalKey(secp256k1::Error),
+}
+
+impl fmt::Display for TaprootError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match *self {
+            TaprootError::InvalidMerkleBranchSize(sz) => write!(
+                f,
+                "Merkle branch size({}) must be a multiple of {}",
+                sz, TAPROOT_CONTROL_NODE_SIZE
+            ),
+            TaprootError::InvalidMerkleTreeDepth(d) => write!(
+                f,
+                "Merkle Tree depth({}) must be less than {}",
+                d, TAPROOT_CONTROL_MAX_NODE_COUNT
+            ),
+            TaprootError::InvalidTaprootLeafVersion(v) => write!(
+                f,
+                "Leaf version({}) must have the least significant bit 0",
+                v
+            ),
+            TaprootError::InvalidControlBlockSize(sz) => write!(
+                f,
+                "Control Block size({}) must be of the form 33 + 32*m where  0 <= m <= {} ",
+                sz, TAPROOT_CONTROL_MAX_NODE_COUNT
+            ),
+            // TODO: add source when in MSRV
+            TaprootError::InvalidInternalKey(e) => write!(f, "Invalid Internal XOnly key : {}", e),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+impl error::Error for TaprootError {}
 #[cfg(test)]
 mod test {
     use super::*;
