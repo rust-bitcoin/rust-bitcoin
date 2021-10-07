@@ -734,6 +734,26 @@ pub struct Instructions<'a> {
 }
 
 impl<'a> Instructions<'a> {
+    /// Set the iterator to end so that it won't iterate any longer
+    fn kill(&mut self) {
+        let len = self.data.len();
+        self.data.nth(len.max(1) - 1);
+    }
+
+    /// takes `len` bytes long slice from iterator and returns it advancing iterator
+    /// if the iterator is not long enough `None` is returned and the iterator is killed
+    /// to avoid returning an infinite stream of errors.
+    fn take_slice_or_kill(&mut self, len: usize) -> Option<&'a [u8]> {
+        if self.data.len() >= len {
+            let slice = &self.data.as_slice()[..len];
+            self.data.nth(len.max(1) - 1);
+            Some(slice)
+        } else {
+            self.kill();
+            None
+        }
+    }
+
     fn next_push_data_len(&mut self, len: usize, max: usize) -> Option<Result<Instruction<'a>, Error>> {
         let n = match read_uint_iter(&mut self.data, len) {
             Ok(n) => n,
@@ -742,19 +762,15 @@ impl<'a> Instructions<'a> {
             // Overflow actually means early end of script (script is definitely shorter
             // than `usize::max_value()`)
             Err(UintError::EarlyEndOfScript) | Err(UintError::NumericOverflow) => {
-                let data_len = self.data.len();
-                self.data.nth(data_len); // Kill iterator so that it does not return an infinite stream of errors
+                self.kill();
                 return Some(Err(Error::EarlyEndOfScript));
             },
         };
         if self.enforce_minimal && n < max {
-            let data_len = self.data.len();
-            self.data.nth(data_len); // Kill iterator so that it does not return an infinite stream of errors
+            self.kill();
             return Some(Err(Error::NonMinimalPush));
         }
-        let ret = Some(Ok(Instruction::PushBytes(&self.data.as_slice()[..n])));
-        self.data.nth(n.max(1) - 1);
-        ret
+        Some(self.take_slice_or_kill(n).map(Instruction::PushBytes).ok_or(Error::EarlyEndOfScript))
     }
 }
 
@@ -773,22 +789,21 @@ impl<'a> Iterator for Instructions<'a> {
                 // casting is safe because we don't support 16-bit architectures
                 let n = n as usize;
 
-                if self.data.len() < n {
-                    let data_len = self.data.len();
-                    self.data.nth(data_len); // Kill iterator so that it does not return an infinite stream of errors
-                    return Some(Err(Error::EarlyEndOfScript));
-                }
-                if self.enforce_minimal {
-                    // index acceess is safe because we checked the lenght above
-                    if n == 1 && (self.data.as_slice()[0] == 0x81 || (self.data.as_slice()[0] > 0 && self.data.as_slice()[0] <= 16)) {
-                        let data_len = self.data.len();
-                        self.data.nth(data_len); // Kill iterator so that it does not return an infinite stream of errors
-                        return Some(Err(Error::NonMinimalPush));
+                let op_byte = self.data.as_slice().first();
+                match (self.enforce_minimal, op_byte, n) {
+                    (true, Some(&op_byte), 1) if op_byte == 0x81 || (op_byte > 0 && op_byte <= 16) => {
+                        self.kill();
+                        Some(Err(Error::NonMinimalPush))
+                    },
+                    (_, None, 0) => {
+                        // the iterator is already empty, may as well use this information to avoid
+                        // whole take_slice_or_kill function
+                        Some(Ok(Instruction::PushBytes(&[])))
+                    },
+                    _ => {
+                        Some(self.take_slice_or_kill(n).map(Instruction::PushBytes).ok_or(Error::EarlyEndOfScript))
                     }
                 }
-                let ret = Some(Ok(Instruction::PushBytes(&self.data.as_slice()[..n])));
-                self.data.nth(n.max(1) - 1);
-                ret
             }
             opcodes::Class::Ordinary(opcodes::Ordinary::OP_PUSHDATA1) => {
                 self.next_push_data_len(1, 76)
