@@ -25,6 +25,8 @@ use hashes::{sha256, sha256t, Hash, HashEngine};
 use schnorr;
 use Script;
 
+use consensus::Encodable;
+
 /// The SHA-256 midstate value for the TapLeaf hash.
 const MIDSTATE_TAPLEAF: [u8; 32] = [
     156, 224, 228, 230, 124, 17, 108, 57, 56, 179, 202, 242, 195, 15, 80, 137, 211, 243, 147, 108,
@@ -228,8 +230,262 @@ impl TaprootSpendInfo {
     pub fn output_key_parity(&self) -> bool {
         self.output_key_parity
     }
+
+    // Internal function to compute [`TaprootSpendInfo`] from NodeInfo
+    fn from_node_info<C: secp256k1::Verification>(
+        secp: &Secp256k1<C>,
+        internal_key: schnorr::PublicKey,
+        node: NodeInfo,
+    ) -> TaprootSpendInfo {
+        // Create as if it is a key spend path with the given merkle root
+        let root_hash = Some(TapBranchHash::from_inner(node.hash.into_inner()));
+        let mut info = TaprootSpendInfo::new_key_spend(secp, internal_key, root_hash);
+        for leaves in node.leaves {
+            let key = (leaves.script, leaves.ver);
+            let value = leaves.merkle_branch;
+            match info.script_map.get_mut(&key) {
+                Some(set) => {
+                    set.insert(value);
+                    continue; // NLL fix
+                }
+                None => {}
+            }
+            let mut set = BTreeSet::new();
+            set.insert(value);
+            info.script_map.insert(key, set);
+        }
+        info
+    }
 }
 
+/// Builder for building taproot iteratively. Users can specify tap leaf or omitted/hidden
+/// branches in a DFS(Depth first search) walk to construct this tree.
+// Similar to Taproot Builder in bitcoin core
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct TaprootBuilder {
+    // The following doc-comment is from bitcoin core, but modified for rust
+    // The comment below describes the current state of the builder for a given tree.
+    //
+    // For each level in the tree, one NodeInfo object may be present. branch at index 0
+    // is information about the root; further values are for deeper subtrees being
+    // explored.
+    //
+    // During the construction of Taptree, for every right branch taken to
+    // reach the position we're currently working in, there will be a (Some(_))
+    // entry in branch corresponding to the left branch at that level.
+    //
+    // For example, imagine this tree:     - N0 -
+    //                                    /      \
+    //                                   N1      N2
+    //                                  /  \    /  \
+    //                                 A    B  C   N3
+    //                                            /  \
+    //                                           D    E
+    //
+    // Initially, branch is empty. After processing leaf A, it would become
+    // {None, None, A}. When processing leaf B, an entry at level 2 already
+    // exists, and it would thus be combined with it to produce a level 1 one,
+    // resulting in {None, N1}. Adding C and D takes us to {None, N1, C}
+    // and {None, N1, C, D} respectively. When E is processed, it is combined
+    // with D, and then C, and then N1, to produce the root, resulting in {N0}.
+    //
+    // This structure allows processing with just O(log n) overhead if the leaves
+    // are computed on the fly.
+    //
+    // As an invariant, there can never be None entries at the end. There can
+    // also not be more than 128 entries (as that would mean more than 128 levels
+    // in the tree). The depth of newly added entries will always be at least
+    // equal to the current size of branch (otherwise it does not correspond
+    // to a depth-first traversal of a tree). branch is only empty if no entries
+    // have ever be processed. branch having length 1 corresponds to being done.
+    //
+    branch: Vec<Option<NodeInfo>>,
+}
+
+impl TaprootBuilder {
+    /// Create a new instance of [`TaprootBuilder`]
+    pub fn new() -> Self {
+        TaprootBuilder { branch: vec![] }
+    }
+    /// Just like [`TaprootBuilder::add_leaf`] but allows to specify script version
+    pub fn add_leaf_with_ver(
+        self,
+        depth: usize,
+        script: Script,
+        ver: LeafVersion,
+    ) -> Result<Self, TaprootBuilderError> {
+        let leaf = NodeInfo::new_leaf_with_ver(script, ver);
+        self.insert(leaf, depth)
+    }
+
+    /// Add a leaf script at a depth `depth` to the builder with default script version.
+    /// This will error if the leave are not provided in a DFS walk order. The depth of the
+    /// root node is 0 and it's immediate child would be at depth 1.
+    /// See [`TaprootBuilder::add_leaf_with_ver`] for adding a leaf with specific version
+    /// See [Wikipedia](https://en.wikipedia.org/wiki/Depth-first_search) for more details
+    pub fn add_leaf(self, depth: usize, script: Script) -> Result<Self, TaprootBuilderError> {
+        self.add_leaf_with_ver(depth, script, LeafVersion::default())
+    }
+
+    /// Add a hidden/omitted node at a depth `depth` to the builder.
+    /// This will error if the node are not provided in a DFS walk order. The depth of the
+    /// root node is 0 and it's immediate child would be at depth 1.
+    pub fn add_hidden(self, depth: usize, hash: sha256::Hash) -> Result<Self, TaprootBuilderError> {
+        let node = NodeInfo::new_hidden(hash);
+        self.insert(node, depth)
+    }
+
+    /// Create [`TaprootSpendInfo`] with the given internal key
+    pub fn finalize<C: secp256k1::Verification>(
+        mut self,
+        secp: &Secp256k1<C>,
+        internal_key: schnorr::PublicKey,
+    ) -> Result<TaprootSpendInfo, TaprootBuilderError> {
+        if self.branch.len() > 1 {
+            return Err(TaprootBuilderError::IncompleteTree);
+        }
+        let node = self
+            .branch
+            .pop()
+            .ok_or(TaprootBuilderError::EmptyTree)?
+            .expect("Builder invariant: last element of the branch must be some");
+        Ok(TaprootSpendInfo::from_node_info(secp, internal_key, node))
+    }
+
+    // Helper function to insert a leaf at a depth
+    fn insert(mut self, mut node: NodeInfo, mut depth: usize) -> Result<Self, TaprootBuilderError> {
+        // early error on invalid depth. Though this will be checked later
+        // while constructing TaprootMerkelBranch
+        if depth > TAPROOT_CONTROL_MAX_NODE_COUNT {
+            return Err(TaprootBuilderError::InvalidMerkleTreeDepth(depth));
+        }
+        // We cannot insert a leaf at a lower depth while a deeper branch is unfinished. Doing
+        // so would mean the add_leaf/add_hidden invocations do not correspond to a DFS traversal of a
+        // binary tree.
+        if depth + 1 < self.branch.len() {
+            return Err(TaprootBuilderError::NodeNotInDfsOrder);
+        }
+
+        while self.branch.len() == depth + 1 {
+            let child = match self.branch.pop() {
+                None => unreachable!("Len of branch checked to be >= 1"),
+                Some(Some(child)) => child,
+                // Needs an explicit push to add the None that we just popped.
+                // Cannot use .last() because of borrow checker issues.
+                Some(None) => {
+                    self.branch.push(None);
+                    break;
+                } // Cannot combine further
+            };
+            if depth == 0 {
+                // We are trying to combine two nodes at root level.
+                // Can't propagate further up than the root
+                return Err(TaprootBuilderError::OverCompleteTree);
+            }
+            node = NodeInfo::combine(node, child)?;
+            // Propagate to combine nodes at a lower depth
+            depth -= 1;
+        }
+
+        if self.branch.len() < depth + 1 {
+            // add enough nodes so that we can insert node at depth `depth`
+            let num_extra_nodes = depth + 1 - self.branch.len();
+            self.branch
+                .extend((0..num_extra_nodes).into_iter().map(|_| None));
+        }
+        // Push the last node to the branch
+        self.branch[depth] = Some(node);
+        Ok(self)
+    }
+}
+
+// Internally used structure to represent the node information in taproot tree
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+struct NodeInfo {
+    /// Merkle Hash for this node
+    hash: sha256::Hash,
+    /// information about leaves inside this node
+    leaves: Vec<LeafInfo>,
+}
+
+impl NodeInfo {
+    // Create a new NodeInfo with omitted/hidden info
+    fn new_hidden(hash: sha256::Hash) -> Self {
+        Self {
+            hash: hash,
+            leaves: vec![],
+        }
+    }
+
+    // Create a new leaf with NodeInfo
+    fn new_leaf_with_ver(script: Script, ver: LeafVersion) -> Self {
+        let leaf = LeafInfo::new(script, ver);
+        Self {
+            hash: leaf.hash(),
+            leaves: vec![leaf],
+        }
+    }
+
+    // Combine two NodeInfo's to create a new parent
+    fn combine(a: Self, b: Self) -> Result<Self, TaprootBuilderError> {
+        let mut all_leaves = Vec::with_capacity(a.leaves.len() + b.leaves.len());
+        for mut a_leaf in a.leaves {
+            a_leaf.merkle_branch.push(b.hash)?; // add hashing partner
+            all_leaves.push(a_leaf);
+        }
+        for mut b_leaf in b.leaves {
+            b_leaf.merkle_branch.push(a.hash)?; // add hashing partner
+            all_leaves.push(b_leaf);
+        }
+        let mut eng = TapBranchHash::engine();
+        if a.hash < b.hash {
+            eng.input(&a.hash);
+            eng.input(&b.hash);
+        } else {
+            eng.input(&b.hash);
+            eng.input(&a.hash);
+        };
+        Ok(Self {
+            hash: sha256::Hash::from_engine(eng),
+            leaves: all_leaves,
+        })
+    }
+}
+
+// Internally used structure to store information about taproot leaf node
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+struct LeafInfo {
+    // The underlying script
+    script: Script,
+    // The leaf version
+    ver: LeafVersion,
+    // The merkle proof(hashing partners) to get this node
+    merkle_branch: TaprootMerkleBranch,
+}
+
+impl LeafInfo {
+    // Create an instance of Self from Script with default version and no merkle branch
+    fn new(script: Script, ver: LeafVersion) -> Self {
+        Self {
+            script: script,
+            ver: ver,
+            merkle_branch: TaprootMerkleBranch(vec![]),
+        }
+    }
+
+    // Compute a leaf hash for the given leaf
+    fn hash(&self) -> sha256::Hash {
+        let mut eng = TapLeafHash::engine();
+        self.ver
+            .as_u8()
+            .consensus_encode(&mut eng)
+            .expect("engines don't err");
+        self.script
+            .consensus_encode(&mut eng)
+            .expect("engines don't err");
+        sha256::Hash::from_engine(eng)
+    }
+}
 /// The Merkle proof for inclusion of a tree in a taptree hash
 // The type of hash is sha256::Hash because the vector might contain
 // both TapBranchHash and TapLeafHash
@@ -275,6 +531,16 @@ impl TaprootMerkleBranch {
     /// Serialize self as bytes
     pub fn serialize(&self) -> Vec<u8> {
         self.0.iter().map(|e| e.as_inner()).flatten().map(|x| *x).collect::<Vec<u8>>()
+    }
+
+    // Internal function to append elements to proof
+    fn push(&mut self, h: sha256::Hash) -> Result<(), TaprootBuilderError> {
+        if self.0.len() >= TAPROOT_CONTROL_MAX_NODE_COUNT {
+            Err(TaprootBuilderError::InvalidMerkleTreeDepth(self.0.len()))
+        } else {
+            self.0.push(h);
+            Ok(())
+        }
     }
 
     /// Create a MerkleProof from Vec<[`sha256::Hash`]>. Returns an error when
@@ -405,6 +671,56 @@ impl Into<u8> for LeafVersion {
     }
 }
 
+/// Detailed error type for taproot builder
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum TaprootBuilderError {
+    /// Merkle Tree depth must not be more than 128
+    InvalidMerkleTreeDepth(usize),
+    /// Nodes must be added specified in DFS order
+    NodeNotInDfsOrder,
+    /// Two nodes at depth 0 are not allowed
+    OverCompleteTree,
+    /// Invalid taproot internal key
+    InvalidInternalKey(secp256k1::Error),
+    /// Called finalize on an incomplete tree
+    IncompleteTree,
+    /// Called finalize on a empty tree
+    EmptyTree,
+}
+
+impl fmt::Display for TaprootBuilderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match *self {
+            TaprootBuilderError::NodeNotInDfsOrder => {
+                write!(f, "add_leaf/add_hidden must be called in DFS walk order",)
+            }
+            TaprootBuilderError::OverCompleteTree => write!(
+                f,
+                "Attempted to create a tree with two nodes at depth 0. There must\
+                only be a exactly one node at depth 0",
+            ),
+            TaprootBuilderError::InvalidMerkleTreeDepth(d) => write!(
+                f,
+                "Merkle Tree depth({}) must be less than {}",
+                d, TAPROOT_CONTROL_MAX_NODE_COUNT
+            ),
+            TaprootBuilderError::InvalidInternalKey(e) => {
+                write!(f, "Invalid Internal XOnly key : {}", e)
+            }
+            TaprootBuilderError::IncompleteTree => {
+                write!(f, "Called finalize on an incomplete tree")
+            }
+            TaprootBuilderError::EmptyTree => {
+                write!(f, "Called finalize on an empty tree")
+            }
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+impl error::Error for TaprootBuilderError {}
+
 /// Detailed error type for taproot utilities
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum TaprootError {
@@ -418,6 +734,8 @@ pub enum TaprootError {
     InvalidControlBlockSize(usize),
     /// Invalid taproot internal key
     InvalidInternalKey(secp256k1::Error),
+    /// Empty TapTree
+    EmptyTree,
 }
 
 impl fmt::Display for TaprootError {
@@ -445,6 +763,7 @@ impl fmt::Display for TaprootError {
             ),
             // TODO: add source when in MSRV
             TaprootError::InvalidInternalKey(e) => write!(f, "Invalid Internal XOnly key : {}", e),
+            TaprootError::EmptyTree => write!(f, "Taproot Tree must contain at least one script"),
         }
     }
 }
