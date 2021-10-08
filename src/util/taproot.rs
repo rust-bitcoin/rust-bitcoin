@@ -113,6 +113,20 @@ impl TapTweakHash {
     }
 }
 
+impl TapLeafHash {
+    /// function to compute leaf hash from components
+    pub fn from_script(script: &Script, ver: LeafVersion) -> TapLeafHash {
+        let mut eng = TapLeafHash::engine();
+        ver.as_u8()
+            .consensus_encode(&mut eng)
+            .expect("engines don't err");
+        script
+            .consensus_encode(&mut eng)
+            .expect("engines don't err");
+        TapLeafHash::from_engine(eng)
+    }
+}
+
 /// Maximum depth of a Taproot Tree Script spend path
 // https://github.com/bitcoin/bitcoin/blob/e826b22da252e0599c61d21c98ff89f366b3120f/src/script/interpreter.h#L229
 pub const TAPROOT_CONTROL_MAX_NODE_COUNT: usize = 128;
@@ -133,6 +147,8 @@ pub const TAPROOT_CONTROL_BASE_SIZE: usize = 33;
 pub const TAPROOT_CONTROL_MAX_SIZE: usize =
     TAPROOT_CONTROL_BASE_SIZE + TAPROOT_CONTROL_NODE_SIZE * TAPROOT_CONTROL_MAX_NODE_COUNT;
 
+// type alias for versioned tap script corresponding merkle proof
+type ScriptMerkleProofMap = BTreeMap<(Script, LeafVersion), BTreeSet<TaprootMerkleBranch>>;
 /// Data structure for representing Taproot spending information.
 /// Taproot output corresponds to a combination of a
 /// single public key condition (known the internal key), and zero or more
@@ -164,7 +180,7 @@ pub struct TaprootSpendInfo {
     /// appears in multiple branches of the tree. In all cases, keeping one should
     /// be enough for spending funds, but we keep all of the paths so that
     /// a full tree can be constructed again from spending data if required.
-    script_map: BTreeMap<(Script, LeafVersion), BTreeSet<TaprootMerkleBranch>>,
+    script_map: ScriptMerkleProofMap,
 }
 
 impl TaprootSpendInfo {
@@ -268,7 +284,7 @@ impl TaprootSpendInfo {
 
     /// Output key(the key used in script pubkey) from Spend data. See also
     /// [`TaprootSpendInfo::output_key_parity`]
-    pub fn output_key<C: secp256k1::Verification>(&self) -> schnorr::PublicKey {
+    pub fn output_key(&self) -> schnorr::PublicKey {
         self.output_key
     }
 
@@ -301,6 +317,29 @@ impl TaprootSpendInfo {
             info.script_map.insert(key, set);
         }
         info
+    }
+
+    /// Access the internal script map
+    pub fn as_script_map(&self) -> &ScriptMerkleProofMap {
+        &self.script_map
+    }
+
+    /// Obtain a [`ControlBlock`] for particular script with the given version.
+    /// Returns [`None`] if the script is not contained in the [`TaprootSpendInfo`]
+    /// If there are multiple ControlBlocks possible, this returns the shortest one.
+    pub fn control_block(&self, script_ver: &(Script, LeafVersion)) -> Option<ControlBlock> {
+        let merkle_branch_set = self.script_map.get(script_ver)?;
+        // Choose the smallest one amongst the multiple script maps
+        let smallest = merkle_branch_set
+            .iter()
+            .min_by(|x, y| x.0.len().cmp(&y.0.len()))
+            .expect("Invariant: Script map key must contain non-empty set value");
+        Some(ControlBlock {
+            internal_key: self.internal_key,
+            output_key_parity: self.output_key_parity,
+            leaf_version: LeafVersion::default(),
+            merkle_branch: smallest.clone(),
+        })
     }
 }
 
@@ -521,17 +560,11 @@ impl LeafInfo {
 
     // Compute a leaf hash for the given leaf
     fn hash(&self) -> sha256::Hash {
-        let mut eng = TapLeafHash::engine();
-        self.ver
-            .as_u8()
-            .consensus_encode(&mut eng)
-            .expect("engines don't err");
-        self.script
-            .consensus_encode(&mut eng)
-            .expect("engines don't err");
-        sha256::Hash::from_engine(eng)
+        let leaf_hash = TapLeafHash::from_script(&self.script, self.ver);
+        sha256::Hash::from_inner(leaf_hash.into_inner())
     }
 }
+
 /// The Merkle proof for inclusion of a tree in a taptree hash
 // The type of hash is sha256::Hash because the vector might contain
 // both TapBranchHash and TapLeafHash
@@ -672,6 +705,42 @@ impl ControlBlock {
         self.encode(&mut buf)
             .expect("writers don't error");
         buf
+    }
+
+    /// Verify that a control block is correct proof for a given output key and script
+    /// This only checks that script is contained inside the taptree described by
+    /// output key, full verification must also execute the script with witness data
+    pub fn verify_taproot_commitment<C: secp256k1::Verification>(
+        &self,
+        secp: &Secp256k1<C>,
+        output_key: &schnorr::PublicKey,
+        script: &Script,
+    ) -> bool {
+        // compute the script hash
+        // Initially the curr_hash is the leaf hash
+        let leaf_hash = TapLeafHash::from_script(&script, self.leaf_version);
+        let mut curr_hash = TapBranchHash::from_inner(leaf_hash.into_inner());
+        // Verify the proof
+        for elem in self.merkle_branch.as_inner() {
+            let mut eng = TapBranchHash::engine();
+            if curr_hash.as_inner() < elem.as_inner() {
+                eng.input(&curr_hash);
+                eng.input(elem);
+            } else {
+                eng.input(elem);
+                eng.input(&curr_hash);
+            }
+            // Recalculate the curr hash as parent hash
+            curr_hash = TapBranchHash::from_engine(eng);
+        }
+        // compute the taptweak
+        let tweak = TapTweakHash::from_key_and_tweak(self.internal_key, Some(curr_hash));
+        self.internal_key.tweak_add_check(
+            secp,
+            output_key,
+            self.output_key_parity,
+            tweak.into_inner(),
+        )
     }
 }
 
