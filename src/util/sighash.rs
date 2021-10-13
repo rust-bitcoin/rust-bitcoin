@@ -20,6 +20,7 @@
 //!
 
 pub use blockdata::transaction::SigHashType as LegacySigHashType;
+use blockdata::witness::Witness;
 use consensus::{encode, Encodable};
 use core::fmt;
 use core::ops::{Deref, DerefMut};
@@ -28,8 +29,6 @@ use io;
 use util::taproot::{TapLeafHash, TapSighashHash};
 use SigHash;
 use {Script, Transaction, TxOut};
-
-use prelude::*;
 
 /// Efficiently calculates signature hash message for legacy, segwit and taproot inputs.
 #[derive(Debug)]
@@ -629,7 +628,7 @@ impl<R: DerefMut<Target = Transaction>> SigHashCache<R> {
     /// use bitcoin::util::sighash::SigHashCache;
     /// use bitcoin::Script;
     ///
-    /// let mut tx_to_sign = Transaction { version: 2, lock_time: 0, input: Vec::new(), output: Vec::new() };
+    /// let mut tx_to_sign = Transaction { version: 2, lock_time: 0, input: tinyvec::TinyVec::Heap(Vec::new()), output: tinyvec::TinyVec::Heap(Vec::new()) };
     /// let input_count = tx_to_sign.input.len();
     ///
     /// let mut sig_hasher = SigHashCache::new(&mut tx_to_sign);
@@ -637,10 +636,10 @@ impl<R: DerefMut<Target = Transaction>> SigHashCache<R> {
     ///     let prevout_script = Script::new();
     ///     let _sighash = sig_hasher.segwit_signature_hash(inp, &prevout_script, 42, SigHashType::All);
     ///     // ... sign the sighash
-    ///     sig_hasher.witness_mut(inp).unwrap().push(Vec::new());
+    ///     sig_hasher.witness_mut(inp).unwrap().push(&Vec::new());
     /// }
     /// ```
-    pub fn witness_mut(&mut self, input_index: usize) -> Option<&mut Vec<Vec<u8>>> {
+    pub fn witness_mut(&mut self, input_index: usize) -> Option<&mut Witness> {
         self.tx.input.get_mut(input_index).map(|i| &mut i.witness)
     }
 }
@@ -685,6 +684,7 @@ mod tests {
     use util::sighash::{Annex, Error, Prevouts, ScriptPath, SigHashCache, SigHashType};
     use util::taproot::TapSighashHash;
     use {Script, Transaction, TxIn, TxOut};
+    use blockdata::transaction::TxOuts;
 
     #[test]
     fn test_tap_sighash_hash() {
@@ -803,8 +803,8 @@ mod tests {
         let dumb_tx = Transaction {
             version: 0,
             lock_time: 0,
-            input: vec![TxIn::default()],
-            output: vec![],
+            input: tinyvec::TinyVec::Heap(vec![TxIn::default()]),
+            output: tinyvec::TinyVec::Heap(vec![]),
         };
         let mut c = SigHashCache::new(&dumb_tx);
 
@@ -871,7 +871,7 @@ mod tests {
         let tx_bytes = Vec::from_hex(tx_hex).unwrap();
         let tx: Transaction = deserialize(&tx_bytes).unwrap();
         let prevout_bytes = Vec::from_hex(prevout_hex).unwrap();
-        let prevouts: Vec<TxOut> = deserialize(&prevout_bytes).unwrap();
+        let prevouts: TxOuts = deserialize(&prevout_bytes).unwrap();
         let annex_inner;
         let annex = match annex_hex {
             Some(annex_hex) => {

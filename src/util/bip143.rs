@@ -22,10 +22,9 @@
 use hashes::Hash;
 use hash_types::SigHash;
 use blockdata::script::Script;
+use blockdata::witness::Witness;
 use blockdata::transaction::{Transaction, TxIn, SigHashType};
 use consensus::{encode, Encodable};
-
-use prelude::*;
 
 use io;
 use core::ops::{Deref, DerefMut};
@@ -169,7 +168,7 @@ impl<R: DerefMut<Target=Transaction>> SigHashCache<R> {
     /// use bitcoin::util::bip143::SigHashCache;
     /// use bitcoin::Script;
     ///
-    /// let mut tx_to_sign = Transaction { version: 2, lock_time: 0, input: Vec::new(), output: Vec::new() };
+    /// let mut tx_to_sign = Transaction { version: 2, lock_time: 0, input: tinyvec::TinyVec::Heap(Vec::new()), output: tinyvec::TinyVec::Heap(Vec::new()) };
     /// let input_count = tx_to_sign.input.len();
     ///
     /// let mut sig_hasher = SigHashCache::new(&mut tx_to_sign);
@@ -177,10 +176,10 @@ impl<R: DerefMut<Target=Transaction>> SigHashCache<R> {
     ///     let prevout_script = Script::new();
     ///     let _sighash = sig_hasher.signature_hash(inp, &prevout_script, 42, SigHashType::All);
     ///     // ... sign the sighash
-    ///     sig_hasher.access_witness(inp).push(Vec::new());
+    ///     sig_hasher.access_witness(inp).push(&Vec::new());
     /// }
     /// ```
-    pub fn access_witness(&mut self, input_index: usize) -> &mut Vec<Vec<u8>> {
+    pub fn access_witness(&mut self, input_index: usize) -> &mut Witness {
         self.cache.witness_mut(input_index).unwrap()
     }
 }

@@ -36,10 +36,12 @@ use util::endian;
 use blockdata::constants::WITNESS_SCALE_FACTOR;
 #[cfg(feature="bitcoinconsensus")] use blockdata::script;
 use blockdata::script::Script;
+use blockdata::witness::Witness;
 use consensus::{encode, Decodable, Encodable};
 use consensus::encode::MAX_VEC_SIZE;
 use hash_types::{SigHash, Txid, Wtxid};
 use VarInt;
+use tinyvec::TinyVec;
 
 /// A reference to a transaction output
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
@@ -197,7 +199,7 @@ pub struct TxIn {
     /// Encodable/Decodable, as it is (de)serialized at the end of the full
     /// Transaction. It *is* (de)serialized with the rest of the TxIn in other
     /// (de)serialization routines.
-    pub witness: Vec<Vec<u8>>
+    pub witness: Witness
 }
 
 impl Default for TxIn {
@@ -206,7 +208,7 @@ impl Default for TxIn {
             previous_output: OutPoint::default(),
             script_sig: Script::new(),
             sequence: u32::max_value(),
-            witness: Vec::new(),
+            witness: Witness::default(),
         }
     }
 }
@@ -227,6 +229,11 @@ impl Default for TxOut {
         TxOut { value: 0xffffffffffffffff, script_pubkey: Script::new() }
     }
 }
+
+/// alias
+pub type TxIns = TinyVec<[TxIn; 2]>;
+/// alias
+pub type TxOuts = TinyVec<[TxOut; 2]>;
 
 /// A Bitcoin transaction, which describes an authenticated movement of coins.
 ///
@@ -267,9 +274,9 @@ pub struct Transaction {
     /// valid immediately.
     pub lock_time: u32,
     /// List of inputs
-    pub input: Vec<TxIn>,
+    pub input: TxIns,
     /// List of outputs
-    pub output: Vec<TxOut>,
+    pub output: TxOuts,
 }
 
 impl Transaction {
@@ -280,7 +287,7 @@ impl Transaction {
         let cloned_tx = Transaction {
             version: self.version,
             lock_time: self.lock_time,
-            input: self.input.iter().map(|txin| TxIn { script_sig: Script::new(), witness: vec![], .. *txin }).collect(),
+            input: self.input.iter().map(|txin| TxIn { script_sig: Script::new(), witness: Witness::default(), .. *txin }).collect(),
             output: self.output.clone(),
         };
         cloned_tx.txid().into()
@@ -348,25 +355,27 @@ impl Transaction {
         let mut tx = Transaction {
             version: self.version,
             lock_time: self.lock_time,
-            input: vec![],
-            output: vec![],
+            input: TinyVec::Heap(vec![]),
+            output: TinyVec::Heap(vec![]),
         };
         // Add all inputs necessary..
         if anyone_can_pay {
-            tx.input = vec![TxIn {
+            let mut inputs = TinyVec::Heap(vec![]);
+            inputs.push(TxIn {
                 previous_output: self.input[input_index].previous_output,
                 script_sig: script_pubkey.clone(),
                 sequence: self.input[input_index].sequence,
-                witness: vec![],
-            }];
+                witness: Witness::default(),
+            });
+            tx.input = inputs;
         } else {
-            tx.input = Vec::with_capacity(self.input.len());
+            tx.input = TinyVec::with_capacity(self.input.len());
             for (n, input) in self.input.iter().enumerate() {
                 tx.input.push(TxIn {
                     previous_output: input.previous_output,
                     script_sig: if n == input_index { script_pubkey.clone() } else { Script::new() },
                     sequence: if n != input_index && (sighash == SigHashType::Single || sighash == SigHashType::None) { 0 } else { input.sequence },
-                    witness: vec![],
+                    witness: Witness::default(),
                 });
             }
         }
@@ -380,7 +389,7 @@ impl Transaction {
                                       .map(|(n, out)| if n == input_index { out.clone() } else { TxOut::default() });
                 output_iter.collect()
             }
-            SigHashType::None => vec![],
+            SigHashType::None => TinyVec::Heap(vec![]),
             _ => unreachable!()
         };
         // hash the result
@@ -473,10 +482,7 @@ impl Transaction {
                 input.script_sig.len());
             if !input.witness.is_empty() {
                 inputs_with_witnesses += 1;
-                input_weight += VarInt(input.witness.len() as u64).len();
-                for elem in &input.witness {
-                    input_weight += VarInt(elem.len() as u64).len() + elem.len();
-                }
+                input_weight += input.witness.serialized_len();
             }
         }
         let mut output_size = 0;
@@ -578,7 +584,7 @@ impl Decodable for TxIn {
             previous_output: Decodable::consensus_decode(&mut d)?,
             script_sig: Decodable::consensus_decode(&mut d)?,
             sequence: Decodable::consensus_decode(d)?,
-            witness: vec![],
+            witness: Witness::default(),
         })
     }
 }
@@ -618,15 +624,15 @@ impl Decodable for Transaction {
     fn consensus_decode<D: io::Read>(d: D) -> Result<Self, encode::Error> {
         let mut d = d.take(MAX_VEC_SIZE as u64);
         let version = i32::consensus_decode(&mut d)?;
-        let input = Vec::<TxIn>::consensus_decode(&mut d)?;
+        let input = TxIns::consensus_decode(&mut d)?;
         // segwit
         if input.is_empty() {
             let segwit_flag = u8::consensus_decode(&mut d)?;
             match segwit_flag {
                 // BIP144 input witnesses
                 1 => {
-                    let mut input = Vec::<TxIn>::consensus_decode(&mut d)?;
-                    let output = Vec::<TxOut>::consensus_decode(&mut d)?;
+                    let mut input = TxIns::consensus_decode(&mut d)?;
+                    let output = TxOuts::consensus_decode(&mut d)?;
                     for txin in input.iter_mut() {
                         txin.witness = Decodable::consensus_decode(&mut d)?;
                     }
@@ -1466,7 +1472,9 @@ mod tests {
         }).is_err());
 
         // test that we get a failure if we corrupt a signature
-        spending.input[1].witness[0][10] = 42;
+        let mut witness: Vec<_> = spending.input[1].witness.iter().map(|el| el.to_vec()).collect();
+        witness[0][10] = 42;
+        spending.input[1].witness = witness.into();
         match spending.verify(|point: &OutPoint| {
             if let Some(tx) = spent3.remove(&point.txid) {
                 return tx.output.get(point.vout as usize).cloned();

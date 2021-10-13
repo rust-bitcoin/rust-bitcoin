@@ -72,7 +72,7 @@ impl PartiallySignedTransaction {
 
         for (vin, psbtin) in tx.input.iter_mut().zip(self.inputs.into_iter()) {
             vin.script_sig = psbtin.final_script_sig.unwrap_or_else(Script::new);
-            vin.witness = psbtin.final_script_witness.unwrap_or_else(Vec::new);
+            vin.witness = psbtin.final_script_witness.unwrap_or_else(Vec::new).into();
         }
 
         tx
@@ -238,6 +238,7 @@ mod tests {
     use super::PartiallySignedTransaction;
     use util::psbt::raw::ProprietaryKey;
     use std::collections::BTreeMap;
+    use blockdata::witness::Witness;
 
     #[test]
     fn trivial_psbt() {
@@ -246,8 +247,8 @@ mod tests {
                 unsigned_tx: Transaction {
                     version: 2,
                     lock_time: 0,
-                    input: vec![],
-                    output: vec![],
+                    input: tinyvec::TinyVec::Heap(vec![]),
+                    output: tinyvec::TinyVec::Heap(vec![]),
                 },
                 xpub: Default::default(),
                 version: 0,
@@ -313,7 +314,7 @@ mod tests {
             unsigned_tx: Transaction {
                 version: 2,
                 lock_time: 1257139,
-                input: vec![TxIn {
+                input: tinyvec::TinyVec::Heap(vec![TxIn {
                     previous_output: OutPoint {
                         txid: Txid::from_hex(
                             "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126",
@@ -322,9 +323,9 @@ mod tests {
                     },
                     script_sig: Script::new(),
                     sequence: 4294967294,
-                    witness: vec![],
-                }],
-                output: vec![
+                    witness: Witness::default(),
+                }]),
+                output: tinyvec::TinyVec::Heap(vec![
                     TxOut {
                         value: 99999699,
                         script_pubkey: hex_script!(
@@ -337,7 +338,7 @@ mod tests {
                             "a9143545e6e33b832c47050f24d3eeb93c9c03948bc787"
                         ),
                     },
-                ],
+                ]),
             },
             xpub: Default::default(),
             version: 0,
@@ -390,7 +391,7 @@ mod tests {
                 },
                 script_sig: hex_script!("160014be18d152a9b012039daf3da7de4f53349eecb985"),
                 sequence: 4294967295,
-                witness: vec![Vec::from_hex("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105").unwrap()],
+                witness: vec![Vec::from_hex("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105").unwrap()].into(),
             }],
             output: vec![
                 TxOut {
@@ -430,7 +431,7 @@ mod tests {
                 unsigned_tx: {
                     let mut unsigned = tx.clone();
                     unsigned.input[0].script_sig = Script::new();
-                    unsigned.input[0].witness = Vec::new();
+                    unsigned.input[0].witness = Witness::default();
                     unsigned
                 },
                 proprietary: proprietary.clone(),
@@ -485,6 +486,7 @@ mod tests {
         use util::psbt::raw;
         use util::psbt::{PartiallySignedTransaction, Error};
         use std::collections::BTreeMap;
+        use blockdata::witness::Witness;
 
         #[test]
         #[should_panic(expected = "InvalidMagic")]
@@ -569,7 +571,7 @@ mod tests {
                     unsigned_tx: Transaction {
                         version: 2,
                         lock_time: 1257139,
-                        input: vec![TxIn {
+                        input: tinyvec::TinyVec::Heap(vec![TxIn {
                             previous_output: OutPoint {
                                 txid: Txid::from_hex(
                                     "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126",
@@ -578,9 +580,9 @@ mod tests {
                             },
                             script_sig: Script::new(),
                             sequence: 4294967294,
-                            witness: vec![],
-                        }],
-                        output: vec![
+                            witness: Witness::default(),
+                        }]),
+                        output: tinyvec::TinyVec::Heap(vec![
                             TxOut {
                                 value: 99999699,
                                 script_pubkey: hex_script!("76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac"),
@@ -589,7 +591,7 @@ mod tests {
                                 value: 100000000,
                                 script_pubkey: hex_script!("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787"),
                             },
-                        ],
+                        ]),
                     },
                     xpub: Default::default(),
                     version: 0,
@@ -600,7 +602,7 @@ mod tests {
                     non_witness_utxo: Some(Transaction {
                         version: 1,
                         lock_time: 0,
-                        input: vec![TxIn {
+                        input: tinyvec::TinyVec::Heap(vec![TxIn {
                             previous_output: OutPoint {
                                 txid: Txid::from_hex(
                                     "e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389",
@@ -612,7 +614,7 @@ mod tests {
                             witness: vec![
                                 Vec::from_hex("304402202712be22e0270f394f568311dc7ca9a68970b8025fdd3b240229f07f8a5f3a240220018b38d7dcd314e734c9276bd6fb40f673325bc4baa144c800d2f2f02db2765c01").unwrap(),
                                 Vec::from_hex("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105").unwrap(),
-                            ],
+                            ].into(),
                         },
                         TxIn {
                             previous_output: OutPoint {
@@ -626,9 +628,9 @@ mod tests {
                             witness: vec![
                                 Vec::from_hex("3045022100d12b852d85dcd961d2f5f4ab660654df6eedcc794c0c33ce5cc309ffb5fce58d022067338a8e0e1725c197fb1a88af59f51e44e4255b20167c8684031c05d1f2592a01").unwrap(),
                                 Vec::from_hex("0223b72beef0965d10be0778efecd61fcac6f79a4ea169393380734464f84f2ab3").unwrap(),
-                            ],
-                        }],
-                        output: vec![
+                            ].into(),
+                        }]),
+                        output: tinyvec::TinyVec::Heap(vec![
                             TxOut {
                                 value: 200000000,
                                 script_pubkey: hex_script!("76a91485cff1097fd9e008bb34af709c62197b38978a4888ac"),
@@ -637,7 +639,7 @@ mod tests {
                                 value: 190303501938,
                                 script_pubkey: hex_script!("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587"),
                             },
-                        ],
+                        ]),
                     }),
                     ..Default::default()
                 },],
@@ -802,7 +804,7 @@ mod tests {
                 unsigned_tx: Transaction {
                     version: 2,
                     lock_time: 1257139,
-                    input: vec![TxIn {
+                    input: tinyvec::TinyVec::Heap(vec![TxIn {
                         previous_output: OutPoint {
                             txid: Txid::from_hex(
                                 "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126",
@@ -811,9 +813,9 @@ mod tests {
                         },
                         script_sig: Script::new(),
                         sequence: 4294967294,
-                        witness: vec![],
-                    }],
-                    output: vec![
+                        witness: Witness::default(),
+                    }]),
+                    output: tinyvec::TinyVec::Heap(vec![
                         TxOut {
                             value: 99999699,
                             script_pubkey: hex_script!("76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac"),
@@ -822,7 +824,7 @@ mod tests {
                             value: 100000000,
                             script_pubkey: hex_script!("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787"),
                         },
-                    ],
+                    ]),
                 },
                 version: 0,
                 xpub: Default::default(),
@@ -833,7 +835,7 @@ mod tests {
                 non_witness_utxo: Some(Transaction {
                     version: 1,
                     lock_time: 0,
-                    input: vec![TxIn {
+                    input: tinyvec::TinyVec::Heap(vec![TxIn {
                         previous_output: OutPoint {
                             txid: Txid::from_hex(
                                 "e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389",
@@ -845,7 +847,7 @@ mod tests {
                         witness: vec![
                             Vec::from_hex("304402202712be22e0270f394f568311dc7ca9a68970b8025fdd3b240229f07f8a5f3a240220018b38d7dcd314e734c9276bd6fb40f673325bc4baa144c800d2f2f02db2765c01").unwrap(),
                             Vec::from_hex("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105").unwrap(),
-                        ],
+                        ].into(),
                     },
                     TxIn {
                         previous_output: OutPoint {
@@ -859,9 +861,9 @@ mod tests {
                         witness: vec![
                             Vec::from_hex("3045022100d12b852d85dcd961d2f5f4ab660654df6eedcc794c0c33ce5cc309ffb5fce58d022067338a8e0e1725c197fb1a88af59f51e44e4255b20167c8684031c05d1f2592a01").unwrap(),
                             Vec::from_hex("0223b72beef0965d10be0778efecd61fcac6f79a4ea169393380734464f84f2ab3").unwrap(),
-                        ],
-                    }],
-                    output: vec![
+                        ].into(),
+                    }]),
+                    output: tinyvec::TinyVec::Heap(vec![
                         TxOut {
                             value: 200000000,
                             script_pubkey: hex_script!("76a91485cff1097fd9e008bb34af709c62197b38978a4888ac"),
@@ -870,7 +872,7 @@ mod tests {
                             value: 190303501938,
                             script_pubkey: hex_script!("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587"),
                         },
-                    ],
+                    ]),
                 }),
                 ..Default::default()
             },],
