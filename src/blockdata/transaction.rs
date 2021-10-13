@@ -41,6 +41,7 @@ use consensus::{encode, Decodable, Encodable};
 use consensus::encode::MAX_VEC_SIZE;
 use hash_types::{SigHash, Txid, Wtxid};
 use VarInt;
+use tinyvec::TinyVec;
 
 /// A reference to a transaction output
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
@@ -229,6 +230,11 @@ impl Default for TxOut {
     }
 }
 
+/// alias
+pub type TxIns = TinyVec<[TxIn; 2]>;
+/// alias
+pub type TxOuts = TinyVec<[TxOut; 2]>;
+
 /// A Bitcoin transaction, which describes an authenticated movement of coins.
 ///
 /// If any inputs have nonempty witnesses, the entire transaction is serialized
@@ -268,9 +274,9 @@ pub struct Transaction {
     /// valid immediately.
     pub lock_time: u32,
     /// List of inputs
-    pub input: Vec<TxIn>,
+    pub input: TxIns,
     /// List of outputs
-    pub output: Vec<TxOut>,
+    pub output: TxOuts,
 }
 
 impl Transaction {
@@ -349,19 +355,21 @@ impl Transaction {
         let mut tx = Transaction {
             version: self.version,
             lock_time: self.lock_time,
-            input: vec![],
-            output: vec![],
+            input: TinyVec::Heap(vec![]),
+            output: TinyVec::Heap(vec![]),
         };
         // Add all inputs necessary..
         if anyone_can_pay {
-            tx.input = vec![TxIn {
+            let mut inputs = TinyVec::Heap(vec![]);
+            inputs.push(TxIn {
                 previous_output: self.input[input_index].previous_output,
                 script_sig: script_pubkey.clone(),
                 sequence: self.input[input_index].sequence,
                 witness: Witness::default(),
-            }];
+            });
+            tx.input = inputs;
         } else {
-            tx.input = Vec::with_capacity(self.input.len());
+            tx.input = TinyVec::with_capacity(self.input.len());
             for (n, input) in self.input.iter().enumerate() {
                 tx.input.push(TxIn {
                     previous_output: input.previous_output,
@@ -381,7 +389,7 @@ impl Transaction {
                                       .map(|(n, out)| if n == input_index { out.clone() } else { TxOut::default() });
                 output_iter.collect()
             }
-            SigHashType::None => vec![],
+            SigHashType::None => TinyVec::Heap(vec![]),
             _ => unreachable!()
         };
         // hash the result
@@ -616,15 +624,15 @@ impl Decodable for Transaction {
     fn consensus_decode<D: io::Read>(d: D) -> Result<Self, encode::Error> {
         let mut d = d.take(MAX_VEC_SIZE as u64);
         let version = i32::consensus_decode(&mut d)?;
-        let input = Vec::<TxIn>::consensus_decode(&mut d)?;
+        let input = TxIns::consensus_decode(&mut d)?;
         // segwit
         if input.is_empty() {
             let segwit_flag = u8::consensus_decode(&mut d)?;
             match segwit_flag {
                 // BIP144 input witnesses
                 1 => {
-                    let mut input = Vec::<TxIn>::consensus_decode(&mut d)?;
-                    let output = Vec::<TxOut>::consensus_decode(&mut d)?;
+                    let mut input = TxIns::consensus_decode(&mut d)?;
+                    let output = TxOuts::consensus_decode(&mut d)?;
                     for txin in input.iter_mut() {
                         txin.witness = Decodable::consensus_decode(&mut d)?;
                     }

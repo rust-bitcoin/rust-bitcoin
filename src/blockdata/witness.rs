@@ -10,6 +10,7 @@ use prelude::*;
 use VarInt;
 
 #[cfg(feature = "serde")] use serde;
+use tinyvec::TinyVec;
 
 /// The Witness is the data used to unlock bitcoins since the [segwit upgrade](https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki)
 ///
@@ -22,7 +23,7 @@ use VarInt;
 pub struct Witness {
     /// contains the witness Vec<Vec<u8>> serialization without the initial varint indicating the
     /// number of elements (which is stored in len)
-    content: Vec<u8>,
+    content: TinyVec<[u8; 128]>,
 
     /// Number of elements in the witness.
     /// It is stored separately (instead of as VarInt in the initial part of content) so that method
@@ -44,7 +45,8 @@ impl From<Vec<Vec<u8>>> for Witness {
             .iter()
             .map(|el| el.len() + VarInt(el.len() as u64).len())
             .sum();
-        let mut content = vec![0u8; content_size];
+        let mut content = TinyVec::with_capacity(content_size);
+        content.resize(content_size, 0);
         let mut cursor = 0usize;
         for el in vec {
             let el_len_varint = VarInt(el.len() as u64);
@@ -73,7 +75,8 @@ impl Decodable for Witness {
 
             // this number should be determined as high enough to cover most witness, and low enough
             // to avoid wasting space without reallocating
-            let mut content = vec![0u8; 128];
+            let mut content = TinyVec::with_capacity(128);
+            content.resize(128, 0);
 
             for _ in 0..witness_elements {
                 let element_size_varint = VarInt::consensus_decode(&mut d)?;
@@ -114,7 +117,7 @@ impl Decodable for Witness {
     }
 }
 
-fn resize_if_needed(vec: &mut Vec<u8>, required_len: usize) {
+fn resize_if_needed(vec: &mut TinyVec<[u8; 128]>, required_len: usize) {
     if required_len >= vec.len() {
         let mut new_len = vec.len().max(1);
         while new_len <= required_len {
@@ -188,7 +191,7 @@ impl Default for Witness {
         // from https://doc.rust-lang.org/std/vec/struct.Vec.html#method.new
         // The vector will not allocate until elements are pushed onto it.
         Witness {
-            content: Vec::new(),
+            content: TinyVec::Heap(Vec::new()),
             witness_elements: 0,
         }
     }
@@ -240,6 +243,7 @@ mod test {
     use consensus::{deserialize, serialize};
     use hashes::hex::{FromHex, ToHex};
     use Transaction;
+    use tinyvec::TinyVec;
 
     #[test]
     fn test_push() {
@@ -247,13 +251,13 @@ mod test {
         witness.push(&vec![0u8]);
         let expected = Witness {
             witness_elements: 1,
-            content: vec![1u8, 0],
+            content: TinyVec::Heap(vec![1u8, 0]),
         };
         assert_eq!(witness, expected);
         witness.push(&vec![2u8, 3u8]);
         let expected = Witness {
             witness_elements: 2,
-            content: vec![1u8, 0, 2, 2, 3],
+            content: TinyVec::Heap(vec![1u8, 0, 2, 2, 3]),
         };
         assert_eq!(witness, expected);
     }
@@ -267,7 +271,7 @@ mod test {
         let witness_vec = vec![w0, w1];
         let witness_serialized: Vec<u8> = serialize(&witness_vec);
         let witness = Witness {
-            content: witness_serialized[1..].to_vec(),
+            content: TinyVec::Heap(witness_serialized[1..].to_vec()),
             witness_elements: 2,
         };
         for (i, el) in witness.iter().enumerate() {

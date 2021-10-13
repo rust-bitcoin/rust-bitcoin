@@ -32,6 +32,7 @@ use blockdata::block::{Block, BlockHeader};
 use blockdata::witness::Witness;
 use network::constants::Network;
 use util::uint::Uint256;
+use tinyvec::TinyVec;
 
 /// The maximum allowable sequence number
 pub const MAX_SEQUENCE: u32 = 0xFFFFFFFF;
@@ -81,8 +82,8 @@ fn bitcoin_genesis_tx() -> Transaction {
     let mut ret = Transaction {
         version: 1,
         lock_time: 0,
-        input: vec![],
-        output: vec![],
+        input: TinyVec::Heap(vec![]),
+        output: TinyVec::Heap(vec![]),
     };
 
     // Inputs

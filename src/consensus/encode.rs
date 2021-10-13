@@ -592,10 +592,52 @@ impl_vec!(FilterHash);
 impl_vec!(FilterHeader);
 impl_vec!(TxMerkleNode);
 impl_vec!(Transaction);
-impl_vec!(TxOut);
-impl_vec!(TxIn);
+
 impl_vec!(Vec<u8>);
 impl_vec!(u64);
+
+
+// Vectors
+macro_rules! impl_tiny_vec {
+    ($type: ty, $num: expr) => {
+        impl Encodable for tinyvec::TinyVec<[$type; $num]> {
+            #[inline]
+            fn consensus_encode<S: io::Write>(
+                &self,
+                mut s: S,
+            ) -> Result<usize, io::Error> {
+                let mut len = 0;
+                len += VarInt(self.len() as u64).consensus_encode(&mut s)?;
+                for c in self.iter() {
+                    len += c.consensus_encode(&mut s)?;
+                }
+                Ok(len)
+            }
+        }
+        impl Decodable for tinyvec::TinyVec<[$type; $num]> {
+            #[inline]
+            fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, Error> {
+                let len = VarInt::consensus_decode(&mut d)?.0;
+                let byte_size = (len as usize)
+                                    .checked_mul(mem::size_of::<$type>())
+                                    .ok_or(self::Error::ParseFailed("Invalid length"))?;
+                if byte_size > MAX_VEC_SIZE {
+                    return Err(self::Error::OversizedVectorAllocation { requested: byte_size, max: MAX_VEC_SIZE })
+                }
+                let mut ret = tinyvec::TinyVec::with_capacity(len as usize);
+                let mut d = d.take(MAX_VEC_SIZE as u64);
+                for _ in 0..len {
+                    ret.push(Decodable::consensus_decode(&mut d)?);
+                }
+                Ok(ret)
+            }
+        }
+    }
+}
+impl_tiny_vec!(TxOut, 1);
+impl_tiny_vec!(TxOut, 2);
+impl_tiny_vec!(TxIn, 2);
+impl_tiny_vec!(TxIn, 1);
 
 #[cfg(feature = "std")] impl_vec!(Inventory);
 #[cfg(feature = "std")] impl_vec!((u32, Address));
@@ -775,7 +817,7 @@ mod tests {
     use super::*;
     use core::{mem::{self, discriminant}, fmt};
     use super::{deserialize, serialize, Error, CheckedData, VarInt};
-    use super::{Transaction, BlockHash, FilterHash, TxMerkleNode, TxOut, TxIn};
+    use super::{Transaction, BlockHash, FilterHash, TxMerkleNode};
     use consensus::{Encodable, deserialize_partial, Decodable};
     use util::endian::{u64_to_array_le, u32_to_array_le, u16_to_array_le};
     use secp256k1::rand::{thread_rng, Rng};
@@ -984,8 +1026,6 @@ mod tests {
         test_len_is_max_vec::<FilterHash>();
         test_len_is_max_vec::<TxMerkleNode>();
         test_len_is_max_vec::<Transaction>();
-        test_len_is_max_vec::<TxOut>();
-        test_len_is_max_vec::<TxIn>();
         test_len_is_max_vec::<Vec<u8>>();
         test_len_is_max_vec::<u64>();
         #[cfg(feature = "std")]
