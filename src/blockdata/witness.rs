@@ -31,10 +31,7 @@ pub struct Witness {
 }
 
 /// Support structure to allow efficient and convenient iteration over the Witness elements
-pub struct Iter<'a> {
-    witness: &'a Witness,
-    cursor: usize,
-}
+pub struct Iter<'a> (::core::slice::Iter<'a, u8>);
 
 impl From<Vec<Vec<u8>>> for Witness {
     fn from(vec: Vec<Vec<u8>>) -> Self {
@@ -141,10 +138,7 @@ impl Witness {
 
     /// Returns a struct implementing [`Iterator`]
     pub fn iter(&self) -> Iter {
-        Iter {
-            witness: &self,
-            cursor: 0,
-        }
+        Iter(self.content.iter())
     }
 
     /// Returns the number of elements this witness holds
@@ -199,17 +193,15 @@ impl<'a> Iterator for Iter<'a> {
     type Item = &'a [u8];
 
     fn next(&mut self) -> Option<Self::Item> {
-        let vec = &self.witness.content;
-        if self.cursor >= vec.len() {
-            None
-        } else {
-            let var = VarInt::consensus_decode(&vec[self.cursor..])
-                .expect("is granted witness.content contains varint because created only from internal methods");
-            let start = self.cursor + var.len();
-            let end = start + var.0 as usize;
-            self.cursor = end;
-            Some(&vec[start..end])
+        let varint = VarInt::consensus_decode(self.0.as_slice()).ok()?;
+        self.0.nth(varint.len() - 1)?; // VarInt::len returns at least 1
+        let len = varint.0 as usize;
+        let slice = &self.0.as_slice()[..len];
+        if len > 0 {
+            // we don't need to advance if the element is empty
+            self.0.nth(len - 1)?;
         }
+        Some(slice)
     }
 }
 
