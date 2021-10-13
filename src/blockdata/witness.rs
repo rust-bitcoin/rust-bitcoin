@@ -1,6 +1,6 @@
 //! Witness
 //!
-//! This module contains the [`Witness`] struct and relative methods to operate on it
+//! This module contains the [`Witness`] struct and related methods to operate on it
 //!
 
 use consensus::encode::{Error, MAX_VEC_SIZE};
@@ -31,7 +31,7 @@ pub struct Witness {
 }
 
 /// Support structure to allow efficient and convenient iteration over the Witness elements
-pub struct WitnessIterator<'a> {
+pub struct Iter<'a> {
     witness: &'a Witness,
     cursor: usize,
 }
@@ -140,8 +140,8 @@ impl Witness {
     }
 
     /// Returns a struct implementing [`Iterator`]
-    pub fn iter(&self) -> WitnessIterator {
-        WitnessIterator {
+    pub fn iter(&self) -> Iter {
+        Iter {
             witness: &self,
             cursor: 0,
         }
@@ -195,7 +195,7 @@ impl Default for Witness {
     }
 }
 
-impl<'a> Iterator for WitnessIterator<'a> {
+impl<'a> Iterator for Iter<'a> {
     type Item = &'a [u8];
 
     fn next(&mut self) -> Option<Self::Item> {
