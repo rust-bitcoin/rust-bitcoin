@@ -26,14 +26,14 @@
 
 use prelude::*;
 
-use io;
+use ::{io, VarInt};
 use core::{fmt, default::Default};
 
 #[cfg(feature = "serde")] use serde;
 
 use hash_types::{PubkeyHash, WPubkeyHash, ScriptHash, WScriptHash};
 use blockdata::opcodes;
-use consensus::{encode, Decodable, Encodable};
+use consensus::{encode, Decodable, Encodable, ReadExt};
 use hashes::{Hash, hex};
 use policy::DUST_RELAY_TX_FEE;
 #[cfg(feature="bitcoinconsensus")] use bitcoinconsensus;
@@ -42,10 +42,14 @@ use policy::DUST_RELAY_TX_FEE;
 
 use util::ecdsa::PublicKey;
 use util::address::WitnessVersion;
+use tinyvec::TinyVec;
+use consensus::encode::{consensus_encode_with_size, MAX_VEC_SIZE};
+
+type StackScript = [u8; 64];
 
 #[derive(Clone, Default, PartialOrd, Ord, PartialEq, Eq, Hash)]
 /// A Bitcoin script
-pub struct Script(Box<[u8]>);
+pub struct Script(TinyVec<StackScript>);
 
 impl AsRef<[u8]> for Script {
     fn as_ref(&self) -> &[u8] {
@@ -91,7 +95,7 @@ impl hex::FromHex for Script {
             ExactSizeIterator +
             DoubleEndedIterator,
     {
-        Vec::from_byte_iter(iter).map(|v| Script(Box::<[u8]>::from(v)))
+        Vec::from_byte_iter(iter).map(|v| Script( TinyVec::Heap(v)))
     }
 }
 
@@ -282,7 +286,7 @@ fn read_uint_iter(data: &mut ::core::slice::Iter<'_, u8>, size: usize) -> Result
 
 impl Script {
     /// Creates a new empty script
-    pub fn new() -> Script { Script(vec![].into_boxed_slice()) }
+    pub fn new() -> Script { Script( TinyVec::Heap(vec![])) }
 
     /// Generates P2PK-type of scriptPubkey
     pub fn new_p2pk(pubkey: &PublicKey) -> Script {
@@ -358,10 +362,10 @@ impl Script {
     pub fn as_bytes(&self) -> &[u8] { &*self.0 }
 
     /// Returns a copy of the script data
-    pub fn to_bytes(&self) -> Vec<u8> { self.0.clone().into_vec() }
+    pub fn to_bytes(&self) -> Vec<u8> { self.0.to_vec() }
 
     /// Convert the script into a byte vector
-    pub fn into_bytes(self) -> Vec<u8> { self.0.into_vec() }
+    pub fn into_bytes(self) -> Vec<u8> { self.0.to_vec() }
 
     /// Compute the P2SH output corresponding to this redeem script
     pub fn to_p2sh(&self) -> Script {
@@ -616,7 +620,7 @@ impl Script {
 
 /// Creates a new script from an existing vector
 impl From<Vec<u8>> for Script {
-    fn from(v: Vec<u8>) -> Script { Script(v.into_boxed_slice()) }
+    fn from(v: Vec<u8>) -> Script { Script( TinyVec::Heap(v)) }
 }
 
 impl_index_newtype!(Script, u8);
@@ -854,7 +858,7 @@ impl Builder {
 
     /// Converts the `Builder` into an unmodifiable `Script`
     pub fn into_script(self) -> Script {
-        Script(self.0.into_boxed_slice())
+        Script( TinyVec::Heap(self.0))
     }
 }
 
@@ -866,7 +870,7 @@ impl Default for Builder {
 /// Creates a new script from an existing vector
 impl From<Vec<u8>> for Builder {
     fn from(v: Vec<u8>) -> Builder {
-        let script = Script(v.into_boxed_slice());
+        let script = Script( TinyVec::Heap( v));
         let last_op = match script.instructions().last() {
             Some(Ok(Instruction::Op(op))) => Some(op),
             _ => None,
@@ -960,14 +964,22 @@ impl Encodable for Script {
         &self,
         s: S,
     ) -> Result<usize, io::Error> {
-        self.0.consensus_encode(s)
+        consensus_encode_with_size(self.0.as_slice(), s)
     }
 }
 
 impl Decodable for Script {
     #[inline]
-    fn consensus_decode<D: io::Read>(d: D) -> Result<Self, encode::Error> {
-        Ok(Script(Decodable::consensus_decode(d)?))
+    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
+        let len = VarInt::consensus_decode(&mut d)?.0 as usize;
+        if len > MAX_VEC_SIZE {
+            return Err(encode::Error::OversizedVectorAllocation { requested: len, max: MAX_VEC_SIZE })
+        }
+        let mut ret = TinyVec::with_capacity(len);
+        ret.resize(len, 0);
+        d.read_slice(&mut ret)?;
+        Ok(Script(ret))
+        //Ok(Script(Decodable::consensus_decode(d)?))
     }
 }
 
