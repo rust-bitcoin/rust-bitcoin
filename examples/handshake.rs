@@ -3,11 +3,10 @@ extern crate bitcoin;
 use std::net::{IpAddr, Ipv4Addr, Shutdown, SocketAddr, TcpStream};
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::{env, process};
-use std::io::Write;
+use std::io::{Write, BufReader};
 
-use bitcoin::consensus::encode;
+use bitcoin::consensus::{encode, Decodable};
 use bitcoin::network::{address, constants, message, message_network};
-use bitcoin::network::stream_reader::StreamReader;
 use bitcoin::secp256k1;
 use bitcoin::secp256k1::rand::Rng;
 
@@ -41,10 +40,10 @@ fn main() {
 
         // Setup StreamReader
         let read_stream = stream.try_clone().unwrap();
-        let mut stream_reader = StreamReader::new(read_stream, None);
+        let mut stream_reader = BufReader::new(read_stream);
         loop {
             // Loop an retrieve new messages
-            let reply: message::RawNetworkMessage = stream_reader.read_next().unwrap();
+            let reply = message::RawNetworkMessage::consensus_decode(&mut stream_reader).unwrap();
             match reply.payload {
                 message::NetworkMessage::Version(_) => {
                     println!("Received version message: {:?}", reply.payload);
