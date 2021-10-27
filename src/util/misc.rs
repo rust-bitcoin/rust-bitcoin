@@ -23,6 +23,7 @@ use hashes::{sha256d, Hash, HashEngine};
 use blockdata::opcodes;
 use consensus::{encode, Encodable};
 
+
 #[cfg(feature = "secp-recovery")]
 #[cfg_attr(docsrs, doc(cfg(feature = "secp-recovery")))]
 pub use self::message_signing::{MessageSignature, MessageSignatureError};
@@ -76,6 +77,27 @@ mod message_signing {
         }
     }
 
+    // TODO: Move this somewhere better
+    #[derive(Copy, Clone, PartialEq, Eq, Debug)]
+    pub enum SegwitType {
+        P2wpkh,
+        P2shwpkh
+    }
+
+    impl SegwitType {
+        pub fn from_flag_byte(byte: u8) -> Result<Option<SegwitType>, MessageSignatureError> {
+            if (byte & 8) == 0 {
+                Ok(None)
+            } else {
+                if (byte & 4) == 0 {
+                    Ok(Some(SegwitType::P2shwpkh))
+                } else {
+                    Ok(Some(SegwitType::P2wpkh))
+                }
+            }
+        }
+    }
+
     #[doc(hidden)]
     impl From<secp256k1::Error> for MessageSignatureError {
         fn from(e: secp256k1::Error) -> MessageSignatureError {
@@ -95,14 +117,20 @@ mod message_signing {
         pub signature: RecoverableSignature,
         /// Whether or not this signature was created with a compressed key.
         pub compressed: bool,
+        /// Segwit type realted to this signature
+        pub segwit_type: Option<SegwitType>,
+        /// Recovery Id for easy access
+        pub recovery_id: RecoveryId,
     }
 
     impl MessageSignature {
         /// Create a new [MessageSignature].
-        pub fn new(signature: RecoverableSignature, compressed: bool) -> MessageSignature {
+        pub fn new(signature: RecoverableSignature, compressed: bool, segwit_type: Option<SegwitType>) -> MessageSignature {
             MessageSignature {
                 signature: signature,
                 compressed: compressed,
+                segwit_type,
+                recovery_id: signature.serialize_compact().0,
             }
         }
 
@@ -128,10 +156,13 @@ mod message_signing {
             if bytes[0] < 27 {
                 return Err(MessageSignatureError::InvalidEncoding(secp256k1::Error::InvalidRecoveryId));
             };
-            let recid = RecoveryId::from_i32(((bytes[0] - 27) & 0x03) as i32)?;
+            let flag_byte: u8 = bytes[0] - 27;
+            let recid = RecoveryId::from_i32(((flag_byte) & 0x03) as i32)?;
             Ok(MessageSignature {
                 signature: RecoverableSignature::from_compact(&bytes[1..], recid)?,
                 compressed: ((bytes[0] - 27) & 0x04) != 0,
+                segwit_type: SegwitType::from_flag_byte(flag_byte)?,
+                recovery_id: recid,
             })
         }
 
@@ -310,7 +341,7 @@ mod tests {
     #[cfg(all(feature = "secp-recovery", feature = "base64"))]
     fn test_message_signature() {
         use core::str::FromStr;
-        use secp256k1;
+        use secp256k1::{self, recovery::RecoveryId};
 
         let secp = secp256k1::Secp256k1::new();
         let message = "rust-bitcoin MessageSignature test";
@@ -322,6 +353,8 @@ mod tests {
         let signature = super::MessageSignature {
             signature: secp_sig,
             compressed: true,
+            recovery_id: RecoveryId::from_i32(0).unwrap(),
+            segwit_type: None,
         };
 
         assert_eq!(signature.to_base64(), signature.to_string());
