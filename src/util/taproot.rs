@@ -68,6 +68,7 @@ macro_rules! sha256t_hash_newtype {
         #[doc = "The tag used for ["]
         #[doc = $sname]
         #[doc = "]"]
+        #[derive(Copy, Clone, PartialEq, Eq, Default, PartialOrd, Ord, Hash)]
         pub struct $tag;
 
         impl sha256t::Tag for $tag {

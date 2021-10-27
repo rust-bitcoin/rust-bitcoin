@@ -39,6 +39,7 @@ use io::{self, Cursor, Read};
 
 use util::endian;
 use util::psbt;
+use util::taproot::TapLeafHash;
 use hashes::hex::ToHex;
 
 use blockdata::transaction::{TxOut, Transaction, TxIn};
@@ -594,6 +595,7 @@ impl_vec!(TxOut);
 impl_vec!(TxIn);
 impl_vec!(Vec<u8>);
 impl_vec!(u64);
+impl_vec!(TapLeafHash);
 
 #[cfg(feature = "std")] impl_vec!(Inventory);
 #[cfg(feature = "std")] impl_vec!((u32, Address));
@@ -762,6 +764,18 @@ impl Encodable for sha256::Hash {
 }
 
 impl Decodable for sha256::Hash {
+    fn consensus_decode<D: io::Read>(d: D) -> Result<Self, Error> {
+        Ok(Self::from_inner(<<Self as Hash>::Inner>::consensus_decode(d)?))
+    }
+}
+
+impl Encodable for TapLeafHash {
+    fn consensus_encode<S: io::Write>(&self, s: S) -> Result<usize, io::Error> {
+        self.into_inner().consensus_encode(s)
+    }
+}
+
+impl Decodable for TapLeafHash {
     fn consensus_decode<D: io::Read>(d: D) -> Result<Self, Error> {
         Ok(Self::from_inner(<<Self as Hash>::Inner>::consensus_decode(d)?))
     }
