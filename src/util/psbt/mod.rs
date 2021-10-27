@@ -39,7 +39,7 @@ mod macros;
 pub mod serialize;
 
 mod map;
-pub use self::map::{Map, Input, Output};
+pub use self::map::{Map, Input, Output, TapTree};
 
 use util::bip32::{ExtendedPubKey, KeySource};
 

@@ -420,6 +420,11 @@ impl TaprootBuilder {
         self.insert(node, depth)
     }
 
+    /// Check if the builder is a complete tree
+    pub fn is_complete(&self) -> bool {
+        self.branch.len() == 1 && self.branch[0].is_some()
+    }
+
     /// Create [`TaprootSpendInfo`] with the given internal key
     pub fn finalize<C: secp256k1::Verification>(
         mut self,
@@ -435,6 +440,10 @@ impl TaprootBuilder {
             .ok_or(TaprootBuilderError::EmptyTree)?
             .expect("Builder invariant: last element of the branch must be some");
         Ok(TaprootSpendInfo::from_node_info(secp, internal_key, node))
+    }
+
+    pub(crate) fn branch(&self) -> &[Option<NodeInfo>]{
+        &self.branch
     }
 
     // Helper function to insert a leaf at a depth
@@ -489,9 +498,9 @@ impl TaprootBuilder {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub(crate) struct NodeInfo {
     /// Merkle Hash for this node
-    hash: sha256::Hash,
+    pub(crate) hash: sha256::Hash,
     /// information about leaves inside this node
-    leaves: Vec<LeafInfo>,
+    pub(crate) leaves: Vec<LeafInfo>,
 }
 
 impl NodeInfo {
@@ -543,11 +552,11 @@ impl NodeInfo {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub(crate) struct LeafInfo {
     // The underlying script
-    script: Script,
+    pub(crate) script: Script,
     // The leaf version
-    ver: LeafVersion,
+    pub(crate) ver: LeafVersion,
     // The merkle proof(hashing partners) to get this node
-    merkle_branch: TaprootMerkleBranch,
+    pub(crate) merkle_branch: TaprootMerkleBranch,
 }
 
 impl LeafInfo {
