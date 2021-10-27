@@ -159,14 +159,16 @@ mod message_signing {
             secp_ctx: &secp256k1::Secp256k1<C>,
             address: &Address,
             msg_hash: sha256d::Hash
-        ) -> Result<bool, secp256k1::Error> {
+        ) -> Result<bool, Box<dyn std::error::Error>> {
             let pubkey = self.recover_pubkey(&secp_ctx, msg_hash)?;
             Ok(match address.address_type() {
                 Some(AddressType::P2pkh) => {
                     *address == Address::p2pkh(&pubkey, address.network)
                 }
                 Some(AddressType::P2sh) => false,
-                Some(AddressType::P2wpkh) => false,
+                Some(AddressType::P2wpkh) => {
+                    *address == Address::p2wpkh(&pubkey, address.network)?
+                },
                 Some(AddressType::P2wsh) => false,
                 Some(AddressType::P2tr) => false,
                 None => false,
@@ -331,11 +333,11 @@ mod tests {
         assert_eq!(pubkey.key, secp256k1::PublicKey::from_secret_key(&secp, &privkey));
 
         let p2pkh = ::Address::p2pkh(&pubkey, ::Network::Bitcoin);
-        assert_eq!(signature2.is_signed_by_address(&secp, &p2pkh, msg_hash), Ok(true));
+        assert!(signature2.is_signed_by_address(&secp, &p2pkh, msg_hash).unwrap());
         let p2wpkh = ::Address::p2wpkh(&pubkey, ::Network::Bitcoin).unwrap();
-        assert_eq!(signature2.is_signed_by_address(&secp, &p2wpkh, msg_hash), Ok(false));
+        assert!(signature2.is_signed_by_address(&secp, &p2wpkh, msg_hash).unwrap());
         let p2shwpkh = ::Address::p2shwpkh(&pubkey, ::Network::Bitcoin).unwrap();
-        assert_eq!(signature2.is_signed_by_address(&secp, &p2shwpkh, msg_hash), Ok(false));
+        assert_eq!(signature2.is_signed_by_address(&secp, &p2shwpkh, msg_hash).unwrap(), false);
     }
 }
 
