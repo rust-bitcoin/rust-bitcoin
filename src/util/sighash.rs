@@ -164,6 +164,9 @@ pub enum Error {
 
     /// Annex must be at least one byte long and the first bytes must be `0x50`
     WrongAnnex,
+
+    /// Invalid Sighash type
+    InvalidSigHashType(u8),
 }
 
 impl fmt::Display for Error {
@@ -176,6 +179,7 @@ impl fmt::Display for Error {
             Error::PrevoutIndex => write!(f, "The index requested is greater than available prevouts or different from the provided [Provided::Anyone] index"),
             Error::PrevoutKind => write!(f, "A single prevout has been provided but all prevouts are needed without `ANYONECANPAY`"),
             Error::WrongAnnex => write!(f, "Annex must be at least one byte long and the first bytes must be `0x50`"),
+            Error::InvalidSigHashType(hash_ty) => write!(f, "Invalid schnorr Signature hash type : {} ", hash_ty),
         }
     }
 }
@@ -254,6 +258,20 @@ impl SchnorrSigHashType {
             SchnorrSigHashType::NonePlusAnyoneCanPay => (SchnorrSigHashType::None, true),
             SchnorrSigHashType::SinglePlusAnyoneCanPay => (SchnorrSigHashType::Single, true),
             SchnorrSigHashType::Reserved => (SchnorrSigHashType::Reserved, false),
+        }
+    }
+
+    /// Create a [`SchnorrSigHashType`] from raw u8
+    pub fn from_u8(hash_ty: u8) -> Result<Self, Error> {
+        match hash_ty {
+            0x00 => Ok(SchnorrSigHashType::Default),
+            0x01 => Ok(SchnorrSigHashType::All),
+            0x02 => Ok(SchnorrSigHashType::None),
+            0x03 => Ok(SchnorrSigHashType::Single),
+            0x81 => Ok(SchnorrSigHashType::AllPlusAnyoneCanPay),
+            0x82 => Ok(SchnorrSigHashType::NonePlusAnyoneCanPay),
+            0x83 => Ok(SchnorrSigHashType::SinglePlusAnyoneCanPay),
+            x => Err(Error::InvalidSigHashType(x)),
         }
     }
 }
