@@ -46,7 +46,7 @@ mod message_signing {
     use util::ecdsa::PublicKey;
     use util::address::{Address};
 
-    use super::{bech32_decode, segwit_redeem_hash, base58_check_decode};
+    use super::{bech32_decode, segwit_redeem_hash, get_payload_bytes};
 
     /// An error used for dealing with Bitcoin Signed Messages.
     #[cfg_attr(docsrs, doc(cfg(feature = "secp-recovery")))]
@@ -206,7 +206,7 @@ mod message_signing {
                         Ok(data) => data,
                         Err(_) => {
                             let redeem_hash = segwit_redeem_hash(&pubkey_hash).to_vec();
-                            let base58_check = base58_check_decode(address);
+                            let base58_check = get_payload_bytes(address);
                             return Ok(
                                 (pubkey_hash == base58_check) ||
                                 (redeem_hash == base58_check)
@@ -217,7 +217,7 @@ mod message_signing {
                 },
                 Some(SegwitType::P2shwpkh) => {
                     let actual = segwit_redeem_hash(&pubkey_hash).to_vec();
-                    let expected = base58_check_decode(address);
+                    let expected = get_payload_bytes(address);
                     Ok(actual == expected)
                 },
                 Some(_) => {
@@ -327,8 +327,8 @@ pub fn segwit_redeem_hash(pubkey_hash: &Vec<u8>) -> ripemd160::Hash {
     hash160(&redeem_script)
 }
 
-/// docs
-pub fn base58_check_decode(address: &Address) -> Vec<u8> {
+/// Pull out payload as byte array
+pub fn get_payload_bytes(address: &Address) -> Vec<u8> {
     match &address.payload {
         Payload::ScriptHash(hash) => hash.to_vec(),
         Payload::PubkeyHash(hash) => hash.to_vec(),
