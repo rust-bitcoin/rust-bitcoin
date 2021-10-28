@@ -345,6 +345,7 @@ impl TaprootSpendInfo {
 /// branches in a DFS(Depth first search) walk to construct this tree.
 // Similar to Taproot Builder in bitcoin core
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct TaprootBuilder {
     // The following doc-comment is from bitcoin core, but modified for rust
     // The comment below describes the current state of the builder for a given tree.
@@ -484,7 +485,8 @@ impl TaprootBuilder {
 
 // Internally used structure to represent the node information in taproot tree
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-struct NodeInfo {
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub(crate) struct NodeInfo {
     /// Merkle Hash for this node
     hash: sha256::Hash,
     /// information about leaves inside this node
@@ -537,7 +539,8 @@ impl NodeInfo {
 
 // Internally used structure to store information about taproot leaf node
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-struct LeafInfo {
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub(crate) struct LeafInfo {
     // The underlying script
     script: Script,
     // The leaf version
@@ -567,6 +570,7 @@ impl LeafInfo {
 // The type of hash is sha256::Hash because the vector might contain
 // both TapBranchHash and TapLeafHash
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct TaprootMerkleBranch(Vec<sha256::Hash>);
 
 impl TaprootMerkleBranch {
@@ -638,6 +642,7 @@ impl TaprootMerkleBranch {
 
 /// Control Block data structure used in Tapscript satisfaction
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ControlBlock {
     /// The tapleaf version,
     pub leaf_version: LeafVersion,
@@ -744,6 +749,7 @@ impl ControlBlock {
 
 /// The leaf version for tapleafs
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct LeafVersion(u8);
 
 impl Default for LeafVersion {
