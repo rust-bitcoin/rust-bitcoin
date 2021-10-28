@@ -332,8 +332,7 @@ pub fn base58_check_decode(address: &Address) -> Vec<u8> {
     match &address.payload {
         Payload::ScriptHash(hash) => hash.to_vec(),
         Payload::PubkeyHash(hash) => hash.to_vec(),
-        // Payload::WitnessProgram { program, .. } => program,
-        _ => vec![]
+        Payload::WitnessProgram { program, .. } => program.clone(),
     }
 }
 
