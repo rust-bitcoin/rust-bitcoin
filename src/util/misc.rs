@@ -18,11 +18,13 @@
 
 use prelude::*;
 
-use hashes::{sha256d, Hash, HashEngine};
+use hashes::{ripemd160, sha256, sha256d, Hash, HashEngine};
 
 use blockdata::opcodes;
 use consensus::{encode, Encodable};
 
+
+use util::address::{Address, Payload};
 
 #[cfg(feature = "secp-recovery")]
 #[cfg_attr(docsrs, doc(cfg(feature = "secp-recovery")))]
@@ -42,7 +44,9 @@ mod message_signing {
     use secp256k1::recovery::{RecoveryId, RecoverableSignature};
 
     use util::ecdsa::PublicKey;
-    use util::address::{Address, AddressType};
+    use util::address::{Address};
+
+    use super::{bech32_decode, segwit_redeem_hash, base58_check_decode};
 
     /// An error used for dealing with Bitcoin Signed Messages.
     #[cfg_attr(docsrs, doc(cfg(feature = "secp-recovery")))]
@@ -77,7 +81,6 @@ mod message_signing {
         }
     }
 
-    // TODO: Move this somewhere better
     #[derive(Copy, Clone, PartialEq, Eq, Debug)]
     pub enum SegwitType {
         P2wpkh,
@@ -191,17 +194,37 @@ mod message_signing {
             address: &Address,
             msg_hash: sha256d::Hash
         ) -> Result<bool, secp256k1::Error> {
+            // Mostly ported from: https://github.com/bitcoinjs/bitcoinjs-message/blob/c43430f4c03c292c719e7801e425d887cbdf7464/index.js#L181-L233
             let pubkey = self.recover_pubkey(&secp_ctx, msg_hash)?;
-            Ok(match address.address_type() {
-                Some(AddressType::P2pkh) => {
-                    *address == Address::p2pkh(&pubkey, address.network)
-                }
-                Some(AddressType::P2sh) => false,
-                Some(AddressType::P2wpkh) => false,
-                Some(AddressType::P2wsh) => false,
-                Some(AddressType::P2tr) => false,
-                None => false,
-            })
+
+            // Use .serialize because we always want compact serialization
+            let pubkey_hash = super::hash160(&pubkey.key.serialize().to_vec()).to_vec();
+
+            match self.segwit_type {
+                None => {
+                    let expected = match bech32_decode(address) {
+                        Ok(data) => data,
+                        Err(_) => {
+                            let redeem_hash = segwit_redeem_hash(&pubkey_hash).to_vec();
+                            let base58_check = base58_check_decode(address);
+                            return Ok(
+                                (pubkey_hash == base58_check) ||
+                                (redeem_hash == base58_check)
+                            );
+                        }
+                    };
+                    Ok(pubkey_hash == expected)
+                },
+                Some(SegwitType::P2shwpkh) => {
+                    let actual = segwit_redeem_hash(&pubkey_hash).to_vec();
+                    let expected = base58_check_decode(address);
+                    Ok(actual == expected)
+                },
+                Some(_) => {
+                    let expected = bech32_decode(address).unwrap();
+                    Ok(pubkey_hash == expected)
+                },
+            }
         }
 
         #[cfg(feature = "base64")]
@@ -286,6 +309,81 @@ pub fn signed_msg_hash(msg: &str) -> sha256d::Hash {
     sha256d::Hash::from_engine(engine)
 }
 
+/// Ripemd160 hash of sha256 hash of given data
+pub fn hash160(data: &Vec<u8>) -> ripemd160::Hash {
+    let mut sha_engine = sha256::Hash::engine();
+    sha_engine.input(data);
+    let inner = sha256::Hash::from_engine(sha_engine);
+
+    let mut ripe_engine = ripemd160::Hash::engine();
+    ripe_engine.input(&inner.to_vec());
+    ripemd160::Hash::from_engine(ripe_engine)
+}
+
+/// Convert a byte array of a pubkey hash into a segwit redeem hash
+pub fn segwit_redeem_hash(pubkey_hash: &Vec<u8>) -> ripemd160::Hash {
+    let mut redeem_script: Vec<u8> = vec![0, 20];
+    redeem_script.append(&mut pubkey_hash.clone());
+    hash160(&redeem_script)
+}
+
+/// docs
+pub fn base58_check_decode(address: &Address) -> Vec<u8> {
+    match &address.payload {
+        Payload::ScriptHash(hash) => hash.to_vec(),
+        Payload::PubkeyHash(hash) => hash.to_vec(),
+        // Payload::WitnessProgram { program, .. } => program,
+        _ => vec![]
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+/// Errors from failures to decode bech32
+pub enum Bech32DecodingError {
+    /// Excessive padding when converting Vec<u5> to Vec<u8>
+    ExcessivePadding,
+    /// Non-zero padding when converting Vec<u5> to Vec<u8>
+    NonZeroPadding,
+    /// The Bech32 is invalidly encoded
+    InvalidEncoding(bech32::Error),
+}
+/// decode address to Bech32 u8 byte array
+fn bech32_decode(address: &crate::Address) -> Result<Vec<u8>, Bech32DecodingError> {
+    match bech32::decode(&address.to_string()) {
+        Ok((_, u5_vec, _)) => bech32_from_words(&u5_vec[1..]),
+        Err(e) => Err(Bech32DecodingError::InvalidEncoding(e))
+    }
+}
+
+/// Convert u5 vec into u8 vec
+fn bech32_from_words(words: &[bech32::u5]) -> Result<Vec<u8>, Bech32DecodingError> {
+    let in_bits: i32 = 5;
+    let out_bits: i32 = 8;
+
+    let mut value: i32 = 0;
+    let mut bits: i32 = 0;
+    let max_v: i32 = 255;
+
+    let mut out: Vec<u8> = Vec::new();
+    for word in words.iter().map(|x| x.to_u8()) {
+        value = (value << in_bits) | (word as i32);
+        bits += in_bits;
+        while bits >= out_bits {
+            bits -= out_bits;
+            out.push(((value >> bits) & max_v) as u8);
+        }
+    }
+    if bits >= in_bits {
+        return Err(Bech32DecodingError::ExcessivePadding)
+    } else {
+        if ((value << (out_bits - bits)) & max_v) != 0 {
+            return Err(Bech32DecodingError::NonZeroPadding)
+        } else {
+            return Ok(out);
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use hashes::hex::ToHex;
@@ -366,9 +464,71 @@ mod tests {
         let p2pkh = ::Address::p2pkh(&pubkey, ::Network::Bitcoin);
         assert_eq!(signature2.is_signed_by_address(&secp, &p2pkh, msg_hash), Ok(true));
         let p2wpkh = ::Address::p2wpkh(&pubkey, ::Network::Bitcoin).unwrap();
-        assert_eq!(signature2.is_signed_by_address(&secp, &p2wpkh, msg_hash), Ok(false));
+        assert_eq!(signature2.is_signed_by_address(&secp, &p2wpkh, msg_hash), Ok(true));
         let p2shwpkh = ::Address::p2shwpkh(&pubkey, ::Network::Bitcoin).unwrap();
-        assert_eq!(signature2.is_signed_by_address(&secp, &p2shwpkh, msg_hash), Ok(false));
+        assert_eq!(signature2.is_signed_by_address(&secp, &p2shwpkh, msg_hash), Ok(true));
+    }
+
+    mod is_signed_by_address {
+        use std::str::FromStr;
+
+        use hashes::hex::FromHex;
+        use super::super::MessageSignature;
+        use crate::{Address, util::misc::signed_msg_hash};
+
+        #[test]
+        fn test_p2wpkh() {
+            let message_string = "test message to sign".to_string();
+            let message_hash = signed_msg_hash(&message_string);
+
+            let address_string = "bc1qhvd6suvqzjcu9pxjhrwhtrlj85ny3n2mqql5w4".to_string();
+            let address = Address::from_str(&address_string).unwrap();
+
+            let sig_string = "286b079e6f3d74a83b5b90710a803f54a1d8c0beb7abaa1b9a5b26f100ef36e8f25d6f7eb73f10eaaac4fe725cb2901f60b890009f93318c7df4836df3b22b9901".to_string();
+            let sig_bytes = <Vec<u8>>::from_hex(&sig_string).unwrap();
+            let message_signature = MessageSignature::from_slice(&sig_bytes).unwrap();
+
+            let secp_ctx = secp256k1::Secp256k1::new();
+
+            let result = message_signature.is_signed_by_address(&secp_ctx, &address, message_hash);
+            assert!(result.unwrap());
+        }
+
+        #[test]
+        fn test_p2shwpkh() {
+            let message_string = "test message to sign".to_string();
+            let message_hash = signed_msg_hash(&message_string);
+
+            let address_string = "3EZQk4F8GURH5sqVMLTFisD17yNeKa7Dfs".to_string();
+            let address = Address::from_str(&address_string).unwrap();
+
+            let sig_string = "246b079e6f3d74a83b5b90710a803f54a1d8c0beb7abaa1b9a5b26f100ef36e8f25d6f7eb73f10eaaac4fe725cb2901f60b890009f93318c7df4836df3b22b9901".to_string();
+            let sig_bytes = <Vec<u8>>::from_hex(&sig_string).unwrap();
+            let message_signature = MessageSignature::from_slice(&sig_bytes).unwrap();
+
+            let secp_ctx = secp256k1::Secp256k1::new();
+
+            let result = message_signature.is_signed_by_address(&secp_ctx, &address, message_hash);
+            assert!(result.unwrap());
+        }
+
+        #[test]
+        fn test_p2pkh() {
+            let message_string = "test message to sign".to_string();
+            let message_hash = signed_msg_hash(&message_string);
+
+            let address_string = "1J4LVanjHMu3JkXbVrahNuQCTGCRRgfWWx".to_string();
+            let address = Address::from_str(&address_string).unwrap();
+
+            let sig_string = "206b079e6f3d74a83b5b90710a803f54a1d8c0beb7abaa1b9a5b26f100ef36e8f25d6f7eb73f10eaaac4fe725cb2901f60b890009f93318c7df4836df3b22b9901".to_string();
+            let sig_bytes = <Vec<u8>>::from_hex(&sig_string).unwrap();
+            let message_signature = MessageSignature::from_slice(&sig_bytes).unwrap();
+
+            let secp_ctx = secp256k1::Secp256k1::new();
+
+            let result = message_signature.is_signed_by_address(&secp_ctx, &address, message_hash);
+            assert!(result.unwrap());
+        }
     }
 }
 
