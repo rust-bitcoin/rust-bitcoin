@@ -91,12 +91,10 @@ mod message_signing {
         pub fn from_flag_byte(byte: u8) -> Option<SegwitType> {
             if (byte & 8) == 0 {
                 None
+            } else if (byte & 4) == 0 {
+                Some(SegwitType::P2shwpkh)
             } else {
-                if (byte & 4) == 0 {
-                    Some(SegwitType::P2shwpkh)
-                } else {
-                    Some(SegwitType::P2wpkh)
-                }
+                Some(SegwitType::P2wpkh)
             }
         }
     }
@@ -309,7 +307,7 @@ pub fn signed_msg_hash(msg: &str) -> sha256d::Hash {
 }
 
 /// Ripemd160 hash of sha256 hash of given data
-pub fn hash160(data: &Vec<u8>) -> ripemd160::Hash {
+pub fn hash160(data: &[u8]) -> ripemd160::Hash {
     let mut sha_engine = sha256::Hash::engine();
     sha_engine.input(data);
     let inner = sha256::Hash::from_engine(sha_engine);
@@ -320,9 +318,9 @@ pub fn hash160(data: &Vec<u8>) -> ripemd160::Hash {
 }
 
 /// Convert a byte array of a pubkey hash into a segwit redeem hash
-pub fn segwit_redeem_hash(pubkey_hash: &Vec<u8>) -> ripemd160::Hash {
+pub fn segwit_redeem_hash(pubkey_hash: &[u8]) -> ripemd160::Hash {
     let mut redeem_script: Vec<u8> = vec![0, 20];
-    redeem_script.append(&mut pubkey_hash.clone());
+    redeem_script.append(&mut pubkey_hash.to_vec());
     hash160(&redeem_script)
 }
 
