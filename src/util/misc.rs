@@ -155,10 +155,6 @@ mod message_signing {
             if bytes.len() != 65 {
                 return Err(MessageSignatureError::InvalidLength);
             }
-            // We just check this here so we can safely subtract further.
-            if bytes[0] < 27 {
-                return Err(MessageSignatureError::InvalidEncoding(secp256k1::Error::InvalidRecoveryId));
-            };
             // array access safe because of the check above
             let flag_byte = bytes[0]
                 .checked_sub(27)
