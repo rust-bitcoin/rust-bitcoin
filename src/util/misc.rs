@@ -219,7 +219,7 @@ mod message_signing {
                     let expected = get_payload_bytes(address);
                     Ok(actual == expected)
                 },
-                Some(_) => {
+                Some(SegwitType::P2wpkh) => {
                     let expected = bech32_decode(address).unwrap();
                     Ok(pubkey_hash == expected)
                 },
