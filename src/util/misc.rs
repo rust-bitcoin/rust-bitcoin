@@ -345,6 +345,7 @@ pub enum Bech32DecodingError {
     /// The Bech32 is invalidly encoded
     InvalidEncoding(bech32::Error),
 }
+
 /// decode address to Bech32 u8 byte array
 fn bech32_decode(address: &crate::Address) -> Result<Vec<u8>, Bech32DecodingError> {
     match bech32::decode(&address.to_string()) {
