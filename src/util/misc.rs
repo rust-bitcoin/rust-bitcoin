@@ -46,7 +46,7 @@ mod message_signing {
     use util::ecdsa::PublicKey;
     use util::address::{Address};
 
-    use super::{bech32_decode, segwit_redeem_hash, get_payload_bytes};
+    use crate::util::misc::{bech32_decode, segwit_redeem_hash, hash160, get_payload_bytes};
 
     /// An error used for dealing with Bitcoin Signed Messages.
     #[cfg_attr(docsrs, doc(cfg(feature = "secp-recovery")))]
@@ -88,14 +88,14 @@ mod message_signing {
     }
 
     impl SegwitType {
-        pub fn from_flag_byte(byte: u8) -> Result<Option<SegwitType>, MessageSignatureError> {
+        pub fn from_flag_byte(byte: u8) -> Option<SegwitType> {
             if (byte & 8) == 0 {
-                Ok(None)
+                None
             } else {
                 if (byte & 4) == 0 {
-                    Ok(Some(SegwitType::P2shwpkh))
+                    Some(SegwitType::P2shwpkh)
                 } else {
-                    Ok(Some(SegwitType::P2wpkh))
+                    Some(SegwitType::P2wpkh)
                 }
             }
         }
@@ -139,10 +139,10 @@ mod message_signing {
 
         /// Serialize to bytes.
         pub fn serialize(&self) -> [u8; 65] {
-            let (recid, raw) = self.signature.serialize_compact();
+            let (recovery_id, raw) = self.signature.serialize_compact();
             let mut serialized = [0u8; 65];
             serialized[0] = 27;
-            serialized[0] += recid.to_i32() as u8;
+            serialized[0] += recovery_id.to_i32() as u8;
             if self.compressed {
                 serialized[0] += 4;
             }
@@ -159,13 +159,16 @@ mod message_signing {
             if bytes[0] < 27 {
                 return Err(MessageSignatureError::InvalidEncoding(secp256k1::Error::InvalidRecoveryId));
             };
-            let flag_byte: u8 = bytes[0] - 27;
-            let recid = RecoveryId::from_i32(((flag_byte) & 0x03) as i32)?;
+            // array access safe because of the check above
+            let flag_byte = bytes[0]
+                .checked_sub(27)
+                .ok_or(MessageSignatureError::InvalidEncoding(secp256k1::Error::InvalidRecoveryId))?;
+            let recovery_id = RecoveryId::from_i32((flag_byte & 0x03) as i32)?;
             Ok(MessageSignature {
-                signature: RecoverableSignature::from_compact(&bytes[1..], recid)?,
-                compressed: ((bytes[0] - 27) & 0x04) != 0,
-                segwit_type: SegwitType::from_flag_byte(flag_byte)?,
-                recovery_id: recid,
+                signature: RecoverableSignature::from_compact(&bytes[1..], recovery_id)?,
+                compressed: (flag_byte & 0x04) != 0,
+                segwit_type: SegwitType::from_flag_byte(flag_byte),
+                recovery_id,
             })
         }
 
@@ -198,7 +201,7 @@ mod message_signing {
             let pubkey = self.recover_pubkey(&secp_ctx, msg_hash)?;
 
             // Use .serialize because we always want compact serialization
-            let pubkey_hash = super::hash160(&pubkey.key.serialize().to_vec()).to_vec();
+            let pubkey_hash = hash160(&pubkey.key.serialize().to_vec()).to_vec();
 
             match self.segwit_type {
                 None => {
@@ -373,14 +376,12 @@ fn bech32_from_words(words: &[bech32::u5]) -> Result<Vec<u8>, Bech32DecodingErro
         }
     }
     if bits >= in_bits {
-        return Err(Bech32DecodingError::ExcessivePadding)
-    } else {
-        if ((value << (out_bits - bits)) & max_v) != 0 {
-            return Err(Bech32DecodingError::NonZeroPadding)
-        } else {
-            return Ok(out);
-        }
+        return Err(Bech32DecodingError::ExcessivePadding);
     }
+    if ((value << (out_bits - bits)) & max_v) != 0 {
+        return Err(Bech32DecodingError::NonZeroPadding);
+    }
+    Ok(out)
 }
 
 #[cfg(test)]
@@ -438,7 +439,8 @@ mod tests {
     #[cfg(all(feature = "secp-recovery", feature = "base64"))]
     fn test_message_signature() {
         use core::str::FromStr;
-        use secp256k1::{self, recovery::RecoveryId};
+        use secp256k1;
+        use secp256k1::recovery::RecoveryId;
 
         let secp = secp256k1::Secp256k1::new();
         let message = "rust-bitcoin MessageSignature test";
