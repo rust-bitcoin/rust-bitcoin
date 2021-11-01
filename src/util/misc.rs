@@ -18,7 +18,7 @@
 
 use prelude::*;
 
-use hashes::{ripemd160, sha256, sha256d, Hash, HashEngine};
+use hashes::{sha256, sha256d, Hash, HashEngine};
 
 use blockdata::opcodes;
 use consensus::{encode, Encodable};
@@ -195,31 +195,31 @@ mod message_signing {
             let pubkey = self.recover_pubkey(&secp_ctx, msg_hash)?;
 
             // Use .serialize because we always want compact serialization
-            let pubkey_hash = hash160(&pubkey.key.serialize().to_vec()).to_vec();
+            let pubkey_hash = hash160(&pubkey.key.serialize());
 
             match self.segwit_type {
                 None => {
                     let expected = match bech32_decode(address) {
                         Ok(data) => data,
                         Err(_) => {
-                            let redeem_hash = segwit_redeem_hash(&pubkey_hash).to_vec();
+                            let redeem_hash = segwit_redeem_hash(&pubkey_hash);
                             let base58_check = get_payload_bytes(address);
                             return Ok(
-                                (pubkey_hash == base58_check) ||
-                                (redeem_hash == base58_check)
+                                (*pubkey_hash == *base58_check) ||
+                                (*redeem_hash == *base58_check)
                             );
                         }
                     };
-                    Ok(pubkey_hash == expected)
+                    Ok(*pubkey_hash == *expected)
                 },
                 Some(SegwitType::P2shwpkh) => {
-                    let actual = segwit_redeem_hash(&pubkey_hash).to_vec();
+                    let actual = segwit_redeem_hash(&pubkey_hash);
                     let expected = get_payload_bytes(address);
-                    Ok(actual == expected)
+                    Ok(*actual == *expected)
                 },
                 Some(SegwitType::P2wpkh) => {
                     let expected = bech32_decode(address).unwrap();
-                    Ok(pubkey_hash == expected)
+                    Ok(*pubkey_hash == *expected)
                 },
             }
         }
@@ -307,29 +307,27 @@ pub fn signed_msg_hash(msg: &str) -> sha256d::Hash {
 }
 
 /// Ripemd160 hash of sha256 hash of given data
-pub fn hash160(data: &[u8]) -> ripemd160::Hash {
+pub fn hash160(data: &[u8]) -> ::hashes::hash160::Hash {
     let mut sha_engine = sha256::Hash::engine();
     sha_engine.input(data);
-    let inner = sha256::Hash::from_engine(sha_engine);
 
-    let mut ripe_engine = ripemd160::Hash::engine();
-    ripe_engine.input(&inner.to_vec());
-    ripemd160::Hash::from_engine(ripe_engine)
+    ::hashes::hash160::Hash::from_engine(sha_engine)
 }
 
 /// Convert a byte array of a pubkey hash into a segwit redeem hash
-pub fn segwit_redeem_hash(pubkey_hash: &[u8]) -> ripemd160::Hash {
-    let mut redeem_script: Vec<u8> = vec![0, 20];
-    redeem_script.append(&mut pubkey_hash.to_vec());
-    hash160(&redeem_script)
+pub fn segwit_redeem_hash(pubkey_hash: &[u8]) -> ::hashes::hash160::Hash {
+    let mut sha_engine = sha256::Hash::engine();
+    sha_engine.input(&[0, 20]);
+    sha_engine.input(pubkey_hash);
+    ::hashes::hash160::Hash::from_engine(sha_engine)
 }
 
 /// Pull out payload as byte array
-pub fn get_payload_bytes(address: &Address) -> Vec<u8> {
+pub fn get_payload_bytes(address: &Address) -> &[u8] {
     match &address.payload {
-        Payload::ScriptHash(hash) => hash.to_vec(),
-        Payload::PubkeyHash(hash) => hash.to_vec(),
-        Payload::WitnessProgram { program, .. } => program.clone(),
+        Payload::ScriptHash(hash) => &hash,
+        Payload::PubkeyHash(hash) => &hash,
+        Payload::WitnessProgram { program, .. } => &program,
     }
 }
 
