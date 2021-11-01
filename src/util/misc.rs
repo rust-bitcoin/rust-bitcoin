@@ -345,7 +345,7 @@ pub enum Bech32DecodingError {
 }
 
 /// decode address to Bech32 u8 byte array
-fn bech32_decode(address: &crate::Address) -> Result<Vec<u8>, Bech32DecodingError> {
+pub fn bech32_decode(address: &crate::Address) -> Result<Vec<u8>, Bech32DecodingError> {
     match bech32::decode(&address.to_string()) {
         Ok((_, u5_vec, _)) => bech32_from_words(&u5_vec[1..]),
         Err(e) => Err(Bech32DecodingError::InvalidEncoding(e))
@@ -465,6 +465,7 @@ mod tests {
         assert_eq!(signature2.is_signed_by_address(&secp, &p2shwpkh, msg_hash), Ok(true));
     }
 
+    #[cfg(all(feature = "secp-recovery"))]
     mod is_signed_by_address {
         use std::str::FromStr;
 
