@@ -17,6 +17,7 @@
 //! Various utility functions
 
 use prelude::*;
+use bech32;
 
 use hashes::{sha256, sha256d, Hash, HashEngine};
 
@@ -46,7 +47,7 @@ mod message_signing {
     use util::ecdsa::PublicKey;
     use util::address::{Address};
 
-    use crate::util::misc::{bech32_decode, segwit_redeem_hash, hash160, get_payload_bytes};
+    use util::misc::{bech32_decode, segwit_redeem_hash, hash160, get_payload_bytes};
 
     /// An error used for dealing with Bitcoin Signed Messages.
     #[cfg_attr(docsrs, doc(cfg(feature = "secp-recovery")))]
@@ -343,7 +344,7 @@ pub enum Bech32DecodingError {
 }
 
 /// decode address to Bech32 u8 byte array
-pub fn bech32_decode(address: &crate::Address) -> Result<Vec<u8>, Bech32DecodingError> {
+pub fn bech32_decode(address: &Address) -> Result<Vec<u8>, Bech32DecodingError> {
     match bech32::decode(&address.to_string()) {
         Ok((_, u5_vec, _)) => bech32_from_words(&u5_vec[1..]),
         Err(e) => Err(Bech32DecodingError::InvalidEncoding(e))
@@ -465,11 +466,13 @@ mod tests {
 
     #[cfg(all(feature = "secp-recovery"))]
     mod is_signed_by_address {
+        use secp256k1;
         use std::str::FromStr;
 
         use hashes::hex::FromHex;
         use super::super::MessageSignature;
-        use crate::{Address, util::misc::signed_msg_hash};
+        use util::address::Address;
+        use util::misc::signed_msg_hash;
 
         #[test]
         fn test_p2wpkh() {
