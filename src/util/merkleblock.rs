@@ -459,7 +459,7 @@ impl MerkleBlock {
             .map(match_txids)
             .collect();
 
-        let pmt = PartialMerkleTree::from_txids(&block_txids, &matches);
+        let pmt = PartialMerkleTree::from_txids(block_txids, &matches);
         MerkleBlock {
             header: *header,
             txn: pmt,

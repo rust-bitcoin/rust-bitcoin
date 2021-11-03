@@ -128,8 +128,8 @@ impl GetBlocksMessage {
     pub fn new(locator_hashes: Vec<BlockHash>, stop_hash: BlockHash) -> GetBlocksMessage {
         GetBlocksMessage {
             version: constants::PROTOCOL_VERSION,
-            locator_hashes: locator_hashes,
-            stop_hash: stop_hash
+            locator_hashes,
+            stop_hash,
         }
     }
 }
@@ -141,8 +141,8 @@ impl GetHeadersMessage {
     pub fn new(locator_hashes: Vec<BlockHash>, stop_hash: BlockHash) -> GetHeadersMessage {
         GetHeadersMessage {
             version: constants::PROTOCOL_VERSION,
-            locator_hashes: locator_hashes,
-            stop_hash: stop_hash
+            locator_hashes,
+            stop_hash,
         }
     }
 }

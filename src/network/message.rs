@@ -49,12 +49,12 @@ impl CommandString {
     /// - `&'static str`
     /// - `String`
     ///
-    /// Returns an empty error if and only if the string is
+    /// Returns an error if and only if the string is
     /// larger than 12 characters in length.
-    pub fn try_from<S: Into<Cow<'static, str>>>(s: S) -> Result<CommandString, ()> {
+    pub fn try_from<S: Into<Cow<'static, str>>>(s: S) -> Result<CommandString, CommandStringError> {
         let cow = s.into();
-        if cow.as_ref().len() > 12 {
-            Err(())
+        if cow.len() > 12 {
+            Err(CommandStringError { cow })
         } else {
             Ok(CommandString(cow))
         }
@@ -82,7 +82,7 @@ impl Encodable for CommandString {
         let mut rawbytes = [0u8; 12];
         let strbytes = self.0.as_bytes();
         debug_assert!(strbytes.len() <= 12);
-        rawbytes[..strbytes.len()].clone_from_slice(&strbytes[..]);
+        rawbytes[..strbytes.len()].copy_from_slice(strbytes);
         rawbytes.consensus_encode(s)
     }
 }
@@ -99,6 +99,24 @@ impl Decodable for CommandString {
         Ok(CommandString(rv))
     }
 }
+
+/// Error returned when a command string is invalid.
+///
+/// This is currently returned for command strings longer than 12.
+#[derive(Clone, Debug)]
+pub struct CommandStringError {
+    cow: Cow<'static, str>,
+}
+
+impl fmt::Display for CommandStringError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "the command string '{}' has length {} which is larger than 12", self.cow, self.cow.len())
+    }
+}
+
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+#[cfg(feature = "std")]
+impl ::std::error::Error for CommandStringError { }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 /// A Network message
@@ -395,8 +413,8 @@ impl Decodable for RawNetworkMessage {
             }
         };
         Ok(RawNetworkMessage {
-            magic: magic,
-            payload: payload
+            magic,
+            payload,
         })
     }
 }

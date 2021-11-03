@@ -47,7 +47,7 @@ impl Address {
             SocketAddr::V4(addr) => (addr.ip().to_ipv6_mapped().segments(), addr.port()),
             SocketAddr::V6(addr) => (addr.ip().segments(), addr.port())
         };
-        Address { address: address, port: port, services: services }
+        Address { address, port, services }
     }
 
     /// Extract socket address from an [Address] message.
@@ -73,9 +73,9 @@ impl Address {
 fn addr_to_be(addr: [u16; 8]) -> [u16; 8] {
     // consensus_encode always encodes in LE, and we want to encode in BE.
     // this utility fn swap bytes before encoding so that the encoded result will be BE
-    let mut result = addr.clone();
-    for i in 0..8 {
-        result[i] = result[i].swap_bytes();
+    let mut result = addr;
+    for word in &mut result {
+        *word = word.swap_bytes();
     }
     result
 }
@@ -266,7 +266,7 @@ impl AddrV2Message {
         match self.addr {
             AddrV2::Ipv4(addr) => Ok(SocketAddr::V4(SocketAddrV4::new(addr, self.port))),
             AddrV2::Ipv6(addr) => Ok(SocketAddr::V6(SocketAddrV6::new(addr, self.port, 0, 0))),
-            _ => return Err(io::Error::from(io::ErrorKind::AddrNotAvailable)),
+            _ => Err(io::Error::from(io::ErrorKind::AddrNotAvailable)),
         }
     }
 }

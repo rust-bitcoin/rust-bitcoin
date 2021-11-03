@@ -46,7 +46,7 @@ impl PublicKey {
     pub fn new(key: secp256k1::PublicKey) -> PublicKey {
         PublicKey {
             compressed: true,
-            key: key,
+            key,
         }
     }
 
@@ -55,7 +55,7 @@ impl PublicKey {
     pub fn new_uncompressed(key: secp256k1::PublicKey) -> PublicKey {
         PublicKey {
             compressed: false,
-            key: key,
+            key,
         }
     }
 
@@ -134,7 +134,7 @@ impl PublicKey {
         };
 
         Ok(PublicKey {
-            compressed: compressed,
+            compressed,
             key: secp256k1::PublicKey::from_slice(data)?,
         })
     }
@@ -165,7 +165,7 @@ impl FromStr for PublicKey {
     fn from_str(s: &str) -> Result<PublicKey, Error> {
         let key = secp256k1::PublicKey::from_str(s)?;
         Ok(PublicKey {
-            key: key,
+            key,
             compressed: s.len() == 66
         })
     }
@@ -188,8 +188,8 @@ impl PrivateKey {
     pub fn new(key: secp256k1::SecretKey, network: Network) -> PrivateKey {
         PrivateKey {
             compressed: true,
-            network: network,
-            key: key,
+            network,
+            key,
         }
     }
 
@@ -198,8 +198,8 @@ impl PrivateKey {
     pub fn new_uncompressed(key: secp256k1::SecretKey, network: Network) -> PrivateKey {
         PrivateKey {
             compressed: false,
-            network: network,
-            key: key,
+            network,
+            key,
         }
     }
 
@@ -266,8 +266,8 @@ impl PrivateKey {
         };
 
         Ok(PrivateKey {
-            compressed: compressed,
-            network: network,
+            compressed,
+            network,
             key: secp256k1::SecretKey::from_slice(&data[1..33])?,
         })
     }

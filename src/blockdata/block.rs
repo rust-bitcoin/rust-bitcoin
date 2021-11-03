@@ -291,7 +291,7 @@ impl Block {
             script::Instruction::PushBytes(b) if b.len() <= 8 => {
                 // Expand the push to exactly 8 bytes (LE).
                 let mut full = [0; 8];
-                full[0..b.len()].copy_from_slice(&b[..]);
+                full[0..b.len()].copy_from_slice(b);
                 Ok(util::endian::slice_to_u64_le(&full))
             }
             script::Instruction::PushBytes(b) if b.len() > 8 => {

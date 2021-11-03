@@ -155,13 +155,8 @@ impl Map for PartiallySignedTransaction {
 
                     let (fingerprint2, derivation2) = entry.get().clone();
 
-                    if derivation1 == derivation2 && fingerprint1 == fingerprint2
-                    {
-                        continue
-                    }
-                    else if
-                        derivation1.len() < derivation2.len() &&
-                        derivation1[..] == derivation2[derivation2.len() - derivation1.len()..]
+                    if (derivation1 == derivation2 && fingerprint1 == fingerprint2) ||
+                        (derivation1.len() < derivation2.len() && derivation1[..] == derivation2[derivation2.len() - derivation1.len()..])
                     {
                         continue
                     }

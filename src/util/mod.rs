@@ -125,7 +125,7 @@ pub(crate) fn read_to_end<D: io::Read>(mut d: D) -> Result<Vec<u8>, io::Error> {
             Ok(0) => break,
             Ok(n) => result.extend_from_slice(&buf[0..n]),
             Err(ref e) if e.kind() == io::ErrorKind::Interrupted => {},
-            Err(e) => return Err(e.into()),
+            Err(e) => return Err(e),
         };
     }
     Ok(result)

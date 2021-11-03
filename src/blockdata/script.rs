@@ -325,7 +325,7 @@ impl Script {
     pub fn new_witness_program(version: WitnessVersion, program: &[u8]) -> Script {
         Builder::new()
             .push_opcode(version.into())
-            .push_slice(&program)
+            .push_slice(program)
             .into_script()
     }
 
@@ -339,12 +339,12 @@ impl Script {
 
     /// Returns 160-bit hash of the script
     pub fn script_hash(&self) -> ScriptHash {
-        ScriptHash::hash(&self.as_bytes())
+        ScriptHash::hash(self.as_bytes())
     }
 
     /// Returns 256-bit hash of the script for P2WSH outputs
     pub fn wscript_hash(&self) -> WScriptHash {
-        WScriptHash::hash(&self.as_bytes())
+        WScriptHash::hash(self.as_bytes())
     }
 
     /// The length in bytes of the script
