@@ -178,10 +178,10 @@ mod prelude {
     pub use std::{string::{String, ToString}, vec::Vec, boxed::Box, borrow::{Cow, ToOwned}, slice, rc, sync};
 
     #[cfg(all(not(feature = "std"), not(test)))]
-    pub use alloc::collections::{BTreeMap, btree_map};
+    pub use alloc::collections::{BTreeMap, BTreeSet, btree_map};
 
     #[cfg(any(feature = "std", test))]
-    pub use std::collections::{BTreeMap, btree_map};
+    pub use std::collections::{BTreeMap, BTreeSet, btree_map};
 
     #[cfg(feature = "std")]
     pub use std::io::sink;

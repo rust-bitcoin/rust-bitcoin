@@ -15,14 +15,15 @@
 //!
 use prelude::*;
 use io;
+use secp256k1::{self, Secp256k1};
 
 use core::fmt;
 #[cfg(feature = "std")]
 use std::error;
 
-use hashes::{sha256, sha256t, Hash};
+use hashes::{sha256, sha256t, Hash, HashEngine};
 use schnorr;
-use secp256k1;
+use Script;
 
 /// The SHA-256 midstate value for the TapLeaf hash.
 const MIDSTATE_TAPLEAF: [u8; 32] = [
@@ -90,6 +91,26 @@ sha256t_hash_newtype!(TapSighashHash, TapSighashTag, MIDSTATE_TAPSIGHASH, 64,
     doc="Taproot-tagged hash for the taproot signature hash", true
 );
 
+impl TapTweakHash {
+
+    /// Create a new BIP341 [`TapTweakHash`] from key and tweak
+    /// Produces H_taptweak(P||R) where P is internal key and R is the merkle root
+    pub fn from_key_and_tweak(
+        internal_key: schnorr::PublicKey,
+        merkle_root: Option<TapBranchHash>,
+    ) -> TapTweakHash {
+        let mut eng = TapTweakHash::engine();
+        // always hash the key
+        eng.input(&internal_key.serialize());
+        if let Some(h) = merkle_root {
+            eng.input(&h);
+        } else {
+            // nothing to hash
+        }
+        TapTweakHash::from_engine(eng)
+    }
+}
+
 /// Maximum depth of a Taproot Tree Script spend path
 // https://github.com/bitcoin/bitcoin/blob/e826b22da252e0599c61d21c98ff89f366b3120f/src/script/interpreter.h#L229
 pub const TAPROOT_CONTROL_MAX_NODE_COUNT: usize = 128;
@@ -109,6 +130,105 @@ pub const TAPROOT_CONTROL_BASE_SIZE: usize = 33;
 // https://github.com/bitcoin/bitcoin/blob/e826b22da252e0599c61d21c98ff89f366b3120f/src/script/interpreter.h#L230
 pub const TAPROOT_CONTROL_MAX_SIZE: usize =
     TAPROOT_CONTROL_BASE_SIZE + TAPROOT_CONTROL_NODE_SIZE * TAPROOT_CONTROL_MAX_NODE_COUNT;
+
+/// Data structure for representing Taproot spending information.
+/// Taproot output corresponds to a combination of a
+/// single public key condition (known the internal key), and zero or more
+/// general conditions encoded in scripts organized in the form of a binary tree.
+///
+/// Taproot can be spent be either:
+/// - Spending using the key path i.e., with secret key corresponding to the output_key
+/// - By satisfying any of the scripts in the script spent path. Each script can be satisfied by providing
+///   a witness stack consisting of the script's inputs, plus the script itself and the control block.
+///
+/// If one or more of the spending conditions consist of just a single key (after aggregation),
+/// the most likely one should be made the internal key.
+/// See [BIP341](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki) for more details
+/// on choosing internal keys for a taproot application
+///
+/// Note: This library currently does not support [annex](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki#cite_note-5)
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct TaprootSpendInfo {
+    /// The BIP341 internal key.
+    internal_key: schnorr::PublicKey,
+    /// The Merkle root of the script tree (None if there are no scripts)
+    merkle_root: Option<TapBranchHash>,
+    /// The sign final output pubkey as per BIP 341
+    output_key_parity: bool,
+    /// The tweaked output key
+    output_key: schnorr::PublicKey,
+    /// Map from (script, leaf_version) to (sets of) [`TaprootMerkleBranch`].
+    /// More than one control block for a given script is only possible if it
+    /// appears in multiple branches of the tree. In all cases, keeping one should
+    /// be enough for spending funds, but we keep all of the paths so that
+    /// a full tree can be constructed again from spending data if required.
+    script_map: BTreeMap<(Script, LeafVersion), BTreeSet<TaprootMerkleBranch>>,
+}
+
+impl TaprootSpendInfo {
+    /// Create a new key spend with internal key and proided merkle root.
+    /// Provide [`None`] for merkle_root if there is no script path.
+    ///
+    /// *Note*: As per BIP341
+    ///
+    /// When the merkle root is [`None`], the output key commits to an unspendable
+    /// script path instead of having no script path. This is achieved by computing
+    /// the output key point as Q = P + int(hashTapTweak(bytes(P)))G.
+    /// See also [`TaprootSpendInfo::tap_tweak`].
+    /// Refer to BIP 341 footnote (Why should the output key always have
+    /// a taproot commitment, even if there is no script path?) for more details
+    ///
+    pub fn new_key_spend<C: secp256k1::Verification>(
+        secp: &Secp256k1<C>,
+        internal_key: schnorr::PublicKey,
+        merkle_root: Option<TapBranchHash>,
+    ) -> Self {
+        let tweak = TapTweakHash::from_key_and_tweak(internal_key, merkle_root);
+        let mut output_key = internal_key;
+        // # Panics:
+        //
+        // This would return Err if the merkle root hash is the negation of the secret
+        // key corresponding to the internal key.
+        // Because the tweak is derived as specified in BIP341 (hash output of a function),
+        // this is unlikely to occur (1/2^128) in real life usage, it is safe to unwrap this
+        let parity = output_key
+            .tweak_add_assign(&secp, &tweak)
+            .expect("TapTweakHash::from_key_and_tweak is broken");
+        Self {
+            internal_key: internal_key,
+            merkle_root: merkle_root,
+            output_key_parity: parity,
+            output_key: output_key,
+            script_map: BTreeMap::new(),
+        }
+    }
+
+    /// Obtain the tweak and parity used to compute the output_key
+    pub fn tap_tweak(&self) -> TapTweakHash {
+        TapTweakHash::from_key_and_tweak(self.internal_key, self.merkle_root)
+    }
+
+    /// Obtain the internal key
+    pub fn internal_key(&self) -> schnorr::PublicKey {
+        self.internal_key
+    }
+
+    /// Obtain the merkle root
+    pub fn merkle_root(&self) -> Option<TapBranchHash> {
+        self.merkle_root
+    }
+
+    /// Output key(the key used in script pubkey) from Spend data. See also
+    /// [`TaprootSpendInfo::output_key_parity`]
+    pub fn output_key<C: secp256k1::Verification>(&self) -> schnorr::PublicKey {
+        self.output_key
+    }
+
+    /// Parity of the output key. See also [`TaprootSpendInfo::output_key`]
+    pub fn output_key_parity(&self) -> bool {
+        self.output_key_parity
+    }
+}
 
 /// The Merkle proof for inclusion of a tree in a taptree hash
 // The type of hash is sha256::Hash because the vector might contain
