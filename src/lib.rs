@@ -46,6 +46,9 @@
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
+// Unknown lint warnings occur when linting with an old version of clippy and
+// hitting code that allows a lint that exists only in newer versions of clippy.
+#![allow(unknown_lints)]
 // Coding conventions
 #![forbid(unsafe_code)]
 #![deny(non_upper_case_globals)]
