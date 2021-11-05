@@ -12,7 +12,7 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! Bitcoin Transaction
+//! Bitcoin transactions.
 //!
 //! A transaction describes a transfer of money. It consumes previously-unspent
 //! transaction outputs and produces new ones, satisfying the condition to spend

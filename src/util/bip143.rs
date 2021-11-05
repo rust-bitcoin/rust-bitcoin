@@ -11,7 +11,7 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! BIP143 Implementation
+//! BIP143 implementation.
 //!
 //! Implementation of BIP143 Segwit-style signatures. Should be sufficient
 //! to create signatures for Segwit transactions (which should be pushed into

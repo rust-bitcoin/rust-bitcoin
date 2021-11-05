@@ -12,11 +12,12 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! Bitcoin network addresses
+//! Bitcoin network addresses.
 //!
 //! This module defines the structures and functions needed to encode
 //! network addresses in Bitcoin messages.
 //!
+
 use prelude::*;
 
 use core::{fmt, iter};

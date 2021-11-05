@@ -12,10 +12,11 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! # PSBT Serialization
+//! PSBT serialization.
 //!
 //! Defines traits used for (de)serializing PSBT values into/from raw
-//! bytes in PSBT key-value pairs.
+//! bytes from/as PSBT key-value pairs.
+//!
 
 use prelude::*;
 

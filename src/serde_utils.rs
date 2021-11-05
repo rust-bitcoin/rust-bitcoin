@@ -1,5 +1,7 @@
-
-//! Module for special serde serializations.
+//! Bitcoin serde utilities.
+//!
+//! This module is for special serde serializations.
+//!
 
 pub mod btreemap_byte_values {
     //! Module for serialization of BTreeMaps with hex byte values.

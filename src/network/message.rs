@@ -12,11 +12,10 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! Network message
+//! Bitcoin network messages.
 //!
-//! This module defines the `Message` traits which are used
-//! for (de)serializing Bitcoin objects for transmission on the network. It
-//! also defines (de)serialization routines for many primitives.
+//! This module defines the `NetworkMessage` and `RawNetworkMessage` types that
+//! are used for (de)serializing Bitcoin objects for transmission on the network.
 //!
 
 use prelude::*;

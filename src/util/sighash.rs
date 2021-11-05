@@ -12,11 +12,12 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! # Generalized, efficient, signature hash implementation
+//! Generalized, efficient, signature hash implementation.
 //!
-//! Implementation of the algorithm to compute the message to be signed according to [Bip341](https://github.com/bitcoin/bips/blob/150ab6f5c3aca9da05fccc5b435e9667853407f4/bip-0341.mediawiki),
+//! Implementation of the algorithm to compute the message to be signed according to
+//! [Bip341](https://github.com/bitcoin/bips/blob/150ab6f5c3aca9da05fccc5b435e9667853407f4/bip-0341.mediawiki),
 //! [Bip143](https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki)
-//! and legacy (before Bip143)
+//! and legacy (before Bip143).
 //!
 
 pub use blockdata::transaction::SigHashType as LegacySigHashType;

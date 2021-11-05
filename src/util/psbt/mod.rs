@@ -12,11 +12,12 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! # Partially Signed Transactions
+//! Partially Signed Bitcoin Transactions.
 //!
 //! Implementation of BIP174 Partially Signed Bitcoin Transaction Format as
 //! defined at <https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki>
 //! except we define PSBTs containing non-standard SigHash types as invalid.
+//!
 
 use blockdata::script::Script;
 use blockdata::transaction::Transaction;

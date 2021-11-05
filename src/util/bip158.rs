@@ -16,12 +16,12 @@
 // on 11. June 2019 which is licensed under Apache, that file specifically
 // was written entirely by Tamas Blummer, who is re-licensing its contents here as CC0.
 
+//! BIP158 Compact Block Filters for light clients.
 //!
-//! # BIP158 Compact Block Filters for Light Clients
-//!
-//! Implements a structure for compact filters on block data, for use in the BIP 157 light client protocol.
-//! The filter construction proposed is an alternative to Bloom filters, as used in BIP 37,
-//! that minimizes filter size by using Golomb-Rice coding for compression.
+//! This module implements a structure for compact filters on block data, for
+//! use in the BIP 157 light client protocol. The filter construction proposed
+//! is an alternative to Bloom filters, as used in BIP 37, that minimizes filter
+//! size by using Golomb-Rice coding for compression.
 //!
 //! ## Example
 //!

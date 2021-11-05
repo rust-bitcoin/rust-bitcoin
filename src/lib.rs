@@ -14,7 +14,7 @@
 
 //! # Rust Bitcoin Library
 //!
-//! This is a library for which supports the Bitcoin network protocol and associated
+//! This is a library that supports the Bitcoin network protocol and associated
 //! primitives. It is designed for Rust programs built to work with the Bitcoin
 //! network.
 //!
@@ -31,13 +31,14 @@
 //! * `secp-recovery` - enables calculating public key from a signature and message.
 //! * `base64` - (dependency), enables encoding of PSBTs and message signatures.
 //! * `unstable` - enables unstable features for testing.
-//! * `rand` - (dependency) makes it more convenient to generate random values.
-//! * `use-serde` - (dependency) implements `serde`-based serialization and
-//!                 deserialization
-//! * `secp-lowmemory` - optimizations for low-memory devices
+//! * `rand` - (dependency), makes it more convenient to generate random values.
+//! * `use-serde` - (dependency), implements `serde`-based serialization and
+//!                 deserialization.
+//! * `secp-lowmemory` - optimizations for low-memory devices.
 //! * `no-std` - enables additional features required for this crate to be usable
 //!              without std. Does **not** disable `std`. Depends on `hashbrown`
 //!              and `core2`.
+//!
 
 #![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
 
