@@ -168,6 +168,52 @@ pub struct TaprootSpendInfo {
 }
 
 impl TaprootSpendInfo {
+    /// Create a new [`TaprootSpendInfo`] from a list of script(with default script version) and
+    /// weights of satisfaction for that script. The weights represent the probability of
+    /// each branch being taken. If probabilities/weights for each condition are known,
+    /// constructing the tree as a Huffman tree is the optimal way to minimize average
+    /// case satisfaction cost. This function takes input an iterator of tuple(u64, &Script)
+    /// where usize represents the satisfaction weights of the branch.
+    /// For example, [(3, S1), (2, S2), (5, S3)] would construct a TapTree that has optimal
+    /// satisfaction weight when probability for S1 is 30%, S2 is 20% and S3 is 50%.
+    ///
+    /// # Errors:
+    ///
+    /// - When the optimal huffman tree has a depth more than 128
+    /// - If the provided list of script weights is empty
+    /// - If the script weight calculations overflow. This should not happen unless you are
+    /// dealing with numbers close to 2^64.
+    pub fn with_huffman_tree<C, I>(
+        secp: &Secp256k1<C>,
+        internal_key: schnorr::PublicKey,
+        script_weights: I,
+    ) -> Result<Self, TaprootBuilderError>
+    where
+        I: IntoIterator<Item = (u64, Script)>,
+        C: secp256k1::Verification,
+    {
+        let mut node_weights = BinaryHeap::<(u64, NodeInfo)>::new();
+        for (p, leaf) in script_weights {
+            node_weights.push((p, NodeInfo::new_leaf_with_ver(leaf, LeafVersion::default())));
+        }
+        if node_weights.is_empty() {
+            return Err(TaprootBuilderError::IncompleteTree);
+        }
+        while node_weights.len() > 1 {
+            // Combine the last two elements and insert a new node
+            let (p1, s1) = node_weights.pop().expect("len must be at least two");
+            let (p2, s2) = node_weights.pop().expect("len must be at least two");
+            // Insert the sum of first two in the tree as a new node
+            let p = p1.checked_add(p2).ok_or(TaprootBuilderError::ScriptWeightOverflow)?;
+            node_weights.push((p, NodeInfo::combine(s1, s2)?));
+        }
+        // Every iteration of the loop reduces the node_weights.len() by exactly 1
+        // Therefore, the loop will eventually terminate with exactly 1 element
+        debug_assert!(node_weights.len() == 1);
+        let node = node_weights.pop().expect("huffman tree algorithm is broken").1;
+        return Ok(Self::from_node_info(secp, internal_key, node));
+    }
+
     /// Create a new key spend with internal key and proided merkle root.
     /// Provide [`None`] for merkle_root if there is no script path.
     ///
@@ -686,6 +732,8 @@ pub enum TaprootBuilderError {
     IncompleteTree,
     /// Called finalize on a empty tree
     EmptyTree,
+    /// Script weight overflow
+    ScriptWeightOverflow,
 }
 
 impl fmt::Display for TaprootBuilderError {
@@ -713,6 +761,9 @@ impl fmt::Display for TaprootBuilderError {
             TaprootBuilderError::EmptyTree => {
                 write!(f, "Called finalize on an empty tree")
             }
+            TaprootBuilderError::ScriptWeightOverflow => {
+                write!(f, "Script weight overflow in Huffman tree construction")
+            },
         }
     }
 }
