@@ -886,6 +886,9 @@ impl fmt::Display for TaprootError {
 impl error::Error for TaprootError {}
 #[cfg(test)]
 mod test {
+    use {Address, Network};
+    use schnorr::TapTweak;
+
     use super::*;
     use hashes::hex::{FromHex, ToHex};
     use hashes::sha256t::Tag;
@@ -893,6 +896,7 @@ mod test {
     use secp256k1::VerifyOnly;
     use core::str::FromStr;
     use schnorr;
+    extern crate serde_json;
 
     fn tag_engine(tag_name: &str) -> sha256::HashEngine {
         let mut engine = sha256::Hash::engine();
@@ -1100,5 +1104,81 @@ mod test {
             let ctrl_block = tree_info.control_block(&ver_script).unwrap();
             assert!(ctrl_block.verify_taproot_commitment(&secp, &output_key, &ver_script.0))
         }
+    }
+
+    #[test]
+    fn bip_341_tests() {
+
+        fn process_script_trees(
+            v: &serde_json::Value,
+            mut builder: TaprootBuilder,
+            leaves: &mut Vec<(Script, LeafVersion)>,
+            depth: usize,
+        ) -> TaprootBuilder {
+            if v.is_null() {
+                // nothing to push
+            } else if v.is_array() {
+                for leaf in v.as_array().unwrap() {
+                    builder =  process_script_trees(leaf, builder, leaves, depth + 1);
+                }
+            } else {
+                let script = Script::from_str(v["script"].as_str().unwrap()).unwrap();
+                let ver = LeafVersion::from_u8(v["leafVersion"].as_u64().unwrap() as u8).unwrap();
+                leaves.push((script.clone(), ver));
+                builder = builder.add_leaf_with_ver(depth, script, ver).unwrap();
+            }
+            builder
+        }
+
+        let data = bip_341_read_json();
+        // Check the version of data
+        assert!(data["version"] == 1);
+        let secp = &secp256k1::Secp256k1::verification_only();
+
+        for arr in data["scriptPubKey"].as_array().unwrap() {
+            let internal_key = schnorr::PublicKey::from_str(arr["given"]["internalPubkey"].as_str().unwrap()).unwrap();
+            // process the tree
+            let script_tree = &arr["given"]["scriptTree"];
+            let mut merkle_root = None;
+            if script_tree.is_null() {
+                assert!(arr["intermediary"]["merkleRoot"].is_null());
+            } else {
+                merkle_root = Some(TapBranchHash::from_str(&arr["intermediary"]["merkleRoot"].as_str().unwrap()).unwrap());
+                let leaf_hashes = arr["intermediary"]["leafHashes"].as_array().unwrap();
+                let ctrl_blks = arr["expected"]["scriptPathControlBlocks"].as_array().unwrap();
+                let mut builder = TaprootBuilder::new();
+                let mut leaves = vec![];
+                builder = process_script_trees(&script_tree, builder, &mut leaves, 0);
+                let spend_info = builder.finalize(secp, internal_key).unwrap();
+                for (i, script_ver) in leaves.iter().enumerate() {
+                    let expected_leaf_hash = leaf_hashes[i].as_str().unwrap();
+                    let expected_ctrl_blk = ControlBlock::from_slice(&Vec::<u8>::from_hex(ctrl_blks[i].as_str().unwrap()).unwrap()).unwrap();
+
+                    let leaf_hash = TapLeafHash::from_script(&script_ver.0, script_ver.1);
+                    let ctrl_blk = spend_info.control_block(script_ver).unwrap();
+                    assert_eq!(leaf_hash.to_hex(), expected_leaf_hash);
+                    assert_eq!(ctrl_blk, expected_ctrl_blk);
+                }
+            }
+            let expected_output_key = schnorr::PublicKey::from_str(arr["intermediary"]["tweakedPubkey"].as_str().unwrap()).unwrap();
+            let expected_tweak = TapTweakHash::from_str(arr["intermediary"]["tweak"].as_str().unwrap()).unwrap();
+            let expected_spk = Script::from_str(arr["expected"]["scriptPubKey"].as_str().unwrap()).unwrap();
+            let expected_addr = Address::from_str(arr["expected"]["bip350Address"].as_str().unwrap()).unwrap();
+
+            let tweak = TapTweakHash::from_key_and_tweak(internal_key, merkle_root);
+            let (output_key, _parity) = internal_key.tap_tweak(&secp, merkle_root);
+            let addr = Address::p2tr(&secp, internal_key, merkle_root, Network::Bitcoin);
+            let spk = addr.script_pubkey();
+
+            assert_eq!(expected_output_key, output_key.into_inner());
+            assert_eq!(expected_tweak, tweak);
+            assert_eq!(expected_addr, addr);
+            assert_eq!(expected_spk, spk);
+        }
+    }
+
+    fn bip_341_read_json() -> serde_json::Value {
+        let json_str = include_str!("../../test_data/bip341_tests.json");
+        serde_json::from_str(json_str).expect("JSON was not well-formatted")
     }
 }
