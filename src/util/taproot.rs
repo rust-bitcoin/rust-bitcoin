@@ -81,19 +81,18 @@ macro_rules! sha256t_hash_newtype {
     };
 }
 
-// Currently all taproot hashes are defined as being displayed backwards,
-// but that can be specified individually per hash.
+// Taproot test vectors from BIP-341 state the hashes without any reversing
 sha256t_hash_newtype!(TapLeafHash, TapLeafTag, MIDSTATE_TAPLEAF, 64,
-    doc="Taproot-tagged hash for tapscript Merkle tree leafs", true
+    doc="Taproot-tagged hash for tapscript Merkle tree leafs", false
 );
 sha256t_hash_newtype!(TapBranchHash, TapBranchTag, MIDSTATE_TAPBRANCH, 64,
-    doc="Taproot-tagged hash for tapscript Merkle tree branches", true
+    doc="Taproot-tagged hash for tapscript Merkle tree branches", false
 );
 sha256t_hash_newtype!(TapTweakHash, TapTweakTag, MIDSTATE_TAPTWEAK, 64,
-    doc="Taproot-tagged hash for public key tweaks", true
+    doc="Taproot-tagged hash for public key tweaks", false
 );
 sha256t_hash_newtype!(TapSighashHash, TapSighashTag, MIDSTATE_TAPSIGHASH, 64,
-    doc="Taproot-tagged hash for the taproot signature hash", true
+    doc="Taproot-tagged hash for the taproot signature hash", false
 );
 
 impl TapTweakHash {
@@ -938,19 +937,19 @@ mod test {
         //   writer.GetSHA256().GetHex()
         assert_eq!(
             TapLeafHash::from_engine(TapLeafTag::engine()).to_hex(),
-            "cbfa0621df37662ca57697e5847b6abaf92934a1a5624916f8d177a388c21252"
+            "5212c288a377d1f8164962a5a13429f9ba6a7b84e59776a52c6637df2106facb"
         );
         assert_eq!(
             TapBranchHash::from_engine(TapBranchTag::engine()).to_hex(),
-            "dffd9fbe4c21c893fa934f8774eda0e1efdc06f52ffbf5c1533c6f4dec73c353"
+            "53c373ec4d6f3c53c1f5fb2ff506dcefe1a0ed74874f93fa93c8214cbe9ffddf"
         );
         assert_eq!(
             TapTweakHash::from_engine(TapTweakTag::engine()).to_hex(),
-            "e4156b45ff9b277dd92a042af9eed8c91f1d037f68f0d6b20001ab749422a48a"
+            "8aa4229474ab0100b2d6f0687f031d1fc9d8eef92a042ad97d279bff456b15e4"
         );
         assert_eq!(
             TapSighashHash::from_engine(TapSighashTag::engine()).to_hex(),
-            "03c8b9d47cdb5f7bf924e282ce99ba8d2fe581262a04002907d8bc4a9111bcda"
+            "dabc11914abcd8072900042a2681e52f8dba99ce82e224f97b5fdb7cd4b9c803"
         );
 
         // 0-byte
@@ -960,19 +959,19 @@ mod test {
         // Note that Core writes the 0 length prefix when an empty vector is written.
         assert_eq!(
             TapLeafHash::hash(&[0]).to_hex(),
-            "29589d5122ec666ab5b4695070b6debc63881a4f85d88d93ddc90078038213ed"
+            "ed1382037800c9dd938dd8854f1a8863bcdeb6705069b4b56a66ec22519d5829"
         );
         assert_eq!(
             TapBranchHash::hash(&[0]).to_hex(),
-            "1deb45569eb6b2da88b5c2ab46d6a64ab08d58a2fdd5f75a24e6c760194b5392"
+            "92534b1960c7e6245af7d5fda2588db04aa6d646abc2b588dab2b69e5645eb1d"
         );
         assert_eq!(
             TapTweakHash::hash(&[0]).to_hex(),
-            "1eea90d42a359c89bbf702ddf6bde140349e95b9e8036ff1c37f04e6b53787cd"
+            "cd8737b5e6047fc3f16f03e8b9959e3440e1bdf6dd02f7bb899c352ad490ea1e"
         );
         assert_eq!(
             TapSighashHash::hash(&[0]).to_hex(),
-            "cd10c023c300fb9a507dff136370fba1d8a0566667cfafc4099a8803e00dfdc2"
+            "c2fd0de003889a09c4afcf676656a0d8a1fb706313ff7d509afb00c323c010cd"
         );
     }
 
