@@ -40,7 +40,7 @@ use core::num::ParseIntError;
 use core::str::FromStr;
 #[cfg(feature = "std")] use std::error;
 
-use secp256k1::schnorrsig;
+use secp256k1::{Secp256k1, Verification};
 use bech32;
 use hashes::Hash;
 use hash_types::{PubkeyHash, WPubkeyHash, ScriptHash, WScriptHash};
@@ -49,7 +49,9 @@ use blockdata::constants::{PUBKEY_ADDRESS_PREFIX_MAIN, SCRIPT_ADDRESS_PREFIX_MAI
 use network::constants::Network;
 use util::base58;
 use util::ecdsa;
+use util::taproot::TapBranchHash;
 use blockdata::script::Instruction;
+use util::schnorr::{TapTweak, UntweakedPublicKey, TweakedPublicKey};
 
 /// Address error.
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -511,13 +513,34 @@ impl Address {
         }
     }
 
-    /// Create a pay to taproot address
-    pub fn p2tr(taptweaked_key: schnorrsig::PublicKey, network: Network) -> Address {
+    /// Create a pay to taproot address from untweaked key
+    pub fn p2tr<C: Verification>(
+        secp: Secp256k1<C>, 
+        internal_key: UntweakedPublicKey, 
+        merkle_root: Option<TapBranchHash>, 
+        network: Network
+    ) -> Address {
         Address {
             network: network,
             payload: Payload::WitnessProgram {
                 version: WitnessVersion::V1,
-                program: taptweaked_key.serialize().to_vec()
+                program: internal_key.tap_tweak(secp, merkle_root).into_inner().serialize().to_vec()
+            }
+        }
+    }
+
+    /// Create a pay to taproot address from a pre-tweaked output key.
+    ///
+    /// This method is not recommended for use and [Address::p2tr()] should be used where possible.
+    pub fn p2tr_tweaked<C: Verification>(
+        output_key: TweakedPublicKey, 
+        network: Network
+    ) -> Address {
+        Address {
+            network: network,
+            payload: Payload::WitnessProgram {
+                version: WitnessVersion::V1,
+                program: output_key.into_inner().serialize().to_vec()
             }
         }
     }
@@ -786,6 +809,7 @@ mod tests {
     use blockdata::script::Script;
     use network::constants::Network::{Bitcoin, Testnet};
     use util::ecdsa::PublicKey;
+    use secp256k1::schnorrsig;
 
     use super::*;
 
@@ -1147,5 +1171,13 @@ mod tests {
 
         test_addr_type(legacy_payload, LEGACY_EQUIVALENCE_CLASSES);
         test_addr_type(&segwit_payload, SEGWIT_EQUIVALENCE_CLASSES);
+    }
+
+    #[test]
+    fn p2tr_from_untweaked(){
+        //Test case from BIP-086
+        let internal_key = schnorrsig::PublicKey::from_str("cc8a4bc64d897bddc5fbc2f670f7a8ba0b386779106cf1223c6fc5d7cd6fc115").unwrap();
+        let address = Address::p2tr(Secp256k1::new(), internal_key,None, Network::Bitcoin);
+        assert_eq!(address.to_string(), "bc1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxqkedrcr");
     }
 }
