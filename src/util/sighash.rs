@@ -31,6 +31,8 @@ use {Script, Transaction, TxOut};
 
 use prelude::*;
 
+use super::taproot::LeafVersion;
+
 /// Efficiently calculates signature hash message for legacy, segwit and taproot inputs.
 #[derive(Debug)]
 pub struct SigHashCache<T: Deref<Target = Transaction>> {
@@ -88,7 +90,6 @@ pub enum Prevouts<'u> {
     All(&'u [TxOut]),
 }
 
-const LEAF_VERSION_TAPSCRIPT: u8 = 0xc0;
 const KEY_VERSION_0: u8 = 0u8;
 
 /// Information related to the script path spending
@@ -96,7 +97,7 @@ const KEY_VERSION_0: u8 = 0u8;
 pub struct ScriptPath<'s> {
     script: &'s Script,
     code_separator_pos: u32,
-    leaf_version: u8,
+    leaf_version: LeafVersion,
 }
 
 /// Hashtype of an input's signature, encoded in the last byte of the signature
@@ -214,7 +215,7 @@ impl<'u> Prevouts<'u> {
 
 impl<'s> ScriptPath<'s> {
     /// Create a new ScriptPath structure
-    pub fn new(script: &'s Script, code_separator_pos: u32, leaf_version: u8) -> Self {
+    pub fn new(script: &'s Script, code_separator_pos: u32, leaf_version: LeafVersion) -> Self {
         ScriptPath {
             script,
             code_separator_pos,
@@ -223,7 +224,7 @@ impl<'s> ScriptPath<'s> {
     }
     /// Create a new ScriptPath structure using default values for `code_separator_pos` and `leaf_version`
     pub fn with_defaults(script: &'s Script) -> Self {
-        Self::new(script, 0xFFFFFFFFu32, LEAF_VERSION_TAPSCRIPT)
+        Self::new(script, 0xFFFFFFFFu32, LeafVersion::default())
     }
 }
 
@@ -399,7 +400,7 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
         }) = script_path
         {
             let mut enc = TapLeafHash::engine();
-            leaf_version.consensus_encode(&mut enc)?;
+            leaf_version.as_u8().consensus_encode(&mut enc)?;
             script.consensus_encode(&mut enc)?;
             let hash = TapLeafHash::from_engine(enc);
 
