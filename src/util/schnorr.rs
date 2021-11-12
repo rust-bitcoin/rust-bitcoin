@@ -17,7 +17,7 @@
 //! Schnorr key types.
 //!
 
-use core::fmt;
+use core::{fmt, str};
 use prelude::*;
 
 pub use secp256k1::{XOnlyPublicKey, KeyPair};
@@ -42,6 +42,13 @@ impl fmt::LowerHex for TweakedPublicKey {
 impl fmt::Display for TweakedPublicKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::Display::fmt(&self.0, f)
+    }
+}
+
+impl str::FromStr for TweakedPublicKey {
+    type Err = secp256k1::Error;
+    fn from_str(s: &str) -> Result<TweakedPublicKey, secp256k1::Error> {
+        Ok(TweakedPublicKey(XOnlyPublicKey::from_str(s)?))
     }
 }
 
