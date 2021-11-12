@@ -26,7 +26,7 @@ secp-recovery = ["secp256k1/recovery"]
 # Instead no-std enables additional features required for this crate to be usable without std.
 # As a result, both can be enabled without conflict.
 std = ["secp256k1/std", "bitcoin_hashes/std", "bech32/std"]
-no-std = ["hashbrown", "core2/alloc", "bitcoin_hashes/alloc"]
+no-std = ["hashbrown", "core2/alloc", "bitcoin_hashes/alloc", "secp256k1/alloc"]
 
 [package.metadata.docs.rs]
 features = [ "std", "secp-recovery", "base64", "rand", "use-serde", "bitcoinconsensus" ]
