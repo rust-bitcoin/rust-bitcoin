@@ -35,7 +35,7 @@ rustc-args = ["--cfg", "docsrs"]
 [dependencies]
 bech32 = { version = "0.8.1", default-features = false }
 bitcoin_hashes = { version = "0.10.0", default-features = false }
-secp256k1 = { version = "0.20.2", default-features = false }
+secp256k1 = { version = "0.20.3", default-features = false }
 core2 = { version = "0.3.0", optional = true, default-features = false }
 
 base64-compat = { version = "1.0.0", optional = true }
