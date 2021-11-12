@@ -41,6 +41,9 @@ use policy::DUST_RELAY_TX_FEE;
 
 use util::ecdsa::PublicKey;
 use util::address::WitnessVersion;
+use util::taproot::{LeafVersion, TapBranchHash, TapLeafHash};
+use secp256k1::{Secp256k1, Verification};
+use schnorr::{TapTweak, TweakedPublicKey, UntweakedPublicKey};
 
 /// A Bitcoin script.
 #[derive(Clone, Default, PartialOrd, Ord, PartialEq, Eq, Hash)]
@@ -313,12 +316,27 @@ impl Script {
 
     /// Generates P2WPKH-type of scriptPubkey
     pub fn new_v0_wpkh(pubkey_hash: &WPubkeyHash) -> Script {
-        Script::new_witness_program(WitnessVersion::V0, &pubkey_hash.to_vec())
+        Script::new_witness_program(WitnessVersion::V0, &pubkey_hash[..])
     }
 
     /// Generates P2WSH-type of scriptPubkey with a given hash of the redeem script
     pub fn new_v0_wsh(script_hash: &WScriptHash) -> Script {
-        Script::new_witness_program(WitnessVersion::V0, &script_hash.to_vec())
+        Script::new_witness_program(WitnessVersion::V0, &script_hash[..])
+    }
+
+    /// Generates P2TR for script spending path using an internal public key and some optional
+    /// script tree merkle root.
+    pub fn new_v1_p2tr<C: Verification>(secp: &Secp256k1<C>, internal_key: UntweakedPublicKey, merkle_root: Option<TapBranchHash>) -> Script {
+        let (output_key, _) = internal_key.tap_tweak(secp, merkle_root);
+        Script::new_witness_program(WitnessVersion::V1, &output_key.serialize())
+    }
+
+    /// Generates P2TR for key spending path for a known [`TweakedPublicKey`].
+    ///
+    /// NB: Make sure that the used key is indeed tweaked (for instance, it comes from `rawtr`
+    /// descriptor content); otherwise please use [`Script::new_v1_p2tr`] method.
+    pub fn new_v1_p2tr_tweaked(output_key: TweakedPublicKey) -> Script {
+        Script::new_witness_program(WitnessVersion::V1, &output_key.serialize())
     }
 
     /// Generates P2WSH-type of scriptPubkey with a given hash of the redeem script
@@ -371,6 +389,20 @@ impl Script {
     /// script")
     pub fn to_v0_p2wsh(&self) -> Script {
         Script::new_v0_wsh(&self.wscript_hash())
+    }
+
+    /// Compute P2TR output with a given internal key and a single script spending path equal to the
+    /// current script, assuming that the script is a Tapscript
+    #[inline]
+    pub fn to_v1_p2tr<C: Verification>(&self, secp: &Secp256k1<C>, internal_key: UntweakedPublicKey) -> Script {
+        let leaf_hash = TapLeafHash::from_script(&self, LeafVersion::TapScript);
+        let merkle_root = TapBranchHash::from_inner(leaf_hash.into_inner());
+        Script::new_v1_p2tr(&secp, internal_key, Some(merkle_root))
+    }
+
+    #[inline]
+    fn witness_version(&self) -> Option<WitnessVersion> {
+        WitnessVersion::from_opcode(self.0[0].into()).ok()
     }
 
     /// Checks whether a script pubkey is a p2sh output
@@ -428,7 +460,7 @@ impl Script {
     #[inline]
     pub fn is_v0_p2wsh(&self) -> bool {
         self.0.len() == 34 &&
-        self.0[0] == opcodes::all::OP_PUSHBYTES_0.into_u8() &&
+            self.witness_version() == Some(WitnessVersion::V0) &&
         self.0[1] == opcodes::all::OP_PUSHBYTES_32.into_u8()
     }
 
@@ -436,8 +468,16 @@ impl Script {
     #[inline]
     pub fn is_v0_p2wpkh(&self) -> bool {
         self.0.len() == 22 &&
-            self.0[0] == opcodes::all::OP_PUSHBYTES_0.into_u8() &&
+            self.witness_version() == Some(WitnessVersion::V0) &&
             self.0[1] == opcodes::all::OP_PUSHBYTES_20.into_u8()
+    }
+
+    /// Checks whether a script pubkey is a P2TR output
+    #[inline]
+    pub fn is_v1_p2tr(&self) -> bool {
+        self.0.len() == 34 &&
+            self.witness_version() == Some(WitnessVersion::V1) &&
+            self.0[1] == opcodes::all::OP_PUSHBYTES_32.into_u8()
     }
 
     /// Check if this is an OP_RETURN output
