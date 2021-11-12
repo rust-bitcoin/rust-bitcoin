@@ -57,17 +57,9 @@ macro_rules! impl_psbtmap_consensus_encoding {
         impl $crate::consensus::Encodable for $thing {
             fn consensus_encode<S: $crate::io::Write>(
                 &self,
-                mut s: S,
+                s: S,
             ) -> Result<usize, $crate::io::Error> {
-                let mut len = 0;
-                for pair in $crate::util::psbt::Map::get_pairs(self)? {
-                    len += $crate::consensus::Encodable::consensus_encode(
-                        &pair,
-                        &mut s,
-                    )?;
-                }
-
-                Ok(len + $crate::consensus::Encodable::consensus_encode(&0x00_u8, s)?)
+                self.consensus_encode_map(s)
             }
         }
     };

@@ -30,6 +30,22 @@ pub trait Map {
 
     /// Attempt to merge with another key-value map of the same type.
     fn merge(&mut self, other: Self) -> Result<(), psbt::Error>;
+
+    /// Encodes map data with bitcoin consensus encoding
+    fn consensus_encode_map<S: io::Write>(
+        &self,
+        mut s: S,
+    ) -> Result<usize, io::Error> {
+        let mut len = 0;
+        for pair in Map::get_pairs(self)? {
+            len += encode::Encodable::consensus_encode(
+                &pair,
+                &mut s,
+            )?;
+        }
+
+        Ok(len + encode::Encodable::consensus_encode(&0x00_u8, s)?)
+    }
 }
 
 // place at end to pick up macros
@@ -37,6 +53,5 @@ mod global;
 mod input;
 mod output;
 
-pub use self::global::Global;
 pub use self::input::Input;
 pub use self::output::Output;
