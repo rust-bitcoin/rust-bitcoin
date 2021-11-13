@@ -563,6 +563,41 @@ impl Payload {
             } => script::Script::new_witness_program(version, prog)
         }
     }
+
+    /// Extract address info from the address.
+    pub fn address_info(&self) -> AddressInfo {
+        match self {
+            Payload::PubkeyHash(_) => AddressInfo::p2pkh(),
+            Payload::ScriptHash(_) => AddressInfo::p2sh(),
+            Payload::WitnessProgram {
+                version,
+                program: ref prog,
+            } => {
+                // BIP-141 p2wpkh or p2wsh addresses.
+                match (version, prog.len()) {
+                    (WitnessVersion::V0, 20) => AddressInfo::p2wpkh(),
+                    (WitnessVersion::V0, 32) => AddressInfo::p2wsh(),
+                    (WitnessVersion::V0, len) => AddressInfo::NotSpendableWitnessV0(len),
+                    (WitnessVersion::V1, 32) => AddressInfo::p2tr(),
+                    (WitnessVersion::V1, len) => AddressInfo::NonTaprootWitnessV1(len),
+                    (version, len) => AddressInfo::Future(*version, len),
+                }
+            }
+        }
+    }
+
+    /// Returns type of the address, if the witness version and program length is known
+    #[inline]
+    pub fn address_type(&self) -> Option<AddressType> {
+        self.address_info().address_type()
+    }
+
+    /// Extracts [`WitnessVersion`] used by the address payload, if known. Returns [`None`] for both
+    /// pre-segwit and P2SH (ambiguous) addresses.
+    #[inline]
+    pub fn witness_version(self) -> Option<WitnessVersion> {
+        self.address_info().witness_version()
+    }
 }
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -703,25 +738,9 @@ impl Address {
     }
 
     /// Extract address info from the address.
+    #[inline]
     pub fn address_info(&self) -> AddressInfo {
-        match self.payload {
-            Payload::PubkeyHash(_) => AddressInfo::p2pkh(),
-            Payload::ScriptHash(_) => AddressInfo::p2sh(),
-            Payload::WitnessProgram {
-                version,
-                program: ref prog,
-            } => {
-                // BIP-141 p2wpkh or p2wsh addresses.
-                match (version, prog.len()) {
-                    (WitnessVersion::V0, 20) => AddressInfo::p2wpkh(),
-                    (WitnessVersion::V0, 32) => AddressInfo::p2wsh(),
-                    (WitnessVersion::V0, len) => AddressInfo::NotSpendableWitnessV0(len),
-                    (WitnessVersion::V1, 32) => AddressInfo::p2tr(),
-                    (WitnessVersion::V1, len) => AddressInfo::NonTaprootWitnessV1(len),
-                    (version, len) => AddressInfo::Future(version, len),
-                }
-            }
-        }
+        self.payload.address_info()
     }
 
     /// Returns type of the address, if the witness version and program length is known
