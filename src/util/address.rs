@@ -234,6 +234,42 @@ impl AddressInfo {
             AddressInfo::NotSpendableWitnessV0(_) => false,
         }
     }
+
+    /// Returns whether support of the address will be possible only in a future through a softfork
+    #[inline]
+    pub fn requires_softfork(self) -> bool {
+        match self {
+            AddressInfo::Known(_) |
+            AddressInfo::NotSpendableWitnessV0(_) => false,
+            AddressInfo::Future(_, _) |
+            AddressInfo::NonTaprootWitnessV1(_) => true,
+        }
+    }
+
+    /// Detects whether the address is Taproot address.
+    ///
+    /// NB: Not all valid witness v1 addresses are taproot addresses; Taproot is only version 1
+    /// witness with 32 byte long witness program; if the length of the witness program is different
+    /// this will be a non-Taproot witness v1 output, spendable by anyone under the current
+    /// consensus rules before one of future softfork would change that.
+    ///
+    /// See also [`AddressInfo::NonTaprootWitnessV1`]
+    #[inline]
+    pub fn is_taproot(self) -> bool {
+        self == AddressInfo::Known(AddressType::P2tr)
+    }
+
+    /// Detects [`WitnessVersion`] used in the address, if known. Returns [`None`] for both
+    /// pre-segwit and P2SH (ambiguous) addresses.
+    #[inline]
+    pub fn witness_version(self) -> Option<WitnessVersion> {
+        match self {
+            AddressInfo::Known(address_type) => address_type.witness_version(),
+            AddressInfo::Future(version, _) => Some(version),
+            AddressInfo::NotSpendableWitnessV0(_) => Some(WitnessVersion::V0),
+            AddressInfo::NonTaprootWitnessV1(_) => Some(WitnessVersion::V1),
+        }
+    }
 }
 
 /// The different types of addresses representable with string and currently supported by the
@@ -257,6 +293,19 @@ impl AddressType {
     #[inline]
     pub fn from_address_info(address_info: AddressInfo) -> Option<AddressType> {
         address_info.address_type()
+    }
+
+    /// Detects [`WitnessVersion`] used in the address, if known. Returns [`None`] for both
+    /// pre-segwit and P2SH (ambiguous) addresses.
+    #[inline]
+    pub fn witness_version(self) -> Option<WitnessVersion> {
+        match self {
+            AddressType::P2pkh |
+            AddressType::P2sh => None,
+            AddressType::P2wpkh |
+            AddressType::P2wsh => Some(WitnessVersion::V0),
+            AddressType::P2tr => Some(WitnessVersion::V1),
+        }
     }
 }
 
@@ -752,6 +801,13 @@ impl Address {
             (Network::Regtest, _) | (_, Network::Regtest) if !is_legacy => false,
             (Network::Testnet, _) | (Network::Regtest, _) | (Network::Signet, _) => true
         }
+    }
+
+    /// Extracts [`WitnessVersion`] used by the address, if known. Returns [`None`] for both
+    /// pre-segwit and P2SH (ambiguous) addresses.
+    #[inline]
+    pub fn witness_version(self) -> Option<WitnessVersion> {
+        self.address_info().witness_version()
     }
 }
 
