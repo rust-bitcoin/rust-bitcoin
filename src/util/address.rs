@@ -409,10 +409,7 @@ impl Payload {
     /// Creates a pay to (compressed) public key hash payload from a public key
     #[inline]
     pub fn p2pkh(pk: &ecdsa::PublicKey) -> Payload {
-        let mut hash_engine = PubkeyHash::engine();
-        pk.write_into(&mut hash_engine)
-            .expect("engines don't error");
-        Payload::PubkeyHash(PubkeyHash::from_engine(hash_engine))
+        Payload::PubkeyHash(PubkeyHash::hash(&pk.to_bytes()))
     }
 
     /// Creates a pay to script hash P2SH payload from a script
@@ -430,13 +427,9 @@ impl Payload {
             return Err(Error::UncompressedPubkey);
         }
 
-        let mut hash_engine = WPubkeyHash::engine();
-        pk.write_into(&mut hash_engine)
-            .expect("engines don't error");
-
         Ok(Payload::WitnessProgram {
             version: WitnessVersion::V0,
-            program: WPubkeyHash::from_engine(hash_engine)[..].to_vec(),
+            program: WPubkeyHash::hash(&pk.to_bytes())[..].to_vec(),
         })
     }
 
@@ -446,13 +439,9 @@ impl Payload {
             return Err(Error::UncompressedPubkey);
         }
 
-        let mut hash_engine = WPubkeyHash::engine();
-        pk.write_into(&mut hash_engine)
-            .expect("engines don't error");
-
         let builder = script::Builder::new()
             .push_int(0)
-            .push_slice(&WPubkeyHash::from_engine(hash_engine)[..]);
+            .push_slice(&WPubkeyHash::hash(&pk.to_bytes())[..]);
 
         Ok(Payload::ScriptHash(ScriptHash::hash(
             builder.into_script().as_bytes(),
