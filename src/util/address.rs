@@ -405,6 +405,148 @@ impl Payload {
             } => script::Script::new_witness_program(version, prog)
         }
     }
+
+    /// Creates a pay to (compressed) public key hash payload from a public key
+    #[inline]
+    pub fn p2pkh(pk: &ecdsa::PublicKey) -> Payload {
+        let mut hash_engine = PubkeyHash::engine();
+        pk.write_into(&mut hash_engine)
+            .expect("engines don't error");
+        Payload::PubkeyHash(PubkeyHash::from_engine(hash_engine))
+    }
+
+    /// Creates a pay to script hash P2SH payload from a script
+    #[inline]
+    pub fn p2sh(script: &script::Script) -> Result<Payload, Error> {
+        if script.len() > MAX_SCRIPT_ELEMENT_SIZE {
+            return Err(Error::ExcessiveScriptSize);
+        }
+        Ok(Payload::ScriptHash(ScriptHash::hash(&script[..])))
+    }
+
+    /// Create a witness pay to public key payload from a public key
+    pub fn p2wpkh(pk: &ecdsa::PublicKey) -> Result<Payload, Error> {
+        if !pk.compressed {
+            return Err(Error::UncompressedPubkey);
+        }
+
+        let mut hash_engine = WPubkeyHash::engine();
+        pk.write_into(&mut hash_engine)
+            .expect("engines don't error");
+
+        Ok(Payload::WitnessProgram {
+            version: WitnessVersion::V0,
+            program: WPubkeyHash::from_engine(hash_engine)[..].to_vec(),
+        })
+    }
+
+    /// Create a pay to script payload that embeds a witness pay to public key
+    pub fn p2shwpkh(pk: &ecdsa::PublicKey) -> Result<Payload, Error> {
+        if !pk.compressed {
+            return Err(Error::UncompressedPubkey);
+        }
+
+        let mut hash_engine = WPubkeyHash::engine();
+        pk.write_into(&mut hash_engine)
+            .expect("engines don't error");
+
+        let builder = script::Builder::new()
+            .push_int(0)
+            .push_slice(&WPubkeyHash::from_engine(hash_engine)[..]);
+
+        Ok(Payload::ScriptHash(ScriptHash::hash(
+            builder.into_script().as_bytes(),
+        )))
+    }
+
+    /// Create a witness pay to script hash payload.
+    pub fn p2wsh(script: &script::Script) -> Payload {
+        Payload::WitnessProgram {
+            version: WitnessVersion::V0,
+            program: WScriptHash::hash(&script[..])[..].to_vec(),
+        }
+    }
+
+    /// Create a pay to script payload that embeds a witness pay to script hash address
+    pub fn p2shwsh(script: &script::Script) -> Payload {
+        let ws = script::Builder::new()
+            .push_int(0)
+            .push_slice(&WScriptHash::hash(&script[..])[..])
+            .into_script();
+
+        Payload::ScriptHash(ScriptHash::hash(&ws[..]))
+    }
+
+    /// Create a pay to taproot payload from untweaked key
+    pub fn p2tr<C: Verification>(
+        secp: &Secp256k1<C>,
+        internal_key: UntweakedPublicKey,
+        merkle_root: Option<TapBranchHash>,
+    ) -> Payload {
+        let (output_key, _parity) = internal_key.tap_tweak(secp, merkle_root);
+        Payload::WitnessProgram {
+            version: WitnessVersion::V1,
+            program: output_key.into_inner().serialize().to_vec(),
+        }
+    }
+
+    /// Create a pay to taproot payload from a pre-tweaked output key.
+    ///
+    /// This method is not recommended for use and [Payload::p2tr()] should be used where possible.
+    pub fn p2tr_tweaked(output_key: TweakedPublicKey) -> Payload {
+        Payload::WitnessProgram {
+            version: WitnessVersion::V1,
+            program: output_key.as_inner().serialize().to_vec(),
+        }
+    }
+}
+
+/// A utility struct to encode an address payload with the given parameters.
+/// This is a low-level utility struct. Consider using `Address` instead.
+pub struct AddressEncoding<'a> {
+    /// The address payload to encode.
+    pub payload: &'a Payload,
+    /// base58 version byte for p2pkh payloads (e.g. 0x00 for "1..." addresses).
+    pub p2pkh_prefix: u8,
+    /// base58 version byte for p2sh payloads (e.g. 0x05 for "3..." addresses).
+    pub p2sh_prefix: u8,
+    /// hrp used in bech32 addresss (e.g. "bc" for "bc1..." addresses).
+    pub bech32_hrp: &'a str,
+}
+
+impl<'a> fmt::Display for AddressEncoding<'a> {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        match self.payload {
+            Payload::PubkeyHash(hash) => {
+                let mut prefixed = [0; 21];
+                prefixed[0] = self.p2pkh_prefix;
+                prefixed[1..].copy_from_slice(&hash[..]);
+                base58::check_encode_slice_to_fmt(fmt, &prefixed[..])
+            }
+            Payload::ScriptHash(hash) => {
+                let mut prefixed = [0; 21];
+                prefixed[0] = self.p2sh_prefix;
+                prefixed[1..].copy_from_slice(&hash[..]);
+                base58::check_encode_slice_to_fmt(fmt, &prefixed[..])
+            }
+            Payload::WitnessProgram {
+                version,
+                program: prog,
+            } => {
+                let mut upper_writer;
+                let writer = if fmt.alternate() {
+                    upper_writer = UpperWriter(fmt);
+                    &mut upper_writer as &mut dyn fmt::Write
+                } else {
+                    fmt as &mut dyn fmt::Write
+                };
+                let mut bech32_writer =
+                    bech32::Bech32Writer::new(self.bech32_hrp, version.bech32_variant(), writer)?;
+                bech32::WriteBase32::write_u5(&mut bech32_writer, (*version).into())?;
+                bech32::ToBase32::write_base32(&prog, &mut bech32_writer)
+            }
+        }
+    }
 }
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -423,12 +565,9 @@ impl Address {
     /// This is the preferred non-witness type address.
     #[inline]
     pub fn p2pkh(pk: &ecdsa::PublicKey, network: Network) -> Address {
-        let mut hash_engine = PubkeyHash::engine();
-        pk.write_into(&mut hash_engine).expect("engines don't error");
-
         Address {
             network: network,
-            payload: Payload::PubkeyHash(PubkeyHash::from_engine(hash_engine)),
+            payload: Payload::p2pkh(pk),
         }
     }
 
@@ -438,12 +577,9 @@ impl Address {
     /// these days.
     #[inline]
     pub fn p2sh(script: &script::Script, network: Network) -> Result<Address, Error> {
-        if script.len() > MAX_SCRIPT_ELEMENT_SIZE{
-            return Err(Error::ExcessiveScriptSize);
-        }
         Ok(Address {
             network: network,
-            payload: Payload::ScriptHash(ScriptHash::hash(&script[..])),
+            payload: Payload::p2sh(script)?,
         })
     }
 
@@ -454,19 +590,9 @@ impl Address {
     /// # Errors
     /// Will only return an error if an uncompressed public key is provided.
     pub fn p2wpkh(pk: &ecdsa::PublicKey, network: Network) -> Result<Address, Error> {
-        if !pk.compressed {
-            return Err(Error::UncompressedPubkey);
-        }
-
-        let mut hash_engine = WPubkeyHash::engine();
-        pk.write_into(&mut hash_engine).expect("engines don't error");
-
         Ok(Address {
             network: network,
-            payload: Payload::WitnessProgram {
-                version: WitnessVersion::V0,
-                program: WPubkeyHash::from_engine(hash_engine)[..].to_vec(),
-            },
+            payload: Payload::p2wpkh(pk)?,
         })
     }
 
@@ -477,20 +603,9 @@ impl Address {
     /// # Errors
     /// Will only return an Error if an uncompressed public key is provided.
     pub fn p2shwpkh(pk: &ecdsa::PublicKey, network: Network) -> Result<Address, Error> {
-        if !pk.compressed {
-            return Err(Error::UncompressedPubkey);
-        }
-
-        let mut hash_engine = WPubkeyHash::engine();
-        pk.write_into(&mut hash_engine).expect("engines don't error");
-
-        let builder = script::Builder::new()
-            .push_int(0)
-            .push_slice(&WPubkeyHash::from_engine(hash_engine)[..]);
-
         Ok(Address {
             network: network,
-            payload: Payload::ScriptHash(ScriptHash::hash(builder.into_script().as_bytes())),
+            payload: Payload::p2shwpkh(pk)?,
         })
     }
 
@@ -498,10 +613,7 @@ impl Address {
     pub fn p2wsh(script: &script::Script, network: Network) -> Address {
         Address {
             network: network,
-            payload: Payload::WitnessProgram {
-                version: WitnessVersion::V0,
-                program: WScriptHash::hash(&script[..])[..].to_vec(),
-            },
+            payload: Payload::p2wsh(script),
         }
     }
 
@@ -509,14 +621,9 @@ impl Address {
     ///
     /// This is a segwit address type that looks familiar (as p2sh) to legacy clients.
     pub fn p2shwsh(script: &script::Script, network: Network) -> Address {
-        let ws = script::Builder::new()
-            .push_int(0)
-            .push_slice(&WScriptHash::hash(&script[..])[..])
-            .into_script();
-
         Address {
             network: network,
-            payload: Payload::ScriptHash(ScriptHash::hash(&ws[..])),
+            payload: Payload::p2shwsh(script),
         }
     }
 
@@ -527,13 +634,9 @@ impl Address {
         merkle_root: Option<TapBranchHash>,
         network: Network
     ) -> Address {
-        let (output_key, _parity) = internal_key.tap_tweak(secp, merkle_root);
         Address {
             network: network,
-            payload: Payload::WitnessProgram {
-                version: WitnessVersion::V1,
-                program: output_key.into_inner().serialize().to_vec()
-            }
+            payload: Payload::p2tr(secp, internal_key, merkle_root),
         }
     }
 
@@ -546,10 +649,7 @@ impl Address {
     ) -> Address {
         Address {
             network: network,
-            payload: Payload::WitnessProgram {
-                version: WitnessVersion::V1,
-                program: output_key.as_inner().serialize().to_vec()
-            }
+            payload: Payload::p2tr_tweaked(output_key),
         }
     }
 
@@ -654,46 +754,26 @@ impl Address {
 // be used in QR codes, see [`Address::to_qr_uri`].
 impl fmt::Display for Address {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        match self.payload {
-            Payload::PubkeyHash(ref hash) => {
-                let mut prefixed = [0; 21];
-                prefixed[0] = match self.network {
-                    Network::Bitcoin => PUBKEY_ADDRESS_PREFIX_MAIN,
-                    Network::Testnet | Network::Signet | Network::Regtest => PUBKEY_ADDRESS_PREFIX_TEST,
-                };
-                prefixed[1..].copy_from_slice(&hash[..]);
-                base58::check_encode_slice_to_fmt(fmt, &prefixed[..])
-            }
-            Payload::ScriptHash(ref hash) => {
-                let mut prefixed = [0; 21];
-                prefixed[0] = match self.network {
-                    Network::Bitcoin => SCRIPT_ADDRESS_PREFIX_MAIN,
-                    Network::Testnet | Network::Signet | Network::Regtest => SCRIPT_ADDRESS_PREFIX_TEST,
-                };
-                prefixed[1..].copy_from_slice(&hash[..]);
-                base58::check_encode_slice_to_fmt(fmt, &prefixed[..])
-            }
-            Payload::WitnessProgram {
-                version,
-                program: ref prog,
-            } => {
-                let hrp = match self.network {
-                    Network::Bitcoin => "bc",
-                    Network::Testnet | Network::Signet => "tb",
-                    Network::Regtest => "bcrt",
-                };
-                let mut upper_writer;
-                let writer = if fmt.alternate() {
-                    upper_writer = UpperWriter(fmt);
-                    &mut upper_writer as &mut dyn fmt::Write
-                } else {
-                    fmt as &mut dyn fmt::Write
-                };
-                let mut bech32_writer = bech32::Bech32Writer::new(hrp, version.bech32_variant(), writer)?;
-                bech32::WriteBase32::write_u5(&mut bech32_writer, version.into())?;
-                bech32::ToBase32::write_base32(&prog, &mut bech32_writer)
-            }
-        }
+        let p2pkh_prefix = match self.network {
+            Network::Bitcoin => PUBKEY_ADDRESS_PREFIX_MAIN,
+            Network::Testnet | Network::Signet | Network::Regtest => PUBKEY_ADDRESS_PREFIX_TEST,
+        };
+        let p2sh_prefix = match self.network {
+            Network::Bitcoin => SCRIPT_ADDRESS_PREFIX_MAIN,
+            Network::Testnet | Network::Signet | Network::Regtest => SCRIPT_ADDRESS_PREFIX_TEST,
+        };
+        let bech32_hrp = match self.network {
+            Network::Bitcoin => "bc",
+            Network::Testnet | Network::Signet => "tb",
+            Network::Regtest => "bcrt",
+        };
+        let encoding = AddressEncoding {
+            payload: &self.payload,
+            p2pkh_prefix,
+            p2sh_prefix,
+            bech32_hrp,
+        };
+        encoding.fmt(fmt)
     }
 }
 
