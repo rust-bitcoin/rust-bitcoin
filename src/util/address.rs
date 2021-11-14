@@ -515,9 +515,9 @@ impl Address {
 
     /// Create a pay to taproot address from untweaked key
     pub fn p2tr<C: Verification>(
-        secp: Secp256k1<C>, 
-        internal_key: UntweakedPublicKey, 
-        merkle_root: Option<TapBranchHash>, 
+        secp: Secp256k1<C>,
+        internal_key: UntweakedPublicKey,
+        merkle_root: Option<TapBranchHash>,
         network: Network
     ) -> Address {
         Address {
@@ -532,8 +532,8 @@ impl Address {
     /// Create a pay to taproot address from a pre-tweaked output key.
     ///
     /// This method is not recommended for use and [Address::p2tr()] should be used where possible.
-    pub fn p2tr_tweaked<C: Verification>(
-        output_key: TweakedPublicKey, 
+    pub fn p2tr_tweaked(
+        output_key: TweakedPublicKey,
         network: Network
     ) -> Address {
         Address {
