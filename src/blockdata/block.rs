@@ -39,7 +39,7 @@ use VarInt;
 
 /// A block header, which contains all the block's information except
 /// the actual transactions
-#[derive(Copy, PartialEq, Eq, Clone, Debug)]
+#[derive(Copy, PartialEq, Eq, Clone, Debug, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct BlockHeader {
     /// The protocol version. Should always be 1.
