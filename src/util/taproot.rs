@@ -200,20 +200,23 @@ impl TaprootSpendInfo {
     ///
     /// - When the optimal huffman tree has a depth more than 128
     /// - If the provided list of script weights is empty
-    /// - If the script weight calculations overflow. This should not happen unless you are
-    /// dealing with numbers close to 2^64.
+    ///
+    /// # Edge Cases:
+    /// - If the script weight calculations overflow, a sub-optimal tree may be generated. This
+    ///   should not happen unless you are dealing with billions of branches with weights close to
+    ///   2^32.
     pub fn with_huffman_tree<C, I>(
         secp: &Secp256k1<C>,
         internal_key: schnorr::PublicKey,
         script_weights: I,
     ) -> Result<Self, TaprootBuilderError>
     where
-        I: IntoIterator<Item = (u64, Script)>,
+        I: IntoIterator<Item = (u32, Script)>,
         C: secp256k1::Verification,
     {
-        let mut node_weights = BinaryHeap::<(Reverse<u128>, NodeInfo)>::new();
+        let mut node_weights = BinaryHeap::<(Reverse<u64>, NodeInfo)>::new();
         for (p, leaf) in script_weights {
-            node_weights.push((Reverse(p as u128), NodeInfo::new_leaf_with_ver(leaf, LeafVersion::default())));
+            node_weights.push((Reverse(p as u64), NodeInfo::new_leaf_with_ver(leaf, LeafVersion::default())));
         }
         if node_weights.is_empty() {
             return Err(TaprootBuilderError::IncompleteTree);
@@ -223,7 +226,7 @@ impl TaprootSpendInfo {
             let (p1, s1) = node_weights.pop().expect("len must be at least two");
             let (p2, s2) = node_weights.pop().expect("len must be at least two");
             // Insert the sum of first two in the tree as a new node
-            // N.B.: p1 + p2 can never actually saturate as you would need to have 2**64 max u64s
+            // N.B.: p1 + p2 can not practically saturate as you would need to have 2**32 max u32s
             // from the input to overflow. However, saturating is a reasonable behavior here as
             // huffman tree construction would treat all such elements as "very likely".
             let p = Reverse(p1.0.saturating_add(p2.0));
