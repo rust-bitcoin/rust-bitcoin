@@ -104,7 +104,7 @@ pub struct ScriptPath<'s> {
 /// Hashtype of an input's signature, encoded in the last byte of the signature
 /// Fixed values so they can be casted as integer types for encoding
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
-pub enum SigHashType {
+pub enum SchnorrSigHashType {
     /// 0x0: Used when not explicitly specified, defaulting to [`SigHashType::All`]
     Default = 0x00,
     /// 0x1: Sign all outputs
@@ -229,31 +229,31 @@ impl<'s> ScriptPath<'s> {
     }
 }
 
-impl From<LegacySigHashType> for SigHashType {
+impl From<LegacySigHashType> for SchnorrSigHashType {
     fn from(s: LegacySigHashType) -> Self {
         match s {
-            LegacySigHashType::All => SigHashType::All,
-            LegacySigHashType::None => SigHashType::None,
-            LegacySigHashType::Single => SigHashType::Single,
-            LegacySigHashType::AllPlusAnyoneCanPay => SigHashType::AllPlusAnyoneCanPay,
-            LegacySigHashType::NonePlusAnyoneCanPay => SigHashType::NonePlusAnyoneCanPay,
-            LegacySigHashType::SinglePlusAnyoneCanPay => SigHashType::SinglePlusAnyoneCanPay,
+            LegacySigHashType::All => SchnorrSigHashType::All,
+            LegacySigHashType::None => SchnorrSigHashType::None,
+            LegacySigHashType::Single => SchnorrSigHashType::Single,
+            LegacySigHashType::AllPlusAnyoneCanPay => SchnorrSigHashType::AllPlusAnyoneCanPay,
+            LegacySigHashType::NonePlusAnyoneCanPay => SchnorrSigHashType::NonePlusAnyoneCanPay,
+            LegacySigHashType::SinglePlusAnyoneCanPay => SchnorrSigHashType::SinglePlusAnyoneCanPay,
         }
     }
 }
 
-impl SigHashType {
+impl SchnorrSigHashType {
     /// Break the sighash flag into the "real" sighash flag and the ANYONECANPAY boolean
-    pub(crate) fn split_anyonecanpay_flag(self) -> (SigHashType, bool) {
+    pub(crate) fn split_anyonecanpay_flag(self) -> (SchnorrSigHashType, bool) {
         match self {
-            SigHashType::Default => (SigHashType::Default, false),
-            SigHashType::All => (SigHashType::All, false),
-            SigHashType::None => (SigHashType::None, false),
-            SigHashType::Single => (SigHashType::Single, false),
-            SigHashType::AllPlusAnyoneCanPay => (SigHashType::All, true),
-            SigHashType::NonePlusAnyoneCanPay => (SigHashType::None, true),
-            SigHashType::SinglePlusAnyoneCanPay => (SigHashType::Single, true),
-            SigHashType::Reserved => (SigHashType::Reserved, false),
+            SchnorrSigHashType::Default => (SchnorrSigHashType::Default, false),
+            SchnorrSigHashType::All => (SchnorrSigHashType::All, false),
+            SchnorrSigHashType::None => (SchnorrSigHashType::None, false),
+            SchnorrSigHashType::Single => (SchnorrSigHashType::Single, false),
+            SchnorrSigHashType::AllPlusAnyoneCanPay => (SchnorrSigHashType::All, true),
+            SchnorrSigHashType::NonePlusAnyoneCanPay => (SchnorrSigHashType::None, true),
+            SchnorrSigHashType::SinglePlusAnyoneCanPay => (SchnorrSigHashType::Single, true),
+            SchnorrSigHashType::Reserved => (SchnorrSigHashType::Reserved, false),
         }
     }
 }
@@ -281,7 +281,7 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
         prevouts: &Prevouts,
         annex: Option<Annex>,
         script_path: Option<ScriptPath>,
-        sighash_type: SigHashType,
+        sighash_type: SchnorrSigHashType,
     ) -> Result<(), Error> {
         prevouts.check_all(&self.tx)?;
 
@@ -321,7 +321,7 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
 
         // If hash_type & 3 does not equal SIGHASH_NONE or SIGHASH_SINGLE:
         //     sha_outputs (32): the SHA256 of the serialization of all outputs in CTxOut format.
-        if sighash != SigHashType::None && sighash != SigHashType::Single {
+        if sighash != SchnorrSigHashType::None && sighash != SchnorrSigHashType::Single {
             self.common_cache().outputs.consensus_encode(&mut writer)?;
         }
 
@@ -376,7 +376,7 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
         // * Data about this output:
         // If hash_type & 3 equals SIGHASH_SINGLE:
         //      sha_single_output (32): the SHA256 of the corresponding output in CTxOut format.
-        if sighash == SigHashType::Single {
+        if sighash == SchnorrSigHashType::Single {
             let mut enc = sha256::Hash::engine();
             self.tx
                 .output
@@ -420,7 +420,7 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
         prevouts: &Prevouts,
         annex: Option<Annex>,
         script_path: Option<ScriptPath>,
-        sighash_type: SigHashType,
+        sighash_type: SchnorrSigHashType,
     ) -> Result<TapSighashHash, Error> {
         let mut enc = TapSighashHash::engine();
         self.taproot_encode_signing_data_to(
@@ -681,10 +681,11 @@ impl<'a> Encodable for Annex<'a> {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use consensus::deserialize;
     use hashes::hex::FromHex;
     use hashes::{Hash, HashEngine};
-    use util::sighash::{Annex, Error, Prevouts, ScriptPath, SigHashCache, SigHashType};
+    use util::sighash::{Annex, Error, Prevouts, ScriptPath, SigHashCache};
     use util::taproot::TapSighashHash;
     use {Script, Transaction, TxIn, TxOut};
 
@@ -709,7 +710,7 @@ mod tests {
             "01365724000000000023542156b39dab4f8f3508e0432cfb41fab110170acaa2d4c42539cb90a4dc7c093bc500",
             0,
             "33ca0ebfb4a945eeee9569fc0f5040221275f88690b7f8592ada88ce3bdf6703",
-            SigHashType::Default, None,None,
+            SchnorrSigHashType::Default, None,None,
         );
 
         test_taproot_sighash(
@@ -717,7 +718,7 @@ mod tests {
             "02591f220000000000225120f25ad35583ea31998d968871d7de1abd2a52f6fe4178b54ea158274806ff4ece48fb310000000000225120f25ad35583ea31998d968871d7de1abd2a52f6fe4178b54ea158274806ff4ece",
             1,
             "626ab955d58c9a8a600a0c580549d06dc7da4e802eb2a531f62a588e430967a8",
-            SigHashType::All, None,None,
+            SchnorrSigHashType::All, None,None,
         );
 
         test_taproot_sighash(
@@ -725,7 +726,7 @@ mod tests {
             "01c4811000000000002251201bf9297d0a2968ae6693aadd0fa514717afefd218087a239afb7418e2d22e65c",
             0,
             "dfa9437f9c9a1d1f9af271f79f2f5482f287cdb0d2e03fa92c8a9b216cc6061c",
-            SigHashType::AllPlusAnyoneCanPay, None,None,
+            SchnorrSigHashType::AllPlusAnyoneCanPay, None,None,
         );
 
         test_taproot_sighash(
@@ -733,7 +734,7 @@ mod tests {
             "0144c84d0000000000225120e3f2107989c88e67296ab2faca930efa2e3a5bd3ff0904835a11c9e807458621",
             0,
             "3129de36a5d05fff97ffca31eb75fcccbbbc27b3147a7a36a9e4b45d8b625067",
-            SigHashType::None, None,None,
+            SchnorrSigHashType::None, None,None,
         );
 
         test_taproot_sighash(
@@ -741,7 +742,7 @@ mod tests {
             "013fed110000000000225120eb536ae8c33580290630fc495046e998086a64f8f33b93b07967d9029b265c55",
             0,
             "2441e8b0e063a2083ee790f14f2045022f07258ddde5ee01de543c9e789d80ae",
-            SigHashType::NonePlusAnyoneCanPay, None,None,
+            SchnorrSigHashType::NonePlusAnyoneCanPay, None,None,
         );
 
         test_taproot_sighash(
@@ -749,7 +750,7 @@ mod tests {
             "01efa558000000000022512007071ea3dc7e331b0687d0193d1e6d6ed10e645ef36f10ef8831d5e522ac9e80",
             0,
             "30239345177cadd0e3ea413d49803580abb6cb27971b481b7788a78d35117a88",
-            SigHashType::Single, None,None,
+            SchnorrSigHashType::Single, None,None,
         );
 
         test_taproot_sighash(
@@ -757,7 +758,7 @@ mod tests {
             "0107af4e00000000002251202c36d243dfc06cb56a248e62df27ecba7417307511a81ae61aa41c597a929c69",
             0,
             "bf9c83f26c6dd16449e4921f813f551c4218e86f2ec906ca8611175b41b566df",
-            SigHashType::SinglePlusAnyoneCanPay, None,None,
+            SchnorrSigHashType::SinglePlusAnyoneCanPay, None,None,
         );
     }
 
@@ -768,7 +769,7 @@ mod tests {
             "01ea49260000000000225120ab5e9800806bf18cb246edcf5fe63441208fe955a4b5a35bbff65f5db622a010",
             0,
             "3b003000add359a364a156e73e02846782a59d0d95ca8c4638aaad99f2ef915c",
-            SigHashType::SinglePlusAnyoneCanPay,
+            SchnorrSigHashType::SinglePlusAnyoneCanPay,
             Some("507b979802e62d397acb29f56743a791894b99372872fc5af06a4f6e8d242d0615cda53062bb20e6ec79756fe39183f0c128adfe85559a8fa042b042c018aa8010143799e44f0893c40e1e"),
             None,
         );
@@ -781,7 +782,7 @@ mod tests {
             "011bec34000000000022512028055142ea437db73382e991861446040b61dd2185c4891d7daf6893d79f7182",
             0,
             "d66de5274a60400c7b08c86ba6b7f198f40660079edf53aca89d2a9501317f2e",
-            SigHashType::All,
+            SchnorrSigHashType::All,
             None,
             Some("20cc4e1107aea1d170c5ff5b6817e1303010049724fb3caa7941792ea9d29b3e2bacab"),
         );
@@ -794,7 +795,7 @@ mod tests {
             "011458360000000000225120a7baec3fb9f84614e3899fcc010c638f80f13539344120e1f4d8b68a9a011a13",
             0,
             "a0042aa434f9a75904b64043f2a283f8b4c143c7f4f7f49a6cbe5b9f745f4c15",
-            SigHashType::All,
+            SchnorrSigHashType::All,
             Some("50a6272b470e1460e3332ade7bb14b81671c564fb6245761bd5bd531394b28860e0b3808ab229fb51791fb6ae6fa82d915b2efb8f6df83ae1f5ab3db13e30928875e2a22b749d89358de481f19286cd4caa792ce27f9559082d227a731c5486882cc707f83da361c51b7aadd9a0cf68fe7480c410fa137b454482d9a1ebf0f96d760b4d61426fc109c6e8e99a508372c45caa7b000a41f8251305da3f206c1849985ba03f3d9592832b4053afbd23ab25d0465df0bc25a36c223aacf8e04ec736a418c72dc319e4da3e972e349713ca600965e7c665f2090d5a70e241ac164115a1f5639f28b1773327715ca307ace64a2de7f0e3df70a2ffee3857689f909c0dad46d8a20fa373a4cc6eed6d4c9806bf146f0d76baae1"),
             Some("7520ab9160dd8299dc1367659be3e8f66781fe440d52940c7f8d314a89b9f2698d406ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6eadac"),
         );
@@ -811,27 +812,27 @@ mod tests {
         let mut c = SigHashCache::new(&dumb_tx);
 
         assert_eq!(
-            c.taproot_signature_hash(0, &Prevouts::All(&vec![]), None, None, SigHashType::All),
+            c.taproot_signature_hash(0, &Prevouts::All(&vec![]), None, None, SchnorrSigHashType::All),
             Err(Error::PrevoutsSize)
         );
         let two = vec![TxOut::default(), TxOut::default()];
         let too_many_prevouts = Prevouts::All(&two);
         assert_eq!(
-            c.taproot_signature_hash(0, &too_many_prevouts, None, None, SigHashType::All),
+            c.taproot_signature_hash(0, &too_many_prevouts, None, None, SchnorrSigHashType::All),
             Err(Error::PrevoutsSize)
         );
         let tx_out = TxOut::default();
         let prevout = Prevouts::One(1, &tx_out);
         assert_eq!(
-            c.taproot_signature_hash(0, &prevout, None, None, SigHashType::All),
+            c.taproot_signature_hash(0, &prevout, None, None, SchnorrSigHashType::All),
             Err(Error::PrevoutKind)
         );
         assert_eq!(
-            c.taproot_signature_hash(0, &prevout, None, None, SigHashType::AllPlusAnyoneCanPay),
+            c.taproot_signature_hash(0, &prevout, None, None, SchnorrSigHashType::AllPlusAnyoneCanPay),
             Err(Error::PrevoutIndex)
         );
         assert_eq!(
-            c.taproot_signature_hash(10, &prevout, None, None, SigHashType::AllPlusAnyoneCanPay),
+            c.taproot_signature_hash(10, &prevout, None, None, SchnorrSigHashType::AllPlusAnyoneCanPay),
             Err(Error::IndexOutOfInputsBounds {
                 index: 10,
                 inputs_size: 1
@@ -839,7 +840,7 @@ mod tests {
         );
         let prevout = Prevouts::One(0, &tx_out);
         assert_eq!(
-            c.taproot_signature_hash(0, &prevout, None, None, SigHashType::SinglePlusAnyoneCanPay),
+            c.taproot_signature_hash(0, &prevout, None, None, SchnorrSigHashType::SinglePlusAnyoneCanPay),
             Err(Error::SingleWithoutCorrespondingOutput {
                 index: 0,
                 outputs_size: 0
@@ -866,7 +867,7 @@ mod tests {
         prevout_hex: &str,
         input_index: usize,
         expected_hash: &str,
-        sighash_type: SigHashType,
+        sighash_type: SchnorrSigHashType,
         annex_hex: Option<&str>,
         script_hex: Option<&str>,
     ) {

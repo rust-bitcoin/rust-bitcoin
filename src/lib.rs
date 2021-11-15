@@ -133,6 +133,7 @@ pub use util::amount::Amount;
 pub use util::amount::Denomination;
 pub use util::amount::SignedAmount;
 pub use util::merkleblock::MerkleBlock;
+pub use util::sighash::SchnorrSigHashType;
 
 pub use util::ecdsa;
 pub use util::schnorr;
