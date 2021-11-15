@@ -20,6 +20,7 @@
 
 use prelude::*;
 
+use core::convert::{TryInto, TryFrom};
 use core::{mem, fmt, iter};
 
 use io;
@@ -45,19 +46,29 @@ pub struct CommandString(Cow<'static, str>);
 impl CommandString {
     /// Convert from various string types into a [CommandString].
     ///
-    /// Supported types are:
-    /// - `&'static str`
-    /// - `String`
-    ///
-    /// Returns an empty error if and only if the string is
-    /// larger than 12 characters in length.
-    pub fn try_from<S: Into<Cow<'static, str>>>(s: S) -> Result<CommandString, ()> {
+    /// # Returns
+    /// An empty error if and only if the string is larger than 12 characters in length.
+    fn _try_from<S: Into<Cow<'static, str>>>(s: S) -> Result<CommandString, ()> {
         let cow = s.into();
         if cow.as_ref().len() > 12 {
             Err(())
         } else {
             Ok(CommandString(cow))
         }
+    }
+}
+
+impl TryFrom<String> for CommandString {
+    type Error = ();
+    fn try_from(s: String) -> Result<Self, Self::Error> {
+        Self::_try_from(s)
+    }
+}
+
+impl TryFrom<&'static str> for CommandString {
+    type Error = ();
+    fn try_from(s: &'static str) -> Result<Self, Self::Error> {
+        Self::_try_from(s)
     }
 }
 
@@ -238,7 +249,7 @@ impl NetworkMessage {
     pub fn command(&self) -> CommandString {
         match *self {
             NetworkMessage::Unknown { command: ref c, .. } => c.clone(),
-            _ => CommandString::try_from(self.cmd()).expect("cmd returns valid commands")
+            _ => self.cmd().try_into().expect("cmd returns valid commands")
         }
     }
 }
@@ -403,6 +414,8 @@ impl Decodable for RawNetworkMessage {
 
 #[cfg(test)]
 mod test {
+    use super::*;
+
     use std::net::Ipv4Addr;
     use super::{RawNetworkMessage, NetworkMessage, CommandString};
     use network::constants::ServiceFlags;
