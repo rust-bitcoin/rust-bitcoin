@@ -18,6 +18,7 @@ use io;
 use secp256k1::{self, Secp256k1};
 
 use core::fmt;
+use core::cmp::Reverse;
 #[cfg(feature = "std")]
 use std::error;
 
@@ -208,9 +209,9 @@ impl TaprootSpendInfo {
         I: IntoIterator<Item = (u64, Script)>,
         C: secp256k1::Verification,
     {
-        let mut node_weights = BinaryHeap::<(u128, NodeInfo)>::new();
+        let mut node_weights = BinaryHeap::<(Reverse<u128>, NodeInfo)>::new();
         for (p, leaf) in script_weights {
-            node_weights.push((p as u128, NodeInfo::new_leaf_with_ver(leaf, LeafVersion::default())));
+            node_weights.push((Reverse(p as u128), NodeInfo::new_leaf_with_ver(leaf, LeafVersion::default())));
         }
         if node_weights.is_empty() {
             return Err(TaprootBuilderError::IncompleteTree);
@@ -223,7 +224,7 @@ impl TaprootSpendInfo {
             // N.B.: p1 + p2 can never actually saturate as you would need to have 2**64 max u64s
             // from the input to overflow. However, saturating is a reasonable behavior here as
             // huffman tree construction would treat all such elements as "very likely".
-            let p = p1.saturating_add(p2);
+            let p = Reverse(p1.0.saturating_add(p2.0));
             node_weights.push((p, NodeInfo::combine(s1, s2)?));
         }
         // Every iteration of the loop reduces the node_weights.len() by exactly 1
