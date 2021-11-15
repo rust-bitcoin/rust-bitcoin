@@ -20,7 +20,7 @@
 //! and legacy (before Bip143).
 //!
 
-pub use blockdata::transaction::SigHashType as LegacySigHashType;
+pub use blockdata::transaction::EcdsaSigHashType;
 use consensus::{encode, Encodable};
 use core::fmt;
 use core::ops::{Deref, DerefMut};
@@ -79,7 +79,7 @@ struct TaprootCache {
 }
 
 /// Contains outputs of previous transactions.
-/// In the case [`SigHashType`] variant is `ANYONECANPAY`, [`Prevouts::One`] may be provided
+/// In the case [`SchnorrSigHashType`] variant is `ANYONECANPAY`, [`Prevouts::One`] may be provided
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum Prevouts<'u> {
     /// `One` variant allows to provide the single Prevout needed. It's useful for example
@@ -105,7 +105,7 @@ pub struct ScriptPath<'s> {
 /// Fixed values so they can be casted as integer types for encoding
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum SchnorrSigHashType {
-    /// 0x0: Used when not explicitly specified, defaulting to [`SigHashType::All`]
+    /// 0x0: Used when not explicitly specified, defaulting to [`SchnorrSigHashType::All`]
     Default = 0x00,
     /// 0x1: Sign all outputs
     All = 0x01,
@@ -233,15 +233,15 @@ impl<'s> ScriptPath<'s> {
     }
 }
 
-impl From<LegacySigHashType> for SchnorrSigHashType {
-    fn from(s: LegacySigHashType) -> Self {
+impl From<EcdsaSigHashType> for SchnorrSigHashType {
+    fn from(s: EcdsaSigHashType) -> Self {
         match s {
-            LegacySigHashType::All => SchnorrSigHashType::All,
-            LegacySigHashType::None => SchnorrSigHashType::None,
-            LegacySigHashType::Single => SchnorrSigHashType::Single,
-            LegacySigHashType::AllPlusAnyoneCanPay => SchnorrSigHashType::AllPlusAnyoneCanPay,
-            LegacySigHashType::NonePlusAnyoneCanPay => SchnorrSigHashType::NonePlusAnyoneCanPay,
-            LegacySigHashType::SinglePlusAnyoneCanPay => SchnorrSigHashType::SinglePlusAnyoneCanPay,
+            EcdsaSigHashType::All => SchnorrSigHashType::All,
+            EcdsaSigHashType::None => SchnorrSigHashType::None,
+            EcdsaSigHashType::Single => SchnorrSigHashType::Single,
+            EcdsaSigHashType::AllPlusAnyoneCanPay => SchnorrSigHashType::AllPlusAnyoneCanPay,
+            EcdsaSigHashType::NonePlusAnyoneCanPay => SchnorrSigHashType::NonePlusAnyoneCanPay,
+            EcdsaSigHashType::SinglePlusAnyoneCanPay => SchnorrSigHashType::SinglePlusAnyoneCanPay,
         }
     }
 }
@@ -460,7 +460,7 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
         input_index: usize,
         script_code: &Script,
         value: u64,
-        sighash_type: LegacySigHashType,
+        sighash_type: EcdsaSigHashType,
     ) -> Result<(), Error> {
         let zero_hash = sha256d::Hash::default();
 
@@ -475,8 +475,8 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
         }
 
         if !anyone_can_pay
-            && sighash != LegacySigHashType::Single
-            && sighash != LegacySigHashType::None
+            && sighash != EcdsaSigHashType::Single
+            && sighash != EcdsaSigHashType::None
         {
             self.segwit_cache()
                 .sequences
@@ -502,9 +502,9 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
             txin.sequence.consensus_encode(&mut writer)?;
         }
 
-        if sighash != LegacySigHashType::Single && sighash != LegacySigHashType::None {
+        if sighash != EcdsaSigHashType::Single && sighash != EcdsaSigHashType::None {
             self.segwit_cache().outputs.consensus_encode(&mut writer)?;
-        } else if sighash == LegacySigHashType::Single && input_index < self.tx.output.len() {
+        } else if sighash == EcdsaSigHashType::Single && input_index < self.tx.output.len() {
             let mut single_enc = SigHash::engine();
             self.tx.output[input_index].consensus_encode(&mut single_enc)?;
             SigHash::from_engine(single_enc).consensus_encode(&mut writer)?;
@@ -523,7 +523,7 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
         input_index: usize,
         script_code: &Script,
         value: u64,
-        sighash_type: LegacySigHashType,
+        sighash_type: EcdsaSigHashType,
     ) -> Result<SigHash, Error> {
         let mut enc = SigHash::engine();
         self.segwit_encode_signing_data_to(
@@ -645,7 +645,7 @@ impl<R: DerefMut<Target = Transaction>> SigHashCache<R> {
     ///
     /// This allows in-line signing such as
     /// ```
-    /// use bitcoin::blockdata::transaction::{Transaction, SigHashType};
+    /// use bitcoin::blockdata::transaction::{Transaction, EcdsaSigHashType};
     /// use bitcoin::util::sighash::SigHashCache;
     /// use bitcoin::Script;
     ///
@@ -655,7 +655,7 @@ impl<R: DerefMut<Target = Transaction>> SigHashCache<R> {
     /// let mut sig_hasher = SigHashCache::new(&mut tx_to_sign);
     /// for inp in 0..input_count {
     ///     let prevout_script = Script::new();
-    ///     let _sighash = sig_hasher.segwit_signature_hash(inp, &prevout_script, 42, SigHashType::All);
+    ///     let _sighash = sig_hasher.segwit_signature_hash(inp, &prevout_script, 42, EcdsaSigHashType::All);
     ///     // ... sign the sighash
     ///     sig_hasher.witness_mut(inp).unwrap().push(Vec::new());
     /// }

@@ -507,7 +507,7 @@ mod tests {
         use hash_types::Txid;
 
         use blockdata::script::Script;
-        use blockdata::transaction::{SigHashType, Transaction, TxIn, TxOut, OutPoint};
+        use blockdata::transaction::{EcdsaSigHashType, Transaction, TxIn, TxOut, OutPoint};
         use consensus::encode::serialize_hex;
         use util::psbt::map::{Map, Input, Output};
         use util::psbt::raw;
@@ -733,7 +733,7 @@ mod tests {
             );
             assert_eq!(
                 (&psbt.inputs[0].sighash_type).as_ref().unwrap(),
-                &SigHashType::All
+                &EcdsaSigHashType::All
             );
         }
 

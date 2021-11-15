@@ -123,7 +123,7 @@ pub use blockdata::transaction::Transaction;
 pub use blockdata::transaction::TxIn;
 pub use blockdata::transaction::TxOut;
 pub use blockdata::transaction::OutPoint;
-pub use blockdata::transaction::SigHashType;
+pub use blockdata::transaction::EcdsaSigHashType;
 pub use consensus::encode::VarInt;
 pub use network::constants::Network;
 pub use util::Error;

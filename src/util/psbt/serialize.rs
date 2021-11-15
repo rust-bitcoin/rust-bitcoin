@@ -23,7 +23,7 @@ use prelude::*;
 use io;
 
 use blockdata::script::Script;
-use blockdata::transaction::{SigHashType, Transaction, TxOut};
+use blockdata::transaction::{EcdsaSigHashType, Transaction, TxOut};
 use consensus::encode::{self, serialize, Decodable};
 use util::bip32::{ChildNumber, Fingerprint, KeySource};
 use hashes::{hash160, ripemd160, sha256, sha256d, Hash};
@@ -126,16 +126,16 @@ impl Deserialize for Vec<u8> {
     }
 }
 
-impl Serialize for SigHashType {
+impl Serialize for EcdsaSigHashType {
     fn serialize(&self) -> Vec<u8> {
         serialize(&self.as_u32())
     }
 }
 
-impl Deserialize for SigHashType {
+impl Deserialize for EcdsaSigHashType {
     fn deserialize(bytes: &[u8]) -> Result<Self, encode::Error> {
         let raw: u32 = encode::deserialize(bytes)?;
-        let rv: SigHashType = SigHashType::from_u32_consensus(raw);
+        let rv: EcdsaSigHashType = EcdsaSigHashType::from_u32_consensus(raw);
 
         if rv.as_u32() == raw {
             Ok(rv)

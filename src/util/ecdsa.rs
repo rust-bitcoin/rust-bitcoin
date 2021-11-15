@@ -29,7 +29,7 @@ use hashes::{Hash, hash160};
 use hash_types::{PubkeyHash, WPubkeyHash};
 use util::base58;
 use util::key::Error;
-use blockdata::transaction::SigHashType;
+use blockdata::transaction::EcdsaSigHashType;
 
 
 /// A Bitcoin ECDSA public key
@@ -421,7 +421,7 @@ pub struct EcdsaSig {
     /// The underlying ECDSA Signature
     pub sig: secp256k1::Signature,
     /// The corresponding hash type
-    pub hash_ty: SigHashType,
+    pub hash_ty: EcdsaSigHashType,
 }
 
 impl EcdsaSig {
@@ -430,7 +430,7 @@ impl EcdsaSig {
     pub fn from_slice(sl: &[u8]) -> Result<Self, EcdsaSigError> {
         let (hash_ty, sig) = sl.split_last()
             .ok_or(EcdsaSigError::EmptySignature)?;
-        let hash_ty = SigHashType::from_u32_standard(*hash_ty as u32)
+        let hash_ty = EcdsaSigHashType::from_u32_standard(*hash_ty as u32)
             .map_err(|_| EcdsaSigError::NonStandardSigHashType(*hash_ty))?;
         let sig = secp256k1::Signature::from_der(sig)
             .map_err(EcdsaSigError::Secp256k1)?;

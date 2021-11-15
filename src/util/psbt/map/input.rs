@@ -17,7 +17,7 @@ use prelude::*;
 use io;
 
 use blockdata::script::Script;
-use blockdata::transaction::{SigHashType, Transaction, TxOut};
+use blockdata::transaction::{EcdsaSigHashType, Transaction, TxOut};
 use consensus::encode;
 use util::bip32::KeySource;
 use hashes::{self, hash160, ripemd160, sha256, sha256d};
@@ -76,7 +76,7 @@ pub struct Input {
     pub partial_sigs: BTreeMap<PublicKey, Vec<u8>>,
     /// The sighash type to be used for this input. Signatures for this input
     /// must use the sighash type.
-    pub sighash_type: Option<SigHashType>,
+    pub sighash_type: Option<EcdsaSigHashType>,
     /// The redeem script for this input.
     pub redeem_script: Option<Script>,
     /// The witness script for this input.
@@ -137,7 +137,7 @@ impl Map for Input {
             }
             PSBT_IN_SIGHASH_TYPE => {
                 impl_psbt_insert_pair! {
-                    self.sighash_type <= <raw_key: _>|<raw_value: SigHashType>
+                    self.sighash_type <= <raw_key: _>|<raw_value: EcdsaSigHashType>
                 }
             }
             PSBT_IN_REDEEM_SCRIPT => {
