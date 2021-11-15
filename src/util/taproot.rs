@@ -1032,9 +1032,34 @@ mod test {
             (20, Script::from_hex("52").unwrap()),
             (20, Script::from_hex("53").unwrap()),
             (30, Script::from_hex("54").unwrap()),
-            (20, Script::from_hex("55").unwrap()),
+            (19, Script::from_hex("55").unwrap()),
         ];
         let tree_info = TaprootSpendInfo::with_huffman_tree(&secp, internal_key, script_weights.clone()).unwrap();
+
+        /* The resulting tree should put the scripts into a tree similar
+         * to the following:
+         *
+         *   1      __/\__
+         *         /      \
+         *        /\     / \
+         *   2   54 52  53 /\
+         *   3            55 51
+         */
+
+        for (script, length) in vec![("51", 3), ("52", 2), ("53", 2), ("54", 2), ("55", 3)] {
+            assert_eq!(
+                length,
+                tree_info
+                    .script_map
+                    .get(&(Script::from_hex(script).unwrap(), LeafVersion::default()))
+                    .expect("Present Key")
+                    .iter()
+                    .next()
+                    .expect("Present Path")
+                    .0
+                    .len()
+            );
+        }
 
         // Obtain the output key
         let output_key = tree_info.output_key();
