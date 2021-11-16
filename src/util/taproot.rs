@@ -339,7 +339,7 @@ impl TaprootSpendInfo {
         Some(ControlBlock {
             internal_key: self.internal_key,
             output_key_parity: self.output_key_parity,
-            leaf_version: LeafVersion::default(),
+            leaf_version: script_ver.1,
             merkle_branch: smallest.clone(),
         })
     }
