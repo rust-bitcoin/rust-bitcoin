@@ -135,8 +135,8 @@ pub use util::amount::SignedAmount;
 pub use util::merkleblock::MerkleBlock;
 pub use util::sighash::SchnorrSigHashType;
 
-pub use util::ecdsa;
-pub use util::schnorr;
+pub use util::ecdsa::{self, EcdsaSig, EcdsaSigError};
+pub use util::schnorr::{self, SchnorrSig, SchnorrSigError};
 #[deprecated(since = "0.26.1", note = "Please use `ecdsa::PrivateKey` instead")]
 pub use util::ecdsa::PrivateKey;
 #[deprecated(since = "0.26.1", note = "Please use `ecdsa::PublicKey` instead")]
