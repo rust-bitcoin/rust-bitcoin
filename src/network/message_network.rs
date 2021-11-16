@@ -12,10 +12,10 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! Network-related network messages
+//! Bitcoin network-related network messages.
 //!
 //! This module defines network messages which describe peers and their
-//! capabilities
+//! capabilities.
 //!
 
 use prelude::*;

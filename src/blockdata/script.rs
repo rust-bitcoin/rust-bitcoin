@@ -12,14 +12,13 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! Script
+//! Bitcoin scripts.
 //!
 //! Scripts define Bitcoin's digital signature scheme: a signature is formed
 //! from a script (the second half of which is defined by a coin to be spent,
-//! and the first half provided by the spending transaction), and is valid
-//! iff the script leaves `TRUE` on the stack after being evaluated.
-//! Bitcoin's script is a stack-based assembly language similar in spirit to
-//! Forth.
+//! and the first half provided by the spending transaction), and is valid iff
+//! the script leaves `TRUE` on the stack after being evaluated. Bitcoin's
+//! script is a stack-based assembly language similar in spirit to Forth.
 //!
 //! This module provides the structures and functions needed to support scripts.
 //!

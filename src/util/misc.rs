@@ -12,9 +12,11 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! Miscellaneous functions
+//! Miscellaneous functions.
 //!
-//! Various utility functions
+//! This module provides various utility functions including secp256k1 signature
+//! recovery when library is used with the `secp-recovery` feature.
+//!
 
 use prelude::*;
 

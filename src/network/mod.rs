@@ -12,7 +12,7 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! Network Support
+//! Bitcoin network support.
 //!
 //! This module defines support for (de)serialization and network transport
 //! of Bitcoin data and network messages.

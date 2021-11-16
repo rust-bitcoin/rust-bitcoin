@@ -11,9 +11,9 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! Bitcoin Keys
+//! Bitcoin keys.
 //!
-//! Keys used in Bitcoin that can be roundtrip (de)serialized.
+//! This module provides keys used in Bitcoin that can be roundtrip (de)serialized.
 //!
 
 #[deprecated(since = "0.26.1", note = "Please use `util::ecdsa` instead")]

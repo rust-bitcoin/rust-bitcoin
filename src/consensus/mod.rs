@@ -12,9 +12,9 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! Consensus
+//! Bitcoin consensus.
 //!
-//! This module defines structures, functions, and traits which are needed to
+//! This module defines structures, functions, and traits that are needed to
 //! conform to Bitcoin consensus.
 //!
 

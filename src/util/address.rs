@@ -11,25 +11,24 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! Addresses
+//! Bitcoin addresses.
 //!
-//! Support for ordinary base58 Bitcoin addresses and private keys
+//! Support for ordinary base58 Bitcoin addresses and private keys.
 //!
 //! # Example: creating a new address from a randomly-generated key pair
 //!
 //! ```rust
-//!
 //! use bitcoin::network::constants::Network;
 //! use bitcoin::util::address::Address;
 //! use bitcoin::util::ecdsa;
 //! use bitcoin::secp256k1::Secp256k1;
 //! use bitcoin::secp256k1::rand::thread_rng;
 //!
-//! // Generate random key pair
+//! // Generate random key pair.
 //! let s = Secp256k1::new();
 //! let public_key = ecdsa::PublicKey::new(s.generate_keypair(&mut thread_rng()).1);
 //!
-//! // Generate pay-to-pubkey-hash address
+//! // Generate pay-to-pubkey-hash address.
 //! let address = Address::p2pkh(&public_key, Network::Bitcoin);
 //! ```
 

@@ -11,9 +11,11 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! Hash functions
+//! Bitcoin hash functions.
 //!
-//! Utility functions related to hashing data, including merkleization
+//! This module provides utility functions related to hashing data, including
+//! merkleization.
+//!
 
 use prelude::*;
 

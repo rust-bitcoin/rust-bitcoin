@@ -12,21 +12,19 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! Consensus-encodable types
+//! Bitcoin consensus-encodable types.
 //!
 //! This is basically a replacement of the `Encodable` trait which does
-//! normalization for endianness, etc., to ensure that the encoding
-//! matches for endianness, etc., to ensure that the encoding matches
+//! normalization of endianness etc., to ensure that the encoding matches
 //! the network consensus encoding.
 //!
-//! Essentially, anything that must go on the -disk- or -network- must
-//! be encoded using the `Encodable` trait, since this data
-//! must be the same for all systems. Any data going to the -user-, e.g.
-//! over JSONRPC, should use the ordinary `Encodable` trait. (This
-//! should also be the same across systems, of course, but has some
-//! critical differences from the network format, e.g. scripts come
-//! with an opcode decode, hashes are big-endian, numbers are typically
-//! big-endian decimals, etc.)
+//! Essentially, anything that must go on the _disk_ or _network_ must be
+//! encoded using the `Encodable` trait, since this data must be the same for
+//! all systems. Any data going to the _user_ e.g., over JSONRPC, should use the
+//! ordinary `Encodable` trait. (This should also be the same across systems, of
+//! course, but has some critical differences from the network format e.g.,
+//! scripts come with an opcode decode, hashes are big-endian, numbers are
+//! typically big-endian decimals, etc.)
 //!
 
 use prelude::*;

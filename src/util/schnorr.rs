@@ -11,9 +11,10 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! Schnorr Bitcoin Keys
+//! Schnorr Bitcoin keys.
 //!
-//! Schnorr keys used in Bitcoin, reexporting Secp256k1 Schnorr key types
+//! This module provides Schnorr keys used in Bitcoin, reexporting Secp256k1
+//! Schnorr key types.
 //!
 
 pub use secp256k1::schnorrsig::{PublicKey, KeyPair};

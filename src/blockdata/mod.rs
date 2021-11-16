@@ -12,7 +12,7 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! Blockdata
+//! Bitcoin block data.
 //!
 //! This module defines structures and functions for storing the blocks and
 //! transactions which make up the Bitcoin system.

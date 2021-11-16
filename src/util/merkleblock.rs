@@ -18,7 +18,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-//! Merkle Block and Partial Merkle Tree
+//! Merkle Block and Partial Merkle Tree.
 //!
 //! Support proofs that transaction(s) belong to a block.
 //!
@@ -51,6 +51,7 @@
 //! assert_eq!(1, index.len());
 //! assert_eq!(1, index[0]);
 //! ```
+
 use prelude::*;
 
 use io;

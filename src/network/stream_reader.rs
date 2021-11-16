@@ -12,12 +12,12 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! Stream reader
+//! Stream reader.
 //!
-//! This module defines `StreamReader` struct and its implementation which is used
-//! for parsing incoming stream into separate `RawNetworkMessage`s, handling assembling
-//! messages from multiple packets or dealing with partial or multiple messages in the stream
-//! (like can happen with reading from TCP socket)
+//! This module defines the `StreamReader` struct and its implementation which
+//! is used for parsing an incoming stream into separate `RawNetworkMessage`s,
+//! handling assembling messages from multiple packets, or dealing with partial
+//! or multiple messages in the stream (e.g. when reading from a TCP socket).
 //!
 
 use prelude::*;

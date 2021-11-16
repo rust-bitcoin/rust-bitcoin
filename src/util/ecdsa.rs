@@ -11,9 +11,10 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! ECDSA Bitcoin Keys
+//! ECDSA Bitcoin keys.
 //!
-//! ECDSA keys used in Bitcoin that can be roundtrip (de)serialized.
+//! This module provides ECDSA keys used in Bitcoin that can be roundtrip
+//! (de)serialized.
 //!
 
 use prelude::*;

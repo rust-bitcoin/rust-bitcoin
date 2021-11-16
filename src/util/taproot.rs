@@ -11,7 +11,9 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! Taproot
+//! Bitcoin Taproot.
+//!
+//! This module provides support for taproot tagged hashes.
 //!
 use prelude::*;
 use io;

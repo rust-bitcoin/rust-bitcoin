@@ -12,9 +12,10 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! Macros
+//! Bitcoin serde macros.
 //!
-//! Internal macros used for unit tests
+//! This module provides internal macros used for unit tests.
+//!
 
 #[cfg(feature = "serde")]
 macro_rules! serde_round_trip (

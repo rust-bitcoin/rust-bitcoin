@@ -11,10 +11,11 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! BIP32 Implementation
+//! BIP32 implementation.
 //!
 //! Implementation of BIP32 hierarchical deterministic wallets, as defined
-//! at <https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki>
+//! at <https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki>.
+//!
 
 use prelude::*;
 

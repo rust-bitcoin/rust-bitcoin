@@ -12,14 +12,14 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! Network constants
+//! Bitcoin network constants.
 //!
 //! This module provides various constants relating to the Bitcoin network
 //! protocol, such as protocol versioning and magic header bytes.
 //!
 //! The [`Network`][1] type implements the [`Decodable`][2] and
 //! [`Encodable`][3] traits and encodes the magic bytes of the given
-//! network
+//! network.
 //!
 //! [1]: enum.Network.html
 //! [2]: ../../consensus/encode/trait.Decodable.html

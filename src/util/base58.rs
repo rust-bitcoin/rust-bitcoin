@@ -12,7 +12,11 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! Base58 encoder and decoder
+//! Base58 encoder and decoder.
+//!
+//! This module provides functions for encoding and decoding base58 slices and
+//! strings respectively.
+//!
 
 use prelude::*;
 

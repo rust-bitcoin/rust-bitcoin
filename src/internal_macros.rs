@@ -12,9 +12,10 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! Internal Macros
+//! Internal macros.
 //!
-//! Macros meant to be used inside the Rust Bitcoin library
+//! Macros meant to be used inside the Rust Bitcoin library.
+//!
 
 macro_rules! impl_consensus_encoding {
     ($thing:ident, $($field:ident),+) => (
