@@ -750,8 +750,13 @@ mod tests {
     use consensus::deserialize;
     use hashes::hex::FromHex;
     use hashes::{Hash, HashEngine};
-    use util::sighash::{Annex, Error, Prevouts, ScriptPath, SigHashCache, TapLeafHash};
-    use util::taproot::TapSighashHash;
+    use util::sighash::{Annex, Error, Prevouts, ScriptPath, SigHashCache};
+    use std::str::FromStr;
+    use hashes::hex::ToHex;
+    use util::taproot::{TapTweakHash, TapSighashHash, TapBranchHash, TapLeafHash};
+    use secp256k1::{self, SecretKey};
+    extern crate serde_json;
+
     use {Script, Transaction, TxIn, TxOut};
 
     #[test]
@@ -995,5 +1000,103 @@ mod tests {
             .unwrap();
         let expected = Vec::from_hex(expected_hash).unwrap();
         assert_eq!(expected, hash.into_inner());
+    }
+
+    #[test]
+    fn bip_341_sighash_tests() {
+
+        let data = bip_341_read_json();
+        assert!(data["version"].as_u64().unwrap() == 1u64);
+        let secp = &secp256k1::Secp256k1::new();
+        let key_path = &data["keyPathSpending"].as_array().unwrap()[0];
+
+        let raw_unsigned_tx = hex_decode!(Transaction, key_path["given"]["rawUnsignedTx"].as_str().unwrap());
+        let mut utxos = vec![];
+        for utxo in key_path["given"]["utxosSpent"].as_array().unwrap() {
+            let spk = hex_script!(utxo["scriptPubKey"].as_str().unwrap());
+            let amt = utxo["amountSats"].as_u64().unwrap();
+            utxos.push(TxOut {value: amt, script_pubkey: spk });
+        }
+
+        // Test intermediary
+        let mut cache = SigHashCache::new(&raw_unsigned_tx);
+        let expected_amt_hash = key_path["intermediary"]["hashAmounts"].as_str().unwrap();
+        let expected_outputs_hash = key_path["intermediary"]["hashOutputs"].as_str().unwrap();
+        let expected_prevouts_hash = key_path["intermediary"]["hashPrevouts"].as_str().unwrap();
+        let expected_spks_hash = key_path["intermediary"]["hashScriptPubkeys"].as_str().unwrap();
+        let expected_sequences_hash = key_path["intermediary"]["hashSequences"].as_str().unwrap();
+
+        // Compute all caches
+        assert_eq!(expected_amt_hash, cache.taproot_cache(&utxos).amounts.to_hex());
+        assert_eq!(expected_outputs_hash, cache.common_cache().outputs.to_hex());
+        assert_eq!(expected_prevouts_hash, cache.common_cache().prevouts.to_hex());
+        assert_eq!(expected_spks_hash, cache.taproot_cache(&utxos).script_pubkeys.to_hex());
+        assert_eq!(expected_sequences_hash, cache.common_cache().sequences.to_hex());
+
+        for inp in key_path["inputSpending"].as_array().unwrap() {
+            let tx_ind = inp["given"]["txinIndex"].as_u64().unwrap() as usize;
+            let internal_priv_key = hex_hash!(SecretKey, inp["given"]["internalPrivkey"].as_str().unwrap());
+            let merkle_root = if inp["given"]["merkleRoot"].is_null() {
+                None
+            } else {
+                Some(hex_hash!(TapBranchHash, inp["given"]["merkleRoot"].as_str().unwrap()))
+            };
+            let hash_ty = SchnorrSigHashType::from_u8(inp["given"]["hashType"].as_u64().unwrap() as u8).unwrap();
+
+            use schnorr::PublicKey as XOnlyPubKey;
+            let expected_internal_pk = hex_hash!(XOnlyPubKey, inp["intermediary"]["internalPubkey"].as_str().unwrap());
+            let expected_tweak = hex_hash!(TapTweakHash, inp["intermediary"]["tweak"].as_str().unwrap());
+            let _expected_tweaked_priv_key = hex_hash!(SecretKey, inp["intermediary"]["tweakedPrivkey"].as_str().unwrap());
+            let expected_sig_msg = Vec::<u8>::from_hex(inp["intermediary"]["sigMsg"].as_str().unwrap()).unwrap();
+            let expected_sig_hash = hex_hash!(TapSighashHash, inp["intermediary"]["sigHash"].as_str().unwrap());
+            let sig_str = inp["expected"]["witness"][0].as_str().unwrap();
+            let (expected_key_spend_sig, expected_hash_ty) = if sig_str.len() == 128 {
+                (secp256k1::schnorrsig::Signature::from_str(sig_str).unwrap(), SchnorrSigHashType::Default)
+            } else {
+                let hash_ty = SchnorrSigHashType::from_u8(Vec::<u8>::from_hex(&sig_str[128..]).unwrap()[0]).unwrap();
+                (secp256k1::schnorrsig::Signature::from_str(&sig_str[..128]).unwrap(), hash_ty)
+            };
+
+            // tests
+            let keypair = secp256k1::schnorrsig::KeyPair::from_secret_key(&secp, internal_priv_key);
+            let internal_key = XOnlyPubKey::from_keypair(secp, &keypair);
+            let tweak = TapTweakHash::from_key_and_tweak(internal_key, merkle_root);
+            let mut tweaked_keypair = keypair;
+            tweaked_keypair.tweak_add_assign(&secp, &tweak).unwrap();
+            let mut sig_msg = Vec::new();
+            cache.taproot_encode_signing_data_to(
+                &mut sig_msg,
+                tx_ind,
+                &Prevouts::All(&utxos),
+                None,
+                None,
+                hash_ty
+            ).unwrap();
+            let sig_hash = cache.taproot_signature_hash(
+                tx_ind,
+                &Prevouts::All(&utxos),
+                None,
+                None,
+                hash_ty
+            ).unwrap();
+
+            let msg = secp256k1::Message::from_slice(&sig_hash).unwrap();
+            let key_spend_sig = secp.schnorrsig_sign_with_aux_rand(&msg, &tweaked_keypair, &[0u8; 32]);
+
+            assert_eq!(expected_internal_pk, internal_key);
+            assert_eq!(expected_tweak, tweak);
+            assert_eq!(expected_sig_msg, sig_msg);
+            assert_eq!(expected_sig_hash, sig_hash);
+            assert_eq!(expected_hash_ty, hash_ty);
+            assert_eq!(expected_key_spend_sig, key_spend_sig);
+            // TODO: Uncomment these after a rust-secp release
+            // let tweaked_priv_key = SecretKey::from_keypair(&tweaked_keypair);
+            // assert_eq!(expected_tweaked_priv_key, tweaked_priv_key);
+        }
+    }
+
+    fn bip_341_read_json() -> serde_json::Value {
+        let json_str = include_str!("../../test_data/bip341_tests.json");
+        serde_json::from_str(json_str).expect("JSON was not well-formatted")
     }
 }
