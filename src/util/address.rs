@@ -177,11 +177,13 @@ impl FromStr for AddressType {
     }
 }
 
-/// Version of the witness program: first byte of `scriptPubkey` in transaction output for
-/// transactions starting with opcodes ranging from 0 to 16 (inclusive).
+/// Version of the witness program.
 ///
-/// Helps to limit possible version of the witness according to the specification; if a plain `u8`
-/// type was be used instead it would mean that version may be > 16, which is incorrect.
+/// Helps limit possible versions of the witness according to the specification. If a plain `u8`
+/// type was used instead it would mean that the version may be > 16, which would be incorrect.
+///
+/// First byte of `scriptPubkey` in transaction output for transactions starting with opcodes
+/// ranging from 0 to 16 (inclusive).
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 #[repr(u8)]
 pub enum WitnessVersion {
