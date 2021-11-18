@@ -17,6 +17,8 @@
 //! merkleization.
 //!
 
+use core::iter;
+
 use prelude::*;
 
 use io;
@@ -25,59 +27,81 @@ use core::cmp::min;
 use hashes::Hash;
 use consensus::encode::Encodable;
 
-/// Calculates the merkle root of a list of hashes inline
-/// into the allocated slice.
+/// Calculates the merkle root of a list of *hashes*, inline (in place) in `hashes`.
 ///
 /// In most cases, you'll want to use [bitcoin_merkle_root] instead.
-pub fn bitcoin_merkle_root_inline<T>(data: &mut [T]) -> T
+///
+/// # Returns
+/// - `None` if `hashes` is empty. The merkle root of an empty tree of hashes is undefined.
+/// - `Some(hash)` if `hashes` contains one element. A single hash is by definition the merkle root.
+/// - `Some(merkle_root)` if length of `hashes` is greater than one.
+pub fn bitcoin_merkle_root_inline<T>(hashes: &mut [T]) -> Option<T>
     where T: Hash + Encodable,
           <T as Hash>::Engine: io::Write,
 {
-    // Base case
-    if data.is_empty() {
-        return Default::default();
+    match hashes.len() {
+        0 => None,
+        1 => Some(hashes[0]),
+        _ => Some(merkle_root_r(hashes)),
     }
-    if data.len() < 2 {
-        return T::from_inner(data[0].into_inner());
-    }
-    // Recursion
-    for idx in 0..((data.len() + 1) / 2) {
-        let idx1 = 2 * idx;
-        let idx2 = min(idx1 + 1, data.len() - 1);
-        let mut encoder = T::engine();
-        data[idx1].consensus_encode(&mut encoder).expect("in-memory writers don't error");
-        data[idx2].consensus_encode(&mut encoder).expect("in-memory writers don't error");
-        data[idx] = T::from_engine(encoder);
-    }
-    let half_len = data.len() / 2 + data.len() % 2;
-    bitcoin_merkle_root_inline(&mut data[0..half_len])
 }
 
-/// Calculates the merkle root of an iterator of hashes.
-pub fn bitcoin_merkle_root<T, I>(mut iter: I) -> T
+/// Calculates the merkle root of an iterator of *hashes*.
+///
+/// # Returns
+/// - `None` if `hashes` is empty. The merkle root of an empty tree of hashes is undefined.
+/// - `Some(hash)` if `hashes` contains one element. A single hash is by definition the merkle root.
+/// - `Some(merkle_root)` if length of `hashes` is greater than one.
+pub fn bitcoin_merkle_root<T, I>(mut hashes: I) -> Option<T>
     where T: Hash + Encodable,
           <T as Hash>::Engine: io::Write,
-          I: ExactSizeIterator<Item = T>,
+          I: Iterator<Item = T>,
 {
-    // Base case
-    if iter.len() == 0 {
-        return Default::default();
-    }
-    if iter.len() == 1 {
-        return T::from_inner(iter.next().unwrap().into_inner());
-    }
-    // Recursion
-    let half_len = iter.len() / 2 + iter.len() % 2;
-    let mut alloc = Vec::with_capacity(half_len);
-    while let Some(hash1) = iter.next() {
+    let first = hashes.next()?;
+    let second = match hashes.next() {
+        Some(second) => second,
+        None => return Some(first),
+    };
+
+    let mut hashes = iter::once(first).chain(iter::once(second)).chain(hashes);
+
+    // We need a local copy to pass to `merkle_root_r`. It's more efficient to do the first loop of
+    // processing as we make the copy instead of copying the whole iterator.
+    let (min, max) = hashes.size_hint();
+    let mut alloc = Vec::with_capacity(max.unwrap_or(min) / 2 + 1);
+
+    while let Some(hash1) = hashes.next() {
         // If the size is odd, use the last element twice.
-        let hash2 = iter.next().unwrap_or(hash1);
+        let hash2 = hashes.next().unwrap_or(hash1);
         let mut encoder = T::engine();
         hash1.consensus_encode(&mut encoder).expect("in-memory writers don't error");
         hash2.consensus_encode(&mut encoder).expect("in-memory writers don't error");
         alloc.push(T::from_engine(encoder));
     }
-    bitcoin_merkle_root_inline(&mut alloc)
+
+    Some(merkle_root_r(&mut alloc))
+}
+
+// `hashes` must contain at least one hash.
+fn merkle_root_r<T>(hashes: &mut [T]) -> T
+    where T: Hash + Encodable,
+          <T as Hash>::Engine: io::Write,
+{
+    if hashes.len() == 1 {
+        return hashes[0]
+    }
+
+    for idx in 0..((hashes.len() + 1) / 2) {
+        let idx1 = 2 * idx;
+        let idx2 = min(idx1 + 1, hashes.len() - 1);
+        let mut encoder = T::engine();
+        hashes[idx1].consensus_encode(&mut encoder).expect("in-memory writers don't error");
+        hashes[idx2].consensus_encode(&mut encoder).expect("in-memory writers don't error");
+        hashes[idx] = T::from_engine(encoder);
+    }
+    let half_len = hashes.len() / 2 + hashes.len() % 2;
+
+    merkle_root_r(&mut hashes[0..half_len])
 }
 
 #[cfg(test)]
