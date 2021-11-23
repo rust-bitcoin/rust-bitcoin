@@ -42,7 +42,7 @@ pub enum Denomination {
 
 impl Denomination {
     /// The number of decimal places more than a satoshi.
-    fn precision(self) -> i32 {
+    fn precision(self) -> i8 {
         match self {
             Denomination::Bitcoin => -8,
             Denomination::MilliBitcoin => -5,
@@ -54,11 +54,10 @@ impl Denomination {
             Denomination::MilliSatoshi => 3,
         }
     }
-}
 
-impl fmt::Display for Denomination {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str(match *self {
+    /// Returns stringly representation of this
+    fn as_str(self) -> &'static str {
+        match self {
             Denomination::Bitcoin => "BTC",
             Denomination::MilliBitcoin => "mBTC",
             Denomination::MicroBitcoin => "uBTC",
@@ -67,7 +66,13 @@ impl fmt::Display for Denomination {
             Denomination::Bit => "bits",
             Denomination::Satoshi => "satoshi",
             Denomination::MilliSatoshi => "msat",
-        })
+        }
+    }
+}
+
+impl fmt::Display for Denomination {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str(self.as_str())
     }
 }
 
@@ -223,7 +228,7 @@ fn parse_signed_to_satoshi(
             // into a less precise amount. That is not allowed unless
             // there are no decimals and the last digits are zeroes as
             // many as the difference in precision.
-            let last_n = precision_diff.abs() as usize;
+            let last_n = unsigned_abs(precision_diff).into();
             if is_too_precise(s, last_n) {
                 return Err(ParseAmountError::TooPrecise);
             }
@@ -275,43 +280,171 @@ fn parse_signed_to_satoshi(
     Ok((is_negative, value))
 }
 
+/// Options given by `fmt::Formatter`
+struct FormatOptions {
+    fill: char,
+    align: Option<fmt::Alignment>,
+    width: Option<usize>,
+    precision: Option<usize>,
+    sign_plus: bool,
+    sign_aware_zero_pad: bool,
+}
+
+impl FormatOptions {
+    fn from_formatter(f: &fmt::Formatter) -> Self {
+        FormatOptions {
+            fill: f.fill(),
+            align: f.align(),
+            width: f.width(),
+            precision: f.precision(),
+            sign_plus: f.sign_plus(),
+            sign_aware_zero_pad: f.sign_aware_zero_pad(),
+        }
+    }
+}
+
+impl Default for FormatOptions {
+    fn default() -> Self {
+        FormatOptions {
+            fill: ' ',
+            align: None,
+            width: None,
+            precision: None,
+            sign_plus: false,
+            sign_aware_zero_pad: false,
+        }
+    }
+}
+
+fn dec_width(mut num: u64) -> usize {
+    let mut width = 1;
+    loop {
+        num /= 10;
+        if num == 0 {
+            break;
+        }
+        width += 1;
+    }
+    width
+}
+
+// NIH due to MSRV, impl copied from `core`
+fn unsigned_abs(x: i8) -> u8 {
+    x.wrapping_abs() as u8
+}
+
+fn repeat_char(f: &mut dyn fmt::Write, c: char, count: usize) -> fmt::Result {
+    for _ in 0..count {
+        f.write_char(c)?;
+    }
+    Ok(())
+}
+
 /// Format the given satoshi amount in the given denomination.
-///
-/// Does not include the denomination.
 fn fmt_satoshi_in(
     satoshi: u64,
     negative: bool,
     f: &mut dyn fmt::Write,
     denom: Denomination,
+    show_denom: bool,
+    options: FormatOptions,
 ) -> fmt::Result {
-    if negative {
-        f.write_str("-")?;
+    let precision = denom.precision();
+    // First we normalize the number:
+    // {num_before_decimal_point}{:0exp}{"." if nb_decimals > 0}{:0nb_decimals}{num_after_decimal_point}{:0trailing_decimal_zeros}
+    let mut num_after_decimal_point = 0;
+    let mut norm_nb_decimals = 0;
+    let mut num_before_decimal_point = satoshi;
+    let trailing_decimal_zeros;
+    let mut exp = 0;
+    match precision.cmp(&0) {
+        // We add the number of zeroes to the end
+        Ordering::Greater => {
+            if satoshi > 0 {
+                exp = precision as usize;
+            }
+            trailing_decimal_zeros = options.precision.unwrap_or(0);
+        },
+        Ordering::Less => {
+            let precision = unsigned_abs(precision);
+            let divisor = 10u64.pow(precision.into());
+            num_before_decimal_point = satoshi / divisor;
+            num_after_decimal_point = satoshi % divisor;
+            // normalize by stripping trailing zeros
+            if num_after_decimal_point == 0 {
+                norm_nb_decimals = 0;
+            } else {
+                norm_nb_decimals = usize::from(precision);
+                while num_after_decimal_point % 10 == 0 {
+                    norm_nb_decimals -= 1;
+                    num_after_decimal_point /= 10
+                }
+            }
+            // compute requested precision
+            let opt_precision = options.precision.unwrap_or(0);
+            trailing_decimal_zeros = opt_precision.saturating_sub(norm_nb_decimals);
+        },
+        Ordering::Equal => trailing_decimal_zeros = options.precision.unwrap_or(0),
+    }
+    let total_decimals = norm_nb_decimals + trailing_decimal_zeros;
+    // Compute expected width of the number
+    let mut num_width = if total_decimals > 0 {
+        // 1 for decimal point
+        1 + total_decimals
+    } else {
+        0
+    };
+    num_width += dec_width(num_before_decimal_point) + exp;
+    if options.sign_plus || negative {
+        num_width += 1;
     }
 
-    let precision = denom.precision();
-    match precision.cmp(&0) {
-        Ordering::Greater => {
-            // add zeroes in the end
-            let width = precision as usize;
-            write!(f, "{}{:0width$}", satoshi, 0, width = width)?;
-        }
-        Ordering::Less => {
-            // need to inject a comma in the number
-            let nb_decimals = precision.abs() as usize;
-            let real = format!("{:0width$}", satoshi, width = nb_decimals);
-            if real.len() == nb_decimals {
-                write!(f, "0.{}", &real[real.len() - nb_decimals..])?;
-            } else {
-                write!(
-                    f,
-                    "{}.{}",
-                    &real[0..(real.len() - nb_decimals)],
-                    &real[real.len() - nb_decimals..]
-                )?;
-            }
-        }
-        Ordering::Equal => write!(f, "{}", satoshi)?,
+    if show_denom {
+        // + 1 for space
+        num_width += denom.as_str().len() + 1;
     }
+
+    let width = options.width.unwrap_or(0);
+    let (left_pad, pad_right) = match (num_width < width, options.sign_aware_zero_pad, options.align.unwrap_or(fmt::Alignment::Right)) {
+        (false, _, _) => (0, 0),
+        // Alignment is always right (ignored) when zero-padding
+        (true, true, _) | (true, false, fmt::Alignment::Right) => (width - num_width, 0),
+        (true, false, fmt::Alignment::Left) => (0, width - num_width),
+        // If the required padding is odd it needs to be skewed to the left
+        (true, false, fmt::Alignment::Center) => ((width - num_width) / 2, (width - num_width + 1) / 2),
+    };
+
+    if !options.sign_aware_zero_pad {
+        repeat_char(f, options.fill, left_pad)?;
+    }
+
+    if negative {
+        write!(f, "-")?;
+    } else if options.sign_plus {
+        write!(f, "+")?;
+    }
+
+    if options.sign_aware_zero_pad {
+        repeat_char(f, '0', left_pad)?;
+    }
+
+    write!(f, "{}", num_before_decimal_point)?;
+
+    repeat_char(f, '0', exp)?;
+
+    if total_decimals > 0 {
+        write!(f, ".")?;
+    }
+    if norm_nb_decimals > 0 {
+        write!(f, "{:0width$}", num_after_decimal_point, width = norm_nb_decimals)?;
+    }
+    repeat_char(f, '0', trailing_decimal_zeros)?;
+
+    if show_denom {
+        write!(f, " {}", denom.as_str())?;
+    }
+
+    repeat_char(f, options.fill, pad_right)?;
     Ok(())
 }
 
@@ -430,11 +563,32 @@ impl Amount {
         Amount::from_str_in(&value.to_string(), denom)
     }
 
+    /// Create an object that implements [`fmt::Display`] using specified denomination.
+    pub fn display_in(self, denomination: Denomination) -> Display {
+        Display {
+            sats_abs: self.as_sat(),
+            is_negative: false,
+            style: DisplayStyle::FixedDenomination { denomination, show_denomination: false, },
+        }
+    }
+
+    /// Create an object that implements [`fmt::Display`] dynamically selecting denomination.
+    ///
+    /// This will use BTC for values greater than or equal to 1 BTC and satoshis otherwise. To
+    /// avoid confusion the denomination is always shown.
+    pub fn display_dynamic(self) -> Display {
+        Display {
+            sats_abs: self.as_sat(),
+            is_negative: false,
+            style: DisplayStyle::DynamicDenomination,
+        }
+    }
+
     /// Format the value of this [Amount] in the given denomination.
     ///
     /// Does not include the denomination.
     pub fn fmt_value_in(self, f: &mut dyn fmt::Write, denom: Denomination) -> fmt::Result {
-        fmt_satoshi_in(self.as_sat(), false, f, denom)
+        fmt_satoshi_in(self.as_sat(), false, f, denom, false, FormatOptions::default())
     }
 
     /// Get a string number of this [Amount] in the given denomination.
@@ -605,6 +759,62 @@ impl ::core::iter::Sum for Amount {
     }
 }
 
+/// A helper/builder that displays amount with specified settings.
+///
+/// This provides richer interface than `fmt::Formatter`:
+///
+/// * Ability to select denomination
+/// * Show or hide denomination
+/// * Dynamically-selected denomination - show in sats if less than 1 BTC.
+///
+/// However this can still be combined with `fmt::Formatter` options to precisely control zeros,
+/// padding, alignment... The formatting works like floats from `core` but note that precision will
+/// **never** be lossy - that means no rounding.
+///
+/// See [`Amount::display_in`] and [`Amount::display_dynamic`] on how to construct this.
+#[derive(Debug, Clone)]
+pub struct Display {
+    /// Absolute value of satoshis to display (sign is below)
+    sats_abs: u64,
+    /// The sign
+    is_negative: bool,
+    /// How to display the value
+    style: DisplayStyle,
+}
+
+impl Display {
+    /// Makes subsequent calls to `Display::fmt` display denomination.
+    pub fn show_denomination(mut self) -> Self {
+        match &mut self.style {
+            DisplayStyle::FixedDenomination { show_denomination, .. } => *show_denomination = true,
+            // No-op because dynamic denomination is always shown
+            DisplayStyle::DynamicDenomination => (),
+        }
+        self
+    }
+}
+
+impl fmt::Display for Display {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let format_options = FormatOptions::from_formatter(f);
+        match &self.style {
+            DisplayStyle::FixedDenomination { show_denomination, denomination } => fmt_satoshi_in(self.sats_abs, self.is_negative, f, *denomination, *show_denomination, format_options),
+            DisplayStyle::DynamicDenomination if self.sats_abs >= Amount::ONE_BTC.as_sat() => {
+                fmt_satoshi_in(self.sats_abs, self.is_negative, f, Denomination::Bitcoin, true, format_options)
+            },
+            DisplayStyle::DynamicDenomination => {
+                fmt_satoshi_in(self.sats_abs, self.is_negative, f, Denomination::Satoshi, true, format_options)
+            },
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+enum DisplayStyle {
+    FixedDenomination { denomination: Denomination, show_denomination: bool, },
+    DynamicDenomination,
+}
+
 /// SignedAmount
 ///
 /// The [SignedAmount] type can be used to express Bitcoin amounts that supports
@@ -717,15 +927,40 @@ impl SignedAmount {
         SignedAmount::from_str_in(&value.to_string(), denom)
     }
 
+    /// Returns the absolute value as satoshis.
+    ///
+    /// This is the implementation of `unsigned_abs()` copied from `core` to support older MSRV.
+    fn to_sat_abs(self) -> u64 {
+        self.as_sat().wrapping_abs() as u64
+    }
+
+    /// Create an object that implements [`fmt::Display`] using specified denomination.
+    pub fn display_in(self, denomination: Denomination) -> Display {
+        Display {
+            sats_abs: self.to_sat_abs(),
+            is_negative: self.is_negative(),
+            style: DisplayStyle::FixedDenomination { denomination, show_denomination: false, },
+        }
+    }
+
+    /// Create an object that implements [`fmt::Display`] dynamically selecting denomination.
+    ///
+    /// This will use BTC for values greater than or equal to 1 BTC and satoshis otherwise. To
+    /// avoid confusion the denomination is always shown.
+    pub fn display_dynamic(self) -> Display {
+        Display {
+            sats_abs: self.to_sat_abs(),
+            is_negative: self.is_negative(),
+            style: DisplayStyle::DynamicDenomination,
+        }
+    }
+
     /// Format the value of this [SignedAmount] in the given denomination.
     ///
     /// Does not include the denomination.
     pub fn fmt_value_in(self, f: &mut dyn fmt::Write, denom: Denomination) -> fmt::Result {
-        let sats = self.as_sat().checked_abs().map(|a: i64| a as u64).unwrap_or_else(|| {
-            // We could also hard code this into `9223372036854775808`
-            u64::max_value() - self.as_sat() as u64 +1
-        });
-        fmt_satoshi_in(sats, self.is_negative(), f, denom)
+
+        fmt_satoshi_in(self.to_sat_abs(), self.is_negative(), f, denom, false, FormatOptions::default())
     }
 
     /// Get a string number of this [SignedAmount] in the given denomination.
@@ -1374,12 +1609,13 @@ mod tests {
     fn to_string() {
         use super::Denomination as D;
 
-        assert_eq!(Amount::ONE_BTC.to_string_in(D::Bitcoin), "1.00000000");
+        assert_eq!(Amount::ONE_BTC.to_string_in(D::Bitcoin), "1");
+        assert_eq!(format!("{:.8}", Amount::ONE_BTC.display_in(D::Bitcoin)), "1.00000000");
         assert_eq!(Amount::ONE_BTC.to_string_in(D::Satoshi), "100000000");
         assert_eq!(Amount::ONE_SAT.to_string_in(D::Bitcoin), "0.00000001");
         assert_eq!(SignedAmount::from_sat(-42).to_string_in(D::Bitcoin), "-0.00000042");
 
-        assert_eq!(Amount::ONE_BTC.to_string_with_denomination(D::Bitcoin), "1.00000000 BTC");
+        assert_eq!(Amount::ONE_BTC.to_string_with_denomination(D::Bitcoin), "1 BTC");
         assert_eq!(Amount::ONE_SAT.to_string_with_denomination(D::MilliSatoshi), "1000 msat");
         assert_eq!(
             SignedAmount::ONE_BTC.to_string_with_denomination(D::Satoshi),
@@ -1390,6 +1626,188 @@ mod tests {
             SignedAmount::from_sat(-42).to_string_with_denomination(D::Bitcoin),
             "-0.00000042 BTC"
         );
+    }
+
+    // May help identify a problem sooner
+    #[test]
+    fn test_repeat_char() {
+        let mut buf = String::new();
+        repeat_char(&mut buf, '0', 0).unwrap();
+        assert_eq!(buf.len(), 0);
+        repeat_char(&mut buf, '0', 42).unwrap();
+        assert_eq!(buf.len(), 42);
+        assert!(buf.chars().all(|c| c == '0'));
+    }
+
+    // Creates individual test functions to make it easier to find which check failed.
+    macro_rules! check_format_non_negative {
+        ($denom:ident; $($test_name:ident, $val:expr, $format_string:expr, $expected:expr);* $(;)*) => {
+            $(
+                #[test]
+                fn $test_name() {
+                    assert_eq!(format!($format_string, Amount::from_sat($val).display_in(Denomination::$denom)), $expected);
+                    assert_eq!(format!($format_string, SignedAmount::from_sat($val as i64).display_in(Denomination::$denom)), $expected);
+                }
+            )*
+        }
+    }
+
+    macro_rules! check_format_non_negative_show_denom {
+        ($denom:ident, $denom_suffix:expr; $($test_name:ident, $val:expr, $format_string:expr, $expected:expr);* $(;)*) => {
+            $(
+                #[test]
+                fn $test_name() {
+                    assert_eq!(format!($format_string, Amount::from_sat($val).display_in(Denomination::$denom).show_denomination()), concat!($expected, $denom_suffix));
+                    assert_eq!(format!($format_string, SignedAmount::from_sat($val as i64).display_in(Denomination::$denom).show_denomination()), concat!($expected, $denom_suffix));
+                }
+            )*
+        }
+    }
+
+    check_format_non_negative! {
+        Satoshi;
+        sat_check_fmt_non_negative_0, 0, "{}", "0";
+        sat_check_fmt_non_negative_1, 0, "{:2}", " 0";
+        sat_check_fmt_non_negative_2, 0, "{:02}", "00";
+        sat_check_fmt_non_negative_3, 0, "{:.1}", "0.0";
+        sat_check_fmt_non_negative_4, 0, "{:4.1}", " 0.0";
+        sat_check_fmt_non_negative_5, 0, "{:04.1}", "00.0";
+        sat_check_fmt_non_negative_6, 1, "{}", "1";
+        sat_check_fmt_non_negative_7, 1, "{:2}", " 1";
+        sat_check_fmt_non_negative_8, 1, "{:02}", "01";
+        sat_check_fmt_non_negative_9, 1, "{:.1}", "1.0";
+        sat_check_fmt_non_negative_10, 1, "{:4.1}", " 1.0";
+        sat_check_fmt_non_negative_11, 1, "{:04.1}", "01.0";
+        sat_check_fmt_non_negative_12, 10, "{}", "10";
+        sat_check_fmt_non_negative_13, 10, "{:2}", "10";
+        sat_check_fmt_non_negative_14, 10, "{:02}", "10";
+        sat_check_fmt_non_negative_15, 10, "{:3}", " 10";
+        sat_check_fmt_non_negative_16, 10, "{:03}", "010";
+        sat_check_fmt_non_negative_17, 10, "{:.1}", "10.0";
+        sat_check_fmt_non_negative_18, 10, "{:5.1}", " 10.0";
+        sat_check_fmt_non_negative_19, 10, "{:05.1}", "010.0";
+        sat_check_fmt_non_negative_20, 1, "{:<2}", "1 ";
+        sat_check_fmt_non_negative_21, 1, "{:<02}", "01";
+        sat_check_fmt_non_negative_22, 1, "{:<3.1}", "1.0";
+        sat_check_fmt_non_negative_23, 1, "{:<4.1}", "1.0 ";
+    }
+
+    check_format_non_negative_show_denom! {
+        Satoshi, " satoshi";
+        sat_check_fmt_non_negative_show_denom_0, 0, "{}", "0";
+        sat_check_fmt_non_negative_show_denom_1, 0, "{:2}", "0";
+        sat_check_fmt_non_negative_show_denom_2, 0, "{:02}", "0";
+        sat_check_fmt_non_negative_show_denom_3, 0, "{:9}", "0";
+        sat_check_fmt_non_negative_show_denom_4, 0, "{:09}", "0";
+        sat_check_fmt_non_negative_show_denom_5, 0, "{:10}", " 0";
+        sat_check_fmt_non_negative_show_denom_6, 0, "{:010}", "00";
+        sat_check_fmt_non_negative_show_denom_7, 0, "{:.1}", "0.0";
+        sat_check_fmt_non_negative_show_denom_8, 0, "{:11.1}", "0.0";
+        sat_check_fmt_non_negative_show_denom_9, 0, "{:011.1}", "0.0";
+        sat_check_fmt_non_negative_show_denom_10, 0, "{:12.1}", " 0.0";
+        sat_check_fmt_non_negative_show_denom_11, 0, "{:012.1}", "00.0";
+        sat_check_fmt_non_negative_show_denom_12, 1, "{}", "1";
+        sat_check_fmt_non_negative_show_denom_13, 1, "{:10}", " 1";
+        sat_check_fmt_non_negative_show_denom_14, 1, "{:010}", "01";
+        sat_check_fmt_non_negative_show_denom_15, 1, "{:.1}", "1.0";
+        sat_check_fmt_non_negative_show_denom_16, 1, "{:12.1}", " 1.0";
+        sat_check_fmt_non_negative_show_denom_17, 1, "{:012.1}", "01.0";
+        sat_check_fmt_non_negative_show_denom_18, 10, "{}", "10";
+        sat_check_fmt_non_negative_show_denom_19, 10, "{:10}", "10";
+        sat_check_fmt_non_negative_show_denom_20, 10, "{:010}", "10";
+        sat_check_fmt_non_negative_show_denom_21, 10, "{:11}", " 10";
+        sat_check_fmt_non_negative_show_denom_22, 10, "{:011}", "010";
+    }
+
+    check_format_non_negative! {
+        Bitcoin;
+        btc_check_fmt_non_negative_0, 0, "{}", "0";
+        btc_check_fmt_non_negative_1, 0, "{:2}", " 0";
+        btc_check_fmt_non_negative_2, 0, "{:02}", "00";
+        btc_check_fmt_non_negative_3, 0, "{:.1}", "0.0";
+        btc_check_fmt_non_negative_4, 0, "{:4.1}", " 0.0";
+        btc_check_fmt_non_negative_5, 0, "{:04.1}", "00.0";
+        btc_check_fmt_non_negative_6, 1, "{}", "0.00000001";
+        btc_check_fmt_non_negative_7, 1, "{:2}", "0.00000001";
+        btc_check_fmt_non_negative_8, 1, "{:02}", "0.00000001";
+        btc_check_fmt_non_negative_9, 1, "{:.1}", "0.00000001";
+        btc_check_fmt_non_negative_10, 1, "{:11}", " 0.00000001";
+        btc_check_fmt_non_negative_11, 1, "{:11.1}", " 0.00000001";
+        btc_check_fmt_non_negative_12, 1, "{:011.1}", "00.00000001";
+        btc_check_fmt_non_negative_13, 1, "{:.9}", "0.000000010";
+        btc_check_fmt_non_negative_14, 1, "{:11.9}", "0.000000010";
+        btc_check_fmt_non_negative_15, 1, "{:011.9}", "0.000000010";
+        btc_check_fmt_non_negative_16, 1, "{:12.9}", " 0.000000010";
+        btc_check_fmt_non_negative_17, 1, "{:012.9}", "00.000000010";
+        btc_check_fmt_non_negative_18, 100_000_000, "{}", "1";
+        btc_check_fmt_non_negative_19, 100_000_000, "{:2}", " 1";
+        btc_check_fmt_non_negative_20, 100_000_000, "{:02}", "01";
+        btc_check_fmt_non_negative_21, 100_000_000, "{:.1}", "1.0";
+        btc_check_fmt_non_negative_22, 100_000_000, "{:4.1}", " 1.0";
+        btc_check_fmt_non_negative_23, 100_000_000, "{:04.1}", "01.0";
+        btc_check_fmt_non_negative_24, 110_000_000, "{}", "1.1";
+        btc_check_fmt_non_negative_25, 100_000_001, "{}", "1.00000001";
+        btc_check_fmt_non_negative_26, 100_000_001, "{:1}", "1.00000001";
+        btc_check_fmt_non_negative_27, 100_000_001, "{:.1}", "1.00000001";
+        btc_check_fmt_non_negative_28, 100_000_001, "{:10}", "1.00000001";
+        btc_check_fmt_non_negative_29, 100_000_001, "{:11}", " 1.00000001";
+        btc_check_fmt_non_negative_30, 100_000_001, "{:011}", "01.00000001";
+        btc_check_fmt_non_negative_31, 100_000_001, "{:.8}", "1.00000001";
+        btc_check_fmt_non_negative_32, 100_000_001, "{:.9}", "1.000000010";
+        btc_check_fmt_non_negative_33, 100_000_001, "{:11.9}", "1.000000010";
+        btc_check_fmt_non_negative_34, 100_000_001, "{:12.9}", " 1.000000010";
+        btc_check_fmt_non_negative_35, 100_000_001, "{:012.9}", "01.000000010";
+        btc_check_fmt_non_negative_36, 100_000_001, "{:+011.8}", "+1.00000001";
+        btc_check_fmt_non_negative_37, 100_000_001, "{:+12.8}", " +1.00000001";
+        btc_check_fmt_non_negative_38, 100_000_001, "{:+012.8}", "+01.00000001";
+        btc_check_fmt_non_negative_39, 100_000_001, "{:+12.9}", "+1.000000010";
+        btc_check_fmt_non_negative_40, 100_000_001, "{:+012.9}", "+1.000000010";
+        btc_check_fmt_non_negative_41, 100_000_001, "{:+13.9}", " +1.000000010";
+        btc_check_fmt_non_negative_42, 100_000_001, "{:+013.9}", "+01.000000010";
+        btc_check_fmt_non_negative_43, 100_000_001, "{:<10}", "1.00000001";
+        btc_check_fmt_non_negative_44, 100_000_001, "{:<11}", "1.00000001 ";
+        btc_check_fmt_non_negative_45, 100_000_001, "{:<011}", "01.00000001";
+        btc_check_fmt_non_negative_46, 100_000_001, "{:<11.9}", "1.000000010";
+        btc_check_fmt_non_negative_47, 100_000_001, "{:<12.9}", "1.000000010 ";
+        btc_check_fmt_non_negative_48, 100_000_001, "{:<12}", "1.00000001  ";
+        btc_check_fmt_non_negative_49, 100_000_001, "{:^11}", "1.00000001 ";
+        btc_check_fmt_non_negative_50, 100_000_001, "{:^11.9}", "1.000000010";
+        btc_check_fmt_non_negative_51, 100_000_001, "{:^12.9}", "1.000000010 ";
+        btc_check_fmt_non_negative_52, 100_000_001, "{:^12}", " 1.00000001 ";
+        btc_check_fmt_non_negative_53, 100_000_001, "{:^12.9}", "1.000000010 ";
+        btc_check_fmt_non_negative_54, 100_000_001, "{:^13.9}", " 1.000000010 ";
+    }
+
+    check_format_non_negative_show_denom! {
+        Bitcoin, " BTC";
+        btc_check_fmt_non_negative_show_denom_0, 1, "{:14.1}", "0.00000001";
+        btc_check_fmt_non_negative_show_denom_1, 1, "{:14.8}", "0.00000001";
+        btc_check_fmt_non_negative_show_denom_2, 1, "{:15}", " 0.00000001";
+        btc_check_fmt_non_negative_show_denom_3, 1, "{:015}", "00.00000001";
+        btc_check_fmt_non_negative_show_denom_4, 1, "{:.9}", "0.000000010";
+        btc_check_fmt_non_negative_show_denom_5, 1, "{:15.9}", "0.000000010";
+        btc_check_fmt_non_negative_show_denom_6, 1, "{:16.9}", " 0.000000010";
+        btc_check_fmt_non_negative_show_denom_7, 1, "{:016.9}", "00.000000010";
+    }
+
+    check_format_non_negative_show_denom! {
+        Bitcoin, " BTC ";
+        btc_check_fmt_non_negative_show_denom_align_0, 1, "{:<15}", "0.00000001";
+        btc_check_fmt_non_negative_show_denom_align_1, 1, "{:^15}", "0.00000001";
+        btc_check_fmt_non_negative_show_denom_align_2, 1, "{:^16}", " 0.00000001";
+    }
+
+    check_format_non_negative! {
+        MilliSatoshi;
+        msat_check_fmt_non_negative_0, 0, "{}", "0";
+        msat_check_fmt_non_negative_1, 1, "{}", "1000";
+        msat_check_fmt_non_negative_2, 1, "{:5}", " 1000";
+        msat_check_fmt_non_negative_3, 1, "{:05}", "01000";
+        msat_check_fmt_non_negative_4, 1, "{:.1}", "1000.0";
+        msat_check_fmt_non_negative_5, 1, "{:6.1}", "1000.0";
+        msat_check_fmt_non_negative_6, 1, "{:06.1}", "1000.0";
+        msat_check_fmt_non_negative_7, 1, "{:7.1}", " 1000.0";
+        msat_check_fmt_non_negative_8, 1, "{:07.1}", "01000.0";
     }
 
     #[test]
@@ -1459,18 +1877,22 @@ mod tests {
         let sa_str = SignedAmount::from_str_in;
         let sa_sat = SignedAmount::from_sat;
 
-        assert_eq!("0.50", Amount::from_sat(50).to_string_in(D::Bit));
-        assert_eq!("-0.50", SignedAmount::from_sat(-50).to_string_in(D::Bit));
+        assert_eq!("0.5", Amount::from_sat(50).to_string_in(D::Bit));
+        assert_eq!("-0.5", SignedAmount::from_sat(-50).to_string_in(D::Bit));
         assert_eq!("0.00253583", Amount::from_sat(253583).to_string_in(D::Bitcoin));
         assert_eq!("-5", SignedAmount::from_sat(-5).to_string_in(D::Satoshi));
-        assert_eq!("0.10000000", Amount::from_sat(100_000_00).to_string_in(D::Bitcoin));
-        assert_eq!("-100.00", SignedAmount::from_sat(-10_000).to_string_in(D::Bit));
+        assert_eq!("0.1", Amount::from_sat(100_000_00).to_string_in(D::Bitcoin));
+        assert_eq!("-100", SignedAmount::from_sat(-10_000).to_string_in(D::Bit));
         assert_eq!("2535830", Amount::from_sat(253583).to_string_in(D::NanoBitcoin));
         assert_eq!("-100000", SignedAmount::from_sat(-10_000).to_string_in(D::NanoBitcoin));
         assert_eq!("2535830000", Amount::from_sat(253583).to_string_in(D::PicoBitcoin));
         assert_eq!("-100000000", SignedAmount::from_sat(-10_000).to_string_in(D::PicoBitcoin));
 
 
+        assert_eq!("0.50", format!("{:.2}", Amount::from_sat(50).display_in(D::Bit)));
+        assert_eq!("-0.50", format!("{:.2}", SignedAmount::from_sat(-50).display_in(D::Bit)));
+        assert_eq!("0.10000000", format!("{:.8}", Amount::from_sat(100_000_00).display_in(D::Bitcoin)));
+        assert_eq!("-100.00", format!("{:.2}", SignedAmount::from_sat(-10_000).display_in(D::Bit)));
 
         assert_eq!(ua_str(&ua_sat(0).to_string_in(D::Satoshi), D::Satoshi), Ok(ua_sat(0)));
         assert_eq!(ua_str(&ua_sat(500).to_string_in(D::Bitcoin), D::Bitcoin), Ok(ua_sat(500)));
