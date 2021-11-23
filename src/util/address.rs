@@ -514,9 +514,9 @@ impl Address {
 
     /// Create a pay to taproot address from untweaked key
     pub fn p2tr<C: Verification>(
-        secp: Secp256k1<C>,
+        secp: &Secp256k1<C>,
         internal_key: UntweakedPublicKey,
-        merkle_root: Option<TapBranchHash>,
+        merkle_root: Option<&TapBranchHash>,
         network: Network
     ) -> Address {
         Address {
@@ -539,7 +539,7 @@ impl Address {
             network: network,
             payload: Payload::WitnessProgram {
                 version: WitnessVersion::V1,
-                program: output_key.into_inner().serialize().to_vec()
+                program: output_key.as_inner().serialize().to_vec()
             }
         }
     }
@@ -1196,7 +1196,8 @@ mod tests {
     fn p2tr_from_untweaked(){
         //Test case from BIP-086
         let internal_key = schnorrsig::PublicKey::from_str("cc8a4bc64d897bddc5fbc2f670f7a8ba0b386779106cf1223c6fc5d7cd6fc115").unwrap();
-        let address = Address::p2tr(Secp256k1::new(), internal_key,None, Network::Bitcoin);
+        let secp = Secp256k1::verification_only();
+        let address = Address::p2tr(&secp, internal_key, None, Network::Bitcoin);
         assert_eq!(address.to_string(), "bc1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxqkedrcr");
         assert_eq!(address.address_type(), Some(AddressType::P2tr));
         roundtrips(&address);
