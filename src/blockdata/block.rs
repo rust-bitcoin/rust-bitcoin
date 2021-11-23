@@ -198,7 +198,9 @@ impl Block {
                     // witness reserved value is in coinbase input witness
                     if coinbase.input[0].witness.len() == 1 && coinbase.input[0].witness[0].len() == 32 {
                         let witness_root = self.witness_root();
-                        return commitment == Self::compute_witness_commitment(&witness_root, coinbase.input[0].witness[0].as_slice())
+                        if let Ok(computed) = Self::compute_witness_commitment(&witness_root, coinbase.input[0].witness[0].as_slice()) {
+                            return commitment == computed
+                        }
                     }
                 }
             }
@@ -213,11 +215,11 @@ impl Block {
     }
 
     /// compute witness commitment for the transaction list
-    pub fn compute_witness_commitment (witness_root: &WitnessMerkleNode, witness_reserved_value: &[u8]) -> WitnessCommitment {
+    pub fn compute_witness_commitment (witness_root: &WitnessMerkleNode, witness_reserved_value: &[u8]) -> Result<WitnessCommitment, util::Error> {
         let mut encoder = WitnessCommitment::engine();
-        witness_root.consensus_encode(&mut encoder).unwrap();
+        witness_root.consensus_encode(&mut encoder)?;
         encoder.input(witness_reserved_value);
-        WitnessCommitment::from_engine(encoder)
+        Ok(WitnessCommitment::from_engine(encoder))
     }
 
     /// Merkle root of transactions hashed for witness
