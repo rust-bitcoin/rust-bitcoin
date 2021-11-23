@@ -78,6 +78,8 @@ pub enum Error {
     BlockBadProofOfWork,
     /// The `target` field of a block header did not match the expected difficulty
     BlockBadTarget,
+    /// IO error.
+    Io(io::Error),
 }
 
 impl fmt::Display for Error {
@@ -87,6 +89,7 @@ impl fmt::Display for Error {
             Error::Network(ref e) => fmt::Display::fmt(e, f),
             Error::BlockBadProofOfWork => f.write_str("block target correct but not attained"),
             Error::BlockBadTarget => f.write_str("block target incorrect"),
+            Error::Io(ref e) => fmt::Display::fmt(e, f),
         }
     }
 }
@@ -97,6 +100,7 @@ impl ::std::error::Error for Error {
         match *self {
             Error::Encode(ref e) => Some(e),
             Error::Network(ref e) => Some(e),
+            Error::Io(ref e) => Some(e),
             Error::BlockBadProofOfWork | Error::BlockBadTarget => None
         }
     }
@@ -113,6 +117,13 @@ impl From<encode::Error> for Error {
 impl From<network::Error> for Error {
     fn from(e: network::Error) -> Error {
         Error::Network(e)
+    }
+}
+
+#[doc(hidden)]
+impl From<io::Error> for Error {
+    fn from(e: io::Error) -> Error {
+        Error::Io(e)
     }
 }
 
