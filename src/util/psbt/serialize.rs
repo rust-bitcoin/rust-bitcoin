@@ -235,7 +235,7 @@ impl Serialize for (Script, LeafVersion) {
     fn serialize(&self) -> Vec<u8> {
         let mut buf = Vec::with_capacity(self.0.len() + 1);
         buf.extend(self.0.as_bytes());
-        buf.push(self.1.as_u8());
+        buf.push(self.1.into_consensus());
         buf
     }
 }
@@ -247,7 +247,7 @@ impl Deserialize for (Script, LeafVersion) {
         }
         // The last byte is LeafVersion.
         let script = Script::deserialize(&bytes[..bytes.len() - 1])?;
-        let leaf_ver = LeafVersion::from_u8(bytes[bytes.len() - 1])
+        let leaf_ver = LeafVersion::from_consensus(bytes[bytes.len() - 1])
             .map_err(|_| encode::Error::ParseFailed("invalid leaf version"))?;
         Ok((script, leaf_ver))
     }
@@ -283,7 +283,7 @@ impl Serialize for TapTree {
                     // TaprootMerkleBranch can only have len atmost 128(TAPROOT_CONTROL_MAX_NODE_COUNT).
                     // safe to cast from usize to u8
                     buf.push(leaf_info.merkle_branch.as_inner().len() as u8);
-                    buf.push(leaf_info.ver.as_u8());
+                    buf.push(leaf_info.ver.into_consensus());
                     leaf_info.script.consensus_encode(&mut buf).expect("Vecs dont err");
                 }
                 buf
@@ -305,7 +305,7 @@ impl Deserialize for TapTree {
                 bytes_iter.nth(consumed - 1);
             }
 
-            let leaf_version = LeafVersion::from_u8(*version)
+            let leaf_version = LeafVersion::from_consensus(*version)
                 .map_err(|_| encode::Error::ParseFailed("Leaf Version Error"))?;
             builder = builder.add_leaf_with_ver(usize::from(*depth), script, leaf_version)
                 .map_err(|_| encode::Error::ParseFailed("Tree not in DFS order"))?;
