@@ -284,17 +284,20 @@ impl Map for Input {
                     self.tap_merkle_root <= <raw_key: _>|< raw_value: TapBranchHash>
                 }
             }
-            PSBT_IN_PROPRIETARY => match self.proprietary.entry(raw::ProprietaryKey::from_key(raw_key.clone())?) {
-                btree_map::Entry::Vacant(empty_key) => {empty_key.insert(raw_value);},
-                btree_map::Entry::Occupied(_) => return Err(Error::DuplicateKey(raw_key).into()),
+            PSBT_IN_PROPRIETARY => {
+                let key = raw::ProprietaryKey::from_key(raw_key.clone())?;
+                match self.proprietary.entry(key) {
+                    btree_map::Entry::Vacant(empty_key) => {
+                        empty_key.insert(raw_value);
+                    },
+                    btree_map::Entry::Occupied(_) => return Err(Error::DuplicateKey(raw_key).into()),
+                }
             }
             _ => match self.unknown.entry(raw_key) {
                 btree_map::Entry::Vacant(empty_key) => {
                     empty_key.insert(raw_value);
                 }
-                btree_map::Entry::Occupied(k) => {
-                    return Err(Error::DuplicateKey(k.key().clone()).into())
-                }
+                btree_map::Entry::Occupied(k) => return Err(Error::DuplicateKey(k.key().clone()).into()),
             },
         }
 

@@ -142,9 +142,14 @@ impl Map for Output {
                     self.bip32_derivation <= <raw_key: secp256k1::PublicKey>|<raw_value: KeySource>
                 }
             }
-            PSBT_OUT_PROPRIETARY => match self.proprietary.entry(raw::ProprietaryKey::from_key(raw_key.clone())?) {
-                btree_map::Entry::Vacant(empty_key) => {empty_key.insert(raw_value);},
-                btree_map::Entry::Occupied(_) => return Err(Error::DuplicateKey(raw_key).into()),
+            PSBT_OUT_PROPRIETARY => {
+                let key = raw::ProprietaryKey::from_key(raw_key.clone())?;
+                match self.proprietary.entry(key) {
+                    btree_map::Entry::Vacant(empty_key) => {
+                        empty_key.insert(raw_value);
+                    },
+                    btree_map::Entry::Occupied(_) => return Err(Error::DuplicateKey(raw_key).into()),
+                }
             }
             PSBT_OUT_TAP_INTERNAL_KEY => {
                 impl_psbt_insert_pair! {
@@ -165,10 +170,8 @@ impl Map for Output {
                 btree_map::Entry::Vacant(empty_key) => {
                     empty_key.insert(raw_value);
                 }
-                btree_map::Entry::Occupied(k) => {
-                    return Err(Error::DuplicateKey(k.key().clone()).into())
-                }
-            },
+                btree_map::Entry::Occupied(k) => return Err(Error::DuplicateKey(k.key().clone()).into()),
+            }
         }
 
         Ok(())

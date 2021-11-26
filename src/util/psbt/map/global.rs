@@ -45,12 +45,19 @@ impl Map for PartiallySignedTransaction {
 
         match raw_key.type_value {
             PSBT_GLOBAL_UNSIGNED_TX => return Err(Error::DuplicateKey(raw_key).into()),
-            PSBT_GLOBAL_PROPRIETARY => match self.proprietary.entry(raw::ProprietaryKey::from_key(raw_key.clone())?) {
-                btree_map::Entry::Vacant(empty_key) => {empty_key.insert(raw_value);},
-                btree_map::Entry::Occupied(_) => return Err(Error::DuplicateKey(raw_key).into()),
+            PSBT_GLOBAL_PROPRIETARY => {
+                let key = raw::ProprietaryKey::from_key(raw_key.clone())?;
+                match self.proprietary.entry(key) {
+                    btree_map::Entry::Vacant(empty_key) => {
+                        empty_key.insert(raw_value);
+                    },
+                    btree_map::Entry::Occupied(_) => return Err(Error::DuplicateKey(raw_key).into()),
+                }
             }
             _ => match self.unknown.entry(raw_key) {
-                btree_map::Entry::Vacant(empty_key) => {empty_key.insert(raw_value);},
+                btree_map::Entry::Vacant(empty_key) => {
+                    empty_key.insert(raw_value);
+                },
                 btree_map::Entry::Occupied(k) => return Err(Error::DuplicateKey(k.key().clone()).into()),
             }
         }
@@ -278,11 +285,15 @@ impl PartiallySignedTransaction {
                             }
                         }
                         PSBT_GLOBAL_PROPRIETARY => match proprietary.entry(raw::ProprietaryKey::from_key(pair.key.clone())?) {
-                            btree_map::Entry::Vacant(empty_key) => {empty_key.insert(pair.value);},
+                            btree_map::Entry::Vacant(empty_key) => {
+                                empty_key.insert(pair.value);
+                            },
                             btree_map::Entry::Occupied(_) => return Err(Error::DuplicateKey(pair.key).into()),
                         }
                         _ => match unknowns.entry(pair.key) {
-                            btree_map::Entry::Vacant(empty_key) => {empty_key.insert(pair.value);},
+                            btree_map::Entry::Vacant(empty_key) => {
+                                empty_key.insert(pair.value);
+                            },
                             btree_map::Entry::Occupied(k) => return Err(Error::DuplicateKey(k.key().clone()).into()),
                         }
                     }
