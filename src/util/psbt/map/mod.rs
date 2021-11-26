@@ -20,6 +20,13 @@ use consensus::encode;
 use util::psbt;
 use util::psbt::raw;
 
+mod global;
+mod input;
+mod output;
+
+pub use self::input::{Input, PsbtSigHashType};
+pub use self::output::{Output, TapTree};
+
 /// A trait that describes a PSBT key-value map.
 pub trait Map {
     /// Attempt to insert a key-value pair.
@@ -47,12 +54,3 @@ pub trait Map {
         Ok(len + encode::Encodable::consensus_encode(&0x00_u8, s)?)
     }
 }
-
-// place at end to pick up macros
-mod global;
-mod input;
-mod output;
-
-pub use self::input::{Input, PsbtSigHashType};
-pub use self::output::Output;
-pub use self::output::TapTree;
