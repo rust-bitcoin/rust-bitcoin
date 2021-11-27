@@ -14,7 +14,7 @@
 
 use prelude::*;
 
-use io;
+use ::{io, TxIn};
 
 use blockdata::script::Script;
 use blockdata::transaction::{SigHashType, Transaction, TxOut};
@@ -62,6 +62,9 @@ const PSBT_IN_PROPRIETARY: u8 = 0xFC;
 #[derive(Clone, Default, Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Input {
+    /// Transaction input, either reconstructed through PSBT v2 fields, or
+    /// cloned from the original transaction data.
+    pub txin: TxIn,
     /// The non-witness transaction this input spends from. Should only be
     /// [std::option::Option::Some] for inputs which spend non-segwit outputs or
     /// if it is unknown whether an input spends a segwit output.

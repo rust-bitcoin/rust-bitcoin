@@ -14,7 +14,7 @@
 
 use prelude::*;
 
-use io;
+use ::{io, TxOut};
 
 use blockdata::script::Script;
 use consensus::encode;
@@ -39,6 +39,9 @@ const PSBT_OUT_PROPRIETARY: u8 = 0xFC;
 #[derive(Clone, Default, Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Output {
+    /// Transaction output, either reconstructed through PSBT v2 fields, or
+    /// cloned from the original transaction data.
+    pub txout: TxOut,
     /// The redeem script for this output.
     pub redeem_script: Option<Script>,
     /// The witness script for this output.

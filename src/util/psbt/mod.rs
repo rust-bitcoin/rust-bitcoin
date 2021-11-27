@@ -90,9 +90,17 @@ impl PartiallySignedTransaction {
     /// Create a PartiallySignedTransaction from an unsigned transaction, error
     /// if not unsigned
     pub fn from_unsigned_tx(tx: Transaction) -> Result<Self, Error> {
+        let inputs = tx.input.iter().map(|txin| Input {
+            txin: txin.clone(),
+            ..Default::default()
+        }).collect();
+        let outputs = tx.output.iter().map(|txout| Output {
+            txout: txout.clone(),
+            ..Default::default()
+        }).collect();
         let psbt = PartiallySignedTransaction {
-            inputs: vec![Default::default(); tx.input.len()],
-            outputs: vec![Default::default(); tx.output.len()],
+            inputs: inputs,
+            outputs: outputs,
 
             unsigned_tx: tx,
             xpub: Default::default(),
@@ -215,8 +223,10 @@ impl Decodable for PartiallySignedTransaction {
 
             let mut inputs: Vec<Input> = Vec::with_capacity(inputs_len);
 
-            for _ in 0..inputs_len {
-                inputs.push(Decodable::consensus_decode(&mut d)?);
+            for i in 0..inputs_len {
+                let mut input = Input::consensus_decode(&mut d)?;
+                input.txin = global.unsigned_tx.input[i].clone();
+                inputs.push(input);
             }
 
             inputs
@@ -227,8 +237,10 @@ impl Decodable for PartiallySignedTransaction {
 
             let mut outputs: Vec<Output> = Vec::with_capacity(outputs_len);
 
-            for _ in 0..outputs_len {
-                outputs.push(Decodable::consensus_decode(&mut d)?);
+            for i in 0..outputs_len {
+                let mut output = Output::consensus_decode(&mut d)?;
+                output.txout = global.unsigned_tx.output[i].clone();
+                outputs.push(output);
             }
 
             outputs
