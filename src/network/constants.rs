@@ -41,6 +41,7 @@ use core::{fmt, ops, convert::From};
 
 use io;
 use consensus::encode::{self, Encodable, Decodable};
+use std::env;
 
 /// Version of the protocol as appearing in network message headers
 /// This constant is used to signal to other peers which features you support.
@@ -70,7 +71,9 @@ user_enum! {
         /// Bitcoin's signet
         Signet <-> "signet",
         /// Bitcoin's regtest
-        Regtest <-> "regtest"
+        Regtest <-> "regtest",
+        /// Bitcoin's custom signet
+        CSignet <-> "csignet"
     }
 }
 
@@ -92,7 +95,8 @@ impl Network {
             0x0709110B => Some(Network::Testnet),
             0x40CF030A => Some(Network::Signet),
             0xDAB5BFFA => Some(Network::Regtest),
-            _ => None
+            _ if Some(magic) == Network::signet_magic_from_env() => Some(Network::CSignet),
+            _ => None,
         }
     }
 
@@ -114,7 +118,14 @@ impl Network {
             Network::Testnet => 0x0709110B,
             Network::Signet  => 0x40CF030A,
             Network::Regtest => 0xDAB5BFFA,
+            Network::CSignet => Network::signet_magic_from_env().unwrap_or(0x40CF030A),
         }
+    }
+
+    /// Read the environment variable SIGNET_MAGIC, parse it, and convert to big endian.
+    /// Returs None if any errors are encountered.
+    fn signet_magic_from_env() -> Option<u32> {
+        env::var("SIGNET_MAGIC").map(|s| u32::from_str_radix(&s, 16).map(|v| v.to_be()).ok()).ok().flatten()
     }
 }
 
@@ -293,6 +304,20 @@ impl Decodable for ServiceFlags {
 mod tests {
     use super::{Network, ServiceFlags};
     use consensus::encode::{deserialize, serialize};
+    use std::env;
+
+    fn signet_magic_from_env_to_vec() -> Vec<u8> {
+        env::var("SIGNET_MAGIC").map(|s| self::to_vec(&s)).ok().unwrap_or(self::to_vec(&"0A03CF40".to_string()))
+    }
+
+    fn to_vec(signet_magic: &String) -> Vec<u8> {
+        vec!(
+            u8::from_str_radix(&signet_magic[0..2], 16).unwrap(),
+            u8::from_str_radix(&signet_magic[2..4], 16).unwrap(),
+            u8::from_str_radix(&signet_magic[4..6], 16).unwrap(),
+            u8::from_str_radix(&signet_magic[6..8], 16).unwrap(),
+        )
+    }
 
     #[test]
     fn serialize_test() {
@@ -312,6 +337,10 @@ mod tests {
             serialize(&Network::Regtest.magic()),
             &[0xfa, 0xbf, 0xb5, 0xda]
         );
+        assert_eq!(
+            serialize(&Network::CSignet.magic()),
+            self::signet_magic_from_env_to_vec()
+        );
 
         assert_eq!(
             deserialize(&[0xf9, 0xbe, 0xb4, 0xd9]).ok(),
@@ -329,6 +358,10 @@ mod tests {
             deserialize(&[0xfa, 0xbf, 0xb5, 0xda]).ok(),
             Some(Network::Regtest.magic())
         );
+        assert_eq!(
+            deserialize(&self::signet_magic_from_env_to_vec()).ok(),
+            Some(Network::CSignet.magic())
+        );
     }
 
     #[test]
@@ -337,11 +370,13 @@ mod tests {
         assert_eq!(Network::Testnet.to_string(), "testnet");
         assert_eq!(Network::Regtest.to_string(), "regtest");
         assert_eq!(Network::Signet.to_string(), "signet");
+        assert_eq!(Network::CSignet.to_string(), "csignet");
 
         assert_eq!("bitcoin".parse::<Network>().unwrap(), Network::Bitcoin);
         assert_eq!("testnet".parse::<Network>().unwrap(), Network::Testnet);
         assert_eq!("regtest".parse::<Network>().unwrap(), Network::Regtest);
         assert_eq!("signet".parse::<Network>().unwrap(), Network::Signet);
+        assert_eq!("csignet".parse::<Network>().unwrap(), Network::CSignet);
         assert!("fakenet".parse::<Network>().is_err());
     }
 

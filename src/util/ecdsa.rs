@@ -227,7 +227,7 @@ impl PrivateKey {
         let mut ret = [0; 34];
         ret[0] = match self.network {
             Network::Bitcoin => 128,
-            Network::Testnet | Network::Signet | Network::Regtest => 239,
+            Network::Testnet | Network::Signet | Network::Regtest | Network::CSignet => 239,
         };
         ret[1..33].copy_from_slice(&self.key[..]);
         let privkey = if self.compressed {

@@ -145,7 +145,7 @@ pub fn genesis_block(network: Network) -> Block {
                 txdata: txdata
             }
         }
-        Network::Signet => {
+        Network::Signet | Network::CSignet => {
             Block {
                 header: BlockHeader {
                     version: 1,

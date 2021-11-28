@@ -644,7 +644,7 @@ impl Address {
             (a, b) if a == b => true,
             (Network::Bitcoin, _) | (_, Network::Bitcoin) => false,
             (Network::Regtest, _) | (_, Network::Regtest) if !is_legacy => false,
-            (Network::Testnet, _) | (Network::Regtest, _) | (Network::Signet, _) => true
+            (Network::Testnet, _) | (Network::Regtest, _) | (Network::Signet, _) | (Network::CSignet, _) => true
         }
     }
 }
@@ -658,7 +658,7 @@ impl fmt::Display for Address {
                 let mut prefixed = [0; 21];
                 prefixed[0] = match self.network {
                     Network::Bitcoin => PUBKEY_ADDRESS_PREFIX_MAIN,
-                    Network::Testnet | Network::Signet | Network::Regtest => PUBKEY_ADDRESS_PREFIX_TEST,
+                    Network::Testnet | Network::Signet | Network::Regtest | Network::CSignet => PUBKEY_ADDRESS_PREFIX_TEST,
                 };
                 prefixed[1..].copy_from_slice(&hash[..]);
                 base58::check_encode_slice_to_fmt(fmt, &prefixed[..])
@@ -667,7 +667,7 @@ impl fmt::Display for Address {
                 let mut prefixed = [0; 21];
                 prefixed[0] = match self.network {
                     Network::Bitcoin => SCRIPT_ADDRESS_PREFIX_MAIN,
-                    Network::Testnet | Network::Signet | Network::Regtest => SCRIPT_ADDRESS_PREFIX_TEST,
+                    Network::Testnet | Network::Signet | Network::Regtest | Network::CSignet => SCRIPT_ADDRESS_PREFIX_TEST,
                 };
                 prefixed[1..].copy_from_slice(&hash[..]);
                 base58::check_encode_slice_to_fmt(fmt, &prefixed[..])
@@ -678,7 +678,7 @@ impl fmt::Display for Address {
             } => {
                 let hrp = match self.network {
                     Network::Bitcoin => "bc",
-                    Network::Testnet | Network::Signet => "tb",
+                    Network::Testnet | Network::Signet | Network::CSignet => "tb",
                     Network::Regtest => "bcrt",
                 };
                 let mut upper_writer;

@@ -49,6 +49,13 @@ const MAX_BITS_REGTEST: Uint256 = Uint256([
     0x0000000000000000u64,
     0x7fffff0000000000u64,
 ]);
+/// Lowest possible difficulty for Custom Signet. See comment on Params::pow_limit for more info.
+const MAX_BITS_CSIGNET: Uint256 = Uint256([
+    0x0000000000000000u64,
+    0x0000000000000000u64,
+    0x0000000000000000u64,
+    0x00000377ae000000u64,
+]);
 
 #[derive(Debug, Clone)]
 /// Parameters that influence chain consensus.
@@ -147,6 +154,20 @@ impl Params {
                 pow_target_timespan: 14 * 24 * 60 * 60, // 2 weeks.
                 allow_min_difficulty_blocks: true,
                 no_pow_retargeting: true,
+            },
+            Network::CSignet => Params {
+                network: Network::CSignet,
+                bip16_time: 1333238400,                 // Apr 1 2012
+                bip34_height: 1,
+                bip65_height: 1,
+                bip66_height: 1,
+                rule_change_activation_threshold: 1916, // 95%
+                miner_confirmation_window: 2016,
+                pow_limit: MAX_BITS_CSIGNET,
+                pow_target_spacing: 10 * 60,            // 10 minutes.
+                pow_target_timespan: 14 * 24 * 60 * 60, // 2 weeks.
+                allow_min_difficulty_blocks: false,
+                no_pow_retargeting: false,
             },
         }
     }
