@@ -26,6 +26,7 @@ use util::taproot::{TapBranchHash, TapTweakHash};
 pub type UntweakedPublicKey = PublicKey;
 
 /// Tweaked Schnorr public key
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct TweakedPublicKey(PublicKey);
 
 /// A trait for tweaking Schnorr public keys
