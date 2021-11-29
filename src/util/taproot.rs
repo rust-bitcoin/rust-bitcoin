@@ -25,7 +25,7 @@ use core::cmp::Reverse;
 use std::error;
 
 use hashes::{sha256, sha256t, Hash, HashEngine};
-use schnorr;
+use schnorr::{TweakedPublicKey, UntweakedPublicKey};
 use Script;
 
 use consensus::Encodable;
@@ -101,7 +101,7 @@ impl TapTweakHash {
     /// Create a new BIP341 [`TapTweakHash`] from key and tweak
     /// Produces H_taptweak(P||R) where P is internal key and R is the merkle root
     pub fn from_key_and_tweak(
-        internal_key: schnorr::PublicKey,
+        internal_key: UntweakedPublicKey,
         merkle_root: Option<TapBranchHash>,
     ) -> TapTweakHash {
         let mut eng = TapTweakHash::engine();
@@ -171,13 +171,13 @@ type ScriptMerkleProofMap = BTreeMap<(Script, LeafVersion), BTreeSet<TaprootMerk
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct TaprootSpendInfo {
     /// The BIP341 internal key.
-    internal_key: schnorr::PublicKey,
+    internal_key: UntweakedPublicKey,
     /// The Merkle root of the script tree (None if there are no scripts)
     merkle_root: Option<TapBranchHash>,
     /// The sign final output pubkey as per BIP 341
     output_key_parity: bool,
     /// The tweaked output key
-    output_key: schnorr::PublicKey,
+    output_key: TweakedPublicKey,
     /// Map from (script, leaf_version) to (sets of) [`TaprootMerkleBranch`].
     /// More than one control block for a given script is only possible if it
     /// appears in multiple branches of the tree. In all cases, keeping one should
@@ -204,7 +204,7 @@ impl TaprootSpendInfo {
     /// dealing with numbers close to 2^64.
     pub fn with_huffman_tree<C, I>(
         secp: &Secp256k1<C>,
-        internal_key: schnorr::PublicKey,
+        internal_key: UntweakedPublicKey,
         script_weights: I,
     ) -> Result<Self, TaprootBuilderError>
     where
@@ -250,7 +250,7 @@ impl TaprootSpendInfo {
     ///
     pub fn new_key_spend<C: secp256k1::Verification>(
         secp: &Secp256k1<C>,
-        internal_key: schnorr::PublicKey,
+        internal_key: UntweakedPublicKey,
         merkle_root: Option<TapBranchHash>,
     ) -> Self {
         let tweak = TapTweakHash::from_key_and_tweak(internal_key, merkle_root);
@@ -268,7 +268,7 @@ impl TaprootSpendInfo {
             internal_key: internal_key,
             merkle_root: merkle_root,
             output_key_parity: parity,
-            output_key: output_key,
+            output_key: TweakedPublicKey::new(output_key),
             script_map: BTreeMap::new(),
         }
     }
@@ -279,7 +279,7 @@ impl TaprootSpendInfo {
     }
 
     /// Obtain the internal key
-    pub fn internal_key(&self) -> schnorr::PublicKey {
+    pub fn internal_key(&self) -> UntweakedPublicKey {
         self.internal_key
     }
 
@@ -290,7 +290,7 @@ impl TaprootSpendInfo {
 
     /// Output key(the key used in script pubkey) from Spend data. See also
     /// [`TaprootSpendInfo::output_key_parity`]
-    pub fn output_key(&self) -> schnorr::PublicKey {
+    pub fn output_key(&self) -> TweakedPublicKey {
         self.output_key
     }
 
@@ -302,7 +302,7 @@ impl TaprootSpendInfo {
     // Internal function to compute [`TaprootSpendInfo`] from NodeInfo
     fn from_node_info<C: secp256k1::Verification>(
         secp: &Secp256k1<C>,
-        internal_key: schnorr::PublicKey,
+        internal_key: UntweakedPublicKey,
         node: NodeInfo,
     ) -> TaprootSpendInfo {
         // Create as if it is a key spend path with the given merkle root
@@ -430,7 +430,7 @@ impl TaprootBuilder {
     pub fn finalize<C: secp256k1::Verification>(
         mut self,
         secp: &Secp256k1<C>,
-        internal_key: schnorr::PublicKey,
+        internal_key: UntweakedPublicKey,
     ) -> Result<TaprootSpendInfo, TaprootBuilderError> {
         if self.branch.len() > 1 {
             return Err(TaprootBuilderError::IncompleteTree);
@@ -652,7 +652,7 @@ pub struct ControlBlock {
     /// The parity of the output key (NOT THE INTERNAL KEY WHICH IS ALWAYS XONLY)
     pub output_key_parity: bool,
     /// The internal key
-    pub internal_key: schnorr::PublicKey,
+    pub internal_key: UntweakedPublicKey,
     /// The merkle proof of a script associated with this leaf
     pub merkle_branch: TaprootMerkleBranch,
 }
@@ -674,7 +674,7 @@ impl ControlBlock {
         }
         let output_key_parity = (sl[0] & 1) == 1;
         let leaf_version = LeafVersion::from_u8(sl[0] & TAPROOT_LEAF_MASK)?;
-        let internal_key = schnorr::PublicKey::from_slice(&sl[1..TAPROOT_CONTROL_BASE_SIZE])
+        let internal_key = UntweakedPublicKey::from_slice(&sl[1..TAPROOT_CONTROL_BASE_SIZE])
             .map_err(TaprootError::InvalidInternalKey)?;
         let merkle_branch = TaprootMerkleBranch::from_slice(&sl[TAPROOT_CONTROL_BASE_SIZE..])?;
         Ok(ControlBlock {
@@ -719,7 +719,7 @@ impl ControlBlock {
     pub fn verify_taproot_commitment<C: secp256k1::Verification>(
         &self,
         secp: &Secp256k1<C>,
-        output_key: &schnorr::PublicKey,
+        output_key: &TweakedPublicKey,
         script: &Script,
     ) -> bool {
         // compute the script hash
@@ -743,7 +743,7 @@ impl ControlBlock {
         let tweak = TapTweakHash::from_key_and_tweak(self.internal_key, Some(curr_hash));
         self.internal_key.tweak_add_check(
             secp,
-            output_key,
+            output_key.as_inner(),
             self.output_key_parity,
             tweak.into_inner(),
         )
@@ -900,6 +900,7 @@ mod test {
     use hashes::{sha256, Hash, HashEngine};
     use secp256k1::VerifyOnly;
     use core::str::FromStr;
+    use schnorr;
 
     fn tag_engine(tag_name: &str) -> sha256::HashEngine {
         let mut engine = sha256::Hash::engine();
@@ -984,6 +985,7 @@ mod test {
 
     fn _verify_tap_commitments(secp: &Secp256k1<VerifyOnly>, out_spk_hex: &str, script_hex : &str, control_block_hex: &str) {
         let out_pk = schnorr::PublicKey::from_str(&out_spk_hex[4..]).unwrap();
+        let out_pk = TweakedPublicKey::new(out_pk);
         let script = Script::from_hex(script_hex).unwrap();
         let control_block = ControlBlock::from_slice(&Vec::<u8>::from_hex(control_block_hex).unwrap()).unwrap();
         assert_eq!(control_block_hex, control_block.serialize().to_hex());
@@ -1025,7 +1027,7 @@ mod test {
     #[test]
     fn build_huffman_tree() {
         let secp = Secp256k1::verification_only();
-        let internal_key = schnorr::PublicKey::from_str("93c7378d96518a75448821c4f7c8f4bae7ce60f804d03d1f0628dd5dd0f5de51").unwrap();
+        let internal_key = UntweakedPublicKey::from_str("93c7378d96518a75448821c4f7c8f4bae7ce60f804d03d1f0628dd5dd0f5de51").unwrap();
 
         let script_weights = vec![
             (10, Script::from_hex("51").unwrap()), // semantics of script don't matter for this test
@@ -1075,7 +1077,7 @@ mod test {
     #[test]
     fn taptree_builder() {
         let secp = Secp256k1::verification_only();
-        let internal_key = schnorr::PublicKey::from_str("93c7378d96518a75448821c4f7c8f4bae7ce60f804d03d1f0628dd5dd0f5de51").unwrap();
+        let internal_key = UntweakedPublicKey::from_str("93c7378d96518a75448821c4f7c8f4bae7ce60f804d03d1f0628dd5dd0f5de51").unwrap();
 
         let builder = TaprootBuilder::new();
         // Create a tree as shown below
