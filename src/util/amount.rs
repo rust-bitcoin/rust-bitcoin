@@ -28,10 +28,16 @@ pub enum Denomination {
     MilliBitcoin,
     /// uBTC
     MicroBitcoin,
-    /// bits
+    /// bit
     Bit,
+    /// bits, same as Bit but plural.
+    Bits,
     /// satoshi
     Satoshi,
+    /// sat, same as sats but singular.
+    Sat,
+    /// sats, for colloquial usage.
+    Sats,
     /// msat
     MilliSatoshi,
 }
@@ -44,7 +50,10 @@ impl Denomination {
             Denomination::MilliBitcoin => -5,
             Denomination::MicroBitcoin => -2,
             Denomination::Bit => -2,
+            Denomination::Bits => -2,
             Denomination::Satoshi => 0,
+            Denomination::Sat => 0,
+            Denomination::Sats => 0,
             Denomination::MilliSatoshi => 3,
         }
     }
@@ -56,8 +65,11 @@ impl fmt::Display for Denomination {
             Denomination::Bitcoin => "BTC",
             Denomination::MilliBitcoin => "mBTC",
             Denomination::MicroBitcoin => "uBTC",
-            Denomination::Bit => "bits",
+            Denomination::Bit => "bit",
+            Denomination::Bits => "bits",
             Denomination::Satoshi => "satoshi",
+            Denomination::Sat => "sat",
+            Denomination::Sats => "sats",
             Denomination::MilliSatoshi => "msat",
         })
     }
@@ -73,7 +85,8 @@ impl FromStr for Denomination {
             "uBTC" => Ok(Denomination::MicroBitcoin),
             "bits" => Ok(Denomination::Bit),
             "satoshi" => Ok(Denomination::Satoshi),
-            "sat" => Ok(Denomination::Satoshi),
+            "sat" => Ok(Denomination::Sat),
+            "sats" => Ok(Denomination::Sats),
             "msat" => Ok(Denomination::MilliSatoshi),
             d => Err(ParseAmountError::UnknownDenomination(d.to_owned())),
         }
