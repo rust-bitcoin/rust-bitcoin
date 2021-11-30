@@ -83,7 +83,8 @@ impl FromStr for Denomination {
             "BTC" => Ok(Denomination::Bitcoin),
             "mBTC" => Ok(Denomination::MilliBitcoin),
             "uBTC" => Ok(Denomination::MicroBitcoin),
-            "bits" => Ok(Denomination::Bit),
+            "bit" => Ok(Denomination::Bit),
+            "bits" => Ok(Denomination::Bits),
             "satoshi" => Ok(Denomination::Satoshi),
             "sat" => Ok(Denomination::Sat),
             "sats" => Ok(Denomination::Sats),
@@ -450,12 +451,12 @@ impl fmt::Debug for Amount {
     }
 }
 
-// No one should depend on a binding contract for Display for this type.
-// Just using Bitcoin denominated string.
+// No one should depend on a binding contract for Display for this type, however
+// make sats the standard.
 impl fmt::Display for Amount {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.fmt_value_in(f, Denomination::Bitcoin)?;
-        write!(f, " {}", Denomination::Bitcoin)
+        self.fmt_value_in(f, Denomination::Sats)?;
+        write!(f, " {}", Denomination::Sats)
     }
 }
 
@@ -959,6 +960,8 @@ pub mod serde {
         fn des_sat<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error>;
         fn ser_btc<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error>;
         fn des_btc<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error>;
+        fn ser_str<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error>;
+        fn des_str<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error>;
     }
 
     mod private {
@@ -990,6 +993,13 @@ pub mod serde {
             use serde::de::Error;
             Ok(Amount::from_btc(f64::deserialize(d)?).map_err(D::Error::custom)?)
         }
+        fn ser_str<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
+            String::serialize(&self.to_string_with_denomination(Denomination::Sats), s)
+        }
+        fn des_str<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error> {
+            use serde::de::Error;
+            Ok(Amount::from_str(&String::deserialize(d)?).map_err(D::Error::custom)?)
+        }
     }
 
     impl SerdeAmountForOpt for Amount {
@@ -1018,6 +1028,13 @@ pub mod serde {
             use serde::de::Error;
             Ok(SignedAmount::from_btc(f64::deserialize(d)?).map_err(D::Error::custom)?)
         }
+        fn ser_str<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
+            String::serialize(&self.to_string_with_denomination(Denomination::Sats), s)
+        }
+        fn des_str<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error> {
+            use serde::de::Error;
+            Ok(SignedAmount::from_str(&String::deserialize(d)?).map_err(D::Error::custom)?)
+        }
     }
 
     impl SerdeAmountForOpt for SignedAmount {
@@ -1032,43 +1049,26 @@ pub mod serde {
         }
     }
 
-    pub fn parse<'d, D, A>(d: D) -> Result<A, D::Error>
-    where
-        D: Deserializer<'d>,
-        A: SerdeAmount,
-        <A as FromStr>::Err: ::core::fmt::Display,
-    {
-        use ::core::fmt::{self, Display, Formatter};
-        use ::core::marker::PhantomData;
-        use ::serde::de;
+    /// Allows usage of `#[serde(deserialize_with = "amount::serde::parse")]`.
+    pub use self::as_string::deserialize as parse;
 
-        struct Visitor<ValueT>(PhantomData<ValueT>);
+    pub mod as_string {
+        //! Serialize and deserialize [`Amount`](crate::Amount) as strings including denomination.
+        //! Deserialization can handle any denomination, serialization uses sats.
+        //! Use with `#[serde(with = "amount::serde::as_string")]`.
 
-        impl<'de, ValueT> de::Visitor<'de> for Visitor<ValueT>
-        where
-            ValueT: FromStr,
-            <ValueT as FromStr>::Err: Display,
-        {
-            type Value = ValueT;
+        use serde::{Deserializer, Serializer};
+        use util::amount::serde::SerdeAmount;
 
-            fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
-                formatter.write_str("a Bitcoin amount with denomination")
-            }
 
-            fn visit_str<E: de::Error>(self, v: &str) -> Result<Self::Value, E> {
-                ValueT::from_str(v).map_err(E::custom)
-            }
-
-            fn visit_borrowed_str<E: de::Error>(self, v: &'de str) -> Result<Self::Value, E> {
-                self.visit_str(v)
-            }
-
-            fn visit_string<E: de::Error>(self, v: String) -> Result<Self::Value, E> {
-                self.visit_str(&v)
-            }
+        pub fn serialize<A: SerdeAmount, S: Serializer>(a: &A, s: S) -> Result<S::Ok, S::Error> {
+            a.ser_str(s)
         }
 
-        d.deserialize_str(Visitor(PhantomData))
+
+        pub fn deserialize<'d, A: SerdeAmount, D: Deserializer<'d>>(d: D) -> Result<A, D::Error> {
+            A::des_str(d)
+        }
     }
 
     pub mod as_sat {
@@ -1476,7 +1476,10 @@ mod tests {
         assert_eq!(Amount::from_str(&denom(amt, D::MilliBitcoin)), Ok(amt));
         assert_eq!(Amount::from_str(&denom(amt, D::MicroBitcoin)), Ok(amt));
         assert_eq!(Amount::from_str(&denom(amt, D::Bit)), Ok(amt));
+        assert_eq!(Amount::from_str(&denom(amt, D::Bits)), Ok(amt));
         assert_eq!(Amount::from_str(&denom(amt, D::Satoshi)), Ok(amt));
+        assert_eq!(Amount::from_str(&denom(amt, D::Sat)), Ok(amt));
+        assert_eq!(Amount::from_str(&denom(amt, D::Sats)), Ok(amt));
         assert_eq!(Amount::from_str(&denom(amt, D::MilliSatoshi)), Ok(amt));
 
         assert_eq!(Amount::from_str("42 satoshi BTC"), Err(ParseAmountError::InvalidFormat));
@@ -1718,5 +1721,30 @@ mod tests {
         let t: T = serde_json::from_str("{\"amt\": \"2 BTC\", \"samt\": \"-5 sat\"}").unwrap();
         assert_eq!(t.amt, Amount::from_btc(2.0).unwrap());
         assert_eq!(t.samt, SignedAmount::from_sat(-5));
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn serde_as_str() {
+        use serde_json;
+
+        #[derive(Deserialize, Serialize, PartialEq, Debug)]
+        struct T {
+            #[serde(default, with = "::util::amount::serde::as_string")]
+            pub amt: Amount,
+        }
+
+        let json = "{\"amt\": \"0.00002 BTC\"}".to_string();
+
+        let t: T = serde_json::from_str(&json).unwrap();
+        assert_eq!(t.amt, Amount::from_btc(0.00002).unwrap());
+
+        let value: serde_json::Value = serde_json::from_str(&json).unwrap();
+        assert_eq!(t, serde_json::from_value(value).unwrap());
+
+        // Check that we serialized with sats not BTC.
+        let want = "{\"amt\":\"2000 sats\"}".to_string();
+        let got = serde_json::to_string(&t).unwrap();
+        assert_eq!(got, want);
     }
 }
