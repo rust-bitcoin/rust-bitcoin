@@ -122,10 +122,10 @@ impl TapLeafHash {
         let mut eng = TapLeafHash::engine();
         ver.as_u8()
             .consensus_encode(&mut eng)
-            .expect("engines don't err");
+            .expect("engines don't error");
         script
             .consensus_encode(&mut eng)
-            .expect("engines don't err");
+            .expect("engines don't error");
         TapLeafHash::from_engine(eng)
     }
 }

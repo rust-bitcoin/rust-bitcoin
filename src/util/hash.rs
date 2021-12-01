@@ -45,8 +45,8 @@ pub fn bitcoin_merkle_root_inline<T>(data: &mut [T]) -> T
         let idx1 = 2 * idx;
         let idx2 = min(idx1 + 1, data.len() - 1);
         let mut encoder = T::engine();
-        data[idx1].consensus_encode(&mut encoder).unwrap();
-        data[idx2].consensus_encode(&mut encoder).unwrap();
+        data[idx1].consensus_encode(&mut encoder).expect("in-memory writers don't error");
+        data[idx2].consensus_encode(&mut encoder).expect("in-memory writers don't error");
         data[idx] = T::from_engine(encoder);
     }
     let half_len = data.len() / 2 + data.len() % 2;
@@ -73,8 +73,8 @@ pub fn bitcoin_merkle_root<T, I>(mut iter: I) -> T
         // If the size is odd, use the last element twice.
         let hash2 = iter.next().unwrap_or(hash1);
         let mut encoder = T::engine();
-        hash1.consensus_encode(&mut encoder).unwrap();
-        hash2.consensus_encode(&mut encoder).unwrap();
+        hash1.consensus_encode(&mut encoder).expect("in-memory writers don't error");
+        hash2.consensus_encode(&mut encoder).expect("in-memory writers don't error");
         alloc.push(T::from_engine(encoder));
     }
     bitcoin_merkle_root_inline(&mut alloc)

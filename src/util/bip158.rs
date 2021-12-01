@@ -365,7 +365,7 @@ impl<'a> GCSFilterWriter<'a> {
 
         // write number of elements as varint
         let mut encoder = Vec::new();
-        VarInt(mapped.len() as u64).consensus_encode(&mut encoder).unwrap();
+        VarInt(mapped.len() as u64).consensus_encode(&mut encoder).expect("in-memory writers don't error");
         let mut wrote = self.writer.write(encoder.as_slice())?;
 
         // write out deltas of sorted values into a Golonb-Rice coded bit stream

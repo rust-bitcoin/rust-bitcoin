@@ -341,8 +341,8 @@ impl PartialMerkleTree {
     /// Helper method to produce SHA256D(left + right)
     fn parent_hash(left: TxMerkleNode, right: TxMerkleNode) -> TxMerkleNode {
         let mut encoder = TxMerkleNode::engine();
-        left.consensus_encode(&mut encoder).unwrap();
-        right.consensus_encode(&mut encoder).unwrap();
+        left.consensus_encode(&mut encoder).expect("engines don't error");
+        right.consensus_encode(&mut encoder).expect("engines don't error");
         TxMerkleNode::from_engine(encoder)
     }
 }

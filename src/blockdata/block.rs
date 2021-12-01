@@ -215,7 +215,7 @@ impl Block {
     /// compute witness commitment for the transaction list
     pub fn compute_witness_commitment (witness_root: &WitnessMerkleNode, witness_reserved_value: &[u8]) -> WitnessCommitment {
         let mut encoder = WitnessCommitment::engine();
-        witness_root.consensus_encode(&mut encoder).unwrap();
+        witness_root.consensus_encode(&mut encoder).expect("engines don't error");
         encoder.input(witness_reserved_value);
         WitnessCommitment::from_engine(encoder)
     }

@@ -292,10 +292,10 @@ impl Transaction {
     /// will also hash witnesses.
     pub fn txid(&self) -> Txid {
         let mut enc = Txid::engine();
-        self.version.consensus_encode(&mut enc).unwrap();
-        self.input.consensus_encode(&mut enc).unwrap();
-        self.output.consensus_encode(&mut enc).unwrap();
-        self.lock_time.consensus_encode(&mut enc).unwrap();
+        self.version.consensus_encode(&mut enc).expect("engines don't error");
+        self.input.consensus_encode(&mut enc).expect("engines don't error");
+        self.output.consensus_encode(&mut enc).expect("engines don't error");
+        self.lock_time.consensus_encode(&mut enc).expect("engines don't error");
         Txid::from_engine(enc)
     }
 
@@ -304,7 +304,7 @@ impl Transaction {
     /// value returned by txid() function.
     pub fn wtxid(&self) -> Wtxid {
         let mut enc = Wtxid::engine();
-        self.consensus_encode(&mut enc).unwrap();
+        self.consensus_encode(&mut enc).expect("engines don't error");
         Wtxid::from_engine(enc)
     }
 

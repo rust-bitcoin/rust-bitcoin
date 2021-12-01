@@ -56,7 +56,7 @@ impl SighashComponents {
         let hash_prevouts = {
             let mut enc = SigHash::engine();
             for txin in &tx.input {
-                txin.previous_output.consensus_encode(&mut enc).unwrap();
+                txin.previous_output.consensus_encode(&mut enc).expect("engines don't error");
             }
             SigHash::from_engine(enc)
         };
@@ -64,7 +64,7 @@ impl SighashComponents {
         let hash_sequence = {
             let mut enc = SigHash::engine();
             for txin in &tx.input {
-                txin.sequence.consensus_encode(&mut enc).unwrap();
+                txin.sequence.consensus_encode(&mut enc).expect("engines don't error");
             }
             SigHash::from_engine(enc)
         };
@@ -72,7 +72,7 @@ impl SighashComponents {
         let hash_outputs = {
             let mut enc = SigHash::engine();
             for txout in &tx.output {
-                txout.consensus_encode(&mut enc).unwrap();
+                txout.consensus_encode(&mut enc).expect("engines don't error");
             }
             SigHash::from_engine(enc)
         };
@@ -90,19 +90,19 @@ impl SighashComponents {
     /// input.
     pub fn sighash_all(&self, txin: &TxIn, script_code: &Script, value: u64) -> SigHash {
         let mut enc = SigHash::engine();
-        self.tx_version.consensus_encode(&mut enc).unwrap();
-        self.hash_prevouts.consensus_encode(&mut enc).unwrap();
-        self.hash_sequence.consensus_encode(&mut enc).unwrap();
+        self.tx_version.consensus_encode(&mut enc).expect("engines don't error");
+        self.hash_prevouts.consensus_encode(&mut enc).expect("engines don't error");
+        self.hash_sequence.consensus_encode(&mut enc).expect("engines don't error");
         txin
             .previous_output
             .consensus_encode(&mut enc)
-            .unwrap();
-        script_code.consensus_encode(&mut enc).unwrap();
-        value.consensus_encode(&mut enc).unwrap();
-        txin.sequence.consensus_encode(&mut enc).unwrap();
-        self.hash_outputs.consensus_encode(&mut enc).unwrap();
-        self.tx_locktime.consensus_encode(&mut enc).unwrap();
-        1u32.consensus_encode(&mut enc).unwrap(); // hashtype
+            .expect("engines don't error");
+        script_code.consensus_encode(&mut enc).expect("engines don't error");
+        value.consensus_encode(&mut enc).expect("engines don't error");
+        txin.sequence.consensus_encode(&mut enc).expect("engines don't error");
+        self.hash_outputs.consensus_encode(&mut enc).expect("engines don't error");
+        self.tx_locktime.consensus_encode(&mut enc).expect("engines don't error");
+        1u32.consensus_encode(&mut enc).expect("engines don't error"); // hashtype
         SigHash::from_engine(enc)
     }
 }
