@@ -9,7 +9,8 @@ use io::{self, Read, Write};
 use prelude::*;
 use VarInt;
 
-#[cfg(feature = "serde")] use serde;
+#[cfg(feature = "serde")]
+use serde;
 
 /// The Witness is the data used to unlock bitcoins since the [segwit upgrade](https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki)
 ///
@@ -27,15 +28,23 @@ pub struct Witness {
     /// Number of elements in the witness.
     /// It is stored separately (instead of as VarInt in the initial part of content) so that method
     /// like [`Witness::push`] doesn't have case requiring to shift the entire array
-    witness_elements: u64,
+    witness_elements: usize,
+
+    /// If `witness_elements > 0` it's a valid index pointing to the last witness element in `content`
+    /// (Including the varint specifying the length of the element)
+    last: usize,
+
+    /// If `witness_elements > 1` it's a valid index pointing to the second-to-last witness element in `content`
+    /// (Including the varint specifying the length of the element)
+    second_to_last: usize,
 }
 
 /// Support structure to allow efficient and convenient iteration over the Witness elements
-pub struct Iter<'a> (::core::slice::Iter<'a, u8>);
+pub struct Iter<'a>(::core::slice::Iter<'a, u8>);
 
 impl From<Vec<Vec<u8>>> for Witness {
     fn from(vec: Vec<Vec<u8>>) -> Self {
-        let witness_elements = vec.len() as u64;
+        let witness_elements = vec.len();
 
         let content_size: usize = vec
             .iter()
@@ -43,7 +52,11 @@ impl From<Vec<Vec<u8>>> for Witness {
             .sum();
         let mut content = vec![0u8; content_size];
         let mut cursor = 0usize;
+        let mut last = 0;
+        let mut second_to_last = 0;
         for el in vec {
+            second_to_last = last;
+            last = cursor;
             let el_len_varint = VarInt(el.len() as u64);
             el_len_varint
                 .consensus_encode(&mut content[cursor..cursor + el_len_varint.len()])
@@ -56,23 +69,29 @@ impl From<Vec<Vec<u8>>> for Witness {
         Witness {
             witness_elements,
             content,
+            last,
+            second_to_last,
         }
     }
 }
 
 impl Decodable for Witness {
     fn consensus_decode<D: Read>(mut d: D) -> Result<Self, Error> {
-        let witness_elements = VarInt::consensus_decode(&mut d)?.0;
+        let witness_elements = VarInt::consensus_decode(&mut d)?.0 as usize;
         if witness_elements == 0 {
             Ok(Witness::default())
         } else {
             let mut cursor = 0usize;
+            let mut last = 0usize;
+            let mut second_to_last = 0usize;
 
             // this number should be determined as high enough to cover most witness, and low enough
             // to avoid wasting space without reallocating
             let mut content = vec![0u8; 128];
 
             for _ in 0..witness_elements {
+                second_to_last = last;
+                last = cursor;
                 let element_size_varint = VarInt::consensus_decode(&mut d)?;
                 let element_size_varint_len = element_size_varint.len();
                 let element_size = element_size_varint.0 as usize;
@@ -106,6 +125,8 @@ impl Decodable for Witness {
             Ok(Witness {
                 content,
                 witness_elements,
+                last,
+                second_to_last,
             })
         }
     }
@@ -123,7 +144,7 @@ fn resize_if_needed(vec: &mut Vec<u8>, required_len: usize) {
 
 impl Encodable for Witness {
     fn consensus_encode<W: Write>(&self, mut writer: W) -> Result<usize, io::Error> {
-        let len = VarInt(self.witness_elements);
+        let len = VarInt(self.witness_elements as u64);
         len.consensus_encode(&mut writer)?;
         writer.emit_slice(&self.content[..])?;
         Ok(self.content.len() + len.len())
@@ -151,7 +172,7 @@ impl Witness {
         self.iter()
             .map(|el| VarInt(el.len() as u64).len() + el.len())
             .sum::<usize>()
-            + VarInt(self.witness_elements).len()
+            + VarInt(self.witness_elements as u64).len()
     }
 
     /// Clear the witness
@@ -164,6 +185,8 @@ impl Witness {
     pub fn push<T: AsRef<[u8]>>(&mut self, new_element: T) {
         let new_element = new_element.as_ref();
         self.witness_elements += 1;
+        self.second_to_last = self.last;
+        self.last = self.content.len();
         let element_len_varint = VarInt(new_element.len() as u64);
         let current_content_len = self.content.len();
         self.content.resize(
@@ -176,6 +199,30 @@ impl Witness {
             .expect("writers on vec don't error, space granted through previous resize");
         self.content[end_varint..].copy_from_slice(new_element);
     }
+
+    fn element_at(&self, index: usize) -> Option<&[u8]> {
+        let varint = VarInt::consensus_decode(&self.content[index..]).ok()?;
+        let start = index + varint.len();
+        Some(&self.content[start..start + varint.0 as usize])
+    }
+
+    /// Return the last element in the witness, if any
+    pub fn last(&self) -> Option<&[u8]> {
+        if self.witness_elements == 0 {
+            None
+        } else {
+            self.element_at(self.last)
+        }
+    }
+
+    /// Return the second_to_last element in the witness, if any
+    pub fn second_to_last(&self) -> Option<&[u8]> {
+        if self.witness_elements <= 1 {
+            None
+        } else {
+            self.element_at(self.second_to_last)
+        }
+    }
 }
 
 impl Default for Witness {
@@ -185,6 +232,8 @@ impl Default for Witness {
         Witness {
             content: Vec::new(),
             witness_elements: 0,
+            last: 0,
+            second_to_last: 0,
         }
     }
 }
@@ -237,18 +286,28 @@ mod test {
     #[test]
     fn test_push() {
         let mut witness = Witness::default();
+        assert_eq!(witness.last(), None);
+        assert_eq!(witness.second_to_last(), None);
         witness.push(&vec![0u8]);
         let expected = Witness {
             witness_elements: 1,
             content: vec![1u8, 0],
+            last: 0,
+            second_to_last: 0,
         };
         assert_eq!(witness, expected);
+        assert_eq!(witness.last(), Some(&[0u8][..]));
+        assert_eq!(witness.second_to_last(), None);
         witness.push(&vec![2u8, 3u8]);
         let expected = Witness {
             witness_elements: 2,
             content: vec![1u8, 0, 2, 2, 3],
+            last: 2,
+            second_to_last: 0,
         };
         assert_eq!(witness, expected);
+        assert_eq!(witness.last(), Some(&[2u8, 3u8][..]));
+        assert_eq!(witness.second_to_last(), Some(&[0u8][..]));
     }
 
     #[test]
@@ -257,23 +316,24 @@ mod test {
             Vec::from_hex("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105")
                 .unwrap();
         let w1 = Vec::from_hex("000000").unwrap();
-        let witness_vec = vec![w0, w1];
+        let witness_vec = vec![w0.clone(), w1.clone()];
         let witness_serialized: Vec<u8> = serialize(&witness_vec);
         let witness = Witness {
             content: witness_serialized[1..].to_vec(),
             witness_elements: 2,
+            last: 34,
+            second_to_last: 0,
         };
         for (i, el) in witness.iter().enumerate() {
             assert_eq!(witness_vec[i], el);
         }
+        assert_eq!(witness.last(), Some(&w1[..]));
+        assert_eq!(witness.second_to_last(), Some(&w0[..]));
 
         let w_into: Witness = witness_vec.into();
         assert_eq!(w_into, witness);
 
         assert_eq!(witness_serialized, serialize(&witness));
-
-        //assert_eq!(32, std::mem::size_of::<Witness>());
-        //assert_eq!(24, std::mem::size_of::<Option<Vec<u8>>>());
     }
 
     #[test]
@@ -286,6 +346,14 @@ mod test {
         for (i, wit_el) in tx.input[0].witness.iter().enumerate() {
             assert_eq!(expected_wit[i], wit_el.to_hex());
         }
+        assert_eq!(
+            expected_wit[1],
+            tx.input[0].witness.last().unwrap().to_hex()
+        );
+        assert_eq!(
+            expected_wit[0],
+            tx.input[0].witness.second_to_last().unwrap().to_hex()
+        );
         let tx_bytes_back = serialize(&tx);
         assert_eq!(tx_bytes_back, tx_bytes);
     }
