@@ -19,7 +19,7 @@
 
 pub use secp256k1::schnorrsig::{PublicKey, KeyPair};
 use secp256k1::{Secp256k1, Verification};
-use hashes::{Hash, HashEngine};
+use hashes::Hash;
 use util::taproot::{TapBranchHash, TapTweakHash};
 
 /// Untweaked Schnorr public key
@@ -38,7 +38,7 @@ pub trait TapTweak {
     ///  * H is the hash function
     ///  * c is the commitment data
     ///  * G is the generator point
-    fn tap_tweak<C: Verification>(&self, secp: &Secp256k1<C>, merkle_root: Option<&TapBranchHash>) -> TweakedPublicKey;
+    fn tap_tweak<C: Verification>(self, secp: &Secp256k1<C>, merkle_root: Option<TapBranchHash>) -> TweakedPublicKey;
 
     /// Directly convert an UntweakedPublicKey to a TweakedPublicKey
     ///
@@ -48,12 +48,9 @@ pub trait TapTweak {
 }
 
 impl TapTweak for UntweakedPublicKey {
-    fn tap_tweak<C: Verification>(&self, secp: &Secp256k1<C>, merkle_root: Option<&TapBranchHash>) -> TweakedPublicKey {
+    fn tap_tweak<C: Verification>(self, secp: &Secp256k1<C>, merkle_root: Option<TapBranchHash>) -> TweakedPublicKey {
         // Compute the tweak
-        let mut engine = TapTweakHash::engine();
-        engine.input(&self.serialize());
-        merkle_root.map(|hash| engine.input(&hash));
-        let tweak_value: [u8; 32] = TapTweakHash::from_engine(engine).into_inner();
+        let tweak_value = TapTweakHash::from_key_and_tweak(self, merkle_root).into_inner();
 
         //Tweak the internal key by the tweak value
         let mut output_key = self.clone();

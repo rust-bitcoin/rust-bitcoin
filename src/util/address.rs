@@ -524,7 +524,7 @@ impl Address {
     pub fn p2tr<C: Verification>(
         secp: &Secp256k1<C>,
         internal_key: UntweakedPublicKey,
-        merkle_root: Option<&TapBranchHash>,
+        merkle_root: Option<TapBranchHash>,
         network: Network
     ) -> Address {
         Address {
