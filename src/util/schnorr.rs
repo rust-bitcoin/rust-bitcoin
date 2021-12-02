@@ -53,9 +53,9 @@ impl TapTweak for UntweakedPublicKey {
         let tweak_value = TapTweakHash::from_key_and_tweak(self, merkle_root).into_inner();
         let mut output_key = self.clone();
         let parity = output_key.tweak_add_assign(&secp, &tweak_value).expect("Tap tweak failed");
-        if self.tweak_add_check(&secp, &output_key, parity, tweak_value) {
-            return TweakedPublicKey(output_key);
-        } else { unreachable!("Tap tweak failed") }
+
+        debug_assert!(self.tweak_add_check(&secp, &output_key, parity, tweak_value));
+        TweakedPublicKey(output_key)
     }
 
     fn dangerous_assume_tweaked(self) -> TweakedPublicKey {
