@@ -50,10 +50,7 @@ pub trait TapTweak {
 
 impl TapTweak for UntweakedPublicKey {
     fn tap_tweak<C: Verification>(self, secp: &Secp256k1<C>, merkle_root: Option<TapBranchHash>) -> TweakedPublicKey {
-        // Compute the tweak
         let tweak_value = TapTweakHash::from_key_and_tweak(self, merkle_root).into_inner();
-
-        //Tweak the internal key by the tweak value
         let mut output_key = self.clone();
         let parity = output_key.tweak_add_assign(&secp, &tweak_value).expect("Tap tweak failed");
         if self.tweak_add_check(&secp, &output_key, parity, tweak_value) {
