@@ -25,7 +25,7 @@ use core::cmp::Reverse;
 use std::error;
 
 use hashes::{sha256, sha256t, Hash, HashEngine};
-use schnorr::{TweakedPublicKey, UntweakedPublicKey};
+use schnorr::{TweakedPublicKey, UntweakedPublicKey, TapTweak};
 use Script;
 
 use consensus::Encodable;
@@ -253,22 +253,12 @@ impl TaprootSpendInfo {
         internal_key: UntweakedPublicKey,
         merkle_root: Option<TapBranchHash>,
     ) -> Self {
-        let tweak = TapTweakHash::from_key_and_tweak(internal_key, merkle_root);
-        let mut output_key = internal_key;
-        // # Panics:
-        //
-        // This would return Err if the merkle root hash is the negation of the secret
-        // key corresponding to the internal key.
-        // Because the tweak is derived as specified in BIP341 (hash output of a function),
-        // this is unlikely to occur (1/2^128) in real life usage, it is safe to unwrap this
-        let parity = output_key
-            .tweak_add_assign(&secp, &tweak)
-            .expect("TapTweakHash::from_key_and_tweak is broken");
+        let (output_key, parity) = internal_key.tap_tweak(secp, merkle_root);
         Self {
             internal_key: internal_key,
             merkle_root: merkle_root,
             output_key_parity: parity,
-            output_key: TweakedPublicKey::dangerous_assume_tweaked(output_key),
+            output_key: output_key,
             script_map: BTreeMap::new(),
         }
     }
