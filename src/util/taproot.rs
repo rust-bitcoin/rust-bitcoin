@@ -268,7 +268,7 @@ impl TaprootSpendInfo {
             internal_key: internal_key,
             merkle_root: merkle_root,
             output_key_parity: parity,
-            output_key: TweakedPublicKey::new(output_key),
+            output_key: TweakedPublicKey::dangerous_assume_tweaked(output_key),
             script_map: BTreeMap::new(),
         }
     }
@@ -985,7 +985,7 @@ mod test {
 
     fn _verify_tap_commitments(secp: &Secp256k1<VerifyOnly>, out_spk_hex: &str, script_hex : &str, control_block_hex: &str) {
         let out_pk = schnorr::PublicKey::from_str(&out_spk_hex[4..]).unwrap();
-        let out_pk = TweakedPublicKey::new(out_pk);
+        let out_pk = TweakedPublicKey::dangerous_assume_tweaked(out_pk);
         let script = Script::from_hex(script_hex).unwrap();
         let control_block = ControlBlock::from_slice(&Vec::<u8>::from_hex(control_block_hex).unwrap()).unwrap();
         assert_eq!(control_block_hex, control_block.serialize().to_hex());

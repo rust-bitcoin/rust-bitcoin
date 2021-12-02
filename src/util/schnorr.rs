@@ -65,8 +65,9 @@ impl TapTweak for UntweakedPublicKey {
 
 
 impl TweakedPublicKey {
-    /// Create a new [TweakedPublicKey] from a [PublicKey]. No tweak is applied.
-    pub fn new(key: PublicKey) -> TweakedPublicKey {
+    /// Creates a new [`TweakedPublicKey`] from a [`PublicKey`]. No tweak is applied, consider
+    /// calling `tap_tweak` on an [`UntweakedPublicKey`] instead of using this constructor.
+    pub fn dangerous_assume_tweaked(key: PublicKey) -> TweakedPublicKey {
         TweakedPublicKey(key)
     }
 
