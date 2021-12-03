@@ -744,6 +744,8 @@ impl<'a> Iterator for Instructions<'a> {
     }
 }
 
+impl<'a> ::core::iter::FusedIterator for Instructions<'a> {}
+
 impl Builder {
     /// Creates a new empty script
     pub fn new() -> Self {
@@ -1388,5 +1390,14 @@ mod test {
         assert_eq!(script, ::bincode::deserialize(&bincode).unwrap());
     }
 
+    #[test]
+    fn test_instructions_are_fused() {
+        let script = Script::new();
+        let mut instructions = script.instructions();
+        assert!(instructions.next().is_none());
+        assert!(instructions.next().is_none());
+        assert!(instructions.next().is_none());
+        assert!(instructions.next().is_none());
+    }
 }
 
