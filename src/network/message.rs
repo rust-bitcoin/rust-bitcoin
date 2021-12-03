@@ -45,13 +45,10 @@ pub struct CommandString(Cow<'static, str>);
 
 impl CommandString {
     /// Convert from various string types into a [CommandString].
-    ///
-    /// # Returns
-    /// An empty error if and only if the string is larger than 12 characters in length.
-    fn _try_from<S: Into<Cow<'static, str>>>(s: S) -> Result<CommandString, ()> {
+    fn _try_from<S: Into<Cow<'static, str>>>(s: S) -> Result<CommandString, TooLongError> {
         let cow = s.into();
         if cow.as_ref().len() > 12 {
-            Err(())
+            Err(TooLongError {})
         } else {
             Ok(CommandString(cow))
         }
@@ -59,18 +56,32 @@ impl CommandString {
 }
 
 impl TryFrom<String> for CommandString {
-    type Error = ();
+    type Error = TooLongError;
     fn try_from(s: String) -> Result<Self, Self::Error> {
         Self::_try_from(s)
     }
 }
 
 impl TryFrom<&'static str> for CommandString {
-    type Error = ();
+    type Error = TooLongError;
     fn try_from(s: &'static str) -> Result<Self, Self::Error> {
         Self::_try_from(s)
     }
 }
+
+/// Input string was too long (more than 12 characters).
+#[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Clone, Copy)]
+pub struct TooLongError{}
+
+impl fmt::Display for TooLongError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Input command string was more than 12 characters")
+    }
+}
+
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+impl ::std::error::Error for TooLongError {}
 
 impl fmt::Display for CommandString {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
