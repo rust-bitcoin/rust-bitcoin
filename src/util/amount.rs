@@ -108,7 +108,7 @@ impl fmt::Display for ParseAmountError {
             ParseAmountError::InvalidFormat => f.write_str("invalid number format"),
             ParseAmountError::InputTooLarge => f.write_str("input string was too large"),
             ParseAmountError::InvalidCharacter(c) => write!(f, "invalid character in input: {}", c),
-            ParseAmountError::UnknownDenomination(ref d) => write!(f, "unknown denomination: {}",d),
+            ParseAmountError::UnknownDenomination(ref d) => write!(f, "unknown denomination: {}", d),
         }
     }
 }
