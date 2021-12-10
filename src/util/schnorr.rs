@@ -44,7 +44,7 @@ pub trait TapTweak {
     /// The tweaked key and its parity.
     fn tap_tweak<C: Verification>(self, secp: &Secp256k1<C>, merkle_root: Option<TapBranchHash>) -> (TweakedPublicKey, bool);
 
-    /// Directly convert an UntweakedPublicKey to a TweakedPublicKey
+    /// Directly converts an [`UntweakedPublicKey`] to a [`TweakedPublicKey`]
     ///
     /// This method is dangerous and can lead to loss of funds if used incorrectly.
     /// Specifically, in multi-party protocols a peer can provide a value that allows them to steal.
@@ -74,12 +74,12 @@ impl TweakedPublicKey {
         TweakedPublicKey(key)
     }
 
-    /// Returns the underlying public key
+    /// Returns the underlying public key.
     pub fn into_inner(self) -> PublicKey {
         self.0
     }
 
-    /// Returns a reference to underlying public key
+    /// Returns a reference to underlying public key.
     pub fn as_inner(&self) -> &PublicKey {
         &self.0
     }
