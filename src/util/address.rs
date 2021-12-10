@@ -42,7 +42,7 @@ use core::str::FromStr;
 use secp256k1::{Secp256k1, Verification};
 use bech32;
 use hashes::Hash;
-use hash_types::{PubkeyHash, WPubkeyHash, ScriptHash, WScriptHash};
+use hash_types::{PubkeyHash, ScriptHash};
 use blockdata::{script, opcodes};
 use blockdata::constants::{PUBKEY_ADDRESS_PREFIX_MAIN, SCRIPT_ADDRESS_PREFIX_MAIN, PUBKEY_ADDRESS_PREFIX_TEST, SCRIPT_ADDRESS_PREFIX_TEST, MAX_SCRIPT_ELEMENT_SIZE};
 use network::constants::Network;
@@ -409,7 +409,7 @@ impl Payload {
     /// Creates a pay to (compressed) public key hash payload from a public key
     #[inline]
     pub fn p2pkh(pk: &ecdsa::PublicKey) -> Payload {
-        Payload::PubkeyHash(PubkeyHash::hash(&pk.to_bytes()))
+        Payload::PubkeyHash(pk.pubkey_hash())
     }
 
     /// Creates a pay to script hash P2SH payload from a script
@@ -418,41 +418,31 @@ impl Payload {
         if script.len() > MAX_SCRIPT_ELEMENT_SIZE {
             return Err(Error::ExcessiveScriptSize);
         }
-        Ok(Payload::ScriptHash(ScriptHash::hash(&script[..])))
+        Ok(Payload::ScriptHash(script.script_hash()))
     }
 
     /// Create a witness pay to public key payload from a public key
     pub fn p2wpkh(pk: &ecdsa::PublicKey) -> Result<Payload, Error> {
-        if !pk.compressed {
-            return Err(Error::UncompressedPubkey);
-        }
-
         Ok(Payload::WitnessProgram {
             version: WitnessVersion::V0,
-            program: WPubkeyHash::hash(&pk.to_bytes())[..].to_vec(),
+            program: pk.wpubkey_hash().ok_or(Error::UncompressedPubkey)?.to_vec(),
         })
     }
 
     /// Create a pay to script payload that embeds a witness pay to public key
     pub fn p2shwpkh(pk: &ecdsa::PublicKey) -> Result<Payload, Error> {
-        if !pk.compressed {
-            return Err(Error::UncompressedPubkey);
-        }
-
         let builder = script::Builder::new()
             .push_int(0)
-            .push_slice(&WPubkeyHash::hash(&pk.to_bytes())[..]);
+            .push_slice(&pk.wpubkey_hash().ok_or(Error::UncompressedPubkey)?);
 
-        Ok(Payload::ScriptHash(ScriptHash::hash(
-            builder.into_script().as_bytes(),
-        )))
+        Ok(Payload::ScriptHash(builder.into_script().script_hash()))
     }
 
     /// Create a witness pay to script hash payload.
     pub fn p2wsh(script: &script::Script) -> Payload {
         Payload::WitnessProgram {
             version: WitnessVersion::V0,
-            program: WScriptHash::hash(&script[..])[..].to_vec(),
+            program: script.wscript_hash().to_vec(),
         }
     }
 
@@ -460,10 +450,10 @@ impl Payload {
     pub fn p2shwsh(script: &script::Script) -> Payload {
         let ws = script::Builder::new()
             .push_int(0)
-            .push_slice(&WScriptHash::hash(&script[..])[..])
+            .push_slice(&script.wscript_hash())
             .into_script();
 
-        Payload::ScriptHash(ScriptHash::hash(&ws[..]))
+        Payload::ScriptHash(ws.script_hash())
     }
 
     /// Create a pay to taproot payload from untweaked key
