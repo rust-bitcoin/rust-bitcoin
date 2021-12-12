@@ -26,6 +26,7 @@ use util::taproot::{TapBranchHash, TapTweakHash};
 pub type UntweakedPublicKey = PublicKey;
 
 /// Tweaked Schnorr public key
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct TweakedPublicKey(PublicKey);
 
 /// A trait for tweaking Schnorr public keys
@@ -38,9 +39,12 @@ pub trait TapTweak {
     ///  * H is the hash function
     ///  * c is the commitment data
     ///  * G is the generator point
-    fn tap_tweak<C: Verification>(self, secp: &Secp256k1<C>, merkle_root: Option<TapBranchHash>) -> TweakedPublicKey;
+    ///
+    /// # Returns
+    /// The tweaked key and its parity.
+    fn tap_tweak<C: Verification>(self, secp: &Secp256k1<C>, merkle_root: Option<TapBranchHash>) -> (TweakedPublicKey, bool);
 
-    /// Directly convert an UntweakedPublicKey to a TweakedPublicKey
+    /// Directly converts an [`UntweakedPublicKey`] to a [`TweakedPublicKey`]
     ///
     /// This method is dangerous and can lead to loss of funds if used incorrectly.
     /// Specifically, in multi-party protocols a peer can provide a value that allows them to steal.
@@ -48,16 +52,13 @@ pub trait TapTweak {
 }
 
 impl TapTweak for UntweakedPublicKey {
-    fn tap_tweak<C: Verification>(self, secp: &Secp256k1<C>, merkle_root: Option<TapBranchHash>) -> TweakedPublicKey {
-        // Compute the tweak
+    fn tap_tweak<C: Verification>(self, secp: &Secp256k1<C>, merkle_root: Option<TapBranchHash>) -> (TweakedPublicKey, bool) {
         let tweak_value = TapTweakHash::from_key_and_tweak(self, merkle_root).into_inner();
-
-        //Tweak the internal key by the tweak value
         let mut output_key = self.clone();
         let parity = output_key.tweak_add_assign(&secp, &tweak_value).expect("Tap tweak failed");
-        if self.tweak_add_check(&secp, &output_key, parity, tweak_value) {
-            return TweakedPublicKey(output_key);
-        } else { unreachable!("Tap tweak failed") }
+
+        debug_assert!(self.tweak_add_check(&secp, &output_key, parity, tweak_value));
+        (TweakedPublicKey(output_key), parity)
     }
 
     fn dangerous_assume_tweaked(self) -> TweakedPublicKey {
@@ -67,17 +68,18 @@ impl TapTweak for UntweakedPublicKey {
 
 
 impl TweakedPublicKey {
-    /// Create a new [TweakedPublicKey] from a [PublicKey]. No tweak is applied.
-    pub fn new(key: PublicKey) -> TweakedPublicKey {
+    /// Creates a new [`TweakedPublicKey`] from a [`PublicKey`]. No tweak is applied, consider
+    /// calling `tap_tweak` on an [`UntweakedPublicKey`] instead of using this constructor.
+    pub fn dangerous_assume_tweaked(key: PublicKey) -> TweakedPublicKey {
         TweakedPublicKey(key)
     }
 
-    /// Returns the underlying public key
+    /// Returns the underlying public key.
     pub fn into_inner(self) -> PublicKey {
         self.0
     }
 
-    /// Returns a reference to underlying public key
+    /// Returns a reference to underlying public key.
     pub fn as_inner(&self) -> &PublicKey {
         &self.0
     }

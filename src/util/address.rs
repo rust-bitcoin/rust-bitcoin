@@ -527,11 +527,12 @@ impl Address {
         merkle_root: Option<TapBranchHash>,
         network: Network
     ) -> Address {
+        let (output_key, _parity) = internal_key.tap_tweak(secp, merkle_root);
         Address {
             network: network,
             payload: Payload::WitnessProgram {
                 version: WitnessVersion::V1,
-                program: internal_key.tap_tweak(secp, merkle_root).into_inner().serialize().to_vec()
+                program: output_key.into_inner().serialize().to_vec()
             }
         }
     }
