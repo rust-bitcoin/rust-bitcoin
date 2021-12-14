@@ -138,7 +138,7 @@ macro_rules! construct_uint {
                 let your_bits = other.bits();
 
                 // Check for division by 0
-                assert!(your_bits != 0);
+                assert!(your_bits != 0, "attempted to divide {} by zero", self);
 
                 // Early return in case we are dividing by a larger number than us
                 if my_bits < your_bits {
