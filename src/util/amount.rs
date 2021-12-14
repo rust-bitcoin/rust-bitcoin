@@ -270,6 +270,8 @@ impl Amount {
     pub const ONE_SAT: Amount = Amount(1);
     /// Exactly one bitcoin.
     pub const ONE_BTC: Amount = Amount(100_000_000);
+    /// The maximum value allowed as an amount. Useful for sanity checking.
+    pub const MAX_MONEY: Amount = Amount(21_000_000 * 100_000_000);
 
     /// Create an [Amount] with satoshi precision and the given number of satoshis.
     pub fn from_sat(satoshi: u64) -> Amount {
@@ -555,6 +557,8 @@ impl SignedAmount {
     pub const ONE_SAT: SignedAmount = SignedAmount(1);
     /// Exactly one bitcoin.
     pub const ONE_BTC: SignedAmount = SignedAmount(100_000_000);
+    /// The maximum value allowed as an amount. Useful for sanity checking.
+    pub const MAX_MONEY: SignedAmount = SignedAmount(21_000_000 * 100_000_000);
 
     /// Create an [SignedAmount] with satoshi precision and the given number of satoshis.
     pub fn from_sat(satoshi: i64) -> SignedAmount {
