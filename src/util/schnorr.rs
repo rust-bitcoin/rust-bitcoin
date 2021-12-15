@@ -18,9 +18,10 @@
 //!
 
 pub use secp256k1::schnorrsig::{PublicKey, KeyPair};
-use secp256k1::{Secp256k1, Verification};
+use secp256k1::{Secp256k1, Verification, constants};
 use hashes::Hash;
 use util::taproot::{TapBranchHash, TapTweakHash};
+use core::fmt;
 
 /// Untweaked Schnorr public key
 pub type UntweakedPublicKey = PublicKey;
@@ -28,6 +29,18 @@ pub type UntweakedPublicKey = PublicKey;
 /// Tweaked Schnorr public key
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct TweakedPublicKey(PublicKey);
+
+impl fmt::LowerHex for TweakedPublicKey {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::LowerHex::fmt(&self.0, f)
+    }
+}
+
+impl fmt::Display for TweakedPublicKey {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Display::fmt(&self.0, f)
+    }
+}
 
 /// A trait for tweaking Schnorr public keys
 pub trait TapTweak {
@@ -66,7 +79,6 @@ impl TapTweak for UntweakedPublicKey {
     }
 }
 
-
 impl TweakedPublicKey {
     /// Creates a new [`TweakedPublicKey`] from a [`PublicKey`]. No tweak is applied, consider
     /// calling `tap_tweak` on an [`UntweakedPublicKey`] instead of using this constructor.
@@ -84,4 +96,11 @@ impl TweakedPublicKey {
         &self.0
     }
 
+    /// Serialize the key as a byte-encoded pair of values. In compressed form
+    /// the y-coordinate is represented by only a single bit, as x determines
+    /// it up to one bit.
+    #[inline]
+    pub fn serialize(&self) -> [u8; constants::SCHNORRSIG_PUBLIC_KEY_SIZE] {
+        self.0.serialize()
+    }
 }
