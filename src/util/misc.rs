@@ -161,7 +161,7 @@ mod message_signing {
             let recovery_id = RecoveryId::from_i32((flag_byte & 0x03) as i32)?;
             Ok(MessageSignature {
                 signature: RecoverableSignature::from_compact(&bytes[1..], recovery_id)?,
-                compressed: (flag_byte & 0x04) != 0,
+                compressed: (flag_byte & 12) != 0,
                 segwit_type: SegwitType::from_flag_byte(flag_byte),
                 recovery_id,
             })
@@ -195,8 +195,7 @@ mod message_signing {
             // Mostly ported from: https://github.com/bitcoinjs/bitcoinjs-message/blob/c43430f4c03c292c719e7801e425d887cbdf7464/index.js#L181-L233
             let pubkey = self.recover_pubkey(&secp_ctx, msg_hash)?;
 
-            // Use .serialize because we always want compact serialization
-            let pubkey_hash = hash160(&pubkey.key.serialize());
+            let pubkey_hash = pubkey.pubkey_hash();
 
             match self.segwit_type {
                 None => {
@@ -519,6 +518,27 @@ mod tests {
             let address = Address::from_str(&address_string).unwrap();
 
             let sig_string = "206b079e6f3d74a83b5b90710a803f54a1d8c0beb7abaa1b9a5b26f100ef36e8f25d6f7eb73f10eaaac4fe725cb2901f60b890009f93318c7df4836df3b22b9901".to_string();
+            let sig_bytes = <Vec<u8>>::from_hex(&sig_string).unwrap();
+            let message_signature = MessageSignature::from_slice(&sig_bytes).unwrap();
+
+            let secp_ctx = secp256k1::Secp256k1::new();
+
+            let result = message_signature.is_signed_by_address(&secp_ctx, &address, message_hash);
+            assert!(result.unwrap());
+        }
+
+        #[test]
+        fn test_p2pkh_2() {
+            // Testcase that was failing the first iteration
+            // due to incorrectly setting MessageSignature.compressed
+            // when using MessageSignature::from_slice
+            let message_string = "23a1c49208661ef362f941dcf84e156fmsvS7KzhReCDpQEJaV2hmGNvuQqVUDuC6pe6f20d12-14da-4dd0-b058-e8d3c9e821f0".to_string();
+            let message_hash = signed_msg_hash(&message_string);
+
+            let address_string = "msvS7KzhReCDpQEJaV2hmGNvuQqVUDuC6p".to_string();
+            let address = Address::from_str(&address_string).unwrap();
+
+            let sig_string = "1c2b156b7634c8facfc32100d45424e619e66be1f816b20dffecbe57e9714623c97181c3d3f558a48825b5c26804ee37aa775bea7f906d7a6144aa239962b0a0a9".to_string();
             let sig_bytes = <Vec<u8>>::from_hex(&sig_string).unwrap();
             let message_signature = MessageSignature::from_slice(&sig_bytes).unwrap();
 
