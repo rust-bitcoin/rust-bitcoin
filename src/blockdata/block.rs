@@ -176,7 +176,10 @@ impl Block {
 
     /// check if merkle root of header matches merkle root of the transaction list
     pub fn check_merkle_root (&self) -> bool {
-        self.header.merkle_root == self.merkle_root()
+        match self.merkle_root() {
+            Some(merkle_root) => self.header.merkle_root == merkle_root,
+            None => false,
+        }
     }
 
     /// check if witness commitment in coinbase is matching the transaction list
@@ -197,8 +200,10 @@ impl Block {
                     let commitment = WitnessCommitment::from_slice(&coinbase.output[pos].script_pubkey.as_bytes()[6..38]).unwrap();
                     // witness reserved value is in coinbase input witness
                     if coinbase.input[0].witness.len() == 1 && coinbase.input[0].witness[0].len() == 32 {
-                        let witness_root = self.witness_root();
-                        return commitment == Self::compute_witness_commitment(&witness_root, coinbase.input[0].witness[0].as_slice())
+                        match self.witness_root() {
+                            Some(witness_root) => return commitment == Self::compute_witness_commitment(&witness_root, coinbase.input[0].witness[0].as_slice()),
+                            None => return false,
+                        }
                     }
                 }
             }
@@ -207,9 +212,9 @@ impl Block {
     }
 
     /// Calculate the transaction merkle root.
-    pub fn merkle_root(&self) -> TxMerkleNode {
+    pub fn merkle_root(&self) -> Option<TxMerkleNode> {
         let hashes = self.txdata.iter().map(|obj| obj.txid().as_hash());
-        bitcoin_merkle_root(hashes).into()
+        bitcoin_merkle_root(hashes).map(|h| h.into())
     }
 
     /// compute witness commitment for the transaction list
@@ -221,7 +226,7 @@ impl Block {
     }
 
     /// Merkle root of transactions hashed for witness
-    pub fn witness_root(&self) -> WitnessMerkleNode {
+    pub fn witness_root(&self) -> Option<WitnessMerkleNode> {
         let hashes = self.txdata.iter().enumerate().map(|(i, t)|
             if i == 0 {
                 // Replace the first hash with zeroes.
@@ -230,7 +235,7 @@ impl Block {
                 t.wtxid().as_hash()
             }
         );
-        bitcoin_merkle_root(hashes).into()
+        bitcoin_merkle_root(hashes).map(|h| h.into())
     }
 
     /// The size of the header + the size of the varint with the tx count + the txs themselves
@@ -371,7 +376,7 @@ mod tests {
         let real_decode = decode.unwrap();
         assert_eq!(real_decode.header.version, 1);
         assert_eq!(serialize(&real_decode.header.prev_blockhash), prevhash);
-        assert_eq!(real_decode.header.merkle_root, real_decode.merkle_root());
+        assert_eq!(real_decode.header.merkle_root, real_decode.merkle_root().unwrap());
         assert_eq!(serialize(&real_decode.header.merkle_root), merkle);
         assert_eq!(real_decode.header.time, 1231965655);
         assert_eq!(real_decode.header.bits, 486604799);
@@ -407,7 +412,7 @@ mod tests {
         assert_eq!(real_decode.header.version, 0x20000000);  // VERSIONBITS but no bits set
         assert_eq!(serialize(&real_decode.header.prev_blockhash), prevhash);
         assert_eq!(serialize(&real_decode.header.merkle_root), merkle);
-        assert_eq!(real_decode.header.merkle_root, real_decode.merkle_root());
+        assert_eq!(real_decode.header.merkle_root, real_decode.merkle_root().unwrap());
         assert_eq!(real_decode.header.time, 1472004949);
         assert_eq!(real_decode.header.bits, 0x1a06d450);
         assert_eq!(real_decode.header.nonce, 1879759182);
