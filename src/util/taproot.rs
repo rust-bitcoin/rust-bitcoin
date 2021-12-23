@@ -81,19 +81,18 @@ macro_rules! sha256t_hash_newtype {
     };
 }
 
-// Currently all taproot hashes are defined as being displayed backwards,
-// but that can be specified individually per hash.
+// Taproot test vectors from BIP-341 state the hashes without any reversing
 sha256t_hash_newtype!(TapLeafHash, TapLeafTag, MIDSTATE_TAPLEAF, 64,
-    doc="Taproot-tagged hash for tapscript Merkle tree leafs", true
+    doc="Taproot-tagged hash for tapscript Merkle tree leafs", false
 );
 sha256t_hash_newtype!(TapBranchHash, TapBranchTag, MIDSTATE_TAPBRANCH, 64,
-    doc="Taproot-tagged hash for tapscript Merkle tree branches", true
+    doc="Taproot-tagged hash for tapscript Merkle tree branches", false
 );
 sha256t_hash_newtype!(TapTweakHash, TapTweakTag, MIDSTATE_TAPTWEAK, 64,
-    doc="Taproot-tagged hash for public key tweaks", true
+    doc="Taproot-tagged hash for public key tweaks", false
 );
 sha256t_hash_newtype!(TapSighashHash, TapSighashTag, MIDSTATE_TAPSIGHASH, 64,
-    doc="Taproot-tagged hash for the taproot signature hash", true
+    doc="Taproot-tagged hash for the taproot signature hash", false
 );
 
 impl TapTweakHash {
@@ -887,6 +886,9 @@ impl fmt::Display for TaprootError {
 impl error::Error for TaprootError {}
 #[cfg(test)]
 mod test {
+    use {Address, Network};
+    use schnorr::TapTweak;
+
     use super::*;
     use hashes::hex::{FromHex, ToHex};
     use hashes::sha256t::Tag;
@@ -894,6 +896,7 @@ mod test {
     use secp256k1::VerifyOnly;
     use core::str::FromStr;
     use schnorr;
+    extern crate serde_json;
 
     fn tag_engine(tag_name: &str) -> sha256::HashEngine {
         let mut engine = sha256::Hash::engine();
@@ -938,19 +941,19 @@ mod test {
         //   writer.GetSHA256().GetHex()
         assert_eq!(
             TapLeafHash::from_engine(TapLeafTag::engine()).to_hex(),
-            "cbfa0621df37662ca57697e5847b6abaf92934a1a5624916f8d177a388c21252"
+            "5212c288a377d1f8164962a5a13429f9ba6a7b84e59776a52c6637df2106facb"
         );
         assert_eq!(
             TapBranchHash::from_engine(TapBranchTag::engine()).to_hex(),
-            "dffd9fbe4c21c893fa934f8774eda0e1efdc06f52ffbf5c1533c6f4dec73c353"
+            "53c373ec4d6f3c53c1f5fb2ff506dcefe1a0ed74874f93fa93c8214cbe9ffddf"
         );
         assert_eq!(
             TapTweakHash::from_engine(TapTweakTag::engine()).to_hex(),
-            "e4156b45ff9b277dd92a042af9eed8c91f1d037f68f0d6b20001ab749422a48a"
+            "8aa4229474ab0100b2d6f0687f031d1fc9d8eef92a042ad97d279bff456b15e4"
         );
         assert_eq!(
             TapSighashHash::from_engine(TapSighashTag::engine()).to_hex(),
-            "03c8b9d47cdb5f7bf924e282ce99ba8d2fe581262a04002907d8bc4a9111bcda"
+            "dabc11914abcd8072900042a2681e52f8dba99ce82e224f97b5fdb7cd4b9c803"
         );
 
         // 0-byte
@@ -960,19 +963,19 @@ mod test {
         // Note that Core writes the 0 length prefix when an empty vector is written.
         assert_eq!(
             TapLeafHash::hash(&[0]).to_hex(),
-            "29589d5122ec666ab5b4695070b6debc63881a4f85d88d93ddc90078038213ed"
+            "ed1382037800c9dd938dd8854f1a8863bcdeb6705069b4b56a66ec22519d5829"
         );
         assert_eq!(
             TapBranchHash::hash(&[0]).to_hex(),
-            "1deb45569eb6b2da88b5c2ab46d6a64ab08d58a2fdd5f75a24e6c760194b5392"
+            "92534b1960c7e6245af7d5fda2588db04aa6d646abc2b588dab2b69e5645eb1d"
         );
         assert_eq!(
             TapTweakHash::hash(&[0]).to_hex(),
-            "1eea90d42a359c89bbf702ddf6bde140349e95b9e8036ff1c37f04e6b53787cd"
+            "cd8737b5e6047fc3f16f03e8b9959e3440e1bdf6dd02f7bb899c352ad490ea1e"
         );
         assert_eq!(
             TapSighashHash::hash(&[0]).to_hex(),
-            "cd10c023c300fb9a507dff136370fba1d8a0566667cfafc4099a8803e00dfdc2"
+            "c2fd0de003889a09c4afcf676656a0d8a1fb706313ff7d509afb00c323c010cd"
         );
     }
 
@@ -1101,5 +1104,81 @@ mod test {
             let ctrl_block = tree_info.control_block(&ver_script).unwrap();
             assert!(ctrl_block.verify_taproot_commitment(&secp, &output_key, &ver_script.0))
         }
+    }
+
+    #[test]
+    fn bip_341_tests() {
+
+        fn process_script_trees(
+            v: &serde_json::Value,
+            mut builder: TaprootBuilder,
+            leaves: &mut Vec<(Script, LeafVersion)>,
+            depth: usize,
+        ) -> TaprootBuilder {
+            if v.is_null() {
+                // nothing to push
+            } else if v.is_array() {
+                for leaf in v.as_array().unwrap() {
+                    builder =  process_script_trees(leaf, builder, leaves, depth + 1);
+                }
+            } else {
+                let script = Script::from_str(v["script"].as_str().unwrap()).unwrap();
+                let ver = LeafVersion::from_u8(v["leafVersion"].as_u64().unwrap() as u8).unwrap();
+                leaves.push((script.clone(), ver));
+                builder = builder.add_leaf_with_ver(depth, script, ver).unwrap();
+            }
+            builder
+        }
+
+        let data = bip_341_read_json();
+        // Check the version of data
+        assert!(data["version"] == 1);
+        let secp = &secp256k1::Secp256k1::verification_only();
+
+        for arr in data["scriptPubKey"].as_array().unwrap() {
+            let internal_key = schnorr::PublicKey::from_str(arr["given"]["internalPubkey"].as_str().unwrap()).unwrap();
+            // process the tree
+            let script_tree = &arr["given"]["scriptTree"];
+            let mut merkle_root = None;
+            if script_tree.is_null() {
+                assert!(arr["intermediary"]["merkleRoot"].is_null());
+            } else {
+                merkle_root = Some(TapBranchHash::from_str(&arr["intermediary"]["merkleRoot"].as_str().unwrap()).unwrap());
+                let leaf_hashes = arr["intermediary"]["leafHashes"].as_array().unwrap();
+                let ctrl_blks = arr["expected"]["scriptPathControlBlocks"].as_array().unwrap();
+                let mut builder = TaprootBuilder::new();
+                let mut leaves = vec![];
+                builder = process_script_trees(&script_tree, builder, &mut leaves, 0);
+                let spend_info = builder.finalize(secp, internal_key).unwrap();
+                for (i, script_ver) in leaves.iter().enumerate() {
+                    let expected_leaf_hash = leaf_hashes[i].as_str().unwrap();
+                    let expected_ctrl_blk = ControlBlock::from_slice(&Vec::<u8>::from_hex(ctrl_blks[i].as_str().unwrap()).unwrap()).unwrap();
+
+                    let leaf_hash = TapLeafHash::from_script(&script_ver.0, script_ver.1);
+                    let ctrl_blk = spend_info.control_block(script_ver).unwrap();
+                    assert_eq!(leaf_hash.to_hex(), expected_leaf_hash);
+                    assert_eq!(ctrl_blk, expected_ctrl_blk);
+                }
+            }
+            let expected_output_key = schnorr::PublicKey::from_str(arr["intermediary"]["tweakedPubkey"].as_str().unwrap()).unwrap();
+            let expected_tweak = TapTweakHash::from_str(arr["intermediary"]["tweak"].as_str().unwrap()).unwrap();
+            let expected_spk = Script::from_str(arr["expected"]["scriptPubKey"].as_str().unwrap()).unwrap();
+            let expected_addr = Address::from_str(arr["expected"]["bip350Address"].as_str().unwrap()).unwrap();
+
+            let tweak = TapTweakHash::from_key_and_tweak(internal_key, merkle_root);
+            let (output_key, _parity) = internal_key.tap_tweak(&secp, merkle_root);
+            let addr = Address::p2tr(&secp, internal_key, merkle_root, Network::Bitcoin);
+            let spk = addr.script_pubkey();
+
+            assert_eq!(expected_output_key, output_key.into_inner());
+            assert_eq!(expected_tweak, tweak);
+            assert_eq!(expected_addr, addr);
+            assert_eq!(expected_spk, spk);
+        }
+    }
+
+    fn bip_341_read_json() -> serde_json::Value {
+        let json_str = include_str!("../../test_data/bip341_tests.json");
+        serde_json::from_str(json_str).expect("JSON was not well-formatted")
     }
 }
