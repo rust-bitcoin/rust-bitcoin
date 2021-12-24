@@ -80,7 +80,7 @@ impl Map for Output {
             }
             PSBT_OUT_PROPRIETARY => match self.proprietary.entry(raw::ProprietaryKey::from_key(raw_key.clone())?) {
                 btree_map::Entry::Vacant(empty_key) => {empty_key.insert(raw_value);},
-                btree_map::Entry::Occupied(_) => return Err(Error::DuplicateKey(raw_key.clone()).into()),
+                btree_map::Entry::Occupied(_) => return Err(Error::DuplicateKey(raw_key).into()),
             }
             _ => match self.unknown.entry(raw_key) {
                 btree_map::Entry::Vacant(empty_key) => {empty_key.insert(raw_value);},

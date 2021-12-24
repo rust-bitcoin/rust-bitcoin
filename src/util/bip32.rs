@@ -38,14 +38,10 @@ impl_array_newtype!(ChainCode, u8, 32);
 impl_bytes_newtype!(ChainCode, 32);
 
 /// A fingerprint
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct Fingerprint([u8; 4]);
 impl_array_newtype!(Fingerprint, u8, 4);
 impl_bytes_newtype!(Fingerprint, 4);
-
-impl Default for Fingerprint {
-    fn default() -> Fingerprint { Fingerprint([0; 4]) }
-}
 
 /// Extended private key
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -105,7 +101,7 @@ impl ChildNumber {
     /// [`Normal`]: #variant.Normal
     pub fn from_normal_idx(index: u32) -> Result<Self, Error> {
         if index & (1 << 31) == 0 {
-            Ok(ChildNumber::Normal { index: index })
+            Ok(ChildNumber::Normal { index })
         } else {
             Err(Error::InvalidChildNumber(index))
         }
@@ -117,7 +113,7 @@ impl ChildNumber {
     /// [`Hardened`]: #variant.Hardened
     pub fn from_hardened_idx(index: u32) -> Result<Self, Error> {
         if index & (1 << 31) == 0 {
-            Ok(ChildNumber::Hardened { index: index })
+            Ok(ChildNumber::Hardened { index })
         } else {
             Err(Error::InvalidChildNumber(index))
         }
@@ -341,6 +337,11 @@ impl DerivationPath {
         self.0.len()
     }
 
+    /// Returns `true` if the derivation path is empty
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
     /// Returns derivation path for a master key (i.e. empty derivation path)
     pub fn master() -> DerivationPath {
         DerivationPath(vec![])
@@ -369,17 +370,17 @@ impl DerivationPath {
     /// Get an [Iterator] over the children of this [DerivationPath]
     /// starting with the given [ChildNumber].
     pub fn children_from(&self, cn: ChildNumber) -> DerivationPathIterator {
-        DerivationPathIterator::start_from(&self, cn)
+        DerivationPathIterator::start_from(self, cn)
     }
 
     /// Get an [Iterator] over the unhardened children of this [DerivationPath].
     pub fn normal_children(&self) -> DerivationPathIterator {
-        DerivationPathIterator::start_from(&self, ChildNumber::Normal{ index: 0 })
+        DerivationPathIterator::start_from(self, ChildNumber::Normal{ index: 0 })
     }
 
     /// Get an [Iterator] over the hardened children of this [DerivationPath].
     pub fn hardened_children(&self) -> DerivationPathIterator {
-        DerivationPathIterator::start_from(&self, ChildNumber::Hardened{ index: 0 })
+        DerivationPathIterator::start_from(self, ChildNumber::Hardened{ index: 0 })
     }
 
     /// Concatenate `self` with `path` and return the resulting new path.
@@ -501,7 +502,7 @@ impl ExtendedPrivKey {
         let hmac_result: Hmac<sha512::Hash> = Hmac::from_engine(hmac_engine);
 
         Ok(ExtendedPrivKey {
-            network: network,
+            network,
             depth: 0,
             parent_fingerprint: Default::default(),
             child_number: ChildNumber::from_normal_idx(0)?,
@@ -572,7 +573,7 @@ impl ExtendedPrivKey {
         };
 
         Ok(ExtendedPrivKey {
-            network: network,
+            network,
             depth: data[4],
             parent_fingerprint: Fingerprint::from(&data[5..9]),
             child_number: endian::slice_to_u32_be(&data[9..13]).into(),
@@ -672,7 +673,7 @@ impl ExtendedPubKey {
             parent_fingerprint: self.fingerprint(),
             child_number: i,
             public_key: pk,
-            chain_code: chain_code
+            chain_code,
         })
     }
 
@@ -744,7 +745,7 @@ impl FromStr for ExtendedPrivKey {
             return Err(base58::Error::InvalidLength(data.len()).into());
         }
 
-        Ok(ExtendedPrivKey::decode(&data[..])?)
+        ExtendedPrivKey::decode(&data)
     }
 }
 
@@ -764,7 +765,7 @@ impl FromStr for ExtendedPubKey {
             return Err(base58::Error::InvalidLength(data.len()).into());
         }
 
-        Ok(ExtendedPubKey::decode(&data[..])?)
+        ExtendedPubKey::decode(&data)
     }
 }
 

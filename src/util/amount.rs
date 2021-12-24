@@ -325,7 +325,7 @@ impl Amount {
             return Err(ParseAmountError::InvalidFormat);
         }
 
-        Ok(Amount::from_str_in(amt_str, denom_str.parse()?)?)
+        Amount::from_str_in(amt_str, denom_str.parse()?)
     }
 
     /// Express this [Amount] as a floating-point value in the given denomination.
@@ -612,7 +612,7 @@ impl SignedAmount {
             return Err(ParseAmountError::InvalidFormat);
         }
 
-        Ok(SignedAmount::from_str_in(amt_str, denom_str.parse()?)?)
+        SignedAmount::from_str_in(amt_str, denom_str.parse()?)
     }
 
     /// Express this [SignedAmount] as a floating-point value in the given denomination.

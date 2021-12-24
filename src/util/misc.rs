@@ -103,8 +103,8 @@ mod message_signing {
         /// Create a new [MessageSignature].
         pub fn new(signature: RecoverableSignature, compressed: bool) -> MessageSignature {
             MessageSignature {
-                signature: signature,
-                compressed: compressed,
+                signature,
+                compressed,
             }
         }
 
@@ -162,7 +162,7 @@ mod message_signing {
             address: &Address,
             msg_hash: sha256d::Hash
         ) -> Result<bool, secp256k1::Error> {
-            let pubkey = self.recover_pubkey(&secp_ctx, msg_hash)?;
+            let pubkey = self.recover_pubkey(secp_ctx, msg_hash)?;
             Ok(match address.address_type() {
                 Some(AddressType::P2pkh) => {
                     *address == Address::p2pkh(&pubkey, address.network)

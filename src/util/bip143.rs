@@ -80,9 +80,9 @@ impl SighashComponents {
         SighashComponents {
             tx_version: tx.version,
             tx_locktime: tx.lock_time,
-            hash_prevouts: hash_prevouts,
-            hash_sequence: hash_sequence,
-            hash_outputs: hash_outputs,
+            hash_prevouts,
+            hash_sequence,
+            hash_outputs,
         }
     }
 
@@ -134,7 +134,7 @@ impl<R: Deref<Target=Transaction>> SigHashCache<R> {
         sighash_type: EcdsaSigHashType,
     ) -> Result<(), encode::Error> {
         self.cache
-            .segwit_encode_signing_data_to(writer, input_index, script_code, value, sighash_type.into())
+            .segwit_encode_signing_data_to(writer, input_index, script_code, value, sighash_type)
             .expect("input_index greater than tx input len");
         Ok(())
     }

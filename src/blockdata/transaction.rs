@@ -56,8 +56,8 @@ impl OutPoint {
     #[inline]
     pub fn new(txid: Txid, vout: u32) -> OutPoint {
         OutPoint {
-            txid: txid,
-            vout: vout,
+            txid,
+            vout,
         }
     }
 
@@ -153,7 +153,7 @@ fn parse_vout(s: &str) -> Result<u32, ParseOutPointError> {
             return Err(ParseOutPointError::VoutNotCanonical);
         }
     }
-    Ok(s.parse().map_err(ParseOutPointError::Vout)?)
+    s.parse().map_err(ParseOutPointError::Vout)
 }
 
 impl ::core::str::FromStr for OutPoint {
@@ -634,9 +634,9 @@ impl Decodable for Transaction {
                         Err(encode::Error::ParseFailed("witness flag set but no witnesses present"))
                     } else {
                         Ok(Transaction {
-                            version: version,
-                            input: input,
-                            output: output,
+                            version,
+                            input,
+                            output,
                             lock_time: Decodable::consensus_decode(d)?,
                         })
                     }
@@ -649,8 +649,8 @@ impl Decodable for Transaction {
         // non-segwit
         } else {
             Ok(Transaction {
-                version: version,
-                input: input,
+                version,
+                input,
                 output: Decodable::consensus_decode(&mut d)?,
                 lock_time: Decodable::consensus_decode(d)?,
             })
@@ -715,17 +715,17 @@ impl fmt::Display for EcdsaSigHashType {
 }
 
 impl str::FromStr for EcdsaSigHashType {
-    type Err = String;
+    type Err = SigHashTypeParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.as_ref() {
+        match s {
             "SIGHASH_ALL" => Ok(EcdsaSigHashType::All),
             "SIGHASH_NONE" => Ok(EcdsaSigHashType::None),
             "SIGHASH_SINGLE" => Ok(EcdsaSigHashType::Single),
             "SIGHASH_ALL|SIGHASH_ANYONECANPAY" => Ok(EcdsaSigHashType::AllPlusAnyoneCanPay),
             "SIGHASH_NONE|SIGHASH_ANYONECANPAY" => Ok(EcdsaSigHashType::NonePlusAnyoneCanPay),
             "SIGHASH_SINGLE|SIGHASH_ANYONECANPAY" => Ok(EcdsaSigHashType::SinglePlusAnyoneCanPay),
-            _ => Err("can't recognize SIGHASH string".to_string())
+            _ => Err(SigHashTypeParseError { string: s.to_owned() }),
         }
     }
 }
@@ -797,6 +797,24 @@ impl From<EcdsaSigHashType> for u32 {
         t.as_u32()
     }
 }
+
+/// Error returned when parsing `SigHashType` fails.
+///
+/// This is currently returned for unrecognized sighash strings.
+#[derive(Debug, Clone)]
+pub struct SigHashTypeParseError {
+    string: String,
+}
+
+impl fmt::Display for SigHashTypeParseError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "can't recognize SIGHASH string '{}'", self.string)
+    }
+}
+
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+#[cfg(feature = "std")]
+impl ::std::error::Error for SigHashTypeParseError {}
 
 #[cfg(test)]
 mod tests {
@@ -1116,7 +1134,7 @@ mod tests {
             "SigHash_NONE",
         ];
         for s in sht_mistakes {
-            assert_eq!(EcdsaSigHashType::from_str(s).unwrap_err(), "can't recognize SIGHASH string");
+            assert_eq!(EcdsaSigHashType::from_str(s).unwrap_err().to_string(), format!("can't recognize SIGHASH string '{}'", s));
         }
     }
 

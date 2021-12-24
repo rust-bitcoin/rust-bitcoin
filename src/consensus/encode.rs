@@ -461,7 +461,7 @@ impl Encodable for String {
     fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, io::Error> {
         let b = self.as_bytes();
         let vi_len = VarInt(b.len() as u64).consensus_encode(&mut s)?;
-        s.emit_slice(&b)?;
+        s.emit_slice(b)?;
         Ok(vi_len + b.len())
     }
 }
@@ -480,7 +480,7 @@ impl Encodable for Cow<'static, str> {
     fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, io::Error> {
         let b = self.as_bytes();
         let vi_len = VarInt(b.len() as u64).consensus_encode(&mut s)?;
-        s.emit_slice(&b)?;
+        s.emit_slice(b)?;
         Ok(vi_len + b.len())
     }
 }
@@ -601,7 +601,7 @@ impl_vec!(u64);
 
 pub(crate) fn consensus_encode_with_size<S: io::Write>(data: &[u8], mut s: S) -> Result<usize, io::Error> {
     let vi_len = VarInt(data.len() as u64).consensus_encode(&mut s)?;
-    s.emit_slice(&data)?;
+    s.emit_slice(data)?;
     Ok(vi_len + data.len())
 }
 

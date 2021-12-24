@@ -236,7 +236,7 @@ impl FromStr for WitnessVersion {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let version = s.parse().map_err(|err| Error::UnparsableWitnessVersion(err))?;
+        let version = s.parse().map_err(Error::UnparsableWitnessVersion)?;
         WitnessVersion::from_num(version)
     }
 }
@@ -282,7 +282,7 @@ impl WitnessVersion {
             14 => WitnessVersion::V14,
             15 => WitnessVersion::V15,
             16 => WitnessVersion::V16,
-            wrong => Err(Error::InvalidWitnessVersion(wrong))?,
+            wrong => return Err(Error::InvalidWitnessVersion(wrong)),
         })
     }
 
@@ -315,7 +315,7 @@ impl WitnessVersion {
     pub fn from_instruction(instruction: Instruction) -> Result<Self, Error> {
         match instruction {
             Instruction::Op(op) => WitnessVersion::from_opcode(op),
-            Instruction::PushBytes(bytes) if bytes.len() == 0 => Ok(WitnessVersion::V0),
+            Instruction::PushBytes(bytes) if bytes.is_empty() => Ok(WitnessVersion::V0),
             Instruction::PushBytes(_) => Err(Error::MalformedWitnessVersion),
         }
     }
@@ -545,7 +545,7 @@ impl Address {
     #[inline]
     pub fn p2pkh(pk: &ecdsa::PublicKey, network: Network) -> Address {
         Address {
-            network: network,
+            network,
             payload: Payload::p2pkh(pk),
         }
     }
@@ -557,7 +557,7 @@ impl Address {
     #[inline]
     pub fn p2sh(script: &script::Script, network: Network) -> Result<Address, Error> {
         Ok(Address {
-            network: network,
+            network,
             payload: Payload::p2sh(script)?,
         })
     }
@@ -570,7 +570,7 @@ impl Address {
     /// Will only return an error if an uncompressed public key is provided.
     pub fn p2wpkh(pk: &ecdsa::PublicKey, network: Network) -> Result<Address, Error> {
         Ok(Address {
-            network: network,
+            network,
             payload: Payload::p2wpkh(pk)?,
         })
     }
@@ -583,7 +583,7 @@ impl Address {
     /// Will only return an Error if an uncompressed public key is provided.
     pub fn p2shwpkh(pk: &ecdsa::PublicKey, network: Network) -> Result<Address, Error> {
         Ok(Address {
-            network: network,
+            network,
             payload: Payload::p2shwpkh(pk)?,
         })
     }
@@ -591,7 +591,7 @@ impl Address {
     /// Creates a witness pay to script hash address.
     pub fn p2wsh(script: &script::Script, network: Network) -> Address {
         Address {
-            network: network,
+            network,
             payload: Payload::p2wsh(script),
         }
     }
@@ -601,7 +601,7 @@ impl Address {
     /// This is a segwit address type that looks familiar (as p2sh) to legacy clients.
     pub fn p2shwsh(script: &script::Script, network: Network) -> Address {
         Address {
-            network: network,
+            network,
             payload: Payload::p2shwsh(script),
         }
     }
@@ -627,7 +627,7 @@ impl Address {
         network: Network
     ) -> Address {
         Address {
-            network: network,
+            network,
             payload: Payload::p2tr_tweaked(output_key),
         }
     }
@@ -670,7 +670,7 @@ impl Address {
     pub fn from_script(script: &script::Script, network: Network) -> Option<Address> {
         Some(Address {
             payload: Payload::from_script(script)?,
-            network: network,
+            network,
         })
     }
 
@@ -821,10 +821,10 @@ impl FromStr for Address {
 
             return Ok(Address {
                 payload: Payload::WitnessProgram {
-                    version: version,
-                    program: program,
+                    version,
+                    program,
                 },
-                network: network,
+                network,
             });
         }
 
@@ -858,15 +858,15 @@ impl FromStr for Address {
         };
 
         Ok(Address {
-            network: network,
-            payload: payload,
+            network,
+            payload,
         })
     }
 }
 
 impl fmt::Debug for Address {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_string())
+        fmt::Display::fmt(self, f)
     }
 }
 

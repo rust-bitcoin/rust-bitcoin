@@ -183,7 +183,7 @@ pub fn compute_tweak(pk: &PublicKey, contract: &[u8]) -> Hmac<sha256::Hash> {
 /// Tweak a secret key using some arbitrary data (calls `compute_tweak` internally)
 pub fn tweak_secret_key<C: secp256k1::Signing>(secp: &Secp256k1<C>, key: &PrivateKey, contract: &[u8]) -> Result<PrivateKey, Error> {
     // Compute public key
-    let pk = PublicKey::from_private_key(secp, &key);
+    let pk = PublicKey::from_private_key(secp, key);
     // Compute tweak
     let hmac_sk = compute_tweak(&pk, contract);
     // Execute the tweak
@@ -203,7 +203,7 @@ pub fn create_address<C: secp256k1::Verification>(secp: &Secp256k1<C>,
     let keys = tweak_keys(secp, keys, contract);
     let script = template.to_script(&keys)?;
     Ok(address::Address {
-        network: network,
+        network,
         payload: address::Payload::ScriptHash(
             ScriptHash::hash(&script[..])
         )

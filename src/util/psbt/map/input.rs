@@ -314,13 +314,13 @@ where
                 return Err(psbt::Error::InvalidPreimageHashPair {
                     preimage: val.into_boxed_slice(),
                     hash: Box::from(key_val.borrow()),
-                    hash_type: hash_type,
+                    hash_type,
                 }
                 .into());
             }
             empty_key.insert(val);
             Ok(())
         }
-        btree_map::Entry::Occupied(_) => return Err(psbt::Error::DuplicateKey(raw_key).into()),
+        btree_map::Entry::Occupied(_) => Err(psbt::Error::DuplicateKey(raw_key).into()),
     }
 }

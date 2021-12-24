@@ -250,7 +250,7 @@ impl GCSFilterReader {
         let nm = n_elements.0 * self.m;
         let mut mapped = query.map(|e| map_to_range(self.filter.hash(e), nm)).collect::<Vec<_>>();
         // sort
-        mapped.sort();
+        mapped.sort_unstable();
         if mapped.is_empty() {
             return Ok(true);
         }
@@ -290,7 +290,7 @@ impl GCSFilterReader {
         let nm = n_elements.0 * self.m;
         let mut mapped = query.map(|e| map_to_range(self.filter.hash(e), nm)).collect::<Vec<_>>();
         // sort
-        mapped.sort();
+        mapped.sort_unstable();
         mapped.dedup();
         if mapped.is_empty() {
             return Ok(true);
@@ -361,7 +361,7 @@ impl<'a> GCSFilterWriter<'a> {
         // map hashes to [0, n_elements * M)
         let mut mapped: Vec<_> = self.elements.iter()
             .map(|e| map_to_range(self.filter.hash(e.as_slice()), nm)).collect();
-        mapped.sort();
+        mapped.sort_unstable();
 
         // write number of elements as varint
         let mut encoder = Vec::new();
@@ -435,7 +435,7 @@ impl<'a> BitStreamReader<'a> {
     pub fn new(reader: &'a mut dyn io::Read) -> BitStreamReader {
         BitStreamReader {
             buffer: [0u8],
-            reader: reader,
+            reader,
             offset: 8,
         }
     }
@@ -473,7 +473,7 @@ impl<'a> BitStreamWriter<'a> {
     pub fn new(writer: &'a mut dyn io::Write) -> BitStreamWriter {
         BitStreamWriter {
             buffer: [0u8],
-            writer: writer,
+            writer,
             offset: 0,
         }
     }
