@@ -141,6 +141,8 @@ pub use util::schnorr::{self, SchnorrSig, SchnorrSigError};
 pub use util::ecdsa::PrivateKey;
 #[deprecated(since = "0.26.1", note = "Please use `ecdsa::PublicKey` instead")]
 pub use util::ecdsa::PublicKey;
+#[allow(deprecated)]
+pub use blockdata::transaction::SigHashType;
 
 #[cfg(feature = "std")]
 use std::io;
