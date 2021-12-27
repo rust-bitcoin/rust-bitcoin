@@ -30,7 +30,7 @@ no-std = ["hashbrown", "core2/alloc", "bitcoin_hashes/alloc", "secp256k1/alloc"]
 
 [package.metadata.docs.rs]
 features = [ "std", "secp-recovery", "base64", "rand", "use-serde", "bitcoinconsensus" ]
-rustc-args = ["--cfg", "docsrs"]
+rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
 bech32 = { version = "0.8.1", default-features = false }
