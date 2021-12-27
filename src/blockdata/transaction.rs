@@ -431,6 +431,13 @@ impl Transaction {
     }
 
     /// Gets the "vsize" of this transaction. Will be `ceil(weight / 4.0)`.
+    /// Note this implements the virtual size as per [`bip141`], which is different
+    /// to what is implemented in Bitcoin Core. The computation should be the same
+    /// for any remotely sane transaction, and a standardness-rule-correct version
+    /// is available in the [`policy`] module.
+    ///
+    /// [`bip141`]: https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki
+    /// [`policy`]: ../policy/mod.rs.html
     #[inline]
     pub fn get_vsize(&self) -> usize {
         let weight = self.get_weight();
