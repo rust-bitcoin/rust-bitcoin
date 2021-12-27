@@ -66,18 +66,59 @@ impl fmt::Display for Denomination {
 impl FromStr for Denomination {
     type Err = ParseAmountError;
 
+    /// Convert from a str to Denomination.
+    ///
+    /// Any combination of upper and/or lower case, excluding uppercase 'M' is considered valid.
+    /// - Singular: BTC, mBTC, uBTC
+    /// - Plural or singular: sat, satoshi, bit, msat
+    ///
+    /// Due to ambiguity between mega and milli we prohibit usage of leading capital 'M'.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "BTC" => Ok(Denomination::Bitcoin),
-            "mBTC" => Ok(Denomination::MilliBitcoin),
-            "uBTC" => Ok(Denomination::MicroBitcoin),
-            "bits" => Ok(Denomination::Bit),
-            "satoshi" => Ok(Denomination::Satoshi),
-            "sat" => Ok(Denomination::Satoshi),
-            "msat" => Ok(Denomination::MilliSatoshi),
-            d => Err(ParseAmountError::UnknownDenomination(d.to_owned())),
+        use self::ParseAmountError::*;
+
+        if s.starts_with('M') {
+            return Err(denomination_from_str(s).map_or_else(
+                || UnknownDenomination(s.to_owned()),
+                |_| PossiblyConfusingDenomination(s.to_owned())
+            ));
         }
+
+        denomination_from_str(s).ok_or_else(|| UnknownDenomination(s.to_owned()))
     }
+}
+
+fn denomination_from_str(mut s: &str) -> Option<Denomination> {
+    if s.eq_ignore_ascii_case("BTC") {
+        return Some(Denomination::Bitcoin);
+    }
+
+    if s.eq_ignore_ascii_case("mBTC") {
+        return Some(Denomination::MilliBitcoin);
+    }
+
+    if s.eq_ignore_ascii_case("uBTC") {
+        return Some(Denomination::MicroBitcoin);
+    }
+
+    if s.ends_with('s') || s.ends_with('S') {
+        s = &s[..(s.len() - 1)];
+    }
+
+    if s.eq_ignore_ascii_case("bit") {
+        return Some(Denomination::Bit);
+    }
+    if s.eq_ignore_ascii_case("satoshi") {
+        return Some(Denomination::Satoshi);
+    }
+    if s.eq_ignore_ascii_case("sat") {
+        return Some(Denomination::Satoshi);
+    }
+
+    if s.eq_ignore_ascii_case("msat") {
+        return Some(Denomination::MilliSatoshi);
+    }
+
+    None
 }
 
 /// An error during amount parsing.
@@ -97,6 +138,8 @@ pub enum ParseAmountError {
     InvalidCharacter(char),
     /// The denomination was unknown.
     UnknownDenomination(String),
+    /// The denomination has multiple possible interpretations.
+    PossiblyConfusingDenomination(String)
 }
 
 impl fmt::Display for ParseAmountError {
@@ -108,7 +151,10 @@ impl fmt::Display for ParseAmountError {
             ParseAmountError::InvalidFormat => f.write_str("invalid number format"),
             ParseAmountError::InputTooLarge => f.write_str("input string was too large"),
             ParseAmountError::InvalidCharacter(c) => write!(f, "invalid character in input: {}", c),
-            ParseAmountError::UnknownDenomination(ref d) => write!(f, "unknown denomination: {}",d),
+            ParseAmountError::UnknownDenomination(ref d) => write!(f, "unknown denomination: {}", d),
+            ParseAmountError::PossiblyConfusingDenomination(ref d) => {
+                write!(f, "the 'M' at the beginning of {} should technically mean 'Mega' but that denomination is uncommon and maybe 'milli' was intended", d)
+            }
         }
     }
 }
@@ -1643,4 +1689,27 @@ mod tests {
         let sum = amounts.into_iter().checked_sum();
         assert_eq!(Some(SignedAmount::from_sat(3364)), sum);
     }
+
+    #[test]
+    fn denomination_string_acceptable_forms() {
+        // Non-exhaustive list of valid forms.
+        let valid = vec!["BTC", "btc", "mBTC", "mbtc", "uBTC", "ubtc", "SATOSHI","Satoshi", "Satoshis", "satoshis", "SAT", "Sat", "sats", "bit", "bits"];
+        for denom in valid.iter() {
+            assert!(Denomination::from_str(denom).is_ok());
+        }
+    }
+
+    #[test]
+    fn disallow_confusing_forms() {
+        // Non-exhaustive list of confusing forms.
+        let confusing = vec!["Msat", "Msats", "MSAT", "MSATS", "MSat", "MSats", "MBTC", "Mbtc"];
+        for denom in confusing.iter() {
+            match  Denomination::from_str(denom) {
+                Ok(_) => panic!("from_str should error for {}", denom),
+                Err(ParseAmountError::PossiblyConfusingDenomination(_)) => {},
+                Err(e) => panic!("unexpected error: {}", e),
+            }
+        }
+    }
 }
+
