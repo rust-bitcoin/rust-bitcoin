@@ -94,10 +94,11 @@ pub enum Prevouts<'u> {
 const KEY_VERSION_0: u8 = 0u8;
 
 /// Information related to the script path spending
+///
+/// This can be hashed into a [`TapLeafHash`].
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub struct ScriptPath<'s> {
     script: &'s Script,
-    code_separator_pos: u32,
     leaf_version: LeafVersion,
 }
 
@@ -220,16 +221,30 @@ impl<'u> Prevouts<'u> {
 
 impl<'s> ScriptPath<'s> {
     /// Create a new ScriptPath structure
-    pub fn new(script: &'s Script, code_separator_pos: u32, leaf_version: LeafVersion) -> Self {
+    pub fn new(script: &'s Script, leaf_version: LeafVersion) -> Self {
         ScriptPath {
             script,
-            code_separator_pos,
             leaf_version,
         }
     }
-    /// Create a new ScriptPath structure using default values for `code_separator_pos` and `leaf_version`
+    /// Create a new ScriptPath structure using default leaf version value
     pub fn with_defaults(script: &'s Script) -> Self {
-        Self::new(script, 0xFFFFFFFFu32, LeafVersion::default())
+        Self::new(script, LeafVersion::default())
+    }
+    /// Compute the leaf hash
+    pub fn leaf_hash(&self) -> TapLeafHash {
+        let mut enc = TapLeafHash::engine();
+
+        self.leaf_version.as_u8().consensus_encode(&mut enc).expect("Writing to hash enging should never fail");
+        self.script.consensus_encode(&mut enc).expect("Writing to hash enging should never fail");
+
+        TapLeafHash::from_engine(enc)
+    }
+}
+
+impl<'s> From<ScriptPath<'s>> for TapLeafHash {
+    fn from(script_path: ScriptPath<'s>) -> TapLeafHash {
+        script_path.leaf_hash()
     }
 }
 
@@ -298,7 +313,7 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
         input_index: usize,
         prevouts: &Prevouts,
         annex: Option<Annex>,
-        script_path: Option<ScriptPath>,
+        leaf_hash_code_separator: Option<(TapLeafHash, u32)>,
         sighash_type: SchnorrSigHashType,
     ) -> Result<(), Error> {
         prevouts.check_all(&self.tx)?;
@@ -350,7 +365,7 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
         if annex.is_some() {
             spend_type |= 1u8;
         }
-        if script_path.is_some() {
+        if leaf_hash_code_separator.is_some() {
             spend_type |= 2u8;
         }
         spend_type.consensus_encode(&mut writer)?;
@@ -412,17 +427,7 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
         //         ss += TaggedHash("TapLeaf", bytes([leaf_ver]) + ser_string(script))
         //         ss += bytes([0])
         //         ss += struct.pack("<i", codeseparator_pos)
-        if let Some(ScriptPath {
-            script,
-            leaf_version,
-            code_separator_pos,
-        }) = script_path
-        {
-            let mut enc = TapLeafHash::engine();
-            leaf_version.as_u8().consensus_encode(&mut enc)?;
-            script.consensus_encode(&mut enc)?;
-            let hash = TapLeafHash::from_engine(enc);
-
+        if let Some((hash, code_separator_pos)) = leaf_hash_code_separator {
             hash.into_inner().consensus_encode(&mut writer)?;
             KEY_VERSION_0.consensus_encode(&mut writer)?;
             code_separator_pos.consensus_encode(&mut writer)?;
@@ -437,7 +442,7 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
         input_index: usize,
         prevouts: &Prevouts,
         annex: Option<Annex>,
-        script_path: Option<ScriptPath>,
+        leaf_hash_code_separator: Option<(TapLeafHash, u32)>,
         sighash_type: SchnorrSigHashType,
     ) -> Result<TapSighashHash, Error> {
         let mut enc = TapSighashHash::engine();
@@ -446,7 +451,49 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
             input_index,
             prevouts,
             annex,
-            script_path,
+            leaf_hash_code_separator,
+            sighash_type,
+        )?;
+        Ok(TapSighashHash::from_engine(enc))
+    }
+
+    /// Compute the BIP341 sighash for a key spend
+    pub fn taproot_key_spend_signature_hash(
+        &mut self,
+        input_index: usize,
+        prevouts: &Prevouts,
+        sighash_type: SchnorrSigHashType,
+    ) -> Result<TapSighashHash, Error> {
+        let mut enc = TapSighashHash::engine();
+        self.taproot_encode_signing_data_to(
+            &mut enc,
+            input_index,
+            prevouts,
+            None,
+            None,
+            sighash_type,
+        )?;
+        Ok(TapSighashHash::from_engine(enc))
+    }
+
+    /// Compute the BIP341 sighash for a script spend
+    ///
+    /// Assumes the default `OP_CODESEPARATOR` position of `0xFFFFFFFF`. Custom values can be
+    /// provided through the more fine-grained API of [`SigHashCache::taproot_encode_signing_data_to`].
+    pub fn taproot_script_spend_signature_hash<S: Into<TapLeafHash>>(
+        &mut self,
+        input_index: usize,
+        prevouts: &Prevouts,
+        leaf_hash: S,
+        sighash_type: SchnorrSigHashType,
+    ) -> Result<TapSighashHash, Error> {
+        let mut enc = TapSighashHash::engine();
+        self.taproot_encode_signing_data_to(
+            &mut enc,
+            input_index,
+            prevouts,
+            None,
+            Some((leaf_hash.into(), 0xFFFFFFFF)),
             sighash_type,
         )?;
         Ok(TapSighashHash::from_engine(enc))
@@ -703,7 +750,7 @@ mod tests {
     use consensus::deserialize;
     use hashes::hex::FromHex;
     use hashes::{Hash, HashEngine};
-    use util::sighash::{Annex, Error, Prevouts, ScriptPath, SigHashCache};
+    use util::sighash::{Annex, Error, Prevouts, ScriptPath, SigHashCache, TapLeafHash};
     use util::taproot::TapSighashHash;
     use {Script, Transaction, TxIn, TxOut};
 
@@ -728,7 +775,7 @@ mod tests {
             "01365724000000000023542156b39dab4f8f3508e0432cfb41fab110170acaa2d4c42539cb90a4dc7c093bc500",
             0,
             "33ca0ebfb4a945eeee9569fc0f5040221275f88690b7f8592ada88ce3bdf6703",
-            SchnorrSigHashType::Default, None,None,
+            SchnorrSigHashType::Default, None, None, None
         );
 
         test_taproot_sighash(
@@ -736,7 +783,7 @@ mod tests {
             "02591f220000000000225120f25ad35583ea31998d968871d7de1abd2a52f6fe4178b54ea158274806ff4ece48fb310000000000225120f25ad35583ea31998d968871d7de1abd2a52f6fe4178b54ea158274806ff4ece",
             1,
             "626ab955d58c9a8a600a0c580549d06dc7da4e802eb2a531f62a588e430967a8",
-            SchnorrSigHashType::All, None,None,
+            SchnorrSigHashType::All, None, None, None
         );
 
         test_taproot_sighash(
@@ -744,7 +791,7 @@ mod tests {
             "01c4811000000000002251201bf9297d0a2968ae6693aadd0fa514717afefd218087a239afb7418e2d22e65c",
             0,
             "dfa9437f9c9a1d1f9af271f79f2f5482f287cdb0d2e03fa92c8a9b216cc6061c",
-            SchnorrSigHashType::AllPlusAnyoneCanPay, None,None,
+            SchnorrSigHashType::AllPlusAnyoneCanPay, None, None, None
         );
 
         test_taproot_sighash(
@@ -752,7 +799,7 @@ mod tests {
             "0144c84d0000000000225120e3f2107989c88e67296ab2faca930efa2e3a5bd3ff0904835a11c9e807458621",
             0,
             "3129de36a5d05fff97ffca31eb75fcccbbbc27b3147a7a36a9e4b45d8b625067",
-            SchnorrSigHashType::None, None,None,
+            SchnorrSigHashType::None, None, None, None
         );
 
         test_taproot_sighash(
@@ -760,7 +807,7 @@ mod tests {
             "013fed110000000000225120eb536ae8c33580290630fc495046e998086a64f8f33b93b07967d9029b265c55",
             0,
             "2441e8b0e063a2083ee790f14f2045022f07258ddde5ee01de543c9e789d80ae",
-            SchnorrSigHashType::NonePlusAnyoneCanPay, None,None,
+            SchnorrSigHashType::NonePlusAnyoneCanPay, None, None, None
         );
 
         test_taproot_sighash(
@@ -768,7 +815,7 @@ mod tests {
             "01efa558000000000022512007071ea3dc7e331b0687d0193d1e6d6ed10e645ef36f10ef8831d5e522ac9e80",
             0,
             "30239345177cadd0e3ea413d49803580abb6cb27971b481b7788a78d35117a88",
-            SchnorrSigHashType::Single, None,None,
+            SchnorrSigHashType::Single, None, None, None
         );
 
         test_taproot_sighash(
@@ -776,7 +823,7 @@ mod tests {
             "0107af4e00000000002251202c36d243dfc06cb56a248e62df27ecba7417307511a81ae61aa41c597a929c69",
             0,
             "bf9c83f26c6dd16449e4921f813f551c4218e86f2ec906ca8611175b41b566df",
-            SchnorrSigHashType::SinglePlusAnyoneCanPay, None,None,
+            SchnorrSigHashType::SinglePlusAnyoneCanPay, None, None, None
         );
     }
 
@@ -789,6 +836,7 @@ mod tests {
             "3b003000add359a364a156e73e02846782a59d0d95ca8c4638aaad99f2ef915c",
             SchnorrSigHashType::SinglePlusAnyoneCanPay,
             Some("507b979802e62d397acb29f56743a791894b99372872fc5af06a4f6e8d242d0615cda53062bb20e6ec79756fe39183f0c128adfe85559a8fa042b042c018aa8010143799e44f0893c40e1e"),
+            None,
             None,
         );
     }
@@ -803,6 +851,21 @@ mod tests {
             SchnorrSigHashType::All,
             None,
             Some("20cc4e1107aea1d170c5ff5b6817e1303010049724fb3caa7941792ea9d29b3e2bacab"),
+            None,
+        );
+    }
+
+    #[test]
+    fn test_sighashes_with_script_path_raw_hash() {
+        test_taproot_sighash(
+            "020000000189fc651483f9296b906455dd939813bf086b1bbe7c77635e157c8e14ae29062195010000004445b5c7044561320000000000160014331414dbdada7fb578f700f38fb69995fc9b5ab958020000000000001976a914268db0a8104cc6d8afd91233cc8b3d1ace8ac3ef88ac580200000000000017a914ec00dcb368d6a693e11986d265f659d2f59e8be2875802000000000000160014c715799a49a0bae3956df9c17cb4440a673ac0df6f010000",
+            "011bec34000000000022512028055142ea437db73382e991861446040b61dd2185c4891d7daf6893d79f7182",
+            0,
+            "d66de5274a60400c7b08c86ba6b7f198f40660079edf53aca89d2a9501317f2e",
+            SchnorrSigHashType::All,
+            None,
+            None,
+            Some("15a2530514e399f8b5cf0b3d3112cf5b289eaa3e308ba2071b58392fdc6da68a"),
         );
     }
 
@@ -816,6 +879,7 @@ mod tests {
             SchnorrSigHashType::All,
             Some("50a6272b470e1460e3332ade7bb14b81671c564fb6245761bd5bd531394b28860e0b3808ab229fb51791fb6ae6fa82d915b2efb8f6df83ae1f5ab3db13e30928875e2a22b749d89358de481f19286cd4caa792ce27f9559082d227a731c5486882cc707f83da361c51b7aadd9a0cf68fe7480c410fa137b454482d9a1ebf0f96d760b4d61426fc109c6e8e99a508372c45caa7b000a41f8251305da3f206c1849985ba03f3d9592832b4053afbd23ab25d0465df0bc25a36c223aacf8e04ec736a418c72dc319e4da3e972e349713ca600965e7c665f2090d5a70e241ac164115a1f5639f28b1773327715ca307ace64a2de7f0e3df70a2ffee3857689f909c0dad46d8a20fa373a4cc6eed6d4c9806bf146f0d76baae1"),
             Some("7520ab9160dd8299dc1367659be3e8f66781fe440d52940c7f8d314a89b9f2698d406ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6ead6eadac"),
+            None,
         );
     }
 
@@ -888,6 +952,7 @@ mod tests {
         sighash_type: SchnorrSigHashType,
         annex_hex: Option<&str>,
         script_hex: Option<&str>,
+        script_leaf_hash: Option<&str>,
     ) {
         let tx_bytes = Vec::from_hex(tx_hex).unwrap();
         let tx: Transaction = deserialize(&tx_bytes).unwrap();
@@ -902,14 +967,18 @@ mod tests {
             None => None,
         };
 
-        let script_inner;
-        let script_path = match script_hex {
-            Some(script_hex) => {
-                script_inner = Script::from_hex(script_hex).unwrap();
-                Some(ScriptPath::with_defaults(&script_inner))
+        let leaf_hash =  match (script_hex, script_leaf_hash) {
+            (Some(script_hex), _) => {
+                let script_inner = Script::from_hex(script_hex).unwrap();
+                Some(ScriptPath::with_defaults(&script_inner).leaf_hash())
             }
-            None => None,
+            (_, Some(script_leaf_hash)) => {
+                Some(TapLeafHash::from_hex(script_leaf_hash).unwrap())
+            }
+            _ => None,
         };
+        // All our tests use the default `0xFFFFFFFF` codeseparator value
+        let leaf_hash = leaf_hash.map(|lh| (lh, 0xFFFFFFFF));
 
         let prevouts = if sighash_type.split_anyonecanpay_flag().1 && tx_bytes[0] % 2 == 0 {
             // for anyonecanpay the `Prevouts::All` variant is good anyway, but sometimes we want to
@@ -922,7 +991,7 @@ mod tests {
         let mut sig_hash_cache = SigHashCache::new(&tx);
 
         let hash = sig_hash_cache
-            .taproot_signature_hash(input_index, &prevouts, annex, script_path, sighash_type)
+            .taproot_signature_hash(input_index, &prevouts, annex, leaf_hash, sighash_type)
             .unwrap();
         let expected = Vec::from_hex(expected_hash).unwrap();
         assert_eq!(expected, hash.into_inner());
