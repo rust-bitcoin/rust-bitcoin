@@ -29,6 +29,7 @@ use blockdata::opcodes;
 use blockdata::script;
 use blockdata::transaction::{OutPoint, Transaction, TxOut, TxIn};
 use blockdata::block::{Block, BlockHeader};
+use blockdata::witness::Witness;
 use network::constants::Network;
 use util::uint::Uint256;
 
@@ -93,7 +94,7 @@ fn bitcoin_genesis_tx() -> Transaction {
         previous_output: OutPoint::null(),
         script_sig: in_script,
         sequence: MAX_SEQUENCE,
-        witness: vec![],
+        witness: Witness::default(),
     });
 
     // Outputs
