@@ -1131,5 +1131,42 @@ mod tests {
         assert_eq!("42", &format!("{}", ChildNumber::from_normal_idx(42).unwrap()));
         assert_eq!("000042", &format!("{:06}", ChildNumber::from_normal_idx(42).unwrap()));
     }
+
+    #[test]
+    #[should_panic(expected = "Secp256k1(InvalidSecretKey)")]
+    fn schnorr_broken_privkey_zeros() {
+        /* this is how we generate key:
+        let mut sk = secp256k1::key::ONE_KEY;
+
+        let zeros = [0u8; 32];
+        unsafe {
+            sk.as_mut_ptr().copy_from(zeros.as_ptr(), 32);
+        }
+
+        let xpriv = ExtendedPrivKey {
+            network: Network::Bitcoin,
+            depth: 0,
+            parent_fingerprint: Default::default(),
+            child_number: ChildNumber::Normal { index: 0 },
+            private_key: sk,
+            chain_code: ChainCode::from(&[0u8; 32][..])
+        };
+
+        println!("{}", xpriv);
+         */
+
+        // Xpriv having secret key set to all zeros
+        let xpriv_str = "xprv9s21ZrQH143K24Mfq5zL5MhWK9hUhhGbd45hLXo2Pq2oqzMMo63oStZzF93Y5wvzdUayhgkkFoicQZcP3y52uPPxFnfoLZB21Teqt1VvEHx";
+        ExtendedPrivKey::from_str(xpriv_str).unwrap();
+    }
+
+
+    #[test]
+    #[should_panic(expected = "Secp256k1(InvalidSecretKey)")]
+    fn schnorr_broken_privkey_ffs() {
+        // Xpriv having secret key set to all 0xFF's
+        let xpriv_str = "xprv9s21ZrQH143K24Mfq5zL5MhWK9hUhhGbd45hLXo2Pq2oqzMMo63oStZzFAzHGBP2UuGCqWLTAPLcMtD9y5gkZ6Eq3Rjuahrv17fENZ3QzxW";
+        ExtendedPrivKey::from_str(xpriv_str).unwrap();
+    }
 }
 
