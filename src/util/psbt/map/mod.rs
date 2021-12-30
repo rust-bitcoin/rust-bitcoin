@@ -55,3 +55,4 @@ mod output;
 
 pub use self::input::Input;
 pub use self::output::Output;
+pub use self::output::TapTree;

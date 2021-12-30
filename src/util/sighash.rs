@@ -104,6 +104,7 @@ pub struct ScriptPath<'s> {
 /// Hashtype of an input's signature, encoded in the last byte of the signature
 /// Fixed values so they can be casted as integer types for encoding
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum SchnorrSigHashType {
     /// 0x0: Used when not explicitly specified, defaulting to [`SchnorrSigHashType::All`]
     Default = 0x00,

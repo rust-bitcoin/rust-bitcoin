@@ -68,6 +68,7 @@ macro_rules! sha256t_hash_newtype {
         #[doc = "The tag used for ["]
         #[doc = $sname]
         #[doc = "]"]
+        #[derive(Copy, Clone, PartialEq, Eq, Default, PartialOrd, Ord, Hash)]
         pub struct $tag;
 
         impl sha256t::Tag for $tag {
@@ -345,6 +346,7 @@ impl TaprootSpendInfo {
 /// branches in a DFS(Depth first search) walk to construct this tree.
 // Similar to Taproot Builder in bitcoin core
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct TaprootBuilder {
     // The following doc-comment is from bitcoin core, but modified for rust
     // The comment below describes the current state of the builder for a given tree.
@@ -418,6 +420,11 @@ impl TaprootBuilder {
         self.insert(node, depth)
     }
 
+    /// Check if the builder is a complete tree
+    pub fn is_complete(&self) -> bool {
+        self.branch.len() == 1 && self.branch[0].is_some()
+    }
+
     /// Create [`TaprootSpendInfo`] with the given internal key
     pub fn finalize<C: secp256k1::Verification>(
         mut self,
@@ -433,6 +440,10 @@ impl TaprootBuilder {
             .ok_or(TaprootBuilderError::EmptyTree)?
             .expect("Builder invariant: last element of the branch must be some");
         Ok(TaprootSpendInfo::from_node_info(secp, internal_key, node))
+    }
+
+    pub(crate) fn branch(&self) -> &[Option<NodeInfo>]{
+        &self.branch
     }
 
     // Helper function to insert a leaf at a depth
@@ -484,11 +495,12 @@ impl TaprootBuilder {
 
 // Internally used structure to represent the node information in taproot tree
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-struct NodeInfo {
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub(crate) struct NodeInfo {
     /// Merkle Hash for this node
-    hash: sha256::Hash,
+    pub(crate) hash: sha256::Hash,
     /// information about leaves inside this node
-    leaves: Vec<LeafInfo>,
+    pub(crate) leaves: Vec<LeafInfo>,
 }
 
 impl NodeInfo {
@@ -537,13 +549,14 @@ impl NodeInfo {
 
 // Internally used structure to store information about taproot leaf node
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-struct LeafInfo {
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub(crate) struct LeafInfo {
     // The underlying script
-    script: Script,
+    pub(crate) script: Script,
     // The leaf version
-    ver: LeafVersion,
+    pub(crate) ver: LeafVersion,
     // The merkle proof(hashing partners) to get this node
-    merkle_branch: TaprootMerkleBranch,
+    pub(crate) merkle_branch: TaprootMerkleBranch,
 }
 
 impl LeafInfo {
@@ -567,6 +580,7 @@ impl LeafInfo {
 // The type of hash is sha256::Hash because the vector might contain
 // both TapBranchHash and TapLeafHash
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct TaprootMerkleBranch(Vec<sha256::Hash>);
 
 impl TaprootMerkleBranch {
@@ -638,6 +652,7 @@ impl TaprootMerkleBranch {
 
 /// Control Block data structure used in Tapscript satisfaction
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ControlBlock {
     /// The tapleaf version,
     pub leaf_version: LeafVersion,
@@ -744,6 +759,7 @@ impl ControlBlock {
 
 /// The leaf version for tapleafs
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct LeafVersion(u8);
 
 impl Default for LeafVersion {
