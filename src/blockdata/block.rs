@@ -507,7 +507,7 @@ mod benches {
 
     #[bench]
     pub fn bench_block_serialize(bh: &mut Bencher) {
-        let raw_block = include_bytes!("../../test_data/testnet_block_000000000000045e0b1660b6445b5e5c5ab63c9a4f956be7e1e69be04fa4497b.raw");
+        let raw_block = include_bytes!("../../test_data/mainnet_block_000000000000000000000c835b2adcaedc20fdf6ee440009c249452c726dafae.raw");
 
         let block: Block = deserialize(&raw_block[..]).unwrap();
 
@@ -522,7 +522,7 @@ mod benches {
 
     #[bench]
     pub fn bench_block_serialize_logic(bh: &mut Bencher) {
-        let raw_block = include_bytes!("../../test_data/testnet_block_000000000000045e0b1660b6445b5e5c5ab63c9a4f956be7e1e69be04fa4497b.raw");
+        let raw_block = include_bytes!("../../test_data/mainnet_block_000000000000000000000c835b2adcaedc20fdf6ee440009c249452c726dafae.raw");
 
         let block: Block = deserialize(&raw_block[..]).unwrap();
 
@@ -534,7 +534,7 @@ mod benches {
 
     #[bench]
     pub fn bench_block_deserialize(bh: &mut Bencher) {
-        let raw_block = include_bytes!("../../test_data/testnet_block_000000000000045e0b1660b6445b5e5c5ab63c9a4f956be7e1e69be04fa4497b.raw");
+        let raw_block = include_bytes!("../../test_data/mainnet_block_000000000000000000000c835b2adcaedc20fdf6ee440009c249452c726dafae.raw");
 
         bh.iter(|| {
             let block: Block = deserialize(&raw_block[..]).unwrap();
