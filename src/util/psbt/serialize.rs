@@ -25,7 +25,7 @@ use io;
 use blockdata::script::Script;
 use blockdata::transaction::{EcdsaSigHashType, Transaction, TxOut};
 use consensus::encode::{self, serialize, Decodable, Encodable, deserialize_partial};
-use secp256k1::schnorrsig;
+use secp256k1::{self, XOnlyPublicKey};
 use util::bip32::{ChildNumber, Fingerprint, KeySource};
 use hashes::{hash160, ripemd160, sha256, sha256d, Hash};
 use util::ecdsa::PublicKey;
@@ -157,15 +157,15 @@ impl Deserialize for EcdsaSigHashType {
 }
 
 // Taproot related ser/deser
-impl Serialize for schnorr::PublicKey {
+impl Serialize for XOnlyPublicKey {
     fn serialize(&self) -> Vec<u8> {
-        schnorr::PublicKey::serialize(&self).to_vec()
+        XOnlyPublicKey::serialize(&self).to_vec()
     }
 }
 
-impl Deserialize for schnorr::PublicKey {
+impl Deserialize for XOnlyPublicKey {
     fn deserialize(bytes: &[u8]) -> Result<Self, encode::Error> {
-        schnorr::PublicKey::from_slice(bytes)
+        XOnlyPublicKey::from_slice(bytes)
             .map_err(|_| encode::Error::ParseFailed("Invalid xonly public key"))
     }
 }
@@ -182,12 +182,12 @@ impl Deserialize for schnorr::SchnorrSig {
             65 => {
                 let hash_ty = SchnorrSigHashType::from_u8(bytes[64])
                     .map_err(|_| encode::Error::ParseFailed("Invalid Sighash type"))?;
-                let sig = schnorrsig::Signature::from_slice(&bytes[..64])
+                let sig = secp256k1::schnorr::Signature::from_slice(&bytes[..64])
                     .map_err(|_| encode::Error::ParseFailed("Invalid Schnorr signature"))?;
                 Ok(schnorr::SchnorrSig{ sig, hash_ty })
             }
             64 => {
-                let sig = schnorrsig::Signature::from_slice(&bytes[..64])
+                let sig = secp256k1::schnorr::Signature::from_slice(&bytes[..64])
                     .map_err(|_| encode::Error::ParseFailed("Invalid Schnorr signature"))?;
                     Ok(schnorr::SchnorrSig{ sig, hash_ty: SchnorrSigHashType::Default })
             }
@@ -196,7 +196,7 @@ impl Deserialize for schnorr::SchnorrSig {
     }
 }
 
-impl Serialize for (schnorr::PublicKey, TapLeafHash) {
+impl Serialize for (XOnlyPublicKey, TapLeafHash) {
     fn serialize(&self) -> Vec<u8> {
         let ser_pk = self.0.serialize();
         let mut buf = Vec::with_capacity(ser_pk.len() + self.1.as_ref().len());
@@ -206,12 +206,12 @@ impl Serialize for (schnorr::PublicKey, TapLeafHash) {
     }
 }
 
-impl Deserialize for (schnorr::PublicKey, TapLeafHash) {
+impl Deserialize for (XOnlyPublicKey, TapLeafHash) {
     fn deserialize(bytes: &[u8]) -> Result<Self, encode::Error> {
         if bytes.len() < 32 {
             return Err(io::Error::from(io::ErrorKind::UnexpectedEof).into())
         }
-        let a: schnorr::PublicKey = Deserialize::deserialize(&bytes[..32])?;
+        let a: XOnlyPublicKey = Deserialize::deserialize(&bytes[..32])?;
         let b: TapLeafHash = Deserialize::deserialize(&bytes[32..])?;
         Ok((a, b))
     }
@@ -266,7 +266,7 @@ impl Serialize for (Vec<TapLeafHash>, KeySource) {
 
 impl Deserialize for (Vec<TapLeafHash>, KeySource) {
     fn deserialize(bytes: &[u8]) -> Result<Self, encode::Error> {
-        let (leafhash_vec, consumed) = deserialize_partial::<Vec::<TapLeafHash>>(&bytes)?;
+        let (leafhash_vec, consumed) = deserialize_partial::<Vec<TapLeafHash>>(&bytes)?;
         let key_source = KeySource::deserialize(&bytes[consumed..])?;
         Ok((leafhash_vec, key_source))
     }

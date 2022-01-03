@@ -879,7 +879,7 @@ mod tests {
     use blockdata::script::Script;
     use network::constants::Network::{Bitcoin, Testnet};
     use util::ecdsa::PublicKey;
-    use secp256k1::schnorrsig;
+    use secp256k1::XOnlyPublicKey;
 
     use super::*;
 
@@ -1266,7 +1266,7 @@ mod tests {
     #[test]
     fn p2tr_from_untweaked(){
         //Test case from BIP-086
-        let internal_key = schnorrsig::PublicKey::from_str("cc8a4bc64d897bddc5fbc2f670f7a8ba0b386779106cf1223c6fc5d7cd6fc115").unwrap();
+        let internal_key = XOnlyPublicKey::from_str("cc8a4bc64d897bddc5fbc2f670f7a8ba0b386779106cf1223c6fc5d7cd6fc115").unwrap();
         let secp = Secp256k1::verification_only();
         let address = Address::p2tr(&secp, internal_key, None, Network::Bitcoin);
         assert_eq!(address.to_string(), "bc1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxqkedrcr");

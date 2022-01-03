@@ -40,7 +40,7 @@ mod message_signing {
 
     use hashes::sha256d;
     use secp256k1;
-    use secp256k1::recovery::{RecoveryId, RecoverableSignature};
+    use secp256k1::ecdsa::{RecoveryId, RecoverableSignature};
 
     use util::ecdsa::PublicKey;
     use util::address::{Address, AddressType};
@@ -146,7 +146,7 @@ mod message_signing {
             msg_hash: sha256d::Hash
         ) -> Result<PublicKey, secp256k1::Error> {
             let msg = secp256k1::Message::from_slice(&msg_hash[..])?;
-            let pubkey = secp_ctx.recover(&msg, &self.signature)?;
+            let pubkey = secp_ctx.recover_ecdsa(&msg, &self.signature)?;
             Ok(PublicKey {
                 key: pubkey,
                 compressed: self.compressed,

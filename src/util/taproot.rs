@@ -175,7 +175,7 @@ pub struct TaprootSpendInfo {
     /// The Merkle root of the script tree (None if there are no scripts)
     merkle_root: Option<TapBranchHash>,
     /// The sign final output pubkey as per BIP 341
-    output_key_parity: bool,
+    output_key_parity: secp256k1::Parity,
     /// The tweaked output key
     output_key: TweakedPublicKey,
     /// Map from (script, leaf_version) to (sets of) [`TaprootMerkleBranch`].
@@ -288,7 +288,7 @@ impl TaprootSpendInfo {
     }
 
     /// Parity of the output key. See also [`TaprootSpendInfo::output_key`]
-    pub fn output_key_parity(&self) -> bool {
+    pub fn output_key_parity(&self) -> secp256k1::Parity {
         self.output_key_parity
     }
 
@@ -657,7 +657,7 @@ pub struct ControlBlock {
     /// The tapleaf version,
     pub leaf_version: LeafVersion,
     /// The parity of the output key (NOT THE INTERNAL KEY WHICH IS ALWAYS XONLY)
-    pub output_key_parity: bool,
+    pub output_key_parity: secp256k1::Parity,
     /// The internal key
     pub internal_key: UntweakedPublicKey,
     /// The merkle proof of a script associated with this leaf
@@ -679,7 +679,7 @@ impl ControlBlock {
         {
             return Err(TaprootError::InvalidControlBlockSize(sl.len()));
         }
-        let output_key_parity = (sl[0] & 1) == 1;
+        let output_key_parity = secp256k1::Parity::from((sl[0] & 1) as i32);
         let leaf_version = LeafVersion::from_u8(sl[0] & TAPROOT_LEAF_MASK)?;
         let internal_key = UntweakedPublicKey::from_slice(&sl[1..TAPROOT_CONTROL_BASE_SIZE])
             .map_err(TaprootError::InvalidInternalKey)?;
@@ -700,8 +700,7 @@ impl ControlBlock {
 
     /// Serialize to a writer. Returns the number of bytes written
     pub fn encode<Write: io::Write>(&self, mut writer: Write) -> io::Result<usize> {
-        let first_byte: u8 =
-            (if self.output_key_parity { 1 } else { 0 }) | self.leaf_version.as_u8();
+        let first_byte: u8 = i32::from(self.output_key_parity) as u8 | self.leaf_version.as_u8();
         let mut bytes_written = 0;
         bytes_written += writer.write(&[first_byte])?;
         bytes_written += writer.write(&self.internal_key.serialize())?;
@@ -909,9 +908,8 @@ mod test {
     use hashes::hex::{FromHex, ToHex};
     use hashes::sha256t::Tag;
     use hashes::{sha256, Hash, HashEngine};
-    use secp256k1::VerifyOnly;
+    use secp256k1::{VerifyOnly, XOnlyPublicKey};
     use core::str::FromStr;
-    use schnorr;
     extern crate serde_json;
 
     fn tag_engine(tag_name: &str) -> sha256::HashEngine {
@@ -996,7 +994,7 @@ mod test {
     }
 
     fn _verify_tap_commitments(secp: &Secp256k1<VerifyOnly>, out_spk_hex: &str, script_hex : &str, control_block_hex: &str) {
-        let out_pk = schnorr::PublicKey::from_str(&out_spk_hex[4..]).unwrap();
+        let out_pk = XOnlyPublicKey::from_str(&out_spk_hex[4..]).unwrap();
         let out_pk = TweakedPublicKey::dangerous_assume_tweaked(out_pk);
         let script = Script::from_hex(script_hex).unwrap();
         let control_block = ControlBlock::from_slice(&Vec::<u8>::from_hex(control_block_hex).unwrap()).unwrap();
@@ -1152,7 +1150,7 @@ mod test {
         let secp = &secp256k1::Secp256k1::verification_only();
 
         for arr in data["scriptPubKey"].as_array().unwrap() {
-            let internal_key = schnorr::PublicKey::from_str(arr["given"]["internalPubkey"].as_str().unwrap()).unwrap();
+            let internal_key = XOnlyPublicKey::from_str(arr["given"]["internalPubkey"].as_str().unwrap()).unwrap();
             // process the tree
             let script_tree = &arr["given"]["scriptTree"];
             let mut merkle_root = None;
@@ -1176,7 +1174,7 @@ mod test {
                     assert_eq!(ctrl_blk, expected_ctrl_blk);
                 }
             }
-            let expected_output_key = schnorr::PublicKey::from_str(arr["intermediary"]["tweakedPubkey"].as_str().unwrap()).unwrap();
+            let expected_output_key = XOnlyPublicKey::from_str(arr["intermediary"]["tweakedPubkey"].as_str().unwrap()).unwrap();
             let expected_tweak = TapTweakHash::from_str(arr["intermediary"]["tweak"].as_str().unwrap()).unwrap();
             let expected_spk = Script::from_str(arr["expected"]["scriptPubKey"].as_str().unwrap()).unwrap();
             let expected_addr = Address::from_str(arr["expected"]["bip350Address"].as_str().unwrap()).unwrap();
