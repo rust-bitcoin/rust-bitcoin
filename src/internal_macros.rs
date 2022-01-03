@@ -165,6 +165,9 @@ macro_rules! hex_script (($s:expr) => (<$crate::Script as ::core::str::FromStr>:
 #[cfg(test)]
 macro_rules! hex_hash (($h:ident, $s:expr) => ($h::from_slice(&<$crate::prelude::Vec<u8> as $crate::hashes::hex::FromHex>::from_hex($s).unwrap()).unwrap()));
 
+#[cfg(test)]
+macro_rules! hex_decode (($h:ident, $s:expr) => (deserialize::<$h>(&<$crate::prelude::Vec<u8> as $crate::hashes::hex::FromHex>::from_hex($s).unwrap()).unwrap()));
+
 macro_rules! serde_string_impl {
     ($name:ident, $expecting:expr) => {
         #[cfg(feature = "serde")]
