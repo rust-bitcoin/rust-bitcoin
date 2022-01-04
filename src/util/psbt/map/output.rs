@@ -93,7 +93,7 @@ impl PartialEq for TapTree {
 impl Eq for TapTree {}
 
 impl TapTree {
-    // get the inner node info as the builder is finalized
+    /// Gets the inner node info as the builder is finalized.
     fn node_info(&self) -> &NodeInfo {
         // The builder algorithm invariant guarantees that is_complete builder
         // have only 1 element in branch and that is not None.
@@ -102,8 +102,10 @@ impl TapTree {
         self.0.branch()[0].as_ref().expect("from_inner only parses is_complete builders")
     }
 
-    /// Convert a [`TaprootBuilder`] into a tree if it is complete binary tree.
-    /// Returns the inner as Err if it is not a complete tree.
+    /// Converts a [`TaprootBuilder`] into a tree if it is complete binary tree.
+    ///
+    /// # Return
+    /// A `TapTree` iff the `inner` builder is complete, otherwise return the inner as `Err`.
     pub fn from_inner(inner: TaprootBuilder) -> Result<Self, TaprootBuilder> {
         if inner.is_complete() {
             Ok(TapTree(inner))
@@ -112,8 +114,7 @@ impl TapTree {
         }
     }
 
-    /// Convert self into builder [`TaprootBuilder`]. The builder is guaranteed to
-    /// be finalized.
+    /// Converts self into builder [`TaprootBuilder`]. The builder is guaranteed to be finalized.
     pub fn into_inner(self) -> TaprootBuilder {
         self.0
     }
