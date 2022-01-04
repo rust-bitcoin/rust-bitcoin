@@ -28,7 +28,7 @@ pub use self::input::{Input, PsbtSigHashType};
 pub use self::output::{Output, TapTree};
 
 /// A trait that describes a PSBT key-value map.
-pub trait Map {
+pub(super) trait Map {
     /// Attempt to insert a key-value pair.
     fn insert_pair(&mut self, pair: raw::Pair) -> Result<(), encode::Error>;
 
