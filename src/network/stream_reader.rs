@@ -23,14 +23,14 @@
 //!
 
 use core::fmt;
-use io::Read;
+use io::{Read, BufReader};
 
 use consensus::{encode, Decodable};
 
 /// Struct used to configure stream reader function
 pub struct StreamReader<R: Read> {
     /// Stream to read from
-    pub stream: R,
+    pub stream: BufReader<R>,
 }
 
 impl<R: Read> fmt::Debug for StreamReader<R> {
@@ -44,7 +44,7 @@ impl<R: Read> StreamReader<R> {
     #[deprecated(since="0.28.0", note="wrap you stream into a buffered reader if necessary and use consensus_encode directly")]
     pub fn new(stream: R, _buffer_size: Option<usize>) -> StreamReader<R> {
         StreamReader {
-            stream,
+            stream: BufReader::new(stream),
         }
     }
 
