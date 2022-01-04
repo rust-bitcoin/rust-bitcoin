@@ -38,7 +38,7 @@ pub trait Map {
     /// Attempt to merge with another key-value map of the same type.
     fn merge(&mut self, other: Self) -> Result<(), psbt::Error>;
 
-    /// Encodes map data with bitcoin consensus encoding
+    /// Encodes map data with bitcoin consensus encoding.
     fn consensus_encode_map<S: io::Write>(
         &self,
         mut s: S,

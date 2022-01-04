@@ -58,11 +58,11 @@ pub struct Output {
     /// corresponding master key fingerprints and derivation paths.
     #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_as_seq"))]
     pub bip32_derivation: BTreeMap<secp256k1::PublicKey, KeySource>,
-    /// The internal pubkey
+    /// The internal pubkey.
     pub tap_internal_key: Option<XOnlyPublicKey>,
-    /// Taproot Output tree
+    /// Taproot Output tree.
     pub tap_tree: Option<TapTree>,
-    /// Map of tap root x only keys to origin info and leaf hashes contained in it
+    /// Map of tap root x only keys to origin info and leaf hashes contained in it.
     #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_as_seq"))]
     pub tap_key_origins: BTreeMap<XOnlyPublicKey, (Vec<TapLeafHash>, KeySource)>,
     /// Proprietary key-value pairs for this output.
@@ -79,7 +79,7 @@ pub struct Output {
     pub unknown: BTreeMap<raw::Key, Vec<u8>>,
 }
 
-/// Taproot Tree representing a finalized [`TaprootBuilder`] (a complete binary tree)
+/// Taproot Tree representing a finalized [`TaprootBuilder`] (a complete binary tree).
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct TapTree(pub(crate) TaprootBuilder);
@@ -103,7 +103,7 @@ impl TapTree {
     }
 
     /// Convert a [`TaprootBuilder`] into a tree if it is complete binary tree.
-    /// Returns the inner as Err if it is not a complete tree
+    /// Returns the inner as Err if it is not a complete tree.
     pub fn from_inner(inner: TaprootBuilder) -> Result<Self, TaprootBuilder> {
         if inner.is_complete() {
             Ok(TapTree(inner))
