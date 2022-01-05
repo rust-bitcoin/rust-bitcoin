@@ -23,9 +23,8 @@ use prelude::*;
 use core::{fmt, str, iter, slice};
 
 use hashes::{sha256d, Hash};
-use secp256k1;
 
-use util::{endian, key};
+use util::endian;
 
 /// An error that might occur during base58 decoding
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
@@ -44,8 +43,6 @@ pub enum Error {
     InvalidAddressVersion(u8),
     /// Checked data was less than 4 bytes
     TooShort(usize),
-    /// Secp256k1 error while parsing a secret key
-    Secp256k1(secp256k1::Error),
 }
 
 impl fmt::Display for Error {
@@ -57,7 +54,6 @@ impl fmt::Display for Error {
             Error::InvalidAddressVersion(ref v) => write!(f, "address version {} is invalid for this base58 type", v),
             Error::InvalidExtendedKeyVersion(ref v) => write!(f, "extended key version {:#04x?} is invalid for this base58 type", v),
             Error::TooShort(_) => write!(f, "base58ck data not even long enough for a checksum"),
-            Error::Secp256k1(ref e) => fmt::Display::fmt(&e, f),
         }
     }
 }
@@ -247,16 +243,6 @@ pub fn check_encode_slice_to_fmt(fmt: &mut fmt::Formatter, data: &[u8]) -> fmt::
         .cloned()
         .chain(checksum[0..4].iter().cloned());
     format_iter(fmt, iter)
-}
-
-#[doc(hidden)]
-impl From<key::Error> for Error {
-    fn from(e: key::Error) -> Self {
-        match e {
-            key::Error::Secp256k1(e) => Error::Secp256k1(e),
-            key::Error::Base58(e) => e,
-        }
-    }
 }
 
 #[cfg(test)]
