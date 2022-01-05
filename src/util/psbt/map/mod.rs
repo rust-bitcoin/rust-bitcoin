@@ -29,9 +29,6 @@ pub use self::output::{Output, TapTree};
 
 /// A trait that describes a PSBT key-value map.
 pub(super) trait Map {
-    /// Attempt to insert a key-value pair.
-    fn insert_pair(&mut self, pair: raw::Pair) -> Result<(), encode::Error>;
-
     /// Attempt to get all key-value pairs.
     fn get_pairs(&self) -> Result<Vec<raw::Pair>, io::Error>;
 

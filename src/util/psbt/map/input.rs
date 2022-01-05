@@ -189,8 +189,8 @@ impl PsbtSigHashType {
     }
 }
 
-impl Map for Input {
-    fn insert_pair(&mut self, pair: raw::Pair) -> Result<(), encode::Error> {
+impl Input {
+    pub(super) fn insert_pair(&mut self, pair: raw::Pair) -> Result<(), encode::Error> {
         let raw::Pair {
             key: raw_key,
             value: raw_value,
@@ -303,7 +303,9 @@ impl Map for Input {
 
         Ok(())
     }
+}
 
+impl Map for Input {
     fn get_pairs(&self) -> Result<Vec<raw::Pair>, io::Error> {
         let mut rv: Vec<raw::Pair> = Default::default();
 

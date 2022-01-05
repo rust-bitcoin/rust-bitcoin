@@ -120,8 +120,8 @@ impl TapTree {
     }
 }
 
-impl Map for Output {
-    fn insert_pair(&mut self, pair: raw::Pair) -> Result<(), encode::Error> {
+impl Output {
+    pub(super) fn insert_pair(&mut self, pair: raw::Pair) -> Result<(), encode::Error> {
         let raw::Pair {
             key: raw_key,
             value: raw_value,
@@ -177,7 +177,9 @@ impl Map for Output {
 
         Ok(())
     }
+}
 
+impl Map for Output {
     fn get_pairs(&self) -> Result<Vec<raw::Pair>, io::Error> {
         let mut rv: Vec<raw::Pair> = Default::default();
 

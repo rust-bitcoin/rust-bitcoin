@@ -75,7 +75,7 @@ macro_rules! impl_psbtmap_consensus_decoding {
 
                 loop {
                     match $crate::consensus::Decodable::consensus_decode(&mut d) {
-                        Ok(pair) => $crate::util::psbt::Map::insert_pair(&mut rv, pair)?,
+                        Ok(pair) => rv.insert_pair(pair)?,
                         Err($crate::consensus::encode::Error::Psbt($crate::util::psbt::Error::NoMorePairs)) => return Ok(rv),
                         Err(e) => return Err(e),
                     }
