@@ -425,6 +425,13 @@ pub struct EcdsaSig {
 }
 
 impl EcdsaSig {
+    /// Constructs ECDSA bitcoin signature for [`EcdsaSigHashType::All`]
+    pub fn sighash_all(sig: secp256k1::Signature) -> EcdsaSig {
+        EcdsaSig {
+            sig,
+            hash_ty: EcdsaSigHashType::All
+        }
+    }
 
     /// Deserialize from slice
     pub fn from_slice(sl: &[u8]) -> Result<Self, EcdsaSigError> {
