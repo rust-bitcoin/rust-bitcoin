@@ -14,78 +14,53 @@
 
 //! Stream reader.
 //!
-//! This module defines the `StreamReader` struct and its implementation which
-//! is used for parsing an incoming stream into separate `RawNetworkMessage`s,
-//! handling assembling messages from multiple packets, or dealing with partial
-//! or multiple messages in the stream (e.g. when reading from a TCP socket).
+//! Deprecated
+//!
+//! This module defines `StreamReader` struct and its implementation which is used
+//! for parsing incoming stream into separate `Decodable`s, handling assembling
+//! messages from multiple packets or dealing with partial or multiple messages in the stream
+//! (like can happen with reading from TCP socket)
 //!
 
-use prelude::*;
-
 use core::fmt;
-use io::{self, Read};
+use io::{Read, BufReader};
 
 use consensus::{encode, Decodable};
 
 /// Struct used to configure stream reader function
 pub struct StreamReader<R: Read> {
     /// Stream to read from
-    pub stream: R,
-    /// I/O buffer
-    data: Vec<u8>,
-    /// Buffer containing unparsed message part
-    unparsed: Vec<u8>
+    pub stream: BufReader<R>,
 }
 
 impl<R: Read> fmt::Debug for StreamReader<R> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "StreamReader with buffer_size={} and unparsed content {:?}",
-               self.data.capacity(), self.unparsed)
+        write!(f, "StreamReader")
     }
 }
 
 impl<R: Read> StreamReader<R> {
-    /// Constructs new stream reader for a given input stream `stream` with
-    /// optional parameter `buffer_size` determining reading buffer size
-    pub fn new(stream: R, buffer_size: Option<usize>) -> StreamReader<R> {
+    /// Constructs new stream reader for a given input stream `stream`
+    #[deprecated(since="0.28.0", note="wrap your stream into a buffered reader if necessary and use consensus_encode directly")]
+    pub fn new(stream: R, _buffer_size: Option<usize>) -> StreamReader<R> {
         StreamReader {
-            stream,
-            data: vec![0u8; buffer_size.unwrap_or(64 * 1024)],
-            unparsed: vec![]
+            stream: BufReader::new(stream),
         }
     }
 
-    /// Reads stream and parses next message from its current input,
-    /// also taking into account previously unparsed partial message (if there was such).
+    /// Reads stream and parses next message from its current input
+    #[deprecated(since="0.28.0", note="wrap your stream into a buffered reader if necessary and use consensus_encode directly")]
     pub fn read_next<D: Decodable>(&mut self) -> Result<D, encode::Error> {
-        loop {
-            match encode::deserialize_partial::<D>(&self.unparsed) {
-                // In this case we just have an incomplete data, so we need to read more
-                Err(encode::Error::Io(ref err)) if err.kind () == io::ErrorKind::UnexpectedEof => {
-                    let count = self.stream.read(&mut self.data)?;
-                    if count > 0 {
-                        self.unparsed.extend(self.data[0..count].iter());
-                    }
-                    else {
-                        return Err(encode::Error::Io(io::Error::from(io::ErrorKind::UnexpectedEof)));
-                    }
-                },
-                Err(err) => return Err(err),
-                // We have successfully read from the buffer
-                Ok((message, index)) => {
-                    self.unparsed.drain(..index);
-                    return Ok(message)
-                },
-            }
-        }
+        Decodable::consensus_decode(&mut self.stream)
     }
 }
 
+#[allow(deprecated)]
 #[cfg(test)]
 mod test {
     use std::thread;
     use std::time::Duration;
-    use io::{self, BufReader, Write};
+    use io::{BufReader, Write};
     use std::net::{TcpListener, TcpStream, Shutdown};
     use std::thread::JoinHandle;
     use network::constants::ServiceFlags;
@@ -191,22 +166,6 @@ mod test {
         } else {
             panic!("Wrong message type: expected AlertMessage");
         }
-    }
-
-    #[test]
-    fn parse_multipartmsg_test() {
-        let stream = io::empty();
-        let mut reader = StreamReader::new(stream, None);
-        reader.unparsed = MSG_ALERT[..24].to_vec();
-        let message: Result<RawNetworkMessage, _> = reader.read_next();
-        assert!(message.is_err());
-        assert_eq!(reader.unparsed.len(), 24);
-
-        reader.unparsed = MSG_ALERT.to_vec();
-        let message = reader.read_next().unwrap();
-        assert_eq!(reader.unparsed.len(), 0);
-
-        check_alert_msg(&message);
     }
 
     #[test]
@@ -345,5 +304,18 @@ mod test {
 
         // should be also ok for a non-witness block as commitment is optional in that case
         assert!(block.check_witness_commitment());
+    }
+
+    #[test]
+    fn parse_multipartmsg_test() {
+        let mut multi = MSG_ALERT.to_vec();
+        multi.extend(&MSG_ALERT[..]);
+        let mut reader = StreamReader::new(&multi[..], None);
+        let message: Result<RawNetworkMessage, _> = reader.read_next();
+        assert!(message.is_ok());
+        check_alert_msg(&message.unwrap());
+        let message: Result<RawNetworkMessage, _> = reader.read_next();
+        assert!(message.is_ok());
+        check_alert_msg(&message.unwrap());
     }
 }
