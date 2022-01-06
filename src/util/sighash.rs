@@ -1045,7 +1045,7 @@ mod tests {
 
             let expected_internal_pk = hex_hash!(XOnlyPublicKey, inp["intermediary"]["internalPubkey"].as_str().unwrap());
             let expected_tweak = hex_hash!(TapTweakHash, inp["intermediary"]["tweak"].as_str().unwrap());
-            let _expected_tweaked_priv_key = hex_hash!(SecretKey, inp["intermediary"]["tweakedPrivkey"].as_str().unwrap());
+            let expected_tweaked_priv_key = hex_hash!(SecretKey, inp["intermediary"]["tweakedPrivkey"].as_str().unwrap());
             let expected_sig_msg = Vec::<u8>::from_hex(inp["intermediary"]["sigMsg"].as_str().unwrap()).unwrap();
             let expected_sig_hash = hex_hash!(TapSighashHash, inp["intermediary"]["sigHash"].as_str().unwrap());
             let sig_str = inp["expected"]["witness"][0].as_str().unwrap();
@@ -1088,9 +1088,9 @@ mod tests {
             assert_eq!(expected_sig_hash, sig_hash);
             assert_eq!(expected_hash_ty, hash_ty);
             assert_eq!(expected_key_spend_sig, key_spend_sig);
-            // TODO: Uncomment these after a rust-secp release
-            // let tweaked_priv_key = SecretKey::from_keypair(&tweaked_keypair);
-            // assert_eq!(expected_tweaked_priv_key, tweaked_priv_key);
+
+            let tweaked_priv_key = SecretKey::from_keypair(&tweaked_keypair);
+            assert_eq!(expected_tweaked_priv_key, tweaked_priv_key);
         }
     }
 
