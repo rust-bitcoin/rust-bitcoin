@@ -118,8 +118,8 @@ impl fmt::Display for CommandStringError {
 #[cfg(feature = "std")]
 impl ::std::error::Error for CommandStringError { }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
 /// A Network message
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct RawNetworkMessage {
     /// Magic bytes to identify the network these messages are meant for
     pub magic: u32,

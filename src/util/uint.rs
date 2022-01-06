@@ -505,9 +505,8 @@ macro_rules! construct_uint {
 construct_uint!(Uint256, 4);
 construct_uint!(Uint128, 2);
 
-/// Invalid slice length
+/// Invalid slice length.
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
-/// Invalid slice length
 pub struct ParseLengthError {
     /// The length of the slice de-facto
     pub actual: usize,

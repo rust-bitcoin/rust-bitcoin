@@ -23,8 +23,8 @@ use util::psbt::raw;
 use hashes;
 use util::bip32::ExtendedPubKey;
 
+/// Enum for marking psbt hash error.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
-/// Enum for marking psbt hash error
 pub enum PsbtHash {
     Ripemd,
     Sha256,

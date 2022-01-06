@@ -506,18 +506,18 @@ impl Transaction {
         }
     }
 
+    /// Shorthand for [Self::verify_with_flags] with flag [bitcoinconsensus::VERIFY_ALL]
     #[cfg(feature="bitcoinconsensus")]
     #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
-    /// Shorthand for [Self::verify_with_flags] with flag [bitcoinconsensus::VERIFY_ALL]
     pub fn verify<S>(&self, spent: S) -> Result<(), script::Error>
         where S: FnMut(&OutPoint) -> Option<TxOut> {
         self.verify_with_flags(spent, ::bitcoinconsensus::VERIFY_ALL)
     }
 
-    #[cfg(feature="bitcoinconsensus")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
     /// Verify that this transaction is able to spend its inputs
     /// The lambda spent should not return the same TxOut twice!
+    #[cfg(feature="bitcoinconsensus")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
     pub fn verify_with_flags<S, F>(&self, mut spent: S, flags: F) -> Result<(), script::Error>
         where S: FnMut(&OutPoint) -> Option<TxOut>, F : Into<u32> {
         let tx = encode::serialize(&*self);

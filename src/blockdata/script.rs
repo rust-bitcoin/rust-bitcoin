@@ -42,8 +42,8 @@ use policy::DUST_RELAY_TX_FEE;
 use util::ecdsa::PublicKey;
 use util::address::WitnessVersion;
 
+/// A Bitcoin script.
 #[derive(Clone, Default, PartialOrd, Ord, PartialEq, Eq, Hash)]
-/// A Bitcoin script
 pub struct Script(Box<[u8]>);
 
 impl AsRef<[u8]> for Script {
@@ -101,8 +101,8 @@ impl ::core::str::FromStr for Script {
     }
 }
 
+/// An object which can be used to construct a script piece by piece.
 #[derive(PartialEq, Eq, Debug, Clone)]
-/// An object which can be used to construct a script piece by piece
 pub struct Builder(Vec<u8>, Option<opcodes::All>);
 display_from_debug!(Builder);
 
@@ -118,17 +118,17 @@ pub enum Error {
     EarlyEndOfScript,
     /// Tried to read an array off the stack as a number when it was more than 4 bytes
     NumericOverflow,
-    #[cfg(feature = "bitcoinconsensus")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
     /// Error validating the script with bitcoinconsensus library
+    #[cfg(feature = "bitcoinconsensus")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
     BitcoinConsensus(bitcoinconsensus::Error),
-    #[cfg(feature = "bitcoinconsensus")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
     /// Can not find the spent output
-    UnknownSpentOutput(OutPoint),
     #[cfg(feature = "bitcoinconsensus")]
     #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
+    UnknownSpentOutput(OutPoint),
     /// Can not serialize the spending transaction
+    #[cfg(feature = "bitcoinconsensus")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
     SerializationError
 }
 
@@ -496,21 +496,21 @@ impl Script {
         }
     }
 
+    /// Shorthand for [Self::verify_with_flags] with flag [bitcoinconsensus::VERIFY_ALL]
     #[cfg(feature="bitcoinconsensus")]
     #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
-    /// Shorthand for [Self::verify_with_flags] with flag [bitcoinconsensus::VERIFY_ALL]
     pub fn verify (&self, index: usize, amount: ::Amount, spending: &[u8]) -> Result<(), Error> {
         self.verify_with_flags(index, amount, spending, ::bitcoinconsensus::VERIFY_ALL)
     }
 
-    #[cfg(feature="bitcoinconsensus")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
     /// Verify spend of an input script
     /// # Parameters
     ///  * `index` - the input index in spending which is spending this transaction
     ///  * `amount` - the amount this script guards
     ///  * `spending` - the transaction that attempts to spend the output holding this script
     ///  * `flags` - verification flags, see [bitcoinconsensus::VERIFY_ALL] and similar
+    #[cfg(feature="bitcoinconsensus")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
     pub fn verify_with_flags<F: Into<u32>>(&self, index: usize, amount: ::Amount, spending: &[u8], flags: F) -> Result<(), Error> {
         Ok(bitcoinconsensus::verify_with_flags (&self.0[..], amount.as_sat(), spending, index, flags.into())?)
     }
