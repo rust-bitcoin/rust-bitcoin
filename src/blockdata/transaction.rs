@@ -666,11 +666,11 @@ impl Decodable for Transaction {
 /// This type is consensus valid but an input including it would prevent the transaction from
 /// being relayed on today's Bitcoin network.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct NonStandardSigHashType;
+pub struct NonStandardSigHashType(pub u32);
 
 impl fmt::Display for NonStandardSigHashType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Non standard sighash type")
+        write!(f, "Non standard sighash type {}", self.0)
     }
 }
 
@@ -789,7 +789,7 @@ impl EcdsaSigHashType {
              0x81 => Ok(EcdsaSigHashType::AllPlusAnyoneCanPay),
              0x82 => Ok(EcdsaSigHashType::NonePlusAnyoneCanPay),
              0x83 => Ok(EcdsaSigHashType::SinglePlusAnyoneCanPay),
-             _ => Err(NonStandardSigHashType)
+             non_standard => Err(NonStandardSigHashType(non_standard))
          }
      }
 
@@ -1151,7 +1151,7 @@ mod tests {
         assert_eq!(EcdsaSigHashType::from_u32(nonstandard_hashtype), EcdsaSigHashType::All);
         assert_eq!(EcdsaSigHashType::from_u32_consensus(nonstandard_hashtype), EcdsaSigHashType::All);
         // But it's policy-invalid to use it!
-        assert_eq!(EcdsaSigHashType::from_u32_standard(nonstandard_hashtype), Err(NonStandardSigHashType));
+        assert_eq!(EcdsaSigHashType::from_u32_standard(nonstandard_hashtype), Err(NonStandardSigHashType(0x04)));
     }
 
     // These test vectors were stolen from libbtc, which is Copyright 2014 Jonas Schnelli MIT
