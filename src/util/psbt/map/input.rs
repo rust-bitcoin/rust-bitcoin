@@ -29,7 +29,7 @@ use util::psbt::raw;
 use util::psbt::serialize::Deserialize;
 use util::psbt::{Error, error};
 
-use schnorr;
+use ::{SchnorrSig};
 use util::taproot::{ControlBlock, LeafVersion, TapLeafHash, TapBranchHash};
 
 /// Type: Non-Witness UTXO PSBT_IN_NON_WITNESS_UTXO = 0x00
@@ -120,10 +120,10 @@ pub struct Input {
     #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_byte_values"))]
     pub hash256_preimages: BTreeMap<sha256d::Hash, Vec<u8>>,
     /// Serialized schnorr signature with sighash type for key spend
-    pub tap_key_sig: Option<schnorr::SchnorrSig>,
+    pub tap_key_sig: Option<SchnorrSig>,
     /// Map of <xonlypubkey>|<leafhash> with signature
     #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_as_seq"))]
-    pub tap_script_sigs: BTreeMap<(XOnlyPublicKey, TapLeafHash), schnorr::SchnorrSig>,
+    pub tap_script_sigs: BTreeMap<(XOnlyPublicKey, TapLeafHash), SchnorrSig>,
     /// Map of Control blocks to Script version pair
     #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_as_seq"))]
     pub tap_scripts: BTreeMap<ControlBlock, (Script, LeafVersion)>,
@@ -209,12 +209,12 @@ impl Map for Input {
             }
             PSBT_IN_TAP_KEY_SIG => {
                 impl_psbt_insert_pair! {
-                    self.tap_key_sig <= <raw_key: _>|<raw_value: schnorr::SchnorrSig>
+                    self.tap_key_sig <= <raw_key: _>|<raw_value: SchnorrSig>
                 }
             }
             PSBT_IN_TAP_SCRIPT_SIG => {
                 impl_psbt_insert_pair! {
-                    self.tap_script_sigs <= <raw_key: (XOnlyPublicKey, TapLeafHash)>|<raw_value: schnorr::SchnorrSig>
+                    self.tap_script_sigs <= <raw_key: (XOnlyPublicKey, TapLeafHash)>|<raw_value: SchnorrSig>
                 }
             }
             PSBT_IN_TAP_LEAF_SCRIPT=> {
@@ -310,11 +310,11 @@ impl Map for Input {
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.tap_key_sig as <PSBT_IN_TAP_KEY_SIG, _>|<Vec<u8>>)
+            rv.push(self.tap_key_sig as <PSBT_IN_TAP_KEY_SIG, _>|<SchnorrSig>)
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.tap_script_sigs as <PSBT_IN_TAP_SCRIPT_SIG, (XOnlyPublicKey, TapLeafHash)>|<Vec<u8>>)
+            rv.push(self.tap_script_sigs as <PSBT_IN_TAP_SCRIPT_SIG, (XOnlyPublicKey, TapLeafHash)>|<SchnorrSig>)
         }
 
         impl_psbt_get_pair! {

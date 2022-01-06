@@ -20,7 +20,7 @@
 
 use prelude::*;
 
-use ::{EcdsaSig, io};
+use io;
 
 use blockdata::script::Script;
 use blockdata::transaction::{EcdsaSigHashType, Transaction, TxOut};
@@ -28,7 +28,7 @@ use consensus::encode::{self, serialize, Decodable, Encodable, deserialize_parti
 use secp256k1::{self, XOnlyPublicKey};
 use util::bip32::{ChildNumber, Fingerprint, KeySource};
 use hashes::{hash160, ripemd160, sha256, sha256d, Hash};
-use util::ecdsa::PublicKey;
+use util::ecdsa::{PublicKey, EcdsaSig};
 use util::psbt;
 use util::taproot::{TapBranchHash, TapLeafHash, ControlBlock, LeafVersion};
 use schnorr;
