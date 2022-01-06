@@ -718,8 +718,8 @@ impl From<io::Error> for Error {
     }
 }
 
+/// The `Annex` struct is a slice wrapper enforcing first byte to be `0x50`.
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
-/// The `Annex` struct is a slice wrapper enforcing first byte to be `0x50`
 pub struct Annex<'a>(&'a [u8]);
 
 impl<'a> Annex<'a> {

@@ -175,17 +175,17 @@ mod message_signing {
             })
         }
 
+        /// Convert a signature from base64 encoding.
         #[cfg(feature = "base64")]
         #[cfg_attr(docsrs, doc(cfg(feature = "base64")))]
-        /// Convert a signature from base64 encoding.
         pub fn from_base64(s: &str) -> Result<MessageSignature, MessageSignatureError> {
             let bytes = ::base64::decode(s).map_err(|_| MessageSignatureError::InvalidBase64)?;
             MessageSignature::from_slice(&bytes)
         }
 
+        /// Convert to base64 encoding.
         #[cfg(feature = "base64")]
         #[cfg_attr(docsrs, doc(cfg(feature = "base64")))]
-        /// Convert to base64 encoding.
         pub fn to_base64(&self) -> String {
             ::base64::encode(&self.serialize()[..])
         }

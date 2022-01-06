@@ -50,8 +50,8 @@ const MAX_BITS_REGTEST: Uint256 = Uint256([
     0x7fffff0000000000u64,
 ]);
 
-#[derive(Debug, Clone)]
 /// Parameters that influence chain consensus.
+#[derive(Debug, Clone)]
 pub struct Params {
     /// Network for which parameters are valid.
     pub network: Network,

@@ -171,8 +171,8 @@ impl FromStr for PublicKey {
     }
 }
 
-#[derive(Copy, Clone, PartialEq, Eq)]
 /// A Bitcoin ECDSA private key
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub struct PrivateKey {
     /// Whether this private key should be serialized as compressed
     pub compressed: bool,

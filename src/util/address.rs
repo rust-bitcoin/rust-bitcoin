@@ -528,8 +528,8 @@ impl<'a> fmt::Display for AddressEncoding<'a> {
     }
 }
 
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 /// A Bitcoin address.
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Address {
     /// The type of the address.
     pub payload: Payload,
