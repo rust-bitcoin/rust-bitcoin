@@ -481,21 +481,15 @@ mod tests {
 mod benches {
     use super::Block;
     use EmptyWrite;
-    use consensus::{deserialize, Encodable, serialize};
+    use consensus::{deserialize, Encodable};
     use test::{black_box, Bencher};
     use network::stream_reader::StreamReader;
 
     #[bench]
     #[allow(deprecated)]
     pub fn bench_stream_reader(bh: &mut Bencher) {
-        let raw_block = include_bytes!("../../test_data/testnet_block_000000000000045e0b1660b6445b5e5c5ab63c9a4f956be7e1e69be04fa4497b.raw");
-        let mut block: Block = deserialize(&raw_block[..]).unwrap();
-        for _ in 0..8 {
-            // make a big block
-            block.txdata.extend(block.txdata.clone().into_iter());
-        }
-        let big_block = serialize(&block);
-        assert_eq!(big_block.len(), 1_085_011);
+        let big_block = include_bytes!("../../test_data/mainnet_block_000000000000000000000c835b2adcaedc20fdf6ee440009c249452c726dafae.raw");
+        assert_eq!(big_block.len(), 1_381_836);
         let big_block = black_box(big_block);
 
         bh.iter(|| {
