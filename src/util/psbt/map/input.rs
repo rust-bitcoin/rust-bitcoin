@@ -14,7 +14,7 @@
 
 use prelude::*;
 
-use io;
+use ::{EcdsaSig, io};
 
 use blockdata::script::Script;
 use blockdata::transaction::{EcdsaSigHashType, Transaction, TxOut};
@@ -87,9 +87,8 @@ pub struct Input {
     /// including P2SH embedded ones.
     pub witness_utxo: Option<TxOut>,
     /// A map from public keys to their corresponding signature as would be
-    /// pushed to the stack from a scriptSig or witness.
-    #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_byte_values"))]
-    pub partial_sigs: BTreeMap<PublicKey, Vec<u8>>,
+    /// pushed to the stack from a scriptSig or witness for a non-taproot inputs.
+    pub partial_sigs: BTreeMap<PublicKey, EcdsaSig>,
     /// The sighash type to be used for this input. Signatures for this input
     /// must use the sighash type.
     pub sighash_type: Option<EcdsaSigHashType>,
@@ -163,7 +162,7 @@ impl Map for Input {
             }
             PSBT_IN_PARTIAL_SIG => {
                 impl_psbt_insert_pair! {
-                    self.partial_sigs <= <raw_key: PublicKey>|<raw_value: Vec<u8>>
+                    self.partial_sigs <= <raw_key: PublicKey>|<raw_value: EcdsaSig>
                 }
             }
             PSBT_IN_SIGHASH_TYPE => {
@@ -267,7 +266,7 @@ impl Map for Input {
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.partial_sigs as <PSBT_IN_PARTIAL_SIG, PublicKey>|<Vec<u8>>)
+            rv.push(self.partial_sigs as <PSBT_IN_PARTIAL_SIG, PublicKey>|<EcdsaSig>)
         }
 
         impl_psbt_get_pair! {
