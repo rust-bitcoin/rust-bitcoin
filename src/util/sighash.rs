@@ -754,7 +754,7 @@ mod tests {
     use std::str::FromStr;
     use hashes::hex::ToHex;
     use util::taproot::{TapTweakHash, TapSighashHash, TapBranchHash, TapLeafHash};
-    use secp256k1::{self, SecretKey};
+    use secp256k1::{self, SecretKey, XOnlyPublicKey};
     extern crate serde_json;
 
     use {Script, Transaction, TxIn, TxOut};
@@ -1043,23 +1043,22 @@ mod tests {
             };
             let hash_ty = SchnorrSigHashType::from_u8(inp["given"]["hashType"].as_u64().unwrap() as u8).unwrap();
 
-            use schnorr::PublicKey as XOnlyPubKey;
-            let expected_internal_pk = hex_hash!(XOnlyPubKey, inp["intermediary"]["internalPubkey"].as_str().unwrap());
+            let expected_internal_pk = hex_hash!(XOnlyPublicKey, inp["intermediary"]["internalPubkey"].as_str().unwrap());
             let expected_tweak = hex_hash!(TapTweakHash, inp["intermediary"]["tweak"].as_str().unwrap());
-            let _expected_tweaked_priv_key = hex_hash!(SecretKey, inp["intermediary"]["tweakedPrivkey"].as_str().unwrap());
+            let expected_tweaked_priv_key = hex_hash!(SecretKey, inp["intermediary"]["tweakedPrivkey"].as_str().unwrap());
             let expected_sig_msg = Vec::<u8>::from_hex(inp["intermediary"]["sigMsg"].as_str().unwrap()).unwrap();
             let expected_sig_hash = hex_hash!(TapSighashHash, inp["intermediary"]["sigHash"].as_str().unwrap());
             let sig_str = inp["expected"]["witness"][0].as_str().unwrap();
             let (expected_key_spend_sig, expected_hash_ty) = if sig_str.len() == 128 {
-                (secp256k1::schnorrsig::Signature::from_str(sig_str).unwrap(), SchnorrSigHashType::Default)
+                (secp256k1::schnorr::Signature::from_str(sig_str).unwrap(), SchnorrSigHashType::Default)
             } else {
                 let hash_ty = SchnorrSigHashType::from_u8(Vec::<u8>::from_hex(&sig_str[128..]).unwrap()[0]).unwrap();
-                (secp256k1::schnorrsig::Signature::from_str(&sig_str[..128]).unwrap(), hash_ty)
+                (secp256k1::schnorr::Signature::from_str(&sig_str[..128]).unwrap(), hash_ty)
             };
 
             // tests
-            let keypair = secp256k1::schnorrsig::KeyPair::from_secret_key(&secp, internal_priv_key);
-            let internal_key = XOnlyPubKey::from_keypair(secp, &keypair);
+            let keypair = secp256k1::KeyPair::from_secret_key(&secp, internal_priv_key);
+            let internal_key = XOnlyPublicKey::from_keypair(&keypair);
             let tweak = TapTweakHash::from_key_and_tweak(internal_key, merkle_root);
             let mut tweaked_keypair = keypair;
             tweaked_keypair.tweak_add_assign(&secp, &tweak).unwrap();
@@ -1081,7 +1080,7 @@ mod tests {
             ).unwrap();
 
             let msg = secp256k1::Message::from_slice(&sig_hash).unwrap();
-            let key_spend_sig = secp.schnorrsig_sign_with_aux_rand(&msg, &tweaked_keypair, &[0u8; 32]);
+            let key_spend_sig = secp.sign_schnorr_with_aux_rand(&msg, &tweaked_keypair, &[0u8; 32]);
 
             assert_eq!(expected_internal_pk, internal_key);
             assert_eq!(expected_tweak, tweak);
@@ -1089,9 +1088,9 @@ mod tests {
             assert_eq!(expected_sig_hash, sig_hash);
             assert_eq!(expected_hash_ty, hash_ty);
             assert_eq!(expected_key_spend_sig, key_spend_sig);
-            // TODO: Uncomment these after a rust-secp release
-            // let tweaked_priv_key = SecretKey::from_keypair(&tweaked_keypair);
-            // assert_eq!(expected_tweaked_priv_key, tweaked_priv_key);
+
+            let tweaked_priv_key = SecretKey::from_keypair(&tweaked_keypair);
+            assert_eq!(expected_tweaked_priv_key, tweaked_priv_key);
         }
     }
 

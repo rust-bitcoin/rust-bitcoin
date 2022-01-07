@@ -419,7 +419,7 @@ impl<'de> ::serde::Deserialize<'de> for PublicKey {
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct EcdsaSig {
     /// The underlying ECDSA Signature
-    pub sig: secp256k1::Signature,
+    pub sig: secp256k1::ecdsa::Signature,
     /// The corresponding hash type
     pub hash_ty: EcdsaSigHashType,
 }
@@ -432,7 +432,7 @@ impl EcdsaSig {
             .ok_or(EcdsaSigError::EmptySignature)?;
         let hash_ty = EcdsaSigHashType::from_u32_standard(*hash_ty as u32)
             .map_err(|_| EcdsaSigError::NonStandardSigHashType(*hash_ty))?;
-        let sig = secp256k1::Signature::from_der(sig)
+        let sig = secp256k1::ecdsa::Signature::from_der(sig)
             .map_err(EcdsaSigError::Secp256k1)?;
         Ok(EcdsaSig { sig, hash_ty })
     }

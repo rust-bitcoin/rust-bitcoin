@@ -20,18 +20,18 @@
 use core::fmt;
 use prelude::*;
 
-pub use secp256k1::schnorrsig::{PublicKey, KeyPair};
+pub use secp256k1::{XOnlyPublicKey, KeyPair};
 use secp256k1::{self, Secp256k1, Verification, constants};
 use hashes::Hash;
 use util::taproot::{TapBranchHash, TapTweakHash};
 use SchnorrSigHashType;
 
 /// Untweaked Schnorr public key
-pub type UntweakedPublicKey = PublicKey;
+pub type UntweakedPublicKey = XOnlyPublicKey;
 
 /// Tweaked Schnorr public key
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct TweakedPublicKey(PublicKey);
+pub struct TweakedPublicKey(XOnlyPublicKey);
 
 impl fmt::LowerHex for TweakedPublicKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -58,7 +58,7 @@ pub trait TapTweak {
     ///
     /// # Returns
     /// The tweaked key and its parity.
-    fn tap_tweak<C: Verification>(self, secp: &Secp256k1<C>, merkle_root: Option<TapBranchHash>) -> (TweakedPublicKey, bool);
+    fn tap_tweak<C: Verification>(self, secp: &Secp256k1<C>, merkle_root: Option<TapBranchHash>) -> (TweakedPublicKey, secp256k1::Parity);
 
     /// Directly converts an [`UntweakedPublicKey`] to a [`TweakedPublicKey`]
     ///
@@ -68,7 +68,7 @@ pub trait TapTweak {
 }
 
 impl TapTweak for UntweakedPublicKey {
-    fn tap_tweak<C: Verification>(self, secp: &Secp256k1<C>, merkle_root: Option<TapBranchHash>) -> (TweakedPublicKey, bool) {
+    fn tap_tweak<C: Verification>(self, secp: &Secp256k1<C>, merkle_root: Option<TapBranchHash>) -> (TweakedPublicKey, secp256k1::Parity) {
         let tweak_value = TapTweakHash::from_key_and_tweak(self, merkle_root).into_inner();
         let mut output_key = self.clone();
         let parity = output_key.tweak_add_assign(&secp, &tweak_value).expect("Tap tweak failed");
@@ -83,19 +83,19 @@ impl TapTweak for UntweakedPublicKey {
 }
 
 impl TweakedPublicKey {
-    /// Creates a new [`TweakedPublicKey`] from a [`PublicKey`]. No tweak is applied, consider
+    /// Creates a new [`TweakedPublicKey`] from a [`XOnlyPublicKey`]. No tweak is applied, consider
     /// calling `tap_tweak` on an [`UntweakedPublicKey`] instead of using this constructor.
-    pub fn dangerous_assume_tweaked(key: PublicKey) -> TweakedPublicKey {
+    pub fn dangerous_assume_tweaked(key: XOnlyPublicKey) -> TweakedPublicKey {
         TweakedPublicKey(key)
     }
 
     /// Returns the underlying public key.
-    pub fn into_inner(self) -> PublicKey {
+    pub fn into_inner(self) -> XOnlyPublicKey {
         self.0
     }
 
     /// Returns a reference to underlying public key.
-    pub fn as_inner(&self) -> &PublicKey {
+    pub fn as_inner(&self) -> &XOnlyPublicKey {
         &self.0
     }
 
@@ -113,7 +113,7 @@ impl TweakedPublicKey {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct SchnorrSig {
     /// The underlying schnorr signature
-    pub sig: secp256k1::schnorrsig::Signature,
+    pub sig: secp256k1::schnorr::Signature,
     /// The corresponding hash type
     pub hash_ty: SchnorrSigHashType,
 }
@@ -125,7 +125,7 @@ impl SchnorrSig {
         match sl.len() {
             64 => {
                 // default type
-                let sig = secp256k1::schnorrsig::Signature::from_slice(sl)
+                let sig = secp256k1::schnorr::Signature::from_slice(sl)
                     .map_err(SchnorrSigError::Secp256k1)?;
                 return Ok( SchnorrSig { sig, hash_ty : SchnorrSigHashType::Default });
             },
@@ -133,7 +133,7 @@ impl SchnorrSig {
                 let (hash_ty, sig) = sl.split_last().expect("Slice len checked == 65");
                 let hash_ty = SchnorrSigHashType::from_u8(*hash_ty)
                     .map_err(|_| SchnorrSigError::InvalidSighashType(*hash_ty))?;
-                let sig = secp256k1::schnorrsig::Signature::from_slice(sig)
+                let sig = secp256k1::schnorr::Signature::from_slice(sig)
                     .map_err(SchnorrSigError::Secp256k1)?;
                 Ok(SchnorrSig { sig, hash_ty })
             }

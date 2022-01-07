@@ -19,6 +19,7 @@ use io;
 use blockdata::script::Script;
 use blockdata::transaction::{EcdsaSigHashType, Transaction, TxOut};
 use consensus::encode;
+use secp256k1::XOnlyPublicKey;
 use util::bip32::KeySource;
 use hashes::{self, hash160, ripemd160, sha256, sha256d};
 use util::ecdsa::PublicKey;
@@ -123,15 +124,15 @@ pub struct Input {
     pub tap_key_sig: Option<schnorr::SchnorrSig>,
     /// Map of <xonlypubkey>|<leafhash> with signature
     #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_as_seq"))]
-    pub tap_script_sigs: BTreeMap<(schnorr::PublicKey, TapLeafHash), schnorr::SchnorrSig>,
+    pub tap_script_sigs: BTreeMap<(XOnlyPublicKey, TapLeafHash), schnorr::SchnorrSig>,
     /// Map of Control blocks to Script version pair
     #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_as_seq"))]
     pub tap_scripts: BTreeMap<ControlBlock, (Script, LeafVersion)>,
     /// Map of tap root x only keys to origin info and leaf hashes contained in it
     #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_as_seq"))]
-    pub tap_key_origins: BTreeMap<schnorr::PublicKey, (Vec<TapLeafHash>, KeySource)>,
+    pub tap_key_origins: BTreeMap<XOnlyPublicKey, (Vec<TapLeafHash>, KeySource)>,
     /// Taproot Internal key
-    pub tap_internal_key : Option<schnorr::PublicKey>,
+    pub tap_internal_key : Option<XOnlyPublicKey>,
     /// Taproot Merkle root
     pub tap_merkle_root : Option<TapBranchHash>,
     /// Proprietary key-value pairs for this input.
@@ -214,7 +215,7 @@ impl Map for Input {
             }
             PSBT_IN_TAP_SCRIPT_SIG => {
                 impl_psbt_insert_pair! {
-                    self.tap_script_sigs <= <raw_key: (schnorr::PublicKey, TapLeafHash)>|<raw_value: schnorr::SchnorrSig>
+                    self.tap_script_sigs <= <raw_key: (XOnlyPublicKey, TapLeafHash)>|<raw_value: schnorr::SchnorrSig>
                 }
             }
             PSBT_IN_TAP_LEAF_SCRIPT=> {
@@ -224,12 +225,12 @@ impl Map for Input {
             }
             PSBT_IN_TAP_BIP32_DERIVATION => {
                 impl_psbt_insert_pair! {
-                    self.tap_key_origins <= <raw_key: schnorr::PublicKey>|< raw_value: (Vec<TapLeafHash>, KeySource)>
+                    self.tap_key_origins <= <raw_key: XOnlyPublicKey>|< raw_value: (Vec<TapLeafHash>, KeySource)>
                 }
             }
             PSBT_IN_TAP_INTERNAL_KEY => {
                 impl_psbt_insert_pair! {
-                    self.tap_internal_key <= <raw_key: _>|< raw_value: schnorr::PublicKey>
+                    self.tap_internal_key <= <raw_key: _>|< raw_value: XOnlyPublicKey>
                 }
             }
             PSBT_IN_TAP_MERKLE_ROOT => {
@@ -314,7 +315,7 @@ impl Map for Input {
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.tap_script_sigs as <PSBT_IN_TAP_SCRIPT_SIG, (schnorr::PublicKey, TapLeafHash)>|<Vec<u8>>)
+            rv.push(self.tap_script_sigs as <PSBT_IN_TAP_SCRIPT_SIG, (XOnlyPublicKey, TapLeafHash)>|<Vec<u8>>)
         }
 
         impl_psbt_get_pair! {
@@ -323,11 +324,11 @@ impl Map for Input {
 
         impl_psbt_get_pair! {
             rv.push(self.tap_key_origins as <PSBT_IN_TAP_BIP32_DERIVATION,
-                schnorr::PublicKey>|<(Vec<TapLeafHash>, KeySource)>)
+                XOnlyPublicKey>|<(Vec<TapLeafHash>, KeySource)>)
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.tap_internal_key as <PSBT_IN_TAP_INTERNAL_KEY, _>|<schnorr::PublicKey>)
+            rv.push(self.tap_internal_key as <PSBT_IN_TAP_INTERNAL_KEY, _>|<XOnlyPublicKey>)
         }
 
         impl_psbt_get_pair! {

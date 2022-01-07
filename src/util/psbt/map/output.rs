@@ -18,6 +18,7 @@ use io;
 
 use blockdata::script::Script;
 use consensus::encode;
+use secp256k1::XOnlyPublicKey;
 use util::bip32::KeySource;
 use util::ecdsa::PublicKey;
 use util::psbt;
@@ -25,7 +26,6 @@ use util::psbt::map::Map;
 use util::psbt::raw;
 use util::psbt::Error;
 
-use schnorr;
 use util::taproot::TapLeafHash;
 
 use util::taproot::{NodeInfo, TaprootBuilder};
@@ -59,12 +59,12 @@ pub struct Output {
     #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_as_seq"))]
     pub bip32_derivation: BTreeMap<PublicKey, KeySource>,
     /// The internal pubkey
-    pub tap_internal_key: Option<schnorr::PublicKey>,
+    pub tap_internal_key: Option<XOnlyPublicKey>,
     /// Taproot Output tree
     pub tap_tree: Option<TapTree>,
     /// Map of tap root x only keys to origin info and leaf hashes contained in it
     #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_as_seq"))]
-    pub tap_key_origins: BTreeMap<schnorr::PublicKey, (Vec<TapLeafHash>, KeySource)>,
+    pub tap_key_origins: BTreeMap<XOnlyPublicKey, (Vec<TapLeafHash>, KeySource)>,
     /// Proprietary key-value pairs for this output.
     #[cfg_attr(
         feature = "serde",
@@ -148,7 +148,7 @@ impl Map for Output {
             }
             PSBT_OUT_TAP_INTERNAL_KEY => {
                 impl_psbt_insert_pair! {
-                    self.tap_internal_key <= <raw_key: _>|<raw_value: schnorr::PublicKey>
+                    self.tap_internal_key <= <raw_key: _>|<raw_value: XOnlyPublicKey>
                 }
             }
             PSBT_OUT_TAP_TREE => {
@@ -158,7 +158,7 @@ impl Map for Output {
             }
             PSBT_OUT_TAP_BIP32_DERIVATION => {
                 impl_psbt_insert_pair! {
-                    self.tap_key_origins <= <raw_key: schnorr::PublicKey>|< raw_value: (Vec<TapLeafHash>, KeySource)>
+                    self.tap_key_origins <= <raw_key: XOnlyPublicKey>|< raw_value: (Vec<TapLeafHash>, KeySource)>
                 }
             }
             _ => match self.unknown.entry(raw_key) {
