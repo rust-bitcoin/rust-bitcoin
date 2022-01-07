@@ -760,6 +760,37 @@ impl ControlBlock {
     }
 }
 
+/// Inner type representing future (non-tapscript) leaf versions. See [`LeafVersion::Future`].
+///
+/// NB: NO PUBLIC CONSTRUCTOR!
+/// The only way to construct this is by converting u8 to LeafVersion and then extracting it.
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
+pub struct FutureLeafVersion(u8);
+
+impl FutureLeafVersion {
+    pub(self) fn from_consensus(version: u8) -> Result<FutureLeafVersion, TaprootError> {
+        match version {
+            TAPROOT_LEAF_TAPSCRIPT => unreachable!("FutureLeafVersion::from_consensus should be never called for 0xC0 value"),
+            TAPROOT_ANNEX_PREFIX => Err(TaprootError::InvalidTaprootLeafVersion(TAPROOT_ANNEX_PREFIX)),
+            odd if odd & 0xFE != odd => Err(TaprootError::InvalidTaprootLeafVersion(odd)),
+            even => Ok(FutureLeafVersion(even))
+        }
+    }
+
+    /// Get consensus representation of the future leaf version.
+    #[inline]
+    pub fn into_consensus(self) -> u8 {
+        self.0
+    }
+}
+
+impl fmt::Display for FutureLeafVersion {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Display::fmt(&self.0, f)
+    }
+}
+
 /// The leaf version for tapleafs
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum LeafVersion {
@@ -767,7 +798,7 @@ pub enum LeafVersion {
     TapScript,
 
     /// Future leaf version
-    Future(u8)
+    Future(FutureLeafVersion)
 }
 
 impl LeafVersion {
@@ -790,8 +821,7 @@ impl LeafVersion {
         match version {
             TAPROOT_LEAF_TAPSCRIPT => Ok(LeafVersion::TapScript),
             TAPROOT_ANNEX_PREFIX => Err(TaprootError::InvalidTaprootLeafVersion(TAPROOT_ANNEX_PREFIX)),
-            odd if odd & TAPROOT_LEAF_MASK != odd => Err(TaprootError::InvalidTaprootLeafVersion(odd)),
-            future => Ok(LeafVersion::Future(future)),
+            future => FutureLeafVersion::from_consensus(future).map(LeafVersion::Future),
         }
     }
 
@@ -799,7 +829,7 @@ impl LeafVersion {
     pub fn into_consensus(self) -> u8 {
         match self {
             LeafVersion::TapScript => TAPROOT_LEAF_TAPSCRIPT,
-            LeafVersion::Future(version) => version,
+            LeafVersion::Future(version) => version.into_consensus(),
         }
     }
 }
@@ -809,7 +839,7 @@ impl fmt::Display for LeafVersion {
         match (self, f.alternate()) {
             (LeafVersion::TapScript, false) => f.write_str("tapscript"),
             (LeafVersion::TapScript, true) => fmt::Display::fmt(&TAPROOT_LEAF_TAPSCRIPT, f),
-            (LeafVersion::Future(version), false) => write!(f, "future_script_{:#02x}", version),
+            (LeafVersion::Future(version), false) => write!(f, "future_script_{:#02x}", version.0),
             (LeafVersion::Future(version), true) => fmt::Display::fmt(version, f),
         }
     }
