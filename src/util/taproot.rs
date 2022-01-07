@@ -762,7 +762,6 @@ impl ControlBlock {
 
 /// The leaf version for tapleafs
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum LeafVersion {
     /// BIP-342 tapscript
     TapScript,
@@ -809,6 +808,43 @@ impl fmt::Display for LeafVersion {
             (LeafVersion::Future(version), false) => write!(f, "future_script_{:#02x}", version),
             (LeafVersion::Future(version), true) => fmt::Display::fmt(version, f),
         }
+    }
+}
+
+#[cfg(feature = "serde")]
+#[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
+impl ::serde::Serialize for LeafVersion {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: ::serde::Serializer,
+    {
+        serializer.serialize_u8(self.into_consensus())
+    }
+}
+
+#[cfg(feature = "serde")]
+#[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
+impl<'de> ::serde::Deserialize<'de> for LeafVersion {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: ::serde::Deserializer<'de> {
+        struct U8Visitor;
+        impl<'de> ::serde::de::Visitor<'de> for U8Visitor {
+            type Value = LeafVersion;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("a valid consensus-encoded taproot leaf version")
+            }
+
+            fn visit_u8<E>(self, value: u8) -> Result<Self::Value, E>
+                where
+                    E: ::serde::de::Error,
+            {
+                LeafVersion::from_consensus(value).map_err(|_| {
+                    E::invalid_value(::serde::de::Unexpected::Unsigned(value as u64), &"consensus-encoded leaf version as u8")
+                })
+            }
+        }
+
+        deserializer.deserialize_u8(U8Visitor)
     }
 }
 
