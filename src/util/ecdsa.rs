@@ -426,8 +426,7 @@ pub struct EcdsaSig {
 }
 
 impl EcdsaSig {
-
-    /// Deserialize from slice
+    /// Deserializes an ECDSA signature from a slice.
     pub fn from_slice(sl: &[u8]) -> Result<Self, EcdsaSigError> {
         let (hash_ty, sig) = sl.split_last()
             .ok_or(EcdsaSigError::EmptySignature)?;
@@ -438,7 +437,7 @@ impl EcdsaSig {
         Ok(EcdsaSig { sig, hash_ty })
     }
 
-    /// Serialize EcdsaSig
+    /// Serializes an ECDSA signature (inner secp256k1 signature in DER format).
     pub fn to_vec(&self) -> Vec<u8> {
         // TODO: add support to serialize to a writer to SerializedSig
         let mut ser_sig = self.sig.serialize_der().to_vec();
