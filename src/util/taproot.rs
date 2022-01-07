@@ -771,8 +771,12 @@ pub enum LeafVersion {
 }
 
 impl LeafVersion {
-    /// Obtain LeafVersion from u8, will error when last bit of ver is odd or
-    /// when ver is 0x50 (ANNEX_TAG)
+    /// Obtain LeafVersion from consensus byte representation.
+    ///
+    /// # Errors
+    /// - If the last bit of the `version` is odd.
+    /// - If the `version` is 0x50 ([`TAPROOT_ANNEX_PREFIX`]).
+    /// - If the `version` is not a valid [`LeafVersion`] byte.
     // Text from BIP341:
     // In order to support some forms of static analysis that rely on
     // being able to identify script spends without access to the output being
@@ -791,7 +795,7 @@ impl LeafVersion {
         }
     }
 
-    /// Get the inner version from LeafVersion
+    /// Get consensus representation of the [`LeafVersion`].
     pub fn into_consensus(self) -> u8 {
         match self {
             LeafVersion::TapScript => TAPROOT_LEAF_TAPSCRIPT,
