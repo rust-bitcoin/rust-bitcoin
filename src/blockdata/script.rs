@@ -315,12 +315,24 @@ impl Script {
     }
 
     /// Generates P2WPKH-type of scriptPubkey
+    #[deprecated(since = "0.28.0", note = "use Script::new_v0_p2wpkh method instead")]
     pub fn new_v0_wpkh(pubkey_hash: &WPubkeyHash) -> Script {
+        Script::new_v0_p2wpkh(pubkey_hash)
+    }
+
+    /// Generates P2WPKH-type of scriptPubkey
+    pub fn new_v0_p2wpkh(pubkey_hash: &WPubkeyHash) -> Script {
         Script::new_witness_program(WitnessVersion::V0, &pubkey_hash[..])
     }
 
     /// Generates P2WSH-type of scriptPubkey with a given hash of the redeem script
+    #[deprecated(since = "0.28.0", note = "use Script::new_v0_p2wsh method instead")]
     pub fn new_v0_wsh(script_hash: &WScriptHash) -> Script {
+        Script::new_v0_p2wsh(script_hash)
+    }
+
+    /// Generates P2WSH-type of scriptPubkey with a given hash of the redeem script
+    pub fn new_v0_p2wsh(script_hash: &WScriptHash) -> Script {
         Script::new_witness_program(WitnessVersion::V0, &script_hash[..])
     }
 
@@ -388,7 +400,7 @@ impl Script {
     /// Compute the P2WSH output corresponding to this witnessScript (aka the "witness redeem
     /// script")
     pub fn to_v0_p2wsh(&self) -> Script {
-        Script::new_v0_wsh(&self.wscript_hash())
+        Script::new_v0_p2wsh(&self.wscript_hash())
     }
 
     /// Compute P2TR output with a given internal key and a single script spending path equal to the
@@ -461,7 +473,7 @@ impl Script {
     pub fn is_v0_p2wsh(&self) -> bool {
         self.0.len() == 34 &&
             self.witness_version() == Some(WitnessVersion::V0) &&
-        self.0[1] == opcodes::all::OP_PUSHBYTES_32.into_u8()
+            self.0[1] == opcodes::all::OP_PUSHBYTES_32.into_u8()
     }
 
     /// Checks whether a script pubkey is a p2wpkh output
@@ -1082,7 +1094,7 @@ mod test {
         assert!(Script::new_p2pkh(&pubkey_hash).is_p2pkh());
 
         let wpubkey_hash = WPubkeyHash::hash(&pubkey.inner.serialize());
-        assert!(Script::new_v0_wpkh(&wpubkey_hash).is_v0_p2wpkh());
+        assert!(Script::new_v0_p2wpkh(&wpubkey_hash).is_v0_p2wpkh());
 
         let script = Builder::new().push_opcode(opcodes::all::OP_NUMEQUAL)
                                    .push_verify()
@@ -1093,7 +1105,7 @@ mod test {
         assert_eq!(script.to_p2sh(), p2sh);
 
         let wscript_hash = WScriptHash::hash(&script.serialize());
-        let p2wsh = Script::new_v0_wsh(&wscript_hash);
+        let p2wsh = Script::new_v0_p2wsh(&wscript_hash);
         assert!(p2wsh.is_v0_p2wsh());
         assert_eq!(script.to_v0_p2wsh(), p2wsh);
 
