@@ -42,7 +42,7 @@ mod message_signing {
     use secp256k1;
     use secp256k1::ecdsa::{RecoveryId, RecoverableSignature};
 
-    use util::ecdsa::PublicKey;
+    use util::key::PublicKey;
     use util::address::{Address, AddressType};
 
     /// An error used for dealing with Bitcoin Signed Messages.

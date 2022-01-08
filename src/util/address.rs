@@ -20,13 +20,13 @@
 //! ```rust
 //! use bitcoin::network::constants::Network;
 //! use bitcoin::util::address::Address;
-//! use bitcoin::util::ecdsa;
+//! use bitcoin::PublicKey;
 //! use bitcoin::secp256k1::Secp256k1;
 //! use bitcoin::secp256k1::rand::thread_rng;
 //!
 //! // Generate random key pair.
 //! let s = Secp256k1::new();
-//! let public_key = ecdsa::PublicKey::new(s.generate_keypair(&mut thread_rng()).1);
+//! let public_key = PublicKey::new(s.generate_keypair(&mut thread_rng()).1);
 //!
 //! // Generate pay-to-pubkey-hash address.
 //! let address = Address::p2pkh(&public_key, Network::Bitcoin);
@@ -47,8 +47,8 @@ use blockdata::{script, opcodes};
 use blockdata::constants::{PUBKEY_ADDRESS_PREFIX_MAIN, SCRIPT_ADDRESS_PREFIX_MAIN, PUBKEY_ADDRESS_PREFIX_TEST, SCRIPT_ADDRESS_PREFIX_TEST, MAX_SCRIPT_ELEMENT_SIZE};
 use network::constants::Network;
 use util::base58;
-use util::ecdsa;
 use util::taproot::TapBranchHash;
+use util::key::PublicKey;
 use blockdata::script::Instruction;
 use util::schnorr::{TapTweak, UntweakedPublicKey, TweakedPublicKey};
 
@@ -408,7 +408,7 @@ impl Payload {
 
     /// Creates a pay to (compressed) public key hash payload from a public key
     #[inline]
-    pub fn p2pkh(pk: &ecdsa::PublicKey) -> Payload {
+    pub fn p2pkh(pk: &PublicKey) -> Payload {
         Payload::PubkeyHash(pk.pubkey_hash())
     }
 
@@ -422,7 +422,7 @@ impl Payload {
     }
 
     /// Create a witness pay to public key payload from a public key
-    pub fn p2wpkh(pk: &ecdsa::PublicKey) -> Result<Payload, Error> {
+    pub fn p2wpkh(pk: &PublicKey) -> Result<Payload, Error> {
         Ok(Payload::WitnessProgram {
             version: WitnessVersion::V0,
             program: pk.wpubkey_hash().ok_or(Error::UncompressedPubkey)?.to_vec(),
@@ -430,7 +430,7 @@ impl Payload {
     }
 
     /// Create a pay to script payload that embeds a witness pay to public key
-    pub fn p2shwpkh(pk: &ecdsa::PublicKey) -> Result<Payload, Error> {
+    pub fn p2shwpkh(pk: &PublicKey) -> Result<Payload, Error> {
         let builder = script::Builder::new()
             .push_int(0)
             .push_slice(&pk.wpubkey_hash().ok_or(Error::UncompressedPubkey)?);
@@ -543,7 +543,7 @@ impl Address {
     ///
     /// This is the preferred non-witness type address.
     #[inline]
-    pub fn p2pkh(pk: &ecdsa::PublicKey, network: Network) -> Address {
+    pub fn p2pkh(pk: &PublicKey, network: Network) -> Address {
         Address {
             network,
             payload: Payload::p2pkh(pk),
@@ -568,7 +568,7 @@ impl Address {
     ///
     /// # Errors
     /// Will only return an error if an uncompressed public key is provided.
-    pub fn p2wpkh(pk: &ecdsa::PublicKey, network: Network) -> Result<Address, Error> {
+    pub fn p2wpkh(pk: &PublicKey, network: Network) -> Result<Address, Error> {
         Ok(Address {
             network,
             payload: Payload::p2wpkh(pk)?,
@@ -581,7 +581,7 @@ impl Address {
     ///
     /// # Errors
     /// Will only return an Error if an uncompressed public key is provided.
-    pub fn p2shwpkh(pk: &ecdsa::PublicKey, network: Network) -> Result<Address, Error> {
+    pub fn p2shwpkh(pk: &PublicKey, network: Network) -> Result<Address, Error> {
         Ok(Address {
             network,
             payload: Payload::p2shwpkh(pk)?,
@@ -878,7 +878,7 @@ mod tests {
 
     use blockdata::script::Script;
     use network::constants::Network::{Bitcoin, Testnet};
-    use util::ecdsa::PublicKey;
+    use util::key::PublicKey;
     use secp256k1::XOnlyPublicKey;
 
     use super::*;

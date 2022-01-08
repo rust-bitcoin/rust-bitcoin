@@ -15,13 +15,15 @@
 //!
 //! This module provides ECDSA keys used in Bitcoin that can be roundtrip
 //! (de)serialized.
-//!
+
+pub use secp256k1::{XOnlyPublicKey, KeyPair};
 
 use prelude::*;
 
 use core::{ops, str::FromStr};
 use core::fmt::{self, Write as _fmtWrite};
 use io;
+#[cfg(feature = "std")] use std::error;
 
 use secp256k1::{self, Secp256k1};
 use network::constants::Network;
@@ -29,8 +31,52 @@ use hashes::{Hash, hash160, hex};
 use hashes::hex::FromHex;
 use hash_types::{PubkeyHash, WPubkeyHash};
 use util::base58;
-use util::key::Error;
 use blockdata::transaction::{EcdsaSigHashType, NonStandardSigHashType};
+
+
+/// A key-related error.
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+pub enum Error {
+    /// Base58 encoding error
+    Base58(base58::Error),
+    /// secp256k1-related error
+    Secp256k1(secp256k1::Error),
+}
+
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Error::Base58(ref e) => write!(f, "Key base58 error: {}", e),
+            Error::Secp256k1(ref e) => write!(f, "Key secp256k1 error: {}", e),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+impl ::std::error::Error for Error {
+    fn cause(&self) -> Option<&dyn error::Error> {
+        match *self {
+            Error::Base58(ref e) => Some(e),
+            Error::Secp256k1(ref e) => Some(e),
+        }
+    }
+}
+
+#[doc(hidden)]
+impl From<base58::Error> for Error {
+    fn from(e: base58::Error) -> Error {
+        Error::Base58(e)
+    }
+}
+
+#[doc(hidden)]
+impl From<secp256k1::Error> for Error {
+    fn from(e: secp256k1::Error) -> Error {
+        Error::Secp256k1(e)
+    }
+}
 
 
 /// A Bitcoin ECDSA public key

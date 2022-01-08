@@ -18,7 +18,6 @@
 //!
 
 pub mod ecdsa;
-pub mod key;
 pub mod schnorr;
 pub mod address;
 pub mod amount;
@@ -36,6 +35,14 @@ pub mod bip158;
 pub mod sighash;
 
 pub(crate) mod endian;
+
+pub mod key {
+    //! Bitcoin keys.
+    //!
+    //! This module provides keys used in Bitcoin that can be roundtrip (de)serialized.
+
+    pub use super::ecdsa::{XOnlyPublicKey, PublicKey, PrivateKey, KeyPair, Error};
+}
 
 use prelude::*;
 use io;
