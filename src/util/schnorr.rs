@@ -20,6 +20,7 @@
 use core::fmt;
 use prelude::*;
 
+#[deprecated(since = "0.28.0", note = "Please use `util::key` instead")]
 pub use secp256k1::{XOnlyPublicKey, KeyPair};
 use secp256k1::{self, Secp256k1, Verification, constants};
 use hashes::Hash;

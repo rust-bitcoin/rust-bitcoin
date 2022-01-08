@@ -16,8 +16,8 @@
 //! This module provides keys used in Bitcoin that can be roundtrip (de)serialized.
 //!
 
-#[deprecated(since = "0.26.1", note = "Please use `util::ecdsa` instead")]
 pub use util::ecdsa::{PrivateKey, PublicKey};
+pub use secp256k1::{XOnlyPublicKey, KeyPair};
 
 use core::fmt;
 #[cfg(feature = "std")] use std::error;
