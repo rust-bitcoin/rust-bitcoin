@@ -25,11 +25,12 @@ use io;
 
 use secp256k1::{self, Secp256k1};
 use network::constants::Network;
-use hashes::{Hash, hash160};
+use hashes::{Hash, hash160, hex};
+use hashes::hex::FromHex;
 use hash_types::{PubkeyHash, WPubkeyHash};
 use util::base58;
 use util::key::Error;
-use blockdata::transaction::EcdsaSigHashType;
+use blockdata::transaction::{EcdsaSigHashType, NonStandardSigHashType};
 
 
 /// A Bitcoin ECDSA public key
@@ -417,6 +418,7 @@ impl<'de> ::serde::Deserialize<'de> for PublicKey {
 
 /// An ECDSA signature with the corresponding hash type.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct EcdsaSig {
     /// The underlying ECDSA Signature
     pub sig: secp256k1::ecdsa::Signature,
@@ -425,13 +427,20 @@ pub struct EcdsaSig {
 }
 
 impl EcdsaSig {
+    /// Constructs ECDSA bitcoin signature for [`EcdsaSigHashType::All`]
+    pub fn sighash_all(sig: secp256k1::ecdsa::Signature) -> EcdsaSig {
+        EcdsaSig {
+            sig,
+            hash_ty: EcdsaSigHashType::All
+        }
+    }
 
     /// Deserialize from slice
     pub fn from_slice(sl: &[u8]) -> Result<Self, EcdsaSigError> {
         let (hash_ty, sig) = sl.split_last()
             .ok_or(EcdsaSigError::EmptySignature)?;
         let hash_ty = EcdsaSigHashType::from_u32_standard(*hash_ty as u32)
-            .map_err(|_| EcdsaSigError::NonStandardSigHashType(*hash_ty))?;
+            .map_err(|_| EcdsaSigError::NonStandardSigHashType(*hash_ty as u32))?;
         let sig = secp256k1::ecdsa::Signature::from_der(sig)
             .map_err(EcdsaSigError::Secp256k1)?;
         Ok(EcdsaSig { sig, hash_ty })
@@ -446,11 +455,34 @@ impl EcdsaSig {
     }
 }
 
+impl fmt::Display for EcdsaSig {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        hex::format_hex(&self.sig.serialize_der(), f)?;
+        hex::format_hex(&[self.hash_ty as u8], f)
+    }
+}
+
+impl FromStr for EcdsaSig {
+    type Err = EcdsaSigError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let bytes = Vec::from_hex(s)?;
+        let (sighash_byte, signature) = bytes.split_last()
+            .ok_or(EcdsaSigError::EmptySignature)?;
+        Ok(EcdsaSig {
+            sig: secp256k1::ecdsa::Signature::from_der(signature)?,
+            hash_ty: EcdsaSigHashType::from_u32_standard(*sighash_byte as u32)?
+        })
+    }
+}
+
 /// A key-related error.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum EcdsaSigError {
+    /// Hex encoding error
+    HexEncoding(hex::Error),
     /// Base58 encoding error
-    NonStandardSigHashType(u8),
+    NonStandardSigHashType(u32),
     /// Empty Signature
     EmptySignature,
     /// secp256k1-related error
@@ -467,6 +499,7 @@ impl fmt::Display for EcdsaSigError {
                 write!(f, "Invalid Ecdsa signature: {}", e),
             EcdsaSigError::EmptySignature =>
                 write!(f, "Empty ECDSA signature"),
+            EcdsaSigError::HexEncoding(e) => write!(f, "EcdsaSig hex encoding error: {}", e)
         }
     }
 }
@@ -478,6 +511,18 @@ impl ::std::error::Error for EcdsaSigError {}
 impl From<secp256k1::Error> for EcdsaSigError {
     fn from(e: secp256k1::Error) -> EcdsaSigError {
         EcdsaSigError::Secp256k1(e)
+    }
+}
+
+impl From<NonStandardSigHashType> for EcdsaSigError {
+    fn from(err: NonStandardSigHashType) -> Self {
+        EcdsaSigError::NonStandardSigHashType(err.0)
+    }
+}
+
+impl From<hex::Error> for EcdsaSigError {
+    fn from(err: hex::Error) -> Self {
+        EcdsaSigError::HexEncoding(err)
     }
 }
 

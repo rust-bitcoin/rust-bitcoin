@@ -477,7 +477,7 @@ mod tests {
                 witness_script: None,
                 partial_sigs: vec![(
                     "0339880dc92394b7355e3d0439fa283c31de7590812ea011c4245c0674a685e883".parse().unwrap(),
-                    vec![8, 5, 4],
+                    "304402204f67e2afb76142d44fae58a2495d33a3419daa26cd0db8d04f3452b63289ac0f022010762a9fb67e94cc5cad9026f6dc99ff7f070f4278d30fbc7d0c869dd38c7fe701".parse().unwrap(),
                 )].into_iter().collect(),
                 bip32_derivation: keypaths.clone(),
                 final_script_witness: Some(vec![vec![1, 3], vec![5]]),

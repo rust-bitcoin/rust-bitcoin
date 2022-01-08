@@ -28,7 +28,7 @@ use consensus::encode::{self, serialize, Decodable, Encodable, deserialize_parti
 use secp256k1::{self, XOnlyPublicKey};
 use util::bip32::{ChildNumber, Fingerprint, KeySource};
 use hashes::{hash160, ripemd160, sha256, sha256d, Hash};
-use util::ecdsa::PublicKey;
+use util::ecdsa::{PublicKey, EcdsaSig};
 use util::psbt;
 use util::taproot::{TapBranchHash, TapLeafHash, ControlBlock, LeafVersion};
 use schnorr;
@@ -86,6 +86,30 @@ impl Deserialize for PublicKey {
     fn deserialize(bytes: &[u8]) -> Result<Self, encode::Error> {
         PublicKey::from_slice(bytes)
             .map_err(|_| encode::Error::ParseFailed("invalid public key"))
+    }
+}
+
+impl Serialize for EcdsaSig {
+    fn serialize(&self) -> Vec<u8> {
+        let mut buf = Vec::with_capacity(72);
+        buf.extend(self.sig.serialize_der().iter());
+        buf.push(self.hash_ty as u8);
+        buf
+    }
+}
+
+impl Deserialize for EcdsaSig {
+    fn deserialize(bytes: &[u8]) -> Result<Self, encode::Error> {
+        let (sighash_byte, signature) = bytes.split_last()
+            .ok_or(encode::Error::ParseFailed("empty partial signature data"))?;
+        Ok(EcdsaSig {
+            sig: secp256k1::ecdsa::Signature::from_der(signature)
+                .map_err(|_| encode::Error::ParseFailed("non-DER encoded signature"))?,
+            // NB: Since BIP-174 says "the signature as would be pushed to the stack from
+            // a scriptSig or witness" we should use a consensus deserialization and do
+            // not error on a non-standard values.
+            hash_ty: EcdsaSigHashType::from_u32_consensus(*sighash_byte as u32)
+        })
     }
 }
 
