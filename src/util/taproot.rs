@@ -98,7 +98,6 @@ sha256t_hash_newtype!(TapSighashHash, TapSighashTag, MIDSTATE_TAPSIGHASH, 64,
 );
 
 impl TapTweakHash {
-
     /// Create a new BIP341 [`TapTweakHash`] from key and tweak
     /// Produces H_taptweak(P||R) where P is internal key and R is the merkle root
     pub fn from_key_and_tweak(
@@ -788,6 +787,20 @@ impl fmt::Display for FutureLeafVersion {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Display::fmt(&self.0, f)
+    }
+}
+
+impl fmt::LowerHex for FutureLeafVersion {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::LowerHex::fmt(&self.0, f)
+    }
+}
+
+impl fmt::UpperHex for FutureLeafVersion {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::UpperHex::fmt(&self.0, f)
     }
 }
 
