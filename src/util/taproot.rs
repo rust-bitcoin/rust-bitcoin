@@ -98,7 +98,6 @@ sha256t_hash_newtype!(TapSighashHash, TapSighashTag, MIDSTATE_TAPSIGHASH, 64,
 );
 
 impl TapTweakHash {
-
     /// Create a new BIP341 [`TapTweakHash`] from key and tweak
     /// Produces H_taptweak(P||R) where P is internal key and R is the merkle root
     pub fn from_key_and_tweak(
@@ -791,6 +790,20 @@ impl fmt::Display for FutureLeafVersion {
     }
 }
 
+impl fmt::LowerHex for FutureLeafVersion {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::LowerHex::fmt(&self.0, f)
+    }
+}
+
+impl fmt::UpperHex for FutureLeafVersion {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::UpperHex::fmt(&self.0, f)
+    }
+}
+
 /// The leaf version for tapleafs
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum LeafVersion {
@@ -807,7 +820,6 @@ impl LeafVersion {
     /// # Errors
     /// - If the last bit of the `version` is odd.
     /// - If the `version` is 0x50 ([`TAPROOT_ANNEX_PREFIX`]).
-    /// - If the `version` is not a valid [`LeafVersion`] byte.
     // Text from BIP341:
     // In order to support some forms of static analysis that rely on
     // being able to identify script spends without access to the output being
@@ -837,11 +849,23 @@ impl LeafVersion {
 impl fmt::Display for LeafVersion {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match (self, f.alternate()) {
-            (LeafVersion::TapScript, false) => f.write_str("tapscript"),
-            (LeafVersion::TapScript, true) => fmt::Display::fmt(&TAPROOT_LEAF_TAPSCRIPT, f),
-            (LeafVersion::Future(version), false) => write!(f, "future_script_{:#02x}", version.0),
-            (LeafVersion::Future(version), true) => fmt::Display::fmt(version, f),
+            (LeafVersion::TapScript, true) => f.write_str("tapscript"),
+            (LeafVersion::TapScript, false) => fmt::Display::fmt(&TAPROOT_LEAF_TAPSCRIPT, f),
+            (LeafVersion::Future(version), true) => write!(f, "future_script_{:#02x}", version.0),
+            (LeafVersion::Future(version), false) => fmt::Display::fmt(version, f),
         }
+    }
+}
+
+impl fmt::LowerHex for LeafVersion {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::LowerHex::fmt(&self.into_consensus(), f)
+    }
+}
+
+impl fmt::UpperHex for LeafVersion {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::UpperHex::fmt(&self.into_consensus(), f)
     }
 }
 
