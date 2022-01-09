@@ -148,7 +148,7 @@ mod message_signing {
             let msg = secp256k1::Message::from_slice(&msg_hash[..])?;
             let pubkey = secp_ctx.recover_ecdsa(&msg, &self.signature)?;
             Ok(PublicKey {
-                key: pubkey,
+                inner: pubkey,
                 compressed: self.compressed,
             })
         }
@@ -330,7 +330,7 @@ mod tests {
         let signature2 = super::MessageSignature::from_str(&signature.to_string()).unwrap();
         let pubkey = signature2.recover_pubkey(&secp, msg_hash).unwrap();
         assert_eq!(pubkey.compressed, true);
-        assert_eq!(pubkey.key, secp256k1::PublicKey::from_secret_key(&secp, &privkey));
+        assert_eq!(pubkey.inner, secp256k1::PublicKey::from_secret_key(&secp, &privkey));
 
         let p2pkh = ::Address::p2pkh(&pubkey, ::Network::Bitcoin);
         assert_eq!(signature2.is_signed_by_address(&secp, &p2pkh, msg_hash), Ok(true));

@@ -39,7 +39,7 @@ pub struct PublicKey {
     /// Whether this public key should be serialized as compressed
     pub compressed: bool,
     /// The actual ECDSA key
-    pub key: secp256k1::PublicKey,
+    pub inner: secp256k1::PublicKey,
 }
 
 impl PublicKey {
@@ -47,7 +47,7 @@ impl PublicKey {
     pub fn new(key: secp256k1::PublicKey) -> PublicKey {
         PublicKey {
             compressed: true,
-            key,
+            inner: key,
         }
     }
 
@@ -56,16 +56,16 @@ impl PublicKey {
     pub fn new_uncompressed(key: secp256k1::PublicKey) -> PublicKey {
         PublicKey {
             compressed: false,
-            key,
+            inner: key,
         }
     }
 
     /// Returns bitcoin 160-bit hash of the public key
     pub fn pubkey_hash(&self) -> PubkeyHash {
         if self.compressed {
-            PubkeyHash::hash(&self.key.serialize())
+            PubkeyHash::hash(&self.inner.serialize())
         } else {
-            PubkeyHash::hash(&self.key.serialize_uncompressed())
+            PubkeyHash::hash(&self.inner.serialize_uncompressed())
         }
     }
 
@@ -73,7 +73,7 @@ impl PublicKey {
     pub fn wpubkey_hash(&self) -> Option<WPubkeyHash> {
         if self.compressed {
             Some(WPubkeyHash::from_inner(
-                hash160::Hash::hash(&self.key.serialize()).into_inner()
+                hash160::Hash::hash(&self.inner.serialize()).into_inner()
             ))
         } else {
             // We can't create witness pubkey hashes for an uncompressed
@@ -85,9 +85,9 @@ impl PublicKey {
     /// Write the public key into a writer
     pub fn write_into<W: io::Write>(&self, mut writer: W) -> Result<(), io::Error> {
         if self.compressed {
-            writer.write_all(&self.key.serialize())
+            writer.write_all(&self.inner.serialize())
         } else {
-            writer.write_all(&self.key.serialize_uncompressed())
+            writer.write_all(&self.inner.serialize_uncompressed())
         }
     }
 
@@ -136,7 +136,7 @@ impl PublicKey {
 
         Ok(PublicKey {
             compressed,
-            key: secp256k1::PublicKey::from_slice(data)?,
+            inner: secp256k1::PublicKey::from_slice(data)?,
         })
     }
 
@@ -149,11 +149,11 @@ impl PublicKey {
 impl fmt::Display for PublicKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.compressed {
-            for ch in &self.key.serialize()[..] {
+            for ch in &self.inner.serialize()[..] {
                 write!(f, "{:02x}", ch)?;
             }
         } else {
-            for ch in &self.key.serialize_uncompressed()[..] {
+            for ch in &self.inner.serialize_uncompressed()[..] {
                 write!(f, "{:02x}", ch)?;
             }
         }
@@ -166,7 +166,7 @@ impl FromStr for PublicKey {
     fn from_str(s: &str) -> Result<PublicKey, Error> {
         let key = secp256k1::PublicKey::from_str(s)?;
         Ok(PublicKey {
-            key,
+            inner: key,
             compressed: s.len() == 66
         })
     }
@@ -181,7 +181,7 @@ pub struct PrivateKey {
     /// The network on which this key should be used
     pub network: Network,
     /// The actual ECDSA key
-    pub key: secp256k1::SecretKey,
+    pub inner: secp256k1::SecretKey,
 }
 
 impl PrivateKey {
@@ -191,7 +191,7 @@ impl PrivateKey {
         PrivateKey {
             compressed: true,
             network,
-            key,
+            inner: key,
         }
     }
 
@@ -201,7 +201,7 @@ impl PrivateKey {
         PrivateKey {
             compressed: false,
             network,
-            key,
+            inner: key,
         }
     }
 
@@ -209,13 +209,13 @@ impl PrivateKey {
     pub fn public_key<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> PublicKey {
         PublicKey {
             compressed: self.compressed,
-            key: secp256k1::PublicKey::from_secret_key(secp, &self.key)
+            inner: secp256k1::PublicKey::from_secret_key(secp, &self.inner)
         }
     }
 
     /// Serialize the private key to bytes
     pub fn to_bytes(&self) -> Vec<u8> {
-        self.key[..].to_vec()
+        self.inner[..].to_vec()
     }
 
     /// Deserialize a private key from a slice
@@ -233,7 +233,7 @@ impl PrivateKey {
             Network::Bitcoin => 128,
             Network::Testnet | Network::Signet | Network::Regtest => 239,
         };
-        ret[1..33].copy_from_slice(&self.key[..]);
+        ret[1..33].copy_from_slice(&self.inner[..]);
         let privkey = if self.compressed {
             ret[33] = 1;
             base58::check_encode_slice(&ret[..])
@@ -270,7 +270,7 @@ impl PrivateKey {
         Ok(PrivateKey {
             compressed,
             network,
-            key: secp256k1::SecretKey::from_slice(&data[1..33])?,
+            inner: secp256k1::SecretKey::from_slice(&data[1..33])?,
         })
     }
 }
@@ -298,7 +298,7 @@ impl FromStr for PrivateKey {
 impl ops::Index<ops::RangeFull> for PrivateKey {
     type Output = [u8];
     fn index(&self, _: ops::RangeFull) -> &[u8] {
-        &self.key[..]
+        &self.inner[..]
     }
 }
 
@@ -354,9 +354,9 @@ impl ::serde::Serialize for PublicKey {
             s.collect_str(self)
         } else {
             if self.compressed {
-                s.serialize_bytes(&self.key.serialize()[..])
+                s.serialize_bytes(&self.inner.serialize()[..])
             } else {
-                s.serialize_bytes(&self.key.serialize_uncompressed()[..])
+                s.serialize_bytes(&self.inner.serialize_uncompressed()[..])
             }
         }
     }
@@ -626,7 +626,7 @@ mod tests {
         let sk = PrivateKey::from_str(&KEY_WIF).unwrap();
         let pk = PublicKey::from_private_key(&s, &sk);
         let pk_u = PublicKey {
-            key: pk.key,
+            inner: pk.inner,
             compressed: false,
         };
 
