@@ -18,6 +18,7 @@
 //!
 
 pub mod key;
+pub mod ecdsa;
 pub mod schnorr;
 pub mod address;
 pub mod amount;
@@ -35,14 +36,6 @@ pub mod bip158;
 pub mod sighash;
 
 pub(crate) mod endian;
-
-pub mod ecdsa {
-    //! ECDSA Bitcoin signatures.
-    //!
-    //! This module provides ECDSA signatures used Bitcoin that can be roundtrip (de)serialized.
-
-    pub use super::key::{EcdsaSig, EcdsaSigError};
-}
 
 use prelude::*;
 use io;
