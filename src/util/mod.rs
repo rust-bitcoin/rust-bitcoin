@@ -17,7 +17,7 @@
 //! Functions needed by all parts of the Bitcoin library.
 //!
 
-pub mod ecdsa;
+pub mod key;
 pub mod schnorr;
 pub mod address;
 pub mod amount;
@@ -36,12 +36,12 @@ pub mod sighash;
 
 pub(crate) mod endian;
 
-pub mod key {
-    //! Bitcoin keys.
+pub mod ecdsa {
+    //! ECDSA Bitcoin signatures.
     //!
-    //! This module provides keys used in Bitcoin that can be roundtrip (de)serialized.
+    //! This module provides ECDSA signatures used Bitcoin that can be roundtrip (de)serialized.
 
-    pub use super::ecdsa::{XOnlyPublicKey, PublicKey, PrivateKey, KeyPair, Error};
+    pub use super::key::{EcdsaSig, EcdsaSigError};
 }
 
 use prelude::*;

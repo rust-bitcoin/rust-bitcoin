@@ -11,9 +11,9 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! ECDSA Bitcoin keys.
+//! Bitcoin keys.
 //!
-//! This module provides ECDSA keys used in Bitcoin that can be roundtrip
+//! This module provides keys used in Bitcoin that can be roundtrip
 //! (de)serialized.
 
 pub use secp256k1::{XOnlyPublicKey, KeyPair};
