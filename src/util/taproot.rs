@@ -15,6 +15,7 @@
 //!
 //! This module provides support for taproot tagged hashes.
 //!
+
 use prelude::*;
 use io;
 use secp256k1::{self, Secp256k1};
@@ -120,7 +121,7 @@ impl TapLeafHash {
     /// function to compute leaf hash from components
     pub fn from_script(script: &Script, ver: LeafVersion) -> TapLeafHash {
         let mut eng = TapLeafHash::engine();
-        ver.as_u8()
+        ver.into_consensus()
             .consensus_encode(&mut eng)
             .expect("engines don't error");
         script
@@ -142,6 +143,8 @@ pub const TAPROOT_LEAF_MASK: u8 = 0xfe;
 /// Tapscript leaf version
 // https://github.com/bitcoin/bitcoin/blob/e826b22da252e0599c61d21c98ff89f366b3120f/src/script/interpreter.h#L226
 pub const TAPROOT_LEAF_TAPSCRIPT: u8 = 0xc0;
+/// Taproot annex prefix
+pub const TAPROOT_ANNEX_PREFIX: u8 = 0x50;
 /// Tapscript control base size
 // https://github.com/bitcoin/bitcoin/blob/e826b22da252e0599c61d21c98ff89f366b3120f/src/script/interpreter.h#L227
 pub const TAPROOT_CONTROL_BASE_SIZE: usize = 33;
@@ -152,6 +155,7 @@ pub const TAPROOT_CONTROL_MAX_SIZE: usize =
 
 // type alias for versioned tap script corresponding merkle proof
 type ScriptMerkleProofMap = BTreeMap<(Script, LeafVersion), BTreeSet<TaprootMerkleBranch>>;
+
 /// Data structure for representing Taproot spending information.
 /// Taproot output corresponds to a combination of a
 /// single public key condition (known the internal key), and zero or more
@@ -216,7 +220,7 @@ impl TaprootSpendInfo {
     {
         let mut node_weights = BinaryHeap::<(Reverse<u64>, NodeInfo)>::new();
         for (p, leaf) in script_weights {
-            node_weights.push((Reverse(p as u64), NodeInfo::new_leaf_with_ver(leaf, LeafVersion::default())));
+            node_weights.push((Reverse(p as u64), NodeInfo::new_leaf_with_ver(leaf, LeafVersion::TapScript)));
         }
         if node_weights.is_empty() {
             return Err(TaprootBuilderError::IncompleteTree);
@@ -409,7 +413,7 @@ impl TaprootBuilder {
     /// See [`TaprootBuilder::add_leaf_with_ver`] for adding a leaf with specific version
     /// See [Wikipedia](https://en.wikipedia.org/wiki/Depth-first_search) for more details
     pub fn add_leaf(self, depth: usize, script: Script) -> Result<Self, TaprootBuilderError> {
-        self.add_leaf_with_ver(depth, script, LeafVersion::default())
+        self.add_leaf_with_ver(depth, script, LeafVersion::TapScript)
     }
 
     /// Add a hidden/omitted node at a depth `depth` to the builder.
@@ -680,7 +684,7 @@ impl ControlBlock {
             return Err(TaprootError::InvalidControlBlockSize(sl.len()));
         }
         let output_key_parity = secp256k1::Parity::from((sl[0] & 1) as i32);
-        let leaf_version = LeafVersion::from_u8(sl[0] & TAPROOT_LEAF_MASK)?;
+        let leaf_version = LeafVersion::from_consensus(sl[0] & TAPROOT_LEAF_MASK)?;
         let internal_key = UntweakedPublicKey::from_slice(&sl[1..TAPROOT_CONTROL_BASE_SIZE])
             .map_err(TaprootError::InvalidInternalKey)?;
         let merkle_branch = TaprootMerkleBranch::from_slice(&sl[TAPROOT_CONTROL_BASE_SIZE..])?;
@@ -700,7 +704,7 @@ impl ControlBlock {
 
     /// Serialize to a writer. Returns the number of bytes written
     pub fn encode<Write: io::Write>(&self, mut writer: Write) -> io::Result<usize> {
-        let first_byte: u8 = i32::from(self.output_key_parity) as u8 | self.leaf_version.as_u8();
+        let first_byte: u8 = i32::from(self.output_key_parity) as u8 | self.leaf_version.into_consensus();
         let mut bytes_written = 0;
         bytes_written += writer.write(&[first_byte])?;
         bytes_written += writer.write(&self.internal_key.serialize())?;
@@ -756,20 +760,54 @@ impl ControlBlock {
     }
 }
 
-/// The leaf version for tapleafs
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct LeafVersion(u8);
+/// Inner type representing future (non-tapscript) leaf versions. See [`LeafVersion::Future`].
+///
+/// NB: NO PUBLIC CONSTRUCTOR!
+/// The only way to construct this is by converting u8 to LeafVersion and then extracting it.
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
+pub struct FutureLeafVersion(u8);
 
-impl Default for LeafVersion {
-    fn default() -> Self {
-        LeafVersion(TAPROOT_LEAF_TAPSCRIPT)
+impl FutureLeafVersion {
+    pub(self) fn from_consensus(version: u8) -> Result<FutureLeafVersion, TaprootError> {
+        match version {
+            TAPROOT_LEAF_TAPSCRIPT => unreachable!("FutureLeafVersion::from_consensus should be never called for 0xC0 value"),
+            TAPROOT_ANNEX_PREFIX => Err(TaprootError::InvalidTaprootLeafVersion(TAPROOT_ANNEX_PREFIX)),
+            odd if odd & 0xFE != odd => Err(TaprootError::InvalidTaprootLeafVersion(odd)),
+            even => Ok(FutureLeafVersion(even))
+        }
+    }
+
+    /// Get consensus representation of the future leaf version.
+    #[inline]
+    pub fn into_consensus(self) -> u8 {
+        self.0
     }
 }
 
+impl fmt::Display for FutureLeafVersion {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Display::fmt(&self.0, f)
+    }
+}
+
+/// The leaf version for tapleafs
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum LeafVersion {
+    /// BIP-342 tapscript
+    TapScript,
+
+    /// Future leaf version
+    Future(FutureLeafVersion)
+}
+
 impl LeafVersion {
-    /// Obtain LeafVersion from u8, will error when last bit of ver is even or
-    /// when ver is 0x50 (ANNEX_TAG)
+    /// Obtain LeafVersion from consensus byte representation.
+    ///
+    /// # Errors
+    /// - If the last bit of the `version` is odd.
+    /// - If the `version` is 0x50 ([`TAPROOT_ANNEX_PREFIX`]).
+    /// - If the `version` is not a valid [`LeafVersion`] byte.
     // Text from BIP341:
     // In order to support some forms of static analysis that rely on
     // being able to identify script spends without access to the output being
@@ -779,23 +817,68 @@ impl LeafVersion {
     // or an opcode that is not valid as the first opcode).
     // The values that comply to this rule are the 32 even values between
     // 0xc0 and 0xfe and also 0x66, 0x7e, 0x80, 0x84, 0x96, 0x98, 0xba, 0xbc, 0xbe
-    pub fn from_u8(ver: u8) -> Result<Self, TaprootError> {
-        if ver & TAPROOT_LEAF_MASK == ver && ver != 0x50 {
-            Ok(LeafVersion(ver))
-        } else {
-            Err(TaprootError::InvalidTaprootLeafVersion(ver))
+    pub fn from_consensus(version: u8) -> Result<Self, TaprootError> {
+        match version {
+            TAPROOT_LEAF_TAPSCRIPT => Ok(LeafVersion::TapScript),
+            TAPROOT_ANNEX_PREFIX => Err(TaprootError::InvalidTaprootLeafVersion(TAPROOT_ANNEX_PREFIX)),
+            future => FutureLeafVersion::from_consensus(future).map(LeafVersion::Future),
         }
     }
 
-    /// Get the inner version from LeafVersion
-    pub fn as_u8(&self) -> u8 {
-        self.0
+    /// Get consensus representation of the [`LeafVersion`].
+    pub fn into_consensus(self) -> u8 {
+        match self {
+            LeafVersion::TapScript => TAPROOT_LEAF_TAPSCRIPT,
+            LeafVersion::Future(version) => version.into_consensus(),
+        }
     }
 }
 
-impl Into<u8> for LeafVersion {
-    fn into(self) -> u8 {
-        self.0
+impl fmt::Display for LeafVersion {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match (self, f.alternate()) {
+            (LeafVersion::TapScript, false) => f.write_str("tapscript"),
+            (LeafVersion::TapScript, true) => fmt::Display::fmt(&TAPROOT_LEAF_TAPSCRIPT, f),
+            (LeafVersion::Future(version), false) => write!(f, "future_script_{:#02x}", version.0),
+            (LeafVersion::Future(version), true) => fmt::Display::fmt(version, f),
+        }
+    }
+}
+
+#[cfg(feature = "serde")]
+#[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
+impl ::serde::Serialize for LeafVersion {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: ::serde::Serializer,
+    {
+        serializer.serialize_u8(self.into_consensus())
+    }
+}
+
+#[cfg(feature = "serde")]
+#[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
+impl<'de> ::serde::Deserialize<'de> for LeafVersion {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: ::serde::Deserializer<'de> {
+        struct U8Visitor;
+        impl<'de> ::serde::de::Visitor<'de> for U8Visitor {
+            type Value = LeafVersion;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("a valid consensus-encoded taproot leaf version")
+            }
+
+            fn visit_u8<E>(self, value: u8) -> Result<Self::Value, E>
+                where
+                    E: ::serde::de::Error,
+            {
+                LeafVersion::from_consensus(value).map_err(|_| {
+                    E::invalid_value(::serde::de::Unexpected::Unsigned(value as u64), &"consensus-encoded leaf version as u8")
+                })
+            }
+        }
+
+        deserializer.deserialize_u8(U8Visitor)
     }
 }
 
@@ -1063,7 +1146,7 @@ mod test {
                 length,
                 tree_info
                     .script_map
-                    .get(&(Script::from_hex(script).unwrap(), LeafVersion::default()))
+                    .get(&(Script::from_hex(script).unwrap(), LeafVersion::TapScript))
                     .expect("Present Key")
                     .iter()
                     .next()
@@ -1078,7 +1161,7 @@ mod test {
 
         // Try to create and verify a control block from each path
         for (_weights, script) in script_weights {
-            let ver_script = (script, LeafVersion::default());
+            let ver_script = (script, LeafVersion::TapScript);
             let ctrl_block = tree_info.control_block(&ver_script).unwrap();
             assert!(ctrl_block.verify_taproot_commitment(&secp, &output_key, &ver_script.0))
         }
@@ -1114,7 +1197,7 @@ mod test {
         let output_key = tree_info.output_key();
 
         for script in vec![a, b, c, d, e] {
-            let ver_script = (script, LeafVersion::default());
+            let ver_script = (script, LeafVersion::TapScript);
             let ctrl_block = tree_info.control_block(&ver_script).unwrap();
             assert!(ctrl_block.verify_taproot_commitment(&secp, &output_key, &ver_script.0))
         }
@@ -1137,7 +1220,7 @@ mod test {
                 }
             } else {
                 let script = Script::from_str(v["script"].as_str().unwrap()).unwrap();
-                let ver = LeafVersion::from_u8(v["leafVersion"].as_u64().unwrap() as u8).unwrap();
+                let ver = LeafVersion::from_consensus(v["leafVersion"].as_u64().unwrap() as u8).unwrap();
                 leaves.push((script.clone(), ver));
                 builder = builder.add_leaf_with_ver(depth, script, ver).unwrap();
             }

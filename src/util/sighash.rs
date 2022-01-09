@@ -27,7 +27,7 @@ use core::fmt;
 use core::ops::{Deref, DerefMut};
 use hashes::{sha256, sha256d, Hash};
 use io;
-use util::taproot::{TapLeafHash, TapSighashHash};
+use util::taproot::{TapLeafHash, TAPROOT_ANNEX_PREFIX, TapSighashHash};
 use SigHash;
 use {Script, Transaction, TxOut};
 
@@ -229,13 +229,13 @@ impl<'s> ScriptPath<'s> {
     }
     /// Create a new ScriptPath structure using default leaf version value
     pub fn with_defaults(script: &'s Script) -> Self {
-        Self::new(script, LeafVersion::default())
+        Self::new(script, LeafVersion::TapScript)
     }
     /// Compute the leaf hash
     pub fn leaf_hash(&self) -> TapLeafHash {
         let mut enc = TapLeafHash::engine();
 
-        self.leaf_version.as_u8().consensus_encode(&mut enc).expect("Writing to hash enging should never fail");
+        self.leaf_version.into_consensus().consensus_encode(&mut enc).expect("Writing to hash enging should never fail");
         self.script.consensus_encode(&mut enc).expect("Writing to hash enging should never fail");
 
         TapLeafHash::from_engine(enc)
@@ -725,7 +725,7 @@ pub struct Annex<'a>(&'a [u8]);
 impl<'a> Annex<'a> {
     /// Creates a new `Annex` struct checking the first byte is `0x50`
     pub fn new(annex_bytes: &'a [u8]) -> Result<Self, Error> {
-        if annex_bytes.first() == Some(&0x50) {
+        if annex_bytes.first() == Some(&TAPROOT_ANNEX_PREFIX) {
             Ok(Annex(annex_bytes))
         } else {
             Err(Error::WrongAnnex)
