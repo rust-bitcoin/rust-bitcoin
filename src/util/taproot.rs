@@ -849,10 +849,10 @@ impl LeafVersion {
 impl fmt::Display for LeafVersion {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match (self, f.alternate()) {
-            (LeafVersion::TapScript, false) => f.write_str("tapscript"),
-            (LeafVersion::TapScript, true) => fmt::Display::fmt(&TAPROOT_LEAF_TAPSCRIPT, f),
-            (LeafVersion::Future(version), false) => write!(f, "future_script_{:#02x}", version.0),
-            (LeafVersion::Future(version), true) => fmt::Display::fmt(version, f),
+            (LeafVersion::TapScript, true) => f.write_str("tapscript"),
+            (LeafVersion::TapScript, false) => fmt::Display::fmt(&TAPROOT_LEAF_TAPSCRIPT, f),
+            (LeafVersion::Future(version), true) => write!(f, "future_script_{:#02x}", version.0),
+            (LeafVersion::Future(version), false) => fmt::Display::fmt(version, f),
         }
     }
 }
