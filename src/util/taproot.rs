@@ -857,6 +857,18 @@ impl fmt::Display for LeafVersion {
     }
 }
 
+impl fmt::LowerHex for LeafVersion {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::LowerHex::fmt(&self.into_consensus(), f)
+    }
+}
+
+impl fmt::UpperHex for LeafVersion {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::UpperHex::fmt(&self.into_consensus(), f)
+    }
+}
+
 #[cfg(feature = "serde")]
 #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 impl ::serde::Serialize for LeafVersion {
