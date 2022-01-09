@@ -174,6 +174,7 @@ impl FromStr for PublicKey {
 
 /// A Bitcoin ECDSA private key
 #[derive(Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(Debug))]
 pub struct PrivateKey {
     /// Whether this private key should be serialized as compressed
     pub compressed: bool,
@@ -280,6 +281,7 @@ impl fmt::Display for PrivateKey {
     }
 }
 
+#[cfg(not(feature = "std"))]
 impl fmt::Debug for PrivateKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "[private key data]")
