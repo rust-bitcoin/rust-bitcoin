@@ -2,10 +2,12 @@
 
 FEATURES="base64 bitcoinconsensus use-serde rand secp-recovery"
 
+# Old cargo format is incompatible with a newer ones, so we need to clean this up
+rm -f Cargo.lock
 # Use toolchain if explicitly specified
 if [ -n "$TOOLCHAIN" ]
 then
-    alias cargo="cargo +$TOOLCHAIN"
+    alias cargo='cargo +"${TOOLCHAIN}"'
 fi
 
 pin_common_verions() {
@@ -96,4 +98,7 @@ then
     fi
 
     cargo test --verbose
+
+    cd ..
+    rm -rf dep_test
 fi

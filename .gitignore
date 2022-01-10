@@ -1,6 +1,9 @@
 target
 Cargo.lock
 
+#tests
+dep_test
+
 #fuzz
 fuzz/hfuzz_target
 fuzz/hfuzz_workspace
