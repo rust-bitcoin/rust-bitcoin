@@ -173,31 +173,18 @@ preferred to "how it looks in Core" if everyone agrees.
 
 ### Formatting
 
-We plan to utilize `rustfmt` for keeping the code formatting consistent.
-However, this will be a gradual process since a thorough peer review is required
-to make sure that no unintended changes are introduced with the change of
-formatting. Thus, all PRs introducing large blocks of re-formatted code will not
-be reviewed.
+The repository currently does not use `rustfmt`.
 
-The current plan is to phase it in over multiple commits or even multiple PRs,
-which will introduce no changes other than re-formatting, such that each change
-may be independently re-reproduced by each reviewer. The first commit should add
-attributes to disable fmt for some parts of the code and a second one does the
-formatting – so only the first one needs review, the rest will be reproducible.
+New changes may format the code with `rustfmt`, but they should not re-format
+any existing code for maintaining diff size small, keeping `git blame` intact and
+reduce review time. All PRs introducing large blocks of re-formatted code will
+not be reviewed.
 
 You may check the [discussion on the formatting](https://github.com/rust-bitcoin/rust-bitcoin/issues/172)
 and [how it is planned to coordinate it with crate refactoring](https://github.com/rust-bitcoin/rust-bitcoin/pull/525)
 
-Before formatting with `rustfmt` is implemented, it is recommended to follow
-style of the existing codebase and avoid any end-line space characters.
-
-<!--
-Rust-fmt should be used as a coding style recommendations in general, with a
-default coding style. By default, Rustfmt uses a style which conforms to the
-[Rust style guide][style guide] that has been formalized through the [style RFC
-process][fmt rfcs]. It is also required to run `cargo fmt` to make the code
-formatted according to `rustfmt` parameters
--->
+For the new code it is recommended to follow style of the existing codebase and
+avoid any end-line space characters.
 
 ### Derivation
 
