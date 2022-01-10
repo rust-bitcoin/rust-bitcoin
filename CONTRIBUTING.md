@@ -77,20 +77,18 @@ To contribute a patch, the workflow is a as follows:
 2. Create topic branch
 3. Commit patches
 
-In general commits should be atomic and diffs should be easy to read. For this
-reason do not mix any formatting fixes or code moves with actual code changes.
+Please keep commits should atomic and diffs easy to read. For this reason
+do not mix any formatting fixes or code moves with actual code changes.
 Further, each commit, individually, should compile and pass tests, in order to
 ensure git bisect and other automated tools function properly.
 
-When adding a new feature thought must be given to the long term technical debt.
-Every new features should be covered by unit tests.
+Please cover every new feature with unit tests.
 
 When refactoring, structure your PR to make it easy to review and don't hesitate
 to split it into multiple small, focused PRs.
 
 Commits should cover both the issue fixed and the solution's rationale.
-These [guidelines](https://chris.beams.io/posts/git-commit/) should be kept in
-mind.
+Please keep these [guidelines](https://chris.beams.io/posts/git-commit/) in mind.
 
 To facilitate communication with other contributors, the project is making use
 of GitHub's "assignee" field. First check that no one is assigned and then
@@ -104,12 +102,11 @@ The main library development happens in the `master` branch. This branch must
 always compile without errors (using GitHub CI). All external contributions are
 made within PRs into this branch.
 
-Prerequisites that a PR must satisfy in order to be considered for merging into
-the `master` branch:
+Prerequisites that a PR must satisfy for merging into the `master` branch:
 * each commit within a PR must compile and pass unit tests with no errors, with
   every feature combination (including compiling the fuzztests) on some
   reasonably recent compiler (this is partially automated with CI, so the rule
-  is that if GitHub CI is not passing, the commit can't be accepted);
+  is that we will not accept commits which do not pass GitHub CI);
 * the tip of any PR branch must also compile and pass tests with no errors on
   MSRV (check [README.md] on current MSRV requirements) and pass fuzz tests on
   nightly rust;
@@ -131,8 +128,8 @@ above, before submitting the PR to review:
 ```shell script
 BITCOIN_MSRV=1.29.0 ./contrib/ci.sh
 ```
-Where value in `BITCOIN_MSRV=1.29.0` should be replaced with the current MSRV
-from [README.md].
+Please replace the value in `BITCOIN_MSRV=1.29.0` with the current MSRV from
+[README.md].
 
 NB: Please keep in mind that the script above replaces `Cargo.lock` file, which
 is necessary to support current MSRV, incompatible with `stable` and newer cargo
@@ -142,15 +139,16 @@ versions.
 
 Anyone may participate in peer review which is expressed by comments in the pull
 request. Typically, reviewers will review the code for obvious errors, as well as
-test out the patch set and opine on the technical merits of the patch. PR should
-be reviewed first on the conceptual level before focusing on code style or
+test out the patch set and opine on the technical merits of the patch. Please,
+first review PR on the conceptual level before focusing on code style or
 grammar fixes.
 
 ### Repository maintainers
 
-For the pull request to be merged we require (a) that all CI test should pass
-and (2) at least two "accepts"/ACKs from the repository maintainers – and no
-main reasonable "rejects"/NACKs from anybody who reviewed the code.
+Pull request merge requirements:
+- all CI test should pass,
+- at least two "accepts"/ACKs from the repository maintainers
+- no reasonable "rejects"/NACKs from anybody who reviewed the code.
 
 Current list of the project maintainers:
 
@@ -165,10 +163,7 @@ Current list of the project maintainers:
 
 ## Coding conventions
 
-Overall, this library must reflect Bitcoin Core approach whenever possible.
-However, since many of the things in Bitcoin Core are maintained due to
-historical reasons and may represent poor design, Rust-idiomatic style is
-preferred to "how it looks in Core" if everyone agrees.
+Library reflects Bitcoin Core approach whenever possible.
 
 ### Formatting
 
@@ -176,8 +171,8 @@ The repository currently does not use `rustfmt`.
 
 New changes may format the code with `rustfmt`, but they should not re-format
 any existing code for maintaining diff size small, keeping `git blame` intact and
-reduce review time. All PRs introducing large blocks of re-formatted code will
-not be reviewed.
+reduce review time. Repository maintainers may not review PRs introducing large
+blocks of re-formatted code.
 
 You may check the [discussion on the formatting](https://github.com/rust-bitcoin/rust-bitcoin/issues/172)
 and [how it is planned to coordinate it with crate refactoring](https://github.com/rust-bitcoin/rust-bitcoin/pull/525)
@@ -194,14 +189,14 @@ the [tracking issue](https://github.com/rust-bitcoin/rust-bitcoin/issues/510).
 ### Naming conventions
 
 Naming of data structures/enums and their fields/variants must follow names used
-in Bitcoin Core, with except to:
-- case, which should follow Rust standards (i.e. PascalCase for types and
-  snake_case for fields and variants)
-- `C`-prefix, which should be omitted
+in Bitcoin Core, with the following exceptions:
+- the case should follow Rust standards (i.e. PascalCase for types and
+  snake_case for fields and variants);
+- omit `C`-prefixes.
 
 ### Unsafe code
 
-Use of `unsafe` code is prohibited unless there is a unanonymous decision among
+Use of `unsafe` code is prohibited unless there is a unanimous decision among
 library maintainers on the exclusion from this rule. In such cases there is a
 requirement to test unsafe code with sanitizers including Miri.
 
@@ -213,8 +208,8 @@ vulnerabilities helps prevent user loss of funds. If you believe a vulnerability
 may affect other implementations, please disclose this information according to
 the [security guidelines](./SECURITY.md), work on which is currently in progress.
 Before it is completed, feel free to send disclosure to Andrew Poelstra,
-apoelstra@wpsoftware.net, encrypted with his public key, which may be found
-at <https://www.wpsoftware.net/andrew/andrew.gpg>.
+apoelstra@wpsoftware.net, encrypted with his public key from
+<https://www.wpsoftware.net/andrew/andrew.gpg>.
 
 
 ## Testing
@@ -226,7 +221,8 @@ the project to enable fine-grained unit testing is also an ongoing effort.
 
 Fuzzing is heavily encouraged: feel free to add related material under `fuzz/`
 
-Mutation testing is planned; any contribution there would be warmly welcomed.
+Mutation testing is planned; any contributions helping with that are highly
+welcome!
 
 
 ## Going further
