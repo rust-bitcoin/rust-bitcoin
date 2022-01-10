@@ -18,7 +18,7 @@ use core::fmt;
 
 use blockdata::transaction::Transaction;
 use consensus::encode;
-use util::psbt::raw;
+use util::psbt::{FutureVersionError, raw};
 
 use hashes;
 use util::bip32::ExtendedPubKey;
@@ -45,6 +45,8 @@ pub enum Error {
     InvalidProprietaryKey,
     /// Keys within key-value map should never be duplicated.
     DuplicateKey(raw::Key),
+    /// Future version of PSBT which can't be parsed by this library
+    FutureVersion(FutureVersionError),
     /// The scriptSigs for the unsigned transaction must be empty.
     UnsignedTxHasScriptSigs,
     /// The scriptWitnesses for the unsigned transaction must be empty.
@@ -85,6 +87,7 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Error::InvalidKey(ref rkey) => write!(f, "invalid key: {}", rkey),
+            Error::FutureVersion(err) => fmt::Display::fmt(&err, f),
             Error::InvalidProprietaryKey => write!(f, "non-proprietary key type found when proprietary key was expected"),
             Error::DuplicateKey(ref rkey) => write!(f, "duplicate key: {}", rkey),
             Error::UnexpectedUnsignedTx { expected: ref e, actual: ref a } => write!(f, "different unsigned transaction: expected {}, actual {}", e.txid(), a.txid()),
@@ -115,6 +118,12 @@ impl ::std::error::Error for Error {}
 impl From<hashes::Error> for Error {
     fn from(e: hashes::Error) -> Error {
         Error::HashParseError(e)
+    }
+}
+
+impl From<FutureVersionError> for Error {
+    fn from(err: FutureVersionError) -> Self {
+        Error::FutureVersion(err)
     }
 }
 

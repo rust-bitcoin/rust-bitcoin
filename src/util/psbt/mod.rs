@@ -27,6 +27,7 @@ use consensus::encode::MAX_VEC_SIZE;
 use prelude::*;
 
 use io;
+use core::fmt;
 use blockdata::witness::Witness;
 
 mod error;
@@ -44,6 +45,42 @@ pub use self::map::{Map, Input, Output, TapTree};
 
 use util::bip32::{ExtendedPubKey, KeySource};
 
+/// Future version of PSBT which can't be parsed by this library
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub struct FutureVersionError(u32);
+
+impl fmt::Display for FutureVersionError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str("Unknown future PSBT version ")?;
+        fmt::Display::fmt(&self.0, f)
+    }
+}
+
+#[cfg(feature = "std")]
+impl ::std::error::Error for FutureVersionError {}
+
+/// Partially signed transaction version as defined in BIP-174 and BIP-370.
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[repr(u32)]
+// TODO: add #[non_exhaustive] with MSRV increase
+pub enum Version {
+    /// PSBT version 0, defined in BIP-174
+    PsbtV0 = 0,
+    /// PSBT version 2, defined in BIP-370
+    PsbtV2 = 2,
+}
+
+impl Version {
+    fn from_standard(version: u32) -> Result<Version, FutureVersionError> {
+        match version {
+            v if v == Version::PsbtV0 as u32 => Ok(Version::PsbtV0),
+            v if v == Version::PsbtV2 as u32 => Ok(Version::PsbtV2),
+            future => Err(FutureVersionError(future))
+        }
+    }
+}
+
 /// A Partially Signed Transaction.
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -51,8 +88,8 @@ pub struct PartiallySignedTransaction {
     /// The unsigned transaction, scriptSigs and witnesses for each input must be
     /// empty.
     pub unsigned_tx: Transaction,
-    /// The version number of this PSBT. If omitted, the version number is 0.
-    pub version: u32,
+    /// The version number of this PSBT. If omitted, the version number defaults to 0.
+    pub psbt_version: Version,
     /// A global map from extended public keys to the used key fingerprint and
     /// derivation path as defined by BIP 32
     pub xpub: BTreeMap<ExtendedPubKey, KeySource>,
@@ -97,7 +134,7 @@ impl PartiallySignedTransaction {
 
             unsigned_tx: tx,
             xpub: Default::default(),
-            version: 0,
+            psbt_version: Version::PsbtV0,
             proprietary: Default::default(),
             unknown: Default::default(),
         };
@@ -126,6 +163,7 @@ mod display_from_str {
     use core::str::FromStr;
     use consensus::encode::{Error, self};
     use ::base64::display::Base64Display;
+    use util::psbt::FutureVersionError;
 
     /// Error happening during PSBT decoding from Base64 string
     #[derive(Debug)]
@@ -133,6 +171,8 @@ mod display_from_str {
     pub enum PsbtParseError {
         /// Error in internal PSBT data structure
         PsbtEncoding(Error),
+        /// Future PSBT version, which is not yet supported by this library
+        Version(FutureVersionError),
         /// Error in PSBT Base64 encoding
         Base64Encoding(::base64::DecodeError)
     }
@@ -142,6 +182,7 @@ mod display_from_str {
             match self {
                 PsbtParseError::PsbtEncoding(err) => Display::fmt(err, f),
                 PsbtParseError::Base64Encoding(err) => Display::fmt(err, f),
+                PsbtParseError::Version(err) => Display::fmt(err, f),
             }
         }
     }
@@ -258,7 +299,7 @@ mod tests {
     use util::bip32::{ChildNumber, ExtendedPrivKey, ExtendedPubKey, Fingerprint, KeySource};
     use util::ecdsa;
     use util::psbt::map::{Output, Input};
-    use util::psbt::raw;
+    use util::psbt::{raw, Version};
 
     use std::collections::BTreeMap;
     use blockdata::witness::Witness;
@@ -273,7 +314,7 @@ mod tests {
                 output: vec![],
             },
             xpub: Default::default(),
-            version: 0,
+            psbt_version: Version::PsbtV0,
             proprietary: BTreeMap::new(),
             unknown: BTreeMap::new(),
 
@@ -366,7 +407,7 @@ mod tests {
                 ],
             },
             xpub: Default::default(),
-            version: 0,
+            psbt_version: Version::PsbtV0,
             proprietary: Default::default(),
             unknown: Default::default(),
             inputs: vec![
@@ -452,7 +493,7 @@ mod tests {
         )].into_iter().collect();
 
         let psbt = PartiallySignedTransaction {
-            version: 0,
+            psbt_version: Version::PsbtV0,
             xpub: {
                 let xpub: ExtendedPubKey =
                     "xpub661MyMwAqRbcGoRVtwfvzZsq2VBJR1LAHfQstHUoxqDorV89vRoMxUZ27kLrraAj6MPi\
@@ -520,7 +561,7 @@ mod tests {
         use blockdata::transaction::{EcdsaSigHashType, Transaction, TxIn, TxOut, OutPoint};
         use consensus::encode::serialize_hex;
         use util::psbt::map::{Map, Input, Output};
-        use util::psbt::raw;
+        use util::psbt::{raw, Version};
         use util::psbt::{PartiallySignedTransaction, Error};
         use std::collections::BTreeMap;
         use blockdata::witness::Witness;
@@ -556,7 +597,7 @@ mod tests {
                 // This weird thing is necessary since rustc 0.29 prints out I/O error in a different format than later versions
                 .map_err(|err| match err {
                     PsbtParseError::PsbtEncoding(err) => err,
-                    PsbtParseError::Base64Encoding(_) => panic!("PSBT Base64 decoding failed")
+                    _ => panic!("PSBT Base64 decoding failed"),
                 })
                 .map_err(Error::from)
                 .unwrap();
@@ -630,7 +671,7 @@ mod tests {
                     ],
                 },
                 xpub: Default::default(),
-                version: 0,
+                psbt_version: Version::PsbtV0,
                 proprietary: BTreeMap::new(),
                 unknown: BTreeMap::new(),
 
@@ -942,7 +983,7 @@ mod tests {
                     },
                 ],
             },
-            version: 0,
+            psbt_version: Version::PsbtV0,
             xpub: Default::default(),
             proprietary: Default::default(),
             unknown: BTreeMap::new(),

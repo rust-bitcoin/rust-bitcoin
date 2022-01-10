@@ -21,7 +21,7 @@ use blockdata::transaction::Transaction;
 use consensus::{encode, Encodable, Decodable};
 use consensus::encode::MAX_VEC_SIZE;
 use util::psbt::map::Map;
-use util::psbt::{raw, PartiallySignedTransaction};
+use util::psbt::{raw, PartiallySignedTransaction, Version};
 use util::psbt;
 use util::psbt::Error;
 use util::endian::u32_to_array_le;
@@ -94,13 +94,13 @@ impl Map for PartiallySignedTransaction {
         }
 
         // Serializing version only for non-default value; otherwise test vectors fail
-        if self.version > 0 {
+        if self.psbt_version != Version::PsbtV0 {
             rv.push(raw::Pair {
                 key: raw::Key {
                     type_value: PSBT_GLOBAL_VERSION,
                     key: vec![],
                 },
-                value: u32_to_array_le(self.version).to_vec()
+                value: u32_to_array_le(self.psbt_version as u32).to_vec()
             });
         }
 
@@ -135,7 +135,7 @@ impl Map for PartiallySignedTransaction {
         //          the specification. It can pick arbitrarily when conflicts occur.
 
         // Keeping the highest version
-        self.version = cmp::max(self.version, other.version);
+        self.psbt_version = cmp::max(self.psbt_version, other.psbt_version);
 
         // Merging xpubs
         for (xpub, (fingerprint1, derivation1)) in other.xpub {
@@ -295,7 +295,7 @@ impl PartiallySignedTransaction {
         if let Some(tx) = tx {
             Ok(PartiallySignedTransaction {
                 unsigned_tx: tx,
-                version: version.unwrap_or(0),
+                psbt_version: Version::from_standard(version.unwrap_or(Version::PsbtV0 as u32)).map_err(Error::from)?,
                 xpub: xpub_map,
                 proprietary,
                 unknown: unknowns,
