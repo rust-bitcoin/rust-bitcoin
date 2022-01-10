@@ -24,7 +24,7 @@ use util::psbt::map::Map;
 use util::psbt::{raw, PartiallySignedTransaction};
 use util::psbt;
 use util::psbt::Error;
-use util::endian::u32_to_array_le;
+use endian::u32_to_array_le;
 use util::bip32::{ExtendedPubKey, Fingerprint, DerivationPath, ChildNumber};
 
 /// Type: Unsigned Transaction PSBT_GLOBAL_UNSIGNED_TX = 0x00

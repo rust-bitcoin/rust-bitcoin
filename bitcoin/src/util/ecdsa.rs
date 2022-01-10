@@ -28,7 +28,7 @@ use network::constants::Network;
 use hashes::{Hash, hash160, hex};
 use hashes::hex::FromHex;
 use hash_types::{PubkeyHash, WPubkeyHash};
-use util::base58;
+use base58;
 use util::key::Error;
 use blockdata::transaction::{EcdsaSigHashType, NonStandardSigHashType};
 

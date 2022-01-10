@@ -32,7 +32,7 @@ use core::{fmt, str, default::Default};
 use hashes::{self, Hash, sha256d};
 use hashes::hex::FromHex;
 
-use util::endian;
+use endian;
 use blockdata::constants::WITNESS_SCALE_FACTOR;
 #[cfg(feature="bitcoinconsensus")] use blockdata::script;
 use blockdata::script::Script;

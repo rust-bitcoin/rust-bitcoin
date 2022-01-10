@@ -23,8 +23,7 @@ use prelude::*;
 use core::{fmt, str, iter, slice};
 
 use hashes::{sha256d, Hash};
-
-use util::endian;
+use endian;
 
 /// An error that might occur during base58 decoding
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]

@@ -78,16 +78,21 @@ extern crate core2;
 extern crate core; // for Rust 1.29 and no-std tests
 
 // Re-exported dependencies.
-#[macro_use] pub extern crate bitcoin_hashes as hashes;
 pub extern crate secp256k1;
-pub extern crate bech32;
-
-#[cfg(feature = "no-std")]
-extern crate hashbrown;
+// TODO: Decide on one of these?
+// - pub use everything from bitcoin_str: implies usage `use bitcoin::hex::{self, ToHex}`.
+extern crate bitcoin_str;
+pub use bitcoin_str::*;
+// - pub extern crate bitcoin_str as str: implies usage `use bitcoin::str::hex::{self, ToHex}`.
+// NOTE: This make usage of `hashes` convoluted: `use bitcoin::str::hashes::sha256d`
+// pub extern crate bitcoin_str as str;
 
 #[cfg(feature = "base64")]
 #[cfg_attr(docsrs, doc(cfg(feature = "base64")))]
-pub extern crate base64;
+pub use bitcoin_str::base64;
+
+#[cfg(feature = "no-std")]
+extern crate hashbrown;
 
 #[cfg(feature="bitcoinconsensus")] extern crate bitcoinconsensus;
 #[cfg(feature = "serde")] #[macro_use] extern crate serde;

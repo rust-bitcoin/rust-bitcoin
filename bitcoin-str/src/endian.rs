@@ -1,3 +1,5 @@
+#![allow(missing_docs)]         // TODO: Work out how to add valid docs during macro implementation of functions.
+
 macro_rules! define_slice_to_be {
     ($name: ident, $type: ty) => {
         #[inline]

@@ -23,7 +23,7 @@ use core::fmt;
 #[cfg(feature = "std")] use std::error;
 
 use secp256k1;
-use util::base58;
+use base58;
 
 /// A key-related error.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]

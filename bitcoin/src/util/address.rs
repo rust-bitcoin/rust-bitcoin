@@ -46,7 +46,7 @@ use hash_types::{PubkeyHash, ScriptHash};
 use blockdata::{script, opcodes};
 use blockdata::constants::{PUBKEY_ADDRESS_PREFIX_MAIN, SCRIPT_ADDRESS_PREFIX_MAIN, PUBKEY_ADDRESS_PREFIX_TEST, SCRIPT_ADDRESS_PREFIX_TEST, MAX_SCRIPT_ELEMENT_SIZE};
 use network::constants::Network;
-use util::base58;
+use base58;
 use util::ecdsa;
 use util::taproot::TapBranchHash;
 use blockdata::script::Instruction;

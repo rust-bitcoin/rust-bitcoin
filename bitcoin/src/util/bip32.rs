@@ -28,7 +28,7 @@ use hashes::{sha512, Hash, HashEngine, Hmac, HmacEngine};
 use secp256k1::{self, Secp256k1, XOnlyPublicKey};
 
 use network::constants::Network;
-use util::{base58, endian};
+use {base58, endian};
 use util::{key, ecdsa, schnorr};
 use io::Write;
 

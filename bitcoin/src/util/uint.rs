@@ -107,7 +107,7 @@ macro_rules! construct_uint {
             }
 
             fn _from_be_slice(bytes: &[u8]) -> $name {
-                use super::endian::slice_to_u64_be;
+                use endian::slice_to_u64_be;
                 let mut slice = [0u64; $n_words];
                 slice.iter_mut()
                     .rev()
@@ -118,7 +118,7 @@ macro_rules! construct_uint {
 
             /// Convert a big integer into a byte array using big-endian encoding
             pub fn to_be_bytes(&self) -> [u8; $n_words * 8] {
-                use super::endian::u64_to_array_be;
+                use endian::u64_to_array_be;
                 let mut res = [0; $n_words * 8];
                 for i in 0..$n_words {
                     let start = i * 8;

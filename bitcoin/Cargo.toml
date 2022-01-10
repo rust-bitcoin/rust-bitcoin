@@ -8,16 +8,16 @@ repository = "https://github.com/rust-bitcoin/rust-bitcoin/"
 documentation = "https://docs.rs/bitcoin/"
 description = "General purpose library for using and interoperating with Bitcoin and other cryptocurrencies."
 keywords = [ "crypto", "bitcoin" ]
-readme = "README.md"
+readme = "https://github.com/rust-bitcoin/rust-bitcoin/README.md"
 exclude = ["./test_data"]
 
 # Please don't forget to add relevant features to docs.rs below
 [features]
 default = [ "std", "secp-recovery" ]
-base64 = [ "base64-compat" ]
+base64 = [ "bitcoin-str/base64" ]
 unstable = []
 rand = ["secp256k1/rand-std"]
-use-serde = ["serde", "bitcoin_hashes/serde", "secp256k1/serde"]
+use-serde = ["serde", "secp256k1/serde"]
 secp-lowmemory = ["secp256k1/lowmemory"]
 secp-recovery = ["secp256k1/recovery"]
 
@@ -26,20 +26,19 @@ secp-recovery = ["secp256k1/recovery"]
 # The no-std feature doesn't disable std - you need to turn off the std feature for that by disabling default.
 # Instead no-std enables additional features required for this crate to be usable without std.
 # As a result, both can be enabled without conflict.
-std = ["secp256k1/std", "bitcoin_hashes/std", "bech32/std"]
-no-std = ["hashbrown", "core2/alloc", "bitcoin_hashes/alloc", "secp256k1/alloc"]
+std = ["bitcoin-str/std", "secp256k1/std"]
+no-std = ["bitcoin-str/no-std", "hashbrown", "core2/alloc", "secp256k1/alloc"]
 
 [package.metadata.docs.rs]
 features = [ "std", "secp-recovery", "base64", "rand", "use-serde", "bitcoinconsensus" ]
 rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
-bech32 = { version = "0.8.1", default-features = false }
-bitcoin_hashes = { version = "0.10.0", default-features = false }
+bitcoin-str = { path = "../bitcoin-str", default-features = false }
+
 secp256k1 = { version = "0.21.2", default-features = false }
 core2 = { version = "0.3.0", optional = true, default-features = false }
 
-base64-compat = { version = "1.0.0", optional = true }
 bitcoinconsensus = { version = "0.19.0-3", optional = true }
 serde = { version = "1", features = [ "derive" ], optional = true }
 hashbrown = { version = "0.8", optional = true }

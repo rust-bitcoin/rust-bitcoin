@@ -22,7 +22,6 @@ pub mod key;
 pub mod schnorr;
 pub mod address;
 pub mod amount;
-pub mod base58;
 pub mod bip32;
 pub mod bip143;
 pub mod contracthash;
@@ -34,8 +33,6 @@ pub mod taproot;
 pub mod uint;
 pub mod bip158;
 pub mod sighash;
-
-pub(crate) mod endian;
 
 use prelude::*;
 use io;

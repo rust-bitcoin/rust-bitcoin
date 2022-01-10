@@ -25,7 +25,7 @@ use core::cmp::Reverse;
 #[cfg(feature = "std")]
 use std::error;
 
-use hashes::{sha256, sha256t, Hash, HashEngine};
+use hashes::*;  // TODO: Find a better way to do this?
 use schnorr::{TweakedPublicKey, UntweakedPublicKey, TapTweak};
 use Script;
 

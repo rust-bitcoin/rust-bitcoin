@@ -20,7 +20,9 @@
 //! hash).
 //!
 
-use hashes::{Hash, sha256, sha256d, hash160};
+use hashes::{Hash, sha256, sha256d, hash160, hash_newtype};
+// TODO: These 'hidden' macros should use fully qualified paths in bitcoin_hashes.
+use hashes::{index_impl, hex_fmt_impl, serde_impl, borrow_slice_impl};
 
 macro_rules! impl_hashencode {
     ($hashtype:ident) => {

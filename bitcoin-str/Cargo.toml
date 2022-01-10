@@ -1,0 +1,41 @@
+[package]
+name = "bitcoin-str"
+version = "0.27.0"
+authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
+license = "CC0-1.0"
+homepage = "https://github.com/rust-bitcoin/rust-bitcoin/"
+repository = "https://github.com/rust-bitcoin/rust-bitcoin/"
+documentation = "https://docs.rs/bitcoin/"
+description = "The string encodings used by rust-bitcoin (base58, base58check, bech32, bech32m, base64, hex)."
+keywords = [ "crypto", "bitcoin" ]
+readme = "https://github.com/rust-bitcoin/rust-bitcoin/README.md"
+
+# Please don't forget to add relevant features to docs.rs below
+[features]
+default = ["std"]
+unstable = []
+base64 = ["base64-compat"]
+use-serde = ["serde", "bitcoin_hashes/serde"]
+
+# At least one of std, no-std must be enabled.
+#
+# The no-std feature doesn't disable std - you need to turn off the std feature for that by disabling default.
+# Instead no-std enables additional features required for this crate to be usable without std.
+# As a result, both can be enabled without conflict.
+std = ["bitcoin_hashes/std", "bech32/std"]
+no-std = ["core2/alloc", "bitcoin_hashes/alloc"]
+
+[package.metadata.docs.rs]
+features = [ "std", "secp-recovery", "base64", "rand", "use-serde", "bitcoinconsensus" ]
+rustdoc-args = ["--cfg", "docsrs"]
+
+[dependencies]
+bech32 = { version = "0.8.1", default-features = false }
+bitcoin_hashes = { version = "0.10.0", default-features = false }
+
+serde = { version = "1", features = [ "derive" ], optional = true }      # Typically enabled with `use-serde`.
+base64-compat = { version = "1.0.0", optional = true }                   # Typically enabled with `base64`.
+core2 = { version = "0.3.0", default-features = false, optional = true } # Typically enabled with `no-std`.
+
+[dev-dependencies]
+
