@@ -56,8 +56,8 @@ echo "********* Testing no-std build *************"
       cargo build --verbose --features="no-std $feature"
   done
 
-  cargo run --example bip32 L1HKVVLHXiUhecWnwFYF6L3shkf1E12HUmuZTESvBXUdx3yqVP1D
-  cargo run --no-default-features --features no-std --example bip32 L1HKVVLHXiUhecWnwFYF6L3shkf1E12HUmuZTESvBXUdx3yqVP1D
+  cargo run --example bip32 7934c09359b234e076b9fa5a1abfd38e3dc2a9939745b7cc3c22a48d831d14bd
+  cargo run --no-default-features --features no-std --example bip32 7934c09359b234e076b9fa5a1abfd38e3dc2a9939745b7cc3c22a48d831d14bd
 fi
 
 # Test each feature
