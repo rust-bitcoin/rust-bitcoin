@@ -696,7 +696,7 @@ impl<R: DerefMut<Target = Transaction>> SigHashCache<R> {
     /// use bitcoin::util::sighash::SigHashCache;
     /// use bitcoin::Script;
     ///
-    /// let mut tx_to_sign = Transaction { version: 2, lock_time: 0, input: Vec::new(), output: Vec::new() };
+    /// let mut tx_to_sign = Transaction { version: 2, lock_time: 0, input: Default::default(), output: Default::default() };
     /// let input_count = tx_to_sign.input.len();
     ///
     /// let mut sig_hasher = SigHashCache::new(&mut tx_to_sign);
@@ -755,9 +755,11 @@ mod tests {
     use hashes::hex::ToHex;
     use util::taproot::{TapTweakHash, TapSighashHash, TapBranchHash, TapLeafHash};
     use secp256k1::{self, SecretKey, XOnlyPublicKey};
+    use tinyvec::tiny_vec;
     extern crate serde_json;
 
     use {Script, Transaction, TxIn, TxOut};
+    use blockdata::transaction::TxOuts;
 
     #[test]
     fn test_tap_sighash_hash() {
@@ -893,8 +895,8 @@ mod tests {
         let dumb_tx = Transaction {
             version: 0,
             lock_time: 0,
-            input: vec![TxIn::default()],
-            output: vec![],
+            input: tinyvec::TinyVec::Heap(vec![TxIn::default()]),
+            output: tiny_vec![],
         };
         let mut c = SigHashCache::new(&dumb_tx);
 
@@ -962,7 +964,7 @@ mod tests {
         let tx_bytes = Vec::from_hex(tx_hex).unwrap();
         let tx: Transaction = deserialize(&tx_bytes).unwrap();
         let prevout_bytes = Vec::from_hex(prevout_hex).unwrap();
-        let prevouts: Vec<TxOut> = deserialize(&prevout_bytes).unwrap();
+        let prevouts: TxOuts = deserialize(&prevout_bytes).unwrap();
         let annex_inner;
         let annex = match annex_hex {
             Some(annex_hex) => {

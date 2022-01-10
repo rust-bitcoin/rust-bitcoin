@@ -44,6 +44,8 @@ bitcoinconsensus = { version = "0.19.0-3", optional = true }
 serde = { version = "1", features = [ "derive" ], optional = true }
 hashbrown = { version = "0.8", optional = true }
 
+tinyvec = { version = "1.5.0", features = ["alloc"] }
+
 [dev-dependencies]
 serde_json = "<1.0.45"
 serde_test = "1"
