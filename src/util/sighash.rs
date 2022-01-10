@@ -276,7 +276,7 @@ impl SchnorrSigHashType {
         }
     }
 
-    /// Create a [`SchnorrSigHashType`] from raw u8
+    /// Create a [`SchnorrSigHashType`] from raw `u8`
     pub fn from_u8(hash_ty: u8) -> Result<Self, Error> {
         match hash_ty {
             0x00 => Ok(SchnorrSigHashType::Default),

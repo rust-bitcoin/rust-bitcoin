@@ -762,7 +762,7 @@ impl ControlBlock {
 /// Inner type representing future (non-tapscript) leaf versions. See [`LeafVersion::Future`].
 ///
 /// NB: NO PUBLIC CONSTRUCTOR!
-/// The only way to construct this is by converting u8 to LeafVersion and then extracting it.
+/// The only way to construct this is by converting `u8` to [`LeafVersion`] and then extracting it.
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub struct FutureLeafVersion(u8);
 
