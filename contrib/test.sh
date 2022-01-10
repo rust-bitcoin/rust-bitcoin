@@ -2,6 +2,8 @@
 
 FEATURES="base64 bitcoinconsensus use-serde rand secp-recovery"
 
+cd bitcoin
+
 # Use toolchain if explicitly specified
 if [ -n "$TOOLCHAIN" ]
 then
@@ -71,7 +73,7 @@ done
 if [ "$DO_FUZZ" = true ]
 then
     (
-        cd fuzz
+        cd ../fuzz
         cargo test --verbose
         ./travis-fuzz.sh
     )
