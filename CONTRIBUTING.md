@@ -19,7 +19,6 @@ changes to this document in a pull request.
   * [Repository maintainers](#repository-maintainers)
 - [Coding conventions](#coding-conventions)
   * [Formatting](#formatting)
-  * [Derivation](#derivation)
   * [MSRV](#msrv)
   * [Naming conventions](#naming-conventions)
   * [Unsafe code](#unsafe-code)
@@ -185,69 +184,6 @@ and [how it is planned to coordinate it with crate refactoring](https://github.c
 
 For the new code it is recommended to follow style of the existing codebase and
 avoid any end-line space characters.
-
-### Derivation
-
-Derivations applied to a data structures should be standardized:
-
-1. All non-error types should opportunistically derive, where it is possible,
-   the following traits:
-   - `Copy` (except iterators)
-   - `Clone`
-   - `PartialEq` and `Eq`
-   - `PartialOrd` and `Ord`
-   - `Hash`
-   - `Debug`
-
-   By "where possible" we mean that by default a code line
-   ```rust
-   #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
-   ```
-   must be placed before each struct, and then those of these traits, which
-   can't be auto-derived because of the member field restrictions should be
-   removed.
-
-2. `Eq`, `PartialEq`, `Ord`, `PartialOrd` derivation must be skipped/removed
-   from pt. 1 in the following situations:
-   - for types that don't have reflexive equality/ordering
-   - types which have a lexicographic ordering defined as a part of a standard
-     must provide a manual implementation
-   - types which may be more efficiently compared with bitcoin-specific rules
-     should provide a manual implementation
-
-3. `Debug` must not be derived on structs and enums which may contain secret
-   data, and a manual `Debug` implementation should be provided instead.
-
-4. `Default` derivation should be performed whenever there is a rationale to
-   have default constructor initializing "empty" data structure, i.e. this
-   empty structure has a real use in the business logic *outside of the scope
-   of testing or creating dumb data*. For instance, if the structure consists
-   only of collection types which may be empty it should derive `Default` trait.
-
-5. **Error types** (both structs and enums) must implement `Display` and `Error`
-   traits manually, and should provide `Error::source` function if some of the
-   error cases contain other error type.
-
-6. `Display` should be implemented for all data types which may be presented to
-   the end user (not developers!), for instance in command line or as a part of
-   GUI. Here are some guidelines:
-   - Normally, `Display` implementation should not just repeat `Debug` and
-     structure the data in some visually-acceptable way.
-   - One should pay attention to the ability of providing alternative ways of
-     data formatting with `{:#}` formatting string option, detectable by
-     `std::fmt::Formatter::alternate()` function. Other important options to
-     look at are `align`, `fill`, `pad`, `precision` and `width`.
-   - When displaying the member fields it is important to consider the ability
-     to pass them display formatting options; thus,
-     `Display::fmt(&self.field, f)?;` is preferable over
-     `write!(f, "{}", self.field)?;`
-
-7. Serde serializers should be implemented for all data types which may persist
-   or may be presented in the UI or API as JSON/YAML and other kinds of data
-   representations (in fact, these are all data types).
-
-The discussion about trait derivation can be read at
-[the tracking issue](https://github.com/rust-bitcoin/rust-bitcoin/issues/555).
 
 ### MSRV
 
