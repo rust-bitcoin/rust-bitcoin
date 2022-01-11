@@ -28,7 +28,7 @@ use consensus::encode::{self, serialize, Decodable, Encodable, deserialize_parti
 use secp256k1::{self, XOnlyPublicKey};
 use util::bip32::{ChildNumber, Fingerprint, KeySource};
 use hashes::{hash160, ripemd160, sha256, sha256d, Hash};
-use util::ecdsa::{PublicKey, EcdsaSig};
+use util::ecdsa::EcdsaSig;
 use util::psbt;
 use util::taproot::{TapBranchHash, TapLeafHash, ControlBlock, LeafVersion};
 use schnorr;
@@ -74,17 +74,15 @@ impl Deserialize for Script {
     }
 }
 
-impl Serialize for PublicKey {
+impl Serialize for secp256k1::PublicKey {
     fn serialize(&self) -> Vec<u8> {
-        let mut buf = Vec::new();
-        self.write_into(&mut buf).expect("vecs don't error");
-        buf
+        self.serialize().to_vec()
     }
 }
 
-impl Deserialize for PublicKey {
+impl Deserialize for secp256k1::PublicKey {
     fn deserialize(bytes: &[u8]) -> Result<Self, encode::Error> {
-        PublicKey::from_slice(bytes)
+        secp256k1::PublicKey::from_slice(bytes)
             .map_err(|_| encode::Error::ParseFailed("invalid public key"))
     }
 }
