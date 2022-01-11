@@ -120,6 +120,12 @@ impl Encodable for Witness {
 }
 
 impl Witness {
+
+    /// Create a new empty [`Witness`]
+    pub fn new() -> Self {
+        Witness::default()
+    }
+
     /// Creates [`Witness`] object from an array of byte-arrays
     pub fn from_vec(vec: Vec<Vec<u8>>) -> Self {
         let witness_elements = vec.len();
