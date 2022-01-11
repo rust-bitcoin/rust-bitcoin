@@ -532,7 +532,7 @@ impl ExtendedPrivKey {
         ecdsa::PrivateKey {
             compressed: true,
             network: self.network,
-            key: self.private_key
+            inner: self.private_key
         }
     }
 
@@ -663,7 +663,7 @@ impl ExtendedPubKey {
     pub fn to_pub(&self) -> ecdsa::PublicKey {
         ecdsa::PublicKey {
             compressed: true,
-            key: self.public_key
+            inner: self.public_key
         }
     }
 

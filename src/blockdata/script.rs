@@ -815,9 +815,9 @@ impl Builder {
     /// Pushes a public key
     pub fn push_key(self, key: &PublicKey) -> Builder {
         if key.compressed {
-            self.push_slice(&key.key.serialize()[..])
+            self.push_slice(&key.inner.serialize()[..])
         } else {
-            self.push_slice(&key.key.serialize_uncompressed()[..])
+            self.push_slice(&key.inner.serialize_uncompressed()[..])
         }
     }
 
@@ -1038,10 +1038,10 @@ mod test {
         let pubkey = PublicKey::from_str("0234e6a79c5359c613762d537e0e19d86c77c1666d8c9ab050f23acd198e97f93e").unwrap();
         assert!(Script::new_p2pk(&pubkey).is_p2pk());
 
-        let pubkey_hash = PubkeyHash::hash(&pubkey.key.serialize());
+        let pubkey_hash = PubkeyHash::hash(&pubkey.inner.serialize());
         assert!(Script::new_p2pkh(&pubkey_hash).is_p2pkh());
 
-        let wpubkey_hash = WPubkeyHash::hash(&pubkey.key.serialize());
+        let wpubkey_hash = WPubkeyHash::hash(&pubkey.inner.serialize());
         assert!(Script::new_v0_wpkh(&wpubkey_hash).is_v0_p2wpkh());
 
         let script = Builder::new().push_opcode(opcodes::all::OP_NUMEQUAL)

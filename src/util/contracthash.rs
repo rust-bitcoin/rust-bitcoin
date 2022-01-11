@@ -160,7 +160,7 @@ impl<'a> From<&'a [u8]> for Template {
 /// Tweak a single key using some arbitrary data
 pub fn tweak_key<C: secp256k1::Verification>(secp: &Secp256k1<C>, mut key: PublicKey, contract: &[u8]) -> PublicKey {
     let hmac_result = compute_tweak(&key, contract);
-    key.key.add_exp_assign(secp, &hmac_result[..]).expect("HMAC cannot produce invalid tweak");
+    key.inner.add_exp_assign(secp, &hmac_result[..]).expect("HMAC cannot produce invalid tweak");
     key
 }
 
@@ -172,9 +172,9 @@ pub fn tweak_keys<C: secp256k1::Verification>(secp: &Secp256k1<C>, keys: &[Publi
 /// Compute a tweak from some given data for the given public key
 pub fn compute_tweak(pk: &PublicKey, contract: &[u8]) -> Hmac<sha256::Hash> {
     let mut hmac_engine: HmacEngine<sha256::Hash> = if pk.compressed {
-        HmacEngine::new(&pk.key.serialize())
+        HmacEngine::new(&pk.inner.serialize())
     } else {
-        HmacEngine::new(&pk.key.serialize_uncompressed())
+        HmacEngine::new(&pk.inner.serialize_uncompressed())
     };
     hmac_engine.input(contract);
     Hmac::from_engine(hmac_engine)
@@ -188,7 +188,7 @@ pub fn tweak_secret_key<C: secp256k1::Signing>(secp: &Secp256k1<C>, key: &Privat
     let hmac_sk = compute_tweak(&pk, contract);
     // Execute the tweak
     let mut key = *key;
-    key.key.add_assign(&hmac_sk[..]).map_err(Error::Secp)?;
+    key.inner.add_assign(&hmac_sk[..]).map_err(Error::Secp)?;
     // Return
     Ok(key)
 }
