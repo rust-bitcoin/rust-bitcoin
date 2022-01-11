@@ -76,22 +76,26 @@ impl FromStr for Denomination {
 
     /// Convert from a str to Denomination.
     ///
-    /// Any combination of upper and/or lower case, excluding uppercase 'M', 'P' is considered valid.
+    /// Any combination of upper and/or lower case, excluding uppercase of SI(m, u, n, p) is considered valid.
     /// - Singular: BTC, mBTC, uBTC, nBTC, pBTC
     /// - Plural or singular: sat, satoshi, bit, msat
     ///
-    /// Due to ambiguity between mega and milli we prohibit usage of leading capital 'M'.
+    /// Due to ambiguity between mega and milli, pico and peta we prohibit usage of leading capital 'M', 'P'.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         use self::ParseAmountError::*;
+        use self::Denomination as D;
 
-        if s.starts_with(|ch| ch == 'M' || ch == 'P') {
-            return Err(denomination_from_str(s).map_or_else(
-                || UnknownDenomination(s.to_owned()),
-                |_| PossiblyConfusingDenomination(s.to_owned())
-            ));
+        let starts_with_uppercase = || s.starts_with(|ch: char| ch.is_uppercase());
+        match denomination_from_str(s) {
+            None => Err(UnknownDenomination(s.to_owned())),
+            Some(D::MilliBitcoin) | Some(D::PicoBitcoin) | Some(D::MilliSatoshi) if starts_with_uppercase() => {
+                Err(PossiblyConfusingDenomination(s.to_owned()))
+            }
+            Some(D::NanoBitcoin) | Some(D::MicroBitcoin) if starts_with_uppercase() => {
+                Err(UnknownDenomination(s.to_owned()))
+            }
+            Some(d) => Ok(d),
         }
-
-        denomination_from_str(s).ok_or_else(|| UnknownDenomination(s.to_owned()))
     }
 }
 
@@ -169,7 +173,13 @@ impl fmt::Display for ParseAmountError {
             ParseAmountError::InvalidCharacter(c) => write!(f, "invalid character in input: {}", c),
             ParseAmountError::UnknownDenomination(ref d) => write!(f, "unknown denomination: {}", d),
             ParseAmountError::PossiblyConfusingDenomination(ref d) => {
-                write!(f, "the 'M' at the beginning of {} should technically mean 'Mega' but that denomination is uncommon and maybe 'milli' was intended", d)
+                let (letter, upper, lower) = match d.chars().next() {
+                    Some('M') => ('M', "Mega", "milli"),
+                    Some('P') => ('P',"Peta", "pico"),
+                    // This panic could be avoided by adding enum ConfusingDenomination { Mega, Peta } but is it worth it?
+                    _ => panic!("invalid error information"),
+                };
+                write!(f, "the '{}' at the beginning of {} should technically mean '{}' but that denomination is uncommon and maybe '{}' was intended", letter, d, upper, lower)
             }
         }
     }
@@ -1740,6 +1750,19 @@ mod tests {
             match  Denomination::from_str(denom) {
                 Ok(_) => panic!("from_str should error for {}", denom),
                 Err(ParseAmountError::PossiblyConfusingDenomination(_)) => {},
+                Err(e) => panic!("unexpected error: {}", e),
+            }
+        }
+    }
+
+    #[test]
+    fn disallow_unknown_denomination() {
+        // Non-exhaustive list of unknown forms.
+        let unknown = vec!["NBTC", "UBTC", "ABC", "abc"];
+        for denom in unknown.iter() {
+            match  Denomination::from_str(denom) {
+                Ok(_) => panic!("from_str should error for {}", denom),
+                Err(ParseAmountError::UnknownDenomination(_)) => {},
                 Err(e) => panic!("unexpected error: {}", e),
             }
         }
