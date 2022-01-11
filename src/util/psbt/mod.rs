@@ -27,7 +27,6 @@ use consensus::encode::MAX_VEC_SIZE;
 use prelude::*;
 
 use io;
-use blockdata::witness::Witness;
 
 mod error;
 pub use self::error::Error;
@@ -112,7 +111,7 @@ impl PartiallySignedTransaction {
 
         for (vin, psbtin) in tx.input.iter_mut().zip(self.inputs.into_iter()) {
             vin.script_sig = psbtin.final_script_sig.unwrap_or_else(Script::new);
-            vin.witness = Witness::from_vec(psbtin.final_script_witness.unwrap_or_else(Vec::new));
+            vin.witness = psbtin.final_script_witness.unwrap_or_default();
         }
 
         tx
@@ -478,7 +477,7 @@ mod tests {
                     "304402204f67e2afb76142d44fae58a2495d33a3419daa26cd0db8d04f3452b63289ac0f022010762a9fb67e94cc5cad9026f6dc99ff7f070f4278d30fbc7d0c869dd38c7fe701".parse().unwrap(),
                 )].into_iter().collect(),
                 bip32_derivation: keypaths.clone(),
-                final_script_witness: Some(vec![vec![1, 3], vec![5]]),
+                final_script_witness: Some(Witness::from_vec(vec![vec![1, 3], vec![5]])),
                 ripemd160_preimages: vec![(ripemd160::Hash::hash(&[]), vec![1, 2])].into_iter().collect(),
                 sha256_preimages: vec![(sha256::Hash::hash(&[]), vec![1, 2])].into_iter().collect(),
                 hash160_preimages: vec![(hash160::Hash::hash(&[]), vec![1, 2])].into_iter().collect(),

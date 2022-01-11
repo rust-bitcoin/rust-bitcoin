@@ -23,6 +23,7 @@ use prelude::*;
 use io;
 
 use blockdata::script::Script;
+use blockdata::witness::Witness;
 use blockdata::transaction::{EcdsaSigHashType, Transaction, TxOut};
 use consensus::encode::{self, serialize, Decodable, Encodable, deserialize_partial};
 use secp256k1::{self, XOnlyPublicKey};
@@ -51,7 +52,7 @@ pub trait Deserialize: Sized {
 
 impl_psbt_de_serialize!(Transaction);
 impl_psbt_de_serialize!(TxOut);
-impl_psbt_de_serialize!(Vec<Vec<u8>>); // scriptWitness
+impl_psbt_de_serialize!(Witness);
 impl_psbt_hash_de_serialize!(ripemd160::Hash);
 impl_psbt_hash_de_serialize!(sha256::Hash);
 impl_psbt_hash_de_serialize!(TapLeafHash);

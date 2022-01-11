@@ -18,6 +18,7 @@ use ::{EcdsaSig, io};
 
 use secp256k1;
 use blockdata::script::Script;
+use blockdata::witness::Witness;
 use blockdata::transaction::{EcdsaSigHashType, Transaction, TxOut};
 use consensus::encode;
 use hashes::{self, hash160, ripemd160, sha256, sha256d};
@@ -105,7 +106,7 @@ pub struct Input {
     pub final_script_sig: Option<Script>,
     /// The finalized, fully-constructed scriptWitness with signatures and any
     /// other scripts necessary for this input to pass validation.
-    pub final_script_witness: Option<Vec<Vec<u8>>>,
+    pub final_script_witness: Option<Witness>,
     /// TODO: Proof of reserves commitment
     /// RIPEMD160 hash to preimage map
     #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_byte_values"))]
@@ -192,7 +193,7 @@ impl Map for Input {
             }
             PSBT_IN_FINAL_SCRIPTWITNESS => {
                 impl_psbt_insert_pair! {
-                    self.final_script_witness <= <raw_key: _>|<raw_value: Vec<Vec<u8>>>
+                    self.final_script_witness <= <raw_key: _>|<raw_value: Witness>
                 }
             }
             PSBT_IN_RIPEMD160 => {
@@ -290,7 +291,7 @@ impl Map for Input {
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.final_script_witness as <PSBT_IN_FINAL_SCRIPTWITNESS, _>|<Script>)
+            rv.push(self.final_script_witness as <PSBT_IN_FINAL_SCRIPTWITNESS, _>|<Witness>)
         }
 
         impl_psbt_get_pair! {
