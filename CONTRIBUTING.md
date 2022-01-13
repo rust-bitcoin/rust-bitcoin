@@ -47,7 +47,8 @@ you'll learn.
 Communication about Rust Bitcoin happens primarily in
 [#bitcoin-rust](https://web.libera.chat/?channel=#bitcoin-rust) IRC chat on
 [Libera](https://libera.chat/) with the logs available at
-<http://gnusha.org/rust-bitcoin/>.
+<https://gnusha.org/bitcoin-rust/> (starting from Jun 2021 and now on) and
+<https://gnusha.org/rust-bitcoin/> (historical archive before Jun 2021).
 
 Discussion about code base improvements happens in GitHub issues and on pull
 requests.
