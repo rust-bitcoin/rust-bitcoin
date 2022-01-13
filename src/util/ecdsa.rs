@@ -43,7 +43,7 @@ impl EcdsaSig {
         }
     }
 
-    /// Deserialize from slice
+    /// Deserialize from slice following the standardness rules for [`EcdsaSigHashType`]
     pub fn from_slice(sl: &[u8]) -> Result<Self, EcdsaSigError> {
         let (hash_ty, sig) = sl.split_last()
             .ok_or(EcdsaSigError::EmptySignature)?;
