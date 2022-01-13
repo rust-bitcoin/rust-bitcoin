@@ -53,6 +53,6 @@ mod global;
 mod input;
 mod output;
 
-pub use self::input::Input;
+pub use self::input::{Input, PsbtSigHashType};
 pub use self::output::Output;
 pub use self::output::TapTree;
