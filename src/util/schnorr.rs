@@ -26,10 +26,10 @@ use hashes::Hash;
 use util::taproot::{TapBranchHash, TapTweakHash};
 use SchnorrSigHashType;
 
-/// Untweaked Schnorr public key
+/// Untweaked BIP-340 X-coord-only public key
 pub type UntweakedPublicKey = XOnlyPublicKey;
 
-/// Tweaked Schnorr public key
+/// Tweaked BIP-340 X-coord-only public key
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct TweakedPublicKey(XOnlyPublicKey);
 
@@ -45,29 +45,59 @@ impl fmt::Display for TweakedPublicKey {
     }
 }
 
-/// A trait for tweaking Schnorr public keys
+/// Untweaked BIP-340 key pair
+pub type UntweakedKeyPair = KeyPair;
+
+/// Tweaked BIP-340 key pair
+#[derive(Clone)]
+#[cfg_attr(feature = "std", derive(Debug))]
+// TODO: Add other derives once secp256k1 v0.21.3 released
+pub struct TweakedKeyPair(KeyPair);
+
+/// A trait for tweaking BIP340 key types (x-only public keys and key pairs).
 pub trait TapTweak {
-    /// Tweaks an untweaked public key given an untweaked key and optional script tree merkle root.
+    /// Tweaked key type with optional auxiliary information
+    type TweakedAux;
+    /// Tweaked key type
+    type TweakedKey;
+
+    /// Tweaks an untweaked key with corresponding public key value and optional script tree merkle
+    /// root. For the [`KeyPair`] type this also tweaks the private key in the pair.
     ///
     /// This is done by using the equation Q = P + H(P|c)G, where
-    ///  * Q is the tweaked key
-    ///  * P is the internal key
+    ///  * Q is the tweaked public key
+    ///  * P is the internal public key
     ///  * H is the hash function
     ///  * c is the commitment data
     ///  * G is the generator point
     ///
     /// # Returns
     /// The tweaked key and its parity.
-    fn tap_tweak<C: Verification>(self, secp: &Secp256k1<C>, merkle_root: Option<TapBranchHash>) -> (TweakedPublicKey, secp256k1::Parity);
+    fn tap_tweak<C: Verification>(self, secp: &Secp256k1<C>, merkle_root: Option<TapBranchHash>) -> Self::TweakedAux;
 
     /// Directly converts an [`UntweakedPublicKey`] to a [`TweakedPublicKey`]
     ///
     /// This method is dangerous and can lead to loss of funds if used incorrectly.
     /// Specifically, in multi-party protocols a peer can provide a value that allows them to steal.
-    fn dangerous_assume_tweaked(self) -> TweakedPublicKey;
+    fn dangerous_assume_tweaked(self) -> Self::TweakedKey;
 }
 
 impl TapTweak for UntweakedPublicKey {
+    type TweakedAux = (TweakedPublicKey, secp256k1::Parity);
+    type TweakedKey = TweakedPublicKey;
+
+    /// Tweaks an untweaked public key with corresponding public key value and optional script tree
+    /// merkle root.
+    ///
+    /// This is done by using the equation Q = P + H(P|c)G, where
+    ///  * Q is the tweaked public key
+    ///  * P is the internal public key
+    ///  * H is the hash function
+    ///  * c is the commitment data
+    ///  * G is the generator point
+    ///
+    /// # Returns
+    /// The tweaked key and its parity.
     fn tap_tweak<C: Verification>(self, secp: &Secp256k1<C>, merkle_root: Option<TapBranchHash>) -> (TweakedPublicKey, secp256k1::Parity) {
         let tweak_value = TapTweakHash::from_key_and_tweak(self, merkle_root).into_inner();
         let mut output_key = self.clone();
@@ -82,9 +112,42 @@ impl TapTweak for UntweakedPublicKey {
     }
 }
 
+impl TapTweak for UntweakedKeyPair {
+    type TweakedAux = TweakedKeyPair;
+    type TweakedKey = TweakedKeyPair;
+
+    /// Tweaks private and public keys within an untweaked [`KeyPair`] with corresponding public key
+    /// value and optional script tree merkle root.
+    ///
+    /// This is done by tweaking private key within the pair using the equation q = p + H(P|c), where
+    ///  * q is the tweaked private key
+    ///  * p is the internal private key
+    ///  * H is the hash function
+    ///  * c is the commitment data
+    /// The public key is generated from a private key by multiplying with generator point, Q = qG.
+    ///
+    /// # Returns
+    /// The tweaked key and its parity.
+    fn tap_tweak<C: Verification>(self, secp: &Secp256k1<C>, merkle_root: Option<TapBranchHash>) -> TweakedKeyPair {
+        let pubkey = XOnlyPublicKey::from_keypair(&self);
+        let tweak_value = TapTweakHash::from_key_and_tweak(pubkey, merkle_root).into_inner();
+        let mut output_key = self.clone();
+        output_key.tweak_add_assign(&secp, &tweak_value).expect("Tap tweak failed");
+        TweakedKeyPair(output_key)
+    }
+
+    fn dangerous_assume_tweaked(self) -> TweakedKeyPair {
+        TweakedKeyPair(self)
+    }
+}
+
 impl TweakedPublicKey {
     /// Creates a new [`TweakedPublicKey`] from a [`XOnlyPublicKey`]. No tweak is applied, consider
     /// calling `tap_tweak` on an [`UntweakedPublicKey`] instead of using this constructor.
+    ///
+    /// This method is dangerous and can lead to loss of funds if used incorrectly.
+    /// Specifically, in multi-party protocols a peer can provide a value that allows them to steal.
+    #[inline]
     pub fn dangerous_assume_tweaked(key: XOnlyPublicKey) -> TweakedPublicKey {
         TweakedPublicKey(key)
     }
@@ -108,6 +171,24 @@ impl TweakedPublicKey {
     }
 }
 
+impl TweakedKeyPair {
+    /// Creates a new [`TweakedKeyPair`] from a [`KeyPair`]. No tweak is applied, consider
+    /// calling `tap_tweak` on an [`UntweakedKeyPair`] instead of using this constructor.
+    ///
+    /// This method is dangerous and can lead to loss of funds if used incorrectly.
+    /// Specifically, in multi-party protocols a peer can provide a value that allows them to steal.
+    #[inline]
+    pub fn dangerous_assume_tweaked(pair: KeyPair) -> TweakedKeyPair {
+        TweakedKeyPair(pair)
+    }
+
+    /// Returns the underlying key pair
+    #[inline]
+    pub fn into_inner(self) -> KeyPair {
+        self.0
+    }
+}
+
 /// A BIP340-341 serialized schnorr signature with the corresponding hash type.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -119,7 +200,6 @@ pub struct SchnorrSig {
 }
 
 impl SchnorrSig {
-
     /// Deserialize from slice
     pub fn from_slice(sl: &[u8]) -> Result<Self, SchnorrSigError> {
         match sl.len() {

@@ -320,7 +320,7 @@ mod tests {
         let msg = secp256k1::Message::from_slice(&msg_hash).unwrap();
 
         let privkey = secp256k1::SecretKey::new(&mut secp256k1::rand::thread_rng());
-        let secp_sig = secp.sign_recoverable(&msg, &privkey);
+        let secp_sig = secp.sign_ecdsa_recoverable(&msg, &privkey);
         let signature = super::MessageSignature {
             signature: secp_sig,
             compressed: true,
