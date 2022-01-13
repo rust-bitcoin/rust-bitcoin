@@ -31,6 +31,7 @@ use util::bip32::{ChildNumber, Fingerprint, KeySource};
 use hashes::{hash160, ripemd160, sha256, sha256d, Hash};
 use util::ecdsa::EcdsaSig;
 use util::taproot::{TapBranchHash, TapLeafHash, ControlBlock, LeafVersion};
+use util::psbt;
 use schnorr;
 use super::map::{TapTree, PsbtSigHashType};
 
@@ -104,9 +105,22 @@ impl Deserialize for EcdsaSig {
             sig: secp256k1::ecdsa::Signature::from_der(signature)
                 .map_err(|_| encode::Error::ParseFailed("non-DER encoded signature"))?,
             // NB: Since BIP-174 says "the signature as would be pushed to the stack from
-            // a scriptSig or witness" we should use a consensus deserialization and do
-            // not error on a non-standard values.
-            hash_ty: EcdsaSigHashType::from_u32_consensus(*sighash_byte as u32)
+            // a scriptSig or witness" we should ideally use a consensus deserialization and do
+            // not error on a non-standard values. However,
+            //
+            // 1) the current implementation of from_u32_consensus(`flag`) does not preserve
+            // the sighash byte `flag` mapping all unknown values to EcdsaSighashType::All or
+            // EcdsaSigHashType::AllPlusAnyOneCanPay. Therefore, break the invariant
+            // EcdsaSig::from_slice(&sl[..]).to_vec = sl.
+            //
+            // 2) This would cause to have invalid signatures because the sighash message
+            // also has a field sighash_u32 (See BIP141). For example, when signing with non-standard
+            // 0x05, the sighash message would have the last field as 0x05u32 while, the verification
+            // would use check the signature assuming sighash_u32 as `0x01`.
+            hash_ty: EcdsaSigHashType::from_u32_standard(*sighash_byte as u32)
+                .map_err(|_e|
+                    encode::Error::from(psbt::Error::NonStandardSigHashType(*sighash_byte as u32))
+                )?,
         })
     }
 }
