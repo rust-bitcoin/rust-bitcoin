@@ -128,12 +128,11 @@ impl TapTweak for UntweakedKeyPair {
     ///
     /// # Returns
     /// The tweaked key and its parity.
-    fn tap_tweak<C: Verification>(self, secp: &Secp256k1<C>, merkle_root: Option<TapBranchHash>) -> TweakedKeyPair {
+    fn tap_tweak<C: Verification>(mut self, secp: &Secp256k1<C>, merkle_root: Option<TapBranchHash>) -> TweakedKeyPair {
         let pubkey = XOnlyPublicKey::from_keypair(&self);
         let tweak_value = TapTweakHash::from_key_and_tweak(pubkey, merkle_root).into_inner();
-        let mut output_key = self.clone();
-        output_key.tweak_add_assign(&secp, &tweak_value).expect("Tap tweak failed");
-        TweakedKeyPair(output_key)
+        self.tweak_add_assign(&secp, &tweak_value).expect("Tap tweak failed");
+        TweakedKeyPair(self)
     }
 
     fn dangerous_assume_tweaked(self) -> TweakedKeyPair {
