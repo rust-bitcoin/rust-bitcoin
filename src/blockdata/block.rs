@@ -219,10 +219,9 @@ impl Block {
     }
 
     /// Calculate the transaction merkle root.
-    #[deprecated(since = "0.27.1", note = "Please use `block::compute_merkle_root` instead.")]
+    #[deprecated(since = "0.28.0", note = "Please use `block::compute_merkle_root` instead.")]
     pub fn merkle_root(&self) -> Option<TxMerkleNode> {
-        let hashes = self.txdata.iter().map(|obj| obj.txid().as_hash());
-        bitcoin_merkle_root(hashes).map(|h| h.into())
+        self.compute_merkle_root()
     }
 
     /// compute witness commitment for the transaction list
