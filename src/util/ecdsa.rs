@@ -18,7 +18,7 @@
 
 use prelude::*;
 use core::str::FromStr;
-use core::fmt;
+use core::{fmt, iter};
 use hashes::hex::{self, FromHex};
 use blockdata::transaction::NonStandardSigHashType;
 use secp256k1;
@@ -57,9 +57,10 @@ impl EcdsaSig {
     /// Serialize EcdsaSig
     pub fn to_vec(&self) -> Vec<u8> {
         // TODO: add support to serialize to a writer to SerializedSig
-        let mut ser_sig = self.sig.serialize_der().to_vec();
-        ser_sig.push(self.hash_ty.as_u32() as u8);
-        ser_sig
+        self.sig.serialize_der()
+            .iter().map(|x| *x)
+            .chain(iter::once(self.hash_ty as u8))
+            .collect()
     }
 }
 

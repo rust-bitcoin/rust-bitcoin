@@ -24,19 +24,19 @@ use io;
 
 use blockdata::script::Script;
 use blockdata::witness::Witness;
-use blockdata::transaction::{EcdsaSigHashType, Transaction, TxOut};
+use blockdata::transaction::{Transaction, TxOut};
 use consensus::encode::{self, serialize, Decodable, Encodable, deserialize_partial};
 use secp256k1::{self, XOnlyPublicKey};
 use util::bip32::{ChildNumber, Fingerprint, KeySource};
 use hashes::{hash160, ripemd160, sha256, sha256d, Hash};
-use util::ecdsa::EcdsaSig;
-use util::taproot::{TapBranchHash, TapLeafHash, ControlBlock, LeafVersion};
+use util::ecdsa::{EcdsaSig, EcdsaSigError};
 use util::psbt;
+use util::taproot::{TapBranchHash, TapLeafHash, ControlBlock, LeafVersion};
 use schnorr;
+
 use super::map::{TapTree, PsbtSigHashType};
 
 use util::taproot::TaprootBuilder;
-use util::sighash::SchnorrSigHashType;
 /// A trait for serializing a value as raw data for insertion into PSBT
 /// key-value pairs.
 pub trait Serialize {
@@ -90,38 +90,35 @@ impl Deserialize for secp256k1::PublicKey {
 
 impl Serialize for EcdsaSig {
     fn serialize(&self) -> Vec<u8> {
-        let mut buf = Vec::with_capacity(72);
-        buf.extend(self.sig.serialize_der().iter());
-        buf.push(self.hash_ty as u8);
-        buf
+        self.to_vec()
     }
 }
 
 impl Deserialize for EcdsaSig {
     fn deserialize(bytes: &[u8]) -> Result<Self, encode::Error> {
-        let (sighash_byte, signature) = bytes.split_last()
-            .ok_or(encode::Error::ParseFailed("empty partial signature data"))?;
-        Ok(EcdsaSig {
-            sig: secp256k1::ecdsa::Signature::from_der(signature)
-                .map_err(|_| encode::Error::ParseFailed("non-DER encoded signature"))?,
-            // NB: Since BIP-174 says "the signature as would be pushed to the stack from
-            // a scriptSig or witness" we should ideally use a consensus deserialization and do
-            // not error on a non-standard values. However,
-            //
-            // 1) the current implementation of from_u32_consensus(`flag`) does not preserve
-            // the sighash byte `flag` mapping all unknown values to EcdsaSighashType::All or
-            // EcdsaSigHashType::AllPlusAnyOneCanPay. Therefore, break the invariant
-            // EcdsaSig::from_slice(&sl[..]).to_vec = sl.
-            //
-            // 2) This would cause to have invalid signatures because the sighash message
-            // also has a field sighash_u32 (See BIP141). For example, when signing with non-standard
-            // 0x05, the sighash message would have the last field as 0x05u32 while, the verification
-            // would use check the signature assuming sighash_u32 as `0x01`.
-            hash_ty: EcdsaSigHashType::from_u32_standard(*sighash_byte as u32)
-                .map_err(|_e|
-                    encode::Error::from(psbt::Error::NonStandardSigHashType(*sighash_byte as u32))
-                )?,
-        })
+        // NB: Since BIP-174 says "the signature as would be pushed to the stack from
+        // a scriptSig or witness" we should ideally use a consensus deserialization and do
+        // not error on a non-standard values. However,
+        //
+        // 1) the current implementation of from_u32_consensus(`flag`) does not preserve
+        // the sighash byte `flag` mapping all unknown values to EcdsaSighashType::All or
+        // EcdsaSigHashType::AllPlusAnyOneCanPay. Therefore, break the invariant
+        // EcdsaSig::from_slice(&sl[..]).to_vec = sl.
+        //
+        // 2) This would cause to have invalid signatures because the sighash message
+        // also has a field sighash_u32 (See BIP141). For example, when signing with non-standard
+        // 0x05, the sighash message would have the last field as 0x05u32 while, the verification
+        // would use check the signature assuming sighash_u32 as `0x01`.
+        match EcdsaSig::from_slice(&bytes) {
+            Ok(sig) => Ok(sig),
+            Err(EcdsaSigError::EmptySignature) =>
+                Err(encode::Error::ParseFailed("Empty partial signature data")),
+            Err(EcdsaSigError::NonStandardSigHashType(flag)) =>
+                Err(encode::Error::from(psbt::Error::NonStandardSigHashType(flag))),
+            Err(EcdsaSigError::Secp256k1(..)) =>
+                Err(encode::Error::ParseFailed("Invalid Ecdsa signature")),
+            Err(EcdsaSigError::HexEncoding(..)) => unreachable!("Decoding from slice, not hex")
+        }
     }
 }
 
@@ -208,20 +205,15 @@ impl Serialize for schnorr::SchnorrSig  {
 
 impl Deserialize for schnorr::SchnorrSig {
     fn deserialize(bytes: &[u8]) -> Result<Self, encode::Error> {
-        match bytes.len() {
-            65 => {
-                let hash_ty = SchnorrSigHashType::from_u8(bytes[64])
-                    .map_err(|_| encode::Error::ParseFailed("Invalid Sighash type"))?;
-                let sig = secp256k1::schnorr::Signature::from_slice(&bytes[..64])
-                    .map_err(|_| encode::Error::ParseFailed("Invalid Schnorr signature"))?;
-                Ok(schnorr::SchnorrSig{ sig, hash_ty })
+        match schnorr::SchnorrSig::from_slice(&bytes) {
+            Ok(sig) => Ok(sig),
+            Err(schnorr::SchnorrSigError::InvalidSighashType(flag)) => {
+                Err(encode::Error::from(psbt::Error::NonStandardSigHashType(flag as u32)))
             }
-            64 => {
-                let sig = secp256k1::schnorr::Signature::from_slice(&bytes[..64])
-                    .map_err(|_| encode::Error::ParseFailed("Invalid Schnorr signature"))?;
-                    Ok(schnorr::SchnorrSig{ sig, hash_ty: SchnorrSigHashType::Default })
-            }
-            _ => Err(encode::Error::ParseFailed("Invalid Schnorr signature len"))
+            Err(schnorr::SchnorrSigError::InvalidSchnorrSigSize(_)) =>
+                Err(encode::Error::ParseFailed("Invalid Schnorr signature length")),
+            Err(schnorr::SchnorrSigError::Secp256k1(..)) =>
+                Err(encode::Error::ParseFailed("Invalid Schnorr signature")),
         }
     }
 }
