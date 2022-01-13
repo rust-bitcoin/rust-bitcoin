@@ -869,6 +869,7 @@ impl fmt::UpperHex for LeafVersion {
     }
 }
 
+/// Serializes LeafVersion as u8 using consensus encoding
 #[cfg(feature = "serde")]
 #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 impl ::serde::Serialize for LeafVersion {
@@ -880,6 +881,7 @@ impl ::serde::Serialize for LeafVersion {
     }
 }
 
+/// Deserializes LeafVersion as u8 using consensus encoding
 #[cfg(feature = "serde")]
 #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 impl<'de> ::serde::Deserialize<'de> for LeafVersion {

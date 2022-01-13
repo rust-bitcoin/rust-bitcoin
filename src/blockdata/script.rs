@@ -344,9 +344,6 @@ impl Script {
     }
 
     /// Generates P2TR for key spending path for a known [`TweakedPublicKey`].
-    ///
-    /// NB: Make sure that the used key is indeed tweaked (for instance, it comes from `rawtr`
-    /// descriptor content); otherwise please use [`Script::new_v1_p2tr`] method.
     pub fn new_v1_p2tr_tweaked(output_key: TweakedPublicKey) -> Script {
         Script::new_witness_program(WitnessVersion::V1, &output_key.serialize())
     }
@@ -414,7 +411,7 @@ impl Script {
 
     #[inline]
     fn witness_version(&self) -> Option<WitnessVersion> {
-        WitnessVersion::from_opcode(self.0[0].into()).ok()
+        self.0.get(0).and_then(|opcode| WitnessVersion::from_opcode(opcodes::All::from(*opcode)).ok())
     }
 
     /// Checks whether a script pubkey is a p2sh output
