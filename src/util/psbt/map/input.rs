@@ -13,8 +13,7 @@
 //
 
 use prelude::*;
-
-use ::{EcdsaSig, io};
+use io;
 
 use secp256k1;
 use blockdata::script::Script;
@@ -30,10 +29,9 @@ use util::psbt::raw;
 use util::psbt::serialize::Deserialize;
 use util::psbt::{Error, error};
 
-use ::{SchnorrSig};
 use util::taproot::{ControlBlock, LeafVersion, TapLeafHash, TapBranchHash};
 use util::sighash;
-use {EcdsaSigHashType, SchnorrSigHashType};
+use {EcdsaSigHashType, SchnorrSigHashType, EcdsaSig, SchnorrSig};
 
 /// Type: Non-Witness UTXO PSBT_IN_NON_WITNESS_UTXO = 0x00
 const PSBT_IN_NON_WITNESS_UTXO: u8 = 0x00;
