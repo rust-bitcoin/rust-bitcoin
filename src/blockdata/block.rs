@@ -176,7 +176,7 @@ impl Block {
 
     /// check if merkle root of header matches merkle root of the transaction list
     pub fn check_merkle_root (&self) -> bool {
-        match self.merkle_root() {
+        match self.compute_merkle_root() {
             Some(merkle_root) => self.header.merkle_root == merkle_root,
             None => false,
         }
@@ -212,10 +212,16 @@ impl Block {
         false
     }
 
-    /// Calculate the transaction merkle root.
-    pub fn merkle_root(&self) -> Option<TxMerkleNode> {
+    /// Compute the transaction merkle root.
+    pub fn compute_merkle_root(&self) -> Option<TxMerkleNode> {
         let hashes = self.txdata.iter().map(|obj| obj.txid().as_hash());
         bitcoin_merkle_root(hashes).map(|h| h.into())
+    }
+
+    /// Calculate the transaction merkle root.
+    #[deprecated(since = "0.28.0", note = "Please use `block::compute_merkle_root` instead.")]
+    pub fn merkle_root(&self) -> Option<TxMerkleNode> {
+        self.compute_merkle_root()
     }
 
     /// compute witness commitment for the transaction list
@@ -377,7 +383,7 @@ mod tests {
         let real_decode = decode.unwrap();
         assert_eq!(real_decode.header.version, 1);
         assert_eq!(serialize(&real_decode.header.prev_blockhash), prevhash);
-        assert_eq!(real_decode.header.merkle_root, real_decode.merkle_root().unwrap());
+        assert_eq!(real_decode.header.merkle_root, real_decode.compute_merkle_root().unwrap());
         assert_eq!(serialize(&real_decode.header.merkle_root), merkle);
         assert_eq!(real_decode.header.time, 1231965655);
         assert_eq!(real_decode.header.bits, 486604799);
@@ -413,7 +419,7 @@ mod tests {
         assert_eq!(real_decode.header.version, 0x20000000);  // VERSIONBITS but no bits set
         assert_eq!(serialize(&real_decode.header.prev_blockhash), prevhash);
         assert_eq!(serialize(&real_decode.header.merkle_root), merkle);
-        assert_eq!(real_decode.header.merkle_root, real_decode.merkle_root().unwrap());
+        assert_eq!(real_decode.header.merkle_root, real_decode.compute_merkle_root().unwrap());
         assert_eq!(real_decode.header.time, 1472004949);
         assert_eq!(real_decode.header.bits, 0x1a06d450);
         assert_eq!(real_decode.header.nonce, 1879759182);
