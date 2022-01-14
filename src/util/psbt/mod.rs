@@ -406,6 +406,7 @@ mod tests {
         //! Create a full PSBT value with various fields filled and make sure it can be JSONized.
         use hashes::sha256d;
         use util::psbt::map::Input;
+        use EcdsaSigHashType;
 
         // create some values to use in the PSBT
         let tx = Transaction {
@@ -469,7 +470,7 @@ mod tests {
                     value: 190303501938,
                     script_pubkey: hex_script!("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587"),
                 }),
-                sighash_type: Some("SIGHASH_SINGLE|SIGHASH_ANYONECANPAY".parse().unwrap()),
+                sighash_type: Some("SIGHASH_SINGLE|SIGHASH_ANYONECANPAY".parse::<EcdsaSigHashType>().unwrap().into()),
                 redeem_script: Some(vec![0x51].into()),
                 witness_script: None,
                 partial_sigs: vec![(
@@ -732,8 +733,8 @@ mod tests {
                     .is_p2pkh()
             );
             assert_eq!(
-                (&psbt.inputs[0].sighash_type).as_ref().unwrap(),
-                &EcdsaSigHashType::All
+                (&psbt.inputs[0].sighash_type).as_ref().unwrap().ecdsa_hash_ty().unwrap(),
+                EcdsaSigHashType::All
             );
         }
 

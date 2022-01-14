@@ -30,10 +30,9 @@ use secp256k1::{self, XOnlyPublicKey};
 use util::bip32::{ChildNumber, Fingerprint, KeySource};
 use hashes::{hash160, ripemd160, sha256, sha256d, Hash};
 use util::ecdsa::EcdsaSig;
-use util::psbt;
 use util::taproot::{TapBranchHash, TapLeafHash, ControlBlock, LeafVersion};
 use schnorr;
-use super::map::TapTree;
+use super::map::{TapTree, PsbtSigHashType};
 
 use util::taproot::TaprootBuilder;
 use util::sighash::SchnorrSigHashType;
@@ -160,22 +159,16 @@ impl Deserialize for Vec<u8> {
     }
 }
 
-impl Serialize for EcdsaSigHashType {
+impl Serialize for PsbtSigHashType {
     fn serialize(&self) -> Vec<u8> {
-        serialize(&self.as_u32())
+        serialize(&self.inner())
     }
 }
 
-impl Deserialize for EcdsaSigHashType {
+impl Deserialize for PsbtSigHashType {
     fn deserialize(bytes: &[u8]) -> Result<Self, encode::Error> {
         let raw: u32 = encode::deserialize(bytes)?;
-        let rv: EcdsaSigHashType = EcdsaSigHashType::from_u32_consensus(raw);
-
-        if rv.as_u32() == raw {
-            Ok(rv)
-        } else {
-            Err(psbt::Error::NonStandardSigHashType(raw).into())
-        }
+        Ok(PsbtSigHashType { inner: raw })
     }
 }
 

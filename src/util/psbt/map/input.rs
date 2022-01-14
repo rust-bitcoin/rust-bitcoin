@@ -13,13 +13,12 @@
 //
 
 use prelude::*;
-
-use ::{EcdsaSig, io};
+use io;
 
 use secp256k1;
 use blockdata::script::Script;
 use blockdata::witness::Witness;
-use blockdata::transaction::{EcdsaSigHashType, Transaction, TxOut};
+use blockdata::transaction::{Transaction, TxOut, NonStandardSigHashType};
 use consensus::encode;
 use hashes::{self, hash160, ripemd160, sha256, sha256d};
 use secp256k1::XOnlyPublicKey;
@@ -30,8 +29,9 @@ use util::psbt::raw;
 use util::psbt::serialize::Deserialize;
 use util::psbt::{Error, error};
 
-use ::{SchnorrSig};
 use util::taproot::{ControlBlock, LeafVersion, TapLeafHash, TapBranchHash};
+use util::sighash;
+use {EcdsaSigHashType, SchnorrSigHashType, EcdsaSig, SchnorrSig};
 
 /// Type: Non-Witness UTXO PSBT_IN_NON_WITNESS_UTXO = 0x00
 const PSBT_IN_NON_WITNESS_UTXO: u8 = 0x00;
@@ -92,7 +92,7 @@ pub struct Input {
     pub partial_sigs: BTreeMap<secp256k1::PublicKey, EcdsaSig>,
     /// The sighash type to be used for this input. Signatures for this input
     /// must use the sighash type.
-    pub sighash_type: Option<EcdsaSigHashType>,
+    pub sighash_type: Option<PsbtSigHashType>,
     /// The redeem script for this input.
     pub redeem_script: Option<Script>,
     /// The witness script for this input.
@@ -143,6 +143,52 @@ pub struct Input {
     pub unknown: BTreeMap<raw::Key, Vec<u8>>,
 }
 
+
+/// A Signature hash type for the corresponding input. As of taproot upgrade, the signature hash
+/// type can be either [`EcdsaSigHashType`] or [`SchnorrSigHashType`] but it is not possible to know
+/// directly which signature hash type the user is dealing with. Therefore, the user is responsible
+/// for converting to/from [`PsbtSigHashType`] from/to the desired signature hash type they need.
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct PsbtSigHashType {
+    pub (in ::util::psbt) inner: u32,
+}
+
+impl From<EcdsaSigHashType> for PsbtSigHashType {
+    fn from(ecdsa_hash_ty: EcdsaSigHashType) -> Self {
+        PsbtSigHashType {inner: ecdsa_hash_ty as u32}
+    }
+}
+
+impl From<SchnorrSigHashType> for PsbtSigHashType {
+    fn from(schnorr_hash_ty: SchnorrSigHashType) -> Self {
+        PsbtSigHashType {inner: schnorr_hash_ty as u32}
+    }
+}
+
+impl PsbtSigHashType {
+    /// Returns the [`EcdsaSigHashType`] if the [`PsbtSigHashType`] can be
+    /// converted to one.
+    pub fn ecdsa_hash_ty(self) -> Result<EcdsaSigHashType, NonStandardSigHashType> {
+        EcdsaSigHashType::from_u32_standard(self.inner)
+    }
+
+    /// Returns the [`SchnorrSigHashType`] if the [`PsbtSigHashType`] can be
+    /// converted to one.
+    pub fn schnorr_hash_ty(self) -> Result<SchnorrSigHashType, sighash::Error> {
+        if self.inner > 0xffu32 {
+            Err(sighash::Error::InvalidSigHashType(self.inner))
+        } else {
+            SchnorrSigHashType::from_u8(self.inner as u8)
+        }
+    }
+
+    /// Obtains the inner sighash byte from this [`PsbtSigHashType`].
+    pub fn inner(self) -> u32 {
+        self.inner
+    }
+}
+
 impl Map for Input {
     fn insert_pair(&mut self, pair: raw::Pair) -> Result<(), encode::Error> {
         let raw::Pair {
@@ -168,7 +214,7 @@ impl Map for Input {
             }
             PSBT_IN_SIGHASH_TYPE => {
                 impl_psbt_insert_pair! {
-                    self.sighash_type <= <raw_key: _>|<raw_value: EcdsaSigHashType>
+                    self.sighash_type <= <raw_key: _>|<raw_value: PsbtSigHashType>
                 }
             }
             PSBT_IN_REDEEM_SCRIPT => {
