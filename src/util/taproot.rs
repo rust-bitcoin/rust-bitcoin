@@ -239,7 +239,7 @@ impl TaprootSpendInfo {
         // Therefore, the loop will eventually terminate with exactly 1 element
         debug_assert!(node_weights.len() == 1);
         let node = node_weights.pop().expect("huffman tree algorithm is broken").1;
-        return Ok(Self::from_node_info(secp, internal_key, node));
+        Ok(Self::from_node_info(secp, internal_key, node))
     }
 
     /// Create a new key spend with internal key and proided merkle root.
