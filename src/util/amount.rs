@@ -85,7 +85,7 @@ impl FromStr for Denomination {
         use self::ParseAmountError::*;
         use self::Denomination as D;
 
-        let starts_with_uppercase = || s.starts_with(|ch: char| ch.is_uppercase());
+        let starts_with_uppercase = || s.starts_with(char::is_uppercase);
         match denomination_from_str(s) {
             None => Err(UnknownDenomination(s.to_owned())),
             Some(D::MilliBitcoin) | Some(D::PicoBitcoin) | Some(D::MilliSatoshi) if starts_with_uppercase() => {
