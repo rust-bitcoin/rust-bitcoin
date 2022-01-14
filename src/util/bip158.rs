@@ -641,7 +641,7 @@ mod test {
                 query.push(p.clone());
             }
             query.push(Vec::from_hex("abcdef").unwrap());
-            let mut input = Cursor::new(bytes.clone());
+            let mut input = Cursor::new(bytes);
             assert!(!reader.match_all(&mut input, &mut query.iter().map(|v| v.as_slice())).unwrap());
         }
     }
