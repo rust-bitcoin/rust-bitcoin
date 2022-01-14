@@ -544,7 +544,7 @@ mod test {
             let mut si = scripts.iter();
             for tx in block.txdata.iter().skip(1) {
                 for input in tx.input.iter() {
-                    txmap.insert(input.previous_output.clone(), Script::from(Vec::from_hex(si.next().unwrap().as_str().unwrap()).unwrap()));
+                    txmap.insert(input.previous_output, Script::from(Vec::from_hex(si.next().unwrap().as_str().unwrap()).unwrap()));
                 }
             }
 
@@ -552,7 +552,7 @@ mod test {
                                         |o| if let Some(s) = txmap.get(o) {
                                             Ok(s.clone())
                                         } else {
-                                            Err(Error::UtxoMissing(o.clone()))
+                                            Err(Error::UtxoMissing(*o))
                                         }).unwrap();
 
             let test_filter = BlockFilter::new(filter_content.as_slice());
