@@ -1194,6 +1194,7 @@ mod test {
     }
 
     #[test]
+    #[allow(clippy::many_single_char_names)]
     fn taptree_builder() {
         let secp = Secp256k1::verification_only();
         let internal_key = UntweakedPublicKey::from_str("93c7378d96518a75448821c4f7c8f4bae7ce60f804d03d1f0628dd5dd0f5de51").unwrap();
