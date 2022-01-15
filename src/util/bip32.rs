@@ -19,6 +19,7 @@
 
 use prelude::*;
 
+use io::Write;
 use core::{fmt, str::FromStr, default::Default};
 #[cfg(feature = "std")] use std::error;
 #[cfg(feature = "serde")] use serde;
@@ -28,9 +29,8 @@ use hashes::{sha512, Hash, HashEngine, Hmac, HmacEngine};
 use secp256k1::{self, Secp256k1, XOnlyPublicKey};
 
 use network::constants::Network;
-use util::{base58, endian};
-use util::{key, ecdsa, schnorr};
-use io::Write;
+use util::{base58, endian, key};
+use util::key::{PublicKey, PrivateKey, KeyPair};
 
 /// A chain code
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -528,8 +528,8 @@ impl ExtendedPrivKey {
     }
 
     /// Constructs ECDSA compressed private key matching internal secret key representation.
-    pub fn to_priv(&self) -> ecdsa::PrivateKey {
-        ecdsa::PrivateKey {
+    pub fn to_priv(&self) -> PrivateKey {
+        PrivateKey {
             compressed: true,
             network: self.network,
             inner: self.private_key
@@ -538,8 +538,8 @@ impl ExtendedPrivKey {
 
     /// Constructs BIP340 keypair for Schnorr signatures and Taproot use matching the internal
     /// secret key representation.
-    pub fn to_keypair<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> schnorr::KeyPair {
-        schnorr::KeyPair::from_seckey_slice(secp, &self.private_key[..]).expect("BIP32 internal private key representation is broken")
+    pub fn to_keypair<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> KeyPair {
+        KeyPair::from_seckey_slice(secp, &self.private_key[..]).expect("BIP32 internal private key representation is broken")
     }
 
     /// Attempts to derive an extended private key from a path.
@@ -660,8 +660,8 @@ impl ExtendedPubKey {
     }
 
     /// Constructs ECDSA compressed public key matching internal public key representation.
-    pub fn to_pub(&self) -> ecdsa::PublicKey {
-        ecdsa::PublicKey {
+    pub fn to_pub(&self) -> PublicKey {
+        PublicKey {
             compressed: true,
             inner: self.public_key
         }

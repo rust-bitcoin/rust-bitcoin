@@ -39,7 +39,7 @@ use policy::DUST_RELAY_TX_FEE;
 #[cfg(feature="bitcoinconsensus")] use core::convert::From;
 #[cfg(feature="bitcoinconsensus")] use OutPoint;
 
-use util::ecdsa::PublicKey;
+use util::key::PublicKey;
 use util::address::WitnessVersion;
 use util::taproot::{LeafVersion, TapBranchHash, TapLeafHash};
 use secp256k1::{Secp256k1, Verification};
@@ -1031,7 +1031,7 @@ mod test {
     use hashes::hex::{FromHex, ToHex};
     use consensus::encode::{deserialize, serialize};
     use blockdata::opcodes;
-    use util::ecdsa::PublicKey;
+    use util::key::PublicKey;
     use util::psbt::serialize::Serialize;
 
     #[test]

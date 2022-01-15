@@ -20,18 +20,27 @@
 use core::fmt;
 use prelude::*;
 
-pub use secp256k1::{XOnlyPublicKey, KeyPair};
+use secp256k1::{XOnlyPublicKey as _XOnlyPublicKey, KeyPair as _KeyPair};
+
 use secp256k1::{self, Secp256k1, Verification, constants};
 use hashes::Hash;
 use util::taproot::{TapBranchHash, TapTweakHash};
 use SchnorrSigHashType;
 
+/// Deprecated re-export of [`secp256k1::XOnlyPublicKey`]
+#[deprecated(since = "0.28.0", note = "Please use `util::key::XOnlyPublicKey` instead")]
+pub type XOnlyPublicKey = _XOnlyPublicKey;
+
+/// Deprecated re-export of [`secp256k1::KeyPair`]
+#[deprecated(since = "0.28.0", note = "Please use `util::key::KeyPair` instead")]
+pub type KeyPair = _KeyPair;
+
 /// Untweaked BIP-340 X-coord-only public key
-pub type UntweakedPublicKey = XOnlyPublicKey;
+pub type UntweakedPublicKey = ::XOnlyPublicKey;
 
 /// Tweaked BIP-340 X-coord-only public key
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct TweakedPublicKey(XOnlyPublicKey);
+pub struct TweakedPublicKey(::XOnlyPublicKey);
 
 impl fmt::LowerHex for TweakedPublicKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -46,13 +55,13 @@ impl fmt::Display for TweakedPublicKey {
 }
 
 /// Untweaked BIP-340 key pair
-pub type UntweakedKeyPair = KeyPair;
+pub type UntweakedKeyPair = ::KeyPair;
 
 /// Tweaked BIP-340 key pair
 #[derive(Clone)]
 #[cfg_attr(feature = "std", derive(Debug))]
 // TODO: Add other derives once secp256k1 v0.21.3 released
-pub struct TweakedKeyPair(KeyPair);
+pub struct TweakedKeyPair(::KeyPair);
 
 /// A trait for tweaking BIP340 key types (x-only public keys and key pairs).
 pub trait TapTweak {
@@ -129,7 +138,7 @@ impl TapTweak for UntweakedKeyPair {
     /// # Returns
     /// The tweaked key and its parity.
     fn tap_tweak<C: Verification>(mut self, secp: &Secp256k1<C>, merkle_root: Option<TapBranchHash>) -> TweakedKeyPair {
-        let pubkey = XOnlyPublicKey::from_keypair(&self);
+        let pubkey = ::XOnlyPublicKey::from_keypair(&self);
         let tweak_value = TapTweakHash::from_key_and_tweak(pubkey, merkle_root).into_inner();
         self.tweak_add_assign(&secp, &tweak_value).expect("Tap tweak failed");
         TweakedKeyPair(self)
@@ -147,17 +156,17 @@ impl TweakedPublicKey {
     /// This method is dangerous and can lead to loss of funds if used incorrectly.
     /// Specifically, in multi-party protocols a peer can provide a value that allows them to steal.
     #[inline]
-    pub fn dangerous_assume_tweaked(key: XOnlyPublicKey) -> TweakedPublicKey {
+    pub fn dangerous_assume_tweaked(key: ::XOnlyPublicKey) -> TweakedPublicKey {
         TweakedPublicKey(key)
     }
 
     /// Returns the underlying public key.
-    pub fn into_inner(self) -> XOnlyPublicKey {
+    pub fn into_inner(self) -> ::XOnlyPublicKey {
         self.0
     }
 
     /// Returns a reference to underlying public key.
-    pub fn as_inner(&self) -> &XOnlyPublicKey {
+    pub fn as_inner(&self) -> &::XOnlyPublicKey {
         &self.0
     }
 
@@ -177,25 +186,25 @@ impl TweakedKeyPair {
     /// This method is dangerous and can lead to loss of funds if used incorrectly.
     /// Specifically, in multi-party protocols a peer can provide a value that allows them to steal.
     #[inline]
-    pub fn dangerous_assume_tweaked(pair: KeyPair) -> TweakedKeyPair {
+    pub fn dangerous_assume_tweaked(pair: ::KeyPair) -> TweakedKeyPair {
         TweakedKeyPair(pair)
     }
 
     /// Returns the underlying key pair
     #[inline]
-    pub fn into_inner(self) -> KeyPair {
+    pub fn into_inner(self) -> ::KeyPair {
         self.0
     }
 }
 
-impl From<TweakedPublicKey> for XOnlyPublicKey {
+impl From<TweakedPublicKey> for ::XOnlyPublicKey {
     #[inline]
     fn from(pair: TweakedPublicKey) -> Self {
         pair.0
     }
 }
 
-impl From<TweakedKeyPair> for KeyPair {
+impl From<TweakedKeyPair> for ::KeyPair {
     #[inline]
     fn from(pair: TweakedKeyPair) -> Self {
         pair.0

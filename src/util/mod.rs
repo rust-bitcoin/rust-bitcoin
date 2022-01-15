@@ -17,8 +17,8 @@
 //! Functions needed by all parts of the Bitcoin library.
 //!
 
-pub mod ecdsa;
 pub mod key;
+pub mod ecdsa;
 pub mod schnorr;
 pub mod address;
 pub mod amount;

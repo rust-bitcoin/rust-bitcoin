@@ -138,10 +138,7 @@ pub use util::sighash::SchnorrSigHashType;
 
 pub use util::ecdsa::{self, EcdsaSig, EcdsaSigError};
 pub use util::schnorr::{self, SchnorrSig, SchnorrSigError};
-#[deprecated(since = "0.26.1", note = "Please use `ecdsa::PrivateKey` instead")]
-pub use util::ecdsa::PrivateKey;
-#[deprecated(since = "0.26.1", note = "Please use `ecdsa::PublicKey` instead")]
-pub use util::ecdsa::PublicKey;
+pub use util::key::{PrivateKey, PublicKey, XOnlyPublicKey, KeyPair};
 #[allow(deprecated)]
 pub use blockdata::transaction::SigHashType;
 
