@@ -108,32 +108,32 @@ pub struct Input {
     /// other scripts necessary for this input to pass validation.
     pub final_script_witness: Option<Witness>,
     /// TODO: Proof of reserves commitment
-    /// RIPEMD160 hash to preimage map
+    /// RIPEMD160 hash to preimage map.
     #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_byte_values"))]
     pub ripemd160_preimages: BTreeMap<ripemd160::Hash, Vec<u8>>,
-    /// SHA256 hash to preimage map
+    /// SHA256 hash to preimage map.
     #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_byte_values"))]
     pub sha256_preimages: BTreeMap<sha256::Hash, Vec<u8>>,
-    /// HSAH160 hash to preimage map
+    /// HSAH160 hash to preimage map.
     #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_byte_values"))]
     pub hash160_preimages: BTreeMap<hash160::Hash, Vec<u8>>,
-    /// HAS256 hash to preimage map
+    /// HAS256 hash to preimage map.
     #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_byte_values"))]
     pub hash256_preimages: BTreeMap<sha256d::Hash, Vec<u8>>,
-    /// Serialized schnorr signature with sighash type for key spend
+    /// Serialized schnorr signature with sighash type for key spend.
     pub tap_key_sig: Option<SchnorrSig>,
-    /// Map of <xonlypubkey>|<leafhash> with signature
+    /// Map of <xonlypubkey>|<leafhash> with signature.
     #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_as_seq"))]
     pub tap_script_sigs: BTreeMap<(XOnlyPublicKey, TapLeafHash), SchnorrSig>,
-    /// Map of Control blocks to Script version pair
+    /// Map of Control blocks to Script version pair.
     #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_as_seq"))]
     pub tap_scripts: BTreeMap<ControlBlock, (Script, LeafVersion)>,
-    /// Map of tap root x only keys to origin info and leaf hashes contained in it
+    /// Map of tap root x only keys to origin info and leaf hashes contained in it.
     #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_as_seq"))]
     pub tap_key_origins: BTreeMap<XOnlyPublicKey, (Vec<TapLeafHash>, KeySource)>,
-    /// Taproot Internal key
+    /// Taproot Internal key.
     pub tap_internal_key : Option<XOnlyPublicKey>,
-    /// Taproot Merkle root
+    /// Taproot Merkle root.
     pub tap_merkle_root : Option<TapBranchHash>,
     /// Proprietary key-value pairs for this input.
     #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_as_seq_byte_values"))]
@@ -189,8 +189,8 @@ impl PsbtSigHashType {
     }
 }
 
-impl Map for Input {
-    fn insert_pair(&mut self, pair: raw::Pair) -> Result<(), encode::Error> {
+impl Input {
+    pub(super) fn insert_pair(&mut self, pair: raw::Pair) -> Result<(), encode::Error> {
         let raw::Pair {
             key: raw_key,
             value: raw_value,
@@ -284,23 +284,28 @@ impl Map for Input {
                     self.tap_merkle_root <= <raw_key: _>|< raw_value: TapBranchHash>
                 }
             }
-            PSBT_IN_PROPRIETARY => match self.proprietary.entry(raw::ProprietaryKey::from_key(raw_key.clone())?) {
-                btree_map::Entry::Vacant(empty_key) => {empty_key.insert(raw_value);},
-                btree_map::Entry::Occupied(_) => return Err(Error::DuplicateKey(raw_key).into()),
+            PSBT_IN_PROPRIETARY => {
+                let key = raw::ProprietaryKey::from_key(raw_key.clone())?;
+                match self.proprietary.entry(key) {
+                    btree_map::Entry::Vacant(empty_key) => {
+                        empty_key.insert(raw_value);
+                    },
+                    btree_map::Entry::Occupied(_) => return Err(Error::DuplicateKey(raw_key).into()),
+                }
             }
             _ => match self.unknown.entry(raw_key) {
                 btree_map::Entry::Vacant(empty_key) => {
                     empty_key.insert(raw_value);
                 }
-                btree_map::Entry::Occupied(k) => {
-                    return Err(Error::DuplicateKey(k.key().clone()).into())
-                }
+                btree_map::Entry::Occupied(k) => return Err(Error::DuplicateKey(k.key().clone()).into()),
             },
         }
 
         Ok(())
     }
+}
 
+impl Map for Input {
     fn get_pairs(&self) -> Result<Vec<raw::Pair>, io::Error> {
         let mut rv: Vec<raw::Pair> = Default::default();
 

@@ -58,11 +58,11 @@ pub struct Output {
     /// corresponding master key fingerprints and derivation paths.
     #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_as_seq"))]
     pub bip32_derivation: BTreeMap<secp256k1::PublicKey, KeySource>,
-    /// The internal pubkey
+    /// The internal pubkey.
     pub tap_internal_key: Option<XOnlyPublicKey>,
-    /// Taproot Output tree
+    /// Taproot Output tree.
     pub tap_tree: Option<TapTree>,
-    /// Map of tap root x only keys to origin info and leaf hashes contained in it
+    /// Map of tap root x only keys to origin info and leaf hashes contained in it.
     #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_as_seq"))]
     pub tap_key_origins: BTreeMap<XOnlyPublicKey, (Vec<TapLeafHash>, KeySource)>,
     /// Proprietary key-value pairs for this output.
@@ -79,7 +79,7 @@ pub struct Output {
     pub unknown: BTreeMap<raw::Key, Vec<u8>>,
 }
 
-/// Taproot Tree representing a finalized [`TaprootBuilder`] (a complete binary tree)
+/// Taproot Tree representing a finalized [`TaprootBuilder`] (a complete binary tree).
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct TapTree(pub(crate) TaprootBuilder);
@@ -93,7 +93,7 @@ impl PartialEq for TapTree {
 impl Eq for TapTree {}
 
 impl TapTree {
-    // get the inner node info as the builder is finalized
+    /// Gets the inner node info as the builder is finalized.
     fn node_info(&self) -> &NodeInfo {
         // The builder algorithm invariant guarantees that is_complete builder
         // have only 1 element in branch and that is not None.
@@ -102,8 +102,10 @@ impl TapTree {
         self.0.branch()[0].as_ref().expect("from_inner only parses is_complete builders")
     }
 
-    /// Convert a [`TaprootBuilder`] into a tree if it is complete binary tree.
-    /// Returns the inner as Err if it is not a complete tree
+    /// Converts a [`TaprootBuilder`] into a tree if it is complete binary tree.
+    ///
+    /// # Return
+    /// A `TapTree` iff the `inner` builder is complete, otherwise return the inner as `Err`.
     pub fn from_inner(inner: TaprootBuilder) -> Result<Self, TaprootBuilder> {
         if inner.is_complete() {
             Ok(TapTree(inner))
@@ -112,15 +114,14 @@ impl TapTree {
         }
     }
 
-    /// Convert self into builder [`TaprootBuilder`]. The builder is guaranteed to
-    /// be finalized.
+    /// Converts self into builder [`TaprootBuilder`]. The builder is guaranteed to be finalized.
     pub fn into_inner(self) -> TaprootBuilder {
         self.0
     }
 }
 
-impl Map for Output {
-    fn insert_pair(&mut self, pair: raw::Pair) -> Result<(), encode::Error> {
+impl Output {
+    pub(super) fn insert_pair(&mut self, pair: raw::Pair) -> Result<(), encode::Error> {
         let raw::Pair {
             key: raw_key,
             value: raw_value,
@@ -142,9 +143,14 @@ impl Map for Output {
                     self.bip32_derivation <= <raw_key: secp256k1::PublicKey>|<raw_value: KeySource>
                 }
             }
-            PSBT_OUT_PROPRIETARY => match self.proprietary.entry(raw::ProprietaryKey::from_key(raw_key.clone())?) {
-                btree_map::Entry::Vacant(empty_key) => {empty_key.insert(raw_value);},
-                btree_map::Entry::Occupied(_) => return Err(Error::DuplicateKey(raw_key).into()),
+            PSBT_OUT_PROPRIETARY => {
+                let key = raw::ProprietaryKey::from_key(raw_key.clone())?;
+                match self.proprietary.entry(key) {
+                    btree_map::Entry::Vacant(empty_key) => {
+                        empty_key.insert(raw_value);
+                    },
+                    btree_map::Entry::Occupied(_) => return Err(Error::DuplicateKey(raw_key).into()),
+                }
             }
             PSBT_OUT_TAP_INTERNAL_KEY => {
                 impl_psbt_insert_pair! {
@@ -165,15 +171,15 @@ impl Map for Output {
                 btree_map::Entry::Vacant(empty_key) => {
                     empty_key.insert(raw_value);
                 }
-                btree_map::Entry::Occupied(k) => {
-                    return Err(Error::DuplicateKey(k.key().clone()).into())
-                }
-            },
+                btree_map::Entry::Occupied(k) => return Err(Error::DuplicateKey(k.key().clone()).into()),
+            }
         }
 
         Ok(())
     }
+}
 
+impl Map for Output {
     fn get_pairs(&self) -> Result<Vec<raw::Pair>, io::Error> {
         let mut rv: Vec<raw::Pair> = Default::default();
 

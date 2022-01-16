@@ -20,18 +20,22 @@ use consensus::encode;
 use util::psbt;
 use util::psbt::raw;
 
-/// A trait that describes a PSBT key-value map.
-pub trait Map {
-    /// Attempt to insert a key-value pair.
-    fn insert_pair(&mut self, pair: raw::Pair) -> Result<(), encode::Error>;
+mod global;
+mod input;
+mod output;
 
+pub use self::input::{Input, PsbtSigHashType};
+pub use self::output::{Output, TapTree};
+
+/// A trait that describes a PSBT key-value map.
+pub(super) trait Map {
     /// Attempt to get all key-value pairs.
     fn get_pairs(&self) -> Result<Vec<raw::Pair>, io::Error>;
 
     /// Attempt to merge with another key-value map of the same type.
     fn merge(&mut self, other: Self) -> Result<(), psbt::Error>;
 
-    /// Encodes map data with bitcoin consensus encoding
+    /// Encodes map data with bitcoin consensus encoding.
     fn consensus_encode_map<S: io::Write>(
         &self,
         mut s: S,
@@ -47,12 +51,3 @@ pub trait Map {
         Ok(len + encode::Encodable::consensus_encode(&0x00_u8, s)?)
     }
 }
-
-// place at end to pick up macros
-mod global;
-mod input;
-mod output;
-
-pub use self::input::{Input, PsbtSigHashType};
-pub use self::output::Output;
-pub use self::output::TapTree;
