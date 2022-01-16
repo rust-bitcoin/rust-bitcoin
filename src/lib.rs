@@ -139,6 +139,7 @@ pub use util::sighash::SchnorrSigHashType;
 pub use util::ecdsa::{self, EcdsaSig, EcdsaSigError};
 pub use util::schnorr::{self, SchnorrSig, SchnorrSigError};
 pub use util::key::{PrivateKey, PublicKey, XOnlyPublicKey, KeyPair};
+pub use util::psbt;
 #[allow(deprecated)]
 pub use blockdata::transaction::SigHashType;
 
