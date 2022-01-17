@@ -160,6 +160,9 @@ Current list of the project maintainers:
 - [Elichai Turkel](https://github.com/elichai)
 - [Sebastian Geisler](https://github.com/sgeisler)
 - [Sanket Kanjalkar](https://github.com/sanket1729)
+- [Martin Habovštiak](https://github.com/Kixunil)
+- [Riccardo Casatta](https://github.com/RCasatta)
+- [Tobin Harding](https://github.com/tcharding)
 
 
 ## Coding conventions
