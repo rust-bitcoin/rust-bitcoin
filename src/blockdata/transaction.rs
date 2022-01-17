@@ -758,6 +758,10 @@ impl EcdsaSigHashType {
      ///
      /// **Note**: this replicates consensus behaviour, for current standardness rules correctness
      /// you probably want [Self::from_u32_standard].
+     /// This might cause unexpected behavior because it does not roundtrip. That is,
+     /// `EcdsaSigHashType::from_u32_consensus(n) as u32 != n` for non-standard values of
+     /// `n`. While verifying signatures, the user should retain the `n` and use it compute the
+     /// signature hash message.
      pub fn from_u32_consensus(n: u32) -> EcdsaSigHashType {
          // In Bitcoin Core, the SignatureHash function will mask the (int32) value with
          // 0x1f to (apparently) deactivate ACP when checking for SINGLE and NONE bits.
