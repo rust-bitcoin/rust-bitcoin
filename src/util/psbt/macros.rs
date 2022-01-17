@@ -125,7 +125,7 @@ macro_rules! impl_psbt_insert_pair {
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
 macro_rules! impl_psbt_get_pair {
-    ($rv:ident.push($slf:ident.$unkeyed_name:ident as <$unkeyed_typeval:expr, _>|<$unkeyed_value_type:ty>)) => {
+    ($rv:ident.push($slf:ident.$unkeyed_name:ident, $unkeyed_typeval:ident)) => {
         if let Some(ref $unkeyed_name) = $slf.$unkeyed_name {
             $rv.push($crate::util::psbt::raw::Pair {
                 key: $crate::util::psbt::raw::Key {
@@ -136,7 +136,7 @@ macro_rules! impl_psbt_get_pair {
             });
         }
     };
-    ($rv:ident.push($slf:ident.$keyed_name:ident as <$keyed_typeval:expr, $keyed_key_type:ty>|<$keyed_value_type:ty>)) => {
+    ($rv:ident.push_map($slf:ident.$keyed_name:ident, $keyed_typeval:ident)) => {
         for (key, val) in &$slf.$keyed_name {
             $rv.push($crate::util::psbt::raw::Pair {
                 key: $crate::util::psbt::raw::Key {

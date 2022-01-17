@@ -310,80 +310,79 @@ impl Map for Input {
         let mut rv: Vec<raw::Pair> = Default::default();
 
         impl_psbt_get_pair! {
-            rv.push(self.non_witness_utxo as <PSBT_IN_NON_WITNESS_UTXO, _>|<Transaction>)
+            rv.push(self.non_witness_utxo, PSBT_IN_NON_WITNESS_UTXO)
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.witness_utxo as <PSBT_IN_WITNESS_UTXO, _>|<TxOut>)
+            rv.push(self.witness_utxo, PSBT_IN_WITNESS_UTXO)
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.partial_sigs as <PSBT_IN_PARTIAL_SIG, PublicKey>|<EcdsaSig>)
+            rv.push_map(self.partial_sigs, PSBT_IN_PARTIAL_SIG)
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.sighash_type as <PSBT_IN_SIGHASH_TYPE, _>|<SigHashType>)
+            rv.push(self.sighash_type, PSBT_IN_SIGHASH_TYPE)
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.redeem_script as <PSBT_IN_REDEEM_SCRIPT, _>|<Script>)
+            rv.push(self.redeem_script, PSBT_IN_REDEEM_SCRIPT)
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.witness_script as <PSBT_IN_WITNESS_SCRIPT, _>|<Script>)
+            rv.push(self.witness_script, PSBT_IN_WITNESS_SCRIPT)
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.bip32_derivation as <PSBT_IN_BIP32_DERIVATION, secp256k1::PublicKey>|<KeySource>)
+            rv.push_map(self.bip32_derivation, PSBT_IN_BIP32_DERIVATION)
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.final_script_sig as <PSBT_IN_FINAL_SCRIPTSIG, _>|<Script>)
+            rv.push(self.final_script_sig, PSBT_IN_FINAL_SCRIPTSIG)
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.final_script_witness as <PSBT_IN_FINAL_SCRIPTWITNESS, _>|<Witness>)
+            rv.push(self.final_script_witness, PSBT_IN_FINAL_SCRIPTWITNESS)
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.ripemd160_preimages as <PSBT_IN_RIPEMD160, ripemd160::Hash>|<Vec<u8>>)
+            rv.push_map(self.ripemd160_preimages, PSBT_IN_RIPEMD160)
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.sha256_preimages as <PSBT_IN_SHA256, sha256::Hash>|<Vec<u8>>)
+            rv.push_map(self.sha256_preimages, PSBT_IN_SHA256)
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.hash160_preimages as <PSBT_IN_HASH160, hash160::Hash>|<Vec<u8>>)
+            rv.push_map(self.hash160_preimages, PSBT_IN_HASH160)
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.hash256_preimages as <PSBT_IN_HASH256, sha256d::Hash>|<Vec<u8>>)
+            rv.push_map(self.hash256_preimages, PSBT_IN_HASH256)
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.tap_key_sig as <PSBT_IN_TAP_KEY_SIG, _>|<SchnorrSig>)
+            rv.push(self.tap_key_sig, PSBT_IN_TAP_KEY_SIG)
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.tap_script_sigs as <PSBT_IN_TAP_SCRIPT_SIG, (XOnlyPublicKey, TapLeafHash)>|<SchnorrSig>)
+            rv.push_map(self.tap_script_sigs, PSBT_IN_TAP_SCRIPT_SIG)
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.tap_scripts as <PSBT_IN_TAP_LEAF_SCRIPT, ControlBlock>|<(Script, LeafVersion)>)
+            rv.push_map(self.tap_scripts, PSBT_IN_TAP_LEAF_SCRIPT)
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.tap_key_origins as <PSBT_IN_TAP_BIP32_DERIVATION,
-                XOnlyPublicKey>|<(Vec<TapLeafHash>, KeySource)>)
+            rv.push_map(self.tap_key_origins, PSBT_IN_TAP_BIP32_DERIVATION)
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.tap_internal_key as <PSBT_IN_TAP_INTERNAL_KEY, _>|<XOnlyPublicKey>)
+            rv.push(self.tap_internal_key, PSBT_IN_TAP_INTERNAL_KEY)
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.tap_merkle_root as <PSBT_IN_TAP_MERKLE_ROOT, _>|<TapBranchHash>)
+            rv.push(self.tap_merkle_root, PSBT_IN_TAP_MERKLE_ROOT)
         }
         for (key, value) in self.proprietary.iter() {
             rv.push(raw::Pair {

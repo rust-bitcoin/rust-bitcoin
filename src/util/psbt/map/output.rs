@@ -184,28 +184,27 @@ impl Map for Output {
         let mut rv: Vec<raw::Pair> = Default::default();
 
         impl_psbt_get_pair! {
-            rv.push(self.redeem_script as <PSBT_OUT_REDEEM_SCRIPT, _>|<Script>)
+            rv.push(self.redeem_script, PSBT_OUT_REDEEM_SCRIPT)
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.witness_script as <PSBT_OUT_WITNESS_SCRIPT, _>|<Script>)
+            rv.push(self.witness_script, PSBT_OUT_WITNESS_SCRIPT)
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.bip32_derivation as <PSBT_OUT_BIP32_DERIVATION, secp256k1::PublicKey>|<KeySource>)
+            rv.push_map(self.bip32_derivation, PSBT_OUT_BIP32_DERIVATION)
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.tap_internal_key as <PSBT_OUT_TAP_INTERNAL_KEY, _>|<schnorr::PublicKey>)
+            rv.push(self.tap_internal_key, PSBT_OUT_TAP_INTERNAL_KEY)
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.tap_tree as <PSBT_OUT_TAP_TREE, _>|<TaprootBuilder>)
+            rv.push(self.tap_tree, PSBT_OUT_TAP_TREE)
         }
 
         impl_psbt_get_pair! {
-            rv.push(self.tap_key_origins as <PSBT_OUT_TAP_BIP32_DERIVATION,
-                    schnorr::PublicKey>|<(Vec<TapLeafHash>, KeySource)>)
+            rv.push_map(self.tap_key_origins, PSBT_OUT_TAP_BIP32_DERIVATION)
         }
 
         for (key, value) in self.proprietary.iter() {
