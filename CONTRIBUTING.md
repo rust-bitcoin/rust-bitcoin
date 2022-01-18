@@ -8,6 +8,7 @@ implementation and other Rust Bitcoin-related projects, which are hosted in the
 mostly guidelines, not rules. Use your best judgment, and feel free to propose
 changes to this document in a pull request.
 
+
 #### Table Of Contents
 
 - [General](#general)
@@ -97,6 +98,7 @@ comment suggesting that you're working on it. If someone is already assigned,
 don't hesitate to ask if the assigned party or previous commenters are still
 working on it if it has been awhile.
 
+
 ## Preparing PRs
 
 The main library development happens in the `master` branch. This branch must
@@ -136,6 +138,7 @@ NB: Please keep in mind that the script above replaces `Cargo.lock` file, which
 is necessary to support current MSRV, incompatible with `stable` and newer cargo
 versions.
 
+
 ### Peer review
 
 Anyone may participate in peer review which is expressed by comments in the pull
@@ -143,6 +146,7 @@ request. Typically, reviewers will review the code for obvious errors, as well a
 test out the patch set and opine on the technical merits of the patch. Please,
 first review PR on the conceptual level before focusing on code style or
 grammar fixes.
+
 
 ### Repository maintainers
 
@@ -160,11 +164,15 @@ Current list of the project maintainers:
 - [Elichai Turkel](https://github.com/elichai)
 - [Sebastian Geisler](https://github.com/sgeisler)
 - [Sanket Kanjalkar](https://github.com/sanket1729)
+- [Martin Habovštiak](https://github.com/Kixunil)
+- [Riccardo Casatta](https://github.com/RCasatta)
+- [Tobin Harding](https://github.com/tcharding)
 
 
 ## Coding conventions
 
 Library reflects Bitcoin Core approach whenever possible.
+
 
 ### Formatting
 
@@ -181,11 +189,13 @@ and [how it is planned to coordinate it with crate refactoring](https://github.c
 For the new code it is recommended to follow style of the existing codebase and
 avoid any end-line space characters.
 
+
 ### MSRV
 
 The Minimal Supported Rust Version (MSRV) is 1.29; it is enforced by our CI.
 Later we plan to increase MSRV to support Rust 2018 and you are welcome to check
 the [tracking issue](https://github.com/rust-bitcoin/rust-bitcoin/issues/510).
+
 
 ### Naming conventions
 
@@ -194,6 +204,7 @@ in Bitcoin Core, with the following exceptions:
 - the case should follow Rust standards (i.e. PascalCase for types and
   snake_case for fields and variants);
 - omit `C`-prefixes.
+
 
 ### Unsafe code
 
