@@ -109,16 +109,21 @@ impl Deserialize for EcdsaSig {
         // also has a field sighash_u32 (See BIP141). For example, when signing with non-standard
         // 0x05, the sighash message would have the last field as 0x05u32 while, the verification
         // would use check the signature assuming sighash_u32 as `0x01`.
-        match EcdsaSig::from_slice(&bytes) {
-            Ok(sig) => Ok(sig),
-            Err(EcdsaSigError::EmptySignature) =>
-                Err(encode::Error::ParseFailed("Empty partial signature data")),
-            Err(EcdsaSigError::NonStandardSigHashType(flag)) =>
-                Err(encode::Error::from(psbt::Error::NonStandardSigHashType(flag))),
-            Err(EcdsaSigError::Secp256k1(..)) =>
-                Err(encode::Error::ParseFailed("Invalid Ecdsa signature")),
-            Err(EcdsaSigError::HexEncoding(..)) => unreachable!("Decoding from slice, not hex")
-        }
+        EcdsaSig::from_slice(&bytes)
+            .map_err(|e| match e {
+                EcdsaSigError::EmptySignature => {
+                    encode::Error::ParseFailed("Empty partial signature data")
+                }
+                EcdsaSigError::NonStandardSigHashType(flag) => {
+                    encode::Error::from(psbt::Error::NonStandardSigHashType(flag))
+                }
+                EcdsaSigError::Secp256k1(..) => {
+                    encode::Error::ParseFailed("Invalid Ecdsa signature")
+                }
+                EcdsaSigError::HexEncoding(..) =>  {
+                    unreachable!("Decoding from slice, not hex")
+                }
+            })
     }
 }
 
@@ -205,16 +210,18 @@ impl Serialize for schnorr::SchnorrSig  {
 
 impl Deserialize for schnorr::SchnorrSig {
     fn deserialize(bytes: &[u8]) -> Result<Self, encode::Error> {
-        match schnorr::SchnorrSig::from_slice(&bytes) {
-            Ok(sig) => Ok(sig),
-            Err(schnorr::SchnorrSigError::InvalidSighashType(flag)) => {
-                Err(encode::Error::from(psbt::Error::NonStandardSigHashType(flag as u32)))
-            }
-            Err(schnorr::SchnorrSigError::InvalidSchnorrSigSize(_)) =>
-                Err(encode::Error::ParseFailed("Invalid Schnorr signature length")),
-            Err(schnorr::SchnorrSigError::Secp256k1(..)) =>
-                Err(encode::Error::ParseFailed("Invalid Schnorr signature")),
-        }
+        schnorr::SchnorrSig::from_slice(&bytes)
+            .map_err(|e| match e {
+                schnorr::SchnorrSigError::InvalidSighashType(flag) => {
+                    encode::Error::from(psbt::Error::NonStandardSigHashType(flag as u32))
+                }
+                schnorr::SchnorrSigError::InvalidSchnorrSigSize(_) => {
+                    encode::Error::ParseFailed("Invalid Schnorr signature length")
+                }
+                schnorr::SchnorrSigError::Secp256k1(..) => {
+                    encode::Error::ParseFailed("Invalid Schnorr signature")
+                }
+            })
     }
 }
 
