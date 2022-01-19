@@ -162,7 +162,6 @@ Current list of the project maintainers:
 - [Maxim Orlovsky](https://github.com/dr-orlovsky)
 - [Matt Corallo](https://github.com/TheBlueMatt)
 - [Elichai Turkel](https://github.com/elichai)
-- [Sebastian Geisler](https://github.com/sgeisler)
 - [Sanket Kanjalkar](https://github.com/sanket1729)
 - [Martin Habovštiak](https://github.com/Kixunil)
 - [Riccardo Casatta](https://github.com/RCasatta)
