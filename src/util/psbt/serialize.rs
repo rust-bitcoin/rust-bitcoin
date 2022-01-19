@@ -264,7 +264,7 @@ impl Serialize for (Script, LeafVersion) {
     fn serialize(&self) -> Vec<u8> {
         let mut buf = Vec::with_capacity(self.0.len() + 1);
         buf.extend(self.0.as_bytes());
-        buf.push(self.1.into_consensus());
+        buf.push(self.1.to_consensus());
         buf
     }
 }
@@ -312,7 +312,7 @@ impl Serialize for TapTree {
                     // TaprootMerkleBranch can only have len atmost 128(TAPROOT_CONTROL_MAX_NODE_COUNT).
                     // safe to cast from usize to u8
                     buf.push(leaf_info.merkle_branch.as_inner().len() as u8);
-                    buf.push(leaf_info.ver.into_consensus());
+                    buf.push(leaf_info.ver.to_consensus());
                     leaf_info.script.consensus_encode(&mut buf).expect("Vecs dont err");
                 }
                 buf

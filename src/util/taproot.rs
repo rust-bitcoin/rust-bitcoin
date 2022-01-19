@@ -120,7 +120,7 @@ impl TapLeafHash {
     /// function to compute leaf hash from components
     pub fn from_script(script: &Script, ver: LeafVersion) -> TapLeafHash {
         let mut eng = TapLeafHash::engine();
-        ver.into_consensus()
+        ver.to_consensus()
             .consensus_encode(&mut eng)
             .expect("engines don't error");
         script
@@ -703,7 +703,7 @@ impl ControlBlock {
 
     /// Serialize to a writer. Returns the number of bytes written
     pub fn encode<Write: io::Write>(&self, mut writer: Write) -> io::Result<usize> {
-        let first_byte: u8 = i32::from(self.output_key_parity) as u8 | self.leaf_version.into_consensus();
+        let first_byte: u8 = i32::from(self.output_key_parity) as u8 | self.leaf_version.to_consensus();
         let mut bytes_written = 0;
         bytes_written += writer.write(&[first_byte])?;
         bytes_written += writer.write(&self.internal_key.serialize())?;
@@ -778,7 +778,7 @@ impl FutureLeafVersion {
 
     /// Get consensus representation of the future leaf version.
     #[inline]
-    pub fn into_consensus(self) -> u8 {
+    pub fn to_consensus(self) -> u8 {
         self.0
     }
 }
@@ -838,10 +838,10 @@ impl LeafVersion {
     }
 
     /// Get consensus representation of the [`LeafVersion`].
-    pub fn into_consensus(self) -> u8 {
+    pub fn to_consensus(self) -> u8 {
         match self {
             LeafVersion::TapScript => TAPROOT_LEAF_TAPSCRIPT,
-            LeafVersion::Future(version) => version.into_consensus(),
+            LeafVersion::Future(version) => version.to_consensus(),
         }
     }
 }
@@ -859,13 +859,13 @@ impl fmt::Display for LeafVersion {
 
 impl fmt::LowerHex for LeafVersion {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::LowerHex::fmt(&self.into_consensus(), f)
+        fmt::LowerHex::fmt(&self.to_consensus(), f)
     }
 }
 
 impl fmt::UpperHex for LeafVersion {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::UpperHex::fmt(&self.into_consensus(), f)
+        fmt::UpperHex::fmt(&self.to_consensus(), f)
     }
 }
 
@@ -877,7 +877,7 @@ impl ::serde::Serialize for LeafVersion {
         where
             S: ::serde::Serializer,
     {
-        serializer.serialize_u8(self.into_consensus())
+        serializer.serialize_u8(self.to_consensus())
     }
 }
 
@@ -1293,7 +1293,7 @@ mod test {
             let addr = Address::p2tr(&secp, internal_key, merkle_root, Network::Bitcoin);
             let spk = addr.script_pubkey();
 
-            assert_eq!(expected_output_key, output_key.into_inner());
+            assert_eq!(expected_output_key, output_key.to_inner());
             assert_eq!(expected_tweak, tweak);
             assert_eq!(expected_addr, addr);
             assert_eq!(expected_spk, spk);
