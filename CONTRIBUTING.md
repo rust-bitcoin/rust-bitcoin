@@ -8,7 +8,6 @@ implementation and other Rust Bitcoin-related projects, which are hosted in the
 mostly guidelines, not rules. Use your best judgment, and feel free to propose
 changes to this document in a pull request.
 
-
 #### Table Of Contents
 
 - [General](#general)
@@ -138,7 +137,6 @@ NB: Please keep in mind that the script above replaces `Cargo.lock` file, which
 is necessary to support current MSRV, incompatible with `stable` and newer cargo
 versions.
 
-
 ### Peer review
 
 Anyone may participate in peer review which is expressed by comments in the pull
@@ -146,7 +144,6 @@ request. Typically, reviewers will review the code for obvious errors, as well a
 test out the patch set and opine on the technical merits of the patch. Please,
 first review PR on the conceptual level before focusing on code style or
 grammar fixes.
-
 
 ### Repository maintainers
 
@@ -172,7 +169,6 @@ Current list of the project maintainers:
 
 Library reflects Bitcoin Core approach whenever possible.
 
-
 ### Formatting
 
 The repository currently does not use `rustfmt`.
@@ -188,13 +184,11 @@ and [how it is planned to coordinate it with crate refactoring](https://github.c
 For the new code it is recommended to follow style of the existing codebase and
 avoid any end-line space characters.
 
-
 ### MSRV
 
 The Minimal Supported Rust Version (MSRV) is 1.29; it is enforced by our CI.
 Later we plan to increase MSRV to support Rust 2018 and you are welcome to check
 the [tracking issue](https://github.com/rust-bitcoin/rust-bitcoin/issues/510).
-
 
 ### Naming conventions
 
@@ -203,7 +197,6 @@ in Bitcoin Core, with the following exceptions:
 - the case should follow Rust standards (i.e. PascalCase for types and
   snake_case for fields and variants);
 - omit `C`-prefixes.
-
 
 ### Unsafe code
 
