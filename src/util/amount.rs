@@ -484,7 +484,13 @@ impl Amount {
     }
 
     /// Get the number of satoshis in this [Amount].
+    #[deprecated(since = "0.29.0", note = "use to_sat instead")]
     pub fn as_sat(self) -> u64 {
+        self.to_sat()
+    }
+
+    /// Gets the number of satoshis in this [`Amount`].
+    pub fn to_sat(self) -> u64 {
         self.0
     }
 
@@ -543,9 +549,22 @@ impl Amount {
     /// Express this [Amount] as a floating-point value in Bitcoin.
     ///
     /// Equivalent to `to_float_in(Denomination::Bitcoin)`.
+    #[deprecated(since = "0.29.0", note = "use to_btc instead")]
+    pub fn as_btc(self) -> f64 {
+        self.to_btc()
+    }
+
+    /// Express this [`Amount`] as a floating-point value in Bitcoin.
     ///
     /// Please be aware of the risk of using floating-point numbers.
-    pub fn as_btc(self) -> f64 {
+    ///
+    /// # Examples
+    /// ```
+    /// # use bitcoin::{Amount, Denomination};
+    /// let amount = Amount::from_sat(100_000);
+    /// assert_eq!(amount.to_btc(), amount.to_float_in(Denomination::Bitcoin))
+    /// ```
+    pub fn to_btc(self) -> f64 {
         self.to_float_in(Denomination::Bitcoin)
     }
 
@@ -566,7 +585,7 @@ impl Amount {
     /// Create an object that implements [`fmt::Display`] using specified denomination.
     pub fn display_in(self, denomination: Denomination) -> Display {
         Display {
-            sats_abs: self.as_sat(),
+            sats_abs: self.to_sat(),
             is_negative: false,
             style: DisplayStyle::FixedDenomination { denomination, show_denomination: false, },
         }
@@ -578,7 +597,7 @@ impl Amount {
     /// avoid confusion the denomination is always shown.
     pub fn display_dynamic(self) -> Display {
         Display {
-            sats_abs: self.as_sat(),
+            sats_abs: self.to_sat(),
             is_negative: false,
             style: DisplayStyle::DynamicDenomination,
         }
@@ -588,7 +607,7 @@ impl Amount {
     ///
     /// Does not include the denomination.
     pub fn fmt_value_in(self, f: &mut dyn fmt::Write, denom: Denomination) -> fmt::Result {
-        fmt_satoshi_in(self.as_sat(), false, f, denom, false, FormatOptions::default())
+        fmt_satoshi_in(self.to_sat(), false, f, denom, false, FormatOptions::default())
     }
 
     /// Get a string number of this [Amount] in the given denomination.
@@ -645,10 +664,10 @@ impl Amount {
 
     /// Convert to a signed amount.
     pub fn to_signed(self) -> Result<SignedAmount, ParseAmountError> {
-        if self.as_sat() > SignedAmount::max_value().as_sat() as u64 {
+        if self.to_sat() > SignedAmount::max_value().to_sat() as u64 {
             Err(ParseAmountError::TooBig)
         } else {
-            Ok(SignedAmount::from_sat(self.as_sat() as i64))
+            Ok(SignedAmount::from_sat(self.to_sat() as i64))
         }
     }
 }
@@ -661,7 +680,7 @@ impl default::Default for Amount {
 
 impl fmt::Debug for Amount {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Amount({:.8} BTC)", self.as_btc())
+        write!(f, "Amount({:.8} BTC)", self.to_btc())
     }
 }
 
@@ -799,7 +818,7 @@ impl fmt::Display for Display {
         let format_options = FormatOptions::from_formatter(f);
         match &self.style {
             DisplayStyle::FixedDenomination { show_denomination, denomination } => fmt_satoshi_in(self.sats_abs, self.is_negative, f, *denomination, *show_denomination, format_options),
-            DisplayStyle::DynamicDenomination if self.sats_abs >= Amount::ONE_BTC.as_sat() => {
+            DisplayStyle::DynamicDenomination if self.sats_abs >= Amount::ONE_BTC.to_sat() => {
                 fmt_satoshi_in(self.sats_abs, self.is_negative, f, Denomination::Bitcoin, true, format_options)
             },
             DisplayStyle::DynamicDenomination => {
@@ -848,7 +867,13 @@ impl SignedAmount {
     }
 
     /// Get the number of satoshis in this [SignedAmount].
+    #[deprecated(since = "0.29.0", note = "use to_sat instead")]
     pub fn as_sat(self) -> i64 {
+        self.to_sat()
+    }
+
+    /// Gets the number of satoshis in this [`SignedAmount`].
+    pub fn to_sat(self) -> i64 {
         self.0
     }
 
@@ -909,7 +934,17 @@ impl SignedAmount {
     /// Equivalent to `to_float_in(Denomination::Bitcoin)`.
     ///
     /// Please be aware of the risk of using floating-point numbers.
+    #[deprecated(since = "0.29.0", note = "use to_btc instead")]
     pub fn as_btc(self) -> f64 {
+        self.to_btc()
+    }
+
+    /// Express this [`SignedAmount`] as a floating-point value in Bitcoin.
+    ///
+    /// Equivalent to `to_float_in(Denomination::Bitcoin)`.
+    ///
+    /// Please be aware of the risk of using floating-point numbers.
+    pub fn to_btc(self) -> f64 {
         self.to_float_in(Denomination::Bitcoin)
     }
 
@@ -931,7 +966,7 @@ impl SignedAmount {
     ///
     /// This is the implementation of `unsigned_abs()` copied from `core` to support older MSRV.
     fn to_sat_abs(self) -> u64 {
-        self.as_sat().wrapping_abs() as u64
+        self.to_sat().wrapping_abs() as u64
     }
 
     /// Create an object that implements [`fmt::Display`] using specified denomination.
@@ -1063,7 +1098,7 @@ impl SignedAmount {
         if self.is_negative() {
             Err(ParseAmountError::Negative)
         } else {
-            Ok(Amount::from_sat(self.as_sat() as u64))
+            Ok(Amount::from_sat(self.to_sat() as u64))
         }
     }
 }
@@ -1076,7 +1111,7 @@ impl default::Default for SignedAmount {
 
 impl fmt::Debug for SignedAmount {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "SignedAmount({:.8} BTC)", self.as_btc())
+        write!(f, "SignedAmount({:.8} BTC)", self.to_btc())
     }
 }
 
@@ -1263,7 +1298,7 @@ pub mod serde {
 
     impl SerdeAmount for Amount {
         fn ser_sat<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
-            u64::serialize(&self.as_sat(), s)
+            u64::serialize(&self.to_sat(), s)
         }
         fn des_sat<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error> {
             Ok(Amount::from_sat(u64::deserialize(d)?))
@@ -1282,16 +1317,16 @@ pub mod serde {
             "u"
         }
         fn ser_sat_opt<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
-            s.serialize_some(&self.as_sat())
+            s.serialize_some(&self.to_sat())
         }
         fn ser_btc_opt<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
-            s.serialize_some(&self.as_btc())
+            s.serialize_some(&self.to_btc())
         }
     }
 
     impl SerdeAmount for SignedAmount {
         fn ser_sat<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
-            i64::serialize(&self.as_sat(), s)
+            i64::serialize(&self.to_sat(), s)
         }
         fn des_sat<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error> {
             Ok(SignedAmount::from_sat(i64::deserialize(d)?))
@@ -1310,10 +1345,10 @@ pub mod serde {
             "i"
         }
         fn ser_sat_opt<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
-            s.serialize_some(&self.as_sat())
+            s.serialize_some(&self.to_sat())
         }
         fn ser_btc_opt<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
-            s.serialize_some(&self.as_btc())
+            s.serialize_some(&self.to_btc())
         }
     }
 

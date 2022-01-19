@@ -178,7 +178,13 @@ impl ServiceFlags {
     }
 
     /// Get the integer representation of this [ServiceFlags].
+    #[deprecated(since = "0.29.0", note = "use to_u64 instead")]
     pub fn as_u64(self) -> u64 {
+        self.to_u64()
+    }
+
+    /// Gets the integer representation of this [`ServiceFlags`].
+    pub fn to_u64(self) -> u64 {
         self.0
     }
 }

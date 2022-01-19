@@ -644,7 +644,7 @@ impl Script {
     #[cfg(feature="bitcoinconsensus")]
     #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
     pub fn verify_with_flags<F: Into<u32>>(&self, index: usize, amount: crate::Amount, spending: &[u8], flags: F) -> Result<(), Error> {
-        Ok(bitcoinconsensus::verify_with_flags (&self.0[..], amount.as_sat(), spending, index, flags.into())?)
+        Ok(bitcoinconsensus::verify_with_flags (&self.0[..], amount.to_sat(), spending, index, flags.into())?)
     }
 
     /// Writes the assembly decoding of the script bytes to the formatter.

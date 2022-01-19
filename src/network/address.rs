@@ -267,7 +267,7 @@ impl Encodable for AddrV2Message {
     fn consensus_encode<W: io::Write>(&self, mut e: W) -> Result<usize, io::Error> {
         let mut len = 0;
         len += self.time.consensus_encode(&mut e)?;
-        len += VarInt(self.services.as_u64()).consensus_encode(&mut e)?;
+        len += VarInt(self.services.to_u64()).consensus_encode(&mut e)?;
         len += self.addr.consensus_encode(&mut e)?;
 
         // consensus_encode always encodes in LE, and we want to encode in BE.
