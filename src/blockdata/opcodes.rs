@@ -736,7 +736,14 @@ impl All {
 
     /// Encode as a byte
     #[inline]
+    #[deprecated(since = "0.29.0", note = "use to_u8 instead")]
     pub fn into_u8(self) -> u8 {
+        self.to_u8()
+    }
+
+    /// Encodes [`All`] as a byte.
+    #[inline]
+    pub fn to_u8(self) -> u8 {
         self.code
     }
 }
@@ -859,9 +866,17 @@ ordinary_opcode! {
 impl Ordinary {
     /// Encode as a byte
     #[inline]
+    #[deprecated(since = "0.29.0", note = "use to_u8 instead")]
     pub fn into_u8(self) -> u8 {
+        self.to_u8()
+    }
+
+    /// Encodes [`All`] as a byte.
+    #[inline]
+    pub fn to_u8(self) -> u8 {
         self as u8
     }
+
 }
 
 #[cfg(test)]
@@ -872,7 +887,7 @@ mod tests {
 
     macro_rules! roundtrip {
         ($unique:expr, $op:ident) => {
-            assert_eq!(all::$op, All::from(all::$op.into_u8()));
+            assert_eq!(all::$op, All::from(all::$op.to_u8()));
 
             let s1 = format!("{}", all::$op);
             let s2 = format!("{:?}", all::$op);

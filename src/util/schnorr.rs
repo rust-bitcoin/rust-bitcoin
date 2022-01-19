@@ -187,7 +187,14 @@ impl TweakedKeyPair {
 
     /// Returns the underlying key pair
     #[inline]
+    #[deprecated(since = "0.29.0", note = "use to_inner instead")]
     pub fn into_inner(self) -> crate::KeyPair {
+        self.0
+    }
+
+    /// Returns the underlying key pair.
+    #[inline]
+    pub fn to_inner(self) -> crate::KeyPair {
         self.0
     }
 }
