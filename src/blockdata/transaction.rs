@@ -736,69 +736,69 @@ impl str::FromStr for EcdsaSigHashType {
 }
 
 impl EcdsaSigHashType {
-     /// Break the sighash flag into the "real" sighash flag and the ANYONECANPAY boolean
-     pub(crate) fn split_anyonecanpay_flag(self) -> (EcdsaSigHashType, bool) {
-         match self {
-             EcdsaSigHashType::All		=> (EcdsaSigHashType::All, false),
-             EcdsaSigHashType::None		=> (EcdsaSigHashType::None, false),
-             EcdsaSigHashType::Single	=> (EcdsaSigHashType::Single, false),
-             EcdsaSigHashType::AllPlusAnyoneCanPay		=> (EcdsaSigHashType::All, true),
-             EcdsaSigHashType::NonePlusAnyoneCanPay		=> (EcdsaSigHashType::None, true),
-             EcdsaSigHashType::SinglePlusAnyoneCanPay	=> (EcdsaSigHashType::Single, true)
-         }
-     }
+    /// Break the sighash flag into the "real" sighash flag and the ANYONECANPAY boolean
+    pub(crate) fn split_anyonecanpay_flag(self) -> (EcdsaSigHashType, bool) {
+        match self {
+            EcdsaSigHashType::All		=> (EcdsaSigHashType::All, false),
+            EcdsaSigHashType::None		=> (EcdsaSigHashType::None, false),
+            EcdsaSigHashType::Single	=> (EcdsaSigHashType::Single, false),
+            EcdsaSigHashType::AllPlusAnyoneCanPay		=> (EcdsaSigHashType::All, true),
+            EcdsaSigHashType::NonePlusAnyoneCanPay		=> (EcdsaSigHashType::None, true),
+            EcdsaSigHashType::SinglePlusAnyoneCanPay	=> (EcdsaSigHashType::Single, true)
+        }
+    }
 
-     /// Reads a 4-byte uint32 as a sighash type.
-     #[deprecated(since="0.26.1", note="please use `from_u32_consensus` or `from_u32_standard` instead")]
-     pub fn from_u32(n: u32) -> EcdsaSigHashType {
-         Self::from_u32_consensus(n)
-     }
+    /// Reads a 4-byte uint32 as a sighash type.
+    #[deprecated(since="0.26.1", note="please use `from_u32_consensus` or `from_u32_standard` instead")]
+    pub fn from_u32(n: u32) -> EcdsaSigHashType {
+        Self::from_u32_consensus(n)
+    }
 
-     /// Reads a 4-byte uint32 as a sighash type.
-     ///
-     /// **Note**: this replicates consensus behaviour, for current standardness rules correctness
-     /// you probably want [Self::from_u32_standard].
-     /// This might cause unexpected behavior because it does not roundtrip. That is,
-     /// `EcdsaSigHashType::from_u32_consensus(n) as u32 != n` for non-standard values of
-     /// `n`. While verifying signatures, the user should retain the `n` and use it compute the
-     /// signature hash message.
-     pub fn from_u32_consensus(n: u32) -> EcdsaSigHashType {
-         // In Bitcoin Core, the SignatureHash function will mask the (int32) value with
-         // 0x1f to (apparently) deactivate ACP when checking for SINGLE and NONE bits.
-         // We however want to be matching also against on ACP-masked ALL, SINGLE, and NONE.
-         // So here we re-activate ACP.
-         let mask = 0x1f | 0x80;
-         match n & mask {
-             // "real" sighashes
-             0x01 => EcdsaSigHashType::All,
-             0x02 => EcdsaSigHashType::None,
-             0x03 => EcdsaSigHashType::Single,
-             0x81 => EcdsaSigHashType::AllPlusAnyoneCanPay,
-             0x82 => EcdsaSigHashType::NonePlusAnyoneCanPay,
-             0x83 => EcdsaSigHashType::SinglePlusAnyoneCanPay,
-             // catchalls
-             x if x & 0x80 == 0x80 => EcdsaSigHashType::AllPlusAnyoneCanPay,
-             _ => EcdsaSigHashType::All
-         }
-     }
+    /// Reads a 4-byte uint32 as a sighash type.
+    ///
+    /// **Note**: this replicates consensus behaviour, for current standardness rules correctness
+    /// you probably want [Self::from_u32_standard].
+    /// This might cause unexpected behavior because it does not roundtrip. That is,
+    /// `EcdsaSigHashType::from_u32_consensus(n) as u32 != n` for non-standard values of
+    /// `n`. While verifying signatures, the user should retain the `n` and use it compute the
+    /// signature hash message.
+    pub fn from_u32_consensus(n: u32) -> EcdsaSigHashType {
+        // In Bitcoin Core, the SignatureHash function will mask the (int32) value with
+        // 0x1f to (apparently) deactivate ACP when checking for SINGLE and NONE bits.
+        // We however want to be matching also against on ACP-masked ALL, SINGLE, and NONE.
+        // So here we re-activate ACP.
+        let mask = 0x1f | 0x80;
+        match n & mask {
+            // "real" sighashes
+            0x01 => EcdsaSigHashType::All,
+            0x02 => EcdsaSigHashType::None,
+            0x03 => EcdsaSigHashType::Single,
+            0x81 => EcdsaSigHashType::AllPlusAnyoneCanPay,
+            0x82 => EcdsaSigHashType::NonePlusAnyoneCanPay,
+            0x83 => EcdsaSigHashType::SinglePlusAnyoneCanPay,
+            // catchalls
+            x if x & 0x80 == 0x80 => EcdsaSigHashType::AllPlusAnyoneCanPay,
+            _ => EcdsaSigHashType::All
+        }
+    }
 
-     /// Read a 4-byte uint32 as a standard sighash type, returning an error if the type
-     /// is non standard.
-     pub fn from_u32_standard(n: u32) -> Result<EcdsaSigHashType, NonStandardSigHashType> {
-         match n {
-             // Standard sighashes, see https://github.com/bitcoin/bitcoin/blob/b805dbb0b9c90dadef0424e5b3bf86ac308e103e/src/script/interpreter.cpp#L189-L198
-             0x01 => Ok(EcdsaSigHashType::All),
-             0x02 => Ok(EcdsaSigHashType::None),
-             0x03 => Ok(EcdsaSigHashType::Single),
-             0x81 => Ok(EcdsaSigHashType::AllPlusAnyoneCanPay),
-             0x82 => Ok(EcdsaSigHashType::NonePlusAnyoneCanPay),
-             0x83 => Ok(EcdsaSigHashType::SinglePlusAnyoneCanPay),
-             non_standard => Err(NonStandardSigHashType(non_standard))
-         }
-     }
+    /// Read a 4-byte uint32 as a standard sighash type, returning an error if the type
+    /// is non standard.
+    pub fn from_u32_standard(n: u32) -> Result<EcdsaSigHashType, NonStandardSigHashType> {
+        match n {
+            // Standard sighashes, see https://github.com/bitcoin/bitcoin/blob/b805dbb0b9c90dadef0424e5b3bf86ac308e103e/src/script/interpreter.cpp#L189-L198
+            0x01 => Ok(EcdsaSigHashType::All),
+            0x02 => Ok(EcdsaSigHashType::None),
+            0x03 => Ok(EcdsaSigHashType::Single),
+            0x81 => Ok(EcdsaSigHashType::AllPlusAnyoneCanPay),
+            0x82 => Ok(EcdsaSigHashType::NonePlusAnyoneCanPay),
+            0x83 => Ok(EcdsaSigHashType::SinglePlusAnyoneCanPay),
+            non_standard => Err(NonStandardSigHashType(non_standard))
+        }
+    }
 
-     /// Converts to a u32
-     pub fn as_u32(self) -> u32 { self as u32 }
+    /// Converts to a u32
+    pub fn as_u32(self) -> u32 { self as u32 }
 }
 
 impl From<EcdsaSigHashType> for u32 {
