@@ -27,6 +27,8 @@ use prelude::*;
 
 use io;
 use core::{fmt, default::Default};
+use core::ops::Index;
+use core::slice::SliceIndex;
 
 #[cfg(feature = "serde")] use serde;
 
@@ -48,6 +50,15 @@ use schnorr::{TapTweak, TweakedPublicKey, UntweakedPublicKey};
 /// A Bitcoin script.
 #[derive(Clone, Default, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub struct Script(Box<[u8]>);
+
+impl<I: SliceIndex<[u8]>> Index<I> for Script {
+    type Output = I::Output;
+
+    #[inline]
+    fn index(&self, index: I) -> &Self::Output {
+        &self.0[index]
+    }
+}
 
 impl AsRef<[u8]> for Script {
     fn as_ref(&self) -> &[u8] {
@@ -108,6 +119,15 @@ impl ::core::str::FromStr for Script {
 #[derive(PartialEq, Eq, Debug, Clone)]
 pub struct Builder(Vec<u8>, Option<opcodes::All>);
 display_from_debug!(Builder);
+
+impl<I: SliceIndex<[u8]>> Index<I> for Builder {
+    type Output = I::Output;
+
+    #[inline]
+    fn index(&self, index: I) -> &Self::Output {
+        &self.0[index]
+    }
+}
 
 /// Ways that a script might fail. Not everything is split up as
 /// much as it could be; patches welcome if more detailed errors
@@ -686,8 +706,6 @@ impl From<Vec<u8>> for Script {
     fn from(v: Vec<u8>) -> Script { Script(v.into_boxed_slice()) }
 }
 
-impl_index_newtype!(Script, u8);
-
 /// A "parsed opcode" which allows iterating over a [`Script`] in a more sensible way.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Instruction<'a> {
@@ -942,8 +960,6 @@ impl From<Vec<u8>> for Builder {
         Builder(script.into_bytes(), last_op)
     }
 }
-
-impl_index_newtype!(Builder, u8);
 
 #[cfg(feature = "serde")]
 #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]

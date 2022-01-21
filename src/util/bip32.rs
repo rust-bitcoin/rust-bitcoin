@@ -21,6 +21,8 @@ use prelude::*;
 
 use io::Write;
 use core::{fmt, str::FromStr, default::Default};
+use core::ops::Index;
+use core::slice::SliceIndex;
 #[cfg(feature = "std")] use std::error;
 #[cfg(feature = "serde")] use serde;
 
@@ -238,8 +240,16 @@ pub trait IntoDerivationPath {
 /// A BIP-32 derivation path.
 #[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Hash)]
 pub struct DerivationPath(Vec<ChildNumber>);
-impl_index_newtype!(DerivationPath, ChildNumber);
 serde_string_impl!(DerivationPath, "a BIP-32 derivation path");
+
+impl<I: SliceIndex<[ChildNumber]>> Index<I> for DerivationPath {
+    type Output = I::Output;
+
+    #[inline]
+    fn index(&self, index: I) -> &Self::Output {
+        &self.0[index]
+    }
+}
 
 impl Default for DerivationPath {
     fn default() -> DerivationPath {
