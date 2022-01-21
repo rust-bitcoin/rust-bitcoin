@@ -235,7 +235,7 @@ impl<'s> ScriptPath<'s> {
     pub fn leaf_hash(&self) -> TapLeafHash {
         let mut enc = TapLeafHash::engine();
 
-        self.leaf_version.into_consensus().consensus_encode(&mut enc).expect("Writing to hash enging should never fail");
+        self.leaf_version.to_consensus().consensus_encode(&mut enc).expect("Writing to hash enging should never fail");
         self.script.consensus_encode(&mut enc).expect("Writing to hash enging should never fail");
 
         TapLeafHash::from_engine(enc)

@@ -465,7 +465,7 @@ impl Payload {
         let (output_key, _parity) = internal_key.tap_tweak(secp, merkle_root);
         Payload::WitnessProgram {
             version: WitnessVersion::V1,
-            program: output_key.into_inner().serialize().to_vec(),
+            program: output_key.to_inner().serialize().to_vec(),
         }
     }
 

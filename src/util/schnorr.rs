@@ -161,7 +161,7 @@ impl TweakedPublicKey {
     }
 
     /// Returns the underlying public key.
-    pub fn into_inner(self) -> ::XOnlyPublicKey {
+    pub fn to_inner(self) -> ::XOnlyPublicKey {
         self.0
     }
 
