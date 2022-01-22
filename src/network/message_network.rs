@@ -22,17 +22,18 @@ use prelude::*;
 
 use io;
 
+use bitcoin_derive::{Decodable, Encodable};
+
 use network::address::Address;
 use network::constants::{self, ServiceFlags};
-use consensus::{Encodable, Decodable, ReadExt};
-use consensus::encode;
+use consensus::{encode, Decodable, Encodable, MAX_VEC_SIZE, ReadExt};
 use network::message::CommandString;
 use hashes::sha256d;
 
 /// Some simple messages
 
 /// The `version` message
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Eq, Clone, Debug, Decodable, Encodable)]
 pub struct VersionMessage {
     /// The P2P network protocol version
     pub version: u32,
@@ -81,10 +82,6 @@ impl VersionMessage {
     }
 }
 
-impl_consensus_encoding!(VersionMessage, version, services, timestamp,
-                         receiver, sender, nonce,
-                         user_agent, start_height, relay);
-
 /// message rejection reason as a code
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub enum RejectReason {
@@ -130,7 +127,7 @@ impl Decodable for RejectReason {
 }
 
 /// Reject message might be sent by peers rejecting one of our messages
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Eq, Clone, Debug, Decodable, Encodable)]
 pub struct Reject {
     /// message type rejected
     pub message: CommandString,
@@ -141,8 +138,6 @@ pub struct Reject {
     /// reference to rejected item
     pub hash: sha256d::Hash
 }
-
-impl_consensus_encoding!(Reject, message, ccode, reason, hash);
 
 #[cfg(test)]
 mod tests {

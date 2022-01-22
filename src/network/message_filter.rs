@@ -3,10 +3,14 @@
 //! This module describes BIP157 Client Side Block Filtering network messages.
 //!
 
+use bitcoin_derive::{Decodable, Encodable};
+
 use hash_types::{BlockHash, FilterHash, FilterHeader};
+use consensus::{encode, Decodable, Encodable, MAX_VEC_SIZE};
+use io;
 
 /// getcfilters message
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Eq, Clone, Debug, Decodable, Encodable)]
 pub struct GetCFilters {
     /// Filter type for which headers are requested
     pub filter_type: u8,
@@ -15,10 +19,9 @@ pub struct GetCFilters {
     /// The hash of the last block in the requested range
     pub stop_hash: BlockHash,
 }
-impl_consensus_encoding!(GetCFilters, filter_type, start_height, stop_hash);
 
 /// cfilter message
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Eq, Clone, Debug, Decodable, Encodable)]
 pub struct CFilter {
     /// Byte identifying the type of filter being returned
     pub filter_type: u8,
@@ -27,10 +30,9 @@ pub struct CFilter {
     /// The serialized compact filter for this block
     pub filter: Vec<u8>,
 }
-impl_consensus_encoding!(CFilter, filter_type, block_hash, filter);
 
 /// getcfheaders message
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Eq, Clone, Debug, Decodable, Encodable)]
 pub struct GetCFHeaders {
     /// Byte identifying the type of filter being returned
     pub filter_type: u8,
@@ -39,10 +41,9 @@ pub struct GetCFHeaders {
     /// The hash of the last block in the requested range
     pub stop_hash: BlockHash,
 }
-impl_consensus_encoding!(GetCFHeaders, filter_type, start_height, stop_hash);
 
 /// cfheaders message
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Eq, Clone, Debug, Decodable, Encodable)]
 pub struct CFHeaders {
     /// Filter type for which headers are requested
     pub filter_type: u8,
@@ -53,20 +54,18 @@ pub struct CFHeaders {
     /// The filter hashes for each block in the requested range
     pub filter_hashes: Vec<FilterHash>,
 }
-impl_consensus_encoding!(CFHeaders, filter_type, stop_hash, previous_filter_header, filter_hashes);
 
 /// getcfcheckpt message
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Eq, Clone, Debug, Decodable, Encodable)]
 pub struct GetCFCheckpt {
     /// Filter type for which headers are requested
     pub filter_type: u8,
     /// The hash of the last block in the requested range
     pub stop_hash: BlockHash,
 }
-impl_consensus_encoding!(GetCFCheckpt, filter_type, stop_hash);
 
 /// cfcheckpt message
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Eq, Clone, Debug, Decodable, Encodable)]
 pub struct CFCheckpt {
     /// Filter type for which headers are requested
     pub filter_type: u8,
@@ -75,4 +74,3 @@ pub struct CFCheckpt {
     /// The filter headers at intervals of 1,000
     pub filter_headers: Vec<FilterHeader>,
 }
-impl_consensus_encoding!(CFCheckpt, filter_type, stop_hash, filter_headers);

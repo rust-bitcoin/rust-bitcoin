@@ -1,0 +1,19 @@
+[package]
+name = "bitcoin-derive"
+version = "0.1.0"
+authors = [""]   # FIXME: Can we have a string here for "The rust-bitcoin devs"?
+license = "CC0-1.0"
+homepage = "https://github.com/rust-bitcoin/rust-bitcoin/rust-bitcoin-derive"
+repository = "https://github.com/rust-bitcoin/rust-bitcoin/"
+documentation = "https://docs.rs/bitcoin-derive/"
+description = "Procedural macros for the rust-bitcoin project."
+keywords = [ "crypto", "bitcoin" ]
+readme = "README.md"            # TODO: Write README
+
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro2 = "1.0"
+quote = "1.0"
+syn = { version = "1.0", features = ["derive"] }

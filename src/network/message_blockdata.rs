@@ -22,10 +22,12 @@ use prelude::*;
 
 use io;
 
+use bitcoin_derive::{Decodable, Encodable};
+
 use hashes::sha256d;
 
 use network::constants;
-use consensus::encode::{self, Decodable, Encodable};
+use consensus::{encode, Decodable, Encodable, MAX_VEC_SIZE};
 use hash_types::{BlockHash, Txid, Wtxid};
 
 /// An inventory item.
@@ -98,7 +100,7 @@ impl Decodable for Inventory {
 // Some simple messages
 
 /// The `getblocks` message
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Eq, Clone, Debug, Decodable, Encodable)]
 pub struct GetBlocksMessage {
     /// The protocol version
     pub version: u32,
@@ -111,7 +113,7 @@ pub struct GetBlocksMessage {
 }
 
 /// The `getheaders` message
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Eq, Clone, Debug, Decodable, Encodable)]
 pub struct GetHeadersMessage {
     /// The protocol version
     pub version: u32,
@@ -134,8 +136,6 @@ impl GetBlocksMessage {
     }
 }
 
-impl_consensus_encoding!(GetBlocksMessage, version, locator_hashes, stop_hash);
-
 impl GetHeadersMessage {
     /// Construct a new `getheaders` message
     pub fn new(locator_hashes: Vec<BlockHash>, stop_hash: BlockHash) -> GetHeadersMessage {
@@ -146,8 +146,6 @@ impl GetHeadersMessage {
         }
     }
 }
-
-impl_consensus_encoding!(GetHeadersMessage, version, locator_hashes, stop_hash);
 
 #[cfg(test)]
 mod tests {

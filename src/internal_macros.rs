@@ -17,34 +17,6 @@
 //! Macros meant to be used inside the Rust Bitcoin library.
 //!
 
-macro_rules! impl_consensus_encoding {
-    ($thing:ident, $($field:ident),+) => (
-        impl $crate::consensus::Encodable for $thing {
-            #[inline]
-            fn consensus_encode<S: $crate::io::Write>(
-                &self,
-                mut s: S,
-            ) -> Result<usize, $crate::io::Error> {
-                let mut len = 0;
-                $(len += self.$field.consensus_encode(&mut s)?;)+
-                Ok(len)
-            }
-        }
-
-        impl $crate::consensus::Decodable for $thing {
-            #[inline]
-            fn consensus_decode<D: $crate::io::Read>(
-                d: D,
-            ) -> Result<$thing, $crate::consensus::encode::Error> {
-                let mut d = d.take($crate::consensus::encode::MAX_VEC_SIZE as u64);
-                Ok($thing {
-                    $($field: $crate::consensus::Decodable::consensus_decode(&mut d)?),+
-                })
-            }
-        }
-    );
-}
-
 /// Implements standard array methods for a given wrapper type
 macro_rules! impl_array_newtype {
     ($thing:ident, $ty:ty, $len:expr) => {

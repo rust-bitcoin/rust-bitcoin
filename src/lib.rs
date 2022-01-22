@@ -77,6 +77,8 @@ extern crate core2;
 #[cfg(any(feature = "std", test))]
 extern crate core; // for Rust 1.29 and no-std tests
 
+extern crate bitcoin_derive;
+
 // Re-exported dependencies.
 #[macro_use] pub extern crate bitcoin_hashes as hashes;
 pub extern crate secp256k1;

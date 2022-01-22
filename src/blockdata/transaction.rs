@@ -29,6 +29,8 @@ use io;
 use core::{fmt, str, default::Default};
 #[cfg(feature = "std")] use std::error;
 
+use bitcoin_derive::{Decodable, Encodable};
+
 use hashes::{self, Hash, sha256d};
 use hashes::hex::FromHex;
 
@@ -37,8 +39,7 @@ use blockdata::constants::WITNESS_SCALE_FACTOR;
 #[cfg(feature="bitcoinconsensus")] use blockdata::script;
 use blockdata::script::Script;
 use blockdata::witness::Witness;
-use consensus::{encode, Decodable, Encodable};
-use consensus::encode::MAX_VEC_SIZE;
+use consensus::{encode, Decodable, Encodable, MAX_VEC_SIZE};
 use hash_types::{SigHash, Txid, Wtxid};
 use VarInt;
 
@@ -213,7 +214,7 @@ impl Default for TxIn {
 }
 
 /// A transaction output, which defines new coins to be created from old ones.
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash, Decodable, Encodable)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct TxOut {
     /// The value of the output, in satoshis
@@ -544,8 +545,6 @@ impl Transaction {
         self.input.iter().any(|input| input.sequence < (0xffffffff - 1))
     }
 }
-
-impl_consensus_encoding!(TxOut, value, script_pubkey);
 
 impl Encodable for OutPoint {
     fn consensus_encode<S: io::Write>(

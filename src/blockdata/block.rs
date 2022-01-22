@@ -23,6 +23,9 @@
 use prelude::*;
 
 use core::fmt;
+use io;
+
+use bitcoin_derive::{Decodable, Encodable};
 
 use util;
 use util::Error::{BlockBadTarget, BlockBadProofOfWork};
@@ -30,7 +33,7 @@ use util::hash::bitcoin_merkle_root;
 use hashes::{Hash, HashEngine};
 use hash_types::{Wtxid, BlockHash, TxMerkleNode, WitnessMerkleNode, WitnessCommitment};
 use util::uint::Uint256;
-use consensus::encode::Encodable;
+use consensus::{encode, Decodable, Encodable, MAX_VEC_SIZE};
 use network::constants::Network;
 use blockdata::transaction::Transaction;
 use blockdata::constants::{max_target, WITNESS_SCALE_FACTOR};
@@ -39,7 +42,7 @@ use VarInt;
 
 /// A block header, which contains all the block's information except
 /// the actual transactions
-#[derive(Copy, PartialEq, Eq, Clone, Debug)]
+#[derive(Copy, PartialEq, Eq, Clone, Debug, Encodable, Decodable)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct BlockHeader {
     /// The protocol version. Should always be 1.
@@ -56,8 +59,6 @@ pub struct BlockHeader {
     /// The nonce, selected to obtain a low enough blockhash
     pub nonce: u32,
 }
-
-impl_consensus_encoding!(BlockHeader, version, prev_blockhash, merkle_root, time, bits, nonce);
 
 impl BlockHeader {
     /// Return the block hash.
@@ -157,7 +158,7 @@ impl BlockHeader {
 
 /// A Bitcoin block, which is a collection of transactions with an attached
 /// proof of work.
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Eq, Clone, Debug, Decodable, Encodable)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Block {
     /// The block header
@@ -165,8 +166,6 @@ pub struct Block {
     /// List of transactions contained in the block
     pub txdata: Vec<Transaction>
 }
-
-impl_consensus_encoding!(Block, header, txdata);
 
 impl Block {
     /// Return the block hash.

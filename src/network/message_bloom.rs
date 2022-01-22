@@ -3,12 +3,13 @@
 //! This module describes BIP37 Connection Bloom filtering network messages.
 //!
 
-use consensus::encode;
-use consensus::{Decodable, Encodable, ReadExt};
+use bitcoin_derive::{Decodable, Encodable};
+
+use consensus::{encode, Decodable, Encodable, MAX_VEC_SIZE, ReadExt};
 use std::io;
 
 /// `filterload` message sets the current bloom filter
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug, Decodable, Encodable)]
 pub struct FilterLoad {
     /// The filter itself
     pub filter: Vec<u8>,
@@ -19,8 +20,6 @@ pub struct FilterLoad {
     /// Controls how matched items are added to the filter
     pub flags: BloomFlags,
 }
-
-impl_consensus_encoding!(FilterLoad, filter, hash_funcs, tweak, flags);
 
 /// Bloom filter update flags
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -56,10 +55,8 @@ impl Decodable for BloomFlags {
 }
 
 /// `filteradd` message updates the current filter with new data
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug, Decodable, Encodable)]
 pub struct FilterAdd {
     /// The data element to add to the current filter.
     pub data: Vec<u8>,
 }
-
-impl_consensus_encoding!(FilterAdd, data);
