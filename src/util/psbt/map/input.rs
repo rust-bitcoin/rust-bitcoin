@@ -67,11 +67,11 @@ const PSBT_IN_TAP_SCRIPT_SIG: u8 = 0x14;
 /// Type: Taproot Leaf Script PSBT_IN_TAP_LEAF_SCRIPT = 0x14
 const PSBT_IN_TAP_LEAF_SCRIPT: u8 = 0x15;
 /// Type: Taproot Key BIP 32 Derivation Path PSBT_IN_TAP_BIP32_DERIVATION = 0x16
-const PSBT_IN_TAP_BIP32_DERIVATION : u8 = 0x16;
+const PSBT_IN_TAP_BIP32_DERIVATION: u8 = 0x16;
 /// Type: Taproot Internal Key PSBT_IN_TAP_INTERNAL_KEY = 0x17
-const PSBT_IN_TAP_INTERNAL_KEY : u8 = 0x17;
+const PSBT_IN_TAP_INTERNAL_KEY: u8 = 0x17;
 /// Type: Taproot Merkle Root PSBT_IN_TAP_MERKLE_ROOT = 0x18
-const PSBT_IN_TAP_MERKLE_ROOT : u8 = 0x18;
+const PSBT_IN_TAP_MERKLE_ROOT: u8 = 0x18;
 /// Type: Proprietary Use Type PSBT_IN_PROPRIETARY = 0xFC
 const PSBT_IN_PROPRIETARY: u8 = 0xFC;
 
@@ -133,9 +133,9 @@ pub struct Input {
     #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_as_seq"))]
     pub tap_key_origins: BTreeMap<XOnlyPublicKey, (Vec<TapLeafHash>, KeySource)>,
     /// Taproot Internal key.
-    pub tap_internal_key : Option<XOnlyPublicKey>,
+    pub tap_internal_key: Option<XOnlyPublicKey>,
     /// Taproot Merkle root.
-    pub tap_merkle_root : Option<TapBranchHash>,
+    pub tap_merkle_root: Option<TapBranchHash>,
     /// Proprietary key-value pairs for this input.
     #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_as_seq_byte_values"))]
     pub proprietary: BTreeMap<raw::ProprietaryKey, Vec<u8>>,
@@ -157,13 +157,13 @@ pub struct PsbtSigHashType {
 
 impl From<EcdsaSigHashType> for PsbtSigHashType {
     fn from(ecdsa_hash_ty: EcdsaSigHashType) -> Self {
-        PsbtSigHashType {inner: ecdsa_hash_ty as u32}
+        PsbtSigHashType { inner: ecdsa_hash_ty as u32 }
     }
 }
 
 impl From<SchnorrSigHashType> for PsbtSigHashType {
     fn from(schnorr_hash_ty: SchnorrSigHashType) -> Self {
-        PsbtSigHashType {inner: schnorr_hash_ty as u32}
+        PsbtSigHashType { inner: schnorr_hash_ty as u32 }
     }
 }
 
@@ -289,7 +289,7 @@ impl Input {
                     self.tap_script_sigs <= <raw_key: (XOnlyPublicKey, TapLeafHash)>|<raw_value: SchnorrSig>
                 }
             }
-            PSBT_IN_TAP_LEAF_SCRIPT=> {
+            PSBT_IN_TAP_LEAF_SCRIPT => {
                 impl_psbt_insert_pair! {
                     self.tap_scripts <= <raw_key: ControlBlock>|< raw_value: (Script, LeafVersion)>
                 }

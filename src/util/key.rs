@@ -31,7 +31,6 @@ use hashes::{Hash, hash160, hex, hex::FromHex};
 use hash_types::{PubkeyHash, WPubkeyHash};
 use util::base58;
 
-
 /// A key-related error.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum Error {
@@ -44,7 +43,6 @@ pub enum Error {
     /// Hex decoding error
     Hex(hex::Error)
 }
-
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -165,7 +163,7 @@ impl PublicKey {
         };
 
         reader.read_exact(&mut bytes[1..])?;
-        Self::from_slice(bytes).map_err(|e|{
+        Self::from_slice(bytes).map_err(|e| {
             // Need a static string for core2
             #[cfg(feature = "std")]
             let reason = e;
@@ -192,7 +190,9 @@ impl PublicKey {
         let compressed: bool = match data.len() {
             33 => true,
             65 => false,
-            len =>  { return Err(base58::Error::InvalidLength(len).into()); },
+            len =>  {
+                return Err(base58::Error::InvalidLength(len).into());
+            },
         };
 
         if !compressed && data[0] != 0x04 {
@@ -323,13 +323,17 @@ impl PrivateKey {
         let compressed = match data.len() {
             33 => false,
             34 => true,
-            _ => { return Err(Error::Base58(base58::Error::InvalidLength(data.len()))); }
+            _ => {
+                return Err(Error::Base58(base58::Error::InvalidLength(data.len())));
+            }
         };
 
         let network = match data[0] {
             128 => Network::Bitcoin,
             239 => Network::Testnet,
-            x   => { return Err(Error::Base58(base58::Error::InvalidAddressVersion(x))); }
+            x   => {
+                return Err(Error::Base58(base58::Error::InvalidAddressVersion(x)));
+            }
         };
 
         Ok(PrivateKey {

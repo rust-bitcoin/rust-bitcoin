@@ -175,7 +175,7 @@ impl Block {
     }
 
     /// check if merkle root of header matches merkle root of the transaction list
-    pub fn check_merkle_root (&self) -> bool {
+    pub fn check_merkle_root(&self) -> bool {
         match self.compute_merkle_root() {
             Some(merkle_root) => self.header.merkle_root == merkle_root,
             None => false,
@@ -229,7 +229,7 @@ impl Block {
     }
 
     /// Computes the witness commitment for the block's transaction list.
-    pub fn compute_witness_commitment (witness_root: &WitnessMerkleNode, witness_reserved_value: &[u8]) -> WitnessCommitment {
+    pub fn compute_witness_commitment(witness_root: &WitnessMerkleNode, witness_reserved_value: &[u8]) -> WitnessCommitment {
         let mut encoder = WitnessCommitment::engine();
         witness_root.consensus_encode(&mut encoder).expect("engines don't error");
         encoder.input(witness_reserved_value);

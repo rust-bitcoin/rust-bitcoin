@@ -576,7 +576,7 @@ mod test {
     }
 
     #[test]
-    fn test_filter () {
+    fn test_filter() {
         let mut patterns = HashSet::new();
 
         patterns.insert(Vec::from_hex("000000").unwrap());

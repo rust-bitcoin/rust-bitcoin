@@ -61,7 +61,7 @@ pub enum Error {
         actual: u32,
     },
     /// Tried to allocate an oversized vector
-    OversizedVectorAllocation{
+    OversizedVectorAllocation {
         /// The capacity requested
         requested: usize,
         /// The maximum capacity
@@ -333,7 +333,7 @@ pub struct VarInt(pub u64);
 pub struct CheckedData(pub Vec<u8>);
 
 // Primitive types
-macro_rules! impl_int_encodable{
+macro_rules! impl_int_encodable {
     ($ty:ident, $meth_dec:ident, $meth_enc:ident) => (
         impl Decodable for $ty {
             #[inline]
@@ -438,7 +438,6 @@ impl Decodable for VarInt {
         }
     }
 }
-
 
 // Booleans
 impl Encodable for bool {
@@ -1033,7 +1032,7 @@ mod tests {
         let witness = vec![vec![0u8; 3_999_999]; 2];
         let ser = serialize(&witness);
         let mut reader = io::Cursor::new(ser);
-        let err  = Vec::<Vec<u8>>::consensus_decode(&mut reader);
+        let err = Vec::<Vec<u8>>::consensus_decode(&mut reader);
         assert!(err.is_err());
     }
 

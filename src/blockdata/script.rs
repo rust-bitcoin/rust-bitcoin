@@ -141,11 +141,11 @@ impl fmt::Display for Error {
             Error::NonMinimalPush => "non-minimal datapush",
             Error::EarlyEndOfScript => "unexpected end of script",
             Error::NumericOverflow => "numeric overflow (number on stack larger than 4 bytes)",
-            #[cfg(feature="bitcoinconsensus")]
+            #[cfg(feature = "bitcoinconsensus")]
             Error::BitcoinConsensus(ref _n) => "bitcoinconsensus verification failed",
-            #[cfg(feature="bitcoinconsensus")]
+            #[cfg(feature = "bitcoinconsensus")]
             Error::UnknownSpentOutput(ref _point) => "unknown spent output Transaction::verify()",
-            #[cfg(feature="bitcoinconsensus")]
+            #[cfg(feature = "bitcoinconsensus")]
             Error::SerializationError => "can not serialize the spending transaction in Transaction::verify()",
         };
         f.write_str(str)
@@ -717,7 +717,7 @@ impl<'a> Iterator for Instructions<'a> {
             opcodes::Class::PushBytes(n) => {
                 let n = n as usize;
                 if self.data.len() < n + 1 {
-                    self.data = &[];  // Kill iterator so that it does not return an infinite stream of errors
+                    self.data = &[]; // Kill iterator so that it does not return an infinite stream of errors
                     return Some(Err(Error::EarlyEndOfScript));
                 }
                 if self.enforce_minimal {
@@ -1395,7 +1395,7 @@ mod test {
 
 	#[test]
     fn script_ord() {
-        let script_1 = Builder::new().push_slice(&[1,2,3,4]).into_script();
+        let script_1 = Builder::new().push_slice(&[1, 2, 3, 4]).into_script();
         let script_2 = Builder::new().push_int(10).into_script();
         let script_3 = Builder::new().push_int(15).into_script();
         let script_4 = Builder::new().push_opcode(opcodes::all::OP_RETURN).into_script();
@@ -1413,7 +1413,7 @@ mod test {
     }
 
 	#[test]
-	#[cfg(feature="bitcoinconsensus")]
+	#[cfg(feature = "bitcoinconsensus")]
 	fn test_bitcoinconsensus () {
 		// a random segwit transaction from the blockchain using native segwit
 		let spent = Builder::from(Vec::from_hex("0020701a8d401c84fb13e6baf169d59684e17abd9fa216c8cc5b9fc63d622ff8c58d").unwrap()).into_script();

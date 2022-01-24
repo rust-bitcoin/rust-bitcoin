@@ -38,7 +38,7 @@ pub struct Address {
     pub port: u16
 }
 
-const ONION : [u16; 3] = [0xFD87, 0xD87E, 0xEB43];
+const ONION: [u16; 3] = [0xFD87, 0xD87E, 0xEB43];
 
 impl Address {
     /// Create an address message for a socket
@@ -287,7 +287,7 @@ impl Encodable for AddrV2Message {
 
 impl Decodable for AddrV2Message {
     fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
-        Ok(AddrV2Message{
+        Ok(AddrV2Message {
             time: Decodable::consensus_decode(&mut d)?,
             services: ServiceFlags::from(VarInt::consensus_decode(&mut d)?.0),
             addr: Decodable::consensus_decode(&mut d)?,

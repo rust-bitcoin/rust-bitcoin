@@ -446,7 +446,7 @@ impl TaprootBuilder {
         Ok(TaprootSpendInfo::from_node_info(secp, internal_key, node))
     }
 
-    pub(crate) fn branch(&self) -> &[Option<NodeInfo>]{
+    pub(crate) fn branch(&self) -> &[Option<NodeInfo>] {
         &self.branch
     }
 

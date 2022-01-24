@@ -175,7 +175,7 @@ impl fmt::Display for ParseAmountError {
             ParseAmountError::PossiblyConfusingDenomination(ref d) => {
                 let (letter, upper, lower) = match d.chars().next() {
                     Some('M') => ('M', "Mega", "milli"),
-                    Some('P') => ('P',"Peta", "pico"),
+                    Some('P') => ('P', "Peta", "pico"),
                     // This panic could be avoided by adding enum ConfusingDenomination { Mega, Peta } but is it worth it?
                     _ => panic!("invalid error information"),
                 };
@@ -599,7 +599,7 @@ impl FromStr for Amount {
 }
 
 impl ::core::iter::Sum for Amount {
-    fn sum<I: Iterator<Item=Self>>(iter: I) -> Self {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         let sats: u64 = iter.map(|amt| amt.0).sum();
         Amount::from_sat(sats)
     }
@@ -933,7 +933,7 @@ impl FromStr for SignedAmount {
 }
 
 impl ::core::iter::Sum for SignedAmount {
-    fn sum<I: Iterator<Item=Self>>(iter: I) -> Self {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         let sats: i64 = iter.map(|amt| amt.0).sum();
         SignedAmount::from_sat(sats)
     }
@@ -1187,7 +1187,7 @@ pub mod serde {
             ) -> Result<Option<A>, D::Error> {
                 struct VisitOptAmt<X>(PhantomData<X>);
 
-                impl<'de, X :SerdeAmountForOpt> de::Visitor<'de> for VisitOptAmt<X> {
+                impl<'de, X: SerdeAmountForOpt> de::Visitor<'de> for VisitOptAmt<X> {
                     type Value = Option<X>;
 
                     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
@@ -1398,12 +1398,12 @@ mod tests {
         let sa = SignedAmount::from_sat;
         let ua = Amount::from_sat;
 
-        assert_eq!(Amount::max_value().to_signed(),  Err(E::TooBig));
+        assert_eq!(Amount::max_value().to_signed(), Err(E::TooBig));
         assert_eq!(ua(i64::max_value() as u64).to_signed(),  Ok(sa(i64::max_value())));
-        assert_eq!(ua(0).to_signed(),  Ok(sa(0)));
+        assert_eq!(ua(0).to_signed(), Ok(sa(0)));
         assert_eq!(ua(1).to_signed(), Ok( sa(1)));
-        assert_eq!(ua(1).to_signed(),  Ok(sa(1)));
-        assert_eq!(ua(i64::max_value() as u64 + 1).to_signed(),  Err(E::TooBig));
+        assert_eq!(ua(1).to_signed(), Ok(sa(1)));
+        assert_eq!(ua(i64::max_value() as u64 + 1).to_signed(), Err(E::TooBig));
 
         assert_eq!(sa(-1).to_unsigned(), Err(E::Negative));
         assert_eq!(sa(i64::max_value()).to_unsigned(), Ok(ua(i64::max_value() as u64)));

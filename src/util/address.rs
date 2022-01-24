@@ -1264,7 +1264,7 @@ mod tests {
     }
 
     #[test]
-    fn p2tr_from_untweaked(){
+    fn p2tr_from_untweaked() {
         //Test case from BIP-086
         let internal_key = XOnlyPublicKey::from_str("cc8a4bc64d897bddc5fbc2f670f7a8ba0b386779106cf1223c6fc5d7cd6fc115").unwrap();
         let secp = Secp256k1::verification_only();

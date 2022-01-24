@@ -169,7 +169,9 @@ macro_rules! construct_uint {
                 let &mut $name(ref mut arr) = self;
                 for i in 0..$n_words {
                     arr[i] = arr[i].wrapping_add(1);
-                    if arr[i] != 0 { break; }
+                    if arr[i] != 0 {
+                        break;
+                    }
                 }
             }
         }
@@ -188,8 +190,12 @@ macro_rules! construct_uint {
                 // and the auto derive is a lexicographic ordering(i.e. memcmp)
                 // which with numbers is equivalent to big-endian
                 for i in 0..$n_words {
-                    if self[$n_words - 1 - i] < other[$n_words - 1 - i] { return ::core::cmp::Ordering::Less; }
-                    if self[$n_words - 1 - i] > other[$n_words - 1 - i] { return ::core::cmp::Ordering::Greater; }
+                    if self[$n_words - 1 - i] < other[$n_words - 1 - i] {
+                        return ::core::cmp::Ordering::Less;
+                    }
+                    if self[$n_words - 1 - i] > other[$n_words - 1 - i] {
+                        return ::core::cmp::Ordering::Greater;
+                    }
                 }
                 ::core::cmp::Ordering::Equal
             }

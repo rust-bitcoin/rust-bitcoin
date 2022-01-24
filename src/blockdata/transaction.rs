@@ -137,7 +137,7 @@ impl fmt::Display for ParseOutPointError {
 
 #[cfg(feature = "std")]
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-impl  error::Error for ParseOutPointError {
+impl error::Error for ParseOutPointError {
     fn cause(&self) -> Option<&dyn  error::Error> {
         match *self {
             ParseOutPointError::Txid(ref e) => Some(e),
@@ -674,8 +674,8 @@ impl fmt::Display for NonStandardSigHashType {
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl error::Error for NonStandardSigHashType {}
 
-/// Legacy Hashtype of an input's signature.
-#[deprecated(since="0.28.0", note="Please use [`EcdsaSigHashType`] instead")]
+/// Legacy Hashtype of an input's signature
+#[deprecated(since = "0.28.0", note = "Please use [`EcdsaSigHashType`] instead")]
 pub type SigHashType = EcdsaSigHashType;
 
 /// Hashtype of an input's signature, encoded in the last byte of the signature.
@@ -736,17 +736,17 @@ impl EcdsaSigHashType {
     /// Splits the sighash flag into the "real" sighash flag and the ANYONECANPAY boolean.
     pub(crate) fn split_anyonecanpay_flag(self) -> (EcdsaSigHashType, bool) {
         match self {
-            EcdsaSigHashType::All		=> (EcdsaSigHashType::All, false),
-            EcdsaSigHashType::None		=> (EcdsaSigHashType::None, false),
-            EcdsaSigHashType::Single	=> (EcdsaSigHashType::Single, false),
-            EcdsaSigHashType::AllPlusAnyoneCanPay		=> (EcdsaSigHashType::All, true),
-            EcdsaSigHashType::NonePlusAnyoneCanPay		=> (EcdsaSigHashType::None, true),
-            EcdsaSigHashType::SinglePlusAnyoneCanPay	=> (EcdsaSigHashType::Single, true)
+            EcdsaSigHashType::All => (EcdsaSigHashType::All, false),
+            EcdsaSigHashType::None => (EcdsaSigHashType::None, false),
+            EcdsaSigHashType::Single => (EcdsaSigHashType::Single, false),
+            EcdsaSigHashType::AllPlusAnyoneCanPay => (EcdsaSigHashType::All, true),
+            EcdsaSigHashType::NonePlusAnyoneCanPay => (EcdsaSigHashType::None, true),
+            EcdsaSigHashType::SinglePlusAnyoneCanPay => (EcdsaSigHashType::Single, true)
         }
     }
 
     /// Reads a 4-byte uint32 as a sighash type.
-    #[deprecated(since="0.26.1", note="please use `from_u32_consensus` or `from_u32_standard` instead")]
+    #[deprecated(since = "0.26.1", note = "please use `from_u32_consensus` or `from_u32_standard` instead")]
     pub fn from_u32(n: u32) -> EcdsaSigHashType {
         Self::from_u32_consensus(n)
     }
@@ -1486,7 +1486,7 @@ mod tests {
         // test that we fail with repeated use of same input
         let mut double_spending = spending.clone();
         let re_use = double_spending.input[0].clone();
-        double_spending.input.push (re_use);
+        double_spending.input.push(re_use);
 
         assert!(double_spending.verify(|point: &OutPoint| {
             if let Some(tx) = spent2.remove(&point.txid) {

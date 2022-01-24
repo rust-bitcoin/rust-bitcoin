@@ -116,7 +116,7 @@ impl fmt::Display for CommandStringError {
 
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 #[cfg(feature = "std")]
-impl ::std::error::Error for CommandStringError { }
+impl ::std::error::Error for CommandStringError {}
 
 /// A Network message
 #[derive(Clone, Debug, PartialEq, Eq)]
