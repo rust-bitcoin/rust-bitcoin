@@ -519,7 +519,7 @@ mod test {
     use super::*;
 
     extern crate serde_json;
-    use self::serde_json::{Value};
+    use self::serde_json::Value;
 
     use consensus::encode::deserialize;
     use std::collections::HashMap;
