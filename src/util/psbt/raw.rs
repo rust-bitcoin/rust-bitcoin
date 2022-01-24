@@ -107,10 +107,7 @@ impl Decodable for Key {
 }
 
 impl Encodable for Key {
-    fn consensus_encode<S: io::Write>(
-        &self,
-        mut s: S,
-    ) -> Result<usize, io::Error> {
+    fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, io::Error> {
         let mut len = 0;
         len += VarInt((self.key.len() + 1) as u64).consensus_encode(&mut s)?;
 
@@ -125,10 +122,7 @@ impl Encodable for Key {
 }
 
 impl Encodable for Pair {
-    fn consensus_encode<S: io::Write>(
-        &self,
-        mut s: S,
-    ) -> Result<usize, io::Error> {
+    fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, io::Error> {
         let len = self.key.consensus_encode(&mut s)?;
         Ok(len + self.value.consensus_encode(s)?)
     }

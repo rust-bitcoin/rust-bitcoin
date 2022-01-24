@@ -547,10 +547,7 @@ impl Transaction {
 impl_consensus_encoding!(TxOut, value, script_pubkey);
 
 impl Encodable for OutPoint {
-    fn consensus_encode<S: io::Write>(
-        &self,
-        mut s: S,
-    ) -> Result<usize, io::Error> {
+    fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, io::Error> {
         let len = self.txid.consensus_encode(&mut s)?;
         Ok(len + self.vout.consensus_encode(s)?)
     }
@@ -565,10 +562,7 @@ impl Decodable for OutPoint {
 }
 
 impl Encodable for TxIn {
-    fn consensus_encode<S: io::Write>(
-        &self,
-        mut s: S,
-    ) -> Result<usize, io::Error> {
+    fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, io::Error> {
         let mut len = 0;
         len += self.previous_output.consensus_encode(&mut s)?;
         len += self.script_sig.consensus_encode(&mut s)?;
@@ -588,10 +582,7 @@ impl Decodable for TxIn {
 }
 
 impl Encodable for Transaction {
-    fn consensus_encode<S: io::Write>(
-        &self,
-        mut s: S,
-    ) -> Result<usize, io::Error> {
+    fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, io::Error> {
         let mut len = 0;
         len += self.version.consensus_encode(&mut s)?;
         // To avoid serialization ambiguity, no inputs means we use BIP141 serialization (see

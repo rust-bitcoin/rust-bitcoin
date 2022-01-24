@@ -238,10 +238,7 @@ mod display_from_str {
 pub use self::display_from_str::PsbtParseError;
 
 impl Encodable for PartiallySignedTransaction {
-    fn consensus_encode<S: io::Write>(
-        &self,
-        mut s: S,
-    ) -> Result<usize, io::Error> {
+    fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, io::Error> {
         let mut len = 0;
         len += b"psbt".consensus_encode(&mut s)?;
 

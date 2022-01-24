@@ -82,10 +82,7 @@ fn addr_to_be(addr: [u16; 8]) -> [u16; 8] {
 
 impl Encodable for Address {
     #[inline]
-    fn consensus_encode<S: io::Write>(
-        &self,
-        mut s: S,
-    ) -> Result<usize, io::Error> {
+    fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, io::Error> {
         let len = self.services.consensus_encode(&mut s)?
             + addr_to_be(self.address).consensus_encode(&mut s)?
 

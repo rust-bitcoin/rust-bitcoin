@@ -1027,10 +1027,7 @@ impl serde::Serialize for Script {
 
 impl Encodable for Script {
     #[inline]
-    fn consensus_encode<S: io::Write>(
-        &self,
-        s: S,
-    ) -> Result<usize, io::Error> {
+    fn consensus_encode<S: io::Write>(&self, s: S) -> Result<usize, io::Error> {
         self.0.consensus_encode(s)
     }
 }
