@@ -222,7 +222,7 @@ mod test {
         let istream = TcpStream::connect(format!("127.0.0.1:{}", port)).unwrap();
         let reader = BufReader::new(istream);
 
-        return (handle, reader)
+        (handle, reader)
     }
 
     #[test]
