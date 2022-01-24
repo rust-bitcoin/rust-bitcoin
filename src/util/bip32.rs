@@ -901,13 +901,14 @@ mod tests {
         assert_eq!(indexed.child(ChildNumber::from_hardened_idx(2).unwrap()), path);
     }
 
-    fn test_path<C: secp256k1::Signing + secp256k1::Verification>(secp: &Secp256k1<C>,
-                 network: Network,
-                 seed: &[u8],
-                 path: DerivationPath,
-                 expected_sk: &str,
-                 expected_pk: &str) {
-
+    fn test_path<C: secp256k1::Signing + secp256k1::Verification>(
+        secp: &Secp256k1<C>,
+        network: Network,
+        seed: &[u8],
+        path: DerivationPath,
+        expected_sk: &str,
+        expected_pk: &str)
+    {
         let mut sk = ExtendedPrivKey::new_master(network, seed).unwrap();
         let mut pk = ExtendedPubKey::from_priv(secp, &sk);
 
