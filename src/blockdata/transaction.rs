@@ -1113,12 +1113,14 @@ mod tests {
 
     #[test]
     fn test_sighashtype_fromstr_display() {
-        let sighashtypes = vec![("SIGHASH_ALL", EcdsaSigHashType::All),
+        let sighashtypes = vec![
+            ("SIGHASH_ALL", EcdsaSigHashType::All),
             ("SIGHASH_NONE", EcdsaSigHashType::None),
             ("SIGHASH_SINGLE", EcdsaSigHashType::Single),
             ("SIGHASH_ALL|SIGHASH_ANYONECANPAY", EcdsaSigHashType::AllPlusAnyoneCanPay),
             ("SIGHASH_NONE|SIGHASH_ANYONECANPAY", EcdsaSigHashType::NonePlusAnyoneCanPay),
-            ("SIGHASH_SINGLE|SIGHASH_ANYONECANPAY", EcdsaSigHashType::SinglePlusAnyoneCanPay)];
+            ("SIGHASH_SINGLE|SIGHASH_ANYONECANPAY", EcdsaSigHashType::SinglePlusAnyoneCanPay)
+        ];
         for (s, sht) in sighashtypes {
             assert_eq!(sht.to_string(), s);
             assert_eq!(EcdsaSigHashType::from_str(s).unwrap(), sht);
