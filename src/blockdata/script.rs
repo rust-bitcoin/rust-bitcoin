@@ -239,9 +239,12 @@ pub fn read_scriptint(v: &[u8]) -> Result<i64, Error> {
 /// else as true", except that the overflow rules don't apply.
 #[inline]
 pub fn read_scriptbool(v: &[u8]) -> bool {
-    !(v.is_empty() ||
-        ((v[v.len() - 1] == 0 || v[v.len() - 1] == 0x80) &&
-         v.iter().rev().skip(1).all(|&w| w == 0)))
+    let last = match v.last() {
+        Some(last) => *last,
+        None => return false,
+    };
+
+    !((last == 0x00 || last == 0x80) && v.iter().rev().skip(1).all(|&b| b == 0))
 }
 
 /// Read a script-encoded unsigned integer
