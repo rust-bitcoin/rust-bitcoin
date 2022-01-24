@@ -238,14 +238,14 @@ impl Block {
 
     /// Computes the merkle root of transactions hashed for witness.
     pub fn witness_root(&self) -> Option<WitnessMerkleNode> {
-        let hashes = self.txdata.iter().enumerate().map(|(i, t)|
+        let hashes = self.txdata.iter().enumerate().map(|(i, t)| {
             if i == 0 {
                 // Replace the first hash with zeroes.
                 Wtxid::default().as_hash()
             } else {
                 t.wtxid().as_hash()
             }
-        );
+        });
         bitcoin_merkle_root(hashes).map(|h| h.into())
     }
 
