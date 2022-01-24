@@ -94,17 +94,10 @@ impl fmt::Display for Error {
             Error::InvalidWitnessVersion(v) => write!(f, "invalid witness script version: {}", v),
             Error::UnparsableWitnessVersion(_) => write!(f, "incorrect format of a witness version byte"),
             Error::MalformedWitnessVersion => f.write_str("bitcoin script opcode does not match any known witness version, the script is malformed"),
-            Error::InvalidWitnessProgramLength(l) => write!(f,
-                "the witness program must be between 2 and 40 bytes in length: length={}", l,
-            ),
-            Error::InvalidSegwitV0ProgramLength(l) => write!(f,
-                "a v0 witness program must be either of length 20 or 32 bytes: length={}", l,
-            ),
-            Error::UncompressedPubkey => write!(f,
-                "an uncompressed pubkey was used where it is not allowed",
-            ),
-            Error::ExcessiveScriptSize => write!(f,
-                "Script size exceed 520 bytes")
+            Error::InvalidWitnessProgramLength(l) => write!(f, "the witness program must be between 2 and 40 bytes in length: length={}", l),
+            Error::InvalidSegwitV0ProgramLength(l) => write!(f, "a v0 witness program must be either of length 20 or 32 bytes: length={}", l),
+            Error::UncompressedPubkey => write!(f, "an uncompressed pubkey was used where it is not allowed"),
+            Error::ExcessiveScriptSize => write!(f, "Script size exceed 520 bytes"),
         }
     }
 }
@@ -395,14 +388,11 @@ impl Payload {
     /// Generates a script pubkey spending to this [Payload].
     pub fn script_pubkey(&self) -> script::Script {
         match *self {
-            Payload::PubkeyHash(ref hash) =>
-                script::Script::new_p2pkh(hash),
-            Payload::ScriptHash(ref hash) =>
-                script::Script::new_p2sh(hash),
-            Payload::WitnessProgram {
-                version,
-                program: ref prog,
-            } => script::Script::new_witness_program(version, prog)
+            Payload::PubkeyHash(ref hash) => script::Script::new_p2pkh(hash),
+            Payload::ScriptHash(ref hash) => script::Script::new_p2sh(hash),
+            Payload::WitnessProgram { version, program: ref prog } => {
+                script::Script::new_witness_program(version, prog)
+            }
         }
     }
 
@@ -622,10 +612,7 @@ impl Address {
     /// Creates a pay to taproot address from a pre-tweaked output key.
     ///
     /// This method is not recommended for use, [`Address::p2tr()`] should be used where possible.
-    pub fn p2tr_tweaked(
-        output_key: TweakedPublicKey,
-        network: Network
-    ) -> Address {
+    pub fn p2tr_tweaked(output_key: TweakedPublicKey, network: Network) -> Address {
         Address {
             network,
             payload: Payload::p2tr_tweaked(output_key),

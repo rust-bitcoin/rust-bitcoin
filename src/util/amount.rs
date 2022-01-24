@@ -961,10 +961,7 @@ impl<T> CheckedSum<SignedAmount> for T where T: Iterator<Item = SignedAmount> {
     fn checked_sum(mut self) -> Option<SignedAmount> {
         let first = Some(self.next().unwrap_or_default());
 
-        self.fold(
-            first,
-            |acc, item| acc.and_then(|acc| acc.checked_add(item))
-        )
+        self.fold(first, |acc, item| acc.and_then(|acc| acc.checked_add(item)))
     }
 }
 
@@ -1534,10 +1531,7 @@ mod tests {
                 samt: SignedAmount::from_sat(-123456789),
             },
             &[
-                serde_test::Token::Struct {
-                    name: "T",
-                    len: 2,
-                },
+                serde_test::Token::Struct { name: "T", len: 2 },
                 serde_test::Token::Str("amt"),
                 serde_test::Token::U64(123456789),
                 serde_test::Token::Str("samt"),

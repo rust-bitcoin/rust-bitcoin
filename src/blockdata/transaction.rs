@@ -59,10 +59,7 @@ impl OutPoint {
     /// Creates a new [`OutPoint`].
     #[inline]
     pub fn new(txid: Txid, vout: u32) -> OutPoint {
-        OutPoint {
-            txid,
-            vout,
-        }
+        OutPoint { txid, vout }
     }
 
     /// Creates a "null" `OutPoint`.
@@ -639,9 +636,7 @@ impl Decodable for Transaction {
                     }
                 }
                 // We don't support anything else
-                x => {
-                    Err(encode::Error::UnsupportedSegwitFlag(x))
-                }
+                x => Err(encode::Error::UnsupportedSegwitFlag(x)),
             }
         // non-segwit
         } else {

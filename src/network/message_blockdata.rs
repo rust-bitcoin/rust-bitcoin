@@ -57,8 +57,7 @@ impl Encodable for Inventory {
     fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, io::Error> {
         macro_rules! encode_inv {
             ($code:expr, $item:expr) => {
-                u32::consensus_encode(&$code, &mut s)? +
-                $item.consensus_encode(&mut s)?
+                u32::consensus_encode(&$code, &mut s)? + $item.consensus_encode(&mut s)?
             }
         }
         Ok(match *self {

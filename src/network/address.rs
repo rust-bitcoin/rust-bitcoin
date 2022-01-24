@@ -58,10 +58,7 @@ impl Address {
         if addr[0..3] == ONION {
             return Err(io::Error::from(io::ErrorKind::AddrNotAvailable));
         }
-        let ipv6 = Ipv6Addr::new(
-            addr[0],addr[1],addr[2],addr[3],
-            addr[4],addr[5],addr[6],addr[7]
-        );
+        let ipv6 = Ipv6Addr::new(addr[0], addr[1], addr[2], addr[3], addr[4], addr[5], addr[6], addr[7]);
         if let Some(ipv4) = ipv6.to_ipv4() {
             Ok(SocketAddr::V4(SocketAddrV4::new(ipv4, self.port)))
         } else {
@@ -190,10 +187,7 @@ impl Decodable for AddrV2 {
                 if addr[0..6] == [0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0xFFFF] {
                     return Err(encode::Error::ParseFailed("IPV4 wrapped address sent with IPv6 network id"));
                 }
-                AddrV2::Ipv6(Ipv6Addr::new(
-                    addr[0],addr[1],addr[2],addr[3],
-                    addr[4],addr[5],addr[6],addr[7]
-                ))
+                AddrV2::Ipv6(Ipv6Addr::new(addr[0], addr[1], addr[2], addr[3], addr[4], addr[5], addr[6], addr[7]))
             },
             3 => {
                 if len != 10 {
@@ -226,10 +220,7 @@ impl Decodable for AddrV2 {
                     return Err(encode::Error::ParseFailed("Invalid CJDNS address"));
                 }
                 let addr = addr_to_be(addr);
-                AddrV2::Cjdns(Ipv6Addr::new(
-                    addr[0],addr[1],addr[2],addr[3],
-                    addr[4],addr[5],addr[6],addr[7]
-                ))
+                AddrV2::Cjdns(Ipv6Addr::new(addr[0], addr[1], addr[2], addr[3], addr[4], addr[5], addr[6], addr[7]))
             },
             _ => {
                 // len already checked above to be <= 512

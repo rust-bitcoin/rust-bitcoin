@@ -342,10 +342,7 @@ mod tests {
             inputs: vec![],
             outputs: vec![],
         };
-        assert_eq!(
-            serialize_hex(&psbt),
-            "70736274ff01000a0200000000000000000000"
-        );
+        assert_eq!(serialize_hex(&psbt), "70736274ff01000a0200000000000000000000");
     }
 
     #[test]
@@ -387,12 +384,8 @@ mod tests {
         hd_keypaths.insert(pk.public_key, (fprint, dpath.into()));
 
         let expected: Output = Output {
-            redeem_script: Some(hex_script!(
-                "76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac"
-            )),
-            witness_script: Some(hex_script!(
-                "a9143545e6e33b832c47050f24d3eeb93c9c03948bc787"
-            )),
+            redeem_script: Some(hex_script!("76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac")),
+            witness_script: Some(hex_script!("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787")),
             bip32_derivation: hd_keypaths,
             ..Default::default()
         };
@@ -438,13 +431,8 @@ mod tests {
             version: 0,
             proprietary: Default::default(),
             unknown: Default::default(),
-            inputs: vec![
-                Input::default(),
-            ],
-            outputs: vec![
-                Output::default(),
-                Output::default()
-            ]
+            inputs: vec![Input::default()],
+            outputs: vec![Output::default(), Output::default()],
         };
 
         let actual: PartiallySignedTransaction = deserialize(&serialize(&expected)).unwrap();
@@ -801,8 +789,7 @@ mod tests {
             let psbt_non_witness_utxo = (&psbt.inputs[0].non_witness_utxo).as_ref().unwrap();
 
             assert_eq!(tx_input.previous_output.txid, psbt_non_witness_utxo.txid());
-            assert!(
-                psbt_non_witness_utxo.output[tx_input.previous_output.vout as usize]
+            assert!(psbt_non_witness_utxo.output[tx_input.previous_output.vout as usize]
                     .script_pubkey
                     .is_p2pkh()
             );
@@ -868,9 +855,7 @@ mod tests {
             let tx = &psbt.unsigned_tx;
             assert_eq!(
                 tx.txid(),
-                Txid::from_hex(
-                    "75c5c9665a570569ad77dd1279e6fd4628a093c4dcbf8d41532614044c14c115"
-                ).unwrap()
+                Txid::from_hex("75c5c9665a570569ad77dd1279e6fd4628a093c4dcbf8d41532614044c14c115").unwrap(),
             );
 
             let mut unknown: BTreeMap<raw::Key, Vec<u8>> = BTreeMap::new();

@@ -1355,38 +1355,19 @@ mod test {
         let slop_v_nonmin: Result<Vec<Instruction>, Error> = nonminimal.instructions().collect();
         let slop_v_nonmin_alt: Result<Vec<Instruction>, Error> = nonminimal_alt.instructions().collect();
 
-        assert_eq!(
-            v_zero.unwrap(),
-            vec![
-                Instruction::PushBytes(&[]),
-            ]
-        );
-        assert_eq!(
-            v_zeropush.unwrap(),
-            vec![
-                Instruction::PushBytes(&[0]),
-            ]
-        );
+        assert_eq!(v_zero.unwrap(), vec![Instruction::PushBytes(&[])]);
+        assert_eq!(v_zeropush.unwrap(), vec![Instruction::PushBytes(&[0])]);
 
         assert_eq!(
             v_min.clone().unwrap(),
-            vec![
-                Instruction::PushBytes(&[105]),
-                Instruction::Op(opcodes::OP_NOP3),
-            ]
+            vec![Instruction::PushBytes(&[105]), Instruction::Op(opcodes::OP_NOP3)]
         );
 
-        assert_eq!(
-            v_nonmin.err().unwrap(),
-            Error::NonMinimalPush
-        );
+        assert_eq!(v_nonmin.err().unwrap(), Error::NonMinimalPush);
 
         assert_eq!(
             v_nonmin_alt.clone().unwrap(),
-            vec![
-                Instruction::PushBytes(&[105, 0]),
-                Instruction::Op(opcodes::OP_NOP3),
-            ]
+            vec![Instruction::PushBytes(&[105, 0]), Instruction::Op(opcodes::OP_NOP3)]
         );
 
         assert_eq!(v_min.clone().unwrap(), slop_v_min.unwrap());

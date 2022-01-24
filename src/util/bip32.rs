@@ -913,23 +913,14 @@ mod tests {
         let mut pk = ExtendedPubKey::from_priv(secp, &sk);
 
         // Check derivation convenience method for ExtendedPrivKey
-        assert_eq!(
-            &sk.derive_priv(secp, &path).unwrap().to_string()[..],
-            expected_sk
-        );
+        assert_eq!(&sk.derive_priv(secp, &path).unwrap().to_string()[..], expected_sk);
 
         // Check derivation convenience method for ExtendedPubKey, should error
         // appropriately if any ChildNumber is hardened
         if path.0.iter().any(|cnum| cnum.is_hardened()) {
-            assert_eq!(
-                pk.derive_pub(secp, &path),
-                Err(Error::CannotDeriveFromHardenedKey)
-            );
+            assert_eq!(pk.derive_pub(secp, &path), Err(Error::CannotDeriveFromHardenedKey));
         } else {
-            assert_eq!(
-                &pk.derive_pub(secp, &path).unwrap().to_string()[..],
-                expected_pk
-            );
+            assert_eq!(&pk.derive_pub(secp, &path).unwrap().to_string()[..], expected_pk);
         }
 
         // Derive keys, checking hardened and non-hardened derivation one-by-one

@@ -189,9 +189,7 @@ impl PartialMerkleTree {
         }
         // there can never be more hashes provided than one for every txid
         if self.hashes.len() as u32 > self.num_transactions {
-            return Err(BadFormat(
-                "Proof contains more hashes than transactions".to_owned(),
-            ));
+            return Err(BadFormat("Proof contains more hashes than transactions".to_owned()));
         };
         // there must be at least one bit per node in the partial tree, and at least one node per hash
         if self.bits.len() < self.hashes.len() {
@@ -246,13 +244,7 @@ impl PartialMerkleTree {
     }
 
     /// Recursive function that traverses tree nodes, storing the data as bits and hashes
-    fn traverse_and_build(
-        &mut self,
-        height: u32,
-        pos: u32,
-        txids: &[Txid],
-        matches: &[bool],
-    ) {
+    fn traverse_and_build(&mut self, height: u32, pos: u32, txids: &[Txid], matches: &[bool]) {
         // Determine whether this node is the parent of at least one matched txid
         let mut parent_of_match = false;
         let mut p = pos << height;

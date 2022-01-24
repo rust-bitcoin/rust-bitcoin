@@ -99,10 +99,7 @@ impl Decodable for Key {
             key.push(Decodable::consensus_decode(&mut d)?);
         }
 
-        Ok(Key {
-            type_value,
-            key,
-        })
+        Ok(Key { type_value, key })
     }
 }
 
@@ -153,11 +150,7 @@ impl<Subtype> Decodable for ProprietaryKey<Subtype> where Subtype: Copy + From<u
         let subtype = Subtype::from(d.read_u8()?);
         let key = read_to_end(d)?;
 
-        Ok(ProprietaryKey {
-            prefix,
-            subtype,
-            key
-        })
+        Ok(ProprietaryKey { prefix, subtype, key })
     }
 }
 

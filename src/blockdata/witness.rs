@@ -202,10 +202,8 @@ impl Witness {
         self.last = self.content.len();
         let element_len_varint = VarInt(new_element.len() as u64);
         let current_content_len = self.content.len();
-        self.content.resize(
-            current_content_len + element_len_varint.len() + new_element.len(),
-            0,
-        );
+        self.content
+            .resize(current_content_len + element_len_varint.len() + new_element.len(), 0);
         let end_varint = current_content_len + element_len_varint.len();
         element_len_varint
             .consensus_encode(&mut self.content[current_content_len..end_varint])
@@ -359,14 +357,9 @@ mod test {
         for (i, wit_el) in tx.input[0].witness.iter().enumerate() {
             assert_eq!(expected_wit[i], wit_el.to_hex());
         }
-        assert_eq!(
-            expected_wit[1],
-            tx.input[0].witness.last().unwrap().to_hex()
-        );
-        assert_eq!(
-            expected_wit[0],
-            tx.input[0].witness.second_to_last().unwrap().to_hex()
-        );
+        assert_eq!(expected_wit[1], tx.input[0].witness.last().unwrap().to_hex());
+        assert_eq!(expected_wit[0], tx.input[0].witness.second_to_last().unwrap().to_hex());
+
         let tx_bytes_back = serialize(&tx);
         assert_eq!(tx_bytes_back, tx_bytes);
     }
