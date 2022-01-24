@@ -334,7 +334,7 @@ pub struct CheckedData(pub Vec<u8>);
 
 // Primitive types
 macro_rules! impl_int_encodable {
-    ($ty:ident, $meth_dec:ident, $meth_enc:ident) => (
+    ($ty:ident, $meth_dec:ident, $meth_enc:ident) => {
         impl Decodable for $ty {
             #[inline]
             fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, Error> {
@@ -348,7 +348,7 @@ macro_rules! impl_int_encodable {
                 Ok(mem::size_of::<$ty>())
             }
         }
-    )
+    }
 }
 
 impl_int_encodable!(u8,  read_u8,  emit_u8);
@@ -494,7 +494,7 @@ impl Decodable for Cow<'static, str> {
 
 // Arrays
 macro_rules! impl_array {
-    ( $size:expr ) => (
+    ( $size:expr ) => {
         impl Encodable for [u8; $size] {
             #[inline]
             fn consensus_encode<S: WriteExt>(&self, mut s: S) -> Result<usize, io::Error> {
@@ -511,7 +511,7 @@ macro_rules! impl_array {
                 Ok(ret)
             }
         }
-    );
+    };
 }
 
 impl_array!(2);
@@ -702,7 +702,7 @@ impl<T: Encodable> Encodable for sync::Arc<T> {
 
 // Tuples
 macro_rules! tuple_encode {
-    ($($x:ident),*) => (
+    ($($x:ident),*) => {
         impl <$($x: Encodable),*> Encodable for ($($x),*) {
             #[inline]
             #[allow(non_snake_case)]
@@ -724,7 +724,7 @@ macro_rules! tuple_encode {
                 Ok(($({let $x = Decodable::consensus_decode(&mut d)?; $x }),*))
             }
         }
-    );
+    };
 }
 
 tuple_encode!(T0, T1);
