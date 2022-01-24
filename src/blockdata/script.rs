@@ -1448,5 +1448,23 @@ mod test {
         assert!(instructions.next().is_none());
         assert!(instructions.next().is_none());
     }
+
+    #[test]
+    fn read_scriptbool_zero_is_false() {
+        let v: Vec<u8> = vec![0x00, 0x00, 0x00, 0x00];
+        assert!(!read_scriptbool(&v));
+
+        let v: Vec<u8> = vec![0x00, 0x00, 0x00, 0x80]; // With sign bit set.
+        assert!(!read_scriptbool(&v));
+    }
+
+    #[test]
+    fn read_scriptbool_non_zero_is_true() {
+        let v: Vec<u8> = vec![0x01, 0x00, 0x00, 0x00];
+        assert!(read_scriptbool(&v));
+
+        let v: Vec<u8> = vec![0x01, 0x00, 0x00, 0x80]; // With sign bit set.
+        assert!(read_scriptbool(&v));
+    }
 }
 
