@@ -499,14 +499,25 @@ impl Script {
 
     /// Check if this is an OP_RETURN output
     pub fn is_op_return (&self) -> bool {
-        !self.0.is_empty() && (opcodes::All::from(self.0[0]) == opcodes::all::OP_RETURN)
+        match self.0.first() {
+            Some(b) => *b == opcodes::all::OP_RETURN.into_u8(),
+            None => false
+        }
     }
 
     /// Whether a script can be proven to have no satisfying input
     pub fn is_provably_unspendable(&self) -> bool {
-        !self.0.is_empty() &&
-            (opcodes::All::from(self.0[0]).classify(opcodes::ClassifyContext::Legacy) == opcodes::Class::ReturnOp ||
-            opcodes::All::from(self.0[0]).classify(opcodes::ClassifyContext::Legacy) == opcodes::Class::IllegalOp)
+        use blockdata::opcodes::Class::{ReturnOp, IllegalOp};
+
+        match self.0.first() {
+            Some(b) => {
+                let first = opcodes::All::from(*b);
+                let class = first.classify(opcodes::ClassifyContext::Legacy);
+
+                class == ReturnOp || class == IllegalOp
+            },
+            None => false,
+        }
     }
 
     /// Gets the minimum value an output with this script should have in order to be
