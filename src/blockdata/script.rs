@@ -89,9 +89,8 @@ impl fmt::UpperHex for Script {
 
 impl hex::FromHex for Script {
     fn from_byte_iter<I>(iter: I) -> Result<Self, hex::Error>
-        where I: Iterator<Item=Result<u8, hex::Error>> +
-            ExactSizeIterator +
-            DoubleEndedIterator,
+    where
+        I: Iterator<Item=Result<u8, hex::Error>> + ExactSizeIterator + DoubleEndedIterator,
     {
         Vec::from_byte_iter(iter).map(|v| Script(Box::<[u8]>::from(v)))
     }
@@ -949,7 +948,8 @@ impl_index_newtype!(Builder, u8);
 #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 impl<'de> serde::Deserialize<'de> for Script {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where D: serde::Deserializer<'de>,
+    where
+        D: serde::Deserializer<'de>,
     {
         use core::fmt::Formatter;
         use hashes::hex::FromHex;
@@ -965,20 +965,23 @@ impl<'de> serde::Deserialize<'de> for Script {
                 }
 
                 fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-                    where E: serde::de::Error,
+                where
+                    E: serde::de::Error,
                 {
                     let v = Vec::from_hex(v).map_err(E::custom)?;
                     Ok(Script::from(v))
                 }
 
                 fn visit_borrowed_str<E>(self, v: &'de str) -> Result<Self::Value, E>
-                    where E: serde::de::Error,
+                where
+                    E: serde::de::Error,
                 {
                     self.visit_str(v)
                 }
 
                 fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
-                    where E: serde::de::Error,
+                where
+                    E: serde::de::Error,
                 {
                     self.visit_str(&v)
                 }
@@ -995,7 +998,8 @@ impl<'de> serde::Deserialize<'de> for Script {
                 }
 
                 fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
-                    where E: serde::de::Error,
+                where
+                    E: serde::de::Error,
                 {
                     Ok(Script::from(v.to_vec()))
                 }

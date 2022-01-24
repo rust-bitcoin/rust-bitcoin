@@ -432,7 +432,9 @@ impl MerkleBlock {
     /// assert_eq!(txid, matches[0]);
     /// ```
     pub fn from_block_with_predicate<F>(block: &Block, match_txids: F) -> Self
-        where F: Fn(&Txid) -> bool {
+    where
+        F: Fn(&Txid) -> bool
+    {
         let block_txids: Vec<_> = block.txdata.iter().map(Transaction::txid).collect();
         Self::from_header_txids_with_predicate(&block.header, &block_txids, match_txids)
     }
@@ -453,7 +455,10 @@ impl MerkleBlock {
         header: &BlockHeader,
         block_txids: &[Txid],
         match_txids: F,
-    ) -> Self where F: Fn(&Txid) -> bool {
+    ) -> Self
+    where
+        F: Fn(&Txid) -> bool
+    {
         let matches: Vec<bool> = block_txids
             .iter()
             .map(match_txids)

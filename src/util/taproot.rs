@@ -874,8 +874,8 @@ impl fmt::UpperHex for LeafVersion {
 #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 impl ::serde::Serialize for LeafVersion {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: ::serde::Serializer,
+    where
+        S: ::serde::Serializer,
     {
         serializer.serialize_u8(self.to_consensus())
     }
@@ -885,7 +885,10 @@ impl ::serde::Serialize for LeafVersion {
 #[cfg(feature = "serde")]
 #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 impl<'de> ::serde::Deserialize<'de> for LeafVersion {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: ::serde::Deserializer<'de> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: ::serde::Deserializer<'de>
+    {
         struct U8Visitor;
         impl<'de> ::serde::de::Visitor<'de> for U8Visitor {
             type Value = LeafVersion;

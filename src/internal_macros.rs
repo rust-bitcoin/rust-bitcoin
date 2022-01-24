@@ -446,9 +446,10 @@ macro_rules! impl_bytes_newtype {
 
         impl $crate::hashes::hex::FromHex for $t {
             fn from_byte_iter<I>(iter: I) -> Result<Self, $crate::hashes::hex::Error>
-                where I: ::core::iter::Iterator<Item=Result<u8, $crate::hashes::hex::Error>> +
-                    ::core::iter::ExactSizeIterator +
-                    ::core::iter::DoubleEndedIterator,
+            where
+                I: ::core::iter::Iterator<Item=Result<u8, $crate::hashes::hex::Error>>
+                + ::core::iter::ExactSizeIterator
+                + ::core::iter::DoubleEndedIterator,
             {
                 if iter.len() == $len {
                     let mut ret = [0; $len];

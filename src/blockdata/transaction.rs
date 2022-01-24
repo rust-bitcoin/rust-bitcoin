@@ -504,7 +504,9 @@ impl Transaction {
     #[cfg(feature="bitcoinconsensus")]
     #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
     pub fn verify<S>(&self, spent: S) -> Result<(), script::Error>
-        where S: FnMut(&OutPoint) -> Option<TxOut> {
+    where
+        S: FnMut(&OutPoint) -> Option<TxOut>
+    {
         self.verify_with_flags(spent, ::bitcoinconsensus::VERIFY_ALL)
     }
 
@@ -513,7 +515,10 @@ impl Transaction {
     #[cfg(feature="bitcoinconsensus")]
     #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
     pub fn verify_with_flags<S, F>(&self, mut spent: S, flags: F) -> Result<(), script::Error>
-        where S: FnMut(&OutPoint) -> Option<TxOut>, F : Into<u32> {
+    where
+        S: FnMut(&OutPoint) -> Option<TxOut>,
+        F: Into<u32>
+    {
         let tx = encode::serialize(&*self);
         let flags: u32 = flags.into();
         for (idx, input) in self.input.iter().enumerate() {

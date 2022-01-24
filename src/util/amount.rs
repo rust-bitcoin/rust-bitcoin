@@ -1133,12 +1133,13 @@ pub mod serde {
 
                     fn visit_none<E>(self) -> Result<Self::Value, E>
                     where
-                        E: de::Error {
+                        E: de::Error,
+                    {
                         Ok(None)
                     }
                     fn visit_some<D>(self, d: D) -> Result<Self::Value, D::Error>
                     where
-                        D: Deserializer<'de>
+                        D: Deserializer<'de>,
                     {
                         Ok(Some(X::des_sat(d)?))
                     }
@@ -1196,7 +1197,8 @@ pub mod serde {
 
                     fn visit_none<E>(self) -> Result<Self::Value, E>
                     where
-                        E: de::Error {
+                        E: de::Error,
+                    {
                         Ok(None)
                     }
                     fn visit_some<D>(self, d: D) -> Result<Self::Value, D::Error>
