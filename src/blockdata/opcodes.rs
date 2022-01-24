@@ -860,8 +860,8 @@ impl Ordinary {
     /// Encode as a byte
     #[inline]
     pub fn into_u8(self) -> u8 {
-      self as u8
-  }
+        self as u8
+    }
 }
 
 #[cfg(test)]

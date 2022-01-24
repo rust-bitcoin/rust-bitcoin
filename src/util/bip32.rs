@@ -486,11 +486,11 @@ impl fmt::Display for Error {
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl error::Error for Error {
     fn cause(&self) -> Option<&dyn error::Error> {
-       if let Error::Secp256k1(ref e) = *self {
-           Some(e)
-       } else {
-           None
-       }
+        if let Error::Secp256k1(ref e) = *self {
+            Some(e)
+        } else {
+            None
+        }
     }
 }
 

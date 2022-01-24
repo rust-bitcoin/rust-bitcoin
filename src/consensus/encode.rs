@@ -570,8 +570,8 @@ macro_rules! impl_vec {
             fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, Error> {
                 let len = VarInt::consensus_decode(&mut d)?.0;
                 let byte_size = (len as usize)
-                                    .checked_mul(mem::size_of::<$type>())
-                                    .ok_or(self::Error::ParseFailed("Invalid length"))?;
+                    .checked_mul(mem::size_of::<$type>())
+                    .ok_or(self::Error::ParseFailed("Invalid length"))?;
                 if byte_size > MAX_VEC_SIZE {
                     return Err(self::Error::OversizedVectorAllocation { requested: byte_size, max: MAX_VEC_SIZE })
                 }

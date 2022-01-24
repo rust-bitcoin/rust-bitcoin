@@ -293,10 +293,10 @@ mod tests {
         // Addresses
         let addr = Vec::from_hex("00f8917303bfa8ef24f292e8fa1419b20460ba064d").unwrap();
         assert_eq!(&check_encode_slice(&addr[..]), "1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH");
-      }
+    }
 
-      #[test]
-      fn test_base58_decode() {
+    #[test]
+    fn test_base58_decode() {
         // Basics
         assert_eq!(from("1").ok(), Some(vec![0u8]));
         assert_eq!(from("2").ok(), Some(vec![1u8]));
