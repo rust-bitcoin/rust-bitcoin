@@ -144,7 +144,7 @@ impl ServiceFlags {
     /// WITNESS indicates that a node can be asked for blocks and transactions including witness
     /// data.
     pub const WITNESS: ServiceFlags = ServiceFlags(1 << 3);
-    
+
     /// COMPACT_FILTERS means the node will service basic block filter requests.
     /// See BIP157 and BIP158 for details on how this is implemented.
     pub const COMPACT_FILTERS: ServiceFlags = ServiceFlags(1 << 6);
@@ -371,7 +371,7 @@ mod tests {
 
         flags2 ^= ServiceFlags::WITNESS;
         assert_eq!(flags2, ServiceFlags::GETUTXO);
-        
+
         flags2 |= ServiceFlags::COMPACT_FILTERS;
         flags2 ^= ServiceFlags::GETUTXO;
         assert_eq!(flags2, ServiceFlags::COMPACT_FILTERS);
