@@ -146,12 +146,11 @@ pub enum AddrV2 {
 impl Encodable for AddrV2 {
     fn consensus_encode<W: io::Write>(&self, e: W) -> Result<usize, io::Error> {
         fn encode_addr<W: io::Write>(mut e: W, network: u8, bytes: &[u8]) -> Result<usize, io::Error> {
-                let len =
-                    network.consensus_encode(&mut e)? +
-                    VarInt(bytes.len() as u64).consensus_encode(&mut e)? +
-                    bytes.len();
-                e.emit_slice(bytes)?;
-                Ok(len)
+            let len = network.consensus_encode(&mut e)?
+                + VarInt(bytes.len() as u64).consensus_encode(&mut e)?
+                + bytes.len();
+            e.emit_slice(bytes)?;
+            Ok(len)
         }
         Ok(match *self {
             AddrV2::Ipv4(ref addr) => encode_addr(e, 1, &addr.octets())?,
