@@ -440,12 +440,17 @@ impl Script {
     /// Checks whether a script pubkey is a p2pk output
     #[inline]
     pub fn is_p2pk(&self) -> bool {
-        (self.0.len() == 67 &&
-            self.0[0] == opcodes::all::OP_PUSHBYTES_65.into_u8() &&
-            self.0[66] == opcodes::all::OP_CHECKSIG.into_u8())
-     || (self.0.len() == 35 &&
-            self.0[0] == opcodes::all::OP_PUSHBYTES_33.into_u8() &&
-            self.0[34] == opcodes::all::OP_CHECKSIG.into_u8())
+        match self.len() {
+            67 => {
+                self.0[0] == opcodes::all::OP_PUSHBYTES_65.into_u8()
+                    && self.0[66] == opcodes::all::OP_CHECKSIG.into_u8()
+            }
+            35 => {
+                self.0[0] == opcodes::all::OP_PUSHBYTES_33.into_u8()
+                    && self.0[34] == opcodes::all::OP_CHECKSIG.into_u8()
+            }
+            _ => false
+        }
     }
 
     /// Checks whether a script pubkey is a Segregated Witness (segwit) program.
