@@ -770,7 +770,7 @@ impl ExtendedPubKey {
     /// Returns the HASH160 of the chaincode
     pub fn identifier(&self) -> XpubIdentifier {
         let mut engine = XpubIdentifier::engine();
-        engine.write(&self.public_key.serialize()).expect("engines don't error");
+        engine.write_all(&self.public_key.serialize()).expect("engines don't error");
         XpubIdentifier::from_engine(engine)
     }
 
