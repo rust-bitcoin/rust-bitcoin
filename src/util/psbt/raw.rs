@@ -147,7 +147,8 @@ impl<Subtype> Encodable for ProprietaryKey<Subtype> where Subtype: Copy + From<u
     fn consensus_encode<W: io::Write>(&self, mut e: W) -> Result<usize, io::Error> {
         let mut len = self.prefix.consensus_encode(&mut e)? + 1;
         e.emit_u8(self.subtype.into())?;
-        len += e.write(&self.key)?;
+        e.write_all(&self.key)?;
+        len += self.key.len();
         Ok(len)
     }
 }

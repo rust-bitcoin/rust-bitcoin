@@ -615,11 +615,10 @@ impl TaprootMerkleBranch {
 
     /// Serialize to a writer. Returns the number of bytes written
     pub fn encode<Write: io::Write>(&self, mut writer: Write) -> io::Result<usize> {
-        let mut written = 0;
         for hash in self.0.iter() {
-            written += writer.write(hash)?;
+            writer.write_all(hash)?;
         }
-        Ok(written)
+        Ok(self.0.len() * sha256::Hash::LEN)
     }
 
     /// Serialize self as bytes
@@ -704,11 +703,10 @@ impl ControlBlock {
     /// Serialize to a writer. Returns the number of bytes written
     pub fn encode<Write: io::Write>(&self, mut writer: Write) -> io::Result<usize> {
         let first_byte: u8 = i32::from(self.output_key_parity) as u8 | self.leaf_version.to_consensus();
-        let mut bytes_written = 0;
-        bytes_written += writer.write(&[first_byte])?;
-        bytes_written += writer.write(&self.internal_key.serialize())?;
-        bytes_written += self.merkle_branch.encode(&mut writer)?;
-        Ok(bytes_written)
+        writer.write_all(&[first_byte])?;
+        writer.write_all(&self.internal_key.serialize())?;
+        self.merkle_branch.encode(&mut writer)?;
+        Ok(self.size())
     }
 
     /// Serialize the control block. This would be required when
