@@ -195,8 +195,8 @@ impl Block {
                 // commitment is in the last output that starts with below magic
                 if let Some(pos) = coinbase.output.iter()
                     .rposition(|o| {
-                        o.script_pubkey.len () >= 38 &&
-                        o.script_pubkey[0..6] == [0x6a, 0x24, 0xaa, 0x21, 0xa9, 0xed] }) {
+                        o.script_pubkey.len () >= 38
+                            && o.script_pubkey[0..6] == [0x6a, 0x24, 0xaa, 0x21, 0xa9, 0xed] }) {
                     let commitment = WitnessCommitment::from_slice(&coinbase.output[pos].script_pubkey.as_bytes()[6..38]).unwrap();
                     // witness reserved value is in coinbase input witness
                     let witness_vec: Vec<_> = coinbase.input[0].witness.iter().collect();
