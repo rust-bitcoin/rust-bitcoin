@@ -16,7 +16,8 @@
 //! Implementation of BIP69 (Lexicographical Indexing of Transaction Inputs and Outputs).
 //! Original specification: https://github.com/bitcoin/bips/blob/master/bip-0069.mediawiki
 
-use std::cmp::Ordering;
+use prelude::*;
+use core::cmp::Ordering;
 
 use blockdata::transaction::{TxIn, TxOut};
 
@@ -215,11 +216,11 @@ mod tests {
             })
             .collect();
 
-        sort_outputs(&mut &mut outputs);
+        sort_outputs(&mut outputs);
 
         assert_eq!(outputs.len(), expected_sorted.len());
 
-        for (actual, expected) in outputs.iter().map(|txout| txout).zip(expected_sorted) {
+        for (actual, expected) in outputs.iter().zip(expected_sorted) {
             assert_eq!(actual.value, u64::from_str(expected.0).unwrap());
             assert_eq!(actual.script_pubkey, Script::from_str(expected.1).unwrap());
         }
