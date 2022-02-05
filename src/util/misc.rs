@@ -55,6 +55,8 @@ mod message_signing {
         InvalidEncoding(secp256k1::Error),
         /// Invalid base64 encoding.
         InvalidBase64,
+        /// Unsupported Address Type
+        UnsupportedAddressType(AddressType),
     }
 
     impl fmt::Display for MessageSignatureError {
@@ -63,6 +65,7 @@ mod message_signing {
                 MessageSignatureError::InvalidLength => write!(f, "length not 65 bytes"),
                 MessageSignatureError::InvalidEncoding(ref e) => write!(f, "invalid encoding: {}", e),
                 MessageSignatureError::InvalidBase64 => write!(f, "invalid base64"),
+                MessageSignatureError::UnsupportedAddressType(ref address_type) => write!(f, "unsupported address type: {}", address_type),
             }
         }
     }
@@ -144,8 +147,9 @@ mod message_signing {
             &self,
             secp_ctx: &secp256k1::Secp256k1<C>,
             msg_hash: sha256d::Hash
-        ) -> Result<PublicKey, secp256k1::Error> {
-            let msg = secp256k1::Message::from_slice(&msg_hash[..])?;
+        ) -> Result<PublicKey, MessageSignatureError> {
+            let msg = secp256k1::Message::from_slice(&msg_hash[..])
+                .expect("cannot fail");
             let pubkey = secp_ctx.recover_ecdsa(&msg, &self.signature)?;
             Ok(PublicKey {
                 inner: pubkey,
@@ -161,18 +165,15 @@ mod message_signing {
             secp_ctx: &secp256k1::Secp256k1<C>,
             address: &Address,
             msg_hash: sha256d::Hash
-        ) -> Result<bool, secp256k1::Error> {
-            let pubkey = self.recover_pubkey(secp_ctx, msg_hash)?;
-            Ok(match address.address_type() {
+        ) -> Result<bool, MessageSignatureError> {
+            match address.address_type() {
                 Some(AddressType::P2pkh) => {
-                    *address == Address::p2pkh(&pubkey, address.network)
+                    let pubkey = self.recover_pubkey(secp_ctx, msg_hash)?;
+                    Ok(*address == Address::p2pkh(&pubkey, address.network))
                 }
-                Some(AddressType::P2sh) => false,
-                Some(AddressType::P2wpkh) => false,
-                Some(AddressType::P2wsh) => false,
-                Some(AddressType::P2tr) => false,
-                None => false,
-            })
+                Some(address_type) => Err(MessageSignatureError::UnsupportedAddressType(address_type)),
+                None => Ok(false),
+            }
         }
 
         /// Convert a signature from base64 encoding.
@@ -259,6 +260,7 @@ pub fn signed_msg_hash(msg: &str) -> sha256d::Hash {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use hashes::hex::ToHex;
     use super::script_find_and_remove;
     use super::signed_msg_hash;
@@ -313,11 +315,13 @@ mod tests {
     fn test_message_signature() {
         use core::str::FromStr;
         use secp256k1;
+        use ::AddressType;
 
         let secp = secp256k1::Secp256k1::new();
         let message = "rust-bitcoin MessageSignature test";
         let msg_hash = super::signed_msg_hash(&message);
-        let msg = secp256k1::Message::from_slice(&msg_hash).unwrap();
+        let msg = secp256k1::Message::from_slice(&msg_hash).expect("message");
+
 
         let privkey = secp256k1::SecretKey::new(&mut secp256k1::rand::thread_rng());
         let secp_sig = secp.sign_ecdsa_recoverable(&msg, &privkey);
@@ -335,9 +339,14 @@ mod tests {
         let p2pkh = ::Address::p2pkh(&pubkey, ::Network::Bitcoin);
         assert_eq!(signature2.is_signed_by_address(&secp, &p2pkh, msg_hash), Ok(true));
         let p2wpkh = ::Address::p2wpkh(&pubkey, ::Network::Bitcoin).unwrap();
-        assert_eq!(signature2.is_signed_by_address(&secp, &p2wpkh, msg_hash), Ok(false));
+        assert_eq!(
+            signature2.is_signed_by_address(&secp, &p2wpkh, msg_hash),
+            Err(MessageSignatureError::UnsupportedAddressType(AddressType::P2wpkh))
+        );
         let p2shwpkh = ::Address::p2shwpkh(&pubkey, ::Network::Bitcoin).unwrap();
-        assert_eq!(signature2.is_signed_by_address(&secp, &p2shwpkh, msg_hash), Ok(false));
+        assert_eq!(
+            signature2.is_signed_by_address(&secp, &p2shwpkh, msg_hash),
+            Err(MessageSignatureError::UnsupportedAddressType(AddressType::P2sh))
+        );
     }
 }
-
