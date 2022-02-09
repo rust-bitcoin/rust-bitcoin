@@ -339,5 +339,29 @@ mod tests {
         let p2shwpkh = ::Address::p2shwpkh(&pubkey, ::Network::Bitcoin).unwrap();
         assert_eq!(signature2.is_signed_by_address(&secp, &p2shwpkh, msg_hash), Ok(false));
     }
+
+    #[test]
+    #[cfg(all(feature = "secp-recovery", feature = "base64"))]
+    fn test_incorrect_message_signature() {
+        use secp256k1;
+        use util::key::PublicKey;
+
+        let secp = secp256k1::Secp256k1::new();
+        let message = "a different message from what was signed";
+        let msg_hash = super::signed_msg_hash(&message);
+
+        // Signature of msg = "rust-bitcoin MessageSignature test"
+        // Signed with pk "UuOGDsfLPr4HIMKQX0ipjJeRaj1geCq3yPUF2COP5ME="
+        let signature_base64 = "IAM2qX24tYx/bdBTIgVLhD8QEAjrPlJpmjB4nZHdRYGIBa4DmVulAcwjPnWe6Q5iEwXH6F0pUCJP/ZeHPWS1h1o=";
+        let pubkey_base64 = "A1FTfMEntPpAty3qkEo0q2Dc1FEycI10a3jmwEFy+Qr6";
+        let signature = super::MessageSignature::from_base64(signature_base64).expect("message signature");
+
+        let pubkey = PublicKey::from_slice(
+            &::base64::decode(&pubkey_base64).expect("base64 string")
+        ).expect("pubkey slice");
+
+        let p2pkh = ::Address::p2pkh(&pubkey, ::Network::Bitcoin);
+        assert_eq!(signature.is_signed_by_address(&secp, &p2pkh, msg_hash), Ok(false));
+    }
 }
 
