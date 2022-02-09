@@ -743,18 +743,18 @@ impl<'a> Instructions<'a> {
     /// takes `len` bytes long slice from iterator and returns it advancing iterator
     /// if the iterator is not long enough `None` is returned and the iterator is killed
     /// to avoid returning an infinite stream of errors.
-    fn take_slice_or_kill(&mut self, len: usize) -> Option<&'a [u8]> {
+    fn take_slice_or_kill(&mut self, len: usize) -> Result<&'a [u8], Error> {
         if self.data.len() >= len {
             let slice = &self.data.as_slice()[..len];
             self.data.nth(len.max(1) - 1);
-            Some(slice)
+            Ok(slice)
         } else {
             self.kill();
-            None
+            Err(Error::EarlyEndOfScript)
         }
     }
 
-    fn next_push_data_len(&mut self, len: usize, max: usize) -> Option<Result<Instruction<'a>, Error>> {
+    fn next_push_data_len(&mut self, len: usize, min_push_len: usize) -> Option<Result<Instruction<'a>, Error>> {
         let n = match read_uint_iter(&mut self.data, len) {
             Ok(n) => n,
             // We do exhaustive matching to not forget to handle new variants if we extend
@@ -766,11 +766,11 @@ impl<'a> Instructions<'a> {
                 return Some(Err(Error::EarlyEndOfScript));
             },
         };
-        if self.enforce_minimal && n < max {
+        if self.enforce_minimal && n < min_push_len {
             self.kill();
             return Some(Err(Error::NonMinimalPush));
         }
-        Some(self.take_slice_or_kill(n).map(Instruction::PushBytes).ok_or(Error::EarlyEndOfScript))
+        Some(self.take_slice_or_kill(n).map(Instruction::PushBytes))
     }
 }
 
@@ -801,7 +801,7 @@ impl<'a> Iterator for Instructions<'a> {
                         Some(Ok(Instruction::PushBytes(&[])))
                     },
                     _ => {
-                        Some(self.take_slice_or_kill(n).map(Instruction::PushBytes).ok_or(Error::EarlyEndOfScript))
+                        Some(self.take_slice_or_kill(n).map(Instruction::PushBytes))
                     }
                 }
             }
@@ -816,8 +816,7 @@ impl<'a> Iterator for Instructions<'a> {
             }
             // Everything else we can push right through
             _ => {
-                let ret = Some(Ok(Instruction::Op(opcodes::All::from(byte))));
-                ret
+                Some(Ok(Instruction::Op(opcodes::All::from(byte))))
             }
         }
     }
