@@ -25,7 +25,7 @@ use core::{fmt, str::FromStr, default::Default};
 #[cfg(feature = "serde")] use serde;
 
 use hash_types::XpubIdentifier;
-use hashes::{sha512, Hash, HashEngine, Hmac, HmacEngine};
+use hashes::{sha512, Hash, HashEngine, Hmac, HmacEngine, hex};
 use secp256k1::{self, Secp256k1, XOnlyPublicKey};
 
 use network::constants::Network;
@@ -461,7 +461,9 @@ pub enum Error {
     /// Encoded extended key data has wrong length
     WrongExtendedKeyLength(usize),
     /// Base58 encoding error
-    Base58(base58::Error)
+    Base58(base58::Error),
+    /// Hexadecimal decoding error
+    Hex(hex::Error)
 }
 
 impl fmt::Display for Error {
@@ -475,6 +477,7 @@ impl fmt::Display for Error {
             Error::UnknownVersion(ref bytes) => write!(f, "unknown version magic bytes: {:?}", bytes),
             Error::WrongExtendedKeyLength(ref len) => write!(f, "encoded extended key data has wrong length {}", len),
             Error::Base58(ref err) => write!(f, "base58 encoding error: {}", err),
+            Error::Hex(ref e) => write!(f, "Hexadecimal decoding error: {}", e)
         }
     }
 }
@@ -496,6 +499,8 @@ impl From<key::Error> for Error {
         match err {
             key::Error::Base58(e) => Error::Base58(e),
             key::Error::Secp256k1(e) => Error::Secp256k1(e),
+            key::Error::InvalidKeyPrefix(_) => Error::Secp256k1(secp256k1::Error::InvalidPublicKey),
+            key::Error::Hex(e) => Error::Hex(e)
         }
     }
 }

@@ -22,7 +22,7 @@ use prelude::*;
 
 use core::{fmt, str, iter, slice};
 
-use hashes::{sha256d, Hash};
+use hashes::{sha256d, Hash, hex};
 use secp256k1;
 
 use util::{endian, key};
@@ -46,6 +46,9 @@ pub enum Error {
     TooShort(usize),
     /// Secp256k1 error while parsing a secret key
     Secp256k1(secp256k1::Error),
+    /// Hex decoding error
+    // TODO: Remove this as part of crate-smashing, there should not be any key related errors in this module
+    Hex(hex::Error)
 }
 
 impl fmt::Display for Error {
@@ -58,6 +61,7 @@ impl fmt::Display for Error {
             Error::InvalidExtendedKeyVersion(ref v) => write!(f, "extended key version {:#04x?} is invalid for this base58 type", v),
             Error::TooShort(_) => write!(f, "base58ck data not even long enough for a checksum"),
             Error::Secp256k1(ref e) => fmt::Display::fmt(&e, f),
+            Error::Hex(ref e) => write!(f, "Hexadecimal decoding error: {}", e)
         }
     }
 }
@@ -255,6 +259,8 @@ impl From<key::Error> for Error {
         match e {
             key::Error::Secp256k1(e) => Error::Secp256k1(e),
             key::Error::Base58(e) => e,
+            key::Error::InvalidKeyPrefix(_) => Error::Secp256k1(secp256k1::Error::InvalidPublicKey),
+            key::Error::Hex(e) => Error::Hex(e)
         }
     }
 }
