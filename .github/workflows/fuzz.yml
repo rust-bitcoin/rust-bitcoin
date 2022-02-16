@@ -5,6 +5,7 @@ on: [push, pull_request]
 jobs:
 
   fuzz:
+    if: ${{ !github.event.act }}
     runs-on: ubuntu-20.04
     env:
       HFUZZ_BUILD_ARGS: "--features honggfuzz_fuzz"
@@ -41,6 +42,7 @@ jobs:
           path: executed_${{ matrix.fuzz_target }}
 
   verify-execution:
+    if: ${{ !github.event.act }}
     needs: fuzz
     runs-on: ubuntu-latest
     steps:
