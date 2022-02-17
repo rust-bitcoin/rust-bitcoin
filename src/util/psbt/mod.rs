@@ -286,6 +286,16 @@ mod tests {
     }
 
     #[test]
+   fn psbt_uncompressed_key() {
+
+       let psbt: PartiallySignedTransaction = hex_psbt!("70736274ff01003302000000010000000000000000000000000000000000000000000000000000000000000000ffffffff00ffffffff000000000000420204bb0d5d0cca36e7b9c80f63bc04c1240babb83bcd2803ef7ac8b6e2af594291daec281e856c98d210c5ab14dfd5828761f8ee7d5f45ca21ad3e4c4b41b747a3a047304402204f67e2afb76142d44fae58a2495d33a3419daa26cd0db8d04f3452b63289ac0f022010762a9fb67e94cc5cad9026f6dc99ff7f070f4278d30fbc7d0c869dd38c7fe70100").unwrap();
+
+       assert!(psbt.inputs[0].partial_sigs.len() == 1);
+       let pk = psbt.inputs[0].partial_sigs.iter().next().unwrap().0;
+       assert!(!pk.compressed);
+   }
+
+    #[test]
     fn serialize_then_deserialize_output() {
         let secp = &Secp256k1::new();
         let seed = Vec::from_hex("000102030405060708090a0b0c0d0e0f").unwrap();
