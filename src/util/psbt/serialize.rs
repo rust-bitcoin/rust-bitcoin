@@ -33,6 +33,7 @@ use util::ecdsa::{EcdsaSig, EcdsaSigError};
 use util::psbt;
 use util::taproot::{TapBranchHash, TapLeafHash, ControlBlock, LeafVersion};
 use schnorr;
+use util::key::PublicKey;
 
 use super::map::{TapTree, PsbtSigHashType};
 
@@ -72,6 +73,21 @@ impl Serialize for Script {
 impl Deserialize for Script {
     fn deserialize(bytes: &[u8]) -> Result<Self, encode::Error> {
         Ok(Self::from(bytes.to_vec()))
+    }
+}
+
+impl Serialize for PublicKey {
+    fn serialize(&self) -> Vec<u8> {
+        let mut buf = Vec::new();
+        self.write_into(&mut buf).expect("vecs don't error");
+        buf
+    }
+}
+
+impl Deserialize for PublicKey {
+    fn deserialize(bytes: &[u8]) -> Result<Self, encode::Error> {
+        PublicKey::from_slice(bytes)
+            .map_err(|_| encode::Error::ParseFailed("invalid public key"))
     }
 }
 

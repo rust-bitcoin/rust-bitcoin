@@ -28,6 +28,7 @@ use util::psbt::map::Map;
 use util::psbt::raw;
 use util::psbt::serialize::Deserialize;
 use util::psbt::{Error, error};
+use util::key::PublicKey;
 
 use util::taproot::{ControlBlock, LeafVersion, TapLeafHash, TapBranchHash};
 use util::sighash;
@@ -89,7 +90,7 @@ pub struct Input {
     pub witness_utxo: Option<TxOut>,
     /// A map from public keys to their corresponding signature as would be
     /// pushed to the stack from a scriptSig or witness for a non-taproot inputs.
-    pub partial_sigs: BTreeMap<secp256k1::PublicKey, EcdsaSig>,
+    pub partial_sigs: BTreeMap<PublicKey, EcdsaSig>,
     /// The sighash type to be used for this input. Signatures for this input
     /// must use the sighash type.
     pub sighash_type: Option<PsbtSigHashType>,
@@ -209,7 +210,7 @@ impl Input {
             }
             PSBT_IN_PARTIAL_SIG => {
                 impl_psbt_insert_pair! {
-                    self.partial_sigs <= <raw_key: secp256k1::PublicKey>|<raw_value: EcdsaSig>
+                    self.partial_sigs <= <raw_key: PublicKey>|<raw_value: EcdsaSig>
                 }
             }
             PSBT_IN_SIGHASH_TYPE => {
