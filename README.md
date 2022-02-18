@@ -114,6 +114,15 @@ Please try to address them, otherwise your PR might get closed without merging
 after a longer time of inactivity. If your PR isn't ready for review yet please
 mark it by prefixing the title with `WIP: `.
 
+### CI Pipeline
+
+The CI pipeline requires approval before being run on each MR.
+
+In order to speed up the review process the CI pipeline can be run locally using
+[act](https://github.com/nektos/act). The `fuzz` and `Cross` jobs will be
+skipped when using `act` due to caching being unsupported at this time. We do
+not *actively* support `act` but will merge PRs fixing `act` issues.
+
 ## Policy on Altcoins/Altchains
 
 Patches which add support for non-Bitcoin cryptocurrencies by adding constants

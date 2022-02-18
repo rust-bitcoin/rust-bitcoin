@@ -64,6 +64,7 @@ jobs:
 
   Cross:
     name: Cross testing
+    if: ${{ !github.event.act }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Crate
@@ -101,7 +102,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Set up QEMU
-        run: sudo apt update && sudo apt install qemu-system-arm gcc-arm-none-eabi
+        run: sudo apt update && sudo apt install -y qemu-system-arm gcc-arm-none-eabi
       - name: Checkout Toolchain
         uses: actions-rs/toolchain@v1
         with:
