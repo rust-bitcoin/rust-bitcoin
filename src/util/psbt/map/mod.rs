@@ -28,7 +28,7 @@ pub use self::input::{Input, PsbtSigHashType};
 pub use self::output::{Output, TapTree};
 
 /// A trait that describes a PSBT key-value map.
-pub(super) trait Map {
+pub trait Map {
     /// Attempt to get all key-value pairs.
     fn get_pairs(&self) -> Result<Vec<raw::Pair>, io::Error>;
 
