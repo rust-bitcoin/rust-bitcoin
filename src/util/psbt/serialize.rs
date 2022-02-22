@@ -193,7 +193,7 @@ impl Deserialize for Vec<u8> {
 
 impl Serialize for PsbtSigHashType {
     fn serialize(&self) -> Vec<u8> {
-        serialize(&self.inner())
+        serialize(&self.to_u32())
     }
 }
 
