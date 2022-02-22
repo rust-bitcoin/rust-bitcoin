@@ -17,7 +17,6 @@ use prelude::*;
 use io;
 
 use consensus::encode;
-use util::psbt;
 use util::psbt::raw;
 
 mod global;
@@ -31,9 +30,6 @@ pub use self::output::{Output, TapTree};
 pub(super) trait Map {
     /// Attempt to get all key-value pairs.
     fn get_pairs(&self) -> Result<Vec<raw::Pair>, io::Error>;
-
-    /// Attempt to merge with another key-value map of the same type.
-    fn merge(&mut self, other: Self) -> Result<(), psbt::Error>;
 
     /// Encodes map data with bitcoin consensus encoding.
     fn consensus_encode_map<S: io::Write>(

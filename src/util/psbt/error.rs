@@ -53,7 +53,7 @@ pub enum Error {
     MustHaveUnsignedTx,
     /// Signals that there are no more key-value pairs in a key-value map.
     NoMorePairs,
-    /// Attempting to merge with a PSBT describing a different unsigned
+    /// Attempting to combine with a PSBT describing a different unsigned
     /// transaction.
     UnexpectedUnsignedTx {
         /// Expected
@@ -74,9 +74,9 @@ pub enum Error {
         /// Hash value
         hash: Box<[u8]>,
     },
-    /// Conflicting data during merge procedure:
+    /// Conflicting data during combine procedure:
     /// global extended public key has inconsistent key sources
-    MergeInconsistentKeySources(ExtendedPubKey),
+    CombineInconsistentKeySources(ExtendedPubKey),
     /// Serialization error in bitcoin consensus-encoded structures
     ConsensusEncoding,
 }
@@ -102,7 +102,7 @@ impl fmt::Display for Error {
                 // directly using debug forms of psbthash enums
                 write!(f, "Preimage {:?} does not match {:?} hash {:?}", preimage, hash_type, hash )
             }
-            Error::MergeInconsistentKeySources(ref s) => { write!(f, "merge conflict: {}", s) }
+            Error::CombineInconsistentKeySources(ref s) => { write!(f, "combine conflict: {}", s) }
             Error::ConsensusEncoding => f.write_str("bitcoin consensus or BIP-174 encoding error"),
         }
     }

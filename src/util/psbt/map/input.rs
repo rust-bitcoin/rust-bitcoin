@@ -304,6 +304,36 @@ impl Input {
 
         Ok(())
     }
+
+    /// Combines this [`Input`] with `other` `Input` (as described by BIP 174).
+    pub fn combine(&mut self, other: Self) {
+        combine!(non_witness_utxo, self, other);
+
+        if let (&None, Some(witness_utxo)) = (&self.witness_utxo, other.witness_utxo) {
+            self.witness_utxo = Some(witness_utxo);
+            self.non_witness_utxo = None; // Clear out any non-witness UTXO when we set a witness one
+        }
+
+        self.partial_sigs.extend(other.partial_sigs);
+        self.bip32_derivation.extend(other.bip32_derivation);
+        self.ripemd160_preimages.extend(other.ripemd160_preimages);
+        self.sha256_preimages.extend(other.sha256_preimages);
+        self.hash160_preimages.extend(other.hash160_preimages);
+        self.hash256_preimages.extend(other.hash256_preimages);
+        self.tap_script_sigs.extend(other.tap_script_sigs);
+        self.tap_scripts.extend(other.tap_scripts);
+        self.tap_key_origins.extend(other.tap_key_origins);
+        self.proprietary.extend(other.proprietary);
+        self.unknown.extend(other.unknown);
+
+        combine!(redeem_script, self, other);
+        combine!(witness_script, self, other);
+        combine!(final_script_sig, self, other);
+        combine!(final_script_witness, self, other);
+        combine!(tap_key_sig, self, other);
+        combine!(tap_internal_key, self, other);
+        combine!(tap_merkle_root, self, other);
+    }
 }
 
 impl Map for Input {
@@ -400,37 +430,6 @@ impl Map for Input {
         }
 
         Ok(rv)
-    }
-
-    fn merge(&mut self, other: Self) -> Result<(), psbt::Error> {
-        merge!(non_witness_utxo, self, other);
-
-        if let (&None, Some(witness_utxo)) = (&self.witness_utxo, other.witness_utxo) {
-            self.witness_utxo = Some(witness_utxo);
-            self.non_witness_utxo = None; // Clear out any non-witness UTXO when we set a witness one
-        }
-
-        self.partial_sigs.extend(other.partial_sigs);
-        self.bip32_derivation.extend(other.bip32_derivation);
-        self.ripemd160_preimages.extend(other.ripemd160_preimages);
-        self.sha256_preimages.extend(other.sha256_preimages);
-        self.hash160_preimages.extend(other.hash160_preimages);
-        self.hash256_preimages.extend(other.hash256_preimages);
-        self.tap_script_sigs.extend(other.tap_script_sigs);
-        self.tap_scripts.extend(other.tap_scripts);
-        self.tap_key_origins.extend(other.tap_key_origins);
-        self.proprietary.extend(other.proprietary);
-        self.unknown.extend(other.unknown);
-
-        merge!(redeem_script, self, other);
-        merge!(witness_script, self, other);
-        merge!(final_script_sig, self, other);
-        merge!(final_script_witness, self, other);
-        merge!(tap_key_sig, self, other);
-        merge!(tap_internal_key, self, other);
-        merge!(tap_merkle_root, self, other);
-
-        Ok(())
     }
 }
 

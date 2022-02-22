@@ -19,6 +19,8 @@
 //! except we define PSBTs containing non-standard SigHash types as invalid.
 //!
 
+use core::cmp;
+
 use blockdata::script::Script;
 use blockdata::transaction::Transaction;
 use consensus::{encode, Encodable, Decodable};
@@ -116,6 +118,70 @@ impl PartiallySignedTransaction {
         }
 
         tx
+    }
+
+    /// Combines this [`PartiallySignedTransaction`] with `other` PSBT as described by BIP 174.
+    ///
+    /// In accordance with BIP 174 this function is commutative i.e., `A.combine(B) == B.combine(A)`
+    pub fn combine(&mut self, other: Self) -> Result<(), Error> {
+        if self.unsigned_tx != other.unsigned_tx {
+            return Err(Error::UnexpectedUnsignedTx {
+                expected: Box::new(self.unsigned_tx.clone()),
+                actual: Box::new(other.unsigned_tx),
+            });
+        }
+
+        // BIP 174: The Combiner must remove any duplicate key-value pairs, in accordance with
+        //          the specification. It can pick arbitrarily when conflicts occur.
+
+        // Keeping the highest version
+        self.version = cmp::max(self.version, other.version);
+
+        // Merging xpubs
+        for (xpub, (fingerprint1, derivation1)) in other.xpub {
+            match self.xpub.entry(xpub) {
+                btree_map::Entry::Vacant(entry) => {
+                    entry.insert((fingerprint1, derivation1));
+                },
+                btree_map::Entry::Occupied(mut entry) => {
+                    // Here in case of the conflict we select the version with algorithm:
+                    // 1) if everything is equal we do nothing
+                    // 2) report an error if
+                    //    - derivation paths are equal and fingerprints are not
+                    //    - derivation paths are of the same length, but not equal
+                    //    - derivation paths has different length, but the shorter one
+                    //      is not the strict suffix of the longer one
+                    // 3) choose longest derivation otherwise
+
+                    let (fingerprint2, derivation2) = entry.get().clone();
+
+                    if (derivation1 == derivation2 && fingerprint1 == fingerprint2) ||
+                        (derivation1.len() < derivation2.len() && derivation1[..] == derivation2[derivation2.len() - derivation1.len()..])
+                    {
+                        continue
+                    }
+                    else if derivation2[..] == derivation1[derivation1.len() - derivation2.len()..]
+                    {
+                        entry.insert((fingerprint1, derivation1));
+                        continue
+                    }
+                    return Err(Error::CombineInconsistentKeySources(xpub));
+                }
+            }
+        }
+
+        self.proprietary.extend(other.proprietary);
+        self.unknown.extend(other.unknown);
+
+        for (self_input, other_input) in self.inputs.iter_mut().zip(other.inputs.into_iter()) {
+            self_input.combine(other_input);
+        }
+
+        for (self_output, other_output) in self.outputs.iter_mut().zip(other.outputs.into_iter()) {
+            self_output.combine(other_output);
+        }
+
+        Ok(())
     }
 }
 
@@ -243,7 +309,7 @@ impl Decodable for PartiallySignedTransaction {
 
 #[cfg(test)]
 mod tests {
-    use super::PartiallySignedTransaction;
+    use super::*;
 
     use hashes::hex::FromHex;
     use hashes::{sha256, hash160, Hash, ripemd160};
@@ -1031,4 +1097,28 @@ mod tests {
         assert!(!rtt.proprietary.is_empty());
     }
 
+    // PSBTs taken from BIP 174 test vectors.
+    #[test]
+    fn combine_psbts() {
+        let mut psbt1 = hex_psbt!(include_str!("../../../test_data/psbt1.hex")).unwrap();
+        let psbt2 = hex_psbt!(include_str!("../../../test_data/psbt2.hex")).unwrap();
+        let psbt_combined = hex_psbt!(include_str!("../../../test_data/psbt2.hex")).unwrap();
+
+        psbt1.combine(psbt2).expect("psbt combine to succeed");
+        assert_eq!(psbt1, psbt_combined);
+    }
+
+    #[test]
+    fn combine_psbts_commutative() {
+        let mut psbt1 = hex_psbt!(include_str!("../../../test_data/psbt1.hex")).unwrap();
+        let mut psbt2 = hex_psbt!(include_str!("../../../test_data/psbt2.hex")).unwrap();
+
+        let psbt1_clone = psbt1.clone();
+        let psbt2_clone = psbt2.clone();
+
+        psbt1.combine(psbt2_clone).expect("psbt1 combine to succeed");
+        psbt2.combine(psbt1_clone).expect("psbt2 combine to succeed");
+
+        assert_eq!(psbt1, psbt2);
+    }
 }

@@ -15,14 +15,12 @@
 use prelude::*;
 
 use io::{self, Cursor, Read};
-use core::cmp;
 
 use blockdata::transaction::Transaction;
 use consensus::{encode, Encodable, Decodable};
 use consensus::encode::MAX_VEC_SIZE;
 use util::psbt::map::Map;
 use util::psbt::{raw, PartiallySignedTransaction};
-use util::psbt;
 use util::psbt::Error;
 use util::endian::u32_to_array_le;
 use util::bip32::{ExtendedPubKey, Fingerprint, DerivationPath, ChildNumber};
@@ -98,69 +96,6 @@ impl Map for PartiallySignedTransaction {
         }
 
         Ok(rv)
-    }
-
-    // Keep in mind that according to BIP 174 this function must be commutative, i.e.
-    // A.merge(B) == B.merge(A)
-    fn merge(&mut self, other: Self) -> Result<(), psbt::Error> {
-        if self.unsigned_tx != other.unsigned_tx {
-            return Err(psbt::Error::UnexpectedUnsignedTx {
-                expected: Box::new(self.unsigned_tx.clone()),
-                actual: Box::new(other.unsigned_tx),
-            });
-        }
-
-        // BIP 174: The Combiner must remove any duplicate key-value pairs, in accordance with
-        //          the specification. It can pick arbitrarily when conflicts occur.
-
-        // Keeping the highest version
-        self.version = cmp::max(self.version, other.version);
-
-        // Merging xpubs
-        for (xpub, (fingerprint1, derivation1)) in other.xpub {
-            match self.xpub.entry(xpub) {
-                btree_map::Entry::Vacant(entry) => {
-                    entry.insert((fingerprint1, derivation1));
-                },
-                btree_map::Entry::Occupied(mut entry) => {
-                    // Here in case of the conflict we select the version with algorithm:
-                    // 1) if everything is equal we do nothing
-                    // 2) report an error if
-                    //    - derivation paths are equal and fingerprints are not
-                    //    - derivation paths are of the same length, but not equal
-                    //    - derivation paths has different length, but the shorter one
-                    //      is not the strict suffix of the longer one
-                    // 3) choose longest derivation otherwise
-
-                    let (fingerprint2, derivation2) = entry.get().clone();
-
-                    if (derivation1 == derivation2 && fingerprint1 == fingerprint2) ||
-                        (derivation1.len() < derivation2.len() && derivation1[..] == derivation2[derivation2.len() - derivation1.len()..])
-                    {
-                        continue
-                    }
-                    else if derivation2[..] == derivation1[derivation1.len() - derivation2.len()..]
-                    {
-                        entry.insert((fingerprint1, derivation1));
-                        continue
-                    }
-                    return Err(psbt::Error::MergeInconsistentKeySources(xpub));
-                }
-            }
-        }
-
-        self.proprietary.extend(other.proprietary);
-        self.unknown.extend(other.unknown);
-
-        for (self_input, other_input) in self.inputs.iter_mut().zip(other.inputs.into_iter()) {
-            self_input.merge(other_input)?;
-        }
-
-        for (self_output, other_output) in self.outputs.iter_mut().zip(other.outputs.into_iter()) {
-            self_output.merge(other_output)?;
-        }
-
-        Ok(())
     }
 }
 
