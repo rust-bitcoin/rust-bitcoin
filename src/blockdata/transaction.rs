@@ -855,8 +855,10 @@ impl EcdsaSigHashType {
         }
     }
 
-    /// Converts to a u32
-    pub fn as_u32(self) -> u32 { self as u32 }
+    /// Converts [`EcdsaSigHashType`] to a `u32` sighash flag.
+    ///
+    /// The returned value is guaranteed to be a valid according to standardness rules.
+    pub fn to_u32(self) -> u32 { self as u32 }
 }
 
 /// Error returned when parsing `SigHashType` fails.
