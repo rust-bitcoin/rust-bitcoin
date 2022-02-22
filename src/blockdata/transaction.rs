@@ -859,12 +859,6 @@ impl EcdsaSigHashType {
     pub fn as_u32(self) -> u32 { self as u32 }
 }
 
-impl From<EcdsaSigHashType> for u32 {
-    fn from(t: EcdsaSigHashType) -> u32 {
-        t.as_u32()
-    }
-}
-
 /// Error returned when parsing `SigHashType` fails.
 ///
 /// This is currently returned for unrecognized sighash strings.
