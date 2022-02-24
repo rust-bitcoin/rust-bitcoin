@@ -27,7 +27,7 @@ use io;
 
 use secp256k1::{self, Secp256k1};
 use network::constants::Network;
-use hashes::{Hash, hash160};
+use hashes::{Hash, hash160, hex, hex::FromHex};
 use hash_types::{PubkeyHash, WPubkeyHash};
 use util::base58;
 
@@ -39,6 +39,10 @@ pub enum Error {
     Base58(base58::Error),
     /// secp256k1-related error
     Secp256k1(secp256k1::Error),
+    /// Invalid key prefix error
+    InvalidKeyPrefix(u8),
+    /// Hex decoding error
+    Hex(hex::Error)
 }
 
 
@@ -47,6 +51,8 @@ impl fmt::Display for Error {
         match *self {
             Error::Base58(ref e) => write!(f, "Key base58 error: {}", e),
             Error::Secp256k1(ref e) => write!(f, "Key secp256k1 error: {}", e),
+            Error::InvalidKeyPrefix(ref e) => write!(f, "Key prefix invalid: {}", e),
+            Error::Hex(ref e) => write!(f, "Key hex decoding error: {}", e)
         }
     }
 }
@@ -58,6 +64,8 @@ impl ::std::error::Error for Error {
         match *self {
             Error::Base58(ref e) => Some(e),
             Error::Secp256k1(ref e) => Some(e),
+            Error::InvalidKeyPrefix(_) => None,
+            Error::Hex(ref e) => Some(e)
         }
     }
 }
@@ -73,6 +81,13 @@ impl From<base58::Error> for Error {
 impl From<secp256k1::Error> for Error {
     fn from(e: secp256k1::Error) -> Error {
         Error::Secp256k1(e)
+    }
+}
+
+#[doc(hidden)]
+impl From<hex::Error> for Error {
+    fn from(e: hex::Error) -> Self {
+        Error::Hex(e)
     }
 }
 
@@ -158,6 +173,8 @@ impl PublicKey {
             let reason = match e {
                 Error::Base58(_) => "base58 error",
                 Error::Secp256k1(_) => "secp256k1 error",
+                Error::InvalidKeyPrefix(_) => "invalid key prefix",
+                Error::Hex(_) => "hex decoding error"
             };
             io::Error::new(io::ErrorKind::InvalidData, reason)
         })
@@ -177,6 +194,10 @@ impl PublicKey {
             65 => false,
             len =>  { return Err(base58::Error::InvalidLength(len).into()); },
         };
+
+        if !compressed && data[0] != 0x04 {
+            return Err(Error::InvalidKeyPrefix(data[0]))
+        }
 
         Ok(PublicKey {
             compressed,
@@ -208,11 +229,11 @@ impl fmt::Display for PublicKey {
 impl FromStr for PublicKey {
     type Err = Error;
     fn from_str(s: &str) -> Result<PublicKey, Error> {
-        let key = secp256k1::PublicKey::from_str(s)?;
-        Ok(PublicKey {
-            inner: key,
-            compressed: s.len() == 66
-        })
+        match s.len() {
+            66 => PublicKey::from_slice(&<[u8; 33]>::from_hex(s)?),
+            130 => PublicKey::from_slice(&<[u8; 65]>::from_hex(s)?),
+            len => return Err(Error::Hex(hex::Error::InvalidLength(66, len)))
+        }
     }
 }
 
