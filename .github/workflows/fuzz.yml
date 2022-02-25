@@ -27,7 +27,7 @@ jobs:
           key: cache-${{ matrix.target }}-${{ hashFiles('**/Cargo.toml','**/Cargo.lock') }}
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          toolchain: 1.58
           override: true
           profile: minimal
       - run: cargo install honggfuzz
