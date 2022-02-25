@@ -171,7 +171,7 @@ impl PsbtSigHashType {
     /// Returns the [`EcdsaSigHashType`] if the [`PsbtSigHashType`] can be
     /// converted to one.
     pub fn ecdsa_hash_ty(self) -> Result<EcdsaSigHashType, NonStandardSigHashType> {
-        EcdsaSigHashType::from_u32_standard(self.inner)
+        EcdsaSigHashType::from_standard(self.inner)
     }
 
     /// Returns the [`SchnorrSigHashType`] if the [`PsbtSigHashType`] can be
