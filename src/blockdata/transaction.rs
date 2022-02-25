@@ -807,12 +807,6 @@ impl EcdsaSigHashType {
     }
 
     /// Reads a 4-byte uint32 as a sighash type.
-    #[deprecated(since = "0.26.1", note = "please use `from_u32_consensus` or `from_u32_standard` instead")]
-    pub fn from_u32(n: u32) -> EcdsaSigHashType {
-        Self::from_u32_consensus(n)
-    }
-
-    /// Reads a 4-byte uint32 as a sighash type.
     ///
     /// **Note**: this replicates consensus behaviour, for current standardness rules correctness
     /// you probably want [Self::from_u32_standard].
@@ -1190,7 +1184,6 @@ mod tests {
     fn test_sighashtype_standard() {
         let nonstandard_hashtype = 0x04;
         // This type is not well defined, by consensus it becomes ALL
-        assert_eq!(EcdsaSigHashType::from_u32(nonstandard_hashtype), EcdsaSigHashType::All);
         assert_eq!(EcdsaSigHashType::from_u32_consensus(nonstandard_hashtype), EcdsaSigHashType::All);
         // But it's policy-invalid to use it!
         assert_eq!(EcdsaSigHashType::from_u32_standard(nonstandard_hashtype), Err(NonStandardSigHashType(0x04)));
