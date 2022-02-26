@@ -79,6 +79,12 @@ macro_rules! sha256t_hash_newtype {
             }
         }
 
+        impl secp256k1::ThirtyTwoByteHash for $newtype {
+            fn into_32(self) -> [u8; 32] {
+                self.into_inner()
+            }
+        }
+
         hash_newtype!($newtype, sha256t::Hash<$tag>, 32, $docs, $reverse);
     };
 }

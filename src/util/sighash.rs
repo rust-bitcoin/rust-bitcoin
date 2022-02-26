@@ -1088,7 +1088,7 @@ mod tests {
                 hash_ty
             ).unwrap();
 
-            let msg = secp256k1::Message::from_slice(&sig_hash).unwrap();
+            let msg = secp256k1::Message::from(sig_hash);
             let key_spend_sig = secp.sign_schnorr_with_aux_rand(&msg, &tweaked_keypair, &[0u8; 32]);
 
             assert_eq!(expected_internal_pk, internal_key);
