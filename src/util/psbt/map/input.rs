@@ -191,6 +191,28 @@ impl PsbtSigHashType {
 }
 
 impl Input {
+    /// Obtains the [`EcdsaSigHashType`] for this input if one is specified.
+    /// If no sighash type is specified, returns ['EcdsaSigHashType::All']
+    ///
+    /// Errors:
+    /// If the sighash type is not a standard ecdsa sighash type
+    pub fn ecdsa_hash_ty(&self) -> Result<EcdsaSigHashType, NonStandardSigHashType> {
+        self.sighash_type
+            .map(|sighash_type| sighash_type.ecdsa_hash_ty())
+            .unwrap_or(Ok(EcdsaSigHashType::All))
+    }
+
+    /// Obtains the [`SchnorrSigHashType`] for this input if one is specified.
+    /// If no sighash type is specified, returns ['SchnorrSigHashType::Default']
+    ///
+    /// Errors:
+    /// If the sighash type is an invalid schnorr sighash type
+    pub fn schnorr_hash_ty(&self) -> Result<SchnorrSigHashType, sighash::Error> {
+        self.sighash_type
+            .map(|sighash_type| sighash_type.schnorr_hash_ty())
+            .unwrap_or(Ok(SchnorrSigHashType::Default))
+    }
+
     pub(super) fn insert_pair(&mut self, pair: raw::Pair) -> Result<(), encode::Error> {
         let raw::Pair {
             key: raw_key,
