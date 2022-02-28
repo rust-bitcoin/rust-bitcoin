@@ -21,7 +21,6 @@ use consensus::encode;
 use secp256k1::XOnlyPublicKey;
 use util::bip32::KeySource;
 use secp256k1;
-use util::psbt;
 use util::psbt::map::Map;
 use util::psbt::raw;
 use util::psbt::Error;
@@ -177,6 +176,19 @@ impl Output {
 
         Ok(())
     }
+
+    /// Combines this [`Output`] with `other` `Output` (as described by BIP 174).
+    pub fn combine(&mut self, other: Self) {
+        self.bip32_derivation.extend(other.bip32_derivation);
+        self.proprietary.extend(other.proprietary);
+        self.unknown.extend(other.unknown);
+        self.tap_key_origins.extend(other.tap_key_origins);
+
+        combine!(redeem_script, self, other);
+        combine!(witness_script, self, other);
+        combine!(tap_internal_key, self, other);
+        combine!(tap_tree, self, other);
+    }
 }
 
 impl Map for Output {
@@ -222,20 +234,6 @@ impl Map for Output {
         }
 
         Ok(rv)
-    }
-
-    fn merge(&mut self, other: Self) -> Result<(), psbt::Error> {
-        self.bip32_derivation.extend(other.bip32_derivation);
-        self.proprietary.extend(other.proprietary);
-        self.unknown.extend(other.unknown);
-        self.tap_key_origins.extend(other.tap_key_origins);
-
-        merge!(redeem_script, self, other);
-        merge!(witness_script, self, other);
-        merge!(tap_internal_key, self, other);
-        merge!(tap_tree, self, other);
-
-        Ok(())
     }
 }
 

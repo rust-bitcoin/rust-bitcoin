@@ -17,7 +17,7 @@ macro_rules! hex_psbt {
     ($s:expr) => { $crate::consensus::deserialize::<$crate::util::psbt::PartiallySignedTransaction>(&<$crate::prelude::Vec<u8> as $crate::hashes::hex::FromHex>::from_hex($s).unwrap()) };
 }
 
-macro_rules! merge {
+macro_rules! combine {
     ($thing:ident, $slf:ident, $other:ident) => {
         if let (&None, Some($thing)) = (&$slf.$thing, $other.$thing) {
             $slf.$thing = Some($thing);
