@@ -27,6 +27,7 @@ use std::error;
 
 use hashes::{sha256, sha256t, Hash, HashEngine};
 use schnorr::{TweakedPublicKey, UntweakedPublicKey, TapTweak};
+use util::key::XOnlyPublicKey;
 use Script;
 
 use consensus::Encodable;
@@ -726,7 +727,7 @@ impl ControlBlock {
     pub fn verify_taproot_commitment<C: secp256k1::Verification>(
         &self,
         secp: &Secp256k1<C>,
-        output_key: &TweakedPublicKey,
+        output_key: XOnlyPublicKey,
         script: &Script,
     ) -> bool {
         // compute the script hash
@@ -750,7 +751,7 @@ impl ControlBlock {
         let tweak = TapTweakHash::from_key_and_tweak(self.internal_key, Some(curr_hash));
         self.internal_key.tweak_add_check(
             secp,
-            output_key.as_inner(),
+            &output_key,
             self.output_key_parity,
             tweak.into_inner(),
         )
@@ -1106,7 +1107,7 @@ mod test {
         let script = Script::from_hex(script_hex).unwrap();
         let control_block = ControlBlock::from_slice(&Vec::<u8>::from_hex(control_block_hex).unwrap()).unwrap();
         assert_eq!(control_block_hex, control_block.serialize().to_hex());
-        assert!(control_block.verify_taproot_commitment(secp, &out_pk, &script));
+        assert!(control_block.verify_taproot_commitment(secp, out_pk.to_inner(), &script));
     }
 
     #[test]
@@ -1187,7 +1188,7 @@ mod test {
         for (_weights, script) in script_weights {
             let ver_script = (script, LeafVersion::TapScript);
             let ctrl_block = tree_info.control_block(&ver_script).unwrap();
-            assert!(ctrl_block.verify_taproot_commitment(&secp, &output_key, &ver_script.0))
+            assert!(ctrl_block.verify_taproot_commitment(&secp, output_key.to_inner(), &ver_script.0))
         }
     }
 
@@ -1223,7 +1224,7 @@ mod test {
         for script in vec![a, b, c, d, e] {
             let ver_script = (script, LeafVersion::TapScript);
             let ctrl_block = tree_info.control_block(&ver_script).unwrap();
-            assert!(ctrl_block.verify_taproot_commitment(&secp, &output_key, &ver_script.0))
+            assert!(ctrl_block.verify_taproot_commitment(&secp, output_key.to_inner(), &ver_script.0))
         }
     }
 
