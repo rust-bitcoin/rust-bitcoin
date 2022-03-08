@@ -1085,25 +1085,6 @@ mod tests {
         serde_round_trip!(tx);
     }
 
-    fn run_test_sighash(tx: &str, script: &str, input_index: usize, hash_type: i32, expected_result: &str) {
-        let tx: Transaction = deserialize(&Vec::from_hex(tx).unwrap()[..]).unwrap();
-        let script = Script::from(Vec::from_hex(script).unwrap());
-        let mut raw_expected = Vec::from_hex(expected_result).unwrap();
-        raw_expected.reverse();
-        let expected_result = SigHash::from_slice(&raw_expected[..]).unwrap();
-
-        let actual_result = if raw_expected[0] % 2 == 0 {
-            // tx.signature_hash and cache.legacy_signature_hash are the same, this if helps to test
-            // both the codepaths without repeating the test code
-            tx.signature_hash(input_index, &script, hash_type as u32)
-        } else {
-            let cache = SigHashCache::new(&tx);
-            cache.legacy_signature_hash(input_index, &script, hash_type as u32).unwrap()
-        };
-
-        assert_eq!(actual_result, expected_result);
-    }
-
     // Test decoding transaction `4be105f158ea44aec57bf12c5817d073a712ab131df6f37786872cfc70734188`
     // from testnet, which is the first BIP144-encoded transaction I encountered.
     #[test]
@@ -1156,6 +1137,25 @@ mod tests {
         assert_eq!(EcdsaSigHashType::from_u32_consensus(nonstandard_hashtype), EcdsaSigHashType::All);
         // But it's policy-invalid to use it!
         assert_eq!(EcdsaSigHashType::from_u32_standard(nonstandard_hashtype), Err(NonStandardSigHashType(0x04)));
+    }
+
+    fn run_test_sighash(tx: &str, script: &str, input_index: usize, hash_type: i32, expected_result: &str) {
+        let tx: Transaction = deserialize(&Vec::from_hex(tx).unwrap()[..]).unwrap();
+        let script = Script::from(Vec::from_hex(script).unwrap());
+        let mut raw_expected = Vec::from_hex(expected_result).unwrap();
+        raw_expected.reverse();
+        let expected_result = SigHash::from_slice(&raw_expected[..]).unwrap();
+
+        let actual_result = if raw_expected[0] % 2 == 0 {
+            // tx.signature_hash and cache.legacy_signature_hash are the same, this if helps to test
+            // both the codepaths without repeating the test code
+            tx.signature_hash(input_index, &script, hash_type as u32)
+        } else {
+            let cache = SigHashCache::new(&tx);
+            cache.legacy_signature_hash(input_index, &script, hash_type as u32).unwrap()
+        };
+
+        assert_eq!(actual_result, expected_result);
     }
 
     // These test vectors were stolen from libbtc, which is Copyright 2014 Jonas Schnelli MIT
