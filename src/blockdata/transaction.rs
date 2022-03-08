@@ -336,15 +336,6 @@ impl Transaction {
 
         let (sighash, anyone_can_pay) = EcdsaSigHashType::from_u32_consensus(sighash_type).split_anyonecanpay_flag();
 
-        // Special-case sighash_single bug because this is easy enough.
-        if sighash == EcdsaSigHashType::Single && input_index >= self.output.len() {
-            writer.write_all(&[1, 0, 0, 0, 0, 0, 0, 0,
-                               0, 0, 0, 0, 0, 0, 0, 0,
-                               0, 0, 0, 0, 0, 0, 0, 0,
-                               0, 0, 0, 0, 0, 0, 0, 0])?;
-            return Ok(());
-        }
-
         // Build tx to sign
         let mut tx = Transaction {
             version: self.version,
@@ -410,10 +401,28 @@ impl Transaction {
         script_pubkey: &Script,
         sighash_u32: u32
     ) -> SigHash {
+        if self.triggers_sighash_single_bug(sighash_u32, input_index) {
+            // TODO: Document why we return this sighash?
+            return SigHash::from_slice(&[
+                1, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0
+            ]).unwrap() // Parse won't panic for hard coded slice.
+        }
+
         let mut engine = SigHash::engine();
         self.encode_signing_data_to(&mut engine, input_index, script_pubkey, sighash_u32)
             .expect("engines don't error");
         SigHash::from_engine(engine)
+    }
+
+    /// The SIGHASH_SINGLE bug becomes exploitable when one tries to sign a transaction with the
+    /// sighash single type and there is not a corresponding output transaction with the same index
+    /// as the input transaction.
+    fn triggers_sighash_single_bug(&self, sighash: u32, input_index: usize) -> bool {
+        let sighash_ty = EcdsaSigHashType::from_u32_consensus(sighash);
+        sighash_ty == EcdsaSigHashType::Single && input_index >= self.output.len()
     }
 
     /// Gets the "weight" of this transaction, as defined by BIP141. For transactions with an empty
