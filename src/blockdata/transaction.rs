@@ -331,7 +331,7 @@ impl Transaction {
         script_pubkey: &Script,
         sighash_type: U,
     ) -> Result<(), encode::Error> {
-        let sighash_type : u32 = sighash_type.into();
+        let sighash_type: u32 = sighash_type.into();
         assert!(input_index < self.input.len());  // Panic on OOB
 
         let (sighash, anyone_can_pay) = EcdsaSigHashType::from_u32_consensus(sighash_type).split_anyonecanpay_flag();
