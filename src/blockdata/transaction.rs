@@ -45,6 +45,14 @@ use VarInt;
 #[cfg(doc)]
 use util::sighash::SchnorrSigHashType;
 
+/// Used for signature hash for invalid use of SIGHASH_SINGLE.
+const UINT256_ONE: [u8; 32] = [
+    1, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0
+];
+
 /// A reference to a transaction output.
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
 pub struct OutPoint {
@@ -340,15 +348,6 @@ impl Transaction {
 
         let (sighash, anyone_can_pay) = EcdsaSigHashType::from_u32_consensus(sighash_type).split_anyonecanpay_flag();
 
-        // Special-case sighash_single bug because this is easy enough.
-        if sighash == EcdsaSigHashType::Single && input_index >= self.output.len() {
-            writer.write_all(&[1, 0, 0, 0, 0, 0, 0, 0,
-                               0, 0, 0, 0, 0, 0, 0, 0,
-                               0, 0, 0, 0, 0, 0, 0, 0,
-                               0, 0, 0, 0, 0, 0, 0, 0])?;
-            return Ok(());
-        }
-
         // Build tx to sign
         let mut tx = Transaction {
             version: self.version,
@@ -404,10 +403,22 @@ impl Transaction {
         script_pubkey: &Script,
         sighash_u32: u32
     ) -> SigHash {
+        if self.is_invalid_use_of_sighash_single(sighash_u32, input_index) {
+            return SigHash::from_slice(&UINT256_ONE).expect("const-size array");
+        }
+
         let mut engine = SigHash::engine();
         self.encode_signing_data_to(&mut engine, input_index, script_pubkey, sighash_u32)
             .expect("engines don't error");
         SigHash::from_engine(engine)
+    }
+
+    /// The SIGHASH_SINGLE bug becomes exploitable when one tries to sign a transaction with
+    /// SIGHASH_SINGLE and there is not a corresponding output transaction with the same index as
+    /// the input transaction.
+    fn is_invalid_use_of_sighash_single(&self, sighash: u32, input_index: usize) -> bool {
+        let ty = EcdsaSigHashType::from_u32_consensus(sighash);
+        ty == EcdsaSigHashType::Single && input_index >= self.output.len()
     }
 
     /// Gets the "weight" of this transaction, as defined by BIP141. For transactions with an empty
