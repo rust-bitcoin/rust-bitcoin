@@ -835,7 +835,7 @@ impl ::std::error::Error for SigHashTypeParseError {}
 
 #[cfg(test)]
 mod tests {
-    use super::{OutPoint, ParseOutPointError, Transaction, TxIn, NonStandardSigHashType};
+    use super::*;
 
     use core::str::FromStr;
     use blockdata::constants::WITNESS_SCALE_FACTOR;
@@ -1145,6 +1145,29 @@ mod tests {
         assert_eq!(EcdsaSigHashType::from_u32_consensus(nonstandard_hashtype), EcdsaSigHashType::All);
         // But it's policy-invalid to use it!
         assert_eq!(EcdsaSigHashType::from_u32_standard(nonstandard_hashtype), Err(NonStandardSigHashType(0x04)));
+    }
+
+    #[test]
+    fn sighash_single_bug() {
+        const SIGHASH_SINGLE: u32 = 3;
+        // We need a tx with more inputs than outputs.
+        let mut input = Vec::new();
+        input.push(TxIn::default());
+        input.push(TxIn::default());
+        let mut output = Vec::new();
+        output.push(TxOut::default());
+
+        let tx = Transaction {
+            version: 1,
+            lock_time: 0,
+            input: input,
+            output: output,   // TODO: Use Vec::from([TxOut]) once we bump MSRV.
+        };
+        let script = Script::new();
+        let got = tx.signature_hash(1, &script, SIGHASH_SINGLE);
+        let want = SigHash::from_slice(&UINT256_ONE).unwrap();
+
+        assert_eq!(got, want)
     }
 
     fn run_test_sighash(tx: &str, script: &str, input_index: usize, hash_type: i32, expected_result: &str) {
