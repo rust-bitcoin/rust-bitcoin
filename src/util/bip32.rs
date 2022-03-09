@@ -23,6 +23,7 @@ use io::Write;
 use core::{fmt, str::FromStr, default::Default};
 use core::ops::Index;
 use core::slice::SliceIndex;
+use core::convert::AsRef;
 #[cfg(feature = "std")] use std::error;
 #[cfg(feature = "serde")] use serde;
 
@@ -37,14 +38,42 @@ use util::key::{PublicKey, PrivateKey, KeyPair};
 /// A chain code
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ChainCode([u8; 32]);
-impl_array_newtype!(ChainCode, u8, 32);
 impl_bytes_newtype!(ChainCode, 32);
+
+impl AsRef<[u8; 32]> for ChainCode {
+    fn as_ref(&self) -> &[u8; 32] {
+        &self.0
+    }
+}
+
+impl<'a> From<&'a [u8]> for ChainCode {
+    fn from(data: &'a [u8]) -> ChainCode {
+        assert_eq!(data.len(), 32);
+        let mut buf = [0; 32];
+        buf.copy_from_slice(&data[..]);
+        ChainCode(buf)
+    }
+}
 
 /// A fingerprint
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct Fingerprint([u8; 4]);
-impl_array_newtype!(Fingerprint, u8, 4);
 impl_bytes_newtype!(Fingerprint, 4);
+
+impl AsRef<[u8; 4]> for Fingerprint {
+    fn as_ref(&self) -> &[u8; 4] {
+        &self.0
+    }
+}
+
+impl<'a> From<&'a [u8]> for Fingerprint {
+    fn from(data: &'a [u8]) -> Fingerprint {
+        assert_eq!(data.len(), 4);
+        let mut buf = [0; 4];
+        buf.copy_from_slice(&data[..]);
+        Fingerprint(buf)
+    }
+}
 
 /// Extended private key
 #[derive(Copy, Clone, PartialEq, Eq)]
@@ -574,7 +603,7 @@ impl ExtendedPrivKey {
 
     /// Private->Private child key derivation
     pub fn ckd_priv<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>, i: ChildNumber) -> Result<ExtendedPrivKey, Error> {
-        let mut hmac_engine: HmacEngine<sha512::Hash> = HmacEngine::new(&self.chain_code[..]);
+        let mut hmac_engine: HmacEngine<sha512::Hash> = HmacEngine::new(&self.chain_code.as_ref()[..]);
         match i {
             ChildNumber::Normal { .. } => {
                 // Non-hardened key: compute public data and use that
@@ -636,9 +665,9 @@ impl ExtendedPrivKey {
             Network::Testnet | Network::Signet | Network::Regtest => [0x04, 0x35, 0x83, 0x94],
         }[..]);
         ret[4] = self.depth as u8;
-        ret[5..9].copy_from_slice(&self.parent_fingerprint[..]);
+        ret[5..9].copy_from_slice(&self.parent_fingerprint.as_ref()[..]);
         ret[9..13].copy_from_slice(&endian::u32_to_array_be(u32::from(self.child_number)));
-        ret[13..45].copy_from_slice(&self.chain_code[..]);
+        ret[13..45].copy_from_slice(&self.chain_code.as_ref()[..]);
         ret[45] = 0;
         ret[46..78].copy_from_slice(&self.private_key[..]);
         ret
@@ -710,7 +739,7 @@ impl ExtendedPubKey {
                 Err(Error::CannotDeriveFromHardenedKey)
             }
             ChildNumber::Normal { index: n } => {
-                let mut hmac_engine: HmacEngine<sha512::Hash> = HmacEngine::new(&self.chain_code[..]);
+                let mut hmac_engine: HmacEngine<sha512::Hash> = HmacEngine::new(&self.chain_code.as_ref()[..]);
                 hmac_engine.input(&self.public_key.serialize()[..]);
                 hmac_engine.input(&endian::u32_to_array_be(n));
 
@@ -775,9 +804,9 @@ impl ExtendedPubKey {
             Network::Testnet | Network::Signet | Network::Regtest => [0x04u8, 0x35, 0x87, 0xCF],
         }[..]);
         ret[4] = self.depth as u8;
-        ret[5..9].copy_from_slice(&self.parent_fingerprint[..]);
+        ret[5..9].copy_from_slice(&self.parent_fingerprint.as_ref()[..]);
         ret[9..13].copy_from_slice(&endian::u32_to_array_be(u32::from(self.child_number)));
-        ret[13..45].copy_from_slice(&self.chain_code[..]);
+        ret[13..45].copy_from_slice(&self.chain_code.as_ref()[..]);
         ret[45..78].copy_from_slice(&self.public_key.serialize()[..]);
         ret
     }

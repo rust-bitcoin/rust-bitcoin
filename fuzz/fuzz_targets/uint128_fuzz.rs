@@ -23,7 +23,7 @@ fn do_test(data: &[u8]) {
     }
     macro_rules! check_eq {
         ($native: expr, $uint: expr) => { {
-            assert_eq!(&[$native as u64, ($native >> 8*8) as u64], $uint.as_bytes());
+            assert_eq!(&[$native as u64, ($native >> 8*8) as u64], $uint.as_ref());
         } }
     }
 

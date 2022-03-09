@@ -45,66 +45,6 @@ macro_rules! impl_consensus_encoding {
     );
 }
 
-/// Implements standard array methods for a given wrapper type
-macro_rules! impl_array_newtype {
-    ($thing:ident, $ty:ty, $len:expr) => {
-        impl $thing {
-            /// Converts the object to a raw pointer
-            #[inline]
-            pub fn as_ptr(&self) -> *const $ty {
-                let &$thing(ref dat) = self;
-                dat.as_ptr()
-            }
-
-            /// Converts the object to a mutable raw pointer
-            #[inline]
-            pub fn as_mut_ptr(&mut self) -> *mut $ty {
-                let &mut $thing(ref mut dat) = self;
-                dat.as_mut_ptr()
-            }
-
-            /// Returns the length of the object as an array
-            #[inline]
-            pub fn len(&self) -> usize { $len }
-
-            /// Returns whether the object, as an array, is empty. Always false.
-            #[inline]
-            pub fn is_empty(&self) -> bool { false }
-
-            /// Returns the underlying bytes.
-            #[inline]
-            pub fn as_bytes(&self) -> &[$ty; $len] { &self.0 }
-
-            /// Returns the underlying bytes.
-            #[inline]
-            pub fn to_bytes(&self) -> [$ty; $len] { self.0.clone() }
-
-            /// Returns the underlying bytes.
-            #[inline]
-            pub fn into_bytes(self) -> [$ty; $len] { self.0 }
-        }
-
-        impl<'a> ::core::convert::From<&'a [$ty]> for $thing {
-            fn from(data: &'a [$ty]) -> $thing {
-                assert_eq!(data.len(), $len);
-                let mut ret = [0; $len];
-                ret.copy_from_slice(&data[..]);
-                $thing(ret)
-            }
-        }
-
-        impl<I: $crate::core::slice::SliceIndex<[$ty]>> $crate::core::ops::Index<I> for $thing {
-            type Output = I::Output;
-
-            #[inline]
-            fn index(&self, index: I) -> &Self::Output {
-                &self.0[index]
-            }
-        }
-
-    }
-}
-
 macro_rules! display_from_debug {
     ($thing:ident) => {
         impl ::core::fmt::Display for $thing {
@@ -432,7 +372,7 @@ macro_rules! impl_bytes_newtype {
                 if s.is_human_readable() {
                     s.serialize_str(&$crate::hashes::hex::ToHex::to_hex(self))
                 } else {
-                    s.serialize_bytes(&self[..])
+                    s.serialize_bytes(&self.as_ref()[..])
                 }
             }
         }

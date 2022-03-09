@@ -23,7 +23,21 @@ macro_rules! construct_uint {
         /// Little-endian large integer type
         #[derive(Copy, Clone, PartialEq, Eq, Hash, Default)]
         pub struct $name(pub [u64; $n_words]);
-        impl_array_newtype!($name, u64, $n_words);
+
+        impl AsRef<[u64; $n_words]> for $name {
+            fn as_ref(&self) -> &[u64; $n_words] {
+                &self.0
+            }
+        }
+
+        impl<'a> From<&'a [u64]> for $name {
+            fn from(data: &'a [u64]) -> $name {
+                assert_eq!(data.len(), $n_words);
+                let mut buf = [0; $n_words];
+                buf.copy_from_slice(&data[..]);
+                $name(buf)
+            }
+        }
 
         impl $name {
             /// Conversion to u32
@@ -188,8 +202,8 @@ macro_rules! construct_uint {
                 // and the auto derive is a lexicographic ordering(i.e. memcmp)
                 // which with numbers is equivalent to big-endian
                 for i in 0..$n_words {
-                    if self[$n_words - 1 - i] < other[$n_words - 1 - i] { return ::core::cmp::Ordering::Less; }
-                    if self[$n_words - 1 - i] > other[$n_words - 1 - i] { return ::core::cmp::Ordering::Greater; }
+                    if self.as_ref()[$n_words - 1 - i] < other.as_ref()[$n_words - 1 - i] { return ::core::cmp::Ordering::Less; }
+                    if self.as_ref()[$n_words - 1 - i] > other.as_ref()[$n_words - 1 - i] { return ::core::cmp::Ordering::Greater; }
                 }
                 ::core::cmp::Ordering::Equal
             }

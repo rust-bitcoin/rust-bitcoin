@@ -63,7 +63,7 @@ impl Map for PartiallySignedTransaction {
                 },
                 value: {
                     let mut ret = Vec::with_capacity(4 + derivation.len() * 4);
-                    ret.extend(fingerprint.as_bytes());
+                    ret.extend(fingerprint.as_ref());
                     derivation.into_iter().for_each(|n| ret.extend(&u32_to_array_le((*n).into())));
                     ret
                 }
