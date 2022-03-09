@@ -588,6 +588,8 @@ impl Encodable for Transaction {
     ) -> Result<usize, io::Error> {
         let mut len = 0;
         len += self.version.consensus_encode(&mut s)?;
+        // To avoid serialization ambiguity, no inputs means we use BIP141 serialization (see
+        // `Transaction` docs for full explanation).
         let mut have_witness = self.input.is_empty();
         for input in &self.input {
             if !input.witness.is_empty() {
