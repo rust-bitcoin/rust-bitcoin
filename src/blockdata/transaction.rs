@@ -310,20 +310,23 @@ impl Transaction {
     }
 
     /// Encodes the signing data from which a signature hash for a given input index with a given
-    /// sighash flag can be computed.  To actually produce a scriptSig, this hash needs to be run
-    /// through an ECDSA signer, the SigHashType appended to the resulting sig, and a script
-    /// written around this, but this is the general (and hard) part.
+    /// sighash flag can be computed.
     ///
-    /// The `sighash_type` supports arbitrary `u32` value, instead of just [`SigHashType`],
-    /// because internally 4 bytes are being hashed, even though only lowest byte
-    /// is appended to signature in a transaction.
+    /// To actually produce a scriptSig, this hash needs to be run through an ECDSA signer, the
+    /// [`EcdsaSigHashType`] appended to the resulting sig, and a script written around this, but
+    /// this is the general (and hard) part.
     ///
-    /// *Warning* This does NOT attempt to support OP_CODESEPARATOR. In general this would require
-    /// evaluating `script_pubkey` to determine which separators get evaluated and which don't,
-    /// which we don't have the information to determine.
+    /// The `sighash_type` supports an arbitrary `u32` value, instead of just [`EcdsaSigHashType`],
+    /// because internally 4 bytes are being hashed, even though only lowest byte is appended to
+    /// signature in a transaction.
+    ///
+    /// **Warning**: This does NOT attempt to support OP_CODESEPARATOR. In general this would
+    /// require evaluating `script_pubkey` to determine which separators get evaluated and which
+    /// don't, which we don't have the information to determine.
     ///
     /// # Panics
-    /// Panics if `input_index` is greater than or equal to `self.input.len()`
+    ///
+    /// If `input_index` is out of bounds (greater than or equal to `self.input.len()`).
     pub fn encode_signing_data_to<Write: io::Write, U: Into<u32>>(
         &self,
         mut writer: Write,
@@ -392,18 +395,8 @@ impl Transaction {
     }
 
     /// Computes a signature hash for a given input index with a given sighash flag.
-    /// To actually produce a scriptSig, this hash needs to be run through an
-    /// ECDSA signer, the SigHashType appended to the resulting sig, and a
-    /// script written around this, but this is the general (and hard) part.
     ///
-    /// *Warning* This does NOT attempt to support OP_CODESEPARATOR. In general
-    /// this would require evaluating `script_pubkey` to determine which separators
-    /// get evaluated and which don't, which we don't have the information to
-    /// determine.
-    ///
-    /// # Panics
-    /// Panics if `input_index` is greater than or equal to `self.input.len()`
-    ///
+    /// Please refer [`Self::encode_signing_data_to`] for full documentation of this method.
     pub fn signature_hash(
         &self,
         input_index: usize,
