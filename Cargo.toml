@@ -1,13 +1,13 @@
 [package]
-name = "bitcoin"
+name = "dashcore"
 version = "0.28.0-rc.1"
 authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
 license = "CC0-1.0"
-homepage = "https://github.com/rust-bitcoin/rust-bitcoin/"
-repository = "https://github.com/rust-bitcoin/rust-bitcoin/"
+homepage = "https://github.com/dashevo/rust-dashcore/"
+repository = "https://github.com/dashevo/rust-dashcore/"
 documentation = "https://docs.rs/bitcoin/"
 description = "General purpose library for using and interoperating with Bitcoin and other cryptocurrencies."
-keywords = [ "crypto", "bitcoin" ]
+keywords = [ "crypto", "dash" ]
 readme = "README.md"
 exclude = ["./test_data"]
 
