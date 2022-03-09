@@ -434,13 +434,13 @@ macro_rules! impl_bytes_newtype {
 
         impl ::core::fmt::Display for $t {
             fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-                fmt::LowerHex::fmt(self, f)
+                ::core::fmt::LowerHex::fmt(self, f)
             }
         }
 
         impl ::core::fmt::Debug for $t {
             fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-                fmt::LowerHex::fmt(self, f)
+                ::core::fmt::LowerHex::fmt(self, f)
             }
         }
 
