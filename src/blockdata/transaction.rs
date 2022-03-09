@@ -42,18 +42,21 @@ use consensus::encode::MAX_VEC_SIZE;
 use hash_types::{SigHash, Txid, Wtxid};
 use VarInt;
 
-/// A reference to a transaction output
+#[cfg(doc)]
+use util::sighash::SchnorrSigHashType;
+
+/// A reference to a transaction output.
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
 pub struct OutPoint {
-    /// The referenced transaction's txid
+    /// The referenced transaction's txid.
     pub txid: Txid,
-    /// The index of the referenced output in its transaction's vout
+    /// The index of the referenced output in its transaction's vout.
     pub vout: u32,
 }
 serde_struct_human_string_impl!(OutPoint, "an OutPoint", txid, vout);
 
 impl OutPoint {
-    /// Create a new [OutPoint].
+    /// Creates a new [`OutPoint`].
     #[inline]
     pub fn new(txid: Txid, vout: u32) -> OutPoint {
         OutPoint {
@@ -64,8 +67,7 @@ impl OutPoint {
 
     /// Creates a "null" `OutPoint`.
     ///
-    /// This value is used for coinbase transactions because they don't have
-    /// any previous outputs.
+    /// This value is used for coinbase transactions because they don't have any previous outputs.
     #[inline]
     pub fn null() -> OutPoint {
         OutPoint {
@@ -146,7 +148,7 @@ impl  error::Error for ParseOutPointError {
 }
 
 /// Parses a string-encoded transaction index (vout).
-/// It does not permit leading zeroes or non-digit characters.
+/// Does not permit leading zeroes or non-digit characters.
 fn parse_vout(s: &str) -> Result<u32, ParseOutPointError> {
     if s.len() > 1 {
         let first = s.chars().next().unwrap();
@@ -183,10 +185,10 @@ impl ::core::str::FromStr for OutPoint {
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct TxIn {
-    /// The reference to the previous output that is being used an an input
+    /// The reference to the previous output that is being used an an input.
     pub previous_output: OutPoint,
     /// The script which pushes values on the stack which will cause
-    /// the referenced output's script to accept
+    /// the referenced output's script to be accepted.
     pub script_sig: Script,
     /// The sequence number, which suggests to miners which of two
     /// conflicting transactions should be preferred, or 0xFFFFFFFF
@@ -216,13 +218,13 @@ impl Default for TxIn {
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct TxOut {
-    /// The value of the output, in satoshis
+    /// The value of the output, in satoshis.
     pub value: u64,
-    /// The script which must satisfy for the output to be spent
+    /// The script which must be satisfied for the output to be spent.
     pub script_pubkey: Script
 }
 
-// This is used as a "null txout" in consensus signing code
+// This is used as a "null txout" in consensus signing code.
 impl Default for TxOut {
     fn default() -> TxOut {
         TxOut { value: 0xffffffffffffffff, script_pubkey: Script::new() }
@@ -264,12 +266,11 @@ impl Default for TxOut {
 pub struct Transaction {
     /// The protocol version, is currently expected to be 1 or 2 (BIP 68).
     pub version: i32,
-    /// Block number before which this transaction is valid, or 0 for
-    /// valid immediately.
+    /// Block number before which this transaction is valid, or 0 for valid immediately.
     pub lock_time: u32,
-    /// List of inputs
+    /// List of transaction inputs.
     pub input: Vec<TxIn>,
-    /// List of outputs
+    /// List of transaction outputs.
     pub output: Vec<TxOut>,
 }
 
@@ -499,7 +500,7 @@ impl Transaction {
         }
     }
 
-    /// Shorthand for [Self::verify_with_flags] with flag [bitcoinconsensus::VERIFY_ALL]
+    /// Shorthand for [`Self::verify_with_flags`] with flag [`bitcoinconsensus::VERIFY_ALL`].
     #[cfg(feature="bitcoinconsensus")]
     #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
     pub fn verify<S>(&self, spent: S) -> Result<(), script::Error>
@@ -507,8 +508,8 @@ impl Transaction {
         self.verify_with_flags(spent, ::bitcoinconsensus::VERIFY_ALL)
     }
 
-    /// Verify that this transaction is able to spend its inputs
-    /// The lambda spent should not return the same TxOut twice!
+    /// Verify that this transaction is able to spend its inputs.
+    /// The `spent` closure should not return the same [`TxOut`] twice!
     #[cfg(feature="bitcoinconsensus")]
     #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
     pub fn verify_with_flags<S, F>(&self, mut spent: S, flags: F) -> Result<(), script::Error>
@@ -673,29 +674,30 @@ impl fmt::Display for NonStandardSigHashType {
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl error::Error for NonStandardSigHashType {}
 
-/// Legacy Hashtype of an input's signature
+/// Legacy Hashtype of an input's signature.
 #[deprecated(since="0.28.0", note="Please use [`EcdsaSigHashType`] instead")]
 pub type SigHashType = EcdsaSigHashType;
 
-/// Hashtype of an input's signature, encoded in the last byte of the signature
-/// Fixed values so they can be casted as integer types for encoding
-/// See also [`crate::SchnorrSigHashType`]
+/// Hashtype of an input's signature, encoded in the last byte of the signature.
+///
+/// Fixed values so they can be cast as integer types for encoding (see also
+/// [`SchnorrSigHashType`]).
 #[derive(PartialEq, Eq, Debug, Copy, Clone)]
 pub enum EcdsaSigHashType {
-    /// 0x1: Sign all outputs
+    /// 0x1: Sign all outputs.
     All		= 0x01,
-    /// 0x2: Sign no outputs --- anyone can choose the destination
+    /// 0x2: Sign no outputs --- anyone can choose the destination.
     None	= 0x02,
     /// 0x3: Sign the output whose index matches this input's index. If none exists,
     /// sign the hash `0000000000000000000000000000000000000000000000000000000000000001`.
     /// (This rule is probably an unintentional C++ism, but it's consensus so we have
     /// to follow it.)
     Single	= 0x03,
-    /// 0x81: Sign all outputs but only this input
+    /// 0x81: Sign all outputs but only this input.
     AllPlusAnyoneCanPay		= 0x81,
-    /// 0x82: Sign no outputs and only this input
+    /// 0x82: Sign no outputs and only this input.
     NonePlusAnyoneCanPay	= 0x82,
-    /// 0x83: Sign one output and only this input (see `Single` for what "one output" means)
+    /// 0x83: Sign one output and only this input (see `Single` for what "one output" means).
     SinglePlusAnyoneCanPay	= 0x83
 }
 serde_string_impl!(EcdsaSigHashType, "a EcdsaSigHashType data");
@@ -731,7 +733,7 @@ impl str::FromStr for EcdsaSigHashType {
 }
 
 impl EcdsaSigHashType {
-    /// Break the sighash flag into the "real" sighash flag and the ANYONECANPAY boolean
+    /// Splits the sighash flag into the "real" sighash flag and the ANYONECANPAY boolean.
     pub(crate) fn split_anyonecanpay_flag(self) -> (EcdsaSigHashType, bool) {
         match self {
             EcdsaSigHashType::All		=> (EcdsaSigHashType::All, false),
