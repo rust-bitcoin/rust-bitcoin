@@ -182,33 +182,37 @@ impl Block {
         }
     }
 
-    /// check if witness commitment in coinbase is matching the transaction list
+    /// Checks if witness commitment in coinbase matches the transaction list.
     pub fn check_witness_commitment(&self) -> bool {
-
-        // witness commitment is optional if there are no transactions using SegWit in the block
+        const MAGIC: [u8; 6] = [0x6a, 0x24, 0xaa, 0x21, 0xa9, 0xed];
+        // Witness commitment is optional if there are no transactions using SegWit in the block.
         if self.txdata.iter().all(|t| t.input.iter().all(|i| i.witness.is_empty())) {
             return true;
         }
-        if !self.txdata.is_empty() {
-            let coinbase = &self.txdata[0];
-            if coinbase.is_coin_base() {
-                // commitment is in the last output that starts with below magic
-                if let Some(pos) = coinbase.output.iter()
-                    .rposition(|o| {
-                        o.script_pubkey.len () >= 38
-                            && o.script_pubkey[0..6] == [0x6a, 0x24, 0xaa, 0x21, 0xa9, 0xed] }) {
-                    let commitment = WitnessCommitment::from_slice(&coinbase.output[pos].script_pubkey.as_bytes()[6..38]).unwrap();
-                    // witness reserved value is in coinbase input witness
-                    let witness_vec: Vec<_> = coinbase.input[0].witness.iter().collect();
-                    if witness_vec.len() == 1 && witness_vec[0].len() == 32 {
-                        match self.witness_root() {
-                            Some(witness_root) => return commitment == Self::compute_witness_commitment(&witness_root, witness_vec[0]),
-                            None => return false,
-                        }
-                    }
+
+        if self.txdata.is_empty() {
+            return false;
+        }
+
+        let coinbase = &self.txdata[0];
+        if !coinbase.is_coin_base() {
+            return false;
+        }
+
+        // Commitment is in the last output that starts with magic bytes.
+        if let Some(pos) = coinbase.output.iter()
+            .rposition(|o| o.script_pubkey.len () >= 38 && o.script_pubkey[0..6] ==  MAGIC)
+        {
+            let commitment = WitnessCommitment::from_slice(&coinbase.output[pos].script_pubkey.as_bytes()[6..38]).unwrap();
+            // Witness reserved value is in coinbase input witness.
+            let witness_vec: Vec<_> = coinbase.input[0].witness.iter().collect();
+            if witness_vec.len() == 1 && witness_vec[0].len() == 32 {
+                if let Some(witness_root) = self.witness_root() {
+                    return commitment == Self::compute_witness_commitment(&witness_root, witness_vec[0]);
                 }
             }
         }
+
         false
     }
 
