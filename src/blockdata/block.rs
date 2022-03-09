@@ -279,8 +279,7 @@ impl Block {
         self.txdata.first()
     }
 
-    /// Get the block height as encoded into the coinbase according to BIP34.
-    /// Returns [None] if not present.
+    /// Returns the block height, as encoded in the coinbase transaction according to BIP34.
     pub fn bip34_block_height(&self) -> Result<u64, Bip34Error> {
         // Citing the spec:
         // Add height as the first item in the coinbase transaction's scriptSig,
