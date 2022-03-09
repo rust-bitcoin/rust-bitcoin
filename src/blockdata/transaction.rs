@@ -418,37 +418,66 @@ impl Transaction {
         ty == EcdsaSigHashType::Single && input_index >= self.output.len()
     }
 
-    /// Gets the "weight" of this transaction, as defined by BIP141. For transactions with an empty
-    /// witness, this is simply the consensus-serialized size times 4. For transactions with a
-    /// witness, this is the non-witness consensus-serialized size multiplied by 3 plus the
-    /// with-witness consensus-serialized size.
+    /// Returns the "weight" of this transaction, as defined by BIP141.
     #[inline]
+    #[deprecated(since = "0.28.0", note = "Please use `transaction::weight` instead.")]
     pub fn get_weight(&self) -> usize {
-        self.get_scaled_size(WITNESS_SCALE_FACTOR)
+        self.weight()
     }
 
-    /// Gets the regular byte-wise consensus-serialized size of this transaction.
-    #[inline]
-    pub fn get_size(&self) -> usize {
-        self.get_scaled_size(1)
-    }
-
-    /// Gets the "vsize" of this transaction. Will be `ceil(weight / 4.0)`.
-    /// Note this implements the virtual size as per [`bip141`], which is different
-    /// to what is implemented in Bitcoin Core. The computation should be the same
-    /// for any remotely sane transaction, and a standardness-rule-correct version
-    /// is available in the [`policy`] module.
+    /// Returns the "weight" of this transaction, as defined by BIP141.
     ///
-    /// [`bip141`]: https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki
+    /// For transactions with an empty witness, this is simply the consensus-serialized size times
+    /// four. For transactions with a witness, this is the non-witness consensus-serialized size
+    /// multiplied by three plus the with-witness consensus-serialized size.
+    #[inline]
+    pub fn weight(&self) -> usize {
+        self.scaled_size(WITNESS_SCALE_FACTOR)
+    }
+
+    /// Returns the regular byte-wise consensus-serialized size of this transaction.
+    #[inline]
+    #[deprecated(since = "0.28.0", note = "Please use `transaction::size` instead.")]
+    pub fn get_size(&self) -> usize {
+        self.size()
+    }
+
+    /// Returns the regular byte-wise consensus-serialized size of this transaction.
+    #[inline]
+    pub fn size(&self) -> usize {
+        self.scaled_size(1)
+    }
+
+    /// Returns the "virtual size" (vsize) of this transaction.
+    #[inline]
+    #[deprecated(since = "0.28.0", note = "Please use `transaction::vsize` instead.")]
+    pub fn get_vsize(&self) -> usize {
+        self.vsize()
+    }
+
+    /// Returns the "virtual size" (vsize) of this transaction.
+    ///
+    /// Will be `ceil(weight / 4.0)`. Note this implements the virtual size as per [`BIP141`], which
+    /// is different to what is implemented in Bitcoin Core. The computation should be the same for
+    /// any remotely sane transaction, and a standardness-rule-correct version is available in the
+    /// [`policy`] module.
+    ///
+    /// [`BIP141`]: https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki
     /// [`policy`]: ../policy/mod.rs.html
     #[inline]
-    pub fn get_vsize(&self) -> usize {
-        let weight = self.get_weight();
+    pub fn vsize(&self) -> usize {
+        let weight = self.weight();
         (weight + WITNESS_SCALE_FACTOR - 1) / WITNESS_SCALE_FACTOR
     }
 
-    /// Gets the size of this transaction excluding the witness data.
+    /// Returns the size of this transaction excluding the witness data.
+    #[deprecated(since = "0.28.0", note = "Please use `transaction::strippedsize` instead.")]
     pub fn get_strippedsize(&self) -> usize {
+        self.strippedsize()
+    }
+
+    /// Returns the size of this transaction excluding the witness data.
+    pub fn strippedsize(&self) -> usize {
         let mut input_size = 0;
         for input in &self.input {
             input_size += 32 + 4 + 4 + // outpoint (32+4) + nSequence
@@ -473,8 +502,8 @@ impl Transaction {
         non_input_size + input_size
     }
 
-    /// Internal utility function for get_{size,weight}
-    fn get_scaled_size(&self, scale_factor: usize) -> usize {
+    /// Internal utility function for size/weight functions.
+    fn scaled_size(&self, scale_factor: usize) -> usize {
         let mut input_weight = 0;
         let mut inputs_with_witnesses = 0;
         for input in &self.input {
@@ -924,10 +953,10 @@ mod tests {
                    "a6eab3c14ab5272a58a5ba91505ba1a4b6d7a3a9fcbd187b6cd99a7b6d548cb7".to_string());
         assert_eq!(format!("{:x}", realtx.wtxid()),
                    "a6eab3c14ab5272a58a5ba91505ba1a4b6d7a3a9fcbd187b6cd99a7b6d548cb7".to_string());
-        assert_eq!(realtx.get_weight(), tx_bytes.len()*WITNESS_SCALE_FACTOR);
-        assert_eq!(realtx.get_size(), tx_bytes.len());
-        assert_eq!(realtx.get_vsize(), tx_bytes.len());
-        assert_eq!(realtx.get_strippedsize(), tx_bytes.len());
+        assert_eq!(realtx.weight(), tx_bytes.len()*WITNESS_SCALE_FACTOR);
+        assert_eq!(realtx.size(), tx_bytes.len());
+        assert_eq!(realtx.vsize(), tx_bytes.len());
+        assert_eq!(realtx.strippedsize(), tx_bytes.len());
     }
 
     #[test]
@@ -959,23 +988,23 @@ mod tests {
         assert_eq!(format!("{:x}", realtx.wtxid()),
                    "80b7d8a82d5d5bf92905b06f2014dd699e03837ca172e3a59d51426ebbe3e7f5".to_string());
         const EXPECTED_WEIGHT: usize = 442;
-        assert_eq!(realtx.get_weight(), EXPECTED_WEIGHT);
-        assert_eq!(realtx.get_size(), tx_bytes.len());
-        assert_eq!(realtx.get_vsize(), 111);
+        assert_eq!(realtx.weight(), EXPECTED_WEIGHT);
+        assert_eq!(realtx.size(), tx_bytes.len());
+        assert_eq!(realtx.vsize(), 111);
         // Since
         //     size   =                        stripped_size + witness_size
         //     weight = WITNESS_SCALE_FACTOR * stripped_size + witness_size
         // then,
         //     stripped_size = (weight - size) / (WITNESS_SCALE_FACTOR - 1)
         let expected_strippedsize = (EXPECTED_WEIGHT - tx_bytes.len()) / (WITNESS_SCALE_FACTOR - 1);
-        assert_eq!(realtx.get_strippedsize(), expected_strippedsize);
+        assert_eq!(realtx.strippedsize(), expected_strippedsize);
         // Construct a transaction without the witness data.
         let mut tx_without_witness = realtx.clone();
         tx_without_witness.input.iter_mut().for_each(|input| input.witness.clear());
-        assert_eq!(tx_without_witness.get_weight(), expected_strippedsize*WITNESS_SCALE_FACTOR);
-        assert_eq!(tx_without_witness.get_size(), expected_strippedsize);
-        assert_eq!(tx_without_witness.get_vsize(), expected_strippedsize);
-        assert_eq!(tx_without_witness.get_strippedsize(), expected_strippedsize);
+        assert_eq!(tx_without_witness.weight(), expected_strippedsize*WITNESS_SCALE_FACTOR);
+        assert_eq!(tx_without_witness.size(), expected_strippedsize);
+        assert_eq!(tx_without_witness.vsize(), expected_strippedsize);
+        assert_eq!(tx_without_witness.strippedsize(), expected_strippedsize);
     }
 
     #[test]
@@ -1059,7 +1088,7 @@ mod tests {
 
         assert_eq!(format!("{:x}", tx.wtxid()), "d6ac4a5e61657c4c604dcde855a1db74ec6b3e54f32695d72c5e11c7761ea1b4");
         assert_eq!(format!("{:x}", tx.txid()), "9652aa62b0e748caeec40c4cb7bc17c6792435cc3dfe447dd1ca24f912a1c6ec");
-        assert_eq!(tx.get_weight(), 2718);
+        assert_eq!(tx.weight(), 2718);
 
         // non-segwit tx from my mempool
         let tx_bytes = Vec::from_hex(
@@ -1091,7 +1120,7 @@ mod tests {
     fn test_segwit_tx_decode() {
         let tx_bytes = Vec::from_hex("010000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff3603da1b0e00045503bd5704c7dd8a0d0ced13bb5785010800000000000a636b706f6f6c122f4e696e6a61506f6f6c2f5345475749542fffffffff02b4e5a212000000001976a914876fbb82ec05caa6af7a3b5e5a983aae6c6cc6d688ac0000000000000000266a24aa21a9edf91c46b49eb8a29089980f02ee6b57e7d63d33b18b4fddac2bcd7db2a39837040120000000000000000000000000000000000000000000000000000000000000000000000000").unwrap();
         let tx: Transaction = deserialize(&tx_bytes).unwrap();
-        assert_eq!(tx.get_weight(), 780);
+        assert_eq!(tx.weight(), 780);
         serde_round_trip!(tx);
 
         let consensus_encoded = serialize(&tx);
@@ -1549,13 +1578,13 @@ mod benches {
     const SOME_TX: &'static str = "0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000";
 
     #[bench]
-    pub fn bench_transaction_get_size(bh: &mut Bencher) {
+    pub fn bench_transaction_size(bh: &mut Bencher) {
         let raw_tx = Vec::from_hex(SOME_TX).unwrap();
 
         let mut tx: Transaction = deserialize(&raw_tx).unwrap();
 
         bh.iter(|| {
-            black_box(black_box(&mut tx).get_size());
+            black_box(black_box(&mut tx).size());
         });
     }
 
