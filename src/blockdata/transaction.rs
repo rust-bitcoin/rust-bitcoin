@@ -86,7 +86,7 @@ impl OutPoint {
     /// let tx = &block.txdata[0];
     ///
     /// // Coinbase transactions don't have any previous output.
-    /// assert_eq!(tx.input[0].previous_output.is_null(), true);
+    /// assert!(tx.input[0].previous_output.is_null());
     /// ```
     #[inline]
     pub fn is_null(&self) -> bool {
