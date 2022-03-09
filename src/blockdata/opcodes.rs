@@ -659,7 +659,6 @@ impl fmt::Debug for All {
     }
 }
 
-
 /// Classification context for the opcode.
 ///
 /// Some opcodes like `OP_RESERVED` abort the script in [`ClassifyContext::Legacy`] context, but
@@ -748,7 +747,6 @@ impl From<u8> for All {
         All {code: b}
     }
 }
-
 
 display_from_debug!(All);
 
@@ -1165,4 +1163,3 @@ mod tests {
         assert_eq!(unique.len(), 256);
     }
 }
-
