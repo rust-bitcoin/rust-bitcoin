@@ -33,6 +33,10 @@ name = "deserialize_transaction"
 path = "fuzz_targets/deserialize_transaction.rs"
 
 [[bin]]
+name = "deserialize_prefilled_transaction"
+path = "fuzz_targets/deserialize_prefilled_transaction.rs"
+
+[[bin]]
 name = "deserialize_address"
 path = "fuzz_targets/deserialize_address.rs"
 
