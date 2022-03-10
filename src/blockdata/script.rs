@@ -137,18 +137,17 @@ pub enum Error {
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let str = match *self {
-            Error::NonMinimalPush => "non-minimal datapush",
-            Error::EarlyEndOfScript => "unexpected end of script",
-            Error::NumericOverflow => "numeric overflow (number on stack larger than 4 bytes)",
+        match *self {
+            Error::NonMinimalPush => write!(f, "non-minimal datapush"),
+            Error::EarlyEndOfScript => write!(f, "unexpected end of script"),
+            Error::NumericOverflow => write!(f, "numeric overflow (number on stack larger than 4 bytes)"),
             #[cfg(feature="bitcoinconsensus")]
-            Error::BitcoinConsensus(ref _n) => "bitcoinconsensus verification failed",
+            Error::BitcoinConsensus(ref _n) => write!(f, "bitcoinconsensus verification failed"),
             #[cfg(feature="bitcoinconsensus")]
-            Error::UnknownSpentOutput(ref _point) => "unknown spent output Transaction::verify()",
+            Error::UnknownSpentOutput(ref _point) => write!(f, "unknown spent output Transaction::verify()"),
             #[cfg(feature="bitcoinconsensus")]
-            Error::SerializationError => "can not serialize the spending transaction in Transaction::verify()",
-        };
-        f.write_str(str)
+            Error::SerializationError => write!(f, "can not serialize the spending transaction in Transaction::verify()"),
+        }
     }
 }
 
