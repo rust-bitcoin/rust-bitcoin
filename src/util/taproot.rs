@@ -682,7 +682,8 @@ impl ControlBlock {
         {
             return Err(TaprootError::InvalidControlBlockSize(sl.len()));
         }
-        let output_key_parity = secp256k1::Parity::from((sl[0] & 1) as i32);
+        let output_key_parity = secp256k1::Parity::from_i32((sl[0] & 1) as i32)
+            .map_err(TaprootError::InvalidParity)?;
         let leaf_version = LeafVersion::from_consensus(sl[0] & TAPROOT_LEAF_MASK)?;
         let internal_key = UntweakedPublicKey::from_slice(&sl[1..TAPROOT_CONTROL_BASE_SIZE])
             .map_err(TaprootError::InvalidInternalKey)?;
@@ -970,6 +971,8 @@ pub enum TaprootError {
     InvalidControlBlockSize(usize),
     /// Invalid taproot internal key
     InvalidInternalKey(secp256k1::Error),
+    /// Invalid parity for internal key
+    InvalidParity(secp256k1::InvalidParityValue),
     /// Empty TapTree
     EmptyTree,
 }
@@ -999,6 +1002,7 @@ impl fmt::Display for TaprootError {
             ),
             // TODO: add source when in MSRV
             TaprootError::InvalidInternalKey(e) => write!(f, "Invalid Internal XOnly key : {}", e),
+            TaprootError::InvalidParity(e) => write!(f, "Invalid parity value for internal key: {}", e),
             TaprootError::EmptyTree => write!(f, "Taproot Tree must contain at least one script"),
         }
     }
