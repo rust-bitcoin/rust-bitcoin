@@ -128,7 +128,7 @@ PR authors may also find it useful to run the following script locally in order
 to check that each of the commits within the PR satisfies the requirements
 above, before submitting the PR to review:
 ```shell script
-BITCOIN_MSRV=1.29.0 ./contrib/ci.sh
+BITCOIN_MSRV=1.29.0 ./contrib/test.sh
 ```
 Please replace the value in `BITCOIN_MSRV=1.29.0` with the current MSRV from
 [README.md].

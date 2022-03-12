@@ -24,6 +24,7 @@ jobs:
               DO_BENCH: true
               AS_DEPENDENCY: true
               DO_NO_STD: true
+              DO_DOCS: true
           - rust: 1.29.0
             env:
               AS_DEPENDENCY: true
@@ -82,20 +83,6 @@ jobs:
       - name: run cross test
         run: cross test --target s390x-unknown-linux-gnu
 
-  Docs:
-    name: Docs
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Crate
-        uses: actions/checkout@v2
-      - name: Checkout Toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-      - name: Create Doc
-        run: cargo doc
   Embedded:
     runs-on: ubuntu-latest
     steps:
