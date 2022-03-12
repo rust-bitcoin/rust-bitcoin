@@ -60,9 +60,11 @@ hash_newtype!(FilterHeader, sha256d::Hash, 32, doc="Filter header, as defined in
 
 impl_hashencode!(Txid);
 impl_hashencode!(Wtxid);
-impl_hashencode!(SigHash);
 impl_hashencode!(BlockHash);
+impl_hashencode!(SigHash);
+
 impl_hashencode!(TxMerkleNode);
 impl_hashencode!(WitnessMerkleNode);
+
 impl_hashencode!(FilterHash);
 impl_hashencode!(FilterHeader);
