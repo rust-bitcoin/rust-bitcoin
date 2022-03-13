@@ -410,8 +410,9 @@ impl Script {
         Script::new_v1_p2tr(&secp, internal_key, Some(merkle_root))
     }
 
+    /// Returns witness version of the script, if any, assuming the script is a `scriptPubkey`.
     #[inline]
-    fn witness_version(&self) -> Option<WitnessVersion> {
+    pub fn witness_version(&self) -> Option<WitnessVersion> {
         self.0.get(0).and_then(|opcode| WitnessVersion::from_opcode(opcodes::All::from(*opcode)).ok())
     }
 
