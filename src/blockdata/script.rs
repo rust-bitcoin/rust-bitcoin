@@ -741,7 +741,7 @@ impl<'a> Instructions<'a> {
     }
 
     /// takes `len` bytes long slice from iterator and returns it advancing iterator
-    /// if the iterator is not long enough `None` is returned and the iterator is killed
+    /// if the iterator is not long enough [`Error::EarlyEndOfScript`] is returned and the iterator is killed
     /// to avoid returning an infinite stream of errors.
     fn take_slice_or_kill(&mut self, len: usize) -> Result<&'a [u8], Error> {
         if self.data.len() >= len {
