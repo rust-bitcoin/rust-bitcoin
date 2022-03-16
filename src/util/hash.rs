@@ -57,7 +57,7 @@ pub fn bitcoin_merkle_root<T, I>(mut hashes: I) -> Option<T>
 where
     T: Hash + Encodable,
     <T as Hash>::Engine: io::Write,
-    I: Iterator<Item = T>,
+    I: Iterator<Item=T>,
 {
     let first = hashes.next()?;
     let second = match hashes.next() {

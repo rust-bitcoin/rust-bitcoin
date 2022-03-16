@@ -284,7 +284,7 @@ impl<'a> From<&'a [ChildNumber]> for DerivationPath {
 }
 
 impl ::core::iter::FromIterator<ChildNumber> for DerivationPath {
-    fn from_iter<T>(iter: T) -> Self where T: IntoIterator<Item = ChildNumber> {
+    fn from_iter<T>(iter: T) -> Self where T: IntoIterator<Item=ChildNumber> {
         DerivationPath(Vec::from_iter(iter))
     }
 }

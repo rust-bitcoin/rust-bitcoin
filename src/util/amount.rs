@@ -946,7 +946,7 @@ pub trait CheckedSum<R>: private::SumSeal<R> {
     fn checked_sum(self) -> Option<R>;
 }
 
-impl<T> CheckedSum<Amount> for T where T: Iterator<Item = Amount> {
+impl<T> CheckedSum<Amount> for T where T: Iterator<Item=Amount> {
     fn checked_sum(mut self) -> Option<Amount> {
         let first = Some(self.next().unwrap_or_default());
 
@@ -957,7 +957,7 @@ impl<T> CheckedSum<Amount> for T where T: Iterator<Item = Amount> {
     }
 }
 
-impl<T> CheckedSum<SignedAmount> for T where T: Iterator<Item = SignedAmount> {
+impl<T> CheckedSum<SignedAmount> for T where T: Iterator<Item=SignedAmount> {
     fn checked_sum(mut self) -> Option<SignedAmount> {
         let first = Some(self.next().unwrap_or_default());
 
@@ -971,8 +971,8 @@ mod private {
     /// Used to seal the `CheckedSum` trait
     pub trait SumSeal<A> {}
 
-    impl<T> SumSeal<Amount> for T where T: Iterator<Item = Amount> {}
-    impl<T> SumSeal<SignedAmount> for T where T: Iterator<Item = SignedAmount> {}
+    impl<T> SumSeal<Amount> for T where T: Iterator<Item=Amount> {}
+    impl<T> SumSeal<SignedAmount> for T where T: Iterator<Item=SignedAmount> {}
 }
 
 #[cfg(feature = "serde")]

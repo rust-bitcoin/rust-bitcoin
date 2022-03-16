@@ -178,7 +178,7 @@ pub fn from_check(data: &str) -> Result<Vec<u8>, Error> {
 
 fn format_iter<I, W>(writer: &mut W, data: I) -> Result<(), fmt::Error>
 where
-    I: Iterator<Item = u8> + Clone,
+    I: Iterator<Item=u8> + Clone,
     W: fmt::Write
 {
     let mut ret = SmallVec::new();
@@ -219,7 +219,7 @@ where
 
 fn encode_iter<I>(data: I) -> String
 where
-    I: Iterator<Item = u8> + Clone,
+    I: Iterator<Item=u8> + Clone,
 {
     let mut ret = String::new();
     format_iter(&mut ret, data).expect("writing into string shouldn't fail");
