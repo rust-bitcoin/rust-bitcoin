@@ -321,10 +321,6 @@ impl Transaction {
     /// because internally 4 bytes are being hashed, even though only lowest byte is appended to
     /// signature in a transaction.
     ///
-    /// **Warning**: This does NOT attempt to support OP_CODESEPARATOR. In general this would
-    /// require evaluating `script_pubkey` to determine which separators get evaluated and which
-    /// don't, which we don't have the information to determine.
-    ///
     /// # Panics
     ///
     /// If `input_index` is out of bounds (greater than or equal to `self.input.len()`).
@@ -360,7 +356,7 @@ impl Transaction {
         if anyone_can_pay {
             tx.input = vec![TxIn {
                 previous_output: self.input[input_index].previous_output,
-                script_sig: script_pubkey.clone(),
+                script_sig: script_pubkey.rm_op_codeseparator(),
                 sequence: self.input[input_index].sequence,
                 witness: Witness::default(),
             }];
@@ -369,7 +365,7 @@ impl Transaction {
             for (n, input) in self.input.iter().enumerate() {
                 tx.input.push(TxIn {
                     previous_output: input.previous_output,
-                    script_sig: if n == input_index { script_pubkey.clone() } else { Script::new() },
+                    script_sig: if n == input_index { script_pubkey.rm_op_codeseparator() } else { Script::new() },
                     sequence: if n != input_index && (sighash == EcdsaSigHashType::Single || sighash == EcdsaSigHashType::None) { 0 } else { input.sequence },
                     witness: Witness::default(),
                 });

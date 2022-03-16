@@ -31,7 +31,7 @@ use core::{fmt, default::Default};
 #[cfg(feature = "serde")] use serde;
 
 use hash_types::{PubkeyHash, WPubkeyHash, ScriptHash, WScriptHash};
-use blockdata::opcodes;
+use blockdata::opcodes::{self, all};
 use consensus::{encode, Decodable, Encodable};
 use hashes::{Hash, hex};
 use policy::DUST_RELAY_TX_FEE;
@@ -286,6 +286,16 @@ fn read_uint_iter(data: &mut ::core::slice::Iter<'_, u8>, size: usize) -> Result
 impl Script {
     /// Creates a new empty script.
     pub fn new() -> Script { Script(vec![].into_boxed_slice()) }
+
+    /// Creates a script identical to `self` but with all instances of `OP_CODESEPARATOR` removed.
+    pub fn rm_op_codeseparator(&self) -> Script {
+        let v = self.0.iter()
+            .filter(|&op| op != &all::OP_CODESEPARATOR.into_u8())
+            .map(|&op| op)
+            .collect::<Vec<u8>>();
+
+        Script(v.into_boxed_slice())
+    }
 
     /// Generates P2PK-type of scriptPubkey.
     pub fn new_p2pk(pubkey: &PublicKey) -> Script {
