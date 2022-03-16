@@ -179,12 +179,10 @@ pub fn genesis_block(network: Network) -> Block {
 #[cfg(test)]
 mod test {
     use core::default::Default;
+    use super::*;
     use crate::hashes::hex::FromHex;
-
     use crate::network::constants::Network;
     use crate::consensus::encode::serialize;
-    use crate::blockdata::constants::{genesis_block, bitcoin_genesis_tx};
-    use crate::blockdata::constants::{MAX_SEQUENCE, COIN_VALUE};
 
     #[test]
     fn bitcoin_genesis_first_transaction() {
