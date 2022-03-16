@@ -176,6 +176,33 @@ pub fn genesis_block(network: Network) -> Block {
     }
 }
 
+// Mainnet value can be verified at https://github.com/lightning/bolts/blob/master/00-introduction.md
+const GENESIS_BLOCK_HASH_BITCOIN: [u8; 32] = [111, 226, 140, 10, 182, 241, 179, 114, 193, 166, 162, 70, 174, 99, 247, 79, 147, 30, 131, 101, 225, 90, 8, 156, 104, 214, 25, 0, 0, 0, 0, 0];
+const GENESIS_BLOCK_HASH_TESTNET: [u8; 32] = [67, 73, 127, 215, 248, 38, 149, 113, 8, 244, 163, 15, 217, 206, 195, 174, 186, 121, 151, 32, 132, 233, 14, 173, 1, 234, 51, 9, 0, 0, 0, 0];
+const GENESIS_BLOCK_HASH_SIGNET: [u8; 32] = [246, 30, 238, 59, 99, 163, 128, 164, 119, 160, 99, 175, 50, 178, 187, 201, 124, 159, 249, 240, 31, 44, 66, 37, 233, 115, 152, 129, 8, 0, 0, 0];
+const GENESIS_BLOCK_HASH_REGTEST: [u8; 32] = [6, 34, 110, 70, 17, 26, 11, 89, 202, 175, 18, 96, 67, 235, 91, 191, 40, 195, 79, 58, 94, 51, 42, 31, 199, 178, 183, 60, 241, 136, 145, 15];
+
+/// The uniquely identifying hash of the target blockchain.
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct ChainHash([u8; 32]);
+impl_array_newtype!(ChainHash, u8, 32);
+impl_bytes_newtype!(ChainHash, 32);
+
+impl ChainHash {
+    /// Returns the hash of the `network` genesis block for use as a chain hash.
+    ///
+    /// See [BOLT 0](https://github.com/lightning/bolts/blob/ffeece3dab1c52efdb9b53ae476539320fa44938/00-introduction.md#chain_hash)
+    /// for specification.
+    pub fn using_genesis_block(network: Network) -> Self {
+        match network {
+            Network::Bitcoin => ChainHash(GENESIS_BLOCK_HASH_BITCOIN),
+            Network::Testnet => ChainHash(GENESIS_BLOCK_HASH_TESTNET),
+            Network::Signet => ChainHash(GENESIS_BLOCK_HASH_SIGNET),
+            Network::Regtest => ChainHash(GENESIS_BLOCK_HASH_REGTEST),
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use core::default::Default;
@@ -247,6 +274,50 @@ mod test {
         assert_eq!(gen.header.nonce, 52613770);
         assert_eq!(format!("{:x}", gen.header.block_hash()),
                    "00000008819873e925422c1ff0f99f7cc9bbb232af63a077a480a3633bee1ef6".to_string());
+    }
+
+    // The *_chain_hash tests are sanity/regression tests, they verify that the const byte array
+    // representing the genesis block is the same as that created by hashing the genesis block.
+    fn chain_hash_and_genesis_block(network: Network) {
+        use hashes::{sha256, Hash};
+
+        // The genesis block hash is a double-sha256 and it is displayed backwards.
+        let genesis_hash = genesis_block(network).block_hash();
+        // We abuse the sha256 hash here so we get a LowerHex impl that does not print the hex backwards.
+        let hash = sha256::Hash::from_slice(&genesis_hash.into_inner()).unwrap();
+        let want = format!("{:02x}", hash);
+
+        let chain_hash = ChainHash::using_genesis_block(network);
+        let got = format!("{:02x}", chain_hash);
+
+        // Compare strings because the spec specifically states how the chain hash must encode to hex.
+        assert_eq!(got, want);
+    }
+
+    macro_rules! chain_hash_genesis_block {
+        ($($test_name:ident, $network:expr);* $(;)*) => {
+            $(
+                #[test]
+                fn $test_name() {
+                    chain_hash_and_genesis_block($network);
+                }
+            )*
+        }
+    }
+
+    chain_hash_genesis_block! {
+        mainnet_chain_hash_genesis_block, Network::Bitcoin;
+        testnet_chain_hash_genesis_block, Network::Testnet;
+        signet_chain_hash_genesis_block, Network::Signet;
+        regtest_chain_hash_genesis_block, Network::Regtest;
+    }
+
+    // Test vector taken from: https://github.com/lightning/bolts/blob/master/00-introduction.md
+    #[test]
+    fn mainnet_chain_hash_test_vector() {
+        let got = format!("{:x}", ChainHash::using_genesis_block(Network::Bitcoin));
+        let want = "6fe28c0ab6f1b372c1a6a246ae63f74f931e8365e15a089c68d6190000000000";
+        assert_eq!(got, want);
     }
 }
 
