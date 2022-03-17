@@ -175,7 +175,7 @@ impl Block {
     }
 
     /// check if merkle root of header matches merkle root of the transaction list
-    pub fn check_merkle_root (&self) -> bool {
+    pub fn check_merkle_root(&self) -> bool {
         match self.compute_merkle_root() {
             Some(merkle_root) => self.header.merkle_root == merkle_root,
             None => false,
@@ -229,7 +229,7 @@ impl Block {
     }
 
     /// Computes the witness commitment for the block's transaction list.
-    pub fn compute_witness_commitment (witness_root: &WitnessMerkleNode, witness_reserved_value: &[u8]) -> WitnessCommitment {
+    pub fn compute_witness_commitment(witness_root: &WitnessMerkleNode, witness_reserved_value: &[u8]) -> WitnessCommitment {
         let mut encoder = WitnessCommitment::engine();
         witness_root.consensus_encode(&mut encoder).expect("engines don't error");
         encoder.input(witness_reserved_value);
@@ -238,14 +238,14 @@ impl Block {
 
     /// Computes the merkle root of transactions hashed for witness.
     pub fn witness_root(&self) -> Option<WitnessMerkleNode> {
-        let hashes = self.txdata.iter().enumerate().map(|(i, t)|
+        let hashes = self.txdata.iter().enumerate().map(|(i, t)| {
             if i == 0 {
                 // Replace the first hash with zeroes.
                 Wtxid::default().as_hash()
             } else {
                 t.wtxid().as_hash()
             }
-        );
+        });
         bitcoin_merkle_root(hashes).map(|h| h.into())
     }
 

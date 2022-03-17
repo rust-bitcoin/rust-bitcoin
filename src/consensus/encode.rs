@@ -61,7 +61,7 @@ pub enum Error {
         actual: u32,
     },
     /// Tried to allocate an oversized vector
-    OversizedVectorAllocation{
+    OversizedVectorAllocation {
         /// The capacity requested
         requested: usize,
         /// The maximum capacity
@@ -164,9 +164,7 @@ pub fn deserialize<T: Decodable>(data: &[u8]) -> Result<T, Error> {
 
 /// Deserialize an object from a vector, but will not report an error if said deserialization
 /// doesn't consume the entire vector.
-pub fn deserialize_partial<T: Decodable>(
-    data: &[u8],
-) -> Result<(T, usize), Error> {
+pub fn deserialize_partial<T: Decodable>(data: &[u8]) -> Result<(T, usize), Error> {
     let mut decoder = Cursor::new(data);
     let rv = Decodable::consensus_decode(&mut decoder)?;
     let consumed = decoder.position() as usize;
@@ -333,8 +331,8 @@ pub struct VarInt(pub u64);
 pub struct CheckedData(pub Vec<u8>);
 
 // Primitive types
-macro_rules! impl_int_encodable{
-    ($ty:ident, $meth_dec:ident, $meth_enc:ident) => (
+macro_rules! impl_int_encodable {
+    ($ty:ident, $meth_dec:ident, $meth_enc:ident) => {
         impl Decodable for $ty {
             #[inline]
             fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, Error> {
@@ -343,15 +341,12 @@ macro_rules! impl_int_encodable{
         }
         impl Encodable for $ty {
             #[inline]
-            fn consensus_encode<S: WriteExt>(
-                &self,
-                mut s: S,
-            ) -> Result<usize, io::Error> {
+            fn consensus_encode<S: WriteExt>(&self, mut s: S) -> Result<usize, io::Error> {
                 s.$meth_enc(*self)?;
                 Ok(mem::size_of::<$ty>())
             }
         }
-    )
+    }
 }
 
 impl_int_encodable!(u8,  read_u8,  emit_u8);
@@ -439,7 +434,6 @@ impl Decodable for VarInt {
     }
 }
 
-
 // Booleans
 impl Encodable for bool {
     #[inline]
@@ -498,13 +492,10 @@ impl Decodable for Cow<'static, str> {
 
 // Arrays
 macro_rules! impl_array {
-    ( $size:expr ) => (
+    ( $size:expr ) => {
         impl Encodable for [u8; $size] {
             #[inline]
-            fn consensus_encode<S: WriteExt>(
-                &self,
-                mut s: S,
-            ) -> Result<usize, io::Error> {
+            fn consensus_encode<S: WriteExt>(&self, mut s: S) -> Result<usize, io::Error> {
                 s.emit_slice(&self[..])?;
                 Ok(self.len())
             }
@@ -518,7 +509,7 @@ macro_rules! impl_array {
                 Ok(ret)
             }
         }
-    );
+    };
 }
 
 impl_array!(2);
@@ -554,10 +545,7 @@ macro_rules! impl_vec {
     ($type: ty) => {
         impl Encodable for Vec<$type> {
             #[inline]
-            fn consensus_encode<S: io::Write>(
-                &self,
-                mut s: S,
-            ) -> Result<usize, io::Error> {
+            fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, io::Error> {
                 let mut len = 0;
                 len += VarInt(self.len() as u64).consensus_encode(&mut s)?;
                 for c in self.iter() {
@@ -571,8 +559,8 @@ macro_rules! impl_vec {
             fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, Error> {
                 let len = VarInt::consensus_decode(&mut d)?.0;
                 let byte_size = (len as usize)
-                                    .checked_mul(mem::size_of::<$type>())
-                                    .ok_or(self::Error::ParseFailed("Invalid length"))?;
+                    .checked_mul(mem::size_of::<$type>())
+                    .ok_or(self::Error::ParseFailed("Invalid length"))?;
                 if byte_size > MAX_VEC_SIZE {
                     return Err(self::Error::OversizedVectorAllocation { requested: byte_size, max: MAX_VEC_SIZE })
                 }
@@ -712,7 +700,7 @@ impl<T: Encodable> Encodable for sync::Arc<T> {
 
 // Tuples
 macro_rules! tuple_encode {
-    ($($x:ident),*) => (
+    ($($x:ident),*) => {
         impl <$($x: Encodable),*> Encodable for ($($x),*) {
             #[inline]
             #[allow(non_snake_case)]
@@ -734,7 +722,7 @@ macro_rules! tuple_encode {
                 Ok(($({let $x = Decodable::consensus_decode(&mut d)?; $x }),*))
             }
         }
-    );
+    };
 }
 
 tuple_encode!(T0, T1);
@@ -1033,7 +1021,7 @@ mod tests {
         let witness = vec![vec![0u8; 3_999_999]; 2];
         let ser = serialize(&witness);
         let mut reader = io::Cursor::new(ser);
-        let err  = Vec::<Vec<u8>>::consensus_decode(&mut reader);
+        let err = Vec::<Vec<u8>>::consensus_decode(&mut reader);
         assert!(err.is_err());
     }
 

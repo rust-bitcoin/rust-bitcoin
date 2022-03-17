@@ -175,7 +175,7 @@ impl fmt::Display for ParseAmountError {
             ParseAmountError::PossiblyConfusingDenomination(ref d) => {
                 let (letter, upper, lower) = match d.chars().next() {
                     Some('M') => ('M', "Mega", "milli"),
-                    Some('P') => ('P',"Peta", "pico"),
+                    Some('P') => ('P', "Peta", "pico"),
                     // This panic could be avoided by adding enum ConfusingDenomination { Mega, Peta } but is it worth it?
                     _ => panic!("invalid error information"),
                 };
@@ -599,7 +599,7 @@ impl FromStr for Amount {
 }
 
 impl ::core::iter::Sum for Amount {
-    fn sum<I: Iterator<Item=Self>>(iter: I) -> Self {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         let sats: u64 = iter.map(|amt| amt.0).sum();
         Amount::from_sat(sats)
     }
@@ -933,7 +933,7 @@ impl FromStr for SignedAmount {
 }
 
 impl ::core::iter::Sum for SignedAmount {
-    fn sum<I: Iterator<Item=Self>>(iter: I) -> Self {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         let sats: i64 = iter.map(|amt| amt.0).sum();
         SignedAmount::from_sat(sats)
     }
@@ -961,10 +961,7 @@ impl<T> CheckedSum<SignedAmount> for T where T: Iterator<Item = SignedAmount> {
     fn checked_sum(mut self) -> Option<SignedAmount> {
         let first = Some(self.next().unwrap_or_default());
 
-        self.fold(
-            first,
-            |acc, item| acc.and_then(|acc| acc.checked_add(item))
-        )
+        self.fold(first, |acc, item| acc.and_then(|acc| acc.checked_add(item)))
     }
 }
 
@@ -1133,12 +1130,13 @@ pub mod serde {
 
                     fn visit_none<E>(self) -> Result<Self::Value, E>
                     where
-                        E: de::Error {
+                        E: de::Error,
+                    {
                         Ok(None)
                     }
                     fn visit_some<D>(self, d: D) -> Result<Self::Value, D::Error>
                     where
-                        D: Deserializer<'de>
+                        D: Deserializer<'de>,
                     {
                         Ok(Some(X::des_sat(d)?))
                     }
@@ -1187,7 +1185,7 @@ pub mod serde {
             ) -> Result<Option<A>, D::Error> {
                 struct VisitOptAmt<X>(PhantomData<X>);
 
-                impl<'de, X :SerdeAmountForOpt> de::Visitor<'de> for VisitOptAmt<X> {
+                impl<'de, X: SerdeAmountForOpt> de::Visitor<'de> for VisitOptAmt<X> {
                     type Value = Option<X>;
 
                     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
@@ -1196,7 +1194,8 @@ pub mod serde {
 
                     fn visit_none<E>(self) -> Result<Self::Value, E>
                     where
-                        E: de::Error {
+                        E: de::Error,
+                    {
                         Ok(None)
                     }
                     fn visit_some<D>(self, d: D) -> Result<Self::Value, D::Error>
@@ -1398,12 +1397,12 @@ mod tests {
         let sa = SignedAmount::from_sat;
         let ua = Amount::from_sat;
 
-        assert_eq!(Amount::max_value().to_signed(),  Err(E::TooBig));
+        assert_eq!(Amount::max_value().to_signed(), Err(E::TooBig));
         assert_eq!(ua(i64::max_value() as u64).to_signed(),  Ok(sa(i64::max_value())));
-        assert_eq!(ua(0).to_signed(),  Ok(sa(0)));
+        assert_eq!(ua(0).to_signed(), Ok(sa(0)));
         assert_eq!(ua(1).to_signed(), Ok( sa(1)));
-        assert_eq!(ua(1).to_signed(),  Ok(sa(1)));
-        assert_eq!(ua(i64::max_value() as u64 + 1).to_signed(),  Err(E::TooBig));
+        assert_eq!(ua(1).to_signed(), Ok(sa(1)));
+        assert_eq!(ua(i64::max_value() as u64 + 1).to_signed(), Err(E::TooBig));
 
         assert_eq!(sa(-1).to_unsigned(), Err(E::Negative));
         assert_eq!(sa(i64::max_value()).to_unsigned(), Ok(ua(i64::max_value() as u64)));
@@ -1532,10 +1531,7 @@ mod tests {
                 samt: SignedAmount::from_sat(-123456789),
             },
             &[
-                serde_test::Token::Struct {
-                    name: "T",
-                    len: 2,
-                },
+                serde_test::Token::Struct { name: "T", len: 2 },
                 serde_test::Token::Str("amt"),
                 serde_test::Token::U64(123456789),
                 serde_test::Token::Str("samt"),

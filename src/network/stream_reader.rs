@@ -41,7 +41,7 @@ impl<R: Read> fmt::Debug for StreamReader<R> {
 
 impl<R: Read> StreamReader<R> {
     /// Constructs new stream reader for a given input stream `stream`
-    #[deprecated(since="0.28.0", note="wrap your stream into a buffered reader if necessary and use consensus_encode directly")]
+    #[deprecated(since = "0.28.0", note = "wrap your stream into a buffered reader if necessary and use consensus_encode directly")]
     pub fn new(stream: R, _buffer_size: Option<usize>) -> StreamReader<R> {
         StreamReader {
             stream: BufReader::new(stream),
@@ -49,7 +49,7 @@ impl<R: Read> StreamReader<R> {
     }
 
     /// Reads stream and parses next message from its current input
-    #[deprecated(since="0.28.0", note="wrap your stream into a buffered reader if necessary and use consensus_encode directly")]
+    #[deprecated(since = "0.28.0", note = "wrap your stream into a buffered reader if necessary and use consensus_encode directly")]
     pub fn read_next<D: Decodable>(&mut self) -> Result<D, encode::Error> {
         Decodable::consensus_decode(&mut self.stream)
     }
@@ -222,7 +222,7 @@ mod test {
         let istream = TcpStream::connect(format!("127.0.0.1:{}", port)).unwrap();
         let reader = BufReader::new(istream);
 
-        return (handle, reader)
+        (handle, reader)
     }
 
     #[test]

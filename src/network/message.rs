@@ -75,10 +75,7 @@ impl AsRef<str> for CommandString {
 
 impl Encodable for CommandString {
     #[inline]
-    fn consensus_encode<S: io::Write>(
-        &self,
-        s: S,
-    ) -> Result<usize, io::Error> {
+    fn consensus_encode<S: io::Write>(&self, s: S) -> Result<usize, io::Error> {
         let mut rawbytes = [0u8; 12];
         let strbytes = self.0.as_bytes();
         debug_assert!(strbytes.len() <= 12);
@@ -116,7 +113,7 @@ impl fmt::Display for CommandStringError {
 
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 #[cfg(feature = "std")]
-impl ::std::error::Error for CommandStringError { }
+impl ::std::error::Error for CommandStringError {}
 
 /// A Network message
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -281,10 +278,7 @@ struct HeaderSerializationWrapper<'a>(&'a Vec<block::BlockHeader>);
 
 impl<'a> Encodable for HeaderSerializationWrapper<'a> {
     #[inline]
-    fn consensus_encode<S: io::Write>(
-        &self,
-        mut s: S,
-    ) -> Result<usize, io::Error> {
+    fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, io::Error> {
         let mut len = 0;
         len += VarInt(self.0.len() as u64).consensus_encode(&mut s)?;
         for header in self.0.iter() {
@@ -296,10 +290,7 @@ impl<'a> Encodable for HeaderSerializationWrapper<'a> {
 }
 
 impl Encodable for RawNetworkMessage {
-    fn consensus_encode<S: io::Write>(
-        &self,
-        mut s: S,
-    ) -> Result<usize, io::Error> {
+    fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, io::Error> {
         let mut len = 0;
         len += self.magic.consensus_encode(&mut s)?;
         len += self.command().consensus_encode(&mut s)?;

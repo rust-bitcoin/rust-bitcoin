@@ -632,10 +632,10 @@ impl fmt::Debug for All {
             all::OP_NUMEQUAL => write!(f, "NUMEQUAL"),
             all::OP_NUMEQUALVERIFY => write!(f, "NUMEQUALVERIFY"),
             all::OP_NUMNOTEQUAL => write!(f, "NUMNOTEQUAL"),
-            all::OP_LESSTHAN  => write!(f, "LESSTHAN"),
-            all::OP_GREATERTHAN  => write!(f, "GREATERTHAN"),
-            all::OP_LESSTHANOREQUAL  => write!(f, "LESSTHANOREQUAL"),
-            all::OP_GREATERTHANOREQUAL  => write!(f, "GREATERTHANOREQUAL"),
+            all::OP_LESSTHAN => write!(f, "LESSTHAN"),
+            all::OP_GREATERTHAN => write!(f, "GREATERTHAN"),
+            all::OP_LESSTHANOREQUAL => write!(f, "LESSTHANOREQUAL"),
+            all::OP_GREATERTHANOREQUAL => write!(f, "GREATERTHANOREQUAL"),
             all::OP_MIN => write!(f, "MIN"),
             all::OP_MAX => write!(f, "MAX"),
             all::OP_WITHIN => write!(f, "WITHIN"),
@@ -860,8 +860,8 @@ impl Ordinary {
     /// Encode as a byte
     #[inline]
     pub fn into_u8(self) -> u8 {
-      self as u8
-  }
+        self as u8
+    }
 }
 
 #[cfg(test)]

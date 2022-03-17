@@ -89,9 +89,8 @@ impl fmt::UpperHex for Script {
 
 impl hex::FromHex for Script {
     fn from_byte_iter<I>(iter: I) -> Result<Self, hex::Error>
-        where I: Iterator<Item=Result<u8, hex::Error>> +
-            ExactSizeIterator +
-            DoubleEndedIterator,
+    where
+        I: Iterator<Item=Result<u8, hex::Error>> + ExactSizeIterator + DoubleEndedIterator,
     {
         Vec::from_byte_iter(iter).map(|v| Script(Box::<[u8]>::from(v)))
     }
@@ -141,11 +140,11 @@ impl fmt::Display for Error {
             Error::NonMinimalPush => "non-minimal datapush",
             Error::EarlyEndOfScript => "unexpected end of script",
             Error::NumericOverflow => "numeric overflow (number on stack larger than 4 bytes)",
-            #[cfg(feature="bitcoinconsensus")]
+            #[cfg(feature = "bitcoinconsensus")]
             Error::BitcoinConsensus(ref _n) => "bitcoinconsensus verification failed",
-            #[cfg(feature="bitcoinconsensus")]
+            #[cfg(feature = "bitcoinconsensus")]
             Error::UnknownSpentOutput(ref _point) => "unknown spent output Transaction::verify()",
-            #[cfg(feature="bitcoinconsensus")]
+            #[cfg(feature = "bitcoinconsensus")]
             Error::SerializationError => "can not serialize the spending transaction in Transaction::verify()",
         };
         f.write_str(str)
@@ -717,7 +716,7 @@ impl<'a> Iterator for Instructions<'a> {
             opcodes::Class::PushBytes(n) => {
                 let n = n as usize;
                 if self.data.len() < n + 1 {
-                    self.data = &[];  // Kill iterator so that it does not return an infinite stream of errors
+                    self.data = &[]; // Kill iterator so that it does not return an infinite stream of errors
                     return Some(Err(Error::EarlyEndOfScript));
                 }
                 if self.enforce_minimal {
@@ -949,7 +948,8 @@ impl_index_newtype!(Builder, u8);
 #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 impl<'de> serde::Deserialize<'de> for Script {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where D: serde::Deserializer<'de>,
+    where
+        D: serde::Deserializer<'de>,
     {
         use core::fmt::Formatter;
         use hashes::hex::FromHex;
@@ -965,20 +965,23 @@ impl<'de> serde::Deserialize<'de> for Script {
                 }
 
                 fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-                    where E: serde::de::Error,
+                where
+                    E: serde::de::Error,
                 {
                     let v = Vec::from_hex(v).map_err(E::custom)?;
                     Ok(Script::from(v))
                 }
 
                 fn visit_borrowed_str<E>(self, v: &'de str) -> Result<Self::Value, E>
-                    where E: serde::de::Error,
+                where
+                    E: serde::de::Error,
                 {
                     self.visit_str(v)
                 }
 
                 fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
-                    where E: serde::de::Error,
+                where
+                    E: serde::de::Error,
                 {
                     self.visit_str(&v)
                 }
@@ -995,7 +998,8 @@ impl<'de> serde::Deserialize<'de> for Script {
                 }
 
                 fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
-                    where E: serde::de::Error,
+                where
+                    E: serde::de::Error,
                 {
                     Ok(Script::from(v.to_vec()))
                 }
@@ -1023,10 +1027,7 @@ impl serde::Serialize for Script {
 
 impl Encodable for Script {
     #[inline]
-    fn consensus_encode<S: io::Write>(
-        &self,
-        s: S,
-    ) -> Result<usize, io::Error> {
+    fn consensus_encode<S: io::Write>(&self, s: S) -> Result<usize, io::Error> {
         self.0.consensus_encode(s)
     }
 }
@@ -1354,38 +1355,19 @@ mod test {
         let slop_v_nonmin: Result<Vec<Instruction>, Error> = nonminimal.instructions().collect();
         let slop_v_nonmin_alt: Result<Vec<Instruction>, Error> = nonminimal_alt.instructions().collect();
 
-        assert_eq!(
-            v_zero.unwrap(),
-            vec![
-                Instruction::PushBytes(&[]),
-            ]
-        );
-        assert_eq!(
-            v_zeropush.unwrap(),
-            vec![
-                Instruction::PushBytes(&[0]),
-            ]
-        );
+        assert_eq!(v_zero.unwrap(), vec![Instruction::PushBytes(&[])]);
+        assert_eq!(v_zeropush.unwrap(), vec![Instruction::PushBytes(&[0])]);
 
         assert_eq!(
             v_min.clone().unwrap(),
-            vec![
-                Instruction::PushBytes(&[105]),
-                Instruction::Op(opcodes::OP_NOP3),
-            ]
+            vec![Instruction::PushBytes(&[105]), Instruction::Op(opcodes::OP_NOP3)]
         );
 
-        assert_eq!(
-            v_nonmin.err().unwrap(),
-            Error::NonMinimalPush
-        );
+        assert_eq!(v_nonmin.err().unwrap(), Error::NonMinimalPush);
 
         assert_eq!(
             v_nonmin_alt.clone().unwrap(),
-            vec![
-                Instruction::PushBytes(&[105, 0]),
-                Instruction::Op(opcodes::OP_NOP3),
-            ]
+            vec![Instruction::PushBytes(&[105, 0]), Instruction::Op(opcodes::OP_NOP3)]
         );
 
         assert_eq!(v_min.clone().unwrap(), slop_v_min.unwrap());
@@ -1395,7 +1377,7 @@ mod test {
 
 	#[test]
     fn script_ord() {
-        let script_1 = Builder::new().push_slice(&[1,2,3,4]).into_script();
+        let script_1 = Builder::new().push_slice(&[1, 2, 3, 4]).into_script();
         let script_2 = Builder::new().push_int(10).into_script();
         let script_3 = Builder::new().push_int(15).into_script();
         let script_4 = Builder::new().push_opcode(opcodes::all::OP_RETURN).into_script();
@@ -1413,7 +1395,7 @@ mod test {
     }
 
 	#[test]
-	#[cfg(feature="bitcoinconsensus")]
+	#[cfg(feature = "bitcoinconsensus")]
 	fn test_bitcoinconsensus () {
 		// a random segwit transaction from the blockchain using native segwit
 		let spent = Builder::from(Vec::from_hex("0020701a8d401c84fb13e6baf169d59684e17abd9fa216c8cc5b9fc63d622ff8c58d").unwrap()).into_script();

@@ -217,8 +217,12 @@ mod message_signing {
 /// instance of it, returning the number of instances removed.
 /// Loops through the vector opcode by opcode, skipping pushed data.
 pub fn script_find_and_remove(haystack: &mut Vec<u8>, needle: &[u8]) -> usize {
-    if needle.len() > haystack.len() { return 0; }
-    if needle.is_empty() { return 0; }
+    if needle.len() > haystack.len() {
+        return 0;
+    }
+    if needle.is_empty() {
+        return 0;
+    }
 
     let mut top = haystack.len() - needle.len();
     let mut n_deleted = 0;
@@ -233,7 +237,9 @@ pub fn script_find_and_remove(haystack: &mut Vec<u8>, needle: &[u8]) -> usize {
             // This is ugly but prevents infinite loop in case of overflow
             let overflow = top < needle.len();
             top = top.wrapping_sub(needle.len());
-            if overflow { break; }
+            if overflow {
+                break;
+            }
         } else {
             i += match opcodes::All::from((*haystack)[i]).classify(opcodes::ClassifyContext::Legacy) {
                 opcodes::Class::PushBytes(n) => n as usize + 1,

@@ -446,7 +446,7 @@ impl TaprootBuilder {
         Ok(TaprootSpendInfo::from_node_info(secp, internal_key, node))
     }
 
-    pub(crate) fn branch(&self) -> &[Option<NodeInfo>]{
+    pub(crate) fn branch(&self) -> &[Option<NodeInfo>] {
         &self.branch
     }
 
@@ -598,9 +598,7 @@ impl TaprootMerkleBranch {
         if sl.len() % TAPROOT_CONTROL_NODE_SIZE != 0 {
             Err(TaprootError::InvalidMerkleBranchSize(sl.len()))
         } else if sl.len() > TAPROOT_CONTROL_NODE_SIZE * TAPROOT_CONTROL_MAX_NODE_COUNT {
-            Err(TaprootError::InvalidMerkleTreeDepth(
-                sl.len() / TAPROOT_CONTROL_NODE_SIZE,
-            ))
+            Err(TaprootError::InvalidMerkleTreeDepth(sl.len() / TAPROOT_CONTROL_NODE_SIZE))
         } else {
             let inner = sl
                 // TODO: Use chunks_exact after MSRV changes to 1.31
@@ -717,8 +715,7 @@ impl ControlBlock {
     /// applied when encoding this element as a witness.
     pub fn serialize(&self) -> Vec<u8> {
         let mut buf = Vec::with_capacity(self.size());
-        self.encode(&mut buf)
-            .expect("writers don't error");
+        self.encode(&mut buf).expect("writers don't error");
         buf
     }
 
@@ -874,8 +871,8 @@ impl fmt::UpperHex for LeafVersion {
 #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 impl ::serde::Serialize for LeafVersion {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: ::serde::Serializer,
+    where
+        S: ::serde::Serializer,
     {
         serializer.serialize_u8(self.to_consensus())
     }
@@ -885,7 +882,10 @@ impl ::serde::Serialize for LeafVersion {
 #[cfg(feature = "serde")]
 #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 impl<'de> ::serde::Deserialize<'de> for LeafVersion {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: ::serde::Deserializer<'de> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: ::serde::Deserializer<'de>
+    {
         struct U8Visitor;
         impl<'de> ::serde::de::Visitor<'de> for U8Visitor {
             type Value = LeafVersion;
@@ -936,11 +936,9 @@ impl fmt::Display for TaprootBuilderError {
                 "Attempted to create a tree with two nodes at depth 0. There must\
                 only be a exactly one node at depth 0",
             ),
-            TaprootBuilderError::InvalidMerkleTreeDepth(d) => write!(
-                f,
-                "Merkle Tree depth({}) must be less than {}",
-                d, TAPROOT_CONTROL_MAX_NODE_COUNT
-            ),
+            TaprootBuilderError::InvalidMerkleTreeDepth(d) => {
+                write!(f, "Merkle Tree depth({}) must be less than {}", d, TAPROOT_CONTROL_MAX_NODE_COUNT)
+            }
             TaprootBuilderError::InvalidInternalKey(e) => {
                 write!(f, "Invalid Internal XOnly key : {}", e)
             }

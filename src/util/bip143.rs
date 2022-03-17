@@ -33,7 +33,7 @@ use util::sighash;
 /// Parts of a sighash which are common across inputs or signatures, and which are
 /// sufficient (in conjunction with a private key) to sign the transaction
 #[derive(Clone, PartialEq, Eq, Debug)]
-#[deprecated(since="0.24.0", note="please use [sighash::SigHashCache] instead")]
+#[deprecated(since = "0.24.0", note = "please use [sighash::SigHashCache] instead")]
 pub struct SighashComponents {
     tx_version: i32,
     tx_locktime: u32,
@@ -107,13 +107,13 @@ impl SighashComponents {
 }
 
 /// A replacement for SigHashComponents which supports all sighash modes
-#[deprecated(since="0.27.0", note="please use [sighash::SigHashCache] instead")]
-pub struct SigHashCache<R: Deref<Target=Transaction>> {
+#[deprecated(since = "0.27.0", note = "please use [sighash::SigHashCache] instead")]
+pub struct SigHashCache<R: Deref<Target = Transaction>> {
     cache: sighash::SigHashCache<R>,
 }
 
 #[allow(deprecated)]
-impl<R: Deref<Target=Transaction>> SigHashCache<R> {
+impl<R: Deref<Target = Transaction>> SigHashCache<R> {
     /// Compute the sighash components from an unsigned transaction and auxiliary
     /// in a lazy manner when required.
     /// For the generated sighashes to be valid, no fields in the transaction may change except for
@@ -155,7 +155,7 @@ impl<R: Deref<Target=Transaction>> SigHashCache<R> {
 }
 
 #[allow(deprecated)]
-impl<R: DerefMut<Target=Transaction>> SigHashCache<R> {
+impl<R: DerefMut<Target = Transaction>> SigHashCache<R> {
     /// When the SigHashCache is initialized with a mutable reference to a transaction instead of a
     /// regular reference, this method is available to allow modification to the witnesses.
     ///
