@@ -643,101 +643,113 @@ impl Script {
     }
 
     /// Writes the assembly decoding of the script bytes to the formatter.
+    #[deprecated(since = "0.29.0", note = "Please use script::bytes_to_asm_fmt instead")]
     pub fn bytes_to_asm_fmt(script: &[u8], f: &mut dyn fmt::Write) -> fmt::Result {
-        // This has to be a macro because it needs to break the loop
-        macro_rules! read_push_data_len {
-            ($iter:expr, $len:literal, $formatter:expr) => {
-                match read_uint_iter($iter, $len) {
-                    Ok(n) => {
-                        n
-                    },
-                    Err(UintError::EarlyEndOfScript) => {
-                        $formatter.write_str("<unexpected end>")?;
-                        break;
-                    }
-                    // We got the data in a slice which implies it being shorter than `usize::max_value()`
-                    // So if we got overflow, we can confidently say the number is higher than length of
-                    // the slice even though we don't know the exact number. This implies attempt to push
-                    // past end.
-                    Err(UintError::NumericOverflow) => {
-                        $formatter.write_str("<push past end>")?;
-                        break;
-                    }
-                }
-            }
-        }
-
-        let mut iter = script.iter();
-        // Was at least one opcode emitted?
-        let mut at_least_one = false;
-        // `iter` needs to be borrowed in `read_push_data_len`, so we have to use `while let` instead
-        // of `for`.
-        while let Some(byte) = iter.next() {
-            let opcode = opcodes::All::from(*byte);
-
-            let data_len = if let opcodes::Class::PushBytes(n) = opcode.classify(opcodes::ClassifyContext::Legacy) {
-                n as usize
-            } else {
-                match opcode {
-                    opcodes::all::OP_PUSHDATA1 => {
-                        // side effects: may write and break from the loop
-                        read_push_data_len!(&mut iter, 1, f)
-                    }
-                    opcodes::all::OP_PUSHDATA2 => {
-                        // side effects: may write and break from the loop
-                        read_push_data_len!(&mut iter, 2, f)
-                    }
-                    opcodes::all::OP_PUSHDATA4 => {
-                        // side effects: may write and break from the loop
-                        read_push_data_len!(&mut iter, 4, f)
-                    }
-                    _ => 0
-                }
-            };
-
-            if at_least_one {
-                f.write_str(" ")?;
-            } else {
-                at_least_one = true;
-            }
-            // Write the opcode
-            if opcode == opcodes::all::OP_PUSHBYTES_0 {
-                f.write_str("OP_0")?;
-            } else {
-                write!(f, "{:?}", opcode)?;
-            }
-            // Write any pushdata
-            if data_len > 0 {
-                f.write_str(" ")?;
-                if data_len <= iter.len() {
-                    for ch in iter.by_ref().take(data_len) {
-                        write!(f, "{:02x}", ch)?;
-                    }
-                } else {
-                    f.write_str("<push past end>")?;
-                    break;
-                }
-            }
-        }
-        Ok(())
+        bytes_to_asm_fmt(script, f)
     }
 
     /// Writes the assembly decoding of the script to the formatter.
     pub fn fmt_asm(&self, f: &mut dyn fmt::Write) -> fmt::Result {
-        Script::bytes_to_asm_fmt(self.as_ref(), f)
+        bytes_to_asm_fmt(self.as_ref(), f)
     }
 
     /// Creates an assembly decoding of the script in the given byte slice.
+    #[deprecated(since = "0.29.0", note = "Please use script::bytes_to_asm instead")]
     pub fn bytes_to_asm(script: &[u8]) -> String {
-        let mut buf = String::new();
-        Script::bytes_to_asm_fmt(script, &mut buf).unwrap();
-        buf
+        bytes_to_asm(script)
     }
 
     /// Returns the assembly decoding of the script.
     pub fn asm(&self) -> String {
-        Script::bytes_to_asm(self.as_ref())
+        bytes_to_asm(self.as_ref())
     }
+}
+
+/// Creates an assembly decoding of the `script`.
+pub fn bytes_to_asm(script: &[u8]) -> String {
+    let mut buf = String::new();
+    bytes_to_asm_fmt(script, &mut buf).unwrap();
+    buf
+}
+
+/// Writes the assembly decoding of the `script` bytes to the formatter.
+pub fn bytes_to_asm_fmt(script: &[u8], f: &mut dyn fmt::Write) -> fmt::Result {
+    // This has to be a macro because it needs to break the loop
+    macro_rules! read_push_data_len {
+        ($iter:expr, $len:literal, $formatter:expr) => {
+            match read_uint_iter($iter, $len) {
+                Ok(n) => {
+                    n
+                },
+                Err(UintError::EarlyEndOfScript) => {
+                    $formatter.write_str("<unexpected end>")?;
+                    break;
+                }
+                // We got the data in a slice which implies it being shorter than `usize::max_value()`
+                // So if we got overflow, we can confidently say the number is higher than length of
+                // the slice even though we don't know the exact number. This implies attempt to push
+                // past end.
+                Err(UintError::NumericOverflow) => {
+                    $formatter.write_str("<push past end>")?;
+                    break;
+                }
+            }
+        }
+    }
+
+    let mut iter = script.iter();
+    // Was at least one opcode emitted?
+    let mut at_least_one = false;
+    // `iter` needs to be borrowed in `read_push_data_len`, so we have to use `while let` instead
+    // of `for`.
+    while let Some(byte) = iter.next() {
+        let opcode = opcodes::All::from(*byte);
+
+        let data_len = if let opcodes::Class::PushBytes(n) = opcode.classify(opcodes::ClassifyContext::Legacy) {
+            n as usize
+        } else {
+            match opcode {
+                opcodes::all::OP_PUSHDATA1 => {
+                    // side effects: may write and break from the loop
+                    read_push_data_len!(&mut iter, 1, f)
+                }
+                opcodes::all::OP_PUSHDATA2 => {
+                    // side effects: may write and break from the loop
+                    read_push_data_len!(&mut iter, 2, f)
+                }
+                opcodes::all::OP_PUSHDATA4 => {
+                    // side effects: may write and break from the loop
+                    read_push_data_len!(&mut iter, 4, f)
+                }
+                _ => 0
+            }
+        };
+
+        if at_least_one {
+            f.write_str(" ")?;
+        } else {
+            at_least_one = true;
+        }
+        // Write the opcode
+        if opcode == opcodes::all::OP_PUSHBYTES_0 {
+            f.write_str("OP_0")?;
+        } else {
+            write!(f, "{:?}", opcode)?;
+        }
+        // Write any pushdata
+        if data_len > 0 {
+            f.write_str(" ")?;
+            if data_len <= iter.len() {
+                for ch in iter.by_ref().take(data_len) {
+                    write!(f, "{:02x}", ch)?;
+                }
+            } else {
+                f.write_str("<push past end>")?;
+                break;
+            }
+        }
+    }
+    Ok(())
 }
 
 /// Creates a new script from an existing vector.
