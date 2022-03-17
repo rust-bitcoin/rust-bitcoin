@@ -698,6 +698,14 @@ impl Decodable for Box<[u8]> {
     }
 }
 
+impl Encodable for &[u8] {
+    #[inline]
+    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        consensus_encode_with_size(self, w)
+    }
+}
+// We do not implement Decodable for `&[u8]` because it is not possible to
+// decode and return a slice.
 
 /// Do a double-SHA256 on some data and return the first 4 bytes
 fn sha2_checksum(data: &[u8]) -> [u8; 4] {

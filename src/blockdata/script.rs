@@ -32,11 +32,12 @@ use crate::OutPoint;
 
 use crate::util::key::PublicKey;
 use crate::util::address::WitnessVersion;
+use crate::util::amount::Amount;
 use crate::util::taproot::{LeafVersion, TapBranchHash, TapLeafHash};
 use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
 use crate::schnorr::{TapTweak, TweakedPublicKey, UntweakedPublicKey};
 
-/// Bitcoin script.
+/// Bitcoin script (using owned heap memory internally).
 ///
 /// A list of instructions in a simple, [Forth]-like, stack-based programming language
 /// that Bitcoin uses.
@@ -53,6 +54,21 @@ use crate::schnorr::{TapTweak, TweakedPublicKey, UntweakedPublicKey};
 #[derive(Clone, Default, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub struct Script(Box<[u8]>);
 
+/// Bitcoin script (using slice reference internally).
+///
+/// This type is equivalent to [`Script`] but uses a borrowed array on the stack instead of heap
+/// memory, can be useful if you only need a reference to the inner array.
+///
+/// Especially handy for creating a script from a slice.
+#[derive(Clone, Default, PartialOrd, Ord, PartialEq, Eq, Hash)]
+pub struct ScriptRef<'a>(&'a [u8]);
+
+impl<'a> From<&'a [u8]> for ScriptRef<'a> {
+    fn from(slice: &'a [u8]) -> ScriptRef {
+        ScriptRef(slice)
+    }
+}
+
 impl<I> Index<I> for Script
 where
     [u8]: Index<I>,
@@ -65,27 +81,69 @@ where
     }
 }
 
+impl<I> Index<I> for ScriptRef<'_>
+where
+    [u8]: Index<I>,
+{
+    type Output = <[u8] as Index<I>>::Output;
+
+    #[inline]
+    fn index(&self, index: I) -> &Self::Output {
+        &self.0[index]
+    }
+}
+
 impl AsRef<[u8]> for Script {
+    #[inline]
     fn as_ref(&self) -> &[u8] {
         &self.0
     }
 }
 
+impl AsRef<[u8]> for ScriptRef<'_> {
+    #[inline]
+    fn as_ref(&self) -> &[u8] {
+        self.0
+    }
+}
+
 impl fmt::Debug for Script {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Debug::fmt(&self.as_script_ref(), f)
+    }
+}
+
+impl fmt::Debug for ScriptRef<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.write_str("Script(")?;
-        self.fmt_asm(f)?;
+        bytes_to_asm_fmt(self.as_ref(), f)?;
         f.write_str(")")
     }
 }
 
 impl fmt::Display for Script {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::Debug::fmt(self, f)
+        fmt::Display::fmt(&self.as_script_ref(), f)
+    }
+}
+
+impl fmt::Display for ScriptRef<'_> {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Debug::fmt(self.0, f)
     }
 }
 
 impl fmt::LowerHex for Script {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::LowerHex::fmt(&self.as_script_ref(), f)
+    }
+}
+
+impl fmt::LowerHex for ScriptRef<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for &ch in self.0.iter() {
             write!(f, "{:02x}", ch)?;
@@ -95,6 +153,13 @@ impl fmt::LowerHex for Script {
 }
 
 impl fmt::UpperHex for Script {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::UpperHex::fmt(&self.as_script_ref(), f)
+    }
+}
+
+impl fmt::UpperHex for ScriptRef<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for &ch in self.0.iter() {
             write!(f, "{:02X}", ch)?;
@@ -323,6 +388,8 @@ fn read_uint_iter(data: &mut core::slice::Iter<'_, u8>, size: usize) -> Result<u
     }
 }
 
+// The methods here call through to `ScriptRef` but the docs are duplicated, if you edit the docs
+// please do so on the respective method on `ScriptRef`.
 impl Script {
     /// Creates a new empty script.
     #[inline]
@@ -415,17 +482,19 @@ impl Script {
             .into_script()
     }
 
+    /// Constructs a `ScriptRef` using an reference to this `Script`'s inner data.
+    #[inline]
+    pub fn as_script_ref(&self) -> ScriptRef {
+        ScriptRef(&self.0)
+    }
+
     /// Returns 160-bit hash of the script.
     #[inline]
-    pub fn script_hash(&self) -> ScriptHash {
-        ScriptHash::hash(self.as_bytes())
-    }
+    pub fn script_hash(&self) -> ScriptHash { self.as_script_ref().script_hash() }
 
     /// Returns 256-bit hash of the script for P2WSH outputs.
     #[inline]
-    pub fn wscript_hash(&self) -> WScriptHash {
-        WScriptHash::hash(self.as_bytes())
-    }
+    pub fn wscript_hash(&self) -> WScriptHash { self.as_script_ref().wscript_hash() }
 
     /// Returns the length in bytes of the script.
     #[inline]
@@ -449,9 +518,178 @@ impl Script {
 
     /// Computes the P2SH output corresponding to this redeem script.
     #[inline]
-    pub fn to_p2sh(&self) -> Script {
-        Script::new_p2sh(&self.script_hash())
+    pub fn to_p2sh(&self) -> Script { self.as_script_ref().to_p2sh() }
+
+    /// Returns the script code used for spending a P2WPKH output if this script is a script pubkey
+    /// for a P2WPKH output. The `scriptCode` is described in [BIP143].
+    ///
+    /// [BIP143]: <https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki>
+    #[inline]
+    pub fn p2wpkh_script_code(&self) -> Option<Script> { self.as_script_ref().p2wpkh_script_code() }
+
+    /// Computes the P2WSH output corresponding to this witnessScript (aka the "witness redeem
+    /// script").
+    #[inline]
+    pub fn to_v0_p2wsh(&self) -> Script { self.as_script_ref().to_v0_p2wsh() }
+
+    /// Computes P2TR output with a given internal key and a single script spending path equal to
+    /// the current script, assuming that the script is a Tapscript.
+    #[inline]
+    pub fn to_v1_p2tr<C: Verification>(&self, secp: &Secp256k1<C>, internal_key: UntweakedPublicKey) -> Script {
+        let leaf_hash = TapLeafHash::from_script(self, LeafVersion::TapScript);
+        let merkle_root = TapBranchHash::from_inner(leaf_hash.into_inner());
+        Script::new_v1_p2tr(secp, internal_key, Some(merkle_root))
     }
+
+    /// Returns witness version of the script, if any, assuming the script is a `scriptPubkey`.
+    #[inline]
+    pub fn witness_version(&self) -> Option<WitnessVersion> { self.as_script_ref().witness_version() }
+
+    /// Checks whether a script pubkey is a P2SH output.
+    #[inline]
+    pub fn is_p2sh(&self) -> bool { self.as_script_ref().is_p2sh() }
+
+    /// Checks whether a script pubkey is a P2PKH output.
+    #[inline]
+    pub fn is_p2pkh(&self) -> bool { self.as_script_ref().is_p2pkh() }
+
+    /// Checks whether a script pubkey is a P2PK output.
+    #[inline]
+    pub fn is_p2pk(&self) -> bool { self.as_script_ref().is_p2pk() }
+
+    /// Checks whether a script pubkey is a Segregated Witness (segwit) program.
+    #[inline]
+    pub fn is_witness_program(&self) -> bool { self.as_script_ref().is_witness_program() }
+
+    /// Checks whether a script pubkey is a P2WSH output.
+    #[inline]
+    pub fn is_v0_p2wsh(&self) -> bool { self.as_script_ref().is_v0_p2wsh() }
+
+    /// Checks whether a script pubkey is a P2WPKH output.
+    #[inline]
+    pub fn is_v0_p2wpkh(&self) -> bool { self.as_script_ref().is_v0_p2wpkh() }
+
+    /// Checks whether a script pubkey is a P2TR output.
+    #[inline]
+    pub fn is_v1_p2tr(&self) -> bool { self.as_script_ref().is_v1_p2tr() }
+
+    /// Check if this is an OP_RETURN output.
+    #[inline]
+    pub fn is_op_return (&self) -> bool { self.as_script_ref().is_op_return() }
+
+    /// Checks whether a script can be proven to have no satisfying input.
+    #[inline]
+    pub fn is_provably_unspendable(&self) -> bool { self.as_script_ref().is_provably_unspendable() }
+
+    /// Returns the minimum value an output with this script should have in order to be
+    /// broadcastable on today's Bitcoin network.
+    #[inline]
+    pub fn dust_value(&self) -> Amount {
+        self.as_script_ref().dust_value()
+    }
+
+    /// Iterates over the script in the form of `Instruction`s, which are an enum covering opcodes,
+    /// datapushes and errors.
+    ///
+    /// At most one error will be returned and then the iterator will end. To instead iterate over
+    /// the script as sequence of bytes, treat it as a slice using `script[..]` or convert it to a
+    /// vector using `into_bytes()`.
+    ///
+    /// To force minimal pushes, use [`Self::instructions_minimal`].
+    pub fn instructions(&self) -> Instructions {
+        Instructions {
+            data: self.0[..].iter(),
+            enforce_minimal: false,
+        }
+    }
+
+    /// Iterates over the script in the form of `Instruction`s while enforcing minimal pushes.
+    pub fn instructions_minimal(&self) -> Instructions {
+        Instructions {
+            data: self.0[..].iter(),
+            enforce_minimal: true,
+        }
+    }
+
+    /// Shorthand for [`Self::verify_with_flags`] with flag [bitcoinconsensus::VERIFY_ALL].
+    #[cfg(feature="bitcoinconsensus")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
+    pub fn verify (&self, index: usize, amount: Amount, spending: &[u8]) -> Result<(), Error> {
+        self.as_script_ref().verify(index, amount, spending)
+    }
+
+    /// Verifies spend of an input script.
+    ///
+    /// # Parameters
+    ///  * `index` - The input index in spending which is spending this transaction.
+    ///  * `amount` - The amount this script guards.
+    ///  * `spending` - The transaction that attempts to spend the output holding this script.
+    ///  * `flags` - Verification flags, see [`bitcoinconsensus::VERIFY_ALL`] and similar.
+    #[cfg(feature="bitcoinconsensus")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
+    pub fn verify_with_flags<F: Into<u32>>(&self, index: usize, amount: Amount, spending: &[u8], flags: F) -> Result<(), Error> {
+        self.as_script_ref().verify_with_flags(index, amount, spending, flags)
+    }
+
+    /// Writes the assembly decoding of the script bytes to the formatter.
+    #[deprecated(since = "0.29.0", note = "Please use script::bytes_to_asm_fmt instead")]
+    pub fn bytes_to_asm_fmt(script: &[u8], f: &mut dyn fmt::Write) -> fmt::Result {
+        bytes_to_asm_fmt(script, f)
+    }
+
+    /// Writes the assembly decoding of the script to the formatter.
+    pub fn fmt_asm(&self, f: &mut dyn fmt::Write) -> fmt::Result {
+        bytes_to_asm_fmt(self.as_ref(), f)
+    }
+
+    /// Creates an assembly decoding of the `script`.
+    #[deprecated(since = "0.29.0", note = "Please use script::bytes_to_asm instead")]
+    pub fn bytes_to_asm(script: &[u8]) -> String {
+        bytes_to_asm(script)
+    }
+
+    /// Returns the assembly decoding of the script.
+    pub fn asm(&self) -> String {
+        bytes_to_asm(self.as_ref())
+    }
+}
+
+impl<'a> ScriptRef<'a> {
+    /// Creates a new `ScriptRef` using `slice`.
+    #[inline]
+    pub fn new(slice: &'a [u8]) -> ScriptRef { ScriptRef(slice) }
+
+    /// Constructs a `Script` using by cloning this `ScriptRef`'s inner data.
+    #[inline]
+    pub fn to_script(&self) -> Script { Script(Box::from(&(*self.0))) }
+
+    /// Returns 160-bit hash of the script.
+    #[inline]
+    pub fn script_hash(&self) -> ScriptHash { ScriptHash::hash(self.as_bytes()) }
+
+    /// Returns 256-bit hash of the script for P2WSH outputs.
+    #[inline]
+    pub fn wscript_hash(&self) -> WScriptHash { WScriptHash::hash(self.as_bytes()) }
+
+    /// Returns the length in bytes of the script.
+    #[inline]
+    pub fn len(&self) -> usize { self.0.len() }
+
+    /// Returns whether the script is the empty script.
+    #[inline]
+    pub fn is_empty(&self) -> bool { self.0.is_empty() }
+
+    /// Returns the script data as a byte slice.
+    #[inline]
+    pub fn as_bytes(&self) -> &[u8] { &*self.0 }
+
+    /// Returns a copy of the script data.
+    #[inline]
+    pub fn to_bytes(&self) -> Vec<u8> { Vec::from(self.0) }
+
+    /// Computes the P2SH output corresponding to this redeem script.
+    #[inline]
+    pub fn to_p2sh(&self) -> Script { Script::new_p2sh(&self.script_hash()) }
 
     /// Returns the script code used for spending a P2WPKH output if this script is a script pubkey
     /// for a P2WPKH output. The `scriptCode` is described in [BIP143].
@@ -476,18 +714,9 @@ impl Script {
     /// Computes the P2WSH output corresponding to this witnessScript (aka the "witness redeem
     /// script").
     #[inline]
-    pub fn to_v0_p2wsh(&self) -> Script {
-        Script::new_v0_p2wsh(&self.wscript_hash())
-    }
+    pub fn to_v0_p2wsh(&self) -> Script { Script::new_v0_p2wsh(&self.wscript_hash()) }
 
-    /// Computes P2TR output with a given internal key and a single script spending path equal to
-    /// the current script, assuming that the script is a Tapscript.
-    #[inline]
-    pub fn to_v1_p2tr<C: Verification>(&self, secp: &Secp256k1<C>, internal_key: UntweakedPublicKey) -> Script {
-        let leaf_hash = TapLeafHash::from_script(self, LeafVersion::TapScript);
-        let merkle_root = TapBranchHash::from_inner(leaf_hash.into_inner());
-        Script::new_v1_p2tr(secp, internal_key, Some(merkle_root))
-    }
+    // For `to_v1_p2tr` use `Script`.
 
     /// Returns witness version of the script, if any, assuming the script is a `scriptPubkey`.
     #[inline]
@@ -663,25 +892,13 @@ impl Script {
     #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
     #[inline]
     pub fn verify_with_flags<F: Into<u32>>(&self, index: usize, amount: crate::Amount, spending: &[u8], flags: F) -> Result<(), Error> {
-        Ok(bitcoinconsensus::verify_with_flags (&self.0[..], amount.to_sat(), spending, index, flags.into())?)
-    }
-
-    /// Writes the assembly decoding of the script bytes to the formatter.
-    #[deprecated(since = "0.29.0", note = "Please use script::bytes_to_asm_fmt instead")]
-    pub fn bytes_to_asm_fmt(script: &[u8], f: &mut dyn fmt::Write) -> fmt::Result {
-        bytes_to_asm_fmt(script, f)
+        Ok(bitcoinconsensus::verify_with_flags (self.0, amount.to_sat(), spending, index, flags.into())?)
     }
 
     /// Writes the assembly decoding of the script to the formatter.
     #[inline]
     pub fn fmt_asm(&self, f: &mut dyn fmt::Write) -> fmt::Result {
         bytes_to_asm_fmt(self.as_ref(), f)
-    }
-
-    /// Creates an assembly decoding of the script in the given byte slice.
-    #[deprecated(since = "0.29.0", note = "Please use script::bytes_to_asm instead")]
-    pub fn bytes_to_asm(script: &[u8]) -> String {
-        bytes_to_asm(script)
     }
 
     /// Returns the assembly decoding of the script.
@@ -1117,6 +1334,18 @@ impl Decodable for Script {
         Ok(Script(Decodable::consensus_decode_from_finite_reader(r)?))
     }
 }
+
+impl Encodable for ScriptRef<'_> {
+    #[inline]
+    fn consensus_encode<W: io::Write + ?Sized>(
+        &self,
+        s: &mut W,
+    ) -> Result<usize, io::Error> {
+        self.0.consensus_encode(s)
+    }
+}
+// We do not implement `Decodable` for `ScriptRef` because if you are decoding you have owned data
+// already, just decode into a `Script`.
 
 #[cfg(test)]
 mod test {

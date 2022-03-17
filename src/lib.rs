@@ -112,7 +112,7 @@ use std::io;
 use core2::io;
 
 pub use crate::blockdata::block::{Block, BlockHeader};
-pub use crate::blockdata::script::Script;
+pub use crate::blockdata::script::{Script, ScriptRef};
 #[allow(deprecated)]
 pub use crate::blockdata::transaction::SigHashType;
 pub use crate::blockdata::transaction::{
