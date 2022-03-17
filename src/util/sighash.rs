@@ -511,10 +511,13 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
         input_index: usize,
         script_code: &Script,
         value: u64,
-        sighash_type: EcdsaSigHashType,
+        sighash_type: i32,      // Because its in `int` in bitcoin-core.
     ) -> Result<(), Error> {
         let zero_hash = sha256d::Hash::default();
 
+        // We use an i32 to allow for non-standard sighash types in line with bitcoin-core.
+        let sighash_type_raw = sighash_type;
+        let sighash_type = EcdsaSigHashType::from_u32_consensus(sighash_type as u32);
         let (sighash, anyone_can_pay) = sighash_type.split_anyonecanpay_flag();
 
         self.tx.version.consensus_encode(&mut writer)?;
@@ -564,7 +567,7 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
         }
 
         self.tx.lock_time.consensus_encode(&mut writer)?;
-        sighash_type.as_u32().consensus_encode(&mut writer)?;
+        sighash_type_raw.consensus_encode(&mut writer)?;
         Ok(())
     }
 
@@ -574,7 +577,7 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
         input_index: usize,
         script_code: &Script,
         value: u64,
-        sighash_type: EcdsaSigHashType,
+        sighash_type: i32,
     ) -> Result<SigHash, Error> {
         let mut enc = SigHash::engine();
         self.segwit_encode_signing_data_to(

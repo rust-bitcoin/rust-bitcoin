@@ -23,7 +23,7 @@ use hashes::Hash;
 use hash_types::SigHash;
 use blockdata::script::Script;
 use blockdata::witness::Witness;
-use blockdata::transaction::{Transaction, TxIn, EcdsaSigHashType};
+use blockdata::transaction::{Transaction, TxIn};
 use consensus::{encode, Encodable};
 
 use io;
@@ -130,7 +130,7 @@ impl<R: Deref<Target=Transaction>> SigHashCache<R> {
         input_index: usize,
         script_code: &Script,
         value: u64,
-        sighash_type: EcdsaSigHashType,
+        sighash_type: i32,
     ) -> Result<(), encode::Error> {
         self.cache
             .segwit_encode_signing_data_to(writer, input_index, script_code, value, sighash_type)
@@ -145,7 +145,7 @@ impl<R: Deref<Target=Transaction>> SigHashCache<R> {
         input_index: usize,
         script_code: &Script,
         value: u64,
-        sighash_type: EcdsaSigHashType
+        sighash_type: i32,
     ) -> SigHash {
         let mut enc = SigHash::engine();
         self.encode_signing_data_to(&mut enc, input_index, script_code, value, sighash_type)
@@ -205,14 +205,13 @@ mod tests {
         witness_script
     }
 
-    fn run_test_sighash_bip143(tx: &str, script: &str, input_index: usize, value: u64, hash_type: u32, expected_result: &str) {
+    fn run_test_sighash_bip143(tx: &str, script: &str, input_index: usize, value: u64, hash_type: i32, expected_result: &str) {
         let tx: Transaction = deserialize(&Vec::<u8>::from_hex(tx).unwrap()[..]).unwrap();
         let script = Script::from(Vec::<u8>::from_hex(script).unwrap());
         let raw_expected = SigHash::from_hex(expected_result).unwrap();
         let expected_result = SigHash::from_slice(&raw_expected[..]).unwrap();
         let mut cache = SigHashCache::new(&tx);
-        let sighash_type = EcdsaSigHashType::from_u32_consensus(hash_type);
-        let actual_result = cache.signature_hash(input_index, &script, value, sighash_type);
+        let actual_result = cache.signature_hash(input_index, &script, value, hash_type);
         assert_eq!(actual_result, expected_result);
     }
 

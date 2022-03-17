@@ -334,6 +334,7 @@ impl Transaction {
         let sighash_type : u32 = sighash_type.into();
         assert!(input_index < self.input.len());  // Panic on OOB
 
+        let sighash_type_raw: u32 = sighash_type.into();
         let (sighash, anyone_can_pay) = EcdsaSigHashType::from_u32_consensus(sighash_type).split_anyonecanpay_flag();
 
         // Special-case sighash_single bug because this is easy enough.
@@ -386,7 +387,7 @@ impl Transaction {
         };
         // hash the result
         tx.consensus_encode(&mut writer)?;
-        let sighash_arr = endian::u32_to_array_le(sighash_type);
+        let sighash_arr = endian::u32_to_array_le(sighash_type_raw);
         sighash_arr.consensus_encode(&mut writer)?;
         Ok(())
     }
