@@ -45,6 +45,14 @@ use VarInt;
 #[cfg(doc)]
 use util::sighash::SchnorrSigHashType;
 
+/// Used for signature hash for invalid use of SIGHASH_SINGLE.
+const UINT256_ONE: [u8; 32] = [
+    1, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0
+];
+
 /// A reference to a transaction output.
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
 pub struct OutPoint {
@@ -332,19 +340,10 @@ impl Transaction {
         script_pubkey: &Script,
         sighash_type: U,
     ) -> Result<(), encode::Error> {
-        let sighash_type : u32 = sighash_type.into();
+        let sighash_type: u32 = sighash_type.into();
         assert!(input_index < self.input.len());  // Panic on OOB
 
         let (sighash, anyone_can_pay) = EcdsaSigHashType::from_u32_consensus(sighash_type).split_anyonecanpay_flag();
-
-        // Special-case sighash_single bug because this is easy enough.
-        if sighash == EcdsaSigHashType::Single && input_index >= self.output.len() {
-            writer.write_all(&[1, 0, 0, 0, 0, 0, 0, 0,
-                               0, 0, 0, 0, 0, 0, 0, 0,
-                               0, 0, 0, 0, 0, 0, 0, 0,
-                               0, 0, 0, 0, 0, 0, 0, 0])?;
-            return Ok(());
-        }
 
         // Build tx to sign
         let mut tx = Transaction {
@@ -401,10 +400,22 @@ impl Transaction {
         script_pubkey: &Script,
         sighash_u32: u32
     ) -> SigHash {
+        if self.is_invalid_use_of_sighash_single(sighash_u32, input_index) {
+            return SigHash::from_slice(&UINT256_ONE).expect("const-size array");
+        }
+
         let mut engine = SigHash::engine();
         self.encode_signing_data_to(&mut engine, input_index, script_pubkey, sighash_u32)
             .expect("engines don't error");
         SigHash::from_engine(engine)
+    }
+
+    /// The SIGHASH_SINGLE bug becomes exploitable when one tries to sign a transaction with
+    /// SIGHASH_SINGLE and there is not a corresponding output transaction with the same index as
+    /// the input transaction.
+    fn is_invalid_use_of_sighash_single(&self, sighash: u32, input_index: usize) -> bool {
+        let ty = EcdsaSigHashType::from_u32_consensus(sighash);
+        ty == EcdsaSigHashType::Single && input_index >= self.output.len()
     }
 
     /// Gets the "weight" of this transaction, as defined by BIP141. For transactions with an empty
@@ -815,7 +826,7 @@ impl ::std::error::Error for SigHashTypeParseError {}
 
 #[cfg(test)]
 mod tests {
-    use super::{OutPoint, ParseOutPointError, Transaction, TxIn, NonStandardSigHashType};
+    use super::*;
 
     use core::str::FromStr;
     use blockdata::constants::WITNESS_SCALE_FACTOR;
@@ -1073,25 +1084,6 @@ mod tests {
         serde_round_trip!(tx);
     }
 
-    fn run_test_sighash(tx: &str, script: &str, input_index: usize, hash_type: i32, expected_result: &str) {
-        let tx: Transaction = deserialize(&Vec::from_hex(tx).unwrap()[..]).unwrap();
-        let script = Script::from(Vec::from_hex(script).unwrap());
-        let mut raw_expected = Vec::from_hex(expected_result).unwrap();
-        raw_expected.reverse();
-        let expected_result = SigHash::from_slice(&raw_expected[..]).unwrap();
-
-        let actual_result = if raw_expected[0] % 2 == 0 {
-            // tx.signature_hash and cache.legacy_signature_hash are the same, this if helps to test
-            // both the codepaths without repeating the test code
-            tx.signature_hash(input_index, &script, hash_type as u32)
-        } else {
-            let cache = SigHashCache::new(&tx);
-            cache.legacy_signature_hash(input_index, &script, hash_type as u32).unwrap()
-        };
-
-        assert_eq!(actual_result, expected_result);
-    }
-
     // Test decoding transaction `4be105f158ea44aec57bf12c5817d073a712ab131df6f37786872cfc70734188`
     // from testnet, which is the first BIP144-encoded transaction I encountered.
     #[test]
@@ -1146,6 +1138,48 @@ mod tests {
         assert_eq!(EcdsaSigHashType::from_u32_consensus(nonstandard_hashtype), EcdsaSigHashType::All);
         // But it's policy-invalid to use it!
         assert_eq!(EcdsaSigHashType::from_u32_standard(nonstandard_hashtype), Err(NonStandardSigHashType(0x04)));
+    }
+
+    #[test]
+    fn sighash_single_bug() {
+        const SIGHASH_SINGLE: u32 = 3;
+        // We need a tx with more inputs than outputs.
+        let mut input = Vec::new();
+        input.push(TxIn::default());
+        input.push(TxIn::default());
+        let mut output = Vec::new();
+        output.push(TxOut::default());
+
+        let tx = Transaction {
+            version: 1,
+            lock_time: 0,
+            input: input,
+            output: output,   // TODO: Use Vec::from([TxOut]) once we bump MSRV.
+        };
+        let script = Script::new();
+        let got = tx.signature_hash(1, &script, SIGHASH_SINGLE);
+        let want = SigHash::from_slice(&UINT256_ONE).unwrap();
+
+        assert_eq!(got, want)
+    }
+
+    fn run_test_sighash(tx: &str, script: &str, input_index: usize, hash_type: i32, expected_result: &str) {
+        let tx: Transaction = deserialize(&Vec::from_hex(tx).unwrap()[..]).unwrap();
+        let script = Script::from(Vec::from_hex(script).unwrap());
+        let mut raw_expected = Vec::from_hex(expected_result).unwrap();
+        raw_expected.reverse();
+        let expected_result = SigHash::from_slice(&raw_expected[..]).unwrap();
+
+        let actual_result = if raw_expected[0] % 2 == 0 {
+            // tx.signature_hash and cache.legacy_signature_hash are the same, this if helps to test
+            // both the codepaths without repeating the test code
+            tx.signature_hash(input_index, &script, hash_type as u32)
+        } else {
+            let cache = SigHashCache::new(&tx);
+            cache.legacy_signature_hash(input_index, &script, hash_type as u32).unwrap()
+        };
+
+        assert_eq!(actual_result, expected_result);
     }
 
     // These test vectors were stolen from libbtc, which is Copyright 2014 Jonas Schnelli MIT
