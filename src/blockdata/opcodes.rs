@@ -661,8 +661,8 @@ impl fmt::Debug for All {
 
 /// Classification context for the opcode.
 ///
-/// Some opcodes like `OP_RESERVED` abort the script in [`ClassifyContext::Legacy`] context, but
-/// will act as `OP_SUCCESS` in tapscript.
+/// Some opcodes like [`all::OP_RESERVED`] abort the script in `ClassifyContext::Legacy` context,
+/// but will act as `OP_SUCCESSx` in `ClassifyContext::TapScript` (see BIP342 for full list).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ClassifyContext {
     /// Opcode used in tapscript context.
