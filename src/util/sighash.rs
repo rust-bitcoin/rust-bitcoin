@@ -36,7 +36,7 @@ use super::taproot::LeafVersion;
 
 /// Efficiently calculates signature hash message for legacy, segwit and taproot inputs.
 #[derive(Debug)]
-pub struct SigHashCache<T: Deref<Target = Transaction>> {
+pub struct SigHashCache<T: Deref<Target=Transaction>> {
     /// Access to transaction required for various introspection, moreover type
     /// `T: Deref<Target=Transaction>` allows to accept borrow and mutable borrow, the
     /// latter in particular is necessary for [`SigHashCache::witness_mut`]
@@ -295,7 +295,7 @@ impl SchnorrSigHashType {
     }
 }
 
-impl<R: Deref<Target = Transaction>> SigHashCache<R> {
+impl<R: Deref<Target=Transaction>> SigHashCache<R> {
     /// Compute the sighash components from an unsigned transaction and auxiliary
     /// in a lazy manner when required.
     /// For the generated sighashes to be valid, no fields in the transaction may change except for
@@ -692,7 +692,7 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
     }
 }
 
-impl<R: DerefMut<Target = Transaction>> SigHashCache<R> {
+impl<R: DerefMut<Target=Transaction>> SigHashCache<R> {
     /// When the SigHashCache is initialized with a mutable reference to a transaction instead of a
     /// regular reference, this method is available to allow modification to the witnesses.
     ///

@@ -56,7 +56,7 @@ pub type ProprietaryType = u8;
 /// structure according to BIP 174.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct ProprietaryKey<Subtype = ProprietaryType> where Subtype: Copy + From<u8> + Into<u8> {
+pub struct ProprietaryKey<Subtype=ProprietaryType> where Subtype: Copy + From<u8> + Into<u8> {
     /// Proprietary type prefix used for grouping together keys under some
     /// application and avoid namespace collision
     #[cfg_attr(feature = "serde", serde(with = "::serde_utils::hex_bytes"))]

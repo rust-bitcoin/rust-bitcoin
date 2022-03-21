@@ -215,7 +215,7 @@ impl TaprootSpendInfo {
         script_weights: I,
     ) -> Result<Self, TaprootBuilderError>
     where
-        I: IntoIterator<Item = (u32, Script)>,
+        I: IntoIterator<Item=(u32, Script)>,
         C: secp256k1::Verification,
     {
         let mut node_weights = BinaryHeap::<(Reverse<u64>, NodeInfo)>::new();
