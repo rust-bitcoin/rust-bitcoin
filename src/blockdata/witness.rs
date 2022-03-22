@@ -423,20 +423,21 @@ mod test {
 
     #[cfg(feature = "serde")]
     #[test]
-    fn test_serde() {
-        use serde_json;
+    fn test_serde_bincode() {
+        use bincode;
 
         let old_witness_format = vec![vec![0u8], vec![2]];
         let new_witness_format = Witness::from_vec(old_witness_format.clone());
 
-        let old = serde_json::to_string(&old_witness_format).unwrap();
-        let new = serde_json::to_string(&new_witness_format).unwrap();
+        let old = bincode::serialize(&old_witness_format).unwrap();
+        let new = bincode::serialize(&new_witness_format).unwrap();
 
         assert_eq!(old, new);
 
-        let back = serde_json::from_str(&new).unwrap();
+        let back: Witness = bincode::deserialize(&new).unwrap();
         assert_eq!(new_witness_format, back);
     }
+
 }
 
 
