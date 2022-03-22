@@ -279,14 +279,19 @@ impl serde::Serialize for Witness {
     where
         S: serde::Serializer,
     {
-        use serde::ser::SerializeSeq; 
+        use hashes::hex::ToHex;
+        use serde::ser::SerializeSeq;
 
+        let human_readable = serializer.is_human_readable();
         let mut seq = serializer.serialize_seq(Some(self.witness_elements))?;
 
         for elem in self.iter() {
-            seq.serialize_element(&elem)?;
+            if human_readable {
+                seq.serialize_element(&elem.to_hex())?;
+            } else {
+                seq.serialize_element(&elem)?;
+            }
         }
-
         seq.end()
     }
 }
@@ -297,8 +302,54 @@ impl<'de> serde::Deserialize<'de> for Witness {
     where
         D: serde::Deserializer<'de>,
     {
-        let vec: Vec<Vec<u8>> = serde::Deserialize::deserialize(deserializer)?;
-        Ok(Witness::from_vec(vec))
+        struct Visitor;         // Human-readable visitor.
+        impl<'de> serde::de::Visitor<'de> for Visitor
+        {
+            type Value = Witness;
+
+            fn expecting(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                write!(f, "a sequence of hex arrays")
+            }
+
+            fn visit_seq<A: serde::de::SeqAccess<'de>>(self, mut a: A) -> Result<Self::Value, A::Error>
+            {
+                use hashes::hex::FromHex;
+                use hashes::hex::Error::*;
+                use serde::de::{self, Unexpected};
+
+                let mut ret = match a.size_hint() {
+                    Some(len) => Vec::with_capacity(len),
+                    None => Vec::new(),
+                };
+
+                while let Some(elem) = a.next_element::<String>()? {
+                    let vec = Vec::<u8>::from_hex(&elem).map_err(|e| {
+                        match e {
+                            InvalidChar(b) => {
+                                match core::char::from_u32(b.into()) {
+                                    Some(c) => de::Error::invalid_value(Unexpected::Char(c), &"a valid hex character"),
+                                    None => de::Error::invalid_value(Unexpected::Unsigned(b.into()), &"a valid hex character")
+                                }
+                            }
+                            OddLengthString(len) => de::Error::invalid_length(len, &"an even length string"),
+                            InvalidLength(expected, got) => {
+                                let exp = format!("expected length: {}", expected);
+                                de::Error::invalid_length(got, &exp.as_str())
+                            }
+                        }
+                    })?;
+                    ret.push(vec);
+                }
+                Ok(Witness::from_vec(ret))
+            }
+        }
+
+        if deserializer.is_human_readable() {
+            deserializer.deserialize_seq(Visitor)
+        } else {
+            let vec: Vec<Vec<u8>> = serde::Deserialize::deserialize(deserializer)?;
+            Ok(Witness::from_vec(vec))
+        }
     }
 }
 
