@@ -429,4 +429,18 @@ mod test {
         assert_eq!(new_witness_format, back);
     }
 
+    #[cfg(feature = "serde")]
+    #[test]
+    fn test_serde_human() {
+        use serde_json;
+
+        let witness = Witness::from_vec(vec![vec![0u8, 123, 75], vec![2u8, 6, 3, 7, 8]]);
+
+        let json = serde_json::to_string(&witness).unwrap();
+
+        assert_eq!(json, r#"["007b4b","0206030708"]"#);
+
+        let back: Witness = serde_json::from_str(&json).unwrap();
+        assert_eq!(witness, back);
+    }
 }
