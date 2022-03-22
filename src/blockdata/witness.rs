@@ -272,8 +272,18 @@ impl serde::Serialize for Witness {
     where
         S: serde::Serializer,
     {
-        let vec: Vec<_> = self.to_vec();
-        serde::Serialize::serialize(&vec, serializer)
+        use hashes::hex::ToHex;
+        use serde::ser::SerializeSeq;
+        if serializer.is_human_readable() {
+            let mut seq = serializer.serialize_seq(Some(self.serialized_len()))?;
+            for elem in self.iter() {
+                seq.serialize_element(&elem.to_hex())?;
+            }
+            seq.end()
+        } else {
+            let vec: Vec<_> = self.to_vec();
+            serde::Serialize::serialize(&vec, serializer)
+        }
     }
 }
 #[cfg(feature = "serde")]
@@ -282,8 +292,35 @@ impl<'de> serde::Deserialize<'de> for Witness {
     where
         D: serde::Deserializer<'de>,
     {
-        let vec: Vec<Vec<u8>> = serde::Deserialize::deserialize(deserializer)?;
-        Ok(Witness::from_vec(vec))
+        struct Visitor;
+        impl<'de> serde::de::Visitor<'de> for Visitor
+        {
+            type Value = Witness;
+
+            fn expecting(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+                write!(f, "a sequence of hex arrays")
+            }
+
+            fn visit_seq<A: serde::de::SeqAccess<'de>>(self, mut a: A) -> Result<Self::Value, A::Error>
+            {
+                use hashes::hex::FromHex;
+                let mut ret = Vec::new();
+                while let Some(elem) = a.next_element::<String>()? {
+                    let vec = Vec::<u8>::from_hex(&elem).map_err(|_| {
+                        serde::de::Error::invalid_value(serde::de::Unexpected::Str(&elem), &"hex byte representation")
+                    })?;
+                    ret.push(vec);
+                }
+                Ok(Witness::from_vec(ret))
+            }
+        }
+
+        if deserializer.is_human_readable() {
+            deserializer.deserialize_seq(Visitor)
+        } else {
+            let vec: Vec<Vec<u8>> = serde::Deserialize::deserialize(deserializer)?;
+            Ok(Witness::from_vec(vec))
+        }
     }
 }
 
