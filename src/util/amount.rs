@@ -346,7 +346,7 @@ impl Amount {
     pub const MAX_MONEY: Amount = Amount(21_000_000 * 100_000_000);
 
     /// Create an [Amount] with satoshi precision and the given number of satoshis.
-    pub fn from_sat(satoshi: u64) -> Amount {
+    pub const fn from_sat(satoshi: u64) -> Amount {
         Amount(satoshi)
     }
 
@@ -633,7 +633,7 @@ impl SignedAmount {
     pub const MAX_MONEY: SignedAmount = SignedAmount(21_000_000 * 100_000_000);
 
     /// Create an [SignedAmount] with satoshi precision and the given number of satoshis.
-    pub fn from_sat(satoshi: i64) -> SignedAmount {
+    pub const fn from_sat(satoshi: i64) -> SignedAmount {
         SignedAmount(satoshi)
     }
 
