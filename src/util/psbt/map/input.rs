@@ -14,11 +14,13 @@
 
 use prelude::*;
 use io;
+use core::fmt;
+use core::str::FromStr;
 
 use secp256k1;
 use blockdata::script::Script;
 use blockdata::witness::Witness;
-use blockdata::transaction::{Transaction, TxOut, NonStandardSigHashType};
+use blockdata::transaction::{Transaction, TxOut, NonStandardSigHashType, SigHashTypeParseError};
 use consensus::encode;
 use hashes::{self, hash160, ripemd160, sha256, sha256d};
 use secp256k1::XOnlyPublicKey;
@@ -155,6 +157,40 @@ pub struct PsbtSigHashType {
     pub (in ::util::psbt) inner: u32,
 }
 
+impl fmt::Display for PsbtSigHashType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self.schnorr_hash_ty() {
+            Ok(SchnorrSigHashType::Reserved) | Err(_) => write!(f, "{:#x}", self.inner),
+            Ok(schnorr_hash_ty) => fmt::Display::fmt(&schnorr_hash_ty, f),
+        }
+    }
+}
+
+impl FromStr for PsbtSigHashType {
+    type Err = SigHashTypeParseError;
+
+    #[inline]
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        // We accept strings of form: "SIGHASH_ALL" etc.
+        //
+        // NB: some of Schnorr sighash types are non-standard for pre-taproot
+        // inputs. We also do not support SIGHASH_RESERVED in verbatim form
+        // ("0xFF" string should be used instead).
+        match SchnorrSigHashType::from_str(s) {
+            Ok(SchnorrSigHashType::Reserved) => return Err(SigHashTypeParseError{ unrecognized: s.to_owned() }),
+            Ok(ty) => return Ok(ty.into()),
+            Err(_) => {}
+        }
+
+        // We accept non-standard sighash values.
+        // TODO: Swap `trim_left_matches` for `trim_start_matches` once MSRV >= 1.30.
+        if let Ok(inner) = u32::from_str_radix(s.trim_left_matches("0x"), 16) {
+            return Ok(PsbtSigHashType { inner });
+        }
+
+        Err(SigHashTypeParseError{ unrecognized: s.to_owned() })
+    }
+}
 impl From<EcdsaSigHashType> for PsbtSigHashType {
     fn from(ecdsa_hash_ty: EcdsaSigHashType) -> Self {
         PsbtSigHashType { inner: ecdsa_hash_ty as u32 }

@@ -758,7 +758,7 @@ impl str::FromStr for EcdsaSigHashType {
             "SIGHASH_ALL|SIGHASH_ANYONECANPAY" => Ok(EcdsaSigHashType::AllPlusAnyoneCanPay),
             "SIGHASH_NONE|SIGHASH_ANYONECANPAY" => Ok(EcdsaSigHashType::NonePlusAnyoneCanPay),
             "SIGHASH_SINGLE|SIGHASH_ANYONECANPAY" => Ok(EcdsaSigHashType::SinglePlusAnyoneCanPay),
-            _ => Err(SigHashTypeParseError{ unrecognized: s.to_owned() }),
+            _ => Err(SigHashTypeParseError { unrecognized: s.to_owned() }),
         }
     }
 }
