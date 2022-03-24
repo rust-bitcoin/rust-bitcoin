@@ -41,7 +41,7 @@ core2 = { version = "0.3.0", optional = true, default-features = false }
 
 base64-compat = { version = "1.0.0", optional = true }
 bitcoinconsensus = { version = "0.19.0-3", optional = true }
-serde = { version = "1", features = [ "derive" ], optional = true }
+serde = { version = "1", default-features = false, features = [ "derive", "alloc" ], optional = true }
 hashbrown = { version = "0.8", optional = true }
 
 [dev-dependencies]
