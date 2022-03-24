@@ -323,12 +323,16 @@ impl Transaction {
     /// this is the general (and hard) part.
     ///
     /// The `sighash_type` supports an arbitrary `u32` value, instead of just [`EcdsaSigHashType`],
-    /// because internally 4 bytes are being hashed, even though only lowest byte is appended to
+    /// because internally 4 bytes are being hashed, even though only the lowest byte is appended to
     /// signature in a transaction.
     ///
-    /// **Warning**: This does NOT attempt to support OP_CODESEPARATOR. In general this would
-    /// require evaluating `script_pubkey` to determine which separators get evaluated and which
-    /// don't, which we don't have the information to determine.
+    /// # Warning
+    ///
+    /// - Does NOT attempt to support OP_CODESEPARATOR. In general this would require evaluating
+    /// `script_pubkey` to determine which separators get evaluated and which don't, which we don't
+    /// have the information to determine.
+    /// - Does NOT handle the sighash single bug, you should either handle that manually or use
+    /// [`Self::signature_hash()`] instead.
     ///
     /// # Panics
     ///
@@ -342,6 +346,15 @@ impl Transaction {
     ) -> Result<(), encode::Error> {
         let sighash_type: u32 = sighash_type.into();
         assert!(input_index < self.input.len());  // Panic on OOB
+
+        if self.is_invalid_use_of_sighash_single(sighash_type, input_index) {
+            // We cannot correctly handle the SIGHASH_SINGLE bug here because usage of this function
+            // will result in the data written to the writer being hashed, however the correct
+            // handling of the SIGHASH_SINGLE bug is to return the 'one array' - either implement
+            // this behaviour manually or use `signature_hash()`.
+            writer.write(b"[not a transaction] SIGHASH_SINGLE bug")?;
+            return Ok(())
+        }
 
         let (sighash, anyone_can_pay) = EcdsaSigHashType::from_u32_consensus(sighash_type).split_anyonecanpay_flag();
 
@@ -393,7 +406,27 @@ impl Transaction {
 
     /// Computes a signature hash for a given input index with a given sighash flag.
     ///
-    /// Please refer [`Self::encode_signing_data_to`] for full documentation of this method.
+    /// To actually produce a scriptSig, this hash needs to be run through an ECDSA signer, the
+    /// [`EcdsaSigHashType`] appended to the resulting sig, and a script written around this, but
+    /// this is the general (and hard) part.
+    ///
+    /// The `sighash_type` supports an arbitrary `u32` value, instead of just [`EcdsaSigHashType`],
+    /// because internally 4 bytes are being hashed, even though only the lowest byte is appended to
+    /// signature in a transaction.
+    ///
+    /// This function correctly handles the sighash single bug by returning the 'one array'. The
+    /// sighash single bug becomes exploitable when one tries to sign a transaction with
+    /// `SIGHASH_SINGLE` and there is not a corresponding output with the same index as the input.
+    ///
+    /// # Warning
+    ///
+    /// Does NOT attempt to support OP_CODESEPARATOR. In general this would require evaluating
+    /// `script_pubkey` to determine which separators get evaluated and which don't, which we don't
+    /// have the information to determine.
+    ///
+    /// # Panics
+    ///
+    /// If `input_index` is out of bounds (greater than or equal to `self.input.len()`).
     pub fn signature_hash(
         &self,
         input_index: usize,
@@ -410,9 +443,6 @@ impl Transaction {
         SigHash::from_engine(engine)
     }
 
-    /// The SIGHASH_SINGLE bug becomes exploitable when one tries to sign a transaction with
-    /// SIGHASH_SINGLE and there is not a corresponding output transaction with the same index as
-    /// the input transaction.
     fn is_invalid_use_of_sighash_single(&self, sighash: u32, input_index: usize) -> bool {
         let ty = EcdsaSigHashType::from_u32_consensus(sighash);
         ty == EcdsaSigHashType::Single && input_index >= self.output.len()
