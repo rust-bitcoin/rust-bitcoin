@@ -758,7 +758,7 @@ impl str::FromStr for EcdsaSigHashType {
             "SIGHASH_ALL|SIGHASH_ANYONECANPAY" => Ok(EcdsaSigHashType::AllPlusAnyoneCanPay),
             "SIGHASH_NONE|SIGHASH_ANYONECANPAY" => Ok(EcdsaSigHashType::NonePlusAnyoneCanPay),
             "SIGHASH_SINGLE|SIGHASH_ANYONECANPAY" => Ok(EcdsaSigHashType::SinglePlusAnyoneCanPay),
-            _ => Err(SigHashTypeParseError { string: s.to_owned() }),
+            _ => Err(SigHashTypeParseError{ unrecognized: s.to_owned() }),
         }
     }
 }
@@ -840,12 +840,13 @@ impl From<EcdsaSigHashType> for u32 {
 /// This is currently returned for unrecognized sighash strings.
 #[derive(Debug, Clone)]
 pub struct SigHashTypeParseError {
-    string: String,
+    /// The unrecognized string we attempted to parse.
+    pub unrecognized: String,
 }
 
 impl fmt::Display for SigHashTypeParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "can't recognize SIGHASH string '{}'", self.string)
+        write!(f, "Unrecognized SIGHASH string '{}'", self.unrecognized)
     }
 }
 
@@ -1154,7 +1155,7 @@ mod tests {
             "SigHash_NONE",
         ];
         for s in sht_mistakes {
-            assert_eq!(EcdsaSigHashType::from_str(s).unwrap_err().to_string(), format!("can't recognize SIGHASH string '{}'", s));
+            assert_eq!(EcdsaSigHashType::from_str(s).unwrap_err().to_string(), format!("Unrecognized SIGHASH string '{}'", s));
         }
     }
 
