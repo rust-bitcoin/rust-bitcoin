@@ -38,7 +38,7 @@ use hashes::{Hash, hex};
 use policy::DUST_RELAY_TX_FEE;
 #[cfg(feature="bitcoinconsensus")] use bitcoinconsensus;
 #[cfg(feature="bitcoinconsensus")] use core::convert::From;
-#[cfg(feature="bitcoinconsensus")] use OutPoint;
+use OutPoint;
 
 use util::key::PublicKey;
 use util::address::WitnessVersion;
@@ -146,18 +146,31 @@ pub enum Error {
     /// Tried to read an array off the stack as a number when it was more than 4 bytes
     NumericOverflow,
     /// Error validating the script with bitcoinconsensus library
-    #[cfg(feature = "bitcoinconsensus")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
-    BitcoinConsensus(bitcoinconsensus::Error),
+    BitcoinConsensus(BitcoinConsensusError),
     /// Can not find the spent output
-    #[cfg(feature = "bitcoinconsensus")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
     UnknownSpentOutput(OutPoint),
     /// Can not serialize the spending transaction
-    #[cfg(feature = "bitcoinconsensus")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
     SerializationError
 }
+
+/// A [`bitcoinconsensus::Error`] alias. Exists to enable the compiler to ensure `bitcoinconsensus`
+/// feature gating is correct.
+#[cfg(feature = "bitcoinconsensus")]
+#[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
+pub type BitcoinConsensusError = bitcoinconsensus::Error;
+
+/// Dummy error type used when `bitcoinconsensus` feature is not enabled.
+#[cfg(not(feature = "bitcoinconsensus"))]
+#[cfg_attr(docsrs, doc(cfg(not(feature = "bitcoinconsensus"))))]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Clone, Copy)]
+pub struct BitcoinConsensusError {
+    _uninhabited: Uninhabited,
+}
+
+#[cfg(not(feature = "bitcoinconsensus"))]
+#[cfg_attr(docsrs, doc(cfg(not(feature = "bitcoinconsensus"))))]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Clone, Copy)]
+enum Uninhabited {}
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -165,11 +178,8 @@ impl fmt::Display for Error {
             Error::NonMinimalPush => "non-minimal datapush",
             Error::EarlyEndOfScript => "unexpected end of script",
             Error::NumericOverflow => "numeric overflow (number on stack larger than 4 bytes)",
-            #[cfg(feature = "bitcoinconsensus")]
             Error::BitcoinConsensus(ref _n) => "bitcoinconsensus verification failed",
-            #[cfg(feature = "bitcoinconsensus")]
             Error::UnknownSpentOutput(ref _point) => "unknown spent output Transaction::verify()",
-            #[cfg(feature = "bitcoinconsensus")]
             Error::SerializationError => "can not serialize the spending transaction in Transaction::verify()",
         };
         f.write_str(str)
@@ -196,13 +206,11 @@ impl From<UintError> for Error {
     }
 }
 
-#[cfg(feature="bitcoinconsensus")]
+#[cfg(feature = "bitcoinconsensus")]
 #[doc(hidden)]
 impl From<bitcoinconsensus::Error> for Error {
     fn from(err: bitcoinconsensus::Error) -> Error {
-        match err {
-            _ => Error::BitcoinConsensus(err)
-        }
+        Error::BitcoinConsensus(err)
     }
 }
 /// Helper to encode an integer in script format
