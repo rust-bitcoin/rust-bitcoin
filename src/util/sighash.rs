@@ -326,6 +326,7 @@ impl SchnorrSigHashType {
             0x81 => Ok(SchnorrSigHashType::AllPlusAnyoneCanPay),
             0x82 => Ok(SchnorrSigHashType::NonePlusAnyoneCanPay),
             0x83 => Ok(SchnorrSigHashType::SinglePlusAnyoneCanPay),
+            0xFF => Ok(SchnorrSigHashType::Reserved),
             x => Err(Error::InvalidSigHashType(x as u32)),
         }
     }
