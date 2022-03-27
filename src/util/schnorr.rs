@@ -40,6 +40,8 @@ pub type UntweakedPublicKey = ::XOnlyPublicKey;
 
 /// Tweaked BIP-340 X-coord-only public key
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(transparent))]
 pub struct TweakedPublicKey(::XOnlyPublicKey);
 
 impl fmt::LowerHex for TweakedPublicKey {
