@@ -905,7 +905,7 @@ mod tests {
 
     use hash_types::*;
     use super::EcdsaSighashType;
-    use util::sighash::SigHashCache;
+    use util::sighash::SighashCache;
 
     #[test]
     fn test_outpoint() {
@@ -1240,7 +1240,7 @@ mod tests {
             // both the codepaths without repeating the test code
             tx.signature_hash(input_index, &script, hash_type as u32)
         } else {
-            let cache = SigHashCache::new(&tx);
+            let cache = SighashCache::new(&tx);
             cache.legacy_signature_hash(input_index, &script, hash_type as u32).unwrap()
         };
 

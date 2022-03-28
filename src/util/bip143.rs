@@ -33,7 +33,7 @@ use util::sighash;
 /// Parts of a sighash which are common across inputs or signatures, and which are
 /// sufficient (in conjunction with a private key) to sign the transaction
 #[derive(Clone, PartialEq, Eq, Debug)]
-#[deprecated(since = "0.24.0", note = "please use [sighash::SigHashCache] instead")]
+#[deprecated(since = "0.24.0", note = "please use [sighash::SighashCache] instead")]
 pub struct SighashComponents {
     tx_version: i32,
     tx_locktime: u32,
@@ -107,9 +107,9 @@ impl SighashComponents {
 }
 
 /// A replacement for SigHashComponents which supports all sighash modes
-#[deprecated(since = "0.28.0", note = "please use [sighash::SigHashCache] instead")]
+#[deprecated(since = "0.28.0", note = "please use [sighash::SighashCache] instead")]
 pub struct SigHashCache<R: Deref<Target = Transaction>> {
-    cache: sighash::SigHashCache<R>,
+    cache: sighash::SighashCache<R>,
 }
 
 #[allow(deprecated)]
@@ -119,7 +119,7 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
     /// For the generated sighashes to be valid, no fields in the transaction may change except for
     /// script_sig and witnesses.
     pub fn new(tx: R) -> Self {
-        Self { cache: sighash::SigHashCache::new(tx) }
+        Self { cache: sighash::SighashCache::new(tx) }
     }
 
     /// Encode the BIP143 signing data for any flag type into a given object implementing a
