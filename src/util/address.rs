@@ -39,9 +39,9 @@ use core::num::ParseIntError;
 use core::str::FromStr;
 #[cfg(feature = "std")] use std::error;
 
-use secp256k1::{Secp256k1, Verification};
+use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
 use bech32;
-use hashes::Hash;
+use hashes::{sha256, Hash, HashEngine};
 use hash_types::{PubkeyHash, ScriptHash};
 use blockdata::{script, opcodes};
 use blockdata::constants::{PUBKEY_ADDRESS_PREFIX_MAIN, SCRIPT_ADDRESS_PREFIX_MAIN, PUBKEY_ADDRESS_PREFIX_TEST, SCRIPT_ADDRESS_PREFIX_TEST, MAX_SCRIPT_ELEMENT_SIZE};
@@ -714,6 +714,37 @@ impl Address {
             (Network::Testnet, _) | (Network::Regtest, _) | (Network::Signet, _) => true
         }
     }
+
+    /// Returns true if the given pubkey is directly related to the address payload.
+    ///
+    /// This is determined by directly comparing the address payload with either the
+    /// hash of the given public key or the segwit redeem hash generated from the
+    /// given key. For taproot addresses, the supplied key is assumed to be tweaked
+    pub fn is_related_to_pubkey(&self, pubkey: &PublicKey) -> bool {
+        let pubkey_hash = pubkey.pubkey_hash();
+        let payload = self.payload_as_bytes();
+        let xonly_pubkey = XOnlyPublicKey::from(pubkey.inner);
+
+        (*pubkey_hash == *payload) || (xonly_pubkey.serialize() == *payload) || (*segwit_redeem_hash(&pubkey_hash) == *payload)
+    }
+
+    /// Returns true if the supplied xonly public key can be used to derive the address.
+    ///
+    /// This will only work for Taproot addresses. The Public Key is
+    /// assumed to have already been tweaked.
+    pub fn is_related_to_xonly_pubkey(&self, xonly_pubkey: &XOnlyPublicKey) -> bool {
+        let payload = self.payload_as_bytes();
+        payload == xonly_pubkey.serialize()
+    }
+
+    /// Return the address payload as a byte slice
+    fn payload_as_bytes(&self) -> &[u8] {
+        match &self.payload {
+            Payload::ScriptHash(hash) => hash,
+            Payload::PubkeyHash(hash) => hash,
+            Payload::WitnessProgram { program, .. } => program,
+        }
+    }
 }
 
 // Alternate formatting `{:#}` is used to return uppercase version of bech32 addresses which should
@@ -855,6 +886,14 @@ impl fmt::Debug for Address {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::Display::fmt(self, f)
     }
+}
+
+/// Convert a byte array of a pubkey hash into a segwit redeem hash
+fn segwit_redeem_hash(pubkey_hash: &[u8]) -> ::hashes::hash160::Hash {
+    let mut sha_engine = sha256::Hash::engine();
+    sha_engine.input(&[0, 20]);
+    sha_engine.input(pubkey_hash);
+    ::hashes::hash160::Hash::from_engine(sha_engine)
 }
 
 #[cfg(test)]
@@ -1259,5 +1298,96 @@ mod tests {
         assert_eq!(address.to_string(), "bc1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxqkedrcr");
         assert_eq!(address.address_type(), Some(AddressType::P2tr));
         roundtrips(&address);
+    }
+
+    #[test]
+    fn test_is_related_to_pubkey_p2wpkh() {
+        let address_string = "bc1qhvd6suvqzjcu9pxjhrwhtrlj85ny3n2mqql5w4";
+        let address = Address::from_str(address_string).expect("address");
+
+        let pubkey_string = "0347ff3dacd07a1f43805ec6808e801505a6e18245178609972a68afbc2777ff2b";
+        let pubkey = PublicKey::from_str(pubkey_string).expect("pubkey");
+
+        let result = address.is_related_to_pubkey(&pubkey);
+        assert!(result);
+
+        let unused_pubkey = PublicKey::from_str("02ba604e6ad9d3864eda8dc41c62668514ef7d5417d3b6db46e45cc4533bff001c").expect("pubkey");
+        assert!(!address.is_related_to_pubkey(&unused_pubkey))
+    }
+
+    #[test]
+    fn test_is_related_to_pubkey_p2shwpkh() {
+        let address_string = "3EZQk4F8GURH5sqVMLTFisD17yNeKa7Dfs";
+        let address = Address::from_str(address_string).expect("address");
+
+        let pubkey_string = "0347ff3dacd07a1f43805ec6808e801505a6e18245178609972a68afbc2777ff2b";
+        let pubkey = PublicKey::from_str(pubkey_string).expect("pubkey");
+
+        let result = address.is_related_to_pubkey(&pubkey);
+        assert!(result);
+
+        let unused_pubkey = PublicKey::from_str("02ba604e6ad9d3864eda8dc41c62668514ef7d5417d3b6db46e45cc4533bff001c").expect("pubkey");
+        assert!(!address.is_related_to_pubkey(&unused_pubkey))
+    }
+
+    #[test]
+    fn test_is_related_to_pubkey_p2pkh() {
+        let address_string = "1J4LVanjHMu3JkXbVrahNuQCTGCRRgfWWx";
+        let address = Address::from_str(address_string).expect("address");
+
+        let pubkey_string = "0347ff3dacd07a1f43805ec6808e801505a6e18245178609972a68afbc2777ff2b";
+        let pubkey = PublicKey::from_str(pubkey_string).expect("pubkey");
+
+        let result = address.is_related_to_pubkey(&pubkey);
+        assert!(result);
+
+        let unused_pubkey = PublicKey::from_str("02ba604e6ad9d3864eda8dc41c62668514ef7d5417d3b6db46e45cc4533bff001c").expect("pubkey");
+        assert!(!address.is_related_to_pubkey(&unused_pubkey))
+    }
+
+    #[test]
+    fn test_is_related_to_pubkey_p2pkh_uncompressed_key() {
+        let address_string = "msvS7KzhReCDpQEJaV2hmGNvuQqVUDuC6p";
+        let address = Address::from_str(address_string).expect("address");
+
+        let pubkey_string = "04e96e22004e3db93530de27ccddfdf1463975d2138ac018fc3e7ba1a2e5e0aad8e424d0b55e2436eb1d0dcd5cb2b8bcc6d53412c22f358de57803a6a655fbbd04";
+        let pubkey = PublicKey::from_str(pubkey_string).expect("pubkey");
+
+        let result = address.is_related_to_pubkey(&pubkey);
+        assert!(result);
+
+        let unused_pubkey = PublicKey::from_str("02ba604e6ad9d3864eda8dc41c62668514ef7d5417d3b6db46e45cc4533bff001c").expect("pubkey");
+        assert!(!address.is_related_to_pubkey(&unused_pubkey))
+    }
+
+    #[test]
+    fn test_is_related_to_pubkey_p2tr(){
+        let pubkey_string = "0347ff3dacd07a1f43805ec6808e801505a6e18245178609972a68afbc2777ff2b";
+        let pubkey = PublicKey::from_str(pubkey_string).expect("pubkey");
+        let xonly_pubkey = XOnlyPublicKey::from(pubkey.inner);
+        let tweaked_pubkey = TweakedPublicKey::dangerous_assume_tweaked(xonly_pubkey);
+        let address = Address::p2tr_tweaked(tweaked_pubkey, Network::Bitcoin);
+
+        assert_eq!(address, Address::from_str("bc1pgllnmtxs0g058qz7c6qgaqq4qknwrqj9z7rqn9e2dzhmcfmhlu4sfadf5e").expect("address"));
+
+        let result = address.is_related_to_pubkey(&pubkey);
+        assert!(result);
+
+        let unused_pubkey = PublicKey::from_str("02ba604e6ad9d3864eda8dc41c62668514ef7d5417d3b6db46e45cc4533bff001c").expect("pubkey");
+        assert!(!address.is_related_to_pubkey(&unused_pubkey));
+    }
+
+    #[test]
+    fn test_is_related_to_xonly_pubkey(){
+        let pubkey_string = "0347ff3dacd07a1f43805ec6808e801505a6e18245178609972a68afbc2777ff2b";
+        let pubkey = PublicKey::from_str(pubkey_string).expect("pubkey");
+        let xonly_pubkey = XOnlyPublicKey::from(pubkey.inner);
+        let tweaked_pubkey = TweakedPublicKey::dangerous_assume_tweaked(xonly_pubkey);
+        let address = Address::p2tr_tweaked(tweaked_pubkey, Network::Bitcoin);
+
+        assert_eq!(address, Address::from_str("bc1pgllnmtxs0g058qz7c6qgaqq4qknwrqj9z7rqn9e2dzhmcfmhlu4sfadf5e").expect("address"));
+
+        let result = address.is_related_to_xonly_pubkey(&xonly_pubkey);
+        assert!(result);
     }
 }
