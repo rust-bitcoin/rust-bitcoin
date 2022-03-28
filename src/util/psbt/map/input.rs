@@ -171,7 +171,7 @@ impl PsbtSigHashType {
     /// Returns the [`EcdsaSigHashType`] if the [`PsbtSigHashType`] can be
     /// converted to one.
     pub fn ecdsa_hash_ty(self) -> Result<EcdsaSigHashType, NonStandardSigHashType> {
-        EcdsaSigHashType::from_u32_standard(self.inner)
+        EcdsaSigHashType::from_standard(self.inner)
     }
 
     /// Returns the [`SchnorrSigHashType`] if the [`PsbtSigHashType`] can be
@@ -184,8 +184,19 @@ impl PsbtSigHashType {
         }
     }
 
-    /// Obtains the inner sighash byte from this [`PsbtSigHashType`].
-    pub fn inner(self) -> u32 {
+    /// Creates a [`PsbtSigHashType`] from a raw `u32`.
+    ///
+    /// Allows construction of a non-standard or non-valid sighash flag
+    /// ([`EcdsaSigHashType`], [`SchnorrSigHashType`] respectively).
+    pub fn from_u32(n: u32) -> PsbtSigHashType {
+        PsbtSigHashType { inner: n }
+    }
+
+
+    /// Converts [`PsbtSigHashType`] to a raw `u32` sighash flag.
+    ///
+    /// No guarantees are made as to the standardness or validity of the returned value.
+    pub fn to_u32(self) -> u32 {
         self.inner
     }
 }

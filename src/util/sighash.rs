@@ -600,7 +600,7 @@ impl<R: Deref<Target=Transaction>> SigHashCache<R> {
         }
 
         self.tx.lock_time.consensus_encode(&mut writer)?;
-        sighash_type.as_u32().consensus_encode(&mut writer)?;
+        sighash_type.to_u32().consensus_encode(&mut writer)?;
         Ok(())
     }
 

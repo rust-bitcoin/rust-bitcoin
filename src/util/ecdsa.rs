@@ -47,7 +47,7 @@ impl EcdsaSig {
     pub fn from_slice(sl: &[u8]) -> Result<Self, EcdsaSigError> {
         let (hash_ty, sig) = sl.split_last()
             .ok_or(EcdsaSigError::EmptySignature)?;
-        let hash_ty = EcdsaSigHashType::from_u32_standard(*hash_ty as u32)
+        let hash_ty = EcdsaSigHashType::from_standard(*hash_ty as u32)
             .map_err(|_| EcdsaSigError::NonStandardSigHashType(*hash_ty as u32))?;
         let sig = secp256k1::ecdsa::Signature::from_der(sig)
             .map_err(EcdsaSigError::Secp256k1)?;
@@ -80,7 +80,7 @@ impl FromStr for EcdsaSig {
             .ok_or(EcdsaSigError::EmptySignature)?;
         Ok(EcdsaSig {
             sig: secp256k1::ecdsa::Signature::from_der(signature)?,
-            hash_ty: EcdsaSigHashType::from_u32_standard(*sighash_byte as u32)?
+            hash_ty: EcdsaSigHashType::from_standard(*sighash_byte as u32)?
         })
     }
 }

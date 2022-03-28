@@ -444,7 +444,7 @@ impl Transaction {
     }
 
     fn is_invalid_use_of_sighash_single(&self, sighash: u32, input_index: usize) -> bool {
-        let ty = EcdsaSigHashType::from_u32_consensus(sighash);
+        let ty = EcdsaSigHashType::from_consensus(sighash);
         ty == EcdsaSigHashType::Single && input_index >= self.output.len()
     }
 
@@ -806,21 +806,22 @@ impl EcdsaSigHashType {
         }
     }
 
-    /// Reads a 4-byte uint32 as a sighash type.
-    #[deprecated(since = "0.26.1", note = "please use `from_u32_consensus` or `from_u32_standard` instead")]
-    pub fn from_u32(n: u32) -> EcdsaSigHashType {
-        Self::from_u32_consensus(n)
+    /// Creates a [`EcdsaSigHashType`] from a raw `u32`.
+    #[deprecated(since="0.28.0", note="please use `from_consensus`")]
+    pub fn from_u32_consensus(n: u32) -> EcdsaSigHashType {
+        EcdsaSigHashType::from_consensus(n)
     }
 
-    /// Reads a 4-byte uint32 as a sighash type.
+    /// Creates a [`EcdsaSigHashType`] from a raw `u32`.
     ///
     /// **Note**: this replicates consensus behaviour, for current standardness rules correctness
-    /// you probably want [Self::from_u32_standard].
+    /// you probably want [`Self::from_standard`].
+    ///
     /// This might cause unexpected behavior because it does not roundtrip. That is,
-    /// `EcdsaSigHashType::from_u32_consensus(n) as u32 != n` for non-standard values of
-    /// `n`. While verifying signatures, the user should retain the `n` and use it compute the
-    /// signature hash message.
-    pub fn from_u32_consensus(n: u32) -> EcdsaSigHashType {
+    /// `EcdsaSigHashType::from_consensus(n) as u32 != n` for non-standard values of `n`. While
+    /// verifying signatures, the user should retain the `n` and use it compute the signature hash
+    /// message.
+    pub fn from_consensus(n: u32) -> EcdsaSigHashType {
         // In Bitcoin Core, the SignatureHash function will mask the (int32) value with
         // 0x1f to (apparently) deactivate ACP when checking for SINGLE and NONE bits.
         // We however want to be matching also against on ACP-masked ALL, SINGLE, and NONE.
@@ -840,9 +841,18 @@ impl EcdsaSigHashType {
         }
     }
 
-    /// Read a 4-byte uint32 as a standard sighash type, returning an error if the type
-    /// is non standard.
+    /// Creates a [`EcdsaSigHashType`] from a raw `u32`.
+    #[deprecated(since="0.28.0", note="please use `from_standard`")]
     pub fn from_u32_standard(n: u32) -> Result<EcdsaSigHashType, NonStandardSigHashType> {
+        EcdsaSigHashType::from_standard(n)
+    }
+
+    /// Creates a [`EcdsaSigHashType`] from a raw `u32`.
+    ///
+    /// # Errors
+    ///
+    /// If `n` is a non-standard sighash value.
+    pub fn from_standard(n: u32) -> Result<EcdsaSigHashType, NonStandardSigHashType> {
         match n {
             // Standard sighashes, see https://github.com/bitcoin/bitcoin/blob/b805dbb0b9c90dadef0424e5b3bf86ac308e103e/src/script/interpreter.cpp#L189-L198
             0x01 => Ok(EcdsaSigHashType::All),
@@ -855,14 +865,10 @@ impl EcdsaSigHashType {
         }
     }
 
-    /// Converts to a u32
-    pub fn as_u32(self) -> u32 { self as u32 }
-}
-
-impl From<EcdsaSigHashType> for u32 {
-    fn from(t: EcdsaSigHashType) -> u32 {
-        t.as_u32()
-    }
+    /// Converts [`EcdsaSigHashType`] to a `u32` sighash flag.
+    ///
+    /// The returned value is guaranteed to be a valid according to standardness rules.
+    pub fn to_u32(self) -> u32 { self as u32 }
 }
 
 /// Error returned when parsing `SigHashType` fails.
@@ -1194,7 +1200,6 @@ mod tests {
     fn test_sighashtype_standard() {
         let nonstandard_hashtype = 0x04;
         // This type is not well defined, by consensus it becomes ALL
-        assert_eq!(EcdsaSigHashType::from_u32(nonstandard_hashtype), EcdsaSigHashType::All);
         assert_eq!(EcdsaSigHashType::from_u32_consensus(nonstandard_hashtype), EcdsaSigHashType::All);
         // But it's policy-invalid to use it!
         assert_eq!(EcdsaSigHashType::from_u32_standard(nonstandard_hashtype), Err(NonStandardSigHashType(0x04)));
