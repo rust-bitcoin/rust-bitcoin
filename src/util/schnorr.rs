@@ -60,9 +60,8 @@ impl fmt::Display for TweakedPublicKey {
 pub type UntweakedKeyPair = ::KeyPair;
 
 /// Tweaked BIP-340 key pair
-#[derive(Clone)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "std", derive(Debug))]
-// TODO: Add other derives once secp256k1 v0.21.3 released
 pub struct TweakedKeyPair(::KeyPair);
 
 /// A trait for tweaking BIP340 key types (x-only public keys and key pairs).
