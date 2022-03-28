@@ -356,7 +356,7 @@ impl Transaction {
             return Ok(())
         }
 
-        let (sighash, anyone_can_pay) = EcdsaSigHashType::from_u32_consensus(sighash_type).split_anyonecanpay_flag();
+        let (sighash, anyone_can_pay) = EcdsaSigHashType::from_consensus(sighash_type).split_anyonecanpay_flag();
 
         // Build tx to sign
         let mut tx = Transaction {
