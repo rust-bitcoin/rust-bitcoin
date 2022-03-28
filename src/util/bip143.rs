@@ -107,7 +107,7 @@ impl SighashComponents {
 }
 
 /// A replacement for SigHashComponents which supports all sighash modes
-#[deprecated(since = "0.27.0", note = "please use [sighash::SigHashCache] instead")]
+#[deprecated(since = "0.28.0", note = "please use [sighash::SigHashCache] instead")]
 pub struct SigHashCache<R: Deref<Target = Transaction>> {
     cache: sighash::SigHashCache<R>,
 }
