@@ -367,8 +367,8 @@ impl TaprootBuilder {
     /// weights of satisfaction for that script. The weights represent the probability of
     /// each branch being taken. If probabilities/weights for each condition are known,
     /// constructing the tree as a Huffman tree is the optimal way to minimize average
-    /// case satisfaction cost. This function takes input an iterator of tuple(u64, &Script)
-    /// where usize represents the satisfaction weights of the branch.
+    /// case satisfaction cost. This function takes an iterator of (`u32`, &[`Script`]) tuples
+    /// as an input, where `u32` represents the satisfaction weights of the script branch.
     /// For example, [(3, S1), (2, S2), (5, S3)] would construct a TapTree that has optimal
     /// satisfaction weight when probability for S1 is 30%, S2 is 20% and S3 is 50%.
     ///
@@ -387,9 +387,9 @@ impl TaprootBuilder {
     where
         I: IntoIterator<Item=(u32, Script)>,
     {
-        let mut node_weights = BinaryHeap::<(Reverse<u64>, NodeInfo)>::new();
+        let mut node_weights = BinaryHeap::<(Reverse<u32>, NodeInfo)>::new();
         for (p, leaf) in script_weights {
-            node_weights.push((Reverse(p as u64), NodeInfo::new_leaf_with_ver(leaf, LeafVersion::TapScript)));
+            node_weights.push((Reverse(p), NodeInfo::new_leaf_with_ver(leaf, LeafVersion::TapScript)));
         }
         if node_weights.is_empty() {
             return Err(TaprootBuilderError::IncompleteTree);
@@ -407,7 +407,7 @@ impl TaprootBuilder {
         }
         // Every iteration of the loop reduces the node_weights.len() by exactly 1
         // Therefore, the loop will eventually terminate with exactly 1 element
-        debug_assert!(node_weights.len() == 1);
+        debug_assert_eq!(node_weights.len(), 1);
         let node = node_weights.pop().expect("huffman tree algorithm is broken").1;
         Ok(TaprootBuilder{branch: vec![Some(node)]})
     }
