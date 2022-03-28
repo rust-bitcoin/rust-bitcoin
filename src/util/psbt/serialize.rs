@@ -35,7 +35,7 @@ use util::taproot::{TapBranchHash, TapLeafHash, ControlBlock, LeafVersion};
 use schnorr;
 use util::key::PublicKey;
 
-use super::map::{TapTree, PsbtSigHashType};
+use super::map::{TapTree, PsbtSighashType};
 
 use util::taproot::TaprootBuilder;
 /// A trait for serializing a value as raw data for insertion into PSBT
@@ -191,16 +191,16 @@ impl Deserialize for Vec<u8> {
     }
 }
 
-impl Serialize for PsbtSigHashType {
+impl Serialize for PsbtSighashType {
     fn serialize(&self) -> Vec<u8> {
         serialize(&self.to_u32())
     }
 }
 
-impl Deserialize for PsbtSigHashType {
+impl Deserialize for PsbtSighashType {
     fn deserialize(bytes: &[u8]) -> Result<Self, encode::Error> {
         let raw: u32 = encode::deserialize(bytes)?;
-        Ok(PsbtSigHashType { inner: raw })
+        Ok(PsbtSighashType { inner: raw })
     }
 }
 
@@ -375,7 +375,7 @@ mod tests {
     #[test]
     fn can_deserialize_non_standard_psbt_sig_hash_type() {
         let non_standard_sighash = [222u8, 0u8, 0u8, 0u8]; // 32 byte value.
-        let sighash = PsbtSigHashType::deserialize(&non_standard_sighash);
+        let sighash = PsbtSighashType::deserialize(&non_standard_sighash);
         assert!(sighash.is_ok())
     }
 }

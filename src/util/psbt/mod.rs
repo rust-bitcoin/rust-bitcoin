@@ -41,7 +41,7 @@ mod macros;
 pub mod serialize;
 
 mod map;
-pub use self::map::{Input, Output, TapTree, PsbtSigHashType};
+pub use self::map::{Input, Output, TapTree, PsbtSighashType};
 use self::map::Map;
 
 use util::bip32::{ExtendedPubKey, KeySource};
