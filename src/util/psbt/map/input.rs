@@ -214,7 +214,7 @@ impl PsbtSighashType {
     /// converted to one.
     pub fn schnorr_hash_ty(self) -> Result<SchnorrSighashType, sighash::Error> {
         if self.inner > 0xffu32 {
-            Err(sighash::Error::InvalidSigHashType(self.inner))
+            Err(sighash::Error::InvalidSighashType(self.inner))
         } else {
             SchnorrSighashType::from_u8(self.inner as u8)
         }
@@ -601,6 +601,6 @@ mod test {
 
         assert_eq!(back, sighash);
         assert_eq!(back.ecdsa_hash_ty(), Err(NonStandardSighashType(nonstd)));
-        assert_eq!(back.schnorr_hash_ty(), Err(sighash::Error::InvalidSigHashType(nonstd)));
+        assert_eq!(back.schnorr_hash_ty(), Err(sighash::Error::InvalidSighashType(nonstd)));
     }
 }

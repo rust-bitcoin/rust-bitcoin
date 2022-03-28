@@ -204,7 +204,7 @@ pub enum Error {
     WrongAnnex,
 
     /// Invalid Sighash type
-    InvalidSigHashType(u32),
+    InvalidSighashType(u32),
 }
 
 impl fmt::Display for Error {
@@ -217,7 +217,7 @@ impl fmt::Display for Error {
             Error::PrevoutIndex => write!(f, "The index requested is greater than available prevouts or different from the provided [Provided::Anyone] index"),
             Error::PrevoutKind => write!(f, "A single prevout has been provided but all prevouts are needed without `ANYONECANPAY`"),
             Error::WrongAnnex => write!(f, "Annex must be at least one byte long and the first bytes must be `0x50`"),
-            Error::InvalidSigHashType(hash_ty) => write!(f, "Invalid schnorr Signature hash type : {} ", hash_ty),
+            Error::InvalidSighashType(hash_ty) => write!(f, "Invalid schnorr Signature hash type : {} ", hash_ty),
         }
     }
 }
@@ -327,7 +327,7 @@ impl SchnorrSighashType {
             0x82 => Ok(SchnorrSighashType::NonePlusAnyoneCanPay),
             0x83 => Ok(SchnorrSighashType::SinglePlusAnyoneCanPay),
             0xFF => Ok(SchnorrSighashType::Reserved),
-            x => Err(Error::InvalidSigHashType(x as u32)),
+            x => Err(Error::InvalidSighashType(x as u32)),
         }
     }
 }
