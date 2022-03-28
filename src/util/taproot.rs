@@ -859,15 +859,6 @@ impl LeafVersion {
     ///
     /// - If the last bit of the `version` is odd.
     /// - If the `version` is 0x50 ([`TAPROOT_ANNEX_PREFIX`]).
-    // Text from BIP341:
-    // In order to support some forms of static analysis that rely on
-    // being able to identify script spends without access to the output being
-    // spent, it is recommended to avoid using any leaf versions that would conflict
-    // with a valid first byte of either a valid P2WPKH pubkey or a valid P2WSH script
-    // (that is, both v and v | 1 should be an undefined, invalid or disabled opcode
-    // or an opcode that is not valid as the first opcode).
-    // The values that comply to this rule are the 32 even values between
-    // 0xc0 and 0xfe and also 0x66, 0x7e, 0x80, 0x84, 0x96, 0x98, 0xba, 0xbc, 0xbe
     pub fn from_consensus(version: u8) -> Result<Self, TaprootError> {
         match version {
             TAPROOT_LEAF_TAPSCRIPT => Ok(LeafVersion::TapScript),
