@@ -1039,9 +1039,9 @@ mod tests {
             Prevouts::All(&prevouts)
         };
 
-        let mut sig_hash_cache = SighashCache::new(&tx);
+        let mut sighash_cache = SighashCache::new(&tx);
 
-        let hash = sig_hash_cache
+        let hash = sighash_cache
             .taproot_signature_hash(input_index, &prevouts, annex, leaf_hash, sighash_type)
             .unwrap();
         let expected = Vec::from_hex(expected_hash).unwrap();
@@ -1093,7 +1093,7 @@ mod tests {
             let expected_tweak = hex_hash!(TapTweakHash, inp["intermediary"]["tweak"].as_str().unwrap());
             let expected_tweaked_priv_key = hex_hash!(SecretKey, inp["intermediary"]["tweakedPrivkey"].as_str().unwrap());
             let expected_sig_msg = Vec::<u8>::from_hex(inp["intermediary"]["sigMsg"].as_str().unwrap()).unwrap();
-            let expected_sig_hash = hex_hash!(TapSighashHash, inp["intermediary"]["sigHash"].as_str().unwrap());
+            let expected_sighash = hex_hash!(TapSighashHash, inp["intermediary"]["sigHash"].as_str().unwrap());
             let sig_str = inp["expected"]["witness"][0].as_str().unwrap();
             let (expected_key_spend_sig, expected_hash_ty) = if sig_str.len() == 128 {
                 (secp256k1::schnorr::Signature::from_str(sig_str).unwrap(), SchnorrSighashType::Default)
@@ -1117,7 +1117,7 @@ mod tests {
                 None,
                 hash_ty
             ).unwrap();
-            let sig_hash = cache.taproot_signature_hash(
+            let sighash = cache.taproot_signature_hash(
                 tx_ind,
                 &Prevouts::All(&utxos),
                 None,
@@ -1125,13 +1125,13 @@ mod tests {
                 hash_ty
             ).unwrap();
 
-            let msg = secp256k1::Message::from_slice(&sig_hash).unwrap();
+            let msg = secp256k1::Message::from_slice(&sighash).unwrap();
             let key_spend_sig = secp.sign_schnorr_with_aux_rand(&msg, &tweaked_keypair, &[0u8; 32]);
 
             assert_eq!(expected_internal_pk, internal_key);
             assert_eq!(expected_tweak, tweak);
             assert_eq!(expected_sig_msg, sig_msg);
-            assert_eq!(expected_sig_hash, sig_hash);
+            assert_eq!(expected_sighash, sighash);
             assert_eq!(expected_hash_ty, hash_ty);
             assert_eq!(expected_key_spend_sig, key_spend_sig);
 

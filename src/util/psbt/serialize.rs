@@ -373,7 +373,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn can_deserialize_non_standard_psbt_sig_hash_type() {
+    fn can_deserialize_non_standard_psbt_sighash_type() {
         let non_standard_sighash = [222u8, 0u8, 0u8, 0u8]; // 32 byte value.
         let sighash = PsbtSighashType::deserialize(&non_standard_sighash);
         assert!(sighash.is_ok())
