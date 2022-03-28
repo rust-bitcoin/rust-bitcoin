@@ -778,7 +778,7 @@ impl fmt::Display for EcdsaSighashType {
 }
 
 impl str::FromStr for EcdsaSighashType {
-    type Err = SigHashTypeParseError;
+    type Err = SighashTypeParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
@@ -788,7 +788,7 @@ impl str::FromStr for EcdsaSighashType {
             "SIGHASH_ALL|SIGHASH_ANYONECANPAY" => Ok(EcdsaSighashType::AllPlusAnyoneCanPay),
             "SIGHASH_NONE|SIGHASH_ANYONECANPAY" => Ok(EcdsaSighashType::NonePlusAnyoneCanPay),
             "SIGHASH_SINGLE|SIGHASH_ANYONECANPAY" => Ok(EcdsaSighashType::SinglePlusAnyoneCanPay),
-            _ => Err(SigHashTypeParseError { unrecognized: s.to_owned() }),
+            _ => Err(SighashTypeParseError { unrecognized: s.to_owned() }),
         }
     }
 }
@@ -875,12 +875,12 @@ impl EcdsaSighashType {
 ///
 /// This is currently returned for unrecognized sighash strings.
 #[derive(Debug, Clone)]
-pub struct SigHashTypeParseError {
+pub struct SighashTypeParseError {
     /// The unrecognized string we attempted to parse.
     pub unrecognized: String,
 }
 
-impl fmt::Display for SigHashTypeParseError {
+impl fmt::Display for SighashTypeParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Unrecognized SIGHASH string '{}'", self.unrecognized)
     }
@@ -888,7 +888,7 @@ impl fmt::Display for SigHashTypeParseError {
 
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 #[cfg(feature = "std")]
-impl ::std::error::Error for SigHashTypeParseError {}
+impl ::std::error::Error for SighashTypeParseError {}
 
 #[cfg(test)]
 mod tests {

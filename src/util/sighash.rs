@@ -22,7 +22,7 @@
 
 use prelude::*;
 
-pub use blockdata::transaction::{EcdsaSighashType, SigHashTypeParseError};
+pub use blockdata::transaction::{EcdsaSighashType, SighashTypeParseError};
 use blockdata::witness::Witness;
 use consensus::{encode, Encodable};
 use core::{str, fmt};
@@ -148,7 +148,7 @@ impl fmt::Display for SchnorrSighashType {
 }
 
 impl str::FromStr for SchnorrSighashType {
-    type Err = SigHashTypeParseError;
+    type Err = SighashTypeParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
@@ -160,7 +160,7 @@ impl str::FromStr for SchnorrSighashType {
             "SIGHASH_NONE|SIGHASH_ANYONECANPAY" => Ok(SchnorrSighashType::NonePlusAnyoneCanPay),
             "SIGHASH_SINGLE|SIGHASH_ANYONECANPAY" => Ok(SchnorrSighashType::SinglePlusAnyoneCanPay),
             "SIGHASH_RESERVED" => Ok(SchnorrSighashType::Reserved),
-            _ => Err(SigHashTypeParseError{ unrecognized: s.to_owned() }),
+            _ => Err(SighashTypeParseError{ unrecognized: s.to_owned() }),
         }
     }
 }

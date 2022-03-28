@@ -20,7 +20,7 @@ use core::str::FromStr;
 use secp256k1;
 use blockdata::script::Script;
 use blockdata::witness::Witness;
-use blockdata::transaction::{Transaction, TxOut, NonStandardSigHashType, SigHashTypeParseError};
+use blockdata::transaction::{Transaction, TxOut, NonStandardSigHashType, SighashTypeParseError};
 use consensus::encode;
 use hashes::{self, hash160, ripemd160, sha256, sha256d};
 use secp256k1::XOnlyPublicKey;
@@ -167,7 +167,7 @@ impl fmt::Display for PsbtSigHashType {
 }
 
 impl FromStr for PsbtSigHashType {
-    type Err = SigHashTypeParseError;
+    type Err = SighashTypeParseError;
 
     #[inline]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -177,7 +177,7 @@ impl FromStr for PsbtSigHashType {
         // inputs. We also do not support SIGHASH_RESERVED in verbatim form
         // ("0xFF" string should be used instead).
         match SchnorrSighashType::from_str(s) {
-            Ok(SchnorrSighashType::Reserved) => return Err(SigHashTypeParseError{ unrecognized: s.to_owned() }),
+            Ok(SchnorrSighashType::Reserved) => return Err(SighashTypeParseError{ unrecognized: s.to_owned() }),
             Ok(ty) => return Ok(ty.into()),
             Err(_) => {}
         }
@@ -188,7 +188,7 @@ impl FromStr for PsbtSigHashType {
             return Ok(PsbtSigHashType { inner });
         }
 
-        Err(SigHashTypeParseError{ unrecognized: s.to_owned() })
+        Err(SighashTypeParseError{ unrecognized: s.to_owned() })
     }
 }
 impl From<EcdsaSighashType> for PsbtSigHashType {
