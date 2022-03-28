@@ -871,7 +871,7 @@ impl EcdsaSighashType {
     pub fn to_u32(self) -> u32 { self as u32 }
 }
 
-/// Error returned when parsing `SigHashType` fails.
+/// Error returned for failure during parsing one of the sighash types.
 ///
 /// This is currently returned for unrecognized sighash strings.
 #[derive(Debug, Clone)]

@@ -61,7 +61,7 @@ pub enum Error {
         /// Actual
         actual: Box<Transaction>,
     },
-    /// Unable to parse as a standard SigHash type.
+    /// Unable to parse as a standard sighash type.
     NonStandardSighashType(u32),
     /// Parsing errors from bitcoin_hashes
     HashParseError(hashes::Error),

@@ -645,7 +645,7 @@ impl<R: Deref<Target=Transaction>> SighashCache<R> {
         Ok(())
     }
 
-    /// Computes the legacy sighash for any SigHashType
+    /// Computes the legacy sighash for any sighash type.
     pub fn legacy_signature_hash(
         &self,
         input_index: usize,
