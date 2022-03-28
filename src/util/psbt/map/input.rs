@@ -20,7 +20,7 @@ use core::str::FromStr;
 use secp256k1;
 use blockdata::script::Script;
 use blockdata::witness::Witness;
-use blockdata::transaction::{Transaction, TxOut, NonStandardSigHashType, SighashTypeParseError};
+use blockdata::transaction::{Transaction, TxOut, NonStandardSighashType, SighashTypeParseError};
 use consensus::encode;
 use hashes::{self, hash160, ripemd160, sha256, sha256d};
 use secp256k1::XOnlyPublicKey;
@@ -206,7 +206,7 @@ impl From<SchnorrSighashType> for PsbtSigHashType {
 impl PsbtSigHashType {
     /// Returns the [`EcdsaSighashType`] if the [`PsbtSigHashType`] can be
     /// converted to one.
-    pub fn ecdsa_hash_ty(self) -> Result<EcdsaSighashType, NonStandardSigHashType> {
+    pub fn ecdsa_hash_ty(self) -> Result<EcdsaSighashType, NonStandardSighashType> {
         EcdsaSighashType::from_standard(self.inner)
     }
 
@@ -244,7 +244,7 @@ impl Input {
     /// # Errors
     ///
     /// If the `sighash_type` field is set to a non-standard ECDSA sighash value.
-    pub fn ecdsa_hash_ty(&self) -> Result<EcdsaSighashType, NonStandardSigHashType> {
+    pub fn ecdsa_hash_ty(&self) -> Result<EcdsaSighashType, NonStandardSighashType> {
         self.sighash_type
             .map(|sighash_type| sighash_type.ecdsa_hash_ty())
             .unwrap_or(Ok(EcdsaSighashType::All))
@@ -600,7 +600,7 @@ mod test {
         let back = PsbtSigHashType::from_str(&s).unwrap();
 
         assert_eq!(back, sighash);
-        assert_eq!(back.ecdsa_hash_ty(), Err(NonStandardSigHashType(nonstd)));
+        assert_eq!(back.ecdsa_hash_ty(), Err(NonStandardSighashType(nonstd)));
         assert_eq!(back.schnorr_hash_ty(), Err(sighash::Error::InvalidSigHashType(nonstd)));
     }
 }

@@ -130,8 +130,8 @@ impl Deserialize for EcdsaSig {
                 EcdsaSigError::EmptySignature => {
                     encode::Error::ParseFailed("Empty partial signature data")
                 }
-                EcdsaSigError::NonStandardSigHashType(flag) => {
-                    encode::Error::from(psbt::Error::NonStandardSigHashType(flag))
+                EcdsaSigError::NonStandardSighashType(flag) => {
+                    encode::Error::from(psbt::Error::NonStandardSighashType(flag))
                 }
                 EcdsaSigError::Secp256k1(..) => {
                     encode::Error::ParseFailed("Invalid Ecdsa signature")
@@ -229,7 +229,7 @@ impl Deserialize for schnorr::SchnorrSig {
         schnorr::SchnorrSig::from_slice(&bytes)
             .map_err(|e| match e {
                 schnorr::SchnorrSigError::InvalidSighashType(flag) => {
-                    encode::Error::from(psbt::Error::NonStandardSigHashType(flag as u32))
+                    encode::Error::from(psbt::Error::NonStandardSighashType(flag as u32))
                 }
                 schnorr::SchnorrSigError::InvalidSchnorrSigSize(_) => {
                     encode::Error::ParseFailed("Invalid Schnorr signature length")

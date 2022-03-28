@@ -20,7 +20,7 @@ use prelude::*;
 use core::str::FromStr;
 use core::{fmt, iter};
 use hashes::hex::{self, FromHex};
-use blockdata::transaction::NonStandardSigHashType;
+use blockdata::transaction::NonStandardSighashType;
 use secp256k1;
 use EcdsaSighashType;
 
@@ -48,7 +48,7 @@ impl EcdsaSig {
         let (hash_ty, sig) = sl.split_last()
             .ok_or(EcdsaSigError::EmptySignature)?;
         let hash_ty = EcdsaSighashType::from_standard(*hash_ty as u32)
-            .map_err(|_| EcdsaSigError::NonStandardSigHashType(*hash_ty as u32))?;
+            .map_err(|_| EcdsaSigError::NonStandardSighashType(*hash_ty as u32))?;
         let sig = secp256k1::ecdsa::Signature::from_der(sig)
             .map_err(EcdsaSigError::Secp256k1)?;
         Ok(EcdsaSig { sig, hash_ty })
@@ -91,7 +91,7 @@ pub enum EcdsaSigError {
     /// Hex encoding error
     HexEncoding(hex::Error),
     /// Base58 encoding error
-    NonStandardSigHashType(u32),
+    NonStandardSighashType(u32),
     /// Empty Signature
     EmptySignature,
     /// secp256k1-related error
@@ -102,7 +102,7 @@ pub enum EcdsaSigError {
 impl fmt::Display for EcdsaSigError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            EcdsaSigError::NonStandardSigHashType(hash_ty) =>
+            EcdsaSigError::NonStandardSighashType(hash_ty) =>
                 write!(f, "Non standard signature hash type {}", hash_ty),
             EcdsaSigError::Secp256k1(ref e) =>
                 write!(f, "Invalid Ecdsa signature: {}", e),
@@ -123,9 +123,9 @@ impl From<secp256k1::Error> for EcdsaSigError {
     }
 }
 
-impl From<NonStandardSigHashType> for EcdsaSigError {
-    fn from(err: NonStandardSigHashType) -> Self {
-        EcdsaSigError::NonStandardSigHashType(err.0)
+impl From<NonStandardSighashType> for EcdsaSigError {
+    fn from(err: NonStandardSighashType) -> Self {
+        EcdsaSigError::NonStandardSighashType(err.0)
     }
 }
 

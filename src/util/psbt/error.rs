@@ -62,7 +62,7 @@ pub enum Error {
         actual: Box<Transaction>,
     },
     /// Unable to parse as a standard SigHash type.
-    NonStandardSigHashType(u32),
+    NonStandardSighashType(u32),
     /// Parsing errors from bitcoin_hashes
     HashParseError(hashes::Error),
     /// The pre-image must hash to the correponding psbt hash
@@ -88,7 +88,7 @@ impl fmt::Display for Error {
             Error::InvalidProprietaryKey => write!(f, "non-proprietary key type found when proprietary key was expected"),
             Error::DuplicateKey(ref rkey) => write!(f, "duplicate key: {}", rkey),
             Error::UnexpectedUnsignedTx { expected: ref e, actual: ref a } => write!(f, "different unsigned transaction: expected {}, actual {}", e.txid(), a.txid()),
-            Error::NonStandardSigHashType(ref sht) => write!(f, "non-standard sighash type: {}", sht),
+            Error::NonStandardSighashType(ref sht) => write!(f, "non-standard sighash type: {}", sht),
             Error::InvalidMagic => f.write_str("invalid magic"),
             Error::InvalidSeparator => f.write_str("invalid separator"),
             Error::UnsignedTxHasScriptSigs => f.write_str("the unsigned transaction has script sigs"),

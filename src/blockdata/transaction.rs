@@ -723,9 +723,9 @@ impl Decodable for Transaction {
 /// This type is consensus valid but an input including it would prevent the transaction from
 /// being relayed on today's Bitcoin network.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct NonStandardSigHashType(pub u32);
+pub struct NonStandardSighashType(pub u32);
 
-impl fmt::Display for NonStandardSigHashType {
+impl fmt::Display for NonStandardSighashType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Non standard sighash type {}", self.0)
     }
@@ -733,7 +733,7 @@ impl fmt::Display for NonStandardSigHashType {
 
 #[cfg(feature = "std")]
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-impl error::Error for NonStandardSigHashType {}
+impl error::Error for NonStandardSighashType {}
 
 /// Legacy Hashtype of an input's signature
 #[deprecated(since = "0.28.0", note = "Please use [`EcdsaSighashType`] instead")]
@@ -843,7 +843,7 @@ impl EcdsaSighashType {
 
     /// Creates a [`EcdsaSighashType`] from a raw `u32`.
     #[deprecated(since="0.28.0", note="please use `from_standard`")]
-    pub fn from_u32_standard(n: u32) -> Result<EcdsaSighashType, NonStandardSigHashType> {
+    pub fn from_u32_standard(n: u32) -> Result<EcdsaSighashType, NonStandardSighashType> {
         EcdsaSighashType::from_standard(n)
     }
 
@@ -852,7 +852,7 @@ impl EcdsaSighashType {
     /// # Errors
     ///
     /// If `n` is a non-standard sighash value.
-    pub fn from_standard(n: u32) -> Result<EcdsaSighashType, NonStandardSigHashType> {
+    pub fn from_standard(n: u32) -> Result<EcdsaSighashType, NonStandardSighashType> {
         match n {
             // Standard sighashes, see https://github.com/bitcoin/bitcoin/blob/b805dbb0b9c90dadef0424e5b3bf86ac308e103e/src/script/interpreter.cpp#L189-L198
             0x01 => Ok(EcdsaSighashType::All),
@@ -861,7 +861,7 @@ impl EcdsaSighashType {
             0x81 => Ok(EcdsaSighashType::AllPlusAnyoneCanPay),
             0x82 => Ok(EcdsaSighashType::NonePlusAnyoneCanPay),
             0x83 => Ok(EcdsaSighashType::SinglePlusAnyoneCanPay),
-            non_standard => Err(NonStandardSigHashType(non_standard))
+            non_standard => Err(NonStandardSighashType(non_standard))
         }
     }
 
@@ -1202,7 +1202,7 @@ mod tests {
         // This type is not well defined, by consensus it becomes ALL
         assert_eq!(EcdsaSighashType::from_u32_consensus(nonstandard_hashtype), EcdsaSighashType::All);
         // But it's policy-invalid to use it!
-        assert_eq!(EcdsaSighashType::from_u32_standard(nonstandard_hashtype), Err(NonStandardSigHashType(0x04)));
+        assert_eq!(EcdsaSighashType::from_u32_standard(nonstandard_hashtype), Err(NonStandardSighashType(0x04)));
     }
 
     #[test]
