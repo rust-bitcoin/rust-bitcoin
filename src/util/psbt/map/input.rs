@@ -34,7 +34,7 @@ use util::key::PublicKey;
 
 use util::taproot::{ControlBlock, LeafVersion, TapLeafHash, TapBranchHash};
 use util::sighash;
-use {EcdsaSighashType, SchnorrSigHashType, EcdsaSig, SchnorrSig};
+use {EcdsaSighashType, SchnorrSighashType, EcdsaSig, SchnorrSig};
 
 /// Type: Non-Witness UTXO PSBT_IN_NON_WITNESS_UTXO = 0x00
 const PSBT_IN_NON_WITNESS_UTXO: u8 = 0x00;
@@ -148,7 +148,7 @@ pub struct Input {
 
 
 /// A Signature hash type for the corresponding input. As of taproot upgrade, the signature hash
-/// type can be either [`EcdsaSighashType`] or [`SchnorrSigHashType`] but it is not possible to know
+/// type can be either [`EcdsaSighashType`] or [`SchnorrSighashType`] but it is not possible to know
 /// directly which signature hash type the user is dealing with. Therefore, the user is responsible
 /// for converting to/from [`PsbtSigHashType`] from/to the desired signature hash type they need.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -160,7 +160,7 @@ pub struct PsbtSigHashType {
 impl fmt::Display for PsbtSigHashType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.schnorr_hash_ty() {
-            Ok(SchnorrSigHashType::Reserved) | Err(_) => write!(f, "{:#x}", self.inner),
+            Ok(SchnorrSighashType::Reserved) | Err(_) => write!(f, "{:#x}", self.inner),
             Ok(schnorr_hash_ty) => fmt::Display::fmt(&schnorr_hash_ty, f),
         }
     }
@@ -176,8 +176,8 @@ impl FromStr for PsbtSigHashType {
         // NB: some of Schnorr sighash types are non-standard for pre-taproot
         // inputs. We also do not support SIGHASH_RESERVED in verbatim form
         // ("0xFF" string should be used instead).
-        match SchnorrSigHashType::from_str(s) {
-            Ok(SchnorrSigHashType::Reserved) => return Err(SigHashTypeParseError{ unrecognized: s.to_owned() }),
+        match SchnorrSighashType::from_str(s) {
+            Ok(SchnorrSighashType::Reserved) => return Err(SigHashTypeParseError{ unrecognized: s.to_owned() }),
             Ok(ty) => return Ok(ty.into()),
             Err(_) => {}
         }
@@ -197,8 +197,8 @@ impl From<EcdsaSighashType> for PsbtSigHashType {
     }
 }
 
-impl From<SchnorrSigHashType> for PsbtSigHashType {
-    fn from(schnorr_hash_ty: SchnorrSigHashType) -> Self {
+impl From<SchnorrSighashType> for PsbtSigHashType {
+    fn from(schnorr_hash_ty: SchnorrSighashType) -> Self {
         PsbtSigHashType { inner: schnorr_hash_ty as u32 }
     }
 }
@@ -210,20 +210,20 @@ impl PsbtSigHashType {
         EcdsaSighashType::from_standard(self.inner)
     }
 
-    /// Returns the [`SchnorrSigHashType`] if the [`PsbtSigHashType`] can be
+    /// Returns the [`SchnorrSighashType`] if the [`PsbtSigHashType`] can be
     /// converted to one.
-    pub fn schnorr_hash_ty(self) -> Result<SchnorrSigHashType, sighash::Error> {
+    pub fn schnorr_hash_ty(self) -> Result<SchnorrSighashType, sighash::Error> {
         if self.inner > 0xffu32 {
             Err(sighash::Error::InvalidSigHashType(self.inner))
         } else {
-            SchnorrSigHashType::from_u8(self.inner as u8)
+            SchnorrSighashType::from_u8(self.inner as u8)
         }
     }
 
     /// Creates a [`PsbtSigHashType`] from a raw `u32`.
     ///
     /// Allows construction of a non-standard or non-valid sighash flag
-    /// ([`EcdsaSighashType`], [`SchnorrSigHashType`] respectively).
+    /// ([`EcdsaSighashType`], [`SchnorrSighashType`] respectively).
     pub fn from_u32(n: u32) -> PsbtSigHashType {
         PsbtSigHashType { inner: n }
     }
@@ -250,16 +250,16 @@ impl Input {
             .unwrap_or(Ok(EcdsaSighashType::All))
     }
 
-    /// Obtains the [`SchnorrSigHashType`] for this input if one is specified. If no sighash type is
-    /// specified, returns [`SchnorrSigHashType::Default`].
+    /// Obtains the [`SchnorrSighashType`] for this input if one is specified. If no sighash type is
+    /// specified, returns [`SchnorrSighashType::Default`].
     ///
     /// # Errors
     ///
     /// If the `sighash_type` field is set to a invalid Schnorr sighash value.
-    pub fn schnorr_hash_ty(&self) -> Result<SchnorrSigHashType, sighash::Error> {
+    pub fn schnorr_hash_ty(&self) -> Result<SchnorrSighashType, sighash::Error> {
         self.sighash_type
             .map(|sighash_type| sighash_type.schnorr_hash_ty())
-            .unwrap_or(Ok(SchnorrSigHashType::Default))
+            .unwrap_or(Ok(SchnorrSighashType::Default))
     }
 
     pub(super) fn insert_pair(&mut self, pair: raw::Pair) -> Result<(), encode::Error> {
@@ -562,13 +562,13 @@ mod test {
     #[test]
     fn psbt_sighash_type_schnorr() {
         for schnorr in &[
-            SchnorrSigHashType::Default,
-            SchnorrSigHashType::All,
-            SchnorrSigHashType::None,
-            SchnorrSigHashType::Single,
-            SchnorrSigHashType::AllPlusAnyoneCanPay,
-            SchnorrSigHashType::NonePlusAnyoneCanPay,
-            SchnorrSigHashType::SinglePlusAnyoneCanPay,
+            SchnorrSighashType::Default,
+            SchnorrSighashType::All,
+            SchnorrSighashType::None,
+            SchnorrSighashType::Single,
+            SchnorrSighashType::AllPlusAnyoneCanPay,
+            SchnorrSighashType::NonePlusAnyoneCanPay,
+            SchnorrSighashType::SinglePlusAnyoneCanPay,
         ] {
             let sighash = PsbtSigHashType::from(*schnorr);
             let s = format!("{}", sighash);
@@ -581,7 +581,7 @@ mod test {
     #[test]
     fn psbt_sighash_type_schnorr_notstd() {
         for (schnorr, schnorr_str) in &[
-            (SchnorrSigHashType::Reserved, "0xff"),
+            (SchnorrSighashType::Reserved, "0xff"),
         ] {
             let sighash = PsbtSigHashType::from(*schnorr);
             let s = format!("{}", sighash);

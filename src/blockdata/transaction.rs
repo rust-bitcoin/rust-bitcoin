@@ -43,7 +43,7 @@ use hash_types::{SigHash, Txid, Wtxid};
 use VarInt;
 
 #[cfg(doc)]
-use util::sighash::SchnorrSigHashType;
+use util::sighash::SchnorrSighashType;
 
 /// Used for signature hash for invalid use of SIGHASH_SINGLE.
 const UINT256_ONE: [u8; 32] = [
@@ -742,7 +742,7 @@ pub type SigHashType = EcdsaSighashType;
 /// Hashtype of an input's signature, encoded in the last byte of the signature.
 ///
 /// Fixed values so they can be cast as integer types for encoding (see also
-/// [`SchnorrSigHashType`]).
+/// [`SchnorrSighashType`]).
 #[derive(PartialEq, Eq, Debug, Copy, Clone)]
 pub enum EcdsaSighashType {
     /// 0x1: Sign all outputs.
