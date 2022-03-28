@@ -297,8 +297,10 @@ impl TaprootSpendInfo {
         self.output_key_parity
     }
 
-    // Internal function to compute [`TaprootSpendInfo`] from NodeInfo
-    fn from_node_info<C: secp256k1::Verification>(
+    /// Compute [`TaprootSpendInfo`] from [`NodeInfo`], and internal key.
+    /// This is useful when you want to manually build a taproot tree wihtout
+    /// using [`TaprootBuilder`].
+    pub fn from_node_info<C: secp256k1::Verification>(
         secp: &Secp256k1<C>,
         internal_key: UntweakedPublicKey,
         node: NodeInfo,
@@ -498,10 +500,12 @@ impl TaprootBuilder {
     }
 }
 
-// Internally used structure to represent the node information in taproot tree
+/// Data structure used to represent node information in taproot tree.
+/// You can use [`TaprootSpendInfo::from_node_info`] to a get [`TaprootSpendInfo`]
+/// from the merkle root [`NodeInfo`].
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub(crate) struct NodeInfo {
+pub struct NodeInfo {
     /// Merkle Hash for this node
     pub(crate) hash: sha256::Hash,
     /// information about leaves inside this node
@@ -509,16 +513,16 @@ pub(crate) struct NodeInfo {
 }
 
 impl NodeInfo {
-    // Create a new NodeInfo with omitted/hidden info
-    fn new_hidden(hash: sha256::Hash) -> Self {
+    /// Creates a new [`NodeInfo`] with omitted/hidden info.
+    pub fn new_hidden(hash: sha256::Hash) -> Self {
         Self {
             hash: hash,
             leaves: vec![],
         }
     }
 
-    // Create a new leaf with NodeInfo
-    fn new_leaf_with_ver(script: Script, ver: LeafVersion) -> Self {
+    /// Creates a new leaf [`NodeInfo`] with given [`Script`] and [`LeafVersion`].
+    pub fn new_leaf_with_ver(script: Script, ver: LeafVersion) -> Self {
         let leaf = LeafInfo::new(script, ver);
         Self {
             hash: leaf.hash(),
@@ -526,8 +530,8 @@ impl NodeInfo {
         }
     }
 
-    // Combine two NodeInfo's to create a new parent
-    fn combine(a: Self, b: Self) -> Result<Self, TaprootBuilderError> {
+    /// Combines two [`NodeInfo`] to create a new parent.
+    pub fn combine(a: Self, b: Self) -> Result<Self, TaprootBuilderError> {
         let mut all_leaves = Vec::with_capacity(a.leaves.len() + b.leaves.len());
         for mut a_leaf in a.leaves {
             a_leaf.merkle_branch.push(b.hash)?; // add hashing partner
