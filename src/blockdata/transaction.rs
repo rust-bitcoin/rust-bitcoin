@@ -319,10 +319,10 @@ impl Transaction {
     /// sighash flag can be computed.
     ///
     /// To actually produce a scriptSig, this hash needs to be run through an ECDSA signer, the
-    /// [`EcdsaSigHashType`] appended to the resulting sig, and a script written around this, but
+    /// [`EcdsaSighashType`] appended to the resulting sig, and a script written around this, but
     /// this is the general (and hard) part.
     ///
-    /// The `sighash_type` supports an arbitrary `u32` value, instead of just [`EcdsaSigHashType`],
+    /// The `sighash_type` supports an arbitrary `u32` value, instead of just [`EcdsaSighashType`],
     /// because internally 4 bytes are being hashed, even though only the lowest byte is appended to
     /// signature in a transaction.
     ///
@@ -356,7 +356,7 @@ impl Transaction {
             return Ok(())
         }
 
-        let (sighash, anyone_can_pay) = EcdsaSigHashType::from_consensus(sighash_type).split_anyonecanpay_flag();
+        let (sighash, anyone_can_pay) = EcdsaSighashType::from_consensus(sighash_type).split_anyonecanpay_flag();
 
         // Build tx to sign
         let mut tx = Transaction {
@@ -379,22 +379,22 @@ impl Transaction {
                 tx.input.push(TxIn {
                     previous_output: input.previous_output,
                     script_sig: if n == input_index { script_pubkey.clone() } else { Script::new() },
-                    sequence: if n != input_index && (sighash == EcdsaSigHashType::Single || sighash == EcdsaSigHashType::None) { 0 } else { input.sequence },
+                    sequence: if n != input_index && (sighash == EcdsaSighashType::Single || sighash == EcdsaSighashType::None) { 0 } else { input.sequence },
                     witness: Witness::default(),
                 });
             }
         }
         // ..then all outputs
         tx.output = match sighash {
-            EcdsaSigHashType::All => self.output.clone(),
-            EcdsaSigHashType::Single => {
+            EcdsaSighashType::All => self.output.clone(),
+            EcdsaSighashType::Single => {
                 let output_iter = self.output.iter()
                                       .take(input_index + 1)  // sign all outputs up to and including this one, but erase
                                       .enumerate()            // all of them except for this one
                                       .map(|(n, out)| if n == input_index { out.clone() } else { TxOut::default() });
                 output_iter.collect()
             }
-            EcdsaSigHashType::None => vec![],
+            EcdsaSighashType::None => vec![],
             _ => unreachable!()
         };
         // hash the result
@@ -407,10 +407,10 @@ impl Transaction {
     /// Computes a signature hash for a given input index with a given sighash flag.
     ///
     /// To actually produce a scriptSig, this hash needs to be run through an ECDSA signer, the
-    /// [`EcdsaSigHashType`] appended to the resulting sig, and a script written around this, but
+    /// [`EcdsaSighashType`] appended to the resulting sig, and a script written around this, but
     /// this is the general (and hard) part.
     ///
-    /// The `sighash_type` supports an arbitrary `u32` value, instead of just [`EcdsaSigHashType`],
+    /// The `sighash_type` supports an arbitrary `u32` value, instead of just [`EcdsaSighashType`],
     /// because internally 4 bytes are being hashed, even though only the lowest byte is appended to
     /// signature in a transaction.
     ///
@@ -444,8 +444,8 @@ impl Transaction {
     }
 
     fn is_invalid_use_of_sighash_single(&self, sighash: u32, input_index: usize) -> bool {
-        let ty = EcdsaSigHashType::from_consensus(sighash);
-        ty == EcdsaSigHashType::Single && input_index >= self.output.len()
+        let ty = EcdsaSighashType::from_consensus(sighash);
+        ty == EcdsaSighashType::Single && input_index >= self.output.len()
     }
 
     /// Returns the "weight" of this transaction, as defined by BIP141.
@@ -736,15 +736,15 @@ impl fmt::Display for NonStandardSigHashType {
 impl error::Error for NonStandardSigHashType {}
 
 /// Legacy Hashtype of an input's signature
-#[deprecated(since = "0.28.0", note = "Please use [`EcdsaSigHashType`] instead")]
-pub type SigHashType = EcdsaSigHashType;
+#[deprecated(since = "0.28.0", note = "Please use [`EcdsaSighashType`] instead")]
+pub type SigHashType = EcdsaSighashType;
 
 /// Hashtype of an input's signature, encoded in the last byte of the signature.
 ///
 /// Fixed values so they can be cast as integer types for encoding (see also
 /// [`SchnorrSigHashType`]).
 #[derive(PartialEq, Eq, Debug, Copy, Clone)]
-pub enum EcdsaSigHashType {
+pub enum EcdsaSighashType {
     /// 0x1: Sign all outputs.
     All		= 0x01,
     /// 0x2: Sign no outputs --- anyone can choose the destination.
@@ -761,67 +761,67 @@ pub enum EcdsaSigHashType {
     /// 0x83: Sign one output and only this input (see `Single` for what "one output" means).
     SinglePlusAnyoneCanPay	= 0x83
 }
-serde_string_impl!(EcdsaSigHashType, "a EcdsaSigHashType data");
+serde_string_impl!(EcdsaSighashType, "a EcdsaSighashType data");
 
-impl fmt::Display for EcdsaSigHashType {
+impl fmt::Display for EcdsaSighashType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = match self {
-            EcdsaSigHashType::All => "SIGHASH_ALL",
-            EcdsaSigHashType::None => "SIGHASH_NONE",
-            EcdsaSigHashType::Single => "SIGHASH_SINGLE",
-            EcdsaSigHashType::AllPlusAnyoneCanPay => "SIGHASH_ALL|SIGHASH_ANYONECANPAY",
-            EcdsaSigHashType::NonePlusAnyoneCanPay => "SIGHASH_NONE|SIGHASH_ANYONECANPAY",
-            EcdsaSigHashType::SinglePlusAnyoneCanPay => "SIGHASH_SINGLE|SIGHASH_ANYONECANPAY",
+            EcdsaSighashType::All => "SIGHASH_ALL",
+            EcdsaSighashType::None => "SIGHASH_NONE",
+            EcdsaSighashType::Single => "SIGHASH_SINGLE",
+            EcdsaSighashType::AllPlusAnyoneCanPay => "SIGHASH_ALL|SIGHASH_ANYONECANPAY",
+            EcdsaSighashType::NonePlusAnyoneCanPay => "SIGHASH_NONE|SIGHASH_ANYONECANPAY",
+            EcdsaSighashType::SinglePlusAnyoneCanPay => "SIGHASH_SINGLE|SIGHASH_ANYONECANPAY",
         };
         f.write_str(s)
     }
 }
 
-impl str::FromStr for EcdsaSigHashType {
+impl str::FromStr for EcdsaSighashType {
     type Err = SigHashTypeParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "SIGHASH_ALL" => Ok(EcdsaSigHashType::All),
-            "SIGHASH_NONE" => Ok(EcdsaSigHashType::None),
-            "SIGHASH_SINGLE" => Ok(EcdsaSigHashType::Single),
-            "SIGHASH_ALL|SIGHASH_ANYONECANPAY" => Ok(EcdsaSigHashType::AllPlusAnyoneCanPay),
-            "SIGHASH_NONE|SIGHASH_ANYONECANPAY" => Ok(EcdsaSigHashType::NonePlusAnyoneCanPay),
-            "SIGHASH_SINGLE|SIGHASH_ANYONECANPAY" => Ok(EcdsaSigHashType::SinglePlusAnyoneCanPay),
+            "SIGHASH_ALL" => Ok(EcdsaSighashType::All),
+            "SIGHASH_NONE" => Ok(EcdsaSighashType::None),
+            "SIGHASH_SINGLE" => Ok(EcdsaSighashType::Single),
+            "SIGHASH_ALL|SIGHASH_ANYONECANPAY" => Ok(EcdsaSighashType::AllPlusAnyoneCanPay),
+            "SIGHASH_NONE|SIGHASH_ANYONECANPAY" => Ok(EcdsaSighashType::NonePlusAnyoneCanPay),
+            "SIGHASH_SINGLE|SIGHASH_ANYONECANPAY" => Ok(EcdsaSighashType::SinglePlusAnyoneCanPay),
             _ => Err(SigHashTypeParseError { unrecognized: s.to_owned() }),
         }
     }
 }
 
-impl EcdsaSigHashType {
+impl EcdsaSighashType {
     /// Splits the sighash flag into the "real" sighash flag and the ANYONECANPAY boolean.
-    pub(crate) fn split_anyonecanpay_flag(self) -> (EcdsaSigHashType, bool) {
+    pub(crate) fn split_anyonecanpay_flag(self) -> (EcdsaSighashType, bool) {
         match self {
-            EcdsaSigHashType::All => (EcdsaSigHashType::All, false),
-            EcdsaSigHashType::None => (EcdsaSigHashType::None, false),
-            EcdsaSigHashType::Single => (EcdsaSigHashType::Single, false),
-            EcdsaSigHashType::AllPlusAnyoneCanPay => (EcdsaSigHashType::All, true),
-            EcdsaSigHashType::NonePlusAnyoneCanPay => (EcdsaSigHashType::None, true),
-            EcdsaSigHashType::SinglePlusAnyoneCanPay => (EcdsaSigHashType::Single, true)
+            EcdsaSighashType::All => (EcdsaSighashType::All, false),
+            EcdsaSighashType::None => (EcdsaSighashType::None, false),
+            EcdsaSighashType::Single => (EcdsaSighashType::Single, false),
+            EcdsaSighashType::AllPlusAnyoneCanPay => (EcdsaSighashType::All, true),
+            EcdsaSighashType::NonePlusAnyoneCanPay => (EcdsaSighashType::None, true),
+            EcdsaSighashType::SinglePlusAnyoneCanPay => (EcdsaSighashType::Single, true)
         }
     }
 
-    /// Creates a [`EcdsaSigHashType`] from a raw `u32`.
+    /// Creates a [`EcdsaSighashType`] from a raw `u32`.
     #[deprecated(since="0.28.0", note="please use `from_consensus`")]
-    pub fn from_u32_consensus(n: u32) -> EcdsaSigHashType {
-        EcdsaSigHashType::from_consensus(n)
+    pub fn from_u32_consensus(n: u32) -> EcdsaSighashType {
+        EcdsaSighashType::from_consensus(n)
     }
 
-    /// Creates a [`EcdsaSigHashType`] from a raw `u32`.
+    /// Creates a [`EcdsaSighashType`] from a raw `u32`.
     ///
     /// **Note**: this replicates consensus behaviour, for current standardness rules correctness
     /// you probably want [`Self::from_standard`].
     ///
     /// This might cause unexpected behavior because it does not roundtrip. That is,
-    /// `EcdsaSigHashType::from_consensus(n) as u32 != n` for non-standard values of `n`. While
+    /// `EcdsaSighashType::from_consensus(n) as u32 != n` for non-standard values of `n`. While
     /// verifying signatures, the user should retain the `n` and use it compute the signature hash
     /// message.
-    pub fn from_consensus(n: u32) -> EcdsaSigHashType {
+    pub fn from_consensus(n: u32) -> EcdsaSighashType {
         // In Bitcoin Core, the SignatureHash function will mask the (int32) value with
         // 0x1f to (apparently) deactivate ACP when checking for SINGLE and NONE bits.
         // We however want to be matching also against on ACP-masked ALL, SINGLE, and NONE.
@@ -829,43 +829,43 @@ impl EcdsaSigHashType {
         let mask = 0x1f | 0x80;
         match n & mask {
             // "real" sighashes
-            0x01 => EcdsaSigHashType::All,
-            0x02 => EcdsaSigHashType::None,
-            0x03 => EcdsaSigHashType::Single,
-            0x81 => EcdsaSigHashType::AllPlusAnyoneCanPay,
-            0x82 => EcdsaSigHashType::NonePlusAnyoneCanPay,
-            0x83 => EcdsaSigHashType::SinglePlusAnyoneCanPay,
+            0x01 => EcdsaSighashType::All,
+            0x02 => EcdsaSighashType::None,
+            0x03 => EcdsaSighashType::Single,
+            0x81 => EcdsaSighashType::AllPlusAnyoneCanPay,
+            0x82 => EcdsaSighashType::NonePlusAnyoneCanPay,
+            0x83 => EcdsaSighashType::SinglePlusAnyoneCanPay,
             // catchalls
-            x if x & 0x80 == 0x80 => EcdsaSigHashType::AllPlusAnyoneCanPay,
-            _ => EcdsaSigHashType::All
+            x if x & 0x80 == 0x80 => EcdsaSighashType::AllPlusAnyoneCanPay,
+            _ => EcdsaSighashType::All
         }
     }
 
-    /// Creates a [`EcdsaSigHashType`] from a raw `u32`.
+    /// Creates a [`EcdsaSighashType`] from a raw `u32`.
     #[deprecated(since="0.28.0", note="please use `from_standard`")]
-    pub fn from_u32_standard(n: u32) -> Result<EcdsaSigHashType, NonStandardSigHashType> {
-        EcdsaSigHashType::from_standard(n)
+    pub fn from_u32_standard(n: u32) -> Result<EcdsaSighashType, NonStandardSigHashType> {
+        EcdsaSighashType::from_standard(n)
     }
 
-    /// Creates a [`EcdsaSigHashType`] from a raw `u32`.
+    /// Creates a [`EcdsaSighashType`] from a raw `u32`.
     ///
     /// # Errors
     ///
     /// If `n` is a non-standard sighash value.
-    pub fn from_standard(n: u32) -> Result<EcdsaSigHashType, NonStandardSigHashType> {
+    pub fn from_standard(n: u32) -> Result<EcdsaSighashType, NonStandardSigHashType> {
         match n {
             // Standard sighashes, see https://github.com/bitcoin/bitcoin/blob/b805dbb0b9c90dadef0424e5b3bf86ac308e103e/src/script/interpreter.cpp#L189-L198
-            0x01 => Ok(EcdsaSigHashType::All),
-            0x02 => Ok(EcdsaSigHashType::None),
-            0x03 => Ok(EcdsaSigHashType::Single),
-            0x81 => Ok(EcdsaSigHashType::AllPlusAnyoneCanPay),
-            0x82 => Ok(EcdsaSigHashType::NonePlusAnyoneCanPay),
-            0x83 => Ok(EcdsaSigHashType::SinglePlusAnyoneCanPay),
+            0x01 => Ok(EcdsaSighashType::All),
+            0x02 => Ok(EcdsaSighashType::None),
+            0x03 => Ok(EcdsaSighashType::Single),
+            0x81 => Ok(EcdsaSighashType::AllPlusAnyoneCanPay),
+            0x82 => Ok(EcdsaSighashType::NonePlusAnyoneCanPay),
+            0x83 => Ok(EcdsaSighashType::SinglePlusAnyoneCanPay),
             non_standard => Err(NonStandardSigHashType(non_standard))
         }
     }
 
-    /// Converts [`EcdsaSigHashType`] to a `u32` sighash flag.
+    /// Converts [`EcdsaSighashType`] to a `u32` sighash flag.
     ///
     /// The returned value is guaranteed to be a valid according to standardness rules.
     pub fn to_u32(self) -> u32 { self as u32 }
@@ -904,7 +904,7 @@ mod tests {
     use hashes::hex::FromHex;
 
     use hash_types::*;
-    use super::EcdsaSigHashType;
+    use super::EcdsaSighashType;
     use util::sighash::SigHashCache;
 
     #[test]
@@ -1167,16 +1167,16 @@ mod tests {
     #[test]
     fn test_sighashtype_fromstr_display() {
         let sighashtypes = vec![
-            ("SIGHASH_ALL", EcdsaSigHashType::All),
-            ("SIGHASH_NONE", EcdsaSigHashType::None),
-            ("SIGHASH_SINGLE", EcdsaSigHashType::Single),
-            ("SIGHASH_ALL|SIGHASH_ANYONECANPAY", EcdsaSigHashType::AllPlusAnyoneCanPay),
-            ("SIGHASH_NONE|SIGHASH_ANYONECANPAY", EcdsaSigHashType::NonePlusAnyoneCanPay),
-            ("SIGHASH_SINGLE|SIGHASH_ANYONECANPAY", EcdsaSigHashType::SinglePlusAnyoneCanPay)
+            ("SIGHASH_ALL", EcdsaSighashType::All),
+            ("SIGHASH_NONE", EcdsaSighashType::None),
+            ("SIGHASH_SINGLE", EcdsaSighashType::Single),
+            ("SIGHASH_ALL|SIGHASH_ANYONECANPAY", EcdsaSighashType::AllPlusAnyoneCanPay),
+            ("SIGHASH_NONE|SIGHASH_ANYONECANPAY", EcdsaSighashType::NonePlusAnyoneCanPay),
+            ("SIGHASH_SINGLE|SIGHASH_ANYONECANPAY", EcdsaSighashType::SinglePlusAnyoneCanPay)
         ];
         for (s, sht) in sighashtypes {
             assert_eq!(sht.to_string(), s);
-            assert_eq!(EcdsaSigHashType::from_str(s).unwrap(), sht);
+            assert_eq!(EcdsaSighashType::from_str(s).unwrap(), sht);
         }
         let sht_mistakes = vec![
             "SIGHASH_ALL | SIGHASH_ANYONECANPAY",
@@ -1191,7 +1191,7 @@ mod tests {
             "SigHash_NONE",
         ];
         for s in sht_mistakes {
-            assert_eq!(EcdsaSigHashType::from_str(s).unwrap_err().to_string(), format!("Unrecognized SIGHASH string '{}'", s));
+            assert_eq!(EcdsaSighashType::from_str(s).unwrap_err().to_string(), format!("Unrecognized SIGHASH string '{}'", s));
         }
     }
 
@@ -1200,9 +1200,9 @@ mod tests {
     fn test_sighashtype_standard() {
         let nonstandard_hashtype = 0x04;
         // This type is not well defined, by consensus it becomes ALL
-        assert_eq!(EcdsaSigHashType::from_u32_consensus(nonstandard_hashtype), EcdsaSigHashType::All);
+        assert_eq!(EcdsaSighashType::from_u32_consensus(nonstandard_hashtype), EcdsaSighashType::All);
         // But it's policy-invalid to use it!
-        assert_eq!(EcdsaSigHashType::from_u32_standard(nonstandard_hashtype), Err(NonStandardSigHashType(0x04)));
+        assert_eq!(EcdsaSighashType::from_u32_standard(nonstandard_hashtype), Err(NonStandardSigHashType(0x04)));
     }
 
     #[test]

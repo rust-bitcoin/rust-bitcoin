@@ -23,7 +23,7 @@ use hashes::Hash;
 use hash_types::SigHash;
 use blockdata::script::Script;
 use blockdata::witness::Witness;
-use blockdata::transaction::{Transaction, TxIn, EcdsaSigHashType};
+use blockdata::transaction::{Transaction, TxIn, EcdsaSighashType};
 use consensus::{encode, Encodable};
 
 use io;
@@ -130,7 +130,7 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
         input_index: usize,
         script_code: &Script,
         value: u64,
-        sighash_type: EcdsaSigHashType,
+        sighash_type: EcdsaSighashType,
     ) -> Result<(), encode::Error> {
         self.cache
             .segwit_encode_signing_data_to(writer, input_index, script_code, value, sighash_type)
@@ -145,7 +145,7 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
         input_index: usize,
         script_code: &Script,
         value: u64,
-        sighash_type: EcdsaSigHashType
+        sighash_type: EcdsaSighashType
     ) -> SigHash {
         let mut enc = SigHash::engine();
         self.encode_signing_data_to(&mut enc, input_index, script_code, value, sighash_type)
@@ -164,7 +164,7 @@ impl<R: DerefMut<Target = Transaction>> SigHashCache<R> {
     /// panics if `input_index` is out of bounds with respect of the number of inputs
     ///
     /// ```
-    /// use bitcoin::blockdata::transaction::{Transaction, EcdsaSigHashType};
+    /// use bitcoin::blockdata::transaction::{Transaction, EcdsaSighashType};
     /// use bitcoin::util::bip143::SigHashCache;
     /// use bitcoin::Script;
     ///
@@ -174,7 +174,7 @@ impl<R: DerefMut<Target = Transaction>> SigHashCache<R> {
     /// let mut sig_hasher = SigHashCache::new(&mut tx_to_sign);
     /// for inp in 0..input_count {
     ///     let prevout_script = Script::new();
-    ///     let _sighash = sig_hasher.signature_hash(inp, &prevout_script, 42, EcdsaSigHashType::All);
+    ///     let _sighash = sig_hasher.signature_hash(inp, &prevout_script, 42, EcdsaSighashType::All);
     ///     // ... sign the sighash
     ///     sig_hasher.access_witness(inp).push(&[]);
     /// }
@@ -211,7 +211,7 @@ mod tests {
         let raw_expected = SigHash::from_hex(expected_result).unwrap();
         let expected_result = SigHash::from_slice(&raw_expected[..]).unwrap();
         let mut cache = SigHashCache::new(&tx);
-        let sighash_type = EcdsaSigHashType::from_u32_consensus(hash_type);
+        let sighash_type = EcdsaSighashType::from_u32_consensus(hash_type);
         let actual_result = cache.signature_hash(input_index, &script, value, sighash_type);
         assert_eq!(actual_result, expected_result);
     }

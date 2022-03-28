@@ -34,7 +34,7 @@ use util::key::PublicKey;
 
 use util::taproot::{ControlBlock, LeafVersion, TapLeafHash, TapBranchHash};
 use util::sighash;
-use {EcdsaSigHashType, SchnorrSigHashType, EcdsaSig, SchnorrSig};
+use {EcdsaSighashType, SchnorrSigHashType, EcdsaSig, SchnorrSig};
 
 /// Type: Non-Witness UTXO PSBT_IN_NON_WITNESS_UTXO = 0x00
 const PSBT_IN_NON_WITNESS_UTXO: u8 = 0x00;
@@ -148,7 +148,7 @@ pub struct Input {
 
 
 /// A Signature hash type for the corresponding input. As of taproot upgrade, the signature hash
-/// type can be either [`EcdsaSigHashType`] or [`SchnorrSigHashType`] but it is not possible to know
+/// type can be either [`EcdsaSighashType`] or [`SchnorrSigHashType`] but it is not possible to know
 /// directly which signature hash type the user is dealing with. Therefore, the user is responsible
 /// for converting to/from [`PsbtSigHashType`] from/to the desired signature hash type they need.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -191,8 +191,8 @@ impl FromStr for PsbtSigHashType {
         Err(SigHashTypeParseError{ unrecognized: s.to_owned() })
     }
 }
-impl From<EcdsaSigHashType> for PsbtSigHashType {
-    fn from(ecdsa_hash_ty: EcdsaSigHashType) -> Self {
+impl From<EcdsaSighashType> for PsbtSigHashType {
+    fn from(ecdsa_hash_ty: EcdsaSighashType) -> Self {
         PsbtSigHashType { inner: ecdsa_hash_ty as u32 }
     }
 }
@@ -204,10 +204,10 @@ impl From<SchnorrSigHashType> for PsbtSigHashType {
 }
 
 impl PsbtSigHashType {
-    /// Returns the [`EcdsaSigHashType`] if the [`PsbtSigHashType`] can be
+    /// Returns the [`EcdsaSighashType`] if the [`PsbtSigHashType`] can be
     /// converted to one.
-    pub fn ecdsa_hash_ty(self) -> Result<EcdsaSigHashType, NonStandardSigHashType> {
-        EcdsaSigHashType::from_standard(self.inner)
+    pub fn ecdsa_hash_ty(self) -> Result<EcdsaSighashType, NonStandardSigHashType> {
+        EcdsaSighashType::from_standard(self.inner)
     }
 
     /// Returns the [`SchnorrSigHashType`] if the [`PsbtSigHashType`] can be
@@ -223,7 +223,7 @@ impl PsbtSigHashType {
     /// Creates a [`PsbtSigHashType`] from a raw `u32`.
     ///
     /// Allows construction of a non-standard or non-valid sighash flag
-    /// ([`EcdsaSigHashType`], [`SchnorrSigHashType`] respectively).
+    /// ([`EcdsaSighashType`], [`SchnorrSigHashType`] respectively).
     pub fn from_u32(n: u32) -> PsbtSigHashType {
         PsbtSigHashType { inner: n }
     }
@@ -238,16 +238,16 @@ impl PsbtSigHashType {
 }
 
 impl Input {
-    /// Obtains the [`EcdsaSigHashType`] for this input if one is specified. If no sighash type is
-    /// specified, returns [`EcdsaSigHashType::All`].
+    /// Obtains the [`EcdsaSighashType`] for this input if one is specified. If no sighash type is
+    /// specified, returns [`EcdsaSighashType::All`].
     ///
     /// # Errors
     ///
     /// If the `sighash_type` field is set to a non-standard ECDSA sighash value.
-    pub fn ecdsa_hash_ty(&self) -> Result<EcdsaSigHashType, NonStandardSigHashType> {
+    pub fn ecdsa_hash_ty(&self) -> Result<EcdsaSighashType, NonStandardSigHashType> {
         self.sighash_type
             .map(|sighash_type| sighash_type.ecdsa_hash_ty())
-            .unwrap_or(Ok(EcdsaSigHashType::All))
+            .unwrap_or(Ok(EcdsaSighashType::All))
     }
 
     /// Obtains the [`SchnorrSigHashType`] for this input if one is specified. If no sighash type is
@@ -544,12 +544,12 @@ mod test {
     #[test]
     fn psbt_sighash_type_ecdsa() {
         for ecdsa in &[
-            EcdsaSigHashType::All,
-            EcdsaSigHashType::None,
-            EcdsaSigHashType::Single,
-            EcdsaSigHashType::AllPlusAnyoneCanPay,
-            EcdsaSigHashType::NonePlusAnyoneCanPay,
-            EcdsaSigHashType::SinglePlusAnyoneCanPay,
+            EcdsaSighashType::All,
+            EcdsaSighashType::None,
+            EcdsaSighashType::Single,
+            EcdsaSighashType::AllPlusAnyoneCanPay,
+            EcdsaSighashType::NonePlusAnyoneCanPay,
+            EcdsaSighashType::SinglePlusAnyoneCanPay,
         ] {
             let sighash = PsbtSigHashType::from(*ecdsa);
             let s = format!("{}", sighash);

@@ -22,7 +22,7 @@
 
 use prelude::*;
 
-pub use blockdata::transaction::{EcdsaSigHashType, SigHashTypeParseError};
+pub use blockdata::transaction::{EcdsaSighashType, SigHashTypeParseError};
 use blockdata::witness::Witness;
 use consensus::{encode, Encodable};
 use core::{str, fmt};
@@ -288,15 +288,15 @@ impl<'s> From<ScriptPath<'s>> for TapLeafHash {
     }
 }
 
-impl From<EcdsaSigHashType> for SchnorrSigHashType {
-    fn from(s: EcdsaSigHashType) -> Self {
+impl From<EcdsaSighashType> for SchnorrSigHashType {
+    fn from(s: EcdsaSighashType) -> Self {
         match s {
-            EcdsaSigHashType::All => SchnorrSigHashType::All,
-            EcdsaSigHashType::None => SchnorrSigHashType::None,
-            EcdsaSigHashType::Single => SchnorrSigHashType::Single,
-            EcdsaSigHashType::AllPlusAnyoneCanPay => SchnorrSigHashType::AllPlusAnyoneCanPay,
-            EcdsaSigHashType::NonePlusAnyoneCanPay => SchnorrSigHashType::NonePlusAnyoneCanPay,
-            EcdsaSigHashType::SinglePlusAnyoneCanPay => SchnorrSigHashType::SinglePlusAnyoneCanPay,
+            EcdsaSighashType::All => SchnorrSigHashType::All,
+            EcdsaSighashType::None => SchnorrSigHashType::None,
+            EcdsaSighashType::Single => SchnorrSigHashType::Single,
+            EcdsaSighashType::AllPlusAnyoneCanPay => SchnorrSigHashType::AllPlusAnyoneCanPay,
+            EcdsaSighashType::NonePlusAnyoneCanPay => SchnorrSigHashType::NonePlusAnyoneCanPay,
+            EcdsaSighashType::SinglePlusAnyoneCanPay => SchnorrSigHashType::SinglePlusAnyoneCanPay,
         }
     }
 }
@@ -548,7 +548,7 @@ impl<R: Deref<Target=Transaction>> SigHashCache<R> {
         input_index: usize,
         script_code: &Script,
         value: u64,
-        sighash_type: EcdsaSigHashType,
+        sighash_type: EcdsaSighashType,
     ) -> Result<(), Error> {
         let zero_hash = sha256d::Hash::default();
 
@@ -563,8 +563,8 @@ impl<R: Deref<Target=Transaction>> SigHashCache<R> {
         }
 
         if !anyone_can_pay
-            && sighash != EcdsaSigHashType::Single
-            && sighash != EcdsaSigHashType::None
+            && sighash != EcdsaSighashType::Single
+            && sighash != EcdsaSighashType::None
         {
             self.segwit_cache()
                 .sequences
@@ -590,9 +590,9 @@ impl<R: Deref<Target=Transaction>> SigHashCache<R> {
             txin.sequence.consensus_encode(&mut writer)?;
         }
 
-        if sighash != EcdsaSigHashType::Single && sighash != EcdsaSigHashType::None {
+        if sighash != EcdsaSighashType::Single && sighash != EcdsaSighashType::None {
             self.segwit_cache().outputs.consensus_encode(&mut writer)?;
-        } else if sighash == EcdsaSigHashType::Single && input_index < self.tx.output.len() {
+        } else if sighash == EcdsaSighashType::Single && input_index < self.tx.output.len() {
             let mut single_enc = SigHash::engine();
             self.tx.output[input_index].consensus_encode(&mut single_enc)?;
             SigHash::from_engine(single_enc).consensus_encode(&mut writer)?;
@@ -611,7 +611,7 @@ impl<R: Deref<Target=Transaction>> SigHashCache<R> {
         input_index: usize,
         script_code: &Script,
         value: u64,
-        sighash_type: EcdsaSigHashType,
+        sighash_type: EcdsaSighashType,
     ) -> Result<SigHash, Error> {
         let mut enc = SigHash::engine();
         self.segwit_encode_signing_data_to(
@@ -735,7 +735,7 @@ impl<R: DerefMut<Target=Transaction>> SigHashCache<R> {
     ///
     /// This allows in-line signing such as
     /// ```
-    /// use bitcoin::blockdata::transaction::{Transaction, EcdsaSigHashType};
+    /// use bitcoin::blockdata::transaction::{Transaction, EcdsaSighashType};
     /// use bitcoin::util::sighash::SigHashCache;
     /// use bitcoin::Script;
     ///
@@ -745,7 +745,7 @@ impl<R: DerefMut<Target=Transaction>> SigHashCache<R> {
     /// let mut sig_hasher = SigHashCache::new(&mut tx_to_sign);
     /// for inp in 0..input_count {
     ///     let prevout_script = Script::new();
-    ///     let _sighash = sig_hasher.segwit_signature_hash(inp, &prevout_script, 42, EcdsaSigHashType::All);
+    ///     let _sighash = sig_hasher.segwit_signature_hash(inp, &prevout_script, 42, EcdsaSighashType::All);
     ///     // ... sign the sighash
     ///     sig_hasher.witness_mut(inp).unwrap().push(&Vec::new());
     /// }

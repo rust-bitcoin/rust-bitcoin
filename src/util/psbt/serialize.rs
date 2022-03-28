@@ -118,7 +118,7 @@ impl Deserialize for EcdsaSig {
         //
         // 1) the current implementation of from_u32_consensus(`flag`) does not preserve
         // the sighash byte `flag` mapping all unknown values to EcdsaSighashType::All or
-        // EcdsaSigHashType::AllPlusAnyOneCanPay. Therefore, break the invariant
+        // EcdsaSighashType::AllPlusAnyOneCanPay. Therefore, break the invariant
         // EcdsaSig::from_slice(&sl[..]).to_vec = sl.
         //
         // 2) This would cause to have invalid signatures because the sighash message

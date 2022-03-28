@@ -22,7 +22,7 @@ use core::{fmt, iter};
 use hashes::hex::{self, FromHex};
 use blockdata::transaction::NonStandardSigHashType;
 use secp256k1;
-use EcdsaSigHashType;
+use EcdsaSighashType;
 
 /// An ECDSA signature with the corresponding hash type.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -31,23 +31,23 @@ pub struct EcdsaSig {
     /// The underlying ECDSA Signature
     pub sig: secp256k1::ecdsa::Signature,
     /// The corresponding hash type
-    pub hash_ty: EcdsaSigHashType,
+    pub hash_ty: EcdsaSighashType,
 }
 
 impl EcdsaSig {
-    /// Constructs ECDSA bitcoin signature for [`EcdsaSigHashType::All`]
+    /// Constructs ECDSA bitcoin signature for [`EcdsaSighashType::All`]
     pub fn sighash_all(sig: secp256k1::ecdsa::Signature) -> EcdsaSig {
         EcdsaSig {
             sig,
-            hash_ty: EcdsaSigHashType::All
+            hash_ty: EcdsaSighashType::All
         }
     }
 
-    /// Deserialize from slice following the standardness rules for [`EcdsaSigHashType`]
+    /// Deserialize from slice following the standardness rules for [`EcdsaSighashType`]
     pub fn from_slice(sl: &[u8]) -> Result<Self, EcdsaSigError> {
         let (hash_ty, sig) = sl.split_last()
             .ok_or(EcdsaSigError::EmptySignature)?;
-        let hash_ty = EcdsaSigHashType::from_standard(*hash_ty as u32)
+        let hash_ty = EcdsaSighashType::from_standard(*hash_ty as u32)
             .map_err(|_| EcdsaSigError::NonStandardSigHashType(*hash_ty as u32))?;
         let sig = secp256k1::ecdsa::Signature::from_der(sig)
             .map_err(EcdsaSigError::Secp256k1)?;
@@ -80,7 +80,7 @@ impl FromStr for EcdsaSig {
             .ok_or(EcdsaSigError::EmptySignature)?;
         Ok(EcdsaSig {
             sig: secp256k1::ecdsa::Signature::from_der(signature)?,
-            hash_ty: EcdsaSigHashType::from_standard(*sighash_byte as u32)?
+            hash_ty: EcdsaSighashType::from_standard(*sighash_byte as u32)?
         })
     }
 }
