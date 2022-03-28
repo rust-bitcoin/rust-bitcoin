@@ -39,7 +39,7 @@ use blockdata::script::Script;
 use blockdata::witness::Witness;
 use consensus::{encode, Decodable, Encodable};
 use consensus::encode::MAX_VEC_SIZE;
-use hash_types::{SigHash, Txid, Wtxid};
+use hash_types::{Sighash, Txid, Wtxid};
 use VarInt;
 
 #[cfg(doc)]
@@ -432,15 +432,15 @@ impl Transaction {
         input_index: usize,
         script_pubkey: &Script,
         sighash_u32: u32
-    ) -> SigHash {
+    ) -> Sighash {
         if self.is_invalid_use_of_sighash_single(sighash_u32, input_index) {
-            return SigHash::from_slice(&UINT256_ONE).expect("const-size array");
+            return Sighash::from_slice(&UINT256_ONE).expect("const-size array");
         }
 
-        let mut engine = SigHash::engine();
+        let mut engine = Sighash::engine();
         self.encode_signing_data_to(&mut engine, input_index, script_pubkey, sighash_u32)
             .expect("engines don't error");
-        SigHash::from_engine(engine)
+        Sighash::from_engine(engine)
     }
 
     fn is_invalid_use_of_sighash_single(&self, sighash: u32, input_index: usize) -> bool {
@@ -1223,7 +1223,7 @@ mod tests {
         };
         let script = Script::new();
         let got = tx.signature_hash(1, &script, SIGHASH_SINGLE);
-        let want = SigHash::from_slice(&UINT256_ONE).unwrap();
+        let want = Sighash::from_slice(&UINT256_ONE).unwrap();
 
         assert_eq!(got, want)
     }
@@ -1233,7 +1233,7 @@ mod tests {
         let script = Script::from(Vec::from_hex(script).unwrap());
         let mut raw_expected = Vec::from_hex(expected_result).unwrap();
         raw_expected.reverse();
-        let expected_result = SigHash::from_slice(&raw_expected[..]).unwrap();
+        let expected_result = Sighash::from_slice(&raw_expected[..]).unwrap();
 
         let actual_result = if raw_expected[0] % 2 == 0 {
             // tx.signature_hash and cache.legacy_signature_hash are the same, this if helps to test

@@ -31,7 +31,7 @@ use core::borrow::Borrow;
 use hashes::{sha256, sha256d, Hash};
 use io;
 use util::taproot::{TapLeafHash, TAPROOT_ANNEX_PREFIX, TapSighashHash};
-use SigHash;
+use Sighash;
 use {Script, Transaction, TxOut};
 
 use super::taproot::LeafVersion;
@@ -593,9 +593,9 @@ impl<R: Deref<Target=Transaction>> SighashCache<R> {
         if sighash != EcdsaSighashType::Single && sighash != EcdsaSighashType::None {
             self.segwit_cache().outputs.consensus_encode(&mut writer)?;
         } else if sighash == EcdsaSighashType::Single && input_index < self.tx.output.len() {
-            let mut single_enc = SigHash::engine();
+            let mut single_enc = Sighash::engine();
             self.tx.output[input_index].consensus_encode(&mut single_enc)?;
-            SigHash::from_engine(single_enc).consensus_encode(&mut writer)?;
+            Sighash::from_engine(single_enc).consensus_encode(&mut writer)?;
         } else {
             zero_hash.consensus_encode(&mut writer)?;
         }
@@ -612,8 +612,8 @@ impl<R: Deref<Target=Transaction>> SighashCache<R> {
         script_code: &Script,
         value: u64,
         sighash_type: EcdsaSighashType,
-    ) -> Result<SigHash, Error> {
-        let mut enc = SigHash::engine();
+    ) -> Result<Sighash, Error> {
+        let mut enc = Sighash::engine();
         self.segwit_encode_signing_data_to(
             &mut enc,
             input_index,
@@ -621,7 +621,7 @@ impl<R: Deref<Target=Transaction>> SighashCache<R> {
             value,
             sighash_type,
         )?;
-        Ok(SigHash::from_engine(enc))
+        Ok(Sighash::from_engine(enc))
     }
 
     /// Encode the legacy signing data for any flag type into a given object implementing a
@@ -651,10 +651,10 @@ impl<R: Deref<Target=Transaction>> SighashCache<R> {
         input_index: usize,
         script_pubkey: &Script,
         sighash_type: u32,
-    ) -> Result<SigHash, Error> {
-        let mut enc = SigHash::engine();
+    ) -> Result<Sighash, Error> {
+        let mut enc = Sighash::engine();
         self.legacy_encode_signing_data_to(&mut enc, input_index, script_pubkey, sighash_type)?;
-        Ok(SigHash::from_engine(enc))
+        Ok(Sighash::from_engine(enc))
     }
 
     #[inline]
