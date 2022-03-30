@@ -99,6 +99,16 @@ impl TapTree {
         self.0.branch().len()
     }
 
+    /// Returns first script leaf from the tree, traversing the tree in the DFS order.
+    #[inline]
+    pub fn first_leaf(&self) -> Option<LeafInfo> {
+        self.0
+            .branch()
+            .last()?
+            .as_ref()
+            .and_then(|root| root.leaves.first().cloned())
+    }
+
     /// Gets the inner node info as the builder is finalized.
     pub fn node_info(&self) -> &NodeInfo {
         // The builder algorithm invariant guarantees that is_complete builder
