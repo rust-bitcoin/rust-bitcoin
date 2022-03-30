@@ -131,6 +131,40 @@ impl TapLeafHash {
     }
 }
 
+/// Marker trait for all forms of hashes which may participate in the construction of
+/// taproot script tree.
+pub trait TapNodeHash {
+    /// Converts leaf or branch hash into a generic SHA256 hash value, which can
+    /// be used to construct hidden nodes in the tap tree.
+    fn into_hidden_hash(self) -> sha256::Hash;
+}
+
+impl TapNodeHash for TapLeafHash {
+    /// Converts this leaf hash into a generic SHA256 hash value, which can
+    /// be used to construct hidden nodes in the tap tree.
+    #[inline]
+    fn into_hidden_hash(self) -> sha256::Hash {
+        sha256::Hash::from_inner(self.into_inner())
+    }
+}
+
+impl TapNodeHash for TapBranchHash {
+    /// Converts this branch hash into a generic SHA256 hash value, which can
+    /// be used to construct hidden nodes in the tap tree.
+    #[inline]
+    fn into_hidden_hash(self) -> sha256::Hash {
+        sha256::Hash::from_inner(self.into_inner())
+    }
+}
+
+impl TapNodeHash for sha256::Hash {
+    /// This function performs nothing and just returns the self.
+    #[inline]
+    fn into_hidden_hash(self) -> sha256::Hash {
+        self
+    }
+}
+
 /// Maximum depth of a Taproot Tree Script spend path
 // https://github.com/bitcoin/bitcoin/blob/e826b22da252e0599c61d21c98ff89f366b3120f/src/script/interpreter.h#L229
 pub const TAPROOT_CONTROL_MAX_NODE_COUNT: usize = 128;
