@@ -131,6 +131,21 @@ impl TapLeafHash {
     }
 }
 
+impl TapBranchHash {
+    /// Computes branch hash given two hashes of the nodes underneath it.
+    pub fn from_node_hashes(a: sha256::Hash, b: sha256::Hash) -> TapBranchHash {
+        let mut eng = TapBranchHash::engine();
+        if a < b {
+            eng.input(&a);
+            eng.input(&b);
+        } else {
+            eng.input(&b);
+            eng.input(&a);
+        };
+        TapBranchHash::from_engine(eng)
+    }
+}
+
 /// Marker trait for all forms of hashes which may participate in the construction of
 /// taproot script tree.
 pub trait TapNodeHash {
