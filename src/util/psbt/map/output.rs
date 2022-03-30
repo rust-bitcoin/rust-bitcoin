@@ -125,6 +125,13 @@ impl TapTree {
         self.0
     }
 
+    /// Returns reference for the inner [`TaprootBuilder`]. The builder is guaranteed to be
+    /// finalized.
+    #[inline]
+    pub fn as_inner(&self) -> &TaprootBuilder {
+        &self.0
+    }
+
     /// Returns iterator for a taproot script tree, operating in DFS order over leaf depth and
     /// leaf script pairs.
     pub fn iter(&self) -> TapTreeIter {
