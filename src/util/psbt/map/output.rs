@@ -127,7 +127,7 @@ impl Eq for TapTree {}
 
 impl TapTree {
     /// Gets the inner node info as the builder is finalized.
-    fn node_info(&self) -> &NodeInfo {
+    pub fn node_info(&self) -> &NodeInfo {
         // The builder algorithm invariant guarantees that is_complete builder
         // have only 1 element in branch and that is not None.
         // We make sure that we only allow is_complete builders via the from_inner
