@@ -704,11 +704,11 @@ impl ControlBlock {
     ///
     /// # Errors
     ///
-    /// - `TaprootError::InvalidControlBlockSize` if `sl` is not of size 1 + 32 + 32N for any N >= 0.
-    /// - `TaprootError::InvalidParity` if first byte of `sl` is not a valid output key parity.
-    /// - `TaprootError::InvalidTaprootLeafVersion` if first byte of `sl` is not a valid leaf version.
-    /// - `TaprootError::InvalidInternalKey` if internal key is invalid (first 32 bytes after the parity byte).
-    /// - `TaprootError::InvalidMerkleTreeDepth` if merkle tree is too deep (more than 128 levels).
+    /// - [`TaprootError::InvalidControlBlockSize`] if `sl` is not of size 1 + 32 + 32N for any N >= 0.
+    /// - [`TaprootError::InvalidParity`] if first byte of `sl` is not a valid output key parity.
+    /// - [`TaprootError::InvalidTaprootLeafVersion`] if first byte of `sl` is not a valid leaf version.
+    /// - [`TaprootError::InvalidInternalKey`] if internal key is invalid (first 32 bytes after the parity byte).
+    /// - [`TaprootError::InvalidMerkleTreeDepth`] if merkle tree is too deep (more than 128 levels).
     pub fn from_slice(sl: &[u8]) -> Result<ControlBlock, TaprootError> {
         if sl.len() < TAPROOT_CONTROL_BASE_SIZE
             || (sl.len() - TAPROOT_CONTROL_BASE_SIZE) % TAPROOT_CONTROL_NODE_SIZE != 0
