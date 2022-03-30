@@ -569,21 +569,21 @@ impl NodeInfo {
     }
 }
 
-// Internally used structure to store information about taproot leaf node
+/// Structure storing information about taproot leaf script.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub(crate) struct LeafInfo {
-    // The underlying script
-    pub(crate) script: Script,
-    // The leaf version
-    pub(crate) ver: LeafVersion,
-    // The merkle proof(hashing partners) to get this node
-    pub(crate) merkle_branch: TaprootMerkleBranch,
+pub struct LeafInfo {
+    /// The underlying script
+    pub script: Script,
+    /// The leaf version
+    pub ver: LeafVersion,
+    /// The merkle proof (vector of hashing partners) to get this node
+    pub merkle_branch: TaprootMerkleBranch,
 }
 
 impl LeafInfo {
-    // Create an instance of Self from Script with default version and no merkle branch
-    fn new(script: Script, ver: LeafVersion) -> Self {
+    /// Create an instance of Self from Script with default version and no merkle branch
+    pub fn new(script: Script, ver: LeafVersion) -> Self {
         Self {
             script: script,
             ver: ver,
@@ -591,8 +591,8 @@ impl LeafInfo {
         }
     }
 
-    // Compute a leaf hash for the given leaf
-    fn hash(&self) -> sha256::Hash {
+    /// Compute a leaf hash for the given leaf
+    pub fn hash(&self) -> sha256::Hash {
         let leaf_hash = TapLeafHash::from_script(&self.script, self.ver);
         sha256::Hash::from_inner(leaf_hash.into_inner())
     }
