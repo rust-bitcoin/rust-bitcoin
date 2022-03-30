@@ -144,36 +144,19 @@ impl TapTree {
 
     /// Returns iterator for a taproot script tree, operating in DFS order over leaf depth and
     /// leaf script pairs.
-    pub fn iter(&self) -> TapTreeIter {
+    pub fn iter(&self) -> core::slice::Iter<LeafInfo> {
         self.into_iter()
-    }
-}
-
-/// Iterator for a taproot script tree, operating in DFS order over leaf depth and
-/// leaf script pairs.
-pub struct TapTreeIter<'tree> {
-    leaf_iter: core::slice::Iter<'tree, LeafInfo>,
-}
-
-impl<'tree> Iterator for TapTreeIter<'tree> {
-    type Item = &'tree LeafInfo;
-
-    #[inline]
-    fn next(&mut self) -> Option<Self::Item> {
-        self.leaf_iter.next()
     }
 }
 
 impl<'tree> IntoIterator for &'tree TapTree {
     type Item = &'tree LeafInfo;
-    type IntoIter = TapTreeIter<'tree>;
+    type IntoIter = core::slice::Iter<'tree, LeafInfo>;
 
     fn into_iter(self) -> Self::IntoIter {
         match (self.0.branch().len(), self.0.branch().last()) {
             (1, Some(Some(root))) => {
-                TapTreeIter {
-                    leaf_iter: root.leaves.iter()
-                }
+                root.leaves.iter()
             }
             // This should be unreachable as we Taptree is already finalized
             _ => unreachable!("non-finalized tree builder inside TapTree"),
