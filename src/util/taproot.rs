@@ -521,8 +521,12 @@ impl TaprootBuilder {
 
 /// Represents the node information in taproot tree.
 ///
-/// You can use [`TaprootSpendInfo::from_node_info`] to a get [`TaprootSpendInfo`]
-/// from the merkle root [`NodeInfo`].
+/// Helper type used in merkle tree construction allowing one to build sparse merkle trees. The node
+/// represents part of the tree that has information about all of its descendants.
+/// See how [`TaprootBuilder`] works for more details.
+///
+/// You can use [`TaprootSpendInfo::from_node_info`] to a get a [`TaprootSpendInfo`] from the merkle
+/// root [`NodeInfo`].
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct NodeInfo {
