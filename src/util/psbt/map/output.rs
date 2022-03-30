@@ -93,6 +93,12 @@ impl PartialEq for TapTree {
 impl Eq for TapTree {}
 
 impl TapTree {
+    /// Convenience method to retrieve number of script leafs in the tree.
+    #[inline]
+    pub fn scripts_count(&self) -> usize {
+        self.0.branch().len()
+    }
+
     /// Gets the inner node info as the builder is finalized.
     fn node_info(&self) -> &NodeInfo {
         // The builder algorithm invariant guarantees that is_complete builder
