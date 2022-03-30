@@ -169,17 +169,16 @@ pub struct TapTreeIter<'tree> {
 }
 
 impl<'tree> Iterator for TapTreeIter<'tree> {
-    type Item = (u8, &'tree Script);
+    type Item = &'tree LeafInfo;
 
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        self.leaf_iter.next().map(|leaf_info| {
-            (leaf_info.merkle_branch.as_inner().len() as u8, &leaf_info.script)
-        })
+        self.leaf_iter.next()
     }
 }
 
 impl<'tree> IntoIterator for &'tree TapTree {
-    type Item = (u8, &'tree Script);
+    type Item = &'tree LeafInfo;
     type IntoIter = TapTreeIter<'tree>;
 
     fn into_iter(self) -> Self::IntoIter {
