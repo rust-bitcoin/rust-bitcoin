@@ -211,7 +211,7 @@ impl TaprootSpendInfo {
     }
 
     /// Creates a new key spend with `internal_key` and `merkle_root`. Provide [`None`] for
-    /// `merkle_root` if there is no script path.
+    /// the `merkle_root` if there is no script path.
     ///
     /// *Note*: As per BIP341
     ///
