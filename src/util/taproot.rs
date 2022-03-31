@@ -610,11 +610,11 @@ impl NodeInfo {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct LeafInfo {
     /// The underlying script.
-    pub(crate) script: Script,
+    script: Script,
     /// The leaf version.
-    pub(crate) ver: LeafVersion,
+    ver: LeafVersion,
     /// The merkle proof (hashing partners) to get this node.
-    pub(crate) merkle_branch: TaprootMerkleBranch,
+    merkle_branch: TaprootMerkleBranch,
 }
 
 impl LeafInfo {
