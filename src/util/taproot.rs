@@ -576,16 +576,9 @@ impl NodeInfo {
             b_leaf.merkle_branch.push(a.hash)?; // add hashing partner
             all_leaves.push(b_leaf);
         }
-        let mut eng = TapBranchHash::engine();
-        if a.hash < b.hash {
-            eng.input(&a.hash);
-            eng.input(&b.hash);
-        } else {
-            eng.input(&b.hash);
-            eng.input(&a.hash);
-        };
+        let hash = TapBranchHash::from_node_hashes(a.hash, b.hash);
         Ok(Self {
-            hash: sha256::Hash::from_engine(eng),
+            hash: sha256::Hash::from_inner(hash.into_inner()),
             leaves: all_leaves,
         })
     }
@@ -790,16 +783,11 @@ impl ControlBlock {
         let mut curr_hash = TapBranchHash::from_inner(leaf_hash.into_inner());
         // Verify the proof
         for elem in self.merkle_branch.as_inner() {
-            let mut eng = TapBranchHash::engine();
-            if curr_hash.as_inner() < elem.as_inner() {
-                eng.input(&curr_hash);
-                eng.input(elem);
-            } else {
-                eng.input(elem);
-                eng.input(&curr_hash);
-            }
             // Recalculate the curr hash as parent hash
-            curr_hash = TapBranchHash::from_engine(eng);
+            curr_hash = TapBranchHash::from_node_hashes(
+                sha256::Hash::from_inner(curr_hash.into_inner()),
+                *elem
+            );
         }
         // compute the taptweak
         let tweak = TapTweakHash::from_key_and_tweak(self.internal_key, Some(curr_hash));
