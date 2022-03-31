@@ -627,6 +627,14 @@ impl LeafInfo {
         }
     }
 
+    /// Returns the depth of this script leaf in the tap tree.
+    #[inline]
+    pub fn depth(&self) -> u8 {
+        // The depth is guaranteed to be < 127 by the TaprootBuilder type.
+        // TODO: Following MSRV bump implement via `try_into().expect("")`.
+        self.merkle_branch.0.len() as u8
+    }
+
     /// Computes a leaf hash for this [`LeafInfo`].
     #[inline]
     pub fn leaf_hash(&self) -> TapLeafHash {
