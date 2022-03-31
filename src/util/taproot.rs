@@ -608,7 +608,7 @@ impl NodeInfo {
 /// Store information about taproot leaf node.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub(crate) struct LeafInfo {
+pub struct LeafInfo {
     /// The underlying script.
     pub(crate) script: Script,
     /// The leaf version.
