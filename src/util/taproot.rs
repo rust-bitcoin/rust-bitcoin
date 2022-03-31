@@ -579,7 +579,7 @@ impl NodeInfo {
     pub fn new_leaf_with_ver(script: Script, ver: LeafVersion) -> Self {
         let leaf = LeafInfo::new(script, ver);
         Self {
-            hash: leaf.hash(),
+            hash: sha256::Hash::from_inner(leaf.leaf_hash().into_inner()),
             leaves: vec![leaf],
             has_hidden_nodes: false,
         }
@@ -628,9 +628,9 @@ impl LeafInfo {
     }
 
     /// Computes a leaf hash for this [`LeafInfo`].
-    fn hash(&self) -> sha256::Hash {
-        let leaf_hash = TapLeafHash::from_script(&self.script, self.ver);
-        sha256::Hash::from_inner(leaf_hash.into_inner())
+    #[inline]
+    pub fn leaf_hash(&self) -> TapLeafHash {
+        TapLeafHash::from_script(&self.script, self.ver)
     }
 }
 
