@@ -131,6 +131,21 @@ impl TapLeafHash {
     }
 }
 
+impl TapBranchHash {
+    /// Computes branch hash given two hashes of the nodes underneath it.
+    pub fn from_node_hashes(a: sha256::Hash, b: sha256::Hash) -> TapBranchHash {
+        let mut eng = TapBranchHash::engine();
+        if a < b {
+            eng.input(&a);
+            eng.input(&b);
+        } else {
+            eng.input(&b);
+            eng.input(&a);
+        };
+        TapBranchHash::from_engine(eng)
+    }
+}
+
 /// Maximum depth of a taproot tree script spend path.
 // https://github.com/bitcoin/bitcoin/blob/e826b22da252e0599c61d21c98ff89f366b3120f/src/script/interpreter.h#L229
 pub const TAPROOT_CONTROL_MAX_NODE_COUNT: usize = 128;
