@@ -632,6 +632,25 @@ impl LeafInfo {
     pub fn leaf_hash(&self) -> TapLeafHash {
         TapLeafHash::from_script(&self.script, self.ver)
     }
+
+    /// Returns reference to the leaf script.
+    #[inline]
+    pub fn script(&self) -> &Script {
+        &self.script
+    }
+
+    /// Returns leaf version of the script.
+    #[inline]
+    pub fn leaf_version(&self) -> LeafVersion {
+        self.ver
+    }
+
+    /// Returns reference to the merkle proof (hashing partners) to get this
+    /// node in form of [`TaprootMerkleBranch`].
+    #[inline]
+    pub fn merkle_branch(&self) -> &TaprootMerkleBranch {
+        &self.merkle_branch
+    }
 }
 
 /// The merkle proof for inclusion of a tree in a taptree hash.
