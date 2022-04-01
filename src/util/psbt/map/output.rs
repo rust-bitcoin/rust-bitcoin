@@ -151,7 +151,7 @@ impl TapTree {
     }
 
     /// Converts self into builder [`TaprootBuilder`]. The builder is guaranteed to be finalized.
-    pub fn into_inner(self) -> TaprootBuilder {
+    pub fn into_builder(self) -> TaprootBuilder {
         self.0
     }
 
