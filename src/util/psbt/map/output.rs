@@ -135,18 +135,18 @@ impl TapTree {
         self.0.branch()[0].as_ref().expect("from_inner only parses is_complete builders")
     }
 
-    /// Converts a [`TaprootBuilder`] into a tree if it is complete binary tree.
+    /// Constructs [`TapTree`] from a [`TaprootBuilder`] if it is complete binary tree.
     ///
     /// # Returns
-    /// A [`TapTree`] iff the `inner` builder is complete, otherwise return [`IncompleteTapTree`]
-    /// error with the content of incomplete builder `inner` instance.
-    pub fn from_inner(inner: TaprootBuilder) -> Result<Self, IncompleteTapTree> {
-        if !inner.is_finalized() {
-            Err(IncompleteTapTree::NotFinalized(inner))
-        } else if inner.has_hidden_nodes() {
-            Err(IncompleteTapTree::HiddenParts(inner))
+    /// A [`TapTree`] iff the `builder` is complete, otherwise return [`IncompleteTapTree`]
+    /// error with the content of incomplete `builder` instance.
+    pub fn from_builder(builder: TaprootBuilder) -> Result<Self, IncompleteTapTree> {
+        if !builder.is_finalized() {
+            Err(IncompleteTapTree::NotFinalized(builder))
+        } else if builder.has_hidden_nodes() {
+            Err(IncompleteTapTree::HiddenParts(builder))
         } else {
-            Ok(TapTree(inner))
+            Ok(TapTree(builder))
         }
     }
 
