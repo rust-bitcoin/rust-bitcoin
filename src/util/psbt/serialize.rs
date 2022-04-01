@@ -352,7 +352,7 @@ impl Deserialize for TapTree {
 
             let leaf_version = LeafVersion::from_consensus(*version)
                 .map_err(|_| encode::Error::ParseFailed("Leaf Version Error"))?;
-            builder = builder.add_leaf_with_ver(usize::from(*depth), script, leaf_version)
+            builder = builder.add_leaf_with_ver(*depth, script, leaf_version)
                 .map_err(|_| encode::Error::ParseFailed("Tree not in DFS order"))?;
         }
         if builder.is_complete() {
