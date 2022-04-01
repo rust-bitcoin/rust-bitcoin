@@ -466,6 +466,18 @@ impl TaprootBuilder {
         self.branch.len() == 1 && self.branch[0].is_some()
     }
 
+    /// Checks if the builder has hidden nodes.
+    pub fn has_hidden_nodes(&self) -> bool {
+        for node in &self.branch {
+            if let Some(node) = node {
+                if node.has_hidden_nodes {
+                    return true
+                }
+            }
+        }
+        false
+    }
+
     /// Creates a [`TaprootSpendInfo`] with the given internal key.
     pub fn finalize<C: secp256k1::Verification>(
         mut self,
