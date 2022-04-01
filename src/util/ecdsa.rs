@@ -25,7 +25,7 @@ use secp256k1;
 use EcdsaSigHashType;
 
 /// An ECDSA signature with the corresponding hash type.
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct EcdsaSig {
     /// The underlying ECDSA Signature
