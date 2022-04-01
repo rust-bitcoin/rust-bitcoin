@@ -79,7 +79,7 @@ const PSBT_IN_PROPRIETARY: u8 = 0xFC;
 
 /// A key-value map for an input of the corresponding index in the unsigned
 /// transaction.
-#[derive(Clone, Default, Debug, PartialEq)]
+#[derive(Clone, Default, Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Input {
     /// The non-witness transaction this input spends from. Should only be

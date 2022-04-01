@@ -47,7 +47,7 @@ const PSBT_OUT_PROPRIETARY: u8 = 0xFC;
 
 /// A key-value map for an output of the corresponding index in the unsigned
 /// transaction.
-#[derive(Clone, Default, Debug, PartialEq)]
+#[derive(Clone, Default, Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Output {
     /// The redeem script for this output.
@@ -80,7 +80,7 @@ pub struct Output {
 }
 
 /// Taproot Tree representing a finalized [`TaprootBuilder`] (a complete binary tree).
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct TapTree(pub(crate) TaprootBuilder);
 
