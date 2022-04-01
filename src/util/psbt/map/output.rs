@@ -47,7 +47,7 @@ const PSBT_OUT_PROPRIETARY: u8 = 0xFC;
 
 /// A key-value map for an output of the corresponding index in the unsigned
 /// transaction.
-#[derive(Clone, Default, Debug, PartialEq)]
+#[derive(Clone, Default, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Output {
     /// The redeem script for this output.

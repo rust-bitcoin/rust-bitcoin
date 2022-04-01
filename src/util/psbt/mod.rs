@@ -47,7 +47,7 @@ use self::map::Map;
 use util::bip32::{ExtendedPubKey, KeySource};
 
 /// A Partially Signed Transaction.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct PartiallySignedTransaction {
     /// The unsigned transaction, scriptSigs and witnesses for each input must be
