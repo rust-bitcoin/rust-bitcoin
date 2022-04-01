@@ -370,7 +370,32 @@ fn key_source_len(key_source: &KeySource) -> usize {
 
 #[cfg(test)]
 mod tests {
+    use hashes::hex::FromHex;
     use super::*;
+
+    // Composes tree matching a given depth map, filled with dumb script leafs,
+    // each of which consists of a single push-int op code, with int value
+    // increased for each consecutive leaf.
+    pub fn compose_taproot_builder<'map>(opcode: u8, depth_map: impl IntoIterator<Item = &'map u8>) -> TaprootBuilder {
+        let mut val = opcode;
+        let mut builder = TaprootBuilder::new();
+        for depth in depth_map {
+            let script = Script::from_hex(&format!("{:02x}", val)).unwrap();
+            builder = builder.add_leaf(*depth, script).unwrap();
+            let (new_val, _) = val.overflowing_add(1);
+            val = new_val;
+        }
+        builder
+    }
+
+    #[test]
+    fn taptree_roundtrip() {
+        let mut builder = compose_taproot_builder(0x51, &[2, 2, 2, 3]);
+        builder = builder.add_leaf_with_ver(3, Script::from_hex("b9").unwrap(), LeafVersion::from_consensus(0xC2).unwrap()).unwrap();
+        let tree = TapTree::from_inner(builder).unwrap();
+        let tree_prime = TapTree::deserialize(&tree.serialize()).unwrap();
+        assert_eq!(tree, tree_prime);
+    }
 
     #[test]
     fn can_deserialize_non_standard_psbt_sighash_type() {
