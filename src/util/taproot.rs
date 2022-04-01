@@ -549,6 +549,8 @@ pub struct NodeInfo {
     pub(crate) hash: sha256::Hash,
     /// Information about leaves inside this node.
     pub(crate) leaves: Vec<LeafInfo>,
+    /// Tracks information on hidden nodes below this node.
+    pub(crate) has_hidden_nodes: bool,
 }
 
 impl NodeInfo {
@@ -557,6 +559,7 @@ impl NodeInfo {
         Self {
             hash: hash,
             leaves: vec![],
+            has_hidden_nodes: true
         }
     }
 
@@ -566,6 +569,7 @@ impl NodeInfo {
         Self {
             hash: leaf.hash(),
             leaves: vec![leaf],
+            has_hidden_nodes: false,
         }
     }
 
@@ -584,6 +588,7 @@ impl NodeInfo {
         Ok(Self {
             hash: sha256::Hash::from_inner(hash.into_inner()),
             leaves: all_leaves,
+            has_hidden_nodes: a.has_hidden_nodes || b.has_hidden_nodes
         })
     }
 }
