@@ -56,7 +56,7 @@ pub type ProprietaryType = u8;
 /// structure according to BIP 174.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct ProprietaryKey<Subtype = ProprietaryType> where Subtype: Copy + From<u8> + Into<u8> {
+pub struct ProprietaryKey<Subtype=ProprietaryType> where Subtype: Copy + From<u8> + Into<u8> {
     /// Proprietary type prefix used for grouping together keys under some
     /// application and avoid namespace collision
     #[cfg_attr(feature = "serde", serde(with = "::serde_utils::hex_bytes"))]
@@ -99,18 +99,12 @@ impl Decodable for Key {
             key.push(Decodable::consensus_decode(&mut d)?);
         }
 
-        Ok(Key {
-            type_value,
-            key,
-        })
+        Ok(Key { type_value, key })
     }
 }
 
 impl Encodable for Key {
-    fn consensus_encode<S: io::Write>(
-        &self,
-        mut s: S,
-    ) -> Result<usize, io::Error> {
+    fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, io::Error> {
         let mut len = 0;
         len += VarInt((self.key.len() + 1) as u64).consensus_encode(&mut s)?;
 
@@ -125,10 +119,7 @@ impl Encodable for Key {
 }
 
 impl Encodable for Pair {
-    fn consensus_encode<S: io::Write>(
-        &self,
-        mut s: S,
-    ) -> Result<usize, io::Error> {
+    fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, io::Error> {
         let len = self.key.consensus_encode(&mut s)?;
         Ok(len + self.value.consensus_encode(s)?)
     }
@@ -159,11 +150,7 @@ impl<Subtype> Decodable for ProprietaryKey<Subtype> where Subtype: Copy + From<u
         let subtype = Subtype::from(d.read_u8()?);
         let key = read_to_end(d)?;
 
-        Ok(ProprietaryKey {
-            prefix,
-            subtype,
-            key
-        })
+        Ok(ProprietaryKey { prefix, subtype, key })
     }
 }
 

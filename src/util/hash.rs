@@ -36,7 +36,8 @@ use consensus::encode::Encodable;
 /// - `Some(hash)` if `hashes` contains one element. A single hash is by definition the merkle root.
 /// - `Some(merkle_root)` if length of `hashes` is greater than one.
 pub fn bitcoin_merkle_root_inline<T>(hashes: &mut [T]) -> Option<T>
-    where T: Hash + Encodable,
+where
+    T: Hash + Encodable,
           <T as Hash>::Engine: io::Write,
 {
     match hashes.len() {
@@ -53,9 +54,10 @@ pub fn bitcoin_merkle_root_inline<T>(hashes: &mut [T]) -> Option<T>
 /// - `Some(hash)` if `hashes` contains one element. A single hash is by definition the merkle root.
 /// - `Some(merkle_root)` if length of `hashes` is greater than one.
 pub fn bitcoin_merkle_root<T, I>(mut hashes: I) -> Option<T>
-    where T: Hash + Encodable,
-          <T as Hash>::Engine: io::Write,
-          I: Iterator<Item = T>,
+where
+    T: Hash + Encodable,
+    <T as Hash>::Engine: io::Write,
+    I: Iterator<Item=T>,
 {
     let first = hashes.next()?;
     let second = match hashes.next() {
@@ -84,8 +86,9 @@ pub fn bitcoin_merkle_root<T, I>(mut hashes: I) -> Option<T>
 
 // `hashes` must contain at least one hash.
 fn merkle_root_r<T>(hashes: &mut [T]) -> T
-    where T: Hash + Encodable,
-          <T as Hash>::Engine: io::Write,
+where
+    T: Hash + Encodable,
+    <T as Hash>::Engine: io::Write,
 {
     if hashes.len() == 1 {
         return hashes[0]

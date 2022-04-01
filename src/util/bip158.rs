@@ -29,21 +29,21 @@
 //! fn get_script_for_coin(coin: &OutPoint) -> Result<Script, BlockFilterError> {
 //!   // get utxo ...
 //! }
-//!  
+//!
 //! // create a block filter for a block (server side)
 //! let filter = BlockFilter::new_script_filter(&block, get_script_for_coin)?;
 //!
 //! // or create a filter from known raw data
 //! let filter = BlockFilter::new(content);
-//!  
+//!
 //! // read and evaluate a filter
-//!  
+//!
 //! let query: Iterator<Item=Script> = // .. some scripts you care about
 //! if filter.match_any(&block_hash, &mut query.map(|s| s.as_bytes())) {
 //!   // get this block
 //! }
 //!  ```
-//!  
+//!
 
 use prelude::*;
 
@@ -519,7 +519,7 @@ mod test {
     use super::*;
 
     extern crate serde_json;
-    use self::serde_json::{Value};
+    use self::serde_json::Value;
 
     use consensus::encode::deserialize;
     use std::collections::HashMap;
@@ -576,7 +576,7 @@ mod test {
     }
 
     #[test]
-    fn test_filter () {
+    fn test_filter() {
         let mut patterns = HashSet::new();
 
         patterns.insert(Vec::from_hex("000000").unwrap());

@@ -31,7 +31,6 @@ use hashes::{Hash, hash160, hex, hex::FromHex};
 use hash_types::{PubkeyHash, WPubkeyHash};
 use util::base58;
 
-
 /// A key-related error.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum Error {
@@ -44,7 +43,6 @@ pub enum Error {
     /// Hex decoding error
     Hex(hex::Error)
 }
-
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -158,14 +156,10 @@ impl PublicKey {
         let mut bytes = [0; 65];
 
         reader.read_exact(&mut bytes[0..1])?;
-        let bytes = if bytes[0] < 4 {
-            &mut bytes[..33]
-        } else {
-            &mut bytes[..65]
-        };
+        let bytes = if bytes[0] < 4 { &mut bytes[..33] } else { &mut bytes[..65] };
 
         reader.read_exact(&mut bytes[1..])?;
-        Self::from_slice(bytes).map_err(|e|{
+        Self::from_slice(bytes).map_err(|e| {
             // Need a static string for core2
             #[cfg(feature = "std")]
             let reason = e;
@@ -189,10 +183,12 @@ impl PublicKey {
 
     /// Deserialize a public key from a slice
     pub fn from_slice(data: &[u8]) -> Result<PublicKey, Error> {
-        let compressed: bool = match data.len() {
+        let compressed = match data.len() {
             33 => true,
             65 => false,
-            len =>  { return Err(base58::Error::InvalidLength(len).into()); },
+            len =>  {
+                return Err(base58::Error::InvalidLength(len).into());
+            },
         };
 
         if !compressed && data[0] != 0x04 {
@@ -285,10 +281,7 @@ impl PrivateKey {
 
     /// Deserialize a private key from a slice
     pub fn from_slice(data: &[u8], network: Network) -> Result<PrivateKey, Error> {
-        Ok(PrivateKey::new(
-            secp256k1::SecretKey::from_slice(data)?,
-            network,
-        ))
+        Ok(PrivateKey::new(secp256k1::SecretKey::from_slice(data)?, network))
     }
 
     /// Format the private key to WIF format.
@@ -323,13 +316,17 @@ impl PrivateKey {
         let compressed = match data.len() {
             33 => false,
             34 => true,
-            _ => { return Err(Error::Base58(base58::Error::InvalidLength(data.len()))); }
+            _ => {
+                return Err(Error::Base58(base58::Error::InvalidLength(data.len())));
+            }
         };
 
         let network = match data[0] {
             128 => Network::Bitcoin,
             239 => Network::Testnet,
-            x   => { return Err(Error::Base58(base58::Error::InvalidAddressVersion(x))); }
+            x   => {
+                return Err(Error::Base58(base58::Error::InvalidAddressVersion(x)));
+            }
         };
 
         Ok(PrivateKey {

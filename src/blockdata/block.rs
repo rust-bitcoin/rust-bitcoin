@@ -44,30 +44,30 @@ use VarInt;
 pub struct BlockHeader {
     /// The protocol version. Should always be 1.
     pub version: i32,
-    /// Reference to the previous block in the chain
+    /// Reference to the previous block in the chain.
     pub prev_blockhash: BlockHash,
-    /// The root hash of the merkle tree of transactions in the block
+    /// The root hash of the merkle tree of transactions in the block.
     pub merkle_root: TxMerkleNode,
-    /// The timestamp of the block, as claimed by the miner
+    /// The timestamp of the block, as claimed by the miner.
     pub time: u32,
     /// The target value below which the blockhash must lie, encoded as a
-    /// a float (with well-defined rounding, of course)
+    /// a float (with well-defined rounding, of course).
     pub bits: u32,
-    /// The nonce, selected to obtain a low enough blockhash
+    /// The nonce, selected to obtain a low enough blockhash.
     pub nonce: u32,
 }
 
 impl_consensus_encoding!(BlockHeader, version, prev_blockhash, merkle_root, time, bits, nonce);
 
 impl BlockHeader {
-    /// Return the block hash.
+    /// Returns the block hash.
     pub fn block_hash(&self) -> BlockHash {
         let mut engine = BlockHash::engine();
         self.consensus_encode(&mut engine).expect("engines don't error");
         BlockHash::from_engine(engine)
     }
 
-    /// Computes the target [0, T] that a blockhash must land in to be valid
+    /// Computes the target [0, T] that a blockhash must land in to be valid.
     pub fn target(&self) -> Uint256 {
         Self::u256_from_compact_target(self.bits)
     }
@@ -125,7 +125,7 @@ impl BlockHeader {
         compact | (size << 24) as u32
     }
 
-    /// Compute the popular "difficulty" measure for mining
+    /// Computes the popular "difficulty" measure for mining.
     pub fn difficulty(&self, network: Network) -> u64 {
         (max_target(network) / self.target()).low_u64()
     }
@@ -143,7 +143,7 @@ impl BlockHeader {
         if hash <= target { Ok(block_hash) } else { Err(BlockBadProofOfWork) }
     }
 
-    /// Returns the total work of the block
+    /// Returns the total work of the block.
     pub fn work(&self) -> Uint256 {
         // 2**256 / (target + 1) == ~target / (target+1) + 1    (eqn shamelessly stolen from bitcoind)
         let mut ret = !self.target();
@@ -169,50 +169,54 @@ pub struct Block {
 impl_consensus_encoding!(Block, header, txdata);
 
 impl Block {
-    /// Return the block hash.
+    /// Returns the block hash.
     pub fn block_hash(&self) -> BlockHash {
         self.header.block_hash()
     }
 
     /// check if merkle root of header matches merkle root of the transaction list
-    pub fn check_merkle_root (&self) -> bool {
+    pub fn check_merkle_root(&self) -> bool {
         match self.compute_merkle_root() {
             Some(merkle_root) => self.header.merkle_root == merkle_root,
             None => false,
         }
     }
 
-    /// check if witness commitment in coinbase is matching the transaction list
+    /// Checks if witness commitment in coinbase matches the transaction list.
     pub fn check_witness_commitment(&self) -> bool {
-
-        // witness commitment is optional if there are no transactions using SegWit in the block
+        const MAGIC: [u8; 6] = [0x6a, 0x24, 0xaa, 0x21, 0xa9, 0xed];
+        // Witness commitment is optional if there are no transactions using SegWit in the block.
         if self.txdata.iter().all(|t| t.input.iter().all(|i| i.witness.is_empty())) {
             return true;
         }
-        if !self.txdata.is_empty() {
-            let coinbase = &self.txdata[0];
-            if coinbase.is_coin_base() {
-                // commitment is in the last output that starts with below magic
-                if let Some(pos) = coinbase.output.iter()
-                    .rposition(|o| {
-                        o.script_pubkey.len () >= 38
-                            && o.script_pubkey[0..6] == [0x6a, 0x24, 0xaa, 0x21, 0xa9, 0xed] }) {
-                    let commitment = WitnessCommitment::from_slice(&coinbase.output[pos].script_pubkey.as_bytes()[6..38]).unwrap();
-                    // witness reserved value is in coinbase input witness
-                    let witness_vec: Vec<_> = coinbase.input[0].witness.iter().collect();
-                    if witness_vec.len() == 1 && witness_vec[0].len() == 32 {
-                        match self.witness_root() {
-                            Some(witness_root) => return commitment == Self::compute_witness_commitment(&witness_root, witness_vec[0]),
-                            None => return false,
-                        }
-                    }
+
+        if self.txdata.is_empty() {
+            return false;
+        }
+
+        let coinbase = &self.txdata[0];
+        if !coinbase.is_coin_base() {
+            return false;
+        }
+
+        // Commitment is in the last output that starts with magic bytes.
+        if let Some(pos) = coinbase.output.iter()
+            .rposition(|o| o.script_pubkey.len () >= 38 && o.script_pubkey[0..6] ==  MAGIC)
+        {
+            let commitment = WitnessCommitment::from_slice(&coinbase.output[pos].script_pubkey.as_bytes()[6..38]).unwrap();
+            // Witness reserved value is in coinbase input witness.
+            let witness_vec: Vec<_> = coinbase.input[0].witness.iter().collect();
+            if witness_vec.len() == 1 && witness_vec[0].len() == 32 {
+                if let Some(witness_root) = self.witness_root() {
+                    return commitment == Self::compute_witness_commitment(&witness_root, witness_vec[0]);
                 }
             }
         }
+
         false
     }
 
-    /// Compute the transaction merkle root.
+    /// Computes the transaction merkle root.
     pub fn compute_merkle_root(&self) -> Option<TxMerkleNode> {
         let hashes = self.txdata.iter().map(|obj| obj.txid().as_hash());
         bitcoin_merkle_root(hashes).map(|h| h.into())
@@ -224,59 +228,77 @@ impl Block {
         self.compute_merkle_root()
     }
 
-    /// compute witness commitment for the transaction list
-    pub fn compute_witness_commitment (witness_root: &WitnessMerkleNode, witness_reserved_value: &[u8]) -> WitnessCommitment {
+    /// Computes the witness commitment for the block's transaction list.
+    pub fn compute_witness_commitment(witness_root: &WitnessMerkleNode, witness_reserved_value: &[u8]) -> WitnessCommitment {
         let mut encoder = WitnessCommitment::engine();
         witness_root.consensus_encode(&mut encoder).expect("engines don't error");
         encoder.input(witness_reserved_value);
         WitnessCommitment::from_engine(encoder)
     }
 
-    /// Merkle root of transactions hashed for witness
+    /// Computes the merkle root of transactions hashed for witness.
     pub fn witness_root(&self) -> Option<WitnessMerkleNode> {
-        let hashes = self.txdata.iter().enumerate().map(|(i, t)|
+        let hashes = self.txdata.iter().enumerate().map(|(i, t)| {
             if i == 0 {
                 // Replace the first hash with zeroes.
                 Wtxid::default().as_hash()
             } else {
                 t.wtxid().as_hash()
             }
-        );
+        });
         bitcoin_merkle_root(hashes).map(|h| h.into())
     }
 
-    /// The size of the header + the size of the varint with the tx count + the txs themselves
-    #[inline]
-    fn get_base_size(&self) -> usize {
+    /// base_size == size of header + size of encoded transaction count.
+    fn base_size(&self) -> usize {
         80 + VarInt(self.txdata.len() as u64).len()
     }
 
-    /// Get the size of the block
+    /// Returns the size of the block.
+    #[deprecated(since = "0.28.0", note = "Please use `block::size` instead.")]
     pub fn get_size(&self) -> usize {
-        let txs_size: usize = self.txdata.iter().map(Transaction::get_size).sum();
-        self.get_base_size() + txs_size
+        self.size()
     }
 
-    /// Get the strippedsize of the block
+    /// Returns the size of the block.
+    ///
+    /// size == size of header + size of encoded transaction count + total size of transactions.
+    pub fn size(&self) -> usize {
+        let txs_size: usize = self.txdata.iter().map(Transaction::size).sum();
+        self.base_size() + txs_size
+    }
+
+    /// Returns the strippedsize of the block.
+    #[deprecated(since = "0.28.0", note = "Please use `transaction::strippedsize` instead.")]
     pub fn get_strippedsize(&self) -> usize {
-        let txs_size: usize = self.txdata.iter().map(Transaction::get_strippedsize).sum();
-        self.get_base_size() + txs_size
+        self.strippedsize()
     }
 
-    /// Get the weight of the block
+    /// Returns the strippedsize of the block.
+    pub fn strippedsize(&self) -> usize {
+        let txs_size: usize = self.txdata.iter().map(Transaction::strippedsize).sum();
+        self.base_size() + txs_size
+    }
+
+    /// Returns the weight of the block.
+    #[deprecated(since = "0.28.0", note = "Please use `transaction::weight` instead.")]
     pub fn get_weight(&self) -> usize {
-        let base_weight = WITNESS_SCALE_FACTOR * self.get_base_size();
-        let txs_weight: usize = self.txdata.iter().map(Transaction::get_weight).sum();
+        self.weight()
+    }
+
+    /// Returns the weight of the block.
+    pub fn weight(&self) -> usize {
+        let base_weight = WITNESS_SCALE_FACTOR * self.base_size();
+        let txs_weight: usize = self.txdata.iter().map(Transaction::weight).sum();
         base_weight + txs_weight
     }
 
-    /// Get the coinbase transaction, if one is present.
+    /// Returns the coinbase transaction, if one is present.
     pub fn coinbase(&self) -> Option<&Transaction> {
         self.txdata.first()
     }
 
-    /// Get the block height as encoded into the coinbase according to BIP34.
-    /// Returns [None] if not present.
+    /// Returns the block height, as encoded in the coinbase transaction according to BIP34.
     pub fn bip34_block_height(&self) -> Result<u64, Bip34Error> {
         // Citing the spec:
         // Add height as the first item in the coinbase transaction's scriptSig,
@@ -393,9 +415,9 @@ mod tests {
         assert_eq!(real_decode.header.difficulty(Network::Bitcoin), 1);
         // [test] TODO: check the transaction data
 
-        assert_eq!(real_decode.get_size(), some_block.len());
-        assert_eq!(real_decode.get_strippedsize(), some_block.len());
-        assert_eq!(real_decode.get_weight(), some_block.len() * 4);
+        assert_eq!(real_decode.size(), some_block.len());
+        assert_eq!(real_decode.strippedsize(), some_block.len());
+        assert_eq!(real_decode.weight(), some_block.len() * 4);
 
         // should be also ok for a non-witness block as commitment is optional in that case
         assert!(real_decode.check_witness_commitment());
@@ -428,9 +450,9 @@ mod tests {
         assert_eq!(real_decode.header.difficulty(Network::Testnet), 2456598);
         // [test] TODO: check the transaction data
 
-        assert_eq!(real_decode.get_size(), segwit_block.len());
-        assert_eq!(real_decode.get_strippedsize(), 4283);
-        assert_eq!(real_decode.get_weight(), 17168);
+        assert_eq!(real_decode.size(), segwit_block.len());
+        assert_eq!(real_decode.strippedsize(), 4283);
+        assert_eq!(real_decode.weight(), 17168);
 
         assert!(real_decode.check_witness_commitment());
 

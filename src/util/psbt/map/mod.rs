@@ -32,16 +32,10 @@ pub(super) trait Map {
     fn get_pairs(&self) -> Result<Vec<raw::Pair>, io::Error>;
 
     /// Encodes map data with bitcoin consensus encoding.
-    fn consensus_encode_map<S: io::Write>(
-        &self,
-        mut s: S,
-    ) -> Result<usize, io::Error> {
+    fn consensus_encode_map<S: io::Write>(&self, mut s: S) -> Result<usize, io::Error> {
         let mut len = 0;
         for pair in Map::get_pairs(self)? {
-            len += encode::Encodable::consensus_encode(
-                &pair,
-                &mut s,
-            )?;
+            len += encode::Encodable::consensus_encode(&pair, &mut s)?;
         }
 
         Ok(len + encode::Encodable::consensus_encode(&0x00_u8, s)?)

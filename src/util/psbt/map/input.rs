@@ -14,11 +14,13 @@
 
 use prelude::*;
 use io;
+use core::fmt;
+use core::str::FromStr;
 
 use secp256k1;
 use blockdata::script::Script;
 use blockdata::witness::Witness;
-use blockdata::transaction::{Transaction, TxOut, NonStandardSigHashType};
+use blockdata::transaction::{Transaction, TxOut, NonStandardSigHashType, SigHashTypeParseError};
 use consensus::encode;
 use hashes::{self, hash160, ripemd160, sha256, sha256d};
 use secp256k1::XOnlyPublicKey;
@@ -67,11 +69,11 @@ const PSBT_IN_TAP_SCRIPT_SIG: u8 = 0x14;
 /// Type: Taproot Leaf Script PSBT_IN_TAP_LEAF_SCRIPT = 0x14
 const PSBT_IN_TAP_LEAF_SCRIPT: u8 = 0x15;
 /// Type: Taproot Key BIP 32 Derivation Path PSBT_IN_TAP_BIP32_DERIVATION = 0x16
-const PSBT_IN_TAP_BIP32_DERIVATION : u8 = 0x16;
+const PSBT_IN_TAP_BIP32_DERIVATION: u8 = 0x16;
 /// Type: Taproot Internal Key PSBT_IN_TAP_INTERNAL_KEY = 0x17
-const PSBT_IN_TAP_INTERNAL_KEY : u8 = 0x17;
+const PSBT_IN_TAP_INTERNAL_KEY: u8 = 0x17;
 /// Type: Taproot Merkle Root PSBT_IN_TAP_MERKLE_ROOT = 0x18
-const PSBT_IN_TAP_MERKLE_ROOT : u8 = 0x18;
+const PSBT_IN_TAP_MERKLE_ROOT: u8 = 0x18;
 /// Type: Proprietary Use Type PSBT_IN_PROPRIETARY = 0xFC
 const PSBT_IN_PROPRIETARY: u8 = 0xFC;
 
@@ -133,9 +135,9 @@ pub struct Input {
     #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_as_seq"))]
     pub tap_key_origins: BTreeMap<XOnlyPublicKey, (Vec<TapLeafHash>, KeySource)>,
     /// Taproot Internal key.
-    pub tap_internal_key : Option<XOnlyPublicKey>,
+    pub tap_internal_key: Option<XOnlyPublicKey>,
     /// Taproot Merkle root.
-    pub tap_merkle_root : Option<TapBranchHash>,
+    pub tap_merkle_root: Option<TapBranchHash>,
     /// Proprietary key-value pairs for this input.
     #[cfg_attr(feature = "serde", serde(with = "::serde_utils::btreemap_as_seq_byte_values"))]
     pub proprietary: BTreeMap<raw::ProprietaryKey, Vec<u8>>,
@@ -155,15 +157,49 @@ pub struct PsbtSigHashType {
     pub (in ::util::psbt) inner: u32,
 }
 
+impl fmt::Display for PsbtSigHashType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self.schnorr_hash_ty() {
+            Ok(SchnorrSigHashType::Reserved) | Err(_) => write!(f, "{:#x}", self.inner),
+            Ok(schnorr_hash_ty) => fmt::Display::fmt(&schnorr_hash_ty, f),
+        }
+    }
+}
+
+impl FromStr for PsbtSigHashType {
+    type Err = SigHashTypeParseError;
+
+    #[inline]
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        // We accept strings of form: "SIGHASH_ALL" etc.
+        //
+        // NB: some of Schnorr sighash types are non-standard for pre-taproot
+        // inputs. We also do not support SIGHASH_RESERVED in verbatim form
+        // ("0xFF" string should be used instead).
+        match SchnorrSigHashType::from_str(s) {
+            Ok(SchnorrSigHashType::Reserved) => return Err(SigHashTypeParseError{ unrecognized: s.to_owned() }),
+            Ok(ty) => return Ok(ty.into()),
+            Err(_) => {}
+        }
+
+        // We accept non-standard sighash values.
+        // TODO: Swap `trim_left_matches` for `trim_start_matches` once MSRV >= 1.30.
+        if let Ok(inner) = u32::from_str_radix(s.trim_left_matches("0x"), 16) {
+            return Ok(PsbtSigHashType { inner });
+        }
+
+        Err(SigHashTypeParseError{ unrecognized: s.to_owned() })
+    }
+}
 impl From<EcdsaSigHashType> for PsbtSigHashType {
     fn from(ecdsa_hash_ty: EcdsaSigHashType) -> Self {
-        PsbtSigHashType {inner: ecdsa_hash_ty as u32}
+        PsbtSigHashType { inner: ecdsa_hash_ty as u32 }
     }
 }
 
 impl From<SchnorrSigHashType> for PsbtSigHashType {
     fn from(schnorr_hash_ty: SchnorrSigHashType) -> Self {
-        PsbtSigHashType {inner: schnorr_hash_ty as u32}
+        PsbtSigHashType { inner: schnorr_hash_ty as u32 }
     }
 }
 
@@ -171,7 +207,7 @@ impl PsbtSigHashType {
     /// Returns the [`EcdsaSigHashType`] if the [`PsbtSigHashType`] can be
     /// converted to one.
     pub fn ecdsa_hash_ty(self) -> Result<EcdsaSigHashType, NonStandardSigHashType> {
-        EcdsaSigHashType::from_u32_standard(self.inner)
+        EcdsaSigHashType::from_standard(self.inner)
     }
 
     /// Returns the [`SchnorrSigHashType`] if the [`PsbtSigHashType`] can be
@@ -184,29 +220,42 @@ impl PsbtSigHashType {
         }
     }
 
-    /// Obtains the inner sighash byte from this [`PsbtSigHashType`].
-    pub fn inner(self) -> u32 {
+    /// Creates a [`PsbtSigHashType`] from a raw `u32`.
+    ///
+    /// Allows construction of a non-standard or non-valid sighash flag
+    /// ([`EcdsaSigHashType`], [`SchnorrSigHashType`] respectively).
+    pub fn from_u32(n: u32) -> PsbtSigHashType {
+        PsbtSigHashType { inner: n }
+    }
+
+
+    /// Converts [`PsbtSigHashType`] to a raw `u32` sighash flag.
+    ///
+    /// No guarantees are made as to the standardness or validity of the returned value.
+    pub fn to_u32(self) -> u32 {
         self.inner
     }
 }
 
 impl Input {
-    /// Obtains the [`EcdsaSigHashType`] for this input if one is specified.
-    /// If no sighash type is specified, returns ['EcdsaSigHashType::All']
+    /// Obtains the [`EcdsaSigHashType`] for this input if one is specified. If no sighash type is
+    /// specified, returns [`EcdsaSigHashType::All`].
     ///
-    /// Errors:
-    /// If the sighash type is not a standard ecdsa sighash type
+    /// # Errors
+    ///
+    /// If the `sighash_type` field is set to a non-standard ECDSA sighash value.
     pub fn ecdsa_hash_ty(&self) -> Result<EcdsaSigHashType, NonStandardSigHashType> {
         self.sighash_type
             .map(|sighash_type| sighash_type.ecdsa_hash_ty())
             .unwrap_or(Ok(EcdsaSigHashType::All))
     }
 
-    /// Obtains the [`SchnorrSigHashType`] for this input if one is specified.
-    /// If no sighash type is specified, returns ['SchnorrSigHashType::Default']
+    /// Obtains the [`SchnorrSigHashType`] for this input if one is specified. If no sighash type is
+    /// specified, returns [`SchnorrSigHashType::Default`].
     ///
-    /// Errors:
-    /// If the sighash type is an invalid schnorr sighash type
+    /// # Errors
+    ///
+    /// If the `sighash_type` field is set to a invalid Schnorr sighash value.
     pub fn schnorr_hash_ty(&self) -> Result<SchnorrSigHashType, sighash::Error> {
         self.sighash_type
             .map(|sighash_type| sighash_type.schnorr_hash_ty())
@@ -287,7 +336,7 @@ impl Input {
                     self.tap_script_sigs <= <raw_key: (XOnlyPublicKey, TapLeafHash)>|<raw_value: SchnorrSig>
                 }
             }
-            PSBT_IN_TAP_LEAF_SCRIPT=> {
+            PSBT_IN_TAP_LEAF_SCRIPT => {
                 impl_psbt_insert_pair! {
                     self.tap_scripts <= <raw_key: ControlBlock>|< raw_value: (Script, LeafVersion)>
                 }
@@ -485,5 +534,73 @@ where
             Ok(())
         }
         btree_map::Entry::Occupied(_) => Err(psbt::Error::DuplicateKey(raw_key).into()),
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn psbt_sighash_type_ecdsa() {
+        for ecdsa in &[
+            EcdsaSigHashType::All,
+            EcdsaSigHashType::None,
+            EcdsaSigHashType::Single,
+            EcdsaSigHashType::AllPlusAnyoneCanPay,
+            EcdsaSigHashType::NonePlusAnyoneCanPay,
+            EcdsaSigHashType::SinglePlusAnyoneCanPay,
+        ] {
+            let sighash = PsbtSigHashType::from(*ecdsa);
+            let s = format!("{}", sighash);
+            let back = PsbtSigHashType::from_str(&s).unwrap();
+            assert_eq!(back, sighash);
+            assert_eq!(back.ecdsa_hash_ty().unwrap(), *ecdsa);
+        }
+    }
+
+    #[test]
+    fn psbt_sighash_type_schnorr() {
+        for schnorr in &[
+            SchnorrSigHashType::Default,
+            SchnorrSigHashType::All,
+            SchnorrSigHashType::None,
+            SchnorrSigHashType::Single,
+            SchnorrSigHashType::AllPlusAnyoneCanPay,
+            SchnorrSigHashType::NonePlusAnyoneCanPay,
+            SchnorrSigHashType::SinglePlusAnyoneCanPay,
+        ] {
+            let sighash = PsbtSigHashType::from(*schnorr);
+            let s = format!("{}", sighash);
+            let back = PsbtSigHashType::from_str(&s).unwrap();
+            assert_eq!(back, sighash);
+            assert_eq!(back.schnorr_hash_ty().unwrap(), *schnorr);
+        }
+    }
+
+    #[test]
+    fn psbt_sighash_type_schnorr_notstd() {
+        for (schnorr, schnorr_str) in &[
+            (SchnorrSigHashType::Reserved, "0xff"),
+        ] {
+            let sighash = PsbtSigHashType::from(*schnorr);
+            let s = format!("{}", sighash);
+            assert_eq!(&s, schnorr_str);
+            let back = PsbtSigHashType::from_str(&s).unwrap();
+            assert_eq!(back, sighash);
+            assert_eq!(back.schnorr_hash_ty().unwrap(), *schnorr);
+        }
+    }
+
+    #[test]
+    fn psbt_sighash_type_notstd() {
+        let nonstd = 0xdddddddd;
+        let sighash = PsbtSigHashType { inner: nonstd };
+        let s = format!("{}", sighash);
+        let back = PsbtSigHashType::from_str(&s).unwrap();
+
+        assert_eq!(back, sighash);
+        assert_eq!(back.ecdsa_hash_ty(), Err(NonStandardSigHashType(nonstd)));
+        assert_eq!(back.schnorr_hash_ty(), Err(sighash::Error::InvalidSigHashType(nonstd)));
     }
 }

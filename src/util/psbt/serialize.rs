@@ -193,7 +193,7 @@ impl Deserialize for Vec<u8> {
 
 impl Serialize for PsbtSigHashType {
     fn serialize(&self) -> Vec<u8> {
-        serialize(&self.inner())
+        serialize(&self.to_u32())
     }
 }
 
@@ -366,4 +366,16 @@ impl Deserialize for TapTree {
 // Helper function to compute key source len
 fn key_source_len(key_source: &KeySource) -> usize {
     4 + 4 * (key_source.1).as_ref().len()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn can_deserialize_non_standard_psbt_sig_hash_type() {
+        let non_standard_sighash = [222u8, 0u8, 0u8, 0u8]; // 32 byte value.
+        let sighash = PsbtSigHashType::deserialize(&non_standard_sighash);
+        assert!(sighash.is_ok())
+    }
 }

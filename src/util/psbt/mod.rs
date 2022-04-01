@@ -214,7 +214,7 @@ mod display_from_str {
 
     #[cfg(feature = "std")]
     #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-    impl ::std::error::Error for PsbtParseError { }
+    impl ::std::error::Error for PsbtParseError {}
 
     #[cfg_attr(docsrs, doc(cfg(feature = "base64")))]
     impl Display for PartiallySignedTransaction {
@@ -238,10 +238,7 @@ mod display_from_str {
 pub use self::display_from_str::PsbtParseError;
 
 impl Encodable for PartiallySignedTransaction {
-    fn consensus_encode<S: io::Write>(
-        &self,
-        mut s: S,
-    ) -> Result<usize, io::Error> {
+    fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, io::Error> {
         let mut len = 0;
         len += b"psbt".consensus_encode(&mut s)?;
 
@@ -345,10 +342,7 @@ mod tests {
             inputs: vec![],
             outputs: vec![],
         };
-        assert_eq!(
-            serialize_hex(&psbt),
-            "70736274ff01000a0200000000000000000000"
-        );
+        assert_eq!(serialize_hex(&psbt), "70736274ff01000a0200000000000000000000");
     }
 
     #[test]
@@ -390,12 +384,8 @@ mod tests {
         hd_keypaths.insert(pk.public_key, (fprint, dpath.into()));
 
         let expected: Output = Output {
-            redeem_script: Some(hex_script!(
-                "76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac"
-            )),
-            witness_script: Some(hex_script!(
-                "a9143545e6e33b832c47050f24d3eeb93c9c03948bc787"
-            )),
+            redeem_script: Some(hex_script!("76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac")),
+            witness_script: Some(hex_script!("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787")),
             bip32_derivation: hd_keypaths,
             ..Default::default()
         };
@@ -441,13 +431,8 @@ mod tests {
             version: 0,
             proprietary: Default::default(),
             unknown: Default::default(),
-            inputs: vec![
-                Input::default(),
-            ],
-            outputs: vec![
-                Output::default(),
-                Output::default()
-            ]
+            inputs: vec![Input::default()],
+            outputs: vec![Output::default(), Output::default()],
         };
 
         let actual: PartiallySignedTransaction = deserialize(&serialize(&expected)).unwrap();
@@ -804,8 +789,7 @@ mod tests {
             let psbt_non_witness_utxo = (&psbt.inputs[0].non_witness_utxo).as_ref().unwrap();
 
             assert_eq!(tx_input.previous_output.txid, psbt_non_witness_utxo.txid());
-            assert!(
-                psbt_non_witness_utxo.output[tx_input.previous_output.vout as usize]
+            assert!(psbt_non_witness_utxo.output[tx_input.previous_output.vout as usize]
                     .script_pubkey
                     .is_p2pkh()
             );
@@ -871,9 +855,7 @@ mod tests {
             let tx = &psbt.unsigned_tx;
             assert_eq!(
                 tx.txid(),
-                Txid::from_hex(
-                    "75c5c9665a570569ad77dd1279e6fd4628a093c4dcbf8d41532614044c14c115"
-                ).unwrap()
+                Txid::from_hex("75c5c9665a570569ad77dd1279e6fd4628a093c4dcbf8d41532614044c14c115").unwrap(),
             );
 
             let mut unknown: BTreeMap<raw::Key, Vec<u8>> = BTreeMap::new();
@@ -892,7 +874,6 @@ mod tests {
     mod bip_371_vectors {
         use super::*;
         use super::serialize;
-
 
         #[test]
         fn invalid_vectors() {
@@ -971,7 +952,7 @@ mod tests {
     }
 
     #[test]
-    fn serialize_and_deserialize_preimage_psbt(){
+    fn serialize_and_deserialize_preimage_psbt() {
         // create a sha preimage map
         let mut sha256_preimages = BTreeMap::new();
         sha256_preimages.insert(sha256::Hash::hash(&[1u8, 2u8]), vec![1u8, 2u8]);
@@ -1071,7 +1052,7 @@ mod tests {
         unserialized.inputs[0].hash160_preimages = hash160_preimages;
         unserialized.inputs[0].sha256_preimages = sha256_preimages;
 
-        let rtt : PartiallySignedTransaction = hex_psbt!(&serialize_hex(&unserialized)).unwrap();
+        let rtt: PartiallySignedTransaction = hex_psbt!(&serialize_hex(&unserialized)).unwrap();
         assert_eq!(rtt, unserialized);
 
         // Now add an ripemd160 with incorrect preimage
@@ -1080,7 +1061,7 @@ mod tests {
         unserialized.inputs[0].ripemd160_preimages = ripemd160_preimages;
 
         // Now the roundtrip should fail as the preimage is incorrect.
-        let rtt : Result<PartiallySignedTransaction, _> = hex_psbt!(&serialize_hex(&unserialized));
+        let rtt: Result<PartiallySignedTransaction, _> = hex_psbt!(&serialize_hex(&unserialized));
         assert!(rtt.is_err());
     }
 
@@ -1093,7 +1074,7 @@ mod tests {
             key: b"test".to_vec(),
         }, b"test".to_vec());
         assert!(!psbt.proprietary.is_empty());
-        let rtt : PartiallySignedTransaction = hex_psbt!(&serialize_hex(&psbt)).unwrap();
+        let rtt: PartiallySignedTransaction = hex_psbt!(&serialize_hex(&psbt)).unwrap();
         assert!(!rtt.proprietary.is_empty());
     }
 

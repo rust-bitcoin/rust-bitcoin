@@ -178,7 +178,7 @@ pub fn from_check(data: &str) -> Result<Vec<u8>, Error> {
 
 fn format_iter<I, W>(writer: &mut W, data: I) -> Result<(), fmt::Error>
 where
-    I: Iterator<Item = u8> + Clone,
+    I: Iterator<Item=u8> + Clone,
     W: fmt::Write
 {
     let mut ret = SmallVec::new();
@@ -219,7 +219,7 @@ where
 
 fn encode_iter<I>(data: I) -> String
 where
-    I: Iterator<Item = u8> + Clone,
+    I: Iterator<Item=u8> + Clone,
 {
     let mut ret = String::new();
     format_iter(&mut ret, data).expect("writing into string shouldn't fail");
@@ -293,10 +293,10 @@ mod tests {
         // Addresses
         let addr = Vec::from_hex("00f8917303bfa8ef24f292e8fa1419b20460ba064d").unwrap();
         assert_eq!(&check_encode_slice(&addr[..]), "1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH");
-      }
+    }
 
-      #[test]
-      fn test_base58_decode() {
+    #[test]
+    fn test_base58_decode() {
         // Basics
         assert_eq!(from("1").ok(), Some(vec![0u8]));
         assert_eq!(from("2").ok(), Some(vec![1u8]));

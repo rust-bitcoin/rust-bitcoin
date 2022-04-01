@@ -21,6 +21,7 @@ use prelude::*;
 
 use io::Write;
 use core::{fmt, str::FromStr, default::Default};
+use core::ops::Index;
 #[cfg(feature = "std")] use std::error;
 #[cfg(feature = "serde")] use serde;
 
@@ -238,8 +239,19 @@ pub trait IntoDerivationPath {
 /// A BIP-32 derivation path.
 #[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Hash)]
 pub struct DerivationPath(Vec<ChildNumber>);
-impl_index_newtype!(DerivationPath, ChildNumber);
 serde_string_impl!(DerivationPath, "a BIP-32 derivation path");
+
+impl<I> Index<I> for DerivationPath
+where
+    Vec<ChildNumber>: Index<I>,
+{
+    type Output = <Vec<ChildNumber> as Index<I>>::Output;
+
+    #[inline]
+    fn index(&self, index: I) -> &Self::Output {
+        &self.0[index]
+    }
+}
 
 impl Default for DerivationPath {
     fn default() -> DerivationPath {
@@ -284,7 +296,7 @@ impl<'a> From<&'a [ChildNumber]> for DerivationPath {
 }
 
 impl ::core::iter::FromIterator<ChildNumber> for DerivationPath {
-    fn from_iter<T>(iter: T) -> Self where T: IntoIterator<Item = ChildNumber> {
+    fn from_iter<T>(iter: T) -> Self where T: IntoIterator<Item=ChildNumber> {
         DerivationPath(Vec::from_iter(iter))
     }
 }
@@ -486,11 +498,11 @@ impl fmt::Display for Error {
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl error::Error for Error {
     fn cause(&self) -> Option<&dyn error::Error> {
-       if let Error::Secp256k1(ref e) = *self {
-           Some(e)
-       } else {
-           None
-       }
+        if let Error::Secp256k1(ref e) = *self {
+            Some(e)
+        } else {
+            None
+        }
     }
 }
 
@@ -901,34 +913,26 @@ mod tests {
         assert_eq!(indexed.child(ChildNumber::from_hardened_idx(2).unwrap()), path);
     }
 
-    fn test_path<C: secp256k1::Signing + secp256k1::Verification>(secp: &Secp256k1<C>,
-                 network: Network,
-                 seed: &[u8],
-                 path: DerivationPath,
-                 expected_sk: &str,
-                 expected_pk: &str) {
-
+    fn test_path<C: secp256k1::Signing + secp256k1::Verification>(
+        secp: &Secp256k1<C>,
+        network: Network,
+        seed: &[u8],
+        path: DerivationPath,
+        expected_sk: &str,
+        expected_pk: &str)
+    {
         let mut sk = ExtendedPrivKey::new_master(network, seed).unwrap();
         let mut pk = ExtendedPubKey::from_priv(secp, &sk);
 
         // Check derivation convenience method for ExtendedPrivKey
-        assert_eq!(
-            &sk.derive_priv(secp, &path).unwrap().to_string()[..],
-            expected_sk
-        );
+        assert_eq!(&sk.derive_priv(secp, &path).unwrap().to_string()[..], expected_sk);
 
         // Check derivation convenience method for ExtendedPubKey, should error
         // appropriately if any ChildNumber is hardened
         if path.0.iter().any(|cnum| cnum.is_hardened()) {
-            assert_eq!(
-                pk.derive_pub(secp, &path),
-                Err(Error::CannotDeriveFromHardenedKey)
-            );
+            assert_eq!(pk.derive_pub(secp, &path), Err(Error::CannotDeriveFromHardenedKey));
         } else {
-            assert_eq!(
-                &pk.derive_pub(secp, &path).unwrap().to_string()[..],
-                expected_pk
-            );
+            assert_eq!(&pk.derive_pub(secp, &path).unwrap().to_string()[..], expected_pk);
         }
 
         // Derive keys, checking hardened and non-hardened derivation one-by-one

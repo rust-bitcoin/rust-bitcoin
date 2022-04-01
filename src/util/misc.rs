@@ -217,8 +217,12 @@ mod message_signing {
 /// instance of it, returning the number of instances removed.
 /// Loops through the vector opcode by opcode, skipping pushed data.
 pub fn script_find_and_remove(haystack: &mut Vec<u8>, needle: &[u8]) -> usize {
-    if needle.len() > haystack.len() { return 0; }
-    if needle.is_empty() { return 0; }
+    if needle.len() > haystack.len() {
+        return 0;
+    }
+    if needle.is_empty() {
+        return 0;
+    }
 
     let mut top = haystack.len() - needle.len();
     let mut n_deleted = 0;
@@ -233,7 +237,9 @@ pub fn script_find_and_remove(haystack: &mut Vec<u8>, needle: &[u8]) -> usize {
             // This is ugly but prevents infinite loop in case of overflow
             let overflow = top < needle.len();
             top = top.wrapping_sub(needle.len());
-            if overflow { break; }
+            if overflow {
+                break;
+            }
         } else {
             i += match opcodes::All::from((*haystack)[i]).classify(opcodes::ClassifyContext::Legacy) {
                 opcodes::Class::PushBytes(n) => n as usize + 1,
@@ -348,5 +354,29 @@ mod tests {
             signature2.is_signed_by_address(&secp, &p2shwpkh, msg_hash),
             Err(MessageSignatureError::UnsupportedAddressType(AddressType::P2sh))
         );
+    }
+
+    #[test]
+    #[cfg(all(feature = "secp-recovery", feature = "base64"))]
+    fn test_incorrect_message_signature() {
+        use secp256k1;
+        use util::key::PublicKey;
+
+        let secp = secp256k1::Secp256k1::new();
+        let message = "a different message from what was signed";
+        let msg_hash = super::signed_msg_hash(&message);
+
+        // Signature of msg = "rust-bitcoin MessageSignature test"
+        // Signed with pk "UuOGDsfLPr4HIMKQX0ipjJeRaj1geCq3yPUF2COP5ME="
+        let signature_base64 = "IAM2qX24tYx/bdBTIgVLhD8QEAjrPlJpmjB4nZHdRYGIBa4DmVulAcwjPnWe6Q5iEwXH6F0pUCJP/ZeHPWS1h1o=";
+        let pubkey_base64 = "A1FTfMEntPpAty3qkEo0q2Dc1FEycI10a3jmwEFy+Qr6";
+        let signature = super::MessageSignature::from_base64(signature_base64).expect("message signature");
+
+        let pubkey = PublicKey::from_slice(
+            &::base64::decode(&pubkey_base64).expect("base64 string")
+        ).expect("pubkey slice");
+
+        let p2pkh = ::Address::p2pkh(&pubkey, ::Network::Bitcoin);
+        assert_eq!(signature.is_signed_by_address(&secp, &p2pkh, msg_hash), Ok(false));
     }
 }

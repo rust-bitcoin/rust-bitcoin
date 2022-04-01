@@ -27,6 +27,7 @@ use prelude::*;
 
 use io;
 use core::{fmt, default::Default};
+use core::ops::Index;
 
 #[cfg(feature = "serde")] use serde;
 
@@ -37,7 +38,7 @@ use hashes::{Hash, hex};
 use policy::DUST_RELAY_TX_FEE;
 #[cfg(feature="bitcoinconsensus")] use bitcoinconsensus;
 #[cfg(feature="bitcoinconsensus")] use core::convert::From;
-#[cfg(feature="bitcoinconsensus")] use OutPoint;
+use OutPoint;
 
 use util::key::PublicKey;
 use util::address::WitnessVersion;
@@ -48,6 +49,18 @@ use schnorr::{TapTweak, TweakedPublicKey, UntweakedPublicKey};
 /// A Bitcoin script.
 #[derive(Clone, Default, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub struct Script(Box<[u8]>);
+
+impl<I> Index<I> for Script
+where
+    [u8]: Index<I>,
+{
+    type Output = <[u8] as Index<I>>::Output;
+
+    #[inline]
+    fn index(&self, index: I) -> &Self::Output {
+        &self.0[index]
+    }
+}
 
 impl AsRef<[u8]> for Script {
     fn as_ref(&self) -> &[u8] {
@@ -89,9 +102,8 @@ impl fmt::UpperHex for Script {
 
 impl hex::FromHex for Script {
     fn from_byte_iter<I>(iter: I) -> Result<Self, hex::Error>
-        where I: Iterator<Item=Result<u8, hex::Error>> +
-            ExactSizeIterator +
-            DoubleEndedIterator,
+    where
+        I: Iterator<Item=Result<u8, hex::Error>> + ExactSizeIterator + DoubleEndedIterator,
     {
         Vec::from_byte_iter(iter).map(|v| Script(Box::<[u8]>::from(v)))
     }
@@ -109,6 +121,18 @@ impl ::core::str::FromStr for Script {
 pub struct Builder(Vec<u8>, Option<opcodes::All>);
 display_from_debug!(Builder);
 
+impl<I> Index<I> for Builder
+where
+    Vec<u8>: Index<I>,
+{
+    type Output = <Vec<u8> as Index<I>>::Output;
+
+    #[inline]
+    fn index(&self, index: I) -> &Self::Output {
+        &self.0[index]
+    }
+}
+
 /// Ways that a script might fail. Not everything is split up as
 /// much as it could be; patches welcome if more detailed errors
 /// would help you.
@@ -122,18 +146,31 @@ pub enum Error {
     /// Tried to read an array off the stack as a number when it was more than 4 bytes
     NumericOverflow,
     /// Error validating the script with bitcoinconsensus library
-    #[cfg(feature = "bitcoinconsensus")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
-    BitcoinConsensus(bitcoinconsensus::Error),
+    BitcoinConsensus(BitcoinConsensusError),
     /// Can not find the spent output
-    #[cfg(feature = "bitcoinconsensus")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
     UnknownSpentOutput(OutPoint),
     /// Can not serialize the spending transaction
-    #[cfg(feature = "bitcoinconsensus")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
     SerializationError
 }
+
+/// A [`bitcoinconsensus::Error`] alias. Exists to enable the compiler to ensure `bitcoinconsensus`
+/// feature gating is correct.
+#[cfg(feature = "bitcoinconsensus")]
+#[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
+pub type BitcoinConsensusError = bitcoinconsensus::Error;
+
+/// Dummy error type used when `bitcoinconsensus` feature is not enabled.
+#[cfg(not(feature = "bitcoinconsensus"))]
+#[cfg_attr(docsrs, doc(cfg(not(feature = "bitcoinconsensus"))))]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Clone, Copy)]
+pub struct BitcoinConsensusError {
+    _uninhabited: Uninhabited,
+}
+
+#[cfg(not(feature = "bitcoinconsensus"))]
+#[cfg_attr(docsrs, doc(cfg(not(feature = "bitcoinconsensus"))))]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Clone, Copy)]
+enum Uninhabited {}
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -141,11 +178,8 @@ impl fmt::Display for Error {
             Error::NonMinimalPush => "non-minimal datapush",
             Error::EarlyEndOfScript => "unexpected end of script",
             Error::NumericOverflow => "numeric overflow (number on stack larger than 4 bytes)",
-            #[cfg(feature="bitcoinconsensus")]
             Error::BitcoinConsensus(ref _n) => "bitcoinconsensus verification failed",
-            #[cfg(feature="bitcoinconsensus")]
             Error::UnknownSpentOutput(ref _point) => "unknown spent output Transaction::verify()",
-            #[cfg(feature="bitcoinconsensus")]
             Error::SerializationError => "can not serialize the spending transaction in Transaction::verify()",
         };
         f.write_str(str)
@@ -172,13 +206,11 @@ impl From<UintError> for Error {
     }
 }
 
-#[cfg(feature="bitcoinconsensus")]
+#[cfg(feature = "bitcoinconsensus")]
 #[doc(hidden)]
 impl From<bitcoinconsensus::Error> for Error {
     fn from(err: bitcoinconsensus::Error) -> Error {
-        match err {
-            _ => Error::BitcoinConsensus(err)
-        }
+        Error::BitcoinConsensus(err)
     }
 }
 /// Helper to encode an integer in script format
@@ -284,10 +316,10 @@ fn read_uint_iter(data: &mut ::core::slice::Iter<'_, u8>, size: usize) -> Result
 }
 
 impl Script {
-    /// Creates a new empty script
+    /// Creates a new empty script.
     pub fn new() -> Script { Script(vec![].into_boxed_slice()) }
 
-    /// Generates P2PK-type of scriptPubkey
+    /// Generates P2PK-type of scriptPubkey.
     pub fn new_p2pk(pubkey: &PublicKey) -> Script {
         Builder::new()
             .push_key(pubkey)
@@ -295,7 +327,7 @@ impl Script {
             .into_script()
     }
 
-    /// Generates P2PKH-type of scriptPubkey
+    /// Generates P2PKH-type of scriptPubkey.
     pub fn new_p2pkh(pubkey_hash: &PubkeyHash) -> Script {
         Builder::new()
             .push_opcode(opcodes::all::OP_DUP)
@@ -306,7 +338,7 @@ impl Script {
             .into_script()
     }
 
-    /// Generates P2SH-type of scriptPubkey with a given hash of the redeem script
+    /// Generates P2SH-type of scriptPubkey with a given hash of the redeem script.
     pub fn new_p2sh(script_hash: &ScriptHash) -> Script {
         Builder::new()
             .push_opcode(opcodes::all::OP_HASH160)
@@ -315,24 +347,24 @@ impl Script {
             .into_script()
     }
 
-    /// Generates P2WPKH-type of scriptPubkey
+    /// Generates P2WPKH-type of scriptPubkey.
     #[deprecated(since = "0.28.0", note = "use Script::new_v0_p2wpkh method instead")]
     pub fn new_v0_wpkh(pubkey_hash: &WPubkeyHash) -> Script {
         Script::new_v0_p2wpkh(pubkey_hash)
     }
 
-    /// Generates P2WPKH-type of scriptPubkey
+    /// Generates P2WPKH-type of scriptPubkey.
     pub fn new_v0_p2wpkh(pubkey_hash: &WPubkeyHash) -> Script {
         Script::new_witness_program(WitnessVersion::V0, &pubkey_hash[..])
     }
 
-    /// Generates P2WSH-type of scriptPubkey with a given hash of the redeem script
+    /// Generates P2WSH-type of scriptPubkey with a given hash of the redeem script.
     #[deprecated(since = "0.28.0", note = "use Script::new_v0_p2wsh method instead")]
     pub fn new_v0_wsh(script_hash: &WScriptHash) -> Script {
         Script::new_v0_p2wsh(script_hash)
     }
 
-    /// Generates P2WSH-type of scriptPubkey with a given hash of the redeem script
+    /// Generates P2WSH-type of scriptPubkey with a given hash of the redeem script.
     pub fn new_v0_p2wsh(script_hash: &WScriptHash) -> Script {
         Script::new_witness_program(WitnessVersion::V0, &script_hash[..])
     }
@@ -349,7 +381,7 @@ impl Script {
         Script::new_witness_program(WitnessVersion::V1, &output_key.serialize())
     }
 
-    /// Generates P2WSH-type of scriptPubkey with a given hash of the redeem script
+    /// Generates P2WSH-type of scriptPubkey with a given hash of the redeem script.
     pub fn new_witness_program(version: WitnessVersion, program: &[u8]) -> Script {
         Builder::new()
             .push_opcode(version.into())
@@ -357,7 +389,7 @@ impl Script {
             .into_script()
     }
 
-    /// Generates OP_RETURN-type of scriptPubkey for a given data
+    /// Generates OP_RETURN-type of scriptPubkey for the given data.
     pub fn new_op_return(data: &[u8]) -> Script {
         Builder::new()
             .push_opcode(opcodes::all::OP_RETURN)
@@ -365,44 +397,44 @@ impl Script {
             .into_script()
     }
 
-    /// Returns 160-bit hash of the script
+    /// Returns 160-bit hash of the script.
     pub fn script_hash(&self) -> ScriptHash {
         ScriptHash::hash(self.as_bytes())
     }
 
-    /// Returns 256-bit hash of the script for P2WSH outputs
+    /// Returns 256-bit hash of the script for P2WSH outputs.
     pub fn wscript_hash(&self) -> WScriptHash {
         WScriptHash::hash(self.as_bytes())
     }
 
-    /// The length in bytes of the script
+    /// Returns the length in bytes of the script.
     pub fn len(&self) -> usize { self.0.len() }
 
-    /// Whether the script is the empty script
+    /// Returns whether the script is the empty script.
     pub fn is_empty(&self) -> bool { self.0.is_empty() }
 
-    /// Returns the script data
+    /// Returns the script data as a byte slice.
     pub fn as_bytes(&self) -> &[u8] { &*self.0 }
 
-    /// Returns a copy of the script data
+    /// Returns a copy of the script data.
     pub fn to_bytes(&self) -> Vec<u8> { self.0.clone().into_vec() }
 
-    /// Convert the script into a byte vector
+    /// Converts the script into a byte vector.
     pub fn into_bytes(self) -> Vec<u8> { self.0.into_vec() }
 
-    /// Compute the P2SH output corresponding to this redeem script
+    /// Computes the P2SH output corresponding to this redeem script.
     pub fn to_p2sh(&self) -> Script {
         Script::new_p2sh(&self.script_hash())
     }
 
-    /// Compute the P2WSH output corresponding to this witnessScript (aka the "witness redeem
-    /// script")
+    /// Computes the P2WSH output corresponding to this witnessScript (aka the "witness redeem
+    /// script").
     pub fn to_v0_p2wsh(&self) -> Script {
         Script::new_v0_p2wsh(&self.wscript_hash())
     }
 
-    /// Compute P2TR output with a given internal key and a single script spending path equal to the
-    /// current script, assuming that the script is a Tapscript
+    /// Computes P2TR output with a given internal key and a single script spending path equal to
+    /// the current script, assuming that the script is a Tapscript.
     #[inline]
     pub fn to_v1_p2tr<C: Verification>(&self, secp: &Secp256k1<C>, internal_key: UntweakedPublicKey) -> Script {
         let leaf_hash = TapLeafHash::from_script(&self, LeafVersion::TapScript);
@@ -410,12 +442,13 @@ impl Script {
         Script::new_v1_p2tr(&secp, internal_key, Some(merkle_root))
     }
 
+    /// Returns witness version of the script, if any, assuming the script is a `scriptPubkey`.
     #[inline]
-    fn witness_version(&self) -> Option<WitnessVersion> {
+    pub fn witness_version(&self) -> Option<WitnessVersion> {
         self.0.get(0).and_then(|opcode| WitnessVersion::from_opcode(opcodes::All::from(*opcode)).ok())
     }
 
-    /// Checks whether a script pubkey is a p2sh output
+    /// Checks whether a script pubkey is a P2SH output.
     #[inline]
     pub fn is_p2sh(&self) -> bool {
         self.0.len() == 23
@@ -424,7 +457,7 @@ impl Script {
             && self.0[22] == opcodes::all::OP_EQUAL.into_u8()
     }
 
-    /// Checks whether a script pubkey is a p2pkh output
+    /// Checks whether a script pubkey is a P2PKH output.
     #[inline]
     pub fn is_p2pkh(&self) -> bool {
         self.0.len() == 25
@@ -435,7 +468,7 @@ impl Script {
             && self.0[24] == opcodes::all::OP_CHECKSIG.into_u8()
     }
 
-    /// Checks whether a script pubkey is a p2pk output
+    /// Checks whether a script pubkey is a P2PK output.
     #[inline]
     pub fn is_p2pk(&self) -> bool {
         match self.len() {
@@ -471,7 +504,7 @@ impl Script {
             && script_len - 2 == push_opbyte as usize
     }
 
-    /// Checks whether a script pubkey is a p2wsh output
+    /// Checks whether a script pubkey is a P2WSH output.
     #[inline]
     pub fn is_v0_p2wsh(&self) -> bool {
         self.0.len() == 34
@@ -479,7 +512,7 @@ impl Script {
             && self.0[1] == opcodes::all::OP_PUSHBYTES_32.into_u8()
     }
 
-    /// Checks whether a script pubkey is a p2wpkh output
+    /// Checks whether a script pubkey is a P2WPKH output.
     #[inline]
     pub fn is_v0_p2wpkh(&self) -> bool {
         self.0.len() == 22
@@ -487,7 +520,7 @@ impl Script {
             && self.0[1] == opcodes::all::OP_PUSHBYTES_20.into_u8()
     }
 
-    /// Checks whether a script pubkey is a P2TR output
+    /// Checks whether a script pubkey is a P2TR output.
     #[inline]
     pub fn is_v1_p2tr(&self) -> bool {
         self.0.len() == 34
@@ -495,7 +528,7 @@ impl Script {
             && self.0[1] == opcodes::all::OP_PUSHBYTES_32.into_u8()
     }
 
-    /// Check if this is an OP_RETURN output
+    /// Check if this is an OP_RETURN output.
     pub fn is_op_return (&self) -> bool {
         match self.0.first() {
             Some(b) => *b == opcodes::all::OP_RETURN.into_u8(),
@@ -503,7 +536,7 @@ impl Script {
         }
     }
 
-    /// Whether a script can be proven to have no satisfying input
+    /// Checks whether a script can be proven to have no satisfying input.
     pub fn is_provably_unspendable(&self) -> bool {
         use blockdata::opcodes::Class::{ReturnOp, IllegalOp};
 
@@ -518,13 +551,12 @@ impl Script {
         }
     }
 
-    /// Gets the minimum value an output with this script should have in order to be
-    /// broadcastable on today's bitcoin network.
+    /// Returns the minimum value an output with this script should have in order to be
+    /// broadcastable on today's Bitcoin network.
     pub fn dust_value(&self) -> ::Amount {
         // This must never be lower than Bitcoin Core's GetDustThreshold() (as of v0.21) as it may
-        // otherwise allow users to create transactions which likely can never be
-        // broadcasted/confirmed.
-        let sats = DUST_RELAY_TX_FEE as u64 / 1000 * // The default dust relay fee is 3000 satoshi/kB (ie 3 sat/vByte)
+        // otherwise allow users to create transactions which likely can never be broadcast/confirmed.
+        let sats = DUST_RELAY_TX_FEE as u64 / 1000 * // The default dust relay fee is 3000 satoshi/kB (i.e. 3 sat/vByte)
         if self.is_op_return() {
             0
         } else if self.is_witness_program() {
@@ -540,12 +572,14 @@ impl Script {
         ::Amount::from_sat(sats)
     }
 
-    /// Iterate over the script in the form of `Instruction`s, which are an enum covering
-    /// opcodes, datapushes and errors. At most one error will be returned and then the
-    /// iterator will end. To instead iterate over the script as sequence of bytes, treat
-    /// it as a slice using `script[..]` or convert it to a vector using `into_bytes()`.
+    /// Iterates over the script in the form of `Instruction`s, which are an enum covering opcodes,
+    /// datapushes and errors.
     ///
-    /// To force minimal pushes, use [Self::instructions_minimal].
+    /// At most one error will be returned and then the iterator will end. To instead iterate over
+    /// the script as sequence of bytes, treat it as a slice using `script[..]` or convert it to a
+    /// vector using `into_bytes()`.
+    ///
+    /// To force minimal pushes, use [`Self::instructions_minimal`].
     pub fn instructions(&self) -> Instructions {
         Instructions {
             data: &self.0[..],
@@ -553,8 +587,7 @@ impl Script {
         }
     }
 
-    /// Iterate over the script in the form of `Instruction`s while enforcing
-    /// minimal pushes.
+    /// Iterates over the script in the form of `Instruction`s while enforcing minimal pushes.
     pub fn instructions_minimal(&self) -> Instructions {
         Instructions {
             data: &self.0[..],
@@ -562,26 +595,27 @@ impl Script {
         }
     }
 
-    /// Shorthand for [Self::verify_with_flags] with flag [bitcoinconsensus::VERIFY_ALL]
+    /// Shorthand for [`Self::verify_with_flags`] with flag [bitcoinconsensus::VERIFY_ALL].
     #[cfg(feature="bitcoinconsensus")]
     #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
     pub fn verify (&self, index: usize, amount: ::Amount, spending: &[u8]) -> Result<(), Error> {
         self.verify_with_flags(index, amount, spending, ::bitcoinconsensus::VERIFY_ALL)
     }
 
-    /// Verify spend of an input script
+    /// Verifies spend of an input script.
+    ///
     /// # Parameters
-    ///  * `index` - the input index in spending which is spending this transaction
-    ///  * `amount` - the amount this script guards
-    ///  * `spending` - the transaction that attempts to spend the output holding this script
-    ///  * `flags` - verification flags, see [bitcoinconsensus::VERIFY_ALL] and similar
+    ///  * `index` - The input index in spending which is spending this transaction.
+    ///  * `amount` - The amount this script guards.
+    ///  * `spending` - The transaction that attempts to spend the output holding this script.
+    ///  * `flags` - Verification flags, see [`bitcoinconsensus::VERIFY_ALL`] and similar.
     #[cfg(feature="bitcoinconsensus")]
     #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
     pub fn verify_with_flags<F: Into<u32>>(&self, index: usize, amount: ::Amount, spending: &[u8], flags: F) -> Result<(), Error> {
         Ok(bitcoinconsensus::verify_with_flags (&self.0[..], amount.as_sat(), spending, index, flags.into())?)
     }
 
-    /// Write the assembly decoding of the script bytes to the formatter.
+    /// Writes the assembly decoding of the script bytes to the formatter.
     pub fn bytes_to_asm_fmt(script: &[u8], f: &mut dyn fmt::Write) -> fmt::Result {
         // This has to be a macro because it needs to break the loop
         macro_rules! read_push_data_len {
@@ -661,41 +695,39 @@ impl Script {
         Ok(())
     }
 
-    /// Write the assembly decoding of the script to the formatter.
+    /// Writes the assembly decoding of the script to the formatter.
     pub fn fmt_asm(&self, f: &mut dyn fmt::Write) -> fmt::Result {
         Script::bytes_to_asm_fmt(self.as_ref(), f)
     }
 
-    /// Create an assembly decoding of the script in the given byte slice.
+    /// Creates an assembly decoding of the script in the given byte slice.
     pub fn bytes_to_asm(script: &[u8]) -> String {
         let mut buf = String::new();
         Script::bytes_to_asm_fmt(script, &mut buf).unwrap();
         buf
     }
 
-    /// Get the assembly decoding of the script.
+    /// Returns the assembly decoding of the script.
     pub fn asm(&self) -> String {
         Script::bytes_to_asm(self.as_ref())
     }
 }
 
-/// Creates a new script from an existing vector
+/// Creates a new script from an existing vector.
 impl From<Vec<u8>> for Script {
     fn from(v: Vec<u8>) -> Script { Script(v.into_boxed_slice()) }
 }
 
-impl_index_newtype!(Script, u8);
-
-/// A "parsed opcode" which allows iterating over a Script in a more sensible way
+/// A "parsed opcode" which allows iterating over a [`Script`] in a more sensible way.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Instruction<'a> {
-    /// Push a bunch of data
+    /// Push a bunch of data.
     PushBytes(&'a [u8]),
-    /// Some non-push opcode
+    /// Some non-push opcode.
     Op(opcodes::All),
 }
 
-/// Iterator over a script returning parsed opcodes
+/// Iterator over a script returning parsed opcodes.
 pub struct Instructions<'a> {
     data: &'a [u8],
     enforce_minimal: bool,
@@ -715,7 +747,7 @@ impl<'a> Iterator for Instructions<'a> {
             opcodes::Class::PushBytes(n) => {
                 let n = n as usize;
                 if self.data.len() < n + 1 {
-                    self.data = &[];  // Kill iterator so that it does not return an infinite stream of errors
+                    self.data = &[]; // Kill iterator so that it does not return an infinite stream of errors
                     return Some(Err(Error::EarlyEndOfScript));
                 }
                 if self.enforce_minimal {
@@ -813,15 +845,15 @@ impl<'a> Iterator for Instructions<'a> {
 impl<'a> ::core::iter::FusedIterator for Instructions<'a> {}
 
 impl Builder {
-    /// Creates a new empty script
+    /// Creates a new empty script.
     pub fn new() -> Self {
         Builder(vec![], None)
     }
 
-    /// The length in bytes of the script
+    /// Returns the length in bytes of the script.
     pub fn len(&self) -> usize { self.0.len() }
 
-    /// Whether the script is the empty script
+    /// Checks whether the script is the empty script.
     pub fn is_empty(&self) -> bool { self.0.is_empty() }
 
     /// Adds instructions to push an integer onto the stack. Integers are
@@ -849,7 +881,7 @@ impl Builder {
         self.push_slice(&build_scriptint(data))
     }
 
-    /// Adds instructions to push some arbitrary data onto the stack
+    /// Adds instructions to push some arbitrary data onto the stack.
     pub fn push_slice(mut self, data: &[u8]) -> Builder {
         // Start with a PUSH opcode
         match data.len() as u64 {
@@ -878,7 +910,7 @@ impl Builder {
         self
     }
 
-    /// Pushes a public key
+    /// Adds instructions to push a public key onto the stack.
     pub fn push_key(self, key: &PublicKey) -> Builder {
         if key.compressed {
             self.push_slice(&key.inner.serialize()[..])
@@ -887,7 +919,7 @@ impl Builder {
         }
     }
 
-    /// Adds a single opcode to the script
+    /// Adds a single opcode to the script.
     pub fn push_opcode(mut self, data: opcodes::All) -> Builder {
         self.0.push(data.into_u8());
         self.1 = Some(data);
@@ -896,7 +928,7 @@ impl Builder {
 
     /// Adds an `OP_VERIFY` to the script, unless the most-recently-added
     /// opcode has an alternate `VERIFY` form, in which case that opcode
-    /// is replaced. e.g. `OP_CHECKSIG` will become `OP_CHECKSIGVERIFY`.
+    /// is replaced e.g., `OP_CHECKSIG` will become `OP_CHECKSIGVERIFY`.
     pub fn push_verify(mut self) -> Builder {
         match self.1 {
             Some(opcodes::all::OP_EQUAL) => {
@@ -919,18 +951,17 @@ impl Builder {
         }
     }
 
-    /// Converts the `Builder` into an unmodifiable `Script`
+    /// Converts the `Builder` into an unmodifiable `Script`.
     pub fn into_script(self) -> Script {
         Script(self.0.into_boxed_slice())
     }
 }
 
-/// Adds an individual opcode to the script
 impl Default for Builder {
     fn default() -> Builder { Builder::new() }
 }
 
-/// Creates a new script from an existing vector
+/// Creates a new builder from an existing vector.
 impl From<Vec<u8>> for Builder {
     fn from(v: Vec<u8>) -> Builder {
         let script = Script(v.into_boxed_slice());
@@ -942,13 +973,12 @@ impl From<Vec<u8>> for Builder {
     }
 }
 
-impl_index_newtype!(Builder, u8);
-
 #[cfg(feature = "serde")]
 #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 impl<'de> serde::Deserialize<'de> for Script {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where D: serde::Deserializer<'de>,
+    where
+        D: serde::Deserializer<'de>,
     {
         use core::fmt::Formatter;
         use hashes::hex::FromHex;
@@ -964,20 +994,23 @@ impl<'de> serde::Deserialize<'de> for Script {
                 }
 
                 fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-                    where E: serde::de::Error,
+                where
+                    E: serde::de::Error,
                 {
                     let v = Vec::from_hex(v).map_err(E::custom)?;
                     Ok(Script::from(v))
                 }
 
                 fn visit_borrowed_str<E>(self, v: &'de str) -> Result<Self::Value, E>
-                    where E: serde::de::Error,
+                where
+                    E: serde::de::Error,
                 {
                     self.visit_str(v)
                 }
 
                 fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
-                    where E: serde::de::Error,
+                where
+                    E: serde::de::Error,
                 {
                     self.visit_str(&v)
                 }
@@ -994,7 +1027,8 @@ impl<'de> serde::Deserialize<'de> for Script {
                 }
 
                 fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
-                    where E: serde::de::Error,
+                where
+                    E: serde::de::Error,
                 {
                     Ok(Script::from(v.to_vec()))
                 }
@@ -1020,13 +1054,9 @@ impl serde::Serialize for Script {
     }
 }
 
-// Network serialization
 impl Encodable for Script {
     #[inline]
-    fn consensus_encode<S: io::Write>(
-        &self,
-        s: S,
-    ) -> Result<usize, io::Error> {
+    fn consensus_encode<S: io::Write>(&self, s: S) -> Result<usize, io::Error> {
         self.0.consensus_encode(s)
     }
 }
@@ -1354,38 +1384,19 @@ mod test {
         let slop_v_nonmin: Result<Vec<Instruction>, Error> = nonminimal.instructions().collect();
         let slop_v_nonmin_alt: Result<Vec<Instruction>, Error> = nonminimal_alt.instructions().collect();
 
-        assert_eq!(
-            v_zero.unwrap(),
-            vec![
-                Instruction::PushBytes(&[]),
-            ]
-        );
-        assert_eq!(
-            v_zeropush.unwrap(),
-            vec![
-                Instruction::PushBytes(&[0]),
-            ]
-        );
+        assert_eq!(v_zero.unwrap(), vec![Instruction::PushBytes(&[])]);
+        assert_eq!(v_zeropush.unwrap(), vec![Instruction::PushBytes(&[0])]);
 
         assert_eq!(
             v_min.clone().unwrap(),
-            vec![
-                Instruction::PushBytes(&[105]),
-                Instruction::Op(opcodes::OP_NOP3),
-            ]
+            vec![Instruction::PushBytes(&[105]), Instruction::Op(opcodes::OP_NOP3)]
         );
 
-        assert_eq!(
-            v_nonmin.err().unwrap(),
-            Error::NonMinimalPush
-        );
+        assert_eq!(v_nonmin.err().unwrap(), Error::NonMinimalPush);
 
         assert_eq!(
             v_nonmin_alt.clone().unwrap(),
-            vec![
-                Instruction::PushBytes(&[105, 0]),
-                Instruction::Op(opcodes::OP_NOP3),
-            ]
+            vec![Instruction::PushBytes(&[105, 0]), Instruction::Op(opcodes::OP_NOP3)]
         );
 
         assert_eq!(v_min.clone().unwrap(), slop_v_min.unwrap());
@@ -1395,7 +1406,7 @@ mod test {
 
 	#[test]
     fn script_ord() {
-        let script_1 = Builder::new().push_slice(&[1,2,3,4]).into_script();
+        let script_1 = Builder::new().push_slice(&[1, 2, 3, 4]).into_script();
         let script_2 = Builder::new().push_int(10).into_script();
         let script_3 = Builder::new().push_int(15).into_script();
         let script_4 = Builder::new().push_opcode(opcodes::all::OP_RETURN).into_script();
@@ -1413,7 +1424,7 @@ mod test {
     }
 
 	#[test]
-	#[cfg(feature="bitcoinconsensus")]
+	#[cfg(feature = "bitcoinconsensus")]
 	fn test_bitcoinconsensus () {
 		// a random segwit transaction from the blockchain using native segwit
 		let spent = Builder::from(Vec::from_hex("0020701a8d401c84fb13e6baf169d59684e17abd9fa216c8cc5b9fc63d622ff8c58d").unwrap()).into_script();

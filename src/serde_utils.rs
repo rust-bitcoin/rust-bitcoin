@@ -13,8 +13,8 @@ pub mod btreemap_byte_values {
     use hashes::hex::{FromHex, ToHex};
     use serde;
 
-    pub fn serialize<S, T>(v: &BTreeMap<T, Vec<u8>>, s: S)
-        -> Result<S::Ok, S::Error> where
+    pub fn serialize<S, T>(v: &BTreeMap<T, Vec<u8>>, s: S) -> Result<S::Ok, S::Error>
+    where
         S: serde::Serializer,
         T: serde::Serialize + ::core::hash::Hash + Eq + Ord,
     {
@@ -32,15 +32,16 @@ pub mod btreemap_byte_values {
         }
     }
 
-    pub fn deserialize<'de, D, T>(d: D)
-        -> Result<BTreeMap<T, Vec<u8>>, D::Error> where
+    pub fn deserialize<'de, D, T>(d: D) -> Result<BTreeMap<T, Vec<u8>>, D::Error>
+    where
         D: serde::Deserializer<'de>,
         T: serde::Deserialize<'de> + ::core::hash::Hash + Eq + Ord,
     {
         use ::core::marker::PhantomData;
 
         struct Visitor<T>(PhantomData<T>);
-        impl<'de, T> serde::de::Visitor<'de> for Visitor<T> where
+        impl<'de, T> serde::de::Visitor<'de> for Visitor<T>
+        where
             T: serde::Deserialize<'de> + ::core::hash::Hash + Eq + Ord,
         {
             type Value = BTreeMap<T, Vec<u8>>;
@@ -79,8 +80,8 @@ pub mod btreemap_as_seq {
     use prelude::*;
     use serde;
 
-    pub fn serialize<S, T, U>(v: &BTreeMap<T, U>, s: S)
-        -> Result<S::Ok, S::Error> where
+    pub fn serialize<S, T, U>(v: &BTreeMap<T, U>, s: S) -> Result<S::Ok, S::Error>
+    where
         S: serde::Serializer,
         T: serde::Serialize + ::core::hash::Hash + Eq + Ord,
         U: serde::Serialize,
@@ -99,8 +100,8 @@ pub mod btreemap_as_seq {
         }
     }
 
-    pub fn deserialize<'de, D, T, U>(d: D)
-        -> Result<BTreeMap<T, U>, D::Error> where
+    pub fn deserialize<'de, D, T, U>(d: D) -> Result<BTreeMap<T, U>, D::Error>
+    where
         D: serde::Deserializer<'de>,
         T: serde::Deserialize<'de> + ::core::hash::Hash + Eq + Ord,
         U: serde::Deserialize<'de>,
@@ -108,7 +109,8 @@ pub mod btreemap_as_seq {
         use ::core::marker::PhantomData;
 
         struct Visitor<T, U>(PhantomData<(T, U)>);
-        impl<'de, T, U> serde::de::Visitor<'de> for Visitor<T, U> where
+        impl<'de, T, U> serde::de::Visitor<'de> for Visitor<T, U>
+        where
             T: serde::Deserialize<'de> + ::core::hash::Hash + Eq + Ord,
             U: serde::Deserialize<'de>,
         {
@@ -164,8 +166,8 @@ pub mod btreemap_as_seq_byte_values {
         &'a [u8],
     );
 
-    pub fn serialize<S, T>(v: &BTreeMap<T, Vec<u8>>, s: S)
-        -> Result<S::Ok, S::Error> where
+    pub fn serialize<S, T>(v: &BTreeMap<T, Vec<u8>>, s: S) -> Result<S::Ok, S::Error>
+    where
         S: serde::Serializer,
         T: serde::Serialize + ::core::hash::Hash + Eq + Ord + 'static,
     {
@@ -183,15 +185,16 @@ pub mod btreemap_as_seq_byte_values {
         }
     }
 
-    pub fn deserialize<'de, D, T>(d: D)
-        -> Result<BTreeMap<T, Vec<u8>>, D::Error> where
+    pub fn deserialize<'de, D, T>(d: D) -> Result<BTreeMap<T, Vec<u8>>, D::Error>
+    where
         D: serde::Deserializer<'de>,
         T: serde::Deserialize<'de> + ::core::hash::Hash + Eq + Ord,
     {
         use ::core::marker::PhantomData;
 
         struct Visitor<T>(PhantomData<T>);
-        impl<'de, T> serde::de::Visitor<'de> for Visitor<T> where
+        impl<'de, T> serde::de::Visitor<'de> for Visitor<T>
+        where
             T: serde::Deserialize<'de> + ::core::hash::Hash + Eq + Ord,
         {
             type Value = BTreeMap<T, Vec<u8>>;
@@ -228,7 +231,8 @@ pub mod hex_bytes {
     use serde;
 
     pub fn serialize<T, S>(bytes: &T, s: S) -> Result<S::Ok, S::Error>
-        where T: serde::Serialize + AsRef<[u8]>, S: serde::Serializer
+    where
+        T: serde::Serialize + AsRef<[u8]>, S: serde::Serializer
     {
         // Don't do anything special when not human readable.
         if !s.is_human_readable() {
@@ -239,7 +243,8 @@ pub mod hex_bytes {
     }
 
     pub fn deserialize<'de, D, B>(d: D) -> Result<B, D::Error>
-        where D: serde::Deserializer<'de>, B: serde::Deserialize<'de> + FromHex,
+    where
+        D: serde::Deserializer<'de>, B: serde::Deserialize<'de> + FromHex,
     {
         struct Visitor<B>(::core::marker::PhantomData<B>);
 
@@ -251,7 +256,8 @@ pub mod hex_bytes {
             }
 
             fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
-                where E: serde::de::Error,
+            where
+                E: serde::de::Error,
             {
                 if let Ok(hex) = ::core::str::from_utf8(v) {
                     FromHex::from_hex(hex).map_err(E::custom)
@@ -261,7 +267,8 @@ pub mod hex_bytes {
             }
 
             fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-                where E: serde::de::Error,
+            where
+                E: serde::de::Error,
             {
                 FromHex::from_hex(v).map_err(E::custom)
             }

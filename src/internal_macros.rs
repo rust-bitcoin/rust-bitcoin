@@ -93,59 +93,17 @@ macro_rules! impl_array_newtype {
             }
         }
 
-        impl_index_newtype!($thing, $ty);
-    }
-}
-
-/// Implements standard indexing methods for a given wrapper type
-macro_rules! impl_index_newtype {
-    ($thing:ident, $ty:ty) => {
-
-        impl ::core::ops::Index<usize> for $thing {
-            type Output = $ty;
+        impl<I> $crate::core::ops::Index<I> for $thing
+        where
+            [$ty]: $crate::core::ops::Index<I>,
+        {
+            type Output = <[$ty] as $crate::core::ops::Index<I>>::Output;
 
             #[inline]
-            fn index(&self, index: usize) -> &$ty {
+            fn index(&self, index: I) -> &Self::Output {
                 &self.0[index]
             }
         }
-
-        impl ::core::ops::Index<::core::ops::Range<usize>> for $thing {
-            type Output = [$ty];
-
-            #[inline]
-            fn index(&self, index: ::core::ops::Range<usize>) -> &[$ty] {
-                &self.0[index]
-            }
-        }
-
-        impl ::core::ops::Index<::core::ops::RangeTo<usize>> for $thing {
-            type Output = [$ty];
-
-            #[inline]
-            fn index(&self, index: ::core::ops::RangeTo<usize>) -> &[$ty] {
-                &self.0[index]
-            }
-        }
-
-        impl ::core::ops::Index<::core::ops::RangeFrom<usize>> for $thing {
-            type Output = [$ty];
-
-            #[inline]
-            fn index(&self, index: ::core::ops::RangeFrom<usize>) -> &[$ty] {
-                &self.0[index]
-            }
-        }
-
-        impl ::core::ops::Index<::core::ops::RangeFull> for $thing {
-            type Output = [$ty];
-
-            #[inline]
-            fn index(&self, _: ::core::ops::RangeFull) -> &[$ty] {
-                &self.0[..]
-            }
-        }
-
     }
 }
 
@@ -202,7 +160,7 @@ macro_rules! serde_string_impl {
                         self.visit_str(v)
                     }
 
-                    fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+                    fn visit_string<E>(self, v: $crate::prelude::String) -> Result<Self::Value, E>
                     where
                         E: $crate::serde::de::Error,
                     {
@@ -264,7 +222,7 @@ macro_rules! serde_struct_human_string_impl {
                             self.visit_str(v)
                         }
 
-                        fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+                        fn visit_string<E>(self, v: $crate::prelude::String) -> Result<Self::Value, E>
                         where
                             E: $crate::serde::de::Error,
                         {
@@ -446,9 +404,10 @@ macro_rules! impl_bytes_newtype {
 
         impl $crate::hashes::hex::FromHex for $t {
             fn from_byte_iter<I>(iter: I) -> Result<Self, $crate::hashes::hex::Error>
-                where I: ::core::iter::Iterator<Item=Result<u8, $crate::hashes::hex::Error>> +
-                    ::core::iter::ExactSizeIterator +
-                    ::core::iter::DoubleEndedIterator,
+            where
+                I: ::core::iter::Iterator<Item=Result<u8, $crate::hashes::hex::Error>>
+                + ::core::iter::ExactSizeIterator
+                + ::core::iter::DoubleEndedIterator,
             {
                 if iter.len() == $len {
                     let mut ret = [0; $len];
