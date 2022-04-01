@@ -43,7 +43,7 @@ use OutPoint;
 use util::key::PublicKey;
 use util::address::WitnessVersion;
 use util::taproot::{LeafVersion, TapBranchHash, TapLeafHash};
-use secp256k1::{Secp256k1, Verification};
+use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
 use schnorr::{TapTweak, TweakedPublicKey, UntweakedPublicKey};
 
 /// A Bitcoin script.
@@ -919,6 +919,11 @@ impl Builder {
         }
     }
 
+    /// Adds instructions to push an XOnly public key onto the stack.
+    pub fn push_x_only_key(self, x_only_key: &XOnlyPublicKey) -> Builder {
+        self.push_slice(&x_only_key.serialize())
+    }
+
     /// Adds a single opcode to the script.
     pub fn push_opcode(mut self, data: opcodes::All) -> Builder {
         self.0.push(data.into_u8());
@@ -1115,6 +1120,17 @@ mod test {
         // opcodes
         script = script.push_opcode(opcodes::all::OP_CHECKSIG); comp.push(0xACu8); assert_eq!(&script[..], &comp[..]);
         script = script.push_opcode(opcodes::all::OP_CHECKSIG); comp.push(0xACu8); assert_eq!(&script[..], &comp[..]);
+    }
+
+    #[test]
+    fn script_x_only_key() {
+        // Notice the "20" which prepends the keystr. That 20 is hexidecimal for "32". The Builder automatically adds the 32 opcode
+        // to our script in order to give a heads up to the script compiler that it should add the next 32 bytes to the stack.
+        // From: https://github.com/bitcoin-core/btcdeb/blob/e8c2750c4a4702768c52d15640ed03bf744d2601/doc/tapscript-example.md?plain=1#L43
+        let keystr = "209997a497d964fc1a62885b05a51166a65a90df00492c8d7cf61d6accf54803be";
+        let x_only_key = XOnlyPublicKey::from_str(&keystr[2..]).unwrap();
+        let script = Builder::new().push_x_only_key(&x_only_key);
+        assert_eq!(script.0, Vec::from_hex(keystr).unwrap());
     }
 
     #[test]
