@@ -123,7 +123,7 @@ pub use blockdata::transaction::Transaction;
 pub use blockdata::transaction::TxIn;
 pub use blockdata::transaction::TxOut;
 pub use blockdata::transaction::OutPoint;
-pub use blockdata::transaction::EcdsaSigHashType;
+pub use blockdata::transaction::EcdsaSighashType;
 pub use blockdata::witness::Witness;
 pub use consensus::encode::VarInt;
 pub use network::constants::Network;
@@ -134,7 +134,7 @@ pub use util::amount::Amount;
 pub use util::amount::Denomination;
 pub use util::amount::SignedAmount;
 pub use util::merkleblock::MerkleBlock;
-pub use util::sighash::SchnorrSigHashType;
+pub use util::sighash::SchnorrSighashType;
 
 pub use util::ecdsa::{self, EcdsaSig, EcdsaSigError};
 pub use util::schnorr::{self, SchnorrSig, SchnorrSigError};

@@ -35,7 +35,7 @@ use util::taproot::{TapBranchHash, TapLeafHash, ControlBlock, LeafVersion};
 use schnorr;
 use util::key::PublicKey;
 
-use super::map::{TapTree, PsbtSigHashType};
+use super::map::{TapTree, PsbtSighashType};
 
 use util::taproot::TaprootBuilder;
 /// A trait for serializing a value as raw data for insertion into PSBT
@@ -118,7 +118,7 @@ impl Deserialize for EcdsaSig {
         //
         // 1) the current implementation of from_u32_consensus(`flag`) does not preserve
         // the sighash byte `flag` mapping all unknown values to EcdsaSighashType::All or
-        // EcdsaSigHashType::AllPlusAnyOneCanPay. Therefore, break the invariant
+        // EcdsaSighashType::AllPlusAnyOneCanPay. Therefore, break the invariant
         // EcdsaSig::from_slice(&sl[..]).to_vec = sl.
         //
         // 2) This would cause to have invalid signatures because the sighash message
@@ -130,8 +130,8 @@ impl Deserialize for EcdsaSig {
                 EcdsaSigError::EmptySignature => {
                     encode::Error::ParseFailed("Empty partial signature data")
                 }
-                EcdsaSigError::NonStandardSigHashType(flag) => {
-                    encode::Error::from(psbt::Error::NonStandardSigHashType(flag))
+                EcdsaSigError::NonStandardSighashType(flag) => {
+                    encode::Error::from(psbt::Error::NonStandardSighashType(flag))
                 }
                 EcdsaSigError::Secp256k1(..) => {
                     encode::Error::ParseFailed("Invalid Ecdsa signature")
@@ -191,16 +191,16 @@ impl Deserialize for Vec<u8> {
     }
 }
 
-impl Serialize for PsbtSigHashType {
+impl Serialize for PsbtSighashType {
     fn serialize(&self) -> Vec<u8> {
         serialize(&self.to_u32())
     }
 }
 
-impl Deserialize for PsbtSigHashType {
+impl Deserialize for PsbtSighashType {
     fn deserialize(bytes: &[u8]) -> Result<Self, encode::Error> {
         let raw: u32 = encode::deserialize(bytes)?;
-        Ok(PsbtSigHashType { inner: raw })
+        Ok(PsbtSighashType { inner: raw })
     }
 }
 
@@ -229,7 +229,7 @@ impl Deserialize for schnorr::SchnorrSig {
         schnorr::SchnorrSig::from_slice(&bytes)
             .map_err(|e| match e {
                 schnorr::SchnorrSigError::InvalidSighashType(flag) => {
-                    encode::Error::from(psbt::Error::NonStandardSigHashType(flag as u32))
+                    encode::Error::from(psbt::Error::NonStandardSighashType(flag as u32))
                 }
                 schnorr::SchnorrSigError::InvalidSchnorrSigSize(_) => {
                     encode::Error::ParseFailed("Invalid Schnorr signature length")
@@ -373,9 +373,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn can_deserialize_non_standard_psbt_sig_hash_type() {
+    fn can_deserialize_non_standard_psbt_sighash_type() {
         let non_standard_sighash = [222u8, 0u8, 0u8, 0u8]; // 32 byte value.
-        let sighash = PsbtSigHashType::deserialize(&non_standard_sighash);
+        let sighash = PsbtSighashType::deserialize(&non_standard_sighash);
         assert!(sighash.is_ok())
     }
 }

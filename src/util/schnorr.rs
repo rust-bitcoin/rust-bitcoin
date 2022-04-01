@@ -25,7 +25,7 @@ use secp256k1::{XOnlyPublicKey as _XOnlyPublicKey, KeyPair as _KeyPair};
 use secp256k1::{self, Secp256k1, Verification, constants};
 use hashes::Hash;
 use util::taproot::{TapBranchHash, TapTweakHash};
-use SchnorrSigHashType;
+use SchnorrSighashType;
 
 /// Deprecated re-export of [`secp256k1::XOnlyPublicKey`]
 #[deprecated(since = "0.28.0", note = "Please use `util::key::XOnlyPublicKey` instead")]
@@ -220,7 +220,7 @@ pub struct SchnorrSig {
     /// The underlying schnorr signature
     pub sig: secp256k1::schnorr::Signature,
     /// The corresponding hash type
-    pub hash_ty: SchnorrSigHashType,
+    pub hash_ty: SchnorrSighashType,
 }
 
 impl SchnorrSig {
@@ -231,11 +231,11 @@ impl SchnorrSig {
                 // default type
                 let sig = secp256k1::schnorr::Signature::from_slice(sl)
                     .map_err(SchnorrSigError::Secp256k1)?;
-                return Ok( SchnorrSig { sig, hash_ty : SchnorrSigHashType::Default });
+                return Ok( SchnorrSig { sig, hash_ty : SchnorrSighashType::Default });
             },
             65 => {
                 let (hash_ty, sig) = sl.split_last().expect("Slice len checked == 65");
-                let hash_ty = SchnorrSigHashType::from_u8(*hash_ty)
+                let hash_ty = SchnorrSighashType::from_u8(*hash_ty)
                     .map_err(|_| SchnorrSigError::InvalidSighashType(*hash_ty))?;
                 let sig = secp256k1::schnorr::Signature::from_slice(sig)
                     .map_err(SchnorrSigError::Secp256k1)?;
@@ -251,7 +251,7 @@ impl SchnorrSig {
     pub fn to_vec(&self) -> Vec<u8> {
         // TODO: add support to serialize to a writer to SerializedSig
         let mut ser_sig = self.sig.as_ref().to_vec();
-        if self.hash_ty == SchnorrSigHashType::Default {
+        if self.hash_ty == SchnorrSighashType::Default {
             // default sighash type, don't add extra sighash byte
         } else {
             ser_sig.push(self.hash_ty as u8);

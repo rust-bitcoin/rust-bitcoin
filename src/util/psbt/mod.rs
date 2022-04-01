@@ -16,7 +16,7 @@
 //!
 //! Implementation of BIP174 Partially Signed Bitcoin Transaction Format as
 //! defined at <https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki>
-//! except we define PSBTs containing non-standard SigHash types as invalid.
+//! except we define PSBTs containing non-standard sighash types as invalid.
 //!
 
 use core::cmp;
@@ -41,7 +41,7 @@ mod macros;
 pub mod serialize;
 
 mod map;
-pub use self::map::{Input, Output, TapTree, PsbtSigHashType};
+pub use self::map::{Input, Output, TapTree, PsbtSighashType};
 use self::map::Map;
 
 use util::bip32::{ExtendedPubKey, KeySource};
@@ -468,7 +468,7 @@ mod tests {
         //! Create a full PSBT value with various fields filled and make sure it can be JSONized.
         use hashes::sha256d;
         use util::psbt::map::Input;
-        use EcdsaSigHashType;
+        use EcdsaSighashType;
 
         // create some values to use in the PSBT
         let tx = Transaction {
@@ -532,7 +532,7 @@ mod tests {
                     value: 190303501938,
                     script_pubkey: hex_script!("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587"),
                 }),
-                sighash_type: Some("SIGHASH_SINGLE|SIGHASH_ANYONECANPAY".parse::<EcdsaSigHashType>().unwrap().into()),
+                sighash_type: Some("SIGHASH_SINGLE|SIGHASH_ANYONECANPAY".parse::<EcdsaSighashType>().unwrap().into()),
                 redeem_script: Some(vec![0x51].into()),
                 witness_script: None,
                 partial_sigs: vec![(
@@ -569,7 +569,7 @@ mod tests {
         use hash_types::Txid;
 
         use blockdata::script::Script;
-        use blockdata::transaction::{EcdsaSigHashType, Transaction, TxIn, TxOut, OutPoint};
+        use blockdata::transaction::{EcdsaSighashType, Transaction, TxIn, TxOut, OutPoint};
         use consensus::encode::serialize_hex;
         use util::psbt::map::{Map, Input, Output};
         use util::psbt::raw;
@@ -795,7 +795,7 @@ mod tests {
             );
             assert_eq!(
                 (&psbt.inputs[0].sighash_type).as_ref().unwrap().ecdsa_hash_ty().unwrap(),
-                EcdsaSigHashType::All
+                EcdsaSighashType::All
             );
         }
 
