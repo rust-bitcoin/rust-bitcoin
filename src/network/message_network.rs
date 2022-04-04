@@ -26,7 +26,6 @@ use network::address::Address;
 use network::constants::{self, ServiceFlags};
 use consensus::{Encodable, Decodable, ReadExt};
 use consensus::encode;
-use network::message::CommandString;
 use hashes::sha256d;
 
 /// Some simple messages
@@ -133,7 +132,7 @@ impl Decodable for RejectReason {
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct Reject {
     /// message type rejected
-    pub message: CommandString,
+    pub message: Cow<'static, str>,
     /// reason of rejection as code
     pub ccode: RejectReason,
     /// reason of rejectection
