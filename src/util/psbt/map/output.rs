@@ -26,7 +26,7 @@ use util::psbt::map::Map;
 use util::psbt::raw;
 use util::psbt::Error;
 
-use util::taproot::{LeafInfo, TapLeafHash};
+use util::taproot::{ScriptLeaf, TapLeafHash};
 
 use util::taproot::{NodeInfo, TaprootBuilder};
 
@@ -156,7 +156,7 @@ impl TapTree {
     }
 
     /// Returns [`TapTreeIter`] iterator for a taproot script tree, operating in DFS order over
-    /// leaf depth and leaf script pairs.
+    /// tree [`ScriptLeaf`]s.
     pub fn script_leaves(&self) -> TapTreeIter {
         self.into_iter()
     }
@@ -165,11 +165,11 @@ impl TapTree {
 /// Iterator for a taproot script tree, operating in DFS order over leaf depth and
 /// leaf script pairs.
 pub struct TapTreeIter<'tree> {
-    leaf_iter: core::slice::Iter<'tree, LeafInfo>,
+    leaf_iter: core::slice::Iter<'tree, ScriptLeaf>,
 }
 
 impl<'tree> Iterator for TapTreeIter<'tree> {
-    type Item = &'tree LeafInfo;
+    type Item = &'tree ScriptLeaf;
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
@@ -178,7 +178,7 @@ impl<'tree> Iterator for TapTreeIter<'tree> {
 }
 
 impl<'tree> IntoIterator for &'tree TapTree {
-    type Item = &'tree LeafInfo;
+    type Item = &'tree ScriptLeaf;
     type IntoIter = TapTreeIter<'tree>;
 
     fn into_iter(self) -> Self::IntoIter {
