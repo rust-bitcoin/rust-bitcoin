@@ -155,9 +155,9 @@ impl TapTree {
         self.0
     }
 
-    /// Returns iterator for a taproot script tree, operating in DFS order over leaf depth and
-    /// leaf script pairs.
-    pub fn iter(&self) -> TapTreeIter {
+    /// Returns [`TapTreeIter`] iterator for a taproot script tree, operating in DFS order over
+    /// leaf depth and leaf script pairs.
+    pub fn script_leaves(&self) -> TapTreeIter {
         self.into_iter()
     }
 }
