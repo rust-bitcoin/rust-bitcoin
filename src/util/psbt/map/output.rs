@@ -125,6 +125,13 @@ impl PartialEq for TapTree {
 
 impl Eq for TapTree {}
 
+impl From<TapTree> for TaprootBuilder {
+    #[inline]
+    fn from(tree: TapTree) -> Self {
+        tree.into_builder()
+    }
+}
+
 impl TapTree {
     /// Gets the inner node info as the builder is finalized.
     pub fn node_info(&self) -> &NodeInfo {
