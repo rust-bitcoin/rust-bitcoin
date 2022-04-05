@@ -143,6 +143,8 @@ impl TapTree {
     pub fn from_inner(inner: TaprootBuilder) -> Result<Self, IncompleteTapTree> {
         if !inner.is_finalized() {
             Err(IncompleteTapTree::NotFinalized(inner))
+        } else if inner.has_hidden_nodes() {
+            Err(IncompleteTapTree::HiddenParts(inner))
         } else {
             Ok(TapTree(inner))
         }
