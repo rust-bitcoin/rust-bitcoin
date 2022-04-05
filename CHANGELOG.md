@@ -1,3 +1,63 @@
+# 0.28 - 2021-04-05 "The Taproot Release"
+
+At nearly nine months, this is our longest release cycle ever, and thanks
+to a huge increase in the number of active contributors this year and last,
+it is also **by far** our largest release ever, at 148 PRs merged from 23
+different contributors. Our primary goal in this release was to introduce
+support for Taproot and its associated data structures: addresses, taptrees,
+sighashes, PSBT fields, and more. As it turned out, these changes required
+(or at least, incentivized) changing a lot of our APIs, causing a significant
+increase in scope.
+
+We have more big changes coming down the pike. 2022 is going to be a big
+year for `rust-bitcoin`, which we know is exciting for us but disruptive to
+downstream users who ultimately want the library to just wark. Our hope is
+that by 2023 we will have eliminated large amounts of technical debt,
+modernized our APIs to meet current Rust conventions, and clarified the scope
+of the individual crates in this ecosystem while still providing the essential
+functionality needed by our downstream users, especially wallet projects.
+
+We will also develop a plan to make our releases more predictable and manageable,
+likely by having scheduled releases with limited scope. We would like to reach
+a point where we no longer have frequent breaking releases, but right now we
+are nowhere close.
+
+Upcoming changes will include
+- A quick new release which updates our MRSV from 1.29 to 1.41 and does little else
+- Updating our codebase to take advantage of the new MSRV, especially regarding
+nostd and wasm support
+- A comprehensive rethinking and flattening of our public-facing APIs
+- Richer support for PSBT, Script, and BIP-0340/Schnorr signatures
+
+With so many changes since 0.27, we cannot list every PR. Here are the highlights:
+
+- Remove dangerous `fuzztarget` cargo feature [#634](https://github.com/rust-bitcoin/rust-bitcoin/pull/634)
+- Improve serde serialization for `Script` [#596](https://github.com/rust-bitcoin/rust-bitcoin/pull/596)
+- Documentation improvements [#623](https://github.com/rust-bitcoin/rust-bitcoin/pull/623) [#633](https://github.com/rust-bitcoin/rust-bitcoin/pull/633) [#663](https://github.com/rust-bitcoin/rust-bitcoin/pull/663) [#689](https://github.com/rust-bitcoin/rust-bitcoin/pull/689) [#704](https://github.com/rust-bitcoin/rust-bitcoin/pull/704) [#744](https://github.com/rust-bitcoin/rust-bitcoin/pull/744) [#852](https://github.com/rust-bitcoin/rust-bitcoin/pull/852) [#869](https://github.com/rust-bitcoin/rust-bitcoin/pull/869) [#865](https://github.com/rust-bitcoin/rust-bitcoin/pull/865) [#864](https://github.com/rust-bitcoin/rust-bitcoin/pull/864) [#858](https://github.com/rust-bitcoin/rust-bitcoin/pull/858) [#806](https://github.com/rust-bitcoin/rust-bitcoin/pull/806) [#877](https://github.com/rust-bitcoin/rust-bitcoin/pull/877) [#912](https://github.com/rust-bitcoin/rust-bitcoin/pull/912) [#923](https://github.com/rust-bitcoin/rust-bitcoin/pull/923)
+- Introduce `WitnessVersion` type [#617](https://github.com/rust-bitcoin/rust-bitcoin/pull/617)
+- Improve error types and API [#625](https://github.com/rust-bitcoin/rust-bitcoin/pull/625)
+- Implement `Block.get_strippedsize()` and `Transaction.get_vsize()` [#626](https://github.com/rust-bitcoin/rust-bitcoin/pull/626)
+- Add Bloom filter network messages [#580](https://github.com/rust-bitcoin/rust-bitcoin/pull/580)
+- **Taproot:** add signature hash support [#628](https://github.com/rust-bitcoin/rust-bitcoin/pull/628) [#702](https://github.com/rust-bitcoin/rust-bitcoin/pull/702) [#722](https://github.com/rust-bitcoin/rust-bitcoin/pull/722) [#835](https://github.com/rust-bitcoin/rust-bitcoin/pull/835) [#903](https://github.com/rust-bitcoin/rust-bitcoin/pull/903) [#796](https://github.com/rust-bitcoin/rust-bitcoin/pull/796)
+- **Taproot:** add new Script opcodes [#644](https://github.com/rust-bitcoin/rust-bitcoin/pull/644) [#721](https://github.com/rust-bitcoin/rust-bitcoin/pull/721) [#868](https://github.com/rust-bitcoin/rust-bitcoin/pull/868) [#920](https://github.com/rust-bitcoin/rust-bitcoin/pull/920)
+- **Taproot:** add bech32m support, addresses and new key types [#563](https://github.com/rust-bitcoin/rust-bitcoin/pull/563) [#691](https://github.com/rust-bitcoin/rust-bitcoin/pull/691) [#697](https://github.com/rust-bitcoin/rust-bitcoin/pull/697) [#728](https://github.com/rust-bitcoin/rust-bitcoin/pull/728) [#696](https://github.com/rust-bitcoin/rust-bitcoin/pull/696) [#757](https://github.com/rust-bitcoin/rust-bitcoin/pull/757)
+- **Taproot:** add taptree data structures [#677](https://github.com/rust-bitcoin/rust-bitcoin/pull/677) [#703](https://github.com/rust-bitcoin/rust-bitcoin/pull/703) [#701](https://github.com/rust-bitcoin/rust-bitcoin/pull/701) [#718](https://github.com/rust-bitcoin/rust-bitcoin/pull/718) [#845](https://github.com/rust-bitcoin/rust-bitcoin/pull/845) [#901](https://github.com/rust-bitcoin/rust-bitcoin/pull/901) [#910](https://github.com/rust-bitcoin/rust-bitcoin/pull/910) [#909](https://github.com/rust-bitcoin/rust-bitcoin/pull/909) [#914](https://github.com/rust-bitcoin/rust-bitcoin/pull/914)
+- no-std improvements [#637](https://github.com/rust-bitcoin/rust-bitcoin/pull/637)
+- PSBT improvements, including Taproot [#654](https://github.com/rust-bitcoin/rust-bitcoin/pull/654) [#681](https://github.com/rust-bitcoin/rust-bitcoin/pull/681) [#669](https://github.com/rust-bitcoin/rust-bitcoin/pull/669) [#774](https://github.com/rust-bitcoin/rust-bitcoin/pull/774) [#779](https://github.com/rust-bitcoin/rust-bitcoin/pull/779) [#752](https://github.com/rust-bitcoin/rust-bitcoin/pull/752) [#776](https://github.com/rust-bitcoin/rust-bitcoin/pull/776) [#790](https://github.com/rust-bitcoin/rust-bitcoin/pull/790) [#836](https://github.com/rust-bitcoin/rust-bitcoin/pull/836) [#847](https://github.com/rust-bitcoin/rust-bitcoin/pull/847) [#842](https://github.com/rust-bitcoin/rust-bitcoin/pull/842)
+- serde improvements [#672](https://github.com/rust-bitcoin/rust-bitcoin/pull/672)
+- Update rust-secp256k1 dependency [#694](https://github.com/rust-bitcoin/rust-bitcoin/pull/694) [#755](https://github.com/rust-bitcoin/rust-bitcoin/pull/755) [#875](https://github.com/rust-bitcoin/rust-bitcoin/pull/875)
+- Change BIP32 to use rust-secp256k1 keys rather than rust-bitcoin ones (no compressedness flag) [#590](https://github.com/rust-bitcoin/rust-bitcoin/pull/590) [#591](https://github.com/rust-bitcoin/rust-bitcoin/pull/591)
+- Rename inner key field in `PrivateKey` and `PublicKey` [#762](https://github.com/rust-bitcoin/rust-bitcoin/pull/762)
+- Address and denomination related changes [#768](https://github.com/rust-bitcoin/rust-bitcoin/pull/768) [#784](https://github.com/rust-bitcoin/rust-bitcoin/pull/784)
+- Don't allow hybrid EC keys [#829](https://github.com/rust-bitcoin/rust-bitcoin/pull/829)
+- Change erroneous behavior for `SIGHASH_SINGLE` bug [#860](https://github.com/rust-bitcoin/rust-bitcoin/pull/860) [#897](https://github.com/rust-bitcoin/rust-bitcoin/pull/897)
+- Delete the deprecated `contracthash` module [#871](https://github.com/rust-bitcoin/rust-bitcoin/pull/871); this functionality will migrate to ElementsProject/rust-elements
+- Remove compilation-breaking feature-gated enum variants [#881](https://github.com/rust-bitcoin/rust-bitcoin/pull/881)
+
+Additionally we made several minor API changes (renaming methods, etc.) to improve
+compliance with modern Rust conventions. Where possible we left the existing methods
+in place, marked as deprecated.
+
 # 0.27 - 2021-07-21
 
 - [Bigendian fixes and CI test](https://github.com/rust-bitcoin/rust-bitcoin/pull/627)
