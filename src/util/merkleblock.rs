@@ -114,11 +114,11 @@ pub enum MerkleBlockError {
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct PartialMerkleTree {
     /// The total number of transactions in the block
-    num_transactions: u32,
+    pub num_transactions: u32,
     /// node-is-parent-of-matched-txid bits
-    bits: Vec<bool>,
+    pub bits: Vec<bool>,
     /// Transaction ids and internal hashes
-    hashes: Vec<TxMerkleNode>,
+    pub hashes: Vec<TxMerkleNode>,
 }
 
 impl PartialMerkleTree {
