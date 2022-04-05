@@ -461,8 +461,8 @@ impl TaprootBuilder {
         self.insert(node, depth)
     }
 
-    /// Checks if the builder is a complete tree.
-    pub fn is_complete(&self) -> bool {
+    /// Checks if the builder has finalized building a tree.
+    pub fn is_finalized(&self) -> bool {
         self.branch.len() == 1 && self.branch[0].is_some()
     }
 

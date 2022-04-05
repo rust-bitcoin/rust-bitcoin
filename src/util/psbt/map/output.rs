@@ -141,7 +141,7 @@ impl TapTree {
     /// A [`TapTree`] iff the `inner` builder is complete, otherwise return [`IncompleteTapTree`]
     /// error with the content of incomplete builder `inner` instance.
     pub fn from_inner(inner: TaprootBuilder) -> Result<Self, IncompleteTapTree> {
-        if !inner.is_complete() {
+        if !inner.is_finalized() {
             Err(IncompleteTapTree::NotFinalized(inner))
         } else {
             Ok(TapTree(inner))
