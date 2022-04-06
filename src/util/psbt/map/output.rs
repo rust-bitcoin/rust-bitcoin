@@ -162,6 +162,12 @@ impl TapTree {
         self.0
     }
 
+    /// Constructs [`TaprootBuilder`] by internally cloning the `self`. The builder is guaranteed
+    /// to be finalized.
+    pub fn to_builder(&self) -> TaprootBuilder {
+        self.0.clone()
+    }
+
     /// Returns [`TapTreeIter`] iterator for a taproot script tree, operating in DFS order over
     /// tree [`ScriptLeaf`]s.
     pub fn script_leaves(&self) -> TapTreeIter {
