@@ -158,7 +158,15 @@ impl TapTree {
     /// Returns [`TapTreeIter`] iterator for a taproot script tree, operating in DFS order over
     /// tree [`ScriptLeaf`]s.
     pub fn script_leaves(&self) -> TapTreeIter {
-        self.into_iter()
+        match (self.0.branch().len(), self.0.branch().last()) {
+            (1, Some(Some(root))) => {
+                TapTreeIter {
+                    leaf_iter: root.leaves.iter()
+                }
+            }
+            // This should be unreachable as we Taptree is already finalized
+            _ => unreachable!("non-finalized tree builder inside TapTree"),
+        }
     }
 }
 
@@ -174,23 +182,6 @@ impl<'tree> Iterator for TapTreeIter<'tree> {
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         self.leaf_iter.next()
-    }
-}
-
-impl<'tree> IntoIterator for &'tree TapTree {
-    type Item = &'tree ScriptLeaf;
-    type IntoIter = TapTreeIter<'tree>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        match (self.0.branch().len(), self.0.branch().last()) {
-            (1, Some(Some(root))) => {
-                TapTreeIter {
-                    leaf_iter: root.leaves.iter()
-                }
-            }
-            // This should be unreachable as we Taptree is already finalized
-            _ => unreachable!("non-finalized tree builder inside TapTree"),
-        }
     }
 }
 
