@@ -19,6 +19,7 @@ use core::fmt;
 use blockdata::transaction::Transaction;
 use consensus::encode;
 use util::psbt::raw;
+use util::sighash;
 
 use hashes;
 use util::bip32::ExtendedPubKey;
@@ -51,6 +52,14 @@ pub enum Error {
     UnsignedTxHasScriptWitnesses,
     /// A PSBT must have an unsigned transaction.
     MustHaveUnsignedTx,
+    /// PSBT requested input index does not exist.
+    InputIndexOutOfRange,
+    /// PBST input is missing the non-witness UTXO.
+    MissingNonWitnessUtxo,
+    /// PBST contains invalid non-witness UTXO.
+    InvalidNonWitnessUtxo,
+    /// PSBT is missing the witness script.
+    MissingWitnessScript,
     /// Signals that there are no more key-value pairs in a key-value map.
     NoMorePairs,
     /// Attempting to combine with a PSBT describing a different unsigned
@@ -79,6 +88,8 @@ pub enum Error {
     CombineInconsistentKeySources(ExtendedPubKey),
     /// Serialization error in bitcoin consensus-encoded structures
     ConsensusEncoding,
+    /// Computation of the signature hash failed.
+    Sighash(sighash::Error),
 }
 
 impl fmt::Display for Error {
@@ -96,6 +107,18 @@ impl fmt::Display for Error {
             Error::MustHaveUnsignedTx => {
                 f.write_str("partially signed transactions must have an unsigned transaction")
             }
+            Error::InputIndexOutOfRange => {
+                f.write_str("partially signed transaction input is missing the non-witness UTXO")
+            }
+            Error::MissingNonWitnessUtxo => {
+                f.write_str("partially signed transaction input is missing the non-witness UTXO")
+            }
+            Error::InvalidNonWitnessUtxo => {
+                f.write_str("partially signed transaction contains invalid non-witness UTXO")
+            }
+            Error::MissingWitnessScript => {
+                f.write_str("partially signed transaction is missing the witness script")
+            }
             Error::NoMorePairs => f.write_str("no more key-value pairs for this psbt map"),
             Error::HashParseError(e) => write!(f, "Hash Parse Error: {}", e),
             Error::InvalidPreimageHashPair{ref preimage, ref hash, ref hash_type} => {
@@ -104,6 +127,7 @@ impl fmt::Display for Error {
             }
             Error::CombineInconsistentKeySources(ref s) => { write!(f, "combine conflict: {}", s) }
             Error::ConsensusEncoding => f.write_str("bitcoin consensus or BIP-174 encoding error"),
+            Error::Sighash(ref e) => write!(f, "partially signed transaction: {}", e),
         }
     }
 }
@@ -124,5 +148,11 @@ impl From<encode::Error> for Error {
             encode::Error::Psbt(err) => err,
             _ => Error::ConsensusEncoding,
         }
+    }
+}
+
+impl From<sighash::Error> for Error {
+    fn from(e: sighash::Error) -> Error {
+        Error::Sighash(e)
     }
 }

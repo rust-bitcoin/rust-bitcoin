@@ -21,10 +21,12 @@
 
 use core::cmp;
 
+use {EcdsaSighashType, Sighash};
 use blockdata::script::Script;
 use blockdata::transaction::Transaction;
 use consensus::{encode, Encodable, Decodable};
 use consensus::encode::MAX_VEC_SIZE;
+use util::sighash::SighashCache;
 
 use prelude::*;
 
@@ -182,6 +184,103 @@ impl PartiallySignedTransaction {
         }
 
         Ok(())
+    }
+
+    // TODO: Work out attribution/license stuff, copied from `impl ComputeSighash for Legacy` in `bdk`.
+    /// Returns the sighash (and type) for input at `input_index`, caller is
+    /// responsible for ensuring `input_index` is a legacy input.
+    pub fn legacy_sighash(&self, input_index: usize) -> Result<(Sighash, EcdsaSighashType), Error> {
+        if input_index >= self.inputs.len() || input_index >= self.unsigned_tx.input.len() {
+            return Err(Error::InputIndexOutOfRange);
+        }
+
+        let psbt_input = &self.inputs[input_index];
+        let tx_input = &self.unsigned_tx.input[input_index];
+
+        let sighash = psbt_input.sighash_type.unwrap_or(PsbtSighashType::from(EcdsaSighashType::All));
+        let script = match psbt_input.redeem_script {
+            Some(ref redeem_script) => redeem_script.clone(),
+            None => {
+                let non_witness_utxo = psbt_input
+                    .non_witness_utxo
+                    .as_ref()
+                    .ok_or(Error::MissingNonWitnessUtxo)?;
+                let prev_out = non_witness_utxo
+                    .output
+                    .get(tx_input.previous_output.vout as usize)
+                    .ok_or(Error::InvalidNonWitnessUtxo)?;
+
+                prev_out.script_pubkey.clone()
+            }
+        };
+
+        Ok((
+            self.unsigned_tx.signature_hash(input_index, &script, sighash.to_u32()),
+            sighash.ecdsa_hash_ty().map_err(|e| Error::NonStandardSighashType(e.0))?,
+        ))
+    }
+
+    // TODO: Work out attribution/license stuff, copied from `impl ComputeSighash for Segwitv0` in `bdk`.
+    /// Returns the sighash (and type) for input at `input_index`, caller is
+    /// responsible for ensuring `input_index` is a segwit v0 input.
+    pub fn segwit_v0_sighash(&self, input_index: usize) -> Result<(Sighash, EcdsaSighashType), Error> {
+        if input_index >= self.inputs.len() || input_index >= self.unsigned_tx.input.len() {
+            return Err(Error::InputIndexOutOfRange);
+        }
+
+        let psbt_input = &self.inputs[input_index];
+        let tx_input = &self.unsigned_tx.input[input_index];
+
+        let sighash = psbt_input.sighash_type.unwrap_or(PsbtSighashType::from(EcdsaSighashType::All));
+
+        // Always try first with the non-witness utxo.
+        let utxo = if let Some(prev_tx) = &psbt_input.non_witness_utxo {
+            // Check the provided prev-tx
+            if prev_tx.txid() != tx_input.previous_output.txid {
+                return Err(Error::InvalidNonWitnessUtxo);
+            }
+
+            // The output should be present, if it's missing the `non_witness_utxo` is invalid.
+            prev_tx
+                .output
+                .get(tx_input.previous_output.vout as usize)
+                .ok_or(Error::InvalidNonWitnessUtxo)?
+        } else if let Some(witness_utxo) = &psbt_input.witness_utxo {
+            // Fallback to the witness_utxo. If we aren't allowed to use it, signing should fail
+            // before we get to this point.
+            witness_utxo
+        } else {
+            // Nothing has been provided.
+            return Err(Error::MissingNonWitnessUtxo);
+        };
+        let value = utxo.value;
+
+        let script = match psbt_input.witness_script {
+            Some(ref witness_script) => witness_script.clone(),
+            None => {
+                if let Some(script) = utxo.script_pubkey.p2wpkh_script_code() {
+                    script
+                } else if let Some(redeem_script) = &psbt_input.redeem_script {
+                    if let Some(script) = redeem_script.p2wpkh_script_code() {
+                        script
+                    } else {
+                        return Err(Error::MissingWitnessScript);
+                    }
+                } else {
+                    return Err(Error::MissingWitnessScript);
+                }
+            }
+        };
+
+        Ok((
+            SighashCache::new(&self.unsigned_tx).segwit_signature_hash(
+                input_index,
+                &script,
+                value,
+                sighash.ecdsa_hash_ty().map_err(|e| Error::NonStandardSighashType(e.0))?,
+            )?,
+            sighash.ecdsa_hash_ty().map_err(|e| Error::NonStandardSighashType(e.0))?,
+        ))
     }
 }
 
