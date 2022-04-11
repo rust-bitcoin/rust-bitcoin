@@ -166,6 +166,7 @@ impl fmt::Display for PsbtSighashType {
     }
 }
 
+#[allow(deprecated)]  // TODO: Swap `trim_left_matches` for `trim_start_matches` once MSRV >= 1.30.
 impl FromStr for PsbtSighashType {
     type Err = SighashTypeParseError;
 
@@ -183,7 +184,6 @@ impl FromStr for PsbtSighashType {
         }
 
         // We accept non-standard sighash values.
-        // TODO: Swap `trim_left_matches` for `trim_start_matches` once MSRV >= 1.30.
         if let Ok(inner) = u32::from_str_radix(s.trim_left_matches("0x"), 16) {
             return Ok(PsbtSighashType { inner });
         }
