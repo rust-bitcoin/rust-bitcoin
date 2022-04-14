@@ -79,6 +79,39 @@ pub struct Output {
     pub unknown: BTreeMap<raw::Key, Vec<u8>>,
 }
 
+/// Error happening when [`TapTree`] is constructed from a [`TaprootBuilder`]
+/// having hidden branches or not being finalized.
+#[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug)]
+pub enum IncompleteTapTree {
+    /// Indicates an attempt to construct a tap tree from a builder containing incomplete branches.
+    NotFinalized(TaprootBuilder),
+    /// Indicates an attempt to construct a tap tree from a builder containing hidden parts.
+    HiddenParts(TaprootBuilder),
+}
+
+impl IncompleteTapTree {
+    /// Converts error into the original incomplete [`TaprootBuilder`] instance.
+    pub fn into_builder(self) -> TaprootBuilder {
+        match self {
+            IncompleteTapTree::NotFinalized(builder) |
+            IncompleteTapTree::HiddenParts(builder) => builder
+        }
+    }
+}
+
+impl core::fmt::Display for IncompleteTapTree {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.write_str(match self {
+            IncompleteTapTree::NotFinalized(_) => "an attempt to construct a tap tree from a builder containing incomplete branches.",
+            IncompleteTapTree::HiddenParts(_) => "an attempt to construct a tap tree from a builder containing hidden parts.",
+        })
+    }
+}
+
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+impl ::std::error::Error for IncompleteTapTree {}
+
 /// Taproot Tree representing a finalized [`TaprootBuilder`] (a complete binary tree).
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -104,13 +137,16 @@ impl TapTree {
 
     /// Converts a [`TaprootBuilder`] into a tree if it is complete binary tree.
     ///
-    /// # Return
-    /// A `TapTree` iff the `inner` builder is complete, otherwise return the inner as `Err`.
-    pub fn from_inner(inner: TaprootBuilder) -> Result<Self, TaprootBuilder> {
-        if inner.is_complete() {
-            Ok(TapTree(inner))
+    /// # Returns
+    /// A [`TapTree`] iff the `inner` builder is complete, otherwise return [`IncompleteTapTree`]
+    /// error with the content of incomplete builder `inner` instance.
+    pub fn from_inner(inner: TaprootBuilder) -> Result<Self, IncompleteTapTree> {
+        if !inner.is_finalized() {
+            Err(IncompleteTapTree::NotFinalized(inner))
+        } else if inner.has_hidden_nodes() {
+            Err(IncompleteTapTree::HiddenParts(inner))
         } else {
-            Err(inner)
+            Ok(TapTree(inner))
         }
     }
 

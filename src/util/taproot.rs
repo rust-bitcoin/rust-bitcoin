@@ -456,14 +456,26 @@ impl TaprootBuilder {
 
     /// Adds a hidden/omitted node at `depth` to the builder. Errors if the leaves are not provided
     /// in DFS walk order. The depth of the root node is 0.
-    pub fn add_hidden(self, depth: u8, hash: sha256::Hash) -> Result<Self, TaprootBuilderError> {
-        let node = NodeInfo::new_hidden(hash);
+    pub fn add_hidden_node(self, depth: u8, hash: sha256::Hash) -> Result<Self, TaprootBuilderError> {
+        let node = NodeInfo::new_hidden_node(hash);
         self.insert(node, depth)
     }
 
-    /// Checks if the builder is a complete tree.
-    pub fn is_complete(&self) -> bool {
+    /// Checks if the builder has finalized building a tree.
+    pub fn is_finalized(&self) -> bool {
         self.branch.len() == 1 && self.branch[0].is_some()
+    }
+
+    /// Checks if the builder has hidden nodes.
+    pub fn has_hidden_nodes(&self) -> bool {
+        for node in &self.branch {
+            if let Some(node) = node {
+                if node.has_hidden_nodes {
+                    return true
+                }
+            }
+        }
+        false
     }
 
     /// Creates a [`TaprootSpendInfo`] with the given internal key.
@@ -549,14 +561,17 @@ pub struct NodeInfo {
     pub(crate) hash: sha256::Hash,
     /// Information about leaves inside this node.
     pub(crate) leaves: Vec<LeafInfo>,
+    /// Tracks information on hidden nodes below this node.
+    pub(crate) has_hidden_nodes: bool,
 }
 
 impl NodeInfo {
     /// Creates a new [`NodeInfo`] with omitted/hidden info.
-    pub fn new_hidden(hash: sha256::Hash) -> Self {
+    pub fn new_hidden_node(hash: sha256::Hash) -> Self {
         Self {
             hash: hash,
             leaves: vec![],
+            has_hidden_nodes: true
         }
     }
 
@@ -566,6 +581,7 @@ impl NodeInfo {
         Self {
             hash: leaf.hash(),
             leaves: vec![leaf],
+            has_hidden_nodes: false,
         }
     }
 
@@ -584,6 +600,7 @@ impl NodeInfo {
         Ok(Self {
             hash: sha256::Hash::from_inner(hash.into_inner()),
             leaves: all_leaves,
+            has_hidden_nodes: a.has_hidden_nodes || b.has_hidden_nodes
         })
     }
 }
