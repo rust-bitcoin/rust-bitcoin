@@ -429,7 +429,7 @@ impl TaprootBuilder {
         }
         // Every iteration of the loop reduces the node_weights.len() by exactly 1
         // Therefore, the loop will eventually terminate with exactly 1 element
-        debug_assert_eq!(node_weights.len(), 1);
+        assert_eq!(node_weights.len(), 1);
         let node = node_weights.pop().expect("huffman tree algorithm is broken").1;
         Ok(TaprootBuilder{branch: vec![Some(node)]})
     }
