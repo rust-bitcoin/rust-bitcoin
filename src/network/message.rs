@@ -78,7 +78,7 @@ impl Encodable for CommandString {
     fn consensus_encode<S: io::Write>(&self, s: S) -> Result<usize, io::Error> {
         let mut rawbytes = [0u8; 12];
         let strbytes = self.0.as_bytes();
-        debug_assert!(strbytes.len() <= 12);
+        assert!(strbytes.len() <= 12);
         rawbytes[..strbytes.len()].copy_from_slice(strbytes);
         rawbytes.consensus_encode(s)
     }
