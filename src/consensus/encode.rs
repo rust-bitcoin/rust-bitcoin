@@ -140,7 +140,7 @@ impl From<psbt::Error> for Error {
 pub fn serialize<T: Encodable + ?Sized>(data: &T) -> Vec<u8> {
     let mut encoder = Vec::new();
     let len = data.consensus_encode(&mut encoder).expect("in-memory writers don't error");
-    debug_assert_eq!(len, encoder.len());
+    assert_eq!(len, encoder.len());
     encoder
 }
 
