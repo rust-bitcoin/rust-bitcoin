@@ -593,3 +593,12 @@ macro_rules! write_err {
         }
     }
 }
+
+/// Asserts a boolean expression at compile time.
+macro_rules! const_assert {
+    ($x:expr) => {
+        {
+            const _: [(); 0 - !$x as usize] = [];
+        }
+    };
+}
