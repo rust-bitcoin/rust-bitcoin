@@ -47,7 +47,7 @@ pub struct SighashCache<T: Deref<Target=Transaction>> {
     /// Common cache for taproot and segwit inputs, `None` for legacy inputs.
     common_cache: Option<CommonCache>,
 
-    /// Cache for segwit v0 inputs.
+    /// Cache for segwit v0 inputs (the result of another round of sha256 on `common_cache`).
     segwit_cache: Option<SegwitCache>,
 
     /// Cache for taproot v1 inputs.
@@ -104,8 +104,8 @@ pub struct ScriptPath<'s> {
     leaf_version: LeafVersion,
 }
 
-/// Hashtype of an input's signature, encoded in the last byte of the signature. Fixed values so
-/// they can be cast as integer types for encoding.
+/// Hashtype of an input's signature, encoded in the last byte of the signature.
+/// Fixed values so they can be cast as integer types for encoding.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum SchnorrSighashType {
     /// 0x0: Used when not explicitly specified, defaults to [`SchnorrSighashType::All`]
@@ -349,7 +349,7 @@ impl<R: Deref<Target = Transaction>> SighashCache<R> {
     }
 
     /// Encodes the BIP341 signing data for any flag type into a given object implementing a
-    /// `io::Write` trait.
+    /// [`io::Write`] trait.
     pub fn taproot_encode_signing_data_to<Write: io::Write, T: Borrow<TxOut>>(
         &mut self,
         mut writer: Write,
