@@ -19,16 +19,22 @@
 //! except we define PSBTs containing non-standard sighash types as invalid.
 //!
 
-use core::cmp;
+use core::{fmt, cmp};
+use core::ops::Deref;
+
+use secp256k1::{Message, Secp256k1, Signing, KeyPair};
 
 use crate::prelude::*;
 use crate::io;
 
 use crate::blockdata::script::Script;
-use crate::blockdata::transaction::{ TxOut, Transaction};
+use crate::blockdata::transaction::{EcdsaSighashType, Transaction, TxOut};
 use crate::consensus::{encode, Encodable, Decodable};
 use crate::consensus::encode::MAX_VEC_SIZE;
 use crate::util::bip32::{ExtendedPubKey, KeySource};
+use crate::util::ecdsa::{EcdsaSig, EcdsaSigError};
+use crate::util::key::PrivateKey;
+use crate::util::sighash::{self, SighashCache};
 
 pub use crate::util::sighash::Prevouts;
 
@@ -208,6 +214,368 @@ impl PartiallySignedTransaction {
         }
 
         Ok(())
+    }
+
+    /// Signs the input at `input_index` with `key`.
+    ///
+    /// If you are repeatedly calling this function to sign multiple inputs then consider using
+    /// [`sign_multi`] and passing in a [`SighashCache`].
+    ///
+    /// # Panics
+    /// If an attempt is made to sign a taproot input.
+    pub fn sign<C: Signing, K: Into<PrivateKeyOrPair>>(
+        &mut self,
+        key: K,
+        input_index: usize,
+        secp: &Secp256k1<C>
+    ) -> Result<(), SighashError> {
+        // FIXME: Borrow checker error without the clone. Is there a better way to do this?
+        let tx = self.unsigned_tx.clone();
+        let mut cache = SighashCache::new(&tx);
+        self.sign_non_generic(key.into(), input_index, &mut cache, secp)
+    }
+
+    /// Signs the input at `input_index` with `key` using `cache`. Use this method if you plan on
+    /// repeatedly signing multiple inputs.
+    ///
+    /// # Panics
+    /// If an attempt is made to sign a taproot input.
+    pub fn sign_multi<C: Signing, T: Deref<Target=Transaction>, K: Into<PrivateKeyOrPair>>(
+        &mut self,
+        key: K,
+        input_index: usize,
+        cache: &mut SighashCache<T>,
+        secp: &Secp256k1<C>
+    ) -> Result<(), SighashError> {
+        self.sign_non_generic(key.into(), input_index, cache, secp)
+    }
+
+    fn sign_non_generic<C: Signing, T: Deref<Target=Transaction>>(
+        &mut self,
+        key: PrivateKeyOrPair,
+        input_index: usize,
+        cache: &mut SighashCache<T>,
+        secp: &Secp256k1<C>
+    ) -> Result<(), SighashError> {
+        // We check this everywhere but fail early if `input_index` is invalid.
+        self.check_index_is_within_bounds(input_index)?;
+
+        let algo = self.signing_algorithm(input_index)?;
+        match (algo, key) {
+            (SigningAlgorithm::Ecdsa, PrivateKeyOrPair::Key(k)) => self.sign_ecdsa(k, input_index, cache, secp),
+            (SigningAlgorithm::Schnorr, PrivateKeyOrPair::Pair(_)) => unimplemented!("taproot PSBT signing not yet implemented"),
+            (_, _) => Err(SighashError::MismatchedAlgoKey),
+        }
+    }
+
+    fn sign_ecdsa<C: Signing, T: Deref<Target=Transaction>>(
+        &mut self,
+        sk: PrivateKey,
+        input_index: usize,
+        cache: &mut SighashCache<T>,
+        secp: &Secp256k1<C>
+    ) -> Result<(), SighashError> {
+        let (msg, sighash_ty) = self.sighash_ecdsa(input_index, cache)?;
+
+        let sig = EcdsaSig {
+            sig: secp.sign_ecdsa(&msg, &sk.inner),
+            hash_ty: sighash_ty,
+        };
+
+        let pk = sk.public_key(secp);
+        self.inputs[input_index]
+            .partial_sigs
+            .insert(pk, sig);
+
+        Ok(())
+    }
+
+    /// Returns the sighash message to sign an ECDSA input along with the sighash type.
+    fn sighash_ecdsa<T: Deref<Target=Transaction>>(
+        &self,
+        input_index: usize,
+        cache: &mut SighashCache<T>,
+    ) -> Result<(Message, EcdsaSighashType), SighashError> {
+        assert_eq!(self.signing_algorithm(input_index), Ok(SigningAlgorithm::Ecdsa));
+
+        let input = self.checked_input(input_index)?;
+        let utxo = self.spend_utxo(input_index)?;
+        let script = &utxo.script_pubkey; // scriptPubkey for input spend utxo.
+
+        let hash_ty = input
+            .sighash_type
+            .map(|ty| ty.ecdsa_hash_ty())
+            .unwrap_or(Ok(EcdsaSighashType::All))
+            .map_err(|_| SighashError::InvalidSighashType)?; // Only support standard sighash types.
+
+        let output_type = self.output_type(input_index)?;
+
+        let is_wpkh = output_type == OutputType::Wpkh;
+        let is_nested_wpkh = output_type == OutputType::ShWpkh;
+
+        let sighash = if output_type.is_segwit() {
+            if is_wpkh || is_nested_wpkh {
+                let script_code = if is_wpkh {
+                    Script::p2wpkh_script_code(&script).ok_or(SighashError::NotWpkh)?
+                } else {
+                    Script::p2wpkh_script_code(input.redeem_script.as_ref().expect("checked above"))
+                        .ok_or(SighashError::NotWpkh)?
+                };
+                cache.segwit_signature_hash(input_index, &script_code, utxo.value, hash_ty)?
+            } else {
+                let script_code = input.witness_script.as_ref().ok_or(SighashError::MissingWitnessScript)?;
+                cache.segwit_signature_hash(input_index, script_code, utxo.value, hash_ty)?
+            }
+        } else {
+            let script_code = if script.is_p2sh() {
+                input.redeem_script.as_ref().ok_or(SighashError::MissingRedeemScript)?
+            } else {
+                &script
+            };
+            cache.legacy_signature_hash(input_index, script_code, hash_ty.to_u32())?
+        };
+
+        Ok((Message::from_slice(&sighash).expect("sighashes are 32 bytes"), hash_ty.into()))
+    }
+
+    /// Returns the spending utxo for this PSBT's input at `input_index`.
+    fn spend_utxo(&self, input_index: usize) -> Result<&TxOut, SighashError> {
+        let input = self.checked_input(input_index)?;
+        let utxo = if let Some(witness_utxo) = &input.witness_utxo {
+            &witness_utxo
+        } else if let Some(non_witness_utxo) = &input.non_witness_utxo {
+            let vout = self.unsigned_tx.input[input_index].previous_output.vout;
+            &non_witness_utxo.output[vout as usize]
+        } else {
+             return Err(SighashError::MissingSpendUtxo);
+        };
+        Ok(utxo)
+    }
+
+    /// Gets the input at `input_index` after checking that it is a valid index.
+    fn checked_input(&self, input_index: usize) -> Result<&Input, SighashError> {
+        self.check_index_is_within_bounds(input_index)?;
+        Ok(&self.inputs[input_index])
+    }
+
+    /// Checks `input_index` is within bounds for the PSBT `inputs` array and
+    /// for the PSBT `unsigned_tx` `input` array.
+    fn check_index_is_within_bounds(&self, input_index: usize) -> Result<(), SighashError> {
+        if input_index >= self.inputs.len() {
+            return Err(SighashError::IndexOutOfBounds(input_index, self.inputs.len()));
+        }
+
+        if input_index >= self.unsigned_tx.input.len() {
+            return Err(SighashError::IndexOutOfBounds(input_index, self.unsigned_tx.input.len()));
+        }
+
+        Ok(())
+    }
+
+    /// Returns the algorithm used to sign this PSBT's input at `input_index`.
+    fn signing_algorithm(&self, input_index: usize) -> Result<SigningAlgorithm, SighashError> {
+        let output_type = self.output_type(input_index)?;
+        Ok(output_type.signing_algorithm())
+    }
+
+    /// Returns the [`OutputType`] of the spend utxo for this PBST's input at `input_index`.
+    fn output_type(&self, input_index: usize) -> Result<OutputType, SighashError> {
+        let input = self.checked_input(input_index)?;
+        let utxo = self.spend_utxo(input_index)?;
+        let script = utxo.script_pubkey.clone();
+
+        if script.is_p2pk() || script.is_p2pkh() {
+            return Ok(OutputType::Bare);
+        }
+
+        if script.is_v0_p2wpkh() {
+            return Ok(OutputType::Wpkh);
+        }
+
+        if script.is_v0_p2wsh() {
+            return Ok(OutputType::Wsh);
+        }
+
+        if script.is_p2sh() {
+            if input.redeem_script.as_ref().map(|s| s.is_v0_p2wpkh()).unwrap_or(false) {
+                return Ok(OutputType::ShWpkh);
+            }
+            if input.redeem_script.as_ref().map(|x| x.is_v0_p2wsh()).unwrap_or(false) {
+                return Ok(OutputType::ShWsh);
+            }
+            return Ok(OutputType::Sh);
+        }
+
+        if script.is_v1_p2tr() {
+            return Ok(OutputType::Tr);
+        }
+
+        // Something is drastically wrong with the input scriptPubkey.
+        Err(SighashError::UnknownOutputType)
+    }
+}
+
+/// Key material for signing with either ECDSA or schnorr.
+#[derive(Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "std", derive(Debug))] // FIXME: How do we debug in no-std environment?
+pub enum PrivateKeyOrPair {
+    /// Private key used for ECDSA signing.
+    Key(PrivateKey),
+    /// Key pair used for schnorr signing.
+    Pair(KeyPair),
+}
+
+impl From<PrivateKey> for PrivateKeyOrPair {
+    fn from(k: PrivateKey) -> Self {
+        PrivateKeyOrPair::Key(k)
+    }
+}
+
+impl From<KeyPair> for PrivateKeyOrPair {
+    fn from(k: KeyPair) -> Self {
+        PrivateKeyOrPair::Pair(k)
+    }
+}
+
+/// The various output types supported by the Bitcoin network.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[non_exhaustive]
+pub enum OutputType {
+    /// An output of type: pay-to-pubkey or pay-to-pubkey-hash.
+    Bare,
+    /// A pay-to-witness-pubkey-hash output (P2WPKH).
+    Wpkh,
+    /// A pay-to-witness-script-hash output (P2WSH).
+    Wsh,
+    /// A nested segwit output, pay-to-witness-pubkey-hash nested in a pay-to-script-hash.
+    ShWpkh,
+    /// A nested segwit output, pay-to-witness-script-hash nested in a pay-to-script-hash.
+    ShWsh,
+    /// A pay-to-script-hash output excluding wrapped segwit (P2SH).
+    Sh,
+    /// A taproot output (P2TR).
+    Tr,
+}
+
+impl OutputType {
+    /// The signing algorithm used to sign this output type.
+    pub fn signing_algorithm(&self) -> SigningAlgorithm {
+        use OutputType::*;
+
+        match self {
+            Bare | Wpkh | Wsh | ShWpkh | ShWsh | Sh => SigningAlgorithm::Ecdsa,
+            Tr => SigningAlgorithm::Schnorr,
+        }
+    }
+
+    /// Returns true if this output is a segwit type i.e., wrapped or native segwit.
+    fn is_segwit(&self) -> bool {
+        use OutputType::*;
+
+        match self {
+            Wpkh | Wsh | ShWpkh | ShWsh => true,
+            Bare | Sh | Tr => false,
+        }
+    }
+}
+
+/// Signing algorithms supported by the Bitcoin network.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum SigningAlgorithm {
+    /// The Elliptic Curve Digital Signature Algorithm (see [wikipedia]).
+    ///
+    /// [wikipedia]: https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm
+    Ecdsa,
+    /// The Schnorr signature algorithm (see [wikipedia]).
+    ///
+    /// [wikipedia]: https://en.wikipedia.org/wiki/Schnorr_signature
+    Schnorr,
+}
+
+/// Errors encountered while calculating the sighash message.
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
+pub enum SighashError {
+    /// An ECDSA key-related error occurred.
+    EcdsaSig(EcdsaSigError),
+    /// Input index out of bounds (actual index, maximum index allowed).
+    IndexOutOfBounds(usize, usize),
+    /// Invalid Sighash type.
+    InvalidSighashType,
+    /// Missing input utxo.
+    MissingInputUxto,
+    /// Missing Redeem script.
+    MissingRedeemScript,
+    /// Missing spending utxo.
+    MissingSpendUtxo,
+    /// Missing witness script.
+    MissingWitnessScript,
+    /// Signing algorithm and key type does not match.
+    MismatchedAlgoKey,
+    /// Attempted to ECDSA sign an non-ECDSA input.
+    NotEcdsa,
+    /// The `scriptPubkey` is not a P2WPKH script.
+    NotWpkh,
+    /// Sighash computation error.
+    SighashComputation(sighash::Error),
+    /// Unable to determine the output type.
+    UnknownOutputType,
+}
+
+impl fmt::Display for SighashError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use self::SighashError::*;
+
+        match self {
+            IndexOutOfBounds(ind, len) => {
+                write!(f, "index {}, psbt input len: {}", ind, len)
+            }
+            InvalidSighashType => write!(f, "invalid sighash type"),
+            MissingInputUxto => write!(f, "missing input utxo in PBST"),
+            MissingRedeemScript => write!(f, "missing redeem script"),
+            MissingSpendUtxo => write!(f, "missing spend utxo in PSBT"),
+            MissingWitnessScript => write!(f, "missing witness script"),
+            MismatchedAlgoKey => write!(f, "signing algorithm and key type does not match"),
+            NotEcdsa => write!(f, "attempted to ECDSA sign an non-ECDSA input"),
+            NotWpkh => write!(f, "the scriptPubkey is not a P2WPKH script"),
+            SighashComputation(e) => write!(f, "sighash: {}", e),
+            EcdsaSig(e) => write!(f, "ecdsa: {}", e),
+            UnknownOutputType => write!(f, "Unable to determine the output type"),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+impl std::error::Error for SighashError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use self::SighashError::*;
+
+        match *self {
+            IndexOutOfBounds(_, _)
+                | InvalidSighashType
+                | MissingInputUxto
+                | MissingRedeemScript
+                | MissingSpendUtxo
+                | MissingWitnessScript
+                | MismatchedAlgoKey
+                | NotEcdsa
+                | NotWpkh
+                | UnknownOutputType => None,
+            EcdsaSig(ref e) => Some(e),
+            SighashComputation(ref e) => Some(e),
+        }
+    }
+}
+
+impl From<sighash::Error> for SighashError {
+    fn from(e: sighash::Error) -> Self {
+        SighashError::SighashComputation(e)
+    }
+}
+
+impl From<EcdsaSigError> for SighashError {
+    fn from(e: EcdsaSigError) -> Self {
+        SighashError::EcdsaSig(e)
     }
 }
 
