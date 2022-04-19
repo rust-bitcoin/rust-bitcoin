@@ -564,3 +564,13 @@ macro_rules! user_enum {
         }
     );
 }
+
+/// Asserts a boolean expression at compile time.
+macro_rules! const_assert {
+    ($x:expr) => {
+        // Use `_UNUSED` and extra scope instead of `_` due to Rust 1.29
+        {
+            const _UNUSED: [(); 0 - !$x as usize] = [];
+        }
+    };
+}
