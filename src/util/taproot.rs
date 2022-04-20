@@ -479,20 +479,21 @@ impl TaprootBuilder {
     }
 
     /// Creates a [`TaprootSpendInfo`] with the given internal key.
+    ///
+    // TODO: in a future breaking API change, this no longer needs to return result
     pub fn finalize<C: secp256k1::Verification>(
         mut self,
         secp: &Secp256k1<C>,
         internal_key: UntweakedPublicKey,
     ) -> Result<TaprootSpendInfo, TaprootBuilderError> {
-        if self.branch.len() > 1 {
-            return Err(TaprootBuilderError::IncompleteTree);
+        match self.branch.pop() {
+            None => Ok(TaprootSpendInfo::new_key_spend(secp, internal_key, None)),
+            Some(Some(node)) => {
+                Ok(TaprootSpendInfo::from_node_info(secp, internal_key, node))
+            }
+            _ => Err(TaprootBuilderError::IncompleteTree),
+
         }
-        let node = self
-            .branch
-            .pop()
-            .ok_or(TaprootBuilderError::EmptyTree)?
-            .expect("Builder invariant: last element of the branch must be some");
-        Ok(TaprootSpendInfo::from_node_info(secp, internal_key, node))
     }
 
     pub(crate) fn branch(&self) -> &[Option<NodeInfo>] {
