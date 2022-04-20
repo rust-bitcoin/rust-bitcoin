@@ -427,6 +427,25 @@ impl Script {
         Script::new_p2sh(&self.script_hash())
     }
 
+    /// Returns the script code used for spending a P2WPKH output if this script is a script pubkey
+    /// for a P2WPKH output. The `scriptCode` is described in [BIP143].
+    ///
+    /// [BIP143]: <https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki>
+    pub fn p2wpkh_script_code(&self) -> Option<Script> {
+        if !self.is_v0_p2wpkh() {
+            return None
+        }
+        let script = Builder::new()
+            .push_opcode(opcodes::all::OP_DUP)
+            .push_opcode(opcodes::all::OP_HASH160)
+            .push_slice(&self[2..]) // The `self` script is 0x00, 0x14, <pubkey_hash>
+            .push_opcode(opcodes::all::OP_EQUALVERIFY)
+            .push_opcode(opcodes::all::OP_CHECKSIG)
+            .into_script();
+
+        Some(script)
+    }
+
     /// Computes the P2WSH output corresponding to this witnessScript (aka the "witness redeem
     /// script").
     pub fn to_v0_p2wsh(&self) -> Script {
