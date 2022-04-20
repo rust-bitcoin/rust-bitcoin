@@ -560,7 +560,7 @@ pub struct NodeInfo {
     /// Merkle hash for this node.
     pub(crate) hash: sha256::Hash,
     /// Information about leaves inside this node.
-    pub(crate) leaves: Vec<LeafInfo>,
+    pub(crate) leaves: Vec<ScriptLeaf>,
     /// Tracks information on hidden nodes below this node.
     pub(crate) has_hidden_nodes: bool,
 }
@@ -577,9 +577,9 @@ impl NodeInfo {
 
     /// Creates a new leaf [`NodeInfo`] with given [`Script`] and [`LeafVersion`].
     pub fn new_leaf_with_ver(script: Script, ver: LeafVersion) -> Self {
-        let leaf = LeafInfo::new(script, ver);
+        let leaf = ScriptLeaf::new(script, ver);
         Self {
-            hash: leaf.hash(),
+            hash: sha256::Hash::from_inner(leaf.leaf_hash().into_inner()),
             leaves: vec![leaf],
             has_hidden_nodes: false,
         }
@@ -608,17 +608,17 @@ impl NodeInfo {
 /// Store information about taproot leaf node.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub(crate) struct LeafInfo {
+pub struct ScriptLeaf {
     /// The underlying script.
-    pub(crate) script: Script,
+    script: Script,
     /// The leaf version.
-    pub(crate) ver: LeafVersion,
+    ver: LeafVersion,
     /// The merkle proof (hashing partners) to get this node.
-    pub(crate) merkle_branch: TaprootMerkleBranch,
+    merkle_branch: TaprootMerkleBranch,
 }
 
-impl LeafInfo {
-    /// Creates an new [`LeafInfo`] from `script` and `ver` and no merkle branch.
+impl ScriptLeaf {
+    /// Creates an new [`ScriptLeaf`] from `script` and `ver` and no merkle branch.
     fn new(script: Script, ver: LeafVersion) -> Self {
         Self {
             script: script,
@@ -627,10 +627,37 @@ impl LeafInfo {
         }
     }
 
-    /// Computes a leaf hash for this [`LeafInfo`].
-    fn hash(&self) -> sha256::Hash {
-        let leaf_hash = TapLeafHash::from_script(&self.script, self.ver);
-        sha256::Hash::from_inner(leaf_hash.into_inner())
+    /// Returns the depth of this script leaf in the tap tree.
+    #[inline]
+    pub fn depth(&self) -> u8 {
+        // The depth is guaranteed to be < 127 by the TaprootBuilder type.
+        // TODO: Following MSRV bump implement via `try_into().expect("")`.
+        self.merkle_branch.0.len() as u8
+    }
+
+    /// Computes a leaf hash for this [`ScriptLeaf`].
+    #[inline]
+    pub fn leaf_hash(&self) -> TapLeafHash {
+        TapLeafHash::from_script(&self.script, self.ver)
+    }
+
+    /// Returns reference to the leaf script.
+    #[inline]
+    pub fn script(&self) -> &Script {
+        &self.script
+    }
+
+    /// Returns leaf version of the script.
+    #[inline]
+    pub fn leaf_version(&self) -> LeafVersion {
+        self.ver
+    }
+
+    /// Returns reference to the merkle proof (hashing partners) to get this
+    /// node in form of [`TaprootMerkleBranch`].
+    #[inline]
+    pub fn merkle_branch(&self) -> &TaprootMerkleBranch {
+        &self.merkle_branch
     }
 }
 

@@ -26,7 +26,7 @@ use util::psbt::map::Map;
 use util::psbt::raw;
 use util::psbt::Error;
 
-use util::taproot::{LeafInfo, TapLeafHash};
+use util::taproot::{ScriptLeaf, TapLeafHash};
 
 use util::taproot::{NodeInfo, TaprootBuilder};
 
@@ -155,34 +155,9 @@ impl TapTree {
         self.0
     }
 
-    /// Returns iterator for a taproot script tree, operating in DFS order over leaf depth and
-    /// leaf script pairs.
-    pub fn iter(&self) -> TapTreeIter {
-        self.into_iter()
-    }
-}
-
-/// Iterator for a taproot script tree, operating in DFS order over leaf depth and
-/// leaf script pairs.
-pub struct TapTreeIter<'tree> {
-    leaf_iter: core::slice::Iter<'tree, LeafInfo>,
-}
-
-impl<'tree> Iterator for TapTreeIter<'tree> {
-    type Item = (u8, &'tree Script);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.leaf_iter.next().map(|leaf_info| {
-            (leaf_info.merkle_branch.as_inner().len() as u8, &leaf_info.script)
-        })
-    }
-}
-
-impl<'tree> IntoIterator for &'tree TapTree {
-    type Item = (u8, &'tree Script);
-    type IntoIter = TapTreeIter<'tree>;
-
-    fn into_iter(self) -> Self::IntoIter {
+    /// Returns [`TapTreeIter`] iterator for a taproot script tree, operating in DFS order over
+    /// tree [`ScriptLeaf`]s.
+    pub fn script_leaves(&self) -> TapTreeIter {
         match (self.0.branch().len(), self.0.branch().last()) {
             (1, Some(Some(root))) => {
                 TapTreeIter {
@@ -192,6 +167,21 @@ impl<'tree> IntoIterator for &'tree TapTree {
             // This should be unreachable as we Taptree is already finalized
             _ => unreachable!("non-finalized tree builder inside TapTree"),
         }
+    }
+}
+
+/// Iterator for a taproot script tree, operating in DFS order over leaf depth and
+/// leaf script pairs.
+pub struct TapTreeIter<'tree> {
+    leaf_iter: core::slice::Iter<'tree, ScriptLeaf>,
+}
+
+impl<'tree> Iterator for TapTreeIter<'tree> {
+    type Item = &'tree ScriptLeaf;
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+        self.leaf_iter.next()
     }
 }
 

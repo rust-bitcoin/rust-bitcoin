@@ -327,9 +327,9 @@ impl Serialize for TapTree {
                     //
                     // TaprootMerkleBranch can only have len atmost 128(TAPROOT_CONTROL_MAX_NODE_COUNT).
                     // safe to cast from usize to u8
-                    buf.push(leaf_info.merkle_branch.as_inner().len() as u8);
-                    buf.push(leaf_info.ver.to_consensus());
-                    leaf_info.script.consensus_encode(&mut buf).expect("Vecs dont err");
+                    buf.push(leaf_info.merkle_branch().as_inner().len() as u8);
+                    buf.push(leaf_info.leaf_version().to_consensus());
+                    leaf_info.script().consensus_encode(&mut buf).expect("Vecs dont err");
                 }
                 buf
             }
