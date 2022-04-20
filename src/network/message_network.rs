@@ -26,7 +26,6 @@ use network::address::Address;
 use network::constants::{self, ServiceFlags};
 use consensus::{Encodable, Decodable, ReadExt};
 use consensus::encode;
-use network::message::CommandString;
 use hashes::sha256d;
 
 /// Some simple messages
@@ -133,7 +132,7 @@ impl Decodable for RejectReason {
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct Reject {
     /// message type rejected
-    pub message: CommandString,
+    pub message: Cow<'static, str>,
     /// reason of rejection as code
     pub ccode: RejectReason,
     /// reason of rejectection
@@ -147,8 +146,11 @@ impl_consensus_encoding!(Reject, message, ccode, reason, hash);
 #[cfg(test)]
 mod tests {
     use super::VersionMessage;
+    use super::Reject;
+    use super::RejectReason;
 
     use hashes::hex::FromHex;
+    use hashes::sha256d::Hash;
     use network::constants::ServiceFlags;
 
     use consensus::encode::{deserialize, serialize};
@@ -171,5 +173,38 @@ mod tests {
         assert_eq!(real_decode.relay, true);
 
         assert_eq!(serialize(&real_decode), from_sat);
+    }
+
+    #[test]
+    fn reject_message_test() {
+        let reject_tx_conflict = Vec::from_hex("027478121474786e2d6d656d706f6f6c2d636f6e666c69637405df54d3860b3c41806a3546ab48279300affacf4b88591b229141dcf2f47004").unwrap();
+        let reject_tx_nonfinal = Vec::from_hex("02747840096e6f6e2d66696e616c259bbe6c83db8bbdfca7ca303b19413dc245d9f2371b344ede5f8b1339a5460b").unwrap();
+
+        let decode_result_conflict: Result<Reject, _> = deserialize(&reject_tx_conflict);
+        let decode_result_nonfinal: Result<Reject, _> = deserialize(&reject_tx_nonfinal);
+
+        assert!(decode_result_conflict.is_ok());
+        assert!(decode_result_nonfinal.is_ok());
+
+        let conflict = decode_result_conflict.unwrap();
+        assert_eq!("tx", conflict.message);
+        assert_eq!(RejectReason::Duplicate, conflict.ccode);
+        assert_eq!("txn-mempool-conflict", conflict.reason);
+        assert_eq!(
+            Hash::from_hex("0470f4f2dc4191221b59884bcffaaf00932748ab46356a80413c0b86d354df05").unwrap(),
+            conflict.hash
+        );
+
+        let nonfinal = decode_result_nonfinal.unwrap();
+        assert_eq!("tx", nonfinal.message);
+        assert_eq!(RejectReason::NonStandard, nonfinal.ccode);
+        assert_eq!("non-final", nonfinal.reason);
+        assert_eq!(
+            Hash::from_hex("0b46a539138b5fde4e341b37f2d945c23d41193b30caa7fcbd8bdb836cbe9b25").unwrap(),
+            nonfinal.hash
+        );
+
+        assert_eq!(serialize(&conflict), reject_tx_conflict);
+        assert_eq!(serialize(&nonfinal), reject_tx_nonfinal);
     }
 }
