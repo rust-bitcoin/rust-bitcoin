@@ -125,9 +125,16 @@ impl PartialEq for TapTree {
 
 impl Eq for TapTree {}
 
+impl From<TapTree> for TaprootBuilder {
+    #[inline]
+    fn from(tree: TapTree) -> Self {
+        tree.into_builder()
+    }
+}
+
 impl TapTree {
     /// Gets the inner node info as the builder is finalized.
-    fn node_info(&self) -> &NodeInfo {
+    pub fn node_info(&self) -> &NodeInfo {
         // The builder algorithm invariant guarantees that is_complete builder
         // have only 1 element in branch and that is not None.
         // We make sure that we only allow is_complete builders via the from_inner
@@ -135,24 +142,30 @@ impl TapTree {
         self.0.branch()[0].as_ref().expect("from_inner only parses is_complete builders")
     }
 
-    /// Converts a [`TaprootBuilder`] into a tree if it is complete binary tree.
+    /// Constructs [`TapTree`] from a [`TaprootBuilder`] if it is complete binary tree.
     ///
     /// # Returns
-    /// A [`TapTree`] iff the `inner` builder is complete, otherwise return [`IncompleteTapTree`]
-    /// error with the content of incomplete builder `inner` instance.
-    pub fn from_inner(inner: TaprootBuilder) -> Result<Self, IncompleteTapTree> {
-        if !inner.is_finalized() {
-            Err(IncompleteTapTree::NotFinalized(inner))
-        } else if inner.has_hidden_nodes() {
-            Err(IncompleteTapTree::HiddenParts(inner))
+    /// A [`TapTree`] iff the `builder` is complete, otherwise return [`IncompleteTapTree`]
+    /// error with the content of incomplete `builder` instance.
+    pub fn from_builder(builder: TaprootBuilder) -> Result<Self, IncompleteTapTree> {
+        if !builder.is_finalized() {
+            Err(IncompleteTapTree::NotFinalized(builder))
+        } else if builder.has_hidden_nodes() {
+            Err(IncompleteTapTree::HiddenParts(builder))
         } else {
-            Ok(TapTree(inner))
+            Ok(TapTree(builder))
         }
     }
 
     /// Converts self into builder [`TaprootBuilder`]. The builder is guaranteed to be finalized.
-    pub fn into_inner(self) -> TaprootBuilder {
+    pub fn into_builder(self) -> TaprootBuilder {
         self.0
+    }
+
+    /// Constructs [`TaprootBuilder`] by internally cloning the `self`. The builder is guaranteed
+    /// to be finalized.
+    pub fn to_builder(&self) -> TaprootBuilder {
+        self.0.clone()
     }
 
     /// Returns [`TapTreeIter`] iterator for a taproot script tree, operating in DFS order over
