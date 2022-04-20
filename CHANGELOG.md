@@ -1,4 +1,4 @@
-# 0.28 - 2021-04-05 "The Taproot Release"
+# 0.28 - 2022-04-20 "The Taproot Release"
 
 At nearly nine months, this is our longest release cycle ever, and thanks
 to a huge increase in the number of active contributors this year and last,
@@ -11,7 +11,7 @@ increase in scope.
 
 We have more big changes coming down the pike. 2022 is going to be a big
 year for `rust-bitcoin`, which we know is exciting for us but disruptive to
-downstream users who ultimately want the library to just wark. Our hope is
+downstream users who ultimately want the library to just work. Our hope is
 that by 2023 we will have eliminated large amounts of technical debt,
 modernized our APIs to meet current Rust conventions, and clarified the scope
 of the individual crates in this ecosystem while still providing the essential
@@ -52,7 +52,7 @@ With so many changes since 0.27, we cannot list every PR. Here are the highlight
 - Don't allow hybrid EC keys [#829](https://github.com/rust-bitcoin/rust-bitcoin/pull/829)
 - Change erroneous behavior for `SIGHASH_SINGLE` bug [#860](https://github.com/rust-bitcoin/rust-bitcoin/pull/860) [#897](https://github.com/rust-bitcoin/rust-bitcoin/pull/897)
 - Delete the deprecated `contracthash` module [#871](https://github.com/rust-bitcoin/rust-bitcoin/pull/871); this functionality will migrate to ElementsProject/rust-elements
-- Remove compilation-breaking feature-gated enum variants [#881](https://github.com/rust-bitcoin/rust-bitcoin/pull/881)
+- Remove compilation-breaking feature-gating of enum variants" [#881](https://github.com/rust-bitcoin/rust-bitcoin/pull/881)
 
 Additionally we made several minor API changes (renaming methods, etc.) to improve
 compliance with modern Rust conventions. Where possible we left the existing methods
