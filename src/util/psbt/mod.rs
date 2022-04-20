@@ -46,6 +46,9 @@ use self::map::Map;
 
 use util::bip32::{ExtendedPubKey, KeySource};
 
+/// Partially signed transaction, commonly referred to as a PSBT.
+pub type Psbt = PartiallySignedTransaction;
+
 /// A Partially Signed Transaction.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
