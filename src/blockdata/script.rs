@@ -1266,14 +1266,15 @@ mod test {
     }
 
     #[test]
+    #[rustfmt::skip]
     fn scriptint_round_trip() {
         assert_eq!(build_scriptint(-1), vec![0x81]);
         assert_eq!(build_scriptint(255), vec![255, 0]);
         assert_eq!(build_scriptint(256), vec![0, 1]);
         assert_eq!(build_scriptint(257), vec![1, 1]);
         assert_eq!(build_scriptint(511), vec![255, 1]);
-        for &i in [10, 100, 255, 256, 1000, 10000, 25000, 200000, 5000000, 1000000000,
-                             (1 << 31) - 1, -((1 << 31) - 1)].iter() {
+        for &i in [10, 100, 255, 256, 1000, 10000, 25000, 200000, 5000000, 1000000000, (1 << 31) - 1, -((1 << 31) - 1)].iter()
+        {
             assert_eq!(Ok(i), read_scriptint(&build_scriptint(i)));
             assert_eq!(Ok(-i), read_scriptint(&build_scriptint(-i)));
         }

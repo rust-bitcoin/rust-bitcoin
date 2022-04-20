@@ -112,6 +112,7 @@ pub mod network;
 pub mod blockdata;
 pub mod util;
 pub mod consensus;
+#[rustfmt::skip] // `hash_newtype` statements are easier to read on a single line.
 pub mod hash_types;
 pub mod policy;
 
@@ -173,6 +174,7 @@ mod io_extras {
     }
 }
 
+#[rustfmt::skip] // One line use statements to reduce number of cfg statements required.
 mod prelude {
     #[cfg(all(not(feature = "std"), not(test)))]
     pub use alloc::{string::{String, ToString}, vec::Vec, boxed::Box, borrow::{Cow, ToOwned}, slice, rc, sync};

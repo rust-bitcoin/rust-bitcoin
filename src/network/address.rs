@@ -306,14 +306,16 @@ mod test {
     use crate::consensus::encode::{deserialize, serialize};
 
     #[test]
+    #[rustfmt::skip]
     fn serialize_address_test() {
-        assert_eq!(serialize(&Address {
-            services: ServiceFlags::NETWORK,
-            address: [0, 0, 0, 0, 0, 0xffff, 0x0a00, 0x0001],
-            port: 8333
-        }),
-        vec![1u8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-             0, 0, 0, 0xff, 0xff, 0x0a, 0, 0, 1, 0x20, 0x8d]);
+        assert_eq!(
+            serialize(&Address {
+                services: ServiceFlags::NETWORK,
+                address: [0, 0, 0, 0, 0, 0xffff, 0x0a00, 0x0001],
+                port: 8333
+            }),
+            vec![1u8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                 0, 0, 0, 0xff, 0xff, 0x0a, 0, 0, 1, 0x20, 0x8d]);
     }
 
     #[test]
