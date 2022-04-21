@@ -683,13 +683,13 @@ impl TaprootMerkleBranch {
             Err(TaprootError::InvalidMerkleTreeDepth(sl.len() / TAPROOT_CONTROL_NODE_SIZE))
         } else {
             let inner = sl
-                // TODO: Use chunks_exact after MSRV changes to 1.31
-                .chunks(TAPROOT_CONTROL_NODE_SIZE)
+                .chunks_exact(TAPROOT_CONTROL_NODE_SIZE)
                 .map(|chunk| {
                     sha256::Hash::from_slice(chunk)
-                        .expect("chunk exact always returns the correct size")
+                        .expect("chunks_exact always returns the correct size")
                 })
                 .collect();
+
             Ok(TaprootMerkleBranch(inner))
         }
     }
