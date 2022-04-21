@@ -1208,18 +1208,13 @@ mod tests {
     #[test]
     fn sighash_single_bug() {
         const SIGHASH_SINGLE: u32 = 3;
-        // We need a tx with more inputs than outputs.
-        let mut input = Vec::new();
-        input.push(TxIn::default());
-        input.push(TxIn::default());
-        let mut output = Vec::new();
-        output.push(TxOut::default());
 
+        // We need a tx with more inputs than outputs.
         let tx = Transaction {
             version: 1,
             lock_time: 0,
-            input: input,
-            output: output,   // TODO: Use Vec::from([TxOut]) once we bump MSRV.
+            input: vec![TxIn::default(), TxIn::default()],
+            output: vec![TxOut::default()],
         };
         let script = Script::new();
         let got = tx.signature_hash(1, &script, SIGHASH_SINGLE);
