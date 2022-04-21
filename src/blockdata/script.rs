@@ -746,7 +746,10 @@ impl<'a> Instructions<'a> {
     fn take_slice_or_kill(&mut self, len: usize) -> Result<&'a [u8], Error> {
         if self.data.len() >= len {
             let slice = &self.data.as_slice()[..len];
-            self.data.nth(len.max(1) - 1);
+            if len > 0 {
+                self.data.nth(len - 1);
+            }
+
             Ok(slice)
         } else {
             self.kill();
