@@ -20,8 +20,6 @@
 use core::fmt;
 use prelude::*;
 
-use secp256k1::{XOnlyPublicKey as _XOnlyPublicKey, KeyPair as _KeyPair};
-
 use secp256k1::{self, Secp256k1, Verification, constants};
 use hashes::Hash;
 use util::taproot::{TapBranchHash, TapTweakHash};
@@ -29,11 +27,11 @@ use SchnorrSighashType;
 
 /// Deprecated re-export of [`secp256k1::XOnlyPublicKey`]
 #[deprecated(since = "0.28.0", note = "Please use `util::key::XOnlyPublicKey` instead")]
-pub type XOnlyPublicKey = _XOnlyPublicKey;
+pub type XOnlyPublicKey = secp256k1::XOnlyPublicKey;
 
 /// Deprecated re-export of [`secp256k1::KeyPair`]
 #[deprecated(since = "0.28.0", note = "Please use `util::key::KeyPair` instead")]
-pub type KeyPair = _KeyPair;
+pub type KeyPair = secp256k1::KeyPair;
 
 /// Untweaked BIP-340 X-coord-only public key
 pub type UntweakedPublicKey = ::XOnlyPublicKey;
