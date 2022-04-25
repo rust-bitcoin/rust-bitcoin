@@ -74,7 +74,8 @@ impl fmt::Debug for ExtendedPrivKey {
             .field("parent_fingerprint", &self.parent_fingerprint)
             .field("child_number", &self.child_number)
             .field("chain_code", &self.chain_code)
-            .finish_non_exhaustive()
+            .field("private_key", &"[SecretKey]")
+            .finish()
     }
 }
 
