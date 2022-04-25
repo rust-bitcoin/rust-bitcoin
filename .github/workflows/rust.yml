@@ -29,6 +29,10 @@ jobs:
             env:
               AS_DEPENDENCY: true
               PIN_VERSIONS: true
+          - rust: 1.47
+            env:
+              AS_DEPENDENCY: true
+              DO_NO_STD: true
     steps:
       - name: Checkout Crate
         uses: actions/checkout@v2
