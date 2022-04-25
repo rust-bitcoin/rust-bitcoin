@@ -152,20 +152,6 @@ macro_rules! serde_string_impl {
                     {
                         $name::from_str(v).map_err(E::custom)
                     }
-
-                    fn visit_borrowed_str<E>(self, v: &'de str) -> Result<Self::Value, E>
-                    where
-                        E: $crate::serde::de::Error,
-                    {
-                        self.visit_str(v)
-                    }
-
-                    fn visit_string<E>(self, v: $crate::prelude::String) -> Result<Self::Value, E>
-                    where
-                        E: $crate::serde::de::Error,
-                    {
-                        self.visit_str(&v)
-                    }
                 }
 
                 deserializer.deserialize_str(Visitor)
@@ -215,19 +201,6 @@ macro_rules! serde_struct_human_string_impl {
                             $name::from_str(v).map_err(E::custom)
                         }
 
-                        fn visit_borrowed_str<E>(self, v: &'de str) -> Result<Self::Value, E>
-                        where
-                            E: $crate::serde::de::Error,
-                        {
-                            self.visit_str(v)
-                        }
-
-                        fn visit_string<E>(self, v: $crate::prelude::String) -> Result<Self::Value, E>
-                        where
-                            E: $crate::serde::de::Error,
-                        {
-                            self.visit_str(&v)
-                        }
                     }
 
                     deserializer.deserialize_str(Visitor)
@@ -573,21 +546,6 @@ macro_rules! user_enum {
                             Err(E::unknown_variant(v, FIELDS))
                         }
                     }
-
-                    fn visit_borrowed_str<E>(self, v: &'de str) -> Result<Self::Value, E>
-                    where
-                        E: $crate::serde::de::Error,
-                    {
-                        self.visit_str(v)
-                    }
-
-                    fn visit_string<E>(self, v: $crate::prelude::String) -> Result<Self::Value, E>
-                    where
-                        E: $crate::serde::de::Error,
-                    {
-                        self.visit_str(&v)
-                    }
-
                 }
 
                 deserializer.deserialize_str(Visitor)

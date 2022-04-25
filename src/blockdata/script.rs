@@ -1024,20 +1024,6 @@ impl<'de> serde::Deserialize<'de> for Script {
                     let v = Vec::from_hex(v).map_err(E::custom)?;
                     Ok(Script::from(v))
                 }
-
-                fn visit_borrowed_str<E>(self, v: &'de str) -> Result<Self::Value, E>
-                where
-                    E: serde::de::Error,
-                {
-                    self.visit_str(v)
-                }
-
-                fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
-                where
-                    E: serde::de::Error,
-                {
-                    self.visit_str(&v)
-                }
             }
             deserializer.deserialize_str(Visitor)
         } else {
