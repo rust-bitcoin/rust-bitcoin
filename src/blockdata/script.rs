@@ -1042,6 +1042,13 @@ impl<'de> serde::Deserialize<'de> for Script {
                 {
                     Ok(Script::from(v.to_vec()))
                 }
+
+                fn visit_byte_buf<E>(self, v: Vec<u8>) -> Result<Self::Value, E>
+                where
+                    E: serde::de::Error,
+                {
+                    Ok(Script::from(v))
+                }
             }
             deserializer.deserialize_bytes(BytesVisitor)
         }
