@@ -67,25 +67,19 @@ impl Address {
     }
 }
 
-fn addr_to_be(addr: [u16; 8]) -> [u16; 8] {
-    // consensus_encode always encodes in LE, and we want to encode in BE.
-    // this utility fn swap bytes before encoding so that the encoded result will be BE
-    let mut result = addr;
-    for word in &mut result {
-        *word = word.swap_bytes();
-    }
-    result
-}
-
 impl Encodable for Address {
     #[inline]
     fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, io::Error> {
-        let len = self.services.consensus_encode(&mut s)?
-            + addr_to_be(self.address).consensus_encode(&mut s)?
+        let mut len = self.services.consensus_encode(&mut s)?;
 
-            // consensus_encode always encodes in LE, and we want to encode in BE.
-            //TODO `len += io::Write::write(&mut e, &self.port.to_be_bytes())?;` when MSRV >= 1.32
-            + self.port.swap_bytes().consensus_encode(s)?;
+        for word in &self.address {
+            s.write_all(&word.to_be_bytes())?;
+            len += 2;
+        }
+
+        s.write_all(&self.port.to_be_bytes())?;
+        len += 2;
+
         Ok(len)
     }
 }
@@ -95,10 +89,22 @@ impl Decodable for Address {
     fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
         Ok(Address {
             services: Decodable::consensus_decode(&mut d)?,
-            address: addr_to_be(Decodable::consensus_decode(&mut d)?),
+            address: read_be_address(&mut d)?,
             port: u16::swap_bytes(Decodable::consensus_decode(d)?)
         })
     }
+}
+
+/// Read a big-endian address from reader.
+fn read_be_address<R: io::Read>(mut r: R) -> Result<[u16; 8], encode::Error> {
+    let mut address = [0u16; 8];
+    let mut buf = [0u8; 2];
+
+    for word in &mut address {
+        io::Read::read_exact(&mut r, &mut buf)?;
+        *word = u16::from_be_bytes(buf)
+    }
+    Ok(address)
 }
 
 impl fmt::Debug for Address {
@@ -180,7 +186,7 @@ impl Decodable for AddrV2 {
                 if len != 16 {
                     return Err(encode::Error::ParseFailed("Invalid IPv6 address"));
                 }
-                let addr: [u16; 8] = addr_to_be(Decodable::consensus_decode(&mut d)?);
+                let addr: [u16; 8] = read_be_address(&mut d)?;
                 if addr[0..3] == ONION {
                     return Err(encode::Error::ParseFailed("OnionCat address sent with IPv6 network id"));
                 }
@@ -214,12 +220,11 @@ impl Decodable for AddrV2 {
                 if len != 16  {
                     return Err(encode::Error::ParseFailed("Invalid CJDNS address"));
                 }
-                let addr: [u16; 8] = Decodable::consensus_decode(&mut d)?;
+                let addr: [u16; 8] = read_be_address(&mut d)?;
                 // check the first byte for the CJDNS marker
-                if addr[0] as u8 != 0xFC {
+                if addr[0] != u16::from_be_bytes([0xFC, 0x00]) {
                     return Err(encode::Error::ParseFailed("Invalid CJDNS address"));
                 }
-                let addr = addr_to_be(addr);
                 AddrV2::Cjdns(Ipv6Addr::new(addr[0], addr[1], addr[2], addr[3], addr[4], addr[5], addr[6], addr[7]))
             },
             _ => {
