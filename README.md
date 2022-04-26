@@ -12,7 +12,7 @@
     <a href="https://github.com/rust-bitcoin/rust-bitcoin/blob/master/LICENSE"><img alt="MIT or Apache-2.0 Licensed" src="https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg"/></a>
     <a href="https://github.com/rust-bitcoin/rust-bitcoin/actions?query=workflow%3AContinuous%20integration"><img alt="CI Status" src="https://github.com/rust-bitcoin/rust-bitcoin/workflows/Continuous%20integration/badge.svg"></a>
     <a href="https://docs.rs/bitcoin"><img alt="API Docs" src="https://img.shields.io/badge/docs.rs-bitcoin-green"/></a>
-    <a href="https://blog.rust-lang.org/2018/09/13/Rust-1.29.html"><img alt="Rustc Version 1.29+" src="https://img.shields.io/badge/rustc-1.29%2B-lightgrey.svg"/></a>
+    <a href="https://blog.rust-lang.org/2020/02/27/Rust-1.41.1.html"><img alt="Rustc Version 1.41.1+" src="https://img.shields.io/badge/rustc-1.41.1%2B-lightgrey.svg"/></a>
     <a href="https://gnusha.org/bitcoin-rust/"><img alt="Chat on IRC" src="https://img.shields.io/badge/irc-%23bitcoin--rust%20on%20libera.chat-blue"></a>
     <img alt="Lines of code" src="https://img.shields.io/tokei/lines/github/rust-bitcoin/rust-bitcoin">
   </p>
