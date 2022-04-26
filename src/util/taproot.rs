@@ -131,6 +131,21 @@ impl TapLeafHash {
     }
 }
 
+impl TapBranchHash {
+    /// Computes branch hash given two hashes of the nodes underneath it.
+    pub fn from_node_hashes(a: sha256::Hash, b: sha256::Hash) -> TapBranchHash {
+        let mut eng = TapBranchHash::engine();
+        if a < b {
+            eng.input(&a);
+            eng.input(&b);
+        } else {
+            eng.input(&b);
+            eng.input(&a);
+        };
+        TapBranchHash::from_engine(eng)
+    }
+}
+
 /// Maximum depth of a taproot tree script spend path.
 // https://github.com/bitcoin/bitcoin/blob/e826b22da252e0599c61d21c98ff89f366b3120f/src/script/interpreter.h#L229
 pub const TAPROOT_CONTROL_MAX_NODE_COUNT: usize = 128;
@@ -211,7 +226,7 @@ impl TaprootSpendInfo {
     }
 
     /// Creates a new key spend with `internal_key` and `merkle_root`. Provide [`None`] for
-    /// `merkle_root` if there is no script path.
+    /// the `merkle_root` if there is no script path.
     ///
     /// *Note*: As per BIP341
     ///
@@ -423,7 +438,7 @@ impl TaprootBuilder {
     /// are not provided in DFS walk order. The depth of the root node is 0.
     pub fn add_leaf_with_ver(
         self,
-        depth: usize,
+        depth: u8,
         script: Script,
         ver: LeafVersion,
     ) -> Result<Self, TaprootBuilderError> {
@@ -435,37 +450,50 @@ impl TaprootBuilder {
     /// leaves are not provided in DFS walk order. The depth of the root node is 0.
     ///
     /// See [`TaprootBuilder::add_leaf_with_ver`] for adding a leaf with specific version.
-    pub fn add_leaf(self, depth: usize, script: Script) -> Result<Self, TaprootBuilderError> {
+    pub fn add_leaf(self, depth: u8, script: Script) -> Result<Self, TaprootBuilderError> {
         self.add_leaf_with_ver(depth, script, LeafVersion::TapScript)
     }
 
     /// Adds a hidden/omitted node at `depth` to the builder. Errors if the leaves are not provided
     /// in DFS walk order. The depth of the root node is 0.
-    pub fn add_hidden(self, depth: usize, hash: sha256::Hash) -> Result<Self, TaprootBuilderError> {
-        let node = NodeInfo::new_hidden(hash);
+    pub fn add_hidden_node(self, depth: u8, hash: sha256::Hash) -> Result<Self, TaprootBuilderError> {
+        let node = NodeInfo::new_hidden_node(hash);
         self.insert(node, depth)
     }
 
-    /// Checks if the builder is a complete tree.
-    pub fn is_complete(&self) -> bool {
+    /// Checks if the builder has finalized building a tree.
+    pub fn is_finalized(&self) -> bool {
         self.branch.len() == 1 && self.branch[0].is_some()
     }
 
+    /// Checks if the builder has hidden nodes.
+    pub fn has_hidden_nodes(&self) -> bool {
+        for node in &self.branch {
+            if let Some(node) = node {
+                if node.has_hidden_nodes {
+                    return true
+                }
+            }
+        }
+        false
+    }
+
     /// Creates a [`TaprootSpendInfo`] with the given internal key.
+    ///
+    // TODO: in a future breaking API change, this no longer needs to return result
     pub fn finalize<C: secp256k1::Verification>(
         mut self,
         secp: &Secp256k1<C>,
         internal_key: UntweakedPublicKey,
     ) -> Result<TaprootSpendInfo, TaprootBuilderError> {
-        if self.branch.len() > 1 {
-            return Err(TaprootBuilderError::IncompleteTree);
+        match self.branch.pop() {
+            None => Ok(TaprootSpendInfo::new_key_spend(secp, internal_key, None)),
+            Some(Some(node)) => {
+                Ok(TaprootSpendInfo::from_node_info(secp, internal_key, node))
+            }
+            _ => Err(TaprootBuilderError::IncompleteTree),
+
         }
-        let node = self
-            .branch
-            .pop()
-            .ok_or(TaprootBuilderError::EmptyTree)?
-            .expect("Builder invariant: last element of the branch must be some");
-        Ok(TaprootSpendInfo::from_node_info(secp, internal_key, node))
     }
 
     pub(crate) fn branch(&self) -> &[Option<NodeInfo>] {
@@ -473,20 +501,20 @@ impl TaprootBuilder {
     }
 
     /// Inserts a leaf at `depth`.
-    fn insert(mut self, mut node: NodeInfo, mut depth: usize) -> Result<Self, TaprootBuilderError> {
+    fn insert(mut self, mut node: NodeInfo, mut depth: u8) -> Result<Self, TaprootBuilderError> {
         // early error on invalid depth. Though this will be checked later
         // while constructing TaprootMerkelBranch
-        if depth > TAPROOT_CONTROL_MAX_NODE_COUNT {
-            return Err(TaprootBuilderError::InvalidMerkleTreeDepth(depth));
+        if depth as usize > TAPROOT_CONTROL_MAX_NODE_COUNT {
+            return Err(TaprootBuilderError::InvalidMerkleTreeDepth(depth as usize));
         }
         // We cannot insert a leaf at a lower depth while a deeper branch is unfinished. Doing
         // so would mean the add_leaf/add_hidden invocations do not correspond to a DFS traversal of a
         // binary tree.
-        if depth + 1 < self.branch.len() {
+        if depth as usize + 1 < self.branch.len() {
             return Err(TaprootBuilderError::NodeNotInDfsOrder);
         }
 
-        while self.branch.len() == depth + 1 {
+        while self.branch.len() == depth as usize + 1 {
             let child = match self.branch.pop() {
                 None => unreachable!("Len of branch checked to be >= 1"),
                 Some(Some(child)) => child,
@@ -507,46 +535,54 @@ impl TaprootBuilder {
             depth -= 1;
         }
 
-        if self.branch.len() < depth + 1 {
+        if self.branch.len() < depth as usize + 1 {
             // add enough nodes so that we can insert node at depth `depth`
-            let num_extra_nodes = depth + 1 - self.branch.len();
+            let num_extra_nodes = depth as usize + 1 - self.branch.len();
             self.branch
                 .extend((0..num_extra_nodes).into_iter().map(|_| None));
         }
         // Push the last node to the branch
-        self.branch[depth] = Some(node);
+        self.branch[depth as usize] = Some(node);
         Ok(self)
     }
 }
 
 /// Represents the node information in taproot tree.
 ///
-/// You can use [`TaprootSpendInfo::from_node_info`] to a get [`TaprootSpendInfo`]
-/// from the merkle root [`NodeInfo`].
+/// Helper type used in merkle tree construction allowing one to build sparse merkle trees. The node
+/// represents part of the tree that has information about all of its descendants.
+/// See how [`TaprootBuilder`] works for more details.
+///
+/// You can use [`TaprootSpendInfo::from_node_info`] to a get a [`TaprootSpendInfo`] from the merkle
+/// root [`NodeInfo`].
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct NodeInfo {
     /// Merkle hash for this node.
     pub(crate) hash: sha256::Hash,
     /// Information about leaves inside this node.
-    pub(crate) leaves: Vec<LeafInfo>,
+    pub(crate) leaves: Vec<ScriptLeaf>,
+    /// Tracks information on hidden nodes below this node.
+    pub(crate) has_hidden_nodes: bool,
 }
 
 impl NodeInfo {
     /// Creates a new [`NodeInfo`] with omitted/hidden info.
-    pub fn new_hidden(hash: sha256::Hash) -> Self {
+    pub fn new_hidden_node(hash: sha256::Hash) -> Self {
         Self {
             hash: hash,
             leaves: vec![],
+            has_hidden_nodes: true
         }
     }
 
     /// Creates a new leaf [`NodeInfo`] with given [`Script`] and [`LeafVersion`].
     pub fn new_leaf_with_ver(script: Script, ver: LeafVersion) -> Self {
-        let leaf = LeafInfo::new(script, ver);
+        let leaf = ScriptLeaf::new(script, ver);
         Self {
-            hash: leaf.hash(),
+            hash: sha256::Hash::from_inner(leaf.leaf_hash().into_inner()),
             leaves: vec![leaf],
+            has_hidden_nodes: false,
         }
     }
 
@@ -561,17 +597,11 @@ impl NodeInfo {
             b_leaf.merkle_branch.push(a.hash)?; // add hashing partner
             all_leaves.push(b_leaf);
         }
-        let mut eng = TapBranchHash::engine();
-        if a.hash < b.hash {
-            eng.input(&a.hash);
-            eng.input(&b.hash);
-        } else {
-            eng.input(&b.hash);
-            eng.input(&a.hash);
-        };
+        let hash = TapBranchHash::from_node_hashes(a.hash, b.hash);
         Ok(Self {
-            hash: sha256::Hash::from_engine(eng),
+            hash: sha256::Hash::from_inner(hash.into_inner()),
             leaves: all_leaves,
+            has_hidden_nodes: a.has_hidden_nodes || b.has_hidden_nodes
         })
     }
 }
@@ -579,17 +609,17 @@ impl NodeInfo {
 /// Store information about taproot leaf node.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub(crate) struct LeafInfo {
+pub struct ScriptLeaf {
     /// The underlying script.
-    pub(crate) script: Script,
+    script: Script,
     /// The leaf version.
-    pub(crate) ver: LeafVersion,
+    ver: LeafVersion,
     /// The merkle proof (hashing partners) to get this node.
-    pub(crate) merkle_branch: TaprootMerkleBranch,
+    merkle_branch: TaprootMerkleBranch,
 }
 
-impl LeafInfo {
-    /// Creates an new [`LeafInfo`] from `script` and `ver` and no merkle branch.
+impl ScriptLeaf {
+    /// Creates an new [`ScriptLeaf`] from `script` and `ver` and no merkle branch.
     fn new(script: Script, ver: LeafVersion) -> Self {
         Self {
             script: script,
@@ -598,10 +628,37 @@ impl LeafInfo {
         }
     }
 
-    /// Computes a leaf hash for this [`LeafInfo`].
-    fn hash(&self) -> sha256::Hash {
-        let leaf_hash = TapLeafHash::from_script(&self.script, self.ver);
-        sha256::Hash::from_inner(leaf_hash.into_inner())
+    /// Returns the depth of this script leaf in the tap tree.
+    #[inline]
+    pub fn depth(&self) -> u8 {
+        // The depth is guaranteed to be < 127 by the TaprootBuilder type.
+        // TODO: Following MSRV bump implement via `try_into().expect("")`.
+        self.merkle_branch.0.len() as u8
+    }
+
+    /// Computes a leaf hash for this [`ScriptLeaf`].
+    #[inline]
+    pub fn leaf_hash(&self) -> TapLeafHash {
+        TapLeafHash::from_script(&self.script, self.ver)
+    }
+
+    /// Returns reference to the leaf script.
+    #[inline]
+    pub fn script(&self) -> &Script {
+        &self.script
+    }
+
+    /// Returns leaf version of the script.
+    #[inline]
+    pub fn leaf_version(&self) -> LeafVersion {
+        self.ver
+    }
+
+    /// Returns reference to the merkle proof (hashing partners) to get this
+    /// node in form of [`TaprootMerkleBranch`].
+    #[inline]
+    pub fn merkle_branch(&self) -> &TaprootMerkleBranch {
+        &self.merkle_branch
     }
 }
 
@@ -704,11 +761,11 @@ impl ControlBlock {
     ///
     /// # Errors
     ///
-    /// - `TaprootError::InvalidControlBlockSize` if `sl` is not of size 1 + 32 + 32N for any N >= 0.
-    /// - `TaprootError::InvalidParity` if first byte of `sl` is not a valid output key parity.
-    /// - `TaprootError::InvalidTaprootLeafVersion` if first byte of `sl` is not a valid leaf version.
-    /// - `TaprootError::InvalidInternalKey` if internal key is invalid (first 32 bytes after the parity byte).
-    /// - `TaprootError::InvalidMerkleTreeDepth` if merkle tree is too deep (more than 128 levels).
+    /// - [`TaprootError::InvalidControlBlockSize`] if `sl` is not of size 1 + 32 + 32N for any N >= 0.
+    /// - [`TaprootError::InvalidParity`] if first byte of `sl` is not a valid output key parity.
+    /// - [`TaprootError::InvalidTaprootLeafVersion`] if first byte of `sl` is not a valid leaf version.
+    /// - [`TaprootError::InvalidInternalKey`] if internal key is invalid (first 32 bytes after the parity byte).
+    /// - [`TaprootError::InvalidMerkleTreeDepth`] if merkle tree is too deep (more than 128 levels).
     pub fn from_slice(sl: &[u8]) -> Result<ControlBlock, TaprootError> {
         if sl.len() < TAPROOT_CONTROL_BASE_SIZE
             || (sl.len() - TAPROOT_CONTROL_BASE_SIZE) % TAPROOT_CONTROL_NODE_SIZE != 0
@@ -775,16 +832,11 @@ impl ControlBlock {
         let mut curr_hash = TapBranchHash::from_inner(leaf_hash.into_inner());
         // Verify the proof
         for elem in self.merkle_branch.as_inner() {
-            let mut eng = TapBranchHash::engine();
-            if curr_hash.as_inner() < elem.as_inner() {
-                eng.input(&curr_hash);
-                eng.input(elem);
-            } else {
-                eng.input(elem);
-                eng.input(&curr_hash);
-            }
             // Recalculate the curr hash as parent hash
-            curr_hash = TapBranchHash::from_engine(eng);
+            curr_hash = TapBranchHash::from_node_hashes(
+                sha256::Hash::from_inner(curr_hash.into_inner()),
+                *elem
+            );
         }
         // compute the taptweak
         let tweak = TapTweakHash::from_key_and_tweak(self.internal_key, Some(curr_hash));
@@ -1270,7 +1322,7 @@ mod test {
             v: &serde_json::Value,
             mut builder: TaprootBuilder,
             leaves: &mut Vec<(Script, LeafVersion)>,
-            depth: usize,
+            depth: u8,
         ) -> TaprootBuilder {
             if v.is_null() {
                 // nothing to push

@@ -21,7 +21,7 @@ pub use secp256k1::{XOnlyPublicKey, KeyPair};
 use prelude::*;
 
 use core::{ops, str::FromStr};
-use core::fmt::{self, Write as _fmtWrite};
+use core::fmt::{self, Write};
 use io;
 #[cfg(feature = "std")] use std::error;
 

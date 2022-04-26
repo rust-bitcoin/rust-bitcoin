@@ -26,7 +26,7 @@ use util::psbt::map::Map;
 use util::psbt::raw;
 use util::psbt::Error;
 
-use util::taproot::{LeafInfo, TapLeafHash};
+use util::taproot::{ScriptLeaf, TapLeafHash};
 
 use util::taproot::{NodeInfo, TaprootBuilder};
 
@@ -47,7 +47,7 @@ const PSBT_OUT_PROPRIETARY: u8 = 0xFC;
 
 /// A key-value map for an output of the corresponding index in the unsigned
 /// transaction.
-#[derive(Clone, Default, Debug, PartialEq)]
+#[derive(Clone, Default, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Output {
     /// The redeem script for this output.
@@ -79,6 +79,39 @@ pub struct Output {
     pub unknown: BTreeMap<raw::Key, Vec<u8>>,
 }
 
+/// Error happening when [`TapTree`] is constructed from a [`TaprootBuilder`]
+/// having hidden branches or not being finalized.
+#[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug)]
+pub enum IncompleteTapTree {
+    /// Indicates an attempt to construct a tap tree from a builder containing incomplete branches.
+    NotFinalized(TaprootBuilder),
+    /// Indicates an attempt to construct a tap tree from a builder containing hidden parts.
+    HiddenParts(TaprootBuilder),
+}
+
+impl IncompleteTapTree {
+    /// Converts error into the original incomplete [`TaprootBuilder`] instance.
+    pub fn into_builder(self) -> TaprootBuilder {
+        match self {
+            IncompleteTapTree::NotFinalized(builder) |
+            IncompleteTapTree::HiddenParts(builder) => builder
+        }
+    }
+}
+
+impl core::fmt::Display for IncompleteTapTree {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.write_str(match self {
+            IncompleteTapTree::NotFinalized(_) => "an attempt to construct a tap tree from a builder containing incomplete branches.",
+            IncompleteTapTree::HiddenParts(_) => "an attempt to construct a tap tree from a builder containing hidden parts.",
+        })
+    }
+}
+
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+impl ::std::error::Error for IncompleteTapTree {}
+
 /// Taproot Tree representing a finalized [`TaprootBuilder`] (a complete binary tree).
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -92,9 +125,16 @@ impl PartialEq for TapTree {
 
 impl Eq for TapTree {}
 
+impl From<TapTree> for TaprootBuilder {
+    #[inline]
+    fn from(tree: TapTree) -> Self {
+        tree.into_builder()
+    }
+}
+
 impl TapTree {
     /// Gets the inner node info as the builder is finalized.
-    fn node_info(&self) -> &NodeInfo {
+    pub fn node_info(&self) -> &NodeInfo {
         // The builder algorithm invariant guarantees that is_complete builder
         // have only 1 element in branch and that is not None.
         // We make sure that we only allow is_complete builders via the from_inner
@@ -102,51 +142,35 @@ impl TapTree {
         self.0.branch()[0].as_ref().expect("from_inner only parses is_complete builders")
     }
 
-    /// Converts a [`TaprootBuilder`] into a tree if it is complete binary tree.
+    /// Constructs [`TapTree`] from a [`TaprootBuilder`] if it is complete binary tree.
     ///
-    /// # Return
-    /// A `TapTree` iff the `inner` builder is complete, otherwise return the inner as `Err`.
-    pub fn from_inner(inner: TaprootBuilder) -> Result<Self, TaprootBuilder> {
-        if inner.is_complete() {
-            Ok(TapTree(inner))
+    /// # Returns
+    /// A [`TapTree`] iff the `builder` is complete, otherwise return [`IncompleteTapTree`]
+    /// error with the content of incomplete `builder` instance.
+    pub fn from_builder(builder: TaprootBuilder) -> Result<Self, IncompleteTapTree> {
+        if !builder.is_finalized() {
+            Err(IncompleteTapTree::NotFinalized(builder))
+        } else if builder.has_hidden_nodes() {
+            Err(IncompleteTapTree::HiddenParts(builder))
         } else {
-            Err(inner)
+            Ok(TapTree(builder))
         }
     }
 
     /// Converts self into builder [`TaprootBuilder`]. The builder is guaranteed to be finalized.
-    pub fn into_inner(self) -> TaprootBuilder {
+    pub fn into_builder(self) -> TaprootBuilder {
         self.0
     }
 
-    /// Returns iterator for a taproot script tree, operating in DFS order over leaf depth and
-    /// leaf script pairs.
-    pub fn iter(&self) -> TapTreeIter {
-        self.into_iter()
+    /// Constructs [`TaprootBuilder`] by internally cloning the `self`. The builder is guaranteed
+    /// to be finalized.
+    pub fn to_builder(&self) -> TaprootBuilder {
+        self.0.clone()
     }
-}
 
-/// Iterator for a taproot script tree, operating in DFS order over leaf depth and
-/// leaf script pairs.
-pub struct TapTreeIter<'tree> {
-    leaf_iter: core::slice::Iter<'tree, LeafInfo>,
-}
-
-impl<'tree> Iterator for TapTreeIter<'tree> {
-    type Item = (u8, &'tree Script);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.leaf_iter.next().map(|leaf_info| {
-            (leaf_info.merkle_branch.as_inner().len() as u8, &leaf_info.script)
-        })
-    }
-}
-
-impl<'tree> IntoIterator for &'tree TapTree {
-    type Item = (u8, &'tree Script);
-    type IntoIter = TapTreeIter<'tree>;
-
-    fn into_iter(self) -> Self::IntoIter {
+    /// Returns [`TapTreeIter`] iterator for a taproot script tree, operating in DFS order over
+    /// tree [`ScriptLeaf`]s.
+    pub fn script_leaves(&self) -> TapTreeIter {
         match (self.0.branch().len(), self.0.branch().last()) {
             (1, Some(Some(root))) => {
                 TapTreeIter {
@@ -156,6 +180,21 @@ impl<'tree> IntoIterator for &'tree TapTree {
             // This should be unreachable as we Taptree is already finalized
             _ => unreachable!("non-finalized tree builder inside TapTree"),
         }
+    }
+}
+
+/// Iterator for a taproot script tree, operating in DFS order over leaf depth and
+/// leaf script pairs.
+pub struct TapTreeIter<'tree> {
+    leaf_iter: core::slice::Iter<'tree, ScriptLeaf>,
+}
+
+impl<'tree> Iterator for TapTreeIter<'tree> {
+    type Item = &'tree ScriptLeaf;
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+        self.leaf_iter.next()
     }
 }
 

@@ -47,7 +47,7 @@
 
 use prelude::*;
 
-use io::{self as io, Cursor};
+use io::{self, Cursor};
 use core::fmt::{self, Display, Formatter};
 use core::cmp::{self, Ordering};
 

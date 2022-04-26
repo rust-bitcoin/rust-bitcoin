@@ -18,6 +18,11 @@
   </p>
 </div>
 
+**Heads up for contributors: upcoming edition change**
+
+We're currently preparing to bump MSRV and **change the edition to 2018**.
+To minimize the churn we recommend you to submit your local WIP changes ASAP.
+There will be a lot of rebasing after the edition change.
 
 [Documentation](https://docs.rs/bitcoin/)
 

@@ -35,7 +35,7 @@ use util::taproot::{TapBranchHash, TapLeafHash, ControlBlock, LeafVersion};
 use schnorr;
 use util::key::PublicKey;
 
-use super::map::{TapTree, PsbtSigHashType};
+use super::map::{TapTree, PsbtSighashType};
 
 use util::taproot::TaprootBuilder;
 /// A trait for serializing a value as raw data for insertion into PSBT
@@ -118,7 +118,7 @@ impl Deserialize for EcdsaSig {
         //
         // 1) the current implementation of from_u32_consensus(`flag`) does not preserve
         // the sighash byte `flag` mapping all unknown values to EcdsaSighashType::All or
-        // EcdsaSigHashType::AllPlusAnyOneCanPay. Therefore, break the invariant
+        // EcdsaSighashType::AllPlusAnyOneCanPay. Therefore, break the invariant
         // EcdsaSig::from_slice(&sl[..]).to_vec = sl.
         //
         // 2) This would cause to have invalid signatures because the sighash message
@@ -130,8 +130,8 @@ impl Deserialize for EcdsaSig {
                 EcdsaSigError::EmptySignature => {
                     encode::Error::ParseFailed("Empty partial signature data")
                 }
-                EcdsaSigError::NonStandardSigHashType(flag) => {
-                    encode::Error::from(psbt::Error::NonStandardSigHashType(flag))
+                EcdsaSigError::NonStandardSighashType(flag) => {
+                    encode::Error::from(psbt::Error::NonStandardSighashType(flag))
                 }
                 EcdsaSigError::Secp256k1(..) => {
                     encode::Error::ParseFailed("Invalid Ecdsa signature")
@@ -191,16 +191,16 @@ impl Deserialize for Vec<u8> {
     }
 }
 
-impl Serialize for PsbtSigHashType {
+impl Serialize for PsbtSighashType {
     fn serialize(&self) -> Vec<u8> {
         serialize(&self.to_u32())
     }
 }
 
-impl Deserialize for PsbtSigHashType {
+impl Deserialize for PsbtSighashType {
     fn deserialize(bytes: &[u8]) -> Result<Self, encode::Error> {
         let raw: u32 = encode::deserialize(bytes)?;
-        Ok(PsbtSigHashType { inner: raw })
+        Ok(PsbtSighashType { inner: raw })
     }
 }
 
@@ -229,7 +229,7 @@ impl Deserialize for schnorr::SchnorrSig {
         schnorr::SchnorrSig::from_slice(&bytes)
             .map_err(|e| match e {
                 schnorr::SchnorrSigError::InvalidSighashType(flag) => {
-                    encode::Error::from(psbt::Error::NonStandardSigHashType(flag as u32))
+                    encode::Error::from(psbt::Error::NonStandardSighashType(flag as u32))
                 }
                 schnorr::SchnorrSigError::InvalidSchnorrSigSize(_) => {
                     encode::Error::ParseFailed("Invalid Schnorr signature length")
@@ -327,9 +327,9 @@ impl Serialize for TapTree {
                     //
                     // TaprootMerkleBranch can only have len atmost 128(TAPROOT_CONTROL_MAX_NODE_COUNT).
                     // safe to cast from usize to u8
-                    buf.push(leaf_info.merkle_branch.as_inner().len() as u8);
-                    buf.push(leaf_info.ver.to_consensus());
-                    leaf_info.script.consensus_encode(&mut buf).expect("Vecs dont err");
+                    buf.push(leaf_info.merkle_branch().as_inner().len() as u8);
+                    buf.push(leaf_info.leaf_version().to_consensus());
+                    leaf_info.script().consensus_encode(&mut buf).expect("Vecs dont err");
                 }
                 buf
             }
@@ -352,10 +352,10 @@ impl Deserialize for TapTree {
 
             let leaf_version = LeafVersion::from_consensus(*version)
                 .map_err(|_| encode::Error::ParseFailed("Leaf Version Error"))?;
-            builder = builder.add_leaf_with_ver(usize::from(*depth), script, leaf_version)
+            builder = builder.add_leaf_with_ver(*depth, script, leaf_version)
                 .map_err(|_| encode::Error::ParseFailed("Tree not in DFS order"))?;
         }
-        if builder.is_complete() {
+        if builder.is_finalized() && !builder.has_hidden_nodes() {
             Ok(TapTree(builder))
         } else {
             Err(encode::Error::ParseFailed("Incomplete taproot Tree"))
@@ -370,12 +370,45 @@ fn key_source_len(key_source: &KeySource) -> usize {
 
 #[cfg(test)]
 mod tests {
+    use hashes::hex::FromHex;
     use super::*;
 
+    // Composes tree matching a given depth map, filled with dumb script leafs,
+    // each of which consists of a single push-int op code, with int value
+    // increased for each consecutive leaf.
+    pub fn compose_taproot_builder<'map>(opcode: u8, depth_map: impl IntoIterator<Item = &'map u8>) -> TaprootBuilder {
+        let mut val = opcode;
+        let mut builder = TaprootBuilder::new();
+        for depth in depth_map {
+            let script = Script::from_hex(&format!("{:02x}", val)).unwrap();
+            builder = builder.add_leaf(*depth, script).unwrap();
+            let (new_val, _) = val.overflowing_add(1);
+            val = new_val;
+        }
+        builder
+    }
+
     #[test]
-    fn can_deserialize_non_standard_psbt_sig_hash_type() {
+    fn taptree_hidden() {
+        let mut builder = compose_taproot_builder(0x51, &[2, 2, 2]);
+        builder = builder.add_leaf_with_ver(3, Script::from_hex("b9").unwrap(), LeafVersion::from_consensus(0xC2).unwrap()).unwrap();
+        builder = builder.add_hidden_node(3, sha256::Hash::default()).unwrap();
+        assert!(TapTree::from_builder(builder.clone()).is_err());
+    }
+
+    #[test]
+    fn taptree_roundtrip() {
+        let mut builder = compose_taproot_builder(0x51, &[2, 2, 2, 3]);
+        builder = builder.add_leaf_with_ver(3, Script::from_hex("b9").unwrap(), LeafVersion::from_consensus(0xC2).unwrap()).unwrap();
+        let tree = TapTree::from_builder(builder).unwrap();
+        let tree_prime = TapTree::deserialize(&tree.serialize()).unwrap();
+        assert_eq!(tree, tree_prime);
+    }
+
+    #[test]
+    fn can_deserialize_non_standard_psbt_sighash_type() {
         let non_standard_sighash = [222u8, 0u8, 0u8, 0u8]; // 32 byte value.
-        let sighash = PsbtSigHashType::deserialize(&non_standard_sighash);
+        let sighash = PsbtSighashType::deserialize(&non_standard_sighash);
         assert!(sighash.is_ok())
     }
 }

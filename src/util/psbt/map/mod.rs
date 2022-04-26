@@ -23,8 +23,8 @@ mod global;
 mod input;
 mod output;
 
-pub use self::input::{Input, PsbtSigHashType};
-pub use self::output::{Output, TapTree};
+pub use self::input::{Input, PsbtSighashType};
+pub use self::output::{Output, TapTree, IncompleteTapTree};
 
 /// A trait that describes a PSBT key-value map.
 pub(super) trait Map {
