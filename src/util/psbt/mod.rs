@@ -22,14 +22,14 @@
 use core::cmp;
 
 use blockdata::script::Script;
-use blockdata::transaction::Transaction;
+use blockdata::transaction::{ TxOut, Transaction};
 use consensus::{encode, Encodable, Decodable};
 use consensus::encode::MAX_VEC_SIZE;
+pub use util::sighash::Prevouts;
 
 use prelude::*;
 
 use io;
-
 mod error;
 pub use self::error::Error;
 
@@ -77,6 +77,32 @@ pub struct PartiallySignedTransaction {
 }
 
 impl PartiallySignedTransaction {
+    /// Returns an iterator for the funding UTXOs of the psbt
+    ///
+    /// For each PSBT input that contains UTXO information `Ok` is returned containing that information.
+    /// The order of returned items is same as the order of inputs.
+    ///
+    /// ## Errors
+    ///
+    /// The function returns error when UTXO information is not present or is invalid.
+    ///
+    /// ## Panics
+    ///
+    /// The function panics if the length of transaction inputs is not equal to the length of PSBT inputs.
+    pub fn iter_funding_utxos(&self) -> impl Iterator<Item = Result<&TxOut, Error>> {
+        assert_eq!(self.inputs.len(), self.unsigned_tx.input.len());
+        self.unsigned_tx.input.iter().zip(&self.inputs).map(|(tx_input, psbt_input)| {
+            match (&psbt_input.witness_utxo, &psbt_input.non_witness_utxo) {
+                (Some(witness_utxo), _) => Ok(witness_utxo),
+                (None, Some(non_witness_utxo)) => {
+                    let vout = tx_input.previous_output.vout as usize;
+                    non_witness_utxo.output.get(vout).ok_or(Error::PsbtUtxoOutOfbounds)
+                },
+                (None, None) => Err(Error::MissingUtxo),
+            }
+        })
+    }
+
     /// Checks that unsigned transaction does not have scriptSig's or witness
     /// data
     fn unsigned_tx_checks(&self) -> Result<(), Error> {

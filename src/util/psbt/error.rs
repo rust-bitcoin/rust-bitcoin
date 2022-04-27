@@ -37,8 +37,12 @@ pub enum Error {
     /// Magic bytes for a PSBT must be the ASCII for "psbt" serialized in most
     /// significant byte order.
     InvalidMagic,
+    /// Missing both the witness and non-witness utxo.
+    MissingUtxo,
     /// The separator for a PSBT must be `0xff`.
     InvalidSeparator,
+    /// Returned when output index is out of bounds in relation to the output in non-witness UTXO.
+    PsbtUtxoOutOfbounds,
     /// Known keys must be according to spec.
     InvalidKey(raw::Key),
     /// Non-proprietary key type found when proprietary key was expected
@@ -98,6 +102,8 @@ impl fmt::Display for Error {
             }
             Error::NoMorePairs => f.write_str("no more key-value pairs for this psbt map"),
             Error::HashParseError(e) => write!(f, "Hash Parse Error: {}", e),
+            Error::MissingUtxo => f.write_str("UTXO information is not present in PSBT"),
+            Error::PsbtUtxoOutOfbounds => f.write_str("output index is out of bounds of non witness script output array"),
             Error::InvalidPreimageHashPair{ref preimage, ref hash, ref hash_type} => {
                 // directly using debug forms of psbthash enums
                 write!(f, "Preimage {:?} does not match {:?} hash {:?}", preimage, hash_type, hash )
