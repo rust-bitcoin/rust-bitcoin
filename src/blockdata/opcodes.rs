@@ -651,7 +651,7 @@ impl fmt::Debug for All {
             all::OP_CHECKMULTISIGVERIFY => write!(f, "CHECKMULTISIGVERIFY"),
             all::OP_CLTV => write!(f, "CLTV"),
             all::OP_CSV => write!(f, "CSV"),
-            All {code: x} if x >= all::OP_NOP1.code && x <= all::OP_NOP10.code => write!(f, "NOP{}", x - all::OP_NOP1.code + 1),
+            All {code: x} if (all::OP_NOP1.code..=all::OP_NOP10.code).contains(&x) => write!(f, "NOP{}", x - all::OP_NOP1.code + 1),
             all::OP_INVALIDOPCODE => write!(f, "INVALIDOPCODE"),
             all::OP_CHECKSIGADD => write!(f, "CHECKSIGADD"),
             All {code: x} => write!(f, "RETURN_{}", x),
