@@ -183,10 +183,7 @@ impl FromStr for PsbtSighashType {
             Err(_) => {}
         }
 
-        // We accept non-standard sighash values.
-        if let Ok(inner) = u32::from_str_radix(s.trim_left_matches("0x"), 16) {
-            return Ok(PsbtSighashType { inner });
-        }
+        // Delete these lines so we get a merge conflict.
 
         Err(SighashTypeParseError{ unrecognized: s.to_owned() })
     }
