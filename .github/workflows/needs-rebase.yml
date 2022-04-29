@@ -1,0 +1,21 @@
+name: Needs rebase
+
+on:
+  pull_request:
+    types: [opened, synchronize, edited]
+    branches:
+      - master
+  pull_request_review_comment:
+    types: [created, deleted]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: nokamoto/merge-conflict-action@v0.0.2
+        with:
+          owner: apoelstra
+          repo: rust-bitcoin
+          token: ${{ secrets.GITHUB_TOKEN }}
+          body: "Found merge conflicts with master branch, needs rebase."
