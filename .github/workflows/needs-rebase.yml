@@ -1,9 +1,12 @@
 name: Needs rebase
 
 on:
-  push:
+  pull_request:
+    types: [opened, synchronize, edited]
     branches:
-    - master
+      - master
+  pull_request_review_comment:
+    types: [created, deleted]
 
 jobs:
   notify:
