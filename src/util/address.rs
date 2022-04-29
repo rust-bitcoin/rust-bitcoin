@@ -738,7 +738,7 @@ impl Address {
     }
 
     /// Return the address payload as a byte slice
-    fn payload_as_bytes(&self) -> &[u8] {
+    pub fn payload_as_bytes(&self) -> &[u8] {
         match &self.payload {
             Payload::ScriptHash(hash) => hash,
             Payload::PubkeyHash(hash) => hash,
