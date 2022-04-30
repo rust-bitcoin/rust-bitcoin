@@ -601,7 +601,7 @@ impl Script {
     /// To force minimal pushes, use [`Self::instructions_minimal`].
     pub fn instructions(&self) -> Instructions {
         Instructions {
-            data: &self.0[..],
+            data: self.0.iter(),
             enforce_minimal: false,
         }
     }
@@ -609,7 +609,7 @@ impl Script {
     /// Iterates over the script in the form of `Instruction`s while enforcing minimal pushes.
     pub fn instructions_minimal(&self) -> Instructions {
         Instructions {
-            data: &self.0[..],
+            data: self.0.iter(),
             enforce_minimal: true,
         }
     }
@@ -748,114 +748,97 @@ pub enum Instruction<'a> {
 
 /// Iterator over a script returning parsed opcodes.
 pub struct Instructions<'a> {
-    data: &'a [u8],
+    data: ::core::slice::Iter<'a, u8>,
     enforce_minimal: bool,
+}
+
+impl<'a> Instructions<'a> {
+    /// Set the iterator to end so that it won't iterate any longer
+    fn kill(&mut self) {
+        let len = self.data.len();
+        self.data.nth(len.max(1) - 1);
+    }
+
+    /// takes `len` bytes long slice from iterator and returns it advancing iterator
+    /// if the iterator is not long enough [`Error::EarlyEndOfScript`] is returned and the iterator is killed
+    /// to avoid returning an infinite stream of errors.
+    fn take_slice_or_kill(&mut self, len: usize) -> Result<&'a [u8], Error> {
+        if self.data.len() >= len {
+            let slice = &self.data.as_slice()[..len];
+            if len > 0 {
+                self.data.nth(len - 1);
+            }
+
+            Ok(slice)
+        } else {
+            self.kill();
+            Err(Error::EarlyEndOfScript)
+        }
+    }
+
+    fn next_push_data_len(&mut self, len: usize, min_push_len: usize) -> Option<Result<Instruction<'a>, Error>> {
+        let n = match read_uint_iter(&mut self.data, len) {
+            Ok(n) => n,
+            // We do exhaustive matching to not forget to handle new variants if we extend
+            // `UintError` type.
+            // Overflow actually means early end of script (script is definitely shorter
+            // than `usize::max_value()`)
+            Err(UintError::EarlyEndOfScript) | Err(UintError::NumericOverflow) => {
+                self.kill();
+                return Some(Err(Error::EarlyEndOfScript));
+            },
+        };
+        if self.enforce_minimal && n < min_push_len {
+            self.kill();
+            return Some(Err(Error::NonMinimalPush));
+        }
+        Some(self.take_slice_or_kill(n).map(Instruction::PushBytes))
+    }
 }
 
 impl<'a> Iterator for Instructions<'a> {
     type Item = Result<Instruction<'a>, Error>;
 
     fn next(&mut self) -> Option<Result<Instruction<'a>, Error>> {
-        if self.data.is_empty() {
-            return None;
-        }
+        let &byte = self.data.next()?;
 
         // classify parameter does not really matter here since we are only using
         // it for pushes and nums
-        match opcodes::All::from(self.data[0]).classify(opcodes::ClassifyContext::Legacy) {
+        match opcodes::All::from(byte).classify(opcodes::ClassifyContext::Legacy) {
             opcodes::Class::PushBytes(n) => {
+                // make sure safety argument holds across refactorings
+                let n: u32 = n;
+                // casting is safe because we don't support 16-bit architectures
                 let n = n as usize;
-                if self.data.len() < n + 1 {
-                    self.data = &[]; // Kill iterator so that it does not return an infinite stream of errors
-                    return Some(Err(Error::EarlyEndOfScript));
-                }
-                if self.enforce_minimal {
-                    if n == 1 && (self.data[1] == 0x81 || (self.data[1] > 0 && self.data[1] <= 16)) {
-                        self.data = &[];
-                        return Some(Err(Error::NonMinimalPush));
+
+                let op_byte = self.data.as_slice().first();
+                match (self.enforce_minimal, op_byte, n) {
+                    (true, Some(&op_byte), 1) if op_byte == 0x81 || (op_byte > 0 && op_byte <= 16) => {
+                        self.kill();
+                        Some(Err(Error::NonMinimalPush))
+                    },
+                    (_, None, 0) => {
+                        // the iterator is already empty, may as well use this information to avoid
+                        // whole take_slice_or_kill function
+                        Some(Ok(Instruction::PushBytes(&[])))
+                    },
+                    _ => {
+                        Some(self.take_slice_or_kill(n).map(Instruction::PushBytes))
                     }
                 }
-                let ret = Some(Ok(Instruction::PushBytes(&self.data[1..n+1])));
-                self.data = &self.data[n + 1..];
-                ret
             }
             opcodes::Class::Ordinary(opcodes::Ordinary::OP_PUSHDATA1) => {
-                if self.data.len() < 2 {
-                    self.data = &[];
-                    return Some(Err(Error::EarlyEndOfScript));
-                }
-                let n = match read_uint(&self.data[1..], 1) {
-                    Ok(n) => n,
-                    Err(e) => {
-                        self.data = &[];
-                        return Some(Err(e));
-                    }
-                };
-                if self.data.len() < n + 2 {
-                    self.data = &[];
-                    return Some(Err(Error::EarlyEndOfScript));
-                }
-                if self.enforce_minimal && n < 76 {
-                    self.data = &[];
-                    return Some(Err(Error::NonMinimalPush));
-                }
-                let ret = Some(Ok(Instruction::PushBytes(&self.data[2..n+2])));
-                self.data = &self.data[n + 2..];
-                ret
+                self.next_push_data_len(1, 76)
             }
             opcodes::Class::Ordinary(opcodes::Ordinary::OP_PUSHDATA2) => {
-                if self.data.len() < 3 {
-                    self.data = &[];
-                    return Some(Err(Error::EarlyEndOfScript));
-                }
-                let n = match read_uint(&self.data[1..], 2) {
-                    Ok(n) => n,
-                    Err(e) => {
-                        self.data = &[];
-                        return Some(Err(e));
-                    }
-                };
-                if self.enforce_minimal && n < 0x100 {
-                    self.data = &[];
-                    return Some(Err(Error::NonMinimalPush));
-                }
-                if self.data.len() < n + 3 {
-                    self.data = &[];
-                    return Some(Err(Error::EarlyEndOfScript));
-                }
-                let ret = Some(Ok(Instruction::PushBytes(&self.data[3..n + 3])));
-                self.data = &self.data[n + 3..];
-                ret
+                self.next_push_data_len(2, 0x100)
             }
             opcodes::Class::Ordinary(opcodes::Ordinary::OP_PUSHDATA4) => {
-                if self.data.len() < 5 {
-                    self.data = &[];
-                    return Some(Err(Error::EarlyEndOfScript));
-                }
-                let n = match read_uint(&self.data[1..], 4) {
-                    Ok(n) => n,
-                    Err(e) => {
-                        self.data = &[];
-                        return Some(Err(e));
-                    }
-                };
-                if self.enforce_minimal && n < 0x10000 {
-                    self.data = &[];
-                    return Some(Err(Error::NonMinimalPush));
-                }
-                if self.data.len() < n + 5 {
-                    self.data = &[];
-                    return Some(Err(Error::EarlyEndOfScript));
-                }
-                let ret = Some(Ok(Instruction::PushBytes(&self.data[5..n + 5])));
-                self.data = &self.data[n + 5..];
-                ret
+                self.next_push_data_len(4, 0x10000)
             }
             // Everything else we can push right through
             _ => {
-                let ret = Some(Ok(Instruction::Op(opcodes::All::from(self.data[0]))));
-                self.data = &self.data[1..];
-                ret
+                Some(Ok(Instruction::Op(opcodes::All::from(byte))))
             }
         }
     }
