@@ -18,26 +18,26 @@
 //! bytes from/as PSBT key-value pairs.
 //!
 
-use prelude::*;
+use crate::prelude::*;
 
-use io;
+use crate::io;
 
-use blockdata::script::Script;
-use blockdata::witness::Witness;
-use blockdata::transaction::{Transaction, TxOut};
-use consensus::encode::{self, serialize, Decodable, Encodable, deserialize_partial};
+use crate::blockdata::script::Script;
+use crate::blockdata::witness::Witness;
+use crate::blockdata::transaction::{Transaction, TxOut};
+use crate::consensus::encode::{self, serialize, Decodable, Encodable, deserialize_partial};
 use secp256k1::{self, XOnlyPublicKey};
-use util::bip32::{ChildNumber, Fingerprint, KeySource};
-use hashes::{hash160, ripemd160, sha256, sha256d, Hash};
-use util::ecdsa::{EcdsaSig, EcdsaSigError};
-use util::psbt;
-use util::taproot::{TapBranchHash, TapLeafHash, ControlBlock, LeafVersion};
-use schnorr;
-use util::key::PublicKey;
+use crate::util::bip32::{ChildNumber, Fingerprint, KeySource};
+use crate::hashes::{hash160, ripemd160, sha256, sha256d, Hash};
+use crate::util::ecdsa::{EcdsaSig, EcdsaSigError};
+use crate::util::psbt;
+use crate::util::taproot::{TapBranchHash, TapLeafHash, ControlBlock, LeafVersion};
+use crate::schnorr;
+use crate::util::key::PublicKey;
 
 use super::map::{TapTree, PsbtSighashType};
 
-use util::taproot::TaprootBuilder;
+use crate::util::taproot::TaprootBuilder;
 /// A trait for serializing a value as raw data for insertion into PSBT
 /// key-value pairs.
 pub trait Serialize {
@@ -370,7 +370,7 @@ fn key_source_len(key_source: &KeySource) -> usize {
 
 #[cfg(test)]
 mod tests {
-    use hashes::hex::FromHex;
+    use crate::hashes::hex::FromHex;
     use super::*;
 
     // Composes tree matching a given depth map, filled with dumb script leafs,

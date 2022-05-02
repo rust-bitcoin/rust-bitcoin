@@ -23,24 +23,24 @@
 //! This module provides the structures and functions needed to support transactions.
 //!
 
-use prelude::*;
+use crate::prelude::*;
 
-use io;
+use crate::io;
 use core::{fmt, str, default::Default};
 #[cfg(feature = "std")] use std::error;
 
-use hashes::{self, Hash, sha256d};
-use hashes::hex::FromHex;
+use crate::hashes::{self, Hash, sha256d};
+use crate::hashes::hex::FromHex;
 
-use util::endian;
-use blockdata::constants::WITNESS_SCALE_FACTOR;
+use crate::util::endian;
+use crate::blockdata::constants::WITNESS_SCALE_FACTOR;
 #[cfg(feature="bitcoinconsensus")] use blockdata::script;
-use blockdata::script::Script;
-use blockdata::witness::Witness;
-use consensus::{encode, Decodable, Encodable};
-use consensus::encode::MAX_VEC_SIZE;
-use hash_types::{Sighash, Txid, Wtxid};
-use VarInt;
+use crate::blockdata::script::Script;
+use crate::blockdata::witness::Witness;
+use crate::consensus::{encode, Decodable, Encodable};
+use crate::consensus::encode::MAX_VEC_SIZE;
+use crate::hash_types::{Sighash, Txid, Wtxid};
+use crate::VarInt;
 
 #[cfg(doc)]
 use util::sighash::SchnorrSighashType;
@@ -895,17 +895,17 @@ mod tests {
     use super::*;
 
     use core::str::FromStr;
-    use blockdata::constants::WITNESS_SCALE_FACTOR;
-    use blockdata::script::Script;
-    use consensus::encode::serialize;
-    use consensus::encode::deserialize;
+    use crate::blockdata::constants::WITNESS_SCALE_FACTOR;
+    use crate::blockdata::script::Script;
+    use crate::consensus::encode::serialize;
+    use crate::consensus::encode::deserialize;
 
-    use hashes::Hash;
-    use hashes::hex::FromHex;
+    use crate::hashes::Hash;
+    use crate::hashes::hex::FromHex;
 
-    use hash_types::*;
+    use crate::hash_types::*;
     use super::EcdsaSighashType;
-    use util::sighash::SighashCache;
+    use crate::util::sighash::SighashCache;
 
     #[test]
     fn test_outpoint() {
@@ -958,8 +958,8 @@ mod tests {
 
     #[test]
     fn test_is_coinbase () {
-        use network::constants::Network;
-        use blockdata::constants;
+        use crate::network::constants::Network;
+        use crate::blockdata::constants;
 
         let genesis = constants::genesis_block(Network::Bitcoin);
         assert! (genesis.txdata[0].is_coin_base());

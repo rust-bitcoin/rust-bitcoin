@@ -18,8 +18,8 @@
 //! chains (such as mainnet, testnet).
 //!
 
-use network::constants::Network;
-use util::uint::Uint256;
+use crate::network::constants::Network;
+use crate::util::uint::Uint256;
 
 /// Lowest possible difficulty for Mainnet. See comment on Params::pow_limit for more info.
 const MAX_BITS_BITCOIN: Uint256 = Uint256([

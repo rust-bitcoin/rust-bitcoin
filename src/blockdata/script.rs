@@ -23,28 +23,28 @@
 //! This module provides the structures and functions needed to support scripts.
 //!
 
-use prelude::*;
+use crate::prelude::*;
 
-use io;
+use crate::io;
 use core::{fmt, default::Default};
 use core::ops::Index;
 
 #[cfg(feature = "serde")] use serde;
 
-use hash_types::{PubkeyHash, WPubkeyHash, ScriptHash, WScriptHash};
-use blockdata::opcodes;
-use consensus::{encode, Decodable, Encodable};
-use hashes::{Hash, hex};
-use policy::DUST_RELAY_TX_FEE;
+use crate::hash_types::{PubkeyHash, WPubkeyHash, ScriptHash, WScriptHash};
+use crate::blockdata::opcodes;
+use crate::consensus::{encode, Decodable, Encodable};
+use crate::hashes::{Hash, hex};
+use crate::policy::DUST_RELAY_TX_FEE;
 #[cfg(feature="bitcoinconsensus")] use bitcoinconsensus;
 #[cfg(feature="bitcoinconsensus")] use core::convert::From;
-use OutPoint;
+use crate::OutPoint;
 
-use util::key::PublicKey;
-use util::address::WitnessVersion;
-use util::taproot::{LeafVersion, TapBranchHash, TapLeafHash};
+use crate::util::key::PublicKey;
+use crate::util::address::WitnessVersion;
+use crate::util::taproot::{LeafVersion, TapBranchHash, TapLeafHash};
 use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
-use schnorr::{TapTweak, TweakedPublicKey, UntweakedPublicKey};
+use crate::schnorr::{TapTweak, TweakedPublicKey, UntweakedPublicKey};
 
 /// A Bitcoin script.
 #[derive(Clone, Default, PartialOrd, Ord, PartialEq, Eq, Hash)]
@@ -557,7 +557,7 @@ impl Script {
 
     /// Checks whether a script can be proven to have no satisfying input.
     pub fn is_provably_unspendable(&self) -> bool {
-        use blockdata::opcodes::Class::{ReturnOp, IllegalOp};
+        use crate::blockdata::opcodes::Class::{ReturnOp, IllegalOp};
 
         match self.0.first() {
             Some(b) => {
@@ -572,7 +572,7 @@ impl Script {
 
     /// Returns the minimum value an output with this script should have in order to be
     /// broadcastable on today's Bitcoin network.
-    pub fn dust_value(&self) -> ::Amount {
+    pub fn dust_value(&self) -> crate::Amount {
         // This must never be lower than Bitcoin Core's GetDustThreshold() (as of v0.21) as it may
         // otherwise allow users to create transactions which likely can never be broadcast/confirmed.
         let sats = DUST_RELAY_TX_FEE as u64 / 1000 * // The default dust relay fee is 3000 satoshi/kB (i.e. 3 sat/vByte)
@@ -588,7 +588,7 @@ impl Script {
             self.consensus_encode(&mut sink()).expect("sinks don't error") as u64 // The serialized size of this script_pubkey
         };
 
-        ::Amount::from_sat(sats)
+        crate::Amount::from_sat(sats)
     }
 
     /// Iterates over the script in the form of `Instruction`s, which are an enum covering opcodes,
@@ -1075,11 +1075,11 @@ mod test {
     use super::*;
     use super::build_scriptint;
 
-    use hashes::hex::{FromHex, ToHex};
-    use consensus::encode::{deserialize, serialize};
-    use blockdata::opcodes;
-    use util::key::PublicKey;
-    use util::psbt::serialize::Serialize;
+    use crate::hashes::hex::{FromHex, ToHex};
+    use crate::consensus::encode::{deserialize, serialize};
+    use crate::blockdata::opcodes;
+    use crate::util::key::PublicKey;
+    use crate::util::psbt::serialize::Serialize;
 
     #[test]
     fn script() {
@@ -1449,7 +1449,7 @@ mod test {
         // well-known scriptPubKey types.
         let script_p2wpkh = Builder::new().push_int(0).push_slice(&[42; 20]).into_script();
         assert!(script_p2wpkh.is_v0_p2wpkh());
-        assert_eq!(script_p2wpkh.dust_value(), ::Amount::from_sat(294));
+        assert_eq!(script_p2wpkh.dust_value(), crate::Amount::from_sat(294));
 
         let script_p2pkh = Builder::new()
             .push_opcode(opcodes::all::OP_DUP)
@@ -1459,7 +1459,7 @@ mod test {
             .push_opcode(opcodes::all::OP_CHECKSIG)
             .into_script();
         assert!(script_p2pkh.is_p2pkh());
-        assert_eq!(script_p2pkh.dust_value(), ::Amount::from_sat(546));
+        assert_eq!(script_p2pkh.dust_value(), crate::Amount::from_sat(546));
     }
 
     #[test]

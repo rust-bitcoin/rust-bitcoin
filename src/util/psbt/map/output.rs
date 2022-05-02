@@ -12,23 +12,23 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-use prelude::*;
+use crate::prelude::*;
 use core;
 
-use io;
+use crate::io;
 
-use blockdata::script::Script;
-use consensus::encode;
+use crate::blockdata::script::Script;
+use crate::consensus::encode;
 use secp256k1::XOnlyPublicKey;
-use util::bip32::KeySource;
+use crate::util::bip32::KeySource;
 use secp256k1;
-use util::psbt::map::Map;
-use util::psbt::raw;
-use util::psbt::Error;
+use crate::util::psbt::map::Map;
+use crate::util::psbt::raw;
+use crate::util::psbt::Error;
 
-use util::taproot::{ScriptLeaf, TapLeafHash};
+use crate::util::taproot::{ScriptLeaf, TapLeafHash};
 
-use util::taproot::{NodeInfo, TaprootBuilder};
+use crate::util::taproot::{NodeInfo, TaprootBuilder};
 
 /// Type: Redeem Script PSBT_OUT_REDEEM_SCRIPT = 0x00
 const PSBT_OUT_REDEEM_SCRIPT: u8 = 0x00;

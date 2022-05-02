@@ -18,14 +18,14 @@
 //! <https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki>.
 //!
 
-use prelude::*;
+use crate::prelude::*;
 use core::fmt;
 
-use io;
-use consensus::encode::{self, ReadExt, WriteExt, Decodable, Encodable, VarInt, serialize, deserialize, MAX_VEC_SIZE};
-use hashes::hex;
-use util::psbt::Error;
-use util::read_to_end;
+use crate::io;
+use crate::consensus::encode::{self, ReadExt, WriteExt, Decodable, Encodable, VarInt, serialize, deserialize, MAX_VEC_SIZE};
+use crate::hashes::hex;
+use crate::util::psbt::Error;
+use crate::util::read_to_end;
 
 /// A PSBT key in its raw byte form.
 #[derive(Debug, PartialEq, Hash, Eq, Clone, Ord, PartialOrd)]

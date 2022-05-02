@@ -18,12 +18,12 @@
 //! recovery when library is used with the `secp-recovery` feature.
 //!
 
-use prelude::*;
+use crate::prelude::*;
 
-use hashes::{sha256d, Hash, HashEngine};
+use crate::hashes::{sha256d, Hash, HashEngine};
 
-use blockdata::opcodes;
-use consensus::{encode, Encodable};
+use crate::blockdata::opcodes;
+use crate::consensus::{encode, Encodable};
 
 #[cfg(feature = "secp-recovery")]
 #[cfg_attr(docsrs, doc(cfg(feature = "secp-recovery")))]
@@ -38,12 +38,12 @@ mod message_signing {
     use core::fmt;
     #[cfg(feature = "std")] use std::error;
 
-    use hashes::sha256d;
+    use crate::hashes::sha256d;
     use secp256k1;
     use secp256k1::ecdsa::{RecoveryId, RecoverableSignature};
 
-    use util::key::PublicKey;
-    use util::address::{Address, AddressType};
+    use crate::util::key::PublicKey;
+    use crate::util::address::{Address, AddressType};
 
     /// An error used for dealing with Bitcoin Signed Messages.
     #[cfg_attr(docsrs, doc(cfg(feature = "secp-recovery")))]
@@ -267,7 +267,7 @@ pub fn signed_msg_hash(msg: &str) -> sha256d::Hash {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use hashes::hex::ToHex;
+    use crate::hashes::hex::ToHex;
     use super::script_find_and_remove;
     use super::signed_msg_hash;
 

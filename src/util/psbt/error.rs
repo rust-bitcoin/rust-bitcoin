@@ -12,16 +12,16 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-use prelude::*;
+use crate::prelude::*;
 
 use core::fmt;
 
-use blockdata::transaction::Transaction;
-use consensus::encode;
-use util::psbt::raw;
+use crate::blockdata::transaction::Transaction;
+use crate::consensus::encode;
+use crate::util::psbt::raw;
 
-use hashes;
-use util::bip32::ExtendedPubKey;
+use crate::hashes;
+use crate::util::bip32::ExtendedPubKey;
 
 /// Enum for marking psbt hash error.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]

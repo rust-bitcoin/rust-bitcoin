@@ -20,19 +20,19 @@
 //! and legacy (before Bip143).
 //!
 
-use prelude::*;
+use crate::prelude::*;
 
-pub use blockdata::transaction::{EcdsaSighashType, SighashTypeParseError};
-use blockdata::witness::Witness;
-use consensus::{encode, Encodable};
+pub use crate::blockdata::transaction::{EcdsaSighashType, SighashTypeParseError};
+use crate::blockdata::witness::Witness;
+use crate::consensus::{encode, Encodable};
 use core::{str, fmt};
 use core::ops::{Deref, DerefMut};
 use core::borrow::Borrow;
-use hashes::{sha256, sha256d, Hash};
-use io;
-use util::taproot::{TapLeafHash, TAPROOT_ANNEX_PREFIX, TapSighashHash};
-use Sighash;
-use {Script, Transaction, TxOut};
+use crate::hashes::{sha256, sha256d, Hash};
+use crate::io;
+use crate::util::taproot::{TapLeafHash, TAPROOT_ANNEX_PREFIX, TapSighashHash};
+use crate::Sighash;
+use crate::{Script, Transaction, TxOut};
 
 use super::taproot::LeafVersion;
 
@@ -790,17 +790,17 @@ impl<'a> Encodable for Annex<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use consensus::deserialize;
-    use hashes::hex::FromHex;
-    use hashes::{Hash, HashEngine};
-    use util::sighash::{Annex, Error, Prevouts, ScriptPath, SighashCache};
+    use crate::consensus::deserialize;
+    use crate::hashes::hex::FromHex;
+    use crate::hashes::{Hash, HashEngine};
+    use crate::util::sighash::{Annex, Error, Prevouts, ScriptPath, SighashCache};
     use std::str::FromStr;
-    use hashes::hex::ToHex;
-    use util::taproot::{TapTweakHash, TapSighashHash, TapBranchHash, TapLeafHash};
+    use crate::hashes::hex::ToHex;
+    use crate::util::taproot::{TapTweakHash, TapSighashHash, TapBranchHash, TapLeafHash};
     use secp256k1::{self, SecretKey, XOnlyPublicKey};
     extern crate serde_json;
 
-    use {Script, Transaction, TxIn, TxOut};
+    use crate::{Script, Transaction, TxIn, TxOut};
 
     #[test]
     fn test_tap_sighash_hash() {

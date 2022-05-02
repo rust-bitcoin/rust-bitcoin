@@ -14,7 +14,7 @@
 //! We refer to the documentation on the types for more information.
 //!
 
-use prelude::*;
+use crate::prelude::*;
 
 use core::{ops, default, str::FromStr, cmp::Ordering};
 use core::fmt::{self, Write};
@@ -1201,7 +1201,7 @@ impl<T> CheckedSum<SignedAmount> for T where T: Iterator<Item=SignedAmount> {
 }
 
 mod private {
-    use ::{Amount, SignedAmount};
+    use crate::{Amount, SignedAmount};
 
     /// Used to seal the `CheckedSum` trait
     pub trait SumSeal<A> {}

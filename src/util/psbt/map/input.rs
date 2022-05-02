@@ -12,29 +12,29 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-use prelude::*;
-use io;
+use crate::prelude::*;
+use crate::io;
 use core::fmt;
 use core::str::FromStr;
 
 use secp256k1;
-use blockdata::script::Script;
-use blockdata::witness::Witness;
-use blockdata::transaction::{Transaction, TxOut, NonStandardSighashType, SighashTypeParseError};
-use consensus::encode;
-use hashes::{self, hash160, ripemd160, sha256, sha256d};
+use crate::blockdata::script::Script;
+use crate::blockdata::witness::Witness;
+use crate::blockdata::transaction::{Transaction, TxOut, NonStandardSighashType, SighashTypeParseError};
+use crate::consensus::encode;
+use crate::hashes::{self, hash160, ripemd160, sha256, sha256d};
 use secp256k1::XOnlyPublicKey;
-use util::bip32::KeySource;
-use util::psbt;
-use util::psbt::map::Map;
-use util::psbt::raw;
-use util::psbt::serialize::Deserialize;
-use util::psbt::{Error, error};
-use util::key::PublicKey;
+use crate::util::bip32::KeySource;
+use crate::util::psbt;
+use crate::util::psbt::map::Map;
+use crate::util::psbt::raw;
+use crate::util::psbt::serialize::Deserialize;
+use crate::util::psbt::{Error, error};
+use crate::util::key::PublicKey;
 
-use util::taproot::{ControlBlock, LeafVersion, TapLeafHash, TapBranchHash};
-use util::sighash;
-use {EcdsaSighashType, SchnorrSighashType, EcdsaSig, SchnorrSig};
+use crate::util::taproot::{ControlBlock, LeafVersion, TapLeafHash, TapBranchHash};
+use crate::util::sighash;
+use crate::{EcdsaSighashType, SchnorrSighashType, EcdsaSig, SchnorrSig};
 
 /// Type: Non-Witness UTXO PSBT_IN_NON_WITNESS_UTXO = 0x00
 const PSBT_IN_NON_WITNESS_UTXO: u8 = 0x00;
@@ -154,7 +154,7 @@ pub struct Input {
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct PsbtSighashType {
-    pub (in ::util::psbt) inner: u32,
+    pub (in crate::util::psbt) inner: u32,
 }
 
 impl fmt::Display for PsbtSighashType {

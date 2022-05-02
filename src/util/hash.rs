@@ -19,13 +19,13 @@
 
 use core::iter;
 
-use prelude::*;
+use crate::prelude::*;
 
-use io;
+use crate::io;
 use core::cmp::min;
 
-use hashes::Hash;
-use consensus::encode::Encodable;
+use crate::hashes::Hash;
+use crate::consensus::encode::Encodable;
 
 /// Calculates the merkle root of a list of *hashes*, inline (in place) in `hashes`.
 ///
@@ -109,10 +109,10 @@ where
 
 #[cfg(test)]
 mod tests {
-    use consensus::encode::deserialize;
-    use hashes::sha256d;
+    use crate::consensus::encode::deserialize;
+    use crate::hashes::sha256d;
 
-    use blockdata::block::Block;
+    use crate::blockdata::block::Block;
     use super::*;
 
     #[test]

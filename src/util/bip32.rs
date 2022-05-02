@@ -17,21 +17,21 @@
 //! at <https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki>.
 //!
 
-use prelude::*;
+use crate::prelude::*;
 
-use io::Write;
+use crate::io::Write;
 use core::{fmt, str::FromStr, default::Default};
 use core::ops::Index;
 #[cfg(feature = "std")] use std::error;
 #[cfg(feature = "serde")] use serde;
 
-use hash_types::XpubIdentifier;
-use hashes::{sha512, Hash, HashEngine, Hmac, HmacEngine, hex};
+use crate::hash_types::XpubIdentifier;
+use crate::hashes::{sha512, Hash, HashEngine, Hmac, HmacEngine, hex};
 use secp256k1::{self, Secp256k1, XOnlyPublicKey};
 
-use network::constants::Network;
-use util::{base58, endian, key};
-use util::key::{PublicKey, PrivateKey, KeyPair};
+use crate::network::constants::Network;
+use crate::util::{base58, endian, key};
+use crate::util::key::{PublicKey, PrivateKey, KeyPair};
 
 /// A chain code
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -846,9 +846,9 @@ mod tests {
     use core::str::FromStr;
 
     use secp256k1::{self, Secp256k1};
-    use hashes::hex::FromHex;
+    use crate::hashes::hex::FromHex;
 
-    use network::constants::Network::{self, Bitcoin};
+    use crate::network::constants::Network::{self, Bitcoin};
 
     #[test]
     fn test_parse_derivation_path() {
