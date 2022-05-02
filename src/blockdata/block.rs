@@ -508,10 +508,10 @@ mod tests {
 #[cfg(all(test, feature = "unstable"))]
 mod benches {
     use super::Block;
-    use EmptyWrite;
-    use consensus::{deserialize, Encodable};
+    use crate::EmptyWrite;
+    use crate::consensus::{deserialize, Encodable};
     use test::{black_box, Bencher};
-    use network::stream_reader::StreamReader;
+    use crate::network::stream_reader::StreamReader;
 
     #[bench]
     #[allow(deprecated)]

@@ -402,7 +402,7 @@ impl TaprootBuilder {
     /// If the script weight calculations overflow, a sub-optimal tree may be generated. This should
     /// not happen unless you are dealing with billions of branches with weights close to 2^32.
     ///
-    /// [`TapTree`]: ::util::psbt::TapTree
+    /// [`TapTree`]: crate::util::psbt::TapTree
     pub fn with_huffman_tree<I>(
         script_weights: I,
     ) -> Result<Self, TaprootBuilderError>
@@ -808,7 +808,7 @@ impl ControlBlock {
     /// Serializes the control block.
     ///
     /// This would be required when using [`ControlBlock`] as a witness element while spending an
-    /// output via script path. This serialization does not include the [`::VarInt`] prefix that would
+    /// output via script path. This serialization does not include the [`crate::VarInt`] prefix that would
     /// be applied when encoding this element as a witness.
     pub fn serialize(&self) -> Vec<u8> {
         let mut buf = Vec::with_capacity(self.size());

@@ -93,11 +93,11 @@ macro_rules! impl_array_newtype {
             }
         }
 
-        impl<I> $crate::core::ops::Index<I> for $thing
+        impl<I> core::ops::Index<I> for $thing
         where
-            [$ty]: $crate::core::ops::Index<I>,
+            [$ty]: core::ops::Index<I>,
         {
-            type Output = <[$ty] as $crate::core::ops::Index<I>>::Output;
+            type Output = <[$ty] as core::ops::Index<I>>::Output;
 
             #[inline]
             fn index(&self, index: I) -> &Self::Output {

@@ -190,7 +190,7 @@ mod prelude {
     pub use std::io::sink;
 
     #[cfg(not(feature = "std"))]
-    pub use io_extras::sink;
+    pub use crate::io_extras::sink;
 
     #[cfg(feature = "hashbrown")]
     pub use hashbrown::HashSet;
@@ -204,7 +204,7 @@ mod prelude {
 #[cfg(all(test, feature = "unstable"))]
 mod tests {
     use core::fmt::Arguments;
-    use io::{IoSlice, Result, Write};
+    use crate::io::{IoSlice, Result, Write};
 
     #[derive(Default, Clone, Debug, PartialEq, Eq)]
     pub struct EmptyWrite;
