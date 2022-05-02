@@ -80,24 +80,6 @@ please join us in
 This library should always compile with any combination of features (minus
 `no-std`) on **Rust 1.41.1** or **Rust 1.47** with `no-std`.
 
-Because some dependencies have broken the build in minor/patch releases, to
-compile with 1.29.0 you will need to run the following version-pinning command:
-```
-cargo update -p cc --precise "1.0.41" --verbose
-```
-
-In order to use the `use-serde` feature or to build the unit tests with 1.29.0,
-the following version-pinning commands are also needed:
-```
-cargo update --package "serde" --precise "1.0.98"
-cargo update --package "serde_derive" --precise "1.0.98"
-```
-
-For the feature `base64` to work with 1.29.0 we also need to pin `byteorder`:
-```
-cargo update -p byteorder --precise "1.3.4"
-```
-
 ## Installing Rust
 
 Rust can be installed using your package manager of choice or
