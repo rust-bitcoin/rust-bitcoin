@@ -468,6 +468,15 @@ impl Payload {
             program: output_key.as_inner().serialize().to_vec(),
         }
     }
+
+    /// Returns a byte slice of the payload
+    pub fn as_bytes(&self) -> &[u8] {
+        match self {
+            Payload::ScriptHash(hash) => hash,
+            Payload::PubkeyHash(hash) => hash,
+            Payload::WitnessProgram { program, .. } => program,
+        }
+    }
 }
 
 /// A utility struct to encode an address payload with the given parameters.
@@ -722,7 +731,7 @@ impl Address {
     /// given key. For taproot addresses, the supplied key is assumed to be tweaked
     pub fn is_related_to_pubkey(&self, pubkey: &PublicKey) -> bool {
         let pubkey_hash = pubkey.pubkey_hash();
-        let payload = self.payload_as_bytes();
+        let payload = self.payload.as_bytes();
         let xonly_pubkey = XOnlyPublicKey::from(pubkey.inner);
 
         (*pubkey_hash == *payload) || (xonly_pubkey.serialize() == *payload) || (*segwit_redeem_hash(&pubkey_hash) == *payload)
@@ -733,17 +742,8 @@ impl Address {
     /// This will only work for Taproot addresses. The Public Key is
     /// assumed to have already been tweaked.
     pub fn is_related_to_xonly_pubkey(&self, xonly_pubkey: &XOnlyPublicKey) -> bool {
-        let payload = self.payload_as_bytes();
+        let payload = self.payload.as_bytes();
         payload == xonly_pubkey.serialize()
-    }
-
-    /// Return the address payload as a byte slice
-    pub fn payload_as_bytes(&self) -> &[u8] {
-        match &self.payload {
-            Payload::ScriptHash(hash) => hash,
-            Payload::PubkeyHash(hash) => hash,
-            Payload::WitnessProgram { program, .. } => program,
-        }
     }
 }
 
