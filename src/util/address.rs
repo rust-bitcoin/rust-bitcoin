@@ -37,7 +37,6 @@ use crate::prelude::*;
 use core::fmt;
 use core::num::ParseIntError;
 use core::str::FromStr;
-#[cfg(feature = "std")] use std::error;
 
 use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
 use bech32;
@@ -104,13 +103,22 @@ impl fmt::Display for Error {
 
 #[cfg(feature = "std")]
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-impl ::std::error::Error for Error {
-    fn cause(&self) -> Option<&dyn  error::Error> {
-        match *self {
-            Error::Base58(ref e) => Some(e),
-            Error::Bech32(ref e) => Some(e),
-            Error::UnparsableWitnessVersion(ref e) => Some(e),
-            _ => None,
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use self::Error::*;
+
+        match self {
+            Base58(e) => Some(e),
+            Bech32(e) => Some(e),
+            UnparsableWitnessVersion(e) => Some(e),
+            EmptyBech32Payload
+            | InvalidBech32Variant { .. }
+            | InvalidWitnessVersion(_)
+            | MalformedWitnessVersion
+            | InvalidWitnessProgramLength(_)
+            | InvalidSegwitV0ProgramLength(_)
+            | UncompressedPubkey
+            | ExcessiveScriptSize => None,
         }
     }
 }

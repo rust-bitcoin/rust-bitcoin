@@ -116,7 +116,17 @@ impl fmt::Display for EcdsaSigError {
 
 #[cfg(feature = "std")]
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-impl ::std::error::Error for EcdsaSigError {}
+impl std::error::Error for EcdsaSigError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use self::EcdsaSigError::*;
+
+        match self {
+            HexEncoding(e) => Some(e),
+            Secp256k1(e) => Some(e),
+            NonStandardSighashType(_) | EmptySignature => None,
+        }
+    }
+}
 
 impl From<secp256k1::Error> for EcdsaSigError {
     fn from(e: secp256k1::Error) -> EcdsaSigError {

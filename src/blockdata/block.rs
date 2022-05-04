@@ -355,7 +355,16 @@ impl fmt::Display for Bip34Error {
 }
 
 #[cfg(feature = "std")]
-impl ::std::error::Error for Bip34Error {}
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+impl std::error::Error for Bip34Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use self::Bip34Error::*;
+
+        match self {
+            Unsupported | NotPresent | UnexpectedPush(_) => None,
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {

@@ -37,7 +37,6 @@ mod message_signing {
     #[cfg(feature = "base64")] use crate::prelude::*;
 
     use core::fmt;
-    #[cfg(feature = "std")] use std::error;
 
     use crate::hashes::sha256d;
     use secp256k1;
@@ -73,11 +72,13 @@ mod message_signing {
 
     #[cfg(feature = "std")]
     #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-    impl error::Error for MessageSignatureError {
-        fn cause(&self) -> Option<&dyn error::Error> {
-            match *self {
-                MessageSignatureError::InvalidEncoding(ref e) => Some(e),
-                _ => None,
+    impl std::error::Error for MessageSignatureError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            use self::MessageSignatureError::*;
+
+            match self {
+                InvalidEncoding(e) => Some(e),
+                InvalidLength | InvalidBase64 | UnsupportedAddressType(_) => None,
             }
         }
     }

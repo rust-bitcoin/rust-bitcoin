@@ -115,7 +115,32 @@ impl fmt::Display for Error {
 }
 
 #[cfg(feature = "std")]
-impl ::std::error::Error for Error {}
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use self::Error::*;
+
+        match self {
+            HashParseError(e) => Some(e),
+            | InvalidMagic
+            | MissingUtxo
+            | InvalidSeparator
+            | PsbtUtxoOutOfbounds
+            | InvalidKey(_)
+            | InvalidProprietaryKey
+            | DuplicateKey(_)
+            | UnsignedTxHasScriptSigs
+            | UnsignedTxHasScriptWitnesses
+            | MustHaveUnsignedTx
+            | NoMorePairs
+            | UnexpectedUnsignedTx { .. }
+            | NonStandardSighashType(_)
+            | InvalidPreimageHashPair{ .. }
+            | CombineInconsistentKeySources(_)
+            | ConsensusEncoding => None,
+        }
+    }
+}
 
 #[doc(hidden)]
 impl From<hashes::Error> for Error {

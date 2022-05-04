@@ -16,16 +16,14 @@
 //! This module provides keys used in Bitcoin that can be roundtrip
 //! (de)serialized.
 
-pub use secp256k1::{XOnlyPublicKey, KeyPair};
-
 use crate::prelude::*;
 
 use core::{ops, str::FromStr};
 use core::fmt::{self, Write};
-use crate::io;
-#[cfg(feature = "std")] use std::error;
 
-use secp256k1::{self, Secp256k1};
+pub use secp256k1::{self, Secp256k1, XOnlyPublicKey, KeyPair};
+
+use crate::io;
 use crate::network::constants::Network;
 use crate::hashes::{Hash, hash160, hex, hex::FromHex};
 use crate::hash_types::{PubkeyHash, WPubkeyHash};
@@ -57,13 +55,15 @@ impl fmt::Display for Error {
 
 #[cfg(feature = "std")]
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-impl ::std::error::Error for Error {
-    fn cause(&self) -> Option<&dyn error::Error> {
-        match *self {
-            Error::Base58(ref e) => Some(e),
-            Error::Secp256k1(ref e) => Some(e),
-            Error::InvalidKeyPrefix(_) => None,
-            Error::Hex(ref e) => Some(e)
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use self::Error::*;
+
+        match self {
+            Base58(e) => Some(e),
+            Secp256k1(e) => Some(e),
+            InvalidKeyPrefix(_) => None,
+            Hex(e) => Some(e),
         }
     }
 }

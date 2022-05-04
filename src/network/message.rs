@@ -111,9 +111,13 @@ impl fmt::Display for CommandStringError {
     }
 }
 
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 #[cfg(feature = "std")]
-impl ::std::error::Error for CommandStringError {}
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+impl std::error::Error for CommandStringError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        None
+    }
+}
 
 /// A Network message
 #[derive(Clone, Debug, PartialEq, Eq)]

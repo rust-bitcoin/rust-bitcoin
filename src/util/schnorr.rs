@@ -286,7 +286,16 @@ impl fmt::Display for SchnorrSigError {
 
 #[cfg(feature = "std")]
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-impl ::std::error::Error for SchnorrSigError {}
+impl std::error::Error for SchnorrSigError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use self::SchnorrSigError::*;
+
+        match self {
+            Secp256k1(e) => Some(e),
+            InvalidSighashType(_) | InvalidSchnorrSigSize(_) => None,
+        }
+    }
+}
 
 impl From<secp256k1::Error> for SchnorrSigError {
 

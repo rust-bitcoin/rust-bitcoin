@@ -30,7 +30,6 @@
 use crate::prelude::*;
 
 use core::{fmt, mem, u32, convert::From};
-#[cfg(feature = "std")] use std::error;
 
 use crate::hashes::{sha256d, Hash, sha256};
 use crate::hash_types::{BlockHash, FilterHash, TxMerkleNode, FilterHeader};
@@ -106,18 +105,20 @@ impl fmt::Display for Error {
 
 #[cfg(feature = "std")]
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-impl ::std::error::Error for Error {
-    fn cause(&self) -> Option<&dyn  error::Error> {
-        match *self {
-            Error::Io(ref e) => Some(e),
-            Error::Psbt(ref e) => Some(e),
-            Error::UnexpectedNetworkMagic { .. }
-            | Error::OversizedVectorAllocation { .. }
-            | Error::InvalidChecksum { .. }
-            | Error::NonMinimalVarInt
-            | Error::UnknownNetworkMagic(..)
-            | Error::ParseFailed(..)
-            | Error::UnsupportedSegwitFlag(..) => None,
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use self::Error::*;
+
+        match self {
+            Io(e) => Some(e),
+            Psbt(e) => Some(e),
+            UnexpectedNetworkMagic { .. }
+            | OversizedVectorAllocation { .. }
+            | InvalidChecksum { .. }
+            | NonMinimalVarInt
+            | UnknownNetworkMagic(_)
+            | ParseFailed(_)
+            | UnsupportedSegwitFlag(_) => None,
         }
     }
 }

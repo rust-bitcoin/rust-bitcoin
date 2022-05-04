@@ -27,7 +27,6 @@ use crate::prelude::*;
 
 use crate::io;
 use core::{fmt, str, default::Default};
-#[cfg(feature = "std")] use std::error;
 
 use crate::hashes::{self, Hash, sha256d};
 use crate::hashes::hex::FromHex;
@@ -142,12 +141,14 @@ impl fmt::Display for ParseOutPointError {
 
 #[cfg(feature = "std")]
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-impl error::Error for ParseOutPointError {
-    fn cause(&self) -> Option<&dyn  error::Error> {
-        match *self {
-            ParseOutPointError::Txid(ref e) => Some(e),
-            ParseOutPointError::Vout(ref e) => Some(e),
-            _ => None,
+impl std::error::Error for ParseOutPointError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use self::ParseOutPointError::*;
+
+        match self {
+            Txid(e) => Some(e),
+            Vout(e) => Some(e),
+            Format | TooLong | VoutNotCanonical => None,
         }
     }
 }
@@ -733,7 +734,11 @@ impl fmt::Display for NonStandardSighashType {
 
 #[cfg(feature = "std")]
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-impl error::Error for NonStandardSighashType {}
+impl std::error::Error for NonStandardSighashType {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        None
+    }
+}
 
 /// Legacy Hashtype of an input's signature
 #[deprecated(since = "0.28.0", note = "Please use [`EcdsaSighashType`] instead")]
@@ -886,9 +891,13 @@ impl fmt::Display for SighashTypeParseError {
     }
 }
 
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 #[cfg(feature = "std")]
-impl ::std::error::Error for SighashTypeParseError {}
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+impl std::error::Error for SighashTypeParseError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        None
+    }
+}
 
 #[cfg(test)]
 mod tests {

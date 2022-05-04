@@ -22,8 +22,6 @@ use secp256k1::{self, Secp256k1};
 
 use core::fmt;
 use core::cmp::Reverse;
-#[cfg(feature = "std")]
-use std::error;
 
 use crate::hashes::{sha256, sha256t, Hash, HashEngine};
 use crate::schnorr::{TweakedPublicKey, UntweakedPublicKey, TapTweak};
@@ -1039,7 +1037,20 @@ impl fmt::Display for TaprootBuilderError {
 
 #[cfg(feature = "std")]
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-impl error::Error for TaprootBuilderError {}
+impl std::error::Error for TaprootBuilderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use self::TaprootBuilderError::*;
+
+        match self {
+            InvalidInternalKey(e) => Some(e),
+            InvalidMerkleTreeDepth(_)
+                | NodeNotInDfsOrder
+                | OverCompleteTree
+                | IncompleteTree
+                | EmptyTree => None
+        }
+    }
+}
 
 /// Detailed error type for taproot utilities.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -1093,7 +1104,23 @@ impl fmt::Display for TaprootError {
 
 #[cfg(feature = "std")]
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-impl error::Error for TaprootError {}
+impl std::error::Error for TaprootError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use self::TaprootError::*;
+
+        match self {
+            InvalidInternalKey(e) => Some(e),
+            InvalidMerkleBranchSize(_)
+            | InvalidMerkleTreeDepth(_)
+            | InvalidTaprootLeafVersion(_)
+            | InvalidControlBlockSize(_)
+            | InvalidParity(_)
+            | EmptyTree => None,
+        }
+    }
+}
+
+
 #[cfg(test)]
 mod test {
     use crate::{Address, Network};

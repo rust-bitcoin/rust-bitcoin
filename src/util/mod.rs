@@ -39,7 +39,6 @@ pub(crate) mod endian;
 use crate::prelude::*;
 use crate::io;
 use core::fmt;
-#[cfg(feature = "std")] use std::error;
 
 use crate::network;
 use crate::consensus::encode;
@@ -91,12 +90,16 @@ impl fmt::Display for Error {
 }
 
 #[cfg(feature = "std")]
-impl ::std::error::Error for Error {
-    fn cause(&self) -> Option<&dyn  error::Error> {
-        match *self {
-            Error::Encode(ref e) => Some(e),
-            Error::Network(ref e) => Some(e),
-            Error::BlockBadProofOfWork | Error::BlockBadTarget => None
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use self::Error::*;
+
+        match self {
+            Encode(e) => Some(e),
+            Network(e) => Some(e),
+            BlockBadProofOfWork
+            | BlockBadTarget => None
         }
     }
 }
