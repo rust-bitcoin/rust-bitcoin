@@ -26,7 +26,7 @@ macro_rules! hex_script {
 
 macro_rules! hex_psbt {
     ($s:expr) => {
-        deserialize::<Psbt>(&<Vec<u8> as FromHex>::from_hex($s).unwrap())
+        Psbt::deserialize(&<Vec<u8> as FromHex>::from_hex($s).unwrap())
     };
 }
 
@@ -397,10 +397,10 @@ fn combine_lexicographically() {
     let expected_psbt = hex_psbt!(expected_psbt_hex).unwrap();
 
     let v = Vec::from_hex(psbt_1_hex).unwrap();
-    let mut psbt_1: Psbt = deserialize(&v).expect("failed to deserialize psbt 1");
+    let mut psbt_1 = Psbt::deserialize(&v).expect("failed to deserialize psbt 1");
 
     let v = Vec::from_hex(psbt_2_hex).unwrap();
-    let psbt_2: Psbt = deserialize(&v).expect("failed to deserialize psbt 2");
+    let psbt_2 = Psbt::deserialize(&v).expect("failed to deserialize psbt 2");
 
     psbt_1.combine(psbt_2).expect("failed to combine PSBTs");
 

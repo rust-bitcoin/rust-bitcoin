@@ -19,8 +19,18 @@ pub(super) trait Map {
     /// Attempt to get all key-value pairs.
     fn get_pairs(&self) -> Result<Vec<raw::Pair>, io::Error>;
 
-    /// Encodes map data with bitcoin consensus encoding.
     fn consensus_encode_map<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        let mut len = 0;
+        for pair in Map::get_pairs(self)? {
+            len += encode::Encodable::consensus_encode(&pair, w)?;
+        }
+
+        Ok(len + encode::Encodable::consensus_encode(&0x00_u8, w)?)
+    }
+
+    /// Encodes map data with bitcoin consensus encoding.
+    /// Serialize Psbt map data according to BIP-174 specification.
+    fn serialize_map<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = 0;
         for pair in Map::get_pairs(self)? {
             len += encode::Encodable::consensus_encode(&pair, w)?;
