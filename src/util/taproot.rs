@@ -510,7 +510,7 @@ impl TaprootBuilder {
         // We cannot insert a leaf at a lower depth while a deeper branch is unfinished. Doing
         // so would mean the add_leaf/add_hidden invocations do not correspond to a DFS traversal of a
         // binary tree.
-        if depth as usize + 1 < self.branch.len() {
+        if (depth as usize + 1) < self.branch.len() {
             return Err(TaprootBuilderError::NodeNotInDfsOrder);
         }
 
