@@ -1013,6 +1013,9 @@ pub enum TaprootBuilderError {
 impl fmt::Display for TaprootBuilderError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
+            TaprootBuilderError::InvalidMerkleTreeDepth(d) => {
+                write!(f, "Merkle Tree depth({}) must be less than {}", d, TAPROOT_CONTROL_MAX_NODE_COUNT)
+            }
             TaprootBuilderError::NodeNotInDfsOrder => {
                 write!(f, "add_leaf/add_hidden must be called in DFS walk order",)
             }
@@ -1021,9 +1024,6 @@ impl fmt::Display for TaprootBuilderError {
                 "Attempted to create a tree with two nodes at depth 0. There must\
                 only be a exactly one node at depth 0",
             ),
-            TaprootBuilderError::InvalidMerkleTreeDepth(d) => {
-                write!(f, "Merkle Tree depth({}) must be less than {}", d, TAPROOT_CONTROL_MAX_NODE_COUNT)
-            }
             TaprootBuilderError::InvalidInternalKey(e) => {
                 write!(f, "Invalid Internal XOnly key : {}", e)
             }

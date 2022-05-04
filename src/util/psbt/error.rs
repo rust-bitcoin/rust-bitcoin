@@ -88,27 +88,27 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
+            Error::InvalidMagic => f.write_str("invalid magic"),
+            Error::MissingUtxo => f.write_str("UTXO information is not present in PSBT"),
+            Error::InvalidSeparator => f.write_str("invalid separator"),
+            Error::PsbtUtxoOutOfbounds => f.write_str("output index is out of bounds of non witness script output array"),
             Error::InvalidKey(ref rkey) => write!(f, "invalid key: {}", rkey),
             Error::InvalidProprietaryKey => write!(f, "non-proprietary key type found when proprietary key was expected"),
             Error::DuplicateKey(ref rkey) => write!(f, "duplicate key: {}", rkey),
-            Error::UnexpectedUnsignedTx { expected: ref e, actual: ref a } => write!(f, "different unsigned transaction: expected {}, actual {}", e.txid(), a.txid()),
-            Error::NonStandardSighashType(ref sht) => write!(f, "non-standard sighash type: {}", sht),
-            Error::InvalidMagic => f.write_str("invalid magic"),
-            Error::InvalidSeparator => f.write_str("invalid separator"),
             Error::UnsignedTxHasScriptSigs => f.write_str("the unsigned transaction has script sigs"),
             Error::UnsignedTxHasScriptWitnesses => f.write_str("the unsigned transaction has script witnesses"),
             Error::MustHaveUnsignedTx => {
                 f.write_str("partially signed transactions must have an unsigned transaction")
             }
             Error::NoMorePairs => f.write_str("no more key-value pairs for this psbt map"),
+            Error::UnexpectedUnsignedTx { expected: ref e, actual: ref a } => write!(f, "different unsigned transaction: expected {}, actual {}", e.txid(), a.txid()),
+            Error::NonStandardSighashType(ref sht) => write!(f, "non-standard sighash type: {}", sht),
             Error::HashParseError(e) => write!(f, "Hash Parse Error: {}", e),
-            Error::MissingUtxo => f.write_str("UTXO information is not present in PSBT"),
-            Error::PsbtUtxoOutOfbounds => f.write_str("output index is out of bounds of non witness script output array"),
             Error::InvalidPreimageHashPair{ref preimage, ref hash, ref hash_type} => {
                 // directly using debug forms of psbthash enums
                 write!(f, "Preimage {:?} does not match {:?} hash {:?}", preimage, hash_type, hash )
-            }
-            Error::CombineInconsistentKeySources(ref s) => { write!(f, "combine conflict: {}", s) }
+            },
+            Error::CombineInconsistentKeySources(ref s) => { write!(f, "combine conflict: {}", s) },
             Error::ConsensusEncoding => f.write_str("bitcoin consensus or BIP-174 encoding error"),
         }
     }
