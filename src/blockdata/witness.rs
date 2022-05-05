@@ -3,10 +3,12 @@
 //! This module contains the [`Witness`] struct and related methods to operate on it
 //!
 
+use blockdata::transaction::EcdsaSighashType;
 use consensus::encode::{Error, MAX_VEC_SIZE};
 use consensus::{Decodable, Encodable, WriteExt};
 use io::{self, Read, Write};
 use prelude::*;
+use secp256k1::ecdsa;
 use VarInt;
 
 #[cfg(feature = "serde")]
@@ -211,6 +213,17 @@ impl Witness {
         self.content[end_varint..].copy_from_slice(new_element);
     }
 
+    /// Pushes a DER-encoded ECDSA signature with a signature hash type as a new element on the
+    /// witness, requires an allocation.
+    pub fn push_bitcoin_signature(&mut self, signature: &ecdsa::SerializedSignature, hash_type: EcdsaSighashType) {
+        // Note that a maximal length ECDSA signature is 72 bytes, plus the sighash type makes 73
+        let mut sig = [0; 73];
+        sig[..signature.len()].copy_from_slice(&signature);
+        sig[signature.len()] = hash_type as u8;
+        self.push(&sig[..signature.len() + 1]);
+    }
+
+
     fn element_at(&self, index: usize) -> Option<&[u8]> {
         let varint = VarInt::consensus_decode(&self.content[index..]).ok()?;
         let start = index + varint.len();
@@ -289,10 +302,12 @@ impl<'de> serde::Deserialize<'de> for Witness {
 
 #[cfg(test)]
 mod test {
+    use blockdata::transaction::EcdsaSighashType;
     use blockdata::witness::Witness;
     use consensus::{deserialize, serialize};
     use hashes::hex::{FromHex, ToHex};
     use Transaction;
+    use secp256k1::ecdsa;
 
     #[test]
     fn test_push() {
@@ -319,6 +334,20 @@ mod test {
         assert_eq!(witness, expected);
         assert_eq!(witness.last(), Some(&[2u8, 3u8][..]));
         assert_eq!(witness.second_to_last(), Some(&[0u8][..]));
+    }
+
+    #[test]
+    fn test_push_ecdsa_sig() {
+        // The very first signature in block 734,958
+        let sig_bytes =
+            Vec::from_hex("304402207c800d698f4b0298c5aac830b822f011bb02df41eb114ade9a6702f364d5e39c0220366900d2a60cab903e77ef7dd415d46509b1f78ac78906e3296f495aa1b1b541");
+        let sig = ecdsa::Signature::from_der(&sig_bytes.unwrap()).unwrap();
+        let mut witness = Witness::default();
+        witness.push_bitcoin_signature(&sig.serialize_der(), EcdsaSighashType::All);
+        let expected_witness = vec![Vec::from_hex(
+            "304402207c800d698f4b0298c5aac830b822f011bb02df41eb114ade9a6702f364d5e39c0220366900d2a60cab903e77ef7dd415d46509b1f78ac78906e3296f495aa1b1b54101")
+            .unwrap()];
+        assert_eq!(witness.to_vec(), expected_witness);
     }
 
     #[test]
