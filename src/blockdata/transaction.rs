@@ -852,7 +852,7 @@ pub type SigHashType = EcdsaSighashType;
 ///
 /// Fixed values so they can be cast as integer types for encoding (see also
 /// [`SchnorrSighashType`]).
-#[derive(PartialEq, Eq, Debug, Copy, Clone)]
+#[derive(PartialEq, Eq, Debug, Copy, Clone, Hash)]
 pub enum EcdsaSighashType {
     /// 0x1: Sign all outputs.
     All		= 0x01,
