@@ -14,7 +14,6 @@ exclude = ["./test_data"]
 # Please don't forget to add relevant features to docs.rs below
 [features]
 default = [ "std", "secp-recovery" ]
-base64 = [ "base64-compat" ]
 unstable = []
 rand = ["secp256k1/rand-std"]
 use-serde = ["serde", "bitcoin_hashes/serde", "secp256k1/serde"]
@@ -39,7 +38,7 @@ bitcoin_hashes = { version = "0.10.0", default-features = false }
 secp256k1 = { version = "0.22.0", default-features = false }
 core2 = { version = "0.3.0", optional = true, default-features = false }
 
-base64-compat = { version = "1.0.0", optional = true }
+base64 = { version = "0.13.0", optional = true }
 bitcoinconsensus = { version = "0.19.0-3", optional = true }
 serde = { version = "1", default-features = false, features = [ "derive", "alloc" ], optional = true }
 hashbrown = { version = "0.8", optional = true }
