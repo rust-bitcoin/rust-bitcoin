@@ -42,7 +42,7 @@ use util::psbt;
 use util::taproot::TapLeafHash;
 use hashes::hex::ToHex;
 
-use blockdata::transaction::{TxOut, Transaction, TxIn};
+use blockdata::transaction::{TxOut, Transaction, TxIn, OutPoint};
 #[cfg(feature = "std")]
 use network::{message_blockdata::Inventory, address::{Address, AddrV2Message}};
 
@@ -520,6 +520,7 @@ impl_array!(12);
 impl_array!(16);
 impl_array!(32);
 impl_array!(33);
+impl_array!(96);
 
 impl Decodable for [u16; 8] {
     #[inline]
@@ -584,6 +585,7 @@ impl_vec!(TxIn);
 impl_vec!(Vec<u8>);
 impl_vec!(u64);
 impl_vec!(TapLeafHash);
+impl_vec!(OutPoint);
 
 #[cfg(feature = "std")] impl_vec!(Inventory);
 #[cfg(feature = "std")] impl_vec!((u32, Address));

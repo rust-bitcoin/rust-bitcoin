@@ -114,6 +114,7 @@ pub mod util;
 pub mod consensus;
 pub mod hash_types;
 pub mod policy;
+pub mod ephemerealdata;
 
 pub use hash_types::*;
 pub use blockdata::block::Block;
@@ -125,6 +126,7 @@ pub use blockdata::transaction::TxOut;
 pub use blockdata::transaction::OutPoint;
 pub use blockdata::transaction::EcdsaSighashType;
 pub use blockdata::witness::Witness;
+pub use ephemerealdata::instant_lock::InstantLock;
 pub use consensus::encode::VarInt;
 pub use network::constants::Network;
 pub use util::Error;
