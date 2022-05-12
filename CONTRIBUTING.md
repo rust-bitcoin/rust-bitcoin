@@ -162,7 +162,6 @@ Current list of the project maintainers:
 
 - [Andrew Poelstra](https://github.com/apoelstra)
 - [Steven Roose](https://github.com/stevenroose)
-- [Maxim Orlovsky](https://github.com/dr-orlovsky)
 - [Matt Corallo](https://github.com/TheBlueMatt)
 - [Elichai Turkel](https://github.com/elichai)
 - [Sanket Kanjalkar](https://github.com/sanket1729)
