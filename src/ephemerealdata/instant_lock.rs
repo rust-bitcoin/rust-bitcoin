@@ -1,16 +1,31 @@
-use std::io;
+//! Instant send lock is a mechanism used by the Dash network to
+//! confirm transaction within 1 or 2 seconds. This data structure
+//! represents a p2p message containing a data to verify such a lock.
+
 use ::{OutPoint, Txid};
 use consensus::{Decodable, Encodable, encode};
 use consensus::encode::MAX_VEC_SIZE;
-use std::default::Default;
+use io;
+#[cfg(all(not(feature = "std"), not(test)))]
+use alloc::vec::Vec;
+#[cfg(any(feature = "std", test))]
+pub use std::vec::Vec;
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+/// Instant send lock is a mechanism used by the Dash network to
+/// confirm transaction within 1 or 2 seconds. This data structure
+/// represents a p2p message containing a data to verify such a lock.
 pub struct InstantLock {
+    /// Instant lock version
     pub version: u8,
+    /// Transaction inputs locked by this instant lock
     pub inputs: Vec<OutPoint>,
+    /// Transaction hash locked by this lock
     pub txid: Txid,
+    /// Hash to figure out which quorum was used to sign this IS lock
     pub cyclehash: [u8; 32],
+    /// Quorum signature for this IS lock
     pub signature: [u8; 96],
 }
 
