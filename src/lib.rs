@@ -29,6 +29,7 @@
 //!
 //! * `std` - the usual dependency on `std` (default).
 //! * `secp-recovery` - enables calculating public key from a signature and message.
+//! * `signer` - enables singing and validation ECDSA helpers.
 //! * `base64` - (dependency), enables encoding of PSBTs and message signatures.
 //! * `unstable` - enables unstable features for testing.
 //! * `rand` - (dependency), makes it more convenient to generate random values.
@@ -96,6 +97,8 @@ pub extern crate base64;
 #[cfg(all(test, feature = "serde"))] extern crate bincode;
 #[cfg(all(test, feature = "unstable"))] extern crate test;
 
+pub extern crate anyhow;
+
 #[cfg(target_pointer_width = "16")]
 compile_error!("rust-bitcoin cannot be used on 16-bit architectures");
 
@@ -138,6 +141,7 @@ pub use util::amount::SignedAmount;
 pub use util::merkleblock::MerkleBlock;
 pub use util::sighash::SchnorrSighashType;
 
+pub use util::signer;
 pub use util::ecdsa::{self, EcdsaSig, EcdsaSigError};
 pub use util::schnorr::{self, SchnorrSig, SchnorrSigError};
 pub use util::key::{PrivateKey, PublicKey, XOnlyPublicKey, KeyPair};

@@ -27,3 +27,25 @@ macro_rules! serde_round_trip (
         assert_eq!($var, decoded);
     })
 );
+
+
+#[cfg(test)]
+#[macro_export]
+macro_rules! assert_error_contains {
+    ($result:ident, $contains:expr) => {
+        match $result {
+            Ok(o) => {
+                panic!("expected error, but returned: {:?}", o);
+            }
+            Err(e) => {
+                let string_error = e.to_string();
+                if !string_error.contains($contains) {
+                    panic!(
+                        "assertion error: '{}' hasn't been found in '{}'",
+                        $contains, string_error
+                    );
+                }
+            }
+        }
+    };
+}
