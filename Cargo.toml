@@ -37,7 +37,7 @@ rustdoc-args = ["--cfg", "docsrs"]
 [dependencies]
 bech32 = { version = "0.8.1", default-features = false }
 bitcoin_hashes = { version = "0.10.0", default-features = false }
-secp256k1 = { git = "https://github.com/rust-bitcoin/rust-secp256k1", default-features = false }
+secp256k1 = { git = "https://github.com/rust-bitcoin/rust-secp256k1", default-features = false, rev="f7cae46fc7733522cb84ef1b1ee1d1ed0cec2fd3" }
 core2 = { version = "0.3.0", optional = true, default-features = false }
 
 base64-compat = { version = "1.0.0", optional = true }
@@ -52,7 +52,7 @@ hex = { version="0.4", optional=true}
 [dev-dependencies]
 serde_json = "<1.0.45"
 serde_test = "1"
-secp256k1 = { git = "https://github.com/rust-bitcoin/rust-secp256k1", features = [ "recovery", "rand-std" ] }
+secp256k1 = { git = "https://github.com/rust-bitcoin/rust-secp256k1", features = [ "recovery", "rand-std" ], rev="f7cae46fc7733522cb84ef1b1ee1d1ed0cec2fd3" }
 bincode = "1.3.1"
 # We need to pin ryu (transitive dep from serde_json) to stay compatible with Rust 1.22.0
 ryu = "<1.0.5"
