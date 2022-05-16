@@ -74,6 +74,9 @@ extern crate alloc;
 #[cfg(feature = "no-std")]
 extern crate core2;
 
+#[cfg(feature = "use-serde")]
+extern crate serde_big_array;
+
 #[cfg(any(feature = "std", test))]
 extern crate core; // for Rust 1.29 and no-std tests
 
