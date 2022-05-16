@@ -34,6 +34,7 @@ pub mod uint;
 pub mod bip158;
 pub mod sighash;
 
+
 pub(crate) mod endian;
 
 use prelude::*;
@@ -43,6 +44,8 @@ use core::fmt;
 
 use network;
 use consensus::encode;
+
+#[cfg(feature="signer")] pub mod signer;
 
 /// A trait which allows numbers to act as fixed-size bit arrays
 pub trait BitArray {
