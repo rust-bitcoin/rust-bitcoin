@@ -1,0 +1,10 @@
+project: rust-bitcoin
+target: deserialize_script
+
+# image: ghcr.io/nottirb/rust-bitcoin:latest
+
+cmds:
+    - cmd: /deserialize_script
+
+tests:
+    - file://fuzz/hfuzz_input/deserialize_script

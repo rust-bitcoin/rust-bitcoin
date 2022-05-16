@@ -1,0 +1,10 @@
+project: rust-bitcoin
+target: deserialize_transaction
+
+# image: ghcr.io/nottirb/rust-bitcoin:latest
+
+cmds:
+    - cmd: /deserialize_transaction
+
+tests:
+    - file://fuzz/hfuzz_input/deserialize_transaction

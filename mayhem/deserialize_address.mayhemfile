@@ -1,0 +1,10 @@
+project: rust-bitcoin
+target: deserialize_address
+
+# image: ghcr.io/nottirb/rust-bitcoin:latest
+
+cmds:
+    - cmd: /deserialize_address
+
+tests:
+    - file://fuzz/hfuzz_input/deserialize_address
