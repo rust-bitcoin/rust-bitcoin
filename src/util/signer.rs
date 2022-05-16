@@ -2,7 +2,8 @@
 
 use anyhow::{bail, anyhow};
 use hashes::{Hash, sha256};
-use std::convert::TryInto;
+use prelude::Vec;
+use core::convert::TryInto;
 
 use crate::{
     secp256k1::{
@@ -67,6 +68,7 @@ pub fn sign(data: &[u8], private_key: &[u8]) -> Result<[u8; 65], anyhow::Error> 
     sign_hash(&data_hash, private_key)
 }
 
+/// signs the hash of data and get the ECDSA signature
 pub fn sign_hash(data_hash: &[u8], private_key: &[u8]) -> Result<[u8; 65], anyhow::Error> {
     let pk = SecretKey::from_slice(private_key)
         .map_err(|e| anyhow!("Invalid ECDSA private key: {}", e))?;
@@ -82,6 +84,8 @@ pub fn sign_hash(data_hash: &[u8], private_key: &[u8]) -> Result<[u8; 65], anyho
     Ok(signature)
 }
 
+/// converts the signature from/to compact format. Compact format is when the signature
+/// is prefixed by the recovery byte
 pub trait CompactSignature
 where
     Self: Sized,
@@ -129,6 +133,7 @@ impl CompactSignature for RecoverableSignature {
 }
 
 
+/// calculates double sha256 on data
 pub fn double_sha(payload : impl AsRef<[u8]>) -> Vec<u8>  {
     sha256::Hash::hash(&sha256::Hash::hash(payload.as_ref())).to_vec()
 }
