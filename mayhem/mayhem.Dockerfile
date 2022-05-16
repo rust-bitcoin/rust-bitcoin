@@ -17,8 +17,7 @@ RUN cd fuzz && \
 # Package Stage
 FROM ubuntu:20.04
 
-COPY --from=builder rust-bitcoin/* /
-RUN mv target/release/deserialize_address /
-RUN mv target/release/deserialize_block /
-RUN mv target/release/deserialize_script /
-RUN mv target/release/deserialize_transaction /
+COPY --from=builder rust-bitcoin/fuzz/target/release/deserialize_address /
+COPY --from=builder rust-bitcoin/fuzz/target/release/deserialize_block /
+COPY --from=builder rust-bitcoin/fuzz/target/release/deserialize_script /
+COPY --from=builder rust-bitcoin/fuzz/target/release/deserialize_transaction /
