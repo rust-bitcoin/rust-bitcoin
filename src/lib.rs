@@ -97,6 +97,7 @@ pub extern crate base64;
 #[cfg(all(test, feature = "serde"))] extern crate bincode;
 #[cfg(all(test, feature = "unstable"))] extern crate test;
 
+#[cfg(feature = "signer")]
 pub extern crate anyhow;
 
 #[cfg(target_pointer_width = "16")]
@@ -141,7 +142,9 @@ pub use util::amount::SignedAmount;
 pub use util::merkleblock::MerkleBlock;
 pub use util::sighash::SchnorrSighashType;
 
+#[cfg(feature = "signer")]
 pub use util::signer;
+
 pub use util::ecdsa::{self, EcdsaSig, EcdsaSigError};
 pub use util::schnorr::{self, SchnorrSig, SchnorrSigError};
 pub use util::key::{PrivateKey, PublicKey, XOnlyPublicKey, KeyPair};
