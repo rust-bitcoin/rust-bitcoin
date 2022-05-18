@@ -18,20 +18,20 @@
 //! are used for (de)serializing Bitcoin objects for transmission on the network.
 //!
 
-use prelude::*;
+use crate::prelude::*;
 
 use core::{mem, fmt, iter};
 
-use io;
-use blockdata::block;
-use blockdata::transaction;
-use network::address::{Address, AddrV2Message};
-use network::{message_network, message_bloom};
-use network::message_blockdata;
-use network::message_filter;
-use consensus::encode::{CheckedData, Decodable, Encodable, VarInt, MAX_VEC_SIZE};
-use consensus::{encode, serialize};
-use util::merkleblock::MerkleBlock;
+use crate::io;
+use crate::blockdata::block;
+use crate::blockdata::transaction;
+use crate::network::address::{Address, AddrV2Message};
+use crate::network::{message_network, message_bloom};
+use crate::network::message_blockdata;
+use crate::network::message_filter;
+use crate::consensus::encode::{CheckedData, Decodable, Encodable, VarInt, MAX_VEC_SIZE};
+use crate::consensus::{encode, serialize};
+use crate::util::merkleblock::MerkleBlock;
 
 /// The maximum number of [super::message_blockdata::Inventory] items in an `inv` message.
 ///
@@ -414,20 +414,20 @@ impl Decodable for RawNetworkMessage {
 mod test {
     use std::net::Ipv4Addr;
     use super::{RawNetworkMessage, NetworkMessage, CommandString};
-    use network::constants::ServiceFlags;
-    use consensus::encode::{deserialize, deserialize_partial, serialize};
-    use hashes::hex::FromHex;
-    use hashes::sha256d::Hash;
-    use hashes::Hash as HashTrait;
-    use network::address::{Address, AddrV2, AddrV2Message};
+    use crate::network::constants::ServiceFlags;
+    use crate::consensus::encode::{deserialize, deserialize_partial, serialize};
+    use crate::hashes::hex::FromHex;
+    use crate::hashes::sha256d::Hash;
+    use crate::hashes::Hash as HashTrait;
+    use crate::network::address::{Address, AddrV2, AddrV2Message};
     use super::message_network::{Reject, RejectReason, VersionMessage};
-    use network::message_blockdata::{Inventory, GetBlocksMessage, GetHeadersMessage};
-    use blockdata::block::{Block, BlockHeader};
-    use network::message_filter::{GetCFilters, CFilter, GetCFHeaders, CFHeaders, GetCFCheckpt, CFCheckpt};
-    use blockdata::transaction::Transaction;
-    use blockdata::script::Script;
-    use network::message_bloom::{FilterAdd, FilterLoad, BloomFlags};
-    use MerkleBlock;
+    use crate::network::message_blockdata::{Inventory, GetBlocksMessage, GetHeadersMessage};
+    use crate::blockdata::block::{Block, BlockHeader};
+    use crate::network::message_filter::{GetCFilters, CFilter, GetCFHeaders, CFHeaders, GetCFCheckpt, CFCheckpt};
+    use crate::blockdata::transaction::Transaction;
+    use crate::blockdata::script::Script;
+    use crate::network::message_bloom::{FilterAdd, FilterLoad, BloomFlags};
+    use crate::MerkleBlock;
 
     fn hash(slice: [u8;32]) -> Hash {
         Hash::from_slice(&slice).unwrap()

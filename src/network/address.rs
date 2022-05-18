@@ -18,14 +18,14 @@
 //! network addresses in Bitcoin messages.
 //!
 
-use prelude::*;
+use crate::prelude::*;
 
 use core::{fmt, iter};
 use std::net::{SocketAddr, Ipv6Addr, SocketAddrV4, SocketAddrV6, Ipv4Addr, ToSocketAddrs};
 
-use io;
-use network::constants::ServiceFlags;
-use consensus::encode::{self, Decodable, Encodable, VarInt, ReadExt, WriteExt};
+use crate::io;
+use crate::network::constants::ServiceFlags;
+use crate::consensus::encode::{self, Decodable, Encodable, VarInt, ReadExt, WriteExt};
 
 /// A message which can be sent on the Bitcoin network
 #[derive(Clone, PartialEq, Eq, Hash)]
@@ -294,11 +294,11 @@ impl ToSocketAddrs for AddrV2Message {
 mod test {
     use core::str::FromStr;
     use super::{AddrV2Message, AddrV2, Address};
-    use network::constants::ServiceFlags;
+    use crate::network::constants::ServiceFlags;
     use std::net::{SocketAddr, IpAddr, Ipv4Addr, Ipv6Addr};
-    use hashes::hex::FromHex;
+    use crate::hashes::hex::FromHex;
 
-    use consensus::encode::{deserialize, serialize};
+    use crate::consensus::encode::{deserialize, serialize};
 
     #[test]
     fn serialize_address_test() {

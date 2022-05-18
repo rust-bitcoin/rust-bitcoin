@@ -19,19 +19,19 @@
 //! single transaction.
 //!
 
-use prelude::*;
+use crate::prelude::*;
 
 use core::default::Default;
 
-use hashes::hex::{self, HexIterator};
-use hashes::sha256d;
-use blockdata::opcodes;
-use blockdata::script;
-use blockdata::transaction::{OutPoint, Transaction, TxOut, TxIn};
-use blockdata::block::{Block, BlockHeader};
-use blockdata::witness::Witness;
-use network::constants::Network;
-use util::uint::Uint256;
+use crate::hashes::hex::{self, HexIterator};
+use crate::hashes::sha256d;
+use crate::blockdata::opcodes;
+use crate::blockdata::script;
+use crate::blockdata::transaction::{OutPoint, Transaction, TxOut, TxIn};
+use crate::blockdata::block::{Block, BlockHeader};
+use crate::blockdata::witness::Witness;
+use crate::network::constants::Network;
+use crate::util::uint::Uint256;
 
 /// The maximum allowable sequence number
 pub const MAX_SEQUENCE: u32 = 0xFFFFFFFF;
@@ -179,12 +179,12 @@ pub fn genesis_block(network: Network) -> Block {
 #[cfg(test)]
 mod test {
     use core::default::Default;
-    use hashes::hex::FromHex;
+    use crate::hashes::hex::FromHex;
 
-    use network::constants::Network;
-    use consensus::encode::serialize;
-    use blockdata::constants::{genesis_block, bitcoin_genesis_tx};
-    use blockdata::constants::{MAX_SEQUENCE, COIN_VALUE};
+    use crate::network::constants::Network;
+    use crate::consensus::encode::serialize;
+    use crate::blockdata::constants::{genesis_block, bitcoin_genesis_tx};
+    use crate::blockdata::constants::{MAX_SEQUENCE, COIN_VALUE};
 
     #[test]
     fn bitcoin_genesis_first_transaction() {

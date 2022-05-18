@@ -115,33 +115,33 @@ pub mod consensus;
 pub mod hash_types;
 pub mod policy;
 
-pub use hash_types::*;
-pub use blockdata::block::Block;
-pub use blockdata::block::BlockHeader;
-pub use blockdata::script::Script;
-pub use blockdata::transaction::Transaction;
-pub use blockdata::transaction::TxIn;
-pub use blockdata::transaction::TxOut;
-pub use blockdata::transaction::OutPoint;
-pub use blockdata::transaction::EcdsaSighashType;
-pub use blockdata::witness::Witness;
-pub use consensus::encode::VarInt;
-pub use network::constants::Network;
-pub use util::Error;
-pub use util::address::Address;
-pub use util::address::AddressType;
-pub use util::amount::Amount;
-pub use util::amount::Denomination;
-pub use util::amount::SignedAmount;
-pub use util::merkleblock::MerkleBlock;
-pub use util::sighash::SchnorrSighashType;
+pub use crate::hash_types::*;
+pub use crate::blockdata::block::Block;
+pub use crate::blockdata::block::BlockHeader;
+pub use crate::blockdata::script::Script;
+pub use crate::blockdata::transaction::Transaction;
+pub use crate::blockdata::transaction::TxIn;
+pub use crate::blockdata::transaction::TxOut;
+pub use crate::blockdata::transaction::OutPoint;
+pub use crate::blockdata::transaction::EcdsaSighashType;
+pub use crate::blockdata::witness::Witness;
+pub use crate::consensus::encode::VarInt;
+pub use crate::network::constants::Network;
+pub use crate::util::Error;
+pub use crate::util::address::Address;
+pub use crate::util::address::AddressType;
+pub use crate::util::amount::Amount;
+pub use crate::util::amount::Denomination;
+pub use crate::util::amount::SignedAmount;
+pub use crate::util::merkleblock::MerkleBlock;
+pub use crate::util::sighash::SchnorrSighashType;
 
-pub use util::ecdsa::{self, EcdsaSig, EcdsaSigError};
-pub use util::schnorr::{self, SchnorrSig, SchnorrSigError};
-pub use util::key::{PrivateKey, PublicKey, XOnlyPublicKey, KeyPair};
-pub use util::psbt;
+pub use crate::util::ecdsa::{self, EcdsaSig, EcdsaSigError};
+pub use crate::util::schnorr::{self, SchnorrSig, SchnorrSigError};
+pub use crate::util::key::{PrivateKey, PublicKey, XOnlyPublicKey, KeyPair};
+pub use crate::util::psbt;
 #[allow(deprecated)]
-pub use blockdata::transaction::SigHashType;
+pub use crate::blockdata::transaction::SigHashType;
 
 #[cfg(feature = "std")]
 use std::io;
@@ -190,7 +190,7 @@ mod prelude {
     pub use std::io::sink;
 
     #[cfg(not(feature = "std"))]
-    pub use io_extras::sink;
+    pub use crate::io_extras::sink;
 
     #[cfg(feature = "hashbrown")]
     pub use hashbrown::HashSet;
@@ -204,7 +204,7 @@ mod prelude {
 #[cfg(all(test, feature = "unstable"))]
 mod tests {
     use core::fmt::Arguments;
-    use io::{IoSlice, Result, Write};
+    use crate::io::{IoSlice, Result, Write};
 
     #[derive(Default, Clone, Debug, PartialEq, Eq)]
     pub struct EmptyWrite;

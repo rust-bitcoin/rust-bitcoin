@@ -39,8 +39,8 @@
 
 use core::{fmt, ops, convert::From};
 
-use io;
-use consensus::encode::{self, Encodable, Decodable};
+use crate::io;
+use crate::consensus::encode::{self, Encodable, Decodable};
 
 /// Version of the protocol as appearing in network message headers
 /// This constant is used to signal to other peers which features you support.
@@ -289,7 +289,7 @@ impl Decodable for ServiceFlags {
 #[cfg(test)]
 mod tests {
     use super::{Network, ServiceFlags};
-    use consensus::encode::{deserialize, serialize};
+    use crate::consensus::encode::{deserialize, serialize};
 
     #[test]
     fn serialize_test() {

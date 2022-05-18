@@ -16,13 +16,13 @@
 //!
 //! This module provides ECDSA signatures used Bitcoin that can be roundtrip (de)serialized.
 
-use prelude::*;
+use crate::prelude::*;
 use core::str::FromStr;
 use core::{fmt, iter};
-use hashes::hex::{self, FromHex};
-use blockdata::transaction::NonStandardSighashType;
+use crate::hashes::hex::{self, FromHex};
+use crate::blockdata::transaction::NonStandardSighashType;
 use secp256k1;
-use EcdsaSighashType;
+use crate::EcdsaSighashType;
 
 /// An ECDSA signature with the corresponding hash type.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]

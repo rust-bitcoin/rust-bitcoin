@@ -19,16 +19,16 @@
 //! signatures, which are placed in the scriptSig.
 //!
 
-use hashes::Hash;
-use hash_types::Sighash;
-use blockdata::script::Script;
-use blockdata::witness::Witness;
-use blockdata::transaction::{Transaction, TxIn, EcdsaSighashType};
-use consensus::{encode, Encodable};
+use crate::hashes::Hash;
+use crate::hash_types::Sighash;
+use crate::blockdata::script::Script;
+use crate::blockdata::witness::Witness;
+use crate::blockdata::transaction::{Transaction, TxIn, EcdsaSighashType};
+use crate::consensus::{encode, Encodable};
 
-use io;
+use crate::io;
 use core::ops::{Deref, DerefMut};
-use util::sighash;
+use crate::util::sighash;
 
 /// Parts of a sighash which are common across inputs or signatures, and which are
 /// sufficient (in conjunction with a private key) to sign the transaction
@@ -188,14 +188,14 @@ impl<R: DerefMut<Target = Transaction>> SigHashCache<R> {
 #[allow(deprecated)]
 mod tests {
     use std::str::FromStr;
-    use hash_types::Sighash;
-    use blockdata::script::Script;
-    use blockdata::transaction::Transaction;
-    use consensus::encode::deserialize;
-    use network::constants::Network;
-    use util::address::Address;
-    use util::key::PublicKey;
-    use hashes::hex::FromHex;
+    use crate::hash_types::Sighash;
+    use crate::blockdata::script::Script;
+    use crate::blockdata::transaction::Transaction;
+    use crate::consensus::encode::deserialize;
+    use crate::network::constants::Network;
+    use crate::util::address::Address;
+    use crate::util::key::PublicKey;
+    use crate::hashes::hex::FromHex;
 
     use super::*;
 

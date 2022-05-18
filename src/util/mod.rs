@@ -36,13 +36,13 @@ pub mod sighash;
 
 pub(crate) mod endian;
 
-use prelude::*;
-use io;
+use crate::prelude::*;
+use crate::io;
 use core::fmt;
 #[cfg(feature = "std")] use std::error;
 
-use network;
-use consensus::encode;
+use crate::network;
+use crate::consensus::encode;
 
 /// A trait which allows numbers to act as fixed-size bit arrays
 pub trait BitArray {

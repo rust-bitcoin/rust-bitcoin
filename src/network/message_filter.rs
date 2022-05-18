@@ -3,7 +3,7 @@
 //! This module describes BIP157 Client Side Block Filtering network messages.
 //!
 
-use hash_types::{BlockHash, FilterHash, FilterHeader};
+use crate::hash_types::{BlockHash, FilterHash, FilterHeader};
 
 /// getcfilters message
 #[derive(PartialEq, Eq, Clone, Debug)]

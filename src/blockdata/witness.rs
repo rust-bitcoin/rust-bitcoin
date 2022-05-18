@@ -3,13 +3,13 @@
 //! This module contains the [`Witness`] struct and related methods to operate on it
 //!
 
-use blockdata::transaction::EcdsaSighashType;
-use consensus::encode::{Error, MAX_VEC_SIZE};
-use consensus::{Decodable, Encodable, WriteExt};
-use io::{self, Read, Write};
-use prelude::*;
+use crate::blockdata::transaction::EcdsaSighashType;
+use crate::consensus::encode::{Error, MAX_VEC_SIZE};
+use crate::consensus::{Decodable, Encodable, WriteExt};
+use crate::io::{self, Read, Write};
+use crate::prelude::*;
 use secp256k1::ecdsa;
-use VarInt;
+use crate::VarInt;
 
 #[cfg(feature = "serde")]
 use serde;
@@ -302,12 +302,12 @@ impl<'de> serde::Deserialize<'de> for Witness {
 
 #[cfg(test)]
 mod test {
-    use blockdata::transaction::EcdsaSighashType;
-    use blockdata::witness::Witness;
-    use consensus::{deserialize, serialize};
-    use hashes::hex::{FromHex, ToHex};
-    use Transaction;
-    use secp256k1::ecdsa;
+    use super::*;
+
+    use crate::consensus::{deserialize, serialize};
+    use crate::hashes::hex::{FromHex, ToHex};
+    use crate::Transaction;
+    use crate::secp256k1::ecdsa;
 
     #[test]
     fn test_push() {

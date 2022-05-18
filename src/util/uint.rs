@@ -541,9 +541,9 @@ impl Uint256 {
 
 #[cfg(test)]
 mod tests {
-    use consensus::{deserialize, serialize};
-    use util::uint::{Uint256, Uint128};
-    use util::BitArray;
+    use crate::consensus::{deserialize, serialize};
+    use crate::util::uint::{Uint256, Uint128};
+    use crate::util::BitArray;
 
     #[test]
     pub fn uint256_bits_test() {

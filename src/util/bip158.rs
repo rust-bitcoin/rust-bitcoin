@@ -45,21 +45,21 @@
 //!  ```
 //!
 
-use prelude::*;
+use crate::prelude::*;
 
-use io::{self, Cursor};
+use crate::io::{self, Cursor};
 use core::fmt::{self, Display, Formatter};
 use core::cmp::{self, Ordering};
 
-use hashes::{Hash, siphash24};
-use hash_types::{BlockHash, FilterHash, FilterHeader};
+use crate::hashes::{Hash, siphash24};
+use crate::hash_types::{BlockHash, FilterHash, FilterHeader};
 
-use blockdata::block::Block;
-use blockdata::script::Script;
-use blockdata::transaction::OutPoint;
-use consensus::{Decodable, Encodable};
-use consensus::encode::VarInt;
-use util::endian;
+use crate::blockdata::block::Block;
+use crate::blockdata::script::Script;
+use crate::blockdata::transaction::OutPoint;
+use crate::consensus::{Decodable, Encodable};
+use crate::consensus::encode::VarInt;
+use crate::util::endian;
 
 /// Golomb encoding parameter as in BIP-158, see also https://gist.github.com/sipa/576d5f09c3b86c3b1b75598d799fc845
 const P: u8 = 19;
@@ -511,17 +511,17 @@ impl<'a> BitStreamWriter<'a> {
 
 #[cfg(test)]
 mod test {
-    use io::Cursor;
+    use crate::io::Cursor;
 
-    use hash_types::BlockHash;
-    use hashes::hex::FromHex;
+    use crate::hash_types::BlockHash;
+    use crate::hashes::hex::FromHex;
 
     use super::*;
 
     extern crate serde_json;
     use self::serde_json::Value;
 
-    use consensus::encode::deserialize;
+    use crate::consensus::encode::deserialize;
     use std::collections::HashMap;
 
     #[test]

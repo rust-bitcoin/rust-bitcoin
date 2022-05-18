@@ -18,12 +18,12 @@
 //! recovery when library is used with the `secp-recovery` feature.
 //!
 
-use prelude::*;
+use crate::prelude::*;
 
-use hashes::{sha256d, Hash, HashEngine};
+use crate::hashes::{sha256d, Hash, HashEngine};
 
-use blockdata::opcodes;
-use consensus::{encode, Encodable};
+use crate::blockdata::opcodes;
+use crate::consensus::{encode, Encodable};
 
 #[cfg(feature = "secp-recovery")]
 #[cfg_attr(docsrs, doc(cfg(feature = "secp-recovery")))]
@@ -34,16 +34,17 @@ pub const BITCOIN_SIGNED_MSG_PREFIX: &[u8] = b"\x18Bitcoin Signed Message:\n";
 
 #[cfg(feature = "secp-recovery")]
 mod message_signing {
-    #[cfg(feature = "base64")] use prelude::*;
+    #[cfg(feature = "base64")] use crate::prelude::*;
+
     use core::fmt;
     #[cfg(feature = "std")] use std::error;
 
-    use hashes::sha256d;
+    use crate::hashes::sha256d;
     use secp256k1;
     use secp256k1::ecdsa::{RecoveryId, RecoverableSignature};
 
-    use util::key::PublicKey;
-    use util::address::{Address, AddressType};
+    use crate::util::key::PublicKey;
+    use crate::util::address::{Address, AddressType};
 
     /// An error used for dealing with Bitcoin Signed Messages.
     #[cfg_attr(docsrs, doc(cfg(feature = "secp-recovery")))]
@@ -267,7 +268,7 @@ pub fn signed_msg_hash(msg: &str) -> sha256d::Hash {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use hashes::hex::ToHex;
+    use crate::hashes::hex::ToHex;
     use super::script_find_and_remove;
     use super::signed_msg_hash;
 
@@ -321,7 +322,7 @@ mod tests {
     fn test_message_signature() {
         use core::str::FromStr;
         use secp256k1;
-        use ::AddressType;
+        use crate::{Address, Network, AddressType};
 
         let secp = secp256k1::Secp256k1::new();
         let message = "rust-bitcoin MessageSignature test";
@@ -342,14 +343,14 @@ mod tests {
         assert_eq!(pubkey.compressed, true);
         assert_eq!(pubkey.inner, secp256k1::PublicKey::from_secret_key(&secp, &privkey));
 
-        let p2pkh = ::Address::p2pkh(&pubkey, ::Network::Bitcoin);
+        let p2pkh = Address::p2pkh(&pubkey, Network::Bitcoin);
         assert_eq!(signature2.is_signed_by_address(&secp, &p2pkh, msg_hash), Ok(true));
-        let p2wpkh = ::Address::p2wpkh(&pubkey, ::Network::Bitcoin).unwrap();
+        let p2wpkh = Address::p2wpkh(&pubkey, Network::Bitcoin).unwrap();
         assert_eq!(
             signature2.is_signed_by_address(&secp, &p2wpkh, msg_hash),
             Err(MessageSignatureError::UnsupportedAddressType(AddressType::P2wpkh))
         );
-        let p2shwpkh = ::Address::p2shwpkh(&pubkey, ::Network::Bitcoin).unwrap();
+        let p2shwpkh = Address::p2shwpkh(&pubkey, Network::Bitcoin).unwrap();
         assert_eq!(
             signature2.is_signed_by_address(&secp, &p2shwpkh, msg_hash),
             Err(MessageSignatureError::UnsupportedAddressType(AddressType::P2sh))
@@ -360,7 +361,8 @@ mod tests {
     #[cfg(all(feature = "secp-recovery", feature = "base64"))]
     fn test_incorrect_message_signature() {
         use secp256k1;
-        use util::key::PublicKey;
+        use crate::util::key::PublicKey;
+        use crate::{Address, Network};
 
         let secp = secp256k1::Secp256k1::new();
         let message = "a different message from what was signed";
@@ -376,7 +378,7 @@ mod tests {
             &::base64::decode(&pubkey_base64).expect("base64 string")
         ).expect("pubkey slice");
 
-        let p2pkh = ::Address::p2pkh(&pubkey, ::Network::Bitcoin);
+        let p2pkh = Address::p2pkh(&pubkey, Network::Bitcoin);
         assert_eq!(signature.is_signed_by_address(&secp, &p2pkh, msg_hash), Ok(false));
     }
 }

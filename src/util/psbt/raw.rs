@@ -18,14 +18,14 @@
 //! <https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki>.
 //!
 
-use prelude::*;
+use crate::prelude::*;
 use core::fmt;
 
-use io;
-use consensus::encode::{self, ReadExt, WriteExt, Decodable, Encodable, VarInt, serialize, deserialize, MAX_VEC_SIZE};
-use hashes::hex;
-use util::psbt::Error;
-use util::read_to_end;
+use crate::io;
+use crate::consensus::encode::{self, ReadExt, WriteExt, Decodable, Encodable, VarInt, serialize, deserialize, MAX_VEC_SIZE};
+use crate::hashes::hex;
+use crate::util::psbt::Error;
+use crate::util::read_to_end;
 
 /// A PSBT key in its raw byte form.
 #[derive(Debug, PartialEq, Hash, Eq, Clone, Ord, PartialOrd)]
@@ -34,7 +34,7 @@ pub struct Key {
     /// The type of this PSBT key.
     pub type_value: u8,
     /// The key itself in raw byte form.
-    #[cfg_attr(feature = "serde", serde(with = "::serde_utils::hex_bytes"))]
+    #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::hex_bytes"))]
     pub key: Vec<u8>,
 }
 
@@ -45,7 +45,7 @@ pub struct Pair {
     /// The key of this key-value pair.
     pub key: Key,
     /// The value of this key-value pair in raw byte form.
-    #[cfg_attr(feature = "serde", serde(with = "::serde_utils::hex_bytes"))]
+    #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::hex_bytes"))]
     pub value: Vec<u8>,
 }
 
@@ -59,12 +59,12 @@ pub type ProprietaryType = u8;
 pub struct ProprietaryKey<Subtype=ProprietaryType> where Subtype: Copy + From<u8> + Into<u8> {
     /// Proprietary type prefix used for grouping together keys under some
     /// application and avoid namespace collision
-    #[cfg_attr(feature = "serde", serde(with = "::serde_utils::hex_bytes"))]
+    #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::hex_bytes"))]
     pub prefix: Vec<u8>,
     /// Custom proprietary subtype
     pub subtype: Subtype,
     /// Additional key bytes (like serialized public key data etc)
-    #[cfg_attr(feature = "serde", serde(with = "::serde_utils::hex_bytes"))]
+    #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::hex_bytes"))]
     pub key: Vec<u8>,
 }
 

@@ -18,15 +18,15 @@
 //! capabilities.
 //!
 
-use prelude::*;
+use crate::prelude::*;
 
-use io;
+use crate::io;
 
-use network::address::Address;
-use network::constants::{self, ServiceFlags};
-use consensus::{Encodable, Decodable, ReadExt};
-use consensus::encode;
-use hashes::sha256d;
+use crate::network::address::Address;
+use crate::network::constants::{self, ServiceFlags};
+use crate::consensus::{Encodable, Decodable, ReadExt};
+use crate::consensus::encode;
+use crate::hashes::sha256d;
 
 /// Some simple messages
 
@@ -149,11 +149,11 @@ mod tests {
     use super::Reject;
     use super::RejectReason;
 
-    use hashes::hex::FromHex;
-    use hashes::sha256d::Hash;
-    use network::constants::ServiceFlags;
+    use crate::hashes::hex::FromHex;
+    use crate::hashes::sha256d::Hash;
+    use crate::network::constants::ServiceFlags;
 
-    use consensus::encode::{deserialize, serialize};
+    use crate::consensus::encode::{deserialize, serialize};
 
     #[test]
     fn version_message_test() {

@@ -16,8 +16,8 @@
 //! This module provides support for taproot tagged hashes.
 //!
 
-use prelude::*;
-use io;
+use crate::prelude::*;
+use crate::io;
 use secp256k1::{self, Secp256k1};
 
 use core::fmt;
@@ -25,12 +25,12 @@ use core::cmp::Reverse;
 #[cfg(feature = "std")]
 use std::error;
 
-use hashes::{sha256, sha256t, Hash, HashEngine};
-use schnorr::{TweakedPublicKey, UntweakedPublicKey, TapTweak};
-use util::key::XOnlyPublicKey;
-use Script;
+use crate::hashes::{sha256, sha256t, Hash, HashEngine};
+use crate::schnorr::{TweakedPublicKey, UntweakedPublicKey, TapTweak};
+use crate::util::key::XOnlyPublicKey;
+use crate::Script;
 
-use consensus::Encodable;
+use crate::consensus::Encodable;
 
 /// The SHA-256 midstate value for the TapLeaf hash.
 const MIDSTATE_TAPLEAF: [u8; 32] = [
@@ -402,7 +402,7 @@ impl TaprootBuilder {
     /// If the script weight calculations overflow, a sub-optimal tree may be generated. This should
     /// not happen unless you are dealing with billions of branches with weights close to 2^32.
     ///
-    /// [`TapTree`]: ::util::psbt::TapTree
+    /// [`TapTree`]: crate::util::psbt::TapTree
     pub fn with_huffman_tree<I>(
         script_weights: I,
     ) -> Result<Self, TaprootBuilderError>
@@ -808,7 +808,7 @@ impl ControlBlock {
     /// Serializes the control block.
     ///
     /// This would be required when using [`ControlBlock`] as a witness element while spending an
-    /// output via script path. This serialization does not include the [`::VarInt`] prefix that would
+    /// output via script path. This serialization does not include the [`crate::VarInt`] prefix that would
     /// be applied when encoding this element as a witness.
     pub fn serialize(&self) -> Vec<u8> {
         let mut buf = Vec::with_capacity(self.size());
@@ -1096,13 +1096,13 @@ impl fmt::Display for TaprootError {
 impl error::Error for TaprootError {}
 #[cfg(test)]
 mod test {
-    use {Address, Network};
-    use schnorr::TapTweak;
+    use crate::{Address, Network};
+    use crate::schnorr::TapTweak;
 
     use super::*;
-    use hashes::hex::{FromHex, ToHex};
-    use hashes::sha256t::Tag;
-    use hashes::{sha256, Hash, HashEngine};
+    use crate::hashes::hex::{FromHex, ToHex};
+    use crate::hashes::sha256t::Tag;
+    use crate::hashes::{sha256, Hash, HashEngine};
     use secp256k1::{VerifyOnly, XOnlyPublicKey};
     use core::str::FromStr;
     extern crate serde_json;

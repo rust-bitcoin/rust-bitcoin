@@ -20,22 +20,22 @@
 //! these blocks and the blockchain.
 //!
 
-use prelude::*;
+use crate::prelude::*;
 
 use core::fmt;
 
-use util;
-use util::Error::{BlockBadTarget, BlockBadProofOfWork};
-use util::hash::bitcoin_merkle_root;
-use hashes::{Hash, HashEngine};
-use hash_types::{Wtxid, BlockHash, TxMerkleNode, WitnessMerkleNode, WitnessCommitment};
-use util::uint::Uint256;
-use consensus::encode::Encodable;
-use network::constants::Network;
-use blockdata::transaction::Transaction;
-use blockdata::constants::{max_target, WITNESS_SCALE_FACTOR};
-use blockdata::script;
-use VarInt;
+use crate::util;
+use crate::util::Error::{BlockBadTarget, BlockBadProofOfWork};
+use crate::util::hash::bitcoin_merkle_root;
+use crate::hashes::{Hash, HashEngine};
+use crate::hash_types::{Wtxid, BlockHash, TxMerkleNode, WitnessMerkleNode, WitnessCommitment};
+use crate::util::uint::Uint256;
+use crate::consensus::encode::Encodable;
+use crate::network::constants::Network;
+use crate::blockdata::transaction::Transaction;
+use crate::blockdata::constants::{max_target, WITNESS_SCALE_FACTOR};
+use crate::blockdata::script;
+use crate::VarInt;
 
 /// A block header, which contains all the block's information except
 /// the actual transactions
@@ -359,13 +359,13 @@ impl ::std::error::Error for Bip34Error {}
 
 #[cfg(test)]
 mod tests {
-    use hashes::hex::FromHex;
+    use crate::hashes::hex::FromHex;
 
-    use blockdata::block::{Block, BlockHeader};
-    use consensus::encode::{deserialize, serialize};
-    use util::uint::Uint256;
-    use util::Error::{BlockBadTarget, BlockBadProofOfWork};
-    use network::constants::Network;
+    use crate::blockdata::block::{Block, BlockHeader};
+    use crate::consensus::encode::{deserialize, serialize};
+    use crate::util::uint::Uint256;
+    use crate::util::Error::{BlockBadTarget, BlockBadProofOfWork};
+    use crate::network::constants::Network;
 
     #[test]
     fn test_coinbase_and_bip34() {
@@ -508,10 +508,10 @@ mod tests {
 #[cfg(all(test, feature = "unstable"))]
 mod benches {
     use super::Block;
-    use EmptyWrite;
-    use consensus::{deserialize, Encodable};
+    use crate::EmptyWrite;
+    use crate::consensus::{deserialize, Encodable};
     use test::{black_box, Bencher};
-    use network::stream_reader::StreamReader;
+    use crate::network::stream_reader::StreamReader;
 
     #[bench]
     #[allow(deprecated)]

@@ -12,12 +12,12 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-use prelude::*;
+use crate::prelude::*;
 
-use io;
+use crate::io;
 
-use consensus::encode;
-use util::psbt::raw;
+use crate::consensus::encode;
+use crate::util::psbt::raw;
 
 mod global;
 mod input;
