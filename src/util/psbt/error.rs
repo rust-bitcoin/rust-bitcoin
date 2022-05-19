@@ -80,7 +80,7 @@ pub enum Error {
     },
     /// Conflicting data during combine procedure:
     /// global extended public key has inconsistent key sources
-    CombineInconsistentKeySources(ExtendedPubKey),
+    CombineInconsistentKeySources(Box<ExtendedPubKey>),
     /// Serialization error in bitcoin consensus-encoded structures
     ConsensusEncoding,
 }
