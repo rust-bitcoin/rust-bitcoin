@@ -25,7 +25,7 @@ use core::cmp::Reverse;
 #[cfg(feature = "std")]
 use std::error;
 
-use crate::hashes::{sha256, sha256t, Hash, HashEngine};
+use crate::hashes::{sha256, Hash, HashEngine};
 use crate::schnorr::{TweakedPublicKey, UntweakedPublicKey, TapTweak};
 use crate::util::key::XOnlyPublicKey;
 use crate::Script;
@@ -60,41 +60,17 @@ const MIDSTATE_TAPSIGHASH: [u8; 32] = [
 ];
 // f504a425d7f8783b1363868ae3e556586eee945dbc7888dd02a6e2c31873fe9f
 
-/// Internal macro to speficy the different taproot tagged hashes.
-macro_rules! sha256t_hash_newtype {
-    ($newtype:ident, $tag:ident, $midstate:ident, $midstate_len:expr, $docs:meta, $reverse: expr) => {
-        sha256t_hash_newtype!($newtype, $tag, $midstate, $midstate_len, $docs, $reverse, stringify!($newtype));
-    };
-
-    ($newtype:ident, $tag:ident, $midstate:ident, $midstate_len:expr, $docs:meta, $reverse: expr, $sname:expr) => {
-        #[doc = "The tag used for ["]
-        #[doc = $sname]
-        #[doc = "]"]
-        #[derive(Copy, Clone, PartialEq, Eq, Default, PartialOrd, Ord, Hash)]
-        pub struct $tag;
-
-        impl sha256t::Tag for $tag {
-            fn engine() -> sha256::HashEngine {
-                let midstate = sha256::Midstate::from_inner($midstate);
-                sha256::HashEngine::from_midstate(midstate, $midstate_len)
-            }
-        }
-
-        hash_newtype!($newtype, sha256t::Hash<$tag>, 32, $docs, $reverse);
-    };
-}
-
 // Taproot test vectors from BIP-341 state the hashes without any reversing
-sha256t_hash_newtype!(TapLeafHash, TapLeafTag, MIDSTATE_TAPLEAF, 64,
+hashes::sha256t_hash_newtype!(TapLeafHash, TapLeafTag, MIDSTATE_TAPLEAF, 64,
     doc="Taproot-tagged hash for tapscript Merkle tree leafs", false
 );
-sha256t_hash_newtype!(TapBranchHash, TapBranchTag, MIDSTATE_TAPBRANCH, 64,
+hashes::sha256t_hash_newtype!(TapBranchHash, TapBranchTag, MIDSTATE_TAPBRANCH, 64,
     doc="Taproot-tagged hash for tapscript Merkle tree branches", false
 );
-sha256t_hash_newtype!(TapTweakHash, TapTweakTag, MIDSTATE_TAPTWEAK, 64,
+hashes::sha256t_hash_newtype!(TapTweakHash, TapTweakTag, MIDSTATE_TAPTWEAK, 64,
     doc="Taproot-tagged hash for public key tweaks", false
 );
-sha256t_hash_newtype!(TapSighashHash, TapSighashTag, MIDSTATE_TAPSIGHASH, 64,
+hashes::sha256t_hash_newtype!(TapSighashHash, TapSighashTag, MIDSTATE_TAPSIGHASH, 64,
     doc="Taproot-tagged hash for the taproot signature hash", false
 );
 
