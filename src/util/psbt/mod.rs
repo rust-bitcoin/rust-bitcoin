@@ -192,7 +192,7 @@ impl PartiallySignedTransaction {
                         entry.insert((fingerprint1, derivation1));
                         continue
                     }
-                    return Err(Error::CombineInconsistentKeySources(xpub));
+                    return Err(Error::CombineInconsistentKeySources(Box::new(xpub)));
                 }
             }
         }
