@@ -168,7 +168,7 @@ impl TapTree {
         self.0.clone()
     }
 
-    /// Returns [`TapTreeIter`] iterator for a taproot script tree, operating in DFS order over
+    /// Returns [`TapTreeIter<'_>`] iterator for a taproot script tree, operating in DFS order over
     /// tree [`ScriptLeaf`]s.
     pub fn script_leaves(&self) -> TapTreeIter {
         match (self.0.branch().len(), self.0.branch().last()) {
