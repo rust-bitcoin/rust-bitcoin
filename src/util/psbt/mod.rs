@@ -53,13 +53,12 @@ pub type Psbt = PartiallySignedTransaction;
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct PartiallySignedTransaction {
-    /// The unsigned transaction, scriptSigs and witnesses for each input must be
-    /// empty.
+    /// The unsigned transaction, scriptSigs and witnesses for each input must be empty.
     pub unsigned_tx: Transaction,
     /// The version number of this PSBT. If omitted, the version number is 0.
     pub version: u32,
     /// A global map from extended public keys to the used key fingerprint and
-    /// derivation path as defined by BIP 32
+    /// derivation path as defined by BIP 32.
     pub xpub: BTreeMap<ExtendedPubKey, KeySource>,
     /// Global proprietary key-value pairs.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq_byte_values"))]
@@ -68,11 +67,9 @@ pub struct PartiallySignedTransaction {
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq_byte_values"))]
     pub unknown: BTreeMap<raw::Key, Vec<u8>>,
 
-    /// The corresponding key-value map for each input in the unsigned
-    /// transaction.
+    /// The corresponding key-value map for each input in the unsigned transaction.
     pub inputs: Vec<Input>,
-    /// The corresponding key-value map for each output in the unsigned
-    /// transaction.
+    /// The corresponding key-value map for each output in the unsigned transaction.
     pub outputs: Vec<Output>,
 }
 
@@ -103,8 +100,7 @@ impl PartiallySignedTransaction {
         })
     }
 
-    /// Checks that unsigned transaction does not have scriptSig's or witness
-    /// data
+    /// Checks that unsigned transaction does not have scriptSig's or witness data.
     fn unsigned_tx_checks(&self) -> Result<(), Error> {
         for txin in &self.unsigned_tx.input {
             if !txin.script_sig.is_empty() {
@@ -119,8 +115,11 @@ impl PartiallySignedTransaction {
         Ok(())
     }
 
-    /// Create a PartiallySignedTransaction from an unsigned transaction, error
-    /// if not unsigned
+    /// Creates a PSBT from an unsigned transaction.
+    ///
+    /// # Errors
+    ///
+    /// If transactions is not unsigned.
     pub fn from_unsigned_tx(tx: Transaction) -> Result<Self, Error> {
         let psbt = PartiallySignedTransaction {
             inputs: vec![Default::default(); tx.input.len()],
@@ -136,8 +135,7 @@ impl PartiallySignedTransaction {
         Ok(psbt)
     }
 
-    /// Extract the Transaction from a PartiallySignedTransaction by filling in
-    /// the available signature information in place.
+    /// Extracts the `Transaction` from a PSBT by filling in the available signature information.
     pub fn extract_tx(self) -> Transaction {
         let mut tx: Transaction = self.unsigned_tx;
 
@@ -222,13 +220,13 @@ mod display_from_str {
     use crate::consensus::encode::{Error, self};
     use base64::display::Base64Display;
 
-    /// Error happening during PSBT decoding from Base64 string
+    /// Error encountered during PSBT decoding from Base64 string.
     #[derive(Debug)]
     #[cfg_attr(docsrs, doc(cfg(feature = "base64")))]
     pub enum PsbtParseError {
-        /// Error in internal PSBT data structure
+        /// Error in internal PSBT data structure.
         PsbtEncoding(Error),
-        /// Error in PSBT Base64 encoding
+        /// Error in PSBT Base64 encoding.
         Base64Encoding(::base64::DecodeError)
     }
 

@@ -39,33 +39,33 @@ use super::taproot::LeafVersion;
 /// Efficiently calculates signature hash message for legacy, segwit and taproot inputs.
 #[derive(Debug)]
 pub struct SighashCache<T: Deref<Target=Transaction>> {
-    /// Access to transaction required for various introspection, moreover type
-    /// `T: Deref<Target=Transaction>` allows to accept borrow and mutable borrow, the
-    /// latter in particular is necessary for [`SighashCache::witness_mut`]
+    /// Access to transaction required for transaction introspection. Moreover, type
+    /// `T: Deref<Target=Transaction>` allows us to use borrowed and mutable borrowed types,
+    /// the latter in particular is necessary for [`SighashCache::witness_mut`].
     tx: T,
 
-    /// Common cache for taproot and segwit inputs. It's an option because it's not needed for legacy inputs
+    /// Common cache for taproot and segwit inputs, `None` for legacy inputs.
     common_cache: Option<CommonCache>,
 
-    /// Cache for segwit v0 inputs, it's the result of another round of sha256 on `common_cache`
+    /// Cache for segwit v0 inputs (the result of another round of sha256 on `common_cache`).
     segwit_cache: Option<SegwitCache>,
 
-    /// Cache for taproot v1 inputs
+    /// Cache for taproot v1 inputs.
     taproot_cache: Option<TaprootCache>,
 }
 
-/// Values cached common between segwit and taproot inputs
+/// Common values cached between segwit and taproot inputs.
 #[derive(Debug)]
 struct CommonCache {
     prevouts: sha256::Hash,
     sequences: sha256::Hash,
 
-    /// in theory, `outputs` could be `Option` since `NONE` and `SINGLE` doesn't need it, but since
-    /// `ALL` is the mostly used variant by large, we don't bother
+    /// In theory `outputs` could be an `Option` since `SIGHASH_NONE` and `SIGHASH_SINGLE` do not
+    /// need it, but since `SIGHASH_ALL` is by far the most used variant we don't bother.
     outputs: sha256::Hash,
 }
 
-/// Values cached for segwit inputs, it's equal to [`CommonCache`] plus another round of `sha256`
+/// Values cached for segwit inputs, equivalent to [`CommonCache`] plus another round of `sha256`.
 #[derive(Debug)]
 struct SegwitCache {
     prevouts: sha256d::Hash,
@@ -73,29 +73,29 @@ struct SegwitCache {
     outputs: sha256d::Hash,
 }
 
-/// Values cached for taproot inputs
+/// Values cached for taproot inputs.
 #[derive(Debug)]
 struct TaprootCache {
     amounts: sha256::Hash,
     script_pubkeys: sha256::Hash,
 }
 
-/// Contains outputs of previous transactions.
-/// In the case [`SchnorrSighashType`] variant is `ANYONECANPAY`, [`Prevouts::One`] may be provided
+/// Contains outputs of previous transactions. In the case [`SchnorrSighashType`] variant is
+/// `SIGHASH_ANYONECANPAY`, [`Prevouts::One`] may be used.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum Prevouts<'u, T> where T: 'u + Borrow<TxOut> {
-    /// `One` variant allows to provide the single Prevout needed. It's useful for example
-    /// when modifier `ANYONECANPAY` is provided, only prevout of the current input is needed.
+    /// `One` variant allows provision of the single prevout needed. It's useful, for example, when
+    /// modifier `SIGHASH_ANYONECANPAY` is provided, only prevout of the current input is needed.
     /// The first `usize` argument is the input index this [`TxOut`] is referring to.
     One(usize, T),
-    /// When `ANYONECANPAY` is not provided, or the caller is handy giving all prevouts so the same
-    /// variable can be used for multiple inputs.
+    /// When `SIGHASH_ANYONECANPAY` is not provided, or when the caller is giving all prevouts so
+    /// the same variable can be used for multiple inputs.
     All(&'u [T]),
 }
 
 const KEY_VERSION_0: u8 = 0u8;
 
-/// Information related to the script path spending
+/// Information related to the script path spending.
 ///
 /// This can be hashed into a [`TapLeafHash`].
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
@@ -104,29 +104,29 @@ pub struct ScriptPath<'s> {
     leaf_version: LeafVersion,
 }
 
-/// Hashtype of an input's signature, encoded in the last byte of the signature
-/// Fixed values so they can be casted as integer types for encoding
+/// Hashtype of an input's signature, encoded in the last byte of the signature.
+/// Fixed values so they can be cast as integer types for encoding.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum SchnorrSighashType {
-    /// 0x0: Used when not explicitly specified, defaulting to [`SchnorrSighashType::All`]
+    /// 0x0: Used when not explicitly specified, defaults to [`SchnorrSighashType::All`]
     Default = 0x00,
-    /// 0x1: Sign all outputs
+    /// 0x1: Sign all outputs.
     All = 0x01,
-    /// 0x2: Sign no outputs --- anyone can choose the destination
+    /// 0x2: Sign no outputs --- anyone can choose the destination.
     None = 0x02,
     /// 0x3: Sign the output whose index matches this input's index. If none exists,
     /// sign the hash `0000000000000000000000000000000000000000000000000000000000000001`.
     /// (This rule is probably an unintentional C++ism, but it's consensus so we have
     /// to follow it.)
     Single = 0x03,
-    /// 0x81: Sign all outputs but only this input
+    /// 0x81: Sign all outputs but only this input.
     AllPlusAnyoneCanPay = 0x81,
-    /// 0x82: Sign no outputs and only this input
+    /// 0x82: Sign no outputs and only this input.
     NonePlusAnyoneCanPay = 0x82,
-    /// 0x83: Sign one output and only this input (see `Single` for what "one output" means)
+    /// 0x83: Sign one output and only this input (see `Single` for what "one output" means).
     SinglePlusAnyoneCanPay = 0x83,
 
-    /// Reserved for future use, `#[non_exhaustive]` is not available with current MSRV
+    /// Reserved for future use, `#[non_exhaustive]` is not available with MSRV 1.29.0
     Reserved = 0xFF,
 }
 serde_string_impl!(SchnorrSighashType, "a SchnorrSighashType data");
@@ -165,45 +165,46 @@ impl str::FromStr for SchnorrSighashType {
     }
 }
 
-/// Possible errors in computing the signature message
+/// Possible errors in computing the signature message.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum Error {
     /// Could happen only by using `*_encode_signing_*` methods with custom writers, engines writers
-    /// like the ones used in methods `*_signature_hash` don't error
+    /// like the ones used in methods `*_signature_hash` do not error.
     Io(io::ErrorKind),
 
-    /// Requested index is greater or equal than the number of inputs in the transaction
+    /// Requested index is greater or equal than the number of inputs in the transaction.
     IndexOutOfInputsBounds {
-        /// Requested index
+        /// Requested index.
         index: usize,
-        /// Number of transaction inputs
+        /// Number of transaction inputs.
         inputs_size: usize,
     },
 
-    /// Using SIGHASH_SINGLE without a "corresponding output" (an output with the same index as the
-    /// input being verified) is a validation failure
+    /// Using `SIGHASH_SINGLE` without a "corresponding output" (an output with the same index as
+    /// the input being verified) is a validation failure.
     SingleWithoutCorrespondingOutput {
-        /// Requested index
+        /// Requested index.
         index: usize,
-        /// Number of transaction outputs
+        /// Number of transaction outputs.
         outputs_size: usize,
     },
 
-    /// There are mismatches in the number of prevouts provided compared with the number of
-    /// inputs in the transaction
+    /// There are mismatches in the number of prevouts provided compared to the number of inputs in
+    /// the transaction.
     PrevoutsSize,
 
     /// Requested a prevout index which is greater than the number of prevouts provided or a
-    /// [`Prevouts::One`] with different index
+    /// [`Prevouts::One`] with different index.
     PrevoutIndex,
 
-    /// A single prevout has been provided but all prevouts are needed without `ANYONECANPAY`
+    /// A single prevout has been provided but all prevouts are needed unless using
+    /// `SIGHASH_ANYONECANPAY`.
     PrevoutKind,
 
-    /// Annex must be at least one byte long and the first bytes must be `0x50`
+    /// Annex must be at least one byte long and the first bytes must be `0x50`.
     WrongAnnex,
 
-    /// Invalid Sighash type
+    /// Invalid Sighash type.
     InvalidSighashType(u32),
 }
 
@@ -260,18 +261,18 @@ impl<'u, T> Prevouts<'u, T> where T: Borrow<TxOut> {
 }
 
 impl<'s> ScriptPath<'s> {
-    /// Create a new ScriptPath structure
+    /// Creates a new `ScriptPath` structure.
     pub fn new(script: &'s Script, leaf_version: LeafVersion) -> Self {
         ScriptPath {
             script,
             leaf_version,
         }
     }
-    /// Create a new ScriptPath structure using default leaf version value
+    /// Creates a new `ScriptPath` structure using default leaf version value.
     pub fn with_defaults(script: &'s Script) -> Self {
         Self::new(script, LeafVersion::TapScript)
     }
-    /// Compute the leaf hash
+    /// Computes the leaf hash for this `ScriptPath`.
     pub fn leaf_hash(&self) -> TapLeafHash {
         let mut enc = TapLeafHash::engine();
 
@@ -302,7 +303,7 @@ impl From<EcdsaSighashType> for SchnorrSighashType {
 }
 
 impl SchnorrSighashType {
-    /// Break the sighash flag into the "real" sighash flag and the ANYONECANPAY boolean
+    /// Breaks the sighash flag into the "real" sighash flag and the `SIGHASH_ANYONECANPAY` boolean.
     pub(crate) fn split_anyonecanpay_flag(self) -> (SchnorrSighashType, bool) {
         match self {
             SchnorrSighashType::Default => (SchnorrSighashType::Default, false),
@@ -316,7 +317,7 @@ impl SchnorrSighashType {
         }
     }
 
-    /// Create a [`SchnorrSighashType`] from raw `u8`
+    /// Creates a [`SchnorrSighashType`] from raw `u8`.
     pub fn from_u8(hash_ty: u8) -> Result<Self, Error> {
         match hash_ty {
             0x00 => Ok(SchnorrSighashType::Default),
@@ -332,11 +333,12 @@ impl SchnorrSighashType {
     }
 }
 
-impl<R: Deref<Target=Transaction>> SighashCache<R> {
-    /// Compute the sighash components from an unsigned transaction and auxiliary
-    /// in a lazy manner when required.
-    /// For the generated sighashes to be valid, no fields in the transaction may change except for
-    /// script_sig and witnesses.
+impl<R: Deref<Target = Transaction>> SighashCache<R> {
+    /// Constructs a new `SighashCache` from an unsigned transaction.
+    ///
+    /// The sighash components are computed in a lazy manner when required. For the generated
+    /// sighashes to be valid, no fields in the transaction may change except for script_sig and
+    /// witness.
     pub fn new(tx: R) -> Self {
         SighashCache {
             tx,
@@ -346,8 +348,8 @@ impl<R: Deref<Target=Transaction>> SighashCache<R> {
         }
     }
 
-    /// Encode the BIP341 signing data for any flag type into a given object implementing a
-    /// io::Write trait.
+    /// Encodes the BIP341 signing data for any flag type into a given object implementing a
+    /// [`io::Write`] trait.
     pub fn taproot_encode_signing_data_to<Write: io::Write, T: Borrow<TxOut>>(
         &mut self,
         mut writer: Write,
@@ -477,7 +479,7 @@ impl<R: Deref<Target=Transaction>> SighashCache<R> {
         Ok(())
     }
 
-    /// Compute the BIP341 sighash for any flag type.
+    /// Computes the BIP341 sighash for any flag type.
     pub fn taproot_signature_hash<T: Borrow<TxOut>>(
         &mut self,
         input_index: usize,
@@ -498,7 +500,7 @@ impl<R: Deref<Target=Transaction>> SighashCache<R> {
         Ok(TapSighashHash::from_engine(enc))
     }
 
-    /// Compute the BIP341 sighash for a key spend
+    /// Computes the BIP341 sighash for a key spend.
     pub fn taproot_key_spend_signature_hash<T: Borrow<TxOut>>(
         &mut self,
         input_index: usize,
@@ -517,7 +519,7 @@ impl<R: Deref<Target=Transaction>> SighashCache<R> {
         Ok(TapSighashHash::from_engine(enc))
     }
 
-    /// Compute the BIP341 sighash for a script spend
+    /// Computes the BIP341 sighash for a script spend.
     ///
     /// Assumes the default `OP_CODESEPARATOR` position of `0xFFFFFFFF`. Custom values can be
     /// provided through the more fine-grained API of [`SighashCache::taproot_encode_signing_data_to`].
@@ -540,7 +542,7 @@ impl<R: Deref<Target=Transaction>> SighashCache<R> {
         Ok(TapSighashHash::from_engine(enc))
     }
 
-    /// Encode the BIP143 signing data for any flag type into a given object implementing a
+    /// Encodes the BIP143 signing data for any flag type into a given object implementing a
     /// [`std::io::Write`] trait.
     pub fn segwit_encode_signing_data_to<Write: io::Write>(
         &mut self,
@@ -605,7 +607,7 @@ impl<R: Deref<Target=Transaction>> SighashCache<R> {
         Ok(())
     }
 
-    /// Compute the BIP143 sighash for any flag type.
+    /// Computes the BIP143 sighash for any flag type.
     pub fn segwit_signature_hash(
         &mut self,
         input_index: usize,
@@ -624,8 +626,8 @@ impl<R: Deref<Target=Transaction>> SighashCache<R> {
         Ok(Sighash::from_engine(enc))
     }
 
-    /// Encode the legacy signing data for any flag type into a given object implementing a
-    /// [`std::io::Write`] trait. Internally calls [`Transaction::encode_signing_data_to`]
+    /// Encodes the legacy signing data for any flag type into a given object implementing a
+    /// [`std::io::Write`] trait. Internally calls [`Transaction::encode_signing_data_to`].
     pub fn legacy_encode_signing_data_to<Write: io::Write, U: Into<u32>>(
         &self,
         mut writer: Write,
@@ -645,7 +647,7 @@ impl<R: Deref<Target=Transaction>> SighashCache<R> {
         Ok(())
     }
 
-    /// Computes the legacy sighash for any sighash type.
+    /// Computes the legacy sighash for any `sighash_type`.
     pub fn legacy_signature_hash(
         &self,
         input_index: usize,
@@ -730,8 +732,8 @@ impl<R: Deref<Target=Transaction>> SighashCache<R> {
 }
 
 impl<R: DerefMut<Target=Transaction>> SighashCache<R> {
-    /// When the SighashCache is initialized with a mutable reference to a transaction instead of a
-    /// regular reference, this method is available to allow modification to the witnesses.
+    /// When the `SighashCache` is initialized with a mutable reference to a transaction instead of
+    /// a regular reference, this method is available to allow modification to the witnesses.
     ///
     /// This allows in-line signing such as
     /// ```
@@ -761,12 +763,12 @@ impl From<io::Error> for Error {
     }
 }
 
-/// The `Annex` struct is a slice wrapper enforcing first byte to be `0x50`.
+/// The `Annex` struct is a slice wrapper enforcing first byte is `0x50`.
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub struct Annex<'a>(&'a [u8]);
 
 impl<'a> Annex<'a> {
-    /// Creates a new `Annex` struct checking the first byte is `0x50`
+    /// Creates a new `Annex` struct checking the first byte is `0x50`.
     pub fn new(annex_bytes: &'a [u8]) -> Result<Self, Error> {
         if annex_bytes.first() == Some(&TAPROOT_ANNEX_PREFIX) {
             Ok(Annex(annex_bytes))
@@ -775,7 +777,7 @@ impl<'a> Annex<'a> {
         }
     }
 
-    /// Returns the Annex bytes data (including first byte `0x50`)
+    /// Returns the Annex bytes data (including first byte `0x50`).
     pub fn as_bytes(&self) -> &[u8] {
         &*self.0
     }
