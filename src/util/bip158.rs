@@ -74,10 +74,6 @@ pub enum Error {
     Io(io::Error),
 }
 
-#[cfg(feature = "std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-impl ::std::error::Error for Error {}
-
 impl Display for Error {
     fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
         match *self {
@@ -86,6 +82,20 @@ impl Display for Error {
         }
     }
 }
+
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use self::Error::*;
+
+        match self {
+            UtxoMissing(_) => None,
+            Io(e) => Some(e),
+        }
+    }
+}
+
 
 impl From<io::Error> for Error {
     fn from(io: io::Error) -> Self {

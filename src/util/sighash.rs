@@ -224,7 +224,23 @@ impl fmt::Display for Error {
 }
 
 #[cfg(feature = "std")]
-impl ::std::error::Error for Error {}
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use self::Error::*;
+
+        match self {
+            Io(_)
+            | IndexOutOfInputsBounds { .. }
+            | SingleWithoutCorrespondingOutput { .. }
+            | PrevoutsSize
+            | PrevoutIndex
+            | PrevoutKind
+            | WrongAnnex
+            | InvalidSighashType(_) => None,
+        }
+    }
+}
 
 impl<'u, T> Prevouts<'u, T> where T: Borrow<TxOut> {
     fn check_all(&self, tx: &Transaction) -> Result<(), Error> {

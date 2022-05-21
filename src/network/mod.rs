@@ -20,7 +20,6 @@
 
 use crate::io;
 use core::fmt;
-#[cfg(feature = "std")] use std::error;
 
 pub mod constants;
 
@@ -79,11 +78,13 @@ impl From<io::Error> for Error {
 
 #[cfg(feature = "std")]
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-impl error::Error for Error {
-    fn cause(&self) -> Option<&dyn error::Error> {
-        match *self {
-            Error::Io(ref e) => Some(e),
-            Error::SocketMutexPoisoned | Error::SocketNotConnectedToPeer => None,
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use self::Error::*;
+
+        match self {
+            Io(e) => Some(e),
+            SocketMutexPoisoned | SocketNotConnectedToPeer => None,
         }
     }
 }

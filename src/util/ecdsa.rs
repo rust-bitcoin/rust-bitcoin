@@ -102,20 +102,31 @@ pub enum EcdsaSigError {
 impl fmt::Display for EcdsaSigError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
+            EcdsaSigError::HexEncoding(e) =>
+                write!(f, "EcdsaSig hex encoding error: {}", e),
             EcdsaSigError::NonStandardSighashType(hash_ty) =>
                 write!(f, "Non standard signature hash type {}", hash_ty),
-            EcdsaSigError::Secp256k1(ref e) =>
-                write!(f, "Invalid Ecdsa signature: {}", e),
             EcdsaSigError::EmptySignature =>
                 write!(f, "Empty ECDSA signature"),
-            EcdsaSigError::HexEncoding(e) => write!(f, "EcdsaSig hex encoding error: {}", e)
+            EcdsaSigError::Secp256k1(ref e) =>
+                write!(f, "Invalid Ecdsa signature: {}", e),
         }
     }
 }
 
 #[cfg(feature = "std")]
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-impl ::std::error::Error for EcdsaSigError {}
+impl std::error::Error for EcdsaSigError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use self::EcdsaSigError::*;
+
+        match self {
+            HexEncoding(e) => Some(e),
+            Secp256k1(e) => Some(e),
+            NonStandardSighashType(_) | EmptySignature => None,
+        }
+    }
+}
 
 impl From<secp256k1::Error> for EcdsaSigError {
     fn from(e: secp256k1::Error) -> EcdsaSigError {

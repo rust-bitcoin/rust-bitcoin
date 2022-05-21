@@ -241,7 +241,16 @@ mod display_from_str {
 
     #[cfg(feature = "std")]
     #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-    impl ::std::error::Error for PsbtParseError {}
+    impl std::error::Error for PsbtParseError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            use self::PsbtParseError::*;
+
+            match self {
+                PsbtEncoding(e) => Some(e),
+                Base64Encoding(e) => Some(e),
+            }
+        }
+    }
 
     #[cfg_attr(docsrs, doc(cfg(feature = "base64")))]
     impl Display for PartiallySignedTransaction {

@@ -22,7 +22,6 @@ use crate::prelude::*;
 use crate::io::Write;
 use core::{fmt, str::FromStr, default::Default};
 use core::ops::Index;
-#[cfg(feature = "std")] use std::error;
 #[cfg(feature = "serde")] use serde;
 
 use crate::hash_types::XpubIdentifier;
@@ -497,12 +496,20 @@ impl fmt::Display for Error {
 
 #[cfg(feature = "std")]
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-impl error::Error for Error {
-    fn cause(&self) -> Option<&dyn error::Error> {
-        if let Error::Secp256k1(ref e) = *self {
-            Some(e)
-        } else {
-            None
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use self::Error::*;
+
+        match self {
+            Secp256k1(e) => Some(e),
+            Base58(e) => Some(e),
+            Hex(e) => Some(e),
+            CannotDeriveFromHardenedKey
+            | InvalidChildNumber(_)
+            | InvalidChildNumberFormat
+            | InvalidDerivationPathFormat
+            | UnknownVersion(_)
+            | WrongExtendedKeyLength(_) => None,
         }
     }
 }

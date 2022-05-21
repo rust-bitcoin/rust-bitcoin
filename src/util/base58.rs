@@ -57,8 +57,8 @@ impl fmt::Display for Error {
             Error::BadByte(b) => write!(f, "invalid base58 character 0x{:x}", b),
             Error::BadChecksum(exp, actual) => write!(f, "base58ck checksum 0x{:x} does not match expected 0x{:x}", actual, exp),
             Error::InvalidLength(ell) => write!(f, "length {} invalid for this base58 type", ell),
-            Error::InvalidAddressVersion(ref v) => write!(f, "address version {} is invalid for this base58 type", v),
             Error::InvalidExtendedKeyVersion(ref v) => write!(f, "extended key version {:#04x?} is invalid for this base58 type", v),
+            Error::InvalidAddressVersion(ref v) => write!(f, "address version {} is invalid for this base58 type", v),
             Error::TooShort(_) => write!(f, "base58ck data not even long enough for a checksum"),
             Error::Secp256k1(ref e) => fmt::Display::fmt(&e, f),
             Error::Hex(ref e) => write!(f, "Hexadecimal decoding error: {}", e)
@@ -68,7 +68,22 @@ impl fmt::Display for Error {
 
 #[cfg(feature = "std")]
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-impl ::std::error::Error for Error {}
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use self::Error::*;
+
+        match self {
+            BadByte(_)
+            | BadChecksum(_, _)
+            | InvalidLength(_)
+            | InvalidExtendedKeyVersion(_)
+            | InvalidAddressVersion(_)
+            | TooShort(_) => None,
+            Secp256k1(e) => Some(e),
+            Hex(e) => Some(e),
+        }
+    }
+}
 
 /// Vector-like object that holds the first 100 elements on the stack. If more space is needed it
 /// will be allocated on the heap.

@@ -22,8 +22,6 @@ use secp256k1::{self, Secp256k1};
 
 use core::fmt;
 use core::cmp::Reverse;
-#[cfg(feature = "std")]
-use std::error;
 
 use crate::hashes::{sha256, Hash, HashEngine};
 use crate::schnorr::{TweakedPublicKey, UntweakedPublicKey, TapTweak};
@@ -486,7 +484,7 @@ impl TaprootBuilder {
         // We cannot insert a leaf at a lower depth while a deeper branch is unfinished. Doing
         // so would mean the add_leaf/add_hidden invocations do not correspond to a DFS traversal of a
         // binary tree.
-        if depth as usize + 1 < self.branch.len() {
+        if (depth as usize + 1) < self.branch.len() {
             return Err(TaprootBuilderError::NodeNotInDfsOrder);
         }
 
@@ -989,6 +987,9 @@ pub enum TaprootBuilderError {
 impl fmt::Display for TaprootBuilderError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
+            TaprootBuilderError::InvalidMerkleTreeDepth(d) => {
+                write!(f, "Merkle Tree depth({}) must be less than {}", d, TAPROOT_CONTROL_MAX_NODE_COUNT)
+            }
             TaprootBuilderError::NodeNotInDfsOrder => {
                 write!(f, "add_leaf/add_hidden must be called in DFS walk order",)
             }
@@ -997,9 +998,6 @@ impl fmt::Display for TaprootBuilderError {
                 "Attempted to create a tree with two nodes at depth 0. There must\
                 only be a exactly one node at depth 0",
             ),
-            TaprootBuilderError::InvalidMerkleTreeDepth(d) => {
-                write!(f, "Merkle Tree depth({}) must be less than {}", d, TAPROOT_CONTROL_MAX_NODE_COUNT)
-            }
             TaprootBuilderError::InvalidInternalKey(e) => {
                 write!(f, "Invalid Internal XOnly key : {}", e)
             }
@@ -1015,7 +1013,20 @@ impl fmt::Display for TaprootBuilderError {
 
 #[cfg(feature = "std")]
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-impl error::Error for TaprootBuilderError {}
+impl std::error::Error for TaprootBuilderError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use self::TaprootBuilderError::*;
+
+        match self {
+            InvalidInternalKey(e) => Some(e),
+            InvalidMerkleTreeDepth(_)
+                | NodeNotInDfsOrder
+                | OverCompleteTree
+                | IncompleteTree
+                | EmptyTree => None
+        }
+    }
+}
 
 /// Detailed error type for taproot utilities.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -1069,7 +1080,23 @@ impl fmt::Display for TaprootError {
 
 #[cfg(feature = "std")]
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-impl error::Error for TaprootError {}
+impl std::error::Error for TaprootError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use self::TaprootError::*;
+
+        match self {
+            InvalidInternalKey(e) => Some(e),
+            InvalidMerkleBranchSize(_)
+            | InvalidMerkleTreeDepth(_)
+            | InvalidTaprootLeafVersion(_)
+            | InvalidControlBlockSize(_)
+            | InvalidParity(_)
+            | EmptyTree => None,
+        }
+    }
+}
+
+
 #[cfg(test)]
 mod test {
     use crate::{Address, Network};

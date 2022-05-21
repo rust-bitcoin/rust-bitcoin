@@ -110,7 +110,15 @@ impl core::fmt::Display for IncompleteTapTree {
 
 #[cfg(feature = "std")]
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-impl ::std::error::Error for IncompleteTapTree {}
+impl std::error::Error for IncompleteTapTree {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use self::IncompleteTapTree::*;
+
+        match self {
+            NotFinalized(_) | HiddenParts(_) => None,
+        }
+    }
+}
 
 /// Taproot Tree representing a finalized [`TaprootBuilder`] (a complete binary tree).
 #[derive(Clone, Debug)]

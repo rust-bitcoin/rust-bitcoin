@@ -188,7 +188,20 @@ impl fmt::Display for Error {
 
 #[cfg(feature = "std")]
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-impl ::std::error::Error for Error {}
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use self::Error::*;
+
+        match self {
+            NonMinimalPush
+            | EarlyEndOfScript
+            | NumericOverflow
+            | BitcoinConsensus(_) // TODO: This should return `Some` but bitcoinconsensus::Error does not implement Error.
+            | UnknownSpentOutput(_)
+            | SerializationError => None,
+        }
+    }
+}
 
 // Our internal error proves that we only return these two cases from `read_uint_iter`.
 // Since it's private we don't bother with trait impls besides From.
