@@ -1,9 +1,9 @@
 //! Module contains helper functions for signing and verification the ECDSA signatures
 
 use anyhow::{bail, anyhow};
-use hashes::{Hash, sha256};
+use hashes::{Hash, sha256, ripemd160};
 use prelude::Vec;
-use core::convert::TryInto;
+use core::{convert::TryInto};
 
 use crate::{
     secp256k1::{
@@ -35,6 +35,7 @@ pub fn verify_data_signature(
 
 /// verifies the the hash signature. From provided signature and hash recovers the public key
 /// and compares with the provided one
+/// The the `public_key_id` should be hash generated on the top of COMPRESSED key
 pub fn verify_hash_signature(
     data_hash: &[u8],
     data_signature: &[u8],
@@ -49,11 +50,9 @@ pub fn verify_hash_signature(
         .recover_ecdsa(&msg, &signature)
         .map_err(anyhow::Error::msg)?;
 
-    let public_key = ECDSAPublicKey::from_slice(public_key_id).map_err(anyhow::Error::msg)?;
-    let are_equal = match public_key.compressed {
-        true => public_key.to_bytes() == recovered_public_key.serialize(),
-        false => public_key.to_bytes() == recovered_public_key.serialize_uncompressed(),
-    };
+    let recovered_compressed_public_key = recovered_public_key.serialize();
+    let hash_recovered_key = ripemd160_sha256(&recovered_compressed_public_key);
+    let are_equal = public_key_id == hash_recovered_key;
 
     if are_equal {
         Ok(())
@@ -136,6 +135,11 @@ impl CompactSignature for RecoverableSignature {
 /// calculates double sha256 on data
 pub fn double_sha(payload : impl AsRef<[u8]>) -> Vec<u8>  {
     sha256::Hash::hash(&sha256::Hash::hash(payload.as_ref())).to_vec()
+}
+
+/// calculates the RIPEMD169(SHA256(data))
+pub fn ripemd160_sha256(data : &[u8]) -> Vec<u8> {
+    ripemd160::Hash::hash(&sha256::Hash::hash(data)).to_vec()
 }
 
 #[cfg(test)]
@@ -223,11 +227,23 @@ mod test {
         let signature = sign(&data, &k.private_key).expect("signing shouldn't fail");
 
         let data_hash = double_sha(data);
-        verify_hash_signature(&data_hash, &signature, &k.public_key_compressed)
+        verify_hash_signature(&data_hash, &signature,  &ripemd160_sha256(&k.public_key_compressed))
             .expect("verification shouldn't fail for compressed public key");
 
-        verify_hash_signature(&data_hash, &signature, &k.public_key_uncompressed)
-            .expect("verification shouldn't fail for uncompressed public key");
+        // verify_hash_signature(&data_hash, &signature, &k.public_key_uncompressed)
+        //     .expect("verification shouldn't fail for uncompressed public key");
+    }
+
+    #[test]
+    fn should_fail_validation_with_hash_coming_from_uncompressed_public_key() {
+        let k = get_keys();
+        let data = hex::decode("fafafa").unwrap();
+        let signature = sign(&data, &k.private_key).expect("signing shouldn't fail");
+
+        let data_hash = double_sha(data);
+        let validation_result = verify_hash_signature(&data_hash, &signature,  &ripemd160_sha256(&k.public_key_uncompressed));
+
+        assert_error_contains!(validation_result, "the signature isn't valid")
     }
 
     #[test]
@@ -242,7 +258,7 @@ mod test {
         let data_hash = double_sha(data);
 
         let validation_result =
-            verify_hash_signature(&data_hash, &signature, &different_public_key.serialize());
+            verify_hash_signature(&data_hash, &signature, &ripemd160_sha256(&different_public_key.serialize()));
 
         assert_error_contains!(validation_result, "the signature isn't valid")
     }
@@ -267,3 +283,6 @@ mod test {
         assert_error_contains!(validation_result, "the signature must be 65 bytes long")
     }
 }
+
+
+
