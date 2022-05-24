@@ -178,7 +178,7 @@ macro_rules! construct_uint {
 
         impl PartialOrd for $name {
             #[inline]
-            fn partial_cmp(&self, other: &$name) -> Option<::core::cmp::Ordering> {
+            fn partial_cmp(&self, other: &$name) -> Option<core::cmp::Ordering> {
                 Some(self.cmp(&other))
             }
         }
