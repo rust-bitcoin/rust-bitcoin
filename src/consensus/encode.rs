@@ -96,7 +96,7 @@ impl fmt::Display for Error {
                 "invalid checksum: expected {}, actual {}", e.to_hex(), a.to_hex()),
             Error::NonMinimalVarInt => write!(f, "non-minimal varint"),
             Error::UnknownNetworkMagic(ref m) => write!(f, "unknown network magic: {}", m),
-            Error::ParseFailed(ref e) => write!(f, "parse failed: {}", e),
+            Error::ParseFailed(ref s) => write!(f, "parse failed: {}", s),
             Error::UnsupportedSegwitFlag(ref swflag) => write!(f,
                 "unsupported segwit version: {}", swflag),
         }
