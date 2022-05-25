@@ -22,7 +22,7 @@ use serde;
 /// For serialization and deserialization performance it is stored internally as a single `Vec`,
 /// saving some allocations.
 ///
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
+#[derive(Clone, Default, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 pub struct Witness {
     /// contains the witness Vec<Vec<u8>> serialization without the initial varint indicating the
     /// number of elements (which is stored in `witness_elements`)
@@ -245,19 +245,6 @@ impl Witness {
             None
         } else {
             self.element_at(self.second_to_last)
-        }
-    }
-}
-
-impl Default for Witness {
-    fn default() -> Self {
-        // from https://doc.rust-lang.org/std/vec/struct.Vec.html#method.new
-        // The vector will not allocate until elements are pushed onto it.
-        Witness {
-            content: Vec::new(),
-            witness_elements: 0,
-            last: 0,
-            second_to_last: 0,
         }
     }
 }
