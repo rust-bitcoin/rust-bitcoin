@@ -1113,7 +1113,7 @@ mod tests {
             } else {
                 Some(hex_hash!(TapBranchHash, inp["given"]["merkleRoot"].as_str().unwrap()))
             };
-            let hash_ty = SchnorrSighashType::from_u8(inp["given"]["hashType"].as_u64().unwrap() as u8).unwrap();
+            let hash_ty = SchnorrSighashType::try_from(inp["given"]["hashType"].as_u64().unwrap() as u8).unwrap();
 
             let expected_internal_pk = hex_hash!(XOnlyPublicKey, inp["intermediary"]["internalPubkey"].as_str().unwrap());
             let expected_tweak = hex_hash!(TapTweakHash, inp["intermediary"]["tweak"].as_str().unwrap());
@@ -1124,7 +1124,7 @@ mod tests {
             let (expected_key_spend_sig, expected_hash_ty) = if sig_str.len() == 128 {
                 (secp256k1::schnorr::Signature::from_str(sig_str).unwrap(), SchnorrSighashType::Default)
             } else {
-                let hash_ty = SchnorrSighashType::from_u8(Vec::<u8>::from_hex(&sig_str[128..]).unwrap()[0]).unwrap();
+                let hash_ty = SchnorrSighashType::try_from(Vec::<u8>::from_hex(&sig_str[128..]).unwrap()[0]).unwrap();
                 (secp256k1::schnorr::Signature::from_str(&sig_str[..128]).unwrap(), hash_ty)
             };
 

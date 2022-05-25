@@ -20,6 +20,7 @@ use crate::prelude::*;
 use crate::io;
 use secp256k1::{self, Secp256k1};
 
+use core::convert::TryFrom;
 use core::fmt;
 use core::cmp::Reverse;
 
@@ -672,6 +673,18 @@ impl TaprootMerkleBranch {
         }
     }
 
+    /// Creates a merkle proof from list of hashes.
+    ///
+    /// # Errors
+    /// If inner proof length is more than [`TAPROOT_CONTROL_MAX_NODE_COUNT`] (128).
+    fn from_collection<T: AsRef<[sha256::Hash]> + Into<Vec<sha256::Hash>>>(collection: T) -> Result<Self, TaprootError> {
+        if collection.as_ref().len() > TAPROOT_CONTROL_MAX_NODE_COUNT {
+            Err(TaprootError::InvalidMerkleTreeDepth(collection.as_ref().len()))
+        } else {
+            Ok(TaprootMerkleBranch(collection.into()))
+        }
+    }
+
     /// Serializes to a writer.
     ///
     /// # Returns
@@ -704,12 +717,9 @@ impl TaprootMerkleBranch {
     /// # Errors
     ///
     /// If inner proof length is more than [`TAPROOT_CONTROL_MAX_NODE_COUNT`] (128).
+    #[deprecated(since = "0.29.0", note = "use try_from instead")]
     pub fn from_inner(inner: Vec<sha256::Hash>) -> Result<Self, TaprootError> {
-        if inner.len() > TAPROOT_CONTROL_MAX_NODE_COUNT {
-            Err(TaprootError::InvalidMerkleTreeDepth(inner.len()))
-        } else {
-            Ok(TaprootMerkleBranch(inner))
-        }
+        Self::try_from(inner)
     }
 
     /// Returns the inner list of hashes.
@@ -717,6 +727,25 @@ impl TaprootMerkleBranch {
         self.0
     }
 }
+
+macro_rules! impl_try_from {
+    ($from:ty) => {
+        impl TryFrom<$from> for TaprootMerkleBranch {
+            type Error = TaprootError;
+
+            /// Creates a merkle proof from list of hashes.
+            ///
+            /// # Errors
+            /// If inner proof length is more than [`TAPROOT_CONTROL_MAX_NODE_COUNT`] (128).
+            fn try_from(v: $from) -> Result<Self, Self::Error> {
+                TaprootMerkleBranch::from_collection(v)
+            }
+        }
+    }
+}
+impl_try_from!(&[sha256::Hash]);
+impl_try_from!(Vec<sha256::Hash>);
+impl_try_from!(Box<[sha256::Hash]>);
 
 /// Control block data structure used in Tapscript satisfaction.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
