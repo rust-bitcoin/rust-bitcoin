@@ -122,7 +122,6 @@ macro_rules! impl_psbt_insert_pair {
     };
 }
 
-
 #[cfg_attr(rustfmt, rustfmt_skip)]
 macro_rules! impl_psbt_get_pair {
     ($rv:ident.push($slf:ident.$unkeyed_name:ident, $unkeyed_typeval:ident)) => {
