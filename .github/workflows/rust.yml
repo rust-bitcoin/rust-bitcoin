@@ -107,3 +107,26 @@ jobs:
           CARGO_TARGET_THUMBV7M_NONE_EABI_RUNNER: "qemu-system-arm -cpu cortex-m3 -machine mps2-an385 -nographic -semihosting-config enable=on,target=native -kernel"
         run: cd embedded && cargo run --target thumbv7m-none-eabi
 
+  Rust-Semverver:
+    runs-on: ubuntu-latest
+    steps:
+     - name: Cancel Previous Runs
+       uses: styfle/cancel-workflow-action@a40b8845c0683271d9f53dfcb887a7e181d3918b # 0.9.1
+       with:
+        access_token: ${{ github.token }}
+     - uses: actions/checkout@v3
+     - name: Install Rust nightly-2022-05-16
+       uses: actions-rs/toolchain@v1
+       with:
+        profile: minimal
+        toolchain: nightly-2022-05-16
+        override: true
+        components: rustc-dev,llvm-tools-preview
+     - name: Install CMake
+       run: sudo apt-get install -y cmake
+     - name: Install Semverver
+       run: cargo +nightly-2022-05-16 install --git https://github.com/rust-lang/rust-semverver
+     - name: Enforce semantic versioning
+       run: cargo semver | tee semver_out
+     - name: Fetch the version in the manifest and check for semantic versioning errors
+       run: eval "current_version=$(grep -e '^version = .*$' Cargo.toml | cut -d ' ' -f 3)" && (head -n 1 semver_out | grep "\-> $current_version") || (echo "versioning mismatch" && return 1)
