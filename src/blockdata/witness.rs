@@ -67,12 +67,12 @@ impl Decodable for Witness {
                 let element_size = element_size_varint.0 as usize;
                 let required_len = cursor
                     .checked_add(element_size)
-                    .ok_or_else(|| self::Error::OversizedVectorAllocation {
+                    .ok_or(self::Error::OversizedVectorAllocation {
                         requested: usize::max_value(),
                         max: MAX_VEC_SIZE,
                     })?
                     .checked_add(element_size_varint_len)
-                    .ok_or_else(|| self::Error::OversizedVectorAllocation {
+                    .ok_or(self::Error::OversizedVectorAllocation {
                         requested: usize::max_value(),
                         max: MAX_VEC_SIZE,
                     })?;
