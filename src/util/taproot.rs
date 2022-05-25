@@ -217,10 +217,10 @@ impl TaprootSpendInfo {
     ) -> Self {
         let (output_key, parity) = internal_key.tap_tweak(secp, merkle_root);
         Self {
-            internal_key: internal_key,
-            merkle_root: merkle_root,
+            internal_key,
+            merkle_root,
             output_key_parity: parity,
-            output_key: output_key,
+            output_key,
             script_map: BTreeMap::new(),
         }
     }
@@ -544,7 +544,7 @@ impl NodeInfo {
     /// Creates a new [`NodeInfo`] with omitted/hidden info.
     pub fn new_hidden_node(hash: sha256::Hash) -> Self {
         Self {
-            hash: hash,
+            hash,
             leaves: vec![],
             has_hidden_nodes: true
         }
@@ -596,8 +596,8 @@ impl ScriptLeaf {
     /// Creates an new [`ScriptLeaf`] from `script` and `ver` and no merkle branch.
     fn new(script: Script, ver: LeafVersion) -> Self {
         Self {
-            script: script,
-            ver: ver,
+            script,
+            ver,
             merkle_branch: TaprootMerkleBranch(vec![]),
         }
     }

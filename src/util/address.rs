@@ -621,7 +621,7 @@ impl Address {
         network: Network
     ) -> Address {
         Address {
-            network: network,
+            network,
             payload: Payload::p2tr(secp, internal_key, merkle_root),
         }
     }
