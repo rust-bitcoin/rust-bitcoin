@@ -78,7 +78,7 @@ impl Display for Error {
     fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
         match *self {
             Error::UtxoMissing(ref coin) => write!(f, "unresolved UTXO {}", coin),
-            Error::Io(ref io) => write!(f, "{}", io)
+            Error::Io(ref e) => write_err!(f, "IO error"; e),
         }
     }
 }

@@ -998,8 +998,8 @@ impl fmt::Display for TaprootBuilderError {
                 "Attempted to create a tree with two nodes at depth 0. There must\
                 only be a exactly one node at depth 0",
             ),
-            TaprootBuilderError::InvalidInternalKey(e) => {
-                write!(f, "Invalid Internal XOnly key : {}", e)
+            TaprootBuilderError::InvalidInternalKey(ref e) => {
+                write_err!(f, "invalid internal x-only key"; e)
             }
             TaprootBuilderError::IncompleteTree => {
                 write!(f, "Called finalize on an incomplete tree")
@@ -1070,9 +1070,8 @@ impl fmt::Display for TaprootError {
                 "Control Block size({}) must be of the form 33 + 32*m where  0 <= m <= {} ",
                 sz, TAPROOT_CONTROL_MAX_NODE_COUNT
             ),
-            // TODO: add source when in MSRV
-            TaprootError::InvalidInternalKey(e) => write!(f, "Invalid Internal XOnly key : {}", e),
-            TaprootError::InvalidParity(e) => write!(f, "Invalid parity value for internal key: {}", e),
+            TaprootError::InvalidInternalKey(ref e) => write_err!(f, "invalid internal x-only key"; e),
+            TaprootError::InvalidParity(_) => write!(f, "invalid parity value for internal key"),
             TaprootError::EmptyTree => write!(f, "Taproot Tree must contain at least one script"),
         }
     }

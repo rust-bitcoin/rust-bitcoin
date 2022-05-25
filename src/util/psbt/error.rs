@@ -103,7 +103,7 @@ impl fmt::Display for Error {
             Error::NoMorePairs => f.write_str("no more key-value pairs for this psbt map"),
             Error::UnexpectedUnsignedTx { expected: ref e, actual: ref a } => write!(f, "different unsigned transaction: expected {}, actual {}", e.txid(), a.txid()),
             Error::NonStandardSighashType(ref sht) => write!(f, "non-standard sighash type: {}", sht),
-            Error::HashParseError(e) => write!(f, "Hash Parse Error: {}", e),
+            Error::HashParseError(ref e) => write_err!(f, "hash parse error"; e),
             Error::InvalidPreimageHashPair{ref preimage, ref hash, ref hash_type} => {
                 // directly using debug forms of psbthash enums
                 write!(f, "Preimage {:?} does not match {:?} hash {:?}", preimage, hash_type, hash )

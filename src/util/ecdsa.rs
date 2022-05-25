@@ -102,14 +102,14 @@ pub enum EcdsaSigError {
 impl fmt::Display for EcdsaSigError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            EcdsaSigError::HexEncoding(e) =>
-                write!(f, "EcdsaSig hex encoding error: {}", e),
+            EcdsaSigError::HexEncoding(ref e) =>
+                write_err!(f, "EcdsaSig hex encoding error"; e),
             EcdsaSigError::NonStandardSighashType(hash_ty) =>
                 write!(f, "Non standard signature hash type {}", hash_ty),
             EcdsaSigError::EmptySignature =>
                 write!(f, "Empty ECDSA signature"),
             EcdsaSigError::Secp256k1(ref e) =>
-                write!(f, "Invalid Ecdsa signature: {}", e),
+                write_err!(f, "invalid ECDSA signature"; e),
         }
     }
 }

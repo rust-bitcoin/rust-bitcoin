@@ -86,8 +86,8 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Error::Io(ref e) => write!(f, "I/O error: {}", e),
-            Error::Psbt(ref e) => write!(f, "PSBT error: {}", e),
+            Error::Io(ref e) => write_err!(f, "IO error"; e),
+            Error::Psbt(ref e) => write_err!(f, "PSBT error"; e),
             Error::UnexpectedNetworkMagic { expected: ref e, actual: ref a } => write!(f,
                 "unexpected network magic: expected {}, actual {}", e, a),
             Error::OversizedVectorAllocation { requested: ref r, max: ref m } => write!(f,

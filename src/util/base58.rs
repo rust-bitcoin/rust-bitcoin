@@ -60,8 +60,8 @@ impl fmt::Display for Error {
             Error::InvalidExtendedKeyVersion(ref v) => write!(f, "extended key version {:#04x?} is invalid for this base58 type", v),
             Error::InvalidAddressVersion(ref v) => write!(f, "address version {} is invalid for this base58 type", v),
             Error::TooShort(_) => write!(f, "base58ck data not even long enough for a checksum"),
-            Error::Secp256k1(ref e) => fmt::Display::fmt(&e, f),
-            Error::Hex(ref e) => write!(f, "Hexadecimal decoding error: {}", e)
+            Error::Secp256k1(ref e) => write_err!(f, "secp256k1 error while parsing secret key"; e),
+            Error::Hex(ref e) => write_err!(f, "hexadecimal decoding error"; e)
         }
     }
 }

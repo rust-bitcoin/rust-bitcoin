@@ -86,12 +86,12 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Error::Base58(_) => write!(f, "base58 address encoding error"),
-            Error::Bech32(_) => write!(f, "bech32 address encoding error"),
+            Error::Base58(ref e) => write_err!(f, "base58 address encoding error"; e),
+            Error::Bech32(ref e) => write_err!(f, "bech32 address encoding error"; e),
             Error::EmptyBech32Payload => write!(f, "the bech32 payload was empty"),
             Error::InvalidBech32Variant { expected, found } => write!(f, "invalid bech32 checksum variant found {:?} when {:?} was expected", found, expected),
             Error::InvalidWitnessVersion(v) => write!(f, "invalid witness script version: {}", v),
-            Error::UnparsableWitnessVersion(_) => write!(f, "incorrect format of a witness version byte"),
+            Error::UnparsableWitnessVersion(ref e) => write_err!(f, "incorrect format of a witness version byte"; e),
             Error::MalformedWitnessVersion => f.write_str("bitcoin script opcode does not match any known witness version, the script is malformed"),
             Error::InvalidWitnessProgramLength(l) => write!(f, "the witness program must be between 2 and 40 bytes in length: length={}", l),
             Error::InvalidSegwitV0ProgramLength(l) => write!(f, "a v0 witness program must be either of length 20 or 32 bytes: length={}", l),

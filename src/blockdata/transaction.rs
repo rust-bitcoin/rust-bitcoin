@@ -130,8 +130,8 @@ pub enum ParseOutPointError {
 impl fmt::Display for ParseOutPointError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            ParseOutPointError::Txid(ref e) => write!(f, "error parsing TXID: {}", e),
-            ParseOutPointError::Vout(ref e) => write!(f, "error parsing vout: {}", e),
+            ParseOutPointError::Txid(ref e) => write_err!(f, "error parsing TXID"; e),
+            ParseOutPointError::Vout(ref e) => write_err!(f, "error parsing vout"; e),
             ParseOutPointError::Format => write!(f, "OutPoint not in <txid>:<vout> format"),
             ParseOutPointError::TooLong => write!(f, "vout should be at most 10 digits"),
             ParseOutPointError::VoutNotCanonical => write!(f, "no leading zeroes or + allowed in vout part"),
