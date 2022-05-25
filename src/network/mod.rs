@@ -53,18 +53,12 @@ pub mod stream_reader;
 pub enum Error {
     /// And I/O error
     Io(io::Error),
-    /// Socket mutex was poisoned
-    SocketMutexPoisoned,
-    /// Not connected to peer
-    SocketNotConnectedToPeer,
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Error::Io(ref e) => fmt::Display::fmt(e, f),
-            Error::SocketMutexPoisoned => f.write_str("socket mutex was poisoned"),
-            Error::SocketNotConnectedToPeer => f.write_str("not connected to peer"),
         }
     }
 }
@@ -76,8 +70,7 @@ impl std::error::Error for Error {
         use self::Error::*;
 
         match self {
-            Io(e) => Some(e),
-            SocketMutexPoisoned | SocketNotConnectedToPeer => None,
+            Io(e) => Some(e)
         }
     }
 }
