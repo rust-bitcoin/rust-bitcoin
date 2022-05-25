@@ -469,9 +469,9 @@ impl Script {
     /// the current script, assuming that the script is a Tapscript.
     #[inline]
     pub fn to_v1_p2tr<C: Verification>(&self, secp: &Secp256k1<C>, internal_key: UntweakedPublicKey) -> Script {
-        let leaf_hash = TapLeafHash::from_script(&self, LeafVersion::TapScript);
+        let leaf_hash = TapLeafHash::from_script(self, LeafVersion::TapScript);
         let merkle_root = TapBranchHash::from_inner(leaf_hash.into_inner());
-        Script::new_v1_p2tr(&secp, internal_key, Some(merkle_root))
+        Script::new_v1_p2tr(secp, internal_key, Some(merkle_root))
     }
 
     /// Returns witness version of the script, if any, assuming the script is a `scriptPubkey`.

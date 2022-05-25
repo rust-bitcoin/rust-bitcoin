@@ -110,9 +110,9 @@ impl TapTweak for UntweakedPublicKey {
     fn tap_tweak<C: Verification>(self, secp: &Secp256k1<C>, merkle_root: Option<TapBranchHash>) -> (TweakedPublicKey, secp256k1::Parity) {
         let tweak_value = TapTweakHash::from_key_and_tweak(self, merkle_root).into_inner();
         let mut output_key = self.clone();
-        let parity = output_key.tweak_add_assign(&secp, &tweak_value).expect("Tap tweak failed");
+        let parity = output_key.tweak_add_assign(secp, &tweak_value).expect("Tap tweak failed");
 
-        debug_assert!(self.tweak_add_check(&secp, &output_key, parity, tweak_value));
+        debug_assert!(self.tweak_add_check(secp, &output_key, parity, tweak_value));
         (TweakedPublicKey(output_key), parity)
     }
 
@@ -140,7 +140,7 @@ impl TapTweak for UntweakedKeyPair {
     fn tap_tweak<C: Verification>(mut self, secp: &Secp256k1<C>, merkle_root: Option<TapBranchHash>) -> TweakedKeyPair {
         let pubkey = crate::XOnlyPublicKey::from_keypair(&self);
         let tweak_value = TapTweakHash::from_key_and_tweak(pubkey, merkle_root).into_inner();
-        self.tweak_add_assign(&secp, &tweak_value).expect("Tap tweak failed");
+        self.tweak_add_assign(secp, &tweak_value).expect("Tap tweak failed");
         TweakedKeyPair(self)
     }
 
