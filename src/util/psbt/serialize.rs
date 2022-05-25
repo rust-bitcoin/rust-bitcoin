@@ -370,6 +370,8 @@ fn key_source_len(key_source: &KeySource) -> usize {
 
 #[cfg(test)]
 mod tests {
+    use core::convert::TryFrom;
+
     use crate::hashes::hex::FromHex;
     use super::*;
 
@@ -393,14 +395,14 @@ mod tests {
         let mut builder = compose_taproot_builder(0x51, &[2, 2, 2]);
         builder = builder.add_leaf_with_ver(3, Script::from_hex("b9").unwrap(), LeafVersion::from_consensus(0xC2).unwrap()).unwrap();
         builder = builder.add_hidden_node(3, sha256::Hash::default()).unwrap();
-        assert!(TapTree::from_builder(builder).is_err());
+        assert!(TapTree::try_from(builder).is_err());
     }
 
     #[test]
     fn taptree_roundtrip() {
         let mut builder = compose_taproot_builder(0x51, &[2, 2, 2, 3]);
         builder = builder.add_leaf_with_ver(3, Script::from_hex("b9").unwrap(), LeafVersion::from_consensus(0xC2).unwrap()).unwrap();
-        let tree = TapTree::from_builder(builder).unwrap();
+        let tree = TapTree::try_from(builder).unwrap();
         let tree_prime = TapTree::deserialize(&tree.serialize()).unwrap();
         assert_eq!(tree, tree_prime);
     }
