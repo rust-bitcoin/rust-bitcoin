@@ -58,7 +58,7 @@ impl EcdsaSig {
     pub fn to_vec(&self) -> Vec<u8> {
         // TODO: add support to serialize to a writer to SerializedSig
         self.sig.serialize_der()
-            .iter().map(|x| *x)
+            .iter().copied()
             .chain(iter::once(self.hash_ty as u8))
             .collect()
     }
