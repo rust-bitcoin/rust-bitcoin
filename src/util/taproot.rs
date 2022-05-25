@@ -442,14 +442,7 @@ impl TaprootBuilder {
 
     /// Checks if the builder has hidden nodes.
     pub fn has_hidden_nodes(&self) -> bool {
-        for node in &self.branch {
-            if let Some(node) = node {
-                if node.has_hidden_nodes {
-                    return true
-                }
-            }
-        }
-        false
+        self.branch.iter().flatten().any(|node| node.has_hidden_nodes)
     }
 
     /// Creates a [`TaprootSpendInfo`] with the given internal key.
