@@ -47,7 +47,7 @@ impl fmt::Display for Error {
         match *self {
             Error::Base58(ref e) => write!(f, "Key base58 error: {}", e),
             Error::Secp256k1(ref e) => write!(f, "Key secp256k1 error: {}", e),
-            Error::InvalidKeyPrefix(ref e) => write!(f, "Key prefix invalid: {}", e),
+            Error::InvalidKeyPrefix(ref b) => write!(f, "key prefix invalid: {}", b),
             Error::Hex(ref e) => write!(f, "Key hex decoding error: {}", e)
         }
     }
