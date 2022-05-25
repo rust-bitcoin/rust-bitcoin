@@ -238,9 +238,9 @@ impl From<u64> for ServiceFlags {
     }
 }
 
-impl Into<u64> for ServiceFlags {
-    fn into(self) -> u64 {
-        self.0
+impl From<ServiceFlags> for u64 {
+    fn from(flags: ServiceFlags) -> Self {
+        flags.0
     }
 }
 

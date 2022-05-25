@@ -283,9 +283,9 @@ impl From<Vec<ChildNumber>> for DerivationPath {
     }
 }
 
-impl Into<Vec<ChildNumber>> for DerivationPath {
-    fn into(self) -> Vec<ChildNumber> {
-        self.0
+impl From<DerivationPath> for Vec<ChildNumber> {
+    fn from(path: DerivationPath) -> Self {
+        path.0
     }
 }
 
