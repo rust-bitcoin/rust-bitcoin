@@ -32,7 +32,7 @@
 //! * `base64` - (dependency), enables encoding of PSBTs and message signatures.
 //! * `unstable` - enables unstable features for testing.
 //! * `rand` - (dependency), makes it more convenient to generate random values.
-//! * `use-serde` - (dependency), implements `serde`-based serialization and
+//! * `serde` - (dependency), implements `serde`-based serialization and
 //!                 deserialization.
 //! * `secp-lowmemory` - optimizations for low-memory devices.
 //! * `no-std` - enables additional features required for this crate to be usable
@@ -90,7 +90,7 @@ extern crate hashbrown;
 pub extern crate base64;
 
 #[cfg(feature="bitcoinconsensus")] extern crate bitcoinconsensus;
-#[cfg(feature = "serde")] #[macro_use] extern crate serde;
+#[cfg(feature = "serde")] #[macro_use] extern crate actual_serde as serde;
 #[cfg(all(test, feature = "serde"))] extern crate serde_json;
 #[cfg(all(test, feature = "serde"))] extern crate serde_test;
 #[cfg(all(test, feature = "serde"))] extern crate bincode;

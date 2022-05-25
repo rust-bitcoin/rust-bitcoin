@@ -27,6 +27,7 @@ use crate::EcdsaSighashType;
 /// An ECDSA signature with the corresponding hash type.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct EcdsaSig {
     /// The underlying ECDSA Signature
     pub sig: secp256k1::ecdsa::Signature,

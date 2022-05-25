@@ -39,6 +39,7 @@ pub type UntweakedPublicKey = crate::XOnlyPublicKey;
 /// Tweaked BIP-340 X-coord-only public key
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 #[cfg_attr(feature = "serde", serde(transparent))]
 pub struct TweakedPublicKey(crate::XOnlyPublicKey);
 
@@ -60,6 +61,7 @@ pub type UntweakedKeyPair = crate::KeyPair;
 /// Tweaked BIP-340 key pair
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 #[cfg_attr(feature = "serde", serde(transparent))]
 pub struct TweakedKeyPair(crate::KeyPair);
 
@@ -214,6 +216,7 @@ impl From<TweakedKeyPair> for crate::KeyPair {
 /// A BIP340-341 serialized schnorr signature with the corresponding hash type.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct SchnorrSig {
     /// The underlying schnorr signature
     pub sig: secp256k1::schnorr::Signature,

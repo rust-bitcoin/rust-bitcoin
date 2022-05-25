@@ -49,6 +49,7 @@ const PSBT_OUT_PROPRIETARY: u8 = 0xFC;
 /// transaction.
 #[derive(Clone, Default, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct Output {
     /// The redeem script for this output.
     pub redeem_script: Option<Script>,
@@ -123,6 +124,7 @@ impl std::error::Error for IncompleteTapTree {
 /// Taproot Tree representing a finalized [`TaprootBuilder`] (a complete binary tree).
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct TapTree(pub(crate) TaprootBuilder);
 
 impl PartialEq for TapTree {
