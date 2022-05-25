@@ -359,6 +359,7 @@ impl_int_encodable!(i16, read_i16, emit_i16);
 impl_int_encodable!(i32, read_i32, emit_i32);
 impl_int_encodable!(i64, read_i64, emit_i64);
 
+#[allow(clippy::len_without_is_empty)] // VarInt has on concept of 'is_empty'.
 impl VarInt {
     /// Gets the length of this VarInt when encoded.
     /// Returns 1 for 0..=0xFC, 3 for 0xFD..=(2^16-1), 5 for 0x10000..=(2^32-1),
