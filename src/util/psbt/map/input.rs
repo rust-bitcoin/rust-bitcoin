@@ -16,6 +16,7 @@ use crate::prelude::*;
 use crate::io;
 use core::fmt;
 use core::str::FromStr;
+use core::convert::TryFrom;
 
 use secp256k1;
 use crate::blockdata::script::Script;
@@ -356,7 +357,7 @@ impl Input {
                 }
             }
             PSBT_IN_PROPRIETARY => {
-                let key = raw::ProprietaryKey::from_key(raw_key.clone())?;
+                let key = raw::ProprietaryKey::try_from(raw_key.clone())?;
                 match self.proprietary.entry(key) {
                     btree_map::Entry::Vacant(empty_key) => {
                         empty_key.insert(raw_value);
