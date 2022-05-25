@@ -229,7 +229,7 @@ impl SchnorrSig {
                 // default type
                 let sig = secp256k1::schnorr::Signature::from_slice(sl)
                     .map_err(SchnorrSigError::Secp256k1)?;
-                return Ok( SchnorrSig { sig, hash_ty : SchnorrSighashType::Default });
+                Ok(SchnorrSig { sig, hash_ty: SchnorrSighashType::Default })
             },
             65 => {
                 let (hash_ty, sig) = sl.split_last().expect("Slice len checked == 65");

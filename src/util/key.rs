@@ -228,7 +228,7 @@ impl FromStr for PublicKey {
         match s.len() {
             66 => PublicKey::from_slice(&<[u8; 33]>::from_hex(s)?),
             130 => PublicKey::from_slice(&<[u8; 65]>::from_hex(s)?),
-            len => return Err(Error::Hex(hex::Error::InvalidLength(66, len)))
+            len => Err(Error::Hex(hex::Error::InvalidLength(66, len))),
         }
     }
 }
