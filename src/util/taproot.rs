@@ -514,6 +514,12 @@ impl TaprootBuilder {
     }
 }
 
+impl Default for TaprootBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Represents the node information in taproot tree.
 ///
 /// Helper type used in merkle tree construction allowing one to build sparse merkle trees. The node
