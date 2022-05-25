@@ -69,13 +69,6 @@ impl fmt::Display for Error {
     }
 }
 
-#[doc(hidden)]
-impl From<io::Error> for Error {
-    fn from(err: io::Error) -> Self {
-        Error::Io(err)
-    }
-}
-
 #[cfg(feature = "std")]
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl std::error::Error for Error {
@@ -86,5 +79,12 @@ impl std::error::Error for Error {
             Io(e) => Some(e),
             SocketMutexPoisoned | SocketNotConnectedToPeer => None,
         }
+    }
+}
+
+#[doc(hidden)]
+impl From<io::Error> for Error {
+    fn from(err: io::Error) -> Self {
+        Error::Io(err)
     }
 }
