@@ -353,7 +353,7 @@ impl Transaction {
             // will result in the data written to the writer being hashed, however the correct
             // handling of the SIGHASH_SINGLE bug is to return the 'one array' - either implement
             // this behaviour manually or use `signature_hash()`.
-            writer.write(b"[not a transaction] SIGHASH_SINGLE bug")?;
+            let _ = writer.write(b"[not a transaction] SIGHASH_SINGLE bug")?;
             return Ok(())
         }
 
