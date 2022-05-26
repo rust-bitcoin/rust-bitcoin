@@ -14,7 +14,11 @@
 
 #[allow(unused_macros)]
 macro_rules! hex_psbt {
-    ($s:expr) => { $crate::consensus::deserialize::<$crate::util::psbt::PartiallySignedTransaction>(&<$crate::prelude::Vec<u8> as $crate::hashes::hex::FromHex>::from_hex($s).unwrap()) };
+    ($s:expr) => {
+        $crate::consensus::deserialize::<$crate::util::psbt::PartiallySignedTransaction>(
+            &<$crate::prelude::Vec<u8> as $crate::hashes::hex::FromHex>::from_hex($s).unwrap(),
+        )
+    };
 }
 
 macro_rules! combine {
@@ -45,9 +49,7 @@ macro_rules! impl_psbt_deserialize {
 macro_rules! impl_psbt_serialize {
     ($thing:ty) => {
         impl $crate::util::psbt::serialize::Serialize for $thing {
-            fn serialize(&self) -> $crate::prelude::Vec<u8> {
-                $crate::consensus::serialize(self)
-            }
+            fn serialize(&self) -> $crate::prelude::Vec<u8> { $crate::consensus::serialize(self) }
         }
     };
 }
@@ -76,7 +78,9 @@ macro_rules! impl_psbtmap_consensus_decoding {
                 loop {
                     match $crate::consensus::Decodable::consensus_decode(&mut d) {
                         Ok(pair) => rv.insert_pair(pair)?,
-                        Err($crate::consensus::encode::Error::Psbt($crate::util::psbt::Error::NoMorePairs)) => return Ok(rv),
+                        Err($crate::consensus::encode::Error::Psbt(
+                            $crate::util::psbt::Error::NoMorePairs,
+                        )) => return Ok(rv),
                         Err(e) => return Err(e),
                     }
                 }
@@ -122,7 +126,6 @@ macro_rules! impl_psbt_insert_pair {
     };
 }
 
-
 #[cfg_attr(rustfmt, rustfmt_skip)]
 macro_rules! impl_psbt_get_pair {
     ($rv:ident.push($slf:ident.$unkeyed_name:ident, $unkeyed_typeval:ident)) => {
@@ -161,9 +164,8 @@ macro_rules! impl_psbt_hash_deserialize {
     ($hash_type:ty) => {
         impl $crate::util::psbt::serialize::Deserialize for $hash_type {
             fn deserialize(bytes: &[u8]) -> Result<Self, $crate::consensus::encode::Error> {
-                <$hash_type>::from_slice(&bytes[..]).map_err(|e| {
-                    $crate::util::psbt::Error::from(e).into()
-                })
+                <$hash_type>::from_slice(&bytes[..])
+                    .map_err(|e| $crate::util::psbt::Error::from(e).into())
             }
         }
     };
@@ -172,9 +174,7 @@ macro_rules! impl_psbt_hash_deserialize {
 macro_rules! impl_psbt_hash_serialize {
     ($hash_type:ty) => {
         impl $crate::util::psbt::serialize::Serialize for $hash_type {
-            fn serialize(&self) -> $crate::prelude::Vec<u8> {
-                self.into_inner().to_vec()
-            }
+            fn serialize(&self) -> $crate::prelude::Vec<u8> { self.into_inner().to_vec() }
         }
     };
 }

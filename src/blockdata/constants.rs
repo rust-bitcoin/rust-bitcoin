@@ -19,18 +19,16 @@
 //! single transaction.
 //!
 
-use crate::prelude::*;
-
 use core::default::Default;
 
+use crate::blockdata::block::{Block, BlockHeader};
+use crate::blockdata::transaction::{OutPoint, Transaction, TxIn, TxOut};
+use crate::blockdata::witness::Witness;
+use crate::blockdata::{opcodes, script};
 use crate::hashes::hex::{self, HexIterator};
 use crate::hashes::sha256d;
-use crate::blockdata::opcodes;
-use crate::blockdata::script;
-use crate::blockdata::transaction::{OutPoint, Transaction, TxOut, TxIn};
-use crate::blockdata::block::{Block, BlockHeader};
-use crate::blockdata::witness::Witness;
 use crate::network::constants::Network;
+use crate::prelude::*;
 use crate::util::uint::Uint256;
 
 /// The maximum allowable sequence number
@@ -65,16 +63,12 @@ pub const MAX_SCRIPT_ELEMENT_SIZE: usize = 520;
 pub const SUBSIDY_HALVING_INTERVAL: u32 = 210_000;
 
 /// In Bitcoind this is insanely described as ~((u256)0 >> 32)
-pub fn max_target(_: Network) -> Uint256 {
-    Uint256::from_u64(0xFFFF).unwrap() << 208
-}
+pub fn max_target(_: Network) -> Uint256 { Uint256::from_u64(0xFFFF).unwrap() << 208 }
 
 /// The maximum value allowed in an output (useful for sanity checking,
 /// since keeping everything below this value should prevent overflows
 /// if you are doing anything remotely sane with monetary values).
-pub fn max_money(_: Network) -> u64 {
-    21_000_000 * COIN_VALUE
-}
+pub fn max_money(_: Network) -> u64 { 21_000_000 * COIN_VALUE }
 
 /// Constructs and returns the coinbase (and only) transaction of the Bitcoin genesis block
 fn bitcoin_genesis_tx() -> Transaction {
@@ -87,10 +81,11 @@ fn bitcoin_genesis_tx() -> Transaction {
     };
 
     // Inputs
-    let in_script = script::Builder::new().push_scriptint(486604799)
-                                          .push_scriptint(4)
-                                          .push_slice(b"The Times 03/Jan/2009 Chancellor on brink of second bailout for banks")
-                                          .into_script();
+    let in_script = script::Builder::new()
+        .push_scriptint(486604799)
+        .push_scriptint(4)
+        .push_slice(b"The Times 03/Jan/2009 Chancellor on brink of second bailout for banks")
+        .into_script();
     ret.input.push(TxIn {
         previous_output: OutPoint::null(),
         script_sig: in_script,
@@ -106,10 +101,7 @@ fn bitcoin_genesis_tx() -> Transaction {
         .push_slice(script_bytes.unwrap().as_slice())
         .push_opcode(opcodes::all::OP_CHECKSIG)
         .into_script();
-    ret.output.push(TxOut {
-        value: 50 * COIN_VALUE,
-        script_pubkey: out_script
-    });
+    ret.output.push(TxOut { value: 50 * COIN_VALUE, script_pubkey: out_script });
 
     // end
     ret
@@ -121,70 +113,63 @@ pub fn genesis_block(network: Network) -> Block {
     let hash: sha256d::Hash = txdata[0].txid().into();
     let merkle_root = hash.into();
     match network {
-        Network::Bitcoin => {
-            Block {
-                header: BlockHeader {
-                    version: 1,
-                    prev_blockhash: Default::default(),
-                    merkle_root,
-                    time: 1231006505,
-                    bits: 0x1d00ffff,
-                    nonce: 2083236893
-                },
-                txdata,
-            }
-        }
-        Network::Testnet => {
-            Block {
-                header: BlockHeader {
-                    version: 1,
-                    prev_blockhash: Default::default(),
-                    merkle_root,
-                    time: 1296688602,
-                    bits: 0x1d00ffff,
-                    nonce: 414098458
-                },
-                txdata,
-            }
-        }
-        Network::Signet => {
-            Block {
-                header: BlockHeader {
-                    version: 1,
-                    prev_blockhash: Default::default(),
-                    merkle_root,
-                    time: 1598918400,
-                    bits: 0x1e0377ae,
-                    nonce: 52613770
-                },
-                txdata,
-            }
-        }
-        Network::Regtest => {
-            Block {
-                header: BlockHeader {
-                    version: 1,
-                    prev_blockhash: Default::default(),
-                    merkle_root,
-                    time: 1296688602,
-                    bits: 0x207fffff,
-                    nonce: 2
-                },
-                txdata,
-            }
-        }
+        Network::Bitcoin => Block {
+            header: BlockHeader {
+                version: 1,
+                prev_blockhash: Default::default(),
+                merkle_root,
+                time: 1231006505,
+                bits: 0x1d00ffff,
+                nonce: 2083236893,
+            },
+            txdata,
+        },
+        Network::Testnet => Block {
+            header: BlockHeader {
+                version: 1,
+                prev_blockhash: Default::default(),
+                merkle_root,
+                time: 1296688602,
+                bits: 0x1d00ffff,
+                nonce: 414098458,
+            },
+            txdata,
+        },
+        Network::Signet => Block {
+            header: BlockHeader {
+                version: 1,
+                prev_blockhash: Default::default(),
+                merkle_root,
+                time: 1598918400,
+                bits: 0x1e0377ae,
+                nonce: 52613770,
+            },
+            txdata,
+        },
+        Network::Regtest => Block {
+            header: BlockHeader {
+                version: 1,
+                prev_blockhash: Default::default(),
+                merkle_root,
+                time: 1296688602,
+                bits: 0x207fffff,
+                nonce: 2,
+            },
+            txdata,
+        },
     }
 }
 
 #[cfg(test)]
 mod test {
     use core::default::Default;
-    use crate::hashes::hex::FromHex;
 
-    use crate::network::constants::Network;
+    use crate::blockdata::constants::{
+        bitcoin_genesis_tx, genesis_block, COIN_VALUE, MAX_SEQUENCE,
+    };
     use crate::consensus::encode::serialize;
-    use crate::blockdata::constants::{genesis_block, bitcoin_genesis_tx};
-    use crate::blockdata::constants::{MAX_SEQUENCE, COIN_VALUE};
+    use crate::hashes::hex::FromHex;
+    use crate::network::constants::Network;
 
     #[test]
     fn bitcoin_genesis_first_transaction() {
@@ -204,8 +189,10 @@ mod test {
         assert_eq!(gen.output[0].value, 50 * COIN_VALUE);
         assert_eq!(gen.lock_time, 0);
 
-        assert_eq!(format!("{:x}", gen.wtxid()),
-                   "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b".to_string());
+        assert_eq!(
+            format!("{:x}", gen.wtxid()),
+            "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b".to_string()
+        );
     }
 
     #[test]
@@ -214,13 +201,17 @@ mod test {
 
         assert_eq!(gen.header.version, 1);
         assert_eq!(gen.header.prev_blockhash, Default::default());
-        assert_eq!(format!("{:x}", gen.header.merkle_root),
-                   "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b".to_string());
+        assert_eq!(
+            format!("{:x}", gen.header.merkle_root),
+            "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b".to_string()
+        );
         assert_eq!(gen.header.time, 1231006505);
         assert_eq!(gen.header.bits, 0x1d00ffff);
         assert_eq!(gen.header.nonce, 2083236893);
-        assert_eq!(format!("{:x}", gen.header.block_hash()),
-                   "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f".to_string());
+        assert_eq!(
+            format!("{:x}", gen.header.block_hash()),
+            "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f".to_string()
+        );
     }
 
     #[test]
@@ -228,13 +219,17 @@ mod test {
         let gen = genesis_block(Network::Testnet);
         assert_eq!(gen.header.version, 1);
         assert_eq!(gen.header.prev_blockhash, Default::default());
-        assert_eq!(format!("{:x}", gen.header.merkle_root),
-                  "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b".to_string());
+        assert_eq!(
+            format!("{:x}", gen.header.merkle_root),
+            "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b".to_string()
+        );
         assert_eq!(gen.header.time, 1296688602);
         assert_eq!(gen.header.bits, 0x1d00ffff);
         assert_eq!(gen.header.nonce, 414098458);
-        assert_eq!(format!("{:x}", gen.header.block_hash()),
-                   "000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943".to_string());
+        assert_eq!(
+            format!("{:x}", gen.header.block_hash()),
+            "000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943".to_string()
+        );
     }
 
     #[test]
@@ -242,13 +237,16 @@ mod test {
         let gen = genesis_block(Network::Signet);
         assert_eq!(gen.header.version, 1);
         assert_eq!(gen.header.prev_blockhash, Default::default());
-        assert_eq!(format!("{:x}", gen.header.merkle_root),
-                  "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b".to_string());
+        assert_eq!(
+            format!("{:x}", gen.header.merkle_root),
+            "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b".to_string()
+        );
         assert_eq!(gen.header.time, 1598918400);
         assert_eq!(gen.header.bits, 0x1e0377ae);
         assert_eq!(gen.header.nonce, 52613770);
-        assert_eq!(format!("{:x}", gen.header.block_hash()),
-                   "00000008819873e925422c1ff0f99f7cc9bbb232af63a077a480a3633bee1ef6".to_string());
+        assert_eq!(
+            format!("{:x}", gen.header.block_hash()),
+            "00000008819873e925422c1ff0f99f7cc9bbb232af63a077a480a3633bee1ef6".to_string()
+        );
     }
 }
-

@@ -17,15 +17,13 @@
 //! merkleization.
 //!
 
+use core::cmp::min;
 use core::iter;
 
-use crate::prelude::*;
-
-use crate::io;
-use core::cmp::min;
-
-use crate::hashes::Hash;
 use crate::consensus::encode::Encodable;
+use crate::hashes::Hash;
+use crate::io;
+use crate::prelude::*;
 
 /// Calculates the merkle root of a list of *hashes*, inline (in place) in `hashes`.
 ///
@@ -38,7 +36,7 @@ use crate::consensus::encode::Encodable;
 pub fn bitcoin_merkle_root_inline<T>(hashes: &mut [T]) -> Option<T>
 where
     T: Hash + Encodable,
-          <T as Hash>::Engine: io::Write,
+    <T as Hash>::Engine: io::Write,
 {
     match hashes.len() {
         0 => None,
@@ -57,7 +55,7 @@ pub fn bitcoin_merkle_root<T, I>(mut hashes: I) -> Option<T>
 where
     T: Hash + Encodable,
     <T as Hash>::Engine: io::Write,
-    I: Iterator<Item=T>,
+    I: Iterator<Item = T>,
 {
     let first = hashes.next()?;
     let second = match hashes.next() {
@@ -91,15 +89,19 @@ where
     <T as Hash>::Engine: io::Write,
 {
     if hashes.len() == 1 {
-        return hashes[0]
+        return hashes[0];
     }
 
     for idx in 0..((hashes.len() + 1) / 2) {
         let idx1 = 2 * idx;
         let idx2 = min(idx1 + 1, hashes.len() - 1);
         let mut encoder = T::engine();
-        hashes[idx1].consensus_encode(&mut encoder).expect("in-memory writers don't error");
-        hashes[idx2].consensus_encode(&mut encoder).expect("in-memory writers don't error");
+        hashes[idx1]
+            .consensus_encode(&mut encoder)
+            .expect("in-memory writers don't error");
+        hashes[idx2]
+            .consensus_encode(&mut encoder)
+            .expect("in-memory writers don't error");
         hashes[idx] = T::from_engine(encoder);
     }
     let half_len = hashes.len() / 2 + hashes.len() % 2;
@@ -109,11 +111,10 @@ where
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+    use crate::blockdata::block::Block;
     use crate::consensus::encode::deserialize;
     use crate::hashes::sha256d;
-
-    use crate::blockdata::block::Block;
-    use super::*;
 
     #[test]
     fn both_merkle_root_functions_return_the_same_result() {

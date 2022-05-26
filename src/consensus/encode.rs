@@ -27,23 +27,22 @@
 //! typically big-endian decimals, etc.)
 //!
 
-use crate::prelude::*;
+use core::convert::From;
+use core::{fmt, mem, u32};
 
-use core::{fmt, mem, u32, convert::From};
-
-use crate::hashes::{sha256d, Hash, sha256};
-use crate::hash_types::{BlockHash, FilterHash, TxMerkleNode, FilterHeader};
-
-use crate::io::{self, Cursor, Read};
-
-use crate::util::endian;
-use crate::util::psbt;
-use crate::util::taproot::TapLeafHash;
+use crate::blockdata::transaction::{Transaction, TxIn, TxOut};
+use crate::hash_types::{BlockHash, FilterHash, FilterHeader, TxMerkleNode};
 use crate::hashes::hex::ToHex;
-
-use crate::blockdata::transaction::{TxOut, Transaction, TxIn};
+use crate::hashes::{sha256, sha256d, Hash};
+use crate::io::{self, Cursor, Read};
 #[cfg(feature = "std")]
-use crate::network::{message_blockdata::Inventory, address::{Address, AddrV2Message}};
+use crate::network::{
+    address::{AddrV2Message, Address},
+    message_blockdata::Inventory,
+};
+use crate::prelude::*;
+use crate::util::taproot::TapLeafHash;
+use crate::util::{endian, psbt};
 
 /// Encoding error
 #[derive(Debug)]
@@ -88,17 +87,17 @@ impl fmt::Display for Error {
         match *self {
             Error::Io(ref e) => write!(f, "I/O error: {}", e),
             Error::Psbt(ref e) => write!(f, "PSBT error: {}", e),
-            Error::UnexpectedNetworkMagic { expected: ref e, actual: ref a } => write!(f,
-                "unexpected network magic: expected {}, actual {}", e, a),
-            Error::OversizedVectorAllocation { requested: ref r, max: ref m } => write!(f,
-                "allocation of oversized vector: requested {}, maximum {}", r, m),
-            Error::InvalidChecksum { expected: ref e, actual: ref a } => write!(f,
-                "invalid checksum: expected {}, actual {}", e.to_hex(), a.to_hex()),
+            Error::UnexpectedNetworkMagic { expected: ref e, actual: ref a } =>
+                write!(f, "unexpected network magic: expected {}, actual {}", e, a),
+            Error::OversizedVectorAllocation { requested: ref r, max: ref m } =>
+                write!(f, "allocation of oversized vector: requested {}, maximum {}", r, m),
+            Error::InvalidChecksum { expected: ref e, actual: ref a } =>
+                write!(f, "invalid checksum: expected {}, actual {}", e.to_hex(), a.to_hex()),
             Error::NonMinimalVarInt => write!(f, "non-minimal varint"),
             Error::UnknownNetworkMagic(ref m) => write!(f, "unknown network magic: {}", m),
             Error::ParseFailed(ref e) => write!(f, "parse failed: {}", e),
-            Error::UnsupportedSegwitFlag(ref swflag) => write!(f,
-                "unsupported segwit version: {}", swflag),
+            Error::UnsupportedSegwitFlag(ref swflag) =>
+                write!(f, "unsupported segwit version: {}", swflag),
         }
     }
 }
@@ -125,16 +124,12 @@ impl std::error::Error for Error {
 
 #[doc(hidden)]
 impl From<io::Error> for Error {
-    fn from(error: io::Error) -> Self {
-        Error::Io(error)
-    }
+    fn from(error: io::Error) -> Self { Error::Io(error) }
 }
 
 #[doc(hidden)]
 impl From<psbt::Error> for Error {
-    fn from(e: psbt::Error) -> Error {
-        Error::Psbt(e)
-    }
+    fn from(e: psbt::Error) -> Error { Error::Psbt(e) }
 }
 
 /// Encode an object into a vector
@@ -146,9 +141,7 @@ pub fn serialize<T: Encodable + ?Sized>(data: &T) -> Vec<u8> {
 }
 
 /// Encode an object into a hex-encoded string
-pub fn serialize_hex<T: Encodable + ?Sized>(data: &T) -> String {
-    serialize(data)[..].to_hex()
-}
+pub fn serialize_hex<T: Encodable + ?Sized>(data: &T) -> String { serialize(data)[..].to_hex() }
 
 /// Deserialize an object from a vector, will error if said deserialization
 /// doesn't consume the entire vector.
@@ -172,7 +165,6 @@ pub fn deserialize_partial<T: Decodable>(data: &[u8]) -> Result<(T, usize), Erro
 
     Ok((rv, consumed))
 }
-
 
 /// Extensions of `Write` to encode data as per Bitcoin consensus
 pub trait WriteExt {
@@ -234,7 +226,7 @@ macro_rules! encoder_fn {
         fn $name(&mut self, v: $val_type) -> Result<(), io::Error> {
             self.write_all(&endian::$writefn(v))
         }
-    }
+    };
 }
 
 macro_rules! decoder_fn {
@@ -246,7 +238,7 @@ macro_rules! decoder_fn {
             self.read_exact(&mut val[..]).map_err(Error::Io)?;
             Ok(endian::$readfn(&val))
         }
-    }
+    };
 }
 
 impl<W: io::Write> WriteExt for W {
@@ -258,21 +250,13 @@ impl<W: io::Write> WriteExt for W {
     encoder_fn!(emit_i16, i16, i16_to_array_le);
 
     #[inline]
-    fn emit_i8(&mut self, v: i8) -> Result<(), io::Error> {
-        self.write_all(&[v as u8])
-    }
+    fn emit_i8(&mut self, v: i8) -> Result<(), io::Error> { self.write_all(&[v as u8]) }
     #[inline]
-    fn emit_u8(&mut self, v: u8) -> Result<(), io::Error> {
-        self.write_all(&[v])
-    }
+    fn emit_u8(&mut self, v: u8) -> Result<(), io::Error> { self.write_all(&[v]) }
     #[inline]
-    fn emit_bool(&mut self, v: bool) -> Result<(), io::Error> {
-        self.write_all(&[v as u8])
-    }
+    fn emit_bool(&mut self, v: bool) -> Result<(), io::Error> { self.write_all(&[v as u8]) }
     #[inline]
-    fn emit_slice(&mut self, v: &[u8]) -> Result<(), io::Error> {
-        self.write_all(v)
-    }
+    fn emit_slice(&mut self, v: &[u8]) -> Result<(), io::Error> { self.write_all(v) }
 }
 
 impl<R: Read> ReadExt for R {
@@ -296,9 +280,7 @@ impl<R: Read> ReadExt for R {
         Ok(slice[0] as i8)
     }
     #[inline]
-    fn read_bool(&mut self) -> Result<bool, Error> {
-        ReadExt::read_i8(self).map(|bit| bit != 0)
-    }
+    fn read_bool(&mut self) -> Result<bool, Error> { ReadExt::read_i8(self).map(|bit| bit != 0) }
     #[inline]
     fn read_slice(&mut self, slice: &mut [u8]) -> Result<(), Error> {
         self.read_exact(slice).map_err(Error::Io)
@@ -347,14 +329,14 @@ macro_rules! impl_int_encodable {
                 Ok(mem::size_of::<$ty>())
             }
         }
-    }
+    };
 }
 
-impl_int_encodable!(u8,  read_u8,  emit_u8);
+impl_int_encodable!(u8, read_u8, emit_u8);
 impl_int_encodable!(u16, read_u16, emit_u16);
 impl_int_encodable!(u32, read_u32, emit_u32);
 impl_int_encodable!(u64, read_u64, emit_u64);
-impl_int_encodable!(i8,  read_i8,  emit_i8);
+impl_int_encodable!(i8, read_i8, emit_i8);
 impl_int_encodable!(i16, read_i16, emit_i16);
 impl_int_encodable!(i32, read_i32, emit_i32);
 impl_int_encodable!(i64, read_i64, emit_i64);
@@ -366,10 +348,10 @@ impl VarInt {
     #[inline]
     pub fn len(&self) -> usize {
         match self.0 {
-            0..=0xFC             => { 1 }
-            0xFD..=0xFFFF        => { 3 }
-            0x10000..=0xFFFFFFFF => { 5 }
-            _                    => { 9 }
+            0..=0xFC => 1,
+            0xFD..=0xFFFF => 3,
+            0x10000..=0xFFFFFFFF => 5,
+            _ => 9,
         }
     }
 }
@@ -381,22 +363,22 @@ impl Encodable for VarInt {
             0..=0xFC => {
                 (self.0 as u8).consensus_encode(s)?;
                 Ok(1)
-            },
+            }
             0xFD..=0xFFFF => {
                 s.emit_u8(0xFD)?;
                 (self.0 as u16).consensus_encode(s)?;
                 Ok(3)
-            },
+            }
             0x10000..=0xFFFFFFFF => {
                 s.emit_u8(0xFE)?;
                 (self.0 as u32).consensus_encode(s)?;
                 Ok(5)
-            },
+            }
             _ => {
                 s.emit_u8(0xFF)?;
                 (self.0 as u64).consensus_encode(s)?;
                 Ok(9)
-            },
+            }
         }
     }
 }
@@ -430,7 +412,7 @@ impl Decodable for VarInt {
                     Ok(VarInt(x as u64))
                 }
             }
-            n => Ok(VarInt(n as u64))
+            n => Ok(VarInt(n as u64)),
         }
     }
 }
@@ -446,9 +428,7 @@ impl Encodable for bool {
 
 impl Decodable for bool {
     #[inline]
-    fn consensus_decode<D: io::Read>(mut d: D) -> Result<bool, Error> {
-        ReadExt::read_bool(&mut d)
-    }
+    fn consensus_decode<D: io::Read>(mut d: D) -> Result<bool, Error> { ReadExt::read_bool(&mut d) }
 }
 
 // Strings
@@ -489,7 +469,6 @@ impl Decodable for Cow<'static, str> {
             .map(Cow::Owned)
     }
 }
-
 
 // Arrays
 macro_rules! impl_array {
@@ -536,7 +515,9 @@ impl Decodable for [u16; 8] {
 impl Encodable for [u16; 8] {
     #[inline]
     fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, io::Error> {
-        for c in self.iter() { c.consensus_encode(&mut s)?; }
+        for c in self.iter() {
+            c.consensus_encode(&mut s)?;
+        }
         Ok(16)
     }
 }
@@ -563,7 +544,10 @@ macro_rules! impl_vec {
                     .checked_mul(mem::size_of::<$type>())
                     .ok_or(self::Error::ParseFailed("Invalid length"))?;
                 if byte_size > MAX_VEC_SIZE {
-                    return Err(self::Error::OversizedVectorAllocation { requested: byte_size, max: MAX_VEC_SIZE })
+                    return Err(self::Error::OversizedVectorAllocation {
+                        requested: byte_size,
+                        max: MAX_VEC_SIZE,
+                    });
                 }
                 let mut ret = Vec::with_capacity(len as usize);
                 let mut d = d.take(MAX_VEC_SIZE as u64);
@@ -573,7 +557,7 @@ macro_rules! impl_vec {
                 Ok(ret)
             }
         }
-    }
+    };
 }
 impl_vec!(BlockHash);
 impl_vec!(FilterHash);
@@ -586,16 +570,21 @@ impl_vec!(Vec<u8>);
 impl_vec!(u64);
 impl_vec!(TapLeafHash);
 
-#[cfg(feature = "std")] impl_vec!(Inventory);
-#[cfg(feature = "std")] impl_vec!((u32, Address));
-#[cfg(feature = "std")] impl_vec!(AddrV2Message);
+#[cfg(feature = "std")]
+impl_vec!(Inventory);
+#[cfg(feature = "std")]
+impl_vec!((u32, Address));
+#[cfg(feature = "std")]
+impl_vec!(AddrV2Message);
 
-pub(crate) fn consensus_encode_with_size<S: io::Write>(data: &[u8], mut s: S) -> Result<usize, io::Error> {
+pub(crate) fn consensus_encode_with_size<S: io::Write>(
+    data: &[u8],
+    mut s: S,
+) -> Result<usize, io::Error> {
     let vi_len = VarInt(data.len() as u64).consensus_encode(&mut s)?;
     s.emit_slice(data)?;
     Ok(vi_len + data.len())
 }
-
 
 impl Encodable for Vec<u8> {
     #[inline]
@@ -609,7 +598,10 @@ impl Decodable for Vec<u8> {
     fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, Error> {
         let len = VarInt::consensus_decode(&mut d)?.0 as usize;
         if len > MAX_VEC_SIZE {
-            return Err(self::Error::OversizedVectorAllocation { requested: len, max: MAX_VEC_SIZE })
+            return Err(self::Error::OversizedVectorAllocation {
+                requested: len,
+                max: MAX_VEC_SIZE,
+            });
         }
         let mut ret = vec![0u8; len];
         d.read_slice(&mut ret)?;
@@ -630,7 +622,6 @@ impl Decodable for Box<[u8]> {
         <Vec<u8>>::consensus_decode(d).map(From::from)
     }
 }
-
 
 /// Do a double-SHA256 on some data and return the first 4 bytes
 fn sha2_checksum(data: &[u8]) -> [u8; 4] {
@@ -656,7 +647,7 @@ impl Decodable for CheckedData {
         if len > MAX_VEC_SIZE as u32 {
             return Err(self::Error::OversizedVectorAllocation {
                 requested: len as usize,
-                max: MAX_VEC_SIZE
+                max: MAX_VEC_SIZE,
             });
         }
         let checksum = <[u8; 4]>::consensus_decode(&mut d)?;
@@ -664,10 +655,7 @@ impl Decodable for CheckedData {
         d.read_slice(&mut ret)?;
         let expected_checksum = sha2_checksum(&ret);
         if expected_checksum != checksum {
-            Err(self::Error::InvalidChecksum {
-                expected: expected_checksum,
-                actual: checksum,
-            })
+            Err(self::Error::InvalidChecksum { expected: expected_checksum, actual: checksum })
         } else {
             Ok(CheckedData(ret))
         }
@@ -773,15 +761,19 @@ impl Decodable for TapLeafHash {
 // Tests
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use core::{mem::{self, discriminant}, fmt};
-    use super::{deserialize, serialize, Error, CheckedData, VarInt};
-    use super::{Transaction, BlockHash, FilterHash, TxMerkleNode, TxOut, TxIn};
-    use crate::consensus::{Encodable, deserialize_partial, Decodable};
-    use crate::util::endian::{u64_to_array_le, u32_to_array_le, u16_to_array_le};
+    use core::fmt;
+    use core::mem::{self, discriminant};
+
     use secp256k1::rand::{thread_rng, Rng};
+
+    use super::{
+        deserialize, serialize, BlockHash, CheckedData, Error, FilterHash, Transaction, TxIn,
+        TxMerkleNode, TxOut, VarInt, *,
+    };
+    use crate::consensus::{deserialize_partial, Decodable, Encodable};
     #[cfg(feature = "std")]
-    use crate::network::{Address, message_blockdata::Inventory};
+    use crate::network::{message_blockdata::Inventory, Address};
+    use crate::util::endian::{u16_to_array_le, u32_to_array_le, u64_to_array_le};
 
     #[test]
     fn serialize_int_test() {
@@ -824,7 +816,10 @@ mod tests {
         assert_eq!(serialize(&-256i64), vec![0u8, 255, 255, 255, 255, 255, 255, 255]);
         assert_eq!(serialize(&-5000i64), vec![120u8, 236, 255, 255, 255, 255, 255, 255]);
         assert_eq!(serialize(&-500000i64), vec![224u8, 94, 248, 255, 255, 255, 255, 255]);
-        assert_eq!(serialize(&-723401728380766730i64), vec![246u8, 245, 245, 245, 245, 245, 245, 245]);
+        assert_eq!(
+            serialize(&-723401728380766730i64),
+            vec![246u8, 245, 245, 245, 245, 245, 245, 245]
+        );
         assert_eq!(serialize(&1i64), vec![1u8, 0, 0, 0, 0, 0, 0, 0]);
         assert_eq!(serialize(&256i64), vec![0u8, 1, 0, 0, 0, 0, 0, 0]);
         assert_eq!(serialize(&5000i64), vec![136u8, 19, 0, 0, 0, 0, 0, 0]);
@@ -839,8 +834,14 @@ mod tests {
         assert_eq!(serialize(&VarInt(0xFD)), vec![0xFDu8, 0xFD, 0]);
         assert_eq!(serialize(&VarInt(0xFFF)), vec![0xFDu8, 0xFF, 0xF]);
         assert_eq!(serialize(&VarInt(0xF0F0F0F)), vec![0xFEu8, 0xF, 0xF, 0xF, 0xF]);
-        assert_eq!(serialize(&VarInt(0xF0F0F0F0F0E0)), vec![0xFFu8, 0xE0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0, 0]);
-        assert_eq!(test_varint_encode(0xFF, &u64_to_array_le(0x100000000)).unwrap(), VarInt(0x100000000));
+        assert_eq!(
+            serialize(&VarInt(0xF0F0F0F0F0E0)),
+            vec![0xFFu8, 0xE0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0, 0]
+        );
+        assert_eq!(
+            test_varint_encode(0xFF, &u64_to_array_le(0x100000000)).unwrap(),
+            VarInt(0x100000000)
+        );
         assert_eq!(test_varint_encode(0xFE, &u64_to_array_le(0x10000)).unwrap(), VarInt(0x10000));
         assert_eq!(test_varint_encode(0xFD, &u64_to_array_le(0xFD)).unwrap(), VarInt(0xFD));
 
@@ -851,7 +852,7 @@ mod tests {
         test_varint_len(VarInt(0xFFFF), 3);
         test_varint_len(VarInt(0x10000), 5);
         test_varint_len(VarInt(0xFFFFFFFF), 5);
-        test_varint_len(VarInt(0xFFFFFFFF+1), 9);
+        test_varint_len(VarInt(0xFFFFFFFF + 1), 9);
         test_varint_len(VarInt(u64::max_value()), 9);
     }
 
@@ -864,35 +865,60 @@ mod tests {
     fn test_varint_encode(n: u8, x: &[u8]) -> Result<VarInt, Error> {
         let mut input = [0u8; 9];
         input[0] = n;
-        input[1..x.len()+1].copy_from_slice(x);
-        deserialize_partial::<VarInt>(&input).map(|t|t.0)
+        input[1..x.len() + 1].copy_from_slice(x);
+        deserialize_partial::<VarInt>(&input).map(|t| t.0)
     }
 
     #[test]
     fn deserialize_nonminimal_vec() {
         // Check the edges for variant int
-        assert_eq!(discriminant(&test_varint_encode(0xFF, &u64_to_array_le(0x100000000-1)).unwrap_err()),
-                   discriminant(&Error::NonMinimalVarInt));
-        assert_eq!(discriminant(&test_varint_encode(0xFE, &u32_to_array_le(0x10000-1)).unwrap_err()),
-                   discriminant(&Error::NonMinimalVarInt));
-        assert_eq!(discriminant(&test_varint_encode(0xFD, &u16_to_array_le(0xFD-1)).unwrap_err()),
-                   discriminant(&Error::NonMinimalVarInt));
+        assert_eq!(
+            discriminant(&test_varint_encode(0xFF, &u64_to_array_le(0x100000000 - 1)).unwrap_err()),
+            discriminant(&Error::NonMinimalVarInt)
+        );
+        assert_eq!(
+            discriminant(&test_varint_encode(0xFE, &u32_to_array_le(0x10000 - 1)).unwrap_err()),
+            discriminant(&Error::NonMinimalVarInt)
+        );
+        assert_eq!(
+            discriminant(&test_varint_encode(0xFD, &u16_to_array_le(0xFD - 1)).unwrap_err()),
+            discriminant(&Error::NonMinimalVarInt)
+        );
 
-        assert_eq!(discriminant(&deserialize::<Vec<u8>>(&[0xfd, 0x00, 0x00]).unwrap_err()),
-                   discriminant(&Error::NonMinimalVarInt));
-        assert_eq!(discriminant(&deserialize::<Vec<u8>>(&[0xfd, 0xfc, 0x00]).unwrap_err()),
-                   discriminant(&Error::NonMinimalVarInt));
-        assert_eq!(discriminant(&deserialize::<Vec<u8>>(&[0xfd, 0xfc, 0x00]).unwrap_err()),
-                   discriminant(&Error::NonMinimalVarInt));
-        assert_eq!(discriminant(&deserialize::<Vec<u8>>(&[0xfe, 0xff, 0x00, 0x00, 0x00]).unwrap_err()),
-                   discriminant(&Error::NonMinimalVarInt));
-        assert_eq!(discriminant(&deserialize::<Vec<u8>>(&[0xfe, 0xff, 0xff, 0x00, 0x00]).unwrap_err()),
-                   discriminant(&Error::NonMinimalVarInt));
-        assert_eq!(discriminant(&deserialize::<Vec<u8>>(&[0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]).unwrap_err()),
-                   discriminant(&Error::NonMinimalVarInt));
-        assert_eq!(discriminant(&deserialize::<Vec<u8>>(&[0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00]).unwrap_err()),
-                   discriminant(&Error::NonMinimalVarInt));
-
+        assert_eq!(
+            discriminant(&deserialize::<Vec<u8>>(&[0xfd, 0x00, 0x00]).unwrap_err()),
+            discriminant(&Error::NonMinimalVarInt)
+        );
+        assert_eq!(
+            discriminant(&deserialize::<Vec<u8>>(&[0xfd, 0xfc, 0x00]).unwrap_err()),
+            discriminant(&Error::NonMinimalVarInt)
+        );
+        assert_eq!(
+            discriminant(&deserialize::<Vec<u8>>(&[0xfd, 0xfc, 0x00]).unwrap_err()),
+            discriminant(&Error::NonMinimalVarInt)
+        );
+        assert_eq!(
+            discriminant(&deserialize::<Vec<u8>>(&[0xfe, 0xff, 0x00, 0x00, 0x00]).unwrap_err()),
+            discriminant(&Error::NonMinimalVarInt)
+        );
+        assert_eq!(
+            discriminant(&deserialize::<Vec<u8>>(&[0xfe, 0xff, 0xff, 0x00, 0x00]).unwrap_err()),
+            discriminant(&Error::NonMinimalVarInt)
+        );
+        assert_eq!(
+            discriminant(
+                &deserialize::<Vec<u8>>(&[0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
+                    .unwrap_err()
+            ),
+            discriminant(&Error::NonMinimalVarInt)
+        );
+        assert_eq!(
+            discriminant(
+                &deserialize::<Vec<u8>>(&[0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00])
+                    .unwrap_err()
+            ),
+            discriminant(&Error::NonMinimalVarInt)
+        );
 
         let mut vec_256 = vec![0; 259];
         vec_256[0] = 0xfd;
@@ -956,12 +982,18 @@ mod tests {
 
         // u64
         assert_eq!(deserialize(&[0xABu8, 0xCD, 0, 0, 0, 0, 0, 0]).ok(), Some(0xCDABu64));
-        assert_eq!(deserialize(&[0xA0u8, 0x0D, 0xAB, 0xCD, 0x99, 0, 0, 0x99]).ok(), Some(0x99000099CDAB0DA0u64));
+        assert_eq!(
+            deserialize(&[0xA0u8, 0x0D, 0xAB, 0xCD, 0x99, 0, 0, 0x99]).ok(),
+            Some(0x99000099CDAB0DA0u64)
+        );
         let failure64: Result<u64, _> = deserialize(&[1u8, 2, 3, 4, 5, 6, 7]);
         assert!(failure64.is_err());
         // TODO: test negative numbers
         assert_eq!(deserialize(&[0xABu8, 0xCD, 0, 0, 0, 0, 0, 0]).ok(), Some(0xCDABi64));
-        assert_eq!(deserialize(&[0xA0u8, 0x0D, 0xAB, 0xCD, 0x99, 0, 0, 0x99]).ok(), Some(-0x66ffff663254f260i64));
+        assert_eq!(
+            deserialize(&[0xA0u8, 0x0D, 0xAB, 0xCD, 0x99, 0, 0, 0x99]).ok(),
+            Some(-0x66ffff663254f260i64)
+        );
         let failurei64: Result<i64, _> = deserialize(&[1u8, 2, 3, 4, 5, 6, 7]);
         assert!(failurei64.is_err());
     }
@@ -971,13 +1003,18 @@ mod tests {
         assert_eq!(deserialize(&[3u8, 2, 3, 4]).ok(), Some(vec![2u8, 3, 4]));
         assert!((deserialize(&[4u8, 2, 3, 4, 5, 6]) as Result<Vec<u8>, _>).is_err());
         // found by cargo fuzz
-        assert!(deserialize::<Vec<u64>>(&[0xff,0xff,0xff,0xff,0x6b,0x6b,0x6b,0x6b,0x6b,0x6b,0x6b,0x6b,0x6b,0x6b,0x6b,0x6b,0xa,0xa,0x3a]).is_err());
+        assert!(deserialize::<Vec<u64>>(&[
+            0xff, 0xff, 0xff, 0xff, 0x6b, 0x6b, 0x6b, 0x6b, 0x6b, 0x6b, 0x6b, 0x6b, 0x6b, 0x6b,
+            0x6b, 0x6b, 0xa, 0xa, 0x3a
+        ])
+        .is_err());
 
         let rand_io_err = Error::Io(io::Error::new(io::ErrorKind::Other, ""));
 
         // Check serialization that `if len > MAX_VEC_SIZE {return err}` isn't inclusive,
         // by making sure it fails with IO Error and not an `OversizedVectorAllocation` Error.
-        let err = deserialize::<CheckedData>(&serialize(&(super::MAX_VEC_SIZE as u32))).unwrap_err();
+        let err =
+            deserialize::<CheckedData>(&serialize(&(super::MAX_VEC_SIZE as u32))).unwrap_err();
         assert_eq!(discriminant(&err), discriminant(&rand_io_err));
 
         test_len_is_max_vec::<u8>();
@@ -995,7 +1032,11 @@ mod tests {
         test_len_is_max_vec::<Inventory>();
     }
 
-    fn test_len_is_max_vec<T>() where Vec<T>: Decodable, T: fmt::Debug {
+    fn test_len_is_max_vec<T>()
+    where
+        Vec<T>: Decodable,
+        T: fmt::Debug,
+    {
         let rand_io_err = Error::Io(io::Error::new(io::ErrorKind::Other, ""));
         let varint = VarInt((super::MAX_VEC_SIZE / mem::size_of::<T>()) as u64);
         let err = deserialize::<Vec<T>>(&serialize(&varint)).unwrap_err();
@@ -1004,7 +1045,10 @@ mod tests {
 
     #[test]
     fn deserialize_strbuf_test() {
-        assert_eq!(deserialize(&[6u8, 0x41, 0x6e, 0x64, 0x72, 0x65, 0x77]).ok(), Some("Andrew".to_string()));
+        assert_eq!(
+            deserialize(&[6u8, 0x41, 0x6e, 0x64, 0x72, 0x65, 0x77]).ok(),
+            Some("Andrew".to_string())
+        );
         assert_eq!(
             deserialize(&[6u8, 0x41, 0x6e, 0x64, 0x72, 0x65, 0x77]).ok(),
             Some(Cow::Borrowed("Andrew"))
@@ -1013,7 +1057,8 @@ mod tests {
 
     #[test]
     fn deserialize_checkeddata_test() {
-        let cd: Result<CheckedData, _> = deserialize(&[5u8, 0, 0, 0, 162, 107, 175, 90, 1, 2, 3, 4, 5]);
+        let cd: Result<CheckedData, _> =
+            deserialize(&[5u8, 0, 0, 0, 162, 107, 175, 90, 1, 2, 3, 4, 5]);
         assert_eq!(cd.ok(), Some(CheckedData(vec![1u8, 2, 3, 4, 5])));
     }
 
@@ -1048,7 +1093,7 @@ mod tests {
         let mut data = Vec::with_capacity(256);
         let mut data64 = Vec::with_capacity(256);
         for _ in 0..10 {
-            round_trip!{bool, i8, u8, i16, u16, i32, u32, i64, u64,
+            round_trip! {bool, i8, u8, i16, u16, i32, u32, i64, u64,
             (bool, i8, u16, i32), (u64, i64, u32, i32, u16, i16), (i8, u8, i16, u16, i32, u32, i64, u64),
             [u8; 2], [u8; 4], [u8; 8], [u8; 12], [u8; 16], [u8; 32]};
 
@@ -1059,10 +1104,7 @@ mod tests {
             data64.resize(len, 0u64);
             let mut arr33 = [0u8; 33];
             let mut arr16 = [0u16; 8];
-            round_trip_bytes!{(Vec<u8>, data), ([u8; 33], arr33), ([u16; 8], arr16), (Vec<u64>, data64)};
-
-
+            round_trip_bytes! {(Vec<u8>, data), ([u8; 33], arr33), ([u16; 8], arr16), (Vec<u64>, data64)};
         }
     }
 }
-

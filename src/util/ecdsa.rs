@@ -16,12 +16,14 @@
 //!
 //! This module provides ECDSA signatures used Bitcoin that can be roundtrip (de)serialized.
 
-use crate::prelude::*;
 use core::str::FromStr;
 use core::{fmt, iter};
-use crate::hashes::hex::{self, FromHex};
-use crate::blockdata::transaction::NonStandardSighashType;
+
 use secp256k1;
+
+use crate::blockdata::transaction::NonStandardSighashType;
+use crate::hashes::hex::{self, FromHex};
+use crate::prelude::*;
 use crate::EcdsaSighashType;
 
 /// An ECDSA signature with the corresponding hash type.
@@ -37,28 +39,25 @@ pub struct EcdsaSig {
 impl EcdsaSig {
     /// Constructs an ECDSA bitcoin signature for [`EcdsaSighashType::All`].
     pub fn sighash_all(sig: secp256k1::ecdsa::Signature) -> EcdsaSig {
-        EcdsaSig {
-            sig,
-            hash_ty: EcdsaSighashType::All
-        }
+        EcdsaSig { sig, hash_ty: EcdsaSighashType::All }
     }
 
     /// Deserializes from slice following the standardness rules for [`EcdsaSighashType`].
     pub fn from_slice(sl: &[u8]) -> Result<Self, EcdsaSigError> {
-        let (hash_ty, sig) = sl.split_last()
-            .ok_or(EcdsaSigError::EmptySignature)?;
+        let (hash_ty, sig) = sl.split_last().ok_or(EcdsaSigError::EmptySignature)?;
         let hash_ty = EcdsaSighashType::from_standard(*hash_ty as u32)
             .map_err(|_| EcdsaSigError::NonStandardSighashType(*hash_ty as u32))?;
-        let sig = secp256k1::ecdsa::Signature::from_der(sig)
-            .map_err(EcdsaSigError::Secp256k1)?;
+        let sig = secp256k1::ecdsa::Signature::from_der(sig).map_err(EcdsaSigError::Secp256k1)?;
         Ok(EcdsaSig { sig, hash_ty })
     }
 
     /// Serializes an ECDSA signature (inner secp256k1 signature in DER format).
     pub fn to_vec(&self) -> Vec<u8> {
         // TODO: add support to serialize to a writer to SerializedSig
-        self.sig.serialize_der()
-            .iter().map(|x| *x)
+        self.sig
+            .serialize_der()
+            .iter()
+            .map(|x| *x)
             .chain(iter::once(self.hash_ty as u8))
             .collect()
     }
@@ -76,11 +75,10 @@ impl FromStr for EcdsaSig {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let bytes = Vec::from_hex(s)?;
-        let (sighash_byte, signature) = bytes.split_last()
-            .ok_or(EcdsaSigError::EmptySignature)?;
+        let (sighash_byte, signature) = bytes.split_last().ok_or(EcdsaSigError::EmptySignature)?;
         Ok(EcdsaSig {
             sig: secp256k1::ecdsa::Signature::from_der(signature)?,
-            hash_ty: EcdsaSighashType::from_standard(*sighash_byte as u32)?
+            hash_ty: EcdsaSighashType::from_standard(*sighash_byte as u32)?,
         })
     }
 }
@@ -98,18 +96,14 @@ pub enum EcdsaSigError {
     Secp256k1(secp256k1::Error),
 }
 
-
 impl fmt::Display for EcdsaSigError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            EcdsaSigError::HexEncoding(e) =>
-                write!(f, "EcdsaSig hex encoding error: {}", e),
+            EcdsaSigError::HexEncoding(e) => write!(f, "EcdsaSig hex encoding error: {}", e),
             EcdsaSigError::NonStandardSighashType(hash_ty) =>
                 write!(f, "Non standard signature hash type {}", hash_ty),
-            EcdsaSigError::EmptySignature =>
-                write!(f, "Empty ECDSA signature"),
-            EcdsaSigError::Secp256k1(ref e) =>
-                write!(f, "Invalid Ecdsa signature: {}", e),
+            EcdsaSigError::EmptySignature => write!(f, "Empty ECDSA signature"),
+            EcdsaSigError::Secp256k1(ref e) => write!(f, "Invalid Ecdsa signature: {}", e),
         }
     }
 }
@@ -129,19 +123,13 @@ impl std::error::Error for EcdsaSigError {
 }
 
 impl From<secp256k1::Error> for EcdsaSigError {
-    fn from(e: secp256k1::Error) -> EcdsaSigError {
-        EcdsaSigError::Secp256k1(e)
-    }
+    fn from(e: secp256k1::Error) -> EcdsaSigError { EcdsaSigError::Secp256k1(e) }
 }
 
 impl From<NonStandardSighashType> for EcdsaSigError {
-    fn from(err: NonStandardSighashType) -> Self {
-        EcdsaSigError::NonStandardSighashType(err.0)
-    }
+    fn from(err: NonStandardSighashType) -> Self { EcdsaSigError::NonStandardSighashType(err.0) }
 }
 
 impl From<hex::Error> for EcdsaSigError {
-    fn from(err: hex::Error) -> Self {
-        EcdsaSigError::HexEncoding(err)
-    }
+    fn from(err: hex::Error) -> Self { EcdsaSigError::HexEncoding(err) }
 }

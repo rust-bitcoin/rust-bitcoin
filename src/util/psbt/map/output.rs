@@ -12,23 +12,17 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-use crate::prelude::*;
-use core;
-
-use crate::io;
+use secp256k1::XOnlyPublicKey;
+use {core, secp256k1};
 
 use crate::blockdata::script::Script;
 use crate::consensus::encode;
-use secp256k1::XOnlyPublicKey;
+use crate::io;
+use crate::prelude::*;
 use crate::util::bip32::KeySource;
-use secp256k1;
 use crate::util::psbt::map::Map;
-use crate::util::psbt::raw;
-use crate::util::psbt::Error;
-
-use crate::util::taproot::{ScriptLeaf, TapLeafHash};
-
-use crate::util::taproot::{NodeInfo, TaprootBuilder};
+use crate::util::psbt::{raw, Error};
+use crate::util::taproot::{NodeInfo, ScriptLeaf, TapLeafHash, TaprootBuilder};
 
 /// Type: Redeem Script PSBT_OUT_REDEEM_SCRIPT = 0x00
 const PSBT_OUT_REDEEM_SCRIPT: u8 = 0x00;
@@ -93,8 +87,8 @@ impl IncompleteTapTree {
     /// Converts error into the original incomplete [`TaprootBuilder`] instance.
     pub fn into_builder(self) -> TaprootBuilder {
         match self {
-            IncompleteTapTree::NotFinalized(builder) |
-            IncompleteTapTree::HiddenParts(builder) => builder
+            IncompleteTapTree::NotFinalized(builder) | IncompleteTapTree::HiddenParts(builder) =>
+                builder,
         }
     }
 }
@@ -102,8 +96,10 @@ impl IncompleteTapTree {
 impl core::fmt::Display for IncompleteTapTree {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.write_str(match self {
-            IncompleteTapTree::NotFinalized(_) => "an attempt to construct a tap tree from a builder containing incomplete branches.",
-            IncompleteTapTree::HiddenParts(_) => "an attempt to construct a tap tree from a builder containing hidden parts.",
+            IncompleteTapTree::NotFinalized(_) =>
+                "an attempt to construct a tap tree from a builder containing incomplete branches.",
+            IncompleteTapTree::HiddenParts(_) =>
+                "an attempt to construct a tap tree from a builder containing hidden parts.",
         })
     }
 }
@@ -126,18 +122,14 @@ impl std::error::Error for IncompleteTapTree {
 pub struct TapTree(pub(crate) TaprootBuilder);
 
 impl PartialEq for TapTree {
-    fn eq(&self, other: &Self) -> bool {
-        self.node_info().hash.eq(&other.node_info().hash)
-    }
+    fn eq(&self, other: &Self) -> bool { self.node_info().hash.eq(&other.node_info().hash) }
 }
 
 impl Eq for TapTree {}
 
 impl From<TapTree> for TaprootBuilder {
     #[inline]
-    fn from(tree: TapTree) -> Self {
-        tree.into_builder()
-    }
+    fn from(tree: TapTree) -> Self { tree.into_builder() }
 }
 
 impl TapTree {
@@ -147,7 +139,9 @@ impl TapTree {
         // have only 1 element in branch and that is not None.
         // We make sure that we only allow is_complete builders via the from_inner
         // constructor
-        self.0.branch()[0].as_ref().expect("from_inner only parses is_complete builders")
+        self.0.branch()[0]
+            .as_ref()
+            .expect("from_inner only parses is_complete builders")
     }
 
     /// Constructs [`TapTree`] from a [`TaprootBuilder`] if it is complete binary tree.
@@ -166,25 +160,17 @@ impl TapTree {
     }
 
     /// Converts self into builder [`TaprootBuilder`]. The builder is guaranteed to be finalized.
-    pub fn into_builder(self) -> TaprootBuilder {
-        self.0
-    }
+    pub fn into_builder(self) -> TaprootBuilder { self.0 }
 
     /// Constructs [`TaprootBuilder`] by internally cloning the `self`. The builder is guaranteed
     /// to be finalized.
-    pub fn to_builder(&self) -> TaprootBuilder {
-        self.0.clone()
-    }
+    pub fn to_builder(&self) -> TaprootBuilder { self.0.clone() }
 
     /// Returns [`TapTreeIter<'_>`] iterator for a taproot script tree, operating in DFS order over
     /// tree [`ScriptLeaf`]s.
     pub fn script_leaves(&self) -> TapTreeIter {
         match (self.0.branch().len(), self.0.branch().last()) {
-            (1, Some(Some(root))) => {
-                TapTreeIter {
-                    leaf_iter: root.leaves.iter()
-                }
-            }
+            (1, Some(Some(root))) => TapTreeIter { leaf_iter: root.leaves.iter() },
             // This should be unreachable as we Taptree is already finalized
             _ => unreachable!("non-finalized tree builder inside TapTree"),
         }
@@ -201,17 +187,12 @@ impl<'tree> Iterator for TapTreeIter<'tree> {
     type Item = &'tree ScriptLeaf;
 
     #[inline]
-    fn next(&mut self) -> Option<Self::Item> {
-        self.leaf_iter.next()
-    }
+    fn next(&mut self) -> Option<Self::Item> { self.leaf_iter.next() }
 }
 
 impl Output {
     pub(super) fn insert_pair(&mut self, pair: raw::Pair) -> Result<(), encode::Error> {
-        let raw::Pair {
-            key: raw_key,
-            value: raw_value,
-        } = pair;
+        let raw::Pair { key: raw_key, value: raw_value } = pair;
 
         match raw_key.type_value {
             PSBT_OUT_REDEEM_SCRIPT => {
@@ -234,8 +215,9 @@ impl Output {
                 match self.proprietary.entry(key) {
                     btree_map::Entry::Vacant(empty_key) => {
                         empty_key.insert(raw_value);
-                    },
-                    btree_map::Entry::Occupied(_) => return Err(Error::DuplicateKey(raw_key).into()),
+                    }
+                    btree_map::Entry::Occupied(_) =>
+                        return Err(Error::DuplicateKey(raw_key).into()),
                 }
             }
             PSBT_OUT_TAP_INTERNAL_KEY => {
@@ -257,8 +239,9 @@ impl Output {
                 btree_map::Entry::Vacant(empty_key) => {
                     empty_key.insert(raw_value);
                 }
-                btree_map::Entry::Occupied(k) => return Err(Error::DuplicateKey(k.key().clone()).into()),
-            }
+                btree_map::Entry::Occupied(k) =>
+                    return Err(Error::DuplicateKey(k.key().clone()).into()),
+            },
         }
 
         Ok(())
@@ -307,17 +290,11 @@ impl Map for Output {
         }
 
         for (key, value) in self.proprietary.iter() {
-            rv.push(raw::Pair {
-                key: key.to_key(),
-                value: value.clone(),
-            });
+            rv.push(raw::Pair { key: key.to_key(), value: value.clone() });
         }
 
         for (key, value) in self.unknown.iter() {
-            rv.push(raw::Pair {
-                key: key.clone(),
-                value: value.clone(),
-            });
+            rv.push(raw::Pair { key: key.clone(), value: value.clone() });
         }
 
         Ok(rv)

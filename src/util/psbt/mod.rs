@@ -22,14 +22,12 @@
 use core::cmp;
 
 use crate::blockdata::script::Script;
-use crate::blockdata::transaction::{ TxOut, Transaction};
-use crate::consensus::{encode, Encodable, Decodable};
+use crate::blockdata::transaction::{Transaction, TxOut};
 use crate::consensus::encode::MAX_VEC_SIZE;
-pub use crate::util::sighash::Prevouts;
-
-use crate::prelude::*;
-
+use crate::consensus::{encode, Decodable, Encodable};
 use crate::io;
+use crate::prelude::*;
+pub use crate::util::sighash::Prevouts;
 mod error;
 pub use self::error::Error;
 
@@ -41,9 +39,8 @@ mod macros;
 pub mod serialize;
 
 mod map;
-pub use self::map::{Input, Output, TapTree, PsbtSighashType, IncompleteTapTree};
 use self::map::Map;
-
+pub use self::map::{IncompleteTapTree, Input, Output, PsbtSighashType, TapTree};
 use crate::util::bip32::{ExtendedPubKey, KeySource};
 
 /// Partially signed transaction, commonly referred to as a PSBT.
@@ -61,10 +58,16 @@ pub struct PartiallySignedTransaction {
     /// derivation path as defined by BIP 32.
     pub xpub: BTreeMap<ExtendedPubKey, KeySource>,
     /// Global proprietary key-value pairs.
-    #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq_byte_values"))]
+    #[cfg_attr(
+        feature = "serde",
+        serde(with = "crate::serde_utils::btreemap_as_seq_byte_values")
+    )]
     pub proprietary: BTreeMap<raw::ProprietaryKey, Vec<u8>>,
     /// Unknown global key-value pairs.
-    #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq_byte_values"))]
+    #[cfg_attr(
+        feature = "serde",
+        serde(with = "crate::serde_utils::btreemap_as_seq_byte_values")
+    )]
     pub unknown: BTreeMap<raw::Key, Vec<u8>>,
 
     /// The corresponding key-value map for each input in the unsigned transaction.
@@ -94,7 +97,7 @@ impl PartiallySignedTransaction {
                 (None, Some(non_witness_utxo)) => {
                     let vout = tx_input.previous_output.vout as usize;
                     non_witness_utxo.output.get(vout).ok_or(Error::PsbtUtxoOutOfbounds)
-                },
+                }
                 (None, None) => Err(Error::MissingUtxo),
             }
         })
@@ -169,7 +172,7 @@ impl PartiallySignedTransaction {
             match self.xpub.entry(xpub) {
                 btree_map::Entry::Vacant(entry) => {
                     entry.insert((fingerprint1, derivation1));
-                },
+                }
                 btree_map::Entry::Occupied(mut entry) => {
                     // Here in case of the conflict we select the version with algorithm:
                     // 1) if everything is equal we do nothing
@@ -182,15 +185,17 @@ impl PartiallySignedTransaction {
 
                     let (fingerprint2, derivation2) = entry.get().clone();
 
-                    if (derivation1 == derivation2 && fingerprint1 == fingerprint2) ||
-                        (derivation1.len() < derivation2.len() && derivation1[..] == derivation2[derivation2.len() - derivation1.len()..])
+                    if (derivation1 == derivation2 && fingerprint1 == fingerprint2)
+                        || (derivation1.len() < derivation2.len()
+                            && derivation1[..]
+                                == derivation2[derivation2.len() - derivation1.len()..])
                     {
-                        continue
-                    }
-                    else if derivation2[..] == derivation1[derivation1.len() - derivation2.len()..]
+                        continue;
+                    } else if derivation2[..]
+                        == derivation1[derivation1.len() - derivation2.len()..]
                     {
                         entry.insert((fingerprint1, derivation1));
-                        continue
+                        continue;
                     }
                     return Err(Error::CombineInconsistentKeySources(Box::new(xpub)));
                 }
@@ -214,11 +219,13 @@ impl PartiallySignedTransaction {
 
 #[cfg(feature = "base64")]
 mod display_from_str {
-    use super::PartiallySignedTransaction;
-    use core::fmt::{Display, Formatter, self};
+    use core::fmt::{self, Display, Formatter};
     use core::str::FromStr;
-    use crate::consensus::encode::{Error, self};
+
     use base64::display::Base64Display;
+
+    use super::PartiallySignedTransaction;
+    use crate::consensus::encode::{self, Error};
 
     /// Error encountered during PSBT decoding from Base64 string.
     #[derive(Debug)]
@@ -227,7 +234,7 @@ mod display_from_str {
         /// Error in internal PSBT data structure.
         PsbtEncoding(Error),
         /// Error in PSBT Base64 encoding.
-        Base64Encoding(::base64::DecodeError)
+        Base64Encoding(::base64::DecodeError),
     }
 
     impl Display for PsbtParseError {
@@ -255,7 +262,11 @@ mod display_from_str {
     #[cfg_attr(docsrs, doc(cfg(feature = "base64")))]
     impl Display for PartiallySignedTransaction {
         fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-            write!(f, "{}", Base64Display::with_config(&encode::serialize(self), ::base64::STANDARD))
+            write!(
+                f,
+                "{}",
+                Base64Display::with_config(&encode::serialize(self), ::base64::STANDARD)
+            )
         }
     }
 
@@ -342,24 +353,24 @@ impl Decodable for PartiallySignedTransaction {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
-    use crate::hashes::hex::FromHex;
-    use crate::hashes::{sha256, hash160, Hash, ripemd160};
-    use crate::hash_types::Txid;
-
-    use secp256k1::{Secp256k1, self};
-
-    use crate::blockdata::script::Script;
-    use crate::blockdata::transaction::{Transaction, TxIn, TxOut, OutPoint};
-    use crate::network::constants::Network::Bitcoin;
-    use crate::consensus::encode::{deserialize, serialize, serialize_hex};
-    use crate::util::bip32::{ChildNumber, ExtendedPrivKey, ExtendedPubKey, Fingerprint, KeySource};
-    use crate::util::psbt::map::{Output, Input};
-    use crate::util::psbt::raw;
-
     use std::collections::BTreeMap;
+
+    use secp256k1::{self, Secp256k1};
+
+    use super::*;
+    use crate::blockdata::script::Script;
+    use crate::blockdata::transaction::{OutPoint, Transaction, TxIn, TxOut};
     use crate::blockdata::witness::Witness;
+    use crate::consensus::encode::{deserialize, serialize, serialize_hex};
+    use crate::hash_types::Txid;
+    use crate::hashes::hex::FromHex;
+    use crate::hashes::{hash160, ripemd160, sha256, Hash};
+    use crate::network::constants::Network::Bitcoin;
+    use crate::util::bip32::{
+        ChildNumber, ExtendedPrivKey, ExtendedPubKey, Fingerprint, KeySource,
+    };
+    use crate::util::psbt::map::{Input, Output};
+    use crate::util::psbt::raw;
 
     #[test]
     fn trivial_psbt() {
@@ -382,14 +393,13 @@ mod tests {
     }
 
     #[test]
-   fn psbt_uncompressed_key() {
+    fn psbt_uncompressed_key() {
+        let psbt: PartiallySignedTransaction = hex_psbt!("70736274ff01003302000000010000000000000000000000000000000000000000000000000000000000000000ffffffff00ffffffff000000000000420204bb0d5d0cca36e7b9c80f63bc04c1240babb83bcd2803ef7ac8b6e2af594291daec281e856c98d210c5ab14dfd5828761f8ee7d5f45ca21ad3e4c4b41b747a3a047304402204f67e2afb76142d44fae58a2495d33a3419daa26cd0db8d04f3452b63289ac0f022010762a9fb67e94cc5cad9026f6dc99ff7f070f4278d30fbc7d0c869dd38c7fe70100").unwrap();
 
-       let psbt: PartiallySignedTransaction = hex_psbt!("70736274ff01003302000000010000000000000000000000000000000000000000000000000000000000000000ffffffff00ffffffff000000000000420204bb0d5d0cca36e7b9c80f63bc04c1240babb83bcd2803ef7ac8b6e2af594291daec281e856c98d210c5ab14dfd5828761f8ee7d5f45ca21ad3e4c4b41b747a3a047304402204f67e2afb76142d44fae58a2495d33a3419daa26cd0db8d04f3452b63289ac0f022010762a9fb67e94cc5cad9026f6dc99ff7f070f4278d30fbc7d0c869dd38c7fe70100").unwrap();
-
-       assert!(psbt.inputs[0].partial_sigs.len() == 1);
-       let pk = psbt.inputs[0].partial_sigs.iter().next().unwrap().0;
-       assert!(!pk.compressed);
-   }
+        assert!(psbt.inputs[0].partial_sigs.len() == 1);
+        let pk = psbt.inputs[0].partial_sigs.iter().next().unwrap().0;
+        assert!(!pk.compressed);
+    }
 
     #[test]
     fn serialize_then_deserialize_output() {
@@ -441,7 +451,8 @@ mod tests {
                     previous_output: OutPoint {
                         txid: Txid::from_hex(
                             "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126",
-                        ).unwrap(),
+                        )
+                        .unwrap(),
                         vout: 0,
                     },
                     script_sig: Script::new(),
@@ -479,10 +490,7 @@ mod tests {
     #[test]
     fn serialize_then_deserialize_psbtkvpair() {
         let expected = raw::Pair {
-            key: raw::Key {
-                type_value: 0u8,
-                key: vec![42u8, 69u8],
-            },
+            key: raw::Key { type_value: 0u8, key: vec![42u8, 69u8] },
             value: vec![69u8, 42u8, 4u8],
         };
 
@@ -503,6 +511,7 @@ mod tests {
     fn test_serde_psbt() {
         //! Create a full PSBT value with various fields filled and make sure it can be JSONized.
         use hashes::sha256d;
+
         use crate::util::psbt::map::Input;
         use crate::EcdsaSighashType;
 
@@ -512,29 +521,37 @@ mod tests {
             lock_time: 0,
             input: vec![TxIn {
                 previous_output: OutPoint {
-                    txid: Txid::from_hex("e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389").unwrap(),
+                    txid: Txid::from_hex(
+                        "e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389",
+                    )
+                    .unwrap(),
                     vout: 1,
                 },
                 script_sig: hex_script!("160014be18d152a9b012039daf3da7de4f53349eecb985"),
                 sequence: 4294967295,
-                witness: Witness::from_vec(vec![Vec::from_hex("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105").unwrap()]),
+                witness: Witness::from_vec(vec![Vec::from_hex(
+                    "03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105",
+                )
+                .unwrap()]),
             }],
-            output: vec![
-                TxOut {
-                    value: 190303501938,
-                    script_pubkey: hex_script!("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587"),
-                },
-            ],
+            output: vec![TxOut {
+                value: 190303501938,
+                script_pubkey: hex_script!("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587"),
+            }],
         };
-        let unknown: BTreeMap<raw::Key, Vec<u8>> = vec![(
-            raw::Key { type_value: 1, key: vec![0, 1] },
-            vec![3, 4 ,5],
-        )].into_iter().collect();
+        let unknown: BTreeMap<raw::Key, Vec<u8>> =
+            vec![(raw::Key { type_value: 1, key: vec![0, 1] }, vec![3, 4, 5])]
+                .into_iter()
+                .collect();
         let key_source = ("deadbeef".parse().unwrap(), "m/0'/1".parse().unwrap());
         let keypaths: BTreeMap<secp256k1::PublicKey, KeySource> = vec![(
-            "0339880dc92394b7355e3d0439fa283c31de7590812ea011c4245c0674a685e883".parse().unwrap(),
+            "0339880dc92394b7355e3d0439fa283c31de7590812ea011c4245c0674a685e883"
+                .parse()
+                .unwrap(),
             key_source.clone(),
-        )].into_iter().collect();
+        )]
+        .into_iter()
+        .collect();
 
         let proprietary: BTreeMap<raw::ProprietaryKey, Vec<u8>> = vec![(
             raw::ProprietaryKey {
@@ -543,7 +560,9 @@ mod tests {
                 key: "test_key".as_bytes().to_vec(),
             },
             vec![5, 6, 7],
-        )].into_iter().collect();
+        )]
+        .into_iter()
+        .collect();
 
         let psbt = PartiallySignedTransaction {
             version: 0,
@@ -598,20 +617,18 @@ mod tests {
     }
 
     mod bip_vectors {
+        use std::collections::BTreeMap;
         #[cfg(feature = "base64")]
         use std::str::FromStr;
 
-        use crate::hashes::hex::FromHex;
-        use crate::hash_types::Txid;
-
         use crate::blockdata::script::Script;
-        use crate::blockdata::transaction::{EcdsaSighashType, Transaction, TxIn, TxOut, OutPoint};
-        use crate::consensus::encode::serialize_hex;
-        use crate::util::psbt::map::{Map, Input, Output};
-        use crate::util::psbt::raw;
-        use crate::util::psbt::{PartiallySignedTransaction, Error};
-        use std::collections::BTreeMap;
+        use crate::blockdata::transaction::{EcdsaSighashType, OutPoint, Transaction, TxIn, TxOut};
         use crate::blockdata::witness::Witness;
+        use crate::consensus::encode::serialize_hex;
+        use crate::hash_types::Txid;
+        use crate::hashes::hex::FromHex;
+        use crate::util::psbt::map::{Input, Map, Output};
+        use crate::util::psbt::{raw, Error, PartiallySignedTransaction};
 
         #[test]
         #[should_panic(expected = "InvalidMagic")]
@@ -782,11 +799,15 @@ mod tests {
             assert_eq!(serialize_hex(&unserialized), base16str);
             assert_eq!(unserialized, hex_psbt!(base16str).unwrap());
 
-            #[cfg(feature = "base64")] {
+            #[cfg(feature = "base64")]
+            {
                 let base64str = "cHNidP8BAHUCAAAAASaBcTce3/KF6Tet7qSze3gADAVmy7OtZGQXE8pCFxv2AAAAAAD+////AtPf9QUAAAAAGXapFNDFmQPFusKGh2DpD9UhpGZap2UgiKwA4fUFAAAAABepFDVF5uM7gyxHBQ8k0+65PJwDlIvHh7MuEwAAAQD9pQEBAAAAAAECiaPHHqtNIOA3G7ukzGmPopXJRjr6Ljl/hTPMti+VZ+UBAAAAFxYAFL4Y0VKpsBIDna89p95PUzSe7LmF/////4b4qkOnHf8USIk6UwpyN+9rRgi7st0tAXHmOuxqSJC0AQAAABcWABT+Pp7xp0XpdNkCxDVZQ6vLNL1TU/////8CAMLrCwAAAAAZdqkUhc/xCX/Z4Ai7NK9wnGIZeziXikiIrHL++E4sAAAAF6kUM5cluiHv1irHU6m80GfWx6ajnQWHAkcwRAIgJxK+IuAnDzlPVoMR3HyppolwuAJf3TskAinwf4pfOiQCIAGLONfc0xTnNMkna9b7QPZzMlvEuqFEyADS8vAtsnZcASED0uFWdJQbrUqZY3LLh+GFbTZSYG2YVi/jnF6efkE/IQUCSDBFAiEA0SuFLYXc2WHS9fSrZgZU327tzHlMDDPOXMMJ/7X85Y0CIGczio4OFyXBl/saiK9Z9R5E5CVbIBZ8hoQDHAXR8lkqASECI7cr7vCWXRC+B3jv7NYfysb3mk6haTkzgHNEZPhPKrMAAAAAAAAA";
                 assert_eq!(PartiallySignedTransaction::from_str(base64str).unwrap(), unserialized);
                 assert_eq!(base64str, unserialized.to_string());
-                assert_eq!(PartiallySignedTransaction::from_str(base64str).unwrap(), hex_psbt!(base16str).unwrap());
+                assert_eq!(
+                    PartiallySignedTransaction::from_str(base64str).unwrap(),
+                    hex_psbt!(base16str).unwrap()
+                );
             }
         }
 
@@ -826,9 +847,8 @@ mod tests {
 
             assert_eq!(tx_input.previous_output.txid, psbt_non_witness_utxo.txid());
             assert!(psbt_non_witness_utxo.output[tx_input.previous_output.vout as usize]
-                    .script_pubkey
-                    .is_p2pkh()
-            );
+                .script_pubkey
+                .is_p2pkh());
             assert_eq!(
                 (&psbt.inputs[0].sighash_type).as_ref().unwrap().ecdsa_hash_ty().unwrap(),
                 EcdsaSighashType::All
@@ -891,7 +911,8 @@ mod tests {
             let tx = &psbt.unsigned_tx;
             assert_eq!(
                 tx.txid(),
-                Txid::from_hex("75c5c9665a570569ad77dd1279e6fd4628a093c4dcbf8d41532614044c14c115").unwrap(),
+                Txid::from_hex("75c5c9665a570569ad77dd1279e6fd4628a093c4dcbf8d41532614044c14c115")
+                    .unwrap(),
             );
 
             let mut unknown: BTreeMap<raw::Key, Vec<u8>> = BTreeMap::new();
@@ -908,8 +929,7 @@ mod tests {
     }
 
     mod bip_371_vectors {
-        use super::*;
-        use super::serialize;
+        use super::{serialize, *};
 
         #[test]
         fn invalid_vectors() {
@@ -924,7 +944,10 @@ mod tests {
             let err = hex_psbt!("70736274ff01007d020000000127744ababf3027fe0d6cf23a96eee2efb188ef52301954585883e69b6624b2420000000000ffffffff02887b0100000000001600142382871c7e8421a00093f754d91281e675874b9f606b042a010000002251205a2c2cf5b52cf31f83ad2e8da63ff03183ecd8f609c7510ae8a48e03910a0757000000000001012b00f2052a010000002251205a2c2cf5b52cf31f83ad2e8da63ff03183ecd8f609c7510ae8a48e03910a07570000220702fe349064c98d6e2a853fa3c9b12bd8b304a19c195c60efa7ee2393046d3fa2321900772b2da7560000800100008000000080010000000000000000").unwrap_err();
             assert_eq!(err.to_string(), "parse failed: Invalid xonly public key");
             let err = hex_psbt!("70736274ff01005e02000000019bd48765230bf9a72e662001f972556e54f0c6f97feb56bcb5600d817f6995260100000000ffffffff0148e6052a01000000225120030da4fce4f7db28c2cb2951631e003713856597fe963882cb500e68112cca63000000000001012b00f2052a01000000225120c2247efbfd92ac47f6f40b8d42d169175a19fa9fa10e4a25d7f35eb4dd85b6924214022cb13ac68248de806aa6a3659cf3c03eb6821d09c8114a4e868febde865bb6d2cd970e15f53fc0c82f950fd560ffa919b76172be017368a89913af074f400b094089756aa3739ccc689ec0fcf3a360be32cc0b59b16e93a1e8bb4605726b2ca7a3ff706c4176649632b2cc68e1f912b8a578e3719ce7710885c7a966f49bcd43cb0000").unwrap_err();
-            assert_eq!(err.to_string(), "PSBT error: Hash Parse Error: bad slice length 33 (expected 32)");
+            assert_eq!(
+                err.to_string(),
+                "PSBT error: Hash Parse Error: bad slice length 33 (expected 32)"
+            );
             let err = hex_psbt!("70736274ff01005e02000000019bd48765230bf9a72e662001f972556e54f0c6f97feb56bcb5600d817f6995260100000000ffffffff0148e6052a01000000225120030da4fce4f7db28c2cb2951631e003713856597fe963882cb500e68112cca63000000000001012b00f2052a01000000225120c2247efbfd92ac47f6f40b8d42d169175a19fa9fa10e4a25d7f35eb4dd85b69241142cb13ac68248de806aa6a3659cf3c03eb6821d09c8114a4e868febde865bb6d2cd970e15f53fc0c82f950fd560ffa919b76172be017368a89913af074f400b094289756aa3739ccc689ec0fcf3a360be32cc0b59b16e93a1e8bb4605726b2ca7a3ff706c4176649632b2cc68e1f912b8a578e3719ce7710885c7a966f49bcd43cb01010000").unwrap_err();
             assert_eq!(err.to_string(), "parse failed: Invalid Schnorr signature length");
             let err = hex_psbt!("70736274ff01005e02000000019bd48765230bf9a72e662001f972556e54f0c6f97feb56bcb5600d817f6995260100000000ffffffff0148e6052a01000000225120030da4fce4f7db28c2cb2951631e003713856597fe963882cb500e68112cca63000000000001012b00f2052a01000000225120c2247efbfd92ac47f6f40b8d42d169175a19fa9fa10e4a25d7f35eb4dd85b69241142cb13ac68248de806aa6a3659cf3c03eb6821d09c8114a4e868febde865bb6d2cd970e15f53fc0c82f950fd560ffa919b76172be017368a89913af074f400b093989756aa3739ccc689ec0fcf3a360be32cc0b59b16e93a1e8bb4605726b2ca7a3ff706c4176649632b2cc68e1f912b8a578e3719ce7710885c7a966f49bcd43cb0000").unwrap_err();
@@ -1104,11 +1127,14 @@ mod tests {
     #[test]
     fn serialize_and_deserialize_proprietary() {
         let mut psbt: PartiallySignedTransaction = hex_psbt!("70736274ff0100a00200000002ab0949a08c5af7c49b8212f417e2f15ab3f5c33dcf153821a8139f877a5b7be40000000000feffffffab0949a08c5af7c49b8212f417e2f15ab3f5c33dcf153821a8139f877a5b7be40100000000feffffff02603bea0b000000001976a914768a40bbd740cbe81d988e71de2a4d5c71396b1d88ac8e240000000000001976a9146f4620b553fa095e721b9ee0efe9fa039cca459788ac000000000001076a47304402204759661797c01b036b25928948686218347d89864b719e1f7fcf57d1e511658702205309eabf56aa4d8891ffd111fdf1336f3a29da866d7f8486d75546ceedaf93190121035cdc61fc7ba971c0b501a646a2a83b102cb43881217ca682dc86e2d73fa882920001012000e1f5050000000017a9143545e6e33b832c47050f24d3eeb93c9c03948bc787010416001485d13537f2e265405a34dbafa9e3dda01fb82308000000").unwrap();
-        psbt.proprietary.insert(raw::ProprietaryKey {
-            prefix: b"test".to_vec(),
-            subtype: 0u8,
-            key: b"test".to_vec(),
-        }, b"test".to_vec());
+        psbt.proprietary.insert(
+            raw::ProprietaryKey {
+                prefix: b"test".to_vec(),
+                subtype: 0u8,
+                key: b"test".to_vec(),
+            },
+            b"test".to_vec(),
+        );
         assert!(!psbt.proprietary.is_empty());
         let rtt: PartiallySignedTransaction = hex_psbt!(&serialize_hex(&psbt)).unwrap();
         assert!(!rtt.proprietary.is_empty());

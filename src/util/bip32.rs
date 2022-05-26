@@ -17,20 +17,22 @@
 //! at <https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki>.
 //!
 
-use crate::prelude::*;
-
-use crate::io::Write;
-use core::{fmt, str::FromStr, default::Default};
+use core::default::Default;
+use core::fmt;
 use core::ops::Index;
-#[cfg(feature = "serde")] use serde;
+use core::str::FromStr;
+
+use secp256k1::{self, Secp256k1, XOnlyPublicKey};
+#[cfg(feature = "serde")]
+use serde;
 
 use crate::hash_types::XpubIdentifier;
-use crate::hashes::{sha512, Hash, HashEngine, Hmac, HmacEngine, hex};
-use secp256k1::{self, Secp256k1, XOnlyPublicKey};
-
+use crate::hashes::{hex, sha512, Hash, HashEngine, Hmac, HmacEngine};
+use crate::io::Write;
 use crate::network::constants::Network;
+use crate::prelude::*;
+use crate::util::key::{KeyPair, PrivateKey, PublicKey};
 use crate::util::{base58, endian, key};
-use crate::util::key::{PublicKey, PrivateKey, KeyPair};
 
 /// A chain code
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -59,7 +61,7 @@ pub struct ExtendedPrivKey {
     /// Private key
     pub private_key: secp256k1::SecretKey,
     /// Chain code
-    pub chain_code: ChainCode
+    pub chain_code: ChainCode,
 }
 serde_string_impl!(ExtendedPrivKey, "a BIP-32 extended private key");
 
@@ -92,7 +94,7 @@ pub struct ExtendedPubKey {
     /// Public key
     pub public_key: secp256k1::PublicKey,
     /// Chain code
-    pub chain_code: ChainCode
+    pub chain_code: ChainCode,
 }
 serde_string_impl!(ExtendedPubKey, "a BIP-32 extended public key");
 
@@ -102,12 +104,12 @@ pub enum ChildNumber {
     /// Non-hardened key
     Normal {
         /// Key index, within [0, 2^31 - 1]
-        index: u32
+        index: u32,
     },
     /// Hardened key
     Hardened {
         /// Key index, within [0, 2^31 - 1]
-        index: u32
+        index: u32,
     },
 }
 
@@ -139,25 +141,23 @@ impl ChildNumber {
     /// Returns `true` if the child number is a [`Normal`] value.
     ///
     /// [`Normal`]: #variant.Normal
-    pub fn is_normal(&self) -> bool {
-        !self.is_hardened()
-    }
+    pub fn is_normal(&self) -> bool { !self.is_hardened() }
 
     /// Returns `true` if the child number is a [`Hardened`] value.
     ///
     /// [`Hardened`]: #variant.Hardened
     pub fn is_hardened(&self) -> bool {
         match self {
-            ChildNumber::Hardened {..} => true,
-            ChildNumber::Normal {..} => false,
+            ChildNumber::Hardened { .. } => true,
+            ChildNumber::Normal { .. } => false,
         }
     }
 
     /// Returns the child number that is a single increment from this one.
     pub fn increment(self) -> Result<ChildNumber, Error> {
         match self {
-            ChildNumber::Normal{ index: idx } => ChildNumber::from_normal_idx(idx+1),
-            ChildNumber::Hardened{ index: idx } => ChildNumber::from_hardened_idx(idx+1),
+            ChildNumber::Normal { index: idx } => ChildNumber::from_normal_idx(idx + 1),
+            ChildNumber::Hardened { index: idx } => ChildNumber::from_hardened_idx(idx + 1),
         }
     }
 }
@@ -188,7 +188,7 @@ impl fmt::Display for ChildNumber {
                 fmt::Display::fmt(&index, f)?;
                 let alt = f.alternate();
                 f.write_str(if alt { "h" } else { "'" })
-            },
+            }
             ChildNumber::Normal { index } => fmt::Display::fmt(&index, f),
         }
     }
@@ -200,7 +200,9 @@ impl FromStr for ChildNumber {
     fn from_str(inp: &str) -> Result<ChildNumber, Error> {
         let is_hardened = inp.chars().last().map_or(false, |l| l == '\'' || l == 'h');
         Ok(if is_hardened {
-            ChildNumber::from_hardened_idx(inp[0..inp.len() - 1].parse().map_err(|_| Error::InvalidChildNumberFormat)?)?
+            ChildNumber::from_hardened_idx(
+                inp[0..inp.len() - 1].parse().map_err(|_| Error::InvalidChildNumberFormat)?,
+            )?
         } else {
             ChildNumber::from_normal_idx(inp.parse().map_err(|_| Error::InvalidChildNumberFormat)?)?
         })
@@ -248,55 +250,45 @@ where
     type Output = <Vec<ChildNumber> as Index<I>>::Output;
 
     #[inline]
-    fn index(&self, index: I) -> &Self::Output {
-        &self.0[index]
-    }
+    fn index(&self, index: I) -> &Self::Output { &self.0[index] }
 }
 
 impl Default for DerivationPath {
-    fn default() -> DerivationPath {
-        DerivationPath::master()
-    }
+    fn default() -> DerivationPath { DerivationPath::master() }
 }
 
-impl<T> IntoDerivationPath for T where T: Into<DerivationPath> {
-    fn into_derivation_path(self) -> Result<DerivationPath, Error> {
-        Ok(self.into())
-    }
+impl<T> IntoDerivationPath for T
+where
+    T: Into<DerivationPath>,
+{
+    fn into_derivation_path(self) -> Result<DerivationPath, Error> { Ok(self.into()) }
 }
 
 impl IntoDerivationPath for String {
-    fn into_derivation_path(self) -> Result<DerivationPath, Error> {
-        self.parse()
-    }
+    fn into_derivation_path(self) -> Result<DerivationPath, Error> { self.parse() }
 }
 
 impl<'a> IntoDerivationPath for &'a str {
-    fn into_derivation_path(self) -> Result<DerivationPath, Error> {
-        self.parse()
-    }
+    fn into_derivation_path(self) -> Result<DerivationPath, Error> { self.parse() }
 }
 
 impl From<Vec<ChildNumber>> for DerivationPath {
-    fn from(numbers: Vec<ChildNumber>) -> Self {
-        DerivationPath(numbers)
-    }
+    fn from(numbers: Vec<ChildNumber>) -> Self { DerivationPath(numbers) }
 }
 
 impl Into<Vec<ChildNumber>> for DerivationPath {
-    fn into(self) -> Vec<ChildNumber> {
-        self.0
-    }
+    fn into(self) -> Vec<ChildNumber> { self.0 }
 }
 
 impl<'a> From<&'a [ChildNumber]> for DerivationPath {
-    fn from(numbers: &'a [ChildNumber]) -> Self {
-        DerivationPath(numbers.to_vec())
-    }
+    fn from(numbers: &'a [ChildNumber]) -> Self { DerivationPath(numbers.to_vec()) }
 }
 
 impl ::core::iter::FromIterator<ChildNumber> for DerivationPath {
-    fn from_iter<T>(iter: T) -> Self where T: IntoIterator<Item=ChildNumber> {
+    fn from_iter<T>(iter: T) -> Self
+    where
+        T: IntoIterator<Item = ChildNumber>,
+    {
         DerivationPath(Vec::from_iter(iter))
     }
 }
@@ -304,15 +296,11 @@ impl ::core::iter::FromIterator<ChildNumber> for DerivationPath {
 impl<'a> ::core::iter::IntoIterator for &'a DerivationPath {
     type Item = &'a ChildNumber;
     type IntoIter = slice::Iter<'a, ChildNumber>;
-    fn into_iter(self) -> Self::IntoIter {
-        self.0.iter()
-    }
+    fn into_iter(self) -> Self::IntoIter { self.0.iter() }
 }
 
 impl AsRef<[ChildNumber]> for DerivationPath {
-    fn as_ref(&self) -> &[ChildNumber] {
-        &self.0
-    }
+    fn as_ref(&self) -> &[ChildNumber] { &self.0 }
 }
 
 impl FromStr for DerivationPath {
@@ -342,10 +330,7 @@ pub struct DerivationPathIterator<'a> {
 impl<'a> DerivationPathIterator<'a> {
     /// Start a new [DerivationPathIterator] at the given child.
     pub fn start_from(path: &'a DerivationPath, start: ChildNumber) -> DerivationPathIterator<'a> {
-        DerivationPathIterator {
-            base: path,
-            next_child: Some(start),
-        }
+        DerivationPathIterator { base: path, next_child: Some(start) }
     }
 }
 
@@ -361,25 +346,17 @@ impl<'a> Iterator for DerivationPathIterator<'a> {
 
 impl DerivationPath {
     /// Returns length of the derivation path
-    pub fn len(&self) -> usize {
-        self.0.len()
-    }
+    pub fn len(&self) -> usize { self.0.len() }
 
     /// Returns `true` if the derivation path is empty
-    pub fn is_empty(&self) -> bool {
-        self.0.is_empty()
-    }
+    pub fn is_empty(&self) -> bool { self.0.is_empty() }
 
     /// Returns derivation path for a master key (i.e. empty derivation path)
-    pub fn master() -> DerivationPath {
-        DerivationPath(vec![])
-    }
+    pub fn master() -> DerivationPath { DerivationPath(vec![]) }
 
     /// Returns whether derivation path represents master key (i.e. it's length
     /// is empty). True for `m` path.
-    pub fn is_master(&self) -> bool {
-        self.0.is_empty()
-    }
+    pub fn is_master(&self) -> bool { self.0.is_empty() }
 
     /// Create a new [DerivationPath] that is a child of this one.
     pub fn child(&self, cn: ChildNumber) -> DerivationPath {
@@ -403,12 +380,12 @@ impl DerivationPath {
 
     /// Get an [Iterator] over the unhardened children of this [DerivationPath].
     pub fn normal_children(&self) -> DerivationPathIterator {
-        DerivationPathIterator::start_from(self, ChildNumber::Normal{ index: 0 })
+        DerivationPathIterator::start_from(self, ChildNumber::Normal { index: 0 })
     }
 
     /// Get an [Iterator] over the hardened children of this [DerivationPath].
     pub fn hardened_children(&self) -> DerivationPathIterator {
-        DerivationPathIterator::start_from(self, ChildNumber::Hardened{ index: 0 })
+        DerivationPathIterator::start_from(self, ChildNumber::Hardened { index: 0 })
     }
 
     /// Concatenate `self` with `path` and return the resulting new path.
@@ -446,9 +423,7 @@ impl fmt::Display for DerivationPath {
 }
 
 impl fmt::Debug for DerivationPath {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::Display::fmt(&self, f)
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self, f) }
 }
 
 /// Full information on the used extended public key: fingerprint of the
@@ -475,21 +450,25 @@ pub enum Error {
     /// Base58 encoding error
     Base58(base58::Error),
     /// Hexadecimal decoding error
-    Hex(hex::Error)
+    Hex(hex::Error),
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Error::CannotDeriveFromHardenedKey => f.write_str("cannot derive hardened key from public key"),
+            Error::CannotDeriveFromHardenedKey =>
+                f.write_str("cannot derive hardened key from public key"),
             Error::Secp256k1(ref e) => fmt::Display::fmt(e, f),
-            Error::InvalidChildNumber(ref n) => write!(f, "child number {} is invalid (not within [0, 2^31 - 1])", n),
+            Error::InvalidChildNumber(ref n) =>
+                write!(f, "child number {} is invalid (not within [0, 2^31 - 1])", n),
             Error::InvalidChildNumberFormat => f.write_str("invalid child number format"),
             Error::InvalidDerivationPathFormat => f.write_str("invalid derivation path format"),
-            Error::UnknownVersion(ref bytes) => write!(f, "unknown version magic bytes: {:?}", bytes),
-            Error::WrongExtendedKeyLength(ref len) => write!(f, "encoded extended key data has wrong length {}", len),
+            Error::UnknownVersion(ref bytes) =>
+                write!(f, "unknown version magic bytes: {:?}", bytes),
+            Error::WrongExtendedKeyLength(ref len) =>
+                write!(f, "encoded extended key data has wrong length {}", len),
             Error::Base58(ref err) => write!(f, "base58 encoding error: {}", err),
-            Error::Hex(ref e) => write!(f, "Hexadecimal decoding error: {}", e)
+            Error::Hex(ref e) => write!(f, "Hexadecimal decoding error: {}", e),
         }
     }
 }
@@ -520,7 +499,7 @@ impl From<key::Error> for Error {
             key::Error::Base58(e) => Error::Base58(e),
             key::Error::Secp256k1(e) => Error::Secp256k1(e),
             key::Error::InvalidKeyPrefix(_) => Error::Secp256k1(secp256k1::Error::InvalidPublicKey),
-            key::Error::Hex(e) => Error::Hex(e)
+            key::Error::Hex(e) => Error::Hex(e),
         }
     }
 }
@@ -530,9 +509,7 @@ impl From<secp256k1::Error> for Error {
 }
 
 impl From<base58::Error> for Error {
-    fn from(err: base58::Error) -> Self {
-        Error::Base58(err)
-    }
+    fn from(err: base58::Error) -> Self { Error::Base58(err) }
 }
 
 impl ExtendedPrivKey {
@@ -557,14 +534,15 @@ impl ExtendedPrivKey {
         PrivateKey {
             compressed: true,
             network: self.network,
-            inner: self.private_key
+            inner: self.private_key,
         }
     }
 
     /// Constructs BIP340 keypair for Schnorr signatures and Taproot use matching the internal
     /// secret key representation.
     pub fn to_keypair<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> KeyPair {
-        KeyPair::from_seckey_slice(secp, &self.private_key[..]).expect("BIP32 internal private key representation is broken")
+        KeyPair::from_seckey_slice(secp, &self.private_key[..])
+            .expect("BIP32 internal private key representation is broken")
     }
 
     /// Attempts to derive an extended private key from a path.
@@ -583,12 +561,18 @@ impl ExtendedPrivKey {
     }
 
     /// Private->Private child key derivation
-    pub fn ckd_priv<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>, i: ChildNumber) -> Result<ExtendedPrivKey, Error> {
+    pub fn ckd_priv<C: secp256k1::Signing>(
+        &self,
+        secp: &Secp256k1<C>,
+        i: ChildNumber,
+    ) -> Result<ExtendedPrivKey, Error> {
         let mut hmac_engine: HmacEngine<sha512::Hash> = HmacEngine::new(&self.chain_code[..]);
         match i {
             ChildNumber::Normal { .. } => {
                 // Non-hardened key: compute public data and use that
-                hmac_engine.input(&secp256k1::PublicKey::from_secret_key(secp, &self.private_key).serialize()[..]);
+                hmac_engine.input(
+                    &secp256k1::PublicKey::from_secret_key(secp, &self.private_key).serialize()[..],
+                );
             }
             ChildNumber::Hardened { .. } => {
                 // Hardened key: use only secret data to prevent public derivation
@@ -608,14 +592,14 @@ impl ExtendedPrivKey {
             parent_fingerprint: self.fingerprint(secp),
             child_number: i,
             private_key: sk,
-            chain_code: ChainCode::from(&hmac_result[32..])
+            chain_code: ChainCode::from(&hmac_result[32..]),
         })
     }
 
     /// Decoding extended private key from binary data according to BIP 32
     pub fn decode(data: &[u8]) -> Result<ExtendedPrivKey, Error> {
         if data.len() != 78 {
-            return Err(Error::WrongExtendedKeyLength(data.len()))
+            return Err(Error::WrongExtendedKeyLength(data.len()));
         }
 
         let network = if data[0..4] == [0x04u8, 0x88, 0xAD, 0xE4] {
@@ -641,10 +625,12 @@ impl ExtendedPrivKey {
     /// Extended private key binary encoding according to BIP 32
     pub fn encode(&self) -> [u8; 78] {
         let mut ret = [0; 78];
-        ret[0..4].copy_from_slice(&match self.network {
-            Network::Bitcoin => [0x04, 0x88, 0xAD, 0xE4],
-            Network::Testnet | Network::Signet | Network::Regtest => [0x04, 0x35, 0x83, 0x94],
-        }[..]);
+        ret[0..4].copy_from_slice(
+            &match self.network {
+                Network::Bitcoin => [0x04, 0x88, 0xAD, 0xE4],
+                Network::Testnet | Network::Signet | Network::Regtest => [0x04, 0x35, 0x83, 0x94],
+            }[..],
+        );
         ret[4] = self.depth as u8;
         ret[5..9].copy_from_slice(&self.parent_fingerprint[..]);
         ret[9..13].copy_from_slice(&endian::u32_to_array_be(u32::from(self.child_number)));
@@ -668,35 +654,34 @@ impl ExtendedPrivKey {
 impl ExtendedPubKey {
     /// Derives a public key from a private key
     #[deprecated(since = "0.28.0", note = "use ExtendedPubKey::from_priv")]
-    pub fn from_private<C: secp256k1::Signing>(secp: &Secp256k1<C>, sk: &ExtendedPrivKey) -> ExtendedPubKey {
+    pub fn from_private<C: secp256k1::Signing>(
+        secp: &Secp256k1<C>,
+        sk: &ExtendedPrivKey,
+    ) -> ExtendedPubKey {
         ExtendedPubKey::from_priv(secp, sk)
     }
 
     /// Derives a public key from a private key
-    pub fn from_priv<C: secp256k1::Signing>(secp: &Secp256k1<C>, sk: &ExtendedPrivKey) -> ExtendedPubKey {
+    pub fn from_priv<C: secp256k1::Signing>(
+        secp: &Secp256k1<C>,
+        sk: &ExtendedPrivKey,
+    ) -> ExtendedPubKey {
         ExtendedPubKey {
             network: sk.network,
             depth: sk.depth,
             parent_fingerprint: sk.parent_fingerprint,
             child_number: sk.child_number,
             public_key: secp256k1::PublicKey::from_secret_key(secp, &sk.private_key),
-            chain_code: sk.chain_code
+            chain_code: sk.chain_code,
         }
     }
 
     /// Constructs ECDSA compressed public key matching internal public key representation.
-    pub fn to_pub(&self) -> PublicKey {
-        PublicKey {
-            compressed: true,
-            inner: self.public_key
-        }
-    }
+    pub fn to_pub(&self) -> PublicKey { PublicKey { compressed: true, inner: self.public_key } }
 
     /// Constructs BIP340 x-only public key for BIP-340 signatures and Taproot use matching
     /// the internal public key representation.
-    pub fn to_x_only_pub(&self) -> XOnlyPublicKey {
-        XOnlyPublicKey::from(self.public_key)
-    }
+    pub fn to_x_only_pub(&self) -> XOnlyPublicKey { XOnlyPublicKey::from(self.public_key) }
 
     /// Attempts to derive an extended public key from a path.
     ///
@@ -714,13 +699,15 @@ impl ExtendedPubKey {
     }
 
     /// Compute the scalar tweak added to this key to get a child key
-    pub fn ckd_pub_tweak(&self, i: ChildNumber) -> Result<(secp256k1::SecretKey, ChainCode), Error> {
+    pub fn ckd_pub_tweak(
+        &self,
+        i: ChildNumber,
+    ) -> Result<(secp256k1::SecretKey, ChainCode), Error> {
         match i {
-            ChildNumber::Hardened { .. } => {
-                Err(Error::CannotDeriveFromHardenedKey)
-            }
+            ChildNumber::Hardened { .. } => Err(Error::CannotDeriveFromHardenedKey),
             ChildNumber::Normal { index: n } => {
-                let mut hmac_engine: HmacEngine<sha512::Hash> = HmacEngine::new(&self.chain_code[..]);
+                let mut hmac_engine: HmacEngine<sha512::Hash> =
+                    HmacEngine::new(&self.chain_code[..]);
                 hmac_engine.input(&self.public_key.serialize()[..]);
                 hmac_engine.input(&endian::u32_to_array_be(n));
 
@@ -756,7 +743,7 @@ impl ExtendedPubKey {
     /// Decoding extended public key from binary data according to BIP 32
     pub fn decode(data: &[u8]) -> Result<ExtendedPubKey, Error> {
         if data.len() != 78 {
-            return Err(Error::WrongExtendedKeyLength(data.len()))
+            return Err(Error::WrongExtendedKeyLength(data.len()));
         }
 
         Ok(ExtendedPubKey {
@@ -780,10 +767,12 @@ impl ExtendedPubKey {
     /// Extended public key binary encoding according to BIP 32
     pub fn encode(&self) -> [u8; 78] {
         let mut ret = [0; 78];
-        ret[0..4].copy_from_slice(&match self.network {
-            Network::Bitcoin => [0x04u8, 0x88, 0xB2, 0x1E],
-            Network::Testnet | Network::Signet | Network::Regtest => [0x04u8, 0x35, 0x87, 0xCF],
-        }[..]);
+        ret[0..4].copy_from_slice(
+            &match self.network {
+                Network::Bitcoin => [0x04u8, 0x88, 0xB2, 0x1E],
+                Network::Testnet | Network::Signet | Network::Regtest => [0x04u8, 0x35, 0x87, 0xCF],
+            }[..],
+        );
         ret[4] = self.depth as u8;
         ret[5..9].copy_from_slice(&self.parent_fingerprint[..]);
         ret[9..13].copy_from_slice(&endian::u32_to_array_be(u32::from(self.child_number)));
@@ -800,9 +789,7 @@ impl ExtendedPubKey {
     }
 
     /// Returns the first four bytes of the identifier
-    pub fn fingerprint(&self) -> Fingerprint {
-        Fingerprint::from(&self.identifier()[0..4])
-    }
+    pub fn fingerprint(&self) -> Fingerprint { Fingerprint::from(&self.identifier()[0..4]) }
 }
 
 impl fmt::Display for ExtendedPrivKey {
@@ -847,14 +834,13 @@ impl FromStr for ExtendedPubKey {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use super::ChildNumber::{Hardened, Normal};
-
     use core::str::FromStr;
 
     use secp256k1::{self, Secp256k1};
-    use crate::hashes::hex::FromHex;
 
+    use super::ChildNumber::{Hardened, Normal};
+    use super::*;
+    use crate::hashes::hex::FromHex;
     use crate::network::constants::Network::{self, Bitcoin};
 
     #[test]
@@ -864,7 +850,10 @@ mod tests {
         assert_eq!(DerivationPath::from_str("4/m/5"), Err(Error::InvalidDerivationPathFormat));
         assert_eq!(DerivationPath::from_str("m//3/0'"), Err(Error::InvalidChildNumberFormat));
         assert_eq!(DerivationPath::from_str("m/0h/0x"), Err(Error::InvalidChildNumberFormat));
-        assert_eq!(DerivationPath::from_str("m/2147483648"), Err(Error::InvalidChildNumber(2147483648)));
+        assert_eq!(
+            DerivationPath::from_str("m/2147483648"),
+            Err(Error::InvalidChildNumber(2147483648))
+        );
 
         assert_eq!(DerivationPath::master(), DerivationPath::from_str("m").unwrap());
         assert_eq!(DerivationPath::master(), DerivationPath::default());
@@ -875,7 +864,11 @@ mod tests {
         );
         assert_eq!(
             DerivationPath::from_str("m/0'/1"),
-            Ok(vec![ChildNumber::from_hardened_idx(0).unwrap(), ChildNumber::from_normal_idx(1).unwrap()].into())
+            Ok(vec![
+                ChildNumber::from_hardened_idx(0).unwrap(),
+                ChildNumber::from_normal_idx(1).unwrap()
+            ]
+            .into())
         );
         assert_eq!(
             DerivationPath::from_str("m/0h/1/2'"),
@@ -883,7 +876,8 @@ mod tests {
                 ChildNumber::from_hardened_idx(0).unwrap(),
                 ChildNumber::from_normal_idx(1).unwrap(),
                 ChildNumber::from_hardened_idx(2).unwrap(),
-            ].into())
+            ]
+            .into())
         );
         assert_eq!(
             DerivationPath::from_str("m/0'/1/2h/2"),
@@ -892,7 +886,8 @@ mod tests {
                 ChildNumber::from_normal_idx(1).unwrap(),
                 ChildNumber::from_hardened_idx(2).unwrap(),
                 ChildNumber::from_normal_idx(2).unwrap(),
-            ].into())
+            ]
+            .into())
         );
         assert_eq!(
             DerivationPath::from_str("m/0'/1/2'/2/1000000000"),
@@ -902,7 +897,8 @@ mod tests {
                 ChildNumber::from_hardened_idx(2).unwrap(),
                 ChildNumber::from_normal_idx(2).unwrap(),
                 ChildNumber::from_normal_idx(1000000000).unwrap(),
-            ].into())
+            ]
+            .into())
         );
         let s = "m/0'/50/3'/5/545456";
         assert_eq!(DerivationPath::from_str(s), s.into_derivation_path());
@@ -915,7 +911,13 @@ mod tests {
         let numbers: Vec<ChildNumber> = path.clone().into();
         let path2: DerivationPath = numbers.into();
         assert_eq!(path, path2);
-        assert_eq!(&path[..2], &[ChildNumber::from_hardened_idx(0).unwrap(), ChildNumber::from_normal_idx(1).unwrap()]);
+        assert_eq!(
+            &path[..2],
+            &[
+                ChildNumber::from_hardened_idx(0).unwrap(),
+                ChildNumber::from_normal_idx(1).unwrap()
+            ]
+        );
         let indexed: DerivationPath = path[..2].into();
         assert_eq!(indexed, DerivationPath::from_str("m/0h/1").unwrap());
         assert_eq!(indexed.child(ChildNumber::from_hardened_idx(2).unwrap()), path);
@@ -927,8 +929,8 @@ mod tests {
         seed: &[u8],
         path: DerivationPath,
         expected_sk: &str,
-        expected_pk: &str)
-    {
+        expected_pk: &str,
+    ) {
         let mut sk = ExtendedPrivKey::new_master(network, seed).unwrap();
         let mut pk = ExtendedPubKey::from_priv(secp, &sk);
 
@@ -947,16 +949,13 @@ mod tests {
         for &num in path.0.iter() {
             sk = sk.ckd_priv(secp, num).unwrap();
             match num {
-                Normal {..} => {
+                Normal { .. } => {
                     let pk2 = pk.ckd_pub(secp, num).unwrap();
                     pk = ExtendedPubKey::from_priv(secp, &sk);
                     assert_eq!(pk, pk2);
                 }
-                Hardened {..} => {
-                    assert_eq!(
-                        pk.ckd_pub(secp, num),
-                        Err(Error::CannotDeriveFromHardenedKey)
-                    );
+                Hardened { .. } => {
+                    assert_eq!(pk.ckd_pub(secp, num), Err(Error::CannotDeriveFromHardenedKey));
                     pk = ExtendedPubKey::from_priv(secp, &sk);
                 }
             }
@@ -976,15 +975,15 @@ mod tests {
     fn test_increment() {
         let idx = 9345497; // randomly generated, I promise
         let cn = ChildNumber::from_normal_idx(idx).unwrap();
-        assert_eq!(cn.increment().ok(), Some(ChildNumber::from_normal_idx(idx+1).unwrap()));
+        assert_eq!(cn.increment().ok(), Some(ChildNumber::from_normal_idx(idx + 1).unwrap()));
         let cn = ChildNumber::from_hardened_idx(idx).unwrap();
-        assert_eq!(cn.increment().ok(), Some(ChildNumber::from_hardened_idx(idx+1).unwrap()));
+        assert_eq!(cn.increment().ok(), Some(ChildNumber::from_hardened_idx(idx + 1).unwrap()));
 
-        let max = (1<<31)-1;
+        let max = (1 << 31) - 1;
         let cn = ChildNumber::from_normal_idx(max).unwrap();
-        assert_eq!(cn.increment().err(), Some(Error::InvalidChildNumber(1<<31)));
+        assert_eq!(cn.increment().err(), Some(Error::InvalidChildNumber(1 << 31)));
         let cn = ChildNumber::from_hardened_idx(max).unwrap();
-        assert_eq!(cn.increment().err(), Some(Error::InvalidChildNumber(1<<31)));
+        assert_eq!(cn.increment().err(), Some(Error::InvalidChildNumber(1 << 31)));
 
         let cn = ChildNumber::from_normal_idx(350).unwrap();
         let path = DerivationPath::from_str("m/42'").unwrap();
@@ -1101,7 +1100,6 @@ mod tests {
         test_path(&secp, Bitcoin, &seed, "m/0h".parse().unwrap(),
                   "xprv9uPDJpEQgRQfDcW7BkF7eTya6RPxXeJCqCJGHuCJ4GiRVLzkTXBAJMu2qaMWPrS7AANYqdq6vcBcBUdJCVVFceUvJFjaPdGZ2y9WACViL4L",
                   "xpub68NZiKmJWnxxS6aaHmn81bvJeTESw724CRDs6HbuccFQN9Ku14VQrADWgqbhhTHBaohPX4CjNLf9fq9MYo6oDaPPLPxSb7gwQN3ih19Zm4Y");
-
     }
 
     #[test]
@@ -1119,7 +1117,7 @@ mod tests {
     #[cfg(feature = "serde")]
     pub fn encode_fingerprint_chaincode() {
         use serde_json;
-        let fp = Fingerprint::from(&[1u8,2,3,42][..]);
+        let fp = Fingerprint::from(&[1u8, 2, 3, 42][..]);
         #[rustfmt::skip]
         let cc = ChainCode::from(
             &[1u8,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2][..]
@@ -1178,7 +1176,6 @@ mod tests {
         ExtendedPrivKey::from_str(xpriv_str).unwrap();
     }
 
-
     #[test]
     #[should_panic(expected = "Secp256k1(InvalidSecretKey)")]
     fn schnorr_broken_privkey_ffs() {
@@ -1187,4 +1184,3 @@ mod tests {
         ExtendedPrivKey::from_str(xpriv_str).unwrap();
     }
 }
-

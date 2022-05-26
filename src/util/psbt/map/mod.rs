@@ -12,11 +12,9 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-use crate::prelude::*;
-
-use crate::io;
-
 use crate::consensus::encode;
+use crate::io;
+use crate::prelude::*;
 use crate::util::psbt::raw;
 
 mod global;
@@ -24,7 +22,7 @@ mod input;
 mod output;
 
 pub use self::input::{Input, PsbtSighashType};
-pub use self::output::{Output, TapTree, IncompleteTapTree};
+pub use self::output::{IncompleteTapTree, Output, TapTree};
 
 /// A trait that describes a PSBT key-value map.
 pub(super) trait Map {

@@ -17,31 +17,30 @@
 //! Functions needed by all parts of the Bitcoin library.
 //!
 
-pub mod key;
-pub mod ecdsa;
-pub mod schnorr;
 pub mod address;
 pub mod amount;
 pub mod base58;
-pub mod bip32;
 pub mod bip143;
+pub mod bip158;
+pub mod bip32;
+pub mod ecdsa;
 pub mod hash;
+pub mod key;
 pub mod merkleblock;
 pub mod misc;
 pub mod psbt;
+pub mod schnorr;
+pub mod sighash;
 pub mod taproot;
 pub mod uint;
-pub mod bip158;
-pub mod sighash;
 
 pub(crate) mod endian;
 
-use crate::prelude::*;
-use crate::io;
 use core::fmt;
 
-use crate::network;
 use crate::consensus::encode;
+use crate::prelude::*;
+use crate::{io, network};
 
 /// A trait which allows numbers to act as fixed-size bit arrays
 pub trait BitArray {
@@ -98,24 +97,19 @@ impl std::error::Error for Error {
         match self {
             Encode(e) => Some(e),
             Network(e) => Some(e),
-            BlockBadProofOfWork
-            | BlockBadTarget => None
+            BlockBadProofOfWork | BlockBadTarget => None,
         }
     }
 }
 
 #[doc(hidden)]
 impl From<encode::Error> for Error {
-    fn from(e: encode::Error) -> Error {
-        Error::Encode(e)
-    }
+    fn from(e: encode::Error) -> Error { Error::Encode(e) }
 }
 
 #[doc(hidden)]
 impl From<network::Error> for Error {
-    fn from(e: network::Error) -> Error {
-        Error::Network(e)
-    }
+    fn from(e: network::Error) -> Error { Error::Network(e) }
 }
 
 // core2 doesn't have read_to_end
@@ -126,7 +120,7 @@ pub(crate) fn read_to_end<D: io::Read>(mut d: D) -> Result<Vec<u8>, io::Error> {
         match d.read(&mut buf) {
             Ok(0) => break,
             Ok(n) => result.extend_from_slice(&buf[0..n]),
-            Err(ref e) if e.kind() == io::ErrorKind::Interrupted => {},
+            Err(ref e) if e.kind() == io::ErrorKind::Interrupted => {}
             Err(e) => return Err(e),
         };
     }

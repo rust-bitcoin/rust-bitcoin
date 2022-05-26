@@ -3,16 +3,16 @@
 //! This module contains the [`Witness`] struct and related methods to operate on it
 //!
 
+use secp256k1::ecdsa;
+#[cfg(feature = "serde")]
+use serde;
+
 use crate::blockdata::transaction::EcdsaSighashType;
 use crate::consensus::encode::{Error, MAX_VEC_SIZE};
 use crate::consensus::{Decodable, Encodable, WriteExt};
 use crate::io::{self, Read, Write};
 use crate::prelude::*;
-use secp256k1::ecdsa;
 use crate::VarInt;
-
-#[cfg(feature = "serde")]
-use serde;
 
 /// The Witness is the data used to unlock bitcoins since the [segwit upgrade](https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki)
 ///
@@ -92,12 +92,7 @@ impl Decodable for Witness {
                 cursor += element_size;
             }
             content.truncate(cursor);
-            Ok(Witness {
-                content,
-                witness_elements,
-                last,
-                second_to_last,
-            })
+            Ok(Witness { content, witness_elements, last, second_to_last })
         }
     }
 }
@@ -122,20 +117,15 @@ impl Encodable for Witness {
 }
 
 impl Witness {
-
     /// Create a new empty [`Witness`]
-    pub fn new() -> Self {
-        Witness::default()
-    }
+    pub fn new() -> Self { Witness::default() }
 
     /// Creates [`Witness`] object from an array of byte-arrays
     pub fn from_vec(vec: Vec<Vec<u8>>) -> Self {
         let witness_elements = vec.len();
 
-        let content_size: usize = vec
-            .iter()
-            .map(|el| el.len() + VarInt(el.len() as u64).len())
-            .sum();
+        let content_size: usize =
+            vec.iter().map(|el| el.len() + VarInt(el.len() as u64).len()).sum();
         let mut content = vec![0u8; content_size];
         let mut cursor = 0usize;
         let mut last = 0;
@@ -152,39 +142,24 @@ impl Witness {
             cursor += el.len();
         }
 
-        Witness {
-            witness_elements,
-            content,
-            last,
-            second_to_last,
-        }
+        Witness { witness_elements, content, last, second_to_last }
     }
 
     /// Convenience method to create an array of byte-arrays from this witness
-    pub fn to_vec(&self) -> Vec<Vec<u8>> {
-        self.iter().map(|s| s.to_vec()).collect()
-    }
+    pub fn to_vec(&self) -> Vec<Vec<u8>> { self.iter().map(|s| s.to_vec()).collect() }
 
     /// Returns `true` if the witness contains no element
-    pub fn is_empty(&self) -> bool {
-        self.witness_elements == 0
-    }
+    pub fn is_empty(&self) -> bool { self.witness_elements == 0 }
 
     /// Returns a struct implementing [`Iterator`]
-    pub fn iter(&self) -> Iter {
-        Iter(self.content.iter())
-    }
+    pub fn iter(&self) -> Iter { Iter(self.content.iter()) }
 
     /// Returns the number of elements this witness holds
-    pub fn len(&self) -> usize {
-        self.witness_elements as usize
-    }
+    pub fn len(&self) -> usize { self.witness_elements as usize }
 
     /// Returns the bytes required when this Witness is consensus encoded
     pub fn serialized_len(&self) -> usize {
-        self.iter()
-            .map(|el| VarInt(el.len() as u64).len() + el.len())
-            .sum::<usize>()
+        self.iter().map(|el| VarInt(el.len() as u64).len() + el.len()).sum::<usize>()
             + VarInt(self.witness_elements as u64).len()
     }
 
@@ -215,14 +190,17 @@ impl Witness {
 
     /// Pushes a DER-encoded ECDSA signature with a signature hash type as a new element on the
     /// witness, requires an allocation.
-    pub fn push_bitcoin_signature(&mut self, signature: &ecdsa::SerializedSignature, hash_type: EcdsaSighashType) {
+    pub fn push_bitcoin_signature(
+        &mut self,
+        signature: &ecdsa::SerializedSignature,
+        hash_type: EcdsaSighashType,
+    ) {
         // Note that a maximal length ECDSA signature is 72 bytes, plus the sighash type makes 73
         let mut sig = [0; 73];
         sig[..signature.len()].copy_from_slice(&signature);
         sig[signature.len()] = hash_type as u8;
         self.push(&sig[..signature.len() + 1]);
     }
-
 
     fn element_at(&self, index: usize) -> Option<&[u8]> {
         let varint = VarInt::consensus_decode(&self.content[index..]).ok()?;
@@ -303,11 +281,10 @@ impl<'de> serde::Deserialize<'de> for Witness {
 #[cfg(test)]
 mod test {
     use super::*;
-
     use crate::consensus::{deserialize, serialize};
     use crate::hashes::hex::{FromHex, ToHex};
-    use crate::Transaction;
     use crate::secp256k1::ecdsa;
+    use crate::Transaction;
 
     #[test]
     fn test_push() {

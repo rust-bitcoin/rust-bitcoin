@@ -18,10 +18,9 @@
 //! transactions which make up the Bitcoin system.
 //!
 
+pub mod block;
 pub mod constants;
 pub mod opcodes;
 pub mod script;
 pub mod transaction;
-pub mod block;
 pub mod witness;
-

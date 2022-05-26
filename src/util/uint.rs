@@ -40,13 +40,15 @@ macro_rules! construct_uint {
                 arr[0] as u64
             }
 
-
             /// Return the least number of bits needed to represent the number
             #[inline]
             pub fn bits(&self) -> usize {
                 let &$name(ref arr) = self;
                 for i in 1..$n_words {
-                    if arr[$n_words - i] > 0 { return (0x40 * ($n_words - i + 1)) - arr[$n_words - i].leading_zeros() as usize; }
+                    if arr[$n_words - i] > 0 {
+                        return (0x40 * ($n_words - i + 1))
+                            - arr[$n_words - i].leading_zeros() as usize;
+                    }
                 }
                 0x40 - arr[0].leading_zeros() as usize
             }
@@ -100,7 +102,7 @@ macro_rules! construct_uint {
             /// big-endian encoding
             pub fn from_be_slice(bytes: &[u8]) -> Result<$name, ParseLengthError> {
                 if bytes.len() != $n_words * 8 {
-                    Err(ParseLengthError { actual: bytes.len(), expected: $n_words*8 })
+                    Err(ParseLengthError { actual: bytes.len(), expected: $n_words * 8 })
                 } else {
                     Ok(Self::_from_be_slice(bytes))
                 }
@@ -109,7 +111,8 @@ macro_rules! construct_uint {
             fn _from_be_slice(bytes: &[u8]) -> $name {
                 use super::endian::slice_to_u64_be;
                 let mut slice = [0u64; $n_words];
-                slice.iter_mut()
+                slice
+                    .iter_mut()
                     .rev()
                     .zip(bytes.chunks(8))
                     .for_each(|(word, bytes)| *word = slice_to_u64_be(bytes));
@@ -122,7 +125,8 @@ macro_rules! construct_uint {
                 let mut res = [0; $n_words * 8];
                 for i in 0..$n_words {
                     let start = i * 8;
-                    res[start..start+8].copy_from_slice(&u64_to_array_be(self.0[$n_words - (i+1)]));
+                    res[start..start + 8]
+                        .copy_from_slice(&u64_to_array_be(self.0[$n_words - (i + 1)]));
                 }
                 res
             }
@@ -217,7 +221,11 @@ macro_rules! construct_uint {
                         b_carry = true;
                     }
                 }
-                if b_carry { $name(ret) + $name(carry) } else { $name(ret) }
+                if b_carry {
+                    $name(ret) + $name(carry)
+                } else {
+                    $name(ret)
+                }
             }
         }
 
@@ -225,9 +233,7 @@ macro_rules! construct_uint {
             type Output = $name;
 
             #[inline]
-            fn sub(self, other: $name) -> $name {
-                self + !other + $crate::util::BitArray::one()
-            }
+            fn sub(self, other: $name) -> $name { self + !other + $crate::util::BitArray::one() }
         }
 
         impl ::core::ops::Mul<$name> for $name {
@@ -248,17 +254,13 @@ macro_rules! construct_uint {
         impl ::core::ops::Div<$name> for $name {
             type Output = $name;
 
-            fn div(self, other: $name) -> $name {
-                self.div_rem(other).0
-            }
+            fn div(self, other: $name) -> $name { self.div_rem(other).0 }
         }
 
         impl ::core::ops::Rem<$name> for $name {
             type Output = $name;
 
-            fn rem(self, other: $name) -> $name {
-                self.div_rem(other).1
-            }
+            fn rem(self, other: $name) -> $name { self.div_rem(other).1 }
         }
 
         impl $crate::util::BitArray for $name {
@@ -292,14 +294,20 @@ macro_rules! construct_uint {
             fn trailing_zeros(&self) -> usize {
                 let &$name(ref arr) = self;
                 for i in 0..($n_words - 1) {
-                    if arr[i] > 0 { return (0x40 * i) + arr[i].trailing_zeros() as usize; }
+                    if arr[i] > 0 {
+                        return (0x40 * i) + arr[i].trailing_zeros() as usize;
+                    }
                 }
                 (0x40 * ($n_words - 1)) + arr[$n_words - 1].trailing_zeros() as usize
             }
 
             fn zero() -> $name { Default::default() }
             fn one() -> $name {
-                $name({ let mut ret = [0; $n_words]; ret[0] = 1; ret })
+                $name({
+                    let mut ret = [0; $n_words];
+                    ret[0] = 1;
+                    ret
+                })
             }
         }
 
@@ -476,7 +484,12 @@ macro_rules! construct_uint {
                     type Value = $name;
 
                     fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                        write!(f, "{} bytes or a hex string with {} characters", $n_words * 8, $n_words * 8 * 2)
+                        write!(
+                            f,
+                            "{} bytes or a hex string with {} characters",
+                            $n_words * 8,
+                            $n_words * 8 * 2
+                        )
                     }
 
                     fn visit_str<E>(self, s: &str) -> Result<Self::Value, E>
@@ -529,9 +542,7 @@ impl ::core::fmt::Display for ParseLengthError {
 #[cfg(feature = "std")]
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl std::error::Error for ParseLengthError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        None
-    }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
 }
 
 impl Uint256 {
@@ -546,7 +557,7 @@ impl Uint256 {
 #[cfg(test)]
 mod tests {
     use crate::consensus::{deserialize, serialize};
-    use crate::util::uint::{Uint256, Uint128};
+    use crate::util::uint::{Uint128, Uint256};
     use crate::util::BitArray;
 
     #[test]
@@ -576,15 +587,25 @@ mod tests {
 
     #[test]
     pub fn uint256_display_test() {
-        assert_eq!(format!("{}", Uint256::from_u64(0xDEADBEEF).unwrap()),
-                   "0x00000000000000000000000000000000000000000000000000000000deadbeef");
-        assert_eq!(format!("{}", Uint256::from_u64(u64::max_value()).unwrap()),
-                   "0x000000000000000000000000000000000000000000000000ffffffffffffffff");
+        assert_eq!(
+            format!("{}", Uint256::from_u64(0xDEADBEEF).unwrap()),
+            "0x00000000000000000000000000000000000000000000000000000000deadbeef"
+        );
+        assert_eq!(
+            format!("{}", Uint256::from_u64(u64::max_value()).unwrap()),
+            "0x000000000000000000000000000000000000000000000000ffffffffffffffff"
+        );
 
-        let max_val = Uint256([0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF,
-                               0xFFFFFFFFFFFFFFFF]);
-        assert_eq!(format!("{}", max_val),
-                   "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        let max_val = Uint256([
+            0xFFFFFFFFFFFFFFFF,
+            0xFFFFFFFFFFFFFFFF,
+            0xFFFFFFFFFFFFFFFF,
+            0xFFFFFFFFFFFFFFFF,
+        ]);
+        assert_eq!(
+            format!("{}", max_val),
+            "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+        );
     }
 
     #[test]
@@ -606,22 +627,53 @@ mod tests {
 
     #[test]
     pub fn uint_from_be_bytes() {
-        assert_eq!(Uint128::from_be_bytes([0x1b, 0xad, 0xca, 0xfe, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xaf, 0xba, 0xbe, 0x2b, 0xed, 0xfe, 0xed]),
-                   Uint128([0xdeafbabe2bedfeed, 0x1badcafedeadbeef]));
+        assert_eq!(
+            Uint128::from_be_bytes([
+                0x1b, 0xad, 0xca, 0xfe, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xaf, 0xba, 0xbe, 0x2b, 0xed,
+                0xfe, 0xed
+            ]),
+            Uint128([0xdeafbabe2bedfeed, 0x1badcafedeadbeef])
+        );
 
-        assert_eq!(Uint256::from_be_bytes([0x1b, 0xad, 0xca, 0xfe, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xaf, 0xba, 0xbe, 0x2b, 0xed, 0xfe, 0xed,
-                                           0xba, 0xad, 0xf0, 0x0d, 0xde, 0xfa, 0xce, 0xda, 0x11, 0xfe, 0xd2, 0xba, 0xd1, 0xc0, 0xff, 0xe0]),
-                   Uint256([0x11fed2bad1c0ffe0, 0xbaadf00ddefaceda, 0xdeafbabe2bedfeed, 0x1badcafedeadbeef]));
+        assert_eq!(
+            Uint256::from_be_bytes([
+                0x1b, 0xad, 0xca, 0xfe, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xaf, 0xba, 0xbe, 0x2b, 0xed,
+                0xfe, 0xed, 0xba, 0xad, 0xf0, 0x0d, 0xde, 0xfa, 0xce, 0xda, 0x11, 0xfe, 0xd2, 0xba,
+                0xd1, 0xc0, 0xff, 0xe0
+            ]),
+            Uint256([
+                0x11fed2bad1c0ffe0,
+                0xbaadf00ddefaceda,
+                0xdeafbabe2bedfeed,
+                0x1badcafedeadbeef
+            ])
+        );
     }
 
     #[test]
     pub fn uint_to_be_bytes() {
-        assert_eq!(Uint128([0xdeafbabe2bedfeed, 0x1badcafedeadbeef]).to_be_bytes(),
-                   [0x1b, 0xad, 0xca, 0xfe, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xaf, 0xba, 0xbe, 0x2b, 0xed, 0xfe, 0xed]);
+        assert_eq!(
+            Uint128([0xdeafbabe2bedfeed, 0x1badcafedeadbeef]).to_be_bytes(),
+            [
+                0x1b, 0xad, 0xca, 0xfe, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xaf, 0xba, 0xbe, 0x2b, 0xed,
+                0xfe, 0xed
+            ]
+        );
 
-        assert_eq!(Uint256([0x11fed2bad1c0ffe0, 0xbaadf00ddefaceda, 0xdeafbabe2bedfeed, 0x1badcafedeadbeef]).to_be_bytes(),
-                   [0x1b, 0xad, 0xca, 0xfe, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xaf, 0xba, 0xbe, 0x2b, 0xed, 0xfe, 0xed,
-                    0xba, 0xad, 0xf0, 0x0d, 0xde, 0xfa, 0xce, 0xda, 0x11, 0xfe, 0xd2, 0xba, 0xd1, 0xc0, 0xff, 0xe0]);
+        assert_eq!(
+            Uint256([
+                0x11fed2bad1c0ffe0,
+                0xbaadf00ddefaceda,
+                0xdeafbabe2bedfeed,
+                0x1badcafedeadbeef
+            ])
+            .to_be_bytes(),
+            [
+                0x1b, 0xad, 0xca, 0xfe, 0xde, 0xad, 0xbe, 0xef, 0xde, 0xaf, 0xba, 0xbe, 0x2b, 0xed,
+                0xfe, 0xed, 0xba, 0xad, 0xf0, 0x0d, 0xde, 0xfa, 0xce, 0xda, 0x11, 0xfe, 0xd2, 0xba,
+                0xd1, 0xc0, 0xff, 0xe0
+            ]
+        );
     }
 
     #[test]
@@ -647,19 +699,23 @@ mod tests {
         let mult = sub.mul_u32(300);
         assert_eq!(mult, Uint256([0x8C8C3EE70C644118u64, 0x0209E7378231E632, 0, 0]));
         // Division
-        assert_eq!(Uint256::from_u64(105).unwrap() /
-                   Uint256::from_u64(5).unwrap(),
-                   Uint256::from_u64(21).unwrap());
+        assert_eq!(
+            Uint256::from_u64(105).unwrap() / Uint256::from_u64(5).unwrap(),
+            Uint256::from_u64(21).unwrap()
+        );
         let div = mult / Uint256::from_u64(300).unwrap();
         assert_eq!(div, Uint256([0x9F30411021524112u64, 0x0001BD5B7DDFBD5A, 0, 0]));
 
-        assert_eq!(Uint256::from_u64(105).unwrap() % Uint256::from_u64(5).unwrap(),
-                   Uint256::from_u64(0).unwrap());
-        assert_eq!(Uint256::from_u64(35498456).unwrap() % Uint256::from_u64(3435).unwrap(),
-                   Uint256::from_u64(1166).unwrap());
+        assert_eq!(
+            Uint256::from_u64(105).unwrap() % Uint256::from_u64(5).unwrap(),
+            Uint256::from_u64(0).unwrap()
+        );
+        assert_eq!(
+            Uint256::from_u64(35498456).unwrap() % Uint256::from_u64(3435).unwrap(),
+            Uint256::from_u64(1166).unwrap()
+        );
         let rem_src = mult * Uint256::from_u64(39842).unwrap() + Uint256::from_u64(9054).unwrap();
-        assert_eq!(rem_src % Uint256::from_u64(39842).unwrap(),
-                   Uint256::from_u64(9054).unwrap());
+        assert_eq!(rem_src % Uint256::from_u64(39842).unwrap(), Uint256::from_u64(9054).unwrap());
         // TODO: bit inversion
     }
 
@@ -677,9 +733,23 @@ mod tests {
         assert_eq!(u96_res, Uint256([0xffffffff21524111u64, 0xDEADBEEE, 0, 0]));
         assert_eq!(u128_res, Uint256([0x21524111DEADBEEFu64, 0xDEADBEEE21524110, 0, 0]));
         assert_eq!(u160_res, Uint256([0xBD5B7DDD21524111u64, 0x42A4822200000001, 0xDEADBEED, 0]));
-        assert_eq!(u192_res, Uint256([0x63F6C333DEADBEEFu64, 0xBD5B7DDFBD5B7DDB, 0xDEADBEEC63F6C334, 0]));
-        assert_eq!(u224_res, Uint256([0x7AB6FBBB21524111u64, 0xFFFFFFFBA69B4558, 0x854904485964BAAA, 0xDEADBEEB]));
-        assert_eq!(u256_res, Uint256([0xA69B4555DEADBEEFu64, 0xA69B455CD41BB662, 0xD41BB662A69B4550, 0xDEADBEEAA69B455C]));
+        assert_eq!(
+            u192_res,
+            Uint256([0x63F6C333DEADBEEFu64, 0xBD5B7DDFBD5B7DDB, 0xDEADBEEC63F6C334, 0])
+        );
+        assert_eq!(
+            u224_res,
+            Uint256([0x7AB6FBBB21524111u64, 0xFFFFFFFBA69B4558, 0x854904485964BAAA, 0xDEADBEEB])
+        );
+        assert_eq!(
+            u256_res,
+            Uint256([
+                0xA69B4555DEADBEEFu64,
+                0xA69B455CD41BB662,
+                0xD41BB662A69B4550,
+                0xDEADBEEAA69B455C
+            ])
+        );
     }
 
     #[test]
@@ -692,8 +762,15 @@ mod tests {
 
         let u256_res = u128_res * u128_res;
 
-        assert_eq!(u256_res, Uint256([0xF4E166AAD40D0A41u64, 0xF5CF7F3618C2C886u64,
-                                      0x4AFCFF6F0375C608u64, 0x928D92B4D7F5DF33u64]));
+        assert_eq!(
+            u256_res,
+            Uint256([
+                0xF4E166AAD40D0A41u64,
+                0xF5CF7F3618C2C886u64,
+                0x4AFCFF6F0375C608u64,
+                0x928D92B4D7F5DF33u64
+            ])
+        );
     }
 
     #[test]
@@ -809,12 +886,26 @@ mod tests {
             "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
         );
         check(
-            Uint256([ 0xA69B4555DEADBEEF, 0xA69B455CD41BB662, 0xD41BB662A69B4550, 0xDEADBEEAA69B455C ]),
+            Uint256([
+                0xA69B4555DEADBEEF,
+                0xA69B455CD41BB662,
+                0xD41BB662A69B4550,
+                0xDEADBEEAA69B455C,
+            ]),
             "deadbeeaa69b455cd41bb662a69b4550a69b455cd41bb662a69b4555deadbeef",
         );
 
-        assert!(::serde_json::from_str::<Uint256>("\"fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffg\"").is_err()); // invalid char
-        assert!(::serde_json::from_str::<Uint256>("\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\"").is_err()); // invalid length
-        assert!(::serde_json::from_str::<Uint256>("\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\"").is_err()); // invalid length
+        assert!(::serde_json::from_str::<Uint256>(
+            "\"fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffg\""
+        )
+        .is_err()); // invalid char
+        assert!(::serde_json::from_str::<Uint256>(
+            "\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\""
+        )
+        .is_err()); // invalid length
+        assert!(::serde_json::from_str::<Uint256>(
+            "\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\""
+        )
+        .is_err()); // invalid length
     }
 }

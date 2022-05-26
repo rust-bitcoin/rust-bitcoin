@@ -19,15 +19,15 @@
 //! signatures, which are placed in the scriptSig.
 //!
 
-use crate::hashes::Hash;
-use crate::hash_types::Sighash;
-use crate::blockdata::script::Script;
-use crate::blockdata::witness::Witness;
-use crate::blockdata::transaction::{Transaction, TxIn, EcdsaSighashType};
-use crate::consensus::{encode, Encodable};
-
-use crate::io;
 use core::ops::{Deref, DerefMut};
+
+use crate::blockdata::script::Script;
+use crate::blockdata::transaction::{EcdsaSighashType, Transaction, TxIn};
+use crate::blockdata::witness::Witness;
+use crate::consensus::{encode, Encodable};
+use crate::hash_types::Sighash;
+use crate::hashes::Hash;
+use crate::io;
 use crate::util::sighash;
 
 /// Parts of a sighash which are common across inputs or signatures, and which are
@@ -92,10 +92,7 @@ impl SighashComponents {
         self.tx_version.consensus_encode(&mut enc).expect("engines don't error");
         self.hash_prevouts.consensus_encode(&mut enc).expect("engines don't error");
         self.hash_sequence.consensus_encode(&mut enc).expect("engines don't error");
-        txin
-            .previous_output
-            .consensus_encode(&mut enc)
-            .expect("engines don't error");
+        txin.previous_output.consensus_encode(&mut enc).expect("engines don't error");
         script_code.consensus_encode(&mut enc).expect("engines don't error");
         value.consensus_encode(&mut enc).expect("engines don't error");
         txin.sequence.consensus_encode(&mut enc).expect("engines don't error");
@@ -118,9 +115,7 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
     /// in a lazy manner when required.
     /// For the generated sighashes to be valid, no fields in the transaction may change except for
     /// script_sig and witnesses.
-    pub fn new(tx: R) -> Self {
-        Self { cache: sighash::SighashCache::new(tx) }
-    }
+    pub fn new(tx: R) -> Self { Self { cache: sighash::SighashCache::new(tx) } }
 
     /// Encode the BIP143 signing data for any flag type into a given object implementing a
     /// std::io::Write trait.
@@ -145,7 +140,7 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
         input_index: usize,
         script_code: &Script,
         value: u64,
-        sighash_type: EcdsaSighashType
+        sighash_type: EcdsaSighashType,
     ) -> Sighash {
         let mut enc = Sighash::engine();
         self.encode_signing_data_to(&mut enc, input_index, script_code, value, sighash_type)
@@ -188,16 +183,16 @@ impl<R: DerefMut<Target = Transaction>> SigHashCache<R> {
 #[allow(deprecated)]
 mod tests {
     use std::str::FromStr;
-    use crate::hash_types::Sighash;
+
+    use super::*;
     use crate::blockdata::script::Script;
     use crate::blockdata::transaction::Transaction;
     use crate::consensus::encode::deserialize;
+    use crate::hash_types::Sighash;
+    use crate::hashes::hex::FromHex;
     use crate::network::constants::Network;
     use crate::util::address::Address;
     use crate::util::key::PublicKey;
-    use crate::hashes::hex::FromHex;
-
-    use super::*;
 
     fn p2pkh_hex(pk: &str) -> Script {
         let pk: PublicKey = PublicKey::from_str(pk).unwrap();
@@ -205,7 +200,14 @@ mod tests {
         witness_script
     }
 
-    fn run_test_sighash_bip143(tx: &str, script: &str, input_index: usize, value: u64, hash_type: u32, expected_result: &str) {
+    fn run_test_sighash_bip143(
+        tx: &str,
+        script: &str,
+        input_index: usize,
+        value: u64,
+        hash_type: u32,
+        expected_result: &str,
+    ) {
         let tx: Transaction = deserialize(&Vec::<u8>::from_hex(tx).unwrap()[..]).unwrap();
         let script = Script::from(Vec::<u8>::from_hex(script).unwrap());
         let raw_expected = Sighash::from_hex(expected_result).unwrap();
@@ -227,7 +229,8 @@ mod tests {
             ).unwrap()[..],
         ).unwrap();
 
-        let witness_script = p2pkh_hex("025476c2e83188368da1ff3e292e7acafcdb3566bb0ad253f62fc70f07aeee6357");
+        let witness_script =
+            p2pkh_hex("025476c2e83188368da1ff3e292e7acafcdb3566bb0ad253f62fc70f07aeee6357");
         let value = 600_000_000;
 
         let comp = SighashComponents::new(&tx);
@@ -237,13 +240,16 @@ mod tests {
                 tx_version: 1,
                 tx_locktime: 17,
                 hash_prevouts: hex_hash!(
-                    Sighash, "96b827c8483d4e9b96712b6713a7b68d6e8003a781feba36c31143470b4efd37"
+                    Sighash,
+                    "96b827c8483d4e9b96712b6713a7b68d6e8003a781feba36c31143470b4efd37"
                 ),
                 hash_sequence: hex_hash!(
-                    Sighash, "52b0a642eea2fb7ae638c36f6252b6750293dbe574a806984b8e4d8548339a3b"
+                    Sighash,
+                    "52b0a642eea2fb7ae638c36f6252b6750293dbe574a806984b8e4d8548339a3b"
                 ),
                 hash_outputs: hex_hash!(
-                    Sighash, "863ef3e1a92afbfdb97f31ad0fc7683ee943e9abcf2501590ff8f6551f47e5e5"
+                    Sighash,
+                    "863ef3e1a92afbfdb97f31ad0fc7683ee943e9abcf2501590ff8f6551f47e5e5"
                 ),
             }
         );
@@ -264,7 +270,8 @@ mod tests {
             ).unwrap()[..],
         ).unwrap();
 
-        let witness_script = p2pkh_hex("03ad1d8e89212f0b92c74d23bb710c00662ad1470198ac48c43f7d6f93a2a26873");
+        let witness_script =
+            p2pkh_hex("03ad1d8e89212f0b92c74d23bb710c00662ad1470198ac48c43f7d6f93a2a26873");
         let value = 1_000_000_000;
         let comp = SighashComponents::new(&tx);
         assert_eq!(
@@ -273,13 +280,16 @@ mod tests {
                 tx_version: 1,
                 tx_locktime: 1170,
                 hash_prevouts: hex_hash!(
-                    Sighash, "b0287b4a252ac05af83d2dcef00ba313af78a3e9c329afa216eb3aa2a7b4613a"
+                    Sighash,
+                    "b0287b4a252ac05af83d2dcef00ba313af78a3e9c329afa216eb3aa2a7b4613a"
                 ),
                 hash_sequence: hex_hash!(
-                    Sighash, "18606b350cd8bf565266bc352f0caddcf01e8fa789dd8a15386327cf8cabe198"
+                    Sighash,
+                    "18606b350cd8bf565266bc352f0caddcf01e8fa789dd8a15386327cf8cabe198"
                 ),
                 hash_outputs: hex_hash!(
-                    Sighash, "de984f44532e2173ca0d64314fcefe6d30da6f8cf27bafa706da61df8a226c83"
+                    Sighash,
+                    "de984f44532e2173ca0d64314fcefe6d30da6f8cf27bafa706da61df8a226c83"
                 ),
             }
         );
@@ -316,13 +326,16 @@ mod tests {
                 tx_version: 1,
                 tx_locktime: 0,
                 hash_prevouts: hex_hash!(
-                    Sighash, "74afdc312af5183c4198a40ca3c1a275b485496dd3929bca388c4b5e31f7aaa0"
+                    Sighash,
+                    "74afdc312af5183c4198a40ca3c1a275b485496dd3929bca388c4b5e31f7aaa0"
                 ),
                 hash_sequence: hex_hash!(
-                    Sighash, "3bb13029ce7b1f559ef5e747fcac439f1455a2ec7c5f09b72290795e70665044"
+                    Sighash,
+                    "3bb13029ce7b1f559ef5e747fcac439f1455a2ec7c5f09b72290795e70665044"
                 ),
                 hash_outputs: hex_hash!(
-                    Sighash, "bc4d309071414bed932f98832b27b4d76dad7e6c1346f487a8fdbb8eb90307cc"
+                    Sighash,
+                    "bc4d309071414bed932f98832b27b4d76dad7e6c1346f487a8fdbb8eb90307cc"
                 ),
             }
         );

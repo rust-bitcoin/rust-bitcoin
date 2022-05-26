@@ -18,14 +18,13 @@
 //! network addresses in Bitcoin messages.
 //!
 
-use crate::prelude::*;
-
 use core::{fmt, iter};
-use std::net::{SocketAddr, Ipv6Addr, SocketAddrV4, SocketAddrV6, Ipv4Addr, ToSocketAddrs};
+use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6, ToSocketAddrs};
 
+use crate::consensus::encode::{self, Decodable, Encodable, ReadExt, VarInt, WriteExt};
 use crate::io;
 use crate::network::constants::ServiceFlags;
-use crate::consensus::encode::{self, Decodable, Encodable, VarInt, ReadExt, WriteExt};
+use crate::prelude::*;
 
 /// A message which can be sent on the Bitcoin network
 #[derive(Clone, PartialEq, Eq, Hash)]
@@ -35,17 +34,17 @@ pub struct Address {
     /// Network byte-order ipv6 address, or ipv4-mapped ipv6 address
     pub address: [u16; 8],
     /// Network port
-    pub port: u16
+    pub port: u16,
 }
 
 const ONION: [u16; 3] = [0xFD87, 0xD87E, 0xEB43];
 
 impl Address {
     /// Create an address message for a socket
-    pub fn new(socket :&SocketAddr, services: ServiceFlags) -> Address {
+    pub fn new(socket: &SocketAddr, services: ServiceFlags) -> Address {
         let (address, port) = match *socket {
             SocketAddr::V4(addr) => (addr.ip().to_ipv6_mapped().segments(), addr.port()),
-            SocketAddr::V6(addr) => (addr.ip().segments(), addr.port())
+            SocketAddr::V6(addr) => (addr.ip().segments(), addr.port()),
         };
         Address { address, port, services }
     }
@@ -58,7 +57,8 @@ impl Address {
         if addr[0..3] == ONION {
             return Err(io::Error::from(io::ErrorKind::AddrNotAvailable));
         }
-        let ipv6 = Ipv6Addr::new(addr[0], addr[1], addr[2], addr[3], addr[4], addr[5], addr[6], addr[7]);
+        let ipv6 =
+            Ipv6Addr::new(addr[0], addr[1], addr[2], addr[3], addr[4], addr[5], addr[6], addr[7]);
         if let Some(ipv4) = ipv6.to_ipv4() {
             Ok(SocketAddr::V4(SocketAddrV4::new(ipv4, self.port)))
         } else {
@@ -90,7 +90,7 @@ impl Decodable for Address {
         Ok(Address {
             services: Decodable::consensus_decode(&mut d)?,
             address: read_be_address(&mut d)?,
-            port: u16::swap_bytes(Decodable::consensus_decode(d)?)
+            port: u16::swap_bytes(Decodable::consensus_decode(d)?),
         })
     }
 }
@@ -112,10 +112,16 @@ impl fmt::Debug for Address {
         let ipv6 = Ipv6Addr::from(self.address);
 
         match ipv6.to_ipv4() {
-            Some(addr) => write!(f, "Address {{services: {}, address: {}, port: {}}}",
-                self.services, addr, self.port),
-            None => write!(f, "Address {{services: {}, address: {}, port: {}}}",
-                self.services, ipv6, self.port)
+            Some(addr) => write!(
+                f,
+                "Address {{services: {}, address: {}, port: {}}}",
+                self.services, addr, self.port
+            ),
+            None => write!(
+                f,
+                "Address {{services: {}, address: {}, port: {}}}",
+                self.services, ipv6, self.port
+            ),
         }
     }
 }
@@ -148,7 +154,11 @@ pub enum AddrV2 {
 
 impl Encodable for AddrV2 {
     fn consensus_encode<W: io::Write>(&self, e: W) -> Result<usize, io::Error> {
-        fn encode_addr<W: io::Write>(mut e: W, network: u8, bytes: &[u8]) -> Result<usize, io::Error> {
+        fn encode_addr<W: io::Write>(
+            mut e: W,
+            network: u8,
+            bytes: &[u8],
+        ) -> Result<usize, io::Error> {
             let len = network.consensus_encode(&mut e)?
                 + VarInt(bytes.len() as u64).consensus_encode(&mut e)?
                 + bytes.len();
@@ -162,7 +172,7 @@ impl Encodable for AddrV2 {
             AddrV2::TorV3(ref bytes) => encode_addr(e, 4, bytes)?,
             AddrV2::I2p(ref bytes) => encode_addr(e, 5, bytes)?,
             AddrV2::Cjdns(ref addr) => encode_addr(e, 6, &addr.octets())?,
-            AddrV2::Unknown(network, ref bytes) => encode_addr(e, network, bytes)?
+            AddrV2::Unknown(network, ref bytes) => encode_addr(e, network, bytes)?,
         })
     }
 }
@@ -181,43 +191,49 @@ impl Decodable for AddrV2 {
                 }
                 let addr: [u8; 4] = Decodable::consensus_decode(&mut d)?;
                 AddrV2::Ipv4(Ipv4Addr::new(addr[0], addr[1], addr[2], addr[3]))
-            },
+            }
             2 => {
                 if len != 16 {
                     return Err(encode::Error::ParseFailed("Invalid IPv6 address"));
                 }
                 let addr: [u16; 8] = read_be_address(&mut d)?;
                 if addr[0..3] == ONION {
-                    return Err(encode::Error::ParseFailed("OnionCat address sent with IPv6 network id"));
+                    return Err(encode::Error::ParseFailed(
+                        "OnionCat address sent with IPv6 network id",
+                    ));
                 }
                 if addr[0..6] == [0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0xFFFF] {
-                    return Err(encode::Error::ParseFailed("IPV4 wrapped address sent with IPv6 network id"));
+                    return Err(encode::Error::ParseFailed(
+                        "IPV4 wrapped address sent with IPv6 network id",
+                    ));
                 }
-                AddrV2::Ipv6(Ipv6Addr::new(addr[0], addr[1], addr[2], addr[3], addr[4], addr[5], addr[6], addr[7]))
-            },
+                AddrV2::Ipv6(Ipv6Addr::new(
+                    addr[0], addr[1], addr[2], addr[3], addr[4], addr[5], addr[6], addr[7],
+                ))
+            }
             3 => {
                 if len != 10 {
                     return Err(encode::Error::ParseFailed("Invalid TorV2 address"));
                 }
                 let id = Decodable::consensus_decode(&mut d)?;
                 AddrV2::TorV2(id)
-            },
+            }
             4 => {
                 if len != 32 {
                     return Err(encode::Error::ParseFailed("Invalid TorV3 address"));
                 }
                 let pubkey = Decodable::consensus_decode(&mut d)?;
                 AddrV2::TorV3(pubkey)
-            },
+            }
             5 => {
                 if len != 32 {
                     return Err(encode::Error::ParseFailed("Invalid I2P address"));
                 }
                 let hash = Decodable::consensus_decode(&mut d)?;
                 AddrV2::I2p(hash)
-            },
+            }
             6 => {
-                if len != 16  {
+                if len != 16 {
                     return Err(encode::Error::ParseFailed("Invalid CJDNS address"));
                 }
                 let addr: [u16; 8] = read_be_address(&mut d)?;
@@ -225,8 +241,10 @@ impl Decodable for AddrV2 {
                 if addr[0] != u16::from_be_bytes([0xFC, 0x00]) {
                     return Err(encode::Error::ParseFailed("Invalid CJDNS address"));
                 }
-                AddrV2::Cjdns(Ipv6Addr::new(addr[0], addr[1], addr[2], addr[3], addr[4], addr[5], addr[6], addr[7]))
-            },
+                AddrV2::Cjdns(Ipv6Addr::new(
+                    addr[0], addr[1], addr[2], addr[3], addr[4], addr[5], addr[6], addr[7],
+                ))
+            }
             _ => {
                 // len already checked above to be <= 512
                 let mut addr = vec![0u8; len as usize];
@@ -247,7 +265,7 @@ pub struct AddrV2Message {
     /// Network ID + Network Address
     pub addr: AddrV2,
     /// Network port, 0 if not applicable
-    pub port: u16
+    pub port: u16,
 }
 
 impl AddrV2Message {
@@ -298,12 +316,12 @@ impl ToSocketAddrs for AddrV2Message {
 #[cfg(test)]
 mod test {
     use core::str::FromStr;
-    use super::{AddrV2Message, AddrV2, Address};
-    use crate::network::constants::ServiceFlags;
-    use std::net::{SocketAddr, IpAddr, Ipv4Addr, Ipv6Addr};
-    use crate::hashes::hex::FromHex;
+    use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 
+    use super::{AddrV2, AddrV2Message, Address};
     use crate::consensus::encode::{deserialize, serialize};
+    use crate::hashes::hex::FromHex;
+    use crate::network::constants::ServiceFlags;
 
     #[test]
     #[rustfmt::skip]
@@ -342,41 +360,47 @@ mod test {
 
     #[test]
     fn deserialize_address_test() {
-        let mut addr: Result<Address, _> = deserialize(&[1u8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                                       0, 0, 0, 0, 0, 0, 0xff, 0xff, 0x0a, 0,
-                                                       0, 1, 0x20, 0x8d]);
+        let mut addr: Result<Address, _> = deserialize(&[
+            1u8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0x0a, 0, 0, 1,
+            0x20, 0x8d,
+        ]);
         assert!(addr.is_ok());
         let full = addr.unwrap();
         assert!(match full.socket_addr().unwrap() {
-                    SocketAddr::V4(_) => true,
-                    _ => false
-                }
-            );
+            SocketAddr::V4(_) => true,
+            _ => false,
+        });
         assert_eq!(full.services, ServiceFlags::NETWORK);
         assert_eq!(full.address, [0, 0, 0, 0, 0, 0xffff, 0x0a00, 0x0001]);
         assert_eq!(full.port, 8333);
 
-        addr = deserialize(&[1u8, 0, 0, 0, 0, 0, 0, 0, 0,
-                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0x0a, 0, 0, 1]);
+        addr = deserialize(&[
+            1u8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0x0a, 0, 0, 1,
+        ]);
         assert!(addr.is_err());
     }
 
     #[test]
-    fn test_socket_addr () {
-        let s4 = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(111,222,123,4)), 5555);
+    fn test_socket_addr() {
+        let s4 = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(111, 222, 123, 4)), 5555);
         let a4 = Address::new(&s4, ServiceFlags::NETWORK | ServiceFlags::WITNESS);
         assert_eq!(a4.socket_addr().unwrap(), s4);
-        let s6 = SocketAddr::new(IpAddr::V6(Ipv6Addr::new(0x1111, 0x2222, 0x3333, 0x4444,
-        0x5555, 0x6666, 0x7777, 0x8888)), 9999);
+        let s6 = SocketAddr::new(
+            IpAddr::V6(Ipv6Addr::new(
+                0x1111, 0x2222, 0x3333, 0x4444, 0x5555, 0x6666, 0x7777, 0x8888,
+            )),
+            9999,
+        );
         let a6 = Address::new(&s6, ServiceFlags::NETWORK | ServiceFlags::WITNESS);
         assert_eq!(a6.socket_addr().unwrap(), s6);
     }
 
     #[test]
-    fn onion_test () {
+    fn onion_test() {
         let onionaddr = SocketAddr::new(
-            IpAddr::V6(
-            Ipv6Addr::from_str("FD87:D87E:EB43:edb1:8e4:3588:e546:35ca").unwrap()), 1111);
+            IpAddr::V6(Ipv6Addr::from_str("FD87:D87E:EB43:edb1:8e4:3588:e546:35ca").unwrap()),
+            1111,
+        );
         let addr = Address::new(&onionaddr, ServiceFlags::NONE);
         assert!(addr.socket_addr().is_err());
     }
@@ -388,17 +412,32 @@ mod test {
         let ip = AddrV2::Ipv4(Ipv4Addr::new(1, 2, 3, 4));
         assert_eq!(serialize(&ip), Vec::from_hex("010401020304").unwrap());
 
-        let ip = AddrV2::Ipv6(Ipv6Addr::from_str("1a1b:2a2b:3a3b:4a4b:5a5b:6a6b:7a7b:8a8b").unwrap());
+        let ip =
+            AddrV2::Ipv6(Ipv6Addr::from_str("1a1b:2a2b:3a3b:4a4b:5a5b:6a6b:7a7b:8a8b").unwrap());
         assert_eq!(serialize(&ip), Vec::from_hex("02101a1b2a2b3a3b4a4b5a5b6a6b7a7b8a8b").unwrap());
 
         let ip = AddrV2::TorV2(FromHex::from_hex("f1f2f3f4f5f6f7f8f9fa").unwrap());
         assert_eq!(serialize(&ip), Vec::from_hex("030af1f2f3f4f5f6f7f8f9fa").unwrap());
 
-        let ip = AddrV2::TorV3(FromHex::from_hex("53cd5648488c4707914182655b7664034e09e66f7e8cbf1084e654eb56c5bd88").unwrap());
-        assert_eq!(serialize(&ip), Vec::from_hex("042053cd5648488c4707914182655b7664034e09e66f7e8cbf1084e654eb56c5bd88").unwrap());
+        let ip = AddrV2::TorV3(
+            FromHex::from_hex("53cd5648488c4707914182655b7664034e09e66f7e8cbf1084e654eb56c5bd88")
+                .unwrap(),
+        );
+        assert_eq!(
+            serialize(&ip),
+            Vec::from_hex("042053cd5648488c4707914182655b7664034e09e66f7e8cbf1084e654eb56c5bd88")
+                .unwrap()
+        );
 
-        let ip = AddrV2::I2p(FromHex::from_hex("a2894dabaec08c0051a481a6dac88b64f98232ae42d4b6fd2fa81952dfe36a87").unwrap());
-        assert_eq!(serialize(&ip), Vec::from_hex("0520a2894dabaec08c0051a481a6dac88b64f98232ae42d4b6fd2fa81952dfe36a87").unwrap());
+        let ip = AddrV2::I2p(
+            FromHex::from_hex("a2894dabaec08c0051a481a6dac88b64f98232ae42d4b6fd2fa81952dfe36a87")
+                .unwrap(),
+        );
+        assert_eq!(
+            serialize(&ip),
+            Vec::from_hex("0520a2894dabaec08c0051a481a6dac88b64f98232ae42d4b6fd2fa81952dfe36a87")
+                .unwrap()
+        );
 
         let ip = AddrV2::Cjdns(Ipv6Addr::from_str("fc00:1:2:3:4:5:6:7").unwrap());
         assert_eq!(serialize(&ip), Vec::from_hex("0610fc000001000200030004000500060007").unwrap());
@@ -425,17 +464,27 @@ mod test {
         assert!(deserialize::<AddrV2>(&Vec::from_hex("01fd010201020304").unwrap()).is_err());
 
         // Valid IPv6.
-        let ip: AddrV2 = deserialize(&Vec::from_hex("02100102030405060708090a0b0c0d0e0f10").unwrap()).unwrap();
-        assert_eq!(ip, AddrV2::Ipv6(Ipv6Addr::from_str("102:304:506:708:90a:b0c:d0e:f10").unwrap()));
+        let ip: AddrV2 =
+            deserialize(&Vec::from_hex("02100102030405060708090a0b0c0d0e0f10").unwrap()).unwrap();
+        assert_eq!(
+            ip,
+            AddrV2::Ipv6(Ipv6Addr::from_str("102:304:506:708:90a:b0c:d0e:f10").unwrap())
+        );
 
         // Invalid IPv6, with bogus length.
         assert!(deserialize::<AddrV2>(&Vec::from_hex("020400").unwrap()).is_err());
 
         // Invalid IPv6, contains embedded IPv4.
-        assert!(deserialize::<AddrV2>(&Vec::from_hex("021000000000000000000000ffff01020304").unwrap()).is_err());
+        assert!(deserialize::<AddrV2>(
+            &Vec::from_hex("021000000000000000000000ffff01020304").unwrap()
+        )
+        .is_err());
 
         // Invalid IPv6, contains embedded TORv2.
-        assert!(deserialize::<AddrV2>(&Vec::from_hex("0210fd87d87eeb430102030405060708090a").unwrap()).is_err());
+        assert!(deserialize::<AddrV2>(
+            &Vec::from_hex("0210fd87d87eeb430102030405060708090a").unwrap()
+        )
+        .is_err());
 
         // Valid TORv2.
         let ip: AddrV2 = deserialize(&Vec::from_hex("030af1f2f3f4f5f6f7f8f9fa").unwrap()).unwrap();
@@ -445,31 +494,61 @@ mod test {
         assert!(deserialize::<AddrV2>(&Vec::from_hex("030700").unwrap()).is_err());
 
         // Valid TORv3.
-        let ip: AddrV2 = deserialize(&Vec::from_hex("042079bcc625184b05194975c28b66b66b0469f7f6556fb1ac3189a79b40dda32f1f").unwrap()).unwrap();
-        assert_eq!(ip, AddrV2::TorV3(FromHex::from_hex("79bcc625184b05194975c28b66b66b0469f7f6556fb1ac3189a79b40dda32f1f").unwrap()));
+        let ip: AddrV2 = deserialize(
+            &Vec::from_hex("042079bcc625184b05194975c28b66b66b0469f7f6556fb1ac3189a79b40dda32f1f")
+                .unwrap(),
+        )
+        .unwrap();
+        assert_eq!(
+            ip,
+            AddrV2::TorV3(
+                FromHex::from_hex(
+                    "79bcc625184b05194975c28b66b66b0469f7f6556fb1ac3189a79b40dda32f1f"
+                )
+                .unwrap()
+            )
+        );
 
         // Invalid TORv3, with bogus length.
         assert!(deserialize::<AddrV2>(&Vec::from_hex("040000").unwrap()).is_err());
 
         // Valid I2P.
-        let ip: AddrV2 = deserialize(&Vec::from_hex("0520a2894dabaec08c0051a481a6dac88b64f98232ae42d4b6fd2fa81952dfe36a87").unwrap()).unwrap();
-        assert_eq!(ip, AddrV2::I2p(FromHex::from_hex("a2894dabaec08c0051a481a6dac88b64f98232ae42d4b6fd2fa81952dfe36a87").unwrap()));
+        let ip: AddrV2 = deserialize(
+            &Vec::from_hex("0520a2894dabaec08c0051a481a6dac88b64f98232ae42d4b6fd2fa81952dfe36a87")
+                .unwrap(),
+        )
+        .unwrap();
+        assert_eq!(
+            ip,
+            AddrV2::I2p(
+                FromHex::from_hex(
+                    "a2894dabaec08c0051a481a6dac88b64f98232ae42d4b6fd2fa81952dfe36a87"
+                )
+                .unwrap()
+            )
+        );
 
         // Invalid I2P, with bogus length.
         assert!(deserialize::<AddrV2>(&Vec::from_hex("050300").unwrap()).is_err());
 
         // Valid CJDNS.
-        let ip: AddrV2 = deserialize(&Vec::from_hex("0610fc000001000200030004000500060007").unwrap()).unwrap();
+        let ip: AddrV2 =
+            deserialize(&Vec::from_hex("0610fc000001000200030004000500060007").unwrap()).unwrap();
         assert_eq!(ip, AddrV2::Cjdns(Ipv6Addr::from_str("fc00:1:2:3:4:5:6:7").unwrap()));
 
         // Invalid CJDNS, incorrect marker
-        assert!(deserialize::<AddrV2>(&Vec::from_hex("0610fd000001000200030004000500060007").unwrap()).is_err());
+        assert!(deserialize::<AddrV2>(
+            &Vec::from_hex("0610fd000001000200030004000500060007").unwrap()
+        )
+        .is_err());
 
         // Invalid CJDNS, with bogus length.
         assert!(deserialize::<AddrV2>(&Vec::from_hex("060100").unwrap()).is_err());
 
         // Unknown, with extreme length.
-        assert!(deserialize::<AddrV2>(&Vec::from_hex("aafe0000000201020304050607").unwrap()).is_err());
+        assert!(
+            deserialize::<AddrV2>(&Vec::from_hex("aafe0000000201020304050607").unwrap()).is_err()
+        );
 
         // Unknown, with reasonable length.
         let ip: AddrV2 = deserialize(&Vec::from_hex("aa0401020304").unwrap()).unwrap();
@@ -485,10 +564,25 @@ mod test {
         let raw = Vec::from_hex("0261bc6649019902abab208d79627683fd4804010409090909208d").unwrap();
         let addresses: Vec<AddrV2Message> = deserialize(&raw).unwrap();
 
-        assert_eq!(addresses, vec![
-            AddrV2Message{services: ServiceFlags::NETWORK, time: 0x4966bc61, port: 8333, addr: AddrV2::Unknown(153, Vec::from_hex("abab").unwrap())},
-            AddrV2Message{services: ServiceFlags::NETWORK_LIMITED | ServiceFlags::WITNESS | ServiceFlags::COMPACT_FILTERS, time: 0x83766279, port: 8333, addr: AddrV2::Ipv4(Ipv4Addr::new(9, 9, 9, 9))},
-        ]);
+        assert_eq!(
+            addresses,
+            vec![
+                AddrV2Message {
+                    services: ServiceFlags::NETWORK,
+                    time: 0x4966bc61,
+                    port: 8333,
+                    addr: AddrV2::Unknown(153, Vec::from_hex("abab").unwrap())
+                },
+                AddrV2Message {
+                    services: ServiceFlags::NETWORK_LIMITED
+                        | ServiceFlags::WITNESS
+                        | ServiceFlags::COMPACT_FILTERS,
+                    time: 0x83766279,
+                    port: 8333,
+                    addr: AddrV2::Ipv4(Ipv4Addr::new(9, 9, 9, 9))
+                },
+            ]
+        );
 
         assert_eq!(serialize(&addresses), raw);
     }

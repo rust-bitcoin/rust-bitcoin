@@ -18,15 +18,12 @@
 //! capabilities.
 //!
 
-use crate::prelude::*;
-
+use crate::consensus::{encode, Decodable, Encodable, ReadExt};
+use crate::hashes::sha256d;
 use crate::io;
-
 use crate::network::address::Address;
 use crate::network::constants::{self, ServiceFlags};
-use crate::consensus::{Encodable, Decodable, ReadExt};
-use crate::consensus::encode;
-use crate::hashes::sha256d;
+use crate::prelude::*;
 
 /// Some simple messages
 
@@ -52,7 +49,7 @@ pub struct VersionMessage {
     /// Whether the receiving peer should relay messages to the sender; used
     /// if the sender is bandwidth-limited and would like to support bloom
     /// filtering. Defaults to false.
-    pub relay: bool
+    pub relay: bool,
 }
 
 impl VersionMessage {
@@ -80,9 +77,18 @@ impl VersionMessage {
     }
 }
 
-impl_consensus_encoding!(VersionMessage, version, services, timestamp,
-                         receiver, sender, nonce,
-                         user_agent, start_height, relay);
+impl_consensus_encoding!(
+    VersionMessage,
+    version,
+    services,
+    timestamp,
+    receiver,
+    sender,
+    nonce,
+    user_agent,
+    start_height,
+    relay
+);
 
 /// message rejection reason as a code
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
@@ -102,7 +108,7 @@ pub enum RejectReason {
     /// insufficient fee
     Fee = 0x42,
     /// checkpoint
-    Checkpoint = 0x43
+    Checkpoint = 0x43,
 }
 
 impl Encodable for RejectReason {
@@ -123,7 +129,7 @@ impl Decodable for RejectReason {
             0x41 => RejectReason::Dust,
             0x42 => RejectReason::Fee,
             0x43 => RejectReason::Checkpoint,
-            _ => return Err(encode::Error::ParseFailed("unknown reject code"))
+            _ => return Err(encode::Error::ParseFailed("unknown reject code")),
         })
     }
 }
@@ -138,22 +144,18 @@ pub struct Reject {
     /// reason of rejectection
     pub reason: Cow<'static, str>,
     /// reference to rejected item
-    pub hash: sha256d::Hash
+    pub hash: sha256d::Hash,
 }
 
 impl_consensus_encoding!(Reject, message, ccode, reason, hash);
 
 #[cfg(test)]
 mod tests {
-    use super::VersionMessage;
-    use super::Reject;
-    use super::RejectReason;
-
+    use super::{Reject, RejectReason, VersionMessage};
+    use crate::consensus::encode::{deserialize, serialize};
     use crate::hashes::hex::FromHex;
     use crate::hashes::sha256d::Hash;
     use crate::network::constants::ServiceFlags;
-
-    use crate::consensus::encode::{deserialize, serialize};
 
     #[test]
     fn version_message_test() {
@@ -191,7 +193,8 @@ mod tests {
         assert_eq!(RejectReason::Duplicate, conflict.ccode);
         assert_eq!("txn-mempool-conflict", conflict.reason);
         assert_eq!(
-            Hash::from_hex("0470f4f2dc4191221b59884bcffaaf00932748ab46356a80413c0b86d354df05").unwrap(),
+            Hash::from_hex("0470f4f2dc4191221b59884bcffaaf00932748ab46356a80413c0b86d354df05")
+                .unwrap(),
             conflict.hash
         );
 
@@ -200,7 +203,8 @@ mod tests {
         assert_eq!(RejectReason::NonStandard, nonfinal.ccode);
         assert_eq!("non-final", nonfinal.reason);
         assert_eq!(
-            Hash::from_hex("0b46a539138b5fde4e341b37f2d945c23d41193b30caa7fcbd8bdb836cbe9b25").unwrap(),
+            Hash::from_hex("0b46a539138b5fde4e341b37f2d945c23d41193b30caa7fcbd8bdb836cbe9b25")
+                .unwrap(),
             nonfinal.hash
         );
 

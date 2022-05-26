@@ -18,8 +18,9 @@
 //! of Bitcoin data and network messages.
 //!
 
-use crate::io;
 use core::fmt;
+
+use crate::io;
 
 pub mod constants;
 
@@ -40,10 +41,10 @@ pub mod message_blockdata;
 pub mod message_bloom;
 #[cfg(feature = "std")]
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-pub mod message_network;
+pub mod message_filter;
 #[cfg(feature = "std")]
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-pub mod message_filter;
+pub mod message_network;
 #[cfg(feature = "std")]
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 pub mod stream_reader;
@@ -71,9 +72,7 @@ impl fmt::Display for Error {
 
 #[doc(hidden)]
 impl From<io::Error> for Error {
-    fn from(err: io::Error) -> Self {
-        Error::Io(err)
-    }
+    fn from(err: io::Error) -> Self { Error::Io(err) }
 }
 
 #[cfg(feature = "std")]

@@ -12,18 +12,15 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-use crate::prelude::*;
-
-use crate::io::{self, Cursor, Read};
-
 use crate::blockdata::transaction::Transaction;
-use crate::consensus::{encode, Encodable, Decodable};
 use crate::consensus::encode::MAX_VEC_SIZE;
-use crate::util::psbt::map::Map;
-use crate::util::psbt::{raw, PartiallySignedTransaction};
-use crate::util::psbt::Error;
+use crate::consensus::{encode, Decodable, Encodable};
+use crate::io::{self, Cursor, Read};
+use crate::prelude::*;
+use crate::util::bip32::{ChildNumber, DerivationPath, ExtendedPubKey, Fingerprint};
 use crate::util::endian::u32_to_array_le;
-use crate::util::bip32::{ExtendedPubKey, Fingerprint, DerivationPath, ChildNumber};
+use crate::util::psbt::map::Map;
+use crate::util::psbt::{raw, Error, PartiallySignedTransaction};
 
 /// Type: Unsigned Transaction PSBT_GLOBAL_UNSIGNED_TX = 0x00
 const PSBT_GLOBAL_UNSIGNED_TX: u8 = 0x00;
@@ -39,10 +36,7 @@ impl Map for PartiallySignedTransaction {
         let mut rv: Vec<raw::Pair> = Default::default();
 
         rv.push(raw::Pair {
-            key: raw::Key {
-                type_value: PSBT_GLOBAL_UNSIGNED_TX,
-                key: vec![],
-            },
+            key: raw::Key { type_value: PSBT_GLOBAL_UNSIGNED_TX, key: vec![] },
             value: {
                 // Manually serialized to ensure 0-input txs are serialized
                 // without witnesses.
@@ -66,33 +60,24 @@ impl Map for PartiallySignedTransaction {
                     ret.extend(fingerprint.as_bytes());
                     derivation.into_iter().for_each(|n| ret.extend(&u32_to_array_le((*n).into())));
                     ret
-                }
+                },
             });
         }
 
         // Serializing version only for non-default value; otherwise test vectors fail
         if self.version > 0 {
             rv.push(raw::Pair {
-                key: raw::Key {
-                    type_value: PSBT_GLOBAL_VERSION,
-                    key: vec![],
-                },
-                value: u32_to_array_le(self.version).to_vec()
+                key: raw::Key { type_value: PSBT_GLOBAL_VERSION, key: vec![] },
+                value: u32_to_array_le(self.version).to_vec(),
             });
         }
 
         for (key, value) in self.proprietary.iter() {
-            rv.push(raw::Pair {
-                key: key.to_key(),
-                value: value.clone(),
-            });
+            rv.push(raw::Pair { key: key.to_key(), value: value.clone() });
         }
 
         for (key, value) in self.unknown.iter() {
-            rv.push(raw::Pair {
-                key: key.clone(),
-                value: value.clone(),
-            });
+            rv.push(raw::Pair { key: key.clone(), value: value.clone() });
         }
 
         Ok(rv)
@@ -105,7 +90,8 @@ impl PartiallySignedTransaction {
         let mut tx: Option<Transaction> = None;
         let mut version: Option<u32> = None;
         let mut unknowns: BTreeMap<raw::Key, Vec<u8>> = Default::default();
-        let mut xpub_map: BTreeMap<ExtendedPubKey, (Fingerprint, DerivationPath)> = Default::default();
+        let mut xpub_map: BTreeMap<ExtendedPubKey, (Fingerprint, DerivationPath)> =
+            Default::default();
         let mut proprietary: BTreeMap<raw::ProprietaryKey, Vec<u8>> = Default::default();
 
         loop {
@@ -131,13 +117,13 @@ impl PartiallySignedTransaction {
                                     });
 
                                     if decoder.position() != vlen as u64 {
-                                        return Err(encode::Error::ParseFailed("data not consumed entirely when explicitly deserializing"))
+                                        return Err(encode::Error::ParseFailed("data not consumed entirely when explicitly deserializing"));
                                     }
                                 } else {
-                                    return Err(Error::DuplicateKey(pair.key).into())
+                                    return Err(Error::DuplicateKey(pair.key).into());
                                 }
                             } else {
-                                return Err(Error::InvalidKey(pair.key).into())
+                                return Err(Error::InvalidKey(pair.key).into());
                             }
                         }
                         PSBT_GLOBAL_XPUB => {
@@ -148,7 +134,9 @@ impl PartiallySignedTransaction {
                                     ))?;
 
                                 if pair.value.is_empty() || pair.value.len() % 4 != 0 {
-                                    return Err(encode::Error::ParseFailed("Incorrect length of global xpub derivation data"))
+                                    return Err(encode::Error::ParseFailed(
+                                        "Incorrect length of global xpub derivation data",
+                                    ));
                                 }
 
                                 let child_count = pair.value.len() / 4 - 1;
@@ -161,11 +149,18 @@ impl PartiallySignedTransaction {
                                 }
                                 let derivation = DerivationPath::from(path);
                                 // Keys, according to BIP-174, must be unique
-                                if xpub_map.insert(xpub, (Fingerprint::from(&fingerprint[..]), derivation)).is_some() {
-                                    return Err(encode::Error::ParseFailed("Repeated global xpub key"))
+                                if xpub_map
+                                    .insert(xpub, (Fingerprint::from(&fingerprint[..]), derivation))
+                                    .is_some()
+                                {
+                                    return Err(encode::Error::ParseFailed(
+                                        "Repeated global xpub key",
+                                    ));
                                 }
                             } else {
-                                return Err(encode::Error::ParseFailed("Xpub global key must contain serialized Xpub data"))
+                                return Err(encode::Error::ParseFailed(
+                                    "Xpub global key must contain serialized Xpub data",
+                                ));
                             }
                         }
                         PSBT_GLOBAL_VERSION => {
@@ -176,36 +171,46 @@ impl PartiallySignedTransaction {
                                     let vlen: usize = pair.value.len();
                                     let mut decoder = Cursor::new(pair.value);
                                     if vlen != 4 {
-                                        return Err(encode::Error::ParseFailed("Wrong global version value length (must be 4 bytes)"))
+                                        return Err(encode::Error::ParseFailed(
+                                            "Wrong global version value length (must be 4 bytes)",
+                                        ));
                                     }
                                     version = Some(Decodable::consensus_decode(&mut decoder)?);
                                     // We only understand version 0 PSBTs. According to BIP-174 we
                                     // should throw an error if we see anything other than version 0.
                                     if version != Some(0) {
-                                        return Err(encode::Error::ParseFailed("PSBT versions greater than 0 are not supported"))
+                                        return Err(encode::Error::ParseFailed(
+                                            "PSBT versions greater than 0 are not supported",
+                                        ));
                                     }
                                 } else {
-                                    return Err(Error::DuplicateKey(pair.key).into())
+                                    return Err(Error::DuplicateKey(pair.key).into());
                                 }
                             } else {
-                                return Err(Error::InvalidKey(pair.key).into())
+                                return Err(Error::InvalidKey(pair.key).into());
                             }
                         }
-                        PSBT_GLOBAL_PROPRIETARY => match proprietary.entry(raw::ProprietaryKey::from_key(pair.key.clone())?) {
+                        PSBT_GLOBAL_PROPRIETARY => match proprietary
+                            .entry(raw::ProprietaryKey::from_key(pair.key.clone())?)
+                        {
                             btree_map::Entry::Vacant(empty_key) => {
                                 empty_key.insert(pair.value);
-                            },
-                            btree_map::Entry::Occupied(_) => return Err(Error::DuplicateKey(pair.key).into()),
-                        }
+                            }
+                            btree_map::Entry::Occupied(_) =>
+                                return Err(Error::DuplicateKey(pair.key).into()),
+                        },
                         _ => match unknowns.entry(pair.key) {
                             btree_map::Entry::Vacant(empty_key) => {
                                 empty_key.insert(pair.value);
-                            },
-                            btree_map::Entry::Occupied(k) => return Err(Error::DuplicateKey(k.key().clone()).into()),
-                        }
+                            }
+                            btree_map::Entry::Occupied(k) =>
+                                return Err(Error::DuplicateKey(k.key().clone()).into()),
+                        },
                     }
                 }
-                Err(crate::consensus::encode::Error::Psbt(crate::util::psbt::Error::NoMorePairs)) => break,
+                Err(crate::consensus::encode::Error::Psbt(
+                    crate::util::psbt::Error::NoMorePairs,
+                )) => break,
                 Err(e) => return Err(e),
             }
         }
@@ -218,7 +223,7 @@ impl PartiallySignedTransaction {
                 proprietary,
                 unknown: unknowns,
                 inputs: vec![],
-                outputs: vec![]
+                outputs: vec![],
             })
         } else {
             Err(Error::MustHaveUnsignedTx.into())

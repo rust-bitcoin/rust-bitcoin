@@ -1,9 +1,9 @@
 extern crate bitcoin;
 
+use std::io::{BufReader, Write};
 use std::net::{IpAddr, Ipv4Addr, Shutdown, SocketAddr, TcpStream};
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::{env, process};
-use std::io::{Write, BufReader};
 
 use bitcoin::consensus::{encode, Decodable};
 use bitcoin::network::{address, constants, message, message_network};
@@ -80,10 +80,7 @@ fn build_version_message(address: SocketAddr) -> message::NetworkMessage {
     let services = constants::ServiceFlags::NONE;
 
     // "standard UNIX timestamp in seconds"
-    let timestamp = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .expect("Time error")
-        .as_secs();
+    let timestamp = SystemTime::now().duration_since(UNIX_EPOCH).expect("Time error").as_secs();
 
     // "The network address of the node receiving this message"
     let addr_recv = address::Address::new(&address, constants::ServiceFlags::NONE);

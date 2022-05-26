@@ -12,16 +12,14 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-use crate::prelude::*;
-
 use core::fmt;
 
 use crate::blockdata::transaction::Transaction;
 use crate::consensus::encode;
-use crate::util::psbt::raw;
-
 use crate::hashes;
+use crate::prelude::*;
 use crate::util::bip32::ExtendedPubKey;
+use crate::util::psbt::raw;
 
 /// Enum for marking psbt hash error.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
@@ -91,24 +89,35 @@ impl fmt::Display for Error {
             Error::InvalidMagic => f.write_str("invalid magic"),
             Error::MissingUtxo => f.write_str("UTXO information is not present in PSBT"),
             Error::InvalidSeparator => f.write_str("invalid separator"),
-            Error::PsbtUtxoOutOfbounds => f.write_str("output index is out of bounds of non witness script output array"),
+            Error::PsbtUtxoOutOfbounds =>
+                f.write_str("output index is out of bounds of non witness script output array"),
             Error::InvalidKey(ref rkey) => write!(f, "invalid key: {}", rkey),
-            Error::InvalidProprietaryKey => write!(f, "non-proprietary key type found when proprietary key was expected"),
+            Error::InvalidProprietaryKey =>
+                write!(f, "non-proprietary key type found when proprietary key was expected"),
             Error::DuplicateKey(ref rkey) => write!(f, "duplicate key: {}", rkey),
-            Error::UnsignedTxHasScriptSigs => f.write_str("the unsigned transaction has script sigs"),
-            Error::UnsignedTxHasScriptWitnesses => f.write_str("the unsigned transaction has script witnesses"),
-            Error::MustHaveUnsignedTx => {
-                f.write_str("partially signed transactions must have an unsigned transaction")
-            }
+            Error::UnsignedTxHasScriptSigs =>
+                f.write_str("the unsigned transaction has script sigs"),
+            Error::UnsignedTxHasScriptWitnesses =>
+                f.write_str("the unsigned transaction has script witnesses"),
+            Error::MustHaveUnsignedTx =>
+                f.write_str("partially signed transactions must have an unsigned transaction"),
             Error::NoMorePairs => f.write_str("no more key-value pairs for this psbt map"),
-            Error::UnexpectedUnsignedTx { expected: ref e, actual: ref a } => write!(f, "different unsigned transaction: expected {}, actual {}", e.txid(), a.txid()),
-            Error::NonStandardSighashType(ref sht) => write!(f, "non-standard sighash type: {}", sht),
+            Error::UnexpectedUnsignedTx { expected: ref e, actual: ref a } => write!(
+                f,
+                "different unsigned transaction: expected {}, actual {}",
+                e.txid(),
+                a.txid()
+            ),
+            Error::NonStandardSighashType(ref sht) =>
+                write!(f, "non-standard sighash type: {}", sht),
             Error::HashParseError(e) => write!(f, "Hash Parse Error: {}", e),
-            Error::InvalidPreimageHashPair{ref preimage, ref hash, ref hash_type} => {
+            Error::InvalidPreimageHashPair { ref preimage, ref hash, ref hash_type } => {
                 // directly using debug forms of psbthash enums
-                write!(f, "Preimage {:?} does not match {:?} hash {:?}", preimage, hash_type, hash )
-            },
-            Error::CombineInconsistentKeySources(ref s) => { write!(f, "combine conflict: {}", s) },
+                write!(f, "Preimage {:?} does not match {:?} hash {:?}", preimage, hash_type, hash)
+            }
+            Error::CombineInconsistentKeySources(ref s) => {
+                write!(f, "combine conflict: {}", s)
+            }
             Error::ConsensusEncoding => f.write_str("bitcoin consensus or BIP-174 encoding error"),
         }
     }
@@ -122,7 +131,7 @@ impl std::error::Error for Error {
 
         match self {
             HashParseError(e) => Some(e),
-            | InvalidMagic
+            InvalidMagic
             | MissingUtxo
             | InvalidSeparator
             | PsbtUtxoOutOfbounds
@@ -135,7 +144,7 @@ impl std::error::Error for Error {
             | NoMorePairs
             | UnexpectedUnsignedTx { .. }
             | NonStandardSighashType(_)
-            | InvalidPreimageHashPair{ .. }
+            | InvalidPreimageHashPair { .. }
             | CombineInconsistentKeySources(_)
             | ConsensusEncoding => None,
         }
@@ -144,9 +153,7 @@ impl std::error::Error for Error {
 
 #[doc(hidden)]
 impl From<hashes::Error> for Error {
-    fn from(e: hashes::Error) -> Error {
-        Error::HashParseError(e)
-    }
+    fn from(e: hashes::Error) -> Error { Error::HashParseError(e) }
 }
 
 impl From<encode::Error> for Error {
