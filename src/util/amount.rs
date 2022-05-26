@@ -16,7 +16,7 @@
 
 use crate::prelude::*;
 
-use core::{ops, default, str::FromStr, cmp::Ordering};
+use core::{ops, default, str::FromStr};
 use core::fmt::{self, Write};
 
 /// A set of denominations in which amounts can be expressed.
@@ -357,15 +357,15 @@ fn fmt_satoshi_in(
     let mut num_before_decimal_point = satoshi;
     let trailing_decimal_zeros;
     let mut exp = 0;
-    match precision.cmp(&0) {
+    match precision {
         // We add the number of zeroes to the end
-        Ordering::Greater => {
+        1 | 3 | 4 => {
             if satoshi > 0 {
                 exp = precision as usize;
             }
             trailing_decimal_zeros = options.precision.unwrap_or(0);
         },
-        Ordering::Less => {
+        -2 | -5 | -8 => {
             let precision = unsigned_abs(precision);
             let divisor = 10u64.pow(precision.into());
             num_before_decimal_point = satoshi / divisor;
@@ -384,7 +384,8 @@ fn fmt_satoshi_in(
             let opt_precision = options.precision.unwrap_or(0);
             trailing_decimal_zeros = opt_precision.saturating_sub(norm_nb_decimals);
         },
-        Ordering::Equal => trailing_decimal_zeros = options.precision.unwrap_or(0),
+        0 => trailing_decimal_zeros = options.precision.unwrap_or(0),
+        _ => unreachable!(),    // precision() only returns the values above.
     }
     let total_decimals = norm_nb_decimals + trailing_decimal_zeros;
     // Compute expected width of the number
