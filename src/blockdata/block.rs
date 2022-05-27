@@ -39,6 +39,10 @@ use crate::VarInt;
 
 /// A block header, which contains all the block's information except
 /// the actual transactions
+///
+/// # Bitcoin Core References
+///
+/// * [CBlockHeader definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/block.h#L20)
 #[derive(Copy, PartialEq, Eq, Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct BlockHeader {
