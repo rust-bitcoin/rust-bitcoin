@@ -42,7 +42,12 @@ use crate::VarInt;
 #[derive(Copy, PartialEq, Eq, Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct BlockHeader {
-    /// The protocol version. Should always be 1.
+    /// Originally protocol version, but repurposed for soft-fork signaling.
+    ///
+    /// ### Relevant BIPs
+    ///
+    /// * [BIP9 - Version bits with timeout and delay](https://github.com/bitcoin/bips/blob/master/bip-0009.mediawiki) (current usage)
+    /// * [BIP34 - Block v2, Height in Coinbase](https://github.com/bitcoin/bips/blob/master/bip-0034.mediawiki)
     pub version: i32,
     /// Reference to the previous block in the chain.
     pub prev_blockhash: BlockHash,
