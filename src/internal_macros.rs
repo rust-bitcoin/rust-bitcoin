@@ -57,7 +57,7 @@ macro_rules! impl_consensus_encoding {
 
 /// Implements standard array methods for a given wrapper type
 macro_rules! impl_array_newtype {
-    ($thing:ident, $ty:ty, $len:expr) => {
+    ($thing:ident, $ty:ty, $len:literal) => {
         impl $thing {
             /// Converts the object to a raw pointer
             #[inline]
@@ -137,7 +137,7 @@ macro_rules! hex_hash (($h:ident, $s:expr) => ($h::from_slice(&<$crate::prelude:
 macro_rules! hex_decode (($h:ident, $s:expr) => (deserialize::<$h>(&<$crate::prelude::Vec<u8> as $crate::hashes::hex::FromHex>::from_hex($s).unwrap()).unwrap()));
 
 macro_rules! serde_string_impl {
-    ($name:ident, $expecting:expr) => {
+    ($name:ident, $expecting:literal) => {
         #[cfg(feature = "serde")]
         #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
         impl<'de> $crate::serde::Deserialize<'de> for $name {
@@ -184,7 +184,7 @@ macro_rules! serde_string_impl {
 /// A combination macro where the human-readable serialization is done like
 /// serde_string_impl and the non-human-readable impl is done as a struct.
 macro_rules! serde_struct_human_string_impl {
-    ($name:ident, $expecting:expr, $($fe:ident),*) => (
+    ($name:ident, $expecting:literal, $($fe:ident),*) => (
         #[cfg(feature = "serde")]
         #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
         impl<'de> $crate::serde::Deserialize<'de> for $name {
@@ -362,7 +362,7 @@ macro_rules! serde_struct_human_string_impl {
 /// - core::str::FromStr
 /// - hashes::hex::FromHex
 macro_rules! impl_bytes_newtype {
-    ($t:ident, $len:expr) => (
+    ($t:ident, $len:literal) => (
 
         impl ::core::fmt::LowerHex for $t {
             fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
@@ -493,7 +493,7 @@ macro_rules! user_enum {
         $(#[$attr:meta])*
         pub enum $name:ident {
             $(#[$doc:meta]
-              $elem:ident <-> $txt:expr),*
+              $elem:ident <-> $txt:literal),*
         }
     ) => (
         $(#[$attr])*

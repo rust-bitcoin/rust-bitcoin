@@ -672,7 +672,7 @@ impl Script {
     pub fn bytes_to_asm_fmt(script: &[u8], f: &mut dyn fmt::Write) -> fmt::Result {
         // This has to be a macro because it needs to break the loop
         macro_rules! read_push_data_len {
-            ($iter:expr, $len:expr, $formatter:expr) => {
+            ($iter:expr, $len:literal, $formatter:expr) => {
                 match read_uint_iter($iter, $len) {
                     Ok(n) => {
                         n

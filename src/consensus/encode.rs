@@ -536,7 +536,7 @@ impl Decodable for Cow<'static, str> {
 
 // Arrays
 macro_rules! impl_array {
-    ( $size:expr ) => {
+    ( $size:literal ) => {
         impl Encodable for [u8; $size] {
             #[inline]
             fn consensus_encode<S: WriteExt>(&self, mut s: S) -> Result<usize, io::Error> {
