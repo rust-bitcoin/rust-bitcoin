@@ -45,7 +45,7 @@ impl Encodable for BloomFlags {
 }
 
 impl Decodable for BloomFlags {
-    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
+    fn consensus_decode_from_finite_reader<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
         Ok(match d.read_u8()? {
             0 => BloomFlags::None,
             1 => BloomFlags::All,

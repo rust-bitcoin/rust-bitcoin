@@ -281,8 +281,8 @@ impl Encodable for ServiceFlags {
 
 impl Decodable for ServiceFlags {
     #[inline]
-    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
-        Ok(ServiceFlags(Decodable::consensus_decode(&mut d)?))
+    fn consensus_decode_from_finite_reader<D: io::Read>(d: D) -> Result<Self, encode::Error> {
+        Ok(ServiceFlags(Decodable::consensus_decode_from_finite_reader(d)?))
     }
 }
 

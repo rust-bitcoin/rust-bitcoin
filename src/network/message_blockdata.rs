@@ -28,6 +28,8 @@ use crate::network::constants;
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::hash_types::{BlockHash, Txid, Wtxid};
 
+use super::message::MAX_MSG_SIZE;
+
 /// An inventory item.
 #[derive(PartialEq, Eq, Clone, Debug, Copy, Hash, PartialOrd, Ord)]
 pub enum Inventory {
@@ -74,20 +76,25 @@ impl Encodable for Inventory {
 
 impl Decodable for Inventory {
     #[inline]
-    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
-        let inv_type: u32 = Decodable::consensus_decode(&mut d)?;
+    fn consensus_decode_from_finite_reader<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
+        let inv_type: u32 = Decodable::consensus_decode_from_finite_reader(&mut d)?;
         Ok(match inv_type {
             0 => Inventory::Error,
-            1 => Inventory::Transaction(Decodable::consensus_decode(&mut d)?),
-            2 => Inventory::Block(Decodable::consensus_decode(&mut d)?),
-            5 => Inventory::WTx(Decodable::consensus_decode(&mut d)?),
-            0x40000001 => Inventory::WitnessTransaction(Decodable::consensus_decode(&mut d)?),
-            0x40000002 => Inventory::WitnessBlock(Decodable::consensus_decode(&mut d)?),
+            1 => Inventory::Transaction(Decodable::consensus_decode_from_finite_reader(&mut d)?),
+            2 => Inventory::Block(Decodable::consensus_decode_from_finite_reader(&mut d)?),
+            5 => Inventory::WTx(Decodable::consensus_decode_from_finite_reader(&mut d)?),
+            0x40000001 => Inventory::WitnessTransaction(Decodable::consensus_decode_from_finite_reader(&mut d)?),
+            0x40000002 => Inventory::WitnessBlock(Decodable::consensus_decode_from_finite_reader(&mut d)?),
             tp => Inventory::Unknown {
                 inv_type: tp,
-                hash: Decodable::consensus_decode(&mut d)?,
+                hash: Decodable::consensus_decode_from_finite_reader(&mut d)?,
             }
         })
+    }
+
+    #[inline]
+    fn consensus_decode<D: io::Read>(d: D) -> Result<Self, encode::Error> {
+        Self::consensus_decode_from_finite_reader(d.take(MAX_MSG_SIZE as u64))
     }
 }
 

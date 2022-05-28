@@ -86,11 +86,11 @@ impl Encodable for Address {
 
 impl Decodable for Address {
     #[inline]
-    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
+    fn consensus_decode_from_finite_reader<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
         Ok(Address {
-            services: Decodable::consensus_decode(&mut d)?,
+            services: Decodable::consensus_decode_from_finite_reader(&mut d)?,
             address: read_be_address(&mut d)?,
-            port: u16::swap_bytes(Decodable::consensus_decode(d)?)
+            port: u16::swap_bytes(Decodable::consensus_decode_from_finite_reader(d)?)
         })
     }
 }
@@ -168,7 +168,7 @@ impl Encodable for AddrV2 {
 }
 
 impl Decodable for AddrV2 {
-    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
+    fn consensus_decode_from_finite_reader<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
         let network_id = u8::consensus_decode(&mut d)?;
         let len = VarInt::consensus_decode(&mut d)?.0;
         if len > 512 {
@@ -278,7 +278,7 @@ impl Encodable for AddrV2Message {
 }
 
 impl Decodable for AddrV2Message {
-    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
+    fn consensus_decode_from_finite_reader<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
         Ok(AddrV2Message {
             time: Decodable::consensus_decode(&mut d)?,
             services: ServiceFlags::from(VarInt::consensus_decode(&mut d)?.0),

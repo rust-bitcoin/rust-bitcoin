@@ -433,15 +433,21 @@ macro_rules! construct_uint {
         }
 
         impl $crate::consensus::Decodable for $name {
-            fn consensus_decode<D: $crate::io::Read>(
+            fn consensus_decode_from_finite_reader<D: $crate::io::Read>(
                 mut d: D,
             ) -> Result<$name, $crate::consensus::encode::Error> {
                 use $crate::consensus::Decodable;
                 let mut ret: [u64; $n_words] = [0; $n_words];
                 for i in 0..$n_words {
-                    ret[i] = Decodable::consensus_decode(&mut d)?;
+                    ret[i] = Decodable::consensus_decode_from_finite_reader(&mut d)?;
                 }
                 Ok($name(ret))
+            }
+
+            fn consensus_decode<D: $crate::io::Read>(
+                d: D,
+            ) -> Result<$name, $crate::consensus::encode::Error> {
+                Self::consensus_decode_from_finite_reader(d.take($crate::consensus::encode::MAX_VEC_SIZE as u64))
             }
         }
 

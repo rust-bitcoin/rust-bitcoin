@@ -31,7 +31,7 @@ macro_rules! impl_hashencode {
         }
 
         impl $crate::consensus::Decodable for $hashtype {
-            fn consensus_decode<D: $crate::io::Read>(d: D) -> Result<Self, $crate::consensus::encode::Error> {
+            fn consensus_decode_from_finite_reader<D: $crate::io::Read>(d: D) -> Result<Self, $crate::consensus::encode::Error> {
                 use $crate::hashes::Hash;
                 Ok(Self::from_inner(<<$hashtype as $crate::hashes::Hash>::Inner>::consensus_decode(d)?))
             }

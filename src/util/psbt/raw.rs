@@ -76,8 +76,8 @@ impl fmt::Display for Key {
 }
 
 impl Decodable for Key {
-    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
-        let VarInt(byte_size): VarInt = Decodable::consensus_decode(&mut d)?;
+    fn consensus_decode_from_finite_reader<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
+        let VarInt(byte_size): VarInt = Decodable::consensus_decode_from_finite_reader(&mut d)?;
 
         if byte_size == 0 {
             return Err(Error::NoMorePairs.into());
@@ -92,14 +92,18 @@ impl Decodable for Key {
             })
         }
 
-        let type_value: u8 = Decodable::consensus_decode(&mut d)?;
+        let type_value: u8 = Decodable::consensus_decode_from_finite_reader(&mut d)?;
 
         let mut key = Vec::with_capacity(key_byte_size as usize);
         for _ in 0..key_byte_size {
-            key.push(Decodable::consensus_decode(&mut d)?);
+            key.push(Decodable::consensus_decode_from_finite_reader(&mut d)?);
         }
 
         Ok(Key { type_value, key })
+    }
+
+    fn consensus_decode<D: io::Read>(d: D) -> Result<Self, encode::Error> {
+        Self::consensus_decode_from_finite_reader(d.take(MAX_VEC_SIZE as u64))
     }
 }
 
@@ -126,11 +130,14 @@ impl Encodable for Pair {
 }
 
 impl Decodable for Pair {
-    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
+    fn consensus_decode_from_finite_reader<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
         Ok(Pair {
-            key: Decodable::consensus_decode(&mut d)?,
-            value: Decodable::consensus_decode(d)?,
+            key: Decodable::consensus_decode_from_finite_reader(&mut d)?,
+            value: Decodable::consensus_decode_from_finite_reader(d)?,
         })
+    }
+    fn consensus_decode<D: io::Read>(d: D) -> Result<Self, encode::Error> {
+        Self::consensus_decode_from_finite_reader(d.take(MAX_VEC_SIZE as u64))
     }
 }
 
@@ -145,12 +152,16 @@ impl<Subtype> Encodable for ProprietaryKey<Subtype> where Subtype: Copy + From<u
 }
 
 impl<Subtype> Decodable for ProprietaryKey<Subtype> where Subtype: Copy + From<u8> + Into<u8> {
-    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
-        let prefix = Vec::<u8>::consensus_decode(&mut d)?;
+    fn consensus_decode_from_finite_reader<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
+        let prefix = Vec::<u8>::consensus_decode_from_finite_reader(&mut d)?;
         let subtype = Subtype::from(d.read_u8()?);
         let key = read_to_end(d)?;
 
         Ok(ProprietaryKey { prefix, subtype, key })
+    }
+
+    fn consensus_decode<D: io::Read>(d: D) -> Result<Self, encode::Error> {
+        Self::consensus_decode_from_finite_reader(d.take(MAX_VEC_SIZE as u64))
     }
 }
 

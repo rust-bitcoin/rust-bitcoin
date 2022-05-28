@@ -295,15 +295,15 @@ impl Encodable for PartiallySignedTransaction {
 }
 
 impl Decodable for PartiallySignedTransaction {
-    fn consensus_decode<D: io::Read>(d: D) -> Result<Self, encode::Error> {
+    fn consensus_decode_from_finite_reader<D: io::Read>(d: D) -> Result<Self, encode::Error> {
         let mut d = d.take(MAX_VEC_SIZE as u64);
-        let magic: [u8; 4] = Decodable::consensus_decode(&mut d)?;
+        let magic: [u8; 4] = Decodable::consensus_decode_from_finite_reader(&mut d)?;
 
         if *b"psbt" != magic {
             return Err(Error::InvalidMagic.into());
         }
 
-        if 0xff_u8 != u8::consensus_decode(&mut d)? {
+        if 0xff_u8 != u8::consensus_decode_from_finite_reader(&mut d)? {
             return Err(Error::InvalidSeparator.into());
         }
 
@@ -316,7 +316,7 @@ impl Decodable for PartiallySignedTransaction {
             let mut inputs: Vec<Input> = Vec::with_capacity(inputs_len);
 
             for _ in 0..inputs_len {
-                inputs.push(Decodable::consensus_decode(&mut d)?);
+                inputs.push(Decodable::consensus_decode_from_finite_reader(&mut d)?);
             }
 
             inputs
@@ -328,7 +328,7 @@ impl Decodable for PartiallySignedTransaction {
             let mut outputs: Vec<Output> = Vec::with_capacity(outputs_len);
 
             for _ in 0..outputs_len {
-                outputs.push(Decodable::consensus_decode(&mut d)?);
+                outputs.push(Decodable::consensus_decode_from_finite_reader(&mut d)?);
             }
 
             outputs
@@ -337,6 +337,10 @@ impl Decodable for PartiallySignedTransaction {
         global.inputs = inputs;
         global.outputs = outputs;
         Ok(global)
+    }
+
+    fn consensus_decode<D: io::Read>(d: D) -> Result<Self, encode::Error> {
+        Self::consensus_decode_from_finite_reader(d.take(MAX_VEC_SIZE as u64))
     }
 }
 

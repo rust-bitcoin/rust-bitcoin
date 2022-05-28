@@ -6,7 +6,7 @@
 use crate::blockdata::transaction::EcdsaSighashType;
 use crate::consensus::encode::{Error, MAX_VEC_SIZE};
 use crate::consensus::{Decodable, Encodable, WriteExt};
-use crate::io::{self, Read, Write};
+use crate::io::{self, Write};
 use crate::prelude::*;
 use secp256k1::ecdsa;
 use crate::VarInt;
@@ -46,8 +46,8 @@ pub struct Witness {
 pub struct Iter<'a>(::core::slice::Iter<'a, u8>);
 
 impl Decodable for Witness {
-    fn consensus_decode<D: Read>(mut d: D) -> Result<Self, Error> {
-        let witness_elements = VarInt::consensus_decode(&mut d)?.0 as usize;
+    fn consensus_decode_from_finite_reader<D: io::Read>(mut d: D) -> Result<Self, Error> {
+        let witness_elements = VarInt::consensus_decode_from_finite_reader(&mut d)?.0 as usize;
         if witness_elements == 0 {
             Ok(Witness::default())
         } else {
@@ -62,7 +62,7 @@ impl Decodable for Witness {
             for _ in 0..witness_elements {
                 second_to_last = last;
                 last = cursor;
-                let element_size_varint = VarInt::consensus_decode(&mut d)?;
+                let element_size_varint = VarInt::consensus_decode_from_finite_reader(&mut d)?;
                 let element_size_varint_len = element_size_varint.len();
                 let element_size = element_size_varint.0 as usize;
                 let required_len = cursor
@@ -99,6 +99,10 @@ impl Decodable for Witness {
                 second_to_last,
             })
         }
+    }
+
+    fn consensus_decode<D: io::Read>(d: D) -> Result<Self, Error> {
+        Self::consensus_decode_from_finite_reader(d.take(MAX_VEC_SIZE as u64))
     }
 }
 

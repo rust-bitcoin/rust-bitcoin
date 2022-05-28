@@ -52,6 +52,7 @@
 //! assert_eq!(1, index[0]);
 //! ```
 
+use crate::consensus::encode::MAX_VEC_SIZE;
 use crate::prelude::*;
 
 use crate::io;
@@ -352,11 +353,11 @@ impl Encodable for PartialMerkleTree {
 }
 
 impl Decodable for PartialMerkleTree {
-    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
-        let num_transactions: u32 = Decodable::consensus_decode(&mut d)?;
-        let hashes: Vec<TxMerkleNode> = Decodable::consensus_decode(&mut d)?;
+    fn consensus_decode_from_finite_reader<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
+        let num_transactions: u32 = Decodable::consensus_decode_from_finite_reader(&mut d)?;
+        let hashes: Vec<TxMerkleNode> = Decodable::consensus_decode_from_finite_reader(&mut d)?;
 
-        let bytes: Vec<u8> = Decodable::consensus_decode(d)?;
+        let bytes: Vec<u8> = Decodable::consensus_decode_from_finite_reader(d)?;
         let mut bits: Vec<bool> = vec![false; bytes.len() * 8];
 
         for (p, bit) in bits.iter_mut().enumerate() {
@@ -367,6 +368,10 @@ impl Decodable for PartialMerkleTree {
             hashes,
             bits,
         })
+    }
+
+    fn consensus_decode<D: io::Read>(d: D) -> Result<Self, encode::Error> {
+        Self::consensus_decode_from_finite_reader(d.take(MAX_VEC_SIZE as u64))
     }
 }
 
@@ -499,11 +504,15 @@ impl Encodable for MerkleBlock {
 }
 
 impl Decodable for MerkleBlock {
-    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
+    fn consensus_decode_from_finite_reader<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
         Ok(MerkleBlock {
-            header: Decodable::consensus_decode(&mut d)?,
-            txn: Decodable::consensus_decode(d)?,
+            header: Decodable::consensus_decode_from_finite_reader(&mut d)?,
+            txn: Decodable::consensus_decode_from_finite_reader(d)?,
         })
+    }
+
+    fn consensus_decode<D: io::Read>(d: D) -> Result<Self, encode::Error> {
+        Self::consensus_decode_from_finite_reader(d.take(MAX_VEC_SIZE as u64))
     }
 }
 
