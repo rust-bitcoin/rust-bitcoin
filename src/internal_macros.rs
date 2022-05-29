@@ -32,6 +32,16 @@ macro_rules! impl_consensus_encoding {
         }
 
         impl $crate::consensus::Decodable for $thing {
+
+            #[inline]
+            fn consensus_decode_from_finite_reader<D: $crate::io::Read>(
+                mut d: D,
+            ) -> Result<$thing, $crate::consensus::encode::Error> {
+                Ok($thing {
+                    $($field: $crate::consensus::Decodable::consensus_decode_from_finite_reader(&mut d)?),+
+                })
+            }
+
             #[inline]
             fn consensus_decode<D: $crate::io::Read>(
                 d: D,
