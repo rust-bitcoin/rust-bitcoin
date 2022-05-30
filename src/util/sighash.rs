@@ -20,6 +20,7 @@
 //! and legacy (before Bip143).
 //!
 
+use crate::blockdata::transaction::EncodeSigningDataResult;
 use crate::prelude::*;
 
 pub use crate::blockdata::transaction::{EcdsaSighashType, SighashTypeParseError};
@@ -35,6 +36,14 @@ use crate::Sighash;
 use crate::{Script, Transaction, TxOut};
 
 use super::taproot::LeafVersion;
+
+/// Used for signature hash for invalid use of SIGHASH_SINGLE.
+pub(crate) const UINT256_ONE: [u8; 32] = [
+    1, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0
+];
 
 /// Efficiently calculates signature hash message for legacy, segwit and taproot inputs.
 #[derive(Debug)]
@@ -638,23 +647,24 @@ impl<R: Deref<Target = Transaction>> SighashCache<R> {
 
     /// Encodes the legacy signing data for any flag type into a given object implementing a
     /// [`std::io::Write`] trait. Internally calls [`Transaction::encode_signing_data_to`].
+    #[must_use]
     pub fn legacy_encode_signing_data_to<Write: io::Write, U: Into<u32>>(
         &self,
         mut writer: Write,
         input_index: usize,
         script_pubkey: &Script,
         sighash_type: U,
-    ) -> Result<(), Error> {
+    ) -> EncodeSigningDataResult<Error> {
         if input_index >= self.tx.input.len() {
-            return Err(Error::IndexOutOfInputsBounds {
+            return EncodeSigningDataResult::WriteResult(Err(Error::IndexOutOfInputsBounds {
                 index: input_index,
                 inputs_size: self.tx.input.len(),
-            });
+            }));
         }
+
         self.tx
             .encode_signing_data_to(&mut writer, input_index, script_pubkey, sighash_type.into())
-            .expect("writers don't error");
-        Ok(())
+            .map_err(|e| e.into())
     }
 
     /// Computes the legacy sighash for any `sighash_type`.
@@ -665,8 +675,12 @@ impl<R: Deref<Target = Transaction>> SighashCache<R> {
         sighash_type: u32,
     ) -> Result<Sighash, Error> {
         let mut enc = Sighash::engine();
-        self.legacy_encode_signing_data_to(&mut enc, input_index, script_pubkey, sighash_type)?;
-        Ok(Sighash::from_engine(enc))
+        if self.legacy_encode_signing_data_to(&mut enc, input_index, script_pubkey, sighash_type)
+            .is_sighash_single_bug()? {
+            Ok(Sighash::from_inner(UINT256_ONE))
+        } else {
+            Ok(Sighash::from_engine(enc))
+        }
     }
 
     #[inline]
