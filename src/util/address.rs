@@ -473,7 +473,7 @@ impl Payload {
     pub fn p2tr_tweaked(output_key: TweakedPublicKey) -> Payload {
         Payload::WitnessProgram {
             version: WitnessVersion::V1,
-            program: output_key.as_inner().serialize().to_vec(),
+            program: output_key.to_inner().serialize().to_vec(),
         }
     }
 
