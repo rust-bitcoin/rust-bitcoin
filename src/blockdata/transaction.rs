@@ -154,8 +154,7 @@ impl ::core::str::FromStr for OutPoint {
     type Err = ParseOutPointError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s.len() > 75 {
-            // 64 + 1 + 10
+        if s.len() > /* 64 + 1 + 10 */ 75 {
             return Err(ParseOutPointError::TooLong);
         }
         let find = s.find(':');
