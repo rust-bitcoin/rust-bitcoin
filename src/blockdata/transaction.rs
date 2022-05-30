@@ -509,25 +509,21 @@ impl Transaction {
     pub fn strippedsize(&self) -> usize {
         let mut input_size = 0;
         for input in &self.input {
-            input_size += 32 + 4 + 4 + // outpoint (32+4) + nSequence
-                VarInt(input.script_sig.len() as u64).len() +
-                input.script_sig.len();
+            input_size += 32 + 4 + 4 // outpoint (32+4) + nSequence
+                + VarInt(input.script_sig.len() as u64).len()
+                + input.script_sig.len();
         }
         let mut output_size = 0;
         for output in &self.output {
-            output_size += 8 + // value
-                VarInt(output.script_pubkey.len() as u64).len() +
-                output.script_pubkey.len();
+            output_size += 8 // value
+                + VarInt(output.script_pubkey.len() as u64).len()
+                + output.script_pubkey.len();
         }
-        let non_input_size =
-        // version:
-        4 +
-        // count varints:
-        VarInt(self.input.len() as u64).len() +
-        VarInt(self.output.len() as u64).len() +
-        output_size +
-        // lock_time
-        4;
+        let non_input_size = 4 // version
+        + VarInt(self.input.len() as u64).len()
+        + VarInt(self.output.len() as u64).len()
+        + output_size
+        + 4; // lock_time
         non_input_size + input_size
     }
 
@@ -537,9 +533,9 @@ impl Transaction {
         let mut inputs_with_witnesses = 0;
         for input in &self.input {
             input_weight += scale_factor
-                * (32 + 4 + 4 + // outpoint (32+4) + nSequence
-                VarInt(input.script_sig.len() as u64).len() +
-                input.script_sig.len());
+                * (32 + 4 + 4 // outpoint (32+4) + nSequence
+                + VarInt(input.script_sig.len() as u64).len()
+                + input.script_sig.len());
             if !input.witness.is_empty() {
                 inputs_with_witnesses += 1;
                 input_weight += input.witness.serialized_len();
@@ -551,15 +547,11 @@ impl Transaction {
                 VarInt(output.script_pubkey.len() as u64).len() +
                 output.script_pubkey.len();
         }
-        let non_input_size =
-        // version:
-        4 +
-        // count varints:
-        VarInt(self.input.len() as u64).len() +
-        VarInt(self.output.len() as u64).len() +
-        output_size +
-        // lock_time
-        4;
+        let non_input_size = 4 // version
+        + VarInt(self.input.len() as u64).len()
+        + VarInt(self.output.len() as u64).len()
+        + output_size
+        + 4; // lock_time
         if inputs_with_witnesses == 0 {
             non_input_size * scale_factor + input_weight
         } else {
