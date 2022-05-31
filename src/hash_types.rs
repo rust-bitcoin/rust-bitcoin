@@ -28,6 +28,7 @@ macro_rules! impl_hashencode {
             fn consensus_encode<S: $crate::io::Write>(&self, s: S) -> Result<usize, $crate::io::Error> {
                 self.0.consensus_encode(s)
             }
+            fn serialized_len(&self) -> usize { $hashtype::LEN }
         }
 
         impl $crate::consensus::Decodable for $hashtype {

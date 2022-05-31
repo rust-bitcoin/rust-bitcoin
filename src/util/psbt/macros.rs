@@ -61,6 +61,8 @@ macro_rules! impl_psbtmap_consensus_encoding {
             ) -> Result<usize, $crate::io::Error> {
                 self.consensus_encode_map(s)
             }
+
+            fn serialized_len(&self) -> usize { 0 /* TODO */ }
         }
     };
 }

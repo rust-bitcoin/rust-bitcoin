@@ -430,6 +430,14 @@ macro_rules! construct_uint {
                 }
                 Ok(len)
             }
+            fn serialized_len(&self) -> usize {
+                let &$name(ref data) = self;
+                let mut len = 0;
+                for word in data.iter() {
+                    len += word.serialized_len();
+                }
+                len
+            }
         }
 
         impl $crate::consensus::Decodable for $name {

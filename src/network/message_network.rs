@@ -110,6 +110,7 @@ impl Encodable for RejectReason {
         e.write_all(&[*self as u8])?;
         Ok(1)
     }
+    fn serialized_len(&self) -> usize { 1 }
 }
 
 impl Decodable for RejectReason {

@@ -116,6 +116,7 @@ impl Encodable for Key {
 
         Ok(len)
     }
+    fn serialized_len(&self) -> usize { encode::var_int_serialized_len((self.key.len() + 1) as u64) + 1 + self.key.len() }
 }
 
 impl Encodable for Pair {
@@ -123,6 +124,8 @@ impl Encodable for Pair {
         let len = self.key.consensus_encode(&mut s)?;
         Ok(len + self.value.consensus_encode(s)?)
     }
+
+    fn serialized_len(&self) -> usize { self.key.serialized_len() + self.value.serialized_len() }
 }
 
 impl Decodable for Pair {
@@ -142,6 +145,8 @@ impl<Subtype> Encodable for ProprietaryKey<Subtype> where Subtype: Copy + From<u
         len += self.key.len();
         Ok(len)
     }
+
+    fn serialized_len(&self) -> usize { self.prefix.serialized_len() + 1 + self.key.len() }
 }
 
 impl<Subtype> Decodable for ProprietaryKey<Subtype> where Subtype: Copy + From<u8> + Into<u8> {

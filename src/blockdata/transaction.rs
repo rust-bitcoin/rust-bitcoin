@@ -619,6 +619,7 @@ impl Encodable for OutPoint {
         let len = self.txid.consensus_encode(&mut s)?;
         Ok(len + self.vout.consensus_encode(s)?)
     }
+    fn serialized_len(&self) -> usize { Txid::LEN + 4 }
 }
 impl Decodable for OutPoint {
     fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
@@ -637,6 +638,11 @@ impl Encodable for TxIn {
         len += self.sequence.consensus_encode(s)?;
         Ok(len)
     }
+    fn serialized_len(&self) -> usize {
+        self.previous_output.serialized_len()
+        + self.script_sig.serialized_len()
+        + self.sequence.serialized_len()
+     }
 }
 impl Decodable for TxIn {
     fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
@@ -677,6 +683,33 @@ impl Encodable for Transaction {
         len += self.lock_time.consensus_encode(s)?;
         Ok(len)
     }
+    fn serialized_len(&self) -> usize {
+        let mut len = 0;
+        len += self.version.serialized_len();
+        // To avoid serialization ambiguity, no inputs means we use BIP141 serialization (see
+        // `Transaction` docs for full explanation).
+        let mut have_witness = self.input.is_empty();
+        for input in &self.input {
+            if !input.witness.is_empty() {
+                have_witness = true;
+                break;
+            }
+        }
+        if !have_witness {
+            len += self.input.serialized_len();
+            len += self.output.serialized_len();
+        } else {
+            len += 0u8.serialized_len();
+            len += 1u8.serialized_len();
+            len += self.input.serialized_len();
+            len += self.output.serialized_len();
+            for input in &self.input {
+                len += input.witness.serialized_len();
+            }
+        }
+        len += self.lock_time.serialized_len();
+        len
+     }
 }
 
 impl Decodable for Transaction {
@@ -1611,7 +1644,7 @@ mod tests {
 mod benches {
     use super::Transaction;
     use crate::EmptyWrite;
-    use crate::consensus::{deserialize, Encodable};
+    use crate::consensus::{serialize, deserialize, Encodable};
     use crate::hashes::hex::FromHex;
     use test::{black_box, Bencher};
 
@@ -1629,7 +1662,7 @@ mod benches {
     }
 
     #[bench]
-    pub fn bench_transaction_serialize(bh: &mut Bencher) {
+    pub fn bench_transaction_serialize_with_capacity(bh: &mut Bencher) {
         let raw_tx = Vec::from_hex(SOME_TX).unwrap();
         let tx: Transaction = deserialize(&raw_tx).unwrap();
 
@@ -1639,6 +1672,17 @@ mod benches {
             let result = tx.consensus_encode(&mut data);
             black_box(&result);
             data.clear();
+        });
+    }
+
+    #[bench]
+    pub fn bench_transaction_serialize(bh: &mut Bencher) {
+        let raw_tx = Vec::from_hex(SOME_TX).unwrap();
+        let tx: Transaction = deserialize(&raw_tx).unwrap();
+
+        bh.iter(|| {
+            let result = serialize(&tx);
+            black_box(&result);
         });
     }
 

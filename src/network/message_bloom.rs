@@ -42,6 +42,7 @@ impl Encodable for BloomFlags {
         }])?;
         Ok(1)
     }
+    fn serialized_len(&self) -> usize { 1 }
 }
 
 impl Decodable for BloomFlags {

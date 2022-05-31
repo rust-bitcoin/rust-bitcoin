@@ -292,6 +292,7 @@ impl Encodable for PartiallySignedTransaction {
 
         Ok(len)
     }
+    fn serialized_len(&self) -> usize { 0 /* TODO */ }
 }
 
 impl Decodable for PartiallySignedTransaction {

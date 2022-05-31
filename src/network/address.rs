@@ -25,7 +25,7 @@ use std::net::{SocketAddr, Ipv6Addr, SocketAddrV4, SocketAddrV6, Ipv4Addr, ToSoc
 
 use crate::io;
 use crate::network::constants::ServiceFlags;
-use crate::consensus::encode::{self, Decodable, Encodable, VarInt, ReadExt, WriteExt};
+use crate::consensus::encode::{self, Decodable, Encodable, VarInt, ReadExt, WriteExt, bytes_serialized_len};
 
 /// A message which can be sent on the Bitcoin network
 #[derive(Clone, PartialEq, Eq, Hash)]
@@ -82,6 +82,7 @@ impl Encodable for Address {
 
         Ok(len)
     }
+    fn serialized_len(&self) -> usize { self.services.serialized_len() + self.address.len() * 2 + 2}
 }
 
 impl Decodable for Address {
@@ -164,6 +165,17 @@ impl Encodable for AddrV2 {
             AddrV2::Cjdns(ref addr) => encode_addr(e, 6, &addr.octets())?,
             AddrV2::Unknown(network, ref bytes) => encode_addr(e, network, bytes)?
         })
+    }
+    fn serialized_len(&self) -> usize {
+        1 + match *self {
+            AddrV2::Ipv4(ref addr) => bytes_serialized_len(&addr.octets()[..]),
+            AddrV2::Ipv6(ref addr) =>  bytes_serialized_len(&addr.octets()[..]),
+            AddrV2::TorV2(ref bytes) => bytes_serialized_len(&bytes[..]),
+            AddrV2::TorV3(ref bytes) => bytes_serialized_len(&bytes[..]),
+            AddrV2::I2p(ref bytes) => bytes_serialized_len(&bytes[..]),
+            AddrV2::Cjdns(ref addr) => bytes_serialized_len(&addr.octets()[..]),
+            AddrV2::Unknown(_, ref bytes) => bytes_serialized_len(&bytes[..]),
+        }
     }
 }
 
@@ -274,6 +286,9 @@ impl Encodable for AddrV2Message {
         //TODO `len += io::Write::write(&mut e, &self.port.to_be_bytes())?;` when MSRV >= 1.32
         len += self.port.swap_bytes().consensus_encode(e)?;
         Ok(len)
+    }
+    fn serialized_len(&self) -> usize { 
+        4 + encode::var_int_serialized_len(self.services.as_u64()) + self.addr.serialized_len() + 2 
     }
 }
 

@@ -70,6 +70,7 @@ impl Encodable for Inventory {
             Inventory::Unknown { inv_type: t, hash: ref d } => encode_inv!(t, d),
         })
     }
+    fn serialized_len(&self) -> usize { 36 }
 }
 
 impl Decodable for Inventory {

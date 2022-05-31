@@ -803,6 +803,7 @@ impl<'a> Encodable for Annex<'a> {
     fn consensus_encode<W: io::Write>(&self, writer: W) -> Result<usize, io::Error> {
         encode::consensus_encode_with_size(self.0, writer)
     }
+    fn serialized_len(&self) -> usize { encode::bytes_serialized_len(self.0) }
 }
 
 #[cfg(test)]

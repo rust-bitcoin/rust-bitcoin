@@ -29,6 +29,11 @@ macro_rules! impl_consensus_encoding {
                 $(len += self.$field.consensus_encode(&mut s)?;)+
                 Ok(len)
             }
+            fn serialized_len(&self) -> usize { 
+                let mut len = 0;
+                $(len += self.$field.serialized_len();)+
+                len
+             }
         }
 
         impl $crate::consensus::Decodable for $thing {

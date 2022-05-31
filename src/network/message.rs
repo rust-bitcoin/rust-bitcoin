@@ -82,6 +82,7 @@ impl Encodable for CommandString {
         rawbytes[..strbytes.len()].copy_from_slice(strbytes);
         rawbytes.consensus_encode(s)
     }
+    fn serialized_len(&self) -> usize { 12 }
 }
 
 impl Decodable for CommandString {
@@ -291,6 +292,7 @@ impl<'a> Encodable for HeaderSerializationWrapper<'a> {
         }
         Ok(len)
     }
+    fn serialized_len(&self) -> usize { encode::var_int_serialized_len(self.0.len() as u64) + self.0.len() * 81 }
 }
 
 impl Encodable for RawNetworkMessage {
@@ -334,6 +336,44 @@ impl Encodable for RawNetworkMessage {
             NetworkMessage::Unknown { payload: ref data, .. } => serialize(data),
         }).consensus_encode(&mut s)?;
         Ok(len)
+    }
+    fn serialized_len(&self) -> usize {
+        let payload_len = match self.payload {
+            NetworkMessage::Version(ref dat) => dat.serialized_len(),
+            NetworkMessage::Addr(ref dat) => dat.serialized_len(),
+            NetworkMessage::Inv(ref dat) => dat.serialized_len(),
+            NetworkMessage::GetData(ref dat) => dat.serialized_len(),
+            NetworkMessage::NotFound(ref dat) => dat.serialized_len(),
+            NetworkMessage::GetBlocks(ref dat) => dat.serialized_len(),
+            NetworkMessage::GetHeaders(ref dat) => dat.serialized_len(),
+            NetworkMessage::Tx(ref dat) => dat.serialized_len(),
+            NetworkMessage::Block(ref dat) => dat.serialized_len(),
+            NetworkMessage::Headers(ref dat) => HeaderSerializationWrapper(dat).serialized_len(),
+            NetworkMessage::Ping(ref dat) => dat.serialized_len(),
+            NetworkMessage::Pong(ref dat) => dat.serialized_len(),
+            NetworkMessage::MerkleBlock(ref dat) => dat.serialized_len(),
+            NetworkMessage::FilterLoad(ref dat) => dat.serialized_len(),
+            NetworkMessage::FilterAdd(ref dat) => dat.serialized_len(),
+            NetworkMessage::GetCFilters(ref dat) => dat.serialized_len(),
+            NetworkMessage::CFilter(ref dat) => dat.serialized_len(),
+            NetworkMessage::GetCFHeaders(ref dat) => dat.serialized_len(),
+            NetworkMessage::CFHeaders(ref dat) => dat.serialized_len(),
+            NetworkMessage::GetCFCheckpt(ref dat) => dat.serialized_len(),
+            NetworkMessage::CFCheckpt(ref dat) => dat.serialized_len(),
+            NetworkMessage::Alert(ref dat) => dat.serialized_len(),
+            NetworkMessage::Reject(ref dat) => dat.serialized_len(),
+            NetworkMessage::FeeFilter(ref data) => data.serialized_len(),
+            NetworkMessage::AddrV2(ref dat) => dat.serialized_len(),
+            NetworkMessage::Verack
+            | NetworkMessage::SendHeaders
+            | NetworkMessage::MemPool
+            | NetworkMessage::GetAddr
+            | NetworkMessage::WtxidRelay
+            | NetworkMessage::FilterClear
+            | NetworkMessage::SendAddrV2 => 0,
+            NetworkMessage::Unknown { payload: ref data, .. } => data.serialized_len(),
+        };
+        4 + self.command().serialized_len() + payload_len + 4 + 4
     }
 }
 

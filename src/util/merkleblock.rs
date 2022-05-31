@@ -349,6 +349,11 @@ impl Encodable for PartialMerkleTree {
         }
         Ok(ret + bytes.consensus_encode(s)?)
     }
+    fn serialized_len(&self) -> usize { 
+        let bytes_len = (self.bits.len() + 7) / 8;
+        4 + self.hashes.serialized_len() + encode::var_int_serialized_len(bytes_len as u64) + bytes_len 
+    }
+
 }
 
 impl Decodable for PartialMerkleTree {
@@ -496,6 +501,8 @@ impl Encodable for MerkleBlock {
             + self.txn.consensus_encode(s)?;
         Ok(len)
     }
+    fn serialized_len(&self) -> usize { self.header.serialized_len() + self.txn.serialized_len() }
+
 }
 
 impl Decodable for MerkleBlock {

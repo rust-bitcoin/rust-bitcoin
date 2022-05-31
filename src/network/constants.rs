@@ -277,6 +277,7 @@ impl Encodable for ServiceFlags {
     fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, io::Error> {
         self.0.consensus_encode(&mut s)
     }
+    fn serialized_len(&self) -> usize { self.0.serialized_len() }
 }
 
 impl Decodable for ServiceFlags {
