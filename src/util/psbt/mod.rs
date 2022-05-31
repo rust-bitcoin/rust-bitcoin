@@ -23,14 +23,12 @@ use core::cmp;
 
 use crate::blockdata::script::Script;
 use crate::blockdata::transaction::{ TxOut, Transaction};
-use crate::consensus::encode::MAX_VEC_SIZE;
 use crate::consensus::{encode, Encodable, Decodable};
 pub use crate::util::sighash::Prevouts;
 
 use crate::prelude::*;
 
 use crate::io;
-use io::Read as _;
 mod error;
 pub use self::error::Error;
 
@@ -341,11 +339,6 @@ impl Decodable for PartiallySignedTransaction {
         global.inputs = inputs;
         global.outputs = outputs;
         Ok(global)
-    }
-
-    #[inline]
-    fn consensus_decode<R: io::Read>(d: &mut R) -> Result<Self, encode::Error> {
-        Self::consensus_decode_from_finite_reader(d.take(MAX_VEC_SIZE as u64).by_ref())
     }
 }
 

@@ -353,6 +353,7 @@ pub trait Decodable: Sized {
     ///   should also implement it applying same rules, and in addition make sure to call
     ///   `consensus_decode_from_finite_reader` on all members, to avoid creating redundant
     ///   `Take` wrappers. Failure to do so might result only in a tiny performance hit.
+    #[inline]
     fn consensus_decode_from_finite_reader<R: io::Read>(reader: &mut R) -> Result<Self, Error> {
         // This method is always strictly less general than, `consensus_decode`,
         // so it's safe and make sense to default to just calling it.
@@ -361,8 +362,18 @@ pub trait Decodable: Sized {
         Self::consensus_decode(reader)
     }
 
-    /// Decode an object with a well-defined format
-    fn consensus_decode<R: io::Read>(reader: &mut R) -> Result<Self, Error>;
+    /// Decode an object with a well-defined format.
+    ///
+    /// This is the method that should be implemented for a typical, fixed sized type
+    /// implementing this trait. Default implementation is wrapping the reader
+    /// in [`crate::io::Take`] to limit the input size to [`MAX_VEC_SIZE`], and forwards the call to
+    /// [`Self::consensus_decode_from_finite_reader`], which is convenient
+    /// for types that override [`Self::consensus_decode_from_finite_reader`]
+    /// instead.
+    #[inline]
+    fn consensus_decode<R: io::Read>(reader: &mut R) -> Result<Self, Error> {
+        Self::consensus_decode_from_finite_reader(reader.take(MAX_VEC_SIZE as u64).by_ref())
+    }
 }
 
 /// A variable-length unsigned integer
@@ -616,11 +627,6 @@ macro_rules! impl_vec {
                 }
                 Ok(ret)
             }
-
-            #[inline]
-            fn consensus_decode<R: io::Read>(d: &mut R) -> Result<Self, Error> {
-                Self::consensus_decode_from_finite_reader(&mut d.take(MAX_VEC_SIZE as u64))
-            }
         }
     }
 }
@@ -687,11 +693,6 @@ impl Decodable for Vec<u8> {
         // most real-world vec of bytes data, wouldn't be larger than 128KiB
         read_bytes_from_finite_reader(r, ReadBytesFromFiniteReaderOpts { len, chunk_size: 128 * 1024 })
     }
-
-    #[inline]
-    fn consensus_decode<R: io::Read>(r: &mut R) -> Result<Self, Error> {
-        Self::consensus_decode_from_finite_reader(&mut r.take(MAX_VEC_SIZE as u64))
-    }
 }
 
 impl Encodable for Box<[u8]> {
@@ -705,11 +706,6 @@ impl Decodable for Box<[u8]> {
     #[inline]
     fn consensus_decode_from_finite_reader<R: io::Read>(r: &mut R) -> Result<Self, Error> {
         <Vec<u8>>::consensus_decode_from_finite_reader(r).map(From::from)
-    }
-
-    #[inline]
-    fn consensus_decode<R: io::Read>(r: &mut R) -> Result<Self, Error> {
-        Self::consensus_decode_from_finite_reader(&mut r.take(MAX_VEC_SIZE as u64))
     }
 }
 
@@ -747,10 +743,6 @@ impl Decodable for CheckedData {
         } else {
             Ok(CheckedData(ret))
         }
-    }
-
-    fn consensus_decode<R: io::Read>(d: &mut R) -> Result<Self, Error> {
-        Self::consensus_decode_from_finite_reader(&mut d.take(MAX_VEC_SIZE as u64))
     }
 }
 

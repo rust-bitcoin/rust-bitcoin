@@ -23,11 +23,9 @@
 //! This module provides the structures and functions needed to support scripts.
 //!
 
-use crate::consensus::encode::MAX_VEC_SIZE;
 use crate::prelude::*;
 
 use crate::io;
-use io::Read as _;
 use core::{fmt, default::Default};
 use core::ops::Index;
 
@@ -1102,11 +1100,6 @@ impl Decodable for Script {
     #[inline]
     fn consensus_decode_from_finite_reader<R: io::Read>(r: &mut R) -> Result<Self, encode::Error> {
         Ok(Script(Decodable::consensus_decode_from_finite_reader(r)?))
-    }
-
-    #[inline]
-    fn consensus_decode<R: io::Read>(r: &mut R) -> Result<Self, encode::Error> {
-        Self::consensus_decode_from_finite_reader(r.take(MAX_VEC_SIZE as u64).by_ref())
     }
 }
 

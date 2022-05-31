@@ -26,7 +26,6 @@
 use crate::prelude::*;
 
 use crate::io;
-use io::Read as _;
 use core::{fmt, str, default::Default};
 
 use crate::hashes::{self, Hash, sha256d};
@@ -38,7 +37,6 @@ use crate::blockdata::constants::WITNESS_SCALE_FACTOR;
 use crate::blockdata::script::Script;
 use crate::blockdata::witness::Witness;
 use crate::consensus::{encode, Decodable, Encodable};
-use crate::consensus::encode::MAX_VEC_SIZE;
 use crate::hash_types::{Sighash, Txid, Wtxid};
 use crate::VarInt;
 
@@ -687,11 +685,6 @@ impl Decodable for TxIn {
             witness: Witness::default(),
         })
     }
-
-    #[inline]
-    fn consensus_decode<R: io::Read>(r: &mut R) -> Result<Self, encode::Error> {
-        Self::consensus_decode_from_finite_reader(r.take(MAX_VEC_SIZE as u64).by_ref())
-    }
 }
 
 impl Encodable for Transaction {
@@ -762,10 +755,6 @@ impl Decodable for Transaction {
                 lock_time: Decodable::consensus_decode_from_finite_reader(r)?,
             })
         }
-    }
-
-    fn consensus_decode<R: io::Read>(r: &mut R) -> Result<Self, encode::Error> {
-        Self::consensus_decode_from_finite_reader(&mut r.take(MAX_VEC_SIZE as u64))
     }
 }
 
