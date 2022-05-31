@@ -50,6 +50,7 @@ pub mod stream_reader;
 
 /// Network error
 #[derive(Debug)]
+#[non_exhaustive]
 pub enum Error {
     /// And I/O error
     Io(io::Error),

@@ -67,6 +67,7 @@ pub trait BitArray {
 /// A general error code, other errors should implement conversions to/from this
 /// if appropriate.
 #[derive(Debug)]
+#[non_exhaustive]
 pub enum Error {
     /// Encoding error
     Encode(encode::Error),

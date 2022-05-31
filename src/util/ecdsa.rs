@@ -87,6 +87,7 @@ impl FromStr for EcdsaSig {
 
 /// A key-related error.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[non_exhaustive]
 pub enum EcdsaSigError {
     /// Hex encoding error
     HexEncoding(hex::Error),

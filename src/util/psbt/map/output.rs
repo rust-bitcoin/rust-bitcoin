@@ -82,6 +82,7 @@ pub struct Output {
 /// Error happening when [`TapTree`] is constructed from a [`TaprootBuilder`]
 /// having hidden branches or not being finalized.
 #[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug)]
+#[non_exhaustive]
 pub enum IncompleteTapTree {
     /// Indicates an attempt to construct a tap tree from a builder containing incomplete branches.
     NotFinalized(TaprootBuilder),

@@ -333,6 +333,7 @@ impl Block {
 
 /// An error when looking up a BIP34 block height.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum Bip34Error {
     /// The block does not support BIP34 yet.
     Unsupported,

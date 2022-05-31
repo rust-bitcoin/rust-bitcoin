@@ -29,6 +29,7 @@ use crate::util::{endian, key};
 
 /// An error that might occur during base58 decoding
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
+#[non_exhaustive]
 pub enum Error {
     /// Invalid character encountered
     BadByte(u8),
