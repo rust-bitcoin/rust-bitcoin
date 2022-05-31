@@ -162,15 +162,10 @@ pub type BitcoinConsensusError = bitcoinconsensus::Error;
 /// Dummy error type used when `bitcoinconsensus` feature is not enabled.
 #[cfg(not(feature = "bitcoinconsensus"))]
 #[cfg_attr(docsrs, doc(cfg(not(feature = "bitcoinconsensus"))))]
-#[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Clone, Copy)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Debug, Clone, Copy)]
 pub struct BitcoinConsensusError {
-    _uninhabited: Uninhabited,
+    _infallible: core::convert::Infallible,
 }
-
-#[cfg(not(feature = "bitcoinconsensus"))]
-#[cfg_attr(docsrs, doc(cfg(not(feature = "bitcoinconsensus"))))]
-#[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Clone, Copy)]
-enum Uninhabited {}
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -200,6 +195,14 @@ impl std::error::Error for Error {
             | UnknownSpentOutput(_)
             | SerializationError => None,
         }
+    }
+}
+
+// Infallible does not implement `Hash` until Rust 1.44
+#[cfg(not(feature = "bitcoinconsensus"))]
+impl core::hash::Hash for BitcoinConsensusError {
+    fn hash<H: core::hash::Hasher>(&self, _: &mut H) {
+        unreachable!()
     }
 }
 
