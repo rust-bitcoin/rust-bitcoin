@@ -139,9 +139,11 @@ impl From<psbt::Error> for Error {
 
 /// Encode an object into a vector
 pub fn serialize<T: Encodable + ?Sized>(data: &T) -> Vec<u8> {
-    let mut encoder = Vec::new();
+    let serialized_len = data.serialized_len();
+    let mut encoder = Vec::with_capacity(serialized_len);
     let len = data.consensus_encode(&mut encoder).expect("in-memory writers don't error");
     debug_assert_eq!(len, encoder.len());
+    debug_assert_eq!(serialized_len, encoder.len());
     encoder
 }
 
