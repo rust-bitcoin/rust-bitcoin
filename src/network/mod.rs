@@ -18,9 +18,6 @@
 //! of Bitcoin data and network messages.
 //!
 
-use crate::io;
-use core::fmt;
-
 pub mod constants;
 
 #[cfg(feature = "std")]
@@ -47,38 +44,3 @@ pub mod message_filter;
 #[cfg(feature = "std")]
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 pub mod stream_reader;
-
-/// Network error
-#[derive(Debug)]
-#[non_exhaustive]
-pub enum Error {
-    /// And I/O error
-    Io(io::Error),
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            Error::Io(ref e) => write_err!(f, "IO error"; e),
-        }
-    }
-}
-
-#[cfg(feature = "std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-impl std::error::Error for Error {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use self::Error::*;
-
-        match self {
-            Io(e) => Some(e)
-        }
-    }
-}
-
-#[doc(hidden)]
-impl From<io::Error> for Error {
-    fn from(err: io::Error) -> Self {
-        Error::Io(err)
-    }
-}
