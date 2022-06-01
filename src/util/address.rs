@@ -683,6 +683,12 @@ impl Address {
 
     /// Constructs an [`Address`] from an output script (`scriptPubkey`).
     pub fn from_script(script: &script::Script, network: Network) -> Option<Address> {
+        if script.is_witness_program() {
+            if script.witness_version() == Some(WitnessVersion::V0) && !(script.is_v0_p2wpkh() || script.is_v0_p2wsh()) {
+                return None
+            }
+        }
+
         Some(Address {
             payload: Payload::from_script(script)?,
             network,
@@ -1408,5 +1414,14 @@ mod tests {
 
         let result = address.is_related_to_xonly_pubkey(&xonly_pubkey);
         assert!(result);
+    }
+
+    #[test]
+    fn test_fail_address_from_script() {
+        let bad_p2wpkh = hex_script!("0014dbc5b0a8f9d4353b4b54c3db48846bb15abfec");
+        let bad_p2wsh = hex_script!("00202d4fa2eb233d008cc83206fa2f4f2e60199000f5b857a835e3172323385623");
+
+        assert_eq!(Address::from_script(&bad_p2wpkh, Network::Bitcoin), None);
+        assert_eq!(Address::from_script(&bad_p2wsh, Network::Bitcoin), None);
     }
 }
