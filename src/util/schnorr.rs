@@ -165,11 +165,6 @@ impl TweakedPublicKey {
         self.0
     }
 
-    /// Returns a reference to underlying public key.
-    pub fn as_inner(&self) -> &crate::XOnlyPublicKey {
-        &self.0
-    }
-
     /// Serialize the key as a byte-encoded pair of values. In compressed form
     /// the y-coordinate is represented by only a single bit, as x determines
     /// it up to one bit.
@@ -192,7 +187,14 @@ impl TweakedKeyPair {
 
     /// Returns the underlying key pair
     #[inline]
+    #[deprecated(since = "0.29.0", note = "use to_inner instead")]
     pub fn into_inner(self) -> crate::KeyPair {
+        self.0
+    }
+
+    /// Returns the underlying key pair.
+    #[inline]
+    pub fn to_inner(self) -> crate::KeyPair {
         self.0
     }
 }
