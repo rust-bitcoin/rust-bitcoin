@@ -1426,8 +1426,10 @@ mod tests {
     fn test_fail_address_from_script() {
         let bad_p2wpkh = hex_script!("0014dbc5b0a8f9d4353b4b54c3db48846bb15abfec");
         let bad_p2wsh = hex_script!("00202d4fa2eb233d008cc83206fa2f4f2e60199000f5b857a835e3172323385623");
+        let bad_p2tr = hex_script!("5128751e76e8199196d454941c45d1b3a323f1433bd6751e76e8199196d454941c45d1b3a323f1433bd6");
 
         assert_eq!(Address::from_script(&bad_p2wpkh, Network::Bitcoin), None);
         assert_eq!(Address::from_script(&bad_p2wsh, Network::Bitcoin), None);
+        assert_eq!(Address::from_script(&bad_p2tr, Network::Bitcoin), None);
     }
 }
