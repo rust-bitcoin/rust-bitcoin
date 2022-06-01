@@ -470,9 +470,9 @@ impl Script {
     /// the current script, assuming that the script is a Tapscript.
     #[inline]
     pub fn to_v1_p2tr<C: Verification>(&self, secp: &Secp256k1<C>, internal_key: UntweakedPublicKey) -> Script {
-        let leaf_hash = TapLeafHash::from_script(&self, LeafVersion::TapScript);
+        let leaf_hash = TapLeafHash::from_script(self, LeafVersion::TapScript);
         let merkle_root = TapBranchHash::from_inner(leaf_hash.into_inner());
-        Script::new_v1_p2tr(&secp, internal_key, Some(merkle_root))
+        Script::new_v1_p2tr(secp, internal_key, Some(merkle_root))
     }
 
     /// Returns witness version of the script, if any, assuming the script is a `scriptPubkey`.
@@ -525,7 +525,7 @@ impl Script {
         // special meaning. The value of the first push is called the "version byte". The following
         // byte vector pushed is called the "witness program".
         let script_len = self.0.len();
-        if script_len < 4 || script_len > 42 {
+        if !(4..=42).contains(&script_len) {
             return false
         }
         let ver_opcode = opcodes::All::from(self.0[0]); // Version 0 or PUSHNUM_1-PUSHNUM_16
@@ -877,7 +877,7 @@ impl Builder {
     /// dedicated opcodes to push some small integers.
     pub fn push_int(self, data: i64) -> Builder {
         // We can special-case -1, 1-16
-        if data == -1 || (data >= 1 && data <= 16) {
+        if data == -1 || (1..=16).contains(&data) {
             let opcode = opcodes::All::from(
                 (data - 1 + opcodes::OP_TRUE.into_u8() as i64) as u8
             );

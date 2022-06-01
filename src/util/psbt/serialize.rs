@@ -125,7 +125,7 @@ impl Deserialize for EcdsaSig {
         // also has a field sighash_u32 (See BIP141). For example, when signing with non-standard
         // 0x05, the sighash message would have the last field as 0x05u32 while, the verification
         // would use check the signature assuming sighash_u32 as `0x01`.
-        EcdsaSig::from_slice(&bytes)
+        EcdsaSig::from_slice(bytes)
             .map_err(|e| match e {
                 EcdsaSigError::EmptySignature => {
                     encode::Error::ParseFailed("Empty partial signature data")
@@ -145,7 +145,7 @@ impl Deserialize for EcdsaSig {
 
 impl Serialize for KeySource {
     fn serialize(&self) -> Vec<u8> {
-        let mut rv: Vec<u8> = Vec::with_capacity(key_source_len(&self));
+        let mut rv: Vec<u8> = Vec::with_capacity(key_source_len(self));
 
         rv.append(&mut self.0.to_bytes().to_vec());
 
@@ -207,7 +207,7 @@ impl Deserialize for PsbtSighashType {
 // Taproot related ser/deser
 impl Serialize for XOnlyPublicKey {
     fn serialize(&self) -> Vec<u8> {
-        XOnlyPublicKey::serialize(&self).to_vec()
+        XOnlyPublicKey::serialize(self).to_vec()
     }
 }
 
@@ -226,7 +226,7 @@ impl Serialize for schnorr::SchnorrSig  {
 
 impl Deserialize for schnorr::SchnorrSig {
     fn deserialize(bytes: &[u8]) -> Result<Self, encode::Error> {
-        schnorr::SchnorrSig::from_slice(&bytes)
+        schnorr::SchnorrSig::from_slice(bytes)
             .map_err(|e| match e {
                 schnorr::SchnorrSigError::InvalidSighashType(flag) => {
                     encode::Error::from(psbt::Error::NonStandardSighashType(flag as u32))
@@ -264,7 +264,7 @@ impl Deserialize for (XOnlyPublicKey, TapLeafHash) {
 
 impl Serialize for ControlBlock {
     fn serialize(&self) -> Vec<u8> {
-        ControlBlock::serialize(&self)
+        ControlBlock::serialize(self)
     }
 }
 
@@ -311,7 +311,7 @@ impl Serialize for (Vec<TapLeafHash>, KeySource) {
 
 impl Deserialize for (Vec<TapLeafHash>, KeySource) {
     fn deserialize(bytes: &[u8]) -> Result<Self, encode::Error> {
-        let (leafhash_vec, consumed) = deserialize_partial::<Vec<TapLeafHash>>(&bytes)?;
+        let (leafhash_vec, consumed) = deserialize_partial::<Vec<TapLeafHash>>(bytes)?;
         let key_source = KeySource::deserialize(&bytes[consumed..])?;
         Ok((leafhash_vec, key_source))
     }

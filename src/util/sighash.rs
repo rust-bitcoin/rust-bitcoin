@@ -440,7 +440,7 @@ impl<R: Deref<Target = Transaction>> SighashCache<R> {
                     .tx
                     .input
                     .get(input_index)
-                    .ok_or_else(|| Error::IndexOutOfInputsBounds {
+                    .ok_or(Error::IndexOutOfInputsBounds {
                         index: input_index,
                         inputs_size: self.tx.input.len(),
                     })?;
@@ -473,7 +473,7 @@ impl<R: Deref<Target = Transaction>> SighashCache<R> {
             self.tx
                 .output
                 .get(input_index)
-                .ok_or_else(|| Error::SingleWithoutCorrespondingOutput {
+                .ok_or(Error::SingleWithoutCorrespondingOutput {
                     index: input_index,
                     outputs_size: self.tx.output.len(),
                 })?
@@ -597,7 +597,7 @@ impl<R: Deref<Target = Transaction>> SighashCache<R> {
                     .tx
                     .input
                     .get(input_index)
-                    .ok_or_else(|| Error::IndexOutOfInputsBounds {
+                    .ok_or(Error::IndexOutOfInputsBounds {
                         index: input_index,
                         inputs_size: self.tx.input.len(),
                     })?;

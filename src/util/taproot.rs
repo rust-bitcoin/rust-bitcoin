@@ -217,10 +217,10 @@ impl TaprootSpendInfo {
     ) -> Self {
         let (output_key, parity) = internal_key.tap_tweak(secp, merkle_root);
         Self {
-            internal_key: internal_key,
-            merkle_root: merkle_root,
+            internal_key,
+            merkle_root,
             output_key_parity: parity,
-            output_key: output_key,
+            output_key,
             script_map: BTreeMap::new(),
         }
     }
@@ -442,14 +442,7 @@ impl TaprootBuilder {
 
     /// Checks if the builder has hidden nodes.
     pub fn has_hidden_nodes(&self) -> bool {
-        for node in &self.branch {
-            if let Some(node) = node {
-                if node.has_hidden_nodes {
-                    return true
-                }
-            }
-        }
-        false
+        self.branch.iter().flatten().any(|node| node.has_hidden_nodes)
     }
 
     /// Creates a [`TaprootSpendInfo`] with the given internal key.
@@ -521,6 +514,12 @@ impl TaprootBuilder {
     }
 }
 
+impl Default for TaprootBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Represents the node information in taproot tree.
 ///
 /// Helper type used in merkle tree construction allowing one to build sparse merkle trees. The node
@@ -544,7 +543,7 @@ impl NodeInfo {
     /// Creates a new [`NodeInfo`] with omitted/hidden info.
     pub fn new_hidden_node(hash: sha256::Hash) -> Self {
         Self {
-            hash: hash,
+            hash,
             leaves: vec![],
             has_hidden_nodes: true
         }
@@ -596,8 +595,8 @@ impl ScriptLeaf {
     /// Creates an new [`ScriptLeaf`] from `script` and `ver` and no merkle branch.
     fn new(script: Script, ver: LeafVersion) -> Self {
         Self {
-            script: script,
-            ver: ver,
+            script,
+            ver,
             merkle_branch: TaprootMerkleBranch(vec![]),
         }
     }
@@ -682,7 +681,7 @@ impl TaprootMerkleBranch {
 
     /// Serializes `self` as bytes.
     pub fn serialize(&self) -> Vec<u8> {
-        self.0.iter().map(|e| e.as_inner()).flatten().map(|x| *x).collect::<Vec<u8>>()
+        self.0.iter().flat_map(|e| e.as_inner()).copied().collect::<Vec<u8>>()
     }
 
     /// Appends elements to proof.
@@ -802,7 +801,7 @@ impl ControlBlock {
     ) -> bool {
         // compute the script hash
         // Initially the curr_hash is the leaf hash
-        let leaf_hash = TapLeafHash::from_script(&script, self.leaf_version);
+        let leaf_hash = TapLeafHash::from_script(script, self.leaf_version);
         let mut curr_hash = TapBranchHash::from_inner(leaf_hash.into_inner());
         // Verify the proof
         for elem in self.merkle_branch.as_inner() {

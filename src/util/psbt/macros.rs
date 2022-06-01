@@ -92,7 +92,7 @@ macro_rules! impl_psbtmap_consensus_enc_dec_oding {
     };
 }
 
-#[cfg_attr(rustfmt, rustfmt_skip)]
+#[rustfmt::skip]
 macro_rules! impl_psbt_insert_pair {
     ($slf:ident.$unkeyed_name:ident <= <$raw_key:ident: _>|<$raw_value:ident: $unkeyed_value_type:ty>) => {
         if $raw_key.key.is_empty() {
@@ -122,8 +122,7 @@ macro_rules! impl_psbt_insert_pair {
     };
 }
 
-
-#[cfg_attr(rustfmt, rustfmt_skip)]
+#[rustfmt::skip]
 macro_rules! impl_psbt_get_pair {
     ($rv:ident.push($slf:ident.$unkeyed_name:ident, $unkeyed_typeval:ident)) => {
         if let Some(ref $unkeyed_name) = $slf.$unkeyed_name {
