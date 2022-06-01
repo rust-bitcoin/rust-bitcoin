@@ -125,9 +125,6 @@ pub enum SchnorrSighashType {
     NonePlusAnyoneCanPay = 0x82,
     /// 0x83: Sign one output and only this input (see `Single` for what "one output" means).
     SinglePlusAnyoneCanPay = 0x83,
-
-    /// Reserved for future use, `#[non_exhaustive]` is not available with MSRV 1.29.0
-    Reserved = 0xFF,
 }
 serde_string_impl!(SchnorrSighashType, "a SchnorrSighashType data");
 
@@ -141,7 +138,6 @@ impl fmt::Display for SchnorrSighashType {
             SchnorrSighashType::AllPlusAnyoneCanPay => "SIGHASH_ALL|SIGHASH_ANYONECANPAY",
             SchnorrSighashType::NonePlusAnyoneCanPay => "SIGHASH_NONE|SIGHASH_ANYONECANPAY",
             SchnorrSighashType::SinglePlusAnyoneCanPay => "SIGHASH_SINGLE|SIGHASH_ANYONECANPAY",
-            SchnorrSighashType::Reserved => "SIGHASH_RESERVED",
         };
         f.write_str(s)
     }
@@ -159,7 +155,6 @@ impl str::FromStr for SchnorrSighashType {
             "SIGHASH_ALL|SIGHASH_ANYONECANPAY" => Ok(SchnorrSighashType::AllPlusAnyoneCanPay),
             "SIGHASH_NONE|SIGHASH_ANYONECANPAY" => Ok(SchnorrSighashType::NonePlusAnyoneCanPay),
             "SIGHASH_SINGLE|SIGHASH_ANYONECANPAY" => Ok(SchnorrSighashType::SinglePlusAnyoneCanPay),
-            "SIGHASH_RESERVED" => Ok(SchnorrSighashType::Reserved),
             _ => Err(SighashTypeParseError{ unrecognized: s.to_owned() }),
         }
     }
@@ -330,7 +325,6 @@ impl SchnorrSighashType {
             SchnorrSighashType::AllPlusAnyoneCanPay => (SchnorrSighashType::All, true),
             SchnorrSighashType::NonePlusAnyoneCanPay => (SchnorrSighashType::None, true),
             SchnorrSighashType::SinglePlusAnyoneCanPay => (SchnorrSighashType::Single, true),
-            SchnorrSighashType::Reserved => (SchnorrSighashType::Reserved, false),
         }
     }
 
@@ -344,7 +338,6 @@ impl SchnorrSighashType {
             0x81 => Ok(SchnorrSighashType::AllPlusAnyoneCanPay),
             0x82 => Ok(SchnorrSighashType::NonePlusAnyoneCanPay),
             0x83 => Ok(SchnorrSighashType::SinglePlusAnyoneCanPay),
-            0xFF => Ok(SchnorrSighashType::Reserved),
             x => Err(Error::InvalidSighashType(x as u32)),
         }
     }
@@ -1174,7 +1167,6 @@ mod tests {
             ("SIGHASH_ALL|SIGHASH_ANYONECANPAY", SchnorrSighashType::AllPlusAnyoneCanPay),
             ("SIGHASH_NONE|SIGHASH_ANYONECANPAY", SchnorrSighashType::NonePlusAnyoneCanPay),
             ("SIGHASH_SINGLE|SIGHASH_ANYONECANPAY", SchnorrSighashType::SinglePlusAnyoneCanPay),
-            ("SIGHASH_RESERVED", SchnorrSighashType::Reserved),
         ];
         for (s, sht) in sighashtypes {
             assert_eq!(sht.to_string(), s);

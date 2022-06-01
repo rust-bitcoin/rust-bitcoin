@@ -162,7 +162,7 @@ pub struct PsbtSighashType {
 impl fmt::Display for PsbtSighashType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.schnorr_hash_ty() {
-            Ok(SchnorrSighashType::Reserved) | Err(_) => write!(f, "{:#x}", self.inner),
+            Err(_) => write!(f, "{:#x}", self.inner),
             Ok(schnorr_hash_ty) => fmt::Display::fmt(&schnorr_hash_ty, f),
         }
     }
@@ -179,7 +179,6 @@ impl FromStr for PsbtSighashType {
         // inputs. We also do not support SIGHASH_RESERVED in verbatim form
         // ("0xFF" string should be used instead).
         match SchnorrSighashType::from_str(s) {
-            Ok(SchnorrSighashType::Reserved) => return Err(SighashTypeParseError{ unrecognized: s.to_owned() }),
             Ok(ty) => return Ok(ty.into()),
             Err(_) => {}
         }
@@ -573,20 +572,6 @@ mod test {
         ] {
             let sighash = PsbtSighashType::from(*schnorr);
             let s = format!("{}", sighash);
-            let back = PsbtSighashType::from_str(&s).unwrap();
-            assert_eq!(back, sighash);
-            assert_eq!(back.schnorr_hash_ty().unwrap(), *schnorr);
-        }
-    }
-
-    #[test]
-    fn psbt_sighash_type_schnorr_notstd() {
-        for (schnorr, schnorr_str) in &[
-            (SchnorrSighashType::Reserved, "0xff"),
-        ] {
-            let sighash = PsbtSighashType::from(*schnorr);
-            let s = format!("{}", sighash);
-            assert_eq!(&s, schnorr_str);
             let back = PsbtSighashType::from_str(&s).unwrap();
             assert_eq!(back, sighash);
             assert_eq!(back.schnorr_hash_ty().unwrap(), *schnorr);
