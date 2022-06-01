@@ -671,6 +671,13 @@ impl Address {
     }
 
     /// Constructs an [`Address`] from an output script (`scriptPubkey`).
+    ///
+    /// # Returns
+    ///
+    /// The Bitcoin network allows well formed addresses that are unspendable, such as an address
+    /// created from an invalid script. We explicitly make an effort to protect users and do not
+    /// create such addresses, hence if `script` is a segwit script but is _invalid_ we do not
+    /// create an address and instead return `None`.
     pub fn from_script(script: &script::Script, network: Network) -> Option<Address> {
         if script.is_witness_program() {
             if script.witness_version() == Some(WitnessVersion::V0) && !(script.is_v0_p2wpkh() || script.is_v0_p2wsh()) {
