@@ -48,6 +48,7 @@ mod message_signing {
     /// An error used for dealing with Bitcoin Signed Messages.
     #[cfg_attr(docsrs, doc(cfg(feature = "secp-recovery")))]
     #[derive(Debug, PartialEq, Eq)]
+    #[non_exhaustive]
     pub enum MessageSignatureError {
         /// Signature is expected to be 65 bytes.
         InvalidLength,

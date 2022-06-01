@@ -114,6 +114,7 @@ impl fmt::Display for OutPoint {
 
 /// An error in parsing an OutPoint.
 #[derive(Clone, PartialEq, Eq, Debug)]
+#[non_exhaustive]
 pub enum ParseOutPointError {
     /// Error in TXID part.
     Txid(hashes::hex::Error),

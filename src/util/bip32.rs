@@ -457,6 +457,7 @@ pub type KeySource = (Fingerprint, DerivationPath);
 
 /// A BIP32 error
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[non_exhaustive]
 pub enum Error {
     /// A pk->pk derivation was attempted on a hardened key
     CannotDeriveFromHardenedKey,

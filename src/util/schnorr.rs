@@ -263,6 +263,7 @@ impl SchnorrSig {
 
 /// A schnorr sig related error.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[non_exhaustive]
 pub enum SchnorrSigError {
     /// Base58 encoding error
     InvalidSighashType(u8),

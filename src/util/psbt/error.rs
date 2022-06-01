@@ -33,6 +33,7 @@ pub enum PsbtHash {
 }
 /// Ways that a Partially Signed Transaction might fail.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[non_exhaustive]
 pub enum Error {
     /// Magic bytes for a PSBT must be the ASCII for "psbt" serialized in most
     /// significant byte order.

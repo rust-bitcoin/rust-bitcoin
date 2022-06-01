@@ -31,6 +31,7 @@ use crate::util::base58;
 
 /// A key-related error.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[non_exhaustive]
 pub enum Error {
     /// Base58 encoding error
     Base58(base58::Error),

@@ -53,6 +53,7 @@ use crate::util::schnorr::{TapTweak, UntweakedPublicKey, TweakedPublicKey};
 
 /// Address error.
 #[derive(Debug, PartialEq, Eq, Clone)]
+#[non_exhaustive]
 pub enum Error {
     /// Base58 encoding error.
     Base58(base58::Error),

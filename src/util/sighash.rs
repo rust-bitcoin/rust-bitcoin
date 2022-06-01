@@ -167,6 +167,7 @@ impl str::FromStr for SchnorrSighashType {
 
 /// Possible errors in computing the signature message.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[non_exhaustive]
 pub enum Error {
     /// Could happen only by using `*_encode_signing_*` methods with custom writers, engines writers
     /// like the ones used in methods `*_signature_hash` do not error.

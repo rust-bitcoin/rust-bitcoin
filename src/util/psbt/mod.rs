@@ -223,6 +223,7 @@ mod display_from_str {
     /// Error encountered during PSBT decoding from Base64 string.
     #[derive(Debug)]
     #[cfg_attr(docsrs, doc(cfg(feature = "base64")))]
+    #[non_exhaustive]
     pub enum PsbtParseError {
         /// Error in internal PSBT data structure.
         PsbtEncoding(Error),

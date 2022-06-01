@@ -148,6 +148,7 @@ fn denomination_from_str(mut s: &str) -> Option<Denomination> {
 
 /// An error during amount parsing.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum ParseAmountError {
     /// Amount is negative.
     Negative,

@@ -968,6 +968,7 @@ impl<'de> ::serde::Deserialize<'de> for LeafVersion {
 
 /// Detailed error type for taproot builder.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[non_exhaustive]
 pub enum TaprootBuilderError {
     /// Merkle tree depth must not be more than 128.
     InvalidMerkleTreeDepth(usize),
@@ -1029,6 +1030,7 @@ impl std::error::Error for TaprootBuilderError {
 
 /// Detailed error type for taproot utilities.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[non_exhaustive]
 pub enum TaprootError {
     /// Proof size must be a multiple of 32.
     InvalidMerkleBranchSize(usize),

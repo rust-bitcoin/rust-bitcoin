@@ -47,6 +47,7 @@ use crate::network::{message_blockdata::Inventory, address::{Address, AddrV2Mess
 
 /// Encoding error
 #[derive(Debug)]
+#[non_exhaustive]
 pub enum Error {
     /// And I/O error
     Io(io::Error),

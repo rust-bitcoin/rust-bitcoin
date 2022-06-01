@@ -138,6 +138,7 @@ where
 /// much as it could be; patches welcome if more detailed errors
 /// would help you.
 #[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Clone, Copy)]
+#[non_exhaustive]
 pub enum Error {
     /// Something did a non-minimal push; for more information see
     /// `https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki#Push_operators`
