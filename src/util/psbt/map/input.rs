@@ -81,6 +81,7 @@ const PSBT_IN_PROPRIETARY: u8 = 0xFC;
 /// transaction.
 #[derive(Clone, Default, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct Input {
     /// The non-witness transaction this input spends from. Should only be
     /// [std::option::Option::Some] for inputs which spend non-segwit outputs or
@@ -153,6 +154,7 @@ pub struct Input {
 /// for converting to/from [`PsbtSighashType`] from/to the desired signature hash type they need.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct PsbtSighashType {
     pub (in crate::util::psbt) inner: u32,
 }

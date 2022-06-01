@@ -1262,6 +1262,7 @@ pub mod serde {
     //! use bitcoin::Amount;
     //!
     //! #[derive(Serialize, Deserialize)]
+    //! # #[serde(crate = "actual_serde")]
     //! pub struct HasAmount {
     //!     #[serde(with = "bitcoin::util::amount::serde::as_btc")]
     //!     pub amount: Amount,
@@ -1976,6 +1977,7 @@ mod tests {
     fn serde_as_sat() {
 
         #[derive(Serialize, Deserialize, PartialEq, Debug)]
+        #[serde(crate = "actual_serde")]
         struct T {
             #[serde(with = "crate::util::amount::serde::as_sat")]
             pub amt: Amount,
@@ -2005,6 +2007,7 @@ mod tests {
         use serde_json;
 
         #[derive(Serialize, Deserialize, PartialEq, Debug)]
+        #[serde(crate = "actual_serde")]
         struct T {
             #[serde(with = "crate::util::amount::serde::as_btc")]
             pub amt: Amount,
@@ -2039,6 +2042,7 @@ mod tests {
         use serde_json;
 
         #[derive(Serialize, Deserialize, PartialEq, Debug, Eq)]
+        #[serde(crate = "actual_serde")]
         struct T {
             #[serde(default, with = "crate::util::amount::serde::as_btc::opt")]
             pub amt: Option<Amount>,
@@ -2082,6 +2086,7 @@ mod tests {
         use serde_json;
 
         #[derive(Serialize, Deserialize, PartialEq, Debug, Eq)]
+        #[serde(crate = "actual_serde")]
         struct T {
             #[serde(default, with = "crate::util::amount::serde::as_sat::opt")]
             pub amt: Option<Amount>,

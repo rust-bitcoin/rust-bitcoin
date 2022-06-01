@@ -41,6 +41,7 @@ use crate::VarInt;
 /// the actual transactions
 #[derive(Copy, PartialEq, Eq, Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct BlockHeader {
     /// The protocol version. Should always be 1.
     pub version: i32,
@@ -159,6 +160,7 @@ impl BlockHeader {
 /// proof of work.
 #[derive(PartialEq, Eq, Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct Block {
     /// The block header
     pub header: BlockHeader,

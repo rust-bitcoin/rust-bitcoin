@@ -152,6 +152,7 @@ pub mod btreemap_as_seq_byte_values {
 
     /// A custom key-value pair type that serialized the bytes as hex.
     #[derive(Debug, Deserialize)]
+    #[serde(crate = "actual_serde")]
     struct OwnedPair<T>(
         T,
         #[serde(deserialize_with = "crate::serde_utils::hex_bytes::deserialize")]
@@ -160,6 +161,7 @@ pub mod btreemap_as_seq_byte_values {
 
     /// A custom key-value pair type that serialized the bytes as hex.
     #[derive(Debug, Serialize)]
+    #[serde(crate = "actual_serde")]
     struct BorrowedPair<'a, T: 'static>(
         &'a T,
         #[serde(serialize_with = "crate::serde_utils::hex_bytes::serialize")]

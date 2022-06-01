@@ -17,7 +17,7 @@ edition = "2018"
 default = [ "std", "secp-recovery" ]
 unstable = []
 rand = ["secp256k1/rand-std"]
-use-serde = ["serde", "bitcoin_hashes/serde", "secp256k1/serde"]
+serde = ["actual-serde", "bitcoin_hashes/serde", "secp256k1/serde"]
 secp-lowmemory = ["secp256k1/lowmemory"]
 secp-recovery = ["secp256k1/recovery"]
 
@@ -30,7 +30,7 @@ std = ["secp256k1/std", "bitcoin_hashes/std", "bech32/std"]
 no-std = ["hashbrown", "core2/alloc", "bitcoin_hashes/alloc", "secp256k1/alloc"]
 
 [package.metadata.docs.rs]
-features = [ "std", "secp-recovery", "base64", "rand", "use-serde", "bitcoinconsensus" ]
+features = [ "std", "secp-recovery", "base64", "rand", "serde", "bitcoinconsensus" ]
 rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
@@ -41,7 +41,8 @@ core2 = { version = "0.3.0", optional = true, default-features = false }
 
 base64 = { version = "0.13.0", optional = true }
 bitcoinconsensus = { version = "0.19.0-3", optional = true }
-serde = { version = "1", default-features = false, features = [ "derive", "alloc" ], optional = true }
+# Do NOT use this as a feature! Use the `serde` feature instead.
+actual-serde = { package = "serde", version = "1", default-features = false, features = [ "derive", "alloc" ], optional = true }
 hashbrown = { version = "0.8", optional = true }
 
 [dev-dependencies]
