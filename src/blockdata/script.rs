@@ -47,7 +47,20 @@ use crate::util::taproot::{LeafVersion, TapBranchHash, TapLeafHash};
 use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
 use crate::schnorr::{TapTweak, TweakedPublicKey, UntweakedPublicKey};
 
-/// A Bitcoin script.
+/// Bitcoin script.
+///
+/// A list of instructions in a simple, [Forth]-like, stack-based programming language
+/// that Bitcoin uses.
+///
+/// [Forth]: https://en.wikipedia.org/wiki/Forth_(programming_language)
+///
+/// See [Bitcoin Wiki: Script][wiki-script] for more information.
+///
+/// [wiki-script]: https://en.bitcoin.it/wiki/Script
+///
+/// ### Bitcoin Core References
+///
+/// * [CScript definition](https://github.com/bitcoin/bitcoin/blob/d492dc1cdaabdc52b0766bf4cba4bd73178325d0/src/script/script.h#L410)
 #[derive(Clone, Default, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub struct Script(Box<[u8]>);
 

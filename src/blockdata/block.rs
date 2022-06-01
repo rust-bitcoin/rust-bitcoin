@@ -37,13 +37,26 @@ use crate::blockdata::constants::{max_target, WITNESS_SCALE_FACTOR};
 use crate::blockdata::script;
 use crate::VarInt;
 
-/// A block header, which contains all the block's information except
-/// the actual transactions
+/// Bitcoin block header.
+///
+/// Contains all the block's information except the actual transactions, but
+/// including a root of a [merkle tree] commiting to all transactions in the block.
+///
+/// [merkle tree]: https://en.wikipedia.org/wiki/Merkle_tree
+///
+/// ### Bitcoin Core References
+///
+/// * [CBlockHeader definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/block.h#L20)
 #[derive(Copy, PartialEq, Eq, Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct BlockHeader {
-    /// The protocol version. Should always be 1.
+    /// Originally protocol version, but repurposed for soft-fork signaling.
+    ///
+    /// ### Relevant BIPs
+    ///
+    /// * [BIP9 - Version bits with timeout and delay](https://github.com/bitcoin/bips/blob/master/bip-0009.mediawiki) (current usage)
+    /// * [BIP34 - Block v2, Height in Coinbase](https://github.com/bitcoin/bips/blob/master/bip-0034.mediawiki)
     pub version: i32,
     /// Reference to the previous block in the chain.
     pub prev_blockhash: BlockHash,
@@ -156,8 +169,17 @@ impl BlockHeader {
     }
 }
 
-/// A Bitcoin block, which is a collection of transactions with an attached
-/// proof of work.
+/// Bitcoin block.
+///
+/// A collection of transactions with an attached proof of work.
+///
+/// See [Bitcoin Wiki: Block][wiki-block] for more information.
+///
+/// [wiki-block]: https://en.bitcoin.it/wiki/Block
+///
+/// ### Bitcoin Core References
+///
+/// * [CBlock definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/block.h#L62)
 #[derive(PartialEq, Eq, Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]

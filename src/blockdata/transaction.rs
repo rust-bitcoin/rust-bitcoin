@@ -53,6 +53,10 @@ const UINT256_ONE: [u8; 32] = [
 ];
 
 /// A reference to a transaction output.
+///
+/// ### Bitcoin Core References
+///
+/// * [COutPoint definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/transaction.h#L26)
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
 pub struct OutPoint {
     /// The referenced transaction's txid.
@@ -188,7 +192,15 @@ impl ::core::str::FromStr for OutPoint {
     }
 }
 
-/// A transaction input, which defines old coins to be consumed
+/// Bitcoin transaction input.
+///
+/// It contains the location of the previous transaction's output,
+/// that it spends and set of scripts that satisfy its spending
+/// conditions.
+///
+/// ### Bitcoin Core References
+///
+/// * [CTxIn definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/transaction.h#L65)
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
@@ -222,7 +234,17 @@ impl Default for TxIn {
     }
 }
 
-/// A transaction output, which defines new coins to be created from old ones.
+/// Bitcoin transaction output.
+///
+/// Defines new coins to be created as a result of the transaction,
+/// along with spending conditions ("script", aka "output script"),
+/// which an input spending it must satisfy.
+///
+/// An output that is not yet spent by an input is called Unspent Transaction Output ("UTXO").
+///
+/// ### Bitcoin Core References
+///
+/// * [CTxOut definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/transaction.h#L148)
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
@@ -240,7 +262,19 @@ impl Default for TxOut {
     }
 }
 
-/// A Bitcoin transaction, which describes an authenticated movement of coins.
+/// Bitcoin transaction.
+///
+/// An authenticated movement of coins.
+///
+/// See [Bitcoin Wiki: Transaction][wiki-transaction] for more information.
+///
+/// [wiki-transaction]: https://en.bitcoin.it/wiki/Transaction
+///
+/// ### Bitcoin Core References
+///
+/// * [CTtransaction definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/transaction.h#L279)
+///
+/// ### Serialization notes
 ///
 /// If any inputs have nonempty witnesses, the entire transaction is serialized
 /// in the post-BIP141 Segwit format which includes a list of witnesses. If all
