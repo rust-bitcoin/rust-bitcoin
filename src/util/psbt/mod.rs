@@ -258,7 +258,7 @@ mod display_from_str {
     #[cfg_attr(docsrs, doc(cfg(feature = "base64")))]
     impl Display for PartiallySignedTransaction {
         fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-            write!(f, "{}", Base64Display::with_config(&encode::serialize(self), ::base64::STANDARD))
+            write!(f, "{}", Base64Display::with_config(&encode::serialize(self), base64::STANDARD))
         }
     }
 
@@ -267,7 +267,7 @@ mod display_from_str {
         type Err = PsbtParseError;
 
         fn from_str(s: &str) -> Result<Self, Self::Err> {
-            let data = ::base64::decode(s).map_err(PsbtParseError::Base64Encoding)?;
+            let data = base64::decode(s).map_err(PsbtParseError::Base64Encoding)?;
             encode::deserialize(&data).map_err(PsbtParseError::PsbtEncoding)
         }
     }
@@ -594,8 +594,8 @@ mod tests {
                 ..Default::default()
             }],
         };
-        let encoded = ::serde_json::to_string(&psbt).unwrap();
-        let decoded: PartiallySignedTransaction = ::serde_json::from_str(&encoded).unwrap();
+        let encoded = serde_json::to_string(&psbt).unwrap();
+        let decoded: PartiallySignedTransaction = serde_json::from_str(&encoded).unwrap();
         assert_eq!(psbt, decoded);
     }
 

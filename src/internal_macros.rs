@@ -121,15 +121,15 @@ macro_rules! impl_array_newtype {
 macro_rules! display_from_debug {
     ($thing:ident) => {
         impl core::fmt::Display for $thing {
-            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> Result<(), ::core::fmt::Error> {
-                ::core::fmt::Debug::fmt(self, f)
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> Result<(), core::fmt::Error> {
+                core::fmt::Debug::fmt(self, f)
             }
         }
     }
 }
 
 #[cfg(test)]
-macro_rules! hex_script (($s:expr) => (<$crate::Script as ::core::str::FromStr>::from_str($s).unwrap()));
+macro_rules! hex_script (($s:expr) => (<$crate::Script as core::str::FromStr>::from_str($s).unwrap()));
 
 #[cfg(test)]
 macro_rules! hex_hash (($h:ident, $s:expr) => ($h::from_slice(&<$crate::prelude::Vec<u8> as $crate::hashes::hex::FromHex>::from_hex($s).unwrap()).unwrap()));
@@ -146,8 +146,8 @@ macro_rules! serde_string_impl {
             where
                 D: $crate::serde::de::Deserializer<'de>,
             {
-                use ::core::fmt::{self, Formatter};
-                use ::core::str::FromStr;
+                use core::fmt::{self, Formatter};
+                use core::str::FromStr;
 
                 struct Visitor;
                 impl<'de> $crate::serde::de::Visitor<'de> for Visitor {
@@ -194,8 +194,8 @@ macro_rules! serde_struct_human_string_impl {
                 D: $crate::serde::de::Deserializer<'de>,
             {
                 if deserializer.is_human_readable() {
-                    use ::core::fmt::{self, Formatter};
-                    use ::core::str::FromStr;
+                    use core::fmt::{self, Formatter};
+                    use core::str::FromStr;
 
                     struct Visitor;
                     impl<'de> $crate::serde::de::Visitor<'de> for Visitor {
@@ -216,7 +216,7 @@ macro_rules! serde_struct_human_string_impl {
 
                     deserializer.deserialize_str(Visitor)
                 } else {
-                    use ::core::fmt::{self, Formatter};
+                    use core::fmt::{self, Formatter};
                     use $crate::serde::de::IgnoredAny;
 
                     #[allow(non_camel_case_types)]
@@ -365,8 +365,8 @@ macro_rules! serde_struct_human_string_impl {
 macro_rules! impl_bytes_newtype {
     ($t:ident, $len:literal) => (
 
-        impl ::core::fmt::LowerHex for $t {
-            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+        impl core::fmt::LowerHex for $t {
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
                 for &ch in self.0.iter() {
                     write!(f, "{:02x}", ch)?;
                 }
@@ -374,24 +374,24 @@ macro_rules! impl_bytes_newtype {
             }
         }
 
-        impl ::core::fmt::Display for $t {
-            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-                ::core::fmt::LowerHex::fmt(self, f)
+        impl core::fmt::Display for $t {
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                core::fmt::LowerHex::fmt(self, f)
             }
         }
 
-        impl ::core::fmt::Debug for $t {
-            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-                ::core::fmt::LowerHex::fmt(self, f)
+        impl core::fmt::Debug for $t {
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                core::fmt::LowerHex::fmt(self, f)
             }
         }
 
         impl $crate::hashes::hex::FromHex for $t {
             fn from_byte_iter<I>(iter: I) -> Result<Self, $crate::hashes::hex::Error>
             where
-                I: ::core::iter::Iterator<Item=Result<u8, $crate::hashes::hex::Error>>
-                + ::core::iter::ExactSizeIterator
-                + ::core::iter::DoubleEndedIterator,
+                I: core::iter::Iterator<Item=Result<u8, $crate::hashes::hex::Error>>
+                + core::iter::ExactSizeIterator
+                + core::iter::DoubleEndedIterator,
             {
                 if iter.len() == $len {
                     let mut ret = [0; $len];
@@ -405,7 +405,7 @@ macro_rules! impl_bytes_newtype {
             }
         }
 
-        impl ::core::str::FromStr for $t {
+        impl core::str::FromStr for $t {
             type Err = $crate::hashes::hex::Error;
             fn from_str(s: &str) -> Result<Self, Self::Err> {
                 $crate::hashes::hex::FromHex::from_hex(s)
@@ -434,7 +434,7 @@ macro_rules! impl_bytes_newtype {
                     impl<'de> $crate::serde::de::Visitor<'de> for HexVisitor {
                         type Value = $t;
 
-                        fn expecting(&self, formatter: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+                        fn expecting(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
                             formatter.write_str("an ASCII hex string")
                         }
 
@@ -442,7 +442,7 @@ macro_rules! impl_bytes_newtype {
                         where
                             E: $crate::serde::de::Error,
                         {
-                            if let Ok(hex) = ::core::str::from_utf8(v) {
+                            if let Ok(hex) = core::str::from_utf8(v) {
                                 $crate::hashes::hex::FromHex::from_hex(hex).map_err(E::custom)
                             } else {
                                 return Err(E::invalid_value($crate::serde::de::Unexpected::Bytes(v), &self));
@@ -464,7 +464,7 @@ macro_rules! impl_bytes_newtype {
                     impl<'de> $crate::serde::de::Visitor<'de> for BytesVisitor {
                         type Value = $t;
 
-                        fn expecting(&self, formatter: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+                        fn expecting(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
                             formatter.write_str("a bytestring")
                         }
 
@@ -502,15 +502,15 @@ macro_rules! user_enum {
             $(#[$doc] $elem),*
         }
 
-        impl ::core::fmt::Display for $name {
-            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+        impl core::fmt::Display for $name {
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
                 f.pad(match *self {
                     $($name::$elem => $txt),*
                 })
             }
         }
 
-        impl ::core::str::FromStr for $name {
+        impl core::str::FromStr for $name {
             type Err = $crate::io::Error;
             #[inline]
             fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -536,7 +536,7 @@ macro_rules! user_enum {
             where
                 D: $crate::serde::Deserializer<'de>,
             {
-                use ::core::fmt::{self, Formatter};
+                use core::fmt::{self, Formatter};
 
                 struct Visitor;
                 impl<'de> $crate::serde::de::Visitor<'de> for Visitor {

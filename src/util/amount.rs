@@ -772,7 +772,7 @@ impl FromStr for Amount {
     }
 }
 
-impl ::core::iter::Sum for Amount {
+impl core::iter::Sum for Amount {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         let sats: u64 = iter.map(|amt| amt.0).sum();
         Amount::from_sat(sats)
@@ -1203,7 +1203,7 @@ impl FromStr for SignedAmount {
     }
 }
 
-impl ::core::iter::Sum for SignedAmount {
+impl core::iter::Sum for SignedAmount {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         let sats: i64 = iter.map(|amt| amt.0).sum();
         SignedAmount::from_sat(sats)
