@@ -1686,6 +1686,30 @@ mod benches {
         });
     }
 
+
+    #[bench]
+    pub fn bench_transaction_serialize_realloc(bh: &mut Bencher) {
+        let raw_tx = Vec::from_hex(SOME_TX).unwrap();
+        let tx: Transaction = deserialize(&raw_tx).unwrap();
+
+        bh.iter(|| {
+            let mut vec = vec![];
+            let result = tx.consensus_encode(&mut vec).unwrap();
+            black_box(&result);
+        });
+    }
+
+    #[bench]
+    pub fn bench_transaction_serialized_len(bh: &mut Bencher) {
+        let raw_tx = Vec::from_hex(SOME_TX).unwrap();
+        let tx: Transaction = deserialize(&raw_tx).unwrap();
+
+        bh.iter(|| {
+            let result = tx.serialized_len();
+            black_box(&result);
+        });
+    }
+
     #[bench]
     pub fn bench_transaction_serialize_logic(bh: &mut Bencher) {
         let raw_tx = Vec::from_hex(SOME_TX).unwrap();

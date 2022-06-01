@@ -518,44 +518,70 @@ mod tests {
 mod benches {
     use super::Block;
     use crate::EmptyWrite;
-    use crate::consensus::{deserialize, Encodable};
+    use crate::consensus::{serialize, deserialize, Encodable};
     use test::{black_box, Bencher};
     use crate::network::stream_reader::StreamReader;
+
+    const BIG_BLOCK: &[u8; 1_381_836] = include_bytes!("../../test_data/mainnet_block_000000000000000000000c835b2adcaedc20fdf6ee440009c249452c726dafae.raw");
 
     #[bench]
     #[allow(deprecated)]
     pub fn bench_stream_reader(bh: &mut Bencher) {
-        let big_block = include_bytes!("../../test_data/mainnet_block_000000000000000000000c835b2adcaedc20fdf6ee440009c249452c726dafae.raw");
-        assert_eq!(big_block.len(), 1_381_836);
-        let big_block = black_box(big_block);
+        assert_eq!(BIG_BLOCK.len(), 1_381_836);
 
         bh.iter(|| {
-            let mut reader = StreamReader::new(&big_block[..], None);
+            let mut reader = StreamReader::new(&BIG_BLOCK[..], None);
             let block: Block = reader.read_next().unwrap();
             black_box(&block);
         });
     }
 
     #[bench]
-    pub fn bench_block_serialize(bh: &mut Bencher) {
-        let raw_block = include_bytes!("../../test_data/mainnet_block_000000000000000000000c835b2adcaedc20fdf6ee440009c249452c726dafae.raw");
-
-        let block: Block = deserialize(&raw_block[..]).unwrap();
-
-        let mut data = Vec::with_capacity(raw_block.len());
+    pub fn bench_block_serialize_with_capacity(bh: &mut Bencher) {
+        let block: Block = deserialize(&BIG_BLOCK[..]).unwrap();
+        assert_eq!(block.txdata.len(), 2500);
 
         bh.iter(|| {
+            let mut data = Vec::with_capacity(BIG_BLOCK.len());
             let result = block.consensus_encode(&mut data);
             black_box(&result);
-            data.clear();
+        });
+    }
+
+    #[bench]
+    pub fn bench_block_serialize(bh: &mut Bencher) {
+        let block: Block = deserialize(&BIG_BLOCK[..]).unwrap();
+
+        bh.iter(|| {
+            let result = serialize(&block);
+            black_box(&result);
+        });
+    }
+
+    #[bench]
+    pub fn bench_block_serialize_realloc(bh: &mut Bencher) {
+        let block: Block = deserialize(&BIG_BLOCK[..]).unwrap();
+
+        bh.iter(|| {
+            let mut vec = vec![];
+            let result = block.consensus_encode(&mut vec).unwrap();
+            black_box(&result);
+        });
+    }
+
+    #[bench]
+    pub fn bench_block_serialized_len(bh: &mut Bencher) {
+        let block: Block = deserialize(&BIG_BLOCK[..]).unwrap();
+
+        bh.iter(|| {
+            let result = block.serialized_len();
+            black_box(&result);
         });
     }
 
     #[bench]
     pub fn bench_block_serialize_logic(bh: &mut Bencher) {
-        let raw_block = include_bytes!("../../test_data/mainnet_block_000000000000000000000c835b2adcaedc20fdf6ee440009c249452c726dafae.raw");
-
-        let block: Block = deserialize(&raw_block[..]).unwrap();
+        let block: Block = deserialize(&BIG_BLOCK[..]).unwrap();
 
         bh.iter(|| {
             let size = block.consensus_encode(&mut EmptyWrite);
@@ -565,10 +591,8 @@ mod benches {
 
     #[bench]
     pub fn bench_block_deserialize(bh: &mut Bencher) {
-        let raw_block = include_bytes!("../../test_data/mainnet_block_000000000000000000000c835b2adcaedc20fdf6ee440009c249452c726dafae.raw");
-
         bh.iter(|| {
-            let block: Block = deserialize(&raw_block[..]).unwrap();
+            let block: Block = deserialize(&BIG_BLOCK[..]).unwrap();
             black_box(&block);
         });
     }
