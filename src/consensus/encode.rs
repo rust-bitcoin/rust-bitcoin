@@ -167,7 +167,7 @@ pub fn deserialize<T: Decodable>(data: &[u8]) -> Result<T, Error> {
 /// doesn't consume the entire vector.
 pub fn deserialize_partial<T: Decodable>(data: &[u8]) -> Result<(T, usize), Error> {
     let mut decoder = Cursor::new(data);
-    let rv = Decodable::consensus_decode(&mut decoder)?;
+    let rv = Decodable::consensus_decode_from_finite_reader(&mut decoder)?;
     let consumed = decoder.position() as usize;
 
     Ok((rv, consumed))
@@ -319,6 +319,47 @@ pub trait Encodable {
 
 /// Data which can be encoded in a consensus-consistent way
 pub trait Decodable: Sized {
+    /// Decode `Self` from a size-limited reader.
+    ///
+    /// Like `consensus_decode` but relies on the reader being
+    /// limited in the amount of data it returns, e.g. by
+    /// being wrapped in [`std::io::Take`].
+    ///
+    /// Failling to obide to this requirement might lead to
+    /// memory exhaustion caused by malicious inputs.
+    ///
+    /// Users should default to `consensus_decode`, but
+    /// when data to be decoded is already in a byte vector
+    /// of a limited size, calling this function directly
+    /// might be marginally faster (due to avoiding
+    /// extra checks).
+    ///
+    /// ### Rules for trait implementations
+    ///
+    /// * Simple types that that have a fixed size (own and member fields),
+    ///   don't have to overwrite this method, or be concern with it.
+    /// * Types that deserialize using externally provided length
+    ///   should implement it:
+    ///   * Make `consensus_decode` forward to `consensus_decode_bytes_from_finite_reader`
+    ///     with the reader wrapped by `Take`. Failure to do so, without other
+    ///     forms of memory exhaustion protection might lead to resource exhaustion
+    ///     vulnerability.
+    ///   * Put a max cap on things like `Vec::with_capacity` to avoid oversized
+    ///     allocations, and rely on the reader running out of data, and collections
+    ///     reallocating on a legitimately oversized input data, instead of trying
+    ///     to enforce arbitrary length limits.
+    /// * Types that contain other types that implement custom `consensus_decode_from_finite_reader`,
+    ///   should also implement it applying same rules, and in addition make sure to call
+    ///   `consensus_decode_from_finite_reader` on all members, to avoid creating redundant
+    ///   `Take` wrappers. Failure to do so might result only in a tiny performance hit.
+    fn consensus_decode_from_finite_reader<D: io::Read>(d: D) -> Result<Self, Error> {
+        // This method is always strictly less general than, `consensus_decode`,
+        // so it's safe and make sense to default to just calling it.
+        // This way most types, that don't care about protecting against
+        // resource exhaustion due to malicious input, can just ignore it.
+        Self::consensus_decode(d)
+    }
+
     /// Decode an object with a well-defined format
     fn consensus_decode<D: io::Read>(d: D) -> Result<Self, Error>;
 }
@@ -555,22 +596,28 @@ macro_rules! impl_vec {
                 Ok(len)
             }
         }
+
         impl Decodable for Vec<$type> {
             #[inline]
-            fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, Error> {
-                let len = VarInt::consensus_decode(&mut d)?.0;
-                let byte_size = (len as usize)
-                    .checked_mul(mem::size_of::<$type>())
-                    .ok_or(self::Error::ParseFailed("Invalid length"))?;
-                if byte_size > MAX_VEC_SIZE {
-                    return Err(self::Error::OversizedVectorAllocation { requested: byte_size, max: MAX_VEC_SIZE })
-                }
-                let mut ret = Vec::with_capacity(len as usize);
-                let mut d = d.take(MAX_VEC_SIZE as u64);
+            fn consensus_decode_from_finite_reader<D: io::Read>(mut d: D) -> Result<Self, Error> {
+                let len = VarInt::consensus_decode_from_finite_reader(&mut d)?.0;
+                // Do not allocate upfront more items than if the sequnce of type
+                // occupied roughly quarter a block. This should never be the case
+                // for normal data, but even if that's not true - `push` will just
+                // reallocate.
+                // Note: OOM protection relies on reader eventually running out of
+                // data to feed us.
+                let max_capacity = MAX_VEC_SIZE / 4 / mem::size_of::<$type>();
+                let mut ret = Vec::with_capacity(core::cmp::min(len as usize, max_capacity));
                 for _ in 0..len {
-                    ret.push(Decodable::consensus_decode(&mut d)?);
+                    ret.push(Decodable::consensus_decode_from_finite_reader(&mut d)?);
                 }
                 Ok(ret)
+            }
+
+            #[inline]
+            fn consensus_decode<D: io::Read>(d: D) -> Result<Self, Error> {
+                Self::consensus_decode_from_finite_reader(d.take(MAX_VEC_SIZE as u64))
             }
         }
     }
@@ -597,6 +644,33 @@ pub(crate) fn consensus_encode_with_size<S: io::Write>(data: &[u8], mut s: S) ->
 }
 
 
+struct ReadBytesFromFiniteReaderOpts {
+    len: usize,
+    chunk_size: usize,
+}
+
+/// Read `opts.len` bytes from reader, where `opts.len` could potentially be malicious
+///
+/// This function relies on reader being bound in amount of data
+/// it returns for OOM protection. See [`Decodable::consensus_decode_from_finite_reader`].
+#[inline]
+fn read_bytes_from_finite_reader<D: io::Read>(mut d: D, mut opts: ReadBytesFromFiniteReaderOpts) -> Result<Vec<u8>, Error> {
+    let mut ret = vec![];
+
+    assert_ne!(opts.chunk_size, 0);
+
+    while opts.len > 0 {
+        let chunk_start = ret.len();
+        let chunk_size = core::cmp::min(opts.len, opts.chunk_size);
+        let chunk_end = chunk_start + chunk_size;
+        ret.resize(chunk_end, 0u8);
+        d.read_slice(&mut ret[chunk_start..chunk_end])?;
+        opts.len -= chunk_size;
+    }
+
+    Ok(ret)
+}
+
 impl Encodable for Vec<u8> {
     #[inline]
     fn consensus_encode<S: io::Write>(&self, s: S) -> Result<usize, io::Error> {
@@ -606,14 +680,15 @@ impl Encodable for Vec<u8> {
 
 impl Decodable for Vec<u8> {
     #[inline]
-    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, Error> {
+    fn consensus_decode_from_finite_reader<D: io::Read>(mut d: D) -> Result<Self, Error> {
         let len = VarInt::consensus_decode(&mut d)?.0 as usize;
-        if len > MAX_VEC_SIZE {
-            return Err(self::Error::OversizedVectorAllocation { requested: len, max: MAX_VEC_SIZE })
-        }
-        let mut ret = vec![0u8; len];
-        d.read_slice(&mut ret)?;
-        Ok(ret)
+        // most real-world vec of bytes data, wouldn't be larger than 128KiB
+        read_bytes_from_finite_reader(d, ReadBytesFromFiniteReaderOpts { len, chunk_size: 128 * 1024 })
+    }
+
+    #[inline]
+    fn consensus_decode<D: io::Read>(d: D) -> Result<Self, Error> {
+        Self::consensus_decode_from_finite_reader(d.take(MAX_VEC_SIZE as u64))
     }
 }
 
@@ -626,8 +701,13 @@ impl Encodable for Box<[u8]> {
 
 impl Decodable for Box<[u8]> {
     #[inline]
+    fn consensus_decode_from_finite_reader<D: io::Read>(d: D) -> Result<Self, Error> {
+        <Vec<u8>>::consensus_decode_from_finite_reader(d).map(From::from)
+    }
+
+    #[inline]
     fn consensus_decode<D: io::Read>(d: D) -> Result<Self, Error> {
-        <Vec<u8>>::consensus_decode(d).map(From::from)
+        Self::consensus_decode_from_finite_reader(d.take(MAX_VEC_SIZE as u64))
     }
 }
 
@@ -651,17 +731,11 @@ impl Encodable for CheckedData {
 
 impl Decodable for CheckedData {
     #[inline]
-    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, Error> {
-        let len = u32::consensus_decode(&mut d)?;
-        if len > MAX_VEC_SIZE as u32 {
-            return Err(self::Error::OversizedVectorAllocation {
-                requested: len as usize,
-                max: MAX_VEC_SIZE
-            });
-        }
-        let checksum = <[u8; 4]>::consensus_decode(&mut d)?;
-        let mut ret = vec![0u8; len as usize];
-        d.read_slice(&mut ret)?;
+    fn consensus_decode_from_finite_reader<D: io::Read>(mut d: D) -> Result<Self, Error> {
+        let len = u32::consensus_decode_from_finite_reader(&mut d)? as usize;
+
+        let checksum = <[u8; 4]>::consensus_decode_from_finite_reader(&mut d)?;
+        let ret = read_bytes_from_finite_reader(d, ReadBytesFromFiniteReaderOpts { len, chunk_size: MAX_VEC_SIZE })?;
         let expected_checksum = sha2_checksum(&ret);
         if expected_checksum != checksum {
             Err(self::Error::InvalidChecksum {
@@ -671,6 +745,10 @@ impl Decodable for CheckedData {
         } else {
             Ok(CheckedData(ret))
         }
+    }
+
+    fn consensus_decode<D: io::Read>(d: D) -> Result<Self, Error> {
+        Self::consensus_decode_from_finite_reader(d.take(MAX_VEC_SIZE as u64))
     }
 }
 
@@ -1064,5 +1142,21 @@ mod tests {
 
         }
     }
+
+    #[test]
+    fn test_read_bytes_from_finite_reader() {
+        let data : Vec<u8> = (0..10).collect();
+
+        for chunk_size in 1..20 {
+            assert_eq!(
+                read_bytes_from_finite_reader(
+                    io::Cursor::new(&data),
+                    ReadBytesFromFiniteReaderOpts { len: data.len(), chunk_size }
+                ).unwrap(),
+                data
+            );
+        }
+    }
+
 }
 
