@@ -211,7 +211,7 @@ impl std::error::Error for Error {
             NonMinimalPush
             | EarlyEndOfScript
             | NumericOverflow
-            | BitcoinConsensus(_) // TODO: This should return `Some` but bitcoinconsensus::Error does not implement Error.
+            | BitcoinConsensus(_)
             | UnknownSpentOutput(_)
             | SerializationError => None,
         }

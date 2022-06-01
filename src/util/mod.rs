@@ -82,8 +82,8 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Error::Encode(ref e) => fmt::Display::fmt(e, f),
-            Error::Network(ref e) => fmt::Display::fmt(e, f),
+            Error::Encode(ref e) => write_err!(f, "encoding error"; e),
+            Error::Network(ref e) => write_err!(f, "network error"; e),
             Error::BlockBadProofOfWork => f.write_str("block target correct but not attained"),
             Error::BlockBadTarget => f.write_str("block target incorrect"),
         }

@@ -212,7 +212,7 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Error::Io(ref e) => write!(f, "Writer errored: {:?}", e),
+            Error::Io(error_kind) => write!(f, "writer errored: {:?}", error_kind),
             Error::IndexOutOfInputsBounds { index, inputs_size } => write!(f, "Requested index ({}) is greater or equal than the number of transaction inputs ({})", index, inputs_size),
             Error::SingleWithoutCorrespondingOutput { index, outputs_size } => write!(f, "SIGHASH_SINGLE for input ({}) haven't a corresponding output (#outputs:{})", index, outputs_size),
             Error::PrevoutsSize => write!(f, "Number of supplied prevouts differs from the number of inputs in transaction"),

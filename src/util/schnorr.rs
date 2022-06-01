@@ -283,7 +283,7 @@ impl fmt::Display for SchnorrSigError {
             SchnorrSigError::InvalidSighashType(hash_ty) =>
                 write!(f, "Invalid signature hash type {}", hash_ty),
             SchnorrSigError::Secp256k1(ref e) =>
-                write!(f, "Schnorr Signature has correct len, but is malformed : {}", e),
+                write_err!(f, "Schnorr signature has correct len but is malformed"; e),
             SchnorrSigError::InvalidSchnorrSigSize(sz) =>
                 write!(f, "Invalid Schnorr signature size: {}", sz),
         }

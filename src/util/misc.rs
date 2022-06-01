@@ -64,7 +64,7 @@ mod message_signing {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match *self {
                 MessageSignatureError::InvalidLength => write!(f, "length not 65 bytes"),
-                MessageSignatureError::InvalidEncoding(ref e) => write!(f, "invalid encoding: {}", e),
+                MessageSignatureError::InvalidEncoding(ref e) => write_err!(f, "invalid encoding"; e),
                 MessageSignatureError::InvalidBase64 => write!(f, "invalid base64"),
                 MessageSignatureError::UnsupportedAddressType(ref address_type) => write!(f, "unsupported address type: {}", address_type),
             }
