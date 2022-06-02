@@ -241,30 +241,36 @@ impl From<bitcoinconsensus::Error> for Error {
         Error::BitcoinConsensus(err)
     }
 }
-/// Helper to encode an integer in script format
-fn build_scriptint(n: i64) -> Vec<u8> {
-    if n == 0 { return vec![] }
+
+/// Helper to encode an integer in script format.
+/// Writes bytes into the buffer and returns the number of bytes written.
+fn write_scriptint(out: &mut [u8; 8], n: i64) -> usize {
+    let mut len = 0;
+    if n == 0 { return len; }
 
     let neg = n < 0;
 
     let mut abs = if neg { -n } else { n } as usize;
-    let mut v = vec![];
     while abs > 0xFF {
-        v.push((abs & 0xFF) as u8);
+        out[len] = (abs & 0xFF) as u8;
+        len += 1;
         abs >>= 8;
     }
     // If the number's value causes the sign bit to be set, we need an extra
     // byte to get the correct value and correct sign bit
     if abs & 0x80 != 0 {
-        v.push(abs as u8);
-        v.push(if neg { 0x80u8 } else { 0u8 });
+        out[len] = abs as u8;
+        len += 1;
+        out[len] = if neg { 0x80u8 } else { 0u8 };
+        len += 1;
     }
     // Otherwise we just set the sign bit ourselves
     else {
         abs |= if neg { 0x80 } else { 0 };
-        v.push(abs as u8);
+        out[len] = abs as u8;
+        len += 1;
     }
-    v
+    len
 }
 
 /// Helper to decode an integer in script format
@@ -908,7 +914,9 @@ impl Builder {
     /// Adds instructions to push an integer onto the stack, using the explicit
     /// encoding regardless of the availability of dedicated opcodes.
     pub fn push_scriptint(self, data: i64) -> Builder {
-        self.push_slice(&build_scriptint(data))
+        let mut buf = [0u8; 8];
+        let len = write_scriptint(&mut buf, data);
+        self.push_slice(&buf[..len])
     }
 
     /// Adds instructions to push some arbitrary data onto the stack.
@@ -1106,7 +1114,7 @@ mod test {
     use core::str::FromStr;
 
     use super::*;
-    use super::build_scriptint;
+    use super::write_scriptint;
 
     use crate::hashes::hex::{FromHex, ToHex};
     use crate::consensus::encode::{deserialize, serialize};
@@ -1287,13 +1295,23 @@ mod test {
 
     #[test]
     fn scriptint_round_trip() {
+        fn build_scriptint(n: i64) -> Vec<u8> {
+            let mut buf = [0u8; 8];
+            let len = write_scriptint(&mut buf, n);
+            assert!(len <= 8);
+            buf[..len].to_vec()
+        }
+
         assert_eq!(build_scriptint(-1), vec![0x81]);
         assert_eq!(build_scriptint(255), vec![255, 0]);
         assert_eq!(build_scriptint(256), vec![0, 1]);
         assert_eq!(build_scriptint(257), vec![1, 1]);
         assert_eq!(build_scriptint(511), vec![255, 1]);
-        for &i in [10, 100, 255, 256, 1000, 10000, 25000, 200000, 5000000, 1000000000,
-                             (1 << 31) - 1, -((1 << 31) - 1)].iter() {
+        let test_vectors = [
+            10, 100, 255, 256, 1000, 10000, 25000, 200000, 5000000, 1000000000,
+            (1 << 31) - 1, -((1 << 31) - 1),
+        ];
+        for &i in test_vectors.iter() {
             assert_eq!(Ok(i), read_scriptint(&build_scriptint(i)));
             assert_eq!(Ok(-i), read_scriptint(&build_scriptint(-i)));
         }
