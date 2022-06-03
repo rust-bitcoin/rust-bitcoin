@@ -30,7 +30,7 @@ use crate::util::hash::bitcoin_merkle_root;
 use crate::hashes::{Hash, HashEngine};
 use crate::hash_types::{Wtxid, BlockHash, TxMerkleNode, WitnessMerkleNode, WitnessCommitment};
 use crate::util::uint::Uint256;
-use crate::consensus::encode::Encodable;
+use crate::consensus::encode::{Encodable, Decodable};
 use crate::network::constants::Network;
 use crate::blockdata::transaction::Transaction;
 use crate::blockdata::constants::{max_target, WITNESS_SCALE_FACTOR};
@@ -166,7 +166,50 @@ pub struct Block {
     pub txdata: Vec<Transaction>
 }
 
-impl_consensus_encoding!(Block, header, txdata);
+impl Encodable for Block {
+    #[inline]
+    fn consensus_encode<S: crate::io::Write>(
+        &self,
+        mut s: S,
+    ) -> Result<usize, crate::io::Error> {
+        let mut len = 0;
+        len += self.header.consensus_encode(&mut s)?;
+        len += self.txdata.consensus_encode(&mut s)?;
+        Ok(len)
+    }
+    fn serialized_len(&self) -> usize {
+        let mut len = 0;
+        len += self.header.serialized_len();
+        len += self.txdata.serialized_len();
+        len
+    }
+    fn is_big_object(&self, max_iterations: usize) -> bool {
+        if self.txdata.len() > max_iterations {
+            true
+        } else {
+            let mut sum: usize = 0;
+            for tx in & self.txdata {
+                sum = sum.saturating_add(tx.input.len()).saturating_add(tx.output.len());
+                if sum > max_iterations {
+                    return true;
+                }
+            }
+            false
+        }
+    }
+}
+impl Decodable for Block {
+    #[inline]
+    fn consensus_decode<D: crate::io::Read>(
+        d: D,
+    ) -> Result<Block, crate::consensus::encode::Error> {
+        let mut d = d.take(crate::consensus::encode::MAX_VEC_SIZE as u64);
+        Ok(Block {
+            header: crate::consensus::Decodable::consensus_decode(&mut d)?,
+            txdata: crate::consensus::Decodable::consensus_decode(&mut d)?,
+        })
+    }
+}
 
 impl Block {
     /// Returns the block hash.

@@ -710,6 +710,9 @@ impl Encodable for Transaction {
         len += self.lock_time.serialized_len();
         len
      }
+     fn is_big_object(&self, max_iterations: usize) -> bool {
+        self.input.len().saturating_add(self.output.len()) > max_iterations
+    }
 }
 
 impl Decodable for Transaction {

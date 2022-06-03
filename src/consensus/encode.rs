@@ -137,13 +137,25 @@ impl From<psbt::Error> for Error {
     }
 }
 
+fn prepare_ser_vec<T: Encodable + ?Sized>(data: &T, max_iterations: usize) -> Vec<u8> {
+    let mut vec = Vec::new();
+    reserve_ser_vec(data, max_iterations, &mut vec);
+    vec
+}
+
+fn reserve_ser_vec<T: Encodable + ?Sized>(data: &T, max_iterations: usize, vec: &mut Vec<u8>) {
+    if !data.is_big_object(max_iterations) {
+        vec.reserve(data.serialized_len())
+    }
+}
+
 /// Encode an object into a vector
 pub fn serialize<T: Encodable + ?Sized>(data: &T) -> Vec<u8> {
-    let serialized_len = data.serialized_len();
-    let mut encoder = Vec::with_capacity(serialized_len);
+    let mut encoder = prepare_ser_vec(data, 10);
+    let initial_len = encoder.len();
     let len = data.consensus_encode(&mut encoder).expect("in-memory writers don't error");
     debug_assert_eq!(len, encoder.len());
-    debug_assert_eq!(serialized_len, encoder.len());
+    debug_assert!(initial_len == 0 || initial_len == encoder.len());
     encoder
 }
 
@@ -325,6 +337,16 @@ pub trait Encodable {
     /// this could not be the best strategy for performance, see [serialize()]
     /// implementation strategy.
     fn serialized_len(&self) -> usize;
+
+    /// Return an estimation wheter `self` is to be considered a big object once
+    /// serialized.
+    ///
+    /// The estimation is based on the number of items to be iterated, for
+    /// example if the number of inputs and outputs in a [`Transaction`] is
+    /// greater than `max_iterations` returns true.
+    fn is_big_object(&self, _max_iterations: usize) -> bool {
+        false
+    }
 }
 
 /// Data which can be encoded in a consensus-consistent way
