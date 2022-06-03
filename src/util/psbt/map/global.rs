@@ -100,8 +100,8 @@ impl Map for PartiallySignedTransaction {
 }
 
 impl PartiallySignedTransaction {
-    pub(crate) fn consensus_decode_global<D: io::Read>(d: D) -> Result<Self, encode::Error> {
-        let mut d = d.take(MAX_VEC_SIZE as u64);
+    pub(crate) fn consensus_decode_global<R: io::Read>(r: &mut R) -> Result<Self, encode::Error> {
+        let mut r = r.take(MAX_VEC_SIZE as u64);
         let mut tx: Option<Transaction> = None;
         let mut version: Option<u32> = None;
         let mut unknowns: BTreeMap<raw::Key, Vec<u8>> = Default::default();
@@ -109,7 +109,7 @@ impl PartiallySignedTransaction {
         let mut proprietary: BTreeMap<raw::ProprietaryKey, Vec<u8>> = Default::default();
 
         loop {
-            match raw::Pair::consensus_decode(&mut d) {
+            match raw::Pair::consensus_decode(&mut r) {
                 Ok(pair) => {
                     match pair.key.type_value {
                         PSBT_GLOBAL_UNSIGNED_TX => {
