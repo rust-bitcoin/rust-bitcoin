@@ -39,7 +39,15 @@ macro_rules! impl_hashencode {
     }
 }
 
-hash_newtype!(Txid, sha256d::Hash, 32, doc="A bitcoin transaction hash/transaction ID.");
+hash_newtype!(
+    Txid, sha256d::Hash, 32, doc="A bitcoin transaction hash/transaction ID.
+
+For compatibility with the existing Bitcoin infrastructure and historical
+and current versions of the Bitcoin Core software itself, this and
+other [`sha256d::Hash`] types, are serialized in reverse
+byte order when converted to a hex string via [`std::fmt::Display`] trait operations.
+See [`hashes::Hash::DISPLAY_BACKWARD`] for more details.
+");
 hash_newtype!(Wtxid, sha256d::Hash, 32, doc="A bitcoin witness transaction ID.");
 hash_newtype!(BlockHash, sha256d::Hash, 32, doc="A bitcoin block hash.");
 hash_newtype!(Sighash, sha256d::Hash, 32, doc="Hash of the transaction according to the signature algorithm");
