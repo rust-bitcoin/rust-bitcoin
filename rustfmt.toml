@@ -1,6 +1,5 @@
 # Eventually this shoud be: ignore = []
 ignore = [
-       "examples",
        "src",
        "src/blockdata",
        "src/consensus",
