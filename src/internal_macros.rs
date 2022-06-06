@@ -100,11 +100,9 @@ macro_rules! impl_array_newtype {
             type Output = <[$ty] as core::ops::Index<I>>::Output;
 
             #[inline]
-            fn index(&self, index: I) -> &Self::Output {
-                &self.0[index]
-            }
+            fn index(&self, index: I) -> &Self::Output { &self.0[index] }
         }
-    }
+    };
 }
 
 macro_rules! display_from_debug {
@@ -114,7 +112,7 @@ macro_rules! display_from_debug {
                 core::fmt::Debug::fmt(self, f)
             }
         }
-    }
+    };
 }
 
 #[cfg(test)]
@@ -352,8 +350,7 @@ macro_rules! serde_struct_human_string_impl {
 /// - core::str::FromStr
 /// - hashes::hex::FromHex
 macro_rules! impl_bytes_newtype {
-    ($t:ident, $len:literal) => (
-
+    ($t:ident, $len:literal) => {
         impl core::fmt::LowerHex for $t {
             fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
                 for &ch in self.0.iter() {
@@ -378,9 +375,9 @@ macro_rules! impl_bytes_newtype {
         impl $crate::hashes::hex::FromHex for $t {
             fn from_byte_iter<I>(iter: I) -> Result<Self, $crate::hashes::hex::Error>
             where
-                I: core::iter::Iterator<Item=Result<u8, $crate::hashes::hex::Error>>
-                + core::iter::ExactSizeIterator
-                + core::iter::DoubleEndedIterator,
+                I: core::iter::Iterator<Item = Result<u8, $crate::hashes::hex::Error>>
+                    + core::iter::ExactSizeIterator
+                    + core::iter::DoubleEndedIterator,
             {
                 if iter.len() == $len {
                     let mut ret = [0; $len];
@@ -477,7 +474,7 @@ macro_rules! impl_bytes_newtype {
                 }
             }
         }
-    )
+    };
 }
 
 macro_rules! user_enum {
@@ -588,9 +585,7 @@ macro_rules! write_err {
 
 /// Asserts a boolean expression at compile time.
 macro_rules! const_assert {
-    ($x:expr) => {
-        {
-            const _: [(); 0 - !$x as usize] = [];
-        }
-    };
+    ($x:expr) => {{
+        const _: [(); 0 - !$x as usize] = [];
+    }};
 }

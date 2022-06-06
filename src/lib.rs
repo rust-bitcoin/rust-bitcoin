@@ -29,11 +29,9 @@
 //!
 
 #![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
-
 // Experimental features we need.
 #![cfg_attr(bench, feature(test))]
 #![cfg_attr(docsrs, feature(doc_cfg))]
-
 // Coding conventions
 #![forbid(unsafe_code)]
 #![deny(non_upper_case_globals)]
@@ -55,7 +53,8 @@ compile_error!(
     know if you want 16-bit support. Note that we do NOT guarantee that we will implement it!"
 );
 
-#[cfg(bench)] extern crate test;
+#[cfg(bench)]
+extern crate test;
 
 #[cfg(feature = "no-std")]
 #[macro_use]
@@ -64,9 +63,10 @@ extern crate alloc;
 extern crate core2;
 
 // Re-exported dependencies.
-#[macro_use] pub extern crate bitcoin_hashes as hashes;
-pub extern crate secp256k1;
+#[macro_use]
+pub extern crate bitcoin_hashes as hashes;
 pub extern crate bech32;
+pub extern crate secp256k1;
 
 #[cfg(feature = "no-std")]
 extern crate hashbrown;
@@ -75,12 +75,19 @@ extern crate hashbrown;
 #[cfg_attr(docsrs, doc(cfg(feature = "base64")))]
 pub extern crate base64;
 
-#[cfg(feature="bitcoinconsensus")] extern crate bitcoinconsensus;
-#[cfg(feature = "serde")] #[macro_use] extern crate actual_serde as serde;
-#[cfg(all(test, feature = "serde"))] extern crate serde_json;
-#[cfg(all(test, feature = "serde"))] extern crate serde_test;
-#[cfg(all(test, feature = "serde"))] extern crate bincode;
-#[cfg(all(test, feature = "unstable"))] extern crate test;
+#[cfg(feature = "bitcoinconsensus")]
+extern crate bitcoinconsensus;
+#[cfg(feature = "serde")]
+#[macro_use]
+extern crate actual_serde as serde;
+#[cfg(all(test, feature = "serde"))]
+extern crate bincode;
+#[cfg(all(test, feature = "serde"))]
+extern crate serde_json;
+#[cfg(all(test, feature = "serde"))]
+extern crate serde_test;
+#[cfg(all(test, feature = "unstable"))]
+extern crate test;
 
 #[cfg(test)]
 #[macro_use]
@@ -93,44 +100,36 @@ mod serde_utils;
 #[macro_use]
 pub mod network;
 pub mod blockdata;
-pub mod util;
 pub mod consensus;
 pub mod hash_types;
 pub mod policy;
-
-pub use crate::hash_types::*;
-pub use crate::blockdata::block::Block;
-pub use crate::blockdata::block::BlockHeader;
-pub use crate::blockdata::script::Script;
-pub use crate::blockdata::transaction::Transaction;
-pub use crate::blockdata::transaction::TxIn;
-pub use crate::blockdata::transaction::Sequence;
-pub use crate::blockdata::transaction::TxOut;
-pub use crate::blockdata::transaction::OutPoint;
-pub use crate::blockdata::transaction::EcdsaSighashType;
-pub use crate::blockdata::witness::Witness;
-pub use crate::consensus::encode::VarInt;
-pub use crate::network::constants::Network;
-pub use crate::util::Error;
-pub use crate::util::address::Address;
-pub use crate::util::address::AddressType;
-pub use crate::util::amount::Amount;
-pub use crate::util::amount::Denomination;
-pub use crate::util::amount::SignedAmount;
-pub use crate::util::merkleblock::MerkleBlock;
-pub use crate::util::sighash::SchnorrSighashType;
-
-pub use crate::util::ecdsa::{self, EcdsaSig, EcdsaSigError};
-pub use crate::util::schnorr::{self, SchnorrSig, SchnorrSigError};
-pub use crate::util::key::{PrivateKey, PublicKey, XOnlyPublicKey, KeyPair};
-pub use crate::util::psbt;
-#[allow(deprecated)]
-pub use crate::blockdata::transaction::SigHashType;
+pub mod util;
 
 #[cfg(feature = "std")]
 use std::io;
+
 #[cfg(not(feature = "std"))]
 use core2::io;
+
+pub use crate::blockdata::block::{Block, BlockHeader};
+pub use crate::blockdata::script::Script;
+#[allow(deprecated)]
+pub use crate::blockdata::transaction::SigHashType;
+pub use crate::blockdata::transaction::{
+    EcdsaSighashType, OutPoint, Sequence, Transaction, TxIn, TxOut,
+};
+pub use crate::blockdata::witness::Witness;
+pub use crate::consensus::encode::VarInt;
+pub use crate::hash_types::*;
+pub use crate::network::constants::Network;
+pub use crate::util::address::{Address, AddressType};
+pub use crate::util::amount::{Amount, Denomination, SignedAmount};
+pub use crate::util::ecdsa::{self, EcdsaSig, EcdsaSigError};
+pub use crate::util::key::{KeyPair, PrivateKey, PublicKey, XOnlyPublicKey};
+pub use crate::util::merkleblock::MerkleBlock;
+pub use crate::util::schnorr::{self, SchnorrSig, SchnorrSigError};
+pub use crate::util::sighash::SchnorrSighashType;
+pub use crate::util::{psbt, Error};
 
 #[cfg(not(feature = "std"))]
 mod io_extras {
@@ -140,20 +139,14 @@ mod io_extras {
     }
 
     /// Creates an instance of a writer which will successfully consume all data.
-    pub const fn sink() -> Sink {
-        Sink { _priv: () }
-    }
+    pub const fn sink() -> Sink { Sink { _priv: () } }
 
     impl core2::io::Write for Sink {
         #[inline]
-        fn write(&mut self, buf: &[u8]) -> core2::io::Result<usize> {
-            Ok(buf.len())
-        }
+        fn write(&mut self, buf: &[u8]) -> core2::io::Result<usize> { Ok(buf.len()) }
 
         #[inline]
-        fn flush(&mut self) -> core2::io::Result<()> {
-            Ok(())
-        }
+        fn flush(&mut self) -> core2::io::Result<()> { Ok(()) }
     }
 }
 
@@ -184,32 +177,26 @@ mod prelude {
     pub use std::collections::HashSet;
 }
 
-#[cfg(bench)] use bench::EmptyWrite;
+#[cfg(bench)]
+use bench::EmptyWrite;
 
 #[cfg(bench)]
 mod bench {
     use core::fmt::Arguments;
+
     use crate::io::{IoSlice, Result, Write};
 
     #[derive(Default, Clone, Debug, PartialEq, Eq)]
     pub struct EmptyWrite;
 
     impl Write for EmptyWrite {
-        fn write(&mut self, buf: &[u8]) -> Result<usize> {
-            Ok(buf.len())
-        }
+        fn write(&mut self, buf: &[u8]) -> Result<usize> { Ok(buf.len()) }
         fn write_vectored(&mut self, bufs: &[IoSlice]) -> Result<usize> {
             Ok(bufs.iter().map(|s| s.len()).sum())
         }
-        fn flush(&mut self) -> Result<()> {
-            Ok(())
-        }
+        fn flush(&mut self) -> Result<()> { Ok(()) }
 
-        fn write_all(&mut self, _: &[u8]) -> Result<()> {
-            Ok(())
-        }
-        fn write_fmt(&mut self, _: Arguments) -> Result<()> {
-            Ok(())
-        }
+        fn write_all(&mut self, _: &[u8]) -> Result<()> { Ok(()) }
+        fn write_fmt(&mut self, _: Arguments) -> Result<()> { Ok(()) }
     }
 }

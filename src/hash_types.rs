@@ -9,6 +9,7 @@
 //! hash).
 //!
 
+#[rustfmt::skip]
 macro_rules! impl_hashencode {
     ($hashtype:ident) => {
         impl $crate::consensus::Encodable for $hashtype {
@@ -23,7 +24,7 @@ macro_rules! impl_hashencode {
                 Ok(Self::from_inner(<<$hashtype as $crate::hashes::Hash>::Inner>::consensus_decode(r)?))
             }
         }
-    }
+    };
 }
 
 // newtypes module is solely here so we can rustfmt::skip.
