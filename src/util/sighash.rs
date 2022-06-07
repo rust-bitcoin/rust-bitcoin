@@ -1007,6 +1007,7 @@ mod tests {
         assert_eq!(Annex::new(&[0x51, 0x50]), Err(Error::WrongAnnex));
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn test_taproot_sighash(
         tx_hex: &str,
         prevout_hex: &str,
