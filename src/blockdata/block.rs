@@ -517,7 +517,7 @@ mod tests {
         // test with zero target
         match some_header.validate_pow(&Uint256::default()) {
             Err(BlockBadTarget) => (),
-            _ => assert!(false)
+            _ => panic!("unexpected result from validate_pow"),
         }
 
         // test with modified header
@@ -525,7 +525,7 @@ mod tests {
         invalid_header.version = invalid_header.version + 1;
         match invalid_header.validate_pow(&invalid_header.target()) {
             Err(BlockBadProofOfWork) => (),
-            _ => assert!(false)
+            _ => panic!("unexpected result from validate_pow"),
         }
     }
 
