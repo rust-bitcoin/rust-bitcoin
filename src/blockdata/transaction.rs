@@ -1092,7 +1092,7 @@ mod tests {
         let expected_strippedsize = (EXPECTED_WEIGHT - tx_bytes.len()) / (WITNESS_SCALE_FACTOR - 1);
         assert_eq!(realtx.strippedsize(), expected_strippedsize);
         // Construct a transaction without the witness data.
-        let mut tx_without_witness = realtx.clone();
+        let mut tx_without_witness = realtx;
         tx_without_witness.input.iter_mut().for_each(|input| input.witness.clear());
         assert_eq!(tx_without_witness.weight(), expected_strippedsize*WITNESS_SCALE_FACTOR);
         assert_eq!(tx_without_witness.size(), expected_strippedsize);

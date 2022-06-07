@@ -393,7 +393,7 @@ mod tests {
         let mut builder = compose_taproot_builder(0x51, &[2, 2, 2]);
         builder = builder.add_leaf_with_ver(3, Script::from_hex("b9").unwrap(), LeafVersion::from_consensus(0xC2).unwrap()).unwrap();
         builder = builder.add_hidden_node(3, sha256::Hash::default()).unwrap();
-        assert!(TapTree::from_builder(builder.clone()).is_err());
+        assert!(TapTree::from_builder(builder).is_err());
     }
 
     #[test]
