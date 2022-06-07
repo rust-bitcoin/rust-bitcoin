@@ -13,7 +13,7 @@ use core::convert::TryFrom;
 use core::fmt;
 use core::cmp::Reverse;
 
-use crate::hashes::{sha256, Hash, HashEngine};
+use crate::hashes::{sha256, sha256t_hash_newtype, Hash, HashEngine};
 use crate::schnorr::{TweakedPublicKey, UntweakedPublicKey, TapTweak};
 use crate::util::key::XOnlyPublicKey;
 use crate::Script;
@@ -49,16 +49,16 @@ const MIDSTATE_TAPSIGHASH: [u8; 32] = [
 // f504a425d7f8783b1363868ae3e556586eee945dbc7888dd02a6e2c31873fe9f
 
 // Taproot test vectors from BIP-341 state the hashes without any reversing
-hashes::sha256t_hash_newtype!(TapLeafHash, TapLeafTag, MIDSTATE_TAPLEAF, 64,
+sha256t_hash_newtype!(TapLeafHash, TapLeafTag, MIDSTATE_TAPLEAF, 64,
     doc="Taproot-tagged hash for tapscript Merkle tree leafs", false
 );
-hashes::sha256t_hash_newtype!(TapBranchHash, TapBranchTag, MIDSTATE_TAPBRANCH, 64,
+sha256t_hash_newtype!(TapBranchHash, TapBranchTag, MIDSTATE_TAPBRANCH, 64,
     doc="Taproot-tagged hash for tapscript Merkle tree branches", false
 );
-hashes::sha256t_hash_newtype!(TapTweakHash, TapTweakTag, MIDSTATE_TAPTWEAK, 64,
+sha256t_hash_newtype!(TapTweakHash, TapTweakTag, MIDSTATE_TAPTWEAK, 64,
     doc="Taproot-tagged hash for public key tweaks", false
 );
-hashes::sha256t_hash_newtype!(TapSighashHash, TapSighashTag, MIDSTATE_TAPSIGHASH, 64,
+sha256t_hash_newtype!(TapSighashHash, TapSighashTag, MIDSTATE_TAPSIGHASH, 64,
     doc="Taproot-tagged hash for the taproot signature hash", false
 );
 

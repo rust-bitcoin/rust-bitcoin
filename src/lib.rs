@@ -63,8 +63,7 @@ extern crate alloc;
 extern crate core2;
 
 // Re-exported dependencies.
-#[macro_use]
-pub extern crate bitcoin_hashes as hashes;
+pub use bitcoin_hashes as hashes;
 pub extern crate bech32;
 pub extern crate secp256k1;
 

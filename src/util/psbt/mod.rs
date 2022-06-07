@@ -492,7 +492,7 @@ mod tests {
     #[test]
     fn test_serde_psbt() {
         //! Create a full PSBT value with various fields filled and make sure it can be JSONized.
-        use hashes::sha256d;
+        use crate::hashes::sha256d;
         use crate::util::psbt::map::Input;
         use crate::EcdsaSighashType;
 

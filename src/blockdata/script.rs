@@ -998,7 +998,7 @@ impl<'de> serde::Deserialize<'de> for Script {
         D: serde::Deserializer<'de>,
     {
         use core::fmt::Formatter;
-        use hashes::hex::FromHex;
+        use crate::hashes::hex::FromHex;
 
         if deserializer.is_human_readable() {
 
