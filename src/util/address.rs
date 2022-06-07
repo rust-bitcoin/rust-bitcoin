@@ -1292,11 +1292,10 @@ mod tests {
 
         fn test_addr_type(payloads: &[Payload], equivalence_classes: &[&[Network]]) {
             for pl in payloads {
-                for addr_net in equivalence_classes.iter().map(|ec| ec.iter()).flatten() {
+                for addr_net in equivalence_classes.iter().flat_map(|ec| ec.iter()) {
                     for valid_net in equivalence_classes.iter()
                         .filter(|ec| ec.contains(addr_net))
-                        .map(|ec| ec.iter())
-                        .flatten()
+                        .flat_map(|ec| ec.iter())
                     {
                         let addr = Address {
                             payload: pl.clone(),
@@ -1307,8 +1306,7 @@ mod tests {
 
                     for invalid_net in equivalence_classes.iter()
                         .filter(|ec| !ec.contains(addr_net))
-                        .map(|ec| ec.iter())
-                        .flatten()
+                        .flat_map(|ec| ec.iter())
                     {
                         let addr = Address {
                             payload: pl.clone(),
