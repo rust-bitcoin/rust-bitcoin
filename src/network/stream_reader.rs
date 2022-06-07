@@ -203,18 +203,15 @@ mod test {
         // 2. Spawning thread that will be writing our messages to the TCP Stream at the server side
         // in async mode
         let handle = thread::spawn(move || {
-            for ostream in listener.incoming() {
-                let mut ostream = ostream.unwrap();
-
-                for piece in pieces {
-                    ostream.write_all(&piece[..]).unwrap();
-                    ostream.flush().unwrap();
-                    thread::sleep(Duration::from_secs(1));
-                }
-
-                ostream.shutdown(Shutdown::Both).unwrap();
-                break;
+            // We only simulate a single connection.
+            let mut ostream = listener.incoming().next().unwrap().unwrap();
+            for piece in pieces {
+                ostream.write_all(&piece[..]).unwrap();
+                ostream.flush().unwrap();
+                thread::sleep(Duration::from_secs(1));
             }
+
+            ostream.shutdown(Shutdown::Both).unwrap();
         });
 
         // 3. Creating client side of the TCP socket connection
