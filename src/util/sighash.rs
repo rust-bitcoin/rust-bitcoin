@@ -1002,9 +1002,9 @@ mod tests {
 
     #[test]
     fn test_annex_errors() {
-        assert_eq!(Annex::new(&vec![]), Err(Error::WrongAnnex));
-        assert_eq!(Annex::new(&vec![0x51]), Err(Error::WrongAnnex));
-        assert_eq!(Annex::new(&vec![0x51, 0x50]), Err(Error::WrongAnnex));
+        assert_eq!(Annex::new(&[]), Err(Error::WrongAnnex));
+        assert_eq!(Annex::new(&[0x51]), Err(Error::WrongAnnex));
+        assert_eq!(Annex::new(&[0x51, 0x50]), Err(Error::WrongAnnex));
     }
 
     fn test_taproot_sighash(

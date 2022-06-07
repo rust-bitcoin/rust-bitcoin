@@ -1262,9 +1262,9 @@ mod test {
          *   3            55 51
          */
 
-        for (script, length) in vec![("51", 3), ("52", 2), ("53", 2), ("54", 2), ("55", 3)] {
+        for (script, length) in [("51", 3), ("52", 2), ("53", 2), ("54", 2), ("55", 3)].iter() {
             assert_eq!(
-                length,
+                *length,
                 tree_info
                     .script_map
                     .get(&(Script::from_hex(script).unwrap(), LeafVersion::TapScript))
