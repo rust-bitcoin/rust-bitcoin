@@ -30,6 +30,7 @@ use core::{fmt, ops, convert::From};
 
 use crate::io;
 use crate::consensus::encode::{self, Encodable, Decodable};
+use crate::internal_macros::user_enum;
 
 /// Version of the protocol as appearing in network message headers
 /// This constant is used to signal to other peers which features you support.

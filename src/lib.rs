@@ -75,7 +75,6 @@ extern crate actual_serde as serde;
 #[cfg(test)]
 #[macro_use]
 mod test_macros;
-#[macro_use]
 mod internal_macros;
 #[cfg(feature = "serde")]
 mod serde_utils;

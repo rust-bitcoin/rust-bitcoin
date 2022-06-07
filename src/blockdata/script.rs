@@ -18,6 +18,7 @@ use crate::io;
 use core::convert::TryFrom;
 use core::{fmt, default::Default};
 use core::ops::Index;
+use crate::internal_macros::display_from_debug;
 
 #[cfg(feature = "serde")] use serde;
 
@@ -1092,6 +1093,7 @@ mod test {
     use crate::blockdata::opcodes;
     use crate::util::key::PublicKey;
     use crate::util::psbt::serialize::Serialize;
+    use crate::internal_macros::hex_script;
 
     #[test]
     fn script() {

@@ -186,6 +186,7 @@ mod tests {
     use crate::util::address::Address;
     use crate::util::key::PublicKey;
     use crate::hashes::hex::FromHex;
+    use crate::internal_macros::{hex_hash, hex_script};
 
     use super::*;
 

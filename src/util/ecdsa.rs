@@ -12,6 +12,7 @@ use crate::hashes::hex::{self, FromHex};
 use crate::blockdata::transaction::NonStandardSighashType;
 use secp256k1;
 use crate::EcdsaSighashType;
+use crate::internal_macros::write_err;
 
 /// An ECDSA signature with the corresponding hash type.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]

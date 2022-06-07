@@ -41,6 +41,7 @@ use crate::util::taproot::TapBranchHash;
 use crate::util::key::PublicKey;
 use crate::blockdata::script::Instruction;
 use crate::util::schnorr::{TapTweak, UntweakedPublicKey, TweakedPublicKey};
+use crate::internal_macros::{serde_string_impl, write_err};
 
 /// Address error.
 #[derive(Debug, PartialEq, Eq, Clone)]

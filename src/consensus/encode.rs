@@ -22,7 +22,7 @@ use core::{fmt, mem, u32, convert::From};
 
 use crate::hashes::{sha256d, Hash, sha256};
 use crate::hash_types::{BlockHash, FilterHash, TxMerkleNode, FilterHeader};
-
+use crate::internal_macros::write_err;
 use crate::io::{self, Cursor, Read};
 
 use crate::util::endian;
@@ -231,7 +231,7 @@ macro_rules! decoder_fn {
     ($name:ident, $val_type:ty, $readfn:ident, $byte_len: expr) => {
         #[inline]
         fn $name(&mut self) -> Result<$val_type, Error> {
-            const_assert!(::core::mem::size_of::<$val_type>() == $byte_len);
+            $crate::internal_macros::const_assert!(::core::mem::size_of::<$val_type>() == $byte_len);
             let mut val = [0; $byte_len];
             self.read_exact(&mut val[..]).map_err(Error::Io)?;
             Ok(endian::$readfn(&val))

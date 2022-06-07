@@ -7,6 +7,7 @@
 
 use crate::consensus::encode;
 use crate::consensus::{Decodable, Encodable, ReadExt};
+use crate::internal_macros::impl_consensus_encoding;
 use std::io;
 
 /// `filterload` message sets the current bloom filter

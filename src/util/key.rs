@@ -18,6 +18,7 @@ use crate::network::constants::Network;
 use crate::hashes::{Hash, hash160, hex, hex::FromHex};
 use crate::hash_types::{PubkeyHash, WPubkeyHash};
 use crate::util::base58;
+use crate::internal_macros::write_err;
 
 /// A key-related error.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]

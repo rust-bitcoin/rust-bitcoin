@@ -14,6 +14,7 @@ use crate::prelude::*;
 use secp256k1::{self, Secp256k1, Verification, constants};
 use crate::util::taproot::{TapBranchHash, TapTweakHash};
 use crate::SchnorrSighashType;
+use crate::internal_macros::write_err;
 
 /// Deprecated re-export of [`secp256k1::XOnlyPublicKey`]
 #[deprecated(since = "0.28.0", note = "Please use `util::key::XOnlyPublicKey` instead")]

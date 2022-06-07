@@ -44,6 +44,7 @@ macro_rules! impl_consensus_encoding {
         }
     );
 }
+pub(crate) use impl_consensus_encoding;
 
 /// Implements standard array methods for a given wrapper type
 macro_rules! impl_array_newtype {
@@ -104,6 +105,7 @@ macro_rules! impl_array_newtype {
         }
     };
 }
+pub(crate) use impl_array_newtype;
 
 macro_rules! display_from_debug {
     ($thing:ident) => {
@@ -114,15 +116,22 @@ macro_rules! display_from_debug {
         }
     };
 }
+pub(crate) use display_from_debug;
 
 #[cfg(test)]
 macro_rules! hex_script (($s:expr) => (<$crate::Script as core::str::FromStr>::from_str($s).unwrap()));
+#[cfg(test)]
+pub(crate) use hex_script;
 
 #[cfg(test)]
 macro_rules! hex_hash (($h:ident, $s:expr) => ($h::from_slice(&<$crate::prelude::Vec<u8> as $crate::hashes::hex::FromHex>::from_hex($s).unwrap()).unwrap()));
+#[cfg(test)]
+pub(crate) use hex_hash;
 
 #[cfg(test)]
 macro_rules! hex_decode (($h:ident, $s:expr) => (deserialize::<$h>(&<$crate::prelude::Vec<u8> as $crate::hashes::hex::FromHex>::from_hex($s).unwrap()).unwrap()));
+#[cfg(test)]
+pub(crate) use hex_decode;
 
 macro_rules! serde_string_impl {
     ($name:ident, $expecting:literal) => {
@@ -168,6 +177,7 @@ macro_rules! serde_string_impl {
         }
     };
 }
+pub(crate) use serde_string_impl;
 
 /// A combination macro where the human-readable serialization is done like
 /// serde_string_impl and the non-human-readable impl is done as a struct.
@@ -342,6 +352,7 @@ macro_rules! serde_struct_human_string_impl {
         }
     )
 }
+pub(crate) use serde_struct_human_string_impl;
 
 /// Implements several traits for byte-based newtypes.
 /// Implements:
@@ -476,6 +487,7 @@ macro_rules! impl_bytes_newtype {
         }
     };
 }
+pub(crate) use impl_bytes_newtype;
 
 macro_rules! user_enum {
     (
@@ -563,6 +575,7 @@ macro_rules! user_enum {
         }
     );
 }
+pub(crate) use user_enum;
 
 /// Formats error. If `std` feature is OFF appends error source (delimited by `: `). We do this
 /// because `e.source()` is only available in std builds, without this macro the error source is
@@ -582,6 +595,7 @@ macro_rules! write_err {
         }
     }
 }
+pub(crate) use write_err;
 
 /// Asserts a boolean expression at compile time.
 macro_rules! const_assert {
@@ -589,3 +603,4 @@ macro_rules! const_assert {
         const _: [(); 0 - !$x as usize] = [];
     }};
 }
+pub(crate) use const_assert;

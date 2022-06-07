@@ -207,6 +207,7 @@ mod display_from_str {
     use core::str::FromStr;
     use crate::consensus::encode::{Error, self};
     use base64::display::Base64Display;
+    use crate::internal_macros::write_err;
 
     /// Error encountered during PSBT decoding from Base64 string.
     #[derive(Debug)]
@@ -347,6 +348,7 @@ mod tests {
     use crate::util::bip32::{ChildNumber, ExtendedPrivKey, ExtendedPubKey, KeySource};
     use crate::util::psbt::map::{Output, Input};
     use crate::util::psbt::raw;
+    use crate::internal_macros::hex_script;
 
     use std::collections::BTreeMap;
     use crate::blockdata::witness::Witness;
@@ -602,6 +604,7 @@ mod tests {
         use crate::util::psbt::{PartiallySignedTransaction, Error};
         use std::collections::BTreeMap;
         use crate::blockdata::witness::Witness;
+        use crate::internal_macros::hex_script;
 
         #[test]
         #[should_panic(expected = "InvalidMagic")]

@@ -16,6 +16,7 @@ use crate::hashes::{Hash as _, sha256d};
 use crate::network::constants;
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::hash_types::{BlockHash, Txid, Wtxid};
+use crate::internal_macros::impl_consensus_encoding;
 
 /// An inventory item.
 #[derive(PartialEq, Eq, Clone, Debug, Copy, Hash, PartialOrd, Ord)]
