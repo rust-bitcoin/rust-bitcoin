@@ -988,7 +988,7 @@ mod tests {
         let addr = Address::p2pkh(&key, Bitcoin);
         assert_eq!(&addr.to_string(), "1QJVDzdqb1VpbDK7uDeyVXy9mR27CJiyhY");
 
-        let key = hex_key!(&"03df154ebfcf29d29cc10d5c2565018bce2d9edbab267c31d2caf44a63056cf99f");
+        let key = hex_key!("03df154ebfcf29d29cc10d5c2565018bce2d9edbab267c31d2caf44a63056cf99f");
         let addr = Address::p2pkh(&key, Testnet);
         assert_eq!(&addr.to_string(), "mqkhEMH6NCeYjFybv7pvFC22MFeaNT9AQC");
         assert_eq!(addr.address_type(), Some(AddressType::P2pkh));
@@ -1108,7 +1108,7 @@ mod tests {
             ("bc1zw508d6qejxtdg4y5r3zarvaryvaxxpcs", None),
         ];
         for (address, expected_type) in &addresses {
-            let addr = Address::from_str(&address).unwrap();
+            let addr = Address::from_str(address).unwrap();
             assert_eq!(&addr.address_type(), expected_type);
         }
     }

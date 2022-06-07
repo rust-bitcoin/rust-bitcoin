@@ -1361,12 +1361,12 @@ mod test {
             if script_tree.is_null() {
                 assert!(arr["intermediary"]["merkleRoot"].is_null());
             } else {
-                merkle_root = Some(TapBranchHash::from_str(&arr["intermediary"]["merkleRoot"].as_str().unwrap()).unwrap());
+                merkle_root = Some(TapBranchHash::from_str(arr["intermediary"]["merkleRoot"].as_str().unwrap()).unwrap());
                 let leaf_hashes = arr["intermediary"]["leafHashes"].as_array().unwrap();
                 let ctrl_blks = arr["expected"]["scriptPathControlBlocks"].as_array().unwrap();
                 let mut builder = TaprootBuilder::new();
                 let mut leaves = vec![];
-                builder = process_script_trees(&script_tree, builder, &mut leaves, 0);
+                builder = process_script_trees(script_tree, builder, &mut leaves, 0);
                 let spend_info = builder.finalize(secp, internal_key).unwrap();
                 for (i, script_ver) in leaves.iter().enumerate() {
                     let expected_leaf_hash = leaf_hashes[i].as_str().unwrap();
@@ -1384,8 +1384,8 @@ mod test {
             let expected_addr = Address::from_str(arr["expected"]["bip350Address"].as_str().unwrap()).unwrap();
 
             let tweak = TapTweakHash::from_key_and_tweak(internal_key, merkle_root);
-            let (output_key, _parity) = internal_key.tap_tweak(&secp, merkle_root);
-            let addr = Address::p2tr(&secp, internal_key, merkle_root, Network::Bitcoin);
+            let (output_key, _parity) = internal_key.tap_tweak(secp, merkle_root);
+            let addr = Address::p2tr(secp, internal_key, merkle_root, Network::Bitcoin);
             let spk = addr.script_pubkey();
 
             assert_eq!(expected_output_key, output_key.to_inner());

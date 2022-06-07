@@ -542,13 +542,13 @@ mod test {
 
         let testdata = serde_json::from_str::<Value>(data).unwrap().as_array().unwrap().clone();
         for t in testdata.iter().skip(1) {
-            let block_hash = BlockHash::from_hex(&t.get(1).unwrap().as_str().unwrap()).unwrap();
-            let block: Block = deserialize(&Vec::from_hex(&t.get(2).unwrap().as_str().unwrap()).unwrap()).unwrap();
+            let block_hash = BlockHash::from_hex(t.get(1).unwrap().as_str().unwrap()).unwrap();
+            let block: Block = deserialize(&Vec::from_hex(t.get(2).unwrap().as_str().unwrap()).unwrap()).unwrap();
             assert_eq!(block.block_hash(), block_hash);
             let scripts = t.get(3).unwrap().as_array().unwrap();
-            let previous_filter_header = FilterHeader::from_hex(&t.get(4).unwrap().as_str().unwrap()).unwrap();
-            let filter_content = Vec::from_hex(&t.get(5).unwrap().as_str().unwrap()).unwrap();
-            let filter_header = FilterHeader::from_hex(&t.get(6).unwrap().as_str().unwrap()).unwrap();
+            let previous_filter_header = FilterHeader::from_hex(t.get(4).unwrap().as_str().unwrap()).unwrap();
+            let filter_content = Vec::from_hex(t.get(5).unwrap().as_str().unwrap()).unwrap();
+            let filter_header = FilterHeader::from_hex(t.get(6).unwrap().as_str().unwrap()).unwrap();
 
             let mut txmap = HashMap::new();
             let mut si = scripts.iter();
@@ -576,7 +576,7 @@ mod test {
             for (_, script) in &txmap {
                 let query = vec![script];
                 if !script.is_empty () {
-                    assert!(filter.match_any(&block_hash, &mut query.iter()
+                    assert!(filter.match_any(block_hash, &mut query.iter()
                         .map(|s| s.as_bytes())).unwrap());
                 }
             }

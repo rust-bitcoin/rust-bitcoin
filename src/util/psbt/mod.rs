@@ -358,7 +358,7 @@ mod tests {
     use crate::blockdata::transaction::{Transaction, TxIn, TxOut, OutPoint};
     use crate::network::constants::Network::Bitcoin;
     use crate::consensus::encode::{deserialize, serialize, serialize_hex};
-    use crate::util::bip32::{ChildNumber, ExtendedPrivKey, ExtendedPubKey, Fingerprint, KeySource};
+    use crate::util::bip32::{ChildNumber, ExtendedPrivKey, ExtendedPubKey, KeySource};
     use crate::util::psbt::map::{Output, Input};
     use crate::util::psbt::raw;
 
@@ -404,7 +404,7 @@ mod tests {
 
         let mut sk: ExtendedPrivKey = ExtendedPrivKey::new_master(Bitcoin, &seed).unwrap();
 
-        let fprint: Fingerprint = sk.fingerprint(&secp);
+        let fprint = sk.fingerprint(secp);
 
         let dpath: Vec<ChildNumber> = vec![
             ChildNumber::from_normal_idx(0).unwrap(),
@@ -419,7 +419,7 @@ mod tests {
 
         sk = sk.derive_priv(secp, &dpath).unwrap();
 
-        let pk: ExtendedPubKey = ExtendedPubKey::from_priv(&secp, &sk);
+        let pk = ExtendedPubKey::from_priv(secp, &sk);
 
         hd_keypaths.insert(pk.public_key, (fprint, dpath.into()));
 
@@ -803,7 +803,7 @@ mod tests {
 
             assert!(&psbt.inputs[0].final_script_sig.is_some());
 
-            let redeem_script: &Script = &psbt.inputs[1].redeem_script.as_ref().unwrap();
+            let redeem_script = psbt.inputs[1].redeem_script.as_ref().unwrap();
             let expected_out = hex_script!("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787");
 
             assert!(redeem_script.is_v0_p2wpkh());
@@ -849,7 +849,7 @@ mod tests {
             assert!(&psbt.inputs[0].final_script_sig.is_none());
             assert!(&psbt.inputs[1].final_script_sig.is_none());
 
-            let redeem_script: &Script = &psbt.inputs[1].redeem_script.as_ref().unwrap();
+            let redeem_script = psbt.inputs[1].redeem_script.as_ref().unwrap();
             let expected_out = hex_script!("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787");
 
             assert!(redeem_script.is_v0_p2wpkh());
@@ -873,7 +873,7 @@ mod tests {
 
             assert!(&psbt.inputs[0].final_script_sig.is_none());
 
-            let redeem_script: &Script = &psbt.inputs[0].redeem_script.as_ref().unwrap();
+            let redeem_script = psbt.inputs[0].redeem_script.as_ref().unwrap();
             let expected_out = hex_script!("a9146345200f68d189e1adc0df1c4d16ea8f14c0dbeb87");
 
             assert!(redeem_script.is_v0_p2wsh());
