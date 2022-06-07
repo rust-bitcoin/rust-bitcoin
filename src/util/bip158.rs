@@ -573,7 +573,7 @@ mod test {
             assert!(filter.match_all(block_hash, &mut txmap.iter()
                 .filter_map(|(_, s)| if !s.is_empty() { Some(s.as_bytes()) } else { None })).unwrap());
 
-            for (_, script) in &txmap {
+            for script in txmap.values() {
                 let query = vec![script];
                 if !script.is_empty () {
                     assert!(filter.match_any(block_hash, &mut query.iter()
