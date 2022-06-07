@@ -693,10 +693,10 @@ impl Address {
 
     /// Constructs an [`Address`] from an output script (`scriptPubkey`).
     pub fn from_script(script: &script::Script, network: Network) -> Option<Address> {
-        if script.is_witness_program() {
-            if script.witness_version() == Some(WitnessVersion::V0) && !(script.is_v0_p2wpkh() || script.is_v0_p2wsh()) {
+        if script.is_witness_program()
+            && script.witness_version() == Some(WitnessVersion::V0)
+            && !(script.is_v0_p2wpkh() || script.is_v0_p2wsh()) {
                 return None
-            }
         }
 
         Some(Address {
