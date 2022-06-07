@@ -124,6 +124,17 @@ In order to speed up the review process the CI pipeline can be run locally using
 skipped when using `act` due to caching being unsupported at this time. We do
 not *actively* support `act` but will merge PRs fixing `act` issues.
 
+### Githooks
+
+To assist devs in catching errors _before_ running CI we provide some githooks. If you do not
+already have locally configured githooks you can use the ones in this repository by running, in the
+root directory of the repository:
+```
+git config --local core.hooksPath githooks/
+```
+
+Alternatively add symlinks in your `.git/hooks` directory to any of the githooks we provide.
+
 ## Policy on Altcoins/Altchains
 
 Patches which add support for non-Bitcoin cryptocurrencies by adding constants
