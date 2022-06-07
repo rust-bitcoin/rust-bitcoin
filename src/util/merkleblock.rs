@@ -584,7 +584,7 @@ mod tests {
 
                 // Check that it has the same merkle root as the original, and a valid one
                 assert_eq!(merkle_root_1, merkle_root_2);
-                assert_ne!(merkle_root_2, TxMerkleNode::default());
+                assert_ne!(merkle_root_2, TxMerkleNode::all_zeros());
 
                 // check that it contains the matched transactions (in the same order!)
                 assert_eq!(match_txid1, match_txid2);

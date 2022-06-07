@@ -60,7 +60,7 @@ impl OutPoint {
     #[inline]
     pub fn null() -> OutPoint {
         OutPoint {
-            txid: Default::default(),
+            txid: Hash::all_zeros(),
             vout: u32::max_value(),
         }
     }

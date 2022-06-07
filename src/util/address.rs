@@ -1339,8 +1339,8 @@ mod tests {
     #[test]
     fn test_valid_networks() {
         let legacy_payload = &[
-            Payload::PubkeyHash(PubkeyHash::default()),
-            Payload::ScriptHash(ScriptHash::default())
+            Payload::PubkeyHash(PubkeyHash::all_zeros()),
+            Payload::ScriptHash(ScriptHash::all_zeros())
         ];
         let segwit_payload = (0..=16).map(|version| {
             Payload::WitnessProgram {
