@@ -1599,6 +1599,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per bitcoin.
     fn parsing() {
         use super::ParseAmountError as E;
         let btc = Denomination::Bitcoin;
@@ -1868,6 +1869,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per bitcoin.
     fn from_str() {
         use super::ParseAmountError as E;
         let p = Amount::from_str;
@@ -1906,6 +1908,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per bitcoin.
     fn to_from_string_in() {
         use super::Denomination as D;
         let ua_str = Amount::from_str_in;
