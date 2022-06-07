@@ -207,7 +207,7 @@ mod test {
                 let mut ostream = ostream.unwrap();
 
                 for piece in pieces {
-                    ostream.write(&piece[..]).unwrap();
+                    ostream.write_all(&piece[..]).unwrap();
                     ostream.flush().unwrap();
                     thread::sleep(Duration::from_secs(1));
                 }
