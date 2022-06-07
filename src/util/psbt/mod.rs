@@ -860,7 +860,7 @@ mod tests {
             assert_eq!(redeem_script.to_p2sh(), expected_out);
 
             for output in psbt.outputs {
-                assert!(output.get_pairs().unwrap().len() > 0)
+                assert!(!output.get_pairs().unwrap().is_empty())
             }
         }
 
