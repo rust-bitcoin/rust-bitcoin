@@ -225,11 +225,10 @@ mod test {
     #[test]
     fn read_multipartmsg_test() {
         // Setting up TCP connection emulation
-        let (handle, istream) = serve_tcp(vec![
+        let (handle, stream) = serve_tcp(vec![
             // single message split in two parts to emulate real network conditions
             MSG_VERSION[..24].to_vec(), MSG_VERSION[24..].to_vec()
         ]);
-        let stream = istream;
         let mut reader = StreamReader::new(stream, None);
 
         // Reading and checking the whole message back
@@ -243,13 +242,12 @@ mod test {
     #[test]
     fn read_sequencemsg_test() {
         // Setting up TCP connection emulation
-        let (handle, istream) = serve_tcp(vec![
+        let (handle, stream) = serve_tcp(vec![
             // Real-world Bitcoin core communication case for /Satoshi:0.17.1/
             MSG_VERSION[..23].to_vec(), MSG_VERSION[23..].to_vec(),
             MSG_VERACK.to_vec(),
             MSG_ALERT[..24].to_vec(), MSG_ALERT[24..].to_vec()
         ]);
-        let stream = istream;
         let mut reader = StreamReader::new(stream, None);
 
         // Reading and checking the first message (Version)
