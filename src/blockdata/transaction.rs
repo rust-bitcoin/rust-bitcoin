@@ -1009,7 +1009,7 @@ mod tests {
         assert_eq!(txin.script_sig, Script::new());
         assert_eq!(txin.sequence, 0xFFFFFFFF);
         assert_eq!(txin.previous_output, OutPoint::default());
-        assert_eq!(txin.witness.len(), 0 as usize);
+        assert_eq!(txin.witness.len(), 0);
     }
 
     #[test]
