@@ -522,7 +522,7 @@ mod tests {
 
         // test with modified header
         let mut invalid_header: BlockHeader = some_header.clone();
-        invalid_header.version = invalid_header.version + 1;
+        invalid_header.version += 1;
         match invalid_header.validate_pow(&invalid_header.target()) {
             Err(BlockBadProofOfWork) => (),
             _ => panic!("unexpected result from validate_pow"),
