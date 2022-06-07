@@ -618,19 +618,13 @@ mod test {
         let bytes = out;
 
         {
-            let mut query = Vec::new();
-            query.push(Vec::from_hex("abcdef").unwrap());
-            query.push(Vec::from_hex("eeeeee").unwrap());
-
+            let query = vec![Vec::from_hex("abcdef").unwrap(), Vec::from_hex("eeeeee").unwrap()];
             let reader = GCSFilterReader::new(0, 0, M, P);
             let mut input = Cursor::new(bytes.clone());
             assert!(reader.match_any(&mut input, &mut query.iter().map(|v| v.as_slice())).unwrap());
         }
         {
-            let mut query = Vec::new();
-            query.push(Vec::from_hex("abcdef").unwrap());
-            query.push(Vec::from_hex("123456").unwrap());
-
+            let query = vec![Vec::from_hex("abcdef").unwrap(), Vec::from_hex("123456").unwrap()];
             let reader = GCSFilterReader::new(0, 0, M, P);
             let mut input = Cursor::new(bytes.clone());
             assert!(!reader.match_any(&mut input, &mut query.iter().map(|v| v.as_slice())).unwrap());
