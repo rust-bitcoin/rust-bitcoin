@@ -1086,7 +1086,7 @@ mod tests {
         let addr = Address {
             payload: Payload::WitnessProgram {
                 version: WitnessVersion::V13,
-                program: program,
+                program,
             },
             network: Network::Bitcoin,
         };
