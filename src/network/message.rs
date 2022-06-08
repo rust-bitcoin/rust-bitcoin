@@ -597,7 +597,7 @@ mod test {
             assert_eq!(version_msg.nonce, 13952548347456104954);
             assert_eq!(version_msg.user_agent, "/Satoshi:0.17.1/");
             assert_eq!(version_msg.start_height, 560275);
-            assert_eq!(version_msg.relay, true);
+            assert!(version_msg.relay);
         } else {
             panic!("Wrong message type");
         }
@@ -634,7 +634,7 @@ mod test {
             assert_eq!(version_msg.nonce, 13952548347456104954);
             assert_eq!(version_msg.user_agent, "/Satoshi:0.17.1/");
             assert_eq!(version_msg.start_height, 560275);
-            assert_eq!(version_msg.relay, true);
+            assert!(version_msg.relay);
         } else {
             panic!("Wrong message type");
         }

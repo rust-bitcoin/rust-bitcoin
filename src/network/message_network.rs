@@ -170,7 +170,7 @@ mod tests {
         assert_eq!(real_decode.nonce, 16735069437859780935);
         assert_eq!(real_decode.user_agent, "/Satoshi:0.9.99/".to_string());
         assert_eq!(real_decode.start_height, 302892);
-        assert_eq!(real_decode.relay, true);
+        assert!(real_decode.relay);
 
         assert_eq!(serialize(&real_decode), from_sat);
     }

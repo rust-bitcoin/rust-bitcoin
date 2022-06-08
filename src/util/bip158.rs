@@ -542,19 +542,19 @@ mod test {
 
         let testdata = serde_json::from_str::<Value>(data).unwrap().as_array().unwrap().clone();
         for t in testdata.iter().skip(1) {
-            let block_hash = BlockHash::from_hex(&t.get(1).unwrap().as_str().unwrap()).unwrap();
-            let block: Block = deserialize(&Vec::from_hex(&t.get(2).unwrap().as_str().unwrap()).unwrap()).unwrap();
+            let block_hash = BlockHash::from_hex(t.get(1).unwrap().as_str().unwrap()).unwrap();
+            let block: Block = deserialize(&Vec::from_hex(t.get(2).unwrap().as_str().unwrap()).unwrap()).unwrap();
             assert_eq!(block.block_hash(), block_hash);
             let scripts = t.get(3).unwrap().as_array().unwrap();
-            let previous_filter_header = FilterHeader::from_hex(&t.get(4).unwrap().as_str().unwrap()).unwrap();
-            let filter_content = Vec::from_hex(&t.get(5).unwrap().as_str().unwrap()).unwrap();
-            let filter_header = FilterHeader::from_hex(&t.get(6).unwrap().as_str().unwrap()).unwrap();
+            let previous_filter_header = FilterHeader::from_hex(t.get(4).unwrap().as_str().unwrap()).unwrap();
+            let filter_content = Vec::from_hex(t.get(5).unwrap().as_str().unwrap()).unwrap();
+            let filter_header = FilterHeader::from_hex(t.get(6).unwrap().as_str().unwrap()).unwrap();
 
             let mut txmap = HashMap::new();
             let mut si = scripts.iter();
             for tx in block.txdata.iter().skip(1) {
                 for input in tx.input.iter() {
-                    txmap.insert(input.previous_output.clone(), Script::from(Vec::from_hex(si.next().unwrap().as_str().unwrap()).unwrap()));
+                    txmap.insert(input.previous_output, Script::from(Vec::from_hex(si.next().unwrap().as_str().unwrap()).unwrap()));
                 }
             }
 
@@ -562,7 +562,7 @@ mod test {
                                         |o| if let Some(s) = txmap.get(o) {
                                             Ok(s.clone())
                                         } else {
-                                            Err(Error::UtxoMissing(o.clone()))
+                                            Err(Error::UtxoMissing(*o))
                                         }).unwrap();
 
             let test_filter = BlockFilter::new(filter_content.as_slice());
@@ -573,10 +573,10 @@ mod test {
             assert!(filter.match_all(block_hash, &mut txmap.iter()
                 .filter_map(|(_, s)| if !s.is_empty() { Some(s.as_bytes()) } else { None })).unwrap());
 
-            for (_, script) in &txmap {
+            for script in txmap.values() {
                 let query = vec![script];
                 if !script.is_empty () {
-                    assert!(filter.match_any(&block_hash, &mut query.iter()
+                    assert!(filter.match_any(block_hash, &mut query.iter()
                         .map(|s| s.as_bytes())).unwrap());
                 }
             }
@@ -618,19 +618,13 @@ mod test {
         let bytes = out;
 
         {
-            let mut query = Vec::new();
-            query.push(Vec::from_hex("abcdef").unwrap());
-            query.push(Vec::from_hex("eeeeee").unwrap());
-
+            let query = vec![Vec::from_hex("abcdef").unwrap(), Vec::from_hex("eeeeee").unwrap()];
             let reader = GCSFilterReader::new(0, 0, M, P);
             let mut input = Cursor::new(bytes.clone());
             assert!(reader.match_any(&mut input, &mut query.iter().map(|v| v.as_slice())).unwrap());
         }
         {
-            let mut query = Vec::new();
-            query.push(Vec::from_hex("abcdef").unwrap());
-            query.push(Vec::from_hex("123456").unwrap());
-
+            let query = vec![Vec::from_hex("abcdef").unwrap(), Vec::from_hex("123456").unwrap()];
             let reader = GCSFilterReader::new(0, 0, M, P);
             let mut input = Cursor::new(bytes.clone());
             assert!(!reader.match_any(&mut input, &mut query.iter().map(|v| v.as_slice())).unwrap());
@@ -651,7 +645,7 @@ mod test {
                 query.push(p.clone());
             }
             query.push(Vec::from_hex("abcdef").unwrap());
-            let mut input = Cursor::new(bytes.clone());
+            let mut input = Cursor::new(bytes);
             assert!(!reader.match_all(&mut input, &mut query.iter().map(|v| v.as_slice())).unwrap());
         }
     }

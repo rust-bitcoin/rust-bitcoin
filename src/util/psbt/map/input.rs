@@ -178,9 +178,8 @@ impl FromStr for PsbtSighashType {
         // NB: some of Schnorr sighash types are non-standard for pre-taproot
         // inputs. We also do not support SIGHASH_RESERVED in verbatim form
         // ("0xFF" string should be used instead).
-        match SchnorrSighashType::from_str(s) {
-            Ok(ty) => return Ok(ty.into()),
-            Err(_) => {}
+        if let Ok(ty) = SchnorrSighashType::from_str(s) {
+            return Ok(ty.into());
         }
 
         // We accept non-standard sighash values.

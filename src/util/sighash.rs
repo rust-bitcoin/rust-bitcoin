@@ -1002,11 +1002,12 @@ mod tests {
 
     #[test]
     fn test_annex_errors() {
-        assert_eq!(Annex::new(&vec![]), Err(Error::WrongAnnex));
-        assert_eq!(Annex::new(&vec![0x51]), Err(Error::WrongAnnex));
-        assert_eq!(Annex::new(&vec![0x51, 0x50]), Err(Error::WrongAnnex));
+        assert_eq!(Annex::new(&[]), Err(Error::WrongAnnex));
+        assert_eq!(Annex::new(&[0x51]), Err(Error::WrongAnnex));
+        assert_eq!(Annex::new(&[0x51, 0x50]), Err(Error::WrongAnnex));
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn test_taproot_sighash(
         tx_hex: &str,
         prevout_hex: &str,
@@ -1115,11 +1116,11 @@ mod tests {
             };
 
             // tests
-            let keypair = secp256k1::KeyPair::from_secret_key(&secp, internal_priv_key);
+            let keypair = secp256k1::KeyPair::from_secret_key(secp, internal_priv_key);
             let internal_key = XOnlyPublicKey::from_keypair(&keypair);
             let tweak = TapTweakHash::from_key_and_tweak(internal_key, merkle_root);
             let mut tweaked_keypair = keypair;
-            tweaked_keypair.tweak_add_assign(&secp, &tweak).unwrap();
+            tweaked_keypair.tweak_add_assign(secp, &tweak).unwrap();
             let mut sig_msg = Vec::new();
             cache.taproot_encode_signing_data_to(
                 &mut sig_msg,

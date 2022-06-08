@@ -693,10 +693,10 @@ impl Address {
 
     /// Constructs an [`Address`] from an output script (`scriptPubkey`).
     pub fn from_script(script: &script::Script, network: Network) -> Option<Address> {
-        if script.is_witness_program() {
-            if script.witness_version() == Some(WitnessVersion::V0) && !(script.is_v0_p2wpkh() || script.is_v0_p2wsh()) {
+        if script.is_witness_program()
+            && script.witness_version() == Some(WitnessVersion::V0)
+            && !(script.is_v0_p2wpkh() || script.is_v0_p2wsh()) {
                 return None
-            }
         }
 
         Some(Address {
@@ -988,7 +988,7 @@ mod tests {
         let addr = Address::p2pkh(&key, Bitcoin);
         assert_eq!(&addr.to_string(), "1QJVDzdqb1VpbDK7uDeyVXy9mR27CJiyhY");
 
-        let key = hex_key!(&"03df154ebfcf29d29cc10d5c2565018bce2d9edbab267c31d2caf44a63056cf99f");
+        let key = hex_key!("03df154ebfcf29d29cc10d5c2565018bce2d9edbab267c31d2caf44a63056cf99f");
         let addr = Address::p2pkh(&key, Testnet);
         assert_eq!(&addr.to_string(), "mqkhEMH6NCeYjFybv7pvFC22MFeaNT9AQC");
         assert_eq!(addr.address_type(), Some(AddressType::P2pkh));
@@ -1086,7 +1086,7 @@ mod tests {
         let addr = Address {
             payload: Payload::WitnessProgram {
                 version: WitnessVersion::V13,
-                program: program,
+                program,
             },
             network: Network::Bitcoin,
         };
@@ -1108,7 +1108,7 @@ mod tests {
             ("bc1zw508d6qejxtdg4y5r3zarvaryvaxxpcs", None),
         ];
         for (address, expected_type) in &addresses {
-            let addr = Address::from_str(&address).unwrap();
+            let addr = Address::from_str(address).unwrap();
             assert_eq!(&addr.address_type(), expected_type);
         }
     }
@@ -1292,11 +1292,10 @@ mod tests {
 
         fn test_addr_type(payloads: &[Payload], equivalence_classes: &[&[Network]]) {
             for pl in payloads {
-                for addr_net in equivalence_classes.iter().map(|ec| ec.iter()).flatten() {
+                for addr_net in equivalence_classes.iter().flat_map(|ec| ec.iter()) {
                     for valid_net in equivalence_classes.iter()
                         .filter(|ec| ec.contains(addr_net))
-                        .map(|ec| ec.iter())
-                        .flatten()
+                        .flat_map(|ec| ec.iter())
                     {
                         let addr = Address {
                             payload: pl.clone(),
@@ -1307,8 +1306,7 @@ mod tests {
 
                     for invalid_net in equivalence_classes.iter()
                         .filter(|ec| !ec.contains(addr_net))
-                        .map(|ec| ec.iter())
-                        .flatten()
+                        .flat_map(|ec| ec.iter())
                     {
                         let addr = Address {
                             payload: pl.clone(),
