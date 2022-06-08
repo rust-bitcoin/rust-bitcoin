@@ -81,7 +81,9 @@ pub enum Error {
     /// An uncompressed pubkey was used where it is not allowed.
     UncompressedPubkey,
     /// Address size more than 520 bytes is not allowed.
-    ExcessiveScriptSize
+    ExcessiveScriptSize,
+    /// Script is not a p2pkh, p2sh or witness program.
+    UnrecognizedScript,
 }
 
 impl fmt::Display for Error {
@@ -97,7 +99,8 @@ impl fmt::Display for Error {
             Error::InvalidWitnessProgramLength(l) => write!(f, "the witness program must be between 2 and 40 bytes in length: length={}", l),
             Error::InvalidSegwitV0ProgramLength(l) => write!(f, "a v0 witness program must be either of length 20 or 32 bytes: length={}", l),
             Error::UncompressedPubkey => write!(f, "an uncompressed pubkey was used where it is not allowed"),
-            Error::ExcessiveScriptSize => write!(f, "Script size exceed 520 bytes"),
+            Error::ExcessiveScriptSize => write!(f, "script size exceed 520 bytes"),
+            Error::UnrecognizedScript => write!(f, "script is not a p2pkh, p2sh or witness program")
         }
     }
 }
@@ -119,7 +122,8 @@ impl std::error::Error for Error {
             | InvalidWitnessProgramLength(_)
             | InvalidSegwitV0ProgramLength(_)
             | UncompressedPubkey
-            | ExcessiveScriptSize => None,
+            | ExcessiveScriptSize
+            | UnrecognizedScript => None,
         }
     }
 }
@@ -386,8 +390,8 @@ pub enum Payload {
 
 impl Payload {
     /// Constructs a [Payload] from an output script (`scriptPubkey`).
-    pub fn from_script(script: &script::Script) -> Option<Payload> {
-        Some(if script.is_p2pkh() {
+    pub fn from_script(script: &script::Script) -> Result<Payload, Error> {
+        Ok(if script.is_p2pkh() {
             let mut hash_inner = [0u8; 20];
             hash_inner.copy_from_slice(&script.as_bytes()[3..23]);
             Payload::PubkeyHash(PubkeyHash::from_inner(hash_inner))
@@ -396,12 +400,16 @@ impl Payload {
             hash_inner.copy_from_slice(&script.as_bytes()[2..22]);
             Payload::ScriptHash(ScriptHash::from_inner(hash_inner))
         } else if script.is_witness_program() {
+            if script.witness_version() == Some(WitnessVersion::V0) && !(script.is_v0_p2wpkh() || script.is_v0_p2wsh()) {
+                return Err(Error::InvalidSegwitV0ProgramLength(script.len()));
+            }
+
             Payload::WitnessProgram {
-                version: WitnessVersion::from_opcode(opcodes::All::from(script[0])).ok()?,
+                version: WitnessVersion::from_opcode(opcodes::All::from(script[0]))?,
                 program: script[2..].to_vec(),
             }
         } else {
-            return None;
+            return Err(Error::UnrecognizedScript);
         })
     }
 
@@ -692,14 +700,8 @@ impl Address {
     }
 
     /// Constructs an [`Address`] from an output script (`scriptPubkey`).
-    pub fn from_script(script: &script::Script, network: Network) -> Option<Address> {
-        if script.is_witness_program()
-            && script.witness_version() == Some(WitnessVersion::V0)
-            && !(script.is_v0_p2wpkh() || script.is_v0_p2wsh()) {
-                return None
-        }
-
-        Some(Address {
+    pub fn from_script(script: &script::Script, network: Network) -> Result<Address, Error> {
+        Ok(Address {
             payload: Payload::from_script(script)?,
             network,
         })
@@ -959,7 +961,7 @@ mod tests {
         );
         assert_eq!(
             Address::from_script(&addr.script_pubkey(), addr.network).as_ref(),
-            Some(addr),
+            Ok(addr),
             "script round-trip failed for {}",
             addr,
         );
@@ -1428,8 +1430,9 @@ mod tests {
     fn test_fail_address_from_script() {
         let bad_p2wpkh = hex_script!("0014dbc5b0a8f9d4353b4b54c3db48846bb15abfec");
         let bad_p2wsh = hex_script!("00202d4fa2eb233d008cc83206fa2f4f2e60199000f5b857a835e3172323385623");
+        let expected = Err(Error::UnrecognizedScript);
 
-        assert_eq!(Address::from_script(&bad_p2wpkh, Network::Bitcoin), None);
-        assert_eq!(Address::from_script(&bad_p2wsh, Network::Bitcoin), None);
+        assert_eq!(Address::from_script(&bad_p2wpkh, Network::Bitcoin), expected);
+        assert_eq!(Address::from_script(&bad_p2wsh, Network::Bitcoin), expected);
     }
 }
