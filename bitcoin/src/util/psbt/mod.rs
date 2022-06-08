@@ -9,29 +9,27 @@
 
 use core::cmp;
 
+use crate::prelude::*;
+use crate::io;
+
 use crate::blockdata::script::Script;
 use crate::blockdata::transaction::{ TxOut, Transaction};
 use crate::consensus::{encode, Encodable, Decodable};
+use crate::util::bip32::{ExtendedPubKey, KeySource};
+
 pub use crate::util::sighash::Prevouts;
-
-use crate::prelude::*;
-
-use crate::io;
-mod error;
-pub use self::error::Error;
-
-pub mod raw;
 
 #[macro_use]
 mod macros;
-
+pub mod raw;
 pub mod serialize;
+
+mod error;
+pub use self::error::Error;
 
 mod map;
 pub use self::map::{Input, Output, TapTree, PsbtSighashType, IncompleteTapTree};
 use self::map::Map;
-
-use crate::util::bip32::{ExtendedPubKey, KeySource};
 
 /// Partially signed transaction, commonly referred to as a PSBT.
 pub type Psbt = PartiallySignedTransaction;
