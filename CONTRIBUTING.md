@@ -1,11 +1,5 @@
 # Contributing to rust-bitcoin
 
-**Heads up about upcoming edition change**
-
-We're currently preparing to bump MSRV and **change the edition to 2018**.
-To minimize the churn we recommend you to submit your local WIP changes ASAP.
-There will be a lot of rebasing after the edition change.
-
 :+1::tada: First off, thanks for taking the time to contribute! :tada::+1:
 
 The following is a set of guidelines for contributing to Rust Bitcoin
