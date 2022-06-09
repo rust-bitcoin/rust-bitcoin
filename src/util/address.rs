@@ -401,7 +401,7 @@ impl Payload {
             Payload::ScriptHash(ScriptHash::from_inner(hash_inner))
         } else if script.is_witness_program() {
             if script.witness_version() == Some(WitnessVersion::V0) && !(script.is_v0_p2wpkh() || script.is_v0_p2wsh()) {
-                return Err(Error::InvalidSegwitV0ProgramLength(script.len()));
+                return Err(Error::InvalidSegwitV0ProgramLength(script.len() - 2));
             }
 
             Payload::WitnessProgram {
@@ -1430,9 +1430,11 @@ mod tests {
     fn test_fail_address_from_script() {
         let bad_p2wpkh = hex_script!("0014dbc5b0a8f9d4353b4b54c3db48846bb15abfec");
         let bad_p2wsh = hex_script!("00202d4fa2eb233d008cc83206fa2f4f2e60199000f5b857a835e3172323385623");
+        let invalid_segwitv0_script = hex_script!("001161458e330389cd0437ee9fe3641d70cc18");
         let expected = Err(Error::UnrecognizedScript);
 
         assert_eq!(Address::from_script(&bad_p2wpkh, Network::Bitcoin), expected);
         assert_eq!(Address::from_script(&bad_p2wsh, Network::Bitcoin), expected);
+        assert_eq!(Address::from_script(&invalid_segwitv0_script, Network::Bitcoin), Err(Error::InvalidSegwitV0ProgramLength(17)));
     }
 }
