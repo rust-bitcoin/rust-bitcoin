@@ -193,7 +193,22 @@ impl fmt::Display for ParseAmountError {
 
 #[cfg(feature = "std")]
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-impl std::error::Error for ParseAmountError {}
+impl std::error::Error for ParseAmountError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use self::ParseAmountError::*;
+
+        match *self {
+            Negative
+                | TooBig
+                | TooPrecise
+                | InvalidFormat
+                | InputTooLarge
+                | InvalidCharacter(_)
+                | UnknownDenomination(_)
+                | PossiblyConfusingDenomination(_) => None
+        }
+    }
+}
 
 fn is_too_precise(s: &str, precision: usize) -> bool {
     s.contains('.') || precision >= s.len() || s.chars().rev().take(precision).any(|d| d != '0')
