@@ -122,6 +122,21 @@ pub struct PartialMerkleTree {
 }
 
 impl PartialMerkleTree {
+    /// Returns the total number of transactions in the block.
+    pub fn num_transactions(&self) -> u32 {
+        self.num_transactions
+    }
+
+    /// Returns the node-is-parent-of-matched-txid bits of the partial merkle tree.
+    pub fn bits(&self) -> &Vec<bool> {
+        &self.bits
+    }
+
+    /// Returns the transaction ids and internal hashes of the partial merkle tree.
+    pub fn hashes(&self) -> &Vec<TxMerkleNode> {
+        &self.hashes
+    }
+
     /// Construct a partial merkle tree
     /// The `txids` are the transaction hashes of the block and the `matches` is the contains flags
     /// wherever a tx hash should be included in the proof.
