@@ -43,7 +43,10 @@ pub struct Witness {
 }
 
 /// Support structure to allow efficient and convenient iteration over the Witness elements
-pub struct Iter<'a>(::core::slice::Iter<'a, u8>);
+pub struct Iter<'a> {
+    inner: core::slice::Iter<'a, u8>,
+    remaining: usize,
+}
 
 impl Decodable for Witness {
     fn consensus_decode<D: Read>(mut d: D) -> Result<Self, Error> {
@@ -172,7 +175,7 @@ impl Witness {
 
     /// Returns a struct implementing [`Iterator`]
     pub fn iter(&self) -> Iter {
-        Iter(self.content.iter())
+        Iter { inner: self.content.iter(), remaining: self.witness_elements }
     }
 
     /// Returns the number of elements this witness holds
@@ -253,17 +256,24 @@ impl<'a> Iterator for Iter<'a> {
     type Item = &'a [u8];
 
     fn next(&mut self) -> Option<Self::Item> {
-        let varint = VarInt::consensus_decode(self.0.as_slice()).ok()?;
-        self.0.nth(varint.len() - 1)?; // VarInt::len returns at least 1
+        let varint = VarInt::consensus_decode(self.inner.as_slice()).ok()?;
+        self.inner.nth(varint.len() - 1)?; // VarInt::len returns at least 1
         let len = varint.0 as usize;
-        let slice = &self.0.as_slice()[..len];
+        let slice = &self.inner.as_slice()[..len];
         if len > 0 {
             // we don't need to advance if the element is empty
-            self.0.nth(len - 1)?;
+            self.inner.nth(len - 1)?;
         }
+        self.remaining -= 1;
         Some(slice)
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (self.remaining, Some(self.remaining))
+    }
 }
+
+impl<'a> ExactSizeIterator for Iter<'a> {}
 
 // Serde keep backward compatibility with old Vec<Vec<u8>> format
 #[cfg(feature = "serde")]
@@ -321,6 +331,21 @@ mod test {
         assert_eq!(witness, expected);
         assert_eq!(witness.last(), Some(&[2u8, 3u8][..]));
         assert_eq!(witness.second_to_last(), Some(&[0u8][..]));
+    }
+
+
+    #[test]
+    fn test_iter_len() {
+        let mut witness = Witness::default();
+        for i in 0..5 {
+            assert_eq!(witness.iter().len(), i);
+            witness.push(&vec![0u8]);
+        }
+        let mut iter = witness.iter();
+        for i in (0..=5).rev() {
+            assert_eq!(iter.len(), i);
+            iter.next();
+        }
     }
 
     #[test]
@@ -407,4 +432,32 @@ mod test {
         let back = serde_json::from_str(&new).unwrap();
         assert_eq!(new_witness_format, back);
     }
+}
+
+
+#[cfg(all(test, feature = "unstable"))]
+mod benches {
+    use test::{Bencher, black_box};
+    use super::Witness;
+
+    #[bench]
+    pub fn bench_big_witness_to_vec(bh: &mut Bencher) {
+        let raw_witness = vec![vec![1u8]; 5];
+        let witness = Witness::from_vec(raw_witness);
+
+        bh.iter(|| {
+            black_box(witness.to_vec());
+        });
+    }
+
+    #[bench]
+    pub fn bench_witness_to_vec(bh: &mut Bencher) {
+        let raw_witness = vec![vec![1u8]; 3];
+        let witness = Witness::from_vec(raw_witness);
+
+        bh.iter(|| {
+            black_box(witness.to_vec());
+        });
+    }
+
 }
