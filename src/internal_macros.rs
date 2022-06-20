@@ -142,8 +142,8 @@ macro_rules! serde_string_impl {
                 impl<'de> $crate::serde::de::Visitor<'de> for Visitor {
                     type Value = $name;
 
-                    fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
-                        formatter.write_str($expecting)
+                    fn expecting(&self, f: &mut Formatter) -> fmt::Result {
+                        f.write_str($expecting)
                     }
 
                     fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
@@ -190,8 +190,8 @@ macro_rules! serde_struct_human_string_impl {
                     impl<'de> $crate::serde::de::Visitor<'de> for Visitor {
                         type Value = $name;
 
-                        fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
-                            formatter.write_str($expecting)
+                        fn expecting(&self, f: &mut Formatter) -> fmt::Result {
+                            f.write_str($expecting)
                         }
 
                         fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
@@ -215,8 +215,8 @@ macro_rules! serde_struct_human_string_impl {
                     impl<'de> $crate::serde::de::Visitor<'de> for EnumVisitor {
                         type Value = Enum;
 
-                        fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
-                            formatter.write_str("a field name")
+                        fn expecting(&self, f: &mut Formatter) -> fmt::Result {
+                            f.write_str("a field name")
                         }
 
                         fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
@@ -246,8 +246,8 @@ macro_rules! serde_struct_human_string_impl {
                     impl<'de> $crate::serde::de::Visitor<'de> for Visitor {
                         type Value = $name;
 
-                        fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
-                            formatter.write_str("a struct")
+                        fn expecting(&self, f: &mut Formatter) -> fmt::Result {
+                            f.write_str("a struct")
                         }
 
                         fn visit_seq<V>(self, mut seq: V) -> Result<Self::Value, V::Error>
@@ -423,8 +423,8 @@ macro_rules! impl_bytes_newtype {
                     impl<'de> $crate::serde::de::Visitor<'de> for HexVisitor {
                         type Value = $t;
 
-                        fn expecting(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
-                            formatter.write_str("an ASCII hex string")
+                        fn expecting(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                            f.write_str("an ASCII hex string")
                         }
 
                         fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
@@ -453,8 +453,8 @@ macro_rules! impl_bytes_newtype {
                     impl<'de> $crate::serde::de::Visitor<'de> for BytesVisitor {
                         type Value = $t;
 
-                        fn expecting(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
-                            formatter.write_str("a bytestring")
+                        fn expecting(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                            f.write_str("a bytestring")
                         }
 
                         fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
@@ -531,8 +531,8 @@ macro_rules! user_enum {
                 impl<'de> $crate::serde::de::Visitor<'de> for Visitor {
                     type Value = $name;
 
-                    fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
-                        formatter.write_str("an enum value")
+                    fn expecting(&self, f: &mut Formatter) -> fmt::Result {
+                        f.write_str("an enum value")
                     }
 
                     fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
