@@ -101,6 +101,13 @@ cargo test
 
 Please refer to the [`cargo` documentation](https://doc.rust-lang.org/stable/cargo/) for more detailed instructions.
 
+### Building the docs
+
+We build docs with the nightly toolchain, you may wish to use the following
+shell alias to check your documentation changes build correctly.
+
+```alias build-docs='RUSTDOCFLAGS="--cfg docsrs" cargo +nightly rustdoc --features="$FEATURES" -- -D rustdoc::broken-intra-doc-links'```
+
 ## Pull Requests
 
 Every PR needs at least two reviews to get merged. During the review phase

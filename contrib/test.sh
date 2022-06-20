@@ -56,7 +56,7 @@ done
 
 # Build the docs if told to (this only works with the nightly toolchain)
 if [ "$DO_DOCS" = true ]; then
-    RUSTDOCFLAGS="--cfg docsrs" cargo doc --all --features="$FEATURES"
+    RUSTDOCFLAGS="--cfg docsrs" cargo +nightly rustdoc --features="$FEATURES" -- -D rustdoc::broken-intra-doc-links
 fi
 
 # Fuzz if told to
