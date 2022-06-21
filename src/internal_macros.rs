@@ -431,10 +431,12 @@ macro_rules! impl_bytes_newtype {
                         where
                             E: $crate::serde::de::Error,
                         {
+                            use $crate::serde::de::Unexpected;
+
                             if let Ok(hex) = core::str::from_utf8(v) {
                                 $crate::hashes::hex::FromHex::from_hex(hex).map_err(E::custom)
                             } else {
-                                return Err(E::invalid_value($crate::serde::de::Unexpected::Bytes(v), &self));
+                                return Err(E::invalid_value(Unexpected::Bytes(v), &self));
                             }
                         }
 
