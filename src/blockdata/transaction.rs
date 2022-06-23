@@ -631,7 +631,7 @@ impl Transaction {
             if let Some(output) = spent(&input.previous_output) {
                 output.script_pubkey.verify_with_flags(idx, crate::Amount::from_sat(output.value), tx.as_slice(), flags)?;
             } else {
-                return Err(script::Error::UnknownSpentOutput(input.previous_output.clone()));
+                return Err(script::Error::UnknownSpentOutput(input.previous_output));
             }
         }
         Ok(())
