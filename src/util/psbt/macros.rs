@@ -12,8 +12,9 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
+/// Helper macro to parse a hex string into a PSBT.
 #[cfg(any(feature = "std", test))]
-#[allow(unused_macros)]
+#[macro_export]
 macro_rules! hex_psbt {
     ($s:expr) => { $crate::consensus::deserialize::<$crate::psbt::Psbt>(&<Vec<u8> as $crate::hashes::hex::FromHex>::from_hex($s).unwrap()) };
 }
