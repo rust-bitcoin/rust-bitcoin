@@ -647,7 +647,6 @@ impl<R: Deref<Target = Transaction>> SighashCache<R> {
 
     /// Encodes the legacy signing data for any flag type into a given object implementing a
     /// [`std::io::Write`] trait. Internally calls [`Transaction::encode_signing_data_to`].
-    #[must_use]
     pub fn legacy_encode_signing_data_to<Write: io::Write, U: Into<u32>>(
         &self,
         mut writer: Write,
