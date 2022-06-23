@@ -269,7 +269,7 @@ mod display_from_str {
 
         fn from_str(s: &str) -> Result<Self, Self::Err> {
             let data = ::base64::decode(s).map_err(PsbtParseError::Base64Encoding)?;
-            Ok(encode::deserialize(&data).map_err(PsbtParseError::PsbtEncoding)?)
+            encode::deserialize(&data).map_err(PsbtParseError::PsbtEncoding)
         }
     }
 }

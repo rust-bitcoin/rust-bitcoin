@@ -1310,7 +1310,7 @@ pub mod serde {
         }
         fn des_btc<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error> {
             use serde::de::Error;
-            Ok(Amount::from_btc(f64::deserialize(d)?).map_err(D::Error::custom)?)
+            Amount::from_btc(f64::deserialize(d)?).map_err(D::Error::custom)
         }
     }
 
@@ -1338,7 +1338,7 @@ pub mod serde {
         }
         fn des_btc<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error> {
             use serde::de::Error;
-            Ok(SignedAmount::from_btc(f64::deserialize(d)?).map_err(D::Error::custom)?)
+            SignedAmount::from_btc(f64::deserialize(d)?).map_err(D::Error::custom)
         }
     }
 
