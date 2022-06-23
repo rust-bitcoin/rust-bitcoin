@@ -411,6 +411,7 @@ impl<'de> ::serde::Deserialize<'de> for PrivateKey {
 
 #[cfg(feature = "serde")]
 #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
+#[allow(clippy::collapsible_else_if)] // Aids readability.
 impl ::serde::Serialize for PublicKey {
     fn serialize<S: ::serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
         if s.is_human_readable() {
