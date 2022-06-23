@@ -40,17 +40,10 @@ use crate::consensus::{encode, Decodable, Encodable};
 use crate::consensus::encode::MAX_VEC_SIZE;
 use crate::hash_types::{Sighash, Txid, Wtxid};
 use crate::VarInt;
+use crate::util::sighash::UINT256_ONE;
 
 #[cfg(doc)]
 use crate::util::sighash::SchnorrSighashType;
-
-/// Used for signature hash for invalid use of SIGHASH_SINGLE.
-const UINT256_ONE: [u8; 32] = [
-    1, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0
-];
 
 /// A reference to a transaction output.
 ///
@@ -262,6 +255,67 @@ impl Default for TxOut {
     }
 }
 
+/// Result of [`Transaction::encode_signing_data_to`].
+///
+/// This type forces the caller to handle SIGHASH_SINGLE bug case.
+///
+/// This corner case can't be expressed using standard `Result`,
+/// in a way that is both convenient and not-prone to accidental
+/// mistakes (like calling `.expect("writer never fails")`).
+#[must_use]
+pub enum EncodeSigningDataResult<E> {
+    /// Input data is an instance of `SIGHASH_SINGLE` bug
+    SighashSingleBug,
+    /// Operation performed normally.
+    WriteResult(Result<(), E>),
+}
+
+impl<E> EncodeSigningDataResult<E> {
+    /// Checks for SIGHASH_SINGLE bug returning error if the writer failed.
+    ///
+    /// This method is provided for easy and correct handling of the result because
+    /// SIGHASH_SINGLE bug is a special case that must not be ignored nor cause panicking.
+    /// Since the data is usually written directly into a hasher which never fails,
+    /// the recommended pattern to handle this is:
+    ///
+    /// ```rust
+    /// # use bitcoin::consensus::deserialize;
+    /// # use bitcoin::{Transaction, Sighash};
+    /// # use bitcoin_hashes::{Hash, hex::FromHex};
+    /// # let mut writer = Sighash::engine();
+    /// # let input_index = 0;
+    /// # let script_pubkey = bitcoin::Script::new();
+    /// # let sighash_u32 = 0u32;
+    /// # const SOME_TX: &'static str = "0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000";
+    /// # let raw_tx = Vec::from_hex(SOME_TX).unwrap();
+    /// # let tx: Transaction = deserialize(&raw_tx).unwrap();
+    /// if tx.encode_signing_data_to(&mut writer, input_index, &script_pubkey, sighash_u32)
+    ///         .is_sighash_single_bug()
+    ///         .expect("writer can't fail") {
+    ///     // use a hash value of "1", instead of computing the actual hash due to SIGHASH_SINGLE bug
+    /// }
+    /// ```
+    pub fn is_sighash_single_bug(self) -> Result<bool, E> {
+        match self {
+            EncodeSigningDataResult::SighashSingleBug => Ok(true),
+            EncodeSigningDataResult::WriteResult(Ok(())) => Ok(false),
+            EncodeSigningDataResult::WriteResult(Err(e)) => Err(e),
+        }
+    }
+
+    /// Maps a `Result<T, E>` to `Result<T, F>` by applying a function to a
+    /// contained [`Err`] value, leaving an [`Ok`] value untouched.
+    ///
+    /// Like [`Result::map_err`].
+    pub fn map_err<E2, F>(self, f: F) -> EncodeSigningDataResult<E2> where F: FnOnce(E) -> E2 {
+        match self {
+            EncodeSigningDataResult::SighashSingleBug => EncodeSigningDataResult::SighashSingleBug,
+            EncodeSigningDataResult::WriteResult(Err(e)) => EncodeSigningDataResult::WriteResult(Err(f(e))),
+            EncodeSigningDataResult::WriteResult(Ok(o)) => EncodeSigningDataResult::WriteResult(Ok(o)),
+        }
+    }
+}
+
 /// Bitcoin transaction.
 ///
 /// An authenticated movement of coins.
@@ -370,19 +424,23 @@ impl Transaction {
     /// - Does NOT attempt to support OP_CODESEPARATOR. In general this would require evaluating
     /// `script_pubkey` to determine which separators get evaluated and which don't, which we don't
     /// have the information to determine.
-    /// - Does NOT handle the sighash single bug, you should either handle that manually or use
-    /// [`Self::signature_hash()`] instead.
+    /// - Does NOT handle the sighash single bug (see "Return type" section)
+    ///
+    /// # Return type
+    ///
+    /// This function can't handle the SIGHASH_SINGLE bug internally, so it returns [`EncodeSigningDataResult`]
+    /// that must be handled by the caller (see [`EncodeSigningDataResult::is_sighash_single_bug`]).
     ///
     /// # Panics
     ///
     /// If `input_index` is out of bounds (greater than or equal to `self.input.len()`).
     pub fn encode_signing_data_to<Write: io::Write, U: Into<u32>>(
         &self,
-        mut writer: Write,
+        writer: Write,
         input_index: usize,
         script_pubkey: &Script,
         sighash_type: U,
-    ) -> Result<(), encode::Error> {
+    ) -> EncodeSigningDataResult<io::Error> {
         let sighash_type: u32 = sighash_type.into();
         assert!(input_index < self.input.len());  // Panic on OOB
 
@@ -391,56 +449,73 @@ impl Transaction {
             // will result in the data written to the writer being hashed, however the correct
             // handling of the SIGHASH_SINGLE bug is to return the 'one array' - either implement
             // this behaviour manually or use `signature_hash()`.
-            writer.write_all(b"[not a transaction] SIGHASH_SINGLE bug")?;
-            return Ok(())
+            return EncodeSigningDataResult::SighashSingleBug;
         }
 
-        let (sighash, anyone_can_pay) = EcdsaSighashType::from_consensus(sighash_type).split_anyonecanpay_flag();
+        fn encode_signing_data_to_inner<Write: io::Write>(
+            self_: &Transaction,
+            mut writer: Write,
+            input_index: usize,
+            script_pubkey: &Script,
+            sighash_type: u32,
+        ) -> Result<(), io::Error> {
+            let (sighash, anyone_can_pay) = EcdsaSighashType::from_consensus(sighash_type).split_anyonecanpay_flag();
 
-        // Build tx to sign
-        let mut tx = Transaction {
-            version: self.version,
-            lock_time: self.lock_time,
-            input: vec![],
-            output: vec![],
-        };
-        // Add all inputs necessary..
-        if anyone_can_pay {
-            tx.input = vec![TxIn {
-                previous_output: self.input[input_index].previous_output,
-                script_sig: script_pubkey.clone(),
-                sequence: self.input[input_index].sequence,
-                witness: Witness::default(),
-            }];
-        } else {
-            tx.input = Vec::with_capacity(self.input.len());
-            for (n, input) in self.input.iter().enumerate() {
-                tx.input.push(TxIn {
-                    previous_output: input.previous_output,
-                    script_sig: if n == input_index { script_pubkey.clone() } else { Script::new() },
-                    sequence: if n != input_index && (sighash == EcdsaSighashType::Single || sighash == EcdsaSighashType::None) { 0 } else { input.sequence },
+            // Build tx to sign
+            let mut tx = Transaction {
+                version: self_.version,
+                lock_time: self_.lock_time,
+                input: vec![],
+                output: vec![],
+            };
+            // Add all inputs necessary..
+            if anyone_can_pay {
+                tx.input = vec![TxIn {
+                    previous_output: self_.input[input_index].previous_output,
+                    script_sig: script_pubkey.clone(),
+                    sequence: self_.input[input_index].sequence,
                     witness: Witness::default(),
-                });
+                }];
+            } else {
+                tx.input = Vec::with_capacity(self_.input.len());
+                for (n, input) in self_.input.iter().enumerate() {
+                    tx.input.push(TxIn {
+                        previous_output: input.previous_output,
+                        script_sig: if n == input_index { script_pubkey.clone() } else { Script::new() },
+                        sequence: if n != input_index && (sighash == EcdsaSighashType::Single || sighash == EcdsaSighashType::None) { 0 } else { input.sequence },
+                        witness: Witness::default(),
+                    });
+                }
             }
+            // ..then all outputs
+            tx.output = match sighash {
+                EcdsaSighashType::All => self_.output.clone(),
+                EcdsaSighashType::Single => {
+                    let output_iter = self_.output.iter()
+                                          .take(input_index + 1)  // sign all outputs up to and including this one, but erase
+                                          .enumerate()            // all of them except for this one
+                                          .map(|(n, out)| if n == input_index { out.clone() } else { TxOut::default() });
+                    output_iter.collect()
+                }
+                EcdsaSighashType::None => vec![],
+                _ => unreachable!()
+            };
+            // hash the result
+            tx.consensus_encode(&mut writer)?;
+            let sighash_arr = endian::u32_to_array_le(sighash_type);
+            sighash_arr.consensus_encode(&mut writer)?;
+            Ok(())
         }
-        // ..then all outputs
-        tx.output = match sighash {
-            EcdsaSighashType::All => self.output.clone(),
-            EcdsaSighashType::Single => {
-                let output_iter = self.output.iter()
-                                      .take(input_index + 1)  // sign all outputs up to and including this one, but erase
-                                      .enumerate()            // all of them except for this one
-                                      .map(|(n, out)| if n == input_index { out.clone() } else { TxOut::default() });
-                output_iter.collect()
-            }
-            EcdsaSighashType::None => vec![],
-            _ => unreachable!()
-        };
-        // hash the result
-        tx.consensus_encode(&mut writer)?;
-        let sighash_arr = endian::u32_to_array_le(sighash_type);
-        sighash_arr.consensus_encode(&mut writer)?;
-        Ok(())
+
+        EncodeSigningDataResult::WriteResult(
+            encode_signing_data_to_inner(
+                self,
+                writer,
+                input_index,
+                script_pubkey,
+                sighash_type
+            )
+        )
     }
 
     /// Computes a signature hash for a given input index with a given sighash flag.
@@ -473,12 +548,15 @@ impl Transaction {
         sighash_u32: u32
     ) -> Sighash {
         if self.is_invalid_use_of_sighash_single(sighash_u32, input_index) {
-            return Sighash::from_slice(&UINT256_ONE).expect("const-size array");
+            return Sighash::from_inner(UINT256_ONE);
         }
 
         let mut engine = Sighash::engine();
-        self.encode_signing_data_to(&mut engine, input_index, script_pubkey, sighash_u32)
-            .expect("engines don't error");
+        if self.encode_signing_data_to(&mut engine, input_index, script_pubkey, sighash_u32)
+            .is_sighash_single_bug()
+            .expect("engines don't error") {
+            return Sighash::from_slice(&UINT256_ONE).expect("const-size array");
+        }
         Sighash::from_engine(engine)
     }
 
