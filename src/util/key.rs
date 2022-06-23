@@ -411,6 +411,7 @@ impl<'de> ::serde::Deserialize<'de> for PrivateKey {
 
 #[cfg(feature = "serde")]
 #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
+#[allow(clippy::collapsible_else_if)] // Aids readability.
 impl ::serde::Serialize for PublicKey {
     fn serialize<S: ::serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
         if s.is_human_readable() {
@@ -549,9 +550,9 @@ mod tests {
     fn test_key_serde() {
         use serde_test::{Configure, Token, assert_tokens};
 
-        static KEY_WIF: &'static str = "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy";
-        static PK_STR: &'static str = "039b6347398505f5ec93826dc61c19f47c66c0283ee9be980e29ce325a0f4679ef";
-        static PK_STR_U: &'static str = "\
+        static KEY_WIF: &str = "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy";
+        static PK_STR: &str = "039b6347398505f5ec93826dc61c19f47c66c0283ee9be980e29ce325a0f4679ef";
+        static PK_STR_U: &str = "\
             04\
             9b6347398505f5ec93826dc61c19f47c66c0283ee9be980e29ce325a0f4679ef\
             87288ed73ce47fc4f5c79d19ebfa57da7cff3aff6e819e4ee971d86b5e61875d\

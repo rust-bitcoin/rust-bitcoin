@@ -1085,7 +1085,7 @@ impl serde::Serialize for Script {
         if serializer.is_human_readable() {
             serializer.serialize_str(&format!("{:x}", self))
         } else {
-            serializer.serialize_bytes(&self.as_bytes())
+            serializer.serialize_bytes(self.as_bytes())
         }
     }
 }
