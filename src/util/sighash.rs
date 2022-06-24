@@ -338,17 +338,25 @@ impl SchnorrSighashType {
     }
 
     /// Creates a [`SchnorrSighashType`] from raw `u8`.
+    #[deprecated(since = "0.29.0", note = "use from_consensus_u8 instead")]
     pub fn from_u8(hash_ty: u8) -> Result<Self, Error> {
-        match hash_ty {
-            0x00 => Ok(SchnorrSighashType::Default),
-            0x01 => Ok(SchnorrSighashType::All),
-            0x02 => Ok(SchnorrSighashType::None),
-            0x03 => Ok(SchnorrSighashType::Single),
-            0x81 => Ok(SchnorrSighashType::AllPlusAnyoneCanPay),
-            0x82 => Ok(SchnorrSighashType::NonePlusAnyoneCanPay),
-            0x83 => Ok(SchnorrSighashType::SinglePlusAnyoneCanPay),
-            x => Err(Error::InvalidSighashType(x as u32)),
-        }
+        Self::from_consensus_u8(hash_ty)
+    }
+
+    /// Constructs a [`SchnorrSighashType`] from a raw `u8`.
+    pub fn from_consensus_u8(hash_ty: u8) -> Result<Self, Error> {
+    use SchnorrSighashType::*;
+
+        Ok(match hash_ty {
+            0x00 => Default,
+            0x01 => All,
+            0x02 => None,
+            0x03 => Single,
+            0x81 => AllPlusAnyoneCanPay,
+            0x82 => NonePlusAnyoneCanPay,
+            0x83 => SinglePlusAnyoneCanPay,
+            x => return Err(Error::InvalidSighashType(x as u32)),
+        })
     }
 }
 
@@ -1113,7 +1121,7 @@ mod tests {
             } else {
                 Some(hex_hash!(TapBranchHash, inp["given"]["merkleRoot"].as_str().unwrap()))
             };
-            let hash_ty = SchnorrSighashType::try_from(inp["given"]["hashType"].as_u64().unwrap() as u8).unwrap();
+            let hash_ty = SchnorrSighashType::from_consensus_u8(inp["given"]["hashType"].as_u64().unwrap() as u8).unwrap();
 
             let expected_internal_pk = hex_hash!(XOnlyPublicKey, inp["intermediary"]["internalPubkey"].as_str().unwrap());
             let expected_tweak = hex_hash!(TapTweakHash, inp["intermediary"]["tweak"].as_str().unwrap());
@@ -1124,7 +1132,7 @@ mod tests {
             let (expected_key_spend_sig, expected_hash_ty) = if sig_str.len() == 128 {
                 (secp256k1::schnorr::Signature::from_str(sig_str).unwrap(), SchnorrSighashType::Default)
             } else {
-                let hash_ty = SchnorrSighashType::try_from(Vec::<u8>::from_hex(&sig_str[128..]).unwrap()[0]).unwrap();
+                let hash_ty = SchnorrSighashType::from_consensus_u8(Vec::<u8>::from_hex(&sig_str[128..]).unwrap()[0]).unwrap();
                 (secp256k1::schnorr::Signature::from_str(&sig_str[..128]).unwrap(), hash_ty)
             };
 

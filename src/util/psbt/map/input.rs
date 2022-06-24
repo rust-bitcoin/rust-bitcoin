@@ -216,7 +216,7 @@ impl PsbtSighashType {
         if self.inner > 0xffu32 {
             Err(sighash::Error::InvalidSighashType(self.inner))
         } else {
-            SchnorrSighashType::from_u8(self.inner as u8)
+            SchnorrSighashType::from_consensus_u8(self.inner as u8)
         }
     }
 
