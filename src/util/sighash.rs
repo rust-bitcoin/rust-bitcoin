@@ -1121,11 +1121,10 @@ mod tests {
             };
 
             // tests
-            let keypair = secp256k1::KeyPair::from_secret_key(&secp, internal_priv_key);
-            let internal_key = XOnlyPublicKey::from_keypair(&keypair);
+            let keypair = secp256k1::KeyPair::from_secret_key(secp, &internal_priv_key);
+            let (internal_key, _parity) = XOnlyPublicKey::from_keypair(&keypair);
             let tweak = TapTweakHash::from_key_and_tweak(internal_key, merkle_root);
-            let mut tweaked_keypair = keypair;
-            tweaked_keypair.tweak_add_assign(&secp, &tweak).unwrap();
+            let tweaked_keypair = keypair.add_xonly_tweak(secp, &tweak.to_scalar()).unwrap();
             let mut sig_msg = Vec::new();
             cache.taproot_encode_signing_data_to(
                 &mut sig_msg,
