@@ -11,9 +11,6 @@ use crate::prelude::*;
 use secp256k1::ecdsa;
 use crate::VarInt;
 
-#[cfg(feature = "serde")]
-use serde;
-
 /// The Witness is the data used to unlock bitcoins since the [segwit upgrade](https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki)
 ///
 /// Can be logically seen as an array of byte-arrays `Vec<Vec<u8>>` and indeed you can convert from
@@ -282,8 +279,15 @@ impl serde::Serialize for Witness {
     where
         S: serde::Serializer,
     {
-        let vec: Vec<_> = self.to_vec();
-        serde::Serialize::serialize(&vec, serializer)
+        use serde::ser::SerializeSeq; 
+
+        let mut seq = serializer.serialize_seq(Some(self.witness_elements))?;
+
+        for elem in self.iter() {
+            seq.serialize_element(&elem)?;
+        }
+
+        seq.end()
     }
 }
 #[cfg(feature = "serde")]
