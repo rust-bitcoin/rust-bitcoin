@@ -122,7 +122,6 @@ impl Encodable for Witness {
 }
 
 impl Witness {
-
     /// Create a new empty [`Witness`]
     pub fn new() -> Self {
         Witness::default()
