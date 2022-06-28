@@ -3,12 +3,13 @@
 //! This module contains the [`Witness`] struct and related methods to operate on it
 //!
 
+use secp256k1::ecdsa;
+
 use crate::blockdata::transaction::EcdsaSighashType;
 use crate::consensus::encode::{Error, MAX_VEC_SIZE};
 use crate::consensus::{Decodable, Encodable, WriteExt};
 use crate::io::{self, Read, Write};
 use crate::prelude::*;
-use secp256k1::ecdsa;
 use crate::VarInt;
 
 /// The Witness is the data used to unlock bitcoins since the [segwit upgrade](https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki)
