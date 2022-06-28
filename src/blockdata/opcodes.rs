@@ -743,7 +743,7 @@ impl All {
 
     /// Encodes [`All`] as a byte.
     #[inline]
-    pub fn to_u8(self) -> u8 {
+    pub const fn to_u8(self) -> u8 {
         self.code
     }
 }
