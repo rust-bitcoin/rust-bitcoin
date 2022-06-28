@@ -290,6 +290,7 @@ impl serde::Serialize for Witness {
         seq.end()
     }
 }
+
 #[cfg(feature = "serde")]
 impl<'de> serde::Deserialize<'de> for Witness {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
