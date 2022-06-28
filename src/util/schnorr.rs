@@ -22,7 +22,6 @@ use core::fmt;
 use crate::prelude::*;
 
 use secp256k1::{self, Secp256k1, Verification, constants};
-use crate::hashes::Hash;
 use crate::util::taproot::{TapBranchHash, TapTweakHash};
 use crate::SchnorrSighashType;
 
@@ -111,11 +110,10 @@ impl TapTweak for UntweakedPublicKey {
     /// # Returns
     /// The tweaked key and its parity.
     fn tap_tweak<C: Verification>(self, secp: &Secp256k1<C>, merkle_root: Option<TapBranchHash>) -> (TweakedPublicKey, secp256k1::Parity) {
-        let tweak_value = TapTweakHash::from_key_and_tweak(self, merkle_root).into_inner();
-        let mut output_key = self;
-        let parity = output_key.tweak_add_assign(secp, &tweak_value).expect("Tap tweak failed");
+        let tweak = TapTweakHash::from_key_and_tweak(self, merkle_root).to_scalar();
+        let (output_key, parity) = self.add_tweak(secp, &tweak).expect("Tap tweak failed");
 
-        debug_assert!(self.tweak_add_check(secp, &output_key, parity, tweak_value));
+        debug_assert!(self.tweak_add_check(secp, &output_key, parity, tweak));
         (TweakedPublicKey(output_key), parity)
     }
 
@@ -140,11 +138,11 @@ impl TapTweak for UntweakedKeyPair {
     ///
     /// # Returns
     /// The tweaked key and its parity.
-    fn tap_tweak<C: Verification>(mut self, secp: &Secp256k1<C>, merkle_root: Option<TapBranchHash>) -> TweakedKeyPair {
-        let pubkey = crate::XOnlyPublicKey::from_keypair(&self);
-        let tweak_value = TapTweakHash::from_key_and_tweak(pubkey, merkle_root).into_inner();
-        self.tweak_add_assign(secp, &tweak_value).expect("Tap tweak failed");
-        TweakedKeyPair(self)
+    fn tap_tweak<C: Verification>(self, secp: &Secp256k1<C>, merkle_root: Option<TapBranchHash>) -> TweakedKeyPair {
+        let (pubkey, _parity) = crate::XOnlyPublicKey::from_keypair(&self);
+        let tweak = TapTweakHash::from_key_and_tweak(pubkey, merkle_root).to_scalar();
+        let tweaked = self.add_xonly_tweak(secp, &tweak).expect("Tap tweak failed");
+        TweakedKeyPair(tweaked)
     }
 
     fn dangerous_assume_tweaked(self) -> TweakedKeyPair {
