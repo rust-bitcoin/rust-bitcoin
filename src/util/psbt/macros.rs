@@ -55,7 +55,7 @@ macro_rules! impl_psbt_serialize {
 macro_rules! impl_psbtmap_consensus_encoding {
     ($thing:ty) => {
         impl $crate::consensus::Encodable for $thing {
-            fn consensus_encode<W: $crate::io::Write>(
+            fn consensus_encode<W: $crate::io::Write + ?Sized>(
                 &self,
                 w: &mut W,
             ) -> Result<usize, $crate::io::Error> {
@@ -68,7 +68,7 @@ macro_rules! impl_psbtmap_consensus_encoding {
 macro_rules! impl_psbtmap_consensus_decoding {
     ($thing:ty) => {
         impl $crate::consensus::Decodable for $thing {
-            fn consensus_decode<R: $crate::io::Read>(
+            fn consensus_decode<R: $crate::io::Read + ?Sized>(
                 r: &mut R,
             ) -> Result<Self, $crate::consensus::encode::Error> {
                 let mut rv: Self = ::core::default::Default::default();

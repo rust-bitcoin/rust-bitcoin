@@ -49,7 +49,7 @@ pub struct Iter<'a> {
 }
 
 impl Decodable for Witness {
-    fn consensus_decode<R: Read>(r: &mut R) -> Result<Self, Error> {
+    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, Error> {
         let witness_elements = VarInt::consensus_decode(r)?.0 as usize;
         if witness_elements == 0 {
             Ok(Witness::default())
@@ -116,7 +116,7 @@ fn resize_if_needed(vec: &mut Vec<u8>, required_len: usize) {
 }
 
 impl Encodable for Witness {
-    fn consensus_encode<W: Write>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let len = VarInt(self.witness_elements as u64);
         len.consensus_encode(w)?;
         w.emit_slice(&self.content[..])?;

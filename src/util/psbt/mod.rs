@@ -277,7 +277,7 @@ mod display_from_str {
 pub use self::display_from_str::PsbtParseError;
 
 impl Encodable for PartiallySignedTransaction {
-    fn consensus_encode<W: io::Write>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = 0;
         len += b"psbt".consensus_encode(w)?;
 
@@ -298,7 +298,7 @@ impl Encodable for PartiallySignedTransaction {
 }
 
 impl Decodable for PartiallySignedTransaction {
-    fn consensus_decode_from_finite_reader<R: io::Read>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode_from_finite_reader<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         let magic: [u8; 4] = Decodable::consensus_decode(r)?;
 
         if *b"psbt" != magic {

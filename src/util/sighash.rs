@@ -794,7 +794,7 @@ impl<'a> Annex<'a> {
 }
 
 impl<'a> Encodable for Annex<'a> {
-    fn consensus_encode<W: io::Write>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         encode::consensus_encode_with_size(self.0, w)
     }
 }

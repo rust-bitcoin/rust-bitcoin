@@ -419,7 +419,7 @@ macro_rules! construct_uint {
 
         impl $crate::consensus::Encodable for $name {
             #[inline]
-            fn consensus_encode<W: $crate::io::Write>(
+            fn consensus_encode<W: $crate::io::Write + ?Sized>(
                 &self,
                 w: &mut W,
             ) -> Result<usize, $crate::io::Error> {
@@ -433,7 +433,7 @@ macro_rules! construct_uint {
         }
 
         impl $crate::consensus::Decodable for $name {
-            fn consensus_decode<R: $crate::io::Read>(
+            fn consensus_decode<R: $crate::io::Read + ?Sized>(
                 r: &mut R,
             ) -> Result<$name, $crate::consensus::encode::Error> {
                 use $crate::consensus::Decodable;

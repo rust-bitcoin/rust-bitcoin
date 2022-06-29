@@ -79,7 +79,7 @@ impl fmt::Display for Key {
 }
 
 impl Decodable for Key {
-    fn consensus_decode<R: io::Read>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         let VarInt(byte_size): VarInt = Decodable::consensus_decode(r)?;
 
         if byte_size == 0 {
@@ -107,7 +107,7 @@ impl Decodable for Key {
 }
 
 impl Encodable for Key {
-    fn consensus_encode<W: io::Write>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = 0;
         len += VarInt((self.key.len() + 1) as u64).consensus_encode(w)?;
 
@@ -122,14 +122,14 @@ impl Encodable for Key {
 }
 
 impl Encodable for Pair {
-    fn consensus_encode<W: io::Write>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let len = self.key.consensus_encode(w)?;
         Ok(len + self.value.consensus_encode(w)?)
     }
 }
 
 impl Decodable for Pair {
-    fn consensus_decode<R: io::Read>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Ok(Pair {
             key: Decodable::consensus_decode(r)?,
             value: Decodable::consensus_decode(r)?,
@@ -138,7 +138,7 @@ impl Decodable for Pair {
 }
 
 impl<Subtype> Encodable for ProprietaryKey<Subtype> where Subtype: Copy + From<u8> + Into<u8> {
-    fn consensus_encode<W: io::Write>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = self.prefix.consensus_encode(w)? + 1;
         w.emit_u8(self.subtype.into())?;
         w.write_all(&self.key)?;
@@ -148,7 +148,7 @@ impl<Subtype> Encodable for ProprietaryKey<Subtype> where Subtype: Copy + From<u
 }
 
 impl<Subtype> Decodable for ProprietaryKey<Subtype> where Subtype: Copy + From<u8> + Into<u8> {
-    fn consensus_decode<R: io::Read>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         let prefix = Vec::<u8>::consensus_decode(r)?;
         let subtype = Subtype::from(r.read_u8()?);
         let key = read_to_end(r)?;

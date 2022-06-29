@@ -652,13 +652,13 @@ impl Transaction {
 impl_consensus_encoding!(TxOut, value, script_pubkey);
 
 impl Encodable for OutPoint {
-    fn consensus_encode<W: io::Write>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let len = self.txid.consensus_encode(w)?;
         Ok(len + self.vout.consensus_encode(w)?)
     }
 }
 impl Decodable for OutPoint {
-    fn consensus_decode<R: io::Read>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Ok(OutPoint {
             txid: Decodable::consensus_decode(r)?,
             vout: Decodable::consensus_decode(r)?,
@@ -667,7 +667,7 @@ impl Decodable for OutPoint {
 }
 
 impl Encodable for TxIn {
-    fn consensus_encode<W: io::Write>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = 0;
         len += self.previous_output.consensus_encode(w)?;
         len += self.script_sig.consensus_encode(w)?;
@@ -677,7 +677,7 @@ impl Encodable for TxIn {
 }
 impl Decodable for TxIn {
     #[inline]
-    fn consensus_decode_from_finite_reader<R: io::Read>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode_from_finite_reader<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Ok(TxIn {
             previous_output: Decodable::consensus_decode_from_finite_reader(r)?,
             script_sig: Decodable::consensus_decode_from_finite_reader(r)?,
@@ -688,7 +688,7 @@ impl Decodable for TxIn {
 }
 
 impl Encodable for Transaction {
-    fn consensus_encode<W: io::Write>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = 0;
         len += self.version.consensus_encode(w)?;
         // To avoid serialization ambiguity, no inputs means we use BIP141 serialization (see
@@ -718,7 +718,7 @@ impl Encodable for Transaction {
 }
 
 impl Decodable for Transaction {
-    fn consensus_decode_from_finite_reader<R: io::Read>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode_from_finite_reader<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         let version = i32::consensus_decode_from_finite_reader(r)?;
         let input = Vec::<TxIn>::consensus_decode_from_finite_reader(r)?;
         // segwit
@@ -952,6 +952,19 @@ mod tests {
     use crate::hash_types::*;
     use super::EcdsaSighashType;
     use crate::util::sighash::SighashCache;
+
+    const SOME_TX: &str = "0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000";
+
+    #[test]
+    fn encode_to_unsized_writer() {
+        let mut buf = [0u8; 1024];
+        let raw_tx = Vec::from_hex(SOME_TX).unwrap();
+        let tx: Transaction = Decodable::consensus_decode(&mut raw_tx.as_slice()).unwrap();
+
+        let size = tx.consensus_encode(&mut &mut buf[..]).unwrap();
+        assert_eq!(size, SOME_TX.len() / 2);
+        assert_eq!(raw_tx, &buf[..size]);
+    }
 
     #[test]
     fn test_outpoint() {

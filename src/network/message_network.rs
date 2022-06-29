@@ -106,14 +106,14 @@ pub enum RejectReason {
 }
 
 impl Encodable for RejectReason {
-    fn consensus_encode<W: io::Write>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         w.write_all(&[*self as u8])?;
         Ok(1)
     }
 }
 
 impl Decodable for RejectReason {
-    fn consensus_decode<R: io::Read>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Ok(match r.read_u8()? {
             0x01 => RejectReason::Malformed,
             0x10 => RejectReason::Invalid,

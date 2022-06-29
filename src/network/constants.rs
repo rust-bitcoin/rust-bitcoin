@@ -280,14 +280,14 @@ impl ops::BitXorAssign for ServiceFlags {
 
 impl Encodable for ServiceFlags {
     #[inline]
-    fn consensus_encode<W: io::Write>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         self.0.consensus_encode(w)
     }
 }
 
 impl Decodable for ServiceFlags {
     #[inline]
-    fn consensus_decode<R: io::Read>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Ok(ServiceFlags(Decodable::consensus_decode(r)?))
     }
 }

@@ -69,7 +69,7 @@ impl Address {
 
 impl Encodable for Address {
     #[inline]
-    fn consensus_encode<W: io::Write>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = self.services.consensus_encode(w)?;
 
         for word in &self.address {
@@ -86,7 +86,7 @@ impl Encodable for Address {
 
 impl Decodable for Address {
     #[inline]
-    fn consensus_decode<R: io::Read>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Ok(Address {
             services: Decodable::consensus_decode(r)?,
             address: read_be_address(r)?,
@@ -96,7 +96,7 @@ impl Decodable for Address {
 }
 
 /// Read a big-endian address from reader.
-fn read_be_address<R: io::Read>(r: &mut R) -> Result<[u16; 8], encode::Error> {
+fn read_be_address<R: io::Read + ?Sized>(r: &mut R) -> Result<[u16; 8], encode::Error> {
     let mut address = [0u16; 8];
     let mut buf = [0u8; 2];
 
@@ -147,8 +147,8 @@ pub enum AddrV2 {
 }
 
 impl Encodable for AddrV2 {
-    fn consensus_encode<W: io::Write>(&self, e: &mut W) -> Result<usize, io::Error> {
-        fn encode_addr<W: io::Write>(w: &mut W, network: u8, bytes: &[u8]) -> Result<usize, io::Error> {
+    fn consensus_encode<W: io::Write + ?Sized>(&self, e: &mut W) -> Result<usize, io::Error> {
+        fn encode_addr<W: io::Write + ?Sized>(w: &mut W, network: u8, bytes: &[u8]) -> Result<usize, io::Error> {
             let len = network.consensus_encode(w)?
                 + VarInt(bytes.len() as u64).consensus_encode(w)?
                 + bytes.len();
@@ -168,7 +168,7 @@ impl Encodable for AddrV2 {
 }
 
 impl Decodable for AddrV2 {
-    fn consensus_decode<R: io::Read>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         let network_id = u8::consensus_decode(r)?;
         let len = VarInt::consensus_decode(r)?.0;
         if len > 512 {
@@ -264,7 +264,7 @@ impl AddrV2Message {
 }
 
 impl Encodable for AddrV2Message {
-    fn consensus_encode<W: io::Write>(&self, w: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = 0;
         len += self.time.consensus_encode(w)?;
         len += VarInt(self.services.to_u64()).consensus_encode(w)?;
@@ -278,7 +278,7 @@ impl Encodable for AddrV2Message {
 }
 
 impl Decodable for AddrV2Message {
-    fn consensus_decode<R: io::Read>(r: &mut R) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Ok(AddrV2Message {
             time: Decodable::consensus_decode(r)?,
             services: ServiceFlags::from(VarInt::consensus_decode(r)?.0),

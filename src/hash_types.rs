@@ -25,13 +25,13 @@ use crate::hashes::{Hash, sha256, sha256d, hash160, hash_newtype};
 macro_rules! impl_hashencode {
     ($hashtype:ident) => {
         impl $crate::consensus::Encodable for $hashtype {
-            fn consensus_encode<W: $crate::io::Write>(&self, w: &mut W) -> Result<usize, $crate::io::Error> {
+            fn consensus_encode<W: $crate::io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, $crate::io::Error> {
                 self.0.consensus_encode(w)
             }
         }
 
         impl $crate::consensus::Decodable for $hashtype {
-            fn consensus_decode<R: $crate::io::Read>(r: &mut R) -> Result<Self, $crate::consensus::encode::Error> {
+            fn consensus_decode<R: $crate::io::Read + ?Sized>(r: &mut R) -> Result<Self, $crate::consensus::encode::Error> {
                 use $crate::hashes::Hash;
                 Ok(Self::from_inner(<<$hashtype as $crate::hashes::Hash>::Inner>::consensus_decode(r)?))
             }
