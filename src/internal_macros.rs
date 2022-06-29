@@ -21,12 +21,12 @@ macro_rules! impl_consensus_encoding {
     ($thing:ident, $($field:ident),+) => (
         impl $crate::consensus::Encodable for $thing {
             #[inline]
-            fn consensus_encode<S: $crate::io::Write>(
+            fn consensus_encode<R: $crate::io::Write + ?Sized>(
                 &self,
-                mut s: S,
+                r: &mut R,
             ) -> Result<usize, $crate::io::Error> {
                 let mut len = 0;
-                $(len += self.$field.consensus_encode(&mut s)?;)+
+                $(len += self.$field.consensus_encode(r)?;)+
                 Ok(len)
             }
         }
@@ -34,21 +34,22 @@ macro_rules! impl_consensus_encoding {
         impl $crate::consensus::Decodable for $thing {
 
             #[inline]
-            fn consensus_decode_from_finite_reader<D: $crate::io::Read>(
-                mut d: D,
+            fn consensus_decode_from_finite_reader<R: $crate::io::Read + ?Sized>(
+                r: &mut R,
             ) -> Result<$thing, $crate::consensus::encode::Error> {
                 Ok($thing {
-                    $($field: $crate::consensus::Decodable::consensus_decode_from_finite_reader(&mut d)?),+
+                    $($field: $crate::consensus::Decodable::consensus_decode_from_finite_reader(r)?),+
                 })
             }
 
             #[inline]
-            fn consensus_decode<D: $crate::io::Read>(
-                d: D,
+            fn consensus_decode<R: $crate::io::Read + ?Sized>(
+                r: &mut R,
             ) -> Result<$thing, $crate::consensus::encode::Error> {
-                let mut d = d.take($crate::consensus::encode::MAX_VEC_SIZE as u64);
+                use crate::io::Read as _;
+                let mut r = r.take($crate::consensus::encode::MAX_VEC_SIZE as u64);
                 Ok($thing {
-                    $($field: $crate::consensus::Decodable::consensus_decode(&mut d)?),+
+                    $($field: $crate::consensus::Decodable::consensus_decode(r.by_ref())?),+
                 })
             }
         }

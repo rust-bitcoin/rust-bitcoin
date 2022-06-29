@@ -23,7 +23,6 @@
 //! This module provides the structures and functions needed to support scripts.
 //!
 
-use crate::consensus::encode::MAX_VEC_SIZE;
 use crate::prelude::*;
 
 use crate::io;
@@ -1093,20 +1092,15 @@ impl serde::Serialize for Script {
 
 impl Encodable for Script {
     #[inline]
-    fn consensus_encode<S: io::Write>(&self, s: S) -> Result<usize, io::Error> {
-        self.0.consensus_encode(s)
+    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        self.0.consensus_encode(w)
     }
 }
 
 impl Decodable for Script {
     #[inline]
-    fn consensus_decode_from_finite_reader<D: io::Read>(d: D) -> Result<Self, encode::Error> {
-        Ok(Script(Decodable::consensus_decode_from_finite_reader(d)?))
-    }
-
-    #[inline]
-    fn consensus_decode<D: io::Read>(d: D) -> Result<Self, encode::Error> {
-        Self::consensus_decode_from_finite_reader(d.take(MAX_VEC_SIZE as u64))
+    fn consensus_decode_from_finite_reader<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        Ok(Script(Decodable::consensus_decode_from_finite_reader(r)?))
     }
 }
 

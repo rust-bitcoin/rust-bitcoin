@@ -34,8 +34,8 @@ pub enum BloomFlags {
 }
 
 impl Encodable for BloomFlags {
-    fn consensus_encode<W: io::Write>(&self, mut e: W) -> Result<usize, io::Error> {
-        e.write_all(&[match self {
+    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        w.write_all(&[match self {
             BloomFlags::None => 0,
             BloomFlags::All => 1,
             BloomFlags::PubkeyOnly => 2,
@@ -45,8 +45,8 @@ impl Encodable for BloomFlags {
 }
 
 impl Decodable for BloomFlags {
-    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
-        Ok(match d.read_u8()? {
+    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        Ok(match r.read_u8()? {
             0 => BloomFlags::None,
             1 => BloomFlags::All,
             2 => BloomFlags::PubkeyOnly,

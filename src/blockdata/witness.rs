@@ -46,8 +46,8 @@ pub struct Iter<'a> {
 }
 
 impl Decodable for Witness {
-    fn consensus_decode<D: Read>(mut d: D) -> Result<Self, Error> {
-        let witness_elements = VarInt::consensus_decode(&mut d)?.0 as usize;
+    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, Error> {
+        let witness_elements = VarInt::consensus_decode(r)?.0 as usize;
         if witness_elements == 0 {
             Ok(Witness::default())
         } else {
@@ -62,7 +62,7 @@ impl Decodable for Witness {
             for _ in 0..witness_elements {
                 second_to_last = last;
                 last = cursor;
-                let element_size_varint = VarInt::consensus_decode(&mut d)?;
+                let element_size_varint = VarInt::consensus_decode(r)?;
                 let element_size_varint_len = element_size_varint.len();
                 let element_size = element_size_varint.0 as usize;
                 let required_len = cursor
@@ -86,9 +86,9 @@ impl Decodable for Witness {
 
                 resize_if_needed(&mut content, required_len);
                 element_size_varint
-                    .consensus_encode(&mut content[cursor..cursor + element_size_varint_len])?;
+                    .consensus_encode(&mut &mut content[cursor..cursor + element_size_varint_len])?;
                 cursor += element_size_varint_len;
-                d.read_exact(&mut content[cursor..cursor + element_size])?;
+                r.read_exact(&mut content[cursor..cursor + element_size])?;
                 cursor += element_size;
             }
             content.truncate(cursor);
@@ -113,10 +113,10 @@ fn resize_if_needed(vec: &mut Vec<u8>, required_len: usize) {
 }
 
 impl Encodable for Witness {
-    fn consensus_encode<W: Write>(&self, mut writer: W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let len = VarInt(self.witness_elements as u64);
-        len.consensus_encode(&mut writer)?;
-        writer.emit_slice(&self.content[..])?;
+        len.consensus_encode(w)?;
+        w.emit_slice(&self.content[..])?;
         Ok(self.content.len() + len.len())
     }
 }
@@ -145,7 +145,7 @@ impl Witness {
             last = cursor;
             let el_len_varint = VarInt(el.len() as u64);
             el_len_varint
-                .consensus_encode(&mut content[cursor..cursor + el_len_varint.len()])
+                .consensus_encode(&mut &mut content[cursor..cursor + el_len_varint.len()])
                 .expect("writers on vec don't errors, space granted by content_size");
             cursor += el_len_varint.len();
             content[cursor..cursor + el.len()].copy_from_slice(&el);
@@ -208,7 +208,7 @@ impl Witness {
             .resize(current_content_len + element_len_varint.len() + new_element.len(), 0);
         let end_varint = current_content_len + element_len_varint.len();
         element_len_varint
-            .consensus_encode(&mut self.content[current_content_len..end_varint])
+            .consensus_encode(&mut &mut self.content[current_content_len..end_varint])
             .expect("writers on vec don't error, space granted through previous resize");
         self.content[end_varint..].copy_from_slice(new_element);
     }
@@ -225,7 +225,7 @@ impl Witness {
 
 
     fn element_at(&self, index: usize) -> Option<&[u8]> {
-        let varint = VarInt::consensus_decode(&self.content[index..]).ok()?;
+        let varint = VarInt::consensus_decode(&mut &self.content[index..]).ok()?;
         let start = index + varint.len();
         Some(&self.content[start..start + varint.0 as usize])
     }
@@ -253,7 +253,7 @@ impl<'a> Iterator for Iter<'a> {
     type Item = &'a [u8];
 
     fn next(&mut self) -> Option<Self::Item> {
-        let varint = VarInt::consensus_decode(self.inner.as_slice()).ok()?;
+        let varint = VarInt::consensus_decode(&mut self.inner.as_slice()).ok()?;
         self.inner.nth(varint.len() - 1)?; // VarInt::len returns at least 1
         let len = varint.0 as usize;
         let slice = &self.inner.as_slice()[..len];

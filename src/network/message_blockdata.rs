@@ -54,10 +54,10 @@ pub enum Inventory {
 
 impl Encodable for Inventory {
     #[inline]
-    fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, io::Error> {
+    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         macro_rules! encode_inv {
             ($code:expr, $item:expr) => {
-                u32::consensus_encode(&$code, &mut s)? + $item.consensus_encode(&mut s)?
+                u32::consensus_encode(&$code, w)? + $item.consensus_encode(w)?
             }
         }
         Ok(match *self {
@@ -74,18 +74,18 @@ impl Encodable for Inventory {
 
 impl Decodable for Inventory {
     #[inline]
-    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
-        let inv_type: u32 = Decodable::consensus_decode(&mut d)?;
+    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        let inv_type: u32 = Decodable::consensus_decode(r)?;
         Ok(match inv_type {
             0 => Inventory::Error,
-            1 => Inventory::Transaction(Decodable::consensus_decode(&mut d)?),
-            2 => Inventory::Block(Decodable::consensus_decode(&mut d)?),
-            5 => Inventory::WTx(Decodable::consensus_decode(&mut d)?),
-            0x40000001 => Inventory::WitnessTransaction(Decodable::consensus_decode(&mut d)?),
-            0x40000002 => Inventory::WitnessBlock(Decodable::consensus_decode(&mut d)?),
+            1 => Inventory::Transaction(Decodable::consensus_decode(r)?),
+            2 => Inventory::Block(Decodable::consensus_decode(r)?),
+            5 => Inventory::WTx(Decodable::consensus_decode(r)?),
+            0x40000001 => Inventory::WitnessTransaction(Decodable::consensus_decode(r)?),
+            0x40000002 => Inventory::WitnessBlock(Decodable::consensus_decode(r)?),
             tp => Inventory::Unknown {
                 inv_type: tp,
-                hash: Decodable::consensus_decode(&mut d)?,
+                hash: Decodable::consensus_decode(r)?,
             }
         })
     }

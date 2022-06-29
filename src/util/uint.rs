@@ -419,27 +419,27 @@ macro_rules! construct_uint {
 
         impl $crate::consensus::Encodable for $name {
             #[inline]
-            fn consensus_encode<S: $crate::io::Write>(
+            fn consensus_encode<W: $crate::io::Write + ?Sized>(
                 &self,
-                mut s: S,
+                w: &mut W,
             ) -> Result<usize, $crate::io::Error> {
                 let &$name(ref data) = self;
                 let mut len = 0;
                 for word in data.iter() {
-                    len += word.consensus_encode(&mut s)?;
+                    len += word.consensus_encode(w)?;
                 }
                 Ok(len)
             }
         }
 
         impl $crate::consensus::Decodable for $name {
-            fn consensus_decode<D: $crate::io::Read>(
-                mut d: D,
+            fn consensus_decode<R: $crate::io::Read + ?Sized>(
+                r: &mut R,
             ) -> Result<$name, $crate::consensus::encode::Error> {
                 use $crate::consensus::Decodable;
                 let mut ret: [u64; $n_words] = [0; $n_words];
                 for i in 0..$n_words {
-                    ret[i] = Decodable::consensus_decode(&mut d)?;
+                    ret[i] = Decodable::consensus_decode(r)?;
                 }
                 Ok($name(ret))
             }

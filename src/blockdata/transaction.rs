@@ -37,7 +37,6 @@ use crate::blockdata::constants::WITNESS_SCALE_FACTOR;
 use crate::blockdata::script::Script;
 use crate::blockdata::witness::Witness;
 use crate::consensus::{encode, Decodable, Encodable};
-use crate::consensus::encode::MAX_VEC_SIZE;
 use crate::hash_types::{Sighash, Txid, Wtxid};
 use crate::VarInt;
 use crate::util::sighash::UINT256_ONE;
@@ -731,50 +730,45 @@ impl Transaction {
 impl_consensus_encoding!(TxOut, value, script_pubkey);
 
 impl Encodable for OutPoint {
-    fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, io::Error> {
-        let len = self.txid.consensus_encode(&mut s)?;
-        Ok(len + self.vout.consensus_encode(s)?)
+    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        let len = self.txid.consensus_encode(w)?;
+        Ok(len + self.vout.consensus_encode(w)?)
     }
 }
 impl Decodable for OutPoint {
-    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
+    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Ok(OutPoint {
-            txid: Decodable::consensus_decode(&mut d)?,
-            vout: Decodable::consensus_decode(d)?,
+            txid: Decodable::consensus_decode(r)?,
+            vout: Decodable::consensus_decode(r)?,
         })
     }
 }
 
 impl Encodable for TxIn {
-    fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, io::Error> {
+    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = 0;
-        len += self.previous_output.consensus_encode(&mut s)?;
-        len += self.script_sig.consensus_encode(&mut s)?;
-        len += self.sequence.consensus_encode(s)?;
+        len += self.previous_output.consensus_encode(w)?;
+        len += self.script_sig.consensus_encode(w)?;
+        len += self.sequence.consensus_encode(w)?;
         Ok(len)
     }
 }
 impl Decodable for TxIn {
     #[inline]
-    fn consensus_decode_from_finite_reader<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
+    fn consensus_decode_from_finite_reader<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Ok(TxIn {
-            previous_output: Decodable::consensus_decode_from_finite_reader(&mut d)?,
-            script_sig: Decodable::consensus_decode_from_finite_reader(&mut d)?,
-            sequence: Decodable::consensus_decode_from_finite_reader(d)?,
+            previous_output: Decodable::consensus_decode_from_finite_reader(r)?,
+            script_sig: Decodable::consensus_decode_from_finite_reader(r)?,
+            sequence: Decodable::consensus_decode_from_finite_reader(r)?,
             witness: Witness::default(),
         })
-    }
-
-    #[inline]
-    fn consensus_decode<D: io::Read>(d: D) -> Result<Self, encode::Error> {
-        Self::consensus_decode_from_finite_reader(d.take(MAX_VEC_SIZE as u64))
     }
 }
 
 impl Encodable for Transaction {
-    fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, io::Error> {
+    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = 0;
-        len += self.version.consensus_encode(&mut s)?;
+        len += self.version.consensus_encode(w)?;
         // To avoid serialization ambiguity, no inputs means we use BIP141 serialization (see
         // `Transaction` docs for full explanation).
         let mut have_witness = self.input.is_empty();
@@ -785,36 +779,36 @@ impl Encodable for Transaction {
             }
         }
         if !have_witness {
-            len += self.input.consensus_encode(&mut s)?;
-            len += self.output.consensus_encode(&mut s)?;
+            len += self.input.consensus_encode(w)?;
+            len += self.output.consensus_encode(w)?;
         } else {
-            len += 0u8.consensus_encode(&mut s)?;
-            len += 1u8.consensus_encode(&mut s)?;
-            len += self.input.consensus_encode(&mut s)?;
-            len += self.output.consensus_encode(&mut s)?;
+            len += 0u8.consensus_encode(w)?;
+            len += 1u8.consensus_encode(w)?;
+            len += self.input.consensus_encode(w)?;
+            len += self.output.consensus_encode(w)?;
             for input in &self.input {
-                len += input.witness.consensus_encode(&mut s)?;
+                len += input.witness.consensus_encode(w)?;
             }
         }
-        len += self.lock_time.consensus_encode(s)?;
+        len += self.lock_time.consensus_encode(w)?;
         Ok(len)
     }
 }
 
 impl Decodable for Transaction {
-    fn consensus_decode_from_finite_reader<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
-        let version = i32::consensus_decode_from_finite_reader(&mut d)?;
-        let input = Vec::<TxIn>::consensus_decode_from_finite_reader(&mut d)?;
+    fn consensus_decode_from_finite_reader<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        let version = i32::consensus_decode_from_finite_reader(r)?;
+        let input = Vec::<TxIn>::consensus_decode_from_finite_reader(r)?;
         // segwit
         if input.is_empty() {
-            let segwit_flag = u8::consensus_decode_from_finite_reader(&mut d)?;
+            let segwit_flag = u8::consensus_decode_from_finite_reader(r)?;
             match segwit_flag {
                 // BIP144 input witnesses
                 1 => {
-                    let mut input = Vec::<TxIn>::consensus_decode_from_finite_reader(&mut d)?;
-                    let output = Vec::<TxOut>::consensus_decode_from_finite_reader(&mut d)?;
+                    let mut input = Vec::<TxIn>::consensus_decode_from_finite_reader(r)?;
+                    let output = Vec::<TxOut>::consensus_decode_from_finite_reader(r)?;
                     for txin in input.iter_mut() {
-                        txin.witness = Decodable::consensus_decode_from_finite_reader(&mut d)?;
+                        txin.witness = Decodable::consensus_decode_from_finite_reader(r)?;
                     }
                     if !input.is_empty() && input.iter().all(|input| input.witness.is_empty()) {
                         Err(encode::Error::ParseFailed("witness flag set but no witnesses present"))
@@ -823,7 +817,7 @@ impl Decodable for Transaction {
                             version,
                             input,
                             output,
-                            lock_time: Decodable::consensus_decode_from_finite_reader(d)?,
+                            lock_time: Decodable::consensus_decode_from_finite_reader(r)?,
                         })
                     }
                 }
@@ -835,14 +829,10 @@ impl Decodable for Transaction {
             Ok(Transaction {
                 version,
                 input,
-                output: Decodable::consensus_decode_from_finite_reader(&mut d)?,
-                lock_time: Decodable::consensus_decode_from_finite_reader(d)?,
+                output: Decodable::consensus_decode_from_finite_reader(r)?,
+                lock_time: Decodable::consensus_decode_from_finite_reader(r)?,
             })
         }
-    }
-
-    fn consensus_decode<D: io::Read>(d: D) -> Result<Self, encode::Error> {
-        Self::consensus_decode_from_finite_reader(d.take(MAX_VEC_SIZE as u64))
     }
 }
 
@@ -1040,6 +1030,19 @@ mod tests {
     use crate::hash_types::*;
     use super::EcdsaSighashType;
     use crate::util::sighash::SighashCache;
+
+    const SOME_TX: &str = "0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000";
+
+    #[test]
+    fn encode_to_unsized_writer() {
+        let mut buf = [0u8; 1024];
+        let raw_tx = Vec::from_hex(SOME_TX).unwrap();
+        let tx: Transaction = Decodable::consensus_decode(&mut raw_tx.as_slice()).unwrap();
+
+        let size = tx.consensus_encode(&mut &mut buf[..]).unwrap();
+        assert_eq!(size, SOME_TX.len() / 2);
+        assert_eq!(raw_tx, &buf[..size]);
+    }
 
     #[test]
     fn test_outpoint() {
