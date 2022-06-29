@@ -101,7 +101,8 @@ pub use crate::blockdata::script::Script;
 #[allow(deprecated)]
 pub use crate::blockdata::transaction::SigHashType;
 pub use crate::blockdata::transaction::{
-    EcdsaSighashType, OutPoint, Sequence, Transaction, TxIn, TxOut,
+    EcdsaSighashType, NonStandardSighashType, OutPoint, Sequence, SighashTypeParseError,
+    Transaction, TxIn, TxOut,
 };
 pub use crate::blockdata::witness::Witness;
 pub use crate::consensus::encode::VarInt;
@@ -113,7 +114,7 @@ pub use crate::util::ecdsa::{self, EcdsaSig, EcdsaSigError};
 pub use crate::util::key::{KeyPair, PrivateKey, PublicKey, XOnlyPublicKey};
 pub use crate::util::merkleblock::MerkleBlock;
 pub use crate::util::schnorr::{self, SchnorrSig, SchnorrSigError};
-pub use crate::util::sighash::SchnorrSighashType;
+pub use crate::util::sighash::{SchnorrSighashType, SighashCache};
 pub use crate::util::{psbt, Error};
 
 #[cfg(not(feature = "std"))]
