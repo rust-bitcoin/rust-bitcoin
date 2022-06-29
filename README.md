@@ -158,4 +158,5 @@ See [CHANGELOG.md](CHANGELOG.md).
 ## Licensing
 
 The code in this project is licensed under the [Creative Commons CC0 1.0
-Universal license](LICENSE).
+Universal license](LICENSE). We use the [SPDX license list](https://spdx.org/licenses/) and [SPDX
+IDs](https://spdx.dev/ids/).

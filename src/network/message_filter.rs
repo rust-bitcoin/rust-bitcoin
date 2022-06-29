@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: CC0-1.0
+
 //! Bitcoin Client Side Block Filtering network messages.
 //!
 //! This module describes BIP157 Client Side Block Filtering network messages.

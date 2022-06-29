@@ -1,22 +1,10 @@
-// Rust Bitcoin Library
-// Written by
-//   John L. Jegutanis
-//
-// To the extent possible under law, the author(s) have dedicated all
-// copyright and related and neighboring rights to this software to
-// the public domain worldwide. This software is distributed without
-// any warranty.
-//
-// You should have received a copy of the CC0 Public Domain Dedication
-// along with this software.
-// If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
-//
+// Written by John L. Jegutanis
+// SPDX-License-Identifier: CC0-1.0
 //
 // This code was translated from merkleblock.h, merkleblock.cpp and pmt_tests.cpp
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2018 The Bitcoin Core developers
-// Distributed under the MIT software license, see the accompanying
-// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+// SPDX-License-Identifier: MIT
 
 //! Merkle Block and Partial Merkle Tree.
 //!
