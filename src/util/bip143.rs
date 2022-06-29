@@ -9,15 +9,16 @@
 //! signatures, which are placed in the scriptSig.
 //!
 
+use core::ops::{Deref, DerefMut};
+
+use crate::io;
+
 use crate::hashes::Hash;
 use crate::hash_types::Sighash;
 use crate::blockdata::script::Script;
-use crate::blockdata::witness::Witness;
 use crate::blockdata::transaction::{Transaction, EcdsaSighashType};
+use crate::blockdata::witness::Witness;
 use crate::consensus::encode;
-
-use crate::io;
-use core::ops::{Deref, DerefMut};
 use crate::util::sighash;
 
 /// A replacement for SigHashComponents which supports all sighash modes
