@@ -161,31 +161,14 @@ pub enum Error {
     /// Tried to read an array off the stack as a number when it was more than 4 bytes
     NumericOverflow,
     /// Error validating the script with bitcoinconsensus library
-    BitcoinConsensus(BitcoinConsensusError),
+    #[cfg(feature = "bitcoinconsensus")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
+    BitcoinConsensus(bitcoinconsensus::Error),
     /// Can not find the spent output
     UnknownSpentOutput(OutPoint),
     /// Can not serialize the spending transaction
     SerializationError
 }
-
-/// A [`bitcoinconsensus::Error`] alias. Exists to enable the compiler to ensure `bitcoinconsensus`
-/// feature gating is correct.
-#[cfg(feature = "bitcoinconsensus")]
-#[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
-pub type BitcoinConsensusError = bitcoinconsensus::Error;
-
-/// Dummy error type used when `bitcoinconsensus` feature is not enabled.
-#[cfg(not(feature = "bitcoinconsensus"))]
-#[cfg_attr(docsrs, doc(cfg(not(feature = "bitcoinconsensus"))))]
-#[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Clone, Copy)]
-pub struct BitcoinConsensusError {
-    _uninhabited: Uninhabited,
-}
-
-#[cfg(not(feature = "bitcoinconsensus"))]
-#[cfg_attr(docsrs, doc(cfg(not(feature = "bitcoinconsensus"))))]
-#[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Clone, Copy)]
-enum Uninhabited {}
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -193,6 +176,7 @@ impl fmt::Display for Error {
             Error::NonMinimalPush => "non-minimal datapush",
             Error::EarlyEndOfScript => "unexpected end of script",
             Error::NumericOverflow => "numeric overflow (number on stack larger than 4 bytes)",
+            #[cfg(feature = "bitcoinconsensus")]
             Error::BitcoinConsensus(ref _n) => "bitcoinconsensus verification failed",
             Error::UnknownSpentOutput(ref _point) => "unknown spent output Transaction::verify()",
             Error::SerializationError => "can not serialize the spending transaction in Transaction::verify()",
@@ -211,9 +195,10 @@ impl std::error::Error for Error {
             NonMinimalPush
             | EarlyEndOfScript
             | NumericOverflow
-            | BitcoinConsensus(_)
             | UnknownSpentOutput(_)
             | SerializationError => None,
+            #[cfg(feature = "bitcoinconsensus")]
+            BitcoinConsensus(_) => None,
         }
     }
 }
