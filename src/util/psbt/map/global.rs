@@ -12,6 +12,8 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
+use core::convert::TryFrom;
+
 use crate::prelude::*;
 
 use crate::io::{self, Cursor, Read};
@@ -191,7 +193,7 @@ impl PartiallySignedTransaction {
                                 return Err(Error::InvalidKey(pair.key).into())
                             }
                         }
-                        PSBT_GLOBAL_PROPRIETARY => match proprietary.entry(raw::ProprietaryKey::from_key(pair.key.clone())?) {
+                        PSBT_GLOBAL_PROPRIETARY => match proprietary.entry(raw::ProprietaryKey::try_from(pair.key.clone())?) {
                             btree_map::Entry::Vacant(empty_key) => {
                                 empty_key.insert(pair.value);
                             },

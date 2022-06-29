@@ -20,6 +20,7 @@
 
 use crate::prelude::*;
 use core::fmt;
+use core::convert::TryFrom;
 
 use crate::io;
 use crate::consensus::encode::{self, ReadExt, WriteExt, Decodable, Encodable, VarInt, serialize, deserialize, MAX_VEC_SIZE};
@@ -160,12 +161,9 @@ impl<Subtype> Decodable for ProprietaryKey<Subtype> where Subtype: Copy + From<u
 impl<Subtype> ProprietaryKey<Subtype> where Subtype: Copy + From<u8> + Into<u8> {
     /// Constructs [ProprietaryKey] from [Key]; returns
     /// [Error::InvalidProprietaryKey] if `key` do not starts with 0xFC byte
+    #[deprecated(since = "0.29.0", note = "use try_from instead")]
     pub fn from_key(key: Key) -> Result<Self, Error> {
-        if key.type_value != 0xFC {
-            return Err(Error::InvalidProprietaryKey)
-        }
-
-        Ok(deserialize(&key.key)?)
+        Self::try_from(key)
     }
 
     /// Constructs full [Key] corresponding to this proprietary key type
@@ -174,5 +172,23 @@ impl<Subtype> ProprietaryKey<Subtype> where Subtype: Copy + From<u8> + Into<u8> 
             type_value: 0xFC,
             key: serialize(self)
         }
+    }
+}
+
+impl<Subtype> TryFrom<Key> for ProprietaryKey<Subtype>
+where
+    Subtype:Copy + From<u8> + Into<u8> {
+    type Error = Error;
+
+    /// Constructs a [`ProprietaryKey`] from a [`Key`].
+    ///
+    /// # Errors
+    /// Returns [`Error::InvalidProprietaryKey`] if `key` does not start with `0xFC` byte.
+    fn try_from(key: Key) -> Result<Self, Self::Error> {
+        if key.type_value != 0xFC {
+            return Err(Error::InvalidProprietaryKey)
+        }
+
+        Ok(deserialize(&key.key)?)
     }
 }

@@ -14,6 +14,7 @@
 
 use crate::prelude::*;
 use core;
+use core::convert::TryFrom;
 
 use crate::io;
 
@@ -158,15 +159,11 @@ impl TapTree {
     /// # Returns
     /// A [`TapTree`] iff the `builder` is complete, otherwise return [`IncompleteTapTree`]
     /// error with the content of incomplete `builder` instance.
+    #[deprecated(since = "0.29.0", note = "use try_from instead")]
     pub fn from_builder(builder: TaprootBuilder) -> Result<Self, IncompleteTapTree> {
-        if !builder.is_finalized() {
-            Err(IncompleteTapTree::NotFinalized(builder))
-        } else if builder.has_hidden_nodes() {
-            Err(IncompleteTapTree::HiddenParts(builder))
-        } else {
-            Ok(TapTree(builder))
-        }
+        Self::try_from(builder)
     }
+
 
     /// Converts self into builder [`TaprootBuilder`]. The builder is guaranteed to be finalized.
     pub fn into_builder(self) -> TaprootBuilder {
@@ -190,6 +187,25 @@ impl TapTree {
             }
             // This should be unreachable as we Taptree is already finalized
             _ => unreachable!("non-finalized tree builder inside TapTree"),
+        }
+    }
+}
+
+impl TryFrom<TaprootBuilder> for TapTree {
+    type Error = IncompleteTapTree;
+
+    /// Constructs [`TapTree`] from a [`TaprootBuilder`] if it is complete binary tree.
+    ///
+    /// # Returns
+    /// A [`TapTree`] iff the `builder` is complete, otherwise return [`IncompleteTapTree`]
+    /// error with the content of incomplete `builder` instance.
+    fn try_from(builder: TaprootBuilder) -> Result<Self, Self::Error> {
+        if !builder.is_finalized() {
+            Err(IncompleteTapTree::NotFinalized(builder))
+        } else if builder.has_hidden_nodes() {
+            Err(IncompleteTapTree::HiddenParts(builder))
+        } else {
+            Ok(TapTree(builder))
         }
     }
 }
@@ -233,7 +249,7 @@ impl Output {
                 }
             }
             PSBT_OUT_PROPRIETARY => {
-                let key = raw::ProprietaryKey::from_key(raw_key.clone())?;
+                let key = raw::ProprietaryKey::try_from(raw_key.clone())?;
                 match self.proprietary.entry(key) {
                     btree_map::Entry::Vacant(empty_key) => {
                         empty_key.insert(raw_value);

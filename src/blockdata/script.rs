@@ -27,6 +27,7 @@ use crate::consensus::encode::MAX_VEC_SIZE;
 use crate::prelude::*;
 
 use crate::io;
+use core::convert::TryFrom;
 use core::{fmt, default::Default};
 use core::ops::Index;
 
@@ -498,7 +499,7 @@ impl Script {
     /// Returns witness version of the script, if any, assuming the script is a `scriptPubkey`.
     #[inline]
     pub fn witness_version(&self) -> Option<WitnessVersion> {
-        self.0.get(0).and_then(|opcode| WitnessVersion::from_opcode(opcodes::All::from(*opcode)).ok())
+        self.0.get(0).and_then(|opcode| WitnessVersion::try_from(opcodes::All::from(*opcode)).ok())
     }
 
     /// Checks whether a script pubkey is a P2SH output.
@@ -550,7 +551,7 @@ impl Script {
         }
         let ver_opcode = opcodes::All::from(self.0[0]); // Version 0 or PUSHNUM_1-PUSHNUM_16
         let push_opbyte = self.0[1]; // Second byte push opcode 2-40 bytes
-        WitnessVersion::from_opcode(ver_opcode).is_ok()
+        WitnessVersion::try_from(ver_opcode).is_ok()
             && push_opbyte >= opcodes::all::OP_PUSHBYTES_2.to_u8()
             && push_opbyte <= opcodes::all::OP_PUSHBYTES_40.to_u8()
             // Check that the rest of the script has the correct size

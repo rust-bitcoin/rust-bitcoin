@@ -34,6 +34,7 @@
 
 use crate::prelude::*;
 
+use core::convert::TryFrom;
 use core::fmt;
 use core::num::ParseIntError;
 use core::str::FromStr;
@@ -243,8 +244,8 @@ impl FromStr for WitnessVersion {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let version = s.parse().map_err(Error::UnparsableWitnessVersion)?;
-        WitnessVersion::from_num(version)
+        let version: u8 = s.parse().map_err(Error::UnparsableWitnessVersion)?;
+        WitnessVersion::try_from(version)
     }
 }
 
@@ -258,8 +259,9 @@ impl WitnessVersion {
     /// # Errors
     /// If the integer does not correspond to any witness version, errors with
     /// [`Error::InvalidWitnessVersion`].
+    #[deprecated(since = "0.29.0", note = "use try_from instead")]
     pub fn from_u5(value: ::bech32::u5) -> Result<Self, Error> {
-        WitnessVersion::from_num(value.to_u8())
+        Self::try_from(value)
     }
 
     /// Converts an 8-bit unsigned integer value into [`WitnessVersion`] variant.
@@ -270,27 +272,9 @@ impl WitnessVersion {
     /// # Errors
     /// If the integer does not correspond to any witness version, errors with
     /// [`Error::InvalidWitnessVersion`].
+    #[deprecated(since = "0.29.0", note = "use try_from instead")]
     pub fn from_num(no: u8) -> Result<Self, Error> {
-        Ok(match no {
-            0 => WitnessVersion::V0,
-            1 => WitnessVersion::V1,
-            2 => WitnessVersion::V2,
-            3 => WitnessVersion::V3,
-            4 => WitnessVersion::V4,
-            5 => WitnessVersion::V5,
-            6 => WitnessVersion::V6,
-            7 => WitnessVersion::V7,
-            8 => WitnessVersion::V8,
-            9 => WitnessVersion::V9,
-            10 => WitnessVersion::V10,
-            11 => WitnessVersion::V11,
-            12 => WitnessVersion::V12,
-            13 => WitnessVersion::V13,
-            14 => WitnessVersion::V14,
-            15 => WitnessVersion::V15,
-            16 => WitnessVersion::V16,
-            wrong => return Err(Error::InvalidWitnessVersion(wrong)),
-        })
+        Self::try_from(no)
     }
 
     /// Converts bitcoin script opcode into [`WitnessVersion`] variant.
@@ -301,13 +285,9 @@ impl WitnessVersion {
     /// # Errors
     /// If the opcode does not correspond to any witness version, errors with
     /// [`Error::MalformedWitnessVersion`].
+    #[deprecated(since = "0.29.0", note = "use try_from instead")]
     pub fn from_opcode(opcode: opcodes::All) -> Result<Self, Error> {
-        match opcode.to_u8() {
-            0 => Ok(WitnessVersion::V0),
-            version if version >= opcodes::all::OP_PUSHNUM_1.to_u8() && version <= opcodes::all::OP_PUSHNUM_16.to_u8() =>
-                WitnessVersion::from_num(version - opcodes::all::OP_PUSHNUM_1.to_u8() + 1),
-            _ => Err(Error::MalformedWitnessVersion)
-        }
+        Self::try_from(opcode)
     }
 
     /// Converts bitcoin script [`Instruction`] (parsed opcode) into [`WitnessVersion`] variant.
@@ -319,12 +299,9 @@ impl WitnessVersion {
     /// # Errors
     /// If the opcode does not correspond to any witness version, errors with
     /// [`Error::MalformedWitnessVersion`] for the rest of opcodes.
+    #[deprecated(since = "0.29.0", note = "use try_from instead")]
     pub fn from_instruction(instruction: Instruction) -> Result<Self, Error> {
-        match instruction {
-            Instruction::Op(op) => WitnessVersion::from_opcode(op),
-            Instruction::PushBytes(bytes) if bytes.is_empty() => Ok(WitnessVersion::V0),
-            Instruction::PushBytes(_) => Err(Error::MalformedWitnessVersion),
-        }
+        Self::try_from(instruction)
     }
 
     /// Returns integer version number representation for a given [`WitnessVersion`] value.
@@ -351,6 +328,102 @@ impl WitnessVersion {
         match self {
             WitnessVersion::V0 => bech32::Variant::Bech32,
             _ => bech32::Variant::Bech32m,
+        }
+    }
+}
+
+impl TryFrom<bech32::u5> for WitnessVersion {
+    type Error = Error;
+
+    /// Converts 5-bit unsigned integer value matching single symbol from Bech32(m) address encoding
+    /// ([`bech32::u5`]) into [`WitnessVersion`] variant.
+    ///
+    /// # Returns
+    /// Version of the Witness program.
+    ///
+    /// # Errors
+    /// If the integer does not correspond to any witness version, errors with
+    /// [`Error::InvalidWitnessVersion`].
+    fn try_from(value: bech32::u5) -> Result<Self, Self::Error> {
+        Self::try_from(value.to_u8())
+    }
+}
+
+impl TryFrom<u8> for WitnessVersion {
+    type Error = Error;
+
+    /// Converts an 8-bit unsigned integer value into [`WitnessVersion`] variant.
+    ///
+    /// # Returns
+    /// Version of the Witness program.
+    ///
+    /// # Errors
+    /// If the integer does not correspond to any witness version, errors with
+    /// [`Error::InvalidWitnessVersion`].
+    fn try_from(no: u8) -> Result<Self, Self::Error> {
+        use WitnessVersion::*;
+
+        Ok(match no {
+            0 => V0,
+            1 => V1,
+            2 => V2,
+            3 => V3,
+            4 => V4,
+            5 => V5,
+            6 => V6,
+            7 => V7,
+            8 => V8,
+            9 => V9,
+            10 => V10,
+            11 => V11,
+            12 => V12,
+            13 => V13,
+            14 => V14,
+            15 => V15,
+            16 => V16,
+            wrong => return Err(Error::InvalidWitnessVersion(wrong)),
+        })
+    }
+}
+
+impl TryFrom<opcodes::All> for WitnessVersion {
+    type Error = Error;
+
+    /// Converts bitcoin script opcode into [`WitnessVersion`] variant.
+    ///
+    /// # Returns
+    /// Version of the Witness program (for opcodes in range of `OP_0`..`OP_16`).
+    ///
+    /// # Errors
+    /// If the opcode does not correspond to any witness version, errors with
+    /// [`Error::MalformedWitnessVersion`].
+    fn try_from(opcode: opcodes::All) -> Result<Self, Self::Error> {
+        match opcode.to_u8() {
+            0 => Ok(WitnessVersion::V0),
+            version if version >= opcodes::all::OP_PUSHNUM_1.to_u8() && version <= opcodes::all::OP_PUSHNUM_16.to_u8() =>
+                WitnessVersion::try_from(version - opcodes::all::OP_PUSHNUM_1.to_u8() + 1),
+            _ => Err(Error::MalformedWitnessVersion)
+        }
+    }
+}
+
+impl<'a> TryFrom<Instruction<'a>> for WitnessVersion {
+    type Error = Error;
+
+    /// Converts bitcoin script [`Instruction`] (parsed opcode) into [`WitnessVersion`] variant.
+    ///
+    /// # Returns
+    /// Version of the Witness program for [`Instruction::Op`] and [`Instruction::PushBytes`] with
+    /// byte value within `1..=16` range.
+    ///
+    /// # Errors
+    /// If the opcode does not correspond to any witness version, errors with
+    /// [`Error::MalformedWitnessVersion`] for the rest of opcodes.
+    fn try_from(instruction: Instruction) -> Result<Self, Self::Error> {
+        match instruction {
+            Instruction::Op(op) => WitnessVersion::try_from(op),
+            Instruction::PushBytes(bytes) if bytes.is_empty() => Ok(WitnessVersion::V0),
+            Instruction::PushBytes(_) => Err(Error::MalformedWitnessVersion),
         }
     }
 }
@@ -405,7 +478,7 @@ impl Payload {
             }
 
             Payload::WitnessProgram {
-                version: WitnessVersion::from_opcode(opcodes::All::from(script[0]))?,
+                version: WitnessVersion::try_from(opcodes::All::from(script[0]))?,
                 program: script[2..].to_vec(),
             }
         } else {
@@ -856,7 +929,7 @@ impl FromStr for Address {
             // Get the script version and program (converted from 5-bit to 8-bit)
             let (version, program): (WitnessVersion, Vec<u8>) = {
                 let (v, p5) = payload.split_at(1);
-                (WitnessVersion::from_u5(v[0])?, bech32::FromBase32::from_base32(p5)?)
+                (WitnessVersion::try_from(v[0])?, bech32::FromBase32::from_base32(p5)?)
             };
 
             if program.len() < 2 || program.len() > 40 {
@@ -1277,7 +1350,7 @@ mod tests {
         ];
         let segwit_payload = (0..=16).map(|version| {
             Payload::WitnessProgram {
-                version: WitnessVersion::from_num(version).unwrap(),
+                version: WitnessVersion::try_from(version).unwrap(),
                 program: vec![]
             }
         }).collect::<Vec<_>>();

@@ -18,6 +18,7 @@
 //!
 
 use core::fmt;
+
 use crate::prelude::*;
 
 use secp256k1::{self, Secp256k1, Verification, constants};
@@ -238,7 +239,7 @@ impl SchnorrSig {
             },
             65 => {
                 let (hash_ty, sig) = sl.split_last().expect("Slice len checked == 65");
-                let hash_ty = SchnorrSighashType::from_u8(*hash_ty)
+                let hash_ty = SchnorrSighashType::from_consensus_u8(*hash_ty)
                     .map_err(|_| SchnorrSigError::InvalidSighashType(*hash_ty))?;
                 let sig = secp256k1::schnorr::Signature::from_slice(sig)
                     .map_err(SchnorrSigError::Secp256k1)?;
