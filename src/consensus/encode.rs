@@ -724,10 +724,23 @@ fn sha2_checksum(data: &[u8]) -> [u8; 4] {
 impl Encodable for CheckedData {
     #[inline]
     fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, io::Error> {
-        (self.0.len() as u32).consensus_encode(&mut s)?;
-        sha2_checksum(&self.0).consensus_encode(&mut s)?;
-        s.emit_slice(&self.0)?;
-        Ok(8 + self.0.len())
+        let mut len_buffer = [0u8; 4];
+        (self.0.len() as u32).consensus_encode(&mut len_buffer[..])?;
+        let checksum = sha2_checksum(&self.0);
+
+        let bufs = [
+            io::IoSlice::new(&len_buffer),
+            io::IoSlice::new(&checksum),
+            io::IoSlice::new(&self.0)
+        ];
+
+        let written = s.write_vectored(&bufs)?;
+        let expected = 8 + self.0.len();
+        if written != expected {
+            let remaining: Vec<u8> = len_buffer.iter().chain(checksum.iter().chain(self.0.iter())).skip(written).cloned().collect();
+            s.write_all(&remaining)?;
+        }
+        Ok(expected)
     }
 }
 
