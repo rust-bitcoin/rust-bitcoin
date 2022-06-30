@@ -31,6 +31,14 @@ if [ "$duplicate_dependencies" -ne 0 ]; then
     exit 1
 fi
 
+if [ "$DO_LINT" = true ]
+then
+    cargo clippy --all-features --all-targets -- -D warnings
+    cargo clippy --example bip32 -- -D warnings
+    cargo clippy --example handshake -- -D warnings
+    cargo clippy --example ecdsa-psbt --features=bitcoinconsensus -- -D warnings
+fi
+
 echo "********* Testing std *************"
 # Test without any features other than std first
 cargo test --verbose --no-default-features --features="std"
