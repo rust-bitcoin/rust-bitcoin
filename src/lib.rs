@@ -43,7 +43,7 @@
 #![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
 
 // Experimental features we need
-#![cfg_attr(all(test, feature = "unstable"), feature(test))]
+#![cfg_attr(all(nightly, test, feature = "unstable"), feature(test))]
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
@@ -93,7 +93,7 @@ pub extern crate base64;
 #[cfg(all(test, feature = "serde"))] extern crate serde_json;
 #[cfg(all(test, feature = "serde"))] extern crate serde_test;
 #[cfg(all(test, feature = "serde"))] extern crate bincode;
-#[cfg(all(test, feature = "unstable"))] extern crate test;
+#[cfg(all(nightly, test, feature = "unstable"))] extern crate test;
 
 #[cfg(target_pointer_width = "16")]
 compile_error!("rust-bitcoin cannot be used on 16-bit architectures");
@@ -198,7 +198,8 @@ mod prelude {
     pub use std::collections::HashSet;
 }
 
-#[cfg(all(test, feature = "unstable"))] use tests::EmptyWrite;
+#[cfg(all(nightly, test, feature = "unstable"))]
+use tests::EmptyWrite;
 
 #[cfg(all(test, feature = "unstable"))]
 mod tests {

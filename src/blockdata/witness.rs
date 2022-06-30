@@ -439,7 +439,7 @@ mod test {
 }
 
 
-#[cfg(all(test, feature = "unstable"))]
+#[cfg(all(nightly, test, feature = "unstable"))]
 mod benches {
     use test::{Bencher, black_box};
     use super::Witness;
