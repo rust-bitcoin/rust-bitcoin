@@ -19,7 +19,7 @@
 //!
 
 macro_rules! construct_uint {
-    ($name:ident, $n_words:expr) => {
+    ($name:ident, $n_words:literal) => {
         /// Little-endian large integer type
         #[derive(Copy, Clone, PartialEq, Eq, Hash, Default)]
         pub struct $name(pub [u64; $n_words]);
