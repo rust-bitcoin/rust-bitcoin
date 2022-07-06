@@ -362,8 +362,8 @@ impl BlockTransactions {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::consensus::encode::{deserialize, serialize};
     use crate::hashes::hex::FromHex;
-    use crate::consensus::encode::deserialize;
     use crate::{
         Block, BlockHash, BlockHeader, OutPoint, Script, Sequence, Transaction, TxIn, TxMerkleNode,
         TxOut, Txid, Witness,
@@ -429,5 +429,57 @@ mod test {
         let compact_expected = deserialize(&raw_compact).unwrap();
 
         assert_eq!(compact, compact_expected);
+    }
+
+    #[test]
+    fn test_getblocktx_differential_encoding_de_and_serialization() {
+        let testcases = vec![
+            // differentially encoded VarInts, indicies
+            (vec![4, 0, 5, 1, 10], vec![0, 6, 8, 19]),
+            (vec![1, 0], vec![0]),
+            (vec![5, 0, 0, 0, 0, 0], vec![0, 1, 2, 3, 4]),
+            (vec![3, 1, 1, 1], vec![1, 3, 5]),
+            (vec![3, 0, 0, 253, 0, 1], vec![0, 1, 258]), // .., 253, 0, 1] == VarInt(256)
+        ];
+        let deser_errorcases = vec![
+            vec![2, 255, 254, 255, 255, 255, 255, 255, 255, 255, 0], // .., 255, 254, .., 255] == VarInt(u64::MAX-1)
+            vec![1, 255, 255, 255, 255, 255, 255, 255, 255, 255], // .., 255, 255, .., 255] == VarInt(u64::MAX)
+        ];
+        for testcase in testcases {
+            {
+                // test deserialization
+                let mut raw: Vec<u8> = [0u8; 32].to_vec();
+                raw.extend(testcase.0.clone());
+                let btr: BlockTransactionsRequest = deserialize(&raw.to_vec()).unwrap();
+                assert_eq!(testcase.1, btr.indexes);
+            }
+            {
+                // test serialization
+                let raw: Vec<u8> = serialize(&BlockTransactionsRequest {
+                    block_hash: Hash::all_zeros(),
+                    indexes: testcase.1,
+                });
+                let mut expected_raw: Vec<u8> = [0u8; 32].to_vec();
+                expected_raw.extend(testcase.0);
+                assert_eq!(expected_raw, raw);
+            }
+        }
+        for errorcase in deser_errorcases {
+            {
+                // test that we return Err() if deserialization fails (and don't panic)
+                let mut raw: Vec<u8> = [0u8; 32].to_vec();
+                raw.extend(errorcase);
+                assert!(deserialize::<BlockTransactionsRequest>(&raw.to_vec()).is_err());
+            }
+        }
+    }
+
+    #[test]
+    #[should_panic] // 'attempt to add with overflow' in consensus_encode()
+    fn test_getblocktx_panic_when_encoding_u64_max() {
+        serialize(&BlockTransactionsRequest {
+            block_hash: Hash::all_zeros(),
+            indexes: vec![core::u64::MAX],
+        });
     }
 }

@@ -453,6 +453,8 @@ mod test {
     use crate::blockdata::script::Script;
     use crate::network::message_bloom::{FilterAdd, FilterLoad, BloomFlags};
     use crate::MerkleBlock;
+    use crate::network::message_compact_blocks::{GetBlockTxn, SendCmpct};
+    use crate::util::bip152::BlockTransactionsRequest;
 
     fn hash(slice: [u8;32]) -> Hash {
         Hash::from_slice(&slice).unwrap()
@@ -467,6 +469,9 @@ mod test {
         let header: BlockHeader = deserialize(&Vec::from_hex("010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914cd74d6e49ffff001d323b3a7b").unwrap()).unwrap();
         let script: Script = deserialize(&Vec::from_hex("1976a91431a420903c05a0a7de2de40c9f02ebedbacdc17288ac").unwrap()).unwrap();
         let merkle_block: MerkleBlock = deserialize(&Vec::from_hex("0100000079cda856b143d9db2c1caff01d1aecc8630d30625d10e8b4b8b0000000000000b50cc069d6a3e33e3ff84a5c41d9d3febe7c770fdcc96b2c3ff60abe184f196367291b4d4c86041b8fa45d630100000001b50cc069d6a3e33e3ff84a5c41d9d3febe7c770fdcc96b2c3ff60abe184f19630101").unwrap()).unwrap();
+        let cmptblock = deserialize(&Vec::from_hex("00000030d923ad36ff2d955abab07f8a0a6e813bc6e066b973e780c5e36674cad5d1cd1f6e265f2a17a0d35cbe701fe9d06e2c6324cfe135f6233e8b767bfa3fb4479b71115dc562ffff7f2006000000000000000000000000010002000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0302ee00ffffffff0100f9029500000000015100000000").unwrap()).unwrap();
+        let blocktxn = deserialize(&Vec::from_hex("2e93c0cff39ff605020072d96bc3a8d20b8447e294d08092351c8583e08d9b5a01020000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff0402dc0000ffffffff0200f90295000000001976a9142b4569203694fc997e13f2c0a1383b9e16c77a0d88ac0000000000000000266a24aa21a9ede2f61c3f71d1defd3fa999dfa36953755c690689799962b48bebd836974e8cf90120000000000000000000000000000000000000000000000000000000000000000000000000").unwrap()).unwrap();
+
 
         let msgs = vec![
             NetworkMessage::Version(version_msg),
@@ -502,6 +507,10 @@ mod test {
             NetworkMessage::WtxidRelay,
             NetworkMessage::AddrV2(vec![AddrV2Message{ addr: AddrV2::Ipv4(Ipv4Addr::new(127, 0, 0, 1)), port: 0, services: ServiceFlags::NONE, time: 0 }]),
             NetworkMessage::SendAddrV2,
+            NetworkMessage::CmpctBlock(cmptblock),
+            NetworkMessage::GetBlockTxn(GetBlockTxn { txs_request: BlockTransactionsRequest { block_hash: hash([11u8; 32]).into(), indexes: vec![0, 1, 2, 3, 10, 3002] } }),
+            NetworkMessage::BlockTxn(blocktxn),
+            NetworkMessage::SendCmpct(SendCmpct{send_compact: true, version: 8333}),
         ];
 
         for msg in msgs {
