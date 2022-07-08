@@ -921,7 +921,6 @@ mod tests {
     use super::*;
 
     use core::str::FromStr;
-    use std::convert::TryInto;
     use blockdata::constants::WITNESS_SCALE_FACTOR;
     use blockdata::script::Script;
     use consensus::encode::serialize;
@@ -1638,9 +1637,14 @@ mod tests {
             output: vec![]
         };
 
-        let pk_data: [u8; 20] = Vec::from_hex("b8e2d839dd21088b78bebfea3e3e632181197982").unwrap().try_into().unwrap();
+        let pk_data = Vec::from_hex("b8e2d839dd21088b78bebfea3e3e632181197982").unwrap();
 
-        tx.add_burn_output(0, &pk_data);
+        let mut pk_array: [u8; 20] = [0; 20];
+        for (index, kek) in pk_array.iter_mut().enumerate() {
+            *kek = *pk_data.get(index).unwrap();
+        }
+
+        tx.add_burn_output(10000, &pk_array);
 
         let mut expected_buf = tx.txid().as_inner().to_vec();
         let mut expected_index = vec![0,0,0,0];
@@ -1651,7 +1655,7 @@ mod tests {
 
         assert_eq!(out_point_buffer.to_vec(), expected_buf);
 
-        assert_eq!(tx.out_point_buffer(1), None);
+        assert!(tx.out_point_buffer(1).is_none());
     }
 
     #[test]
@@ -1663,9 +1667,14 @@ mod tests {
             output: vec![]
         };
 
-        let pk_data: [u8; 20] =  Vec::from_hex("b8e2d839dd21088b78bebfea3e3e632181197982").unwrap().try_into().unwrap();
-        
-        tx.add_burn_output(10000, &pk_data);
+        let pk_data = Vec::from_hex("b8e2d839dd21088b78bebfea3e3e632181197982").unwrap();
+
+        let mut pk_array: [u8; 20] = [0; 20];
+        for (index, kek) in pk_array.iter_mut().enumerate() {
+            *kek = *pk_data.get(index).unwrap();
+        }
+
+        tx.add_burn_output(10000, &pk_array);
 
         let output = tx.output.get(0).unwrap();
 
