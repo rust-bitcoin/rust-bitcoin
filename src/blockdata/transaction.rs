@@ -1684,7 +1684,7 @@ mod tests {
         let data = &output.script_pubkey.as_bytes()[2..];
 
         assert_eq!(data.len(), 20);
-        assert_eq!(data, &pk_data);
+        assert_eq!(&data, &pk_data.as_slice());
     }
 }
 
