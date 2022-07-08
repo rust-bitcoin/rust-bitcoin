@@ -80,7 +80,7 @@ if [ "$AS_DEPENDENCY" = true ]
 then
     cargo new dep_test
     cd dep_test
-    echo 'bitcoin = { path = "..", features = ["use-serde"] }' >> Cargo.toml
+    echo 'dashcore = { path = "..", features = ["use-serde"] }' >> Cargo.toml
 
     cargo test --verbose
 fi
