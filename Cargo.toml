@@ -20,7 +20,7 @@ rand = ["secp256k1/rand-std"]
 use-serde = ["serde", "bitcoin_hashes/serde", "secp256k1/serde", "serde-big-array"]
 secp-lowmemory = ["secp256k1/lowmemory"]
 secp-recovery = ["secp256k1/recovery"]
-signer = ["secp-recovery", "rand", "dep:hex", "dep:anyhow"]
+signer = ["secp-recovery", "rand", "hex", "anyhow"]
 
 # At least one of std, no-std must be enabled.
 #
@@ -46,8 +46,8 @@ serde = { version = "1", features = [ "derive" ], optional = true }
 hashbrown = { version = "0.8", optional = true }
 serde-big-array = { version = "0.4.1", optional = true}
 
-anyhow = { version="1.0", optional=true}
-hex = { version="0.4", optional=true}
+anyhow = { version= "1.0", optional = true}
+hex = { version= "0.4", optional = true}
 
 [dev-dependencies]
 serde_json = "<1.0.45"
