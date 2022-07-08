@@ -28,7 +28,7 @@ macro_rules! serde_round_trip (
     })
 );
 
-
+/// Checks that error contains a message
 #[cfg(test)]
 #[macro_export]
 macro_rules! assert_error_contains {
