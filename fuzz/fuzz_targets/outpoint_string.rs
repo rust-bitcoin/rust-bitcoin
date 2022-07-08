@@ -1,8 +1,8 @@
 
-extern crate bitcoin;
+extern crate dashcore;
 
-use bitcoin::blockdata::transaction::OutPoint;
-use bitcoin::consensus::encode;
+use dashcore::blockdata::transaction::OutPoint;
+use dashcore::consensus::encode;
 
 use std::str::FromStr;
 

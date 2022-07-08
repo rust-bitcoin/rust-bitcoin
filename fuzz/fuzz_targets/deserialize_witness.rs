@@ -1,7 +1,7 @@
-extern crate bitcoin;
+extern crate dashcore;
 
-use bitcoin::consensus::{serialize, deserialize};
-use bitcoin::blockdata::witness::Witness;
+use dashcore::consensus::{serialize, deserialize};
+use dashcore::blockdata::witness::Witness;
 
 fn do_test(data: &[u8]) {
     let w: Result<Witness, _> = deserialize(data);

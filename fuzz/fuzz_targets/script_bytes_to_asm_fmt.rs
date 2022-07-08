@@ -1,4 +1,4 @@
-extern crate bitcoin;
+extern crate dashcore;
 
 use std::fmt;
 
@@ -17,7 +17,7 @@ impl fmt::Write for NullWriter {
 
 fn do_test(data: &[u8]) {
     let mut writer = NullWriter;
-    bitcoin::Script::bytes_to_asm_fmt(data, &mut writer);
+    dashcore::Script::bytes_to_asm_fmt(data, &mut writer);
 }
 
 #[cfg(feature = "afl")]
