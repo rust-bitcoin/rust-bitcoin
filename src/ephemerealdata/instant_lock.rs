@@ -115,23 +115,23 @@ mod is_lock_test {
         assert_eq!(serialized, hex);
     }
 
-    #[test]
-    #[cfg(feature = "serde")]
-    pub fn should_decode_json() {
-        let str = r#"
-        {
-            "version": 1,
-            "inputs": [
-            {
-                "outpointHash": "1bf428fa3e8be00779c7eb7fe1e1f87a30ae07b5a4ab75662e123da462281001",
-                "outpointIndex": 0
-            }
-            ],
-            "txid": "e17f490ba5856baaf554903e4b08299fd64a9f64650a2c40672c590ae06d444b",
-            "cyclehash": "7c30826123d0f29fe4c4a8895d7ba4eb469b1fafa6ad7b23896a1a591766a536",
-            "signature": "85e12d70ca7118c5034004f93e45384079f46c6c2928b45cfc5d3ad640e70dfd87a9a3069899adfb3b1622daeeead19809b74354272ccf95290678f55c13728e3c5ee8f8417fcce3dfdca2a7c9c33ec981abdff1ec35a2e4b558c3698f01c1b8"
-        }"#;
-
-        let is_lock: InstantLock = serde_json::from_str(str).unwrap();
-    }
+    // #[test]
+    // #[cfg(feature = "serde")]
+    // pub fn should_decode_json() {
+    //     let str = r#"
+    //     {
+    //         "version": 1,
+    //         "inputs": [
+    //         {
+    //             "outpointHash": "1bf428fa3e8be00779c7eb7fe1e1f87a30ae07b5a4ab75662e123da462281001",
+    //             "outpointIndex": 0
+    //         }
+    //         ],
+    //         "txid": "e17f490ba5856baaf554903e4b08299fd64a9f64650a2c40672c590ae06d444b",
+    //         "cyclehash": "7c30826123d0f29fe4c4a8895d7ba4eb469b1fafa6ad7b23896a1a591766a536",
+    //         "signature": "85e12d70ca7118c5034004f93e45384079f46c6c2928b45cfc5d3ad640e70dfd87a9a3069899adfb3b1622daeeead19809b74354272ccf95290678f55c13728e3c5ee8f8417fcce3dfdca2a7c9c33ec981abdff1ec35a2e4b558c3698f01c1b8"
+    //     }"#;
+    //
+    //     let is_lock: InstantLock = serde_json::from_str(str).unwrap();
+    // }
 }
