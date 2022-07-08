@@ -414,7 +414,7 @@ impl DerivationPath {
     /// Concatenate `self` with `path` and return the resulting new path.
     ///
     /// ```
-    /// use bitcoin::util::bip32::{DerivationPath, ChildNumber};
+    /// use dashcore::util::bip32::{DerivationPath, ChildNumber};
     /// use std::str::FromStr;
     ///
     /// let base = DerivationPath::from_str("m/42").unwrap();

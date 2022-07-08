@@ -86,8 +86,8 @@ impl OutPoint {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin::blockdata::constants::genesis_block;
-    /// use bitcoin::network::constants::Network;
+    /// use dashcore::blockdata::constants::genesis_block;
+    /// use dashcore::network::constants::Network;
     ///
     /// let block = genesis_block(Network::Bitcoin);
     /// let tx = &block.txdata[0];
@@ -1638,7 +1638,7 @@ mod tests {
             output: vec![]
         };
 
-        let pk_data: [u8; 20] = hex::decode("b8e2d839dd21088b78bebfea3e3e632181197982").unwrap().try_into().unwrap();
+        let pk_data: [u8; 20] = Vec::from_hex("b8e2d839dd21088b78bebfea3e3e632181197982").unwrap().try_into().unwrap();
 
         tx.add_burn_output(0, &pk_data);
 
@@ -1663,7 +1663,7 @@ mod tests {
             output: vec![]
         };
 
-        let pk_data: [u8; 20] = hex::decode("b8e2d839dd21088b78bebfea3e3e632181197982").unwrap().try_into().unwrap();
+        let pk_data: [u8; 20] =  Vec::from_hex("b8e2d839dd21088b78bebfea3e3e632181197982").unwrap().try_into().unwrap();
         
         tx.add_burn_output(10000, &pk_data);
 
@@ -1672,7 +1672,7 @@ mod tests {
         assert_eq!(output.value, 10000);
         assert!(output.script_pubkey.is_op_return());
 
-        let data = &output.script_pubkey.as_bytes()[1..];
+        let data = &output.script_pubkey.as_bytes()[2..];
 
         assert_eq!(data.len(), 20);
         assert_eq!(data, &pk_data);

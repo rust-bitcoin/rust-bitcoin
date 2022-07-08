@@ -94,8 +94,9 @@ mod is_lock_test {
         //     signature: "85e12d70ca7118c5034004f93e45384079f46c6c2928b45cfc5d3ad640e70dfd87a9a3069899adfb3b1622daeeead19809b74354272ccf95290678f55c13728e3c5ee8f8417fcce3dfdca2a7c9c33ec981abdff1ec35a2e4b558c3698f01c1b8"
         // };
         let vec = Vec::from_hex(hex).unwrap();
-        let expected_hash = "4ee6a4ed2b6c70efd401c6c91dfaf6c61badd13f80ec07c281bb93d5270fcd58";
-        let expected_request_id = "495be44677e82895a9396fef02c6e9afc1f01d4aff70622b9f78e0e10d57064c";
+
+        // let expected_hash = "4ee6a4ed2b6c70efd401c6c91dfaf6c61badd13f80ec07c281bb93d5270fcd58";
+        // let expected_request_id = "495be44677e82895a9396fef02c6e9afc1f01d4aff70622b9f78e0e10d57064c";
         
         let is_lock: InstantLock = deserialize(&vec).unwrap();
         assert_eq!(is_lock.version, 1);

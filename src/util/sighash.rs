@@ -735,9 +735,9 @@ impl<R: DerefMut<Target=Transaction>> SighashCache<R> {
     ///
     /// This allows in-line signing such as
     /// ```
-    /// use bitcoin::blockdata::transaction::{Transaction, EcdsaSighashType};
-    /// use bitcoin::util::sighash::SighashCache;
-    /// use bitcoin::Script;
+    /// use dashcore::blockdata::transaction::{Transaction, EcdsaSighashType};
+    /// use dashcore::util::sighash::SighashCache;
+    /// use dashcore::Script;
     ///
     /// let mut tx_to_sign = Transaction { version: 2, lock_time: 0, input: Vec::new(), output: Vec::new() };
     /// let input_count = tx_to_sign.input.len();

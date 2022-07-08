@@ -164,9 +164,9 @@ impl<R: DerefMut<Target = Transaction>> SigHashCache<R> {
     /// panics if `input_index` is out of bounds with respect of the number of inputs
     ///
     /// ```
-    /// use bitcoin::blockdata::transaction::{Transaction, EcdsaSighashType};
-    /// use bitcoin::util::bip143::SigHashCache;
-    /// use bitcoin::Script;
+    /// use dashcore::blockdata::transaction::{Transaction, EcdsaSighashType};
+    /// use dashcore::util::bip143::SigHashCache;
+    /// use dashcore::Script;
     ///
     /// let mut tx_to_sign = Transaction { version: 2, lock_time: 0, input: Vec::new(), output: Vec::new() };
     /// let input_count = tx_to_sign.input.len();

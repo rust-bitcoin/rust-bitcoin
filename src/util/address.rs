@@ -18,11 +18,11 @@
 //! # Example: creating a new address from a randomly-generated key pair
 //!
 //! ```rust
-//! use bitcoin::network::constants::Network;
-//! use bitcoin::util::address::Address;
-//! use bitcoin::PublicKey;
-//! use bitcoin::secp256k1::Secp256k1;
-//! use bitcoin::secp256k1::rand::thread_rng;
+//! use dashcore::network::constants::Network;
+//! use dashcore::util::address::Address;
+//! use dashcore::PublicKey;
+//! use dashcore::secp256k1::Secp256k1;
+//! use dashcore::secp256k1::rand::thread_rng;
 //!
 //! // Generate random key pair.
 //! let s = Secp256k1::new();
@@ -688,7 +688,7 @@ impl Address {
     /// network a simple comparison is not enough anymore. Instead this function can be used.
     ///
     /// ```rust
-    /// use bitcoin::{Address, Network};
+    /// use dashcore::{Address, Network};
     ///
     /// let address: Address = "2N83imGV3gPwBzKJQvWJ7cRUY2SpUyU6A5e".parse().unwrap();
     /// assert!(address.is_valid_for_network(Network::Testnet));
