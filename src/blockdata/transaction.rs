@@ -609,6 +609,32 @@ impl Transaction {
     pub fn is_explicitly_rbf(&self) -> bool {
         self.input.iter().any(|input| input.sequence < (0xffffffff - 1))
     }
+
+    /// Adds an output that burns Dash. Used to top up a Dash Identity;
+    /// accepts hash of the public key to prove ownership of the burnt
+    /// dash on Dash Platform.
+    pub fn add_burn_output(&mut self, satoshis_to_burn: u64, data: &[u8; 20]) {
+        let burn_script = Script::new_op_return(data);
+        let output = TxOut {
+            value: satoshis_to_burn,
+            script_pubkey: burn_script,
+        };
+        self.output.push(output)
+    }
+
+    /// Gives an OutPoint buffer for the output at a given index
+    pub fn out_point_buffer(&self, output_index: usize) -> Option<[u8; 36]> {
+        self.output.get(output_index).map(|_a| {
+            let mut result: [u8; 36] = [0; 36];
+            let hash = self.txid();
+
+            let (one, two) = result.split_at_mut(32);
+            one.copy_from_slice(hash.as_inner());
+            let output_index_bytes: [u8; 4] = (output_index as u32).to_le_bytes();
+            two.copy_from_slice(&output_index_bytes);
+            result
+        })
+    }
 }
 
 impl_consensus_encoding!(TxOut, value, script_pubkey);
@@ -895,6 +921,7 @@ mod tests {
     use super::*;
 
     use core::str::FromStr;
+    use std::convert::TryInto;
     use blockdata::constants::WITNESS_SCALE_FACTOR;
     use blockdata::script::Script;
     use consensus::encode::serialize;
@@ -1600,6 +1627,55 @@ mod tests {
             script::Error::BitcoinConsensus(_) => {},
             _ => panic!("Wrong error type"),
         }
+    }
+
+    #[test]
+    fn out_point_buffer() {
+        let mut tx = Transaction {
+            version: 0,
+            lock_time: 0,
+            input: vec![],
+            output: vec![]
+        };
+
+        let pk_data: [u8; 20] = hex::decode("b8e2d839dd21088b78bebfea3e3e632181197982").unwrap().try_into().unwrap();
+
+        tx.add_burn_output(0, &pk_data);
+
+        let mut expected_buf = tx.txid().as_inner().to_vec();
+        let mut expected_index = vec![0,0,0,0];
+        // 0 serialized as 32 bits
+        expected_buf.append(&mut expected_index);
+
+        let out_point_buffer = tx.out_point_buffer(0).unwrap();
+
+        assert_eq!(out_point_buffer.to_vec(), expected_buf);
+
+        assert_eq!(tx.out_point_buffer(1), None);
+    }
+
+    #[test]
+    fn add_burn_output() {
+        let mut tx = Transaction {
+            version: 0,
+            lock_time: 0,
+            input: vec![],
+            output: vec![]
+        };
+
+        let pk_data: [u8; 20] = hex::decode("b8e2d839dd21088b78bebfea3e3e632181197982").unwrap().try_into().unwrap();
+        
+        tx.add_burn_output(10000, &pk_data);
+
+        let output = tx.output.get(0).unwrap();
+
+        assert_eq!(output.value, 10000);
+        assert!(output.script_pubkey.is_op_return());
+
+        let data = &output.script_pubkey.as_bytes()[1..];
+
+        assert_eq!(data.len(), 20);
+        assert_eq!(data, &pk_data);
     }
 }
 
