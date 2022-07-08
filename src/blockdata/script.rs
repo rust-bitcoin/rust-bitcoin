@@ -1067,8 +1067,10 @@ impl serde::Serialize for Script {
     where
         S: serde::Serializer,
     {
+        use crate::hashes::hex::ToHex;
+
         if serializer.is_human_readable() {
-            serializer.serialize_str(&format!("{:x}", self))
+            serializer.serialize_str(&self.to_hex())
         } else {
             serializer.serialize_bytes(self.as_bytes())
         }
@@ -1158,7 +1160,7 @@ mod test {
                                    .push_opcode(opcodes::all::OP_EQUALVERIFY)
                                    .push_opcode(opcodes::all::OP_CHECKSIG)
                                    .into_script();
-        assert_eq!(&format!("{:x}", script), "76a91416e1ae70ff0fa102905d4af297f6912bda6cce1988ac");
+        assert_eq!(script.to_hex(), "76a91416e1ae70ff0fa102905d4af297f6912bda6cce1988ac");
     }
 
     #[test]
@@ -1198,71 +1200,71 @@ mod test {
         let simple = Builder::new()
             .push_verify()
             .into_script();
-        assert_eq!(format!("{:x}", simple), "69");
+        assert_eq!(simple.to_hex(), "69");
         let simple2 = Builder::from(vec![])
             .push_verify()
             .into_script();
-        assert_eq!(format!("{:x}", simple2), "69");
+        assert_eq!(simple2.to_hex(), "69");
 
         let nonverify = Builder::new()
             .push_verify()
             .push_verify()
             .into_script();
-        assert_eq!(format!("{:x}", nonverify), "6969");
+        assert_eq!(nonverify.to_hex(), "6969");
         let nonverify2 = Builder::from(vec![0x69])
             .push_verify()
             .into_script();
-        assert_eq!(format!("{:x}", nonverify2), "6969");
+        assert_eq!(nonverify2.to_hex(), "6969");
 
         let equal = Builder::new()
             .push_opcode(opcodes::all::OP_EQUAL)
             .push_verify()
             .into_script();
-        assert_eq!(format!("{:x}", equal), "88");
+        assert_eq!(equal.to_hex(), "88");
         let equal2 = Builder::from(vec![0x87])
             .push_verify()
             .into_script();
-        assert_eq!(format!("{:x}", equal2), "88");
+        assert_eq!(equal2.to_hex(), "88");
 
         let numequal = Builder::new()
             .push_opcode(opcodes::all::OP_NUMEQUAL)
             .push_verify()
             .into_script();
-        assert_eq!(format!("{:x}", numequal), "9d");
+        assert_eq!(numequal.to_hex(), "9d");
         let numequal2 = Builder::from(vec![0x9c])
             .push_verify()
             .into_script();
-        assert_eq!(format!("{:x}", numequal2), "9d");
+        assert_eq!(numequal2.to_hex(), "9d");
 
         let checksig = Builder::new()
             .push_opcode(opcodes::all::OP_CHECKSIG)
             .push_verify()
             .into_script();
-        assert_eq!(format!("{:x}", checksig), "ad");
+        assert_eq!(checksig.to_hex(), "ad");
         let checksig2 = Builder::from(vec![0xac])
             .push_verify()
             .into_script();
-        assert_eq!(format!("{:x}", checksig2), "ad");
+        assert_eq!(checksig2.to_hex(), "ad");
 
         let checkmultisig = Builder::new()
             .push_opcode(opcodes::all::OP_CHECKMULTISIG)
             .push_verify()
             .into_script();
-        assert_eq!(format!("{:x}", checkmultisig), "af");
+        assert_eq!(checkmultisig.to_hex(), "af");
         let checkmultisig2 = Builder::from(vec![0xae])
             .push_verify()
             .into_script();
-        assert_eq!(format!("{:x}", checkmultisig2), "af");
+        assert_eq!(checkmultisig2.to_hex(), "af");
 
         let trick_slice = Builder::new()
             .push_slice(&[0xae]) // OP_CHECKMULTISIG
             .push_verify()
             .into_script();
-        assert_eq!(format!("{:x}", trick_slice), "01ae69");
+        assert_eq!(trick_slice.to_hex(), "01ae69");
         let trick_slice2 = Builder::from(vec![0x01, 0xae])
             .push_verify()
             .into_script();
-        assert_eq!(format!("{:x}", trick_slice2), "01ae69");
+        assert_eq!(trick_slice2.to_hex(), "01ae69");
    }
 
     #[test]
