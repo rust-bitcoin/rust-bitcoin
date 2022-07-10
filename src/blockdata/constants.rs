@@ -53,6 +53,8 @@ pub const SCRIPT_ADDRESS_PREFIX_TEST: u8 = 196; // 0xc4
 pub const MAX_SCRIPT_ELEMENT_SIZE: usize = 520;
 /// How may blocks between halvings.
 pub const SUBSIDY_HALVING_INTERVAL: u32 = 210_000;
+/// Maximum allowed value for an integer in Script.
+pub const MAX_SCRIPTNUM_VALUE: u32 = 0x80000000; // 2^31
 
 /// In Bitcoind this is insanely described as ~((u256)0 >> 32)
 pub fn max_target(_: Network) -> Uint256 {
