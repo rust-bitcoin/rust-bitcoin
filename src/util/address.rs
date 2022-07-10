@@ -85,6 +85,8 @@ pub enum Error {
     ExcessiveScriptSize,
     /// Script is not a p2pkh, p2sh or witness program.
     UnrecognizedScript,
+    /// Address type is either invalid or not supported in rust-bitcoin.
+    UnknownAddressType(String),
 }
 
 impl fmt::Display for Error {
@@ -101,7 +103,8 @@ impl fmt::Display for Error {
             Error::InvalidSegwitV0ProgramLength(l) => write!(f, "a v0 witness program must be either of length 20 or 32 bytes: length={}", l),
             Error::UncompressedPubkey => write!(f, "an uncompressed pubkey was used where it is not allowed"),
             Error::ExcessiveScriptSize => write!(f, "script size exceed 520 bytes"),
-            Error::UnrecognizedScript => write!(f, "script is not a p2pkh, p2sh or witness program")
+            Error::UnrecognizedScript => write!(f, "script is not a p2pkh, p2sh or witness program"),
+            Error::UnknownAddressType(ref s) => write!(f, "unknown address type: '{}' is either invalid or not supported in rust-bitcoin", s),
         }
     }
 }
@@ -124,7 +127,8 @@ impl std::error::Error for Error {
             | InvalidSegwitV0ProgramLength(_)
             | UncompressedPubkey
             | ExcessiveScriptSize
-            | UnrecognizedScript => None,
+            | UnrecognizedScript
+            | UnknownAddressType(_) => None,
         }
     }
 }
@@ -172,7 +176,7 @@ impl fmt::Display for AddressType {
 }
 
 impl FromStr for AddressType {
-    type Err = ();
+    type Err = Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "p2pkh" => Ok(AddressType::P2pkh),
@@ -180,7 +184,7 @@ impl FromStr for AddressType {
             "p2wpkh" => Ok(AddressType::P2wpkh),
             "p2wsh" => Ok(AddressType::P2wsh),
             "p2tr" => Ok(AddressType::P2tr),
-            _ => Err(()),
+            _ => Err(Error::UnknownAddressType(s.to_owned())),
         }
     }
 }
@@ -1509,5 +1513,18 @@ mod tests {
         assert_eq!(Address::from_script(&bad_p2wpkh, Network::Bitcoin), expected);
         assert_eq!(Address::from_script(&bad_p2wsh, Network::Bitcoin), expected);
         assert_eq!(Address::from_script(&invalid_segwitv0_script, Network::Bitcoin), Err(Error::InvalidSegwitV0ProgramLength(17)));
+    }
+
+    #[test]
+    fn valid_address_parses_correctly() {
+        let addr = AddressType::from_str("p2tr").expect("false negative while parsing address");
+        assert_eq!(addr, AddressType::P2tr);
+    }
+
+    #[test]
+    fn invalid_address_parses_error() {
+        let got = AddressType::from_str("invalid");
+        let want = Err(Error::UnknownAddressType("invalid".to_string()));
+        assert_eq!(got, want);
     }
 }
