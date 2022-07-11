@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: CC0-1.0
+
 macro_rules! define_slice_to_be {
     ($name: ident, $type: ty) => {
         #[inline]
