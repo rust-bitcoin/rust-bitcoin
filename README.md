@@ -110,6 +110,11 @@ shell alias to check your documentation changes build correctly.
 alias build-docs='RUSTDOCFLAGS="--cfg docsrs" cargo +nightly rustdoc --features="$FEATURES" -- -D rustdoc::broken-intra-doc-links'
 ```
 
+### Running benchmarks
+
+We use a custom Rust compiler configuration conditional to guard the bench mark code. To run the
+bench marks use: `RUSTFLAGS='--cfg=bench' cargo +nightly bench`.
+
 ## Pull Requests
 
 Every PR needs at least two reviews to get merged. During the review phase

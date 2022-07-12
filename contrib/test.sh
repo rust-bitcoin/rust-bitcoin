@@ -77,7 +77,7 @@ then
     )
 fi
 
-# Bench if told to
+# Bench if told to, only works with non-stable toolchain (nightly, beta).
 if [ "$DO_BENCH" = true ]
 then
     if [ "NIGHTLY" = false ]
@@ -90,7 +90,7 @@ then
         fi
         exit 1
     fi
-    cargo bench --features unstable
+    RUSTFLAGS='--cfg=bench' cargo bench
 fi
 
 # Use as dependency if told to
