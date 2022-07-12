@@ -590,15 +590,15 @@ impl ExtendedPrivKey {
 
         hmac_engine.input(&endian::u32_to_array_be(u32::from(i)));
         let hmac_result: Hmac<sha512::Hash> = Hmac::from_engine(hmac_engine);
-        let mut sk = secp256k1::SecretKey::from_slice(&hmac_result[..32])?;
-        sk.add_assign(&self.private_key[..])?;
+        let sk = secp256k1::SecretKey::from_slice(&hmac_result[..32]).expect("statistically impossible to hit");
+        let tweaked = sk.add_tweak(&self.private_key.into()).expect("statistically impossible to hit");
 
         Ok(ExtendedPrivKey {
             network: self.network,
             depth: self.depth + 1,
             parent_fingerprint: self.fingerprint(secp),
             child_number: i,
-            private_key: sk,
+            private_key: tweaked,
             chain_code: ChainCode::from(&hmac_result[32..])
         })
     }
@@ -731,15 +731,14 @@ impl ExtendedPubKey {
         i: ChildNumber,
     ) -> Result<ExtendedPubKey, Error> {
         let (sk, chain_code) = self.ckd_pub_tweak(i)?;
-        let mut pk = self.public_key;
-        pk.add_exp_assign(secp, &sk[..])?;
+        let tweaked = self.public_key.add_exp_tweak(secp, &sk.into())?;
 
         Ok(ExtendedPubKey {
             network: self.network,
             depth: self.depth + 1,
             parent_fingerprint: self.fingerprint(),
             child_number: i,
-            public_key: pk,
+            public_key: tweaked,
             chain_code,
         })
     }

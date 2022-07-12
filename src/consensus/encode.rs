@@ -1115,7 +1115,7 @@ mod tests {
 
             data.clear();
             data64.clear();
-            let len = thread_rng().gen_range(1, 256);
+            let len = thread_rng().gen_range(1..256);
             data.resize(len, 0u8);
             data64.resize(len, 0u64);
             let mut arr33 = [0u8; 33];

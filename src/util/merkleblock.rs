@@ -715,7 +715,7 @@ mod tests {
     impl PartialMerkleTree {
         /// Flip one bit in one of the hashes - this should break the authentication
         fn damage(&mut self, rng: &mut ThreadRng) {
-            let n = rng.gen_range(0, self.hashes.len());
+            let n = rng.gen_range(0..self.hashes.len());
             let bit = rng.gen::<u8>();
             let hashes = &mut self.hashes;
             let mut hash = hashes[n].into_inner();
