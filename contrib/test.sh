@@ -13,6 +13,8 @@ then
     export RUSTFLAGS="-C link-dead-code"
 fi
 
+cargo --version
+rustc --version
 
 echo "********* Testing std *************"
 # Test without any features other than std first
