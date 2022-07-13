@@ -16,6 +16,12 @@ fi
 cargo --version
 rustc --version
 
+# Work out if we are using a nightly toolchain.
+NIGHTLY=false
+if cargo --version | grep nightly; then
+    NIGHTLY=true
+fi
+
 echo "********* Testing std *************"
 # Test without any features other than std first
 cargo test --verbose --no-default-features --features="std"
@@ -74,6 +80,16 @@ fi
 # Bench if told to
 if [ "$DO_BENCH" = true ]
 then
+    if [ "NIGHTLY" = false ]
+    then
+        if [ -n "TOOLCHAIN" ]
+        then
+            echo "TOOLCHAIN is set to a non-nightly toolchain but DO_BENCH requires a nightly toolchain"
+        else
+            echo "DO_BENCH requires a nightly toolchain"
+        fi
+        exit 1
+    fi
     cargo bench --features unstable
 fi
 
