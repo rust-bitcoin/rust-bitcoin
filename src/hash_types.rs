@@ -9,7 +9,7 @@
 //! hash).
 //!
 
-use crate::hashes::{Hash, sha256, sha256d, hash160, hash_newtype};
+use bitcoin_hashes::{sha256, sha256d, hash160, hash_newtype};
 
 macro_rules! impl_hashencode {
     ($hashtype:ident) => {

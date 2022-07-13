@@ -567,7 +567,7 @@ impl<R: Deref<Target = Transaction>> SighashCache<R> {
         value: u64,
         sighash_type: EcdsaSighashType,
     ) -> Result<(), Error> {
-        let zero_hash = sha256d::Hash::default();
+        let zero_hash = sha256d::Hash::all_zeros();
 
         let (sighash, anyone_can_pay) = sighash_type.split_anyonecanpay_flag();
 
