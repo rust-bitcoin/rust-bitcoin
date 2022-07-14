@@ -32,6 +32,9 @@ Supports (or should support)
 For JSONRPC interaction with Bitcoin Core, it is recommended to use
 [rust-bitcoincore-rpc](https://github.com/rust-bitcoin/rust-bitcoincore-rpc).
 
+It is recommended to always use [cargo-crev](https://github.com/crev-dev/cargo-crev)
+to verify the trustworthiness of each of your dependencies, including this one.
+
 ## Known limitations
 
 ### Consensus
