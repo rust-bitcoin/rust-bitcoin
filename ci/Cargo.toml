@@ -1,0 +1,16 @@
+[package]
+name = "ci"
+version = "0.1.0"
+authors = ["Tobin C. Harding <me@tobin.cc>", "The rust-bitcoin Devs"]
+license = "CC0-1.0"
+homepage = "https://github.com/rust-bitcoin/ci/README.md"
+repository = "https://github.com/rust-bitcoin"
+documentation = "https://github.com/rust-bitcoin/ci/README.md"
+description = "Continuous Integration: rust-bitcoin test runner"
+keywords = ["bitocin", "continuous integration", "ci", "rust"]
+readme = "README.md"
+edition = "2018"
+
+[dependencies]
+clap = { version = "3.2.12", features = ["derive"] }
+cmd_lib = "1.3.0"
