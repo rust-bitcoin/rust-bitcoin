@@ -353,7 +353,7 @@ mod tests {
     use secp256k1::{Secp256k1, self};
 
     use crate::blockdata::script::Script;
-    use crate::blockdata::transaction::{Transaction, TxIn, TxOut, OutPoint};
+    use crate::blockdata::transaction::{Transaction, TxIn, TxOut, OutPoint, Sequence};
     use crate::network::constants::Network::Bitcoin;
     use crate::consensus::encode::{deserialize, serialize, serialize_hex};
     use crate::util::bip32::{ChildNumber, ExtendedPrivKey, ExtendedPubKey, KeySource};
@@ -447,7 +447,7 @@ mod tests {
                         vout: 0,
                     },
                     script_sig: Script::new(),
-                    sequence: 4294967294,
+                    sequence: Sequence::ENABLE_LOCKTIME_NO_RBF,
                     witness: Witness::default(),
                 }],
                 output: vec![
@@ -518,7 +518,7 @@ mod tests {
                     vout: 1,
                 },
                 script_sig: hex_script!("160014be18d152a9b012039daf3da7de4f53349eecb985"),
-                sequence: 4294967295,
+                sequence: Sequence::MAX,
                 witness: Witness::from_vec(vec![Vec::from_hex("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105").unwrap()]),
             }],
             output: vec![
@@ -607,7 +607,7 @@ mod tests {
         use crate::hash_types::Txid;
 
         use crate::blockdata::script::Script;
-        use crate::blockdata::transaction::{EcdsaSighashType, Transaction, TxIn, TxOut, OutPoint};
+        use crate::blockdata::transaction::{EcdsaSighashType, Transaction, TxIn, TxOut, OutPoint, Sequence};
         use crate::consensus::encode::serialize_hex;
         use crate::util::psbt::map::{Map, Input, Output};
         use crate::util::psbt::raw;
@@ -705,7 +705,7 @@ mod tests {
                             vout: 0,
                         },
                         script_sig: Script::new(),
-                        sequence: 4294967294,
+                        sequence: Sequence::ENABLE_LOCKTIME_NO_RBF,
                         witness: Witness::default(),
                     }],
                     output: vec![
@@ -736,7 +736,7 @@ mod tests {
                                 vout: 1,
                             },
                             script_sig: hex_script!("160014be18d152a9b012039daf3da7de4f53349eecb985"),
-                            sequence: 4294967295,
+                            sequence: Sequence::MAX,
                             witness: Witness::from_vec(vec![
                                 Vec::from_hex("304402202712be22e0270f394f568311dc7ca9a68970b8025fdd3b240229f07f8a5f3a240220018b38d7dcd314e734c9276bd6fb40f673325bc4baa144c800d2f2f02db2765c01").unwrap(),
                                 Vec::from_hex("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105").unwrap(),
@@ -750,7 +750,7 @@ mod tests {
                                 vout: 1,
                             },
                             script_sig: hex_script!("160014fe3e9ef1a745e974d902c4355943abcb34bd5353"),
-                            sequence: 4294967295,
+                            sequence: Sequence::MAX,
                             witness: Witness::from_vec(vec![
                                 Vec::from_hex("3045022100d12b852d85dcd961d2f5f4ab660654df6eedcc794c0c33ce5cc309ffb5fce58d022067338a8e0e1725c197fb1a88af59f51e44e4255b20167c8684031c05d1f2592a01").unwrap(),
                                 Vec::from_hex("0223b72beef0965d10be0778efecd61fcac6f79a4ea169393380734464f84f2ab3").unwrap(),
@@ -1017,7 +1017,7 @@ mod tests {
                         vout: 0,
                     },
                     script_sig: Script::new(),
-                    sequence: 4294967294,
+                    sequence: Sequence::ENABLE_LOCKTIME_NO_RBF,
                     witness: Witness::default(),
                 }],
                 output: vec![
@@ -1048,7 +1048,7 @@ mod tests {
                             vout: 1,
                         },
                         script_sig: hex_script!("160014be18d152a9b012039daf3da7de4f53349eecb985"),
-                        sequence: 4294967295,
+                        sequence: Sequence::MAX,
                         witness: Witness::from_vec(vec![
                             Vec::from_hex("304402202712be22e0270f394f568311dc7ca9a68970b8025fdd3b240229f07f8a5f3a240220018b38d7dcd314e734c9276bd6fb40f673325bc4baa144c800d2f2f02db2765c01").unwrap(),
                             Vec::from_hex("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105").unwrap(),
@@ -1062,7 +1062,7 @@ mod tests {
                             vout: 1,
                         },
                         script_sig: hex_script!("160014fe3e9ef1a745e974d902c4355943abcb34bd5353"),
-                        sequence: 4294967295,
+                        sequence: Sequence::MAX,
                         witness: Witness::from_vec(vec![
                             Vec::from_hex("3045022100d12b852d85dcd961d2f5f4ab660654df6eedcc794c0c33ce5cc309ffb5fce58d022067338a8e0e1725c197fb1a88af59f51e44e4255b20167c8684031c05d1f2592a01").unwrap(),
                             Vec::from_hex("0223b72beef0965d10be0778efecd61fcac6f79a4ea169393380734464f84f2ab3").unwrap(),

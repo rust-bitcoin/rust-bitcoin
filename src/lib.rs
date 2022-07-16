@@ -117,6 +117,7 @@ pub use crate::blockdata::block::BlockHeader;
 pub use crate::blockdata::script::Script;
 pub use crate::blockdata::transaction::Transaction;
 pub use crate::blockdata::transaction::TxIn;
+pub use crate::blockdata::transaction::Sequence;
 pub use crate::blockdata::transaction::TxOut;
 pub use crate::blockdata::transaction::OutPoint;
 pub use crate::blockdata::transaction::EcdsaSighashType;

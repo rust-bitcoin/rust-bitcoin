@@ -27,7 +27,7 @@ use crate::hashes::hex::{self, HexIterator};
 use crate::hashes::sha256d;
 use crate::blockdata::opcodes;
 use crate::blockdata::script;
-use crate::blockdata::transaction::{OutPoint, Transaction, TxOut, TxIn};
+use crate::blockdata::transaction::{OutPoint, Transaction, TxOut, TxIn, Sequence};
 use crate::blockdata::block::{Block, BlockHeader};
 use crate::blockdata::witness::Witness;
 use crate::network::constants::Network;
@@ -94,7 +94,7 @@ fn bitcoin_genesis_tx() -> Transaction {
     ret.input.push(TxIn {
         previous_output: OutPoint::null(),
         script_sig: in_script,
-        sequence: MAX_SEQUENCE,
+        sequence: Sequence::MAX,
         witness: Witness::default(),
     });
 
@@ -222,7 +222,7 @@ mod test {
         assert_eq!(serialize(&gen.input[0].script_sig),
                    Vec::from_hex("4d04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73").unwrap());
 
-        assert_eq!(gen.input[0].sequence, MAX_SEQUENCE);
+        assert_eq!(gen.input[0].sequence, Sequence::MAX);
         assert_eq!(gen.output.len(), 1);
         assert_eq!(serialize(&gen.output[0].script_pubkey),
                    Vec::from_hex("434104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac").unwrap());
