@@ -1724,7 +1724,7 @@ mod tests {
     }
 }
 
-#[cfg(all(test, feature = "unstable"))]
+#[cfg(bench)]
 mod benches {
     use super::Transaction;
     use crate::EmptyWrite;

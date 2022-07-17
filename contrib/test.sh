@@ -13,6 +13,14 @@ then
     export RUSTFLAGS="-C link-dead-code"
 fi
 
+cargo --version
+rustc --version
+
+# Work out if we are using a nightly toolchain.
+NIGHTLY=false
+if cargo --version | grep nightly; then
+    NIGHTLY=true
+fi
 
 echo "********* Testing std *************"
 # Test without any features other than std first
@@ -69,10 +77,20 @@ then
     )
 fi
 
-# Bench if told to
+# Bench if told to, only works with non-stable toolchain (nightly, beta).
 if [ "$DO_BENCH" = true ]
 then
-    cargo bench --features unstable
+    if [ "NIGHTLY" = false ]
+    then
+        if [ -n "TOOLCHAIN" ]
+        then
+            echo "TOOLCHAIN is set to a non-nightly toolchain but DO_BENCH requires a nightly toolchain"
+        else
+            echo "DO_BENCH requires a nightly toolchain"
+        fi
+        exit 1
+    fi
+    RUSTFLAGS='--cfg=bench' cargo bench
 fi
 
 # Use as dependency if told to

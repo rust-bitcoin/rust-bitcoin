@@ -19,7 +19,6 @@
 //! * `std` - the usual dependency on `std` (default).
 //! * `secp-recovery` - enables calculating public key from a signature and message.
 //! * `base64` - (dependency), enables encoding of PSBTs and message signatures.
-//! * `unstable` - enables unstable features for testing.
 //! * `rand` - (dependency), makes it more convenient to generate random values.
 //! * `serde` - (dependency), implements `serde`-based serialization and
 //!                 deserialization.
@@ -31,9 +30,8 @@
 
 #![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
 
-// Experimental features we need
-#![cfg_attr(all(test, feature = "unstable"), feature(test))]
-
+// Experimental features we need.
+#![cfg_attr(bench, feature(test))]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
 // Coding conventions
@@ -55,6 +53,8 @@ compile_error!("at least one of the `std` or `no-std` features must be enabled")
 compile_error!("rust-bitcoin currently only supports architectures with pointers wider
                 than 16 bits, let us know if you want 16-bit support. Note that we do
                 NOT guarantee that we will implement it!");
+
+#[cfg(bench)] extern crate test;
 
 #[cfg(feature = "no-std")]
 #[macro_use]
@@ -181,10 +181,10 @@ mod prelude {
     pub use std::collections::HashSet;
 }
 
-#[cfg(all(test, feature = "unstable"))] use tests::EmptyWrite;
+#[cfg(bench)] use bench::EmptyWrite;
 
-#[cfg(all(test, feature = "unstable"))]
-mod tests {
+#[cfg(bench)]
+mod bench {
     use core::fmt::Arguments;
     use crate::io::{IoSlice, Result, Write};
 
