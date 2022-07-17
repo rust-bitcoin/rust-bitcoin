@@ -36,7 +36,7 @@ const PSBT_OUT_PROPRIETARY: u8 = 0xFC;
 
 /// A key-value map for an output of the corresponding index in the unsigned
 /// transaction.
-#[derive(Clone, Default, Debug, PartialEq, Eq)]
+#[derive(Clone, Default, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct Output {
@@ -120,6 +120,12 @@ pub struct TapTree(pub(crate) TaprootBuilder);
 impl PartialEq for TapTree {
     fn eq(&self, other: &Self) -> bool {
         self.node_info().hash.eq(&other.node_info().hash)
+    }
+}
+
+impl core::hash::Hash for TapTree {
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+        self.node_info().hash(state)
     }
 }
 

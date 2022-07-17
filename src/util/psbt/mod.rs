@@ -37,7 +37,7 @@ use crate::util::bip32::{ExtendedPubKey, KeySource};
 pub type Psbt = PartiallySignedTransaction;
 
 /// A Partially Signed Transaction.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct PartiallySignedTransaction {
