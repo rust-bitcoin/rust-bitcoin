@@ -4,3 +4,5 @@ Cargo.lock
 #fuzz
 fuzz/hfuzz_target
 fuzz/hfuzz_workspace
+
+.idea
