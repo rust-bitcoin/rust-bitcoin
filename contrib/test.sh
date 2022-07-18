@@ -8,11 +8,6 @@ then
     alias cargo="cargo +$TOOLCHAIN"
 fi
 
-if [ "$DO_COV" = true ]
-then
-    export RUSTFLAGS="-C link-dead-code"
-fi
-
 cargo --version
 rustc --version
 

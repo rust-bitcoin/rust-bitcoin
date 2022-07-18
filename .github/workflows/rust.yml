@@ -12,7 +12,6 @@ jobs:
         include:
           - rust: stable
             env:
-              DO_COV: true
               AS_DEPENDENCY: true
               DO_NO_STD: true
           - rust: beta
