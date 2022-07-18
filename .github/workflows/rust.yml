@@ -3,6 +3,23 @@ on: [push, pull_request]
 name: Continuous integration
 
 jobs:
+  Features:
+    name: Rust-script
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Checkout Crate
+        uses: actions/checkout@v2
+      - name: Checkout Toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - name: Running test suite
+        run: cd ci; cargo build --target-dir target; cd ..; ci/target/debug/ci --debug --feature-matrix
+
   Tests:
     name: Tests
     runs-on: ubuntu-latest
