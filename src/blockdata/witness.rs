@@ -5,12 +5,13 @@
 //! This module contains the [`Witness`] struct and related methods to operate on it
 //!
 
+use secp256k1::ecdsa;
+
 use crate::blockdata::transaction::EcdsaSighashType;
 use crate::consensus::encode::{Error, MAX_VEC_SIZE};
 use crate::consensus::{Decodable, Encodable, WriteExt};
 use crate::io::{self, Read, Write};
 use crate::prelude::*;
-use secp256k1::ecdsa;
 use crate::VarInt;
 
 /// The Witness is the data used to unlock bitcoins since the [segwit upgrade](https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki)
@@ -124,7 +125,6 @@ impl Encodable for Witness {
 }
 
 impl Witness {
-
     /// Create a new empty [`Witness`]
     pub fn new() -> Self {
         Witness::default()
@@ -281,25 +281,77 @@ impl serde::Serialize for Witness {
     where
         S: serde::Serializer,
     {
-        use serde::ser::SerializeSeq; 
+        use hashes::hex::ToHex;
+        use serde::ser::SerializeSeq;
 
+        let human_readable = serializer.is_human_readable();
         let mut seq = serializer.serialize_seq(Some(self.witness_elements))?;
 
         for elem in self.iter() {
-            seq.serialize_element(&elem)?;
+            if human_readable {
+                seq.serialize_element(&elem.to_hex())?;
+            } else {
+                seq.serialize_element(&elem)?;
+            }
         }
-
         seq.end()
     }
 }
+
 #[cfg(feature = "serde")]
 impl<'de> serde::Deserialize<'de> for Witness {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
-        let vec: Vec<Vec<u8>> = serde::Deserialize::deserialize(deserializer)?;
-        Ok(Witness::from_vec(vec))
+        struct Visitor;         // Human-readable visitor.
+        impl<'de> serde::de::Visitor<'de> for Visitor
+        {
+            type Value = Witness;
+
+            fn expecting(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                write!(f, "a sequence of hex arrays")
+            }
+
+            fn visit_seq<A: serde::de::SeqAccess<'de>>(self, mut a: A) -> Result<Self::Value, A::Error>
+            {
+                use hashes::hex::FromHex;
+                use hashes::hex::Error::*;
+                use serde::de::{self, Unexpected};
+
+                let mut ret = match a.size_hint() {
+                    Some(len) => Vec::with_capacity(len),
+                    None => Vec::new(),
+                };
+
+                while let Some(elem) = a.next_element::<String>()? {
+                    let vec = Vec::<u8>::from_hex(&elem).map_err(|e| {
+                        match e {
+                            InvalidChar(b) => {
+                                match core::char::from_u32(b.into()) {
+                                    Some(c) => de::Error::invalid_value(Unexpected::Char(c), &"a valid hex character"),
+                                    None => de::Error::invalid_value(Unexpected::Unsigned(b.into()), &"a valid hex character")
+                                }
+                            }
+                            OddLengthString(len) => de::Error::invalid_length(len, &"an even length string"),
+                            InvalidLength(expected, got) => {
+                                let exp = format!("expected length: {}", expected);
+                                de::Error::invalid_length(got, &exp.as_str())
+                            }
+                        }
+                    })?;
+                    ret.push(vec);
+                }
+                Ok(Witness::from_vec(ret))
+            }
+        }
+
+        if deserializer.is_human_readable() {
+            deserializer.deserialize_seq(Visitor)
+        } else {
+            let vec: Vec<Vec<u8>> = serde::Deserialize::deserialize(deserializer)?;
+            Ok(Witness::from_vec(vec))
+        }
     }
 }
 
@@ -424,19 +476,34 @@ mod test {
 
     #[cfg(feature = "serde")]
     #[test]
-    fn test_serde() {
-        use serde_json;
+    fn test_serde_bincode() {
+        use bincode;
 
         let old_witness_format = vec![vec![0u8], vec![2]];
         let new_witness_format = Witness::from_vec(old_witness_format.clone());
 
-        let old = serde_json::to_string(&old_witness_format).unwrap();
-        let new = serde_json::to_string(&new_witness_format).unwrap();
+        let old = bincode::serialize(&old_witness_format).unwrap();
+        let new = bincode::serialize(&new_witness_format).unwrap();
 
         assert_eq!(old, new);
 
-        let back = serde_json::from_str(&new).unwrap();
+        let back: Witness = bincode::deserialize(&new).unwrap();
         assert_eq!(new_witness_format, back);
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn test_serde_human() {
+        use serde_json;
+
+        let witness = Witness::from_vec(vec![vec![0u8, 123, 75], vec![2u8, 6, 3, 7, 8]]);
+
+        let json = serde_json::to_string(&witness).unwrap();
+
+        assert_eq!(json, r#"["007b4b","0206030708"]"#);
+
+        let back: Witness = serde_json::from_str(&json).unwrap();
+        assert_eq!(witness, back);
     }
 }
 
