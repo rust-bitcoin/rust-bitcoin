@@ -85,8 +85,6 @@ extern crate bincode;
 extern crate serde_json;
 #[cfg(all(test, feature = "serde"))]
 extern crate serde_test;
-#[cfg(all(test, feature = "unstable"))]
-extern crate test;
 
 #[cfg(test)]
 #[macro_use]
