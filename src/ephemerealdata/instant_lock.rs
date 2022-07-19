@@ -6,6 +6,7 @@ use ::{OutPoint, Txid};
 use consensus::{Decodable, Encodable, encode};
 use consensus::encode::MAX_VEC_SIZE;
 use io;
+use core::fmt::{Debug, Formatter};
 #[cfg(all(not(feature = "std"), not(test)))]
 use alloc::vec::Vec;
 #[cfg(any(feature = "std", test))]
@@ -42,6 +43,18 @@ impl Default for InstantLock {
             cyclehash: Default::default(),
             signature: [0; 96]
         }
+    }
+}
+
+impl Debug for InstantLock {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> core::fmt::Result {
+        formatter.debug_struct("InstantLock")
+            .field("version", &self.version)
+            .field("inputs", &format_args!("{:?}", self.inputs))
+            .field("txid", &format_args!("{}", self.txid))
+            .field("cyclehash", &format_args!("{:?}", self.cyclehash))
+            .field("signature", &format_args!("{:?}", self.signature.to_vec()))
+            .finish()
     }
 }
 
