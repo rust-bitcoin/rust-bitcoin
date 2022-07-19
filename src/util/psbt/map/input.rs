@@ -11,7 +11,7 @@ use secp256k1::XOnlyPublicKey;
 
 use crate::blockdata::script::Script;
 use crate::blockdata::witness::Witness;
-use crate::blockdata::transaction::{Transaction, TxOut, NonStandardSighashType, SighashTypeParseError};
+use crate::blockdata::transaction::{Transaction, TxOut};
 use crate::consensus::encode;
 use crate::hashes::{self, hash160, ripemd160, sha256, sha256d};
 use crate::util::bip32::KeySource;
@@ -21,9 +21,10 @@ use crate::util::psbt::raw;
 use crate::util::psbt::serialize::Deserialize;
 use crate::util::psbt::{Error, error};
 use crate::util::key::PublicKey;
+use crate::util::sighash::{NonStandardSighashType, SighashTypeParseError, EcdsaSighashType, SchnorrSighashType};
 use crate::util::taproot::{ControlBlock, LeafVersion, TapLeafHash, TapBranchHash};
 use crate::util::sighash;
-use crate::{EcdsaSighashType, SchnorrSighashType, EcdsaSig, SchnorrSig};
+use crate::{EcdsaSig, SchnorrSig};
 
 /// Type: Non-Witness UTXO PSBT_IN_NON_WITNESS_UTXO = 0x00
 const PSBT_IN_NON_WITNESS_UTXO: u8 = 0x00;
