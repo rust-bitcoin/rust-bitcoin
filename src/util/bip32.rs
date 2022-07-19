@@ -285,13 +285,13 @@ impl<'a> From<&'a [ChildNumber]> for DerivationPath {
     }
 }
 
-impl ::core::iter::FromIterator<ChildNumber> for DerivationPath {
+impl core::iter::FromIterator<ChildNumber> for DerivationPath {
     fn from_iter<T>(iter: T) -> Self where T: IntoIterator<Item=ChildNumber> {
         DerivationPath(Vec::from_iter(iter))
     }
 }
 
-impl<'a> ::core::iter::IntoIterator for &'a DerivationPath {
+impl<'a> core::iter::IntoIterator for &'a DerivationPath {
     type Item = &'a ChildNumber;
     type IntoIter = slice::Iter<'a, ChildNumber>;
     fn into_iter(self) -> Self::IntoIter {

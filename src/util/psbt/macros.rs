@@ -59,7 +59,7 @@ macro_rules! impl_psbtmap_consensus_decoding {
             fn consensus_decode<R: $crate::io::Read + ?Sized>(
                 r: &mut R,
             ) -> Result<Self, $crate::consensus::encode::Error> {
-                let mut rv: Self = ::core::default::Default::default();
+                let mut rv: Self = core::default::Default::default();
 
                 loop {
                     match $crate::consensus::Decodable::consensus_decode(r) {

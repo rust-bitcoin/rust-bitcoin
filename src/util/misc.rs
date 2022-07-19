@@ -172,7 +172,7 @@ mod message_signing {
         #[cfg(feature = "base64")]
         #[cfg_attr(docsrs, doc(cfg(feature = "base64")))]
         pub fn from_base64(s: &str) -> Result<MessageSignature, MessageSignatureError> {
-            let bytes = ::base64::decode(s).map_err(|_| MessageSignatureError::InvalidBase64)?;
+            let bytes = base64::decode(s).map_err(|_| MessageSignatureError::InvalidBase64)?;
             MessageSignature::from_slice(&bytes)
         }
 
@@ -180,7 +180,7 @@ mod message_signing {
         #[cfg(feature = "base64")]
         #[cfg_attr(docsrs, doc(cfg(feature = "base64")))]
         pub fn to_base64(&self) -> String {
-            ::base64::encode(&self.serialize()[..])
+            base64::encode(&self.serialize()[..])
         }
     }
 
@@ -190,14 +190,14 @@ mod message_signing {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             let bytes = self.serialize();
             // This avoids the allocation of a String.
-            write!(f, "{}", ::base64::display::Base64Display::with_config(
-                    &bytes[..], ::base64::STANDARD))
+            write!(f, "{}", base64::display::Base64Display::with_config(
+                    &bytes[..], base64::STANDARD))
         }
     }
 
     #[cfg(feature = "base64")]
     #[cfg_attr(docsrs, doc(cfg(feature = "base64")))]
-    impl ::core::str::FromStr for MessageSignature {
+    impl core::str::FromStr for MessageSignature {
         type Err = MessageSignatureError;
         fn from_str(s: &str) -> Result<MessageSignature, MessageSignatureError> {
             MessageSignature::from_base64(s)

@@ -427,30 +427,30 @@ impl ops::Index<ops::RangeFull> for PrivateKey {
 
 #[cfg(feature = "serde")]
 #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
-impl ::serde::Serialize for PrivateKey {
-    fn serialize<S: ::serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+impl serde::Serialize for PrivateKey {
+    fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
         s.collect_str(self)
     }
 }
 
 #[cfg(feature = "serde")]
 #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
-impl<'de> ::serde::Deserialize<'de> for PrivateKey {
-    fn deserialize<D: ::serde::Deserializer<'de>>(d: D) -> Result<PrivateKey, D::Error> {
+impl<'de> serde::Deserialize<'de> for PrivateKey {
+    fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<PrivateKey, D::Error> {
         struct WifVisitor;
 
-        impl<'de> ::serde::de::Visitor<'de> for WifVisitor {
+        impl<'de> serde::de::Visitor<'de> for WifVisitor {
             type Value = PrivateKey;
 
-            fn expecting(&self, formatter: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+            fn expecting(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
                 formatter.write_str("an ASCII WIF string")
             }
 
             fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
             where
-                E: ::serde::de::Error,
+                E: serde::de::Error,
             {
-                if let Ok(s) = ::core::str::from_utf8(v) {
+                if let Ok(s) = core::str::from_utf8(v) {
                     PrivateKey::from_str(s).map_err(E::custom)
                 } else {
                     Err(E::invalid_value(::serde::de::Unexpected::Bytes(v), &self))
@@ -459,7 +459,7 @@ impl<'de> ::serde::Deserialize<'de> for PrivateKey {
 
             fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
             where
-                E: ::serde::de::Error,
+                E: serde::de::Error,
             {
                 PrivateKey::from_str(v).map_err(E::custom)
             }
@@ -472,8 +472,8 @@ impl<'de> ::serde::Deserialize<'de> for PrivateKey {
 #[cfg(feature = "serde")]
 #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 #[allow(clippy::collapsible_else_if)] // Aids readability.
-impl ::serde::Serialize for PublicKey {
-    fn serialize<S: ::serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+impl serde::Serialize for PublicKey {
+    fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
         if s.is_human_readable() {
             s.collect_str(self)
         } else {
@@ -488,23 +488,23 @@ impl ::serde::Serialize for PublicKey {
 
 #[cfg(feature = "serde")]
 #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
-impl<'de> ::serde::Deserialize<'de> for PublicKey {
-    fn deserialize<D: ::serde::Deserializer<'de>>(d: D) -> Result<PublicKey, D::Error> {
+impl<'de> serde::Deserialize<'de> for PublicKey {
+    fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<PublicKey, D::Error> {
         if d.is_human_readable() {
             struct HexVisitor;
 
-            impl<'de> ::serde::de::Visitor<'de> for HexVisitor {
+            impl<'de> serde::de::Visitor<'de> for HexVisitor {
                 type Value = PublicKey;
 
-                fn expecting(&self, formatter: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+                fn expecting(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
                     formatter.write_str("an ASCII hex string")
                 }
 
                 fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
                 where
-                    E: ::serde::de::Error,
+                    E: serde::de::Error,
                 {
-                    if let Ok(hex) = ::core::str::from_utf8(v) {
+                    if let Ok(hex) = core::str::from_utf8(v) {
                         PublicKey::from_str(hex).map_err(E::custom)
                     } else {
                         Err(E::invalid_value(::serde::de::Unexpected::Bytes(v), &self))
@@ -513,7 +513,7 @@ impl<'de> ::serde::Deserialize<'de> for PublicKey {
 
                 fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
                 where
-                    E: ::serde::de::Error,
+                    E: serde::de::Error,
                 {
                     PublicKey::from_str(v).map_err(E::custom)
                 }
@@ -522,16 +522,16 @@ impl<'de> ::serde::Deserialize<'de> for PublicKey {
         } else {
             struct BytesVisitor;
 
-            impl<'de> ::serde::de::Visitor<'de> for BytesVisitor {
+            impl<'de> serde::de::Visitor<'de> for BytesVisitor {
                 type Value = PublicKey;
 
-                fn expecting(&self, formatter: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+                fn expecting(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
                     formatter.write_str("a bytestring")
                 }
 
                 fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
                 where
-                    E: ::serde::de::Error,
+                    E: serde::de::Error,
                 {
                     PublicKey::from_slice(v).map_err(E::custom)
                 }

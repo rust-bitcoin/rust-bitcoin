@@ -112,7 +112,7 @@ impl hex::FromHex for Script {
     }
 }
 
-impl ::core::str::FromStr for Script {
+impl core::str::FromStr for Script {
     type Err = hex::Error;
     fn from_str(s: &str) -> Result<Self, hex::Error> {
         hex::FromHex::from_hex(s)
@@ -303,7 +303,7 @@ pub fn read_uint(data: &[u8], size: usize) -> Result<usize, Error> {
 
 // We internally use implementation based on iterator so that it automatically advances as needed
 // Errors are same as above, just different type.
-fn read_uint_iter(data: &mut ::core::slice::Iter<'_, u8>, size: usize) -> Result<usize, UintError> {
+fn read_uint_iter(data: &mut core::slice::Iter<'_, u8>, size: usize) -> Result<usize, UintError> {
     if data.len() < size {
         Err(UintError::EarlyEndOfScript)
     } else if size > usize::from(u16::max_value() / 8) {
@@ -626,7 +626,7 @@ impl Script {
     #[cfg(feature="bitcoinconsensus")]
     #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
     pub fn verify (&self, index: usize, amount: crate::Amount, spending: &[u8]) -> Result<(), Error> {
-        self.verify_with_flags(index, amount, spending, ::bitcoinconsensus::VERIFY_ALL)
+        self.verify_with_flags(index, amount, spending, bitcoinconsensus::VERIFY_ALL)
     }
 
     /// Verifies spend of an input script.
@@ -756,7 +756,7 @@ pub enum Instruction<'a> {
 
 /// Iterator over a script returning parsed opcodes.
 pub struct Instructions<'a> {
-    data: ::core::slice::Iter<'a, u8>,
+    data: core::slice::Iter<'a, u8>,
     enforce_minimal: bool,
 }
 
@@ -852,7 +852,7 @@ impl<'a> Iterator for Instructions<'a> {
     }
 }
 
-impl<'a> ::core::iter::FusedIterator for Instructions<'a> {}
+impl<'a> core::iter::FusedIterator for Instructions<'a> {}
 
 impl Builder {
     /// Creates a new empty script.
@@ -1490,14 +1490,14 @@ mod test {
         let script = Script::from(vec![0u8, 1u8, 2u8]);
 
         // Serialize
-        let json = ::serde_json::to_string(&script).unwrap();
+        let json = serde_json::to_string(&script).unwrap();
         assert_eq!(json, "\"000102\"");
-        let bincode = ::bincode::serialize(&script).unwrap();
+        let bincode = bincode::serialize(&script).unwrap();
         assert_eq!(bincode, [3, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2]); // bincode adds u64 for length, serde_cbor use varint
 
         // Deserialize
-        assert_eq!(script, ::serde_json::from_str(&json).unwrap());
-        assert_eq!(script, ::bincode::deserialize(&bincode).unwrap());
+        assert_eq!(script, serde_json::from_str(&json).unwrap());
+        assert_eq!(script, bincode::deserialize(&bincode).unwrap());
     }
 
     #[test]

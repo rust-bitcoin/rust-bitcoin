@@ -254,7 +254,7 @@ impl WitnessVersion {
     /// If the integer does not correspond to any witness version, errors with
     /// [`Error::InvalidWitnessVersion`].
     #[deprecated(since = "0.29.0", note = "use try_from instead")]
-    pub fn from_u5(value: ::bech32::u5) -> Result<Self, Error> {
+    pub fn from_u5(value: bech32::u5) -> Result<Self, Error> {
         Self::try_from(value)
     }
 
@@ -422,10 +422,10 @@ impl<'a> TryFrom<Instruction<'a>> for WitnessVersion {
     }
 }
 
-impl From<WitnessVersion> for ::bech32::u5 {
+impl From<WitnessVersion> for bech32::u5 {
     /// Converts [`WitnessVersion`] instance into corresponding Bech32(m) u5-value ([`bech32::u5`]).
     fn from(version: WitnessVersion) -> Self {
-        ::bech32::u5::try_from_u8(version.to_num()).expect("WitnessVersion must be 0..=16")
+        bech32::u5::try_from_u8(version.to_num()).expect("WitnessVersion must be 0..=16")
     }
 }
 

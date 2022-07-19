@@ -957,10 +957,10 @@ impl fmt::UpperHex for LeafVersion {
 /// Serializes [`LeafVersion`] as a `u8` using consensus encoding.
 #[cfg(feature = "serde")]
 #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
-impl ::serde::Serialize for LeafVersion {
+impl serde::Serialize for LeafVersion {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: ::serde::Serializer,
+        S: serde::Serializer,
     {
         serializer.serialize_u8(self.to_consensus())
     }
@@ -969,13 +969,13 @@ impl ::serde::Serialize for LeafVersion {
 /// Deserializes [`LeafVersion`] as a `u8` using consensus encoding.
 #[cfg(feature = "serde")]
 #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
-impl<'de> ::serde::Deserialize<'de> for LeafVersion {
+impl<'de> serde::Deserialize<'de> for LeafVersion {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
-        D: ::serde::Deserializer<'de>
+        D: serde::Deserializer<'de>
     {
         struct U8Visitor;
-        impl<'de> ::serde::de::Visitor<'de> for U8Visitor {
+        impl<'de> serde::de::Visitor<'de> for U8Visitor {
             type Value = LeafVersion;
 
             fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
@@ -984,7 +984,7 @@ impl<'de> ::serde::Deserialize<'de> for LeafVersion {
 
             fn visit_u8<E>(self, value: u8) -> Result<Self::Value, E>
                 where
-                    E: ::serde::de::Error,
+                    E: serde::de::Error,
             {
                 LeafVersion::from_consensus(value).map_err(|_| {
                     E::invalid_value(::serde::de::Unexpected::Unsigned(value as u64), &"consensus-encoded leaf version as u8")

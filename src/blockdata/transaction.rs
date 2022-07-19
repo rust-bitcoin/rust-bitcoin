@@ -152,7 +152,7 @@ fn parse_vout(s: &str) -> Result<u32, ParseOutPointError> {
     s.parse().map_err(ParseOutPointError::Vout)
 }
 
-impl ::core::str::FromStr for OutPoint {
+impl core::str::FromStr for OutPoint {
     type Err = ParseOutPointError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -880,7 +880,7 @@ impl Transaction {
     where
         S: FnMut(&OutPoint) -> Option<TxOut>
     {
-        self.verify_with_flags(spent, ::bitcoinconsensus::VERIFY_ALL)
+        self.verify_with_flags(spent, bitcoinconsensus::VERIFY_ALL)
     }
 
     /// Verify that this transaction is able to spend its inputs.
