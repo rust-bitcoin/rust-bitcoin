@@ -26,7 +26,7 @@
 use prelude::*;
 
 use io;
-use core::{fmt, str, default::Default};
+use core::{fmt, str, default::Default, convert::TryInto};
 #[cfg(feature = "std")] use std::error;
 
 use hashes::{self, Hash, sha256d};
@@ -98,6 +98,18 @@ impl OutPoint {
     #[inline]
     pub fn is_null(&self) -> bool {
         *self == OutPoint::null()
+    }
+}
+
+impl From<[u8; 36]> for OutPoint {
+    fn from(buffer: [u8; 36]) -> Self {
+        let tx_id: [u8; 32] = buffer[0..32].try_into().unwrap();
+        let index: [u8; 4] = buffer[32..36].try_into().unwrap();
+
+        Self {
+            txid: Txid::from_inner(tx_id),
+            vout: u32::from_le_bytes(index)
+        }
     }
 }
 
@@ -1656,6 +1668,37 @@ mod tests {
         assert_eq!(out_point_buffer.to_vec(), expected_buf);
 
         assert!(tx.out_point_buffer(1).is_none());
+    }
+
+    #[test]
+    fn out_point_parse() {
+        let mut tx = Transaction {
+            version: 0,
+            lock_time: 0,
+            input: vec![],
+            output: vec![]
+        };
+
+        let pk_data = Vec::from_hex("b8e2d839dd21088b78bebfea3e3e632181197982").unwrap();
+
+        let mut pk_array: [u8; 20] = [0; 20];
+        for (index, kek) in pk_array.iter_mut().enumerate() {
+            *kek = *pk_data.get(index).unwrap();
+        }
+
+        tx.add_burn_output(10000, &pk_array);
+
+        let mut expected_buf = tx.txid().as_inner().to_vec();
+        let mut expected_index = vec![0,0,0,0];
+        // 0 serialized as 32 bits
+        expected_buf.append(&mut expected_index);
+
+        let out_point_buffer = tx.out_point_buffer(0).unwrap();
+
+        let out_point = OutPoint::from(out_point_buffer);
+
+        assert_eq!(out_point.vout, 0);
+        assert_eq!(out_point.txid, tx.txid());
     }
 
     #[test]
