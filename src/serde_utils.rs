@@ -11,9 +11,10 @@ pub mod btreemap_byte_values {
 
     // NOTE: This module can be exactly copied to use with HashMap.
 
-    use crate::prelude::*;
-    use crate::hashes::hex::{FromHex, ToHex};
     use serde;
+
+    use crate::hashes::hex::{FromHex, ToHex};
+    use crate::prelude::*;
 
     pub fn serialize<S, T>(v: &BTreeMap<T, Vec<u8>>, s: S) -> Result<S::Ok, S::Error>
     where
@@ -52,9 +53,10 @@ pub mod btreemap_byte_values {
                 write!(f, "a map with hexadecimal values")
             }
 
-            fn visit_map<A: serde::de::MapAccess<'de>>(self, mut a: A)
-                -> Result<Self::Value, A::Error>
-            {
+            fn visit_map<A: serde::de::MapAccess<'de>>(
+                self,
+                mut a: A,
+            ) -> Result<Self::Value, A::Error> {
                 let mut ret = BTreeMap::new();
                 while let Some((key, value)) = a.next_entry()? {
                     ret.insert(key, FromHex::from_hex(value).map_err(serde::de::Error::custom)?);
@@ -79,8 +81,9 @@ pub mod btreemap_as_seq {
 
     // NOTE: This module can be exactly copied to use with HashMap.
 
-    use crate::prelude::*;
     use serde;
+
+    use crate::prelude::*;
 
     pub fn serialize<S, T, U>(v: &BTreeMap<T, U>, s: S) -> Result<S::Ok, S::Error>
     where
@@ -122,9 +125,10 @@ pub mod btreemap_as_seq {
                 write!(f, "a sequence of pairs")
             }
 
-            fn visit_seq<A: serde::de::SeqAccess<'de>>(self, mut a: A)
-                -> Result<Self::Value, A::Error>
-            {
+            fn visit_seq<A: serde::de::SeqAccess<'de>>(
+                self,
+                mut a: A,
+            ) -> Result<Self::Value, A::Error> {
                 let mut ret = BTreeMap::new();
                 while let Some((key, value)) = a.next_element()? {
                     ret.insert(key, value);
@@ -149,16 +153,16 @@ pub mod btreemap_as_seq_byte_values {
 
     // NOTE: This module can be exactly copied to use with HashMap.
 
-    use crate::prelude::*;
     use serde;
+
+    use crate::prelude::*;
 
     /// A custom key-value pair type that serialized the bytes as hex.
     #[derive(Debug, Deserialize)]
     #[serde(crate = "actual_serde")]
     struct OwnedPair<T>(
         T,
-        #[serde(deserialize_with = "crate::serde_utils::hex_bytes::deserialize")]
-        Vec<u8>,
+        #[serde(deserialize_with = "crate::serde_utils::hex_bytes::deserialize")] Vec<u8>,
     );
 
     /// A custom key-value pair type that serialized the bytes as hex.
@@ -166,8 +170,7 @@ pub mod btreemap_as_seq_byte_values {
     #[serde(crate = "actual_serde")]
     struct BorrowedPair<'a, T: 'static>(
         &'a T,
-        #[serde(serialize_with = "crate::serde_utils::hex_bytes::serialize")]
-        &'a [u8],
+        #[serde(serialize_with = "crate::serde_utils::hex_bytes::serialize")] &'a [u8],
     );
 
     pub fn serialize<S, T>(v: &BTreeMap<T, Vec<u8>>, s: S) -> Result<S::Ok, S::Error>
@@ -207,9 +210,10 @@ pub mod btreemap_as_seq_byte_values {
                 write!(f, "a sequence of pairs")
             }
 
-            fn visit_seq<A: serde::de::SeqAccess<'de>>(self, mut a: A)
-                -> Result<Self::Value, A::Error>
-            {
+            fn visit_seq<A: serde::de::SeqAccess<'de>>(
+                self,
+                mut a: A,
+            ) -> Result<Self::Value, A::Error> {
                 let mut ret = BTreeMap::new();
                 while let Option::Some(OwnedPair(key, value)) = a.next_element()? {
                     ret.insert(key, value);
@@ -236,7 +240,8 @@ pub mod hex_bytes {
 
     pub fn serialize<T, S>(bytes: &T, s: S) -> Result<S::Ok, S::Error>
     where
-        T: serde::Serialize + AsRef<[u8]>, S: serde::Serializer
+        T: serde::Serialize + AsRef<[u8]>,
+        S: serde::Serializer,
     {
         // Don't do anything special when not human readable.
         if !s.is_human_readable() {
@@ -248,7 +253,8 @@ pub mod hex_bytes {
 
     pub fn deserialize<'de, D, B>(d: D) -> Result<B, D::Error>
     where
-        D: serde::Deserializer<'de>, B: serde::Deserialize<'de> + FromHex,
+        D: serde::Deserializer<'de>,
+        B: serde::Deserialize<'de> + FromHex,
     {
         struct Visitor<B>(core::marker::PhantomData<B>);
 
