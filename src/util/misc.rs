@@ -317,7 +317,7 @@ mod tests {
 
         let secp = secp256k1::Secp256k1::new();
         let message = "rust-bitcoin MessageSignature test";
-        let msg_hash = super::signed_msg_hash(&message);
+        let msg_hash = super::signed_msg_hash(message);
         let msg = secp256k1::Message::from(msg_hash);
 
 
@@ -357,7 +357,7 @@ mod tests {
 
         let secp = secp256k1::Secp256k1::new();
         let message = "a different message from what was signed";
-        let msg_hash = super::signed_msg_hash(&message);
+        let msg_hash = super::signed_msg_hash(message);
 
         // Signature of msg = "rust-bitcoin MessageSignature test"
         // Signed with pk "UuOGDsfLPr4HIMKQX0ipjJeRaj1geCq3yPUF2COP5ME="

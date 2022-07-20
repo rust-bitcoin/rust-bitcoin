@@ -2033,10 +2033,10 @@ mod tests {
 
         let json = "{\"amt\": 21000000.00000001, \
                     \"samt\": -21000000.00000001}";
-        let t: T = serde_json::from_str(&json).unwrap();
+        let t: T = serde_json::from_str(json).unwrap();
         assert_eq!(t, orig);
 
-        let value: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let value: serde_json::Value = serde_json::from_str(json).unwrap();
         assert_eq!(t, serde_json::from_value(value).unwrap());
 
         // errors

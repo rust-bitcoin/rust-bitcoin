@@ -638,7 +638,7 @@ mod tests {
         ];
 
         let s = Secp256k1::new();
-        let sk = PrivateKey::from_str(&KEY_WIF).unwrap();
+        let sk = PrivateKey::from_str(KEY_WIF).unwrap();
         let pk = PublicKey::from_private_key(&s, &sk);
         let pk_u = PublicKey {
             inner: pk.inner,
