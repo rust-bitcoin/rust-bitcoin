@@ -28,18 +28,24 @@
 //!    `bt listunspent`
 //!
 
+use std::collections::BTreeMap;
 use std::fmt;
 use std::str::FromStr;
-use std::collections::BTreeMap;
 
-use bitcoin::{Address, Amount, Network, OutPoint, PublicKey, PrivateKey, Sequence, Script, Transaction, Txid, TxOut, TxIn, Witness};
 use bitcoin::consensus::encode;
 use bitcoin::hashes::hex::{self, FromHex};
 use bitcoin::secp256k1::{Secp256k1, Signing, Verification};
 use bitcoin::util::address;
 use bitcoin::util::amount::ParseAmountError;
-use bitcoin::util::bip32::{self, ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint, IntoDerivationPath};
+use bitcoin::util::bip32::{
+    self, ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint,
+    IntoDerivationPath,
+};
 use bitcoin::util::psbt::{self, Input, Psbt, PsbtSighashType};
+use bitcoin::{
+    Address, Amount, Network, OutPoint, PrivateKey, PublicKey, Script, Sequence, Transaction, TxIn,
+    TxOut, Txid, Witness,
+};
 
 use self::psbt_sign::*;
 
@@ -69,7 +75,8 @@ const NETWORK: Network = Network::Regtest;
 fn main() -> Result<()> {
     let secp = Secp256k1::new();
 
-    let (offline, fingerprint, account_0_xpub, input_xpub) = ColdStorage::new(&secp, EXTENDED_MASTER_PRIVATE_KEY)?;
+    let (offline, fingerprint, account_0_xpub, input_xpub) =
+        ColdStorage::new(&secp, EXTENDED_MASTER_PRIVATE_KEY)?;
 
     let online = WatchOnly::new(account_0_xpub, input_xpub, fingerprint);
 
@@ -109,7 +116,7 @@ impl ColdStorage {
     /// # Returns
     ///
     /// The newly created signer along with the data needed to configure a watch-only wallet.
-    fn new<C: Signing>(secp: &Secp256k1<C>, xpriv: &str)-> Result<ExportData> {
+    fn new<C: Signing>(secp: &Secp256k1<C>, xpriv: &str) -> Result<ExportData> {
         let master_xpriv = ExtendedPrivKey::from_str(xpriv)?;
         let master_xpub = ExtendedPubKey::from_priv(secp, &master_xpriv);
 
@@ -123,19 +130,14 @@ impl ColdStorage {
         let input_xpriv = master_xpriv.derive_priv(secp, &path)?;
         let input_xpub = ExtendedPubKey::from_priv(secp, &input_xpriv);
 
-        let wallet = ColdStorage {
-            master_xpriv,
-            master_xpub,
-        };
+        let wallet = ColdStorage { master_xpriv, master_xpub };
         let fingerprint = wallet.master_fingerprint();
 
         Ok((wallet, fingerprint, account_0_xpub, input_xpub))
     }
 
     /// Returns the fingerprint for the master extended public key.
-    fn master_fingerprint(&self) -> Fingerprint {
-        self.master_xpub.fingerprint()
-    }
+    fn master_fingerprint(&self) -> Fingerprint { self.master_xpub.fingerprint() }
 
     /// Signs `psbt` with this signer.
     fn sign_psbt<C: Signing>(&self, secp: &Secp256k1<C>, mut psbt: Psbt) -> Result<Psbt> {
@@ -146,7 +148,11 @@ impl ColdStorage {
     }
 
     /// Returns the private key required to sign `input` if we have it.
-    fn private_key_to_sign<C: Signing>(&self, secp: &Secp256k1<C>, input: &Input) -> Result<PrivateKey> {
+    fn private_key_to_sign<C: Signing>(
+        &self,
+        secp: &Secp256k1<C>,
+        input: &Input,
+    ) -> Result<PrivateKey> {
         match input.bip32_derivation.iter().next() {
             Some((pk, (fingerprint, path))) => {
                 if *fingerprint != self.master_fingerprint() {
@@ -159,8 +165,7 @@ impl ColdStorage {
                 }
 
                 Ok(sk)
-
-            },
+            }
             None => Err(Error::MissingBip32Derivation),
         }
     }
@@ -184,7 +189,11 @@ impl WatchOnly {
     ///
     /// The reason for importing the `input_xpub` is so one can use bitcoind to grab a valid input
     /// to verify the workflow presented in this file.
-    fn new(account_0_xpub: ExtendedPubKey, input_xpub: ExtendedPubKey, master_fingerprint: Fingerprint) -> Self {
+    fn new(
+        account_0_xpub: ExtendedPubKey,
+        input_xpub: ExtendedPubKey,
+        master_fingerprint: Fingerprint,
+    ) -> Self {
         WatchOnly { account_0_xpub, input_xpub, master_fingerprint }
     }
 
@@ -199,26 +208,21 @@ impl WatchOnly {
         let tx = Transaction {
             version: 2,
             lock_time: 0,
-            input: vec![
-                TxIn {
-                    previous_output: OutPoint {
-                        txid: Txid::from_hex(INPUT_UTXO_TXID)?,
-                        vout: INPUT_UTXO_VOUT,
-                    },
-                    script_sig: Script::new(),
-                    sequence: Sequence::MAX, // Disable LockTime and RBF.
-                    witness: Witness::default(),
+            input: vec![TxIn {
+                previous_output: OutPoint {
+                    txid: Txid::from_hex(INPUT_UTXO_TXID)?,
+                    vout: INPUT_UTXO_VOUT,
                 },
-            ],
+                script_sig: Script::new(),
+                sequence: Sequence::MAX, // Disable LockTime and RBF.
+                witness: Witness::default(),
+            }],
             output: vec![
-                TxOut {
-                    value: to_amount.to_sat(),
-                    script_pubkey: to_address.script_pubkey(),
-                },
+                TxOut { value: to_amount.to_sat(), script_pubkey: to_address.script_pubkey() },
                 TxOut {
                     value: change_amount.to_sat(),
                     script_pubkey: change_address.script_pubkey(),
-                }
+                },
             ],
         };
 
@@ -281,7 +285,10 @@ impl WatchOnly {
     /// "m/84h/0h/0h/1/0"). A real wallet would have access to the chain so could determine if an
     /// address has been used or not. We ignore this detail and just re-use the first change address
     /// without loss of generality.
-    fn change_address<C: Verification>(&self, secp: &Secp256k1<C>) -> Result<(PublicKey, Address, DerivationPath)> {
+    fn change_address<C: Verification>(
+        &self,
+        secp: &Secp256k1<C>,
+    ) -> Result<(PublicKey, Address, DerivationPath)> {
         let path = vec![ChildNumber::from_normal_idx(1)?, ChildNumber::from_normal_idx(0)?];
         let derived = self.account_0_xpub.derive_pub(secp, &path)?;
 
@@ -299,13 +306,11 @@ fn input_derivation_path() -> Result<DerivationPath> {
 }
 
 fn previous_output() -> TxOut {
-    let script_pubkey = Script::from_hex(INPUT_UTXO_SCRIPT_PUBKEY).expect("failed to parse input utxo scriptPubkey");
+    let script_pubkey = Script::from_hex(INPUT_UTXO_SCRIPT_PUBKEY)
+        .expect("failed to parse input utxo scriptPubkey");
     let amount = Amount::from_str(INPUT_UTXO_VALUE).expect("failed to parse input utxo value");
 
-    TxOut {
-        value: amount.to_sat(),
-        script_pubkey,
-    }
+    TxOut { value: amount.to_sat(), script_pubkey }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -335,51 +340,35 @@ enum Error {
 }
 
 impl std::error::Error for Error {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        None
-    }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
 }
 
 impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self)
-    }
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { write!(f, "{:?}", self) }
 }
 
 impl From<bip32::Error> for Error {
-    fn from(e: bip32::Error) -> Error {
-        Error::Bip32(e)
-    }
+    fn from(e: bip32::Error) -> Error { Error::Bip32(e) }
 }
 
 impl From<psbt::Error> for Error {
-    fn from(e: psbt::Error) -> Error {
-        Error::Psbt(e)
-    }
+    fn from(e: psbt::Error) -> Error { Error::Psbt(e) }
 }
 
 impl From<SighashError> for Error {
-    fn from(e: SighashError) -> Error {
-        Error::PsbtSighash(e)
-    }
+    fn from(e: SighashError) -> Error { Error::PsbtSighash(e) }
 }
 
 impl From<hex::Error> for Error {
-    fn from(e: hex::Error) -> Error {
-        Error::Hex(e)
-    }
+    fn from(e: hex::Error) -> Error { Error::Hex(e) }
 }
 
 impl From<address::Error> for Error {
-    fn from(e: address::Error) -> Error {
-        Error::Address(e)
-    }
+    fn from(e: address::Error) -> Error { Error::Address(e) }
 }
 
 impl From<ParseAmountError> for Error {
-    fn from(e: ParseAmountError) -> Error {
-        Error::ParseAmount(e)
-    }
+    fn from(e: ParseAmountError) -> Error { Error::ParseAmount(e) }
 }
 
 /// This module implements signing a PSBT. It is based on code in `rust-miniscript` with a bit of a
@@ -392,15 +381,22 @@ mod psbt_sign {
     use std::fmt;
     use std::ops::Deref;
 
-    use bitcoin::{EcdsaSig, EcdsaSighashType, EcdsaSigError, PrivateKey, SchnorrSighashType, Script, Transaction, TxOut};
     use bitcoin::psbt::{Input, Prevouts, Psbt, PsbtSighashType};
     use bitcoin::util::sighash::{self, SighashCache};
     use bitcoin::util::taproot::TapLeafHash;
-
-    use secp256k1::{Message, Signing, Secp256k1};
+    use bitcoin::{
+        EcdsaSig, EcdsaSigError, EcdsaSighashType, PrivateKey, SchnorrSighashType, Script,
+        Transaction, TxOut,
+    };
+    use secp256k1::{Message, Secp256k1, Signing};
 
     /// Signs the input at `input_index` with private key `sk`.
-    pub fn sign<C: Signing>(psbt: &mut Psbt, sk: &PrivateKey, input_index: usize, secp: &Secp256k1<C>) -> Result<(), SighashError> {
+    pub fn sign<C: Signing>(
+        psbt: &mut Psbt,
+        sk: &PrivateKey,
+        input_index: usize,
+        secp: &Secp256k1<C>,
+    ) -> Result<(), SighashError> {
         check_index_is_within_bounds(psbt, input_index)?;
 
         let mut cache = SighashCache::new(&psbt.unsigned_tx);
@@ -413,16 +409,13 @@ mod psbt_sign {
         final_signature.push(sighash_ty.to_u32() as u8);
 
         let pk = sk.public_key(secp);
-        psbt.inputs[input_index]
-            .partial_sigs
-            .insert(pk, EcdsaSig::from_slice(&final_signature)?);
+        psbt.inputs[input_index].partial_sigs.insert(pk, EcdsaSig::from_slice(&final_signature)?);
 
         Ok(())
-
     }
 
     /// Returns the sighash message to sign along with the sighash type.
-    fn sighash<T: Deref<Target=Transaction>>(
+    fn sighash<T: Deref<Target = Transaction>>(
         psbt: &Psbt,
         input_index: usize,
         cache: &mut SighashCache<T>,
@@ -450,12 +443,10 @@ mod psbt_sign {
         let is_wsh = script.is_v0_p2wsh();
 
         let is_nested_wpkh = script.is_p2sh()
-            && input.redeem_script.as_ref()
-            .map(|s| s.is_v0_p2wpkh()).unwrap_or(false);
+            && input.redeem_script.as_ref().map(|s| s.is_v0_p2wpkh()).unwrap_or(false);
 
         let is_nested_wsh = script.is_p2sh()
-            && input.redeem_script.as_ref()
-            .map(|x| x.is_v0_p2wsh()).unwrap_or(false);
+            && input.redeem_script.as_ref().map(|x| x.is_v0_p2wsh()).unwrap_or(false);
 
         let is_segwit = is_wpkh || is_wsh || is_nested_wpkh || is_nested_wsh;
 
@@ -468,9 +459,9 @@ mod psbt_sign {
                         .ok_or(SighashError::NotWpkh)?
                 };
                 cache.segwit_signature_hash(input_index, &script_code, utxo.value, hash_ty)?
-
             } else {
-                let script_code = input.witness_script.as_ref().ok_or(SighashError::MissingWitnessScript)?;
+                let script_code =
+                    input.witness_script.as_ref().ok_or(SighashError::MissingWitnessScript)?;
                 cache.segwit_signature_hash(input_index, script_code, utxo.value, hash_ty)?
             }
         } else {
@@ -528,7 +519,7 @@ mod psbt_sign {
     }
 
     /// Returns the sighash message and sighash type for this `input`.
-    fn taproot_sighash<T: Deref<Target=Transaction>>(
+    fn taproot_sighash<T: Deref<Target = Transaction>>(
         input: &Input,
         prevouts: Vec<&TxOut>,
         input_index: usize,
@@ -546,16 +537,16 @@ mod psbt_sign {
             .map_err(|_e| SighashError::InvalidSighashType)?;
 
         let sighash = match tapleaf_hash {
-            Some(leaf_hash) => {
-                cache.taproot_script_spend_signature_hash(input_index, &prevouts, leaf_hash, hash_ty)?
-            }
-            None => {
-                cache.taproot_key_spend_signature_hash(input_index, &prevouts, hash_ty)?
-            }
+            Some(leaf_hash) => cache.taproot_script_spend_signature_hash(
+                input_index,
+                &prevouts,
+                leaf_hash,
+                hash_ty,
+            )?,
+            None => cache.taproot_key_spend_signature_hash(input_index, &prevouts, hash_ty)?,
         };
         let msg = Message::from_slice(&sighash).expect("sighashes are 32 bytes");
         Ok((msg, hash_ty.into()))
-
     }
 
     /// Errors encountered while calculating the sighash message.
@@ -598,15 +589,11 @@ mod psbt_sign {
     }
 
     impl From<sighash::Error> for SighashError {
-        fn from(e: sighash::Error) -> Self {
-            SighashError::SighashComputation(e)
-        }
+        fn from(e: sighash::Error) -> Self { SighashError::SighashComputation(e) }
     }
 
     impl From<EcdsaSigError> for SighashError {
-        fn from(e: EcdsaSigError) -> Self {
-            SighashError::EcdsaSig(e)
-        }
+        fn from(e: EcdsaSigError) -> Self { SighashError::EcdsaSig(e) }
     }
 
     #[cfg(feature = "std")]
@@ -616,11 +603,11 @@ mod psbt_sign {
 
             match self {
                 IndexOutOfBounds(_, _)
-                    | MissingSpendUtxo
-                    | MissingWitnessScript
-                    | MissingRedeemScript
-                    | InvalidSighashType
-                    | NotWpkh => None,
+                | MissingSpendUtxo
+                | MissingWitnessScript
+                | MissingRedeemScript
+                | InvalidSighashType
+                | NotWpkh => None,
                 SighashComputation(e) => Some(e),
                 EcdsaSig(e) => Some(e),
             }
