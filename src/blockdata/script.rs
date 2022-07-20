@@ -325,9 +325,11 @@ fn read_uint_iter(data: &mut core::slice::Iter<'_, u8>, size: usize) -> Result<u
 
 impl Script {
     /// Creates a new empty script.
+    #[inline]
     pub fn new() -> Script { Script(vec![].into_boxed_slice()) }
 
     /// Generates P2PK-type of scriptPubkey.
+    #[inline]
     pub fn new_p2pk(pubkey: &PublicKey) -> Script {
         Builder::new()
             .push_key(pubkey)
@@ -336,6 +338,7 @@ impl Script {
     }
 
     /// Generates P2PKH-type of scriptPubkey.
+    #[inline]
     pub fn new_p2pkh(pubkey_hash: &PubkeyHash) -> Script {
         Builder::new()
             .push_opcode(opcodes::all::OP_DUP)
@@ -347,6 +350,7 @@ impl Script {
     }
 
     /// Generates P2SH-type of scriptPubkey with a given hash of the redeem script.
+    #[inline]
     pub fn new_p2sh(script_hash: &ScriptHash) -> Script {
         Builder::new()
             .push_opcode(opcodes::all::OP_HASH160)
@@ -362,6 +366,7 @@ impl Script {
     }
 
     /// Generates P2WPKH-type of scriptPubkey.
+    #[inline]
     pub fn new_v0_p2wpkh(pubkey_hash: &WPubkeyHash) -> Script {
         Script::new_witness_program(WitnessVersion::V0, &pubkey_hash[..])
     }
@@ -373,23 +378,27 @@ impl Script {
     }
 
     /// Generates P2WSH-type of scriptPubkey with a given hash of the redeem script.
+    #[inline]
     pub fn new_v0_p2wsh(script_hash: &WScriptHash) -> Script {
         Script::new_witness_program(WitnessVersion::V0, &script_hash[..])
     }
 
     /// Generates P2TR for script spending path using an internal public key and some optional
     /// script tree merkle root.
+    #[inline]
     pub fn new_v1_p2tr<C: Verification>(secp: &Secp256k1<C>, internal_key: UntweakedPublicKey, merkle_root: Option<TapBranchHash>) -> Script {
         let (output_key, _) = internal_key.tap_tweak(secp, merkle_root);
         Script::new_witness_program(WitnessVersion::V1, &output_key.serialize())
     }
 
     /// Generates P2TR for key spending path for a known [`TweakedPublicKey`].
+    #[inline]
     pub fn new_v1_p2tr_tweaked(output_key: TweakedPublicKey) -> Script {
         Script::new_witness_program(WitnessVersion::V1, &output_key.serialize())
     }
 
     /// Generates P2WSH-type of scriptPubkey with a given hash of the redeem script.
+    #[inline]
     pub fn new_witness_program(version: WitnessVersion, program: &[u8]) -> Script {
         Builder::new()
             .push_opcode(version.into())
@@ -398,6 +407,7 @@ impl Script {
     }
 
     /// Generates OP_RETURN-type of scriptPubkey for the given data.
+    #[inline]
     pub fn new_op_return(data: &[u8]) -> Script {
         Builder::new()
             .push_opcode(opcodes::all::OP_RETURN)
@@ -406,31 +416,39 @@ impl Script {
     }
 
     /// Returns 160-bit hash of the script.
+    #[inline]
     pub fn script_hash(&self) -> ScriptHash {
         ScriptHash::hash(self.as_bytes())
     }
 
     /// Returns 256-bit hash of the script for P2WSH outputs.
+    #[inline]
     pub fn wscript_hash(&self) -> WScriptHash {
         WScriptHash::hash(self.as_bytes())
     }
 
     /// Returns the length in bytes of the script.
+    #[inline]
     pub fn len(&self) -> usize { self.0.len() }
 
     /// Returns whether the script is the empty script.
+    #[inline]
     pub fn is_empty(&self) -> bool { self.0.is_empty() }
 
     /// Returns the script data as a byte slice.
+    #[inline]
     pub fn as_bytes(&self) -> &[u8] { &*self.0 }
 
     /// Returns a copy of the script data.
+    #[inline]
     pub fn to_bytes(&self) -> Vec<u8> { self.0.clone().into_vec() }
 
     /// Converts the script into a byte vector.
+    #[inline]
     pub fn into_bytes(self) -> Vec<u8> { self.0.into_vec() }
 
     /// Computes the P2SH output corresponding to this redeem script.
+    #[inline]
     pub fn to_p2sh(&self) -> Script {
         Script::new_p2sh(&self.script_hash())
     }
@@ -439,6 +457,7 @@ impl Script {
     /// for a P2WPKH output. The `scriptCode` is described in [BIP143].
     ///
     /// [BIP143]: <https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki>
+    #[inline]
     pub fn p2wpkh_script_code(&self) -> Option<Script> {
         if !self.is_v0_p2wpkh() {
             return None
@@ -456,6 +475,7 @@ impl Script {
 
     /// Computes the P2WSH output corresponding to this witnessScript (aka the "witness redeem
     /// script").
+    #[inline]
     pub fn to_v0_p2wsh(&self) -> Script {
         Script::new_v0_p2wsh(&self.wscript_hash())
     }
@@ -556,6 +576,7 @@ impl Script {
     }
 
     /// Check if this is an OP_RETURN output.
+    #[inline]
     pub fn is_op_return (&self) -> bool {
         match self.0.first() {
             Some(b) => *b == opcodes::all::OP_RETURN.to_u8(),
@@ -607,6 +628,7 @@ impl Script {
     /// vector using `into_bytes()`.
     ///
     /// To force minimal pushes, use [`Self::instructions_minimal`].
+    #[inline]
     pub fn instructions(&self) -> Instructions {
         Instructions {
             data: self.0.iter(),
@@ -615,6 +637,7 @@ impl Script {
     }
 
     /// Iterates over the script in the form of `Instruction`s while enforcing minimal pushes.
+    #[inline]
     pub fn instructions_minimal(&self) -> Instructions {
         Instructions {
             data: self.0.iter(),
@@ -638,6 +661,7 @@ impl Script {
     ///  * `flags` - Verification flags, see [`bitcoinconsensus::VERIFY_ALL`] and similar.
     #[cfg(feature="bitcoinconsensus")]
     #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
+    #[inline]
     pub fn verify_with_flags<F: Into<u32>>(&self, index: usize, amount: crate::Amount, spending: &[u8], flags: F) -> Result<(), Error> {
         Ok(bitcoinconsensus::verify_with_flags (&self.0[..], amount.to_sat(), spending, index, flags.into())?)
     }
@@ -649,6 +673,7 @@ impl Script {
     }
 
     /// Writes the assembly decoding of the script to the formatter.
+    #[inline]
     pub fn fmt_asm(&self, f: &mut dyn fmt::Write) -> fmt::Result {
         bytes_to_asm_fmt(self.as_ref(), f)
     }
@@ -660,6 +685,7 @@ impl Script {
     }
 
     /// Returns the assembly decoding of the script.
+    #[inline]
     pub fn asm(&self) -> String {
         bytes_to_asm(self.as_ref())
     }
