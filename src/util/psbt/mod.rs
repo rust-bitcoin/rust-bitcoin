@@ -579,8 +579,8 @@ mod tests {
             }],
             outputs: vec![Output {
                 bip32_derivation: keypaths,
-                proprietary: proprietary,
-                unknown: unknown,
+                proprietary,
+                unknown,
                 ..Default::default()
             }],
         };
