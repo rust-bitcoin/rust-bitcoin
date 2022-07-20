@@ -1,3 +1,57 @@
+# 0.29 - 2022-07-20 "Edition 2018 Release"
+
+As promised, this is our quick release to bring on edition 2018 by increasing our MSRV to Rust
+1.41.1 [#983](https://github.com/rust-bitcoin/rust-bitcoin/pull/983)
+
+This work saw a bunch of new language features become available to us. At the
+same time we were able to start using `rustfmt`. We also started linting as part
+of CI.
+
+## Breaking changes
+
+There are numerous breaking changes in this release related to the new language features but also
+other improvements such as more newtypes added. Note that not all changes cause compilation failure!
+For example, [`Witness` serialization was changed](https://github.com/rust-bitcoin/rust-bitcoin/pull/1068)
+to support human-readable formats.
+
+[Detailed list of breaking changes](https://github.com/rust-bitcoin/rust-bitcoin/pulls?q=is%3Apr+label%3A%22API+break%22+is%3Aclosed+milestone%3A0.29.0+)
+
+## Highlights
+
+- Added support for BIP 152 [#1088](https://github.com/rust-bitcoin/rust-bitcoin/pull/1088)
+- Edition 2018 improvements
+  - Implement `TryFrom` [#1007](https://github.com/rust-bitcoin/rust-bitcoin/pull/1007)
+  - Add `non_exhaustive` to all error enums [#1026](https://github.com/rust-bitcoin/rust-bitcoin/pull/1026)
+  - Various other improvements, see [tracking issue](https://github.com/rust-bitcoin/rust-bitcoin/issues/510) for more information.
+- Enable `clippy` on CI [#1061](https://github.com/rust-bitcoin/rust-bitcoin/pull/1061)
+- Taproot improvements
+  [#950](https://github.com/rust-bitcoin/rust-bitcoin/pull/950) [#936](https://github.com/rust-bitcoin/rust-bitcoin/pull/936)
+- serde improvements/changes
+  [#1006](https://github.com/rust-bitcoin/rust-bitcoin/pull/1006) [#905](https://github.com/rust-bitcoin/rust-bitcoin/pull/905)
+  [#1071](https://github.com/rust-bitcoin/rust-bitcoin/pull/1071) []
+- Performance improvements
+  [#1033](https://github.com/rust-bitcoin/rust-bitcoin/pull/1033) [#996](https://github.com/rust-bitcoin/rust-bitcoin/pull/996)
+  [#1053](https://github.com/rust-bitcoin/rust-bitcoin/pull/1053) [#1023](https://github.com/rust-bitcoin/rust-bitcoin/pull/1023)
+- PSBT improvements
+  [#853](https://github.com/rust-bitcoin/rust-bitcoin/pull/853) [#951] (https://github.com/rust-bitcoin/rust-bitcoin/pull/951)
+  [#940](https://github.com/rust-bitcoin/rust-bitcoin/pull/940)
+- Script improvements
+  [#1021](https://github.com/rust-bitcoin/rust-bitcoin/pull/1021) [#954](https://github.com/rust-bitcoin/rust-bitcoin/pull/954)
+- New types that may be of interest
+  - `Sequence`, transaction sequence number [#1093](https://github.com/rust-bitcoin/rust-bitcoin/pull/1093)
+  - `ChainHash`, as used in Lightning [#878](https://github.com/rust-bitcoin/rust-bitcoin/pull/878)
+  - `LockTime`, transaction nLockTime [#994](https://github.com/rust-bitcoin/rust-bitcoin/pull/994)
+- Improve pubkey sorting: [#1084](https://github.com/rust-bitcoin/rust-bitcoin/pull/1084)
+- Introduce `rustfmt` [#1040](https://github.com/rust-bitcoin/rust-bitcoin/pull/1040)
+- Dependencies
+  - Upgrade to use `bitcoinconsensus` v0.20.2-0.5.0 [#1165](https://github.com/rust-bitcoin/rust-bitcoin/pull/1165)
+  - Upgrade to use `secp256k1` v0.24.0 [#1110](https://github.com/rust-bitcoin/rust-bitcoin/pull/1110)
+  - Upgrade to use `bech32` v0.9.0 [#1131](https://github.com/rust-bitcoin/rust-bitcoin/pull/1131)
+  - Remove `base64-compat` in favour of `base64` [#993](https://github.com/rust-bitcoin/rust-bitcoin/pull/993)
+  - Do not pin transitive `ryu` dependency [#1013](https://github.com/rust-bitcoin/rust-bitcoin/pull/1013)
+- Take `Writer`/`Reader` by `&mut` in consensus en/decoding [#1035](https://github.com/rust-bitcoin/rust-bitcoin/pull/1035)
+- Consume `self` in conversion methods named `to_*` instead of borrowing [#1161](https://github.com/rust-bitcoin/rust-bitcoin/pull/1161)
+
 # 0.28 - 2022-04-20 "The Taproot Release"
 
 At nearly nine months, this is our longest release cycle ever, and thanks
