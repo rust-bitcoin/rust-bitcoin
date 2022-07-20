@@ -18,6 +18,7 @@ use crate::io;
 use core::convert::TryFrom;
 use core::{fmt, default::Default};
 use core::ops::Index;
+use crate::internal_macros::display_from_debug;
 
 #[cfg(feature = "serde")] use serde;
 
@@ -998,7 +999,7 @@ impl<'de> serde::Deserialize<'de> for Script {
         D: serde::Deserializer<'de>,
     {
         use core::fmt::Formatter;
-        use hashes::hex::FromHex;
+        use crate::hashes::hex::FromHex;
 
         if deserializer.is_human_readable() {
 
@@ -1092,6 +1093,7 @@ mod test {
     use crate::blockdata::opcodes;
     use crate::util::key::PublicKey;
     use crate::util::psbt::serialize::Serialize;
+    use crate::internal_macros::hex_script;
 
     #[test]
     fn script() {

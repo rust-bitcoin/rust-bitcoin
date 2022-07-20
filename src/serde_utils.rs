@@ -235,7 +235,7 @@ pub mod hex_bytes {
     //! Module for serialization of byte arrays as hex strings.
     #![allow(missing_docs)]
 
-    use hashes::hex::{FromHex, ToHex};
+    use crate::hashes::hex::{FromHex, ToHex};
     use serde;
 
     pub fn serialize<T, S>(bytes: &T, s: S) -> Result<S::Ok, S::Error>

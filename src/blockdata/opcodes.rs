@@ -14,6 +14,7 @@
 #[cfg(feature = "serde")] use crate::prelude::*;
 
 use core::{fmt, convert::From};
+use crate::internal_macros::display_from_debug;
 
 // Note: I am deliberately not implementing PartialOrd or Ord on the
 //       opcode enum. If you want to check ranges of opcodes, etc.,

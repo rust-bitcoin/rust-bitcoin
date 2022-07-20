@@ -16,6 +16,7 @@ use crate::network::constants::{self, ServiceFlags};
 use crate::consensus::{Encodable, Decodable, ReadExt};
 use crate::consensus::encode;
 use crate::hashes::sha256d;
+use crate::internal_macros::impl_consensus_encoding;
 
 /// Some simple messages
 

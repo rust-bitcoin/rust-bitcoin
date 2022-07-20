@@ -25,6 +25,7 @@ use crate::blockdata::transaction::Transaction;
 use crate::blockdata::constants::{max_target, WITNESS_SCALE_FACTOR};
 use crate::blockdata::script;
 use crate::VarInt;
+use crate::internal_macros::impl_consensus_encoding;
 
 /// Bitcoin block header.
 ///

@@ -12,7 +12,7 @@ macro_rules! construct_uint {
         /// Little-endian large integer type
         #[derive(Copy, Clone, PartialEq, Eq, Hash, Default)]
         pub struct $name(pub [u64; $n_words]);
-        impl_array_newtype!($name, u64, $n_words);
+        $crate::internal_macros::impl_array_newtype!($name, u64, $n_words);
 
         impl $name {
             /// Conversion to u32
@@ -404,7 +404,7 @@ macro_rules! construct_uint {
             }
         }
 
-        display_from_debug!($name);
+        $crate::internal_macros::display_from_debug!($name);
 
         impl $crate::consensus::Encodable for $name {
             #[inline]

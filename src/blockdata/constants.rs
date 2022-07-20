@@ -21,6 +21,7 @@ use crate::blockdata::block::{Block, BlockHeader};
 use crate::blockdata::witness::Witness;
 use crate::network::constants::Network;
 use crate::util::uint::Uint256;
+use crate::internal_macros::{impl_array_newtype, impl_bytes_newtype};
 
 /// The maximum allowable sequence number
 pub const MAX_SEQUENCE: u32 = 0xFFFFFFFF;

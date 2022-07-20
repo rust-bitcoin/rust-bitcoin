@@ -33,6 +33,7 @@ mod message_signing {
 
     use crate::util::key::PublicKey;
     use crate::util::address::{Address, AddressType};
+    use crate::internal_macros::write_err;
 
     /// An error used for dealing with Bitcoin Signed Messages.
     #[cfg_attr(docsrs, doc(cfg(feature = "secp-recovery")))]

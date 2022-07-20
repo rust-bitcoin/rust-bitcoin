@@ -30,6 +30,7 @@ use crate::consensus::{encode, Decodable, Encodable};
 use crate::hash_types::{Sighash, Txid, Wtxid};
 use crate::VarInt;
 use crate::util::sighash::UINT256_ONE;
+use crate::internal_macros::{impl_consensus_encoding, serde_string_impl, serde_struct_human_string_impl, write_err};
 
 #[cfg(doc)]
 use crate::util::sighash::SchnorrSighashType;

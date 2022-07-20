@@ -59,40 +59,22 @@ extern crate test;
 #[cfg(feature = "no-std")]
 #[macro_use]
 extern crate alloc;
-#[cfg(feature = "no-std")]
-extern crate core2;
 
-// Re-exported dependencies.
-#[macro_use]
-pub extern crate bitcoin_hashes as hashes;
-pub extern crate bech32;
-pub extern crate secp256k1;
+// Re-export dependencies we control.
+pub use bitcoin_hashes as hashes;
+pub use secp256k1;
+pub use bech32;
+#[cfg(feature="bitcoinconsensus")]
+pub use bitcoinconsensus;
 
-#[cfg(feature = "no-std")]
-extern crate hashbrown;
-
-#[cfg(feature = "base64")]
-#[cfg_attr(docsrs, doc(cfg(feature = "base64")))]
-pub extern crate base64;
-
-#[cfg(feature = "bitcoinconsensus")]
-extern crate bitcoinconsensus;
 #[cfg(feature = "serde")]
 #[macro_use]
 extern crate actual_serde as serde;
-#[cfg(all(test, feature = "serde"))]
-extern crate bincode;
-#[cfg(all(test, feature = "serde"))]
-extern crate serde_json;
-#[cfg(all(test, feature = "serde"))]
-extern crate serde_test;
-#[cfg(all(test, feature = "unstable"))]
-extern crate test;
+
 
 #[cfg(test)]
 #[macro_use]
 mod test_macros;
-#[macro_use]
 mod internal_macros;
 #[cfg(feature = "serde")]
 mod serde_utils;
