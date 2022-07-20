@@ -331,7 +331,7 @@ mod tests {
         assert_eq!(signature.to_base64(), signature.to_string());
         let signature2 = super::MessageSignature::from_str(&signature.to_string()).unwrap();
         let pubkey = signature2.recover_pubkey(&secp, msg_hash).unwrap();
-        assert_eq!(pubkey.compressed, true);
+        assert!(pubkey.compressed);
         assert_eq!(pubkey.inner, secp256k1::PublicKey::from_secret_key(&secp, &privkey));
 
         let p2pkh = Address::p2pkh(&pubkey, Network::Bitcoin);
