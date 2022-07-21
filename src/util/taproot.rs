@@ -62,6 +62,12 @@ sha256t_hash_newtype!(TapSighashHash, TapSighashTag, MIDSTATE_TAPSIGHASH, 64,
     doc="Taproot-tagged hash for the taproot signature hash", false
 );
 
+impl secp256k1::ThirtyTwoByteHash for TapSighashHash {
+        fn into_32(self) -> [u8; 32] {
+            self.into_inner()
+        }
+}
+
 impl TapTweakHash {
     /// Creates a new BIP341 [`TapTweakHash`] from key and tweak. Produces `H_taptweak(P||R)` where
     /// `P` is the internal key and `R` is the merkle root.

@@ -141,8 +141,7 @@ mod message_signing {
             secp_ctx: &secp256k1::Secp256k1<C>,
             msg_hash: sha256d::Hash
         ) -> Result<PublicKey, MessageSignatureError> {
-            let msg = secp256k1::Message::from_slice(&msg_hash[..])
-                .expect("cannot fail");
+            let msg = secp256k1::Message::from(msg_hash);
             let pubkey = secp_ctx.recover_ecdsa(&msg, &self.signature)?;
             Ok(PublicKey {
                 inner: pubkey,
@@ -319,7 +318,7 @@ mod tests {
         let secp = secp256k1::Secp256k1::new();
         let message = "rust-bitcoin MessageSignature test";
         let msg_hash = super::signed_msg_hash(&message);
-        let msg = secp256k1::Message::from_slice(&msg_hash).expect("message");
+        let msg = secp256k1::Message::from(msg_hash);
 
 
         let privkey = secp256k1::SecretKey::new(&mut secp256k1::rand::thread_rng());
