@@ -1,4 +1,6 @@
-#!/bin/sh -ex
+#!/bin/sh
+
+set -ex
 
 FEATURES="base64 bitcoinconsensus serde rand secp-recovery"
 
