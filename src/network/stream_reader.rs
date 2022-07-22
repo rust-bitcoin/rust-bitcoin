@@ -193,7 +193,7 @@ mod test {
         // in async mode
         let handle = thread::spawn(move || {
             // We only simulate a single connection.
-            let mut ostream = listener.incoming().next().unwrap().unwrap();
+            let (mut ostream, _) = listener.accept().unwrap();
             for piece in pieces {
                 ostream.write_all(&piece[..]).unwrap();
                 ostream.flush().unwrap();
