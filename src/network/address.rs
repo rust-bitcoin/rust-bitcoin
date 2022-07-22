@@ -259,9 +259,9 @@ impl Encodable for AddrV2Message {
         len += VarInt(self.services.to_u64()).consensus_encode(w)?;
         len += self.addr.consensus_encode(w)?;
 
-        // consensus_encode always encodes in LE, and we want to encode in BE.
-        //TODO `len += io::Write::write(w, &self.port.to_be_bytes())?;` when MSRV >= 1.32
-        len += self.port.swap_bytes().consensus_encode(w)?;
+        w.write_all(&self.port.to_be_bytes())?;
+        len += 2; // port u16 is two bytes.
+
         Ok(len)
     }
 }
