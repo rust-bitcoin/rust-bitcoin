@@ -80,7 +80,7 @@ fi
 # Test each feature
 for feature in ${FEATURES}
 do
-    echo "********* Testing "$feature" *************"
+    echo "********* Testing $feature *************"
     cargo test --verbose --features="$feature"
 done
 
