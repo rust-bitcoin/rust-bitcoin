@@ -336,7 +336,7 @@ fn dec_width(mut num: u64) -> usize {
     width
 }
 
-// NIH due to MSRV, impl copied from `core`
+// NIH due to MSRV, impl copied from `core::i8::unsigned_abs` (introduced in Rust 1.51.1).
 fn unsigned_abs(x: i8) -> u8 {
     x.wrapping_abs() as u8
 }
