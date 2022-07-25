@@ -7,7 +7,7 @@ use crate::prelude::*;
 use crate::io::{self, Cursor, Read};
 
 use crate::blockdata::transaction::Transaction;
-use crate::consensus::{encode, Encodable, Decodable};
+use crate::consensus::{encode, Decodable};
 use crate::consensus::encode::MAX_VEC_SIZE;
 use crate::psbt::map::Map;
 use crate::psbt::{raw, Error, PartiallySignedTransaction};
@@ -23,7 +23,7 @@ const PSBT_GLOBAL_VERSION: u8 = 0xFB;
 const PSBT_GLOBAL_PROPRIETARY: u8 = 0xFC;
 
 impl Map for PartiallySignedTransaction {
-    fn get_pairs(&self) -> Result<Vec<raw::Pair>, io::Error> {
+    fn get_pairs(&self) -> Vec<raw::Pair> {
         let mut rv: Vec<raw::Pair> = Default::default();
 
         rv.push(raw::Pair {
@@ -35,10 +35,10 @@ impl Map for PartiallySignedTransaction {
                 // Manually serialized to ensure 0-input txs are serialized
                 // without witnesses.
                 let mut ret = Vec::new();
-                self.unsigned_tx.version.consensus_encode(&mut ret)?;
-                self.unsigned_tx.input.consensus_encode(&mut ret)?;
-                self.unsigned_tx.output.consensus_encode(&mut ret)?;
-                self.unsigned_tx.lock_time.consensus_encode(&mut ret)?;
+                ret.extend(encode::serialize(&self.unsigned_tx.version));
+                ret.extend(encode::serialize(&self.unsigned_tx.input));
+                ret.extend(encode::serialize(&self.unsigned_tx.output));
+                ret.extend(encode::serialize(&self.unsigned_tx.lock_time));
                 ret
             },
         });
@@ -83,7 +83,7 @@ impl Map for PartiallySignedTransaction {
             });
         }
 
-        Ok(rv)
+        rv
     }
 }
 

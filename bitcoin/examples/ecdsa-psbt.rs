@@ -236,16 +236,14 @@ impl WatchOnly {
     /// Finalizes the PSBT, in BIP174 parlance this is the 'Finalizer'.
     /// This is just an example. For a production-ready PSBT Finalizer, use [rust-miniscript](https://docs.rs/miniscript/latest/miniscript/psbt/trait.PsbtExt.html#tymethod.finalize)
     fn finalize_psbt(&self, mut psbt: Psbt) -> Result<Psbt> {
-        use bitcoin::psbt::serialize::Serialize;
-
         if psbt.inputs.is_empty() {
             return Err(psbt::SignError::MissingInputUtxo.into());
         }
 
         let sigs: Vec<_> = psbt.inputs[0].partial_sigs.values().collect();
         let mut script_witness: Witness = Witness::new();
-        script_witness.push(&sigs[0].serialize());
-        script_witness.push(self.input_xpub.to_pub().serialize());
+        script_witness.push(&sigs[0].to_vec());
+        script_witness.push(self.input_xpub.to_pub().to_bytes());
 
         psbt.inputs[0].final_script_witness = Some(script_witness);
 

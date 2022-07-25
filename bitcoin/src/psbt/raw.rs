@@ -15,6 +15,8 @@ use crate::consensus::encode::{self, ReadExt, WriteExt, Decodable, Encodable, Va
 use crate::hashes::hex;
 use crate::psbt::Error;
 
+use super::serialize::Serialize;
+
 /// A PSBT key in its raw byte form.
 #[derive(Debug, PartialEq, Hash, Eq, Clone, Ord, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -23,18 +25,21 @@ pub struct Key {
     /// The type of this PSBT key.
     pub type_value: u8,
     /// The key itself in raw byte form.
+    /// `<key> := <keylen> <keytype> <keydata>`
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::hex_bytes"))]
     pub key: Vec<u8>,
 }
 
 /// A PSBT key-value pair in its raw byte form.
+/// `<keypair> := <key> <value>`
 #[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct Pair {
     /// The key of this key-value pair.
     pub key: Key,
-    /// The value of this key-value pair in raw byte form.
+    /// The value data of this key-value pair in raw byte form.
+    /// `<value> := <valuelen> <valuedata>`
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::hex_bytes"))]
     pub value: Vec<u8>,
 }
@@ -94,25 +99,28 @@ impl Decodable for Key {
     }
 }
 
-impl Encodable for Key {
-    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        let mut len = 0;
-        len += VarInt((self.key.len() + 1) as u64).consensus_encode(w)?;
+impl Serialize for Key {
+    fn serialize(&self) -> Vec<u8> {
+        let mut buf = Vec::new();
+        VarInt((self.key.len() + 1) as u64).consensus_encode(&mut buf).expect("in-memory writers don't error");
 
-        len += self.type_value.consensus_encode(w)?;
+        self.type_value.consensus_encode(&mut buf).expect("in-memory writers don't error");
 
         for key in &self.key {
-            len += key.consensus_encode(w)?
+            key.consensus_encode(&mut buf).expect("in-memory writers don't error");
         }
 
-        Ok(len)
+        buf
     }
 }
 
-impl Encodable for Pair {
-    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        let len = self.key.consensus_encode(w)?;
-        Ok(len + self.value.consensus_encode(w)?)
+impl Serialize for Pair {
+    fn serialize(&self) -> Vec<u8> {
+        let mut buf = Vec::new();
+        buf.extend(self.key.serialize());
+        // <value> := <valuelen> <valuedata>
+        self.value.consensus_encode(&mut buf).unwrap();
+        buf
     }
 }
 

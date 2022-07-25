@@ -816,6 +816,7 @@ mod tests {
     use crate::hashes::hex::FromHex;
     use crate::hashes::{sha256, hash160, Hash, ripemd160};
     use crate::hash_types::Txid;
+    use crate::psbt::serialize::Serialize;
 
     use secp256k1::{Secp256k1, self};
     #[cfg(feature = "rand")]
@@ -824,7 +825,7 @@ mod tests {
     use crate::blockdata::script::ScriptBuf;
     use crate::blockdata::transaction::{Transaction, TxIn, TxOut, OutPoint, Sequence};
     use crate::network::constants::Network::Bitcoin;
-    use crate::consensus::encode::{deserialize, serialize};
+    use crate::consensus::encode::deserialize;
     use crate::bip32::{ChildNumber, ExtendedPrivKey, ExtendedPubKey, KeySource};
     use crate::psbt::map::{Output, Input};
     use crate::psbt::raw;
@@ -898,7 +899,7 @@ mod tests {
             ..Default::default()
         };
 
-        let actual: Output = deserialize(&serialize(&expected)).unwrap();
+        let actual: Output = deserialize(&expected.serialize()).unwrap();
 
         assert_eq!(expected, actual);
     }
@@ -943,7 +944,7 @@ mod tests {
             outputs: vec![Output::default(), Output::default()],
         };
 
-        let actual: Psbt = Psbt::deserialize(&Psbt::serialize(&expected)).unwrap();
+        let actual: Psbt = Psbt::deserialize(&expected.serialize()).unwrap();
         assert_eq!(expected, actual);
     }
 
@@ -957,7 +958,7 @@ mod tests {
             value: vec![69u8, 42u8, 4u8],
         };
 
-        let actual: raw::Pair = deserialize(&serialize(&expected)).unwrap();
+        let actual: raw::Pair = deserialize(&expected.serialize()).unwrap();
 
         assert_eq!(expected, actual);
     }
@@ -1282,7 +1283,7 @@ mod tests {
             assert_eq!(redeem_script.to_p2sh(), expected_out);
 
             for output in psbt.outputs {
-                assert_eq!(output.get_pairs().unwrap().len(), 0)
+                assert_eq!(output.get_pairs().len(), 0)
             }
         }
 
@@ -1328,7 +1329,7 @@ mod tests {
             assert_eq!(redeem_script.to_p2sh(), expected_out);
 
             for output in psbt.outputs {
-                assert!(!output.get_pairs().unwrap().is_empty())
+                assert!(!output.get_pairs().is_empty())
             }
         }
 
