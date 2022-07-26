@@ -128,9 +128,9 @@ PR authors may also find it useful to run the following script locally in order
 to check that each of the commits within the PR satisfies the requirements
 above, before submitting the PR to review:
 ```shell script
-BITCOIN_MSRV=1.29.0 ./contrib/test.sh
+RUSTUP_TOOLCHAIN=1.41.1 ./contrib/test.sh
 ```
-Please replace the value in `BITCOIN_MSRV=1.29.0` with the current MSRV from
+Please replace the value in `RUSTUP_TOOLCHAIN=1.41.1` with the current MSRV from
 [README.md].
 
 NB: Please keep in mind that the script above replaces `Cargo.lock` file, which
