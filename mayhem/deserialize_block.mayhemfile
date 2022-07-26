@@ -6,5 +6,5 @@ target: deserialize_block
 cmds:
     - cmd: /deserialize_block
 
-tests:
+testsuite:
     - file://fuzz/hfuzz_input/deserialize_block

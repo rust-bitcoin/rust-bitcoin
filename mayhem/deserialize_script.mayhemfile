@@ -6,5 +6,5 @@ target: deserialize_script
 cmds:
     - cmd: /deserialize_script
 
-tests:
+testsuite:
     - file://fuzz/hfuzz_input/deserialize_script

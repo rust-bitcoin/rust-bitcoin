@@ -6,5 +6,5 @@ target: deserialize_address
 cmds:
     - cmd: /deserialize_address
 
-tests:
+testsuite:
     - file://fuzz/hfuzz_input/deserialize_address

@@ -6,5 +6,5 @@ target: deserialize_transaction
 cmds:
     - cmd: /deserialize_transaction
 
-tests:
+testsuite:
     - file://fuzz/hfuzz_input/deserialize_transaction
