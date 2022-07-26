@@ -317,7 +317,7 @@ mod tests {
 
         let secp = secp256k1::Secp256k1::new();
         let message = "rust-bitcoin MessageSignature test";
-        let msg_hash = super::signed_msg_hash(&message);
+        let msg_hash = super::signed_msg_hash(message);
         let msg = secp256k1::Message::from(msg_hash);
 
 
@@ -331,7 +331,7 @@ mod tests {
         assert_eq!(signature.to_base64(), signature.to_string());
         let signature2 = super::MessageSignature::from_str(&signature.to_string()).unwrap();
         let pubkey = signature2.recover_pubkey(&secp, msg_hash).unwrap();
-        assert_eq!(pubkey.compressed, true);
+        assert!(pubkey.compressed);
         assert_eq!(pubkey.inner, secp256k1::PublicKey::from_secret_key(&secp, &privkey));
 
         let p2pkh = Address::p2pkh(&pubkey, Network::Bitcoin);
@@ -357,7 +357,7 @@ mod tests {
 
         let secp = secp256k1::Secp256k1::new();
         let message = "a different message from what was signed";
-        let msg_hash = super::signed_msg_hash(&message);
+        let msg_hash = super::signed_msg_hash(message);
 
         // Signature of msg = "rust-bitcoin MessageSignature test"
         // Signed with pk "UuOGDsfLPr4HIMKQX0ipjJeRaj1geCq3yPUF2COP5ME="

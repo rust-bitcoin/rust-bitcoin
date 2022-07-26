@@ -543,7 +543,7 @@ mod tests {
                 let xpub: ExtendedPubKey =
                     "xpub661MyMwAqRbcGoRVtwfvzZsq2VBJR1LAHfQstHUoxqDorV89vRoMxUZ27kLrraAj6MPi\
                     QfrDb27gigC1VS1dBXi5jGpxmMeBXEkKkcXUTg4".parse().unwrap();
-                vec![(xpub, key_source.clone())].into_iter().collect()
+                vec![(xpub, key_source)].into_iter().collect()
             },
             unsigned_tx: {
                 let mut unsigned = tx.clone();
@@ -579,8 +579,8 @@ mod tests {
             }],
             outputs: vec![Output {
                 bip32_derivation: keypaths,
-                proprietary: proprietary.clone(),
-                unknown: unknown.clone(),
+                proprietary,
+                unknown,
                 ..Default::default()
             }],
         };

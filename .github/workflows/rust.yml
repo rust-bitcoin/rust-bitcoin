@@ -13,6 +13,7 @@ jobs:
           - rust: stable
             env:
               DO_COV: true
+              DO_LINT: true
               AS_DEPENDENCY: true
               DO_NO_STD: true
           - rust: beta
@@ -106,19 +107,3 @@ jobs:
           RUSTFLAGS: "-C link-arg=-Tlink.x"
           CARGO_TARGET_THUMBV7M_NONE_EABI_RUNNER: "qemu-system-arm -cpu cortex-m3 -machine mps2-an385 -nographic -semihosting-config enable=on,target=native -kernel"
         run: cd embedded && cargo run --target thumbv7m-none-eabi
-
-  Clippy:
-    name: Clippy
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-      - run: rustup component add clippy
-      - uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: --all-features -- -D warnings
