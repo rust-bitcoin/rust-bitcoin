@@ -71,6 +71,8 @@ please join us in
 [#bitcoin-rust](https://web.libera.chat/?channel=#bitcoin-rust) on
 [libera.chat](https://libera.chat).
 
+For more information please see `./CONTRIBUTING.md`.
+
 ## Minimum Supported Rust Version (MSRV)
 
 This library should always compile with any combination of features (minus

@@ -183,12 +183,6 @@ and [how it is planned to coordinate it with crate refactoring](https://github.c
 For the new code it is recommended to follow style of the existing codebase and
 avoid any end-line space characters.
 
-### MSRV
-
-The Minimal Supported Rust Version (MSRV) is 1.29; it is enforced by our CI.
-Later we plan to increase MSRV to support Rust 2018 and you are welcome to check
-the [tracking issue](https://github.com/rust-bitcoin/rust-bitcoin/issues/510).
-
 ### Naming conventions
 
 Naming of data structures/enums and their fields/variants must follow names used
