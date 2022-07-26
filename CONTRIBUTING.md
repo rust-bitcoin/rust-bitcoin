@@ -170,18 +170,9 @@ Library reflects Bitcoin Core approach whenever possible.
 
 ### Formatting
 
-The repository currently does not use `rustfmt`.
-
-New changes may format the code with `rustfmt`, but they should not re-format
-any existing code for maintaining diff size small, keeping `git blame` intact and
-reduce review time. Repository maintainers may not review PRs introducing large
-blocks of re-formatted code.
-
-You may check the [discussion on the formatting](https://github.com/rust-bitcoin/rust-bitcoin/issues/172)
-and [how it is planned to coordinate it with crate refactoring](https://github.com/rust-bitcoin/rust-bitcoin/pull/525)
-
-For the new code it is recommended to follow style of the existing codebase and
-avoid any end-line space characters.
+The repository currently does use `rustfmt`. The introduction of this is still
+WIP (see 'ignore' in `rustfmt.toml`) but we are working towards full
+formatting.
 
 ### MSRV
 
