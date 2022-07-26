@@ -23,6 +23,7 @@ changes to this document in a pull request.
   * [Naming conventions](#naming-conventions)
   * [Upgrading dependencies](#upgrading-dependencies)
   * [Unsafe code](#unsafe-code)
+  * [Policy](#policy)
 - [Security](#security)
 - [Testing](#testing)
 - [Going further](#going-further)
@@ -221,6 +222,138 @@ Use of `unsafe` code is prohibited unless there is a unanimous decision among
 library maintainers on the exclusion from this rule. In such cases there is a
 requirement to test unsafe code with sanitizers including Miri.
 
+
+### Policy
+
+We have various `rust-bitcoin` specific coding styles and conventions that are
+grouped here loosely under the term 'policy'. These are things we try to adhere
+to but that you should not need to worry too much about if you are a new
+contributor. Think of this as a place to collect group knowledge that exists in
+the various PRs over the last few years.
+
+#### Import statements
+
+We use the following style for import statements, see
+(https://github.com/rust-bitcoin/rust-bitcoin/discussions/2088) for the discussion that led to this.
+
+```rust
+
+// Modules first, as they are part of the project's structure.
+pub mod aa_this;
+mod bb_private;
+pub mod cc_that;
+
+// Private imports, rustfmt will sort and merge them correctly.
+use crate::aa_this::{This, That};
+use crate::bb_that;
+
+// Public re-exports.
+#[rustfmt::skip] // Keeps public re-exports separate, because of this we have to sort manually.
+pub use {
+    crate::aa_aa_this,
+    crate::bb_bb::That,
+}
+```
+
+#### Errors
+
+Return as much context as possible with errors e.g., if an error was encountered parsing a string
+include the string in the returned error type. If a function consumes costly-to-compute input
+(allocations are also considered costly) it should return the input back in the error type.
+
+More specifically an error should
+
+- be `non_exhaustive` unless we _really_ never want to change it.
+- have private fields unless we are very confident they won't change.
+- derive `Debug, Clone, PartialEq, Eq` (and `Copy` iff not `non_exhaustive`).
+- implement Display using `write_err!()` macro if a variant contains an inner error source.
+- have `Error` suffix
+- implement `std::error::Error` if they are public (feature gated on "std").
+
+```rust
+/// Documentation for the `Error` type.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]  // Add liberally; if the error type may ever have new variants added.
+pub enum Error {
+    /// Documentation for variant A.
+    A,
+    /// Documentation for variant B.
+    B,
+}
+```
+
+
+#### Rustdocs
+
+Be liberal with references to BIPs or other documentation; the aim is that devs can learn about
+Bitcoin by hacking on this codebase as opposed to having to learn about Bitcoin first and then start
+hacking on this codebase. Consider the following format, not all sections will be required for all types.
+
+
+```rust
+/// The Bitcoin foobar.
+///
+/// Contains all the data used when passing a foobar around the Bitcoin network.
+///
+/// <details>
+/// <summary>FooBar Original Design</summary>
+///
+/// The foobar was introduced in Bitcoin x.y.z to increase the amount of foo in bar.
+///
+/// </details>
+///
+/// ### Relevant BIPs
+///
+/// * [BIP X - FooBar in Bitcoin](https://github.com/bitcoin/bips/blob/master/bip-0000.mediawiki)
+pub struct FooBar {
+    /// The version in use.
+    pub version: Version
+}
+```
+
+Do use rustdoc subheadings. Do put an empty newline below each heading e.g.,
+
+```rust
+impl FooBar {
+    /// Constructs a `FooBar` from a [`Baz`].
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if `Baz` is not ...
+    ///
+    /// # Panics
+    ///
+    /// If the `Baz`, converted to a `usize`, is out of bounds.
+    pub fn from_baz(baz: Baz) -> Result<Self, Error> {
+        ...
+    }
+}
+```
+
+Add Panics section if any input to the function can trigger a panic.
+
+Generally we prefer to have non-panicking APIs but it is impractical in some cases. If you're not
+sure, feel free to ask. If we determine panicking is more practical it must be documented. Internal
+panics that could theoretically occur because of bugs in our code must not be documented.
+
+
+#### Attributes
+
+- `#[track_caller]`: Used on functions that panic on invalid arguments
+  (see https://rustc-dev-guide.rust-lang.org/backend/implicit-caller-location.html)
+
+- `#[cfg(rust_v_1_60)]`: Used to guard code that should only be built in if the toolchain is
+  compatible. These configuration conditionals are set at build time in `bitcoin/build.rs`. New
+  version attributes may be added as needed.
+
+
+#### Licensing
+
+We use SPDX license tags, all files should start with
+
+```
+// SPDX-License-Identifier: CC0-1.0
+```
 
 ## Security
 
