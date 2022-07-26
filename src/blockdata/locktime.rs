@@ -21,7 +21,8 @@ use core::{mem, fmt};
 use core::cmp::{PartialOrd, Ordering};
 use core::convert::TryFrom;
 use core::str::FromStr;
-use core::num::ParseIntError;
+use crate::error::ParseIntError;
+use crate::parse;
 
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::io::{self, Read, Write};
@@ -134,29 +135,38 @@ impl From<PackedLockTime> for u32 {
     }
 }
 
-impl FromStr for PackedLockTime {
-    type Err = ParseIntError;
+/// Implements `TryFrom<$from> for $to` using `parse::int`, mapping the output using `fn`
+macro_rules! impl_tryfrom_str_single {
+    ($($from:ty, $to:ident $(, $fn:ident)?);*) => {
+        $(
+        impl TryFrom<$from> for $to {
+            type Error = ParseIntError;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        s.parse().map(PackedLockTime)
+            fn try_from(s: $from) -> Result<Self, Self::Error> {
+                parse::int(s).map($to $(:: $fn)?)
+            }
+        }
+        )*
     }
 }
 
-impl TryFrom<&str> for PackedLockTime {
-    type Error = ParseIntError;
+/// Implements `TryFrom<{&str, String, Box<str>}> for $to` using `parse::int`, mapping the output using `fn`
+macro_rules! impl_tryfrom_str {
+    ($to:ident $(, $fn:ident)?) => {
+        impl_tryfrom_str_single!(&str, $to $(, $fn)?; String, $to $(, $fn)?; Box<str>, $to $(, $fn)?);
 
-    fn try_from(s: &str) -> Result<Self, Self::Error> {
-        PackedLockTime::from_str(s)
+        impl FromStr for $to {
+            type Err = ParseIntError;
+
+            fn from_str(s: &str) -> Result<Self, Self::Err> {
+                parse::int(s).map($to $(:: $fn)?)
+            }
+        }
+
     }
 }
 
-impl TryFrom<String> for PackedLockTime {
-    type Error = ParseIntError;
-
-    fn try_from(s: String) -> Result<Self, Self::Error> {
-        PackedLockTime::from_str(&s)
-    }
-}
+impl_tryfrom_str!(PackedLockTime);
 
 impl fmt::LowerHex for PackedLockTime {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -366,29 +376,7 @@ impl LockTime {
     }
 }
 
-impl FromStr for LockTime {
-    type Err = ParseIntError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        s.parse().map(LockTime::from_consensus)
-    }
-}
-
-impl TryFrom<&str> for LockTime {
-    type Error = ParseIntError;
-
-    fn try_from(s: &str) -> Result<Self, Self::Error> {
-        LockTime::from_str(s)
-    }
-}
-
-impl TryFrom<String> for LockTime {
-    type Error = ParseIntError;
-
-    fn try_from(s: String) -> Result<Self, Self::Error> {
-        LockTime::from_str(&s)
-    }
-}
+impl_tryfrom_str!(LockTime, from_consensus);
 
 impl From<Height> for LockTime {
     fn from(h: Height) -> Self {
@@ -503,7 +491,7 @@ impl FromStr for Height {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let n = s.parse::<u32>().map_err(|e| Error::Parse(e, s.to_owned()))?;
+        let n = parse::int(s)?;
         Height::from_consensus(n)
     }
 }
@@ -512,7 +500,8 @@ impl TryFrom<&str> for Height {
     type Error = Error;
 
     fn try_from(s: &str) -> Result<Self, Self::Error> {
-        Height::from_str(s)
+        let n = parse::int(s)?;
+        Height::from_consensus(n)
     }
 }
 
@@ -520,7 +509,7 @@ impl TryFrom<String> for Height {
     type Error = Error;
 
     fn try_from(s: String) -> Result<Self, Self::Error> {
-        let n = s.parse::<u32>().map_err(|e| Error::Parse(e, s))?;
+        let n = parse::int(s)?;
         Height::from_consensus(n)
     }
 }
@@ -585,7 +574,7 @@ impl FromStr for Time {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let n = s.parse::<u32>().map_err(|e| Error::Parse(e, s.to_owned()))?;
+        let n = parse::int(s)?;
         Time::from_consensus(n)
     }
 }
@@ -594,7 +583,8 @@ impl TryFrom<&str> for Time {
     type Error = Error;
 
     fn try_from(s: &str) -> Result<Self, Self::Error> {
-        Time::from_str(s)
+        let n = parse::int(s)?;
+        Time::from_consensus(n)
     }
 }
 
@@ -602,7 +592,7 @@ impl TryFrom<String> for Time {
     type Error = Error;
 
     fn try_from(s: String) -> Result<Self, Self::Error> {
-        let n = s.parse::<u32>().map_err(|e| Error::Parse(e, s))?;
+        let n = parse::int(s)?;
         Time::from_consensus(n)
     }
 }
@@ -626,7 +616,7 @@ pub enum Error {
     /// An error occurred while operating on lock times.
     Operation(OperationError),
     /// An error occurred while parsing a string into an `u32`.
-    Parse(ParseIntError, String),
+    Parse(ParseIntError),
 }
 
 impl fmt::Display for Error {
@@ -636,7 +626,7 @@ impl fmt::Display for Error {
         match *self {
             Conversion(ref e) => write_err!(f, "error converting lock time value"; e),
             Operation(ref e) => write_err!(f, "error during lock time operation"; e),
-            Parse(ref e, ref s) => write_err!(f, "error parsing string: {}", s; e),
+            Parse(ref e) => write_err!(f, "failed to parse lock time from string"; e),
         }
     }
 }
@@ -650,7 +640,7 @@ impl std::error::Error for Error {
         match *self {
             Conversion(ref e) => Some(e),
             Operation(ref e) => Some(e),
-            Parse(ref e, _) => Some(e),
+            Parse(ref e) => Some(e),
         }
     }
 }
@@ -664,6 +654,12 @@ impl From<ConversionError> for Error {
 impl From<OperationError> for Error {
     fn from(e: OperationError) -> Self {
         Error::Operation(e)
+    }
+}
+
+impl From<ParseIntError> for Error {
+    fn from(e: ParseIntError) -> Self {
+        Error::Parse(e)
     }
 }
 
