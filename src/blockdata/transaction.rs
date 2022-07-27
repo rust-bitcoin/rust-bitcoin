@@ -26,6 +26,7 @@ use crate::blockdata::constants::{WITNESS_SCALE_FACTOR, MAX_SEQUENCE};
 #[cfg(feature="bitcoinconsensus")] use crate::blockdata::script;
 use crate::blockdata::script::Script;
 use crate::blockdata::witness::Witness;
+use crate::blockdata::locktime::{LockTime, PackedLockTime, Height, Time};
 use crate::consensus::{encode, Decodable, Encodable};
 use crate::hash_types::{Sighash, Txid, Wtxid};
 use crate::VarInt;
@@ -204,6 +205,20 @@ pub struct TxIn {
     /// Transaction. It *is* (de)serialized with the rest of the TxIn in other
     /// (de)serialization routines.
     pub witness: Witness
+}
+
+impl TxIn {
+    /// Returns true if this input enables the [`LockTime`]  (aka `nLockTime`) of its [`Transaction`].
+    ///
+    /// `nLockTime` is enabled if *any* input enables it. See [`Transaction::is_lock_time_enabled`]
+    ///  to check the overall state. If none of the inputs enables it, the lock time value is simply
+    ///  ignored. If this returns false and OP_CHECKLOCKTIMEVERIFY is used in the redeem script with
+    ///  this input then the script execution will fail [BIP-0065].
+    ///
+    /// [BIP-65](https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki)
+    pub fn enables_lock_time(&self) -> bool {
+        self.sequence != Sequence::MAX
+    }
 }
 
 impl Default for TxIn {
@@ -554,8 +569,13 @@ impl<E> EncodeSigningDataResult<E> {
 pub struct Transaction {
     /// The protocol version, is currently expected to be 1 or 2 (BIP 68).
     pub version: i32,
-    /// Block number before which this transaction is valid, or 0 for valid immediately.
-    pub lock_time: u32,
+    /// Block height or timestamp. Transaction cannot be included in a block until this height/time.
+    ///
+    /// ### Relevant BIPs
+    ///
+    /// * [BIP-65 OP_CHECKLOCKTIMEVERIFY](https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki)
+    /// * [BIP-113 Median time-past as endpoint for lock-time calculations](https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki)
+    pub lock_time: PackedLockTime,
     /// List of transaction inputs.
     pub input: Vec<TxIn>,
     /// List of transaction outputs.
@@ -916,6 +936,27 @@ impl Transaction {
     pub fn is_explicitly_rbf(&self) -> bool {
         self.input.iter().any(|input| input.sequence.is_rbf())
     }
+
+    /// Returns true if this [`Transaction`]'s absolute timelock is satisfied at `height`/`time`.
+    ///
+    /// # Returns
+    ///
+    /// By definition if the lock time is not enabled the transaction's absolute timelock is
+    /// considered to be satisfied i.e., there are no timelock constraints restricting this
+    /// transaction from being mined immediately.
+    pub fn is_absolute_timelock_satisfied(&self, height: Height, time: Time) -> bool {
+        if !self.is_lock_time_enabled() {
+            return true;
+        }
+        LockTime::from(self.lock_time).is_satisfied_by(height, time)
+    }
+
+    /// Returns `true` if this transactions nLockTime is enabled ([BIP-65]).
+    ///
+    /// [BIP-65]: https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki
+    pub fn is_lock_time_enabled(&self) -> bool {
+        self.input.iter().any(|i| i.enables_lock_time())
+    }
 }
 
 impl_consensus_encoding!(TxOut, value, script_pubkey);
@@ -1224,6 +1265,7 @@ mod tests {
     use core::str::FromStr;
     use crate::blockdata::constants::WITNESS_SCALE_FACTOR;
     use crate::blockdata::script::Script;
+    use crate::blockdata::locktime::PackedLockTime;
     use crate::consensus::encode::serialize;
     use crate::consensus::encode::deserialize;
 
@@ -1324,7 +1366,7 @@ mod tests {
                    "ce9ea9f6f5e422c6a9dbcddb3b9a14d1c78fab9ab520cb281aa2a74a09575da1".to_string());
         assert_eq!(realtx.input[0].previous_output.vout, 1);
         assert_eq!(realtx.output.len(), 1);
-        assert_eq!(realtx.lock_time, 0);
+        assert_eq!(realtx.lock_time, PackedLockTime::ZERO);
 
         assert_eq!(format!("{:x}", realtx.txid()),
                    "a6eab3c14ab5272a58a5ba91505ba1a4b6d7a3a9fcbd187b6cd99a7b6d548cb7".to_string());
@@ -1358,7 +1400,7 @@ mod tests {
                    "7cac3cf9a112cf04901a51d605058615d56ffe6d04b45270e89d1720ea955859".to_string());
         assert_eq!(realtx.input[0].previous_output.vout, 1);
         assert_eq!(realtx.output.len(), 1);
-        assert_eq!(realtx.lock_time, 0);
+        assert_eq!(realtx.lock_time, PackedLockTime::ZERO);
 
         assert_eq!(format!("{:x}", realtx.txid()),
                    "f5864806e3565c34d1b41e716f72609d00b55ea5eac5b924c9719a842ef42206".to_string());
@@ -1552,7 +1594,7 @@ mod tests {
         // We need a tx with more inputs than outputs.
         let tx = Transaction {
             version: 1,
-            lock_time: 0,
+            lock_time: PackedLockTime::ZERO,
             input: vec![TxIn::default(), TxIn::default()],
             output: vec![TxOut::default()],
         };

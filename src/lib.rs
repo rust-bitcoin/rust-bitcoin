@@ -94,6 +94,7 @@ use std::io;
 use core2::io;
 
 pub use crate::blockdata::block::{Block, BlockHeader};
+pub use crate::blockdata::locktime::{self, LockTime, PackedLockTime};
 pub use crate::blockdata::script::Script;
 #[allow(deprecated)]
 pub use crate::blockdata::transaction::SigHashType;

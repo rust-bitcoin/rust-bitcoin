@@ -14,6 +14,7 @@ use crate::hash_types::Sighash;
 use crate::blockdata::script::Script;
 use crate::blockdata::witness::Witness;
 use crate::blockdata::transaction::{Transaction, TxIn, EcdsaSighashType};
+use crate::blockdata::locktime::LockTime;
 use crate::consensus::{encode, Encodable};
 
 use crate::io;
@@ -26,7 +27,7 @@ use crate::util::sighash;
 #[deprecated(since = "0.24.0", note = "please use [sighash::SighashCache] instead")]
 pub struct SighashComponents {
     tx_version: i32,
-    tx_locktime: u32,
+    tx_locktime: LockTime,
     /// Hash of all the previous outputs
     pub hash_prevouts: Sighash,
     /// Hash of all the input sequence nos
@@ -68,7 +69,7 @@ impl SighashComponents {
 
         SighashComponents {
             tx_version: tx.version,
-            tx_locktime: tx.lock_time,
+            tx_locktime: tx.lock_time.into(),
             hash_prevouts,
             hash_sequence,
             hash_outputs,
@@ -156,9 +157,9 @@ impl<R: DerefMut<Target = Transaction>> SigHashCache<R> {
     /// ```
     /// use bitcoin::blockdata::transaction::{Transaction, EcdsaSighashType};
     /// use bitcoin::util::bip143::SigHashCache;
-    /// use bitcoin::Script;
+    /// use bitcoin::{PackedLockTime, Script};
     ///
-    /// let mut tx_to_sign = Transaction { version: 2, lock_time: 0, input: Vec::new(), output: Vec::new() };
+    /// let mut tx_to_sign = Transaction { version: 2, lock_time: PackedLockTime::ZERO, input: Vec::new(), output: Vec::new() };
     /// let input_count = tx_to_sign.input.len();
     ///
     /// let mut sig_hasher = SigHashCache::new(&mut tx_to_sign);
@@ -181,6 +182,7 @@ mod tests {
     use crate::hash_types::Sighash;
     use crate::blockdata::script::Script;
     use crate::blockdata::transaction::Transaction;
+    use crate::blockdata::locktime::LockTime;
     use crate::consensus::encode::deserialize;
     use crate::network::constants::Network;
     use crate::util::address::Address;
@@ -225,7 +227,7 @@ mod tests {
             comp,
             SighashComponents {
                 tx_version: 1,
-                tx_locktime: 17,
+                tx_locktime: LockTime::from_consensus(17),
                 hash_prevouts: hex_hash!(
                     Sighash, "96b827c8483d4e9b96712b6713a7b68d6e8003a781feba36c31143470b4efd37"
                 ),
@@ -261,7 +263,7 @@ mod tests {
             comp,
             SighashComponents {
                 tx_version: 1,
-                tx_locktime: 1170,
+                tx_locktime: LockTime::from_consensus(1170),
                 hash_prevouts: hex_hash!(
                     Sighash, "b0287b4a252ac05af83d2dcef00ba313af78a3e9c329afa216eb3aa2a7b4613a"
                 ),
@@ -304,7 +306,7 @@ mod tests {
             comp,
             SighashComponents {
                 tx_version: 1,
-                tx_locktime: 0,
+                tx_locktime: LockTime::ZERO,
                 hash_prevouts: hex_hash!(
                     Sighash, "74afdc312af5183c4198a40ca3c1a275b485496dd3929bca388c4b5e31f7aaa0"
                 ),

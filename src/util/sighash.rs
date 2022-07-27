@@ -759,9 +759,9 @@ impl<R: DerefMut<Target=Transaction>> SighashCache<R> {
     /// ```
     /// use bitcoin::blockdata::transaction::{Transaction, EcdsaSighashType};
     /// use bitcoin::util::sighash::SighashCache;
-    /// use bitcoin::Script;
+    /// use bitcoin::{PackedLockTime, Script};
     ///
-    /// let mut tx_to_sign = Transaction { version: 2, lock_time: 0, input: Vec::new(), output: Vec::new() };
+    /// let mut tx_to_sign = Transaction { version: 2, lock_time: PackedLockTime::ZERO, input: Vec::new(), output: Vec::new() };
     /// let input_count = tx_to_sign.input.len();
     ///
     /// let mut sig_hasher = SighashCache::new(&mut tx_to_sign);
@@ -812,6 +812,7 @@ impl<'a> Encodable for Annex<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::blockdata::locktime::PackedLockTime;
     use crate::consensus::deserialize;
     use crate::hashes::hex::FromHex;
     use crate::hashes::{Hash, HashEngine};
@@ -958,7 +959,7 @@ mod tests {
     fn test_sighash_errors() {
         let dumb_tx = Transaction {
             version: 0,
-            lock_time: 0,
+            lock_time: PackedLockTime::ZERO,
             input: vec![TxIn::default()],
             output: vec![],
         };

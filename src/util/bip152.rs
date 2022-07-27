@@ -366,13 +366,13 @@ mod test {
     use crate::hashes::hex::FromHex;
     use crate::{
         Block, BlockHash, BlockHeader, OutPoint, Script, Sequence, Transaction, TxIn, TxMerkleNode,
-        TxOut, Txid, Witness,
+        TxOut, Txid, Witness, LockTime,
     };
 
     fn dummy_tx(nonce: &[u8]) -> Transaction {
         Transaction {
             version: 1,
-            lock_time: 2,
+            lock_time: LockTime::from_consensus(2).into(),
             input: vec![TxIn {
                 previous_output: OutPoint::new(Txid::hash(nonce), 0),
                 script_sig: Script::new(),

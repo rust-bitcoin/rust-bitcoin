@@ -43,8 +43,8 @@ use bitcoin::util::bip32::{
 };
 use bitcoin::util::psbt::{self, Input, Psbt, PsbtSighashType};
 use bitcoin::{
-    Address, Amount, Network, OutPoint, PrivateKey, PublicKey, Script, Sequence, Transaction, TxIn,
-    TxOut, Txid, Witness,
+    Address, Amount, Network, OutPoint, PackedLockTime, PrivateKey, PublicKey, Script, Sequence,
+    Transaction, TxIn, TxOut, Txid, Witness,
 };
 
 use self::psbt_sign::*;
@@ -207,7 +207,7 @@ impl WatchOnly {
 
         let tx = Transaction {
             version: 2,
-            lock_time: 0,
+            lock_time: PackedLockTime::ZERO,
             input: vec![TxIn {
                 previous_output: OutPoint {
                     txid: Txid::from_hex(INPUT_UTXO_TXID)?,
