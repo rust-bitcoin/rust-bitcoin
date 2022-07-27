@@ -10,6 +10,7 @@
 use crate::prelude::*;
 
 use core::{fmt, iter};
+use core::convert::TryFrom;
 
 use crate::io;
 use io::Read as _;
@@ -46,13 +47,62 @@ impl CommandString {
     ///
     /// Returns an error if and only if the string is
     /// larger than 12 characters in length.
+    #[deprecated(note = "Use `TryFrom::try_from` or `CommandString::try_from_static`", since = "0.29.0")]
     pub fn try_from<S: Into<Cow<'static, str>>>(s: S) -> Result<CommandString, CommandStringError> {
-        let cow = s.into();
+        Self::try_from_static_cow(s.into())
+    }
+
+    /// Convert `&'static str` to `CommandString`
+    ///
+    /// This is more efficient for string literals than non-static conversions because it avoids
+    /// allocation.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if and only if the string is
+    /// larger than 12 characters in length.
+    pub fn try_from_static(s: &'static str) -> Result<CommandString, CommandStringError> {
+        Self::try_from_static_cow(s.into())
+    }
+
+    fn try_from_static_cow(cow: Cow<'static, str>) -> Result<CommandString, CommandStringError> {
         if cow.len() > 12 {
             Err(CommandStringError { cow })
         } else {
             Ok(CommandString(cow))
         }
+    }
+}
+
+impl TryFrom<String> for CommandString {
+    type Error = CommandStringError;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        Self::try_from_static_cow(value.into())
+    }
+}
+
+impl TryFrom<Box<str>> for CommandString {
+    type Error = CommandStringError;
+
+    fn try_from(value: Box<str>) -> Result<Self, Self::Error> {
+        Self::try_from_static_cow(String::from(value).into())
+    }
+}
+
+impl<'a> TryFrom<&'a str> for CommandString {
+    type Error = CommandStringError;
+
+    fn try_from(value: &'a str) -> Result<Self, Self::Error> {
+        Self::try_from_static_cow(value.to_owned().into())
+    }
+}
+
+impl core::str::FromStr for CommandString {
+    type Err = CommandStringError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::try_from_static_cow(s.to_owned().into())
     }
 }
 
@@ -264,7 +314,7 @@ impl NetworkMessage {
     pub fn command(&self) -> CommandString {
         match *self {
             NetworkMessage::Unknown { command: ref c, .. } => c.clone(),
-            _ => CommandString::try_from(self.cmd()).expect("cmd returns valid commands")
+            _ => CommandString::try_from_static(self.cmd()).expect("cmd returns valid commands")
         }
     }
 }
@@ -523,8 +573,8 @@ mod test {
     #[test]
     fn commandstring_test() {
         // Test converting.
-        assert_eq!(CommandString::try_from("AndrewAndrew").unwrap().as_ref(), "AndrewAndrew");
-        assert!(CommandString::try_from("AndrewAndrewA").is_err());
+        assert_eq!(CommandString::try_from_static("AndrewAndrew").unwrap().as_ref(), "AndrewAndrew");
+        assert!(CommandString::try_from_static("AndrewAndrewA").is_err());
 
         // Test serializing.
         let cs = CommandString("Andrew".into());
@@ -534,7 +584,7 @@ mod test {
         let cs: Result<CommandString, _> = deserialize(&[0x41u8, 0x6e, 0x64, 0x72, 0x65, 0x77, 0, 0, 0, 0, 0, 0]);
         assert!(cs.is_ok());
         assert_eq!(cs.as_ref().unwrap().to_string(), "Andrew".to_owned());
-        assert_eq!(cs.unwrap(), CommandString::try_from("Andrew").unwrap());
+        assert_eq!(cs.unwrap(), CommandString::try_from_static("Andrew").unwrap());
 
         let short_cs: Result<CommandString, _> = deserialize(&[0x41u8, 0x6e, 0x64, 0x72, 0x65, 0x77, 0, 0, 0, 0, 0]);
         assert!(short_cs.is_err());
