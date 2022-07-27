@@ -32,6 +32,7 @@ use crate::hash_types::{Sighash, Txid, Wtxid};
 use crate::VarInt;
 use crate::util::sighash::UINT256_ONE;
 use crate::internal_macros::{impl_consensus_encoding, serde_string_impl, serde_struct_human_string_impl, write_err};
+use crate::impl_parse_str_through_int;
 
 #[cfg(doc)]
 use crate::util::sighash::SchnorrSighashType;
@@ -421,6 +422,8 @@ impl fmt::Display for RelativeLockTimeError {
         }
     }
 }
+
+impl_parse_str_through_int!(Sequence);
 
 #[cfg(feature = "std")]
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]

@@ -28,6 +28,7 @@ use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::io::{self, Read, Write};
 use crate::prelude::*;
 use crate::internal_macros::write_err;
+use crate::impl_parse_str_through_int;
 
 /// The Threshold for deciding whether a lock time value is a height or a time (see [Bitcoin Core]).
 ///
@@ -135,38 +136,7 @@ impl From<PackedLockTime> for u32 {
     }
 }
 
-/// Implements `TryFrom<$from> for $to` using `parse::int`, mapping the output using `fn`
-macro_rules! impl_tryfrom_str_single {
-    ($($from:ty, $to:ident $(, $fn:ident)?);*) => {
-        $(
-        impl TryFrom<$from> for $to {
-            type Error = ParseIntError;
-
-            fn try_from(s: $from) -> Result<Self, Self::Error> {
-                parse::int(s).map($to $(:: $fn)?)
-            }
-        }
-        )*
-    }
-}
-
-/// Implements `TryFrom<{&str, String, Box<str>}> for $to` using `parse::int`, mapping the output using `fn`
-macro_rules! impl_tryfrom_str {
-    ($to:ident $(, $fn:ident)?) => {
-        impl_tryfrom_str_single!(&str, $to $(, $fn)?; String, $to $(, $fn)?; Box<str>, $to $(, $fn)?);
-
-        impl FromStr for $to {
-            type Err = ParseIntError;
-
-            fn from_str(s: &str) -> Result<Self, Self::Err> {
-                parse::int(s).map($to $(:: $fn)?)
-            }
-        }
-
-    }
-}
-
-impl_tryfrom_str!(PackedLockTime);
+impl_parse_str_through_int!(PackedLockTime);
 
 impl fmt::LowerHex for PackedLockTime {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -376,7 +346,7 @@ impl LockTime {
     }
 }
 
-impl_tryfrom_str!(LockTime, from_consensus);
+impl_parse_str_through_int!(LockTime, from_consensus);
 
 impl From<Height> for LockTime {
     fn from(h: Height) -> Self {

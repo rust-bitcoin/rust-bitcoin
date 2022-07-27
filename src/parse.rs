@@ -86,3 +86,38 @@ pub(crate) fn int<T: Integer, S: AsRef<str> + Into<String>>(s: S) -> Result<T, P
 }
 
 impl_std_error!(ParseIntError, source);
+
+/// Implements `TryFrom<$from> for $to` using `parse::int`, mapping the output using `fn`
+#[macro_export]
+macro_rules! impl_tryfrom_str_through_int_single {
+    ($($from:ty, $to:ident $(, $fn:ident)?);*) => {
+        $(
+        impl core::convert::TryFrom<$from> for $to {
+            type Error = $crate::error::ParseIntError;
+
+            fn try_from(s: $from) -> Result<Self, Self::Error> {
+                $crate::parse::int(s).map($to $(:: $fn)?)
+            }
+        }
+        )*
+    }
+}
+
+/// Implements `FromStr` and `TryFrom<{&str, String, Box<str>}> for $to` using `parse::int`, mapping the output using `fn`
+///
+/// The `Error` type is `ParseIntError`
+#[macro_export]
+macro_rules! impl_parse_str_through_int {
+    ($to:ident $(, $fn:ident)?) => {
+        $crate::impl_tryfrom_str_through_int_single!(&str, $to $(, $fn)?; String, $to $(, $fn)?; Box<str>, $to $(, $fn)?);
+
+        impl core::str::FromStr for $to {
+            type Err = $crate::error::ParseIntError;
+
+            fn from_str(s: &str) -> Result<Self, Self::Err> {
+                $crate::parse::int(s).map($to $(:: $fn)?)
+            }
+        }
+
+    }
+}
