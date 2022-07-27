@@ -1,15 +1,5 @@
-// Rust Bitcoin Library
-// Written in 2022 by
-//     Tobin C. Harding <me@tobin.cc>
-// To the extent possible under law, the author(s) have dedicated all
-// copyright and related and neighboring rights to this software to
-// the public domain worldwide. This software is distributed without
-// any warranty.
-//
-// You should have received a copy of the CC0 Public Domain Dedication
-// along with this software.
-// If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
-//
+// Rust Bitcoin Library - Written by the rust-bitcoin developers.
+// SPDX-License-Identifier: CC0-1.0
 
 //! Provides type [`LockTime`] that implements the logic around nLockTime/OP_CHECKLOCKTIMEVERIFY.
 //!
