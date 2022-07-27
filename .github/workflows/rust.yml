@@ -107,3 +107,20 @@ jobs:
           RUSTFLAGS: "-C link-arg=-Tlink.x"
           CARGO_TARGET_THUMBV7M_NONE_EABI_RUNNER: "qemu-system-arm -cpu cortex-m3 -machine mps2-an385 -nographic -semihosting-config enable=on,target=native -kernel"
         run: cd embedded && cargo run --target thumbv7m-none-eabi
+
+  NoStd:
+    name: no std
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Checkout Crate
+        uses: actions/checkout@v2
+      - name: Checkout Toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - name: Building ensure_no_std
+        run: cd ensure_no_std && cargo rustc -- -C link-arg=-nostartfiles

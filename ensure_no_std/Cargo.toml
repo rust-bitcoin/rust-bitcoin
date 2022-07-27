@@ -1,0 +1,16 @@
+[package]
+name = "ensure_no_std"
+version = "0.1.0"
+authors = ["The rust-bitcoin developers"]
+license = "CC0-1.0"
+description = "Helper crate to ensure our dependencies can be built in a no-std environment"
+readme = "README.md"
+edition = "2018"
+
+[dependencies]
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
