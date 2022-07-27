@@ -521,13 +521,7 @@ impl core::fmt::Display for ParseLengthError {
     }
 }
 
-#[cfg(feature = "std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-impl std::error::Error for ParseLengthError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        None
-    }
-}
+crate::error::impl_std_error!(ParseLengthError);
 
 impl Uint256 {
     /// Decay to a uint128

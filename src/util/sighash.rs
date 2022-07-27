@@ -16,6 +16,7 @@ use crate::{io, Script, Transaction, TxIn, TxOut, Sequence, Sighash};
 use crate::blockdata::transaction::EncodeSigningDataResult;
 use crate::blockdata::witness::Witness;
 use crate::consensus::{encode, Encodable};
+use crate::error::impl_std_error;
 use crate::util::endian;
 use crate::hashes::{sha256, sha256d, Hash};
 use crate::internal_macros::serde_string_impl;
@@ -488,13 +489,7 @@ impl fmt::Display for NonStandardSighashType {
     }
 }
 
-#[cfg(feature = "std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-impl std::error::Error for NonStandardSighashType {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        None
-    }
-}
+impl_std_error!(NonStandardSighashType);
 
 /// Error returned for failure during parsing one of the sighash types.
 ///
@@ -511,13 +506,7 @@ impl fmt::Display for SighashTypeParseError {
     }
 }
 
-#[cfg(feature = "std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-impl std::error::Error for SighashTypeParseError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        None
-    }
-}
+impl_std_error!(SighashTypeParseError);
 
 impl<R: Deref<Target = Transaction>> SighashCache<R> {
     /// Constructs a new `SighashCache` from an unsigned transaction.
