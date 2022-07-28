@@ -32,6 +32,7 @@ use crate::hash_types::{Sighash, Txid, Wtxid};
 use crate::VarInt;
 use crate::util::sighash::UINT256_ONE;
 use crate::internal_macros::{impl_consensus_encoding, serde_string_impl, serde_struct_human_string_impl, write_err};
+use crate::impl_parse_str_through_int;
 
 #[cfg(doc)]
 use crate::util::sighash::SchnorrSighashType;
@@ -107,7 +108,7 @@ pub enum ParseOutPointError {
     /// Error in TXID part.
     Txid(hashes::hex::Error),
     /// Error in vout part.
-    Vout(::core::num::ParseIntError),
+    Vout(crate::error::ParseIntError),
     /// Error in general format.
     Format,
     /// Size exceeds max.
@@ -151,7 +152,7 @@ fn parse_vout(s: &str) -> Result<u32, ParseOutPointError> {
             return Err(ParseOutPointError::VoutNotCanonical);
         }
     }
-    s.parse().map_err(ParseOutPointError::Vout)
+    crate::parse::int(s).map_err(ParseOutPointError::Vout)
 }
 
 impl core::str::FromStr for OutPoint {
@@ -421,6 +422,8 @@ impl fmt::Display for RelativeLockTimeError {
         }
     }
 }
+
+impl_parse_str_through_int!(Sequence);
 
 #[cfg(feature = "std")]
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
@@ -1308,7 +1311,7 @@ mod tests {
         assert_eq!(OutPoint::from_str("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c945X:1"),
                    Err(ParseOutPointError::Txid(Txid::from_hex("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c945X").unwrap_err())));
         assert_eq!(OutPoint::from_str("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456:lol"),
-                   Err(ParseOutPointError::Vout(u32::from_str("lol").unwrap_err())));
+                   Err(ParseOutPointError::Vout(crate::parse::int::<u32, _>("lol").unwrap_err())));
 
         assert_eq!(OutPoint::from_str("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456:42"),
                    Ok(OutPoint{

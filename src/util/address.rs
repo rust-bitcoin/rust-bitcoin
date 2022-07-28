@@ -26,7 +26,7 @@ use crate::prelude::*;
 
 use core::convert::TryFrom;
 use core::fmt;
-use core::num::ParseIntError;
+use crate::error::ParseIntError;
 use core::str::FromStr;
 
 use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
@@ -239,7 +239,7 @@ impl FromStr for WitnessVersion {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let version: u8 = s.parse().map_err(Error::UnparsableWitnessVersion)?;
+        let version: u8 = crate::parse::int(s).map_err(Error::UnparsableWitnessVersion)?;
         WitnessVersion::try_from(version)
     }
 }

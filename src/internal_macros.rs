@@ -581,7 +581,7 @@ pub(crate) use user_enum;
 /// because `e.source()` is only available in std builds, without this macro the error source is
 /// lost for no-std builds.
 macro_rules! write_err {
-    ($writer:expr, $string:literal $(, $args:expr),*; $source:expr) => {
+    ($writer:expr, $string:literal $(, $args:expr)*; $source:expr) => {
         {
             #[cfg(feature = "std")]
             {

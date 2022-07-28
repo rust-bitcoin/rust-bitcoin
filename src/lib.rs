@@ -78,11 +78,13 @@ mod test_macros;
 mod internal_macros;
 #[cfg(feature = "serde")]
 mod serde_utils;
+mod parse;
 
 #[macro_use]
 pub mod network;
 pub mod blockdata;
 pub mod consensus;
+pub mod error;
 pub mod hash_types;
 pub mod policy;
 pub mod util;
