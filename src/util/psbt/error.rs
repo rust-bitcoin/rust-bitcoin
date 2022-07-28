@@ -10,7 +10,7 @@ use crate::util::psbt::raw;
 
 use crate::hashes;
 use crate::util::bip32::ExtendedPubKey;
-use crate::internal_macros::write_err;
+use crate::internal_macros::{pub_error_type, write_err};
 
 /// Enum for marking psbt hash error.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
@@ -21,7 +21,7 @@ pub enum PsbtHash {
     Hash256,
 }
 /// Ways that a Partially Signed Transaction might fail.
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[derive(Debug)]
 #[non_exhaustive]
 pub enum Error {
     /// Magic bytes for a PSBT must be the ASCII for "psbt" serialized in most
@@ -74,6 +74,7 @@ pub enum Error {
     /// Serialization error in bitcoin consensus-encoded structures
     ConsensusEncoding,
 }
+pub_error_type!(Error);
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

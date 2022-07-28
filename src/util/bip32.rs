@@ -21,7 +21,7 @@ use secp256k1::{self, Secp256k1, XOnlyPublicKey};
 use crate::network::constants::Network;
 use crate::util::{base58, endian, key};
 use crate::util::key::{PublicKey, PrivateKey, KeyPair};
-use crate::internal_macros::{impl_array_newtype, impl_bytes_newtype, serde_string_impl, write_err};
+use crate::internal_macros::{impl_array_newtype, impl_bytes_newtype, pub_error_type, serde_string_impl, write_err};
 
 /// A chain code
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -447,7 +447,7 @@ impl fmt::Debug for DerivationPath {
 pub type KeySource = (Fingerprint, DerivationPath);
 
 /// A BIP32 error
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[derive(Debug)]
 #[non_exhaustive]
 pub enum Error {
     /// A pk->pk derivation was attempted on a hardened key
@@ -469,6 +469,7 @@ pub enum Error {
     /// Hexadecimal decoding error
     Hex(hex::Error)
 }
+pub_error_type!(Error);
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

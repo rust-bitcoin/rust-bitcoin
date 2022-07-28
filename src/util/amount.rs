@@ -11,6 +11,8 @@ use crate::prelude::*;
 use core::{ops, default, str::FromStr, cmp::Ordering};
 use core::fmt::{self, Write};
 
+use crate::internal_macros::pub_error_type;
+
 /// A set of denominations in which amounts can be expressed.
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum Denomination {
@@ -139,7 +141,7 @@ fn denomination_from_str(mut s: &str) -> Option<Denomination> {
 }
 
 /// An error during amount parsing.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug)]
 #[non_exhaustive]
 pub enum ParseAmountError {
     /// Amount is negative.
@@ -159,6 +161,7 @@ pub enum ParseAmountError {
     /// The denomination has multiple possible interpretations.
     PossiblyConfusingDenomination(String)
 }
+pub_error_type!(ParseAmountError);
 
 impl fmt::Display for ParseAmountError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

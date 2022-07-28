@@ -25,7 +25,7 @@ use crate::blockdata::transaction::Transaction;
 use crate::blockdata::constants::{max_target, WITNESS_SCALE_FACTOR};
 use crate::blockdata::script;
 use crate::VarInt;
-use crate::internal_macros::impl_consensus_encoding;
+use crate::internal_macros::{impl_consensus_encoding, pub_error_type};
 
 /// Bitcoin block header.
 ///
@@ -346,7 +346,7 @@ impl Block {
 }
 
 /// An error when looking up a BIP34 block height.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug)]
 #[non_exhaustive]
 pub enum Bip34Error {
     /// The block does not support BIP34 yet.
@@ -356,6 +356,7 @@ pub enum Bip34Error {
     /// The BIP34 push was larger than 8 bytes.
     UnexpectedPush(Vec<u8>),
 }
+pub_error_type!(Bip34Error);
 
 impl fmt::Display for Bip34Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

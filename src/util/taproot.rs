@@ -17,7 +17,7 @@ use crate::hashes::{sha256, sha256t_hash_newtype, Hash, HashEngine};
 use crate::schnorr::{TweakedPublicKey, UntweakedPublicKey, TapTweak};
 use crate::util::key::XOnlyPublicKey;
 use crate::Script;
-use crate::internal_macros::write_err;
+use crate::internal_macros::{pub_error_type, write_err};
 use crate::consensus::Encodable;
 
 /// The SHA-256 midstate value for the TapLeaf hash.
@@ -1002,7 +1002,7 @@ impl<'de> serde::Deserialize<'de> for LeafVersion {
 }
 
 /// Detailed error type for taproot builder.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug)]
 #[non_exhaustive]
 pub enum TaprootBuilderError {
     /// Merkle tree depth must not be more than 128.
@@ -1018,6 +1018,8 @@ pub enum TaprootBuilderError {
     /// Called finalize on a empty tree.
     EmptyTree,
 }
+pub_error_type!(TaprootBuilderError);
+
 
 impl fmt::Display for TaprootBuilderError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -1064,7 +1066,7 @@ impl std::error::Error for TaprootBuilderError {
 }
 
 /// Detailed error type for taproot utilities.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug)]
 #[non_exhaustive]
 pub enum TaprootError {
     /// Proof size must be a multiple of 32.
@@ -1082,6 +1084,7 @@ pub enum TaprootError {
     /// Empty tap tree.
     EmptyTree,
 }
+pub_error_type!(TaprootError);
 
 impl fmt::Display for TaprootError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

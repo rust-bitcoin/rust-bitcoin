@@ -51,10 +51,11 @@ use crate::blockdata::transaction::Transaction;
 use crate::blockdata::constants::{MAX_BLOCK_WEIGHT, MIN_TRANSACTION_WEIGHT};
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::util::merkleblock::MerkleBlockError::*;
+use crate::internal_macros::pub_error_type;
 use crate::{Block, BlockHeader};
 
 /// An error when verifying the merkle block
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Debug)]
 pub enum MerkleBlockError {
     /// When header merkle root don't match to the root calculated from the partial merkle tree
     MerkleRootMismatch,
@@ -65,6 +66,7 @@ pub enum MerkleBlockError {
     /// General format error
     BadFormat(String),
 }
+pub_error_type!(MerkleBlockError);
 
 /// Data structure that represents a partial merkle tree.
 ///

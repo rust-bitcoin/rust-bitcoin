@@ -14,7 +14,7 @@ use crate::prelude::*;
 use secp256k1::{self, Secp256k1, Verification, constants};
 use crate::util::taproot::{TapBranchHash, TapTweakHash};
 use crate::SchnorrSighashType;
-use crate::internal_macros::write_err;
+use crate::internal_macros::{pub_error_type, write_err};
 
 /// Deprecated re-export of [`secp256k1::XOnlyPublicKey`]
 #[deprecated(since = "0.28.0", note = "Please use `util::key::XOnlyPublicKey` instead")]
@@ -255,7 +255,7 @@ impl SchnorrSig {
 }
 
 /// A schnorr sig related error.
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[derive(Debug)]
 #[non_exhaustive]
 pub enum SchnorrSigError {
     /// Base58 encoding error
@@ -265,6 +265,7 @@ pub enum SchnorrSigError {
     /// Invalid schnorr signature size
     InvalidSchnorrSigSize(usize),
 }
+pub_error_type!(SchnorrSigError);
 
 impl fmt::Display for SchnorrSigError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

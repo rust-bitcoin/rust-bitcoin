@@ -33,11 +33,11 @@ mod message_signing {
 
     use crate::util::key::PublicKey;
     use crate::util::address::{Address, AddressType};
-    use crate::internal_macros::write_err;
+    use crate::internal_macros::{pub_error_type, write_err};
 
     /// An error used for dealing with Bitcoin Signed Messages.
     #[cfg_attr(docsrs, doc(cfg(feature = "secp-recovery")))]
-    #[derive(Debug, PartialEq, Eq)]
+    #[derive(Debug)]
     #[non_exhaustive]
     pub enum MessageSignatureError {
         /// Signature is expected to be 65 bytes.
@@ -49,6 +49,7 @@ mod message_signing {
         /// Unsupported Address Type
         UnsupportedAddressType(AddressType),
     }
+    pub_error_type!(MessageSignatureError);
 
     impl fmt::Display for MessageSignatureError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

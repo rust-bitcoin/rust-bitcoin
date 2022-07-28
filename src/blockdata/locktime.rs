@@ -27,7 +27,7 @@ use crate::parse;
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::io::{self, Read, Write};
 use crate::prelude::*;
-use crate::internal_macros::write_err;
+use crate::internal_macros::{pub_error_type, write_err};
 use crate::impl_parse_str_through_int;
 
 /// The Threshold for deciding whether a lock time value is a height or a time (see [Bitcoin Core]).
@@ -578,7 +578,7 @@ fn is_block_time(n: u32) -> bool {
 }
 
 /// Catchall type for errors that relate to time locks.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug)]
 #[non_exhaustive]
 pub enum Error {
     /// An error occurred while converting a `u32` to a lock time variant.
@@ -588,6 +588,7 @@ pub enum Error {
     /// An error occurred while parsing a string into an `u32`.
     Parse(ParseIntError),
 }
+pub_error_type!(Error);
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -691,12 +692,13 @@ impl fmt::Display for LockTimeUnit {
 }
 
 /// Errors than occur when operating on lock times.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug)]
 #[non_exhaustive]
 pub enum OperationError {
     /// Cannot compare different lock time units (height vs time).
     InvalidComparison,
 }
+pub_error_type!(OperationError);
 
 impl fmt::Display for OperationError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

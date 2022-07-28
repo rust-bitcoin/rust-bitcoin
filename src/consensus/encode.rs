@@ -22,7 +22,7 @@ use core::{fmt, mem, u32, convert::From};
 
 use crate::hashes::{sha256d, Hash, sha256};
 use crate::hash_types::{BlockHash, FilterHash, TxMerkleNode, FilterHeader};
-use crate::internal_macros::write_err;
+use crate::internal_macros::{write_err, pub_error_type};
 use crate::io::{self, Cursor, Read};
 
 use crate::util::endian;
@@ -73,6 +73,7 @@ pub enum Error {
     /// Unsupported Segwit flag
     UnsupportedSegwitFlag(u8),
 }
+pub_error_type!(Error);
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

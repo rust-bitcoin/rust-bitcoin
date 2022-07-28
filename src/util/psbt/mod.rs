@@ -207,7 +207,7 @@ mod display_from_str {
     use core::str::FromStr;
     use crate::consensus::encode::{Error, self};
     use base64::display::Base64Display;
-    use crate::internal_macros::write_err;
+    use crate::internal_macros::{pub_error_type, write_err};
 
     /// Error encountered during PSBT decoding from Base64 string.
     #[derive(Debug)]
@@ -219,6 +219,7 @@ mod display_from_str {
         /// Error in PSBT Base64 encoding.
         Base64Encoding(::base64::DecodeError)
     }
+    pub_error_type!(PsbtParseError);
 
     impl Display for PsbtParseError {
         fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {

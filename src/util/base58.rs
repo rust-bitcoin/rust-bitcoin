@@ -15,10 +15,10 @@ use crate::hashes::{sha256d, Hash, hex};
 use secp256k1;
 
 use crate::util::{endian, key};
-use crate::internal_macros::write_err;
+use crate::internal_macros::{pub_error_type, write_err};
 
 /// An error that might occur during base58 decoding
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
+#[derive(Debug)]
 #[non_exhaustive]
 pub enum Error {
     /// Invalid character encountered
@@ -41,6 +41,7 @@ pub enum Error {
     // TODO: Remove this as part of crate-smashing, there should not be any key related errors in this module
     Hex(hex::Error)
 }
+pub_error_type!(Error);
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

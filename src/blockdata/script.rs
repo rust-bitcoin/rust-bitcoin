@@ -18,7 +18,7 @@ use crate::io;
 use core::convert::TryFrom;
 use core::{fmt, default::Default};
 use core::ops::Index;
-use crate::internal_macros::display_from_debug;
+use crate::internal_macros::{display_from_debug, pub_error_type};
 
 #[cfg(feature = "serde")] use serde;
 
@@ -140,7 +140,7 @@ where
 /// Ways that a script might fail. Not everything is split up as
 /// much as it could be; patches welcome if more detailed errors
 /// would help you.
-#[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Clone, Copy)]
+#[derive(Debug)]
 #[non_exhaustive]
 pub enum Error {
     /// Something did a non-minimal push; for more information see
@@ -159,6 +159,7 @@ pub enum Error {
     /// Can not serialize the spending transaction
     SerializationError
 }
+pub_error_type!(Error);
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

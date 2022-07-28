@@ -22,7 +22,7 @@ use crate::io;
 use crate::util::taproot::{TapLeafHash, TAPROOT_ANNEX_PREFIX, TapSighashHash};
 use crate::Sighash;
 use crate::{Script, Transaction, TxOut};
-use crate::internal_macros::serde_string_impl;
+use crate::internal_macros::{pub_error_type, serde_string_impl};
 
 use super::taproot::LeafVersion;
 
@@ -159,7 +159,7 @@ impl str::FromStr for SchnorrSighashType {
 }
 
 /// Possible errors in computing the signature message.
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[derive(Debug)]
 #[non_exhaustive]
 pub enum Error {
     /// Could happen only by using `*_encode_signing_*` methods with custom writers, engines writers
@@ -201,6 +201,7 @@ pub enum Error {
     /// Invalid Sighash type.
     InvalidSighashType(u32),
 }
+pub_error_type!(Error);
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

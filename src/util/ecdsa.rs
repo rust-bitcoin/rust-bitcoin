@@ -12,7 +12,7 @@ use crate::hashes::hex::{self, FromHex};
 use crate::blockdata::transaction::NonStandardSighashType;
 use secp256k1;
 use crate::EcdsaSighashType;
-use crate::internal_macros::write_err;
+use crate::internal_macros::{pub_error_type, write_err};
 
 /// An ECDSA signature with the corresponding hash type.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
@@ -77,7 +77,7 @@ impl FromStr for EcdsaSig {
 }
 
 /// A key-related error.
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[derive(Debug)]
 #[non_exhaustive]
 pub enum EcdsaSigError {
     /// Hex encoding error
@@ -89,6 +89,7 @@ pub enum EcdsaSigError {
     /// secp256k1-related error
     Secp256k1(secp256k1::Error),
 }
+pub_error_type!(EcdsaSigError);
 
 impl fmt::Display for EcdsaSigError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

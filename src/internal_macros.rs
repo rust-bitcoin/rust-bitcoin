@@ -604,3 +604,17 @@ macro_rules! const_assert {
     }};
 }
 pub(crate) use const_assert;
+
+/// Implemented by our error types to commit to `Send`/`Sync`.
+///
+/// In an attempt to guarantee forward compatibility for error types we only derive `Debug` and we
+/// use this trait to commit to `Send`/`Sync`.
+#[doc(hidden)]
+pub trait AssertSendSync: Send + Sync {}
+
+macro_rules! pub_error_type {
+    ($ty:ident) => {
+        impl $crate::internal_macros::AssertSendSync for $ty {}
+    }
+}
+pub(crate) use pub_error_type;

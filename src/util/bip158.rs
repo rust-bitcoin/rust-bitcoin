@@ -49,7 +49,7 @@ use crate::blockdata::transaction::OutPoint;
 use crate::consensus::{Decodable, Encodable};
 use crate::consensus::encode::VarInt;
 use crate::util::endian;
-use crate::internal_macros::write_err;
+use crate::internal_macros::{pub_error_type, write_err};
 
 /// Golomb encoding parameter as in BIP-158, see also https://gist.github.com/sipa/576d5f09c3b86c3b1b75598d799fc845
 const P: u8 = 19;
@@ -63,6 +63,7 @@ pub enum Error {
     /// some IO error reading or writing binary serialization of the filter
     Io(io::Error),
 }
+pub_error_type!(Error);
 
 impl Display for Error {
     fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {

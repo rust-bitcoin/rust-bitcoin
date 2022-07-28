@@ -31,7 +31,7 @@ use crate::io;
 use core::fmt;
 
 use crate::consensus::encode;
-use crate::internal_macros::write_err;
+use crate::internal_macros::{pub_error_type, write_err};
 
 /// A trait which allows numbers to act as fixed-size bit arrays
 pub trait BitArray {
@@ -66,6 +66,7 @@ pub enum Error {
     /// The `target` field of a block header did not match the expected difficulty
     BlockBadTarget,
 }
+pub_error_type!(Error);
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

@@ -41,10 +41,10 @@ use crate::util::taproot::TapBranchHash;
 use crate::util::key::PublicKey;
 use crate::blockdata::script::Instruction;
 use crate::util::schnorr::{TapTweak, UntweakedPublicKey, TweakedPublicKey};
-use crate::internal_macros::{serde_string_impl, write_err};
+use crate::internal_macros::{pub_error_type, serde_string_impl, write_err};
 
 /// Address error.
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug)]
 #[non_exhaustive]
 pub enum Error {
     /// Base58 encoding error.
@@ -79,6 +79,7 @@ pub enum Error {
     /// Address type is either invalid or not supported in rust-bitcoin.
     UnknownAddressType(String),
 }
+pub_error_type!(Error);
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

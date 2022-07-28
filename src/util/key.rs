@@ -18,10 +18,10 @@ use crate::network::constants::Network;
 use crate::hashes::{Hash, hash160, hex, hex::FromHex};
 use crate::hash_types::{PubkeyHash, WPubkeyHash};
 use crate::util::base58;
-use crate::internal_macros::write_err;
+use crate::internal_macros::{pub_error_type, write_err};
 
 /// A key-related error.
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[derive(Debug)]
 #[non_exhaustive]
 pub enum Error {
     /// Base58 encoding error
@@ -33,6 +33,7 @@ pub enum Error {
     /// Hex decoding error
     Hex(hex::Error)
 }
+pub_error_type!(Error);
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

@@ -31,7 +31,7 @@ use crate::consensus::{encode, Decodable, Encodable};
 use crate::hash_types::{Sighash, Txid, Wtxid};
 use crate::VarInt;
 use crate::util::sighash::UINT256_ONE;
-use crate::internal_macros::{impl_consensus_encoding, serde_string_impl, serde_struct_human_string_impl, write_err};
+use crate::internal_macros::{impl_consensus_encoding, pub_error_type, serde_string_impl, serde_struct_human_string_impl, write_err};
 use crate::impl_parse_str_through_int;
 
 #[cfg(doc)]
@@ -102,7 +102,7 @@ impl fmt::Display for OutPoint {
 }
 
 /// An error in parsing an OutPoint.
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Debug)]
 #[non_exhaustive]
 pub enum ParseOutPointError {
     /// Error in TXID part.
@@ -116,6 +116,7 @@ pub enum ParseOutPointError {
     /// Vout part is not strictly numeric without leading zeroes.
     VoutNotCanonical,
 }
+pub_error_type!(ParseOutPointError);
 
 impl fmt::Display for ParseOutPointError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -252,13 +253,14 @@ impl Default for TxIn {
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct Sequence(pub u32);
 
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Debug)]
 #[non_exhaustive]
 /// An error in creating relative lock-times.
 pub enum RelativeLockTimeError {
     /// The input was too large
     IntegerOverflow(u32)
 }
+pub_error_type!(RelativeLockTimeError);
 
 impl Sequence {
     /// The maximum allowable sequence number.
