@@ -533,20 +533,18 @@ mod tests {
 mod benches {
     use super::Block;
     use crate::EmptyWrite;
-    use crate::consensus::{deserialize, Encodable};
+    use crate::consensus::{deserialize, Encodable, Decodable};
     use test::{black_box, Bencher};
-    use crate::network::stream_reader::StreamReader;
 
     #[bench]
-    #[allow(deprecated)]
     pub fn bench_stream_reader(bh: &mut Bencher) {
         let big_block = include_bytes!("../../test_data/mainnet_block_000000000000000000000c835b2adcaedc20fdf6ee440009c249452c726dafae.raw");
         assert_eq!(big_block.len(), 1_381_836);
         let big_block = black_box(big_block);
 
         bh.iter(|| {
-            let mut reader = StreamReader::new(&big_block[..], None);
-            let block: Block = reader.read_next().unwrap();
+            let mut reader = &big_block[..];
+            let block = Block::consensus_decode(&mut reader).unwrap();
             black_box(&block);
         });
     }
