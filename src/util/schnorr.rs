@@ -266,7 +266,6 @@ pub enum SchnorrSigError {
     InvalidSchnorrSigSize(usize),
 }
 
-
 impl fmt::Display for SchnorrSigError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
