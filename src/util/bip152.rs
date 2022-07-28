@@ -20,6 +20,7 @@ use crate::{Block, BlockHash, BlockHeader, Transaction};
 
 /// A BIP-152 error
 #[derive(Clone, PartialEq, Eq, Debug, Copy, PartialOrd, Ord, Hash)]
+#[non_exhaustive]
 pub enum Error {
     /// An unknown version number was used.
     UnknownVersion,

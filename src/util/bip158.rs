@@ -57,6 +57,7 @@ const M: u64 = 784931;
 
 /// Errors for blockfilter
 #[derive(Debug)]
+#[non_exhaustive]
 pub enum Error {
     /// missing UTXO, can not calculate script filter
     UtxoMissing(OutPoint),

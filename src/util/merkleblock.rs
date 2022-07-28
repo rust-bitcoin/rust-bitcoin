@@ -55,6 +55,7 @@ use crate::{Block, BlockHeader};
 
 /// An error when verifying the merkle block
 #[derive(Clone, PartialEq, Eq, Debug)]
+#[non_exhaustive]
 pub enum MerkleBlockError {
     /// When header merkle root don't match to the root calculated from the partial merkle tree
     MerkleRootMismatch,
