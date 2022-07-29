@@ -392,7 +392,7 @@ impl TaprootBuilder {
             node_weights.push((Reverse(p), NodeInfo::new_leaf_with_ver(leaf, LeafVersion::TapScript)));
         }
         if node_weights.is_empty() {
-            return Err(TaprootBuilderError::IncompleteTree);
+            return Err(TaprootBuilderError::EmptyTree);
         }
         while node_weights.len() > 1 {
             // Combine the last two elements and insert a new node
