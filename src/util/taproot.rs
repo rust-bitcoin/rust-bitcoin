@@ -1340,6 +1340,9 @@ mod test {
         let builder = builder.add_leaf(2, b.clone()).unwrap();
         let builder = builder.add_leaf(2, c.clone()).unwrap();
         let builder = builder.add_leaf(3, d.clone()).unwrap();
+
+        // Trying to finalize an incomplete tree returns the Err(builder)
+        let builder = builder.finalize(&secp, internal_key).unwrap_err();
         let builder = builder.add_leaf(3, e.clone()).unwrap();
 
         let tree_info = builder.finalize(&secp, internal_key).unwrap();
