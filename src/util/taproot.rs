@@ -199,7 +199,8 @@ impl TaprootSpendInfo {
         I: IntoIterator<Item=(u32, Script)>,
         C: secp256k1::Verification,
     {
-        TaprootBuilder::with_huffman_tree(script_weights)?.finalize(secp, internal_key)
+        let builder = TaprootBuilder::with_huffman_tree(script_weights)?;
+        Ok(builder.finalize(secp, internal_key).expect("Huffman Tree is always complete"))
     }
 
     /// Creates a new key spend with `internal_key` and `merkle_root`. Provide [`None`] for
@@ -451,19 +452,23 @@ impl TaprootBuilder {
 
     /// Creates a [`TaprootSpendInfo`] with the given internal key.
     ///
-    // TODO: in a future breaking API change, this no longer needs to return result
+    /// Returns the unmodified builder as Err if the builder is not finalized.
+    /// See also [`TaprootBuilder::is_finalized`]
     pub fn finalize<C: secp256k1::Verification>(
         mut self,
         secp: &Secp256k1<C>,
         internal_key: UntweakedPublicKey,
-    ) -> Result<TaprootSpendInfo, TaprootBuilderError> {
-        match self.branch.pop() {
-            None => Ok(TaprootSpendInfo::new_key_spend(secp, internal_key, None)),
-            Some(Some(node)) => {
-                Ok(TaprootSpendInfo::from_node_info(secp, internal_key, node))
+    ) -> Result<TaprootSpendInfo, TaprootBuilder> {
+        match self.branch.len() {
+            0 => Ok(TaprootSpendInfo::new_key_spend(secp, internal_key, None)),
+            1 => {
+                if let Some(Some(node)) = self.branch.pop() {
+                    Ok(TaprootSpendInfo::from_node_info(secp, internal_key, node))
+                } else {
+                    unreachable!("Size checked above. Builder guarantees the last element is Some")
+                }
             }
-            _ => Err(TaprootBuilderError::IncompleteTree),
-
+            _ => Err(self),
         }
     }
 
@@ -1013,8 +1018,6 @@ pub enum TaprootBuilderError {
     OverCompleteTree,
     /// Invalid taproot internal key.
     InvalidInternalKey(secp256k1::Error),
-    /// Called finalize on an incomplete tree.
-    IncompleteTree,
     /// Called finalize on a empty tree.
     EmptyTree,
 }
@@ -1036,9 +1039,6 @@ impl fmt::Display for TaprootBuilderError {
             TaprootBuilderError::InvalidInternalKey(ref e) => {
                 write_err!(f, "invalid internal x-only key"; e)
             }
-            TaprootBuilderError::IncompleteTree => {
-                write!(f, "Called finalize on an incomplete tree")
-            }
             TaprootBuilderError::EmptyTree => {
                 write!(f, "Called finalize on an empty tree")
             }
@@ -1057,7 +1057,6 @@ impl std::error::Error for TaprootBuilderError {
             InvalidMerkleTreeDepth(_)
                 | NodeNotInDfsOrder
                 | OverCompleteTree
-                | IncompleteTree
                 | EmptyTree => None
         }
     }
