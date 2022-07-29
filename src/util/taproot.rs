@@ -441,7 +441,7 @@ impl TaprootBuilder {
     }
 
     /// Checks if the builder has finalized building a tree.
-    pub fn is_finalized(&self) -> bool {
+    pub fn is_finalizable(&self) -> bool {
         self.branch.len() == 1 && self.branch[0].is_some()
     }
 
@@ -452,8 +452,8 @@ impl TaprootBuilder {
 
     /// Creates a [`TaprootSpendInfo`] with the given internal key.
     ///
-    /// Returns the unmodified builder as Err if the builder is not finalized.
-    /// See also [`TaprootBuilder::is_finalized`]
+    /// Returns the unmodified builder as Err if the builder is not finalizable.
+    /// See also [`TaprootBuilder::is_finalizable`]
     pub fn finalize<C: secp256k1::Verification>(
         mut self,
         secp: &Secp256k1<C>,

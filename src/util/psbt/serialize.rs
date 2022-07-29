@@ -343,7 +343,7 @@ impl Deserialize for TapTree {
             builder = builder.add_leaf_with_ver(*depth, script, leaf_version)
                 .map_err(|_| encode::Error::ParseFailed("Tree not in DFS order"))?;
         }
-        if builder.is_finalized() && !builder.has_hidden_nodes() {
+        if builder.is_finalizable() && !builder.has_hidden_nodes() {
             Ok(TapTree(builder))
         } else {
             Err(encode::Error::ParseFailed("Incomplete taproot Tree"))
