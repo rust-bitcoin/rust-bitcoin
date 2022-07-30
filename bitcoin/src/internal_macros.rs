@@ -88,7 +88,7 @@ mod test_macros {
     pub(crate) use hex_into;
 
     // Script is commonly used in places where inference may fail
-    macro_rules! hex_script (($hex:expr) => ($crate::internal_macros::hex_into!($crate::Script, $hex)));
+    macro_rules! hex_script (($hex:expr) => ($crate::internal_macros::hex_into!($crate::ScriptBuf, $hex)));
     pub(crate) use hex_script;
 
     // For types that can't use TestFromHex due to coherence rules or reversed hex

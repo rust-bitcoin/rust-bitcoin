@@ -15,7 +15,7 @@
 //
 //  use std::fs::File;
 //  use std::io::Write;
-//  let script = Script::from(vec![0u8, 1u8, 2u8]);
+//  let script = ScriptBuf::from(vec![0u8, 1u8, 2u8]);
 //  let got = serialize(&script).unwrap();
 //  let mut file = File::create("/tmp/script_bincode").unwrap();
 //  file.write_all(&got).unwrap();
@@ -38,7 +38,7 @@ use bitcoin::schnorr::{self, UntweakedPublicKey};
 use bitcoin::sighash::{EcdsaSighashType, SchnorrSighashType};
 use bitcoin::taproot::{ControlBlock, LeafVersion, TaprootBuilder, TaprootSpendInfo};
 use bitcoin::{
-    ecdsa, Address, Block, Network, OutPoint, PrivateKey, PublicKey, Script, Sequence, Target,
+    ecdsa, Address, Block, Network, OutPoint, PrivateKey, PublicKey, ScriptBuf, Sequence, Target,
     Transaction, TxIn, TxOut, Txid, Work,
 };
 use secp256k1::Secp256k1;
@@ -95,7 +95,7 @@ fn serde_regression_relative_lock_time_time() {
 
 #[test]
 fn serde_regression_script() {
-    let script = Script::from(vec![0u8, 1u8, 2u8]);
+    let script = ScriptBuf::from(vec![0u8, 1u8, 2u8]);
     let got = serialize(&script).unwrap();
     let want = include_bytes!("data/serde/script_bincode") as &[_];
     assert_eq!(got, want)
@@ -114,7 +114,7 @@ fn serde_regression_txin() {
 #[test]
 fn serde_regression_txout() {
     let txout =
-        TxOut { value: 0xDEADBEEFCAFEBABE, script_pubkey: Script::from(vec![0u8, 1u8, 2u8]) };
+        TxOut { value: 0xDEADBEEFCAFEBABE, script_pubkey: ScriptBuf::from(vec![0u8, 1u8, 2u8]) };
     let got = serialize(&txout).unwrap();
     let want = include_bytes!("data/serde/txout_bincode") as &[_];
     assert_eq!(got, want)
@@ -232,7 +232,7 @@ fn serde_regression_psbt() {
                 .unwrap(),
                 vout: 1,
             },
-            script_sig: Script::from_str("160014be18d152a9b012039daf3da7de4f53349eecb985").unwrap(),
+            script_sig: ScriptBuf::from_str("160014be18d152a9b012039daf3da7de4f53349eecb985").unwrap(),
             sequence: Sequence::from_consensus(4294967295),
             witness: Witness::from_slice(&[Vec::from_hex(
                 "03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105",
@@ -241,7 +241,7 @@ fn serde_regression_psbt() {
         }],
         output: vec![TxOut {
             value: 190303501938,
-            script_pubkey: Script::from_str("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587")
+            script_pubkey: ScriptBuf::from_str("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587")
                 .unwrap(),
         }],
     };
@@ -275,7 +275,7 @@ fn serde_regression_psbt() {
         },
         unsigned_tx: {
             let mut unsigned = tx.clone();
-            unsigned.input[0].script_sig = Script::new();
+            unsigned.input[0].script_sig = ScriptBuf::new();
             unsigned.input[0].witness = Witness::default();
             unsigned
         },
@@ -286,7 +286,7 @@ fn serde_regression_psbt() {
             non_witness_utxo: Some(tx),
             witness_utxo: Some(TxOut {
                 value: 190303501938,
-                script_pubkey: Script::from_str("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587").unwrap(),
+                script_pubkey: ScriptBuf::from_str("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587").unwrap(),
             }),
             sighash_type: Some(PsbtSighashType::from(EcdsaSighashType::from_str("SIGHASH_SINGLE|SIGHASH_ANYONECANPAY").unwrap())),
             redeem_script: Some(vec![0x51].into()),
@@ -357,7 +357,7 @@ fn serde_regression_schnorr_sig() {
 #[test]
 fn serde_regression_taproot_builder() {
     let ver = LeafVersion::from_consensus(0).unwrap();
-    let script = Script::from(vec![0u8, 1u8, 2u8]);
+    let script = ScriptBuf::from(vec![0u8, 1u8, 2u8]);
     let builder = TaprootBuilder::new().add_leaf_with_ver(1, script, ver).unwrap();
 
     let got = serialize(&builder).unwrap();
@@ -374,11 +374,11 @@ fn serde_regression_taproot_spend_info() {
     .unwrap();
 
     let script_weights = vec![
-        (10, Script::from_hex("51").unwrap()), // semantics of script don't matter for this test
-        (20, Script::from_hex("52").unwrap()),
-        (20, Script::from_hex("53").unwrap()),
-        (30, Script::from_hex("54").unwrap()),
-        (19, Script::from_hex("55").unwrap()),
+        (10, ScriptBuf::from_hex("51").unwrap()), // semantics of script don't matter for this test
+        (20, ScriptBuf::from_hex("52").unwrap()),
+        (20, ScriptBuf::from_hex("53").unwrap()),
+        (30, ScriptBuf::from_hex("54").unwrap()),
+        (19, ScriptBuf::from_hex("55").unwrap()),
     ];
     let tree_info =
         TaprootSpendInfo::with_huffman_tree(&secp, internal_key, script_weights).unwrap();

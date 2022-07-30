@@ -17,7 +17,7 @@ impl fmt::Write for NullWriter {
 
 fn do_test(data: &[u8]) {
     let mut writer = NullWriter;
-    bitcoin::Script::bytes_to_asm_fmt(data, &mut writer);
+    bitcoin::Script::from_bytes(data).fmt_asm(&mut writer);
 }
 
 #[cfg(feature = "afl")]

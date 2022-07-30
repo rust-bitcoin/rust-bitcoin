@@ -10,7 +10,7 @@ use crate::prelude::*;
 
 use crate::io;
 
-use crate::blockdata::script::Script;
+use crate::blockdata::script::ScriptBuf;
 use crate::blockdata::witness::Witness;
 use crate::blockdata::transaction::{Transaction, TxOut};
 use crate::consensus::encode::{self, serialize, Decodable, Encodable, deserialize_partial};
@@ -51,13 +51,13 @@ impl_psbt_hash_de_serialize!(sha256d::Hash);
 // taproot
 impl_psbt_de_serialize!(Vec<TapLeafHash>);
 
-impl Serialize for Script {
+impl Serialize for ScriptBuf {
     fn serialize(&self) -> Vec<u8> {
         self.to_bytes()
     }
 }
 
-impl Deserialize for Script {
+impl Deserialize for ScriptBuf {
     fn deserialize(bytes: &[u8]) -> Result<Self, encode::Error> {
         Ok(Self::from(bytes.to_vec()))
     }
@@ -262,8 +262,8 @@ impl Deserialize for ControlBlock {
     }
 }
 
-// Versioned Script
-impl Serialize for (Script, LeafVersion) {
+// Versioned ScriptBuf
+impl Serialize for (ScriptBuf, LeafVersion) {
     fn serialize(&self) -> Vec<u8> {
         let mut buf = Vec::with_capacity(self.0.len() + 1);
         buf.extend(self.0.as_bytes());
@@ -272,13 +272,13 @@ impl Serialize for (Script, LeafVersion) {
     }
 }
 
-impl Deserialize for (Script, LeafVersion) {
+impl Deserialize for (ScriptBuf, LeafVersion) {
     fn deserialize(bytes: &[u8]) -> Result<Self, encode::Error> {
         if bytes.is_empty() {
             return Err(io::Error::from(io::ErrorKind::UnexpectedEof).into())
         }
         // The last byte is LeafVersion.
-        let script = Script::deserialize(&bytes[..bytes.len() - 1])?;
+        let script = ScriptBuf::deserialize(&bytes[..bytes.len() - 1])?;
         let leaf_ver = LeafVersion::from_consensus(bytes[bytes.len() - 1])
             .map_err(|_| encode::Error::ParseFailed("invalid leaf version"))?;
         Ok((script, leaf_ver))
@@ -332,7 +332,7 @@ impl Deserialize for TapTree {
         let mut bytes_iter = bytes.iter();
         while let Some(depth) = bytes_iter.next() {
             let version = bytes_iter.next().ok_or(encode::Error::ParseFailed("Invalid Taproot Builder"))?;
-            let (script, consumed) = deserialize_partial::<Script>(bytes_iter.as_slice())?;
+            let (script, consumed) = deserialize_partial::<ScriptBuf>(bytes_iter.as_slice())?;
             if consumed > 0 {
                 bytes_iter.nth(consumed - 1);
             }
@@ -369,7 +369,7 @@ mod tests {
         let mut val = opcode;
         let mut builder = TaprootBuilder::new();
         for depth in depth_map {
-            let script = Script::from_hex(&format!("{:02x}", val)).unwrap();
+            let script = ScriptBuf::from_hex(&format!("{:02x}", val)).unwrap();
             builder = builder.add_leaf(*depth, script).unwrap();
             let (new_val, _) = val.overflowing_add(1);
             val = new_val;
@@ -380,7 +380,7 @@ mod tests {
     #[test]
     fn taptree_hidden() {
         let mut builder = compose_taproot_builder(0x51, &[2, 2, 2]);
-        builder = builder.add_leaf_with_ver(3, Script::from_hex("b9").unwrap(), LeafVersion::from_consensus(0xC2).unwrap()).unwrap();
+        builder = builder.add_leaf_with_ver(3, ScriptBuf::from_hex("b9").unwrap(), LeafVersion::from_consensus(0xC2).unwrap()).unwrap();
         builder = builder.add_hidden_node(3, sha256::Hash::all_zeros()).unwrap();
         assert!(TapTree::try_from(builder).is_err());
     }
@@ -388,7 +388,7 @@ mod tests {
     #[test]
     fn taptree_roundtrip() {
         let mut builder = compose_taproot_builder(0x51, &[2, 2, 2, 3]);
-        builder = builder.add_leaf_with_ver(3, Script::from_hex("b9").unwrap(), LeafVersion::from_consensus(0xC2).unwrap()).unwrap();
+        builder = builder.add_leaf_with_ver(3, ScriptBuf::from_hex("b9").unwrap(), LeafVersion::from_consensus(0xC2).unwrap()).unwrap();
         let tree = TapTree::try_from(builder).unwrap();
         let tree_prime = TapTree::deserialize(&tree.serialize()).unwrap();
         assert_eq!(tree, tree_prime);

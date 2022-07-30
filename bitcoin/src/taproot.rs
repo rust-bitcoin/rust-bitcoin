@@ -16,7 +16,7 @@ use crate::consensus::Encodable;
 use crate::crypto::schnorr::{TapTweak, TweakedPublicKey, UntweakedPublicKey, XOnlyPublicKey};
 use crate::hashes::{sha256, sha256t_hash_newtype, Hash, HashEngine};
 use crate::prelude::*;
-use crate::{io, Script};
+use crate::{io, Script, ScriptBuf};
 
 /// The SHA-256 midstate value for the TapLeaf hash.
 const MIDSTATE_TAPLEAF: [u8; 32] = [
@@ -149,7 +149,7 @@ pub const TAPROOT_CONTROL_MAX_SIZE: usize =
     TAPROOT_CONTROL_BASE_SIZE + TAPROOT_CONTROL_NODE_SIZE * TAPROOT_CONTROL_MAX_NODE_COUNT;
 
 // type alias for versioned tap script corresponding merkle proof
-type ScriptMerkleProofMap = BTreeMap<(Script, LeafVersion), BTreeSet<TaprootMerkleBranch>>;
+type ScriptMerkleProofMap = BTreeMap<(ScriptBuf, LeafVersion), BTreeSet<TaprootMerkleBranch>>;
 
 /// Represents taproot spending information.
 ///
@@ -200,7 +200,7 @@ impl TaprootSpendInfo {
         script_weights: I,
     ) -> Result<Self, TaprootBuilderError>
     where
-        I: IntoIterator<Item = (u32, Script)>,
+        I: IntoIterator<Item = (u32, ScriptBuf)>,
         C: secp256k1::Verification,
     {
         let builder = TaprootBuilder::with_huffman_tree(script_weights)?;
@@ -286,13 +286,13 @@ impl TaprootSpendInfo {
     ///
     /// - If there are multiple control blocks possible, returns the shortest one.
     /// - If the script is not contained in the [`TaprootSpendInfo`], returns `None`.
-    pub fn control_block(&self, script_ver: &(Script, LeafVersion)) -> Option<ControlBlock> {
+    pub fn control_block(&self, script_ver: &(ScriptBuf, LeafVersion)) -> Option<ControlBlock> {
         let merkle_branch_set = self.script_map.get(script_ver)?;
         // Choose the smallest one amongst the multiple script maps
         let smallest = merkle_branch_set
             .iter()
             .min_by(|x, y| x.0.len().cmp(&y.0.len()))
-            .expect("Invariant: Script map key must contain non-empty set value");
+            .expect("Invariant: ScriptBuf map key must contain non-empty set value");
         Some(ControlBlock {
             internal_key: self.internal_key,
             output_key_parity: self.output_key_parity,
@@ -364,7 +364,7 @@ impl TaprootBuilder {
     /// The weights represent the probability of each branch being taken. If probabilities/weights
     /// for each condition are known, constructing the tree as a Huffman Tree is the optimal way to
     /// minimize average case satisfaction cost. This function takes as input an iterator of
-    /// `tuple(u32, &Script)` where `u32` represents the satisfaction weights of the branch. For
+    /// `tuple(u32, ScriptBuf)` where `u32` represents the satisfaction weights of the branch. For
     /// example, [(3, S1), (2, S2), (5, S3)] would construct a [`TapTree`] that has optimal
     /// satisfaction weight when probability for S1 is 30%, S2 is 20% and S3 is 50%.
     ///
@@ -381,7 +381,7 @@ impl TaprootBuilder {
     /// [`TapTree`]: crate::psbt::TapTree
     pub fn with_huffman_tree<I>(script_weights: I) -> Result<Self, TaprootBuilderError>
     where
-        I: IntoIterator<Item = (u32, Script)>,
+        I: IntoIterator<Item = (u32, ScriptBuf)>,
     {
         let mut node_weights = BinaryHeap::<(Reverse<u32>, NodeInfo)>::new();
         for (p, leaf) in script_weights {
@@ -414,7 +414,7 @@ impl TaprootBuilder {
     pub fn add_leaf_with_ver(
         self,
         depth: u8,
-        script: Script,
+        script: ScriptBuf,
         ver: LeafVersion,
     ) -> Result<Self, TaprootBuilderError> {
         let leaf = NodeInfo::new_leaf_with_ver(script, ver);
@@ -425,7 +425,7 @@ impl TaprootBuilder {
     /// leaves are not provided in DFS walk order. The depth of the root node is 0.
     ///
     /// See [`TaprootBuilder::add_leaf_with_ver`] for adding a leaf with specific version.
-    pub fn add_leaf(self, depth: u8, script: Script) -> Result<Self, TaprootBuilderError> {
+    pub fn add_leaf(self, depth: u8, script: ScriptBuf) -> Result<Self, TaprootBuilderError> {
         self.add_leaf_with_ver(depth, script, LeafVersion::TapScript)
     }
 
@@ -547,8 +547,8 @@ impl NodeInfo {
         Self { hash, leaves: vec![], has_hidden_nodes: true }
     }
 
-    /// Creates a new leaf [`NodeInfo`] with given [`Script`] and [`LeafVersion`].
-    pub fn new_leaf_with_ver(script: Script, ver: LeafVersion) -> Self {
+    /// Creates a new leaf [`NodeInfo`] with given [`ScriptBuf`] and [`LeafVersion`].
+    pub fn new_leaf_with_ver(script: ScriptBuf, ver: LeafVersion) -> Self {
         let leaf = ScriptLeaf::new(script, ver);
         Self {
             hash: sha256::Hash::from_inner(leaf.leaf_hash().into_inner()),
@@ -583,7 +583,7 @@ impl NodeInfo {
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct ScriptLeaf {
     /// The underlying script.
-    script: Script,
+    script: ScriptBuf,
     /// The leaf version.
     ver: LeafVersion,
     /// The merkle proof (hashing partners) to get this node.
@@ -592,7 +592,7 @@ pub struct ScriptLeaf {
 
 impl ScriptLeaf {
     /// Creates an new [`ScriptLeaf`] from `script` and `ver` and no merkle branch.
-    fn new(script: Script, ver: LeafVersion) -> Self {
+    fn new(script: ScriptBuf, ver: LeafVersion) -> Self {
         Self { script, ver, merkle_branch: TaprootMerkleBranch(vec![]) }
     }
 
@@ -1187,7 +1187,7 @@ mod test {
     ) {
         let out_pk = XOnlyPublicKey::from_str(&out_spk_hex[4..]).unwrap();
         let out_pk = TweakedPublicKey::dangerous_assume_tweaked(out_pk);
-        let script = Script::from_hex(script_hex).unwrap();
+        let script = ScriptBuf::from_hex(script_hex).unwrap();
         let control_block =
             ControlBlock::from_slice(&Vec::<u8>::from_hex(control_block_hex).unwrap()).unwrap();
         assert_eq!(control_block_hex, control_block.serialize().to_hex());
@@ -1255,11 +1255,11 @@ mod test {
         .unwrap();
 
         let script_weights = vec![
-            (10, Script::from_hex("51").unwrap()), // semantics of script don't matter for this test
-            (20, Script::from_hex("52").unwrap()),
-            (20, Script::from_hex("53").unwrap()),
-            (30, Script::from_hex("54").unwrap()),
-            (19, Script::from_hex("55").unwrap()),
+            (10, ScriptBuf::from_hex("51").unwrap()), // semantics of script don't matter for this test
+            (20, ScriptBuf::from_hex("52").unwrap()),
+            (20, ScriptBuf::from_hex("53").unwrap()),
+            (30, ScriptBuf::from_hex("54").unwrap()),
+            (19, ScriptBuf::from_hex("55").unwrap()),
         ];
         let tree_info =
             TaprootSpendInfo::with_huffman_tree(&secp, internal_key, script_weights.clone())
@@ -1280,7 +1280,7 @@ mod test {
                 *length,
                 tree_info
                     .script_map
-                    .get(&(Script::from_hex(script).unwrap(), LeafVersion::TapScript))
+                    .get(&(ScriptBuf::from_hex(script).unwrap(), LeafVersion::TapScript))
                     .expect("Present Key")
                     .iter()
                     .next()
@@ -1323,11 +1323,11 @@ mod test {
         //                                   /  \    /  \
         //                                  A    B  C  / \
         //                                            D   E
-        let a = Script::from_hex("51").unwrap();
-        let b = Script::from_hex("52").unwrap();
-        let c = Script::from_hex("53").unwrap();
-        let d = Script::from_hex("54").unwrap();
-        let e = Script::from_hex("55").unwrap();
+        let a = ScriptBuf::from_hex("51").unwrap();
+        let b = ScriptBuf::from_hex("52").unwrap();
+        let c = ScriptBuf::from_hex("53").unwrap();
+        let d = ScriptBuf::from_hex("54").unwrap();
+        let e = ScriptBuf::from_hex("55").unwrap();
         let builder = builder.add_leaf(2, a.clone()).unwrap();
         let builder = builder.add_leaf(2, b.clone()).unwrap();
         let builder = builder.add_leaf(2, c.clone()).unwrap();
@@ -1356,7 +1356,7 @@ mod test {
         fn process_script_trees(
             v: &serde_json::Value,
             mut builder: TaprootBuilder,
-            leaves: &mut Vec<(Script, LeafVersion)>,
+            leaves: &mut Vec<(ScriptBuf, LeafVersion)>,
             depth: u8,
         ) -> TaprootBuilder {
             if v.is_null() {
@@ -1366,7 +1366,7 @@ mod test {
                     builder = process_script_trees(leaf, builder, leaves, depth + 1);
                 }
             } else {
-                let script = Script::from_str(v["script"].as_str().unwrap()).unwrap();
+                let script = ScriptBuf::from_str(v["script"].as_str().unwrap()).unwrap();
                 let ver =
                     LeafVersion::from_consensus(v["leafVersion"].as_u64().unwrap() as u8).unwrap();
                 leaves.push((script.clone(), ver));
@@ -1418,7 +1418,7 @@ mod test {
             let expected_tweak =
                 TapTweakHash::from_str(arr["intermediary"]["tweak"].as_str().unwrap()).unwrap();
             let expected_spk =
-                Script::from_str(arr["expected"]["scriptPubKey"].as_str().unwrap()).unwrap();
+                ScriptBuf::from_str(arr["expected"]["scriptPubKey"].as_str().unwrap()).unwrap();
             let expected_addr =
                 Address::from_str(arr["expected"]["bip350Address"].as_str().unwrap()).unwrap();
 

@@ -26,7 +26,7 @@ use crate::hashes::hex::FromHex;
 
 use crate::blockdata::constants::WITNESS_SCALE_FACTOR;
 #[cfg(feature="bitcoinconsensus")] use crate::blockdata::script;
-use crate::blockdata::script::Script;
+use crate::blockdata::script::{ScriptBuf, Script};
 use crate::blockdata::witness::Witness;
 use crate::blockdata::locktime::absolute::{self, Height, Time};
 use crate::blockdata::locktime::relative;
@@ -198,7 +198,7 @@ pub struct TxIn {
     pub previous_output: OutPoint,
     /// The script which pushes values on the stack which will cause
     /// the referenced output's script to be accepted.
-    pub script_sig: Script,
+    pub script_sig: ScriptBuf,
     /// The sequence number, which suggests to miners which of two
     /// conflicting transactions should be preferred, or 0xFFFFFFFF
     /// to ignore this feature. This is generally never used since
@@ -231,7 +231,7 @@ impl Default for TxIn {
     fn default() -> TxIn {
         TxIn {
             previous_output: OutPoint::default(),
-            script_sig: Script::new(),
+            script_sig: ScriptBuf::new(),
             sequence: Sequence::MAX,
             witness: Witness::default(),
         }
@@ -466,13 +466,13 @@ pub struct TxOut {
     /// The value of the output, in satoshis.
     pub value: u64,
     /// The script which must be satisfied for the output to be spent.
-    pub script_pubkey: Script
+    pub script_pubkey: ScriptBuf
 }
 
 // This is used as a "null txout" in consensus signing code.
 impl Default for TxOut {
     fn default() -> TxOut {
-        TxOut { value: 0xffffffffffffffff, script_pubkey: Script::new() }
+        TxOut { value: 0xffffffffffffffff, script_pubkey: ScriptBuf::new() }
     }
 }
 
@@ -505,7 +505,7 @@ impl<E> EncodeSigningDataResult<E> {
     /// # use bitcoin_hashes::{Hash, hex::FromHex};
     /// # let mut writer = Sighash::engine();
     /// # let input_index = 0;
-    /// # let script_pubkey = bitcoin::Script::new();
+    /// # let script_pubkey = bitcoin::ScriptBuf::new();
     /// # let sighash_u32 = 0u32;
     /// # const SOME_TX: &'static str = "0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000";
     /// # let raw_tx = Vec::from_hex(SOME_TX).unwrap();
@@ -622,7 +622,7 @@ impl Transaction {
         let cloned_tx = Transaction {
             version: self.version,
             lock_time: self.lock_time,
-            input: self.input.iter().map(|txin| TxIn { script_sig: Script::new(), witness: Witness::default(), .. *txin }).collect(),
+            input: self.input.iter().map(|txin| TxIn { script_sig: ScriptBuf::new(), witness: Witness::default(), .. *txin }).collect(),
             output: self.output.clone(),
         };
         cloned_tx.txid().into()
@@ -1073,7 +1073,7 @@ mod tests {
     use core::str::FromStr;
 
     use crate::blockdata::constants::WITNESS_SCALE_FACTOR;
-    use crate::blockdata::script::Script;
+    use crate::blockdata::script::ScriptBuf;
     use crate::blockdata::locktime::absolute;
     use crate::consensus::encode::serialize;
     use crate::consensus::encode::deserialize;
@@ -1139,7 +1139,7 @@ mod tests {
     fn test_txin_default() {
         let txin = TxIn::default();
         assert_eq!(txin.previous_output, OutPoint::default());
-        assert_eq!(txin.script_sig, Script::new());
+        assert_eq!(txin.script_sig, ScriptBuf::new());
         assert_eq!(txin.sequence, Sequence::from_consensus(0xFFFFFFFF));
         assert_eq!(txin.previous_output, OutPoint::default());
         assert_eq!(txin.witness.len(), 0);
@@ -1288,10 +1288,10 @@ mod tests {
         let old_ntxid = tx.ntxid();
         assert_eq!(format!("{:x}", old_ntxid), "c3573dbea28ce24425c59a189391937e00d255150fa973d59d61caf3a06b601d");
         // changing sigs does not affect it
-        tx.input[0].script_sig = Script::new();
+        tx.input[0].script_sig = ScriptBuf::new();
         assert_eq!(old_ntxid, tx.ntxid());
         // changing pks does
-        tx.output[0].script_pubkey = Script::new();
+        tx.output[0].script_pubkey = ScriptBuf::new();
         assert!(old_ntxid != tx.ntxid());
     }
 

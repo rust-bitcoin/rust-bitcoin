@@ -516,7 +516,7 @@ mod test {
     use super::{CommandString, NetworkMessage, RawNetworkMessage, *};
     use crate::bip152::BlockTransactionsRequest;
     use crate::blockdata::block::{self, Block};
-    use crate::blockdata::script::Script;
+    use crate::blockdata::script::ScriptBuf;
     use crate::blockdata::transaction::Transaction;
     use crate::consensus::encode::{deserialize, deserialize_partial, serialize};
     use crate::hashes::hex::FromHex;
@@ -540,7 +540,7 @@ mod test {
         let tx: Transaction = deserialize(&Vec::from_hex("0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000").unwrap()).unwrap();
         let block: Block = deserialize(&include_bytes!("../../tests/data/testnet_block_000000000000045e0b1660b6445b5e5c5ab63c9a4f956be7e1e69be04fa4497b.raw")[..]).unwrap();
         let header: block::Header = deserialize(&Vec::from_hex("010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914cd74d6e49ffff001d323b3a7b").unwrap()).unwrap();
-        let script: Script = deserialize(
+        let script: ScriptBuf = deserialize(
             &Vec::from_hex("1976a91431a420903c05a0a7de2de40c9f02ebedbacdc17288ac").unwrap(),
         )
         .unwrap();

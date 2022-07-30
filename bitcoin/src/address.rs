@@ -409,9 +409,11 @@ impl Payload {
                 return Err(Error::InvalidSegwitV0ProgramLength(script.len() - 2));
             }
 
+            let opcode = script.first_opcode().expect("witness_version guarantees len() > 4");
+
             Payload::WitnessProgram {
-                version: WitnessVersion::try_from(opcodes::All::from(script[0]))?,
-                program: script[2..].to_vec(),
+                version: WitnessVersion::try_from(opcode)?,
+                program: script.as_bytes()[2..].to_vec(),
             }
         } else {
             return Err(Error::UnrecognizedScript);
@@ -419,12 +421,12 @@ impl Payload {
     }
 
     /// Generates a script pubkey spending to this [Payload].
-    pub fn script_pubkey(&self) -> script::Script {
+    pub fn script_pubkey(&self) -> script::ScriptBuf {
         match *self {
-            Payload::PubkeyHash(ref hash) => script::Script::new_p2pkh(hash),
-            Payload::ScriptHash(ref hash) => script::Script::new_p2sh(hash),
+            Payload::PubkeyHash(ref hash) => script::ScriptBuf::new_p2pkh(hash),
+            Payload::ScriptHash(ref hash) => script::ScriptBuf::new_p2sh(hash),
             Payload::WitnessProgram { version, program: ref prog } =>
-                script::Script::new_witness_program(version, prog),
+                script::ScriptBuf::new_witness_program(version, prog)
         }
     }
 
@@ -674,7 +676,7 @@ impl Address {
     }
 
     /// Generates a script pubkey spending to this address.
-    pub fn script_pubkey(&self) -> script::Script { self.payload.script_pubkey() }
+    pub fn script_pubkey(&self) -> script::ScriptBuf { self.payload.script_pubkey() }
 
     /// Creates a URI string *bitcoin:address* optimized to be encoded in QR codes.
     ///

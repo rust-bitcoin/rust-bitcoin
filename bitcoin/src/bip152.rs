@@ -377,7 +377,7 @@ mod test {
     use crate::consensus::encode::{deserialize, serialize};
     use crate::hashes::hex::FromHex;
     use crate::{
-        CompactTarget, OutPoint, Script, Sequence, Transaction, TxIn, TxMerkleNode, TxOut, Txid,
+        CompactTarget, OutPoint, ScriptBuf, Sequence, Transaction, TxIn, TxMerkleNode, TxOut, Txid,
         Witness,
     };
 
@@ -387,11 +387,11 @@ mod test {
             lock_time: absolute::LockTime::from_consensus(2),
             input: vec![TxIn {
                 previous_output: OutPoint::new(Txid::hash(nonce), 0),
-                script_sig: Script::new(),
+                script_sig: ScriptBuf::new(),
                 sequence: Sequence(1),
                 witness: Witness::new(),
             }],
-            output: vec![TxOut { value: 1, script_pubkey: Script::new() }],
+            output: vec![TxOut { value: 1, script_pubkey: ScriptBuf::new() }],
         }
     }
 
