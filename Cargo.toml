@@ -1,4 +1,4 @@
 [workspace]
-members = ["bitcoin"]
+members = ["bitcoin", "bitcoin-str"]
 # "dep_test" is there for test runs (see contrib/test.sh).
 exclude = ["embedded", "fuzz", "dep_test"]
