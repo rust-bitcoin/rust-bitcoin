@@ -1538,4 +1538,3 @@ mod test {
         assert!(read_scriptbool(&v));
     }
 }
-
