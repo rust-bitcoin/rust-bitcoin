@@ -142,7 +142,7 @@ impl BlockHeader {
         }
         let block_hash = self.block_hash();
         let mut ret = [0u64; 4];
-        util::endian::bytes_to_u64_slice_le(block_hash.as_inner(), &mut ret);
+        endian::bytes_to_u64_slice_le(block_hash.as_inner(), &mut ret);
         let hash = &Uint256(ret);
         if hash <= target { Ok(block_hash) } else { Err(BlockBadProofOfWork) }
     }
@@ -335,7 +335,7 @@ impl Block {
                 // Expand the push to exactly 8 bytes (LE).
                 let mut full = [0; 8];
                 full[0..b.len()].copy_from_slice(b);
-                Ok(util::endian::slice_to_u64_le(&full))
+                Ok(endian::slice_to_u64_le(&full))
             }
             script::Instruction::PushBytes(b) if b.len() > 8 => {
                 Err(Bip34Error::UnexpectedPush(b.to_vec()))

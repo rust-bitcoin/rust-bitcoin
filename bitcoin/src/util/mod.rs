@@ -11,6 +11,7 @@ pub mod ecdsa;
 pub mod schnorr;
 pub mod address;
 pub mod amount;
+#[deprecated(since = "0.30.0", note = "Consider using the base58 crate")]
 pub mod base58;
 pub mod bip32;
 pub mod bip143;
@@ -23,8 +24,6 @@ pub mod taproot;
 pub mod uint;
 pub mod bip158;
 pub mod sighash;
-
-pub(crate) mod endian;
 
 use crate::prelude::*;
 use crate::io;

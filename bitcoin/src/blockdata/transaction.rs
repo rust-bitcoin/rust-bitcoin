@@ -21,7 +21,6 @@ use core::convert::TryFrom;
 use crate::hashes::{Hash, sha256d};
 use bitcoin_str::hex::{self, FromHex};
 
-use crate::util::endian;
 use crate::blockdata::constants::{WITNESS_SCALE_FACTOR, MAX_SEQUENCE};
 #[cfg(feature="bitcoinconsensus")] use crate::blockdata::script;
 use crate::blockdata::script::Script;

@@ -37,7 +37,6 @@ use crate::hash_types::{PubkeyHash, ScriptHash};
 use crate::blockdata::{script, opcodes};
 use crate::blockdata::constants::{PUBKEY_ADDRESS_PREFIX_MAIN, SCRIPT_ADDRESS_PREFIX_MAIN, PUBKEY_ADDRESS_PREFIX_TEST, SCRIPT_ADDRESS_PREFIX_TEST, MAX_SCRIPT_ELEMENT_SIZE};
 use crate::network::constants::Network;
-use crate::util::base58;
 use crate::util::taproot::TapBranchHash;
 use crate::util::key::PublicKey;
 use crate::blockdata::script::Instruction;

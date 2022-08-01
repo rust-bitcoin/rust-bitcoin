@@ -3,15 +3,15 @@
 
 //! Base58 encoder and decoder.
 //!
-//! This module provides functions for encoding and decoding base58 slices and
+//! This crate provides functions for encoding and decoding base58 slices and
 //! strings respectively.
 //!
 
-use crate::prelude::*;
+// TODO: sort out std/alloc feature and check feature gating (Vec is used below).
 
 use core::{fmt, str, iter, slice};
 
-use crate::hashes::{sha256d, Hash};
+use bitcoin_hashes::{sha256d, Hash};
 
 /// An error that might occur during base58 decoding
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]

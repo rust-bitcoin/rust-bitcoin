@@ -25,7 +25,6 @@ use crate::hash_types::{BlockHash, FilterHash, TxMerkleNode, FilterHeader};
 use crate::internal_macros::write_err;
 use crate::io::{self, Cursor, Read};
 
-use crate::util::endian;
 use crate::util::psbt;
 use crate::util::bip152::{ShortId, PrefilledTransaction};
 use crate::util::taproot::TapLeafHash;
