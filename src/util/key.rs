@@ -167,7 +167,7 @@ impl PublicKey {
     }
 
     /// Serialize the public key to bytes
-    pub fn to_bytes(&self) -> Vec<u8> {
+    pub fn to_bytes(self) -> Vec<u8> {
         let mut buf = Vec::new();
         self.write_into(&mut buf).expect("vecs don't error");
         buf
@@ -219,11 +219,11 @@ impl PublicKey {
     ///     pk("04c4b0bbb339aa236bff38dbe6a451e111972a7909a126bc424013cba2ec33bc38e98ac269ffe028345c31ac8d0a365f29c8f7e7cfccac72f84e1acd02bc554f35"),
     /// ];
     ///
-    /// unsorted.sort_unstable_by_key(PublicKey::to_sort_key);
+    /// unsorted.sort_unstable_by_key(|k| PublicKey::to_sort_key(*k));
     ///
     /// assert_eq!(unsorted, sorted);
     /// ```
-    pub fn to_sort_key(&self) -> SortKey {
+    pub fn to_sort_key(self) -> SortKey {
         if self.compressed {
             let bytes = self.inner.serialize();
             let mut res = [0; 32];
@@ -337,7 +337,7 @@ impl PrivateKey {
     }
 
     /// Serialize the private key to bytes
-    pub fn to_bytes(&self) -> Vec<u8> {
+    pub fn to_bytes(self) -> Vec<u8> {
         self.inner[..].to_vec()
     }
 
@@ -364,7 +364,7 @@ impl PrivateKey {
     }
 
     /// Get WIF encoding of this private key.
-    pub fn to_wif(&self) -> String {
+    pub fn to_wif(self) -> String {
         let mut buf = String::new();
         buf.write_fmt(format_args!("{}", self)).unwrap();
         buf.shrink_to_fit();
@@ -833,7 +833,7 @@ mod tests {
             },
         ];
         for mut vector in vectors {
-            vector.input.sort_by_cached_key(PublicKey::to_sort_key);
+            vector.input.sort_by_cached_key(|k| PublicKey::to_sort_key(*k));
             assert_eq!(vector.input, vector.expect);
         }
     }

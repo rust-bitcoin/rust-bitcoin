@@ -106,7 +106,7 @@ macro_rules! construct_uint {
             }
 
             /// Convert a big integer into a byte array using big-endian encoding
-            pub fn to_be_bytes(&self) -> [u8; $n_words * 8] {
+            pub fn to_be_bytes(self) -> [u8; $n_words * 8] {
                 use super::endian::u64_to_array_be;
                 let mut res = [0; $n_words * 8];
                 for i in 0..$n_words {

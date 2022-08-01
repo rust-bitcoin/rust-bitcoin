@@ -81,7 +81,7 @@ impl PackedLockTime {
 
     /// Returns the inner `u32`.
     #[inline]
-    pub fn to_u32(&self) -> u32 {
+    pub fn to_u32(self) -> u32 {
         self.0
     }
 }
@@ -338,8 +338,8 @@ impl LockTime {
     /// // let is_satisfied = n.partial_cmp(&lock_time).expect("invalid comparison").is_le();
     /// ```
     #[inline]
-    pub fn to_consensus_u32(&self) -> u32 {
-        match *self {
+    pub fn to_consensus_u32(self) -> u32 {
+        match self {
             LockTime::Blocks(ref h) => h.to_consensus_u32(),
             LockTime::Seconds(ref t) => t.to_consensus_u32(),
         }
@@ -446,7 +446,7 @@ impl Height {
     /// assert!(lock_time.is_block_height());
     /// assert_eq!(lock_time.to_consensus_u32(), n_lock_time);
     #[inline]
-    pub fn to_consensus_u32(&self) -> u32 {
+    pub fn to_consensus_u32(self) -> u32 {
         self.0
     }
 }
@@ -529,7 +529,7 @@ impl Time {
     /// assert_eq!(lock_time.to_consensus_u32(), n_lock_time);
     /// ```
     #[inline]
-    pub fn to_consensus_u32(&self) -> u32 {
+    pub fn to_consensus_u32(self) -> u32 {
         self.0
     }
 }

@@ -87,7 +87,7 @@ impl TapTweakHash {
     }
 
     /// Converts a `TapTweakHash` into a `Scalar` ready for use with key tweaking API.
-    pub fn to_scalar(&self) -> Scalar {
+    pub fn to_scalar(self) -> Scalar {
         // This is statistically extremely unlikely to panic.
         Scalar::from_be_bytes(self.into_inner()).expect("hash value greater than curve order")
     }

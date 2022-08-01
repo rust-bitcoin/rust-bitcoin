@@ -179,7 +179,7 @@ mod message_signing {
         /// Convert to base64 encoding.
         #[cfg(feature = "base64")]
         #[cfg_attr(docsrs, doc(cfg(feature = "base64")))]
-        pub fn to_base64(&self) -> String {
+        pub fn to_base64(self) -> String {
             base64::encode(&self.serialize()[..])
         }
     }

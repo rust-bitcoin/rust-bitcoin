@@ -379,7 +379,7 @@ impl Sequence {
 
     /// Returns the inner 32bit integer value of Sequence.
     #[inline]
-    pub fn to_consensus_u32(&self) -> u32 {
+    pub fn to_consensus_u32(self) -> u32 {
         self.0
     }
 }
