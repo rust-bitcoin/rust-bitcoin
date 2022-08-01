@@ -3,3 +3,53 @@
 
 //! Stringly encodings used by the Bitcoin network.
 //!
+
+#![cfg_attr(all(not(test), not(feature = "std")), no_std)]
+
+// Experimental features we need.
+#![cfg_attr(bench, feature(test))]
+#![cfg_attr(docsrs, feature(doc_cfg))]
+
+// Coding conventions
+#![forbid(unsafe_code)]
+#![deny(non_upper_case_globals)]
+#![deny(non_camel_case_types)]
+#![deny(non_snake_case)]
+#![deny(unused_mut)]
+#![deny(dead_code)]
+#![deny(unused_imports)]
+#![deny(missing_docs)]
+#![deny(unused_must_use)]
+
+// Disable 16-bit support at least for now as we can't guarantee it yet.
+#[cfg(target_pointer_width = "16")]
+compile_error!(
+    "rust-bitcoin currently only supports architectures with pointers wider than 16 bits, let us
+    know if you want 16-bit support. Note that we do NOT guarantee that we will implement it!"
+);
+
+#[cfg(bench)]
+extern crate test;
+
+#[cfg(feature = "alloc")]
+extern crate alloc;
+
+#[cfg(all(feature = "std", feature = "bech32", not(feature = "bech32-std")))]
+compile_error!("If you enable \"std\" and want \"bech32\" you should enable \"bech32-std\"");
+
+#[rustfmt::skip]
+mod prelude {
+    #[cfg(all(feature = "alloc", not(feature = "std"), not(test)))]
+    pub use alloc::{string::{String, ToString}, vec::Vec, boxed::Box, borrow::{Cow, ToOwned}, slice, rc, sync};
+
+    #[cfg(any(feature = "std", test))]
+    pub use std::{string::{String, ToString}, vec::Vec, boxed::Box, borrow::{Cow, ToOwned}, slice, rc, sync};
+
+    #[cfg(all(feature = "alloc", not(feature = "std"), not(test)))]
+    pub use alloc::collections::{BTreeMap, BTreeSet, btree_map, BinaryHeap};
+
+    #[cfg(any(feature = "std", test))]
+    pub use std::collections::{BTreeMap, BTreeSet, btree_map, BinaryHeap};
+}
+
+pub mod hex;

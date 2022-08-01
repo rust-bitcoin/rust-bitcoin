@@ -15,12 +15,14 @@ edition = "2018"
 [features]
 default = ["std"]
 std = []
-alloc = []
+alloc = ["core2/alloc"]
 
 [package.metadata.docs.rs]
-features = ["std"]
+features = ["std", "alloc"]
 rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
+# Only enable this if you explicitly do not want to use an allocator, otherwise enable "alloc".
+core2 = { version = "0.3.0", default_features = false, optional = true }
 
 [dev-dependencies]
