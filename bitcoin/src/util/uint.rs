@@ -441,7 +441,7 @@ macro_rules! construct_uint {
             where
                 S: $crate::serde::Serializer,
             {
-                use $crate::hashes::hex::ToHex;
+                use $crate::str::hex::ToHex;
                 let bytes = self.to_be_bytes();
                 if serializer.is_human_readable() {
                     serializer.serialize_str(&bytes.to_hex())
@@ -458,7 +458,7 @@ macro_rules! construct_uint {
                 deserializer: D,
             ) -> Result<Self, D::Error> {
                 use core::fmt;
-                use $crate::hashes::hex::FromHex;
+                use $crate::str::hex::FromHex;
                 use $crate::serde::de;
                 struct Visitor;
                 impl<'de> de::Visitor<'de> for Visitor {

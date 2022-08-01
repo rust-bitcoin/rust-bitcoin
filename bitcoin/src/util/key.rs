@@ -12,10 +12,11 @@ use core::{ops, str::FromStr};
 use core::fmt::{self, Write};
 
 pub use secp256k1::{self, Secp256k1, XOnlyPublicKey, KeyPair};
+use bitcoin_str::hex::{self, FromHex};
 
 use crate::io;
 use crate::network::constants::Network;
-use crate::hashes::{Hash, hash160, hex, hex::FromHex};
+use crate::hashes::{Hash, hash160};
 use crate::hash_types::{PubkeyHash, WPubkeyHash};
 use crate::util::base58;
 use crate::internal_macros::write_err;
@@ -549,7 +550,7 @@ mod tests {
     use super::{PrivateKey, PublicKey, SortKey};
     use secp256k1::Secp256k1;
     use std::str::FromStr;
-    use crate::hashes::hex::{FromHex, ToHex};
+    use bitcoin_str::hex::{FromHex, ToHex};
     use crate::network::constants::Network::Testnet;
     use crate::network::constants::Network::Bitcoin;
     use crate::util::address::Address;

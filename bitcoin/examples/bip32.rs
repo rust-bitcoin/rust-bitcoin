@@ -3,7 +3,7 @@ extern crate bitcoin;
 use std::str::FromStr;
 use std::{env, process};
 
-use bitcoin::hashes::hex::FromHex;
+use bitcoin::str::hex::FromHex;
 use bitcoin::secp256k1::ffi::types::AlignedType;
 use bitcoin::secp256k1::Secp256k1;
 use bitcoin::util::address::Address;

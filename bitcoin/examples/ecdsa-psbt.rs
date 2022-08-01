@@ -33,7 +33,7 @@ use std::fmt;
 use std::str::FromStr;
 
 use bitcoin::consensus::encode;
-use bitcoin::hashes::hex::{self, FromHex};
+use bitcoin::str::hex::{self, FromHex};
 use bitcoin::secp256k1::{Secp256k1, Signing, Verification};
 use bitcoin::util::address;
 use bitcoin::util::amount::ParseAmountError;

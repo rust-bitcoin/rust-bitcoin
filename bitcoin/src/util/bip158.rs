@@ -512,7 +512,7 @@ mod test {
     use crate::io::Cursor;
 
     use crate::hash_types::BlockHash;
-    use crate::hashes::hex::FromHex;
+    use bitcoin_str::hex::FromHex;
 
     use super::*;
 

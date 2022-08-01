@@ -814,11 +814,11 @@ mod tests {
     use super::*;
     use crate::blockdata::locktime::PackedLockTime;
     use crate::consensus::deserialize;
-    use crate::hashes::hex::FromHex;
+    use bitcoin_str::hex::FromHex;
     use crate::hashes::{Hash, HashEngine};
     use crate::util::sighash::{Annex, Error, Prevouts, ScriptPath, SighashCache};
     use std::str::FromStr;
-    use crate::hashes::hex::ToHex;
+    use bitcoin_str::hex::ToHex;
     use crate::util::taproot::{TapTweakHash, TapSighashHash, TapBranchHash, TapLeafHash};
     use secp256k1::{self, SecretKey, XOnlyPublicKey};
     use crate::internal_macros::{hex_hash, hex_script, hex_decode};

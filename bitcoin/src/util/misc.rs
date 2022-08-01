@@ -259,7 +259,7 @@ pub fn signed_msg_hash(msg: &str) -> sha256d::Hash {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::hashes::hex::ToHex;
+    use bitcoin_str::hex::ToHex;
     use super::script_find_and_remove;
     use super::signed_msg_hash;
 

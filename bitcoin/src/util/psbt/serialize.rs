@@ -360,7 +360,7 @@ fn key_source_len(key_source: &KeySource) -> usize {
 mod tests {
     use core::convert::TryFrom;
 
-    use crate::hashes::hex::FromHex;
+    use bitcoin_str::hex::FromHex;
     use super::*;
 
     // Composes tree matching a given depth map, filled with dumb script leafs,

@@ -143,7 +143,7 @@ impl_consensus_encoding!(GetHeadersMessage, version, locator_hashes, stop_hash);
 mod tests {
     use super::{Vec, GetHeadersMessage, GetBlocksMessage};
 
-    use crate::hashes::hex::FromHex;
+    use bitcoin_str::hex::FromHex;
     use crate::hashes::Hash;
     use crate::consensus::encode::{deserialize, serialize};
 

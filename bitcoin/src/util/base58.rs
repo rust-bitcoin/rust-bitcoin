@@ -251,7 +251,7 @@ pub fn check_encode_slice_to_fmt(fmt: &mut fmt::Formatter, data: &[u8]) -> fmt::
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::hashes::hex::FromHex;
+    use bitcoin_str::hex::FromHex;
 
     #[test]
     fn test_base58_encode() {

@@ -1138,7 +1138,7 @@ mod test {
     use crate::schnorr::TapTweak;
 
     use super::*;
-    use crate::hashes::hex::{FromHex, ToHex};
+    use bitcoin_str::hex::{FromHex, ToHex};
     use crate::hashes::sha256t::Tag;
     use crate::hashes::{sha256, Hash, HashEngine};
     use secp256k1::{VerifyOnly, XOnlyPublicKey};

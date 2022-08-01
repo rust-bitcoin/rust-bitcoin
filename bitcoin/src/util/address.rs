@@ -1005,7 +1005,7 @@ fn segwit_redeem_hash(pubkey_hash: &[u8]) -> crate::hashes::hash160::Hash {
 mod tests {
     use core::str::FromStr;
 
-    use crate::hashes::hex::{FromHex, ToHex};
+    use bitcoin_str::hex::{FromHex, ToHex};
 
     use crate::blockdata::script::Script;
     use crate::network::constants::Network::{Bitcoin, Testnet};

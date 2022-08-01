@@ -12,7 +12,7 @@ use core::convert::TryFrom;
 
 use crate::io;
 use crate::consensus::encode::{self, ReadExt, WriteExt, Decodable, Encodable, VarInt, serialize, deserialize, MAX_VEC_SIZE};
-use crate::hashes::hex;
+use bitcoin_str::hex;
 use crate::util::psbt::Error;
 use crate::util::read_to_end;
 

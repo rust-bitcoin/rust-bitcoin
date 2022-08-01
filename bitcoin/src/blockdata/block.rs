@@ -383,7 +383,7 @@ impl std::error::Error for Bip34Error {
 
 #[cfg(test)]
 mod tests {
-    use crate::hashes::hex::FromHex;
+    use bitcoin_str::hex::FromHex;
 
     use crate::blockdata::block::{Block, BlockHeader};
     use crate::consensus::encode::{deserialize, serialize};

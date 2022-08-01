@@ -491,7 +491,7 @@ mod test {
     use super::{RawNetworkMessage, NetworkMessage, CommandString};
     use crate::network::constants::ServiceFlags;
     use crate::consensus::encode::{deserialize, deserialize_partial, serialize};
-    use crate::hashes::hex::FromHex;
+    use bitcoin_str::hex::FromHex;
     use crate::hashes::sha256d::Hash;
     use crate::hashes::Hash as HashTrait;
     use crate::network::address::{Address, AddrV2, AddrV2Message};

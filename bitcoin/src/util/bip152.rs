@@ -363,7 +363,7 @@ impl BlockTransactions {
 mod test {
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
-    use crate::hashes::hex::FromHex;
+    use bitcoin_str::hex::FromHex;
     use crate::{
         Block, BlockHash, BlockHeader, OutPoint, Script, Sequence, Transaction, TxIn, TxMerkleNode,
         TxOut, Txid, Witness, LockTime,

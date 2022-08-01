@@ -139,7 +139,7 @@ mod tests {
     use super::Reject;
     use super::RejectReason;
 
-    use crate::hashes::hex::FromHex;
+    use bitcoin_str::hex::FromHex;
     use crate::hashes::sha256d::Hash;
     use crate::network::constants::ServiceFlags;
 

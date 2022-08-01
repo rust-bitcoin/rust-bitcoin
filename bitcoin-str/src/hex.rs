@@ -39,6 +39,18 @@ impl fmt::Display for Error {
     }
 }
 
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use self::Error::*;
+
+        match *self {
+            InvalidChar(_) | OddLengthString(_) | InvalidLength(_, _) => None,
+        }
+    }
+}
+
 /// Trait for objects that can be serialized as hex strings.
 #[cfg(any(test, feature = "std", feature = "alloc"))]
 #[cfg_attr(docsrs, doc(cfg(any(test, feature = "std", feature = "alloc"))))]

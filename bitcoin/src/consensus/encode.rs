@@ -29,7 +29,7 @@ use crate::util::endian;
 use crate::util::psbt;
 use crate::util::bip152::{ShortId, PrefilledTransaction};
 use crate::util::taproot::TapLeafHash;
-use crate::hashes::hex::ToHex;
+use bitcoin_str::hex::ToHex;
 
 use crate::blockdata::transaction::{TxOut, Transaction, TxIn};
 #[cfg(feature = "std")]

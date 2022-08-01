@@ -15,8 +15,9 @@ use core::ops::Index;
 #[cfg(feature = "serde")] use serde;
 
 use crate::hash_types::XpubIdentifier;
-use crate::hashes::{sha512, Hash, HashEngine, Hmac, HmacEngine, hex};
+use crate::hashes::{sha512, Hash, HashEngine, Hmac, HmacEngine};
 use secp256k1::{self, Secp256k1, XOnlyPublicKey};
+use bitcoin_str::hex;
 
 use crate::network::constants::Network;
 use crate::util::{base58, endian, key};
@@ -844,7 +845,7 @@ mod tests {
     use core::str::FromStr;
 
     use secp256k1::{self, Secp256k1};
-    use crate::hashes::hex::FromHex;
+    use bitcoin_str::hex::FromHex;
 
     use crate::network::constants::Network::{self, Bitcoin};
 

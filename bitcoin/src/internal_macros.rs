@@ -124,12 +124,12 @@ macro_rules! hex_script (($s:expr) => (<$crate::Script as core::str::FromStr>::f
 pub(crate) use hex_script;
 
 #[cfg(test)]
-macro_rules! hex_hash (($h:ident, $s:expr) => ($h::from_slice(&<$crate::prelude::Vec<u8> as $crate::hashes::hex::FromHex>::from_hex($s).unwrap()).unwrap()));
+macro_rules! hex_hash (($h:ident, $s:expr) => ($h::from_slice(&<$crate::prelude::Vec<u8> as $crate::str::hex::FromHex>::from_hex($s).unwrap()).unwrap()));
 #[cfg(test)]
 pub(crate) use hex_hash;
 
 #[cfg(test)]
-macro_rules! hex_decode (($h:ident, $s:expr) => (deserialize::<$h>(&<$crate::prelude::Vec<u8> as $crate::hashes::hex::FromHex>::from_hex($s).unwrap()).unwrap()));
+macro_rules! hex_decode (($h:ident, $s:expr) => (deserialize::<$h>(&<$crate::prelude::Vec<u8> as $crate::str::hex::FromHex>::from_hex($s).unwrap()).unwrap()));
 #[cfg(test)]
 pub(crate) use hex_decode;
 
@@ -356,10 +356,10 @@ pub(crate) use serde_struct_human_string_impl;
 
 /// Implements several traits for byte-based newtypes.
 /// Implements:
-/// - core::fmt::LowerHex (implies hashes::hex::ToHex)
+/// - core::fmt::LowerHex (implies str::hex::ToHex)
 /// - core::fmt::Display
 /// - core::str::FromStr
-/// - hashes::hex::FromHex
+/// - str::hex::FromHex
 macro_rules! impl_bytes_newtype {
     ($t:ident, $len:literal) => {
         impl core::fmt::LowerHex for $t {
@@ -383,10 +383,10 @@ macro_rules! impl_bytes_newtype {
             }
         }
 
-        impl $crate::hashes::hex::FromHex for $t {
-            fn from_byte_iter<I>(iter: I) -> Result<Self, $crate::hashes::hex::Error>
+        impl $crate::str::hex::FromHex for $t {
+            fn from_byte_iter<I>(iter: I) -> Result<Self, $crate::str::hex::Error>
             where
-                I: core::iter::Iterator<Item = Result<u8, $crate::hashes::hex::Error>>
+                I: core::iter::Iterator<Item = Result<u8, $crate::str::hex::Error>>
                     + core::iter::ExactSizeIterator
                     + core::iter::DoubleEndedIterator,
             {
@@ -397,15 +397,15 @@ macro_rules! impl_bytes_newtype {
                     }
                     Ok($t(ret))
                 } else {
-                    Err($crate::hashes::hex::Error::InvalidLength(2 * $len, 2 * iter.len()))
+                    Err($crate::str::hex::Error::InvalidLength(2 * $len, 2 * iter.len()))
                 }
             }
         }
 
         impl core::str::FromStr for $t {
-            type Err = $crate::hashes::hex::Error;
+            type Err = $crate::str::hex::Error;
             fn from_str(s: &str) -> Result<Self, Self::Err> {
-                $crate::hashes::hex::FromHex::from_hex(s)
+                $crate::str::hex::FromHex::from_hex(s)
             }
         }
 
@@ -414,7 +414,7 @@ macro_rules! impl_bytes_newtype {
         impl $crate::serde::Serialize for $t {
             fn serialize<S: $crate::serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
                 if s.is_human_readable() {
-                    s.serialize_str(&$crate::hashes::hex::ToHex::to_hex(self))
+                    s.serialize_str(&$crate::str::hex::ToHex::to_hex(self))
                 } else {
                     s.serialize_bytes(&self[..])
                 }
@@ -442,7 +442,7 @@ macro_rules! impl_bytes_newtype {
                             use $crate::serde::de::Unexpected;
 
                             if let Ok(hex) = core::str::from_utf8(v) {
-                                $crate::hashes::hex::FromHex::from_hex(hex).map_err(E::custom)
+                                $crate::str::hex::FromHex::from_hex(hex).map_err(E::custom)
                             } else {
                                 return Err(E::invalid_value(Unexpected::Bytes(v), &self));
                             }
@@ -452,7 +452,7 @@ macro_rules! impl_bytes_newtype {
                         where
                             E: $crate::serde::de::Error,
                         {
-                            $crate::hashes::hex::FromHex::from_hex(v).map_err(E::custom)
+                            $crate::str::hex::FromHex::from_hex(v).map_err(E::custom)
                         }
                     }
 

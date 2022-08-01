@@ -281,7 +281,7 @@ impl serde::Serialize for Witness {
     where
         S: serde::Serializer,
     {
-        use crate::hashes::hex::ToHex;
+        use bitcoin_str::hex::ToHex;
         use serde::ser::SerializeSeq;
 
         let human_readable = serializer.is_human_readable();
@@ -315,8 +315,8 @@ impl<'de> serde::Deserialize<'de> for Witness {
 
             fn visit_seq<A: serde::de::SeqAccess<'de>>(self, mut a: A) -> Result<Self::Value, A::Error>
             {
-                use crate::hashes::hex::FromHex;
-                use crate::hashes::hex::Error::*;
+                use bitcoin_str::hex::FromHex;
+                use bitcoin_str::hex::Error::*;
                 use serde::de::{self, Unexpected};
 
                 let mut ret = match a.size_hint() {
@@ -360,7 +360,7 @@ mod test {
     use super::*;
 
     use crate::consensus::{deserialize, serialize};
-    use crate::hashes::hex::{FromHex, ToHex};
+    use bitcoin_str::hex::{FromHex, ToHex};
     use crate::Transaction;
     use crate::secp256k1::ecdsa;
 

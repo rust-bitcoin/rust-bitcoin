@@ -336,7 +336,7 @@ mod tests {
     use super::*;
 
     use crate::blockdata::locktime::PackedLockTime;
-    use crate::hashes::hex::FromHex;
+    use bitcoin_str::hex::FromHex;
     use crate::hashes::{sha256, hash160, Hash, ripemd160};
     use crate::hash_types::Txid;
 
@@ -594,7 +594,7 @@ mod tests {
         #[cfg(feature = "base64")]
         use std::str::FromStr;
 
-        use crate::hashes::hex::FromHex;
+        use bitcoin_str::hex::FromHex;
         use crate::hash_types::Txid;
 
         use crate::blockdata::script::Script;

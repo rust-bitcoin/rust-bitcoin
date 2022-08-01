@@ -8,7 +8,7 @@
 use crate::prelude::*;
 use core::str::FromStr;
 use core::{fmt, iter};
-use crate::hashes::hex::{self, FromHex};
+use bitcoin_str::hex::{self, FromHex};
 use crate::blockdata::transaction::NonStandardSighashType;
 use secp256k1;
 use crate::EcdsaSighashType;

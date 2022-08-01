@@ -12,7 +12,7 @@ use crate::prelude::*;
 
 use core::default::Default;
 
-use crate::hashes::hex::{self, HexIterator};
+use bitcoin_str::hex::{self, HexIterator};
 use crate::hashes::{Hash, sha256d};
 use crate::blockdata::opcodes;
 use crate::blockdata::script;
@@ -199,7 +199,7 @@ impl ChainHash {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::hashes::hex::{ToHex, FromHex};
+    use bitcoin_str::hex::{ToHex, FromHex};
     use crate::network::constants::Network;
     use crate::consensus::encode::serialize;
     use crate::blockdata::locktime::PackedLockTime;
