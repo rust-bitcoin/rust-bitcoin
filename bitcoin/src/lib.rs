@@ -64,7 +64,6 @@ extern crate alloc;
 pub use bitcoin_hashes as hashes;
 pub use bitcoin_str as str;
 pub use secp256k1;
-pub use bech32;
 #[cfg(feature="bitcoinconsensus")]
 pub use bitcoinconsensus;
 

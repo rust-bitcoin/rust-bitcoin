@@ -30,7 +30,8 @@ use crate::error::ParseIntError;
 use core::str::FromStr;
 
 use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
-use bech32;
+use bitcoin_str::bech32;
+
 use crate::hashes::{sha256, Hash, HashEngine};
 use crate::hash_types::{PubkeyHash, ScriptHash};
 use crate::blockdata::{script, opcodes};

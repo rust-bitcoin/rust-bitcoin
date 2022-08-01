@@ -34,6 +34,11 @@ extern crate test;
 #[cfg(feature = "alloc")]
 extern crate alloc;
 
+/// Re-export of the [`bech32`] crate.
+/// [`bech32`]: <https://docs.rs/bech32/latest/bech32/>
+#[cfg(feature = "bech32")]
+pub use bech32;
+
 #[cfg(all(feature = "std", feature = "bech32", not(feature = "bech32-std")))]
 compile_error!("If you enable \"std\" and want \"bech32\" you should enable \"bech32-std\"");
 
