@@ -456,23 +456,18 @@ fn fmt_satoshi_in(
     Ok(())
 }
 
-/// Amount
+/// The `Amount` type can be used to express unsigned Bitcoin amounts, it supports arithmetic and
+/// conversion to various denominations.
 ///
-/// The [Amount] type can be used to express Bitcoin amounts that supports
-/// arithmetic and conversion to various denominations.
+/// This type implements several arithmetic operations from [`core::ops`]. To prevent errors due to
+/// overflow when using these operations, it is advised to instead use the checked arithmetic
+/// methods whose names start with `checked_`.
 ///
+/// # Panics
 ///
-/// Warning!
-///
-/// This type implements several arithmetic operations from [core::ops].
-/// To prevent errors due to overflow or underflow when using these operations,
-/// it is advised to instead use the checked arithmetic methods whose names
-/// start with `checked_`.  The operations from [core::ops] that [Amount]
-/// implements will panic when overflow or underflow occurs.  Also note that
-/// since the internal representation of amounts is unsigned, subtracting below
-/// zero is considered an underflow and will cause a panic if you're not using
-/// the checked arithmetic methods.
-///
+/// The operations from [`core::ops`] that `Amount` implements will panic when overflow occurs. Also
+/// note that since the internal representation of `Amount` is unsigned, subtracting below zero is
+/// considered an overflow and will cause a panic if you're not using the checked arithmetic methods.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Amount(u64);
 
@@ -842,20 +837,16 @@ enum DisplayStyle {
     DynamicDenomination,
 }
 
-/// SignedAmount
+/// The `SignedAmount` type can be used to express signed Bitcoin amounts, it supports arithmetic
+/// and conversion to various denominations.
 ///
-/// The [SignedAmount] type can be used to express Bitcoin amounts that supports
-/// arithmetic and conversion to various denominations.
+/// This type implements several arithmetic operations from [`core::ops`]. To prevent errors due to
+/// overflow when using these operations, it is advised to instead use the checked arithmetic
+/// methods whose names start with `checked_`.
 ///
+/// # Panics
 ///
-/// Warning!
-///
-/// This type implements several arithmetic operations from [core::ops].
-/// To prevent errors due to overflow or underflow when using these operations,
-/// it is advised to instead use the checked arithmetic methods whose names
-/// start with `checked_`.  The operations from [core::ops] that [Amount]
-/// implements will panic when overflow or underflow occurs.
-///
+/// The operations from [`core::ops`] that `SignedAmount` implements will panic when overflow occurs.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct SignedAmount(i64);
 
