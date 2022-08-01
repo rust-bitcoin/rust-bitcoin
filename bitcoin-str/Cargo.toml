@@ -16,7 +16,10 @@ edition = "2018"
 default = ["std"]
 std = []
 alloc = ["core2/alloc"]
+# We use explicit std/alloc features for optional dependencies.
 bech32-std = ["bech32/std"]
+base64-std = ["base64/std"]
+base64-alloc = ["base64/alloc"]
 
 [package.metadata.docs.rs]
 features = ["std", "alloc"]
@@ -26,6 +29,9 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 # Only enable this if you explicitly want no-defaul-features, otherwise use "bech32-std".
 bech32 = { version = "0.9.0", default_features = false, optional = true }
+
+# Only enable this if you explicitly want no-defaul-features, otherwise use "base64-std" or "base64-alloc".
+base64 = { version = "0.13.0", default-features = false, optional = true }
 
 # Only enable this if you explicitly do not want to use an allocator, otherwise enable "alloc".
 core2 = { version = "0.3.0", default_features = false, optional = true }

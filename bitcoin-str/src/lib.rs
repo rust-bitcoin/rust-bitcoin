@@ -39,8 +39,16 @@ extern crate alloc;
 #[cfg(feature = "bech32")]
 pub use bech32;
 
+/// Re-export of the [`base64`] crate.
+/// [`base64`]: <https://docs.rs/base64/latest/base64/>
+#[cfg(feature = "base64")]
+pub use base64;
+
+// Only warn for std builds, if devs are doing no-std builds they probably know what they are doing.
 #[cfg(all(feature = "std", feature = "bech32", not(feature = "bech32-std")))]
 compile_error!("If you enable \"std\" and want \"bech32\" you should enable \"bech32-std\"");
+#[cfg(all(feature = "std", feature = "base64", not(feature = "base64-std")))]
+compile_error!("If you enable \"std\" and want \"base64\" you should enable \"base64-std\"");
 
 #[rustfmt::skip]
 mod prelude {
