@@ -179,4 +179,3 @@ mod tests {
         assert_eq!(serialize(&real_decode), from_sat);
     }
 }
-

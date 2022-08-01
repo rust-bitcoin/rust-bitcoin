@@ -307,4 +307,3 @@ mod test {
         assert_eq!(got, want);
     }
 }
-
