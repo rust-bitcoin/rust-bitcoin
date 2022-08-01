@@ -199,7 +199,8 @@ impl TaprootSpendInfo {
         I: IntoIterator<Item=(u32, Script)>,
         C: secp256k1::Verification,
     {
-        TaprootBuilder::with_huffman_tree(script_weights)?.finalize(secp, internal_key)
+        let builder = TaprootBuilder::with_huffman_tree(script_weights)?;
+        Ok(builder.finalize(secp, internal_key).expect("Huffman Tree is always complete"))
     }
 
     /// Creates a new key spend with `internal_key` and `merkle_root`. Provide [`None`] for
@@ -392,7 +393,7 @@ impl TaprootBuilder {
             node_weights.push((Reverse(p), NodeInfo::new_leaf_with_ver(leaf, LeafVersion::TapScript)));
         }
         if node_weights.is_empty() {
-            return Err(TaprootBuilderError::IncompleteTree);
+            return Err(TaprootBuilderError::EmptyTree);
         }
         while node_weights.len() > 1 {
             // Combine the last two elements and insert a new node
@@ -440,7 +441,7 @@ impl TaprootBuilder {
     }
 
     /// Checks if the builder has finalized building a tree.
-    pub fn is_finalized(&self) -> bool {
+    pub fn is_finalizable(&self) -> bool {
         self.branch.len() == 1 && self.branch[0].is_some()
     }
 
@@ -451,19 +452,23 @@ impl TaprootBuilder {
 
     /// Creates a [`TaprootSpendInfo`] with the given internal key.
     ///
-    // TODO: in a future breaking API change, this no longer needs to return result
+    /// Returns the unmodified builder as Err if the builder is not finalizable.
+    /// See also [`TaprootBuilder::is_finalizable`]
     pub fn finalize<C: secp256k1::Verification>(
         mut self,
         secp: &Secp256k1<C>,
         internal_key: UntweakedPublicKey,
-    ) -> Result<TaprootSpendInfo, TaprootBuilderError> {
-        match self.branch.pop() {
-            None => Ok(TaprootSpendInfo::new_key_spend(secp, internal_key, None)),
-            Some(Some(node)) => {
-                Ok(TaprootSpendInfo::from_node_info(secp, internal_key, node))
+    ) -> Result<TaprootSpendInfo, TaprootBuilder> {
+        match self.branch.len() {
+            0 => Ok(TaprootSpendInfo::new_key_spend(secp, internal_key, None)),
+            1 => {
+                if let Some(Some(node)) = self.branch.pop() {
+                    Ok(TaprootSpendInfo::from_node_info(secp, internal_key, node))
+                } else {
+                    unreachable!("Size checked above. Builder guarantees the last element is Some")
+                }
             }
-            _ => Err(TaprootBuilderError::IncompleteTree),
-
+            _ => Err(self),
         }
     }
 
@@ -1013,8 +1018,6 @@ pub enum TaprootBuilderError {
     OverCompleteTree,
     /// Invalid taproot internal key.
     InvalidInternalKey(secp256k1::Error),
-    /// Called finalize on an incomplete tree.
-    IncompleteTree,
     /// Called finalize on a empty tree.
     EmptyTree,
 }
@@ -1036,9 +1039,6 @@ impl fmt::Display for TaprootBuilderError {
             TaprootBuilderError::InvalidInternalKey(ref e) => {
                 write_err!(f, "invalid internal x-only key"; e)
             }
-            TaprootBuilderError::IncompleteTree => {
-                write!(f, "Called finalize on an incomplete tree")
-            }
             TaprootBuilderError::EmptyTree => {
                 write!(f, "Called finalize on an empty tree")
             }
@@ -1057,7 +1057,6 @@ impl std::error::Error for TaprootBuilderError {
             InvalidMerkleTreeDepth(_)
                 | NodeNotInDfsOrder
                 | OverCompleteTree
-                | IncompleteTree
                 | EmptyTree => None
         }
     }
@@ -1341,6 +1340,9 @@ mod test {
         let builder = builder.add_leaf(2, b.clone()).unwrap();
         let builder = builder.add_leaf(2, c.clone()).unwrap();
         let builder = builder.add_leaf(3, d.clone()).unwrap();
+
+        // Trying to finalize an incomplete tree returns the Err(builder)
+        let builder = builder.finalize(&secp, internal_key).unwrap_err();
         let builder = builder.add_leaf(3, e.clone()).unwrap();
 
         let tree_info = builder.finalize(&secp, internal_key).unwrap();

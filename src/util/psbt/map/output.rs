@@ -194,7 +194,7 @@ impl TryFrom<TaprootBuilder> for TapTree {
     /// A [`TapTree`] iff the `builder` is complete, otherwise return [`IncompleteTapTree`]
     /// error with the content of incomplete `builder` instance.
     fn try_from(builder: TaprootBuilder) -> Result<Self, Self::Error> {
-        if !builder.is_finalized() {
+        if !builder.is_finalizable() {
             Err(IncompleteTapTree::NotFinalized(builder))
         } else if builder.has_hidden_nodes() {
             Err(IncompleteTapTree::HiddenParts(builder))
