@@ -122,6 +122,7 @@ pub use crate::blockdata::transaction::{self, OutPoint, Sequence, Transaction, T
 pub use crate::blockdata::witness::{self, Witness};
 pub use crate::blockdata::{constants, opcodes};
 pub use crate::consensus::encode::VarInt;
+pub use crate::error::Error;
 pub use crate::hash_types::*;
 pub use crate::network::constants::Network;
 pub use crate::pow::{CompactTarget, Target, Work};
@@ -130,7 +131,7 @@ pub use crate::util::ecdsa::{self, EcdsaSig, EcdsaSigError};
 pub use crate::util::key::{KeyPair, PrivateKey, PublicKey, XOnlyPublicKey};
 pub use crate::merkle_tree::MerkleBlock;
 pub use crate::util::schnorr::{self, SchnorrSig, SchnorrSigError};
-pub use crate::util::{psbt, Error};
+pub use crate::util::psbt;
 
 #[cfg(not(feature = "std"))]
 mod io_extras {

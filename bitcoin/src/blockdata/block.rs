@@ -13,8 +13,8 @@ use crate::prelude::*;
 
 use core::fmt;
 
-use crate::{merkle_tree, util};
-use crate::util::Error::{BlockBadTarget, BlockBadProofOfWork};
+use crate::merkle_tree;
+use crate::error::Error::{self, BlockBadTarget, BlockBadProofOfWork};
 use crate::hashes::{Hash, HashEngine};
 use crate::hash_types::{Wtxid, TxMerkleNode, WitnessMerkleNode, WitnessCommitment};
 use crate::consensus::{encode, Encodable, Decodable};
@@ -77,7 +77,7 @@ impl Header {
     }
 
     /// Checks that the proof-of-work for the block is valid, returning the block hash.
-    pub fn validate_pow(&self, required_target: Target) -> Result<BlockHash, util::Error> {
+    pub fn validate_pow(&self, required_target: Target) -> Result<BlockHash, Error> {
         let target = self.target();
         if target != required_target {
             return Err(BlockBadTarget);
