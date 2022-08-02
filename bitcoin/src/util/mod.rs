@@ -13,24 +13,6 @@ pub mod base58;
 pub mod psbt;
 pub mod taproot;
 
-use crate::prelude::*;
-use crate::io;
-
-// core2 doesn't have read_to_end
-pub(crate) fn read_to_end<D: io::Read>(mut d: D) -> Result<Vec<u8>, io::Error> {
-    let mut result = vec![];
-    let mut buf = [0u8; 64];
-    loop {
-        match d.read(&mut buf) {
-            Ok(0) => break,
-            Ok(n) => result.extend_from_slice(&buf[0..n]),
-            Err(ref e) if e.kind() == io::ErrorKind::Interrupted => {},
-            Err(e) => return Err(e),
-        };
-    }
-    Ok(result)
-}
-
 /// The `misc` module was moved and re-named to `sign_message`.
 pub mod misc {
     use crate::prelude::*;
