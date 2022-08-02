@@ -365,8 +365,8 @@ mod test {
     use crate::consensus::encode::{deserialize, serialize};
     use crate::hashes::hex::FromHex;
     use crate::{
-        Block, BlockHash, BlockHeader, OutPoint, Script, Sequence, Transaction, TxIn, TxMerkleNode,
-        TxOut, Txid, Witness, LockTime,
+        Amount, Block, BlockHash, BlockHeader, OutPoint, Script, Sequence, Transaction, TxIn,
+        TxMerkleNode, TxOut, Txid, Witness, LockTime,
     };
 
     fn dummy_tx(nonce: &[u8]) -> Transaction {
@@ -379,7 +379,7 @@ mod test {
                 sequence: Sequence(1),
                 witness: Witness::new(),
             }],
-            output: vec![TxOut { value: 1, script_pubkey: Script::new() }],
+            output: vec![TxOut { value: Amount::from_sat(1), script_pubkey: Script::new() }],
         }
     }
 

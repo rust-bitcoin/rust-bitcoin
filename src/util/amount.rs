@@ -6,10 +6,12 @@
 //! We refer to the documentation on the types for more information.
 //!
 
-use crate::prelude::*;
-
 use core::{ops, default, str::FromStr, cmp::Ordering};
 use core::fmt::{self, Write};
+
+use crate::consensus::encode::{self, Decodable, Encodable};
+use crate::io;
+use crate::prelude::*;
 
 /// A set of denominations in which amounts can be expressed.
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
@@ -956,6 +958,20 @@ impl core::iter::Sum for Amount {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         let sats: u64 = iter.map(|amt| amt.0).sum();
         Amount::from_sat(sats)
+    }
+}
+
+impl Encodable for Amount {
+    #[inline]
+    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        self.0.consensus_encode(w)
+    }
+}
+
+impl Decodable for Amount {
+    #[inline]
+    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        u64::consensus_decode(r).map(Amount)
     }
 }
 

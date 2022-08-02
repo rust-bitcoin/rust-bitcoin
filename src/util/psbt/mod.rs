@@ -342,6 +342,7 @@ mod tests {
 
     use secp256k1::{Secp256k1, self};
 
+    use crate::amount::Amount;
     use crate::blockdata::script::Script;
     use crate::blockdata::transaction::{Transaction, TxIn, TxOut, OutPoint, Sequence};
     use crate::network::constants::Network::Bitcoin;
@@ -443,13 +444,13 @@ mod tests {
                 }],
                 output: vec![
                     TxOut {
-                        value: 99999699,
+                        value: Amount::from_sat(99999699),
                         script_pubkey: hex_script!(
                             "76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac"
                         ),
                     },
                     TxOut {
-                        value: 100000000,
+                        value: Amount::from_sat(100000000),
                         script_pubkey: hex_script!(
                             "a9143545e6e33b832c47050f24d3eeb93c9c03948bc787"
                         ),
@@ -514,7 +515,7 @@ mod tests {
             }],
             output: vec![
                 TxOut {
-                    value: 190303501938,
+                    value: Amount::from_sat(190303501938),
                     script_pubkey: hex_script!("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587"),
                 },
             ],
@@ -558,7 +559,7 @@ mod tests {
             inputs: vec![Input {
                 non_witness_utxo: Some(tx),
                 witness_utxo: Some(TxOut {
-                    value: 190303501938,
+                    value: Amount::from_sat(190303501938),
                     script_pubkey: hex_script!("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587"),
                 }),
                 sighash_type: Some("SIGHASH_SINGLE|SIGHASH_ANYONECANPAY".parse::<EcdsaSighashType>().unwrap().into()),
@@ -596,7 +597,7 @@ mod tests {
 
         use crate::hashes::hex::FromHex;
         use crate::hash_types::Txid;
-
+        use crate::amount::Amount;
         use crate::blockdata::script::Script;
         use crate::blockdata::transaction::{EcdsaSighashType, Transaction, TxIn, TxOut, OutPoint, Sequence};
         use crate::consensus::encode::serialize_hex;
@@ -703,11 +704,11 @@ mod tests {
                     }],
                     output: vec![
                         TxOut {
-                            value: 99999699,
+                            value: Amount::from_sat(99999699),
                             script_pubkey: hex_script!("76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac"),
                         },
                         TxOut {
-                            value: 100000000,
+                            value: Amount::from_sat(100000000),
                             script_pubkey: hex_script!("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787"),
                         },
                     ],
@@ -751,11 +752,11 @@ mod tests {
                         }],
                         output: vec![
                             TxOut {
-                                value: 200000000,
+                                value: Amount::from_sat(200000000),
                                 script_pubkey: hex_script!("76a91485cff1097fd9e008bb34af709c62197b38978a4888ac"),
                             },
                             TxOut {
-                                value: 190303501938,
+                                value: Amount::from_sat(190303501938),
                                 script_pubkey: hex_script!("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587"),
                             },
                         ],
@@ -1015,11 +1016,11 @@ mod tests {
                 }],
                 output: vec![
                     TxOut {
-                        value: 99999699,
+                        value: Amount::from_sat(99999699),
                         script_pubkey: hex_script!("76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac"),
                     },
                     TxOut {
-                        value: 100000000,
+                        value: Amount::from_sat(100000000),
                         script_pubkey: hex_script!("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787"),
                     },
                 ],
@@ -1063,11 +1064,11 @@ mod tests {
                     }],
                     output: vec![
                         TxOut {
-                            value: 200000000,
+                            value: Amount::from_sat(200000000),
                             script_pubkey: hex_script!("76a91485cff1097fd9e008bb34af709c62197b38978a4888ac"),
                         },
                         TxOut {
-                            value: 190303501938,
+                            value: Amount::from_sat(190303501938),
                             script_pubkey: hex_script!("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587"),
                         },
                     ],
