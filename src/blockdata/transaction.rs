@@ -379,7 +379,7 @@ impl Sequence {
 
     /// Returns the inner 32bit integer value of Sequence.
     #[inline]
-    pub fn to_consensus_u32(&self) -> u32 {
+    pub fn to_consensus_u32(self) -> u32 {
         self.0
     }
 }
@@ -503,6 +503,7 @@ impl<E> EncodeSigningDataResult<E> {
     ///     // use a hash value of "1", instead of computing the actual hash due to SIGHASH_SINGLE bug
     /// }
     /// ```
+    #[allow(clippy::wrong_self_convention)] // E is not Copy so we consume self.
     pub fn is_sighash_single_bug(self) -> Result<bool, E> {
         match self {
             EncodeSigningDataResult::SighashSingleBug => Ok(true),

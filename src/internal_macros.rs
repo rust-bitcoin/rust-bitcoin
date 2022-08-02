@@ -78,7 +78,7 @@ macro_rules! impl_array_newtype {
 
             /// Returns the underlying bytes.
             #[inline]
-            pub fn to_bytes(&self) -> [$ty; $len] { self.0.clone() }
+            pub fn to_bytes(self) -> [$ty; $len] { self.0.clone() }
 
             /// Returns the underlying bytes.
             #[inline]

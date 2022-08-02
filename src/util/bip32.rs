@@ -545,7 +545,7 @@ impl ExtendedPrivKey {
     }
 
     /// Constructs ECDSA compressed private key matching internal secret key representation.
-    pub fn to_priv(&self) -> PrivateKey {
+    pub fn to_priv(self) -> PrivateKey {
         PrivateKey {
             compressed: true,
             network: self.network,
@@ -555,7 +555,7 @@ impl ExtendedPrivKey {
 
     /// Constructs BIP340 keypair for Schnorr signatures and Taproot use matching the internal
     /// secret key representation.
-    pub fn to_keypair<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> KeyPair {
+    pub fn to_keypair<C: secp256k1::Signing>(self, secp: &Secp256k1<C>) -> KeyPair {
         KeyPair::from_seckey_slice(secp, &self.private_key[..]).expect("BIP32 internal private key representation is broken")
     }
 
@@ -677,7 +677,7 @@ impl ExtendedPubKey {
     }
 
     /// Constructs ECDSA compressed public key matching internal public key representation.
-    pub fn to_pub(&self) -> PublicKey {
+    pub fn to_pub(self) -> PublicKey {
         PublicKey {
             compressed: true,
             inner: self.public_key
@@ -686,7 +686,7 @@ impl ExtendedPubKey {
 
     /// Constructs BIP340 x-only public key for BIP-340 signatures and Taproot use matching
     /// the internal public key representation.
-    pub fn to_x_only_pub(&self) -> XOnlyPublicKey {
+    pub fn to_x_only_pub(self) -> XOnlyPublicKey {
         XOnlyPublicKey::from(self.public_key)
     }
 

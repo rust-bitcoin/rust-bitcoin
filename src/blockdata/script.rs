@@ -157,7 +157,7 @@ pub enum Error {
     /// Can not find the spent output
     UnknownSpentOutput(OutPoint),
     /// Can not serialize the spending transaction
-    SerializationError
+    Serialization
 }
 
 impl fmt::Display for Error {
@@ -169,7 +169,7 @@ impl fmt::Display for Error {
             #[cfg(feature = "bitcoinconsensus")]
             Error::BitcoinConsensus(ref _n) => "bitcoinconsensus verification failed",
             Error::UnknownSpentOutput(ref _point) => "unknown spent output Transaction::verify()",
-            Error::SerializationError => "can not serialize the spending transaction in Transaction::verify()",
+            Error::Serialization => "can not serialize the spending transaction in Transaction::verify()",
         };
         f.write_str(str)
     }
@@ -186,7 +186,7 @@ impl std::error::Error for Error {
             | EarlyEndOfScript
             | NumericOverflow
             | UnknownSpentOutput(_)
-            | SerializationError => None,
+            | Serialization => None,
             #[cfg(feature = "bitcoinconsensus")]
             BitcoinConsensus(_) => None,
         }

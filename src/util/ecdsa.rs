@@ -46,7 +46,7 @@ impl EcdsaSig {
     }
 
     /// Serializes an ECDSA signature (inner secp256k1 signature in DER format).
-    pub fn to_vec(&self) -> Vec<u8> {
+    pub fn to_vec(self) -> Vec<u8> {
         // TODO: add support to serialize to a writer to SerializedSig
         self.sig.serialize_der()
             .iter().copied()

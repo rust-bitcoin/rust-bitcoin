@@ -58,7 +58,7 @@ pub enum Error {
     /// Unable to parse as a standard sighash type.
     NonStandardSighashType(u32),
     /// Parsing errors from bitcoin_hashes
-    HashParseError(hashes::Error),
+    HashParse(hashes::Error),
     /// The pre-image must hash to the correponding psbt hash
     InvalidPreimageHashPair {
         /// Hash-type
@@ -93,7 +93,7 @@ impl fmt::Display for Error {
             Error::NoMorePairs => f.write_str("no more key-value pairs for this psbt map"),
             Error::UnexpectedUnsignedTx { expected: ref e, actual: ref a } => write!(f, "different unsigned transaction: expected {}, actual {}", e.txid(), a.txid()),
             Error::NonStandardSighashType(ref sht) => write!(f, "non-standard sighash type: {}", sht),
-            Error::HashParseError(ref e) => write_err!(f, "hash parse error"; e),
+            Error::HashParse(ref e) => write_err!(f, "hash parse error"; e),
             Error::InvalidPreimageHashPair{ref preimage, ref hash, ref hash_type} => {
                 // directly using debug forms of psbthash enums
                 write!(f, "Preimage {:?} does not match {:?} hash {:?}", preimage, hash_type, hash )
@@ -111,7 +111,7 @@ impl std::error::Error for Error {
         use self::Error::*;
 
         match self {
-            HashParseError(e) => Some(e),
+            HashParse(e) => Some(e),
             | InvalidMagic
             | MissingUtxo
             | InvalidSeparator
@@ -135,7 +135,7 @@ impl std::error::Error for Error {
 #[doc(hidden)]
 impl From<hashes::Error> for Error {
     fn from(e: hashes::Error) -> Error {
-        Error::HashParseError(e)
+        Error::HashParse(e)
     }
 }
 
