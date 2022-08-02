@@ -13,89 +13,12 @@ use crate::hashes::Hash;
 use crate::hash_types::Sighash;
 use crate::blockdata::script::Script;
 use crate::blockdata::witness::Witness;
-use crate::blockdata::transaction::{Transaction, TxIn, EcdsaSighashType};
-use crate::blockdata::locktime::LockTime;
-use crate::consensus::{encode, Encodable};
+use crate::blockdata::transaction::{Transaction, EcdsaSighashType};
+use crate::consensus::encode;
 
 use crate::io;
 use core::ops::{Deref, DerefMut};
 use crate::util::sighash;
-
-/// Parts of a sighash which are common across inputs or signatures, and which are
-/// sufficient (in conjunction with a private key) to sign the transaction
-#[derive(Clone, PartialEq, Eq, Debug)]
-#[deprecated(since = "0.24.0", note = "please use [sighash::SighashCache] instead")]
-pub struct SighashComponents {
-    tx_version: i32,
-    tx_locktime: LockTime,
-    /// Hash of all the previous outputs
-    pub hash_prevouts: Sighash,
-    /// Hash of all the input sequence nos
-    pub hash_sequence: Sighash,
-    /// Hash of all the outputs in this transaction
-    pub hash_outputs: Sighash,
-}
-
-#[allow(deprecated)]
-impl SighashComponents {
-    /// Compute the sighash components from an unsigned transaction and auxiliary
-    /// information about its inputs.
-    /// For the generated sighashes to be valid, no fields in the transaction may change except for
-    /// script_sig and witnesses.
-    pub fn new(tx: &Transaction) -> SighashComponents {
-        let hash_prevouts = {
-            let mut enc = Sighash::engine();
-            for txin in &tx.input {
-                txin.previous_output.consensus_encode(&mut enc).expect("engines don't error");
-            }
-            Sighash::from_engine(enc)
-        };
-
-        let hash_sequence = {
-            let mut enc = Sighash::engine();
-            for txin in &tx.input {
-                txin.sequence.consensus_encode(&mut enc).expect("engines don't error");
-            }
-            Sighash::from_engine(enc)
-        };
-
-        let hash_outputs = {
-            let mut enc = Sighash::engine();
-            for txout in &tx.output {
-                txout.consensus_encode(&mut enc).expect("engines don't error");
-            }
-            Sighash::from_engine(enc)
-        };
-
-        SighashComponents {
-            tx_version: tx.version,
-            tx_locktime: tx.lock_time.into(),
-            hash_prevouts,
-            hash_sequence,
-            hash_outputs,
-        }
-    }
-
-    /// Compute the BIP143 sighash for a `SIGHASH_ALL` signature for the given
-    /// input.
-    pub fn sighash_all(&self, txin: &TxIn, script_code: &Script, value: u64) -> Sighash {
-        let mut enc = Sighash::engine();
-        self.tx_version.consensus_encode(&mut enc).expect("engines don't error");
-        self.hash_prevouts.consensus_encode(&mut enc).expect("engines don't error");
-        self.hash_sequence.consensus_encode(&mut enc).expect("engines don't error");
-        txin
-            .previous_output
-            .consensus_encode(&mut enc)
-            .expect("engines don't error");
-        script_code.consensus_encode(&mut enc).expect("engines don't error");
-        value.consensus_encode(&mut enc).expect("engines don't error");
-        txin.sequence.consensus_encode(&mut enc).expect("engines don't error");
-        self.hash_outputs.consensus_encode(&mut enc).expect("engines don't error");
-        self.tx_locktime.consensus_encode(&mut enc).expect("engines don't error");
-        1u32.consensus_encode(&mut enc).expect("engines don't error"); // hashtype
-        Sighash::from_engine(enc)
-    }
-}
 
 /// A replacement for SigHashComponents which supports all sighash modes
 #[deprecated(since = "0.28.0", note = "please use [sighash::SighashCache] instead")]
@@ -129,8 +52,7 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
         Ok(())
     }
 
-    /// Compute the BIP143 sighash for any flag type. See SighashComponents::sighash_all simpler
-    /// API for the most common case
+    /// Compute the BIP143 sighash for any flag type.
     pub fn signature_hash(
         &mut self,
         input_index: usize,
