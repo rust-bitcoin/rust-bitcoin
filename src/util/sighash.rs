@@ -812,19 +812,21 @@ impl<'a> Encodable for Annex<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::blockdata::locktime::PackedLockTime;
-    use crate::consensus::deserialize;
-    use crate::hashes::hex::FromHex;
-    use crate::hashes::{Hash, HashEngine};
-    use crate::util::sighash::{Annex, Error, Prevouts, ScriptPath, SighashCache};
+
     use std::str::FromStr;
-    use crate::hashes::hex::ToHex;
-    use crate::util::taproot::{TapTweakHash, TapSighashHash, TapBranchHash, TapLeafHash};
+
     use secp256k1::{self, SecretKey, XOnlyPublicKey};
-    use crate::internal_macros::{hex_hash, hex_script, hex_decode};
-    extern crate serde_json;
 
     use crate::{Script, Transaction, TxIn, TxOut};
+    use crate::blockdata::locktime::PackedLockTime;
+    use crate::consensus::deserialize;
+    use crate::hashes::hex::{FromHex, ToHex};
+    use crate::hashes::{Hash, HashEngine};
+    use crate::internal_macros::{hex_hash, hex_script, hex_decode};
+    use crate::util::sighash::{Annex, Error, Prevouts, ScriptPath, SighashCache};
+    use crate::util::taproot::{TapTweakHash, TapSighashHash, TapBranchHash, TapLeafHash};
+
+    extern crate serde_json;
 
     #[test]
     fn test_tap_sighash_hash() {
