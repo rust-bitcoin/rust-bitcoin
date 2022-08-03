@@ -824,7 +824,7 @@ mod tests {
     use crate::internal_macros::{hex_hash, hex_script, hex_decode};
     extern crate serde_json;
 
-    use crate::{Script, Transaction, TxIn, TxOut};
+    use crate::{Script, Transaction, TxIn, TxOut, TxAmount};
 
     #[test]
     fn test_tap_sighash_hash() {
@@ -1086,7 +1086,7 @@ mod tests {
         for utxo in key_path["given"]["utxosSpent"].as_array().unwrap() {
             let spk = hex_script!(utxo["scriptPubKey"].as_str().unwrap());
             let amt = utxo["amountSats"].as_u64().unwrap();
-            utxos.push(TxOut {value: amt, script_pubkey: spk });
+            utxos.push(TxOut {value: TxAmount::from_sat(amt).expect("valid amount"), script_pubkey: spk });
         }
 
         // Test intermediary

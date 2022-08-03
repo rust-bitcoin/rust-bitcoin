@@ -27,6 +27,7 @@ use crate::blockdata::constants::{WITNESS_SCALE_FACTOR, MAX_SEQUENCE};
 use crate::blockdata::script::Script;
 use crate::blockdata::witness::Witness;
 use crate::blockdata::locktime::{LockTime, PackedLockTime, Height, Time};
+use crate::blockdata::tx_amount::TxAmount;
 use crate::consensus::{encode, Decodable, Encodable};
 use crate::hash_types::{Sighash, Txid, Wtxid};
 use crate::VarInt;
@@ -451,7 +452,8 @@ impl std::error::Error for RelativeLockTimeError {
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct TxOut {
     /// The value of the output, in satoshis.
-    pub value: u64,
+    #[cfg_attr(feature = "serde", serde(with="crate::util::amount::serde::as_sat"))]
+    pub value: TxAmount,
     /// The script which must be satisfied for the output to be spent.
     pub script_pubkey: Script
 }
@@ -459,7 +461,7 @@ pub struct TxOut {
 // This is used as a "null txout" in consensus signing code.
 impl Default for TxOut {
     fn default() -> TxOut {
-        TxOut { value: 0xffffffffffffffff, script_pubkey: Script::new() }
+        TxOut { value: TxAmount::NULL_TX_OUT, script_pubkey: Script::new() }
     }
 }
 
@@ -921,7 +923,7 @@ impl Transaction {
         let flags: u32 = flags.into();
         for (idx, input) in self.input.iter().enumerate() {
             if let Some(output) = spent(&input.previous_output) {
-                output.script_pubkey.verify_with_flags(idx, crate::Amount::from_sat(output.value), tx.as_slice(), flags)?;
+                output.script_pubkey.verify_with_flags(idx, output.value.to_amount(), tx.as_slice(), flags)?;
             } else {
                 return Err(script::Error::UnknownSpentOutput(input.previous_output));
             }

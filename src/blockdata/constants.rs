@@ -18,6 +18,7 @@ use crate::blockdata::opcodes;
 use crate::blockdata::script;
 use crate::blockdata::locktime::PackedLockTime;
 use crate::blockdata::transaction::{OutPoint, Transaction, TxOut, TxIn, Sequence};
+use crate::blockdata::tx_amount::TxAmount;
 use crate::blockdata::block::{Block, BlockHeader};
 use crate::blockdata::witness::Witness;
 use crate::network::constants::Network;
@@ -100,7 +101,7 @@ fn bitcoin_genesis_tx() -> Transaction {
         .push_opcode(opcodes::all::OP_CHECKSIG)
         .into_script();
     ret.output.push(TxOut {
-        value: 50 * COIN_VALUE,
+        value: TxAmount::from_sat(50 * COIN_VALUE).expect("valid value"),
         script_pubkey: out_script
     });
 
@@ -219,7 +220,7 @@ mod test {
         assert_eq!(gen.output.len(), 1);
         assert_eq!(serialize(&gen.output[0].script_pubkey),
                    Vec::from_hex("434104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac").unwrap());
-        assert_eq!(gen.output[0].value, 50 * COIN_VALUE);
+        assert_eq!(gen.output[0].value, TxAmount::from_sats(50 * COIN_VALUE).expect("valid value"));
         assert_eq!(gen.lock_time, PackedLockTime::ZERO);
 
         assert_eq!(gen.wtxid().to_hex(), "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b");

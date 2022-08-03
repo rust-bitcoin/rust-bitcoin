@@ -103,6 +103,7 @@ pub use crate::blockdata::transaction::SigHashType;
 pub use crate::blockdata::transaction::{
     EcdsaSighashType, OutPoint, Sequence, Transaction, TxIn, TxOut,
 };
+pub use crate::blockdata::tx_amount::TxAmount;
 pub use crate::blockdata::witness::Witness;
 pub use crate::consensus::encode::VarInt;
 pub use crate::hash_types::*;

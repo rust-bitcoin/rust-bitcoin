@@ -366,7 +366,7 @@ mod test {
     use crate::hashes::hex::FromHex;
     use crate::{
         Block, BlockHash, BlockHeader, OutPoint, Script, Sequence, Transaction, TxIn, TxMerkleNode,
-        TxOut, Txid, Witness, LockTime,
+        TxOut, Txid, Witness, LockTime, TxAmount,
     };
 
     fn dummy_tx(nonce: &[u8]) -> Transaction {
@@ -379,7 +379,7 @@ mod test {
                 sequence: Sequence(1),
                 witness: Witness::new(),
             }],
-            output: vec![TxOut { value: 1, script_pubkey: Script::new() }],
+            output: vec![TxOut { value: TxAmount::ONE_SAT, script_pubkey: Script::new() }],
         }
     }
 
