@@ -183,6 +183,7 @@ mod tests {
     use crate::blockdata::transaction::Transaction;
     use crate::consensus::encode::deserialize;
     use crate::hashes::hex::FromHex;
+    use crate::util::sighash::SighashCache;
 
     use super::*;
 
@@ -191,9 +192,9 @@ mod tests {
         let script = Script::from(Vec::<u8>::from_hex(script).unwrap());
         let raw_expected = Sighash::from_hex(expected_result).unwrap();
         let expected_result = Sighash::from_slice(&raw_expected[..]).unwrap();
-        let mut cache = SigHashCache::new(&tx);
+        let mut cache = SighashCache::new(&tx);
         let sighash_type = EcdsaSighashType::from_u32_consensus(hash_type);
-        let actual_result = cache.signature_hash(input_index, &script, value, sighash_type);
+        let actual_result = cache.segwit_signature_hash(input_index, &script, value, sighash_type).unwrap();
         assert_eq!(actual_result, expected_result);
     }
 
