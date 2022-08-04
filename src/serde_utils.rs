@@ -1,4 +1,4 @@
-//! Bitcoin serde utilities.
+//! Dash serde utilities.
 //!
 //! This module is for special serde serializations.
 //!

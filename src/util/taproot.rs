@@ -1,4 +1,4 @@
-// Rust Bitcoin Library
+// Rust Dash Library
 // Written in 2019 by
 //     The rust-bitcoin developers.
 // To the extent possible under law, the author(s) have dedicated all

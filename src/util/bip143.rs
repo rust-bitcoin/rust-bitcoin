@@ -1,4 +1,4 @@
-// Rust Bitcoin Library
+// Rust Dash Library
 // Written in 2018 by
 //     Andrew Poelstra <apoelstra@wpsoftware.net>
 // To the extent possible under law, the author(s) have dedicated all

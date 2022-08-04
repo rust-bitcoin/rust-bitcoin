@@ -1,6 +1,9 @@
-// Rust Bitcoin Library
-// Written in 2014 by
+// Rust Dash Library
+// Originally written in 2014 by
 //     Andrew Poelstra <apoelstra@wpsoftware.net>
+//     For Bitcoin
+// Updated for Dash in 2022 by
+//     The Dash Core Developers
 //
 // To the extent possible under law, the author(s) have dedicated all
 // copyright and related and neighboring rights to this software to
@@ -12,7 +15,7 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! Bitcoin transactions.
+//! Dash transactions.
 //!
 //! A transaction describes a transfer of money. It consumes previously-unspent
 //! transaction outputs and produces new ones, satisfying the condition to spend

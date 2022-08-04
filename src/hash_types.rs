@@ -1,6 +1,9 @@
-// Rust Bitcoin Library
-// Written in 2014 by
-//   Andrew Poelstra <apoelstra@wpsoftware.net>
+// Rust Dash Library
+// Originally written in 2014 by
+//     Andrew Poelstra <apoelstra@wpsoftware.net>
+//     For Bitcoin
+// Updated for Dash in 2022 by
+//     The Dash Core Developers
 //
 // To the extent possible under law, the author(s) have dedicated all
 // copyright and related and neighboring rights to this software to
@@ -12,7 +15,7 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! Bitcoin hash types.
+//! Dash hash types.
 //!
 //! This module defines types for hashes used throughout the library. These
 //! types are needed in order to avoid mixing data of the same hash format

@@ -1,4 +1,4 @@
-// Rust Bitcoin Library
+// Rust Dash Library
 // Written in 2021 by
 //   The rust-bitcoin developers
 //

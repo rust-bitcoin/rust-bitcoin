@@ -1,6 +1,9 @@
-// Rust Bitcoin Library
-// Written in 2014 by
+// Rust Dash Library
+// Originally written in 2014 by
 //     Andrew Poelstra <apoelstra@wpsoftware.net>
+//     For Bitcoin
+// Updated for Dash in 2022 by
+//     The Dash Core Developers
 //
 // To the extent possible under law, the author(s) have dedicated all
 // copyright and related and neighboring rights to this software to
@@ -14,7 +17,7 @@
 
 //! Internal macros.
 //!
-//! Macros meant to be used inside the Rust Bitcoin library.
+//! Macros meant to be used inside the Rust Dash library.
 //!
 
 macro_rules! impl_consensus_encoding {
