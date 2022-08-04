@@ -8,23 +8,20 @@
 //! and legacy (before Bip143).
 //!
 
-use crate::blockdata::transaction::EncodeSigningDataResult;
-use crate::prelude::*;
+use core::{str, fmt};
+use core::borrow::Borrow;
+use core::ops::{Deref, DerefMut};
 
-pub use crate::blockdata::transaction::{EcdsaSighashType, SighashTypeParseError};
+use crate::{io, Script, Transaction, TxOut, Sighash};
+use crate::blockdata::transaction::EncodeSigningDataResult;
 use crate::blockdata::witness::Witness;
 use crate::consensus::{encode, Encodable};
-use core::{str, fmt};
-use core::ops::{Deref, DerefMut};
-use core::borrow::Borrow;
 use crate::hashes::{sha256, sha256d, Hash};
-use crate::io;
-use crate::util::taproot::{TapLeafHash, TAPROOT_ANNEX_PREFIX, TapSighashHash};
-use crate::Sighash;
-use crate::{Script, Transaction, TxOut};
 use crate::internal_macros::serde_string_impl;
+use crate::prelude::*;
+use crate::util::taproot::{TapLeafHash, TAPROOT_ANNEX_PREFIX, TapSighashHash, LeafVersion};
 
-use super::taproot::LeafVersion;
+pub use crate::blockdata::transaction::{EcdsaSighashType, SighashTypeParseError};
 
 /// Used for signature hash for invalid use of SIGHASH_SINGLE.
 pub(crate) const UINT256_ONE: [u8; 32] = [
