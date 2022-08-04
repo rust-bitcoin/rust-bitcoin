@@ -21,7 +21,6 @@ use core::convert::TryFrom;
 use crate::hashes::{self, Hash, sha256d};
 use crate::hashes::hex::FromHex;
 
-use crate::util::endian;
 use crate::blockdata::constants::WITNESS_SCALE_FACTOR;
 #[cfg(feature="bitcoinconsensus")] use crate::blockdata::script;
 use crate::blockdata::script::Script;
@@ -30,7 +29,6 @@ use crate::blockdata::locktime::{LockTime, PackedLockTime, Height, Time};
 use crate::consensus::{encode, Decodable, Encodable};
 use crate::hash_types::{Sighash, Txid, Wtxid};
 use crate::VarInt;
-use crate::util::sighash::UINT256_ONE;
 use crate::internal_macros::{impl_consensus_encoding, serde_string_impl, serde_struct_human_string_impl, write_err};
 use crate::impl_parse_str_through_int;
 
@@ -648,6 +646,7 @@ impl Transaction {
     /// # Panics
     ///
     /// If `input_index` is out of bounds (greater than or equal to `self.input.len()`).
+    #[deprecated(since = "0.30.0", note = "Use SighashCache::legacy_encode_signing_data_to instead")]
     pub fn encode_signing_data_to<Write: io::Write, U: Into<u32>>(
         &self,
         writer: Write,
@@ -655,81 +654,22 @@ impl Transaction {
         script_pubkey: &Script,
         sighash_type: U,
     ) -> EncodeSigningDataResult<io::Error> {
-        let sighash_type: u32 = sighash_type.into();
+        use crate::util::sighash::{self, SighashCache};
+        use EncodeSigningDataResult::*;
+
         assert!(input_index < self.input.len());  // Panic on OOB
 
-        if self.is_invalid_use_of_sighash_single(sighash_type, input_index) {
-            // We cannot correctly handle the SIGHASH_SINGLE bug here because usage of this function
-            // will result in the data written to the writer being hashed, however the correct
-            // handling of the SIGHASH_SINGLE bug is to return the 'one array' - either implement
-            // this behaviour manually or use `signature_hash()`.
-            return EncodeSigningDataResult::SighashSingleBug;
-        }
-
-        fn encode_signing_data_to_inner<Write: io::Write>(
-            self_: &Transaction,
-            mut writer: Write,
-            input_index: usize,
-            script_pubkey: &Script,
-            sighash_type: u32,
-        ) -> Result<(), io::Error> {
-            let (sighash, anyone_can_pay) = EcdsaSighashType::from_consensus(sighash_type).split_anyonecanpay_flag();
-
-            // Build tx to sign
-            let mut tx = Transaction {
-                version: self_.version,
-                lock_time: self_.lock_time,
-                input: vec![],
-                output: vec![],
-            };
-            // Add all inputs necessary..
-            if anyone_can_pay {
-                tx.input = vec![TxIn {
-                    previous_output: self_.input[input_index].previous_output,
-                    script_sig: script_pubkey.clone(),
-                    sequence: self_.input[input_index].sequence,
-                    witness: Witness::default(),
-                }];
-            } else {
-                tx.input = Vec::with_capacity(self_.input.len());
-                for (n, input) in self_.input.iter().enumerate() {
-                    tx.input.push(TxIn {
-                        previous_output: input.previous_output,
-                        script_sig: if n == input_index { script_pubkey.clone() } else { Script::new() },
-                        sequence: if n != input_index && (sighash == EcdsaSighashType::Single || sighash == EcdsaSighashType::None) { Sequence::ZERO } else { input.sequence },
-                        witness: Witness::default(),
-                    });
+        let cache = SighashCache::new(self);
+        match cache.legacy_encode_signing_data_to(writer, input_index, script_pubkey, sighash_type) {
+            SighashSingleBug =>  SighashSingleBug,
+            WriteResult(res) => match res {
+                Ok(()) => WriteResult(Ok(())),
+                Err(e) => match e {
+                    sighash::Error::Io(e) => WriteResult(Err(e.into())),
+                    _ => unreachable!("we check input_index above")
                 }
             }
-            // ..then all outputs
-            tx.output = match sighash {
-                EcdsaSighashType::All => self_.output.clone(),
-                EcdsaSighashType::Single => {
-                    let output_iter = self_.output.iter()
-                                          .take(input_index + 1)  // sign all outputs up to and including this one, but erase
-                                          .enumerate()            // all of them except for this one
-                                          .map(|(n, out)| if n == input_index { out.clone() } else { TxOut::default() });
-                    output_iter.collect()
-                }
-                EcdsaSighashType::None => vec![],
-                _ => unreachable!()
-            };
-            // hash the result
-            tx.consensus_encode(&mut writer)?;
-            let sighash_arr = endian::u32_to_array_le(sighash_type);
-            sighash_arr.consensus_encode(&mut writer)?;
-            Ok(())
         }
-
-        EncodeSigningDataResult::WriteResult(
-            encode_signing_data_to_inner(
-                self,
-                writer,
-                input_index,
-                script_pubkey,
-                sighash_type
-            )
-        )
     }
 
     /// Computes a signature hash for a given input index with a given sighash flag.
@@ -755,28 +695,18 @@ impl Transaction {
     /// # Panics
     ///
     /// If `input_index` is out of bounds (greater than or equal to `self.input.len()`).
+    #[deprecated(since = "0.30.0", note = "Use SighashCache::legacy_signature_hash instead")]
     pub fn signature_hash(
         &self,
         input_index: usize,
         script_pubkey: &Script,
         sighash_u32: u32
     ) -> Sighash {
-        if self.is_invalid_use_of_sighash_single(sighash_u32, input_index) {
-            return Sighash::from_inner(UINT256_ONE);
-        }
+        assert!(input_index < self.input.len());  // Panic on OOB, enables expect below.
 
-        let mut engine = Sighash::engine();
-        if self.encode_signing_data_to(&mut engine, input_index, script_pubkey, sighash_u32)
-            .is_sighash_single_bug()
-            .expect("engines don't error") {
-            return Sighash::from_slice(&UINT256_ONE).expect("const-size array");
-        }
-        Sighash::from_engine(engine)
-    }
-
-    fn is_invalid_use_of_sighash_single(&self, sighash: u32, input_index: usize) -> bool {
-        let ty = EcdsaSighashType::from_consensus(sighash);
-        ty == EcdsaSighashType::Single && input_index >= self.output.len()
+        let cache = crate::util::sighash::SighashCache::new(self);
+        cache.legacy_signature_hash(input_index, script_pubkey, sighash_u32)
+            .expect("cache method doesn't error")
     }
 
     /// Returns the "weight" of this transaction, as defined by BIP141.
@@ -1274,7 +1204,6 @@ mod tests {
     use crate::consensus::encode::serialize;
     use crate::consensus::encode::deserialize;
 
-    use crate::hashes::Hash;
     use crate::hashes::hex::FromHex;
 
     use crate::hash_types::*;
@@ -1589,65 +1518,6 @@ mod tests {
         assert_eq!(EcdsaSighashType::from_u32_consensus(nonstandard_hashtype), EcdsaSighashType::All);
         // But it's policy-invalid to use it!
         assert_eq!(EcdsaSighashType::from_u32_standard(nonstandard_hashtype), Err(NonStandardSighashType(0x04)));
-    }
-
-    #[test]
-    fn sighash_single_bug() {
-        const SIGHASH_SINGLE: u32 = 3;
-
-        // We need a tx with more inputs than outputs.
-        let tx = Transaction {
-            version: 1,
-            lock_time: PackedLockTime::ZERO,
-            input: vec![TxIn::default(), TxIn::default()],
-            output: vec![TxOut::default()],
-        };
-        let script = Script::new();
-        let got = tx.signature_hash(1, &script, SIGHASH_SINGLE);
-        let want = Sighash::from_slice(&UINT256_ONE).unwrap();
-
-        assert_eq!(got, want)
-    }
-
-    #[test]
-    #[cfg(feature = "serde")]
-    fn legacy_sighash() {
-        use serde_json::Value;
-        use crate::util::sighash::SighashCache;
-
-        fn run_test_sighash(tx: &str, script: &str, input_index: usize, hash_type: i64, expected_result: &str) {
-            let tx: Transaction = deserialize(&Vec::from_hex(tx).unwrap()[..]).unwrap();
-            let script = Script::from(Vec::from_hex(script).unwrap());
-            let mut raw_expected = Vec::from_hex(expected_result).unwrap();
-            raw_expected.reverse();
-            let expected_result = Sighash::from_slice(&raw_expected[..]).unwrap();
-
-            let actual_result = if raw_expected[0] % 2 == 0 {
-                // tx.signature_hash and cache.legacy_signature_hash are the same, this if helps to test
-                // both the codepaths without repeating the test code
-                tx.signature_hash(input_index, &script, hash_type as u32)
-            } else {
-                let cache = SighashCache::new(&tx);
-                cache.legacy_signature_hash(input_index, &script, hash_type as u32).unwrap()
-            };
-
-            assert_eq!(actual_result, expected_result);
-        }
-
-        // These test vectors were stolen from libbtc, which is Copyright 2014 Jonas Schnelli MIT
-        // They were transformed by replacing {...} with run_test_sighash(...), then the ones containing
-        // OP_CODESEPARATOR in their pubkeys were removed
-        let data = include_str!("../../test_data/legacy_sighash.json");
-
-        let testdata = serde_json::from_str::<Value>(data).unwrap().as_array().unwrap().clone();
-        for t in testdata.iter().skip(1) {
-            let tx = t.get(0).unwrap().as_str().unwrap();
-            let script = t.get(1).unwrap().as_str().unwrap_or("");
-            let input_index = t.get(2).unwrap().as_u64().unwrap();
-            let hash_type = t.get(3).unwrap().as_i64().unwrap();
-            let expected_sighash = t.get(4).unwrap().as_str().unwrap();
-            run_test_sighash(tx, script, input_index as usize, hash_type, expected_sighash);
-        }
     }
 
     #[test]

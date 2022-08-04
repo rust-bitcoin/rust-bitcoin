@@ -12,10 +12,11 @@ use core::{str, fmt};
 use core::borrow::Borrow;
 use core::ops::{Deref, DerefMut};
 
-use crate::{io, Script, Transaction, TxOut, Sighash};
+use crate::{io, Script, Transaction, TxIn, TxOut, Sequence, Sighash};
 use crate::blockdata::transaction::EncodeSigningDataResult;
 use crate::blockdata::witness::Witness;
 use crate::consensus::{encode, Encodable};
+use crate::util::endian;
 use crate::hashes::{sha256, sha256d, Hash};
 use crate::internal_macros::serde_string_impl;
 use crate::prelude::*;
@@ -639,11 +640,31 @@ impl<R: Deref<Target = Transaction>> SighashCache<R> {
         Ok(Sighash::from_engine(enc))
     }
 
-    /// Encodes the legacy signing data for any flag type into a given object implementing a
-    /// [`std::io::Write`] trait. Internally calls [`Transaction::encode_signing_data_to`].
+    /// Encodes the legacy signing data from which a signature hash for a given input index with a
+    /// given sighash flag can be computed.
+    ///
+    /// To actually produce a scriptSig, this hash needs to be run through an ECDSA signer, the
+    /// [`EcdsaSighashType`] appended to the resulting sig, and a script written around this, but
+    /// this is the general (and hard) part.
+    ///
+    /// The `sighash_type` supports an arbitrary `u32` value, instead of just [`EcdsaSighashType`],
+    /// because internally 4 bytes are being hashed, even though only the lowest byte is appended to
+    /// signature in a transaction.
+    ///
+    /// # Warning
+    ///
+    /// - Does NOT attempt to support OP_CODESEPARATOR. In general this would require evaluating
+    /// `script_pubkey` to determine which separators get evaluated and which don't, which we don't
+    /// have the information to determine.
+    /// - Does NOT handle the sighash single bug (see "Return type" section)
+    ///
+    /// # Returns
+    ///
+    /// This function can't handle the SIGHASH_SINGLE bug internally, so it returns [`EncodeSigningDataResult`]
+    /// that must be handled by the caller (see [`EncodeSigningDataResult::is_sighash_single_bug`]).
     pub fn legacy_encode_signing_data_to<Write: io::Write, U: Into<u32>>(
         &self,
-        mut writer: Write,
+        writer: Write,
         input_index: usize,
         script_pubkey: &Script,
         sighash_type: U,
@@ -654,13 +675,101 @@ impl<R: Deref<Target = Transaction>> SighashCache<R> {
                 inputs_size: self.tx.input.len(),
             }));
         }
+        let sighash_type: u32 = sighash_type.into();
 
-        self.tx
-            .encode_signing_data_to(&mut writer, input_index, script_pubkey, sighash_type.into())
-            .map_err(|e| e.into())
+        if is_invalid_use_of_sighash_single(sighash_type, input_index, self.tx.output.len()) {
+            // We cannot correctly handle the SIGHASH_SINGLE bug here because usage of this function
+            // will result in the data written to the writer being hashed, however the correct
+            // handling of the SIGHASH_SINGLE bug is to return the 'one array' - either implement
+            // this behaviour manually or use `signature_hash()`.
+            return EncodeSigningDataResult::SighashSingleBug;
+        }
+
+        fn encode_signing_data_to_inner<Write: io::Write>(
+            self_: &Transaction,
+            mut writer: Write,
+            input_index: usize,
+            script_pubkey: &Script,
+            sighash_type: u32,
+        ) -> Result<(), io::Error> {
+            let (sighash, anyone_can_pay) = EcdsaSighashType::from_consensus(sighash_type).split_anyonecanpay_flag();
+
+            // Build tx to sign
+            let mut tx = Transaction {
+                version: self_.version,
+                lock_time: self_.lock_time,
+                input: vec![],
+                output: vec![],
+            };
+            // Add all inputs necessary..
+            if anyone_can_pay {
+                tx.input = vec![TxIn {
+                    previous_output: self_.input[input_index].previous_output,
+                    script_sig: script_pubkey.clone(),
+                    sequence: self_.input[input_index].sequence,
+                    witness: Witness::default(),
+                }];
+            } else {
+                tx.input = Vec::with_capacity(self_.input.len());
+                for (n, input) in self_.input.iter().enumerate() {
+                    tx.input.push(TxIn {
+                        previous_output: input.previous_output,
+                        script_sig: if n == input_index { script_pubkey.clone() } else { Script::new() },
+                        sequence: if n != input_index && (sighash == EcdsaSighashType::Single || sighash == EcdsaSighashType::None) { Sequence::ZERO } else { input.sequence },
+                        witness: Witness::default(),
+                    });
+                }
+            }
+            // ..then all outputs
+            tx.output = match sighash {
+                EcdsaSighashType::All => self_.output.clone(),
+                EcdsaSighashType::Single => {
+                    let output_iter = self_.output.iter()
+                                          .take(input_index + 1)  // sign all outputs up to and including this one, but erase
+                                          .enumerate()            // all of them except for this one
+                                          .map(|(n, out)| if n == input_index { out.clone() } else { TxOut::default() });
+                    output_iter.collect()
+                }
+                EcdsaSighashType::None => vec![],
+                _ => unreachable!()
+            };
+            // hash the result
+            tx.consensus_encode(&mut writer)?;
+            let sighash_arr = endian::u32_to_array_le(sighash_type);
+            sighash_arr.consensus_encode(&mut writer)?;
+            Ok(())
+        }
+
+        EncodeSigningDataResult::WriteResult(
+            encode_signing_data_to_inner(
+                &self.tx,
+                writer,
+                input_index,
+                script_pubkey,
+                sighash_type
+            ).map_err(|e| Error::Io(e.kind()))
+        )
     }
 
-    /// Computes the legacy sighash for any `sighash_type`.
+    /// Computes a legacy signature hash for a given input index with a given sighash flag.
+    ///
+    /// To actually produce a scriptSig, this hash needs to be run through an ECDSA signer, the
+    /// [`EcdsaSighashType`] appended to the resulting sig, and a script written around this, but
+    /// this is the general (and hard) part.
+    ///
+    /// The `sighash_type` supports an arbitrary `u32` value, instead of just [`EcdsaSighashType`],
+    /// because internally 4 bytes are being hashed, even though only the lowest byte is appended to
+    /// signature in a transaction.
+    ///
+    /// This function correctly handles the sighash single bug by returning the 'one array'. The
+    /// sighash single bug becomes exploitable when one tries to sign a transaction with
+    /// `SIGHASH_SINGLE` and there is not a corresponding output with the same index as the input.
+    ///
+    /// # Warning
+    ///
+    /// Does NOT attempt to support OP_CODESEPARATOR. In general this would require evaluating
+    /// `script_pubkey` to determine which separators get evaluated and which don't, which we don't
+    /// have the information to determine.
     pub fn legacy_signature_hash(
         &self,
         input_index: usize,
@@ -806,6 +915,11 @@ impl<'a> Encodable for Annex<'a> {
     }
 }
 
+fn is_invalid_use_of_sighash_single(sighash: u32, input_index: usize, output_len: usize) -> bool {
+    let ty = EcdsaSighashType::from_consensus(sighash);
+    ty == EcdsaSighashType::Single && input_index >= output_len
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -822,6 +936,61 @@ mod tests {
     extern crate serde_json;
 
     use crate::{Script, Transaction, TxIn, TxOut};
+
+    #[test]
+    fn sighash_single_bug() {
+        const SIGHASH_SINGLE: u32 = 3;
+
+        // We need a tx with more inputs than outputs.
+        let tx = Transaction {
+            version: 1,
+            lock_time: PackedLockTime::ZERO,
+            input: vec![TxIn::default(), TxIn::default()],
+            output: vec![TxOut::default()],
+        };
+        let script = Script::new();
+        let cache = SighashCache::new(&tx);
+
+        let got = cache.legacy_signature_hash(1, &script, SIGHASH_SINGLE).expect("sighash");
+        let want = Sighash::from_slice(&UINT256_ONE).unwrap();
+
+        assert_eq!(got, want)
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn legacy_sighash() {
+        use serde_json::Value;
+        use crate::util::sighash::SighashCache;
+
+        fn run_test_sighash(tx: &str, script: &str, input_index: usize, hash_type: i64, expected_result: &str) {
+            let tx: Transaction = deserialize(&Vec::from_hex(tx).unwrap()[..]).unwrap();
+            let script = Script::from(Vec::from_hex(script).unwrap());
+            let mut raw_expected = Vec::from_hex(expected_result).unwrap();
+            raw_expected.reverse();
+            let want = Sighash::from_slice(&raw_expected[..]).unwrap();
+
+            let cache = SighashCache::new(&tx);
+            let got = cache.legacy_signature_hash(input_index, &script, hash_type as u32).unwrap();
+
+            assert_eq!(got, want);
+        }
+
+        // These test vectors were stolen from libbtc, which is Copyright 2014 Jonas Schnelli MIT
+        // They were transformed by replacing {...} with run_test_sighash(...), then the ones containing
+        // OP_CODESEPARATOR in their pubkeys were removed
+        let data = include_str!("../../test_data/legacy_sighash.json");
+
+        let testdata = serde_json::from_str::<Value>(data).unwrap().as_array().unwrap().clone();
+        for t in testdata.iter().skip(1) {
+            let tx = t.get(0).unwrap().as_str().unwrap();
+            let script = t.get(1).unwrap().as_str().unwrap_or("");
+            let input_index = t.get(2).unwrap().as_u64().unwrap();
+            let hash_type = t.get(3).unwrap().as_i64().unwrap();
+            let expected_sighash = t.get(4).unwrap().as_str().unwrap();
+            run_test_sighash(tx, script, input_index as usize, hash_type, expected_sighash);
+        }
+    }
 
     #[test]
     fn test_tap_sighash_hash() {
