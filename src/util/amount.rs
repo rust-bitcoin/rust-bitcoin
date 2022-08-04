@@ -671,6 +671,8 @@ impl Amount {
     }
 
     /// Convert to a signed amount.
+    #[deprecated(since = "0.30.0", note = "consider using standard integers if you need signed amounts")]
+    #[allow(deprecated)]
     pub fn to_signed(self) -> Result<SignedAmount, ParseAmountError> {
         if self.to_sat() > SignedAmount::max_value().to_sat() as u64 {
             Err(ParseAmountError::TooBig)
@@ -857,8 +859,10 @@ enum DisplayStyle {
 /// implements will panic when overflow or underflow occurs.
 ///
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[deprecated(since = "0.30.0", note = "consider using standard integers if you need signed amounts")]
 pub struct SignedAmount(i64);
 
+#[allow(deprecated)]
 impl SignedAmount {
     /// The zero amount.
     pub const ZERO: SignedAmount = SignedAmount(0);
@@ -1111,12 +1115,14 @@ impl SignedAmount {
     }
 }
 
+#[allow(deprecated)]
 impl default::Default for SignedAmount {
     fn default() -> Self {
         SignedAmount::ZERO
     }
 }
 
+#[allow(deprecated)]
 impl fmt::Debug for SignedAmount {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "SignedAmount({:.8} BTC)", self.to_btc())
@@ -1125,6 +1131,7 @@ impl fmt::Debug for SignedAmount {
 
 // No one should depend on a binding contract for Display for this type.
 // Just using Bitcoin denominated string.
+#[allow(deprecated)]
 impl fmt::Display for SignedAmount {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.fmt_value_in(f, Denomination::Bitcoin)?;
@@ -1132,6 +1139,7 @@ impl fmt::Display for SignedAmount {
     }
 }
 
+#[allow(deprecated)]
 impl ops::Add for SignedAmount {
     type Output = SignedAmount;
 
@@ -1140,12 +1148,14 @@ impl ops::Add for SignedAmount {
     }
 }
 
+#[allow(deprecated)]
 impl ops::AddAssign for SignedAmount {
     fn add_assign(&mut self, other: SignedAmount) {
         *self = *self + other
     }
 }
 
+#[allow(deprecated)]
 impl ops::Sub for SignedAmount {
     type Output = SignedAmount;
 
@@ -1154,12 +1164,14 @@ impl ops::Sub for SignedAmount {
     }
 }
 
+#[allow(deprecated)]
 impl ops::SubAssign for SignedAmount {
     fn sub_assign(&mut self, other: SignedAmount) {
         *self = *self - other
     }
 }
 
+#[allow(deprecated)]
 impl ops::Rem<i64> for SignedAmount {
     type Output = SignedAmount;
 
@@ -1168,12 +1180,14 @@ impl ops::Rem<i64> for SignedAmount {
     }
 }
 
+#[allow(deprecated)]
 impl ops::RemAssign<i64> for SignedAmount {
     fn rem_assign(&mut self, modulus: i64) {
         *self = *self % modulus
     }
 }
 
+#[allow(deprecated)]
 impl ops::Mul<i64> for SignedAmount {
     type Output = SignedAmount;
 
@@ -1182,12 +1196,14 @@ impl ops::Mul<i64> for SignedAmount {
     }
 }
 
+#[allow(deprecated)]
 impl ops::MulAssign<i64> for SignedAmount {
     fn mul_assign(&mut self, rhs: i64) {
         *self = *self * rhs
     }
 }
 
+#[allow(deprecated)]
 impl ops::Div<i64> for SignedAmount {
     type Output = SignedAmount;
 
@@ -1196,12 +1212,14 @@ impl ops::Div<i64> for SignedAmount {
     }
 }
 
+#[allow(deprecated)]
 impl ops::DivAssign<i64> for SignedAmount {
     fn div_assign(&mut self, rhs: i64) {
         *self = *self / rhs
     }
 }
 
+#[allow(deprecated)]
 impl FromStr for SignedAmount {
     type Err = ParseAmountError;
 
@@ -1210,6 +1228,7 @@ impl FromStr for SignedAmount {
     }
 }
 
+#[allow(deprecated)]
 impl core::iter::Sum for SignedAmount {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         let sats: i64 = iter.map(|amt| amt.0).sum();
@@ -1235,6 +1254,7 @@ impl<T> CheckedSum<Amount> for T where T: Iterator<Item=Amount> {
     }
 }
 
+#[allow(deprecated)]
 impl<T> CheckedSum<SignedAmount> for T where T: Iterator<Item=SignedAmount> {
     fn checked_sum(mut self) -> Option<SignedAmount> {
         let first = Some(self.next().unwrap_or_default());
@@ -1244,12 +1264,15 @@ impl<T> CheckedSum<SignedAmount> for T where T: Iterator<Item=SignedAmount> {
 }
 
 mod private {
-    use crate::{Amount, SignedAmount};
+    #[allow(deprecated)]
+    use crate::SignedAmount;
+    use crate::Amount;
 
     /// Used to seal the `CheckedSum` trait
     pub trait SumSeal<A> {}
 
     impl<T> SumSeal<Amount> for T where T: Iterator<Item=Amount> {}
+    #[allow(deprecated)]
     impl<T> SumSeal<SignedAmount> for T where T: Iterator<Item=SignedAmount> {}
 }
 
@@ -1277,7 +1300,10 @@ pub mod serde {
     //! ```
 
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
-    use crate::util::amount::{Amount, Denomination, SignedAmount};
+    use crate::util::amount::{Amount, Denomination};
+    #[allow(deprecated)]
+    use crate::util::amount::SignedAmount;
+
 
     /// This trait is used only to avoid code duplication and naming collisions
     /// of the different serde serialization crates.
@@ -1295,6 +1321,7 @@ pub mod serde {
         /// should not be able to implement.
         pub trait Sealed {}
         impl Sealed for super::Amount {}
+        #[allow(deprecated)]
         impl Sealed for super::SignedAmount {}
     }
 
@@ -1333,6 +1360,7 @@ pub mod serde {
         }
     }
 
+    #[allow(deprecated)]
     impl SerdeAmount for SignedAmount {
         fn ser_sat<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
             i64::serialize(&self.to_sat(), s)
@@ -1349,6 +1377,7 @@ pub mod serde {
         }
     }
 
+    #[allow(deprecated)]
     impl SerdeAmountForOpt for SignedAmount {
         fn type_prefix() -> &'static str {
             "i"
@@ -1491,6 +1520,7 @@ pub mod serde {
 }
 
 #[cfg(test)]
+#[allow(deprecated)]    // SignedAmount
 mod tests {
     use super::*;
     #[cfg(feature = "std")]
@@ -1545,6 +1575,7 @@ mod tests {
 
         assert_eq!(sat(42).checked_add(sat(1)), Some(sat(43)));
         assert_eq!(SignedAmount::max_value().checked_add(ssat(1)), None);
+
         assert_eq!(SignedAmount::min_value().checked_sub(ssat(1)), None);
         assert_eq!(Amount::max_value().checked_add(sat(1)), None);
         assert_eq!(Amount::min_value().checked_sub(sat(1)), None);

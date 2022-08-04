@@ -108,7 +108,9 @@ pub use crate::consensus::encode::VarInt;
 pub use crate::hash_types::*;
 pub use crate::network::constants::Network;
 pub use crate::util::address::{Address, AddressType};
-pub use crate::util::amount::{Amount, Denomination, SignedAmount};
+#[allow(deprecated)]
+pub use crate::util::amount::SignedAmount;
+pub use crate::util::amount::{Amount, Denomination};
 pub use crate::util::ecdsa::{self, EcdsaSig, EcdsaSigError};
 pub use crate::util::key::{KeyPair, PrivateKey, PublicKey, XOnlyPublicKey};
 pub use crate::util::merkleblock::MerkleBlock;
