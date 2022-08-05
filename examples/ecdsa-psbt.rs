@@ -35,7 +35,6 @@ use std::str::FromStr;
 use bitcoin::consensus::encode;
 use bitcoin::hashes::hex::{self, FromHex};
 use bitcoin::secp256k1::{Secp256k1, Signing, Verification};
-use bitcoin::util::address;
 use bitcoin::util::amount::ParseAmountError;
 use bitcoin::util::bip32::{
     self, ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint,
@@ -44,7 +43,7 @@ use bitcoin::util::bip32::{
 use bitcoin::util::psbt::{self, Input, Psbt, PsbtSighashType};
 use bitcoin::{
     Address, Amount, Network, OutPoint, PackedLockTime, PrivateKey, PublicKey, Script, Sequence,
-    Transaction, TxIn, TxOut, Txid, Witness,
+    Transaction, TxIn, TxOut, Txid, Witness, address,
 };
 
 use self::psbt_sign::*;

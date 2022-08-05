@@ -32,7 +32,7 @@ use crate::policy::DUST_RELAY_TX_FEE;
 use crate::OutPoint;
 
 use crate::util::key::PublicKey;
-use crate::util::address::WitnessVersion;
+use crate::address::WitnessVersion;
 use crate::util::taproot::{LeafVersion, TapBranchHash, TapLeafHash};
 use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
 use crate::schnorr::{TapTweak, TweakedPublicKey, UntweakedPublicKey};

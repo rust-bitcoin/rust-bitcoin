@@ -79,6 +79,7 @@ mod serde_utils;
 
 #[macro_use]
 pub mod network;
+pub mod address;
 pub mod blockdata;
 pub mod consensus;
 pub mod error;
@@ -104,7 +105,7 @@ pub use crate::blockdata::witness::Witness;
 pub use crate::consensus::encode::VarInt;
 pub use crate::hash_types::*;
 pub use crate::network::constants::Network;
-pub use crate::util::address::{Address, AddressType};
+pub use crate::address::{Address, AddressType};
 pub use crate::util::amount::{Amount, Denomination, SignedAmount};
 pub use crate::util::ecdsa::{self, EcdsaSig, EcdsaSigError};
 pub use crate::util::key::{KeyPair, PrivateKey, PublicKey, XOnlyPublicKey};

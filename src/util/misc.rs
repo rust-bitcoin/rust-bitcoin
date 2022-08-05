@@ -32,7 +32,7 @@ mod message_signing {
     use secp256k1::ecdsa::{RecoveryId, RecoverableSignature};
 
     use crate::util::key::PublicKey;
-    use crate::util::address::{Address, AddressType};
+    use crate::address::{Address, AddressType};
     use crate::internal_macros::write_err;
 
     /// An error used for dealing with Bitcoin Signed Messages.

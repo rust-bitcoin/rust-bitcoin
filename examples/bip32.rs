@@ -6,7 +6,7 @@ use std::{env, process};
 use bitcoin::hashes::hex::FromHex;
 use bitcoin::secp256k1::ffi::types::AlignedType;
 use bitcoin::secp256k1::Secp256k1;
-use bitcoin::util::address::Address;
+use bitcoin::address::Address;
 use bitcoin::util::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey};
 use bitcoin::PublicKey;
 

@@ -9,7 +9,7 @@
 //!
 //! ```rust
 //! use bitcoin::network::constants::Network;
-//! use bitcoin::util::address::Address;
+//! use bitcoin::address::Address;
 //! use bitcoin::PublicKey;
 //! use bitcoin::secp256k1::Secp256k1;
 //! use bitcoin::secp256k1::rand::thread_rng;
