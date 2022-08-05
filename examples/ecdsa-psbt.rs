@@ -42,8 +42,8 @@ use bitcoin::util::bip32::{
 };
 use bitcoin::util::psbt::{self, Input, Psbt, PsbtSighashType};
 use bitcoin::{
-    Address, Amount, Network, OutPoint, PackedLockTime, PrivateKey, PublicKey, Script, Sequence,
-    Transaction, TxIn, TxOut, Txid, Witness, address,
+    address, Address, Amount, Network, OutPoint, PackedLockTime, PrivateKey, PublicKey, Script,
+    Sequence, Transaction, TxIn, TxOut, Txid, Witness,
 };
 
 use self::psbt_sign::*;

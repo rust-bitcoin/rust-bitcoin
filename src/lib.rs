@@ -93,6 +93,7 @@ use std::io;
 #[cfg(not(feature = "std"))]
 use core2::io;
 
+pub use crate::address::{Address, AddressType};
 pub use crate::blockdata::block::{Block, BlockHeader};
 pub use crate::blockdata::locktime::{self, LockTime, PackedLockTime};
 pub use crate::blockdata::script::Script;
@@ -105,7 +106,6 @@ pub use crate::blockdata::witness::Witness;
 pub use crate::consensus::encode::VarInt;
 pub use crate::hash_types::*;
 pub use crate::network::constants::Network;
-pub use crate::address::{Address, AddressType};
 pub use crate::util::amount::{Amount, Denomination, SignedAmount};
 pub use crate::util::ecdsa::{self, EcdsaSig, EcdsaSigError};
 pub use crate::util::key::{KeyPair, PrivateKey, PublicKey, XOnlyPublicKey};
