@@ -821,6 +821,23 @@ impl Display {
         }
         self
     }
+
+    /// Makes value displayed by `self` be negative.
+    ///
+    /// # Examples
+    /// ```
+    /// # use bitcoin::{Amount, Denomination};
+    /// let amount = Amount::from_sat(1000);
+    /// let s = format!("{}", amount.display_in(Denomination::Satoshi).negative());
+    /// assert_eq!(s, "-1000");
+    /// ```
+    pub fn negative(self) -> Self {
+        Display {
+            sats_abs: self.sats_abs,
+            is_negative: true,
+            style: self.style,
+        }
+    }
 }
 
 impl fmt::Display for Display {
@@ -2269,6 +2286,18 @@ mod tests {
                 Err(e) => panic!("unexpected error: {}", e),
             }
         }
+    }
+
+    #[test]
+    #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per bitcoin.
+    fn display_negative() {
+        use super::Denomination as D;
+        assert_eq!("50", format!("{}", Amount::from_sat(50).display_in(D::Satoshi)));
+        assert_eq!("-50", format!("{}", Amount::from_sat(50).display_in(D::Satoshi).negative()));
+        assert_eq!("0.1", format!("{}", Amount::from_sat(100_000_00).display_in(D::Bitcoin)));
+        assert_eq!("-0.1", format!("{}", Amount::from_sat(100_000_00).display_in(D::Bitcoin).negative()));
+        assert_eq!("100", format!("{}", Amount::from_sat(10_000).display_in(D::Bit)));
+        assert_eq!("-100", format!("{}", Amount::from_sat(10_000).display_in(D::Bit).negative()));
     }
 }
 
