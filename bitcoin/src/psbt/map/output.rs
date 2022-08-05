@@ -11,9 +11,9 @@ use crate::consensus::encode;
 use secp256k1::XOnlyPublicKey;
 use crate::bip32::KeySource;
 use secp256k1;
-use crate::util::psbt::map::Map;
-use crate::util::psbt::raw;
-use crate::util::psbt::Error;
+use crate::psbt::map::Map;
+use crate::psbt::raw;
+use crate::psbt::Error;
 
 use crate::util::taproot::{ScriptLeaf, TapLeafHash};
 

@@ -13,7 +13,7 @@ use core::convert::TryFrom;
 use crate::io;
 use crate::consensus::encode::{self, ReadExt, WriteExt, Decodable, Encodable, VarInt, serialize, deserialize, MAX_VEC_SIZE};
 use crate::hashes::hex;
-use crate::util::psbt::Error;
+use crate::psbt::Error;
 
 /// A PSBT key in its raw byte form.
 #[derive(Debug, PartialEq, Hash, Eq, Clone, Ord, PartialOrd)]

@@ -5,7 +5,7 @@ use crate::prelude::*;
 use crate::io;
 
 use crate::consensus::encode;
-use crate::util::psbt::raw;
+use crate::psbt::raw;
 
 mod global;
 mod input;

@@ -40,7 +40,7 @@ use bitcoin::secp256k1::{Secp256k1, Signing, Verification};
 use bitcoin::bip32::{
     ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint, IntoDerivationPath,
 };
-use bitcoin::util::psbt::{self, Input, Psbt, PsbtSighashType};
+use bitcoin::psbt::{self, Input, Psbt, PsbtSighashType};
 use bitcoin::{
     Address, Amount, Network, OutPoint, PublicKey, Script, Sequence, Transaction, TxIn, TxOut,
     Txid, Witness,
@@ -236,7 +236,7 @@ impl WatchOnly {
     /// Finalizes the PSBT, in BIP174 parlance this is the 'Finalizer'.
     /// This is just an example. For a production-ready PSBT Finalizer, use [rust-miniscript](https://docs.rs/miniscript/latest/miniscript/psbt/trait.PsbtExt.html#tymethod.finalize)
     fn finalize_psbt(&self, mut psbt: Psbt) -> Result<Psbt> {
-        use bitcoin::util::psbt::serialize::Serialize;
+        use bitcoin::psbt::serialize::Serialize;
 
         if psbt.inputs.is_empty() {
             return Err(psbt::SignError::MissingInputUtxo.into());

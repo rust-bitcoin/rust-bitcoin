@@ -9,9 +9,8 @@ use crate::io::{self, Cursor, Read};
 use crate::blockdata::transaction::Transaction;
 use crate::consensus::{encode, Encodable, Decodable};
 use crate::consensus::encode::MAX_VEC_SIZE;
-use crate::util::psbt::map::Map;
-use crate::util::psbt::{raw, PartiallySignedTransaction};
-use crate::util::psbt::Error;
+use crate::psbt::map::Map;
+use crate::psbt::{raw, Error, PartiallySignedTransaction};
 use crate::bip32::{ExtendedPubKey, Fingerprint, DerivationPath, ChildNumber};
 
 /// Type: Unsigned Transaction PSBT_GLOBAL_UNSIGNED_TX = 0x00
@@ -194,7 +193,7 @@ impl PartiallySignedTransaction {
                         }
                     }
                 }
-                Err(crate::consensus::encode::Error::Psbt(crate::util::psbt::Error::NoMorePairs)) => break,
+                Err(crate::consensus::encode::Error::Psbt(crate::psbt::Error::NoMorePairs)) => break,
                 Err(e) => return Err(e),
             }
         }

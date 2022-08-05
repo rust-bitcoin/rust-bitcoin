@@ -15,11 +15,9 @@ use crate::blockdata::transaction::{Transaction, TxOut};
 use crate::consensus::encode;
 use crate::hashes::{self, hash160, ripemd160, sha256, sha256d};
 use crate::bip32::KeySource;
-use crate::util::psbt;
-use crate::util::psbt::map::Map;
-use crate::util::psbt::raw;
-use crate::util::psbt::serialize::Deserialize;
-use crate::util::psbt::{Error, error};
+use crate::psbt::map::Map;
+use crate::psbt::serialize::Deserialize;
+use crate::psbt::{self, error, raw, Error};
 use crate::util::key::PublicKey;
 use crate::sighash::{NonStandardSighashType, SighashTypeParseError, EcdsaSighashType, SchnorrSighashType};
 use crate::util::taproot::{ControlBlock, LeafVersion, TapLeafHash, TapBranchHash};
@@ -145,7 +143,7 @@ pub struct Input {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct PsbtSighashType {
-    pub (in crate::util::psbt) inner: u32,
+    pub (in crate::psbt) inner: u32,
 }
 
 impl fmt::Display for PsbtSighashType {

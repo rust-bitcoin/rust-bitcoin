@@ -417,7 +417,7 @@ fn sign(mut psbt: Psbt, keys: BTreeMap<bitcoin::PublicKey, PrivateKey>) -> Psbt 
 /// Finalizes a PSBT accord to the Input Finalizer role described in BIP 174.
 /// This is just a test. For a production-ready PSBT Finalizer, use [rust-miniscript](https://docs.rs/miniscript/latest/miniscript/psbt/trait.PsbtExt.html#tymethod.finalize)
 fn finalize_psbt(mut psbt: Psbt) -> Psbt {
-    use bitcoin::util::psbt::serialize::Serialize;
+    use bitcoin::psbt::serialize::Serialize;
 
     // Input 0: legacy UTXO
 
