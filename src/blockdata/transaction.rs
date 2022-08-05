@@ -22,7 +22,7 @@ use crate::hashes::{self, Hash, sha256d};
 use crate::hashes::hex::FromHex;
 
 use crate::util::endian;
-use crate::blockdata::constants::{WITNESS_SCALE_FACTOR, MAX_SEQUENCE};
+use crate::blockdata::constants::WITNESS_SCALE_FACTOR;
 #[cfg(feature="bitcoinconsensus")] use crate::blockdata::script;
 use crate::blockdata::script::Script;
 use crate::blockdata::witness::Witness;
@@ -264,7 +264,7 @@ impl Sequence {
     /// The maximum allowable sequence number.
     ///
     /// This sequence number disables lock-time and replace-by-fee.
-    pub const MAX: Self = Sequence(MAX_SEQUENCE);
+    pub const MAX: Self = Sequence(0xFFFFFFFF);
     /// Zero value sequence.
     ///
     /// This sequence number enables replace-by-fee and lock-time.

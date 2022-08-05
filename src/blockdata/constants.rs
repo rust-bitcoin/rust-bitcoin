@@ -24,8 +24,6 @@ use crate::network::constants::Network;
 use crate::util::uint::Uint256;
 use crate::internal_macros::{impl_array_newtype, impl_bytes_newtype};
 
-/// The maximum allowable sequence number
-pub const MAX_SEQUENCE: u32 = 0xFFFFFFFF;
 /// How many satoshis are in "one bitcoin"
 pub const COIN_VALUE: u64 = 100_000_000;
 /// How many seconds between blocks we expect on average
