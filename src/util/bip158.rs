@@ -137,27 +137,33 @@ impl BlockFilter {
     }
 
     /// match any query pattern
-    pub fn match_any(&self, block_hash: &BlockHash, query: &mut dyn Iterator<Item=&[u8]>) -> Result<bool, Error> {
+    pub fn match_any<'a, I>(&self, block_hash: &BlockHash, query: I) -> Result<bool, Error>
+    where
+        I: Iterator<Item = &'a [u8]>,
+    {
         let filter_reader = BlockFilterReader::new(block_hash);
         filter_reader.match_any(&mut self.content.as_slice(), query)
     }
 
     /// match all query pattern
-    pub fn match_all(&self, block_hash: &BlockHash, query: &mut dyn Iterator<Item=&[u8]>) -> Result<bool, Error> {
+    pub fn match_all<'a, I>(&self, block_hash: &BlockHash, query: I) -> Result<bool, Error>
+    where
+        I: Iterator<Item = &'a [u8]>,
+    {
         let filter_reader = BlockFilterReader::new(block_hash);
         filter_reader.match_all(&mut self.content.as_slice(), query)
     }
 }
 
 /// Compiles and writes a block filter
-pub struct BlockFilterWriter<'a> {
+pub struct BlockFilterWriter<'a, W> {
     block: &'a Block,
-    writer: GCSFilterWriter<'a>,
+    writer: GCSFilterWriter<'a, W>,
 }
 
-impl<'a> BlockFilterWriter<'a> {
+impl<'a, W: io::Write> BlockFilterWriter<'a, W> {
     /// Create a block filter writer
-    pub fn new(writer: &'a mut dyn io::Write, block: &'a Block) -> BlockFilterWriter<'a> {
+    pub fn new(writer: &'a mut W, block: &'a Block) -> BlockFilterWriter<'a, W> {
         let block_hash_as_int = block.block_hash().into_inner();
         let k0 = endian::slice_to_u64_le(&block_hash_as_int[0..8]);
         let k1 = endian::slice_to_u64_le(&block_hash_as_int[8..16]);
@@ -218,12 +224,20 @@ impl BlockFilterReader {
     }
 
     /// match any query pattern
-    pub fn match_any(&self, reader: &mut dyn io::Read, query: &mut dyn Iterator<Item=&[u8]>) -> Result<bool, Error> {
+    pub fn match_any<'a, I, R>(&self, reader: &mut R, query: I) -> Result<bool, Error>
+    where
+        I: Iterator<Item = &'a [u8]>,
+        R: io::Read + ?Sized,
+    {
         self.reader.match_any(reader, query)
     }
 
     /// match all query pattern
-    pub fn match_all(&self, reader: &mut dyn io::Read, query: &mut dyn Iterator<Item=&[u8]>) -> Result<bool, Error> {
+    pub fn match_all<'a, I, R>(&self, reader: &mut R, query: I) -> Result<bool, Error>
+    where
+        I: Iterator<Item = &'a [u8]>,
+        R: io::Read + ?Sized,
+    {
         self.reader.match_all(reader, query)
     }
 }
@@ -242,7 +256,11 @@ impl GCSFilterReader {
     }
 
     /// match any query pattern
-    pub fn match_any(&self, reader: &mut dyn io::Read, query: &mut dyn Iterator<Item=&[u8]>) -> Result<bool, Error> {
+    pub fn match_any<'a, I, R>(&self, reader: &mut R, query: I) -> Result<bool, Error>
+    where
+        I: Iterator<Item = &'a [u8]>,
+        R: io::Read + ?Sized,
+    {
         let mut decoder = reader;
         let n_elements: VarInt = Decodable::consensus_decode(&mut decoder).unwrap_or(VarInt(0));
         let reader = &mut decoder;
@@ -282,7 +300,11 @@ impl GCSFilterReader {
     }
 
     /// match all query pattern
-    pub fn match_all(&self, reader: &mut dyn io::Read, query: &mut dyn Iterator<Item=&[u8]>) -> Result<bool, Error> {
+    pub fn match_all<'a, I, R>(&self, reader: &mut R, query: I) -> Result<bool, Error>
+    where
+        I: Iterator<Item = &'a [u8]>,
+        R: io::Read + ?Sized,
+    {
         let mut decoder = reader;
         let n_elements: VarInt = Decodable::consensus_decode(&mut decoder).unwrap_or(VarInt(0));
         let reader = &mut decoder;
@@ -329,16 +351,16 @@ fn map_to_range(hash: u64, nm: u64) -> u64 {
 }
 
 /// Colomb-Rice encoded filter writer
-pub struct GCSFilterWriter<'a> {
+pub struct GCSFilterWriter<'a, W> {
     filter: GCSFilter,
-    writer: &'a mut dyn io::Write,
+    writer: &'a mut W,
     elements: HashSet<Vec<u8>>,
     m: u64
 }
 
-impl<'a> GCSFilterWriter<'a> {
+impl<'a, W: io::Write> GCSFilterWriter<'a, W> {
     /// Create a new GCS writer wrapping a generic writer, with specific seed to siphash
-    pub fn new(writer: &'a mut dyn io::Write, k0: u64, k1: u64, m: u64, p: u8) -> GCSFilterWriter<'a> {
+    pub fn new(writer: &'a mut W, k0: u64, k1: u64, m: u64, p: u8) -> GCSFilterWriter<'a, W> {
         GCSFilterWriter {
             filter: GCSFilter::new(k0, k1, p),
             writer,
@@ -392,7 +414,10 @@ impl GCSFilter {
     }
 
     /// Golomb-Rice encode a number n to a bit stream (Parameter 2^k)
-    fn golomb_rice_encode(&self, writer: &mut BitStreamWriter, n: u64) -> Result<usize, io::Error> {
+    fn golomb_rice_encode<'a, W>(&self, writer: &mut BitStreamWriter<'a, W>, n: u64) -> Result<usize, io::Error>
+    where
+        W: io::Write,
+    {
         let mut wrote = 0;
         let mut q = n >> self.p;
         while q > 0 {
@@ -406,7 +431,10 @@ impl GCSFilter {
     }
 
     /// Golomb-Rice decode a number from a bit stream (Parameter 2^k)
-    fn golomb_rice_decode(&self, reader: &mut BitStreamReader) -> Result<u64, io::Error> {
+    fn golomb_rice_decode<R>(&self, reader: &mut BitStreamReader<R>) -> Result<u64, io::Error>
+    where
+        R: io::Read
+    {
         let mut q = 0u64;
         while reader.read(1)? == 1 {
             q += 1;
@@ -422,15 +450,15 @@ impl GCSFilter {
 }
 
 /// Bitwise stream reader
-pub struct BitStreamReader<'a> {
+pub struct BitStreamReader<'a, R> {
     buffer: [u8; 1],
     offset: u8,
-    reader: &'a mut dyn io::Read,
+    reader: &'a mut R,
 }
 
-impl<'a> BitStreamReader<'a> {
+impl<'a, R: io::Read> BitStreamReader<'a, R> {
     /// Create a new BitStreamReader that reads bitwise from a given reader
-    pub fn new(reader: &'a mut dyn io::Read) -> BitStreamReader {
+    pub fn new(reader: &'a mut R) -> BitStreamReader<'a, R> {
         BitStreamReader {
             buffer: [0u8],
             reader,
@@ -460,15 +488,15 @@ impl<'a> BitStreamReader<'a> {
 }
 
 /// Bitwise stream writer
-pub struct BitStreamWriter<'a> {
+pub struct BitStreamWriter<'a, W> {
     buffer: [u8; 1],
     offset: u8,
-    writer: &'a mut dyn io::Write,
+    writer: &'a mut W,
 }
 
-impl<'a> BitStreamWriter<'a> {
+impl<'a, W: io::Write> BitStreamWriter<'a, W> {
     /// Create a new BitStreamWriter that writes bitwise to a given writer
-    pub fn new(writer: &'a mut dyn io::Write) -> BitStreamWriter {
+    pub fn new(writer: &'a mut W) -> BitStreamWriter<'a, W> {
         BitStreamWriter {
             buffer: [0u8],
             writer,
