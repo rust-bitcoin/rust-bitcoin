@@ -35,8 +35,8 @@
 //!
 
 use crate::prelude::*;
+use crate::io;
 
-use crate::io::{self, Cursor};
 use core::fmt::{self, Display, Formatter};
 use core::cmp::{self, Ordering};
 
@@ -139,13 +139,13 @@ impl BlockFilter {
     /// match any query pattern
     pub fn match_any(&self, block_hash: &BlockHash, query: &mut dyn Iterator<Item=&[u8]>) -> Result<bool, Error> {
         let filter_reader = BlockFilterReader::new(block_hash);
-        filter_reader.match_any(&mut Cursor::new(self.content.as_slice()), query)
+        filter_reader.match_any(&mut self.content.as_slice(), query)
     }
 
     /// match all query pattern
     pub fn match_all(&self, block_hash: &BlockHash, query: &mut dyn Iterator<Item=&[u8]>) -> Result<bool, Error> {
         let filter_reader = BlockFilterReader::new(block_hash);
-        filter_reader.match_all(&mut Cursor::new(self.content.as_slice()), query)
+        filter_reader.match_all(&mut self.content.as_slice(), query)
     }
 }
 
@@ -509,8 +509,6 @@ impl<'a> BitStreamWriter<'a> {
 
 #[cfg(test)]
 mod test {
-    use crate::io::Cursor;
-
     use crate::hash_types::BlockHash;
     use crate::hashes::hex::FromHex;
 
@@ -608,14 +606,12 @@ mod test {
         {
             let query = vec![Vec::from_hex("abcdef").unwrap(), Vec::from_hex("eeeeee").unwrap()];
             let reader = GCSFilterReader::new(0, 0, M, P);
-            let mut input = Cursor::new(bytes.clone());
-            assert!(reader.match_any(&mut input, &mut query.iter().map(|v| v.as_slice())).unwrap());
+            assert!(reader.match_any(&mut bytes.as_slice(), &mut query.iter().map(|v| v.as_slice())).unwrap());
         }
         {
             let query = vec![Vec::from_hex("abcdef").unwrap(), Vec::from_hex("123456").unwrap()];
             let reader = GCSFilterReader::new(0, 0, M, P);
-            let mut input = Cursor::new(bytes.clone());
-            assert!(!reader.match_any(&mut input, &mut query.iter().map(|v| v.as_slice())).unwrap());
+            assert!(!reader.match_any(&mut bytes.as_slice(), &mut query.iter().map(|v| v.as_slice())).unwrap());
         }
         {
             let reader = GCSFilterReader::new(0, 0, M, P);
@@ -623,8 +619,7 @@ mod test {
             for p in &patterns {
                 query.push(p.clone());
             }
-            let mut input = Cursor::new(bytes.clone());
-            assert!(reader.match_all(&mut input, &mut query.iter().map(|v| v.as_slice())).unwrap());
+            assert!(reader.match_all(&mut bytes.as_slice(), &mut query.iter().map(|v| v.as_slice())).unwrap());
         }
         {
             let reader = GCSFilterReader::new(0, 0, M, P);
@@ -633,8 +628,7 @@ mod test {
                 query.push(p.clone());
             }
             query.push(Vec::from_hex("abcdef").unwrap());
-            let mut input = Cursor::new(bytes);
-            assert!(!reader.match_all(&mut input, &mut query.iter().map(|v| v.as_slice())).unwrap());
+            assert!(!reader.match_all(&mut bytes.as_slice(), &mut query.iter().map(|v| v.as_slice())).unwrap());
         }
     }
 
@@ -655,7 +649,7 @@ mod test {
         let bytes = out;
         assert_eq!("01011010110000110000000001110000", format!("{:08b}{:08b}{:08b}{:08b}", bytes[0], bytes[1], bytes[2], bytes[3]));
         {
-            let mut input = Cursor::new(bytes);
+            let mut input = bytes.as_slice();
             let mut reader = BitStreamReader::new(&mut input);
             assert_eq!(reader.read(1).unwrap(), 0);
             assert_eq!(reader.read(2).unwrap(), 2);
