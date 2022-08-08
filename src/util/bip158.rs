@@ -86,13 +86,11 @@ impl std::error::Error for Error {
     }
 }
 
-
 impl From<io::Error> for Error {
     fn from(io: io::Error) -> Self {
         Error::Io(io)
     }
 }
-
 
 /// a computed or read block filter
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -208,7 +206,6 @@ impl<'a, W: io::Write> BlockFilterWriter<'a, W> {
     }
 }
 
-
 /// Reads and interpret a block filter
 pub struct BlockFilterReader {
     reader: GCSFilterReader
@@ -241,7 +238,6 @@ impl BlockFilterReader {
         self.reader.match_all(reader, query)
     }
 }
-
 
 /// Golomb-Rice encoded filter reader
 pub struct GCSFilterReader {
