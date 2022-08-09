@@ -108,8 +108,8 @@ impl FilterHash {
     /// Computes the filter header from a filter hash and previous filter header.
     pub fn filter_header(&self, previous_filter_header: &FilterHeader) -> FilterHeader {
         let mut header_data = [0u8; 64];
-        header_data[0..32].copy_from_slice(&self[..]);
-        header_data[32..64].copy_from_slice(&previous_filter_header[..]);
+        header_data[0..32].copy_from_slice(self.as_ref());
+        header_data[32..64].copy_from_slice(previous_filter_header.as_ref());
         FilterHeader::hash(&header_data)
     }
 }

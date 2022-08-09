@@ -172,7 +172,7 @@ pub fn from_check(data: &str) -> Result<Vec<u8>, Error> {
         return Err(Error::TooShort(ret.len()));
     }
     let ck_start = ret.len() - 4;
-    let expected = endian::slice_to_u32_le(&sha256d::Hash::hash(&ret[..ck_start])[..4]);
+    let expected = endian::slice_to_u32_le(&sha256d::Hash::hash(&ret[..ck_start]).as_ref()[..4]);
     let actual = endian::slice_to_u32_le(&ret[ck_start..(ck_start + 4)]);
     if expected != actual {
         return Err(Error::BadChecksum(expected, actual));
@@ -245,7 +245,7 @@ pub fn check_encode_slice(data: &[u8]) -> String {
     encode_iter(
         data.iter()
             .cloned()
-            .chain(checksum[0..4].iter().cloned())
+            .chain(checksum.as_ref()[0..4].iter().cloned())
     )
 }
 
@@ -255,7 +255,7 @@ pub fn check_encode_slice_to_fmt(fmt: &mut fmt::Formatter, data: &[u8]) -> fmt::
     let checksum = sha256d::Hash::hash(data);
     let iter = data.iter()
         .cloned()
-        .chain(checksum[0..4].iter().cloned());
+        .chain(checksum.as_ref()[0..4].iter().cloned());
     format_iter(fmt, iter)
 }
 

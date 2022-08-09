@@ -706,8 +706,11 @@ impl Decodable for Box<[u8]> {
 
 /// Do a double-SHA256 on some data and return the first 4 bytes
 fn sha2_checksum(data: &[u8]) -> [u8; 4] {
-    let checksum = <sha256d::Hash as Hash>::hash(data);
-    [checksum[0], checksum[1], checksum[2], checksum[3]]
+    let hash = <sha256d::Hash as Hash>::hash(data);
+
+    let mut checksum = [0u8; 4];
+    checksum.copy_from_slice(&hash.as_ref()[..4]);
+    checksum
 }
 
 // Checked data

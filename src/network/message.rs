@@ -543,7 +543,7 @@ mod test {
             NetworkMessage::MerkleBlock(merkle_block),
             NetworkMessage::FilterLoad(FilterLoad {filter: Vec::from_hex("03614e9b050000000000000001").unwrap(), hash_funcs: 1, tweak: 2, flags: BloomFlags::All}),
             NetworkMessage::FilterAdd(FilterAdd {data: script.as_bytes().to_vec()}),
-            NetworkMessage::FilterAdd(FilterAdd {data: hash([29u8; 32]).to_vec()}),
+            NetworkMessage::FilterAdd(FilterAdd {data: hash([29u8; 32]).as_ref().to_vec()}),
             NetworkMessage::FilterClear,
             NetworkMessage::GetCFilters(GetCFilters{filter_type: 2, start_height: 52, stop_hash: hash([42u8; 32]).into()}),
             NetworkMessage::CFilter(CFilter{filter_type: 7, block_hash: hash([25u8; 32]).into(), filter: vec![1,2,3]}),

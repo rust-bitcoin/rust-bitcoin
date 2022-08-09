@@ -103,7 +103,7 @@ impl ShortId {
 
         // 2. Running SipHash-2-4 with the input being the transaction ID and the keys (k0/k1)
         // set to the first two little-endian 64-bit integers from the above hash, respectively.
-        (endian::slice_to_u64_le(&h[0..8]), endian::slice_to_u64_le(&h[8..16]))
+        (endian::slice_to_u64_le(&h.as_ref()[0..8]), endian::slice_to_u64_le(&h.as_ref()[8..16]))
     }
 
     /// Calculate the short ID with the given (w)txid and using the provided SipHash keys.
@@ -114,7 +114,7 @@ impl ShortId {
 
         // 3. Dropping the 2 most significant bytes from the SipHash output to make it 6 bytes.
         let mut id = ShortId([0; 6]);
-        id.0.copy_from_slice(&hash[0..6]);
+        id.0.copy_from_slice(&hash.as_ref()[0..6]);
         id
     }
 }

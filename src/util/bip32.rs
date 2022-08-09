@@ -539,8 +539,8 @@ impl ExtendedPrivKey {
             depth: 0,
             parent_fingerprint: Default::default(),
             child_number: ChildNumber::from_normal_idx(0)?,
-            private_key: secp256k1::SecretKey::from_slice(&hmac_result[..32])?,
-            chain_code: ChainCode::from(&hmac_result[32..]),
+            private_key: secp256k1::SecretKey::from_slice(&hmac_result.as_ref()[..32])?,
+            chain_code: ChainCode::from(&hmac_result.as_ref()[32..]),
         })
     }
 
@@ -591,7 +591,7 @@ impl ExtendedPrivKey {
 
         hmac_engine.input(&endian::u32_to_array_be(u32::from(i)));
         let hmac_result: Hmac<sha512::Hash> = Hmac::from_engine(hmac_engine);
-        let sk = secp256k1::SecretKey::from_slice(&hmac_result[..32]).expect("statistically impossible to hit");
+        let sk = secp256k1::SecretKey::from_slice(&hmac_result.as_ref()[..32]).expect("statistically impossible to hit");
         let tweaked = sk.add_tweak(&self.private_key.into()).expect("statistically impossible to hit");
 
         Ok(ExtendedPrivKey {
@@ -600,7 +600,7 @@ impl ExtendedPrivKey {
             parent_fingerprint: self.fingerprint(secp),
             child_number: i,
             private_key: tweaked,
-            chain_code: ChainCode::from(&hmac_result[32..])
+            chain_code: ChainCode::from(&hmac_result.as_ref()[32..])
         })
     }
 
@@ -653,7 +653,7 @@ impl ExtendedPrivKey {
 
     /// Returns the first four bytes of the identifier
     pub fn fingerprint<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> Fingerprint {
-        Fingerprint::from(&self.identifier(secp)[0..4])
+        Fingerprint::from(&self.identifier(secp).as_ref()[0..4])
     }
 }
 
@@ -718,8 +718,8 @@ impl ExtendedPubKey {
 
                 let hmac_result: Hmac<sha512::Hash> = Hmac::from_engine(hmac_engine);
 
-                let private_key = secp256k1::SecretKey::from_slice(&hmac_result[..32])?;
-                let chain_code = ChainCode::from(&hmac_result[32..]);
+                let private_key = secp256k1::SecretKey::from_slice(&hmac_result.as_ref()[..32])?;
+                let chain_code = ChainCode::from(&hmac_result.as_ref()[32..]);
                 Ok((private_key, chain_code))
             }
         }
@@ -792,7 +792,7 @@ impl ExtendedPubKey {
 
     /// Returns the first four bytes of the identifier
     pub fn fingerprint(&self) -> Fingerprint {
-        Fingerprint::from(&self.identifier()[0..4])
+        Fingerprint::from(&self.identifier().as_ref()[0..4])
     }
 }
 

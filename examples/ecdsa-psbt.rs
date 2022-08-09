@@ -473,7 +473,7 @@ mod psbt_sign {
             cache.legacy_signature_hash(input_index, script_code, hash_ty.to_u32())?
         };
 
-        Ok((Message::from_slice(&sighash).expect("sighashes are 32 bytes"), hash_ty.into()))
+        Ok((Message::from_slice(sighash.as_ref()).expect("sighashes are 32 bytes"), hash_ty.into()))
     }
 
     /// Returns the prevouts for this PSBT.
@@ -545,7 +545,7 @@ mod psbt_sign {
             )?,
             None => cache.taproot_key_spend_signature_hash(input_index, &prevouts, hash_ty)?,
         };
-        let msg = Message::from_slice(&sighash).expect("sighashes are 32 bytes");
+        let msg = Message::from_slice(sighash.as_ref()).expect("sighashes are 32 bytes");
         Ok((msg, hash_ty.into()))
     }
 

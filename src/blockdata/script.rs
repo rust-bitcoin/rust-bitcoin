@@ -341,7 +341,7 @@ impl Script {
         Builder::new()
             .push_opcode(opcodes::all::OP_DUP)
             .push_opcode(opcodes::all::OP_HASH160)
-            .push_slice(&pubkey_hash[..])
+            .push_slice(pubkey_hash.as_ref())
             .push_opcode(opcodes::all::OP_EQUALVERIFY)
             .push_opcode(opcodes::all::OP_CHECKSIG)
             .into_script()
@@ -351,7 +351,7 @@ impl Script {
     pub fn new_p2sh(script_hash: &ScriptHash) -> Script {
         Builder::new()
             .push_opcode(opcodes::all::OP_HASH160)
-            .push_slice(&script_hash[..])
+            .push_slice(script_hash.as_ref())
             .push_opcode(opcodes::all::OP_EQUAL)
             .into_script()
     }
@@ -364,7 +364,7 @@ impl Script {
 
     /// Generates P2WPKH-type of scriptPubkey.
     pub fn new_v0_p2wpkh(pubkey_hash: &WPubkeyHash) -> Script {
-        Script::new_witness_program(WitnessVersion::V0, &pubkey_hash[..])
+        Script::new_witness_program(WitnessVersion::V0, pubkey_hash.as_ref())
     }
 
     /// Generates P2WSH-type of scriptPubkey with a given hash of the redeem script.
@@ -375,7 +375,7 @@ impl Script {
 
     /// Generates P2WSH-type of scriptPubkey with a given hash of the redeem script.
     pub fn new_v0_p2wsh(script_hash: &WScriptHash) -> Script {
-        Script::new_witness_program(WitnessVersion::V0, &script_hash[..])
+        Script::new_witness_program(WitnessVersion::V0, script_hash.as_ref())
     }
 
     /// Generates P2TR for script spending path using an internal public key and some optional

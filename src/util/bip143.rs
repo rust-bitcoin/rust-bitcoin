@@ -113,7 +113,7 @@ mod tests {
         let tx: Transaction = deserialize(&Vec::<u8>::from_hex(tx).unwrap()[..]).unwrap();
         let script = Script::from(Vec::<u8>::from_hex(script).unwrap());
         let raw_expected = Sighash::from_hex(expected_result).unwrap();
-        let expected_result = Sighash::from_slice(&raw_expected[..]).unwrap();
+        let expected_result = Sighash::from_slice(raw_expected.as_ref()).unwrap();
         let mut cache = SighashCache::new(&tx);
         let sighash_type = EcdsaSighashType::from_u32_consensus(hash_type);
         let actual_result = cache.segwit_signature_hash(input_index, &script, value, sighash_type).unwrap();

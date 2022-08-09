@@ -511,7 +511,7 @@ impl Payload {
     pub fn p2wpkh(pk: &PublicKey) -> Result<Payload, Error> {
         Ok(Payload::WitnessProgram {
             version: WitnessVersion::V0,
-            program: pk.wpubkey_hash().ok_or(Error::UncompressedPubkey)?.to_vec(),
+            program: pk.wpubkey_hash().ok_or(Error::UncompressedPubkey)?.as_ref().to_vec(),
         })
     }
 
@@ -519,7 +519,7 @@ impl Payload {
     pub fn p2shwpkh(pk: &PublicKey) -> Result<Payload, Error> {
         let builder = script::Builder::new()
             .push_int(0)
-            .push_slice(&pk.wpubkey_hash().ok_or(Error::UncompressedPubkey)?);
+            .push_slice(pk.wpubkey_hash().ok_or(Error::UncompressedPubkey)?.as_ref());
 
         Ok(Payload::ScriptHash(builder.into_script().script_hash()))
     }
@@ -528,7 +528,7 @@ impl Payload {
     pub fn p2wsh(script: &script::Script) -> Payload {
         Payload::WitnessProgram {
             version: WitnessVersion::V0,
-            program: script.wscript_hash().to_vec(),
+            program: script.wscript_hash().as_ref().to_vec(),
         }
     }
 
@@ -536,7 +536,7 @@ impl Payload {
     pub fn p2shwsh(script: &script::Script) -> Payload {
         let ws = script::Builder::new()
             .push_int(0)
-            .push_slice(&script.wscript_hash())
+            .push_slice(script.wscript_hash().as_ref())
             .into_script();
 
         Payload::ScriptHash(ws.script_hash())
@@ -568,8 +568,8 @@ impl Payload {
     /// Returns a byte slice of the payload
     pub fn as_bytes(&self) -> &[u8] {
         match self {
-            Payload::ScriptHash(hash) => hash,
-            Payload::PubkeyHash(hash) => hash,
+            Payload::ScriptHash(hash) => hash.as_ref(),
+            Payload::PubkeyHash(hash) => hash.as_ref(),
             Payload::WitnessProgram { program, .. } => program,
         }
     }
@@ -594,13 +594,13 @@ impl<'a> fmt::Display for AddressEncoding<'a> {
             Payload::PubkeyHash(hash) => {
                 let mut prefixed = [0; 21];
                 prefixed[0] = self.p2pkh_prefix;
-                prefixed[1..].copy_from_slice(&hash[..]);
+                prefixed[1..].copy_from_slice(hash.as_ref());
                 base58::check_encode_slice_to_fmt(fmt, &prefixed[..])
             }
             Payload::ScriptHash(hash) => {
                 let mut prefixed = [0; 21];
                 prefixed[0] = self.p2sh_prefix;
-                prefixed[1..].copy_from_slice(&hash[..]);
+                prefixed[1..].copy_from_slice(hash.as_ref());
                 base58::check_encode_slice_to_fmt(fmt, &prefixed[..])
             }
             Payload::WitnessProgram {
@@ -839,7 +839,7 @@ impl Address {
         let payload = self.payload.as_bytes();
         let xonly_pubkey = XOnlyPublicKey::from(pubkey.inner);
 
-        (*pubkey_hash == *payload) || (xonly_pubkey.serialize() == *payload) || (*segwit_redeem_hash(&pubkey_hash) == *payload)
+        (pubkey_hash.as_ref() == payload) || (xonly_pubkey.serialize() == *payload) || (segwit_redeem_hash(pubkey_hash.as_ref()).as_ref() == payload)
     }
 
     /// Returns true if the supplied xonly public key can be used to derive the address.
