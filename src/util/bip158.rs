@@ -5,14 +5,19 @@
 // on 11. June 2019 which is licensed under Apache, that file specifically
 // was written entirely by Tamas Blummer, who is re-licensing its contents here as CC0.
 
-//! BIP158 Compact Block Filters for light clients.
+//! BIP 158 Compact Block Filters for Light Clients.
 //!
 //! This module implements a structure for compact filters on block data, for
 //! use in the BIP 157 light client protocol. The filter construction proposed
 //! is an alternative to Bloom filters, as used in BIP 37, that minimizes filter
 //! size by using Golomb-Rice coding for compression.
 //!
-//! ## Example
+//! ### Relevant BIPS
+//!
+//! * [BIP 157 - Client Side Block Filtering](https://github.com/bitcoin/bips/blob/master/bip-0157.mediawiki)
+//! * [BIP 158 - Compact Block Filters for Light Clients](https://github.com/bitcoin/bips/blob/master/bip-0158.mediawiki)
+//!
+//! # Examples
 //!
 //! ```ignore
 //! fn get_script_for_coin(coin: &OutPoint) -> Result<Script, BlockFilterError> {
