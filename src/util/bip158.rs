@@ -120,23 +120,25 @@ impl BlockFilter {
         BlockFilter { content: content.to_vec() }
     }
 
+    /// Computes a SCRIPT_FILTER that contains spent and output scripts.
+    pub fn new_script_filter<M>(block: &Block, script_for_coin: M) -> Result<BlockFilter, Error>
+    where
+        M: Fn(&OutPoint) -> Result<Script, Error>
+    {
+        let mut out = Vec::new();
+        let mut writer = BlockFilterWriter::new(&mut out, block);
+
+        writer.add_output_scripts();
+        writer.add_input_scripts(script_for_coin)?;
+        writer.finish()?;
+
+        Ok(BlockFilter { content: out })
+    }
+
     /// compute this filter's id in a chain of filters
     pub fn filter_header(&self, previous_filter_header: &FilterHeader) -> FilterHeader {
         let filter_hash = FilterHash::hash(self.content.as_slice());
         filter_hash.filter_header(previous_filter_header)
-    }
-
-    /// Compute a SCRIPT_FILTER that contains spent and output scripts
-    pub fn new_script_filter<M>(block: &Block, script_for_coin: M) -> Result<BlockFilter, Error>
-        where M: Fn(&OutPoint) -> Result<Script, Error> {
-        let mut out = Vec::new();
-        {
-            let mut writer = BlockFilterWriter::new(&mut out, block);
-            writer.add_output_scripts();
-            writer.add_input_scripts(script_for_coin)?;
-            writer.finish()?;
-        }
-        Ok(BlockFilter { content: out })
     }
 
     /// match any query pattern
