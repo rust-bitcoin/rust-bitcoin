@@ -4,7 +4,6 @@ pub use crate::parse::ParseIntError;
 
 /// Impls std::error::Error for the specified type with appropriate attributes, possibly returning
 /// source.
-#[macro_export]
 macro_rules! impl_std_error {
     // No source available
     ($type:ty) => {
@@ -23,3 +22,4 @@ macro_rules! impl_std_error {
         }
     };
 }
+pub(crate) use impl_std_error;
