@@ -135,7 +135,9 @@ impl BlockFilter {
         Ok(BlockFilter { content: out })
     }
 
-    /// compute this filter's id in a chain of filters
+    /// Computes this filter's ID in a chain of filters (see [BIP 157]).
+    ///
+    /// [BIP 157]: <https://github.com/bitcoin/bips/blob/master/bip-0157.mediawiki#Filter_Headers>
     pub fn filter_header(&self, previous_filter_header: &FilterHeader) -> FilterHeader {
         let filter_hash = FilterHash::hash(self.content.as_slice());
         filter_hash.filter_header(previous_filter_header)
