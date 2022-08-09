@@ -165,7 +165,7 @@ impl BlockFilter {
 /// Compiles and writes a block filter
 pub struct BlockFilterWriter<'a, W> {
     block: &'a Block,
-    writer: GCSFilterWriter<'a, W>,
+    writer: GcsFilterWriter<'a, W>,
 }
 
 impl<'a, W: io::Write> BlockFilterWriter<'a, W> {
@@ -174,7 +174,7 @@ impl<'a, W: io::Write> BlockFilterWriter<'a, W> {
         let block_hash_as_int = block.block_hash().into_inner();
         let k0 = endian::slice_to_u64_le(&block_hash_as_int[0..8]);
         let k1 = endian::slice_to_u64_le(&block_hash_as_int[8..16]);
-        let writer = GCSFilterWriter::new(writer, k0, k1, M, P);
+        let writer = GcsFilterWriter::new(writer, k0, k1, M, P);
         BlockFilterWriter { block, writer }
     }
 
@@ -217,7 +217,7 @@ impl<'a, W: io::Write> BlockFilterWriter<'a, W> {
 
 /// Reads and interpret a block filter
 pub struct BlockFilterReader {
-    reader: GCSFilterReader
+    reader: GcsFilterReader
 }
 
 impl BlockFilterReader {
@@ -226,7 +226,7 @@ impl BlockFilterReader {
         let block_hash_as_int = block_hash.into_inner();
         let k0 = endian::slice_to_u64_le(&block_hash_as_int[0..8]);
         let k1 = endian::slice_to_u64_le(&block_hash_as_int[8..16]);
-        BlockFilterReader { reader: GCSFilterReader::new(k0, k1, M, P) }
+        BlockFilterReader { reader: GcsFilterReader::new(k0, k1, M, P) }
     }
 
     /// match any query pattern
@@ -249,15 +249,15 @@ impl BlockFilterReader {
 }
 
 /// Golomb-Rice encoded filter reader
-pub struct GCSFilterReader {
-    filter: GCSFilter,
+pub struct GcsFilterReader {
+    filter: GcsFilter,
     m: u64
 }
 
-impl GCSFilterReader {
+impl GcsFilterReader {
     /// Create a new filter reader with specific seed to siphash
-    pub fn new(k0: u64, k1: u64, m: u64, p: u8) -> GCSFilterReader {
-        GCSFilterReader { filter: GCSFilter::new(k0, k1, p), m }
+    pub fn new(k0: u64, k1: u64, m: u64, p: u8) -> GcsFilterReader {
+        GcsFilterReader { filter: GcsFilter::new(k0, k1, p), m }
     }
 
     /// match any query pattern
@@ -356,18 +356,18 @@ fn map_to_range(hash: u64, nm: u64) -> u64 {
 }
 
 /// Colomb-Rice encoded filter writer
-pub struct GCSFilterWriter<'a, W> {
-    filter: GCSFilter,
+pub struct GcsFilterWriter<'a, W> {
+    filter: GcsFilter,
     writer: &'a mut W,
     elements: HashSet<Vec<u8>>,
     m: u64
 }
 
-impl<'a, W: io::Write> GCSFilterWriter<'a, W> {
-    /// Create a new GCS writer wrapping a generic writer, with specific seed to siphash
-    pub fn new(writer: &'a mut W, k0: u64, k1: u64, m: u64, p: u8) -> GCSFilterWriter<'a, W> {
-        GCSFilterWriter {
-            filter: GCSFilter::new(k0, k1, p),
+impl<'a, W: io::Write> GcsFilterWriter<'a, W> {
+    /// Create a new Gcs writer wrapping a generic writer, with specific seed to siphash
+    pub fn new(writer: &'a mut W, k0: u64, k1: u64, m: u64, p: u8) -> GcsFilterWriter<'a, W> {
+        GcsFilterWriter {
+            filter: GcsFilter::new(k0, k1, p),
             writer,
             elements: HashSet::new(),
             m
@@ -406,16 +406,16 @@ impl<'a, W: io::Write> GCSFilterWriter<'a, W> {
 }
 
 /// Golomb Coded Set Filter
-struct GCSFilter {
+struct GcsFilter {
     k0: u64, // sip hash key
     k1: u64, // sip hash key
     p: u8
 }
 
-impl GCSFilter {
+impl GcsFilter {
     /// Create a new filter
-    fn new(k0: u64, k1: u64, p: u8) -> GCSFilter {
-        GCSFilter { k0, k1, p }
+    fn new(k0: u64, k1: u64, p: u8) -> GcsFilter {
+        GcsFilter { k0, k1, p }
     }
 
     /// Golomb-Rice encode a number n to a bit stream (Parameter 2^k)
@@ -627,7 +627,7 @@ mod test {
 
         let mut out = Vec::new();
         {
-            let mut writer = GCSFilterWriter::new(&mut out, 0, 0, M, P);
+            let mut writer = GcsFilterWriter::new(&mut out, 0, 0, M, P);
             for p in &patterns {
                 writer.add_element(p.as_slice());
             }
@@ -638,16 +638,16 @@ mod test {
 
         {
             let query = vec![Vec::from_hex("abcdef").unwrap(), Vec::from_hex("eeeeee").unwrap()];
-            let reader = GCSFilterReader::new(0, 0, M, P);
-            assert!(reader.match_any(&mut bytes.as_slice(), &mut query.iter().map(|v| v.as_slice())).unwrap());
+            let reader = GcsFilterReader::new(0, 0, M, P);
+               assert!(reader.match_any(&mut bytes.as_slice(), &mut query.iter().map(|v| v.as_slice())).unwrap());
         }
         {
             let query = vec![Vec::from_hex("abcdef").unwrap(), Vec::from_hex("123456").unwrap()];
-            let reader = GCSFilterReader::new(0, 0, M, P);
+            let reader = GcsFilterReader::new(0, 0, M, P);
             assert!(!reader.match_any(&mut bytes.as_slice(), &mut query.iter().map(|v| v.as_slice())).unwrap());
         }
         {
-            let reader = GCSFilterReader::new(0, 0, M, P);
+            let reader = GcsFilterReader::new(0, 0, M, P);
             let mut query = Vec::new();
             for p in &patterns {
                 query.push(p.clone());
@@ -655,7 +655,7 @@ mod test {
             assert!(reader.match_all(&mut bytes.as_slice(), &mut query.iter().map(|v| v.as_slice())).unwrap());
         }
         {
-            let reader = GCSFilterReader::new(0, 0, M, P);
+            let reader = GcsFilterReader::new(0, 0, M, P);
             let mut query = Vec::new();
             for p in &patterns {
                 query.push(p.clone());
