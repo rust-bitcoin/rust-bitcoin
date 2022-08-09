@@ -60,12 +60,12 @@ use crate::internal_macros::write_err;
 const P: u8 = 19;
 const M: u64 = 784931;
 
-/// Errors for blockfilter
+/// Errors for blockfilter.
 #[derive(Debug)]
 pub enum Error {
-    /// missing UTXO, can not calculate script filter
+    /// Missing UTXO, cannot calculate script filter.
     UtxoMissing(OutPoint),
-    /// some IO error reading or writing binary serialization of the filter
+    /// IO error reading or writing binary serialization of the filter.
     Io(io::Error),
 }
 
@@ -97,7 +97,7 @@ impl From<io::Error> for Error {
     }
 }
 
-/// a computed or read block filter
+/// A block filter, as described by BIP 158.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BlockFilter {
     /// Golomb encoded filter
@@ -105,7 +105,7 @@ pub struct BlockFilter {
 }
 
 impl FilterHash {
-    /// compute the filter header from a filter hash and previous filter header
+    /// Computes the filter header from a filter hash and previous filter header.
     pub fn filter_header(&self, previous_filter_header: &FilterHeader) -> FilterHeader {
         let mut header_data = [0u8; 64];
         header_data[0..32].copy_from_slice(&self[..]);
@@ -143,7 +143,7 @@ impl BlockFilter {
         filter_hash.filter_header(previous_filter_header)
     }
 
-    /// match any query pattern
+    /// Returns true if any query matches against this [`BlockFilter`].
     pub fn match_any<'a, I>(&self, block_hash: &BlockHash, query: I) -> Result<bool, Error>
     where
         I: Iterator<Item = &'a [u8]>,
@@ -152,7 +152,7 @@ impl BlockFilter {
         filter_reader.match_any(&mut self.content.as_slice(), query)
     }
 
-    /// match all query pattern
+    /// Returns true if all queries match against this [`BlockFilter`].
     pub fn match_all<'a, I>(&self, block_hash: &BlockHash, query: I) -> Result<bool, Error>
     where
         I: Iterator<Item = &'a [u8]>,
@@ -162,14 +162,14 @@ impl BlockFilter {
     }
 }
 
-/// Compiles and writes a block filter
+/// Compiles and writes a block filter.
 pub struct BlockFilterWriter<'a, W> {
     block: &'a Block,
     writer: GcsFilterWriter<'a, W>,
 }
 
 impl<'a, W: io::Write> BlockFilterWriter<'a, W> {
-    /// Create a block filter writer
+    /// Creates a new [`BlockFilterWriter`] from `block`.
     pub fn new(writer: &'a mut W, block: &'a Block) -> BlockFilterWriter<'a, W> {
         let block_hash_as_int = block.block_hash().into_inner();
         let k0 = endian::slice_to_u64_le(&block_hash_as_int[0..8]);
@@ -178,7 +178,7 @@ impl<'a, W: io::Write> BlockFilterWriter<'a, W> {
         BlockFilterWriter { block, writer }
     }
 
-    /// Add output scripts of the block - excluding OP_RETURN scripts
+    /// Adds output scripts of the block to filter (excluding OP_RETURN scripts).
     pub fn add_output_scripts(&mut self) {
         for transaction in &self.block.txdata {
             for output in &transaction.output {
@@ -189,7 +189,7 @@ impl<'a, W: io::Write> BlockFilterWriter<'a, W> {
         }
     }
 
-    /// Add consumed output scripts of a block to filter
+    /// Adds consumed output scripts of a block to filter.
     pub fn add_input_scripts<M>(&mut self, script_for_coin: M) -> Result<(), Error>
         where M: Fn(&OutPoint) -> Result<Script, Error> {
         for script in self.block.txdata.iter()
@@ -204,24 +204,24 @@ impl<'a, W: io::Write> BlockFilterWriter<'a, W> {
         Ok(())
     }
 
-    /// Add arbitrary element to a filter
+    /// Adds an arbitrary element to filter.
     pub fn add_element(&mut self, data: &[u8]) {
         self.writer.add_element(data);
     }
 
-    /// Write block filter
+    /// Writes the block filter.
     pub fn finish(&mut self) -> Result<usize, io::Error> {
         self.writer.finish()
     }
 }
 
-/// Reads and interpret a block filter
+/// Reads and interprets a block filter.
 pub struct BlockFilterReader {
     reader: GcsFilterReader
 }
 
 impl BlockFilterReader {
-    /// Create a block filter reader
+    /// Creates a new [`BlockFilterReader`] from `block_hash`.
     pub fn new(block_hash: &BlockHash) -> BlockFilterReader {
         let block_hash_as_int = block_hash.into_inner();
         let k0 = endian::slice_to_u64_le(&block_hash_as_int[0..8]);
@@ -229,7 +229,7 @@ impl BlockFilterReader {
         BlockFilterReader { reader: GcsFilterReader::new(k0, k1, M, P) }
     }
 
-    /// match any query pattern
+    /// Returns true if any query matches against this [`BlockFilterReader`].
     pub fn match_any<'a, I, R>(&self, reader: &mut R, query: I) -> Result<bool, Error>
     where
         I: Iterator<Item = &'a [u8]>,
@@ -238,7 +238,7 @@ impl BlockFilterReader {
         self.reader.match_any(reader, query)
     }
 
-    /// match all query pattern
+    /// Returns true if all queries match against this [`BlockFilterReader`].
     pub fn match_all<'a, I, R>(&self, reader: &mut R, query: I) -> Result<bool, Error>
     where
         I: Iterator<Item = &'a [u8]>,
@@ -248,19 +248,19 @@ impl BlockFilterReader {
     }
 }
 
-/// Golomb-Rice encoded filter reader
+/// Golomb-Rice encoded filter reader.
 pub struct GcsFilterReader {
     filter: GcsFilter,
     m: u64
 }
 
 impl GcsFilterReader {
-    /// Create a new filter reader with specific seed to siphash
+    /// Creates a new [`GcsFilterReader`] with specific seed to siphash.
     pub fn new(k0: u64, k1: u64, m: u64, p: u8) -> GcsFilterReader {
         GcsFilterReader { filter: GcsFilter::new(k0, k1, p), m }
     }
 
-    /// match any query pattern
+    /// Returns true if any query matches against this [`GcsFilterReader`].
     pub fn match_any<'a, I, R>(&self, reader: &mut R, query: I) -> Result<bool, Error>
     where
         I: Iterator<Item = &'a [u8]>,
@@ -304,7 +304,7 @@ impl GcsFilterReader {
         Ok(false)
     }
 
-    /// match all query pattern
+    /// Returns true if all queries match against this [`GcsFilterReader`].
     pub fn match_all<'a, I, R>(&self, reader: &mut R, query: I) -> Result<bool, Error>
     where
         I: Iterator<Item = &'a [u8]>,
@@ -350,12 +350,12 @@ impl GcsFilterReader {
     }
 }
 
-// fast reduction of hash to [0, nm) range
+/// Fast reduction of hash to [0, nm) range.
 fn map_to_range(hash: u64, nm: u64) -> u64 {
     ((hash as u128 * nm as u128) >> 64) as u64
 }
 
-/// Colomb-Rice encoded filter writer
+/// Golomb-Rice encoded filter writer.
 pub struct GcsFilterWriter<'a, W> {
     filter: GcsFilter,
     writer: &'a mut W,
@@ -364,7 +364,7 @@ pub struct GcsFilterWriter<'a, W> {
 }
 
 impl<'a, W: io::Write> GcsFilterWriter<'a, W> {
-    /// Create a new Gcs writer wrapping a generic writer, with specific seed to siphash
+    /// Creates a new [`GcsFilterWriter`] wrapping a generic writer, with specific seed to siphash.
     pub fn new(writer: &'a mut W, k0: u64, k1: u64, m: u64, p: u8) -> GcsFilterWriter<'a, W> {
         GcsFilterWriter {
             filter: GcsFilter::new(k0, k1, p),
@@ -374,14 +374,14 @@ impl<'a, W: io::Write> GcsFilterWriter<'a, W> {
         }
     }
 
-    /// Add some data to the filter
+    /// Adds data to the filter.
     pub fn add_element(&mut self, element: &[u8]) {
         if !element.is_empty() {
             self.elements.insert(element.to_vec());
         }
     }
 
-    /// write the filter to the wrapped writer
+    /// Writes the filter to the wrapped writer.
     pub fn finish(&mut self) -> Result<usize, io::Error> {
         let nm = self.elements.len() as u64 * self.m;
 
@@ -405,7 +405,7 @@ impl<'a, W: io::Write> GcsFilterWriter<'a, W> {
     }
 }
 
-/// Golomb Coded Set Filter
+/// Golomb Coded Set Filter.
 struct GcsFilter {
     k0: u64, // sip hash key
     k1: u64, // sip hash key
@@ -413,12 +413,12 @@ struct GcsFilter {
 }
 
 impl GcsFilter {
-    /// Create a new filter
+    /// Creates a new [`GcsFilter`].
     fn new(k0: u64, k1: u64, p: u8) -> GcsFilter {
         GcsFilter { k0, k1, p }
     }
 
-    /// Golomb-Rice encode a number n to a bit stream (Parameter 2^k)
+    /// Golomb-Rice encodes a number `n` to a bit stream (parameter 2^k).
     fn golomb_rice_encode<'a, W>(&self, writer: &mut BitStreamWriter<'a, W>, n: u64) -> Result<usize, io::Error>
     where
         W: io::Write,
@@ -435,7 +435,7 @@ impl GcsFilter {
         Ok(wrote)
     }
 
-    /// Golomb-Rice decode a number from a bit stream (Parameter 2^k)
+    /// Golomb-Rice decodes a number from a bit stream (parameter 2^k).
     fn golomb_rice_decode<R>(&self, reader: &mut BitStreamReader<R>) -> Result<u64, io::Error>
     where
         R: io::Read
@@ -448,13 +448,13 @@ impl GcsFilter {
         Ok((q << self.p) + r)
     }
 
-    /// Hash an arbitrary slice with siphash using parameters of this filter
+    /// Hashes an arbitrary slice with siphash using parameters of this filter.
     fn hash(&self, element: &[u8]) -> u64 {
         siphash24::Hash::hash_to_u64_with_keys(self.k0, self.k1, element)
     }
 }
 
-/// Bitwise stream reader
+/// Bitwise stream reader.
 pub struct BitStreamReader<'a, R> {
     buffer: [u8; 1],
     offset: u8,
@@ -462,7 +462,7 @@ pub struct BitStreamReader<'a, R> {
 }
 
 impl<'a, R: io::Read> BitStreamReader<'a, R> {
-    /// Create a new BitStreamReader that reads bitwise from a given reader
+    /// Creates a new [`BitStreamReader`] that reads bitwise from a given `reader`.
     pub fn new(reader: &'a mut R) -> BitStreamReader<'a, R> {
         BitStreamReader {
             buffer: [0u8],
@@ -471,7 +471,17 @@ impl<'a, R: io::Read> BitStreamReader<'a, R> {
         }
     }
 
-    /// Read nbit bits
+    /// Reads nbit bits, returning the bits in a `u64` starting with the rightmost bit.
+    ///
+    /// # Examples
+    /// ```
+    /// # use bitcoin::util::bip158::BitStreamReader;
+    /// # let data = vec![0xff];
+    /// # let mut input = data.as_slice();
+    /// let mut reader = BitStreamReader::new(&mut input); // input contains all 1's
+    /// let res = reader.read(1).expect("read failed");
+    /// assert_eq!(res, 1_u64);
+    /// ```
     pub fn read(&mut self, mut nbits: u8) -> Result<u64, io::Error> {
         if nbits > 64 {
             return Err(io::Error::new(io::ErrorKind::Other, "can not read more than 64 bits at once"));
@@ -492,7 +502,7 @@ impl<'a, R: io::Read> BitStreamReader<'a, R> {
     }
 }
 
-/// Bitwise stream writer
+/// Bitwise stream writer.
 pub struct BitStreamWriter<'a, W> {
     buffer: [u8; 1],
     offset: u8,
@@ -500,7 +510,7 @@ pub struct BitStreamWriter<'a, W> {
 }
 
 impl<'a, W: io::Write> BitStreamWriter<'a, W> {
-    /// Create a new BitStreamWriter that writes bitwise to a given writer
+    /// Creates a new [`BitStreamWriter`] that writes bitwise to a given `writer`.
     pub fn new(writer: &'a mut W) -> BitStreamWriter<'a, W> {
         BitStreamWriter {
             buffer: [0u8],
@@ -509,7 +519,7 @@ impl<'a, W: io::Write> BitStreamWriter<'a, W> {
         }
     }
 
-    /// Write nbits bits from data
+    /// Writes nbits bits from data.
     pub fn write(&mut self, data: u64, mut nbits: u8) -> Result<usize, io::Error> {
         if nbits > 64 {
             return Err(io::Error::new(io::ErrorKind::Other, "can not write more than 64 bits at once"));
@@ -527,7 +537,7 @@ impl<'a, W: io::Write> BitStreamWriter<'a, W> {
         Ok(wrote)
     }
 
-    /// flush bits not yet written
+    /// flush bits not yet written.
     pub fn flush(&mut self) -> Result<usize, io::Error> {
         if self.offset > 0 {
             self.writer.write_all(&self.buffer)?;
