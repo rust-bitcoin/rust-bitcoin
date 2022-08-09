@@ -542,16 +542,15 @@ impl<'a, W: io::Write> BitStreamWriter<'a, W> {
 
 #[cfg(test)]
 mod test {
-    use crate::hash_types::BlockHash;
-    use crate::hashes::hex::FromHex;
-
     use super::*;
 
-    extern crate serde_json;
-    use self::serde_json::Value;
+    use std::collections::HashMap;
+
+    use serde_json::Value;
 
     use crate::consensus::encode::deserialize;
-    use std::collections::HashMap;
+    use crate::hash_types::BlockHash;
+    use crate::hashes::hex::FromHex;
 
     #[test]
     fn test_blockfilters() {
