@@ -110,15 +110,15 @@ impl FilterHash {
 }
 
 impl BlockFilter {
+    /// Creates a new filter from pre-computed data.
+    pub fn new (content: &[u8]) -> BlockFilter {
+        BlockFilter { content: content.to_vec() }
+    }
+
     /// compute this filter's id in a chain of filters
     pub fn filter_header(&self, previous_filter_header: &FilterHeader) -> FilterHeader {
         let filter_hash = FilterHash::hash(self.content.as_slice());
         filter_hash.filter_header(previous_filter_header)
-    }
-
-    /// create a new filter from pre-computed data
-    pub fn new (content: &[u8]) -> BlockFilter {
-        BlockFilter { content: content.to_vec() }
     }
 
     /// Compute a SCRIPT_FILTER that contains spent and output scripts
