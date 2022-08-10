@@ -8,14 +8,45 @@
 //!
 
 macro_rules! construct_uint {
-    ($name:ident, $n_words:literal) => {
+    ($name:ident, $n_words:literal, $n_bits:literal, $max_value:literal) => {
         /// Little-endian large integer type
         #[derive(Copy, Clone, PartialEq, Eq, Hash, Default)]
         pub struct $name(pub [u64; $n_words]);
         $crate::internal_macros::impl_array_newtype!($name, u64, $n_words);
 
         impl $name {
-            /// Conversion to u32
+            /// The smallest value that can be represented by this integer type.
+            ///
+            /// # Examples
+            ///
+            /// ```
+            /// # use bitcoin::{Uint128, Uint256};
+            #[doc = concat!("assert_eq!(", stringify!($name), "::MIN, ", stringify!($name), "::from_u64(0).expect(\"zero is valid\"));")]
+            /// ```
+            pub const MIN: Self = $name([0_u64; $n_words]);
+
+            /// The largest value that can be represented by this integer type,
+            #[doc = concat!("2<sup>", $n_bits, "</sup> &minus; 1.")]
+            ///
+            /// # Examples
+            ///
+            /// ```
+            /// # use bitcoin::{Uint128, Uint256};
+            #[doc = concat!("assert_eq!(", stringify!($name), "::MAX.to_string(), ", stringify!($max_value), ");")]
+            /// ```
+            pub const MAX: Self = $name([0xffffffffffffffff_u64; $n_words]);
+
+            /// The size of this integer type in bits.
+            ///
+            /// # Examples
+            ///
+            /// ```
+            /// # use bitcoin::{Uint128, Uint256};
+            #[doc = concat!("assert_eq!(", stringify!($name), "::BITS, ", stringify!($n_bits), ");")]
+            /// ```
+            pub const BITS: u32 = $n_bits;
+
+            /// Conversion to u32.
             #[inline]
             pub fn low_u32(&self) -> u32 {
                 let &$name(ref arr) = self;
@@ -163,6 +194,20 @@ macro_rules! construct_uint {
                     }
                 }
             }
+
+            /// New code should prefer to use
+            #[doc = concat!("[`", stringify!($name), "::MIN", "`] instead.")]
+            ///
+            /// Returns the smallest value that can be represented by this integer type.
+            #[inline]
+            pub const fn min_value() -> Self { Self::MIN }
+
+            /// New code should prefer to use
+            #[doc = concat!("[`", stringify!($name), "::MAX", "`] instead.")]
+            ///
+            /// Returns the largest value that can be represented by this integer type.
+            #[inline]
+            pub const fn max_value() -> Self { Self::MAX }
         }
 
         impl PartialOrd for $name {
@@ -497,8 +542,8 @@ macro_rules! construct_uint {
     };
 }
 
-construct_uint!(Uint256, 4);
-construct_uint!(Uint128, 2);
+construct_uint!(Uint256, 4, 256, "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+construct_uint!(Uint128, 2, 128, "0xffffffffffffffffffffffffffffffff");
 
 /// Invalid slice length.
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]

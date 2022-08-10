@@ -115,6 +115,7 @@ pub use crate::util::merkleblock::MerkleBlock;
 pub use crate::util::schnorr::{self, SchnorrSig, SchnorrSigError};
 pub use crate::util::sighash::SchnorrSighashType;
 pub use crate::util::{psbt, Error};
+pub use crate::util::uint::{self, Uint128, Uint256};
 
 #[cfg(not(feature = "std"))]
 mod io_extras {
