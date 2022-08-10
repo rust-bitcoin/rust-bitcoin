@@ -22,16 +22,20 @@ if cargo --version | grep nightly; then
     NIGHTLY=true
 fi
 
-# We should not have any duplicate dependencies. This catches mistakes made upgrading dependencies
-# in one crate and not in another (e.g. upgrade bitcoin_hashes in bitcoin but not in secp).
-cargo update -p serde --precise 1.0.142
-cargo update -p serde_test --precise 1.0.142
-cargo update -p serde_derive --precise 1.0.142
-duplicate_dependencies=$(cargo tree  --target=all --all-features --duplicates | wc -l)
-if [ "$duplicate_dependencies" -ne 0 ]; then
-    echo "Dependency tree is broken, contains duplicates"
-    cargo tree  --target=all --all-features --duplicates
-    exit 1
+STABLE=false
+if cargo --version | grep stable; then
+    STABLE=true
+fi
+
+if [ "$STABLE" = true]; then
+    # We should not have any duplicate dependencies. This catches mistakes made upgrading dependencies
+    # in one crate and not in another (e.g. upgrade bitcoin_hashes in bitcoin but not in secp).
+    duplicate_dependencies=$(cargo tree  --target=all --all-features --duplicates | wc -l)
+    if [ "$duplicate_dependencies" -ne 0 ]; then
+        echo "Dependency tree is broken, contains duplicates"
+        cargo tree  --target=all --all-features --duplicates
+        exit 1
+    fi
 fi
 
 if [ "$DO_LINT" = true ]
@@ -121,6 +125,7 @@ then
     cargo new dep_test
     cd dep_test
     echo 'bitcoin = { path = "..", features = ["serde"] }' >> Cargo.toml
+    # serde >= 1.0.143 is broken for Rust 1.47
     cargo update -p serde --precise 1.0.142
     cargo update -p serde_derive --precise 1.0.142
 
