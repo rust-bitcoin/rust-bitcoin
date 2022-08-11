@@ -1,3 +1,7 @@
+# 0.29.1 - 2022-08-12
+
+This unpublishes some internal macros that were not intended to be public.
+
 # 0.29 - 2022-07-20 "Edition 2018 Release"
 
 As promised, this is our quick release to bring on edition 2018 by increasing our MSRV to Rust
