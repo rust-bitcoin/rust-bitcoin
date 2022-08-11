@@ -847,7 +847,7 @@ impl Transaction {
         S: FnMut(&OutPoint) -> Option<TxOut>,
         F: Into<u32>
     {
-        let tx = encode::serialize(&*self);
+        let tx = encode::serialize(self);
         let flags: u32 = flags.into();
         for (idx, input) in self.input.iter().enumerate() {
             if let Some(output) = spent(&input.previous_output) {

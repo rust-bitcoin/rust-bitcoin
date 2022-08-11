@@ -179,7 +179,7 @@ impl HeaderAndShortIds {
         let mut last_prefill = 0;
         for (idx, tx) in block.txdata.iter().enumerate() {
             // Check if we should prefill this tx.
-            let prefill_tx = if prefill.get(0) == Some(&idx) {
+            let prefill_tx = if prefill.first() == Some(&idx) {
                 prefill = &prefill[1..];
                 true
             } else {
