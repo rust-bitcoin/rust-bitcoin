@@ -431,14 +431,6 @@ impl MerkleBlock {
         Self::from_header_txids_with_predicate(&block.header, &block_txids, match_txids)
     }
 
-    /// Create a MerkleBlock from a block, that contains proofs for specific txids.
-    #[cfg(feature = "std")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-    #[deprecated(since = "0.26.2", note = "use from_block_with_predicate")]
-    pub fn from_block(block: &Block, match_txids: &::std::collections::HashSet<Txid>) -> Self {
-        Self::from_block_with_predicate(block, |t| match_txids.contains(t))
-    }
-
     /// Create a MerkleBlock from the block's header and txids, that contain proofs for specific txids.
     ///
     /// The `header` is the block header, `block_txids` is the full list of txids included in the block and
@@ -461,18 +453,6 @@ impl MerkleBlock {
             header: *header,
             txn: pmt,
         }
-    }
-
-    /// Create a MerkleBlock from the block's header and txids, that should contain proofs for match_txids.
-    #[cfg(feature = "std")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-    #[deprecated(since = "0.26.2", note = "use from_header_txids_with_predicate")]
-    pub fn from_header_txids(
-        header: &BlockHeader,
-        block_txids: &[Txid],
-        match_txids: &::std::collections::HashSet<Txid>,
-    ) -> Self {
-        Self::from_header_txids_with_predicate(header, block_txids, |t| match_txids.contains(t))
     }
 
     /// Extract the matching txid's represented by this partial merkle tree
