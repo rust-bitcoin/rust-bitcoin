@@ -473,7 +473,7 @@ impl Script {
     /// Returns witness version of the script, if any, assuming the script is a `scriptPubkey`.
     #[inline]
     pub fn witness_version(&self) -> Option<WitnessVersion> {
-        self.0.get(0).and_then(|opcode| WitnessVersion::try_from(opcodes::All::from(*opcode)).ok())
+        self.0.first().and_then(|opcode| WitnessVersion::try_from(opcodes::All::from(*opcode)).ok())
     }
 
     /// Checks whether a script pubkey is a P2SH output.

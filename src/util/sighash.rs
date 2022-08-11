@@ -799,7 +799,7 @@ impl<'a> Annex<'a> {
 
     /// Returns the Annex bytes data (including first byte `0x50`).
     pub fn as_bytes(&self) -> &[u8] {
-        &*self.0
+        self.0
     }
 }
 

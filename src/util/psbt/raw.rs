@@ -29,7 +29,7 @@ pub struct Key {
 }
 
 /// A PSBT key-value pair in its raw byte form.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct Pair {
