@@ -552,7 +552,7 @@ mod tests {
     use crate::hashes::hex::{FromHex, ToHex};
     use crate::network::constants::Network::Testnet;
     use crate::network::constants::Network::Bitcoin;
-    use crate::util::address::Address;
+    use crate::address::Address;
 
     #[test]
     fn test_key_derivation() {

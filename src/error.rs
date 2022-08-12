@@ -16,9 +16,7 @@ macro_rules! impl_std_error {
         #[cfg(feature = "std")]
         #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
         impl std::error::Error for $type {
-            fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-                Some(&self.$field)
-            }
+            fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.$field) }
         }
     };
 }

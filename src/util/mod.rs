@@ -9,7 +9,6 @@
 pub mod key;
 pub mod ecdsa;
 pub mod schnorr;
-pub mod address;
 pub mod amount;
 pub mod base58;
 pub mod bip32;
@@ -110,4 +109,11 @@ pub(crate) fn read_to_end<D: io::Read>(mut d: D) -> Result<Vec<u8>, io::Error> {
         };
     }
     Ok(result)
+}
+
+/// The `address` module now lives at the crate root, re-export everything so as not to break the
+/// API, however deprecate the re-exports so folks know to upgrade sooner or later.
+#[deprecated(since = "0.30.0", note = "Please use crate::address")]
+pub mod address {
+    pub use crate::address::*;
 }

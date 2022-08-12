@@ -1,6 +1,6 @@
 extern crate bitcoin;
 
-use bitcoin::util::address::Address;
+use bitcoin::address::Address;
 use bitcoin::network::constants::Network;
 use bitcoin::blockdata::script;
 use bitcoin::consensus::encode;

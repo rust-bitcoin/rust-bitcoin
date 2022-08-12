@@ -1,8 +1,9 @@
-use crate::internal_macros::write_err;
-use crate::error::impl_std_error;
+use core::convert::TryFrom;
 use core::fmt;
 use core::str::FromStr;
-use core::convert::TryFrom;
+
+use crate::error::impl_std_error;
+use crate::internal_macros::write_err;
 use crate::prelude::*;
 
 /// Error with rich context returned when a string can't be parsed as an integer.
@@ -28,21 +29,15 @@ pub struct ParseIntError {
 
 impl ParseIntError {
     /// Returns the input that was attempted to be parsed.
-    pub fn input(&self) -> &str {
-        &self.input
-    }
+    pub fn input(&self) -> &str { &self.input }
 }
 
 impl From<ParseIntError> for core::num::ParseIntError {
-    fn from(value: ParseIntError) -> Self {
-        value.source
-    }
+    fn from(value: ParseIntError) -> Self { value.source }
 }
 
 impl AsRef<core::num::ParseIntError> for ParseIntError {
-    fn as_ref(&self) -> &core::num::ParseIntError {
-        &self.source
-    }
+    fn as_ref(&self) -> &core::num::ParseIntError { &self.source }
 }
 
 impl fmt::Display for ParseIntError {
@@ -55,7 +50,10 @@ impl fmt::Display for ParseIntError {
 
 /// Not strictly neccessary but serves as a lint - avoids weird behavior if someone accidentally
 /// passes non-integer to the `parse()` function.
-pub(crate) trait Integer: FromStr<Err=core::num::ParseIntError> + TryFrom<i8> + Sized {}
+pub(crate) trait Integer:
+    FromStr<Err = core::num::ParseIntError> + TryFrom<i8> + Sized
+{
+}
 
 macro_rules! impl_integer {
     ($($type:ty),* $(,)?) => {
