@@ -2,15 +2,15 @@
 //! confirm transaction within 1 or 2 seconds. This data structure
 //! represents a p2p message containing a data to verify such a lock.
 
-use ::{OutPoint, Txid};
 use consensus::{Decodable, Encodable, encode};
 use consensus::encode::MAX_VEC_SIZE;
-use io;
+use ::{io, Txid};
 use core::fmt::{Debug, Formatter};
 #[cfg(all(not(feature = "std"), not(test)))]
 use alloc::vec::Vec;
 #[cfg(any(feature = "std", test))]
 pub use std::vec::Vec;
+use blockdata::transaction::outpoint::OutPoint;
 //#[cfg(feature = "use-serde")]
 //use serde_big_array::BigArray;
 

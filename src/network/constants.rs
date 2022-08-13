@@ -1,7 +1,7 @@
 // Rust Dash Library
 // Originally written in 2014 by
 //     Andrew Poelstra <apoelstra@wpsoftware.net>
-//     For Bitcoin
+//     For Dash
 // Updated for Dash in 2022 by
 //     The Dash Core Developers
 //
@@ -15,9 +15,9 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! Bitcoin network constants.
+//! Dash network constants.
 //!
-//! This module provides various constants relating to the Bitcoin network
+//! This module provides various constants relating to the Dash network
 //! protocol, such as protocol versioning and magic header bytes.
 //!
 //! The [`Network`][1] type implements the [`Decodable`][2] and
@@ -34,10 +34,10 @@
 //! use dashcore::network::constants::Network;
 //! use dashcore::consensus::encode::serialize;
 //!
-//! let network = Network::Bitcoin;
+//! let network = Network::Dash;
 //! let bytes = serialize(&network.magic());
 //!
-//! assert_eq!(&bytes[..], &[0xF9, 0xBE, 0xB4, 0xD9]);
+//! assert_eq!(&bytes[..], &[0xBF, 0x0C, 0x6B, 0xBD]);
 //! ```
 
 use core::{fmt, ops, convert::From};
@@ -60,19 +60,19 @@ use consensus::encode::{self, Encodable, Decodable};
 /// 70001 - Support bloom filter messages `filterload`, `filterclear` `filteradd`, `merkleblock` and FILTERED_BLOCK inventory type
 /// 60002 - Support `mempool` message
 /// 60001 - Support `pong` message and nonce in `ping` message
-pub const PROTOCOL_VERSION: u32 = 70001;
+pub const PROTOCOL_VERSION: u32 = 70220;
 
 user_enum! {
     /// The cryptocurrency to act on
     #[derive(Copy, PartialEq, Eq, PartialOrd, Ord, Clone, Hash, Debug)]
     pub enum Network {
-        /// Classic Bitcoin
-        Bitcoin <-> "bitcoin",
-        /// Bitcoin's testnet
+        /// Classic Dash Core Payment Chain
+        Dash <-> "dash",
+        /// Dash's testnet
         Testnet <-> "testnet",
-        /// Bitcoin's signet
-        Signet <-> "signet",
-        /// Bitcoin's regtest
+        /// A Dash devnet
+        Devnet <-> "devnet",
+        /// Dash's regtest
         Regtest <-> "regtest"
     }
 }
@@ -85,15 +85,15 @@ impl Network {
     /// ```rust
     /// use dashcore::network::constants::Network;
     ///
-    /// assert_eq!(Some(Network::Bitcoin), Network::from_magic(0xD9B4BEF9));
+    /// assert_eq!(Some(Network::Dash), Network::from_magic(0xBD6B0CBF));
     /// assert_eq!(None, Network::from_magic(0xFFFFFFFF));
     /// ```
     pub fn from_magic(magic: u32) -> Option<Network> {
         // Note: any new entries here must be added to `magic` below
         match magic {
-            0xD9B4BEF9 => Some(Network::Bitcoin),
-            0x0709110B => Some(Network::Testnet),
-            0x40CF030A => Some(Network::Signet),
+            0xBD6B0CBF => Some(Network::Dash),
+            0xFFCAE2CE => Some(Network::Testnet),
+            0xCEFFCAE2 => Some(Network::Devnet),
             0xDAB5BFFA => Some(Network::Regtest),
             _ => None
         }
@@ -107,15 +107,15 @@ impl Network {
     /// ```rust
     /// use dashcore::network::constants::Network;
     ///
-    /// let network = Network::Bitcoin;
-    /// assert_eq!(network.magic(), 0xD9B4BEF9);
+    /// let network = Network::Dash;
+    /// assert_eq!(network.magic(), 0xBD6B0CBF);
     /// ```
     pub fn magic(self) -> u32 {
         // Note: any new entries here must be added to `from_magic` above
         match self {
-            Network::Bitcoin => 0xD9B4BEF9,
-            Network::Testnet => 0x0709110B,
-            Network::Signet  => 0x40CF030A,
+            Network::Dash => 0xBD6B0CBF,
+            Network::Testnet => 0xFFCAE2CE,
+            Network::Devnet  => 0xCEFFCAE2,
             Network::Regtest => 0xDAB5BFFA,
         }
     }
@@ -130,16 +130,16 @@ impl ServiceFlags {
     pub const NONE: ServiceFlags = ServiceFlags(0);
 
     /// NETWORK means that the node is capable of serving the complete block chain. It is currently
-    /// set by all Bitcoin Core non pruned nodes, and is unset by SPV clients or other light
+    /// set by all Dash Core non pruned nodes, and is unset by SPV clients or other light
     /// clients.
     pub const NETWORK: ServiceFlags = ServiceFlags(1 << 0);
 
-    /// GETUTXO means the node is capable of responding to the getutxo protocol request.  Bitcoin
-    /// Core does not support this but a patch set called Bitcoin XT does.
+    /// GETUTXO means the node is capable of responding to the getutxo protocol request.  Dash
+    /// Core does not support this but a patch set called Dash XT does.
     /// See BIP 64 for details on how this is implemented.
     pub const GETUTXO: ServiceFlags = ServiceFlags(1 << 1);
 
-    /// BLOOM means the node is capable and willing to handle bloom-filtered connections.  Bitcoin
+    /// BLOOM means the node is capable and willing to handle bloom-filtered connections.  Dash
     /// Core nodes used to support this by default, without advertising this bit, but no longer do
     /// as of protocol version 70011 (= NO_BLOOM_VERSION)
     pub const BLOOM: ServiceFlags = ServiceFlags(1 << 2);
@@ -296,29 +296,29 @@ mod tests {
 
     #[test]
     fn serialize_test() {
-        assert_eq!(serialize(&Network::Bitcoin.magic()), &[0xf9, 0xbe, 0xb4, 0xd9]);
-        assert_eq!(serialize(&Network::Testnet.magic()), &[0x0b, 0x11, 0x09, 0x07]);
-        assert_eq!(serialize(&Network::Signet.magic()), &[0x0a, 0x03, 0xcf, 0x40]);
+        assert_eq!(serialize(&Network::Dash.magic()), &[0xbf, 0x0c, 0x6b, 0xbd]);
+        assert_eq!(serialize(&Network::Testnet.magic()), &[0xce, 0xe2, 0xca, 0xff]);
+        assert_eq!(serialize(&Network::Devnet.magic()), &[0xe2, 0xca, 0xff, 0xce]);
         assert_eq!(serialize(&Network::Regtest.magic()), &[0xfa, 0xbf, 0xb5, 0xda]);
 
-        assert_eq!(deserialize(&[0xf9, 0xbe, 0xb4, 0xd9]).ok(), Some(Network::Bitcoin.magic()));
-        assert_eq!(deserialize(&[0x0b, 0x11, 0x09, 0x07]).ok(), Some(Network::Testnet.magic()));
-        assert_eq!(deserialize(&[0x0a, 0x03, 0xcf, 0x40]).ok(), Some(Network::Signet.magic()));
+        assert_eq!(deserialize(&[0xbf, 0x0c, 0x6b, 0xbd]).ok(), Some(Network::Dash.magic()));
+        assert_eq!(deserialize(&[0xce, 0xe2, 0xca, 0xff]).ok(), Some(Network::Testnet.magic()));
+        assert_eq!(deserialize(&[0xe2, 0xca, 0xff, 0xce]).ok(), Some(Network::Devnet.magic()));
         assert_eq!(deserialize(&[0xfa, 0xbf, 0xb5, 0xda]).ok(), Some(Network::Regtest.magic()));
 
     }
 
     #[test]
     fn string_test() {
-        assert_eq!(Network::Bitcoin.to_string(), "bitcoin");
+        assert_eq!(Network::Dash.to_string(), "dash");
         assert_eq!(Network::Testnet.to_string(), "testnet");
         assert_eq!(Network::Regtest.to_string(), "regtest");
-        assert_eq!(Network::Signet.to_string(), "signet");
+        assert_eq!(Network::Devnet.to_string(), "devnet");
 
-        assert_eq!("bitcoin".parse::<Network>().unwrap(), Network::Bitcoin);
+        assert_eq!("dash".parse::<Network>().unwrap(), Network::Dash);
         assert_eq!("testnet".parse::<Network>().unwrap(), Network::Testnet);
         assert_eq!("regtest".parse::<Network>().unwrap(), Network::Regtest);
-        assert_eq!("signet".parse::<Network>().unwrap(), Network::Signet);
+        assert_eq!("devnet".parse::<Network>().unwrap(), Network::Devnet);
         assert!("fakenet".parse::<Network>().is_err());
     }
 

@@ -1,7 +1,7 @@
 
 extern crate dashcore;
 
-use dashcore::blockdata::transaction::OutPoint;
+use dashcore::blockdata::transaction::outpoint::OutPoint;
 use dashcore::consensus::encode;
 
 use std::str::FromStr;

@@ -56,7 +56,7 @@ use hash_types::{BlockHash, FilterHash, FilterHeader};
 
 use blockdata::block::Block;
 use blockdata::script::Script;
-use blockdata::transaction::OutPoint;
+use blockdata::transaction::outpoint::OutPoint;
 use consensus::{Decodable, Encodable};
 use consensus::encode::VarInt;
 use util::endian;

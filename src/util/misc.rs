@@ -32,8 +32,8 @@ use consensus::{encode, Encodable};
 #[cfg_attr(docsrs, doc(cfg(feature = "secp-recovery")))]
 pub use self::message_signing::{MessageSignature, MessageSignatureError};
 
-/// The prefix for signed messages using Bitcoin's message signing protocol.
-pub const BITCOIN_SIGNED_MSG_PREFIX: &[u8] = b"\x18Bitcoin Signed Message:\n";
+/// The prefix for signed messages using Dash's message signing protocol.
+pub const DASH_SIGNED_MSG_PREFIX: &[u8] = b"\x19DarkCoin Signed Message:\n";
 
 #[cfg(feature = "secp-recovery")]
 mod message_signing {
@@ -260,7 +260,7 @@ pub fn script_find_and_remove(haystack: &mut Vec<u8>, needle: &[u8]) -> usize {
 /// Hash message for signature using Bitcoin's message signing format.
 pub fn signed_msg_hash(msg: &str) -> sha256d::Hash {
     let mut engine = sha256d::Hash::engine();
-    engine.input(BITCOIN_SIGNED_MSG_PREFIX);
+    engine.input(DASH_SIGNED_MSG_PREFIX);
     let msg_len = encode::VarInt(msg.len() as u64);
     msg_len.consensus_encode(&mut engine).expect("engines don't error");
     engine.input(msg.as_bytes());
@@ -316,7 +316,7 @@ mod tests {
     #[test]
     fn test_signed_msg_hash() {
         let hash = signed_msg_hash("test");
-        assert_eq!(hash.to_hex(), "a6f87fe6d58a032c320ff8d1541656f0282c2c7bfcc69d61af4c8e8ed528e49c");
+        assert_eq!(hash.to_hex(), "9534c129a0eec7aaec6b6145d5014c2867d573f23a9827089ff09d5c357597dc");
     }
 
     #[test]
@@ -327,7 +327,7 @@ mod tests {
         use ::AddressType;
 
         let secp = secp256k1::Secp256k1::new();
-        let message = "rust-bitcoin MessageSignature test";
+        let message = "rust-dashcore MessageSignature test";
         let msg_hash = super::signed_msg_hash(&message);
         let msg = secp256k1::Message::from_slice(&msg_hash).expect("message");
 
@@ -345,14 +345,14 @@ mod tests {
         assert_eq!(pubkey.compressed, true);
         assert_eq!(pubkey.inner, secp256k1::PublicKey::from_secret_key(&secp, &privkey));
 
-        let p2pkh = ::Address::p2pkh(&pubkey, ::Network::Bitcoin);
+        let p2pkh = ::Address::p2pkh(&pubkey, ::Network::Dash);
         assert_eq!(signature2.is_signed_by_address(&secp, &p2pkh, msg_hash), Ok(true));
-        let p2wpkh = ::Address::p2wpkh(&pubkey, ::Network::Bitcoin).unwrap();
+        let p2wpkh = ::Address::p2wpkh(&pubkey, ::Network::Dash).unwrap();
         assert_eq!(
             signature2.is_signed_by_address(&secp, &p2wpkh, msg_hash),
             Err(MessageSignatureError::UnsupportedAddressType(AddressType::P2wpkh))
         );
-        let p2shwpkh = ::Address::p2shwpkh(&pubkey, ::Network::Bitcoin).unwrap();
+        let p2shwpkh = ::Address::p2shwpkh(&pubkey, ::Network::Dash).unwrap();
         assert_eq!(
             signature2.is_signed_by_address(&secp, &p2shwpkh, msg_hash),
             Err(MessageSignatureError::UnsupportedAddressType(AddressType::P2sh))
@@ -379,7 +379,7 @@ mod tests {
             &::base64::decode(&pubkey_base64).expect("base64 string")
         ).expect("pubkey slice");
 
-        let p2pkh = ::Address::p2pkh(&pubkey, ::Network::Bitcoin);
+        let p2pkh = ::Address::p2pkh(&pubkey, ::Network::Dash);
         assert_eq!(signature.is_signed_by_address(&secp, &p2pkh, msg_hash), Ok(false));
     }
 }

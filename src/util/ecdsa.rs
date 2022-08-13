@@ -23,9 +23,8 @@ use prelude::*;
 use core::str::FromStr;
 use core::{fmt, iter};
 use hashes::hex::{self, FromHex};
-use blockdata::transaction::NonStandardSighashType;
 use secp256k1;
-use EcdsaSighashType;
+use blockdata::transaction::hash_type::{EcdsaSighashType, NonStandardSighashType};
 
 /// An ECDSA signature with the corresponding hash type.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -38,7 +37,7 @@ pub struct EcdsaSig {
 }
 
 impl EcdsaSig {
-    /// Constructs ECDSA bitcoin signature for [`EcdsaSighashType::All`]
+    /// Constructs ECDSA dash signature for [`EcdsaSighashType::All`]
     pub fn sighash_all(sig: secp256k1::ecdsa::Signature) -> EcdsaSig {
         EcdsaSig {
             sig,

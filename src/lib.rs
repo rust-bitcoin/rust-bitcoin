@@ -61,7 +61,9 @@
 #![deny(unused_imports)]
 #![deny(missing_docs)]
 #![deny(unused_must_use)]
-#![deny(broken_intra_doc_links)]
+
+// #[rustversion::since(1.48)]
+// #[deny(rustdoc::broken_intra_doc_links)]
 
 #[cfg(not(any(feature = "std", feature = "no-std")))]
 compile_error!("at least one of the `std` or `no-std` features must be enabled");
@@ -125,16 +127,17 @@ pub mod consensus;
 pub mod hash_types;
 pub mod policy;
 pub mod ephemerealdata;
+pub mod bls_sig_utils;
 
 pub use hash_types::*;
 pub use blockdata::block::Block;
 pub use blockdata::block::BlockHeader;
 pub use blockdata::script::Script;
 pub use blockdata::transaction::Transaction;
-pub use blockdata::transaction::TxIn;
-pub use blockdata::transaction::TxOut;
-pub use blockdata::transaction::OutPoint;
-pub use blockdata::transaction::EcdsaSighashType;
+pub use blockdata::transaction::txin::TxIn;
+pub use blockdata::transaction::txout::TxOut;
+pub use blockdata::transaction::outpoint::OutPoint;
+pub use blockdata::transaction::hash_type::EcdsaSighashType;
 pub use blockdata::witness::Witness;
 pub use ephemerealdata::instant_lock::InstantLock;
 pub use consensus::encode::VarInt;
@@ -156,7 +159,7 @@ pub use util::schnorr::{self, SchnorrSig, SchnorrSigError};
 pub use util::key::{PrivateKey, PublicKey, XOnlyPublicKey, KeyPair};
 pub use util::psbt;
 #[allow(deprecated)]
-pub use blockdata::transaction::SigHashType;
+pub use blockdata::transaction::hash_type::SigHashType;
 
 #[cfg(feature = "std")]
 use std::io;

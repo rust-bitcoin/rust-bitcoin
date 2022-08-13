@@ -20,7 +20,7 @@ use core::str::FromStr;
 use secp256k1;
 use blockdata::script::Script;
 use blockdata::witness::Witness;
-use blockdata::transaction::{Transaction, TxOut, NonStandardSighashType, SighashTypeParseError};
+use blockdata::transaction::{Transaction, txout::TxOut, hash_type::NonStandardSighashType};
 use consensus::encode;
 use hashes::{self, hash160, ripemd160, sha256, sha256d};
 use secp256k1::XOnlyPublicKey;
@@ -34,7 +34,8 @@ use util::key::PublicKey;
 
 use util::taproot::{ControlBlock, LeafVersion, TapLeafHash, TapBranchHash};
 use util::sighash;
-use {EcdsaSighashType, SchnorrSighashType, EcdsaSig, SchnorrSig};
+use {SchnorrSighashType, EcdsaSig, SchnorrSig};
+use blockdata::transaction::hash_type::{EcdsaSighashType, SighashTypeParseError};
 
 /// Type: Non-Witness UTXO PSBT_IN_NON_WITNESS_UTXO = 0x00
 const PSBT_IN_NON_WITNESS_UTXO: u8 = 0x00;

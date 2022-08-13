@@ -24,7 +24,7 @@ use io;
 
 use blockdata::script::Script;
 use blockdata::witness::Witness;
-use blockdata::transaction::{Transaction, TxOut};
+use blockdata::transaction::{Transaction, txout::TxOut};
 use consensus::encode::{self, serialize, Decodable, Encodable, deserialize_partial};
 use secp256k1::{self, XOnlyPublicKey};
 use util::bip32::{ChildNumber, Fingerprint, KeySource};
@@ -116,7 +116,7 @@ impl Deserialize for EcdsaSig {
         // a scriptSig or witness" we should ideally use a consensus deserialization and do
         // not error on a non-standard values. However,
         //
-        // 1) the current implementation of from_u32_consensus(`flag`) does not preserve
+        // 1) the current implementation of from_consensus(`flag`) does not preserve
         // the sighash byte `flag` mapping all unknown values to EcdsaSighashType::All or
         // EcdsaSighashType::AllPlusAnyOneCanPay. Therefore, break the invariant
         // EcdsaSig::from_slice(&sl[..]).to_vec = sl.

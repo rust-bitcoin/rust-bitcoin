@@ -23,11 +23,13 @@ use hashes::Hash;
 use hash_types::Sighash;
 use blockdata::script::Script;
 use blockdata::witness::Witness;
-use blockdata::transaction::{Transaction, TxIn, EcdsaSighashType};
+use blockdata::transaction::{Transaction, hash_type::EcdsaSighashType};
 use consensus::{encode, Encodable};
 
 use io;
 use core::ops::{Deref, DerefMut};
+use blockdata::transaction::special_transaction::TransactionPayload;
+use blockdata::transaction::txin::TxIn;
 use util::sighash;
 
 /// Parts of a sighash which are common across inputs or signatures, and which are
@@ -35,7 +37,7 @@ use util::sighash;
 #[derive(Clone, PartialEq, Eq, Debug)]
 #[deprecated(since = "0.24.0", note = "please use [sighash::SighashCache] instead")]
 pub struct SighashComponents {
-    tx_version: i32,
+    tx_version: u16,
     tx_locktime: u32,
     /// Hash of all the previous outputs
     pub hash_prevouts: Sighash,
@@ -43,6 +45,8 @@ pub struct SighashComponents {
     pub hash_sequence: Sighash,
     /// Hash of all the outputs in this transaction
     pub hash_outputs: Sighash,
+    /// Transaction payload for special transactions
+    pub special_transaction_payload: Option<TransactionPayload>,
 }
 
 #[allow(deprecated)]
@@ -82,6 +86,7 @@ impl SighashComponents {
             hash_prevouts,
             hash_sequence,
             hash_outputs,
+            special_transaction_payload: tx.special_transaction_payload.clone(),
         }
     }
 
@@ -164,11 +169,11 @@ impl<R: DerefMut<Target = Transaction>> SigHashCache<R> {
     /// panics if `input_index` is out of bounds with respect of the number of inputs
     ///
     /// ```
-    /// use dashcore::blockdata::transaction::{Transaction, EcdsaSighashType};
+    /// use dashcore::blockdata::transaction::{Transaction, hash_type::EcdsaSighashType};
     /// use dashcore::util::bip143::SigHashCache;
     /// use dashcore::Script;
     ///
-    /// let mut tx_to_sign = Transaction { version: 2, lock_time: 0, input: Vec::new(), output: Vec::new() };
+    /// let mut tx_to_sign = Transaction { version: 2, lock_time: 0, input: Vec::new(), output: Vec::new(), special_transaction_payload: None };
     /// let input_count = tx_to_sign.input.len();
     ///
     /// let mut sig_hasher = SigHashCache::new(&mut tx_to_sign);
@@ -201,7 +206,7 @@ mod tests {
 
     fn p2pkh_hex(pk: &str) -> Script {
         let pk: PublicKey = PublicKey::from_str(pk).unwrap();
-        let witness_script = Address::p2pkh(&pk, Network::Bitcoin).script_pubkey();
+        let witness_script = Address::p2pkh(&pk, Network::Dash).script_pubkey();
         witness_script
     }
 
@@ -211,7 +216,7 @@ mod tests {
         let raw_expected = Sighash::from_hex(expected_result).unwrap();
         let expected_result = Sighash::from_slice(&raw_expected[..]).unwrap();
         let mut cache = SigHashCache::new(&tx);
-        let sighash_type = EcdsaSighashType::from_u32_consensus(hash_type);
+        let sighash_type = EcdsaSighashType::from_consensus(hash_type);
         let actual_result = cache.signature_hash(input_index, &script, value, sighash_type);
         assert_eq!(actual_result, expected_result);
     }
@@ -245,12 +250,13 @@ mod tests {
                 hash_outputs: hex_hash!(
                     Sighash, "863ef3e1a92afbfdb97f31ad0fc7683ee943e9abcf2501590ff8f6551f47e5e5"
                 ),
+                special_transaction_payload: None
             }
         );
 
         assert_eq!(
             comp.sighash_all(&tx.input[1], &witness_script, value),
-            hex_hash!(Sighash, "c37af31116d1b27caf68aae9e3ac82f1477929014d5b917657d0eb49478cb670")
+            hex_hash!(Sighash, "313ca7f8ba3ad9da3eb040a61e2768eceb7126d610c13dbd440fdc3e1f1d07e0")
         );
     }
 
@@ -281,12 +287,13 @@ mod tests {
                 hash_outputs: hex_hash!(
                     Sighash, "de984f44532e2173ca0d64314fcefe6d30da6f8cf27bafa706da61df8a226c83"
                 ),
+                special_transaction_payload: None
             }
         );
 
         assert_eq!(
             comp.sighash_all(&tx.input[0], &witness_script, value),
-            hex_hash!(Sighash, "64f3b0f4dd2bb3aa1ce8566d220cc74dda9df97d8490cc81d89d735c92e59fb6")
+            hex_hash!(Sighash, "1c9c7380e80e8b12f62b896cb2a2f994c5f5d86ebb8b803bfdeab385ffd3a7a9")
         );
     }
 
@@ -324,23 +331,24 @@ mod tests {
                 hash_outputs: hex_hash!(
                     Sighash, "bc4d309071414bed932f98832b27b4d76dad7e6c1346f487a8fdbb8eb90307cc"
                 ),
+                special_transaction_payload: None
             }
         );
 
         assert_eq!(
             comp.sighash_all(&tx.input[0], &witness_script, value),
-            hex_hash!(Sighash, "185c0be5263dce5b4bb50a047973c1b6272bfbd0103a89444597dc40b248ee7c")
+            hex_hash!(Sighash, "3a892568a19aee7bb185d5b4f7359e3e20d09db39ea38fdaf73eb719394fde69")
         );
     }
     #[test]
     fn bip143_sighash_flags() {
         // All examples generated via Bitcoin Core RPC using signrawtransactionwithwallet
         // with additional debug printing
-        run_test_sighash_bip143("0200000001cf309ee0839b8aaa3fbc84f8bd32e9c6357e99b49bf6a3af90308c68e762f1d70100000000feffffff0288528c61000000001600146e8d9e07c543a309dcdeba8b50a14a991a658c5be0aebb0000000000160014698d8419804a5d5994704d47947889ff7620c004db000000", "76a91462744660c6b5133ddeaacbc57d2dc2d7b14d0b0688ac", 0, 1648888940, 0x01, "0a1bc2758dbb5b3a56646f8cafbf63f410cc62b77a482f8b87552683300a7711");
-        run_test_sighash_bip143("0200000001cf309ee0839b8aaa3fbc84f8bd32e9c6357e99b49bf6a3af90308c68e762f1d70100000000feffffff0288528c61000000001600146e8d9e07c543a309dcdeba8b50a14a991a658c5be0aebb0000000000160014698d8419804a5d5994704d47947889ff7620c004db000000", "76a91462744660c6b5133ddeaacbc57d2dc2d7b14d0b0688ac", 0, 1648888940, 0x02, "3e275ac8b084f79f756dcd535bffb615cc94a685eefa244d9031eaf22e4cec12");
-        run_test_sighash_bip143("0200000001cf309ee0839b8aaa3fbc84f8bd32e9c6357e99b49bf6a3af90308c68e762f1d70100000000feffffff0288528c61000000001600146e8d9e07c543a309dcdeba8b50a14a991a658c5be0aebb0000000000160014698d8419804a5d5994704d47947889ff7620c004db000000", "76a91462744660c6b5133ddeaacbc57d2dc2d7b14d0b0688ac", 0, 1648888940, 0x03, "191a08165ffacc3ea55753b225f323c35fd00d9cc0268081a4a501921fc6ec14");
-        run_test_sighash_bip143("0200000001cf309ee0839b8aaa3fbc84f8bd32e9c6357e99b49bf6a3af90308c68e762f1d70100000000feffffff0288528c61000000001600146e8d9e07c543a309dcdeba8b50a14a991a658c5be0aebb0000000000160014698d8419804a5d5994704d47947889ff7620c004db000000", "76a91462744660c6b5133ddeaacbc57d2dc2d7b14d0b0688ac", 0, 1648888940, 0x81, "4b6b612530f94470bbbdef18f57f2990d56b239f41b8728b9a49dc8121de4559");
-        run_test_sighash_bip143("0200000001cf309ee0839b8aaa3fbc84f8bd32e9c6357e99b49bf6a3af90308c68e762f1d70100000000feffffff0288528c61000000001600146e8d9e07c543a309dcdeba8b50a14a991a658c5be0aebb0000000000160014698d8419804a5d5994704d47947889ff7620c004db000000", "76a91462744660c6b5133ddeaacbc57d2dc2d7b14d0b0688ac", 0, 1648888940, 0x82, "a7e916d3acd4bb97a21e6793828279aeab02162adf8099ea4f309af81f3d5adb");
-        run_test_sighash_bip143("0200000001cf309ee0839b8aaa3fbc84f8bd32e9c6357e99b49bf6a3af90308c68e762f1d70100000000feffffff0288528c61000000001600146e8d9e07c543a309dcdeba8b50a14a991a658c5be0aebb0000000000160014698d8419804a5d5994704d47947889ff7620c004db000000", "76a91462744660c6b5133ddeaacbc57d2dc2d7b14d0b0688ac", 0, 1648888940, 0x83, "d9276e2a48648ddb53a4aaa58314fc2b8067c13013e1913ffb67e0988ce82c78");
+        run_test_sighash_bip143("0200000001cf309ee0839b8aaa3fbc84f8bd32e9c6357e99b49bf6a3af90308c68e762f1d70100000000feffffff0288528c61000000001600146e8d9e07c543a309dcdeba8b50a14a991a658c5be0aebb0000000000160014698d8419804a5d5994704d47947889ff7620c004db000000", "76a91462744660c6b5133ddeaacbc57d2dc2d7b14d0b0688ac", 0, 1648888940, 0x01, "8ada71798be05f37bcb5f4616f6bae8398f6f964d5a30f37b8602a2b9128d7d1");
+        run_test_sighash_bip143("0200000001cf309ee0839b8aaa3fbc84f8bd32e9c6357e99b49bf6a3af90308c68e762f1d70100000000feffffff0288528c61000000001600146e8d9e07c543a309dcdeba8b50a14a991a658c5be0aebb0000000000160014698d8419804a5d5994704d47947889ff7620c004db000000", "76a91462744660c6b5133ddeaacbc57d2dc2d7b14d0b0688ac", 0, 1648888940, 0x02, "9befbc916ed910f46e5426ed5aaff03e09f1574aedada0c330382eded78b24a6");
+        run_test_sighash_bip143("0200000001cf309ee0839b8aaa3fbc84f8bd32e9c6357e99b49bf6a3af90308c68e762f1d70100000000feffffff0288528c61000000001600146e8d9e07c543a309dcdeba8b50a14a991a658c5be0aebb0000000000160014698d8419804a5d5994704d47947889ff7620c004db000000", "76a91462744660c6b5133ddeaacbc57d2dc2d7b14d0b0688ac", 0, 1648888940, 0x03, "e500fc70ec0d42b895aaeca4aa4db352ed6876f9a12f1f7af4325bbef5442380");
+        run_test_sighash_bip143("0200000001cf309ee0839b8aaa3fbc84f8bd32e9c6357e99b49bf6a3af90308c68e762f1d70100000000feffffff0288528c61000000001600146e8d9e07c543a309dcdeba8b50a14a991a658c5be0aebb0000000000160014698d8419804a5d5994704d47947889ff7620c004db000000", "76a91462744660c6b5133ddeaacbc57d2dc2d7b14d0b0688ac", 0, 1648888940, 0x81, "10f6d9eff2a9ce5d70e45d24c9b1207cda90ae85d4dca987b6cf7e9429558c9b");
+        run_test_sighash_bip143("0200000001cf309ee0839b8aaa3fbc84f8bd32e9c6357e99b49bf6a3af90308c68e762f1d70100000000feffffff0288528c61000000001600146e8d9e07c543a309dcdeba8b50a14a991a658c5be0aebb0000000000160014698d8419804a5d5994704d47947889ff7620c004db000000", "76a91462744660c6b5133ddeaacbc57d2dc2d7b14d0b0688ac", 0, 1648888940, 0x82, "cef95d4dc84c2374657f4ae14cbf85217fc2c19dd38476c1751142e4f5522758");
+        run_test_sighash_bip143("0200000001cf309ee0839b8aaa3fbc84f8bd32e9c6357e99b49bf6a3af90308c68e762f1d70100000000feffffff0288528c61000000001600146e8d9e07c543a309dcdeba8b50a14a991a658c5be0aebb0000000000160014698d8419804a5d5994704d47947889ff7620c004db000000", "76a91462744660c6b5133ddeaacbc57d2dc2d7b14d0b0688ac", 0, 1648888940, 0x83, "9c03ee1e7a7836cb92f86b80b6ad782e9debe40a56874b40f636a6c83aa40989");
     }
 }

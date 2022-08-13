@@ -15,6 +15,7 @@
 use prelude::*;
 
 use io::{self, Cursor, Read};
+use blockdata::transaction::special_transaction::TransactionType;
 
 use blockdata::transaction::Transaction;
 use consensus::{encode, Encodable, Decodable};
@@ -123,11 +124,18 @@ impl PartiallySignedTransaction {
                                     // Manually deserialized to ensure 0-input
                                     // txs without witnesses are deserialized
                                     // properly.
+                                    let version = Decodable::consensus_decode(&mut decoder)?;
+                                    let transaction_type: TransactionType = Decodable::consensus_decode(&mut decoder)?;
+                                    let input = Decodable::consensus_decode(&mut decoder)?;
+                                    let output = Decodable::consensus_decode(&mut decoder)?;
+                                    let lock_time = Decodable::consensus_decode(&mut decoder)?;
+
                                     tx = Some(Transaction {
-                                        version: Decodable::consensus_decode(&mut decoder)?,
-                                        input: Decodable::consensus_decode(&mut decoder)?,
-                                        output: Decodable::consensus_decode(&mut decoder)?,
-                                        lock_time: Decodable::consensus_decode(&mut decoder)?,
+                                        version,
+                                        lock_time,
+                                        input,
+                                        output,
+                                        special_transaction_payload: transaction_type.consensus_decode(&mut decoder)?
                                     });
 
                                     if decoder.position() != vlen as u64 {

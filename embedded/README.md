@@ -19,7 +19,7 @@ Output should be something like:
 heap size 524288
 secp buf size 66240
 Seed WIF: L1HKVVLHXiUhecWnwFYF6L3shkf1E12HUmuZTESvBXUdx3yqVP1D
-Address: bc1qpx9t9pzzl4qsydmhyt6ctrxxjd4ep549np9993
+Address: ds1qpx9t9pzzl4qsydmhyt6ctrxxjd4ep549jaqrtd
 ```
 
 Note that this heap size is required because of the amount of stack used by libsecp256k1 when initializing a context.

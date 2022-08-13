@@ -1,4 +1,4 @@
-# Contributing to rust-bitcoin
+# Contributing to rust-dashcore
 
 **Heads up about upcoming edition change**
 
@@ -8,9 +8,9 @@ There will be a lot of rebasing after the edition change.
 
 :+1::tada: First off, thanks for taking the time to contribute! :tada::+1:
 
-The following is a set of guidelines for contributing to Rust Bitcoin
-implementation and other Rust Bitcoin-related projects, which are hosted in the
-[Rust Bitcoin Community](https://github.com/rust-bitcoin) on GitHub. These are
+The following is a set of guidelines for contributing to Rust Dash Core
+implementation and other Rust Dash-related projects, which are hosted in the
+[Rust Dash Core Community](https://github.com/rust-dashcore) on GitHub. These are
 mostly guidelines, not rules. Use your best judgment, and feel free to propose
 changes to this document in a pull request.
 
@@ -35,7 +35,7 @@ changes to this document in a pull request.
 
 ## General
 
-The Rust Bitcoin project operates an open contributor model where anyone is
+The Rust Dash Core project operates an open contributor model where anyone is
 welcome to contribute towards development in the form of peer review,
 documentation, testing and patches.
 

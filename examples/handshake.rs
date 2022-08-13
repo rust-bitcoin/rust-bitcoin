@@ -29,7 +29,7 @@ fn main() {
     let version_message = build_version_message(address);
 
     let first_message = message::RawNetworkMessage {
-        magic: constants::Network::Bitcoin.magic(),
+        magic: constants::Network::Dash.magic(),
         payload: version_message,
     };
 
@@ -49,7 +49,7 @@ fn main() {
                     println!("Received version message: {:?}", reply.payload);
 
                     let second_message = message::RawNetworkMessage {
-                        magic: constants::Network::Bitcoin.magic(),
+                        magic: constants::Network::Dash.magic(),
                         payload: message::NetworkMessage::Verack,
                     };
 

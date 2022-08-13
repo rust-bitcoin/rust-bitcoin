@@ -30,15 +30,18 @@ use hashes::hex::{self, HexIterator};
 use hashes::sha256d;
 use blockdata::opcodes;
 use blockdata::script;
-use blockdata::transaction::{OutPoint, Transaction, TxOut, TxIn};
 use blockdata::block::{Block, BlockHeader};
+use blockdata::transaction::outpoint::OutPoint;
+use blockdata::transaction::txin::TxIn;
+use blockdata::transaction::txout::TxOut;
 use blockdata::witness::Witness;
 use network::constants::Network;
+use Transaction;
 use util::uint::Uint256;
 
 /// The maximum allowable sequence number
 pub const MAX_SEQUENCE: u32 = 0xFFFFFFFF;
-/// How many satoshis are in "one bitcoin"
+/// How many duffs are in "one dash"
 pub const COIN_VALUE: u64 = 100_000_000;
 /// How many seconds between blocks we expect on average
 pub const TARGET_BLOCK_SPACING: u32 = 600;
@@ -54,14 +57,14 @@ pub const MIN_TRANSACTION_WEIGHT: u32 = 4 * 60;
 pub const WITNESS_SCALE_FACTOR: usize = 4;
 /// The maximum allowed number of signature check operations in a block
 pub const MAX_BLOCK_SIGOPS_COST: i64 = 80_000;
-/// Mainnet (bitcoin) pubkey address prefix.
-pub const PUBKEY_ADDRESS_PREFIX_MAIN: u8 = 0; // 0x00
-/// Mainnet (bitcoin) script address prefix.
-pub const SCRIPT_ADDRESS_PREFIX_MAIN: u8 = 5; // 0x05
-/// Test (tesnet, signet, regtest) pubkey address prefix.
-pub const PUBKEY_ADDRESS_PREFIX_TEST: u8 = 111; // 0x6f
-/// Test (tesnet, signet, regtest) script address prefix.
-pub const SCRIPT_ADDRESS_PREFIX_TEST: u8 = 196; // 0xc4
+/// Mainnet (dash) pubkey address prefix.
+pub const PUBKEY_ADDRESS_PREFIX_MAIN: u8 = 76; // 0x4C
+/// Mainnet (dash) script address prefix.
+pub const SCRIPT_ADDRESS_PREFIX_MAIN: u8 = 16; // 0x10
+/// Test (testnet, devnet, regtest) pubkey address prefix.
+pub const PUBKEY_ADDRESS_PREFIX_TEST: u8 = 140; // 0x8C
+/// Test (testnet, devnet, regtest) script address prefix.
+pub const SCRIPT_ADDRESS_PREFIX_TEST: u8 = 19; // 0x13
 /// The maximum allowed script size.
 pub const MAX_SCRIPT_ELEMENT_SIZE: usize = 520;
 /// How may blocks between halvings.
@@ -80,13 +83,14 @@ pub fn max_money(_: Network) -> u64 {
 }
 
 /// Constructs and returns the coinbase (and only) transaction of the Bitcoin genesis block
-fn bitcoin_genesis_tx() -> Transaction {
+fn dash_genesis_tx() -> Transaction {
     // Base
     let mut ret = Transaction {
         version: 1,
         lock_time: 0,
         input: vec![],
         output: vec![],
+        special_transaction_payload: None
     };
 
     // Inputs
@@ -120,11 +124,11 @@ fn bitcoin_genesis_tx() -> Transaction {
 
 /// Constructs and returns the genesis block
 pub fn genesis_block(network: Network) -> Block {
-    let txdata = vec![bitcoin_genesis_tx()];
+    let txdata = vec![dash_genesis_tx()];
     let hash: sha256d::Hash = txdata[0].txid().into();
     let merkle_root = hash.into();
     match network {
-        Network::Bitcoin => {
+        Network::Dash => {
             Block {
                 header: BlockHeader {
                     version: 1,
@@ -150,7 +154,7 @@ pub fn genesis_block(network: Network) -> Block {
                 txdata,
             }
         }
-        Network::Signet => {
+        Network::Devnet => {
             Block {
                 header: BlockHeader {
                     version: 1,
@@ -186,12 +190,12 @@ mod test {
 
     use network::constants::Network;
     use consensus::encode::serialize;
-    use blockdata::constants::{genesis_block, bitcoin_genesis_tx};
+    use blockdata::constants::{genesis_block, dash_genesis_tx};
     use blockdata::constants::{MAX_SEQUENCE, COIN_VALUE};
 
     #[test]
     fn bitcoin_genesis_first_transaction() {
-        let gen = bitcoin_genesis_tx();
+        let gen = dash_genesis_tx();
 
         assert_eq!(gen.version, 1);
         assert_eq!(gen.input.len(), 1);
@@ -213,7 +217,7 @@ mod test {
 
     #[test]
     fn bitcoin_genesis_full_block() {
-        let gen = genesis_block(Network::Bitcoin);
+        let gen = genesis_block(Network::Dash);
 
         assert_eq!(gen.header.version, 1);
         assert_eq!(gen.header.prev_blockhash, Default::default());
@@ -241,8 +245,8 @@ mod test {
     }
 
     #[test]
-    fn signet_genesis_full_block() {
-        let gen = genesis_block(Network::Signet);
+    fn devnet_genesis_full_block() {
+        let gen = genesis_block(Network::Devnet);
         assert_eq!(gen.header.version, 1);
         assert_eq!(gen.header.prev_blockhash, Default::default());
         assert_eq!(format!("{:x}", gen.header.merkle_root),

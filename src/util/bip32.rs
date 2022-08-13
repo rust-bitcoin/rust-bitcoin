@@ -1,7 +1,7 @@
 // Rust Dash Library
 // Originally written in 2014 by
 //     Andrew Poelstra <apoelstra@wpsoftware.net>
-//     For Bitcoin
+//     For Dash
 // Updated for Dash in 2022 by
 //     The Dash Core Developers
 //
@@ -18,7 +18,7 @@
 //! BIP32 implementation.
 //!
 //! Implementation of BIP32 hierarchical deterministic wallets, as defined
-//! at <https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki>.
+//! at <https://github.com/Dash/bips/blob/master/bip-0032.mediawiki>.
 //!
 
 use prelude::*;
@@ -534,7 +534,7 @@ impl From<base58::Error> for Error {
 impl ExtendedPrivKey {
     /// Construct a new master key from a seed value
     pub fn new_master(network: Network, seed: &[u8]) -> Result<ExtendedPrivKey, Error> {
-        let mut hmac_engine: HmacEngine<sha512::Hash> = HmacEngine::new(b"Bitcoin seed");
+        let mut hmac_engine: HmacEngine<sha512::Hash> = HmacEngine::new(b"Dash seed");
         hmac_engine.input(seed);
         let hmac_result: Hmac<sha512::Hash> = Hmac::from_engine(hmac_engine);
 
@@ -615,7 +615,7 @@ impl ExtendedPrivKey {
         }
 
         let network = if data[0..4] == [0x04u8, 0x88, 0xAD, 0xE4] {
-            Network::Bitcoin
+            Network::Dash
         } else if data[0..4] == [0x04u8, 0x35, 0x83, 0x94] {
             Network::Testnet
         } else {
@@ -638,8 +638,8 @@ impl ExtendedPrivKey {
     pub fn encode(&self) -> [u8; 78] {
         let mut ret = [0; 78];
         ret[0..4].copy_from_slice(&match self.network {
-            Network::Bitcoin => [0x04, 0x88, 0xAD, 0xE4],
-            Network::Testnet | Network::Signet | Network::Regtest => [0x04, 0x35, 0x83, 0x94],
+            Network::Dash => [0x04, 0x88, 0xAD, 0xE4],
+            Network::Testnet | Network::Devnet | Network::Regtest => [0x04, 0x35, 0x83, 0x94],
         }[..]);
         ret[4] = self.depth as u8;
         ret[5..9].copy_from_slice(&self.parent_fingerprint[..]);
@@ -757,7 +757,7 @@ impl ExtendedPubKey {
 
         Ok(ExtendedPubKey {
             network: if data[0..4] == [0x04u8, 0x88, 0xB2, 0x1E] {
-                Network::Bitcoin
+                Network::Dash
             } else if data[0..4] == [0x04u8, 0x35, 0x87, 0xCF] {
                 Network::Testnet
             } else {
@@ -777,8 +777,8 @@ impl ExtendedPubKey {
     pub fn encode(&self) -> [u8; 78] {
         let mut ret = [0; 78];
         ret[0..4].copy_from_slice(&match self.network {
-            Network::Bitcoin => [0x04u8, 0x88, 0xB2, 0x1E],
-            Network::Testnet | Network::Signet | Network::Regtest => [0x04u8, 0x35, 0x87, 0xCF],
+            Network::Dash => [0x04u8, 0x88, 0xB2, 0x1E],
+            Network::Testnet | Network::Devnet | Network::Regtest => [0x04u8, 0x35, 0x87, 0xCF],
         }[..]);
         ret[4] = self.depth as u8;
         ret[5..9].copy_from_slice(&self.parent_fingerprint[..]);
@@ -851,7 +851,7 @@ mod tests {
     use secp256k1::{self, Secp256k1};
     use hashes::hex::FromHex;
 
-    use network::constants::Network::{self, Bitcoin};
+    use network::constants::Network::{self, Dash};
 
     #[test]
     fn test_parse_derivation_path() {
@@ -1017,34 +1017,34 @@ mod tests {
         let seed = Vec::from_hex("000102030405060708090a0b0c0d0e0f").unwrap();
 
         // m
-        test_path(&secp, Bitcoin, &seed, "m".parse().unwrap(),
-                  "xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbPy6cq3jPPqjiChkVvvNKmPGJxWUtg6LnF5kejMRNNU3TGtRBeJgk33yuGBxrMPHi",
-                  "xpub661MyMwAqRbcFtXgS5sYJABqqG9YLmC4Q1Rdap9gSE8NqtwybGhePY2gZ29ESFjqJoCu1Rupje8YtGqsefD265TMg7usUDFdp6W1EGMcet8");
+        test_path(&secp, Dash, &seed, "m".parse().unwrap(),
+                  "xprv9s21ZrQH143K2jzXqXpjaW7iTFzUsAMqwf5UqbQwjZifUCb3CA5GriZ5EYqp2hfHNjJXApSnygMQWptkbhyUAn7DgjqTL6ATpL3JU47syRi",
+                  "xpub661MyMwAqRbcFE4zwZMjwe4T1HpyGd5hJt15dypZHuFeLzvBjhPXQWsZ5nAdEbyHJinVJZM4N6M8wRtpxi5FJB2gQqpn2DAkUSbgVDsj2yS");
 
         // m/0h
-        test_path(&secp, Bitcoin, &seed, "m/0h".parse().unwrap(),
-                  "xprv9uHRZZhk6KAJC1avXpDAp4MDc3sQKNxDiPvvkX8Br5ngLNv1TxvUxt4cV1rGL5hj6KCesnDYUhd7oWgT11eZG7XnxHrnYeSvkzY7d2bhkJ7",
-                  "xpub68Gmy5EdvgibQVfPdqkBBCHxA5htiqg55crXYuXoQRKfDBFA1WEjWgP6LHhwBZeNK1VTsfTFUHCdrfp1bgwQ9xv5ski8PX9rL2dZXvgGDnw");
+        test_path(&secp, Dash, &seed, "m/0h".parse().unwrap(),
+                  "xprv9tuj7viMgLkw6gMGe5vNSvEDCddkgH5eu13owFCqkZZFaU1N9363SipgxTFukT8Z6HU5B5iaQA1op6gQL12t6u7k8JtH47s1TMHdJw1X7hg",
+                  "xpub67u5XSFFWiKEKARjk7TNp4AwkfUF5joWGDyQjdcTJu6ETGLWgaQHzX9AomNdVJfgsKiJwgT6ghazw6qVTmFNskBJ5TSYVQjuJeNM931xmNf");
 
         // m/0h/1
-        test_path(&secp, Bitcoin, &seed, "m/0h/1".parse().unwrap(),
-                   "xprv9wTYmMFdV23N2TdNG573QoEsfRrWKQgWeibmLntzniatZvR9BmLnvSxqu53Kw1UmYPxLgboyZQaXwTCg8MSY3H2EU4pWcQDnRnrVA1xe8fs",
-                   "xpub6ASuArnXKPbfEwhqN6e3mwBcDTgzisQN1wXN9BJcM47sSikHjJf3UFHKkNAWbWMiGj7Wf5uMash7SyYq527Hqck2AxYysAA7xmALppuCkwQ");
+        test_path(&secp, Dash, &seed, "m/0h/1".parse().unwrap(),
+                   "xprv9xc7kxoRsCeHwh7uK4gPumyqpdGcUVB5XjAKHTjPnrNLr6uMz6ZkpieuVDJykxumA5rWaHrCgRKsDEHnHnVhAHoYkwofb8aWF29xZAsRecq",
+                   "xpub6BbUAULKhaCbABCNR6DQGuvaNf76swtvtx5v5r91MBuKiuEWXdt1NWyPLWgDeT4yFBEyfL5r3y7CDAWmzzwa3EbdGEvJky6cMmTCRg5KPE7");
 
         // m/0h/1/2h
-        test_path(&secp, Bitcoin, &seed, "m/0h/1/2h".parse().unwrap(),
-                  "xprv9z4pot5VBttmtdRTWfWQmoH1taj2axGVzFqSb8C9xaxKymcFzXBDptWmT7FwuEzG3ryjH4ktypQSAewRiNMjANTtpgP4mLTj34bhnZX7UiM",
-                  "xpub6D4BDPcP2GT577Vvch3R8wDkScZWzQzMMUm3PWbmWvVJrZwQY4VUNgqFJPMM3No2dFDFGTsxxpG5uJh7n7epu4trkrX7x7DogT5Uv6fcLW5");
+        test_path(&secp, Dash, &seed, "m/0h/1/2h".parse().unwrap(),
+                  "xprv9ydrQzyHdoLuFpcSwdQYp5xTvxV5iKDuVWxjaRnGa6NQsYDFpr7rFbfe3enkdjsgt2E4mxJQPqumAgKxHmyDuRwW8qi6BjgGSenhjrA8L5r",
+                  "xpub6CdCpWWBUAuCUJgv3ewZBDuCUzKa7mwkrjtLNpBt8RuPkLYQNPS6oPz7tu9ERqLjJWoU5rvGjK85qNq64F5fwvf5G14c1q5zFiygt7PyqUf");
 
         // m/0h/1/2h/2
-        test_path(&secp, Bitcoin, &seed, "m/0h/1/2h/2".parse().unwrap(),
-                  "xprvA2JDeKCSNNZky6uBCviVfJSKyQ1mDYahRjijr5idH2WwLsEd4Hsb2Tyh8RfQMuPh7f7RtyzTtdrbdqqsunu5Mm3wDvUAKRHSC34sJ7in334",
-                  "xpub6FHa3pjLCk84BayeJxFW2SP4XRrFd1JYnxeLeU8EqN3vDfZmbqBqaGJAyiLjTAwm6ZLRQUMv1ZACTj37sR62cfN7fe5JnJ7dh8zL4fiyLHV");
+        test_path(&secp, Dash, &seed, "m/0h/1/2h/2".parse().unwrap(),
+                  "xprvA1Pn2MUU6kfyCEEa3gU6o1RhBZ9xZkL9HBakSa3xrQzf9fQSYRH6CCFHNAkMZ6UP7UTeAmLeuDAKXkas46T4M5MrjZaV1wzuyiFKmEtH3iC",
+                  "xpub6EP8Rs1Mw8EGQiK39i17A9NRjazSyD3zeQWMExTaQkXe2Tjb5xbLjzZmDUbBpzoGMDZkhChUryc9LYCLj9a6nSghS7DYGrqDqEJKwM1RSZ6");
 
         // m/0h/1/2h/2/1000000000
-        test_path(&secp, Bitcoin, &seed, "m/0h/1/2h/2/1000000000".parse().unwrap(),
-                  "xprvA41z7zogVVwxVSgdKUHDy1SKmdb533PjDz7J6N6mV6uS3ze1ai8FHa8kmHScGpWmj4WggLyQjgPie1rFSruoUihUZREPSL39UNdE3BBDu76",
-                  "xpub6H1LXWLaKsWFhvm6RVpEL9P4KfRZSW7abD2ttkWP3SSQvnyA8FSVqNTEcYFgJS2UaFcxupHiYkro49S8yGasTvXEYBVPamhGW6cFJodrTHy");
+        test_path(&secp, Dash, &seed, "m/0h/1/2h/2/1000000000".parse().unwrap(),
+                  "xprvA38ZJ22mSSEnoCJ2JdayaJCBYkerJFPiyLEaA2TLAqbMrGfA6MpjgfcjmMghz8WbBBVB5eN9RGVRFuR7yd7jhsLtghZVc6JA1whLVHPLSYm",
+                  "xpub6G7uhXZfGoo61gNVQf7ywS8v6nVLhi7aLZAAxQrwjB8Lj4zJdu8zETwDcdceDESZ1CwKjBJYN8TBcgp3PL4HRQJ4qQnZvsLUwC71y7ubyQD");
     }
 
     #[test]
@@ -1053,34 +1053,34 @@ mod tests {
         let seed = Vec::from_hex("fffcf9f6f3f0edeae7e4e1dedbd8d5d2cfccc9c6c3c0bdbab7b4b1aeaba8a5a29f9c999693908d8a8784817e7b7875726f6c696663605d5a5754514e4b484542").unwrap();
 
         // m
-        test_path(&secp, Bitcoin, &seed, "m".parse().unwrap(),
-                  "xprv9s21ZrQH143K31xYSDQpPDxsXRTUcvj2iNHm5NUtrGiGG5e2DtALGdso3pGz6ssrdK4PFmM8NSpSBHNqPqm55Qn3LqFtT2emdEXVYsCzC2U",
-                  "xpub661MyMwAqRbcFW31YEwpkMuc5THy2PSt5bDMsktWQcFF8syAmRUapSCGu8ED9W6oDMSgv6Zz8idoc4a6mr8BDzTJY47LJhkJ8UB7WEGuduB");
+        test_path(&secp, Dash, &seed, "m".parse().unwrap(),
+                  "xprv9s21ZrQH143K3KYj2Y9pojSeFSwFzy7BRcPj5h24q6dUh3nhSqiEPvJd9KW4WBj7fRHKWCtWDTv2pJWprVd61kwv1tULV3A6UcywSZmfaEx",
+                  "xpub661MyMwAqRbcFodC8ZgqAsPNoUmkQRq2nqKKt5RgPSATZr7qzP2Uwid6zaWHK95H9CnftcrubWRib631GpEWrhsDkP9s8a8gyjVw2xZK1fr");
 
         // m/0
-        test_path(&secp, Bitcoin, &seed, "m/0".parse().unwrap(),
-                  "xprv9vHkqa6EV4sPZHYqZznhT2NPtPCjKuDKGY38FBWLvgaDx45zo9WQRUT3dKYnjwih2yJD9mkrocEZXo1ex8G81dwSM1fwqWpWkeS3v86pgKt",
-                  "xpub69H7F5d8KSRgmmdJg2KhpAK8SR3DjMwAdkxj3ZuxV27CprR9LgpeyGmXUbC6wb7ERfvrnKZjXoUmmDznezpbZb7ap6r1D3tgFxHmwMkQTPH");
+        test_path(&secp, Dash, &seed, "m/0".parse().unwrap(),
+                  "xprv9va8t45dhTZr1Nu8PfTbdTfAjMZYaBt23xCVxyWfPuVpXMp7Vd12rAtCDKq9dW8kAqspRS5xAfTb5BrBozzBUq4NV7MS3uXETtzHcLpgkRp",
+                  "xpub69ZVHZcXXq89DrybVgzbzbbuHPQ2yebsRB86mMvGxF2oQA9G3AKHPyCg4aYRHTVwVYqYTnEFd5gvmE8CGHz2VQCALeMT4DHu6ukcc17n1dU");
 
         // m/0/2147483647h
-        test_path(&secp, Bitcoin, &seed, "m/0/2147483647h".parse().unwrap(),
-                  "xprv9wSp6B7kry3Vj9m1zSnLvN3xH8RdsPP1Mh7fAaR7aRLcQMKTR2vidYEeEg2mUCTAwCd6vnxVrcjfy2kRgVsFawNzmjuHc2YmYRmagcEPdU9",
-                  "xpub6ASAVgeehLbnwdqV6UKMHVzgqAG8Gr6riv3Fxxpj8ksbH9ebxaEyBLZ85ySDhKiLDBrQSARLq1uNRts8RuJiHjaDMBU4Zn9h8LZNnBC5y4a");
+        test_path(&secp, Dash, &seed, "m/0/2147483647h".parse().unwrap(),
+                  "xprv9vzqQRvuNb8AqQytGsxjdwp8GTaS7nW9FAGunYNks7Ag6eetiaw9JLYYxjGBVxZBScc1Gnv21W3EsS2Gj9UhFeenawYwYTBKr6sq6GUmWfW",
+                  "xpub69zBowToCxgU3u4MNuVk15krpVQvXFDzcPCWavnNRSheySz3G8FPr8s2ozijxZs37bLKXqGyhEa6jcZx85ikdGZ1JyNAxk44ayTzpLwuGzr");
 
         // m/0/2147483647h/1
-        test_path(&secp, Bitcoin, &seed, "m/0/2147483647h/1".parse().unwrap(),
-                  "xprv9zFnWC6h2cLgpmSA46vutJzBcfJ8yaJGg8cX1e5StJh45BBciYTRXSd25UEPVuesF9yog62tGAQtHjXajPPdbRCHuWS6T8XA2ECKADdw4Ef",
-                  "xpub6DF8uhdarytz3FWdA8TvFSvvAh8dP3283MY7p2V4SeE2wyWmG5mg5EwVvmdMVCQcoNJxGoWaU9DCWh89LojfZ537wTfunKau47EL2dhHKon");
+        test_path(&secp, Dash, &seed, "m/0/2147483647h/1".parse().unwrap(),
+                  "xprv9ypsdp1k6UdM9rmUC1dZDAzWnhodgSQK45augaYjffmvYZPRZJ7qxCagPCXPNvhzPQkxt6GUrmc4EDttkwckFic9zv1LRhuj4R6oe8Mg6mV",
+                  "xpub6CpE3KYdvrBeNLqwJ3AZaJwFLje85u8ARJWWUxxME1JuRMia6qS6VzuAETVauQHTrczxSCyDqo7dVULF8Pxbho8WMnp6YgtuvC58jb2Saxt");
 
         // m/0/2147483647h/1/2147483646h
-        test_path(&secp, Bitcoin, &seed, "m/0/2147483647h/1/2147483646h".parse().unwrap(),
-                  "xprvA1RpRA33e1JQ7ifknakTFpgNXPmW2YvmhqLQYMmrj4xJXXWYpDPS3xz7iAxn8L39njGVyuoseXzU6rcxFLJ8HFsTjSyQbLYnMpCqE2VbFWc",
-                  "xpub6ERApfZwUNrhLCkDtcHTcxd75RbzS1ed54G1LkBUHQVHQKqhMkhgbmJbZRkrgZw4koxb5JaHWkY4ALHY2grBGRjaDMzQLcgJvLJuZZvRcEL");
+        test_path(&secp, Dash, &seed, "m/0/2147483647h/1/2147483646h".parse().unwrap(),
+                  "xprvA1D4pPPcmJitrPcWK4NeHy9XmY3n9yMduiERDjn2LwoYhxL2xHSd1nCBSDsJMfREaVKuML2GdYHaERuYA1ZHAJGcx7n56dhDPQ2FyezwTXr",
+                  "xpub6ECRDtvWbgHC4sgyR5uef76GKZtGZS5VGwA228BduHLXakfBVpksZaWfHVarMGstw6vfwmsNdj7ikmpds9yLqMLiWMg3YnwFtjD21NMktpB");
 
         // m/0/2147483647h/1/2147483646h/2
-        test_path(&secp, Bitcoin, &seed, "m/0/2147483647h/1/2147483646h/2".parse().unwrap(),
-                  "xprvA2nrNbFZABcdryreWet9Ea4LvTJcGsqrMzxHx98MMrotbir7yrKCEXw7nadnHM8Dq38EGfSh6dqA9QWTyefMLEcBYJUuekgW4BYPJcr9E7j",
-                  "xpub6FnCn6nSzZAw5Tw7cgR9bi15UV96gLZhjDstkXXxvCLsUXBGXPdSnLFbdpq8p9HmGsApME5hQTZ3emM2rnY5agb9rXpVGyy3bdW6EEgAtqt");
+        test_path(&secp, Dash, &seed, "m/0/2147483647h/1/2147483646h/2".parse().unwrap(),
+                  "xprvA3iwKafNJDC6amJCGWePZMfncdS7QUEva5Lre5VaQjNkgwTYWHm6nBASMTQkwoeGC8RjXrM6SGHPqK5Fi9wN3iUVjsbFfwZHJUh8nMXsP1N",
+                  "xpub6GiHj6CG8akPoFNfNYBPvVcXAfGbovxmwJGTSTuBy4ujZjnh3q5MKyUvCjEcji686T3WNkw2L6Ln5Cxap9S34vY61KYyj8QSNNVdvKp6Kc1");
     }
 
     #[test]
@@ -1089,14 +1089,14 @@ mod tests {
         let seed = Vec::from_hex("4b381541583be4423346c643850da4b320e46a87ae3d2a4e6da11eba819cd4acba45d239319ac14f863b8d5ab5a0d0c64d2e8a1e7d1457df2e5a3c51c73235be").unwrap();
 
         // m
-        test_path(&secp, Bitcoin, &seed, "m".parse().unwrap(),
-                  "xprv9s21ZrQH143K25QhxbucbDDuQ4naNntJRi4KUfWT7xo4EKsHt2QJDu7KXp1A3u7Bi1j8ph3EGsZ9Xvz9dGuVrtHHs7pXeTzjuxBrCmmhgC6",
-                  "xpub661MyMwAqRbcEZVB4dScxMAdx6d4nFc9nvyvH3v4gJL378CSRZiYmhRoP7mBy6gSPSCYk6SzXPTf3ND1cZAceL7SfJ1Z3GC8vBgp2epUt13");
+        test_path(&secp, Dash, &seed, "m".parse().unwrap(),
+                  "xprv9s21ZrQH143K2WzvxhjUdopzTAXyGdmoXuYQtahTFgJBwnyN2Fi4B286NDSwW4sMmJq8AgNHYy8L8GenyKaG1fJc6JcJNxihRMn2UJYfoJn",
+                  "xpub661MyMwAqRbcF15Q4jGUzwmj1CNTg6Veu8U1gy74p1qApbJWZo2JipSaDWCc2jM8tvptC5CWRohjjcqCvLhifkGHUJBkdi6v1r7uUu9BG8v");
 
         // m/0h
-        test_path(&secp, Bitcoin, &seed, "m/0h".parse().unwrap(),
-                  "xprv9uPDJpEQgRQfDcW7BkF7eTya6RPxXeJCqCJGHuCJ4GiRVLzkTXBAJMu2qaMWPrS7AANYqdq6vcBcBUdJCVVFceUvJFjaPdGZ2y9WACViL4L",
-                  "xpub68NZiKmJWnxxS6aaHmn81bvJeTESw724CRDs6HbuccFQN9Ku14VQrADWgqbhhTHBaohPX4CjNLf9fq9MYo6oDaPPLPxSb7gwQN3ih19Zm4Y");
+        test_path(&secp, Dash, &seed, "m/0h".parse().unwrap(),
+                  "xprv9vJwFo9uB8DkGQQGj4V85CpJmRWoEMNb9FM9K1Csq6dyUQuXWRuivoJQg6CX66wRhgQ82DFKaiCCqUjwWmDNe74yuujkTfsC6XL2j379caj",
+                  "xpub69JHfJgo1Vn3UtUjq628SLm3KTMHdp6SWUGk7PcVPSAxMDEg3yDyUbctXPE8KdBhAoBHF5uNcKmn59z5jNzzHExi7yJUwL77NP5rGMQez8i");
 
     }
 
@@ -1157,7 +1157,7 @@ mod tests {
         }
 
         let xpriv = ExtendedPrivKey {
-            network: Network::Bitcoin,
+            network: Network::Dash,
             depth: 0,
             parent_fingerprint: Default::default(),
             child_number: ChildNumber::Normal { index: 0 },

@@ -31,7 +31,7 @@ fn main() {
     println!("Seed: {}", seed_hex);
 
     // default network as mainnet
-    let network = dashcore::Network::Bitcoin;
+    let network = dashcore::Network::Dash;
     println!("Network: {:?}", network);
 
     let seed = Vec::from_hex(seed_hex).unwrap();

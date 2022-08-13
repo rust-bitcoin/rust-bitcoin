@@ -42,13 +42,13 @@ macro_rules! impl_hashencode {
     }
 }
 
-hash_newtype!(Txid, sha256d::Hash, 32, doc="A bitcoin transaction hash/transaction ID.");
-hash_newtype!(Wtxid, sha256d::Hash, 32, doc="A bitcoin witness transaction ID.");
-hash_newtype!(BlockHash, sha256d::Hash, 32, doc="A bitcoin block hash.");
+hash_newtype!(Txid, sha256d::Hash, 32, doc="A dash transaction hash/transaction ID.");
+hash_newtype!(Wtxid, sha256d::Hash, 32, doc="A dash witness transaction ID.");
+hash_newtype!(BlockHash, sha256d::Hash, 32, doc="A dash block hash.");
 hash_newtype!(Sighash, sha256d::Hash, 32, doc="Hash of the transaction according to the signature algorithm");
 
 hash_newtype!(PubkeyHash, hash160::Hash, 20, doc="A hash of a public key.");
-hash_newtype!(ScriptHash, hash160::Hash, 20, doc="A hash of Bitcoin Script bytecode.");
+hash_newtype!(ScriptHash, hash160::Hash, 20, doc="A hash of Dash Script bytecode.");
 hash_newtype!(WPubkeyHash, hash160::Hash, 20, doc="SegWit version of a public key hash.");
 hash_newtype!(WScriptHash, sha256::Hash, 32, doc="SegWit version of a Bitcoin Script bytecode hash.");
 
@@ -60,14 +60,33 @@ hash_newtype!(XpubIdentifier, hash160::Hash, 20, doc="XpubIdentifier as defined 
 hash_newtype!(FilterHash, sha256d::Hash, 32, doc="Filter hash, as defined in BIP-157");
 hash_newtype!(FilterHeader, sha256d::Hash, 32, doc="Filter header, as defined in BIP-157");
 
+hash_newtype!(MerkleRootMasternodeList, sha256d::Hash, 32, doc="The merkle root of the masternode list");
+hash_newtype!(MerkleRootQuorums, sha256d::Hash, 32, doc="The merkle root of the quorums");
+
+hash_newtype!(SpecialTransactionPayloadHash, sha256d::Hash, 32, doc="A special transaction payload hash");
+hash_newtype!(InputsHash, sha256d::Hash, 32, doc="A hash of all transaction inputs");
+
+hash_newtype!(QuorumHash, sha256d::Hash, 32, doc="A hash used to identify a quorum");
+hash_newtype!(QuorumVVecHash, sha256d::Hash, 32, doc="A hash of a quorum verification vector");
 
 impl_hashencode!(Txid);
 impl_hashencode!(Wtxid);
 impl_hashencode!(BlockHash);
 impl_hashencode!(Sighash);
 
+impl_hashencode!(PubkeyHash);
+
 impl_hashencode!(TxMerkleNode);
 impl_hashencode!(WitnessMerkleNode);
 
 impl_hashencode!(FilterHash);
 impl_hashencode!(FilterHeader);
+
+impl_hashencode!(MerkleRootMasternodeList);
+impl_hashencode!(MerkleRootQuorums);
+
+impl_hashencode!(SpecialTransactionPayloadHash);
+impl_hashencode!(InputsHash);
+
+impl_hashencode!(QuorumHash);
+impl_hashencode!(QuorumVVecHash);

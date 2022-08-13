@@ -38,8 +38,8 @@ const MAX_BITS_TESTNET: Uint256 = Uint256([
     0x0000000000000000u64,
     0x00000000ffff0000u64,
 ]);
-/// Lowest possible difficulty for Signet. See comment on Params::pow_limit for more info.
-const MAX_BITS_SIGNET: Uint256 = Uint256([
+/// Lowest possible difficulty for Devnet. See comment on Params::pow_limit for more info.
+const MAX_BITS_DEVNET: Uint256 = Uint256([
     0x0000000000000000u64,
     0x0000000000000000u64,
     0x0000000000000000u64,
@@ -95,8 +95,8 @@ impl Params {
     /// Creates parameters set for the given network.
     pub fn new(network: Network) -> Self {
         match network {
-            Network::Bitcoin => Params {
-                network: Network::Bitcoin,
+            Network::Dash => Params {
+                network: Network::Dash,
                 bip16_time: 1333238400,                 // Apr 1 2012
                 bip34_height: 227931, // 000000000000024b89b42a942fe0d9fea3bb44ab7bd1b19115dd6a759c0808b8
                 bip65_height: 388381, // 000000000000000004c2b624ed5d7756c508d90fd0da2c7c679febfa6c4735f0
@@ -123,15 +123,15 @@ impl Params {
                 allow_min_difficulty_blocks: true,
                 no_pow_retargeting: false,
             },
-            Network::Signet => Params {
-                network: Network::Signet,
+            Network::Devnet => Params {
+                network: Network::Devnet,
                 bip16_time: 1333238400,                 // Apr 1 2012
                 bip34_height: 1,
                 bip65_height: 1,
                 bip66_height: 1,
                 rule_change_activation_threshold: 1916, // 95%
                 miner_confirmation_window: 2016,
-                pow_limit: MAX_BITS_SIGNET,
+                pow_limit: MAX_BITS_DEVNET,
                 pow_target_spacing: 10 * 60,            // 10 minutes.
                 pow_target_timespan: 14 * 24 * 60 * 60, // 2 weeks.
                 allow_min_difficulty_blocks: false,

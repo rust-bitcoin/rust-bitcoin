@@ -35,7 +35,7 @@ use prelude::*;
 use core::{fmt, mem, u32, convert::From};
 #[cfg(feature = "std")] use std::error;
 
-use hashes::{sha256d, Hash, sha256};
+use hashes::{sha256d, Hash, sha256, hash160};
 use hash_types::{BlockHash, FilterHash, TxMerkleNode, FilterHeader};
 
 use io::{self, Cursor, Read};
@@ -45,9 +45,11 @@ use util::psbt;
 use util::taproot::TapLeafHash;
 use hashes::hex::ToHex;
 
-use blockdata::transaction::{TxOut, Transaction, TxIn, OutPoint};
+use blockdata::transaction::{txout::TxOut, Transaction, txin::TxIn, outpoint::OutPoint};
+use blockdata::transaction::special_transaction::TransactionType;
 #[cfg(feature = "std")]
 use network::{message_blockdata::Inventory, address::{Address, AddrV2Message}};
+use Script;
 
 /// Encoding error
 #[derive(Debug)]
@@ -85,6 +87,17 @@ pub enum Error {
     ParseFailed(&'static str),
     /// Unsupported Segwit flag
     UnsupportedSegwitFlag(u8),
+    /// The Transaction type was not identified
+    UnknownSpecialTransactionType(u16),
+    /// We tried to convert the payload to the wrong type
+    WrongSpecialTransactionPayloadConversion {
+        /// The expected transaction type
+        expected: TransactionType,
+        /// The invalid transaction type
+        actual: TransactionType,
+    },
+    /// The script type was non standard
+    NonStandardScriptPayout(Script),
 }
 
 impl fmt::Display for Error {
@@ -103,6 +116,12 @@ impl fmt::Display for Error {
             Error::ParseFailed(ref e) => write!(f, "parse failed: {}", e),
             Error::UnsupportedSegwitFlag(ref swflag) => write!(f,
                 "unsupported segwit version: {}", swflag),
+            Error::UnknownSpecialTransactionType(ref stt) => write!(f,
+                                                               "unknown special transaction type: {}", stt),
+            Error::WrongSpecialTransactionPayloadConversion { expected: ref e, actual: ref a } => write!(f,
+                                                                                           "wrong special transaction payload conversion expected: {} got: {}", e, a),
+            Error::NonStandardScriptPayout(ref script) => write!(f,
+                                                        "non standard script payout: {}", script.to_hex()),
         }
     }
 }
@@ -120,7 +139,10 @@ impl ::std::error::Error for Error {
             | Error::NonMinimalVarInt
             | Error::UnknownNetworkMagic(..)
             | Error::ParseFailed(..)
-            | Error::UnsupportedSegwitFlag(..) => None,
+            | Error::UnsupportedSegwitFlag(..)
+            | Error::UnknownSpecialTransactionType(..)
+            | Error::WrongSpecialTransactionPayloadConversion{..}
+            | Error::NonStandardScriptPayout(..)=> None,
         }
     }
 }
@@ -178,6 +200,8 @@ pub fn deserialize_partial<T: Decodable>(data: &[u8]) -> Result<(T, usize), Erro
 
 /// Extensions of `Write` to encode data as per Bitcoin consensus
 pub trait WriteExt {
+    /// Output a 128-bit uint
+    fn emit_u128(&mut self, v: u128) -> Result<(), io::Error>;
     /// Output a 64-bit uint
     fn emit_u64(&mut self, v: u64) -> Result<(), io::Error>;
     /// Output a 32-bit uint
@@ -205,6 +229,8 @@ pub trait WriteExt {
 
 /// Extensions of `Read` to decode data as per Bitcoin consensus
 pub trait ReadExt {
+    /// Read a 128-bit uint
+    fn read_u128(&mut self) -> Result<u128, Error>;
     /// Read a 64-bit uint
     fn read_u64(&mut self) -> Result<u64, Error>;
     /// Read a 32-bit uint
@@ -252,6 +278,7 @@ macro_rules! decoder_fn {
 }
 
 impl<W: io::Write> WriteExt for W {
+    encoder_fn!(emit_u128, u128, u128_to_array_le);
     encoder_fn!(emit_u64, u64, u64_to_array_le);
     encoder_fn!(emit_u32, u32, u32_to_array_le);
     encoder_fn!(emit_u16, u16, u16_to_array_le);
@@ -260,12 +287,12 @@ impl<W: io::Write> WriteExt for W {
     encoder_fn!(emit_i16, i16, i16_to_array_le);
 
     #[inline]
-    fn emit_i8(&mut self, v: i8) -> Result<(), io::Error> {
-        self.write_all(&[v as u8])
-    }
-    #[inline]
     fn emit_u8(&mut self, v: u8) -> Result<(), io::Error> {
         self.write_all(&[v])
+    }
+    #[inline]
+    fn emit_i8(&mut self, v: i8) -> Result<(), io::Error> {
+        self.write_all(&[v as u8])
     }
     #[inline]
     fn emit_bool(&mut self, v: bool) -> Result<(), io::Error> {
@@ -278,6 +305,7 @@ impl<W: io::Write> WriteExt for W {
 }
 
 impl<R: Read> ReadExt for R {
+    decoder_fn!(read_u128, u128, slice_to_u128_le, 16);
     decoder_fn!(read_u64, u64, slice_to_u64_le, 8);
     decoder_fn!(read_u32, u32, slice_to_u32_le, 4);
     decoder_fn!(read_u16, u16, slice_to_u16_le, 2);
@@ -356,6 +384,7 @@ impl_int_encodable!(u8,  read_u8,  emit_u8);
 impl_int_encodable!(u16, read_u16, emit_u16);
 impl_int_encodable!(u32, read_u32, emit_u32);
 impl_int_encodable!(u64, read_u64, emit_u64);
+impl_int_encodable!(u128, read_u128, emit_u128);
 impl_int_encodable!(i8,  read_i8,  emit_i8);
 impl_int_encodable!(i16, read_i16, emit_i16);
 impl_int_encodable!(i32, read_i32, emit_i32);
@@ -521,6 +550,7 @@ impl_array!(8);
 impl_array!(10);
 impl_array!(12);
 impl_array!(16);
+impl_array!(20);
 impl_array!(32);
 impl_array!(33);
 impl_array!(96);
@@ -737,6 +767,18 @@ tuple_encode!(T0, T1, T2, T3, T4);
 tuple_encode!(T0, T1, T2, T3, T4, T5);
 tuple_encode!(T0, T1, T2, T3, T4, T5, T6);
 tuple_encode!(T0, T1, T2, T3, T4, T5, T6, T7);
+
+impl Encodable for hash160::Hash {
+    fn consensus_encode<S: io::Write>(&self, s: S) -> Result<usize, io::Error> {
+        self.into_inner().consensus_encode(s)
+    }
+}
+
+impl Decodable for hash160::Hash {
+    fn consensus_decode<D: io::Read>(d: D) -> Result<Self, Error> {
+        Ok(Self::from_inner(<<Self as Hash>::Inner>::consensus_decode(d)?))
+    }
+}
 
 impl Encodable for sha256d::Hash {
     fn consensus_encode<S: io::Write>(&self, s: S) -> Result<usize, io::Error> {

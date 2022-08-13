@@ -41,12 +41,12 @@ use hashes::{Hash, hex};
 use policy::DUST_RELAY_TX_FEE;
 #[cfg(feature="bitcoinconsensus")] use bitcoinconsensus;
 #[cfg(feature="bitcoinconsensus")] use core::convert::From;
-use OutPoint;
 
 use util::key::PublicKey;
 use util::address::WitnessVersion;
 use util::taproot::{LeafVersion, TapBranchHash, TapLeafHash};
 use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
+use blockdata::transaction::outpoint::OutPoint;
 use schnorr::{TapTweak, TweakedPublicKey, UntweakedPublicKey};
 
 /// A Bitcoin script.
