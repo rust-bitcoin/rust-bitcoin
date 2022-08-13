@@ -263,6 +263,7 @@ impl PublicKey {
     pub fn from_private_key<C: secp256k1::Signing>(secp: &Secp256k1<C>, sk: &PrivateKey) -> PublicKey {
         sk.public_key(secp)
     }
+
 }
 
 /// An opaque return type for PublicKey::to_sort_key
