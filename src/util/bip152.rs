@@ -20,6 +20,7 @@ use crate::{Block, BlockHash, BlockHeader, Transaction};
 
 /// A BIP-152 error
 #[derive(Clone, PartialEq, Eq, Debug, Copy, PartialOrd, Ord, Hash)]
+#[non_exhaustive]
 pub enum Error {
     /// An unknown version number was used.
     UnknownVersion,
@@ -37,7 +38,16 @@ impl fmt::Display for Error {
 }
 
 #[cfg(feature = "std")]
-impl error::Error for Error {}
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use self::Error::*;
+
+        match *self {
+            UnknownVersion | InvalidPrefill => None,
+        }
+    }
+}
 
 /// A [PrefilledTransaction] structure is used in [HeaderAndShortIds] to
 /// provide a list of a few transactions explicitly.

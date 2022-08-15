@@ -250,9 +250,9 @@ impl Default for TxIn {
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct Sequence(pub u32);
 
+/// An error in creating relative lock-times.
 #[derive(Clone, PartialEq, Eq, Debug)]
 #[non_exhaustive]
-/// An error in creating relative lock-times.
 pub enum RelativeLockTimeError {
     /// The input was too large
     IntegerOverflow(u32)
