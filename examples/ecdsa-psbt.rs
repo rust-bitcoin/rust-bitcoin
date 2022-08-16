@@ -34,6 +34,7 @@ use std::str::FromStr;
 
 use bitcoin::consensus::encode;
 use bitcoin::hashes::hex::{self, FromHex};
+use bitcoin::locktime::absolute;
 use bitcoin::secp256k1::{Secp256k1, Signing, Verification};
 use bitcoin::util::amount::ParseAmountError;
 use bitcoin::util::bip32::{
@@ -42,7 +43,7 @@ use bitcoin::util::bip32::{
 };
 use bitcoin::util::psbt::{self, Input, Psbt, PsbtSighashType};
 use bitcoin::{
-    address, Address, Amount, Network, OutPoint, PackedLockTime, PrivateKey, PublicKey, Script,
+    address, Address, Amount, Network, OutPoint, PrivateKey, PublicKey, Script,
     Sequence, Transaction, TxIn, TxOut, Txid, Witness,
 };
 
@@ -206,7 +207,7 @@ impl WatchOnly {
 
         let tx = Transaction {
             version: 2,
-            lock_time: PackedLockTime::ZERO,
+            lock_time: absolute::PackedLockTime::ZERO,
             input: vec![TxIn {
                 previous_output: OutPoint {
                     txid: Txid::from_hex(INPUT_UTXO_TXID)?,

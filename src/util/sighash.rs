@@ -1035,9 +1035,9 @@ impl<R: DerefMut<Target=Transaction>> SighashCache<R> {
     ///
     /// This allows in-line signing such as
     /// ```
-    /// use bitcoin::{EcdsaSighashType, PackedLockTime, Script, SighashCache, Transaction};
+    /// use bitcoin::{absolute, EcdsaSighashType, SighashCache, Transaction, Script};
     ///
-    /// let mut tx_to_sign = Transaction { version: 2, lock_time: PackedLockTime::ZERO, input: Vec::new(), output: Vec::new() };
+    /// let mut tx_to_sign = Transaction { version: 2, lock_time: absolute::PackedLockTime::ZERO, input: Vec::new(), output: Vec::new() };
     /// let input_count = tx_to_sign.input.len();
     ///
     /// let mut sig_hasher = SighashCache::new(&mut tx_to_sign);
@@ -1099,7 +1099,7 @@ mod tests {
     use secp256k1::{self, SecretKey, XOnlyPublicKey};
 
     use crate::{Script, Transaction, TxIn, TxOut, EcdsaSighashType, Address};
-    use crate::blockdata::locktime::PackedLockTime;
+    use crate::blockdata::locktime::absolute;
     use crate::consensus::deserialize;
     use crate::hashes::hex::{FromHex, ToHex};
     use crate::hashes::{Hash, HashEngine};
@@ -1119,7 +1119,7 @@ mod tests {
         // We need a tx with more inputs than outputs.
         let tx = Transaction {
             version: 1,
-            lock_time: PackedLockTime::ZERO,
+            lock_time: absolute::PackedLockTime::ZERO,
             input: vec![TxIn::default(), TxIn::default()],
             output: vec![TxOut::default()],
         };
@@ -1300,7 +1300,7 @@ mod tests {
     fn test_sighash_errors() {
         let dumb_tx = Transaction {
             version: 0,
-            lock_time: PackedLockTime::ZERO,
+            lock_time: absolute::PackedLockTime::ZERO,
             input: vec![TxIn::default()],
             output: vec![],
         };
