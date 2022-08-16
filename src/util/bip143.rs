@@ -9,16 +9,17 @@
 //! signatures, which are placed in the scriptSig.
 //!
 
+use core::ops::{Deref, DerefMut};
+
+use crate::io;
+
 use crate::hashes::Hash;
 use crate::hash_types::Sighash;
 use crate::blockdata::script::Script;
+use crate::blockdata::transaction::Transaction;
 use crate::blockdata::witness::Witness;
-use crate::blockdata::transaction::{Transaction, EcdsaSighashType};
 use crate::consensus::encode;
-
-use crate::io;
-use core::ops::{Deref, DerefMut};
-use crate::util::sighash;
+use crate::util::sighash::{self, EcdsaSighashType};
 
 /// A replacement for SigHashComponents which supports all sighash modes
 #[deprecated(since = "0.28.0", note = "please use [sighash::SighashCache] instead")]
@@ -77,9 +78,8 @@ impl<R: DerefMut<Target = Transaction>> SigHashCache<R> {
     /// panics if `input_index` is out of bounds with respect of the number of inputs
     ///
     /// ```
-    /// use bitcoin::blockdata::transaction::{Transaction, EcdsaSighashType};
     /// use bitcoin::util::bip143::SigHashCache;
-    /// use bitcoin::{PackedLockTime, Script};
+    /// use bitcoin::{EcdsaSighashType, Script, Transaction, PackedLockTime};
     ///
     /// let mut tx_to_sign = Transaction { version: 2, lock_time: PackedLockTime::ZERO, input: Vec::new(), output: Vec::new() };
     /// let input_count = tx_to_sign.input.len();

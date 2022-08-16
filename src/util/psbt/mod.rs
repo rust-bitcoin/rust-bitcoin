@@ -598,12 +598,13 @@ mod tests {
         use crate::hash_types::Txid;
 
         use crate::blockdata::script::Script;
-        use crate::blockdata::transaction::{EcdsaSighashType, Transaction, TxIn, TxOut, OutPoint, Sequence};
+        use crate::blockdata::transaction::{Transaction, TxIn, TxOut, OutPoint, Sequence};
         use crate::consensus::encode::serialize_hex;
         use crate::blockdata::locktime::PackedLockTime;
         use crate::util::psbt::map::{Map, Input, Output};
         use crate::util::psbt::raw;
         use crate::util::psbt::{PartiallySignedTransaction, Error};
+        use crate::util::sighash::EcdsaSighashType;
         use std::collections::BTreeMap;
         use crate::blockdata::witness::Witness;
         use crate::internal_macros::hex_script;
