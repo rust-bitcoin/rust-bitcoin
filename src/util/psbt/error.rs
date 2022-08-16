@@ -7,6 +7,7 @@ use core::fmt;
 use crate::blockdata::transaction::Transaction;
 use crate::consensus::encode;
 use crate::util::psbt::raw;
+use crate::util::psbt::map::IncompleteTapTree;
 
 use crate::hashes;
 use crate::util::bip32::ExtendedPubKey;
@@ -73,6 +74,9 @@ pub enum Error {
     CombineInconsistentKeySources(Box<ExtendedPubKey>),
     /// Serialization error in bitcoin consensus-encoded structures
     ConsensusEncoding,
+    /// Incomplete TapTree Error
+    // N.B. No need to Box as it's just a vector internally.
+    IncompleteTapTree(IncompleteTapTree)
 }
 
 impl fmt::Display for Error {
@@ -100,6 +104,7 @@ impl fmt::Display for Error {
             },
             Error::CombineInconsistentKeySources(ref s) => { write!(f, "combine conflict: {}", s) },
             Error::ConsensusEncoding => f.write_str("bitcoin consensus or BIP-174 encoding error"),
+            Error::IncompleteTapTree(ref b) => write!(f, "{}", b),
         }
     }
 }
@@ -127,7 +132,8 @@ impl std::error::Error for Error {
             | NonStandardSighashType(_)
             | InvalidPreimageHashPair{ .. }
             | CombineInconsistentKeySources(_)
-            | ConsensusEncoding => None,
+            | ConsensusEncoding
+            | IncompleteTapTree(_) => None,
         }
     }
 }

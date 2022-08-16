@@ -7,6 +7,8 @@
 //!
 
 use crate::prelude::*;
+use core;
+use core::convert::TryFrom;
 
 use crate::io;
 
@@ -344,7 +346,7 @@ impl Deserialize for TapTree {
                 .map_err(|_| encode::Error::ParseFailed("Tree not in DFS order"))?;
         }
         if builder.is_finalizable() && !builder.has_hidden_nodes() {
-            Ok(TapTree(builder))
+            Ok(TapTree::try_from(builder).map_err(psbt::Error::from)?)
         } else {
             Err(encode::Error::ParseFailed("Incomplete taproot Tree"))
         }
@@ -393,6 +395,17 @@ mod tests {
         let tree = TapTree::try_from(builder).unwrap();
         let tree_prime = TapTree::deserialize(&tree.serialize()).unwrap();
         assert_eq!(tree, tree_prime);
+    }
+
+    #[cfg(feature = "base64")]
+    #[test]
+    fn taptree_empty() {
+        use core::str::FromStr;
+        use crate::psbt::PartiallySignedTransaction;
+        let test_data_containing_empty =
+            "cHNidP8BAIkCAAAAAWlZ9F5/nRjE0quO8bE8cfKIiVTKHa/Zu6PKwWfpZDmpAAAAAAD9////Anz3nHYAAAAAIlEg7T17MEFOm47gN7FhZB5g4HjviGW4YxZWReJr1c/w0I+AlpgAAAAAACJRIDspRhxBQj5+aJw088IczFSbyRKB7wofy/SQXnErwCcQAAAAAAABASsAlDV3AAAAACJRIBMUosKNoVNU5tEW2Q/tylLRzabMGIprODHM0LbB8h1/IRaXdf3KRBBZMc8epg7uuU3pr42i3YMFnheNDW10F0cpnxkAHzYIzlYAAIABAACAAAAAgAAAAABRAAAAARcgl3X9ykQQWTHPHqYO7rlN6a+Not2DBZ4XjQ1tdBdHKZ8AAQUgT+NhtL213EJgJ51h6FiZYhPgUv48YQKACnnMYpOZPMEBBgAhB0/jYbS9tdxCYCedYehYmWIT4FL+PGECgAp5zGKTmTzBGQAfNgjOVgAAgAEAAIAAAACAAQAAADEBAAAAAQUgrUXPD+fhaOeY7GlxJDZ0pAgUZ0reW+A3wmxMwBAIt14BBgAhB61Fzw/n4WjnmOxpcSQ2dKQIFGdK3lvgN8JsTMAQCLdeGQAfNgjOVgAAgAEAAIAAAACAAAAAAFIAAAAA";
+        let psbt = PartiallySignedTransaction::from_str(test_data_containing_empty);
+        assert!(matches!(psbt, Err(psbt::PsbtParseError::PsbtEncoding(encode::Error::ParseFailed("Incomplete taproot Tree")))));
     }
 
     #[test]

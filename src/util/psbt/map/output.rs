@@ -99,6 +99,12 @@ impl core::fmt::Display for IncompleteTapTree {
     }
 }
 
+impl From<IncompleteTapTree> for crate::util::psbt::Error {
+    fn from(i: IncompleteTapTree) -> Self {
+        crate::util::psbt::Error::IncompleteTapTree(i)
+    }
+}
+
 #[cfg(feature = "std")]
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl std::error::Error for IncompleteTapTree {
