@@ -16,7 +16,7 @@ use crate::hashes::hex::{self, HexIterator};
 use crate::hashes::{Hash, sha256d};
 use crate::blockdata::opcodes;
 use crate::blockdata::script;
-use crate::blockdata::locktime::PackedLockTime;
+use crate::blockdata::locktime::absolute;
 use crate::blockdata::transaction::{OutPoint, Transaction, TxOut, TxIn, Sequence};
 use crate::blockdata::block::{Block, BlockHeader};
 use crate::blockdata::witness::Witness;
@@ -72,7 +72,7 @@ fn bitcoin_genesis_tx() -> Transaction {
     // Base
     let mut ret = Transaction {
         version: 1,
-        lock_time: PackedLockTime::ZERO,
+        lock_time: absolute::PackedLockTime::ZERO,
         input: vec![],
         output: vec![],
     };
@@ -200,7 +200,7 @@ mod test {
     use crate::hashes::hex::{ToHex, FromHex};
     use crate::network::constants::Network;
     use crate::consensus::encode::serialize;
-    use crate::blockdata::locktime::PackedLockTime;
+    use crate::blockdata::locktime::absolute;
 
     #[test]
     fn bitcoin_genesis_first_transaction() {
@@ -218,7 +218,7 @@ mod test {
         assert_eq!(serialize(&gen.output[0].script_pubkey),
                    Vec::from_hex("434104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac").unwrap());
         assert_eq!(gen.output[0].value, 50 * COIN_VALUE);
-        assert_eq!(gen.lock_time, PackedLockTime::ZERO);
+        assert_eq!(gen.lock_time, absolute::PackedLockTime::ZERO);
 
         assert_eq!(gen.wtxid().to_hex(), "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b");
     }
