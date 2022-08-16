@@ -26,6 +26,7 @@ use crate::blockdata::constants::WITNESS_SCALE_FACTOR;
 use crate::blockdata::script::Script;
 use crate::blockdata::witness::Witness;
 use crate::blockdata::locktime::absolute::{self, Height, Time};
+use crate::blockdata::locktime::relative;
 use crate::consensus::{encode, Decodable, Encodable};
 use crate::hash_types::{Sighash, Txid, Wtxid};
 use crate::VarInt;
@@ -251,14 +252,6 @@ impl Default for TxIn {
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct Sequence(pub u32);
 
-/// An error in creating relative lock-times.
-#[derive(Clone, PartialEq, Eq, Debug)]
-#[non_exhaustive]
-pub enum RelativeLockTimeError {
-    /// The input was too large
-    IntegerOverflow(u32)
-}
-
 impl Sequence {
     /// The maximum allowable sequence number.
     ///
@@ -343,11 +336,11 @@ impl Sequence {
     ///
     /// Will return an error if the input cannot be encoded in 16 bits.
     #[inline]
-    pub fn from_seconds_floor(seconds: u32) -> Result<Self, RelativeLockTimeError> {
+    pub fn from_seconds_floor(seconds: u32) -> Result<Self, relative::Error> {
         if let Ok(interval) = u16::try_from(seconds / 512) {
             Ok(Sequence::from_512_second_intervals(interval))
         } else {
-            Err(RelativeLockTimeError::IntegerOverflow(seconds))
+            Err(relative::Error::IntegerOverflow(seconds))
         }
     }
 
@@ -356,11 +349,11 @@ impl Sequence {
     ///
     /// Will return an error if the input cannot be encoded in 16 bits.
     #[inline]
-    pub fn from_seconds_ceil(seconds: u32) -> Result<Self, RelativeLockTimeError> {
+    pub fn from_seconds_ceil(seconds: u32) -> Result<Self, relative::Error> {
         if let Ok(interval) = u16::try_from((seconds + 511) / 512) {
             Ok(Sequence::from_512_second_intervals(interval))
         } else {
-            Err(RelativeLockTimeError::IntegerOverflow(seconds))
+            Err(relative::Error::IntegerOverflow(seconds))
         }
     }
 
@@ -380,6 +373,31 @@ impl Sequence {
     #[inline]
     pub fn to_consensus_u32(self) -> u32 {
         self.0
+    }
+
+    /// Creates a [`relative::LockTime`] from this [`Sequence`] number.
+    #[inline]
+    pub fn to_relative_lock_time(&self) -> Option<relative::LockTime> {
+        use crate::locktime::relative::{LockTime, Height, Time};
+
+        if !self.is_relative_lock_time() {
+            return None;
+        }
+
+        let lock_value = self.low_u16();
+
+        if self.is_time_locked() {
+            Some(LockTime::from(Time::from_512_second_intervals(lock_value)))
+        } else {
+            Some(LockTime::from(Height::from(lock_value)))
+        }
+    }
+
+    /// Returns the low 16 bits from sequence number.
+    ///
+    /// BIP-68 only uses the low 16 bits for relative lock value.
+    fn low_u16(&self) -> u16 {
+        self.0 as u16
     }
 }
 
@@ -414,25 +432,7 @@ impl fmt::UpperHex for Sequence {
     }
 }
 
-impl fmt::Display for RelativeLockTimeError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            Self::IntegerOverflow(val) => write!(f, "input of {} was too large", val)
-        }
-    }
-}
-
 impl_parse_str_through_int!(Sequence);
-
-#[cfg(feature = "std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-impl std::error::Error for RelativeLockTimeError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self {
-            Self::IntegerOverflow(_) => None
-        }
-    }
-}
 
 /// Bitcoin transaction output.
 ///
