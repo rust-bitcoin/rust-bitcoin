@@ -16,7 +16,6 @@ pub mod hash;
 pub mod merkleblock;
 pub mod psbt;
 pub mod taproot;
-pub mod uint;
 pub mod sighash;
 
 pub(crate) mod endian;
@@ -28,27 +27,6 @@ use core::fmt;
 use bitcoin_internals::write_err;
 
 use crate::consensus::encode;
-
-/// A trait which allows numbers to act as fixed-size bit arrays
-pub trait BitArray {
-    /// Is bit set?
-    fn bit(&self, idx: usize) -> bool;
-
-    /// Returns an array which is just the bits from start to end
-    fn bit_slice(&self, start: usize, end: usize) -> Self;
-
-    /// Bitwise and with `n` ones
-    fn mask(&self, n: usize) -> Self;
-
-    /// Trailing zeros
-    fn trailing_zeros(&self) -> usize;
-
-    /// Create all-zeros value
-    fn zero() -> Self;
-
-    /// Create value representing one
-    fn one() -> Self;
-}
 
 /// A general error code, other errors should implement conversions to/from this
 /// if appropriate.
