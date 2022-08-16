@@ -141,7 +141,8 @@ impl fmt::UpperHex for PackedLockTime {
     }
 }
 
-/// A lock time value, representing either a block height or a UNIX timestamp (seconds since epoch).
+/// An absolute lock time value, representing either a block height or a UNIX timestamp (seconds
+/// since epoch).
 ///
 /// Used for transaction lock time (`nLockTime` in Bitcoin Core and [`crate::Transaction::lock_time`]
 /// in this library) and also for the argument to opcode 'OP_CHECKLOCKTIMEVERIFY`.
@@ -156,7 +157,7 @@ impl fmt::UpperHex for PackedLockTime {
 /// # use bitcoin::absolute::{LockTime, LockTime::*};
 /// # let n = LockTime::from_consensus(100);          // n OP_CHECKLOCKTIMEVERIFY
 /// # let lock_time = LockTime::from_consensus(100);  // nLockTime
-/// // To compare lock times there are various `is_satisfied_*` methods, you may also use:
+/// // To compare absolute lock times there are various `is_satisfied_*` methods, you may also use:
 /// let is_satisfied = match (n, lock_time) {
 ///     (Blocks(n), Blocks(lock_time)) => n <= lock_time,
 ///     (Seconds(n), Seconds(lock_time)) => n <= lock_time,

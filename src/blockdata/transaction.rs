@@ -262,17 +262,17 @@ pub enum RelativeLockTimeError {
 impl Sequence {
     /// The maximum allowable sequence number.
     ///
-    /// This sequence number disables lock-time and replace-by-fee.
+    /// This sequence number disables absolute lock time and replace-by-fee.
     pub const MAX: Self = Sequence(0xFFFFFFFF);
     /// Zero value sequence.
     ///
-    /// This sequence number enables replace-by-fee and lock-time.
+    /// This sequence number enables replace-by-fee and absolute lock time.
     pub const ZERO: Self = Sequence(0);
-    /// The sequence number that enables absolute lock-time but disables replace-by-fee
-    /// and relative lock-time.
+    /// The sequence number that enables absolute lock time but disables replace-by-fee
+    /// and relative lock time.
     pub const ENABLE_LOCKTIME_NO_RBF: Self = Sequence::MIN_NO_RBF;
-    /// The sequence number that enables replace-by-fee and absolute lock-time but
-    /// disables relative lock-time.
+    /// The sequence number that enables replace-by-fee and absolute lock time but
+    /// disables relative lock time.
     pub const ENABLE_RBF_NO_LOCKTIME: Self = Sequence(0xFFFFFFFD);
 
     /// The lowest sequence number that does not opt-in for replace-by-fee.
@@ -283,9 +283,9 @@ impl Sequence {
     ///
     /// [BIP-125]: <https://github.com/bitcoin/bips/blob/master/bip-0125.mediawiki]>
     const MIN_NO_RBF: Self = Sequence(0xFFFFFFFE);
-    /// BIP-68 relative lock-time disable flag mask
+    /// BIP-68 relative lock time disable flag mask.
     const LOCK_TIME_DISABLE_FLAG_MASK: u32 = 0x80000000;
-    /// BIP-68 relative lock-time type flag mask
+    /// BIP-68 relative lock time type flag mask.
     const LOCK_TYPE_MASK: u32 = 0x00400000;
 
     /// Retuns `true` if the sequence number indicates that the transaction is finalised.
