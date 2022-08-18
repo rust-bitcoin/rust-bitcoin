@@ -1,8 +1,6 @@
 project: rust-bitcoin
 target: deserialize_block
 
-# image: ghcr.io/nottirb/rust-bitcoin:latest
-
 cmds:
     - cmd: /deserialize_block
 
