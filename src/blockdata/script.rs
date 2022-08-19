@@ -18,7 +18,7 @@ use crate::io;
 use core::convert::TryFrom;
 use core::{fmt, default::Default};
 use core::ops::Index;
-use crate::internal_macros::display_from_debug;
+use crate::internal_macros::debug_from_display;
 
 #[cfg(feature = "serde")] use serde;
 
@@ -121,9 +121,16 @@ impl core::str::FromStr for Script {
 }
 
 /// An object which can be used to construct a script piece by piece.
-#[derive(PartialEq, Eq, Debug, Clone)]
+#[derive(PartialEq, Eq, Clone)]
 pub struct Builder(Vec<u8>, Option<opcodes::All>);
-display_from_debug!(Builder);
+
+impl fmt::Display for Builder {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        Script::bytes_to_asm_fmt(self.0.as_ref(), f)
+    }
+}
+
+debug_from_display!(Builder);
 
 impl<I> Index<I> for Builder
 where

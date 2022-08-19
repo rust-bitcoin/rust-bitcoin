@@ -127,7 +127,7 @@ macro_rules! construct_uint {
                 let your_bits = other.bits();
 
                 // Check for division by 0
-                assert!(your_bits != 0, "attempted to divide {} by zero", self);
+                assert!(your_bits != 0, "attempted to divide {:#x} by zero", self);
 
                 // Early return in case we are dividing by a larger number than us
                 if my_bits < your_bits {
@@ -393,10 +393,12 @@ macro_rules! construct_uint {
             }
         }
 
-        impl core::fmt::Debug for $name {
+        impl core::fmt::LowerHex for $name {
             fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
                 let &$name(ref data) = self;
-                write!(f, "0x")?;
+                if f.alternate() {
+                    write!(f, "0x")?;
+                }
                 for ch in data.iter().rev() {
                     write!(f, "{:016x}", ch)?;
                 }
@@ -404,7 +406,11 @@ macro_rules! construct_uint {
             }
         }
 
-        $crate::internal_macros::display_from_debug!($name);
+        impl core::fmt::Debug for $name {
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                write!(f,"{:#x}", self)
+            }
+        }
 
         impl $crate::consensus::Encodable for $name {
             #[inline]
@@ -565,15 +571,23 @@ mod tests {
 
     #[test]
     pub fn uint256_display_test() {
-        assert_eq!(format!("{}", Uint256::from_u64(0xDEADBEEF).unwrap()),
+        assert_eq!(format!("{:#x}", Uint256::from_u64(0xDEADBEEF).unwrap()),
                    "0x00000000000000000000000000000000000000000000000000000000deadbeef");
-        assert_eq!(format!("{}", Uint256::from_u64(u64::max_value()).unwrap()),
+        assert_eq!(format!("{:x}", Uint256::from_u64(0xDEADBEEF).unwrap()),
+                   "00000000000000000000000000000000000000000000000000000000deadbeef");
+        assert_eq!(format!("{:#x}", Uint256::from_u64(u64::max_value()).unwrap()),
                    "0x000000000000000000000000000000000000000000000000ffffffffffffffff");
 
         let max_val = Uint256([0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF,
                                0xFFFFFFFFFFFFFFFF]);
-        assert_eq!(format!("{}", max_val),
+        assert_eq!(format!("{:#x}", max_val),
                    "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+    }
+
+    #[test]
+    pub fn uint256_debug_test() {
+        assert_eq!(format!("{:?}", Uint256::from_u64(0xDEADBEEF).unwrap()),
+                   "0x00000000000000000000000000000000000000000000000000000000deadbeef");
     }
 
     #[test]

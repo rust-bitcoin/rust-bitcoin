@@ -107,16 +107,16 @@ macro_rules! impl_array_newtype {
 }
 pub(crate) use impl_array_newtype;
 
-macro_rules! display_from_debug {
+macro_rules! debug_from_display {
     ($thing:ident) => {
-        impl core::fmt::Display for $thing {
+        impl core::fmt::Debug for $thing {
             fn fmt(&self, f: &mut core::fmt::Formatter) -> Result<(), core::fmt::Error> {
-                core::fmt::Debug::fmt(self, f)
+                core::fmt::Display::fmt(self, f)
             }
         }
     };
 }
-pub(crate) use display_from_debug;
+pub(crate) use debug_from_display;
 
 #[cfg(test)]
 macro_rules! hex_script (($s:expr) => (<$crate::Script as core::str::FromStr>::from_str($s).unwrap()));
