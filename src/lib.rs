@@ -94,13 +94,14 @@ use std::io;
 use core2::io;
 
 pub use crate::address::{Address, AddressType};
-pub use crate::blockdata::block::{Block, BlockHeader};
+pub use crate::blockdata::block::{self, Block, BlockHeader};
 pub use crate::blockdata::locktime::{self, LockTime, PackedLockTime};
-pub use crate::blockdata::script::Script;
+pub use crate::blockdata::script::{self, Script};
 #[allow(deprecated)]
 pub use crate::blockdata::transaction::SigHashType;
-pub use crate::blockdata::transaction::{OutPoint, Sequence, Transaction, TxIn, TxOut};
-pub use crate::blockdata::witness::Witness;
+pub use crate::blockdata::transaction::{self, OutPoint, Sequence, Transaction, TxIn, TxOut};
+pub use crate::blockdata::witness::{self, Witness};
+pub use crate::blockdata::{constants, opcodes};
 pub use crate::consensus::encode::VarInt;
 pub use crate::hash_types::*;
 pub use crate::network::constants::Network;

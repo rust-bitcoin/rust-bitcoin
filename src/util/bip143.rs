@@ -78,8 +78,8 @@ impl<R: DerefMut<Target = Transaction>> SigHashCache<R> {
     /// panics if `input_index` is out of bounds with respect of the number of inputs
     ///
     /// ```
-    /// use bitcoin::util::bip143::SigHashCache;
     /// use bitcoin::{EcdsaSighashType, Script, Transaction, PackedLockTime};
+    /// use bitcoin::util::bip143::SigHashCache;
     ///
     /// let mut tx_to_sign = Transaction { version: 2, lock_time: PackedLockTime::ZERO, input: Vec::new(), output: Vec::new() };
     /// let input_count = tx_to_sign.input.len();

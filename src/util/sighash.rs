@@ -1035,9 +1035,7 @@ impl<R: DerefMut<Target=Transaction>> SighashCache<R> {
     ///
     /// This allows in-line signing such as
     /// ```
-    /// use bitcoin::blockdata::transaction::Transaction;
-    /// use bitcoin::util::sighash::{EcdsaSighashType, SighashCache};
-    /// use bitcoin::{PackedLockTime, Script};
+    /// use bitcoin::{EcdsaSighashType, PackedLockTime, Script, SighashCache, Transaction};
     ///
     /// let mut tx_to_sign = Transaction { version: 2, lock_time: PackedLockTime::ZERO, input: Vec::new(), output: Vec::new() };
     /// let input_count = tx_to_sign.input.len();

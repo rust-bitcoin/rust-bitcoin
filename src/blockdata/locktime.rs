@@ -283,7 +283,7 @@ impl LockTime {
     ///
     /// # Examples
     /// ```no_run
-    /// # use bitcoin::blockdata::locktime::{LockTime, Height, Time};
+    /// # use bitcoin::locktime::{LockTime, Height, Time};
     /// // Can be implemented if block chain data is available.
     /// fn get_height() -> Height { todo!("return the current block height") }
     /// fn get_time() -> Time { todo!("return the current block time") }
@@ -410,7 +410,7 @@ impl Height {
     ///
     /// # Examples
     /// ```rust
-    /// use bitcoin::blockdata::locktime::Height;
+    /// use bitcoin::locktime::Height;
     ///
     /// let h: u32 = 741521;
     /// let height = Height::from_consensus(h).expect("invalid height value");
@@ -493,7 +493,7 @@ impl Time {
     ///
     /// # Examples
     /// ```rust
-    /// use bitcoin::blockdata::locktime::Time;
+    /// use bitcoin::locktime::Time;
     ///
     /// let t: u32 = 1653195600; // May 22nd, 5am UTC.
     /// let time = Time::from_consensus(t).expect("invalid time value");
