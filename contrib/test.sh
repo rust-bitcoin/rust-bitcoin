@@ -102,9 +102,9 @@ fi
 # Bench if told to, only works with non-stable toolchain (nightly, beta).
 if [ "$DO_BENCH" = true ]
 then
-    if [ "NIGHTLY" = false ]
+    if [ "$NIGHTLY" = false ]
     then
-        if [ -n "TOOLCHAIN" ]
+        if [ -n "$TOOLCHAIN" ]
         then
             echo "TOOLCHAIN is set to a non-nightly toolchain but DO_BENCH requires a nightly toolchain"
         else
