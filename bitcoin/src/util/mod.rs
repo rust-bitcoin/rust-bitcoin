@@ -12,7 +12,6 @@ pub mod schnorr;
 pub mod amount;
 pub mod base58;
 pub mod bip32;
-pub mod bip143;
 pub mod bip152;
 pub mod hash;
 pub mod merkleblock;
@@ -120,3 +119,6 @@ pub mod address {
 
 #[deprecated(since = "0.30.0", note = "Please use crate::bip158")]
 pub use crate::bip158;
+
+#[deprecated(since = "0.30.0", note = "Please use crate::bip143")]
+pub use crate::bip143;
