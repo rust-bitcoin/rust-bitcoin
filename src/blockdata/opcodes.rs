@@ -14,7 +14,7 @@
 #[cfg(feature = "serde")] use crate::prelude::*;
 
 use core::{fmt, convert::From};
-use crate::internal_macros::display_from_debug;
+use crate::internal_macros::debug_from_display;
 
 // Note: I am deliberately not implementing PartialOrd or Ord on the
 //       opcode enum. If you want to check ranges of opcodes, etc.,
@@ -549,7 +549,7 @@ pub mod all {
     pub const OP_INVALIDOPCODE: All = All {code: 0xff};
 }
 
-impl fmt::Debug for All {
+impl fmt::Display for All {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.write_str("OP_")?;
         match *self {
@@ -745,7 +745,7 @@ impl From<u8> for All {
     }
 }
 
-display_from_debug!(All);
+debug_from_display!(All);
 
 #[cfg(feature = "serde")]
 #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
@@ -786,19 +786,6 @@ pub enum Class {
     Ordinary(Ordinary)
 }
 
-display_from_debug!(Class);
-
-#[cfg(feature = "serde")]
-#[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
-impl serde::Serialize for Class {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        serializer.serialize_str(&self.to_string())
-    }
-}
-
 macro_rules! ordinary_opcode {
     ($($op:ident),*) => (
         #[repr(u8)]
@@ -806,6 +793,14 @@ macro_rules! ordinary_opcode {
         #[derive(Copy, Clone, PartialEq, Eq, Debug)]
         pub enum Ordinary {
             $( $op = all::$op.code ),*
+        }
+
+        impl fmt::Display for Ordinary {
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                match *self {
+                   $(Ordinary::$op => { f.pad(stringify!($op)) }),*
+                }
+            }
         }
 
         impl Ordinary {
@@ -866,7 +861,6 @@ impl Ordinary {
     pub fn to_u8(self) -> u8 {
         self as u8
     }
-
 }
 
 #[cfg(test)]
@@ -1068,10 +1062,10 @@ mod tests {
         roundtrip!(unique, OP_NUMEQUAL);
         roundtrip!(unique, OP_NUMEQUALVERIFY);
         roundtrip!(unique, OP_NUMNOTEQUAL);
-        roundtrip!(unique, OP_LESSTHAN );
-        roundtrip!(unique, OP_GREATERTHAN );
-        roundtrip!(unique, OP_LESSTHANOREQUAL );
-        roundtrip!(unique, OP_GREATERTHANOREQUAL );
+        roundtrip!(unique, OP_LESSTHAN);
+        roundtrip!(unique, OP_GREATERTHAN);
+        roundtrip!(unique, OP_LESSTHANOREQUAL);
+        roundtrip!(unique, OP_GREATERTHANOREQUAL);
         roundtrip!(unique, OP_MIN);
         roundtrip!(unique, OP_MAX);
         roundtrip!(unique, OP_WITHIN);
