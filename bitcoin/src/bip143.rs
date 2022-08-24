@@ -11,14 +11,13 @@
 
 use core::ops::{Deref, DerefMut};
 
-use crate::io;
-
-use crate::hashes::Hash;
-use crate::hash_types::Sighash;
 use crate::blockdata::script::Script;
 use crate::blockdata::transaction::Transaction;
 use crate::blockdata::witness::Witness;
 use crate::consensus::encode;
+use crate::hash_types::Sighash;
+use crate::hashes::Hash;
+use crate::io;
 use crate::util::sighash::{self, EcdsaSighashType};
 
 /// A replacement for SigHashComponents which supports all sighash modes
@@ -33,9 +32,7 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
     /// in a lazy manner when required.
     /// For the generated sighashes to be valid, no fields in the transaction may change except for
     /// script_sig and witnesses.
-    pub fn new(tx: R) -> Self {
-        Self { cache: sighash::SighashCache::new(tx) }
-    }
+    pub fn new(tx: R) -> Self { Self { cache: sighash::SighashCache::new(tx) } }
 
     /// Encode the BIP143 signing data for any flag type into a given object implementing a
     /// std::io::Write trait.
@@ -59,7 +56,7 @@ impl<R: Deref<Target = Transaction>> SigHashCache<R> {
         input_index: usize,
         script_code: &Script,
         value: u64,
-        sighash_type: EcdsaSighashType
+        sighash_type: EcdsaSighashType,
     ) -> Sighash {
         let mut enc = Sighash::engine();
         self.encode_signing_data_to(&mut enc, input_index, script_code, value, sighash_type)
@@ -78,7 +75,7 @@ impl<R: DerefMut<Target = Transaction>> SigHashCache<R> {
     /// panics if `input_index` is out of bounds with respect of the number of inputs
     ///
     /// ```
-    /// use bitcoin::util::bip143::SigHashCache;
+    /// use bitcoin::bip143::SigHashCache;
     /// use bitcoin::{absolute, EcdsaSighashType, Script, Transaction};
     ///
     /// let mut tx_to_sign = Transaction { version: 2, lock_time: absolute::PackedLockTime::ZERO, input: Vec::new(), output: Vec::new() };
@@ -100,23 +97,30 @@ impl<R: DerefMut<Target = Transaction>> SigHashCache<R> {
 #[cfg(test)]
 #[allow(deprecated)]
 mod tests {
-    use crate::hash_types::Sighash;
+    use super::*;
     use crate::blockdata::script::Script;
     use crate::blockdata::transaction::Transaction;
     use crate::consensus::encode::deserialize;
+    use crate::hash_types::Sighash;
     use crate::hashes::hex::FromHex;
     use crate::util::sighash::SighashCache;
 
-    use super::*;
-
-    fn run_test_sighash_bip143(tx: &str, script: &str, input_index: usize, value: u64, hash_type: u32, expected_result: &str) {
+    fn run_test_sighash_bip143(
+        tx: &str,
+        script: &str,
+        input_index: usize,
+        value: u64,
+        hash_type: u32,
+        expected_result: &str,
+    ) {
         let tx: Transaction = deserialize(&Vec::<u8>::from_hex(tx).unwrap()[..]).unwrap();
         let script = Script::from(Vec::<u8>::from_hex(script).unwrap());
         let raw_expected = Sighash::from_hex(expected_result).unwrap();
         let expected_result = Sighash::from_slice(&raw_expected[..]).unwrap();
         let mut cache = SighashCache::new(&tx);
         let sighash_type = EcdsaSighashType::from_u32_consensus(hash_type);
-        let actual_result = cache.segwit_signature_hash(input_index, &script, value, sighash_type).unwrap();
+        let actual_result =
+            cache.segwit_signature_hash(input_index, &script, value, sighash_type).unwrap();
         assert_eq!(actual_result, expected_result);
     }
 
