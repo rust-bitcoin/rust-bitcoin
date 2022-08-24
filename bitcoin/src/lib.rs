@@ -81,6 +81,7 @@ mod serde_utils;
 pub mod network;
 pub mod address;
 pub mod bip158;
+pub mod bip32;
 pub mod blockdata;
 pub mod consensus;
 pub mod error;

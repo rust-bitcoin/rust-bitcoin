@@ -1118,6 +1118,7 @@ mod tests {
     pub fn encode_fingerprint_chaincode() {
         use serde_json;
         let fp = Fingerprint::from(&[1u8,2,3,42][..]);
+        #[rustfmt::skip]
         let cc = ChainCode::from(
             &[1u8,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2][..]
         );

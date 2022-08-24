@@ -11,7 +11,6 @@ pub mod ecdsa;
 pub mod schnorr;
 pub mod amount;
 pub mod base58;
-pub mod bip32;
 pub mod bip152;
 pub mod hash;
 pub mod merkleblock;
@@ -116,6 +115,9 @@ pub(crate) fn read_to_end<D: io::Read>(mut d: D) -> Result<Vec<u8>, io::Error> {
 pub mod address {
     pub use crate::address::*;
 }
+
+#[deprecated(since = "0.30.0", note = "Please use crate::bip32")]
+pub use crate::bip32;
 
 #[deprecated(since = "0.30.0", note = "Please use crate::bip158")]
 pub use crate::bip158;
