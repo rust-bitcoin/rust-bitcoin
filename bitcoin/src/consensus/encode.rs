@@ -28,7 +28,7 @@ use crate::io::{self, Cursor, Read};
 
 use crate::util::endian;
 use crate::util::psbt;
-use crate::util::bip152::{ShortId, PrefilledTransaction};
+use crate::bip152::{ShortId, PrefilledTransaction};
 use crate::util::taproot::TapLeafHash;
 use crate::hashes::hex::ToHex;
 
