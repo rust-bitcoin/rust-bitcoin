@@ -20,7 +20,6 @@ pub mod misc;
 pub mod psbt;
 pub mod taproot;
 pub mod uint;
-pub mod bip158;
 pub mod sighash;
 
 pub(crate) mod endian;
@@ -117,3 +116,6 @@ pub(crate) fn read_to_end<D: io::Read>(mut d: D) -> Result<Vec<u8>, io::Error> {
 pub mod address {
     pub use crate::address::*;
 }
+
+#[deprecated(since = "0.30.0", note = "Please use crate::bip158")]
+pub use crate::bip158;
