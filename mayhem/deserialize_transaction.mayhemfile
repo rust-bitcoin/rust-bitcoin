@@ -3,6 +3,8 @@ target: deserialize_transaction
 
 cmds:
     - cmd: /deserialize_transaction
+      env:
+        DISABLE_SMOKETEST: '1'
 
 testsuite:
     - file://fuzz/hfuzz_input/deserialize_transaction
