@@ -8,7 +8,7 @@ use crate::bip32::Xpub;
 use crate::blockdata::transaction::Transaction;
 use crate::consensus::encode;
 use crate::prelude::*;
-use crate::psbt::raw;
+use crate::psbt::{raw, FutureVersionError};
 use crate::{hashes, io};
 
 /// Enum for marking psbt hash error.
@@ -38,6 +38,8 @@ pub enum Error {
     InvalidProprietaryKey,
     /// Keys within key-value map should never be duplicated.
     DuplicateKey(raw::Key),
+    /// Future version of PSBT which can't be parsed by this library
+    FutureVersion(FutureVersionError),
     /// The scriptSigs for the unsigned transaction must be empty.
     UnsignedTxHasScriptSigs,
     /// The scriptWitnesses for the unsigned transaction must be empty.
@@ -116,6 +118,7 @@ impl fmt::Display for Error {
             Error::InvalidProprietaryKey =>
                 write!(f, "non-proprietary key type found when proprietary key was expected"),
             Error::DuplicateKey(ref rkey) => write!(f, "duplicate key: {}", rkey),
+            Error::FutureVersion(ref e) => write_err!(f, "unrecognized PSBT version"; e),
             Error::UnsignedTxHasScriptSigs =>
                 f.write_str("the unsigned transaction has script sigs"),
             Error::UnsignedTxHasScriptWitnesses =>
@@ -169,6 +172,7 @@ impl std::error::Error for Error {
         match self {
             InvalidHash(e) => Some(e),
             ConsensusEncoding(e) => Some(e),
+            FutureVersion(e) => Some(e),
             Io(e) => Some(e),
             InvalidMagic
             | MissingUtxo
@@ -205,6 +209,10 @@ impl std::error::Error for Error {
 
 impl From<hashes::FromSliceError> for Error {
     fn from(e: hashes::FromSliceError) -> Error { Error::InvalidHash(e) }
+}
+
+impl From<FutureVersionError> for Error {
+    fn from(err: FutureVersionError) -> Self { Error::FutureVersion(err) }
 }
 
 impl From<encode::Error> for Error {

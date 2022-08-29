@@ -9,7 +9,7 @@ use crate::consensus::{encode, Decodable};
 use crate::io::{self, Cursor, Read};
 use crate::prelude::*;
 use crate::psbt::map::Map;
-use crate::psbt::{raw, Error, Psbt};
+use crate::psbt::{raw, Error, Psbt, Version};
 
 /// Type: Unsigned Transaction PSBT_GLOBAL_UNSIGNED_TX = 0x00
 const PSBT_GLOBAL_UNSIGNED_TX: u8 = 0x00;
@@ -51,10 +51,10 @@ impl Map for Psbt {
         }
 
         // Serializing version only for non-default value; otherwise test vectors fail
-        if self.version > 0 {
+        if self.version > Version::PsbtV0 {
             rv.push(raw::Pair {
                 key: raw::Key { type_value: PSBT_GLOBAL_VERSION, key: vec![] },
-                value: self.version.to_le_bytes().to_vec(),
+                value: self.version.to_raw().to_le_bytes().to_vec(),
             });
         }
 
@@ -201,7 +201,10 @@ impl Psbt {
         if let Some(tx) = tx {
             Ok(Psbt {
                 unsigned_tx: tx,
-                version: version.unwrap_or(0),
+                version: match version {
+                    Some(v) => Version::from_raw(v).map_err(Error::from)?,
+                    None => Version::PsbtV0,
+                },
                 xpub: xpub_map,
                 proprietary,
                 unknown: unknowns,
