@@ -34,7 +34,7 @@ use bitcoin::consensus::encode::deserialize;
 use bitcoin::hashes::hex::FromHex;
 use bitcoin::hashes::{hash160, ripemd160, sha256, sha256d, Hash};
 use bitcoin::psbt::raw::{self, Key, Pair, ProprietaryKey};
-use bitcoin::psbt::{Input, Output, Psbt, PsbtSighashType};
+use bitcoin::psbt::{Input, Output, Psbt, PsbtSighashType, Version};
 use bitcoin::sighash::{EcdsaSighashType, TapSighashType};
 use bitcoin::taproot::{self, ControlBlock, LeafVersion, TapTree, TaprootBuilder};
 use bitcoin::{
@@ -264,7 +264,7 @@ fn serde_regression_psbt() {
     .collect();
 
     let psbt = Psbt {
-        version: 0,
+        version: Version::PsbtV0,
         xpub: {
             let s = include_str!("data/serde/extended_pub_key");
             let xpub = ExtendedPubKey::from_str(s.trim()).unwrap();
