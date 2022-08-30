@@ -9,7 +9,7 @@ if [ ${incorrectFilenames} -gt 0 ]; then
 fi
 
 # Testing
-cargo install --force honggfuzz
+cargo install --force honggfuzz --no-default-features
 for TARGET in fuzz_targets/*; do
 	FILENAME=$(basename $TARGET)
 	FILE="${FILENAME%.*}"
