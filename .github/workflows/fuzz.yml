@@ -30,7 +30,7 @@ jobs:
           toolchain: 1.58
           override: true
           profile: minimal
-      - run: cargo install honggfuzz
+      - run: cargo install honggfuzz --no-default-features
         if: steps.cache-fuzz.outputs.cache-hit != 'true'
       - run: echo "HFUZZ_RUN_ARGS=\"--run_time 30 --exit_upon_crash -v -f hfuzz_input/${{ matrix.fuzz_target }}/input\"" >> $GITHUB_ENV
       - name: fuzz
