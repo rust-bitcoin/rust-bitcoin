@@ -1,7 +1,6 @@
 name: Fuzz
 
-# Temporarily disable job until someone works out how to fix honggfuzz.
-on: []
+on: [push, pull_request]
 
 jobs:
 
