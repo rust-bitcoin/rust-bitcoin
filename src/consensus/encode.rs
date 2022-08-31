@@ -306,6 +306,12 @@ pub trait Encodable {
     ///
     /// The only errors returned are errors propagated from the writer.
     fn consensus_encode<W: io::Write + ?Sized>(&self, writer: &mut W) -> Result<usize, io::Error>;
+
+    /// Returns the bytes needed when `self` is serialized
+    fn serialized_len(&self) -> usize {
+        self.consensus_encode(&mut sink()).unwrap()
+    }
+
 }
 
 /// Data which can be encoded in a consensus-consistent way
