@@ -76,6 +76,7 @@ mod internal_macros;
 mod parse;
 #[cfg(feature = "serde")]
 mod serde_utils;
+mod serialized_len;
 
 #[macro_use]
 pub mod network;

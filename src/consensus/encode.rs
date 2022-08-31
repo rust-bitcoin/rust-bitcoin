@@ -17,6 +17,7 @@
 //!
 
 use crate::prelude::*;
+use crate::serialized_len::WriteCounterThreshold;
 
 use core::{fmt, mem, u32, convert::From};
 
@@ -308,10 +309,22 @@ pub trait Encodable {
     fn consensus_encode<W: io::Write + ?Sized>(&self, writer: &mut W) -> Result<usize, io::Error>;
 
     /// Returns the bytes needed when `self` is serialized
+    ///
+    /// The computation could be costly for big objects, see [`Encodable::serialized_len_early_stop`] to limit
+    /// the cost at the expense of precision for big objects
     fn serialized_len(&self) -> usize {
         self.consensus_encode(&mut sink()).unwrap()
     }
 
+    /// Equivalent to [`Encodable::serialized_len`] wrapped in `Ok` when the needed bytes to serialize are less
+    /// than `threshold`.
+    ///
+    /// If more than `threshold` bytes are needed the result is an `Err`, containing a number that
+    /// could be a minimum bound of the needed bytes to serialize.
+    fn serialized_len_early_stop(&self, threshold: usize) -> Result<usize, usize> {
+        let mut writer = WriteCounterThreshold::new(threshold);
+        self.consensus_encode(&mut writer).map_err(|_| writer.bytes_written())
+    }
 }
 
 /// Data which can be encoded in a consensus-consistent way
