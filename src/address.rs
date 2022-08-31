@@ -933,16 +933,10 @@ mod tests {
     use secp256k1::XOnlyPublicKey;
 
     use super::*;
-    use crate::blockdata::script::Script;
     use crate::hashes::hex::{FromHex, ToHex};
+    use crate::internal_macros::{hex, hex_into, hex_script};
     use crate::network::constants::Network::{Bitcoin, Testnet};
     use crate::util::key::PublicKey;
-
-    macro_rules! hex (($hex:literal) => (Vec::from_hex($hex).unwrap()));
-    macro_rules! hex_key (($hex:literal) => (PublicKey::from_slice(&hex!($hex)).unwrap()));
-    macro_rules! hex_script (($hex:literal) => (Script::from(hex!($hex))));
-    macro_rules! hex_pubkeyhash (($hex:literal) => (PubkeyHash::from_hex(&$hex).unwrap()));
-    macro_rules! hex_scripthash (($hex:literal) => (ScriptHash::from_hex($hex).unwrap()));
 
     fn roundtrips(addr: &Address) {
         assert_eq!(
@@ -964,9 +958,7 @@ mod tests {
     fn test_p2pkh_address_58() {
         let addr = Address {
             network: Bitcoin,
-            payload: Payload::PubkeyHash(hex_pubkeyhash!(
-                "162c5ea71c0b23f5b9022ef047c4a86470a5b070"
-            )),
+            payload: Payload::PubkeyHash(hex_into!("162c5ea71c0b23f5b9022ef047c4a86470a5b070")),
         };
 
         assert_eq!(
@@ -980,11 +972,11 @@ mod tests {
 
     #[test]
     fn test_p2pkh_from_key() {
-        let key = hex_key!("048d5141948c1702e8c95f438815794b87f706a8d4cd2bffad1dc1570971032c9b6042a0431ded2478b5c9cf2d81c124a5e57347a3c63ef0e7716cf54d613ba183");
+        let key = hex_into!("048d5141948c1702e8c95f438815794b87f706a8d4cd2bffad1dc1570971032c9b6042a0431ded2478b5c9cf2d81c124a5e57347a3c63ef0e7716cf54d613ba183");
         let addr = Address::p2pkh(&key, Bitcoin);
         assert_eq!(&addr.to_string(), "1QJVDzdqb1VpbDK7uDeyVXy9mR27CJiyhY");
 
-        let key = hex_key!("03df154ebfcf29d29cc10d5c2565018bce2d9edbab267c31d2caf44a63056cf99f");
+        let key = hex_into!("03df154ebfcf29d29cc10d5c2565018bce2d9edbab267c31d2caf44a63056cf99f");
         let addr = Address::p2pkh(&key, Testnet);
         assert_eq!(&addr.to_string(), "mqkhEMH6NCeYjFybv7pvFC22MFeaNT9AQC");
         assert_eq!(addr.address_type(), Some(AddressType::P2pkh));
@@ -995,9 +987,7 @@ mod tests {
     fn test_p2sh_address_58() {
         let addr = Address {
             network: Bitcoin,
-            payload: Payload::ScriptHash(hex_scripthash!(
-                "162c5ea71c0b23f5b9022ef047c4a86470a5b070"
-            )),
+            payload: Payload::ScriptHash(hex_into!("162c5ea71c0b23f5b9022ef047c4a86470a5b070")),
         };
 
         assert_eq!(
@@ -1028,7 +1018,7 @@ mod tests {
     fn test_p2wpkh() {
         // stolen from Bitcoin transaction: b3c8c2b6cfc335abbcb2c7823a8453f55d64b2b5125a9a61e8737230cdb8ce20
         let mut key =
-            hex_key!("033bc8c83c52df5712229a2f72206d90192366c36428cb0c12b6af98324d97bfbc");
+            hex_into!("033bc8c83c52df5712229a2f72206d90192366c36428cb0c12b6af98324d97bfbc");
         let addr = Address::p2wpkh(&key, Bitcoin).unwrap();
         assert_eq!(&addr.to_string(), "bc1qvzvkjn4q3nszqxrv3nraga2r822xjty3ykvkuw");
         assert_eq!(addr.address_type(), Some(AddressType::P2wpkh));
@@ -1056,7 +1046,7 @@ mod tests {
     fn test_p2shwpkh() {
         // stolen from Bitcoin transaction: ad3fd9c6b52e752ba21425435ff3dd361d6ac271531fc1d2144843a9f550ad01
         let mut key =
-            hex_key!("026c468be64d22761c30cd2f12cbc7de255d592d7904b1bab07236897cc4c2e766");
+            hex_into!("026c468be64d22761c30cd2f12cbc7de255d592d7904b1bab07236897cc4c2e766");
         let addr = Address::p2shwpkh(&key, Bitcoin).unwrap();
         assert_eq!(&addr.to_string(), "3QBRmWNqqBGme9er7fMkGqtZtp4gjMFxhE");
         assert_eq!(addr.address_type(), Some(AddressType::P2sh));
