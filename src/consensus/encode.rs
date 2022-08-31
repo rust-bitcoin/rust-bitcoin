@@ -131,7 +131,8 @@ impl From<psbt::Error> for Error {
 
 /// Encode an object into a vector
 pub fn serialize<T: Encodable + ?Sized>(data: &T) -> Vec<u8> {
-    let mut encoder = Vec::new();
+    let capacity = data.serialized_len_early_stop(512).unwrap_or_else(|e| e);
+    let mut encoder = Vec::with_capacity(capacity);
     let len = data.consensus_encode(&mut encoder).expect("in-memory writers don't error");
     debug_assert_eq!(len, encoder.len());
     encoder
