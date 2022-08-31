@@ -531,6 +531,7 @@ mod tests {
 
 #[cfg(bench)]
 mod benches {
+    use crate::consensus::serialize;
     use super::Block;
     use crate::consensus::{deserialize, Encodable, Decodable};
     use test::{black_box, Bencher};
@@ -550,7 +551,30 @@ mod benches {
     }
 
     #[bench]
+    pub fn bench_block_serialize_alloc(bh: &mut Bencher) {
+        let raw_block = include_bytes!("../../test_data/mainnet_block_000000000000000000000c835b2adcaedc20fdf6ee440009c249452c726dafae.raw");
+        let block: Block = deserialize(&raw_block[..]).unwrap();
+
+        bh.iter(|| {
+            let mut data = vec![];
+            let result = block.consensus_encode(&mut data);
+            black_box(&result);
+        });
+    }
+
+    #[bench]
     pub fn bench_block_serialize(bh: &mut Bencher) {
+        let raw_block = include_bytes!("../../test_data/mainnet_block_000000000000000000000c835b2adcaedc20fdf6ee440009c249452c726dafae.raw");
+        let block: Block = deserialize(&raw_block[..]).unwrap();
+
+        bh.iter(|| {
+            let result = serialize(&block);
+            black_box(&result);
+        });
+    }
+
+    #[bench]
+    pub fn bench_block_serialize_prealloc(bh: &mut Bencher) {
         let raw_block = include_bytes!("../../test_data/mainnet_block_000000000000000000000c835b2adcaedc20fdf6ee440009c249452c726dafae.raw");
 
         let block: Block = deserialize(&raw_block[..]).unwrap();

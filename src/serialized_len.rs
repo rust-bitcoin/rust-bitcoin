@@ -28,3 +28,88 @@ impl io::Write for WriteCounterThreshold {
     }
     fn flush(&mut self) -> io::Result<()> { Ok(()) }
 }
+
+#[cfg(test)]
+mod test {
+    use crate::consensus::{serialize, Encodable};
+    use crate::constants::genesis_block;
+
+    #[test]
+    fn test_serialized_len() {
+        let tx = genesis_block(crate::Network::Bitcoin).txdata[0].clone();
+        let len = serialize(&tx).len();
+        assert_eq!(len, 204);
+        assert_eq!(len, tx.serialized_len());
+        let ser_stop = tx.serialized_len_early_stop(20);
+        assert!(ser_stop.is_err());
+        assert!(ser_stop.unwrap_err() > 20);
+    }
+}
+
+#[cfg(bench)]
+mod bench {
+    use test::{black_box, Bencher};
+
+    use crate::consensus::{deserialize, serialize, Encodable};
+    use crate::constants::genesis_block;
+    use crate::hashes::Hash;
+    use crate::{Block, OutPoint, Txid};
+
+    #[bench]
+    pub fn bench_transaction_serialize_len(bh: &mut Bencher) {
+        let tx = genesis_block(crate::Network::Bitcoin).txdata[0].clone();
+
+        bh.iter(|| {
+            black_box(serialize(&tx).len());
+        });
+    }
+
+    #[bench]
+    pub fn bench_transaction_serialized_len(bh: &mut Bencher) {
+        let tx = genesis_block(crate::Network::Bitcoin).txdata[0].clone();
+
+        bh.iter(|| {
+            black_box(tx.serialized_len());
+        });
+    }
+
+    #[bench]
+    pub fn bench_block_serialized_len(bh: &mut Bencher) {
+        let raw_block = include_bytes!("../test_data/mainnet_block_000000000000000000000c835b2adcaedc20fdf6ee440009c249452c726dafae.raw");
+        let block: Block = deserialize(&raw_block[..]).unwrap();
+
+        bh.iter(|| {
+            black_box(block.serialized_len());
+        });
+    }
+
+    #[bench]
+    pub fn bench_block_serialized_len_early_stop(bh: &mut Bencher) {
+        let raw_block = include_bytes!("../test_data/mainnet_block_000000000000000000000c835b2adcaedc20fdf6ee440009c249452c726dafae.raw");
+        let block: Block = deserialize(&raw_block[..]).unwrap();
+
+        bh.iter(|| {
+            black_box(block.serialized_len_early_stop(512).unwrap_err());
+        });
+    }
+
+    #[bench]
+    pub fn bench_out_point_serialize_alloc(bh: &mut Bencher) {
+        let out_point = OutPoint { txid: Txid::all_zeros(), vout: 0 };
+
+        bh.iter(|| {
+            let mut data = vec![];
+            out_point.consensus_encode(&mut data).unwrap();
+            black_box(data);
+        });
+    }
+
+    #[bench]
+    pub fn bench_out_point_serialize(bh: &mut Bencher) {
+        let out_point = OutPoint { txid: Txid::all_zeros(), vout: 0 };
+
+        bh.iter(|| {
+            black_box(serialize(&out_point).len());
+        });
+    }
+}

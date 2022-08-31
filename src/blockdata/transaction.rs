@@ -1439,6 +1439,7 @@ mod benches {
     use super::Transaction;
     use crate::consensus::{deserialize, Encodable};
     use crate::hashes::hex::FromHex;
+    use crate::consensus::serialize;
     use test::{black_box, Bencher};
     use crate::prelude::sink;
 
@@ -1457,6 +1458,29 @@ mod benches {
 
     #[bench]
     pub fn bench_transaction_serialize(bh: &mut Bencher) {
+        let raw_tx = Vec::from_hex(SOME_TX).unwrap();
+        let tx: Transaction = deserialize(&raw_tx).unwrap();
+
+        bh.iter(|| {
+            let result = serialize(&tx);
+            black_box(&result);
+        });
+    }
+
+    #[bench]
+    pub fn bench_transaction_serialize_alloc(bh: &mut Bencher) {
+        let raw_tx = Vec::from_hex(SOME_TX).unwrap();
+        let tx: Transaction = deserialize(&raw_tx).unwrap();
+
+        bh.iter(|| {
+            let mut data = vec![];
+            let result = tx.consensus_encode(&mut data);
+            black_box(&result);
+        });
+    }
+
+    #[bench]
+    pub fn bench_transaction_serialize_prealloc(bh: &mut Bencher) {
         let raw_tx = Vec::from_hex(SOME_TX).unwrap();
         let tx: Transaction = deserialize(&raw_tx).unwrap();
 
