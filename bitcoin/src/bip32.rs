@@ -7,6 +7,7 @@
 //! at <https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki>.
 //!
 
+use core::convert::TryInto;
 use core::default::Default;
 use core::fmt;
 use core::ops::Index;
@@ -24,7 +25,7 @@ use crate::io::Write;
 use crate::network::constants::Network;
 use crate::prelude::*;
 use crate::util::key::{KeyPair, PrivateKey, PublicKey};
-use crate::util::{base58, endian, key};
+use crate::util::{base58, key};
 
 /// A chain code
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -574,7 +575,7 @@ impl ExtendedPrivKey {
             }
         }
 
-        hmac_engine.input(&endian::u32_to_array_be(u32::from(i)));
+        hmac_engine.input(&u32::from(i).to_be_bytes());
         let hmac_result: Hmac<sha512::Hash> = Hmac::from_engine(hmac_engine);
         let sk = secp256k1::SecretKey::from_slice(&hmac_result[..32])
             .expect("statistically impossible to hit");
@@ -611,7 +612,7 @@ impl ExtendedPrivKey {
             network,
             depth: data[4],
             parent_fingerprint: Fingerprint::from(&data[5..9]),
-            child_number: endian::slice_to_u32_be(&data[9..13]).into(),
+            child_number: u32::from_be_bytes(data[9..13].try_into().expect("4 byte slice")).into(),
             chain_code: ChainCode::from(&data[13..45]),
             private_key: secp256k1::SecretKey::from_slice(&data[46..78])?,
         })
@@ -628,7 +629,7 @@ impl ExtendedPrivKey {
         );
         ret[4] = self.depth as u8;
         ret[5..9].copy_from_slice(&self.parent_fingerprint[..]);
-        ret[9..13].copy_from_slice(&endian::u32_to_array_be(u32::from(self.child_number)));
+        ret[9..13].copy_from_slice(&u32::from(self.child_number).to_be_bytes());
         ret[13..45].copy_from_slice(&self.chain_code[..]);
         ret[45] = 0;
         ret[46..78].copy_from_slice(&self.private_key[..]);
@@ -695,7 +696,7 @@ impl ExtendedPubKey {
                 let mut hmac_engine: HmacEngine<sha512::Hash> =
                     HmacEngine::new(&self.chain_code[..]);
                 hmac_engine.input(&self.public_key.serialize()[..]);
-                hmac_engine.input(&endian::u32_to_array_be(n));
+                hmac_engine.input(&n.to_be_bytes());
 
                 let hmac_result: Hmac<sha512::Hash> = Hmac::from_engine(hmac_engine);
 
@@ -743,7 +744,7 @@ impl ExtendedPubKey {
             },
             depth: data[4],
             parent_fingerprint: Fingerprint::from(&data[5..9]),
-            child_number: endian::slice_to_u32_be(&data[9..13]).into(),
+            child_number: u32::from_be_bytes(data[9..13].try_into().expect("4 byte slice")).into(),
             chain_code: ChainCode::from(&data[13..45]),
             public_key: secp256k1::PublicKey::from_slice(&data[45..78])?,
         })
@@ -760,7 +761,7 @@ impl ExtendedPubKey {
         );
         ret[4] = self.depth as u8;
         ret[5..9].copy_from_slice(&self.parent_fingerprint[..]);
-        ret[9..13].copy_from_slice(&endian::u32_to_array_be(u32::from(self.child_number)));
+        ret[9..13].copy_from_slice(&u32::from(self.child_number).to_be_bytes());
         ret[13..45].copy_from_slice(&self.chain_code[..]);
         ret[45..78].copy_from_slice(&self.public_key.serialize()[..]);
         ret

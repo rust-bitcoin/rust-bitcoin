@@ -17,7 +17,6 @@ use crate::blockdata::transaction::EncodeSigningDataResult;
 use crate::blockdata::witness::Witness;
 use crate::consensus::{encode, Encodable};
 use crate::error::impl_std_error;
-use crate::util::endian;
 use crate::hashes::{sha256, sha256d, Hash};
 use crate::prelude::*;
 use crate::util::taproot::{TapLeafHash, TAPROOT_ANNEX_PREFIX, TapSighashHash, LeafVersion};
@@ -879,8 +878,7 @@ impl<R: Deref<Target = Transaction>> SighashCache<R> {
             };
             // hash the result
             tx.consensus_encode(&mut writer)?;
-            let sighash_arr = endian::u32_to_array_le(sighash_type);
-            sighash_arr.consensus_encode(&mut writer)?;
+            sighash_type.to_le_bytes().consensus_encode(&mut writer)?;
             Ok(())
         }
 

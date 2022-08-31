@@ -12,7 +12,6 @@ use crate::consensus::encode::MAX_VEC_SIZE;
 use crate::util::psbt::map::Map;
 use crate::util::psbt::{raw, PartiallySignedTransaction};
 use crate::util::psbt::Error;
-use crate::util::endian::u32_to_array_le;
 use crate::util::bip32::{ExtendedPubKey, Fingerprint, DerivationPath, ChildNumber};
 
 /// Type: Unsigned Transaction PSBT_GLOBAL_UNSIGNED_TX = 0x00
@@ -54,7 +53,7 @@ impl Map for PartiallySignedTransaction {
                 value: {
                     let mut ret = Vec::with_capacity(4 + derivation.len() * 4);
                     ret.extend(fingerprint.as_bytes());
-                    derivation.into_iter().for_each(|n| ret.extend(&u32_to_array_le((*n).into())));
+                    derivation.into_iter().for_each(|n| ret.extend(&u32::from(*n).to_le_bytes()));
                     ret
                 }
             });
@@ -67,7 +66,7 @@ impl Map for PartiallySignedTransaction {
                     type_value: PSBT_GLOBAL_VERSION,
                     key: vec![],
                 },
-                value: u32_to_array_le(self.version).to_vec()
+                value: self.version.to_le_bytes().to_vec()
             });
         }
 

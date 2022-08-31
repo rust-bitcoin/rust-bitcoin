@@ -26,7 +26,6 @@ use crate::hashes::{sha256d, Hash, sha256};
 use crate::hash_types::{BlockHash, FilterHash, TxMerkleNode, FilterHeader};
 use crate::io::{self, Cursor, Read};
 
-use crate::util::endian;
 use crate::util::psbt;
 use crate::bip152::{ShortId, PrefilledTransaction};
 use crate::util::taproot::TapLeafHash;
@@ -207,33 +206,32 @@ pub trait ReadExt : io::Read {
 }
 
 macro_rules! encoder_fn {
-    ($name:ident, $val_type:ty, $writefn:ident) => {
+    ($name:ident, $val_type:ty) => {
         #[inline]
         fn $name(&mut self, v: $val_type) -> Result<(), io::Error> {
-            self.write_all(&endian::$writefn(v))
+            self.write_all(&v.to_le_bytes())
         }
     }
 }
 
 macro_rules! decoder_fn {
-    ($name:ident, $val_type:ty, $readfn:ident, $byte_len: expr) => {
+    ($name:ident, $val_type:ty, $byte_len: expr) => {
         #[inline]
         fn $name(&mut self) -> Result<$val_type, Error> {
-            bitcoin_internals::const_assert!(core::mem::size_of::<$val_type>() == $byte_len);
             let mut val = [0; $byte_len];
             self.read_exact(&mut val[..]).map_err(Error::Io)?;
-            Ok(endian::$readfn(&val))
+            Ok(<$val_type>::from_le_bytes(val))
         }
     }
 }
 
 impl<W: io::Write + ?Sized> WriteExt for W {
-    encoder_fn!(emit_u64, u64, u64_to_array_le);
-    encoder_fn!(emit_u32, u32, u32_to_array_le);
-    encoder_fn!(emit_u16, u16, u16_to_array_le);
-    encoder_fn!(emit_i64, i64, i64_to_array_le);
-    encoder_fn!(emit_i32, i32, i32_to_array_le);
-    encoder_fn!(emit_i16, i16, i16_to_array_le);
+    encoder_fn!(emit_u64, u64);
+    encoder_fn!(emit_u32, u32);
+    encoder_fn!(emit_u16, u16);
+    encoder_fn!(emit_i64, i64);
+    encoder_fn!(emit_i32, i32);
+    encoder_fn!(emit_i16, i16);
 
     #[inline]
     fn emit_i8(&mut self, v: i8) -> Result<(), io::Error> {
@@ -254,12 +252,12 @@ impl<W: io::Write + ?Sized> WriteExt for W {
 }
 
 impl<R: Read + ?Sized> ReadExt for R {
-    decoder_fn!(read_u64, u64, slice_to_u64_le, 8);
-    decoder_fn!(read_u32, u32, slice_to_u32_le, 4);
-    decoder_fn!(read_u16, u16, slice_to_u16_le, 2);
-    decoder_fn!(read_i64, i64, slice_to_i64_le, 8);
-    decoder_fn!(read_i32, i32, slice_to_i32_le, 4);
-    decoder_fn!(read_i16, i16, slice_to_i16_le, 2);
+    decoder_fn!(read_u64, u64, 8);
+    decoder_fn!(read_u32, u32, 4);
+    decoder_fn!(read_u16, u16, 2);
+    decoder_fn!(read_i64, i64, 8);
+    decoder_fn!(read_i32, i32, 4);
+    decoder_fn!(read_i16, i16, 2);
 
     #[inline]
     fn read_u8(&mut self) -> Result<u8, Error> {
@@ -831,7 +829,6 @@ mod tests {
     use super::{deserialize, serialize, Error, CheckedData, VarInt};
     use super::{Transaction, BlockHash, FilterHash, TxMerkleNode, TxOut, TxIn};
     use crate::consensus::{Encodable, deserialize_partial, Decodable};
-    use crate::util::endian::{u64_to_array_le, u32_to_array_le, u16_to_array_le};
     use secp256k1::rand::{thread_rng, Rng};
     #[cfg(feature = "std")]
     use crate::network::{Address, message_blockdata::Inventory};
@@ -893,9 +890,9 @@ mod tests {
         assert_eq!(serialize(&VarInt(0xFFF)), vec![0xFDu8, 0xFF, 0xF]);
         assert_eq!(serialize(&VarInt(0xF0F0F0F)), vec![0xFEu8, 0xF, 0xF, 0xF, 0xF]);
         assert_eq!(serialize(&VarInt(0xF0F0F0F0F0E0)), vec![0xFFu8, 0xE0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0, 0]);
-        assert_eq!(test_varint_encode(0xFF, &u64_to_array_le(0x100000000)).unwrap(), VarInt(0x100000000));
-        assert_eq!(test_varint_encode(0xFE, &u64_to_array_le(0x10000)).unwrap(), VarInt(0x10000));
-        assert_eq!(test_varint_encode(0xFD, &u64_to_array_le(0xFD)).unwrap(), VarInt(0xFD));
+        assert_eq!(test_varint_encode(0xFF, &0x100000000_u64.to_le_bytes()).unwrap(), VarInt(0x100000000));
+        assert_eq!(test_varint_encode(0xFE, &0x10000_u64.to_le_bytes()).unwrap(), VarInt(0x10000));
+        assert_eq!(test_varint_encode(0xFD, &0xFD_u64.to_le_bytes()).unwrap(), VarInt(0xFD));
 
         // Test that length calc is working correctly
         test_varint_len(VarInt(0), 1);
@@ -924,11 +921,11 @@ mod tests {
     #[test]
     fn deserialize_nonminimal_vec() {
         // Check the edges for variant int
-        assert_eq!(discriminant(&test_varint_encode(0xFF, &u64_to_array_le(0x100000000-1)).unwrap_err()),
+        assert_eq!(discriminant(&test_varint_encode(0xFF, &(0x100000000_u64-1).to_le_bytes()).unwrap_err()),
                    discriminant(&Error::NonMinimalVarInt));
-        assert_eq!(discriminant(&test_varint_encode(0xFE, &u32_to_array_le(0x10000-1)).unwrap_err()),
+        assert_eq!(discriminant(&test_varint_encode(0xFE, &(0x10000_u64-1).to_le_bytes()).unwrap_err()),
                    discriminant(&Error::NonMinimalVarInt));
-        assert_eq!(discriminant(&test_varint_encode(0xFD, &u16_to_array_le(0xFD-1)).unwrap_err()),
+        assert_eq!(discriminant(&test_varint_encode(0xFD, &(0xFD_u64-1).to_le_bytes()).unwrap_err()),
                    discriminant(&Error::NonMinimalVarInt));
 
         assert_eq!(discriminant(&deserialize::<Vec<u8>>(&[0xfd, 0x00, 0x00]).unwrap_err()),

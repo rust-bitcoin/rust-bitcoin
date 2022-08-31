@@ -40,6 +40,7 @@
 //!
 
 use core::cmp::{self, Ordering};
+use core::convert::TryInto;
 use core::fmt::{self, Display, Formatter};
 
 use bitcoin_internals::write_err;
@@ -53,7 +54,6 @@ use crate::hash_types::{BlockHash, FilterHash, FilterHeader};
 use crate::hashes::{siphash24, Hash};
 use crate::io;
 use crate::prelude::*;
-use crate::util::endian;
 
 /// Golomb encoding parameter as in BIP-158, see also https://gist.github.com/sipa/576d5f09c3b86c3b1b75598d799fc845
 const P: u8 = 19;
@@ -170,8 +170,8 @@ impl<'a, W: io::Write> BlockFilterWriter<'a, W> {
     /// Creates a new [`BlockFilterWriter`] from `block`.
     pub fn new(writer: &'a mut W, block: &'a Block) -> BlockFilterWriter<'a, W> {
         let block_hash_as_int = block.block_hash().into_inner();
-        let k0 = endian::slice_to_u64_le(&block_hash_as_int[0..8]);
-        let k1 = endian::slice_to_u64_le(&block_hash_as_int[8..16]);
+        let k0 = u64::from_le_bytes(block_hash_as_int[0..8].try_into().expect("8 byte slice"));
+        let k1 = u64::from_le_bytes(block_hash_as_int[8..16].try_into().expect("8 byte slice"));
         let writer = GcsFilterWriter::new(writer, k0, k1, M, P);
         BlockFilterWriter { block, writer }
     }
@@ -224,8 +224,8 @@ impl BlockFilterReader {
     /// Creates a new [`BlockFilterReader`] from `block_hash`.
     pub fn new(block_hash: &BlockHash) -> BlockFilterReader {
         let block_hash_as_int = block_hash.into_inner();
-        let k0 = endian::slice_to_u64_le(&block_hash_as_int[0..8]);
-        let k1 = endian::slice_to_u64_le(&block_hash_as_int[8..16]);
+        let k0 = u64::from_le_bytes(block_hash_as_int[0..8].try_into().expect("8 byte slice"));
+        let k1 = u64::from_le_bytes(block_hash_as_int[8..16].try_into().expect("8 byte slice"));
         BlockFilterReader { reader: GcsFilterReader::new(k0, k1, M, P) }
     }
 

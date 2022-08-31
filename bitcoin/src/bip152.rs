@@ -5,7 +5,7 @@
 //! Implementation of compact blocks data structure and algorithms.
 //!
 
-use core::convert::TryFrom;
+use core::convert::{TryFrom, TryInto};
 use core::{convert, fmt, mem};
 #[cfg(feature = "std")]
 use std::error;
@@ -16,7 +16,6 @@ use crate::consensus::encode::{self, Decodable, Encodable, VarInt};
 use crate::hashes::{sha256, siphash24, Hash};
 use crate::internal_macros::{impl_bytes_newtype, impl_consensus_encoding};
 use crate::prelude::*;
-use crate::util::endian;
 use crate::{io, Block, BlockHash, BlockHeader, Transaction};
 
 /// A BIP-152 error
@@ -112,7 +111,7 @@ impl ShortId {
 
         // 2. Running SipHash-2-4 with the input being the transaction ID and the keys (k0/k1)
         // set to the first two little-endian 64-bit integers from the above hash, respectively.
-        (endian::slice_to_u64_le(&h[0..8]), endian::slice_to_u64_le(&h[8..16]))
+        (u64::from_le_bytes(h[0..8].try_into().expect("8 byte slice")), u64::from_le_bytes(h[8..16].try_into().expect("8 byte slice")))
     }
 
     /// Calculate the short ID with the given (w)txid and using the provided SipHash keys.
