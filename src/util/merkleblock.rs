@@ -532,81 +532,94 @@ mod tests {
     use crate::util::merkleblock::{MerkleBlock, PartialMerkleTree};
     use crate::Block;
 
-    #[test]
-    fn pmt_tests() {
+    /// accepts `pmt_test_$num`
+    fn pmt_test_from_name(name: &str) {
+        pmt_test(name[9..].parse().unwrap())
+    }
+
+    macro_rules! pmt_tests {
+    ($($name:ident),* $(,)?) => {
+         $(
+        #[test]
+        fn $name() {
+            pmt_test_from_name(stringify!($name));
+        }
+         )*
+    }
+}
+    pmt_tests!(pmt_test_1, pmt_test_4, pmt_test_7, pmt_test_17, pmt_test_56, pmt_test_100,
+        pmt_test_127, pmt_test_256, pmt_test_312, pmt_test_513, pmt_test_1000, pmt_test_4095);
+
+    fn pmt_test(tx_count: usize) {
         let mut rng = thread_rng();
-        let tx_counts = vec![1, 4, 7, 17, 56, 100, 127, 256, 312, 513, 1000, 4095];
+        // Create some fake tx ids
+        let tx_ids = (1..=tx_count)
+            .map(|i| Txid::from_hex(&format!("{:064x}", i)).unwrap())
+            .collect::<Vec<_>>();
 
-        for num_tx in tx_counts {
-            // Create some fake tx ids
-            let txids = (1..num_tx + 1) // change to `1..=num_tx` when min Rust >= 1.26.0
-                .map(|i| Txid::from_hex(&format!("{:064x}", i)).unwrap())
-                .collect::<Vec<_>>();
+        // Calculate the merkle root and height
+        let hashes = tx_ids.iter().map(|t| t.as_hash());
+        let merkle_root_1: TxMerkleNode = bitcoin_merkle_root(hashes).expect("hashes is not empty").into();
+        let mut height = 1;
+        let mut ntx = tx_count;
+        while ntx > 1 {
+            ntx = (ntx + 1) / 2;
+            height += 1;
+        }
 
-            // Calculate the merkle root and height
-            let hashes = txids.iter().map(|t| t.as_hash());
-            let merkle_root_1: TxMerkleNode = bitcoin_merkle_root(hashes).expect("hashes is not empty").into();
-            let mut height = 1;
-            let mut ntx = num_tx;
-            while ntx > 1 {
-                ntx = (ntx + 1) / 2;
-                height += 1;
+        // Check with random subsets with inclusion chances 1, 1/2, 1/4, ..., 1/128
+        for att in 1..15 {
+            let mut matches = vec![false; tx_count];
+            let mut match_txid1 = vec![];
+            for j in 0..tx_count {
+                // Generate `att / 2` random bits
+                let rand_bits = match att / 2 {
+                    0 => 0,
+                    bits => rng.gen::<u64>() >> (64 - bits),
+                };
+                let include = rand_bits == 0;
+                matches[j] = include;
+
+                if include {
+                    match_txid1.push(tx_ids[j]);
+                };
             }
 
-            // Check with random subsets with inclusion chances 1, 1/2, 1/4, ..., 1/128
-            for att in 1..15 {
-                let mut matches = vec![false; num_tx];
-                let mut match_txid1 = vec![];
-                for j in 0..num_tx {
-                    // Generate `att / 2` random bits
-                    let rand_bits = match att / 2 {
-                        0 => 0,
-                        bits => rng.gen::<u64>() >> (64 - bits),
-                    };
-                    let include = rand_bits == 0;
-                    matches[j] = include;
+            // Build the partial merkle tree
+            let pmt1 = PartialMerkleTree::from_txids(&tx_ids, &matches);
+            let serialized = serialize(&pmt1);
 
-                    if include {
-                        match_txid1.push(txids[j]);
-                    };
-                }
+            // Verify PartialMerkleTree's size guarantees
+            let n = min(tx_count, 1 + match_txid1.len() * height);
+            assert!(serialized.len() <= 10 + (258 * n + 7) / 8);
 
-                // Build the partial merkle tree
-                let pmt1 = PartialMerkleTree::from_txids(&txids, &matches);
-                let serialized = serialize(&pmt1);
+            // Deserialize into a tester copy
+            let pmt2: PartialMerkleTree =
+                deserialize(&serialized).expect("Could not deserialize own data");
 
-                // Verify PartialMerkleTree's size guarantees
-                let n = min(num_tx, 1 + match_txid1.len() * height);
-                assert!(serialized.len() <= 10 + (258 * n + 7) / 8);
+            // Extract merkle root and matched txids from copy
+            let mut match_txid2: Vec<Txid> = vec![];
+            let mut indexes = vec![];
+            let merkle_root_2 = pmt2
+                .extract_matches(&mut match_txid2, &mut indexes)
+                .expect("Could not extract matches");
 
-                // Deserialize into a tester copy
-                let pmt2: PartialMerkleTree =
-                    deserialize(&serialized).expect("Could not deserialize own data");
+            // Check that it has the same merkle root as the original, and a valid one
+            assert_eq!(merkle_root_1, merkle_root_2);
+            assert_ne!(merkle_root_2, TxMerkleNode::all_zeros());
 
-                // Extract merkle root and matched txids from copy
-                let mut match_txid2: Vec<Txid> = vec![];
-                let mut indexes = vec![];
-                let merkle_root_2 = pmt2
-                    .extract_matches(&mut match_txid2, &mut indexes)
-                    .expect("Could not extract matches");
+            // check that it contains the matched transactions (in the same order!)
+            assert_eq!(match_txid1, match_txid2);
 
-                // Check that it has the same merkle root as the original, and a valid one
-                assert_eq!(merkle_root_1, merkle_root_2);
-                assert_ne!(merkle_root_2, TxMerkleNode::all_zeros());
-
-                // check that it contains the matched transactions (in the same order!)
-                assert_eq!(match_txid1, match_txid2);
-
-                // check that random bit flips break the authentication
-                for _ in 0..4 {
-                    let mut pmt3: PartialMerkleTree = deserialize(&serialized).unwrap();
-                    pmt3.damage(&mut rng);
-                    let mut match_txid3 = vec![];
-                    let merkle_root_3 = pmt3
-                        .extract_matches(&mut match_txid3, &mut indexes)
-                        .unwrap();
-                    assert_ne!(merkle_root_3, merkle_root_1);
-                }
+            // check that random bit flips break the authentication
+            for _ in 0..4 {
+                let mut pmt3: PartialMerkleTree = deserialize(&serialized).unwrap();
+                pmt3.damage(&mut rng);
+                let mut match_txid3 = vec![];
+                let merkle_root_3 = pmt3
+                    .extract_matches(&mut match_txid3, &mut indexes)
+                    .unwrap();
+                assert_ne!(merkle_root_3, merkle_root_1);
             }
         }
     }
