@@ -422,6 +422,7 @@ macro_rules! impl_int_encodable {
                 w.$meth_enc(*self)?;
                 Ok(mem::size_of::<$ty>())
             }
+            const STATIC_SERIALIZED_LEN: usize = mem::size_of::<$ty>();
         }
     }
 }
