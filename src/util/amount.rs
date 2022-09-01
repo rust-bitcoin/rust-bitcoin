@@ -1281,9 +1281,7 @@ pub mod serde {
 
     /// This trait is used only to avoid code duplication and naming collisions
     /// of the different serde serialization crates.
-    ///
-    /// TODO: Add the private::Sealed bound in next breaking release
-    pub trait SerdeAmount: Copy + Sized {
+    pub trait SerdeAmount: Copy + Sized + private::Sealed {
         fn ser_sat<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error>;
         fn des_sat<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error>;
         fn ser_btc<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error>;
