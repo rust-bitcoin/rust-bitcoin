@@ -477,6 +477,12 @@ impl Encodable for VarInt {
             },
         }
     }
+    fn serialized_len(&self) -> usize {
+        self.len()
+    }
+    fn serialized_len_early_stop(&self, _threshold: usize) -> Result<usize, usize> {
+        Ok(self.len())
+    }
 }
 
 impl Decodable for VarInt {
