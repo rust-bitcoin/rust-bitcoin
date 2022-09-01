@@ -61,7 +61,7 @@ pub struct BlockHeader {
     pub nonce: u32,
 }
 
-impl_consensus_encoding!(BlockHeader, version, prev_blockhash, merkle_root, time, bits, nonce);
+impl_consensus_encoding!(BlockHeader, 80, version, prev_blockhash, merkle_root, time, bits, nonce);
 
 impl BlockHeader {
     /// Returns the block hash.
