@@ -309,12 +309,21 @@ pub trait Encodable {
     /// The only errors returned are errors propagated from the writer.
     fn consensus_encode<W: io::Write + ?Sized>(&self, writer: &mut W) -> Result<usize, io::Error>;
 
+    /// Objects with statically known serialized len, such as [`crate::Txid`] or [`crate::BlockHeader`],
+    /// have the serialized len value here, 0 means the object size is known only at run-time, for 
+    /// example contains a `Vec`.
+    const STATIC_SERIALIZED_LEN: usize = 0;
+
     /// Returns the bytes needed when `self` is serialized
     ///
     /// The computation could be costly for big objects, see [`Encodable::serialized_len_early_stop`] to limit
     /// the cost at the expense of precision for big objects
     fn serialized_len(&self) -> usize {
-        self.consensus_encode(&mut sink()).unwrap()
+        if Self::STATIC_SERIALIZED_LEN == 0 {
+            self.consensus_encode(&mut sink()).unwrap()
+        } else {
+            Self::STATIC_SERIALIZED_LEN
+        }
     }
 
     /// Equivalent to [`Encodable::serialized_len`] wrapped in `Ok` when the needed bytes to serialize are less
@@ -323,8 +332,12 @@ pub trait Encodable {
     /// If more than `threshold` bytes are needed the result is an `Err`, containing a number that
     /// could be a minimum bound of the needed bytes to serialize.
     fn serialized_len_early_stop(&self, threshold: usize) -> Result<usize, usize> {
-        let mut writer = WriteCounterThreshold::new(threshold);
-        self.consensus_encode(&mut writer).map_err(|_| writer.bytes_written())
+        if Self::STATIC_SERIALIZED_LEN == 0 {
+            let mut writer = WriteCounterThreshold::new(threshold);
+            self.consensus_encode(&mut writer).map_err(|_| writer.bytes_written())
+        } else {
+            Ok(Self::STATIC_SERIALIZED_LEN)
+        }
     }
 }
 
