@@ -122,6 +122,12 @@ impl Encodable for Witness {
         w.emit_slice(&self.content[..])?;
         Ok(self.content.len() + len.len())
     }
+    fn serialized_len(&self) -> usize {
+        VarInt(self.witness_elements as u64).len() + self.content.len()
+    }
+    fn serialized_len_early_stop(&self, _threshold: usize) -> Result<usize, usize> {
+        Ok(self.serialized_len())
+    }
 }
 
 impl Witness {
@@ -180,14 +186,6 @@ impl Witness {
     /// Returns the number of elements this witness holds
     pub fn len(&self) -> usize {
         self.witness_elements as usize
-    }
-
-    /// Returns the bytes required when this Witness is consensus encoded
-    pub fn serialized_len(&self) -> usize {
-        self.iter()
-            .map(|el| VarInt(el.len() as u64).len() + el.len())
-            .sum::<usize>()
-            + VarInt(self.witness_elements as u64).len()
     }
 
     /// Clear the witness
