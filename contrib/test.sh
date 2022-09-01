@@ -4,12 +4,6 @@ set -ex
 
 FEATURES="base64 bitcoinconsensus serde rand secp-recovery"
 
-# Use toolchain if explicitly specified
-if [ -n "$TOOLCHAIN" ]
-then
-    alias cargo="cargo +$TOOLCHAIN"
-fi
-
 if [ "$DO_COV" = true ]
 then
     export RUSTFLAGS="-C link-dead-code"
@@ -104,11 +98,11 @@ fi
 # Bench if told to, only works with non-stable toolchain (nightly, beta).
 if [ "$DO_BENCH" = true ]
 then
-    if [ "NIGHTLY" = false ]
+    if [ "$NIGHTLY" = false ]
     then
-        if [ -n "TOOLCHAIN" ]
+        if [ -n "$RUSTUP_TOOLCHAIN" ]
         then
-            echo "TOOLCHAIN is set to a non-nightly toolchain but DO_BENCH requires a nightly toolchain"
+            echo "RUSTUP_TOOLCHAIN is set to a non-nightly toolchain but DO_BENCH requires a nightly toolchain"
         else
             echo "DO_BENCH requires a nightly toolchain"
         fi
