@@ -25,7 +25,8 @@ use crate::blockdata::constants::WITNESS_SCALE_FACTOR;
 #[cfg(feature="bitcoinconsensus")] use crate::blockdata::script;
 use crate::blockdata::script::Script;
 use crate::blockdata::witness::Witness;
-use crate::blockdata::locktime::{LockTime, PackedLockTime, Height, Time};
+use crate::blockdata::locktime::absolute::{self, Height, Time};
+use crate::blockdata::locktime::relative;
 use crate::consensus::{encode, Decodable, Encodable};
 use crate::hash_types::{Sighash, Txid, Wtxid};
 use crate::VarInt;
@@ -207,7 +208,8 @@ pub struct TxIn {
 }
 
 impl TxIn {
-    /// Returns true if this input enables the [`LockTime`]  (aka `nLockTime`) of its [`Transaction`].
+    /// Returns true if this input enables the [`absolute::LockTime`] (aka `nLockTime`) of its
+    /// [`Transaction`].
     ///
     /// `nLockTime` is enabled if *any* input enables it. See [`Transaction::is_lock_time_enabled`]
     ///  to check the overall state. If none of the inputs enables it, the lock time value is simply
@@ -250,28 +252,20 @@ impl Default for TxIn {
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct Sequence(pub u32);
 
-/// An error in creating relative lock-times.
-#[derive(Clone, PartialEq, Eq, Debug)]
-#[non_exhaustive]
-pub enum RelativeLockTimeError {
-    /// The input was too large
-    IntegerOverflow(u32)
-}
-
 impl Sequence {
     /// The maximum allowable sequence number.
     ///
-    /// This sequence number disables lock-time and replace-by-fee.
+    /// This sequence number disables absolute lock time and replace-by-fee.
     pub const MAX: Self = Sequence(0xFFFFFFFF);
     /// Zero value sequence.
     ///
-    /// This sequence number enables replace-by-fee and lock-time.
+    /// This sequence number enables replace-by-fee and absolute lock time.
     pub const ZERO: Self = Sequence(0);
-    /// The sequence number that enables absolute lock-time but disables replace-by-fee
-    /// and relative lock-time.
+    /// The sequence number that enables absolute lock time but disables replace-by-fee
+    /// and relative lock time.
     pub const ENABLE_LOCKTIME_NO_RBF: Self = Sequence::MIN_NO_RBF;
-    /// The sequence number that enables replace-by-fee and absolute lock-time but
-    /// disables relative lock-time.
+    /// The sequence number that enables replace-by-fee and absolute lock time but
+    /// disables relative lock time.
     pub const ENABLE_RBF_NO_LOCKTIME: Self = Sequence(0xFFFFFFFD);
 
     /// The lowest sequence number that does not opt-in for replace-by-fee.
@@ -282,9 +276,9 @@ impl Sequence {
     ///
     /// [BIP-125]: <https://github.com/bitcoin/bips/blob/master/bip-0125.mediawiki]>
     const MIN_NO_RBF: Self = Sequence(0xFFFFFFFE);
-    /// BIP-68 relative lock-time disable flag mask
+    /// BIP-68 relative lock time disable flag mask.
     const LOCK_TIME_DISABLE_FLAG_MASK: u32 = 0x80000000;
-    /// BIP-68 relative lock-time type flag mask
+    /// BIP-68 relative lock time type flag mask.
     const LOCK_TYPE_MASK: u32 = 0x00400000;
 
     /// Retuns `true` if the sequence number indicates that the transaction is finalised.
@@ -342,11 +336,11 @@ impl Sequence {
     ///
     /// Will return an error if the input cannot be encoded in 16 bits.
     #[inline]
-    pub fn from_seconds_floor(seconds: u32) -> Result<Self, RelativeLockTimeError> {
+    pub fn from_seconds_floor(seconds: u32) -> Result<Self, relative::Error> {
         if let Ok(interval) = u16::try_from(seconds / 512) {
             Ok(Sequence::from_512_second_intervals(interval))
         } else {
-            Err(RelativeLockTimeError::IntegerOverflow(seconds))
+            Err(relative::Error::IntegerOverflow(seconds))
         }
     }
 
@@ -355,11 +349,11 @@ impl Sequence {
     ///
     /// Will return an error if the input cannot be encoded in 16 bits.
     #[inline]
-    pub fn from_seconds_ceil(seconds: u32) -> Result<Self, RelativeLockTimeError> {
+    pub fn from_seconds_ceil(seconds: u32) -> Result<Self, relative::Error> {
         if let Ok(interval) = u16::try_from((seconds + 511) / 512) {
             Ok(Sequence::from_512_second_intervals(interval))
         } else {
-            Err(RelativeLockTimeError::IntegerOverflow(seconds))
+            Err(relative::Error::IntegerOverflow(seconds))
         }
     }
 
@@ -379,6 +373,31 @@ impl Sequence {
     #[inline]
     pub fn to_consensus_u32(self) -> u32 {
         self.0
+    }
+
+    /// Creates a [`relative::LockTime`] from this [`Sequence`] number.
+    #[inline]
+    pub fn to_relative_lock_time(&self) -> Option<relative::LockTime> {
+        use crate::locktime::relative::{LockTime, Height, Time};
+
+        if !self.is_relative_lock_time() {
+            return None;
+        }
+
+        let lock_value = self.low_u16();
+
+        if self.is_time_locked() {
+            Some(LockTime::from(Time::from_512_second_intervals(lock_value)))
+        } else {
+            Some(LockTime::from(Height::from(lock_value)))
+        }
+    }
+
+    /// Returns the low 16 bits from sequence number.
+    ///
+    /// BIP-68 only uses the low 16 bits for relative lock value.
+    fn low_u16(&self) -> u16 {
+        self.0 as u16
     }
 }
 
@@ -413,25 +432,7 @@ impl fmt::UpperHex for Sequence {
     }
 }
 
-impl fmt::Display for RelativeLockTimeError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            Self::IntegerOverflow(val) => write!(f, "input of {} was too large", val)
-        }
-    }
-}
-
 impl_parse_str_through_int!(Sequence);
-
-#[cfg(feature = "std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-impl std::error::Error for RelativeLockTimeError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self {
-            Self::IntegerOverflow(_) => None
-        }
-    }
-}
 
 /// Bitcoin transaction output.
 ///
@@ -577,7 +578,7 @@ pub struct Transaction {
     ///
     /// * [BIP-65 OP_CHECKLOCKTIMEVERIFY](https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki)
     /// * [BIP-113 Median time-past as endpoint for lock-time calculations](https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki)
-    pub lock_time: PackedLockTime,
+    pub lock_time: absolute::PackedLockTime,
     /// List of transaction inputs.
     pub input: Vec<TxIn>,
     /// List of transaction outputs.
@@ -882,7 +883,7 @@ impl Transaction {
         if !self.is_lock_time_enabled() {
             return true;
         }
-        LockTime::from(self.lock_time).is_satisfied_by(height, time)
+        absolute::LockTime::from(self.lock_time).is_satisfied_by(height, time)
     }
 
     /// Returns `true` if this transactions nLockTime is enabled ([BIP-65]).
@@ -1033,7 +1034,7 @@ mod tests {
 
     use crate::blockdata::constants::WITNESS_SCALE_FACTOR;
     use crate::blockdata::script::Script;
-    use crate::blockdata::locktime::PackedLockTime;
+    use crate::blockdata::locktime::absolute;
     use crate::consensus::encode::serialize;
     use crate::consensus::encode::deserialize;
 
@@ -1132,7 +1133,7 @@ mod tests {
                    "ce9ea9f6f5e422c6a9dbcddb3b9a14d1c78fab9ab520cb281aa2a74a09575da1".to_string());
         assert_eq!(realtx.input[0].previous_output.vout, 1);
         assert_eq!(realtx.output.len(), 1);
-        assert_eq!(realtx.lock_time, PackedLockTime::ZERO);
+        assert_eq!(realtx.lock_time, absolute::PackedLockTime::ZERO);
 
         assert_eq!(format!("{:x}", realtx.txid()),
                    "a6eab3c14ab5272a58a5ba91505ba1a4b6d7a3a9fcbd187b6cd99a7b6d548cb7".to_string());
@@ -1166,7 +1167,7 @@ mod tests {
                    "7cac3cf9a112cf04901a51d605058615d56ffe6d04b45270e89d1720ea955859".to_string());
         assert_eq!(realtx.input[0].previous_output.vout, 1);
         assert_eq!(realtx.output.len(), 1);
-        assert_eq!(realtx.lock_time, PackedLockTime::ZERO);
+        assert_eq!(realtx.lock_time, absolute::PackedLockTime::ZERO);
 
         assert_eq!(format!("{:x}", realtx.txid()),
                    "f5864806e3565c34d1b41e716f72609d00b55ea5eac5b924c9719a842ef42206".to_string());

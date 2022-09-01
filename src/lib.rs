@@ -95,7 +95,7 @@ use core2::io;
 
 pub use crate::address::{Address, AddressType};
 pub use crate::blockdata::block::{self, Block, BlockHeader};
-pub use crate::blockdata::locktime::{self, LockTime, PackedLockTime};
+pub use crate::blockdata::locktime::{self, absolute, relative};
 pub use crate::blockdata::script::{self, Script};
 #[allow(deprecated)]
 pub use crate::blockdata::transaction::SigHashType;

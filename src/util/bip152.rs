@@ -372,17 +372,18 @@ impl BlockTransactions {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::blockdata::locktime::absolute;
     use crate::consensus::encode::{deserialize, serialize};
     use crate::hashes::hex::FromHex;
     use crate::{
         Block, BlockHash, BlockHeader, OutPoint, Script, Sequence, Transaction, TxIn, TxMerkleNode,
-        TxOut, Txid, Witness, LockTime,
+        TxOut, Txid, Witness,
     };
 
     fn dummy_tx(nonce: &[u8]) -> Transaction {
         Transaction {
             version: 1,
-            lock_time: LockTime::from_consensus(2).into(),
+            lock_time: absolute::LockTime::from_consensus(2).into(),
             input: vec![TxIn {
                 previous_output: OutPoint::new(Txid::hash(nonce), 0),
                 script_sig: Script::new(),
