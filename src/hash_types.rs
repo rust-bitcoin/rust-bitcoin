@@ -16,6 +16,7 @@ macro_rules! impl_hashencode {
             fn consensus_encode<W: $crate::io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, $crate::io::Error> {
                 self.0.consensus_encode(w)
             }
+            const STATIC_SERIALIZED_LEN: usize = Self::LEN;
         }
 
         impl $crate::consensus::Decodable for $hashtype {
@@ -32,7 +33,7 @@ pub use newtypes::*;
 
 #[rustfmt::skip]
 mod newtypes {
-    use crate::hashes::{sha256, sha256d, hash160, hash_newtype};
+    use crate::hashes::{sha256, sha256d, hash160, hash_newtype, Hash};
 
     hash_newtype!(
         Txid, sha256d::Hash, 32, doc="A bitcoin transaction hash/transaction ID.
