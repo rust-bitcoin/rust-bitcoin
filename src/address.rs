@@ -951,7 +951,13 @@ mod tests {
             "script round-trip failed for {}",
             addr,
         );
-        //TODO: add serde roundtrip after no-strason PR
+
+        #[cfg(feature = "serde")]
+        {
+            let ser = serde_json::to_string(addr).expect("failed to serialize address");
+            let back: Address = serde_json::from_str(&ser).expect("failed to deserialize address");
+            assert_eq!(back, *addr, "serde round-trip failed for {}", addr)
+        }
     }
 
     #[test]
