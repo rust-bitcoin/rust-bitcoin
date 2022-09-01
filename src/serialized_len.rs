@@ -31,6 +31,7 @@ impl io::Write for WriteCounterThreshold {
 
 #[cfg(test)]
 mod test {
+    use crate::OutPoint;
     use crate::consensus::{serialize, Encodable};
     use crate::constants::genesis_block;
 
@@ -43,6 +44,9 @@ mod test {
         let ser_stop = tx.serialized_len_early_stop(20);
         assert!(ser_stop.is_err());
         assert!(ser_stop.unwrap_err() > 20);
+
+        let out_point = OutPoint::default();
+        assert_eq!(serialize(&out_point).len(), out_point.serialized_len());
     }
 }
 

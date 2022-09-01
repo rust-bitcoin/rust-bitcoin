@@ -900,6 +900,7 @@ impl Encodable for OutPoint {
         let len = self.txid.consensus_encode(w)?;
         Ok(len + self.vout.consensus_encode(w)?)
     }
+    const STATIC_SERIALIZED_LEN: usize = Txid::STATIC_SERIALIZED_LEN + u32::STATIC_SERIALIZED_LEN;
 }
 impl Decodable for OutPoint {
     fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
