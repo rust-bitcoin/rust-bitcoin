@@ -105,9 +105,6 @@ mod test_macros {
         };
     }
     pub(crate) use hex_from_slice;
-
-    macro_rules! hex_decode (($h:ident, $s:expr) => (deserialize::<$h>(&<$crate::prelude::Vec<u8> as $crate::hashes::hex::FromHex>::from_hex($s).unwrap()).unwrap()));
-    pub(crate) use hex_decode;
 }
 
 /// Implements several traits for byte-based newtypes.

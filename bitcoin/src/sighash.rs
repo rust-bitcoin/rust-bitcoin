@@ -1054,19 +1054,17 @@ fn is_invalid_use_of_sighash_single(sighash: u32, input_index: usize, output_len
 mod tests {
     use std::str::FromStr;
 
-    use secp256k1::{self, SecretKey, XOnlyPublicKey};
-
     use super::*;
     use crate::address::Address;
     use crate::blockdata::locktime::absolute;
     use crate::consensus::deserialize;
     use crate::crypto::key::PublicKey;
     use crate::hash_types::Sighash;
-    use crate::hashes::hex::{FromHex, ToHex};
+    use crate::hashes::hex::FromHex;
     use crate::hashes::{Hash, HashEngine};
-    use crate::internal_macros::{hex_decode, hex_from_slice, hex_into, hex_script};
+    use crate::internal_macros::{hex_from_slice, hex_script};
     use crate::network::constants::Network;
-    use crate::taproot::{TapBranchHash, TapLeafHash, TapSighashHash, TapTweakHash};
+    use crate::taproot::{TapLeafHash, TapSighashHash};
 
     extern crate serde_json;
 
@@ -1378,74 +1376,156 @@ mod tests {
         assert_eq!(expected, hash.into_inner());
     }
 
+    #[cfg(feature = "serde")]
     #[test]
     fn bip_341_sighash_tests() {
-        let data = bip_341_read_json();
-        assert!(data["version"].as_u64().unwrap() == 1u64);
-        let secp = &secp256k1::Secp256k1::new();
-        let key_path = &data["keyPathSpending"].as_array().unwrap()[0];
+        fn sighash_deser_numeric<'de, D>(deserializer: D) -> Result<SchnorrSighashType, D::Error> where D: actual_serde::Deserializer<'de> {
+            use actual_serde::de::{Deserialize, Error, Unexpected};
 
-        let raw_unsigned_tx =
-            hex_decode!(Transaction, key_path["given"]["rawUnsignedTx"].as_str().unwrap());
-        let mut utxos = vec![];
-        for utxo in key_path["given"]["utxosSpent"].as_array().unwrap() {
-            let spk = hex_script!(utxo["scriptPubKey"].as_str().unwrap());
-            let amt = utxo["amountSats"].as_u64().unwrap();
-            utxos.push(TxOut { value: amt, script_pubkey: spk });
+            let raw = u8::deserialize(deserializer)?;
+            SchnorrSighashType::from_consensus_u8(raw)
+                .map_err(|_| D::Error::invalid_value(Unexpected::Unsigned(raw.into()), &"number in range 0-3 or 0x81-0x83"))
         }
+            
+        use crate::hashes::hex::ToHex;
+        use crate::taproot::{TapTweakHash, TapBranchHash};
+        use secp256k1::{self, SecretKey, XOnlyPublicKey};
+        use crate::consensus::serde as con_serde;
+
+        #[derive(serde::Deserialize)]
+        #[serde(crate = "actual_serde")]
+        struct UtxoSpent {
+            #[serde(rename = "scriptPubKey")]
+            script_pubkey: Script,
+            #[serde(rename = "amountSats")]
+            value: u64,
+        }
+
+        #[derive(serde::Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        #[serde(crate = "actual_serde")]
+        struct KpsGiven {
+            #[serde(with = "con_serde::With::<con_serde::Hex>")]
+            raw_unsigned_tx: Transaction,
+            utxos_spent: Vec<UtxoSpent>,
+        }
+
+        #[derive(serde::Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        #[serde(crate = "actual_serde")]
+        struct KpsIntermediary {
+            hash_prevouts: sha256::Hash,
+            hash_outputs: sha256::Hash,
+            hash_sequences: sha256::Hash,
+            hash_amounts: sha256::Hash,
+            hash_script_pubkeys: sha256::Hash,
+        }
+
+        #[derive(serde::Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        #[serde(crate = "actual_serde")]
+        struct KpsInputSpendingGiven {
+            txin_index: usize,
+            internal_privkey: SecretKey,
+            merkle_root: Option<TapBranchHash>,
+            #[serde(deserialize_with = "sighash_deser_numeric")]
+            hash_type: SchnorrSighashType,
+        }
+
+        #[derive(serde::Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        #[serde(crate = "actual_serde")]
+        struct KpsInputSpendingIntermediary {
+            internal_pubkey: XOnlyPublicKey,
+            tweak: TapTweakHash,
+            tweaked_privkey: SecretKey,
+            sig_msg: String,
+            //precomputed_used: Vec<String>, // unused
+            sig_hash: TapSighashHash,
+        }
+
+        #[derive(serde::Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        #[serde(crate = "actual_serde")]
+        struct KpsInputSpendingExpected {
+            witness: Vec<String>,
+        }
+
+        #[derive(serde::Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        #[serde(crate = "actual_serde")]
+        struct KpsInputSpending {
+            given: KpsInputSpendingGiven,
+            intermediary: KpsInputSpendingIntermediary,
+            expected: KpsInputSpendingExpected,
+            // auxiliary: KpsAuxiliary, //unused
+        }
+
+        #[derive(serde::Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        #[serde(crate = "actual_serde")]
+        struct KeyPathSpending {
+            given: KpsGiven,
+            intermediary: KpsIntermediary,
+            input_spending: Vec<KpsInputSpending>,
+        }
+
+        #[derive(serde::Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        #[serde(crate = "actual_serde")]
+        struct TestData {
+            version: u64,
+            key_path_spending: Vec<KeyPathSpending>,
+            //script_pubkey: Vec<ScriptPubKey>, // unused
+        }
+
+        let json_str = include_str!("../tests/data/bip341_tests.json");
+        let mut data = serde_json::from_str::<TestData>(json_str).expect("JSON was not well-formatted");
+
+        assert_eq!(data.version, 1u64);
+        let secp = &secp256k1::Secp256k1::new();
+        let key_path = data.key_path_spending.remove(0);
+
+        let raw_unsigned_tx = key_path.given.raw_unsigned_tx;
+        let utxos = key_path.given.utxos_spent.into_iter()
+            .map(|txo| TxOut { value: txo.value, script_pubkey: txo.script_pubkey })
+            .collect::<Vec<_>>();
 
         // Test intermediary
         let mut cache = SighashCache::new(&raw_unsigned_tx);
-        let expected_amt_hash = key_path["intermediary"]["hashAmounts"].as_str().unwrap();
-        let expected_outputs_hash = key_path["intermediary"]["hashOutputs"].as_str().unwrap();
-        let expected_prevouts_hash = key_path["intermediary"]["hashPrevouts"].as_str().unwrap();
-        let expected_spks_hash = key_path["intermediary"]["hashScriptPubkeys"].as_str().unwrap();
-        let expected_sequences_hash = key_path["intermediary"]["hashSequences"].as_str().unwrap();
+        let expected_amt_hash = key_path.intermediary.hash_amounts;
+        let expected_outputs_hash = key_path.intermediary.hash_outputs;
+        let expected_prevouts_hash = key_path.intermediary.hash_prevouts;
+        let expected_spks_hash = key_path.intermediary.hash_script_pubkeys;
+        let expected_sequences_hash = key_path.intermediary.hash_sequences;
 
         // Compute all caches
-        assert_eq!(expected_amt_hash, cache.taproot_cache(&utxos).amounts.to_hex());
-        assert_eq!(expected_outputs_hash, cache.common_cache().outputs.to_hex());
-        assert_eq!(expected_prevouts_hash, cache.common_cache().prevouts.to_hex());
-        assert_eq!(expected_spks_hash, cache.taproot_cache(&utxos).script_pubkeys.to_hex());
-        assert_eq!(expected_sequences_hash, cache.common_cache().sequences.to_hex());
+        assert_eq!(expected_amt_hash, cache.taproot_cache(&utxos).amounts);
+        assert_eq!(expected_outputs_hash, cache.common_cache().outputs);
+        assert_eq!(expected_prevouts_hash, cache.common_cache().prevouts);
+        assert_eq!(expected_spks_hash, cache.taproot_cache(&utxos).script_pubkeys);
+        assert_eq!(expected_sequences_hash, cache.common_cache().sequences);
 
-        for inp in key_path["inputSpending"].as_array().unwrap() {
-            let tx_ind = inp["given"]["txinIndex"].as_u64().unwrap() as usize;
-            let internal_priv_key =
-                hex_from_slice!(SecretKey, inp["given"]["internalPrivkey"].as_str().unwrap());
-            let merkle_root = if inp["given"]["merkleRoot"].is_null() {
-                None
-            } else {
-                Some(hex_into!(TapBranchHash, inp["given"]["merkleRoot"].as_str().unwrap()))
-            };
-            let hash_ty = SchnorrSighashType::from_consensus_u8(
-                inp["given"]["hashType"].as_u64().unwrap() as u8,
-            )
-            .unwrap();
+        for mut inp in key_path.input_spending {
+            let tx_ind = inp.given.txin_index;
+            let internal_priv_key = inp.given.internal_privkey;
+            let merkle_root = inp.given.merkle_root;
+            let hash_ty = inp.given.hash_type;
 
-            let expected_internal_pk = hex_from_slice!(
-                XOnlyPublicKey,
-                inp["intermediary"]["internalPubkey"].as_str().unwrap()
-            );
-            let expected_tweak =
-                hex_into!(TapTweakHash, inp["intermediary"]["tweak"].as_str().unwrap());
-            let expected_tweaked_priv_key =
-                hex_from_slice!(SecretKey, inp["intermediary"]["tweakedPrivkey"].as_str().unwrap());
-            let expected_sig_msg =
-                Vec::<u8>::from_hex(inp["intermediary"]["sigMsg"].as_str().unwrap()).unwrap();
-            let expected_sighash =
-                hex_into!(TapSighashHash, inp["intermediary"]["sigHash"].as_str().unwrap());
-            let sig_str = inp["expected"]["witness"][0].as_str().unwrap();
+            let expected_internal_pk = inp.intermediary.internal_pubkey;
+            let expected_tweak = inp.intermediary.tweak;
+            let expected_tweaked_priv_key = inp.intermediary.tweaked_privkey;
+            let expected_sig_msg = inp.intermediary.sig_msg;
+            let expected_sighash = inp.intermediary.sig_hash;
+            let sig_str = inp.expected.witness.remove(0);
             let (expected_key_spend_sig, expected_hash_ty) = if sig_str.len() == 128 {
                 (
-                    secp256k1::schnorr::Signature::from_str(sig_str).unwrap(),
+                    secp256k1::schnorr::Signature::from_str(&sig_str).unwrap(),
                     SchnorrSighashType::Default,
                 )
             } else {
-                let hash_ty = SchnorrSighashType::from_consensus_u8(
-                    Vec::<u8>::from_hex(&sig_str[128..]).unwrap()[0],
-                )
-                .unwrap();
+                let hash_ty = u8::from_str_radix(&sig_str[128..130], 16).unwrap();
+                let hash_ty = SchnorrSighashType::from_consensus_u8(hash_ty).unwrap();
                 (secp256k1::schnorr::Signature::from_str(&sig_str[..128]).unwrap(), hash_ty)
             };
 
@@ -1474,7 +1554,7 @@ mod tests {
 
             assert_eq!(expected_internal_pk, internal_key);
             assert_eq!(expected_tweak, tweak);
-            assert_eq!(expected_sig_msg, sig_msg);
+            assert_eq!(expected_sig_msg, sig_msg.to_hex());
             assert_eq!(expected_sighash, sighash);
             assert_eq!(expected_hash_ty, hash_ty);
             assert_eq!(expected_key_spend_sig, key_spend_sig);
@@ -1482,11 +1562,6 @@ mod tests {
             let tweaked_priv_key = SecretKey::from_keypair(&tweaked_keypair);
             assert_eq!(expected_tweaked_priv_key, tweaked_priv_key);
         }
-    }
-
-    fn bip_341_read_json() -> serde_json::Value {
-        let json_str = include_str!("../tests/data/bip341_tests.json");
-        serde_json::from_str(json_str).expect("JSON was not well-formatted")
     }
 
     #[test]
