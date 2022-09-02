@@ -1493,18 +1493,14 @@ mod tests {
 
         // Test intermediary
         let mut cache = SighashCache::new(&raw_unsigned_tx);
-        let expected_amt_hash = key_path.intermediary.hash_amounts;
-        let expected_outputs_hash = key_path.intermediary.hash_outputs;
-        let expected_prevouts_hash = key_path.intermediary.hash_prevouts;
-        let expected_spks_hash = key_path.intermediary.hash_script_pubkeys;
-        let expected_sequences_hash = key_path.intermediary.hash_sequences;
 
+        let expected = key_path.intermediary;
         // Compute all caches
-        assert_eq!(expected_amt_hash, cache.taproot_cache(&utxos).amounts);
-        assert_eq!(expected_outputs_hash, cache.common_cache().outputs);
-        assert_eq!(expected_prevouts_hash, cache.common_cache().prevouts);
-        assert_eq!(expected_spks_hash, cache.taproot_cache(&utxos).script_pubkeys);
-        assert_eq!(expected_sequences_hash, cache.common_cache().sequences);
+        assert_eq!(expected.hash_amounts, cache.taproot_cache(&utxos).amounts);
+        assert_eq!(expected.hash_outputs, cache.common_cache().outputs);
+        assert_eq!(expected.hash_prevouts, cache.common_cache().prevouts);
+        assert_eq!(expected.hash_script_pubkeys, cache.taproot_cache(&utxos).script_pubkeys);
+        assert_eq!(expected.hash_sequences, cache.common_cache().sequences);
 
         for mut inp in key_path.input_spending {
             let tx_ind = inp.given.txin_index;
@@ -1512,11 +1508,7 @@ mod tests {
             let merkle_root = inp.given.merkle_root;
             let hash_ty = inp.given.hash_type;
 
-            let expected_internal_pk = inp.intermediary.internal_pubkey;
-            let expected_tweak = inp.intermediary.tweak;
-            let expected_tweaked_priv_key = inp.intermediary.tweaked_privkey;
-            let expected_sig_msg = inp.intermediary.sig_msg;
-            let expected_sighash = inp.intermediary.sig_hash;
+            let expected = inp.intermediary;
             let sig_str = inp.expected.witness.remove(0);
             let (expected_key_spend_sig, expected_hash_ty) = if sig_str.len() == 128 {
                 (
@@ -1552,15 +1544,15 @@ mod tests {
             let msg = secp256k1::Message::from(sighash);
             let key_spend_sig = secp.sign_schnorr_with_aux_rand(&msg, &tweaked_keypair, &[0u8; 32]);
 
-            assert_eq!(expected_internal_pk, internal_key);
-            assert_eq!(expected_tweak, tweak);
-            assert_eq!(expected_sig_msg, sig_msg.to_hex());
-            assert_eq!(expected_sighash, sighash);
+            assert_eq!(expected.internal_pubkey, internal_key);
+            assert_eq!(expected.tweak, tweak);
+            assert_eq!(expected.sig_msg, sig_msg.to_hex());
+            assert_eq!(expected.sig_hash, sighash);
             assert_eq!(expected_hash_ty, hash_ty);
             assert_eq!(expected_key_spend_sig, key_spend_sig);
 
             let tweaked_priv_key = SecretKey::from_keypair(&tweaked_keypair);
-            assert_eq!(expected_tweaked_priv_key, tweaked_priv_key);
+            assert_eq!(expected.tweaked_privkey, tweaked_priv_key);
         }
     }
 
