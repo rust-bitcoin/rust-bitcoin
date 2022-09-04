@@ -527,6 +527,16 @@ mod tests {
 
         assert_eq!(header.bits, BlockHeader::compact_target_from_u256(&header.target()));
     }
+
+    #[test]
+    fn block_header_vec_test() {
+        let two_headers = Vec::from_hex("010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914cd74d6e49ffff001d323b3a7b010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914cd74d6e49ffff001d323b3a7b").unwrap();
+
+        let headers: Vec<BlockHeader> =
+            deserialize(&two_headers).expect("Can't deserialize block header array");
+
+        assert_eq!(headers.len(), 2);
+    }
 }
 
 #[cfg(bench)]

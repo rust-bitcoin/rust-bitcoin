@@ -31,6 +31,7 @@ use crate::util::bip152::{ShortId, PrefilledTransaction};
 use crate::util::taproot::TapLeafHash;
 use crate::hashes::hex::ToHex;
 
+use crate::blockdata::block::BlockHeader;
 use crate::blockdata::transaction::{TxOut, Transaction, TxIn};
 #[cfg(feature = "std")]
 use crate::network::{message_blockdata::Inventory, address::{Address, AddrV2Message}};
@@ -686,6 +687,24 @@ impl Decodable for Vec<u8> {
         let len = VarInt::consensus_decode(r)?.0 as usize;
         // most real-world vec of bytes data, wouldn't be larger than 128KiB
         read_bytes_from_finite_reader(r, ReadBytesFromFiniteReaderOpts { len, chunk_size: 128 * 1024 })
+    }
+}
+
+/// Used for bitcoind REST blockheaders enpoint
+impl Decodable for Vec<BlockHeader> {
+    fn consensus_decode_from_finite_reader<R: std::io::Read + ?Sized>(
+        r: &mut R,
+    ) -> Result<Self, Error> {
+        let mut vec: Vec<BlockHeader> = vec![];
+        loop {
+            let header = BlockHeader::consensus_decode_from_finite_reader(r);
+            if header.is_err() {
+                break;
+            } else if let Ok(header) = header {
+                vec.push(header);
+            }
+        }
+        Ok(vec)
     }
 }
 
