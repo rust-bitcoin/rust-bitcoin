@@ -6,13 +6,8 @@
 //! Macros meant to be used inside the Rust Bitcoin library.
 //!
 
-macro_rules! impl_consensus_encoding {
-    ($thing:ident, $($field:ident),+) => (
-        impl_consensus_encoding!($thing, 0, $($field),+);
-    );
-
-    ($thing:ident, $static:expr, $($field:ident),+) => (
-        impl $crate::consensus::Encodable for $thing {
+macro_rules! impl_consensus_encodable_body {
+    ($($field:ident),+) => (
             #[inline]
             fn consensus_encode<R: $crate::io::Write + ?Sized>(
                 &self,
@@ -22,11 +17,11 @@ macro_rules! impl_consensus_encoding {
                 $(len += self.$field.consensus_encode(r)?;)+
                 Ok(len)
             }
-            const STATIC_SERIALIZED_LEN: usize = $static;
-        }
+    );
+}
 
-        impl $crate::consensus::Decodable for $thing {
-
+macro_rules! impl_consensus_decodable_body {
+    ($thing:ident, $($field:ident),+) => (
             #[inline]
             fn consensus_decode_from_finite_reader<R: $crate::io::Read + ?Sized>(
                 r: &mut R,
@@ -46,10 +41,29 @@ macro_rules! impl_consensus_encoding {
                     $($field: $crate::consensus::Decodable::consensus_decode(r.by_ref())?),+
                 })
             }
+    );
+}
+
+macro_rules! impl_consensus_encoding {
+    ($thing:ident, $($field:ident),+) => (
+        impl_consensus_encoding!($thing, 0, $($field),+);
+    );
+
+    ($thing:ident, $static:expr, $($field:ident),+) => (
+        impl $crate::consensus::Encodable for $thing {
+            const STATIC_SERIALIZED_LEN: usize = $static;
+            $crate::internal_macros::impl_consensus_encodable_body!($($field),+);
+        }
+
+        impl $crate::consensus::Decodable for $thing {
+            $crate::internal_macros::impl_consensus_decodable_body!($thing, $($field),+);
         }
     );
 }
+
 pub(crate) use impl_consensus_encoding;
+pub(crate) use impl_consensus_decodable_body;
+pub(crate) use impl_consensus_encodable_body;
 
 /// Implements standard array methods for a given wrapper type
 macro_rules! impl_array_newtype {

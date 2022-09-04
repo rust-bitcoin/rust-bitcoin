@@ -131,7 +131,7 @@ impl From<psbt::Error> for Error {
 
 /// Encode an object into a vector
 pub fn serialize<T: Encodable + ?Sized>(data: &T) -> Vec<u8> {
-    let capacity = data.serialized_len_early_stop(512).unwrap_or_else(|e| e);
+    let capacity = data.serialized_len_est();
     let mut encoder = Vec::with_capacity(capacity);
     let len = data.consensus_encode(&mut encoder).expect("in-memory writers don't error");
     debug_assert_eq!(len, encoder.len());
@@ -337,6 +337,17 @@ pub trait Encodable {
             self.consensus_encode(&mut writer).map_err(|_| writer.bytes_written())
         } else {
             Ok(Self::STATIC_SERIALIZED_LEN)
+        }
+    }
+
+    /// Recommended size to use for serialization output buffer
+    fn serialized_len_est(&self) -> usize {
+        if Self::STATIC_SERIALIZED_LEN == 0 {
+            // For types without a static or overriden implemention,
+            // default to something small, but not tiny.
+            64
+        } else {
+            Self::STATIC_SERIALIZED_LEN
         }
     }
 }

@@ -25,7 +25,7 @@ use crate::blockdata::transaction::Transaction;
 use crate::blockdata::constants::{max_target, WITNESS_SCALE_FACTOR};
 use crate::blockdata::script;
 use crate::VarInt;
-use crate::internal_macros::impl_consensus_encoding;
+use crate::internal_macros::{impl_consensus_encoding, impl_consensus_encodable_body, impl_consensus_decodable_body};
 
 /// Bitcoin block header.
 ///
@@ -180,7 +180,21 @@ pub struct Block {
     pub txdata: Vec<Transaction>
 }
 
-impl_consensus_encoding!(Block, header, txdata);
+impl crate::consensus::Encodable for Block {
+    const STATIC_SERIALIZED_LEN: usize = 0;
+
+    impl_consensus_encodable_body!(header, txdata);
+
+    #[allow(clippy::assertions_on_constants)]
+    fn serialized_len_est(&self) -> usize {
+        debug_assert!(BlockHeader::STATIC_SERIALIZED_LEN != 0);
+        BlockHeader::STATIC_SERIALIZED_LEN + self.txdata.len() * 512
+    }
+}
+
+impl crate::consensus::Decodable for Block {
+    impl_consensus_decodable_body!(Block, header, txdata);
+}
 
 impl Block {
     /// Returns the block hash.

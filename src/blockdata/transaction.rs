@@ -973,6 +973,10 @@ impl Encodable for Transaction {
         len += self.lock_time.consensus_encode(w)?;
         Ok(len)
     }
+
+    fn serialized_len_est(&self) -> usize {
+        64 + self.input.len() * 192 + self.output.len() * 48
+    }
 }
 
 impl Decodable for Transaction {
