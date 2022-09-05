@@ -626,26 +626,6 @@ macro_rules! user_enum {
 }
 pub(crate) use user_enum;
 
-/// Formats error. If `std` feature is OFF appends error source (delimited by `: `). We do this
-/// because `e.source()` is only available in std builds, without this macro the error source is
-/// lost for no-std builds.
-macro_rules! write_err {
-    ($writer:expr, $string:literal $(, $args:expr)*; $source:expr) => {
-        {
-            #[cfg(feature = "std")]
-            {
-                let _ = &$source;   // Prevents clippy warnings.
-                write!($writer, $string $(, $args)*)
-            }
-            #[cfg(not(feature = "std"))]
-            {
-                write!($writer, concat!($string, ": {}") $(, $args)*, $source)
-            }
-        }
-    }
-}
-pub(crate) use write_err;
-
 /// Asserts a boolean expression at compile time.
 macro_rules! const_assert {
     ($x:expr) => {{

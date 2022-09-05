@@ -207,7 +207,7 @@ mod display_from_str {
     use core::str::FromStr;
     use crate::consensus::encode::{Error, self};
     use base64::display::Base64Display;
-    use crate::internal_macros::write_err;
+    use bitcoin_internals::write_err;
 
     /// Error encountered during PSBT decoding from Base64 string.
     #[derive(Debug)]

@@ -27,13 +27,13 @@ mod message_signing {
 
     use core::fmt;
 
+    use bitcoin_internals::write_err;
     use crate::hashes::sha256d;
     use secp256k1;
     use secp256k1::ecdsa::{RecoveryId, RecoverableSignature};
 
     use crate::util::key::PublicKey;
     use crate::address::{Address, AddressType};
-    use crate::internal_macros::write_err;
 
     /// An error used for dealing with Bitcoin Signed Messages.
     #[cfg_attr(docsrs, doc(cfg(feature = "secp-recovery")))]

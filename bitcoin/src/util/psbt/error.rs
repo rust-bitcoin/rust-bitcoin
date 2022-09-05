@@ -4,13 +4,14 @@ use crate::prelude::*;
 
 use core::fmt;
 
+use bitcoin_internals::write_err;
+
 use crate::blockdata::transaction::Transaction;
 use crate::consensus::encode;
 use crate::util::psbt::raw;
 
 use crate::hashes;
 use crate::util::bip32::ExtendedPubKey;
-use crate::internal_macros::write_err;
 
 /// Enum for marking psbt hash error.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]

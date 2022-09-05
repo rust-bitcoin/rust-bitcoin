@@ -7,6 +7,7 @@
 
 use crate::prelude::*;
 use crate::io;
+use bitcoin_internals::write_err;
 use secp256k1::{self, Secp256k1, Scalar};
 
 use core::convert::TryFrom;
@@ -17,7 +18,6 @@ use crate::hashes::{sha256, sha256t_hash_newtype, Hash, HashEngine};
 use crate::schnorr::{TweakedPublicKey, UntweakedPublicKey, TapTweak};
 use crate::util::key::XOnlyPublicKey;
 use crate::Script;
-use crate::internal_macros::write_err;
 use crate::consensus::Encodable;
 
 /// The SHA-256 midstate value for the TapLeaf hash.

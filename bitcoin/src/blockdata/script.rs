@@ -20,7 +20,7 @@ use core::{fmt, default::Default};
 use core::ops::Index;
 use crate::internal_macros::debug_from_display;
 #[cfg(feature = "bitcoinconsensus")]
-use crate::internal_macros::write_err;
+use bitcoin_internals::write_err;
 
 #[cfg(feature = "serde")] use serde;
 
