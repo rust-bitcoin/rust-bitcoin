@@ -104,7 +104,7 @@ impl fmt::Display for Error {
             },
             Error::CombineInconsistentKeySources(ref s) => { write!(f, "combine conflict: {}", s) },
             Error::ConsensusEncoding => f.write_str("bitcoin consensus or BIP-174 encoding error"),
-            Error::IncompleteTapTree(ref b) => write!(f, "{}", b),
+            Error::IncompleteTapTree(ref error) => write_err!(f, "incomplete Taproot tree", error),
         }
     }
 }
