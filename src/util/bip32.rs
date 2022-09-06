@@ -1177,4 +1177,3 @@ mod tests {
         ExtendedPrivKey::from_str(xpriv_str).unwrap();
     }
 }
-
