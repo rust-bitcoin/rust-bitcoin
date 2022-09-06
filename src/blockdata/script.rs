@@ -225,9 +225,9 @@ impl From<bitcoinconsensus::Error> for Error {
     }
 }
 
-/// Helper to encode an integer in script format.
+/// Helper to encode an integer in script(minimal CScriptNum) format.
 /// Writes bytes into the buffer and returns the number of bytes written.
-fn write_scriptint(out: &mut [u8; 8], n: i64) -> usize {
+pub fn write_scriptint(out: &mut [u8; 8], n: i64) -> usize {
     let mut len = 0;
     if n == 0 { return len; }
 
@@ -256,7 +256,7 @@ fn write_scriptint(out: &mut [u8; 8], n: i64) -> usize {
     len
 }
 
-/// Helper to decode an integer in script format
+/// Helper to decode an integer in script(minimal CScriptNum) format
 /// Notice that this fails on overflow: the result is the same as in
 /// bitcoind, that only 4-byte signed-magnitude values may be read as
 /// numbers. They can be added or subtracted (and a long time ago,
@@ -272,8 +272,26 @@ fn write_scriptint(out: &mut [u8; 8], n: i64) -> usize {
 /// This is basically a ranged type implementation.
 pub fn read_scriptint(v: &[u8]) -> Result<i64, Error> {
     let len = v.len();
-    if len == 0 { return Ok(0); }
     if len > 4 { return Err(Error::NumericOverflow); }
+    let last = match v.last() {
+        Some(last) => last,
+        None => return Ok(0),
+    };
+    // Comment and code copied from bitcoin core:
+    // https://github.com/bitcoin/bitcoin/blob/447f50e4aed9a8b1d80e1891cda85801aeb80b4e/src/script/script.h#L247-L262
+    // If the most-significant-byte - excluding the sign bit - is zero
+    // then we're not minimal. Note how this test also rejects the
+    // negative-zero encoding, 0x80.
+    if (last & 0x7f) == 0 {
+        // One exception: if there's more than one byte and the most
+        // significant bit of the second-most-significant-byte is set
+        // it would conflict with the sign bit. An example of this case
+        // is +-255, which encode to 0xff00 and 0xff80 respectively.
+        // (big-endian).
+        if v.len() <= 1 || (v[v.len() - 2] & 0x80) == 0 {
+            return Err(Error::NonMinimalPush);
+        }
+    }
 
     let (mut ret, sh) = v.iter()
                          .fold((0, 0), |(acc, sh), n| (acc + ((*n as i64) << sh), sh + 8));
@@ -1298,6 +1316,14 @@ mod test {
         }
         assert!(read_scriptint(&build_scriptint(1 << 31)).is_err());
         assert!(read_scriptint(&build_scriptint(-(1 << 31))).is_err());
+    }
+
+    #[test]
+    fn non_minimal_scriptints() {
+        assert_eq!(read_scriptint(&[0x80, 0x00]), Ok(0x80));
+        assert_eq!(read_scriptint(&[0xff, 0x00]), Ok(0xff));
+        assert_eq!(read_scriptint(&[0x8f, 0x00, 0x00]), Err(Error::NonMinimalPush));
+        assert_eq!(read_scriptint(&[0x7f, 0x00]), Err(Error::NonMinimalPush));
     }
 
     #[test]
