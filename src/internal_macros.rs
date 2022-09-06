@@ -103,6 +103,13 @@ macro_rules! impl_array_newtype {
             #[inline]
             fn index(&self, index: I) -> &Self::Output { &self.0[index] }
         }
+
+        impl core::convert::AsRef<[$ty]> for $thing {
+            fn as_ref(&self) -> &[$ty] {
+                &self.0[..]
+            }
+        }
+
     };
 }
 pub(crate) use impl_array_newtype;
@@ -123,7 +130,8 @@ pub(crate) use test_macros::*;
 
 #[cfg(test)]
 mod test_macros {
-    use crate::hashes::hex::FromHex;
+    use hex::FromHex;
+
     use crate::PublicKey;
 
     /// Trait used to create a value from hex string for testing purposes.
@@ -136,7 +144,7 @@ mod test_macros {
         fn test_from_hex(hex: &str) -> Self;
     }
 
-    impl<T: FromHex> TestFromHex for T {
+    impl<T: hex::FromHex> TestFromHex for T where <T as FromHex>::Error: core::fmt::Debug {
         fn test_from_hex(hex: &str) -> Self { Self::from_hex(hex).unwrap() }
     }
 
@@ -170,7 +178,7 @@ mod test_macros {
         };
         ($type:ty, $hex:expr) => {
             <$type>::from_slice(
-                &<$crate::prelude::Vec<u8> as $crate::hashes::hex::FromHex>::from_hex($hex)
+                &<$crate::prelude::Vec<u8> as hex::FromHex>::from_hex($hex)
                     .unwrap(),
             )
             .unwrap()
@@ -178,7 +186,7 @@ mod test_macros {
     }
     pub(crate) use hex_from_slice;
 
-    macro_rules! hex_decode (($h:ident, $s:expr) => (deserialize::<$h>(&<$crate::prelude::Vec<u8> as $crate::hashes::hex::FromHex>::from_hex($s).unwrap()).unwrap()));
+    macro_rules! hex_decode (($h:ident, $s:expr) => (deserialize::<$h>(&<$crate::prelude::Vec<u8> as hex::FromHex>::from_hex($s).unwrap()).unwrap()));
     pub(crate) use hex_decode;
 }
 
@@ -432,29 +440,20 @@ macro_rules! impl_bytes_newtype {
             }
         }
 
-        impl $crate::hashes::hex::FromHex for $t {
-            fn from_byte_iter<I>(iter: I) -> Result<Self, $crate::hashes::hex::Error>
-            where
-                I: core::iter::Iterator<Item = Result<u8, $crate::hashes::hex::Error>>
-                    + core::iter::ExactSizeIterator
-                    + core::iter::DoubleEndedIterator,
-            {
-                if iter.len() == $len {
-                    let mut ret = [0; $len];
-                    for (n, byte) in iter.enumerate() {
-                        ret[n] = byte?;
-                    }
-                    Ok($t(ret))
-                } else {
-                    Err($crate::hashes::hex::Error::InvalidLength(2 * $len, 2 * iter.len()))
-                }
+        impl hex::FromHex for $t {
+            type Error = hex::FromHexError;
+
+            fn from_hex<T: AsRef<[u8]>>(hex: T) -> Result<Self, Self::Error> {
+                let inner = <[u8; $len]>::from_hex(hex)?;
+                Ok($t(inner))
             }
         }
 
         impl core::str::FromStr for $t {
-            type Err = $crate::hashes::hex::Error;
+            type Err = hex::FromHexError;
+
             fn from_str(s: &str) -> Result<Self, Self::Err> {
-                $crate::hashes::hex::FromHex::from_hex(s)
+                hex::FromHex::from_hex(s)
             }
         }
 
@@ -463,7 +462,7 @@ macro_rules! impl_bytes_newtype {
         impl $crate::serde::Serialize for $t {
             fn serialize<S: $crate::serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
                 if s.is_human_readable() {
-                    s.serialize_str(&$crate::hashes::hex::ToHex::to_hex(self))
+                    s.serialize_str(&hex::encode(self))
                 } else {
                     s.serialize_bytes(&self[..])
                 }
@@ -491,7 +490,7 @@ macro_rules! impl_bytes_newtype {
                             use $crate::serde::de::Unexpected;
 
                             if let Ok(hex) = core::str::from_utf8(v) {
-                                $crate::hashes::hex::FromHex::from_hex(hex).map_err(E::custom)
+                                hex::FromHex::from_hex(hex).map_err(E::custom)
                             } else {
                                 return Err(E::invalid_value(Unexpected::Bytes(v), &self));
                             }
@@ -501,7 +500,7 @@ macro_rules! impl_bytes_newtype {
                         where
                             E: $crate::serde::de::Error,
                         {
-                            $crate::hashes::hex::FromHex::from_hex(v).map_err(E::custom)
+                            hex::FromHex::from_hex(v).map_err(E::custom)
                         }
                     }
 

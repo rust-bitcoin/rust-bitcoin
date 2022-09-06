@@ -11,17 +11,18 @@ use crate::prelude::*;
 use core::{ops, str::FromStr};
 use core::fmt::{self, Write};
 
+use hex::{FromHex, FromHexError};
 pub use secp256k1::{self, Secp256k1, XOnlyPublicKey, KeyPair};
 
 use crate::io;
 use crate::network::constants::Network;
-use crate::hashes::{Hash, hash160, hex, hex::FromHex};
+use crate::hashes::{Hash, hash160};
 use crate::hash_types::{PubkeyHash, WPubkeyHash};
 use crate::util::base58;
 use crate::internal_macros::write_err;
 
 /// A key-related error.
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 #[non_exhaustive]
 pub enum Error {
     /// Base58 encoding error
@@ -31,7 +32,7 @@ pub enum Error {
     /// Invalid key prefix error
     InvalidKeyPrefix(u8),
     /// Hex decoding error
-    Hex(hex::Error)
+    Hex(FromHexError)
 }
 
 impl fmt::Display for Error {
@@ -75,8 +76,8 @@ impl From<secp256k1::Error> for Error {
 }
 
 #[doc(hidden)]
-impl From<hex::Error> for Error {
-    fn from(e: hex::Error) -> Self {
+impl From<FromHexError> for Error {
+    fn from(e: FromHexError) -> Self {
         Error::Hex(e)
     }
 }
@@ -291,7 +292,7 @@ impl FromStr for PublicKey {
         match s.len() {
             66 => PublicKey::from_slice(&<[u8; 33]>::from_hex(s)?),
             130 => PublicKey::from_slice(&<[u8; 65]>::from_hex(s)?),
-            len => Err(Error::Hex(hex::Error::InvalidLength(66, len))),
+            _ => Err(Error::Hex(FromHexError::InvalidStringLength)),
         }
     }
 }
@@ -550,7 +551,7 @@ mod tests {
     use super::{PrivateKey, PublicKey, SortKey};
     use secp256k1::Secp256k1;
     use std::str::FromStr;
-    use crate::hashes::hex::{FromHex, ToHex};
+    use hex::FromHex;
     use crate::network::constants::Network::Testnet;
     use crate::network::constants::Network::Bitcoin;
     use crate::address::Address;
@@ -595,15 +596,15 @@ mod tests {
     fn test_pubkey_hash() {
         let pk = PublicKey::from_str("032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af").unwrap();
         let upk = PublicKey::from_str("042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133").unwrap();
-        assert_eq!(pk.pubkey_hash().to_hex(), "9511aa27ef39bbfa4e4f3dd15f4d66ea57f475b4");
-        assert_eq!(upk.pubkey_hash().to_hex(), "ac2e7daf42d2c97418fd9f78af2de552bb9c6a7a");
+        assert_eq!(hex::encode(pk.pubkey_hash()), "9511aa27ef39bbfa4e4f3dd15f4d66ea57f475b4");
+        assert_eq!(hex::encode(upk.pubkey_hash()), "ac2e7daf42d2c97418fd9f78af2de552bb9c6a7a");
     }
 
     #[test]
     fn test_wpubkey_hash() {
         let pk = PublicKey::from_str("032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af").unwrap();
         let upk = PublicKey::from_str("042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133").unwrap();
-        assert_eq!(pk.wpubkey_hash().unwrap().to_hex(), "9511aa27ef39bbfa4e4f3dd15f4d66ea57f475b4");
+        assert_eq!(hex::encode(pk.wpubkey_hash().unwrap()), "9511aa27ef39bbfa4e4f3dd15f4d66ea57f475b4");
         assert_eq!(upk.wpubkey_hash(), None);
     }
 

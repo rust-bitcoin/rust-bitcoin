@@ -104,7 +104,7 @@ mod tests {
     use crate::blockdata::script::Script;
     use crate::blockdata::transaction::Transaction;
     use crate::consensus::encode::deserialize;
-    use crate::hashes::hex::FromHex;
+    use hex::FromHex;
     use crate::util::sighash::SighashCache;
 
     use super::*;

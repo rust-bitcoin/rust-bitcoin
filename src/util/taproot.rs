@@ -13,7 +13,7 @@ use core::convert::TryFrom;
 use core::fmt;
 use core::cmp::Reverse;
 
-use crate::hashes::{sha256, sha256t_hash_newtype, Hash, HashEngine};
+use crate::hashes::{sha256, Hash, HashEngine};
 use crate::schnorr::{TweakedPublicKey, UntweakedPublicKey, TapTweak};
 use crate::util::key::XOnlyPublicKey;
 use crate::Script;
@@ -47,6 +47,38 @@ const MIDSTATE_TAPSIGHASH: [u8; 32] = [
     120, 136, 221, 2, 166, 226, 195, 24, 115, 254, 159,
 ];
 // f504a425d7f8783b1363868ae3e556586eee945dbc7888dd02a6e2c31873fe9f
+
+macro_rules! sha256t_hash_newtype {
+    ($newtype:ident, $tag:ident, $midstate:ident, $midstate_len:expr, $docs:meta, $reverse: expr) => {
+        sha256t_hash_newtype!($newtype, $tag, $midstate, $midstate_len, $docs, $reverse, stringify!($newtype));
+    };
+
+    ($newtype:ident, $tag:ident, $midstate:ident, $midstate_len:expr, $docs:meta, $reverse: expr, $sname:expr) => {
+        #[doc = "The tag used for ["]
+        #[doc = $sname]
+        #[doc = "]"]
+        #[derive(Copy, Clone, PartialEq, Eq, Default, PartialOrd, Ord, Hash)]
+        pub struct $tag;
+
+        impl $crate::hashes::sha256t::Tag for $tag {
+            fn engine() -> $crate::hashes::sha256::HashEngine {
+                let midstate = $crate::hashes::sha256::Midstate::from_inner($midstate);
+                $crate::hashes::sha256::HashEngine::from_midstate(midstate, $midstate_len)
+            }
+        }
+
+        $crate::hashes::hash_newtype!($newtype, $crate::hashes::sha256t::Hash<$tag>, 32, $docs, $reverse);
+
+        impl hex::FromHex for $newtype {
+            type Error = hex::FromHexError;
+
+            fn from_hex<T: AsRef<[u8]>>(hex: T) -> Result<Self, Self::Error> {
+                let inner = <[u8; 32]>::from_hex(hex)?;
+                Ok(<$newtype as $crate::hashes::Hash>::from_inner(inner))
+            }
+        }
+    }
+}
 
 // Taproot test vectors from BIP-341 state the hashes without any reversing
 sha256t_hash_newtype!(TapLeafHash, TapLeafTag, MIDSTATE_TAPLEAF, 64,
@@ -1137,7 +1169,7 @@ mod test {
     use crate::schnorr::TapTweak;
 
     use super::*;
-    use crate::hashes::hex::{FromHex, ToHex};
+    use hex::FromHex;
     use crate::hashes::sha256t::Tag;
     use crate::hashes::{sha256, Hash, HashEngine};
     use secp256k1::{VerifyOnly, XOnlyPublicKey};
@@ -1186,19 +1218,19 @@ mod test {
         //   CHashWriter writer = HasherTapLeaf;
         //   writer.GetSHA256().GetHex()
         assert_eq!(
-            TapLeafHash::from_engine(TapLeafTag::engine()).to_hex(),
+            hex::encode(TapLeafHash::from_engine(TapLeafTag::engine())),
             "5212c288a377d1f8164962a5a13429f9ba6a7b84e59776a52c6637df2106facb"
         );
         assert_eq!(
-            TapBranchHash::from_engine(TapBranchTag::engine()).to_hex(),
+            hex::encode(TapBranchHash::from_engine(TapBranchTag::engine())),
             "53c373ec4d6f3c53c1f5fb2ff506dcefe1a0ed74874f93fa93c8214cbe9ffddf"
         );
         assert_eq!(
-            TapTweakHash::from_engine(TapTweakTag::engine()).to_hex(),
+            hex::encode(TapTweakHash::from_engine(TapTweakTag::engine())),
             "8aa4229474ab0100b2d6f0687f031d1fc9d8eef92a042ad97d279bff456b15e4"
         );
         assert_eq!(
-            TapSighashHash::from_engine(TapSighashTag::engine()).to_hex(),
+            hex::encode(TapSighashHash::from_engine(TapSighashTag::engine())),
             "dabc11914abcd8072900042a2681e52f8dba99ce82e224f97b5fdb7cd4b9c803"
         );
 
@@ -1208,19 +1240,19 @@ mod test {
         //   writer.GetSHA256().GetHex()
         // Note that Core writes the 0 length prefix when an empty vector is written.
         assert_eq!(
-            TapLeafHash::hash(&[0]).to_hex(),
+            hex::encode(TapLeafHash::hash(&[0])),
             "ed1382037800c9dd938dd8854f1a8863bcdeb6705069b4b56a66ec22519d5829"
         );
         assert_eq!(
-            TapBranchHash::hash(&[0]).to_hex(),
+            hex::encode(TapBranchHash::hash(&[0])),
             "92534b1960c7e6245af7d5fda2588db04aa6d646abc2b588dab2b69e5645eb1d"
         );
         assert_eq!(
-            TapTweakHash::hash(&[0]).to_hex(),
+            hex::encode(TapTweakHash::hash(&[0])),
             "cd8737b5e6047fc3f16f03e8b9959e3440e1bdf6dd02f7bb899c352ad490ea1e"
         );
         assert_eq!(
-            TapSighashHash::hash(&[0]).to_hex(),
+            hex::encode(TapSighashHash::hash(&[0])),
             "c2fd0de003889a09c4afcf676656a0d8a1fb706313ff7d509afb00c323c010cd"
         );
     }
@@ -1230,7 +1262,7 @@ mod test {
         let out_pk = TweakedPublicKey::dangerous_assume_tweaked(out_pk);
         let script = Script::from_hex(script_hex).unwrap();
         let control_block = ControlBlock::from_slice(&Vec::<u8>::from_hex(control_block_hex).unwrap()).unwrap();
-        assert_eq!(control_block_hex, control_block.serialize().to_hex());
+        assert_eq!(control_block_hex, hex::encode(control_block.serialize()));
         assert!(control_block.verify_taproot_commitment(secp, out_pk.to_inner(), &script));
     }
 
@@ -1405,7 +1437,7 @@ mod test {
 
                     let leaf_hash = TapLeafHash::from_script(&script_ver.0, script_ver.1);
                     let ctrl_blk = spend_info.control_block(script_ver).unwrap();
-                    assert_eq!(leaf_hash.to_hex(), expected_leaf_hash);
+                    assert_eq!(hex::encode(leaf_hash), expected_leaf_hash);
                     assert_eq!(ctrl_blk, expected_ctrl_blk);
                 }
             }

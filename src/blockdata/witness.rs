@@ -281,7 +281,6 @@ impl serde::Serialize for Witness {
     where
         S: serde::Serializer,
     {
-        use crate::hashes::hex::ToHex;
         use serde::ser::SerializeSeq;
 
         let human_readable = serializer.is_human_readable();
@@ -289,7 +288,7 @@ impl serde::Serialize for Witness {
 
         for elem in self.iter() {
             if human_readable {
-                seq.serialize_element(&elem.to_hex())?;
+                seq.serialize_element(&hex::encode(&elem))?;
             } else {
                 seq.serialize_element(&elem)?;
             }
@@ -315,9 +314,7 @@ impl<'de> serde::Deserialize<'de> for Witness {
 
             fn visit_seq<A: serde::de::SeqAccess<'de>>(self, mut a: A) -> Result<Self::Value, A::Error>
             {
-                use crate::hashes::hex::FromHex;
-                use crate::hashes::hex::Error::*;
-                use serde::de::{self, Unexpected};
+                use hex::FromHex;
 
                 let mut ret = match a.size_hint() {
                     Some(len) => Vec::with_capacity(len),
@@ -325,21 +322,8 @@ impl<'de> serde::Deserialize<'de> for Witness {
                 };
 
                 while let Some(elem) = a.next_element::<String>()? {
-                    let vec = Vec::<u8>::from_hex(&elem).map_err(|e| {
-                        match e {
-                            InvalidChar(b) => {
-                                match core::char::from_u32(b.into()) {
-                                    Some(c) => de::Error::invalid_value(Unexpected::Char(c), &"a valid hex character"),
-                                    None => de::Error::invalid_value(Unexpected::Unsigned(b.into()), &"a valid hex character")
-                                }
-                            }
-                            OddLengthString(len) => de::Error::invalid_length(len, &"an even length string"),
-                            InvalidLength(expected, got) => {
-                                let exp = format!("expected length: {}", expected);
-                                de::Error::invalid_length(got, &exp.as_str())
-                            }
-                        }
-                    })?;
+                    // TODO: Fix this.
+                    let vec = Vec::<u8>::from_hex(&elem).map_err(|_| serde::de::Error::custom("from hex error"))?;
                     ret.push(vec);
                 }
                 Ok(Witness::from_vec(ret))
@@ -360,7 +344,7 @@ mod test {
     use super::*;
 
     use crate::consensus::{deserialize, serialize};
-    use crate::hashes::hex::{FromHex, ToHex};
+    use hex::FromHex;
     use crate::Transaction;
     use crate::secp256k1::ecdsa;
 
@@ -454,10 +438,10 @@ mod test {
 
         let expected_wit = ["304502210084622878c94f4c356ce49c8e33a063ec90f6ee9c0208540888cfab056cd1fca9022014e8dbfdfa46d318c6887afd92dcfa54510e057565e091d64d2ee3a66488f82c01", "026e181ffb98ebfe5a64c983073398ea4bcd1548e7b971b4c175346a25a1c12e95"];
         for (i, wit_el) in tx.input[0].witness.iter().enumerate() {
-            assert_eq!(expected_wit[i], wit_el.to_hex());
+            assert_eq!(expected_wit[i], hex::encode(wit_el));
         }
-        assert_eq!(expected_wit[1], tx.input[0].witness.last().unwrap().to_hex());
-        assert_eq!(expected_wit[0], tx.input[0].witness.second_to_last().unwrap().to_hex());
+        assert_eq!(expected_wit[1], hex::encode(tx.input[0].witness.last().unwrap()));
+        assert_eq!(expected_wit[0], hex::encode(tx.input[0].witness.second_to_last().unwrap()));
 
         let tx_bytes_back = serialize(&tx);
         assert_eq!(tx_bytes_back, tx_bytes);

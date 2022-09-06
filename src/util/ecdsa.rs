@@ -8,10 +8,10 @@
 use core::str::FromStr;
 use core::{fmt, iter};
 
+use hex::{FromHex, FromHexError};
 use secp256k1;
 
 use crate::prelude::*;
-use crate::hashes::hex::{self, FromHex};
 use crate::internal_macros::write_err;
 use crate::util::sighash::{EcdsaSighashType, NonStandardSighashType};
 
@@ -58,8 +58,9 @@ impl EcdsaSig {
 
 impl fmt::Display for EcdsaSig {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        hex::format_hex(&self.sig.serialize_der(), f)?;
-        hex::format_hex(&[self.hash_ty as u8], f)
+        fmt::Display::fmt(&self.sig.serialize_der(), f)?;
+        fmt::Display::fmt(&(self.hash_ty as u8), f)?;
+        Ok(())
     }
 }
 
@@ -78,11 +79,11 @@ impl FromStr for EcdsaSig {
 }
 
 /// A key-related error.
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 #[non_exhaustive]
 pub enum EcdsaSigError {
     /// Hex encoding error
-    HexEncoding(hex::Error),
+    HexEncoding(FromHexError),
     /// Base58 encoding error
     NonStandardSighashType(u32),
     /// Empty Signature
@@ -133,8 +134,8 @@ impl From<NonStandardSighashType> for EcdsaSigError {
     }
 }
 
-impl From<hex::Error> for EcdsaSigError {
-    fn from(err: hex::Error) -> Self {
+impl From<FromHexError> for EcdsaSigError {
+    fn from(err: FromHexError) -> Self {
         EcdsaSigError::HexEncoding(err)
     }
 }

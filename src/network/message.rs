@@ -488,10 +488,10 @@ impl Decodable for RawNetworkMessage {
 #[cfg(test)]
 mod test {
     use std::net::Ipv4Addr;
+    use hex::FromHex;
     use super::{RawNetworkMessage, NetworkMessage, CommandString};
     use crate::network::constants::ServiceFlags;
     use crate::consensus::encode::{deserialize, deserialize_partial, serialize};
-    use crate::hashes::hex::FromHex;
     use crate::hashes::sha256d::Hash;
     use crate::hashes::Hash as HashTrait;
     use crate::network::address::{Address, AddrV2, AddrV2Message};

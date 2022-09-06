@@ -522,8 +522,9 @@ impl Decodable for MerkleBlock {
 mod tests {
     use core::cmp::min;
 
+    use hex::FromHex;
+
     use crate::hashes::Hash;
-    use crate::hashes::hex::{FromHex, ToHex};
     use crate::hash_types::{Txid, TxMerkleNode};
     use secp256k1::rand::prelude::*;
 
@@ -661,7 +662,7 @@ mod tests {
             mb.txn.extract_matches(&mut vec![], &mut vec![]).unwrap()
         );
         // Serialize again and check that it matches the original bytes
-        assert_eq!(mb_hex, serialize(&mb).to_hex().as_str());
+        assert_eq!(mb_hex, hex::encode(serialize(&mb)).as_str());
     }
 
     /// Create a CMerkleBlock using a list of txids which will be found in the

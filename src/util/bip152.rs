@@ -8,7 +8,7 @@
 use crate::prelude::*;
 
 use crate::io;
-use core::{convert, convert::TryFrom, fmt, mem};
+use core::{convert::TryFrom, fmt, mem};
 #[cfg(feature = "std")]
 use std::error;
 
@@ -66,12 +66,6 @@ pub struct PrefilledTransaction {
     pub idx: u16,
     /// The actual transaction.
     pub tx: Transaction,
-}
-
-impl convert::AsRef<Transaction> for PrefilledTransaction {
-    fn as_ref(&self) -> &Transaction {
-        &self.tx
-    }
 }
 
 impl Encodable for PrefilledTransaction {
@@ -374,7 +368,7 @@ mod test {
     use super::*;
     use crate::blockdata::locktime::absolute;
     use crate::consensus::encode::{deserialize, serialize};
-    use crate::hashes::hex::FromHex;
+    use hex::FromHex;
     use crate::{
         Block, BlockHash, BlockHeader, OutPoint, Script, Sequence, Transaction, TxIn, TxMerkleNode,
         TxOut, Txid, Witness,

@@ -1097,11 +1097,11 @@ mod tests {
     use std::str::FromStr;
 
     use secp256k1::{self, SecretKey, XOnlyPublicKey};
+    use hex::FromHex;
 
     use crate::{Script, Transaction, TxIn, TxOut, EcdsaSighashType, Address};
     use crate::blockdata::locktime::absolute;
     use crate::consensus::deserialize;
-    use crate::hashes::hex::{FromHex, ToHex};
     use crate::hashes::{Hash, HashEngine};
     use crate::hash_types::Sighash;
     use crate::internal_macros::{hex_into, hex_script, hex_decode, hex_from_slice};
@@ -1439,11 +1439,11 @@ mod tests {
         let expected_sequences_hash = key_path["intermediary"]["hashSequences"].as_str().unwrap();
 
         // Compute all caches
-        assert_eq!(expected_amt_hash, cache.taproot_cache(&utxos).amounts.to_hex());
-        assert_eq!(expected_outputs_hash, cache.common_cache().outputs.to_hex());
-        assert_eq!(expected_prevouts_hash, cache.common_cache().prevouts.to_hex());
-        assert_eq!(expected_spks_hash, cache.taproot_cache(&utxos).script_pubkeys.to_hex());
-        assert_eq!(expected_sequences_hash, cache.common_cache().sequences.to_hex());
+        assert_eq!(expected_amt_hash, hex::encode(cache.taproot_cache(&utxos).amounts));
+        assert_eq!(expected_outputs_hash, hex::encode(cache.common_cache().outputs));
+        assert_eq!(expected_prevouts_hash, hex::encode(cache.common_cache().prevouts));
+        assert_eq!(expected_spks_hash, hex::encode(cache.taproot_cache(&utxos).script_pubkeys));
+        assert_eq!(expected_sequences_hash, hex::encode(cache.common_cache().sequences));
 
         for inp in key_path["inputSpending"].as_array().unwrap() {
             let tx_ind = inp["given"]["txinIndex"].as_u64().unwrap() as usize;

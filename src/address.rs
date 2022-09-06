@@ -47,7 +47,7 @@ use crate::util::schnorr::{TapTweak, TweakedPublicKey, UntweakedPublicKey};
 use crate::util::taproot::TapBranchHash;
 
 /// Address error.
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Clone, Debug, PartialEq)]
 #[non_exhaustive]
 pub enum Error {
     /// Base58 encoding error.
@@ -931,9 +931,10 @@ mod tests {
     use core::str::FromStr;
 
     use secp256k1::XOnlyPublicKey;
+    use hex::FromHex;
 
     use super::*;
-    use crate::hashes::hex::{FromHex, ToHex};
+
     use crate::internal_macros::{hex, hex_into, hex_script};
     use crate::network::constants::Network::{Bitcoin, Testnet};
     use crate::util::key::PublicKey;
@@ -1127,7 +1128,7 @@ mod tests {
         ];
         for vector in &valid_vectors {
             let addr: Address = vector.0.parse().unwrap();
-            assert_eq!(&addr.script_pubkey().as_bytes().to_hex(), vector.1);
+            assert_eq!(hex::encode(&addr.script_pubkey().as_bytes()), vector.1);
             roundtrips(&addr);
         }
 

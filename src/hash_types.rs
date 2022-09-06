@@ -32,7 +32,22 @@ pub use newtypes::*;
 
 #[rustfmt::skip]
 mod newtypes {
-    use crate::hashes::{sha256, sha256d, hash160, hash_newtype};
+    use crate::hashes::{sha256, sha256d, hash160};
+
+    macro_rules! hash_newtype {
+        ($newtype:ident, $hash:ty, $len:expr, $docs:meta) => {
+            $crate::hashes::hash_newtype!($newtype, $hash, $len, $docs);
+
+            impl hex::FromHex for $newtype {
+                type Error = hex::FromHexError;
+
+                fn from_hex<T: AsRef<[u8]>>(hex: T) -> Result<Self, Self::Error> {
+                    let inner = <[u8; $len]>::from_hex(hex)?;
+                    Ok(<$newtype as $crate::hashes::Hash>::from_inner(inner))
+                }
+            }
+        }
+    }
 
     hash_newtype!(
         Txid, sha256d::Hash, 32, doc="A bitcoin transaction hash/transaction ID.

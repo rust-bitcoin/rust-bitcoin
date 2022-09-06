@@ -14,6 +14,8 @@
 
 use crate::prelude::*;
 
+use hex::FromHex;
+
 use crate::io;
 use core::convert::TryFrom;
 use core::{fmt, default::Default};
@@ -27,7 +29,7 @@ use crate::internal_macros::write_err;
 use crate::hash_types::{PubkeyHash, WPubkeyHash, ScriptHash, WScriptHash};
 use crate::blockdata::opcodes;
 use crate::consensus::{encode, Decodable, Encodable};
-use crate::hashes::{Hash, hex};
+use crate::hashes::Hash;
 use crate::policy::DUST_RELAY_TX_FEE;
 #[cfg(feature="bitcoinconsensus")] use bitcoinconsensus;
 #[cfg(feature="bitcoinconsensus")] use core::convert::From;
@@ -106,19 +108,19 @@ impl fmt::UpperHex for Script {
     }
 }
 
-impl hex::FromHex for Script {
-    fn from_byte_iter<I>(iter: I) -> Result<Self, hex::Error>
-    where
-        I: Iterator<Item=Result<u8, hex::Error>> + ExactSizeIterator + DoubleEndedIterator,
-    {
-        Vec::from_byte_iter(iter).map(|v| Script(Box::<[u8]>::from(v)))
+impl FromHex for Script {
+    type Error = hex::FromHexError;
+
+    fn from_hex<T: AsRef<[u8]>>(hex: T) -> Result<Self, Self::Error> {
+        let v = Vec::from_hex(hex)?;
+        Ok(Script(Box::<[u8]>::from(v)))
     }
 }
 
 impl core::str::FromStr for Script {
-    type Err = hex::Error;
-    fn from_str(s: &str) -> Result<Self, hex::Error> {
-        hex::FromHex::from_hex(s)
+    type Err = hex::FromHexError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        FromHex::from_hex(s)
     }
 }
 
@@ -1007,7 +1009,6 @@ impl<'de> serde::Deserialize<'de> for Script {
         D: serde::Deserializer<'de>,
     {
         use core::fmt::Formatter;
-        use crate::hashes::hex::FromHex;
 
         if deserializer.is_human_readable() {
 
@@ -1065,10 +1066,8 @@ impl serde::Serialize for Script {
     where
         S: serde::Serializer,
     {
-        use crate::hashes::hex::ToHex;
-
         if serializer.is_human_readable() {
-            serializer.serialize_str(&self.to_hex())
+            serializer.serialize_str(&hex::encode(self))
         } else {
             serializer.serialize_bytes(self.as_bytes())
         }
@@ -1092,11 +1091,11 @@ impl Decodable for Script {
 #[cfg(test)]
 mod test {
     use core::str::FromStr;
+    use hex::FromHex;
 
     use super::*;
     use super::write_scriptint;
 
-    use crate::hashes::hex::{FromHex, ToHex};
     use crate::consensus::encode::{deserialize, serialize};
     use crate::blockdata::opcodes;
     use crate::util::key::PublicKey;
@@ -1159,7 +1158,7 @@ mod test {
                                    .push_opcode(opcodes::all::OP_EQUALVERIFY)
                                    .push_opcode(opcodes::all::OP_CHECKSIG)
                                    .into_script();
-        assert_eq!(script.to_hex(), "76a91416e1ae70ff0fa102905d4af297f6912bda6cce1988ac");
+        assert_eq!(hex::encode(script), "76a91416e1ae70ff0fa102905d4af297f6912bda6cce1988ac");
     }
 
     #[test]
@@ -1191,7 +1190,7 @@ mod test {
         let data = Vec::<u8>::from_hex("aa21a9ed20280f53f2d21663cac89e6bd2ad19edbabb048cda08e73ed19e9268d0afea2a").unwrap();
         let op_return = Script::new_op_return(&data);
         assert!(op_return.is_op_return());
-        assert_eq!(op_return.to_hex(), "6a24aa21a9ed20280f53f2d21663cac89e6bd2ad19edbabb048cda08e73ed19e9268d0afea2a");
+        assert_eq!(hex::encode(op_return), "6a24aa21a9ed20280f53f2d21663cac89e6bd2ad19edbabb048cda08e73ed19e9268d0afea2a");
     }
 
     #[test]
@@ -1199,71 +1198,71 @@ mod test {
         let simple = Builder::new()
             .push_verify()
             .into_script();
-        assert_eq!(simple.to_hex(), "69");
+        assert_eq!(hex::encode(simple), "69");
         let simple2 = Builder::from(vec![])
             .push_verify()
             .into_script();
-        assert_eq!(simple2.to_hex(), "69");
+        assert_eq!(hex::encode(simple2), "69");
 
         let nonverify = Builder::new()
             .push_verify()
             .push_verify()
             .into_script();
-        assert_eq!(nonverify.to_hex(), "6969");
+        assert_eq!(hex::encode(nonverify), "6969");
         let nonverify2 = Builder::from(vec![0x69])
             .push_verify()
             .into_script();
-        assert_eq!(nonverify2.to_hex(), "6969");
+        assert_eq!(hex::encode(nonverify2), "6969");
 
         let equal = Builder::new()
             .push_opcode(opcodes::all::OP_EQUAL)
             .push_verify()
             .into_script();
-        assert_eq!(equal.to_hex(), "88");
+        assert_eq!(hex::encode(equal), "88");
         let equal2 = Builder::from(vec![0x87])
             .push_verify()
             .into_script();
-        assert_eq!(equal2.to_hex(), "88");
+        assert_eq!(hex::encode(equal2), "88");
 
         let numequal = Builder::new()
             .push_opcode(opcodes::all::OP_NUMEQUAL)
             .push_verify()
             .into_script();
-        assert_eq!(numequal.to_hex(), "9d");
+        assert_eq!(hex::encode(numequal), "9d");
         let numequal2 = Builder::from(vec![0x9c])
             .push_verify()
             .into_script();
-        assert_eq!(numequal2.to_hex(), "9d");
+        assert_eq!(hex::encode(numequal2), "9d");
 
         let checksig = Builder::new()
             .push_opcode(opcodes::all::OP_CHECKSIG)
             .push_verify()
             .into_script();
-        assert_eq!(checksig.to_hex(), "ad");
+        assert_eq!(hex::encode(checksig), "ad");
         let checksig2 = Builder::from(vec![0xac])
             .push_verify()
             .into_script();
-        assert_eq!(checksig2.to_hex(), "ad");
+        assert_eq!(hex::encode(checksig2), "ad");
 
         let checkmultisig = Builder::new()
             .push_opcode(opcodes::all::OP_CHECKMULTISIG)
             .push_verify()
             .into_script();
-        assert_eq!(checkmultisig.to_hex(), "af");
+        assert_eq!(hex::encode(checkmultisig), "af");
         let checkmultisig2 = Builder::from(vec![0xae])
             .push_verify()
             .into_script();
-        assert_eq!(checkmultisig2.to_hex(), "af");
+        assert_eq!(hex::encode(checkmultisig2), "af");
 
         let trick_slice = Builder::new()
             .push_slice(&[0xae]) // OP_CHECKMULTISIG
             .push_verify()
             .into_script();
-        assert_eq!(trick_slice.to_hex(), "01ae69");
+        assert_eq!(hex::encode(trick_slice), "01ae69");
         let trick_slice2 = Builder::from(vec![0x01, 0xae])
             .push_verify()
             .into_script();
-        assert_eq!(trick_slice2.to_hex(), "01ae69");
+        assert_eq!(hex::encode(trick_slice2), "01ae69");
    }
 
     #[test]
@@ -1303,8 +1302,8 @@ mod test {
     #[test]
     fn script_hashes() {
         let script = hex_script!("410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac");
-        assert_eq!(script.script_hash().to_hex(), "8292bcfbef1884f73c813dfe9c82fd7e814291ea");
-        assert_eq!(script.wscript_hash().to_hex(), "3e1525eb183ad4f9b3c5fa3175bdca2a52e947b135bbb90383bf9f6408e2c324");
+        assert_eq!(hex::encode(script.script_hash()), "8292bcfbef1884f73c813dfe9c82fd7e814291ea");
+        assert_eq!(hex::encode(script.wscript_hash()), "3e1525eb183ad4f9b3c5fa3175bdca2a52e947b135bbb90383bf9f6408e2c324");
     }
 
     #[test]

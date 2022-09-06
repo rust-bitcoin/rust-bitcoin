@@ -29,7 +29,6 @@ use crate::util::endian;
 use crate::util::psbt;
 use crate::util::bip152::{ShortId, PrefilledTransaction};
 use crate::util::taproot::TapLeafHash;
-use crate::hashes::hex::ToHex;
 
 use crate::blockdata::transaction::{TxOut, Transaction, TxIn};
 #[cfg(feature = "std")]
@@ -84,7 +83,7 @@ impl fmt::Display for Error {
             Error::OversizedVectorAllocation { requested: ref r, max: ref m } => write!(f,
                 "allocation of oversized vector: requested {}, maximum {}", r, m),
             Error::InvalidChecksum { expected: ref e, actual: ref a } => write!(f,
-                "invalid checksum: expected {}, actual {}", e.to_hex(), a.to_hex()),
+                "invalid checksum: expected {}, actual {}", hex::encode(e), hex::encode(a)),
             Error::NonMinimalVarInt => write!(f, "non-minimal varint"),
             Error::UnknownNetworkMagic(ref m) => write!(f, "unknown network magic: {}", m),
             Error::ParseFailed(ref s) => write!(f, "parse failed: {}", s),
@@ -138,7 +137,7 @@ pub fn serialize<T: Encodable + ?Sized>(data: &T) -> Vec<u8> {
 
 /// Encode an object into a hex-encoded string
 pub fn serialize_hex<T: Encodable + ?Sized>(data: &T) -> String {
-    serialize(data)[..].to_hex()
+    hex::encode(serialize(data))
 }
 
 /// Deserialize an object from a vector, will error if said deserialization

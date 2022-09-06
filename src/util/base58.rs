@@ -11,14 +11,16 @@ use crate::prelude::*;
 
 use core::{fmt, str, iter, slice};
 
-use crate::hashes::{sha256d, Hash, hex};
+use hex::FromHexError;
+
+use crate::hashes::{sha256d, Hash};
 use secp256k1;
 
 use crate::util::{endian, key};
 use crate::internal_macros::write_err;
 
 /// An error that might occur during base58 decoding
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
+#[derive(Clone, Debug, PartialEq)]
 #[non_exhaustive]
 pub enum Error {
     /// Invalid character encountered
@@ -39,7 +41,7 @@ pub enum Error {
     Secp256k1(secp256k1::Error),
     /// Hex decoding error
     // TODO: Remove this as part of crate-smashing, there should not be any key related errors in this module
-    Hex(hex::Error)
+    Hex(FromHexError)
 }
 
 impl fmt::Display for Error {
@@ -274,7 +276,7 @@ impl From<key::Error> for Error {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::hashes::hex::FromHex;
+    use hex::FromHex;
 
     #[test]
     fn test_base58_encode() {

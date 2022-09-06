@@ -32,8 +32,9 @@ use std::collections::BTreeMap;
 use std::fmt;
 use std::str::FromStr;
 
+use hex::FromHex;
+
 use bitcoin::consensus::encode;
-use bitcoin::hashes::hex::{self, FromHex};
 use bitcoin::locktime::absolute;
 use bitcoin::secp256k1::{Secp256k1, Signing, Verification};
 use bitcoin::util::amount::ParseAmountError;
@@ -313,7 +314,7 @@ fn previous_output() -> TxOut {
     TxOut { value: amount.to_sat(), script_pubkey }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq)]
 enum Error {
     /// Bip32 error.
     Bip32(bip32::Error),
@@ -322,7 +323,7 @@ enum Error {
     /// PSBT sighash error.
     PsbtSighash(SighashError),
     /// Bitcoin_hashes hex error.
-    Hex(hex::Error),
+    Hex(hex::FromHexError),
     /// Address error.
     Address(address::Error),
     /// Parse amount error.
@@ -359,8 +360,8 @@ impl From<SighashError> for Error {
     fn from(e: SighashError) -> Error { Error::PsbtSighash(e) }
 }
 
-impl From<hex::Error> for Error {
-    fn from(e: hex::Error) -> Error { Error::Hex(e) }
+impl From<hex::FromHexError> for Error {
+    fn from(e: hex::FromHexError) -> Error { Error::Hex(e) }
 }
 
 impl From<address::Error> for Error {
@@ -550,7 +551,7 @@ mod psbt_sign {
     }
 
     /// Errors encountered while calculating the sighash message.
-    #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
+    #[derive(Clone, Debug, PartialEq)]
     pub enum SighashError {
         /// Input index out of bounds (actual index, maximum index allowed).
         IndexOutOfBounds(usize, usize),

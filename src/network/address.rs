@@ -290,7 +290,7 @@ mod test {
     use super::{AddrV2Message, AddrV2, Address};
     use crate::network::constants::ServiceFlags;
     use std::net::{SocketAddr, IpAddr, Ipv4Addr, Ipv6Addr};
-    use crate::hashes::hex::FromHex;
+    use hex::FromHex;
 
     use crate::consensus::encode::{deserialize, serialize};
 

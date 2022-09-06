@@ -13,7 +13,7 @@ pub mod btreemap_byte_values {
 
     use serde;
 
-    use crate::hashes::hex::{FromHex, ToHex};
+    use hex::FromHex;
     use crate::prelude::*;
 
     pub fn serialize<S, T>(v: &BTreeMap<T, Vec<u8>>, s: S) -> Result<S::Ok, S::Error>
@@ -29,7 +29,7 @@ pub mod btreemap_byte_values {
         } else {
             let mut map = s.serialize_map(Some(v.len()))?;
             for (key, value) in v.iter() {
-                map.serialize_entry(key, &value.to_hex())?;
+                map.serialize_entry(key, &hex::encode(value))?;
             }
             map.end()
         }
@@ -58,7 +58,7 @@ pub mod btreemap_byte_values {
                 mut a: A,
             ) -> Result<Self::Value, A::Error> {
                 let mut ret = BTreeMap::new();
-                while let Some((key, value)) = a.next_entry()? {
+                while let Some((key, value)) = a.next_entry::<T, Vec<u8>>()? {
                     ret.insert(key, FromHex::from_hex(value).map_err(serde::de::Error::custom)?);
                 }
                 Ok(ret)
@@ -237,7 +237,7 @@ pub mod hex_bytes {
 
     use serde;
 
-    use crate::hashes::hex::{FromHex, ToHex};
+    use hex::FromHex;
 
     pub fn serialize<T, S>(bytes: &T, s: S) -> Result<S::Ok, S::Error>
     where
@@ -248,7 +248,7 @@ pub mod hex_bytes {
         if !s.is_human_readable() {
             serde::Serialize::serialize(bytes, s)
         } else {
-            s.serialize_str(&bytes.as_ref().to_hex())
+            s.serialize_str(&hex::encode(bytes))
         }
     }
 
@@ -271,7 +271,9 @@ pub mod hex_bytes {
                 E: serde::de::Error,
             {
                 if let Ok(hex) = core::str::from_utf8(v) {
-                    FromHex::from_hex(hex).map_err(E::custom)
+                    // TODO: Fix this.
+                    FromHex::from_hex(hex).map_err(|_| E::custom("from hex error"))
+                // FromHex::from_hex(v).map_err(E::custom)
                 } else {
                     return Err(E::invalid_value(serde::de::Unexpected::Bytes(v), &self));
                 }
@@ -281,7 +283,9 @@ pub mod hex_bytes {
             where
                 E: serde::de::Error,
             {
-                FromHex::from_hex(v).map_err(E::custom)
+                // TODO: Fix this.
+                FromHex::from_hex(v).map_err(|_| E::custom("from hex error"))
+                // FromHex::from_hex(v).map_err(E::custom)
             }
         }
 
