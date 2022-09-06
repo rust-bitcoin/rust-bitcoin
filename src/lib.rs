@@ -94,7 +94,7 @@ use std::io;
 use core2::io;
 
 pub use crate::address::{Address, AddressType};
-pub use crate::blockdata::block::{self, Block, BlockHeader};
+pub use crate::blockdata::block::{self, Block, BlockHeader, BlockVersion};
 pub use crate::blockdata::locktime::{self, absolute, relative};
 pub use crate::blockdata::script::{self, Script};
 #[allow(deprecated)]

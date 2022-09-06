@@ -376,7 +376,7 @@ mod test {
     use crate::consensus::encode::{deserialize, serialize};
     use crate::hashes::hex::FromHex;
     use crate::{
-        Block, BlockHash, BlockHeader, OutPoint, Script, Sequence, Transaction, TxIn, TxMerkleNode,
+        Block, BlockHash, BlockHeader, BlockVersion, OutPoint, Script, Sequence, Transaction, TxIn, TxMerkleNode,
         TxOut, Txid, Witness,
     };
 
@@ -397,7 +397,7 @@ mod test {
     fn dummy_block() -> Block {
         Block {
             header: BlockHeader {
-                version: 1,
+                version: BlockVersion(1),
                 prev_blockhash: BlockHash::hash(&[0]),
                 merkle_root: TxMerkleNode::hash(&[1]),
                 time: 2,
