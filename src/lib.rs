@@ -80,6 +80,7 @@ mod serde_utils;
 #[macro_use]
 pub mod network;
 pub mod address;
+pub mod bip158;
 pub mod blockdata;
 pub mod consensus;
 pub mod error;
