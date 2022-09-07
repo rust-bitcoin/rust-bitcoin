@@ -19,13 +19,14 @@ use crate::util::hash::bitcoin_merkle_root;
 use crate::hashes::{Hash, HashEngine};
 use crate::hash_types::{Wtxid, BlockHash, TxMerkleNode, WitnessMerkleNode, WitnessCommitment};
 use crate::util::uint::Uint256;
-use crate::consensus::encode::Encodable;
+use crate::consensus::{encode, Encodable, Decodable};
 use crate::network::constants::Network;
 use crate::blockdata::transaction::Transaction;
 use crate::blockdata::constants::{max_target, WITNESS_SCALE_FACTOR};
 use crate::blockdata::script;
 use crate::VarInt;
 use crate::internal_macros::impl_consensus_encoding;
+use crate::io;
 
 /// Bitcoin block header.
 ///
@@ -41,13 +42,8 @@ use crate::internal_macros::impl_consensus_encoding;
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct BlockHeader {
-    /// Originally protocol version, but repurposed for soft-fork signaling.
-    ///
-    /// ### Relevant BIPs
-    ///
-    /// * [BIP9 - Version bits with timeout and delay](https://github.com/bitcoin/bips/blob/master/bip-0009.mediawiki) (current usage)
-    /// * [BIP34 - Block v2, Height in Coinbase](https://github.com/bitcoin/bips/blob/master/bip-0034.mediawiki)
-    pub version: i32,
+    /// Block version, now repurposed for soft fork signalling.
+    pub version: BlockVersion,
     /// Reference to the previous block in the chain.
     pub prev_blockhash: BlockHash,
     /// The root hash of the merkle tree of transactions in the block.
@@ -156,6 +152,72 @@ impl BlockHeader {
         ret = ret / ret1;
         ret.increment();
         ret
+    }
+}
+
+/// Bitcoin block version number
+///
+/// Originally used as a protocol version, but repurposed for soft-fork signaling.
+///
+/// The inner value is a signed integer in Bitcoin Core for historical reasons, if version bits is
+/// being used the top three bits must be 001, this gives us a useful range of [0x20000000...0x3FFFFFFF].
+///
+/// > When a block nVersion does not have top bits 001, it is treated as if all bits are 0 for the purposes of deployments.
+///
+/// ### Relevant BIPs
+///
+/// * [BIP9 - Version bits with timeout and delay](https://github.com/bitcoin/bips/blob/master/bip-0009.mediawiki) (current usage)
+/// * [BIP34 - Block v2, Height in Coinbase](https://github.com/bitcoin/bips/blob/master/bip-0034.mediawiki)
+#[derive(Copy, PartialEq, Eq, Clone, Debug, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
+pub struct BlockVersion(pub i32);
+
+impl BlockVersion {
+    /// BIP-9 compatible version number that does not signal for any softforks.
+    pub const NO_SOFT_FORK_SIGNALLING: Self = Self(Self::USE_VERSION_BITS as i32);
+    /// BIP-9 soft fork signal bits mask.
+    const VERSION_BITS_MASK: u32 = 0x1FFF_FFFF;
+    /// 32bit value starting with `001` to use version bits.
+    /// 
+    /// The value has the top three bits `001` which enables the use of version bits to signal for soft forks.
+    const USE_VERSION_BITS: u32 = 0x2000_0000;
+
+    /// Check whether the version number is signalling a soft fork at the given bit.
+    ///
+    /// A block is signalling for a soft fork under BIP-9 if the first 3 bits are `001` and
+    /// the version bit for the specific soft fork is toggled on.
+    pub fn is_signalling_soft_fork(&self, bit: u8) -> bool {
+        // Only bits [0, 28] inclusive are used for signalling.
+        if bit > 28 {
+            return false;
+        }
+
+        // To signal using version bits, the first three bits must be `001`.
+        if (self.0 as u32) & !Self::VERSION_BITS_MASK != Self::USE_VERSION_BITS {
+            return false;
+        }
+
+        // The bit is set if signalling a soft fork.
+        (self.0 as u32 & Self::VERSION_BITS_MASK) & (1 << bit) > 0
+    }
+}
+
+impl Default for BlockVersion {
+    fn default() -> BlockVersion {
+        Self::NO_SOFT_FORK_SIGNALLING
+    }
+}
+
+impl Encodable for BlockVersion {
+    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        self.0.consensus_encode(w)
+    }
+}
+
+impl Decodable for BlockVersion {
+    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        Decodable::consensus_decode(r).map(BlockVersion)
     }
 }
 
@@ -323,7 +385,7 @@ impl Block {
         // number (including a sign bit). Height is the height of the mined
         // block in the block chain, where the genesis block is height zero (0).
 
-        if self.header.version < 2 {
+        if self.header.version < BlockVersion(2) {
             return Err(Bip34Error::Unsupported);
         }
 
@@ -385,7 +447,7 @@ impl std::error::Error for Bip34Error {
 mod tests {
     use crate::hashes::hex::FromHex;
 
-    use crate::blockdata::block::{Block, BlockHeader};
+    use crate::blockdata::block::{Block, BlockHeader, BlockVersion};
     use crate::consensus::encode::{deserialize, serialize};
     use crate::util::uint::Uint256;
     use crate::util::Error::{BlockBadTarget, BlockBadProofOfWork};
@@ -427,7 +489,7 @@ mod tests {
         assert!(decode.is_ok());
         assert!(bad_decode.is_err());
         let real_decode = decode.unwrap();
-        assert_eq!(real_decode.header.version, 1);
+        assert_eq!(real_decode.header.version, BlockVersion(1));
         assert_eq!(serialize(&real_decode.header.prev_blockhash), prevhash);
         assert_eq!(real_decode.header.merkle_root, real_decode.compute_merkle_root().unwrap());
         assert_eq!(serialize(&real_decode.header.merkle_root), merkle);
@@ -462,7 +524,7 @@ mod tests {
 
         assert!(decode.is_ok());
         let real_decode = decode.unwrap();
-        assert_eq!(real_decode.header.version, 0x20000000);  // VERSIONBITS but no bits set
+        assert_eq!(real_decode.header.version, BlockVersion(BlockVersion::USE_VERSION_BITS as i32));  // VERSIONBITS but no bits set
         assert_eq!(serialize(&real_decode.header.prev_blockhash), prevhash);
         assert_eq!(serialize(&real_decode.header.merkle_root), merkle);
         assert_eq!(real_decode.header.merkle_root, real_decode.compute_merkle_root().unwrap());
@@ -489,13 +551,13 @@ mod tests {
         let decode: Result<Block, _> = deserialize(&block);
         assert!(decode.is_ok());
         let real_decode = decode.unwrap();
-        assert_eq!(real_decode.header.version, 2147483647);
+        assert_eq!(real_decode.header.version, BlockVersion(2147483647));
 
         let block2 = Vec::from_hex("000000800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000").unwrap();
         let decode2: Result<Block, _> = deserialize(&block2);
         assert!(decode2.is_ok());
         let real_decode2 = decode2.unwrap();
-        assert_eq!(real_decode2.header.version, -2147483648);
+        assert_eq!(real_decode2.header.version, BlockVersion(-2147483648));
     }
 
     #[test]
@@ -512,7 +574,7 @@ mod tests {
 
         // test with modified header
         let mut invalid_header: BlockHeader = some_header;
-        invalid_header.version += 1;
+        invalid_header.version.0 += 1;
         match invalid_header.validate_pow(&invalid_header.target()) {
             Err(BlockBadProofOfWork) => (),
             _ => panic!("unexpected result from validate_pow"),
@@ -526,6 +588,24 @@ mod tests {
         let header: BlockHeader = deserialize(&some_header).expect("Can't deserialize correct block header");
 
         assert_eq!(header.bits, BlockHeader::compact_target_from_u256(&header.target()));
+    }
+
+    #[test]
+    fn soft_fork_signalling() {
+        for i in 0..31 {
+            let version_int = (0x20000000u32 ^ 1<<i) as i32;
+            let version = BlockVersion(version_int);
+            if i < 29 {
+                assert!(version.is_signalling_soft_fork(i));
+            } else {
+                assert!(!version.is_signalling_soft_fork(i));
+            }
+        }
+
+        let segwit_signal = BlockVersion(0x20000000 ^ 1<<1);
+        assert!(!segwit_signal.is_signalling_soft_fork(0));
+        assert!(segwit_signal.is_signalling_soft_fork(1));
+        assert!(!segwit_signal.is_signalling_soft_fork(2));
     }
 }
 
