@@ -1192,6 +1192,24 @@ mod tests {
         assert_eq!(tx_without_witness.strippedsize(), expected_strippedsize);
     }
 
+    // We temporarily abuse `Transaction` for testing consensus serde adapter.
+    #[cfg(feature = "serde")]
+    #[test]
+    fn test_consensus_serde() {
+        use crate::consensus::serde as con_serde;
+        let json = "\"010000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff3603da1b0e00045503bd5704c7dd8a0d0ced13bb5785010800000000000a636b706f6f6c122f4e696e6a61506f6f6c2f5345475749542fffffffff02b4e5a212000000001976a914876fbb82ec05caa6af7a3b5e5a983aae6c6cc6d688ac0000000000000000266a24aa21a9edf91c46b49eb8a29089980f02ee6b57e7d63d33b18b4fddac2bcd7db2a39837040120000000000000000000000000000000000000000000000000000000000000000000000000\"";
+        let mut deserializer = serde_json::Deserializer::from_str(json);
+        let tx = con_serde::With::<con_serde::Hex>::deserialize::<'_, Transaction, _>(&mut deserializer)
+            .unwrap();
+        let tx_bytes = Vec::from_hex(&json[1..(json.len() - 1)]).unwrap();
+        let expected = deserialize::<Transaction>(&tx_bytes).unwrap();
+        assert_eq!(tx, expected);
+        let mut bytes = Vec::new();
+        let mut serializer = serde_json::Serializer::new(&mut bytes);
+        con_serde::With::<con_serde::Hex>::serialize(&tx, &mut serializer).unwrap();
+        assert_eq!(bytes, json.as_bytes())
+    }
+
     #[test]
     fn test_transaction_version() {
         let tx_bytes = Vec::from_hex("ffffff7f0100000000000000000000000000000000000000000000000000000000000000000000000000ffffffff0100f2052a01000000434104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac00000000").unwrap();
