@@ -74,6 +74,18 @@ pub enum Error {
     CombineInconsistentKeySources(Box<ExtendedPubKey>),
     /// Serialization error in bitcoin consensus-encoded structures
     ConsensusEncoding,
+    /// Parsing error indicating invalid public keys
+    InvalidPublicKey,
+    /// Parsing error indicating invalid xonly public keys
+    InvalidXOnlyPublicKey,
+    /// Parsing error indicating an invalid signature
+    InvalidSignature(&'static str),
+    /// Parsing error indicating invalid control block
+    InvalidControlBlock,
+    /// Parsing error indicating invalid leaf version
+    InvalidLeafVersion,
+    /// Parsing error indicating a Taproot error
+    TaprootError(&'static str),
 }
 
 impl fmt::Display for Error {
@@ -101,6 +113,12 @@ impl fmt::Display for Error {
             },
             Error::CombineInconsistentKeySources(ref s) => { write!(f, "combine conflict: {}", s) },
             Error::ConsensusEncoding => f.write_str("bitcoin consensus or BIP-174 encoding error"),
+            Error::InvalidPublicKey => f.write_str("invalid public key"),
+            Error::InvalidXOnlyPublicKey => f.write_str("invalid xonly public key"),
+            Error::InvalidSignature(ref s) => write!(f, "signature error - {}", s),
+            Error::InvalidControlBlock => f.write_str("invalid control block"),
+            Error::InvalidLeafVersion => f.write_str("invalid leaf version"),
+            Error::TaprootError(ref s) => write!(f, "taproot error -  {}", s),
         }
     }
 }
@@ -128,7 +146,13 @@ impl std::error::Error for Error {
             | NonStandardSighashType(_)
             | InvalidPreimageHashPair{ .. }
             | CombineInconsistentKeySources(_)
-            | ConsensusEncoding => None,
+            | ConsensusEncoding
+            | InvalidPublicKey
+            | InvalidXOnlyPublicKey
+            | InvalidSignature(_)
+            | InvalidControlBlock
+            | InvalidLeafVersion
+            | TaprootError(_) => None,
         }
     }
 }

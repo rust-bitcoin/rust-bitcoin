@@ -23,8 +23,8 @@ macro_rules! impl_psbt_de_serialize {
 macro_rules! impl_psbt_deserialize {
     ($thing:ty) => {
         impl $crate::util::psbt::serialize::Deserialize for $thing {
-            fn deserialize(bytes: &[u8]) -> Result<Self, $crate::consensus::encode::Error> {
-                $crate::consensus::deserialize(&bytes[..])
+            fn deserialize(bytes: &[u8]) -> Result<Self, $crate::psbt::Error> {
+                $crate::consensus::deserialize(&bytes[..]).map_err(|e| e.into())
             }
         }
     };
@@ -147,7 +147,7 @@ macro_rules! impl_psbt_hash_de_serialize {
 macro_rules! impl_psbt_hash_deserialize {
     ($hash_type:ty) => {
         impl $crate::util::psbt::serialize::Deserialize for $hash_type {
-            fn deserialize(bytes: &[u8]) -> Result<Self, $crate::consensus::encode::Error> {
+            fn deserialize(bytes: &[u8]) -> Result<Self, $crate::psbt::Error> {
                 <$hash_type>::from_slice(&bytes[..]).map_err(|e| {
                     $crate::util::psbt::Error::from(e).into()
                 })

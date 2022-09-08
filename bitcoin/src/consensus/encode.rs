@@ -70,7 +70,7 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Error::Io(ref e) => write_err!(f, "IO error"; e),
-            Error::Psbt(ref e) => write_err!(f, "PSBT error"; e),
+            Error::Psbt(ref e) => write!(f, "PSBT error: {}", e),
             Error::OversizedVectorAllocation { requested: ref r, max: ref m } => write!(f,
                 "allocation of oversized vector: requested {}, maximum {}", r, m),
             Error::InvalidChecksum { expected: ref e, actual: ref a } => write!(f,
