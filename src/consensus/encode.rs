@@ -43,13 +43,6 @@ pub enum Error {
     Io(io::Error),
     /// PSBT-related error
     Psbt(psbt::Error),
-    /// Network magic was not expected
-    UnexpectedNetworkMagic {
-        /// The expected network magic
-        expected: u32,
-        /// The unexpected network magic
-        actual: u32,
-    },
     /// Tried to allocate an oversized vector
     OversizedVectorAllocation {
         /// The capacity requested
@@ -66,8 +59,6 @@ pub enum Error {
     },
     /// VarInt was encoded in a non-minimal way
     NonMinimalVarInt,
-    /// Network magic was unknown
-    UnknownNetworkMagic(u32),
     /// Parsing error
     ParseFailed(&'static str),
     /// Unsupported Segwit flag
@@ -79,14 +70,11 @@ impl fmt::Display for Error {
         match *self {
             Error::Io(ref e) => write_err!(f, "IO error"; e),
             Error::Psbt(ref e) => write_err!(f, "PSBT error"; e),
-            Error::UnexpectedNetworkMagic { expected: ref e, actual: ref a } => write!(f,
-                "unexpected network magic: expected {}, actual {}", e, a),
             Error::OversizedVectorAllocation { requested: ref r, max: ref m } => write!(f,
                 "allocation of oversized vector: requested {}, maximum {}", r, m),
             Error::InvalidChecksum { expected: ref e, actual: ref a } => write!(f,
                 "invalid checksum: expected {}, actual {}", e.to_hex(), a.to_hex()),
             Error::NonMinimalVarInt => write!(f, "non-minimal varint"),
-            Error::UnknownNetworkMagic(ref m) => write!(f, "unknown network magic: {}", m),
             Error::ParseFailed(ref s) => write!(f, "parse failed: {}", s),
             Error::UnsupportedSegwitFlag(ref swflag) => write!(f,
                 "unsupported segwit version: {}", swflag),
@@ -103,11 +91,9 @@ impl std::error::Error for Error {
         match self {
             Io(e) => Some(e),
             Psbt(e) => Some(e),
-            UnexpectedNetworkMagic { .. }
-            | OversizedVectorAllocation { .. }
+            OversizedVectorAllocation { .. }
             | InvalidChecksum { .. }
             | NonMinimalVarInt
-            | UnknownNetworkMagic(_)
             | ParseFailed(_)
             | UnsupportedSegwitFlag(_) => None,
         }
