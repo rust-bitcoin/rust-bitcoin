@@ -379,7 +379,7 @@ impl Block {
         // Citing the spec:
         // Add height as the first item in the coinbase transaction's scriptSig,
         // and increase block version to 2. The format of the height is
-        // "serialized CScript" -- first byte is number of bytes in the number
+        // "minimally encoded serialized CScript"" -- first byte is number of bytes in the number
         // (will be 0x03 on main net for the next 150 or so years with 2^23-1
         // blocks), following bytes are little-endian representation of the
         // number (including a sign bit). Height is the height of the mined
@@ -393,14 +393,14 @@ impl Block {
         let input = cb.input.first().ok_or(Bip34Error::NotPresent)?;
         let push = input.script_sig.instructions_minimal().next().ok_or(Bip34Error::NotPresent)?;
         match push.map_err(|_| Bip34Error::NotPresent)? {
-            script::Instruction::PushBytes(b) if b.len() <= 8 => {
-                // Expand the push to exactly 8 bytes (LE).
-                let mut full = [0; 8];
-                full[0..b.len()].copy_from_slice(b);
-                Ok(util::endian::slice_to_u64_le(&full))
-            }
-            script::Instruction::PushBytes(b) if b.len() > 8 => {
-                Err(Bip34Error::UnexpectedPush(b.to_vec()))
+            script::Instruction::PushBytes(b) => {
+                // Check that the number is encoded in the minimal way.
+                let h = script::read_scriptint(b).map_err(|_e| Bip34Error::UnexpectedPush(b.to_vec()))?;
+                if h < 0 {
+                    Err(Bip34Error::NegativeHeight)
+                } else {
+                    Ok(h as u64)
+                }
             }
             _ => Err(Bip34Error::NotPresent),
         }
@@ -417,6 +417,8 @@ pub enum Bip34Error {
     NotPresent,
     /// The BIP34 push was larger than 8 bytes.
     UnexpectedPush(Vec<u8>),
+    /// The BIP34 push was negative.
+    NegativeHeight,
 }
 
 impl fmt::Display for Bip34Error {
@@ -427,6 +429,7 @@ impl fmt::Display for Bip34Error {
             Bip34Error::UnexpectedPush(ref p) => {
                 write!(f, "unexpected byte push of > 8 bytes: {:?}", p)
             }
+            Bip34Error::NegativeHeight => write!(f, "negative BIP34 height"),
         }
     }
 }
@@ -438,7 +441,10 @@ impl std::error::Error for Bip34Error {
         use self::Bip34Error::*;
 
         match self {
-            Unsupported | NotPresent | UnexpectedPush(_) => None,
+            Unsupported |
+            NotPresent |
+            UnexpectedPush(_) |
+            NegativeHeight => None,
         }
     }
 }
