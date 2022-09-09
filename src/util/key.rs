@@ -296,6 +296,12 @@ impl FromStr for PublicKey {
     }
 }
 
+impl From<PublicKey> for PubkeyHash {
+    fn from(key: PublicKey) -> PubkeyHash {
+        key.pubkey_hash()
+    }
+}
+
 /// A Bitcoin ECDSA private key
 #[derive(Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "std", derive(Debug))]
