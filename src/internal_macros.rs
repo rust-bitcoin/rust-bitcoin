@@ -117,7 +117,6 @@ macro_rules! debug_from_display {
     };
 }
 pub(crate) use debug_from_display;
-
 #[cfg(test)]
 pub(crate) use test_macros::*;
 
