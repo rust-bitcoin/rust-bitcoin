@@ -318,7 +318,7 @@ impl LockTime {
     /// ```rust
     /// # use bitcoin::absolute::{LockTime, LockTime::*};
     /// # let n = LockTime::from_consensus(100);          // n OP_CHECKLOCKTIMEVERIFY
-    /// # let lock_time = LockTime::from_consensus(100);  // nLockTime
+    /// # let lock_time = LockTime::from_consensus(100 + 1);  // nLockTime
     ///
     /// let is_satisfied = match (n, lock_time) {
     ///     (Blocks(n), Blocks(lock_time)) => n <= lock_time,
