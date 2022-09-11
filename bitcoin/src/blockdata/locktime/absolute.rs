@@ -20,6 +20,9 @@ use crate::io::{self, Read, Write};
 use crate::prelude::*;
 use crate::parse::{self, impl_parse_str_through_int};
 
+#[cfg(docsrs)]
+use crate::absolute;
+
 /// The Threshold for deciding whether a lock time value is a height or a time (see [Bitcoin Core]).
 ///
 /// `LockTime` values _below_ the threshold are interpreted as block heights, values _above_ (or
@@ -305,13 +308,42 @@ impl LockTime {
         }
     }
 
+    /// Returns true if satisfaction of `other` lock time implies satisfaction of this
+    /// [`absolute::LockTime`].
+    ///
+    /// A lock time can only be satisfied by n blocks being mined or n seconds passing. If you have
+    /// two lock times (same unit) then the larger lock time being satisfied implies (in a
+    /// mathematical sense) the smaller one being satisfied.
+    ///
+    /// This function is useful if you wish to check a lock time against various other locks e.g.,
+    /// filtering out locks which cannot be satisfied.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use bitcoin::absolute::{LockTime, LockTime::*};
+    /// let lock_time = LockTime::from_consensus(100);
+    /// let check = LockTime::from_consensus(100 + 1);
+    /// assert!(lock_time.is_implied_by(check));
+    /// ```
+    pub fn is_implied_by(&self, other: LockTime) -> bool {
+        use LockTime::*;
+
+        match (*self, other) {
+            (Blocks(this), Blocks(other)) => this <= other,
+            (Seconds(this), Seconds(other)) => this <= other,
+            _ => false, // Not the same units.
+        }
+    }
+
     /// Returns the inner `u32` value. This is the value used when creating this `LockTime`
     /// i.e., `n OP_CHECKLOCKTIMEVERIFY` or nLockTime.
     ///
     /// # Warning
     ///
     /// Do not compare values return by this method. The whole point of the `LockTime` type is to
-    /// assist in doing correct comparisons. Either use `is_satisfied_by` or use the pattern below:
+    /// assist in doing correct comparisons. Either use `is_satisfied_by`, `is_satisfied_by_lock`,
+    /// or use the pattern below:
     ///
     /// # Examples
     ///
