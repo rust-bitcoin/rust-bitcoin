@@ -109,13 +109,17 @@ impl PublicKey {
         }
     }
 
+    fn with_serialized<R, F: FnOnce(&[u8]) -> R>(&self, f: F) -> R {
+        if self.compressed {
+            f(&self.inner.serialize())
+        } else {
+            f(&self.inner.serialize_uncompressed())
+        }
+    }
+
     /// Returns bitcoin 160-bit hash of the public key
     pub fn pubkey_hash(&self) -> PubkeyHash {
-        if self.compressed {
-            PubkeyHash::hash(&self.inner.serialize())
-        } else {
-            PubkeyHash::hash(&self.inner.serialize_uncompressed())
-        }
+        self.with_serialized(PubkeyHash::hash)
     }
 
     /// Returns bitcoin 160-bit hash of the public key for witness program
@@ -133,11 +137,7 @@ impl PublicKey {
 
     /// Write the public key into a writer
     pub fn write_into<W: io::Write>(&self, mut writer: W) -> Result<(), io::Error> {
-        if self.compressed {
-            writer.write_all(&self.inner.serialize())
-        } else {
-            writer.write_all(&self.inner.serialize_uncompressed())
-        }
+        self.with_serialized(|bytes| writer.write_all(bytes))
     }
 
     /// Read the public key from a reader
@@ -272,16 +272,13 @@ pub struct SortKey(u8, [u8; 32], [u8; 32]);
 
 impl fmt::Display for PublicKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if self.compressed {
-            for ch in &self.inner.serialize()[..] {
+        // TODO: fast hex encoding
+        self.with_serialized(|bytes| {
+            for ch in bytes {
                 write!(f, "{:02x}", ch)?;
             }
-        } else {
-            for ch in &self.inner.serialize_uncompressed()[..] {
-                write!(f, "{:02x}", ch)?;
-            }
-        }
-        Ok(())
+            Ok(())
+        })
     }
 }
 
@@ -485,11 +482,7 @@ impl serde::Serialize for PublicKey {
         if s.is_human_readable() {
             s.collect_str(self)
         } else {
-            if self.compressed {
-                s.serialize_bytes(&self.inner.serialize()[..])
-            } else {
-                s.serialize_bytes(&self.inner.serialize_uncompressed()[..])
-            }
+            self.with_serialized(|bytes| s.serialize_bytes(bytes))
         }
     }
 }
