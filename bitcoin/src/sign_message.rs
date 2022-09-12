@@ -1,17 +1,14 @@
 // Written in 2014 by Andrew Poelstra <apoelstra@wpsoftware.net>
 // SPDX-License-Identifier: CC0-1.0
 
-//! Miscellaneous functions.
+//! Signature
 //!
-//! This module provides various utility functions including secp256k1 signature
-//! recovery when library is used with the `secp-recovery` feature.
+//! This module provides signature related functions including secp256k1 signature recovery when
+//! library is used with the `secp-recovery` feature.
 //!
-
-use crate::prelude::*;
 
 use crate::hashes::{sha256d, Hash, HashEngine};
 
-use crate::blockdata::opcodes;
 use crate::consensus::{encode, Encodable};
 
 #[cfg(feature = "secp-recovery")]
@@ -205,47 +202,6 @@ mod message_signing {
     }
 }
 
-/// Search for `needle` in the vector `haystack` and remove every
-/// instance of it, returning the number of instances removed.
-/// Loops through the vector opcode by opcode, skipping pushed data.
-pub fn script_find_and_remove(haystack: &mut Vec<u8>, needle: &[u8]) -> usize {
-    if needle.len() > haystack.len() {
-        return 0;
-    }
-    if needle.is_empty() {
-        return 0;
-    }
-
-    let mut top = haystack.len() - needle.len();
-    let mut n_deleted = 0;
-
-    let mut i = 0;
-    while i <= top {
-        if &haystack[i..(i + needle.len())] == needle {
-            for j in i..top {
-                haystack.swap(j + needle.len(), j);
-            }
-            n_deleted += 1;
-            // This is ugly but prevents infinite loop in case of overflow
-            let overflow = top < needle.len();
-            top = top.wrapping_sub(needle.len());
-            if overflow {
-                break;
-            }
-        } else {
-            i += match opcodes::All::from((*haystack)[i]).classify(opcodes::ClassifyContext::Legacy) {
-                opcodes::Class::PushBytes(n) => n as usize + 1,
-                opcodes::Class::Ordinary(opcodes::Ordinary::OP_PUSHDATA1) => 2,
-                opcodes::Class::Ordinary(opcodes::Ordinary::OP_PUSHDATA2) => 3,
-                opcodes::Class::Ordinary(opcodes::Ordinary::OP_PUSHDATA4) => 5,
-                _ => 1
-            };
-        }
-    }
-    haystack.truncate(top.wrapping_add(needle.len()));
-    n_deleted
-}
-
 /// Hash message for signature using Bitcoin's message signing format.
 pub fn signed_msg_hash(msg: &str) -> sha256d::Hash {
     let mut engine = sha256d::Hash::engine();
@@ -260,47 +216,6 @@ pub fn signed_msg_hash(msg: &str) -> sha256d::Hash {
 mod tests {
     use super::*;
     use crate::hashes::hex::ToHex;
-    use super::script_find_and_remove;
-    use super::signed_msg_hash;
-
-    #[test]
-    fn test_script_find_and_remove() {
-        let mut v = vec![101u8, 102, 103, 104, 102, 103, 104, 102, 103, 104, 105, 106, 107, 108, 109];
-
-        assert_eq!(script_find_and_remove(&mut v, &[]), 0);
-        assert_eq!(script_find_and_remove(&mut v, &[105, 105, 105]), 0);
-        assert_eq!(v, vec![101, 102, 103, 104, 102, 103, 104, 102, 103, 104, 105, 106, 107, 108, 109]);
-
-        assert_eq!(script_find_and_remove(&mut v, &[105, 106, 107]), 1);
-        assert_eq!(v, vec![101, 102, 103, 104, 102, 103, 104, 102, 103, 104, 108, 109]);
-
-        assert_eq!(script_find_and_remove(&mut v, &[104, 108, 109]), 1);
-        assert_eq!(v, vec![101, 102, 103, 104, 102, 103, 104, 102, 103]);
-
-        assert_eq!(script_find_and_remove(&mut v, &[101]), 1);
-        assert_eq!(v, vec![102, 103, 104, 102, 103, 104, 102, 103]);
-
-        assert_eq!(script_find_and_remove(&mut v, &[102]), 3);
-        assert_eq!(v, vec![103, 104, 103, 104, 103]);
-
-        assert_eq!(script_find_and_remove(&mut v, &[103, 104]), 2);
-        assert_eq!(v, vec![103]);
-
-        assert_eq!(script_find_and_remove(&mut v, &[105, 105, 5]), 0);
-        assert_eq!(script_find_and_remove(&mut v, &[105]), 0);
-        assert_eq!(script_find_and_remove(&mut v, &[103]), 1);
-        assert_eq!(v, Vec::<u8>::new());
-
-        assert_eq!(script_find_and_remove(&mut v, &[105, 105, 5]), 0);
-        assert_eq!(script_find_and_remove(&mut v, &[105]), 0);
-    }
-
-    #[test]
-    fn test_script_codesep_remove() {
-        let mut s = vec![33u8, 3, 132, 121, 160, 250, 153, 140, 211, 82, 89, 162, 239, 10, 122, 92, 104, 102, 44, 20, 116, 248, 140, 203, 109, 8, 167, 103, 123, 190, 199, 242, 32, 65, 173, 171, 33, 3, 132, 121, 160, 250, 153, 140, 211, 82, 89, 162, 239, 10, 122, 92, 104, 102, 44, 20, 116, 248, 140, 203, 109, 8, 167, 103, 123, 190, 199, 242, 32, 65, 173, 171, 81];
-        assert_eq!(script_find_and_remove(&mut s, &[171]), 2);
-        assert_eq!(s, vec![33, 3, 132, 121, 160, 250, 153, 140, 211, 82, 89, 162, 239, 10, 122, 92, 104, 102, 44, 20, 116, 248, 140, 203, 109, 8, 167, 103, 123, 190, 199, 242, 32, 65, 173, 33, 3, 132, 121, 160, 250, 153, 140, 211, 82, 89, 162, 239, 10, 122, 92, 104, 102, 44, 20, 116, 248, 140, 203, 109, 8, 167, 103, 123, 190, 199, 242, 32, 65, 173, 81]);
-    }
 
     #[test]
     fn test_signed_msg_hash() {

@@ -86,6 +86,7 @@ pub mod consensus;
 pub mod error;
 pub mod hash_types;
 pub mod policy;
+pub mod sign_message;
 pub mod util;
 
 #[cfg(feature = "std")]
