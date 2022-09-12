@@ -139,18 +139,20 @@ impl BlockFilter {
     }
 
     /// Returns true if any query matches against this [`BlockFilter`].
-    pub fn match_any<'a, I>(&self, block_hash: &BlockHash, query: I) -> Result<bool, Error>
+    pub fn match_any<I>(&self, block_hash: &BlockHash, query: I) -> Result<bool, Error>
     where
-        I: Iterator<Item = &'a [u8]>,
+        I: Iterator,
+        I::Item: Borrow<[u8]>,
     {
         let filter_reader = BlockFilterReader::new(block_hash);
         filter_reader.match_any(&mut self.content.as_slice(), query)
     }
 
     /// Returns true if all queries match against this [`BlockFilter`].
-    pub fn match_all<'a, I>(&self, block_hash: &BlockHash, query: I) -> Result<bool, Error>
+    pub fn match_all<I>(&self, block_hash: &BlockHash, query: I) -> Result<bool, Error>
     where
-        I: Iterator<Item = &'a [u8]>,
+        I: Iterator,
+        I::Item: Borrow<[u8]>,
     {
         let filter_reader = BlockFilterReader::new(block_hash);
         filter_reader.match_all(&mut self.content.as_slice(), query)
@@ -227,18 +229,20 @@ impl BlockFilterReader {
     }
 
     /// Returns true if any query matches against this [`BlockFilterReader`].
-    pub fn match_any<'a, I, R>(&self, reader: &mut R, query: I) -> Result<bool, Error>
+    pub fn match_any<I, R>(&self, reader: &mut R, query: I) -> Result<bool, Error>
     where
-        I: Iterator<Item = &'a [u8]>,
+        I: Iterator,
+        I::Item: Borrow<[u8]>,
         R: io::Read + ?Sized,
     {
         self.reader.match_any(reader, query)
     }
 
     /// Returns true if all queries match against this [`BlockFilterReader`].
-    pub fn match_all<'a, I, R>(&self, reader: &mut R, query: I) -> Result<bool, Error>
+    pub fn match_all<I, R>(&self, reader: &mut R, query: I) -> Result<bool, Error>
     where
-        I: Iterator<Item = &'a [u8]>,
+        I: Iterator,
+        I::Item: Borrow<[u8]>,
         R: io::Read + ?Sized,
     {
         self.reader.match_all(reader, query)
@@ -258,9 +262,10 @@ impl GcsFilterReader {
     }
 
     /// Returns true if any query matches against this [`GcsFilterReader`].
-    pub fn match_any<'a, I, R>(&self, reader: &mut R, query: I) -> Result<bool, Error>
+    pub fn match_any<I, R>(&self, reader: &mut R, query: I) -> Result<bool, Error>
     where
-        I: Iterator<Item = &'a [u8]>,
+        I: Iterator,
+        I::Item: Borrow<[u8]>,
         R: io::Read + ?Sized,
     {
         let mut decoder = reader;
@@ -268,7 +273,7 @@ impl GcsFilterReader {
         let reader = &mut decoder;
         // map hashes to [0, n_elements << grp]
         let nm = n_elements.0 * self.m;
-        let mut mapped = query.map(|e| map_to_range(self.filter.hash(e), nm)).collect::<Vec<_>>();
+        let mut mapped = query.map(|e| map_to_range(self.filter.hash(e.borrow()), nm)).collect::<Vec<_>>();
         // sort
         mapped.sort_unstable();
         if mapped.is_empty() {
@@ -301,9 +306,10 @@ impl GcsFilterReader {
     }
 
     /// Returns true if all queries match against this [`GcsFilterReader`].
-    pub fn match_all<'a, I, R>(&self, reader: &mut R, query: I) -> Result<bool, Error>
+    pub fn match_all<I, R>(&self, reader: &mut R, query: I) -> Result<bool, Error>
     where
-        I: Iterator<Item = &'a [u8]>,
+        I: Iterator,
+        I::Item: Borrow<[u8]>,
         R: io::Read + ?Sized,
     {
         let mut decoder = reader;
@@ -311,7 +317,7 @@ impl GcsFilterReader {
         let reader = &mut decoder;
         // map hashes to [0, n_elements << grp]
         let nm = n_elements.0 * self.m;
-        let mut mapped = query.map(|e| map_to_range(self.filter.hash(e), nm)).collect::<Vec<_>>();
+        let mut mapped = query.map(|e| map_to_range(self.filter.hash(e.borrow()), nm)).collect::<Vec<_>>();
         // sort
         mapped.sort_unstable();
         mapped.dedup();
