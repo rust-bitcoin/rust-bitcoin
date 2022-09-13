@@ -36,8 +36,8 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Error::BadByte(b) => write!(f, "invalid base58 character 0x{:x}", b),
-            Error::BadChecksum(exp, actual) => write!(f, "base58ck checksum 0x{:x} does not match expected 0x{:x}", actual, exp),
+            Error::BadByte(b) => write!(f, "invalid base58 character {:#x}", b),
+            Error::BadChecksum(exp, actual) => write!(f, "base58ck checksum {:#x} does not match expected {:#x}", actual, exp),
             Error::InvalidLength(ell) => write!(f, "length {} invalid for this base58 type", ell),
             Error::InvalidExtendedKeyVersion(ref v) => write!(f, "extended key version {:#04x?} is invalid for this base58 type", v),
             Error::InvalidAddressVersion(ref v) => write!(f, "address version {} is invalid for this base58 type", v),
