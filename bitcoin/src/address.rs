@@ -523,13 +523,13 @@ impl<'a> fmt::Display for AddressEncoding<'a> {
                 let mut prefixed = [0; 21];
                 prefixed[0] = self.p2pkh_prefix;
                 prefixed[1..].copy_from_slice(&hash[..]);
-                base58::check_encode_slice_to_fmt(fmt, &prefixed[..])
+                base58::encode_check_to_fmt(fmt, &prefixed[..])
             }
             Payload::ScriptHash(hash) => {
                 let mut prefixed = [0; 21];
                 prefixed[0] = self.p2sh_prefix;
                 prefixed[1..].copy_from_slice(&hash[..]);
-                base58::check_encode_slice_to_fmt(fmt, &prefixed[..])
+                base58::encode_check_to_fmt(fmt, &prefixed[..])
             }
             Payload::WitnessProgram { version, program: prog } => {
                 let mut upper_writer;
@@ -839,7 +839,7 @@ impl FromStr for Address {
         if s.len() > 50 {
             return Err(Error::Base58(base58::Error::InvalidLength(s.len() * 11 / 15)));
         }
-        let data = base58::from_check(s)?;
+        let data = base58::decode_check(s)?;
         if data.len() != 21 {
             return Err(Error::Base58(base58::Error::InvalidLength(data.len())));
         }
