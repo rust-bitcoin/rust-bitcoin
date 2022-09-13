@@ -73,7 +73,7 @@ struct SmallVec<T> {
 }
 
 impl<T: Default + Copy> SmallVec<T> {
-    pub fn new() -> SmallVec<T> {
+    fn new() -> SmallVec<T> {
         SmallVec {
             len: 0,
             stack: [T::default(); 100],
@@ -81,7 +81,7 @@ impl<T: Default + Copy> SmallVec<T> {
         }
     }
 
-    pub fn push(&mut self, val: T) {
+    fn push(&mut self, val: T) {
         if self.len < 100 {
             self.stack[self.len] = val;
             self.len += 1;
@@ -90,12 +90,12 @@ impl<T: Default + Copy> SmallVec<T> {
         }
     }
 
-    pub fn iter(&self) -> iter::Chain<slice::Iter<T>, slice::Iter<T>> {
+    fn iter(&self) -> iter::Chain<slice::Iter<T>, slice::Iter<T>> {
         // If len<100 then we just append an empty vec
         self.stack[0..self.len].iter().chain(self.heap.iter())
     }
 
-    pub fn iter_mut(&mut self) -> iter::Chain<slice::IterMut<T>, slice::IterMut<T>> {
+    fn iter_mut(&mut self) -> iter::Chain<slice::IterMut<T>, slice::IterMut<T>> {
         // If len<100 then we just append an empty vec
         self.stack[0..self.len].iter_mut().chain(self.heap.iter_mut())
     }
