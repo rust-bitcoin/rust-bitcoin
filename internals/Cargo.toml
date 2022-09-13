@@ -1,0 +1,25 @@
+[package]
+name = "bitcoin-internals"
+version = "0.1.0"
+authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>", "The Rust Bitcoin developers"]
+license = "CC0-1.0"
+repository = "https://github.com/rust-bitcoin/rust-bitcoin/"
+documentation = "https://docs.rs/bitcoin-internals"
+description = "Internal types and macros used by rust-bitcoin ecosystem"
+categories = ["cryptography::cryptocurrencies"]
+keywords = ["internal"]
+readme = "README.md"
+edition = "2018"
+
+# Please don't forget to add relevant features to docs.rs below.
+[features]
+default = []
+std = []
+
+[package.metadata.docs.rs]
+features = ["std"]
+rustdoc-args = ["--cfg", "docsrs"]
+
+[dependencies]
+
+[dev-dependencies]

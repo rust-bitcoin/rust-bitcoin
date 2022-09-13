@@ -14,6 +14,7 @@ use core::{fmt, str::FromStr, default::Default};
 use core::ops::Index;
 #[cfg(feature = "serde")] use serde;
 
+use bitcoin_internals::write_err;
 use crate::hash_types::XpubIdentifier;
 use crate::hashes::{sha512, Hash, HashEngine, Hmac, HmacEngine, hex};
 use secp256k1::{self, Secp256k1, XOnlyPublicKey};
@@ -21,7 +22,7 @@ use secp256k1::{self, Secp256k1, XOnlyPublicKey};
 use crate::network::constants::Network;
 use crate::util::{base58, endian, key};
 use crate::util::key::{PublicKey, PrivateKey, KeyPair};
-use crate::internal_macros::{impl_array_newtype, impl_bytes_newtype, serde_string_impl, write_err};
+use crate::internal_macros::{impl_array_newtype, impl_bytes_newtype, serde_string_impl};
 
 /// A chain code
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]

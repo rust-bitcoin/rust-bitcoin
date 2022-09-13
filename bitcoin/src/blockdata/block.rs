@@ -179,7 +179,7 @@ impl BlockVersion {
     /// BIP-9 soft fork signal bits mask.
     const VERSION_BITS_MASK: u32 = 0x1FFF_FFFF;
     /// 32bit value starting with `001` to use version bits.
-    /// 
+    ///
     /// The value has the top three bits `001` which enables the use of version bits to signal for soft forks.
     const USE_VERSION_BITS: u32 = 0x2000_0000;
 

@@ -28,8 +28,9 @@ use crate::prelude::*;
 use crate::io;
 use core::fmt;
 
+use bitcoin_internals::write_err;
+
 use crate::consensus::encode;
-use crate::internal_macros::write_err;
 
 /// A trait which allows numbers to act as fixed-size bit arrays
 pub trait BitArray {

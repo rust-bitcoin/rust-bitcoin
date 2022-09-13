@@ -11,14 +11,14 @@ use core::{mem, fmt};
 use core::cmp::{PartialOrd, Ordering};
 use core::convert::TryFrom;
 use core::str::FromStr;
-use crate::error::ParseIntError;
-use crate::parse;
+
+use bitcoin_internals::write_err;
 
 use crate::consensus::encode::{self, Decodable, Encodable};
+use crate::error::ParseIntError;
 use crate::io::{self, Read, Write};
 use crate::prelude::*;
-use crate::internal_macros::write_err;
-use crate::parse::impl_parse_str_through_int;
+use crate::parse::{self, impl_parse_str_through_int};
 
 /// The Threshold for deciding whether a lock time value is a height or a time (see [Bitcoin Core]).
 ///

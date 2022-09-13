@@ -2,8 +2,9 @@ use core::convert::TryFrom;
 use core::fmt;
 use core::str::FromStr;
 
+use bitcoin_internals::write_err;
+
 use crate::error::impl_std_error;
-use crate::internal_macros::write_err;
 use crate::prelude::*;
 
 /// Error with rich context returned when a string can't be parsed as an integer.

@@ -42,6 +42,8 @@
 use core::cmp::{self, Ordering};
 use core::fmt::{self, Display, Formatter};
 
+use bitcoin_internals::write_err;
+
 use crate::blockdata::block::Block;
 use crate::blockdata::script::Script;
 use crate::blockdata::transaction::OutPoint;
@@ -49,7 +51,6 @@ use crate::consensus::encode::VarInt;
 use crate::consensus::{Decodable, Encodable};
 use crate::hash_types::{BlockHash, FilterHash, FilterHeader};
 use crate::hashes::{siphash24, Hash};
-use crate::internal_macros::write_err;
 use crate::io;
 use crate::prelude::*;
 use crate::util::endian;
@@ -273,7 +274,8 @@ impl GcsFilterReader {
         let reader = &mut decoder;
         // map hashes to [0, n_elements << grp]
         let nm = n_elements.0 * self.m;
-        let mut mapped = query.map(|e| map_to_range(self.filter.hash(e.borrow()), nm)).collect::<Vec<_>>();
+        let mut mapped =
+            query.map(|e| map_to_range(self.filter.hash(e.borrow()), nm)).collect::<Vec<_>>();
         // sort
         mapped.sort_unstable();
         if mapped.is_empty() {
@@ -317,7 +319,8 @@ impl GcsFilterReader {
         let reader = &mut decoder;
         // map hashes to [0, n_elements << grp]
         let nm = n_elements.0 * self.m;
-        let mut mapped = query.map(|e| map_to_range(self.filter.hash(e.borrow()), nm)).collect::<Vec<_>>();
+        let mut mapped =
+            query.map(|e| map_to_range(self.filter.hash(e.borrow()), nm)).collect::<Vec<_>>();
         // sort
         mapped.sort_unstable();
         mapped.dedup();

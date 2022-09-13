@@ -11,11 +11,11 @@ use crate::prelude::*;
 
 use core::{fmt, str, iter, slice};
 
+use bitcoin_internals::write_err;
 use crate::hashes::{sha256d, Hash, hex};
 use secp256k1;
 
 use crate::util::{endian, key};
-use crate::internal_macros::write_err;
 
 /// An error that might occur during base58 decoding
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]

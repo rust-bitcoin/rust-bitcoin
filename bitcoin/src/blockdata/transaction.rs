@@ -18,6 +18,8 @@ use crate::io;
 use core::{fmt, str, default::Default};
 use core::convert::TryFrom;
 
+use bitcoin_internals::write_err;
+
 use crate::hashes::{self, Hash, sha256d};
 use crate::hashes::hex::FromHex;
 
@@ -30,7 +32,7 @@ use crate::blockdata::locktime::relative;
 use crate::consensus::{encode, Decodable, Encodable};
 use crate::hash_types::{Sighash, Txid, Wtxid};
 use crate::VarInt;
-use crate::internal_macros::{impl_consensus_encoding, serde_struct_human_string_impl, write_err};
+use crate::internal_macros::{impl_consensus_encoding, serde_struct_human_string_impl};
 use crate::parse::impl_parse_str_through_int;
 
 #[cfg(doc)]
