@@ -11,11 +11,9 @@ use crate::prelude::*;
 
 use core::{fmt, str, iter, slice};
 
-use bitcoin_internals::write_err;
-use crate::hashes::{sha256d, Hash, hex};
-use secp256k1;
+use crate::hashes::{sha256d, Hash};
 
-use crate::util::{endian, key};
+use crate::util::endian;
 
 /// An error that might occur during base58 decoding
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
@@ -35,11 +33,6 @@ pub enum Error {
     InvalidAddressVersion(u8),
     /// Checked data was less than 4 bytes
     TooShort(usize),
-    /// Secp256k1 error while parsing a secret key
-    Secp256k1(secp256k1::Error),
-    /// Hex decoding error
-    // TODO: Remove this as part of crate-smashing, there should not be any key related errors in this module
-    Hex(hex::Error)
 }
 
 impl fmt::Display for Error {
@@ -51,8 +44,6 @@ impl fmt::Display for Error {
             Error::InvalidExtendedKeyVersion(ref v) => write!(f, "extended key version {:#04x?} is invalid for this base58 type", v),
             Error::InvalidAddressVersion(ref v) => write!(f, "address version {} is invalid for this base58 type", v),
             Error::TooShort(_) => write!(f, "base58ck data not even long enough for a checksum"),
-            Error::Secp256k1(ref e) => write_err!(f, "secp256k1 error while parsing secret key"; e),
-            Error::Hex(ref e) => write_err!(f, "hexadecimal decoding error"; e)
         }
     }
 }
@@ -70,8 +61,6 @@ impl std::error::Error for Error {
             | InvalidExtendedKeyVersion(_)
             | InvalidAddressVersion(_)
             | TooShort(_) => None,
-            Secp256k1(e) => Some(e),
-            Hex(e) => Some(e),
         }
     }
 }
@@ -257,18 +246,6 @@ pub fn check_encode_slice_to_fmt(fmt: &mut fmt::Formatter, data: &[u8]) -> fmt::
         .cloned()
         .chain(checksum[0..4].iter().cloned());
     format_iter(fmt, iter)
-}
-
-#[doc(hidden)]
-impl From<key::Error> for Error {
-    fn from(e: key::Error) -> Self {
-        match e {
-            key::Error::Secp256k1(e) => Error::Secp256k1(e),
-            key::Error::Base58(e) => e,
-            key::Error::InvalidKeyPrefix(_) => Error::Secp256k1(secp256k1::Error::InvalidPublicKey),
-            key::Error::Hex(e) => Error::Hex(e)
-        }
-    }
 }
 
 #[cfg(test)]
