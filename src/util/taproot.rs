@@ -15,7 +15,7 @@ use core::cmp::Reverse;
 
 use crate::hashes::{sha256, sha256t_hash_newtype, Hash, HashEngine};
 use crate::schnorr::{TweakedPublicKey, UntweakedPublicKey, TapTweak};
-use crate::util::key::XOnlyPublicKey;
+use crate::key::XOnlyPublicKey;
 use crate::Script;
 use crate::internal_macros::write_err;
 use crate::consensus::Encodable;

@@ -31,7 +31,7 @@ mod message_signing {
     use secp256k1;
     use secp256k1::ecdsa::{RecoveryId, RecoverableSignature};
 
-    use crate::util::key::PublicKey;
+    use crate::key::PublicKey;
     use crate::address::{Address, AddressType};
     use crate::internal_macros::write_err;
 
@@ -352,7 +352,7 @@ mod tests {
     #[cfg(all(feature = "secp-recovery", feature = "base64"))]
     fn test_incorrect_message_signature() {
         use secp256k1;
-        use crate::util::key::PublicKey;
+        use crate::key::PublicKey;
         use crate::{Address, Network};
 
         let secp = secp256k1::Secp256k1::new();

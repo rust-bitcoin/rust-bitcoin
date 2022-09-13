@@ -21,7 +21,7 @@ use crate::util::ecdsa::{EcdsaSig, EcdsaSigError};
 use crate::util::psbt;
 use crate::util::taproot::{TapBranchHash, TapLeafHash, ControlBlock, LeafVersion};
 use crate::schnorr;
-use crate::util::key::PublicKey;
+use crate::key::PublicKey;
 
 use super::map::{TapTree, PsbtSighashType};
 

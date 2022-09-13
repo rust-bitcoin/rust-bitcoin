@@ -17,11 +17,11 @@ use crate::SchnorrSighashType;
 use crate::internal_macros::write_err;
 
 /// Deprecated re-export of [`secp256k1::XOnlyPublicKey`]
-#[deprecated(since = "0.28.0", note = "Please use `util::key::XOnlyPublicKey` instead")]
+#[deprecated(since = "0.28.0", note = "Please use `key::XOnlyPublicKey` instead")]
 pub type XOnlyPublicKey = secp256k1::XOnlyPublicKey;
 
 /// Deprecated re-export of [`secp256k1::KeyPair`]
-#[deprecated(since = "0.28.0", note = "Please use `util::key::KeyPair` instead")]
+#[deprecated(since = "0.28.0", note = "Please use `key::KeyPair` instead")]
 pub type KeyPair = secp256k1::KeyPair;
 
 /// Untweaked BIP-340 X-coord-only public key

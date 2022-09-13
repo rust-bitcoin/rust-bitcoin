@@ -20,7 +20,7 @@ use crate::util::psbt::map::Map;
 use crate::util::psbt::raw;
 use crate::util::psbt::serialize::Deserialize;
 use crate::util::psbt::{Error, error};
-use crate::util::key::PublicKey;
+use crate::key::PublicKey;
 use crate::util::sighash::{NonStandardSighashType, SighashTypeParseError, EcdsaSighashType, SchnorrSighashType};
 use crate::util::taproot::{ControlBlock, LeafVersion, TapLeafHash, TapBranchHash};
 use crate::util::sighash;

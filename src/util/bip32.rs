@@ -19,8 +19,8 @@ use crate::hashes::{sha512, Hash, HashEngine, Hmac, HmacEngine, hex};
 use secp256k1::{self, Secp256k1, XOnlyPublicKey};
 
 use crate::network::constants::Network;
-use crate::util::{base58, endian, key};
-use crate::util::key::{PublicKey, PrivateKey, KeyPair};
+use crate::util::{base58, endian};
+use crate::key::{self, PublicKey, PrivateKey, KeyPair};
 use crate::internal_macros::{impl_array_newtype, impl_bytes_newtype, serde_string_impl, write_err};
 
 /// A chain code

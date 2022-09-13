@@ -14,7 +14,8 @@ use core::{fmt, str, iter, slice};
 use crate::hashes::{sha256d, Hash, hex};
 use secp256k1;
 
-use crate::util::{endian, key};
+use crate::key;
+use crate::util::endian;
 use crate::internal_macros::write_err;
 
 /// An error that might occur during base58 decoding

@@ -6,7 +6,6 @@
 //! Functions needed by all parts of the Bitcoin library.
 //!
 
-pub mod key;
 pub mod ecdsa;
 pub mod schnorr;
 pub mod amount;
@@ -115,6 +114,13 @@ pub(crate) fn read_to_end<D: io::Read>(mut d: D) -> Result<Vec<u8>, io::Error> {
 #[deprecated(since = "0.30.0", note = "Please use crate::address")]
 pub mod address {
     pub use crate::address::*;
+}
+
+/// The `key` module now lives at the crate root, re-export everything so as not to break the
+/// API, however deprecate the re-exports so folks know to upgrade sooner or later.
+#[deprecated(since = "0.30.0", note = "Please use crate::key")]
+pub mod key {
+    pub use crate::key::*;
 }
 
 #[deprecated(since = "0.30.0", note = "Please use crate::bip158")]

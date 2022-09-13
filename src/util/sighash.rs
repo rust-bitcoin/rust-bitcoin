@@ -1095,7 +1095,7 @@ mod tests {
     use crate::hash_types::Sighash;
     use crate::internal_macros::{hex_into, hex_script, hex_decode, hex_from_slice};
     use crate::network::constants::Network;
-    use crate::util::key::PublicKey;
+    use crate::key::PublicKey;
     use crate::util::sighash::{Annex, Error, Prevouts, ScriptPath, SighashCache};
     use crate::util::taproot::{TapTweakHash, TapSighashHash, TapBranchHash, TapLeafHash};
 

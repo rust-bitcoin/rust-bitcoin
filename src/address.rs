@@ -42,7 +42,7 @@ use crate::internal_macros::{serde_string_impl, write_err};
 use crate::network::constants::Network;
 use crate::prelude::*;
 use crate::util::base58;
-use crate::util::key::PublicKey;
+use crate::key::PublicKey;
 use crate::util::schnorr::{TapTweak, TweakedPublicKey, UntweakedPublicKey};
 use crate::util::taproot::TapBranchHash;
 
@@ -936,7 +936,6 @@ mod tests {
     use crate::hashes::hex::{FromHex, ToHex};
     use crate::internal_macros::{hex, hex_into, hex_script};
     use crate::network::constants::Network::{Bitcoin, Testnet};
-    use crate::util::key::PublicKey;
 
     fn roundtrips(addr: &Address) {
         assert_eq!(
