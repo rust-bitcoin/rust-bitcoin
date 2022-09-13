@@ -35,7 +35,13 @@ static BASE58_DIGITS: [Option<u8>; 128] = [
 ];
 
 /// Decodes a base58-encoded string into a byte vector.
+#[deprecated(since = "0.30.0", note = "Use base58::decode() instead")]
 pub fn from(data: &str) -> Result<Vec<u8>, Error> {
+    decode(data)
+}
+
+/// Decodes a base58-encoded string into a byte vector.
+pub fn decode(data: &str) -> Result<Vec<u8>, Error> {
     // 11/15 is just over log_256(58)
     let mut scratch = vec![0u8; 1 + data.len() * 11 / 15];
     // Build in base 256
@@ -66,8 +72,14 @@ pub fn from(data: &str) -> Result<Vec<u8>, Error> {
 }
 
 /// Decodes a base58check-encoded string into a byte vector verifying the checksum.
+#[deprecated(since = "0.30.0", note = "Use base58::decode_check() instead")]
 pub fn from_check(data: &str) -> Result<Vec<u8>, Error> {
-    let mut ret: Vec<u8> = from(data)?;
+    decode_check(data)
+}
+
+/// Decodes a base58check-encoded string into a byte vector verifying the checksum.
+pub fn decode_check(data: &str) -> Result<Vec<u8>, Error> {
+    let mut ret: Vec<u8> = decode(data)?;
     if ret.len() < 4 {
         return Err(Error::TooShort(ret.len()));
     }
@@ -83,14 +95,28 @@ pub fn from_check(data: &str) -> Result<Vec<u8>, Error> {
 }
 
 /// Encodes `data` as a base58 string.
+#[deprecated(since = "0.30.0", note = "Use base58::encode() instead")]
 pub fn encode_slice(data: &[u8]) -> String {
+    encode(data)
+}
+
+/// Encodes `data` as a base58 string (see also `base58::encode_check()`).
+pub fn encode(data: &[u8]) -> String {
     encode_iter(data.iter().cloned())
 }
 
 /// Encodes `data` as a base58 string including the checksum.
 ///
 /// The checksum is the first 4 256-digits of the object's Bitcoin hash, concatenated onto the end.
+#[deprecated(since = "0.30.0", note = "Use base58::encode_check() instead")]
 pub fn check_encode_slice(data: &[u8]) -> String {
+    encode_check(data)
+}
+
+/// Encodes `data` as a base58 string including the checksum.
+///
+/// The checksum is the first 4 256-digits of the object's Bitcoin hash, concatenated onto the end.
+pub fn encode_check(data: &[u8]) -> String {
     let checksum = sha256d::Hash::hash(data);
     encode_iter(
         data.iter()
@@ -102,7 +128,15 @@ pub fn check_encode_slice(data: &[u8]) -> String {
 /// Encodes `data` as base58, including the checksum, into a formatter.
 ///
 /// The checksum is the first 4 256-digits of the object's Bitcoin hash, concatenated onto the end.
+#[deprecated(since = "0.30.0", note = "Use base58::encode_check_to_fmt() instead")]
 pub fn check_encode_slice_to_fmt(fmt: &mut fmt::Formatter, data: &[u8]) -> fmt::Result {
+    encode_check_to_fmt(fmt, data)
+}
+
+/// Encodes a slice as base58, including the checksum, into a formatter.
+///
+/// The checksum is the first 4 256-digits of the object's Bitcoin hash, concatenated onto the end.
+pub fn encode_check_to_fmt(fmt: &mut fmt::Formatter, data: &[u8]) -> fmt::Result {
     let checksum = sha256d::Hash::hash(data);
     let iter = data.iter()
         .cloned()
@@ -254,17 +288,17 @@ mod tests {
     #[test]
     fn test_base58_encode() {
         // Basics
-        assert_eq!(&encode_slice(&[0][..]), "1");
-        assert_eq!(&encode_slice(&[1][..]), "2");
-        assert_eq!(&encode_slice(&[58][..]), "21");
-        assert_eq!(&encode_slice(&[13, 36][..]), "211");
+        assert_eq!(&encode(&[0][..]), "1");
+        assert_eq!(&encode(&[1][..]), "2");
+        assert_eq!(&encode(&[58][..]), "21");
+        assert_eq!(&encode(&[13, 36][..]), "211");
 
         // Leading zeroes
-        assert_eq!(&encode_slice(&[0, 13, 36][..]), "1211");
-        assert_eq!(&encode_slice(&[0, 0, 0, 0, 13, 36][..]), "1111211");
+        assert_eq!(&encode(&[0, 13, 36][..]), "1211");
+        assert_eq!(&encode(&[0, 0, 0, 0, 13, 36][..]), "1111211");
 
         // Long input (>100 bytes => has to use heap)
-        let res = encode_slice("BitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBit\
+        let res = encode("BitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBit\
         coinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoin".as_bytes());
         let exp = "ZqC5ZdfpZRi7fjA8hbhX5pEE96MdH9hEaC1YouxscPtbJF16qVWksHWR4wwvx7MotFcs2ChbJqK8KJ9X\
         wZznwWn1JFDhhTmGo9v6GjAVikzCsBWZehu7bm22xL8b5zBR5AsBygYRwbFJsNwNkjpyFuDKwmsUTKvkULCvucPJrN5\
@@ -273,39 +307,39 @@ mod tests {
 
         // Addresses
         let addr = Vec::from_hex("00f8917303bfa8ef24f292e8fa1419b20460ba064d").unwrap();
-        assert_eq!(&check_encode_slice(&addr[..]), "1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH");
+        assert_eq!(&encode_check(&addr[..]), "1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH");
     }
 
     #[test]
     fn test_base58_decode() {
         // Basics
-        assert_eq!(from("1").ok(), Some(vec![0u8]));
-        assert_eq!(from("2").ok(), Some(vec![1u8]));
-        assert_eq!(from("21").ok(), Some(vec![58u8]));
-        assert_eq!(from("211").ok(), Some(vec![13u8, 36]));
+        assert_eq!(decode("1").ok(), Some(vec![0u8]));
+        assert_eq!(decode("2").ok(), Some(vec![1u8]));
+        assert_eq!(decode("21").ok(), Some(vec![58u8]));
+        assert_eq!(decode("211").ok(), Some(vec![13u8, 36]));
 
         // Leading zeroes
-        assert_eq!(from("1211").ok(), Some(vec![0u8, 13, 36]));
-        assert_eq!(from("111211").ok(), Some(vec![0u8, 0, 0, 13, 36]));
+        assert_eq!(decode("1211").ok(), Some(vec![0u8, 13, 36]));
+        assert_eq!(decode("111211").ok(), Some(vec![0u8, 0, 0, 13, 36]));
 
         // Addresses
-        assert_eq!(from_check("1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH").ok(),
+        assert_eq!(decode_check("1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH").ok(),
                    Some(Vec::from_hex("00f8917303bfa8ef24f292e8fa1419b20460ba064d").unwrap()));
         // Non Base58 char.
-        assert_eq!(from("¢").unwrap_err(), Error::BadByte(194));
+        assert_eq!(decode("¢").unwrap_err(), Error::BadByte(194));
     }
 
     #[test]
     fn test_base58_roundtrip() {
         let s = "xprv9wTYmMFdV23N2TdNG573QoEsfRrWKQgWeibmLntzniatZvR9BmLnvSxqu53Kw1UmYPxLgboyZQaXwTCg8MSY3H2EU4pWcQDnRnrVA1xe8fs";
-        let v: Vec<u8> = from_check(s).unwrap();
-        assert_eq!(check_encode_slice(&v[..]), s);
-        assert_eq!(from_check(&check_encode_slice(&v[..])).ok(), Some(v));
+        let v: Vec<u8> = decode_check(s).unwrap();
+        assert_eq!(encode_check(&v[..]), s);
+        assert_eq!(decode_check(&encode_check(&v[..])).ok(), Some(v));
 
         // Check that empty slice passes roundtrip.
-        assert_eq!(from_check(&check_encode_slice(&[])), Ok(vec![]));
+        assert_eq!(decode_check(&encode_check(&[])), Ok(vec![]));
         // Check that `len > 4` is enforced.
-        assert_eq!(from_check(&encode_slice(&[1,2,3])), Err(Error::TooShort(3)));
+        assert_eq!(decode_check(&encode(&[1,2,3])), Err(Error::TooShort(3)));
 
     }
 }
