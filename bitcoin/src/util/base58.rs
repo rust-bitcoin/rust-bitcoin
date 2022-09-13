@@ -7,12 +7,10 @@
 //! strings respectively.
 //!
 
-use crate::prelude::*;
-
 use core::{fmt, str, iter, slice};
 
 use crate::hashes::{sha256d, Hash};
-
+use crate::prelude::*;
 use crate::util::endian;
 
 /// An error that might occur during base58 decoding
