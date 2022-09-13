@@ -7,7 +7,7 @@
 //! [rust-bitcoin](https://github.com/rust-bitcoin) ecosystem.
 //!
 
-#![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
+#![no_std]
 // Experimental features we need.
 #![cfg_attr(docsrs, feature(doc_cfg))]
 // Coding conventions
@@ -21,4 +21,17 @@
 #![deny(missing_docs)]
 #![deny(unused_must_use)]
 
+#[cfg(feature = "alloc")]
+extern crate alloc;
+
+#[cfg(feature = "std")]
+extern crate std;
+
 pub mod error;
+pub mod hex;
+
+/// Mainly reexports based on features.
+pub(crate) mod prelude {
+    #[cfg(feature = "alloc")]
+    pub(crate) use alloc::string::String;
+}
