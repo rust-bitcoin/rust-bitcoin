@@ -13,23 +13,22 @@ use crate::hashes::{sha256d, Hash};
 use crate::prelude::*;
 use crate::util::endian;
 
-/// An error that might occur during base58 decoding
+/// An error that might occur during base58 decoding.
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
 #[non_exhaustive]
 pub enum Error {
-    /// Invalid character encountered
+    /// Invalid character encountered.
     BadByte(u8),
-    /// Checksum was not correct (expected, actual)
+    /// Checksum was not correct (expected, actual).
     BadChecksum(u32, u32),
-    /// The length (in bytes) of the object was not correct
-    /// Note that if the length is excessively long the provided length may be
-    /// an estimate (and the checksum step may be skipped).
+    /// The length (in bytes) of the object was not correct, note that if the length is excessively
+    /// long the provided length may be an estimate (and the checksum step may be skipped).
     InvalidLength(usize),
-    /// Extended Key version byte(s) were not recognized
+    /// Extended Key version byte(s) were not recognized.
     InvalidExtendedKeyVersion([u8; 4]),
-    /// Address version byte were not recognized
+    /// Address version byte were not recognized.
     InvalidAddressVersion(u8),
-    /// Checked data was less than 4 bytes
+    /// Checked data was less than 4 bytes.
     TooShort(usize),
 }
 
@@ -121,7 +120,7 @@ static BASE58_DIGITS: [Option<u8>; 128] = [
     Some(55), Some(56), Some(57), None,     None,     None,     None,     None,     // 120-127
 ];
 
-/// Decode base58-encoded string into a byte vector
+/// Decodes a base58-encoded string into a byte vector.
 pub fn from(data: &str) -> Result<Vec<u8>, Error> {
     // 11/15 is just over log_256(58)
     let mut scratch = vec![0u8; 1 + data.len() * 11 / 15];
@@ -152,7 +151,7 @@ pub fn from(data: &str) -> Result<Vec<u8>, Error> {
     Ok(ret)
 }
 
-/// Decode a base58check-encoded string
+/// Decodes a base58check-encoded string into a byte vector verifying the checksum.
 pub fn from_check(data: &str) -> Result<Vec<u8>, Error> {
     let mut ret: Vec<u8> = from(data)?;
     if ret.len() < 4 {
@@ -220,13 +219,14 @@ where
 }
 
 
-/// Directly encode a slice as base58
+/// Encodes `data` as a base58 string.
 pub fn encode_slice(data: &[u8]) -> String {
     encode_iter(data.iter().cloned())
 }
 
-/// Obtain a string with the base58check encoding of a slice
-/// (Tack the first 4 256-digits of the object's Bitcoin hash onto the end.)
+/// Encodes `data` as a base58 string including the checksum.
+///
+/// The checksum is the first 4 256-digits of the object's Bitcoin hash, concatenated onto the end.
 pub fn check_encode_slice(data: &[u8]) -> String {
     let checksum = sha256d::Hash::hash(data);
     encode_iter(
@@ -236,8 +236,9 @@ pub fn check_encode_slice(data: &[u8]) -> String {
     )
 }
 
-/// Obtain a string with the base58check encoding of a slice
-/// (Tack the first 4 256-digits of the object's Bitcoin hash onto the end.)
+/// Encodes `data` as base58, including the checksum, into a formatter.
+///
+/// The checksum is the first 4 256-digits of the object's Bitcoin hash, concatenated onto the end.
 pub fn check_encode_slice_to_fmt(fmt: &mut fmt::Formatter, data: &[u8]) -> fmt::Result {
     let checksum = sha256d::Hash::hash(data);
     let iter = data.iter()
