@@ -78,6 +78,19 @@ For more information please see `./CONTRIBUTING.md`.
 This library should always compile with any combination of features (minus
 `no-std`) on **Rust 1.41.1** or **Rust 1.47** with `no-std`.
 
+## External dependencies
+
+The crate integrates with a few external librarie, most notably `serde`. These
+are available via feature flags. To ensure compatibility and MSRV stability we
+provide two lock files as a means of inspecting compatible versions:
+`Cargo-minimal.lock` containing minimal versions of dependencies and
+`Cargo-recent.lock` containing recent versions of dependencies tested in our CI.
+
+We do not provide any guarantees about the content of these lock files outside
+of "our CI didn't fail with these versions". Specifically, we do not guarantee
+that the committed hashes are free from malware. It is your responsibility to
+review them.
+
 ## Installing Rust
 
 Rust can be installed using your package manager of choice or

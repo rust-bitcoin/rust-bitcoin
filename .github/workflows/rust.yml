@@ -9,6 +9,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        rust: [stable, beta, nightly, 1.41.1, 1.47]
+        deps: [minimal, recent]
         include:
           - rust: stable
             env:
@@ -44,7 +46,7 @@ jobs:
           override: true
       - name: Running test script
         env: ${{ matrix.env }}
-        run: ./contrib/test.sh
+        run: ./contrib/test.sh ${{ matrix.deps }}
 
   Arch32bit:
     name: Testing 32-bit version
