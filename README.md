@@ -84,8 +84,18 @@ To build with the MSRV you will need to pin `serde` (if you have the feature ena
 cargo update -p serde --precise 1.0.156
 ```
 
-before building. (And if your code is a library, your downstream users will need to run these
-commands, and so on.)
+## External dependencies
+
+We integrate with a few external libraries, most notably `serde`. These
+are available via feature flags. To ensure compatibility and MSRV stability we
+provide two lock files as a means of inspecting compatible versions:
+`Cargo-minimal.lock` containing minimal versions of dependencies and
+`Cargo-recent.lock` containing recent versions of dependencies tested in our CI.
+
+We do not provide any guarantees about the content of these lock files outside
+of "our CI didn't fail with these versions". Specifically, we do not guarantee
+that the committed hashes are free from malware. It is your responsibility to
+review them.
 
 ## Installing Rust
 
