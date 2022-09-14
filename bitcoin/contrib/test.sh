@@ -29,34 +29,34 @@ if cargo --version | grep "1\.48"; then
     cargo update -p serde --precise 1.0.156
 fi
 
-# We should not have any duplicate dependencies. This catches mistakes made upgrading dependencies
-# in one crate and not in another (e.g. upgrade bitcoin_hashes in bitcoin but not in secp).
-duplicate_dependencies=$(
-    # Only show the actual duplicated deps, not their reverse tree, then
-    # whitelist the 'syn' crate which is duplicated but it's not our fault.
-    cargo tree  --target=all --all-features --duplicates \
-        | grep '^[0-9A-Za-z]' \
-        | grep -v 'syn' \
-        | wc -l
-)
-if [ "$duplicate_dependencies" -ne 0 ]; then
-    echo "Dependency tree is broken, contains duplicates"
-    cargo tree  --target=all --all-features --duplicates
-    exit 1
-fi
-
 if [ "$DO_LINT" = true ]
 then
-    cargo clippy --all-features --all-targets -- -D warnings
-    cargo clippy --example bip32 -- -D warnings
-    cargo clippy --example handshake --features=rand-std -- -D warnings
-    cargo clippy --example ecdsa-psbt --features=bitcoinconsensus -- -D warnings
-    cargo clippy --example taproot-psbt --features=rand-std,bitcoinconsensus -- -D warnings
+    cargo clippy --locked --all-features --all-targets -- -D warnings
+    cargo clippy --locked --example bip32 -- -D warnings
+    cargo clippy --locked --example handshake --features=rand-std -- -D warnings
+    cargo clippy --locked --example ecdsa-psbt --features=bitcoinconsensus -- -D warnings
+    cargo clippy --locked --example taproot-psbt --features=rand-std,bitcoinconsensus -- -D warnings
+
+    # We should not have any duplicate dependencies. This catches mistakes made upgrading dependencies
+    # in one crate and not in another (e.g. upgrade bitcoin_hashes in bitcoin but not in secp).
+    duplicate_dependencies=$(
+        # Only show the actual duplicated deps, not their reverse tree, then
+        # whitelist the 'syn' crate which is duplicated but it's not our fault.
+        cargo tree  --target=all --all-features --duplicates \
+            | grep '^[0-9A-Za-z]' \
+            | grep -v 'syn' \
+            | wc -l
+                          )
+    if [ "$duplicate_dependencies" -ne 0 ]; then
+        echo "Dependency tree is broken, contains duplicates"
+        cargo tree  --target=all --all-features --duplicates
+        exit 1
+    fi
 fi
 
 echo "********* Testing std *************"
 # Test without any features other than std first
-cargo test --verbose --no-default-features --features="std"
+cargo test --locked --verbose --no-default-features --features="std"
 
 echo "********* Testing default *************"
 # Then test with the default features
@@ -66,36 +66,36 @@ if [ "$DO_NO_STD" = true ]
 then
     echo "********* Testing no-std build *************"
     # Build no_std, to make sure that cfg(test) doesn't hide any issues
-    cargo build --verbose --features="no-std" --no-default-features
+    cargo build --locked --verbose --features="no-std" --no-default-features
 
     # Build std + no_std, to make sure they are not incompatible
-    cargo build --verbose --features="no-std"
+    cargo build --locked --verbose --features="no-std"
 
     # Test no_std
-    cargo test --verbose --features="no-std" --no-default-features
+    cargo test --locked --verbose --features="no-std" --no-default-features
 
     # Build all features
-    cargo build --verbose --features="no-std $FEATURES" --no-default-features
+    cargo build --locked --verbose --features="no-std $FEATURES" --no-default-features
 
     # Build specific features
     for feature in ${FEATURES}
     do
-        cargo build --verbose --features="no-std $feature" --no-default-features
+        cargo build --locked --verbose --features="no-std $feature" --no-default-features
     done
 
-    cargo run --example bip32 7934c09359b234e076b9fa5a1abfd38e3dc2a9939745b7cc3c22a48d831d14bd
-    cargo run --no-default-features --features no-std --example bip32 7934c09359b234e076b9fa5a1abfd38e3dc2a9939745b7cc3c22a48d831d14bd
+    cargo run --locked --example bip32 7934c09359b234e076b9fa5a1abfd38e3dc2a9939745b7cc3c22a48d831d14bd
+    cargo run --locked --no-default-features --features no-std --example bip32 7934c09359b234e076b9fa5a1abfd38e3dc2a9939745b7cc3c22a48d831d14bd
 fi
 
 # Test each feature
 for feature in ${FEATURES}
 do
     echo "********* Testing $feature *************"
-    cargo test --verbose --features="$feature"
+    cargo test --locked --verbose --features="$feature"
 done
 
-cargo run --example ecdsa-psbt --features=bitcoinconsensus
-cargo run --example taproot-psbt --features=rand-std,bitcoinconsensus
+cargo run --locked --example ecdsa-psbt --features=bitcoinconsensus
+cargo run --locked --example taproot-psbt --features=rand-std,bitcoinconsensus
 
 # Build the docs if told to (this only works with the nightly toolchain)
 if [ "$DO_DOCSRS" = true ]; then
