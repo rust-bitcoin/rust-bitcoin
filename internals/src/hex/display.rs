@@ -45,6 +45,7 @@ pub trait DisplayHex: Copy + sealed::IsRef {
     ///
     /// This may be faster than `.display_hex().to_string()` because it uses `reserve_suggestion`.
     #[cfg(feature = "alloc")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
     fn to_lower_hex_string(self) -> String {
         self.to_hex_string(Case::Lower)
     }
@@ -55,6 +56,7 @@ pub trait DisplayHex: Copy + sealed::IsRef {
     ///
     /// This may be faster than `.display_hex().to_string()` because it uses `reserve_suggestion`.
     #[cfg(feature = "alloc")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
     fn to_upper_hex_string(self) -> String {
         self.to_hex_string(Case::Upper)
     }
@@ -63,6 +65,7 @@ pub trait DisplayHex: Copy + sealed::IsRef {
     ///
     /// This may be faster than `.display_hex().to_string()` because it uses `reserve_suggestion`.
     #[cfg(feature = "alloc")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
     fn to_hex_string(self, case: Case) -> String {
         let mut string = String::new();
         self.append_hex_to_string(case, &mut string);
@@ -74,6 +77,7 @@ pub trait DisplayHex: Copy + sealed::IsRef {
     /// This may be faster than `write!(string, "{}", self.display_hex())` because it uses
     /// `reserve_sugggestion`.
     #[cfg(feature = "alloc")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
     fn append_hex_to_string(self, case: Case, string: &mut String) {
         use fmt::Write;
 
