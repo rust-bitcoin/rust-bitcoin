@@ -14,7 +14,8 @@ edition = "2018"
 # Please don't forget to add relevant features to docs.rs below.
 [features]
 default = []
-std = []
+std = ["alloc"]
+alloc = []
 
 [package.metadata.docs.rs]
 features = ["std"]
