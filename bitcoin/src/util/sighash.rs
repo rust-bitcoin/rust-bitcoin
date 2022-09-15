@@ -364,12 +364,6 @@ impl EcdsaSighashType {
     }
 
     /// Creates a [`EcdsaSighashType`] from a raw `u32`.
-    #[deprecated(since="0.28.0", note="please use `from_consensus`")]
-    pub fn from_u32_consensus(n: u32) -> EcdsaSighashType {
-        EcdsaSighashType::from_consensus(n)
-    }
-
-    /// Creates a [`EcdsaSighashType`] from a raw `u32`.
     ///
     /// **Note**: this replicates consensus behaviour, for current standardness rules correctness
     /// you probably want [`Self::from_standard`].
@@ -396,12 +390,6 @@ impl EcdsaSighashType {
             x if x & 0x80 == 0x80 => EcdsaSighashType::AllPlusAnyoneCanPay,
             _ => EcdsaSighashType::All
         }
-    }
-
-    /// Creates a [`EcdsaSighashType`] from a raw `u32`.
-    #[deprecated(since="0.28.0", note="please use `from_standard`")]
-    pub fn from_u32_standard(n: u32) -> Result<EcdsaSighashType, NonStandardSighashType> {
-        EcdsaSighashType::from_standard(n)
     }
 
     /// Creates a [`EcdsaSighashType`] from a raw `u32`.

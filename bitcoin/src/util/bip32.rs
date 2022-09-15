@@ -660,12 +660,6 @@ impl ExtendedPrivKey {
 
 impl ExtendedPubKey {
     /// Derives a public key from a private key
-    #[deprecated(since = "0.28.0", note = "use ExtendedPubKey::from_priv")]
-    pub fn from_private<C: secp256k1::Signing>(secp: &Secp256k1<C>, sk: &ExtendedPrivKey) -> ExtendedPubKey {
-        ExtendedPubKey::from_priv(secp, sk)
-    }
-
-    /// Derives a public key from a private key
     pub fn from_priv<C: secp256k1::Signing>(secp: &Secp256k1<C>, sk: &ExtendedPrivKey) -> ExtendedPubKey {
         ExtendedPubKey {
             network: sk.network,

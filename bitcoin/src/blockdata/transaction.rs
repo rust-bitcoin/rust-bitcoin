@@ -713,13 +713,6 @@ impl Transaction {
     }
 
     /// Returns the "weight" of this transaction, as defined by BIP141.
-    #[inline]
-    #[deprecated(since = "0.28.0", note = "Please use `transaction::weight` instead.")]
-    pub fn get_weight(&self) -> usize {
-        self.weight()
-    }
-
-    /// Returns the "weight" of this transaction, as defined by BIP141.
     ///
     /// For transactions with an empty witness, this is simply the consensus-serialized size times
     /// four. For transactions with a witness, this is the non-witness consensus-serialized size
@@ -731,22 +724,8 @@ impl Transaction {
 
     /// Returns the regular byte-wise consensus-serialized size of this transaction.
     #[inline]
-    #[deprecated(since = "0.28.0", note = "Please use `transaction::size` instead.")]
-    pub fn get_size(&self) -> usize {
-        self.size()
-    }
-
-    /// Returns the regular byte-wise consensus-serialized size of this transaction.
-    #[inline]
     pub fn size(&self) -> usize {
         self.scaled_size(1)
-    }
-
-    /// Returns the "virtual size" (vsize) of this transaction.
-    #[inline]
-    #[deprecated(since = "0.28.0", note = "Please use `transaction::vsize` instead.")]
-    pub fn get_vsize(&self) -> usize {
-        self.vsize()
     }
 
     /// Returns the "virtual size" (vsize) of this transaction.
@@ -762,12 +741,6 @@ impl Transaction {
     pub fn vsize(&self) -> usize {
         let weight = self.weight();
         (weight + WITNESS_SCALE_FACTOR - 1) / WITNESS_SCALE_FACTOR
-    }
-
-    /// Returns the size of this transaction excluding the witness data.
-    #[deprecated(since = "0.28.0", note = "Please use `transaction::strippedsize` instead.")]
-    pub fn get_strippedsize(&self) -> usize {
-        self.strippedsize()
     }
 
     /// Returns the size of this transaction excluding the witness data.
@@ -1017,10 +990,6 @@ impl Decodable for Transaction {
     }
 }
 
-/// Legacy Hashtype of an input's signature
-#[deprecated(since = "0.28.0", note = "Please use [`EcdsaSighashType`] instead")]
-pub type SigHashType = EcdsaSighashType;
-
 #[deprecated(since = "0.30.0", note = "use crate::NonStandardSighashType instead")]
 pub use crate::util::sighash::NonStandardSighashType;
 #[deprecated(since = "0.30.0", note = "use crate::EcdsaSighashType instead")]
@@ -1043,7 +1012,6 @@ mod tests {
     use crate::hashes::hex::FromHex;
 
     use crate::hash_types::*;
-    use crate::util::sighash::NonStandardSighashType;
 
     const SOME_TX: &str = "0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000";
 
@@ -1344,16 +1312,6 @@ mod tests {
         for s in sht_mistakes {
             assert_eq!(EcdsaSighashType::from_str(s).unwrap_err().to_string(), format!("Unrecognized SIGHASH string '{}'", s));
         }
-    }
-
-    #[test]
-    #[allow(deprecated)]
-    fn test_sighashtype_standard() {
-        let nonstandard_hashtype = 0x04;
-        // This type is not well defined, by consensus it becomes ALL
-        assert_eq!(EcdsaSighashType::from_u32_consensus(nonstandard_hashtype), EcdsaSighashType::All);
-        // But it's policy-invalid to use it!
-        assert_eq!(EcdsaSighashType::from_u32_standard(nonstandard_hashtype), Err(NonStandardSighashType(0x04)));
     }
 
     #[test]

@@ -383,20 +383,8 @@ impl Script {
     }
 
     /// Generates P2WPKH-type of scriptPubkey.
-    #[deprecated(since = "0.28.0", note = "use Script::new_v0_p2wpkh method instead")]
-    pub fn new_v0_wpkh(pubkey_hash: &WPubkeyHash) -> Script {
-        Script::new_v0_p2wpkh(pubkey_hash)
-    }
-
-    /// Generates P2WPKH-type of scriptPubkey.
     pub fn new_v0_p2wpkh(pubkey_hash: &WPubkeyHash) -> Script {
         Script::new_witness_program(WitnessVersion::V0, &pubkey_hash[..])
-    }
-
-    /// Generates P2WSH-type of scriptPubkey with a given hash of the redeem script.
-    #[deprecated(since = "0.28.0", note = "use Script::new_v0_p2wsh method instead")]
-    pub fn new_v0_wsh(script_hash: &WScriptHash) -> Script {
-        Script::new_v0_p2wsh(script_hash)
     }
 
     /// Generates P2WSH-type of scriptPubkey with a given hash of the redeem script.

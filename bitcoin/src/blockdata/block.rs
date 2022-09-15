@@ -298,12 +298,6 @@ impl Block {
         bitcoin_merkle_root(hashes).map(|h| h.into())
     }
 
-    /// Calculate the transaction merkle root.
-    #[deprecated(since = "0.28.0", note = "Please use `block::compute_merkle_root` instead.")]
-    pub fn merkle_root(&self) -> Option<TxMerkleNode> {
-        self.compute_merkle_root()
-    }
-
     /// Computes the witness commitment for the block's transaction list.
     pub fn compute_witness_commitment(witness_root: &WitnessMerkleNode, witness_reserved_value: &[u8]) -> WitnessCommitment {
         let mut encoder = WitnessCommitment::engine();
@@ -331,12 +325,6 @@ impl Block {
     }
 
     /// Returns the size of the block.
-    #[deprecated(since = "0.28.0", note = "Please use `block::size` instead.")]
-    pub fn get_size(&self) -> usize {
-        self.size()
-    }
-
-    /// Returns the size of the block.
     ///
     /// size == size of header + size of encoded transaction count + total size of transactions.
     pub fn size(&self) -> usize {
@@ -345,21 +333,9 @@ impl Block {
     }
 
     /// Returns the strippedsize of the block.
-    #[deprecated(since = "0.28.0", note = "Please use `transaction::strippedsize` instead.")]
-    pub fn get_strippedsize(&self) -> usize {
-        self.strippedsize()
-    }
-
-    /// Returns the strippedsize of the block.
     pub fn strippedsize(&self) -> usize {
         let txs_size: usize = self.txdata.iter().map(Transaction::strippedsize).sum();
         self.base_size() + txs_size
-    }
-
-    /// Returns the weight of the block.
-    #[deprecated(since = "0.28.0", note = "Please use `transaction::weight` instead.")]
-    pub fn get_weight(&self) -> usize {
-        self.weight()
     }
 
     /// Returns the weight of the block.
