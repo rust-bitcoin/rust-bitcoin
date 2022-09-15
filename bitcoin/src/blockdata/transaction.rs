@@ -36,7 +36,7 @@ use crate::internal_macros::{impl_consensus_encoding, serde_struct_human_string_
 use crate::parse::impl_parse_str_through_int;
 
 #[cfg(doc)]
-use crate::util::sighash::SchnorrSighashType;
+use crate::sighash::{EcdsaSighashType, SchnorrSighashType};
 
 /// A reference to a transaction output.
 ///
@@ -1014,13 +1014,6 @@ impl From<&Transaction> for Wtxid {
     }
 }
 
-#[deprecated(since = "0.30.0", note = "use crate::NonStandardSighashType instead")]
-pub use crate::util::sighash::NonStandardSighashType;
-#[deprecated(since = "0.30.0", note = "use crate::EcdsaSighashType instead")]
-pub use crate::util::sighash::EcdsaSighashType;
-#[deprecated(since = "0.30.0", note = "use crate::SighashTypeParseError instead")]
-pub use crate::util::sighash::SighashTypeParseError;
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1032,6 +1025,7 @@ mod tests {
     use crate::blockdata::locktime::absolute;
     use crate::consensus::encode::serialize;
     use crate::consensus::encode::deserialize;
+    use crate::sighash::EcdsaSighashType;
 
     use crate::hashes::hex::FromHex;
 

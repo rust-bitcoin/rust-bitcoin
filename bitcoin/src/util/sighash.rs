@@ -1006,7 +1006,8 @@ impl<R: DerefMut<Target=Transaction>> SighashCache<R> {
     ///
     /// This allows in-line signing such as
     /// ```
-    /// use bitcoin::{absolute, EcdsaSighashType, SighashCache, Transaction, Script};
+    /// use bitcoin::{absolute, Transaction, Script};
+    /// use bitcoin::sighash::{EcdsaSighashType, SighashCache};
     ///
     /// let mut tx_to_sign = Transaction { version: 2, lock_time: absolute::PackedLockTime::ZERO, input: Vec::new(), output: Vec::new() };
     /// let input_count = tx_to_sign.input.len();
@@ -1069,7 +1070,7 @@ mod tests {
 
     use secp256k1::{self, SecretKey, XOnlyPublicKey};
 
-    use crate::{Script, Transaction, TxIn, TxOut, EcdsaSighashType, Address};
+    use crate::{Script, Transaction, TxIn, TxOut, Address};
     use crate::blockdata::locktime::absolute;
     use crate::consensus::deserialize;
     use crate::hashes::hex::{FromHex, ToHex};
