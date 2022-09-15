@@ -98,8 +98,6 @@ pub use crate::address::{Address, AddressType};
 pub use crate::blockdata::block::{self, Block, BlockHeader, BlockVersion};
 pub use crate::blockdata::locktime::{self, absolute, relative};
 pub use crate::blockdata::script::{self, Script};
-#[allow(deprecated)]
-pub use crate::blockdata::transaction::SigHashType;
 pub use crate::blockdata::transaction::{self, OutPoint, Sequence, Transaction, TxIn, TxOut};
 pub use crate::blockdata::witness::{self, Witness};
 pub use crate::blockdata::{constants, opcodes};
