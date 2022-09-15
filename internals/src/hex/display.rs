@@ -181,7 +181,8 @@ macro_rules! fmt_hex_exact {
             const _: () = [()][($len > usize::max_value() / 2) as usize];
             assert_eq!($bytes.len(), $len);
             let mut buf = [0u8; $len * 2];
-            $crate::hex::display::fmt_hex_exact_fn($formatter, (&mut buf).into(), $bytes, $case)
+            let buf = $crate::hex::buf_encoder::AsOutBytes::as_mut_out_bytes(&mut buf);
+            $crate::hex::display::fmt_hex_exact_fn($formatter, buf, $bytes, $case)
         }
     }
 }
@@ -189,7 +190,7 @@ macro_rules! fmt_hex_exact {
 // Implementation detail of `write_hex_exact` macro to de-duplicate the code
 #[doc(hidden)]
 #[inline]
-pub fn fmt_hex_exact_fn(f: &mut fmt::Formatter, buf: OutBytes<'_>, bytes: &[u8], case: Case) -> fmt::Result {
+pub fn fmt_hex_exact_fn(f: &mut fmt::Formatter, buf: &mut OutBytes, bytes: &[u8], case: Case) -> fmt::Result {
     let mut encoder = BufEncoder::new(buf);
     encoder.put_bytes(bytes, case);
     f.pad_integral(true, "0x", encoder.as_str())

@@ -8,10 +8,32 @@ pub use out_bytes::OutBytes;
 
 use super::Case;
 
+/// Trait for types that can be soundly converted to `OutBytes`.
+///
+/// To protect the API from future breakage this sealed trait guards which types can be used with
+/// the `Encoder`. Currently it is implemented for byte arrays of various interesting lengths.
+///
+/// ## Safety
+///
+/// This is not `unsafe` yet but the `as_out_bytes` should always return the same reference if the
+/// same reference is supplied. IOW the returned memory address and length should be the same if
+/// the input memory address and length are the same.
+///
+/// If the trait ever becomes `unsafe` this will be required for soundness.
+pub trait AsOutBytes: out_bytes::Sealed {
+    /// Performs the conversion.
+    fn as_out_bytes(&self) -> &OutBytes;
+
+    /// Performs the conversion.
+    fn as_mut_out_bytes(&mut self) -> &mut OutBytes;
+}
+
 /// Implements `OutBytes`
 ///
 /// This prevents the rest of the crate from accessing the field of `OutBytes`.
 mod out_bytes {
+    use super::AsOutBytes;
+
     /// A byte buffer that can only be written-into.
     ///
     /// You shouldn't concern yourself with this, just call `BufEncoder::new` with your array.
@@ -20,11 +42,12 @@ mod out_bytes {
     /// `unsafe` until it's proven to be needed but if it does we have an easy, compatible upgrade
     /// option.
     ///
-    /// We also don't bother with unsized type because the immutable version is useless and this avoids
-    /// `unsafe` while we don't want/need it.
-    pub struct OutBytes<'a>(&'a mut [u8]);
+    /// Warning: `repr(transparent)` is an internal implementation detail and **must not** be
+    /// relied on!
+    #[repr(transparent)]
+    pub struct OutBytes([u8]);
 
-    impl<'a> OutBytes<'a> {
+    impl OutBytes {
         /// Returns the first `len` bytes as initialized.
         ///
         /// Not `unsafe` because we don't use `unsafe` (yet).
@@ -51,23 +74,83 @@ mod out_bytes {
         pub(crate) fn len(&self) -> usize {
             self.0.len()
         }
+
+        fn from_bytes(slice: &[u8]) -> &Self {
+            // SAFETY: copied from std
+            // conversion of reference to pointer of the same referred type is always sound,
+            // including in unsized types.
+            // Thanks to repr(transparent) the types have the same layout making the other
+            // conversion sound.
+            // The pointer was just created from a reference that's still alive so dereferencing is
+            // sound.
+            unsafe {
+                &*(slice as *const [u8] as *const Self)
+            }
+        }
+
+        fn from_mut_bytes(slice: &mut [u8]) -> &mut Self {
+            // SAFETY: copied from std
+            // conversion of reference to pointer of the same referred type is always sound,
+            // including in unsized types.
+            // Thanks to repr(transparent) the types have the same layout making the other
+            // conversion sound.
+            // The pointer was just created from a reference that's still alive so dereferencing is
+            // sound.
+            unsafe {
+                &mut *(slice as *mut [u8] as *mut Self)
+            }
+        }
     }
 
     macro_rules! impl_from_array {
         ($($len:expr),* $(,)?) => {
             $(
-                impl<'a> From<&'a mut [u8; $len]> for OutBytes<'a> {
-                    fn from(value: &'a mut [u8; $len]) -> Self {
-                        OutBytes(value)
+                impl AsOutBytes for [u8; $len] {
+                    fn as_out_bytes(&self) -> &OutBytes {
+                        OutBytes::from_bytes(self)
+                    }
+
+                    fn as_mut_out_bytes(&mut self) -> &mut OutBytes {
+                        OutBytes::from_mut_bytes(self)
                     }
                 }
+
+                impl Sealed for [u8; $len] {}
             )*
         }
     }
 
+    impl<T: AsOutBytes + ?Sized> AsOutBytes for &'_ mut T {
+        fn as_out_bytes(&self) -> &OutBytes {
+            (**self).as_out_bytes()
+        }
+
+        fn as_mut_out_bytes(&mut self) -> &mut OutBytes {
+            (**self).as_mut_out_bytes()
+        }
+    }
+
+    impl<T: AsOutBytes + ?Sized> Sealed for &'_ mut T {}
+
+    impl AsOutBytes for OutBytes {
+        fn as_out_bytes(&self) -> &OutBytes {
+            self
+        }
+
+        fn as_mut_out_bytes(&mut self) -> &mut OutBytes {
+            self
+        }
+    }
+
+    impl Sealed for OutBytes {}
+
     // As a sanity check we only provide conversions for even, non-empty arrays.
     // Weird lengths 66 and 130 are provided for serialized public keys.
     impl_from_array!(2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 64, 66, 128, 130, 256, 512, 1024, 2048, 4096, 8192);
+
+    /// Prevents outside crates from implementing the trait
+    pub trait Sealed {}
+
 }
 
 /// Hex-encodes bytes into the provided buffer.
@@ -75,19 +158,18 @@ mod out_bytes {
 /// This is an important building block for fast hex-encoding. Because string writing tools
 /// provided by `core::fmt` involve dynamic dispatch and don't allow reserving capacity in strings
 /// buffering the hex and then formatting it is significantly faster.
-pub struct BufEncoder<'a> {
-    buf: OutBytes<'a>,
+pub struct BufEncoder<T: AsOutBytes> {
+    buf: T,
     pos: usize,
 }
 
-impl<'a> BufEncoder<'a> {
+impl<T: AsOutBytes> BufEncoder<T> {
     /// Creates an empty `BufEncoder`.
     ///
     /// This is usually used with uninitialized (zeroed) byte array allocated on stack.
     /// This can only be constructed with an even-length, non-empty array.
     #[inline]
-    pub fn new<T: Into<OutBytes<'a>>>(buf: T) -> Self {
-        let buf = buf.into();
+    pub fn new(buf: T) -> Self {
         BufEncoder {
             buf,
             pos: 0,
@@ -102,7 +184,7 @@ impl<'a> BufEncoder<'a> {
     #[inline]
     #[cfg_attr(rust_v_1_46, track_caller)]
     pub fn put_byte(&mut self, byte: u8, case: Case) {
-        self.buf.write(self.pos, &super::byte_to_hex(byte, case.table()));
+        self.buf.as_mut_out_bytes().write(self.pos, &super::byte_to_hex(byte, case.table()));
         self.pos += 2;
     }
 
@@ -117,7 +199,7 @@ impl<'a> BufEncoder<'a> {
         // Panic if the result wouldn't fit address space to not waste time and give the optimizer
         // more opportunities.
         let double_len = bytes.len().checked_mul(2).expect("overflow");
-        assert!(double_len <= self.buf.len() - self.pos);
+        assert!(double_len <= self.buf.as_out_bytes().len() - self.pos);
         for byte in bytes {
             self.put_byte(*byte, case);
         }
@@ -126,13 +208,13 @@ impl<'a> BufEncoder<'a> {
     /// Returns true if no more bytes can be written into the buffer.
     #[inline]
     pub fn is_full(&self) -> bool {
-        self.pos == self.buf.len()
+        self.pos == self.buf.as_out_bytes().len()
     }
 
     /// Returns the written bytes as a hex `str`.
     #[inline]
     pub fn as_str(&self) -> &str {
-        core::str::from_utf8(self.buf.assume_init(self.pos)).expect("we only write ASCII")
+        core::str::from_utf8(self.buf.as_out_bytes().assume_init(self.pos)).expect("we only write ASCII")
     }
 
     /// Resets the buffer to become empty.
