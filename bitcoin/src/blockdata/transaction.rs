@@ -1017,6 +1017,18 @@ impl Decodable for Transaction {
     }
 }
 
+impl From<Transaction> for Txid {
+    fn from(tx: Transaction) -> Txid {
+        tx.txid()
+    }
+}
+
+impl From<Transaction> for Wtxid {
+    fn from(tx: Transaction) -> Wtxid {
+        tx.wtxid()
+    }
+}
+
 /// Legacy Hashtype of an input's signature
 #[deprecated(since = "0.28.0", note = "Please use [`EcdsaSighashType`] instead")]
 pub type SigHashType = EcdsaSighashType;

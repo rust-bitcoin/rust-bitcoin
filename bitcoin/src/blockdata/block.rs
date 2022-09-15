@@ -449,6 +449,18 @@ impl std::error::Error for Bip34Error {
     }
 }
 
+impl From<BlockHeader> for BlockHash {
+    fn from(header: BlockHeader) -> BlockHash {
+        header.block_hash()
+    }
+}
+
+impl From<Block> for BlockHash {
+    fn from(block: Block) -> BlockHash {
+        block.block_hash()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::hashes::hex::FromHex;

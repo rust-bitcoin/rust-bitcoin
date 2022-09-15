@@ -837,6 +837,12 @@ impl FromStr for ExtendedPubKey {
     }
 }
 
+impl From<ExtendedPubKey> for XpubIdentifier {
+    fn from(key: ExtendedPubKey) -> XpubIdentifier {
+        key.identifier()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
