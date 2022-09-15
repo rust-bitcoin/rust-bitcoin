@@ -11,29 +11,22 @@ use core::fmt;
 
 use bitcoin_internals::write_err;
 
+pub use secp256k1::{self, constants, Secp256k1, KeyPair, XOnlyPublicKey, Verification};
+
 use crate::prelude::*;
 
-use secp256k1::{self, Secp256k1, Verification, constants};
 use crate::util::taproot::{TapBranchHash, TapTweakHash};
 use crate::SchnorrSighashType;
 
-/// Deprecated re-export of [`secp256k1::XOnlyPublicKey`]
-#[deprecated(since = "0.28.0", note = "Please use `util::key::XOnlyPublicKey` instead")]
-pub type XOnlyPublicKey = secp256k1::XOnlyPublicKey;
-
-/// Deprecated re-export of [`secp256k1::KeyPair`]
-#[deprecated(since = "0.28.0", note = "Please use `util::key::KeyPair` instead")]
-pub type KeyPair = secp256k1::KeyPair;
-
 /// Untweaked BIP-340 X-coord-only public key
-pub type UntweakedPublicKey = crate::XOnlyPublicKey;
+pub type UntweakedPublicKey = XOnlyPublicKey;
 
 /// Tweaked BIP-340 X-coord-only public key
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 #[cfg_attr(feature = "serde", serde(transparent))]
-pub struct TweakedPublicKey(crate::XOnlyPublicKey);
+pub struct TweakedPublicKey(XOnlyPublicKey);
 
 impl fmt::LowerHex for TweakedPublicKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -48,14 +41,14 @@ impl fmt::Display for TweakedPublicKey {
 }
 
 /// Untweaked BIP-340 key pair
-pub type UntweakedKeyPair = crate::KeyPair;
+pub type UntweakedKeyPair = KeyPair;
 
 /// Tweaked BIP-340 key pair
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 #[cfg_attr(feature = "serde", serde(transparent))]
-pub struct TweakedKeyPair(crate::KeyPair);
+pub struct TweakedKeyPair(KeyPair);
 
 /// A trait for tweaking BIP340 key types (x-only public keys and key pairs).
 pub trait TapTweak {
@@ -131,7 +124,7 @@ impl TapTweak for UntweakedKeyPair {
     /// # Returns
     /// The tweaked key and its parity.
     fn tap_tweak<C: Verification>(self, secp: &Secp256k1<C>, merkle_root: Option<TapBranchHash>) -> TweakedKeyPair {
-        let (pubkey, _parity) = crate::XOnlyPublicKey::from_keypair(&self);
+        let (pubkey, _parity) = XOnlyPublicKey::from_keypair(&self);
         let tweak = TapTweakHash::from_key_and_tweak(pubkey, merkle_root).to_scalar();
         let tweaked = self.add_xonly_tweak(secp, &tweak).expect("Tap tweak failed");
         TweakedKeyPair(tweaked)
@@ -149,12 +142,12 @@ impl TweakedPublicKey {
     /// This method is dangerous and can lead to loss of funds if used incorrectly.
     /// Specifically, in multi-party protocols a peer can provide a value that allows them to steal.
     #[inline]
-    pub fn dangerous_assume_tweaked(key: crate::XOnlyPublicKey) -> TweakedPublicKey {
+    pub fn dangerous_assume_tweaked(key: XOnlyPublicKey) -> TweakedPublicKey {
         TweakedPublicKey(key)
     }
 
     /// Returns the underlying public key.
-    pub fn to_inner(self) -> crate::XOnlyPublicKey {
+    pub fn to_inner(self) -> XOnlyPublicKey {
         self.0
     }
 
@@ -174,32 +167,32 @@ impl TweakedKeyPair {
     /// This method is dangerous and can lead to loss of funds if used incorrectly.
     /// Specifically, in multi-party protocols a peer can provide a value that allows them to steal.
     #[inline]
-    pub fn dangerous_assume_tweaked(pair: crate::KeyPair) -> TweakedKeyPair {
+    pub fn dangerous_assume_tweaked(pair: KeyPair) -> TweakedKeyPair {
         TweakedKeyPair(pair)
     }
 
     /// Returns the underlying key pair
     #[inline]
     #[deprecated(since = "0.29.0", note = "use to_inner instead")]
-    pub fn into_inner(self) -> crate::KeyPair {
+    pub fn into_inner(self) -> KeyPair {
         self.0
     }
 
     /// Returns the underlying key pair.
     #[inline]
-    pub fn to_inner(self) -> crate::KeyPair {
+    pub fn to_inner(self) -> KeyPair {
         self.0
     }
 }
 
-impl From<TweakedPublicKey> for crate::XOnlyPublicKey {
+impl From<TweakedPublicKey> for XOnlyPublicKey {
     #[inline]
     fn from(pair: TweakedPublicKey) -> Self {
         pair.0
     }
 }
 
-impl From<TweakedKeyPair> for crate::KeyPair {
+impl From<TweakedKeyPair> for KeyPair {
     #[inline]
     fn from(pair: TweakedKeyPair) -> Self {
         pair.0
