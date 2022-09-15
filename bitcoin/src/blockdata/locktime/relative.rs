@@ -65,9 +65,16 @@ impl LockTime {
     /// Returns true if satisfaction of `other` lock time implies satisfaction of this
     /// [`relative::LockTime`].
     ///
+    /// A lock time can only be satisfied by n blocks being mined or n seconds passing. If you have
+    /// two lock times (same unit) then the larger lock time being satisfied implies (in a
+    /// mathematical sense) the smaller one being satisfied.
+    ///
     /// This function is useful when checking sequence values against a lock, first one checks the
     /// sequence represents a relative lock time by converting to `LockTime` then use this function
     /// to see if satisfaction of the newly created lock time would imply satisfaction of `self`.
+    ///
+    /// Can also be used to remove the smaller value of two `OP_CHECKSEQUENCEVERIFY` operations
+    /// within one branch of the script.
     ///
     /// # Examples
     ///

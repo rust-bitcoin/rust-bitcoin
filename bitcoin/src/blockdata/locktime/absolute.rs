@@ -316,7 +316,8 @@ impl LockTime {
     /// mathematical sense) the smaller one being satisfied.
     ///
     /// This function is useful if you wish to check a lock time against various other locks e.g.,
-    /// filtering out locks which cannot be satisfied.
+    /// filtering out locks which cannot be satisfied. Can also be used to remove the smaller value
+    /// of two `OP_CHECKLOCKTIMEVERIFY` operations within one branch of the script.
     ///
     /// # Examples
     ///
