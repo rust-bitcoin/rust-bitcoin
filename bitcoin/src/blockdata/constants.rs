@@ -188,13 +188,9 @@ impl ChainHash {
     ///
     /// See [BOLT 0](https://github.com/lightning/bolts/blob/ffeece3dab1c52efdb9b53ae476539320fa44938/00-introduction.md#chain_hash)
     /// for specification.
-    pub fn using_genesis_block(network: Network) -> Self {
-        match network {
-            Network::Bitcoin => Self::BITCOIN,
-            Network::Testnet => Self::TESTNET,
-            Network::Signet => Self::SIGNET,
-            Network::Regtest => Self::REGTEST,
-        }
+    pub const fn using_genesis_block(network: Network) -> Self {
+        let hashes = [Self::BITCOIN, Self::TESTNET, Self::SIGNET, Self::REGTEST];
+        hashes[network as usize]
     }
 }
 
@@ -281,6 +277,14 @@ mod test {
 
         // Compare strings because the spec specifically states how the chain hash must encode to hex.
         assert_eq!(got, want);
+
+        match network {
+            Network::Bitcoin => {},
+            Network::Testnet => {},
+            Network::Signet => {},
+            Network::Regtest => {},
+            // Update ChainHash::using_genesis_block and chain_hash_genesis_block with new variants.
+        }
     }
 
     macro_rules! chain_hash_genesis_block {
