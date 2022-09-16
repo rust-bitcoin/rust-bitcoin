@@ -990,6 +990,30 @@ impl Decodable for Transaction {
     }
 }
 
+impl From<Transaction> for Txid {
+    fn from(tx: Transaction) -> Txid {
+        tx.txid()
+    }
+}
+
+impl From<&Transaction> for Txid {
+    fn from(tx: &Transaction) -> Txid {
+        tx.txid()
+    }
+}
+
+impl From<Transaction> for Wtxid {
+    fn from(tx: Transaction) -> Wtxid {
+        tx.wtxid()
+    }
+}
+
+impl From<&Transaction> for Wtxid {
+    fn from(tx: &Transaction) -> Wtxid {
+        tx.wtxid()
+    }
+}
+
 #[deprecated(since = "0.30.0", note = "use crate::NonStandardSighashType instead")]
 pub use crate::util::sighash::NonStandardSighashType;
 #[deprecated(since = "0.30.0", note = "use crate::EcdsaSighashType instead")]
