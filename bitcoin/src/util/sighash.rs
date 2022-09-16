@@ -443,12 +443,6 @@ impl SchnorrSighashType {
         }
     }
 
-    /// Creates a [`SchnorrSighashType`] from raw `u8`.
-    #[deprecated(since = "0.29.0", note = "use from_consensus_u8 instead")]
-    pub fn from_u8(hash_ty: u8) -> Result<Self, Error> {
-        Self::from_consensus_u8(hash_ty)
-    }
-
     /// Constructs a [`SchnorrSighashType`] from a raw `u8`.
     pub fn from_consensus_u8(hash_ty: u8) -> Result<Self, Error> {
     use SchnorrSighashType::*;

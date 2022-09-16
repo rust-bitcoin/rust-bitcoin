@@ -242,62 +242,6 @@ impl FromStr for WitnessVersion {
 }
 
 impl WitnessVersion {
-    /// Converts 5-bit unsigned integer value matching single symbol from Bech32(m) address encoding
-    /// ([`bech32::u5`]) into [`WitnessVersion`] variant.
-    ///
-    /// # Returns
-    /// Version of the Witness program.
-    ///
-    /// # Errors
-    /// If the integer does not correspond to any witness version, errors with
-    /// [`Error::InvalidWitnessVersion`].
-    #[deprecated(since = "0.29.0", note = "use try_from instead")]
-    pub fn from_u5(value: bech32::u5) -> Result<Self, Error> { Self::try_from(value) }
-
-    /// Converts an 8-bit unsigned integer value into [`WitnessVersion`] variant.
-    ///
-    /// # Returns
-    /// Version of the Witness program.
-    ///
-    /// # Errors
-    /// If the integer does not correspond to any witness version, errors with
-    /// [`Error::InvalidWitnessVersion`].
-    #[deprecated(since = "0.29.0", note = "use try_from instead")]
-    pub fn from_num(no: u8) -> Result<Self, Error> { Self::try_from(no) }
-
-    /// Converts bitcoin script opcode into [`WitnessVersion`] variant.
-    ///
-    /// # Returns
-    /// Version of the Witness program (for opcodes in range of `OP_0`..`OP_16`).
-    ///
-    /// # Errors
-    /// If the opcode does not correspond to any witness version, errors with
-    /// [`Error::MalformedWitnessVersion`].
-    #[deprecated(since = "0.29.0", note = "use try_from instead")]
-    pub fn from_opcode(opcode: opcodes::All) -> Result<Self, Error> { Self::try_from(opcode) }
-
-    /// Converts bitcoin script [`Instruction`] (parsed opcode) into [`WitnessVersion`] variant.
-    ///
-    /// # Returns
-    /// Version of the Witness program for [`Instruction::Op`] and [`Instruction::PushBytes`] with
-    /// byte value within `1..=16` range.
-    ///
-    /// # Errors
-    /// If the opcode does not correspond to any witness version, errors with
-    /// [`Error::MalformedWitnessVersion`] for the rest of opcodes.
-    #[deprecated(since = "0.29.0", note = "use try_from instead")]
-    pub fn from_instruction(instruction: Instruction) -> Result<Self, Error> {
-        Self::try_from(instruction)
-    }
-
-    /// Returns integer version number representation for a given [`WitnessVersion`] value.
-    ///
-    /// NB: this is not the same as an integer representation of the opcode signifying witness
-    /// version in bitcoin script. Thus, there is no function to directly convert witness version
-    /// into a byte since the conversion requires context (bitcoin script or just a version number).
-    #[deprecated(since = "0.29.0", note = "use to_num instead")]
-    pub fn into_num(self) -> u8 { self.to_num() }
-
     /// Returns integer version number representation for a given [`WitnessVersion`] value.
     ///
     /// NB: this is not the same as an integer representation of the opcode signifying witness

@@ -717,16 +717,6 @@ impl TaprootMerkleBranch {
         }
     }
 
-    /// Creates a merkle proof from list of hashes.
-    ///
-    /// # Errors
-    ///
-    /// If inner proof length is more than [`TAPROOT_CONTROL_MAX_NODE_COUNT`] (128).
-    #[deprecated(since = "0.29.0", note = "use try_from instead")]
-    pub fn from_inner(inner: Vec<sha256::Hash>) -> Result<Self, TaprootError> {
-        Self::try_from(inner)
-    }
-
     /// Returns the inner list of hashes.
     pub fn into_inner(self) -> Vec<sha256::Hash> {
         self.0

@@ -491,12 +491,6 @@ impl Amount {
         Amount(satoshi)
     }
 
-    /// Get the number of satoshis in this [Amount].
-    #[deprecated(since = "0.29.0", note = "use to_sat instead")]
-    pub fn as_sat(self) -> u64 {
-        self.to_sat()
-    }
-
     /// Gets the number of satoshis in this [`Amount`].
     pub fn to_sat(self) -> u64 {
         self.0
@@ -552,14 +546,6 @@ impl Amount {
     /// Please be aware of the risk of using floating-point numbers.
     pub fn to_float_in(self, denom: Denomination) -> f64 {
         f64::from_str(&self.to_string_in(denom)).unwrap()
-    }
-
-    /// Express this [Amount] as a floating-point value in Bitcoin.
-    ///
-    /// Equivalent to `to_float_in(Denomination::Bitcoin)`.
-    #[deprecated(since = "0.29.0", note = "use to_btc instead")]
-    pub fn as_btc(self) -> f64 {
-        self.to_btc()
     }
 
     /// Express this [`Amount`] as a floating-point value in Bitcoin.
@@ -874,12 +860,6 @@ impl SignedAmount {
         SignedAmount(satoshi)
     }
 
-    /// Get the number of satoshis in this [SignedAmount].
-    #[deprecated(since = "0.29.0", note = "use to_sat instead")]
-    pub fn as_sat(self) -> i64 {
-        self.to_sat()
-    }
-
     /// Gets the number of satoshis in this [`SignedAmount`].
     pub fn to_sat(self) -> i64 {
         self.0
@@ -935,16 +915,6 @@ impl SignedAmount {
     /// Please be aware of the risk of using floating-point numbers.
     pub fn to_float_in(self, denom: Denomination) -> f64 {
         f64::from_str(&self.to_string_in(denom)).unwrap()
-    }
-
-    /// Express this [SignedAmount] as a floating-point value in Bitcoin.
-    ///
-    /// Equivalent to `to_float_in(Denomination::Bitcoin)`.
-    ///
-    /// Please be aware of the risk of using floating-point numbers.
-    #[deprecated(since = "0.29.0", note = "use to_btc instead")]
-    pub fn as_btc(self) -> f64 {
-        self.to_btc()
     }
 
     /// Express this [`SignedAmount`] as a floating-point value in Bitcoin.

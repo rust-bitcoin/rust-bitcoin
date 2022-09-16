@@ -147,13 +147,6 @@ impl<Subtype> Decodable for ProprietaryKey<Subtype> where Subtype: Copy + From<u
 }
 
 impl<Subtype> ProprietaryKey<Subtype> where Subtype: Copy + From<u8> + Into<u8> {
-    /// Constructs [ProprietaryKey] from [Key]; returns
-    /// [Error::InvalidProprietaryKey] if `key` do not starts with 0xFC byte
-    #[deprecated(since = "0.29.0", note = "use try_from instead")]
-    pub fn from_key(key: Key) -> Result<Self, Error> {
-        Self::try_from(key)
-    }
-
     /// Constructs full [Key] corresponding to this proprietary key type
     pub fn to_key(&self) -> Key {
         Key {

@@ -148,17 +148,6 @@ impl TapTree {
         self.0.branch()[0].as_ref().expect("from_inner only parses is_complete builders")
     }
 
-    /// Constructs [`TapTree`] from a [`TaprootBuilder`] if it is complete binary tree.
-    ///
-    /// # Returns
-    /// A [`TapTree`] iff the `builder` is complete, otherwise return [`IncompleteTapTree`]
-    /// error with the content of incomplete `builder` instance.
-    #[deprecated(since = "0.29.0", note = "use try_from instead")]
-    pub fn from_builder(builder: TaprootBuilder) -> Result<Self, IncompleteTapTree> {
-        Self::try_from(builder)
-    }
-
-
     /// Converts self into builder [`TaprootBuilder`]. The builder is guaranteed to be finalized.
     pub fn into_builder(self) -> TaprootBuilder {
         self.0
