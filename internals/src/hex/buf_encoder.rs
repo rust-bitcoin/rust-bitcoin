@@ -177,13 +177,23 @@ impl<T: AsOutBytes> BufEncoder<T> {
     #[inline]
     #[cfg_attr(rust_v_1_46, track_caller)]
     pub fn put_bytes(&mut self, bytes: &[u8], case: Case) {
-        // Panic if the result wouldn't fit address space to not waste time and give the optimizer
-        // more opportunities.
-        let double_len = bytes.len().checked_mul(2).expect("overflow");
-        assert!(double_len <= self.buf.as_out_bytes().len() - self.pos);
+        assert!(bytes.len() <= self.space_remaining());
         for byte in bytes {
             self.put_byte(*byte, case);
         }
+    }
+
+    /// Encodes as many `bytes` as fit into the buffer as hex and return the remainder.
+    ///
+    /// This method works just like `put_bytes` but instead of panicking it returns the unwritten
+    /// bytes. The method returns an empty slice if all bytes were written
+    #[must_use = "this may write only part of the input buffer"]
+    #[inline]
+    #[cfg_attr(rust_v_1_46, track_caller)]
+    pub fn put_bytes_min<'a>(&mut self, bytes: &'a [u8], case: Case) -> &'a [u8] {
+        let to_write = self.space_remaining().min(bytes.len());
+        self.put_bytes(&bytes[..to_write], case);
+        &bytes[to_write..]
     }
 
     /// Returns true if no more bytes can be written into the buffer.
@@ -200,6 +210,14 @@ impl<T: AsOutBytes> BufEncoder<T> {
     /// Resets the buffer to become empty.
     #[inline]
     pub fn clear(&mut self) { self.pos = 0; }
+
+    /// How many bytes can be written to this buffer.
+    ///
+    /// Note that this returns the number of bytes before encoding, not number of hex digits.
+    #[inline]
+    pub fn space_remaining(&self) -> usize {
+        (self.buf.as_out_bytes().len() - self.pos) / 2
+    }
 }
 
 #[cfg(test)]
@@ -218,13 +236,17 @@ mod tests {
     fn single_byte_exact_buf() {
         let mut buf = [0u8; 2];
         let mut encoder = BufEncoder::new(&mut buf);
+        assert_eq!(encoder.space_remaining(), 1);
         encoder.put_byte(42, Case::Lower);
         assert_eq!(encoder.as_str(), "2a");
+        assert_eq!(encoder.space_remaining(), 0);
         assert!(encoder.is_full());
         encoder.clear();
+        assert_eq!(encoder.space_remaining(), 1);
         assert!(!encoder.is_full());
         encoder.put_byte(42, Case::Upper);
         assert_eq!(encoder.as_str(), "2A");
+        assert_eq!(encoder.space_remaining(), 0);
         assert!(encoder.is_full());
     }
 
@@ -232,12 +254,16 @@ mod tests {
     fn single_byte_oversized_buf() {
         let mut buf = [0u8; 4];
         let mut encoder = BufEncoder::new(&mut buf);
+        assert_eq!(encoder.space_remaining(), 2);
         encoder.put_byte(42, Case::Lower);
+        assert_eq!(encoder.space_remaining(), 1);
         assert_eq!(encoder.as_str(), "2a");
         assert!(!encoder.is_full());
         encoder.clear();
+        assert_eq!(encoder.space_remaining(), 2);
         encoder.put_byte(42, Case::Upper);
         assert_eq!(encoder.as_str(), "2A");
+        assert_eq!(encoder.space_remaining(), 1);
         assert!(!encoder.is_full());
     }
 
@@ -246,7 +272,9 @@ mod tests {
         let mut buf = [0u8; 4];
         let mut encoder = BufEncoder::new(&mut buf);
         encoder.put_byte(42, Case::Lower);
+        assert_eq!(encoder.space_remaining(), 1);
         encoder.put_byte(255, Case::Lower);
+        assert_eq!(encoder.space_remaining(), 0);
         assert_eq!(encoder.as_str(), "2aff");
         assert!(encoder.is_full());
         encoder.clear();
@@ -255,6 +283,22 @@ mod tests {
         encoder.put_byte(255, Case::Upper);
         assert_eq!(encoder.as_str(), "2AFF");
         assert!(encoder.is_full());
+    }
+
+    #[test]
+    fn put_bytes_min() {
+        let mut buf = [0u8; 2];
+        let mut encoder = BufEncoder::new(&mut buf);
+        let remainder = encoder.put_bytes_min(b"", Case::Lower);
+        assert_eq!(remainder, b"");
+        assert_eq!(encoder.as_str(), "");
+        let remainder = encoder.put_bytes_min(b"*", Case::Lower);
+        assert_eq!(remainder, b"");
+        assert_eq!(encoder.as_str(), "2a");
+        encoder.clear();
+        let remainder = encoder.put_bytes_min(&[42, 255], Case::Lower);
+        assert_eq!(remainder, &[255]);
+        assert_eq!(encoder.as_str(), "2a");
     }
 
     #[test]
