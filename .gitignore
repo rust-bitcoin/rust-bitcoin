@@ -1,7 +1,18 @@
-target
-Cargo.lock
-dep_test
+# .gitignore for rust-bitcoin repository workspace.
 
-#fuzz
+# Lock files
+Cargo.lock
+internals/Cargo.lock
+bitcoin/Cargo.lock
+
+# Build artifacts
+target
+internals/target
+bitcoin/target
+
+# Test artifacts
+bitcoin/dep_test
+
+# Fuzz artifacts
 fuzz/hfuzz_target
 fuzz/hfuzz_workspace
