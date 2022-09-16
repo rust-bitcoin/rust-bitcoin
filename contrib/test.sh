@@ -2,7 +2,7 @@
 
 set -ex
 
-CRATES="bitcoin"
+CRATES="bitcoin hashes"
 
 for crate in ${CRATES}
 do

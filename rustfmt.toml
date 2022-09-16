@@ -4,6 +4,7 @@ ignore = [
        "bitcoin/src/consensus",
        "bitcoin/src/network",
        "bitcoin/src/util",
+       "hashes",
 ]
 
 hard_tabs = false
