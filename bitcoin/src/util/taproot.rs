@@ -107,6 +107,18 @@ impl TapLeafHash {
     }
 }
 
+impl From<ScriptLeaf> for TapLeafHash {
+    fn from(leaf: ScriptLeaf) -> TapLeafHash {
+        leaf.leaf_hash()
+    }
+}
+
+impl From<&ScriptLeaf> for TapLeafHash {
+    fn from(leaf: &ScriptLeaf) -> TapLeafHash {
+        leaf.leaf_hash()
+    }
+}
+
 impl TapBranchHash {
     /// Computes branch hash given two hashes of the nodes underneath it.
     pub fn from_node_hashes(a: sha256::Hash, b: sha256::Hash) -> TapBranchHash {
@@ -308,6 +320,18 @@ impl TaprootSpendInfo {
             leaf_version: script_ver.1,
             merkle_branch: smallest.clone(),
         })
+    }
+}
+
+impl From<TaprootSpendInfo> for TapTweakHash {
+    fn from(spend_info: TaprootSpendInfo) -> TapTweakHash {
+        spend_info.tap_tweak()
+    }
+}
+
+impl From<&TaprootSpendInfo> for TapTweakHash {
+    fn from(spend_info: &TaprootSpendInfo) -> TapTweakHash {
+        spend_info.tap_tweak()
     }
 }
 

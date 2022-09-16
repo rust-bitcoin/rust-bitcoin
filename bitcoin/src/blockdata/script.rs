@@ -760,6 +760,30 @@ impl From<Vec<u8>> for Script {
     fn from(v: Vec<u8>) -> Script { Script(v.into_boxed_slice()) }
 }
 
+impl From<Script> for ScriptHash {
+    fn from(script: Script) -> ScriptHash {
+        script.script_hash()
+    }
+}
+
+impl From<&Script> for ScriptHash {
+    fn from(script: &Script) -> ScriptHash {
+        script.script_hash()
+    }
+}
+
+impl From<Script> for WScriptHash {
+    fn from(script: Script) -> WScriptHash {
+        script.wscript_hash()
+    }
+}
+
+impl From<&Script> for WScriptHash {
+    fn from(script: &Script) -> WScriptHash {
+        script.wscript_hash()
+    }
+}
+
 /// A "parsed opcode" which allows iterating over a [`Script`] in a more sensible way.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Instruction<'a> {
