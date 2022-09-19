@@ -371,7 +371,7 @@ impl Transaction {
     /// [`policy`] module.
     ///
     /// [`BIP141`]: https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki
-    /// [`policy`]: ../policy/mod.rs.html
+    /// [`policy`]: ../policy/asset_unlock.html
     #[inline]
     pub fn vsize(&self) -> usize {
         let weight = self.weight();

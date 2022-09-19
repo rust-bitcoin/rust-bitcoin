@@ -29,7 +29,7 @@ use core::fmt;
 
 use util;
 use util::Error::{BlockBadTarget, BlockBadProofOfWork};
-use util::hash::bitcoin_merkle_root;
+use util::hash::dash_merkle_root;
 use hashes::{Hash, HashEngine};
 use hash_types::{Wtxid, BlockHash, TxMerkleNode, WitnessMerkleNode, WitnessCommitment};
 use util::uint::Uint256;
@@ -222,7 +222,7 @@ impl Block {
     /// Computes the transaction merkle root.
     pub fn compute_merkle_root(&self) -> Option<TxMerkleNode> {
         let hashes = self.txdata.iter().map(|obj| obj.txid().as_hash());
-        bitcoin_merkle_root(hashes).map(|h| h.into())
+        dash_merkle_root(hashes).map(|h| h.into())
     }
 
     /// Calculate the transaction merkle root.
@@ -249,7 +249,7 @@ impl Block {
                 t.wtxid().as_hash()
             }
         });
-        bitcoin_merkle_root(hashes).map(|h| h.into())
+        dash_merkle_root(hashes).map(|h| h.into())
     }
 
     /// base_size == size of header + size of encoded transaction count.

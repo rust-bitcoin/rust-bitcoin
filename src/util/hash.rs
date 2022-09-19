@@ -15,7 +15,7 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! Bitcoin hash functions.
+//! Dash hash functions.
 //!
 //! This module provides utility functions related to hashing data, including
 //! merkleization.
@@ -33,13 +33,13 @@ use consensus::encode::Encodable;
 
 /// Calculates the merkle root of a list of *hashes*, inline (in place) in `hashes`.
 ///
-/// In most cases, you'll want to use [bitcoin_merkle_root] instead.
+/// In most cases, you'll want to use [dash_merkle_root] instead.
 ///
 /// # Returns
 /// - `None` if `hashes` is empty. The merkle root of an empty tree of hashes is undefined.
 /// - `Some(hash)` if `hashes` contains one element. A single hash is by definition the merkle root.
 /// - `Some(merkle_root)` if length of `hashes` is greater than one.
-pub fn bitcoin_merkle_root_inline<T>(hashes: &mut [T]) -> Option<T>
+pub fn dash_merkle_root_inline<T>(hashes: &mut [T]) -> Option<T>
 where
     T: Hash + Encodable,
           <T as Hash>::Engine: io::Write,
@@ -57,7 +57,7 @@ where
 /// - `None` if `hashes` is empty. The merkle root of an empty tree of hashes is undefined.
 /// - `Some(hash)` if `hashes` contains one element. A single hash is by definition the merkle root.
 /// - `Some(merkle_root)` if length of `hashes` is greater than one.
-pub fn bitcoin_merkle_root<T, I>(mut hashes: I) -> Option<T>
+pub fn dash_merkle_root<T, I>(mut hashes: I) -> Option<T>
 where
     T: Hash + Encodable,
     <T as Hash>::Engine: io::Write,
@@ -133,8 +133,8 @@ mod tests {
             hashes_array[i] = hash;
         }
 
-        let from_iter = bitcoin_merkle_root(hashes_iter);
-        let from_array = bitcoin_merkle_root_inline(&mut hashes_array);
+        let from_iter = dash_merkle_root(hashes_iter);
+        let from_array = dash_merkle_root_inline(&mut hashes_array);
         assert_eq!(from_iter, from_array);
     }
 }

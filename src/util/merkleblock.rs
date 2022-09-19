@@ -518,7 +518,7 @@ mod tests {
     use secp256k1::rand::prelude::*;
 
     use consensus::encode::{deserialize, serialize};
-    use util::hash::bitcoin_merkle_root;
+    use util::hash::dash_merkle_root;
     use util::merkleblock::{MerkleBlock, PartialMerkleTree};
     use Block;
 
@@ -535,7 +535,7 @@ mod tests {
 
             // Calculate the merkle root and height
             let hashes = txids.iter().map(|t| t.as_hash());
-            let merkle_root_1: TxMerkleNode = bitcoin_merkle_root(hashes).expect("hashes is not empty").into();
+            let merkle_root_1: TxMerkleNode = dash_merkle_root(hashes).expect("hashes is not empty").into();
             let mut height = 1;
             let mut ntx = num_tx;
             while ntx > 1 {

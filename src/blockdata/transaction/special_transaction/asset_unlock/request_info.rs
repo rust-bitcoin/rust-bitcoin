@@ -22,11 +22,11 @@
 //!
 //! The special transaction type used for CrWithTx Transactions is 9.
 
-use io;
+use ::{io};
 use io::{Error, Write};
-use bls_sig_utils::BLSSignature;
 use consensus::{Decodable, Encodable, encode};
 use ::{QuorumHash};
+use prelude::*;
 
 /// A Credit Withdrawal payload. This is contained as the payload of a credit withdrawal special
 /// transaction.
@@ -38,43 +38,37 @@ use ::{QuorumHash};
 ///
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct CreditWithdrawalPayload {
-    version: u8,
-    index: u64,
-    fee: u32,
+pub struct AssetUnlockRequestInfo {
     request_height: u32,
     quorum_hash: QuorumHash,
-    quorum_sig: BLSSignature,
 }
 
-impl Encodable for CreditWithdrawalPayload {
-    fn consensus_encode<S: Write>(&self, mut s: S) -> Result<usize, Error> {
+impl AssetUnlockRequestInfo {
+    /// Encodes the asset unlock on top of
+    pub fn consensus_append_to_base_encode<S: Write>(&self, base_bytes: Vec<u8>, mut s: S) -> Result<usize, Error> {
         let mut len = 0;
-        len += self.version.consensus_encode(&mut s)?;
-        len += self.index.consensus_encode(&mut s)?;
-        len += self.fee.consensus_encode(&mut s)?;
-        len += self.request_height.consensus_encode(&mut s)?;
-        len += self.quorum_hash.consensus_encode(&mut s)?;
-        len += self.quorum_sig.consensus_encode(&mut s)?;
+        len += base_bytes.consensus_encode(&mut s)?;
+        len += self.consensus_encode(&mut s)?;
         Ok(len)
     }
 }
 
-impl Decodable for CreditWithdrawalPayload {
+impl Encodable for AssetUnlockRequestInfo {
+    fn consensus_encode<S: Write>(&self, mut s: S) -> Result<usize, Error> {
+        let mut len = 0;
+        len += self.request_height.consensus_encode(&mut s)?;
+        len += self.quorum_hash.consensus_encode(&mut s)?;
+        Ok(len)
+    }
+}
+
+impl Decodable for AssetUnlockRequestInfo {
     fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
-        let version = u8::consensus_decode(&mut d)?;
-        let index = u64::consensus_decode(&mut d)?;
-        let fee = u32::consensus_decode(&mut d)?;
         let request_height = u32::consensus_decode(&mut d)?;
         let quorum_hash = QuorumHash::consensus_decode(&mut d)?;
-        let quorum_sig = BLSSignature::consensus_decode(&mut d)?;
-        Ok(CreditWithdrawalPayload {
-            version,
-            index,
-            fee,
+        Ok(AssetUnlockRequestInfo {
             request_height,
             quorum_hash,
-            quorum_sig
         })
     }
 }

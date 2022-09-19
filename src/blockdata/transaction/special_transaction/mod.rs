@@ -26,14 +26,14 @@ use io;
 use io::{Error, Read, Write};
 use blockdata::transaction::special_transaction::asset_lock::AssetLockPayload;
 use blockdata::transaction::special_transaction::coinbase::CoinbasePayload;
-use blockdata::transaction::special_transaction::credit_withdrawal::CreditWithdrawalPayload;
+use blockdata::transaction::special_transaction::asset_unlock::qualified_asset_unlock::AssetUnlockPayload;
 use blockdata::transaction::special_transaction::provider_registration::ProviderRegistrationPayload;
 use blockdata::transaction::special_transaction::provider_update_registrar::ProviderUpdateRegistrarPayload;
 use blockdata::transaction::special_transaction::provider_update_revocation::ProviderUpdateRevocationPayload;
 use blockdata::transaction::special_transaction::provider_update_service::ProviderUpdateServicePayload;
 use blockdata::transaction::special_transaction::quorum_commitment::QuorumCommitmentPayload;
-use blockdata::transaction::special_transaction::TransactionPayload::{AssetLockPayloadType, CoinbasePayloadType, CreditWithdrawalPayloadType, ProviderRegistrationPayloadType, ProviderUpdateRegistrarPayloadType, ProviderUpdateRevocationPayloadType, ProviderUpdateServicePayloadType, QuorumCommitmentPayloadType};
-use blockdata::transaction::special_transaction::TransactionType::{AssetLock, Classic, Coinbase, CreditWithdrawal, ProviderRegistration, ProviderUpdateRegistrar, ProviderUpdateRevocation, ProviderUpdateService, QuorumCommitment};
+use blockdata::transaction::special_transaction::TransactionPayload::{AssetLockPayloadType, AssetUnlockPayloadType, CoinbasePayloadType, ProviderRegistrationPayloadType, ProviderUpdateRegistrarPayloadType, ProviderUpdateRevocationPayloadType, ProviderUpdateServicePayloadType, QuorumCommitmentPayloadType};
+use blockdata::transaction::special_transaction::TransactionType::{AssetLock, Classic, Coinbase, AssetUnlock, ProviderRegistration, ProviderUpdateRegistrar, ProviderUpdateRevocation, ProviderUpdateService, QuorumCommitment};
 use consensus::{Decodable, Encodable, encode};
 use ::{SpecialTransactionPayloadHash, VarInt};
 
@@ -44,7 +44,7 @@ pub mod provider_update_revocation;
 pub mod coinbase;
 pub mod quorum_commitment;
 pub mod asset_lock;
-pub mod credit_withdrawal;
+pub mod asset_unlock;
 
 /// An enum wrapper around various special transaction payloads.
 /// Special transactions are defined in DIP 2.
@@ -65,8 +65,8 @@ pub enum TransactionPayload {
     QuorumCommitmentPayloadType(QuorumCommitmentPayload),
     /// A wrapper for an Asset Lock payload
     AssetLockPayloadType(AssetLockPayload),
-    /// A wrapper for a Credit Withdrawal payload
-    CreditWithdrawalPayloadType(CreditWithdrawalPayload)
+    /// A wrapper for an Asset Unlock payload
+    AssetUnlockPayloadType(AssetUnlockPayload)
 }
 
 impl Encodable for TransactionPayload {
@@ -79,7 +79,7 @@ impl Encodable for TransactionPayload {
             CoinbasePayloadType(p) => {p.consensus_encode(&mut s)}
             QuorumCommitmentPayloadType(p) => {p.consensus_encode(&mut s)}
             AssetLockPayloadType(p) => {p.consensus_encode(&mut s)}
-            CreditWithdrawalPayloadType(p) => {p.consensus_encode(&mut s)}
+            AssetUnlockPayloadType(p) => {p.consensus_encode(&mut s)}
         }
     }
 }
@@ -95,7 +95,7 @@ impl TransactionPayload {
             CoinbasePayloadType(_) => { Coinbase }
             QuorumCommitmentPayloadType(_) => { QuorumCommitment }
             AssetLockPayloadType(_) => { AssetLock }
-            CreditWithdrawalPayloadType(_) => { CreditWithdrawal }
+            AssetUnlockPayloadType(_) => { AssetUnlock }
         }
     }
 
@@ -179,8 +179,8 @@ impl TransactionPayload {
     /// Convenience method that assumes the payload to be a credit withdrawal payload to get it
     /// easier.
     /// Errors if it is not a credit withdrawal payload.
-    pub fn to_credit_withdrawal_payload(self) -> Result<CreditWithdrawalPayload, encode::Error> {
-        if let CreditWithdrawalPayloadType(payload) = self {
+    pub fn to_asset_unlock_payload(self) -> Result<AssetUnlockPayload, encode::Error> {
+        if let AssetUnlockPayloadType(payload) = self {
             Ok(payload)
         } else {
             Err(encode::Error::WrongSpecialTransactionPayloadConversion { expected: AssetLock, actual: self.get_type() })
@@ -212,8 +212,8 @@ pub enum TransactionType {
     QuorumCommitment = 6,
     /// An Asset Lock Transaction, used to transfer credits to Dash Platform, by locking them until withdrawals occur
     AssetLock = 8,
-    /// A Credit Withdrawal Transaction, used to withdraw credits from Dash Platform
-    CreditWithdrawal = 9,
+    /// An Asset Unlock Transaction, used to withdraw credits from Dash Platform, by unlocking them
+    AssetUnlock = 9,
 }
 
 impl Debug for TransactionType {
@@ -227,7 +227,7 @@ impl Debug for TransactionType {
             Coinbase => write!(f, "Coinbase Transaction"),
             QuorumCommitment => write!(f, "Quorum Commitment Transaction"),
             AssetLock => write!(f, "Asset Lock Transaction"),
-            CreditWithdrawal => write!(f, "Credit Withdrawal Transaction"),
+            AssetUnlock => write!(f, "Asset Unlock Transaction"),
         }
     }
 }
@@ -243,7 +243,7 @@ impl Display for TransactionType {
             Coinbase => write!(f, "Coinbase"),
             QuorumCommitment => write!(f, "Quorum Commitment"),
             AssetLock => write!(f, "Asset Lock"),
-            CreditWithdrawal => write!(f, "Credit Withdrawal"),
+            AssetUnlock => write!(f, "Asset Unlock"),
         }
     }
 }
@@ -261,7 +261,7 @@ impl TryFrom<u16> for TransactionType {
             5 => Ok(Coinbase),
             6 => Ok(QuorumCommitment),
             8 => Ok(AssetLock),
-            9 => Ok(CreditWithdrawal),
+            9 => Ok(AssetUnlock),
             _ => Err(encode::Error::UnknownSpecialTransactionType(value))
         }
     }
@@ -300,7 +300,7 @@ impl TransactionType {
             Coinbase => { Some(CoinbasePayloadType(CoinbasePayload::consensus_decode(d)?))}
             QuorumCommitment => { Some(QuorumCommitmentPayloadType(QuorumCommitmentPayload::consensus_decode(d)?))}
             AssetLock => { Some(AssetLockPayloadType(AssetLockPayload::consensus_decode(d)?))}
-            CreditWithdrawal => { Some(CreditWithdrawalPayloadType(CreditWithdrawalPayload::consensus_decode(d)?))}
+            AssetUnlock => { Some(AssetUnlockPayloadType(AssetUnlockPayload::consensus_decode(d)?))}
         })
     }
 }
