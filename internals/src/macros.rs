@@ -1,26 +1,26 @@
 //! Various macros used by the Rust Bitcoin ecosystem.
 //!
 
-/// Implements standard array methods for a given wrapper type
+/// Implements standard array methods for a given wrapper type.
 #[macro_export]
 macro_rules! impl_array_newtype {
     ($thing:ident, $ty:ty, $len:literal) => {
         impl $thing {
-            /// Converts the object to a raw pointer
+            /// Converts the object to a raw pointer.
             #[inline]
             pub fn as_ptr(&self) -> *const $ty {
                 let &$thing(ref dat) = self;
                 dat.as_ptr()
             }
 
-            /// Converts the object to a mutable raw pointer
+            /// Converts the object to a mutable raw pointer.
             #[inline]
             pub fn as_mut_ptr(&mut self) -> *mut $ty {
                 let &mut $thing(ref mut dat) = self;
                 dat.as_mut_ptr()
             }
 
-            /// Returns the length of the object as an array
+            /// Returns the length of the object as an array.
             #[inline]
             pub fn len(&self) -> usize { $len }
 
@@ -28,15 +28,15 @@ macro_rules! impl_array_newtype {
             #[inline]
             pub fn is_empty(&self) -> bool { false }
 
-            /// Returns the underlying bytes.
+            /// Returns a reference the underlying bytes.
             #[inline]
             pub fn as_bytes(&self) -> &[$ty; $len] { &self.0 }
 
-            /// Returns the underlying bytes.
+            /// Returns a clone of the underlying bytes.
             #[inline]
             pub fn to_bytes(self) -> [$ty; $len] { self.0.clone() }
 
-            /// Returns the underlying bytes.
+            /// Returns the underlying bytes (takes ownership).
             #[inline]
             pub fn into_bytes(self) -> [$ty; $len] { self.0 }
         }
