@@ -19,7 +19,7 @@ use serde;
 
 use crate::hash_types::XpubIdentifier;
 use crate::hashes::{hex, sha512, Hash, HashEngine, Hmac, HmacEngine};
-use crate::internal_macros::{impl_bytes_newtype, serde_string_impl};
+use crate::internal_macros::impl_bytes_newtype;
 use crate::io::Write;
 use crate::network::constants::Network;
 use crate::prelude::*;
@@ -55,7 +55,8 @@ pub struct ExtendedPrivKey {
     /// Chain code
     pub chain_code: ChainCode,
 }
-serde_string_impl!(ExtendedPrivKey, "a BIP-32 extended private key");
+#[cfg(feature = "serde")]
+crate::serde_utils::serde_string_impl!(ExtendedPrivKey, "a BIP-32 extended private key");
 
 #[cfg(not(feature = "std"))]
 #[cfg_attr(docsrs, doc(cfg(not(feature = "std"))))]
@@ -88,7 +89,8 @@ pub struct ExtendedPubKey {
     /// Chain code
     pub chain_code: ChainCode,
 }
-serde_string_impl!(ExtendedPubKey, "a BIP-32 extended public key");
+#[cfg(feature = "serde")]
+crate::serde_utils::serde_string_impl!(ExtendedPubKey, "a BIP-32 extended public key");
 
 /// A child number for a derived key
 #[derive(Copy, Clone, PartialEq, Eq, Debug, PartialOrd, Ord, Hash)]
@@ -233,7 +235,9 @@ pub trait IntoDerivationPath {
 /// A BIP-32 derivation path.
 #[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Hash)]
 pub struct DerivationPath(Vec<ChildNumber>);
-serde_string_impl!(DerivationPath, "a BIP-32 derivation path");
+
+#[cfg(feature = "serde")]
+crate::serde_utils::serde_string_impl!(DerivationPath, "a BIP-32 derivation path");
 
 impl<I> Index<I> for DerivationPath
 where

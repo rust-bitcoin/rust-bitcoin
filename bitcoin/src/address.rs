@@ -39,7 +39,6 @@ use crate::blockdata::{opcodes, script};
 use crate::error::ParseIntError;
 use crate::hash_types::{PubkeyHash, ScriptHash};
 use crate::hashes::{sha256, Hash, HashEngine};
-use crate::internal_macros::serde_string_impl;
 use crate::network::constants::Network;
 use crate::prelude::*;
 use crate::util::base58;
@@ -565,7 +564,8 @@ pub struct Address {
     /// The network on which this address is usable.
     pub network: Network,
 }
-serde_string_impl!(Address, "a Bitcoin address");
+#[cfg(feature = "serde")]
+crate::serde_utils::serde_string_impl!(Address, "a Bitcoin address");
 
 impl Address {
     /// Creates a pay to (compressed) public key hash address from a public key.

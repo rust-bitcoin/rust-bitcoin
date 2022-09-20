@@ -19,7 +19,6 @@ use crate::consensus::{encode, Encodable};
 use crate::error::impl_std_error;
 use crate::util::endian;
 use crate::hashes::{sha256, sha256d, Hash};
-use crate::internal_macros::serde_string_impl;
 use crate::prelude::*;
 use crate::util::taproot::{TapLeafHash, TAPROOT_ANNEX_PREFIX, TapSighashHash, LeafVersion};
 
@@ -121,7 +120,8 @@ pub enum SchnorrSighashType {
     /// 0x83: Sign one output and only this input (see `Single` for what "one output" means).
     SinglePlusAnyoneCanPay = 0x83,
 }
-serde_string_impl!(SchnorrSighashType, "a SchnorrSighashType data");
+#[cfg(feature = "serde")]
+crate::serde_utils::serde_string_impl!(SchnorrSighashType, "a SchnorrSighashType data");
 
 impl fmt::Display for SchnorrSighashType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -318,7 +318,8 @@ pub enum EcdsaSighashType {
     /// 0x83: Sign one output and only this input (see `Single` for what "one output" means).
     SinglePlusAnyoneCanPay	= 0x83
 }
-serde_string_impl!(EcdsaSighashType, "a EcdsaSighashType data");
+#[cfg(feature = "serde")]
+crate::serde_utils::serde_string_impl!(EcdsaSighashType, "a EcdsaSighashType data");
 
 impl fmt::Display for EcdsaSighashType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
