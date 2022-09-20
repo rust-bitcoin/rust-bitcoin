@@ -7,14 +7,41 @@
 //! strings respectively.
 //!
 
-use core::{fmt, str, iter, slice};
+#![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
+// Experimental features we need.
+#![cfg_attr(docsrs, feature(doc_cfg))]
+// Coding conventions
+#![forbid(unsafe_code)]
+#![deny(non_upper_case_globals)]
+#![deny(non_camel_case_types)]
+#![deny(non_snake_case)]
+#![deny(unused_mut)]
+#![deny(dead_code)]
+#![deny(unused_imports)]
+#![deny(missing_docs)]
+#![deny(unused_must_use)]
 
-use crate::hashes::{sha256d, Hash};
-use crate::prelude::*;
-use crate::util::endian;
+// Disable 16-bit support at least for now as we can't guarantee it yet.
+#[cfg(target_pointer_width = "16")]
+compile_error!("bitcoin-base58 currently only supports architectures with pointers wider than 16 bits");
+
+#[cfg(all(not(feature = "std"), not(test)))]
+extern crate alloc;
+
+#[cfg(all(feature = "alloc", not(feature = "std"), not(test)))]
+pub use alloc::{string::{String, ToString}, vec::Vec, borrow::ToOwned};
+
+#[cfg(any(feature = "std", test))]
+pub use std::{string::{String, ToString}, vec::Vec, borrow::ToOwned};
+
+use core::{fmt, str, iter, slice};
+use core::convert::TryInto;
+
+use bitcoin_hashes::{sha256d, Hash};
 
 static BASE58_CHARS: &[u8] = b"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
+#[rustfmt::skip]
 static BASE58_DIGITS: [Option<u8>; 128] = [
     None,     None,     None,     None,     None,     None,     None,     None,     // 0-7
     None,     None,     None,     None,     None,     None,     None,     None,     // 8-15
@@ -33,12 +60,6 @@ static BASE58_DIGITS: [Option<u8>; 128] = [
     Some(47), Some(48), Some(49), Some(50), Some(51), Some(52), Some(53), Some(54), // 112-119
     Some(55), Some(56), Some(57), None,     None,     None,     None,     None,     // 120-127
 ];
-
-/// Decodes a base58-encoded string into a byte vector.
-#[deprecated(since = "0.30.0", note = "Use base58::decode() instead")]
-pub fn from(data: &str) -> Result<Vec<u8>, Error> {
-    decode(data)
-}
 
 /// Decodes a base58-encoded string into a byte vector.
 pub fn decode(data: &str) -> Result<Vec<u8>, Error> {
@@ -72,45 +93,30 @@ pub fn decode(data: &str) -> Result<Vec<u8>, Error> {
 }
 
 /// Decodes a base58check-encoded string into a byte vector verifying the checksum.
-#[deprecated(since = "0.30.0", note = "Use base58::decode_check() instead")]
-pub fn from_check(data: &str) -> Result<Vec<u8>, Error> {
-    decode_check(data)
-}
-
-/// Decodes a base58check-encoded string into a byte vector verifying the checksum.
 pub fn decode_check(data: &str) -> Result<Vec<u8>, Error> {
     let mut ret: Vec<u8> = decode(data)?;
     if ret.len() < 4 {
         return Err(Error::TooShort(ret.len()));
     }
-    let ck_start = ret.len() - 4;
-    let expected = endian::slice_to_u32_le(&sha256d::Hash::hash(&ret[..ck_start])[..4]);
-    let actual = endian::slice_to_u32_le(&ret[ck_start..(ck_start + 4)]);
+    let check_start = ret.len() - 4;
+
+    let hash_check = &sha256d::Hash::hash(&ret[..check_start])[..4];
+    let data_check = &ret[check_start..];
+
+    let expected = u32::from_le_bytes(hash_check.try_into().expect("4 byte slice"));
+    let actual = u32::from_le_bytes(data_check.try_into().expect("4 byte slice"));
+
     if expected != actual {
         return Err(Error::BadChecksum(expected, actual));
     }
 
-    ret.truncate(ck_start);
+    ret.truncate(check_start);
     Ok(ret)
-}
-
-/// Encodes `data` as a base58 string.
-#[deprecated(since = "0.30.0", note = "Use base58::encode() instead")]
-pub fn encode_slice(data: &[u8]) -> String {
-    encode(data)
 }
 
 /// Encodes `data` as a base58 string (see also `base58::encode_check()`).
 pub fn encode(data: &[u8]) -> String {
     encode_iter(data.iter().cloned())
-}
-
-/// Encodes `data` as a base58 string including the checksum.
-///
-/// The checksum is the first four bytes of the sha256d of the data, concatenated onto the end.
-#[deprecated(since = "0.30.0", note = "Use base58::encode_check() instead")]
-pub fn check_encode_slice(data: &[u8]) -> String {
-    encode_check(data)
 }
 
 /// Encodes `data` as a base58 string including the checksum.
@@ -123,14 +129,6 @@ pub fn encode_check(data: &[u8]) -> String {
             .cloned()
             .chain(checksum[0..4].iter().cloned())
     )
-}
-
-/// Encodes `data` as base58, including the checksum, into a formatter.
-///
-/// The checksum is the first four bytes of the sha256d of the data, concatenated onto the end.
-#[deprecated(since = "0.30.0", note = "Use base58::encode_check_to_fmt() instead")]
-pub fn check_encode_slice_to_fmt(fmt: &mut fmt::Formatter, data: &[u8]) -> fmt::Result {
-    encode_check_to_fmt(fmt, data)
 }
 
 /// Encodes a slice as base58, including the checksum, into a formatter.
@@ -285,7 +283,7 @@ impl std::error::Error for Error {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::hashes::hex::FromHex;
+    use bitcoin_hashes::hex::FromHex;
 
     #[test]
     fn test_base58_encode() {

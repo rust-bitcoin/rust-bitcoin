@@ -10,7 +10,6 @@ pub mod key;
 pub mod ecdsa;
 pub mod schnorr;
 pub mod amount;
-pub mod base58;
 pub mod bip152;
 pub mod hash;
 pub mod merkleblock;
@@ -18,6 +17,9 @@ pub mod psbt;
 pub mod taproot;
 pub mod uint;
 pub mod sighash;
+
+// Deprecated since 0.30.0, remove this at some stage.
+pub use bitcoin_base58 as base58;
 
 pub(crate) mod endian;
 

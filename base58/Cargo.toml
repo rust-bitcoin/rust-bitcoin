@@ -1,0 +1,27 @@
+[package]
+name = "bitcoin-base58"
+version = "0.1.0"
+authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>", "The Rust Bitcoin developers"]
+license = "CC0-1.0"
+repository = "https://github.com/rust-bitcoin/rust-bitcoin/"
+documentation = "https://docs.rs/bitcoin-base58"
+description = "Bitcoin base58 encoding format"
+categories = ["cryptography::cryptocurrencies"]
+keywords = ["bitcoin", "encoding"]
+readme = "README.md"
+edition = "2018"
+
+# Please don't forget to add relevant features to docs.rs below.
+[features]
+default = ["std"]
+std = ["bitcoin_hashes/std"]
+alloc = ["bitcoin_hashes/alloc"]
+
+[package.metadata.docs.rs]
+features = ["std"]
+rustdoc-args = ["--cfg", "docsrs"]
+
+[dependencies]
+bitcoin_hashes = { version = "0.11.0", default-features = false }
+
+[dev-dependencies]

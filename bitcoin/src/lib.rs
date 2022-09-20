@@ -63,7 +63,7 @@ extern crate alloc;
 // Re-export dependencies we control.
 #[cfg(feature = "bitcoinconsensus")]
 pub use bitcoinconsensus;
-pub use {bech32, bitcoin_hashes as hashes, secp256k1};
+pub use {bech32, bitcoin_hashes as hashes, secp256k1, bitcoin_base58 as base58};
 
 #[cfg(feature = "serde")]
 #[macro_use]

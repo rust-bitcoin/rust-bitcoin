@@ -30,6 +30,7 @@ use bech32;
 use bitcoin_internals::write_err;
 use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
 
+use crate::base58;
 use crate::blockdata::constants::{
     MAX_SCRIPT_ELEMENT_SIZE, PUBKEY_ADDRESS_PREFIX_MAIN, PUBKEY_ADDRESS_PREFIX_TEST,
     SCRIPT_ADDRESS_PREFIX_MAIN, SCRIPT_ADDRESS_PREFIX_TEST,
@@ -42,7 +43,6 @@ use crate::hashes::{sha256, Hash, HashEngine};
 use crate::internal_macros::serde_string_impl;
 use crate::network::constants::Network;
 use crate::prelude::*;
-use crate::util::base58;
 use crate::util::key::PublicKey;
 use crate::util::schnorr::{TapTweak, TweakedPublicKey, UntweakedPublicKey};
 use crate::util::taproot::TapBranchHash;
