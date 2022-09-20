@@ -28,6 +28,7 @@ extern crate std;
 
 pub mod error;
 pub mod hex;
+pub mod macros;
 
 /// Mainly reexports based on features.
 pub(crate) mod prelude {
