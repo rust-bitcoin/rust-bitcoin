@@ -9,7 +9,7 @@ use core::convert::TryFrom;
 
 use secp256k1::XOnlyPublicKey;
 
-use crate::primitives::script::Script;
+use crate::script::Script;
 use crate::primitives::witness::Witness;
 use crate::primitives::transaction::{Transaction, TxOut};
 use crate::consensus::encode;

@@ -3,6 +3,7 @@ ignore = [
        "bitcoin/src/consensus",
        "bitcoin/src/network",
        "bitcoin/src/primitives",
+       "bitcoin/src/script",
        "bitcoin/src/util",
 ]
 

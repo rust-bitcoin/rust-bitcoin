@@ -14,8 +14,7 @@ use core::default::Default;
 
 use crate::hashes::hex::{self, HexIterator};
 use crate::hashes::{Hash, sha256d};
-use crate::primitives::opcodes;
-use crate::primitives::script;
+use crate::script::{self, opcodes};
 use crate::primitives::locktime::absolute;
 use crate::primitives::transaction::{OutPoint, Transaction, TxOut, TxIn, Sequence};
 use crate::primitives::block::{Block, BlockHeader, BlockVersion};

@@ -131,7 +131,7 @@ pub mod misc {
     // For why we deprecated see: https://github.com/rust-bitcoin/rust-bitcoin/pull/1259#discussion_r968613736
     #[deprecated(since = "0.30.0", note = "No longer supported")]
     pub fn script_find_and_remove(haystack: &mut Vec<u8>, needle: &[u8]) -> usize {
-        use crate::blockdata::opcodes;
+        use crate::script::opcodes;
 
         if needle.len() > haystack.len() {
             return 0;

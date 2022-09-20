@@ -24,8 +24,8 @@ use crate::hashes::{self, Hash, sha256d};
 use crate::hashes::hex::FromHex;
 
 use crate::primitives::constants::WITNESS_SCALE_FACTOR;
-#[cfg(feature="bitcoinconsensus")] use crate::primitives::script;
-use crate::primitives::script::Script;
+#[cfg(feature="bitcoinconsensus")] use crate::script;
+use crate::script::Script;
 use crate::primitives::witness::Witness;
 use crate::primitives::locktime::absolute::{self, Height, Time};
 use crate::primitives::locktime::relative;
@@ -1021,7 +1021,7 @@ mod tests {
     use core::str::FromStr;
 
     use crate::primitives::constants::WITNESS_SCALE_FACTOR;
-    use crate::primitives::script::Script;
+    use crate::script::Script;
     use crate::primitives::locktime::absolute;
     use crate::consensus::encode::serialize;
     use crate::consensus::encode::deserialize;
@@ -1337,7 +1337,7 @@ mod tests {
     fn test_transaction_verify () {
         use std::collections::HashMap;
         use crate::hashes::hex::FromHex;
-        use crate::primitives::script;
+        use crate::script;
         use crate::primitives::witness::Witness;
 
         // a random recent segwit transaction from blockchain using both old and segwit inputs

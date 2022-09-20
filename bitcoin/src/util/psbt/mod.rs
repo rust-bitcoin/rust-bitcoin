@@ -9,7 +9,7 @@
 
 use core::cmp;
 
-use crate::primitives::script::Script;
+use crate::script::Script;
 use crate::primitives::transaction::{ TxOut, Transaction};
 use crate::consensus::{encode, Encodable, Decodable};
 pub use crate::util::sighash::Prevouts;
@@ -342,7 +342,7 @@ mod tests {
 
     use secp256k1::{Secp256k1, self};
 
-    use crate::primitives::script::Script;
+    use crate::script::Script;
     use crate::primitives::transaction::{Transaction, TxIn, TxOut, OutPoint, Sequence};
     use crate::network::constants::Network::Bitcoin;
     use crate::consensus::encode::{deserialize, serialize, serialize_hex};
@@ -597,7 +597,7 @@ mod tests {
         use crate::hashes::hex::FromHex;
         use crate::hash_types::Txid;
 
-        use crate::primitives::script::Script;
+        use crate::script::Script;
         use crate::primitives::transaction::{Transaction, TxIn, TxOut, OutPoint, Sequence};
         use crate::consensus::encode::serialize_hex;
         use crate::primitives::locktime::absolute;

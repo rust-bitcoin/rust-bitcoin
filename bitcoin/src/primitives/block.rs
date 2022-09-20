@@ -23,7 +23,7 @@ use crate::consensus::{encode, Encodable, Decodable};
 use crate::network::constants::Network;
 use crate::primitives::transaction::Transaction;
 use crate::primitives::constants::{max_target, WITNESS_SCALE_FACTOR};
-use crate::primitives::script;
+use crate::script;
 use crate::VarInt;
 use crate::internal_macros::impl_consensus_encoding;
 use crate::io;

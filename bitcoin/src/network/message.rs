@@ -482,7 +482,7 @@ mod test {
     use crate::primitives::block::{Block, BlockHeader};
     use crate::network::message_filter::{GetCFilters, CFilter, GetCFHeaders, CFHeaders, GetCFCheckpt, CFCheckpt};
     use crate::primitives::transaction::Transaction;
-    use crate::primitives::script::Script;
+    use crate::script::Script;
     use crate::network::message_bloom::{FilterAdd, FilterLoad, BloomFlags};
     use crate::MerkleBlock;
     use crate::network::message_compact_blocks::{GetBlockTxn, SendCmpct};

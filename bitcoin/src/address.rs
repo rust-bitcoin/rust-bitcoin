@@ -40,8 +40,7 @@ use crate::primitives::constants::{
     MAX_SCRIPT_ELEMENT_SIZE, PUBKEY_ADDRESS_PREFIX_MAIN, PUBKEY_ADDRESS_PREFIX_TEST,
     SCRIPT_ADDRESS_PREFIX_MAIN, SCRIPT_ADDRESS_PREFIX_TEST,
 };
-use crate::primitives::script::Instruction;
-use crate::primitives::{opcodes, script};
+use crate::script::{self, opcodes, Instruction};
 use crate::util::base58;
 use crate::util::key::PublicKey;
 use crate::util::schnorr::{TapTweak, TweakedPublicKey, UntweakedPublicKey};
