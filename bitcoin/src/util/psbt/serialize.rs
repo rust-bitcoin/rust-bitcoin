@@ -10,9 +10,9 @@ use crate::prelude::*;
 
 use crate::io;
 
-use crate::blockdata::script::Script;
-use crate::blockdata::witness::Witness;
-use crate::blockdata::transaction::{Transaction, TxOut};
+use crate::primitives::script::Script;
+use crate::primitives::witness::Witness;
+use crate::primitives::transaction::{Transaction, TxOut};
 use crate::consensus::encode::{self, serialize, Decodable, Encodable, deserialize_partial};
 use secp256k1::{self, XOnlyPublicKey};
 use crate::util::bip32::{ChildNumber, Fingerprint, KeySource};

@@ -25,7 +25,7 @@ use bitcoin_internals::write_err;
 #[cfg(feature = "serde")] use serde;
 
 use crate::hash_types::{PubkeyHash, WPubkeyHash, ScriptHash, WScriptHash};
-use crate::blockdata::opcodes;
+use crate::primitives::opcodes;
 use crate::consensus::{encode, Decodable, Encodable};
 use crate::hashes::{Hash, hex};
 use crate::policy::DUST_RELAY_TX_FEE;
@@ -580,7 +580,7 @@ impl Script {
 
     /// Checks whether a script can be proven to have no satisfying input.
     pub fn is_provably_unspendable(&self) -> bool {
-        use crate::blockdata::opcodes::Class::{ReturnOp, IllegalOp};
+        use crate::primitives::opcodes::Class::{ReturnOp, IllegalOp};
 
         match self.0.first() {
             Some(b) => {
@@ -1128,7 +1128,7 @@ mod test {
 
     use crate::hashes::hex::{FromHex, ToHex};
     use crate::consensus::encode::{deserialize, serialize};
-    use crate::blockdata::opcodes;
+    use crate::primitives::opcodes;
     use crate::util::key::PublicKey;
     use crate::util::psbt::serialize::Serialize;
     use crate::internal_macros::hex_script;

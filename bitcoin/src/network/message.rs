@@ -14,8 +14,8 @@ use core::convert::TryFrom;
 
 use crate::io;
 use io::Read as _;
-use crate::blockdata::block;
-use crate::blockdata::transaction;
+use crate::primitives::block;
+use crate::primitives::transaction;
 use crate::network::address::{Address, AddrV2Message};
 use crate::network::{message_network, message_bloom};
 use crate::network::message_blockdata;
@@ -479,10 +479,10 @@ mod test {
     use crate::network::address::{Address, AddrV2, AddrV2Message};
     use super::message_network::{Reject, RejectReason, VersionMessage};
     use crate::network::message_blockdata::{Inventory, GetBlocksMessage, GetHeadersMessage};
-    use crate::blockdata::block::{Block, BlockHeader};
+    use crate::primitives::block::{Block, BlockHeader};
     use crate::network::message_filter::{GetCFilters, CFilter, GetCFHeaders, CFHeaders, GetCFCheckpt, CFCheckpt};
-    use crate::blockdata::transaction::Transaction;
-    use crate::blockdata::script::Script;
+    use crate::primitives::transaction::Transaction;
+    use crate::primitives::script::Script;
     use crate::network::message_bloom::{FilterAdd, FilterLoad, BloomFlags};
     use crate::MerkleBlock;
     use crate::network::message_compact_blocks::{GetBlockTxn, SendCmpct};

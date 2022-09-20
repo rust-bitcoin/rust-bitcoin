@@ -30,18 +30,18 @@ use bech32;
 use bitcoin_internals::write_err;
 use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
 
-use crate::blockdata::constants::{
-    MAX_SCRIPT_ELEMENT_SIZE, PUBKEY_ADDRESS_PREFIX_MAIN, PUBKEY_ADDRESS_PREFIX_TEST,
-    SCRIPT_ADDRESS_PREFIX_MAIN, SCRIPT_ADDRESS_PREFIX_TEST,
-};
-use crate::blockdata::script::Instruction;
-use crate::blockdata::{opcodes, script};
 use crate::error::ParseIntError;
 use crate::hash_types::{PubkeyHash, ScriptHash};
 use crate::hashes::{sha256, Hash, HashEngine};
 use crate::internal_macros::serde_string_impl;
 use crate::network::constants::Network;
 use crate::prelude::*;
+use crate::primitives::constants::{
+    MAX_SCRIPT_ELEMENT_SIZE, PUBKEY_ADDRESS_PREFIX_MAIN, PUBKEY_ADDRESS_PREFIX_TEST,
+    SCRIPT_ADDRESS_PREFIX_MAIN, SCRIPT_ADDRESS_PREFIX_TEST,
+};
+use crate::primitives::script::Instruction;
+use crate::primitives::{opcodes, script};
 use crate::util::base58;
 use crate::util::key::PublicKey;
 use crate::util::schnorr::{TapTweak, TweakedPublicKey, UntweakedPublicKey};

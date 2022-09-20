@@ -49,8 +49,8 @@ use crate::io;
 use crate::hashes::Hash;
 use crate::hash_types::{Txid, TxMerkleNode};
 
-use crate::blockdata::transaction::Transaction;
-use crate::blockdata::constants::{MAX_BLOCK_WEIGHT, MIN_TRANSACTION_WEIGHT};
+use crate::primitives::transaction::Transaction;
+use crate::primitives::constants::{MAX_BLOCK_WEIGHT, MIN_TRANSACTION_WEIGHT};
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::util::merkleblock::MerkleBlockError::*;
 use crate::{Block, BlockHeader};

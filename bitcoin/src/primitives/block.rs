@@ -21,9 +21,9 @@ use crate::hash_types::{Wtxid, BlockHash, TxMerkleNode, WitnessMerkleNode, Witne
 use crate::util::uint::Uint256;
 use crate::consensus::{encode, Encodable, Decodable};
 use crate::network::constants::Network;
-use crate::blockdata::transaction::Transaction;
-use crate::blockdata::constants::{max_target, WITNESS_SCALE_FACTOR};
-use crate::blockdata::script;
+use crate::primitives::transaction::Transaction;
+use crate::primitives::constants::{max_target, WITNESS_SCALE_FACTOR};
+use crate::primitives::script;
 use crate::VarInt;
 use crate::internal_macros::impl_consensus_encoding;
 use crate::io;
@@ -453,7 +453,7 @@ impl From<&Block> for BlockHash {
 mod tests {
     use crate::hashes::hex::FromHex;
 
-    use crate::blockdata::block::{Block, BlockHeader, BlockVersion};
+    use crate::primitives::block::{Block, BlockHeader, BlockVersion};
     use crate::consensus::encode::{deserialize, serialize};
     use crate::util::uint::Uint256;
     use crate::util::Error::{BlockBadTarget, BlockBadProofOfWork};

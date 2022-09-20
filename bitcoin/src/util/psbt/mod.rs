@@ -9,8 +9,8 @@
 
 use core::cmp;
 
-use crate::blockdata::script::Script;
-use crate::blockdata::transaction::{ TxOut, Transaction};
+use crate::primitives::script::Script;
+use crate::primitives::transaction::{ TxOut, Transaction};
 use crate::consensus::{encode, Encodable, Decodable};
 pub use crate::util::sighash::Prevouts;
 
@@ -335,15 +335,15 @@ impl Decodable for PartiallySignedTransaction {
 mod tests {
     use super::*;
 
-    use crate::blockdata::locktime::absolute;
+    use crate::primitives::locktime::absolute;
     use crate::hashes::hex::FromHex;
     use crate::hashes::{sha256, hash160, Hash, ripemd160};
     use crate::hash_types::Txid;
 
     use secp256k1::{Secp256k1, self};
 
-    use crate::blockdata::script::Script;
-    use crate::blockdata::transaction::{Transaction, TxIn, TxOut, OutPoint, Sequence};
+    use crate::primitives::script::Script;
+    use crate::primitives::transaction::{Transaction, TxIn, TxOut, OutPoint, Sequence};
     use crate::network::constants::Network::Bitcoin;
     use crate::consensus::encode::{deserialize, serialize, serialize_hex};
     use crate::util::bip32::{ChildNumber, ExtendedPrivKey, ExtendedPubKey, KeySource};
@@ -352,7 +352,7 @@ mod tests {
     use crate::internal_macros::hex_script;
 
     use std::collections::BTreeMap;
-    use crate::blockdata::witness::Witness;
+    use crate::primitives::witness::Witness;
 
     #[test]
     fn trivial_psbt() {
@@ -597,16 +597,16 @@ mod tests {
         use crate::hashes::hex::FromHex;
         use crate::hash_types::Txid;
 
-        use crate::blockdata::script::Script;
-        use crate::blockdata::transaction::{Transaction, TxIn, TxOut, OutPoint, Sequence};
+        use crate::primitives::script::Script;
+        use crate::primitives::transaction::{Transaction, TxIn, TxOut, OutPoint, Sequence};
         use crate::consensus::encode::serialize_hex;
-        use crate::blockdata::locktime::absolute;
+        use crate::primitives::locktime::absolute;
         use crate::util::psbt::map::{Map, Input, Output};
         use crate::util::psbt::raw;
         use crate::util::psbt::{PartiallySignedTransaction, Error};
         use crate::util::sighash::EcdsaSighashType;
         use std::collections::BTreeMap;
-        use crate::blockdata::witness::Witness;
+        use crate::primitives::witness::Witness;
         use crate::internal_macros::hex_script;
 
         #[test]

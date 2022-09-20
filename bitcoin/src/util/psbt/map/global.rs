@@ -6,7 +6,7 @@ use crate::prelude::*;
 
 use crate::io::{self, Cursor, Read};
 
-use crate::blockdata::transaction::Transaction;
+use crate::primitives::transaction::Transaction;
 use crate::consensus::{encode, Encodable, Decodable};
 use crate::consensus::encode::MAX_VEC_SIZE;
 use crate::util::psbt::map::Map;

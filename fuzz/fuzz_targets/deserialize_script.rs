@@ -2,7 +2,7 @@ extern crate bitcoin;
 
 use bitcoin::address::Address;
 use bitcoin::network::constants::Network;
-use bitcoin::blockdata::script;
+use bitcoin::primitives::script;
 use bitcoin::consensus::encode;
 
 fn do_test(data: &[u8]) {

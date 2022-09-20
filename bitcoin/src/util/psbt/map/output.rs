@@ -6,7 +6,7 @@ use core::convert::TryFrom;
 
 use crate::io;
 
-use crate::blockdata::script::Script;
+use crate::primitives::script::Script;
 use crate::consensus::encode;
 use secp256k1::XOnlyPublicKey;
 use crate::util::bip32::KeySource;

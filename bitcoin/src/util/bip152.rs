@@ -372,7 +372,7 @@ impl BlockTransactions {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::blockdata::locktime::absolute;
+    use crate::primitives::locktime::absolute;
     use crate::consensus::encode::{deserialize, serialize};
     use crate::hashes::hex::FromHex;
     use crate::{

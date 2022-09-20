@@ -9,9 +9,9 @@ use core::convert::TryFrom;
 
 use secp256k1::XOnlyPublicKey;
 
-use crate::blockdata::script::Script;
-use crate::blockdata::witness::Witness;
-use crate::blockdata::transaction::{Transaction, TxOut};
+use crate::primitives::script::Script;
+use crate::primitives::witness::Witness;
+use crate::primitives::transaction::{Transaction, TxOut};
 use crate::consensus::encode;
 use crate::hashes::{self, hash160, ripemd160, sha256, sha256d};
 use crate::util::bip32::KeySource;
