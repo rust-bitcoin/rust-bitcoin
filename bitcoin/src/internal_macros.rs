@@ -45,17 +45,6 @@ macro_rules! impl_consensus_encoding {
     );
 }
 pub(crate) use impl_consensus_encoding;
-
-macro_rules! debug_from_display {
-    ($thing:ident) => {
-        impl core::fmt::Debug for $thing {
-            fn fmt(&self, f: &mut core::fmt::Formatter) -> Result<(), core::fmt::Error> {
-                core::fmt::Display::fmt(self, f)
-            }
-        }
-    };
-}
-pub(crate) use debug_from_display;
 // We use test_macros module to keep things organised, re-export everything for ease of use.
 #[cfg(test)]
 pub(crate) use test_macros::*;

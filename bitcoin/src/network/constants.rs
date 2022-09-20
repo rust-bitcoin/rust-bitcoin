@@ -32,13 +32,13 @@ use core::str::FromStr;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
+use bitcoin_internals::{debug_from_display, write_err};
+
 use crate::io;
 use crate::prelude::{String, ToOwned};
 use crate::consensus::encode::{self, Encodable, Decodable};
-use crate::internal_macros::debug_from_display;
 use crate::hashes::hex::{FromHex, Error};
 use crate::error::impl_std_error;
-use bitcoin_internals::write_err;
 
 /// Version of the protocol as appearing in network message headers
 /// This constant is used to signal to other peers which features you support.

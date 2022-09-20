@@ -61,3 +61,15 @@ macro_rules! impl_array_newtype {
         }
     };
 }
+
+/// Implements `Debug` by calling through to `Display`.
+#[macro_export]
+macro_rules! debug_from_display {
+    ($thing:ident) => {
+        impl core::fmt::Debug for $thing {
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> Result<(), core::fmt::Error> {
+                core::fmt::Display::fmt(self, f)
+            }
+        }
+    };
+}
