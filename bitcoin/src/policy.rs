@@ -15,7 +15,7 @@
 
 use core::cmp;
 
-use super::primitives::constants::{MAX_BLOCK_SIGOPS_COST, WITNESS_SCALE_FACTOR};
+use super::primitives::{MAX_BLOCK_SIGOPS_COST, WITNESS_SCALE_FACTOR};
 
 /// Maximum weight of a transaction for it to be relayed by most nodes on the network
 pub const MAX_STANDARD_TX_WEIGHT: u32 = 400_000;

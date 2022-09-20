@@ -23,7 +23,7 @@ use bitcoin_internals::write_err;
 use crate::hashes::{self, Hash, sha256d};
 use crate::hashes::hex::FromHex;
 
-use crate::primitives::constants::WITNESS_SCALE_FACTOR;
+use crate::primitives::WITNESS_SCALE_FACTOR;
 #[cfg(feature="bitcoinconsensus")] use crate::script;
 use crate::script::Script;
 use crate::primitives::witness::Witness;
@@ -75,7 +75,7 @@ impl OutPoint {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin::constants::genesis_block;
+    /// use bitcoin::primitives::genesis_block;
     /// use bitcoin::network::constants::Network;
     ///
     /// let block = genesis_block(Network::Bitcoin);
@@ -1020,7 +1020,7 @@ mod tests {
 
     use core::str::FromStr;
 
-    use crate::primitives::constants::WITNESS_SCALE_FACTOR;
+    use crate::primitives::WITNESS_SCALE_FACTOR;
     use crate::script::Script;
     use crate::primitives::locktime::absolute;
     use crate::consensus::encode::serialize;
@@ -1096,9 +1096,9 @@ mod tests {
     #[test]
     fn test_is_coinbase () {
         use crate::network::constants::Network;
-        use crate::primitives::constants;
+        use crate::primitives;
 
-        let genesis = constants::genesis_block(Network::Bitcoin);
+        let genesis = primitives::genesis_block(Network::Bitcoin);
         assert! (genesis.txdata[0].is_coin_base());
         let tx_bytes = Vec::from_hex("0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000").unwrap();
         let tx: Transaction = deserialize(&tx_bytes).unwrap();

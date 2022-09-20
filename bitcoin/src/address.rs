@@ -36,7 +36,7 @@ use crate::hashes::{sha256, Hash, HashEngine};
 use crate::internal_macros::serde_string_impl;
 use crate::network::constants::Network;
 use crate::prelude::*;
-use crate::primitives::constants::{
+use crate::primitives::{
     MAX_SCRIPT_ELEMENT_SIZE, PUBKEY_ADDRESS_PREFIX_MAIN, PUBKEY_ADDRESS_PREFIX_TEST,
     SCRIPT_ADDRESS_PREFIX_MAIN, SCRIPT_ADDRESS_PREFIX_TEST,
 };

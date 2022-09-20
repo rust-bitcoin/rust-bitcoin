@@ -102,7 +102,6 @@ pub use crate::consensus::encode::VarInt;
 pub use crate::hash_types::*;
 pub use crate::network::constants::Network;
 pub use crate::primitives::block::{self, Block, BlockHeader, BlockVersion};
-pub use crate::primitives::constants;
 pub use crate::primitives::locktime::{self, absolute, relative};
 pub use crate::primitives::transaction::{self, OutPoint, Sequence, Transaction, TxIn, TxOut};
 pub use crate::primitives::witness::{self, Witness};
