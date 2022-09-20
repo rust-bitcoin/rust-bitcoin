@@ -5,6 +5,11 @@
 //! Error handling macros and helpers.
 //!
 
+pub mod input_string;
+mod parse_error;
+
+pub use input_string::InputString;
+
 /// Formats error.
 ///
 /// If `std` feature is OFF appends error source (delimited by `: `). We do this because
