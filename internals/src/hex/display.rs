@@ -4,10 +4,11 @@
 //! `&[u8]`.
 
 use core::fmt;
-#[cfg(feature = "alloc")]
-use crate::prelude::*;
+
 use super::buf_encoder::{BufEncoder, OutBytes};
 use super::Case;
+#[cfg(feature = "alloc")]
+use crate::prelude::*;
 
 /// Extension trait for types that can be displayed as hex.
 /// Types that have a single, obvious text representation being hex should **not** implement this
@@ -28,16 +29,12 @@ pub trait DisplayHex: Copy + sealed::IsRef {
     /// Shorthand for `display_hex(Case::Lower)`.
     ///
     /// Avoids the requirement to import the `Case` type.
-    fn display_lower_hex(self) -> Self::Display {
-        self.display_hex(Case::Lower)
-    }
+    fn display_lower_hex(self) -> Self::Display { self.display_hex(Case::Lower) }
 
     /// Shorthand for `display_hex(Case::Upper)`.
     ///
     /// Avoids the requirement to import the `Case` type.
-    fn display_upper_hex(self) -> Self::Display {
-        self.display_hex(Case::Upper)
-    }
+    fn display_upper_hex(self) -> Self::Display { self.display_hex(Case::Upper) }
 
     /// Create a lower-hex-encoded string.
     ///
@@ -46,9 +43,7 @@ pub trait DisplayHex: Copy + sealed::IsRef {
     /// This may be faster than `.display_hex().to_string()` because it uses `reserve_suggestion`.
     #[cfg(feature = "alloc")]
     #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
-    fn to_lower_hex_string(self) -> String {
-        self.to_hex_string(Case::Lower)
-    }
+    fn to_lower_hex_string(self) -> String { self.to_hex_string(Case::Lower) }
 
     /// Create an upper-hex-encoded string.
     ///
@@ -57,9 +52,7 @@ pub trait DisplayHex: Copy + sealed::IsRef {
     /// This may be faster than `.display_hex().to_string()` because it uses `reserve_suggestion`.
     #[cfg(feature = "alloc")]
     #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
-    fn to_upper_hex_string(self) -> String {
-        self.to_hex_string(Case::Upper)
-    }
+    fn to_upper_hex_string(self) -> String { self.to_hex_string(Case::Upper) }
 
     /// Create a hex-encoded string.
     ///
@@ -96,30 +89,21 @@ pub trait DisplayHex: Copy + sealed::IsRef {
     /// Defaults to 0.
     ///
     // We prefix the name with `hex_` to avoid potential collision with other methods.
-    fn hex_reserve_suggestion(self) -> usize {
-        0
-    }
+    fn hex_reserve_suggestion(self) -> usize { 0 }
 }
 
 mod sealed {
     /// Trait marking a shared reference.
-    pub trait IsRef: Copy {
-    }
+    pub trait IsRef: Copy {}
 
-    impl<T: ?Sized> IsRef for &'_ T {
-    }
+    impl<T: ?Sized> IsRef for &'_ T {}
 }
 
 impl<'a> DisplayHex for &'a [u8] {
     type Display = DisplayByteSlice<'a>;
 
     #[inline]
-    fn display_hex(self, case: Case) -> Self::Display {
-        DisplayByteSlice {
-            bytes: self,
-            case,
-        }
-    }
+    fn display_hex(self, case: Case) -> Self::Display { DisplayByteSlice { bytes: self, case } }
 
     #[inline]
     fn hex_reserve_suggestion(self) -> usize {
@@ -174,23 +158,26 @@ impl<'a> fmt::Display for DisplayByteSlice<'a> {
 /// is more than half of `usize::MAX`.
 #[macro_export]
 macro_rules! fmt_hex_exact {
-    ($formatter:expr, $len:expr, $bytes:expr, $case:expr) => {
-        {
-            // statically check $len
-            #[allow(deprecated)]
-            const _: () = [()][($len > usize::max_value() / 2) as usize];
-            assert_eq!($bytes.len(), $len);
-            let mut buf = [0u8; $len * 2];
-            let buf = $crate::hex::buf_encoder::AsOutBytes::as_mut_out_bytes(&mut buf);
-            $crate::hex::display::fmt_hex_exact_fn($formatter, buf, $bytes, $case)
-        }
-    }
+    ($formatter:expr, $len:expr, $bytes:expr, $case:expr) => {{
+        // statically check $len
+        #[allow(deprecated)]
+        const _: () = [()][($len > usize::max_value() / 2) as usize];
+        assert_eq!($bytes.len(), $len);
+        let mut buf = [0u8; $len * 2];
+        let buf = $crate::hex::buf_encoder::AsOutBytes::as_mut_out_bytes(&mut buf);
+        $crate::hex::display::fmt_hex_exact_fn($formatter, buf, $bytes, $case)
+    }};
 }
 
 // Implementation detail of `write_hex_exact` macro to de-duplicate the code
 #[doc(hidden)]
 #[inline]
-pub fn fmt_hex_exact_fn(f: &mut fmt::Formatter, buf: &mut OutBytes, bytes: &[u8], case: Case) -> fmt::Result {
+pub fn fmt_hex_exact_fn(
+    f: &mut fmt::Formatter,
+    buf: &mut OutBytes,
+    bytes: &[u8],
+    case: Case,
+) -> fmt::Result {
     let mut encoder = BufEncoder::new(buf);
     encoder.put_bytes(bytes, case);
     f.pad_integral(true, "0x", encoder.as_str())
@@ -217,34 +204,22 @@ mod tests {
         }
 
         #[test]
-        fn empty() {
-            check_encoding(b"");
-        }
+        fn empty() { check_encoding(b""); }
 
         #[test]
-        fn single() {
-            check_encoding(b"*");
-        }
+        fn single() { check_encoding(b"*"); }
 
         #[test]
-        fn two() {
-            check_encoding(b"*x");
-        }
+        fn two() { check_encoding(b"*x"); }
 
         #[test]
-        fn just_below_boundary() {
-            check_encoding(&[42; 512]);
-        }
+        fn just_below_boundary() { check_encoding(&[42; 512]); }
 
         #[test]
-        fn just_above_boundary() {
-            check_encoding(&[42; 513]);
-        }
+        fn just_above_boundary() { check_encoding(&[42; 513]); }
 
         #[test]
-        fn just_above_double_boundary() {
-            check_encoding(&[42; 1025]);
-        }
+        fn just_above_double_boundary() { check_encoding(&[42; 1025]); }
 
         #[test]
         fn fmt_exact_macro() {
