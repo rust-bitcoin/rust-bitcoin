@@ -73,3 +73,11 @@ macro_rules! debug_from_display {
         }
     };
 }
+
+/// Asserts a boolean expression at compile time.
+#[macro_export]
+macro_rules! const_assert {
+    ($x:expr) => {{
+        const _: [(); 0 - !$x as usize] = [];
+    }};
+}
