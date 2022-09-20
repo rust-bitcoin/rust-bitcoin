@@ -193,7 +193,7 @@ impl TransactionPayload {
 /// The first part for the version and the second part for the transaction
 /// type.
 ///
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 #[repr(u16)]
 pub enum TransactionType {
     /// A Classic transaction

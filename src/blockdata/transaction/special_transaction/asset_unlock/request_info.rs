@@ -12,15 +12,11 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! Dash Credit Withdrawal Special Transaction.
+//! Dash Asset unlock Special Transaction request info.
 //!
-//! The credit withdrawal special transaction is used to withdraw from the asset lock credit pool.
+//! The asset unlock special transaction is used to withdraw from the asset lock credit pool.
 //!
-//!
-//! It is defined in DIPX https://github.com/dashpay/dips/blob/master/dip-000X.md as follows:
-//!
-//!
-//! The special transaction type used for CrWithTx Transactions is 9.
+//! The request info should be added once the quorum selection for signing has been made.
 
 use ::{io};
 use io::{Error, Write};
@@ -28,14 +24,9 @@ use consensus::{Decodable, Encodable, encode};
 use ::{QuorumHash};
 use prelude::*;
 
-/// A Credit Withdrawal payload. This is contained as the payload of a credit withdrawal special
-/// transaction.
-/// The Credit Withdrawal Special transaction and this payload is described in the Asset Lock DIP2X
-/// (todo:update this).
-/// The Credit Withdrawal Payload is signed by a quorum.
-///
-/// Transaction using it have no inputs. Hence the proof of validity lies solely on the BLS signature.
-///
+/// An asset unlock request info
+/// This is the information about the signing quorum
+/// The request height should be the height at which the specified quorum is active on core.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct AssetUnlockRequestInfo {
