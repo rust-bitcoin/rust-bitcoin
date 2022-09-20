@@ -62,11 +62,19 @@ impl LockTime {
         }
     }
 
-    /// Returns true if this [`relative::LockTime`] is satisfied by `other` lock.
+    /// Returns true if satisfaction of `other` lock time implies satisfaction of this
+    /// [`relative::LockTime`].
+    ///
+    /// A lock time can only be satisfied by n blocks being mined or n seconds passing. If you have
+    /// two lock times (same unit) then the larger lock time being satisfied implies (in a
+    /// mathematical sense) the smaller one being satisfied.
     ///
     /// This function is useful when checking sequence values against a lock, first one checks the
     /// sequence represents a relative lock time by converting to `LockTime` then use this function
-    /// to see if [`LockTime`] is satisfied by the newly created lock.
+    /// to see if satisfaction of the newly created lock time would imply satisfaction of `self`.
+    ///
+    /// Can also be used to remove the smaller value of two `OP_CHECKSEQUENCEVERIFY` operations
+    /// within one branch of the script.
     ///
     /// # Examples
     ///
@@ -80,16 +88,16 @@ impl LockTime {
     ///
     /// let satisfied = match test_sequence.to_relative_lock_time() {
     ///     None => false, // Handle non-lock-time case.
-    ///     Some(test_lock) => lock.is_satisfied_by_lock(test_lock),
+    ///     Some(test_lock) => lock.is_implied_by(test_lock),
     /// };
     /// assert!(satisfied);
     /// ```
-    pub fn is_satisfied_by_lock(&self, other: LockTime) -> bool {
+    pub fn is_implied_by(&self, other: LockTime) -> bool {
         use LockTime::*;
 
         match (*self, other) {
-            (Blocks(n), Blocks(m)) => n.value() <= m.value(),
-            (Time(n), Time(m)) => n.value() <= m.value(),
+            (Blocks(this), Blocks(other)) => this.value() <= other.value(),
+            (Time(this), Time(other)) => this.value() <= other.value(),
             _ => false, // Not the same units.
         }
     }
