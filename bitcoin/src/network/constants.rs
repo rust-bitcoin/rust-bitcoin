@@ -348,4 +348,22 @@ mod tests {
         let flag = ServiceFlags::WITNESS | 0xf0.into();
         assert_eq!("ServiceFlags(WITNESS|COMPACT_FILTERS|0xb0)", flag.to_string());
     }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn serde_roundtrip() {
+        use Network::*;
+        let tests = vec![(Bitcoin, "bitcoin"), (Testnet, "testnet"), (Signet, "signet"), (Regtest, "regtest")];
+
+        for tc in tests {
+            let network = tc.0;
+
+            let want = format!("\"{}\"", tc.1);
+            let got = serde_json::to_string(&tc.0).expect("failed to serialize network");
+            assert_eq!(got, want);
+
+            let back: Network = serde_json::from_str(&got).expect("failed to deserialize network");
+            assert_eq!(back, network);
+        }
+    }
 }
