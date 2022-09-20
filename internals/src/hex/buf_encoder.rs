@@ -56,9 +56,7 @@ mod out_bytes {
         ///
         /// The method panics if `len` is out of bounds.
         #[cfg_attr(rust_v_1_46, track_caller)]
-        pub(crate) fn assume_init(&self, len: usize) -> &[u8] {
-            &self.0[..len]
-        }
+        pub(crate) fn assume_init(&self, len: usize) -> &[u8] { &self.0[..len] }
 
         /// Writes given bytes into the buffer.
         ///
@@ -71,9 +69,7 @@ mod out_bytes {
         }
 
         /// Returns the length of the buffer.
-        pub(crate) fn len(&self) -> usize {
-            self.0.len()
-        }
+        pub(crate) fn len(&self) -> usize { self.0.len() }
 
         fn from_bytes(slice: &[u8]) -> &Self {
             // SAFETY: copied from std
@@ -83,9 +79,7 @@ mod out_bytes {
             // conversion sound.
             // The pointer was just created from a reference that's still alive so dereferencing is
             // sound.
-            unsafe {
-                &*(slice as *const [u8] as *const Self)
-            }
+            unsafe { &*(slice as *const [u8] as *const Self) }
         }
 
         fn from_mut_bytes(slice: &mut [u8]) -> &mut Self {
@@ -96,9 +90,7 @@ mod out_bytes {
             // conversion sound.
             // The pointer was just created from a reference that's still alive so dereferencing is
             // sound.
-            unsafe {
-                &mut *(slice as *mut [u8] as *mut Self)
-            }
+            unsafe { &mut *(slice as *mut [u8] as *mut Self) }
         }
     }
 
@@ -121,36 +113,30 @@ mod out_bytes {
     }
 
     impl<T: AsOutBytes + ?Sized> AsOutBytes for &'_ mut T {
-        fn as_out_bytes(&self) -> &OutBytes {
-            (**self).as_out_bytes()
-        }
+        fn as_out_bytes(&self) -> &OutBytes { (**self).as_out_bytes() }
 
-        fn as_mut_out_bytes(&mut self) -> &mut OutBytes {
-            (**self).as_mut_out_bytes()
-        }
+        fn as_mut_out_bytes(&mut self) -> &mut OutBytes { (**self).as_mut_out_bytes() }
     }
 
     impl<T: AsOutBytes + ?Sized> Sealed for &'_ mut T {}
 
     impl AsOutBytes for OutBytes {
-        fn as_out_bytes(&self) -> &OutBytes {
-            self
-        }
+        fn as_out_bytes(&self) -> &OutBytes { self }
 
-        fn as_mut_out_bytes(&mut self) -> &mut OutBytes {
-            self
-        }
+        fn as_mut_out_bytes(&mut self) -> &mut OutBytes { self }
     }
 
     impl Sealed for OutBytes {}
 
     // As a sanity check we only provide conversions for even, non-empty arrays.
     // Weird lengths 66 and 130 are provided for serialized public keys.
-    impl_from_array!(2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 64, 66, 128, 130, 256, 512, 1024, 2048, 4096, 8192);
+    impl_from_array!(
+        2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 64, 66, 128, 130, 256, 512,
+        1024, 2048, 4096, 8192
+    );
 
     /// Prevents outside crates from implementing the trait
     pub trait Sealed {}
-
 }
 
 /// Hex-encodes bytes into the provided buffer.
@@ -169,12 +155,7 @@ impl<T: AsOutBytes> BufEncoder<T> {
     /// This is usually used with uninitialized (zeroed) byte array allocated on stack.
     /// This can only be constructed with an even-length, non-empty array.
     #[inline]
-    pub fn new(buf: T) -> Self {
-        BufEncoder {
-            buf,
-            pos: 0,
-        }
-    }
+    pub fn new(buf: T) -> Self { BufEncoder { buf, pos: 0 } }
 
     /// Encodes `byte` as hex in given `case` and appends it to the buffer.
     ///
@@ -207,21 +188,18 @@ impl<T: AsOutBytes> BufEncoder<T> {
 
     /// Returns true if no more bytes can be written into the buffer.
     #[inline]
-    pub fn is_full(&self) -> bool {
-        self.pos == self.buf.as_out_bytes().len()
-    }
+    pub fn is_full(&self) -> bool { self.pos == self.buf.as_out_bytes().len() }
 
     /// Returns the written bytes as a hex `str`.
     #[inline]
     pub fn as_str(&self) -> &str {
-        core::str::from_utf8(self.buf.as_out_bytes().assume_init(self.pos)).expect("we only write ASCII")
+        core::str::from_utf8(self.buf.as_out_bytes().assume_init(self.pos))
+            .expect("we only write ASCII")
     }
 
     /// Resets the buffer to become empty.
     #[inline]
-    pub fn clear(&mut self) {
-        self.pos = 0;
-    }
+    pub fn clear(&mut self) { self.pos = 0; }
 }
 
 #[cfg(test)]
@@ -289,9 +267,7 @@ mod tests {
         }
 
         impl Writer {
-            fn as_str(&self) -> &str {
-                core::str::from_utf8(&self.buf[..self.pos]).unwrap()
-            }
+            fn as_str(&self) -> &str { core::str::from_utf8(&self.buf[..self.pos]).unwrap() }
         }
 
         impl Write for Writer {
@@ -307,10 +283,7 @@ mod tests {
             }
         }
 
-        let mut writer = Writer {
-            buf: [0u8; 2],
-            pos: 0,
-        };
+        let mut writer = Writer { buf: [0u8; 2], pos: 0 };
         let mut buf = [0u8; 2];
         let mut encoder = BufEncoder::new(&mut buf);
 
