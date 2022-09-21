@@ -14,14 +14,13 @@ edition = "2018"
 # Please don't forget to add relevant features to docs.rs below.
 [features]
 default = ["std"]
-std = ["bitcoin_hashes/std"]
-alloc = ["bitcoin_hashes/alloc"]
+std = []
 
 [package.metadata.docs.rs]
 features = ["std"]
 rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
-bitcoin_hashes = { version = "0.11.0", default-features = false }
 
 [dev-dependencies]
+bitcoin_hashes = { version = "0.11.0", default-features = false }

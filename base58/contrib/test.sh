@@ -2,7 +2,7 @@
 
 set -ex
 
-FEATURES="std alloc"
+FEATURES="std"
 
 cargo --version
 rustc --version
