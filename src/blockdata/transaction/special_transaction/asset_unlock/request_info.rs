@@ -30,8 +30,11 @@ use prelude::*;
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct AssetUnlockRequestInfo {
-    request_height: u32,
-    quorum_hash: QuorumHash,
+    /// The core request height of the transaction. This should match a period where the quorum_hash
+    /// is still active
+    pub request_height: u32,
+    /// The quorum hash. This is the block hash when the quorum was created.
+    pub quorum_hash: QuorumHash,
 }
 
 impl AssetUnlockRequestInfo {

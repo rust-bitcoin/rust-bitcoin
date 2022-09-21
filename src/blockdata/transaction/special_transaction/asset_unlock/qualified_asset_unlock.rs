@@ -42,9 +42,14 @@ use blockdata::transaction::special_transaction::SpecialTransactionBasePayloadEn
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct AssetUnlockPayload {
-    base: AssetUnlockBasePayload,
-    request_info: AssetUnlockRequestInfo,
-    quorum_sig: BLSSignature,
+    /// The base information about the asset unlock. This base information is the information that
+    /// should be put into a queue.
+    pub base: AssetUnlockBasePayload,
+    /// The request information. This should be added to the unlock transaction as it is being sent
+    /// to be signed.
+    pub request_info: AssetUnlockRequestInfo,
+    /// The threshold signature. This should be returned by the consensus engine.
+    pub quorum_sig: BLSSignature,
 }
 
 impl SpecialTransactionBasePayloadEncodable for AssetUnlockPayload {

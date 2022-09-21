@@ -29,8 +29,9 @@ use blockdata::transaction::special_transaction::TransactionType;
 use blockdata::transaction::special_transaction::TransactionType::AssetUnlock;
 use consensus::{Decodable, Encodable, encode};
 use consensus::encode::MAX_VEC_SIZE;
-use TxIn;
+use ::{Script, TxIn};
 use prelude::*;
+use ::{PubkeyHash, ScriptHash};
 
 /// An Asset Unlock Base payload. This is the base payload of the Asset Unlock. In order to make
 /// it a full payload the request info should be added.
@@ -81,6 +82,40 @@ pub struct AssetUnlockBaseTransactionInfo {
     pub output: Vec<TxOut>,
     /// Base payload information
     pub base_payload: AssetUnlockBasePayload,
+}
+
+impl AssetUnlockBaseTransactionInfo {
+    /// Adds an output that burns Dash. Used to top up a Dash Identity;
+    /// accepts hash of the public key to prove ownership of the burnt
+    /// dash on Dash Platform.
+    pub fn add_burn_output(&mut self, satoshis_to_burn: u64, data: &[u8; 20]) {
+        let burn_script = Script::new_op_return(data);
+        let output = TxOut {
+            value: satoshis_to_burn,
+            script_pubkey: burn_script,
+        };
+        self.output.push(output)
+    }
+
+    /// Convenience method that adds an output that pays to a public key hash.
+    pub fn add_p2pkh_output(&mut self, amount: u64, public_key_hash: &PubkeyHash) {
+        let public_key_hash_script = Script::new_p2pkh(public_key_hash);
+        let output = TxOut {
+            value: amount,
+            script_pubkey: public_key_hash_script,
+        };
+        self.output.push(output)
+    }
+
+    /// Convenience method that adds an output that pays to a public key hash.
+    pub fn add_p2sh_output(&mut self, amount: u64, script_hash: &ScriptHash) {
+        let pay_to_script_hash_script = Script::new_p2sh(script_hash);
+        let output = TxOut {
+            value: amount,
+            script_pubkey: pay_to_script_hash_script,
+        };
+        self.output.push(output)
+    }
 }
 
 impl Encodable for AssetUnlockBaseTransactionInfo {
