@@ -282,12 +282,9 @@ impl TaprootSpendInfo {
         for leaves in node.leaves {
             let key = (leaves.script, leaves.ver);
             let value = leaves.merkle_branch;
-            match info.script_map.get_mut(&key) {
-                Some(set) => {
-                    set.insert(value);
-                    continue; // NLL fix
-                }
-                None => {}
+            if let Some(set) = info.script_map.get_mut(&key) {
+                set.insert(value);
+                continue; // NLL fix
             }
             let mut set = BTreeSet::new();
             set.insert(value);
