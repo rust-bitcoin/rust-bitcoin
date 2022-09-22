@@ -743,25 +743,25 @@ impl Decodable for CheckedData {
 // References
 impl<'a, T: Encodable> Encodable for &'a T {
     fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        (&**self).consensus_encode(w)
+        (**self).consensus_encode(w)
     }
 }
 
 impl<'a, T: Encodable> Encodable for &'a mut T {
     fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        (&**self).consensus_encode(w)
+        (**self).consensus_encode(w)
     }
 }
 
 impl<T: Encodable> Encodable for rc::Rc<T> {
     fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        (&**self).consensus_encode(w)
+        (**self).consensus_encode(w)
     }
 }
 
 impl<T: Encodable> Encodable for sync::Arc<T> {
     fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        (&**self).consensus_encode(w)
+        (**self).consensus_encode(w)
     }
 }
 

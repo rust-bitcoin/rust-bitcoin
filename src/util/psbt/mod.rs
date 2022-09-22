@@ -302,7 +302,7 @@ impl Decodable for PartiallySignedTransaction {
         global.unsigned_tx_checks()?;
 
         let inputs: Vec<Input> = {
-            let inputs_len: usize = (&global.unsigned_tx.input).len();
+            let inputs_len: usize = global.unsigned_tx.input.len();
 
             let mut inputs: Vec<Input> = Vec::with_capacity(inputs_len);
 
@@ -314,7 +314,7 @@ impl Decodable for PartiallySignedTransaction {
         };
 
         let outputs: Vec<Output> = {
-            let outputs_len: usize = (&global.unsigned_tx.output).len();
+            let outputs_len: usize = global.unsigned_tx.output.len();
 
             let mut outputs: Vec<Output> = Vec::with_capacity(outputs_len);
 
@@ -817,7 +817,7 @@ mod tests {
             assert_eq!(psbt.outputs.len(), 2);
 
             let tx_input = &psbt.unsigned_tx.input[0];
-            let psbt_non_witness_utxo = (&psbt.inputs[0].non_witness_utxo).as_ref().unwrap();
+            let psbt_non_witness_utxo = psbt.inputs[0].non_witness_utxo.as_ref().unwrap();
 
             assert_eq!(tx_input.previous_output.txid, psbt_non_witness_utxo.txid());
             assert!(psbt_non_witness_utxo.output[tx_input.previous_output.vout as usize]
@@ -825,7 +825,7 @@ mod tests {
                     .is_p2pkh()
             );
             assert_eq!(
-                (&psbt.inputs[0].sighash_type).as_ref().unwrap().ecdsa_hash_ty().unwrap(),
+                psbt.inputs[0].sighash_type.as_ref().unwrap().ecdsa_hash_ty().unwrap(),
                 EcdsaSighashType::All
             );
         }
