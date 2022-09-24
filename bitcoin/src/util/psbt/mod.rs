@@ -497,7 +497,7 @@ mod tests {
         //! Create a full PSBT value with various fields filled and make sure it can be JSONized.
         use crate::hashes::sha256d;
         use crate::util::psbt::map::Input;
-        use crate::EcdsaSighashType;
+        use crate::sighash::EcdsaSighashType;
 
         // create some values to use in the PSBT
         let tx = Transaction {

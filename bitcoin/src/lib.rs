@@ -110,11 +110,7 @@ pub use crate::util::ecdsa::{self, EcdsaSig, EcdsaSigError};
 pub use crate::util::key::{KeyPair, PrivateKey, PublicKey, XOnlyPublicKey};
 pub use crate::util::merkleblock::MerkleBlock;
 pub use crate::util::schnorr::{self, SchnorrSig, SchnorrSigError};
-pub use crate::util::sighash::{
-    EcdsaSighashType, NonStandardSighashType, SchnorrSighashType, SighashCache,
-    SighashTypeParseError,
-};
-pub use crate::util::{psbt, Error};
+pub use crate::util::{psbt, sighash, Error};
 
 #[cfg(not(feature = "std"))]
 mod io_extras {
