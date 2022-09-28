@@ -37,6 +37,8 @@ use crate::prelude::{String, ToOwned};
 use crate::consensus::encode::{self, Encodable, Decodable};
 use crate::internal_macros::debug_from_display;
 use crate::hashes::hex::{FromHex, Error};
+use crate::error::impl_std_error;
+use bitcoin_internals::write_err;
 
 /// Version of the protocol as appearing in network message headers
 /// This constant is used to signal to other peers which features you support.
@@ -286,6 +288,20 @@ impl BorrowMut<[u8; 4]> for Magic {
         &mut self.0
     }
 }
+
+impl fmt::Display for ParseMagicError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        write_err!(f, "failed to parse {} as network magic", self.magic; self.error)
+    }
+}
+impl_std_error!(ParseMagicError, error);
+
+impl fmt::Display for UnknownMagic {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        write!(f, "unknown network magic {}", self.0)
+    }
+}
+impl_std_error!(UnknownMagic);
 
 /// Flags to indicate which network services a node supports.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
