@@ -239,8 +239,10 @@ pub enum Error {
     BadByte(u8),
     /// Checksum was not correct (expected, actual).
     BadChecksum(u32, u32),
-    /// The length (in bytes) of the object was not correct, note that if the length is excessively
-    /// long the provided length may be an estimate (and the checksum step may be skipped).
+    /// The length (in bytes) of the object was not correct.
+    ///
+    /// Note that if the length is excessively long the provided length may be an estimate (and the
+    /// checksum step may be skipped).
     InvalidLength(usize),
     /// Extended Key version byte(s) were not recognized.
     InvalidExtendedKeyVersion([u8; 4]),
