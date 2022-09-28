@@ -107,7 +107,7 @@ pub fn encode(data: &[u8]) -> String {
 
 /// Encodes `data` as a base58 string including the checksum.
 ///
-/// The checksum is the first 4 256-digits of the object's Bitcoin hash, concatenated onto the end.
+/// The checksum is the first four bytes of the sha256d of the data, concatenated onto the end.
 #[deprecated(since = "0.30.0", note = "Use base58::encode_check() instead")]
 pub fn check_encode_slice(data: &[u8]) -> String {
     encode_check(data)
@@ -115,7 +115,7 @@ pub fn check_encode_slice(data: &[u8]) -> String {
 
 /// Encodes `data` as a base58 string including the checksum.
 ///
-/// The checksum is the first 4 256-digits of the object's Bitcoin hash, concatenated onto the end.
+/// The checksum is the first four bytes of the sha256d of the data, concatenated onto the end.
 pub fn encode_check(data: &[u8]) -> String {
     let checksum = sha256d::Hash::hash(data);
     encode_iter(
@@ -127,7 +127,7 @@ pub fn encode_check(data: &[u8]) -> String {
 
 /// Encodes `data` as base58, including the checksum, into a formatter.
 ///
-/// The checksum is the first 4 256-digits of the object's Bitcoin hash, concatenated onto the end.
+/// The checksum is the first four bytes of the sha256d of the data, concatenated onto the end.
 #[deprecated(since = "0.30.0", note = "Use base58::encode_check_to_fmt() instead")]
 pub fn check_encode_slice_to_fmt(fmt: &mut fmt::Formatter, data: &[u8]) -> fmt::Result {
     encode_check_to_fmt(fmt, data)
@@ -135,7 +135,7 @@ pub fn check_encode_slice_to_fmt(fmt: &mut fmt::Formatter, data: &[u8]) -> fmt::
 
 /// Encodes a slice as base58, including the checksum, into a formatter.
 ///
-/// The checksum is the first 4 256-digits of the object's Bitcoin hash, concatenated onto the end.
+/// The checksum is the first four bytes of the sha256d of the data, concatenated onto the end.
 pub fn encode_check_to_fmt(fmt: &mut fmt::Formatter, data: &[u8]) -> fmt::Result {
     let checksum = sha256d::Hash::hash(data);
     let iter = data.iter()
