@@ -513,7 +513,7 @@ mod tests {
         assert_eq!(some_header.validate_pow(some_header.target()).unwrap(), some_header.block_hash());
 
         // test with zero target
-        match some_header.validate_pow(Target::default()) {
+        match some_header.validate_pow(Target::ZERO) {
             Err(BlockBadTarget) => (),
             _ => panic!("unexpected result from validate_pow"),
         }

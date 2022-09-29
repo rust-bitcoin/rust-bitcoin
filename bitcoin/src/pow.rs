@@ -90,7 +90,7 @@ macro_rules! do_impl {
 /// Work is a measure of how difficult it is to find a hash below a given [`Target`].
 ///
 /// ref: <https://en.bitcoin.it/wiki/Work>
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct Work(U256);
@@ -130,14 +130,14 @@ impl Sub for Work {
 /// a block. (See also [`Work`].)
 ///
 /// ref: <https://en.bitcoin.it/wiki/Target>
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct Target(U256);
 
 impl Target {
-    // When parsing nBits, Bitcoin Core converts a negative target threshold into a target of zero.
-    const ZERO: Target = Target(U256::ZERO);
+    /// When parsing nBits, Bitcoin Core converts a negative target threshold into a target of zero.
+    pub const ZERO: Target = Target(U256::ZERO);
     /// The maximum possible target.
     ///
     /// This value is used to calculate difficulty, which is defined as how difficult the current
