@@ -265,6 +265,18 @@ impl AsRef<[u8; 4]> for Magic {
     }
 }
 
+impl AsMut<[u8]> for Magic {
+    fn as_mut(&mut self) -> &mut [u8] {
+        &mut self.0
+    }
+}
+
+impl AsMut<[u8; 4]> for Magic {
+    fn as_mut(&mut self) -> &mut [u8; 4] {
+        &mut self.0
+    }
+}
+
 impl Borrow<[u8]> for Magic {
     fn borrow(&self) -> &[u8] {
         &self.0
