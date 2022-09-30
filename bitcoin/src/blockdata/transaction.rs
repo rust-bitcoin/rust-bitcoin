@@ -422,6 +422,12 @@ impl Default for Sequence {
     }
 }
 
+impl From<u32> for Sequence {
+    fn from(x: u32) -> Self {
+        Sequence::from_consensus(x)
+    }
+}
+
 impl From<Sequence> for u32 {
     fn from(sequence: Sequence) -> u32 {
         sequence.0

@@ -264,6 +264,12 @@ impl LockTime {
 
 impl_parse_str_through_int!(LockTime, from_consensus);
 
+impl From<u32> for LockTime {
+    fn from(t: u32) -> Self {
+        LockTime::from_consensus(t)
+    }
+}
+
 impl From<Height> for LockTime {
     fn from(h: Height) -> Self {
         LockTime::Blocks(h)
@@ -420,6 +426,14 @@ impl fmt::Display for Height {
     }
 }
 
+impl TryFrom<u32> for Height {
+    type Error = Error;
+
+    fn try_from(x: u32) -> Result<Self, Self::Error> {
+        Height::from_consensus(x)
+    }
+}
+
 impl FromHexStr for Height {
     type Error = Error;
 
@@ -510,6 +524,14 @@ impl Time {
 impl fmt::Display for Time {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::Display::fmt(&self.0, f)
+    }
+}
+
+impl TryFrom<u32> for Time {
+    type Error = Error;
+
+    fn try_from(x: u32) -> Result<Self, Self::Error> {
+        Time::from_consensus(x)
     }
 }
 
