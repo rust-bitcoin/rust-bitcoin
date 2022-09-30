@@ -1,25 +1,27 @@
 // Written in 2014 by Andrew Poelstra <apoelstra@wpsoftware.net>
 // SPDX-License-Identifier: CC0-1.0
 
-//! Blockdata constants.
+//! Bitcoin block data.
 //!
-//! This module provides various constants relating to the blockchain and
-//! consensus code. In particular, it defines the genesis block and its
-//! single transaction.
+//! This module defines structures and functions for storing the blocks and
+//! transactions which make up the Bitcoin system.
 //!
 
+pub mod locktime;
+pub mod transaction;
+pub mod block;
+pub mod witness;
 use crate::prelude::*;
 
 use core::default::Default;
 
 use crate::hashes::hex::{self, HexIterator};
 use crate::hashes::{Hash, sha256d};
-use crate::blockdata::opcodes;
-use crate::blockdata::script;
-use crate::blockdata::locktime::absolute;
-use crate::blockdata::transaction::{OutPoint, Transaction, TxOut, TxIn, Sequence};
-use crate::blockdata::block::{Block, BlockHeader, BlockVersion};
-use crate::blockdata::witness::Witness;
+use crate::script::{self, opcodes};
+use crate::primitives::locktime::absolute;
+use crate::primitives::transaction::{OutPoint, Transaction, TxOut, TxIn, Sequence};
+use crate::primitives::block::{Block, BlockHeader, BlockVersion};
+use crate::primitives::witness::Witness;
 use crate::network::constants::Network;
 use crate::util::uint::Uint256;
 use crate::internal_macros::{impl_array_newtype, impl_bytes_newtype};
@@ -200,7 +202,7 @@ mod test {
     use crate::hashes::hex::{ToHex, FromHex};
     use crate::network::constants::Network;
     use crate::consensus::encode::serialize;
-    use crate::blockdata::locktime::absolute;
+    use crate::primitives::locktime::absolute;
 
     #[test]
     fn bitcoin_genesis_first_transaction() {

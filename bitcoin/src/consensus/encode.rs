@@ -32,7 +32,7 @@ use crate::util::bip152::{ShortId, PrefilledTransaction};
 use crate::util::taproot::TapLeafHash;
 use crate::hashes::hex::ToHex;
 
-use crate::blockdata::transaction::{TxOut, Transaction, TxIn};
+use crate::primitives::transaction::{TxOut, Transaction, TxIn};
 #[cfg(feature = "std")]
 use crate::network::{message_blockdata::Inventory, address::{Address, AddrV2Message}};
 

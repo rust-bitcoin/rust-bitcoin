@@ -13,8 +13,8 @@ use core::borrow::Borrow;
 use core::ops::{Deref, DerefMut};
 
 use crate::{io, Script, Transaction, TxIn, TxOut, Sequence, Sighash};
-use crate::blockdata::transaction::EncodeSigningDataResult;
-use crate::blockdata::witness::Witness;
+use crate::primitives::transaction::EncodeSigningDataResult;
+use crate::primitives::witness::Witness;
 use crate::consensus::{encode, Encodable};
 use crate::error::impl_std_error;
 use crate::util::endian;
@@ -1071,7 +1071,7 @@ mod tests {
     use secp256k1::{self, SecretKey, XOnlyPublicKey};
 
     use crate::{Script, Transaction, TxIn, TxOut, Address};
-    use crate::blockdata::locktime::absolute;
+    use crate::primitives::locktime::absolute;
     use crate::consensus::deserialize;
     use crate::hashes::hex::{FromHex, ToHex};
     use crate::hashes::{Hash, HashEngine};

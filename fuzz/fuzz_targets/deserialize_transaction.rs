@@ -1,7 +1,7 @@
 extern crate bitcoin;
 
 fn do_test(data: &[u8]) {
-    let tx_result: Result<bitcoin::blockdata::transaction::Transaction, _> = bitcoin::consensus::encode::deserialize(data);
+    let tx_result: Result<bitcoin::primitives::transaction::Transaction, _> = bitcoin::consensus::encode::deserialize(data);
     match tx_result {
         Err(_) => {},
         Ok(mut tx) => {
@@ -10,7 +10,7 @@ fn do_test(data: &[u8]) {
             let len = ser.len();
             let calculated_weight = tx.weight();
             for input in &mut tx.input {
-                input.witness = bitcoin::blockdata::witness::Witness::default();
+                input.witness = bitcoin::primitives::witness::Witness::default();
             }
             let no_witness_len = bitcoin::consensus::encode::serialize(&tx).len();
             // For 0-input transactions, `no_witness_len` will be incorrect because

@@ -102,7 +102,7 @@ mod tests {
     use crate::consensus::encode::deserialize;
     use crate::hashes::sha256d;
 
-    use crate::blockdata::block::Block;
+    use crate::primitives::block::Block;
     use super::*;
 
     #[test]
