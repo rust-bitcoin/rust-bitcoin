@@ -12,10 +12,15 @@ fi
 cargo --version
 rustc --version
 
-# Work out if we are using a nightly toolchain.
+# Some tests require certain toolchain types.
 NIGHTLY=false
+STABLE=true
 if cargo --version | grep nightly; then
+    STABLE=false
     NIGHTLY=true
+fi
+if cargo --version | grep beta; then
+    STABLE=false
 fi
 
 # Pin dependencies as required if we are using MSRV toolchain.
@@ -109,13 +114,11 @@ fi
 # Bench if told to, only works with non-stable toolchain (nightly, beta).
 if [ "$DO_BENCH" = true ]
 then
-    if [ "$NIGHTLY" = false ]
-    then
-        if [ -n "$RUSTUP_TOOLCHAIN" ]
-        then
-            echo "RUSTUP_TOOLCHAIN is set to a non-nightly toolchain but DO_BENCH requires a nightly toolchain"
+    if [ "$STABLE" = true ]; then
+        if [ -n "$RUSTUP_TOOLCHAIN" ]; then
+            echo "RUSTUP_TOOLCHAIN is set to a stable toolchain but DO_BENCH requires a non-stable (beta, nightly) toolchain"
         else
-            echo "DO_BENCH requires a nightly toolchain"
+            echo "DO_BENCH requires a non-stable (beta, nightly) toolchain"
         fi
         exit 1
     fi
