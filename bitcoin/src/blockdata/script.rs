@@ -354,6 +354,11 @@ impl Script {
     /// Creates a new empty script.
     pub fn new() -> Script { Script(vec![].into_boxed_slice()) }
 
+    /// Creates a new script builder
+    pub fn builder() -> Builder {
+      Builder::new()
+    }
+
     /// Generates P2PK-type of scriptPubkey.
     pub fn new_p2pk(pubkey: &PublicKey) -> Script {
         Builder::new()
