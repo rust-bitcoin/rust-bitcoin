@@ -57,10 +57,6 @@ name = "deser_net_msg"
 path = "fuzz_targets/deser_net_msg.rs"
 
 [[bin]]
-name = "uint128_fuzz"
-path = "fuzz_targets/uint128_fuzz.rs"
-
-[[bin]]
 name = "script_bytes_to_asm_fmt"
 path = "fuzz_targets/script_bytes_to_asm_fmt.rs"
 

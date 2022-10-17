@@ -376,8 +376,8 @@ mod test {
     use crate::consensus::encode::{deserialize, serialize};
     use crate::hashes::hex::FromHex;
     use crate::{
-        Block, BlockHash, BlockHeader, BlockVersion, OutPoint, Script, Sequence, Transaction, TxIn, TxMerkleNode,
-        TxOut, Txid, Witness,
+        Block, BlockHash, BlockHeader, BlockVersion, OutPoint, Script, Sequence, Transaction, TxIn,
+        TxMerkleNode, TxOut, Txid, Witness, CompactTarget,
     };
 
     fn dummy_tx(nonce: &[u8]) -> Transaction {
@@ -401,7 +401,7 @@ mod test {
                 prev_blockhash: BlockHash::hash(&[0]),
                 merkle_root: TxMerkleNode::hash(&[1]),
                 time: 2,
-                bits: 3,
+                bits: CompactTarget::from_consensus(3),
                 nonce: 4,
             },
             txdata: vec![dummy_tx(&[2]), dummy_tx(&[3]), dummy_tx(&[4])],

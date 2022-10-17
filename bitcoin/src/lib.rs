@@ -87,6 +87,7 @@ pub mod consensus;
 pub mod error;
 pub mod hash_types;
 pub mod policy;
+pub mod pow;
 pub mod sign_message;
 pub mod util;
 
@@ -106,6 +107,7 @@ pub use crate::blockdata::{constants, opcodes};
 pub use crate::consensus::encode::VarInt;
 pub use crate::hash_types::*;
 pub use crate::network::constants::Network;
+pub use crate::pow::{CompactTarget, Target, Work};
 pub use crate::util::amount::{Amount, Denomination, SignedAmount};
 pub use crate::util::ecdsa::{self, EcdsaSig, EcdsaSigError};
 pub use crate::util::key::{KeyPair, PrivateKey, PublicKey, XOnlyPublicKey};
