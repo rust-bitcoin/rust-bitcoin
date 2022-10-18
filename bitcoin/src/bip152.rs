@@ -5,18 +5,17 @@
 //! Implementation of compact blocks data structure and algorithms.
 //!
 
-use crate::prelude::*;
-
-use crate::io;
-use core::{convert, convert::TryFrom, fmt, mem};
+use core::convert::TryFrom;
+use core::{convert, fmt, mem};
 #[cfg(feature = "std")]
 use std::error;
 
 use crate::consensus::encode::{self, Decodable, Encodable, VarInt};
 use crate::hashes::{sha256, siphash24, Hash};
 use crate::internal_macros::{impl_array_newtype, impl_bytes_newtype, impl_consensus_encoding};
+use crate::prelude::*;
 use crate::util::endian;
-use crate::{Block, BlockHash, BlockHeader, Transaction};
+use crate::{io, Block, BlockHash, BlockHeader, Transaction};
 
 /// A BIP-152 error
 #[derive(Clone, PartialEq, Eq, Debug, Copy, PartialOrd, Ord, Hash)]
@@ -69,9 +68,7 @@ pub struct PrefilledTransaction {
 }
 
 impl convert::AsRef<Transaction> for PrefilledTransaction {
-    fn as_ref(&self) -> &Transaction {
-        &self.tx
-    }
+    fn as_ref(&self) -> &Transaction { &self.tx }
 }
 
 impl Encodable for PrefilledTransaction {
@@ -376,8 +373,8 @@ mod test {
     use crate::consensus::encode::{deserialize, serialize};
     use crate::hashes::hex::FromHex;
     use crate::{
-        Block, BlockHash, BlockHeader, BlockVersion, OutPoint, Script, Sequence, Transaction, TxIn,
-        TxMerkleNode, TxOut, Txid, Witness, CompactTarget,
+        Block, BlockHash, BlockHeader, BlockVersion, CompactTarget, OutPoint, Script, Sequence,
+        Transaction, TxIn, TxMerkleNode, TxOut, Txid, Witness,
     };
 
     fn dummy_tx(nonce: &[u8]) -> Transaction {
