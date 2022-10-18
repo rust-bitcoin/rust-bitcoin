@@ -106,8 +106,20 @@ impl Network {
     }
 }
 
+/// An error in parsing network string.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ParseNetworkError(String);
+
+impl fmt::Display for ParseNetworkError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        write_err!(f, "failed to parse {} as network", self.0; self)
+    }
+}
+impl_std_error!(ParseNetworkError);
+
 impl FromStr for Network {
-    type Err = io::Error;
+    type Err = ParseNetworkError;
+
     #[inline]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         use Network::*;
@@ -117,13 +129,7 @@ impl FromStr for Network {
             "testnet" => Testnet,
             "signet" => Signet,
             "regtest" => Regtest,
-            _ => {
-                #[cfg(feature = "std")]
-                let message = format!("Unknown network (type {})", s);
-                #[cfg(not(feature = "std"))]
-                let message = "Unknown network";
-                return Err(io::Error::new(io::ErrorKind::InvalidInput, message));
-            }
+            _ => return Err(ParseNetworkError(s.to_owned()))
         };
         Ok(network)
     }
