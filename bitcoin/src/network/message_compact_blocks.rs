@@ -3,7 +3,7 @@
 //!
 
 use crate::internal_macros::impl_consensus_encoding;
-use crate::util::bip152;
+use crate::bip152;
 
 /// sendcmpct message
 #[derive(PartialEq, Eq, Clone, Debug, Copy, PartialOrd, Ord, Hash)]

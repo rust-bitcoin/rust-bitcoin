@@ -2,7 +2,7 @@ extern crate bitcoin;
 
 fn do_test(data: &[u8]) {
     // We already fuzz Transactions in `./deserialize_transaction.rs`.
-    let tx_result: Result<bitcoin::util::bip152::PrefilledTransaction, _> = bitcoin::consensus::encode::deserialize(data);
+    let tx_result: Result<bitcoin::bip152::PrefilledTransaction, _> = bitcoin::consensus::encode::deserialize(data);
 
     match tx_result {
         Err(_) => {},

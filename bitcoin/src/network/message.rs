@@ -486,7 +486,7 @@ mod test {
     use crate::network::message_bloom::{FilterAdd, FilterLoad, BloomFlags};
     use crate::MerkleBlock;
     use crate::network::message_compact_blocks::{GetBlockTxn, SendCmpct};
-    use crate::util::bip152::BlockTransactionsRequest;
+    use crate::bip152::BlockTransactionsRequest;
 
     fn hash(slice: [u8;32]) -> Hash {
         Hash::from_slice(&slice).unwrap()

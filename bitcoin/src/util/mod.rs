@@ -11,7 +11,6 @@ pub mod ecdsa;
 pub mod schnorr;
 pub mod amount;
 pub mod base58;
-pub mod bip152;
 pub mod hash;
 pub mod merkleblock;
 pub mod psbt;

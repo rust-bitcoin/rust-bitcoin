@@ -382,7 +382,7 @@ mod psbt_sign {
     use std::ops::Deref;
 
     use bitcoin::psbt::{Input, Prevouts, Psbt, PsbtSighashType};
-    use bitcoin::sighash::{self, SighashCache, EcdsaSighashType, SchnorrSighashType};
+    use bitcoin::sighash::{self, EcdsaSighashType, SchnorrSighashType, SighashCache};
     use bitcoin::util::taproot::TapLeafHash;
     use bitcoin::{EcdsaSig, EcdsaSigError, PrivateKey, Script, Transaction, TxOut};
     use secp256k1::{Message, Secp256k1, Signing};
