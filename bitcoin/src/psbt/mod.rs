@@ -907,7 +907,7 @@ mod tests {
         let psbt = PartiallySignedTransaction {
             unsigned_tx: Transaction {
                 version: 2,
-                lock_time: absolute::PackedLockTime::ZERO,
+                lock_time: absolute::LockTime::ZERO,
                 input: vec![],
                 output: vec![],
             },
@@ -977,7 +977,7 @@ mod tests {
         let expected = PartiallySignedTransaction {
             unsigned_tx: Transaction {
                 version: 2,
-                lock_time: absolute::PackedLockTime::from_consensus(1257139),
+                lock_time: absolute::LockTime::from_consensus(1257139),
                 input: vec![TxIn {
                     previous_output: OutPoint {
                         txid: Txid::from_hex(
@@ -1050,7 +1050,7 @@ mod tests {
         // create some values to use in the PSBT
         let tx = Transaction {
             version: 1,
-            lock_time: absolute::PackedLockTime::ZERO,
+            lock_time: absolute::LockTime::ZERO,
             input: vec![TxIn {
                 previous_output: OutPoint {
                     txid: Txid::from_hex("e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389").unwrap(),
@@ -1237,7 +1237,7 @@ mod tests {
             let unserialized = PartiallySignedTransaction {
                 unsigned_tx: Transaction {
                     version: 2,
-                    lock_time: absolute::PackedLockTime::from_consensus(1257139),
+                    lock_time: absolute::LockTime::from_consensus(1257139),
                     input: vec![TxIn {
                         previous_output: OutPoint {
                             txid: Txid::from_hex(
@@ -1268,7 +1268,7 @@ mod tests {
                 inputs: vec![Input {
                     non_witness_utxo: Some(Transaction {
                         version: 1,
-                        lock_time: absolute::PackedLockTime::ZERO,
+                        lock_time: absolute::LockTime::ZERO,
                         input: vec![TxIn {
                             previous_output: OutPoint {
                                 txid: Txid::from_hex(
@@ -1549,7 +1549,7 @@ mod tests {
         let mut unserialized = PartiallySignedTransaction {
             unsigned_tx: Transaction {
                 version: 2,
-                lock_time: absolute::PackedLockTime::from_consensus(1257139),
+                lock_time: absolute::LockTime::from_consensus(1257139),
                 input: vec![TxIn {
                     previous_output: OutPoint {
                         txid: Txid::from_hex(
@@ -1580,7 +1580,7 @@ mod tests {
             inputs: vec![Input {
                 non_witness_utxo: Some(Transaction {
                     version: 1,
-                    lock_time: absolute::PackedLockTime::ZERO,
+                    lock_time: absolute::LockTime::ZERO,
                     input: vec![TxIn {
                         previous_output: OutPoint {
                             txid: Txid::from_hex(
@@ -1719,7 +1719,7 @@ mod tests {
         let mut t = PartiallySignedTransaction {
             unsigned_tx: Transaction {
                 version: 2,
-                lock_time: absolute::PackedLockTime::from_consensus(1257139),
+                lock_time: absolute::LockTime::from_consensus(1257139),
                 input: vec![TxIn {
                     previous_output: OutPoint {
                         txid: Txid::from_hex(
@@ -1749,7 +1749,7 @@ mod tests {
             inputs: vec![Input {
                 non_witness_utxo: Some(Transaction {
                     version: 1,
-                    lock_time: absolute::PackedLockTime::ZERO,
+                    lock_time: absolute::LockTime::ZERO,
                     input: vec![TxIn {
                         previous_output: OutPoint {
                             txid: Txid::from_hex(
@@ -1818,7 +1818,7 @@ mod tests {
 
         let unsigned_tx = Transaction {
             version: 2,
-            lock_time: absolute::PackedLockTime::ZERO,
+            lock_time: absolute::LockTime::ZERO,
             input: vec![TxIn::default(), TxIn::default()],
             output: vec![TxOut::default()],
         };

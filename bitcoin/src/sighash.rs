@@ -1001,7 +1001,7 @@ impl<R: DerefMut<Target = Transaction>> SighashCache<R> {
     /// use bitcoin::{absolute, Transaction, Script};
     /// use bitcoin::sighash::{EcdsaSighashType, SighashCache};
     ///
-    /// let mut tx_to_sign = Transaction { version: 2, lock_time: absolute::PackedLockTime::ZERO, input: Vec::new(), output: Vec::new() };
+    /// let mut tx_to_sign = Transaction { version: 2, lock_time: absolute::LockTime::ZERO, input: Vec::new(), output: Vec::new() };
     /// let input_count = tx_to_sign.input.len();
     ///
     /// let mut sig_hasher = SighashCache::new(&mut tx_to_sign);
@@ -1075,7 +1075,7 @@ mod tests {
         // We need a tx with more inputs than outputs.
         let tx = Transaction {
             version: 1,
-            lock_time: absolute::PackedLockTime::ZERO,
+            lock_time: absolute::LockTime::ZERO,
             input: vec![TxIn::default(), TxIn::default()],
             output: vec![TxOut::default()],
         };
@@ -1264,7 +1264,7 @@ mod tests {
     fn test_sighash_errors() {
         let dumb_tx = Transaction {
             version: 0,
-            lock_time: absolute::PackedLockTime::ZERO,
+            lock_time: absolute::LockTime::ZERO,
             input: vec![TxIn::default()],
             output: vec![],
         };

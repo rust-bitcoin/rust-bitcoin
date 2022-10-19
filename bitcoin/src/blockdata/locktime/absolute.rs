@@ -37,9 +37,6 @@ use crate::absolute;
 /// [Bitcoin Core]: https://github.com/bitcoin/bitcoin/blob/9ccaee1d5e2e4b79b0a7c29aadb41b97e4741332/src/script/script.h#L39
 pub const LOCK_TIME_THRESHOLD: u32 = 500_000_000;
 
-/// Will be deleted in next commit
-pub type PackedLockTime = LockTime;
-
 /// An absolute lock time value, representing either a block height or a UNIX timestamp (seconds
 /// since epoch).
 ///
@@ -734,21 +731,21 @@ mod tests {
 
     #[test]
     fn packed_lock_time_from_str_hex_happy_path() {
-        let actual = PackedLockTime::from_hex_str("0xBA70D").unwrap();
-        let expected = PackedLockTime::from_consensus(0xBA70D);
+        let actual = LockTime::from_hex_str("0xBA70D").unwrap();
+        let expected = LockTime::from_consensus(0xBA70D);
         assert_eq!(actual, expected);
     }
 
     #[test]
     fn packed_lock_time_from_str_hex_no_prefix_happy_path() {
-        let lock_time = PackedLockTime::from_hex_str_no_prefix("BA70D").unwrap();
-        assert_eq!(lock_time, PackedLockTime::from_consensus(0xBA70D));
+        let lock_time = LockTime::from_hex_str_no_prefix("BA70D").unwrap();
+        assert_eq!(lock_time, LockTime::from_consensus(0xBA70D));
     }
 
     #[test]
     fn packed_lock_time_from_str_hex_invalid_hex_should_ergr() {
         let hex = "0xzb93";
-        let result = PackedLockTime::from_hex_str(hex);
+        let result = LockTime::from_hex_str(hex);
         assert!(result.is_err());
     }
 
