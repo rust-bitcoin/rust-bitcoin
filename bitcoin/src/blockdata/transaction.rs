@@ -601,7 +601,7 @@ pub struct Transaction {
 
 impl cmp::PartialOrd for Transaction {
     fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
-        Some(self.cmp(&other))
+        Some(self.cmp(other))
     }
 }
 impl cmp::Ord for Transaction {
@@ -910,7 +910,7 @@ impl Transaction {
         if !self.is_lock_time_enabled() {
             return true;
         }
-        absolute::LockTime::from(self.lock_time).is_satisfied_by(height, time)
+        self.lock_time.is_satisfied_by(height, time)
     }
 
     /// Returns `true` if this transactions nLockTime is enabled ([BIP-65]).

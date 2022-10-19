@@ -1379,18 +1379,26 @@ mod tests {
     #[cfg(feature = "serde")]
     #[test]
     fn bip_341_sighash_tests() {
-        fn sighash_deser_numeric<'de, D>(deserializer: D) -> Result<SchnorrSighashType, D::Error> where D: actual_serde::Deserializer<'de> {
+        fn sighash_deser_numeric<'de, D>(deserializer: D) -> Result<SchnorrSighashType, D::Error>
+        where
+            D: actual_serde::Deserializer<'de>,
+        {
             use actual_serde::de::{Deserialize, Error, Unexpected};
 
             let raw = u8::deserialize(deserializer)?;
-            SchnorrSighashType::from_consensus_u8(raw)
-                .map_err(|_| D::Error::invalid_value(Unexpected::Unsigned(raw.into()), &"number in range 0-3 or 0x81-0x83"))
+            SchnorrSighashType::from_consensus_u8(raw).map_err(|_| {
+                D::Error::invalid_value(
+                    Unexpected::Unsigned(raw.into()),
+                    &"number in range 0-3 or 0x81-0x83",
+                )
+            })
         }
-            
-        use crate::hashes::hex::ToHex;
-        use crate::taproot::{TapTweakHash, TapBranchHash};
+
         use secp256k1::{self, SecretKey, XOnlyPublicKey};
+
         use crate::consensus::serde as con_serde;
+        use crate::hashes::hex::ToHex;
+        use crate::taproot::{TapBranchHash, TapTweakHash};
 
         #[derive(serde::Deserialize)]
         #[serde(crate = "actual_serde")]
@@ -1480,14 +1488,18 @@ mod tests {
         }
 
         let json_str = include_str!("../tests/data/bip341_tests.json");
-        let mut data = serde_json::from_str::<TestData>(json_str).expect("JSON was not well-formatted");
+        let mut data =
+            serde_json::from_str::<TestData>(json_str).expect("JSON was not well-formatted");
 
         assert_eq!(data.version, 1u64);
         let secp = &secp256k1::Secp256k1::new();
         let key_path = data.key_path_spending.remove(0);
 
         let raw_unsigned_tx = key_path.given.raw_unsigned_tx;
-        let utxos = key_path.given.utxos_spent.into_iter()
+        let utxos = key_path
+            .given
+            .utxos_spent
+            .into_iter()
             .map(|txo| TxOut { value: txo.value, script_pubkey: txo.script_pubkey })
             .collect::<Vec<_>>();
 
