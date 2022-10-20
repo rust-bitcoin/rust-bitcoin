@@ -528,7 +528,7 @@ mod tests {
     use secp256k1::rand::prelude::*;
 
     use crate::consensus::encode::{deserialize, serialize};
-    use crate::util::hash::bitcoin_merkle_root;
+    use crate::merkle_tree::bitcoin_merkle_root;
     use crate::util::merkleblock::{MerkleBlock, PartialMerkleTree};
     use crate::Block;
 
