@@ -528,9 +528,8 @@ mod tests {
     use secp256k1::rand::prelude::*;
 
     use crate::consensus::encode::{deserialize, serialize};
-    use crate::merkle_tree::bitcoin_merkle_root;
     use crate::util::merkleblock::{MerkleBlock, PartialMerkleTree};
-    use crate::Block;
+    use crate::{merkle_tree, Block};
 
     /// accepts `pmt_test_$num`
     fn pmt_test_from_name(name: &str) {
@@ -559,7 +558,7 @@ mod tests {
 
         // Calculate the merkle root and height
         let hashes = tx_ids.iter().map(|t| t.as_hash());
-        let merkle_root_1: TxMerkleNode = bitcoin_merkle_root(hashes).expect("hashes is not empty").into();
+        let merkle_root_1: TxMerkleNode = merkle_tree::calculate_root(hashes).expect("hashes is not empty").into();
         let mut height = 1;
         let mut ntx = tx_count;
         while ntx > 1 {

@@ -98,27 +98,27 @@ pub use crate::bip158;
 pub mod hash {
     use crate::consensus::encode::Encodable;
     use crate::hashes::Hash;
-    use crate::io;
+    use crate::{io, merkle_tree};
 
     /// Calculates the merkle root of a list of *hashes*, inline (in place) in `hashes`.
-    #[deprecated(since = "0.30.0", note = "Please use crate::merkle_tree::bitcoin_merkle_root_inline")]
+    #[deprecated(since = "0.30.0", note = "Please use crate::merkle_tree::calculate_root_inline")]
     pub fn bitcoin_merkle_root_inline<T>(hashes: &mut [T]) -> Option<T>
     where
         T: Hash + Encodable,
     <T as Hash>::Engine: io::Write,
     {
-        crate::merkle_tree::bitcoin_merkle_root_inline(hashes)
+        crate::merkle_tree::calculate_root_inline(hashes)
     }
 
     /// Calculates the merkle root of an iterator of *hashes*.
-    #[deprecated(since = "0.30.0", note = "Please use crate::merkle_tree::bitcoin_merkle_root")]
+    #[deprecated(since = "0.30.0", note = "Please use crate::merkle_tree::calculate_root")]
     pub fn bitcoin_merkle_root<T, I>(hashes: I) -> Option<T>
     where
         T: Hash + Encodable,
     <T as Hash>::Engine: io::Write,
         I: Iterator<Item=T>,
     {
-        crate::merkle_tree::bitcoin_merkle_root(hashes)
+        merkle_tree::calculate_root(hashes)
     }
 }
 

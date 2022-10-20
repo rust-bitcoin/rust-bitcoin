@@ -13,9 +13,8 @@ use crate::prelude::*;
 
 use core::fmt;
 
-use crate::util;
+use crate::{merkle_tree, util};
 use crate::util::Error::{BlockBadTarget, BlockBadProofOfWork};
-use crate::merkle_tree::bitcoin_merkle_root;
 use crate::hashes::{Hash, HashEngine};
 use crate::hash_types::{Wtxid, BlockHash, TxMerkleNode, WitnessMerkleNode, WitnessCommitment};
 use crate::consensus::{encode, Encodable, Decodable};
@@ -235,7 +234,7 @@ impl Block {
     /// Computes the transaction merkle root.
     pub fn compute_merkle_root(&self) -> Option<TxMerkleNode> {
         let hashes = self.txdata.iter().map(|obj| obj.txid().as_hash());
-        bitcoin_merkle_root(hashes).map(|h| h.into())
+        merkle_tree::calculate_root(hashes).map(|h| h.into())
     }
 
     /// Computes the witness commitment for the block's transaction list.
@@ -256,7 +255,7 @@ impl Block {
                 t.wtxid().as_hash()
             }
         });
-        bitcoin_merkle_root(hashes).map(|h| h.into())
+        merkle_tree::calculate_root(hashes).map(|h| h.into())
     }
 
     /// base_size == size of header + size of encoded transaction count.

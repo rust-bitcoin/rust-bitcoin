@@ -3,6 +3,16 @@
 
 //! Bitcoin merkle tree functions.
 //!
+//! # Examples
+//!
+//! ```
+//! # use bitcoin::{merkle_tree, Txid};
+//! # use bitcoin::hashes::Hash;
+//! # let tx1 = Txid::all_zeros();  // Dummy hash values.
+//! # let tx2 = Txid::all_zeros();
+//! let tx_hashes = vec![tx1, tx2]; // All the hashes we wish to merkelize.
+//! let root = merkle_tree::calculate_root(tx_hashes.into_iter());
+//! ```
 
 use core::iter;
 
@@ -16,13 +26,13 @@ use crate::consensus::encode::Encodable;
 
 /// Calculates the merkle root of a list of *hashes*, inline (in place) in `hashes`.
 ///
-/// In most cases, you'll want to use [bitcoin_merkle_root] instead.
+/// In most cases, you'll want to use [`calculate_root`] instead.
 ///
 /// # Returns
 /// - `None` if `hashes` is empty. The merkle root of an empty tree of hashes is undefined.
 /// - `Some(hash)` if `hashes` contains one element. A single hash is by definition the merkle root.
 /// - `Some(merkle_root)` if length of `hashes` is greater than one.
-pub fn bitcoin_merkle_root_inline<T>(hashes: &mut [T]) -> Option<T>
+pub fn calculate_root_inline<T>(hashes: &mut [T]) -> Option<T>
 where
     T: Hash + Encodable,
           <T as Hash>::Engine: io::Write,
@@ -40,7 +50,7 @@ where
 /// - `None` if `hashes` is empty. The merkle root of an empty tree of hashes is undefined.
 /// - `Some(hash)` if `hashes` contains one element. A single hash is by definition the merkle root.
 /// - `Some(merkle_root)` if length of `hashes` is greater than one.
-pub fn bitcoin_merkle_root<T, I>(mut hashes: I) -> Option<T>
+pub fn calculate_root<T, I>(mut hashes: I) -> Option<T>
 where
     T: Hash + Encodable,
     <T as Hash>::Engine: io::Write,
@@ -116,8 +126,8 @@ mod tests {
             hashes_array[i] = hash;
         }
 
-        let from_iter = bitcoin_merkle_root(hashes_iter);
-        let from_array = bitcoin_merkle_root_inline(&mut hashes_array);
+        let from_iter = calculate_root(hashes_iter);
+        let from_array = calculate_root_inline(&mut hashes_array);
         assert_eq!(from_iter, from_array);
     }
 }
