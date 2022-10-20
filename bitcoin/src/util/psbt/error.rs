@@ -11,7 +11,7 @@ use crate::consensus::encode;
 use crate::util::psbt::raw;
 
 use crate::hashes;
-use crate::util::bip32::ExtendedPubKey;
+use crate::bip32::ExtendedPubKey;
 
 /// Enum for marking psbt hash error.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]

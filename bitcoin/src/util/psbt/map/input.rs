@@ -14,7 +14,7 @@ use crate::blockdata::witness::Witness;
 use crate::blockdata::transaction::{Transaction, TxOut};
 use crate::consensus::encode;
 use crate::hashes::{self, hash160, ripemd160, sha256, sha256d};
-use crate::util::bip32::KeySource;
+use crate::bip32::KeySource;
 use crate::util::psbt;
 use crate::util::psbt::map::Map;
 use crate::util::psbt::raw;

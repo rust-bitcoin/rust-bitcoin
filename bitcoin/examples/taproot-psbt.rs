@@ -87,7 +87,7 @@ use bitcoin::psbt::serialize::Serialize;
 use bitcoin::psbt::{self, Input, Output, Psbt, PsbtSighashType};
 use bitcoin::schnorr::TapTweak;
 use bitcoin::secp256k1::{Message, Secp256k1};
-use bitcoin::util::bip32::{
+use bitcoin::bip32::{
     ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint,
 };
 use bitcoin::sighash::{self, SighashCache, SchnorrSighashType};

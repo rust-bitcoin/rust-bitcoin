@@ -9,7 +9,7 @@ use crate::io;
 use crate::blockdata::script::Script;
 use crate::consensus::encode;
 use secp256k1::XOnlyPublicKey;
-use crate::util::bip32::KeySource;
+use crate::bip32::KeySource;
 use secp256k1;
 use crate::util::psbt::map::Map;
 use crate::util::psbt::raw;

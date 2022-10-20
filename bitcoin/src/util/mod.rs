@@ -80,47 +80,6 @@ pub(crate) fn read_to_end<D: io::Read>(mut d: D) -> Result<Vec<u8>, io::Error> {
     Ok(result)
 }
 
-/// The `address` module now lives at the crate root, re-export everything so as not to break the
-/// API, however deprecate the re-exports so folks know to upgrade sooner or later.
-#[deprecated(since = "0.30.0", note = "Please use crate::address")]
-pub mod address {
-    pub use crate::address::*;
-}
-
-#[deprecated(since = "0.30.0", note = "Please use crate::bip32")]
-pub use crate::bip32;
-
-#[deprecated(since = "0.30.0", note = "Please use crate::bip158")]
-pub use crate::bip158;
-
-/// Functions from the `hash` module were renamed and moved to `../merkle_tree`.
-pub mod hash {
-    use crate::consensus::encode::Encodable;
-    use crate::hashes::Hash;
-    use crate::{io, merkle_tree};
-
-    /// Calculates the merkle root of a list of *hashes*, inline (in place) in `hashes`.
-    #[deprecated(since = "0.30.0", note = "Please use crate::merkle_tree::calculate_root_inline")]
-    pub fn bitcoin_merkle_root_inline<T>(hashes: &mut [T]) -> Option<T>
-    where
-        T: Hash + Encodable,
-    <T as Hash>::Engine: io::Write,
-    {
-        crate::merkle_tree::calculate_root_inline(hashes)
-    }
-
-    /// Calculates the merkle root of an iterator of *hashes*.
-    #[deprecated(since = "0.30.0", note = "Please use crate::merkle_tree::calculate_root")]
-    pub fn bitcoin_merkle_root<T, I>(hashes: I) -> Option<T>
-    where
-        T: Hash + Encodable,
-    <T as Hash>::Engine: io::Write,
-        I: Iterator<Item=T>,
-    {
-        merkle_tree::calculate_root(hashes)
-    }
-}
-
 /// The `misc` module was moved and re-named to `sign_message`.
 pub mod misc {
     use crate::prelude::*;
