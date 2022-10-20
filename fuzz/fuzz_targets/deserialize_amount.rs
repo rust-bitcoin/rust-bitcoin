@@ -4,22 +4,22 @@ fn do_test(data: &[u8]) {
     let data_str = String::from_utf8_lossy(data);
 
     // signed
-    let samt = match bitcoin::util::amount::SignedAmount::from_str(&data_str) {
+    let samt = match bitcoin::amount::SignedAmount::from_str(&data_str) {
         Ok(amt) => amt,
         Err(_) => return,
     };
-    let samt_roundtrip = match bitcoin::util::amount::SignedAmount::from_str(&samt.to_string()) {
+    let samt_roundtrip = match bitcoin::amount::SignedAmount::from_str(&samt.to_string()) {
         Ok(amt) => amt,
         Err(_) => return,
     };
     assert_eq!(samt, samt_roundtrip);
 
     // unsigned
-    let amt = match bitcoin::util::amount::Amount::from_str(&data_str) {
+    let amt = match bitcoin::amount::Amount::from_str(&data_str) {
         Ok(amt) => amt,
         Err(_) => return,
     };
-    let amt_roundtrip = match bitcoin::util::amount::Amount::from_str(&amt.to_string()) {
+    let amt_roundtrip = match bitcoin::amount::Amount::from_str(&amt.to_string()) {
         Ok(amt) => amt,
         Err(_) => return,
     };

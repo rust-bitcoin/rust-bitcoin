@@ -80,6 +80,7 @@ mod serde_utils;
 #[macro_use]
 pub mod network;
 pub mod address;
+pub mod amount;
 pub mod bip152;
 pub mod bip158;
 pub mod bip32;
@@ -109,7 +110,7 @@ pub use crate::consensus::encode::VarInt;
 pub use crate::hash_types::*;
 pub use crate::network::constants::Network;
 pub use crate::pow::{CompactTarget, Target, Work};
-pub use crate::util::amount::{Amount, Denomination, SignedAmount};
+pub use crate::amount::{Amount, Denomination, SignedAmount};
 pub use crate::util::ecdsa::{self, EcdsaSig, EcdsaSigError};
 pub use crate::util::key::{KeyPair, PrivateKey, PublicKey, XOnlyPublicKey};
 pub use crate::util::merkleblock::MerkleBlock;
