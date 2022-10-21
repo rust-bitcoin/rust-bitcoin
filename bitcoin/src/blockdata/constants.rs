@@ -12,6 +12,8 @@ use crate::prelude::*;
 
 use core::default::Default;
 
+use bitcoin_internals::impl_array_newtype;
+
 use crate::hashes::hex::{self, HexIterator};
 use crate::hashes::{Hash, sha256d};
 use crate::blockdata::opcodes;
@@ -22,7 +24,7 @@ use crate::blockdata::block::{Block, BlockHeader, BlockVersion};
 use crate::blockdata::witness::Witness;
 use crate::network::constants::Network;
 use crate::pow::CompactTarget;
-use crate::internal_macros::{impl_array_newtype, impl_bytes_newtype};
+use crate::internal_macros::impl_bytes_newtype;
 
 /// How many satoshis are in "one bitcoin"
 pub const COIN_VALUE: u64 = 100_000_000;

@@ -18,7 +18,7 @@ use crate::io;
 use core::convert::TryFrom;
 use core::{fmt, default::Default};
 use core::ops::Index;
-use crate::internal_macros::debug_from_display;
+use bitcoin_internals::debug_from_display;
 #[cfg(feature = "bitcoinconsensus")]
 use bitcoin_internals::write_err;
 

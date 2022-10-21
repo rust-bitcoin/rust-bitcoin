@@ -14,7 +14,7 @@
 #[cfg(feature = "serde")] use crate::prelude::*;
 
 use core::{fmt, convert::From};
-use crate::internal_macros::debug_from_display;
+use bitcoin_internals::debug_from_display;
 
 // Note: I am deliberately not implementing PartialOrd or Ord on the
 //       opcode enum. If you want to check ranges of opcodes, etc.,

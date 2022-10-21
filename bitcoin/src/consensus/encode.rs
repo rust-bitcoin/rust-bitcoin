@@ -219,7 +219,7 @@ macro_rules! decoder_fn {
     ($name:ident, $val_type:ty, $readfn:ident, $byte_len: expr) => {
         #[inline]
         fn $name(&mut self) -> Result<$val_type, Error> {
-            $crate::internal_macros::const_assert!(::core::mem::size_of::<$val_type>() == $byte_len);
+            bitcoin_internals::const_assert!(core::mem::size_of::<$val_type>() == $byte_len);
             let mut val = [0; $byte_len];
             self.read_exact(&mut val[..]).map_err(Error::Io)?;
             Ok(endian::$readfn(&val))

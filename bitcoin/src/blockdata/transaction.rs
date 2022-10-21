@@ -32,7 +32,7 @@ use crate::blockdata::locktime::relative;
 use crate::consensus::{encode, Decodable, Encodable};
 use crate::hash_types::{Sighash, Txid, Wtxid};
 use crate::VarInt;
-use crate::internal_macros::{impl_consensus_encoding, serde_struct_human_string_impl};
+use crate::internal_macros::impl_consensus_encoding;
 use crate::parse::impl_parse_str_through_int;
 
 #[cfg(doc)]
@@ -50,7 +50,8 @@ pub struct OutPoint {
     /// The index of the referenced output in its transaction's vout.
     pub vout: u32,
 }
-serde_struct_human_string_impl!(OutPoint, "an OutPoint", txid, vout);
+#[cfg(feature = "serde")]
+crate::serde_utils::serde_struct_human_string_impl!(OutPoint, "an OutPoint", txid, vout);
 
 impl OutPoint {
     /// Creates a new [`OutPoint`].
