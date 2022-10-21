@@ -20,7 +20,7 @@ jobs:
         with:
           path: |
             ~/.cargo/bin
-            fuzz/target
+            bitcoin/fuzz/target
             target
           key: cache-${{ matrix.target }}-${{ hashFiles('**/Cargo.toml','**/Cargo.lock') }}
       - uses: actions-rs/toolchain@v1
@@ -28,8 +28,8 @@ jobs:
           toolchain: 1.58
           override: true
           profile: minimal
-      - name: fuzz
-        run: cd fuzz && ./travis-fuzz.sh "${{ matrix.fuzz_target }}"
+      - name: fuzz bitcoin
+        run: cd bitcoin/fuzz && ./travis-fuzz.sh "${{ matrix.fuzz_target }}"
       - run: echo "${{ matrix.fuzz_target }}.rs" >executed_${{ matrix.fuzz_target }}
       - uses: actions/upload-artifact@v2
         with:
@@ -46,5 +46,5 @@ jobs:
       - name: Display structure of downloaded files
         run: ls -R
       - run: find executed_* -type f -exec cat {} + | sort > executed
-      - run: ls fuzz/fuzz_targets | sort > expected
+      - run: ls bitcoin/fuzz/fuzz_targets | sort > expected
       - run: diff expected executed
