@@ -74,6 +74,10 @@ pub enum Error {
     CombineInconsistentKeySources(Box<ExtendedPubKey>),
     /// Serialization error in bitcoin consensus-encoded structures
     ConsensusEncoding,
+    /// Negative fee
+    NegativeFee,
+    /// Integer overflow in fee calculation
+    FeeOverflow,
 }
 
 impl fmt::Display for Error {
@@ -101,6 +105,9 @@ impl fmt::Display for Error {
             },
             Error::CombineInconsistentKeySources(ref s) => { write!(f, "combine conflict: {}", s) },
             Error::ConsensusEncoding => f.write_str("bitcoin consensus or BIP-174 encoding error"),
+            Error::NegativeFee => f.write_str("PSBT has a negative fee which is not allowed"),
+            Error::FeeOverflow => f.write_str("integer overflow in fee calculation"),
+
         }
     }
 }
@@ -128,7 +135,9 @@ impl std::error::Error for Error {
             | NonStandardSighashType(_)
             | InvalidPreimageHashPair{ .. }
             | CombineInconsistentKeySources(_)
-            | ConsensusEncoding => None,
+            | ConsensusEncoding
+            | NegativeFee
+            | FeeOverflow => None,
         }
     }
 }

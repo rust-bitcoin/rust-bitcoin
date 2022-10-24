@@ -16,7 +16,7 @@ use core::ops::Deref;
 use secp256k1::{Message, Secp256k1, Signing};
 use bitcoin_internals::write_err;
 
-use crate::prelude::*;
+use crate::{prelude::*, Amount};
 use crate::io;
 
 use crate::blockdata::script::Script;
@@ -436,6 +436,28 @@ impl PartiallySignedTransaction {
         // Something is wrong with the input scriptPubkey or we do not know how to sign
         // because there has been a new softfork that we do not yet support.
         Err(SignError::UnknownOutputType)
+    }
+
+    /// Calculates transaction fee.
+    ///
+    /// 'Fee' being the amount that will be paid for mining a transaction with the current inputs
+    /// and outputs i.e., the difference in value of the total inputs and the total outputs.
+    ///
+    /// ## Errors
+    ///
+    /// - [`Error::MissingUtxo`] when UTXO information for any input is not present or is invalid.
+    /// - [`Error::NegativeFee`] if calculated value is negative.
+    /// - [`Error::FeeOverflow`] if an integer overflow occurs.
+    pub fn fee(&self) -> Result<Amount, Error> {
+        let mut inputs: u64 = 0;
+        for utxo in self.iter_funding_utxos() {
+            inputs = inputs.checked_add(utxo?.value).ok_or(Error::FeeOverflow)?;
+        }
+        let mut outputs: u64 = 0;
+        for out in &self.unsigned_tx.output {
+            outputs = outputs.checked_add(out.value).ok_or(Error::FeeOverflow)?;
+        }
+        inputs.checked_sub(outputs).map(Amount::from_sat).ok_or(Error::NegativeFee)
     }
 }
 
@@ -1687,6 +1709,106 @@ mod tests {
 
         let got = key_map.get_key(KeyRequest::Pubkey(pk), &secp).expect("failed to get key");
         assert_eq!(got.unwrap(), priv_key)
+    }
+
+    #[test]
+    fn test_fee() {
+        let output_0_val = 99999699;
+        let output_1_val = 100000000;
+        let prev_output_val = 200000000;
+
+        let mut t = PartiallySignedTransaction {
+            unsigned_tx: Transaction {
+                version: 2,
+                lock_time: absolute::PackedLockTime(1257139),
+                input: vec![TxIn {
+                    previous_output: OutPoint {
+                        txid: Txid::from_hex(
+                            "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126",
+                        ).unwrap(),
+                        vout: 0,
+                    },
+                    sequence: Sequence::ENABLE_LOCKTIME_NO_RBF,
+                    ..Default::default()
+                }],
+                output: vec![
+                    TxOut {
+                        value: output_0_val,
+                        ..Default::default()
+                    },
+                    TxOut {
+                        value: output_1_val,
+                        ..Default::default()
+                    },
+                ],
+            },
+            xpub: Default::default(),
+            version: 0,
+            proprietary: BTreeMap::new(),
+            unknown: BTreeMap::new(),
+
+            inputs: vec![Input {
+                non_witness_utxo: Some(Transaction {
+                    version: 1,
+                    lock_time: absolute::PackedLockTime::ZERO,
+                    input: vec![TxIn {
+                        previous_output: OutPoint {
+                            txid: Txid::from_hex(
+                                "e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389",
+                            ).unwrap(),
+                            vout: 1,
+                        },
+                        sequence: Sequence::MAX,
+                       ..Default::default()
+                    },
+                    TxIn {
+                        previous_output: OutPoint {
+                            txid: Txid::from_hex(
+                                "b490486aec3ae671012dddb2bb08466bef37720a533a894814ff1da743aaf886",
+                            ).unwrap(),
+                            vout: 1,
+                        },
+                        sequence: Sequence::MAX,
+                        ..Default::default()
+                    }],
+                    output: vec![
+                        TxOut {
+                            value: prev_output_val,
+                            ..Default::default()
+                        },
+                        TxOut {
+                            value: 190303501938,
+                            ..Default::default()
+                        },
+                    ],
+                }),
+                ..Default::default()
+            },],
+            outputs: vec![
+                Output {
+                    ..Default::default()
+                },
+                Output {
+                    ..Default::default()
+                },
+            ],
+        };
+        assert_eq!(
+            t.fee().expect("fee calculation"),
+            Amount::from_sat(prev_output_val - (output_0_val + output_1_val))
+        );
+        // no previous output
+        let mut t2 = t.clone();
+        t2.inputs[0].non_witness_utxo = None;
+        assert_eq!(t2.fee(), Err(Error::MissingUtxo));
+        //  negative fee
+        let mut t3 = t.clone();
+        t3.unsigned_tx.output[0].value = prev_output_val;
+        assert_eq!(t3.fee(), Err(Error::NegativeFee));
+        // overflow
+        t.unsigned_tx.output[0].value = u64::max_value();
+        t.unsigned_tx.output[1].value = u64::max_value();
+        assert_eq!(t.fee(), Err(Error::FeeOverflow));
     }
 
     #[test]
