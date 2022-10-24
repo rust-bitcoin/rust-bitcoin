@@ -16,8 +16,8 @@ use bitcoin_internals::impl_array_newtype;
 
 use crate::hashes::hex::{self, HexIterator};
 use crate::hashes::{Hash, sha256d};
-use crate::blockdata::opcodes;
 use crate::blockdata::script;
+use crate::blockdata::opcodes::all::*;
 use crate::blockdata::locktime::absolute;
 use crate::blockdata::transaction::{OutPoint, Transaction, TxOut, TxIn, Sequence};
 use crate::blockdata::block::{Block, BlockHeader, BlockVersion};
@@ -92,7 +92,7 @@ fn bitcoin_genesis_tx() -> Transaction {
             .collect();
     let out_script = script::Builder::new()
         .push_slice(script_bytes.unwrap().as_slice())
-        .push_opcode(opcodes::all::OP_CHECKSIG)
+        .push_opcode(OP_CHECKSIG)
         .into_script();
     ret.output.push(TxOut {
         value: 50 * COIN_VALUE,
