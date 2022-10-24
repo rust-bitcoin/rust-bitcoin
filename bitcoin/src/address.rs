@@ -36,6 +36,7 @@ use crate::blockdata::constants::{
 };
 use crate::blockdata::script::Instruction;
 use crate::blockdata::{opcodes, script};
+use crate::blockdata::opcodes::all::*;
 use crate::error::ParseIntError;
 use crate::hash_types::{PubkeyHash, ScriptHash};
 use crate::hashes::{sha256, Hash, HashEngine};
@@ -324,9 +325,9 @@ impl TryFrom<opcodes::All> for WitnessVersion {
         match opcode.to_u8() {
             0 => Ok(WitnessVersion::V0),
             version
-                if version >= opcodes::all::OP_PUSHNUM_1.to_u8()
-                    && version <= opcodes::all::OP_PUSHNUM_16.to_u8() =>
-                WitnessVersion::try_from(version - opcodes::all::OP_PUSHNUM_1.to_u8() + 1),
+                if version >= OP_PUSHNUM_1.to_u8()
+                    && version <= OP_PUSHNUM_16.to_u8() =>
+                WitnessVersion::try_from(version - OP_PUSHNUM_1.to_u8() + 1),
             _ => Err(Error::MalformedWitnessVersion),
         }
     }
@@ -364,8 +365,8 @@ impl From<WitnessVersion> for opcodes::All {
     /// Converts [`WitnessVersion`] instance into corresponding Bitcoin scriptopcode (`OP_0`..`OP_16`).
     fn from(version: WitnessVersion) -> opcodes::All {
         match version {
-            WitnessVersion::V0 => opcodes::all::OP_PUSHBYTES_0,
-            no => opcodes::All::from(opcodes::all::OP_PUSHNUM_1.to_u8() + no.to_num() - 1),
+            WitnessVersion::V0 => OP_PUSHBYTES_0,
+            no => opcodes::All::from(OP_PUSHNUM_1.to_u8() + no.to_num() - 1),
         }
     }
 }

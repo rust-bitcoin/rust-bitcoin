@@ -26,6 +26,11 @@ pub struct All {
     code: u8,
 }
 
+// private import so we don't have to use `all::OP_FOO` in this file.
+use self::all::*;
+
+/// The `all` module is provided so one can use a wildcard import `use bitcoin::opcodes::all::*` to
+/// get all the `OP_FOO` opcodes without getting other types defined in `opcodes` (e.g. `All`, `Class`).
 pub mod all {
     //! Constants associated with All type
     use super::All;
@@ -554,96 +559,96 @@ impl fmt::Display for All {
         f.write_str("OP_")?;
         match *self {
             All {code: x} if x <= 75 => write!(f, "PUSHBYTES_{}", self.code),
-            all::OP_PUSHDATA1 => write!(f, "PUSHDATA1"),
-            all::OP_PUSHDATA2 => write!(f, "PUSHDATA2"),
-            all::OP_PUSHDATA4 => write!(f, "PUSHDATA4"),
-            all::OP_PUSHNUM_NEG1 => write!(f, "PUSHNUM_NEG1"),
-            all::OP_RESERVED => write!(f, "RESERVED"),
-            All {code: x} if x >= all::OP_PUSHNUM_1.code && x <= all::OP_PUSHNUM_16.code => write!(f, "PUSHNUM_{}", x - all::OP_PUSHNUM_1.code + 1),
-            all::OP_NOP => write!(f, "NOP"),
-            all::OP_VER => write!(f, "VER"),
-            all::OP_IF => write!(f, "IF"),
-            all::OP_NOTIF => write!(f, "NOTIF"),
-            all::OP_VERIF => write!(f, "VERIF"),
-            all::OP_VERNOTIF => write!(f, "VERNOTIF"),
-            all::OP_ELSE => write!(f, "ELSE"),
-            all::OP_ENDIF => write!(f, "ENDIF"),
-            all::OP_VERIFY => write!(f, "VERIFY"),
-            all::OP_RETURN => write!(f, "RETURN"),
-            all::OP_TOALTSTACK => write!(f, "TOALTSTACK"),
-            all::OP_FROMALTSTACK => write!(f, "FROMALTSTACK"),
-            all::OP_2DROP => write!(f, "2DROP"),
-            all::OP_2DUP => write!(f, "2DUP"),
-            all::OP_3DUP => write!(f, "3DUP"),
-            all::OP_2OVER => write!(f, "2OVER"),
-            all::OP_2ROT => write!(f, "2ROT"),
-            all::OP_2SWAP => write!(f, "2SWAP"),
-            all::OP_IFDUP => write!(f, "IFDUP"),
-            all::OP_DEPTH => write!(f, "DEPTH"),
-            all::OP_DROP => write!(f, "DROP"),
-            all::OP_DUP => write!(f, "DUP"),
-            all::OP_NIP => write!(f, "NIP"),
-            all::OP_OVER => write!(f, "OVER"),
-            all::OP_PICK => write!(f, "PICK"),
-            all::OP_ROLL => write!(f, "ROLL"),
-            all::OP_ROT => write!(f, "ROT"),
-            all::OP_SWAP => write!(f, "SWAP"),
-            all::OP_TUCK => write!(f, "TUCK"),
-            all::OP_CAT => write!(f, "CAT"),
-            all::OP_SUBSTR => write!(f, "SUBSTR"),
-            all::OP_LEFT => write!(f, "LEFT"),
-            all::OP_RIGHT => write!(f, "RIGHT"),
-            all::OP_SIZE => write!(f, "SIZE"),
-            all::OP_INVERT => write!(f, "INVERT"),
-            all::OP_AND => write!(f, "AND"),
-            all::OP_OR => write!(f, "OR"),
-            all::OP_XOR => write!(f, "XOR"),
-            all::OP_EQUAL => write!(f, "EQUAL"),
-            all::OP_EQUALVERIFY => write!(f, "EQUALVERIFY"),
-            all::OP_RESERVED1 => write!(f, "RESERVED1"),
-            all::OP_RESERVED2 => write!(f, "RESERVED2"),
-            all::OP_1ADD => write!(f, "1ADD"),
-            all::OP_1SUB => write!(f, "1SUB"),
-            all::OP_2MUL => write!(f, "2MUL"),
-            all::OP_2DIV => write!(f, "2DIV"),
-            all::OP_NEGATE => write!(f, "NEGATE"),
-            all::OP_ABS => write!(f, "ABS"),
-            all::OP_NOT => write!(f, "NOT"),
-            all::OP_0NOTEQUAL => write!(f, "0NOTEQUAL"),
-            all::OP_ADD => write!(f, "ADD"),
-            all::OP_SUB => write!(f, "SUB"),
-            all::OP_MUL => write!(f, "MUL"),
-            all::OP_DIV => write!(f, "DIV"),
-            all::OP_MOD => write!(f, "MOD"),
-            all::OP_LSHIFT => write!(f, "LSHIFT"),
-            all::OP_RSHIFT => write!(f, "RSHIFT"),
-            all::OP_BOOLAND => write!(f, "BOOLAND"),
-            all::OP_BOOLOR => write!(f, "BOOLOR"),
-            all::OP_NUMEQUAL => write!(f, "NUMEQUAL"),
-            all::OP_NUMEQUALVERIFY => write!(f, "NUMEQUALVERIFY"),
-            all::OP_NUMNOTEQUAL => write!(f, "NUMNOTEQUAL"),
-            all::OP_LESSTHAN => write!(f, "LESSTHAN"),
-            all::OP_GREATERTHAN => write!(f, "GREATERTHAN"),
-            all::OP_LESSTHANOREQUAL => write!(f, "LESSTHANOREQUAL"),
-            all::OP_GREATERTHANOREQUAL => write!(f, "GREATERTHANOREQUAL"),
-            all::OP_MIN => write!(f, "MIN"),
-            all::OP_MAX => write!(f, "MAX"),
-            all::OP_WITHIN => write!(f, "WITHIN"),
-            all::OP_RIPEMD160 => write!(f, "RIPEMD160"),
-            all::OP_SHA1 => write!(f, "SHA1"),
-            all::OP_SHA256 => write!(f, "SHA256"),
-            all::OP_HASH160 => write!(f, "HASH160"),
-            all::OP_HASH256 => write!(f, "HASH256"),
-            all::OP_CODESEPARATOR => write!(f, "CODESEPARATOR"),
-            all::OP_CHECKSIG => write!(f, "CHECKSIG"),
-            all::OP_CHECKSIGVERIFY => write!(f, "CHECKSIGVERIFY"),
-            all::OP_CHECKMULTISIG => write!(f, "CHECKMULTISIG"),
-            all::OP_CHECKMULTISIGVERIFY => write!(f, "CHECKMULTISIGVERIFY"),
-            all::OP_CLTV => write!(f, "CLTV"),
-            all::OP_CSV => write!(f, "CSV"),
-            All {code: x} if (all::OP_NOP1.code..=all::OP_NOP10.code).contains(&x) => write!(f, "NOP{}", x - all::OP_NOP1.code + 1),
-            all::OP_INVALIDOPCODE => write!(f, "INVALIDOPCODE"),
-            all::OP_CHECKSIGADD => write!(f, "CHECKSIGADD"),
+            OP_PUSHDATA1 => write!(f, "PUSHDATA1"),
+            OP_PUSHDATA2 => write!(f, "PUSHDATA2"),
+            OP_PUSHDATA4 => write!(f, "PUSHDATA4"),
+            OP_PUSHNUM_NEG1 => write!(f, "PUSHNUM_NEG1"),
+            OP_RESERVED => write!(f, "RESERVED"),
+            All {code: x} if x >= OP_PUSHNUM_1.code && x <= OP_PUSHNUM_16.code => write!(f, "PUSHNUM_{}", x - OP_PUSHNUM_1.code + 1),
+            OP_NOP => write!(f, "NOP"),
+            OP_VER => write!(f, "VER"),
+            OP_IF => write!(f, "IF"),
+            OP_NOTIF => write!(f, "NOTIF"),
+            OP_VERIF => write!(f, "VERIF"),
+            OP_VERNOTIF => write!(f, "VERNOTIF"),
+            OP_ELSE => write!(f, "ELSE"),
+            OP_ENDIF => write!(f, "ENDIF"),
+            OP_VERIFY => write!(f, "VERIFY"),
+            OP_RETURN => write!(f, "RETURN"),
+            OP_TOALTSTACK => write!(f, "TOALTSTACK"),
+            OP_FROMALTSTACK => write!(f, "FROMALTSTACK"),
+            OP_2DROP => write!(f, "2DROP"),
+            OP_2DUP => write!(f, "2DUP"),
+            OP_3DUP => write!(f, "3DUP"),
+            OP_2OVER => write!(f, "2OVER"),
+            OP_2ROT => write!(f, "2ROT"),
+            OP_2SWAP => write!(f, "2SWAP"),
+            OP_IFDUP => write!(f, "IFDUP"),
+            OP_DEPTH => write!(f, "DEPTH"),
+            OP_DROP => write!(f, "DROP"),
+            OP_DUP => write!(f, "DUP"),
+            OP_NIP => write!(f, "NIP"),
+            OP_OVER => write!(f, "OVER"),
+            OP_PICK => write!(f, "PICK"),
+            OP_ROLL => write!(f, "ROLL"),
+            OP_ROT => write!(f, "ROT"),
+            OP_SWAP => write!(f, "SWAP"),
+            OP_TUCK => write!(f, "TUCK"),
+            OP_CAT => write!(f, "CAT"),
+            OP_SUBSTR => write!(f, "SUBSTR"),
+            OP_LEFT => write!(f, "LEFT"),
+            OP_RIGHT => write!(f, "RIGHT"),
+            OP_SIZE => write!(f, "SIZE"),
+            OP_INVERT => write!(f, "INVERT"),
+            OP_AND => write!(f, "AND"),
+            OP_OR => write!(f, "OR"),
+            OP_XOR => write!(f, "XOR"),
+            OP_EQUAL => write!(f, "EQUAL"),
+            OP_EQUALVERIFY => write!(f, "EQUALVERIFY"),
+            OP_RESERVED1 => write!(f, "RESERVED1"),
+            OP_RESERVED2 => write!(f, "RESERVED2"),
+            OP_1ADD => write!(f, "1ADD"),
+            OP_1SUB => write!(f, "1SUB"),
+            OP_2MUL => write!(f, "2MUL"),
+            OP_2DIV => write!(f, "2DIV"),
+            OP_NEGATE => write!(f, "NEGATE"),
+            OP_ABS => write!(f, "ABS"),
+            OP_NOT => write!(f, "NOT"),
+            OP_0NOTEQUAL => write!(f, "0NOTEQUAL"),
+            OP_ADD => write!(f, "ADD"),
+            OP_SUB => write!(f, "SUB"),
+            OP_MUL => write!(f, "MUL"),
+            OP_DIV => write!(f, "DIV"),
+            OP_MOD => write!(f, "MOD"),
+            OP_LSHIFT => write!(f, "LSHIFT"),
+            OP_RSHIFT => write!(f, "RSHIFT"),
+            OP_BOOLAND => write!(f, "BOOLAND"),
+            OP_BOOLOR => write!(f, "BOOLOR"),
+            OP_NUMEQUAL => write!(f, "NUMEQUAL"),
+            OP_NUMEQUALVERIFY => write!(f, "NUMEQUALVERIFY"),
+            OP_NUMNOTEQUAL => write!(f, "NUMNOTEQUAL"),
+            OP_LESSTHAN => write!(f, "LESSTHAN"),
+            OP_GREATERTHAN => write!(f, "GREATERTHAN"),
+            OP_LESSTHANOREQUAL => write!(f, "LESSTHANOREQUAL"),
+            OP_GREATERTHANOREQUAL => write!(f, "GREATERTHANOREQUAL"),
+            OP_MIN => write!(f, "MIN"),
+            OP_MAX => write!(f, "MAX"),
+            OP_WITHIN => write!(f, "WITHIN"),
+            OP_RIPEMD160 => write!(f, "RIPEMD160"),
+            OP_SHA1 => write!(f, "SHA1"),
+            OP_SHA256 => write!(f, "SHA256"),
+            OP_HASH160 => write!(f, "HASH160"),
+            OP_HASH256 => write!(f, "HASH256"),
+            OP_CODESEPARATOR => write!(f, "CODESEPARATOR"),
+            OP_CHECKSIG => write!(f, "CHECKSIG"),
+            OP_CHECKSIGVERIFY => write!(f, "CHECKSIGVERIFY"),
+            OP_CHECKMULTISIG => write!(f, "CHECKMULTISIG"),
+            OP_CHECKMULTISIGVERIFY => write!(f, "CHECKMULTISIGVERIFY"),
+            OP_CLTV => write!(f, "CLTV"),
+            OP_CSV => write!(f, "CSV"),
+            All {code: x} if (OP_NOP1.code..=OP_NOP10.code).contains(&x) => write!(f, "NOP{}", x - OP_NOP1.code + 1),
+            OP_INVALIDOPCODE => write!(f, "INVALIDOPCODE"),
+            OP_CHECKSIGADD => write!(f, "CHECKSIGADD"),
             All {code: x} => write!(f, "RETURN_{}", x),
         }
     }
@@ -651,7 +656,7 @@ impl fmt::Display for All {
 
 /// Classification context for the opcode.
 ///
-/// Some opcodes like [`all::OP_RESERVED`] abort the script in `ClassifyContext::Legacy` context,
+/// Some opcodes like [`OP_RESERVED`] abort the script in `ClassifyContext::Legacy` context,
 /// but will act as `OP_SUCCESSx` in `ClassifyContext::TapScript` (see BIP342 for full list).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ClassifyContext {
@@ -665,7 +670,6 @@ impl All {
     /// Classifies an Opcode into a broad class.
     #[inline]
     pub fn classify(self, ctx: ClassifyContext) -> Class {
-        use self::all::*;
         match (self, ctx) {
             // 3 opcodes illegal in all contexts
             (OP_VERIF, _) | (OP_VERNOTIF, _) | (OP_INVALIDOPCODE, _) => Class::IllegalOp,
@@ -752,13 +756,13 @@ impl serde::Serialize for All {
 }
 
 /// Empty stack is also FALSE.
-pub static OP_FALSE: All = all::OP_PUSHBYTES_0;
+pub static OP_FALSE: All = OP_PUSHBYTES_0;
 /// Number 1 is also TRUE.
-pub static OP_TRUE: All = all::OP_PUSHNUM_1;
+pub static OP_TRUE: All = OP_PUSHNUM_1;
 /// Previously called OP_NOP2.
-pub static OP_NOP2: All = all::OP_CLTV;
+pub static OP_NOP2: All = OP_CLTV;
 /// Previously called OP_NOP3.
-pub static OP_NOP3: All = all::OP_CSV;
+pub static OP_NOP3: All = OP_CSV;
 
 /// Broad categories of opcodes with similar behavior.
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -785,7 +789,7 @@ macro_rules! ordinary_opcode {
         #[doc(hidden)]
         #[derive(Copy, Clone, PartialEq, Eq, Debug)]
         pub enum Ordinary {
-            $( $op = all::$op.code ),*
+            $( $op = $op.code ),*
         }
 
         impl fmt::Display for Ordinary {
@@ -799,7 +803,7 @@ macro_rules! ordinary_opcode {
         impl Ordinary {
             fn with(b: All) -> Self {
                 match b {
-                    $( all::$op => { Ordinary::$op } ),*
+                    $( $op => { Ordinary::$op } ),*
                     _ => unreachable!("construction of `Ordinary` type from non-ordinary opcode {}", b),
                 }
             }
@@ -807,7 +811,7 @@ macro_rules! ordinary_opcode {
             /// Try to create from an All
             pub fn try_from_all(b: All) -> Option<Self> {
                 match b {
-                    $( all::$op => { Some(Ordinary::$op) } ),*
+                    $( $op => { Some(Ordinary::$op) } ),*
                     _ => None,
                 }
             }
@@ -857,10 +861,10 @@ mod tests {
 
     macro_rules! roundtrip {
         ($unique:expr, $op:ident) => {
-            assert_eq!(all::$op, All::from(all::$op.to_u8()));
+            assert_eq!($op, All::from($op.to_u8()));
 
-            let s1 = format!("{}", all::$op);
-            let s2 = format!("{:?}", all::$op);
+            let s1 = format!("{}", $op);
+            let s2 = format!("{:?}", $op);
             assert_eq!(s1, s2);
             assert_eq!(s1, stringify!($op));
             assert!($unique.insert(s1));
@@ -869,19 +873,19 @@ mod tests {
 
     #[test]
     fn classify_test() {
-        let op174 = all::OP_CHECKMULTISIG;
+        let op174 = OP_CHECKMULTISIG;
         assert_eq!(op174.classify(ClassifyContext::Legacy), Class::Ordinary(Ordinary::OP_CHECKMULTISIG));
         assert_eq!(op174.classify(ClassifyContext::TapScript), Class::ReturnOp);
 
-        let op175 = all::OP_CHECKMULTISIGVERIFY;
+        let op175 = OP_CHECKMULTISIGVERIFY;
         assert_eq!(op175.classify(ClassifyContext::Legacy),  Class::Ordinary(Ordinary::OP_CHECKMULTISIGVERIFY));
         assert_eq!(op175.classify(ClassifyContext::TapScript), Class::ReturnOp);
 
-        let op186 = all::OP_CHECKSIGADD;
+        let op186 = OP_CHECKSIGADD;
         assert_eq!(op186.classify(ClassifyContext::Legacy), Class::ReturnOp);
         assert_eq!(op186.classify(ClassifyContext::TapScript), Class::Ordinary(Ordinary::OP_CHECKSIGADD));
 
-        let op187 = all::OP_RETURN_187;
+        let op187 = OP_RETURN_187;
         assert_eq!(op187.classify(ClassifyContext::Legacy), Class::ReturnOp);
         assert_eq!(op187.classify(ClassifyContext::TapScript), Class::SuccessOp);
     }
