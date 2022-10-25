@@ -20,9 +20,6 @@ fi
 
 # We should not have any duplicate dependencies. This catches mistakes made upgrading dependencies
 # in one crate and not in another (e.g. upgrade bitcoin_hashes in bitcoin but not in secp).
-cargo update -p serde --precise 1.0.142
-cargo update -p serde_test --precise 1.0.142
-cargo update -p serde_derive --precise 1.0.142
 duplicate_dependencies=$(cargo tree  --target=all --all-features --duplicates | wc -l)
 if [ "$duplicate_dependencies" -ne 0 ]; then
     echo "Dependency tree is broken, contains duplicates"
@@ -119,9 +116,6 @@ then
     echo 'bitcoin = { path = "..", features = ["serde"] }\n\n' >> Cargo.toml
     # Adding an empty workspace section excludes this crate from the rust-bitcoin workspace.
     echo '[workspace]\n\n' >> Cargo.toml
-
-    cargo update -p serde --precise 1.0.142
-    cargo update -p serde_derive --precise 1.0.142
 
     cargo test --verbose
 fi
