@@ -234,6 +234,7 @@ impl WatchOnly {
     }
 
     /// Finalizes the PSBT, in BIP174 parlance this is the 'Finalizer'.
+    /// This is just an example. For a production-ready PSBT Finalizer, use [rust-miniscript](https://docs.rs/miniscript/latest/miniscript/psbt/trait.PsbtExt.html#tymethod.finalize)
     fn finalize_psbt(&self, mut psbt: Psbt) -> Result<Psbt> {
         use bitcoin::util::psbt::serialize::Serialize;
 
