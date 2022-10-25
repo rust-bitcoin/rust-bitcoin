@@ -87,16 +87,16 @@ use bitcoin::psbt::serialize::Serialize;
 use bitcoin::psbt::{self, Input, Output, Psbt, PsbtSighashType};
 use bitcoin::schnorr::TapTweak;
 use bitcoin::secp256k1::{Message, Secp256k1};
+use bitcoin::sighash::{self, SchnorrSighashType, SighashCache};
 use bitcoin::util::bip32::{
     ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint,
 };
-use bitcoin::util::sighash;
 use bitcoin::util::taproot::{
     LeafVersion, TapLeafHash, TapSighashHash, TaprootBuilder, TaprootSpendInfo,
 };
 use bitcoin::{
-    absolute, script, Address, Amount, OutPoint, SchnorrSig, SchnorrSighashType, Script,
-    SighashCache, Transaction, TxIn, TxOut, Txid, Witness, XOnlyPublicKey,
+    absolute, script, Address, Amount, OutPoint, SchnorrSig, Script,
+    Transaction, TxIn, TxOut, Txid, Witness, XOnlyPublicKey,
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -276,7 +276,7 @@ fn generate_bip86_key_spend_tx(
             let hash_ty = input
                 .sighash_type
                 .and_then(|psbt_sighash_type| psbt_sighash_type.schnorr_hash_ty().ok())
-                .unwrap_or(bitcoin::SchnorrSighashType::All);
+                .unwrap_or(SchnorrSighashType::All);
             let hash = SighashCache::new(&unsigned_tx).taproot_key_spend_signature_hash(
                 vout,
                 &sighash::Prevouts::All(&[TxOut {
@@ -649,7 +649,7 @@ impl BeneficiaryWallet {
             let secret_key =
                 self.master_xpriv.derive_priv(&self.secp, &derivation_path)?.to_priv().inner;
             for lh in leaf_hashes {
-                let hash_ty = bitcoin::SchnorrSighashType::All;
+                let hash_ty = SchnorrSighashType::All;
                 let hash = SighashCache::new(&unsigned_tx).taproot_script_spend_signature_hash(
                     0,
                     &sighash::Prevouts::All(&[TxOut {
