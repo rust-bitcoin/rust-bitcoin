@@ -9,7 +9,7 @@ use secp256k1::ecdsa;
 
 use crate::consensus::encode::{Error, MAX_VEC_SIZE};
 use crate::consensus::{Decodable, Encodable, WriteExt};
-use crate::util::sighash::EcdsaSighashType;
+use crate::sighash::EcdsaSighashType;
 use crate::io::{self, Read, Write};
 use crate::prelude::*;
 use crate::VarInt;

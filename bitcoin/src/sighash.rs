@@ -1080,7 +1080,7 @@ mod tests {
     use crate::internal_macros::{hex_into, hex_script, hex_decode, hex_from_slice};
     use crate::network::constants::Network;
     use crate::util::key::PublicKey;
-    use crate::util::sighash::{Annex, Error, Prevouts, ScriptPath, SighashCache};
+    use crate::sighash::{Annex, Error, Prevouts, ScriptPath, SighashCache};
     use crate::util::taproot::{TapTweakHash, TapSighashHash, TapBranchHash, TapLeafHash};
 
     extern crate serde_json;
@@ -1109,7 +1109,7 @@ mod tests {
     #[cfg(feature = "serde")]
     fn legacy_sighash() {
         use serde_json::Value;
-        use crate::util::sighash::SighashCache;
+        use crate::sighash::SighashCache;
 
         fn run_test_sighash(tx: &str, script: &str, input_index: usize, hash_type: i64, expected_result: &str) {
             let tx: Transaction = deserialize(&Vec::from_hex(tx).unwrap()[..]).unwrap();
@@ -1127,7 +1127,7 @@ mod tests {
         // These test vectors were stolen from libbtc, which is Copyright 2014 Jonas Schnelli MIT
         // They were transformed by replacing {...} with run_test_sighash(...), then the ones containing
         // OP_CODESEPARATOR in their pubkeys were removed
-        let data = include_str!("../../test_data/legacy_sighash.json");
+        let data = include_str!("../test_data/legacy_sighash.json");
 
         let testdata = serde_json::from_str::<Value>(data).unwrap().as_array().unwrap().clone();
         for t in testdata.iter().skip(1) {
@@ -1479,7 +1479,7 @@ mod tests {
     }
 
     fn bip_341_read_json() -> serde_json::Value {
-        let json_str = include_str!("../../test_data/bip341_tests.json");
+        let json_str = include_str!("../test_data/bip341_tests.json");
         serde_json::from_str(json_str).expect("JSON was not well-formatted")
     }
 

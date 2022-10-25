@@ -13,7 +13,7 @@ use secp256k1;
 
 use crate::prelude::*;
 use crate::hashes::hex::{self, FromHex};
-use crate::util::sighash::{EcdsaSighashType, NonStandardSighashType};
+use crate::sighash::{EcdsaSighashType, NonStandardSighashType};
 
 /// An ECDSA signature with the corresponding hash type.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]

@@ -89,6 +89,7 @@ pub mod error;
 pub mod hash_types;
 pub mod policy;
 pub mod pow;
+pub mod sighash;
 pub mod sign_message;
 pub mod util;
 
@@ -114,7 +115,7 @@ pub use crate::util::ecdsa::{self, EcdsaSig, EcdsaSigError};
 pub use crate::util::key::{KeyPair, PrivateKey, PublicKey, XOnlyPublicKey};
 pub use crate::util::merkleblock::MerkleBlock;
 pub use crate::util::schnorr::{self, SchnorrSig, SchnorrSigError};
-pub use crate::util::{psbt, sighash, Error};
+pub use crate::util::{psbt, Error};
 
 #[cfg(not(feature = "std"))]
 mod io_extras {

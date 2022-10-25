@@ -21,10 +21,9 @@ use crate::util::psbt::raw;
 use crate::util::psbt::serialize::Deserialize;
 use crate::util::psbt::{Error, error};
 use crate::util::key::PublicKey;
-use crate::util::sighash::{NonStandardSighashType, SighashTypeParseError, EcdsaSighashType, SchnorrSighashType};
+use crate::sighash::{NonStandardSighashType, SighashTypeParseError, EcdsaSighashType, SchnorrSighashType};
 use crate::util::taproot::{ControlBlock, LeafVersion, TapLeafHash, TapBranchHash};
-use crate::util::sighash;
-use crate::{EcdsaSig, SchnorrSig};
+use crate::{sighash, EcdsaSig, SchnorrSig};
 
 /// Type: Non-Witness UTXO PSBT_IN_NON_WITNESS_UTXO = 0x00
 const PSBT_IN_NON_WITNESS_UTXO: u8 = 0x00;

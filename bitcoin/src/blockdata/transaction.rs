@@ -658,7 +658,7 @@ impl Transaction {
         script_pubkey: &Script,
         sighash_type: U,
     ) -> EncodeSigningDataResult<io::Error> {
-        use crate::util::sighash::{self, SighashCache};
+        use crate::sighash::{self, SighashCache};
         use EncodeSigningDataResult::*;
 
         assert!(input_index < self.input.len());  // Panic on OOB
@@ -708,7 +708,7 @@ impl Transaction {
     ) -> Sighash {
         assert!(input_index < self.input.len());  // Panic on OOB, enables expect below.
 
-        let cache = crate::util::sighash::SighashCache::new(self);
+        let cache = crate::sighash::SighashCache::new(self);
         cache.legacy_signature_hash(input_index, script_pubkey, sighash_u32)
             .expect("cache method doesn't error")
     }

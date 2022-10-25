@@ -15,7 +15,6 @@ pub mod hash;
 pub mod merkleblock;
 pub mod psbt;
 pub mod taproot;
-pub mod sighash;
 
 pub(crate) mod endian;
 

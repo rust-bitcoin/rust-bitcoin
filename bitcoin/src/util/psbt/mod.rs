@@ -25,9 +25,9 @@ use crate::consensus::{encode, Encodable, Decodable};
 use crate::util::bip32::{self, ExtendedPrivKey, ExtendedPubKey, KeySource};
 use crate::util::ecdsa::{EcdsaSig, EcdsaSigError};
 use crate::util::key::{PublicKey, PrivateKey};
-use crate::util::sighash::{self, EcdsaSighashType, SighashCache};
+use crate::sighash::{self, EcdsaSighashType, SighashCache};
 
-pub use crate::util::sighash::Prevouts;
+pub use crate::sighash::Prevouts;
 
 #[macro_use]
 mod macros;
@@ -1152,7 +1152,7 @@ mod tests {
         use crate::util::psbt::map::{Map, Input, Output};
         use crate::util::psbt::raw;
         use crate::util::psbt::{PartiallySignedTransaction, Error};
-        use crate::util::sighash::EcdsaSighashType;
+        use crate::sighash::EcdsaSighashType;
         use std::collections::BTreeMap;
         use crate::blockdata::witness::Witness;
         use crate::internal_macros::hex_script;
