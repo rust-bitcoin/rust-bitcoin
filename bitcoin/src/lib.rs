@@ -65,6 +65,11 @@ extern crate alloc;
 pub use bitcoinconsensus;
 pub use {bech32, bitcoin_hashes as hashes, secp256k1};
 
+// Re-export base64 when enabled
+#[cfg(feature = "base64")]
+#[cfg_attr(docsrs, doc(cfg(feature = "base64")))]
+pub use base64;
+
 #[cfg(feature = "serde")]
 #[macro_use]
 extern crate actual_serde as serde;
