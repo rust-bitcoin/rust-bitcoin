@@ -63,7 +63,7 @@ extern crate alloc;
 // Re-export dependencies we control.
 #[cfg(feature = "bitcoinconsensus")]
 pub use bitcoinconsensus;
-pub use {bech32, bitcoin_hashes as hashes, secp256k1};
+pub use {bech32, bitcoin_hashes as hashes, secp256k1, secp256k1 as secp};
 
 // Re-export base64 when enabled
 #[cfg(feature = "base64")]
