@@ -2,7 +2,6 @@
 ignore = [
        "bitcoin/src/blockdata",
        "bitcoin/src/consensus",
-       "bitcoin/src/network",
        "bitcoin/src/psbt",
        "bitcoin/src/util",
 ]
