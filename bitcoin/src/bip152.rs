@@ -395,7 +395,7 @@ mod test {
     fn dummy_block() -> Block {
         Block {
             header: block::Header {
-                version: block::Version(1),
+                version: block::Version::ONE,
                 prev_blockhash: BlockHash::hash(&[0]),
                 merkle_root: TxMerkleNode::hash(&[1]),
                 time: 2,

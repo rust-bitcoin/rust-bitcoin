@@ -112,13 +112,21 @@ impl Header {
 #[derive(Copy, PartialEq, Eq, Clone, Debug, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
-pub struct Version(pub i32);
+pub struct Version(i32);
 
 impl Version {
+    /// The original Bitcoin Block v1.
+    pub const ONE: Self = Self(1);
+
+    /// BIP-34 Block v2.
+    pub const TWO: Self = Self(2);
+
     /// BIP-9 compatible version number that does not signal for any softforks.
     pub const NO_SOFT_FORK_SIGNALLING: Self = Self(Self::USE_VERSION_BITS as i32);
+
     /// BIP-9 soft fork signal bits mask.
     const VERSION_BITS_MASK: u32 = 0x1FFF_FFFF;
+
     /// 32bit value starting with `001` to use version bits.
     ///
     /// The value has the top three bits `001` which enables the use of version bits to signal for soft forks.
@@ -302,7 +310,7 @@ impl Block {
         // number (including a sign bit). Height is the height of the mined
         // block in the block chain, where the genesis block is height zero (0).
 
-        if self.header.version < Version(2) {
+        if self.header.version < Version::TWO {
             return Err(Bip34Error::Unsupported);
         }
 
