@@ -49,11 +49,11 @@ use crate::io;
 use crate::hashes::Hash;
 use crate::hash_types::{Txid, TxMerkleNode};
 
+use crate::blockdata::block::{self, Block};
 use crate::blockdata::transaction::Transaction;
 use crate::blockdata::constants::{MAX_BLOCK_WEIGHT, MIN_TRANSACTION_WEIGHT};
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::util::merkleblock::MerkleBlockError::*;
-use crate::{Block, BlockHeader};
 
 /// An error when verifying the merkle block.
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -408,7 +408,7 @@ impl Decodable for PartialMerkleTree {
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct MerkleBlock {
     /// The block header
-    pub header: BlockHeader,
+    pub header: block::Header,
     /// Transactions making up a partial merkle tree
     pub txn: PartialMerkleTree,
 }
@@ -464,7 +464,7 @@ impl MerkleBlock {
     /// The `header` is the block header, `block_txids` is the full list of txids included in the block and
     /// `match_txids` is a function that returns true for the ids that should be included in the partial merkle tree.
     pub fn from_header_txids_with_predicate<F>(
-        header: &BlockHeader,
+        header: &block::Header,
         block_txids: &[Txid],
         match_txids: F,
     ) -> Self
