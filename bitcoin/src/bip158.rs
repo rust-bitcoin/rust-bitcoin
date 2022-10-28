@@ -564,7 +564,7 @@ mod test {
     #[test]
     fn test_blockfilters() {
         // test vectors from: https://github.com/jimpo/bitcoin/blob/c7efb652f3543b001b4dd22186a354605b14f47e/src/test/data/blockfilters.json
-        let data = include_str!("../test_data/blockfilters.json");
+        let data = include_str!("../tests/data/blockfilters.json");
 
         let testdata = serde_json::from_str::<Value>(data).unwrap().as_array().unwrap().clone();
         for t in testdata.iter().skip(1) {

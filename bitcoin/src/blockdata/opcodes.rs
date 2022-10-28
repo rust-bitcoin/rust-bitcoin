@@ -755,6 +755,8 @@ impl serde::Serialize for All {
     }
 }
 
+/// Push an empty array onto the stack.
+pub static OP_0: All = OP_PUSHBYTES_0;
 /// Empty stack is also FALSE.
 pub static OP_FALSE: All = OP_PUSHBYTES_0;
 /// Number 1 is also TRUE.

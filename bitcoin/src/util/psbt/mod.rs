@@ -1664,9 +1664,9 @@ mod tests {
     // PSBTs taken from BIP 174 test vectors.
     #[test]
     fn combine_psbts() {
-        let mut psbt1 = hex_psbt!(include_str!("../../../test_data/psbt1.hex")).unwrap();
-        let psbt2 = hex_psbt!(include_str!("../../../test_data/psbt2.hex")).unwrap();
-        let psbt_combined = hex_psbt!(include_str!("../../../test_data/psbt2.hex")).unwrap();
+        let mut psbt1 = hex_psbt!(include_str!("../../../tests/data/psbt1.hex")).unwrap();
+        let psbt2 = hex_psbt!(include_str!("../../../tests/data/psbt2.hex")).unwrap();
+        let psbt_combined = hex_psbt!(include_str!("../../../tests/data/psbt2.hex")).unwrap();
 
         psbt1.combine(psbt2).expect("psbt combine to succeed");
         assert_eq!(psbt1, psbt_combined);
@@ -1674,8 +1674,8 @@ mod tests {
 
     #[test]
     fn combine_psbts_commutative() {
-        let mut psbt1 = hex_psbt!(include_str!("../../../test_data/psbt1.hex")).unwrap();
-        let mut psbt2 = hex_psbt!(include_str!("../../../test_data/psbt2.hex")).unwrap();
+        let mut psbt1 = hex_psbt!(include_str!("../../../tests/data/psbt1.hex")).unwrap();
+        let mut psbt2 = hex_psbt!(include_str!("../../../tests/data/psbt2.hex")).unwrap();
 
         let psbt1_clone = psbt1.clone();
         let psbt2_clone = psbt2.clone();
