@@ -26,7 +26,9 @@ use crate::consensus::encode::Encodable;
 
 /// Calculates the merkle root of a list of *hashes*, inline (in place) in `hashes`.
 ///
-/// In most cases, you'll want to use [`calculate_root`] instead.
+/// In most cases, you'll want to use [`calculate_root`] instead. Please note, calling this function
+/// trashes the data in `hashes` (i.e. the `hashes` is left in an undefined state at conclusion of
+/// this method and should not be used again afterwards).
 ///
 /// # Returns
 /// - `None` if `hashes` is empty. The merkle root of an empty tree of hashes is undefined.
