@@ -274,6 +274,15 @@ impl<'a> Iterator for Iter<'a> {
 
 impl<'a> ExactSizeIterator for Iter<'a> {}
 
+impl<'a> IntoIterator for &'a Witness {
+    type IntoIter = Iter<'a>;
+    type Item = &'a [u8];
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
 // Serde keep backward compatibility with old Vec<Vec<u8>> format
 #[cfg(feature = "serde")]
 impl serde::Serialize for Witness {
