@@ -132,6 +132,20 @@ impl Version {
     /// The value has the top three bits `001` which enables the use of version bits to signal for soft forks.
     const USE_VERSION_BITS: u32 = 0x2000_0000;
 
+    /// Creates a [`Version`] from a signed 32 bit integer value.
+    ///
+    /// This is the data type used in consensus code in Bitcoin Core.
+    pub fn from_consensus(v: i32) -> Self {
+        Version(v)
+    }
+
+    /// Returns the inner `i32` value.
+    ///
+    /// This is the data type used in consensus code in Bitcoin Core.
+    pub fn to_consensus(self) -> i32 {
+        self.0
+    }
+
     /// Check whether the version number is signalling a soft fork at the given bit.
     ///
     /// A block is signalling for a soft fork under BIP-9 if the first 3 bits are `001` and
