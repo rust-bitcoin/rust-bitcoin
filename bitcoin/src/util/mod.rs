@@ -16,8 +16,6 @@ pub mod merkleblock;
 pub mod psbt;
 pub mod taproot;
 
-pub(crate) mod endian;
-
 use crate::prelude::*;
 use crate::io;
 use core::fmt;

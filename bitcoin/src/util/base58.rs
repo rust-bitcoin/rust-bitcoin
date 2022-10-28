@@ -10,12 +10,13 @@
 use crate::prelude::*;
 
 use core::{fmt, str, iter, slice};
+use core::convert::TryInto;
 
 use bitcoin_internals::write_err;
 use crate::hashes::{sha256d, Hash, hex};
 use secp256k1;
 
-use crate::util::{endian, key};
+use crate::util::key;
 
 /// An error that might occur during base58 decoding
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
@@ -171,14 +172,19 @@ pub fn from_check(data: &str) -> Result<Vec<u8>, Error> {
     if ret.len() < 4 {
         return Err(Error::TooShort(ret.len()));
     }
-    let ck_start = ret.len() - 4;
-    let expected = endian::slice_to_u32_le(&sha256d::Hash::hash(&ret[..ck_start])[..4]);
-    let actual = endian::slice_to_u32_le(&ret[ck_start..(ck_start + 4)]);
+    let check_start = ret.len() - 4;
+
+    let hash_check = sha256d::Hash::hash(&ret[..check_start])[..4].try_into().expect("4 byte slice");
+    let data_check = ret[check_start..].try_into().expect("4 byte slice");
+
+    let expected = u32::from_le_bytes(hash_check);
+    let actual = u32::from_le_bytes(data_check);
+
     if expected != actual {
         return Err(Error::BadChecksum(expected, actual));
     }
 
-    ret.truncate(ck_start);
+    ret.truncate(check_start);
     Ok(ret)
 }
 
