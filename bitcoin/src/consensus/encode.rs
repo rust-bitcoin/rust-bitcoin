@@ -458,7 +458,6 @@ impl Decodable for VarInt {
     }
 }
 
-// Booleans
 impl Encodable for bool {
     #[inline]
     fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
@@ -474,7 +473,6 @@ impl Decodable for bool {
     }
 }
 
-// Strings
 impl Encodable for String {
     #[inline]
     fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
@@ -493,7 +491,6 @@ impl Decodable for String {
     }
 }
 
-// Cow<'static, str>
 impl Encodable for Cow<'static, str> {
     #[inline]
     fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
@@ -513,8 +510,6 @@ impl Decodable for Cow<'static, str> {
     }
 }
 
-
-// Arrays
 macro_rules! impl_array {
     ( $size:literal ) => {
         impl Encodable for [u8; $size] {
@@ -565,7 +560,6 @@ impl Encodable for [u16; 8] {
     }
 }
 
-// Vectors
 macro_rules! impl_vec {
     ($type: ty) => {
         impl Encodable for Vec<$type> {
@@ -689,7 +683,6 @@ fn sha2_checksum(data: &[u8]) -> [u8; 4] {
     [checksum[0], checksum[1], checksum[2], checksum[3]]
 }
 
-// Checked data
 impl Encodable for CheckedData {
     #[inline]
     fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
@@ -719,7 +712,6 @@ impl Decodable for CheckedData {
     }
 }
 
-// References
 impl<'a, T: Encodable> Encodable for &'a T {
     fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         (**self).consensus_encode(w)
@@ -744,7 +736,6 @@ impl<T: Encodable> Encodable for sync::Arc<T> {
     }
 }
 
-// Tuples
 macro_rules! tuple_encode {
     ($($x:ident),*) => {
         impl <$($x: Encodable),*> Encodable for ($($x),*) {
@@ -815,7 +806,6 @@ impl Decodable for TapLeafHash {
     }
 }
 
-// Tests
 #[cfg(test)]
 mod tests {
     use super::*;
