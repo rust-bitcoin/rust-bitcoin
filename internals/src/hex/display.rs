@@ -11,6 +11,7 @@ use super::Case;
 use crate::prelude::*;
 
 /// Extension trait for types that can be displayed as hex.
+///
 /// Types that have a single, obvious text representation being hex should **not** implement this
 /// trait and simply implement `Display` instead.
 ///
