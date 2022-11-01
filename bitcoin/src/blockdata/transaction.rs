@@ -1344,6 +1344,12 @@ mod tests {
     }
 
     #[test]
+    fn test_huge_witness() {
+        use crate::hashes::hex::FromHex;
+        deserialize::<Transaction>(&Vec::from_hex(include_str!("../../tests/data/huge_witness.hex").trim()).unwrap()).unwrap();
+    }
+
+    #[test]
     #[cfg(feature="bitcoinconsensus")]
     fn test_transaction_verify () {
         use std::collections::HashMap;
