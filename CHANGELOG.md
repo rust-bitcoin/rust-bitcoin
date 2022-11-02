@@ -52,6 +52,12 @@ to support human-readable formats.
 - Take `Writer`/`Reader` by `&mut` in consensus en/decoding [#1035](https://github.com/rust-bitcoin/rust-bitcoin/pull/1035)
 - Consume `self` in conversion methods named `to_*` instead of borrowing [#1161](https://github.com/rust-bitcoin/rust-bitcoin/pull/1161)
 
+# 0.28.2 - 2022-11-01
+
+Backported a set of changes from 0.29 which may cause some specific
+transactions and/or blocks to fail to deserialize. No known such transactions
+exist on any public blockchain.
+
 # 0.28 - 2022-04-20 "The Taproot Release"
 
 At nearly nine months, this is our longest release cycle ever, and thanks
