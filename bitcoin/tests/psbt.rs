@@ -1,9 +1,9 @@
 //! Tests PSBT integration vectors from BIP 174
 //! defined at <https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki#test-vectors>
 
+use core::convert::TryFrom;
 use std::collections::BTreeMap;
 use std::str::FromStr;
-use core::convert::TryFrom;
 
 use bitcoin::bip32::{ExtendedPrivKey, ExtendedPubKey, Fingerprint, IntoDerivationPath, KeySource};
 use bitcoin::blockdata::opcodes::OP_0;
@@ -11,12 +11,12 @@ use bitcoin::blockdata::script;
 use bitcoin::consensus::encode::{deserialize, serialize_hex};
 use bitcoin::hashes::hex::FromHex;
 use bitcoin::psbt::{Psbt, PsbtSighashType};
+use bitcoin::script::PushBytes;
 use bitcoin::secp256k1::{self, Secp256k1};
 use bitcoin::{
     absolute, Amount, Denomination, Network, OutPoint, PrivateKey, PublicKey, ScriptBuf, Sequence,
     Transaction, TxIn, TxOut, Witness,
 };
-use bitcoin::script::PushBytes;
 
 const NETWORK: Network = Network::Testnet;
 
@@ -426,7 +426,10 @@ fn finalize_psbt(mut psbt: Psbt) -> Psbt {
         .push_opcode(OP_0) // OP_CHECKMULTISIG bug pops +1 value when evaluating so push OP_0.
         .push_slice(sigs[0].serialize())
         .push_slice(sigs[1].serialize())
-        .push_slice(<&PushBytes>::try_from(psbt.inputs[0].redeem_script.as_ref().unwrap().as_bytes()).unwrap())
+        .push_slice(
+            <&PushBytes>::try_from(psbt.inputs[0].redeem_script.as_ref().unwrap().as_bytes())
+                .unwrap(),
+        )
         .into_script();
 
     psbt.inputs[0].final_script_sig = Some(script_sig);
@@ -439,7 +442,10 @@ fn finalize_psbt(mut psbt: Psbt) -> Psbt {
     // Input 1: SegWit UTXO
 
     let script_sig = script::Builder::new()
-        .push_slice(<&PushBytes>::try_from(psbt.inputs[1].redeem_script.as_ref().unwrap().as_bytes()).unwrap())
+        .push_slice(
+            <&PushBytes>::try_from(psbt.inputs[1].redeem_script.as_ref().unwrap().as_bytes())
+                .unwrap(),
+        )
         .into_script();
 
     psbt.inputs[1].final_script_sig = Some(script_sig);

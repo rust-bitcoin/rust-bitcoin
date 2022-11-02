@@ -88,7 +88,8 @@ use bitcoin::secp256k1::Secp256k1;
 use bitcoin::sighash::{self, SighashCache, TapSighash, TapSighashType};
 use bitcoin::taproot::{self, LeafVersion, TapLeafHash, TaprootBuilder, TaprootSpendInfo};
 use bitcoin::{
-    absolute, script, Address, Amount, Network, OutPoint, ScriptBuf, Transaction, TxIn, TxOut,  Witness,
+    absolute, script, Address, Amount, Network, OutPoint, ScriptBuf, Transaction, TxIn, TxOut,
+    Witness,
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -100,10 +101,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Just some addresses for outputs from our wallets. Not really important.
     let to_address =
         Address::from_str("bcrt1p0p3rvwww0v9znrclp00uneq8ytre9kj922v8fxhnezm3mgsmn9usdxaefc")?
-	.require_network(Network::Regtest)?;
+            .require_network(Network::Regtest)?;
     let change_address =
         Address::from_str("bcrt1pz449kexzydh2kaypatup5ultru3ej284t6eguhnkn6wkhswt0l7q3a7j76")?
-	.require_network(Network::Regtest)?;
+            .require_network(Network::Regtest)?;
     let amount_to_send_in_sats = COIN_VALUE;
     let change_amount = UTXO_1
         .amount_in_sats
@@ -233,10 +234,7 @@ fn generate_bip86_key_spend_tx(
         version: 2,
         lock_time: absolute::LockTime::ZERO,
         input: vec![TxIn {
-            previous_output: OutPoint {
-                txid: input_utxo.txid.parse()?,
-                vout: input_utxo.vout,
-            },
+            previous_output: OutPoint { txid: input_utxo.txid.parse()?, vout: input_utxo.vout },
             script_sig: ScriptBuf::new(),
             sequence: bitcoin::Sequence(0xFFFFFFFF), // Ignore nSequence.
             witness: Witness::default(),
@@ -363,7 +361,10 @@ impl BenefactorWallet {
         })
     }
 
-    fn time_lock_script(locktime: absolute::LockTime, beneficiary_key: XOnlyPublicKey) -> ScriptBuf {
+    fn time_lock_script(
+        locktime: absolute::LockTime,
+        beneficiary_key: XOnlyPublicKey,
+    ) -> ScriptBuf {
         script::Builder::new()
             .push_int(locktime.to_consensus_u32() as i64)
             .push_opcode(OP_CLTV)

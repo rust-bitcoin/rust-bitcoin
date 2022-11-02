@@ -135,8 +135,7 @@ mod tests {
     #[test]
     fn getblocks_message_test() {
         let from_sat = hex!("72110100014a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b0000000000000000000000000000000000000000000000000000000000000000");
-        let genhash =
-            hex!("4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b");
+        let genhash = hex!("4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b");
 
         let decode: Result<GetBlocksMessage, _> = deserialize(&from_sat);
         assert!(decode.is_ok());
@@ -152,8 +151,7 @@ mod tests {
     #[test]
     fn getheaders_message_test() {
         let from_sat = hex!("72110100014a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b0000000000000000000000000000000000000000000000000000000000000000");
-        let genhash =
-            hex!("4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b");
+        let genhash = hex!("4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b");
 
         let decode: Result<GetHeadersMessage, _> = deserialize(&from_sat);
         assert!(decode.is_ok());

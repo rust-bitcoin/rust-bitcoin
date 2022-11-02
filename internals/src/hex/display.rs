@@ -8,9 +8,9 @@ use core::fmt;
 
 use super::buf_encoder::{BufEncoder, OutBytes};
 use super::Case;
+use crate::hex::buf_encoder::FixedLenBuf;
 #[cfg(feature = "alloc")]
 use crate::prelude::*;
-use crate::hex::buf_encoder::FixedLenBuf;
 
 /// Extension trait for types that can be displayed as hex.
 ///
@@ -153,34 +153,30 @@ impl<'a> DisplayByteSlice<'a> {
 }
 
 impl<'a> fmt::LowerHex for DisplayByteSlice<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.display(f, Case::Lower)
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.display(f, Case::Lower) }
 }
 
 impl<'a> fmt::UpperHex for DisplayByteSlice<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.display(f, Case::Upper)
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.display(f, Case::Upper) }
 }
 
 /// Displays byte array as hex.
 ///
 /// Created by [`<&[u8; LEN] as DisplayHex>::as_hex`](DisplayHex::as_hex).
-pub struct DisplayArray<A: Clone + IntoIterator, B: FixedLenBuf> where A::Item: Borrow<u8> {
+pub struct DisplayArray<A: Clone + IntoIterator, B: FixedLenBuf>
+where
+    A::Item: Borrow<u8>,
+{
     array: A,
     _buffer_marker: core::marker::PhantomData<B>,
 }
 
-
-impl<A: Clone + IntoIterator, B: FixedLenBuf> DisplayArray<A, B> where A::Item: Borrow<u8> {
+impl<A: Clone + IntoIterator, B: FixedLenBuf> DisplayArray<A, B>
+where
+    A::Item: Borrow<u8>,
+{
     /// Creates the wrapper.
-    pub fn new(array: A) -> Self {
-        DisplayArray {
-            array,
-            _buffer_marker: Default::default(),
-        }
-    }
+    pub fn new(array: A) -> Self { DisplayArray { array, _buffer_marker: Default::default() } }
 
     fn display(&self, f: &mut fmt::Formatter, case: Case) -> fmt::Result {
         let mut buf = B::uninit();
@@ -190,16 +186,18 @@ impl<A: Clone + IntoIterator, B: FixedLenBuf> DisplayArray<A, B> where A::Item: 
     }
 }
 
-impl<A: Clone + IntoIterator, B: FixedLenBuf> fmt::LowerHex for DisplayArray<A, B> where A::Item: Borrow<u8> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.display(f, Case::Lower)
-    }
+impl<A: Clone + IntoIterator, B: FixedLenBuf> fmt::LowerHex for DisplayArray<A, B>
+where
+    A::Item: Borrow<u8>,
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.display(f, Case::Lower) }
 }
 
-impl<A: Clone + IntoIterator, B: FixedLenBuf> fmt::UpperHex for DisplayArray<A, B> where A::Item: Borrow<u8> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.display(f, Case::Upper)
-    }
+impl<A: Clone + IntoIterator, B: FixedLenBuf> fmt::UpperHex for DisplayArray<A, B>
+where
+    A::Item: Borrow<u8>,
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.display(f, Case::Upper) }
 }
 
 /// Format known-length array as hex.
@@ -243,7 +241,9 @@ pub fn fmt_hex_exact_fn<I>(
     bytes: I,
     case: Case,
 ) -> fmt::Result
-    where I: IntoIterator, I::Item: Borrow<u8>
+where
+    I: IntoIterator,
+    I::Item: Borrow<u8>,
 {
     let mut encoder = BufEncoder::new(buf);
     encoder.put_bytes(bytes, case);

@@ -561,8 +561,8 @@ mod test {
     use super::*;
     use crate::consensus::encode::deserialize;
     use crate::hash_types::BlockHash;
-    use crate::ScriptBuf;
     use crate::internal_macros::hex;
+    use crate::ScriptBuf;
 
     #[test]
     fn test_blockfilters() {
@@ -572,8 +572,7 @@ mod test {
         let testdata = serde_json::from_str::<Value>(data).unwrap().as_array().unwrap().clone();
         for t in testdata.iter().skip(1) {
             let block_hash = t.get(1).unwrap().as_str().unwrap().parse::<BlockHash>().unwrap();
-            let block: Block =
-                deserialize(&hex!(t.get(2).unwrap().as_str().unwrap())).unwrap();
+            let block: Block = deserialize(&hex!(t.get(2).unwrap().as_str().unwrap())).unwrap();
             assert_eq!(block.block_hash(), block_hash);
             let scripts = t.get(3).unwrap().as_array().unwrap();
             let previous_filter_header =

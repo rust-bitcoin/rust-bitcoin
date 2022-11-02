@@ -30,15 +30,11 @@ macro_rules! impl_array_newtype {
         }
 
         impl<'a> core::convert::From<[$ty; $len]> for $thing {
-            fn from(data: [$ty; $len]) -> Self {
-                $thing(data)
-            }
+            fn from(data: [$ty; $len]) -> Self { $thing(data) }
         }
 
         impl<'a> core::convert::From<&'a [$ty; $len]> for $thing {
-            fn from(data: &'a [$ty; $len]) -> Self {
-                $thing(*data)
-            }
+            fn from(data: &'a [$ty; $len]) -> Self { $thing(*data) }
         }
 
         impl<'a> core::convert::TryFrom<&'a [$ty]> for $thing {
@@ -52,52 +48,36 @@ macro_rules! impl_array_newtype {
         }
 
         impl AsRef<[$ty; $len]> for $thing {
-            fn as_ref(&self) -> &[$ty; $len] {
-                &self.0
-            }
+            fn as_ref(&self) -> &[$ty; $len] { &self.0 }
         }
 
         impl AsMut<[$ty; $len]> for $thing {
-            fn as_mut(&mut self) -> &mut [$ty; $len] {
-                &mut self.0
-            }
+            fn as_mut(&mut self) -> &mut [$ty; $len] { &mut self.0 }
         }
 
         impl AsRef<[$ty]> for $thing {
-            fn as_ref(&self) -> &[$ty] {
-                &self.0
-            }
+            fn as_ref(&self) -> &[$ty] { &self.0 }
         }
 
         impl AsMut<[$ty]> for $thing {
-            fn as_mut(&mut self) -> &mut [$ty] {
-                &mut self.0
-            }
+            fn as_mut(&mut self) -> &mut [$ty] { &mut self.0 }
         }
 
         impl core::borrow::Borrow<[$ty; $len]> for $thing {
-            fn borrow(&self) -> &[$ty; $len] {
-                &self.0
-            }
+            fn borrow(&self) -> &[$ty; $len] { &self.0 }
         }
 
         impl core::borrow::BorrowMut<[$ty; $len]> for $thing {
-            fn borrow_mut(&mut self) -> &mut [$ty; $len] {
-                &mut self.0
-            }
+            fn borrow_mut(&mut self) -> &mut [$ty; $len] { &mut self.0 }
         }
 
         // The following two are valid because `[T; N]: Borrow<[T]>`
         impl core::borrow::Borrow<[$ty]> for $thing {
-            fn borrow(&self) -> &[$ty] {
-                &self.0
-            }
+            fn borrow(&self) -> &[$ty] { &self.0 }
         }
 
         impl core::borrow::BorrowMut<[$ty]> for $thing {
-            fn borrow_mut(&mut self) -> &mut [$ty] {
-                &mut self.0
-            }
+            fn borrow_mut(&mut self) -> &mut [$ty] { &mut self.0 }
         }
 
         impl<I> core::ops::Index<I> for $thing

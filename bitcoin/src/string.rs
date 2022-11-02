@@ -47,14 +47,14 @@ impl<E> From<E> for FromHexError<E> {
     fn from(e: E) -> Self { FromHexError::ParseHex(e) }
 }
 
-impl<E: fmt::Display> fmt::Display for FromHexError<E>
-{
+impl<E: fmt::Display> fmt::Display for FromHexError<E> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use self::FromHexError::*;
 
         match *self {
             ParseHex(ref e) => write_err!(f, "failed to parse hex string"; e),
-            MissingPrefix(ref value) => write_err!(f, "the input value `{}` is missing the `0x` prefix", value; self),
+            MissingPrefix(ref value) =>
+                write_err!(f, "the input value `{}` is missing the `0x` prefix", value; self),
         }
     }
 }

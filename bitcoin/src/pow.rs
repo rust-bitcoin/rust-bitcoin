@@ -402,15 +402,16 @@ impl U256 {
     // mutagen false positive: binop_bit, replace `|` with `^`
     fn mul_u64(self, rhs: u64) -> (U256, bool) {
         let mut carry: u128 = 0;
-        let mut split_le = [self.1 as u64, (self.1 >> 64) as u64, self.0 as u64, (self.0 >> 64) as u64];
+        let mut split_le =
+            [self.1 as u64, (self.1 >> 64) as u64, self.0 as u64, (self.0 >> 64) as u64];
 
         for word in &mut split_le {
             // TODO: Use `carrying_mul` when stabilized: https://github.com/rust-lang/rust/issues/85532
             // This will not overflow, for proof see https://github.com/rust-bitcoin/rust-bitcoin/pull/1496#issuecomment-1365938572
             let n = carry + u128::from(rhs) * u128::from(*word);
 
-            *word = n as u64;   // Intentional truncation, save the low bits
-            carry = n >> 64;    // and carry the high bits.
+            *word = n as u64; // Intentional truncation, save the low bits
+            carry = n >> 64; // and carry the high bits.
         }
 
         let low = u128::from(split_le[0]) | u128::from(split_le[1]) << 64;
@@ -1336,7 +1337,10 @@ mod tests {
 
         let (got, overflow) = x.overflowing_mul(y);
 
-        let want = U256(0x0000_0000_0000_0008_0000_0000_0000_0008, 0x0000_0000_0000_0006_0000_0000_0000_0004);
+        let want = U256(
+            0x0000_0000_0000_0008_0000_0000_0000_0008,
+            0x0000_0000_0000_0006_0000_0000_0000_0004,
+        );
         assert!(!overflow);
         assert_eq!(got, want)
     }
@@ -1489,9 +1493,12 @@ mod tests {
     #[test]
     fn target_is_met_by_for_target_equals_hash() {
         use std::str::FromStr;
+
         use crate::hashes::Hash;
 
-        let hash = BlockHash::from_str("ef537f25c895bfa782526529a9b63d97aa631564d5d789c2b765448c8635fb6c").expect("failed to parse block hash");
+        let hash =
+            BlockHash::from_str("ef537f25c895bfa782526529a9b63d97aa631564d5d789c2b765448c8635fb6c")
+                .expect("failed to parse block hash");
         let target = Target(U256::from_le_bytes(hash.to_byte_array()));
         assert!(target.is_met_by(hash));
     }
@@ -1598,9 +1605,7 @@ mod tests {
 
     #[test]
     #[should_panic]
-    fn u256_multiplication_by_max_panics() {
-        let _ = U256::MAX * U256::MAX;
-    }
+    fn u256_multiplication_by_max_panics() { let _ = U256::MAX * U256::MAX; }
 
     #[test]
     #[should_panic]

@@ -41,6 +41,7 @@
 
 use core::fmt;
 
+use self::MerkleBlockError::*;
 use crate::blockdata::block::{self, Block};
 use crate::blockdata::constants::{MAX_BLOCK_WEIGHT, MIN_TRANSACTION_WEIGHT};
 use crate::blockdata::transaction::Transaction;
@@ -49,7 +50,6 @@ use crate::hash_types::{TxMerkleNode, Txid};
 use crate::hashes::Hash;
 use crate::io;
 use crate::prelude::*;
-use self::MerkleBlockError::*;
 
 /// Data structure that represents a block header paired to a partial merkle tree.
 ///
@@ -509,8 +509,9 @@ impl std::error::Error for MerkleBlockError {
         use self::MerkleBlockError::*;
 
         match *self {
-            MerkleRootMismatch | NoTransactions | TooManyTransactions | TooManyHashes | NotEnoughBits | NotAllBitsConsumed |
-            NotAllHashesConsumed | BitsArrayOverflow | HashesArrayOverflow | IdenticalHashesFound => None,
+            MerkleRootMismatch | NoTransactions | TooManyTransactions | TooManyHashes
+            | NotEnoughBits | NotAllBitsConsumed | NotAllHashesConsumed | BitsArrayOverflow
+            | HashesArrayOverflow | IdenticalHashesFound => None,
         }
     }
 }
@@ -564,6 +565,7 @@ mod tests {
     #[cfg(feature = "rand-std")]
     fn pmt_test(tx_count: usize) {
         use core::cmp::min;
+
         use crate::merkle_tree;
 
         let mut rng = thread_rng();
