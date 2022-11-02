@@ -23,6 +23,7 @@
 //! This module provides the structures and functions needed to support scripts.
 //!
 
+use consensus::encode::MAX_VEC_SIZE;
 use prelude::*;
 
 use io;
@@ -1068,8 +1069,13 @@ impl Encodable for Script {
 
 impl Decodable for Script {
     #[inline]
+    fn consensus_decode_from_finite_reader<D: io::Read>(d: D) -> Result<Self, encode::Error> {
+        Ok(Script(Decodable::consensus_decode_from_finite_reader(d)?))
+    }
+
+    #[inline]
     fn consensus_decode<D: io::Read>(d: D) -> Result<Self, encode::Error> {
-        Ok(Script(Decodable::consensus_decode(d)?))
+        Self::consensus_decode_from_finite_reader(d.take(MAX_VEC_SIZE as u64))
     }
 }
 

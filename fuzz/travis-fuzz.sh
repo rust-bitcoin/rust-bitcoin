@@ -8,9 +8,19 @@ if [ ${incorrectFilenames} -gt 0 ]; then
 	exit 2
 fi
 
+if [ "$1" == "" ]; then
+	TARGETS=fuzz_targets/*
+else
+	TARGETS=fuzz_targets/"$1".rs
+fi
+
+cargo --version
+rustc --version
+
 # Testing
-cargo install --force honggfuzz
-for TARGET in fuzz_targets/*; do
+cargo install --force honggfuzz --no-default-features
+for TARGET in $TARGETS; do
+	echo "Fuzzing target $TARGET"
 	FILENAME=$(basename $TARGET)
 	FILE="${FILENAME%.*}"
 	if [ -d hfuzz_input/$FILE ]; then
