@@ -66,7 +66,7 @@ pub enum MerkleBlockError {
     /// There are too many transactions.
     TooManyTransactions,
     /// General format error.
-    BadFormat(String),
+    BadFormat(&'static str),
 }
 
 impl fmt::Display for MerkleBlockError {
@@ -220,11 +220,11 @@ impl PartialMerkleTree {
         }
         // there can never be more hashes provided than one for every txid
         if self.hashes.len() as u32 > self.num_transactions {
-            return Err(BadFormat("Proof contains more hashes than transactions".to_owned()));
+            return Err(BadFormat("Proof contains more hashes than transactions"));
         };
         // there must be at least one bit per node in the partial tree, and at least one node per hash
         if self.bits.len() < self.hashes.len() {
-            return Err(BadFormat("Proof contains less bits than hashes".to_owned()));
+            return Err(BadFormat("Proof contains less bits than hashes"));
         };
         // calculate height of tree
         let mut height = 0;
@@ -239,11 +239,11 @@ impl PartialMerkleTree {
         // Verify that all bits were consumed (except for the padding caused by
         // serializing it as a byte sequence)
         if (bits_used + 7) / 8 != (self.bits.len() as u32 + 7) / 8 {
-            return Err(BadFormat("Not all bit were consumed".to_owned()));
+            return Err(BadFormat("Not all bit were consumed"));
         }
         // Verify that all hashes were consumed
         if hash_used != self.hashes.len() as u32 {
-            return Err(BadFormat("Not all hashes were consumed".to_owned()));
+            return Err(BadFormat("Not all hashes were consumed"));
         }
         Ok(TxMerkleNode::from_inner(hash_merkle_root.into_inner()))
     }
@@ -311,14 +311,14 @@ impl PartialMerkleTree {
         indexes: &mut Vec<u32>,
     ) -> Result<TxMerkleNode, MerkleBlockError> {
         if *bits_used as usize >= self.bits.len() {
-            return Err(BadFormat("Overflowed the bits array".to_owned()));
+            return Err(BadFormat("Overflowed the bits array"));
         }
         let parent_of_match = self.bits[*bits_used as usize];
         *bits_used += 1;
         if height == 0 || !parent_of_match {
             // If at height 0, or nothing interesting below, use stored hash and do not descend
             if *hash_used as usize >= self.hashes.len() {
-                return Err(BadFormat("Overflowed the hash array".to_owned()));
+                return Err(BadFormat("Overflowed the hash array"));
             }
             let hash = self.hashes[*hash_used as usize];
             *hash_used += 1;
@@ -351,7 +351,7 @@ impl PartialMerkleTree {
                 if right == left {
                     // The left and right branches should never be identical, as the transaction
                     // hashes covered by them must each be unique.
-                    return Err(BadFormat("Found identical transaction hashes".to_owned()));
+                    return Err(BadFormat("Found identical transaction hashes"));
                 }
             } else {
                 right = left;
