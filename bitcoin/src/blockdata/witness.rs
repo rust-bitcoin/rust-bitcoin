@@ -298,6 +298,34 @@ impl Witness {
         let pos = decode_cursor(&self.content, self.indices_start, index)?;
         self.element_at(pos)
     }
+
+    /// Get Tapscript following BIP341 rules regarding accounting for an annex.
+    ///
+    /// This does not guarantee that this represents a P2TR [`Witness`].
+    /// It merely gets the second to last or third to last element depending
+    /// on the first byte of the last element being equal to 0x50.
+    pub fn get_tapscript(&self) -> Option<&[u8]> {
+        let len = self.len();
+        self
+            .last()
+            .map(|last_elem| {
+                // From BIP341:
+                // If there are at least two witness elements, and the first byte of
+                // the last element is 0x50, this last element is called annex a
+                // and is removed from the witness stack.
+                if len >= 2 && last_elem.first().filter(|&&v| v == 0x50).is_some() {
+                    // account for the extra item removed from the end
+                    3
+                } else {
+                    // otherwise script is 2nd from last
+                    2
+                }
+            })
+            .filter(|&script_pos_from_last| len >= script_pos_from_last)
+            .and_then(|script_pos_from_last| {
+                self.nth(len - script_pos_from_last)
+            })
+    }
 }
 
 impl Index<usize> for Witness {
@@ -549,6 +577,35 @@ mod test {
         assert_eq!(w_into, witness);
 
         assert_eq!(witness_serialized, serialize(&witness));
+    }
+
+    #[test]
+    fn test_get_tapscript() {
+        let tapscript = Vec::from_hex("deadbeef").unwrap();
+        let control_block = Vec::from_hex("02").unwrap();
+        // annex starting with 0x50 causes the branching logic.
+        let annex = Vec::from_hex("50").unwrap();
+
+        let witness_vec = vec![tapscript.clone(), control_block.clone()];
+        let witness_vec_annex = vec![tapscript.clone(), control_block, annex];
+
+        let witness_serialized: Vec<u8> = serialize(&witness_vec);
+        let witness_serialized_annex: Vec<u8> = serialize(&witness_vec_annex);
+
+        let witness = Witness {
+            content: append_u32_vec(witness_serialized[1..].to_vec(), &[0, 5]),
+            witness_elements: 2,
+            indices_start: 7,
+        };
+        let witness_annex = Witness {
+            content: append_u32_vec(witness_serialized_annex[1..].to_vec(), &[0, 5, 7]),
+            witness_elements: 3,
+            indices_start: 9,
+        };
+
+        // With or without annex, the tapscript should be returned.
+        assert_eq!(witness.get_tapscript(), Some(&tapscript[..]));
+        assert_eq!(witness_annex.get_tapscript(), Some(&tapscript[..]));
     }
 
     #[test]
