@@ -11,7 +11,6 @@ pub mod ecdsa;
 pub mod schnorr;
 pub mod amount;
 pub mod base58;
-pub mod hash;
 pub mod merkleblock;
 pub mod psbt;
 pub mod taproot;
@@ -94,6 +93,34 @@ pub use crate::bip32;
 
 #[deprecated(since = "0.30.0", note = "Please use crate::bip158")]
 pub use crate::bip158;
+
+/// Functions from the `hash` module were renamed and moved to `../merkle_tree`.
+pub mod hash {
+    use crate::consensus::encode::Encodable;
+    use crate::hashes::Hash;
+    use crate::{io, merkle_tree};
+
+    /// Calculates the merkle root of a list of *hashes*, inline (in place) in `hashes`.
+    #[deprecated(since = "0.30.0", note = "Please use crate::merkle_tree::calculate_root_inline")]
+    pub fn bitcoin_merkle_root_inline<T>(hashes: &mut [T]) -> Option<T>
+    where
+        T: Hash + Encodable,
+    <T as Hash>::Engine: io::Write,
+    {
+        crate::merkle_tree::calculate_root_inline(hashes)
+    }
+
+    /// Calculates the merkle root of an iterator of *hashes*.
+    #[deprecated(since = "0.30.0", note = "Please use crate::merkle_tree::calculate_root")]
+    pub fn bitcoin_merkle_root<T, I>(hashes: I) -> Option<T>
+    where
+        T: Hash + Encodable,
+    <T as Hash>::Engine: io::Write,
+        I: Iterator<Item=T>,
+    {
+        merkle_tree::calculate_root(hashes)
+    }
+}
 
 /// The `misc` module was moved and re-named to `sign_message`.
 pub mod misc {

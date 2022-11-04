@@ -92,6 +92,7 @@ pub mod blockdata;
 pub mod consensus;
 pub mod error;
 pub mod hash_types;
+pub mod merkle_tree;
 pub mod policy;
 pub mod pow;
 pub mod sighash;

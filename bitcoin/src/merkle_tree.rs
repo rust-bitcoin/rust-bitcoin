@@ -1,11 +1,18 @@
 // Written in 2014 by Andrew Poelstra <apoelstra@wpsoftware.net>
 // SPDX-License-Identifier: CC0-1.0
 
-//! Bitcoin hash functions.
+//! Bitcoin merkle tree functions.
 //!
-//! This module provides utility functions related to hashing data, including
-//! merkleization.
+//! # Examples
 //!
+//! ```
+//! # use bitcoin::{merkle_tree, Txid};
+//! # use bitcoin::hashes::Hash;
+//! # let tx1 = Txid::all_zeros();  // Dummy hash values.
+//! # let tx2 = Txid::all_zeros();
+//! let tx_hashes = vec![tx1, tx2]; // All the hashes we wish to merkelize.
+//! let root = merkle_tree::calculate_root(tx_hashes.into_iter());
+//! ```
 
 use core::iter;
 
@@ -19,13 +26,15 @@ use crate::consensus::encode::Encodable;
 
 /// Calculates the merkle root of a list of *hashes*, inline (in place) in `hashes`.
 ///
-/// In most cases, you'll want to use [bitcoin_merkle_root] instead.
+/// In most cases, you'll want to use [`calculate_root`] instead. Please note, calling this function
+/// trashes the data in `hashes` (i.e. the `hashes` is left in an undefined state at conclusion of
+/// this method and should not be used again afterwards).
 ///
 /// # Returns
 /// - `None` if `hashes` is empty. The merkle root of an empty tree of hashes is undefined.
 /// - `Some(hash)` if `hashes` contains one element. A single hash is by definition the merkle root.
 /// - `Some(merkle_root)` if length of `hashes` is greater than one.
-pub fn bitcoin_merkle_root_inline<T>(hashes: &mut [T]) -> Option<T>
+pub fn calculate_root_inline<T>(hashes: &mut [T]) -> Option<T>
 where
     T: Hash + Encodable,
           <T as Hash>::Engine: io::Write,
@@ -43,7 +52,7 @@ where
 /// - `None` if `hashes` is empty. The merkle root of an empty tree of hashes is undefined.
 /// - `Some(hash)` if `hashes` contains one element. A single hash is by definition the merkle root.
 /// - `Some(merkle_root)` if length of `hashes` is greater than one.
-pub fn bitcoin_merkle_root<T, I>(mut hashes: I) -> Option<T>
+pub fn calculate_root<T, I>(mut hashes: I) -> Option<T>
 where
     T: Hash + Encodable,
     <T as Hash>::Engine: io::Write,
@@ -108,7 +117,7 @@ mod tests {
     #[test]
     fn both_merkle_root_functions_return_the_same_result() {
         // testnet block 000000000000045e0b1660b6445b5e5c5ab63c9a4f956be7e1e69be04fa4497b
-        let segwit_block = include_bytes!("../../tests/data/testnet_block_000000000000045e0b1660b6445b5e5c5ab63c9a4f956be7e1e69be04fa4497b.raw");
+        let segwit_block = include_bytes!("../tests/data/testnet_block_000000000000045e0b1660b6445b5e5c5ab63c9a4f956be7e1e69be04fa4497b.raw");
         let block: Block = deserialize(&segwit_block[..]).expect("Failed to deserialize block");
         assert!(block.check_merkle_root()); // Sanity check.
 
@@ -119,8 +128,8 @@ mod tests {
             hashes_array[i] = hash;
         }
 
-        let from_iter = bitcoin_merkle_root(hashes_iter);
-        let from_array = bitcoin_merkle_root_inline(&mut hashes_array);
+        let from_iter = calculate_root(hashes_iter);
+        let from_array = calculate_root_inline(&mut hashes_array);
         assert_eq!(from_iter, from_array);
     }
 }
