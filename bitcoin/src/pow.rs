@@ -198,7 +198,7 @@ impl Target {
             size += 1;
         }
 
-        CompactTarget(compact | (size << 24) as u32)
+        CompactTarget(compact | (size << 24))
     }
 
     /// Returns true if block hash is less than or equal to this [`Target`].
