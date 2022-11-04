@@ -165,7 +165,7 @@ impl core::str::FromStr for OutPoint {
             return Err(ParseOutPointError::TooLong);
         }
         let find = s.find(':');
-        if find == None || find != s.rfind(':') {
+        if find.is_none() || find != s.rfind(':') {
             return Err(ParseOutPointError::Format);
         }
         let colon = find.unwrap();
