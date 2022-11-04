@@ -179,7 +179,7 @@ impl Witness {
 
     /// Returns the number of elements this witness holds
     pub fn len(&self) -> usize {
-        self.witness_elements as usize
+        self.witness_elements
     }
 
     /// Returns the bytes required when this Witness is consensus encoded

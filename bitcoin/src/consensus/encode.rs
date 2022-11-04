@@ -423,7 +423,7 @@ impl Encodable for VarInt {
             },
             _ => {
                 w.emit_u8(0xFF)?;
-                (self.0 as u64).consensus_encode(w)?;
+                self.0.consensus_encode(w)?;
                 Ok(9)
             },
         }

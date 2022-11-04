@@ -627,7 +627,7 @@ impl ExtendedPrivKey {
                 Network::Testnet | Network::Signet | Network::Regtest => [0x04, 0x35, 0x83, 0x94],
             }[..],
         );
-        ret[4] = self.depth as u8;
+        ret[4] = self.depth;
         ret[5..9].copy_from_slice(&self.parent_fingerprint[..]);
         ret[9..13].copy_from_slice(&u32::from(self.child_number).to_be_bytes());
         ret[13..45].copy_from_slice(&self.chain_code[..]);
@@ -759,7 +759,7 @@ impl ExtendedPubKey {
                 Network::Testnet | Network::Signet | Network::Regtest => [0x04u8, 0x35, 0x87, 0xCF],
             }[..],
         );
-        ret[4] = self.depth as u8;
+        ret[4] = self.depth;
         ret[5..9].copy_from_slice(&self.parent_fingerprint[..]);
         ret[9..13].copy_from_slice(&u32::from(self.child_number).to_be_bytes());
         ret[13..45].copy_from_slice(&self.chain_code[..]);

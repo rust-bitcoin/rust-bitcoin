@@ -281,9 +281,8 @@ mod tests {
         let signature =
             super::MessageSignature::from_base64(signature_base64).expect("message signature");
 
-        let pubkey =
-            PublicKey::from_slice(&::base64::decode(&pubkey_base64).expect("base64 string"))
-                .expect("pubkey slice");
+        let pubkey = PublicKey::from_slice(&base64::decode(pubkey_base64).expect("base64 string"))
+            .expect("pubkey slice");
 
         let p2pkh = Address::p2pkh(&pubkey, Network::Bitcoin);
         assert_eq!(signature.is_signed_by_address(&secp, &p2pkh, msg_hash), Ok(false));

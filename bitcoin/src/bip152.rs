@@ -284,7 +284,7 @@ impl Decodable for BlockTransactionsRequest {
                 // Since the number of indices ultimately represent transactions,
                 // we can limit the number of indices to the maximum number of
                 // transactions that would be allowed in a vector.
-                let byte_size = (nb_indexes as usize)
+                let byte_size = (nb_indexes)
                     .checked_mul(mem::size_of::<Transaction>())
                     .ok_or(encode::Error::ParseFailed("Invalid length"))?;
                 if byte_size > encode::MAX_VEC_SIZE {
