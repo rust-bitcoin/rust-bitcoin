@@ -9,7 +9,6 @@
 pub mod key;
 pub mod ecdsa;
 pub mod schnorr;
-pub mod amount;
 pub mod base58;
 pub mod merkleblock;
 pub mod psbt;

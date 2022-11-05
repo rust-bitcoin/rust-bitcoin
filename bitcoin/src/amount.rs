@@ -1241,13 +1241,13 @@ pub mod serde {
     //! #[derive(Serialize, Deserialize)]
     //! # #[serde(crate = "actual_serde")]
     //! pub struct HasAmount {
-    //!     #[serde(with = "bitcoin::util::amount::serde::as_btc")]
+    //!     #[serde(with = "bitcoin::amount::serde::as_btc")]
     //!     pub amount: Amount,
     //! }
     //! ```
 
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
-    use crate::util::amount::{Amount, Denomination, SignedAmount};
+    use crate::amount::{Amount, Denomination, SignedAmount};
 
     /// This trait is used only to avoid code duplication and naming collisions
     /// of the different serde serialization crates.
@@ -1334,7 +1334,7 @@ pub mod serde {
         //! Use with `#[serde(with = "amount::serde::as_sat")]`.
 
         use serde::{Deserializer, Serializer};
-        use crate::util::amount::serde::SerdeAmount;
+        use crate::amount::serde::SerdeAmount;
 
         pub fn serialize<A: SerdeAmount, S: Serializer>(a: &A, s: S) -> Result<S::Ok, S::Error> {
             a.ser_sat(s)
@@ -1349,7 +1349,7 @@ pub mod serde {
             //! Use with `#[serde(default, with = "amount::serde::as_sat::opt")]`.
 
             use serde::{Deserializer, Serializer, de};
-            use crate::util::amount::serde::SerdeAmountForOpt;
+            use crate::amount::serde::SerdeAmountForOpt;
             use core::fmt;
             use core::marker::PhantomData;
 
@@ -1398,7 +1398,7 @@ pub mod serde {
         //! Use with `#[serde(with = "amount::serde::as_btc")]`.
 
         use serde::{Deserializer, Serializer};
-        use crate::util::amount::serde::SerdeAmount;
+        use crate::amount::serde::SerdeAmount;
 
         pub fn serialize<A: SerdeAmount, S: Serializer>(a: &A, s: S) -> Result<S::Ok, S::Error> {
             a.ser_btc(s)
@@ -1413,7 +1413,7 @@ pub mod serde {
             //! Use with `#[serde(default, with = "amount::serde::as_btc::opt")]`.
 
             use serde::{Deserializer, Serializer, de};
-            use crate::util::amount::serde::SerdeAmountForOpt;
+            use crate::amount::serde::SerdeAmountForOpt;
             use core::fmt;
             use core::marker::PhantomData;
 
@@ -1957,9 +1957,9 @@ mod tests {
         #[derive(Serialize, Deserialize, PartialEq, Debug)]
         #[serde(crate = "actual_serde")]
         struct T {
-            #[serde(with = "crate::util::amount::serde::as_sat")]
+            #[serde(with = "crate::amount::serde::as_sat")]
             pub amt: Amount,
-            #[serde(with = "crate::util::amount::serde::as_sat")]
+            #[serde(with = "crate::amount::serde::as_sat")]
             pub samt: SignedAmount,
         }
 
@@ -1988,9 +1988,9 @@ mod tests {
         #[derive(Serialize, Deserialize, PartialEq, Debug)]
         #[serde(crate = "actual_serde")]
         struct T {
-            #[serde(with = "crate::util::amount::serde::as_btc")]
+            #[serde(with = "crate::amount::serde::as_btc")]
             pub amt: Amount,
-            #[serde(with = "crate::util::amount::serde::as_btc")]
+            #[serde(with = "crate::amount::serde::as_btc")]
             pub samt: SignedAmount,
         }
 
@@ -2024,9 +2024,9 @@ mod tests {
         #[derive(Serialize, Deserialize, PartialEq, Debug, Eq)]
         #[serde(crate = "actual_serde")]
         struct T {
-            #[serde(default, with = "crate::util::amount::serde::as_btc::opt")]
+            #[serde(default, with = "crate::amount::serde::as_btc::opt")]
             pub amt: Option<Amount>,
-            #[serde(default, with = "crate::util::amount::serde::as_btc::opt")]
+            #[serde(default, with = "crate::amount::serde::as_btc::opt")]
             pub samt: Option<SignedAmount>,
         }
 
@@ -2069,9 +2069,9 @@ mod tests {
         #[derive(Serialize, Deserialize, PartialEq, Debug, Eq)]
         #[serde(crate = "actual_serde")]
         struct T {
-            #[serde(default, with = "crate::util::amount::serde::as_sat::opt")]
+            #[serde(default, with = "crate::amount::serde::as_sat::opt")]
             pub amt: Option<Amount>,
-            #[serde(default, with = "crate::util::amount::serde::as_sat::opt")]
+            #[serde(default, with = "crate::amount::serde::as_sat::opt")]
             pub samt: Option<SignedAmount>,
         }
 
