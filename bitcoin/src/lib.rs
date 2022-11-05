@@ -73,6 +73,11 @@ pub use {bech32, bitcoin_hashes as hashes, secp256k1};
 #[cfg_attr(docsrs, doc(cfg(feature = "base64")))]
 pub use base64;
 
+// Re-export hashbrown when enabled
+#[cfg(feature = "hashbrown")]
+#[cfg_attr(docsrs, doc(cfg(feature = "hashbrown")))]
+pub use hashbrown;
+
 #[cfg(feature = "serde")]
 #[macro_use]
 extern crate actual_serde as serde;
