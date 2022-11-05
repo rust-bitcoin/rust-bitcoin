@@ -45,7 +45,7 @@ pub struct Witness {
     indices_start: usize,
 }
 
-/// Support structure to allow efficient and convenient iteration over the Witness elements.
+/// An iterator returning individual witness elements.
 pub struct Iter<'a> {
     inner: &'a [u8],
     indices_start: usize,

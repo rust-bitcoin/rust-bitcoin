@@ -604,11 +604,11 @@ impl Transaction {
         cloned_tx.txid().into()
     }
 
-    /// Computes the txid.
+    /// Computes the [`Txid`].
     ///
-    /// For non-segwit transactions this will be identical to the output of `wtxid()`, but for
-    /// segwit transactions, this will give the correct txid (not including witnesses) while `wtxid`
-    /// will also hash witnesses.
+    /// Hashes the transaction **excluding** the segwit data (i.e. the marker, flag bytes, and the
+    /// witness fields themselves). For non-segwit transactions which do not have any segwit data,
+    /// this will be equal to [`Transaction::wtxid()`].
     pub fn txid(&self) -> Txid {
         let mut enc = Txid::engine();
         self.version.consensus_encode(&mut enc).expect("engines don't error");
@@ -618,10 +618,11 @@ impl Transaction {
         Txid::from_engine(enc)
     }
 
-    /// Computes SegWit-version of the transaction id (wtxid).
+    /// Computes the segwit version of the transaction id.
     ///
-    /// For transaction with the witness data this hash includes witness, for pre-witness
-    /// transaction it is equal to the normal value returned by txid() function.
+    /// Hashes the transaction **including** all segwit data (i.e. the marker, flag bytes, and the
+    /// witness fields themselves). For non-segwit transactions which do not have any segwit data,
+    /// this will be equal to [`Transaction::txid()`].
     pub fn wtxid(&self) -> Wtxid {
         let mut enc = Wtxid::engine();
         self.consensus_encode(&mut enc).expect("engines don't error");
@@ -644,7 +645,7 @@ impl Transaction {
     /// - Does NOT attempt to support OP_CODESEPARATOR. In general this would require evaluating
     /// `script_pubkey` to determine which separators get evaluated and which don't, which we don't
     /// have the information to determine.
-    /// - Does NOT handle the sighash single bug (see "Return type" section)
+    /// - Does NOT handle the sighash single bug (see "Returns" section)
     ///
     /// # Returns
     ///
@@ -851,7 +852,12 @@ impl Transaction {
         Ok(())
     }
 
-    /// Checks if this is a coin base transaction.
+    /// Checks if this is a coinbase transaction.
+    ///
+    /// The first transaction in the block distributes the mining reward and is called the coinbase
+    /// transaction. It is impossible to check if the transaction is first in the block, so this
+    /// function checks the structure of the transaction instead - the previous output must be
+    /// all-zeros (creates satoshis "out of thin air").
     pub fn is_coin_base(&self) -> bool {
         self.input.len() == 1 && self.input[0].previous_output.is_null()
     }
@@ -859,7 +865,8 @@ impl Transaction {
     /// Returns `true` if the transaction itself opted in to be BIP-125-replaceable (RBF).
     ///
     /// This **does not** cover the case where a transaction becomes replaceable due to ancestors
-    /// being RBF.
+    /// being RBF. Please note that transactions may be replaced even if they do not include the RBF
+    /// signal: <https://bitcoinops.org/en/newsletters/2022/10/19/#transaction-replacement-option>.
     pub fn is_explicitly_rbf(&self) -> bool {
         self.input.iter().any(|input| input.sequence.is_rbf())
     }
