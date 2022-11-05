@@ -26,14 +26,17 @@
 //! * `no-std` - enables additional features required for this crate to be usable
 //!              without std. Does **not** disable `std`. Depends on `hashbrown`
 //!              and `core2`.
-//!
+//! * `bitcoinconsensus-std` - enables `std` in `bitcoinconsensus` and communicates it
+//!                            to this crate so it knows how to implement
+//!                            `std::error::Error`. At this time there's a hack to
+//!                            achieve the same without this feature but it could
+//!                            happen the implementations diverge one day.
 
 #![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
 // Experimental features we need.
 #![cfg_attr(bench, feature(test))]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 // Coding conventions
-#![forbid(unsafe_code)]
 #![deny(non_upper_case_globals)]
 #![deny(non_camel_case_types)]
 #![deny(non_snake_case)]
