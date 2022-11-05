@@ -32,13 +32,16 @@ macro_rules! impl_array_newtype {
             #[inline]
             pub fn as_bytes(&self) -> &[$ty; $len] { &self.0 }
 
-            /// Returns a clone of the underlying bytes.
+            /// Returns the underlying bytes.
             #[inline]
-            pub fn to_bytes(self) -> [$ty; $len] { self.0.clone() }
+            pub fn to_bytes(self) -> [$ty; $len] {
+                // We rely on `Copy` being implemented for $thing so conversion
+                // methods use the correct Rust naming conventions.
+                fn check_copy<T: Copy>() {}
+                check_copy::<$thing>();
 
-            /// Returns the underlying bytes (takes ownership).
-            #[inline]
-            pub fn into_bytes(self) -> [$ty; $len] { self.0 }
+                self.0
+            }
         }
 
         impl<'a> core::convert::From<&'a [$ty]> for $thing {
