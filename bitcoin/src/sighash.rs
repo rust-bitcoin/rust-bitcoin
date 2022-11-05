@@ -1152,7 +1152,7 @@ mod tests {
 
     #[test]
     fn test_sighashes_keyspending() {
-        // following test case has been taken from bitcoin core test framework
+        // following test case has been taken from Bitcoin Core test framework
 
         test_taproot_sighash(
             "020000000164eb050a5e3da0c2a65e4786f26d753b7bc69691fabccafb11f7acef36641f1846010000003101b2b404392a22000000000017a9147f2bde86fe78bf68a0544a4f290e12f0b7e0a08c87580200000000000017a91425d11723074ecfb96a0a83c3956bfaf362ae0c908758020000000000001600147e20f938993641de67bb0cdd71682aa34c4d29ad5802000000000000160014c64984dc8761acfa99418bd6bedc79b9287d652d72000000",

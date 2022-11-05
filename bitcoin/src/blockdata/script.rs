@@ -318,7 +318,7 @@ pub fn read_scriptint(v: &[u8]) -> Result<i64, Error> {
         Some(last) => last,
         None => return Ok(0),
     };
-    // Comment and code copied from bitcoin core:
+    // Comment and code copied from Bitcoin Core:
     // https://github.com/bitcoin/bitcoin/blob/447f50e4aed9a8b1d80e1891cda85801aeb80b4e/src/script/script.h#L247-L262
     // If the most-significant-byte - excluding the sign bit - is zero
     // then we're not minimal. Note how this test also rejects the

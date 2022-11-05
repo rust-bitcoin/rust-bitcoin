@@ -336,12 +336,12 @@ impl From<&TaprootSpendInfo> for TapTweakHash {
 /// in a depth-first search (DFS) walk order to construct this tree.
 ///
 /// See Wikipedia for more details on [DFS](https://en.wikipedia.org/wiki/Depth-first_search).
-// Similar to Taproot Builder in bitcoin core.
+// Similar to Taproot Builder in Bitcoin Core.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct TaprootBuilder {
-    // The following doc-comment is from bitcoin core, but modified for Rust. It describes the
+    // The following doc-comment is from Bitcoin Core, but modified for Rust. It describes the
     // current state of the builder for a given tree.
     //
     // For each level in the tree, one NodeInfo object may be present. Branch at index 0 is
@@ -1248,7 +1248,7 @@ mod test {
     #[test]
     fn control_block_verify() {
         let secp  = Secp256k1::verification_only();
-        // test vectors obtained from printing values in feature_taproot.py from bitcoin core
+        // test vectors obtained from printing values in feature_taproot.py from Bitcoin Core
         _verify_tap_commitments(&secp, "51205dc8e62b15e0ebdf44751676be35ba32eed2e84608b290d4061bbff136cd7ba9", "6a", "c1a9d6f66cd4b25004f526bfa873e56942f98e8e492bd79ed6532b966104817c2bda584e7d32612381cf88edc1c02e28a296e807c16ad22f591ee113946e48a71e0641e660d1e5392fb79d64838c2b84faf04b7f5f283c9d8bf83e39e177b64372a0cd22eeab7e093873e851e247714eff762d8a30be699ba4456cfe6491b282e193a071350ae099005a5950d74f73ba13077a57bc478007fb0e4d1099ce9cf3d4");
         _verify_tap_commitments(&secp, "5120e208c869c40d8827101c5ad3238018de0f3f5183d77a0c53d18ac28ddcbcd8ad", "f4", "c0a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f40090ab1f4890d51115998242ebce636efb9ede1b516d9eb8952dc1068e0335306199aaf103cceb41d9bc37ec231aca89b984b5fd3c65977ce764d51033ac65adb4da14e029b1e154a85bfd9139e7aa2720b6070a4ceba8264ca61d5d3ac27aceb9ef4b54cd43c2d1fd5e11b5c2e93cf29b91ea3dc5b832201f02f7473a28c63246");
         _verify_tap_commitments(&secp, "5120567666e7df90e0450bb608e17c01ed3fbcfa5355a5f8273e34e583bfaa70ce09", "203455139bf238a3067bd72ed77e0ab8db590330f55ed58dba7366b53bf4734279ac", "c1a0eb12e60a52614986c623cbb6621dcdba3a47e3be6b37e032b7a11c7b98f400");
