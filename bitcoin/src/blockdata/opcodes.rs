@@ -16,11 +16,19 @@
 use core::{fmt, convert::From};
 use bitcoin_internals::debug_from_display;
 
-// Note: I am deliberately not implementing PartialOrd or Ord on the
-//       opcode enum. If you want to check ranges of opcodes, etc.,
-//       write an #[inline] helper function which casts to u8s.
-
 /// A script Opcode.
+///
+/// We do not implement Ord on this type because there is no natural ordering on opcodes, but there
+/// may appear to be one (e.g. because all the push opcodes appear in a consecutive block) and we
+/// don't want to encourage subtly buggy code. Please use [`All::classify`] to distinguish different
+/// types of opcodes.
+///
+/// <details>
+///   <summary>Example of Core bug caused by assuming ordering</summary>
+///
+///   Bitcoin Core's `IsPushOnly` considers `OP_RESERVED` to be a "push code", allowing this opcode
+///   in contexts where only pushes are supposed to be allowed.
+/// </details>
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub struct All {
     code: u8,
@@ -29,10 +37,14 @@ pub struct All {
 // private import so we don't have to use `all::OP_FOO` in this file.
 use self::all::*;
 
+/// Enables wildcard imports to bring into scope all opcodes and nothing else.
+///
 /// The `all` module is provided so one can use a wildcard import `use bitcoin::opcodes::all::*` to
 /// get all the `OP_FOO` opcodes without getting other types defined in `opcodes` (e.g. `All`, `Class`).
+///
+/// This module is guaranteed to never contain anything except opcode constants and all opcode
+/// constants are guaranteed to begin with OP_.
 pub mod all {
-    //! Constants associated with All type
     use super::All;
 
     /// Push an empty array onto the stack.
