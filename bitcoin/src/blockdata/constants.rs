@@ -20,7 +20,7 @@ use crate::blockdata::script;
 use crate::blockdata::opcodes::all::*;
 use crate::blockdata::locktime::absolute;
 use crate::blockdata::transaction::{OutPoint, Transaction, TxOut, TxIn, Sequence};
-use crate::blockdata::block::{Block, BlockHeader, BlockVersion};
+use crate::blockdata::block::{self, Block};
 use crate::blockdata::witness::Witness;
 use crate::network::constants::Network;
 use crate::pow::CompactTarget;
@@ -111,8 +111,8 @@ pub fn genesis_block(network: Network) -> Block {
     match network {
         Network::Bitcoin => {
             Block {
-                header: BlockHeader {
-                    version: BlockVersion(1),
+                header: block::Header {
+                    version: block::Version::ONE,
                     prev_blockhash: Hash::all_zeros(),
                     merkle_root,
                     time: 1231006505,
@@ -124,8 +124,8 @@ pub fn genesis_block(network: Network) -> Block {
         }
         Network::Testnet => {
             Block {
-                header: BlockHeader {
-                    version: BlockVersion(1),
+                header: block::Header {
+                    version: block::Version::ONE,
                     prev_blockhash: Hash::all_zeros(),
                     merkle_root,
                     time: 1296688602,
@@ -137,8 +137,8 @@ pub fn genesis_block(network: Network) -> Block {
         }
         Network::Signet => {
             Block {
-                header: BlockHeader {
-                    version: BlockVersion(1),
+                header: block::Header {
+                    version: block::Version::ONE,
                     prev_blockhash: Hash::all_zeros(),
                     merkle_root,
                     time: 1598918400,
@@ -150,8 +150,8 @@ pub fn genesis_block(network: Network) -> Block {
         }
         Network::Regtest => {
             Block {
-                header: BlockHeader {
-                    version: BlockVersion(1),
+                header: block::Header {
+                    version: block::Version::ONE,
                     prev_blockhash: Hash::all_zeros(),
                     merkle_root,
                     time: 1296688602,
@@ -224,7 +224,7 @@ mod test {
     fn bitcoin_genesis_full_block() {
         let gen = genesis_block(Network::Bitcoin);
 
-        assert_eq!(gen.header.version, BlockVersion(1));
+        assert_eq!(gen.header.version, block::Version::ONE);
         assert_eq!(gen.header.prev_blockhash, Hash::all_zeros());
         assert_eq!(gen.header.merkle_root.to_hex(), "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b");
 
@@ -237,7 +237,7 @@ mod test {
     #[test]
     fn testnet_genesis_full_block() {
         let gen = genesis_block(Network::Testnet);
-        assert_eq!(gen.header.version, BlockVersion(1));
+        assert_eq!(gen.header.version, block::Version::ONE);
         assert_eq!(gen.header.prev_blockhash, Hash::all_zeros());
         assert_eq!(gen.header.merkle_root.to_hex(), "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b");
         assert_eq!(gen.header.time, 1296688602);
@@ -249,7 +249,7 @@ mod test {
     #[test]
     fn signet_genesis_full_block() {
         let gen = genesis_block(Network::Signet);
-        assert_eq!(gen.header.version, BlockVersion(1));
+        assert_eq!(gen.header.version, block::Version::ONE);
         assert_eq!(gen.header.prev_blockhash, Hash::all_zeros());
         assert_eq!(gen.header.merkle_root.to_hex(), "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b");
         assert_eq!(gen.header.time, 1598918400);

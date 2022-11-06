@@ -237,7 +237,7 @@ impl Target {
     /// `0xffff_ffff_ffff_ffff_ffff_ffff` `difficulty()` will saturate at `u128::MAX`.
     ///
     /// [max]: Target::max
-    /// [target]: crate::blockdata::block::BlockHeader::target
+    /// [target]: crate::blockdata::block::Header::target
     pub fn difficulty(&self) -> u128 {
         let d = Target::MAX.0 / self.0;
         d.saturating_to_u128()

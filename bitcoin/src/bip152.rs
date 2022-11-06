@@ -16,7 +16,7 @@ use crate::consensus::encode::{self, Decodable, Encodable, VarInt};
 use crate::hashes::{sha256, siphash24, Hash};
 use crate::internal_macros::{impl_bytes_newtype, impl_consensus_encoding};
 use crate::prelude::*;
-use crate::{io, Block, BlockHash, BlockHeader, Transaction};
+use crate::{io, block, Block, BlockHash, Transaction};
 
 /// A BIP-152 error
 #[derive(Clone, PartialEq, Eq, Debug, Copy, PartialOrd, Ord, Hash)]
@@ -100,7 +100,7 @@ impl_bytes_newtype!(ShortId, 6);
 
 impl ShortId {
     /// Calculate the SipHash24 keys used to calculate short IDs.
-    pub fn calculate_siphash_keys(header: &BlockHeader, nonce: u64) -> (u64, u64) {
+    pub fn calculate_siphash_keys(header: &block::Header, nonce: u64) -> (u64, u64) {
         // 1. single-SHA256 hashing the block header with the nonce appended (in little-endian)
         let h = {
             let mut engine = sha256::Hash::engine();
@@ -147,7 +147,7 @@ impl Decodable for ShortId {
 #[derive(PartialEq, Eq, Clone, Debug, PartialOrd, Ord, Hash)]
 pub struct HeaderAndShortIds {
     /// The header of the block being provided.
-    pub header: BlockHeader,
+    pub header: block::Header,
     ///  A nonce for use in short transaction ID calculations.
     pub nonce: u64,
     ///  The short transaction IDs calculated from the transactions
@@ -374,7 +374,7 @@ mod test {
     use crate::consensus::encode::{deserialize, serialize};
     use crate::hashes::hex::FromHex;
     use crate::{
-        Block, BlockHash, BlockHeader, BlockVersion, CompactTarget, OutPoint, Script, Sequence,
+        CompactTarget, OutPoint, Script, Sequence,
         Transaction, TxIn, TxMerkleNode, TxOut, Txid, Witness,
     };
 
@@ -394,8 +394,8 @@ mod test {
 
     fn dummy_block() -> Block {
         Block {
-            header: BlockHeader {
-                version: BlockVersion(1),
+            header: block::Header {
+                version: block::Version::ONE,
                 prev_blockhash: BlockHash::hash(&[0]),
                 merkle_root: TxMerkleNode::hash(&[1]),
                 time: 2,

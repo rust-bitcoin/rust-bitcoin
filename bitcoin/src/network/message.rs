@@ -182,7 +182,7 @@ pub enum NetworkMessage {
     /// `block`
     Block(block::Block),
     /// `headers`
-    Headers(Vec<block::BlockHeader>),
+    Headers(Vec<block::Header>),
     /// `sendheaders`
     SendHeaders,
     /// `getaddr`
@@ -317,7 +317,7 @@ impl RawNetworkMessage {
     }
 }
 
-struct HeaderSerializationWrapper<'a>(&'a Vec<block::BlockHeader>);
+struct HeaderSerializationWrapper<'a>(&'a Vec<block::Header>);
 
 impl<'a> Encodable for HeaderSerializationWrapper<'a> {
     #[inline]
@@ -380,7 +380,7 @@ impl Encodable for RawNetworkMessage {
     }
 }
 
-struct HeaderDeserializationWrapper(Vec<block::BlockHeader>);
+struct HeaderDeserializationWrapper(Vec<block::Header>);
 
 impl Decodable for HeaderDeserializationWrapper {
     #[inline]
@@ -479,7 +479,7 @@ mod test {
     use crate::network::address::{Address, AddrV2, AddrV2Message};
     use super::message_network::{Reject, RejectReason, VersionMessage};
     use crate::network::message_blockdata::{Inventory, GetBlocksMessage, GetHeadersMessage};
-    use crate::blockdata::block::{Block, BlockHeader};
+    use crate::blockdata::block::{self, Block};
     use crate::network::message_filter::{GetCFilters, CFilter, GetCFHeaders, CFHeaders, GetCFCheckpt, CFCheckpt};
     use crate::blockdata::transaction::Transaction;
     use crate::blockdata::script::Script;
@@ -498,7 +498,7 @@ mod test {
         let version_msg: VersionMessage = deserialize(&Vec::from_hex("721101000100000000000000e6e0845300000000010000000000000000000000000000000000ffff0000000000000100000000000000fd87d87eeb4364f22cf54dca59412db7208d47d920cffce83ee8102f5361746f7368693a302e392e39392f2c9f040001").unwrap()).unwrap();
         let tx: Transaction = deserialize(&Vec::from_hex("0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000").unwrap()).unwrap();
         let block: Block = deserialize(&include_bytes!("../../tests/data/testnet_block_000000000000045e0b1660b6445b5e5c5ab63c9a4f956be7e1e69be04fa4497b.raw")[..]).unwrap();
-        let header: BlockHeader = deserialize(&Vec::from_hex("010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914cd74d6e49ffff001d323b3a7b").unwrap()).unwrap();
+        let header: block::Header = deserialize(&Vec::from_hex("010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914cd74d6e49ffff001d323b3a7b").unwrap()).unwrap();
         let script: Script = deserialize(&Vec::from_hex("1976a91431a420903c05a0a7de2de40c9f02ebedbacdc17288ac").unwrap()).unwrap();
         let merkle_block: MerkleBlock = deserialize(&Vec::from_hex("0100000079cda856b143d9db2c1caff01d1aecc8630d30625d10e8b4b8b0000000000000b50cc069d6a3e33e3ff84a5c41d9d3febe7c770fdcc96b2c3ff60abe184f196367291b4d4c86041b8fa45d630100000001b50cc069d6a3e33e3ff84a5c41d9d3febe7c770fdcc96b2c3ff60abe184f19630101").unwrap()).unwrap();
         let cmptblock = deserialize(&Vec::from_hex("00000030d923ad36ff2d955abab07f8a0a6e813bc6e066b973e780c5e36674cad5d1cd1f6e265f2a17a0d35cbe701fe9d06e2c6324cfe135f6233e8b767bfa3fb4479b71115dc562ffff7f2006000000000000000000000000010002000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0302ee00ffffffff0100f9029500000000015100000000").unwrap()).unwrap();

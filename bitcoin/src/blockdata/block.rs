@@ -16,7 +16,7 @@ use core::fmt;
 use crate::{merkle_tree, util};
 use crate::util::Error::{BlockBadTarget, BlockBadProofOfWork};
 use crate::hashes::{Hash, HashEngine};
-use crate::hash_types::{Wtxid, BlockHash, TxMerkleNode, WitnessMerkleNode, WitnessCommitment};
+use crate::hash_types::{Wtxid, TxMerkleNode, WitnessMerkleNode, WitnessCommitment};
 use crate::consensus::{encode, Encodable, Decodable};
 use crate::blockdata::transaction::Transaction;
 use crate::blockdata::constants::WITNESS_SCALE_FACTOR;
@@ -25,6 +25,8 @@ use crate::pow::{CompactTarget, Target, Work};
 use crate::VarInt;
 use crate::internal_macros::impl_consensus_encoding;
 use crate::io;
+
+pub use crate::hash_types::BlockHash;
 
 /// Bitcoin block header.
 ///
@@ -39,9 +41,9 @@ use crate::io;
 #[derive(Copy, PartialEq, Eq, Clone, Debug, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
-pub struct BlockHeader {
+pub struct Header {
     /// Block version, now repurposed for soft fork signalling.
-    pub version: BlockVersion,
+    pub version: Version,
     /// Reference to the previous block in the chain.
     pub prev_blockhash: BlockHash,
     /// The root hash of the merkle tree of transactions in the block.
@@ -54,9 +56,9 @@ pub struct BlockHeader {
     pub nonce: u32,
 }
 
-impl_consensus_encoding!(BlockHeader, version, prev_blockhash, merkle_root, time, bits, nonce);
+impl_consensus_encoding!(Header, version, prev_blockhash, merkle_root, time, bits, nonce);
 
-impl BlockHeader {
+impl Header {
     /// Returns the block hash.
     pub fn block_hash(&self) -> BlockHash {
         let mut engine = BlockHash::engine();
@@ -110,17 +112,39 @@ impl BlockHeader {
 #[derive(Copy, PartialEq, Eq, Clone, Debug, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
-pub struct BlockVersion(pub i32);
+pub struct Version(i32);
 
-impl BlockVersion {
+impl Version {
+    /// The original Bitcoin Block v1.
+    pub const ONE: Self = Self(1);
+
+    /// BIP-34 Block v2.
+    pub const TWO: Self = Self(2);
+
     /// BIP-9 compatible version number that does not signal for any softforks.
     pub const NO_SOFT_FORK_SIGNALLING: Self = Self(Self::USE_VERSION_BITS as i32);
+
     /// BIP-9 soft fork signal bits mask.
     const VERSION_BITS_MASK: u32 = 0x1FFF_FFFF;
+
     /// 32bit value starting with `001` to use version bits.
     ///
     /// The value has the top three bits `001` which enables the use of version bits to signal for soft forks.
     const USE_VERSION_BITS: u32 = 0x2000_0000;
+
+    /// Creates a [`Version`] from a signed 32 bit integer value.
+    ///
+    /// This is the data type used in consensus code in Bitcoin Core.
+    pub fn from_consensus(v: i32) -> Self {
+        Version(v)
+    }
+
+    /// Returns the inner `i32` value.
+    ///
+    /// This is the data type used in consensus code in Bitcoin Core.
+    pub fn to_consensus(self) -> i32 {
+        self.0
+    }
 
     /// Check whether the version number is signalling a soft fork at the given bit.
     ///
@@ -142,21 +166,21 @@ impl BlockVersion {
     }
 }
 
-impl Default for BlockVersion {
-    fn default() -> BlockVersion {
+impl Default for Version {
+    fn default() -> Version {
         Self::NO_SOFT_FORK_SIGNALLING
     }
 }
 
-impl Encodable for BlockVersion {
+impl Encodable for Version {
     fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         self.0.consensus_encode(w)
     }
 }
 
-impl Decodable for BlockVersion {
+impl Decodable for Version {
     fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Decodable::consensus_decode(r).map(BlockVersion)
+        Decodable::consensus_decode(r).map(Version)
     }
 }
 
@@ -176,7 +200,7 @@ impl Decodable for BlockVersion {
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct Block {
     /// The block header
-    pub header: BlockHeader,
+    pub header: Header,
     /// List of transactions contained in the block
     pub txdata: Vec<Transaction>
 }
@@ -300,7 +324,7 @@ impl Block {
         // number (including a sign bit). Height is the height of the mined
         // block in the block chain, where the genesis block is height zero (0).
 
-        if self.header.version < BlockVersion(2) {
+        if self.header.version < Version::TWO {
             return Err(Bip34Error::Unsupported);
         }
 
@@ -364,14 +388,14 @@ impl std::error::Error for Bip34Error {
     }
 }
 
-impl From<BlockHeader> for BlockHash {
-    fn from(header: BlockHeader) -> BlockHash {
+impl From<Header> for BlockHash {
+    fn from(header: Header) -> BlockHash {
         header.block_hash()
     }
 }
 
-impl From<&BlockHeader> for BlockHash {
-    fn from(header: &BlockHeader) -> BlockHash {
+impl From<&Header> for BlockHash {
+    fn from(header: &Header) -> BlockHash {
         header.block_hash()
     }
 }
@@ -393,10 +417,7 @@ mod tests {
     use super::*;
 
     use crate::hashes::hex::FromHex;
-
-    use crate::blockdata::block::{Block, BlockHeader, BlockVersion};
     use crate::consensus::encode::{deserialize, serialize};
-    use crate::util::Error::{BlockBadTarget, BlockBadProofOfWork};
 
     #[test]
     fn test_coinbase_and_bip34() {
@@ -434,7 +455,7 @@ mod tests {
         assert!(decode.is_ok());
         assert!(bad_decode.is_err());
         let real_decode = decode.unwrap();
-        assert_eq!(real_decode.header.version, BlockVersion(1));
+        assert_eq!(real_decode.header.version, Version(1));
         assert_eq!(serialize(&real_decode.header.prev_blockhash), prevhash);
         assert_eq!(real_decode.header.merkle_root, real_decode.compute_merkle_root().unwrap());
         assert_eq!(serialize(&real_decode.header.merkle_root), merkle);
@@ -469,7 +490,7 @@ mod tests {
 
         assert!(decode.is_ok());
         let real_decode = decode.unwrap();
-        assert_eq!(real_decode.header.version, BlockVersion(BlockVersion::USE_VERSION_BITS as i32));  // VERSIONBITS but no bits set
+        assert_eq!(real_decode.header.version, Version(Version::USE_VERSION_BITS as i32));  // VERSIONBITS but no bits set
         assert_eq!(serialize(&real_decode.header.prev_blockhash), prevhash);
         assert_eq!(serialize(&real_decode.header.merkle_root), merkle);
         assert_eq!(real_decode.header.merkle_root, real_decode.compute_merkle_root().unwrap());
@@ -496,19 +517,19 @@ mod tests {
         let decode: Result<Block, _> = deserialize(&block);
         assert!(decode.is_ok());
         let real_decode = decode.unwrap();
-        assert_eq!(real_decode.header.version, BlockVersion(2147483647));
+        assert_eq!(real_decode.header.version, Version(2147483647));
 
         let block2 = Vec::from_hex("000000800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000").unwrap();
         let decode2: Result<Block, _> = deserialize(&block2);
         assert!(decode2.is_ok());
         let real_decode2 = decode2.unwrap();
-        assert_eq!(real_decode2.header.version, BlockVersion(-2147483648));
+        assert_eq!(real_decode2.header.version, Version(-2147483648));
     }
 
     #[test]
     fn validate_pow_test() {
         let some_header = Vec::from_hex("010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914cd74d6e49ffff001d323b3a7b").unwrap();
-        let some_header: BlockHeader = deserialize(&some_header).expect("Can't deserialize correct block header");
+        let some_header: Header = deserialize(&some_header).expect("Can't deserialize correct block header");
         assert_eq!(some_header.validate_pow(some_header.target()).unwrap(), some_header.block_hash());
 
         // test with zero target
@@ -518,7 +539,7 @@ mod tests {
         }
 
         // test with modified header
-        let mut invalid_header: BlockHeader = some_header;
+        let mut invalid_header: Header = some_header;
         invalid_header.version.0 += 1;
         match invalid_header.validate_pow(invalid_header.target()) {
             Err(BlockBadProofOfWork) => (),
@@ -530,7 +551,7 @@ mod tests {
     fn compact_roundrtip_test() {
         let some_header = Vec::from_hex("010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914cd74d6e49ffff001d323b3a7b").unwrap();
 
-        let header: BlockHeader = deserialize(&some_header).expect("Can't deserialize correct block header");
+        let header: Header = deserialize(&some_header).expect("Can't deserialize correct block header");
 
         assert_eq!(header.bits, header.target().to_compact_lossy());
     }
@@ -539,7 +560,7 @@ mod tests {
     fn soft_fork_signalling() {
         for i in 0..31 {
             let version_int = (0x20000000u32 ^ 1<<i) as i32;
-            let version = BlockVersion(version_int);
+            let version = Version(version_int);
             if i < 29 {
                 assert!(version.is_signalling_soft_fork(i));
             } else {
@@ -547,7 +568,7 @@ mod tests {
             }
         }
 
-        let segwit_signal = BlockVersion(0x20000000 ^ 1<<1);
+        let segwit_signal = Version(0x20000000 ^ 1<<1);
         assert!(!segwit_signal.is_signalling_soft_fork(0));
         assert!(segwit_signal.is_signalling_soft_fork(1));
         assert!(!segwit_signal.is_signalling_soft_fork(2));
