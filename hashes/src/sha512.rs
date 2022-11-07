@@ -124,19 +124,19 @@ impl Default for Hash {
 
 impl PartialOrd for Hash {
     fn partial_cmp(&self, other: &Hash) -> Option<cmp::Ordering> {
-        (&self.0).partial_cmp(&other.0)
+        self.0.partial_cmp(&other.0)
     }
 }
 
 impl Ord for Hash {
     fn cmp(&self, other: &Hash) -> cmp::Ordering {
-        (&self.0).cmp(&other.0)
+        self.0.cmp(&other.0)
     }
 }
 
 impl hash::Hash for Hash {
     fn hash<H: hash::Hasher>(&self, state: &mut H) {
-        (&self.0).hash(state)
+        self.0.hash(state)
     }
 }
 
