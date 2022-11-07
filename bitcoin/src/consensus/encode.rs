@@ -28,7 +28,7 @@ use crate::io::{self, Cursor, Read};
 
 use crate::psbt;
 use crate::bip152::{ShortId, PrefilledTransaction};
-use crate::util::taproot::TapLeafHash;
+use crate::taproot::TapLeafHash;
 use crate::hashes::hex::ToHex;
 
 use crate::blockdata::transaction::{TxOut, Transaction, TxIn};

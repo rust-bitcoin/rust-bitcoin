@@ -106,6 +106,7 @@ pub mod pow;
 pub mod psbt;
 pub mod sighash;
 pub mod sign_message;
+pub mod taproot;
 pub mod util;
 
 #[cfg(feature = "std")]

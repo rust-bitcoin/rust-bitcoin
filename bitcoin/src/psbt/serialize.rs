@@ -19,12 +19,12 @@ use crate::bip32::{ChildNumber, Fingerprint, KeySource};
 use crate::hashes::{hash160, ripemd160, sha256, sha256d, Hash};
 use crate::crypto::{ecdsa, schnorr};
 use crate::psbt;
-use crate::util::taproot::{TapBranchHash, TapLeafHash, ControlBlock, LeafVersion};
+use crate::taproot::{TapBranchHash, TapLeafHash, ControlBlock, LeafVersion};
 use crate::crypto::key::PublicKey;
 
 use super::map::{TapTree, PsbtSighashType};
 
-use crate::util::taproot::TaprootBuilder;
+use crate::taproot::TaprootBuilder;
 /// A trait for serializing a value as raw data for insertion into PSBT
 /// key-value pairs.
 pub trait Serialize {

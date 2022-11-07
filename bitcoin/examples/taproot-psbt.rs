@@ -90,7 +90,7 @@ use bitcoin::psbt::{self, Input, Output, Psbt, PsbtSighashType};
 use bitcoin::schnorr::{self, TapTweak};
 use bitcoin::secp256k1::{Message, Secp256k1};
 use bitcoin::sighash::{self, SchnorrSighashType, SighashCache};
-use bitcoin::util::taproot::{
+use bitcoin::taproot::{
     LeafVersion, TapLeafHash, TapSighashHash, TaprootBuilder, TaprootSpendInfo,
 };
 use bitcoin::{

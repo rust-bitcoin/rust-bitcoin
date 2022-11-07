@@ -16,7 +16,7 @@ use crate::sighash::EcdsaSighashType;
 use crate::io::{self, Read, Write};
 use crate::prelude::*;
 use crate::VarInt;
-use crate::util::taproot::TAPROOT_ANNEX_PREFIX;
+use crate::taproot::TAPROOT_ANNEX_PREFIX;
 
 /// The Witness is the data used to unlock bitcoins since the [segwit upgrade](https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki)
 ///

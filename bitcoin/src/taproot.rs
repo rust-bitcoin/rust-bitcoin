@@ -48,15 +48,19 @@ const MIDSTATE_TAPSIGHASH: [u8; 32] = [
 // f504a425d7f8783b1363868ae3e556586eee945dbc7888dd02a6e2c31873fe9f
 
 // Taproot test vectors from BIP-341 state the hashes without any reversing
+#[rustfmt::skip]
 sha256t_hash_newtype!(TapLeafHash, TapLeafTag, MIDSTATE_TAPLEAF, 64,
     doc="Taproot-tagged hash for tapscript Merkle tree leafs", false
 );
+#[rustfmt::skip]
 sha256t_hash_newtype!(TapBranchHash, TapBranchTag, MIDSTATE_TAPBRANCH, 64,
     doc="Taproot-tagged hash for tapscript Merkle tree branches", false
 );
+#[rustfmt::skip]
 sha256t_hash_newtype!(TapTweakHash, TapTweakTag, MIDSTATE_TAPTWEAK, 64,
     doc="Taproot-tagged hash for public key tweaks", false
 );
+#[rustfmt::skip]
 sha256t_hash_newtype!(TapSighashHash, TapSighashTag, MIDSTATE_TAPSIGHASH, 64,
     doc="Taproot-tagged hash for the taproot signature hash", false
 );
@@ -1437,7 +1441,7 @@ mod test {
     }
 
     fn bip_341_read_json() -> serde_json::Value {
-        let json_str = include_str!("../../tests/data/bip341_tests.json");
+        let json_str = include_str!("../tests/data/bip341_tests.json");
         serde_json::from_str(json_str).expect("JSON was not well-formatted")
     }
 }

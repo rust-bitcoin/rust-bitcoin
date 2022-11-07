@@ -7,7 +7,6 @@
 //!
 
 pub mod base58;
-pub mod taproot;
 
 /// The `misc` module was moved and re-named to `sign_message`.
 pub mod misc {
