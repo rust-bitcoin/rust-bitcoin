@@ -864,9 +864,13 @@ impl Transaction {
 
     /// Returns `true` if the transaction itself opted in to be BIP-125-replaceable (RBF).
     ///
+    /// # Warning
+    ///
+    /// **Incorrectly relying on RBF may lead to monetary loss!**
+    ///
     /// This **does not** cover the case where a transaction becomes replaceable due to ancestors
-    /// being RBF. Please note that transactions may be replaced even if they do not include the RBF
-    /// signal: <https://bitcoinops.org/en/newsletters/2022/10/19/#transaction-replacement-option>.
+    /// being RBF. Please note that transactions **may be replaced** even if they **do not** include
+    /// the RBF signal: <https://bitcoinops.org/en/newsletters/2022/10/19/#transaction-replacement-option>.
     pub fn is_explicitly_rbf(&self) -> bool {
         self.input.iter().any(|input| input.sequence.is_rbf())
     }
