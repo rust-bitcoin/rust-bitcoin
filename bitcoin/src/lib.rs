@@ -97,6 +97,7 @@ pub mod bip158;
 pub mod bip32;
 pub mod blockdata;
 pub mod consensus;
+pub mod crypto;
 pub mod error;
 pub mod hash_types;
 pub mod merkle_tree;
@@ -122,14 +123,13 @@ pub use crate::blockdata::transaction::{self, OutPoint, Sequence, Transaction, T
 pub use crate::blockdata::witness::{self, Witness};
 pub use crate::blockdata::{constants, opcodes};
 pub use crate::consensus::encode::VarInt;
+pub use crate::crypto::key::{self, PrivateKey, PublicKey};
+pub use crate::crypto::{ecdsa, schnorr};
 pub use crate::error::Error;
 pub use crate::hash_types::*;
 pub use crate::merkle_tree::MerkleBlock;
 pub use crate::network::constants::Network;
 pub use crate::pow::{CompactTarget, Target, Work};
-pub use crate::util::ecdsa::{self, EcdsaSig, EcdsaSigError};
-pub use crate::util::key::{KeyPair, PrivateKey, PublicKey, XOnlyPublicKey};
-pub use crate::util::schnorr::{self, SchnorrSig, SchnorrSigError};
 
 #[cfg(not(feature = "std"))]
 mod io_extras {

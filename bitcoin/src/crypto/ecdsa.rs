@@ -19,31 +19,31 @@ use crate::sighash::{EcdsaSighashType, NonStandardSighashType};
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
-pub struct EcdsaSig {
+pub struct Signature {
     /// The underlying ECDSA Signature
     pub sig: secp256k1::ecdsa::Signature,
     /// The corresponding hash type
     pub hash_ty: EcdsaSighashType,
 }
 
-impl EcdsaSig {
+impl Signature {
     /// Constructs an ECDSA bitcoin signature for [`EcdsaSighashType::All`].
-    pub fn sighash_all(sig: secp256k1::ecdsa::Signature) -> EcdsaSig {
-        EcdsaSig {
+    pub fn sighash_all(sig: secp256k1::ecdsa::Signature) -> Signature {
+        Signature {
             sig,
             hash_ty: EcdsaSighashType::All
         }
     }
 
     /// Deserializes from slice following the standardness rules for [`EcdsaSighashType`].
-    pub fn from_slice(sl: &[u8]) -> Result<Self, EcdsaSigError> {
+    pub fn from_slice(sl: &[u8]) -> Result<Self, Error> {
         let (hash_ty, sig) = sl.split_last()
-            .ok_or(EcdsaSigError::EmptySignature)?;
+            .ok_or(Error::EmptySignature)?;
         let hash_ty = EcdsaSighashType::from_standard(*hash_ty as u32)
-            .map_err(|_| EcdsaSigError::NonStandardSighashType(*hash_ty as u32))?;
+            .map_err(|_| Error::NonStandardSighashType(*hash_ty as u32))?;
         let sig = secp256k1::ecdsa::Signature::from_der(sig)
-            .map_err(EcdsaSigError::Secp256k1)?;
-        Ok(EcdsaSig { sig, hash_ty })
+            .map_err(Error::Secp256k1)?;
+        Ok(Signature { sig, hash_ty })
     }
 
     /// Serializes an ECDSA signature (inner secp256k1 signature in DER format).
@@ -56,21 +56,21 @@ impl EcdsaSig {
     }
 }
 
-impl fmt::Display for EcdsaSig {
+impl fmt::Display for Signature {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         hex::format_hex(&self.sig.serialize_der(), f)?;
         hex::format_hex(&[self.hash_ty as u8], f)
     }
 }
 
-impl FromStr for EcdsaSig {
-    type Err = EcdsaSigError;
+impl FromStr for Signature {
+    type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let bytes = Vec::from_hex(s)?;
         let (sighash_byte, signature) = bytes.split_last()
-            .ok_or(EcdsaSigError::EmptySignature)?;
-        Ok(EcdsaSig {
+            .ok_or(Error::EmptySignature)?;
+        Ok(Signature {
             sig: secp256k1::ecdsa::Signature::from_der(signature)?,
             hash_ty: EcdsaSighashType::from_standard(*sighash_byte as u32)?
         })
@@ -80,7 +80,7 @@ impl FromStr for EcdsaSig {
 /// A key-related error.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 #[non_exhaustive]
-pub enum EcdsaSigError {
+pub enum Error {
     /// Hex encoding error
     HexEncoding(hex::Error),
     /// Base58 encoding error
@@ -92,16 +92,16 @@ pub enum EcdsaSigError {
 }
 
 
-impl fmt::Display for EcdsaSigError {
+impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            EcdsaSigError::HexEncoding(ref e) =>
-                write_err!(f, "EcdsaSig hex encoding error"; e),
-            EcdsaSigError::NonStandardSighashType(hash_ty) =>
+            Error::HexEncoding(ref e) =>
+                write_err!(f, "Signature hex encoding error"; e),
+            Error::NonStandardSighashType(hash_ty) =>
                 write!(f, "Non standard signature hash type {}", hash_ty),
-            EcdsaSigError::EmptySignature =>
+            Error::EmptySignature =>
                 write!(f, "Empty ECDSA signature"),
-            EcdsaSigError::Secp256k1(ref e) =>
+            Error::Secp256k1(ref e) =>
                 write_err!(f, "invalid ECDSA signature"; e),
         }
     }
@@ -109,9 +109,9 @@ impl fmt::Display for EcdsaSigError {
 
 #[cfg(feature = "std")]
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-impl std::error::Error for EcdsaSigError {
+impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use self::EcdsaSigError::*;
+        use self::Error::*;
 
         match self {
             HexEncoding(e) => Some(e),
@@ -121,20 +121,20 @@ impl std::error::Error for EcdsaSigError {
     }
 }
 
-impl From<secp256k1::Error> for EcdsaSigError {
-    fn from(e: secp256k1::Error) -> EcdsaSigError {
-        EcdsaSigError::Secp256k1(e)
+impl From<secp256k1::Error> for Error {
+    fn from(e: secp256k1::Error) -> Error {
+        Error::Secp256k1(e)
     }
 }
 
-impl From<NonStandardSighashType> for EcdsaSigError {
+impl From<NonStandardSighashType> for Error {
     fn from(err: NonStandardSighashType) -> Self {
-        EcdsaSigError::NonStandardSighashType(err.0)
+        Error::NonStandardSighashType(err.0)
     }
 }
 
-impl From<hex::Error> for EcdsaSigError {
+impl From<hex::Error> for Error {
     fn from(err: hex::Error) -> Self {
-        EcdsaSigError::HexEncoding(err)
+        Error::HexEncoding(err)
     }
 }

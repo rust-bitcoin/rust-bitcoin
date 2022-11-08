@@ -25,10 +25,10 @@ mod message_signing {
     use secp256k1::ecdsa::{RecoverableSignature, RecoveryId};
 
     use crate::address::{Address, AddressType};
+    use crate::crypto::key::PublicKey;
     use crate::hashes::sha256d;
     #[cfg(feature = "base64")]
     use crate::prelude::*;
-    use crate::util::key::PublicKey;
 
     /// An error used for dealing with Bitcoin Signed Messages.
     #[cfg_attr(docsrs, doc(cfg(feature = "secp-recovery")))]
@@ -267,7 +267,7 @@ mod tests {
     fn test_incorrect_message_signature() {
         use secp256k1;
 
-        use crate::util::key::PublicKey;
+        use crate::crypto::key::PublicKey;
         use crate::{Address, Network};
 
         let secp = secp256k1::Secp256k1::new();

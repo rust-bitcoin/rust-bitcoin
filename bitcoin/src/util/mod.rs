@@ -6,9 +6,6 @@
 //! Functions needed by all parts of the Bitcoin library.
 //!
 
-pub mod key;
-pub mod ecdsa;
-pub mod schnorr;
 pub mod base58;
 pub mod taproot;
 

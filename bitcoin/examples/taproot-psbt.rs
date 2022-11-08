@@ -83,18 +83,18 @@ use bitcoin::consensus::encode;
 use bitcoin::constants::COIN_VALUE;
 use bitcoin::hashes::hex::FromHex;
 use bitcoin::hashes::Hash;
+use bitcoin::key::XOnlyPublicKey;
 use bitcoin::opcodes::all::{OP_CHECKSIG, OP_CLTV, OP_DROP};
 use bitcoin::psbt::serialize::Serialize;
 use bitcoin::psbt::{self, Input, Output, Psbt, PsbtSighashType};
-use bitcoin::schnorr::TapTweak;
+use bitcoin::schnorr::{self, TapTweak};
 use bitcoin::secp256k1::{Message, Secp256k1};
 use bitcoin::sighash::{self, SchnorrSighashType, SighashCache};
 use bitcoin::util::taproot::{
     LeafVersion, TapLeafHash, TapSighashHash, TaprootBuilder, TaprootSpendInfo,
 };
 use bitcoin::{
-    absolute, script, Address, Amount, OutPoint, SchnorrSig, Script, Transaction, TxIn, TxOut,
-    Txid, Witness, XOnlyPublicKey,
+    absolute, script, Address, Amount, OutPoint, Script, Transaction, TxIn, TxOut, Txid, Witness,
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -734,7 +734,7 @@ fn sign_psbt_schnorr(
 
     let sig = secp.sign_schnorr(&Message::from_slice(&hash.into_inner()[..]).unwrap(), &keypair);
 
-    let final_signature = SchnorrSig { sig, hash_ty };
+    let final_signature = schnorr::Signature { sig, hash_ty };
 
     if let Some(lh) = leaf_hash {
         psbt_input.tap_script_sigs.insert((pubkey, lh), final_signature);

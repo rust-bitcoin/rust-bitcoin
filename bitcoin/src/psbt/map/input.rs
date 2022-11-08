@@ -13,15 +13,16 @@ use crate::blockdata::script::Script;
 use crate::blockdata::witness::Witness;
 use crate::blockdata::transaction::{Transaction, TxOut};
 use crate::consensus::encode;
+use crate::crypto::{ecdsa, schnorr};
+use crate::crypto::key::PublicKey;
 use crate::hashes::{self, hash160, ripemd160, sha256, sha256d};
 use crate::bip32::KeySource;
 use crate::psbt::map::Map;
 use crate::psbt::serialize::Deserialize;
 use crate::psbt::{self, error, raw, Error};
-use crate::util::key::PublicKey;
 use crate::sighash::{NonStandardSighashType, SighashTypeParseError, EcdsaSighashType, SchnorrSighashType};
 use crate::util::taproot::{ControlBlock, LeafVersion, TapLeafHash, TapBranchHash};
-use crate::{sighash, EcdsaSig, SchnorrSig};
+use crate::sighash;
 
 /// Type: Non-Witness UTXO PSBT_IN_NON_WITNESS_UTXO = 0x00
 const PSBT_IN_NON_WITNESS_UTXO: u8 = 0x00;
@@ -80,7 +81,7 @@ pub struct Input {
     pub witness_utxo: Option<TxOut>,
     /// A map from public keys to their corresponding signature as would be
     /// pushed to the stack from a scriptSig or witness for a non-taproot inputs.
-    pub partial_sigs: BTreeMap<PublicKey, EcdsaSig>,
+    pub partial_sigs: BTreeMap<PublicKey, ecdsa::Signature>,
     /// The sighash type to be used for this input. Signatures for this input
     /// must use the sighash type.
     pub sighash_type: Option<PsbtSighashType>,
@@ -112,10 +113,10 @@ pub struct Input {
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_byte_values"))]
     pub hash256_preimages: BTreeMap<sha256d::Hash, Vec<u8>>,
     /// Serialized schnorr signature with sighash type for key spend.
-    pub tap_key_sig: Option<SchnorrSig>,
+    pub tap_key_sig: Option<schnorr::Signature>,
     /// Map of `<xonlypubkey>|<leafhash>` with signature.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq"))]
-    pub tap_script_sigs: BTreeMap<(XOnlyPublicKey, TapLeafHash), SchnorrSig>,
+    pub tap_script_sigs: BTreeMap<(XOnlyPublicKey, TapLeafHash), schnorr::Signature>,
     /// Map of Control blocks to Script version pair.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq"))]
     pub tap_scripts: BTreeMap<ControlBlock, (Script, LeafVersion)>,
@@ -267,7 +268,7 @@ impl Input {
             }
             PSBT_IN_PARTIAL_SIG => {
                 impl_psbt_insert_pair! {
-                    self.partial_sigs <= <raw_key: PublicKey>|<raw_value: EcdsaSig>
+                    self.partial_sigs <= <raw_key: PublicKey>|<raw_value: ecdsa::Signature>
                 }
             }
             PSBT_IN_SIGHASH_TYPE => {
@@ -314,12 +315,12 @@ impl Input {
             }
             PSBT_IN_TAP_KEY_SIG => {
                 impl_psbt_insert_pair! {
-                    self.tap_key_sig <= <raw_key: _>|<raw_value: SchnorrSig>
+                    self.tap_key_sig <= <raw_key: _>|<raw_value: schnorr::Signature>
                 }
             }
             PSBT_IN_TAP_SCRIPT_SIG => {
                 impl_psbt_insert_pair! {
-                    self.tap_script_sigs <= <raw_key: (XOnlyPublicKey, TapLeafHash)>|<raw_value: SchnorrSig>
+                    self.tap_script_sigs <= <raw_key: (XOnlyPublicKey, TapLeafHash)>|<raw_value: schnorr::Signature>
                 }
             }
             PSBT_IN_TAP_LEAF_SCRIPT => {
