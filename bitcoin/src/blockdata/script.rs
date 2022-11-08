@@ -785,7 +785,7 @@ impl From<&Script> for WScriptHash {
 }
 
 /// A "parsed opcode" which allows iterating over a [`Script`] in a more sensible way.
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum Instruction<'a> {
     /// Push a bunch of data.
     PushBytes(&'a [u8]),
