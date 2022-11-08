@@ -846,6 +846,22 @@ pub struct Instructions<'a> {
 }
 
 impl<'a> Instructions<'a> {
+    /// Iterate over instructions in `script_bytes`
+    pub fn from_raw_bytes(script_bytes: &'a [u8]) -> Self {
+      Self {
+        data: script_bytes.iter(),
+        enforce_minimal: false,
+      }
+    }
+
+    /// Iterate over instructions in `script_bytes` enforcing minimal pushes
+    pub fn from_raw_bytes_minimal(script_bytes: &'a [u8]) -> Self {
+      Self {
+        data: script_bytes.iter(),
+        enforce_minimal: true,
+      }
+    }
+
     /// Set the iterator to end so that it won't iterate any longer
     fn kill(&mut self) {
         let len = self.data.len();
@@ -1627,5 +1643,17 @@ mod test {
 
         let v: Vec<u8> = vec![0x01, 0x00, 0x00, 0x80]; // With sign bit set.
         assert!(read_scriptbool(&v));
+    }
+
+    #[test]
+    fn test_instructions_slice_constructor() {
+      assert_eq!(
+        Instructions::from_raw_bytes(&[0x01, 0x01]).collect::<Result<Vec<Instruction>, Error>>(),
+        Ok(vec![Instruction::PushBytes(&[1])]),
+      );
+      assert_eq!(
+        Instructions::from_raw_bytes_minimal(&[0x01, 0x01]).collect::<Result<Vec<Instruction>, Error>>(),
+        Err(Error::NonMinimalPush),
+      );
     }
 }
