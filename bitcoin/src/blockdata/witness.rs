@@ -16,6 +16,7 @@ use crate::sighash::EcdsaSighashType;
 use crate::io::{self, Read, Write};
 use crate::prelude::*;
 use crate::VarInt;
+use crate::util::taproot::TAPROOT_ANNEX_PREFIX;
 
 const U32_SIZE: usize = core::mem::size_of::<u32>();
 
@@ -304,7 +305,7 @@ impl Witness {
     /// This does not guarantee that this represents a P2TR [`Witness`].
     /// It merely gets the second to last or third to last element depending
     /// on the first byte of the last element being equal to 0x50.
-    pub fn get_tapscript(&self) -> Option<&[u8]> {
+    pub fn tapscript(&self) -> Option<&[u8]> {
         let len = self.len();
         self
             .last()
@@ -313,7 +314,7 @@ impl Witness {
                 // If there are at least two witness elements, and the first byte of
                 // the last element is 0x50, this last element is called annex a
                 // and is removed from the witness stack.
-                if len >= 2 && last_elem.first().filter(|&&v| v == 0x50).is_some() {
+                if len >= 2 && last_elem.first() == Some(&TAPROOT_ANNEX_PREFIX) {
                     // account for the extra item removed from the end
                     3
                 } else {
@@ -604,8 +605,8 @@ mod test {
         };
 
         // With or without annex, the tapscript should be returned.
-        assert_eq!(witness.get_tapscript(), Some(&tapscript[..]));
-        assert_eq!(witness_annex.get_tapscript(), Some(&tapscript[..]));
+        assert_eq!(witness.tapscript(), Some(&tapscript[..]));
+        assert_eq!(witness_annex.tapscript(), Some(&tapscript[..]));
     }
 
     #[test]
