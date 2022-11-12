@@ -17,8 +17,6 @@ use crate::io::{self, Read, Write};
 use crate::prelude::*;
 use crate::VarInt;
 
-const U32_SIZE: usize = core::mem::size_of::<u32>();
-
 /// The Witness is the data used to unlock bitcoins since the [segwit upgrade](https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki)
 ///
 /// Can be logically seen as an array of byte-arrays `Vec<Vec<u8>>` and indeed you can convert from
@@ -66,7 +64,7 @@ impl Decodable for Witness {
         } else {
             // Leave space at the head for element positions.
             // We will rotate them to the end of the Vec later.
-            let witness_index_space = witness_elements * U32_SIZE;
+            let witness_index_space = witness_elements * 4;
             let mut cursor = witness_index_space;
 
             // this number should be determined as high enough to cover most witness, and low enough
@@ -120,18 +118,18 @@ impl Decodable for Witness {
 }
 
 
-/// Safety Requirements: value must always fit within u32
+/// Correctness Requirements: value must always fit within u32
 #[inline]
 fn encode_cursor(bytes: &mut [u8], start_of_indices: usize, index: usize, value: usize) {
-    let start = start_of_indices + index * U32_SIZE;
-    let end = start + U32_SIZE;
-    bytes[start..end].copy_from_slice(&(value as u32).to_ne_bytes()[..]);
+    let start = start_of_indices + index * 4;
+    let end = start + 4;
+    bytes[start..end].copy_from_slice(&u32::to_ne_bytes(value.try_into().expect("Larger than u32")));
 }
 
 #[inline]
 fn decode_cursor(bytes: &[u8], start_of_indices: usize, index: usize) -> Option<usize> {
-    let start = start_of_indices + index * U32_SIZE;
-    let end = start + U32_SIZE;
+    let start = start_of_indices + index * 4;
+    let end = start + 4;
     if end > bytes.len() {
         None
     } else {
@@ -154,7 +152,7 @@ impl Encodable for Witness {
         let len = VarInt(self.witness_elements as u64);
         len.consensus_encode(w)?;
         let content_with_indices_len = self.content.len();
-        let indices_size = self.witness_elements * U32_SIZE;
+        let indices_size = self.witness_elements * 4;
         let content_len = content_with_indices_len - indices_size;
         w.emit_slice(&self.content[..content_len])?;
         Ok(content_len + len.len())
@@ -170,7 +168,7 @@ impl Witness {
     /// Creates [`Witness`] object from an array of byte-arrays
     pub fn from_vec(vec: Vec<Vec<u8>>) -> Self {
         let witness_elements = vec.len();
-        let index_size = witness_elements * U32_SIZE;
+        let index_size = witness_elements * 4;
 
         let content_size: usize = vec
             .iter()
@@ -245,7 +243,7 @@ impl Witness {
         let current_content_len = self.content.len();
         let new_item_total_len = element_len_varint.len() + new_element.len();
         self.content
-            .resize(current_content_len + new_item_total_len + U32_SIZE, 0);
+            .resize(current_content_len + new_item_total_len + 4, 0);
 
         self.content[previous_content_end..].rotate_right(new_item_total_len);
         self.indices_start += new_item_total_len;
@@ -350,7 +348,7 @@ impl<'a> Iterator for Iter<'a> {
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        let total_count = (self.inner.len() - self.indices_start) / U32_SIZE;
+        let total_count = (self.inner.len() - self.indices_start) / 4;
         let remaining = total_count - self.current_index;
         (remaining, Some(remaining))
     }
@@ -459,7 +457,7 @@ mod test {
 
     fn append_u32_vec(mut v: Vec<u8>, n: &[u32]) -> Vec<u8> {
         for &num in n {
-            v.extend_from_slice(&num.to_ne_bytes()[..]);
+            v.extend_from_slice(&num.to_ne_bytes());
         }
         v
     }
