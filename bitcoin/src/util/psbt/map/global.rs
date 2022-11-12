@@ -12,7 +12,7 @@ use crate::consensus::encode::MAX_VEC_SIZE;
 use crate::util::psbt::map::Map;
 use crate::util::psbt::{raw, PartiallySignedTransaction};
 use crate::util::psbt::Error;
-use crate::util::bip32::{ExtendedPubKey, Fingerprint, DerivationPath, ChildNumber};
+use crate::bip32::{ExtendedPubKey, Fingerprint, DerivationPath, ChildNumber};
 
 /// Type: Unsigned Transaction PSBT_GLOBAL_UNSIGNED_TX = 0x00
 const PSBT_GLOBAL_UNSIGNED_TX: u8 = 0x00;

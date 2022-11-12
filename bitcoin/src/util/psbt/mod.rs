@@ -22,7 +22,7 @@ use crate::io;
 use crate::blockdata::script::Script;
 use crate::blockdata::transaction::{Transaction, TxOut};
 use crate::consensus::{encode, Encodable, Decodable};
-use crate::util::bip32::{self, ExtendedPrivKey, ExtendedPubKey, KeySource};
+use crate::bip32::{self, ExtendedPrivKey, ExtendedPubKey, KeySource};
 use crate::util::ecdsa::{EcdsaSig, EcdsaSigError};
 use crate::util::key::{PublicKey, PrivateKey};
 use crate::sighash::{self, EcdsaSighashType, SighashCache};
@@ -894,7 +894,7 @@ mod tests {
     use crate::blockdata::transaction::{Transaction, TxIn, TxOut, OutPoint, Sequence};
     use crate::network::constants::Network::Bitcoin;
     use crate::consensus::encode::{deserialize, serialize, serialize_hex};
-    use crate::util::bip32::{ChildNumber, ExtendedPrivKey, ExtendedPubKey, KeySource};
+    use crate::bip32::{ChildNumber, ExtendedPrivKey, ExtendedPubKey, KeySource};
     use crate::util::psbt::map::{Output, Input};
     use crate::util::psbt::raw;
     use crate::internal_macros::hex_script;
@@ -1815,7 +1815,7 @@ mod tests {
     #[cfg(feature = "rand")]
     fn sign_psbt() {
         use crate::WPubkeyHash;
-        use crate::util::bip32::{Fingerprint, DerivationPath};
+        use crate::bip32::{Fingerprint, DerivationPath};
 
         let unsigned_tx = Transaction {
             version: 2,

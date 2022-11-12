@@ -15,7 +15,7 @@ use crate::blockdata::witness::Witness;
 use crate::blockdata::transaction::{Transaction, TxOut};
 use crate::consensus::encode::{self, serialize, Decodable, Encodable, deserialize_partial};
 use secp256k1::{self, XOnlyPublicKey};
-use crate::util::bip32::{ChildNumber, Fingerprint, KeySource};
+use crate::bip32::{ChildNumber, Fingerprint, KeySource};
 use crate::hashes::{hash160, ripemd160, sha256, sha256d, Hash};
 use crate::util::ecdsa::{EcdsaSig, EcdsaSigError};
 use crate::util::psbt;
