@@ -515,15 +515,16 @@ mod tests {
 
     #[cfg(feature = "rand-std")]
     macro_rules! pmt_tests {
-    ($($name:ident),* $(,)?) => {
-         $(
-        #[test]
-        fn $name() {
-            pmt_test_from_name(stringify!($name));
+        ($($name:ident),* $(,)?) => {
+            $(
+                #[test]
+                fn $name() {
+                    pmt_test_from_name(stringify!($name));
+                }
+            )*
         }
-         )*
     }
-}
+
     #[cfg(feature = "rand-std")]
     pmt_tests!(
         pmt_test_1,
