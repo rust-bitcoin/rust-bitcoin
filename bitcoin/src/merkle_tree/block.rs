@@ -53,42 +53,120 @@ use crate::prelude::*;
 
 use self::MerkleBlockError::*;
 
-/// An error when verifying the merkle block.
-#[derive(Clone, PartialEq, Eq, Debug)]
-#[non_exhaustive]
-pub enum MerkleBlockError {
-    /// Merkle root in the header doesn't match to the root calculated from partial merkle tree.
-    MerkleRootMismatch,
-    /// Partial merkle tree contains no transactions.
-    NoTransactions,
-    /// There are too many transactions.
-    TooManyTransactions,
-    /// General format error.
-    BadFormat(String),
+/// Data structure that represents a block header paired to a partial merkle tree.
+///
+/// NOTE: This assumes that the given Block has *at least* 1 transaction. If the Block has 0 txs,
+/// it will hit an assertion.
+#[derive(PartialEq, Eq, Clone, Debug)]
+pub struct MerkleBlock {
+    /// The block header
+    pub header: block::Header,
+    /// Transactions making up a partial merkle tree
+    pub txn: PartialMerkleTree,
 }
 
-impl fmt::Display for MerkleBlockError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use self::MerkleBlockError::*;
+impl MerkleBlock {
+    /// Create a MerkleBlock from a block, that contains proofs for specific txids.
+    ///
+    /// The `block` is a full block containing the header and transactions and `match_txids` is a
+    /// function that returns true for the ids that should be included in the partial merkle tree.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use bitcoin::hash_types::Txid;
+    /// use bitcoin::hashes::hex::FromHex;
+    /// use bitcoin::{Block, MerkleBlock};
+    ///
+    /// // Block 80000
+    /// let block_bytes = Vec::from_hex("01000000ba8b9cda965dd8e536670f9ddec10e53aab14b20bacad2\
+    ///     7b9137190000000000190760b278fe7b8565fda3b968b918d5fd997f993b23674c0af3b6fde300b38f33\
+    ///     a5914ce6ed5b1b01e32f5702010000000100000000000000000000000000000000000000000000000000\
+    ///     00000000000000ffffffff0704e6ed5b1b014effffffff0100f2052a01000000434104b68a50eaa0287e\
+    ///     ff855189f949c1c6e5f58b37c88231373d8a59809cbae83059cc6469d65c665ccfd1cfeb75c6e8e19413\
+    ///     bba7fbff9bc762419a76d87b16086eac000000000100000001a6b97044d03da79c005b20ea9c0e1a6d9d\
+    ///     c12d9f7b91a5911c9030a439eed8f5000000004948304502206e21798a42fae0e854281abd38bacd1aee\
+    ///     d3ee3738d9e1446618c4571d1090db022100e2ac980643b0b82c0e88ffdfec6b64e3e6ba35e7ba5fdd7d\
+    ///     5d6cc8d25c6b241501ffffffff0100f2052a010000001976a914404371705fa9bd789a2fcd52d2c580b6\
+    ///     5d35549d88ac00000000").unwrap();
+    /// let block: Block = bitcoin::consensus::deserialize(&block_bytes).unwrap();
+    ///
+    /// // Create a merkle block containing a single transaction
+    /// let txid = Txid::from_hex(
+    ///     "5a4ebf66822b0b2d56bd9dc64ece0bc38ee7844a23ff1d7320a88c5fdb2ad3e2").unwrap();
+    /// let match_txids: Vec<Txid> = vec![txid].into_iter().collect();
+    /// let mb = MerkleBlock::from_block_with_predicate(&block, |t| match_txids.contains(t));
+    ///
+    /// // Authenticate and extract matched transaction ids
+    /// let mut matches: Vec<Txid> = vec![];
+    /// let mut index: Vec<u32> = vec![];
+    /// assert!(mb.extract_matches(&mut matches, &mut index).is_ok());
+    /// assert_eq!(txid, matches[0]);
+    /// ```
+    pub fn from_block_with_predicate<F>(block: &Block, match_txids: F) -> Self
+    where
+        F: Fn(&Txid) -> bool
+    {
+        let block_txids: Vec<_> = block.txdata.iter().map(Transaction::txid).collect();
+        Self::from_header_txids_with_predicate(&block.header, &block_txids, match_txids)
+    }
 
-        match *self {
-            MerkleRootMismatch => write!(f, "merkle header root doesn't match to the root calculated from the partial merkle tree"),
-            NoTransactions => write!(f, "partial merkle tree contains no transactions"),
-            TooManyTransactions => write!(f, "too many transactions"),
-            BadFormat(ref s) => write!(f, "general format error: {}", s),
+    /// Create a MerkleBlock from the block's header and txids, that contain proofs for specific txids.
+    ///
+    /// The `header` is the block header, `block_txids` is the full list of txids included in the block and
+    /// `match_txids` is a function that returns true for the ids that should be included in the partial merkle tree.
+    pub fn from_header_txids_with_predicate<F>(
+        header: &block::Header,
+        block_txids: &[Txid],
+        match_txids: F,
+    ) -> Self
+    where
+        F: Fn(&Txid) -> bool
+    {
+        let matches: Vec<bool> = block_txids
+            .iter()
+            .map(match_txids)
+            .collect();
+
+        let pmt = PartialMerkleTree::from_txids(block_txids, &matches);
+        MerkleBlock {
+            header: *header,
+            txn: pmt,
+        }
+    }
+
+    /// Extract the matching txid's represented by this partial merkle tree
+    /// and their respective indices within the partial tree.
+    /// returns Ok(()) on success, or error in case of failure
+    pub fn extract_matches(
+        &self,
+        matches: &mut Vec<Txid>,
+        indexes: &mut Vec<u32>,
+    ) -> Result<(), MerkleBlockError> {
+        let merkle_root = self.txn.extract_matches(matches, indexes)?;
+
+        if merkle_root.eq(&self.header.merkle_root) {
+            Ok(())
+        } else {
+            Err(MerkleRootMismatch)
         }
     }
 }
 
-#[cfg(feature = "std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-impl std::error::Error for MerkleBlockError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use self::MerkleBlockError::*;
+impl Encodable for MerkleBlock {
+    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        let len = self.header.consensus_encode(w)?
+            + self.txn.consensus_encode(w)?;
+        Ok(len)
+    }
+}
 
-        match *self {
-            MerkleRootMismatch | NoTransactions | TooManyTransactions | BadFormat(_) => None,
-        }
+impl Decodable for MerkleBlock {
+    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        Ok(MerkleBlock {
+            header: Decodable::consensus_decode(r)?,
+            txn: Decodable::consensus_decode(r)?,
+        })
     }
 }
 
@@ -399,120 +477,42 @@ impl Decodable for PartialMerkleTree {
     }
 }
 
-/// Data structure that represents a block header paired to a partial merkle tree.
-///
-/// NOTE: This assumes that the given Block has *at least* 1 transaction. If the Block has 0 txs,
-/// it will hit an assertion.
-#[derive(PartialEq, Eq, Clone, Debug)]
-pub struct MerkleBlock {
-    /// The block header
-    pub header: block::Header,
-    /// Transactions making up a partial merkle tree
-    pub txn: PartialMerkleTree,
+/// An error when verifying the merkle block.
+#[derive(Clone, PartialEq, Eq, Debug)]
+#[non_exhaustive]
+pub enum MerkleBlockError {
+    /// Merkle root in the header doesn't match to the root calculated from partial merkle tree.
+    MerkleRootMismatch,
+    /// Partial merkle tree contains no transactions.
+    NoTransactions,
+    /// There are too many transactions.
+    TooManyTransactions,
+    /// General format error.
+    BadFormat(String),
 }
 
-impl MerkleBlock {
-    /// Create a MerkleBlock from a block, that contains proofs for specific txids.
-    ///
-    /// The `block` is a full block containing the header and transactions and `match_txids` is a
-    /// function that returns true for the ids that should be included in the partial merkle tree.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use bitcoin::hash_types::Txid;
-    /// use bitcoin::hashes::hex::FromHex;
-    /// use bitcoin::{Block, MerkleBlock};
-    ///
-    /// // Block 80000
-    /// let block_bytes = Vec::from_hex("01000000ba8b9cda965dd8e536670f9ddec10e53aab14b20bacad2\
-    ///     7b9137190000000000190760b278fe7b8565fda3b968b918d5fd997f993b23674c0af3b6fde300b38f33\
-    ///     a5914ce6ed5b1b01e32f5702010000000100000000000000000000000000000000000000000000000000\
-    ///     00000000000000ffffffff0704e6ed5b1b014effffffff0100f2052a01000000434104b68a50eaa0287e\
-    ///     ff855189f949c1c6e5f58b37c88231373d8a59809cbae83059cc6469d65c665ccfd1cfeb75c6e8e19413\
-    ///     bba7fbff9bc762419a76d87b16086eac000000000100000001a6b97044d03da79c005b20ea9c0e1a6d9d\
-    ///     c12d9f7b91a5911c9030a439eed8f5000000004948304502206e21798a42fae0e854281abd38bacd1aee\
-    ///     d3ee3738d9e1446618c4571d1090db022100e2ac980643b0b82c0e88ffdfec6b64e3e6ba35e7ba5fdd7d\
-    ///     5d6cc8d25c6b241501ffffffff0100f2052a010000001976a914404371705fa9bd789a2fcd52d2c580b6\
-    ///     5d35549d88ac00000000").unwrap();
-    /// let block: Block = bitcoin::consensus::deserialize(&block_bytes).unwrap();
-    ///
-    /// // Create a merkle block containing a single transaction
-    /// let txid = Txid::from_hex(
-    ///     "5a4ebf66822b0b2d56bd9dc64ece0bc38ee7844a23ff1d7320a88c5fdb2ad3e2").unwrap();
-    /// let match_txids: Vec<Txid> = vec![txid].into_iter().collect();
-    /// let mb = MerkleBlock::from_block_with_predicate(&block, |t| match_txids.contains(t));
-    ///
-    /// // Authenticate and extract matched transaction ids
-    /// let mut matches: Vec<Txid> = vec![];
-    /// let mut index: Vec<u32> = vec![];
-    /// assert!(mb.extract_matches(&mut matches, &mut index).is_ok());
-    /// assert_eq!(txid, matches[0]);
-    /// ```
-    pub fn from_block_with_predicate<F>(block: &Block, match_txids: F) -> Self
-    where
-        F: Fn(&Txid) -> bool
-    {
-        let block_txids: Vec<_> = block.txdata.iter().map(Transaction::txid).collect();
-        Self::from_header_txids_with_predicate(&block.header, &block_txids, match_txids)
-    }
+impl fmt::Display for MerkleBlockError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use self::MerkleBlockError::*;
 
-    /// Create a MerkleBlock from the block's header and txids, that contain proofs for specific txids.
-    ///
-    /// The `header` is the block header, `block_txids` is the full list of txids included in the block and
-    /// `match_txids` is a function that returns true for the ids that should be included in the partial merkle tree.
-    pub fn from_header_txids_with_predicate<F>(
-        header: &block::Header,
-        block_txids: &[Txid],
-        match_txids: F,
-    ) -> Self
-    where
-        F: Fn(&Txid) -> bool
-    {
-        let matches: Vec<bool> = block_txids
-            .iter()
-            .map(match_txids)
-            .collect();
-
-        let pmt = PartialMerkleTree::from_txids(block_txids, &matches);
-        MerkleBlock {
-            header: *header,
-            txn: pmt,
-        }
-    }
-
-    /// Extract the matching txid's represented by this partial merkle tree
-    /// and their respective indices within the partial tree.
-    /// returns Ok(()) on success, or error in case of failure
-    pub fn extract_matches(
-        &self,
-        matches: &mut Vec<Txid>,
-        indexes: &mut Vec<u32>,
-    ) -> Result<(), MerkleBlockError> {
-        let merkle_root = self.txn.extract_matches(matches, indexes)?;
-
-        if merkle_root.eq(&self.header.merkle_root) {
-            Ok(())
-        } else {
-            Err(MerkleRootMismatch)
+        match *self {
+            MerkleRootMismatch => write!(f, "merkle header root doesn't match to the root calculated from the partial merkle tree"),
+            NoTransactions => write!(f, "partial merkle tree contains no transactions"),
+            TooManyTransactions => write!(f, "too many transactions"),
+            BadFormat(ref s) => write!(f, "general format error: {}", s),
         }
     }
 }
 
-impl Encodable for MerkleBlock {
-    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        let len = self.header.consensus_encode(w)?
-            + self.txn.consensus_encode(w)?;
-        Ok(len)
-    }
-}
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+impl std::error::Error for MerkleBlockError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use self::MerkleBlockError::*;
 
-impl Decodable for MerkleBlock {
-    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Ok(MerkleBlock {
-            header: Decodable::consensus_decode(r)?,
-            txn: Decodable::consensus_decode(r)?,
-        })
+        match *self {
+            MerkleRootMismatch | NoTransactions | TooManyTransactions | BadFormat(_) => None,
+        }
     }
 }
 
