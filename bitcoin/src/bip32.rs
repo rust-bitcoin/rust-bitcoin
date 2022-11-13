@@ -780,7 +780,7 @@ impl ExtendedPubKey {
 
 impl fmt::Display for ExtendedPrivKey {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        base58::check_encode_slice_to_fmt(fmt, &self.encode()[..])
+        base58::encode_check_to_fmt(fmt, &self.encode()[..])
     }
 }
 
@@ -788,7 +788,7 @@ impl FromStr for ExtendedPrivKey {
     type Err = Error;
 
     fn from_str(inp: &str) -> Result<ExtendedPrivKey, Error> {
-        let data = base58::from_check(inp)?;
+        let data = base58::decode_check(inp)?;
 
         if data.len() != 78 {
             return Err(base58::Error::InvalidLength(data.len()).into());
@@ -800,7 +800,7 @@ impl FromStr for ExtendedPrivKey {
 
 impl fmt::Display for ExtendedPubKey {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        base58::check_encode_slice_to_fmt(fmt, &self.encode()[..])
+        base58::encode_check_to_fmt(fmt, &self.encode()[..])
     }
 }
 
@@ -808,7 +808,7 @@ impl FromStr for ExtendedPubKey {
     type Err = Error;
 
     fn from_str(inp: &str) -> Result<ExtendedPubKey, Error> {
-        let data = base58::from_check(inp)?;
+        let data = base58::decode_check(inp)?;
 
         if data.len() != 78 {
             return Err(base58::Error::InvalidLength(data.len()).into());

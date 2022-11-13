@@ -360,9 +360,9 @@ impl PrivateKey {
         ret[1..33].copy_from_slice(&self.inner[..]);
         let privkey = if self.compressed {
             ret[33] = 1;
-            base58::check_encode_slice(&ret[..])
+            base58::encode_check(&ret[..])
         } else {
-            base58::check_encode_slice(&ret[..33])
+            base58::encode_check(&ret[..33])
         };
         fmt.write_str(&privkey)
     }
@@ -377,7 +377,7 @@ impl PrivateKey {
 
     /// Parse WIF encoded private key.
     pub fn from_wif(wif: &str) -> Result<PrivateKey, Error> {
-        let data = base58::from_check(wif)?;
+        let data = base58::decode_check(wif)?;
 
         let compressed = match data.len() {
             33 => false,
