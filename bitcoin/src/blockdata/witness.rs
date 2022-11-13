@@ -236,7 +236,11 @@ impl Witness {
 
     /// Push a new element on the witness, requires an allocation
     pub fn push<T: AsRef<[u8]>>(&mut self, new_element: T) {
-        let new_element = new_element.as_ref();
+        self.push_slice(new_element.as_ref());
+    }
+
+    /// Push a new element slice onto the witness stack.
+    fn push_slice(&mut self, new_element: &[u8]) {
         self.witness_elements += 1;
         let previous_content_end = self.indices_start;
         let element_len_varint = VarInt(new_element.len() as u64);
