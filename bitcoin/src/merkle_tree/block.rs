@@ -538,15 +538,15 @@ mod tests {
     }
 
     macro_rules! pmt_tests {
-    ($($name:ident),* $(,)?) => {
-         $(
-        #[test]
-        fn $name() {
-            pmt_test_from_name(stringify!($name));
+        ($($name:ident),* $(,)?) => {
+            $(
+                #[test]
+                fn $name() {
+                    pmt_test_from_name(stringify!($name));
+                }
+            )*
         }
-         )*
     }
-}
     pmt_tests!(pmt_test_1, pmt_test_4, pmt_test_7, pmt_test_17, pmt_test_56, pmt_test_100,
         pmt_test_127, pmt_test_256, pmt_test_312, pmt_test_513, pmt_test_1000, pmt_test_4095);
 
