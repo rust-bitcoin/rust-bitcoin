@@ -509,10 +509,6 @@ mod tests {
     use crate::internal_macros::hex;
     use crate::{Block, Txid};
 
-    /// accepts `pmt_test_$num`
-    #[cfg(feature = "rand-std")]
-    fn pmt_test_from_name(name: &str) { pmt_test(name[9..].parse().unwrap()) }
-
     #[cfg(feature = "rand-std")]
     macro_rules! pmt_tests {
         ($($name:ident),* $(,)?) => {
@@ -540,6 +536,10 @@ mod tests {
         pmt_test_1000,
         pmt_test_4095
     );
+
+    /// Parses the transaction count out of `name` with form: `pmt_test_$num`.
+    #[cfg(feature = "rand-std")]
+    fn pmt_test_from_name(name: &str) { pmt_test(name[9..].parse().unwrap()) }
 
     #[cfg(feature = "rand-std")]
     fn pmt_test(tx_count: usize) {
