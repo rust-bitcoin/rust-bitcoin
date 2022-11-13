@@ -532,11 +532,6 @@ mod tests {
     use crate::consensus::encode::{deserialize, serialize};
     use crate::{merkle_tree, Block};
 
-    /// accepts `pmt_test_$num`
-    fn pmt_test_from_name(name: &str) {
-        pmt_test(name[9..].parse().unwrap())
-    }
-
     macro_rules! pmt_tests {
         ($($name:ident),* $(,)?) => {
             $(
@@ -547,6 +542,12 @@ mod tests {
             )*
         }
     }
+
+    /// Parses the transaction count out of `name` with form: `pmt_test_$num`.
+    fn pmt_test_from_name(name: &str) {
+        pmt_test(name[9..].parse().unwrap())
+    }
+
     pmt_tests!(pmt_test_1, pmt_test_4, pmt_test_7, pmt_test_17, pmt_test_56, pmt_test_100,
         pmt_test_127, pmt_test_256, pmt_test_312, pmt_test_513, pmt_test_1000, pmt_test_4095);
 
