@@ -42,18 +42,16 @@
 
 use core::fmt;
 
-use crate::prelude::*;
-
-use crate::io;
-
+use crate::blockdata::block::{self, Block};
+use crate::blockdata::constants::{MAX_BLOCK_WEIGHT, MIN_TRANSACTION_WEIGHT};
+use crate::blockdata::transaction::Transaction;
+use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::hashes::Hash;
 use crate::hash_types::{Txid, TxMerkleNode};
+use crate::io;
+use crate::prelude::*;
 
-use crate::blockdata::block::{self, Block};
-use crate::blockdata::transaction::Transaction;
-use crate::blockdata::constants::{MAX_BLOCK_WEIGHT, MIN_TRANSACTION_WEIGHT};
-use crate::consensus::encode::{self, Decodable, Encodable};
-use crate::merkle_tree::MerkleBlockError::*;
+use self::MerkleBlockError::*;
 
 /// An error when verifying the merkle block.
 #[derive(Clone, PartialEq, Eq, Debug)]
