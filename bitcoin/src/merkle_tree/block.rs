@@ -250,11 +250,8 @@ impl PartialMerkleTree {
             bits: Vec::with_capacity(txids.len()),
             hashes: vec![],
         };
-        // calculate height of tree
-        let mut height = 0;
-        while pmt.calc_tree_width(height) > 1 {
-            height += 1;
-        }
+        let height = pmt.calc_tree_height();
+
         // traverse the partial tree
         pmt.traverse_and_build(height, 0, txids, matches);
         pmt
@@ -286,11 +283,9 @@ impl PartialMerkleTree {
         if self.bits.len() < self.hashes.len() {
             return Err(NotEnoughBits);
         };
-        // calculate height of tree
-        let mut height = 0;
-        while self.calc_tree_width(height) > 1 {
-            height += 1;
-        }
+
+        let height = self.calc_tree_height();
+
         // traverse the partial tree
         let mut bits_used = 0u32;
         let mut hash_used = 0u32;
@@ -306,6 +301,15 @@ impl PartialMerkleTree {
             return Err(NotAllHashesConsumed);
         }
         Ok(TxMerkleNode::from_byte_array(hash_merkle_root.to_byte_array()))
+    }
+
+    /// Calculates the height of the tree.
+    fn calc_tree_height(&self) -> u32 {
+        let mut height = 0;
+        while self.calc_tree_width(height) > 1 {
+            height += 1;
+        }
+        height
     }
 
     /// Helper function to efficiently calculate the number of nodes at given height
