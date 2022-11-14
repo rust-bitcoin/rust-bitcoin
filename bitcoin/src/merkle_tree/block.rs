@@ -51,7 +51,7 @@ use crate::hash_types::{Txid, TxMerkleNode};
 use crate::io;
 use crate::prelude::*;
 
-use self::MerkleBlockError::*;
+use self::Error::*;
 
 /// Data structure that represents a block header paired to a partial merkle tree.
 ///
@@ -142,7 +142,7 @@ impl MerkleBlock {
         &self,
         matches: &mut Vec<Txid>,
         indexes: &mut Vec<u32>,
-    ) -> Result<(), MerkleBlockError> {
+    ) -> Result<(), Error> {
         let merkle_root = self.txn.extract_matches(matches, indexes)?;
 
         if merkle_root.eq(&self.header.merkle_root) {
@@ -280,7 +280,7 @@ impl PartialMerkleTree {
         &self,
         matches: &mut Vec<Txid>,
         indexes: &mut Vec<u32>,
-    ) -> Result<TxMerkleNode, MerkleBlockError> {
+    ) -> Result<TxMerkleNode, Error> {
         matches.clear();
         indexes.clear();
         // An empty set will not work
@@ -389,7 +389,7 @@ impl PartialMerkleTree {
         hash_used: &mut u32,
         matches: &mut Vec<Txid>,
         indexes: &mut Vec<u32>,
-    ) -> Result<TxMerkleNode, MerkleBlockError> {
+    ) -> Result<TxMerkleNode, Error> {
         if *bits_used as usize >= self.bits.len() {
             return Err(BadFormat("Overflowed the bits array".to_owned()));
         }
@@ -484,7 +484,7 @@ impl Decodable for PartialMerkleTree {
 /// An error when verifying the merkle block.
 #[derive(Clone, PartialEq, Eq, Debug)]
 #[non_exhaustive]
-pub enum MerkleBlockError {
+pub enum Error {
     /// Merkle root in the header doesn't match to the root calculated from partial merkle tree.
     MerkleRootMismatch,
     /// Partial merkle tree contains no transactions.
@@ -495,9 +495,9 @@ pub enum MerkleBlockError {
     BadFormat(String),
 }
 
-impl fmt::Display for MerkleBlockError {
+impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use self::MerkleBlockError::*;
+        use self::Error::*;
 
         match *self {
             MerkleRootMismatch => write!(f, "merkle header root doesn't match to the root calculated from the partial merkle tree"),
@@ -510,9 +510,9 @@ impl fmt::Display for MerkleBlockError {
 
 #[cfg(feature = "std")]
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-impl std::error::Error for MerkleBlockError {
+impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use self::MerkleBlockError::*;
+        use self::Error::*;
 
         match *self {
             MerkleRootMismatch | NoTransactions | TooManyTransactions | BadFormat(_) => None,

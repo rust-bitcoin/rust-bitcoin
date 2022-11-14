@@ -26,7 +26,7 @@ use core::cmp::min;
 use crate::hashes::Hash;
 use crate::consensus::encode::Encodable;
 
-pub use block::{MerkleBlock, PartialMerkleTree, MerkleBlockError};
+pub use block::{MerkleBlock, PartialMerkleTree, Error};
 
 /// Calculates the merkle root of a list of *hashes*, inline (in place) in `hashes`.
 ///
