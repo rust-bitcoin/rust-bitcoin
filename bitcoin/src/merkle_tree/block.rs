@@ -54,9 +54,6 @@ use crate::prelude::*;
 use self::Error::*;
 
 /// Data structure that represents a block header paired to a partial merkle tree.
-///
-/// NOTE: This assumes that the given Block has *at least* 1 transaction. If the Block has 0 txs,
-/// it will hit an assertion.
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct MerkleBlock {
     /// The block header
@@ -108,7 +105,8 @@ impl MerkleBlock {
         F: Fn(&Txid) -> bool
     {
         let block_txids: Vec<_> = block.txdata.iter().map(Transaction::txid).collect();
-        Self::from_header_txids_with_predicate(&block.header, &block_txids, match_txids)
+        Self::from_header_txids_with_predicate(block.header, &block_txids, match_txids)
+            .expect("can't fail because txids came from the block")
     }
 
     /// Create a MerkleBlock from the block's header and txids, that contain proofs for specific txids.
@@ -116,10 +114,10 @@ impl MerkleBlock {
     /// The `header` is the block header, `block_txids` is the full list of txids included in the block and
     /// `match_txids` is a function that returns true for the ids that should be included in the partial merkle tree.
     pub fn from_header_txids_with_predicate<F>(
-        header: &block::Header,
+        header: block::Header,
         block_txids: &[Txid],
         match_txids: F,
-    ) -> Self
+    ) -> Result<Self, Error>
     where
         F: Fn(&Txid) -> bool
     {
@@ -128,11 +126,9 @@ impl MerkleBlock {
             .map(match_txids)
             .collect();
 
-        let pmt = PartialMerkleTree::from_txids(block_txids, &matches);
-        MerkleBlock {
-            header: *header,
-            txn: pmt,
-        }
+        let pmt = PartialMerkleTree::from_txids(block_txids, &matches)?;
+
+        Ok(MerkleBlock { header, txn: pmt })
     }
 
     /// Extract the matching txid's represented by this partial merkle tree
@@ -253,13 +249,16 @@ impl PartialMerkleTree {
     ///
     /// // Select the second transaction
     /// let matches = vec![false, true];
-    /// let tree = PartialMerkleTree::from_txids(&txids, &matches);
+    /// let tree = PartialMerkleTree::from_txids(&txids, &matches).expect("equal length arrays");
     /// assert!(tree.extract_matches(&mut vec![], &mut vec![]).is_ok());
     /// ```
-    pub fn from_txids(txids: &[Txid], matches: &[bool]) -> Self {
-        // We can never have zero txs in a merkle block, we always need the coinbase tx
-        assert_ne!(txids.len(), 0);
-        assert_eq!(txids.len(), matches.len());
+    pub fn from_txids(txids: &[Txid], matches: &[bool]) -> Result<Self, Error> {
+        if txids.is_empty() {
+            return Err(NoTransactions);
+        }
+        if txids.len() != matches.len() {
+            return Err(ArrayLengthsNotEqual);
+        }
 
         let mut pmt = PartialMerkleTree {
             num_transactions: txids.len() as u32,
@@ -270,7 +269,8 @@ impl PartialMerkleTree {
 
         // traverse the partial tree
         pmt.traverse_and_build(height, 0, txids, matches);
-        pmt
+
+        Ok(pmt)
     }
 
     /// Extract the matching txid's represented by this partial merkle tree
@@ -489,6 +489,8 @@ pub enum Error {
     MerkleRootMismatch,
     /// Partial merkle tree contains no transactions.
     NoTransactions,
+    /// `txids` and `matches` must have equal length.
+    ArrayLengthsNotEqual,
     /// There are too many transactions.
     TooManyTransactions,
     /// Proof contains more hashes than transactions.
@@ -514,6 +516,7 @@ impl fmt::Display for Error {
         let s = match *self {
             MerkleRootMismatch => "merkle header root doesn't match to the root calculated from the partial merkle tree",
             NoTransactions => "partial merkle tree contains no transactions",
+            ArrayLengthsNotEqual => "txids and matches must have equal length",
             TooManyTransactions => "too many transactions",
             MoreHashesThanTransactions => "proof contains more hashes than transactions",
             LessBitsThanHashes => "proof contains less bits than hashes",
@@ -537,6 +540,7 @@ impl std::error::Error for Error {
         match *self {
             MerkleRootMismatch
                 | NoTransactions
+                | ArrayLengthsNotEqual
                 | TooManyTransactions
                 | MoreHashesThanTransactions
                 | LessBitsThanHashes
@@ -618,7 +622,7 @@ mod tests {
             }
 
             // Build the partial merkle tree
-            let pmt1 = PartialMerkleTree::from_txids(&tx_ids, &matches);
+            let pmt1 = PartialMerkleTree::from_txids(&tx_ids, &matches).expect("from_txids failed");
             let serialized = serialize(&pmt1);
 
             // Verify PartialMerkleTree's size guarantees
@@ -668,7 +672,7 @@ mod tests {
             false, false, false, false, false, false, false, false, false, true, true, false,
         ];
 
-        let tree = PartialMerkleTree::from_txids(&txids, &matches);
+        let tree = PartialMerkleTree::from_txids(&txids, &matches).expect("from_txids failed");
         // Should fail due to duplicate txs found
         let result = tree.extract_matches(&mut vec![], &mut vec![]);
         assert!(result.is_err());
