@@ -293,11 +293,11 @@ impl PartialMerkleTree {
         }
         // there can never be more hashes provided than one for every txid
         if self.hashes.len() as u32 > self.num_transactions {
-            return Err(BadFormat("Proof contains more hashes than transactions".to_owned()));
+            return Err(MoreHashesThanTransactions);
         };
         // there must be at least one bit per node in the partial tree, and at least one node per hash
         if self.bits.len() < self.hashes.len() {
-            return Err(BadFormat("Proof contains less bits than hashes".to_owned()));
+            return Err(LessBitsThanHashes);
         };
 
         let height = self.calc_tree_height();
@@ -310,11 +310,11 @@ impl PartialMerkleTree {
         // Verify that all bits were consumed (except for the padding caused by
         // serializing it as a byte sequence)
         if (bits_used + 7) / 8 != (self.bits.len() as u32 + 7) / 8 {
-            return Err(BadFormat("Not all bit were consumed".to_owned()));
+            return Err(AllBitsNotConsumed);
         }
         // Verify that all hashes were consumed
         if hash_used != self.hashes.len() as u32 {
-            return Err(BadFormat("Not all hashes were consumed".to_owned()));
+            return Err(AllHashesNotConsumed);
         }
         Ok(TxMerkleNode::from_inner(hash_merkle_root.into_inner()))
     }
@@ -391,14 +391,14 @@ impl PartialMerkleTree {
         indexes: &mut Vec<u32>,
     ) -> Result<TxMerkleNode, Error> {
         if *bits_used as usize >= self.bits.len() {
-            return Err(BadFormat("Overflowed the bits array".to_owned()));
+            return Err(OverflowBitsArray);
         }
         let parent_of_match = self.bits[*bits_used as usize];
         *bits_used += 1;
         if height == 0 || !parent_of_match {
             // If at height 0, or nothing interesting below, use stored hash and do not descend
             if *hash_used as usize >= self.hashes.len() {
-                return Err(BadFormat("Overflowed the hash array".to_owned()));
+                return Err(OverflowHashesArray);
             }
             let hash = self.hashes[*hash_used as usize];
             *hash_used += 1;
@@ -431,7 +431,7 @@ impl PartialMerkleTree {
                 if right == left {
                     // The left and right branches should never be identical, as the transaction
                     // hashes covered by them must each be unique.
-                    return Err(BadFormat("Found identical transaction hashes".to_owned()));
+                    return Err(DuplicateHashes);
                 }
             } else {
                 right = left;
@@ -491,20 +491,40 @@ pub enum Error {
     NoTransactions,
     /// There are too many transactions.
     TooManyTransactions,
-    /// General format error.
-    BadFormat(String),
+    /// Proof contains more hashes than transactions.
+    MoreHashesThanTransactions,
+    /// Proof contains less bits than hashes.
+    LessBitsThanHashes,
+    /// Not all bits were consumed.
+    AllBitsNotConsumed,
+    /// Not all hashes were consumed.
+    AllHashesNotConsumed,
+    /// Overflowed the bits array.
+    OverflowBitsArray,
+    /// Overflowed the hashes array.
+    OverflowHashesArray,
+    /// Found duplicate transaction hashes.
+    DuplicateHashes,
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use self::Error::*;
+        use Error::*;
 
-        match *self {
-            MerkleRootMismatch => write!(f, "merkle header root doesn't match to the root calculated from the partial merkle tree"),
-            NoTransactions => write!(f, "partial merkle tree contains no transactions"),
-            TooManyTransactions => write!(f, "too many transactions"),
-            BadFormat(ref s) => write!(f, "general format error: {}", s),
-        }
+        let s = match *self {
+            MerkleRootMismatch => "merkle header root doesn't match to the root calculated from the partial merkle tree",
+            NoTransactions => "partial merkle tree contains no transactions",
+            TooManyTransactions => "too many transactions",
+            MoreHashesThanTransactions => "proof contains more hashes than transactions",
+            LessBitsThanHashes => "proof contains less bits than hashes",
+            AllBitsNotConsumed => "not all bits were consumed",
+            AllHashesNotConsumed => "not all hashes were consumed",
+            OverflowBitsArray => "overflowed the bits array",
+            OverflowHashesArray => "overflowed the hashes array",
+            DuplicateHashes => "found duplicate transaction hashes",
+
+        };
+        write!(f, "{}", s)
     }
 }
 
@@ -512,10 +532,19 @@ impl fmt::Display for Error {
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use self::Error::*;
+        use Error::*;
 
         match *self {
-            MerkleRootMismatch | NoTransactions | TooManyTransactions | BadFormat(_) => None,
+            MerkleRootMismatch
+                | NoTransactions
+                | TooManyTransactions
+                | MoreHashesThanTransactions
+                | LessBitsThanHashes
+                | AllBitsNotConsumed
+                | AllHashesNotConsumed
+                | OverflowBitsArray
+                | OverflowHashesArray
+                | DuplicateHashes => None
         }
     }
 }
