@@ -1058,7 +1058,7 @@ mod tests {
                 },
                 script_sig: hex_script!("160014be18d152a9b012039daf3da7de4f53349eecb985"),
                 sequence: Sequence::MAX,
-                witness: Witness::from_vec(vec![Vec::from_hex("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105").unwrap()]),
+                witness: Witness::from_slice(&[Vec::from_hex("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105").unwrap()]),
             }],
             output: vec![
                 TxOut {
@@ -1117,7 +1117,7 @@ mod tests {
                     "304402204f67e2afb76142d44fae58a2495d33a3419daa26cd0db8d04f3452b63289ac0f022010762a9fb67e94cc5cad9026f6dc99ff7f070f4278d30fbc7d0c869dd38c7fe701".parse().unwrap(),
                 )].into_iter().collect(),
                 bip32_derivation: keypaths.clone(),
-                final_script_witness: Some(Witness::from_vec(vec![vec![1, 3], vec![5]])),
+                final_script_witness: Some(Witness::from_slice(&[vec![1, 3], vec![5]])),
                 ripemd160_preimages: vec![(ripemd160::Hash::hash(&[]), vec![1, 2])].into_iter().collect(),
                 sha256_preimages: vec![(sha256::Hash::hash(&[]), vec![1, 2])].into_iter().collect(),
                 hash160_preimages: vec![(hash160::Hash::hash(&[]), vec![1, 2])].into_iter().collect(),
@@ -1279,7 +1279,7 @@ mod tests {
                             },
                             script_sig: hex_script!("160014be18d152a9b012039daf3da7de4f53349eecb985"),
                             sequence: Sequence::MAX,
-                            witness: Witness::from_vec(vec![
+                            witness: Witness::from_slice(&[
                                 Vec::from_hex("304402202712be22e0270f394f568311dc7ca9a68970b8025fdd3b240229f07f8a5f3a240220018b38d7dcd314e734c9276bd6fb40f673325bc4baa144c800d2f2f02db2765c01").unwrap(),
                                 Vec::from_hex("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105").unwrap(),
                             ]),
@@ -1293,7 +1293,7 @@ mod tests {
                             },
                             script_sig: hex_script!("160014fe3e9ef1a745e974d902c4355943abcb34bd5353"),
                             sequence: Sequence::MAX,
-                            witness: Witness::from_vec(vec![
+                            witness: Witness::from_slice(&[
                                 Vec::from_hex("3045022100d12b852d85dcd961d2f5f4ab660654df6eedcc794c0c33ce5cc309ffb5fce58d022067338a8e0e1725c197fb1a88af59f51e44e4255b20167c8684031c05d1f2592a01").unwrap(),
                                 Vec::from_hex("0223b72beef0965d10be0778efecd61fcac6f79a4ea169393380734464f84f2ab3").unwrap(),
                             ]),
@@ -1591,7 +1591,7 @@ mod tests {
                         },
                         script_sig: hex_script!("160014be18d152a9b012039daf3da7de4f53349eecb985"),
                         sequence: Sequence::MAX,
-                        witness: Witness::from_vec(vec![
+                        witness: Witness::from_slice(&[
                             Vec::from_hex("304402202712be22e0270f394f568311dc7ca9a68970b8025fdd3b240229f07f8a5f3a240220018b38d7dcd314e734c9276bd6fb40f673325bc4baa144c800d2f2f02db2765c01").unwrap(),
                             Vec::from_hex("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105").unwrap(),
                         ]),
@@ -1605,7 +1605,7 @@ mod tests {
                         },
                         script_sig: hex_script!("160014fe3e9ef1a745e974d902c4355943abcb34bd5353"),
                         sequence: Sequence::MAX,
-                        witness: Witness::from_vec(vec![
+                        witness: Witness::from_slice(&[
                             Vec::from_hex("3045022100d12b852d85dcd961d2f5f4ab660654df6eedcc794c0c33ce5cc309ffb5fce58d022067338a8e0e1725c197fb1a88af59f51e44e4255b20167c8684031c05d1f2592a01").unwrap(),
                             Vec::from_hex("0223b72beef0965d10be0778efecd61fcac6f79a4ea169393380734464f84f2ab3").unwrap(),
                         ]),

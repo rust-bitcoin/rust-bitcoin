@@ -19,15 +19,16 @@ use crate::VarInt;
 
 /// The Witness is the data used to unlock bitcoins since the [segwit upgrade](https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki)
 ///
-/// Can be logically seen as an array of byte-arrays `Vec<Vec<u8>>` and indeed you can convert from
-/// it [`Witness::from_vec`] and convert into it [`Witness::to_vec`].
+/// Can be logically seen as an array of bytestrings, i.e. `Vec<Vec<u8>>`, and it is serialized on the wire
+/// in that format. You can convert between this type and `Vec<Vec<u8>>` by using [`Witness::from_slice`]
+/// and [`Witness::to_vec`].
 ///
 /// For serialization and deserialization performance it is stored internally as a single `Vec`,
 /// saving some allocations.
 ///
 #[derive(Clone, Default, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 pub struct Witness {
-    /// contains the witness Vec<Vec<u8>> serialization without the initial varint indicating the
+    /// Contains the witness Vec<Vec<u8>> serialization without the initial varint indicating the
     /// number of elements (which is stored in `witness_elements`)
     content: Vec<u8>,
 
@@ -166,26 +167,31 @@ impl Witness {
     }
 
     /// Creates [`Witness`] object from an array of byte-arrays
+    #[deprecated(since="0.30.0", note="use `Witness::from_slice()` instead")]
     pub fn from_vec(vec: Vec<Vec<u8>>) -> Self {
-        let witness_elements = vec.len();
-        let index_size = witness_elements * 4;
+        Witness::from_slice(&vec)
+    }
 
-        let content_size: usize = vec
+    /// Creates a [`Witness`] object from a slice of bytes slices where each slice is a witness item.
+    pub fn from_slice<T: AsRef<[u8]>>(slice: &[T]) -> Self {
+        let witness_elements = slice.len();
+        let index_size = witness_elements * 4;
+        let content_size = slice
             .iter()
-            .map(|el| el.len() + VarInt(el.len() as u64).len())
+            .map(|elem| elem.as_ref().len() + VarInt(elem.as_ref().len() as u64).len())
             .sum();
+
         let mut content = vec![0u8; content_size + index_size];
         let mut cursor = 0usize;
-        for (i, el) in vec.into_iter().enumerate() {
+        for (i, elem) in slice.iter().enumerate() {
             encode_cursor(&mut content, content_size, i, cursor);
-
-            let el_len_varint = VarInt(el.len() as u64);
-            el_len_varint
-                .consensus_encode(&mut &mut content[cursor..cursor + el_len_varint.len()])
+            let elem_len_varint = VarInt(elem.as_ref().len() as u64);
+            elem_len_varint
+                .consensus_encode(&mut &mut content[cursor..cursor + elem_len_varint.len()])
                 .expect("writers on vec don't errors, space granted by content_size");
-            cursor += el_len_varint.len();
-            content[cursor..cursor + el.len()].copy_from_slice(&el);
-            cursor += el.len();
+            cursor += elem_len_varint.len();
+            content[cursor..cursor + elem.as_ref().len()].copy_from_slice(elem.as_ref());
+            cursor += elem.as_ref().len();
         }
 
         Witness {
@@ -437,7 +443,7 @@ impl<'de> serde::Deserialize<'de> for Witness {
                     })?;
                     ret.push(vec);
                 }
-                Ok(Witness::from_vec(ret))
+                Ok(Witness::from_slice(&ret))
             }
         }
 
@@ -445,7 +451,7 @@ impl<'de> serde::Deserialize<'de> for Witness {
             deserializer.deserialize_seq(Visitor)
         } else {
             let vec: Vec<Vec<u8>> = serde::Deserialize::deserialize(deserializer)?;
-            Ok(Witness::from_vec(vec))
+            Ok(Witness::from_slice(&vec))
         }
     }
 }
@@ -575,7 +581,7 @@ mod test {
         assert_eq!(&witness[0], &w0[..]);
         assert_eq!(&witness[1], &w1[..]);
 
-        let w_into = Witness::from_vec(witness_vec);
+        let w_into = Witness::from_slice(&witness_vec);
         assert_eq!(w_into, witness);
 
         assert_eq!(witness_serialized, serialize(&witness));
@@ -649,7 +655,7 @@ mod test {
         use bincode;
 
         let old_witness_format = vec![vec![0u8], vec![2]];
-        let new_witness_format = Witness::from_vec(old_witness_format.clone());
+        let new_witness_format = Witness::from_slice(&old_witness_format);
 
         let old = bincode::serialize(&old_witness_format).unwrap();
         let new = bincode::serialize(&new_witness_format).unwrap();
@@ -665,7 +671,7 @@ mod test {
     fn test_serde_human() {
         use serde_json;
 
-        let witness = Witness::from_vec(vec![vec![0u8, 123, 75], vec![2u8, 6, 3, 7, 8]]);
+        let witness = Witness::from_slice(&[vec![0u8, 123, 75], vec![2u8, 6, 3, 7, 8]]);
 
         let json = serde_json::to_string(&witness).unwrap();
 
@@ -684,8 +690,8 @@ mod benches {
 
     #[bench]
     pub fn bench_big_witness_to_vec(bh: &mut Bencher) {
-        let raw_witness = vec![vec![1u8]; 5];
-        let witness = Witness::from_vec(raw_witness);
+        let raw_witness = [[1u8]; 5];
+        let witness = Witness::from_slice(&raw_witness);
 
         bh.iter(|| {
             black_box(witness.to_vec());
@@ -695,7 +701,7 @@ mod benches {
     #[bench]
     pub fn bench_witness_to_vec(bh: &mut Bencher) {
         let raw_witness = vec![vec![1u8]; 3];
-        let witness = Witness::from_vec(raw_witness);
+        let witness = Witness::from_slice(&raw_witness);
 
         bh.iter(|| {
             black_box(witness.to_vec());

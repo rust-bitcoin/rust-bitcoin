@@ -1396,7 +1396,7 @@ mod tests {
         // test that we get a failure if we corrupt a signature
         let mut witness: Vec<_> = spending.input[1].witness.to_vec();
         witness[0][10] = 42;
-        spending.input[1].witness = Witness::from_vec(witness);
+        spending.input[1].witness = Witness::from_slice(&witness);
         match spending.verify(|point: &OutPoint| {
             if let Some(tx) = spent3.remove(&point.txid) {
                 return tx.output.get(point.vout as usize).cloned();
