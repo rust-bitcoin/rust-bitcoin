@@ -33,14 +33,14 @@ use std::collections::BTreeMap;
 use std::fmt;
 use std::str::FromStr;
 
-use bitcoin::consensus::encode;
-use bitcoin::hashes::hex::FromHex;
-use bitcoin::locktime::absolute;
-use bitcoin::secp256k1::{Secp256k1, Signing, Verification};
 use bitcoin::bip32::{
     ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint, IntoDerivationPath,
 };
+use bitcoin::consensus::encode;
+use bitcoin::hashes::hex::FromHex;
+use bitcoin::locktime::absolute;
 use bitcoin::psbt::{self, Input, Psbt, PsbtSighashType};
+use bitcoin::secp256k1::{Secp256k1, Signing, Verification};
 use bitcoin::{
     Address, Amount, Network, OutPoint, PublicKey, Script, Sequence, Transaction, TxIn, TxOut,
     Txid, Witness,

@@ -78,6 +78,7 @@ const UTXO_3: P2trUtxo = P2trUtxo {
 use std::collections::BTreeMap;
 use std::str::FromStr;
 
+use bitcoin::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint};
 use bitcoin::consensus::encode;
 use bitcoin::constants::COIN_VALUE;
 use bitcoin::hashes::hex::FromHex;
@@ -87,16 +88,13 @@ use bitcoin::psbt::serialize::Serialize;
 use bitcoin::psbt::{self, Input, Output, Psbt, PsbtSighashType};
 use bitcoin::schnorr::TapTweak;
 use bitcoin::secp256k1::{Message, Secp256k1};
-use bitcoin::bip32::{
-    ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint,
-};
-use bitcoin::sighash::{self, SighashCache, SchnorrSighashType};
+use bitcoin::sighash::{self, SchnorrSighashType, SighashCache};
 use bitcoin::util::taproot::{
     LeafVersion, TapLeafHash, TapSighashHash, TaprootBuilder, TaprootSpendInfo,
 };
 use bitcoin::{
-    absolute, script, Address, Amount, OutPoint, SchnorrSig, Script,
-    Transaction, TxIn, TxOut, Txid, Witness, XOnlyPublicKey,
+    absolute, script, Address, Amount, OutPoint, SchnorrSig, Script, Transaction, TxIn, TxOut,
+    Txid, Witness, XOnlyPublicKey,
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

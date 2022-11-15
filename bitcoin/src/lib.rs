@@ -114,6 +114,7 @@ use std::io;
 use core2::io;
 
 pub use crate::address::{Address, AddressType};
+pub use crate::amount::{Amount, Denomination, SignedAmount};
 pub use crate::blockdata::block::{self, Block};
 pub use crate::blockdata::locktime::{self, absolute, relative};
 pub use crate::blockdata::script::{self, Script};
@@ -123,12 +124,11 @@ pub use crate::blockdata::{constants, opcodes};
 pub use crate::consensus::encode::VarInt;
 pub use crate::error::Error;
 pub use crate::hash_types::*;
+pub use crate::merkle_tree::MerkleBlock;
 pub use crate::network::constants::Network;
 pub use crate::pow::{CompactTarget, Target, Work};
-pub use crate::amount::{Amount, Denomination, SignedAmount};
 pub use crate::util::ecdsa::{self, EcdsaSig, EcdsaSigError};
 pub use crate::util::key::{KeyPair, PrivateKey, PublicKey, XOnlyPublicKey};
-pub use crate::merkle_tree::MerkleBlock;
 pub use crate::util::schnorr::{self, SchnorrSig, SchnorrSigError};
 
 #[cfg(not(feature = "std"))]

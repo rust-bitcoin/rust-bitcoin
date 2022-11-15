@@ -34,9 +34,9 @@ use crate::blockdata::constants::{
     MAX_SCRIPT_ELEMENT_SIZE, PUBKEY_ADDRESS_PREFIX_MAIN, PUBKEY_ADDRESS_PREFIX_TEST,
     SCRIPT_ADDRESS_PREFIX_MAIN, SCRIPT_ADDRESS_PREFIX_TEST,
 };
+use crate::blockdata::opcodes::all::*;
 use crate::blockdata::script::Instruction;
 use crate::blockdata::{opcodes, script};
-use crate::blockdata::opcodes::all::*;
 use crate::error::ParseIntError;
 use crate::hash_types::{PubkeyHash, ScriptHash};
 use crate::hashes::{sha256, Hash, HashEngine};
@@ -324,9 +324,7 @@ impl TryFrom<opcodes::All> for WitnessVersion {
     fn try_from(opcode: opcodes::All) -> Result<Self, Self::Error> {
         match opcode.to_u8() {
             0 => Ok(WitnessVersion::V0),
-            version
-                if version >= OP_PUSHNUM_1.to_u8()
-                    && version <= OP_PUSHNUM_16.to_u8() =>
+            version if version >= OP_PUSHNUM_1.to_u8() && version <= OP_PUSHNUM_16.to_u8() =>
                 WitnessVersion::try_from(version - OP_PUSHNUM_1.to_u8() + 1),
             _ => Err(Error::MalformedWitnessVersion),
         }
