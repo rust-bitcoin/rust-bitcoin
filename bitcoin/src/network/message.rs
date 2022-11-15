@@ -24,7 +24,7 @@ use crate::network::message_compact_blocks;
 use crate::network::constants::Magic;
 use crate::consensus::encode::{CheckedData, Decodable, Encodable, VarInt};
 use crate::consensus::{encode, serialize};
-use crate::util::merkleblock::MerkleBlock;
+use crate::merkle_tree::MerkleBlock;
 
 /// The maximum number of [super::message_blockdata::Inventory] items in an `inv` message.
 ///
@@ -469,6 +469,8 @@ impl Decodable for RawNetworkMessage {
 
 #[cfg(test)]
 mod test {
+    use super::*;
+
     use std::net::Ipv4Addr;
     use super::{RawNetworkMessage, NetworkMessage, CommandString};
     use crate::network::constants::{ServiceFlags, Magic, Network};
@@ -484,7 +486,6 @@ mod test {
     use crate::blockdata::transaction::Transaction;
     use crate::blockdata::script::Script;
     use crate::network::message_bloom::{FilterAdd, FilterLoad, BloomFlags};
-    use crate::MerkleBlock;
     use crate::network::message_compact_blocks::{GetBlockTxn, SendCmpct};
     use crate::bip152::BlockTransactionsRequest;
 

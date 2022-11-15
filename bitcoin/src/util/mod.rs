@@ -10,7 +10,6 @@ pub mod key;
 pub mod ecdsa;
 pub mod schnorr;
 pub mod base58;
-pub mod merkleblock;
 pub mod psbt;
 pub mod taproot;
 

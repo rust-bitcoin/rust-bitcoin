@@ -14,6 +14,8 @@
 //! let root = merkle_tree::calculate_root(tx_hashes.into_iter());
 //! ```
 
+mod block;
+
 use core::iter;
 
 use crate::prelude::*;
@@ -23,6 +25,8 @@ use core::cmp::min;
 
 use crate::hashes::Hash;
 use crate::consensus::encode::Encodable;
+
+pub use block::{MerkleBlock, PartialMerkleTree, MerkleBlockError};
 
 /// Calculates the merkle root of a list of *hashes*, inline (in place) in `hashes`.
 ///
