@@ -53,7 +53,7 @@ use crate::blockdata::block::{self, Block};
 use crate::blockdata::transaction::Transaction;
 use crate::blockdata::constants::{MAX_BLOCK_WEIGHT, MIN_TRANSACTION_WEIGHT};
 use crate::consensus::encode::{self, Decodable, Encodable};
-use crate::util::merkleblock::MerkleBlockError::*;
+use crate::merkle_tree::MerkleBlockError::*;
 
 /// An error when verifying the merkle block.
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -164,7 +164,7 @@ impl PartialMerkleTree {
     /// ```rust
     /// use bitcoin::hash_types::Txid;
     /// use bitcoin::hashes::hex::FromHex;
-    /// use bitcoin::util::merkleblock::PartialMerkleTree;
+    /// use bitcoin::merkle_tree::{MerkleBlock, PartialMerkleTree};
     ///
     /// // Block 80000
     /// let txids: Vec<Txid> = [
@@ -520,6 +520,8 @@ impl Decodable for MerkleBlock {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     use core::cmp::min;
 
     use crate::hashes::Hash;
@@ -528,7 +530,6 @@ mod tests {
     use secp256k1::rand::prelude::*;
 
     use crate::consensus::encode::{deserialize, serialize};
-    use crate::util::merkleblock::{MerkleBlock, PartialMerkleTree};
     use crate::{merkle_tree, Block};
 
     /// accepts `pmt_test_$num`

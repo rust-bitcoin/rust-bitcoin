@@ -128,7 +128,7 @@ pub use crate::pow::{CompactTarget, Target, Work};
 pub use crate::amount::{Amount, Denomination, SignedAmount};
 pub use crate::util::ecdsa::{self, EcdsaSig, EcdsaSigError};
 pub use crate::util::key::{KeyPair, PrivateKey, PublicKey, XOnlyPublicKey};
-pub use crate::util::merkleblock::MerkleBlock;
+pub use crate::merkle_tree::MerkleBlock;
 pub use crate::util::schnorr::{self, SchnorrSig, SchnorrSigError};
 pub use crate::util::{psbt, Error};
 
