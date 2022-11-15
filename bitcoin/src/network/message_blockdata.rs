@@ -7,16 +7,13 @@
 //! Bitcoin data (blocks and transactions) around.
 //!
 
-use crate::prelude::*;
-
-use crate::io;
-
-use crate::hashes::{Hash as _, sha256d};
-
-use crate::network::constants;
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::hash_types::{BlockHash, Txid, Wtxid};
+use crate::hashes::{sha256d, Hash as _};
 use crate::internal_macros::impl_consensus_encoding;
+use crate::io;
+use crate::network::constants;
+use crate::prelude::*;
 
 /// An inventory item.
 #[derive(PartialEq, Eq, Clone, Debug, Copy, Hash, PartialOrd, Ord)]
@@ -41,7 +38,7 @@ pub enum Inventory {
         inv_type: u32,
         /// The hash of the inventory item
         hash: [u8; 32],
-    }
+    },
 }
 
 impl Encodable for Inventory {
@@ -50,7 +47,7 @@ impl Encodable for Inventory {
         macro_rules! encode_inv {
             ($code:expr, $item:expr) => {
                 u32::consensus_encode(&$code, w)? + $item.consensus_encode(w)?
-            }
+            };
         }
         Ok(match *self {
             Inventory::Error => encode_inv!(0, sha256d::Hash::all_zeros()),
@@ -77,10 +74,7 @@ impl Decodable for Inventory {
             5 => Inventory::WTx(Decodable::consensus_decode(r)?),
             0x40000001 => Inventory::WitnessTransaction(Decodable::consensus_decode(r)?),
             0x40000002 => Inventory::WitnessBlock(Decodable::consensus_decode(r)?),
-            tp => Inventory::Unknown {
-                inv_type: tp,
-                hash: Decodable::consensus_decode(r)?,
-            }
+            tp => Inventory::Unknown { inv_type: tp, hash: Decodable::consensus_decode(r)? },
         })
     }
 }
@@ -110,17 +104,13 @@ pub struct GetHeadersMessage {
     /// if possible and block 1 otherwise.
     pub locator_hashes: Vec<BlockHash>,
     /// References the header to stop at, or zero to just fetch the maximum 2000 headers
-    pub stop_hash: BlockHash
+    pub stop_hash: BlockHash,
 }
 
 impl GetBlocksMessage {
     /// Construct a new `getblocks` message
     pub fn new(locator_hashes: Vec<BlockHash>, stop_hash: BlockHash) -> GetBlocksMessage {
-        GetBlocksMessage {
-            version: constants::PROTOCOL_VERSION,
-            locator_hashes,
-            stop_hash,
-        }
+        GetBlocksMessage { version: constants::PROTOCOL_VERSION, locator_hashes, stop_hash }
     }
 }
 
@@ -129,11 +119,7 @@ impl_consensus_encoding!(GetBlocksMessage, version, locator_hashes, stop_hash);
 impl GetHeadersMessage {
     /// Construct a new `getheaders` message
     pub fn new(locator_hashes: Vec<BlockHash>, stop_hash: BlockHash) -> GetHeadersMessage {
-        GetHeadersMessage {
-            version: constants::PROTOCOL_VERSION,
-            locator_hashes,
-            stop_hash,
-        }
+        GetHeadersMessage { version: constants::PROTOCOL_VERSION, locator_hashes, stop_hash }
     }
 }
 
@@ -141,16 +127,17 @@ impl_consensus_encoding!(GetHeadersMessage, version, locator_hashes, stop_hash);
 
 #[cfg(test)]
 mod tests {
-    use super::{Vec, GetHeadersMessage, GetBlocksMessage};
-
+    use super::{GetBlocksMessage, GetHeadersMessage, Vec};
+    use crate::consensus::encode::{deserialize, serialize};
     use crate::hashes::hex::FromHex;
     use crate::hashes::Hash;
-    use crate::consensus::encode::{deserialize, serialize};
 
     #[test]
     fn getblocks_message_test() {
         let from_sat = Vec::from_hex("72110100014a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b0000000000000000000000000000000000000000000000000000000000000000").unwrap();
-        let genhash = Vec::from_hex("4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b").unwrap();
+        let genhash =
+            Vec::from_hex("4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b")
+                .unwrap();
 
         let decode: Result<GetBlocksMessage, _> = deserialize(&from_sat);
         assert!(decode.is_ok());
@@ -166,7 +153,9 @@ mod tests {
     #[test]
     fn getheaders_message_test() {
         let from_sat = Vec::from_hex("72110100014a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b0000000000000000000000000000000000000000000000000000000000000000").unwrap();
-        let genhash = Vec::from_hex("4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b").unwrap();
+        let genhash =
+            Vec::from_hex("4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b")
+                .unwrap();
 
         let decode: Result<GetHeadersMessage, _> = deserialize(&from_sat);
         assert!(decode.is_ok());

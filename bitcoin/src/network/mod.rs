@@ -29,7 +29,7 @@ pub mod message_bloom;
 pub mod message_compact_blocks;
 #[cfg(feature = "std")]
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-pub mod message_network;
+pub mod message_filter;
 #[cfg(feature = "std")]
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-pub mod message_filter;
+pub mod message_network;
