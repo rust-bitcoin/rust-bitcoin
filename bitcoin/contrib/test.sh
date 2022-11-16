@@ -31,9 +31,9 @@ if [ "$DO_LINT" = true ]
 then
     cargo clippy --all-features --all-targets -- -D warnings
     cargo clippy --example bip32 -- -D warnings
-    cargo clippy --example handshake -- -D warnings
+    cargo clippy --example handshake --features=rand-std -- -D warnings
     cargo clippy --example ecdsa-psbt --features=bitcoinconsensus -- -D warnings
-    cargo clippy --example taproot-psbt --features=bitcoinconsensus -- -D warnings
+    cargo clippy --example taproot-psbt --features=rand-std,bitcoinconsensus -- -D warnings
 fi
 
 echo "********* Testing std *************"
@@ -77,7 +77,7 @@ do
 done
 
 cargo run --example ecdsa-psbt --features=bitcoinconsensus
-cargo run --example taproot-psbt --features=bitcoinconsensus
+cargo run --example taproot-psbt --features=rand-std,bitcoinconsensus
 
 # Build the docs if told to (this only works with the nightly toolchain)
 if [ "$DO_DOCS" = true ]; then

@@ -499,20 +499,23 @@ impl Decodable for MerkleBlock {
 
 #[cfg(test)]
 mod tests {
-    use core::cmp::min;
-
+    #[cfg(feature = "rand-std")]
     use secp256k1::rand::prelude::*;
 
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
-    use crate::hash_types::{TxMerkleNode, Txid};
+    #[cfg(feature = "rand-std")]
+    use crate::hash_types::TxMerkleNode;
     use crate::hashes::hex::{FromHex, ToHex};
+    #[cfg(feature = "rand-std")]
     use crate::hashes::Hash;
-    use crate::{merkle_tree, Block};
+    use crate::{Block, Txid};
 
     /// accepts `pmt_test_$num`
+    #[cfg(feature = "rand-std")]
     fn pmt_test_from_name(name: &str) { pmt_test(name[9..].parse().unwrap()) }
 
+    #[cfg(feature = "rand-std")]
     macro_rules! pmt_tests {
     ($($name:ident),* $(,)?) => {
          $(
@@ -523,6 +526,7 @@ mod tests {
          )*
     }
 }
+    #[cfg(feature = "rand-std")]
     pmt_tests!(
         pmt_test_1,
         pmt_test_4,
@@ -538,7 +542,11 @@ mod tests {
         pmt_test_4095
     );
 
+    #[cfg(feature = "rand-std")]
     fn pmt_test(tx_count: usize) {
+        use core::cmp::min;
+        use crate::merkle_tree;
+
         let mut rng = thread_rng();
         // Create some fake tx ids
         let tx_ids = (1..=tx_count)
@@ -713,6 +721,7 @@ mod tests {
         assert_eq!(index.len(), 0);
     }
 
+    #[cfg(feature = "rand-std")]
     impl PartialMerkleTree {
         /// Flip one bit in one of the hashes - this should break the authentication
         fn damage(&mut self, rng: &mut ThreadRng) {

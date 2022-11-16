@@ -225,7 +225,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(all(feature = "secp-recovery", feature = "base64"))]
+    #[cfg(all(feature = "secp-recovery", feature = "base64", feature = "rand-std"))]
     fn test_message_signature() {
         use core::str::FromStr;
 

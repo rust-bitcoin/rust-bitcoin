@@ -816,7 +816,6 @@ mod tests {
     use super::{deserialize, serialize, Error, CheckedData, VarInt};
     use super::{Transaction, BlockHash, FilterHash, TxMerkleNode, TxOut, TxIn};
     use crate::consensus::{Encodable, deserialize_partial, Decodable};
-    use secp256k1::rand::{thread_rng, Rng};
     #[cfg(feature = "std")]
     use crate::network::{Address, message_blockdata::Inventory};
 
@@ -1088,7 +1087,10 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "rand-std")]
     fn serialization_round_trips() {
+        use secp256k1::rand::{thread_rng, Rng};
+
         macro_rules! round_trip {
             ($($val_type:ty),*) => {
                 $(
