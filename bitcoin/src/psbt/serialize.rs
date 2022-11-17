@@ -18,7 +18,7 @@ use secp256k1::{self, XOnlyPublicKey};
 use crate::bip32::{ChildNumber, Fingerprint, KeySource};
 use crate::hashes::{hash160, ripemd160, sha256, sha256d, Hash};
 use crate::util::ecdsa::{EcdsaSig, EcdsaSigError};
-use crate::util::psbt;
+use crate::psbt;
 use crate::util::taproot::{TapBranchHash, TapLeafHash, ControlBlock, LeafVersion};
 use crate::schnorr;
 use crate::util::key::PublicKey;

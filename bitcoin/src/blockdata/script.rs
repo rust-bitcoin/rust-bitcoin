@@ -1183,7 +1183,7 @@ mod test {
     use crate::consensus::encode::{deserialize, serialize};
     use crate::blockdata::opcodes;
     use crate::util::key::PublicKey;
-    use crate::util::psbt::serialize::Serialize;
+    use crate::psbt::serialize::Serialize;
     use crate::internal_macros::hex_script;
 
     #[test]

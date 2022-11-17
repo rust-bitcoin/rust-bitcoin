@@ -402,7 +402,7 @@ impl TaprootBuilder {
     /// If the script weight calculations overflow, a sub-optimal tree may be generated. This should
     /// not happen unless you are dealing with billions of branches with weights close to 2^32.
     ///
-    /// [`TapTree`]: crate::util::psbt::TapTree
+    /// [`TapTree`]: crate::psbt::TapTree
     pub fn with_huffman_tree<I>(
         script_weights: I,
     ) -> Result<Self, TaprootBuilderError>

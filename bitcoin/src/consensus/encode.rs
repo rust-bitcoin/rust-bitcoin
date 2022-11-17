@@ -26,7 +26,7 @@ use crate::hashes::{sha256d, Hash, sha256};
 use crate::hash_types::{BlockHash, FilterHash, TxMerkleNode, FilterHeader};
 use crate::io::{self, Cursor, Read};
 
-use crate::util::psbt;
+use crate::psbt;
 use crate::bip152::{ShortId, PrefilledTransaction};
 use crate::util::taproot::TapLeafHash;
 use crate::hashes::hex::ToHex;

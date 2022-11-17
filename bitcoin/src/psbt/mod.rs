@@ -895,8 +895,8 @@ mod tests {
     use crate::network::constants::Network::Bitcoin;
     use crate::consensus::encode::{deserialize, serialize, serialize_hex};
     use crate::bip32::{ChildNumber, ExtendedPrivKey, ExtendedPubKey, KeySource};
-    use crate::util::psbt::map::{Output, Input};
-    use crate::util::psbt::raw;
+    use crate::psbt::map::{Output, Input};
+    use crate::psbt::raw;
     use crate::internal_macros::hex_script;
 
     use std::collections::BTreeMap;
@@ -1044,7 +1044,7 @@ mod tests {
     fn test_serde_psbt() {
         //! Create a full PSBT value with various fields filled and make sure it can be JSONized.
         use crate::hashes::sha256d;
-        use crate::util::psbt::map::Input;
+        use crate::psbt::map::Input;
         use crate::sighash::EcdsaSighashType;
 
         // create some values to use in the PSBT
@@ -1149,9 +1149,8 @@ mod tests {
         use crate::blockdata::transaction::{Transaction, TxIn, TxOut, OutPoint, Sequence};
         use crate::consensus::encode::serialize_hex;
         use crate::blockdata::locktime::absolute;
-        use crate::util::psbt::map::{Map, Input, Output};
-        use crate::util::psbt::raw;
-        use crate::util::psbt::{PartiallySignedTransaction, Error};
+        use crate::psbt::map::{Map, Input, Output};
+        use crate::psbt::{raw, PartiallySignedTransaction, Error};
         use crate::sighash::EcdsaSighashType;
         use std::collections::BTreeMap;
         use crate::blockdata::witness::Witness;
@@ -1183,7 +1182,7 @@ mod tests {
         #[test]
         #[should_panic(expected = "ConsensusEncoding")]
         fn invalid_vector_2_base64() {
-            use crate::util::psbt::PsbtParseError;
+            use crate::psbt::PsbtParseError;
             PartiallySignedTransaction::from_str("cHNidP8BAHUCAAAAASaBcTce3/KF6Tet7qSze3gADAVmy7OtZGQXE8pCFxv2AAAAAAD+////AtPf9QUAAAAAGXapFNDFmQPFusKGh2DpD9UhpGZap2UgiKwA4fUFAAAAABepFDVF5uM7gyxHBQ8k0+65PJwDlIvHh7MuEwAAAQD9pQEBAAAAAAECiaPHHqtNIOA3G7ukzGmPopXJRjr6Ljl/hTPMti+VZ+UBAAAAFxYAFL4Y0VKpsBIDna89p95PUzSe7LmF/////4b4qkOnHf8USIk6UwpyN+9rRgi7st0tAXHmOuxqSJC0AQAAABcWABT+Pp7xp0XpdNkCxDVZQ6vLNL1TU/////8CAMLrCwAAAAAZdqkUhc/xCX/Z4Ai7NK9wnGIZeziXikiIrHL++E4sAAAAF6kUM5cluiHv1irHU6m80GfWx6ajnQWHAkcwRAIgJxK+IuAnDzlPVoMR3HyppolwuAJf3TskAinwf4pfOiQCIAGLONfc0xTnNMkna9b7QPZzMlvEuqFEyADS8vAtsnZcASED0uFWdJQbrUqZY3LLh+GFbTZSYG2YVi/jnF6efkE/IQUCSDBFAiEA0SuFLYXc2WHS9fSrZgZU327tzHlMDDPOXMMJ/7X85Y0CIGczio4OFyXBl/saiK9Z9R5E5CVbIBZ8hoQDHAXR8lkqASECI7cr7vCWXRC+B3jv7NYfysb3mk6haTkzgHNEZPhPKrMAAAAAAA==")
                 // This weird thing is necessary since rustc 0.29 prints out I/O error in a different format than later versions
                 .map_err(|err| match err {
@@ -1664,9 +1663,9 @@ mod tests {
     // PSBTs taken from BIP 174 test vectors.
     #[test]
     fn combine_psbts() {
-        let mut psbt1 = hex_psbt!(include_str!("../../../tests/data/psbt1.hex")).unwrap();
-        let psbt2 = hex_psbt!(include_str!("../../../tests/data/psbt2.hex")).unwrap();
-        let psbt_combined = hex_psbt!(include_str!("../../../tests/data/psbt2.hex")).unwrap();
+        let mut psbt1 = hex_psbt!(include_str!("../../tests/data/psbt1.hex")).unwrap();
+        let psbt2 = hex_psbt!(include_str!("../../tests/data/psbt2.hex")).unwrap();
+        let psbt_combined = hex_psbt!(include_str!("../../tests/data/psbt2.hex")).unwrap();
 
         psbt1.combine(psbt2).expect("psbt combine to succeed");
         assert_eq!(psbt1, psbt_combined);
@@ -1674,8 +1673,8 @@ mod tests {
 
     #[test]
     fn combine_psbts_commutative() {
-        let mut psbt1 = hex_psbt!(include_str!("../../../tests/data/psbt1.hex")).unwrap();
-        let mut psbt2 = hex_psbt!(include_str!("../../../tests/data/psbt2.hex")).unwrap();
+        let mut psbt1 = hex_psbt!(include_str!("../../tests/data/psbt1.hex")).unwrap();
+        let mut psbt2 = hex_psbt!(include_str!("../../tests/data/psbt2.hex")).unwrap();
 
         let psbt1_clone = psbt1.clone();
         let psbt2_clone = psbt2.clone();

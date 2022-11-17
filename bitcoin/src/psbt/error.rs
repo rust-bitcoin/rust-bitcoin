@@ -8,7 +8,7 @@ use bitcoin_internals::write_err;
 
 use crate::blockdata::transaction::Transaction;
 use crate::consensus::encode;
-use crate::util::psbt::raw;
+use crate::psbt::raw;
 
 use crate::hashes;
 use crate::bip32::ExtendedPubKey;
