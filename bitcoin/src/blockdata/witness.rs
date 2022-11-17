@@ -457,6 +457,30 @@ impl<'de> serde::Deserialize<'de> for Witness {
     }
 }
 
+impl From<Vec<Vec<u8>>> for Witness {
+    fn from(vec: Vec<Vec<u8>>) -> Self {
+        Witness::from_slice(&vec)
+    }
+}
+
+impl From<&[&[u8]]> for Witness {
+    fn from(slice: &[&[u8]]) -> Self {
+        Witness::from_slice(slice)
+    }
+}
+
+impl From<&[Vec<u8>]> for Witness {
+    fn from(slice: &[Vec<u8>]) -> Self {
+        Witness::from_slice(slice)
+    }
+}
+
+impl From<Vec<&[u8]>> for Witness {
+    fn from(vec: Vec<&[u8]>) -> Self {
+        Witness::from_slice(&vec)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
