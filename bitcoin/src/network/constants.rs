@@ -101,6 +101,24 @@ impl Network {
     /// assert_eq!(network.magic(), Magic::from_bytes([0xF9, 0xBE, 0xB4, 0xD9]));
     /// ```
     pub fn magic(self) -> Magic { Magic::from(self) }
+
+    /// Converts a `Network` to its equivalent `bitcoind -chain` argument name.
+    ///
+    /// ```bash,no_run
+    /// $ bitcoin-23.0/bin/bitcoind --help | grep -C 3 '\-chain=<chain>'
+    /// Chain selection options:
+    ///
+    /// -chain=<chain>
+    /// Use the chain <chain> (default: main). Allowed values: main, test, signet, regtest
+    /// ```
+    pub fn to_core_arg(self) -> &'static str {
+        match self {
+            Network::Bitcoin => "main",
+            Network::Testnet => "test",
+            Network::Signet => "signet",
+            Network::Regtest => "regtest",
+        }
+    }
 }
 
 /// An error in parsing network string.
