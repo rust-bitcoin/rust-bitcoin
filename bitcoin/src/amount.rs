@@ -413,7 +413,8 @@ fn fmt_satoshi_in(
     }
 
     let width = options.width.unwrap_or(0);
-    let (left_pad, pad_right) = match (num_width < width, options.sign_aware_zero_pad, options.align.unwrap_or(fmt::Alignment::Right)) {
+    let align = options.align.unwrap_or(fmt::Alignment::Right);
+    let (left_pad, pad_right) = match (num_width < width, options.sign_aware_zero_pad, align) {
         (false, _, _) => (0, 0),
         // Alignment is always right (ignored) when zero-padding
         (true, true, _) | (true, false, fmt::Alignment::Right) => (width - num_width, 0),
