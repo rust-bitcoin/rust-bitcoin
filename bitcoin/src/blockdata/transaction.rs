@@ -15,6 +15,7 @@
 use crate::prelude::*;
 
 use crate::io;
+use crate::string::FromHexStr;
 use core::{fmt, str, default::Default};
 use core::convert::TryFrom;
 
@@ -401,6 +402,15 @@ impl Sequence {
     /// BIP-68 only uses the low 16 bits for relative lock value.
     fn low_u16(&self) -> u16 {
         self.0 as u16
+    }
+}
+
+impl FromHexStr for Sequence {
+    type Error = crate::parse::ParseIntError;
+
+    fn from_hex_str_no_prefix<S: AsRef<str> + Into<String>>(s: S) -> Result<Self, Self::Error> {
+        let sequence = crate::parse::hex_u32(s)?;
+        Ok(Self::from_consensus(sequence))
     }
 }
 
@@ -1445,6 +1455,25 @@ mod tests {
         assert!(unit_time_lock.is_time_locked());
         assert!(unit_time_lock.is_rbf());
         assert!(!lock_time_disabled.is_relative_lock_time());
+    }
+
+    #[test]
+    fn sequence_from_str_hex_happy_path() {
+        let sequence = Sequence::from_hex_str("0xFFFFFFFF").unwrap();
+        assert_eq!(sequence, Sequence::MAX);
+    }
+
+    #[test]
+    fn sequence_from_str_hex_no_prefix_happy_path() {
+        let sequence = Sequence::from_hex_str_no_prefix("FFFFFFFF").unwrap();
+        assert_eq!(sequence, Sequence::MAX);
+    }
+
+    #[test]
+    fn sequence_from_str_hex_invalid_hex_should_err() {
+        let hex = "0xzb93";
+        let result = Sequence::from_hex_str(hex);
+        assert!(result.is_err());
     }
 }
 

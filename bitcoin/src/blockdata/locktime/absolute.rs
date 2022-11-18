@@ -19,6 +19,7 @@ use crate::error::ParseIntError;
 use crate::io::{self, Read, Write};
 use crate::prelude::*;
 use crate::parse::{self, impl_parse_str_through_int};
+use crate::string::FromHexStr;
 
 #[cfg(docsrs)]
 use crate::absolute;
@@ -83,6 +84,15 @@ impl PackedLockTime {
 impl fmt::Display for PackedLockTime {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::Display::fmt(&self.0, f)
+    }
+}
+
+impl FromHexStr for PackedLockTime {
+    type Error = Error;
+
+    fn from_hex_str_no_prefix<S: AsRef<str> + Into<String>>(s: S) -> Result<Self, Self::Error> {
+        let packed_lock_time = crate::parse::hex_u32(s)?;
+        Ok(Self(packed_lock_time))
     }
 }
 
@@ -482,6 +492,16 @@ impl fmt::Display for Height {
     }
 }
 
+impl FromHexStr for Height {
+    type Error = Error;
+
+    fn from_hex_str_no_prefix<S: AsRef<str> + Into<String>>(s: S) -> Result<Self, Self::Error> {
+        let height = crate::parse::hex_u32(s)?;
+        Self::from_consensus(height)
+    }
+}
+
+
 impl FromStr for Height {
     type Err = Error;
 
@@ -562,6 +582,15 @@ impl Time {
 impl fmt::Display for Time {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::Display::fmt(&self.0, f)
+    }
+}
+
+impl FromHexStr for Time {
+    type Error = Error;
+
+    fn from_hex_str_no_prefix<S: AsRef<str> + Into<String>>(s: S) -> Result<Self, Self::Error> {
+        let time = crate::parse::hex_u32(s)?;
+        Time::from_consensus(time)
     }
 }
 
@@ -749,5 +778,65 @@ mod tests {
 
         let got = format!("{:#}", n);
         assert_eq!(got, "block-height 100");
+    }
+
+    #[test]
+    fn time_from_str_hex_happy_path() {
+        let actual = Time::from_hex_str("0x6289C350").unwrap();
+        let expected = Time::from_consensus(0x6289C350).unwrap();
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn time_from_str_hex_no_prefix_happy_path() {
+        let time = Time::from_hex_str_no_prefix("6289C350").unwrap();
+        assert_eq!(time, Time(0x6289C350));
+    }
+
+    #[test]
+    fn time_from_str_hex_invalid_hex_should_err() {
+        let hex = "0xzb93";
+        let result = Time::from_hex_str(hex);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn packed_lock_time_from_str_hex_happy_path() {
+        let actual = PackedLockTime::from_hex_str("0xBA70D").unwrap();
+        let expected = PackedLockTime(0xBA70D);
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn packed_lock_time_from_str_hex_no_prefix_happy_path() {
+        let lock_time = PackedLockTime::from_hex_str_no_prefix("BA70D").unwrap();
+        assert_eq!(lock_time, PackedLockTime(0xBA70D));
+    }
+
+    #[test]
+    fn packed_lock_time_from_str_hex_invalid_hex_should_ergr() {
+        let hex = "0xzb93";
+        let result = PackedLockTime::from_hex_str(hex);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn height_from_str_hex_happy_path() {
+        let actual = Height::from_hex_str("0xBA70D").unwrap();
+        let expected = Height(0xBA70D);
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn height_from_str_hex_no_prefix_happy_path() {
+        let height = Height::from_hex_str_no_prefix("BA70D").unwrap();
+        assert_eq!(height, Height(0xBA70D));
+    }
+
+    #[test]
+    fn height_from_str_hex_invalid_hex_should_err() {
+        let hex = "0xzb93";
+        let result = Height::from_hex_str(hex);
+        assert!(result.is_err());
     }
 }
