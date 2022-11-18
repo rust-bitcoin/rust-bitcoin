@@ -16,7 +16,7 @@ use crate::consensus::encode::{self, Decodable, Encodable, VarInt};
 use crate::hashes::{sha256, siphash24, Hash};
 use crate::internal_macros::{impl_bytes_newtype, impl_consensus_encoding};
 use crate::prelude::*;
-use crate::{io, block, Block, BlockHash, Transaction};
+use crate::{block, io, Block, BlockHash, Transaction};
 
 /// A BIP-152 error
 #[derive(Clone, PartialEq, Eq, Debug, Copy, PartialOrd, Ord, Hash)]
@@ -111,7 +111,10 @@ impl ShortId {
 
         // 2. Running SipHash-2-4 with the input being the transaction ID and the keys (k0/k1)
         // set to the first two little-endian 64-bit integers from the above hash, respectively.
-        (u64::from_le_bytes(h[0..8].try_into().expect("8 byte slice")), u64::from_le_bytes(h[8..16].try_into().expect("8 byte slice")))
+        (
+            u64::from_le_bytes(h[0..8].try_into().expect("8 byte slice")),
+            u64::from_le_bytes(h[8..16].try_into().expect("8 byte slice")),
+        )
     }
 
     /// Calculate the short ID with the given (w)txid and using the provided SipHash keys.
@@ -374,8 +377,8 @@ mod test {
     use crate::consensus::encode::{deserialize, serialize};
     use crate::hashes::hex::FromHex;
     use crate::{
-        CompactTarget, OutPoint, Script, Sequence,
-        Transaction, TxIn, TxMerkleNode, TxOut, Txid, Witness,
+        CompactTarget, OutPoint, Script, Sequence, Transaction, TxIn, TxMerkleNode, TxOut, Txid,
+        Witness,
     };
 
     fn dummy_tx(nonce: &[u8]) -> Transaction {

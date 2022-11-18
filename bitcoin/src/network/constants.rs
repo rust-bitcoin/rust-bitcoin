@@ -26,19 +26,20 @@
 //! assert_eq!(&bytes[..], &[0xF9, 0xBE, 0xB4, 0xD9]);
 //! ```
 
-use core::{fmt, ops, convert::TryFrom, borrow::Borrow, borrow::BorrowMut};
+use core::borrow::{Borrow, BorrowMut};
+use core::convert::TryFrom;
 use core::str::FromStr;
+use core::{fmt, ops};
 
+use bitcoin_internals::{debug_from_display, write_err};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-use bitcoin_internals::{debug_from_display, write_err};
-
+use crate::consensus::encode::{self, Decodable, Encodable};
+use crate::error::impl_std_error;
+use crate::hashes::hex::{Error, FromHex};
 use crate::io;
 use crate::prelude::{String, ToOwned};
-use crate::consensus::encode::{self, Encodable, Decodable};
-use crate::hashes::hex::{FromHex, Error};
-use crate::error::impl_std_error;
 
 /// Version of the protocol as appearing in network message headers
 /// This constant is used to signal to other peers which features you support.
@@ -86,9 +87,7 @@ impl Network {
     /// assert_eq!(Ok(Network::Bitcoin), Network::try_from(Magic::from_bytes([0xF9, 0xBE, 0xB4, 0xD9])));
     /// assert_eq!(None, Network::from_magic(Magic::from_bytes([0xFF, 0xFF, 0xFF, 0xFF])));
     /// ```
-    pub fn from_magic(magic: Magic) -> Option<Network> {
-        Network::try_from(magic).ok()
-    }
+    pub fn from_magic(magic: Magic) -> Option<Network> { Network::try_from(magic).ok() }
 
     /// Return the network magic bytes, which should be encoded little-endian
     /// at the start of every message
@@ -101,9 +100,7 @@ impl Network {
     /// let network = Network::Bitcoin;
     /// assert_eq!(network.magic(), Magic::from_bytes([0xF9, 0xBE, 0xB4, 0xD9]));
     /// ```
-    pub fn magic(self) -> Magic {
-        Magic::from(self)
-    }
+    pub fn magic(self) -> Magic { Magic::from(self) }
 }
 
 /// An error in parsing network string.
@@ -129,7 +126,7 @@ impl FromStr for Network {
             "testnet" => Testnet,
             "signet" => Signet,
             "regtest" => Regtest,
-            _ => return Err(ParseNetworkError(s.to_owned()))
+            _ => return Err(ParseNetworkError(s.to_owned())),
         };
         Ok(network)
     }
@@ -164,14 +161,10 @@ impl Magic {
     pub const REGTEST: Self = Self([0xFA, 0xBF, 0xB5, 0xDA]);
 
     /// Create network magic from bytes.
-    pub fn from_bytes(bytes: [u8; 4]) -> Magic {
-        Magic(bytes)
-    }
+    pub fn from_bytes(bytes: [u8; 4]) -> Magic { Magic(bytes) }
 
     /// Get network magic bytes.
-    pub fn to_bytes(self) -> [u8; 4] {
-        self.0
-    }
+    pub fn to_bytes(self) -> [u8; 4] { self.0 }
 }
 
 /// An error in parsing magic bytes.
@@ -180,7 +173,7 @@ pub struct ParseMagicError {
     /// The error that occurred when parsing the string.
     error: Error,
     /// The byte string that failed to parse.
-    magic: String
+    magic: String,
 }
 
 impl FromStr for Magic {
@@ -189,7 +182,7 @@ impl FromStr for Magic {
     fn from_str(s: &str) -> Result<Magic, Self::Err> {
         match <[u8; 4]>::from_hex(s) {
             Ok(magic) => Ok(Magic::from_bytes(magic)),
-            Err(e) => Err(ParseMagicError { error: e, magic: s.to_owned() })
+            Err(e) => Err(ParseMagicError { error: e, magic: s.to_owned() }),
         }
     }
 }
@@ -201,7 +194,7 @@ impl From<Network> for Magic {
             Network::Bitcoin => Magic::BITCOIN,
             Network::Testnet => Magic::TESTNET,
             Network::Signet => Magic::SIGNET,
-            Network::Regtest => Magic::REGTEST
+            Network::Regtest => Magic::REGTEST,
         }
     }
 }
@@ -220,7 +213,7 @@ impl TryFrom<Magic> for Network {
             Magic::TESTNET => Ok(Network::Testnet),
             Magic::SIGNET => Ok(Network::Signet),
             Magic::REGTEST => Ok(Network::Regtest),
-            _ => Err(UnknownMagic(magic))
+            _ => Err(UnknownMagic(magic)),
         }
     }
 }
@@ -260,51 +253,35 @@ impl Decodable for Magic {
 }
 
 impl AsRef<[u8]> for Magic {
-    fn as_ref(&self) -> &[u8] {
-        &self.0
-    }
+    fn as_ref(&self) -> &[u8] { &self.0 }
 }
 
 impl AsRef<[u8; 4]> for Magic {
-    fn as_ref(&self) -> &[u8; 4] {
-        &self.0
-    }
+    fn as_ref(&self) -> &[u8; 4] { &self.0 }
 }
 
 impl AsMut<[u8]> for Magic {
-    fn as_mut(&mut self) -> &mut [u8] {
-        &mut self.0
-    }
+    fn as_mut(&mut self) -> &mut [u8] { &mut self.0 }
 }
 
 impl AsMut<[u8; 4]> for Magic {
-    fn as_mut(&mut self) -> &mut [u8; 4] {
-        &mut self.0
-    }
+    fn as_mut(&mut self) -> &mut [u8; 4] { &mut self.0 }
 }
 
 impl Borrow<[u8]> for Magic {
-    fn borrow(&self) -> &[u8] {
-        &self.0
-    }
+    fn borrow(&self) -> &[u8] { &self.0 }
 }
 
 impl Borrow<[u8; 4]> for Magic {
-    fn borrow(&self) -> &[u8; 4] {
-        &self.0
-    }
+    fn borrow(&self) -> &[u8; 4] { &self.0 }
 }
 
 impl BorrowMut<[u8]> for Magic {
-    fn borrow_mut(&mut self) -> &mut [u8] {
-        &mut self.0
-    }
+    fn borrow_mut(&mut self) -> &mut [u8] { &mut self.0 }
 }
 
 impl BorrowMut<[u8; 4]> for Magic {
-    fn borrow_mut(&mut self) -> &mut [u8; 4] {
-        &mut self.0
-    }
+    fn borrow_mut(&mut self) -> &mut [u8; 4] { &mut self.0 }
 }
 
 impl fmt::Display for ParseMagicError {
@@ -376,26 +353,18 @@ impl ServiceFlags {
     }
 
     /// Check whether [ServiceFlags] are included in this one.
-    pub fn has(self, flags: ServiceFlags) -> bool {
-        (self.0 | flags.0) == self.0
-    }
+    pub fn has(self, flags: ServiceFlags) -> bool { (self.0 | flags.0) == self.0 }
 
     /// Gets the integer representation of this [`ServiceFlags`].
-    pub fn to_u64(self) -> u64 {
-        self.0
-    }
+    pub fn to_u64(self) -> u64 { self.0 }
 }
 
 impl fmt::LowerHex for ServiceFlags {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::LowerHex::fmt(&self.0, f)
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
 }
 
 impl fmt::UpperHex for ServiceFlags {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::UpperHex::fmt(&self.0, f)
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&self.0, f) }
 }
 
 impl fmt::Display for ServiceFlags {
@@ -415,7 +384,7 @@ impl fmt::Display for ServiceFlags {
                     write!(f, stringify!($f))?;
                     flags.remove(ServiceFlags::$f);
                 }
-            }
+            };
         }
         write!(f, "ServiceFlags(")?;
         write_flag!(NETWORK);
@@ -436,43 +405,31 @@ impl fmt::Display for ServiceFlags {
 }
 
 impl From<u64> for ServiceFlags {
-    fn from(f: u64) -> Self {
-        ServiceFlags(f)
-    }
+    fn from(f: u64) -> Self { ServiceFlags(f) }
 }
 
 impl From<ServiceFlags> for u64 {
-    fn from(flags: ServiceFlags) -> Self {
-        flags.0
-    }
+    fn from(flags: ServiceFlags) -> Self { flags.0 }
 }
 
 impl ops::BitOr for ServiceFlags {
     type Output = Self;
 
-    fn bitor(mut self, rhs: Self) -> Self {
-        self.add(rhs)
-    }
+    fn bitor(mut self, rhs: Self) -> Self { self.add(rhs) }
 }
 
 impl ops::BitOrAssign for ServiceFlags {
-    fn bitor_assign(&mut self, rhs: Self) {
-        self.add(rhs);
-    }
+    fn bitor_assign(&mut self, rhs: Self) { self.add(rhs); }
 }
 
 impl ops::BitXor for ServiceFlags {
     type Output = Self;
 
-    fn bitxor(mut self, rhs: Self) -> Self {
-        self.remove(rhs)
-    }
+    fn bitxor(mut self, rhs: Self) -> Self { self.remove(rhs) }
 }
 
 impl ops::BitXorAssign for ServiceFlags {
-    fn bitxor_assign(&mut self, rhs: Self) {
-        self.remove(rhs);
-    }
+    fn bitxor_assign(&mut self, rhs: Self) { self.remove(rhs); }
 }
 
 impl Encodable for ServiceFlags {
@@ -491,10 +448,11 @@ impl Decodable for ServiceFlags {
 
 #[cfg(test)]
 mod tests {
-    use super::{Network, ServiceFlags, Magic};
-    use crate::consensus::encode::{deserialize, serialize};
     use std::convert::TryFrom;
     use std::str::FromStr;
+
+    use super::{Magic, Network, ServiceFlags};
+    use crate::consensus::encode::{deserialize, serialize};
 
     #[test]
     fn serialize_test() {
@@ -507,7 +465,6 @@ mod tests {
         assert_eq!(deserialize(&[0x0b, 0x11, 0x09, 0x07]).ok(), Some(Network::Testnet.magic()));
         assert_eq!(deserialize(&[0x0a, 0x03, 0xcf, 0x40]).ok(), Some(Network::Signet.magic()));
         assert_eq!(deserialize(&[0xfa, 0xbf, 0xb5, 0xda]).ok(), Some(Network::Regtest.magic()));
-
     }
 
     #[test]
@@ -568,7 +525,12 @@ mod tests {
     #[cfg(feature = "serde")]
     fn serde_roundtrip() {
         use Network::*;
-        let tests = vec![(Bitcoin, "bitcoin"), (Testnet, "testnet"), (Signet, "signet"), (Regtest, "regtest")];
+        let tests = vec![
+            (Bitcoin, "bitcoin"),
+            (Testnet, "testnet"),
+            (Signet, "signet"),
+            (Regtest, "regtest"),
+        ];
 
         for tc in tests {
             let network = tc.0;

@@ -5,10 +5,10 @@
 //! This module describes BIP37 Connection Bloom filtering network messages.
 //!
 
-use crate::consensus::encode;
-use crate::consensus::{Decodable, Encodable, ReadExt};
-use crate::internal_macros::impl_consensus_encoding;
 use std::io;
+
+use crate::consensus::{encode, Decodable, Encodable, ReadExt};
+use crate::internal_macros::impl_consensus_encoding;
 
 /// `filterload` message sets the current bloom filter
 #[derive(Clone, PartialEq, Eq, Debug)]
