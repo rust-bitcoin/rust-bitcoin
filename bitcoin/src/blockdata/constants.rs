@@ -60,7 +60,7 @@ pub const MAX_SCRIPTNUM_VALUE: u32 = 0x80000000; // 2^31
 /// The maximum value allowed in an output (useful for sanity checking,
 /// since keeping everything below this value should prevent overflows
 /// if you are doing anything remotely sane with monetary values).
-pub fn max_money(_: Network) -> u64 {
+pub fn max_money() -> u64 {
     21_000_000 * COIN_VALUE
 }
 
