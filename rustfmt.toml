@@ -5,6 +5,7 @@ ignore = [
        "bitcoin/src/network",
        "bitcoin/src/psbt",
        "bitcoin/src/util",
+       "hashes",
 ]
 
 hard_tabs = false

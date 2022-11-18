@@ -5,13 +5,17 @@ readme = "README.md"
 name = "embedded"
 version = "0.1.0"
 
+# Prevent this from interfering with workspaces
+[workspace]
+members = ["."]
+
 [dependencies]
 cortex-m = "0.6.0"
 cortex-m-rt = "0.6.10"
 cortex-m-semihosting = "0.3.3"
 panic-halt = "0.2.0"
 alloc-cortex-m = "0.4.1"
-bitcoin = { path="../bitcoin", default-features = false, features = ["no-std", "secp-lowmemory"] }
+bitcoin = { path="../", default-features = false, features = ["no-std", "secp-lowmemory"] }
 
 [[bin]]
 name = "embedded"

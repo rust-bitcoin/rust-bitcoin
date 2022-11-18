@@ -1,0 +1,32 @@
+[package]
+authors = ["Riccardo Casatta <riccardo@casatta.it>"]
+edition = "2018"
+readme = "README.md"
+name = "embedded"
+version = "0.1.0"
+
+# Prevent this from interfering with workspaces
+[workspace]
+members = ["."]
+
+[features]
+alloc = ["alloc-cortex-m", "bitcoin_hashes/alloc"]
+
+[dependencies]
+cortex-m = "0.6.0"
+cortex-m-rt = "0.6.10"
+cortex-m-semihosting = "0.3.3"
+panic-halt = "0.2.0"
+alloc-cortex-m = { version = "0.4.1", optional = true }
+bitcoin_hashes = { path="../", default-features = false, features = ["core2"] }
+core2 = { version = "0.3.0", default_features = false }
+
+[[bin]]
+name = "embedded"
+test = false
+bench = false
+
+[profile.release]
+codegen-units = 1 # better optimizations
+debug = true # symbols are nice and they don't increase the size on Flash
+lto = true # better optimizations
