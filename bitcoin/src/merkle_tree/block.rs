@@ -48,8 +48,8 @@ use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::hash_types::{TxMerkleNode, Txid};
 use crate::hashes::Hash;
 use crate::io;
-use crate::merkle_tree::MerkleBlockError::*;
 use crate::prelude::*;
+use self::MerkleBlockError::*;
 
 /// An error when verifying the merkle block.
 #[derive(Clone, PartialEq, Eq, Debug)]
