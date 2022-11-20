@@ -29,7 +29,7 @@ use crate::util::taproot::TAPROOT_ANNEX_PREFIX;
 ///
 #[derive(Clone, Default, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 pub struct Witness {
-    /// Contains the witness Vec<Vec<u8>> serialization without the initial varint indicating the
+    /// Contains the witness `Vec<Vec<u8>>` serialization without the initial varint indicating the
     /// number of elements (which is stored in `witness_elements`)
     content: Vec<u8>,
 
