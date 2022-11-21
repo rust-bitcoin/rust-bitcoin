@@ -1348,7 +1348,7 @@ pub mod serde {
         }
 
         pub mod opt {
-            //! Serialize and deserialize [Option<Amount>] as JSON numbers denominated in BTC.
+            //! Serialize and deserialize `Option<Amount>` as JSON numbers denominated in BTC.
             //! Use with `#[serde(default, with = "amount::serde::as_btc::opt")]`.
 
             use core::fmt;
