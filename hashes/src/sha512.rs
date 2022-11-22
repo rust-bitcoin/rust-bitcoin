@@ -80,7 +80,7 @@ impl crate::HashEngine for HashEngine {
     engine_input_impl!();
 }
 
-/// Output of the SHA256 hash function.
+/// Output of the SHA512 hash function.
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(transparent)]
 pub struct Hash(
