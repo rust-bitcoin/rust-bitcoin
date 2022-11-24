@@ -41,6 +41,10 @@ name = "sha512"
 path = "fuzz_targets/sha512.rs"
 
 [[bin]]
+name = "sha512_256"
+path = "fuzz_targets/sha512_256.rs"
+
+[[bin]]
 name = "cbor"
 path = "fuzz_targets/cbor.rs"
 
