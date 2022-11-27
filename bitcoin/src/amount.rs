@@ -1399,6 +1399,117 @@ pub mod serde {
     }
 }
 
+#[cfg(kani)]
+mod verification {
+    use std::cmp;
+    use std::convert::TryInto;
+    use super::*;
+
+    // Note regarding the `unwind` parameter: this defines how many iterations
+    // of loops kani will unwind before handing off to the SMT solver. Basically
+    // it should be set as low as possible such that Kani still succeeds (doesn't
+    // return "undecidable").
+    //
+    // There is more info here: https://model-checking.github.io/kani/tutorial-loop-unwinding.html
+    //
+    // Unfortunately what it means to "loop" is pretty opaque ... in this case
+    // there appear to be loops in memcmp, which I guess comes from assert_eq!,
+    // though I didn't see any failures until I added the to_signed() test.
+    // Further confusing the issue, a value of 2 works fine on my system, but on
+    // CI it fails, so we need to set it higher.
+    #[kani::unwind(4)]
+    #[kani::proof]
+    fn u_amount_add_homomorphic() {
+        let n1 = kani::any::<u64>();
+        let n2 = kani::any::<u64>();
+        kani::assume(n1.checked_add(n2).is_some()); // assume we don't overflow in the actual test
+        assert_eq!(Amount::from_sat(n1) + Amount::from_sat(n2), Amount::from_sat(n1 + n2));
+
+        let mut amt = Amount::from_sat(n1);
+        amt += Amount::from_sat(n2);
+        assert_eq!(amt, Amount::from_sat(n1 + n2));
+
+        let max = cmp::max(n1, n2);
+        let min = cmp::min(n1, n2);
+        assert_eq!(Amount::from_sat(max) - Amount::from_sat(min), Amount::from_sat(max - min));
+
+        let mut amt = Amount::from_sat(max);
+        amt -= Amount::from_sat(min);
+        assert_eq!(amt, Amount::from_sat(max - min));
+
+        assert_eq!(
+            Amount::from_sat(n1).to_signed(),
+            if n1 <= i64::MAX as u64 {
+                Ok(SignedAmount::from_sat(n1.try_into().unwrap()))
+            } else {
+                Err(ParseAmountError::TooBig)
+            },
+        );
+    }
+
+    #[kani::unwind(4)]
+    #[kani::proof]
+    fn u_amount_add_homomorphic_checked() {
+        let n1 = kani::any::<u64>();
+        let n2 = kani::any::<u64>();
+        assert_eq!(
+            Amount::from_sat(n1).checked_add(Amount::from_sat(n2)),
+            n1.checked_add(n2).map(Amount::from_sat),
+        );
+        assert_eq!(
+            Amount::from_sat(n1).checked_sub(Amount::from_sat(n2)),
+            n1.checked_sub(n2).map(Amount::from_sat),
+        );
+    }
+
+    #[kani::unwind(4)]
+    #[kani::proof]
+    fn s_amount_add_homomorphic() {
+        let n1 = kani::any::<i64>();
+        let n2 = kani::any::<i64>();
+        kani::assume(n1.checked_add(n2).is_some()); // assume we don't overflow in the actual test
+        kani::assume(n1.checked_sub(n2).is_some()); // assume we don't overflow in the actual test
+        assert_eq!(SignedAmount::from_sat(n1) + SignedAmount::from_sat(n2), SignedAmount::from_sat(n1 + n2));
+        assert_eq!(SignedAmount::from_sat(n1) - SignedAmount::from_sat(n2), SignedAmount::from_sat(n1 - n2));
+
+        let mut amt = SignedAmount::from_sat(n1);
+        amt += SignedAmount::from_sat(n2);
+        assert_eq!(amt, SignedAmount::from_sat(n1 + n2));
+        let mut amt = SignedAmount::from_sat(n1);
+        amt -= SignedAmount::from_sat(n2);
+        assert_eq!(amt, SignedAmount::from_sat(n1 - n2));
+
+        assert_eq!(
+            SignedAmount::from_sat(n1).to_unsigned(),
+            if n1 >= 0 {
+                Ok(Amount::from_sat(n1.try_into().unwrap()))
+            } else {
+                Err(ParseAmountError::Negative)
+            },
+        );
+    }
+
+    #[kani::unwind(4)]
+    #[kani::proof]
+    fn s_amount_add_homomorphic_checked() {
+        let n1 = kani::any::<i64>();
+        let n2 = kani::any::<i64>();
+        assert_eq!(
+            SignedAmount::from_sat(n1).checked_add(SignedAmount::from_sat(n2)),
+            n1.checked_add(n2).map(SignedAmount::from_sat),
+        );
+        assert_eq!(
+            SignedAmount::from_sat(n1).checked_sub(SignedAmount::from_sat(n2)),
+            n1.checked_sub(n2).map(SignedAmount::from_sat),
+        );
+
+        assert_eq!(
+            SignedAmount::from_sat(n1).positive_sub(SignedAmount::from_sat(n2)),
+            if n1 >= 0 && n2 >= 0 && n1 >= n2 { Some(SignedAmount::from_sat(n1 - n2)) } else { None },
+        );
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use core::str::FromStr;
@@ -1411,27 +1522,18 @@ mod tests {
     use super::*;
 
     #[test]
-    fn add_sub_mul_div() {
+    fn mul_div() {
         let sat = Amount::from_sat;
         let ssat = SignedAmount::from_sat;
 
-        assert_eq!(sat(15) + sat(15), sat(30));
-        assert_eq!(sat(15) - sat(15), sat(0));
         assert_eq!(sat(14) * 3, sat(42));
         assert_eq!(sat(14) / 2, sat(7));
         assert_eq!(sat(14) % 3, sat(2));
-        assert_eq!(ssat(15) - ssat(20), ssat(-5));
         assert_eq!(ssat(-14) * 3, ssat(-42));
         assert_eq!(ssat(-14) / 2, ssat(-7));
         assert_eq!(ssat(-14) % 3, ssat(-2));
 
-        let mut b = ssat(-5);
-        b += ssat(13);
-        assert_eq!(b, ssat(8));
-        b -= ssat(3);
-        assert_eq!(b, ssat(5));
-        b *= 6;
-        assert_eq!(b, ssat(30));
+        let mut b = ssat(30);
         b /= 3;
         assert_eq!(b, ssat(10));
         b %= 3;
@@ -1453,25 +1555,13 @@ mod tests {
         let sat = Amount::from_sat;
         let ssat = SignedAmount::from_sat;
 
-        assert_eq!(sat(42).checked_add(sat(1)), Some(sat(43)));
         assert_eq!(SignedAmount::max_value().checked_add(ssat(1)), None);
         assert_eq!(SignedAmount::min_value().checked_sub(ssat(1)), None);
         assert_eq!(Amount::max_value().checked_add(sat(1)), None);
         assert_eq!(Amount::min_value().checked_sub(sat(1)), None);
 
-        assert_eq!(sat(5).checked_sub(sat(3)), Some(sat(2)));
-        assert_eq!(sat(5).checked_sub(sat(6)), None);
-        assert_eq!(ssat(5).checked_sub(ssat(6)), Some(ssat(-1)));
-        assert_eq!(sat(5).checked_rem(2), Some(sat(1)));
-
         assert_eq!(sat(5).checked_div(2), Some(sat(2))); // integer division
         assert_eq!(ssat(-6).checked_div(2), Some(ssat(-3)));
-
-        assert_eq!(ssat(-5).positive_sub(ssat(3)), None);
-        assert_eq!(ssat(5).positive_sub(ssat(-3)), None);
-        assert_eq!(ssat(3).positive_sub(ssat(5)), None);
-        assert_eq!(ssat(3).positive_sub(ssat(3)), Some(ssat(0)));
-        assert_eq!(ssat(5).positive_sub(ssat(3)), Some(ssat(2)));
     }
 
     #[test]
@@ -1781,16 +1871,10 @@ mod tests {
 
         assert_eq!(Amount::max_value().to_signed(), Err(E::TooBig));
         assert_eq!(ua(i64::max_value() as u64).to_signed(), Ok(sa(i64::max_value())));
-        assert_eq!(ua(0).to_signed(), Ok(sa(0)));
-        assert_eq!(ua(1).to_signed(), Ok(sa(1)));
-        assert_eq!(ua(1).to_signed(), Ok(sa(1)));
         assert_eq!(ua(i64::max_value() as u64 + 1).to_signed(), Err(E::TooBig));
 
-        assert_eq!(sa(-1).to_unsigned(), Err(E::Negative));
         assert_eq!(sa(i64::max_value()).to_unsigned(), Ok(ua(i64::max_value() as u64)));
 
-        assert_eq!(sa(0).to_unsigned().unwrap().to_signed(), Ok(sa(0)));
-        assert_eq!(sa(1).to_unsigned().unwrap().to_signed(), Ok(sa(1)));
         assert_eq!(
             sa(i64::max_value()).to_unsigned().unwrap().to_signed(),
             Ok(sa(i64::max_value()))
