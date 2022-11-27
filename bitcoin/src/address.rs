@@ -21,6 +21,12 @@
 //! // Generate pay-to-pubkey-hash address.
 //! let address = Address::p2pkh(&public_key, Network::Bitcoin);
 //! ```
+//!
+//! # Note: creating a new address requires the rand feature flag
+//!
+//! ```toml
+//! bitcoin = { version = "...", features = ["rand"] }
+//! ```
 
 use core::convert::TryFrom;
 use core::fmt;
