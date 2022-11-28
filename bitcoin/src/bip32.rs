@@ -18,6 +18,7 @@ use secp256k1::{self, Secp256k1, XOnlyPublicKey};
 #[cfg(feature = "serde")]
 use serde;
 
+use crate::base58;
 use crate::crypto::key::{self, KeyPair, PrivateKey, PublicKey};
 use crate::hash_types::XpubIdentifier;
 use crate::hashes::{hex, sha512, Hash, HashEngine, Hmac, HmacEngine};
@@ -25,7 +26,6 @@ use crate::internal_macros::impl_bytes_newtype;
 use crate::io::Write;
 use crate::network::constants::Network;
 use crate::prelude::*;
-use crate::util::base58;
 
 /// A chain code
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
