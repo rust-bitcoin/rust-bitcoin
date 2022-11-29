@@ -34,11 +34,11 @@ use crate::policy::DUST_RELAY_TX_FEE;
 #[cfg(feature="bitcoinconsensus")] use core::convert::From;
 use crate::OutPoint;
 
-use crate::util::key::PublicKey;
+use crate::crypto::key::PublicKey;
 use crate::address::WitnessVersion;
 use crate::util::taproot::{LeafVersion, TapBranchHash, TapLeafHash};
 use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
-use crate::schnorr::{TapTweak, TweakedPublicKey, UntweakedPublicKey};
+use crate::crypto::schnorr::{TapTweak, TweakedPublicKey, UntweakedPublicKey};
 
 /// Bitcoin script.
 ///
@@ -1182,7 +1182,7 @@ mod test {
     use crate::hashes::hex::{FromHex, ToHex};
     use crate::consensus::encode::{deserialize, serialize};
     use crate::blockdata::opcodes;
-    use crate::util::key::PublicKey;
+    use crate::crypto::key::PublicKey;
     use crate::psbt::serialize::Serialize;
     use crate::internal_macros::hex_script;
 

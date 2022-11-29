@@ -17,11 +17,10 @@ use crate::consensus::encode::{self, serialize, Decodable, Encodable, deserializ
 use secp256k1::{self, XOnlyPublicKey};
 use crate::bip32::{ChildNumber, Fingerprint, KeySource};
 use crate::hashes::{hash160, ripemd160, sha256, sha256d, Hash};
-use crate::util::ecdsa::{EcdsaSig, EcdsaSigError};
+use crate::crypto::{ecdsa, schnorr};
 use crate::psbt;
 use crate::util::taproot::{TapBranchHash, TapLeafHash, ControlBlock, LeafVersion};
-use crate::schnorr;
-use crate::util::key::PublicKey;
+use crate::crypto::key::PublicKey;
 
 use super::map::{TapTree, PsbtSighashType};
 
@@ -92,13 +91,13 @@ impl Deserialize for secp256k1::PublicKey {
     }
 }
 
-impl Serialize for EcdsaSig {
+impl Serialize for ecdsa::Signature {
     fn serialize(&self) -> Vec<u8> {
         self.to_vec()
     }
 }
 
-impl Deserialize for EcdsaSig {
+impl Deserialize for ecdsa::Signature {
     fn deserialize(bytes: &[u8]) -> Result<Self, encode::Error> {
         // NB: Since BIP-174 says "the signature as would be pushed to the stack from
         // a scriptSig or witness" we should ideally use a consensus deserialization and do
@@ -113,18 +112,18 @@ impl Deserialize for EcdsaSig {
         // also has a field sighash_u32 (See BIP141). For example, when signing with non-standard
         // 0x05, the sighash message would have the last field as 0x05u32 while, the verification
         // would use check the signature assuming sighash_u32 as `0x01`.
-        EcdsaSig::from_slice(bytes)
+        ecdsa::Signature::from_slice(bytes)
             .map_err(|e| match e {
-                EcdsaSigError::EmptySignature => {
+                ecdsa::Error::EmptySignature => {
                     encode::Error::ParseFailed("Empty partial signature data")
                 }
-                EcdsaSigError::NonStandardSighashType(flag) => {
+                ecdsa::Error::NonStandardSighashType(flag) => {
                     encode::Error::from(psbt::Error::NonStandardSighashType(flag))
                 }
-                EcdsaSigError::Secp256k1(..) => {
+                ecdsa::Error::Secp256k1(..) => {
                     encode::Error::ParseFailed("Invalid Ecdsa signature")
                 }
-                EcdsaSigError::HexEncoding(..) =>  {
+                ecdsa::Error::HexEncoding(..) =>  {
                     unreachable!("Decoding from slice, not hex")
                 }
             })
@@ -206,23 +205,23 @@ impl Deserialize for XOnlyPublicKey {
     }
 }
 
-impl Serialize for schnorr::SchnorrSig  {
+impl Serialize for schnorr::Signature  {
     fn serialize(&self) -> Vec<u8> {
         self.to_vec()
     }
 }
 
-impl Deserialize for schnorr::SchnorrSig {
+impl Deserialize for schnorr::Signature {
     fn deserialize(bytes: &[u8]) -> Result<Self, encode::Error> {
-        schnorr::SchnorrSig::from_slice(bytes)
+        schnorr::Signature::from_slice(bytes)
             .map_err(|e| match e {
-                schnorr::SchnorrSigError::InvalidSighashType(flag) => {
+                schnorr::Error::InvalidSighashType(flag) => {
                     encode::Error::from(psbt::Error::NonStandardSighashType(flag as u32))
                 }
-                schnorr::SchnorrSigError::InvalidSchnorrSigSize(_) => {
+                schnorr::Error::InvalidSignatureSize(_) => {
                     encode::Error::ParseFailed("Invalid Schnorr signature length")
                 }
-                schnorr::SchnorrSigError::Secp256k1(..) => {
+                schnorr::Error::Secp256k1(..) => {
                     encode::Error::ParseFailed("Invalid Schnorr signature")
                 }
             })

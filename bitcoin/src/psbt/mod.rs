@@ -23,8 +23,8 @@ use crate::blockdata::script::Script;
 use crate::blockdata::transaction::{Transaction, TxOut};
 use crate::consensus::{encode, Encodable, Decodable};
 use crate::bip32::{self, ExtendedPrivKey, ExtendedPubKey, KeySource};
-use crate::util::ecdsa::{EcdsaSig, EcdsaSigError};
-use crate::util::key::{PublicKey, PrivateKey};
+use crate::crypto::ecdsa;
+use crate::crypto::key::{PublicKey, PrivateKey};
 use crate::sighash::{self, EcdsaSighashType, SighashCache};
 
 pub use crate::sighash::Prevouts;
@@ -293,7 +293,7 @@ impl PartiallySignedTransaction {
                 Ok((msg, sighash_ty)) => (msg, sighash_ty),
             };
 
-            let sig = EcdsaSig {
+            let sig = ecdsa::Signature {
                 sig: secp.sign_ecdsa(&msg, &sk.inner),
                 hash_ty: sighash_ty,
             };
@@ -651,7 +651,7 @@ pub enum SigningAlgorithm {
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
 pub enum SignError {
     /// An ECDSA key-related error occurred.
-    EcdsaSig(EcdsaSigError),
+    EcdsaSig(ecdsa::Error),
     /// Input index out of bounds (actual index, maximum index allowed).
     IndexOutOfBounds(usize, usize),
     /// Invalid Sighash type.
@@ -740,8 +740,8 @@ impl From<sighash::Error> for SignError {
     }
 }
 
-impl From<EcdsaSigError> for SignError {
-    fn from(e: EcdsaSigError) -> Self {
+impl From<ecdsa::Error> for SignError {
+    fn from(e: ecdsa::Error) -> Self {
         SignError::EcdsaSig(e)
     }
 }

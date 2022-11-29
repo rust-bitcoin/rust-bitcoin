@@ -15,8 +15,7 @@ use core::fmt;
 use core::cmp::Reverse;
 
 use crate::hashes::{sha256, sha256t_hash_newtype, Hash, HashEngine};
-use crate::schnorr::{TweakedPublicKey, UntweakedPublicKey, TapTweak};
-use crate::util::key::XOnlyPublicKey;
+use crate::crypto::schnorr::{TweakedPublicKey, UntweakedPublicKey, TapTweak, XOnlyPublicKey};
 use crate::Script;
 use crate::consensus::Encodable;
 
@@ -1145,7 +1144,7 @@ impl std::error::Error for TaprootError {
 #[cfg(test)]
 mod test {
     use crate::{Address, Network};
-    use crate::schnorr::TapTweak;
+    use crate::crypto::schnorr::TapTweak;
 
     use super::*;
     use crate::hashes::hex::{FromHex, ToHex};

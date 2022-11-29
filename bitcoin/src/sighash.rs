@@ -1057,17 +1057,16 @@ mod tests {
     use secp256k1::{self, SecretKey, XOnlyPublicKey};
 
     use super::*;
+    use crate::address::Address;
     use crate::blockdata::locktime::absolute;
     use crate::consensus::deserialize;
+    use crate::crypto::key::PublicKey;
     use crate::hash_types::Sighash;
     use crate::hashes::hex::{FromHex, ToHex};
     use crate::hashes::{Hash, HashEngine};
     use crate::internal_macros::{hex_decode, hex_from_slice, hex_into, hex_script};
     use crate::network::constants::Network;
-    use crate::sighash::{Annex, Error, Prevouts, ScriptPath, SighashCache};
-    use crate::util::key::PublicKey;
     use crate::util::taproot::{TapBranchHash, TapLeafHash, TapSighashHash, TapTweakHash};
-    use crate::{Address, Script, Transaction, TxIn, TxOut};
 
     extern crate serde_json;
 
