@@ -96,6 +96,9 @@
 
 #![cfg_attr(all(not(test), not(feature = "std")), no_std)]
 
+// Instead of littering the codebase for non-fuzzing code just globally allow.
+#![cfg_attr(fuzzing, allow(dead_code, unused_imports))]
+
 #[cfg(bench)] extern crate test;
 #[cfg(any(test, feature = "std"))] extern crate core;
 #[cfg(feature = "core2")] extern crate core2;
