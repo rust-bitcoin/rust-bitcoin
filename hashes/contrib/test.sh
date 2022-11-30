@@ -22,6 +22,11 @@ export CARGO_TERM_VERBOSE=true
 cargo build --all
 cargo test --all
 
+if [ "$DO_LINT" = true ]
+then
+    cargo clippy --all-features --all-targets -- -D warnings
+fi
+
 if [ "$DO_FEATURE_MATRIX" = true ]; then
     cargo build --all --no-default-features
     cargo test --all --no-default-features
