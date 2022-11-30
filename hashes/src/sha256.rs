@@ -324,6 +324,7 @@ mod tests {
     use crate::{Hash, HashEngine, sha256};
 
     #[test]
+    #[cfg(not(fuzzing))]
     #[cfg(any(feature = "std", feature = "alloc"))]
     fn test() {
         use crate::hex::{FromHex, ToHex};
@@ -388,6 +389,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(fuzzing))]
     fn midstate() {
         // Test vector obtained by doing an asset issuance on Elements
         let mut engine = sha256::Hash::engine();
@@ -414,6 +416,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(fuzzing))]
     fn engine_with_state() {
         let mut engine = sha256::Hash::engine();
         let midstate_engine = sha256::HashEngine::from_midstate(engine.midstate(), 0);

@@ -151,6 +151,7 @@ mod tests {
     sha256t_hash_newtype!(NewTypeHash, NewTypeTag, TEST_MIDSTATE, 64, doc="test hash", true);
 
     #[test]
+    #[cfg(not(fuzzing))]
     #[cfg(any(feature = "std", feature = "alloc"))]
     fn test_sha256t() {
         assert_eq!(

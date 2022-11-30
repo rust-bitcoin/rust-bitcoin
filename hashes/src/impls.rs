@@ -102,6 +102,7 @@ mod tests {
     macro_rules! write_test {
         ($mod:ident, $exp_empty:expr, $exp_256:expr, $exp_64k:expr,) => {
             #[test]
+            #[cfg(not(fuzzing))]
             fn $mod() {
                 let mut engine = $mod::Hash::engine();
                 engine.write_all(&[]).unwrap();
@@ -180,6 +181,7 @@ mod tests {
     );
 
     #[test]
+    #[cfg(not(fuzzing))]
     fn hmac() {
         let mut engine = hmac::HmacEngine::<sha256::Hash>::new(&[0xde, 0xad, 0xbe, 0xef]);
         engine.write_all(&[]).unwrap();

@@ -405,6 +405,7 @@ impl HashEngine {
 #[cfg(test)]
 mod tests {
     #[test]
+    #[cfg(not(fuzzing))]
     #[cfg(any(feature = "std", feature = "alloc"))]
     fn test() {
         use crate::{Hash, HashEngine, ripemd160};
