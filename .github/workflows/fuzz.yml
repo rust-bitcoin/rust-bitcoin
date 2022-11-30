@@ -4,14 +4,13 @@ on: [push, pull_request]
 
 jobs:
 
-  fuzz:
+  bitcoin:
     if: ${{ !github.event.act }}
     runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
       matrix:
-        bitcoin_fuzz_target: [deser_net_msg, deserialize_address, deserialize_amount, deserialize_block, deserialize_psbt, deserialize_script, deserialize_transaction, deserialize_prefilled_transaction, deserialize_witness, outpoint_string, script_bytes_to_asm_fmt]
-        hashes_fuzz_target: [sha1, ripemd160, sha256, sha512, cbor, json]
+        fuzz_target: [deser_net_msg, deserialize_address, deserialize_amount, deserialize_block, deserialize_psbt, deserialize_script, deserialize_transaction, deserialize_prefilled_transaction, deserialize_witness, outpoint_string, script_bytes_to_asm_fmt]
     steps:
       - name: Install test dependencies
         run: sudo apt-get update -y && sudo apt-get install -y binutils-dev libunwind8-dev libcurl4-openssl-dev libelf-dev libdw-dev cmake gcc libiberty-dev
@@ -29,20 +28,45 @@ jobs:
           toolchain: 1.58
           override: true
           profile: minimal
-      - name: bitcoin
-        run: cd bitcoin/fuzz && ./travis-fuzz.sh "${{ matrix.bitcoin_fuzz_target }}"
-      - run: echo "${{ matrix.bitcoin_fuzz_target }}.rs" >executed_${{ matrix.bitcoin_fuzz_target }}
+      - name: fuzz
+        run: cd bitcoin/fuzz && ./travis-fuzz.sh "${{ matrix.fuzz_target }}"
+      - run: echo "${{ matrix.fuzz_target }}.rs" >executed_${{ matrix.fuzz_target }}
       - uses: actions/upload-artifact@v2
         with:
-          name: executed_${{ matrix.bitcoin_fuzz_target }}
-          path: executed_${{ matrix.bitcoin_fuzz_target }}
-      - name: hashes
-        run: cd hashes/fuzz && ./travis-fuzz.sh "${{ matrix.hashes_fuzz_target }}"
-      - run: echo "${{ matrix.hashes_fuzz_target }}.rs" >executed_${{ matrix.hashes_fuzz_target }}
+          name: executed_${{ matrix.fuzz_target }}
+          path: executed_${{ matrix.fuzz_target }}
+
+  hashes:
+    if: ${{ !github.event.act }}
+    runs-on: ubuntu-20.04
+    strategy:
+      fail-fast: false
+      matrix:
+        fuzz_target: [sha1, ripemd160, sha256, sha512, cbor, json]
+    steps:
+      - name: Install test dependencies
+        run: sudo apt-get update -y && sudo apt-get install -y binutils-dev libunwind8-dev libcurl4-openssl-dev libelf-dev libdw-dev cmake gcc libiberty-dev
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        id: cache-fuzz
+        with:
+          path: |
+            ~/.cargo/bin
+            fuzz/target
+            target
+          key: cache-${{ matrix.target }}-${{ hashFiles('**/Cargo.toml','**/Cargo.lock') }}
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: 1.58
+          override: true
+          profile: minimal
+      - name: fuzz
+        run: cd hashes/fuzz && ./travis-fuzz.sh "${{ matrix.fuzz_target }}"
+      - run: echo "${{ matrix.fuzz_target }}.rs" >executed_${{ matrix.fuzz_target }}
       - uses: actions/upload-artifact@v2
         with:
-          name: executed_${{ matrix.hashes_fuzz_target }}
-          path: executed_${{ matrix.hashes_fuzz_target }}
+          name: executed_${{ matrix.fuzz_target }}
+          path: executed_${{ matrix.fuzz_target }}
 
   verify-execution:
     if: ${{ !github.event.act }}
