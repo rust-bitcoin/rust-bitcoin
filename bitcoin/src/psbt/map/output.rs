@@ -15,9 +15,7 @@ use crate::psbt::map::Map;
 use crate::psbt::raw;
 use crate::psbt::Error;
 
-use crate::util::taproot::{ScriptLeaf, TapLeafHash};
-
-use crate::util::taproot::{NodeInfo, TaprootBuilder};
+use crate::taproot::{ScriptLeaf, TapLeafHash, NodeInfo, TaprootBuilder};
 
 /// Type: Redeem Script PSBT_OUT_REDEEM_SCRIPT = 0x00
 const PSBT_OUT_REDEEM_SCRIPT: u8 = 0x00;

@@ -15,7 +15,7 @@ pub use secp256k1::{self, constants, Secp256k1, KeyPair, XOnlyPublicKey, Verific
 
 use crate::prelude::*;
 
-use crate::util::taproot::{TapBranchHash, TapTweakHash};
+use crate::taproot::{TapBranchHash, TapTweakHash};
 use crate::sighash::SchnorrSighashType;
 
 /// Untweaked BIP-340 X-coord-only public key

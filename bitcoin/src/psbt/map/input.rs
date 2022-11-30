@@ -20,9 +20,8 @@ use crate::bip32::KeySource;
 use crate::psbt::map::Map;
 use crate::psbt::serialize::Deserialize;
 use crate::psbt::{self, error, raw, Error};
-use crate::sighash::{NonStandardSighashType, SighashTypeParseError, EcdsaSighashType, SchnorrSighashType};
-use crate::util::taproot::{ControlBlock, LeafVersion, TapLeafHash, TapBranchHash};
-use crate::sighash;
+use crate::sighash::{self, NonStandardSighashType, SighashTypeParseError, EcdsaSighashType, SchnorrSighashType};
+use crate::taproot::{ControlBlock, LeafVersion, TapLeafHash, TapBranchHash};
 
 /// Type: Non-Witness UTXO PSBT_IN_NON_WITNESS_UTXO = 0x00
 const PSBT_IN_NON_WITNESS_UTXO: u8 = 0x00;

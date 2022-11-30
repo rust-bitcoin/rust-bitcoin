@@ -18,7 +18,7 @@ use crate::consensus::{encode, Encodable};
 use crate::error::impl_std_error;
 use crate::hashes::{sha256, sha256d, Hash};
 use crate::prelude::*;
-use crate::util::taproot::{LeafVersion, TapLeafHash, TapSighashHash, TAPROOT_ANNEX_PREFIX};
+use crate::taproot::{LeafVersion, TapLeafHash, TapSighashHash, TAPROOT_ANNEX_PREFIX};
 use crate::{io, Script, Sequence, Sighash, Transaction, TxIn, TxOut};
 
 /// Used for signature hash for invalid use of SIGHASH_SINGLE.
@@ -1066,7 +1066,7 @@ mod tests {
     use crate::hashes::{Hash, HashEngine};
     use crate::internal_macros::{hex_decode, hex_from_slice, hex_into, hex_script};
     use crate::network::constants::Network;
-    use crate::util::taproot::{TapBranchHash, TapLeafHash, TapSighashHash, TapTweakHash};
+    use crate::taproot::{TapBranchHash, TapLeafHash, TapSighashHash, TapTweakHash};
 
     extern crate serde_json;
 

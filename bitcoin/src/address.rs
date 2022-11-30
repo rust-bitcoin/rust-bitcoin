@@ -50,8 +50,8 @@ use crate::hash_types::{PubkeyHash, ScriptHash};
 use crate::hashes::{sha256, Hash, HashEngine};
 use crate::network::constants::Network;
 use crate::prelude::*;
+use crate::taproot::TapBranchHash;
 use crate::util::base58;
-use crate::util::taproot::TapBranchHash;
 
 /// Address error.
 #[derive(Debug, PartialEq, Eq, Clone)]

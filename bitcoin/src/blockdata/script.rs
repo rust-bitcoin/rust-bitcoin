@@ -36,7 +36,7 @@ use crate::OutPoint;
 
 use crate::crypto::key::PublicKey;
 use crate::address::WitnessVersion;
-use crate::util::taproot::{LeafVersion, TapBranchHash, TapLeafHash};
+use crate::taproot::{LeafVersion, TapBranchHash, TapLeafHash};
 use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
 use crate::crypto::schnorr::{TapTweak, TweakedPublicKey, UntweakedPublicKey};
 
