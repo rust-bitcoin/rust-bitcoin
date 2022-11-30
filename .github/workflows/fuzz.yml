@@ -10,7 +10,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        fuzz_target: [deser_net_msg, deserialize_address, deserialize_amount, deserialize_block, deserialize_psbt, deserialize_script, deserialize_transaction, deserialize_prefilled_transaction, deserialize_witness, outpoint_string, script_bytes_to_asm_fmt]
+        bitcoin_fuzz_target: [deser_net_msg, deserialize_address, deserialize_amount, deserialize_block, deserialize_psbt, deserialize_script, deserialize_transaction, deserialize_prefilled_transaction, deserialize_witness, outpoint_string, script_bytes_to_asm_fmt]
+        hashes_fuzz_target: [sha1, ripemd160, sha256, sha512, cbor, json]
     steps:
       - name: Install test dependencies
         run: sudo apt-get update -y && sudo apt-get install -y binutils-dev libunwind8-dev libcurl4-openssl-dev libelf-dev libdw-dev cmake gcc libiberty-dev
@@ -28,13 +29,20 @@ jobs:
           toolchain: 1.58
           override: true
           profile: minimal
-      - name: fuzz
-        run: cd bitcoin/fuzz && ./travis-fuzz.sh "${{ matrix.fuzz_target }}"
-      - run: echo "${{ matrix.fuzz_target }}.rs" >executed_${{ matrix.fuzz_target }}
+      - name: bitcoin
+        run: cd bitcoin/fuzz && ./travis-fuzz.sh "${{ matrix.bitcoin_fuzz_target }}"
+      - run: echo "${{ matrix.bitcoin_fuzz_target }}.rs" >executed_${{ matrix.bitcoin_fuzz_target }}
       - uses: actions/upload-artifact@v2
         with:
-          name: executed_${{ matrix.fuzz_target }}
-          path: executed_${{ matrix.fuzz_target }}
+          name: executed_${{ matrix.bitcoin_fuzz_target }}
+          path: executed_${{ matrix.bitcoin_fuzz_target }}
+      - name: hashes
+        run: cd hashes/fuzz && ./travis-fuzz.sh "${{ matrix.hashes_fuzz_target }}"
+      - run: echo "${{ matrix.hashes_fuzz_target }}.rs" >executed_${{ matrix.hashes_fuzz_target }}
+      - uses: actions/upload-artifact@v2
+        with:
+          name: executed_${{ matrix.hashes_fuzz_target }}
+          path: executed_${{ matrix.hashes_fuzz_target }}
 
   verify-execution:
     if: ${{ !github.event.act }}
@@ -46,5 +54,5 @@ jobs:
       - name: Display structure of downloaded files
         run: ls -R
       - run: find executed_* -type f -exec cat {} + | sort > executed
-      - run: ls bitcoin/fuzz/fuzz_targets | sort > expected
+      - run: ./contrib/list_fuzz_targets.sh > expected
       - run: diff expected executed
