@@ -285,6 +285,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[cfg(not(fuzzing))]
     fn test_siphash_2_4() {
         let vecs: [[u8; 8]; 64] = [
             [0x31, 0x0e, 0x0e, 0xdd, 0x47, 0xdb, 0x6f, 0x72],

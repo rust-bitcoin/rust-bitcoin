@@ -49,6 +49,7 @@ fn from_engine(e: HashEngine) -> Hash {
 #[cfg(test)]
 mod tests {
     #[test]
+    #[cfg(not(fuzzing))]
     #[cfg(any(feature = "std", feature = "alloc"))]
     fn test() {
         use crate::{hash160, Hash, HashEngine};

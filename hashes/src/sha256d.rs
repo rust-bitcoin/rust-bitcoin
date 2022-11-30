@@ -46,6 +46,7 @@ mod tests {
     use crate::sha256;
 
     #[test]
+    #[cfg(not(fuzzing))]
     #[cfg(any(feature = "std", feature = "alloc"))]
     fn test() {
         use crate::{sha256d, Hash, HashEngine};
