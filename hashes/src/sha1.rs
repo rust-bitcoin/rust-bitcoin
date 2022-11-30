@@ -195,7 +195,7 @@ mod tests {
 
         for test in tests {
             // Hash through high-level API, check hex encoding/decoding
-            let hash = sha1::Hash::hash(&test.input.as_bytes());
+            let hash = sha1::Hash::hash(test.input.as_bytes());
             assert_eq!(hash, sha1::Hash::from_hex(test.output_str).expect("parse hex"));
             assert_eq!(&hash[..], &test.output[..]);
             assert_eq!(&hash.to_hex(), &test.output_str);
