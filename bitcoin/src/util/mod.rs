@@ -6,8 +6,6 @@
 //! Functions needed by all parts of the Bitcoin library.
 //!
 
-pub mod base58;
-
 /// The `misc` module was moved and re-named to `sign_message`.
 pub mod misc {
     use crate::prelude::*;

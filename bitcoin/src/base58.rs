@@ -7,15 +7,15 @@
 //! strings respectively.
 //!
 
-use crate::prelude::*;
-
-use core::{fmt, str, iter, slice};
 use core::convert::TryInto;
+use core::{fmt, iter, slice, str};
 
 use crate::hashes::{sha256d, Hash};
+use crate::prelude::*;
 
 static BASE58_CHARS: &[u8] = b"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
+#[rustfmt::skip]
 static BASE58_DIGITS: [Option<u8>; 128] = [
     None,     None,     None,     None,     None,     None,     None,     None,     // 0-7
     None,     None,     None,     None,     None,     None,     None,     None,     // 8-15
@@ -37,9 +37,7 @@ static BASE58_DIGITS: [Option<u8>; 128] = [
 
 /// Decodes a base58-encoded string into a byte vector.
 #[deprecated(since = "0.30.0", note = "Use base58::decode() instead")]
-pub fn from(data: &str) -> Result<Vec<u8>, Error> {
-    decode(data)
-}
+pub fn from(data: &str) -> Result<Vec<u8>, Error> { decode(data) }
 
 /// Decodes a base58-encoded string into a byte vector.
 pub fn decode(data: &str) -> Result<Vec<u8>, Error> {
@@ -53,7 +51,9 @@ pub fn decode(data: &str) -> Result<Vec<u8>, Error> {
         }
         let mut carry = match BASE58_DIGITS[d58 as usize] {
             Some(d58) => d58 as u32,
-            None => { return Err(Error::BadByte(d58)); }
+            None => {
+                return Err(Error::BadByte(d58));
+            }
         };
         for d256 in scratch.iter_mut().rev() {
             carry += *d256 as u32 * 58;
@@ -64,9 +64,7 @@ pub fn decode(data: &str) -> Result<Vec<u8>, Error> {
     }
 
     // Copy leading zeroes directly
-    let mut ret: Vec<u8> = data.bytes().take_while(|&x| x == BASE58_CHARS[0])
-                                       .map(|_| 0)
-                                       .collect();
+    let mut ret: Vec<u8> = data.bytes().take_while(|&x| x == BASE58_CHARS[0]).map(|_| 0).collect();
     // Copy rest of string
     ret.extend(scratch.into_iter().skip_while(|&x| x == 0));
     Ok(ret)
@@ -74,9 +72,7 @@ pub fn decode(data: &str) -> Result<Vec<u8>, Error> {
 
 /// Decodes a base58check-encoded string into a byte vector verifying the checksum.
 #[deprecated(since = "0.30.0", note = "Use base58::decode_check() instead")]
-pub fn from_check(data: &str) -> Result<Vec<u8>, Error> {
-    decode_check(data)
-}
+pub fn from_check(data: &str) -> Result<Vec<u8>, Error> { decode_check(data) }
 
 /// Decodes a base58check-encoded string into a byte vector verifying the checksum.
 pub fn decode_check(data: &str) -> Result<Vec<u8>, Error> {
@@ -86,7 +82,8 @@ pub fn decode_check(data: &str) -> Result<Vec<u8>, Error> {
     }
     let check_start = ret.len() - 4;
 
-    let hash_check = sha256d::Hash::hash(&ret[..check_start])[..4].try_into().expect("4 byte slice");
+    let hash_check =
+        sha256d::Hash::hash(&ret[..check_start])[..4].try_into().expect("4 byte slice");
     let data_check = ret[check_start..].try_into().expect("4 byte slice");
 
     let expected = u32::from_le_bytes(hash_check);
@@ -102,33 +99,23 @@ pub fn decode_check(data: &str) -> Result<Vec<u8>, Error> {
 
 /// Encodes `data` as a base58 string.
 #[deprecated(since = "0.30.0", note = "Use base58::encode() instead")]
-pub fn encode_slice(data: &[u8]) -> String {
-    encode(data)
-}
+pub fn encode_slice(data: &[u8]) -> String { encode(data) }
 
 /// Encodes `data` as a base58 string (see also `base58::encode_check()`).
-pub fn encode(data: &[u8]) -> String {
-    encode_iter(data.iter().cloned())
-}
+pub fn encode(data: &[u8]) -> String { encode_iter(data.iter().cloned()) }
 
 /// Encodes `data` as a base58 string including the checksum.
 ///
 /// The checksum is the first four bytes of the sha256d of the data, concatenated onto the end.
 #[deprecated(since = "0.30.0", note = "Use base58::encode_check() instead")]
-pub fn check_encode_slice(data: &[u8]) -> String {
-    encode_check(data)
-}
+pub fn check_encode_slice(data: &[u8]) -> String { encode_check(data) }
 
 /// Encodes `data` as a base58 string including the checksum.
 ///
 /// The checksum is the first four bytes of the sha256d of the data, concatenated onto the end.
 pub fn encode_check(data: &[u8]) -> String {
     let checksum = sha256d::Hash::hash(data);
-    encode_iter(
-        data.iter()
-            .cloned()
-            .chain(checksum[0..4].iter().cloned())
-    )
+    encode_iter(data.iter().cloned().chain(checksum[0..4].iter().cloned()))
 }
 
 /// Encodes `data` as base58, including the checksum, into a formatter.
@@ -144,15 +131,13 @@ pub fn check_encode_slice_to_fmt(fmt: &mut fmt::Formatter, data: &[u8]) -> fmt::
 /// The checksum is the first four bytes of the sha256d of the data, concatenated onto the end.
 pub fn encode_check_to_fmt(fmt: &mut fmt::Formatter, data: &[u8]) -> fmt::Result {
     let checksum = sha256d::Hash::hash(data);
-    let iter = data.iter()
-        .cloned()
-        .chain(checksum[0..4].iter().cloned());
+    let iter = data.iter().cloned().chain(checksum[0..4].iter().cloned());
     format_iter(fmt, iter)
 }
 
 fn encode_iter<I>(data: I) -> String
 where
-    I: Iterator<Item=u8> + Clone,
+    I: Iterator<Item = u8> + Clone,
 {
     let mut ret = String::new();
     format_iter(&mut ret, data).expect("writing into string shouldn't fail");
@@ -161,8 +146,8 @@ where
 
 fn format_iter<I, W>(writer: &mut W, data: I) -> Result<(), fmt::Error>
 where
-    I: Iterator<Item=u8> + Clone,
-    W: fmt::Write
+    I: Iterator<Item = u8> + Clone,
+    W: fmt::Write,
 {
     let mut ret = SmallVec::new();
 
@@ -209,13 +194,7 @@ struct SmallVec<T> {
 }
 
 impl<T: Default + Copy> SmallVec<T> {
-    fn new() -> SmallVec<T> {
-        SmallVec {
-            len: 0,
-            stack: [T::default(); 100],
-            heap: Vec::new(),
-        }
-    }
+    fn new() -> SmallVec<T> { SmallVec { len: 0, stack: [T::default(); 100], heap: Vec::new() } }
 
     fn push(&mut self, val: T) {
         if self.len < 100 {
@@ -262,10 +241,13 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Error::BadByte(b) => write!(f, "invalid base58 character {:#x}", b),
-            Error::BadChecksum(exp, actual) => write!(f, "base58ck checksum {:#x} does not match expected {:#x}", actual, exp),
+            Error::BadChecksum(exp, actual) =>
+                write!(f, "base58ck checksum {:#x} does not match expected {:#x}", actual, exp),
             Error::InvalidLength(ell) => write!(f, "length {} invalid for this base58 type", ell),
-            Error::InvalidExtendedKeyVersion(ref v) => write!(f, "extended key version {:#04x?} is invalid for this base58 type", v),
-            Error::InvalidAddressVersion(ref v) => write!(f, "address version {} is invalid for this base58 type", v),
+            Error::InvalidExtendedKeyVersion(ref v) =>
+                write!(f, "extended key version {:#04x?} is invalid for this base58 type", v),
+            Error::InvalidAddressVersion(ref v) =>
+                write!(f, "address version {} is invalid for this base58 type", v),
             Error::TooShort(_) => write!(f, "base58ck data not even long enough for a checksum"),
         }
     }
@@ -306,9 +288,13 @@ mod tests {
         assert_eq!(&encode(&[0, 0, 0, 0, 13, 36][..]), "1111211");
 
         // Long input (>100 bytes => has to use heap)
-        let res = encode("BitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBit\
-        coinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoin".as_bytes());
-        let exp = "ZqC5ZdfpZRi7fjA8hbhX5pEE96MdH9hEaC1YouxscPtbJF16qVWksHWR4wwvx7MotFcs2ChbJqK8KJ9X\
+        let res = encode(
+            "BitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBit\
+        coinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoinBitcoin"
+                .as_bytes(),
+        );
+        let exp =
+            "ZqC5ZdfpZRi7fjA8hbhX5pEE96MdH9hEaC1YouxscPtbJF16qVWksHWR4wwvx7MotFcs2ChbJqK8KJ9X\
         wZznwWn1JFDhhTmGo9v6GjAVikzCsBWZehu7bm22xL8b5zBR5AsBygYRwbFJsNwNkjpyFuDKwmsUTKvkULCvucPJrN5\
         QUdxpGakhqkZFL7RU4yT";
         assert_eq!(&res, exp);
@@ -331,8 +317,10 @@ mod tests {
         assert_eq!(decode("111211").ok(), Some(vec![0u8, 0, 0, 13, 36]));
 
         // Addresses
-        assert_eq!(decode_check("1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH").ok(),
-                   Some(Vec::from_hex("00f8917303bfa8ef24f292e8fa1419b20460ba064d").unwrap()));
+        assert_eq!(
+            decode_check("1PfJpZsjreyVrqeoAfabrRwwjQyoSQMmHH").ok(),
+            Some(Vec::from_hex("00f8917303bfa8ef24f292e8fa1419b20460ba064d").unwrap())
+        );
         // Non Base58 char.
         assert_eq!(decode("¢").unwrap_err(), Error::BadByte(194));
     }
@@ -347,7 +335,6 @@ mod tests {
         // Check that empty slice passes roundtrip.
         assert_eq!(decode_check(&encode_check(&[])), Ok(vec![]));
         // Check that `len > 4` is enforced.
-        assert_eq!(decode_check(&encode(&[1,2,3])), Err(Error::TooShort(3)));
-
+        assert_eq!(decode_check(&encode(&[1, 2, 3])), Err(Error::TooShort(3)));
     }
 }

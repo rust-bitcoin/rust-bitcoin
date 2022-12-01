@@ -14,11 +14,10 @@ use core::fmt::{self, Write};
 use bitcoin_internals::write_err;
 pub use secp256k1::{self, Secp256k1, XOnlyPublicKey, KeyPair};
 
-use crate::io;
+use crate::{base58, io};
 use crate::network::constants::Network;
 use crate::hashes::{Hash, hash160, hex, hex::FromHex};
 use crate::hash_types::{PubkeyHash, WPubkeyHash};
-use crate::util::base58;
 
 /// A key-related error.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
