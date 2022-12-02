@@ -104,7 +104,7 @@ impl Network {
 
     /// Converts a `Network` to its equivalent `bitcoind -chain` argument name.
     ///
-    /// ```bash,no_run
+    /// ```bash
     /// $ bitcoin-23.0/bin/bitcoind --help | grep -C 3 '\-chain=<chain>'
     /// Chain selection options:
     ///
