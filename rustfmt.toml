@@ -1,7 +1,6 @@
 # Eventually this shoud be: ignore = []
 ignore = [
        "bitcoin/src/blockdata",
-       "bitcoin/src/consensus",
        "bitcoin/src/crypto",
        "bitcoin/src/psbt",
        "bitcoin/src/util",
