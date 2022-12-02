@@ -26,20 +26,20 @@ use std::collections::BTreeMap;
 use std::str::FromStr;
 
 use bincode::serialize;
+use bitcoin::bip32::{ChildNumber, ExtendedPrivKey, ExtendedPubKey, KeySource};
 use bitcoin::blockdata::locktime::{absolute, relative};
 use bitcoin::blockdata::witness::Witness;
 use bitcoin::consensus::encode::deserialize;
 use bitcoin::hashes::hex::FromHex;
 use bitcoin::hashes::{hash160, ripemd160, sha256, sha256d, Hash};
+use bitcoin::psbt::raw::{self, Key, Pair, ProprietaryKey};
+use bitcoin::psbt::{Input, Output, Psbt, PsbtSighashType};
+use bitcoin::schnorr::{self, UntweakedPublicKey};
 use bitcoin::sighash::{EcdsaSighashType, SchnorrSighashType};
-use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey, ExtendedPubKey, KeySource};
-use bitcoin::util::psbt::raw::{self, Key, Pair, ProprietaryKey};
-use bitcoin::util::psbt::{Input, Output, Psbt, PsbtSighashType};
-use bitcoin::util::schnorr::UntweakedPublicKey;
-use bitcoin::util::taproot::{ControlBlock, LeafVersion, TaprootBuilder, TaprootSpendInfo};
+use bitcoin::taproot::{ControlBlock, LeafVersion, TaprootBuilder, TaprootSpendInfo};
 use bitcoin::{
-    Address, Block, EcdsaSig, Network, OutPoint, PrivateKey, PublicKey, SchnorrSig, Script,
-    Sequence, Target, Transaction, TxIn, TxOut, Txid, Work,
+    ecdsa, Address, Block, Network, OutPoint, PrivateKey, PublicKey, Script, Sequence, Target,
+    Transaction, TxIn, TxOut, Txid, Work,
 };
 use secp256k1::Secp256k1;
 
@@ -135,7 +135,7 @@ fn serde_regression_witness() {
         .unwrap();
     let w1 = Vec::from_hex("000000").unwrap();
     let vec = vec![w0, w1];
-    let witness = Witness::from_vec(vec);
+    let witness = Witness::from_slice(&vec);
 
     let got = serialize(&witness).unwrap();
     let want = include_bytes!("data/serde/witness_bincode") as &[_];
@@ -174,7 +174,7 @@ fn serde_regression_extended_pub_key() {
 #[test]
 fn serde_regression_ecdsa_sig() {
     let s = include_str!("data/serde/ecdsa_sig_hex");
-    let sig = EcdsaSig {
+    let sig = ecdsa::Signature {
         sig: secp256k1::ecdsa::Signature::from_str(s.trim()).unwrap(),
         hash_ty: EcdsaSighashType::All,
     };
@@ -234,7 +234,7 @@ fn serde_regression_psbt() {
             },
             script_sig: Script::from_str("160014be18d152a9b012039daf3da7de4f53349eecb985").unwrap(),
             sequence: Sequence::from_consensus(4294967295),
-            witness: Witness::from_vec(vec![Vec::from_hex(
+            witness: Witness::from_slice(&[Vec::from_hex(
                 "03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105",
             )
             .unwrap()]),
@@ -296,7 +296,7 @@ fn serde_regression_psbt() {
                 "304402204f67e2afb76142d44fae58a2495d33a3419daa26cd0db8d04f3452b63289ac0f022010762a9fb67e94cc5cad9026f6dc99ff7f070f4278d30fbc7d0c869dd38c7fe701".parse().unwrap(),
             )].into_iter().collect(),
             bip32_derivation: keypaths.clone().into_iter().collect(),
-            final_script_witness: Some(Witness::from_vec(vec![vec![1, 3], vec![5]])),
+            final_script_witness: Some(Witness::from_slice(&[vec![1, 3], vec![5]])),
             ripemd160_preimages: vec![(ripemd160::Hash::hash(&[]), vec![1, 2])].into_iter().collect(),
             sha256_preimages: vec![(sha256::Hash::hash(&[]), vec![1, 2])].into_iter().collect(),
             hash160_preimages: vec![(hash160::Hash::hash(&[]), vec![1, 2])].into_iter().collect(),
@@ -344,7 +344,7 @@ fn serde_regression_proprietary_key() {
 #[test]
 fn serde_regression_schnorr_sig() {
     let s = include_str!("data/serde/schnorr_sig_hex");
-    let sig = SchnorrSig {
+    let sig = schnorr::Signature {
         sig: secp256k1::schnorr::Signature::from_str(s.trim()).unwrap(),
         hash_ty: SchnorrSighashType::All,
     };
