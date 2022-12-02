@@ -652,7 +652,8 @@ impl Decodable for Vec<u8> {
     fn consensus_decode_from_finite_reader<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, Error> {
         let len = VarInt::consensus_decode(r)?.0 as usize;
         // most real-world vec of bytes data, wouldn't be larger than 128KiB
-        read_bytes_from_finite_reader(r, ReadBytesFromFiniteReaderOpts { len, chunk_size: 128 * 1024 })
+        let opts = ReadBytesFromFiniteReaderOpts { len, chunk_size: 128 * 1024 };
+        read_bytes_from_finite_reader(r, opts)
     }
 }
 
@@ -693,7 +694,8 @@ impl Decodable for CheckedData {
         let len = u32::consensus_decode_from_finite_reader(r)? as usize;
 
         let checksum = <[u8; 4]>::consensus_decode_from_finite_reader(r)?;
-        let ret = read_bytes_from_finite_reader(r, ReadBytesFromFiniteReaderOpts { len, chunk_size: MAX_VEC_SIZE })?;
+        let opts = ReadBytesFromFiniteReaderOpts { len, chunk_size: MAX_VEC_SIZE };
+        let ret = read_bytes_from_finite_reader(r, opts)?;
         let expected_checksum = sha2_checksum(&ret);
         if expected_checksum != checksum {
             Err(self::Error::InvalidChecksum {
