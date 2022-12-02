@@ -809,8 +809,6 @@ impl Decodable for TapLeafHash {
 mod tests {
     use super::*;
     use core::{mem::{self, discriminant}, fmt};
-    use super::{deserialize, serialize, Error, CheckedData, VarInt};
-    use super::{Transaction, BlockHash, FilterHash, TxMerkleNode, TxOut, TxIn};
     use crate::consensus::{Encodable, deserialize_partial, Decodable};
     #[cfg(feature = "std")]
     use crate::network::{Address, message_blockdata::Inventory};
