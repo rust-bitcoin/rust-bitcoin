@@ -509,6 +509,7 @@ mod tests {
     use crate::hashes::hex::{FromHex, ToHex};
     #[cfg(feature = "rand-std")]
     use crate::hashes::Hash;
+    use crate::internal_macros::hex;
     use crate::{Block, Txid};
 
     /// accepts `pmt_test_$num`
@@ -640,7 +641,7 @@ mod tests {
     fn merkleblock_serialization() {
         // Got it by running the rpc call
         // `gettxoutproof '["220ebc64e21abece964927322cba69180ed853bb187fbc6923bac7d010b9d87a"]'`
-        let mb_hex =
+        const MB_HEX: &str =
             "0100000090f0a9f110702f808219ebea1173056042a714bad51b916cb6800000000000005275289558f51c\
             9966699404ae2294730c3c9f9bda53523ce50e9b95e558da2fdb261b4d4c86041b1ab1bf930900000005fac\
             7708a6e81b2a986dea60db2663840ed141130848162eb1bd1dee54f309a1b2ee1e12587e497ada70d9bd10d\
@@ -648,14 +649,14 @@ mod tests {
             ebe1ae264bc0e2289189ff0316cdc10511da71da757e553cada9f3b5b1434f3923673adb57d83caac392c38\
             af156d6fc30b55fad4112df2b95531e68114e9ad10011e72f7b7cfdb025700";
 
-        let mb: MerkleBlock = deserialize(&Vec::from_hex(mb_hex).unwrap()).unwrap();
+        let mb: MerkleBlock = deserialize(&hex!(MB_HEX)).unwrap();
         assert_eq!(get_block_13b8a().block_hash(), mb.header.block_hash());
         assert_eq!(
             mb.header.merkle_root,
             mb.txn.extract_matches(&mut vec![], &mut vec![]).unwrap()
         );
         // Serialize again and check that it matches the original bytes
-        assert_eq!(mb_hex, serialize(&mb).to_hex().as_str());
+        assert_eq!(MB_HEX, serialize(&mb).to_hex().as_str());
     }
 
     /// Create a CMerkleBlock using a list of txids which will be found in the
@@ -737,7 +738,7 @@ mod tests {
     /// Returns a real block (0000000000013b8ab2cd513b0261a14096412195a72a0c4827d229dcc7e0f7af)
     /// with 9 txs.
     fn get_block_13b8a() -> Block {
-        let block_hex =
+        const BLOCK_HEX: &str =
             "0100000090f0a9f110702f808219ebea1173056042a714bad51b916cb6800000000000005275289558f51c\
             9966699404ae2294730c3c9f9bda53523ce50e9b95e558da2fdb261b4d4c86041b1ab1bf930901000000010\
             000000000000000000000000000000000000000000000000000000000000000ffffffff07044c86041b0146\
@@ -809,6 +810,6 @@ mod tests {
             058b800a098fc1740ce3012e8fc8a00c96af966ffffffff02c0e1e400000000001976a9144134e75a6fcb60\
             42034aab5e18570cf1f844f54788ac404b4c00000000001976a9142b6ba7c9d796b75eef7942fc9288edd37\
             c32f5c388ac00000000";
-        deserialize(&Vec::from_hex(block_hex).unwrap()).unwrap()
+        deserialize(&hex!(BLOCK_HEX)).unwrap()
     }
 }
