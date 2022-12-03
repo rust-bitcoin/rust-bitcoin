@@ -110,6 +110,20 @@ impl Work {
 
     /// Converts this [`Work`] to [`Target`].
     pub fn to_target(self) -> Target { Target(self.0.inverse()) }
+
+    /// Returns log2 of this work.
+    ///
+    /// The result inherently suffers from a loss of precision and is, therefore, meant to be
+    /// used mainly for informative and displaying purposes, similarly to Bitcoin Core's
+    /// `log2_work` output in its logs.
+    #[cfg(feature = "std")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+    pub fn log2(self) -> f64 {
+        let U256(high, low) = self.0;
+        // 2^128 * high + low
+        let double = (3402823669209385e23_f64 * high as f64) + (low as f64);
+        double.log2()
+    }
 }
 do_impl!(Work);
 
@@ -1436,6 +1450,29 @@ mod tests {
         let work = target.to_work();
         let back = work.to_target();
         assert_eq!(back, target)
+    }
+
+    #[cfg(feature = "std")]
+    #[test]
+    fn work_log2() {
+        // Compare work log2 to historical Bitcoin Core values found in Core logs.
+        let tests: Vec<(u128, f64)> = vec![
+            // (chainwork, core log2)                // height
+            (0x200020002, 33.000022),                // 1
+            (0xa97d67041c5e51596ee7, 79.405055),     // 308004
+            (0x1dc45d79394baa8ab18b20, 84.895644),   // 418141
+            (0x8c85acb73287e335d525b98, 91.134654),  // 596624
+            (0x2ef447e01d1642c40a184ada, 93.553183), // 738965
+        ];
+
+        for (chainwork, core_log2) in tests {
+            // Core log2 in the logs is rounded to 6 decimal places.
+            let log2 = (Work::from(chainwork).log2() * 1e6).round() / 1e6;
+            assert_eq!(log2, core_log2)
+        }
+
+        assert_eq!(Work(U256::ONE).log2(), 0.0);
+        assert_eq!(Work(U256::MAX).log2(), 256.0);
     }
 
     #[test]
