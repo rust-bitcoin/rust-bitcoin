@@ -271,12 +271,13 @@ mod test {
         // Compare strings because the spec specifically states how the chain hash must encode to hex.
         assert_eq!(got, want);
 
+        #[allow(unreachable_patterns)] // This is specifically trying to catch later added variants.
         match network {
             Network::Bitcoin => {},
             Network::Testnet => {},
             Network::Signet => {},
             Network::Regtest => {},
-            // Update ChainHash::using_genesis_block and chain_hash_genesis_block with new variants.
+            _ => panic!("Update ChainHash::using_genesis_block and chain_hash_genesis_block with new variants"),
         }
     }
 
