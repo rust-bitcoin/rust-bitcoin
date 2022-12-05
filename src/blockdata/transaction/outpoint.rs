@@ -79,8 +79,10 @@ impl OutPoint {
 
 impl From<[u8; 36]> for OutPoint {
     fn from(buffer: [u8; 36]) -> Self {
-        let tx_id: [u8; 32] = buffer[0..32].try_into().unwrap();
+        let mut tx_id: [u8; 32] = buffer[0..32].try_into().unwrap();
         let index: [u8; 4] = buffer[32..36].try_into().unwrap();
+        // Reverse the tx_id to match the endianness of Txid::from_inner
+        tx_id.reverse();
 
         Self {
             txid: Txid::from_inner(tx_id),
@@ -250,6 +252,7 @@ mod tests {
         tx.add_burn_output(10000, &pk_array);
 
         let mut expected_buf = tx.txid().as_inner().to_vec();
+        expected_buf.reverse();
         let mut expected_index = vec![0,0,0,0];
         // 0 serialized as 32 bits
         expected_buf.append(&mut expected_index);
