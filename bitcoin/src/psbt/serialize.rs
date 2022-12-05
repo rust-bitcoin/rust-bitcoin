@@ -6,31 +6,26 @@
 //! according to the BIP-174 specification.
 //!
 
-use core::convert::TryFrom;
-use core::convert::TryInto;
+use core::convert::{TryFrom, TryInto};
 
-use crate::VarInt;
-use crate::prelude::*;
-
-use crate::io;
-
-use crate::blockdata::script::ScriptBuf;
-use crate::blockdata::witness::Witness;
-use crate::blockdata::transaction::{Transaction, TxOut};
-use crate::consensus::encode::{self, serialize, Decodable, Encodable, deserialize_partial};
-use crate::taproot::TapTree;
 use secp256k1::{self, XOnlyPublicKey};
-use crate::bip32::{ChildNumber, Fingerprint, KeySource};
-use crate::hashes::{hash160, ripemd160, sha256, sha256d, Hash};
-use crate::crypto::{ecdsa, taproot};
-use crate::psbt::{Error, PartiallySignedTransaction};
-use crate::taproot::{TapNodeHash, TapLeafHash, ControlBlock, LeafVersion};
-use crate::crypto::key::PublicKey;
 
-use super::map::{Map, Input, Output, PsbtSighashType};
+use super::map::{Input, Map, Output, PsbtSighashType};
 use super::Psbt;
-
-use crate::taproot::TaprootBuilder;
+use crate::bip32::{ChildNumber, Fingerprint, KeySource};
+use crate::blockdata::script::ScriptBuf;
+use crate::blockdata::transaction::{Transaction, TxOut};
+use crate::blockdata::witness::Witness;
+use crate::consensus::encode::{self, deserialize_partial, serialize, Decodable, Encodable};
+use crate::crypto::key::PublicKey;
+use crate::crypto::{ecdsa, taproot};
+use crate::hashes::{hash160, ripemd160, sha256, sha256d, Hash};
+use crate::prelude::*;
+use crate::psbt::{Error, PartiallySignedTransaction};
+use crate::taproot::{
+    ControlBlock, LeafVersion, TapLeafHash, TapNodeHash, TapTree, TaprootBuilder,
+};
+use crate::{io, VarInt};
 /// A trait for serializing a value as raw data for insertion into PSBT
 /// key-value maps.
 pub(crate) trait Serialize {
@@ -46,9 +41,7 @@ pub(crate) trait Deserialize: Sized {
 
 impl PartiallySignedTransaction {
     /// Serialize a value as bytes in hex.
-    pub fn serialize_hex(&self) -> String {
-        self.serialize().to_lower_hex_string()
-    }
+    pub fn serialize_hex(&self) -> String { self.serialize().to_lower_hex_string() }
 
     /// Serialize as raw binary data
     pub fn serialize(&self) -> Vec<u8> {
@@ -71,7 +64,6 @@ impl PartiallySignedTransaction {
 
         buf
     }
-
 
     /// Deserialize a value from raw binary data.
     pub fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
@@ -133,15 +125,11 @@ impl_psbt_hash_de_serialize!(sha256d::Hash);
 impl_psbt_de_serialize!(Vec<TapLeafHash>);
 
 impl Serialize for ScriptBuf {
-    fn serialize(&self) -> Vec<u8> {
-        self.to_bytes()
-    }
+    fn serialize(&self) -> Vec<u8> { self.to_bytes() }
 }
 
 impl Deserialize for ScriptBuf {
-    fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
-        Ok(Self::from(bytes.to_vec()))
-    }
+    fn deserialize(bytes: &[u8]) -> Result<Self, Error> { Ok(Self::from(bytes.to_vec())) }
 }
 
 impl Serialize for PublicKey {
@@ -154,28 +142,22 @@ impl Serialize for PublicKey {
 
 impl Deserialize for PublicKey {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
-        PublicKey::from_slice(bytes)
-            .map_err(Error::InvalidPublicKey)
+        PublicKey::from_slice(bytes).map_err(Error::InvalidPublicKey)
     }
 }
 
 impl Serialize for secp256k1::PublicKey {
-    fn serialize(&self) -> Vec<u8> {
-        self.serialize().to_vec()
-    }
+    fn serialize(&self) -> Vec<u8> { self.serialize().to_vec() }
 }
 
 impl Deserialize for secp256k1::PublicKey {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
-        secp256k1::PublicKey::from_slice(bytes)
-            .map_err(Error::InvalidSecp256k1PublicKey)
+        secp256k1::PublicKey::from_slice(bytes).map_err(Error::InvalidSecp256k1PublicKey)
     }
 }
 
 impl Serialize for ecdsa::Signature {
-    fn serialize(&self) -> Vec<u8> {
-        self.to_vec()
-    }
+    fn serialize(&self) -> Vec<u8> { self.to_vec() }
 }
 
 impl Deserialize for ecdsa::Signature {
@@ -193,21 +175,14 @@ impl Deserialize for ecdsa::Signature {
         // also has a field sighash_u32 (See BIP141). For example, when signing with non-standard
         // 0x05, the sighash message would have the last field as 0x05u32 while, the verification
         // would use check the signature assuming sighash_u32 as `0x01`.
-        ecdsa::Signature::from_slice(bytes)
-            .map_err(|e| match e {
-                ecdsa::Error::EmptySignature => {
-                    Error::InvalidEcdsaSignature(e)
-                }
-                ecdsa::Error::NonStandardSighashType(flag) => {
-                    Error::NonStandardSighashType(flag)
-                }
-                ecdsa::Error::Secp256k1(..) => {
-                    Error::InvalidEcdsaSignature(e)
-                }
-                ecdsa::Error::HexEncoding(..) =>  {
-                    unreachable!("Decoding from slice, not hex")
-                }
-            })
+        ecdsa::Signature::from_slice(bytes).map_err(|e| match e {
+            ecdsa::Error::EmptySignature => Error::InvalidEcdsaSignature(e),
+            ecdsa::Error::NonStandardSighashType(flag) => Error::NonStandardSighashType(flag),
+            ecdsa::Error::Secp256k1(..) => Error::InvalidEcdsaSignature(e),
+            ecdsa::Error::HexEncoding(..) => {
+                unreachable!("Decoding from slice, not hex")
+            }
+        })
     }
 }
 
@@ -228,7 +203,7 @@ impl Serialize for KeySource {
 impl Deserialize for KeySource {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
         if bytes.len() < 4 {
-            return Err(io::Error::from(io::ErrorKind::UnexpectedEof).into())
+            return Err(io::Error::from(io::ErrorKind::UnexpectedEof).into());
         }
 
         let fprint: Fingerprint = bytes[0..4].try_into().expect("4 is the fingerprint length");
@@ -248,21 +223,15 @@ impl Deserialize for KeySource {
 
 // partial sigs
 impl Serialize for Vec<u8> {
-    fn serialize(&self) -> Vec<u8> {
-        self.clone()
-    }
+    fn serialize(&self) -> Vec<u8> { self.clone() }
 }
 
 impl Deserialize for Vec<u8> {
-    fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
-        Ok(bytes.to_vec())
-    }
+    fn deserialize(bytes: &[u8]) -> Result<Self, Error> { Ok(bytes.to_vec()) }
 }
 
 impl Serialize for PsbtSighashType {
-    fn serialize(&self) -> Vec<u8> {
-        serialize(&self.to_u32())
-    }
+    fn serialize(&self) -> Vec<u8> { serialize(&self.to_u32()) }
 }
 
 impl Deserialize for PsbtSighashType {
@@ -274,38 +243,26 @@ impl Deserialize for PsbtSighashType {
 
 // Taproot related ser/deser
 impl Serialize for XOnlyPublicKey {
-    fn serialize(&self) -> Vec<u8> {
-        XOnlyPublicKey::serialize(self).to_vec()
-    }
+    fn serialize(&self) -> Vec<u8> { XOnlyPublicKey::serialize(self).to_vec() }
 }
 
 impl Deserialize for XOnlyPublicKey {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
-        XOnlyPublicKey::from_slice(bytes)
-            .map_err(|_| Error::InvalidXOnlyPublicKey)
+        XOnlyPublicKey::from_slice(bytes).map_err(|_| Error::InvalidXOnlyPublicKey)
     }
 }
 
-impl Serialize for taproot::Signature  {
-    fn serialize(&self) -> Vec<u8> {
-        self.to_vec()
-    }
+impl Serialize for taproot::Signature {
+    fn serialize(&self) -> Vec<u8> { self.to_vec() }
 }
 
 impl Deserialize for taproot::Signature {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
-        taproot::Signature::from_slice(bytes)
-            .map_err(|e| match e {
-                taproot::Error::InvalidSighashType(flag) => {
-                    Error::NonStandardSighashType(flag as u32)
-                }
-                taproot::Error::InvalidSignatureSize(_) => {
-                    Error::InvalidTaprootSignature(e)
-                }
-                taproot::Error::Secp256k1(..) => {
-                    Error::InvalidTaprootSignature(e)
-                }
-            })
+        taproot::Signature::from_slice(bytes).map_err(|e| match e {
+            taproot::Error::InvalidSighashType(flag) => Error::NonStandardSighashType(flag as u32),
+            taproot::Error::InvalidSignatureSize(_) => Error::InvalidTaprootSignature(e),
+            taproot::Error::Secp256k1(..) => Error::InvalidTaprootSignature(e),
+        })
     }
 }
 
@@ -322,7 +279,7 @@ impl Serialize for (XOnlyPublicKey, TapLeafHash) {
 impl Deserialize for (XOnlyPublicKey, TapLeafHash) {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
         if bytes.len() < 32 {
-            return Err(io::Error::from(io::ErrorKind::UnexpectedEof).into())
+            return Err(io::Error::from(io::ErrorKind::UnexpectedEof).into());
         }
         let a: XOnlyPublicKey = Deserialize::deserialize(&bytes[..32])?;
         let b: TapLeafHash = Deserialize::deserialize(&bytes[32..])?;
@@ -331,15 +288,12 @@ impl Deserialize for (XOnlyPublicKey, TapLeafHash) {
 }
 
 impl Serialize for ControlBlock {
-    fn serialize(&self) -> Vec<u8> {
-        ControlBlock::serialize(self)
-    }
+    fn serialize(&self) -> Vec<u8> { ControlBlock::serialize(self) }
 }
 
 impl Deserialize for ControlBlock {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
-        Self::decode(bytes)
-            .map_err(|_| Error::InvalidControlBlock)
+        Self::decode(bytes).map_err(|_| Error::InvalidControlBlock)
     }
 }
 
@@ -356,7 +310,7 @@ impl Serialize for (ScriptBuf, LeafVersion) {
 impl Deserialize for (ScriptBuf, LeafVersion) {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
         if bytes.is_empty() {
-            return Err(io::Error::from(io::ErrorKind::UnexpectedEof).into())
+            return Err(io::Error::from(io::ErrorKind::UnexpectedEof).into());
         }
         // The last byte is LeafVersion.
         let script = ScriptBuf::deserialize(&bytes[..bytes.len() - 1])?;
@@ -366,10 +320,9 @@ impl Deserialize for (ScriptBuf, LeafVersion) {
     }
 }
 
-
 impl Serialize for (Vec<TapLeafHash>, KeySource) {
     fn serialize(&self) -> Vec<u8> {
-        let mut buf = Vec::with_capacity( 32 * self.0.len() + key_source_len(&self.1));
+        let mut buf = Vec::with_capacity(32 * self.0.len() + key_source_len(&self.1));
         self.0.consensus_encode(&mut buf).expect("Vecs don't error allocation");
         // TODO: Add support for writing into a writer for key-source
         buf.extend(self.1.serialize());
@@ -387,11 +340,14 @@ impl Deserialize for (Vec<TapLeafHash>, KeySource) {
 
 impl Serialize for TapTree {
     fn serialize(&self) -> Vec<u8> {
-        let capacity = self.script_leaves().map(|l| {
-            l.script().len() + VarInt(l.script().len() as u64).len() // script version
+        let capacity = self
+            .script_leaves()
+            .map(|l| {
+                l.script().len() + VarInt(l.script().len() as u64).len() // script version
             + 1 // merkle branch
             + 1 // leaf version
-        }).sum::<usize>();
+            })
+            .sum::<usize>();
         let mut buf = Vec::with_capacity(capacity);
         for leaf_info in self.script_leaves() {
             // # Cast Safety:
@@ -416,9 +372,10 @@ impl Deserialize for TapTree {
             if consumed > 0 {
                 bytes_iter.nth(consumed - 1);
             }
-            let leaf_version = LeafVersion::from_consensus(*version)
-                .map_err(|_| Error::InvalidLeafVersion)?;
-            builder = builder.add_leaf_with_ver(*depth, script, leaf_version)
+            let leaf_version =
+                LeafVersion::from_consensus(*version).map_err(|_| Error::InvalidLeafVersion)?;
+            builder = builder
+                .add_leaf_with_ver(*depth, script, leaf_version)
                 .map_err(|_| Error::Taproot("Tree not in DFS order"))?;
         }
         TapTree::try_from(builder).map_err(Error::TapTree)
@@ -426,9 +383,7 @@ impl Deserialize for TapTree {
 }
 
 // Helper function to compute key source len
-fn key_source_len(key_source: &KeySource) -> usize {
-    4 + 4 * (key_source.1).as_ref().len()
-}
+fn key_source_len(key_source: &KeySource) -> usize { 4 + 4 * (key_source.1).as_ref().len() }
 
 #[cfg(test)]
 mod tests {
@@ -439,7 +394,10 @@ mod tests {
     // Composes tree matching a given depth map, filled with dumb script leafs,
     // each of which consists of a single push-int op code, with int value
     // increased for each consecutive leaf.
-    pub fn compose_taproot_builder<'map>(opcode: u8, depth_map: impl IntoIterator<Item = &'map u8>) -> TaprootBuilder {
+    pub fn compose_taproot_builder<'map>(
+        opcode: u8,
+        depth_map: impl IntoIterator<Item = &'map u8>,
+    ) -> TaprootBuilder {
         let mut val = opcode;
         let mut builder = TaprootBuilder::new();
         for depth in depth_map {
@@ -454,7 +412,13 @@ mod tests {
     #[test]
     fn taptree_hidden() {
         let mut builder = compose_taproot_builder(0x51, &[2, 2, 2]);
-        builder = builder.add_leaf_with_ver(3, ScriptBuf::from_hex("b9").unwrap(), LeafVersion::from_consensus(0xC2).unwrap()).unwrap();
+        builder = builder
+            .add_leaf_with_ver(
+                3,
+                ScriptBuf::from_hex("b9").unwrap(),
+                LeafVersion::from_consensus(0xC2).unwrap(),
+            )
+            .unwrap();
         builder = builder.add_hidden_node(3, TapNodeHash::all_zeros()).unwrap();
         assert!(TapTree::try_from(builder).is_err());
     }
@@ -462,7 +426,13 @@ mod tests {
     #[test]
     fn taptree_roundtrip() {
         let mut builder = compose_taproot_builder(0x51, &[2, 2, 2, 3]);
-        builder = builder.add_leaf_with_ver(3, ScriptBuf::from_hex("b9").unwrap(), LeafVersion::from_consensus(0xC2).unwrap()).unwrap();
+        builder = builder
+            .add_leaf_with_ver(
+                3,
+                ScriptBuf::from_hex("b9").unwrap(),
+                LeafVersion::from_consensus(0xC2).unwrap(),
+            )
+            .unwrap();
         let tree = TapTree::try_from(builder).unwrap();
         let tree_prime = TapTree::deserialize(&tree.serialize()).unwrap();
         assert_eq!(tree, tree_prime);

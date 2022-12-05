@@ -1,18 +1,15 @@
 // SPDX-License-Identifier: CC0-1.0
 
-use crate::prelude::*;
-
 use core::fmt;
 
 use bitcoin_internals::write_err;
 
+use crate::bip32::ExtendedPubKey;
 use crate::blockdata::transaction::Transaction;
 use crate::consensus::encode;
+use crate::prelude::*;
 use crate::psbt::raw;
-
-use crate::hashes;
-use crate::io;
-use crate::bip32::ExtendedPubKey;
+use crate::{hashes, io};
 
 /// Enum for marking psbt hash error.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
@@ -113,29 +110,41 @@ impl fmt::Display for Error {
             Error::InvalidMagic => f.write_str("invalid magic"),
             Error::MissingUtxo => f.write_str("UTXO information is not present in PSBT"),
             Error::InvalidSeparator => f.write_str("invalid separator"),
-            Error::PsbtUtxoOutOfbounds => f.write_str("output index is out of bounds of non witness script output array"),
+            Error::PsbtUtxoOutOfbounds =>
+                f.write_str("output index is out of bounds of non witness script output array"),
             Error::InvalidKey(ref rkey) => write!(f, "invalid key: {}", rkey),
-            Error::InvalidProprietaryKey => write!(f, "non-proprietary key type found when proprietary key was expected"),
+            Error::InvalidProprietaryKey =>
+                write!(f, "non-proprietary key type found when proprietary key was expected"),
             Error::DuplicateKey(ref rkey) => write!(f, "duplicate key: {}", rkey),
-            Error::UnsignedTxHasScriptSigs => f.write_str("the unsigned transaction has script sigs"),
-            Error::UnsignedTxHasScriptWitnesses => f.write_str("the unsigned transaction has script witnesses"),
-            Error::MustHaveUnsignedTx => {
-                f.write_str("partially signed transactions must have an unsigned transaction")
-            }
+            Error::UnsignedTxHasScriptSigs =>
+                f.write_str("the unsigned transaction has script sigs"),
+            Error::UnsignedTxHasScriptWitnesses =>
+                f.write_str("the unsigned transaction has script witnesses"),
+            Error::MustHaveUnsignedTx =>
+                f.write_str("partially signed transactions must have an unsigned transaction"),
             Error::NoMorePairs => f.write_str("no more key-value pairs for this psbt map"),
-            Error::UnexpectedUnsignedTx { expected: ref e, actual: ref a } => write!(f, "different unsigned transaction: expected {}, actual {}", e.txid(), a.txid()),
-            Error::NonStandardSighashType(ref sht) => write!(f, "non-standard sighash type: {}", sht),
+            Error::UnexpectedUnsignedTx { expected: ref e, actual: ref a } => write!(
+                f,
+                "different unsigned transaction: expected {}, actual {}",
+                e.txid(),
+                a.txid()
+            ),
+            Error::NonStandardSighashType(ref sht) =>
+                write!(f, "non-standard sighash type: {}", sht),
             Error::HashParse(ref e) => write_err!(f, "hash parse error"; e),
-            Error::InvalidPreimageHashPair{ref preimage, ref hash, ref hash_type} => {
+            Error::InvalidPreimageHashPair { ref preimage, ref hash, ref hash_type } => {
                 // directly using debug forms of psbthash enums
-                write!(f, "Preimage {:?} does not match {:?} hash {:?}", preimage, hash_type, hash )
-            },
-            Error::CombineInconsistentKeySources(ref s) => { write!(f, "combine conflict: {}", s) },
+                write!(f, "Preimage {:?} does not match {:?} hash {:?}", preimage, hash_type, hash)
+            }
+            Error::CombineInconsistentKeySources(ref s) => {
+                write!(f, "combine conflict: {}", s)
+            }
             Error::ConsensusEncoding(ref e) => write_err!(f, "bitcoin consensus encoding error"; e),
             Error::NegativeFee => f.write_str("PSBT has a negative fee which is not allowed"),
             Error::FeeOverflow => f.write_str("integer overflow in fee calculation"),
             Error::InvalidPublicKey(ref e) => write_err!(f, "invalid public key"; e),
-            Error::InvalidSecp256k1PublicKey(ref e) => write_err!(f, "invalid secp256k1 public key"; e),
+            Error::InvalidSecp256k1PublicKey(ref e) =>
+                write_err!(f, "invalid secp256k1 public key"; e),
             Error::InvalidXOnlyPublicKey => f.write_str("invalid xonly public key"),
             Error::InvalidEcdsaSignature(ref e) => write_err!(f, "invalid ECDSA signature"; e),
             Error::InvalidTaprootSignature(ref e) => write_err!(f, "invalid taproot signature"; e),
@@ -145,7 +154,8 @@ impl fmt::Display for Error {
             Error::TapTree(ref e) => write_err!(f, "taproot tree error"; e),
             Error::XPubKey(s) => write!(f, "xpub key error -  {}", s),
             Error::Version(s) => write!(f, "version error {}", s),
-            Error::PartialDataConsumption => f.write_str("data not consumed entirely when explicitly deserializing"),
+            Error::PartialDataConsumption =>
+                f.write_str("data not consumed entirely when explicitly deserializing"),
             Error::Io(ref e) => write_err!(f, "I/O error"; e),
         }
     }
@@ -161,7 +171,7 @@ impl std::error::Error for Error {
             HashParse(e) => Some(e),
             ConsensusEncoding(e) => Some(e),
             Io(e) => Some(e),
-            | InvalidMagic
+            InvalidMagic
             | MissingUtxo
             | InvalidSeparator
             | PsbtUtxoOutOfbounds
@@ -174,7 +184,7 @@ impl std::error::Error for Error {
             | NoMorePairs
             | UnexpectedUnsignedTx { .. }
             | NonStandardSighashType(_)
-            | InvalidPreimageHashPair{ .. }
+            | InvalidPreimageHashPair { .. }
             | CombineInconsistentKeySources(_)
             | NegativeFee
             | FeeOverflow
@@ -189,26 +199,20 @@ impl std::error::Error for Error {
             | TapTree(_)
             | XPubKey(_)
             | Version(_)
-            | PartialDataConsumption=> None,
+            | PartialDataConsumption => None,
         }
     }
 }
 
 #[doc(hidden)]
 impl From<hashes::Error> for Error {
-    fn from(e: hashes::Error) -> Error {
-        Error::HashParse(e)
-    }
+    fn from(e: hashes::Error) -> Error { Error::HashParse(e) }
 }
 
 impl From<encode::Error> for Error {
-    fn from(e: encode::Error) -> Self {
-        Error::ConsensusEncoding(e)
-    }
+    fn from(e: encode::Error) -> Self { Error::ConsensusEncoding(e) }
 }
 
 impl From<io::Error> for Error {
-    fn from(e: io::Error) -> Self {
-        Error::Io(e)
-    }
+    fn from(e: io::Error) -> Self { Error::Io(e) }
 }

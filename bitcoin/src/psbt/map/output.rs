@@ -1,18 +1,16 @@
 // SPDX-License-Identifier: CC0-1.0
 
-use crate::prelude::*;
-use core;
 use core::convert::TryFrom;
 
-use crate::blockdata::script::ScriptBuf;
 use secp256k1::XOnlyPublicKey;
-use crate::bip32::KeySource;
-use secp256k1;
-use crate::psbt::map::Map;
-use crate::psbt::raw;
-use crate::psbt::Error;
+use {core, secp256k1};
 
-use crate::taproot::{TapTree, TapLeafHash};
+use crate::bip32::KeySource;
+use crate::blockdata::script::ScriptBuf;
+use crate::prelude::*;
+use crate::psbt::map::Map;
+use crate::psbt::{raw, Error};
+use crate::taproot::{TapLeafHash, TapTree};
 
 /// Type: Redeem ScriptBuf PSBT_OUT_REDEEM_SCRIPT = 0x00
 const PSBT_OUT_REDEEM_SCRIPT: u8 = 0x00;
@@ -51,25 +49,16 @@ pub struct Output {
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq"))]
     pub tap_key_origins: BTreeMap<XOnlyPublicKey, (Vec<TapLeafHash>, KeySource)>,
     /// Proprietary key-value pairs for this output.
-    #[cfg_attr(
-        feature = "serde",
-        serde(with = "crate::serde_utils::btreemap_as_seq_byte_values")
-    )]
+    #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq_byte_values"))]
     pub proprietary: BTreeMap<raw::ProprietaryKey, Vec<u8>>,
     /// Unknown key-value pairs for this output.
-    #[cfg_attr(
-        feature = "serde",
-        serde(with = "crate::serde_utils::btreemap_as_seq_byte_values")
-    )]
+    #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq_byte_values"))]
     pub unknown: BTreeMap<raw::Key, Vec<u8>>,
 }
 
 impl Output {
     pub(super) fn insert_pair(&mut self, pair: raw::Pair) -> Result<(), Error> {
-        let raw::Pair {
-            key: raw_key,
-            value: raw_value,
-        } = pair;
+        let raw::Pair { key: raw_key, value: raw_value } = pair;
 
         match raw_key.type_value {
             PSBT_OUT_REDEEM_SCRIPT => {
@@ -92,7 +81,7 @@ impl Output {
                 match self.proprietary.entry(key) {
                     btree_map::Entry::Vacant(empty_key) => {
                         empty_key.insert(raw_value);
-                    },
+                    }
                     btree_map::Entry::Occupied(_) => return Err(Error::DuplicateKey(raw_key)),
                 }
             }
@@ -116,7 +105,7 @@ impl Output {
                     empty_key.insert(raw_value);
                 }
                 btree_map::Entry::Occupied(k) => return Err(Error::DuplicateKey(k.key().clone())),
-            }
+            },
         }
 
         Ok(())
@@ -165,17 +154,11 @@ impl Map for Output {
         }
 
         for (key, value) in self.proprietary.iter() {
-            rv.push(raw::Pair {
-                key: key.to_key(),
-                value: value.clone(),
-            });
+            rv.push(raw::Pair { key: key.to_key(), value: value.clone() });
         }
 
         for (key, value) in self.unknown.iter() {
-            rv.push(raw::Pair {
-                key: key.clone(),
-                value: value.clone(),
-            });
+            rv.push(raw::Pair { key: key.clone(), value: value.clone() });
         }
 
         rv

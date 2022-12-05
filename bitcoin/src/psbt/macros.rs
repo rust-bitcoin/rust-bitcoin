@@ -2,7 +2,11 @@
 
 #[allow(unused_macros)]
 macro_rules! hex_psbt {
-    ($s:expr) => { <$crate::psbt::PartiallySignedTransaction>::deserialize(&<$crate::prelude::Vec<u8> as $crate::hashes::hex::FromHex>::from_hex($s).unwrap()) };
+    ($s:expr) => {
+        <$crate::psbt::PartiallySignedTransaction>::deserialize(
+            &<$crate::prelude::Vec<u8> as $crate::hashes::hex::FromHex>::from_hex($s).unwrap(),
+        )
+    };
 }
 
 macro_rules! combine {
@@ -33,9 +37,7 @@ macro_rules! impl_psbt_deserialize {
 macro_rules! impl_psbt_serialize {
     ($thing:ty) => {
         impl $crate::psbt::serialize::Serialize for $thing {
-            fn serialize(&self) -> $crate::prelude::Vec<u8> {
-                $crate::consensus::serialize(self)
-            }
+            fn serialize(&self) -> $crate::prelude::Vec<u8> { $crate::consensus::serialize(self) }
         }
     };
 }
@@ -43,9 +45,7 @@ macro_rules! impl_psbt_serialize {
 macro_rules! impl_psbtmap_serialize {
     ($thing:ty) => {
         impl $crate::psbt::serialize::Serialize for $thing {
-            fn serialize(&self) -> Vec<u8> {
-                self.serialize_map()
-            }
+            fn serialize(&self) -> Vec<u8> { self.serialize_map() }
         }
     };
 }
@@ -157,9 +157,7 @@ macro_rules! impl_psbt_hash_deserialize {
     ($hash_type:ty) => {
         impl $crate::psbt::serialize::Deserialize for $hash_type {
             fn deserialize(bytes: &[u8]) -> Result<Self, $crate::psbt::Error> {
-                <$hash_type>::from_slice(&bytes[..]).map_err(|e| {
-                    $crate::psbt::Error::from(e)
-                })
+                <$hash_type>::from_slice(&bytes[..]).map_err(|e| $crate::psbt::Error::from(e))
             }
         }
     };
@@ -168,9 +166,7 @@ macro_rules! impl_psbt_hash_deserialize {
 macro_rules! impl_psbt_hash_serialize {
     ($hash_type:ty) => {
         impl $crate::psbt::serialize::Serialize for $hash_type {
-            fn serialize(&self) -> $crate::prelude::Vec<u8> {
-                self.as_byte_array().to_vec()
-            }
+            fn serialize(&self) -> $crate::prelude::Vec<u8> { self.as_byte_array().to_vec() }
         }
     };
 }
