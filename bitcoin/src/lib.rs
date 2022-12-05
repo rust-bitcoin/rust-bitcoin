@@ -116,6 +116,15 @@ use std::io;
 #[cfg(not(feature = "std"))]
 use core2::io;
 
+// May depend on crate features and we don't want to bother with it
+#[allow(unused)]
+#[cfg(feature = "std")]
+use std::error::Error as StdError;
+
+#[allow(unused)]
+#[cfg(not(feature = "std"))]
+use core2::error::Error as StdError;
+
 pub use crate::address::{Address, AddressType};
 pub use crate::amount::{Amount, Denomination, SignedAmount};
 pub use crate::blockdata::block::{self, Block};
