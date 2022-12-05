@@ -65,6 +65,9 @@ use bitcoin_hashes::hex::ToHex;
 
 #[cfg(feature = "serde")] use serde;
 
+#[cfg(feature = "crypto")]
+use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
+
 use crate::hash_types::{PubkeyHash, WPubkeyHash, ScriptHash, WScriptHash};
 use crate::blockdata::opcodes::{self, all::*};
 use crate::consensus::{encode, Decodable, Encodable};
@@ -74,11 +77,14 @@ use crate::policy::DUST_RELAY_TX_FEE;
 #[cfg(feature="bitcoinconsensus")] use core::convert::From;
 use crate::OutPoint;
 
+#[cfg(feature = "crypto")]
 use crate::key::PublicKey;
 use crate::address::WitnessVersion;
-use crate::taproot::{LeafVersion, TapBranchHash, TapLeafHash};
-use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
+#[cfg(feature = "crypto")]
 use crate::schnorr::{TapTweak, TweakedPublicKey, UntweakedPublicKey};
+use crate::taproot::{LeafVersion,TapLeafHash};
+#[cfg(feature = "crypto")]
+use crate::taproot::TapBranchHash;
 
 /// Bitcoin script slice.
 ///
@@ -243,6 +249,8 @@ impl Script {
     /// Computes P2TR output with a given internal key and a single script spending path equal to
     /// the current script, assuming that the script is a Tapscript.
     #[inline]
+    #[cfg(feature = "crypto")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
     pub fn to_v1_p2tr<C: Verification>(&self, secp: &Secp256k1<C>, internal_key: UntweakedPublicKey) -> ScriptBuf {
         let leaf_hash = self.tapscript_leaf_hash();
         let merkle_root = TapBranchHash::from_inner(leaf_hash.into_inner());
@@ -290,6 +298,8 @@ impl Script {
     /// This happens when the public key is invalid (e.g. the point not being on the curve).
     /// It also implies the script is unspendable.
     #[inline]
+    #[cfg(feature = "crypto")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
     pub fn p2pk_public_key(&self) -> Option<PublicKey> {
         PublicKey::from_slice(self.p2pk_pubkey_bytes()?).ok()
     }
@@ -1098,6 +1108,8 @@ impl ScriptBuf {
     }
 
     /// Generates P2PK-type of scriptPubkey.
+    #[cfg(feature = "crypto")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
     pub fn new_p2pk(pubkey: &PublicKey) -> Self {
         Builder::new()
             .push_key(pubkey)
@@ -1137,12 +1149,16 @@ impl ScriptBuf {
 
     /// Generates P2TR for script spending path using an internal public key and some optional
     /// script tree merkle root.
+    #[cfg(feature = "crypto")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
     pub fn new_v1_p2tr<C: Verification>(secp: &Secp256k1<C>, internal_key: UntweakedPublicKey, merkle_root: Option<TapBranchHash>) -> Self {
         let (output_key, _) = internal_key.tap_tweak(secp, merkle_root);
         ScriptBuf::new_witness_program(WitnessVersion::V1, &output_key.serialize())
     }
 
     /// Generates P2TR for key spending path for a known [`TweakedPublicKey`].
+    #[cfg(feature = "crypto")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
     pub fn new_v1_p2tr_tweaked(output_key: TweakedPublicKey) -> Self {
         ScriptBuf::new_witness_program(WitnessVersion::V1, &output_key.serialize())
     }
@@ -1773,6 +1789,8 @@ impl Builder {
     }
 
     /// Adds instructions to push a public key onto the stack.
+    #[cfg(feature = "crypto")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
     pub fn push_key(self, key: &PublicKey) -> Builder {
         if key.compressed {
             self.push_slice(&key.inner.serialize()[..])
@@ -1782,6 +1800,8 @@ impl Builder {
     }
 
     /// Adds instructions to push an XOnly public key onto the stack.
+    #[cfg(feature = "crypto")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
     pub fn push_x_only_key(self, x_only_key: &XOnlyPublicKey) -> Builder {
         self.push_slice(&x_only_key.serialize())
     }
@@ -2002,6 +2022,7 @@ impl Decodable for ScriptBuf {
 
 #[cfg(test)]
 mod test {
+    #[cfg(feature = "crypto")]
     use core::str::FromStr;
 
     use super::*;
@@ -2010,11 +2031,14 @@ mod test {
     use crate::hashes::hex::{FromHex, ToHex};
     use crate::consensus::encode::{deserialize, serialize};
     use crate::blockdata::opcodes;
+    #[cfg(feature = "crypto")]
     use crate::crypto::key::PublicKey;
+    #[cfg(feature = "crypto")]
     use crate::psbt::serialize::Serialize;
     use crate::internal_macros::hex_script;
 
     #[test]
+    #[cfg(feature = "crypto")]
     fn script() {
         let mut comp = vec![];
         let mut script = Builder::new();
@@ -2051,6 +2075,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "crypto")]
     fn p2pk_pubkey_bytes_valid_key_and_valid_script_returns_expected_key() {
         let key_str = "0411db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3";
         let key = PublicKey::from_str(key_str).unwrap();
@@ -2060,6 +2085,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "crypto")]
     fn p2pk_pubkey_bytes_no_checksig_returns_none() {
         let key_str = "0411db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3";
         let key = PublicKey::from_str(key_str).unwrap();
@@ -2081,6 +2107,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "crypto")]
     fn p2pk_pubkey_bytes_different_op_code_returns_none() {
         let key_str = "0411db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3";
         let key = PublicKey::from_str(key_str).unwrap();
@@ -2110,6 +2137,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "crypto")]
     fn p2pk_pubkey_bytes_compressed_key_returns_expected_key() {
         let compressed_key_str = "0311db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5c";
         let key = PublicKey::from_str(compressed_key_str).unwrap();
@@ -2119,6 +2147,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "crypto")]
     fn p2pk_public_key_valid_key_and_valid_script_returns_expected_key() {
         let key_str = "0411db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3";
         let key = PublicKey::from_str(key_str).unwrap();
@@ -2128,6 +2157,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "crypto")]
     fn p2pk_public_key_no_checksig_returns_none() {
         let key_str = "0411db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3";
         let key = PublicKey::from_str(key_str).unwrap();
@@ -2136,18 +2166,21 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "crypto")]
     fn p2pk_public_key_empty_script_returns_none() {
         let empty_script = Script::builder().into_script();
         assert!(empty_script.p2pk_public_key().is_none());
     }
 
     #[test]
+    #[cfg(feature = "crypto")]
     fn p2pk_public_key_no_key_returns_none() {
         let no_push_bytes = Script::builder().push_opcode(OP_CHECKSIG).into_script();
         assert!(no_push_bytes.p2pk_public_key().is_none());
     }
 
     #[test]
+    #[cfg(feature = "crypto")]
     fn p2pk_public_key_different_op_code_returns_none() {
         let key_str = "0411db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3";
         let key = PublicKey::from_str(key_str).unwrap();
@@ -2156,6 +2189,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "crypto")]
     fn p2pk_public_key_incorrect_size_returns_none() {
         let malformed_key = "21032e58afe51f9ed8ad3cc7897f634d881fdbe49816429ded8156bebd2ffd1";
         let malformed_key_script = Script::builder()
@@ -2167,6 +2201,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "crypto")]
     fn p2pk_public_key_invalid_key_returns_none() {
         let malformed_key = "21032e58afe51f9ed8ad3cc7897f634d881fdbe49816429ded8156bebd2ffd1ux";
         let invalid_key_script = Script::builder()
@@ -2177,6 +2212,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "crypto")]
     fn p2pk_public_key_compressed_key_returns_some() {
         let compressed_key_str = "0311db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5c";
         let key = PublicKey::from_str(compressed_key_str).unwrap();
@@ -2186,6 +2222,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "crypto")]
     fn script_x_only_key() {
         // Notice the "20" which prepends the keystr. That 20 is hexidecimal for "32". The Builder automatically adds the 32 opcode
         // to our script in order to give a heads up to the script compiler that it should add the next 32 bytes to the stack.
@@ -2209,6 +2246,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "crypto")]
     fn script_generators() {
         let pubkey = PublicKey::from_str("0234e6a79c5359c613762d537e0e19d86c77c1666d8c9ab050f23acd198e97f93e").unwrap();
         assert!(ScriptBuf::new_p2pk(&pubkey).is_p2pk());

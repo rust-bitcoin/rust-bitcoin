@@ -73,6 +73,8 @@ pub extern crate bitcoinconsensus;
 #[cfg(feature = "hashbrown")]
 #[cfg_attr(docsrs, doc(cfg(feature = "hashbrown")))]
 pub extern crate hashbrown;
+#[cfg(feature = "crypto")]
+#[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
 pub extern crate secp256k1;
 
 #[cfg(feature = "serde")]
@@ -94,15 +96,21 @@ pub mod amount;
 pub mod base58;
 pub mod bip152;
 pub mod bip158;
+#[cfg(feature = "crypto")]
+#[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
 pub mod bip32;
 pub mod blockdata;
 pub mod consensus;
+#[cfg(feature = "crypto")]
+#[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
 pub mod crypto;
 pub mod error;
 pub mod hash_types;
 pub mod merkle_tree;
 pub mod policy;
 pub mod pow;
+#[cfg(feature = "crypto")]
+#[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
 pub mod psbt;
 pub mod sighash;
 pub mod sign_message;
@@ -132,7 +140,11 @@ pub use crate::blockdata::transaction::{self, OutPoint, Sequence, Transaction, T
 pub use crate::blockdata::witness::{self, Witness};
 pub use crate::blockdata::{constants, opcodes};
 pub use crate::consensus::encode::VarInt;
+#[cfg(feature = "crypto")]
+#[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
 pub use crate::crypto::key::{self, PrivateKey, PublicKey};
+#[cfg(feature = "crypto")]
+#[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
 pub use crate::crypto::{ecdsa, schnorr};
 pub use crate::error::Error;
 pub use crate::hash_types::*;

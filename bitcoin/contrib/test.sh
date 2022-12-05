@@ -2,7 +2,7 @@
 
 set -ex
 
-FEATURES="base64 bitcoinconsensus serde rand secp-recovery"
+FEATURES="base64 bitcoinconsensus serde rand secp-recovery crypto"
 
 if [ "$DO_COV" = true ]
 then
@@ -30,10 +30,10 @@ fi
 if [ "$DO_LINT" = true ]
 then
     cargo clippy --all-features --all-targets -- -D warnings
-    cargo clippy --example bip32 -- -D warnings
-    cargo clippy --example handshake -- -D warnings
-    cargo clippy --example ecdsa-psbt --features=bitcoinconsensus -- -D warnings
-    cargo clippy --example taproot-psbt --features=bitcoinconsensus -- -D warnings
+    cargo clippy --example bip32 --features=crypto -- -D warnings
+    cargo clippy --example handshake --features=crypto  -- -D warnings
+    cargo clippy --example ecdsa-psbt --features=crypto,bitcoinconsensus -- -D warnings
+    cargo clippy --example taproot-psbt --features=crypto,bitcoinconsensus -- -D warnings
 fi
 
 echo "********* Testing std *************"
@@ -65,8 +65,8 @@ then
         cargo build --verbose --features="no-std $feature"
     done
 
-    cargo run --example bip32 7934c09359b234e076b9fa5a1abfd38e3dc2a9939745b7cc3c22a48d831d14bd
-    cargo run --no-default-features --features no-std --example bip32 7934c09359b234e076b9fa5a1abfd38e3dc2a9939745b7cc3c22a48d831d14bd
+    cargo run --features=crypto --example bip32 7934c09359b234e076b9fa5a1abfd38e3dc2a9939745b7cc3c22a48d831d14bd
+    cargo run --no-default-features --features=no-std,crypto --example bip32 7934c09359b234e076b9fa5a1abfd38e3dc2a9939745b7cc3c22a48d831d14bd
 fi
 
 # Test each feature
@@ -76,8 +76,8 @@ do
     cargo test --verbose --features="$feature"
 done
 
-cargo run --example ecdsa-psbt --features=bitcoinconsensus
-cargo run --example taproot-psbt --features=bitcoinconsensus
+cargo run --example ecdsa-psbt --features=crypto,bitcoinconsensus
+cargo run --example taproot-psbt --features=crypto,bitcoinconsensus
 
 # Build the docs if told to (this only works with the nightly toolchain)
 if [ "$DO_DOCS" = true ]; then
@@ -115,7 +115,7 @@ if [ "$AS_DEPENDENCY" = true ]
 then
     cargo new dep_test 2> /dev/null # Mute warning about workspace, fixed below.
     cd dep_test
-    echo 'bitcoin = { path = "..", features = ["serde"] }\n\n' >> Cargo.toml
+    echo 'bitcoin = { path = "..", features = ["serde", "crypto"] }\n\n' >> Cargo.toml
     # Adding an empty workspace section excludes this crate from the rust-bitcoin workspace.
     echo '[workspace]\n\n' >> Cargo.toml
 

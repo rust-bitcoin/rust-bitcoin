@@ -26,6 +26,7 @@ use crate::hashes::{sha256d, Hash, sha256};
 use crate::hash_types::{BlockHash, FilterHash, TxMerkleNode, FilterHeader};
 use crate::io::{self, Cursor, Read};
 
+#[cfg(feature = "crypto")]
 use crate::psbt;
 use crate::bip152::{ShortId, PrefilledTransaction};
 use crate::taproot::TapLeafHash;
@@ -42,6 +43,8 @@ pub enum Error {
     /// And I/O error.
     Io(io::Error),
     /// PSBT-related error.
+    #[cfg(feature = "crypto")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
     Psbt(psbt::Error),
     /// Tried to allocate an oversized vector.
     OversizedVectorAllocation {
@@ -69,6 +72,7 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Error::Io(ref e) => write_err!(f, "IO error"; e),
+            #[cfg(feature = "crypto")]
             Error::Psbt(ref e) => write_err!(f, "PSBT error"; e),
             Error::OversizedVectorAllocation { requested: ref r, max: ref m } => write!(f,
                 "allocation of oversized vector: requested {}, maximum {}", r, m),
@@ -90,6 +94,7 @@ impl std::error::Error for Error {
 
         match self {
             Io(e) => Some(e),
+            #[cfg(feature = "crypto")]
             Psbt(e) => Some(e),
             OversizedVectorAllocation { .. }
             | InvalidChecksum { .. }
@@ -108,6 +113,7 @@ impl From<io::Error> for Error {
 }
 
 #[doc(hidden)]
+#[cfg(feature = "crypto")]
 impl From<psbt::Error> for Error {
     fn from(e: psbt::Error) -> Error {
         Error::Psbt(e)

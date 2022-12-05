@@ -5,6 +5,8 @@
 //! This module is for special serde serializations.
 //!
 
+#[cfg(feature = "crypto")]
+#[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
 pub mod btreemap_byte_values {
     //! Module for serialization of BTreeMaps with hex byte values.
     #![allow(missing_docs)]
@@ -74,6 +76,8 @@ pub mod btreemap_byte_values {
     }
 }
 
+#[cfg(feature = "crypto")]
+#[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
 pub mod btreemap_as_seq {
     //! Module for serialization of BTreeMaps as lists of sequences because
     //! serde_json will not serialize hashmaps with non-string keys be default.
@@ -146,6 +150,8 @@ pub mod btreemap_as_seq {
     }
 }
 
+#[cfg(feature = "crypto")]
+#[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
 pub mod btreemap_as_seq_byte_values {
     //! Module for serialization of BTreeMaps as lists of sequences because
     //! serde_json will not serialize hashmaps with non-string keys be default.
@@ -231,6 +237,8 @@ pub mod btreemap_as_seq_byte_values {
     }
 }
 
+#[cfg(feature = "crypto")]
+#[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
 pub mod hex_bytes {
     //! Module for serialization of byte arrays as hex strings.
     #![allow(missing_docs)]

@@ -52,6 +52,7 @@ pub(crate) use test_macros::*;
 #[cfg(test)]
 mod test_macros {
     use crate::hashes::hex::FromHex;
+    #[cfg(feature = "crypto")]
     use crate::PublicKey;
 
     /// Trait used to create a value from hex string for testing purposes.
@@ -68,6 +69,7 @@ mod test_macros {
         fn test_from_hex(hex: &str) -> Self { Self::from_hex(hex).unwrap() }
     }
 
+    #[cfg(feature = "crypto")]
     impl TestFromHex for PublicKey {
         fn test_from_hex(hex: &str) -> Self {
             PublicKey::from_slice(&Vec::from_hex(hex).unwrap()).unwrap()

@@ -9,10 +9,13 @@ use core::cmp::Reverse;
 use core::convert::TryFrom;
 use core::fmt;
 
+#[cfg(feature = "crypto")]
 use bitcoin_internals::write_err;
+#[cfg(feature = "crypto")]
 use secp256k1::{self, Scalar, Secp256k1};
 
 use crate::consensus::Encodable;
+#[cfg(feature = "crypto")]
 use crate::crypto::schnorr::{TapTweak, TweakedPublicKey, UntweakedPublicKey, XOnlyPublicKey};
 use crate::hashes::{sha256, sha256t_hash_newtype, Hash, HashEngine};
 use crate::prelude::*;
@@ -64,6 +67,8 @@ sha256t_hash_newtype!(TapSighashHash, TapSighashTag, MIDSTATE_TAPSIGHASH, 64,
     doc="Taproot-tagged hash for the taproot signature hash", false
 );
 
+#[cfg(feature = "crypto")]
+#[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
 impl secp256k1::ThirtyTwoByteHash for TapSighashHash {
     fn into_32(self) -> [u8; 32] { self.into_inner() }
 }
@@ -71,6 +76,8 @@ impl secp256k1::ThirtyTwoByteHash for TapSighashHash {
 impl TapTweakHash {
     /// Creates a new BIP341 [`TapTweakHash`] from key and tweak. Produces `H_taptweak(P||R)` where
     /// `P` is the internal key and `R` is the merkle root.
+    #[cfg(feature = "crypto")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
     pub fn from_key_and_tweak(
         internal_key: UntweakedPublicKey,
         merkle_root: Option<TapBranchHash>,
@@ -87,6 +94,8 @@ impl TapTweakHash {
     }
 
     /// Converts a `TapTweakHash` into a `Scalar` ready for use with key tweaking API.
+    #[cfg(feature = "crypto")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
     pub fn to_scalar(self) -> Scalar {
         // This is statistically extremely unlikely to panic.
         Scalar::from_be_bytes(self.into_inner()).expect("hash value greater than curve order")
@@ -149,6 +158,8 @@ pub const TAPROOT_CONTROL_MAX_SIZE: usize =
     TAPROOT_CONTROL_BASE_SIZE + TAPROOT_CONTROL_NODE_SIZE * TAPROOT_CONTROL_MAX_NODE_COUNT;
 
 // type alias for versioned tap script corresponding merkle proof
+#[cfg(feature = "crypto")]
+#[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
 type ScriptMerkleProofMap = BTreeMap<(ScriptBuf, LeafVersion), BTreeSet<TaprootMerkleBranch>>;
 
 /// Represents taproot spending information.
@@ -173,6 +184,8 @@ type ScriptMerkleProofMap = BTreeMap<(ScriptBuf, LeafVersion), BTreeSet<TaprootM
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
+#[cfg(feature = "crypto")]
+#[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
 pub struct TaprootSpendInfo {
     /// The BIP341 internal key.
     internal_key: UntweakedPublicKey,
@@ -189,6 +202,7 @@ pub struct TaprootSpendInfo {
     script_map: ScriptMerkleProofMap,
 }
 
+#[cfg(feature = "crypto")]
 impl TaprootSpendInfo {
     /// Creates a new [`TaprootSpendInfo`] from a list of scripts (with default script version) and
     /// weights of satisfaction for that script.
@@ -302,10 +316,14 @@ impl TaprootSpendInfo {
     }
 }
 
+#[cfg(feature = "crypto")]
+#[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
 impl From<TaprootSpendInfo> for TapTweakHash {
     fn from(spend_info: TaprootSpendInfo) -> TapTweakHash { spend_info.tap_tweak() }
 }
 
+#[cfg(feature = "crypto")]
+#[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
 impl From<&TaprootSpendInfo> for TapTweakHash {
     fn from(spend_info: &TaprootSpendInfo) -> TapTweakHash { spend_info.tap_tweak() }
 }
@@ -452,6 +470,8 @@ impl TaprootBuilder {
     ///
     /// Returns the unmodified builder as Err if the builder is not finalizable.
     /// See also [`TaprootBuilder::is_finalizable`]
+    #[cfg(feature = "crypto")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
     pub fn finalize<C: secp256k1::Verification>(
         mut self,
         secp: &Secp256k1<C>,
@@ -469,6 +489,8 @@ impl TaprootBuilder {
         }
     }
 
+    #[cfg(feature = "crypto")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
     pub(crate) fn branch(&self) -> &[Option<NodeInfo>] { &self.branch }
 
     /// Inserts a leaf at `depth`.
@@ -720,6 +742,8 @@ impl_try_from!(Box<[sha256::Hash]>);
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
+#[cfg(feature = "crypto")]
+#[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
 pub struct ControlBlock {
     /// The tapleaf version.
     pub leaf_version: LeafVersion,
@@ -731,6 +755,7 @@ pub struct ControlBlock {
     pub merkle_branch: TaprootMerkleBranch,
 }
 
+#[cfg(feature = "crypto")]
 impl ControlBlock {
     /// Constructs a `ControlBlock` from slice. This is an extra witness element that provides the
     /// proof that taproot script pubkey is correctly computed with some specified leaf hash. This
@@ -972,6 +997,8 @@ pub enum TaprootBuilderError {
     /// Two nodes at depth 0 are not allowed.
     OverCompleteTree,
     /// Invalid taproot internal key.
+    #[cfg(feature = "crypto")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
     InvalidInternalKey(secp256k1::Error),
     /// Called finalize on a empty tree.
     EmptyTree,
@@ -995,6 +1022,7 @@ impl fmt::Display for TaprootBuilderError {
                 "Attempted to create a tree with two nodes at depth 0. There must\
                 only be a exactly one node at depth 0",
             ),
+            #[cfg(feature = "crypto")]
             TaprootBuilderError::InvalidInternalKey(ref e) => {
                 write_err!(f, "invalid internal x-only key"; e)
             }
@@ -1012,6 +1040,7 @@ impl std::error::Error for TaprootBuilderError {
         use self::TaprootBuilderError::*;
 
         match self {
+            #[cfg(feature = "crypto")]
             InvalidInternalKey(e) => Some(e),
             InvalidMerkleTreeDepth(_) | NodeNotInDfsOrder | OverCompleteTree | EmptyTree => None,
         }
@@ -1031,8 +1060,12 @@ pub enum TaprootError {
     /// Invalid control block size.
     InvalidControlBlockSize(usize),
     /// Invalid taproot internal key.
+    #[cfg(feature = "crypto")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
     InvalidInternalKey(secp256k1::Error),
     /// Invalid parity for internal key.
+    #[cfg(feature = "crypto")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
     InvalidParity(secp256k1::InvalidParityValue),
     /// Empty tap tree.
     EmptyTree,
@@ -1058,8 +1091,10 @@ impl fmt::Display for TaprootError {
                 "Control Block size({}) must be of the form 33 + 32*m where  0 <= m <= {} ",
                 sz, TAPROOT_CONTROL_MAX_NODE_COUNT
             ),
+            #[cfg(feature = "crypto")]
             TaprootError::InvalidInternalKey(ref e) =>
                 write_err!(f, "invalid internal x-only key"; e),
+            #[cfg(feature = "crypto")]
             TaprootError::InvalidParity(_) => write!(f, "invalid parity value for internal key"),
             TaprootError::EmptyTree => write!(f, "Taproot Tree must contain at least one script"),
         }
@@ -1073,28 +1108,35 @@ impl std::error::Error for TaprootError {
         use self::TaprootError::*;
 
         match self {
+            #[cfg(feature = "crypto")]
             InvalidInternalKey(e) => Some(e),
             InvalidMerkleBranchSize(_)
             | InvalidMerkleTreeDepth(_)
             | InvalidTaprootLeafVersion(_)
             | InvalidControlBlockSize(_)
-            | InvalidParity(_)
             | EmptyTree => None,
+            #[cfg(feature = "crypto")]
+            InvalidParity(_) => None,
         }
     }
 }
 
 #[cfg(test)]
 mod test {
+    #[cfg(feature = "crypto")]
     use core::str::FromStr;
 
+    #[cfg(feature = "crypto")]
     use secp256k1::{VerifyOnly, XOnlyPublicKey};
 
     use super::*;
+    #[cfg(feature = "crypto")]
     use crate::crypto::schnorr::TapTweak;
+    #[cfg(feature = "crypto")]
     use crate::hashes::hex::{FromHex, ToHex};
     use crate::hashes::sha256t::Tag;
     use crate::hashes::{sha256, Hash, HashEngine};
+    #[cfg(feature = "crypto")]
     use crate::{Address, Network};
     extern crate serde_json;
 
@@ -1133,6 +1175,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "crypto")]
     fn test_vectors_core() {
         //! Test vectors taken from Core
 
@@ -1179,6 +1222,7 @@ mod test {
         );
     }
 
+    #[cfg(feature = "crypto")]
     fn _verify_tap_commitments(
         secp: &Secp256k1<VerifyOnly>,
         out_spk_hex: &str,
@@ -1195,6 +1239,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "crypto")]
     fn control_block_verify() {
         let secp = Secp256k1::verification_only();
         // test vectors obtained from printing values in feature_taproot.py from Bitcoin Core
@@ -1247,6 +1292,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "crypto")]
     fn build_huffman_tree() {
         let secp = Secp256k1::verification_only();
         let internal_key = UntweakedPublicKey::from_str(
@@ -1306,6 +1352,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "crypto")]
     fn taptree_builder() {
         let secp = Secp256k1::verification_only();
         let internal_key = UntweakedPublicKey::from_str(
@@ -1352,6 +1399,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "crypto")]
     fn bip_341_tests() {
         fn process_script_trees(
             v: &serde_json::Value,
@@ -1434,6 +1482,7 @@ mod test {
         }
     }
 
+    #[cfg(feature = "crypto")]
     fn bip_341_read_json() -> serde_json::Value {
         let json_str = include_str!("../tests/data/bip341_tests.json");
         serde_json::from_str(json_str).expect("JSON was not well-formatted")

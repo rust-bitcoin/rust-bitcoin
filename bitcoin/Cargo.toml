@@ -14,7 +14,9 @@ edition = "2018"
 
 # Please don't forget to add relevant features to docs.rs below
 [features]
-default = [ "std", "secp-recovery" ]
+default = ["std"]
+crypto-std = ["secp256k1/std", "crypto"] # Enable this feature to use ECC (i.e. keys and sigs).
+crypto = ["secp256k1/alloc"]
 secp-lowmemory = ["secp256k1/lowmemory"]
 secp-recovery = ["secp256k1/recovery"]
 rand = ["secp256k1/rand-std"]
@@ -27,7 +29,7 @@ rust_v_1_53 = []
 # The no-std feature doesn't disable std - you need to turn off the std feature for that by disabling default.
 # Instead no-std enables additional features required for this crate to be usable without std.
 # As a result, both can be enabled without conflict.
-std = ["secp256k1/std", "bitcoin_hashes/std", "bech32/std", "bitcoin-internals/std"]
+std = ["bitcoin_hashes/std", "bech32/std", "bitcoin-internals/std"]
 no-std = ["hashbrown", "core2/alloc", "bitcoin_hashes/alloc", "secp256k1/alloc"]
 
 [package.metadata.docs.rs]
@@ -38,7 +40,8 @@ rustdoc-args = ["--cfg", "docsrs"]
 bitcoin-internals = { path = "../internals" }
 bech32 = { version = "0.9.0", default-features = false }
 bitcoin_hashes = { version = "0.11.0", default-features = false }
-secp256k1 = { version = "0.25.0", default-features = false, features = ["bitcoin_hashes"] }
+
+secp256k1 = { version = "0.25.0", default-features = false, features = ["bitcoin_hashes"], optional = true }
 core2 = { version = "0.3.0", optional = true, default-features = false }
 
 base64 = { version = "0.13.0", optional = true }
@@ -59,15 +62,16 @@ mutagen = { git = "https://github.com/llogiq/mutagen" }
 
 [[example]]
 name = "bip32"
+required-features = ["crypto"]
 
 [[example]]
 name = "handshake"
-required-features = ["std"]
+required-features = ["std", "crypto"]
 
 [[example]]
 name = "ecdsa-psbt"
-required-features = ["std", "bitcoinconsensus"]
+required-features = ["std", "crypto", "bitcoinconsensus"]
 
 [[example]]
 name = "taproot-psbt"
-required-features = ["std", "bitcoinconsensus"]
+required-features = ["std", "crypto", "bitcoinconsensus"]

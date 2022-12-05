@@ -12,7 +12,7 @@ use core::borrow::Borrow;
 use core::ops::{Deref, DerefMut};
 use core::{fmt, str};
 
-use crate::{io, Script, ScriptBuf, Transaction, TxIn, TxOut, Sequence, Sighash};
+use crate::{io, Script, ScriptBuf, Sequence, Sighash, Transaction, TxIn, TxOut};
 use crate::blockdata::transaction::EncodeSigningDataResult;
 use crate::blockdata::witness::Witness;
 use crate::consensus::{encode, Encodable};
@@ -1049,14 +1049,17 @@ mod tests {
     use std::str::FromStr;
 
     use super::*;
+    #[cfg(feature = "crypto")]
     use crate::address::Address;
     use crate::blockdata::locktime::absolute;
     use crate::consensus::deserialize;
+    #[cfg(feature = "crypto")]
     use crate::crypto::key::PublicKey;
     use crate::hash_types::Sighash;
     use crate::hashes::hex::FromHex;
     use crate::hashes::{Hash, HashEngine};
     use crate::internal_macros::{hex_from_slice, hex_script};
+    #[cfg(feature = "crypto")]
     use crate::network::constants::Network;
     use crate::taproot::{TapLeafHash, TapSighashHash};
 
@@ -1370,8 +1373,9 @@ mod tests {
         assert_eq!(expected, hash.into_inner());
     }
 
-    #[cfg(feature = "serde")]
     #[test]
+    #[cfg(feature = "serde")]
+    #[cfg(feature = "crypto")]
     fn bip_341_sighash_tests() {
         fn sighash_deser_numeric<'de, D>(deserializer: D) -> Result<SchnorrSighashType, D::Error>
         where
@@ -1599,12 +1603,14 @@ mod tests {
         }
     }
 
+    #[cfg(feature = "crypto")]
     fn p2pkh_hex(pk: &str) -> ScriptBuf {
         let pk: PublicKey = PublicKey::from_str(pk).unwrap();
         Address::p2pkh(&pk, Network::Bitcoin).script_pubkey()
     }
 
     #[test]
+    #[cfg(feature = "crypto")]
     fn bip143_p2wpkh() {
         let tx = deserialize::<Transaction>(
             &Vec::from_hex(
@@ -1644,6 +1650,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "crypto")]
     fn bip143_p2wpkh_nested_in_p2sh() {
         let tx = deserialize::<Transaction>(
             &Vec::from_hex(

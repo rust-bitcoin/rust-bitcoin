@@ -22,26 +22,35 @@
 
 #![cfg(feature = "serde")]
 
+#[cfg(feature = "crypto")]
 use std::collections::BTreeMap;
+#[cfg(feature = "crypto")]
 use std::str::FromStr;
 
 use bincode::serialize;
+#[cfg(feature = "crypto")]
 use bitcoin::bip32::{ChildNumber, ExtendedPrivKey, ExtendedPubKey, KeySource};
 use bitcoin::blockdata::locktime::{absolute, relative};
 use bitcoin::blockdata::witness::Witness;
 use bitcoin::consensus::encode::deserialize;
 use bitcoin::hashes::hex::FromHex;
+#[cfg(feature = "crypto")]
 use bitcoin::hashes::{hash160, ripemd160, sha256, sha256d, Hash};
+#[cfg(feature = "crypto")]
 use bitcoin::psbt::raw::{self, Key, Pair, ProprietaryKey};
+#[cfg(feature = "crypto")]
 use bitcoin::psbt::{Input, Output, Psbt, PsbtSighashType};
+#[cfg(feature = "crypto")]
 use bitcoin::schnorr::{self, UntweakedPublicKey};
+#[cfg(feature = "crypto")]
+use bitcoin::secp256k1::Secp256k1;
+#[cfg(feature = "crypto")]
 use bitcoin::sighash::{EcdsaSighashType, SchnorrSighashType};
+#[cfg(feature = "crypto")]
 use bitcoin::taproot::{ControlBlock, LeafVersion, TaprootBuilder, TaprootSpendInfo};
-use bitcoin::{
-    ecdsa, Address, Block, Network, OutPoint, PrivateKey, PublicKey, ScriptBuf, Sequence, Target,
-    Transaction, TxIn, TxOut, Txid, Work,
-};
-use secp256k1::Secp256k1;
+#[cfg(feature = "crypto")]
+use bitcoin::{ecdsa, Address, Network, OutPoint, PrivateKey, PublicKey, Sequence, Txid};
+use bitcoin::{Block, ScriptBuf, Target, Transaction, TxIn, TxOut, Work};
 
 /// Implicitly does regression test for `BlockHeader` also.
 #[test]
@@ -143,6 +152,7 @@ fn serde_regression_witness() {
 }
 
 #[test]
+#[cfg(feature = "crypto")]
 fn serde_regression_address() {
     let s = include_str!("data/serde/public_key_hex");
     let pk = PublicKey::from_str(s.trim()).unwrap();
@@ -154,6 +164,7 @@ fn serde_regression_address() {
 }
 
 #[test]
+#[cfg(feature = "crypto")]
 fn serde_regression_extended_priv_key() {
     let s = include_str!("data/serde/extended_priv_key");
     let key = ExtendedPrivKey::from_str(s.trim()).unwrap();
@@ -163,6 +174,7 @@ fn serde_regression_extended_priv_key() {
 }
 
 #[test]
+#[cfg(feature = "crypto")]
 fn serde_regression_extended_pub_key() {
     let s = include_str!("data/serde/extended_pub_key");
     let key = ExtendedPubKey::from_str(s.trim()).unwrap();
@@ -172,6 +184,7 @@ fn serde_regression_extended_pub_key() {
 }
 
 #[test]
+#[cfg(feature = "crypto")]
 fn serde_regression_ecdsa_sig() {
     let s = include_str!("data/serde/ecdsa_sig_hex");
     let sig = ecdsa::Signature {
@@ -185,6 +198,7 @@ fn serde_regression_ecdsa_sig() {
 }
 
 #[test]
+#[cfg(feature = "crypto")]
 fn serde_regression_control_block() {
     let s = include_str!("data/serde/control_block_hex");
     let block = ControlBlock::from_slice(&Vec::<u8>::from_hex(s.trim()).unwrap()).unwrap();
@@ -195,6 +209,7 @@ fn serde_regression_control_block() {
 }
 
 #[test]
+#[cfg(feature = "crypto")]
 fn serde_regression_child_number() {
     let num = ChildNumber::Normal { index: 0xDEADBEEF };
     let got = serialize(&num).unwrap();
@@ -203,6 +218,7 @@ fn serde_regression_child_number() {
 }
 
 #[test]
+#[cfg(feature = "crypto")]
 fn serde_regression_private_key() {
     let sk = PrivateKey::from_wif("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
     let got = serialize(&sk).unwrap();
@@ -211,6 +227,7 @@ fn serde_regression_private_key() {
 }
 
 #[test]
+#[cfg(feature = "crypto")]
 fn serde_regression_public_key() {
     let s = include_str!("data/serde/public_key_hex");
     let pk = PublicKey::from_str(s.trim()).unwrap();
@@ -220,6 +237,7 @@ fn serde_regression_public_key() {
 }
 
 #[test]
+#[cfg(feature = "crypto")]
 fn serde_regression_psbt() {
     let tx = Transaction {
         version: 1,
@@ -319,6 +337,7 @@ fn serde_regression_psbt() {
 }
 
 #[test]
+#[cfg(feature = "crypto")]
 fn serde_regression_raw_pair() {
     let pair = Pair {
         key: Key { type_value: 1u8, key: vec![0u8, 1u8, 2u8, 3u8] },
@@ -330,6 +349,7 @@ fn serde_regression_raw_pair() {
 }
 
 #[test]
+#[cfg(feature = "crypto")]
 fn serde_regression_proprietary_key() {
     let key = ProprietaryKey {
         prefix: vec![0u8, 1u8, 2u8, 3u8],
@@ -342,6 +362,7 @@ fn serde_regression_proprietary_key() {
 }
 
 #[test]
+#[cfg(feature = "crypto")]
 fn serde_regression_schnorr_sig() {
     let s = include_str!("data/serde/schnorr_sig_hex");
     let sig = schnorr::Signature {
@@ -355,6 +376,7 @@ fn serde_regression_schnorr_sig() {
 }
 
 #[test]
+#[cfg(feature = "crypto")]
 fn serde_regression_taproot_builder() {
     let ver = LeafVersion::from_consensus(0).unwrap();
     let script = ScriptBuf::from(vec![0u8, 1u8, 2u8]);
@@ -366,6 +388,7 @@ fn serde_regression_taproot_builder() {
 }
 
 #[test]
+#[cfg(feature = "crypto")]
 fn serde_regression_taproot_spend_info() {
     let secp = Secp256k1::verification_only();
     let internal_key = UntweakedPublicKey::from_str(

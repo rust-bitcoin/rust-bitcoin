@@ -46,6 +46,8 @@ See [`hashes::Hash::DISPLAY_BACKWARD`] for more details.
     hash_newtype!(Wtxid, sha256d::Hash, 32, doc="A bitcoin witness transaction ID.");
     hash_newtype!(BlockHash, sha256d::Hash, 32, doc="A bitcoin block hash.");
     hash_newtype!(Sighash, sha256d::Hash, 32, doc="Hash of the transaction according to the signature algorithm");
+    #[cfg(feature = "crypto")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
     impl secp256k1::ThirtyTwoByteHash for Sighash {
         fn into_32(self) -> [u8; 32] {
             use hashes::Hash;

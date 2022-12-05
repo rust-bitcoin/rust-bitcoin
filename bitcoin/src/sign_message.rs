@@ -24,8 +24,12 @@ mod message_signing {
     use secp256k1;
     use secp256k1::ecdsa::{RecoverableSignature, RecoveryId};
 
-    use crate::address::{Address, AddressType};
+    #[cfg(feature = "crypto")]
+    use crate::address::Address;
+    use crate::address::AddressType;
+    #[cfg(feature = "crypto")]
     use crate::crypto::key::PublicKey;
+    #[cfg(feature = "crypto")]
     use crate::hashes::sha256d;
     #[cfg(feature = "base64")]
     use crate::prelude::*;
@@ -132,6 +136,8 @@ mod message_signing {
         /// Attempt to recover a public key from the signature and the signed message.
         ///
         /// To get the message hash from a message, use [super::signed_msg_hash].
+        #[cfg(feature = "crypto")]
+        #[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
         pub fn recover_pubkey<C: secp256k1::Verification>(
             &self,
             secp_ctx: &secp256k1::Secp256k1<C>,
@@ -145,6 +151,8 @@ mod message_signing {
         /// Verify that the signature signs the message and was signed by the given address.
         ///
         /// To get the message hash from a message, use [super::signed_msg_hash].
+        #[cfg(feature = "crypto")]
+        #[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
         pub fn is_signed_by_address<C: secp256k1::Verification>(
             &self,
             secp_ctx: &secp256k1::Secp256k1<C>,

@@ -8,6 +8,7 @@
 //! # Example: creating a new address from a randomly-generated key pair
 //!
 //! ```rust
+//! # #[cfg(feature = "crypto")] {
 //! use bitcoin::network::constants::Network;
 //! use bitcoin::address::Address;
 //! use bitcoin::PublicKey;
@@ -20,6 +21,7 @@
 //!
 //! // Generate pay-to-pubkey-hash address.
 //! let address = Address::p2pkh(&public_key, Network::Bitcoin);
+//! # }
 //! ```
 //!
 //! # Note: creating a new address requires the rand feature flag
@@ -34,6 +36,7 @@ use core::str::FromStr;
 
 use bech32;
 use bitcoin_internals::write_err;
+#[cfg(feature = "crypto")]
 use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
 
 use crate::base58;
@@ -44,13 +47,18 @@ use crate::blockdata::constants::{
 use crate::blockdata::opcodes::all::*;
 use crate::blockdata::script::Instruction;
 use crate::blockdata::{opcodes, script};
+#[cfg(feature = "crypto")]
 use crate::crypto::key::PublicKey;
+#[cfg(feature = "crypto")]
 use crate::crypto::schnorr::{TapTweak, TweakedPublicKey, UntweakedPublicKey};
 use crate::error::ParseIntError;
 use crate::hash_types::{PubkeyHash, ScriptHash};
-use crate::hashes::{sha256, Hash, HashEngine};
+use crate::hashes::Hash;
+#[cfg(feature = "crypto")]
+use crate::hashes::{sha256, HashEngine};
 use crate::network::constants::Network;
 use crate::prelude::*;
+#[cfg(feature = "crypto")]
 use crate::taproot::TapBranchHash;
 
 /// Address error.
@@ -432,6 +440,8 @@ impl Payload {
 
     /// Creates a pay to (compressed) public key hash payload from a public key
     #[inline]
+    #[cfg(feature = "crypto")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
     pub fn p2pkh(pk: &PublicKey) -> Payload { Payload::PubkeyHash(pk.pubkey_hash()) }
 
     /// Creates a pay to script hash P2SH payload from a script
@@ -444,6 +454,8 @@ impl Payload {
     }
 
     /// Create a witness pay to public key payload from a public key
+    #[cfg(feature = "crypto")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
     pub fn p2wpkh(pk: &PublicKey) -> Result<Payload, Error> {
         Ok(Payload::WitnessProgram {
             version: WitnessVersion::V0,
@@ -452,6 +464,8 @@ impl Payload {
     }
 
     /// Create a pay to script payload that embeds a witness pay to public key
+    #[cfg(feature = "crypto")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
     pub fn p2shwpkh(pk: &PublicKey) -> Result<Payload, Error> {
         let builder = script::Builder::new()
             .push_int(0)
@@ -477,6 +491,8 @@ impl Payload {
     }
 
     /// Create a pay to taproot payload from untweaked key
+    #[cfg(feature = "crypto")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
     pub fn p2tr<C: Verification>(
         secp: &Secp256k1<C>,
         internal_key: UntweakedPublicKey,
@@ -492,6 +508,8 @@ impl Payload {
     /// Create a pay to taproot payload from a pre-tweaked output key.
     ///
     /// This method is not recommended for use and [Payload::p2tr()] should be used where possible.
+    #[cfg(feature = "crypto")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
     pub fn p2tr_tweaked(output_key: TweakedPublicKey) -> Payload {
         Payload::WitnessProgram {
             version: WitnessVersion::V1,
@@ -579,6 +597,8 @@ impl Address {
     ///
     /// This is the preferred non-witness type address.
     #[inline]
+    #[cfg(feature = "crypto")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
     pub fn p2pkh(pk: &PublicKey, network: Network) -> Address {
         Address { network, payload: Payload::p2pkh(pk) }
     }
@@ -598,6 +618,8 @@ impl Address {
     ///
     /// # Errors
     /// Will only return an error if an uncompressed public key is provided.
+    #[cfg(feature = "crypto")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
     pub fn p2wpkh(pk: &PublicKey, network: Network) -> Result<Address, Error> {
         Ok(Address { network, payload: Payload::p2wpkh(pk)? })
     }
@@ -608,6 +630,8 @@ impl Address {
     ///
     /// # Errors
     /// Will only return an Error if an uncompressed public key is provided.
+    #[cfg(feature = "crypto")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
     pub fn p2shwpkh(pk: &PublicKey, network: Network) -> Result<Address, Error> {
         Ok(Address { network, payload: Payload::p2shwpkh(pk)? })
     }
@@ -625,6 +649,8 @@ impl Address {
     }
 
     /// Creates a pay to taproot address from an untweaked key.
+    #[cfg(feature = "crypto")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
     pub fn p2tr<C: Verification>(
         secp: &Secp256k1<C>,
         internal_key: UntweakedPublicKey,
@@ -637,6 +663,8 @@ impl Address {
     /// Creates a pay to taproot address from a pre-tweaked output key.
     ///
     /// This method is not recommended for use, [`Address::p2tr()`] should be used where possible.
+    #[cfg(feature = "crypto")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
     pub fn p2tr_tweaked(output_key: TweakedPublicKey, network: Network) -> Address {
         Address { network, payload: Payload::p2tr_tweaked(output_key) }
     }
@@ -732,6 +760,8 @@ impl Address {
     /// This is determined by directly comparing the address payload with either the
     /// hash of the given public key or the segwit redeem hash generated from the
     /// given key. For taproot addresses, the supplied key is assumed to be tweaked
+    #[cfg(feature = "crypto")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
     pub fn is_related_to_pubkey(&self, pubkey: &PublicKey) -> bool {
         let pubkey_hash = pubkey.pubkey_hash();
         let payload = self.payload.as_bytes();
@@ -746,6 +776,8 @@ impl Address {
     ///
     /// This will only work for Taproot addresses. The Public Key is
     /// assumed to have already been tweaked.
+    #[cfg(feature = "crypto")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
     pub fn is_related_to_xonly_pubkey(&self, xonly_pubkey: &XOnlyPublicKey) -> bool {
         let payload = self.payload.as_bytes();
         payload == xonly_pubkey.serialize()
@@ -871,6 +903,8 @@ impl fmt::Debug for Address {
 }
 
 /// Convert a byte array of a pubkey hash into a segwit redeem hash
+#[cfg(feature = "crypto")]
+#[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
 fn segwit_redeem_hash(pubkey_hash: &PubkeyHash) -> crate::hashes::hash160::Hash {
     let mut sha_engine = sha256::Hash::engine();
     sha_engine.input(&[0, 20]);
@@ -882,9 +916,11 @@ fn segwit_redeem_hash(pubkey_hash: &PubkeyHash) -> crate::hashes::hash160::Hash 
 mod tests {
     use core::str::FromStr;
 
+    #[cfg(feature = "crypto")]
     use secp256k1::XOnlyPublicKey;
 
     use super::*;
+    #[cfg(feature = "crypto")]
     use crate::crypto::key::PublicKey;
     use crate::hashes::hex::{FromHex, ToHex};
     use crate::internal_macros::{hex, hex_into, hex_script};
@@ -929,6 +965,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "crypto")]
     fn test_p2pkh_from_key() {
         let key = hex_into!("048d5141948c1702e8c95f438815794b87f706a8d4cd2bffad1dc1570971032c9b6042a0431ded2478b5c9cf2d81c124a5e57347a3c63ef0e7716cf54d613ba183");
         let addr = Address::p2pkh(&key, Bitcoin);
@@ -973,6 +1010,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "crypto")]
     fn test_p2wpkh() {
         // stolen from Bitcoin transaction: b3c8c2b6cfc335abbcb2c7823a8453f55d64b2b5125a9a61e8737230cdb8ce20
         let mut key =
@@ -1001,6 +1039,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "crypto")]
     fn test_p2shwpkh() {
         // stolen from Bitcoin transaction: ad3fd9c6b52e752ba21425435ff3dd361d6ac271531fc1d2144843a9f550ad01
         let mut key =
@@ -1271,6 +1310,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "crypto")]
     fn p2tr_from_untweaked() {
         //Test case from BIP-086
         let internal_key = XOnlyPublicKey::from_str(
@@ -1288,6 +1328,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "crypto")]
     fn test_is_related_to_pubkey_p2wpkh() {
         let address_string = "bc1qhvd6suvqzjcu9pxjhrwhtrlj85ny3n2mqql5w4";
         let address = Address::from_str(address_string).expect("address");
@@ -1306,6 +1347,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "crypto")]
     fn test_is_related_to_pubkey_p2shwpkh() {
         let address_string = "3EZQk4F8GURH5sqVMLTFisD17yNeKa7Dfs";
         let address = Address::from_str(address_string).expect("address");
@@ -1324,6 +1366,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "crypto")]
     fn test_is_related_to_pubkey_p2pkh() {
         let address_string = "1J4LVanjHMu3JkXbVrahNuQCTGCRRgfWWx";
         let address = Address::from_str(address_string).expect("address");
@@ -1342,6 +1385,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "crypto")]
     fn test_is_related_to_pubkey_p2pkh_uncompressed_key() {
         let address_string = "msvS7KzhReCDpQEJaV2hmGNvuQqVUDuC6p";
         let address = Address::from_str(address_string).expect("address");
@@ -1360,6 +1404,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "crypto")]
     fn test_is_related_to_pubkey_p2tr() {
         let pubkey_string = "0347ff3dacd07a1f43805ec6808e801505a6e18245178609972a68afbc2777ff2b";
         let pubkey = PublicKey::from_str(pubkey_string).expect("pubkey");
@@ -1384,6 +1429,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "crypto")]
     fn test_is_related_to_xonly_pubkey() {
         let pubkey_string = "0347ff3dacd07a1f43805ec6808e801505a6e18245178609972a68afbc2777ff2b";
         let pubkey = PublicKey::from_str(pubkey_string).expect("pubkey");

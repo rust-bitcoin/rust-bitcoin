@@ -8,10 +8,12 @@
 use core::convert::TryInto;
 use core::ops::Index;
 
+#[cfg(feature = "crypto")]
 use secp256k1::ecdsa;
 
 use crate::consensus::encode::{Error, MAX_VEC_SIZE};
 use crate::consensus::{Decodable, Encodable, WriteExt};
+#[cfg(feature = "crypto")]
 use crate::sighash::EcdsaSighashType;
 use crate::io::{self, Read, Write};
 use crate::prelude::*;
@@ -271,6 +273,8 @@ impl Witness {
 
     /// Pushes a DER-encoded ECDSA signature with a signature hash type as a new element on the
     /// witness, requires an allocation.
+    #[cfg(feature = "crypto")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "crypto")))]
     pub fn push_bitcoin_signature(&mut self, signature: &ecdsa::SerializedSignature, hash_type: EcdsaSighashType) {
         // Note that a maximal length ECDSA signature is 72 bytes, plus the sighash type makes 73
         let mut sig = [0; 73];
@@ -492,6 +496,7 @@ mod test {
     use crate::consensus::{deserialize, serialize};
     use crate::hashes::hex::{FromHex, ToHex};
     use crate::Transaction;
+    #[cfg(feature = "crypto")]
     use crate::secp256k1::ecdsa;
 
     fn append_u32_vec(mut v: Vec<u8>, n: &[u32]) -> Vec<u8> {
@@ -573,6 +578,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "crypto")]
     fn test_push_ecdsa_sig() {
         // The very first signature in block 734,958
         let sig_bytes =
