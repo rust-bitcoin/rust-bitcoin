@@ -9,11 +9,9 @@
 use core::fmt;
 
 use bitcoin_internals::write_err;
-
-pub use secp256k1::{self, constants, Secp256k1, KeyPair, XOnlyPublicKey, Verification, Parity};
+pub use secp256k1::{self, constants, KeyPair, Parity, Secp256k1, Verification, XOnlyPublicKey};
 
 use crate::prelude::*;
-
 use crate::sighash::TapSighashType;
 
 /// A BIP340-341 serialized taproot signature with the corresponding hash type.
@@ -33,21 +31,19 @@ impl Signature {
         match sl.len() {
             64 => {
                 // default type
-                let sig = secp256k1::schnorr::Signature::from_slice(sl)
-                    .map_err(Error::Secp256k1)?;
+                let sig =
+                    secp256k1::schnorr::Signature::from_slice(sl).map_err(Error::Secp256k1)?;
                 Ok(Signature { sig, hash_ty: TapSighashType::Default })
-            },
+            }
             65 => {
                 let (hash_ty, sig) = sl.split_last().expect("Slice len checked == 65");
                 let hash_ty = TapSighashType::from_consensus_u8(*hash_ty)
                     .map_err(|_| Error::InvalidSighashType(*hash_ty))?;
-                let sig = secp256k1::schnorr::Signature::from_slice(sig)
-                    .map_err(Error::Secp256k1)?;
+                let sig =
+                    secp256k1::schnorr::Signature::from_slice(sig).map_err(Error::Secp256k1)?;
                 Ok(Signature { sig, hash_ty })
             }
-            len => {
-                Err(Error::InvalidSignatureSize(len))
-            }
+            len => Err(Error::InvalidSignatureSize(len)),
         }
     }
 
@@ -62,7 +58,6 @@ impl Signature {
         }
         ser_sig
     }
-
 }
 
 /// A taproot sig related error.
@@ -77,7 +72,6 @@ pub enum Error {
     InvalidSignatureSize(usize),
 }
 
-
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
@@ -85,8 +79,7 @@ impl fmt::Display for Error {
                 write!(f, "invalid signature hash type {}", hash_ty),
             Error::Secp256k1(ref e) =>
                 write_err!(f, "taproot signature has correct len but is malformed"; e),
-            Error::InvalidSignatureSize(sz) =>
-                write!(f, "invalid taproot signature size: {}", sz),
+            Error::InvalidSignatureSize(sz) => write!(f, "invalid taproot signature size: {}", sz),
         }
     }
 }
@@ -105,8 +98,5 @@ impl std::error::Error for Error {
 }
 
 impl From<secp256k1::Error> for Error {
-
-    fn from(e: secp256k1::Error) -> Error {
-        Error::Secp256k1(e)
-    }
+    fn from(e: secp256k1::Error) -> Error { Error::Secp256k1(e) }
 }
