@@ -11,6 +11,7 @@ use super::Case;
 use crate::prelude::*;
 
 /// Extension trait for types that can be displayed as hex.
+///
 /// Types that have a single, obvious text representation being hex should **not** implement this
 /// trait and simply implement `Display` instead.
 ///
@@ -23,20 +24,20 @@ pub trait DisplayHex: Copy + sealed::IsRef {
     /// This is usually a wrapper type holding a reference to `Self`.
     type Display: fmt::Display;
 
-    /// Display `Self` as a continuous sequence of ASCII hex chars.
+    /// Displays `Self` as a continuous sequence of ASCII hex chars.
     fn display_hex(self, case: Case) -> Self::Display;
 
-    /// Shorthand for `display_hex(Case::Lower)`.
+    /// Displays `Self` as a continuous sequence of ASCII hex lower case chars.
     ///
-    /// Avoids the requirement to import the `Case` type.
+    /// Shorthand for `display_hex(Case::Lower)`. Avoids the requirement to import the `Case` type.
     fn display_lower_hex(self) -> Self::Display { self.display_hex(Case::Lower) }
 
-    /// Shorthand for `display_hex(Case::Upper)`.
+    /// Displays `Self` as a continuous sequence of ASCII hex upper case chars.
     ///
-    /// Avoids the requirement to import the `Case` type.
+    /// Shorthand for `display_hex(Case::Upper)`. Avoids the requirement to import the `Case` type.
     fn display_upper_hex(self) -> Self::Display { self.display_hex(Case::Upper) }
 
-    /// Create a hex-encoded string.
+    /// Creates a hex-encoded string.
     ///
     /// This may be faster than `.display_hex().to_string()` because it uses `reserve_suggestion`.
     #[cfg(feature = "alloc")]
@@ -47,7 +48,7 @@ pub trait DisplayHex: Copy + sealed::IsRef {
         string
     }
 
-    /// Create a lower-hex-encoded string.
+    /// Creates a lower case hex-encoded string.
     ///
     /// A shorthand for `to_hex_string(Case::Lower)`, so that `Case` doesn't need to be imported.
     ///
@@ -56,7 +57,7 @@ pub trait DisplayHex: Copy + sealed::IsRef {
     #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
     fn to_lower_hex_string(self) -> String { self.to_hex_string(Case::Lower) }
 
-    /// Create an upper-hex-encoded string.
+    /// Creates a upper case hex-encoded string.
     ///
     /// A shorthand for `to_hex_string(Case::Upper)`, so that `Case` doesn't need to be imported.
     ///

@@ -43,9 +43,9 @@ impl Case {
     }
 }
 
-/// Encodes single byte as two ASCII chars using the given table.
+/// Encodes a single byte as two ASCII chars using the given table.
 ///
-/// The function guarantees only returning values from the provided table.
+/// The function guarantees to only return values from the provided table.
 #[inline]
 pub(crate) fn byte_to_hex(byte: u8, table: &[u8; 16]) -> [u8; 2] {
     [table[usize::from(byte.wrapping_shr(4))], table[usize::from(byte & 0x0F)]]

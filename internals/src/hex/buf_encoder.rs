@@ -1,7 +1,7 @@
 //! Implements a buffered encoder.
 //!
-//! The main type of this module is [`BufEncoder`] which provides buffered hex encoding. Such is
-//! faster than the usual `write!(f, "{02x}", b)?` in a for loop because it reduces dynamic
+//! The main type of this module is [`BufEncoder`] which provides buffered hex encoding. Expected to
+//! be faster than the usual `write!(f, "{02x}", b)?` in a for loop because it reduces dynamic
 //! dispatch and decreases the number of allocations if a `String` is being created.
 
 pub use out_bytes::OutBytes;
@@ -28,7 +28,7 @@ pub trait AsOutBytes: out_bytes::Sealed {
     fn as_mut_out_bytes(&mut self) -> &mut OutBytes;
 }
 
-/// Implements `OutBytes`
+/// Implements `OutBytes`.
 ///
 /// This prevents the rest of the crate from accessing the field of `OutBytes`.
 mod out_bytes {
@@ -62,7 +62,7 @@ mod out_bytes {
         ///
         /// ## Panics
         ///
-        /// The method panics if pos is out of bounds or `bytes` don't fit into the buffer.
+        /// The method panics if `pos` is out of bounds or `bytes` don't fit into the buffer.
         #[cfg_attr(rust_v_1_46, track_caller)]
         pub(crate) fn write(&mut self, pos: usize, bytes: &[u8]) {
             self.0[pos..(pos + bytes.len())].copy_from_slice(bytes);
@@ -183,10 +183,10 @@ impl<T: AsOutBytes> BufEncoder<T> {
         }
     }
 
-    /// Encodes as many `bytes` as fit into the buffer as hex and return the remainder.
+    /// Encodes as many `bytes` as fit into the buffer as hex and returns the remainder.
     ///
     /// This method works just like `put_bytes` but instead of panicking it returns the unwritten
-    /// bytes. The method returns an empty slice if all bytes were written
+    /// bytes. The method returns an empty slice if all bytes were written.
     #[must_use = "this may write only part of the input buffer"]
     #[inline]
     #[cfg_attr(rust_v_1_46, track_caller)]
@@ -207,7 +207,7 @@ impl<T: AsOutBytes> BufEncoder<T> {
             .expect("we only write ASCII")
     }
 
-    /// Resets the buffer to become empty.
+    /// Resets the buffer to empty.
     #[inline]
     pub fn clear(&mut self) { self.pos = 0; }
 
