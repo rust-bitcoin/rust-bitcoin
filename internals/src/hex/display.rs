@@ -36,6 +36,17 @@ pub trait DisplayHex: Copy + sealed::IsRef {
     /// Avoids the requirement to import the `Case` type.
     fn display_upper_hex(self) -> Self::Display { self.display_hex(Case::Upper) }
 
+    /// Create a hex-encoded string.
+    ///
+    /// This may be faster than `.display_hex().to_string()` because it uses `reserve_suggestion`.
+    #[cfg(feature = "alloc")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
+    fn to_hex_string(self, case: Case) -> String {
+        let mut string = String::new();
+        self.append_hex_to_string(case, &mut string);
+        string
+    }
+
     /// Create a lower-hex-encoded string.
     ///
     /// A shorthand for `to_hex_string(Case::Lower)`, so that `Case` doesn't need to be imported.
@@ -53,17 +64,6 @@ pub trait DisplayHex: Copy + sealed::IsRef {
     #[cfg(feature = "alloc")]
     #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
     fn to_upper_hex_string(self) -> String { self.to_hex_string(Case::Upper) }
-
-    /// Create a hex-encoded string.
-    ///
-    /// This may be faster than `.display_hex().to_string()` because it uses `reserve_suggestion`.
-    #[cfg(feature = "alloc")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
-    fn to_hex_string(self, case: Case) -> String {
-        let mut string = String::new();
-        self.append_hex_to_string(case, &mut string);
-        string
-    }
 
     /// Appends hex-encoded content to an existing `String`.
     ///
