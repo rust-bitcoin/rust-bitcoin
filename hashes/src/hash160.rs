@@ -52,7 +52,7 @@ mod tests {
     #[cfg(any(feature = "std", feature = "alloc"))]
     fn test() {
         use crate::{hash160, Hash, HashEngine};
-        use crate::hex::{FromHex, ToHex};
+        use crate::hex::FromHex;
 
         #[derive(Clone)]
         #[cfg(any(feature = "std", feature = "alloc"))]
@@ -89,7 +89,7 @@ mod tests {
             let hash = hash160::Hash::hash(&test.input[..]);
             assert_eq!(hash, hash160::Hash::from_hex(test.output_str).expect("parse hex"));
             assert_eq!(&hash[..], &test.output[..]);
-            assert_eq!(&hash.to_hex(), &test.output_str);
+            assert_eq!(&hash.to_string(), &test.output_str);
 
             // Hash through engine, checking that we can input byte by byte
             let mut engine = hash160::Hash::engine();
