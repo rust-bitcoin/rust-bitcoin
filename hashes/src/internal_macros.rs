@@ -1,5 +1,52 @@
 //! Non-public macros
 
+macro_rules! arr_newtype_fmt_impl {
+    ($ty:ident, $bytes:expr $(, $gen:ident: $gent:ident)*) => {
+        impl<$($gen: $gent),*> $crate::_export::_core::fmt::LowerHex for $ty<$($gen),*> {
+            #[inline]
+            fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
+                #[allow(unused)]
+                use crate::Hash as _;
+                let case = internals::hex::Case::Lower;
+                if <$ty<$($gen),*>>::DISPLAY_BACKWARD {
+                    internals::hex::display::fmt_hex_exact!(f, $bytes, self.0.iter().rev(), case)
+                } else {
+                    internals::hex::display::fmt_hex_exact!(f, $bytes, self.0.iter(), case)
+                }
+            }
+        }
+
+        impl<$($gen: $gent),*> $crate::_export::_core::fmt::UpperHex for $ty<$($gen),*> {
+            #[inline]
+            fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
+                #[allow(unused)]
+                use crate::Hash as _;
+                let case = internals::hex::Case::Upper;
+                if <$ty<$($gen),*>>::DISPLAY_BACKWARD {
+                    internals::hex::display::fmt_hex_exact!(f, $bytes, self.0.iter().rev(), case)
+                } else {
+                    internals::hex::display::fmt_hex_exact!(f, $bytes, self.0.iter(), case)
+                }
+            }
+        }
+
+        impl<$($gen: $gent),*> $crate::_export::_core::fmt::Display for $ty<$($gen),*> {
+            #[inline]
+            fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
+                $crate::_export::_core::fmt::LowerHex::fmt(self, f)
+            }
+        }
+
+        impl<$($gen: $gent),*> $crate::_export::_core::fmt::Debug for $ty<$($gen),*> {
+            #[inline]
+            fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
+                write!(f, "{:#}", self)
+            }
+        }
+    }
+}
+pub(crate) use arr_newtype_fmt_impl;
+
 /// Adds trait impls to the type called `Hash` in the current scope.
 ///
 /// Implpements various conversion traits as well as the [`crate::Hash`] trait.
@@ -21,6 +68,24 @@
 /// `internal_engine` is required to initialize the engine for given hash type.
 macro_rules! hash_trait_impls {
     ($bits:expr, $reversed:expr $(, $gen:ident: $gent:ident)*) => {
+        impl<$($gen: $gent),*> Hash<$($gen),*> {
+            /// Displays hex forwards, regardless of how this type would display it naturally.
+            ///
+            /// This is mainly intended as an internal method and you shouldn't need it unless
+            /// you're doing something special.
+            pub fn forward_hex(&self) -> impl '_ + core::fmt::LowerHex + core::fmt::UpperHex {
+                internals::hex::display::DisplayHex::as_hex(&self.0)
+            }
+
+            /// Displays hex backwards, regardless of how this type would display it naturally.
+            ///
+            /// This is mainly intended as an internal method and you shouldn't need it unless
+            /// you're doing something special.
+            pub fn backward_hex(&self) -> impl '_ + core::fmt::LowerHex + core::fmt::UpperHex {
+                internals::hex::display::DisplayArray::<_, [u8; $bits / 8 * 2]>::new(self.0.iter().rev())
+            }
+        }
+
         impl<$($gen: $gent),*> str::FromStr for Hash<$($gen),*> {
             type Err = hex::Error;
             fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -28,7 +93,7 @@ macro_rules! hash_trait_impls {
             }
         }
 
-        hex_fmt_impl!(Hash $(, $gen: $gent)*);
+        $crate::internal_macros::arr_newtype_fmt_impl!(Hash, $bits / 8 $(, $gen: $gent)*);
         serde_impl!(Hash, $bits / 8 $(, $gen: $gent)*);
         borrow_slice_impl!(Hash $(, $gen: $gent)*);
 

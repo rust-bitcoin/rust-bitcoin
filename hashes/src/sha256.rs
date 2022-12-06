@@ -119,7 +119,7 @@ impl Hash {
 #[derive(Copy, Clone, PartialEq, Eq, Default, PartialOrd, Ord, Hash)]
 pub struct Midstate(pub [u8; 32]);
 
-hex_fmt_impl!(Midstate);
+crate::internal_macros::arr_newtype_fmt_impl!(Midstate, 32);
 serde_impl!(Midstate, 32);
 borrow_slice_impl!(Midstate);
 
