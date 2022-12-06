@@ -213,13 +213,12 @@ pub fn signed_msg_hash(msg: &str) -> sha256d::Hash {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::hashes::hex::ToHex;
 
     #[test]
     fn test_signed_msg_hash() {
         let hash = signed_msg_hash("test");
         assert_eq!(
-            hash.to_hex(),
+            hash.to_string(),
             "a6f87fe6d58a032c320ff8d1541656f0282c2c7bfcc69d61af4c8e8ed528e49c"
         );
     }

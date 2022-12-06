@@ -880,11 +880,13 @@ fn segwit_redeem_hash(pubkey_hash: &[u8]) -> crate::hashes::hash160::Hash {
 mod tests {
     use core::str::FromStr;
 
+    use bitcoin_internals::hex::display::DisplayHex;
+
     use secp256k1::XOnlyPublicKey;
 
     use super::*;
     use crate::crypto::key::PublicKey;
-    use crate::hashes::hex::{FromHex, ToHex};
+    use crate::hashes::hex::FromHex;
     use crate::internal_macros::{hex, hex_into, hex_script};
     use crate::network::constants::Network::{Bitcoin, Testnet};
 
@@ -1077,7 +1079,7 @@ mod tests {
         ];
         for vector in &valid_vectors {
             let addr: Address = vector.0.parse().unwrap();
-            assert_eq!(&addr.script_pubkey().as_bytes().to_hex(), vector.1);
+            assert_eq!(&addr.script_pubkey().as_bytes().to_lower_hex_string(), vector.1);
             roundtrips(&addr);
         }
 

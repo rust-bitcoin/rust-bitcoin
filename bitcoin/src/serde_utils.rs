@@ -13,7 +13,9 @@ pub mod btreemap_byte_values {
 
     use serde;
 
-    use crate::hashes::hex::{FromHex, ToHex};
+    use bitcoin_internals::hex::display::DisplayHex;
+
+    use crate::hashes::hex::FromHex;
     use crate::prelude::*;
 
     pub fn serialize<S, T>(v: &BTreeMap<T, Vec<u8>>, s: S) -> Result<S::Ok, S::Error>
@@ -29,7 +31,7 @@ pub mod btreemap_byte_values {
         } else {
             let mut map = s.serialize_map(Some(v.len()))?;
             for (key, value) in v.iter() {
-                map.serialize_entry(key, &value.to_hex())?;
+                map.serialize_entry(key, &value.to_lower_hex_string())?;
             }
             map.end()
         }
@@ -237,7 +239,8 @@ pub mod hex_bytes {
 
     use serde;
 
-    use crate::hashes::hex::{FromHex, ToHex};
+    use crate::hashes::hex::FromHex;
+    use bitcoin_internals::hex::display::DisplayHex;
 
     pub fn serialize<T, S>(bytes: &T, s: S) -> Result<S::Ok, S::Error>
     where
@@ -248,7 +251,7 @@ pub mod hex_bytes {
         if !s.is_human_readable() {
             serde::Serialize::serialize(bytes, s)
         } else {
-            s.serialize_str(&bytes.as_ref().to_hex())
+            s.serialize_str(&bytes.as_ref().to_lower_hex_string())
         }
     }
 

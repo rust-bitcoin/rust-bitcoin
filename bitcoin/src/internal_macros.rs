@@ -112,7 +112,7 @@ mod test_macros {
 
 /// Implements several traits for byte-based newtypes.
 /// Implements:
-/// - core::fmt::LowerHex (implies hashes::hex::ToHex)
+/// - core::fmt::LowerHex
 /// - core::fmt::Display
 /// - core::str::FromStr
 /// - hashes::hex::FromHex
@@ -169,8 +169,10 @@ macro_rules! impl_bytes_newtype {
         #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
         impl $crate::serde::Serialize for $t {
             fn serialize<S: $crate::serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+                use bitcoin_internals::hex::display::DisplayHex;
+
                 if s.is_human_readable() {
-                    s.serialize_str(&$crate::hashes::hex::ToHex::to_hex(self))
+                    s.serialize_str(&self.0.to_lower_hex_string())
                 } else {
                     s.serialize_bytes(&self[..])
                 }

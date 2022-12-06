@@ -503,10 +503,12 @@ mod tests {
 
     use secp256k1::rand::prelude::*;
 
+    use bitcoin_internals::hex::display::DisplayHex;
+
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
     use crate::hash_types::{TxMerkleNode, Txid};
-    use crate::hashes::hex::{FromHex, ToHex};
+    use crate::hashes::hex::FromHex;
     use crate::hashes::Hash;
     use crate::{merkle_tree, Block};
 
@@ -647,7 +649,7 @@ mod tests {
             mb.txn.extract_matches(&mut vec![], &mut vec![]).unwrap()
         );
         // Serialize again and check that it matches the original bytes
-        assert_eq!(mb_hex, serialize(&mb).to_hex().as_str());
+        assert_eq!(mb_hex, serialize(&mb).to_lower_hex_string());
     }
 
     /// Create a CMerkleBlock using a list of txids which will be found in the

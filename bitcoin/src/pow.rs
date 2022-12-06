@@ -782,11 +782,11 @@ impl crate::serde::Serialize for U256 {
     where
         S: crate::serde::Serializer,
     {
-        use crate::hashes::hex::ToHex;
+        use bitcoin_internals::hex::display::DisplayHex;
+
         let bytes = self.to_be_bytes();
         if serializer.is_human_readable() {
-            // TODO: fast hex encoding.
-            serializer.serialize_str(&bytes.to_hex())
+            serializer.serialize_str(&bytes.to_lower_hex_string())
         } else {
             serializer.serialize_bytes(&bytes)
         }
