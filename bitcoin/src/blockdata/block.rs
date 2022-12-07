@@ -96,7 +96,7 @@ impl Header {
     }
 }
 
-/// Bitcoin block version number
+/// Bitcoin block version number.
 ///
 /// Originally used as a protocol version, but repurposed for soft-fork signaling.
 ///
@@ -146,7 +146,7 @@ impl Version {
         self.0
     }
 
-    /// Check whether the version number is signalling a soft fork at the given bit.
+    /// Checks whether the version number is signalling a soft fork at the given bit.
     ///
     /// A block is signalling for a soft fork under BIP-9 if the first 3 bits are `001` and
     /// the version bit for the specific soft fork is toggled on.
@@ -213,7 +213,7 @@ impl Block {
         self.header.block_hash()
     }
 
-    /// check if merkle root of header matches merkle root of the transaction list
+    /// Checks if merkle root of header matches merkle root of the transaction list.
     pub fn check_merkle_root(&self) -> bool {
         match self.compute_merkle_root() {
             Some(merkle_root) => self.header.merkle_root == merkle_root,

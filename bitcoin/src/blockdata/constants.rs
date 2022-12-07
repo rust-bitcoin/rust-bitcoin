@@ -26,21 +26,21 @@ use crate::network::constants::Network;
 use crate::pow::CompactTarget;
 use crate::internal_macros::impl_bytes_newtype;
 
-/// How many satoshis are in "one bitcoin"
+/// How many satoshis are in "one bitcoin".
 pub const COIN_VALUE: u64 = 100_000_000;
-/// How many seconds between blocks we expect on average
+/// How many seconds between blocks we expect on average.
 pub const TARGET_BLOCK_SPACING: u32 = 600;
-/// How many blocks between diffchanges
+/// How many blocks between diffchanges.
 pub const DIFFCHANGE_INTERVAL: u32 = 2016;
-/// How much time on average should occur between diffchanges
+/// How much time on average should occur between diffchanges.
 pub const DIFFCHANGE_TIMESPAN: u32 = 14 * 24 * 3600;
-/// The maximum allowed weight for a block, see BIP 141 (network rule)
+/// The maximum allowed weight for a block, see BIP 141 (network rule).
 pub const MAX_BLOCK_WEIGHT: u32 = 4_000_000;
-/// The minimum transaction weight for a valid serialized transaction
+/// The minimum transaction weight for a valid serialized transaction.
 pub const MIN_TRANSACTION_WEIGHT: u32 = 4 * 60;
-/// The factor that non-witness serialization data is multiplied by during weight calculation
+/// The factor that non-witness serialization data is multiplied by during weight calculation.
 pub const WITNESS_SCALE_FACTOR: usize = 4;
-/// The maximum allowed number of signature check operations in a block
+/// The maximum allowed number of signature check operations in a block.
 pub const MAX_BLOCK_SIGOPS_COST: i64 = 80_000;
 /// Mainnet (bitcoin) pubkey address prefix.
 pub const PUBKEY_ADDRESS_PREFIX_MAIN: u8 = 0; // 0x00
@@ -62,7 +62,7 @@ pub const MAX_SCRIPTNUM_VALUE: u32 = 0x80000000; // 2^31
 /// if you are doing anything remotely sane with monetary values).
 pub const MAX_MONEY: u64 = 21_000_000 * COIN_VALUE;
 
-/// Constructs and returns the coinbase (and only) transaction of the Bitcoin genesis block
+/// Constructs and returns the coinbase (and only) transaction of the Bitcoin genesis block.
 fn bitcoin_genesis_tx() -> Transaction {
     // Base
     let mut ret = Transaction {
@@ -101,7 +101,7 @@ fn bitcoin_genesis_tx() -> Transaction {
     ret
 }
 
-/// Constructs and returns the genesis block
+/// Constructs and returns the genesis block.
 pub fn genesis_block(network: Network) -> Block {
     let txdata = vec![bitcoin_genesis_tx()];
     let hash: sha256d::Hash = txdata[0].txid().into();

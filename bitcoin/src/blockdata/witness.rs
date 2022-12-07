@@ -18,7 +18,7 @@ use crate::prelude::*;
 use crate::VarInt;
 use crate::taproot::TAPROOT_ANNEX_PREFIX;
 
-/// The Witness is the data used to unlock bitcoins since the [segwit upgrade](https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki)
+/// The Witness is the data used to unlock bitcoin since the [segwit upgrade].
 ///
 /// Can be logically seen as an array of bytestrings, i.e. `Vec<Vec<u8>>`, and it is serialized on the wire
 /// in that format. You can convert between this type and `Vec<Vec<u8>>` by using [`Witness::from_slice`]
@@ -27,23 +27,25 @@ use crate::taproot::TAPROOT_ANNEX_PREFIX;
 /// For serialization and deserialization performance it is stored internally as a single `Vec`,
 /// saving some allocations.
 ///
+/// [segwit upgrade]: <https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki>
 #[derive(Clone, Default, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 pub struct Witness {
     /// Contains the witness `Vec<Vec<u8>>` serialization without the initial varint indicating the
-    /// number of elements (which is stored in `witness_elements`)
+    /// number of elements (which is stored in `witness_elements`).
     content: Vec<u8>,
 
-    /// Number of elements in the witness.
-    /// It is stored separately (instead of as VarInt in the initial part of content) so that method
-    /// like [`Witness::push`] doesn't have case requiring to shift the entire array
+    /// The number of elements in the witness.
+    ///
+    /// Stored separately (instead of as a VarInt in the initial part of content) so that methods
+    /// like [`Witness::push`] don't have to shift the entire array.
     witness_elements: usize,
 
-    /// This is the valid index pointing to the beginning of the index area. This area is 4 * stack_size bytes
-    /// at the end of the content vector which stores the indices of each item.
+    /// This is the valid index pointing to the beginning of the index area. This area is 4 *
+    /// stack_size bytes at the end of the content vector which stores the indices of each item.
     indices_start: usize,
 }
 
-/// Support structure to allow efficient and convenient iteration over the Witness elements
+/// An iterator returning individual witness elements.
 pub struct Iter<'a> {
     inner: &'a [u8],
     indices_start: usize,
@@ -162,7 +164,7 @@ impl Encodable for Witness {
 }
 
 impl Witness {
-    /// Create a new empty [`Witness`]
+    /// Creates a new empty [`Witness`].
     pub fn new() -> Self {
         Witness::default()
     }
@@ -202,17 +204,17 @@ impl Witness {
         }
     }
 
-    /// Convenience method to create an array of byte-arrays from this witness
+    /// Convenience method to create an array of byte-arrays from this witness.
     pub fn to_vec(&self) -> Vec<Vec<u8>> {
         self.iter().map(|s| s.to_vec()).collect()
     }
 
-    /// Returns `true` if the witness contains no element
+    /// Returns `true` if the witness contains no element.
     pub fn is_empty(&self) -> bool {
         self.witness_elements == 0
     }
 
-    /// Returns a struct implementing [`Iterator`]
+    /// Returns a struct implementing [`Iterator`].
     pub fn iter(&self) -> Iter {
         Iter {
             inner: self.content.as_slice(),
@@ -221,12 +223,12 @@ impl Witness {
         }
     }
 
-    /// Returns the number of elements this witness holds
+    /// Returns the number of elements this witness holds.
     pub fn len(&self) -> usize {
         self.witness_elements
     }
 
-    /// Returns the bytes required when this Witness is consensus encoded
+    /// Returns the bytes required when this Witness is consensus encoded.
     pub fn serialized_len(&self) -> usize {
         self.iter()
             .map(|el| VarInt(el.len() as u64).len() + el.len())
@@ -234,14 +236,14 @@ impl Witness {
             + VarInt(self.witness_elements as u64).len()
     }
 
-    /// Clear the witness
+    /// Clear the witness.
     pub fn clear(&mut self) {
         self.content.clear();
         self.witness_elements = 0;
         self.indices_start = 0;
     }
 
-    /// Push a new element on the witness, requires an allocation
+    /// Push a new element on the witness, requires an allocation.
     pub fn push<T: AsRef<[u8]>>(&mut self, new_element: T) {
         self.push_slice(new_element.as_ref());
     }
@@ -284,7 +286,7 @@ impl Witness {
         Some(&self.content[start..start + varint.0 as usize])
     }
 
-    /// Return the last element in the witness, if any
+    /// Returns the last element in the witness, if any.
     pub fn last(&self) -> Option<&[u8]> {
         if self.witness_elements == 0 {
             None
@@ -293,7 +295,7 @@ impl Witness {
         }
     }
 
-    /// Return the second-to-last element in the witness, if any
+    /// Returns the second-to-last element in the witness, if any.
     pub fn second_to_last(&self) -> Option<&[u8]> {
         if self.witness_elements <= 1 {
             None

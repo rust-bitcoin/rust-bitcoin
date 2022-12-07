@@ -35,33 +35,33 @@ use crate::blockdata::transaction::{TxOut, Transaction, TxIn};
 #[cfg(feature = "std")]
 use crate::network::{message_blockdata::Inventory, address::{Address, AddrV2Message}};
 
-/// Encoding error
+/// Encoding error.
 #[derive(Debug)]
 #[non_exhaustive]
 pub enum Error {
-    /// And I/O error
+    /// And I/O error.
     Io(io::Error),
-    /// PSBT-related error
+    /// PSBT-related error.
     Psbt(psbt::Error),
-    /// Tried to allocate an oversized vector
+    /// Tried to allocate an oversized vector.
     OversizedVectorAllocation {
-        /// The capacity requested
+        /// The capacity requested.
         requested: usize,
-        /// The maximum capacity
+        /// The maximum capacity.
         max: usize,
     },
-    /// Checksum was invalid
+    /// Checksum was invalid.
     InvalidChecksum {
-        /// The expected checksum
+        /// The expected checksum.
         expected: [u8; 4],
-        /// The invalid checksum
+        /// The invalid checksum.
         actual: [u8; 4],
     },
-    /// VarInt was encoded in a non-minimal way
+    /// VarInt was encoded in a non-minimal way.
     NonMinimalVarInt,
-    /// Parsing error
+    /// Parsing error.
     ParseFailed(&'static str),
-    /// Unsupported Segwit flag
+    /// Unsupported Segwit flag.
     UnsupportedSegwitFlag(u8),
 }
 
@@ -114,7 +114,7 @@ impl From<psbt::Error> for Error {
     }
 }
 
-/// Encode an object into a vector
+/// Encodes an object into a vector.
 pub fn serialize<T: Encodable + ?Sized>(data: &T) -> Vec<u8> {
     let mut encoder = Vec::new();
     let len = data.consensus_encode(&mut encoder).expect("in-memory writers don't error");
@@ -122,12 +122,12 @@ pub fn serialize<T: Encodable + ?Sized>(data: &T) -> Vec<u8> {
     encoder
 }
 
-/// Encode an object into a hex-encoded string
+/// Encodes an object into a hex-encoded string.
 pub fn serialize_hex<T: Encodable + ?Sized>(data: &T) -> String {
     serialize(data)[..].to_hex()
 }
 
-/// Deserialize an object from a vector, will error if said deserialization
+/// Deserializes an object from a vector, will error if said deserialization
 /// doesn't consume the entire vector.
 pub fn deserialize<T: Decodable>(data: &[u8]) -> Result<T, Error> {
     let (rv, consumed) = deserialize_partial(data)?;
@@ -140,7 +140,7 @@ pub fn deserialize<T: Decodable>(data: &[u8]) -> Result<T, Error> {
     }
 }
 
-/// Deserialize an object from a vector, but will not report an error if said deserialization
+/// Deserializes an object from a vector, but will not report an error if said deserialization
 /// doesn't consume the entire vector.
 pub fn deserialize_partial<T: Decodable>(data: &[u8]) -> Result<(T, usize), Error> {
     let mut decoder = Cursor::new(data);
@@ -151,57 +151,57 @@ pub fn deserialize_partial<T: Decodable>(data: &[u8]) -> Result<(T, usize), Erro
 }
 
 
-/// Extensions of `Write` to encode data as per Bitcoin consensus
+/// Extensions of `Write` to encode data as per Bitcoin consensus.
 pub trait WriteExt : io::Write {
-    /// Output a 64-bit uint
+    /// Outputs a 64-bit unsigned integer.
     fn emit_u64(&mut self, v: u64) -> Result<(), io::Error>;
-    /// Output a 32-bit uint
+    /// Outputs a 32-bit unsigned integer.
     fn emit_u32(&mut self, v: u32) -> Result<(), io::Error>;
-    /// Output a 16-bit uint
+    /// Outputs a 16-bit unsigned integer.
     fn emit_u16(&mut self, v: u16) -> Result<(), io::Error>;
-    /// Output a 8-bit uint
+    /// Outputs a 8-bit unsigned integer.
     fn emit_u8(&mut self, v: u8) -> Result<(), io::Error>;
 
-    /// Output a 64-bit int
+    /// Outputs a 64-bit signed integer.
     fn emit_i64(&mut self, v: i64) -> Result<(), io::Error>;
-    /// Output a 32-bit int
+    /// Outputs a 32-bit signed integer.
     fn emit_i32(&mut self, v: i32) -> Result<(), io::Error>;
-    /// Output a 16-bit int
+    /// Outputs a 16-bit signed integer.
     fn emit_i16(&mut self, v: i16) -> Result<(), io::Error>;
-    /// Output a 8-bit int
+    /// Outputs a 8-bit signed integer.
     fn emit_i8(&mut self, v: i8) -> Result<(), io::Error>;
 
-    /// Output a boolean
+    /// Outputs a boolean.
     fn emit_bool(&mut self, v: bool) -> Result<(), io::Error>;
 
-    /// Output a byte slice
+    /// Outputs a byte slice.
     fn emit_slice(&mut self, v: &[u8]) -> Result<(), io::Error>;
 }
 
-/// Extensions of `Read` to decode data as per Bitcoin consensus
+/// Extensions of `Read` to decode data as per Bitcoin consensus.
 pub trait ReadExt : io::Read {
-    /// Read a 64-bit uint
+    /// Reads a 64-bit unsigned integer.
     fn read_u64(&mut self) -> Result<u64, Error>;
-    /// Read a 32-bit uint
+    /// Reads a 32-bit unsigned integer.
     fn read_u32(&mut self) -> Result<u32, Error>;
-    /// Read a 16-bit uint
+    /// Reads a 16-bit unsigned integer.
     fn read_u16(&mut self) -> Result<u16, Error>;
-    /// Read a 8-bit uint
+    /// Reads a 8-bit unsigned integer.
     fn read_u8(&mut self) -> Result<u8, Error>;
 
-    /// Read a 64-bit int
+    /// Reads a 64-bit signed integer.
     fn read_i64(&mut self) -> Result<i64, Error>;
-    /// Read a 32-bit int
+    /// Reads a 32-bit signed integer.
     fn read_i32(&mut self) -> Result<i32, Error>;
-    /// Read a 16-bit int
+    /// Reads a 16-bit signed integer.
     fn read_i16(&mut self) -> Result<i16, Error>;
-    /// Read a 8-bit int
+    /// Reads a 8-bit signed integer.
     fn read_i8(&mut self) -> Result<i8, Error>;
 
-    /// Read a boolean
+    /// Reads a boolean.
     fn read_bool(&mut self) -> Result<bool, Error>;
 
-    /// Read a byte slice
+    /// Reads a byte slice.
     fn read_slice(&mut self, slice: &mut [u8]) -> Result<(), Error>;
 }
 
@@ -281,59 +281,55 @@ impl<R: Read + ?Sized> ReadExt for R {
     }
 }
 
-/// Maximum size, in bytes, of a vector we are allowed to decode
+/// Maximum size, in bytes, of a vector we are allowed to decode.
 pub const MAX_VEC_SIZE: usize = 4_000_000;
 
-/// Data which can be encoded in a consensus-consistent way
+/// Data which can be encoded in a consensus-consistent way.
 pub trait Encodable {
-    /// Encode an object with a well-defined format.
-    /// Returns the number of bytes written on success.
+    /// Encodes an object with a well-defined format.
     ///
-    /// The only errors returned are errors propagated from the writer.
+    /// # Returns
+    ///
+    /// The number of bytes written on success. The only errors returned are errors propagated from
+    /// the writer.
     fn consensus_encode<W: io::Write + ?Sized>(&self, writer: &mut W) -> Result<usize, io::Error>;
 }
 
-/// Data which can be encoded in a consensus-consistent way
+/// Data which can be encoded in a consensus-consistent way.
 pub trait Decodable: Sized {
     /// Decode `Self` from a size-limited reader.
     ///
-    /// Like `consensus_decode` but relies on the reader being
-    /// limited in the amount of data it returns, e.g. by
-    /// being wrapped in [`std::io::Take`].
+    /// Like `consensus_decode` but relies on the reader being limited in the amount of data it
+    /// returns, e.g. by being wrapped in [`std::io::Take`].
     ///
-    /// Failling to obide to this requirement might lead to
-    /// memory exhaustion caused by malicious inputs.
+    /// Failling to obide to this requirement might lead to memory exhaustion caused by malicious
+    /// inputs.
     ///
-    /// Users should default to `consensus_decode`, but
-    /// when data to be decoded is already in a byte vector
-    /// of a limited size, calling this function directly
-    /// might be marginally faster (due to avoiding
-    /// extra checks).
+    /// Users should default to `consensus_decode`, but when data to be decoded is already in a byte
+    /// vector of a limited size, calling this function directly might be marginally faster (due to
+    /// avoiding extra checks).
     ///
     /// ### Rules for trait implementations
     ///
-    /// * Simple types that that have a fixed size (own and member fields),
-    ///   don't have to overwrite this method, or be concern with it.
-    /// * Types that deserialize using externally provided length
-    ///   should implement it:
-    ///   * Make `consensus_decode` forward to `consensus_decode_bytes_from_finite_reader`
-    ///     with the reader wrapped by `Take`. Failure to do so, without other
-    ///     forms of memory exhaustion protection might lead to resource exhaustion
-    ///     vulnerability.
-    ///   * Put a max cap on things like `Vec::with_capacity` to avoid oversized
-    ///     allocations, and rely on the reader running out of data, and collections
-    ///     reallocating on a legitimately oversized input data, instead of trying
-    ///     to enforce arbitrary length limits.
-    /// * Types that contain other types that implement custom `consensus_decode_from_finite_reader`,
-    ///   should also implement it applying same rules, and in addition make sure to call
-    ///   `consensus_decode_from_finite_reader` on all members, to avoid creating redundant
-    ///   `Take` wrappers. Failure to do so might result only in a tiny performance hit.
+    /// * Simple types that that have a fixed size (own and member fields), don't have to overwrite
+    ///   this method, or be concern with it.
+    /// * Types that deserialize using externally provided length should implement it:
+    ///   * Make `consensus_decode` forward to `consensus_decode_bytes_from_finite_reader` with the
+    ///     reader wrapped by `Take`. Failure to do so, without other forms of memory exhaustion
+    ///     protection might lead to resource exhaustion vulnerability.
+    ///   * Put a max cap on things like `Vec::with_capacity` to avoid oversized allocations, and
+    ///     rely on the reader running out of data, and collections reallocating on a legitimately
+    ///     oversized input data, instead of trying to enforce arbitrary length limits.
+    /// * Types that contain other types that implement custom
+    ///   `consensus_decode_from_finite_reader`, should also implement it applying same rules, and
+    ///   in addition make sure to call `consensus_decode_from_finite_reader` on all members, to
+    ///   avoid creating redundant `Take` wrappers. Failure to do so might result only in a tiny
+    ///   performance hit.
     #[inline]
     fn consensus_decode_from_finite_reader<R: io::Read + ?Sized>(reader: &mut R) -> Result<Self, Error> {
-        // This method is always strictly less general than, `consensus_decode`,
-        // so it's safe and make sense to default to just calling it.
-        // This way most types, that don't care about protecting against
-        // resource exhaustion due to malicious input, can just ignore it.
+        // This method is always strictly less general than, `consensus_decode`, so it's safe and
+        // make sense to default to just calling it. This way most types, that don't care about
+        // protecting against resource exhaustion due to malicious input, can just ignore it.
         Self::consensus_decode(reader)
     }
 
@@ -351,11 +347,11 @@ pub trait Decodable: Sized {
     }
 }
 
-/// A variable-length unsigned integer
+/// A variable-length unsigned integer.
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]
 pub struct VarInt(pub u64);
 
-/// Data which must be preceded by a 4-byte checksum
+/// Data which must be preceded by a 4-byte checksum.
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct CheckedData(pub Vec<u8>);
 
@@ -390,6 +386,7 @@ impl_int_encodable!(i64, read_i64, emit_i64);
 #[allow(clippy::len_without_is_empty)] // VarInt has on concept of 'is_empty'.
 impl VarInt {
     /// Gets the length of this VarInt when encoded.
+    ///
     /// Returns 1 for 0..=0xFC, 3 for 0xFD..=(2^16-1), 5 for 0x10000..=(2^32-1),
     /// and 9 otherwise.
     #[inline]
@@ -464,7 +461,6 @@ impl Decodable for VarInt {
     }
 }
 
-// Booleans
 impl Encodable for bool {
     #[inline]
     fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
@@ -480,7 +476,6 @@ impl Decodable for bool {
     }
 }
 
-// Strings
 impl Encodable for String {
     #[inline]
     fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
@@ -499,7 +494,6 @@ impl Decodable for String {
     }
 }
 
-// Cow<'static, str>
 impl Encodable for Cow<'static, str> {
     #[inline]
     fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
@@ -519,8 +513,6 @@ impl Decodable for Cow<'static, str> {
     }
 }
 
-
-// Arrays
 macro_rules! impl_array {
     ( $size:literal ) => {
         impl Encodable for [u8; $size] {
@@ -571,7 +563,6 @@ impl Encodable for [u16; 8] {
     }
 }
 
-// Vectors
 macro_rules! impl_vec {
     ($type: ty) => {
         impl Encodable for Vec<$type> {
@@ -636,7 +627,7 @@ struct ReadBytesFromFiniteReaderOpts {
     chunk_size: usize,
 }
 
-/// Read `opts.len` bytes from reader, where `opts.len` could potentially be malicious
+/// Read `opts.len` bytes from reader, where `opts.len` could potentially be malicious.
 ///
 /// This function relies on reader being bound in amount of data
 /// it returns for OOM protection. See [`Decodable::consensus_decode_from_finite_reader`].
@@ -689,13 +680,12 @@ impl Decodable for Box<[u8]> {
 }
 
 
-/// Do a double-SHA256 on some data and return the first 4 bytes
+/// Does a double-SHA256 on `data` and returns the first 4 bytes.
 fn sha2_checksum(data: &[u8]) -> [u8; 4] {
     let checksum = <sha256d::Hash as Hash>::hash(data);
     [checksum[0], checksum[1], checksum[2], checksum[3]]
 }
 
-// Checked data
 impl Encodable for CheckedData {
     #[inline]
     fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
@@ -725,7 +715,6 @@ impl Decodable for CheckedData {
     }
 }
 
-// References
 impl<'a, T: Encodable> Encodable for &'a T {
     fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         (**self).consensus_encode(w)
@@ -750,7 +739,6 @@ impl<T: Encodable> Encodable for sync::Arc<T> {
     }
 }
 
-// Tuples
 macro_rules! tuple_encode {
     ($($x:ident),*) => {
         impl <$($x: Encodable),*> Encodable for ($($x),*) {
@@ -821,7 +809,6 @@ impl Decodable for TapLeafHash {
     }
 }
 
-// Tests
 #[cfg(test)]
 mod tests {
     use super::*;

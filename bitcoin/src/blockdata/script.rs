@@ -156,17 +156,17 @@ pub enum Error {
     /// Something did a non-minimal push; for more information see
     /// `https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki#Push_operators`
     NonMinimalPush,
-    /// Some opcode expected a parameter, but it was missing or truncated
+    /// Some opcode expected a parameter but it was missing or truncated.
     EarlyEndOfScript,
-    /// Tried to read an array off the stack as a number when it was more than 4 bytes
+    /// Tried to read an array off the stack as a number when it was more than 4 bytes.
     NumericOverflow,
-    /// Error validating the script with bitcoinconsensus library
+    /// Error validating the script with bitcoinconsensus library.
     #[cfg(feature = "bitcoinconsensus")]
     #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
     BitcoinConsensus(bitcoinconsensus::Error),
-    /// Can not find the spent output
+    /// Can not find the spent output.
     UnknownSpentOutput(OutPoint),
-    /// Can not serialize the spending transaction
+    /// Can not serialize the spending transaction.
     Serialization
 }
 
@@ -266,7 +266,8 @@ impl From<bitcoinconsensus::Error> for Error {
     }
 }
 
-/// Helper to encode an integer in script(minimal CScriptNum) format.
+/// Encodes an integer in script(minimal CScriptNum) format.
+///
 /// Writes bytes into the buffer and returns the number of bytes written.
 pub fn write_scriptint(out: &mut [u8; 8], n: i64) -> usize {
     let mut len = 0;
@@ -297,7 +298,8 @@ pub fn write_scriptint(out: &mut [u8; 8], n: i64) -> usize {
     len
 }
 
-/// Helper to decode an integer in script(minimal CScriptNum) format
+/// Decodes an integer in script(minimal CScriptNum) format.
+///
 /// Notice that this fails on overflow: the result is the same as in
 /// bitcoind, that only 4-byte signed-magnitude values may be read as
 /// numbers. They can be added or subtracted (and a long time ago,
@@ -343,6 +345,8 @@ pub fn read_scriptint(v: &[u8]) -> Result<i64, Error> {
     Ok(ret)
 }
 
+/// Decodes a boolean.
+///
 /// This is like "`read_scriptint` then map 0 to false and everything
 /// else as true", except that the overflow rules don't apply.
 #[inline]
@@ -353,7 +357,7 @@ pub fn read_scriptbool(v: &[u8]) -> bool {
     }
 }
 
-/// Read a script-encoded unsigned integer
+/// Decodes a script-encoded unsigned integer.
 ///
 /// ## Errors
 ///
@@ -395,7 +399,7 @@ impl Script {
     /// Creates a new empty script.
     pub fn new() -> Script { Script(vec![].into_boxed_slice()) }
 
-    /// Creates a new script builder
+    /// Creates a new script builder.
     pub fn builder() -> Builder {
       Builder::new()
     }
@@ -863,15 +867,16 @@ pub struct Instructions<'a> {
 }
 
 impl<'a> Instructions<'a> {
-    /// Set the iterator to end so that it won't iterate any longer
+    /// Sets the iterator to end so that it won't iterate any longer.
     fn kill(&mut self) {
         let len = self.data.len();
         self.data.nth(len.max(1) - 1);
     }
 
-    /// takes `len` bytes long slice from iterator and returns it advancing iterator
-    /// if the iterator is not long enough [`Error::EarlyEndOfScript`] is returned and the iterator is killed
-    /// to avoid returning an infinite stream of errors.
+    /// Takes a `len` bytes long slice from iterator and returns it, advancing the iterator.
+    ///
+    /// If the iterator is not long enough [`Error::EarlyEndOfScript`] is returned and the iterator
+    /// is killed to avoid returning an infinite stream of errors.
     fn take_slice_or_kill(&mut self, len: usize) -> Result<&'a [u8], Error> {
         if self.data.len() >= len {
             let slice = &self.data.as_slice()[..len];
@@ -968,9 +973,10 @@ impl Builder {
     /// Checks whether the script is the empty script.
     pub fn is_empty(&self) -> bool { self.0.is_empty() }
 
-    /// Adds instructions to push an integer onto the stack. Integers are
-    /// encoded as little-endian signed-magnitude numbers, but there are
-    /// dedicated opcodes to push some small integers.
+    /// Adds instructions to push an integer onto the stack.
+    ///
+    /// Integers are encoded as little-endian signed-magnitude numbers, but there are dedicated
+    /// opcodes to push some small integers.
     pub fn push_int(self, data: i64) -> Builder {
         // We can special-case -1, 1-16
         if data == -1 || (1..=16).contains(&data) {

@@ -146,6 +146,7 @@ impl std::error::Error for ParseOutPointError {
 }
 
 /// Parses a string-encoded transaction index (vout).
+///
 /// Does not permit leading zeroes or non-digit characters.
 fn parse_vout(s: &str) -> Result<u32, ParseOutPointError> {
     if s.len() > 1 {
@@ -319,13 +320,13 @@ impl Sequence {
         self.is_relative_lock_time() & (self.0 & Sequence::LOCK_TYPE_MASK > 0)
     }
 
-    /// Create a relative lock-time using block height.
+    /// Creates a relative lock-time using block height.
     #[inline]
     pub fn from_height(height: u16) -> Self {
         Sequence(u32::from(height))
     }
 
-    /// Create a relative lock-time using time intervals where each interval is equivalent
+    /// Creates a relative lock-time using time intervals where each interval is equivalent
     /// to 512 seconds.
     ///
     /// Encoding finer granularity of time for relative lock-times is not supported in Bitcoin
@@ -334,7 +335,7 @@ impl Sequence {
         Sequence(u32::from(intervals) | Sequence::LOCK_TYPE_MASK)
     }
 
-    /// Create a relative lock-time from seconds, converting the seconds into 512 second
+    /// Creates a relative lock-time from seconds, converting the seconds into 512 second
     /// interval with floor division.
     ///
     /// Will return an error if the input cannot be encoded in 16 bits.
@@ -347,7 +348,7 @@ impl Sequence {
         }
     }
 
-    /// Create a relative lock-time from seconds, converting the seconds into 512 second
+    /// Creates a relative lock-time from seconds, converting the seconds into 512 second
     /// interval with ceiling division.
     ///
     /// Will return an error if the input cannot be encoded in 16 bits.
@@ -366,7 +367,7 @@ impl Sequence {
         !self.is_final()
     }
 
-    /// Create a sequence from a u32 value.
+    /// Creates a sequence from a u32 value.
     #[inline]
     pub fn from_consensus(n: u32) -> Self {
         Sequence(n)
@@ -590,6 +591,7 @@ pub struct Transaction {
 
 impl Transaction {
     /// Computes a "normalized TXID" which does not include any signatures.
+    ///
     /// This gives a way to identify a transaction that is "the same" as
     /// another in the sense of having same inputs and outputs.
     pub fn ntxid(&self) -> sha256d::Hash {
@@ -602,10 +604,11 @@ impl Transaction {
         cloned_tx.txid().into()
     }
 
-    /// Computes the txid. For non-segwit transactions this will be identical
-    /// to the output of `wtxid()`, but for segwit transactions,
-    /// this will give the correct txid (not including witnesses) while `wtxid`
-    /// will also hash witnesses.
+    /// Computes the [`Txid`].
+    ///
+    /// Hashes the transaction **excluding** the segwit data (i.e. the marker, flag bytes, and the
+    /// witness fields themselves). For non-segwit transactions which do not have any segwit data,
+    /// this will be equal to [`Transaction::wtxid()`].
     pub fn txid(&self) -> Txid {
         let mut enc = Txid::engine();
         self.version.consensus_encode(&mut enc).expect("engines don't error");
@@ -615,9 +618,11 @@ impl Transaction {
         Txid::from_engine(enc)
     }
 
-    /// Computes SegWit-version of the transaction id (wtxid). For transaction with the witness
-    /// data this hash includes witness, for pre-witness transaction it is equal to the normal
-    /// value returned by txid() function.
+    /// Computes the segwit version of the transaction id.
+    ///
+    /// Hashes the transaction **including** all segwit data (i.e. the marker, flag bytes, and the
+    /// witness fields themselves). For non-segwit transactions which do not have any segwit data,
+    /// this will be equal to [`Transaction::txid()`].
     pub fn wtxid(&self) -> Wtxid {
         let mut enc = Wtxid::engine();
         self.consensus_encode(&mut enc).expect("engines don't error");
@@ -640,9 +645,9 @@ impl Transaction {
     /// - Does NOT attempt to support OP_CODESEPARATOR. In general this would require evaluating
     /// `script_pubkey` to determine which separators get evaluated and which don't, which we don't
     /// have the information to determine.
-    /// - Does NOT handle the sighash single bug (see "Return type" section)
+    /// - Does NOT handle the sighash single bug (see "Returns" section)
     ///
-    /// # Return type
+    /// # Returns
     ///
     /// This function can't handle the SIGHASH_SINGLE bug internally, so it returns [`EncodeSigningDataResult`]
     /// that must be handled by the caller (see [`EncodeSigningDataResult::is_sighash_single_bug`]).
@@ -826,6 +831,7 @@ impl Transaction {
     }
 
     /// Verify that this transaction is able to spend its inputs.
+    ///
     /// The `spent` closure should not return the same [`TxOut`] twice!
     #[cfg(feature="bitcoinconsensus")]
     #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
@@ -846,14 +852,25 @@ impl Transaction {
         Ok(())
     }
 
-    /// Is this a coin base transaction?
+    /// Checks if this is a coinbase transaction.
+    ///
+    /// The first transaction in the block distributes the mining reward and is called the coinbase
+    /// transaction. It is impossible to check if the transaction is first in the block, so this
+    /// function checks the structure of the transaction instead - the previous output must be
+    /// all-zeros (creates satoshis "out of thin air").
     pub fn is_coin_base(&self) -> bool {
         self.input.len() == 1 && self.input[0].previous_output.is_null()
     }
 
-    /// Returns `true` if the transaction itself opted in to be BIP-125-replaceable (RBF). This
-    /// **does not** cover the case where a transaction becomes replaceable due to ancestors being
-    /// RBF.
+    /// Returns `true` if the transaction itself opted in to be BIP-125-replaceable (RBF).
+    ///
+    /// # Warning
+    ///
+    /// **Incorrectly relying on RBF may lead to monetary loss!**
+    ///
+    /// This **does not** cover the case where a transaction becomes replaceable due to ancestors
+    /// being RBF. Please note that transactions **may be replaced** even if they **do not** include
+    /// the RBF signal: <https://bitcoinops.org/en/newsletters/2022/10/19/#transaction-replacement-option>.
     pub fn is_explicitly_rbf(&self) -> bool {
         self.input.iter().any(|input| input.sequence.is_rbf())
     }
