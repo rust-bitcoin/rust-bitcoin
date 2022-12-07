@@ -28,9 +28,9 @@ macro_rules! hex_fmt_impl(
                     write!(f, "0x")?;
                 }
                 if $ty::<$($gen),*>::DISPLAY_BACKWARD {
-                    hex::format_hex_reverse(&self.0, f)
+                    hex::format_hex_reverse(self.as_ref(), f)
                 } else {
-                    hex::format_hex(&self.0, f)
+                    hex::format_hex(self.as_ref(), f)
                 }
             }
         }
@@ -65,14 +65,6 @@ macro_rules! borrow_slice_impl(
         impl<$($gen: $gent),*> $crate::_export::_core::convert::AsRef<[u8]> for $ty<$($gen),*>  {
             fn as_ref(&self) -> &[u8] {
                 &self[..]
-            }
-        }
-
-        impl<$($gen: $gent),*> $crate::_export::_core::ops::Deref for $ty<$($gen),*> {
-            type Target = [u8];
-
-            fn deref(&self) -> &Self::Target {
-                &self.0
             }
         }
     )
@@ -240,10 +232,18 @@ mod test {
     use crate::{Hash, sha256};
 
     #[test]
-    fn borrow_slice_impl_to_vec() {
-        // Test that the borrow_slice_impl macro gives to_vec.
+    fn hash_as_ref() {
         let hash = sha256::Hash::hash(&[3, 50]);
-        assert_eq!(hash.to_vec().len(), sha256::Hash::LEN);
+        assert_eq!(hash.as_ref(), hash.as_inner());
+    }
+
+    #[test]
+    fn hash_borrow() {
+        use core::borrow::Borrow;
+
+        let hash = sha256::Hash::hash(&[3, 50]);
+        let borrowed: &[u8] = hash.borrow();
+        assert_eq!(borrowed, hash.as_inner());
     }
 
     hash_newtype!(TestHash, crate::sha256d::Hash, 32, doc="Test hash.");
