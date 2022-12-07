@@ -15,22 +15,20 @@
 #[macro_export]
 /// Adds hexadecimal formatting implementation of a trait `$imp` to a given type `$ty`.
 macro_rules! hex_fmt_impl(
-    ($ty:ident) => (
-        $crate::hex_fmt_impl!($ty, );
+    ($ty:ident, $len:expr) => (
+        $crate::hex_fmt_impl!($ty, $len, );
     );
-    ($ty:ident, $($gen:ident: $gent:ident),*) => (
+    ($ty:ident, $len:expr, $($gen:ident: $gent:ident),*) => (
         impl<$($gen: $gent),*> $crate::_export::_core::fmt::LowerHex for $ty<$($gen),*> {
             fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
                 #[allow(unused_imports)]
-                use $crate::{Hash as _, HashEngine as _, hex};
+                use $crate::Hash as _;
+                use bitcoin_internals::hex::Case;
 
-                if f.alternate() {
-                    write!(f, "0x")?;
-                }
                 if $ty::<$($gen),*>::DISPLAY_BACKWARD {
-                    hex::format_hex_reverse(&self.0, f)
+                    bitcoin_internals::fmt_hex_exact!(f, $len, self.0.iter().rev(), Case::Lower)
                 } else {
-                    hex::format_hex(&self.0, f)
+                    bitcoin_internals::fmt_hex_exact!(f, $len, self.0.iter(), Case::Lower)
                 }
             }
         }
@@ -121,7 +119,7 @@ macro_rules! hash_newtype {
         #[repr(transparent)]
         pub struct $newtype($hash);
 
-        $crate::hex_fmt_impl!($newtype);
+        $crate::hex_fmt_impl!($newtype, $len);
         $crate::serde_impl!($newtype, $len);
         $crate::borrow_slice_impl!($newtype);
 

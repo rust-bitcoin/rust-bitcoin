@@ -22,6 +22,7 @@ alloc = ["core2/alloc"]
 serde-std = ["serde/std"]
 
 [dependencies]
+bitcoin-internals = { path = "../internals" }
 # Only enable this if you explicitly do not want to use "std", otherwise enable "serde-std".
 serde = { version = "1.0", default-features = false, optional = true }
 # Only enable this if you explicitly do not want to use an allocator, otherwise enable "alloc".

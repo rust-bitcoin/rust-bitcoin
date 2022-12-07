@@ -28,7 +28,7 @@ macro_rules! hash_trait_impls {
             }
         }
 
-        hex_fmt_impl!(Hash $(, $gen: $gent)*);
+        hex_fmt_impl!(Hash, $bits / 8 $(, $gen: $gent)*);
         serde_impl!(Hash, $bits / 8 $(, $gen: $gent)*);
         borrow_slice_impl!(Hash $(, $gen: $gent)*);
 

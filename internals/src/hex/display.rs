@@ -172,10 +172,10 @@ macro_rules! fmt_hex_exact {
 // Implementation detail of `write_hex_exact` macro to de-duplicate the code
 #[doc(hidden)]
 #[inline]
-pub fn fmt_hex_exact_fn(
+pub fn fmt_hex_exact_fn<'a>(
     f: &mut fmt::Formatter,
     buf: &mut OutBytes,
-    bytes: &[u8],
+    bytes: impl IntoIterator<Item = &'a u8>,
     case: Case,
 ) -> fmt::Result {
     let mut encoder = BufEncoder::new(buf);

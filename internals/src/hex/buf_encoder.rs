@@ -129,9 +129,9 @@ mod out_bytes {
     impl Sealed for OutBytes {}
 
     // As a sanity check we only provide conversions for even, non-empty arrays.
-    // Weird lengths 66 and 130 are provided for serialized public keys.
+    // Weird lengths 66 and 130 are provided for serialized public keys, 40 is for ripemd160 hashes.
     impl_from_array!(
-        2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 64, 66, 128, 130, 256, 512,
+        2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 40, 64, 66, 128, 130, 256, 512,
         1024, 2048, 4096, 8192
     );
 
@@ -176,8 +176,7 @@ impl<T: AsOutBytes> BufEncoder<T> {
     /// The method panics if the bytes wouldn't fit the buffer.
     #[inline]
     #[cfg_attr(rust_v_1_46, track_caller)]
-    pub fn put_bytes(&mut self, bytes: &[u8], case: Case) {
-        assert!(bytes.len() <= self.space_remaining());
+    pub fn put_bytes<'a>(&mut self, bytes: impl IntoIterator<Item = &'a u8>, case: Case) {
         for byte in bytes {
             self.put_byte(*byte, case);
         }
