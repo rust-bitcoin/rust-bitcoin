@@ -119,6 +119,28 @@ impl Network {
             Network::Regtest => "regtest",
         }
     }
+
+    /// Converts a `bitcoind -chain` argument name to its equivalent `Network`.
+    ///
+    /// ```bash
+    /// $ bitcoin-23.0/bin/bitcoind --help | grep -C 3 '\-chain=<chain>'
+    /// Chain selection options:
+    ///
+    /// -chain=<chain>
+    /// Use the chain <chain> (default: main). Allowed values: main, test, signet, regtest
+    /// ```
+    pub fn from_core_arg(core_arg: &str) -> Result<Self, ParseNetworkError> {
+        use Network::*;
+
+        let network = match core_arg {
+           "main" => Bitcoin,
+           "test" => Testnet,
+           "signet" => Signet, 
+           "regtest" => Regtest,
+           _ => return Err(ParseNetworkError(core_arg.to_owned())),
+        };
+        Ok(network)
+    }
 }
 
 /// An error in parsing network string.
@@ -575,6 +597,21 @@ mod tests {
             let magic: Magic = Magic::from_str(magic_str).unwrap();
             assert_eq!(Network::try_from(magic).unwrap(), *network);
             assert_eq!(&magic.to_string(), magic_str);
+        }
+    }
+
+    #[test]
+    fn from_to_core_arg() {
+        let expected_pairs = [
+            (Network::Bitcoin, "main"),
+            (Network::Testnet, "test"),
+            (Network::Regtest, "regtest"),
+            (Network::Signet, "signet"),
+        ];
+
+        for (net, core_arg) in &expected_pairs {
+            assert_eq!(Network::from_core_arg(core_arg), Ok(*net));
+            assert_eq!(net.to_core_arg(), *core_arg);
         }
     }
 }
