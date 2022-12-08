@@ -599,4 +599,19 @@ mod tests {
             assert_eq!(&magic.to_string(), magic_str);
         }
     }
+
+    #[test]
+    fn from_to_core_arg() {
+        let expected_pairs = [
+            (Network::Bitcoin, "main"),
+            (Network::Testnet, "test"),
+            (Network::Regtest, "regtest"),
+            (Network::Signet, "signet"),
+        ];
+
+        for (net, core_arg) in &expected_pairs {
+            assert_eq!(Network::from_core_arg(core_arg), Ok(*net));
+            assert_eq!(net.to_core_arg(), *core_arg);
+        }
+    }
 }
