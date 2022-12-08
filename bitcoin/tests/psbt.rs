@@ -424,7 +424,7 @@ fn finalize_psbt(mut psbt: Psbt) -> Psbt {
         .push_opcode(OP_0) // OP_CHECKMULTISIG bug pops +1 value when evaluating so push OP_0.
         .push_slice(&sigs[0].to_vec())
         .push_slice(&sigs[1].to_vec())
-        .push_slice(&psbt.inputs[0].redeem_script.clone().unwrap().as_bytes())
+        .push_slice(psbt.inputs[0].redeem_script.clone().unwrap().as_bytes())
         .into_script();
 
     psbt.inputs[0].final_script_sig = Some(script_sig);
@@ -437,7 +437,7 @@ fn finalize_psbt(mut psbt: Psbt) -> Psbt {
     // Input 1: SegWit UTXO
 
     let script_sig = script::Builder::new()
-        .push_slice(&psbt.inputs[1].redeem_script.clone().unwrap().as_bytes())
+        .push_slice(psbt.inputs[1].redeem_script.clone().unwrap().as_bytes())
         .into_script();
 
     psbt.inputs[1].final_script_sig = Some(script_sig);
@@ -448,7 +448,7 @@ fn finalize_psbt(mut psbt: Psbt) -> Psbt {
         script_witness.push([]); // Push 0x00 to the stack.
         script_witness.push(&sigs[1].to_vec());
         script_witness.push(&sigs[0].to_vec());
-        script_witness.push(&psbt.inputs[1].witness_script.clone().unwrap().as_bytes());
+        script_witness.push(psbt.inputs[1].witness_script.clone().unwrap().as_bytes());
 
         script_witness
     };

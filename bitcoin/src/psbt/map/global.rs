@@ -7,8 +7,8 @@ use crate::prelude::*;
 use crate::io::{self, Cursor, Read};
 
 use crate::blockdata::transaction::Transaction;
-use crate::consensus::{encode, Decodable};
 use crate::consensus::encode::MAX_VEC_SIZE;
+use crate::consensus::{encode, Decodable};
 use crate::psbt::map::Map;
 use crate::psbt::{raw, Error, PartiallySignedTransaction};
 use crate::bip32::{ExtendedPubKey, Fingerprint, DerivationPath, ChildNumber};
@@ -88,7 +88,7 @@ impl Map for PartiallySignedTransaction {
 }
 
 impl PartiallySignedTransaction {
-    pub(crate) fn consensus_decode_global<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    pub(crate) fn decode_global<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         let mut r = r.take(MAX_VEC_SIZE as u64);
         let mut tx: Option<Transaction> = None;
         let mut version: Option<u32> = None;
@@ -97,7 +97,7 @@ impl PartiallySignedTransaction {
         let mut proprietary: BTreeMap<raw::ProprietaryKey, Vec<u8>> = Default::default();
 
         loop {
-            match raw::Pair::consensus_decode(&mut r) {
+            match raw::Pair::decode(&mut r) {
                 Ok(pair) => {
                     match pair.key.type_value {
                         PSBT_GLOBAL_UNSIGNED_TX => {

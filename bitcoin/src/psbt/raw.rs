@@ -10,12 +10,12 @@ use crate::prelude::*;
 use core::fmt;
 use core::convert::TryFrom;
 
-use crate::io;
+use crate::io::{self, Cursor};
 use crate::consensus::encode::{self, ReadExt, WriteExt, Decodable, Encodable, VarInt, serialize, deserialize, MAX_VEC_SIZE};
 use crate::hashes::hex;
 use crate::psbt::Error;
 
-use super::serialize::Serialize;
+use super::serialize::{Serialize, Deserialize};
 
 /// A PSBT key in its raw byte form.
 #[derive(Debug, PartialEq, Hash, Eq, Clone, Ord, PartialOrd)]
@@ -71,8 +71,8 @@ impl fmt::Display for Key {
     }
 }
 
-impl Decodable for Key {
-    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+impl Key {
+    pub(crate) fn decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         let VarInt(byte_size): VarInt = Decodable::consensus_decode(r)?;
 
         if byte_size == 0 {
@@ -124,10 +124,17 @@ impl Serialize for Pair {
     }
 }
 
-impl Decodable for Pair {
-    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+impl Deserialize for Pair {
+    fn deserialize(bytes: &[u8]) -> Result<Self, encode::Error> {
+        let mut decoder = Cursor::new(bytes);
+        Pair::decode(&mut decoder)
+    }
+}
+
+impl Pair {
+    pub(crate) fn decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Ok(Pair {
-            key: Decodable::consensus_decode(r)?,
+            key: Key::decode(r)?,
             value: Decodable::consensus_decode(r)?,
         })
     }

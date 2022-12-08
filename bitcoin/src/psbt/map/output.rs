@@ -322,5 +322,4 @@ impl Map for Output {
     }
 }
 
-impl_psbtmap_serialize!(Output);
-impl_psbtmap_consensus_decoding!(Output);
+impl_psbtmap_ser_de_serialize!(Output);

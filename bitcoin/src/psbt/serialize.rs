@@ -34,16 +34,9 @@ pub(crate) trait Serialize {
 }
 
 /// A trait for deserializing a value from raw data in PSBT key-value maps.
-pub trait Deserialize: Sized {
+pub(crate) trait Deserialize: Sized {
     /// Deserialize a value from raw data.
     fn deserialize(bytes: &[u8]) -> Result<Self, encode::Error>;
-}
-
-impl Serialize for Psbt {
-    /// Serialize a value as raw binary data.
-   fn serialize(&self) -> Vec<u8> {
-        self.serialize()
-    }
 }
 
 impl PartiallySignedTransaction {
@@ -89,28 +82,28 @@ impl PartiallySignedTransaction {
 
         let mut d = bytes.get(5..).ok_or(Error::NoMorePairs)?;
 
-        let mut global = PartiallySignedTransaction::consensus_decode_global(&mut d)?;
+        let mut global = Psbt::decode_global(&mut d)?;
         global.unsigned_tx_checks()?;
 
         let inputs: Vec<Input> = {
-            let inputs_len: usize = (&global.unsigned_tx.input).len();
+            let inputs_len: usize = (global.unsigned_tx.input).len();
 
             let mut inputs: Vec<Input> = Vec::with_capacity(inputs_len);
 
             for _ in 0..inputs_len {
-                inputs.push(Decodable::consensus_decode(&mut d)?);
+                inputs.push(Input::decode(&mut d)?);
             }
 
             inputs
         };
 
         let outputs: Vec<Output> = {
-            let outputs_len: usize = (&global.unsigned_tx.output).len();
+            let outputs_len: usize = (global.unsigned_tx.output).len();
 
             let mut outputs: Vec<Output> = Vec::with_capacity(outputs_len);
 
             for _ in 0..outputs_len {
-                outputs.push(Decodable::consensus_decode(&mut d)?);
+                outputs.push(Output::decode(&mut d)?);
             }
 
             outputs

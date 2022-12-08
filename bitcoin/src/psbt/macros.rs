@@ -50,16 +50,27 @@ macro_rules! impl_psbtmap_serialize {
     };
 }
 
-macro_rules! impl_psbtmap_consensus_decoding {
+macro_rules! impl_psbtmap_deserialize {
     ($thing:ty) => {
-        impl $crate::consensus::Decodable for $thing {
-            fn consensus_decode<R: $crate::io::Read + ?Sized>(
+        impl $crate::psbt::serialize::Deserialize for $thing {
+            fn deserialize(bytes: &[u8]) -> Result<Self, $crate::consensus::encode::Error> {
+                let mut decoder = crate::io::Cursor::new(bytes);
+                Self::decode(&mut decoder)
+            }
+        }
+    };
+}
+
+macro_rules! impl_psbtmap_decoding {
+    ($thing:ty) => {
+        impl $thing {
+            pub(crate) fn decode<R: $crate::io::Read + ?Sized>(
                 r: &mut R,
             ) -> Result<Self, $crate::consensus::encode::Error> {
                 let mut rv: Self = core::default::Default::default();
 
                 loop {
-                    match $crate::consensus::Decodable::consensus_decode(r) {
+                    match $crate::psbt::raw::Pair::decode(r) {
                         Ok(pair) => rv.insert_pair(pair)?,
                         Err($crate::consensus::encode::Error::Psbt($crate::psbt::Error::NoMorePairs)) => return Ok(rv),
                         Err(e) => return Err(e),
@@ -67,6 +78,14 @@ macro_rules! impl_psbtmap_consensus_decoding {
                 }
             }
         }
+    };
+}
+
+macro_rules! impl_psbtmap_ser_de_serialize {
+    ($thing:ty) => {
+        impl_psbtmap_decoding!($thing);
+        impl_psbtmap_serialize!($thing);
+        impl_psbtmap_deserialize!($thing);
     };
 }
 
