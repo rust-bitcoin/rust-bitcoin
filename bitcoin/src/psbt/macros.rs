@@ -23,8 +23,8 @@ macro_rules! impl_psbt_de_serialize {
 macro_rules! impl_psbt_deserialize {
     ($thing:ty) => {
         impl $crate::psbt::serialize::Deserialize for $thing {
-            fn deserialize(bytes: &[u8]) -> Result<Self, $crate::consensus::encode::Error> {
-                $crate::consensus::deserialize(&bytes[..])
+            fn deserialize(bytes: &[u8]) -> Result<Self, $crate::psbt::Error> {
+                $crate::consensus::deserialize(&bytes[..]).map_err(|e| $crate::psbt::Error::from(e))
             }
         }
     };
@@ -53,7 +53,7 @@ macro_rules! impl_psbtmap_serialize {
 macro_rules! impl_psbtmap_deserialize {
     ($thing:ty) => {
         impl $crate::psbt::serialize::Deserialize for $thing {
-            fn deserialize(bytes: &[u8]) -> Result<Self, $crate::consensus::encode::Error> {
+            fn deserialize(bytes: &[u8]) -> Result<Self, $crate::psbt::Error> {
                 let mut decoder = bytes;
                 Self::decode(&mut decoder)
             }
@@ -66,13 +66,13 @@ macro_rules! impl_psbtmap_decoding {
         impl $thing {
             pub(crate) fn decode<R: $crate::io::Read + ?Sized>(
                 r: &mut R,
-            ) -> Result<Self, $crate::consensus::encode::Error> {
+            ) -> Result<Self, $crate::psbt::Error> {
                 let mut rv: Self = core::default::Default::default();
 
                 loop {
                     match $crate::psbt::raw::Pair::decode(r) {
                         Ok(pair) => rv.insert_pair(pair)?,
-                        Err($crate::consensus::encode::Error::Psbt($crate::psbt::Error::NoMorePairs)) => return Ok(rv),
+                        Err($crate::psbt::Error::NoMorePairs) => return Ok(rv),
                         Err(e) => return Err(e),
                     }
                 }
@@ -156,9 +156,9 @@ macro_rules! impl_psbt_hash_de_serialize {
 macro_rules! impl_psbt_hash_deserialize {
     ($hash_type:ty) => {
         impl $crate::psbt::serialize::Deserialize for $hash_type {
-            fn deserialize(bytes: &[u8]) -> Result<Self, $crate::consensus::encode::Error> {
+            fn deserialize(bytes: &[u8]) -> Result<Self, $crate::psbt::Error> {
                 <$hash_type>::from_slice(&bytes[..]).map_err(|e| {
-                    $crate::psbt::Error::from(e).into()
+                    $crate::psbt::Error::from(e)
                 })
             }
         }

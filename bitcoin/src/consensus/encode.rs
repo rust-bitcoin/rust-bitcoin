@@ -26,7 +26,6 @@ use crate::hashes::{sha256d, Hash, sha256};
 use crate::hash_types::{BlockHash, FilterHash, TxMerkleNode, FilterHeader};
 use crate::io::{self, Cursor, Read};
 
-use crate::psbt;
 use crate::bip152::{ShortId, PrefilledTransaction};
 use crate::taproot::TapLeafHash;
 
@@ -40,8 +39,6 @@ use crate::network::{message_blockdata::Inventory, address::{Address, AddrV2Mess
 pub enum Error {
     /// And I/O error.
     Io(io::Error),
-    /// PSBT-related error.
-    Psbt(psbt::Error),
     /// Tried to allocate an oversized vector.
     OversizedVectorAllocation {
         /// The capacity requested.
@@ -68,7 +65,6 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Error::Io(ref e) => write_err!(f, "IO error"; e),
-            Error::Psbt(ref e) => write_err!(f, "PSBT error"; e),
             Error::OversizedVectorAllocation { requested: ref r, max: ref m } => write!(f,
                 "allocation of oversized vector: requested {}, maximum {}", r, m),
             Error::InvalidChecksum { expected: ref e, actual: ref a } => write!(f,
@@ -89,7 +85,6 @@ impl std::error::Error for Error {
 
         match self {
             Io(e) => Some(e),
-            Psbt(e) => Some(e),
             OversizedVectorAllocation { .. }
             | InvalidChecksum { .. }
             | NonMinimalVarInt
@@ -103,13 +98,6 @@ impl std::error::Error for Error {
 impl From<io::Error> for Error {
     fn from(error: io::Error) -> Self {
         Error::Io(error)
-    }
-}
-
-#[doc(hidden)]
-impl From<psbt::Error> for Error {
-    fn from(e: psbt::Error) -> Error {
-        Error::Psbt(e)
     }
 }
 

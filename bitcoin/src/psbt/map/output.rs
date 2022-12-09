@@ -5,7 +5,6 @@ use core;
 use core::convert::TryFrom;
 
 use crate::blockdata::script::ScriptBuf;
-use crate::consensus::encode;
 use secp256k1::XOnlyPublicKey;
 use crate::bip32::KeySource;
 use secp256k1;
@@ -205,7 +204,7 @@ impl<'tree> Iterator for TapTreeIter<'tree> {
 }
 
 impl Output {
-    pub(super) fn insert_pair(&mut self, pair: raw::Pair) -> Result<(), encode::Error> {
+    pub(super) fn insert_pair(&mut self, pair: raw::Pair) -> Result<(), Error> {
         let raw::Pair {
             key: raw_key,
             value: raw_value,
@@ -233,7 +232,7 @@ impl Output {
                     btree_map::Entry::Vacant(empty_key) => {
                         empty_key.insert(raw_value);
                     },
-                    btree_map::Entry::Occupied(_) => return Err(Error::DuplicateKey(raw_key).into()),
+                    btree_map::Entry::Occupied(_) => return Err(Error::DuplicateKey(raw_key)),
                 }
             }
             PSBT_OUT_TAP_INTERNAL_KEY => {
@@ -255,7 +254,7 @@ impl Output {
                 btree_map::Entry::Vacant(empty_key) => {
                     empty_key.insert(raw_value);
                 }
-                btree_map::Entry::Occupied(k) => return Err(Error::DuplicateKey(k.key().clone()).into()),
+                btree_map::Entry::Occupied(k) => return Err(Error::DuplicateKey(k.key().clone())),
             }
         }
 

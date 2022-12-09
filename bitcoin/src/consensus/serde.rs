@@ -372,7 +372,6 @@ enum DecodeError<E> {
 fn consensus_error_into_serde<E: serde::de::Error>(error: ConsensusError) -> E {
     match error {
         ConsensusError::Io(error) => panic!("unexpected IO error {:?}", error),
-        ConsensusError::Psbt(_) => panic!("PSBT shouldn't implement consensus encoding"),
         ConsensusError::OversizedVectorAllocation { requested, max } => E::custom(format_args!("the requested allocation of {} items exceeds maximum of {}", requested, max)),
         ConsensusError::InvalidChecksum { expected, actual } => E::invalid_value(Unexpected::Bytes(&actual), &DisplayExpected(format_args!("checksum {:02x}{:02x}{:02x}{:02x}", expected[0], expected[1], expected[2], expected[3]))),
         ConsensusError::NonMinimalVarInt => E::custom(format_args!("compact size was not encoded minimally")),
