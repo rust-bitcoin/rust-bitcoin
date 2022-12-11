@@ -15,6 +15,8 @@ use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::consensus::Params;
 use crate::hash_types::BlockHash;
 use crate::io::{self, Read, Write};
+use crate::prelude::String;
+use crate::string::FromHexStr;
 
 /// Implements $int * $ty. Requires `u64::from($int)`.
 macro_rules! impl_int_mul {
@@ -281,6 +283,15 @@ impl CompactTarget {
 
 impl From<CompactTarget> for Target {
     fn from(c: CompactTarget) -> Self { Target::from_compact(c) }
+}
+
+impl FromHexStr for CompactTarget {
+    type Error = crate::parse::ParseIntError;
+
+    fn from_hex_str_no_prefix<S: AsRef<str> + Into<String>>(s: S) -> Result<Self, Self::Error> {
+        let compact_target = crate::parse::hex_u32(s)?;
+        Ok(Self::from_consensus(compact_target))
+    }
 }
 
 impl Encodable for CompactTarget {
@@ -1401,6 +1412,27 @@ mod tests {
             "\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\""
         )
         .is_err()); // invalid length
+    }
+
+    #[test]
+    fn compact_target_from_hex_str_happy_path() {
+        let actual = CompactTarget::from_hex_str("0x01003456").unwrap();
+        let expected = CompactTarget(0x01003456);
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn compact_target_from_hex_str_no_prefix_happy_path() {
+        let actual = CompactTarget::from_hex_str_no_prefix("01003456").unwrap();
+        let expected = CompactTarget(0x01003456);
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn compact_target_from_hex_invalid_hex_should_err() {
+        let hex = "0xzbf9";
+        let result = CompactTarget::from_hex_str(hex);
+        assert!(result.is_err());
     }
 
     #[test]

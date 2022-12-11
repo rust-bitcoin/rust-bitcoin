@@ -84,6 +84,15 @@ pub(crate) fn int<T: Integer, S: AsRef<str> + Into<String>>(s: S) -> Result<T, P
     })
 }
 
+pub(crate) fn hex_u32<S: AsRef<str> + Into<String>>(s: S) -> Result<u32, ParseIntError> {
+    u32::from_str_radix(s.as_ref(), 16).map_err(|error| ParseIntError {
+        input: s.into(),
+        bits: u8::try_from(core::mem::size_of::<u32>() * 8).expect("max is 32 bits for u32"),
+        is_signed: u32::try_from(-1i8).is_ok(),
+        source: error,
+    })
+}
+
 impl_std_error!(ParseIntError, source);
 
 /// Implements `TryFrom<$from> for $to` using `parse::int`, mapping the output using `fn`
