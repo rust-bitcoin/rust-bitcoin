@@ -62,7 +62,6 @@ pub const LOCK_TIME_THRESHOLD: u32 = 500_000_000;
 /// ```
 #[allow(clippy::derive_ord_xor_partial_ord)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[derive(Ord)] // will be removed in next commit
 pub enum LockTime {
     /// A block height lock time value.
     ///
