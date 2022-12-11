@@ -977,7 +977,7 @@ mod tests {
         let expected = PartiallySignedTransaction {
             unsigned_tx: Transaction {
                 version: 2,
-                lock_time: absolute::PackedLockTime(1257139),
+                lock_time: absolute::PackedLockTime::from_consensus(1257139),
                 input: vec![TxIn {
                     previous_output: OutPoint {
                         txid: Txid::from_hex(
@@ -1237,7 +1237,7 @@ mod tests {
             let unserialized = PartiallySignedTransaction {
                 unsigned_tx: Transaction {
                     version: 2,
-                    lock_time: absolute::PackedLockTime(1257139),
+                    lock_time: absolute::PackedLockTime::from_consensus(1257139),
                     input: vec![TxIn {
                         previous_output: OutPoint {
                             txid: Txid::from_hex(
@@ -1549,7 +1549,7 @@ mod tests {
         let mut unserialized = PartiallySignedTransaction {
             unsigned_tx: Transaction {
                 version: 2,
-                lock_time: absolute::PackedLockTime(1257139),
+                lock_time: absolute::PackedLockTime::from_consensus(1257139),
                 input: vec![TxIn {
                     previous_output: OutPoint {
                         txid: Txid::from_hex(
@@ -1719,7 +1719,7 @@ mod tests {
         let mut t = PartiallySignedTransaction {
             unsigned_tx: Transaction {
                 version: 2,
-                lock_time: absolute::PackedLockTime(1257139),
+                lock_time: absolute::PackedLockTime::from_consensus(1257139),
                 input: vec![TxIn {
                     previous_output: OutPoint {
                         txid: Txid::from_hex(

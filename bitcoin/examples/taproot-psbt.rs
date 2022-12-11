@@ -412,7 +412,7 @@ impl BenefactorWallet {
         // CREATOR + UPDATER
         let next_tx = Transaction {
             version: 2,
-            lock_time: absolute::PackedLockTime(lock_time),
+            lock_time: absolute::PackedLockTime::from_consensus(lock_time),
             input: vec![TxIn {
                 previous_output: OutPoint { txid: tx.txid(), vout: 0 },
                 script_sig: Script::new(),
@@ -482,7 +482,7 @@ impl BenefactorWallet {
                 self.beneficiary_xpub.derive_pub(&self.secp, &new_derivation_path)?.to_x_only_pub();
 
             // Build up the leaf script and combine with internal key into a taproot commitment
-            let lock_time = psbt.unsigned_tx.lock_time.to_u32() + lock_time_delta;
+            let lock_time = psbt.unsigned_tx.lock_time.to_consensus_u32() + lock_time_delta;
             let script = Self::time_lock_script(lock_time, beneficiary_key);
             let leaf_hash = TapLeafHash::from_script(&script, LeafVersion::TapScript);
 
@@ -557,7 +557,7 @@ impl BenefactorWallet {
 
             let next_tx = Transaction {
                 version: 2,
-                lock_time: absolute::PackedLockTime(lock_time),
+                lock_time: absolute::PackedLockTime::from_consensus(lock_time),
                 input: vec![TxIn {
                     previous_output: OutPoint { txid: tx.txid(), vout: 0 },
                     script_sig: Script::new(),
@@ -632,7 +632,7 @@ impl BeneficiaryWallet {
         let input_value = psbt.inputs[0].witness_utxo.as_ref().unwrap().value;
         let input_script_pubkey =
             psbt.inputs[0].witness_utxo.as_ref().unwrap().script_pubkey.clone();
-        psbt.unsigned_tx.lock_time = absolute::PackedLockTime(lock_time);
+        psbt.unsigned_tx.lock_time = absolute::PackedLockTime::from_consensus(lock_time);
         psbt.unsigned_tx.output = vec![TxOut {
             script_pubkey: to_address.script_pubkey(),
             value: input_value - ABSOLUTE_FEES_IN_SATS,

@@ -37,122 +37,8 @@ use crate::absolute;
 /// [Bitcoin Core]: https://github.com/bitcoin/bitcoin/blob/9ccaee1d5e2e4b79b0a7c29aadb41b97e4741332/src/script/script.h#L39
 pub const LOCK_TIME_THRESHOLD: u32 = 500_000_000;
 
-/// Packed lock time wraps a [`LockTime`] consensus value i.e., the raw `u32` used by the network.
-///
-/// This struct may be preferred in performance-critical applications because it's slightly smaller
-/// than [`LockTime`] and has a bit more performant (de)serialization. In particular, this may be
-/// relevant when the value is not processed, just passed around. Note however that the difference
-/// is super-small, so unless you do something extreme you shouldn't worry about it.
-///
-/// This type implements a naive ordering based on the `u32`, this is _not_ a semantically correct
-/// ordering for a lock time, hence [`LockTime`] does not implement `Ord`. This type is useful if
-/// you want to use a lock time as part of a struct and wish to derive `Ord`. For all other uses,
-/// consider using [`LockTime`] directly.
-///
-/// # Examples
-/// ```
-/// # use bitcoin::Amount;
-/// # use bitcoin::absolute::{PackedLockTime, LockTime};
-/// #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
-/// struct S {
-///     lock_time: PackedLockTime,
-///     amount: Amount,
-/// }
-///
-/// let _ = S {
-///     lock_time: LockTime::from_consensus(741521).into(),
-///     amount: Amount::from_sat(10_000_000),
-/// };
-/// ```
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
-pub struct PackedLockTime(pub u32);
-
-impl PackedLockTime {
-    /// If [`crate::Transaction::lock_time`] is set to zero it is ignored, in other words a
-    /// transaction with nLocktime==0 is able to be included immediately in any block.
-    pub const ZERO: PackedLockTime = PackedLockTime(0);
-
-    /// Returns the inner `u32`.
-    #[inline]
-    pub fn to_u32(self) -> u32 {
-        self.0
-    }
-}
-
-impl fmt::Display for PackedLockTime {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::Display::fmt(&self.0, f)
-    }
-}
-
-impl FromHexStr for PackedLockTime {
-    type Error = Error;
-
-    fn from_hex_str_no_prefix<S: AsRef<str> + Into<String>>(s: S) -> Result<Self, Self::Error> {
-        let packed_lock_time = crate::parse::hex_u32(s)?;
-        Ok(Self(packed_lock_time))
-    }
-}
-
-impl Encodable for PackedLockTime {
-    #[inline]
-    fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.0.consensus_encode(w)
-    }
-}
-
-impl Decodable for PackedLockTime {
-    #[inline]
-    fn consensus_decode<R: Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        u32::consensus_decode(r).map(PackedLockTime)
-    }
-}
-
-impl From<LockTime> for PackedLockTime {
-    fn from(n: LockTime) -> Self {
-        PackedLockTime(n.to_consensus_u32())
-    }
-}
-
-impl From<PackedLockTime> for LockTime {
-    fn from(n: PackedLockTime) -> Self {
-        LockTime::from_consensus(n.0)
-    }
-}
-
-impl From<&LockTime> for PackedLockTime {
-    fn from(n: &LockTime) -> Self {
-        PackedLockTime(n.to_consensus_u32())
-    }
-}
-
-impl From<&PackedLockTime> for LockTime {
-    fn from(n: &PackedLockTime) -> Self {
-        LockTime::from_consensus(n.0)
-    }
-}
-
-impl From<PackedLockTime> for u32 {
-    fn from(p: PackedLockTime) -> Self {
-        p.0
-    }
-}
-
-impl_parse_str_through_int!(PackedLockTime);
-
-impl fmt::LowerHex for PackedLockTime {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:x}", self.0)
-    }
-}
-
-impl fmt::UpperHex for PackedLockTime {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:X}", self.0)
-    }
-}
+/// Will be deleted in next commit
+pub type PackedLockTime = LockTime;
 
 /// An absolute lock time value, representing either a block height or a UNIX timestamp (seconds
 /// since epoch).
@@ -179,6 +65,7 @@ impl fmt::UpperHex for PackedLockTime {
 /// ```
 #[allow(clippy::derive_ord_xor_partial_ord)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Ord)] // will be removed in next commit
 pub enum LockTime {
     /// A block height lock time value.
     ///
@@ -848,14 +735,14 @@ mod tests {
     #[test]
     fn packed_lock_time_from_str_hex_happy_path() {
         let actual = PackedLockTime::from_hex_str("0xBA70D").unwrap();
-        let expected = PackedLockTime(0xBA70D);
+        let expected = PackedLockTime::from_consensus(0xBA70D);
         assert_eq!(actual, expected);
     }
 
     #[test]
     fn packed_lock_time_from_str_hex_no_prefix_happy_path() {
         let lock_time = PackedLockTime::from_hex_str_no_prefix("BA70D").unwrap();
-        assert_eq!(lock_time, PackedLockTime(0xBA70D));
+        assert_eq!(lock_time, PackedLockTime::from_consensus(0xBA70D));
     }
 
     #[test]
