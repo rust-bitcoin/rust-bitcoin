@@ -423,6 +423,15 @@ impl fmt::Display for LockTime {
     }
 }
 
+impl FromHexStr for LockTime {
+    type Error = Error;
+
+    fn from_hex_str_no_prefix<S: AsRef<str> + Into<String>>(s: S) -> Result<Self, Self::Error> {
+        let packed_lock_time = crate::parse::hex_u32(s)?;
+        Ok(Self::from_consensus(packed_lock_time))
+    }
+}
+
 impl Encodable for LockTime {
     #[inline]
     fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
