@@ -17,6 +17,7 @@ panic-halt = "0.2.0"
 alloc-cortex-m = "0.4.1"
 bitcoin = { path="../", default-features = false, features = ["no-std", "secp-lowmemory"] }
 
+
 [[bin]]
 name = "embedded"
 test = false
