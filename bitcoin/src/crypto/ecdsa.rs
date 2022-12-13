@@ -78,7 +78,7 @@ impl FromStr for Signature {
 }
 
 /// A key-related error.
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Error {
     /// Hex encoding error

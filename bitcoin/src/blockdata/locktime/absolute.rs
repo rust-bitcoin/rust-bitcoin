@@ -632,7 +632,7 @@ fn is_block_time(n: u32) -> bool {
 }
 
 /// Catchall type for errors that relate to time locks.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Error {
     /// An error occurred while converting a `u32` to a lock time variant.
@@ -688,7 +688,7 @@ impl From<ParseIntError> for Error {
 }
 
 /// An error that occurs when converting a `u32` to a lock time variant.
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ConversionError {
     /// The expected timelock unit, height (blocks) or time (seconds).
     unit: LockTimeUnit,

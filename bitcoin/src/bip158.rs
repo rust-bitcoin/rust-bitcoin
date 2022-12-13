@@ -43,8 +43,6 @@ use core::cmp::{self, Ordering};
 use core::convert::TryInto;
 use core::fmt::{self, Display, Formatter};
 
-use bitcoin_internals::write_err;
-
 use crate::blockdata::block::Block;
 use crate::blockdata::script::Script;
 use crate::blockdata::transaction::OutPoint;
@@ -60,20 +58,23 @@ const P: u8 = 19;
 const M: u64 = 784931;
 
 /// Errors for blockfilter.
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Error {
     /// Missing UTXO, cannot calculate script filter.
     UtxoMissing(OutPoint),
     /// IO error reading or writing binary serialization of the filter.
-    Io(io::Error),
+    Io(io::ErrorKind),
 }
 
 impl Display for Error {
     fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
         match *self {
             Error::UtxoMissing(ref coin) => write!(f, "unresolved UTXO {}", coin),
-            Error::Io(ref e) => write_err!(f, "IO error"; e),
+            Error::Io(ref kind) => {
+                let e = io::Error::new(*kind, "");
+                write!(f, "IO error: {}", e)
+            }
         }
     }
 }
@@ -85,14 +86,13 @@ impl std::error::Error for Error {
         use self::Error::*;
 
         match self {
-            UtxoMissing(_) => None,
-            Io(e) => Some(e),
+            UtxoMissing(_) | Io(_) => None,
         }
     }
 }
 
 impl From<io::Error> for Error {
-    fn from(io: io::Error) -> Self { Error::Io(io) }
+    fn from(io: io::Error) -> Self { Error::Io(io.kind()) }
 }
 
 /// A block filter, as described by BIP 158.

@@ -29,7 +29,7 @@ use core::{fmt, str};
 use crate::Hash;
 
 /// Hex decoding error.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Error {
     /// Non-hexadecimal character.
     InvalidChar(u8),

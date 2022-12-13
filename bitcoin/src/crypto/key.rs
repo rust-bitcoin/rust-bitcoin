@@ -20,7 +20,7 @@ use crate::hashes::{Hash, hash160, hex, hex::FromHex};
 use crate::hash_types::{PubkeyHash, WPubkeyHash};
 
 /// A key-related error.
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Error {
     /// Base58 encoding error

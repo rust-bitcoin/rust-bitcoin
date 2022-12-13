@@ -19,7 +19,7 @@ use crate::prelude::*;
 use crate::{block, io, Block, BlockHash, Transaction};
 
 /// A BIP-152 error
-#[derive(Clone, PartialEq, Eq, Debug, Copy, PartialOrd, Ord, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Error {
     /// An unknown version number was used.

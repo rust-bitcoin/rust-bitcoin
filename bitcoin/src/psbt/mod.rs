@@ -563,7 +563,7 @@ impl_get_key_for_map!(BTreeMap);
 impl_get_key_for_map!(HashMap);
 
 /// Errors when getting a key.
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum GetKeyError {
     /// A bip32 error.
@@ -648,7 +648,7 @@ pub enum SigningAlgorithm {
 }
 
 /// Errors encountered while calculating the sighash message.
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum SignError {
     /// An ECDSA key-related error occurred.
     EcdsaSig(ecdsa::Error),

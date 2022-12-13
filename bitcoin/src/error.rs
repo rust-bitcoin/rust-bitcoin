@@ -9,7 +9,7 @@ pub use crate::parse::ParseIntError;
 
 /// A general error code, other errors should implement conversions to/from this
 /// if appropriate.
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Error {
     /// Encoding error

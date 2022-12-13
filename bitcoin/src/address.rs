@@ -54,7 +54,7 @@ use crate::prelude::*;
 use crate::taproot::TapBranchHash;
 
 /// Address error.
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Error {
     /// Base58 encoding error.
