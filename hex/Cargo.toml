@@ -1,0 +1,24 @@
+[package]
+name = "hex"
+version = "0.1.0"
+authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>", "The rust-bitcoin developers"]
+license = "CC0-1.0"
+description = "Hexidecimal encoding and decoding"
+repository = "https://github.com/rust-bitcoin/"
+keywords = [ "encoding", "decoding", "hexidecimal", "string", "parsing"]
+readme = "README.md"
+edition = "2018"
+
+# Please don't forget to add relevant features to docs.rs below
+[features]
+default = []
+std = []
+alloc = []
+
+[package.metadata.docs.rs]
+features = []
+rustdoc-args = ["--cfg", "docsrs"]
+
+[dependencies]
+
+[dev-dependencies]

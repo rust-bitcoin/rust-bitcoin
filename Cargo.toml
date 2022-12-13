@@ -1,2 +1,2 @@
 [workspace]
-members = ["bitcoin", "hashes", "internals"]
+members = ["bitcoin", "hashes", "hex", "internals"]
