@@ -13,15 +13,16 @@ edition = "2018"
 
 [features]
 default = ["std"]
-std = []
+std = ["hex/std"]
 schemars = ["actual-schemars", "dyn-clone"]
 # If you disable std, you can still use a Write trait via the core2 feature.
 # You can also use ToHex via the alloc feature, as it requires Vec/String.
 # And you can still just disable std by disabling default features, without enabling these two.
-alloc = ["core2/alloc"]
+alloc = ["core2/alloc", "hex/alloc"]
 serde-std = ["serde/std"]
 
 [dependencies]
+hex = { path = "../hex", default-features = false }
 # Only enable this if you explicitly do not want to use "std", otherwise enable "serde-std".
 serde = { version = "1.0", default-features = false, optional = true }
 # Only enable this if you explicitly do not want to use an allocator, otherwise enable "alloc".

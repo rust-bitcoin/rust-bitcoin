@@ -20,7 +20,7 @@ use core::marker::PhantomData;
 use core::ops::Index;
 use core::slice::SliceIndex;
 
-use crate::{Error, hex, sha256};
+use crate::{Error, sha256};
 
 type HashEngine = sha256::HashEngine;
 
@@ -124,7 +124,7 @@ mod tests {
     use core::str::FromStr;
     use crate::{sha256, sha256t};
     #[cfg(any(feature = "std", feature = "alloc"))]
-    use crate::hex::ToHex;
+    use hex::ToHex;
     #[cfg(any(feature = "std", feature = "alloc"))]
     use crate::Hash;
 

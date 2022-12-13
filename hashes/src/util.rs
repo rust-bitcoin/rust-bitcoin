@@ -22,7 +22,7 @@ macro_rules! hex_fmt_impl(
         impl<$($gen: $gent),*> $crate::_export::_core::fmt::LowerHex for $ty<$($gen),*> {
             fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
                 #[allow(unused_imports)]
-                use $crate::{Hash as _, HashEngine as _, hex};
+                use $crate::{Hash as _, HashEngine as _};
 
                 if f.alternate() {
                     write!(f, "0x")?;
@@ -186,9 +186,9 @@ macro_rules! hash_newtype {
         }
 
         impl $crate::_export::_core::str::FromStr for $newtype {
-            type Err = $crate::hex::Error;
+            type Err = hex::Error;
             fn from_str(s: &str) -> $crate::_export::_core::result::Result<$newtype, Self::Err> {
-                $crate::hex::FromHex::from_hex(s)
+                hex::FromHex::from_hex(s)
             }
         }
 
@@ -198,6 +198,34 @@ macro_rules! hash_newtype {
             #[inline]
             fn index(&self, index: I) -> &Self::Output {
                 &self.0[index]
+            }
+        }
+
+        impl hex::FromHex for $newtype {
+            fn from_byte_iter<I>(iter: I) -> Result<Self, hex::Error>
+            where
+                I: Iterator<Item = Result<u8, hex::Error>> + ExactSizeIterator + DoubleEndedIterator,
+            {
+                // Whether or not we reverse depends on what gets done by the call to create inner.
+                let inner = <$hash as $crate::Hash>::DISPLAY_BACKWARD;
+                let outer = <Self as $crate::Hash>::DISPLAY_BACKWARD;
+
+                let reverse = if inner && outer {
+                    false       // reverse done by creation of inner.
+                } else if inner && !outer {
+                    true        // reverse to counter the reverse done by creation of inner.
+                } else if !inner && outer {
+                    true
+                } else {        // !inner && !outer
+                    false
+                };
+
+                let hash = if reverse {
+                    hex::FromHex::from_byte_iter(iter.rev())?
+                } else {
+                    hex::FromHex::from_byte_iter(iter)?
+                };
+                Ok($newtype(hash))
             }
         }
     };
@@ -230,7 +258,7 @@ pub mod json_hex_string {
 #[cfg(test)]
 mod test {
     use core::str::FromStr;
-    use crate::hex::ToHex;
+    use hex::ToHex;
     use crate::{Hash, sha256};
 
     #[test]

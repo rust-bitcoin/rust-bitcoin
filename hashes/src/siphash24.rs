@@ -24,7 +24,7 @@ use core::{cmp, mem, ptr, str};
 use core::ops::Index;
 use core::slice::SliceIndex;
 
-use crate::{Error, Hash as _, HashEngine as _, hex};
+use crate::{Error, Hash as _, HashEngine as _};
 
 crate::internal_macros::hash_type! {
     64,

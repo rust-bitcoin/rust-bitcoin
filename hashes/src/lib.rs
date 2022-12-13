@@ -100,7 +100,6 @@
 #[cfg(any(test, feature = "std"))] extern crate core;
 #[cfg(feature = "core2")] extern crate core2;
 #[cfg(feature = "alloc")] extern crate alloc;
-#[cfg(all(not(feature = "alloc"), feature = "std"))] use std as alloc;
 #[cfg(feature = "serde")] pub extern crate serde;
 #[cfg(all(test,feature = "serde"))] extern crate serde_test;
 
@@ -120,7 +119,6 @@ mod internal_macros;
 #[macro_use] pub mod serde_macros;
 #[cfg(any(feature = "std", feature = "core2"))] mod impls;
 pub mod error;
-pub mod hex;
 pub mod hash160;
 pub mod hmac;
 pub mod ripemd160;

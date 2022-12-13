@@ -41,6 +41,22 @@ macro_rules! hash_trait_impls {
             }
         }
 
+        impl<$($gen: $gent),*> hex::FromHex for Hash<$($gen),*> {
+            fn from_byte_iter<I>(iter: I) -> Result<Self, hex::Error>
+            where
+                I: Iterator<Item = Result<u8, hex::Error>> + ExactSizeIterator + DoubleEndedIterator,
+            {
+                use $crate::Hash;
+
+                let inner = if Self::DISPLAY_BACKWARD {
+                    <Self as Hash>::Inner::from_byte_iter(iter.rev())?
+                } else {
+                    <Self as Hash>::Inner::from_byte_iter(iter)?
+                };
+                Ok(Hash::from_inner(inner))
+            }
+        }
+
         impl<$($gen: $gent),*> crate::Hash for Hash<$($gen),*> {
             type Engine = HashEngine;
             type Inner = [u8; $bits / 8];

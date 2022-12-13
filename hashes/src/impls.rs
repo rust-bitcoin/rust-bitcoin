@@ -23,16 +23,9 @@ use std::{error, io};
 #[cfg(not(feature = "std"))]
 use core2::{error, io};
 
-use crate::{Error, HashEngine, hex, sha1, sha256, sha512, ripemd160, siphash24, hmac};
+use crate::{Error, HashEngine, sha1, sha256, sha512, ripemd160, siphash24, hmac};
 
 impl error::Error for Error {
-    #[cfg(feature = "std")]
-    fn cause(&self) -> Option<&error::Error> { None }
-    #[cfg(feature = "std")]
-    fn description(&self) -> &str { "`std::error::description` is deprecated" }
-}
-
-impl error::Error for hex::Error {
     #[cfg(feature = "std")]
     fn cause(&self) -> Option<&error::Error> { None }
     #[cfg(feature = "std")]
