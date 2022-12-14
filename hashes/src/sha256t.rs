@@ -121,6 +121,7 @@ macro_rules! sha256t_hash_newtype {
 
 #[cfg(test)]
 mod tests {
+    use core::str::FromStr;
     use crate::{sha256, sha256t};
     #[cfg(any(feature = "std", feature = "alloc"))]
     use crate::hex::ToHex;
@@ -148,18 +149,38 @@ mod tests {
     #[cfg(any(feature = "std", feature = "alloc"))]
     pub type TestHash = sha256t::Hash<TestHashTag>;
 
-    sha256t_hash_newtype!(NewTypeHash, NewTypeTag, TEST_MIDSTATE, 64, doc="test hash", true);
+    #[test]
+    fn hash_newtype_inner_backwards_roundtrip_backwards() {
+        // sha256t::Hash uses DISPLAY_BACKWARDS==true i.e., prints backwards.
+        hash_newtype!(TestHashBackwards, TestHash, 32, doc="test hash display backwards", true);
+
+        let hex = "29589d5122ec666ab5b4695070b6debc63881a4f85d88d93ddc90078038213ed";
+
+        // Sanity - check that sha256t roundtrips.
+        let hash = TestHash::hash(&[0]);
+        assert_eq!(hash.to_hex(), hex);
+        let got = TestHash::from_str(hex).expect("failed to parse hex");
+        assert_eq!(got, hash);
+
+        let hash = TestHashBackwards::hash(&[0]);
+        assert_eq!(hash.to_hex(), hex);
+
+        let got = TestHashBackwards::from_str(hex).expect("failed to parse hex");
+        assert_eq!(got, hash);
+    }
 
     #[test]
-    #[cfg(any(feature = "std", feature = "alloc"))]
-    fn test_sha256t() {
-        assert_eq!(
-            TestHash::hash(&[0]).to_hex(),
-            "29589d5122ec666ab5b4695070b6debc63881a4f85d88d93ddc90078038213ed"
-        );
-        assert_eq!(
-            NewTypeHash::hash(&[0]).to_hex(),
-            "29589d5122ec666ab5b4695070b6debc63881a4f85d88d93ddc90078038213ed"
-        );
+    fn hash_newtype_inner_backwards_roundtrip_forwards() {
+        // sha256t::Hash uses DISPLAY_BACKWARDS==true i.e., prints backwards.
+        hash_newtype!(TestHashForwards, TestHash, 32, doc="test hash display forwards", false);
+
+        // This is the same as in `hash_newtype_inner_backwards_roundtrip_backards` but inverted.
+        let hex = "ed1382037800c9dd938dd8854f1a8863bcdeb6705069b4b56a66ec22519d5829";
+
+        let hash = TestHashForwards::hash(&[0]);
+        assert_eq!(hash.to_hex(), hex);
+
+        let got = TestHashForwards::from_str(hex).expect("failed to parse hex");
+        assert_eq!(got, hash);
     }
 }

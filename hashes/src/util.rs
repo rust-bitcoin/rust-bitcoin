@@ -229,6 +229,8 @@ pub mod json_hex_string {
 
 #[cfg(test)]
 mod test {
+    use core::str::FromStr;
+    use crate::hex::ToHex;
     use crate::{Hash, sha256};
 
     #[test]
@@ -274,5 +276,40 @@ mod test {
         let want = "0x0000000000000000000000000000000000000000000000000000000000000000";
         let got = format!("{:#x}", TestHash::all_zeros());
         assert_eq!(got, want)
+    }
+
+    #[test]
+    fn hash_newtype_inner_forwards_roundtrip_forwards() {
+        // sha256::Hash uses DISPLAY_BACKWARDS==false i.e., prints forwards.
+        hash_newtype!(TestHashForwards, sha256::Hash, 32, doc="test hash display forwards", false);
+
+        let hex = "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d";
+
+        // Sanity - check that sha256 roundtrips.
+        let hash = sha256::Hash::hash(&[0]);
+        assert_eq!(hash.to_hex(), hex);
+        let got = sha256::Hash::from_str(hex).expect("failed to parse hex");
+        assert_eq!(got, hash);
+
+        let hash = TestHashForwards::hash(&[0]);
+        assert_eq!(hash.to_hex(), hex);
+
+        let got = TestHashForwards::from_str(hex).expect("failed to parse hex");
+        assert_eq!(got, hash);
+    }
+
+    #[test]
+    fn hash_newtype_inner_forwards_roundtrip_backwards() {
+        // sha256::Hash uses DISPLAY_BACKWARDS==false i.e., prints forwards.
+        hash_newtype!(TestHashBackwards, sha256::Hash, 32, doc="test hash display backwards", true);
+
+        // This is the same as in `hash_newtype_inner_forwards_roundtrip_forwards` but inverted.
+        let hex = "1da0af1706a31185763837b33f1d90782c0a78bbe644a59c987ab3ff9c0b346e";
+
+        let hash = TestHashBackwards::hash(&[0]);
+        assert_eq!(hash.to_hex(), hex);
+
+        let got = TestHashBackwards::from_str(hex).expect("failed to parse hex");
+        assert_eq!(got, hash);
     }
 }
