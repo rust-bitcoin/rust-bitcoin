@@ -2268,4 +2268,30 @@ mod tests {
             }
         }
     }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn round_trip_flattened_option_signed_amount() {
+        #[derive(Serialize, Deserialize, Debug, PartialEq)]
+        #[serde(crate = "actual_serde")]
+        struct Foo {
+            #[serde(flatten)]
+            bar: Bar,
+        }
+
+        #[derive(Serialize, Deserialize, Debug, PartialEq)]
+        #[serde(crate = "actual_serde")]
+        struct Bar {
+            #[serde(with = "crate::amount::serde::as_btc::opt")]
+            amount: Option<SignedAmount>,
+        }
+
+        let value = Foo { bar: Bar { amount: None } };
+
+        let json = serde_json::to_string(&value).unwrap();
+
+        let deserialized = serde_json::from_str::<Foo>(&json).unwrap();
+
+        assert_eq!(deserialized, value);
+    }
 }
