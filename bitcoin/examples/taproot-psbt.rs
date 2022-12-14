@@ -144,7 +144,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             ExtendedPrivKey::from_str(BENEFACTOR_XPRIV_STR)?,
             beneficiary.master_xpub(),
         )?;
-        let (tx, psbt) = benefactor.create_inheritance_funding_tx(1000, UTXO_2)?;
+        let (tx, psbt) = benefactor.create_inheritance_funding_tx(
+            absolute::LockTime::from_height(1000).unwrap(),
+            UTXO_2,
+        )?;
         let tx_hex = encode::serialize_hex(&tx);
 
         println!("Inheritance funding tx hex:\n\n{}", tx_hex);
@@ -154,7 +157,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         // And mine a block to confirm the transaction:
         // bt generatetoaddress 1 $(bt-benefactor getnewaddress '' 'bech32m')
 
-        let spending_tx = beneficiary.spend_inheritance(psbt, 1000, to_address)?;
+        let spending_tx = beneficiary.spend_inheritance(
+            psbt,
+            absolute::LockTime::from_height(1000).unwrap(),
+            to_address,
+        )?;
         let spending_tx_hex = encode::serialize_hex(&spending_tx);
         println!("\nInheritance spending tx hex:\n\n{}", spending_tx_hex);
         // If you try to broadcast now, the transaction will be rejected as it is timelocked.
@@ -176,7 +183,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             ExtendedPrivKey::from_str(BENEFACTOR_XPRIV_STR)?,
             beneficiary.master_xpub(),
         )?;
-        let (tx, _) = benefactor.create_inheritance_funding_tx(2000, UTXO_3)?;
+        let (tx, _) = benefactor.create_inheritance_funding_tx(
+            absolute::LockTime::from_height(2000).unwrap(),
+            UTXO_3,
+        )?;
         let tx_hex = encode::serialize_hex(&tx);
 
         println!("Inheritance funding tx hex:\n\n{}", tx_hex);
@@ -225,7 +235,7 @@ fn generate_bip86_key_spend_tx(
     // CREATOR + UPDATER
     let tx1 = Transaction {
         version: 2,
-        lock_time: absolute::PackedLockTime::ZERO,
+        lock_time: absolute::LockTime::ZERO,
         input: vec![TxIn {
             previous_output: OutPoint {
                 txid: Txid::from_hex(input_utxo.txid)?,
@@ -357,9 +367,9 @@ impl BenefactorWallet {
         })
     }
 
-    fn time_lock_script(locktime: u32, beneficiary_key: XOnlyPublicKey) -> Script {
+    fn time_lock_script(locktime: absolute::LockTime, beneficiary_key: XOnlyPublicKey) -> Script {
         script::Builder::new()
-            .push_int(locktime as i64)
+            .push_int(locktime.to_consensus_u32() as i64)
             .push_opcode(OP_CLTV)
             .push_opcode(OP_DROP)
             .push_x_only_key(&beneficiary_key)
@@ -369,7 +379,7 @@ impl BenefactorWallet {
 
     fn create_inheritance_funding_tx(
         &mut self,
-        lock_time: u32,
+        lock_time: absolute::LockTime,
         input_utxo: P2trUtxo,
     ) -> Result<(Transaction, Psbt), Box<dyn std::error::Error>> {
         if let ChildNumber::Normal { index } = self.next {
@@ -412,7 +422,7 @@ impl BenefactorWallet {
         // CREATOR + UPDATER
         let next_tx = Transaction {
             version: 2,
-            lock_time: absolute::PackedLockTime(lock_time),
+            lock_time,
             input: vec![TxIn {
                 previous_output: OutPoint { txid: tx.txid(), vout: 0 },
                 script_sig: Script::new(),
@@ -482,7 +492,10 @@ impl BenefactorWallet {
                 self.beneficiary_xpub.derive_pub(&self.secp, &new_derivation_path)?.to_x_only_pub();
 
             // Build up the leaf script and combine with internal key into a taproot commitment
-            let lock_time = psbt.unsigned_tx.lock_time.to_u32() + lock_time_delta;
+            let lock_time = absolute::LockTime::from_height(
+                psbt.unsigned_tx.lock_time.to_consensus_u32() + lock_time_delta,
+            )
+            .unwrap();
             let script = Self::time_lock_script(lock_time, beneficiary_key);
             let leaf_hash = TapLeafHash::from_script(&script, LeafVersion::TapScript);
 
@@ -501,7 +514,7 @@ impl BenefactorWallet {
             psbt.unsigned_tx.output =
                 vec![TxOut { script_pubkey: output_script_pubkey.clone(), value: output_value }];
             psbt.outputs = vec![Output::default()];
-            psbt.unsigned_tx.lock_time = absolute::PackedLockTime::ZERO;
+            psbt.unsigned_tx.lock_time = absolute::LockTime::ZERO;
 
             let hash_ty = input
                 .sighash_type
@@ -557,7 +570,7 @@ impl BenefactorWallet {
 
             let next_tx = Transaction {
                 version: 2,
-                lock_time: absolute::PackedLockTime(lock_time),
+                lock_time,
                 input: vec![TxIn {
                     previous_output: OutPoint { txid: tx.txid(), vout: 0 },
                     script_sig: Script::new(),
@@ -626,13 +639,13 @@ impl BeneficiaryWallet {
     fn spend_inheritance(
         &self,
         mut psbt: Psbt,
-        lock_time: u32,
+        lock_time: absolute::LockTime,
         to_address: Address,
     ) -> Result<Transaction, Box<dyn std::error::Error>> {
         let input_value = psbt.inputs[0].witness_utxo.as_ref().unwrap().value;
         let input_script_pubkey =
             psbt.inputs[0].witness_utxo.as_ref().unwrap().script_pubkey.clone();
-        psbt.unsigned_tx.lock_time = absolute::PackedLockTime(lock_time);
+        psbt.unsigned_tx.lock_time = lock_time;
         psbt.unsigned_tx.output = vec![TxOut {
             script_pubkey: to_address.script_pubkey(),
             value: input_value - ABSOLUTE_FEES_IN_SATS,

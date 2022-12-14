@@ -1470,8 +1470,14 @@ mod verification {
         let n2 = kani::any::<i64>();
         kani::assume(n1.checked_add(n2).is_some()); // assume we don't overflow in the actual test
         kani::assume(n1.checked_sub(n2).is_some()); // assume we don't overflow in the actual test
-        assert_eq!(SignedAmount::from_sat(n1) + SignedAmount::from_sat(n2), SignedAmount::from_sat(n1 + n2));
-        assert_eq!(SignedAmount::from_sat(n1) - SignedAmount::from_sat(n2), SignedAmount::from_sat(n1 - n2));
+        assert_eq!(
+            SignedAmount::from_sat(n1) + SignedAmount::from_sat(n2),
+            SignedAmount::from_sat(n1 + n2)
+        );
+        assert_eq!(
+            SignedAmount::from_sat(n1) - SignedAmount::from_sat(n2),
+            SignedAmount::from_sat(n1 - n2)
+        );
 
         let mut amt = SignedAmount::from_sat(n1);
         amt += SignedAmount::from_sat(n2);
@@ -1506,7 +1512,11 @@ mod verification {
 
         assert_eq!(
             SignedAmount::from_sat(n1).positive_sub(SignedAmount::from_sat(n2)),
-            if n1 >= 0 && n2 >= 0 && n1 >= n2 { Some(SignedAmount::from_sat(n1 - n2)) } else { None },
+            if n1 >= 0 && n2 >= 0 && n1 >= n2 {
+                Some(SignedAmount::from_sat(n1 - n2))
+            } else {
+                None
+            },
         );
     }
 }

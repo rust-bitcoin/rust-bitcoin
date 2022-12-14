@@ -162,7 +162,7 @@ fn create_transaction() -> Transaction {
 
     Transaction {
         version: 2,
-        lock_time: absolute::PackedLockTime::ZERO,
+        lock_time: absolute::LockTime::ZERO,
         input: vec![
             TxIn {
                 previous_output: OutPoint {

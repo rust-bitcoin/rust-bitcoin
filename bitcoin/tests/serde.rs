@@ -223,7 +223,7 @@ fn serde_regression_public_key() {
 fn serde_regression_psbt() {
     let tx = Transaction {
         version: 1,
-        lock_time: absolute::PackedLockTime::ZERO,
+        lock_time: absolute::LockTime::ZERO,
         input: vec![TxIn {
             previous_output: OutPoint {
                 txid: Txid::from_hex(

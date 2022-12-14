@@ -215,9 +215,7 @@ impl<T: AsOutBytes> BufEncoder<T> {
     ///
     /// Note that this returns the number of bytes before encoding, not number of hex digits.
     #[inline]
-    pub fn space_remaining(&self) -> usize {
-        (self.buf.as_out_bytes().len() - self.pos) / 2
-    }
+    pub fn space_remaining(&self) -> usize { (self.buf.as_out_bytes().len() - self.pos) / 2 }
 }
 
 #[cfg(test)]

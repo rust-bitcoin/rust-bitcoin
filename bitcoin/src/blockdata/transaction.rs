@@ -16,7 +16,7 @@ use crate::prelude::*;
 
 use crate::io;
 use crate::string::FromHexStr;
-use core::{fmt, str, default::Default};
+use core::{cmp, fmt, str, default::Default};
 use core::convert::TryFrom;
 
 use bitcoin_internals::write_err;
@@ -580,7 +580,7 @@ impl<E> EncodeSigningDataResult<E> {
 ///
 /// We therefore deviate from the spec by always using the Segwit witness encoding
 /// for 0-input transactions, which results in unambiguously parseable transactions.
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
+#[derive(Clone, PartialEq, Eq, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct Transaction {
@@ -592,11 +592,25 @@ pub struct Transaction {
     ///
     /// * [BIP-65 OP_CHECKLOCKTIMEVERIFY](https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki)
     /// * [BIP-113 Median time-past as endpoint for lock-time calculations](https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki)
-    pub lock_time: absolute::PackedLockTime,
+    pub lock_time: absolute::LockTime,
     /// List of transaction inputs.
     pub input: Vec<TxIn>,
     /// List of transaction outputs.
     pub output: Vec<TxOut>,
+}
+
+impl cmp::PartialOrd for Transaction {
+    fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+impl cmp::Ord for Transaction {
+    fn cmp(&self, other: &Self) -> cmp::Ordering {
+        self.version.cmp(&other.version)
+            .then(self.lock_time.to_consensus_u32().cmp(&other.lock_time.to_consensus_u32()))
+            .then(self.input.cmp(&other.input))
+            .then(self.output.cmp(&other.output))
+    }
 }
 
 impl Transaction {
@@ -896,7 +910,7 @@ impl Transaction {
         if !self.is_lock_time_enabled() {
             return true;
         }
-        absolute::LockTime::from(self.lock_time).is_satisfied_by(height, time)
+        self.lock_time.is_satisfied_by(height, time)
     }
 
     /// Returns `true` if this transactions nLockTime is enabled ([BIP-65]).
@@ -1159,7 +1173,7 @@ mod tests {
                    "ce9ea9f6f5e422c6a9dbcddb3b9a14d1c78fab9ab520cb281aa2a74a09575da1".to_string());
         assert_eq!(realtx.input[0].previous_output.vout, 1);
         assert_eq!(realtx.output.len(), 1);
-        assert_eq!(realtx.lock_time, absolute::PackedLockTime::ZERO);
+        assert_eq!(realtx.lock_time, absolute::LockTime::ZERO);
 
         assert_eq!(format!("{:x}", realtx.txid()),
                    "a6eab3c14ab5272a58a5ba91505ba1a4b6d7a3a9fcbd187b6cd99a7b6d548cb7".to_string());
@@ -1193,7 +1207,7 @@ mod tests {
                    "7cac3cf9a112cf04901a51d605058615d56ffe6d04b45270e89d1720ea955859".to_string());
         assert_eq!(realtx.input[0].previous_output.vout, 1);
         assert_eq!(realtx.output.len(), 1);
-        assert_eq!(realtx.lock_time, absolute::PackedLockTime::ZERO);
+        assert_eq!(realtx.lock_time, absolute::LockTime::ZERO);
 
         assert_eq!(format!("{:x}", realtx.txid()),
                    "f5864806e3565c34d1b41e716f72609d00b55ea5eac5b924c9719a842ef42206".to_string());
