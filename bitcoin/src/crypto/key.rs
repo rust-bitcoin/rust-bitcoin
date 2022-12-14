@@ -16,8 +16,9 @@ pub use secp256k1::{self, Secp256k1, XOnlyPublicKey, KeyPair};
 
 use crate::{base58, io};
 use crate::network::constants::Network;
-use crate::hashes::{Hash, hash160, hex, hex::FromHex};
+use crate::hashes::{Hash, hash160};
 use crate::hash_types::{PubkeyHash, WPubkeyHash};
+use crate::hex::FromHex;
 
 /// A key-related error.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
@@ -548,7 +549,7 @@ mod tests {
     use super::{PrivateKey, PublicKey, SortKey};
     use secp256k1::Secp256k1;
     use std::str::FromStr;
-    use crate::hashes::hex::{FromHex, ToHex};
+    use crate::hex::{FromHex, ToHex};
     use crate::network::constants::Network::Testnet;
     use crate::network::constants::Network::Bitcoin;
     use crate::address::Address;

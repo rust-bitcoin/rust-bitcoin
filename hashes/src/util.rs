@@ -206,6 +206,8 @@ macro_rules! hash_newtype {
             where
                 I: Iterator<Item = Result<u8, hex::Error>> + ExactSizeIterator + DoubleEndedIterator,
             {
+                use hex::FromHex;
+
                 // Whether or not we reverse depends on what gets done by the call to create inner.
                 let inner = <$hash as $crate::Hash>::DISPLAY_BACKWARD;
                 let outer = <Self as $crate::Hash>::DISPLAY_BACKWARD;

@@ -129,7 +129,7 @@ impl_consensus_encoding!(GetHeadersMessage, version, locator_hashes, stop_hash);
 mod tests {
     use super::{GetBlocksMessage, GetHeadersMessage, Vec};
     use crate::consensus::encode::{deserialize, serialize};
-    use crate::hashes::hex::FromHex;
+    use crate::hex::FromHex;
     use crate::hashes::Hash;
 
     #[test]

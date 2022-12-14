@@ -119,5 +119,9 @@ then
     # Adding an empty workspace section excludes this crate from the rust-bitcoin workspace.
     echo '[workspace]\n\n' >> Cargo.toml
 
+    # Use patch same as we do in the crate root manifest.
+    echo '[patch.crates-io]' >> Cargo.toml
+    echo 'bitcoin_hashes = { path = "../../hashes" }' >> Cargo.toml
+
     cargo test --verbose
 fi

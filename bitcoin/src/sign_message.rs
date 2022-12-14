@@ -213,7 +213,7 @@ pub fn signed_msg_hash(msg: &str) -> sha256d::Hash {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::hashes::hex::ToHex;
+    use crate::hex::ToHex;
 
     #[test]
     fn test_signed_msg_hash() {

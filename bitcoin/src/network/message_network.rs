@@ -143,7 +143,7 @@ impl_consensus_encoding!(Reject, message, ccode, reason, hash);
 mod tests {
     use super::{Reject, RejectReason, VersionMessage};
     use crate::consensus::encode::{deserialize, serialize};
-    use crate::hashes::hex::FromHex;
+    use crate::hex::FromHex;
     use crate::hashes::sha256d::Hash;
     use crate::network::constants::ServiceFlags;
 

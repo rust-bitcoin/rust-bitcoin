@@ -51,7 +51,7 @@ pub(crate) use test_macros::*;
 
 #[cfg(test)]
 mod test_macros {
-    use crate::hashes::hex::FromHex;
+    use crate::hex::FromHex;
     use crate::PublicKey;
 
     /// Trait used to create a value from hex string for testing purposes.
@@ -98,7 +98,7 @@ mod test_macros {
         };
         ($type:ty, $hex:expr) => {
             <$type>::from_slice(
-                &<$crate::prelude::Vec<u8> as $crate::hashes::hex::FromHex>::from_hex($hex)
+                &<$crate::prelude::Vec<u8> as $crate::hex::FromHex>::from_hex($hex)
                     .unwrap(),
             )
             .unwrap()
@@ -109,10 +109,10 @@ mod test_macros {
 
 /// Implements several traits for byte-based newtypes.
 /// Implements:
-/// - core::fmt::LowerHex (implies hashes::hex::ToHex)
+/// - core::fmt::LowerHex (implies hex::ToHex)
 /// - core::fmt::Display
 /// - core::str::FromStr
-/// - hashes::hex::FromHex
+/// - hex::FromHex
 macro_rules! impl_bytes_newtype {
     ($t:ident, $len:literal) => {
         impl core::fmt::LowerHex for $t {
@@ -136,10 +136,10 @@ macro_rules! impl_bytes_newtype {
             }
         }
 
-        impl $crate::hashes::hex::FromHex for $t {
-            fn from_byte_iter<I>(iter: I) -> Result<Self, $crate::hashes::hex::Error>
+        impl $crate::hex::FromHex for $t {
+            fn from_byte_iter<I>(iter: I) -> Result<Self, $crate::hex::Error>
             where
-                I: core::iter::Iterator<Item = Result<u8, $crate::hashes::hex::Error>>
+                I: core::iter::Iterator<Item = Result<u8, $crate::hex::Error>>
                     + core::iter::ExactSizeIterator
                     + core::iter::DoubleEndedIterator,
             {
@@ -150,15 +150,15 @@ macro_rules! impl_bytes_newtype {
                     }
                     Ok($t(ret))
                 } else {
-                    Err($crate::hashes::hex::Error::InvalidLength(2 * $len, 2 * iter.len()))
+                    Err($crate::hex::Error::InvalidLength(2 * $len, 2 * iter.len()))
                 }
             }
         }
 
         impl core::str::FromStr for $t {
-            type Err = $crate::hashes::hex::Error;
+            type Err = $crate::hex::Error;
             fn from_str(s: &str) -> Result<Self, Self::Err> {
-                $crate::hashes::hex::FromHex::from_hex(s)
+                $crate::hex::FromHex::from_hex(s)
             }
         }
 
@@ -167,7 +167,7 @@ macro_rules! impl_bytes_newtype {
         impl $crate::serde::Serialize for $t {
             fn serialize<S: $crate::serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
                 if s.is_human_readable() {
-                    s.serialize_str(&$crate::hashes::hex::ToHex::to_hex(self))
+                    s.serialize_str(&$crate::hex::ToHex::to_hex(self))
                 } else {
                     s.serialize_bytes(&self[..])
                 }
@@ -195,7 +195,7 @@ macro_rules! impl_bytes_newtype {
                             use $crate::serde::de::Unexpected;
 
                             if let Ok(hex) = core::str::from_utf8(v) {
-                                $crate::hashes::hex::FromHex::from_hex(hex).map_err(E::custom)
+                                $crate::hex::FromHex::from_hex(hex).map_err(E::custom)
                             } else {
                                 return Err(E::invalid_value(Unexpected::Bytes(v), &self));
                             }
@@ -205,7 +205,7 @@ macro_rules! impl_bytes_newtype {
                         where
                             E: $crate::serde::de::Error,
                         {
-                            $crate::hashes::hex::FromHex::from_hex(v).map_err(E::custom)
+                            $crate::hex::FromHex::from_hex(v).map_err(E::custom)
                         }
                     }
 

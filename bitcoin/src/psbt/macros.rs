@@ -2,7 +2,7 @@
 
 #[allow(unused_macros)]
 macro_rules! hex_psbt {
-    ($s:expr) => { $crate::consensus::deserialize::<$crate::psbt::PartiallySignedTransaction>(&<$crate::prelude::Vec<u8> as $crate::hashes::hex::FromHex>::from_hex($s).unwrap()) };
+    ($s:expr) => { $crate::consensus::deserialize::<$crate::psbt::PartiallySignedTransaction>(&<$crate::prelude::Vec<u8> as $crate::hex::FromHex>::from_hex($s).unwrap()) };
 }
 
 macro_rules! combine {

@@ -37,7 +37,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::error::impl_std_error;
-use crate::hashes::hex::{Error, FromHex};
+use crate::hex::{Error, FromHex};
 use crate::io;
 use crate::prelude::{String, ToOwned};
 

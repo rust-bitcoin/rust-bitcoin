@@ -29,7 +29,7 @@ use crate::io::{self, Cursor, Read};
 use crate::psbt;
 use crate::bip152::{ShortId, PrefilledTransaction};
 use crate::taproot::TapLeafHash;
-use crate::hashes::hex::ToHex;
+use crate::hex::ToHex;
 
 use crate::blockdata::transaction::{TxOut, Transaction, TxIn};
 #[cfg(feature = "std")]

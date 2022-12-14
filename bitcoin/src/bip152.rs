@@ -375,7 +375,7 @@ mod test {
     use super::*;
     use crate::blockdata::locktime::absolute;
     use crate::consensus::encode::{deserialize, serialize};
-    use crate::hashes::hex::FromHex;
+    use crate::hex::FromHex;
     use crate::{
         CompactTarget, OutPoint, Script, Sequence, Transaction, TxIn, TxMerkleNode, TxOut, Txid,
         Witness,

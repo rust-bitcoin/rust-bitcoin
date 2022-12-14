@@ -309,7 +309,7 @@ mod test {
 
     use super::{AddrV2, AddrV2Message, Address};
     use crate::consensus::encode::{deserialize, serialize};
-    use crate::hashes::hex::FromHex;
+    use crate::hex::FromHex;
     use crate::network::constants::ServiceFlags;
 
     #[test]

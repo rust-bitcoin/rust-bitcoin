@@ -100,18 +100,18 @@ pub mod hex {
 
     /// Error returned when a hex string decoder can't be created.
     #[derive(Debug)]
-    pub struct DecodeInitError(bitcoin_hashes::hex::Error);
+    pub struct DecodeInitError(hex::Error);
 
     /// Error returned when a hex string contains invalid characters.
     #[derive(Debug)]
-    pub struct DecodeError(bitcoin_hashes::hex::Error);
+    pub struct DecodeError(hex::Error);
 
     /// Hex decoder state.
-    pub struct Decoder<'a>(bitcoin_hashes::hex::HexIterator<'a>);
+    pub struct Decoder<'a>(hex::HexIterator<'a>);
 
     impl<'a> Decoder<'a> {
         fn new(s: &'a str) -> Result<Self, DecodeInitError> {
-            match bitcoin_hashes::hex::HexIterator::new(s) {
+            match hex::HexIterator::new(s) {
                 Ok(iter) => Ok(Decoder(iter)),
                 Err(error) => Err(DecodeInitError(error)),
             }
@@ -138,7 +138,7 @@ pub mod hex {
 
     impl super::IntoDeError for DecodeInitError {
         fn into_de_error<E: serde::de::Error>(self) -> E {
-            use bitcoin_hashes::hex::Error;
+            use hex::Error;
 
             match self.0 {
                 Error::OddLengthString(len) => E::invalid_length(len, &"an even number of ASCII-encoded hex digits"),
@@ -149,7 +149,7 @@ pub mod hex {
 
     impl super::IntoDeError for DecodeError {
         fn into_de_error<E: serde::de::Error>(self) -> E {
-            use bitcoin_hashes::hex::Error;
+            use hex::Error;
             use serde::de::Unexpected;
 
             const EXPECTED_CHAR: &str = "an ASCII-encoded hex digit";

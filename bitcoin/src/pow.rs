@@ -793,7 +793,7 @@ impl crate::serde::Serialize for U256 {
     where
         S: crate::serde::Serializer,
     {
-        use crate::hashes::hex::ToHex;
+        use crate::hex::ToHex;
         let bytes = self.to_be_bytes();
         if serializer.is_human_readable() {
             // TODO: fast hex encoding.
@@ -810,7 +810,7 @@ impl<'de> crate::serde::Deserialize<'de> for U256 {
     fn deserialize<D: crate::serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
         use core::convert::TryInto;
 
-        use crate::hashes::hex::FromHex;
+        use crate::hex::FromHex;
         use crate::serde::de;
 
         if d.is_human_readable() {

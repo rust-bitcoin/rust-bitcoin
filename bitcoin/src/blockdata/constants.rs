@@ -14,7 +14,7 @@ use core::default::Default;
 
 use bitcoin_internals::impl_array_newtype;
 
-use crate::hashes::hex::{self, HexIterator};
+use crate::hex::{self, HexIterator};
 use crate::hashes::{Hash, sha256d};
 use crate::blockdata::script;
 use crate::blockdata::opcodes::all::*;
@@ -192,7 +192,7 @@ impl ChainHash {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::hashes::hex::{ToHex, FromHex};
+    use crate::hex::{ToHex, FromHex};
     use crate::network::constants::Network;
     use crate::consensus::encode::serialize;
     use crate::blockdata::locktime::absolute;

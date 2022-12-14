@@ -81,7 +81,7 @@ use std::str::FromStr;
 use bitcoin::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint};
 use bitcoin::consensus::encode;
 use bitcoin::constants::COIN_VALUE;
-use bitcoin::hashes::hex::FromHex;
+use bitcoin::hex::FromHex;
 use bitcoin::hashes::Hash;
 use bitcoin::key::XOnlyPublicKey;
 use bitcoin::opcodes::all::{OP_CHECKSIG, OP_CLTV, OP_DROP};

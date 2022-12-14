@@ -964,13 +964,13 @@ impl<R: Deref<Target = Transaction>> SighashCache<R> {
             let common_cache = Self::common_cache_minimal_borrow(common_cache, tx);
             SegwitCache {
                 prevouts: sha256d::Hash::from_inner(
-                    sha256::Hash::hash(&common_cache.prevouts).into_inner(),
+                    sha256::Hash::hash(common_cache.prevouts.as_ref()).into_inner(),
                 ),
                 sequences: sha256d::Hash::from_inner(
-                    sha256::Hash::hash(&common_cache.sequences).into_inner(),
+                    sha256::Hash::hash(common_cache.sequences.as_ref()).into_inner(),
                 ),
                 outputs: sha256d::Hash::from_inner(
-                    sha256::Hash::hash(&common_cache.outputs).into_inner(),
+                    sha256::Hash::hash(common_cache.outputs.as_ref()).into_inner(),
                 ),
             }
         })
@@ -1060,7 +1060,7 @@ mod tests {
     use crate::consensus::deserialize;
     use crate::crypto::key::PublicKey;
     use crate::hash_types::Sighash;
-    use crate::hashes::hex::FromHex;
+    use crate::hex::FromHex;
     use crate::hashes::{Hash, HashEngine};
     use crate::internal_macros::{hex_from_slice, hex_script};
     use crate::network::constants::Network;
@@ -1393,11 +1393,11 @@ mod tests {
                 )
             })
         }
-
+            
         use secp256k1::{self, SecretKey, XOnlyPublicKey};
 
         use crate::consensus::serde as con_serde;
-        use crate::hashes::hex::ToHex;
+        use crate::hex::ToHex;
         use crate::taproot::{TapBranchHash, TapTweakHash};
 
         #[derive(serde::Deserialize)]

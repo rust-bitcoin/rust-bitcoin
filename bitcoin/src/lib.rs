@@ -74,6 +74,7 @@ pub extern crate bitcoinconsensus;
 #[cfg(feature = "hashbrown")]
 #[cfg_attr(docsrs, doc(cfg(feature = "hashbrown")))]
 pub extern crate hashbrown;
+pub extern crate hex;
 pub extern crate secp256k1;
 
 #[cfg(feature = "serde")]

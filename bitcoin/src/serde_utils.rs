@@ -13,7 +13,7 @@ pub mod btreemap_byte_values {
 
     use serde;
 
-    use crate::hashes::hex::{FromHex, ToHex};
+    use crate::hex::{FromHex, ToHex};
     use crate::prelude::*;
 
     pub fn serialize<S, T>(v: &BTreeMap<T, Vec<u8>>, s: S) -> Result<S::Ok, S::Error>
@@ -237,7 +237,7 @@ pub mod hex_bytes {
 
     use serde;
 
-    use crate::hashes::hex::{FromHex, ToHex};
+    use crate::hex::{FromHex, ToHex};
 
     pub fn serialize<T, S>(bytes: &T, s: S) -> Result<S::Ok, S::Error>
     where

@@ -20,6 +20,10 @@ bitcoin = { path = "../" }
 [workspace]
 members = ["."]
 
+ # Use patch same as we do in the crate root manifest.
+[patch.crates-io]
+bitcoin_hashes = { path = "../../hashes" }
+
 [[bin]]
 name = "deserialize_block"
 path = "fuzz_targets/deserialize_block.rs"

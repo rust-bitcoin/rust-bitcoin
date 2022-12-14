@@ -559,7 +559,7 @@ mod test {
     use super::*;
     use crate::consensus::encode::deserialize;
     use crate::hash_types::BlockHash;
-    use crate::hashes::hex::FromHex;
+    use crate::hex::FromHex;
 
     #[test]
     fn test_blockfilters() {

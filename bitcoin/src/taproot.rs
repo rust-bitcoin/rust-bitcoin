@@ -79,7 +79,7 @@ impl TapTweakHash {
         // always hash the key
         eng.input(&internal_key.serialize());
         if let Some(h) = merkle_root {
-            eng.input(&h);
+            eng.input(h.as_ref());
         } else {
             // nothing to hash
         }
@@ -116,11 +116,11 @@ impl TapBranchHash {
     pub fn from_node_hashes(a: sha256::Hash, b: sha256::Hash) -> TapBranchHash {
         let mut eng = TapBranchHash::engine();
         if a < b {
-            eng.input(&a);
-            eng.input(&b);
+            eng.input(a.as_ref());
+            eng.input(b.as_ref());
         } else {
-            eng.input(&b);
-            eng.input(&a);
+            eng.input(b.as_ref());
+            eng.input(a.as_ref());
         };
         TapBranchHash::from_engine(eng)
     }
@@ -673,7 +673,7 @@ impl TaprootMerkleBranch {
     /// The number of bytes written to the writer.
     pub fn encode<Write: io::Write>(&self, mut writer: Write) -> io::Result<usize> {
         for hash in self.0.iter() {
-            writer.write_all(hash)?;
+            writer.write_all(hash.as_ref())?;
         }
         Ok(self.0.len() * sha256::Hash::LEN)
     }
@@ -1092,7 +1092,7 @@ mod test {
 
     use super::*;
     use crate::crypto::schnorr::TapTweak;
-    use crate::hashes::hex::{FromHex, ToHex};
+    use crate::hex::{FromHex, ToHex};
     use crate::hashes::sha256t::Tag;
     use crate::hashes::{sha256, Hash, HashEngine};
     use crate::{Address, Network};

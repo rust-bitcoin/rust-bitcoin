@@ -9,6 +9,10 @@ version = "0.1.0"
 [workspace]
 members = ["."]
 
+ # Use patch same as we do in the crate root manifest.
+[patch.crates-io]
+bitcoin_hashes = { path = "../../hashes" }
+
 [dependencies]
 cortex-m = "0.6.0"
 cortex-m-rt = "0.6.10"

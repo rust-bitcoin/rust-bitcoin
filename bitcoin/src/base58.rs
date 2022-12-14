@@ -273,7 +273,7 @@ impl std::error::Error for Error {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::hashes::hex::FromHex;
+    use crate::hex::FromHex;
 
     #[test]
     fn test_base58_encode() {

@@ -519,7 +519,7 @@ mod test {
     use crate::blockdata::script::Script;
     use crate::blockdata::transaction::Transaction;
     use crate::consensus::encode::{deserialize, deserialize_partial, serialize};
-    use crate::hashes::hex::FromHex;
+    use crate::hex::FromHex;
     use crate::hashes::sha256d::Hash;
     use crate::hashes::Hash as HashTrait;
     use crate::network::address::{AddrV2, AddrV2Message, Address};
@@ -581,8 +581,8 @@ mod test {
                 tweak: 2,
                 flags: BloomFlags::All,
             }),
-            NetworkMessage::FilterAdd(FilterAdd { data: script.as_bytes().to_vec() }),
-            NetworkMessage::FilterAdd(FilterAdd { data: hash([29u8; 32]).to_vec() }),
+            NetworkMessage::FilterAdd(FilterAdd { data: script.as_bytes().as_ref().to_vec() }),
+            NetworkMessage::FilterAdd(FilterAdd { data: hash([29u8; 32]).as_ref().to_vec() }),
             NetworkMessage::FilterClear,
             NetworkMessage::GetCFilters(GetCFilters {
                 filter_type: 2,
