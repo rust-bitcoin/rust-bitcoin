@@ -1391,7 +1391,7 @@ mod tests {
         use secp256k1::{self, SecretKey, XOnlyPublicKey};
 
         use crate::consensus::serde as con_serde;
-        use crate::taproot::{TapBranchHash, TapTweakHash};
+        use crate::taproot::{TapNodeHash, TapTweakHash};
 
         #[derive(serde::Deserialize)]
         #[serde(crate = "actual_serde")]
@@ -1428,7 +1428,7 @@ mod tests {
         struct KpsInputSpendingGiven {
             txin_index: usize,
             internal_privkey: SecretKey,
-            merkle_root: Option<TapBranchHash>,
+            merkle_root: Option<TapNodeHash>,
             #[serde(deserialize_with = "sighash_deser_numeric")]
             hash_type: SchnorrSighashType,
         }

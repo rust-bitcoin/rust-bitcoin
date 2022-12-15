@@ -20,7 +20,7 @@ use crate::psbt::map::Map;
 use crate::psbt::serialize::Deserialize;
 use crate::psbt::{self, error, raw, Error};
 use crate::sighash::{self, NonStandardSighashType, SighashTypeParseError, EcdsaSighashType, SchnorrSighashType};
-use crate::taproot::{ControlBlock, LeafVersion, TapLeafHash, TapBranchHash};
+use crate::taproot::{ControlBlock, LeafVersion, TapLeafHash, TapNodeHash};
 
 /// Type: Non-Witness UTXO PSBT_IN_NON_WITNESS_UTXO = 0x00
 const PSBT_IN_NON_WITNESS_UTXO: u8 = 0x00;
@@ -124,7 +124,7 @@ pub struct Input {
     /// Taproot Internal key.
     pub tap_internal_key: Option<XOnlyPublicKey>,
     /// Taproot Merkle root.
-    pub tap_merkle_root: Option<TapBranchHash>,
+    pub tap_merkle_root: Option<TapNodeHash>,
     /// Proprietary key-value pairs for this input.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq_byte_values"))]
     pub proprietary: BTreeMap<raw::ProprietaryKey, Vec<u8>>,
@@ -338,7 +338,7 @@ impl Input {
             }
             PSBT_IN_TAP_MERKLE_ROOT => {
                 impl_psbt_insert_pair! {
-                    self.tap_merkle_root <= <raw_key: _>|< raw_value: TapBranchHash>
+                    self.tap_merkle_root <= <raw_key: _>|< raw_value: TapNodeHash>
                 }
             }
             PSBT_IN_PROPRIETARY => {

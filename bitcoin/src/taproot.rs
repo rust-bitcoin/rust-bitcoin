@@ -49,19 +49,22 @@ const MIDSTATE_TAPSIGHASH: [u8; 32] = [
 // Taproot test vectors from BIP-341 state the hashes without any reversing
 #[rustfmt::skip]
 sha256t_hash_newtype!(TapLeafHash, TapLeafTag, MIDSTATE_TAPLEAF, 64,
-    doc="Taproot-tagged hash for tapscript Merkle tree leafs", false
+    doc="Taproot-tagged hash with tag \"TapLeaf\".
+    This is used for computing tapscript script spend hash.", false
 );
 #[rustfmt::skip]
-sha256t_hash_newtype!(TapBranchHash, TapBranchTag, MIDSTATE_TAPBRANCH, 64,
-    doc="Taproot-tagged hash for tapscript Merkle tree branches", false
+sha256t_hash_newtype!(TapNodeHash, TapBranchTag, MIDSTATE_TAPBRANCH, 64,
+    doc="Tagged hash used in taproot trees; see BIP-340 for tagging rules", false
 );
 #[rustfmt::skip]
 sha256t_hash_newtype!(TapTweakHash, TapTweakTag, MIDSTATE_TAPTWEAK, 64,
-    doc="Taproot-tagged hash for public key tweaks", false
+    doc="Taproot-tagged hash with tag \"TapTweak\".
+    This hash type is used while computing the tweaked public key", false
 );
 #[rustfmt::skip]
 sha256t_hash_newtype!(TapSighashHash, TapSighashTag, MIDSTATE_TAPSIGHASH, 64,
-    doc="Taproot-tagged hash for the taproot signature hash", false
+    doc="Taproot-tagged hash with tag \"TapSighash\".
+    This hash type is used for computing taproot signature hash.", false
 );
 
 impl secp256k1::ThirtyTwoByteHash for TapSighashHash {
@@ -73,7 +76,7 @@ impl TapTweakHash {
     /// `P` is the internal key and `R` is the merkle root.
     pub fn from_key_and_tweak(
         internal_key: UntweakedPublicKey,
-        merkle_root: Option<TapBranchHash>,
+        merkle_root: Option<TapNodeHash>,
     ) -> TapTweakHash {
         let mut eng = TapTweakHash::engine();
         // always hash the key
@@ -111,10 +114,10 @@ impl From<&ScriptLeaf> for TapLeafHash {
     fn from(leaf: &ScriptLeaf) -> TapLeafHash { leaf.leaf_hash() }
 }
 
-impl TapBranchHash {
+impl TapNodeHash {
     /// Computes branch hash given two hashes of the nodes underneath it.
-    pub fn from_node_hashes(a: sha256::Hash, b: sha256::Hash) -> TapBranchHash {
-        let mut eng = TapBranchHash::engine();
+    pub fn from_node_hashes(a: sha256::Hash, b: sha256::Hash) -> TapNodeHash {
+        let mut eng = TapNodeHash::engine();
         if a < b {
             eng.input(a.as_ref());
             eng.input(b.as_ref());
@@ -122,8 +125,12 @@ impl TapBranchHash {
             eng.input(b.as_ref());
             eng.input(a.as_ref());
         };
-        TapBranchHash::from_engine(eng)
+        TapNodeHash::from_engine(eng)
     }
+}
+
+impl From<TapLeafHash> for TapNodeHash {
+    fn from(leaf: TapLeafHash) -> TapNodeHash { TapNodeHash::from_inner(leaf.into_inner()) }
 }
 
 /// Maximum depth of a taproot tree script spend path.
@@ -177,7 +184,7 @@ pub struct TaprootSpendInfo {
     /// The BIP341 internal key.
     internal_key: UntweakedPublicKey,
     /// The merkle root of the script tree (None if there are no scripts).
-    merkle_root: Option<TapBranchHash>,
+    merkle_root: Option<TapNodeHash>,
     /// The sign final output pubkey as per BIP 341.
     output_key_parity: secp256k1::Parity,
     /// The tweaked output key.
@@ -221,7 +228,7 @@ impl TaprootSpendInfo {
     pub fn new_key_spend<C: secp256k1::Verification>(
         secp: &Secp256k1<C>,
         internal_key: UntweakedPublicKey,
-        merkle_root: Option<TapBranchHash>,
+        merkle_root: Option<TapNodeHash>,
     ) -> Self {
         let (output_key, parity) = internal_key.tap_tweak(secp, merkle_root);
         Self {
@@ -243,7 +250,7 @@ impl TaprootSpendInfo {
     pub fn internal_key(&self) -> UntweakedPublicKey { self.internal_key }
 
     /// Returns the merkle root for this [`TaprootSpendInfo`].
-    pub fn merkle_root(&self) -> Option<TapBranchHash> { self.merkle_root }
+    pub fn merkle_root(&self) -> Option<TapNodeHash> { self.merkle_root }
 
     /// Returns the output key (the key used in script pubkey) for this [`TaprootSpendInfo`].
     pub fn output_key(&self) -> TweakedPublicKey { self.output_key }
@@ -261,7 +268,7 @@ impl TaprootSpendInfo {
         node: NodeInfo,
     ) -> TaprootSpendInfo {
         // Create as if it is a key spend path with the given merkle root
-        let root_hash = Some(TapBranchHash::from_inner(node.hash.into_inner()));
+        let root_hash = Some(TapNodeHash::from_inner(node.hash.into_inner()));
         let mut info = TaprootSpendInfo::new_key_spend(secp, internal_key, root_hash);
         for leaves in node.leaves {
             let key = (leaves.script, leaves.ver);
@@ -568,7 +575,7 @@ impl NodeInfo {
             b_leaf.merkle_branch.push(a.hash)?; // add hashing partner
             all_leaves.push(b_leaf);
         }
-        let hash = TapBranchHash::from_node_hashes(a.hash, b.hash);
+        let hash = TapNodeHash::from_node_hashes(a.hash, b.hash);
         Ok(Self {
             hash: sha256::Hash::from_inner(hash.into_inner()),
             leaves: all_leaves,
@@ -622,7 +629,7 @@ impl ScriptLeaf {
 }
 
 /// The merkle proof for inclusion of a tree in a taptree hash.
-// The type of hash is `sha256::Hash` because the vector might contain both `TapBranchHash` and
+// The type of hash is `sha256::Hash` because the vector might contain both `TapNodeHash` and
 // `TapLeafHash`.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -802,11 +809,11 @@ impl ControlBlock {
         // compute the script hash
         // Initially the curr_hash is the leaf hash
         let leaf_hash = TapLeafHash::from_script(script, self.leaf_version);
-        let mut curr_hash = TapBranchHash::from_inner(leaf_hash.into_inner());
+        let mut curr_hash = TapNodeHash::from_inner(leaf_hash.into_inner());
         // Verify the proof
         for elem in self.merkle_branch.as_inner() {
             // Recalculate the curr hash as parent hash
-            curr_hash = TapBranchHash::from_node_hashes(
+            curr_hash = TapNodeHash::from_node_hashes(
                 sha256::Hash::from_inner(curr_hash.into_inner()),
                 *elem,
             );
@@ -1137,7 +1144,7 @@ mod test {
             sha256::Hash::from_engine(e).into_inner()
         }
         assert_eq!(empty_hash("TapLeaf"), TapLeafHash::hash(&[]).into_inner());
-        assert_eq!(empty_hash("TapBranch"), TapBranchHash::hash(&[]).into_inner());
+        assert_eq!(empty_hash("TapBranch"), TapNodeHash::hash(&[]).into_inner());
         assert_eq!(empty_hash("TapTweak"), TapTweakHash::hash(&[]).into_inner());
         assert_eq!(empty_hash("TapSighash"), TapSighashHash::hash(&[]).into_inner());
     }
@@ -1154,7 +1161,7 @@ mod test {
             "5212c288a377d1f8164962a5a13429f9ba6a7b84e59776a52c6637df2106facb"
         );
         assert_eq!(
-            TapBranchHash::from_engine(TapBranchTag::engine()).to_string(),
+            TapNodeHash::from_engine(TapBranchTag::engine()).to_string(),
             "53c373ec4d6f3c53c1f5fb2ff506dcefe1a0ed74874f93fa93c8214cbe9ffddf"
         );
         assert_eq!(
@@ -1176,7 +1183,7 @@ mod test {
             "ed1382037800c9dd938dd8854f1a8863bcdeb6705069b4b56a66ec22519d5829"
         );
         assert_eq!(
-            TapBranchHash::hash(&[0]).to_string(),
+            TapNodeHash::hash(&[0]).to_string(),
             "92534b1960c7e6245af7d5fda2588db04aa6d646abc2b588dab2b69e5645eb1d"
         );
         assert_eq!(
@@ -1412,7 +1419,7 @@ mod test {
                 assert!(arr["intermediary"]["merkleRoot"].is_null());
             } else {
                 merkle_root = Some(
-                    TapBranchHash::from_str(arr["intermediary"]["merkleRoot"].as_str().unwrap())
+                    TapNodeHash::from_str(arr["intermediary"]["merkleRoot"].as_str().unwrap())
                         .unwrap(),
                 );
                 let leaf_hashes = arr["intermediary"]["leafHashes"].as_array().unwrap();

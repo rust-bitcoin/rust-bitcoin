@@ -21,7 +21,7 @@ use crate::bip32::{ChildNumber, Fingerprint, KeySource};
 use crate::hashes::{hash160, ripemd160, sha256, sha256d, Hash};
 use crate::crypto::{ecdsa, schnorr};
 use crate::psbt::{self, Error, PartiallySignedTransaction};
-use crate::taproot::{TapBranchHash, TapLeafHash, ControlBlock, LeafVersion};
+use crate::taproot::{TapNodeHash, TapLeafHash, ControlBlock, LeafVersion};
 use crate::crypto::key::PublicKey;
 
 use super::map::{Map, Input, Output, TapTree, PsbtSighashType};
@@ -123,7 +123,7 @@ impl_psbt_de_serialize!(Witness);
 impl_psbt_hash_de_serialize!(ripemd160::Hash);
 impl_psbt_hash_de_serialize!(sha256::Hash);
 impl_psbt_hash_de_serialize!(TapLeafHash);
-impl_psbt_hash_de_serialize!(TapBranchHash);
+impl_psbt_hash_de_serialize!(TapNodeHash);
 impl_psbt_hash_de_serialize!(hash160::Hash);
 impl_psbt_hash_de_serialize!(sha256d::Hash);
 

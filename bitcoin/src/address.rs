@@ -50,7 +50,7 @@ use crate::hash_types::{PubkeyHash, ScriptHash};
 use crate::hashes::{sha256, Hash, HashEngine};
 use crate::network::constants::Network;
 use crate::prelude::*;
-use crate::taproot::TapBranchHash;
+use crate::taproot::TapNodeHash;
 
 /// Address error.
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -479,7 +479,7 @@ impl Payload {
     pub fn p2tr<C: Verification>(
         secp: &Secp256k1<C>,
         internal_key: UntweakedPublicKey,
-        merkle_root: Option<TapBranchHash>,
+        merkle_root: Option<TapNodeHash>,
     ) -> Payload {
         let (output_key, _parity) = internal_key.tap_tweak(secp, merkle_root);
         Payload::WitnessProgram {
@@ -627,7 +627,7 @@ impl Address {
     pub fn p2tr<C: Verification>(
         secp: &Secp256k1<C>,
         internal_key: UntweakedPublicKey,
-        merkle_root: Option<TapBranchHash>,
+        merkle_root: Option<TapNodeHash>,
         network: Network,
     ) -> Address {
         Address { network, payload: Payload::p2tr(secp, internal_key, merkle_root) }
