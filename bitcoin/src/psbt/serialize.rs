@@ -460,7 +460,7 @@ mod tests {
     fn taptree_hidden() {
         let mut builder = compose_taproot_builder(0x51, &[2, 2, 2]);
         builder = builder.add_leaf_with_ver(3, ScriptBuf::from_hex("b9").unwrap(), LeafVersion::from_consensus(0xC2).unwrap()).unwrap();
-        builder = builder.add_hidden_node(3, sha256::Hash::all_zeros()).unwrap();
+        builder = builder.add_hidden_node(3, TapNodeHash::all_zeros()).unwrap();
         assert!(TapTree::try_from(builder).is_err());
     }
 
