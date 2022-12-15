@@ -42,7 +42,7 @@ use bitcoin::locktime::absolute;
 use bitcoin::psbt::{self, Input, Psbt, PsbtSighashType};
 use bitcoin::secp256k1::{Secp256k1, Signing, Verification};
 use bitcoin::{
-    Address, Amount, Network, OutPoint, PublicKey, Script, Sequence, Transaction, TxIn, TxOut,
+    Address, Amount, Network, OutPoint, PublicKey, ScriptBuf, Sequence, Transaction, TxIn, TxOut,
     Txid, Witness,
 };
 
@@ -191,7 +191,7 @@ impl WatchOnly {
                     txid: Txid::from_hex(INPUT_UTXO_TXID)?,
                     vout: INPUT_UTXO_VOUT,
                 },
-                script_sig: Script::new(),
+                script_sig: ScriptBuf::new(),
                 sequence: Sequence::MAX, // Disable LockTime and RBF.
                 witness: Witness::default(),
             }],
@@ -216,7 +216,7 @@ impl WatchOnly {
         let pk = self.input_xpub.to_pub();
         let wpkh = pk.wpubkey_hash().expect("a compressed pubkey");
 
-        let redeem_script = Script::new_v0_p2wpkh(&wpkh);
+        let redeem_script = ScriptBuf::new_v0_p2wpkh(&wpkh);
         input.redeem_script = Some(redeem_script);
 
         let fingerprint = self.master_fingerprint;
@@ -284,7 +284,7 @@ fn input_derivation_path() -> Result<DerivationPath> {
 }
 
 fn previous_output() -> TxOut {
-    let script_pubkey = Script::from_hex(INPUT_UTXO_SCRIPT_PUBKEY)
+    let script_pubkey = ScriptBuf::from_hex(INPUT_UTXO_SCRIPT_PUBKEY)
         .expect("failed to parse input utxo scriptPubkey");
     let amount = Amount::from_str(INPUT_UTXO_VALUE).expect("failed to parse input utxo value");
 

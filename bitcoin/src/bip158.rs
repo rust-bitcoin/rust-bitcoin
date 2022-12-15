@@ -20,7 +20,7 @@
 //! # Examples
 //!
 //! ```ignore
-//! fn get_script_for_coin(coin: &OutPoint) -> Result<Script, BlockFilterError> {
+//! fn get_script_for_coin(coin: &OutPoint) -> Result<ScriptBuf, BlockFilterError> {
 //!   // get utxo ...
 //! }
 //!
@@ -32,7 +32,7 @@
 //!
 //! // read and evaluate a filter
 //!
-//! let query: Iterator<Item=Script> = // .. some scripts you care about
+//! let query: Iterator<Item=ScriptBuf> = // .. some scripts you care about
 //! if filter.match_any(&block_hash, &mut query.map(|s| s.as_bytes())) {
 //!   // get this block
 //! }
@@ -117,9 +117,10 @@ impl BlockFilter {
     pub fn new(content: &[u8]) -> BlockFilter { BlockFilter { content: content.to_vec() } }
 
     /// Computes a SCRIPT_FILTER that contains spent and output scripts.
-    pub fn new_script_filter<M>(block: &Block, script_for_coin: M) -> Result<BlockFilter, Error>
+    pub fn new_script_filter<M, S>(block: &Block, script_for_coin: M) -> Result<BlockFilter, Error>
     where
-        M: Fn(&OutPoint) -> Result<Script, Error>,
+        M: Fn(&OutPoint) -> Result<S, Error>,
+        S: Borrow<Script>,
     {
         let mut out = Vec::new();
         let mut writer = BlockFilterWriter::new(&mut out, block);
@@ -188,9 +189,10 @@ impl<'a, W: io::Write> BlockFilterWriter<'a, W> {
     }
 
     /// Adds consumed output scripts of a block to filter.
-    pub fn add_input_scripts<M>(&mut self, script_for_coin: M) -> Result<(), Error>
+    pub fn add_input_scripts<M, S>(&mut self, script_for_coin: M) -> Result<(), Error>
     where
-        M: Fn(&OutPoint) -> Result<Script, Error>,
+        M: Fn(&OutPoint) -> Result<S, Error>,
+        S: Borrow<Script>,
     {
         for script in self
             .block
@@ -201,7 +203,7 @@ impl<'a, W: io::Write> BlockFilterWriter<'a, W> {
             .map(script_for_coin)
         {
             match script {
-                Ok(script) => self.add_element(script.as_bytes()),
+                Ok(script) => self.add_element(script.borrow().as_bytes()),
                 Err(e) => return Err(e),
             }
         }
@@ -560,6 +562,7 @@ mod test {
     use crate::consensus::encode::deserialize;
     use crate::hash_types::BlockHash;
     use crate::hashes::hex::FromHex;
+    use crate::ScriptBuf;
 
     #[test]
     fn test_blockfilters() {
@@ -585,7 +588,7 @@ mod test {
                 for input in tx.input.iter() {
                     txmap.insert(
                         input.previous_output,
-                        Script::from(Vec::from_hex(si.next().unwrap().as_str().unwrap()).unwrap()),
+                        ScriptBuf::from(Vec::from_hex(si.next().unwrap().as_str().unwrap()).unwrap()),
                     );
                 }
             }

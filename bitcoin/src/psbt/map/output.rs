@@ -6,7 +6,7 @@ use core::convert::TryFrom;
 
 use crate::io;
 
-use crate::blockdata::script::Script;
+use crate::blockdata::script::ScriptBuf;
 use crate::consensus::encode;
 use secp256k1::XOnlyPublicKey;
 use crate::bip32::KeySource;
@@ -17,9 +17,9 @@ use crate::psbt::Error;
 
 use crate::taproot::{ScriptLeaf, TapLeafHash, NodeInfo, TaprootBuilder};
 
-/// Type: Redeem Script PSBT_OUT_REDEEM_SCRIPT = 0x00
+/// Type: Redeem ScriptBuf PSBT_OUT_REDEEM_SCRIPT = 0x00
 const PSBT_OUT_REDEEM_SCRIPT: u8 = 0x00;
-/// Type: Witness Script PSBT_OUT_WITNESS_SCRIPT = 0x01
+/// Type: Witness ScriptBuf PSBT_OUT_WITNESS_SCRIPT = 0x01
 const PSBT_OUT_WITNESS_SCRIPT: u8 = 0x01;
 /// Type: BIP 32 Derivation Path PSBT_OUT_BIP32_DERIVATION = 0x02
 const PSBT_OUT_BIP32_DERIVATION: u8 = 0x02;
@@ -39,9 +39,9 @@ const PSBT_OUT_PROPRIETARY: u8 = 0xFC;
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct Output {
     /// The redeem script for this output.
-    pub redeem_script: Option<Script>,
+    pub redeem_script: Option<ScriptBuf>,
     /// The witness script for this output.
-    pub witness_script: Option<Script>,
+    pub witness_script: Option<ScriptBuf>,
     /// A map from public keys needed to spend this output to their
     /// corresponding master key fingerprints and derivation paths.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq"))]
@@ -216,12 +216,12 @@ impl Output {
         match raw_key.type_value {
             PSBT_OUT_REDEEM_SCRIPT => {
                 impl_psbt_insert_pair! {
-                    self.redeem_script <= <raw_key: _>|<raw_value: Script>
+                    self.redeem_script <= <raw_key: _>|<raw_value: ScriptBuf>
                 }
             }
             PSBT_OUT_WITNESS_SCRIPT => {
                 impl_psbt_insert_pair! {
-                    self.witness_script <= <raw_key: _>|<raw_value: Script>
+                    self.witness_script <= <raw_key: _>|<raw_value: ScriptBuf>
                 }
             }
             PSBT_OUT_BIP32_DERIVATION => {

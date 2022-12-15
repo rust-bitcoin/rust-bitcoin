@@ -19,7 +19,7 @@ use bitcoin_internals::write_err;
 use crate::{prelude::*, Amount};
 use crate::io;
 
-use crate::blockdata::script::Script;
+use crate::blockdata::script::ScriptBuf;
 use crate::blockdata::transaction::{Transaction, TxOut};
 use crate::consensus::{encode, Encodable, Decodable};
 use crate::bip32::{self, ExtendedPrivKey, ExtendedPubKey, KeySource};
@@ -136,7 +136,7 @@ impl PartiallySignedTransaction {
         let mut tx: Transaction = self.unsigned_tx;
 
         for (vin, psbtin) in tx.input.iter_mut().zip(self.inputs.into_iter()) {
-            vin.script_sig = psbtin.final_script_sig.unwrap_or_else(Script::new);
+            vin.script_sig = psbtin.final_script_sig.unwrap_or_default();
             vin.witness = psbtin.final_script_witness.unwrap_or_default();
         }
 
@@ -339,11 +339,11 @@ impl PartiallySignedTransaction {
                 cache.legacy_signature_hash(input_index, script_code, hash_ty.to_u32())?
             },
             Wpkh => {
-                let script_code = Script::p2wpkh_script_code(spk).ok_or(SignError::NotWpkh)?;
+                let script_code = ScriptBuf::p2wpkh_script_code(spk).ok_or(SignError::NotWpkh)?;
                 cache.segwit_signature_hash(input_index, &script_code, utxo.value, hash_ty)?
             }
             ShWpkh => {
-                let script_code = Script::p2wpkh_script_code(input.redeem_script.as_ref().expect("checked above"))
+                let script_code = ScriptBuf::p2wpkh_script_code(input.redeem_script.as_ref().expect("checked above"))
                     .ok_or(SignError::NotWpkh)?;
                 cache.segwit_signature_hash(input_index, &script_code, utxo.value, hash_ty)?
             },
@@ -890,7 +890,7 @@ mod tests {
     #[cfg(feature = "rand")]
     use secp256k1::{All, SecretKey};
 
-    use crate::blockdata::script::Script;
+    use crate::blockdata::script::ScriptBuf;
     use crate::blockdata::transaction::{Transaction, TxIn, TxOut, OutPoint, Sequence};
     use crate::network::constants::Network::Bitcoin;
     use crate::consensus::encode::{deserialize, serialize, serialize_hex};
@@ -985,7 +985,7 @@ mod tests {
                         ).unwrap(),
                         vout: 0,
                     },
-                    script_sig: Script::new(),
+                    script_sig: ScriptBuf::new(),
                     sequence: Sequence::ENABLE_LOCKTIME_NO_RBF,
                     witness: Witness::default(),
                 }],
@@ -1096,7 +1096,7 @@ mod tests {
             },
             unsigned_tx: {
                 let mut unsigned = tx.clone();
-                unsigned.input[0].script_sig = Script::new();
+                unsigned.input[0].script_sig = ScriptBuf::new();
                 unsigned.input[0].witness = Witness::default();
                 unsigned
             },
@@ -1145,7 +1145,7 @@ mod tests {
         use crate::hashes::hex::FromHex;
         use crate::hash_types::Txid;
 
-        use crate::blockdata::script::Script;
+        use crate::blockdata::script::ScriptBuf;
         use crate::blockdata::transaction::{Transaction, TxIn, TxOut, OutPoint, Sequence};
         use crate::consensus::encode::serialize_hex;
         use crate::blockdata::locktime::absolute;
@@ -1245,7 +1245,7 @@ mod tests {
                             ).unwrap(),
                             vout: 0,
                         },
-                        script_sig: Script::new(),
+                        script_sig: ScriptBuf::new(),
                         sequence: Sequence::ENABLE_LOCKTIME_NO_RBF,
                         witness: Witness::default(),
                     }],
@@ -1557,7 +1557,7 @@ mod tests {
                         ).unwrap(),
                         vout: 0,
                     },
-                    script_sig: Script::new(),
+                    script_sig: ScriptBuf::new(),
                     sequence: Sequence::ENABLE_LOCKTIME_NO_RBF,
                     witness: Witness::default(),
                 }],
@@ -1834,7 +1834,7 @@ mod tests {
         // First input we can spend. See comment above on key_map for why we use defaults here.
         let txout_wpkh = TxOut{
             value: 10,
-            script_pubkey: Script::new_v0_p2wpkh(&WPubkeyHash::hash(&pk.to_bytes())),
+            script_pubkey: ScriptBuf::new_v0_p2wpkh(&WPubkeyHash::hash(&pk.to_bytes())),
         };
         psbt.inputs[0].witness_utxo = Some(txout_wpkh);
 
@@ -1845,7 +1845,7 @@ mod tests {
         // Second input is unspendable by us e.g., from another wallet that supports future upgrades.
         let txout_unknown_future = TxOut{
             value: 10,
-            script_pubkey: Script::new_witness_program(crate::address::WitnessVersion::V4, &[0xaa; 34]),
+            script_pubkey: ScriptBuf::new_witness_program(crate::address::WitnessVersion::V4, &[0xaa; 34]),
         };
         psbt.inputs[1].witness_utxo = Some(txout_unknown_future);
 

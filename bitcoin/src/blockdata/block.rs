@@ -240,7 +240,7 @@ impl Block {
 
         // Commitment is in the last output that starts with magic bytes.
         if let Some(pos) = coinbase.output.iter()
-            .rposition(|o| o.script_pubkey.len () >= 38 && o.script_pubkey[0..6] ==  MAGIC)
+            .rposition(|o| o.script_pubkey.len () >= 38 && o.script_pubkey.as_bytes()[0..6] ==  MAGIC)
         {
             let commitment = WitnessCommitment::from_slice(&coinbase.output[pos].script_pubkey.as_bytes()[6..38]).unwrap();
             // Witness reserved value is in coinbase input witness.

@@ -94,7 +94,7 @@ use bitcoin::taproot::{
     LeafVersion, TapLeafHash, TapSighashHash, TaprootBuilder, TaprootSpendInfo,
 };
 use bitcoin::{
-    absolute, script, Address, Amount, OutPoint, Script, Transaction, TxIn, TxOut, Txid, Witness,
+    absolute, script, Address, Amount, OutPoint, ScriptBuf, Transaction, TxIn, TxOut, Txid, Witness,
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -241,7 +241,7 @@ fn generate_bip86_key_spend_tx(
                 txid: Txid::from_hex(input_utxo.txid)?,
                 vout: input_utxo.vout,
             },
-            script_sig: Script::new(),
+            script_sig: ScriptBuf::new(),
             sequence: bitcoin::Sequence(0xFFFFFFFF), // Ignore nSequence.
             witness: Witness::default(),
         }],
@@ -263,7 +263,7 @@ fn generate_bip86_key_spend_tx(
 
     let mut input = Input {
         witness_utxo: {
-            let script_pubkey = Script::from_hex(input_utxo.script_pubkey)
+            let script_pubkey = ScriptBuf::from_hex(input_utxo.script_pubkey)
                 .expect("failed to parse input utxo scriptPubkey");
             let amount = Amount::from_sat(from_amount);
 
@@ -289,7 +289,7 @@ fn generate_bip86_key_spend_tx(
                 vout,
                 &sighash::Prevouts::All(&[TxOut {
                     value: from_amount,
-                    script_pubkey: Script::from_str(input_utxo.script_pubkey)?,
+                    script_pubkey: ScriptBuf::from_str(input_utxo.script_pubkey)?,
                 }]),
                 hash_ty,
             )?;
@@ -333,7 +333,7 @@ fn generate_bip86_key_spend_tx(
     tx.verify(|_| {
         Some(TxOut {
             value: from_amount,
-            script_pubkey: Script::from_hex(input_utxo.script_pubkey).unwrap(),
+            script_pubkey: ScriptBuf::from_hex(input_utxo.script_pubkey).unwrap(),
         })
     })
     .expect("failed to verify transaction");
@@ -367,7 +367,7 @@ impl BenefactorWallet {
         })
     }
 
-    fn time_lock_script(locktime: absolute::LockTime, beneficiary_key: XOnlyPublicKey) -> Script {
+    fn time_lock_script(locktime: absolute::LockTime, beneficiary_key: XOnlyPublicKey) -> ScriptBuf {
         script::Builder::new()
             .push_int(locktime.to_consensus_u32() as i64)
             .push_opcode(OP_CLTV)
@@ -404,7 +404,7 @@ impl BenefactorWallet {
             .finalize(&self.secp, internal_keypair.x_only_public_key().0)
             .expect("Should be finalizable");
         self.current_spend_info = Some(taproot_spend_info.clone());
-        let script_pubkey = Script::new_v1_p2tr(
+        let script_pubkey = ScriptBuf::new_v1_p2tr(
             &self.secp,
             taproot_spend_info.internal_key(),
             taproot_spend_info.merkle_root(),
@@ -425,7 +425,7 @@ impl BenefactorWallet {
             lock_time,
             input: vec![TxIn {
                 previous_output: OutPoint { txid: tx.txid(), vout: 0 },
-                script_sig: Script::new(),
+                script_sig: ScriptBuf::new(),
                 sequence: bitcoin::Sequence(0xFFFFFFFD), // enable locktime and opt-in RBF
                 witness: Witness::default(),
             }],
@@ -505,7 +505,7 @@ impl BenefactorWallet {
                 .expect("Should be finalizable");
             self.current_spend_info = Some(taproot_spend_info.clone());
             let prevout_script_pubkey = input.witness_utxo.as_ref().unwrap().script_pubkey.clone();
-            let output_script_pubkey = Script::new_v1_p2tr(
+            let output_script_pubkey = ScriptBuf::new_v1_p2tr(
                 &self.secp,
                 taproot_spend_info.internal_key(),
                 taproot_spend_info.merkle_root(),
@@ -573,7 +573,7 @@ impl BenefactorWallet {
                 lock_time,
                 input: vec![TxIn {
                     previous_output: OutPoint { txid: tx.txid(), vout: 0 },
-                    script_sig: Script::new(),
+                    script_sig: ScriptBuf::new(),
                     sequence: bitcoin::Sequence(0xFFFFFFFD), // enable locktime and opt-in RBF
                     witness: Witness::default(),
                 }],
