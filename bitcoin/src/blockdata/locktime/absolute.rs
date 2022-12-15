@@ -43,6 +43,14 @@ pub const LOCK_TIME_THRESHOLD: u32 = 500_000_000;
 /// Used for transaction lock time (`nLockTime` in Bitcoin Core and [`crate::Transaction::lock_time`]
 /// in this library) and also for the argument to opcode 'OP_CHECKLOCKTIMEVERIFY`.
 ///
+/// ### Note on ordering
+///
+/// Because locktimes may be height- or time-based, and these metrics are incommensurate, there
+/// is no total ordering on locktimes. We therefore have implemented [`PartialOrd`] but not [`Ord`].
+/// For [`crate::Transaction`], which has a locktime field, we implement a total ordering to make
+/// it easy to store transactions in sorted data structures, and use the locktime's 32-bit integer
+/// consensus encoding to order it.
+///
 /// ### Relevant BIPs
 ///
 /// * [BIP-65 OP_CHECKLOCKTIMEVERIFY](https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki)

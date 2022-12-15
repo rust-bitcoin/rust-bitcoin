@@ -1,3 +1,12 @@
+# 0.30 - 2023-XX-XX "The First Crate-Smashing Release"
+
+* Drop `PackedLockTime`, [replace with richer `LockTime` everywhere](https://github.com/rust-bitcoin/rust-bitcoin/pull/1330)
+  Be aware that `LockTime` does not have an `Ord` implementation, so users who need a
+  total ordering on locktimes will be forced to wrap this type. In `Transaction`, which
+  contains a `LockTime` but is `Ord`, we have manually sorted the locktimes based on
+  their consensus encoding. This ordering is somewhat arbitrary -- there is no total
+  ordering on locktimes since they may be measured in either blocks or seconds.
+
 # 0.29 - 2022-07-20 "Edition 2018 Release"
 
 As promised, this is our quick release to bring on edition 2018 by increasing our MSRV to Rust

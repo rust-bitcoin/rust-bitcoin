@@ -580,6 +580,19 @@ impl<E> EncodeSigningDataResult<E> {
 ///
 /// We therefore deviate from the spec by always using the Segwit witness encoding
 /// for 0-input transactions, which results in unambiguously parseable transactions.
+///
+/// ### A note on ordering
+///
+/// This type implements `Ord`, even though it contains a locktime, which is not
+/// itself `Ord`. This was done to simplify applications that may need to hold
+/// transactions inside a sorted container. We have ordered the locktimes based
+/// on their representation as a `u32`, which is not a semantically meaningful
+/// order, and therefore the ordering on `Transaction` itself is not semantically
+/// meaningful either.
+///
+/// The ordering is, however, consistent with the ordering present in this library
+/// before this change, so users should not notice any breakage (here) when
+/// transitioning from 0.29 to 0.30.
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
