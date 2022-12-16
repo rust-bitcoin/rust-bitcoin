@@ -1,7 +1,7 @@
 <div align="center">
   <h1>Rust Dash</h1>
 
-  <img alt="Rust Bitcoin logo by Hunter Trujillo, see license and source files under /logo" src="./logo/rust-bitcoin.png" width="300" />
+  <img alt="Rust Dash logo by Rostislav Gorbachenko, UX engineer at Dash Core Group, see license and source files under /logo" src="./logo/rust-dash-together.png" width="300" />
 
   <p>Library with support for de/serialization, parsing and executing on data-structures
     and network messages related to Dash Core payment chain.
