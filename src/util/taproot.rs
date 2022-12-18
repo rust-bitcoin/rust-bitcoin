@@ -18,7 +18,7 @@
 
 use prelude::*;
 use io;
-use secp256k1::{self, Secp256k1};
+use secp256k1::{self, Secp256k1, Scalar};
 
 use core::fmt;
 use core::cmp::Reverse;
@@ -114,6 +114,12 @@ impl TapTweakHash {
             // nothing to hash
         }
         TapTweakHash::from_engine(eng)
+    }
+
+    /// Converts a `TapTweakHash` into a `Scalar` ready for use with key tweaking API.
+    pub fn to_scalar(&self) -> Scalar {
+        // This is statistically extremely unlikely to panic.
+        Scalar::from_be_bytes(self.into_inner()).expect("hash value greater than curve order")
     }
 }
 
@@ -839,12 +845,12 @@ impl ControlBlock {
             );
         }
         // compute the taptweak
-        let tweak = TapTweakHash::from_key_and_tweak(self.internal_key, Some(curr_hash));
+        let tweak = TapTweakHash::from_key_and_tweak(self.internal_key, Some(curr_hash)).to_scalar();
         self.internal_key.tweak_add_check(
             secp,
             &output_key,
             self.output_key_parity,
-            tweak.into_inner(),
+            tweak,
         )
     }
 }

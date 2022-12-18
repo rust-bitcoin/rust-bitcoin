@@ -1,7 +1,7 @@
 <div align="center">
   <h1>Rust Dash</h1>
 
-  <img alt="Rust Bitcoin logo by Hunter Trujillo, see license and source files under /logo" src="./logo/rust-bitcoin.png" width="300" />
+  <img alt="Rust Dash logo by Rostislav Gorbachenko, UX engineer at Dash Core Group, see license and source files under /logo" src="./logo/rust-dash-together.png" width="300" />
 
   <p>Library with support for de/serialization, parsing and executing on data-structures
     and network messages related to Dash Core payment chain.
@@ -23,7 +23,7 @@
 
 Supports (or should support)
 
-* De/serialization of Bitcoin protocol network messages
+* De/serialization of Dash protocol network messages
 * De/serialization of blocks and transactions
 * Script de/serialization
 * Private keys and address creation, de/serialization and validation (including full BIP32 support)
@@ -82,7 +82,7 @@ versions than the current stable one (see MSRV section).
 The library can be built and tested using [`cargo`](https://github.com/rust-lang/cargo/):
 
 ```
-git clone git@github.com:rust-bitcoin/rust-bitcoin.git
+git clone git@github.com:dashpay/rust-dashcore.git
 cd rust-bitcoin
 cargo build
 ```
