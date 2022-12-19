@@ -253,7 +253,7 @@ impl TxIn {
     /// might increase more than `TxIn::segwit_weight`. This happens when:
     /// - the new input added causes the input length `VarInt` to increase its encoding length
     /// - the new input is the first segwit input added - this will add an additional 2WU to the
-    /// transaction weight to take into account the segwit marker
+    ///   transaction weight to take into account the segwit marker
     pub fn segwit_weight(&self) -> usize {
         self.legacy_weight() + self.witness.serialized_len()
     }
