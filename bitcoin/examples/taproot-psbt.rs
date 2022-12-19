@@ -397,7 +397,7 @@ impl BenefactorWallet {
 
         // Build up the leaf script and combine with internal key into a taproot commitment
         let script = Self::time_lock_script(lock_time, beneficiary_key);
-        let leaf_hash = TapLeafHash::from_script(&script, LeafVersion::TapScript);
+        let leaf_hash = script.tapscript_leaf_hash();
 
         let taproot_spend_info = TaprootBuilder::new()
             .add_leaf(0, script.clone())?
@@ -497,7 +497,7 @@ impl BenefactorWallet {
             )
             .unwrap();
             let script = Self::time_lock_script(lock_time, beneficiary_key);
-            let leaf_hash = TapLeafHash::from_script(&script, LeafVersion::TapScript);
+            let leaf_hash = script.tapscript_leaf_hash();
 
             let taproot_spend_info = TaprootBuilder::new()
                 .add_leaf(0, script.clone())?

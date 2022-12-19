@@ -209,6 +209,12 @@ impl Script {
         WScriptHash::hash(self.as_bytes())
     }
 
+    /// Computes leaf hash of tapscript.
+    #[inline]
+    pub fn tapscript_leaf_hash(&self) -> TapLeafHash {
+        TapLeafHash::from_script(self, LeafVersion::TapScript)
+    }
+
     /// Returns the length in bytes of the script.
     #[inline]
     pub fn len(&self) -> usize { self.0.len() }
@@ -238,7 +244,7 @@ impl Script {
     /// the current script, assuming that the script is a Tapscript.
     #[inline]
     pub fn to_v1_p2tr<C: Verification>(&self, secp: &Secp256k1<C>, internal_key: UntweakedPublicKey) -> ScriptBuf {
-        let leaf_hash = TapLeafHash::from_script(self, LeafVersion::TapScript);
+        let leaf_hash = self.tapscript_leaf_hash();
         let merkle_root = TapBranchHash::from_inner(leaf_hash.into_inner());
         ScriptBuf::new_v1_p2tr(secp, internal_key, Some(merkle_root))
     }
@@ -2344,6 +2350,10 @@ mod test {
         let script = hex_script!("410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac");
         assert_eq!(script.script_hash().to_hex(), "8292bcfbef1884f73c813dfe9c82fd7e814291ea");
         assert_eq!(script.wscript_hash().to_hex(), "3e1525eb183ad4f9b3c5fa3175bdca2a52e947b135bbb90383bf9f6408e2c324");
+	assert_eq!(
+	    hex_script!("20d85a959b0290bf19bb89ed43c916be835475d013da4b362117393e25a48229b8ac").tapscript_leaf_hash().to_hex(),
+	    "5b75adecf53548f3ec6ad7d78383bf84cc57b55a3127c72b9a2481752dd88b21"
+	);
     }
 
     #[test]
