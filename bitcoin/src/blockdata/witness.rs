@@ -312,9 +312,11 @@ impl Witness {
 
     /// Get Tapscript following BIP341 rules regarding accounting for an annex.
     ///
-    /// This does not guarantee that this represents a P2TR [`Witness`].
-    /// It merely gets the second to last or third to last element depending
-    /// on the first byte of the last element being equal to 0x50.
+    /// This does not guarantee that this represents a P2TR [`Witness`]. It
+    /// merely gets the second to last or third to last element depending on
+    /// the first byte of the last element being equal to 0x50. See
+    /// [Script::is_v1_p2tr](crate::blockdata::script::Script::is_v1_p2tr) to
+    /// check whether this is actually a Taproot witness.
     pub fn tapscript(&self) -> Option<&[u8]> {
         let len = self.len();
         self
