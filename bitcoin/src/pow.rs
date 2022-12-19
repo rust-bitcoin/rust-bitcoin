@@ -10,6 +10,9 @@
 use core::fmt::{self, LowerHex, UpperHex};
 use core::ops::{Add, Div, Mul, Not, Rem, Shl, Shr, Sub};
 
+#[cfg(test)]
+use mutagen::mutate;
+
 use crate::consensus::encode::{self, Decodable, Encodable};
 #[cfg(doc)]
 use crate::consensus::Params;
@@ -322,6 +325,7 @@ impl U256 {
     const ONE: U256 = U256(0, 1);
 
     /// Creates [`U256`] from a big-endian array of `u8`s.
+    #[cfg_attr(test, mutate)]
     fn from_be_bytes(a: [u8; 32]) -> U256 {
         let (high, low) = split_in_half(a);
         let big = u128::from_be_bytes(high);
@@ -330,6 +334,7 @@ impl U256 {
     }
 
     /// Creates a [`U256`] from a little-endian array of `u8`s.
+    #[cfg_attr(test, mutate)]
     fn from_le_bytes(a: [u8; 32]) -> U256 {
         let (high, low) = split_in_half(a);
         let little = u128::from_le_bytes(high);
@@ -338,6 +343,7 @@ impl U256 {
     }
 
     /// Converts `Self` to a big-endian array of `u8`s.
+    #[cfg_attr(test, mutate)]
     fn to_be_bytes(self) -> [u8; 32] {
         let mut out = [0; 32];
         out[..16].copy_from_slice(&self.0.to_be_bytes());
@@ -346,6 +352,7 @@ impl U256 {
     }
 
     /// Converts `Self` to a little-endian array of `u8`s.
+    #[cfg_attr(test, mutate)]
     fn to_le_bytes(self) -> [u8; 32] {
         let mut out = [0; 32];
         out[..16].copy_from_slice(&self.1.to_le_bytes());
@@ -358,6 +365,7 @@ impl U256 {
     /// 2**256 / (x + 1) == ~x / (x + 1) + 1
     ///
     /// (Equation shamelessly stolen from bitcoind)
+    #[cfg_attr(test, mutate)]
     fn inverse(&self) -> U256 {
         // We should never have a target/work of zero so this doesn't matter
         // that much but we define the inverse of 0 as max.
@@ -390,9 +398,11 @@ impl U256 {
     fn low_u64(&self) -> u64 { self.low_u128() as u64 }
 
     /// Returns the low 128 bits.
+    #[cfg_attr(test, mutate)]
     fn low_u128(&self) -> u128 { self.1 }
 
     /// Returns `self` as a `u128` saturating to `u128::MAX` if `self` is too big.
+    #[cfg_attr(test, mutate)]
     fn saturating_to_u128(&self) -> u128 {
         if *self > U256::from(u128::max_value()) {
             u128::max_value()
@@ -402,6 +412,7 @@ impl U256 {
     }
 
     /// Returns the least number of bits needed to represent the number.
+    #[cfg_attr(test, mutate)]
     fn bits(&self) -> u32 {
         if self.0 > 0 {
             256 - self.0.leading_zeros()
@@ -414,6 +425,7 @@ impl U256 {
     ///
     /// Returns a tuple of the addition along with a boolean indicating whether an arithmetic
     /// overflow would occur. If an overflow would have occurred then the wrapped value is returned.
+    #[cfg_attr(test, mutate)]
     fn mul_u64(self, rhs: u64) -> (U256, bool) {
         // Multiply 64 bit parts of `mul` by `rhs`.
         fn mul_parts(mul: u128, rhs: u64) -> (u128, u128) {
@@ -449,6 +461,7 @@ impl U256 {
     /// # Panics
     ///
     /// If `rhs` is zero.
+    #[cfg_attr(test, mutate)]
     fn div_rem(self, rhs: Self) -> (Self, Self) {
         let mut sub_copy = self;
         let mut shift_copy = rhs;
@@ -488,6 +501,7 @@ impl U256 {
     /// Returns a tuple of the addition along with a boolean indicating whether an arithmetic
     /// overflow would occur. If an overflow would have occurred then the wrapped value is returned.
     #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[cfg_attr(test, mutate)]
     fn overflowing_add(self, rhs: Self) -> (Self, bool) {
         let mut ret = U256::ZERO;
         let mut ret_overflow = false;
@@ -512,6 +526,7 @@ impl U256 {
     /// Returns a tuple of the subtraction along with a boolean indicating whether an arithmetic
     /// overflow would occur. If an overflow would have occurred then the wrapped value is returned.
     #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[cfg_attr(test, mutate)]
     fn overflowing_sub(self, rhs: Self) -> (Self, bool) {
         let ret = self.wrapping_add(!rhs).wrapping_add(Self::ONE);
         let overflow = rhs > self;
@@ -524,6 +539,7 @@ impl U256 {
     /// indicating whether an arithmetic overflow would occur. If an
     /// overflow would have occurred then the wrapped value is returned.
     #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[cfg_attr(test, mutate)]
     fn overflowing_mul(self, rhs: Self) -> (Self, bool) {
         let mut ret = U256::ZERO;
         let mut ret_overflow = false;
@@ -547,6 +563,7 @@ impl U256 {
     /// Wrapping (modular) addition. Computes `self + rhs`, wrapping around at the boundary of the
     /// type.
     #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[cfg_attr(test, mutate)]
     fn wrapping_add(self, rhs: Self) -> Self {
         let (ret, _overflow) = self.overflowing_add(rhs);
         ret
@@ -555,6 +572,7 @@ impl U256 {
     /// Wrapping (modular) subtraction. Computes `self - rhs`, wrapping around at the boundary of
     /// the type.
     #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[cfg_attr(test, mutate)]
     fn wrapping_sub(self, rhs: Self) -> Self {
         let (ret, _overflow) = self.overflowing_sub(rhs);
         ret
@@ -571,6 +589,7 @@ impl U256 {
 
     /// Returns `self` incremented by 1 wrapping around at the boundary of the type.
     #[must_use = "this returns the result of the increment, without modifying the original"]
+    #[cfg_attr(test, mutate)]
     fn wrapping_inc(&self) -> U256 {
         let mut ret = U256::ZERO;
 
@@ -616,6 +635,7 @@ impl U256 {
     /// restricted to the range of the type, rather than the bits shifted out of the LHS being
     /// returned to the other end. We do not currently support `rotate_right`.
     #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[cfg_attr(test, mutate)]
     fn wrapping_shr(self, rhs: u32) -> Self {
         let shift = rhs & 0x000000ff;
 
@@ -636,6 +656,7 @@ impl U256 {
     }
 
     /// Format `self` to `f` as a decimal when value is known to be non-zero.
+    #[cfg_attr(test, mutate)]
     fn fmt_decimal(&self, f: &mut fmt::Formatter) -> fmt::Result {
         const DIGITS: usize = 78; // U256::MAX has 78 base 10 digits.
         const TEN: U256 = U256(0, 10);
