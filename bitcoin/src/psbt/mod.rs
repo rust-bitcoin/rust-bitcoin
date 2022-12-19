@@ -357,7 +357,7 @@ impl PartiallySignedTransaction {
             }
         };
 
-        Ok((Message::from_slice(&sighash).expect("sighashes are 32 bytes"), hash_ty))
+        Ok((Message::from(sighash), hash_ty))
     }
 
     /// Returns the spending utxo for this PSBT's input at `input_index`.
