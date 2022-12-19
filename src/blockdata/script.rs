@@ -423,7 +423,7 @@ impl Script {
     pub fn is_empty(&self) -> bool { self.0.is_empty() }
 
     /// Returns the script data as a byte slice.
-    pub fn as_bytes(&self) -> &[u8] { &*self.0 }
+    pub fn as_bytes(&self) -> &[u8] { &self.0 }
 
     /// Returns a copy of the script data.
     pub fn to_bytes(&self) -> Vec<u8> { self.0.clone().into_vec() }
