@@ -38,14 +38,14 @@ pub const MAX_MSG_SIZE: usize = 5_000_000;
 pub struct CommandString(Cow<'static, str>);
 
 impl CommandString {
-    /// Convert `&'static str` to `CommandString`
+    /// Converts `&'static str` to `CommandString`
     ///
     /// This is more efficient for string literals than non-static conversions because it avoids
     /// allocation.
     ///
     /// # Errors
     ///
-    /// Returns an error if and only if the string is
+    /// Returns an error if, and only if, the string is
     /// larger than 12 characters in length.
     pub fn try_from_static(s: &'static str) -> Result<CommandString, CommandStringError> {
         Self::try_from_static_cow(s.into())

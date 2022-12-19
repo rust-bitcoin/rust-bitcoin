@@ -458,7 +458,7 @@ fn fmt_satoshi_in(
 
 /// Amount
 ///
-/// The [Amount] type can be used to express Bitcoin amounts that supports
+/// The [Amount] type can be used to express Bitcoin amounts that support
 /// arithmetic and conversion to various denominations.
 ///
 ///
@@ -802,7 +802,7 @@ enum DisplayStyle {
 
 /// SignedAmount
 ///
-/// The [SignedAmount] type can be used to express Bitcoin amounts that supports
+/// The [SignedAmount] type can be used to express Bitcoin amounts that support
 /// arithmetic and conversion to various denominations.
 ///
 ///

@@ -159,7 +159,7 @@ pub trait WriteExt : io::Write {
     fn emit_u32(&mut self, v: u32) -> Result<(), io::Error>;
     /// Outputs a 16-bit unsigned integer.
     fn emit_u16(&mut self, v: u16) -> Result<(), io::Error>;
-    /// Outputs a 8-bit unsigned integer.
+    /// Outputs an 8-bit unsigned integer.
     fn emit_u8(&mut self, v: u8) -> Result<(), io::Error>;
 
     /// Outputs a 64-bit signed integer.
@@ -168,7 +168,7 @@ pub trait WriteExt : io::Write {
     fn emit_i32(&mut self, v: i32) -> Result<(), io::Error>;
     /// Outputs a 16-bit signed integer.
     fn emit_i16(&mut self, v: i16) -> Result<(), io::Error>;
-    /// Outputs a 8-bit signed integer.
+    /// Outputs an 8-bit signed integer.
     fn emit_i8(&mut self, v: i8) -> Result<(), io::Error>;
 
     /// Outputs a boolean.
@@ -186,7 +186,7 @@ pub trait ReadExt : io::Read {
     fn read_u32(&mut self) -> Result<u32, Error>;
     /// Reads a 16-bit unsigned integer.
     fn read_u16(&mut self) -> Result<u16, Error>;
-    /// Reads a 8-bit unsigned integer.
+    /// Reads an 8-bit unsigned integer.
     fn read_u8(&mut self) -> Result<u8, Error>;
 
     /// Reads a 64-bit signed integer.
@@ -195,7 +195,7 @@ pub trait ReadExt : io::Read {
     fn read_i32(&mut self) -> Result<i32, Error>;
     /// Reads a 16-bit signed integer.
     fn read_i16(&mut self) -> Result<i16, Error>;
-    /// Reads a 8-bit signed integer.
+    /// Reads an 8-bit signed integer.
     fn read_i8(&mut self) -> Result<i8, Error>;
 
     /// Reads a boolean.
