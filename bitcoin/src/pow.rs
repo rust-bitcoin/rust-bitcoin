@@ -412,6 +412,7 @@ impl U256 {
     }
 
     /// Returns the least number of bits needed to represent the number.
+    #[cfg_attr(test, mutate)]
     fn bits(&self) -> u32 {
         if self.0 > 0 {
             256 - self.0.leading_zeros()
@@ -940,6 +941,11 @@ mod tests {
         assert_eq!(U256::from(300_u64).bits(), 9);
         assert_eq!(U256::from(60000_u64).bits(), 16);
         assert_eq!(U256::from(70000_u64).bits(), 17);
+
+        let x = U256::from(u128::max_value());
+        assert_eq!(x.bits(), 128);
+        let x = x + U256::ONE;
+        assert_eq!(x.bits(), 129);
 
         // Try to read the following lines out loud quickly
         let mut shl = U256::from(70000_u64);
