@@ -391,6 +391,7 @@ impl U256 {
     #[cfg_attr(test, mutate)]
     fn is_one(&self) -> bool { self.0 == 0 && self.1 == 1 }
 
+    #[cfg_attr(test, mutate)]
     fn is_max(&self) -> bool { self.0 == u128::max_value() && self.1 == u128::max_value() }
 
     /// Returns the low 32 bits.
@@ -1530,6 +1531,16 @@ mod tests {
         assert_eq!(U256::MAX.inverse(), U256::ONE);
         assert_eq!(U256::ONE.inverse(), U256::MAX);
         assert_eq!(U256::ZERO.inverse(), U256::MAX);
+    }
+
+    #[test]
+    fn u256_is_max() {
+        let x = u128::max_value();
+
+        let low = U256::from(x);
+        assert!(!low.is_max());
+        let max = (low << 128) + low;
+        assert!(max.is_max())
     }
 
     #[test]
