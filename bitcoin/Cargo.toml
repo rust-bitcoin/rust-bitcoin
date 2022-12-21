@@ -38,7 +38,7 @@ rustdoc-args = ["--cfg", "docsrs"]
 bitcoin-internals = { path = "../internals" }
 bech32 = { version = "0.9.0", default-features = false }
 bitcoin_hashes = { version = "0.11.0", default-features = false }
-secp256k1 = { version = "0.24.0", default-features = false, features = ["bitcoin_hashes"] }
+secp256k1 = { version = "0.25.0", default-features = false, features = ["bitcoin_hashes"] }
 core2 = { version = "0.3.0", optional = true, default-features = false }
 
 base64 = { version = "0.13.0", optional = true }
@@ -51,7 +51,7 @@ hashbrown = { version = "0.8", optional = true }
 serde_json = "1.0.0"
 serde_test = "1.0.19"
 serde_derive = "1.0.103"
-secp256k1 = { version = "0.24.0", features = [ "recovery", "rand-std" ] }
+secp256k1 = { version = "0.25.0", features = [ "recovery", "rand-std" ] }
 bincode = "1.3.1"
 
 [[example]]
