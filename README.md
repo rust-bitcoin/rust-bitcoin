@@ -114,10 +114,38 @@ shell alias to check your documentation changes build correctly.
 alias build-docs='RUSTDOCFLAGS="--cfg docsrs" cargo +nightly rustdoc --features="$FEATURES" -- -D rustdoc::broken-intra-doc-links'
 ```
 
-### Running benchmarks
+## Testing
+
+Unit and integration tests are available for those interested, along with benchmarks. For project
+developers, especially new contributors looking for something to work on, we do:
+
+- Fuzz testing with [`Hongfuzz`](https://github.com/rust-fuzz/honggfuzz-rs)
+- Mutation testing with [`Mutagen`](https://github.com/llogiq/mutagen)
+- Code verification with [`Kani`](https://github.com/model-checking/kani)
+
+There are always more tests to write and more bugs to find, contributions to our testing efforts
+extremely welcomed. Please consider testing code a first class citizen, we definitely do take PRs
+improving and cleaning up test code.
+
+### Unit/Integration tests
+
+Run as for any other Rust project `cargo test --all-features`.
+
+### Benchmarks
 
 We use a custom Rust compiler configuration conditional to guard the bench mark code. To run the
 bench marks use: `RUSTFLAGS='--cfg=bench' cargo +nightly bench`.
+
+### Mutation tests
+
+We have started doing mutation testing with [mutagen](https://github.com/llogiq/mutagen). To run
+these tests first install the latest dev version with `cargo +nightly install --git https://github.com/llogiq/mutagen`
+then run with `RUSTFLAGS='--cfg=mutate' cargo +nightly mutagen`.
+
+### Code verification
+
+We have started using [kani](https://github.com/model-checking/kani), install with `cargo install
+--locked kani-verifier` (no need to run `cargo kani setup`). Run the tests with `cargo kani`.
 
 ## Pull Requests
 
