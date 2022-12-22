@@ -1433,10 +1433,11 @@ impl<'a> core::iter::FromIterator<Instruction<'a>> for ScriptBuf {
 
 impl<'a> Extend<Instruction<'a>> for ScriptBuf {
     fn extend<T>(&mut self, iter: T) where T: IntoIterator<Item = Instruction<'a>> {
-        let mut iter = iter.into_iter();
+        let iter = iter.into_iter();
         // Most of Bitcoin scripts have only a few opcodes, so we can avoid reallocations in many
         // cases.
         if iter.size_hint().1.map(|max| max < 6).unwrap_or(false) {
+            let mut iter = iter.fuse();
             // `MaybeUninit` might be faster but we don't want to introduce more `unsafe` than
             // required.
             let mut head = [None; 5];
@@ -1445,8 +1446,10 @@ impl<'a> Extend<Instruction<'a>> for ScriptBuf {
                 total_size += instr.script_serialized_len();
                 *head = Some(instr);
             }
+            // Incorrect impl of `size_hint` breaks `Iterator` contract so we're free to panic.
+            assert!(iter.next().is_none(), "Buggy implementation of `Iterator` on {} returns invalid upper bound", core::any::type_name::<T::IntoIter>());
             self.reserve(total_size);
-            for instr in iter {
+            for instr in head.iter().cloned().flatten() {
                 self.push_instruction_no_opt(instr);
             }
         } else {
