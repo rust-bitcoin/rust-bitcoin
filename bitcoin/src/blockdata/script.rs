@@ -1163,7 +1163,16 @@ impl ScriptBuf {
             .into_script()
     }
 
+    /// Converts byte vector into script.
+    ///
+    /// This method doesn't (re)allocate.
+    pub fn from_bytes(bytes: Vec<u8>) -> Self {
+        ScriptBuf(bytes)
+    }
+
     /// Converts the script into a byte vector.
+    ///
+    /// This method doesn't (re)allocate.
     pub fn into_bytes(self) -> Vec<u8> { self.0 }
 
     /// Computes the P2SH output corresponding to this redeem script.
