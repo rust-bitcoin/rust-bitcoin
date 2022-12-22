@@ -2595,6 +2595,50 @@ mod test {
     }
 
     #[test]
+    fn script_extend() {
+        fn cmp_scripts(new_script: &Script, orig_script: &[Instruction<'_>]) {
+            let mut new_instr = new_script.instructions();
+            let mut orig_instr = orig_script.iter().cloned();
+            for (new, orig) in new_instr.by_ref().zip(orig_instr.by_ref()) {
+                assert_eq!(new.unwrap(), orig);
+            }
+            assert!(new_instr.next().is_none() && orig_instr.next().is_none())
+        }
+
+        let script_5_items = [
+            Instruction::Op(OP_DUP),
+            Instruction::Op(OP_HASH160),
+            Instruction::PushBytes(&[42; 20]),
+            Instruction::Op(OP_EQUALVERIFY),
+            Instruction::Op(OP_CHECKSIG),
+        ];
+        let new_script = script_5_items.iter().cloned().collect::<ScriptBuf>();
+        cmp_scripts(&new_script, &script_5_items);
+
+        let script_6_items = [
+            Instruction::Op(OP_DUP),
+            Instruction::Op(OP_HASH160),
+            Instruction::PushBytes(&[42; 20]),
+            Instruction::Op(OP_EQUALVERIFY),
+            Instruction::Op(OP_CHECKSIG),
+            Instruction::Op(OP_NOP),
+        ];
+        let new_script = script_6_items.iter().cloned().collect::<ScriptBuf>();
+        cmp_scripts(&new_script, &script_6_items);
+
+        let script_7_items = [
+            Instruction::Op(OP_DUP),
+            Instruction::Op(OP_HASH160),
+            Instruction::PushBytes(&[42; 20]),
+            Instruction::Op(OP_EQUALVERIFY),
+            Instruction::Op(OP_CHECKSIG),
+            Instruction::Op(OP_NOP),
+        ];
+        let new_script = script_7_items.iter().cloned().collect::<ScriptBuf>();
+        cmp_scripts(&new_script, &script_7_items);
+    }
+
+    #[test]
     fn read_scriptbool_zero_is_false() {
         let v: Vec<u8> = vec![0x00, 0x00, 0x00, 0x00];
         assert!(!read_scriptbool(&v));
