@@ -149,7 +149,7 @@ impl PartiallySignedTransaction {
                                 }
                                 let derivation = DerivationPath::from(path);
                                 // Keys, according to BIP-174, must be unique
-                                if xpub_map.insert(xpub, (Fingerprint::from(&fingerprint[..]), derivation)).is_some() {
+                                if xpub_map.insert(xpub, (Fingerprint::from(fingerprint), derivation)).is_some() {
                                     return Err(encode::Error::ParseFailed("Repeated global xpub key"))
                                 }
                             } else {

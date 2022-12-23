@@ -115,6 +115,23 @@ mod test_macros {
 /// - hashes::hex::FromHex
 macro_rules! impl_bytes_newtype {
     ($t:ident, $len:literal) => {
+        impl $t {
+            /// Returns a reference the underlying bytes.
+            #[inline]
+            pub fn as_bytes(&self) -> &[u8; $len] { &self.0 }
+
+            /// Returns the underlying bytes.
+            #[inline]
+            pub fn to_bytes(self) -> [u8; $len] {
+                // We rely on `Copy` being implemented for $t so conversion
+                // methods use the correct Rust naming conventions.
+                fn check_copy<T: Copy>() {}
+                check_copy::<$t>();
+
+                self.0
+            }
+        }
+
         impl core::fmt::LowerHex for $t {
             fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
                 for &ch in self.0.iter() {

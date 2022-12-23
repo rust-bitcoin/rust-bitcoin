@@ -33,6 +33,12 @@ pub struct ChainCode([u8; 32]);
 impl_array_newtype!(ChainCode, u8, 32);
 impl_bytes_newtype!(ChainCode, 32);
 
+impl ChainCode {
+    fn from_hmac(hmac: Hmac<sha512::Hash>) -> Self {
+        hmac[32..].try_into().expect("half of hmac is guaranteed to be 32 bytes")
+    }
+}
+
 /// A fingerprint
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct Fingerprint([u8; 4]);
@@ -523,7 +529,7 @@ impl ExtendedPrivKey {
             parent_fingerprint: Default::default(),
             child_number: ChildNumber::from_normal_idx(0)?,
             private_key: secp256k1::SecretKey::from_slice(&hmac_result[..32])?,
-            chain_code: ChainCode::from(&hmac_result[32..]),
+            chain_code: ChainCode::from_hmac(hmac_result),
         })
     }
 
@@ -588,7 +594,7 @@ impl ExtendedPrivKey {
             parent_fingerprint: self.fingerprint(secp),
             child_number: i,
             private_key: tweaked,
-            chain_code: ChainCode::from(&hmac_result[32..]),
+            chain_code: ChainCode::from_hmac(hmac_result),
         })
     }
 
@@ -611,9 +617,9 @@ impl ExtendedPrivKey {
         Ok(ExtendedPrivKey {
             network,
             depth: data[4],
-            parent_fingerprint: Fingerprint::from(&data[5..9]),
+            parent_fingerprint: data[5..9].try_into().expect("9 - 5 == 4, which is the Fingerprint length"),
             child_number: u32::from_be_bytes(data[9..13].try_into().expect("4 byte slice")).into(),
-            chain_code: ChainCode::from(&data[13..45]),
+            chain_code: data[13..45].try_into().expect("45 - 13 == 32, which is the ChainCode length"),
             private_key: secp256k1::SecretKey::from_slice(&data[46..78])?,
         })
     }
@@ -643,7 +649,7 @@ impl ExtendedPrivKey {
 
     /// Returns the first four bytes of the identifier
     pub fn fingerprint<C: secp256k1::Signing>(&self, secp: &Secp256k1<C>) -> Fingerprint {
-        Fingerprint::from(&self.identifier(secp)[0..4])
+        self.identifier(secp)[0..4].try_into().expect("4 is the fingerprint length")
     }
 }
 
@@ -701,7 +707,7 @@ impl ExtendedPubKey {
                 let hmac_result: Hmac<sha512::Hash> = Hmac::from_engine(hmac_engine);
 
                 let private_key = secp256k1::SecretKey::from_slice(&hmac_result[..32])?;
-                let chain_code = ChainCode::from(&hmac_result[32..]);
+                let chain_code = ChainCode::from_hmac(hmac_result);
                 Ok((private_key, chain_code))
             }
         }
@@ -743,9 +749,9 @@ impl ExtendedPubKey {
                 return Err(Error::UnknownVersion(ver));
             },
             depth: data[4],
-            parent_fingerprint: Fingerprint::from(&data[5..9]),
+            parent_fingerprint: data[5..9].try_into().expect("9 - 5 == 4, which is the Fingerprint length"),
             child_number: u32::from_be_bytes(data[9..13].try_into().expect("4 byte slice")).into(),
-            chain_code: ChainCode::from(&data[13..45]),
+            chain_code: data[13..45].try_into().expect("45 - 13 == 32, which is the ChainCode length"),
             public_key: secp256k1::PublicKey::from_slice(&data[45..78])?,
         })
     }
@@ -775,7 +781,7 @@ impl ExtendedPubKey {
     }
 
     /// Returns the first four bytes of the identifier
-    pub fn fingerprint(&self) -> Fingerprint { Fingerprint::from(&self.identifier()[0..4]) }
+    pub fn fingerprint(&self) -> Fingerprint { self.identifier()[0..4].try_into().expect("4 is the fingerprint length") }
 }
 
 impl fmt::Display for ExtendedPrivKey {
@@ -1108,10 +1114,10 @@ mod tests {
     #[cfg(feature = "serde")]
     pub fn encode_fingerprint_chaincode() {
         use serde_json;
-        let fp = Fingerprint::from(&[1u8, 2, 3, 42][..]);
+        let fp = Fingerprint::from([1u8, 2, 3, 42]);
         #[rustfmt::skip]
         let cc = ChainCode::from(
-            &[1u8,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2][..]
+            [1u8,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2]
         );
 
         serde_round_trip!(fp);
@@ -1156,7 +1162,7 @@ mod tests {
             parent_fingerprint: Default::default(),
             child_number: ChildNumber::Normal { index: 0 },
             private_key: sk,
-            chain_code: ChainCode::from(&[0u8; 32][..])
+            chain_code: ChainCode::from([0u8; 32])
         };
 
         println!("{}", xpriv);

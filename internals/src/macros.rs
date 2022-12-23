@@ -27,29 +27,76 @@ macro_rules! impl_array_newtype {
             /// Returns whether the object, as an array, is empty. Always false.
             #[inline]
             pub fn is_empty(&self) -> bool { false }
+        }
 
-            /// Returns a reference the underlying bytes.
-            #[inline]
-            pub fn as_bytes(&self) -> &[$ty; $len] { &self.0 }
-
-            /// Returns the underlying bytes.
-            #[inline]
-            pub fn to_bytes(self) -> [$ty; $len] {
-                // We rely on `Copy` being implemented for $thing so conversion
-                // methods use the correct Rust naming conventions.
-                fn check_copy<T: Copy>() {}
-                check_copy::<$thing>();
-
-                self.0
+        impl<'a> core::convert::From<[$ty; $len]> for $thing {
+            fn from(data: [$ty; $len]) -> Self {
+                $thing(data)
             }
         }
 
-        impl<'a> core::convert::From<&'a [$ty]> for $thing {
-            fn from(data: &'a [$ty]) -> $thing {
-                assert_eq!(data.len(), $len);
-                let mut ret = [0; $len];
-                ret.copy_from_slice(&data[..]);
-                $thing(ret)
+        impl<'a> core::convert::From<&'a [$ty; $len]> for $thing {
+            fn from(data: &'a [$ty; $len]) -> Self {
+                $thing(*data)
+            }
+        }
+
+        impl<'a> core::convert::TryFrom<&'a [$ty]> for $thing {
+            type Error = core::array::TryFromSliceError;
+
+            fn try_from(data: &'a [$ty]) -> Result<Self, Self::Error> {
+                use core::convert::TryInto;
+
+                Ok($thing(data.try_into()?))
+            }
+        }
+
+        impl AsRef<[$ty; $len]> for $thing {
+            fn as_ref(&self) -> &[$ty; $len] {
+                &self.0
+            }
+        }
+
+        impl AsMut<[$ty; $len]> for $thing {
+            fn as_mut(&mut self) -> &mut [$ty; $len] {
+                &mut self.0
+            }
+        }
+
+        impl AsRef<[$ty]> for $thing {
+            fn as_ref(&self) -> &[$ty] {
+                &self.0
+            }
+        }
+
+        impl AsMut<[$ty]> for $thing {
+            fn as_mut(&mut self) -> &mut [$ty] {
+                &mut self.0
+            }
+        }
+
+        impl core::borrow::Borrow<[$ty; $len]> for $thing {
+            fn borrow(&self) -> &[$ty; $len] {
+                &self.0
+            }
+        }
+
+        impl core::borrow::BorrowMut<[$ty; $len]> for $thing {
+            fn borrow_mut(&mut self) -> &mut [$ty; $len] {
+                &mut self.0
+            }
+        }
+
+        // The following two are valid because `[T; N]: Borrow<[T]>`
+        impl core::borrow::Borrow<[$ty]> for $thing {
+            fn borrow(&self) -> &[$ty] {
+                &self.0
+            }
+        }
+
+        impl core::borrow::BorrowMut<[$ty]> for $thing {
+            fn borrow_mut(&mut self) -> &mut [$ty] {
+                &mut self.0
             }
         }
 
