@@ -81,7 +81,7 @@ cargo run --example taproot-psbt --features=rand-std,bitcoinconsensus
 
 # Build the docs if told to (this only works with the nightly toolchain)
 if [ "$DO_DOCS" = true ]; then
-    RUSTDOCFLAGS="--cfg docsrs" cargo +nightly rustdoc --all-features -- -D rustdoc::broken-intra-doc-links -D warnings || exit 1
+    RUSTDOCFLAGS="--cfg docsrs" cargo +nightly rustdoc --all-features -- -D rustdoc::broken-intra-doc-links -D warnings
 fi
 
 # Fuzz if told to
