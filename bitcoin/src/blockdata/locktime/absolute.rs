@@ -24,7 +24,7 @@ use crate::prelude::*;
 use crate::parse::{self, impl_parse_str_through_int};
 use crate::string::FromHexStr;
 
-#[cfg(docsrs)]
+#[cfg(doc)]
 use crate::absolute;
 
 /// The Threshold for deciding whether a lock time value is a height or a time (see [Bitcoin Core]).
