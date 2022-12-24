@@ -10,6 +10,9 @@
 use core::fmt::{self, LowerHex, UpperHex};
 use core::ops::{Add, Div, Mul, Not, Rem, Shl, Shr, Sub};
 
+#[cfg(all(test, mutate))]
+use mutagen::mutate;
+
 use crate::consensus::encode::{self, Decodable, Encodable};
 #[cfg(doc)]
 use crate::consensus::Params;
@@ -322,6 +325,7 @@ impl U256 {
     const ONE: U256 = U256(0, 1);
 
     /// Creates [`U256`] from a big-endian array of `u8`s.
+    #[cfg_attr(all(test, mutate), mutate)]
     fn from_be_bytes(a: [u8; 32]) -> U256 {
         let (high, low) = split_in_half(a);
         let big = u128::from_be_bytes(high);
@@ -330,6 +334,7 @@ impl U256 {
     }
 
     /// Creates a [`U256`] from a little-endian array of `u8`s.
+    #[cfg_attr(all(test, mutate), mutate)]
     fn from_le_bytes(a: [u8; 32]) -> U256 {
         let (high, low) = split_in_half(a);
         let little = u128::from_le_bytes(high);
@@ -338,6 +343,7 @@ impl U256 {
     }
 
     /// Converts `Self` to a big-endian array of `u8`s.
+    #[cfg_attr(all(test, mutate), mutate)]
     fn to_be_bytes(self) -> [u8; 32] {
         let mut out = [0; 32];
         out[..16].copy_from_slice(&self.0.to_be_bytes());
@@ -346,6 +352,7 @@ impl U256 {
     }
 
     /// Converts `Self` to a little-endian array of `u8`s.
+    #[cfg_attr(all(test, mutate), mutate)]
     fn to_le_bytes(self) -> [u8; 32] {
         let mut out = [0; 32];
         out[..16].copy_from_slice(&self.1.to_le_bytes());
@@ -377,8 +384,10 @@ impl U256 {
         ret.wrapping_inc()
     }
 
+    #[cfg_attr(all(test, mutate), mutate)]
     fn is_zero(&self) -> bool { self.0 == 0 && self.1 == 0 }
 
+    #[cfg_attr(all(test, mutate), mutate)]
     fn is_one(&self) -> bool { self.0 == 0 && self.1 == 1 }
 
     fn is_max(&self) -> bool { self.0 == u128::max_value() && self.1 == u128::max_value() }
@@ -571,6 +580,7 @@ impl U256 {
 
     /// Returns `self` incremented by 1 wrapping around at the boundary of the type.
     #[must_use = "this returns the result of the increment, without modifying the original"]
+    #[cfg_attr(all(test, mutate), mutate)]
     fn wrapping_inc(&self) -> U256 {
         let mut ret = U256::ZERO;
 

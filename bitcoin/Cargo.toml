@@ -54,6 +54,9 @@ serde_derive = "1.0.103"
 secp256k1 = { version = "0.25.0", features = [ "recovery", "rand-std" ] }
 bincode = "1.3.1"
 
+[target.'cfg(mutate)'.dev-dependencies]
+mutagen = { git = "https://github.com/llogiq/mutagen" }
+
 [[example]]
 name = "bip32"
 
