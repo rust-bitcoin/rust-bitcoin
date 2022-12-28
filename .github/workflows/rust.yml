@@ -85,7 +85,7 @@ jobs:
       - name: Install target
         run: rustup target add s390x-unknown-linux-gnu
       - name: install cross
-        run: cargo install cross
+        run: cargo install cross --locked
       - name: run cross test
         run: cross test --target s390x-unknown-linux-gnu
 
