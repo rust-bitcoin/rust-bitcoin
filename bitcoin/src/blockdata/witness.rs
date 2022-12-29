@@ -15,7 +15,7 @@ use crate::consensus::{Decodable, Encodable, WriteExt};
 use crate::sighash::EcdsaSighashType;
 use crate::io::{self, Read, Write};
 use crate::prelude::*;
-use crate::VarInt;
+use crate::{Script, VarInt};
 use crate::taproot::TAPROOT_ANNEX_PREFIX;
 
 /// The Witness is the data used to unlock bitcoin since the [segwit upgrade].
@@ -317,7 +317,7 @@ impl Witness {
     /// the first byte of the last element being equal to 0x50. See
     /// [Script::is_v1_p2tr](crate::blockdata::script::Script::is_v1_p2tr) to
     /// check whether this is actually a Taproot witness.
-    pub fn tapscript(&self) -> Option<&[u8]> {
+    pub fn tapscript(&self) -> Option<&Script> {
         let len = self.len();
         self
             .last()
@@ -338,6 +338,7 @@ impl Witness {
             .and_then(|script_pos_from_last| {
                 self.nth(len - script_pos_from_last)
             })
+            .map(Script::from_bytes)
     }
 }
 
@@ -641,8 +642,8 @@ mod test {
         };
 
         // With or without annex, the tapscript should be returned.
-        assert_eq!(witness.tapscript(), Some(&tapscript[..]));
-        assert_eq!(witness_annex.tapscript(), Some(&tapscript[..]));
+        assert_eq!(witness.tapscript(), Some(Script::from_bytes(&tapscript[..])));
+        assert_eq!(witness_annex.tapscript(), Some(Script::from_bytes(&tapscript[..])));
     }
 
     #[test]
