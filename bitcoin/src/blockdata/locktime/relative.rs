@@ -52,6 +52,7 @@ impl LockTime {
     /// let height_and_time = (current_time(), current_height());  // tuple order does not matter.
     /// assert!(lock.is_satisfied_by(current_height(), current_time()));
     /// ```
+    #[inline]
     pub fn is_satisfied_by(&self, h: Height, t: Time) -> bool {
         if let Ok(true) = self.is_satisfied_by_height(h) {
             true
@@ -92,6 +93,7 @@ impl LockTime {
     /// };
     /// assert!(satisfied);
     /// ```
+    #[inline]
     pub fn is_implied_by(&self, other: LockTime) -> bool {
         use LockTime::*;
 
@@ -170,7 +172,6 @@ impl From<Time> for LockTime {
 }
 
 impl fmt::Display for LockTime {
-    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use LockTime::*;
 
@@ -210,7 +211,6 @@ impl From<u16> for Height {
 }
 
 impl fmt::Display for Height {
-    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::Display::fmt(&self.0, f)
     }
@@ -256,7 +256,6 @@ impl Time {
 }
 
 impl fmt::Display for Time {
-    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::Display::fmt(&self.0, f)
     }

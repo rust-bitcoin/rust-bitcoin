@@ -226,6 +226,7 @@ impl LockTime {
     /// let check = LockTime::from_consensus(100 + 1);
     /// assert!(lock_time.is_implied_by(check));
     /// ```
+    #[inline]
     pub fn is_implied_by(&self, other: LockTime) -> bool {
         use LockTime::*;
 
@@ -273,18 +274,21 @@ impl LockTime {
 impl_parse_str_through_int!(LockTime, from_consensus);
 
 impl From<Height> for LockTime {
+    #[inline]
     fn from(h: Height) -> Self {
         LockTime::Blocks(h)
     }
 }
 
 impl From<Time> for LockTime {
+    #[inline]
     fn from(t: Time) -> Self {
         LockTime::Seconds(t)
     }
 }
 
 impl PartialOrd for LockTime {
+    #[inline]
     fn partial_cmp(&self, other: &LockTime) -> Option<Ordering> {
         use LockTime::*;
 
@@ -317,6 +321,7 @@ impl fmt::Display for LockTime {
 impl FromHexStr for LockTime {
     type Error = Error;
 
+    #[inline]
     fn from_hex_str_no_prefix<S: AsRef<str> + Into<String>>(s: S) -> Result<Self, Self::Error> {
         let packed_lock_time = crate::parse::hex_u32(s)?;
         Ok(Self::from_consensus(packed_lock_time))
@@ -431,6 +436,7 @@ impl fmt::Display for Height {
 impl FromHexStr for Height {
     type Error = Error;
 
+    #[inline]
     fn from_hex_str_no_prefix<S: AsRef<str> + Into<String>>(s: S) -> Result<Self, Self::Error> {
         let height = crate::parse::hex_u32(s)?;
         Self::from_consensus(height)
@@ -441,6 +447,7 @@ impl FromHexStr for Height {
 impl FromStr for Height {
     type Err = Error;
 
+    #[inline]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let n = parse::int(s)?;
         Height::from_consensus(n)
@@ -450,6 +457,7 @@ impl FromStr for Height {
 impl TryFrom<&str> for Height {
     type Error = Error;
 
+    #[inline]
     fn try_from(s: &str) -> Result<Self, Self::Error> {
         let n = parse::int(s)?;
         Height::from_consensus(n)
@@ -459,6 +467,7 @@ impl TryFrom<&str> for Height {
 impl TryFrom<String> for Height {
     type Error = Error;
 
+    #[inline]
     fn try_from(s: String) -> Result<Self, Self::Error> {
         let n = parse::int(s)?;
         Height::from_consensus(n)
@@ -524,6 +533,7 @@ impl fmt::Display for Time {
 impl FromHexStr for Time {
     type Error = Error;
 
+    #[inline]
     fn from_hex_str_no_prefix<S: AsRef<str> + Into<String>>(s: S) -> Result<Self, Self::Error> {
         let time = crate::parse::hex_u32(s)?;
         Time::from_consensus(time)
@@ -533,6 +543,7 @@ impl FromHexStr for Time {
 impl FromStr for Time {
     type Err = Error;
 
+    #[inline]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let n = parse::int(s)?;
         Time::from_consensus(n)
@@ -542,6 +553,7 @@ impl FromStr for Time {
 impl TryFrom<&str> for Time {
     type Error = Error;
 
+    #[inline]
     fn try_from(s: &str) -> Result<Self, Self::Error> {
         let n = parse::int(s)?;
         Time::from_consensus(n)
@@ -551,6 +563,7 @@ impl TryFrom<&str> for Time {
 impl TryFrom<String> for Time {
     type Error = Error;
 
+    #[inline]
     fn try_from(s: String) -> Result<Self, Self::Error> {
         let n = parse::int(s)?;
         Time::from_consensus(n)
@@ -606,18 +619,21 @@ impl std::error::Error for Error {
 }
 
 impl From<ConversionError> for Error {
+    #[inline]
     fn from(e: ConversionError) -> Self {
         Error::Conversion(e)
     }
 }
 
 impl From<OperationError> for Error {
+    #[inline]
     fn from(e: OperationError) -> Self {
         Error::Operation(e)
     }
 }
 
 impl From<ParseIntError> for Error {
+    #[inline]
     fn from(e: ParseIntError) -> Self {
         Error::Parse(e)
     }
