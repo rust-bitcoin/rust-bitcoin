@@ -1568,8 +1568,8 @@ mod tests {
     fn u256_overflowing_subtraction_panics() { let _ = U256::ZERO - U256::ONE; }
 
     // We only test with test case value on the right hand side of the multiplication but that
-    // should be enough coverage since we call the same underlying method to do multiplication the
-    // sides inverted.
+    // should be enough coverage since we call the same underlying method to do multiplication with
+    // the sides inverted.
     macro_rules! test_u256_multiplication_panics {
         ($($test_name:ident, $x:expr);* $(;)?) => {
             $(
