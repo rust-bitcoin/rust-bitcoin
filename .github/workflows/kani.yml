@@ -1,8 +1,8 @@
 # From https://model-checking.github.io/kani/install-github-ci.html
 name: Kani CI
 on:
-  pull_request:
-  push:
+  schedule:
+    - cron: '59 23 * * *'       # midnight every day.
 jobs:
   run-kani:
     runs-on: ubuntu-20.04
