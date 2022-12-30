@@ -10,6 +10,9 @@
 use core::fmt;
 use core::convert::TryFrom;
 
+#[cfg(all(test, mutate))]
+use mutagen::mutate;
+
 #[cfg(docsrs)]
 use crate::relative;
 
@@ -53,6 +56,7 @@ impl LockTime {
     /// assert!(lock.is_satisfied_by(current_height(), current_time()));
     /// ```
     #[inline]
+    #[cfg_attr(all(test, mutate), mutate)]
     pub fn is_satisfied_by(&self, h: Height, t: Time) -> bool {
         if let Ok(true) = self.is_satisfied_by_height(h) {
             true
@@ -94,6 +98,7 @@ impl LockTime {
     /// assert!(satisfied);
     /// ```
     #[inline]
+    #[cfg_attr(all(test, mutate), mutate)]
     pub fn is_implied_by(&self, other: LockTime) -> bool {
         use LockTime::*;
 
@@ -121,6 +126,7 @@ impl LockTime {
     /// assert!(lock.is_satisfied_by_height(Height::from(height+1)).expect("a height"));
     /// ```
     #[inline]
+    #[cfg_attr(all(test, mutate), mutate)]
     pub fn is_satisfied_by_height(&self, h: Height) -> Result<bool, Error> {
         use LockTime::*;
 
@@ -147,6 +153,7 @@ impl LockTime {
     /// assert!(lock.is_satisfied_by_time(Time::from_512_second_intervals(intervals + 10)).expect("a time"));
     /// ```
     #[inline]
+    #[cfg_attr(all(test, mutate), mutate)]
     pub fn is_satisfied_by_time(&self, t: Time) -> Result<bool, Error> {
         use LockTime::*;
 
@@ -292,5 +299,63 @@ impl std::error::Error for Error {
         match *self {
             IntegerOverflow(_) | IncompatibleHeight(_, _) | IncompatibleTime(_, _) => None,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn satisfied_by_height() {
+        let height = Height::from(10);
+        let time = Time::from_512_second_intervals(70);
+
+        let lock = LockTime::from(height);
+
+        assert!(!lock.is_satisfied_by(Height::from(9), time));
+        assert!(lock.is_satisfied_by(Height::from(10), time));
+        assert!(lock.is_satisfied_by(Height::from(11), time));
+    }
+
+    #[test]
+    fn satisfied_by_time() {
+        let height = Height::from(10);
+        let time = Time::from_512_second_intervals(70);
+
+        let lock = LockTime::from(time);
+
+        assert!(!lock.is_satisfied_by(height, Time::from_512_second_intervals(69)));
+        assert!(lock.is_satisfied_by(height, Time::from_512_second_intervals(70)));
+        assert!(lock.is_satisfied_by(height, Time::from_512_second_intervals(71)));
+    }
+
+    #[test]
+    fn height_correctly_implies() {
+        let height = Height::from(10);
+        let lock = LockTime::from(height);
+
+        assert!(!lock.is_implied_by(LockTime::from(Height::from(9))));
+        assert!(lock.is_implied_by(LockTime::from(Height::from(10))));
+        assert!(lock.is_implied_by(LockTime::from(Height::from(11))));
+   }
+
+    #[test]
+    fn time_correctly_implies() {
+        let time = Time::from_512_second_intervals(70);
+        let lock = LockTime::from(time);
+
+        assert!(!lock.is_implied_by(LockTime::from(Time::from_512_second_intervals(69))));
+        assert!(lock.is_implied_by(LockTime::from(Time::from_512_second_intervals(70))));
+        assert!(lock.is_implied_by(LockTime::from(Time::from_512_second_intervals(71))));
+    }
+
+    #[test]
+    fn incorrect_units_do_not_imply() {
+        let time = Time::from_512_second_intervals(70);
+        let height = Height::from(10);
+
+        let lock = LockTime::from(time);
+        assert!(!lock.is_implied_by(LockTime::from(height)));
     }
 }

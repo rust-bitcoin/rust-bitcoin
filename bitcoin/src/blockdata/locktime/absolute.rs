@@ -14,6 +14,9 @@ use core::str::FromStr;
 
 use bitcoin_internals::write_err;
 
+#[cfg(all(test, mutate))]
+use mutagen::mutate;
+
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::error::ParseIntError;
 use crate::io::{self, Read, Write};
@@ -198,6 +201,7 @@ impl LockTime {
     /// }
     /// ````
     #[inline]
+    #[cfg_attr(all(test, mutate), mutate)]
     pub fn is_satisfied_by(&self, height: Height, time: Time) -> bool {
         use LockTime::*;
 
@@ -227,6 +231,7 @@ impl LockTime {
     /// assert!(lock_time.is_implied_by(check));
     /// ```
     #[inline]
+    #[cfg_attr(all(test, mutate), mutate)]
     pub fn is_implied_by(&self, other: LockTime) -> bool {
         use LockTime::*;
 
@@ -790,5 +795,91 @@ mod tests {
         let hex = "0xzb93";
         let result = Height::from_hex_str(hex);
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn parses_correctly_to_height_or_time() {
+        let lock = LockTime::from_consensus(750_000);
+
+        assert!(lock.is_block_height());
+        assert!(!lock.is_block_time());
+
+        let t: u32 = 1653195600; // May 22nd, 5am UTC.
+        let lock = LockTime::from_consensus(t);
+
+        assert!(!lock.is_block_height());
+        assert!(lock.is_block_time());
+    }
+
+    #[test]
+    fn satisfied_by_height() {
+        let lock = LockTime::from_consensus(750_000);
+
+        let height = Height::from_consensus(800_000).expect("failed to parse height");
+
+        let t: u32 = 1653195600; // May 22nd, 5am UTC.
+        let time = Time::from_consensus(t).expect("invalid time value");
+
+        assert!(lock.is_satisfied_by(height, time))
+    }
+
+    #[test]
+    fn satisfied_by_time() {
+        let lock = LockTime::from_consensus(1053195600);
+
+        let t: u32 = 1653195600; // May 22nd, 5am UTC.
+        let time = Time::from_consensus(t).expect("invalid time value");
+
+        let height = Height::from_consensus(800_000).expect("failed to parse height");
+
+        assert!(lock.is_satisfied_by(height, time))
+    }
+
+    #[test]
+    fn satisfied_by_same_height() {
+        let h = 750_000;
+        let lock = LockTime::from_consensus(h);
+        let height = Height::from_consensus(h).expect("failed to parse height");
+
+        let t: u32 = 1653195600; // May 22nd, 5am UTC.
+        let time = Time::from_consensus(t).expect("invalid time value");
+
+        assert!(lock.is_satisfied_by(height, time))
+    }
+
+    #[test]
+    fn satisfied_by_same_time() {
+        let t: u32 = 1653195600; // May 22nd, 5am UTC.
+        let lock = LockTime::from_consensus(t);
+        let time = Time::from_consensus(t).expect("invalid time value");
+
+        let height = Height::from_consensus(800_000).expect("failed to parse height");
+
+        assert!(lock.is_satisfied_by(height, time))
+    }
+
+    #[test]
+    fn height_correctly_implies() {
+        let lock = LockTime::from_consensus(750_005);
+
+        assert!(!lock.is_implied_by(LockTime::from_consensus(750_004)));
+        assert!(lock.is_implied_by(LockTime::from_consensus(750_005)));
+        assert!(lock.is_implied_by(LockTime::from_consensus(750_006)));
+   }
+
+    #[test]
+    fn time_correctly_implies() {
+        let t: u32 = 1700000005;
+        let lock = LockTime::from_consensus(t);
+
+        assert!(!lock.is_implied_by(LockTime::from_consensus(1700000004)));
+        assert!(lock.is_implied_by(LockTime::from_consensus(1700000005)));
+        assert!(lock.is_implied_by(LockTime::from_consensus(1700000006)));
+   }
+
+    #[test]
+    fn incorrect_units_do_not_imply() {
+        let lock = LockTime::from_consensus(750_005);
+        assert!(!lock.is_implied_by(LockTime::from_consensus(1700000004)));
     }
 }
