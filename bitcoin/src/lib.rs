@@ -46,6 +46,9 @@
 #![deny(missing_docs)]
 #![deny(unused_must_use)]
 
+// Instead of littering the codebase for non-fuzzing code just globally allow.
+#![cfg_attr(fuzzing, allow(dead_code, unused_imports))]
+
 #[cfg(not(any(feature = "std", feature = "no-std")))]
 compile_error!("at least one of the `std` or `no-std` features must be enabled");
 
