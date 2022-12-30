@@ -6,6 +6,8 @@
 //! bytes from/as PSBT key-value pairs.
 //!
 
+use core::convert::TryInto;
+
 use crate::prelude::*;
 
 use crate::io;
@@ -150,7 +152,7 @@ impl Deserialize for KeySource {
             return Err(io::Error::from(io::ErrorKind::UnexpectedEof).into())
         }
 
-        let fprint: Fingerprint = Fingerprint::from(&bytes[0..4]);
+        let fprint: Fingerprint = bytes[0..4].try_into().expect("4 is the fingerprint length");
         let mut dpath: Vec<ChildNumber> = Default::default();
 
         let mut d = &bytes[4..];
