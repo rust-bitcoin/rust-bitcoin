@@ -14,6 +14,9 @@ use core::str::FromStr;
 
 use bitcoin_internals::write_err;
 
+#[cfg(all(test, mutate))]
+use mutagen::mutate;
+
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::error::ParseIntError;
 use crate::io::{self, Read, Write};
@@ -198,6 +201,7 @@ impl LockTime {
     /// }
     /// ````
     #[inline]
+    #[cfg_attr(all(test, mutate), mutate)]
     pub fn is_satisfied_by(&self, height: Height, time: Time) -> bool {
         use LockTime::*;
 
@@ -226,6 +230,8 @@ impl LockTime {
     /// let check = LockTime::from_consensus(100 + 1);
     /// assert!(lock_time.is_implied_by(check));
     /// ```
+    #[inline]
+    #[cfg_attr(all(test, mutate), mutate)]
     pub fn is_implied_by(&self, other: LockTime) -> bool {
         use LockTime::*;
 
@@ -273,18 +279,21 @@ impl LockTime {
 impl_parse_str_through_int!(LockTime, from_consensus);
 
 impl From<Height> for LockTime {
+    #[inline]
     fn from(h: Height) -> Self {
         LockTime::Blocks(h)
     }
 }
 
 impl From<Time> for LockTime {
+    #[inline]
     fn from(t: Time) -> Self {
         LockTime::Seconds(t)
     }
 }
 
 impl PartialOrd for LockTime {
+    #[inline]
     fn partial_cmp(&self, other: &LockTime) -> Option<Ordering> {
         use LockTime::*;
 
@@ -317,6 +326,7 @@ impl fmt::Display for LockTime {
 impl FromHexStr for LockTime {
     type Error = Error;
 
+    #[inline]
     fn from_hex_str_no_prefix<S: AsRef<str> + Into<String>>(s: S) -> Result<Self, Self::Error> {
         let packed_lock_time = crate::parse::hex_u32(s)?;
         Ok(Self::from_consensus(packed_lock_time))
@@ -431,6 +441,7 @@ impl fmt::Display for Height {
 impl FromHexStr for Height {
     type Error = Error;
 
+    #[inline]
     fn from_hex_str_no_prefix<S: AsRef<str> + Into<String>>(s: S) -> Result<Self, Self::Error> {
         let height = crate::parse::hex_u32(s)?;
         Self::from_consensus(height)
@@ -441,6 +452,7 @@ impl FromHexStr for Height {
 impl FromStr for Height {
     type Err = Error;
 
+    #[inline]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let n = parse::int(s)?;
         Height::from_consensus(n)
@@ -450,6 +462,7 @@ impl FromStr for Height {
 impl TryFrom<&str> for Height {
     type Error = Error;
 
+    #[inline]
     fn try_from(s: &str) -> Result<Self, Self::Error> {
         let n = parse::int(s)?;
         Height::from_consensus(n)
@@ -459,6 +472,7 @@ impl TryFrom<&str> for Height {
 impl TryFrom<String> for Height {
     type Error = Error;
 
+    #[inline]
     fn try_from(s: String) -> Result<Self, Self::Error> {
         let n = parse::int(s)?;
         Height::from_consensus(n)
@@ -524,6 +538,7 @@ impl fmt::Display for Time {
 impl FromHexStr for Time {
     type Error = Error;
 
+    #[inline]
     fn from_hex_str_no_prefix<S: AsRef<str> + Into<String>>(s: S) -> Result<Self, Self::Error> {
         let time = crate::parse::hex_u32(s)?;
         Time::from_consensus(time)
@@ -533,6 +548,7 @@ impl FromHexStr for Time {
 impl FromStr for Time {
     type Err = Error;
 
+    #[inline]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let n = parse::int(s)?;
         Time::from_consensus(n)
@@ -542,6 +558,7 @@ impl FromStr for Time {
 impl TryFrom<&str> for Time {
     type Error = Error;
 
+    #[inline]
     fn try_from(s: &str) -> Result<Self, Self::Error> {
         let n = parse::int(s)?;
         Time::from_consensus(n)
@@ -551,6 +568,7 @@ impl TryFrom<&str> for Time {
 impl TryFrom<String> for Time {
     type Error = Error;
 
+    #[inline]
     fn try_from(s: String) -> Result<Self, Self::Error> {
         let n = parse::int(s)?;
         Time::from_consensus(n)
@@ -606,18 +624,21 @@ impl std::error::Error for Error {
 }
 
 impl From<ConversionError> for Error {
+    #[inline]
     fn from(e: ConversionError) -> Self {
         Error::Conversion(e)
     }
 }
 
 impl From<OperationError> for Error {
+    #[inline]
     fn from(e: OperationError) -> Self {
         Error::Operation(e)
     }
 }
 
 impl From<ParseIntError> for Error {
+    #[inline]
     fn from(e: ParseIntError) -> Self {
         Error::Parse(e)
     }
@@ -774,5 +795,91 @@ mod tests {
         let hex = "0xzb93";
         let result = Height::from_hex_str(hex);
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn parses_correctly_to_height_or_time() {
+        let lock = LockTime::from_consensus(750_000);
+
+        assert!(lock.is_block_height());
+        assert!(!lock.is_block_time());
+
+        let t: u32 = 1653195600; // May 22nd, 5am UTC.
+        let lock = LockTime::from_consensus(t);
+
+        assert!(!lock.is_block_height());
+        assert!(lock.is_block_time());
+    }
+
+    #[test]
+    fn satisfied_by_height() {
+        let lock = LockTime::from_consensus(750_000);
+
+        let height = Height::from_consensus(800_000).expect("failed to parse height");
+
+        let t: u32 = 1653195600; // May 22nd, 5am UTC.
+        let time = Time::from_consensus(t).expect("invalid time value");
+
+        assert!(lock.is_satisfied_by(height, time))
+    }
+
+    #[test]
+    fn satisfied_by_time() {
+        let lock = LockTime::from_consensus(1053195600);
+
+        let t: u32 = 1653195600; // May 22nd, 5am UTC.
+        let time = Time::from_consensus(t).expect("invalid time value");
+
+        let height = Height::from_consensus(800_000).expect("failed to parse height");
+
+        assert!(lock.is_satisfied_by(height, time))
+    }
+
+    #[test]
+    fn satisfied_by_same_height() {
+        let h = 750_000;
+        let lock = LockTime::from_consensus(h);
+        let height = Height::from_consensus(h).expect("failed to parse height");
+
+        let t: u32 = 1653195600; // May 22nd, 5am UTC.
+        let time = Time::from_consensus(t).expect("invalid time value");
+
+        assert!(lock.is_satisfied_by(height, time))
+    }
+
+    #[test]
+    fn satisfied_by_same_time() {
+        let t: u32 = 1653195600; // May 22nd, 5am UTC.
+        let lock = LockTime::from_consensus(t);
+        let time = Time::from_consensus(t).expect("invalid time value");
+
+        let height = Height::from_consensus(800_000).expect("failed to parse height");
+
+        assert!(lock.is_satisfied_by(height, time))
+    }
+
+    #[test]
+    fn height_correctly_implies() {
+        let lock = LockTime::from_consensus(750_005);
+
+        assert!(!lock.is_implied_by(LockTime::from_consensus(750_004)));
+        assert!(lock.is_implied_by(LockTime::from_consensus(750_005)));
+        assert!(lock.is_implied_by(LockTime::from_consensus(750_006)));
+   }
+
+    #[test]
+    fn time_correctly_implies() {
+        let t: u32 = 1700000005;
+        let lock = LockTime::from_consensus(t);
+
+        assert!(!lock.is_implied_by(LockTime::from_consensus(1700000004)));
+        assert!(lock.is_implied_by(LockTime::from_consensus(1700000005)));
+        assert!(lock.is_implied_by(LockTime::from_consensus(1700000006)));
+   }
+
+    #[test]
+    fn incorrect_units_do_not_imply() {
+        let lock = LockTime::from_consensus(750_005);
+        assert!(!lock.is_implied_by(LockTime::from_consensus(1700000004)));
     }
 }
