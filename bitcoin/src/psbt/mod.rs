@@ -887,7 +887,7 @@ mod tests {
     use crate::hash_types::Txid;
 
     use secp256k1::{Secp256k1, self};
-    #[cfg(feature = "rand")]
+    #[cfg(feature = "rand-std")]
     use secp256k1::{All, SecretKey};
 
     use crate::blockdata::script::ScriptBuf;
@@ -1685,7 +1685,7 @@ mod tests {
         assert_eq!(psbt1, psbt2);
     }
 
-    #[cfg(feature = "rand")]
+    #[cfg(feature = "rand-std")]
     fn gen_keys() -> (PrivateKey, PublicKey, Secp256k1<All>) {
         use secp256k1::rand::thread_rng;
 
@@ -1699,7 +1699,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "rand")]
+    #[cfg(feature = "rand-std")]
     fn get_key_btree_map() {
         let (priv_key, pk, secp) = gen_keys();
 
@@ -1811,7 +1811,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "rand")]
+    #[cfg(feature = "rand-std")]
     fn sign_psbt() {
         use crate::WPubkeyHash;
         use crate::bip32::{Fingerprint, DerivationPath};

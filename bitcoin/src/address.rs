@@ -8,24 +8,23 @@
 //! # Example: creating a new address from a randomly-generated key pair
 //!
 //! ```rust
-//! use bitcoin::network::constants::Network;
-//! use bitcoin::address::Address;
-//! use bitcoin::PublicKey;
-//! use bitcoin::secp256k1::Secp256k1;
-//! use bitcoin::secp256k1::rand::thread_rng;
+//! # #[cfg(feature = "rand-std")] {
+//! use bitcoin::{Address, PublicKey, Network};
+//! use bitcoin::secp256k1::{rand, Secp256k1};
 //!
 //! // Generate random key pair.
 //! let s = Secp256k1::new();
-//! let public_key = PublicKey::new(s.generate_keypair(&mut thread_rng()).1);
+//! let public_key = PublicKey::new(s.generate_keypair(&mut rand::thread_rng()).1);
 //!
 //! // Generate pay-to-pubkey-hash address.
 //! let address = Address::p2pkh(&public_key, Network::Bitcoin);
+//! # }
 //! ```
 //!
-//! # Note: creating a new address requires the rand feature flag
+//! # Note: creating a new address requires the rand-std feature flag
 //!
 //! ```toml
-//! bitcoin = { version = "...", features = ["rand"] }
+//! bitcoin = { version = "...", features = ["rand-std"] }
 //! ```
 
 use core::convert::TryFrom;
