@@ -13,7 +13,7 @@ use core::convert::TryFrom;
 #[cfg(all(test, mutate))]
 use mutagen::mutate;
 
-#[cfg(docsrs)]
+#[cfg(doc)]
 use crate::relative;
 
 /// A relative lock time value, representing either a block height or time (512 second intervals).
