@@ -3,12 +3,14 @@
 //! This module provides a trait for displaying things as hex as well as an implementation for
 //! `&[u8]`.
 
+use core::borrow::Borrow;
 use core::fmt;
 
 use super::buf_encoder::{BufEncoder, OutBytes};
 use super::Case;
 #[cfg(feature = "alloc")]
 use crate::prelude::*;
+use crate::hex::buf_encoder::FixedLenBuf;
 
 /// Extension trait for types that can be displayed as hex.
 ///
@@ -22,20 +24,10 @@ pub trait DisplayHex: Copy + sealed::IsRef {
     /// The type providing [`fmt::Display`] implementation.
     ///
     /// This is usually a wrapper type holding a reference to `Self`.
-    type Display: fmt::Display;
+    type Display: fmt::LowerHex + fmt::UpperHex;
 
     /// Display `Self` as a continuous sequence of ASCII hex chars.
-    fn display_hex(self, case: Case) -> Self::Display;
-
-    /// Shorthand for `display_hex(Case::Lower)`.
-    ///
-    /// Avoids the requirement to import the `Case` type.
-    fn display_lower_hex(self) -> Self::Display { self.display_hex(Case::Lower) }
-
-    /// Shorthand for `display_hex(Case::Upper)`.
-    ///
-    /// Avoids the requirement to import the `Case` type.
-    fn display_upper_hex(self) -> Self::Display { self.display_hex(Case::Upper) }
+    fn as_hex(self) -> Self::Display;
 
     /// Create a lower-hex-encoded string.
     ///
@@ -68,7 +60,7 @@ pub trait DisplayHex: Copy + sealed::IsRef {
 
     /// Appends hex-encoded content to an existing `String`.
     ///
-    /// This may be faster than `write!(string, "{}", self.display_hex())` because it uses
+    /// This may be faster than `write!(string, "{:x}", self.display_hex())` because it uses
     /// `reserve_sugggestion`.
     #[cfg(feature = "alloc")]
     #[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
@@ -76,7 +68,11 @@ pub trait DisplayHex: Copy + sealed::IsRef {
         use fmt::Write;
 
         string.reserve(self.hex_reserve_suggestion());
-        write!(string, "{}", self.display_hex(case)).unwrap_or_else(|_| {
+        match case {
+            Case::Lower => write!(string, "{:x}", self.as_hex()),
+            Case::Upper => write!(string, "{:X}", self.as_hex()),
+        }
+        .unwrap_or_else(|_| {
             let name = core::any::type_name::<Self::Display>();
             // We don't expect `std` to ever be buggy, so the bug is most likely in the `Display`
             // impl of `Self::Display`.
@@ -104,7 +100,7 @@ impl<'a> DisplayHex for &'a [u8] {
     type Display = DisplayByteSlice<'a>;
 
     #[inline]
-    fn display_hex(self, case: Case) -> Self::Display { DisplayByteSlice { bytes: self, case } }
+    fn as_hex(self) -> Self::Display { DisplayByteSlice { bytes: self } }
 
     #[inline]
     fn hex_reserve_suggestion(self) -> usize {
@@ -119,23 +115,73 @@ impl<'a> DisplayHex for &'a [u8] {
 ///
 /// Created by [`<&[u8] as DisplayHex>::display_hex`](DisplayHex::display_hex).
 pub struct DisplayByteSlice<'a> {
-    bytes: &'a [u8],
-    case: Case,
+    // pub because we want to keep lengths in sync
+    pub(crate) bytes: &'a [u8],
 }
 
-impl<'a> fmt::Display for DisplayByteSlice<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl<'a> DisplayByteSlice<'a> {
+    fn display(&self, f: &mut fmt::Formatter, case: Case) -> fmt::Result {
         let mut buf = [0u8; 1024];
         let mut encoder = super::BufEncoder::new(&mut buf);
 
         let mut chunks = self.bytes.chunks_exact(512);
         for chunk in &mut chunks {
-            encoder.put_bytes(chunk, self.case);
+            encoder.put_bytes(chunk, case);
             f.write_str(encoder.as_str())?;
             encoder.clear();
         }
-        encoder.put_bytes(chunks.remainder(), self.case);
+        encoder.put_bytes(chunks.remainder(), case);
         f.write_str(encoder.as_str())
+    }
+}
+
+impl<'a> fmt::LowerHex for DisplayByteSlice<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.display(f, Case::Lower)
+    }
+}
+
+impl<'a> fmt::UpperHex for DisplayByteSlice<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.display(f, Case::Upper)
+    }
+}
+
+/// Displays byte array as hex.
+///
+/// Created by [`<&[u8; LEN] as DisplayHex>::display_hex`](DisplayHex::display_hex).
+pub struct DisplayArray<A: Clone + IntoIterator, B: FixedLenBuf> where A::Item: Borrow<u8> {
+    array: A,
+    _buffer_marker: core::marker::PhantomData<B>,
+}
+
+
+impl<A: Clone + IntoIterator, B: FixedLenBuf> DisplayArray<A, B> where A::Item: Borrow<u8> {
+    /// Creates the wrapper.
+    pub fn new(array: A) -> Self {
+        DisplayArray {
+            array,
+            _buffer_marker: Default::default(),
+        }
+    }
+
+    fn display(&self, f: &mut fmt::Formatter, case: Case) -> fmt::Result {
+        let mut buf = B::uninit();
+        let mut encoder = super::BufEncoder::new(&mut buf);
+        encoder.put_bytes(self.array.clone(), case);
+        f.pad_integral(true, "0x", encoder.as_str())
+    }
+}
+
+impl<A: Clone + IntoIterator, B: FixedLenBuf> fmt::LowerHex for DisplayArray<A, B> where A::Item: Borrow<u8> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.display(f, Case::Lower)
+    }
+}
+
+impl<A: Clone + IntoIterator, B: FixedLenBuf> fmt::UpperHex for DisplayArray<A, B> where A::Item: Borrow<u8> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.display(f, Case::Upper)
     }
 }
 
@@ -169,16 +215,19 @@ macro_rules! fmt_hex_exact {
         $crate::hex::display::fmt_hex_exact_fn($formatter, buf, $bytes, $case)
     }};
 }
+pub use fmt_hex_exact;
 
 // Implementation detail of `write_hex_exact` macro to de-duplicate the code
 #[doc(hidden)]
 #[inline]
-pub fn fmt_hex_exact_fn(
+pub fn fmt_hex_exact_fn<I>(
     f: &mut fmt::Formatter,
     buf: &mut OutBytes,
-    bytes: &[u8],
+    bytes: I,
     case: Case,
-) -> fmt::Result {
+) -> fmt::Result
+    where I: IntoIterator, I::Item: Borrow<u8>
+{
     let mut encoder = BufEncoder::new(buf);
     encoder.put_bytes(bytes, case);
     f.pad_integral(true, "0x", encoder.as_str())

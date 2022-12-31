@@ -15,33 +15,41 @@
 #[macro_export]
 /// Adds hexadecimal formatting implementation of a trait `$imp` to a given type `$ty`.
 macro_rules! hex_fmt_impl(
-    ($ty:ident) => (
-        $crate::hex_fmt_impl!($ty, );
+    ($reverse:expr, $ty:ident) => (
+        $crate::hex_fmt_impl!($reverse, $ty, );
     );
-    ($ty:ident, $($gen:ident: $gent:ident),*) => (
+    ($reverse:expr, $ty:ident, $($gen:ident: $gent:ident),*) => (
         impl<$($gen: $gent),*> $crate::_export::_core::fmt::LowerHex for $ty<$($gen),*> {
+            #[inline]
             fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
-                #[allow(unused_imports)]
-                use $crate::{Hash as _, HashEngine as _, hex};
-
-                if f.alternate() {
-                    write!(f, "0x")?;
-                }
-                if $ty::<$($gen),*>::DISPLAY_BACKWARD {
-                    hex::format_hex_reverse(self.as_ref(), f)
+                if $reverse {
+                    $crate::_export::_core::fmt::LowerHex::fmt(&self.0.backward_hex(), f)
                 } else {
-                    hex::format_hex(self.as_ref(), f)
+                    $crate::_export::_core::fmt::LowerHex::fmt(&self.0.forward_hex(), f)
+                }
+            }
+        }
+
+        impl<$($gen: $gent),*> $crate::_export::_core::fmt::UpperHex for $ty<$($gen),*> {
+            #[inline]
+            fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
+                if $reverse {
+                    $crate::_export::_core::fmt::UpperHex::fmt(&self.0.backward_hex(), f)
+                } else {
+                    $crate::_export::_core::fmt::UpperHex::fmt(&self.0.forward_hex(), f)
                 }
             }
         }
 
         impl<$($gen: $gent),*> $crate::_export::_core::fmt::Display for $ty<$($gen),*> {
+            #[inline]
             fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
-                $crate::_export::_core::fmt::LowerHex::fmt(self, f)
+                $crate::_export::_core::fmt::LowerHex::fmt(&self, f)
             }
         }
 
         impl<$($gen: $gent),*> $crate::_export::_core::fmt::Debug for $ty<$($gen),*> {
+            #[inline]
             fn fmt(&self, f: &mut $crate::_export::_core::fmt::Formatter) -> $crate::_export::_core::fmt::Result {
                 write!(f, "{:#}", self)
             }
@@ -113,7 +121,7 @@ macro_rules! hash_newtype {
         #[repr(transparent)]
         pub struct $newtype($hash);
 
-        $crate::hex_fmt_impl!($newtype);
+        $crate::hex_fmt_impl!($reverse, $newtype);
         $crate::serde_impl!($newtype, $len);
         $crate::borrow_slice_impl!($newtype);
 
