@@ -29,14 +29,14 @@ use crate::{Error, HashEngine as _, hex};
 
 crate::internal_macros::hash_trait_impls!(512, false);
 
-const BLOCK_SIZE: usize = 128;
+pub(crate) const BLOCK_SIZE: usize = 128;
 
 /// Engine to compute SHA512 hash function.
 #[derive(Clone)]
 pub struct HashEngine {
-    h: [u64; 8],
-    length: usize,
-    buffer: [u8; BLOCK_SIZE],
+    pub(crate) h: [u64; 8],
+    pub(crate) length: usize,
+    pub(crate) buffer: [u8; BLOCK_SIZE],
 }
 
 impl Default for HashEngine {
@@ -141,7 +141,7 @@ impl hash::Hash for Hash {
 }
 
 #[cfg(not(fuzzing))]
-fn from_engine(mut e: HashEngine) -> Hash {
+pub(crate) fn from_engine(mut e: HashEngine) -> Hash {
     // pad buffer with a single 1-bit then all 0s, until there are exactly 16 bytes remaining
     let data_len = e.length as u64;
 
@@ -162,7 +162,7 @@ fn from_engine(mut e: HashEngine) -> Hash {
 }
 
 #[cfg(fuzzing)]
-fn from_engine(e: HashEngine) -> Hash {
+pub(crate) fn from_engine(e: HashEngine) -> Hash {
     let mut hash = e.midstate();
     hash[0] ^= 0xff; // Make this distinct from SHA-256
     Hash(hash)
@@ -192,7 +192,7 @@ macro_rules! round(
 
 impl HashEngine {
     // Algorithm copied from libsecp256k1
-    fn process_block(&mut self) {
+    pub(crate) fn process_block(&mut self) {
         debug_assert_eq!(self.buffer.len(), BLOCK_SIZE);
 
         let mut w = [0u64; 16];
