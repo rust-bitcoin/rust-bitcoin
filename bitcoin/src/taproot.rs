@@ -944,10 +944,16 @@ impl<'de> serde::Deserialize<'de> for LeafVersion {
                 formatter.write_str("a valid consensus-encoded taproot leaf version")
             }
 
-            fn visit_u8<E>(self, value: u8) -> Result<Self::Value, E>
+            fn visit_u64<E>(self, value: u64) -> Result<Self::Value, E>
             where
                 E: serde::de::Error,
             {
+                let value = u8::try_from(value).map_err(|_| {
+                    E::invalid_value(
+                        serde::de::Unexpected::Unsigned(value),
+                        &"consensus-encoded leaf version as u8",
+                    )
+                })?;
                 LeafVersion::from_consensus(value).map_err(|_| {
                     E::invalid_value(
                         ::serde::de::Unexpected::Unsigned(value as u64),
