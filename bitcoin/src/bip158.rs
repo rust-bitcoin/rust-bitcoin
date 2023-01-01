@@ -563,6 +563,7 @@ mod test {
     use crate::hash_types::BlockHash;
     use crate::hashes::hex::FromHex;
     use crate::ScriptBuf;
+    use crate::internal_macros::hex;
 
     #[test]
     fn test_blockfilters() {
@@ -573,12 +574,12 @@ mod test {
         for t in testdata.iter().skip(1) {
             let block_hash = BlockHash::from_hex(t.get(1).unwrap().as_str().unwrap()).unwrap();
             let block: Block =
-                deserialize(&Vec::from_hex(t.get(2).unwrap().as_str().unwrap()).unwrap()).unwrap();
+                deserialize(&hex!(t.get(2).unwrap().as_str().unwrap())).unwrap();
             assert_eq!(block.block_hash(), block_hash);
             let scripts = t.get(3).unwrap().as_array().unwrap();
             let previous_filter_header =
                 FilterHeader::from_hex(t.get(4).unwrap().as_str().unwrap()).unwrap();
-            let filter_content = Vec::from_hex(t.get(5).unwrap().as_str().unwrap()).unwrap();
+            let filter_content = hex!(t.get(5).unwrap().as_str().unwrap());
             let filter_header =
                 FilterHeader::from_hex(t.get(6).unwrap().as_str().unwrap()).unwrap();
 
@@ -588,7 +589,7 @@ mod test {
                 for input in tx.input.iter() {
                     txmap.insert(
                         input.previous_output,
-                        ScriptBuf::from(Vec::from_hex(si.next().unwrap().as_str().unwrap()).unwrap()),
+                        ScriptBuf::from(hex!(si.next().unwrap().as_str().unwrap())),
                     );
                 }
             }
@@ -635,22 +636,22 @@ mod test {
     fn test_filter() {
         let mut patterns = HashSet::new();
 
-        patterns.insert(Vec::from_hex("000000").unwrap());
-        patterns.insert(Vec::from_hex("111111").unwrap());
-        patterns.insert(Vec::from_hex("222222").unwrap());
-        patterns.insert(Vec::from_hex("333333").unwrap());
-        patterns.insert(Vec::from_hex("444444").unwrap());
-        patterns.insert(Vec::from_hex("555555").unwrap());
-        patterns.insert(Vec::from_hex("666666").unwrap());
-        patterns.insert(Vec::from_hex("777777").unwrap());
-        patterns.insert(Vec::from_hex("888888").unwrap());
-        patterns.insert(Vec::from_hex("999999").unwrap());
-        patterns.insert(Vec::from_hex("aaaaaa").unwrap());
-        patterns.insert(Vec::from_hex("bbbbbb").unwrap());
-        patterns.insert(Vec::from_hex("cccccc").unwrap());
-        patterns.insert(Vec::from_hex("dddddd").unwrap());
-        patterns.insert(Vec::from_hex("eeeeee").unwrap());
-        patterns.insert(Vec::from_hex("ffffff").unwrap());
+        patterns.insert(hex!("000000"));
+        patterns.insert(hex!("111111"));
+        patterns.insert(hex!("222222"));
+        patterns.insert(hex!("333333"));
+        patterns.insert(hex!("444444"));
+        patterns.insert(hex!("555555"));
+        patterns.insert(hex!("666666"));
+        patterns.insert(hex!("777777"));
+        patterns.insert(hex!("888888"));
+        patterns.insert(hex!("999999"));
+        patterns.insert(hex!("aaaaaa"));
+        patterns.insert(hex!("bbbbbb"));
+        patterns.insert(hex!("cccccc"));
+        patterns.insert(hex!("dddddd"));
+        patterns.insert(hex!("eeeeee"));
+        patterns.insert(hex!("ffffff"));
 
         let mut out = Vec::new();
         {
@@ -664,14 +665,14 @@ mod test {
         let bytes = out;
 
         {
-            let query = vec![Vec::from_hex("abcdef").unwrap(), Vec::from_hex("eeeeee").unwrap()];
+            let query = vec![hex!("abcdef"), hex!("eeeeee")];
             let reader = GcsFilterReader::new(0, 0, M, P);
             assert!(reader
                 .match_any(&mut bytes.as_slice(), &mut query.iter().map(|v| v.as_slice()))
                 .unwrap());
         }
         {
-            let query = vec![Vec::from_hex("abcdef").unwrap(), Vec::from_hex("123456").unwrap()];
+            let query = vec![hex!("abcdef"), hex!("123456")];
             let reader = GcsFilterReader::new(0, 0, M, P);
             assert!(!reader
                 .match_any(&mut bytes.as_slice(), &mut query.iter().map(|v| v.as_slice()))
@@ -693,7 +694,7 @@ mod test {
             for p in &patterns {
                 query.push(p.clone());
             }
-            query.push(Vec::from_hex("abcdef").unwrap());
+            query.push(hex!("abcdef"));
             assert!(!reader
                 .match_all(&mut bytes.as_slice(), &mut query.iter().map(|v| v.as_slice()))
                 .unwrap());

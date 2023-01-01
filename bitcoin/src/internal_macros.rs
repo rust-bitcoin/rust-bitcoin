@@ -74,7 +74,7 @@ mod test_macros {
         }
     }
 
-    macro_rules! hex (($hex:literal) => (Vec::from_hex($hex).unwrap()));
+    macro_rules! hex (($hex:expr) => (<Vec<u8> as hashes::hex::FromHex>::from_hex($hex).unwrap()));
     pub(crate) use hex;
 
     macro_rules! hex_into {

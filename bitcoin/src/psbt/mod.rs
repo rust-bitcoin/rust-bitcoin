@@ -897,7 +897,7 @@ mod tests {
     use crate::bip32::{ChildNumber, ExtendedPrivKey, ExtendedPubKey, KeySource};
     use crate::psbt::map::{Output, Input};
     use crate::psbt::raw;
-    use crate::internal_macros::hex_script;
+    use crate::internal_macros::{hex, hex_script};
 
     use std::collections::BTreeMap;
     use crate::blockdata::witness::Witness;
@@ -935,7 +935,7 @@ mod tests {
     #[test]
     fn serialize_then_deserialize_output() {
         let secp = &Secp256k1::new();
-        let seed = Vec::from_hex("000102030405060708090a0b0c0d0e0f").unwrap();
+        let seed = hex!("000102030405060708090a0b0c0d0e0f");
 
         let mut hd_keypaths: BTreeMap<secp256k1::PublicKey, KeySource> = Default::default();
 
@@ -1058,7 +1058,7 @@ mod tests {
                 },
                 script_sig: hex_script!("160014be18d152a9b012039daf3da7de4f53349eecb985"),
                 sequence: Sequence::MAX,
-                witness: Witness::from_slice(&[Vec::from_hex("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105").unwrap()]),
+                witness: Witness::from_slice(&[hex!("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105")]),
             }],
             output: vec![
                 TxOut {
@@ -1154,7 +1154,7 @@ mod tests {
         use crate::sighash::EcdsaSighashType;
         use std::collections::BTreeMap;
         use crate::blockdata::witness::Witness;
-        use crate::internal_macros::hex_script;
+        use crate::internal_macros::{hex, hex_script};
 
         #[test]
         #[should_panic(expected = "InvalidMagic")]
@@ -1279,8 +1279,8 @@ mod tests {
                             script_sig: hex_script!("160014be18d152a9b012039daf3da7de4f53349eecb985"),
                             sequence: Sequence::MAX,
                             witness: Witness::from_slice(&[
-                                Vec::from_hex("304402202712be22e0270f394f568311dc7ca9a68970b8025fdd3b240229f07f8a5f3a240220018b38d7dcd314e734c9276bd6fb40f673325bc4baa144c800d2f2f02db2765c01").unwrap(),
-                                Vec::from_hex("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105").unwrap(),
+                                hex!("304402202712be22e0270f394f568311dc7ca9a68970b8025fdd3b240229f07f8a5f3a240220018b38d7dcd314e734c9276bd6fb40f673325bc4baa144c800d2f2f02db2765c01"),
+                                hex!("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105"),
                             ]),
                         },
                         TxIn {
@@ -1293,8 +1293,8 @@ mod tests {
                             script_sig: hex_script!("160014fe3e9ef1a745e974d902c4355943abcb34bd5353"),
                             sequence: Sequence::MAX,
                             witness: Witness::from_slice(&[
-                                Vec::from_hex("3045022100d12b852d85dcd961d2f5f4ab660654df6eedcc794c0c33ce5cc309ffb5fce58d022067338a8e0e1725c197fb1a88af59f51e44e4255b20167c8684031c05d1f2592a01").unwrap(),
-                                Vec::from_hex("0223b72beef0965d10be0778efecd61fcac6f79a4ea169393380734464f84f2ab3").unwrap(),
+                                hex!("3045022100d12b852d85dcd961d2f5f4ab660654df6eedcc794c0c33ce5cc309ffb5fce58d022067338a8e0e1725c197fb1a88af59f51e44e4255b20167c8684031c05d1f2592a01"),
+                                hex!("0223b72beef0965d10be0778efecd61fcac6f79a4ea169393380734464f84f2ab3"),
                             ]),
                         }],
                         output: vec![
@@ -1440,9 +1440,9 @@ mod tests {
             let mut unknown: BTreeMap<raw::Key, Vec<u8>> = BTreeMap::new();
             let key: raw::Key = raw::Key {
                 type_value: 0x0fu8,
-                key: Vec::from_hex("010203040506070809").unwrap(),
+                key: hex!("010203040506070809"),
             };
-            let value: Vec<u8> = Vec::from_hex("0102030405060708090a0b0c0d0e0f").unwrap();
+            let value: Vec<u8> = hex!("0102030405060708090a0b0c0d0e0f");
 
             unknown.insert(key, value);
 
@@ -1591,8 +1591,8 @@ mod tests {
                         script_sig: hex_script!("160014be18d152a9b012039daf3da7de4f53349eecb985"),
                         sequence: Sequence::MAX,
                         witness: Witness::from_slice(&[
-                            Vec::from_hex("304402202712be22e0270f394f568311dc7ca9a68970b8025fdd3b240229f07f8a5f3a240220018b38d7dcd314e734c9276bd6fb40f673325bc4baa144c800d2f2f02db2765c01").unwrap(),
-                            Vec::from_hex("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105").unwrap(),
+                            hex!("304402202712be22e0270f394f568311dc7ca9a68970b8025fdd3b240229f07f8a5f3a240220018b38d7dcd314e734c9276bd6fb40f673325bc4baa144c800d2f2f02db2765c01"),
+                            hex!("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105"),
                         ]),
                     },
                     TxIn {
@@ -1605,8 +1605,8 @@ mod tests {
                         script_sig: hex_script!("160014fe3e9ef1a745e974d902c4355943abcb34bd5353"),
                         sequence: Sequence::MAX,
                         witness: Witness::from_slice(&[
-                            Vec::from_hex("3045022100d12b852d85dcd961d2f5f4ab660654df6eedcc794c0c33ce5cc309ffb5fce58d022067338a8e0e1725c197fb1a88af59f51e44e4255b20167c8684031c05d1f2592a01").unwrap(),
-                            Vec::from_hex("0223b72beef0965d10be0778efecd61fcac6f79a4ea169393380734464f84f2ab3").unwrap(),
+                            hex!("3045022100d12b852d85dcd961d2f5f4ab660654df6eedcc794c0c33ce5cc309ffb5fce58d022067338a8e0e1725c197fb1a88af59f51e44e4255b20167c8684031c05d1f2592a01"),
+                            hex!("0223b72beef0965d10be0778efecd61fcac6f79a4ea169393380734464f84f2ab3"),
                         ]),
                     }],
                     output: vec![

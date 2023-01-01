@@ -885,7 +885,7 @@ mod tests {
 
     use super::*;
     use crate::crypto::key::PublicKey;
-    use crate::hashes::hex::{FromHex, ToHex};
+    use crate::hashes::hex::ToHex;
     use crate::internal_macros::{hex, hex_into, hex_script};
     use crate::network::constants::Network::{Bitcoin, Testnet};
 

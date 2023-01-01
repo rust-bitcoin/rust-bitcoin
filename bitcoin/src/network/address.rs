@@ -310,6 +310,7 @@ mod test {
     use super::{AddrV2, AddrV2Message, Address};
     use crate::consensus::encode::{deserialize, serialize};
     use crate::hashes::hex::FromHex;
+    use crate::internal_macros::hex;
     use crate::network::constants::ServiceFlags;
 
     #[test]
@@ -401,14 +402,14 @@ mod test {
         // Taken from https://github.com/bitcoin/bitcoin/blob/12a1c3ad1a43634d2a98717e49e3f02c4acea2fe/src/test/net_tests.cpp#L348
 
         let ip = AddrV2::Ipv4(Ipv4Addr::new(1, 2, 3, 4));
-        assert_eq!(serialize(&ip), Vec::from_hex("010401020304").unwrap());
+        assert_eq!(serialize(&ip), hex!("010401020304"));
 
         let ip =
             AddrV2::Ipv6(Ipv6Addr::from_str("1a1b:2a2b:3a3b:4a4b:5a5b:6a6b:7a7b:8a8b").unwrap());
-        assert_eq!(serialize(&ip), Vec::from_hex("02101a1b2a2b3a3b4a4b5a5b6a6b7a7b8a8b").unwrap());
+        assert_eq!(serialize(&ip), hex!("02101a1b2a2b3a3b4a4b5a5b6a6b7a7b8a8b"));
 
         let ip = AddrV2::TorV2(FromHex::from_hex("f1f2f3f4f5f6f7f8f9fa").unwrap());
-        assert_eq!(serialize(&ip), Vec::from_hex("030af1f2f3f4f5f6f7f8f9fa").unwrap());
+        assert_eq!(serialize(&ip), hex!("030af1f2f3f4f5f6f7f8f9fa"));
 
         let ip = AddrV2::TorV3(
             FromHex::from_hex("53cd5648488c4707914182655b7664034e09e66f7e8cbf1084e654eb56c5bd88")
@@ -416,8 +417,7 @@ mod test {
         );
         assert_eq!(
             serialize(&ip),
-            Vec::from_hex("042053cd5648488c4707914182655b7664034e09e66f7e8cbf1084e654eb56c5bd88")
-                .unwrap()
+            hex!("042053cd5648488c4707914182655b7664034e09e66f7e8cbf1084e654eb56c5bd88")
         );
 
         let ip = AddrV2::I2p(
@@ -426,15 +426,14 @@ mod test {
         );
         assert_eq!(
             serialize(&ip),
-            Vec::from_hex("0520a2894dabaec08c0051a481a6dac88b64f98232ae42d4b6fd2fa81952dfe36a87")
-                .unwrap()
+            hex!("0520a2894dabaec08c0051a481a6dac88b64f98232ae42d4b6fd2fa81952dfe36a87")
         );
 
         let ip = AddrV2::Cjdns(Ipv6Addr::from_str("fc00:1:2:3:4:5:6:7").unwrap());
-        assert_eq!(serialize(&ip), Vec::from_hex("0610fc000001000200030004000500060007").unwrap());
+        assert_eq!(serialize(&ip), hex!("0610fc000001000200030004000500060007"));
 
-        let ip = AddrV2::Unknown(170, Vec::from_hex("01020304").unwrap());
-        assert_eq!(serialize(&ip), Vec::from_hex("aa0401020304").unwrap());
+        let ip = AddrV2::Unknown(170, hex!("01020304"));
+        assert_eq!(serialize(&ip), hex!("aa0401020304"));
     }
 
     #[test]
@@ -442,52 +441,52 @@ mod test {
         // Taken from https://github.com/bitcoin/bitcoin/blob/12a1c3ad1a43634d2a98717e49e3f02c4acea2fe/src/test/net_tests.cpp#L386
 
         // Valid IPv4.
-        let ip: AddrV2 = deserialize(&Vec::from_hex("010401020304").unwrap()).unwrap();
+        let ip: AddrV2 = deserialize(&hex!("010401020304")).unwrap();
         assert_eq!(ip, AddrV2::Ipv4(Ipv4Addr::new(1, 2, 3, 4)));
 
         // Invalid IPv4, valid length but address itself is shorter.
-        deserialize::<AddrV2>(&Vec::from_hex("01040102").unwrap()).unwrap_err();
+        deserialize::<AddrV2>(&hex!("01040102")).unwrap_err();
 
         // Invalid IPv4, with bogus length.
-        assert!(deserialize::<AddrV2>(&Vec::from_hex("010501020304").unwrap()).is_err());
+        assert!(deserialize::<AddrV2>(&hex!("010501020304")).is_err());
 
         // Invalid IPv4, with extreme length.
-        assert!(deserialize::<AddrV2>(&Vec::from_hex("01fd010201020304").unwrap()).is_err());
+        assert!(deserialize::<AddrV2>(&hex!("01fd010201020304")).is_err());
 
         // Valid IPv6.
         let ip: AddrV2 =
-            deserialize(&Vec::from_hex("02100102030405060708090a0b0c0d0e0f10").unwrap()).unwrap();
+            deserialize(&hex!("02100102030405060708090a0b0c0d0e0f10")).unwrap();
         assert_eq!(
             ip,
             AddrV2::Ipv6(Ipv6Addr::from_str("102:304:506:708:90a:b0c:d0e:f10").unwrap())
         );
 
         // Invalid IPv6, with bogus length.
-        assert!(deserialize::<AddrV2>(&Vec::from_hex("020400").unwrap()).is_err());
+        assert!(deserialize::<AddrV2>(&hex!("020400")).is_err());
 
         // Invalid IPv6, contains embedded IPv4.
         assert!(deserialize::<AddrV2>(
-            &Vec::from_hex("021000000000000000000000ffff01020304").unwrap()
+            &hex!("021000000000000000000000ffff01020304")
         )
         .is_err());
 
         // Invalid IPv6, contains embedded TORv2.
         assert!(deserialize::<AddrV2>(
-            &Vec::from_hex("0210fd87d87eeb430102030405060708090a").unwrap()
+            &hex!("0210fd87d87eeb430102030405060708090a")
         )
         .is_err());
 
         // Valid TORv2.
-        let ip: AddrV2 = deserialize(&Vec::from_hex("030af1f2f3f4f5f6f7f8f9fa").unwrap()).unwrap();
+        let ip: AddrV2 = deserialize(&hex!("030af1f2f3f4f5f6f7f8f9fa")).unwrap();
         assert_eq!(ip, AddrV2::TorV2(FromHex::from_hex("f1f2f3f4f5f6f7f8f9fa").unwrap()));
 
         // Invalid TORv2, with bogus length.
-        assert!(deserialize::<AddrV2>(&Vec::from_hex("030700").unwrap()).is_err());
+        assert!(deserialize::<AddrV2>(&hex!("030700")).is_err());
 
         // Valid TORv3.
         let ip: AddrV2 = deserialize(
-            &Vec::from_hex("042079bcc625184b05194975c28b66b66b0469f7f6556fb1ac3189a79b40dda32f1f")
-                .unwrap(),
+            &hex!("042079bcc625184b05194975c28b66b66b0469f7f6556fb1ac3189a79b40dda32f1f")
+                ,
         )
         .unwrap();
         assert_eq!(
@@ -501,12 +500,12 @@ mod test {
         );
 
         // Invalid TORv3, with bogus length.
-        assert!(deserialize::<AddrV2>(&Vec::from_hex("040000").unwrap()).is_err());
+        assert!(deserialize::<AddrV2>(&hex!("040000")).is_err());
 
         // Valid I2P.
         let ip: AddrV2 = deserialize(
-            &Vec::from_hex("0520a2894dabaec08c0051a481a6dac88b64f98232ae42d4b6fd2fa81952dfe36a87")
-                .unwrap(),
+            &hex!("0520a2894dabaec08c0051a481a6dac88b64f98232ae42d4b6fd2fa81952dfe36a87")
+                ,
         )
         .unwrap();
         assert_eq!(
@@ -520,39 +519,39 @@ mod test {
         );
 
         // Invalid I2P, with bogus length.
-        assert!(deserialize::<AddrV2>(&Vec::from_hex("050300").unwrap()).is_err());
+        assert!(deserialize::<AddrV2>(&hex!("050300")).is_err());
 
         // Valid CJDNS.
         let ip: AddrV2 =
-            deserialize(&Vec::from_hex("0610fc000001000200030004000500060007").unwrap()).unwrap();
+            deserialize(&hex!("0610fc000001000200030004000500060007")).unwrap();
         assert_eq!(ip, AddrV2::Cjdns(Ipv6Addr::from_str("fc00:1:2:3:4:5:6:7").unwrap()));
 
         // Invalid CJDNS, incorrect marker
         assert!(deserialize::<AddrV2>(
-            &Vec::from_hex("0610fd000001000200030004000500060007").unwrap()
+            &hex!("0610fd000001000200030004000500060007")
         )
         .is_err());
 
         // Invalid CJDNS, with bogus length.
-        assert!(deserialize::<AddrV2>(&Vec::from_hex("060100").unwrap()).is_err());
+        assert!(deserialize::<AddrV2>(&hex!("060100")).is_err());
 
         // Unknown, with extreme length.
         assert!(
-            deserialize::<AddrV2>(&Vec::from_hex("aafe0000000201020304050607").unwrap()).is_err()
+            deserialize::<AddrV2>(&hex!("aafe0000000201020304050607")).is_err()
         );
 
         // Unknown, with reasonable length.
-        let ip: AddrV2 = deserialize(&Vec::from_hex("aa0401020304").unwrap()).unwrap();
-        assert_eq!(ip, AddrV2::Unknown(170, Vec::from_hex("01020304").unwrap()));
+        let ip: AddrV2 = deserialize(&hex!("aa0401020304")).unwrap();
+        assert_eq!(ip, AddrV2::Unknown(170, hex!("01020304")));
 
         // Unknown, with zero length.
-        let ip: AddrV2 = deserialize(&Vec::from_hex("aa00").unwrap()).unwrap();
+        let ip: AddrV2 = deserialize(&hex!("aa00")).unwrap();
         assert_eq!(ip, AddrV2::Unknown(170, vec![]));
     }
 
     #[test]
     fn addrv2message_test() {
-        let raw = Vec::from_hex("0261bc6649019902abab208d79627683fd4804010409090909208d").unwrap();
+        let raw = hex!("0261bc6649019902abab208d79627683fd4804010409090909208d");
         let addresses: Vec<AddrV2Message> = deserialize(&raw).unwrap();
 
         assert_eq!(
@@ -562,7 +561,7 @@ mod test {
                     services: ServiceFlags::NETWORK,
                     time: 0x4966bc61,
                     port: 8333,
-                    addr: AddrV2::Unknown(153, Vec::from_hex("abab").unwrap())
+                    addr: AddrV2::Unknown(153, hex!("abab"))
                 },
                 AddrV2Message {
                     services: ServiceFlags::NETWORK_LIMITED

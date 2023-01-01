@@ -145,12 +145,13 @@ mod tests {
     use crate::consensus::encode::{deserialize, serialize};
     use crate::hashes::hex::FromHex;
     use crate::hashes::sha256d::Hash;
+    use crate::internal_macros::hex;
     use crate::network::constants::ServiceFlags;
 
     #[test]
     fn version_message_test() {
         // This message is from my satoshi node, morning of May 27 2014
-        let from_sat = Vec::from_hex("721101000100000000000000e6e0845300000000010000000000000000000000000000000000ffff0000000000000100000000000000fd87d87eeb4364f22cf54dca59412db7208d47d920cffce83ee8102f5361746f7368693a302e392e39392f2c9f040001").unwrap();
+        let from_sat = hex!("721101000100000000000000e6e0845300000000010000000000000000000000000000000000ffff0000000000000100000000000000fd87d87eeb4364f22cf54dca59412db7208d47d920cffce83ee8102f5361746f7368693a302e392e39392f2c9f040001");
 
         let decode: Result<VersionMessage, _> = deserialize(&from_sat);
         assert!(decode.is_ok());
@@ -169,8 +170,8 @@ mod tests {
 
     #[test]
     fn reject_message_test() {
-        let reject_tx_conflict = Vec::from_hex("027478121474786e2d6d656d706f6f6c2d636f6e666c69637405df54d3860b3c41806a3546ab48279300affacf4b88591b229141dcf2f47004").unwrap();
-        let reject_tx_nonfinal = Vec::from_hex("02747840096e6f6e2d66696e616c259bbe6c83db8bbdfca7ca303b19413dc245d9f2371b344ede5f8b1339a5460b").unwrap();
+        let reject_tx_conflict = hex!("027478121474786e2d6d656d706f6f6c2d636f6e666c69637405df54d3860b3c41806a3546ab48279300affacf4b88591b229141dcf2f47004");
+        let reject_tx_nonfinal = hex!("02747840096e6f6e2d66696e616c259bbe6c83db8bbdfca7ca303b19413dc245d9f2371b344ede5f8b1339a5460b");
 
         let decode_result_conflict: Result<Reject, _> = deserialize(&reject_tx_conflict);
         let decode_result_nonfinal: Result<Reject, _> = deserialize(&reject_tx_nonfinal);
