@@ -1104,6 +1104,9 @@ mod test {
     use crate::{Address, Network};
     extern crate serde_json;
 
+    #[cfg(feature = "serde")]
+    use serde_test::{assert_tokens, Token};
+
     fn tag_engine(tag_name: &str) -> sha256::HashEngine {
         let mut engine = sha256::Hash::engine();
         let tag_hash = sha256::Hash::hash(tag_name.as_bytes());
@@ -1355,6 +1358,18 @@ mod test {
                 &ver_script.0
             ))
         }
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn test_leaf_version_serde() {
+        let leaf_version = LeafVersion::TapScript;
+        // use serde_test to test serialization and deserialization
+        assert_tokens(&leaf_version, &[Token::U8(192)]);
+
+        let json = serde_json::to_string(&leaf_version).unwrap();
+        let leaf_version2 = serde_json::from_str(&json).unwrap();
+        assert_eq!(leaf_version, leaf_version2);
     }
 
     #[test]
