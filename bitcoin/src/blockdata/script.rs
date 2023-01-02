@@ -1757,12 +1757,13 @@ impl Builder {
             self.push_opcode(opcodes::OP_FALSE)
         }
         // Otherwise encode it as data
-        else { self.push_scriptint(data) }
+        else { self.push_int_non_minimal(data) }
     }
 
-    /// Adds instructions to push an integer onto the stack, using the explicit
-    /// encoding regardless of the availability of dedicated opcodes.
-    pub fn push_scriptint(self, data: i64) -> Builder {
+    /// Adds instructions to push an integer onto the stack without optimization.
+    ///
+    /// This uses the explicit encoding regardless of the availability of dedicated opcodes.
+    pub(super) fn push_int_non_minimal(self, data: i64) -> Builder {
         let mut buf = [0u8; 8];
         let len = write_scriptint(&mut buf, data);
         self.push_slice(&buf[..len])
@@ -2029,7 +2030,7 @@ mod test {
         script = script.push_int(4);  comp.push(84u8); assert_eq!(script.as_bytes(), &comp[..]);
         script = script.push_int(-1); comp.push(79u8); assert_eq!(script.as_bytes(), &comp[..]);
         // forced scriptint
-        script = script.push_scriptint(4); comp.extend([1u8, 4].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
+        script = script.push_int_non_minimal(4); comp.extend([1u8, 4].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
         // big ints
         script = script.push_int(17); comp.extend([1u8, 17].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
         script = script.push_int(10000); comp.extend([2u8, 16, 39].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
