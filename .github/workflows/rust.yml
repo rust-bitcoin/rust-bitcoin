@@ -25,7 +25,7 @@ jobs:
               AS_DEPENDENCY: true
               DO_NO_STD: true
               DO_DOCS: true
-          - rust: 1.41.1
+          - rust: 1.65.0
             env:
               AS_DEPENDENCY: true
     steps:
@@ -40,27 +40,6 @@ jobs:
       - name: Running test script
         env: ${{ matrix.env }}
         run: ./contrib/test.sh
-
-  Arch32bit:
-    name: Testing 32-bit version
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Crate
-        uses: actions/checkout@v2
-      - name: Checkout Toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-      - name: Add architecture i386
-        run: sudo dpkg --add-architecture i386
-      - name: Install i686 gcc
-        run: sudo apt-get update -y && sudo apt-get install -y gcc-multilib
-      - name: Install target
-        run: rustup target add i686-unknown-linux-gnu
-      - name: Run test on i686
-        run: cargo test --target i686-unknown-linux-gnu
 
   Cross:
     name: Cross testing
