@@ -508,7 +508,6 @@ impl Transaction {
 
             let (one, two) = result.split_at_mut(32);
             one.copy_from_slice(hash.as_inner());
-            one.reverse();
             let output_index_bytes: [u8; 4] = (output_index as u32).to_le_bytes();
             two.copy_from_slice(&output_index_bytes);
             result
