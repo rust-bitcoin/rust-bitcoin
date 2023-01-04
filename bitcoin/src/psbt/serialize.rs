@@ -2,8 +2,8 @@
 
 //! PSBT serialization.
 //!
-//! Defines traits used for (de)serializing PSBT values into/from raw
-//! bytes from/as PSBT key-value pairs.
+//! Traits to serialize PSBT values to and from raw bytes
+//! according to the BIP-174 specification.
 //!
 
 use core::convert::TryInto;
@@ -20,26 +20,102 @@ use secp256k1::{self, XOnlyPublicKey};
 use crate::bip32::{ChildNumber, Fingerprint, KeySource};
 use crate::hashes::{hash160, ripemd160, sha256, sha256d, Hash};
 use crate::crypto::{ecdsa, schnorr};
-use crate::psbt;
+use crate::psbt::{self, Error, PartiallySignedTransaction};
 use crate::taproot::{TapBranchHash, TapLeafHash, ControlBlock, LeafVersion};
 use crate::crypto::key::PublicKey;
 
-use super::map::{TapTree, PsbtSighashType};
+use super::map::{Map, Input, Output, TapTree, PsbtSighashType};
+use super::Psbt;
 
 use crate::taproot::TaprootBuilder;
 /// A trait for serializing a value as raw data for insertion into PSBT
-/// key-value pairs.
-pub trait Serialize {
+/// key-value maps.
+pub(crate) trait Serialize {
     /// Serialize a value as raw data.
     fn serialize(&self) -> Vec<u8>;
 }
 
-/// A trait for deserializing a value from raw data in PSBT key-value pairs.
-pub trait Deserialize: Sized {
+/// A trait for deserializing a value from raw data in PSBT key-value maps.
+pub(crate) trait Deserialize: Sized {
     /// Deserialize a value from raw data.
     fn deserialize(bytes: &[u8]) -> Result<Self, encode::Error>;
 }
 
+impl PartiallySignedTransaction {
+    /// Serialize a value as bytes in hex.
+    pub fn serialize_hex(&self) -> String {
+        bitcoin_hashes::hex::ToHex::to_hex(&self.serialize()[..])
+    }
+
+    /// Serialize as raw binary data
+    pub fn serialize(&self) -> Vec<u8> {
+        let mut buf: Vec<u8> = Vec::new();
+
+        //  <magic>
+        buf.extend(b"psbt");
+
+        buf.push(0xff_u8);
+
+        buf.extend(self.serialize_map());
+
+        for i in &self.inputs {
+            buf.extend(i.serialize_map());
+        }
+
+        for i in &self.outputs {
+            buf.extend(i.serialize_map());
+        }
+
+        buf
+    }
+
+
+    /// Deserialize a value from raw binary data.
+    pub fn deserialize(bytes: &[u8]) -> Result<Self, encode::Error> {
+        const MAGIC_BYTES: &[u8] = b"psbt";
+        if bytes.get(0..MAGIC_BYTES.len()) != Some(MAGIC_BYTES) {
+            return Err(Error::InvalidMagic.into());
+        }
+
+        const PSBT_SERPARATOR: u8 = 0xff_u8;
+        if bytes.get(MAGIC_BYTES.len()) != Some(&PSBT_SERPARATOR) {
+            return Err(Error::InvalidSeparator.into());
+        }
+
+        let mut d = bytes.get(5..).ok_or(Error::NoMorePairs)?;
+
+        let mut global = Psbt::decode_global(&mut d)?;
+        global.unsigned_tx_checks()?;
+
+        let inputs: Vec<Input> = {
+            let inputs_len: usize = (global.unsigned_tx.input).len();
+
+            let mut inputs: Vec<Input> = Vec::with_capacity(inputs_len);
+
+            for _ in 0..inputs_len {
+                inputs.push(Input::decode(&mut d)?);
+            }
+
+            inputs
+        };
+
+        let outputs: Vec<Output> = {
+            let outputs_len: usize = (global.unsigned_tx.output).len();
+
+            let mut outputs: Vec<Output> = Vec::with_capacity(outputs_len);
+
+            for _ in 0..outputs_len {
+                outputs.push(Output::decode(&mut d)?);
+            }
+
+            outputs
+        };
+
+        global.inputs = inputs;
+        global.outputs = outputs;
+        Ok(global)
+    }
+}
 impl_psbt_de_serialize!(Transaction);
 impl_psbt_de_serialize!(TxOut);
 impl_psbt_de_serialize!(Witness);
@@ -401,5 +477,12 @@ mod tests {
         let non_standard_sighash = [222u8, 0u8, 0u8, 0u8]; // 32 byte value.
         let sighash = PsbtSighashType::deserialize(&non_standard_sighash);
         assert!(sighash.is_ok())
+    }
+
+    #[test]
+    #[should_panic(expected = "InvalidMagic")]
+    fn invalid_vector_1() {
+        let hex_psbt = b"0200000001268171371edff285e937adeea4b37b78000c0566cbb3ad64641713ca42171bf6000000006a473044022070b2245123e6bf474d60c5b50c043d4c691a5d2435f09a34a7662a9dc251790a022001329ca9dacf280bdf30740ec0390422422c81cb45839457aeb76fc12edd95b3012102657d118d3357b8e0f4c2cd46db7b39f6d9c38d9a70abcb9b2de5dc8dbfe4ce31feffffff02d3dff505000000001976a914d0c59903c5bac2868760e90fd521a4665aa7652088ac00e1f5050000000017a9143545e6e33b832c47050f24d3eeb93c9c03948bc787b32e1300";
+        PartiallySignedTransaction::deserialize(hex_psbt).unwrap();
     }
 }

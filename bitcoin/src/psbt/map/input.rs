@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
 use crate::prelude::*;
-use crate::io;
 
 use core::fmt;
 use core::str::FromStr;
@@ -394,7 +393,7 @@ impl Input {
 }
 
 impl Map for Input {
-    fn get_pairs(&self) -> Result<Vec<raw::Pair>, io::Error> {
+    fn get_pairs(&self) -> Vec<raw::Pair> {
         let mut rv: Vec<raw::Pair> = Default::default();
 
         impl_psbt_get_pair! {
@@ -486,11 +485,11 @@ impl Map for Input {
             });
         }
 
-        Ok(rv)
+        rv
     }
 }
 
-impl_psbtmap_consensus_enc_dec_oding!(Input);
+impl_psbtmap_ser_de_serialize!(Input);
 
 fn psbt_insert_hash_pair<H>(
     map: &mut BTreeMap<H, Vec<u8>>,

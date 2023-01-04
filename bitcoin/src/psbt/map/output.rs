@@ -4,8 +4,6 @@ use crate::prelude::*;
 use core;
 use core::convert::TryFrom;
 
-use crate::io;
-
 use crate::blockdata::script::ScriptBuf;
 use crate::consensus::encode;
 use secp256k1::XOnlyPublicKey;
@@ -279,7 +277,7 @@ impl Output {
 }
 
 impl Map for Output {
-    fn get_pairs(&self) -> Result<Vec<raw::Pair>, io::Error> {
+    fn get_pairs(&self) -> Vec<raw::Pair> {
         let mut rv: Vec<raw::Pair> = Default::default();
 
         impl_psbt_get_pair! {
@@ -320,8 +318,8 @@ impl Map for Output {
             });
         }
 
-        Ok(rv)
+        rv
     }
 }
 
-impl_psbtmap_consensus_enc_dec_oding!(Output);
+impl_psbtmap_ser_de_serialize!(Output);

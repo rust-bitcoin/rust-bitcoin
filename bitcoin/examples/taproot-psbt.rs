@@ -85,7 +85,6 @@ use bitcoin::hashes::hex::FromHex;
 use bitcoin::hashes::Hash;
 use bitcoin::key::XOnlyPublicKey;
 use bitcoin::opcodes::all::{OP_CHECKSIG, OP_CLTV, OP_DROP};
-use bitcoin::psbt::serialize::Serialize;
 use bitcoin::psbt::{self, Input, Output, Psbt, PsbtSighashType};
 use bitcoin::schnorr::{self, TapTweak};
 use bitcoin::secp256k1::{Message, Secp256k1};
@@ -317,7 +316,7 @@ fn generate_bip86_key_spend_tx(
     // FINALIZER
     psbt.inputs.iter_mut().for_each(|input| {
         let mut script_witness: Witness = Witness::new();
-        script_witness.push(input.tap_key_sig.unwrap().serialize());
+        script_witness.push(input.tap_key_sig.unwrap().to_vec());
         input.final_script_witness = Some(script_witness);
 
         // Clear all the data fields as per the spec.
@@ -550,7 +549,7 @@ impl BenefactorWallet {
             // FINALIZER
             psbt.inputs.iter_mut().for_each(|input| {
                 let mut script_witness: Witness = Witness::new();
-                script_witness.push(input.tap_key_sig.unwrap().serialize());
+                script_witness.push(input.tap_key_sig.unwrap().to_vec());
                 input.final_script_witness = Some(script_witness);
 
                 // Clear all the data fields as per the spec.
@@ -686,10 +685,10 @@ impl BeneficiaryWallet {
         psbt.inputs.iter_mut().for_each(|input| {
             let mut script_witness: Witness = Witness::new();
             for (_, signature) in input.tap_script_sigs.iter() {
-                script_witness.push(signature.serialize());
+                script_witness.push(signature.to_vec());
             }
             for (control_block, (script, _)) in input.tap_scripts.iter() {
-                script_witness.push(script.serialize());
+                script_witness.push(script.to_bytes());
                 script_witness.push(control_block.serialize());
             }
             input.final_script_witness = Some(script_witness);

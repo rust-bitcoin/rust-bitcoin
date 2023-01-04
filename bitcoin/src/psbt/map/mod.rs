@@ -2,9 +2,6 @@
 
 use crate::prelude::*;
 
-use crate::io;
-
-use crate::consensus::encode;
 use crate::psbt::raw;
 
 mod global;
@@ -14,18 +11,26 @@ mod output;
 pub use self::input::{Input, PsbtSighashType};
 pub use self::output::{Output, TapTree, IncompleteTapTree};
 
+use super::serialize::Serialize;
+
 /// A trait that describes a PSBT key-value map.
 pub(super) trait Map {
     /// Attempt to get all key-value pairs.
-    fn get_pairs(&self) -> Result<Vec<raw::Pair>, io::Error>;
+    fn get_pairs(&self) -> Vec<raw::Pair>;
 
-    /// Encodes map data with bitcoin consensus encoding.
-    fn consensus_encode_map<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        let mut len = 0;
-        for pair in Map::get_pairs(self)? {
-            len += encode::Encodable::consensus_encode(&pair, w)?;
+    /// Serialize Psbt binary map data according to BIP-174 specification.
+    ///
+    /// <map> := <keypair>* 0x00
+    ///
+    /// Why is the separator here 0x00 instead of 0xff? The separator here is used to distinguish between each chunk of data.
+    /// A separator of 0x00 would mean that the unserializer can read it as a key length of 0, which would never occur with
+    /// actual keys. It can thus be used as a separator and allow for easier unserializer implementation.
+    fn serialize_map(&self) -> Vec<u8> {
+        let mut buf = Vec::new();
+        for pair in Map::get_pairs(self) {
+            buf.extend(&pair.serialize());
         }
-
-        Ok(len + encode::Encodable::consensus_encode(&0x00_u8, w)?)
+        buf.push(0x00_u8);
+        buf
     }
 }

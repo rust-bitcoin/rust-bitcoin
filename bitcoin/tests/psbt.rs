@@ -26,7 +26,7 @@ macro_rules! hex_script {
 
 macro_rules! hex_psbt {
     ($s:expr) => {
-        deserialize::<Psbt>(&<Vec<u8> as FromHex>::from_hex($s).unwrap())
+        Psbt::deserialize(&<Vec<u8> as FromHex>::from_hex($s).unwrap())
     };
 }
 
@@ -397,10 +397,10 @@ fn combine_lexicographically() {
     let expected_psbt = hex_psbt!(expected_psbt_hex).unwrap();
 
     let v = Vec::from_hex(psbt_1_hex).unwrap();
-    let mut psbt_1: Psbt = deserialize(&v).expect("failed to deserialize psbt 1");
+    let mut psbt_1 = Psbt::deserialize(&v).expect("failed to deserialize psbt 1");
 
     let v = Vec::from_hex(psbt_2_hex).unwrap();
-    let psbt_2: Psbt = deserialize(&v).expect("failed to deserialize psbt 2");
+    let psbt_2 = Psbt::deserialize(&v).expect("failed to deserialize psbt 2");
 
     psbt_1.combine(psbt_2).expect("failed to combine PSBTs");
 
@@ -417,16 +417,14 @@ fn sign(mut psbt: Psbt, keys: BTreeMap<bitcoin::PublicKey, PrivateKey>) -> Psbt 
 /// Finalizes a PSBT accord to the Input Finalizer role described in BIP 174.
 /// This is just a test. For a production-ready PSBT Finalizer, use [rust-miniscript](https://docs.rs/miniscript/latest/miniscript/psbt/trait.PsbtExt.html#tymethod.finalize)
 fn finalize_psbt(mut psbt: Psbt) -> Psbt {
-    use bitcoin::psbt::serialize::Serialize;
-
     // Input 0: legacy UTXO
 
     let sigs: Vec<_> = psbt.inputs[0].partial_sigs.values().collect();
     let script_sig = script::Builder::new()
         .push_opcode(OP_0) // OP_CHECKMULTISIG bug pops +1 value when evaluating so push OP_0.
-        .push_slice(&sigs[0].serialize())
-        .push_slice(&sigs[1].serialize())
-        .push_slice(&psbt.inputs[0].redeem_script.clone().unwrap().serialize())
+        .push_slice(&sigs[0].to_vec())
+        .push_slice(&sigs[1].to_vec())
+        .push_slice(psbt.inputs[0].redeem_script.clone().unwrap().as_bytes())
         .into_script();
 
     psbt.inputs[0].final_script_sig = Some(script_sig);
@@ -439,7 +437,7 @@ fn finalize_psbt(mut psbt: Psbt) -> Psbt {
     // Input 1: SegWit UTXO
 
     let script_sig = script::Builder::new()
-        .push_slice(&psbt.inputs[1].redeem_script.clone().unwrap().serialize())
+        .push_slice(psbt.inputs[1].redeem_script.clone().unwrap().as_bytes())
         .into_script();
 
     psbt.inputs[1].final_script_sig = Some(script_sig);
@@ -448,9 +446,9 @@ fn finalize_psbt(mut psbt: Psbt) -> Psbt {
         let sigs: Vec<_> = psbt.inputs[1].partial_sigs.values().collect();
         let mut script_witness = Witness::new();
         script_witness.push([]); // Push 0x00 to the stack.
-        script_witness.push(&sigs[1].serialize());
-        script_witness.push(&sigs[0].serialize());
-        script_witness.push(&psbt.inputs[1].witness_script.clone().unwrap().serialize());
+        script_witness.push(&sigs[1].to_vec());
+        script_witness.push(&sigs[0].to_vec());
+        script_witness.push(psbt.inputs[1].witness_script.clone().unwrap().as_bytes());
 
         script_witness
     };

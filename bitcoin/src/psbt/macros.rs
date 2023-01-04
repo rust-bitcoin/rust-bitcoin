@@ -2,7 +2,7 @@
 
 #[allow(unused_macros)]
 macro_rules! hex_psbt {
-    ($s:expr) => { $crate::consensus::deserialize::<$crate::psbt::PartiallySignedTransaction>(&<$crate::prelude::Vec<u8> as $crate::hashes::hex::FromHex>::from_hex($s).unwrap()) };
+    ($s:expr) => { <$crate::psbt::PartiallySignedTransaction>::deserialize(&<$crate::prelude::Vec<u8> as $crate::hashes::hex::FromHex>::from_hex($s).unwrap()) };
 }
 
 macro_rules! combine {
@@ -40,29 +40,37 @@ macro_rules! impl_psbt_serialize {
     };
 }
 
-macro_rules! impl_psbtmap_consensus_encoding {
+macro_rules! impl_psbtmap_serialize {
     ($thing:ty) => {
-        impl $crate::consensus::Encodable for $thing {
-            fn consensus_encode<W: $crate::io::Write + ?Sized>(
-                &self,
-                w: &mut W,
-            ) -> Result<usize, $crate::io::Error> {
-                self.consensus_encode_map(w)
+        impl $crate::psbt::serialize::Serialize for $thing {
+            fn serialize(&self) -> Vec<u8> {
+                self.serialize_map()
             }
         }
     };
 }
 
-macro_rules! impl_psbtmap_consensus_decoding {
+macro_rules! impl_psbtmap_deserialize {
     ($thing:ty) => {
-        impl $crate::consensus::Decodable for $thing {
-            fn consensus_decode<R: $crate::io::Read + ?Sized>(
+        impl $crate::psbt::serialize::Deserialize for $thing {
+            fn deserialize(bytes: &[u8]) -> Result<Self, $crate::consensus::encode::Error> {
+                let mut decoder = crate::io::Cursor::new(bytes);
+                Self::decode(&mut decoder)
+            }
+        }
+    };
+}
+
+macro_rules! impl_psbtmap_decoding {
+    ($thing:ty) => {
+        impl $thing {
+            pub(crate) fn decode<R: $crate::io::Read + ?Sized>(
                 r: &mut R,
             ) -> Result<Self, $crate::consensus::encode::Error> {
                 let mut rv: Self = core::default::Default::default();
 
                 loop {
-                    match $crate::consensus::Decodable::consensus_decode(r) {
+                    match $crate::psbt::raw::Pair::decode(r) {
                         Ok(pair) => rv.insert_pair(pair)?,
                         Err($crate::consensus::encode::Error::Psbt($crate::psbt::Error::NoMorePairs)) => return Ok(rv),
                         Err(e) => return Err(e),
@@ -73,10 +81,11 @@ macro_rules! impl_psbtmap_consensus_decoding {
     };
 }
 
-macro_rules! impl_psbtmap_consensus_enc_dec_oding {
+macro_rules! impl_psbtmap_ser_de_serialize {
     ($thing:ty) => {
-        impl_psbtmap_consensus_decoding!($thing);
-        impl_psbtmap_consensus_encoding!($thing);
+        impl_psbtmap_decoding!($thing);
+        impl_psbtmap_serialize!($thing);
+        impl_psbtmap_deserialize!($thing);
     };
 }
 
