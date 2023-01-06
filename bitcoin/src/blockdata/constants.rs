@@ -73,8 +73,8 @@ fn bitcoin_genesis_tx() -> Transaction {
     };
 
     // Inputs
-    let in_script = script::Builder::new().push_scriptint(486604799)
-                                          .push_scriptint(4)
+    let in_script = script::Builder::new().push_int(486604799)
+                                          .push_int_non_minimal(4)
                                           .push_slice(b"The Times 03/Jan/2009 Chancellor on brink of second bailout for banks")
                                           .into_script();
     ret.input.push(TxIn {
