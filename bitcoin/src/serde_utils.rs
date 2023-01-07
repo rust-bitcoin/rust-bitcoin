@@ -5,6 +5,20 @@
 //! This module is for special serde serializations.
 //!
 
+pub(crate) struct SerializeBytesAsHex<'a>(pub(crate) &'a [u8]);
+
+impl<'a> serde::Serialize for SerializeBytesAsHex<'a> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use bitcoin_internals::hex::display::DisplayHex;
+
+        serializer.collect_str(&format_args!("{:x}", self.0.as_hex()))
+    }
+}
+
+
 pub mod btreemap_byte_values {
     //! Module for serialization of BTreeMaps with hex byte values.
     #![allow(missing_docs)]
@@ -13,7 +27,7 @@ pub mod btreemap_byte_values {
 
     use serde;
 
-    use crate::hashes::hex::{FromHex, ToHex};
+    use crate::hashes::hex::FromHex;
     use crate::prelude::*;
 
     pub fn serialize<S, T>(v: &BTreeMap<T, Vec<u8>>, s: S) -> Result<S::Ok, S::Error>
@@ -29,7 +43,7 @@ pub mod btreemap_byte_values {
         } else {
             let mut map = s.serialize_map(Some(v.len()))?;
             for (key, value) in v.iter() {
-                map.serialize_entry(key, &value.to_hex())?;
+                map.serialize_entry(key, &super::SerializeBytesAsHex(value))?;
             }
             map.end()
         }
@@ -237,7 +251,7 @@ pub mod hex_bytes {
 
     use serde;
 
-    use crate::hashes::hex::{FromHex, ToHex};
+    use crate::hashes::hex::FromHex;
 
     pub fn serialize<T, S>(bytes: &T, s: S) -> Result<S::Ok, S::Error>
     where
@@ -248,7 +262,7 @@ pub mod hex_bytes {
         if !s.is_human_readable() {
             serde::Serialize::serialize(bytes, s)
         } else {
-            s.serialize_str(&bytes.as_ref().to_hex())
+            serde::Serialize::serialize(&super::SerializeBytesAsHex(bytes.as_ref()), s)
         }
     }
 

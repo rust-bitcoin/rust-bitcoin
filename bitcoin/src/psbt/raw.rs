@@ -6,13 +6,13 @@
 //! <https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki>.
 //!
 
+use bitcoin_internals::hex::display::DisplayHex;
 use crate::prelude::*;
 use core::fmt;
 use core::convert::TryFrom;
 
 use crate::io::{self, Cursor};
 use crate::consensus::encode::{self, ReadExt, WriteExt, Decodable, Encodable, VarInt, serialize, deserialize, MAX_VEC_SIZE};
-use crate::hashes::hex;
 use crate::psbt::Error;
 
 use super::serialize::{Serialize, Deserialize};
@@ -66,8 +66,7 @@ pub struct ProprietaryKey<Subtype=ProprietaryType> where Subtype: Copy + From<u8
 
 impl fmt::Display for Key {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "type: {:#x}, key: ", self.type_value)?;
-        hex::format_hex(&self.key[..], f)
+        write!(f, "type: {:#x}, key: {:x}", self.type_value, self.key.as_hex())
     }
 }
 

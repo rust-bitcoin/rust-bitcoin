@@ -388,7 +388,6 @@ impl serde::Serialize for Witness {
     where
         S: serde::Serializer,
     {
-        use crate::hashes::hex::ToHex;
         use serde::ser::SerializeSeq;
 
         let human_readable = serializer.is_human_readable();
@@ -396,7 +395,7 @@ impl serde::Serialize for Witness {
 
         for elem in self.iter() {
             if human_readable {
-                seq.serialize_element(&elem.to_hex())?;
+                seq.serialize_element(&crate::serde_utils::SerializeBytesAsHex(elem))?;
             } else {
                 seq.serialize_element(&elem)?;
             }
@@ -490,8 +489,8 @@ impl From<Vec<&[u8]>> for Witness {
 mod test {
     use super::*;
 
+    use bitcoin_internals::hex::display::DisplayHex;
     use crate::consensus::{deserialize, serialize};
-    use crate::hashes::hex::ToHex;
     use crate::internal_macros::hex;
     use crate::Transaction;
     use crate::secp256k1::ecdsa;
@@ -654,15 +653,15 @@ mod test {
 
         let expected_wit = ["304502210084622878c94f4c356ce49c8e33a063ec90f6ee9c0208540888cfab056cd1fca9022014e8dbfdfa46d318c6887afd92dcfa54510e057565e091d64d2ee3a66488f82c01", "026e181ffb98ebfe5a64c983073398ea4bcd1548e7b971b4c175346a25a1c12e95"];
         for (i, wit_el) in tx.input[0].witness.iter().enumerate() {
-            assert_eq!(expected_wit[i], wit_el.to_hex());
+            assert_eq!(expected_wit[i], wit_el.to_lower_hex_string());
         }
-        assert_eq!(expected_wit[1], tx.input[0].witness.last().unwrap().to_hex());
-        assert_eq!(expected_wit[0], tx.input[0].witness.second_to_last().unwrap().to_hex());
-        assert_eq!(expected_wit[0], tx.input[0].witness.nth(0).unwrap().to_hex());
-        assert_eq!(expected_wit[1], tx.input[0].witness.nth(1).unwrap().to_hex());
+        assert_eq!(expected_wit[1], tx.input[0].witness.last().unwrap().to_lower_hex_string());
+        assert_eq!(expected_wit[0], tx.input[0].witness.second_to_last().unwrap().to_lower_hex_string());
+        assert_eq!(expected_wit[0], tx.input[0].witness.nth(0).unwrap().to_lower_hex_string());
+        assert_eq!(expected_wit[1], tx.input[0].witness.nth(1).unwrap().to_lower_hex_string());
         assert_eq!(None, tx.input[0].witness.nth(2));
-        assert_eq!(expected_wit[0], tx.input[0].witness[0].to_hex());
-        assert_eq!(expected_wit[1], tx.input[0].witness[1].to_hex());
+        assert_eq!(expected_wit[0], tx.input[0].witness[0].to_lower_hex_string());
+        assert_eq!(expected_wit[1], tx.input[0].witness[1].to_lower_hex_string());
 
         let tx_bytes_back = serialize(&tx);
         assert_eq!(tx_bytes_back, tx_bytes);

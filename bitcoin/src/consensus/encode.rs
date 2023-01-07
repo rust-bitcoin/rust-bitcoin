@@ -21,6 +21,7 @@ use crate::prelude::*;
 use core::{fmt, mem, u32, convert::From};
 
 use bitcoin_internals::write_err;
+use bitcoin_internals::hex::display::DisplayHex;
 
 use crate::hashes::{sha256d, Hash, sha256};
 use crate::hash_types::{BlockHash, FilterHash, TxMerkleNode, FilterHeader};
@@ -29,7 +30,6 @@ use crate::io::{self, Cursor, Read};
 use crate::psbt;
 use crate::bip152::{ShortId, PrefilledTransaction};
 use crate::taproot::TapLeafHash;
-use crate::hashes::hex::ToHex;
 
 use crate::blockdata::transaction::{TxOut, Transaction, TxIn};
 #[cfg(feature = "std")]
@@ -73,7 +73,7 @@ impl fmt::Display for Error {
             Error::OversizedVectorAllocation { requested: ref r, max: ref m } => write!(f,
                 "allocation of oversized vector: requested {}, maximum {}", r, m),
             Error::InvalidChecksum { expected: ref e, actual: ref a } => write!(f,
-                "invalid checksum: expected {}, actual {}", e.to_hex(), a.to_hex()),
+                "invalid checksum: expected {:x}, actual {:x}", e.as_hex(), a.as_hex()),
             Error::NonMinimalVarInt => write!(f, "non-minimal varint"),
             Error::ParseFailed(ref s) => write!(f, "parse failed: {}", s),
             Error::UnsupportedSegwitFlag(ref swflag) => write!(f,
@@ -124,7 +124,7 @@ pub fn serialize<T: Encodable + ?Sized>(data: &T) -> Vec<u8> {
 
 /// Encodes an object into a hex-encoded string.
 pub fn serialize_hex<T: Encodable + ?Sized>(data: &T) -> String {
-    serialize(data)[..].to_hex()
+    serialize(data).to_lower_hex_string()
 }
 
 /// Deserializes an object from a vector, will error if said deserialization

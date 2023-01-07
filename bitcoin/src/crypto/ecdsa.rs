@@ -9,6 +9,7 @@ use core::str::FromStr;
 use core::{fmt, iter};
 
 use bitcoin_internals::write_err;
+use bitcoin_internals::hex::display::DisplayHex;
 use secp256k1;
 
 use crate::prelude::*;
@@ -58,8 +59,8 @@ impl Signature {
 
 impl fmt::Display for Signature {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        hex::format_hex(&self.sig.serialize_der(), f)?;
-        hex::format_hex(&[self.hash_ty as u8], f)
+        fmt::LowerHex::fmt(&self.sig.serialize_der().as_hex(), f)?;
+        fmt::LowerHex::fmt(&[self.hash_ty as u8].as_hex(), f)
     }
 }
 

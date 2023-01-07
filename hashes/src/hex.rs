@@ -17,8 +17,6 @@
 
 #[cfg(any(feature = "std", feature = "alloc"))]
 use crate::alloc::{string::String, vec::Vec};
-#[cfg(feature = "alloc")]
-use crate::alloc::format;
 
 #[cfg(any(test, feature = "std"))]
 use std::io;
@@ -49,14 +47,6 @@ impl fmt::Display for Error {
     }
 }
 
-/// Trait for objects that can be serialized as hex strings.
-#[cfg(any(test, feature = "std", feature = "alloc"))]
-#[cfg_attr(docsrs, doc(cfg(any(test, feature = "std", feature = "alloc"))))]
-pub trait ToHex {
-    /// Converts to a hexadecimal representation of the object.
-    fn to_hex(&self) -> String;
-}
-
 /// Trait for objects that can be deserialized from hex strings.
 pub trait FromHex: Sized {
     /// Produces an object from a byte iterator.
@@ -67,15 +57,6 @@ pub trait FromHex: Sized {
     /// Produces an object from a hex string.
     fn from_hex(s: &str) -> Result<Self, Error> {
         Self::from_byte_iter(HexIterator::new(s)?)
-    }
-}
-
-#[cfg(any(test, feature = "std", feature = "alloc"))]
-#[cfg_attr(docsrs, doc(cfg(any(test, feature = "std", feature = "alloc"))))]
-impl<T: fmt::LowerHex> ToHex for T {
-    /// Outputs the hash in hexadecimal form.
-    fn to_hex(&self) -> String {
-        format!("{:x}", self)
     }
 }
 
@@ -170,65 +151,8 @@ impl<'a> DoubleEndedIterator for HexIterator<'a> {
 
 impl<'a> ExactSizeIterator for HexIterator<'a> {}
 
-/// Outputs hex into an object implementing `fmt::Write`.
-///
-/// This is usually more efficient than going through a `String` using [`ToHex`].
-pub fn format_hex(data: &[u8], f: &mut fmt::Formatter) -> fmt::Result {
-    let prec = f.precision().unwrap_or(2 * data.len());
-    let width = f.width().unwrap_or(2 * data.len());
-    for _ in (2 * data.len())..width {
-        f.write_str("0")?;
-    }
-    for ch in data.iter().take(prec / 2) {
-        write!(f, "{:02x}", *ch)?;
-    }
-    if prec < 2 * data.len() && prec % 2 == 1 {
-        write!(f, "{:x}", data[prec / 2] / 16)?;
-    }
-    Ok(())
-}
-
-/// Outputs hex in reverse order.
-///
-/// Used for `sha256d::Hash` whose standard hex encoding has the bytes reversed.
-pub fn format_hex_reverse(data: &[u8], f: &mut fmt::Formatter) -> fmt::Result {
-    let prec = f.precision().unwrap_or(2 * data.len());
-    let width = f.width().unwrap_or(2 * data.len());
-    for _ in (2 * data.len())..width {
-        f.write_str("0")?;
-    }
-    for ch in data.iter().rev().take(prec / 2) {
-        write!(f, "{:02x}", *ch)?;
-    }
-    if prec < 2 * data.len() && prec % 2 == 1 {
-        write!(f, "{:x}", data[data.len() - 1 - prec / 2] / 16)?;
-    }
-    Ok(())
-}
-
-#[cfg(any(test, feature = "std", feature = "alloc"))]
-#[cfg_attr(docsrs, doc(cfg(any(test, feature = "std", feature = "alloc"))))]
-impl ToHex for [u8] {
-    fn to_hex(&self) -> String {
-        use core::fmt::Write;
-        let mut ret = String::with_capacity(2 * self.len());
-        for ch in self {
-            write!(ret, "{:02x}", ch).expect("writing to string");
-        }
-        ret
-    }
-}
-
 /// A struct implementing [`io::Write`] that converts what's written to it into
 /// a hex String.
-///
-/// If you already have the data to be converted in a `Vec<u8>` use [`ToHex`]
-/// but if you have an encodable object, by using this you avoid the
-/// serialization to `Vec<u8>` by going directly to `String`.
-///
-/// Note that to achieve better perfomance than [`ToHex`] the struct must be
-/// created with the right `capacity` of the final hex string so that the inner
-/// `String` doesn't re-allocate.
 #[cfg(any(test, feature = "std", feature = "alloc"))]
 #[cfg_attr(docsrs, doc(cfg(any(test, feature = "std", feature = "alloc"))))]
 pub struct HexWriter(String);
@@ -319,8 +243,9 @@ impl_fromhex_array!(512);
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(any(feature = "std", feature = "alloc"))]
+    use internals::hex::exts::DisplayHex;
 
-    use core::fmt;
     use std::io::Write;
 
     #[test]
@@ -331,84 +256,18 @@ mod tests {
 
         let parse: Vec<u8> = FromHex::from_hex(expected).expect("parse lowercase string");
         assert_eq!(parse, vec![0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef]);
-        let ser = parse.to_hex();
+        let ser = parse.to_lower_hex_string();
         assert_eq!(ser, expected);
 
         let parse: Vec<u8> = FromHex::from_hex(expected_up).expect("parse uppercase string");
         assert_eq!(parse, vec![0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef]);
-        let ser = parse.to_hex();
+        let ser = parse.to_lower_hex_string();
         assert_eq!(ser, expected);
 
         let parse: [u8; 8] = FromHex::from_hex(expected_up).expect("parse uppercase string");
         assert_eq!(parse, [0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef]);
-        let ser = parse.to_hex();
+        let ser = parse.to_lower_hex_string();
         assert_eq!(ser, expected);
-    }
-
-    #[test]
-    fn hex_truncate() {
-        struct HexBytes(Vec<u8>);
-        impl fmt::LowerHex for HexBytes {
-            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                format_hex(&self.0, f)
-            }
-        }
-
-        let bytes = HexBytes(vec![1u8, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
-
-        assert_eq!(
-            format!("{:x}", bytes),
-            "0102030405060708090a"
-        );
-
-        for i in 0..20 {
-            assert_eq!(
-                format!("{:.prec$x}", bytes, prec = i),
-                &"0102030405060708090a"[0..i]
-            );
-        }
-
-        assert_eq!(
-            format!("{:25x}", bytes),
-            "000000102030405060708090a"
-        );
-        assert_eq!(
-            format!("{:26x}", bytes),
-            "0000000102030405060708090a"
-        );
-    }
-
-    #[test]
-    fn hex_truncate_rev() {
-        struct HexBytes(Vec<u8>);
-        impl fmt::LowerHex for HexBytes {
-            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                format_hex_reverse(&self.0, f)
-            }
-        }
-
-        let bytes = HexBytes(vec![1u8, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
-
-        assert_eq!(
-            format!("{:x}", bytes),
-            "0a090807060504030201"
-        );
-
-        for i in 0..20 {
-            assert_eq!(
-                format!("{:.prec$x}", bytes, prec = i),
-                &"0a090807060504030201"[0..i]
-            );
-        }
-
-        assert_eq!(
-            format!("{:25x}", bytes),
-            "000000a090807060504030201"
-        );
-        assert_eq!(
-            format!("{:26x}", bytes),
-            "0000000a090807060504030201"
-        );
     }
 
     #[test]
@@ -447,18 +306,19 @@ mod tests {
 
 
     #[test]
+    #[cfg(any(feature = "std", feature = "alloc"))]
     fn hex_writer() {
         let vec: Vec<_>  = (0u8..32).collect();
         let mut writer = HexWriter::new(64);
         writer.write_all(&vec[..]).unwrap();
-        assert_eq!(vec.to_hex(), writer.result());
+        assert_eq!(vec.to_lower_hex_string(), writer.result());
     }
 }
 
 #[cfg(bench)]
 mod benches {
     use test::{Bencher, black_box};
-    use super::{ToHex, HexWriter};
+    use super::HexWriter;
     use std::io::Write;
     use crate::{sha256, Hash};
 
@@ -466,7 +326,7 @@ mod benches {
     fn bench_to_hex(bh: &mut Bencher) {
         let hash = sha256::Hash::hash(&[0; 1]);
         bh.iter(|| {
-            black_box(hash.to_hex());
+            black_box(hash.to_string());
         })
     }
 
