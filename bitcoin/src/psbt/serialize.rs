@@ -16,6 +16,7 @@ use crate::blockdata::script::ScriptBuf;
 use crate::blockdata::witness::Witness;
 use crate::blockdata::transaction::{Transaction, TxOut};
 use crate::consensus::encode::{self, serialize, Decodable, Encodable, deserialize_partial};
+use crate::taproot::TapTree;
 use secp256k1::{self, XOnlyPublicKey};
 use crate::bip32::{ChildNumber, Fingerprint, KeySource};
 use crate::hashes::{hash160, ripemd160, sha256, sha256d, Hash};
@@ -24,7 +25,7 @@ use crate::psbt::{Error, PartiallySignedTransaction};
 use crate::taproot::{TapNodeHash, TapLeafHash, ControlBlock, LeafVersion};
 use crate::crypto::key::PublicKey;
 
-use super::map::{Map, Input, Output, TapTree, PsbtSighashType};
+use super::map::{Map, Input, Output, PsbtSighashType};
 use super::Psbt;
 
 use crate::taproot::TaprootBuilder;

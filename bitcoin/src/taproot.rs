@@ -378,7 +378,7 @@ impl TaprootBuilder {
     /// If the script weight calculations overflow, a sub-optimal tree may be generated. This should
     /// not happen unless you are dealing with billions of branches with weights close to 2^32.
     ///
-    /// [`TapTree`]: crate::psbt::TapTree
+    /// [`TapTree`]: crate::taproot::TapTree
     pub fn with_huffman_tree<I>(script_weights: I) -> Result<Self, TaprootBuilderError>
     where
         I: IntoIterator<Item = (u32, ScriptBuf)>,
@@ -519,6 +519,132 @@ impl TaprootBuilder {
 
 impl Default for TaprootBuilder {
     fn default() -> Self { Self::new() }
+}
+
+/// Error happening when [`TapTree`] is constructed from a [`TaprootBuilder`]
+/// having hidden branches or not being finalized.
+#[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug)]
+#[non_exhaustive]
+pub enum IncompleteTapTree {
+    /// Indicates an attempt to construct a tap tree from a builder containing incomplete branches.
+    NotFinalized(TaprootBuilder),
+    /// Indicates an attempt to construct a tap tree from a builder containing hidden parts.
+    HiddenParts(TaprootBuilder),
+}
+
+impl IncompleteTapTree {
+    /// Converts error into the original incomplete [`TaprootBuilder`] instance.
+    pub fn into_builder(self) -> TaprootBuilder {
+        match self {
+            IncompleteTapTree::NotFinalized(builder) | IncompleteTapTree::HiddenParts(builder) =>
+                builder,
+        }
+    }
+}
+
+impl core::fmt::Display for IncompleteTapTree {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.write_str(match self {
+            IncompleteTapTree::NotFinalized(_) =>
+                "an attempt to construct a tap tree from a builder containing incomplete branches.",
+            IncompleteTapTree::HiddenParts(_) =>
+                "an attempt to construct a tap tree from a builder containing hidden parts.",
+        })
+    }
+}
+
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+impl std::error::Error for IncompleteTapTree {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use self::IncompleteTapTree::*;
+
+        match self {
+            NotFinalized(_) | HiddenParts(_) => None,
+        }
+    }
+}
+
+/// Taproot Tree representing a finalized [`TaprootBuilder`] (a complete binary tree).
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
+pub struct TapTree(pub(crate) TaprootBuilder);
+
+impl PartialEq for TapTree {
+    fn eq(&self, other: &Self) -> bool { self.node_info().hash.eq(&other.node_info().hash) }
+}
+
+impl core::hash::Hash for TapTree {
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) { self.node_info().hash(state) }
+}
+
+impl Eq for TapTree {}
+
+impl From<TapTree> for TaprootBuilder {
+    #[inline]
+    fn from(tree: TapTree) -> Self { tree.into_builder() }
+}
+
+impl TapTree {
+    /// Gets the inner node info as the builder is finalized.
+    pub fn node_info(&self) -> &NodeInfo {
+        // The builder algorithm invariant guarantees that is_complete builder
+        // have only 1 element in branch and that is not None.
+        // We make sure that we only allow is_complete builders via the from_inner
+        // constructor
+        self.0.branch()[0].as_ref().expect("from_inner only parses is_complete builders")
+    }
+
+    /// Converts self into builder [`TaprootBuilder`]. The builder is guaranteed to be finalized.
+    pub fn into_builder(self) -> TaprootBuilder { self.0 }
+
+    /// Constructs [`TaprootBuilder`] by internally cloning the `self`. The builder is guaranteed
+    /// to be finalized.
+    pub fn to_builder(&self) -> TaprootBuilder { self.0.clone() }
+
+    /// Returns [`TapTreeIter<'_>`] iterator for a taproot script tree, operating in DFS order over
+    /// tree [`ScriptLeaf`]s.
+    pub fn script_leaves(&self) -> TapTreeIter {
+        match (self.0.branch().len(), self.0.branch().last()) {
+            (1, Some(Some(root))) => TapTreeIter { leaf_iter: root.leaves.iter() },
+            // This should be unreachable as we Taptree is already finalized
+            _ => unreachable!("non-finalized tree builder inside TapTree"),
+        }
+    }
+}
+
+impl TryFrom<TaprootBuilder> for TapTree {
+    type Error = IncompleteTapTree;
+
+    /// Constructs [`TapTree`] from a [`TaprootBuilder`] if it is complete binary tree.
+    ///
+    /// # Returns
+    ///
+    /// A [`TapTree`] iff the `builder` is complete, otherwise return [`IncompleteBuilder`]
+    /// error with the content of incomplete `builder` instance.
+    fn try_from(builder: TaprootBuilder) -> Result<Self, Self::Error> {
+        if !builder.is_finalizable() {
+            Err(IncompleteTapTree::NotFinalized(builder))
+        } else if builder.has_hidden_nodes() {
+            Err(IncompleteTapTree::HiddenParts(builder))
+        } else {
+            Ok(TapTree(builder))
+        }
+    }
+}
+
+/// Iterator for a taproot script tree, operating in DFS order over leaf depth and
+/// leaf script pairs.
+pub struct TapTreeIter<'tree> {
+    leaf_iter: core::slice::Iter<'tree, ScriptLeaf>,
+}
+
+impl<'tree> Iterator for TapTreeIter<'tree> {
+    type Item = &'tree ScriptLeaf;
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> { self.leaf_iter.next() }
 }
 
 /// Represents the node information in taproot tree.
