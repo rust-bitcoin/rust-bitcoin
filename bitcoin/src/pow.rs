@@ -774,21 +774,16 @@ impl fmt::Debug for U256 {
 }
 
 macro_rules! impl_hex {
-    ($hex:ident, $fmt:literal) => {
+    ($hex:ident, $case:expr) => {
         impl $hex for U256 {
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                if f.alternate() {
-                    write!(f, "0x")?;
-                }
-                write!(f, $fmt, self.0)?;
-                write!(f, $fmt, self.1)?;
-                Ok(())
+                bitcoin_internals::hex::display::fmt_hex_exact!(f, 32, &self.to_be_bytes(), $case)
             }
         }
     };
 }
-impl_hex!(LowerHex, "{:032x}");
-impl_hex!(UpperHex, "{:032X}");
+impl_hex!(LowerHex, bitcoin_internals::hex::Case::Lower);
+impl_hex!(UpperHex, bitcoin_internals::hex::Case::Upper);
 
 #[cfg(feature = "serde")]
 #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
@@ -797,12 +792,17 @@ impl crate::serde::Serialize for U256 {
     where
         S: crate::serde::Serializer,
     {
-        use crate::hashes::hex::ToHex;
-        let bytes = self.to_be_bytes();
+        struct DisplayHex(U256);
+
+        impl fmt::Display for DisplayHex {
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "{:x}", self.0) }
+        }
+
         if serializer.is_human_readable() {
             // TODO: fast hex encoding.
-            serializer.serialize_str(&bytes.to_hex())
+            serializer.collect_str(&DisplayHex(*self))
         } else {
+            let bytes = self.to_be_bytes();
             serializer.serialize_bytes(&bytes)
         }
     }

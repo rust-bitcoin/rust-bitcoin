@@ -53,6 +53,7 @@ use crate::prelude::*;
 use alloc::rc::Rc;
 use alloc::sync::Arc;
 use bitcoin_internals::debug_from_display;
+use bitcoin_internals::hex::display::DisplayHex;
 use crate::io;
 use core::cmp::Ordering;
 use core::convert::TryFrom;
@@ -61,7 +62,6 @@ use core::{fmt, default::Default};
 use core::ops::{Deref, DerefMut, Index, Range, RangeFull, RangeFrom, RangeTo, RangeInclusive, RangeToInclusive};
 #[cfg(feature = "rust_v_1_53")]
 use core::ops::Bound;
-use bitcoin_hashes::hex::ToHex;
 
 #[cfg(feature = "serde")] use serde;
 
@@ -485,6 +485,15 @@ impl Script {
         buf
     }
 
+    /// Formats the script as lower-case hex.
+    ///
+    /// This is a more convenient and performant way to write `format!("{:x}", script)`.
+    /// For better performance you should generally prefer displaying the script but if `String` is
+    /// required (this is common in tests) this method is can be used.
+    pub fn to_hex_string(&self) -> String {
+        self.as_bytes().to_lower_hex_string()
+    }
+
     /// Returns the first opcode of the script (if there is any).
     pub fn first_opcode(&self) -> Option<opcodes::All> {
         self.as_bytes().first().copied().map(From::from)
@@ -550,13 +559,6 @@ impl<'a> From<&'a Script> for Rc<Script> {
         // Casting a slice to a transparent struct wrapping that slice is sound (same
         // layout).
         unsafe { Rc::from_raw(rw as *const Script) }
-    }
-}
-
-impl ToHex for Script {
-    #[inline]
-    fn to_hex(&self) -> String {
-        self.0.to_hex()
     }
 }
 
@@ -662,19 +664,13 @@ impl fmt::Display for Script {
 
 impl fmt::LowerHex for Script {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for ch in self.bytes() {
-            write!(f, "{:02x}", ch)?;
-        }
-        Ok(())
+        fmt::LowerHex::fmt(&self.as_bytes().as_hex(), f)
     }
 }
 
 impl fmt::UpperHex for Script {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for ch in self.bytes() {
-            write!(f, "{:02X}", ch)?;
-        }
-        Ok(())
+        fmt::UpperHex::fmt(&self.as_bytes().as_hex(), f)
     }
 }
 
@@ -1873,7 +1869,7 @@ impl serde::Serialize for Script {
         S: serde::Serializer,
     {
         if serializer.is_human_readable() {
-            serializer.serialize_str(&self.to_hex())
+            serializer.collect_str(&format_args!("{:x}", self))
         } else {
             serializer.serialize_bytes(self.as_bytes())
         }
@@ -2011,7 +2007,7 @@ mod test {
     use super::*;
     use super::write_scriptint;
 
-    use crate::hashes::hex::{FromHex, ToHex};
+    use crate::hashes::hex::FromHex;
     use crate::consensus::encode::{deserialize, serialize};
     use crate::blockdata::opcodes;
     use crate::crypto::key::PublicKey;
@@ -2209,7 +2205,7 @@ mod test {
                                    .push_opcode(OP_EQUALVERIFY)
                                    .push_opcode(OP_CHECKSIG)
                                    .into_script();
-        assert_eq!(script.to_hex(), "76a91416e1ae70ff0fa102905d4af297f6912bda6cce1988ac");
+        assert_eq!(script.to_hex_string(), "76a91416e1ae70ff0fa102905d4af297f6912bda6cce1988ac");
     }
 
     #[test]
@@ -2241,7 +2237,7 @@ mod test {
         let data = Vec::<u8>::from_hex("aa21a9ed20280f53f2d21663cac89e6bd2ad19edbabb048cda08e73ed19e9268d0afea2a").unwrap();
         let op_return = ScriptBuf::new_op_return(&data);
         assert!(op_return.is_op_return());
-        assert_eq!(op_return.to_hex(), "6a24aa21a9ed20280f53f2d21663cac89e6bd2ad19edbabb048cda08e73ed19e9268d0afea2a");
+        assert_eq!(op_return.to_hex_string(), "6a24aa21a9ed20280f53f2d21663cac89e6bd2ad19edbabb048cda08e73ed19e9268d0afea2a");
     }
 
     #[test]
@@ -2249,71 +2245,71 @@ mod test {
         let simple = Builder::new()
             .push_verify()
             .into_script();
-        assert_eq!(simple.to_hex(), "69");
+        assert_eq!(simple.to_hex_string(), "69");
         let simple2 = Builder::from(vec![])
             .push_verify()
             .into_script();
-        assert_eq!(simple2.to_hex(), "69");
+        assert_eq!(simple2.to_hex_string(), "69");
 
         let nonverify = Builder::new()
             .push_verify()
             .push_verify()
             .into_script();
-        assert_eq!(nonverify.to_hex(), "6969");
+        assert_eq!(nonverify.to_hex_string(), "6969");
         let nonverify2 = Builder::from(vec![0x69])
             .push_verify()
             .into_script();
-        assert_eq!(nonverify2.to_hex(), "6969");
+        assert_eq!(nonverify2.to_hex_string(), "6969");
 
         let equal = Builder::new()
             .push_opcode(OP_EQUAL)
             .push_verify()
             .into_script();
-        assert_eq!(equal.to_hex(), "88");
+        assert_eq!(equal.to_hex_string(), "88");
         let equal2 = Builder::from(vec![0x87])
             .push_verify()
             .into_script();
-        assert_eq!(equal2.to_hex(), "88");
+        assert_eq!(equal2.to_hex_string(), "88");
 
         let numequal = Builder::new()
             .push_opcode(OP_NUMEQUAL)
             .push_verify()
             .into_script();
-        assert_eq!(numequal.to_hex(), "9d");
+        assert_eq!(numequal.to_hex_string(), "9d");
         let numequal2 = Builder::from(vec![0x9c])
             .push_verify()
             .into_script();
-        assert_eq!(numequal2.to_hex(), "9d");
+        assert_eq!(numequal2.to_hex_string(), "9d");
 
         let checksig = Builder::new()
             .push_opcode(OP_CHECKSIG)
             .push_verify()
             .into_script();
-        assert_eq!(checksig.to_hex(), "ad");
+        assert_eq!(checksig.to_hex_string(), "ad");
         let checksig2 = Builder::from(vec![0xac])
             .push_verify()
             .into_script();
-        assert_eq!(checksig2.to_hex(), "ad");
+        assert_eq!(checksig2.to_hex_string(), "ad");
 
         let checkmultisig = Builder::new()
             .push_opcode(OP_CHECKMULTISIG)
             .push_verify()
             .into_script();
-        assert_eq!(checkmultisig.to_hex(), "af");
+        assert_eq!(checkmultisig.to_hex_string(), "af");
         let checkmultisig2 = Builder::from(vec![0xae])
             .push_verify()
             .into_script();
-        assert_eq!(checkmultisig2.to_hex(), "af");
+        assert_eq!(checkmultisig2.to_hex_string(), "af");
 
         let trick_slice = Builder::new()
             .push_slice(&[0xae]) // OP_CHECKMULTISIG
             .push_verify()
             .into_script();
-        assert_eq!(trick_slice.to_hex(), "01ae69");
+        assert_eq!(trick_slice.to_hex_string(), "01ae69");
         let trick_slice2 = Builder::from(vec![0x01, 0xae])
             .push_verify()
             .into_script();
-        assert_eq!(trick_slice2.to_hex(), "01ae69");
+        assert_eq!(trick_slice2.to_hex_string(), "01ae69");
    }
 
     #[test]
@@ -2361,10 +2357,10 @@ mod test {
     #[test]
     fn script_hashes() {
         let script = hex_script!("410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac");
-        assert_eq!(script.script_hash().to_hex(), "8292bcfbef1884f73c813dfe9c82fd7e814291ea");
-        assert_eq!(script.wscript_hash().to_hex(), "3e1525eb183ad4f9b3c5fa3175bdca2a52e947b135bbb90383bf9f6408e2c324");
+        assert_eq!(script.script_hash().to_string(), "8292bcfbef1884f73c813dfe9c82fd7e814291ea");
+        assert_eq!(script.wscript_hash().to_string(), "3e1525eb183ad4f9b3c5fa3175bdca2a52e947b135bbb90383bf9f6408e2c324");
 	assert_eq!(
-	    hex_script!("20d85a959b0290bf19bb89ed43c916be835475d013da4b362117393e25a48229b8ac").tapscript_leaf_hash().to_hex(),
+	    hex_script!("20d85a959b0290bf19bb89ed43c916be835475d013da4b362117393e25a48229b8ac").tapscript_leaf_hash().to_string(),
 	    "5b75adecf53548f3ec6ad7d78383bf84cc57b55a3127c72b9a2481752dd88b21"
 	);
     }

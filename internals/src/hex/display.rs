@@ -111,6 +111,23 @@ impl<'a> DisplayHex for &'a [u8] {
     }
 }
 
+#[cfg(feature = "alloc")]
+#[cfg_attr(docsrs, doc(feature = "alloc"))]
+impl<'a> DisplayHex for &'a alloc::vec::Vec<u8> {
+    type Display = DisplayByteSlice<'a>;
+
+    #[inline]
+    fn as_hex(self) -> Self::Display { DisplayByteSlice { bytes: self } }
+
+    #[inline]
+    fn hex_reserve_suggestion(self) -> usize {
+        // Since the string wouldn't fit into address space if this overflows (actually even for
+        // smaller amounts) it's better to panic right away. It should also give the optimizer
+        // better opportunities.
+        self.len().checked_mul(2).expect("the string wouldn't fit into address space")
+    }
+}
+
 /// Displays byte slice as hex.
 ///
 /// Created by [`<&[u8] as DisplayHex>::display_hex`](DisplayHex::display_hex).

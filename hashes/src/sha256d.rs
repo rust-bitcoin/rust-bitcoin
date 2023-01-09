@@ -49,7 +49,7 @@ mod tests {
     #[cfg(any(feature = "std", feature = "alloc"))]
     fn test() {
         use crate::{sha256d, Hash, HashEngine};
-        use crate::hex::{FromHex, ToHex};
+        use crate::hex::FromHex;
 
         #[derive(Clone)]
         struct Test {
@@ -77,7 +77,7 @@ mod tests {
             let hash = sha256d::Hash::hash(test.input.as_bytes());
             assert_eq!(hash, sha256d::Hash::from_hex(test.output_str).expect("parse hex"));
             assert_eq!(&hash[..], &test.output[..]);
-            assert_eq!(&hash.to_hex(), &test.output_str);
+            assert_eq!(&hash.to_string(), &test.output_str);
 
             // Hash through engine, checking that we can input byte by byte
             let mut engine = sha256d::Hash::engine();

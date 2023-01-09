@@ -885,7 +885,6 @@ mod tests {
 
     use super::*;
     use crate::crypto::key::PublicKey;
-    use crate::hashes::hex::ToHex;
     use crate::internal_macros::{hex, hex_into, hex_script};
     use crate::network::constants::Network::{Bitcoin, Testnet};
 
@@ -1078,7 +1077,7 @@ mod tests {
         ];
         for vector in &valid_vectors {
             let addr: Address = vector.0.parse().unwrap();
-            assert_eq!(&addr.script_pubkey().as_bytes().to_hex(), vector.1);
+            assert_eq!(&addr.script_pubkey().to_hex_string(), vector.1);
             roundtrips(&addr);
         }
 

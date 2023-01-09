@@ -109,7 +109,8 @@ mod test_macros {
 
 /// Implements several traits for byte-based newtypes.
 /// Implements:
-/// - core::fmt::LowerHex (implies hashes::hex::ToHex)
+/// - core::fmt::LowerHex
+/// - core::fmt::UpperHex
 /// - core::fmt::Display
 /// - core::str::FromStr
 /// - hashes::hex::FromHex
@@ -134,10 +135,15 @@ macro_rules! impl_bytes_newtype {
 
         impl core::fmt::LowerHex for $t {
             fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-                for &ch in self.0.iter() {
-                    write!(f, "{:02x}", ch)?;
-                }
-                Ok(())
+                use bitcoin_internals::hex::{Case, display};
+                display::fmt_hex_exact!(f, $len, &self.0, Case::Lower)
+            }
+        }
+
+        impl core::fmt::UpperHex for $t {
+            fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+                use bitcoin_internals::hex::{Case, display};
+                display::fmt_hex_exact!(f, $len, &self.0, Case::Upper)
             }
         }
 
@@ -184,7 +190,7 @@ macro_rules! impl_bytes_newtype {
         impl $crate::serde::Serialize for $t {
             fn serialize<S: $crate::serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
                 if s.is_human_readable() {
-                    s.serialize_str(&$crate::hashes::hex::ToHex::to_hex(self))
+                    s.collect_str(self)
                 } else {
                     s.serialize_bytes(&self[..])
                 }

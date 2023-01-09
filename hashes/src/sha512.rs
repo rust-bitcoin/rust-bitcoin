@@ -311,7 +311,7 @@ mod tests {
     #[cfg(any(feature = "std", feature = "alloc"))]
     fn test() {
         use crate::{sha512, Hash, HashEngine};
-        use crate::hex::{FromHex, ToHex};
+        use crate::hex::FromHex;
 
         #[derive(Clone)]
         struct Test {
@@ -371,7 +371,7 @@ mod tests {
             let hash = sha512::Hash::hash(test.input.as_bytes());
             assert_eq!(hash, sha512::Hash::from_hex(test.output_str).expect("parse hex"));
             assert_eq!(&hash[..], &test.output[..]);
-            assert_eq!(&hash.to_hex(), &test.output_str);
+            assert_eq!(&hash.to_string(), &test.output_str);
 
             // Hash through engine, checking that we can input byte by byte
             let mut engine = sha512::Hash::engine();

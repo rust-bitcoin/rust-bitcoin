@@ -499,6 +499,7 @@ impl Decodable for MerkleBlock {
 
 #[cfg(test)]
 mod tests {
+    use bitcoin_internals::hex::display::DisplayHex;
     #[cfg(feature = "rand-std")]
     use secp256k1::rand::prelude::*;
 
@@ -506,7 +507,7 @@ mod tests {
     use crate::consensus::encode::{deserialize, serialize};
     #[cfg(feature = "rand-std")]
     use crate::hash_types::TxMerkleNode;
-    use crate::hashes::hex::{FromHex, ToHex};
+    use crate::hashes::hex::FromHex;
     #[cfg(feature = "rand-std")]
     use crate::hashes::Hash;
     use crate::internal_macros::hex;
@@ -656,7 +657,7 @@ mod tests {
             mb.txn.extract_matches(&mut vec![], &mut vec![]).unwrap()
         );
         // Serialize again and check that it matches the original bytes
-        assert_eq!(MB_HEX, serialize(&mb).to_hex().as_str());
+        assert_eq!(MB_HEX, serialize(&mb).to_lower_hex_string().as_str());
     }
 
     /// Create a CMerkleBlock using a list of txids which will be found in the

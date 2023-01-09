@@ -44,7 +44,8 @@ pub(crate) trait Deserialize: Sized {
 impl PartiallySignedTransaction {
     /// Serialize a value as bytes in hex.
     pub fn serialize_hex(&self) -> String {
-        bitcoin_hashes::hex::ToHex::to_hex(&self.serialize()[..])
+        use bitcoin_internals::hex::display::DisplayHex;
+        self.serialize().to_lower_hex_string()
     }
 
     /// Serialize as raw binary data
