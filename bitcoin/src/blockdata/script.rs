@@ -53,7 +53,6 @@ use crate::prelude::*;
 use alloc::rc::Rc;
 use alloc::sync::Arc;
 use bitcoin_internals::debug_from_display;
-use bitcoin_internals::hex::display::DisplayHex;
 use crate::io;
 use core::cmp::Ordering;
 use core::convert::TryFrom;

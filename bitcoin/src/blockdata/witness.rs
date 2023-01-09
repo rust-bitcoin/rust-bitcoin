@@ -489,7 +489,6 @@ impl From<Vec<&[u8]>> for Witness {
 mod test {
     use super::*;
 
-    use bitcoin_internals::hex::display::DisplayHex;
     use crate::consensus::{deserialize, serialize};
     use crate::internal_macros::hex;
     use crate::Transaction;
