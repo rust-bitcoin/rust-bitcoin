@@ -21,7 +21,6 @@ use crate::prelude::*;
 use core::{fmt, mem, u32, convert::From};
 
 use bitcoin_internals::write_err;
-use bitcoin_internals::hex::display::DisplayHex;
 
 use crate::hashes::{sha256d, Hash, sha256};
 use crate::hash_types::{BlockHash, FilterHash, TxMerkleNode, FilterHeader};

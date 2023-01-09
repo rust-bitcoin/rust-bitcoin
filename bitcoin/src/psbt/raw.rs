@@ -6,7 +6,6 @@
 //! <https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki>.
 //!
 
-use bitcoin_internals::hex::display::DisplayHex;
 use crate::prelude::*;
 use core::fmt;
 use core::convert::TryFrom;

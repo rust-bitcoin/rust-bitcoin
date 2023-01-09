@@ -499,7 +499,6 @@ impl Decodable for MerkleBlock {
 
 #[cfg(test)]
 mod tests {
-    use bitcoin_internals::hex::display::DisplayHex;
     #[cfg(feature = "rand-std")]
     use secp256k1::rand::prelude::*;
 
