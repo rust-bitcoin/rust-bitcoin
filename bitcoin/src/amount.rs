@@ -14,6 +14,21 @@ use core::{default, ops};
 use crate::prelude::*;
 
 /// A set of denominations in which amounts can be expressed.
+///
+/// # Examples
+/// ```
+/// # use core::str::FromStr;
+/// # use bitcoin::Amount;
+///
+/// assert_eq!(Amount::from_str("1 BTC").unwrap(), Amount::from_sat(100_000_000));
+/// assert_eq!(Amount::from_str("1 mBTC").unwrap(), Amount::from_sat(100_000));
+/// assert_eq!(Amount::from_str("1 uBTC").unwrap(), Amount::from_sat(100));
+/// assert_eq!(Amount::from_str("10 nBTC").unwrap(), Amount::from_sat(1));
+/// assert_eq!(Amount::from_str("10000 pBTC").unwrap(), Amount::from_sat(1));
+/// assert_eq!(Amount::from_str("1 bit").unwrap(), Amount::from_sat(100));
+/// assert_eq!(Amount::from_str("1 sat").unwrap(), Amount::from_sat(1));
+/// assert_eq!(Amount::from_str("1000 msats").unwrap(), Amount::from_sat(1));
+/// ```
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum Denomination {
     /// BTC
