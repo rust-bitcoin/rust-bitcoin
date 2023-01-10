@@ -76,7 +76,7 @@ use crate::OutPoint;
 use crate::key::PublicKey;
 use crate::address::WitnessVersion;
 use crate::taproot::{LeafVersion, TapBranchHash, TapLeafHash};
-use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
+use secp256k1::{ecdsa, Secp256k1, Verification, XOnlyPublicKey};
 use crate::schnorr::{TapTweak, TweakedPublicKey, UntweakedPublicKey};
 
 /// Bitcoin script slice.
@@ -1175,23 +1175,46 @@ impl ScriptBuf {
         ScriptBuf::new_p2sh(&self.script_hash())
     }
 
-    /// Returns the script code used for spending a P2WPKH output if this script is a script pubkey
-    /// for a P2WPKH output. The `scriptCode` is described in [BIP143].
-    ///
-    /// [BIP143]: <https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki>
-    pub fn p2wpkh_script_code(&self) -> Option<ScriptBuf> {
-        if !self.is_v0_p2wpkh() {
-            return None
-        }
-        let script = Builder::new()
-            .push_opcode(OP_DUP)
-            .push_opcode(OP_HASH160)
-            .push_slice(&self.as_bytes()[2..]) // The `self` script is 0x00, 0x14, <pubkey_hash>
-            .push_opcode(OP_EQUALVERIFY)
-            .push_opcode(OP_CHECKSIG)
-            .into_script();
+    /// Creates the scriptSig used to spend a legacy utxo.
+    pub fn p2pk_script_sig(sig: ecdsa::Signature) -> ScriptBuf {
+        let der = sig.serialize_der();
+        let mut v = der.to_vec();
+        v.push(0x01);
 
-        Some(script)
+        Builder::new()
+            .push_slice(&v)
+            .into_script()
+    }
+
+    /// Creates the scriptSig used to spend a P2SH-P2WPKH utxo.
+    pub fn p2sh_p2wpkh_script_sig(pkh: WPubkeyHash) -> ScriptBuf {
+        // From [BIP143]:
+        //
+        // Compared to spending a native P2WPKH output, the input script is not left empty in a P2SH(P2WPKH)
+        // transaction, but is instead populated with a single data push representing the serialised P2SH
+        // embedded script (specifically, a P2WPKH script).
+        Builder::new()
+        // "representing the serialised P2SH" means we need a length byte which we (in rust-bitcoin)
+        // add during serialization, so we have to push it manually here.
+            .push_opcode(OP_PUSHBYTES_22)
+            .push_opcode(WitnessVersion::V0.into())
+            .push_slice(&pkh[..])
+            .into_script()
+    }
+
+    /// Creates the scriptSig used to spend a P2SH-P2WSH utxo.
+    pub fn p2sh_p2wsh_script_sig(witness: &Script) -> ScriptBuf {
+        let script_hash = witness.wscript_hash();
+        Builder::new()
+            .push_opcode(OP_PUSHBYTES_34)
+            .push_opcode(WitnessVersion::V0.into())
+            .push_slice(&script_hash[..])
+            .into_script()
+    }        
+
+    /// Creates the scriptSig used to spend a P2WSH utxo.
+    pub fn p2wsh_script_sig() -> ScriptBuf {
+        ScriptBuf::new()
     }
 
     /// Adds a single opcode to the script.

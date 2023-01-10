@@ -16,9 +16,8 @@ use core::ops::Deref;
 use secp256k1::{Message, Secp256k1, Signing};
 use bitcoin_internals::write_err;
 
-use crate::{prelude::*, Amount};
+use crate::{bip143, prelude::*, Amount};
 
-use crate::blockdata::script::ScriptBuf;
 use crate::blockdata::transaction::{Transaction, TxOut};
 use crate::bip32::{self, ExtendedPrivKey, ExtendedPubKey, KeySource};
 use crate::crypto::ecdsa;
@@ -336,17 +335,17 @@ impl PartiallySignedTransaction {
                 cache.legacy_signature_hash(input_index, script_code, hash_ty.to_u32())?
             },
             Wpkh => {
-                let script_code = ScriptBuf::p2wpkh_script_code(spk).ok_or(SignError::NotWpkh)?;
+                let script_code = bip143::ScriptCode::new_p2wpkh(spk).ok_or(SignError::NotWpkh)?;
                 cache.segwit_signature_hash(input_index, &script_code, utxo.value, hash_ty)?
             }
             ShWpkh => {
-                let script_code = ScriptBuf::p2wpkh_script_code(input.redeem_script.as_ref().expect("checked above"))
+                let script_code = bip143::ScriptCode::new_p2wpkh(input.redeem_script.as_ref().expect("checked above"))
                     .ok_or(SignError::NotWpkh)?;
                 cache.segwit_signature_hash(input_index, &script_code, utxo.value, hash_ty)?
             },
             Wsh | ShWsh => {
-                let script_code = input.witness_script.as_ref().ok_or(SignError::MissingWitnessScript)?;
-                cache.segwit_signature_hash(input_index, script_code, utxo.value, hash_ty)?
+                let script_code = bip143::ScriptCode::new_p2wsh(input.witness_script.as_ref().ok_or(SignError::MissingWitnessScript)?);
+                cache.segwit_signature_hash(input_index, &script_code, utxo.value, hash_ty)?
             },
             Tr => {
                 // This PSBT signing API is WIP, taproot to come shortly.
@@ -667,6 +666,8 @@ pub enum SignError {
     NotEcdsa,
     /// The `scriptPubkey` is not a P2WPKH script.
     NotWpkh,
+    /// The `scriptPubkey` is not a P2WSH script.
+    NotWsh,
     /// Sighash computation error.
     SighashComputation(sighash::Error),
     /// Unable to determine the output type.
@@ -695,6 +696,7 @@ impl fmt::Display for SignError {
             MismatchedAlgoKey => write!(f, "signing algorithm and key type does not match"),
             NotEcdsa => write!(f, "attempted to ECDSA sign an non-ECDSA input"),
             NotWpkh => write!(f, "the scriptPubkey is not a P2WPKH script"),
+            NotWsh => write!(f, "the scriptPubkey is not a P2WSH script"),
             SighashComputation(e) => write!(f, "sighash: {}", e),
             EcdsaSig(ref e) => write_err!(f, "ecdsa signature"; e),
             UnknownOutputType => write!(f, "unable to determine the output type"),
@@ -721,6 +723,7 @@ impl std::error::Error for SignError {
                 | MismatchedAlgoKey
                 | NotEcdsa
                 | NotWpkh
+                | NotWsh
                 | UnknownOutputType
                 | KeyNotFound
                 | WrongSigningAlgorithm

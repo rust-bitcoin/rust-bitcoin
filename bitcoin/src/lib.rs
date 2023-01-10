@@ -95,6 +95,7 @@ pub mod network;
 pub mod address;
 pub mod amount;
 pub mod base58;
+pub mod bip143;
 pub mod bip152;
 pub mod bip158;
 pub mod bip32;
