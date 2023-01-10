@@ -54,7 +54,7 @@ macro_rules! impl_psbtmap_deserialize {
     ($thing:ty) => {
         impl $crate::psbt::serialize::Deserialize for $thing {
             fn deserialize(bytes: &[u8]) -> Result<Self, $crate::consensus::encode::Error> {
-                let mut decoder = crate::io::Cursor::new(bytes);
+                let mut decoder = bytes;
                 Self::decode(&mut decoder)
             }
         }
