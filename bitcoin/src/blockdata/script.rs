@@ -58,6 +58,7 @@ use core::cmp::Ordering;
 use core::convert::TryFrom;
 use core::borrow::{Borrow, BorrowMut};
 use core::{fmt, default::Default};
+use core::marker::PhantomData;
 use core::ops::{Deref, DerefMut, Index, Range, RangeFull, RangeFrom, RangeTo, RangeInclusive, RangeToInclusive};
 #[cfg(feature = "rust_v_1_53")]
 use core::ops::Bound;
@@ -138,13 +139,19 @@ pub struct Script([u8]);
 ///
 /// [deref coercions]: https://doc.rust-lang.org/std/ops/trait.Deref.html#more-on-deref-coercion
 #[derive(Default, Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
-pub struct ScriptBuf(Vec<u8>);
+pub struct ScriptBuf<T = Generic>(PhantomData<T>, Vec<u8>);
+
+/// Marker for a generic [`ScriptBuf`].
+pub type Generic = ();
+
+/// Marker for a [`ScriptBuf`] that is used as script code.
+pub type ScriptCode = ();
 
 impl ToOwned for Script {
     type Owned = ScriptBuf;
 
     fn to_owned(&self) -> Self::Owned {
-        ScriptBuf(self.0.to_owned())
+        ScriptBuf(PhantomData, self.0.to_owned())
     }
 }
 
@@ -259,7 +266,7 @@ impl Script {
     pub fn is_p2sh(&self) -> bool {
         self.0.len() == 23
             && self.0[0] == OP_HASH160.to_u8()
-            && self.0[1] == OP_PUSHBYTES_20.to_u8()
+
             && self.0[22] == OP_EQUAL.to_u8()
     }
 
@@ -517,7 +524,7 @@ impl Script {
         // Casting a transparent struct wrapping a slice to the slice pointer is sound (same
         // layout).
         let inner = unsafe { Box::from_raw(rw) };
-        ScriptBuf(Vec::from(inner))
+        ScriptBuf(PhantomData, Vec::from(inner))
     }
 }
 
@@ -679,7 +686,7 @@ impl hex::FromHex for ScriptBuf {
     where
         I: Iterator<Item=Result<u8, hex::Error>> + ExactSizeIterator + DoubleEndedIterator,
     {
-        Vec::from_byte_iter(iter).map(ScriptBuf)
+        Vec::from_byte_iter(iter).map(|v| ScriptBuf(PhantomData, v))
     }
 }
 
@@ -723,7 +730,9 @@ pub enum Error {
     /// Can not find the spent output.
     UnknownSpentOutput(OutPoint),
     /// Can not serialize the spending transaction.
-    Serialization
+    Serialization,
+    /// Found OP_CODESEPARATOR - currently unsupported.
+    FoundOpCodeseparator,
 }
 
 // If bitcoinonsensus-std is off but bitcoinconsensus is present we patch the error type to
@@ -779,6 +788,7 @@ impl fmt::Display for Error {
             Error::BitcoinConsensus(ref e) => write_err!(f, "bitcoinconsensus verification failed"; bitcoinconsensus_hack::wrap_error(e)),
             Error::UnknownSpentOutput(ref point) => write!(f, "unknown spent output: {}", point),
             Error::Serialization => f.write_str("can not serialize the spending transaction in Transaction::verify()"),
+            Error::FoundOpCodeseparator => write!(f, "currently we do not support OP_CODESEPARATOR"),
         }
     }
 }
@@ -794,7 +804,8 @@ impl std::error::Error for Error {
             | EarlyEndOfScript
             | NumericOverflow
             | UnknownSpentOutput(_)
-            | Serialization => None,
+            | Serialization
+            | FoundOpCodeseparator => None,
             #[cfg(feature = "bitcoinconsensus")]
             BitcoinConsensus(ref e) => Some(bitcoinconsensus_hack::wrap_error(e)),
         }
@@ -1038,12 +1049,12 @@ fn bytes_to_asm_fmt(script: &[u8], f: &mut dyn fmt::Write) -> fmt::Result {
 impl ScriptBuf {
     /// Creates a new empty script.
     pub fn new() -> Self {
-        ScriptBuf(Vec::new())
+        ScriptBuf(PhantomData, Vec::new())
     }
 
     /// Creates a new empty script with pre-allocated capacity.
     pub fn with_capacity(capacity: usize) -> Self {
-        ScriptBuf(Vec::with_capacity(capacity))
+        ScriptBuf(PhantomData, Vec::with_capacity(capacity))
     }
 
     /// Pre-allocates at least `additional_len` bytes if needed.
@@ -1057,7 +1068,7 @@ impl ScriptBuf {
     ///
     /// Panics if the new capacity exceeds `isize::MAX bytes`.
     pub fn reserve(&mut self, additional_len: usize) {
-        self.0.reserve(additional_len);
+        self.1.reserve(additional_len);
     }
 
     /// Pre-allocates exactly `additional_len` bytes if needed.
@@ -1074,17 +1085,17 @@ impl ScriptBuf {
     ///
     /// Panics if the new capacity exceeds `isize::MAX bytes`.
     pub fn reserve_exact(&mut self, additional_len: usize) {
-        self.0.reserve_exact(additional_len);
+        self.1.reserve_exact(additional_len);
     }
 
     /// Returns a reference to unsized script.
     pub fn as_script(&self) -> &Script {
-        Script::from_bytes(&self.0)
+        Script::from_bytes(&self.1)
     }
 
     /// Returns a mutable reference to unsized script.
     pub fn as_mut_script(&mut self) -> &mut Script {
-        Script::from_bytes_mut(&mut self.0)
+        Script::from_bytes_mut(&mut self.1)
     }
 
     /// Creates a new script builder
@@ -1162,41 +1173,62 @@ impl ScriptBuf {
     ///
     /// This method doesn't (re)allocate.
     pub fn from_bytes(bytes: Vec<u8>) -> Self {
-        ScriptBuf(bytes)
+        ScriptBuf(PhantomData, bytes)
     }
 
     /// Converts the script into a byte vector.
     ///
     /// This method doesn't (re)allocate.
-    pub fn into_bytes(self) -> Vec<u8> { self.0 }
+    pub fn into_bytes(self) -> Vec<u8> { self.1 }
 
     /// Computes the P2SH output corresponding to this redeem script.
     pub fn to_p2sh(&self) -> ScriptBuf {
         ScriptBuf::new_p2sh(&self.script_hash())
     }
 
-    /// Returns the script code used for spending a P2WPKH output if this script is a script pubkey
-    /// for a P2WPKH output. The `scriptCode` is described in [BIP143].
-    ///
-    /// [BIP143]: <https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki>
-    pub fn p2wpkh_script_code(&self) -> Option<ScriptBuf> {
-        if !self.is_v0_p2wpkh() {
-            return None
-        }
-        let script = Builder::new()
-            .push_opcode(OP_DUP)
-            .push_opcode(OP_HASH160)
-            .push_slice(&self.as_bytes()[2..]) // The `self` script is 0x00, 0x14, <pubkey_hash>
-            .push_opcode(OP_EQUALVERIFY)
-            .push_opcode(OP_CHECKSIG)
-            .into_script();
+    /// Creates the scriptSig used to spend a legacy utxo.
+    pub fn p2pk_script_sig(sig: crate::ecdsa::Signature) -> ScriptBuf {
+        Builder::new()
+            // This includes the hash_ty since this is not a secp256k1::ecdsa::Signature.
+            .push_slice(&sig.to_vec())
+            .into_script()
+    }
 
-        Some(script)
+    /// Creates the scriptSig used to spend a P2SH-P2WPKH utxo.
+    pub fn p2sh_p2wpkh_script_sig(pkh: WPubkeyHash) -> ScriptBuf {
+        // From BIP143:
+        // Compared to spending a native P2WPKH output, the input script is not left empty in a P2SH(P2WPKH)
+        // transaction, but is instead populated with a single data push representing the serialised P2SH
+        // embedded script (specifically, a P2WPKH script).
+        Builder::new()
+            // "representing the serialised P2SH" means we need a length byte which we (in
+            // rust-bitcoin) add during serialization, so we have to push it manually here.
+            .push_opcode(OP_PUSHBYTES_22)
+            .push_opcode(WitnessVersion::V0.into())
+            .push_slice(&pkh[..])
+            .into_script()
+    }
+
+    /// Creates the scriptSig used to spend a P2SH-P2WSH utxo.
+    pub fn p2sh_p2wsh_script_sig(witness: &Script) -> ScriptBuf {
+        let script_hash = witness.wscript_hash();
+        Builder::new()
+            // Same as for p2sh_p2wpkh_script_sig, the witness script must be serialized i.e.,
+            // needs the length byte pre-pended.
+            .push_opcode(OP_PUSHBYTES_34)
+            .push_opcode(WitnessVersion::V0.into())
+            .push_slice(&script_hash[..])
+            .into_script()
+    }
+
+    /// Creates the empty scriptSig used to spend a P2WSH utxo.
+    pub fn p2wsh_script_sig() -> ScriptBuf {
+        ScriptBuf::new()
     }
 
     /// Adds a single opcode to the script.
     pub fn push_opcode(&mut self, data: opcodes::All) {
-        self.0.push(data.to_u8());
+        self.1.push(data.to_u8());
     }
 
     /// Adds instructions to push some arbitrary data onto the stack.
@@ -1213,27 +1245,27 @@ impl ScriptBuf {
     fn push_slice_no_opt(&mut self, data: &[u8]) {
         // Start with a PUSH opcode
         match data.len() as u64 {
-            n if n < opcodes::Ordinary::OP_PUSHDATA1 as u64 => { self.0.push(n as u8); },
+            n if n < opcodes::Ordinary::OP_PUSHDATA1 as u64 => { self.1.push(n as u8); },
             n if n < 0x100 => {
-                self.0.push(opcodes::Ordinary::OP_PUSHDATA1.to_u8());
-                self.0.push(n as u8);
+                self.1.push(opcodes::Ordinary::OP_PUSHDATA1.to_u8());
+                self.1.push(n as u8);
             },
             n if n < 0x10000 => {
-                self.0.push(opcodes::Ordinary::OP_PUSHDATA2.to_u8());
-                self.0.push((n % 0x100) as u8);
-                self.0.push((n / 0x100) as u8);
+                self.1.push(opcodes::Ordinary::OP_PUSHDATA2.to_u8());
+                self.1.push((n % 0x100) as u8);
+                self.1.push((n / 0x100) as u8);
             },
             n if n < 0x100000000 => {
-                self.0.push(opcodes::Ordinary::OP_PUSHDATA4.to_u8());
-                self.0.push((n % 0x100) as u8);
-                self.0.push(((n / 0x100) % 0x100) as u8);
-                self.0.push(((n / 0x10000) % 0x100) as u8);
-                self.0.push((n / 0x1000000) as u8);
+                self.1.push(opcodes::Ordinary::OP_PUSHDATA4.to_u8());
+                self.1.push((n % 0x100) as u8);
+                self.1.push(((n / 0x100) % 0x100) as u8);
+                self.1.push(((n / 0x10000) % 0x100) as u8);
+                self.1.push((n / 0x1000000) as u8);
             }
             _ => panic!("tried to put a 4bn+ sized object into a script!")
         }
         // Then push the raw bytes
-        self.0.extend_from_slice(data);
+        self.1.extend_from_slice(data);
     }
 
     /// Computes the sum of `len` and the lenght of an appropriate push opcode.
@@ -1293,7 +1325,7 @@ impl ScriptBuf {
     fn push_verify(&mut self, last_opcode: Option<opcodes::All>) {
         match opcode_to_verify(last_opcode) {
             Some(opcode) => {
-                self.0.pop();
+                self.1.pop();
                 self.push_opcode(opcode);
             },
             None => self.push_opcode(OP_VERIFY),
@@ -1310,8 +1342,73 @@ impl ScriptBuf {
     #[inline]
     pub fn into_boxed_script(self) -> Box<Script> {
         // Copied from PathBuf::into_boxed_path
-        let rw = Box::into_raw(self.0.into_boxed_slice()) as *mut Script;
+        let rw = Box::into_raw(self.1.into_boxed_slice()) as *mut Script;
         unsafe { Box::from_raw(rw) }
+    }
+}
+
+/// A [`ScriptBuf`] used as the script code when spending segwit utxos.
+///
+/// Please note, the script code created here does not contain the length byte, this is pre-pended
+/// during serialization by `consensus_encode` and in the sighash cache we use `consensus_encode` to
+/// encode the script codes created below - therefore the length byte is not present in the raw
+/// script returned here. To get a hex string use `crate::consensus::serialize_hex(&script_code)`.
+impl ScriptBuf<ScriptCode> {
+    /// Returns the script code used for spending a P2WPKH output if this script is a script pubkey
+    /// for a P2WPKH output.
+    pub fn p2wpkh_script_code(wpkh: &Script) -> Option<Self> {
+        if !wpkh.is_v0_p2wpkh() {
+            return None
+        }
+        // From BIP143: For P2WPKH witness program, the scriptCode is 0x1976a914{20-byte-pubkey-hash}88ac
+        let script = Builder::new()
+            // OP_PUSHBYTES_25 (0x19) is added by consensus_encode.
+            .push_opcode(OP_DUP)               // 0x76
+            .push_opcode(OP_HASH160)           // 0xa9
+            // OP_PUSHBYTES_20 (0x14) is added by push_slice
+            .push_slice(&wpkh.as_bytes()[2..]) // The `wpkh` script is 0x00, 0x14, <pubkey_hash>
+            .push_opcode(OP_EQUALVERIFY)       // 0x88
+            .push_opcode(OP_CHECKSIG)          // 0xac
+            .into_script();
+
+        Some(script)
+    }
+
+    /// Returns the script code used for spending a P2WSH output using `witness` (redeem script).
+    ///
+    /// # Errors
+    ///
+    /// If `witness` contains `OP_CODESEPARATOR` (currently unsupported).
+    pub fn p2wsh_script_code(witness: &Script) -> Result<Self, Error> {
+        // From BIP143:
+        // - if the witnessScript does not contain any OP_CODESEPARATOR, the scriptCode is the
+        // witnessScript serialized as scripts inside CTxOut.
+
+        // We explicitly do not support OP_CODESEPARATOR.
+        if witness.instructions().any(|x| {
+            // `matches!` isn't available in Rust 1.41.1
+            match x {
+                Ok(Instruction::Op(OP_CODESEPARATOR)) => true,
+                _ => false
+            }
+        }) {
+            // - if the witnessScript contains any OP_CODESEPARATOR, the scriptCode is the witnessScript
+            // but removing everything up to and including the last executed OP_CODESEPARATOR before the
+            // signature checking opcode being executed, serialized as scripts inside CTxOut. (The exact
+            // semantics is demonstrated in the examples below)
+            return Err(Error::FoundOpCodeseparator)
+        }
+
+        Ok(witness.to_owned())
+    }
+
+    /// Converts `raw_script` directly into a [`ScriptCode<ScriptCode>`].
+    ///
+    /// Assumes the given script is the correctly constructed script code. Useful for custom cases
+    /// with code separator, or in cases where the user wants to explicitly trust the given script as
+    /// a correctly computed script code.
+    pub fn dangerous_assume_script_code(raw_script: ScriptBuf) -> Self {
+        raw_script
     }
 }
 
@@ -1319,13 +1416,13 @@ impl Deref for ScriptBuf {
     type Target = Script;
 
     fn deref(&self) -> &Self::Target {
-        Script::from_bytes(&self.0)
+        Script::from_bytes(&self.1)
     }
 }
 
 impl DerefMut for ScriptBuf {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        Script::from_bytes_mut(&mut self.0)
+        Script::from_bytes_mut(&mut self.1)
     }
 }
 
@@ -1366,11 +1463,11 @@ impl AsMut<[u8]> for ScriptBuf {
 }
 
 impl From<Vec<u8>> for ScriptBuf {
-    fn from(v: Vec<u8>) -> Self { ScriptBuf(v) }
+    fn from(v: Vec<u8>) -> Self { ScriptBuf(PhantomData, v) }
 }
 
 impl From<ScriptBuf> for Vec<u8> {
-    fn from(v: ScriptBuf) -> Self { v.0 }
+    fn from(v: ScriptBuf) -> Self { v.1 }
 }
 
 impl From<ScriptBuf> for Box<Script> {
@@ -1806,7 +1903,7 @@ impl Builder {
         // "duplicated code" because we need to update `1` field
         match opcode_to_verify(self.1) {
             Some(opcode) => {
-                (self.0).0.pop();
+                (self.0).1.pop();
                 self.push_opcode(opcode)
             },
             None => self.push_opcode(OP_VERIFY),
@@ -1985,17 +2082,17 @@ impl Encodable for Script {
     }
 }
 
-impl Encodable for ScriptBuf {
+impl Encodable for ScriptBuf<Generic> {
     #[inline]
     fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.0.consensus_encode(w)
+        self.1.consensus_encode(w)
     }
 }
 
-impl Decodable for ScriptBuf {
+impl Decodable for ScriptBuf<Generic> {
     #[inline]
     fn consensus_decode_from_finite_reader<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Ok(ScriptBuf(Decodable::consensus_decode_from_finite_reader(r)?))
+        Ok(ScriptBuf(PhantomData, Decodable::consensus_decode_from_finite_reader(r)?))
     }
 }
 
@@ -2659,5 +2756,13 @@ mod test {
 
         let v: Vec<u8> = vec![0x01, 0x00, 0x00, 0x80]; // With sign bit set.
         assert!(read_scriptbool(&v));
+    }
+
+    #[test]
+    fn bip143_p2wsh_fails_if_op_codeseparator_present() {
+        //     witnessScript: 21026dccc749adc2a9d0d89497ac511f760f45c47dc5ed9cf352a58ac706453880aeadab210255a9626aebf5e29c0e6538428ba0d1dcf6ca98ffdf086aa8ced5e0d0215ea465ac
+        //                    <026dccc749adc2a9d0d89497ac511f760f45c47dc5ed9cf352a58ac706453880ae> CHECKSIGVERIFY CODESEPARATOR <0255a9626aebf5e29c0e6538428ba0d1dcf6ca98ffdf086aa8ced5e0d0215ea>
+        let redeem_script = ScriptBuf::from_hex("21026dccc749adc2a9d0d89497ac511f760f45c47dc5ed9cf352a58ac706453880aeadab210255a9626aebf5e29c0e6538428ba0d1dcf6ca98ffdf086aa8ced5e0d0215ea465ac").unwrap();
+        assert!(ScriptBuf::p2wsh_script_code(&redeem_script).is_err());
     }
 }
