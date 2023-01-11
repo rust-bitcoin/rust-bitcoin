@@ -6,6 +6,7 @@
 //! according to the BIP-174 specification.
 //!
 
+use core::convert::TryFrom;
 use core::convert::TryInto;
 
 use crate::prelude::*;
@@ -385,23 +386,22 @@ impl Deserialize for (Vec<TapLeafHash>, KeySource) {
 
 impl Serialize for TapTree {
     fn serialize(&self) -> Vec<u8> {
-        match (self.0.branch().len(), self.0.branch().last()) {
-            (1, Some(Some(root))) => {
-                let mut buf = Vec::new();
-                for leaf_info in root.leaves.iter() {
-                    // # Cast Safety:
-                    //
-                    // TaprootMerkleBranch can only have len atmost 128(TAPROOT_CONTROL_MAX_NODE_COUNT).
-                    // safe to cast from usize to u8
-                    buf.push(leaf_info.merkle_branch().as_inner().len() as u8);
-                    buf.push(leaf_info.leaf_version().to_consensus());
-                    leaf_info.script().consensus_encode(&mut buf).expect("Vecs dont err");
-                }
-                buf
-            }
-        // This should be unreachable as we Taptree is already finalized
-            _ => unreachable!(),
+        let script_leaves_iter = self.script_leaves();
+        let mut buf = Vec::with_capacity(script_leaves_iter.len());
+        for leaf_info in script_leaves_iter {
+            // # Panics:
+            //
+            // TapTree only has script leaves. We will remove this expect in future commit.
+            let (script, ver) = leaf_info.leaf().as_script().expect("TapTree only has script leaves");
+            // # Cast Safety:
+            //
+            // TaprootMerkleBranch can only have len atmost 128(TAPROOT_CONTROL_MAX_NODE_COUNT).
+            // safe to cast from usize to u8
+            buf.push(leaf_info.merkle_branch().len() as u8);
+            buf.push(ver.to_consensus());
+            script.consensus_encode(&mut buf).expect("Vecs dont err");
         }
+        buf
     }
 }
 
@@ -420,11 +420,7 @@ impl Deserialize for TapTree {
             builder = builder.add_leaf_with_ver(*depth, script, leaf_version)
                 .map_err(|_| Error::Taproot("Tree not in DFS order"))?;
         }
-        if builder.is_finalizable() && !builder.has_hidden_nodes() {
-            Ok(TapTree(builder))
-        } else {
-            Err(Error::Taproot("Incomplete taproot Tree"))
-        }
+        TapTree::try_from(builder).map_err(Error::TapTree)
     }
 }
 

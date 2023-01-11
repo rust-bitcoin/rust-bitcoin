@@ -23,6 +23,7 @@
 #![cfg(feature = "serde")]
 
 use std::collections::BTreeMap;
+use std::convert::TryFrom;
 use std::str::FromStr;
 
 use bincode::serialize;
@@ -36,7 +37,7 @@ use bitcoin::key::UntweakedPublicKey;
 use bitcoin::psbt::raw::{self, Key, Pair, ProprietaryKey};
 use bitcoin::psbt::{Input, Output, Psbt, PsbtSighashType};
 use bitcoin::sighash::{EcdsaSighashType, TapSighashType};
-use bitcoin::taproot::{self, ControlBlock, LeafVersion, TaprootBuilder, TaprootSpendInfo};
+use bitcoin::taproot::{self, ControlBlock, LeafVersion, TaprootBuilder, TaprootSpendInfo, TapTree};
 use bitcoin::{
     ecdsa, Address, Block, Network, OutPoint, PrivateKey, PublicKey, ScriptBuf, Sequence, Target,
     Transaction, TxIn, TxOut, Txid, Work,
@@ -352,13 +353,15 @@ fn serde_regression_taproot_sig() {
 }
 
 #[test]
-fn serde_regression_taproot_builder() {
+fn serde_regression_taptree() {
     let ver = LeafVersion::from_consensus(0).unwrap();
     let script = ScriptBuf::from(vec![0u8, 1u8, 2u8]);
-    let builder = TaprootBuilder::new().add_leaf_with_ver(1, script, ver).unwrap();
+    let mut builder = TaprootBuilder::new().add_leaf_with_ver(1, script.clone(), ver).unwrap();
+    builder = builder.add_leaf(1, script).unwrap();
+    let tree = TapTree::try_from(builder).unwrap();
 
-    let got = serialize(&builder).unwrap();
-    let want = include_bytes!("data/serde/taproot_builder_bincode") as &[_];
+    let got = serialize(&tree).unwrap();
+    let want = include_bytes!("data/serde/taptree_bincode") as &[_];
     assert_eq!(got, want)
 }
 
