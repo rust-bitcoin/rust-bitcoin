@@ -76,7 +76,7 @@ use crate::OutPoint;
 
 use crate::key::PublicKey;
 use crate::address::WitnessVersion;
-use crate::taproot::{LeafVersion, TapBranchHash, TapLeafHash};
+use crate::taproot::{LeafVersion, TapNodeHash, TapLeafHash};
 use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
 use crate::schnorr::{TapTweak, TweakedPublicKey, UntweakedPublicKey};
 
@@ -245,7 +245,7 @@ impl Script {
     #[inline]
     pub fn to_v1_p2tr<C: Verification>(&self, secp: &Secp256k1<C>, internal_key: UntweakedPublicKey) -> ScriptBuf {
         let leaf_hash = self.tapscript_leaf_hash();
-        let merkle_root = TapBranchHash::from_inner(leaf_hash.into_inner());
+        let merkle_root = TapNodeHash::from(leaf_hash);
         ScriptBuf::new_v1_p2tr(secp, internal_key, Some(merkle_root))
     }
 
@@ -1133,7 +1133,7 @@ impl ScriptBuf {
 
     /// Generates P2TR for script spending path using an internal public key and some optional
     /// script tree merkle root.
-    pub fn new_v1_p2tr<C: Verification>(secp: &Secp256k1<C>, internal_key: UntweakedPublicKey, merkle_root: Option<TapBranchHash>) -> Self {
+    pub fn new_v1_p2tr<C: Verification>(secp: &Secp256k1<C>, internal_key: UntweakedPublicKey, merkle_root: Option<TapNodeHash>) -> Self {
         let (output_key, _) = internal_key.tap_tweak(secp, merkle_root);
         ScriptBuf::new_witness_program(WitnessVersion::V1, &output_key.serialize())
     }

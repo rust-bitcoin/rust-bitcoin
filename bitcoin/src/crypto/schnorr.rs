@@ -15,7 +15,7 @@ pub use secp256k1::{self, constants, Secp256k1, KeyPair, XOnlyPublicKey, Verific
 
 use crate::prelude::*;
 
-use crate::taproot::{TapBranchHash, TapTweakHash};
+use crate::taproot::{TapNodeHash, TapTweakHash};
 use crate::sighash::SchnorrSighashType;
 
 /// Untweaked BIP-340 X-coord-only public key
@@ -69,7 +69,7 @@ pub trait TapTweak {
     ///
     /// # Returns
     /// The tweaked key and its parity.
-    fn tap_tweak<C: Verification>(self, secp: &Secp256k1<C>, merkle_root: Option<TapBranchHash>) -> Self::TweakedAux;
+    fn tap_tweak<C: Verification>(self, secp: &Secp256k1<C>, merkle_root: Option<TapNodeHash>) -> Self::TweakedAux;
 
     /// Directly converts an [`UntweakedPublicKey`] to a [`TweakedPublicKey`]
     ///
@@ -94,7 +94,7 @@ impl TapTweak for UntweakedPublicKey {
     ///
     /// # Returns
     /// The tweaked key and its parity.
-    fn tap_tweak<C: Verification>(self, secp: &Secp256k1<C>, merkle_root: Option<TapBranchHash>) -> (TweakedPublicKey, secp256k1::Parity) {
+    fn tap_tweak<C: Verification>(self, secp: &Secp256k1<C>, merkle_root: Option<TapNodeHash>) -> (TweakedPublicKey, secp256k1::Parity) {
         let tweak = TapTweakHash::from_key_and_tweak(self, merkle_root).to_scalar();
         let (output_key, parity) = self.add_tweak(secp, &tweak).expect("Tap tweak failed");
 
@@ -123,7 +123,7 @@ impl TapTweak for UntweakedKeyPair {
     ///
     /// # Returns
     /// The tweaked key and its parity.
-    fn tap_tweak<C: Verification>(self, secp: &Secp256k1<C>, merkle_root: Option<TapBranchHash>) -> TweakedKeyPair {
+    fn tap_tweak<C: Verification>(self, secp: &Secp256k1<C>, merkle_root: Option<TapNodeHash>) -> TweakedKeyPair {
         let (pubkey, _parity) = XOnlyPublicKey::from_keypair(&self);
         let tweak = TapTweakHash::from_key_and_tweak(pubkey, merkle_root).to_scalar();
         let tweaked = self.add_xonly_tweak(secp, &tweak).expect("Tap tweak failed");
