@@ -308,15 +308,27 @@ pub mod hex_bytes {
     }
 }
 
-macro_rules! serde_string_impl {
-    ($name:ident, $expecting:literal) => {
+macro_rules! serde_string_serialize_impl {
+    ($name:ty, $expecting:literal) => {
+	impl $crate::serde::Serialize for $name {
+            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+            where
+                S: $crate::serde::Serializer,
+            {
+                serializer.collect_str(&self)
+            }
+        }
+    };
+}
+
+macro_rules! serde_string_deserialize_impl {
+    ($name:ty, $expecting:literal) => {
         impl<'de> $crate::serde::Deserialize<'de> for $name {
             fn deserialize<D>(deserializer: D) -> Result<$name, D::Error>
             where
                 D: $crate::serde::de::Deserializer<'de>,
             {
                 use core::fmt::{self, Formatter};
-                use core::str::FromStr;
 
                 struct Visitor;
                 impl<'de> $crate::serde::de::Visitor<'de> for Visitor {
@@ -330,25 +342,25 @@ macro_rules! serde_string_impl {
                     where
                         E: $crate::serde::de::Error,
                     {
-                        $name::from_str(v).map_err(E::custom)
+			v.parse::<$name>().map_err(E::custom)
                     }
                 }
 
                 deserializer.deserialize_str(Visitor)
             }
         }
+    };
+}
 
-        impl $crate::serde::Serialize for $name {
-            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-            where
-                S: $crate::serde::Serializer,
-            {
-                serializer.collect_str(&self)
-            }
-        }
+macro_rules! serde_string_impl {
+    ($name:ty, $expecting:literal) => {
+	$crate::serde_utils::serde_string_deserialize_impl!($name, $expecting);
+	$crate::serde_utils::serde_string_serialize_impl!($name, $expecting);
     };
 }
 pub(crate) use serde_string_impl;
+pub(crate) use serde_string_serialize_impl;
+pub(crate) use serde_string_deserialize_impl;
 
 /// A combination macro where the human-readable serialization is done like
 /// serde_string_impl and the non-human-readable impl is done as a struct.

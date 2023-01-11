@@ -1449,7 +1449,7 @@ mod test {
             let expected_spk =
                 ScriptBuf::from_str(arr["expected"]["scriptPubKey"].as_str().unwrap()).unwrap();
             let expected_addr =
-                Address::from_str(arr["expected"]["bip350Address"].as_str().unwrap()).unwrap();
+                Address::from_str(arr["expected"]["bip350Address"].as_str().unwrap()).unwrap().assume_checked();
 
             let tweak = TapTweakHash::from_key_and_tweak(internal_key, merkle_root);
             let (output_key, _parity) = internal_key.tap_tweak(secp, merkle_root);

@@ -3,7 +3,7 @@ use std::str::FromStr;
 fn do_test(data: &[u8]) {
     let data_str = String::from_utf8_lossy(data);
     let addr = match bitcoin::address::Address::from_str(&data_str) {
-        Ok(addr) => addr,
+        Ok(addr) => addr.assume_checked(),
         Err(_) => return,
     };
     assert_eq!(addr.to_string(), data_str);

@@ -177,7 +177,8 @@ impl WatchOnly {
 
     /// Creates the PSBT, in BIP174 parlance this is the 'Creater'.
     fn create_psbt<C: Verification>(&self, secp: &Secp256k1<C>) -> Result<Psbt> {
-        let to_address = Address::from_str(RECEIVE_ADDRESS)?;
+        let to_address = Address::from_str(RECEIVE_ADDRESS)?
+            .require_network(Network::Regtest)?;
         let to_amount = Amount::from_str(OUTPUT_AMOUNT_BTC)?;
 
         let (_, change_address, _) = self.change_address(secp)?;
