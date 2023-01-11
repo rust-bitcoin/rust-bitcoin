@@ -53,7 +53,7 @@ impl PartiallySignedTransaction {
         let mut buf: Vec<u8> = Vec::new();
 
         //  <magic>
-        buf.extend(b"psbt");
+        buf.extend_from_slice(b"psbt");
 
         buf.push(0xff_u8);
 

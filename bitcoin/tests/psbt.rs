@@ -437,7 +437,7 @@ fn finalize_psbt(mut psbt: Psbt) -> Psbt {
     // Input 1: SegWit UTXO
 
     let script_sig = script::Builder::new()
-        .push_slice(psbt.inputs[1].redeem_script.clone().unwrap().as_bytes())
+        .push_slice(psbt.inputs[1].redeem_script.as_ref().unwrap().as_bytes())
         .into_script();
 
     psbt.inputs[1].final_script_sig = Some(script_sig);

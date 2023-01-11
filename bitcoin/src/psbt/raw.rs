@@ -11,7 +11,7 @@ use crate::prelude::*;
 use core::fmt;
 use core::convert::TryFrom;
 
-use crate::io::{self, Cursor};
+use crate::io;
 use crate::consensus::encode::{self, ReadExt, WriteExt, Decodable, Encodable, VarInt, serialize, deserialize, MAX_VEC_SIZE};
 use crate::psbt::Error;
 
@@ -125,7 +125,7 @@ impl Serialize for Pair {
 
 impl Deserialize for Pair {
     fn deserialize(bytes: &[u8]) -> Result<Self, encode::Error> {
-        let mut decoder = Cursor::new(bytes);
+        let mut decoder = bytes;
         Pair::decode(&mut decoder)
     }
 }
