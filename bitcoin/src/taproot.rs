@@ -750,6 +750,8 @@ impl ScriptLeaf {
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
+#[cfg_attr(feature = "serde", serde(into = "Vec<TapNodeHash>"))]
+#[cfg_attr(feature = "serde", serde(try_from = "Vec<TapNodeHash>"))]
 pub struct TaprootMerkleBranch(Vec<TapNodeHash>);
 
 impl TaprootMerkleBranch {
@@ -869,6 +871,10 @@ macro_rules! impl_try_from_array {
 // The reason zero is included is that `TaprootMerkleBranch` doesn't contain the hash of the node
 // that's being proven - it's not needed because the script is already right before control block.
 impl_try_from_array!(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128);
+
+impl From<TaprootMerkleBranch> for Vec<TapNodeHash> {
+    fn from(branch: TaprootMerkleBranch) -> Self { branch.0 }
+}
 
 /// Control block data structure used in Tapscript satisfaction.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -1265,7 +1271,11 @@ mod test {
     extern crate serde_json;
 
     #[cfg(feature = "serde")]
-    use serde_test::{assert_tokens, Token};
+    use {
+        crate::internal_macros::hex,
+        serde_test::Configure,
+        serde_test::{assert_tokens, Token},
+    };
 
     fn tag_engine(tag_name: &str) -> sha256::HashEngine {
         let mut engine = sha256::Hash::engine();
@@ -1532,6 +1542,26 @@ mod test {
         let json = serde_json::to_string(&leaf_version).unwrap();
         let leaf_version2 = serde_json::from_str(&json).unwrap();
         assert_eq!(leaf_version, leaf_version2);
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn test_merkle_branch_serde() {
+        let dummy_hash = hex!("03ba2a4dcd914fed29a1c630c7e811271b081a0e2f2f52cf1c197583dfd46c1b");
+        let hash1 = TapNodeHash::from_slice(&dummy_hash).unwrap();
+        let dummy_hash = hex!("8d79dedc2fa0b55167b5d28c61dbad9ce1191a433f3a1a6c8ee291631b2c94c9");
+        let hash2 = TapNodeHash::from_slice(&dummy_hash).unwrap();
+        let merkle_branch = TaprootMerkleBranch::from_collection(vec![hash1, hash2]).unwrap();
+        // use serde_test to test serialization and deserialization
+        serde_test::assert_tokens(
+            &merkle_branch.readable(),
+            &[
+                Token::Seq { len: Some(2) },
+                Token::Str("03ba2a4dcd914fed29a1c630c7e811271b081a0e2f2f52cf1c197583dfd46c1b"),
+                Token::Str("8d79dedc2fa0b55167b5d28c61dbad9ce1191a433f3a1a6c8ee291631b2c94c9"),
+                Token::SeqEnd,
+            ],
+        );
     }
 
     #[test]
