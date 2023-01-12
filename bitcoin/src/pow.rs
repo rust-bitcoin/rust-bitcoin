@@ -537,7 +537,7 @@ impl U256 {
             ret = ret.wrapping_add(mul_res << (64 * i));
         }
 
-        let to_mul = (rhs >> (192)).low_u64();
+        let to_mul = (rhs >> 192).low_u64();
         let (mul_res, overflow) = self.mul_u64(to_mul);
         ret_overflow |= overflow;
         let (sum, overflow) = ret.overflowing_add(mul_res);
