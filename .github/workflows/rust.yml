@@ -20,7 +20,7 @@ jobs:
           DO_LINT: true
           AS_DEPENDENCY: false
           DO_NO_STD: true
-          DO_FEATURE_MATRIX: true # Currently only used in hashes crate.
+          DO_FEATURE_MATRIX: true
           DO_SCHEMARS_TESTS: true # Currently only used in hashes crate.
         run: ./contrib/test.sh
 
@@ -70,7 +70,7 @@ jobs:
         uses: dtolnay/rust-toolchain@1.41.1
       - name: Running test script
         env:
-          DO_FEATURE_MATRIX: true # Currently only used in hashes crate.
+          DO_FEATURE_MATRIX: true
         run: ./contrib/test.sh
 
   NoStd:
