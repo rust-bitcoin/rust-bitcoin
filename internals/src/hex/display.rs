@@ -112,7 +112,7 @@ impl<'a> DisplayHex for &'a [u8] {
 }
 
 #[cfg(feature = "alloc")]
-#[cfg_attr(docsrs, doc(feature = "alloc"))]
+#[cfg_attr(docsrs, doc(cfg(feature = "alloc")))]
 impl<'a> DisplayHex for &'a alloc::vec::Vec<u8> {
     type Display = DisplayByteSlice<'a>;
 
@@ -130,7 +130,7 @@ impl<'a> DisplayHex for &'a alloc::vec::Vec<u8> {
 
 /// Displays byte slice as hex.
 ///
-/// Created by [`<&[u8] as DisplayHex>::display_hex`](DisplayHex::display_hex).
+/// Created by [`<&[u8] as DisplayHex>::as_hex`](DisplayHex::as_hex).
 pub struct DisplayByteSlice<'a> {
     // pub because we want to keep lengths in sync
     pub(crate) bytes: &'a [u8],
@@ -166,7 +166,7 @@ impl<'a> fmt::UpperHex for DisplayByteSlice<'a> {
 
 /// Displays byte array as hex.
 ///
-/// Created by [`<&[u8; LEN] as DisplayHex>::display_hex`](DisplayHex::display_hex).
+/// Created by [`<&[u8; LEN] as DisplayHex>::as_hex`](DisplayHex::as_hex).
 pub struct DisplayArray<A: Clone + IntoIterator, B: FixedLenBuf> where A::Item: Borrow<u8> {
     array: A,
     _buffer_marker: core::marker::PhantomData<B>,
