@@ -6,7 +6,7 @@
 //! library is used with the `secp-recovery` feature.
 //!
 
-use hashes::{sha256d, Hash, HashEngine};
+use hashes::{sha256d, Hash, HashEngine, RawHash};
 
 use crate::consensus::{encode, Encodable};
 
@@ -203,7 +203,7 @@ pub fn signed_msg_hash(msg: &str) -> sha256d::Hash {
     let msg_len = encode::VarInt::from(msg.len());
     msg_len.consensus_encode(&mut engine).expect("engines don't error");
     engine.input(msg.as_bytes());
-    sha256d::Hash::from_engine(engine)
+    engine.finalize()
 }
 
 #[cfg(test)]

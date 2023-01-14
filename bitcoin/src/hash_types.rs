@@ -25,6 +25,7 @@ macro_rules! impl_hashencode {
         }
     };
 }
+pub(crate) use impl_hashencode;
 
 #[rustfmt::skip]
 macro_rules! impl_asref_push_bytes {
@@ -58,40 +59,9 @@ mod newtypes {
     use hashes::{sha256d, hash_newtype};
 
     hash_newtype! {
-        /// A bitcoin transaction hash/transaction ID.
-        ///
-        /// For compatibility with the existing Bitcoin infrastructure and historical
-        /// and current versions of the Bitcoin Core software itself, this and
-        /// other [`sha256d::Hash`] types, are serialized in reverse
-        /// byte order when converted to a hex string via [`std::fmt::Display`] trait operations.
-        /// See [`hashes::Hash::DISPLAY_BACKWARD`] for more details.
-        pub struct Txid(sha256d::Hash); 
-
-        /// A bitcoin witness transaction ID.
-        pub struct Wtxid(sha256d::Hash);
-        /// A bitcoin block hash.
-        pub struct BlockHash(sha256d::Hash);
-
-        /// A hash of the Merkle tree branch or root for transactions
-        pub struct TxMerkleNode(sha256d::Hash);
         /// A hash corresponding to the Merkle tree root for witness data
         pub struct WitnessMerkleNode(sha256d::Hash);
-        /// A hash corresponding to the witness structure commitment in the coinbase transaction
-        pub struct WitnessCommitment(sha256d::Hash);
-
-        /// Filter hash, as defined in BIP-157
-        pub struct FilterHash(sha256d::Hash);
-        /// Filter header, as defined in BIP-157
-        pub struct FilterHeader(sha256d::Hash);
     }
 
-    impl_hashencode!(Txid);
-    impl_hashencode!(Wtxid);
-    impl_hashencode!(BlockHash);
-
-    impl_hashencode!(TxMerkleNode);
     impl_hashencode!(WitnessMerkleNode);
-
-    impl_hashencode!(FilterHash);
-    impl_hashencode!(FilterHeader);
 }

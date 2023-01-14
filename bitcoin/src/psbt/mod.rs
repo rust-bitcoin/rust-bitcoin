@@ -1002,7 +1002,7 @@ pub use self::display_from_str::PsbtParseError;
 mod tests {
     use std::collections::BTreeMap;
 
-    use hashes::{hash160, ripemd160, sha256, Hash};
+    use hashes::{hash160, ripemd160, sha256, Hash, RawHash};
     use hex::{test_hex_unwrap as hex, FromHex};
     use secp256k1::{self, Secp256k1};
     #[cfg(feature = "rand-std")]
@@ -2078,7 +2078,7 @@ mod tests {
         // First input we can spend. See comment above on key_map for why we use defaults here.
         let txout_wpkh = TxOut {
             value: Amount::from_sat(10),
-            script_pubkey: ScriptBuf::new_p2wpkh(&WPubkeyHash::hash(&pk.to_bytes())),
+            script_pubkey: ScriptBuf::new_p2wpkh(&pk.wpubkey_hash().unwrap()),
         };
         psbt.inputs[0].witness_utxo = Some(txout_wpkh);
 

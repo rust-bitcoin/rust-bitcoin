@@ -10,23 +10,34 @@
 
 use core::fmt;
 
-use hashes::{Hash, HashEngine};
+use hashes::{Hash, RawHash, HashEngine, hash_newtype, sha256d};
 
 use super::Weight;
 use crate::blockdata::script;
-use crate::blockdata::transaction::Transaction;
+use crate::blockdata::transaction::{Transaction, Wtxid};
 use crate::consensus::{encode, Decodable, Encodable};
-use crate::hash_types::{TxMerkleNode, WitnessCommitment, WitnessMerkleNode, Wtxid};
+use crate::merkle_tree::TxMerkleNode;
+use crate::hash_types::WitnessMerkleNode;
 use crate::internal_macros::impl_consensus_encoding;
 use crate::pow::{CompactTarget, Target, Work};
 use crate::prelude::*;
 use crate::{io, merkle_tree, Network, VarInt};
 
-#[rustfmt::skip]                // Keep public re-exports separate.
-#[doc(inline)]
-pub use crate::{
-    hash_types::BlockHash,
-};
+hash_newtype! {
+    /// A bitcoin block hash.
+    pub struct BlockHash(sha256d::Hash);
+
+    /// A hash corresponding to the witness structure commitment in the coinbase transaction
+    pub struct WitnessCommitment(sha256d::Hash);
+}
+crate::hash_types::impl_hashencode!(BlockHash);
+
+impl BlockHash {
+    /// Creates an all-zeros block hash used in the genesis block.
+    pub fn all_zeros() -> Self {
+        BlockHash(sha256d::Hash::all_zeros())
+    }
+}
 
 /// Bitcoin block header.
 ///
@@ -67,7 +78,7 @@ impl Header {
     pub fn block_hash(&self) -> BlockHash {
         let mut engine = BlockHash::engine();
         self.consensus_encode(&mut engine).expect("engines don't error");
-        BlockHash::from_engine(engine)
+        BlockHash(engine.finalize())
     }
 
     /// Computes the target (range [0, T] inclusive) that a blockhash must land in to be valid.
@@ -285,7 +296,7 @@ impl Block {
         let mut encoder = WitnessCommitment::engine();
         witness_root.consensus_encode(&mut encoder).expect("engines don't error");
         encoder.input(witness_reserved_value);
-        WitnessCommitment::from_engine(encoder)
+        WitnessCommitment(encoder.finalize())
     }
 
     /// Computes the merkle root of transactions hashed for witness.
@@ -293,10 +304,10 @@ impl Block {
         let hashes = self.txdata.iter().enumerate().map(|(i, t)| {
             if i == 0 {
                 // Replace the first hash with zeroes.
-                Wtxid::all_zeros().to_raw_hash()
+                Wtxid::all_zeros()
             } else {
-                t.wtxid().to_raw_hash()
-            }
+                t.wtxid()
+            }.to_raw_hash()
         });
         merkle_tree::calculate_root(hashes).map(|h| h.into())
     }

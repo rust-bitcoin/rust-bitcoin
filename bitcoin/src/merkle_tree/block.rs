@@ -12,9 +12,8 @@
 //! # Examples
 //!
 //! ```rust
-//! use bitcoin::hash_types::Txid;
 //! use bitcoin::hex::FromHex;
-//! use bitcoin::{Block, MerkleBlock};
+//! use bitcoin::{Block, MerkleBlock, Txid};
 //!
 //! // Get the proof from a bitcoind by running in the terminal:
 //! // $ TXID="5a4ebf66822b0b2d56bd9dc64ece0bc38ee7844a23ff1d7320a88c5fdb2ad3e2"
@@ -40,14 +39,13 @@
 
 use core::fmt;
 
-use hashes::Hash;
+use hashes::{Hash, HashEngine, sha256d, hash_newtype};
 
 use self::MerkleBlockError::*;
 use crate::blockdata::block::{self, Block};
-use crate::blockdata::transaction::Transaction;
+use crate::blockdata::transaction::{Transaction, Txid};
 use crate::blockdata::weight::Weight;
 use crate::consensus::encode::{self, Decodable, Encodable};
-use crate::hash_types::{TxMerkleNode, Txid};
 use crate::io;
 use crate::prelude::*;
 
@@ -62,6 +60,11 @@ pub struct MerkleBlock {
     /// Transactions making up a partial merkle tree
     pub txn: PartialMerkleTree,
 }
+hash_newtype! {
+    /// A hash of the Merkle tree branch or root for transactions.
+    pub struct TxMerkleNode(sha256d::Hash);
+}
+crate::hash_types::impl_hashencode!(TxMerkleNode);
 
 impl MerkleBlock {
     /// Create a MerkleBlock from a block, that contains proofs for specific txids.
@@ -72,7 +75,7 @@ impl MerkleBlock {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin::hash_types::Txid;
+    /// use bitcoin::Txid;
     /// use bitcoin::hex::FromHex;
     /// use bitcoin::{Block, MerkleBlock};
     ///
@@ -222,7 +225,7 @@ impl PartialMerkleTree {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin::hash_types::Txid;
+    /// use bitcoin::Txid;
     /// use bitcoin::hex::FromHex;
     /// use bitcoin::merkle_tree::{MerkleBlock, PartialMerkleTree};
     ///
@@ -430,7 +433,7 @@ impl PartialMerkleTree {
         let mut encoder = TxMerkleNode::engine();
         left.consensus_encode(&mut encoder).expect("engines don't error");
         right.consensus_encode(&mut encoder).expect("engines don't error");
-        TxMerkleNode::from_engine(encoder)
+        TxMerkleNode(encoder.finalize())
     }
 }
 
@@ -542,7 +545,7 @@ mod tests {
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
     #[cfg(feature = "rand-std")]
-    use crate::hash_types::TxMerkleNode;
+    use crate::merkle_tree::TxMerkleNode;
     use crate::{Block, Txid};
 
     #[cfg(feature = "rand-std")]
@@ -639,7 +642,7 @@ mod tests {
 
             // Check that it has the same merkle root as the original, and a valid one
             assert_eq!(merkle_root_1, merkle_root_2);
-            assert_ne!(merkle_root_2, TxMerkleNode::all_zeros());
+            assert_ne!(merkle_root_2.to_byte_array(), [0; 32]);
 
             // check that it contains the matched transactions (in the same order!)
             assert_eq!(match_txid1, match_txid2);

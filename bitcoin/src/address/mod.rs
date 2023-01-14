@@ -34,7 +34,7 @@ use core::marker::PhantomData;
 use core::str::FromStr;
 
 use bech32::primitives::hrp::{self, Hrp};
-use hashes::{sha256, Hash, HashEngine};
+use hashes::{sha256, Hash, HashEngine, RawHash};
 use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
 
 use crate::base58;
@@ -1116,8 +1116,8 @@ mod tests {
     #[test]
     fn test_valid_networks() {
         let legacy_payload = &[
-            Payload::PubkeyHash(PubkeyHash::all_zeros()),
-            Payload::ScriptHash(ScriptHash::all_zeros()),
+            Payload::PubkeyHash(PubkeyHash::from_byte_array(Default::default())),
+            Payload::ScriptHash(ScriptHash::from_byte_array(Default::default())),
         ];
         let segwit_payload = (0..=16)
             .map(|version| {

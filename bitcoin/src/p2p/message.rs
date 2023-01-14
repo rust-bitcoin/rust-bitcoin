@@ -9,7 +9,7 @@
 use core::convert::TryFrom;
 use core::{fmt, iter};
 
-use hashes::{sha256d, Hash};
+use hashes::{sha256d, Hash, RawHash};
 use io::Read as _;
 
 use crate::blockdata::{block, transaction};
