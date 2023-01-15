@@ -224,6 +224,7 @@ impl Target {
     ///
     /// Proof-of-work validity for a block requires the hash of the block to be less than or equal
     /// to the target.
+    #[cfg_attr(all(test, mutate), mutate)]
     pub fn is_met_by(&self, hash: BlockHash) -> bool {
         use crate::hashes::Hash;
         let hash = U256::from_le_bytes(hash.into_inner());
@@ -257,6 +258,7 @@ impl Target {
     ///
     /// [max]: Target::max
     /// [target]: crate::blockdata::block::Header::target
+    #[cfg_attr(all(test, mutate), mutate)]
     pub fn difficulty(&self) -> u128 {
         let d = Target::MAX.0 / self.0;
         d.saturating_to_u128()
@@ -390,6 +392,7 @@ impl U256 {
     #[cfg_attr(all(test, mutate), mutate)]
     fn is_one(&self) -> bool { self.0 == 0 && self.1 == 1 }
 
+    #[cfg_attr(all(test, mutate), mutate)]
     fn is_max(&self) -> bool { self.0 == u128::max_value() && self.1 == u128::max_value() }
 
     /// Returns the low 32 bits.
@@ -402,6 +405,7 @@ impl U256 {
     fn low_u128(&self) -> u128 { self.1 }
 
     /// Returns `self` as a `u128` saturating to `u128::MAX` if `self` is too big.
+    // Matagen gives false positive because >= and > both return u128::MAX
     fn saturating_to_u128(&self) -> u128 {
         if *self > U256::from(u128::max_value()) {
             u128::max_value()
@@ -411,6 +415,7 @@ impl U256 {
     }
 
     /// Returns the least number of bits needed to represent the number.
+    #[cfg_attr(all(test, mutate), mutate)]
     fn bits(&self) -> u32 {
         if self.0 > 0 {
             256 - self.0.leading_zeros()
@@ -425,6 +430,7 @@ impl U256 {
     ///
     /// The multiplication result along with a boolean indicating whether an arithmetic overflow
     /// occurred. If an overflow occurred then the wrapped value is returned.
+    // mutagen false positive: binop_bit, replace `|` with `^`
     fn mul_u64(self, rhs: u64) -> (U256, bool) {
         let mut carry: u128 = 0;
         let mut split_le = [self.1 as u64, (self.1 >> 64) as u64, self.0 as u64, (self.0 >> 64) as u64];
@@ -452,6 +458,7 @@ impl U256 {
     /// # Panics
     ///
     /// If `rhs` is zero.
+    #[cfg_attr(all(test, mutate), mutate)]
     fn div_rem(self, rhs: Self) -> (Self, Self) {
         let mut sub_copy = self;
         let mut shift_copy = rhs;
@@ -491,6 +498,7 @@ impl U256 {
     /// Returns a tuple of the addition along with a boolean indicating whether an arithmetic
     /// overflow would occur. If an overflow would have occurred then the wrapped value is returned.
     #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[cfg_attr(all(test, mutate), mutate)]
     fn overflowing_add(self, rhs: Self) -> (Self, bool) {
         let mut ret = U256::ZERO;
         let mut ret_overflow = false;
@@ -515,6 +523,7 @@ impl U256 {
     /// Returns a tuple of the subtraction along with a boolean indicating whether an arithmetic
     /// overflow would occur. If an overflow would have occurred then the wrapped value is returned.
     #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[cfg_attr(all(test, mutate), mutate)]
     fn overflowing_sub(self, rhs: Self) -> (Self, bool) {
         let ret = self.wrapping_add(!rhs).wrapping_add(Self::ONE);
         let overflow = rhs > self;
@@ -527,6 +536,7 @@ impl U256 {
     /// indicating whether an arithmetic overflow would occur. If an
     /// overflow would have occurred then the wrapped value is returned.
     #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[cfg_attr(all(test, mutate), mutate)]
     fn overflowing_mul(self, rhs: Self) -> (Self, bool) {
         let mut ret = U256::ZERO;
         let mut ret_overflow = false;
@@ -537,7 +547,7 @@ impl U256 {
             ret = ret.wrapping_add(mul_res << (64 * i));
         }
 
-        let to_mul = (rhs >> (192)).low_u64();
+        let to_mul = (rhs >> 192).low_u64();
         let (mul_res, overflow) = self.mul_u64(to_mul);
         ret_overflow |= overflow;
         let (sum, overflow) = ret.overflowing_add(mul_res);
@@ -594,6 +604,7 @@ impl U256 {
     /// restricted to the range of the type, rather than the bits shifted out of the LHS being
     /// returned to the other end. We do not currently support `rotate_left`.
     #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[cfg_attr(all(test, mutate), mutate)]
     fn wrapping_shl(self, rhs: u32) -> Self {
         let shift = rhs & 0x000000ff;
 
@@ -620,6 +631,7 @@ impl U256 {
     /// restricted to the range of the type, rather than the bits shifted out of the LHS being
     /// returned to the other end. We do not currently support `rotate_right`.
     #[must_use = "this returns the result of the operation, without modifying the original"]
+    #[cfg_attr(all(test, mutate), mutate)]
     fn wrapping_shr(self, rhs: u32) -> Self {
         let shift = rhs & 0x000000ff;
 
@@ -942,6 +954,9 @@ mod tests {
         assert_eq!(U256::from(60000_u64).bits(), 16);
         assert_eq!(U256::from(70000_u64).bits(), 17);
 
+        let u = U256::from(u128::max_value()) << 1;
+        assert_eq!(u.bits(), 129);
+
         // Try to read the following lines out loud quickly
         let mut shl = U256::from(70000_u64);
         shl = shl << 100;
@@ -1199,7 +1214,11 @@ mod tests {
         assert_eq!(u << 1, U256::from(2_u64));
         assert_eq!(u << 63, U256::from(0x8000_0000_0000_0000_u64));
         assert_eq!(u << 64, U256::from_array([0, 0, 0x0000_0000_0000_0001, 0]));
+        assert_eq!(u << 127, U256(0, 0x8000_0000_0000_0000_0000_0000_0000_0000));
         assert_eq!(u << 128, U256(1, 0));
+
+        let x = U256(0, 0x8000_0000_0000_0000_0000_0000_0000_0000);
+        assert_eq!(x << 1, U256(1, 0));
     }
 
     #[test]
@@ -1207,6 +1226,7 @@ mod tests {
         let u = U256(1, 0);
         assert_eq!(u >> 0, u);
         assert_eq!(u >> 1, U256(0, 0x8000_0000_0000_0000_0000_0000_0000_0000));
+        assert_eq!(u >> 127, U256(0, 2));
         assert_eq!(u >> 128, U256(0, 1));
     }
 
@@ -1320,6 +1340,29 @@ mod tests {
     }
 
     #[test]
+    fn u256_addition() {
+        let x = U256::from(u128::max_value());
+        let (add, overflow) = x.overflowing_add(U256::ONE);
+        assert!(!overflow);
+        assert_eq!(add, U256(1, 0));
+
+        let (add, _) = add.overflowing_add(U256::ONE);
+        assert_eq!(add, U256(1, 1));
+    }
+
+    #[test]
+    fn u256_subtraction() {
+        let (sub, overflow) = U256::ONE.overflowing_sub(U256::ONE);
+        assert!(!overflow);
+        assert_eq!(sub, U256::ZERO);
+
+        let x = U256(1, 0);
+        let (sub, overflow) = x.overflowing_sub(U256::ONE);
+        assert!(!overflow);
+        assert_eq!(sub, U256::from(u128::max_value()));
+    }
+
+    #[test]
     fn u256_multiplication() {
         let u64_val = U256::from(0xDEAD_BEEF_DEAD_BEEF_u64);
 
@@ -1336,6 +1379,23 @@ mod tests {
                 0xF5CF_7F36_18C2_C886_F4E1_66AA_D40D_0A41,
             )
         );
+    }
+
+    #[test]
+    fn u256_multiplication_bits_in_each_word() {
+        // Put a digit in the least significant bit of each 64 bit word.
+        let u = 1_u128 << 64 | 1_u128;
+        let x = U256(u, u);
+
+        // Put a digit in the second least significant bit of each 64 bit word.
+        let u = 2_u128 << 64 | 2_u128;
+        let y = U256(u, u);
+
+        let (got, overflow) = x.overflowing_mul(y);
+
+        let want = U256(0x0000_0000_0000_0008_0000_0000_0000_0008, 0x0000_0000_0000_0006_0000_0000_0000_0004);
+        assert!(!overflow);
+        assert_eq!(got, want)
     }
 
     #[test]
@@ -1428,6 +1488,22 @@ mod tests {
     }
 
     #[test]
+    fn u256_is_max_correct_negative() {
+        let tc = vec![U256::ZERO, U256::ONE, U256::from(u128::max_value())];
+        for t in tc {
+            assert!(!t.is_max())
+        }
+    }
+
+    #[test]
+    fn u256_is_max_correct_positive() {
+        assert!(U256::MAX.is_max());
+
+        let u = u128::max_value();
+        assert!(((U256::from(u) << 128) + U256::from(u)).is_max());
+    }
+
+    #[test]
     fn compact_target_from_hex_str_happy_path() {
         let actual = CompactTarget::from_hex_str("0x01003456").unwrap();
         let expected = CompactTarget(0x01003456);
@@ -1465,6 +1541,16 @@ mod tests {
             let got = Target::from_compact(CompactTarget::from_consensus(n_bits));
             assert_eq!(got, want);
         }
+    }
+
+    #[test]
+    fn target_is_met_by_for_target_equals_hash() {
+        use std::str::FromStr;
+        use crate::hashes::Hash;
+
+        let hash = BlockHash::from_str("ef537f25c895bfa782526529a9b63d97aa631564d5d789c2b765448c8635fb6c").expect("failed to parse block hash");
+        let target = Target(U256::from_le_bytes(hash.into_inner()));
+        assert!(target.is_met_by(hash));
     }
 
     #[test]
@@ -1568,8 +1654,8 @@ mod tests {
     fn u256_overflowing_subtraction_panics() { let _ = U256::ZERO - U256::ONE; }
 
     // We only test with test case value on the right hand side of the multiplication but that
-    // should be enough coverage since we call the same underlying method to do multiplication the
-    // sides inverted.
+    // should be enough coverage since we call the same underlying method to do multiplication with
+    // the sides inverted.
     macro_rules! test_u256_multiplication_panics {
         ($($test_name:ident, $x:expr);* $(;)?) => {
             $(
