@@ -119,7 +119,7 @@ impl PartiallySignedTransaction {
                                     });
 
                                     if decoder.position() != vlen as u64 {
-                                        return Err(Error::ParseFailed("data not consumed entirely when explicitly deserializing"))
+                                        return Err(Error::PartialDataConsumption)
                                     }
                                 } else {
                                     return Err(Error::DuplicateKey(pair.key))
@@ -131,18 +131,18 @@ impl PartiallySignedTransaction {
                         PSBT_GLOBAL_XPUB => {
                             if !pair.key.key.is_empty() {
                                 let xpub = ExtendedPubKey::decode(&pair.key.key)
-                                    .map_err(|_| Error::ParseFailed(
+                                    .map_err(|_| Error::XPubKey(
                                         "Can't deserialize ExtendedPublicKey from global XPUB key data"
                                     ))?;
 
                                 if pair.value.is_empty() || pair.value.len() % 4 != 0 {
-                                    return Err(Error::ParseFailed("Incorrect length of global xpub derivation data"))
+                                    return Err(Error::XPubKey("Incorrect length of global xpub derivation data"))
                                 }
 
                                 let child_count = pair.value.len() / 4 - 1;
                                 let mut decoder = Cursor::new(pair.value);
                                 let mut fingerprint = [0u8; 4];
-                                decoder.read_exact(&mut fingerprint[..]).map_err(|_| Error::ParseFailed("Can't read global xpub fingerprint"))?;
+                                decoder.read_exact(&mut fingerprint[..]).map_err(|_| Error::XPubKey("Can't read global xpub fingerprint"))?;
                                 let mut path = Vec::<ChildNumber>::with_capacity(child_count);
                                 while let Ok(index) = u32::consensus_decode(&mut decoder) {
                                     path.push(ChildNumber::from(index))
@@ -150,10 +150,10 @@ impl PartiallySignedTransaction {
                                 let derivation = DerivationPath::from(path);
                                 // Keys, according to BIP-174, must be unique
                                 if xpub_map.insert(xpub, (Fingerprint::from(fingerprint), derivation)).is_some() {
-                                    return Err(Error::ParseFailed("Repeated global xpub key"))
+                                    return Err(Error::XPubKey("Repeated global xpub key"))
                                 }
                             } else {
-                                return Err(Error::ParseFailed("Xpub global key must contain serialized Xpub data"))
+                                return Err(Error::XPubKey("Xpub global key must contain serialized Xpub data"))
                             }
                         }
                         PSBT_GLOBAL_VERSION => {
@@ -164,13 +164,13 @@ impl PartiallySignedTransaction {
                                     let vlen: usize = pair.value.len();
                                     let mut decoder = Cursor::new(pair.value);
                                     if vlen != 4 {
-                                        return Err(Error::ParseFailed("Wrong global version value length (must be 4 bytes)"))
+                                        return Err(Error::Version("invalid global version value length (must be 4 bytes)"))
                                     }
                                     version = Some(Decodable::consensus_decode(&mut decoder)?);
                                     // We only understand version 0 PSBTs. According to BIP-174 we
                                     // should throw an error if we see anything other than version 0.
                                     if version != Some(0) {
-                                        return Err(Error::ParseFailed("PSBT versions greater than 0 are not supported"))
+                                        return Err(Error::Version("PSBT versions greater than 0 are not supported"))
                                     }
                                 } else {
                                     return Err(Error::DuplicateKey(pair.key))

@@ -72,14 +72,34 @@ pub enum Error {
     /// Conflicting data during combine procedure:
     /// global extended public key has inconsistent key sources
     CombineInconsistentKeySources(Box<ExtendedPubKey>),
-    /// Parsing error.
-    ParseFailed(&'static str),
     /// Serialization error in bitcoin consensus-encoded structures
     ConsensusEncoding,
     /// Negative fee
     NegativeFee,
     /// Integer overflow in fee calculation
     FeeOverflow,
+    /// Parsing error indicating invalid public keys
+    InvalidPublicKey(crate::crypto::key::Error),
+    /// Parsing error indicating invalid secp256k1 public keys
+    InvalidSecp256k1PublicKey(secp256k1::Error),
+    /// Parsing error indicating invalid xonly public keys
+    InvalidXOnlyPublicKey,
+    /// Parsing error indicating invalid ECDSA signatures
+    InvalidEcdsaSignature(crate::crypto::ecdsa::Error),
+    /// Parsing error indicating invalid Schnorr signatures
+    InvalidSchnorrSignature(crate::crypto::schnorr::Error),
+    /// Parsing error indicating invalid control block
+    InvalidControlBlock,
+    /// Parsing error indicating invalid leaf version
+    InvalidLeafVersion,
+    /// Parsing error indicating a Taproot error
+    Taproot(&'static str),
+    /// Error related to an xpub key
+    XPubKey(&'static str),
+    /// Error related to PSBT version
+    Version(&'static str),
+    /// PSBT data is not consumed entirely
+    PartialDataConsumption,
 }
 
 impl fmt::Display for Error {
@@ -106,11 +126,20 @@ impl fmt::Display for Error {
                 write!(f, "Preimage {:?} does not match {:?} hash {:?}", preimage, hash_type, hash )
             },
             Error::CombineInconsistentKeySources(ref s) => { write!(f, "combine conflict: {}", s) },
-            Error::ParseFailed(ref s) => write!(f, "parse failed: {}", s),
             Error::ConsensusEncoding => f.write_str("bitcoin consensus or BIP-174 encoding error"),
             Error::NegativeFee => f.write_str("PSBT has a negative fee which is not allowed"),
             Error::FeeOverflow => f.write_str("integer overflow in fee calculation"),
-
+            Error::InvalidPublicKey(ref e) => write_err!(f, "invalid public key"; e),
+            Error::InvalidSecp256k1PublicKey(ref e) => write_err!(f, "invalid secp256k1 public key"; e),
+            Error::InvalidXOnlyPublicKey => f.write_str("invalid xonly public key"),
+            Error::InvalidEcdsaSignature(ref e) => write_err!(f, "invalid ECDSA signature"; e),
+            Error::InvalidSchnorrSignature(ref e) => write_err!(f, "invalid Schnorr signature"; e),
+            Error::InvalidControlBlock => f.write_str("invalid control block"),
+            Error::InvalidLeafVersion => f.write_str("invalid leaf version"),
+            Error::Taproot(s) => write!(f, "taproot error -  {}", s),
+            Error::XPubKey(s) => write!(f, "xpub key error -  {}", s),
+            Error::Version(s) => write!(f, "version error {}", s),
+            Error::PartialDataConsumption => f.write_str("data not consumed entirely when explicitly deserializing"),
         }
     }
 }
@@ -138,10 +167,20 @@ impl std::error::Error for Error {
             | NonStandardSighashType(_)
             | InvalidPreimageHashPair{ .. }
             | CombineInconsistentKeySources(_)
-            | ParseFailed(_)
             | ConsensusEncoding
             | NegativeFee
-            | FeeOverflow => None,
+            | FeeOverflow
+            | InvalidPublicKey(_)
+            | InvalidSecp256k1PublicKey(_)
+            | InvalidXOnlyPublicKey
+            | InvalidEcdsaSignature(_)
+            | InvalidSchnorrSignature(_)
+            | InvalidControlBlock
+            | InvalidLeafVersion
+            | Taproot(_)
+            | XPubKey(_)
+            | Version(_)
+            | PartialDataConsumption=> None
         }
     }
 }
