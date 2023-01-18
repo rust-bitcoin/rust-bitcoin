@@ -131,7 +131,10 @@ where T::Engine: io::Write
 pub fn calculate_root_light<T: Hash + Encodable>(hashes: impl Iterator<Item = T>) -> Option<T>
 where T::Engine: io::Write
 {
-    hashes.map(|v| HashNode(v)).bin_tree().map(|h| h.0)
+    let it =hashes.map(|v| HashNode(v));
+    let hint = it.size_hint();
+    println!("{hint:?}");
+    it.bin_tree().map(|h| h.0)
 }
 
 #[cfg(test)]
