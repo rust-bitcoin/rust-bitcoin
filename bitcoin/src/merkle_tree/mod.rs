@@ -19,6 +19,7 @@ mod block;
 use core::cmp::min;
 use core::iter;
 
+use bin_tree::{BinTree, Node};
 pub use block::{MerkleBlock, MerkleBlockError, PartialMerkleTree};
 
 use crate::consensus::encode::Encodable;
@@ -108,8 +109,35 @@ where
     merkle_root_r(&mut hashes[0..half_len])
 }
 
+#[repr(transparent)]
+struct HashNode<T>(T);
+
+impl<T: Hash + Encodable> Node for HashNode<T>
+where T::Engine: io::Write
+{
+    fn new2(&self, right: &Self) -> Self {
+        let mut encoder = T::engine();
+        self.0.consensus_encode(&mut encoder).expect("in-memory writers don't error");
+        right.0.consensus_encode(&mut encoder).expect("in-memory writers don't error");
+        HashNode(T::from_engine(encoder))
+    }
+
+    fn new1(&self) -> Self {
+        self.new2(self)
+    }
+}
+
+/// Calculates the merkle root of an iterator of *hashes*.
+pub fn calculate_root_light<T: Hash + Encodable>(hashes: impl Iterator<Item = T>) -> Option<T>
+where T::Engine: io::Write
+{
+    hashes.map(|v| HashNode(v)).bin_tree().map(|h| h.0)
+}
+
 #[cfg(test)]
 mod tests {
+    use std::time::Instant;
+
     use super::*;
     use crate::blockdata::block::Block;
     use crate::consensus::encode::deserialize;
@@ -129,8 +157,53 @@ mod tests {
             hashes_array[i] = hash;
         }
 
-        let from_iter = calculate_root(hashes_iter);
+        let from_iter = {
+            let before = Instant::now();
+            let from_iter = calculate_root(hashes_iter);
+            let delta = (Instant::now() - before).as_secs_f64();
+            println!("calculate_root: {delta} s");
+            from_iter
+        };
+
         let from_array = calculate_root_inline(&mut hashes_array);
         assert_eq!(from_iter, from_array);
+
+        let iter = block.txdata.iter().map(|obj| obj.txid().as_hash());
+        let from_light = {
+            let before = Instant::now();
+            let from_light = calculate_root_light(iter);
+            let delta = (Instant::now() - before).as_secs_f64();
+            println!("calculate_root: {delta} s");
+            from_light
+        };
+        assert_eq!(from_light, from_iter);
+    }
+
+    #[test]
+    fn benchmark_merkle_root_functions() {
+        // testnet block 000000000000045e0b1660b6445b5e5c5ab63c9a4f956be7e1e69be04fa4497b
+        let segwit_block = include_bytes!("../../tests/data/mainnet_block_000000000000000000000c835b2adcaedc20fdf6ee440009c249452c726dafae.raw");
+        let block: Block = deserialize(&segwit_block[..]).expect("Failed to deserialize block");
+        assert!(block.check_merkle_root()); // Sanity check.
+
+        let hashes_iter = block.txdata.iter().map(|obj| obj.txid().as_hash());
+
+        let from_iter = {
+            let before = Instant::now();
+            let from_iter = calculate_root(hashes_iter);
+            let delta = (Instant::now() - before).as_secs_f64();
+            println!("calculate_root: {delta} s");
+            from_iter
+        };
+
+        let iter = block.txdata.iter().map(|obj| obj.txid().as_hash());
+        let from_light = {
+            let before = Instant::now();
+            let from_light = calculate_root_light(iter);
+            let delta = (Instant::now() - before).as_secs_f64();
+            println!("calculate_root_light: {delta} s");
+            from_light
+        };
+        assert_eq!(from_light, from_iter);
     }
 }
