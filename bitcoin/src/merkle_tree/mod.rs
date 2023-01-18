@@ -189,20 +189,21 @@ mod tests {
         let block: Block = deserialize(&segwit_block[..]).expect("Failed to deserialize block");
         assert!(block.check_merkle_root()); // Sanity check.
 
-        let hashes_iter = block.txdata.iter().map(|obj| obj.txid().as_hash());
+        let hashes_iter = || block.txdata.iter().map(|obj| obj.txid().as_hash());
+
+        let collection = (0..1000).flat_map(|_| hashes_iter()).collect::<Vec<_>>();
 
         let from_iter = {
             let before = Instant::now();
-            let from_iter = calculate_root(hashes_iter);
+            let from_iter = calculate_root(collection.iter().map(|v| *v));
             let delta = (Instant::now() - before).as_secs_f64();
             println!("calculate_root: {delta} s");
             from_iter
         };
 
-        let iter = block.txdata.iter().map(|obj| obj.txid().as_hash());
         let from_light = {
             let before = Instant::now();
-            let from_light = calculate_root_light(iter);
+            let from_light = calculate_root_light(collection.iter().map(|v| *v));
             let delta = (Instant::now() - before).as_secs_f64();
             println!("calculate_root_light: {delta} s");
             from_light
