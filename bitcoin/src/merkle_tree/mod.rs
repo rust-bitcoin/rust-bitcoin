@@ -210,4 +210,33 @@ mod tests {
         };
         assert_eq!(from_light, from_iter);
     }
+
+    #[test]
+    fn benchmark_merkle_root_functions_without_size_hint() {
+        // testnet block 000000000000045e0b1660b6445b5e5c5ab63c9a4f956be7e1e69be04fa4497b
+        let segwit_block = include_bytes!("../../tests/data/mainnet_block_000000000000000000000c835b2adcaedc20fdf6ee440009c249452c726dafae.raw");
+        let block: Block = deserialize(&segwit_block[..]).expect("Failed to deserialize block");
+        assert!(block.check_merkle_root()); // Sanity check.
+
+        let hashes_iter = || block.txdata.iter().map(|obj| obj.txid().as_hash());
+
+        let collection = || (0..1000).flat_map(|_| hashes_iter());
+
+        let from_iter = {
+            let before = Instant::now();
+            let from_iter = calculate_root(collection());
+            let delta = (Instant::now() - before).as_secs_f64();
+            println!("calculate_root: {delta} s");
+            from_iter
+        };
+
+        let from_light = {
+            let before = Instant::now();
+            let from_light = calculate_root_light(collection());
+            let delta = (Instant::now() - before).as_secs_f64();
+            println!("calculate_root_light: {delta} s");
+            from_light
+        };
+        assert_eq!(from_light, from_iter);
+    }
 }
