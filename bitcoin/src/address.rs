@@ -848,10 +848,20 @@ impl Address {
 	self.address_type_internal()
     }
 
+    /// Checks whether or not the address is following Bitcoin standardness rules when
+    /// *spending* from this address. This method should *NOT* called by senders. For forward
+    /// compatibility, the senders must send to any [`Address`]. Receivers can use this method to
+    /// check whether or not they can spend from this address.
+    ///
+    /// SegWit addresses with unassigned witness versions or non-standard program sizes are
+    /// considered non-standard.
+    pub fn is_spend_standard(&self) -> bool { self.address_type().is_some() }
+
     /// Checks whether or not the address is following Bitcoin standardness rules.
     ///
     /// SegWit addresses with unassigned witness versions or non-standard program sizes are
     /// considered non-standard.
+    #[deprecated(since = "0.30.0", note = "Use Address::is_spend_standard instead")]
     pub fn is_standard(&self) -> bool { self.address_type().is_some() }
 
     /// Constructs an [`Address`] from an output script (`scriptPubkey`).
