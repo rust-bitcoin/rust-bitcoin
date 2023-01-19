@@ -40,10 +40,11 @@ bitcoin-internals = { path = "../internals" }
 bech32 = { version = "0.9.0", default-features = false }
 bitcoin_hashes = { version = "0.11.0", default-features = false }
 secp256k1 = { version = "0.25.0", default-features = false, features = ["bitcoin_hashes"] }
-core2 = { version = "0.3.0", optional = true, default-features = false }
 
 base64 = { version = "0.13.0", optional = true }
 bitcoinconsensus = { version = "0.20.2-0.5.0", optional = true, default-features = false }
+# You probably want to use "no-std" instead of using "core2" directly - unless you specifically do not want to use an allocator.
+core2 = { version = "0.3.0", default-features = false, optional = true }
 # Do NOT use this as a feature! Use the `serde` feature instead.
 actual-serde = { package = "serde", version = "1.0.103", default-features = false, features = [ "derive", "alloc" ], optional = true }
 
