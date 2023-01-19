@@ -7,7 +7,7 @@
 
 use core::fmt;
 
-use bitcoin_internals::write_err;
+use internals::write_err;
 
 use crate::prelude::String;
 

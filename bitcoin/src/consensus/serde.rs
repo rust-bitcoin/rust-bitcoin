@@ -33,7 +33,7 @@ impl<C: hex::Case> ByteEncoder for Hex<C> {
 pub mod hex {
     use core::fmt;
     use core::marker::PhantomData;
-    use bitcoin_internals as internals;
+    use internals as internals;
     use internals::hex::BufEncoder;
 
     /// Marker for upper/lower case type-level flags ("type-level enum").
@@ -48,7 +48,7 @@ pub mod hex {
     pub enum Upper {}
 
     mod sealed {
-        use bitcoin_internals as internals;
+        use internals as internals;
 
         pub trait Case {
             /// Internal detail, don't depend on it!!!

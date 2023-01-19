@@ -33,7 +33,7 @@ use core::marker::PhantomData;
 use core::str::FromStr;
 
 use bech32;
-use bitcoin_internals::write_err;
+use internals::write_err;
 use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
 
 use crate::base58;

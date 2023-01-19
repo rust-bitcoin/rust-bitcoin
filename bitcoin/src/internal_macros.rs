@@ -135,14 +135,14 @@ macro_rules! impl_bytes_newtype {
 
         impl core::fmt::LowerHex for $t {
             fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-                use bitcoin_internals::hex::{Case, display};
+                use internals::hex::{Case, display};
                 display::fmt_hex_exact!(f, $len, &self.0, Case::Lower)
             }
         }
 
         impl core::fmt::UpperHex for $t {
             fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-                use bitcoin_internals::hex::{Case, display};
+                use internals::hex::{Case, display};
                 display::fmt_hex_exact!(f, $len, &self.0, Case::Upper)
             }
         }

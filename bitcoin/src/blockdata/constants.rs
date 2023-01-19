@@ -12,7 +12,7 @@ use crate::prelude::*;
 
 use core::default::Default;
 
-use bitcoin_internals::impl_array_newtype;
+use internals::impl_array_newtype;
 
 use crate::hashes::hex::{self, HexIterator};
 use crate::hashes::{Hash, sha256d};

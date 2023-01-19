@@ -20,7 +20,7 @@ use crate::prelude::*;
 
 use core::{fmt, mem, u32, convert::From};
 
-use bitcoin_internals::write_err;
+use internals::write_err;
 
 use crate::hashes::{sha256d, Hash, sha256};
 use crate::hash_types::{BlockHash, FilterHash, TxMerkleNode, FilterHeader};

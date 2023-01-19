@@ -12,7 +12,7 @@ use core::cmp::{PartialOrd, Ordering};
 use core::convert::TryFrom;
 use core::str::FromStr;
 
-use bitcoin_internals::write_err;
+use internals::write_err;
 
 #[cfg(all(test, mutate))]
 use mutagen::mutate;

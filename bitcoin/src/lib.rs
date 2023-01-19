@@ -188,7 +188,7 @@ mod prelude {
     #[cfg(not(feature = "hashbrown"))]
     pub use std::collections::HashSet;
 
-    pub use bitcoin_internals::hex::display::DisplayHex;
+    pub use internals::hex::display::DisplayHex;
 }
 
 #[cfg(bench)]

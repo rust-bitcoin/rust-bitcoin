@@ -43,7 +43,7 @@ use core::cmp::{self, Ordering};
 use core::convert::TryInto;
 use core::fmt::{self, Display, Formatter};
 
-use bitcoin_internals::write_err;
+use internals::write_err;
 
 use crate::blockdata::block::Block;
 use crate::blockdata::script::Script;

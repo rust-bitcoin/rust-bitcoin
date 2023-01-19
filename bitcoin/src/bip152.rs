@@ -10,7 +10,7 @@ use core::{convert, fmt, mem};
 #[cfg(feature = "std")]
 use std::error;
 
-use bitcoin_internals::impl_array_newtype;
+use internals::impl_array_newtype;
 
 use crate::consensus::encode::{self, Decodable, Encodable, VarInt};
 use crate::hashes::{sha256, siphash24, Hash};

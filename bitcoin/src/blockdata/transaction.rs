@@ -19,7 +19,7 @@ use crate::string::FromHexStr;
 use core::{cmp, fmt, str, default::Default};
 use core::convert::TryFrom;
 
-use bitcoin_internals::write_err;
+use internals::write_err;
 
 use crate::hashes::{self, Hash, sha256d};
 use crate::hashes::hex::FromHex;

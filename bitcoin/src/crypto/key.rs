@@ -11,7 +11,7 @@ use crate::prelude::*;
 use core::{ops, str::FromStr};
 use core::fmt::{self, Write};
 
-use bitcoin_internals::write_err;
+use internals::write_err;
 pub use secp256k1::{self, Secp256k1, XOnlyPublicKey, KeyPair};
 
 use crate::{base58, io};

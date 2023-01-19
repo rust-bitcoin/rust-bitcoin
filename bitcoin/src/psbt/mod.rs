@@ -14,7 +14,7 @@ use core::{fmt, cmp};
 use core::ops::Deref;
 
 use secp256k1::{Message, Secp256k1, Signing};
-use bitcoin_internals::write_err;
+use internals::write_err;
 
 use crate::{prelude::*, Amount};
 
@@ -750,7 +750,7 @@ mod display_from_str {
     use core::str::FromStr;
     use crate::consensus::encode::Error;
     use base64::display::Base64Display;
-    use bitcoin_internals::write_err;
+    use internals::write_err;
 
     /// Error encountered during PSBT decoding from Base64 string.
     #[derive(Debug)]
