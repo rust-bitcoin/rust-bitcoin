@@ -825,8 +825,7 @@ impl crate::serde::Serialize for U256 {
 impl<'de> crate::serde::Deserialize<'de> for U256 {
     fn deserialize<D: crate::serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
         use core::convert::TryInto;
-
-        use crate::hashes::hex::FromHex;
+        use internals::hex::FromHex;
         use crate::serde::de;
 
         if d.is_human_readable() {

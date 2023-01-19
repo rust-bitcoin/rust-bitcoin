@@ -16,14 +16,14 @@ use core::ops::Deref;
 use secp256k1::{Message, Secp256k1, Signing};
 use internals::write_err;
 
-use crate::{prelude::*, Amount};
-
 use crate::blockdata::script::ScriptBuf;
 use crate::blockdata::transaction::{Transaction, TxOut};
 use crate::bip32::{self, ExtendedPrivKey, ExtendedPubKey, KeySource};
 use crate::crypto::ecdsa;
 use crate::crypto::key::{PublicKey, PrivateKey};
+use crate::prelude::*;
 use crate::sighash::{self, EcdsaSighashType, SighashCache};
+use crate::Amount;
 
 pub use crate::sighash::Prevouts;
 
@@ -813,7 +813,6 @@ mod tests {
     use super::*;
 
     use crate::blockdata::locktime::absolute;
-    use crate::hashes::hex::FromHex;
     use crate::hashes::{sha256, hash160, Hash, ripemd160};
     use crate::hash_types::Txid;
     use crate::psbt::serialize::{Serialize, Deserialize};
@@ -1072,7 +1071,6 @@ mod tests {
         #[cfg(feature = "base64")]
         use std::str::FromStr;
 
-        use crate::hashes::hex::FromHex;
         use crate::hash_types::Txid;
 
         use crate::blockdata::script::ScriptBuf;
@@ -1163,6 +1161,9 @@ mod tests {
 
         #[test]
         fn valid_vector_1() {
+            // FIXME: This is in scope already from prelude::* and use super::* ???
+            use internals::hex::FromHex;
+
             let unserialized = PartiallySignedTransaction {
                 unsigned_tx: Transaction {
                     version: 2,
@@ -1355,6 +1356,9 @@ mod tests {
 
         #[test]
         fn valid_vector_6() {
+            // FIXME: This is in scope already from prelude::* and use super::* ???
+            use internals::hex::FromHex;
+
             let psbt: PartiallySignedTransaction = hex_psbt!("70736274ff01003f0200000001ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000ffffffff010000000000000000036a010000000000000a0f0102030405060708090f0102030405060708090a0b0c0d0e0f0000").unwrap();
 
             assert_eq!(psbt.inputs.len(), 1);

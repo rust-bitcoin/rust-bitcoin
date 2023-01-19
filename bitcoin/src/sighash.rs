@@ -1054,7 +1054,6 @@ mod tests {
     use crate::consensus::deserialize;
     use crate::crypto::key::PublicKey;
     use crate::hash_types::Sighash;
-    use crate::hashes::hex::FromHex;
     use crate::hashes::{Hash, HashEngine};
     use crate::internal_macros::{hex, hex_from_slice, hex_script};
     use crate::network::constants::Network;

@@ -20,7 +20,7 @@ use core::convert::TryInto;
 use core::ops::Index;
 use core::slice::SliceIndex;
 
-use crate::{Error, HashEngine as _, hex};
+use crate::{Error, HashEngine as _};
 
 crate::internal_macros::hash_type! {
     160,
@@ -146,7 +146,7 @@ mod tests {
     #[cfg(any(feature = "std", feature = "alloc"))]
     fn test() {
         use crate::{sha1, Hash, HashEngine};
-        use crate::hex::FromHex;
+        use internals::hex::FromHex;
 
         #[derive(Clone)]
         struct Test {

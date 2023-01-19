@@ -25,7 +25,7 @@ use core::convert::TryInto;
 use core::ops::Index;
 use core::slice::SliceIndex;
 
-use crate::{Error, HashEngine as _, hex};
+use crate::{Error, HashEngine as _};
 
 crate::internal_macros::hash_trait_impls!(512, false);
 
@@ -311,7 +311,7 @@ mod tests {
     #[cfg(any(feature = "std", feature = "alloc"))]
     fn test() {
         use crate::{sha512, Hash, HashEngine};
-        use crate::hex::FromHex;
+        use internals::hex::FromHex;
 
         #[derive(Clone)]
         struct Test {

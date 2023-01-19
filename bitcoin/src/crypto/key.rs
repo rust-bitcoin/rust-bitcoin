@@ -11,12 +11,12 @@ use crate::prelude::*;
 use core::{ops, str::FromStr};
 use core::fmt::{self, Write};
 
-use internals::write_err;
+use internals::{hex, write_err};
 pub use secp256k1::{self, Secp256k1, XOnlyPublicKey, KeyPair};
 
 use crate::{base58, io};
 use crate::network::constants::Network;
-use crate::hashes::{Hash, hash160, hex, hex::FromHex};
+use crate::hashes::{Hash, hash160};
 use crate::hash_types::{PubkeyHash, WPubkeyHash};
 
 /// A key-related error.
@@ -545,10 +545,9 @@ impl<'de> serde::Deserialize<'de> for PublicKey {
 #[cfg(test)]
 mod tests {
     use crate::io;
-    use super::{PrivateKey, PublicKey, SortKey};
+    use super::*;
     use secp256k1::Secp256k1;
     use std::str::FromStr;
-    use crate::hashes::hex::FromHex;
     use crate::network::constants::Network::Testnet;
     use crate::network::constants::Network::Bitcoin;
     use crate::address::Address;

@@ -32,12 +32,13 @@ use core::str::FromStr;
 use core::{fmt, ops};
 
 use internals::{debug_from_display, write_err};
+use internals::hex::{Error, FromHex};
+
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::error::impl_std_error;
-use crate::hashes::hex::{Error, FromHex};
 use crate::io;
 use crate::prelude::{String, ToOwned};
 

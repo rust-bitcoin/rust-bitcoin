@@ -14,7 +14,7 @@
 //!
 //! ```rust
 //! use bitcoin::hash_types::Txid;
-//! use bitcoin::hashes::hex::FromHex;
+//! use bitcoin::prelude::*;
 //! use bitcoin::{Block, MerkleBlock};
 //!
 //! // Get the proof from a bitcoind by running in the terminal:
@@ -153,9 +153,9 @@ impl PartialMerkleTree {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin::hash_types::Txid;
-    /// use bitcoin::hashes::hex::FromHex;
+    /// use bitcoin::prelude::*;
     /// use bitcoin::merkle_tree::{MerkleBlock, PartialMerkleTree};
+    /// use bitcoin::Txid;
     ///
     /// // Block 80000
     /// let txids: Vec<Txid> = [
@@ -408,9 +408,8 @@ impl MerkleBlock {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin::hash_types::Txid;
-    /// use bitcoin::hashes::hex::FromHex;
-    /// use bitcoin::{Block, MerkleBlock};
+    /// use bitcoin::prelude::*;
+    /// use bitcoin::{Block, MerkleBlock, Txid};
     ///
     /// // Block 80000
     /// let block_bytes = Vec::from_hex("01000000ba8b9cda965dd8e536670f9ddec10e53aab14b20bacad2\
@@ -506,7 +505,6 @@ mod tests {
     use crate::consensus::encode::{deserialize, serialize};
     #[cfg(feature = "rand-std")]
     use crate::hash_types::TxMerkleNode;
-    use crate::hashes::hex::FromHex;
     #[cfg(feature = "rand-std")]
     use crate::hashes::Hash;
     use crate::internal_macros::hex;

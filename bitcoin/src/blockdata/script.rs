@@ -64,10 +64,12 @@ use core::ops::Bound;
 
 #[cfg(feature = "serde")] use serde;
 
+use internals::hex;
+
 use crate::hash_types::{PubkeyHash, WPubkeyHash, ScriptHash, WScriptHash};
 use crate::blockdata::opcodes::{self, all::*};
 use crate::consensus::{encode, Decodable, Encodable};
-use crate::hashes::{Hash, hex};
+use crate::hashes::Hash;
 use crate::policy::DUST_RELAY_TX_FEE;
 #[cfg(feature="bitcoinconsensus")] use bitcoinconsensus;
 #[cfg(feature="bitcoinconsensus")] use core::convert::From;
@@ -1916,7 +1918,6 @@ impl<'de> serde::Deserialize<'de> for ScriptBuf {
         D: serde::Deserializer<'de>,
     {
         use core::fmt::Formatter;
-        use crate::hashes::hex::FromHex;
 
         if deserializer.is_human_readable() {
 
@@ -2006,7 +2007,6 @@ mod test {
     use super::*;
     use super::write_scriptint;
 
-    use crate::hashes::hex::FromHex;
     use crate::consensus::encode::{deserialize, serialize};
     use crate::blockdata::opcodes;
     use crate::crypto::key::PublicKey;

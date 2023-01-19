@@ -87,9 +87,9 @@ macro_rules! hash_trait_impls {
         }
 
         impl<$($gen: $gent),*> str::FromStr for Hash<$($gen),*> {
-            type Err = hex::Error;
+            type Err = internals::hex::Error;
             fn from_str(s: &str) -> Result<Self, Self::Err> {
-                hex::FromHex::from_hex(s)
+                internals::hex::FromHex::from_hex(s)
             }
         }
 
@@ -103,6 +103,22 @@ macro_rules! hash_trait_impls {
             #[inline]
             fn index(&self, index: I) -> &Self::Output {
                 &self.0[index]
+            }
+        }
+
+        impl<$($gen: $gent),*> internals::hex::FromHex for Hash<$($gen),*> {
+            fn from_byte_iter<I>(iter: I) -> Result<Self, internals::hex::Error>
+            where
+                I: Iterator<Item = Result<u8, internals::hex::Error>> + ExactSizeIterator + DoubleEndedIterator,
+            {
+                use $crate::Hash;
+
+                let inner = if Self::DISPLAY_BACKWARD {
+                    <Self as Hash>::Inner::from_byte_iter(iter.rev())?
+                } else {
+                    <Self as Hash>::Inner::from_byte_iter(iter)?
+                };
+                Ok(Hash::from_inner(inner))
             }
         }
 

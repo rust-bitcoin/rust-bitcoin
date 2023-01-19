@@ -1105,7 +1105,6 @@ mod test {
 
     use super::*;
     use crate::crypto::schnorr::TapTweak;
-    use crate::hashes::hex::FromHex;
     use crate::hashes::sha256t::Tag;
     use crate::hashes::{sha256, Hash, HashEngine};
     use crate::{Address, Network};

@@ -8,7 +8,7 @@ use bitcoin::bip32::{ExtendedPrivKey, ExtendedPubKey, Fingerprint, IntoDerivatio
 use bitcoin::blockdata::opcodes::OP_0;
 use bitcoin::blockdata::script;
 use bitcoin::consensus::encode::{deserialize, serialize_hex};
-use bitcoin::hashes::hex::FromHex;
+use bitcoin::prelude::*;
 use bitcoin::psbt::{Psbt, PsbtSighashType};
 use bitcoin::secp256k1::{self, Secp256k1};
 use bitcoin::{

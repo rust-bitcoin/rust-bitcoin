@@ -13,8 +13,8 @@ use crate::prelude::*;
 use core::default::Default;
 
 use internals::impl_array_newtype;
+use internals::hex::{self, HexIterator};
 
-use crate::hashes::hex::{self, HexIterator};
 use crate::hashes::{Hash, sha256d};
 use crate::blockdata::script;
 use crate::blockdata::opcodes::all::*;

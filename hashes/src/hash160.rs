@@ -24,7 +24,7 @@ use core::str;
 use core::ops::Index;
 use core::slice::SliceIndex;
 
-use crate::{Error, hex, ripemd160, sha256};
+use crate::{Error, ripemd160, sha256};
 
 crate::internal_macros::hash_type! {
     160,
@@ -52,7 +52,7 @@ mod tests {
     #[cfg(any(feature = "std", feature = "alloc"))]
     fn test() {
         use crate::{hash160, Hash, HashEngine};
-        use crate::hex::FromHex;
+        use internals::hex::FromHex;
 
         #[derive(Clone)]
         #[cfg(any(feature = "std", feature = "alloc"))]

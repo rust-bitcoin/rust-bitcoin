@@ -28,7 +28,7 @@ use core::str;
 use core::ops::Index;
 use core::slice::SliceIndex;
 
-use crate::{hex, sha512, sha512::BLOCK_SIZE, Error};
+use crate::{sha512, sha512::BLOCK_SIZE, Error};
 
 /// Engine to compute SHA512/256 hash function.
 ///
@@ -89,7 +89,7 @@ mod tests {
     #[cfg(any(feature = "std", feature = "alloc"))]
     fn test() {
         use crate::{sha512_256, Hash, HashEngine};
-        use crate::hex::FromHex;
+        use internals::hex::FromHex;
 
         #[derive(Clone)]
         struct Test {

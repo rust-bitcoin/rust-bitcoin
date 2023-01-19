@@ -416,7 +416,6 @@ impl From<&Block> for BlockHash {
 mod tests {
     use super::*;
 
-    use crate::hashes::hex::FromHex;
     use crate::consensus::encode::{deserialize, serialize};
     use crate::internal_macros::hex;
 

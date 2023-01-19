@@ -20,7 +20,7 @@ use core::marker::PhantomData;
 use core::ops::Index;
 use core::slice::SliceIndex;
 
-use crate::{Error, hex, sha256};
+use crate::{Error, sha256};
 
 type HashEngine = sha256::HashEngine;
 

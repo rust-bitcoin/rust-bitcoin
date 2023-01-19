@@ -19,10 +19,9 @@ use crate::string::FromHexStr;
 use core::{cmp, fmt, str, default::Default};
 use core::convert::TryFrom;
 
-use internals::write_err;
+use internals::{hex, write_err};
 
-use crate::hashes::{self, Hash, sha256d};
-use crate::hashes::hex::FromHex;
+use crate::hashes::{Hash, sha256d};
 
 use crate::blockdata::constants::WITNESS_SCALE_FACTOR;
 #[cfg(feature="bitcoinconsensus")] use crate::blockdata::script;
@@ -109,7 +108,7 @@ impl fmt::Display for OutPoint {
 #[non_exhaustive]
 pub enum ParseOutPointError {
     /// Error in TXID part.
-    Txid(hashes::hex::Error),
+    Txid(hex::Error),
     /// Error in vout part.
     Vout(crate::error::ParseIntError),
     /// Error in general format.
@@ -548,8 +547,9 @@ impl<E> EncodeSigningDataResult<E> {
     ///
     /// ```rust
     /// # use bitcoin::consensus::deserialize;
+    /// # use bitcoin::prelude::*;
     /// # use bitcoin::{Transaction, Sighash};
-    /// # use bitcoin_hashes::{Hash, hex::FromHex};
+    /// # use bitcoin_hashes::Hash;
     /// # let mut writer = Sighash::engine();
     /// # let input_index = 0;
     /// # let script_pubkey = bitcoin::ScriptBuf::new();
@@ -1139,7 +1139,6 @@ mod tests {
     use crate::consensus::encode::deserialize;
     use crate::sighash::EcdsaSighashType;
 
-    use crate::hashes::hex::FromHex;
     use crate::internal_macros::hex;
 
     use crate::hash_types::*;

@@ -13,7 +13,7 @@ use core::fmt;
 use core::ops::Index;
 use core::str::FromStr;
 
-use internals::{impl_array_newtype, write_err};
+use internals::{hex, impl_array_newtype, write_err};
 use secp256k1::{self, Secp256k1, XOnlyPublicKey};
 #[cfg(feature = "serde")]
 use serde;
@@ -21,7 +21,7 @@ use serde;
 use crate::base58;
 use crate::crypto::key::{self, KeyPair, PrivateKey, PublicKey};
 use crate::hash_types::XpubIdentifier;
-use crate::hashes::{hex, sha512, Hash, HashEngine, Hmac, HmacEngine};
+use crate::hashes::{sha512, Hash, HashEngine, Hmac, HmacEngine};
 use crate::internal_macros::impl_bytes_newtype;
 use crate::io::Write;
 use crate::network::constants::Network;

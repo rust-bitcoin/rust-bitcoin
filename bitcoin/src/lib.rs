@@ -162,8 +162,9 @@ mod io_extras {
     }
 }
 
+/// Common imports expected to be imported with a wildcard.
 #[rustfmt::skip]
-mod prelude {
+pub mod prelude {
     #[cfg(all(not(feature = "std"), not(test)))]
     pub use alloc::{string::{String, ToString}, vec::Vec, boxed::Box, borrow::{Borrow, Cow, ToOwned}, slice, rc, sync};
 
@@ -188,7 +189,7 @@ mod prelude {
     #[cfg(not(feature = "hashbrown"))]
     pub use std::collections::HashSet;
 
-    pub use internals::hex::display::DisplayHex;
+    pub use internals::hex::exts::{DisplayHex, FromHex};
 }
 
 #[cfg(bench)]

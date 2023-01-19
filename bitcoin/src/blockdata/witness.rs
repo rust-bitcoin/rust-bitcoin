@@ -421,8 +421,7 @@ impl<'de> serde::Deserialize<'de> for Witness {
 
             fn visit_seq<A: serde::de::SeqAccess<'de>>(self, mut a: A) -> Result<Self::Value, A::Error>
             {
-                use crate::hashes::hex::FromHex;
-                use crate::hashes::hex::Error::*;
+                use internals::hex::Error::*;
                 use serde::de::{self, Unexpected};
 
                 let mut ret = match a.size_hint() {

@@ -2,12 +2,15 @@
 
 pub mod buf_encoder;
 pub mod display;
+pub mod parse;
 
 pub use buf_encoder::BufEncoder;
+pub use parse::{Error, FromHex, HexIterator};
 
 /// Reexports of extension traits.
 pub mod exts {
     pub use super::display::DisplayHex;
+    pub use super::parse::FromHex;
 }
 
 /// Possible case of hex.

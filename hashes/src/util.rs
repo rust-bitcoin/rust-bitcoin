@@ -194,9 +194,25 @@ macro_rules! hash_newtype {
         }
 
         impl $crate::_export::_core::str::FromStr for $newtype {
-            type Err = $crate::hex::Error;
+            type Err = internals::hex::Error;
             fn from_str(s: &str) -> $crate::_export::_core::result::Result<$newtype, Self::Err> {
-                $crate::hex::FromHex::from_hex(s)
+                internals::hex::FromHex::from_hex(s)
+            }
+        }
+
+        impl internals::hex::FromHex for $newtype {
+            fn from_byte_iter<I>(iter: I) -> Result<Self, internals::hex::Error>
+            where
+                I: Iterator<Item = Result<u8, internals::hex::Error>> + ExactSizeIterator + DoubleEndedIterator,
+            {
+                use $crate::Hash;
+
+                let inner = if $reverse {
+                    <Self as Hash>::Inner::from_byte_iter(iter.rev())?
+                } else {
+                    <Self as Hash>::Inner::from_byte_iter(iter)?
+                };
+                Ok(Hash::from_inner(inner))
             }
         }
 
