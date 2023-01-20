@@ -81,6 +81,8 @@ if [ "$DO_ASAN" = true ]; then
     CC='clang -fsanitize=memory -fno-omit-frame-pointer'                                         \
     RUSTFLAGS='-Zsanitizer=memory -Zsanitizer-memory-track-origins -Cforce-frame-pointers=yes'   \
     cargo test --lib --no-default-features --features="$FEATURES" -Zbuild-std --target x86_64-unknown-linux-gnu
+    # Cleanup because we do not want to use a build that used these build flags again.
+    cargo clean
 fi
 
 # Bench if told to, only works with non-stable toolchain (nightly, beta).
