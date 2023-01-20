@@ -19,7 +19,7 @@ mod block;
 use core::cmp::min;
 use core::iter;
 
-use bin_tree::{BinTree, Node};
+use bin_tree::{IteratorEx, Node};
 pub use block::{MerkleBlock, MerkleBlockError, PartialMerkleTree};
 
 use crate::consensus::encode::Encodable;
@@ -110,20 +110,22 @@ where
 }
 
 #[repr(transparent)]
+#[derive(Clone)]
 struct HashNode<T>(T);
 
 impl<T: Hash + Encodable> Node for HashNode<T>
 where T::Engine: io::Write
 {
-    fn new2(&self, right: &Self) -> Self {
+    fn new_parent2(self, right: Self) -> Self {
         let mut encoder = T::engine();
         self.0.consensus_encode(&mut encoder).expect("in-memory writers don't error");
         right.0.consensus_encode(&mut encoder).expect("in-memory writers don't error");
         HashNode(T::from_engine(encoder))
     }
 
-    fn new1(&self) -> Self {
-        self.new2(self)
+    fn new_parent1(self) -> Self {
+        let right = self.clone();
+        self.new_parent2(right)
     }
 }
 
@@ -131,10 +133,7 @@ where T::Engine: io::Write
 pub fn calculate_root_light<T: Hash + Encodable>(hashes: impl Iterator<Item = T>) -> Option<T>
 where T::Engine: io::Write
 {
-    let it =hashes.map(|v| HashNode(v));
-    let hint = it.size_hint();
-    println!("{hint:?}");
-    it.bin_tree().map(|h| h.0)
+    hashes.map(|v| HashNode(v)).build_tree().map(|h| h.0)
 }
 
 #[cfg(test)]
