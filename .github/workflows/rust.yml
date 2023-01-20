@@ -157,7 +157,7 @@ jobs:
       - name: Running address sanitizer
         env:
           DO_ASAN: true
-        run: ./hashes/contrib/test.sh
+        run: cd hashes && ./contrib/test.sh
 
   WASM:
     name: WebAssembly Build # hashes crate only.
@@ -170,4 +170,4 @@ jobs:
       - name: Running WASM build
         env:
           DO_WASM: true
-        run: ./hashes/contrib/test.sh
+        run: cd hashes && ./contrib/test.sh
