@@ -729,9 +729,10 @@ impl<R: Deref<Target = Transaction>> SighashCache<R> {
         } else if sighash == EcdsaSighashType::Single && input_index < self.tx.output.len() {
             let mut single_enc = Sighash::engine();
             self.tx.output[input_index].consensus_encode(&mut single_enc)?;
-            Sighash::from_engine(single_enc).consensus_encode(&mut writer)?;
+            let hash = Sighash::from_engine(single_enc);
+            writer.write_all(&hash[..])?;
         } else {
-            zero_hash.consensus_encode(&mut writer)?;
+            writer.write_all(&zero_hash[..])?;
         }
 
         self.tx.lock_time.consensus_encode(&mut writer)?;
