@@ -8,8 +8,6 @@
 use core::convert::TryInto;
 use core::ops::Index;
 
-use secp256k1::ecdsa;
-
 use crate::consensus::encode::{Error, MAX_VEC_SIZE};
 use crate::consensus::{Decodable, Encodable, WriteExt};
 use crate::sighash::EcdsaSighashType;
@@ -269,16 +267,21 @@ impl Witness {
         self.content[end_varint..end_varint + new_element.len()].copy_from_slice(new_element);
     }
 
+    /// Pushes a [`crate::ecdsa::Signature`] as a new element on the witness (the DER-encoded
+    /// secp256k1::ecdsa::Signature along with the hash type), requires an allocation.
+    pub fn push_signature(&mut self, signature: &crate::ecdsa::Signature) {
+        self.push_bitcoin_signature(&signature.sig.serialize_der(), signature.hash_ty)
+    }
+
     /// Pushes a DER-encoded ECDSA signature with a signature hash type as a new element on the
     /// witness, requires an allocation.
-    pub fn push_bitcoin_signature(&mut self, signature: &ecdsa::SerializedSignature, hash_type: EcdsaSighashType) {
+    pub fn push_bitcoin_signature(&mut self, signature: &secp256k1::ecdsa::SerializedSignature, hash_type: EcdsaSighashType) {
         // Note that a maximal length ECDSA signature is 72 bytes, plus the sighash type makes 73
         let mut sig = [0; 73];
         sig[..signature.len()].copy_from_slice(signature);
         sig[signature.len()] = hash_type as u8;
         self.push(&sig[..signature.len() + 1]);
     }
-
 
     fn element_at(&self, index: usize) -> Option<&[u8]> {
         let varint = VarInt::consensus_decode(&mut &self.content[index..]).ok()?;

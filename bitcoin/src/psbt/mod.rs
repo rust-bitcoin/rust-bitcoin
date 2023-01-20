@@ -18,7 +18,7 @@ use bitcoin_internals::write_err;
 
 use crate::{prelude::*, Amount};
 
-use crate::blockdata::script::ScriptBuf;
+use crate::blockdata::script::{self ,ScriptBuf};
 use crate::blockdata::transaction::{Transaction, TxOut};
 use crate::bip32::{self, ExtendedPrivKey, ExtendedPubKey, KeySource};
 use crate::crypto::ecdsa;
@@ -345,8 +345,8 @@ impl PartiallySignedTransaction {
                 cache.segwit_signature_hash(input_index, &script_code, utxo.value, hash_ty)?
             },
             Wsh | ShWsh => {
-                let script_code = input.witness_script.as_ref().ok_or(SignError::MissingWitnessScript)?;
-                cache.segwit_signature_hash(input_index, script_code, utxo.value, hash_ty)?
+                let script_code = ScriptBuf::p2wsh_script_code(input.witness_script.as_ref().ok_or(SignError::MissingWitnessScript)?)?;
+                cache.segwit_signature_hash(input_index, &script_code, utxo.value, hash_ty)?
             },
             Tr => {
                 // This PSBT signing API is WIP, taproot to come shortly.
@@ -676,7 +676,9 @@ pub enum SignError {
     /// Attempt to sign an input with the wrong signing algorithm.
     WrongSigningAlgorithm,
     /// Signing request currently unsupported.
-    Unsupported
+    Unsupported,
+    /// Script error.
+    Script(script::Error),
 }
 
 impl fmt::Display for SignError {
@@ -701,6 +703,7 @@ impl fmt::Display for SignError {
             KeyNotFound => write!(f, "unable to find key"),
             WrongSigningAlgorithm => write!(f, "attempt to sign an input with the wrong signing algorithm"),
             Unsupported => write!(f, "signing request currently unsupported"),
+            Script(ref e) => write_err!(f, "script"; e),
         }
     }
 }
@@ -727,6 +730,7 @@ impl std::error::Error for SignError {
                 | Unsupported => None,
             EcdsaSig(ref e) => Some(e),
             SighashComputation(ref e) => Some(e),
+            Script(ref e) => Some(e),
         }
     }
 }
@@ -740,6 +744,12 @@ impl From<sighash::Error> for SignError {
 impl From<ecdsa::Error> for SignError {
     fn from(e: ecdsa::Error) -> Self {
         SignError::EcdsaSig(e)
+    }
+}
+
+impl From<script::Error> for SignError {
+    fn from(e: script::Error) -> Self {
+        SignError::Script(e)
     }
 }
 

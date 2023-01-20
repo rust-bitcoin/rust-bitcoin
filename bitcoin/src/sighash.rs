@@ -12,7 +12,7 @@ use core::borrow::Borrow;
 use core::ops::{Deref, DerefMut};
 use core::{fmt, str};
 
-use crate::{io, Script, ScriptBuf, Transaction, TxIn, TxOut, Sequence, Sighash};
+use crate::{io, Script, ScriptBuf, ScriptCode, Transaction, TxIn, TxOut, Sequence, Sighash};
 use crate::blockdata::transaction::EncodeSigningDataResult;
 use crate::blockdata::witness::Witness;
 use crate::consensus::{encode, Encodable};
@@ -687,7 +687,7 @@ impl<R: Deref<Target = Transaction>> SighashCache<R> {
         &mut self,
         mut writer: Write,
         input_index: usize,
-        script_code: &Script,
+        script_code: &ScriptBuf<ScriptCode>,
         value: u64,
         sighash_type: EcdsaSighashType,
     ) -> Result<(), Error> {
@@ -743,7 +743,7 @@ impl<R: Deref<Target = Transaction>> SighashCache<R> {
     pub fn segwit_signature_hash(
         &mut self,
         input_index: usize,
-        script_code: &Script,
+        script_code: &ScriptBuf<ScriptCode>,
         value: u64,
         sighash_type: EcdsaSighashType,
     ) -> Result<Sighash, Error> {
@@ -992,7 +992,7 @@ impl<R: DerefMut<Target = Transaction>> SighashCache<R> {
     ///
     /// This allows in-line signing such as
     /// ```
-    /// use bitcoin::{absolute, Transaction, Script};
+    /// use bitcoin::{absolute, Transaction, Script, ScriptBuf};
     /// use bitcoin::sighash::{EcdsaSighashType, SighashCache};
     ///
     /// let mut tx_to_sign = Transaction { version: 2, lock_time: absolute::LockTime::ZERO, input: Vec::new(), output: Vec::new() };
@@ -1000,8 +1000,10 @@ impl<R: DerefMut<Target = Transaction>> SighashCache<R> {
     ///
     /// let mut sig_hasher = SighashCache::new(&mut tx_to_sign);
     /// for inp in 0..input_count {
-    ///     let prevout_script = Script::empty();
-    ///     let _sighash = sig_hasher.segwit_signature_hash(inp, prevout_script, 42, EcdsaSighashType::All);
+    /// #   let redeem_script = Script::empty();
+    /// #   let script_code = ScriptBuf::p2wsh_script_code(redeem_script).unwrap();
+    ///     // Get the correct script code ...
+    ///     let _sighash = sig_hasher.segwit_signature_hash(inp, &script_code, 42, EcdsaSighashType::All);
     ///     // ... sign the sighash
     ///     sig_hasher.witness_mut(inp).unwrap().push(&Vec::new());
     /// }
@@ -1049,7 +1051,6 @@ mod tests {
     use std::str::FromStr;
 
     use super::*;
-    use crate::address::Address;
     use crate::blockdata::locktime::absolute;
     use crate::consensus::deserialize;
     use crate::crypto::key::PublicKey;
@@ -1057,8 +1058,8 @@ mod tests {
     use crate::hashes::hex::FromHex;
     use crate::hashes::{Hash, HashEngine};
     use crate::internal_macros::{hex, hex_from_slice, hex_script};
-    use crate::network::constants::Network;
     use crate::taproot::{TapLeafHash, TapSighashHash};
+    use crate::script::ScriptBuf;
 
     extern crate serde_json;
 
@@ -1597,12 +1598,9 @@ mod tests {
         }
     }
 
-    fn p2pkh_hex(pk: &str) -> ScriptBuf {
-        let pk: PublicKey = PublicKey::from_str(pk).unwrap();
-        Address::p2pkh(&pk, Network::Bitcoin).script_pubkey()
-    }
-
     #[test]
+    // This is the initial part of the Native P2WPKH test vector from BIP143, continued in
+    // `rust-bitcoin/bitcoin/tests/bip143.rs`.
     fn bip143_p2wpkh() {
         let tx = deserialize::<Transaction>(
             &hex!(
@@ -1613,13 +1611,15 @@ mod tests {
             ),
         ).unwrap();
 
-        let witness_script =
-            p2pkh_hex("025476c2e83188368da1ff3e292e7acafcdb3566bb0ad253f62fc70f07aeee6357");
+        let pk = PublicKey::from_str("025476c2e83188368da1ff3e292e7acafcdb3566bb0ad253f62fc70f07aeee6357").expect("failed to parse pk");
+        let pkh = pk.wpubkey_hash().expect("failed to get witness pubkey hash");
+        let script_pubkey = ScriptBuf::new_v0_p2wpkh(&pkh);
         let value = 600_000_000;
 
         let mut cache = SighashCache::new(&tx);
+        let script_code = ScriptBuf::p2wpkh_script_code(&script_pubkey).expect("not p2wpkh");
         assert_eq!(
-            cache.segwit_signature_hash(1, &witness_script, value, EcdsaSighashType::All).unwrap(),
+            cache.segwit_signature_hash(1, &script_code, value, EcdsaSighashType::All).unwrap(),
             hex_from_slice!(
                 Sighash,
                 "c37af31116d1b27caf68aae9e3ac82f1477929014d5b917657d0eb49478cb670"
@@ -1651,13 +1651,16 @@ mod tests {
             ),
         ).unwrap();
 
-        let witness_script =
-            p2pkh_hex("03ad1d8e89212f0b92c74d23bb710c00662ad1470198ac48c43f7d6f93a2a26873");
+        let pk = PublicKey::from_str("03ad1d8e89212f0b92c74d23bb710c00662ad1470198ac48c43f7d6f93a2a26873").expect("failed to parse pk");
+        let pkh = pk.wpubkey_hash().expect("failed to get witness pubkey hash");
+        let script_pubkey = ScriptBuf::new_v0_p2wpkh(&pkh);
         let value = 1_000_000_000;
 
         let mut cache = SighashCache::new(&tx);
+        let script_code = ScriptBuf::p2wpkh_script_code(&script_pubkey).expect("not p2wpkh");
+
         assert_eq!(
-            cache.segwit_signature_hash(0, &witness_script, value, EcdsaSighashType::All).unwrap(),
+            cache.segwit_signature_hash(0, &script_code, value, EcdsaSighashType::All).unwrap(),
             hex_from_slice!(
                 Sighash,
                 "64f3b0f4dd2bb3aa1ce8566d220cc74dda9df97d8490cc81d89d735c92e59fb6"
@@ -1680,6 +1683,96 @@ mod tests {
     }
 
     #[test]
+    // This is the initial part of the Native P2WSH test vector from BIP143, continued in
+    // `rust-bitcoin/bitcoin/tests/bip143.rs`.
+    fn bip143_p2wsh_part_1() {
+        let secp = crate::secp256k1::Secp256k1::new();
+
+        let tx = deserialize::<Transaction>(
+            &hex!(
+                "0100000002fe3dc9208094f3ffd12645477b3dc56f60ec4fa8e6f5d67c565d1c6b9216b36e0000000000\
+                 ffffffff0815cf020f013ed6cf91d29f4202e8a58726b1ac6c79da47c23d1bee0a6925f80000000000ff\
+                 ffffff0100f2052a010000001976a914a30741f8145e5acadf23f751864167f32e0963f788ac00000000"
+            ),
+        ).unwrap();
+
+        let sk = "b8f28a772fccbf9b4f58a4f027e07dc2e35e7cd80529975e292ea34f84c4580c";
+        let secp_sk_0 = secp256k1::SecretKey::from_str(sk).expect("failed to parse input 0 sk");
+        let secp_pk_0 = PublicKey::new(secp_sk_0.public_key(&secp));
+        let script_pubkey_0 = ScriptBuf::new_p2pk(&secp_pk_0);
+        assert_eq!(script_pubkey_0.as_script().to_hex_string(), "21036d5c20fa14fb2f635474c1dc4ef5909d4568e5569b79fc94d3448486e14685f8ac");
+
+        let mut cache = SighashCache::new(&tx);
+
+        let ty = EcdsaSighashType::All;
+        let _ = cache.legacy_signature_hash(0, script_pubkey_0.as_script(), ty.to_u32()).expect("failed to get legacy sighash");
+
+        let witness = ScriptBuf::from_hex("21026dccc749adc2a9d0d89497ac511f760f45c47dc5ed9cf352a58ac706453880aeadab210255a9626aebf5e29c0e6538428ba0d1dcf6ca98ffdf086aa8ced5e0d0215ea465ac")
+            .expect("failed to parse witness script");
+        let script_pubkey_1 = witness.to_v0_p2wsh();
+        assert_eq!(script_pubkey_1.as_script().to_hex_string(), "00205d1b56b63d714eebe542309525f484b7e9d6f686b3781b6f61ef925d66d6f6a0");
+
+        let script_code = ScriptBuf::p2wsh_script_code(&script_pubkey_1).unwrap();
+        let value = 4_900_000_000;
+
+        cache.segwit_signature_hash(1, &script_code, value, EcdsaSighashType::Single).unwrap();
+        let cache = cache.segwit_cache();
+        assert_eq!(
+            cache.prevouts,
+            hex_from_slice!("ef546acf4a020de3898d1b8956176bb507e6211b5ed3619cd08b6ea7e2a09d41")
+        );
+        // We do not do assertions against the sequences and outputs fields because they are
+        // functionally zeroed out (by writing zero_hash with consenus_encode when encoding the
+        // cached data).
+    }
+
+    #[test]
+    // This is the initial part of the Native P2WSH test vector from BIP143, continued in
+    // `rust-bitcoin/bitcoin/tests/bip143.rs`.
+    fn bip143_p2wsh_part_2() {
+        let secp = crate::secp256k1::Secp256k1::new();
+
+        let tx = deserialize::<Transaction>(
+            &hex!(
+                "0100000002fe3dc9208094f3ffd12645477b3dc56f60ec4fa8e6f5d67c565d1c6b9216b36e0000000000\
+                 ffffffff0815cf020f013ed6cf91d29f4202e8a58726b1ac6c79da47c23d1bee0a6925f80000000000ff\
+                 ffffff0100f2052a010000001976a914a30741f8145e5acadf23f751864167f32e0963f788ac00000000"
+            ),
+        ).unwrap();
+
+        let sk = "b8f28a772fccbf9b4f58a4f027e07dc2e35e7cd80529975e292ea34f84c4580c";
+        let secp_sk_0 = secp256k1::SecretKey::from_str(sk).expect("failed to parse input 0 sk");
+        let secp_pk_0 = PublicKey::new(secp_sk_0.public_key(&secp));
+        let script_pubkey_0 = ScriptBuf::new_p2pk(&secp_pk_0);
+        assert_eq!(script_pubkey_0.as_script().to_hex_string(), "21036d5c20fa14fb2f635474c1dc4ef5909d4568e5569b79fc94d3448486e14685f8ac");
+
+        let mut cache = SighashCache::new(&tx);
+
+        let ty = EcdsaSighashType::All;
+        let _ = cache.legacy_signature_hash(0, script_pubkey_0.as_script(), ty.to_u32()).expect("failed to get legacy sighash");
+
+        let witness = ScriptBuf::from_hex("21026dccc749adc2a9d0d89497ac511f760f45c47dc5ed9cf352a58ac706453880aeadab210255a9626aebf5e29c0e6538428ba0d1dcf6ca98ffdf086aa8ced5e0d0215ea465ac")
+            .expect("failed to parse witness script");
+        let script_pubkey_1 = witness.to_v0_p2wsh();
+        assert_eq!(script_pubkey_1.as_script().to_hex_string(), "00205d1b56b63d714eebe542309525f484b7e9d6f686b3781b6f61ef925d66d6f6a0");
+
+        let script_code = ScriptBuf::p2wsh_script_code(&script_pubkey_1).unwrap();
+        let value = 4_900_000_000;
+
+        cache.segwit_signature_hash(1, &script_code, value, EcdsaSighashType::Single).unwrap();
+        let cache = cache.segwit_cache();
+        assert_eq!(
+            cache.prevouts,
+            hex_from_slice!("ef546acf4a020de3898d1b8956176bb507e6211b5ed3619cd08b6ea7e2a09d41")
+        );
+        // We do not do assertions against the sequences and outputs fields because they are
+        // functionally zeroed out (by writing zero_hash with consenus_encode when encoding the
+        // cached data).
+    }
+
+    // This is the initial part of the P2SH-P2WSH test vector from BIP143, continued in
+    // `rust-bitcoin/bitcoin/tests/bip143.rs`.
+    #[test]
     fn bip143_p2wsh_nested_in_p2sh() {
         let tx = deserialize::<Transaction>(
             &hex!(
@@ -1699,8 +1792,9 @@ mod tests {
         let value = 987654321;
 
         let mut cache = SighashCache::new(&tx);
+        let script_code = ScriptBuf::p2wsh_script_code(&witness_script).unwrap();
         assert_eq!(
-            cache.segwit_signature_hash(0, &witness_script, value, EcdsaSighashType::All).unwrap(),
+            cache.segwit_signature_hash(0, &script_code, value, EcdsaSighashType::All).unwrap(),
             hex_from_slice!(
                 Sighash,
                 "185c0be5263dce5b4bb50a047973c1b6272bfbd0103a89444597dc40b248ee7c"
