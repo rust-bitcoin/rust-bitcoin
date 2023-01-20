@@ -386,6 +386,7 @@ impl From<WitnessVersion> for opcodes::All {
 
 /// The method used to produce an address.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[non_exhaustive]
 pub enum Payload {
     /// P2PKH address.
     PubkeyHash(PubkeyHash),
