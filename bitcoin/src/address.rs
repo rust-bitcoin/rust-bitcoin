@@ -537,8 +537,9 @@ impl Payload {
         Payload::WitnessProgram(prog)
     }
 
-    /// Returns a byte slice of the payload
-    pub fn as_bytes(&self) -> &[u8] {
+    /// Returns a byte slice of the inner program of the payload. If the payload
+    /// is a script hash or pubkey hash, a reference to the hash is returned.
+    fn inner_prog_as_bytes(&self) -> &[u8] {
         match self {
             Payload::ScriptHash(hash) => hash.as_ref(),
             Payload::PubkeyHash(hash) => hash.as_ref(),
@@ -930,7 +931,7 @@ impl Address {
     /// given key. For taproot addresses, the supplied key is assumed to be tweaked
     pub fn is_related_to_pubkey(&self, pubkey: &PublicKey) -> bool {
         let pubkey_hash = pubkey.pubkey_hash();
-        let payload = self.payload.as_bytes();
+        let payload = self.payload.inner_prog_as_bytes();
         let xonly_pubkey = XOnlyPublicKey::from(pubkey.inner);
 
         (*pubkey_hash.as_ref() == *payload)
@@ -943,7 +944,7 @@ impl Address {
     /// This will only work for Taproot addresses. The Public Key is
     /// assumed to have already been tweaked.
     pub fn is_related_to_xonly_pubkey(&self, xonly_pubkey: &XOnlyPublicKey) -> bool {
-        let payload = self.payload.as_bytes();
+        let payload = self.payload.inner_prog_as_bytes();
         payload == xonly_pubkey.serialize()
     }
 }
