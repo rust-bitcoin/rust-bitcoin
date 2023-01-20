@@ -87,9 +87,9 @@ macro_rules! hash_trait_impls {
         }
 
         impl<$($gen: $gent),*> str::FromStr for Hash<$($gen),*> {
-            type Err = hex::Error;
+            type Err = $crate::hex::Error;
             fn from_str(s: &str) -> Result<Self, Self::Err> {
-                hex::FromHex::from_hex(s)
+                $crate::hex::FromHex::from_hex(s)
             }
         }
 

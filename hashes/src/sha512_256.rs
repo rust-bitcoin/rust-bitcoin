@@ -28,7 +28,7 @@ use core::str;
 use core::ops::Index;
 use core::slice::SliceIndex;
 
-use crate::{hex, sha512, sha512::BLOCK_SIZE, Error};
+use crate::{sha512, sha512::BLOCK_SIZE, Error};
 
 /// Engine to compute SHA512/256 hash function.
 ///
