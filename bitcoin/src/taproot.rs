@@ -1394,7 +1394,7 @@ mod test {
                     builder = process_script_trees(leaf, builder, leaves, depth + 1);
                 }
             } else {
-                let script = ScriptBuf::from_str(v["script"].as_str().unwrap()).unwrap();
+                let script = ScriptBuf::from_hex(v["script"].as_str().unwrap()).unwrap();
                 let ver =
                     LeafVersion::from_consensus(v["leafVersion"].as_u64().unwrap() as u8).unwrap();
                 leaves.push((script.clone(), ver));
@@ -1446,7 +1446,7 @@ mod test {
             let expected_tweak =
                 TapTweakHash::from_str(arr["intermediary"]["tweak"].as_str().unwrap()).unwrap();
             let expected_spk =
-                ScriptBuf::from_str(arr["expected"]["scriptPubKey"].as_str().unwrap()).unwrap();
+                ScriptBuf::from_hex(arr["expected"]["scriptPubKey"].as_str().unwrap()).unwrap();
             let expected_addr =
                 Address::from_str(arr["expected"]["bip350Address"].as_str().unwrap()).unwrap().assume_checked();
 

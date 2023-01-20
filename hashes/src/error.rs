@@ -26,8 +26,10 @@ pub enum Error {
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            Error::InvalidLength(ell, ell2) => write!(f, "bad slice length {} (expected {})", ell2, ell),
+        use self::Error::*;
+
+        match self {
+            InvalidLength(ref ell, ref ell2) => write!(f, "invalid slice length {} (expected {})", ell2, ell),
         }
     }
 }

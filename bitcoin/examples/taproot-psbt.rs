@@ -81,7 +81,6 @@ use std::str::FromStr;
 use bitcoin::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint};
 use bitcoin::consensus::encode;
 use bitcoin::constants::COIN_VALUE;
-use bitcoin::hashes::hex::FromHex;
 use bitcoin::hashes::Hash;
 use bitcoin::key::XOnlyPublicKey;
 use bitcoin::opcodes::all::{OP_CHECKSIG, OP_CLTV, OP_DROP};
@@ -93,7 +92,7 @@ use bitcoin::taproot::{
     LeafVersion, TapLeafHash, TapSighashHash, TaprootBuilder, TaprootSpendInfo,
 };
 use bitcoin::{
-    absolute, script, Address, Amount, Network, OutPoint, ScriptBuf, Transaction, TxIn, TxOut, Txid, Witness,
+    absolute, script, Address, Amount, Network, OutPoint, ScriptBuf, Transaction, TxIn, TxOut, Witness,
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -239,7 +238,7 @@ fn generate_bip86_key_spend_tx(
         lock_time: absolute::LockTime::ZERO,
         input: vec![TxIn {
             previous_output: OutPoint {
-                txid: Txid::from_hex(input_utxo.txid)?,
+                txid: input_utxo.txid.parse()?,
                 vout: input_utxo.vout,
             },
             script_sig: ScriptBuf::new(),
@@ -290,7 +289,7 @@ fn generate_bip86_key_spend_tx(
                 vout,
                 &sighash::Prevouts::All(&[TxOut {
                     value: from_amount,
-                    script_pubkey: ScriptBuf::from_str(input_utxo.script_pubkey)?,
+                    script_pubkey: ScriptBuf::from_hex(input_utxo.script_pubkey)?,
                 }]),
                 hash_ty,
             )?;

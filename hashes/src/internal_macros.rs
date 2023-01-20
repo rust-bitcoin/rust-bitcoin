@@ -89,7 +89,15 @@ macro_rules! hash_trait_impls {
         impl<$($gen: $gent),*> str::FromStr for Hash<$($gen),*> {
             type Err = $crate::hex::Error;
             fn from_str(s: &str) -> Result<Self, Self::Err> {
-                $crate::hex::FromHex::from_hex(s)
+                use $crate::hex::{FromHex, HexIterator};
+                use $crate::Hash;
+
+                let inner: [u8; $bits / 8] = if $reverse {
+                    FromHex::from_byte_iter(HexIterator::new(s)?.rev())?
+                } else {
+                    FromHex::from_byte_iter(HexIterator::new(s)?)?
+                };
+                Ok(Self::from_inner(inner))
             }
         }
 

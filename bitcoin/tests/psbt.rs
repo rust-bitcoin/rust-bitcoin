@@ -13,14 +13,14 @@ use bitcoin::psbt::{Psbt, PsbtSighashType};
 use bitcoin::secp256k1::{self, Secp256k1};
 use bitcoin::{
     absolute, Amount, Denomination, Network, OutPoint, PrivateKey, PublicKey, ScriptBuf, Sequence,
-    Transaction, TxIn, TxOut, Txid, Witness,
+    Transaction, TxIn, TxOut, Witness,
 };
 
 const NETWORK: Network = Network::Testnet;
 
 macro_rules! hex_script {
     ($s:expr) => {
-        <ScriptBuf as FromStr>::from_str($s).unwrap()
+        <ScriptBuf>::from_hex($s).unwrap()
     };
 }
 
@@ -166,7 +166,7 @@ fn create_transaction() -> Transaction {
         input: vec![
             TxIn {
                 previous_output: OutPoint {
-                    txid: Txid::from_hex(input_0.txid).expect("failed to parse txid"),
+                    txid: input_0.txid.parse().expect("failed to parse txid"),
                     vout: input_0.index,
                 },
                 script_sig: ScriptBuf::new(),
@@ -175,7 +175,7 @@ fn create_transaction() -> Transaction {
             },
             TxIn {
                 previous_output: OutPoint {
-                    txid: Txid::from_hex(input_1.txid).expect("failed to parse txid"),
+                    txid: input_1.txid.parse().expect("failed to parse txid"),
                     vout: input_1.index,
                 },
                 script_sig: ScriptBuf::new(),
@@ -188,14 +188,14 @@ fn create_transaction() -> Transaction {
                 value: Amount::from_str_in(output_0.amount, Denomination::Bitcoin)
                     .expect("failed to parse amount")
                     .to_sat(),
-                script_pubkey: ScriptBuf::from_str(output_0.script_pubkey)
+                script_pubkey: ScriptBuf::from_hex(output_0.script_pubkey)
                     .expect("failed to parse script"),
             },
             TxOut {
                 value: Amount::from_str_in(output_1.amount, Denomination::Bitcoin)
                     .expect("failed to parse amount")
                     .to_sat(),
-                script_pubkey: ScriptBuf::from_str(output_1.script_pubkey)
+                script_pubkey: ScriptBuf::from_hex(output_1.script_pubkey)
                     .expect("failed to parse script"),
             },
         ],

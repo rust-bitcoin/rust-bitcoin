@@ -812,9 +812,7 @@ mod tests {
     use super::*;
 
     use crate::blockdata::locktime::absolute;
-    use crate::hashes::hex::FromHex;
     use crate::hashes::{sha256, hash160, Hash, ripemd160};
-    use crate::hash_types::Txid;
     use crate::psbt::serialize::{Serialize, Deserialize};
 
     use secp256k1::{Secp256k1, self};
@@ -827,7 +825,7 @@ mod tests {
     use crate::bip32::{ChildNumber, ExtendedPrivKey, ExtendedPubKey, KeySource};
     use crate::psbt::map::{Output, Input};
     use crate::psbt::raw;
-    use crate::internal_macros::{hex, hex_script};
+    use crate::internal_macros::hex;
 
     use std::collections::BTreeMap;
     use crate::blockdata::witness::Witness;
@@ -891,8 +889,8 @@ mod tests {
         hd_keypaths.insert(pk.public_key, (fprint, dpath.into()));
 
         let expected: Output = Output {
-            redeem_script: Some(hex_script!("76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac")),
-            witness_script: Some(hex_script!("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787")),
+            redeem_script: Some(ScriptBuf::from_hex("76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac").unwrap()),
+            witness_script: Some(ScriptBuf::from_hex("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787").unwrap()),
             bip32_derivation: hd_keypaths,
             ..Default::default()
         };
@@ -911,9 +909,7 @@ mod tests {
                 input: vec![
                     TxIn {
                         previous_output: OutPoint {
-                            txid: Txid::from_hex(
-                                "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126",
-                            ).unwrap(),
+                            txid: "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126".parse().unwrap(),
                             vout: 0,
                         },
                         script_sig: ScriptBuf::new(),
@@ -924,15 +920,11 @@ mod tests {
                 output: vec![
                     TxOut {
                         value: 99999699,
-                        script_pubkey: hex_script!(
-                            "76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac"
-                        ),
+                        script_pubkey: ScriptBuf::from_hex("76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac").unwrap(),
                     },
                     TxOut {
                         value: 100000000,
-                        script_pubkey: hex_script!(
-                            "a9143545e6e33b832c47050f24d3eeb93c9c03948bc787"
-                        ),
+                        script_pubkey: ScriptBuf::from_hex("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787").unwrap(),
                     },
                 ],
             },
@@ -976,7 +968,6 @@ mod tests {
         //! Create a full PSBT value with various fields filled and make sure it can be JSONized.
         use crate::hashes::sha256d;
         use crate::psbt::map::Input;
-        use crate::sighash::EcdsaSighashType;
 
         // create some values to use in the PSBT
         let tx = Transaction {
@@ -985,10 +976,10 @@ mod tests {
             input: vec![
                 TxIn {
                     previous_output: OutPoint {
-                        txid: Txid::from_hex("e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389").unwrap(),
+                        txid: "e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389".parse().unwrap(),
                         vout: 1,
                     },
-                    script_sig: hex_script!("160014be18d152a9b012039daf3da7de4f53349eecb985"),
+                    script_sig: ScriptBuf::from_hex("160014be18d152a9b012039daf3da7de4f53349eecb985").unwrap(),
                     sequence: Sequence::MAX,
                     witness: Witness::from_slice(&[hex!("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105")]),
                 }
@@ -996,7 +987,7 @@ mod tests {
             output: vec![
                 TxOut {
                     value: 190303501938,
-                    script_pubkey: hex_script!("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587"),
+                    script_pubkey: ScriptBuf::from_hex("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587").unwrap(),
                 },
             ],
         };
@@ -1041,9 +1032,9 @@ mod tests {
                     non_witness_utxo: Some(tx),
                     witness_utxo: Some(TxOut {
                         value: 190303501938,
-                        script_pubkey: hex_script!("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587"),
+                        script_pubkey: ScriptBuf::from_hex("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587").unwrap(),
                     }),
-                    sighash_type: Some("SIGHASH_SINGLE|SIGHASH_ANYONECANPAY".parse::<EcdsaSighashType>().unwrap().into()),
+                    sighash_type: Some("SIGHASH_SINGLE|SIGHASH_ANYONECANPAY".parse::<PsbtSighashType>().unwrap()),
                     redeem_script: Some(vec![0x51].into()),
                     witness_script: None,
                     partial_sigs: vec![(
@@ -1076,11 +1067,10 @@ mod tests {
     }
 
     mod bip_vectors {
+        use super::*;
+
         #[cfg(feature = "base64")]
         use std::str::FromStr;
-
-        use crate::hashes::hex::FromHex;
-        use crate::hash_types::Txid;
 
         use crate::blockdata::script::ScriptBuf;
         use crate::blockdata::transaction::{Transaction, TxIn, TxOut, OutPoint, Sequence};
@@ -1090,7 +1080,6 @@ mod tests {
         use crate::sighash::EcdsaSighashType;
         use std::collections::BTreeMap;
         use crate::blockdata::witness::Witness;
-        use crate::internal_macros::{hex, hex_script};
 
         #[test]
         #[should_panic(expected = "InvalidMagic")]
@@ -1177,9 +1166,7 @@ mod tests {
                     input: vec![
                         TxIn {
                             previous_output: OutPoint {
-                                txid: Txid::from_hex(
-                                    "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126",
-                                ).unwrap(),
+                                txid: "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126".parse().unwrap(),
                                 vout: 0,
                             },
                             script_sig: ScriptBuf::new(),
@@ -1190,11 +1177,11 @@ mod tests {
                     output: vec![
                         TxOut {
                             value: 99999699,
-                            script_pubkey: hex_script!("76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac"),
+                            script_pubkey: ScriptBuf::from_hex("76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac").unwrap(),
                         },
                         TxOut {
                             value: 100000000,
-                            script_pubkey: hex_script!("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787"),
+                            script_pubkey: ScriptBuf::from_hex("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787").unwrap(),
                         },
                     ],
                 },
@@ -1211,12 +1198,10 @@ mod tests {
                             input: vec![
                                 TxIn {
                                     previous_output: OutPoint {
-                                        txid: Txid::from_hex(
-                                            "e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389",
-                                        ).unwrap(),
+                                        txid: "e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389".parse().unwrap(),
                                         vout: 1,
                                     },
-                                    script_sig: hex_script!("160014be18d152a9b012039daf3da7de4f53349eecb985"),
+                                    script_sig: ScriptBuf::from_hex("160014be18d152a9b012039daf3da7de4f53349eecb985").unwrap(),
                                     sequence: Sequence::MAX,
                                     witness: Witness::from_slice(&[
                                         hex!("304402202712be22e0270f394f568311dc7ca9a68970b8025fdd3b240229f07f8a5f3a240220018b38d7dcd314e734c9276bd6fb40f673325bc4baa144c800d2f2f02db2765c01"),
@@ -1225,12 +1210,10 @@ mod tests {
                                 },
                                 TxIn {
                                     previous_output: OutPoint {
-                                        txid: Txid::from_hex(
-                                            "b490486aec3ae671012dddb2bb08466bef37720a533a894814ff1da743aaf886",
-                                        ).unwrap(),
+                                        txid: "b490486aec3ae671012dddb2bb08466bef37720a533a894814ff1da743aaf886".parse().unwrap(),
                                         vout: 1,
                                     },
-                                    script_sig: hex_script!("160014fe3e9ef1a745e974d902c4355943abcb34bd5353"),
+                                    script_sig: ScriptBuf::from_hex("160014fe3e9ef1a745e974d902c4355943abcb34bd5353").unwrap(),
                                     sequence: Sequence::MAX,
                                     witness: Witness::from_slice(&[
                                         hex!("3045022100d12b852d85dcd961d2f5f4ab660654df6eedcc794c0c33ce5cc309ffb5fce58d022067338a8e0e1725c197fb1a88af59f51e44e4255b20167c8684031c05d1f2592a01"),
@@ -1241,11 +1224,11 @@ mod tests {
                             output: vec![
                                 TxOut {
                                     value: 200000000,
-                                    script_pubkey: hex_script!("76a91485cff1097fd9e008bb34af709c62197b38978a4888ac"),
+                                    script_pubkey: ScriptBuf::from_hex("76a91485cff1097fd9e008bb34af709c62197b38978a4888ac").unwrap(),
                                 },
                                 TxOut {
                                     value: 190303501938,
-                                    script_pubkey: hex_script!("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587"),
+                                    script_pubkey: ScriptBuf::from_hex("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587").unwrap(),
                                 },
                             ],
                         }),
@@ -1285,7 +1268,7 @@ mod tests {
             assert!(&psbt.inputs[0].final_script_sig.is_some());
 
             let redeem_script = psbt.inputs[1].redeem_script.as_ref().unwrap();
-            let expected_out = hex_script!("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787");
+            let expected_out = ScriptBuf::from_hex("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787").unwrap();
 
             assert!(redeem_script.is_v0_p2wpkh());
             assert_eq!(
@@ -1331,7 +1314,7 @@ mod tests {
             assert!(&psbt.inputs[1].final_script_sig.is_none());
 
             let redeem_script = psbt.inputs[1].redeem_script.as_ref().unwrap();
-            let expected_out = hex_script!("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787");
+            let expected_out = ScriptBuf::from_hex("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787").unwrap();
 
             assert!(redeem_script.is_v0_p2wpkh());
             assert_eq!(
@@ -1355,7 +1338,7 @@ mod tests {
             assert!(&psbt.inputs[0].final_script_sig.is_none());
 
             let redeem_script = psbt.inputs[0].redeem_script.as_ref().unwrap();
-            let expected_out = hex_script!("a9146345200f68d189e1adc0df1c4d16ea8f14c0dbeb87");
+            let expected_out = ScriptBuf::from_hex("a9146345200f68d189e1adc0df1c4d16ea8f14c0dbeb87").unwrap();
 
             assert!(redeem_script.is_v0_p2wsh());
             assert_eq!(
@@ -1376,7 +1359,7 @@ mod tests {
             let tx = &psbt.unsigned_tx;
             assert_eq!(
                 tx.txid(),
-                Txid::from_hex("75c5c9665a570569ad77dd1279e6fd4628a093c4dcbf8d41532614044c14c115").unwrap(),
+                "75c5c9665a570569ad77dd1279e6fd4628a093c4dcbf8d41532614044c14c115".parse().unwrap(),
             );
 
             let mut unknown: BTreeMap<raw::Key, Vec<u8>> = BTreeMap::new();
@@ -1503,9 +1486,7 @@ mod tests {
                 input: vec![
                     TxIn {
                         previous_output: OutPoint {
-                            txid: Txid::from_hex(
-                                "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126",
-                            ).unwrap(),
+                            txid: "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126".parse().unwrap(),
                             vout: 0,
                         },
                         script_sig: ScriptBuf::new(),
@@ -1516,11 +1497,11 @@ mod tests {
                 output: vec![
                     TxOut {
                         value: 99999699,
-                        script_pubkey: hex_script!("76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac"),
+                        script_pubkey: ScriptBuf::from_hex("76a914d0c59903c5bac2868760e90fd521a4665aa7652088ac").unwrap(),
                     },
                     TxOut {
                         value: 100000000,
-                        script_pubkey: hex_script!("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787"),
+                        script_pubkey: ScriptBuf::from_hex("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787").unwrap(),
                     },
                 ],
             },
@@ -1537,12 +1518,10 @@ mod tests {
                         input: vec![
                             TxIn {
                                 previous_output: OutPoint {
-                                    txid: Txid::from_hex(
-                                        "e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389",
-                                    ).unwrap(),
+                                    txid: "e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389".parse().unwrap(),
                                     vout: 1,
                                 },
-                                script_sig: hex_script!("160014be18d152a9b012039daf3da7de4f53349eecb985"),
+                                script_sig: ScriptBuf::from_hex("160014be18d152a9b012039daf3da7de4f53349eecb985").unwrap(),
                                 sequence: Sequence::MAX,
                                 witness: Witness::from_slice(&[
                                     hex!("304402202712be22e0270f394f568311dc7ca9a68970b8025fdd3b240229f07f8a5f3a240220018b38d7dcd314e734c9276bd6fb40f673325bc4baa144c800d2f2f02db2765c01"),
@@ -1551,12 +1530,10 @@ mod tests {
                             },
                             TxIn {
                                 previous_output: OutPoint {
-                                    txid: Txid::from_hex(
-                                        "b490486aec3ae671012dddb2bb08466bef37720a533a894814ff1da743aaf886",
-                                    ).unwrap(),
+                                    txid: "b490486aec3ae671012dddb2bb08466bef37720a533a894814ff1da743aaf886".parse().unwrap(),
                                     vout: 1,
                                 },
-                                script_sig: hex_script!("160014fe3e9ef1a745e974d902c4355943abcb34bd5353"),
+                                script_sig: ScriptBuf::from_hex("160014fe3e9ef1a745e974d902c4355943abcb34bd5353").unwrap(),
                                 sequence: Sequence::MAX,
                                 witness: Witness::from_slice(&[
                                     hex!("3045022100d12b852d85dcd961d2f5f4ab660654df6eedcc794c0c33ce5cc309ffb5fce58d022067338a8e0e1725c197fb1a88af59f51e44e4255b20167c8684031c05d1f2592a01"),
@@ -1567,11 +1544,11 @@ mod tests {
                         output: vec![
                             TxOut {
                                 value: 200000000,
-                                script_pubkey: hex_script!("76a91485cff1097fd9e008bb34af709c62197b38978a4888ac"),
+                                script_pubkey: ScriptBuf::from_hex("76a91485cff1097fd9e008bb34af709c62197b38978a4888ac").unwrap(),
                             },
                             TxOut {
                                 value: 190303501938,
-                                script_pubkey: hex_script!("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587"),
+                                script_pubkey: ScriptBuf::from_hex("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587").unwrap(),
                             },
                         ],
                     }),
@@ -1679,9 +1656,7 @@ mod tests {
                 input: vec![
                     TxIn {
                         previous_output: OutPoint {
-                            txid: Txid::from_hex(
-                                "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126",
-                            ).unwrap(),
+                            txid: "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126".parse().unwrap(),
                             vout: 0,
                         },
                         sequence: Sequence::ENABLE_LOCKTIME_NO_RBF,
@@ -1712,9 +1687,7 @@ mod tests {
                         input: vec![
                             TxIn {
                                 previous_output: OutPoint {
-                                    txid: Txid::from_hex(
-                                        "e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389",
-                                    ).unwrap(),
+                                    txid: "e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389".parse().unwrap(),
                                     vout: 1,
                                 },
                                 sequence: Sequence::MAX,
@@ -1722,9 +1695,7 @@ mod tests {
                             },
                             TxIn {
                                 previous_output: OutPoint {
-                                    txid: Txid::from_hex(
-                                        "b490486aec3ae671012dddb2bb08466bef37720a533a894814ff1da743aaf886",
-                                    ).unwrap(),
+                                    txid: "b490486aec3ae671012dddb2bb08466bef37720a533a894814ff1da743aaf886".parse().unwrap(),
                                     vout: 1,
                                 },
                                 sequence: Sequence::MAX,

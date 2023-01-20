@@ -1057,7 +1057,7 @@ mod tests {
     use crate::hash_types::Sighash;
     use crate::hashes::hex::FromHex;
     use crate::hashes::{Hash, HashEngine};
-    use crate::internal_macros::{hex, hex_from_slice, hex_script};
+    use crate::internal_macros::{hex, hex_from_slice};
     use crate::network::constants::Network;
     use crate::taproot::{TapLeafHash, TapSighashHash};
 
@@ -1347,7 +1347,7 @@ mod tests {
                 let script_inner = ScriptBuf::from_hex(script_hex).unwrap();
                 Some(ScriptPath::with_defaults(&script_inner).leaf_hash())
             }
-            (_, Some(script_leaf_hash)) => Some(TapLeafHash::from_hex(script_leaf_hash).unwrap()),
+            (_, Some(script_leaf_hash)) => Some(script_leaf_hash.parse::<TapLeafHash>().unwrap()),
             _ => None,
         };
         // All our tests use the default `0xFFFFFFFF` codeseparator value
@@ -1689,14 +1689,14 @@ mod tests {
              05000000001976a9147480a33f950689af511e6e84c138dbbd3c3ee41588ac00000000"),
         ).unwrap();
 
-        let witness_script = hex_script!(
+        let witness_script = ScriptBuf::from_hex(
             "56210307b8ae49ac90a048e9b53357a2354b3334e9c8bee813ecb98e99a7e07e8c3ba32103b28f0c28\
              bfab54554ae8c658ac5c3e0ce6e79ad336331f78c428dd43eea8449b21034b8113d703413d57761b8b\
              9781957b8c0ac1dfe69f492580ca4195f50376ba4a21033400f6afecb833092a9a21cfdf1ed1376e58\
              c5d1f47de74683123987e967a8f42103a6d48b1131e94ba04d9737d61acdaa1322008af9602b3b1486\
              2c07a1789aac162102d8b661b0b3302ee2f162b09e07a55ad5dfbe673a9f01d9f0c19617681024306b\
              56ae"
-        );
+        ).unwrap();
         let value = 987654321;
 
         let mut cache = SighashCache::new(&tx);

@@ -22,7 +22,6 @@ use core::convert::TryFrom;
 use bitcoin_internals::write_err;
 
 use crate::hashes::{self, Hash, sha256d};
-use crate::hashes::hex::FromHex;
 
 use crate::blockdata::constants::WITNESS_SCALE_FACTOR;
 #[cfg(feature="bitcoinconsensus")] use crate::blockdata::script;
@@ -175,7 +174,7 @@ impl core::str::FromStr for OutPoint {
             return Err(ParseOutPointError::Format);
         }
         Ok(OutPoint {
-            txid: Txid::from_hex(&s[..colon]).map_err(ParseOutPointError::Txid)?,
+            txid: s[..colon].parse().map_err(ParseOutPointError::Txid)?,
             vout: parse_vout(&s[colon+1..])?,
         })
     }
@@ -1163,8 +1162,6 @@ mod tests {
     use crate::hashes::hex::FromHex;
     use crate::internal_macros::hex;
 
-    use crate::hash_types::*;
-
     const SOME_TX: &str = "0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000";
 
     #[test]
@@ -1193,20 +1190,20 @@ mod tests {
         assert_eq!(OutPoint::from_str("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456:+42"),
                    Err(ParseOutPointError::VoutNotCanonical));
         assert_eq!(OutPoint::from_str("i don't care:1"),
-                   Err(ParseOutPointError::Txid(Txid::from_hex("i don't care").unwrap_err())));
+                   Err(ParseOutPointError::Txid("i don't care".parse::<Txid>().unwrap_err())));
         assert_eq!(OutPoint::from_str("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c945X:1"),
-                   Err(ParseOutPointError::Txid(Txid::from_hex("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c945X").unwrap_err())));
+                   Err(ParseOutPointError::Txid("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c945X".parse::<Txid>().unwrap_err())));
         assert_eq!(OutPoint::from_str("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456:lol"),
                    Err(ParseOutPointError::Vout(crate::parse::int::<u32, _>("lol").unwrap_err())));
 
         assert_eq!(OutPoint::from_str("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456:42"),
                    Ok(OutPoint{
-                       txid: Txid::from_hex("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456").unwrap(),
+                       txid: "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456".parse().unwrap(),
                        vout: 42,
                    }));
         assert_eq!(OutPoint::from_str("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456:0"),
                    Ok(OutPoint{
-                       txid: Txid::from_hex("5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456").unwrap(),
+                       txid: "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456".parse().unwrap(),
                        vout: 0,
                    }));
     }

@@ -52,7 +52,6 @@ pub(crate) use test_macros::*;
 #[cfg(test)]
 mod test_macros {
     use crate::hashes::hex::FromHex;
-    use crate::PublicKey;
 
     /// Trait used to create a value from hex string for testing purposes.
     pub(crate) trait TestFromHex {
@@ -68,28 +67,8 @@ mod test_macros {
         fn test_from_hex(hex: &str) -> Self { Self::from_hex(hex).unwrap() }
     }
 
-    impl TestFromHex for PublicKey {
-        fn test_from_hex(hex: &str) -> Self {
-            PublicKey::from_slice(&Vec::from_hex(hex).unwrap()).unwrap()
-        }
-    }
-
     macro_rules! hex (($hex:expr) => (<Vec<u8> as hashes::hex::FromHex>::from_hex($hex).unwrap()));
     pub(crate) use hex;
-
-    macro_rules! hex_into {
-        ($hex:expr) => {
-            $crate::internal_macros::hex_into!(_, $hex)
-        };
-        ($type:ty, $hex:expr) => {
-            <$type as $crate::internal_macros::TestFromHex>::test_from_hex($hex)
-        };
-    }
-    pub(crate) use hex_into;
-
-    // Script is commonly used in places where inference may fail
-    macro_rules! hex_script (($hex:expr) => ($crate::internal_macros::hex_into!($crate::ScriptBuf, $hex)));
-    pub(crate) use hex_script;
 
     // For types that can't use TestFromHex due to coherence rules or reversed hex
     macro_rules! hex_from_slice {

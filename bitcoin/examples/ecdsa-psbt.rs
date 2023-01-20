@@ -37,13 +37,12 @@ use bitcoin::bip32::{
     ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint, IntoDerivationPath,
 };
 use bitcoin::consensus::encode;
-use bitcoin::hashes::hex::FromHex;
 use bitcoin::locktime::absolute;
 use bitcoin::psbt::{self, Input, Psbt, PsbtSighashType};
 use bitcoin::secp256k1::{Secp256k1, Signing, Verification};
 use bitcoin::{
     Address, Amount, Network, OutPoint, PublicKey, ScriptBuf, Sequence, Transaction, TxIn, TxOut,
-    Txid, Witness,
+    Witness,
 };
 
 type Result<T> = std::result::Result<T, Error>;
@@ -189,7 +188,7 @@ impl WatchOnly {
             lock_time: absolute::LockTime::ZERO,
             input: vec![TxIn {
                 previous_output: OutPoint {
-                    txid: Txid::from_hex(INPUT_UTXO_TXID)?,
+                    txid: INPUT_UTXO_TXID.parse()?,
                     vout: INPUT_UTXO_VOUT,
                 },
                 script_sig: ScriptBuf::new(),

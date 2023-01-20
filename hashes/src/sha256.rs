@@ -326,8 +326,6 @@ mod tests {
     #[test]
     #[cfg(any(feature = "std", feature = "alloc"))]
     fn test() {
-        use crate::hex::FromHex;
-
         #[derive(Clone)]
         struct Test {
             input: &'static str,
@@ -372,7 +370,7 @@ mod tests {
         for test in tests {
             // Hash through high-level API, check hex encoding/decoding
             let hash = sha256::Hash::hash(test.input.as_bytes());
-            assert_eq!(hash, sha256::Hash::from_hex(test.output_str).expect("parse hex"));
+            assert_eq!(hash, test.output_str.parse::<sha256::Hash>().expect("parse hex"));
             assert_eq!(&hash[..], &test.output[..]);
             assert_eq!(&hash.to_string(), &test.output_str);
 
