@@ -1397,7 +1397,7 @@ mod tests {
             #[cfg(feature = "std")]
             assert_eq!(err.to_string(), "hash parse error");
             #[cfg(not(feature = "std"))]
-            assert_eq!(err.to_string(), "hash parse error: bad slice length 33 (expected 32)");
+            assert_eq!(err.to_string(), "hash parse error: invalid slice length 33 (expected 32)");
             let err = hex_psbt!("70736274ff01005e02000000019bd48765230bf9a72e662001f972556e54f0c6f97feb56bcb5600d817f6995260100000000ffffffff0148e6052a01000000225120030da4fce4f7db28c2cb2951631e003713856597fe963882cb500e68112cca63000000000001012b00f2052a01000000225120c2247efbfd92ac47f6f40b8d42d169175a19fa9fa10e4a25d7f35eb4dd85b69241142cb13ac68248de806aa6a3659cf3c03eb6821d09c8114a4e868febde865bb6d2cd970e15f53fc0c82f950fd560ffa919b76172be017368a89913af074f400b094289756aa3739ccc689ec0fcf3a360be32cc0b59b16e93a1e8bb4605726b2ca7a3ff706c4176649632b2cc68e1f912b8a578e3719ce7710885c7a966f49bcd43cb01010000").unwrap_err();
             #[cfg(feature = "std")]
             assert_eq!(err.to_string(), "invalid Schnorr signature");
