@@ -194,7 +194,7 @@ mod tests {
 
         let from_iter = {
             let before = Instant::now();
-            let from_iter = calculate_root(collection.iter().map(|v| *v));
+            let from_iter = calculate_root(collection.iter().copied());
             let delta = (Instant::now() - before).as_secs_f64();
             println!("calculate_root: {delta} s");
             from_iter
@@ -202,7 +202,7 @@ mod tests {
 
         let from_light = {
             let before = Instant::now();
-            let from_light = calculate_root_light(collection.iter().map(|v| *v));
+            let from_light = calculate_root_light(collection.iter().copied());
             let delta = (Instant::now() - before).as_secs_f64();
             println!("calculate_root_light: {delta} s");
             from_light
