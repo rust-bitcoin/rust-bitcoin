@@ -41,9 +41,9 @@ use crate::blockdata::constants::{
     MAX_SCRIPT_ELEMENT_SIZE, PUBKEY_ADDRESS_PREFIX_MAIN, PUBKEY_ADDRESS_PREFIX_TEST,
     SCRIPT_ADDRESS_PREFIX_MAIN, SCRIPT_ADDRESS_PREFIX_TEST,
 };
+use crate::blockdata::opcodes;
 use crate::blockdata::opcodes::all::*;
-use crate::blockdata::script::Instruction;
-use crate::blockdata::{opcodes, script};
+use crate::blockdata::script::{self, Instruction, Script, ScriptBuf};
 use crate::crypto::key::PublicKey;
 use crate::crypto::schnorr::{TapTweak, TweakedPublicKey, UntweakedPublicKey};
 use crate::error::ParseIntError;
@@ -432,7 +432,7 @@ impl WitnessProgram {
 
 impl Payload {
     /// Constructs a [Payload] from an output script (`scriptPubkey`).
-    pub fn from_script(script: &script::Script) -> Result<Payload, Error> {
+    pub fn from_script(script: &Script) -> Result<Payload, Error> {
         Ok(if script.is_p2pkh() {
             let mut hash_inner = [0u8; 20];
             hash_inner.copy_from_slice(&script.as_bytes()[3..23]);
@@ -455,12 +455,12 @@ impl Payload {
     }
 
     /// Generates a script pubkey spending to this [Payload].
-    pub fn script_pubkey(&self) -> script::ScriptBuf {
+    pub fn script_pubkey(&self) -> ScriptBuf {
         match *self {
-            Payload::PubkeyHash(ref hash) => script::ScriptBuf::new_p2pkh(hash),
-            Payload::ScriptHash(ref hash) => script::ScriptBuf::new_p2sh(hash),
+            Payload::PubkeyHash(ref hash) => ScriptBuf::new_p2pkh(hash),
+            Payload::ScriptHash(ref hash) => ScriptBuf::new_p2sh(hash),
             Payload::WitnessProgram(ref prog) =>
-                script::ScriptBuf::new_witness_program(prog)
+                ScriptBuf::new_witness_program(prog)
         }
     }
 
@@ -470,7 +470,7 @@ impl Payload {
 
     /// Creates a pay to script hash P2SH payload from a script
     #[inline]
-    pub fn p2sh(script: &script::Script) -> Result<Payload, Error> {
+    pub fn p2sh(script: &Script) -> Result<Payload, Error> {
         if script.len() > MAX_SCRIPT_ELEMENT_SIZE {
             return Err(Error::ExcessiveScriptSize);
         }
@@ -496,7 +496,7 @@ impl Payload {
     }
 
     /// Create a witness pay to script hash payload.
-    pub fn p2wsh(script: &script::Script) -> Payload {
+    pub fn p2wsh(script: &Script) -> Payload {
         let prog = WitnessProgram::new(
             WitnessVersion::V0,
             script.wscript_hash().as_ref().to_vec()
@@ -505,7 +505,7 @@ impl Payload {
     }
 
     /// Create a pay to script payload that embeds a witness pay to script hash address
-    pub fn p2shwsh(script: &script::Script) -> Payload {
+    pub fn p2shwsh(script: &Script) -> Payload {
         let ws =
             script::Builder::new().push_int(0).push_slice(script.wscript_hash().as_ref()).into_script();
 
@@ -820,7 +820,7 @@ impl Address {
     /// This address type was introduced with BIP16 and is the popular type to implement multi-sig
     /// these days.
     #[inline]
-    pub fn p2sh(script: &script::Script, network: Network) -> Result<Address, Error> {
+    pub fn p2sh(script: &Script, network: Network) -> Result<Address, Error> {
         Ok(Address::new(network, Payload::p2sh(script)?))
     }
 
@@ -845,14 +845,14 @@ impl Address {
     }
 
     /// Creates a witness pay to script hash address.
-    pub fn p2wsh(script: &script::Script, network: Network) -> Address {
+    pub fn p2wsh(script: &Script, network: Network) -> Address {
         Address::new(network, Payload::p2wsh(script))
     }
 
     /// Creates a pay to script address that embeds a witness pay to script hash address.
     ///
     /// This is a segwit address type that looks familiar (as p2sh) to legacy clients.
-    pub fn p2shwsh(script: &script::Script, network: Network) -> Address {
+    pub fn p2shwsh(script: &Script, network: Network) -> Address {
         Address::new(network, Payload::p2shwsh(script))
     }
 
@@ -905,12 +905,12 @@ impl Address {
     pub fn is_standard(&self) -> bool { self.address_type().is_some() }
 
     /// Constructs an [`Address`] from an output script (`scriptPubkey`).
-    pub fn from_script(script: &script::Script, network: Network) -> Result<Address, Error> {
+    pub fn from_script(script: &Script, network: Network) -> Result<Address, Error> {
         Ok(Address::new(network, Payload::from_script(script)?))
     }
 
     /// Generates a script pubkey spending to this address.
-    pub fn script_pubkey(&self) -> script::ScriptBuf { self.payload.script_pubkey() }
+    pub fn script_pubkey(&self) -> ScriptBuf { self.payload.script_pubkey() }
 
     /// Creates a URI string *bitcoin:address* optimized to be encoded in QR codes.
     ///
