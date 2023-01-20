@@ -908,17 +908,19 @@ mod tests {
             unsigned_tx: Transaction {
                 version: 2,
                 lock_time: absolute::LockTime::from_consensus(1257139),
-                input: vec![TxIn {
-                    previous_output: OutPoint {
-                        txid: Txid::from_hex(
-                            "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126",
-                        ).unwrap(),
-                        vout: 0,
-                    },
-                    script_sig: ScriptBuf::new(),
-                    sequence: Sequence::ENABLE_LOCKTIME_NO_RBF,
-                    witness: Witness::default(),
-                }],
+                input: vec![
+                    TxIn {
+                        previous_output: OutPoint {
+                            txid: Txid::from_hex(
+                                "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126",
+                            ).unwrap(),
+                            vout: 0,
+                        },
+                        script_sig: ScriptBuf::new(),
+                        sequence: Sequence::ENABLE_LOCKTIME_NO_RBF,
+                        witness: Witness::default(),
+                    }
+                ],
                 output: vec![
                     TxOut {
                         value: 99999699,
@@ -980,15 +982,17 @@ mod tests {
         let tx = Transaction {
             version: 1,
             lock_time: absolute::LockTime::ZERO,
-            input: vec![TxIn {
-                previous_output: OutPoint {
-                    txid: Txid::from_hex("e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389").unwrap(),
-                    vout: 1,
-                },
-                script_sig: hex_script!("160014be18d152a9b012039daf3da7de4f53349eecb985"),
-                sequence: Sequence::MAX,
-                witness: Witness::from_slice(&[hex!("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105")]),
-            }],
+            input: vec![
+                TxIn {
+                    previous_output: OutPoint {
+                        txid: Txid::from_hex("e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389").unwrap(),
+                        vout: 1,
+                    },
+                    script_sig: hex_script!("160014be18d152a9b012039daf3da7de4f53349eecb985"),
+                    sequence: Sequence::MAX,
+                    witness: Witness::from_slice(&[hex!("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105")]),
+                }
+            ],
             output: vec![
                 TxOut {
                     value: 190303501938,
@@ -1032,35 +1036,39 @@ mod tests {
             proprietary: proprietary.clone(),
             unknown: unknown.clone(),
 
-            inputs: vec![Input {
-                non_witness_utxo: Some(tx),
-                witness_utxo: Some(TxOut {
-                    value: 190303501938,
-                    script_pubkey: hex_script!("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587"),
-                }),
-                sighash_type: Some("SIGHASH_SINGLE|SIGHASH_ANYONECANPAY".parse::<EcdsaSighashType>().unwrap().into()),
-                redeem_script: Some(vec![0x51].into()),
-                witness_script: None,
-                partial_sigs: vec![(
-                    "0339880dc92394b7355e3d0439fa283c31de7590812ea011c4245c0674a685e883".parse().unwrap(),
-                    "304402204f67e2afb76142d44fae58a2495d33a3419daa26cd0db8d04f3452b63289ac0f022010762a9fb67e94cc5cad9026f6dc99ff7f070f4278d30fbc7d0c869dd38c7fe701".parse().unwrap(),
-                )].into_iter().collect(),
-                bip32_derivation: keypaths.clone(),
-                final_script_witness: Some(Witness::from_slice(&[vec![1, 3], vec![5]])),
-                ripemd160_preimages: vec![(ripemd160::Hash::hash(&[]), vec![1, 2])].into_iter().collect(),
-                sha256_preimages: vec![(sha256::Hash::hash(&[]), vec![1, 2])].into_iter().collect(),
-                hash160_preimages: vec![(hash160::Hash::hash(&[]), vec![1, 2])].into_iter().collect(),
-                hash256_preimages: vec![(sha256d::Hash::hash(&[]), vec![1, 2])].into_iter().collect(),
-                proprietary: proprietary.clone(),
-                unknown: unknown.clone(),
-                ..Default::default()
-            }],
-            outputs: vec![Output {
-                bip32_derivation: keypaths,
-                proprietary,
-                unknown,
-                ..Default::default()
-            }],
+            inputs: vec![
+                Input {
+                    non_witness_utxo: Some(tx),
+                    witness_utxo: Some(TxOut {
+                        value: 190303501938,
+                        script_pubkey: hex_script!("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587"),
+                    }),
+                    sighash_type: Some("SIGHASH_SINGLE|SIGHASH_ANYONECANPAY".parse::<EcdsaSighashType>().unwrap().into()),
+                    redeem_script: Some(vec![0x51].into()),
+                    witness_script: None,
+                    partial_sigs: vec![(
+                        "0339880dc92394b7355e3d0439fa283c31de7590812ea011c4245c0674a685e883".parse().unwrap(),
+                        "304402204f67e2afb76142d44fae58a2495d33a3419daa26cd0db8d04f3452b63289ac0f022010762a9fb67e94cc5cad9026f6dc99ff7f070f4278d30fbc7d0c869dd38c7fe701".parse().unwrap(),
+                    )].into_iter().collect(),
+                    bip32_derivation: keypaths.clone(),
+                    final_script_witness: Some(Witness::from_slice(&[vec![1, 3], vec![5]])),
+                    ripemd160_preimages: vec![(ripemd160::Hash::hash(&[]), vec![1, 2])].into_iter().collect(),
+                    sha256_preimages: vec![(sha256::Hash::hash(&[]), vec![1, 2])].into_iter().collect(),
+                    hash160_preimages: vec![(hash160::Hash::hash(&[]), vec![1, 2])].into_iter().collect(),
+                    hash256_preimages: vec![(sha256d::Hash::hash(&[]), vec![1, 2])].into_iter().collect(),
+                    proprietary: proprietary.clone(),
+                    unknown: unknown.clone(),
+                    ..Default::default()
+                }
+            ],
+            outputs: vec![
+                Output {
+                    bip32_derivation: keypaths,
+                    proprietary,
+                    unknown,
+                    ..Default::default()
+                }
+            ],
         };
         let encoded = serde_json::to_string(&psbt).unwrap();
         let decoded: PartiallySignedTransaction = serde_json::from_str(&encoded).unwrap();
@@ -1166,17 +1174,19 @@ mod tests {
                 unsigned_tx: Transaction {
                     version: 2,
                     lock_time: absolute::LockTime::from_consensus(1257139),
-                    input: vec![TxIn {
-                        previous_output: OutPoint {
-                            txid: Txid::from_hex(
-                                "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126",
-                            ).unwrap(),
-                            vout: 0,
-                        },
-                        script_sig: ScriptBuf::new(),
-                        sequence: Sequence::ENABLE_LOCKTIME_NO_RBF,
-                        witness: Witness::default(),
-                    }],
+                    input: vec![
+                        TxIn {
+                            previous_output: OutPoint {
+                                txid: Txid::from_hex(
+                                    "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126",
+                                ).unwrap(),
+                                vout: 0,
+                            },
+                            script_sig: ScriptBuf::new(),
+                            sequence: Sequence::ENABLE_LOCKTIME_NO_RBF,
+                            witness: Witness::default(),
+                        }
+                    ],
                     output: vec![
                         TxOut {
                             value: 99999699,
@@ -1193,51 +1203,55 @@ mod tests {
                 proprietary: BTreeMap::new(),
                 unknown: BTreeMap::new(),
 
-                inputs: vec![Input {
-                    non_witness_utxo: Some(Transaction {
-                        version: 1,
-                        lock_time: absolute::LockTime::ZERO,
-                        input: vec![TxIn {
-                            previous_output: OutPoint {
-                                txid: Txid::from_hex(
-                                    "e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389",
-                                ).unwrap(),
-                                vout: 1,
-                            },
-                            script_sig: hex_script!("160014be18d152a9b012039daf3da7de4f53349eecb985"),
-                            sequence: Sequence::MAX,
-                            witness: Witness::from_slice(&[
-                                hex!("304402202712be22e0270f394f568311dc7ca9a68970b8025fdd3b240229f07f8a5f3a240220018b38d7dcd314e734c9276bd6fb40f673325bc4baa144c800d2f2f02db2765c01"),
-                                hex!("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105"),
-                            ]),
-                        },
-                        TxIn {
-                            previous_output: OutPoint {
-                                txid: Txid::from_hex(
-                                    "b490486aec3ae671012dddb2bb08466bef37720a533a894814ff1da743aaf886",
-                                ).unwrap(),
-                                vout: 1,
-                            },
-                            script_sig: hex_script!("160014fe3e9ef1a745e974d902c4355943abcb34bd5353"),
-                            sequence: Sequence::MAX,
-                            witness: Witness::from_slice(&[
-                                hex!("3045022100d12b852d85dcd961d2f5f4ab660654df6eedcc794c0c33ce5cc309ffb5fce58d022067338a8e0e1725c197fb1a88af59f51e44e4255b20167c8684031c05d1f2592a01"),
-                                hex!("0223b72beef0965d10be0778efecd61fcac6f79a4ea169393380734464f84f2ab3"),
-                            ]),
-                        }],
-                        output: vec![
-                            TxOut {
-                                value: 200000000,
-                                script_pubkey: hex_script!("76a91485cff1097fd9e008bb34af709c62197b38978a4888ac"),
-                            },
-                            TxOut {
-                                value: 190303501938,
-                                script_pubkey: hex_script!("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587"),
-                            },
-                        ],
-                    }),
-                    ..Default::default()
-                },],
+                inputs: vec![
+                    Input {
+                        non_witness_utxo: Some(Transaction {
+                            version: 1,
+                            lock_time: absolute::LockTime::ZERO,
+                            input: vec![
+                                TxIn {
+                                    previous_output: OutPoint {
+                                        txid: Txid::from_hex(
+                                            "e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389",
+                                        ).unwrap(),
+                                        vout: 1,
+                                    },
+                                    script_sig: hex_script!("160014be18d152a9b012039daf3da7de4f53349eecb985"),
+                                    sequence: Sequence::MAX,
+                                    witness: Witness::from_slice(&[
+                                        hex!("304402202712be22e0270f394f568311dc7ca9a68970b8025fdd3b240229f07f8a5f3a240220018b38d7dcd314e734c9276bd6fb40f673325bc4baa144c800d2f2f02db2765c01"),
+                                        hex!("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105"),
+                                    ]),
+                                },
+                                TxIn {
+                                    previous_output: OutPoint {
+                                        txid: Txid::from_hex(
+                                            "b490486aec3ae671012dddb2bb08466bef37720a533a894814ff1da743aaf886",
+                                        ).unwrap(),
+                                        vout: 1,
+                                    },
+                                    script_sig: hex_script!("160014fe3e9ef1a745e974d902c4355943abcb34bd5353"),
+                                    sequence: Sequence::MAX,
+                                    witness: Witness::from_slice(&[
+                                        hex!("3045022100d12b852d85dcd961d2f5f4ab660654df6eedcc794c0c33ce5cc309ffb5fce58d022067338a8e0e1725c197fb1a88af59f51e44e4255b20167c8684031c05d1f2592a01"),
+                                        hex!("0223b72beef0965d10be0778efecd61fcac6f79a4ea169393380734464f84f2ab3"),
+                                    ]),
+                                }
+                            ],
+                            output: vec![
+                                TxOut {
+                                    value: 200000000,
+                                    script_pubkey: hex_script!("76a91485cff1097fd9e008bb34af709c62197b38978a4888ac"),
+                                },
+                                TxOut {
+                                    value: 190303501938,
+                                    script_pubkey: hex_script!("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587"),
+                                },
+                            ],
+                        }),
+                        ..Default::default()
+                    },
+                ],
                 outputs: vec![
                     Output {
                         ..Default::default()
@@ -1486,17 +1500,19 @@ mod tests {
             unsigned_tx: Transaction {
                 version: 2,
                 lock_time: absolute::LockTime::from_consensus(1257139),
-                input: vec![TxIn {
-                    previous_output: OutPoint {
-                        txid: Txid::from_hex(
-                            "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126",
-                        ).unwrap(),
-                        vout: 0,
-                    },
-                    script_sig: ScriptBuf::new(),
-                    sequence: Sequence::ENABLE_LOCKTIME_NO_RBF,
-                    witness: Witness::default(),
-                }],
+                input: vec![
+                    TxIn {
+                        previous_output: OutPoint {
+                            txid: Txid::from_hex(
+                                "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126",
+                            ).unwrap(),
+                            vout: 0,
+                        },
+                        script_sig: ScriptBuf::new(),
+                        sequence: Sequence::ENABLE_LOCKTIME_NO_RBF,
+                        witness: Witness::default(),
+                    }
+                ],
                 output: vec![
                     TxOut {
                         value: 99999699,
@@ -1513,51 +1529,55 @@ mod tests {
             proprietary: Default::default(),
             unknown: BTreeMap::new(),
 
-            inputs: vec![Input {
-                non_witness_utxo: Some(Transaction {
-                    version: 1,
-                    lock_time: absolute::LockTime::ZERO,
-                    input: vec![TxIn {
-                        previous_output: OutPoint {
-                            txid: Txid::from_hex(
-                                "e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389",
-                            ).unwrap(),
-                            vout: 1,
-                        },
-                        script_sig: hex_script!("160014be18d152a9b012039daf3da7de4f53349eecb985"),
-                        sequence: Sequence::MAX,
-                        witness: Witness::from_slice(&[
-                            hex!("304402202712be22e0270f394f568311dc7ca9a68970b8025fdd3b240229f07f8a5f3a240220018b38d7dcd314e734c9276bd6fb40f673325bc4baa144c800d2f2f02db2765c01"),
-                            hex!("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105"),
-                        ]),
-                    },
-                    TxIn {
-                        previous_output: OutPoint {
-                            txid: Txid::from_hex(
-                                "b490486aec3ae671012dddb2bb08466bef37720a533a894814ff1da743aaf886",
-                            ).unwrap(),
-                            vout: 1,
-                        },
-                        script_sig: hex_script!("160014fe3e9ef1a745e974d902c4355943abcb34bd5353"),
-                        sequence: Sequence::MAX,
-                        witness: Witness::from_slice(&[
-                            hex!("3045022100d12b852d85dcd961d2f5f4ab660654df6eedcc794c0c33ce5cc309ffb5fce58d022067338a8e0e1725c197fb1a88af59f51e44e4255b20167c8684031c05d1f2592a01"),
-                            hex!("0223b72beef0965d10be0778efecd61fcac6f79a4ea169393380734464f84f2ab3"),
-                        ]),
-                    }],
-                    output: vec![
-                        TxOut {
-                            value: 200000000,
-                            script_pubkey: hex_script!("76a91485cff1097fd9e008bb34af709c62197b38978a4888ac"),
-                        },
-                        TxOut {
-                            value: 190303501938,
-                            script_pubkey: hex_script!("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587"),
-                        },
-                    ],
-                }),
-                ..Default::default()
-            },],
+            inputs: vec![
+                Input {
+                    non_witness_utxo: Some(Transaction {
+                        version: 1,
+                        lock_time: absolute::LockTime::ZERO,
+                        input: vec![
+                            TxIn {
+                                previous_output: OutPoint {
+                                    txid: Txid::from_hex(
+                                        "e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389",
+                                    ).unwrap(),
+                                    vout: 1,
+                                },
+                                script_sig: hex_script!("160014be18d152a9b012039daf3da7de4f53349eecb985"),
+                                sequence: Sequence::MAX,
+                                witness: Witness::from_slice(&[
+                                    hex!("304402202712be22e0270f394f568311dc7ca9a68970b8025fdd3b240229f07f8a5f3a240220018b38d7dcd314e734c9276bd6fb40f673325bc4baa144c800d2f2f02db2765c01"),
+                                    hex!("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105"),
+                                ]),
+                            },
+                            TxIn {
+                                previous_output: OutPoint {
+                                    txid: Txid::from_hex(
+                                        "b490486aec3ae671012dddb2bb08466bef37720a533a894814ff1da743aaf886",
+                                    ).unwrap(),
+                                    vout: 1,
+                                },
+                                script_sig: hex_script!("160014fe3e9ef1a745e974d902c4355943abcb34bd5353"),
+                                sequence: Sequence::MAX,
+                                witness: Witness::from_slice(&[
+                                    hex!("3045022100d12b852d85dcd961d2f5f4ab660654df6eedcc794c0c33ce5cc309ffb5fce58d022067338a8e0e1725c197fb1a88af59f51e44e4255b20167c8684031c05d1f2592a01"),
+                                    hex!("0223b72beef0965d10be0778efecd61fcac6f79a4ea169393380734464f84f2ab3"),
+                                ]),
+                            }
+                        ],
+                        output: vec![
+                            TxOut {
+                                value: 200000000,
+                                script_pubkey: hex_script!("76a91485cff1097fd9e008bb34af709c62197b38978a4888ac"),
+                            },
+                            TxOut {
+                                value: 190303501938,
+                                script_pubkey: hex_script!("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587"),
+                            },
+                        ],
+                    }),
+                    ..Default::default()
+                },
+            ],
             outputs: vec![
                 Output {
                     ..Default::default()
@@ -1656,16 +1676,18 @@ mod tests {
             unsigned_tx: Transaction {
                 version: 2,
                 lock_time: absolute::LockTime::from_consensus(1257139),
-                input: vec![TxIn {
-                    previous_output: OutPoint {
-                        txid: Txid::from_hex(
-                            "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126",
-                        ).unwrap(),
-                        vout: 0,
-                    },
-                    sequence: Sequence::ENABLE_LOCKTIME_NO_RBF,
-                    ..Default::default()
-                }],
+                input: vec![
+                    TxIn {
+                        previous_output: OutPoint {
+                            txid: Txid::from_hex(
+                                "f61b1742ca13176464adb3cb66050c00787bb3a4eead37e985f2df1e37718126",
+                            ).unwrap(),
+                            vout: 0,
+                        },
+                        sequence: Sequence::ENABLE_LOCKTIME_NO_RBF,
+                        ..Default::default()
+                    }
+                ],
                 output: vec![
                     TxOut {
                         value: output_0_val,
@@ -1682,43 +1704,47 @@ mod tests {
             proprietary: BTreeMap::new(),
             unknown: BTreeMap::new(),
 
-            inputs: vec![Input {
-                non_witness_utxo: Some(Transaction {
-                    version: 1,
-                    lock_time: absolute::LockTime::ZERO,
-                    input: vec![TxIn {
-                        previous_output: OutPoint {
-                            txid: Txid::from_hex(
-                                "e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389",
-                            ).unwrap(),
-                            vout: 1,
-                        },
-                        sequence: Sequence::MAX,
-                       ..Default::default()
-                    },
-                    TxIn {
-                        previous_output: OutPoint {
-                            txid: Txid::from_hex(
-                                "b490486aec3ae671012dddb2bb08466bef37720a533a894814ff1da743aaf886",
-                            ).unwrap(),
-                            vout: 1,
-                        },
-                        sequence: Sequence::MAX,
-                        ..Default::default()
-                    }],
-                    output: vec![
-                        TxOut {
-                            value: prev_output_val,
-                            ..Default::default()
-                        },
-                        TxOut {
-                            value: 190303501938,
-                            ..Default::default()
-                        },
-                    ],
-                }),
-                ..Default::default()
-            },],
+            inputs: vec![
+                Input {
+                    non_witness_utxo: Some(Transaction {
+                        version: 1,
+                        lock_time: absolute::LockTime::ZERO,
+                        input: vec![
+                            TxIn {
+                                previous_output: OutPoint {
+                                    txid: Txid::from_hex(
+                                        "e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389",
+                                    ).unwrap(),
+                                    vout: 1,
+                                },
+                                sequence: Sequence::MAX,
+                                ..Default::default()
+                            },
+                            TxIn {
+                                previous_output: OutPoint {
+                                    txid: Txid::from_hex(
+                                        "b490486aec3ae671012dddb2bb08466bef37720a533a894814ff1da743aaf886",
+                                    ).unwrap(),
+                                    vout: 1,
+                                },
+                                sequence: Sequence::MAX,
+                                ..Default::default()
+                            }
+                        ],
+                        output: vec![
+                            TxOut {
+                                value: prev_output_val,
+                                ..Default::default()
+                            },
+                            TxOut {
+                                value: 190303501938,
+                                ..Default::default()
+                            },
+                        ],
+                    }),
+                    ..Default::default()
+                },
+            ],
             outputs: vec![
                 Output {
                     ..Default::default()
