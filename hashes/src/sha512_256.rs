@@ -22,7 +22,7 @@
 //! SHA512/256 is a hash function that uses the sha512 alogrithm but it truncates
 //! the output to 256 bits. It has different initial constants than sha512 so it
 //! produces an entirely different hash compared to sha512. More information at
-//! https://eprint.iacr.org/2010/548.pdf.
+//! <https://eprint.iacr.org/2010/548.pdf>.
 
 use core::str;
 use core::ops::Index;
@@ -35,7 +35,7 @@ use crate::{sha512, sha512::BLOCK_SIZE, Error};
 /// SHA512/256 is a hash function that uses the sha512 alogrithm but it truncates
 /// the output to 256 bits. It has different initial constants than sha512 so it
 /// produces an entirely different hash compared to sha512. More information at
-/// https://eprint.iacr.org/2010/548.pdf.
+/// <https://eprint.iacr.org/2010/548.pdf>.
 #[derive(Clone)]
 pub struct HashEngine(sha512::HashEngine);
 
@@ -73,7 +73,7 @@ impl crate::HashEngine for HashEngine {
 crate::internal_macros::hash_type! {
     256,
     false,
-    "Output of the SHA512/256 hash function.\n\nSHA512/256 is a hash function that uses the sha512 alogrithm but it truncates the output to 256 bits. It has different initial constants than sha512 so it produces an entirely different hash compared to sha512. More information at https://eprint.iacr.org/2010/548.pdf. ",
+    "Output of the SHA512/256 hash function.\n\nSHA512/256 is a hash function that uses the sha512 alogrithm but it truncates the output to 256 bits. It has different initial constants than sha512 so it produces an entirely different hash compared to sha512. More information at <https://eprint.iacr.org/2010/548.pdf>. ",
     "crate::util::json_hex_string::len_32"
 }
 
