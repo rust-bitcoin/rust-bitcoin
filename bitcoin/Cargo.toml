@@ -12,7 +12,7 @@ readme = "README.md"
 exclude = ["tests/"]
 edition = "2018"
 
-# Please don't forget to add relevant features to docs.rs below
+# Please don't forget to add relevant features to docs.rs below.
 [features]
 default = [ "std", "secp-recovery" ]
 rand-std = ["secp256k1/rand-std"]
@@ -32,7 +32,7 @@ std = ["secp256k1/std", "bitcoin_hashes/std", "bech32/std", "bitcoin-internals/s
 no-std = ["core2/alloc", "bitcoin_hashes/alloc", "secp256k1/alloc"]
 
 [package.metadata.docs.rs]
-features = [ "std", "secp-recovery", "base64", "rand", "serde", "bitcoinconsensus" ]
+features = [ "std", "base64", "rand-std", "rand", "serde", "bitcoinconsensus", "secp-recovery", "bitocinconsensus-std", "rust_v_1_53" ]
 rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
