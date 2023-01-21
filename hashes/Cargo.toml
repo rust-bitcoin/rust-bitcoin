@@ -14,7 +14,7 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = ["std"]
-std = ["internals/std"]
+std = ["alloc", "internals/std"]
 alloc = ["internals/alloc"]
 schemars = ["actual-schemars", "dyn-clone"]
 serde-std = ["serde/std"]

@@ -324,7 +324,7 @@ mod tests {
     use crate::{Hash, HashEngine, sha256};
 
     #[test]
-    #[cfg(any(feature = "std", feature = "alloc"))]
+    #[cfg(feature = "alloc")]
     fn test() {
         #[derive(Clone)]
         struct Test {
