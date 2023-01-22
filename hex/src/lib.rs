@@ -12,6 +12,7 @@ extern crate alloc;
 
 pub mod buf_encoder;
 pub mod display;
+pub mod parse;
 
 /// Reexports of extension traits.
 pub mod exts {
