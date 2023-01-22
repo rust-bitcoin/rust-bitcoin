@@ -1,3 +1,6 @@
+// Written by the Rust Bitcoin developers.
+// SPDX-License-Identifier: CC0-1.0
+
 //! Implements a buffered encoder.
 //!
 //! This is a low-level module, most uses should be satisfied by the `display` module instead.
