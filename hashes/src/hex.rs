@@ -16,7 +16,7 @@
 //!
 
 #[cfg(any(feature = "std", feature = "alloc"))]
-use crate::alloc::{string::String, vec::Vec};
+use crate::alloc::vec::Vec;
 
 #[cfg(any(test, feature = "std"))]
 use std::io;
@@ -151,43 +151,6 @@ impl<'a> DoubleEndedIterator for HexIterator<'a> {
 
 impl<'a> ExactSizeIterator for HexIterator<'a> {}
 
-/// A struct implementing [`io::Write`] that converts what's written to it into
-/// a hex String.
-#[cfg(any(test, feature = "std", feature = "alloc"))]
-#[cfg_attr(docsrs, doc(cfg(any(test, feature = "std", feature = "alloc"))))]
-pub struct HexWriter(String);
-
-#[cfg(any(test, feature = "std", feature = "alloc"))]
-#[cfg_attr(docsrs, doc(cfg(any(test, feature = "std", feature = "alloc"))))]
-impl HexWriter {
-    /// Creates a new [`HexWriter`] with the `capacity` of the inner `String`
-    /// that will contain final hex value.
-    pub fn new(capacity: usize) -> Self {
-        HexWriter(String::with_capacity(capacity))
-    }
-
-    /// Returns the resulting hex string.
-    pub fn result(self) -> String {
-        self.0
-    }
-}
-
-#[cfg(any(test, feature = "std", feature = "alloc"))]
-#[cfg_attr(docsrs, doc(cfg(any(test, feature = "std", feature = "alloc"))))]
-impl io::Write for HexWriter {
-    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        use core::fmt::Write;
-        for ch in buf {
-            write!(self.0, "{:02x}", ch).expect("writing to string");
-        }
-        Ok(buf.len())
-    }
-
-    fn flush(&mut self) -> io::Result<()> {
-        Ok(())
-    }
-}
-
 #[cfg(any(test, feature = "std", feature = "alloc"))]
 #[cfg_attr(docsrs, doc(cfg(any(feature = "std", feature = "alloc"))))]
 impl FromHex for Vec<u8> {
@@ -246,8 +209,6 @@ mod tests {
     #[cfg(any(feature = "std", feature = "alloc"))]
     use internals::hex::exts::DisplayHex;
 
-    use std::io::Write;
-
     #[test]
     #[cfg(any(feature = "std", feature = "alloc"))]
     fn hex_roundtrip() {
@@ -302,42 +263,5 @@ mod tests {
             Vec::<u8>::from_hex(badchar3),
             Err(Error::InvalidChar(194))
         );
-    }
-
-
-    #[test]
-    #[cfg(any(feature = "std", feature = "alloc"))]
-    fn hex_writer() {
-        let vec: Vec<_>  = (0u8..32).collect();
-        let mut writer = HexWriter::new(64);
-        writer.write_all(&vec[..]).unwrap();
-        assert_eq!(vec.to_lower_hex_string(), writer.result());
-    }
-}
-
-#[cfg(bench)]
-mod benches {
-    use test::{Bencher, black_box};
-    use super::HexWriter;
-    use std::io::Write;
-    use crate::{sha256, Hash};
-
-    #[bench]
-    fn bench_to_hex(bh: &mut Bencher) {
-        let hash = sha256::Hash::hash(&[0; 1]);
-        bh.iter(|| {
-            black_box(hash.to_string());
-        })
-    }
-
-
-    #[bench]
-    fn bench_to_hex_writer(bh: &mut Bencher) {
-        let hash = sha256::Hash::hash(&[0; 1]);
-        bh.iter(|| {
-            let mut writer = HexWriter::new(64);
-            writer.write_all(hash.as_inner()).unwrap();
-            black_box(writer.result());
-        })
     }
 }
