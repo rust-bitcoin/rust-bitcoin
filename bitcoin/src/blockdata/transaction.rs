@@ -318,6 +318,12 @@ impl Sequence {
     /// BIP-68 relative lock time type flag mask.
     const LOCK_TYPE_MASK: u32 = 0x00400000;
 
+    /// Returns `true` if the sequence number enables absolute lock-time ([`Transaction::lock_time`]).
+    #[inline]
+    pub fn enables_absolute_lock_time(&self) -> bool {
+        !self.is_final()
+    }
+
     /// Retuns `true` if the sequence number indicates that the transaction is finalised.
     ///
     /// The sequence number being equal to 0xffffffff on all txin sequences indicates
@@ -392,12 +398,6 @@ impl Sequence {
         } else {
             Err(relative::Error::IntegerOverflow(seconds))
         }
-    }
-
-    /// Returns `true` if the sequence number enables absolute lock-time ([`Transaction::lock_time`]).
-    #[inline]
-    pub fn enables_absolute_lock_time(&self) -> bool {
-        !self.is_final()
     }
 
     /// Creates a sequence from a u32 value.
