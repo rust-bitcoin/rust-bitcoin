@@ -20,9 +20,12 @@ export CARGO_TERM_VERBOSE=true
 cargo build
 cargo test
 
+cargo run --example hexy
+
 if [ "$DO_LINT" = true ]
 then
-    cargo clippy --locked --all-features --all-targets -- -D warnings
+    cargo clippy --all-features --all-targets -- -D warnings
+    cargo clippy --locked --example hexy -- -D warnings
 fi
 
 if [ "$DO_FEATURE_MATRIX" = true ]; then

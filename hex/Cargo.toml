@@ -25,3 +25,6 @@ rustdoc-args = ["--cfg", "docsrs"]
 core2 = { version = "0.3.2", default_features = false, optional = true }
 
 [dev-dependencies]
+
+[[example]]
+name = "hexy"
