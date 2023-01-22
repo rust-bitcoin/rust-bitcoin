@@ -203,6 +203,25 @@ impl fmt::Display for LockTime {
 pub struct Height(u16);
 
 impl Height {
+    /// Relative block height 0, can be included in any block.
+    pub const ZERO: Self = Height(0);
+
+    /// The minimum relative block height (0), can be included in any block.
+    pub const MIN: Self = Self::ZERO;
+
+    /// The maximum relative block height.
+    pub const MAX: Self = Height(u16::max_value());
+
+    /// The minimum relative block height (0), can be included in any block.
+    ///
+    /// This is provided for consistency with Rust 1.41.1, newer code should use [`Height::MIN`].
+    pub fn min_value() -> Self { Self::MIN }
+
+    /// The maximum relative block height.
+    ///
+    /// This is provided for consistency with Rust 1.41.1, newer code should use [`Height::MAX`].
+    pub fn max_value() -> Self { Self::MAX }
+
     /// Returns the inner `u16` value.
     #[inline]
     pub fn value(self) -> u16 {
@@ -232,6 +251,25 @@ impl fmt::Display for Height {
 pub struct Time(u16);
 
 impl Time {
+    /// Relative block time 0, can be included in any block.
+    pub const ZERO: Self = Time(0);
+
+    /// The minimum relative block time (0), can be included in any block.
+    pub const MIN: Self = Time::ZERO;
+
+    /// The maximum relative block time (33,554,432 seconds or approx 388 days).
+    pub const MAX: Self = Time(u16::max_value());
+
+    /// The minimum relative block time.
+    ///
+    /// This is provided for consistency with Rust 1.41.1, newer code should use [`Time::MIN`].
+    pub fn min_value() -> Self { Self::MIN }
+
+    /// The maximum relative block time.
+    ///
+    /// This is provided for consistency with Rust 1.41.1, newer code should use [`Time::MAX`].
+    pub fn max_value() -> Self { Self::MAX }
+
     /// Create a [`Time`] using time intervals where each interval is equivalent to 512 seconds.
     ///
     /// Encoding finer granularity of time for relative lock-times is not supported in Bitcoin.
