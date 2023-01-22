@@ -1,0 +1,27 @@
+[package]
+name = "bitcoin-hex"
+version = "0.0.1"
+authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
+license = "CC0-1.0"
+repository = "https://github.com/rust-bitcoin/rust-bitcoin"
+documentation = "https://docs.rs/bitcoin-hex/"
+description = "Hexadecimal encoding and decoding."
+categories = ["encoding"]
+keywords = ["encoding", "hex", "hexadecimal"]
+readme = "README.md"
+edition = "2018"
+exclude = ["tests", "contrib"]
+
+[features]
+default = ["std"]
+std = ["alloc"]
+alloc = []
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[dependencies]
+core2 = { version = "0.3.2", default_features = false, optional = true }
+
+[dev-dependencies]

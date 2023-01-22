@@ -51,6 +51,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "bitcoin-hex"
+version = "0.0.1"
+dependencies = [
+ "core2",
+]
+
+[[package]]
 name = "bitcoin-private"
 version = "0.1.0"
 

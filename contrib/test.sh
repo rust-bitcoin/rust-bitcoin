@@ -9,7 +9,7 @@ else
 	deps="minimal recent"
 fi
 
-CRATES="bitcoin hashes internals"
+CRATES="bitcoin hashes hex internals"
 
 for dep in $deps
 do
