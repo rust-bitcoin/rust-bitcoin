@@ -92,19 +92,19 @@ pub struct PublicKey {
 
 impl PublicKey {
     /// Constructs compressed ECDSA public key from the provided generic Secp256k1 public key
-    pub fn new(key: secp256k1::PublicKey) -> PublicKey {
+    pub fn new(key: impl Into<secp256k1::PublicKey>) -> PublicKey {
         PublicKey {
             compressed: true,
-            inner: key,
+            inner: key.into(),
         }
     }
 
     /// Constructs uncompressed (legacy) ECDSA public key from the provided generic Secp256k1
     /// public key
-    pub fn new_uncompressed(key: secp256k1::PublicKey) -> PublicKey {
+    pub fn new_uncompressed(key: impl Into<secp256k1::PublicKey>) -> PublicKey {
         PublicKey {
             compressed: false,
-            inner: key,
+            inner: key.into(),
         }
     }
 
@@ -838,5 +838,17 @@ mod tests {
             vector.input.sort_by_cached_key(|k| PublicKey::to_sort_key(*k));
             assert_eq!(vector.input, vector.expect);
         }
+    }
+
+    #[test]
+    #[cfg(feature = "rand-std")]
+    fn public_key_constructors() {
+        use crate::secp256k1::rand;
+
+        let secp = Secp256k1::new();
+        let kp = KeyPair::new(&secp, &mut rand::thread_rng());
+
+        let _ = PublicKey::new(kp);
+        let _ = PublicKey::new_uncompressed(kp);
     }
 }
