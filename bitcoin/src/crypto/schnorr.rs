@@ -11,7 +11,7 @@ use core::fmt;
 
 use bitcoin_internals::write_err;
 
-pub use secp256k1::{self, constants, Secp256k1, KeyPair, XOnlyPublicKey, Verification};
+pub use secp256k1::{self, constants, Secp256k1, KeyPair, XOnlyPublicKey, Verification, Parity};
 
 use crate::prelude::*;
 
@@ -79,7 +79,7 @@ pub trait TapTweak {
 }
 
 impl TapTweak for UntweakedPublicKey {
-    type TweakedAux = (TweakedPublicKey, secp256k1::Parity);
+    type TweakedAux = (TweakedPublicKey, Parity);
     type TweakedKey = TweakedPublicKey;
 
     /// Tweaks an untweaked public key with corresponding public key value and optional script tree
@@ -94,7 +94,7 @@ impl TapTweak for UntweakedPublicKey {
     ///
     /// # Returns
     /// The tweaked key and its parity.
-    fn tap_tweak<C: Verification>(self, secp: &Secp256k1<C>, merkle_root: Option<TapNodeHash>) -> (TweakedPublicKey, secp256k1::Parity) {
+    fn tap_tweak<C: Verification>(self, secp: &Secp256k1<C>, merkle_root: Option<TapNodeHash>) -> (TweakedPublicKey, Parity) {
         let tweak = TapTweakHash::from_key_and_tweak(self, merkle_root).to_scalar();
         let (output_key, parity) = self.add_tweak(secp, &tweak).expect("Tap tweak failed");
 
