@@ -24,8 +24,7 @@
 //!                 deserialization.
 //! * `secp-lowmemory` - optimizations for low-memory devices.
 //! * `no-std` - enables additional features required for this crate to be usable
-//!              without std. Does **not** disable `std`. Depends on `hashbrown`
-//!              and `core2`.
+//!              without std. Does **not** disable `std`. Depends on `core2`.
 //! * `bitcoinconsensus-std` - enables `std` in `bitcoinconsensus` and communicates it
 //!                            to this crate so it knows how to implement
 //!                            `std::error::Error`. At this time there's a hack to
@@ -181,12 +180,6 @@ mod prelude {
 
     #[cfg(not(feature = "std"))]
     pub use crate::io_extras::sink;
-
-    #[cfg(feature = "hashbrown")]
-    pub use hashbrown::HashSet;
-
-    #[cfg(not(feature = "hashbrown"))]
-    pub use std::collections::HashSet;
 
     pub use bitcoin_internals::hex::display::DisplayHex;
 }

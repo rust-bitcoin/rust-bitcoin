@@ -363,14 +363,14 @@ fn map_to_range(hash: u64, nm: u64) -> u64 { ((hash as u128 * nm as u128) >> 64)
 pub struct GcsFilterWriter<'a, W> {
     filter: GcsFilter,
     writer: &'a mut W,
-    elements: HashSet<Vec<u8>>,
+    elements: BTreeSet<Vec<u8>>,
     m: u64,
 }
 
 impl<'a, W: io::Write> GcsFilterWriter<'a, W> {
     /// Creates a new [`GcsFilterWriter`] wrapping a generic writer, with specific seed to siphash.
     pub fn new(writer: &'a mut W, k0: u64, k1: u64, m: u64, p: u8) -> GcsFilterWriter<'a, W> {
-        GcsFilterWriter { filter: GcsFilter::new(k0, k1, p), writer, elements: HashSet::new(), m }
+        GcsFilterWriter { filter: GcsFilter::new(k0, k1, p), writer, elements: BTreeSet::new(), m }
     }
 
     /// Adds data to the filter.
@@ -634,7 +634,7 @@ mod test {
 
     #[test]
     fn test_filter() {
-        let mut patterns = HashSet::new();
+        let mut patterns = BTreeSet::new();
 
         patterns.insert(hex!("000000"));
         patterns.insert(hex!("111111"));
