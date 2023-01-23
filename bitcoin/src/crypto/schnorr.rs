@@ -44,6 +44,20 @@ impl fmt::Display for TweakedPublicKey {
 pub type UntweakedKeyPair = KeyPair;
 
 /// Tweaked BIP-340 key pair
+///
+/// # Examples
+/// ```
+/// # #[cfg(feature = "rand-std")] {
+/// # use bitcoin::schnorr::{TweakedKeyPair, TweakedPublicKey};
+/// # use bitcoin::secp256k1::{rand, Secp256k1};
+/// # let secp = Secp256k1::new();
+/// # let keypair = TweakedKeyPair::dangerous_assume_tweaked(KeyPair::new(&secp, &mut rand::thread_rng()));
+/// // There are various conversion methods available to get a tweaked pubkey from a tweaked keypair.
+/// let (_pk, _parity) = keypair.public_parts();
+/// let _pk  = TweakedPublicKey::from_keypair(keypair);
+/// let _pk = TweakedPublicKey::from(keypair);
+/// # }
+/// ```
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
@@ -136,6 +150,13 @@ impl TapTweak for UntweakedKeyPair {
 }
 
 impl TweakedPublicKey {
+    /// Returns the [`TweakedPublicKey`] for `keypair`.
+    #[inline]
+    pub fn from_keypair(keypair: TweakedKeyPair) -> Self {
+        let (xonly, _parity) = keypair.0.x_only_public_key();
+        TweakedPublicKey(xonly)
+    }
+
     /// Creates a new [`TweakedPublicKey`] from a [`XOnlyPublicKey`]. No tweak is applied, consider
     /// calling `tap_tweak` on an [`UntweakedPublicKey`] instead of using this constructor.
     ///
@@ -176,6 +197,13 @@ impl TweakedKeyPair {
     pub fn to_inner(self) -> KeyPair {
         self.0
     }
+
+    /// Returns the [`TweakedPublicKey`] and its [`Parity`] for this [`TweakedKeyPair`].
+    #[inline]
+    pub fn public_parts(&self) -> (TweakedPublicKey, Parity) {
+        let (xonly, parity) = self.0.x_only_public_key();
+        (TweakedPublicKey(xonly), parity)
+    }
 }
 
 impl From<TweakedPublicKey> for XOnlyPublicKey {
@@ -189,6 +217,13 @@ impl From<TweakedKeyPair> for KeyPair {
     #[inline]
     fn from(pair: TweakedKeyPair) -> Self {
         pair.0
+    }
+}
+
+impl From<TweakedKeyPair> for TweakedPublicKey {
+    #[inline]
+    fn from(pair: TweakedKeyPair) -> Self {
+        TweakedPublicKey::from_keypair(pair)
     }
 }
 
