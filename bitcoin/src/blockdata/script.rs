@@ -137,7 +137,7 @@ pub struct Script([u8]);
 /// that all the safety/validity restrictions that apply to [`Script`] apply to `ScriptBuf` as well.
 ///
 /// [deref coercions]: https://doc.rust-lang.org/std/ops/trait.Deref.html#more-on-deref-coercion
-#[derive(Default, Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
+#[derive(Default, Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub struct ScriptBuf(Vec<u8>);
 
 impl ToOwned for Script {
@@ -1312,6 +1312,12 @@ impl ScriptBuf {
         // Copied from PathBuf::into_boxed_path
         let rw = Box::into_raw(self.0.into_boxed_slice()) as *mut Script;
         unsafe { Box::from_raw(rw) }
+    }
+}
+
+impl fmt::Debug for ScriptBuf {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Debug::fmt(self.as_script(), f)
     }
 }
 
