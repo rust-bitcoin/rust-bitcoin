@@ -571,20 +571,23 @@ mod sealed {
 
 /// Marker of status of address's network validation. See section [*Parsing addresses*](Address#parsing-addresses)
 /// on [`Address`] for details.
-pub trait NetworkValidation: sealed::NetworkValidation {}
+pub trait NetworkValidation: sealed::NetworkValidation {
+    /// Indicates whether this `NetworkValidation` is `NetworkChecked` or not.
+    const IS_CHECKED: bool;
+}
 
 /// Marker that address's network has been successfully validated. See section [*Parsing addresses*](Address#parsing-addresses)
 /// on [`Address`] for details.
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum NetworkChecked {}
 
 /// Marker that address's network has not yet been validated. See section [*Parsing addresses*](Address#parsing-addresses)
 /// on [`Address`] for details.
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum NetworkUnchecked {}
 
-impl NetworkValidation for NetworkChecked {}
-impl NetworkValidation for NetworkUnchecked {}
+impl NetworkValidation for NetworkChecked { const IS_CHECKED: bool = true; }
+impl NetworkValidation for NetworkUnchecked { const IS_CHECKED: bool = false; }
 
 /// A Bitcoin address.
 ///
@@ -970,15 +973,15 @@ impl fmt::Display for Address {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result { self.fmt_internal(fmt) }
 }
 
-impl fmt::Debug for Address {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.fmt_internal(f) }
-}
-
-impl fmt::Debug for Address<NetworkUnchecked> {
+impl<V: NetworkValidation> fmt::Debug for Address<V> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-	write!(f, "Address<NetworkUnchecked>(")?;
-	self.fmt_internal(f)?;
-	write!(f, ")")
+        if V::IS_CHECKED {
+            self.fmt_internal(f)
+        } else {
+            write!(f, "Address<NetworkUnchecked>(")?;
+            self.fmt_internal(f)?;
+            write!(f, ")")
+        }
     }
 }
 
@@ -1005,7 +1008,7 @@ fn find_bech32_prefix(bech32: &str) -> &str {
     }
 }
 
-// Address can be parsed only with NetworkUnchecked.
+/// Address can be parsed only with `NetworkUnchecked`.
 impl FromStr for Address<NetworkUnchecked> {
     type Err = Error;
 
@@ -1230,6 +1233,25 @@ mod tests {
         );
         let addr = Address::new(Bitcoin, Payload::WitnessProgram { version: WitnessVersion::V13, program });
         roundtrips(&addr);
+    }
+
+    #[test]
+    fn test_address_debug() {
+        // This is not really testing output of Debug but the ability and proper functioning
+        // of Debug derivation on structs generic in NetworkValidation.
+        #[derive(Debug)] #[allow(unused)]
+        struct Test<V: NetworkValidation> { address: Address<V> }
+
+        let addr_str = "33iFwdLuRpW1uK1RTRqsoi8rR4NpDzk66k";
+        let unchecked = Address::from_str(addr_str).unwrap();
+
+        assert_eq!(
+            format!("{:?}", Test { address: unchecked.clone() }),
+            format!("Test {{ address: Address<NetworkUnchecked>({}) }}", addr_str));
+
+        assert_eq!(
+            format!("{:?}", Test { address: unchecked.assume_checked() }),
+            format!("Test {{ address: {} }}", addr_str));
     }
 
     #[test]
