@@ -455,6 +455,8 @@ pub enum Error {
     Base58(base58::Error),
     /// Hexadecimal decoding error
     Hex(hex::Error),
+    /// `PublicKey` hex should be 66 or 130 digits long.
+    InvalidPublicKeyHexLength(usize),
 }
 
 impl fmt::Display for Error {
@@ -473,6 +475,7 @@ impl fmt::Display for Error {
                 write!(f, "encoded extended key data has wrong length {}", len),
             Error::Base58(ref e) => write_err!(f, "base58 encoding error"; e),
             Error::Hex(ref e) => write_err!(f, "Hexadecimal decoding error"; e),
+            Error::InvalidPublicKeyHexLength(got) => write!(f, "PublicKey hex should be 66 or 130 digits long, got: {}", got),
         }
     }
 }
@@ -492,7 +495,8 @@ impl std::error::Error for Error {
             | InvalidChildNumberFormat
             | InvalidDerivationPathFormat
             | UnknownVersion(_)
-            | WrongExtendedKeyLength(_) => None,
+            | WrongExtendedKeyLength(_)
+            | InvalidPublicKeyHexLength(_) => None,
         }
     }
 }
@@ -504,6 +508,7 @@ impl From<key::Error> for Error {
             key::Error::Secp256k1(e) => Error::Secp256k1(e),
             key::Error::InvalidKeyPrefix(_) => Error::Secp256k1(secp256k1::Error::InvalidPublicKey),
             key::Error::Hex(e) => Error::Hex(e),
+            key::Error::InvalidHexLength(got) => Error::InvalidPublicKeyHexLength(got),
         }
     }
 }
