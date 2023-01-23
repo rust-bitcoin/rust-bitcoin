@@ -544,14 +544,17 @@ impl<'de> serde::Deserialize<'de> for PublicKey {
 
 #[cfg(test)]
 mod tests {
-    use crate::io;
-    use super::{PrivateKey, PublicKey, SortKey};
-    use secp256k1::Secp256k1;
+    use super::*;
+
     use std::str::FromStr;
+
+    use secp256k1::Secp256k1;
+
+    use crate::address::Address;
     use crate::hashes::hex::FromHex;
+    use crate::io;
     use crate::network::constants::Network::Testnet;
     use crate::network::constants::Network::Bitcoin;
-    use crate::address::Address;
 
     #[test]
     fn test_key_derivation() {
