@@ -88,7 +88,7 @@ impl Map for PartiallySignedTransaction {
 }
 
 impl PartiallySignedTransaction {
-    pub(crate) fn decode_global<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+    pub(crate) fn decode_global<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, Error> {
         let mut r = r.take(MAX_VEC_SIZE as u64);
         let mut tx: Option<Transaction> = None;
         let mut version: Option<u32> = None;
@@ -119,30 +119,30 @@ impl PartiallySignedTransaction {
                                     });
 
                                     if decoder.position() != vlen as u64 {
-                                        return Err(encode::Error::ParseFailed("data not consumed entirely when explicitly deserializing"))
+                                        return Err(Error::ParseFailed("data not consumed entirely when explicitly deserializing"))
                                     }
                                 } else {
-                                    return Err(Error::DuplicateKey(pair.key).into())
+                                    return Err(Error::DuplicateKey(pair.key))
                                 }
                             } else {
-                                return Err(Error::InvalidKey(pair.key).into())
+                                return Err(Error::InvalidKey(pair.key))
                             }
                         }
                         PSBT_GLOBAL_XPUB => {
                             if !pair.key.key.is_empty() {
                                 let xpub = ExtendedPubKey::decode(&pair.key.key)
-                                    .map_err(|_| encode::Error::ParseFailed(
+                                    .map_err(|_| Error::ParseFailed(
                                         "Can't deserialize ExtendedPublicKey from global XPUB key data"
                                     ))?;
 
                                 if pair.value.is_empty() || pair.value.len() % 4 != 0 {
-                                    return Err(encode::Error::ParseFailed("Incorrect length of global xpub derivation data"))
+                                    return Err(Error::ParseFailed("Incorrect length of global xpub derivation data"))
                                 }
 
                                 let child_count = pair.value.len() / 4 - 1;
                                 let mut decoder = Cursor::new(pair.value);
                                 let mut fingerprint = [0u8; 4];
-                                decoder.read_exact(&mut fingerprint[..])?;
+                                decoder.read_exact(&mut fingerprint[..]).map_err(|_| Error::ParseFailed("Can't read global xpub fingerprint"))?;
                                 let mut path = Vec::<ChildNumber>::with_capacity(child_count);
                                 while let Ok(index) = u32::consensus_decode(&mut decoder) {
                                     path.push(ChildNumber::from(index))
@@ -150,10 +150,10 @@ impl PartiallySignedTransaction {
                                 let derivation = DerivationPath::from(path);
                                 // Keys, according to BIP-174, must be unique
                                 if xpub_map.insert(xpub, (Fingerprint::from(fingerprint), derivation)).is_some() {
-                                    return Err(encode::Error::ParseFailed("Repeated global xpub key"))
+                                    return Err(Error::ParseFailed("Repeated global xpub key"))
                                 }
                             } else {
-                                return Err(encode::Error::ParseFailed("Xpub global key must contain serialized Xpub data"))
+                                return Err(Error::ParseFailed("Xpub global key must contain serialized Xpub data"))
                             }
                         }
                         PSBT_GLOBAL_VERSION => {
@@ -164,36 +164,36 @@ impl PartiallySignedTransaction {
                                     let vlen: usize = pair.value.len();
                                     let mut decoder = Cursor::new(pair.value);
                                     if vlen != 4 {
-                                        return Err(encode::Error::ParseFailed("Wrong global version value length (must be 4 bytes)"))
+                                        return Err(Error::ParseFailed("Wrong global version value length (must be 4 bytes)"))
                                     }
                                     version = Some(Decodable::consensus_decode(&mut decoder)?);
                                     // We only understand version 0 PSBTs. According to BIP-174 we
                                     // should throw an error if we see anything other than version 0.
                                     if version != Some(0) {
-                                        return Err(encode::Error::ParseFailed("PSBT versions greater than 0 are not supported"))
+                                        return Err(Error::ParseFailed("PSBT versions greater than 0 are not supported"))
                                     }
                                 } else {
-                                    return Err(Error::DuplicateKey(pair.key).into())
+                                    return Err(Error::DuplicateKey(pair.key))
                                 }
                             } else {
-                                return Err(Error::InvalidKey(pair.key).into())
+                                return Err(Error::InvalidKey(pair.key))
                             }
                         }
                         PSBT_GLOBAL_PROPRIETARY => match proprietary.entry(raw::ProprietaryKey::try_from(pair.key.clone())?) {
                             btree_map::Entry::Vacant(empty_key) => {
                                 empty_key.insert(pair.value);
                             },
-                            btree_map::Entry::Occupied(_) => return Err(Error::DuplicateKey(pair.key).into()),
+                            btree_map::Entry::Occupied(_) => return Err(Error::DuplicateKey(pair.key)),
                         }
                         _ => match unknowns.entry(pair.key) {
                             btree_map::Entry::Vacant(empty_key) => {
                                 empty_key.insert(pair.value);
                             },
-                            btree_map::Entry::Occupied(k) => return Err(Error::DuplicateKey(k.key().clone()).into()),
+                            btree_map::Entry::Occupied(k) => return Err(Error::DuplicateKey(k.key().clone())),
                         }
                     }
                 }
-                Err(crate::consensus::encode::Error::Psbt(crate::psbt::Error::NoMorePairs)) => break,
+                Err(crate::psbt::Error::NoMorePairs) => break,
                 Err(e) => return Err(e),
             }
         }
@@ -209,7 +209,7 @@ impl PartiallySignedTransaction {
                 outputs: vec![]
             })
         } else {
-            Err(Error::MustHaveUnsignedTx.into())
+            Err(Error::MustHaveUnsignedTx)
         }
     }
 }

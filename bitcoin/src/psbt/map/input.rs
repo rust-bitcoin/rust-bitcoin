@@ -11,7 +11,6 @@ use secp256k1::XOnlyPublicKey;
 use crate::blockdata::script::ScriptBuf;
 use crate::blockdata::witness::Witness;
 use crate::blockdata::transaction::{Transaction, TxOut};
-use crate::consensus::encode;
 use crate::crypto::{ecdsa, schnorr};
 use crate::crypto::key::PublicKey;
 use crate::hashes::{self, hash160, ripemd160, sha256, sha256d};
@@ -247,7 +246,7 @@ impl Input {
             .unwrap_or(Ok(SchnorrSighashType::Default))
     }
 
-    pub(super) fn insert_pair(&mut self, pair: raw::Pair) -> Result<(), encode::Error> {
+    pub(super) fn insert_pair(&mut self, pair: raw::Pair) -> Result<(), Error> {
         let raw::Pair {
             key: raw_key,
             value: raw_value,
@@ -347,14 +346,14 @@ impl Input {
                     btree_map::Entry::Vacant(empty_key) => {
                         empty_key.insert(raw_value);
                     },
-                    btree_map::Entry::Occupied(_) => return Err(Error::DuplicateKey(raw_key).into()),
+                    btree_map::Entry::Occupied(_) => return Err(Error::DuplicateKey(raw_key)),
                 }
             }
             _ => match self.unknown.entry(raw_key) {
                 btree_map::Entry::Vacant(empty_key) => {
                     empty_key.insert(raw_value);
                 }
-                btree_map::Entry::Occupied(k) => return Err(Error::DuplicateKey(k.key().clone()).into()),
+                btree_map::Entry::Occupied(k) => return Err(Error::DuplicateKey(k.key().clone())),
             },
         }
 
@@ -496,12 +495,12 @@ fn psbt_insert_hash_pair<H>(
     raw_key: raw::Key,
     raw_value: Vec<u8>,
     hash_type: error::PsbtHash,
-) -> Result<(), encode::Error>
+) -> Result<(), Error>
 where
     H: hashes::Hash + Deserialize,
 {
     if raw_key.key.is_empty() {
-        return Err(psbt::Error::InvalidKey(raw_key).into());
+        return Err(psbt::Error::InvalidKey(raw_key));
     }
     let key_val: H = Deserialize::deserialize(&raw_key.key)?;
     match map.entry(key_val) {
@@ -512,13 +511,12 @@ where
                     preimage: val.into_boxed_slice(),
                     hash: Box::from(key_val.borrow()),
                     hash_type,
-                }
-                .into());
+                });
             }
             empty_key.insert(val);
             Ok(())
         }
-        btree_map::Entry::Occupied(_) => Err(psbt::Error::DuplicateKey(raw_key).into()),
+        btree_map::Entry::Occupied(_) => Err(psbt::Error::DuplicateKey(raw_key)),
     }
 }
 
