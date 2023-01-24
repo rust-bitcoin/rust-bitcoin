@@ -74,7 +74,7 @@ use crate::policy::DUST_RELAY_TX_FEE;
 use crate::OutPoint;
 
 use crate::key::PublicKey;
-use crate::address::WitnessVersion;
+use crate::address::{WitnessVersion, WitnessProgram};
 use crate::taproot::{LeafVersion, TapNodeHash, TapLeafHash};
 use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
 use crate::schnorr::{TapTweak, TweakedPublicKey, UntweakedPublicKey};
@@ -1122,28 +1122,47 @@ impl ScriptBuf {
 
     /// Generates P2WPKH-type of scriptPubkey.
     pub fn new_v0_p2wpkh(pubkey_hash: &WPubkeyHash) -> Self {
-        ScriptBuf::new_witness_program(WitnessVersion::V0, &pubkey_hash[..])
+        // pubkey hash is 20 bytes long, so it's safe to use `new_witness_program_unchecked` (Segwitv0)
+        ScriptBuf::new_witness_program_unchecked(WitnessVersion::V0, &pubkey_hash[..])
     }
 
     /// Generates P2WSH-type of scriptPubkey with a given hash of the redeem script.
     pub fn new_v0_p2wsh(script_hash: &WScriptHash) -> Self {
-        ScriptBuf::new_witness_program(WitnessVersion::V0, &script_hash[..])
+        // script hash is 32 bytes long, so it's safe to use `new_witness_program_unchecked` (Segwitv0)
+        ScriptBuf::new_witness_program_unchecked(WitnessVersion::V0, &script_hash[..])
     }
 
     /// Generates P2TR for script spending path using an internal public key and some optional
     /// script tree merkle root.
     pub fn new_v1_p2tr<C: Verification>(secp: &Secp256k1<C>, internal_key: UntweakedPublicKey, merkle_root: Option<TapNodeHash>) -> Self {
         let (output_key, _) = internal_key.tap_tweak(secp, merkle_root);
-        ScriptBuf::new_witness_program(WitnessVersion::V1, &output_key.serialize())
+        // output key is 32 bytes long, so it's safe to use `new_witness_program_unchecked` (Segwitv1)
+        ScriptBuf::new_witness_program_unchecked(WitnessVersion::V1, &output_key.serialize())
     }
 
     /// Generates P2TR for key spending path for a known [`TweakedPublicKey`].
     pub fn new_v1_p2tr_tweaked(output_key: TweakedPublicKey) -> Self {
-        ScriptBuf::new_witness_program(WitnessVersion::V1, &output_key.serialize())
+        // output key is 32 bytes long, so it's safe to use `new_witness_program_unchecked` (Segwitv1)
+        ScriptBuf::new_witness_program_unchecked(WitnessVersion::V1, &output_key.serialize())
     }
 
-    /// Generates P2WSH-type of scriptPubkey with a given hash of the redeem script.
-    pub fn new_witness_program(version: WitnessVersion, program: &[u8]) -> Self {
+    /// Generates P2WSH-type of scriptPubkey with a given [`WitnessProgram`].
+    pub fn new_witness_program(witness_program: &WitnessProgram) -> Self {
+        Builder::new()
+            .push_opcode(witness_program.version().into())
+            .push_slice(witness_program.program())
+            .into_script()
+    }
+
+    /// Generates P2WSH-type of scriptPubkey with a given [`WitnessVersion`] and the program bytes.
+    /// Does not do any checks on version or program length.
+    ///
+    /// Convenience method used by `new_v0_p2wpkh`, `new_v0_p2wsh`, `new_v1_p2tr`, and
+    /// `new_v1_p2tr_tweaked`.
+    fn new_witness_program_unchecked(version: WitnessVersion, program: &[u8]) -> Self {
+        debug_assert!(program.len() >= 2 && program.len() <= 40);
+        // In segwit v0, the program must be 20 or 32 bytes long.
+        debug_assert!(version != WitnessVersion::V0 || program.len() == 20 || program.len() == 32);
         Builder::new()
             .push_opcode(version.into())
             .push_slice(program)
