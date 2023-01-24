@@ -318,18 +318,40 @@ impl Sequence {
     /// BIP-68 relative lock time type flag mask.
     const LOCK_TYPE_MASK: u32 = 0x00400000;
 
-    /// Retuns `true` if the sequence number indicates that the transaction is finalised.
+    /// Returns `true` if the sequence number enables absolute lock-time ([`Transaction::lock_time`]).
+    #[inline]
+    pub fn enables_absolute_lock_time(&self) -> bool {
+        *self != Sequence::MAX
+    }
+
+    /// Returns `true` if the sequence number indicates that the transaction is finalized.
     ///
-    /// The sequence number being equal to 0xffffffff on all txin sequences indicates
-    /// that the transaction is finalised.
+    /// Instead of this method please consider using `!enables_absolute_lock_time` because it
+    /// is equivalent and improves readability for those not steeped in Bitcoin folklore.
+    ///
+    /// ## Historical note
+    ///
+    /// The term 'final' is an archaic Bitcoin term, it may have come about because the sequence
+    /// number in the original Bitcoin code was intended to be incremented in order to replace a
+    /// transaction, so once the sequence number got to `u64::MAX` it could no longer be increased,
+    /// hence it was 'final'.
+    ///
+    ///
+    /// Some other references to the term:
+    /// - `CTxIn::SEQUENCE_FINAL` in the Bitcoin Core code.
+    /// - [BIP-112]: "BIP 68 prevents a non-final transaction from being selected for inclusion in a
+    ///   block until the corresponding input has reached the specified age"
+    ///
+    /// [BIP-112]: <https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki>
     #[inline]
     pub fn is_final(&self) -> bool {
-        *self == Sequence::MAX
+        !self.enables_absolute_lock_time()
     }
 
     /// Returns true if the transaction opted-in to BIP125 replace-by-fee.
     ///
-    /// Replace by fee is signaled by the sequence being less than 0xfffffffe which is checked by this method.
+    /// Replace by fee is signaled by the sequence being less than 0xfffffffe which is checked by
+    /// this method. Note, this is the highest "non-final" value (see [`Sequence::is_final`]).
     #[inline]
     pub fn is_rbf(&self) -> bool {
         *self < Sequence::MIN_NO_RBF
@@ -392,12 +414,6 @@ impl Sequence {
         } else {
             Err(relative::Error::IntegerOverflow(seconds))
         }
-    }
-
-    /// Returns `true` if the sequence number enables absolute lock-time ([`Transaction::lock_time`]).
-    #[inline]
-    pub fn enables_absolute_lock_time(&self) -> bool {
-        !self.is_final()
     }
 
     /// Creates a sequence from a u32 value.
