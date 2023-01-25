@@ -1014,6 +1014,12 @@ impl Address<NetworkUnchecked> {
     }
 }
 
+impl From<Address> for script::ScriptBuf {
+    fn from(a: Address) -> Self {
+        a.script_pubkey()
+    }
+}
+
 // Alternate formatting `{:#}` is used to return uppercase version of bech32 addresses which should
 // be used in QR codes, see [`Address::to_qr_uri`].
 impl fmt::Display for Address {
