@@ -309,9 +309,9 @@ impl Deserialize for schnorr::Signature {
 impl Serialize for (XOnlyPublicKey, TapLeafHash) {
     fn serialize(&self) -> Vec<u8> {
         let ser_pk = self.0.serialize();
-        let mut buf = Vec::with_capacity(ser_pk.len() + self.1.as_ref().len());
+        let mut buf = Vec::with_capacity(ser_pk.len() + self.1.as_inner().len());
         buf.extend(&ser_pk);
-        buf.extend(self.1.as_ref());
+        buf.extend(self.1.as_inner());
         buf
     }
 }
