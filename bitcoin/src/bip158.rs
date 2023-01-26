@@ -419,9 +419,9 @@ impl GcsFilter {
     fn new(k0: u64, k1: u64, p: u8) -> GcsFilter { GcsFilter { k0, k1, p } }
 
     /// Golomb-Rice encodes a number `n` to a bit stream (parameter 2^k).
-    fn golomb_rice_encode<'a, W>(
+    fn golomb_rice_encode<W>(
         &self,
-        writer: &mut BitStreamWriter<'a, W>,
+        writer: &mut BitStreamWriter<W>,
         n: u64,
     ) -> Result<usize, io::Error>
     where
