@@ -152,7 +152,7 @@ impl Serialize for PublicKey {
 impl Deserialize for PublicKey {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
         PublicKey::from_slice(bytes)
-            .map_err(|_| Error::ParseFailed("invalid public key"))
+            .map_err(Error::InvalidPublicKey)
     }
 }
 
@@ -165,7 +165,7 @@ impl Serialize for secp256k1::PublicKey {
 impl Deserialize for secp256k1::PublicKey {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
         secp256k1::PublicKey::from_slice(bytes)
-            .map_err(|_| Error::ParseFailed("invalid public key"))
+            .map_err(Error::InvalidSecp256k1PublicKey)
     }
 }
 
@@ -193,13 +193,13 @@ impl Deserialize for ecdsa::Signature {
         ecdsa::Signature::from_slice(bytes)
             .map_err(|e| match e {
                 ecdsa::Error::EmptySignature => {
-                    Error::ParseFailed("Empty partial signature data")
+                    Error::InvalidEcdsaSignature(e)
                 }
                 ecdsa::Error::NonStandardSighashType(flag) => {
                     Error::NonStandardSighashType(flag)
                 }
                 ecdsa::Error::Secp256k1(..) => {
-                    Error::ParseFailed("Invalid Ecdsa signature")
+                    Error::InvalidEcdsaSignature(e)
                 }
                 ecdsa::Error::HexEncoding(..) =>  {
                     unreachable!("Decoding from slice, not hex")
@@ -279,7 +279,7 @@ impl Serialize for XOnlyPublicKey {
 impl Deserialize for XOnlyPublicKey {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
         XOnlyPublicKey::from_slice(bytes)
-            .map_err(|_| Error::ParseFailed("Invalid xonly public key"))
+            .map_err(|_| Error::InvalidXOnlyPublicKey)
     }
 }
 
@@ -297,10 +297,10 @@ impl Deserialize for schnorr::Signature {
                     Error::NonStandardSighashType(flag as u32)
                 }
                 schnorr::Error::InvalidSignatureSize(_) => {
-                    Error::ParseFailed("Invalid Schnorr signature length")
+                    Error::InvalidSchnorrSignature(e)
                 }
                 schnorr::Error::Secp256k1(..) => {
-                    Error::ParseFailed("Invalid Schnorr signature")
+                    Error::InvalidSchnorrSignature(e)
                 }
             })
     }
@@ -336,7 +336,7 @@ impl Serialize for ControlBlock {
 impl Deserialize for ControlBlock {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
         Self::from_slice(bytes)
-            .map_err(|_| Error::ParseFailed("Invalid control block"))
+            .map_err(|_| Error::InvalidControlBlock)
     }
 }
 
@@ -358,7 +358,7 @@ impl Deserialize for (ScriptBuf, LeafVersion) {
         // The last byte is LeafVersion.
         let script = ScriptBuf::deserialize(&bytes[..bytes.len() - 1])?;
         let leaf_ver = LeafVersion::from_consensus(bytes[bytes.len() - 1])
-            .map_err(|_| Error::ParseFailed("invalid leaf version"))?;
+            .map_err(|_| Error::InvalidLeafVersion)?;
         Ok((script, leaf_ver))
     }
 }
@@ -409,21 +409,20 @@ impl Deserialize for TapTree {
         let mut builder = TaprootBuilder::new();
         let mut bytes_iter = bytes.iter();
         while let Some(depth) = bytes_iter.next() {
-            let version = bytes_iter.next().ok_or(Error::ParseFailed("Invalid Taproot Builder"))?;
+            let version = bytes_iter.next().ok_or(Error::Taproot("Invalid Taproot Builder"))?;
             let (script, consumed) = deserialize_partial::<ScriptBuf>(bytes_iter.as_slice())?;
             if consumed > 0 {
                 bytes_iter.nth(consumed - 1);
             }
-
             let leaf_version = LeafVersion::from_consensus(*version)
-                .map_err(|_| Error::ParseFailed("Leaf Version Error"))?;
+                .map_err(|_| Error::InvalidLeafVersion)?;
             builder = builder.add_leaf_with_ver(*depth, script, leaf_version)
-                .map_err(|_| Error::ParseFailed("Tree not in DFS order"))?;
+                .map_err(|_| Error::Taproot("Tree not in DFS order"))?;
         }
         if builder.is_finalizable() && !builder.has_hidden_nodes() {
             Ok(TapTree(builder))
         } else {
-            Err(Error::ParseFailed("Incomplete taproot Tree"))
+            Err(Error::Taproot("Incomplete taproot Tree"))
         }
     }
 }
