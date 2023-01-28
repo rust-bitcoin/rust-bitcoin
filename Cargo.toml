@@ -1,5 +1,6 @@
 [workspace]
 members = ["bitcoin", "hashes", "internals"]
 
-[patch.crates-io.bitcoin_hashes]
-path = "hashes"
+[patch.crates-io]
+# Arbitrary commit during dev of v0.12.0 (and rust-bitcoin v0.30.0)
+bitcoin_hashes = { git = "https://github.com/rust-bitcoin/rust-bitcoin", rev = "f90338021bda8be8c648cdd0e9276ccad54eef9a" }
