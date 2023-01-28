@@ -116,16 +116,16 @@ struct HashNode<T>(T);
 impl<T: Hash + Encodable> Node for HashNode<T>
 where T::Engine: io::Write
 {
-    fn new_parent2(self, right: Self) -> Self {
+    fn new_parent(self, right: Self) -> Self {
         let mut encoder = T::engine();
         self.0.consensus_encode(&mut encoder).expect("in-memory writers don't error");
         right.0.consensus_encode(&mut encoder).expect("in-memory writers don't error");
         HashNode(T::from_engine(encoder))
     }
 
-    fn new_parent1(self) -> Self {
+    fn new_parent_from_single(self) -> Self {
         let right = self.clone();
-        self.new_parent2(right)
+        self.new_parent(right)
     }
 }
 
@@ -195,7 +195,7 @@ mod tests {
         let from_iter = {
             let before = Instant::now();
             let from_iter = calculate_root(collection.iter().copied());
-            let delta = (Instant::now() - before).as_secs_f64();
+            let delta = before.elapsed().as_secs_f64();
             println!("calculate_root: {delta} s");
             from_iter
         };
@@ -203,7 +203,7 @@ mod tests {
         let from_light = {
             let before = Instant::now();
             let from_light = calculate_root_light(collection.iter().copied());
-            let delta = (Instant::now() - before).as_secs_f64();
+            let delta = before.elapsed().as_secs_f64();
             println!("calculate_root_light: {delta} s");
             from_light
         };
