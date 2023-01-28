@@ -46,12 +46,12 @@ fn from_engine(mut e: HashEngine) -> Hash {
     e.input(&(8 * data_len).to_be_bytes());
     debug_assert_eq!(e.length % BLOCK_SIZE, 0);
 
-    Hash(e.midstate().into_inner())
+    Hash(e.midstate().to_byte_array())
 }
 
 #[cfg(fuzzing)]
 fn from_engine(e: HashEngine) -> Hash {
-    let mut hash = e.midstate().into_inner();
+    let mut hash = e.midstate().to_byte_array();
     if hash == [0; 32] {
         // Assume sha256 is secure and never generate 0-hashes (which represent invalid
         // secp256k1 secret keys, causing downstream application breakage).
@@ -111,7 +111,7 @@ impl crate::HashEngine for HashEngine {
 impl Hash {
     /// Iterate the sha256 algorithm to turn a sha256 hash into a sha256d hash
     pub fn hash_again(&self) -> sha256d::Hash {
-        crate::Hash::from_inner(<Self as crate::Hash>::hash(&self.0).0)
+        crate::Hash::from_byte_array(<Self as crate::Hash>::hash(&self.0).0)
     }
 }
 
@@ -149,7 +149,7 @@ impl Midstate {
     const DISPLAY_BACKWARD: bool = true;
 
     /// Construct a new [`Midstate`] from the inner value.
-    pub fn from_inner(inner: [u8; 32]) -> Self {
+    pub fn from_byte_array(inner: [u8; 32]) -> Self {
         Midstate(inner)
     }
 
@@ -165,7 +165,7 @@ impl Midstate {
     }
 
     /// Unwraps the [`Midstate`] and returns the underlying byte array.
-    pub fn into_inner(self) -> [u8; 32] {
+    pub fn to_byte_array(self) -> [u8; 32] {
         self.0
     }
 }
@@ -176,7 +176,7 @@ impl hex::FromHex for Midstate {
         I: Iterator<Item = Result<u8, hex::Error>> + ExactSizeIterator + DoubleEndedIterator,
     {
         // DISPLAY_BACKWARD is true
-        Ok(Midstate::from_inner(hex::FromHex::from_byte_iter(iter.rev())?))
+        Ok(Midstate::from_byte_array(hex::FromHex::from_byte_iter(iter.rev())?))
     }
 }
 
@@ -381,7 +381,7 @@ mod tests {
             }
             let manual_hash = sha256::Hash::from_engine(engine);
             assert_eq!(hash, manual_hash);
-            assert_eq!(hash.into_inner()[..].as_ref(), test.output.as_slice());
+            assert_eq!(hash.to_byte_array()[..].as_ref(), test.output.as_slice());
         }
     }
 
@@ -402,7 +402,7 @@ mod tests {
         assert_eq!(
             engine.midstate(),
             // RPC output
-            sha256::Midstate::from_inner([
+            sha256::Midstate::from_byte_array([
                 0x0b, 0xcf, 0xe0, 0xe5, 0x4e, 0x6c, 0xc7, 0xd3,
                 0x4f, 0x4f, 0x7c, 0x1d, 0xf0, 0xb0, 0xf5, 0x03,
                 0xf2, 0xf7, 0x12, 0x91, 0x2a, 0x06, 0x05, 0xb4,
@@ -455,7 +455,7 @@ mod tests {
             0xd5, 0x69, 0x09, 0x59,
         ];
         let midstate_engine =
-            sha256::HashEngine::from_midstate(sha256::Midstate::from_inner(MIDSTATE), 64);
+            sha256::HashEngine::from_midstate(sha256::Midstate::from_byte_array(MIDSTATE), 64);
         let hash = sha256::Hash::from_engine(midstate_engine);
         assert_eq!(hash, sha256::Hash(HASH_EXPECTED));
     }

@@ -171,7 +171,7 @@ pub trait Hash: Copy + Clone + PartialEq + Eq + PartialOrd + Ord +
     type Engine: HashEngine;
 
     /// The byte array that represents the hash internally.
-    type Inner: hex::FromHex;
+    type Bytes: hex::FromHex + Copy;
 
     /// Constructs a new engine.
     fn engine() -> Self::Engine {
@@ -199,14 +199,14 @@ pub trait Hash: Copy + Clone + PartialEq + Eq + PartialOrd + Ord +
     /// true for `Sha256dHash`, so here we are.
     const DISPLAY_BACKWARD: bool = false;
 
-    /// Unwraps the hash and returns the underlying byte array.
-    fn into_inner(self) -> Self::Inner;
+    /// Returns the underlying byte array.
+    fn to_byte_array(self) -> Self::Bytes;
 
-    /// Unwraps the hash and returns a reference to the underlying byte array.
-    fn as_inner(&self) -> &Self::Inner;
+    /// Returns a reference to the underlying byte array.
+    fn as_byte_array(&self) -> &Self::Bytes;
 
     /// Constructs a hash from the underlying byte array.
-    fn from_inner(inner: Self::Inner) -> Self;
+    fn from_byte_array(bytes: Self::Bytes) -> Self;
 
     /// Returns an all zero hash.
     ///
@@ -231,11 +231,11 @@ mod tests {
     #[test]
     fn convert_newtypes() {
         let h1 = TestNewtype::hash(&[]);
-        let h2: TestNewtype2 = h1.as_hash().into();
+        let h2: TestNewtype2 = h1.to_raw_hash().into();
         assert_eq!(&h1[..], &h2[..]);
 
         let h = sha256d::Hash::hash(&[]);
         let h2: TestNewtype = h.to_string().parse().unwrap();
-        assert_eq!(h2.as_hash(), h);
+        assert_eq!(h2.to_raw_hash(), h);
     }
 }

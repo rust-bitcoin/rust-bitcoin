@@ -192,7 +192,7 @@ impl<T: Hash> borrow::Borrow<[u8]> for Hmac<T> {
 
 impl<T: Hash> Hash for Hmac<T> {
     type Engine = HmacEngine<T>;
-    type Inner = T::Inner;
+    type Bytes = T::Bytes;
 
     fn from_engine(mut e: HmacEngine<T>) -> Hmac<T> {
         let ihash = T::from_engine(e.iengine);
@@ -207,16 +207,16 @@ impl<T: Hash> Hash for Hmac<T> {
         T::from_slice(sl).map(Hmac)
     }
 
-    fn into_inner(self) -> Self::Inner {
-        self.0.into_inner()
+    fn to_byte_array(self) -> Self::Bytes {
+        self.0.to_byte_array()
     }
 
-    fn as_inner(&self) -> &Self::Inner {
-        self.0.as_inner()
+    fn as_byte_array(&self) -> &Self::Bytes {
+        self.0.as_byte_array()
     }
 
-    fn from_inner(inner: T::Inner) -> Self {
-        Hmac(T::from_inner(inner))
+    fn from_byte_array(bytes: T::Bytes) -> Self {
+        Hmac(T::from_byte_array(bytes))
     }
 
     fn all_zeros() -> Self {
@@ -237,8 +237,8 @@ impl<T: Hash + Serialize> Serialize for Hmac<T> {
 #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 impl<'de, T: Hash + Deserialize<'de>> Deserialize<'de> for Hmac<T> {
     fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Hmac<T>, D::Error> {
-        let inner = Deserialize::deserialize(d)?;
-        Ok(Hmac(inner))
+        let bytes = Deserialize::deserialize(d)?;
+        Ok(Hmac(bytes))
     }
 }
 
@@ -365,7 +365,7 @@ mod tests {
             engine.input(&test.input);
             let hash = Hmac::<sha256::Hash>::from_engine(engine);
             assert_eq!(&hash[..], &test.output[..]);
-            assert_eq!(hash.into_inner()[..].as_ref(), test.output.as_slice());
+            assert_eq!(hash.as_byte_array(), test.output.as_slice());
         }
     }
 

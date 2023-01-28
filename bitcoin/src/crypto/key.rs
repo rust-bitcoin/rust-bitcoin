@@ -129,8 +129,8 @@ impl PublicKey {
     /// Returns bitcoin 160-bit hash of the public key for witness program
     pub fn wpubkey_hash(&self) -> Option<WPubkeyHash> {
         if self.compressed {
-            Some(WPubkeyHash::from_inner(
-                hash160::Hash::hash(&self.inner.serialize()).into_inner()
+            Some(WPubkeyHash::from_byte_array(
+                hash160::Hash::hash(&self.inner.serialize()).to_byte_array()
             ))
         } else {
             // We can't create witness pubkey hashes for an uncompressed

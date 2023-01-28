@@ -170,7 +170,7 @@ pub struct BlockFilterWriter<'a, W> {
 impl<'a, W: io::Write> BlockFilterWriter<'a, W> {
     /// Creates a new [`BlockFilterWriter`] from `block`.
     pub fn new(writer: &'a mut W, block: &'a Block) -> BlockFilterWriter<'a, W> {
-        let block_hash_as_int = block.block_hash().into_inner();
+        let block_hash_as_int = block.block_hash().to_byte_array();
         let k0 = u64::from_le_bytes(block_hash_as_int[0..8].try_into().expect("8 byte slice"));
         let k1 = u64::from_le_bytes(block_hash_as_int[8..16].try_into().expect("8 byte slice"));
         let writer = GcsFilterWriter::new(writer, k0, k1, M, P);
@@ -225,7 +225,7 @@ pub struct BlockFilterReader {
 impl BlockFilterReader {
     /// Creates a new [`BlockFilterReader`] from `block_hash`.
     pub fn new(block_hash: &BlockHash) -> BlockFilterReader {
-        let block_hash_as_int = block_hash.into_inner();
+        let block_hash_as_int = block_hash.to_byte_array();
         let k0 = u64::from_le_bytes(block_hash_as_int[0..8].try_into().expect("8 byte slice"));
         let k1 = u64::from_le_bytes(block_hash_as_int[8..16].try_into().expect("8 byte slice"));
         BlockFilterReader { reader: GcsFilterReader::new(k0, k1, M, P) }

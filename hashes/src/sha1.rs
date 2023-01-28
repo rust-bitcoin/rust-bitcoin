@@ -206,7 +206,7 @@ mod tests {
             }
             let manual_hash = sha1::Hash::from_engine(engine);
             assert_eq!(hash, manual_hash);
-            assert_eq!(hash.into_inner()[..].as_ref(), test.output.as_slice());
+            assert_eq!(hash.as_byte_array(), test.output.as_slice());
         }
     }
 

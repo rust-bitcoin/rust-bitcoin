@@ -257,7 +257,7 @@ impl Block {
 
     /// Computes the transaction merkle root.
     pub fn compute_merkle_root(&self) -> Option<TxMerkleNode> {
-        let hashes = self.txdata.iter().map(|obj| obj.txid().as_hash());
+        let hashes = self.txdata.iter().map(|obj| obj.txid().to_raw_hash());
         merkle_tree::calculate_root(hashes).map(|h| h.into())
     }
 
@@ -274,9 +274,9 @@ impl Block {
         let hashes = self.txdata.iter().enumerate().map(|(i, t)| {
             if i == 0 {
                 // Replace the first hash with zeroes.
-                Wtxid::all_zeros().as_hash()
+                Wtxid::all_zeros().to_raw_hash()
             } else {
-                t.wtxid().as_hash()
+                t.wtxid().to_raw_hash()
             }
         });
         merkle_tree::calculate_root(hashes).map(|h| h.into())

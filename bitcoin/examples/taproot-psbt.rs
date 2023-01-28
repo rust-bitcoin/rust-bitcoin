@@ -82,11 +82,10 @@ use bitcoin::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKe
 use bitcoin::consensus::encode;
 use bitcoin::constants::COIN_VALUE;
 use bitcoin::crypto::taproot;
-use bitcoin::hashes::Hash;
 use bitcoin::key::{TapTweak, XOnlyPublicKey};
 use bitcoin::opcodes::all::{OP_CHECKSIG, OP_CLTV, OP_DROP};
 use bitcoin::psbt::{self, Input, Output, Psbt, PsbtSighashType};
-use bitcoin::secp256k1::{Message, Secp256k1};
+use bitcoin::secp256k1::Secp256k1;
 use bitcoin::sighash::{self, TapSighashType, SighashCache};
 use bitcoin::taproot::{
     LeafVersion, TapLeafHash, TapSighash, TaprootBuilder, TaprootSpendInfo,
