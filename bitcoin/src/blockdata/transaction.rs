@@ -318,6 +318,11 @@ impl Sequence {
     /// BIP-68 relative lock time type flag mask.
     const LOCK_TYPE_MASK: u32 = 0x00400000;
 
+    /// The maximum allowable sequence number.
+    ///
+    /// This is provided for consistency with Rust 1.41.1, newer code should use [`Sequence::MAX`].
+    pub fn max_value() -> Self { Self::MAX }
+
     /// Returns `true` if the sequence number enables absolute lock-time ([`Transaction::lock_time`]).
     #[inline]
     pub fn enables_absolute_lock_time(&self) -> bool {

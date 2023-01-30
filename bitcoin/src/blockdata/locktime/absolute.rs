@@ -103,7 +103,7 @@ pub enum LockTime {
 impl LockTime {
     /// If [`crate::Transaction::lock_time`] is set to zero it is ignored, in other words a
     /// transaction with nLocktime==0 is able to be included immediately in any block.
-    pub const ZERO: LockTime = LockTime::Blocks(Height(0));
+    pub const ZERO: LockTime = LockTime::Blocks(Height::ZERO);
 
     /// Constructs a `LockTime` from an nLockTime value or the argument to OP_CHEKCLOCKTIMEVERIFY.
     ///
@@ -393,6 +393,25 @@ impl<'de> serde::Deserialize<'de> for LockTime {
 pub struct Height(u32);
 
 impl Height {
+    /// Absolute block height 0, the genesis block.
+    pub const ZERO: Self = Height(0);
+
+    /// The minimum absolute block height (0), the genesis block.
+    pub const MIN: Self = Self::ZERO;
+
+    /// The maximum absolute block height.
+    pub const MAX: Self = Height(LOCK_TIME_THRESHOLD - 1);
+
+    /// The minimum absolute block height (0), the genesis block.
+    ///
+    /// This is provided for consistency with Rust 1.41.1, newer code should use [`Height::MIN`].
+    pub fn min_value() -> Self { Self::MIN }
+
+    /// The maximum absolute block height.
+    ///
+    /// This is provided for consistency with Rust 1.41.1, newer code should use [`Height::MAX`].
+    pub fn max_value() -> Self { Self::MAX }
+
     /// Constructs a new block height.
     ///
     /// # Errors
@@ -490,6 +509,22 @@ impl TryFrom<String> for Height {
 pub struct Time(u32);
 
 impl Time {
+    /// The minimum absolute block time (Tue Nov 05 1985 00:53:20 GMT+0000).
+    pub const MIN: Self = Time(LOCK_TIME_THRESHOLD);
+
+    /// The maximum absolute block time (Sun Feb 07 2106 06:28:15 GMT+0000).
+    pub const MAX: Self = Time(u32::max_value());
+
+    /// The minimum absolute block time.
+    ///
+    /// This is provided for consistency with Rust 1.41.1, newer code should use [`Time::MIN`].
+    pub fn min_value() -> Self { Self::MIN }
+
+    /// The maximum absolute block time.
+    ///
+    /// This is provided for consistency with Rust 1.41.1, newer code should use [`Time::MAX`].
+    pub fn max_value() -> Self { Self::MAX }
+
     /// Constructs a new block time.
     ///
     /// # Errors
