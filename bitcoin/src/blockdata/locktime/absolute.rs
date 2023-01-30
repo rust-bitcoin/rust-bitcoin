@@ -405,12 +405,12 @@ impl Height {
     /// The minimum absolute block height (0), the genesis block.
     ///
     /// This is provided for consistency with Rust 1.41.1, newer code should use [`Height::MIN`].
-    pub fn min_value() -> Self { Self::MIN }
+    pub const fn min_value() -> Self { Self::MIN }
 
     /// The maximum absolute block height.
     ///
     /// This is provided for consistency with Rust 1.41.1, newer code should use [`Height::MAX`].
-    pub fn max_value() -> Self { Self::MAX }
+    pub const fn max_value() -> Self { Self::MAX }
 
     /// Constructs a new block height.
     ///
@@ -518,12 +518,12 @@ impl Time {
     /// The minimum absolute block time.
     ///
     /// This is provided for consistency with Rust 1.41.1, newer code should use [`Time::MIN`].
-    pub fn min_value() -> Self { Self::MIN }
+    pub const fn min_value() -> Self { Self::MIN }
 
     /// The maximum absolute block time.
     ///
     /// This is provided for consistency with Rust 1.41.1, newer code should use [`Time::MAX`].
-    pub fn max_value() -> Self { Self::MAX }
+    pub const fn max_value() -> Self { Self::MAX }
 
     /// Constructs a new block time.
     ///
