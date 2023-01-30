@@ -30,7 +30,9 @@ pub enum Error {
     /// Invalid key prefix error
     InvalidKeyPrefix(u8),
     /// Hex decoding error
-    Hex(hex::Error)
+    Hex(hex::Error),
+    /// `PublicKey` hex should be 66 or 130 digits long.
+    InvalidHexLength(usize),
 }
 
 impl fmt::Display for Error {
@@ -39,7 +41,8 @@ impl fmt::Display for Error {
             Error::Base58(ref e) => write_err!(f, "key base58 error"; e),
             Error::Secp256k1(ref e) => write_err!(f, "key secp256k1 error"; e),
             Error::InvalidKeyPrefix(ref b) => write!(f, "key prefix invalid: {}", b),
-            Error::Hex(ref e) => write_err!(f, "key hex decoding error"; e)
+            Error::Hex(ref e) => write_err!(f, "key hex decoding error"; e),
+            Error::InvalidHexLength(got) => write!(f, "PublicKey hex should be 66 or 130 digits long, got: {}", got),
         }
     }
 }
@@ -53,8 +56,8 @@ impl std::error::Error for Error {
         match self {
             Base58(e) => Some(e),
             Secp256k1(e) => Some(e),
-            InvalidKeyPrefix(_) => None,
             Hex(e) => Some(e),
+            InvalidKeyPrefix(_) | InvalidHexLength(_) => None,
         }
     }
 }
@@ -159,7 +162,8 @@ impl PublicKey {
                 Error::Base58(_) => "base58 error",
                 Error::Secp256k1(_) => "secp256k1 error",
                 Error::InvalidKeyPrefix(_) => "invalid key prefix",
-                Error::Hex(_) => "hex decoding error"
+                Error::Hex(_) => "hex decoding error",
+                Error::InvalidHexLength(_) => "invalid hex string length",
             };
             io::Error::new(io::ErrorKind::InvalidData, reason)
         })
@@ -287,7 +291,7 @@ impl FromStr for PublicKey {
         match s.len() {
             66 => PublicKey::from_slice(&<[u8; 33]>::from_hex(s)?),
             130 => PublicKey::from_slice(&<[u8; 65]>::from_hex(s)?),
-            len => Err(Error::Hex(hex::Error::InvalidLength(66, len))),
+            len => Err(Error::InvalidHexLength(len)),
         }
     }
 }
@@ -850,5 +854,23 @@ mod tests {
 
         let _ = PublicKey::new(kp);
         let _ = PublicKey::new_uncompressed(kp);
+    }
+
+    #[test]
+    fn public_key_from_str_wrong_length() {
+        // Sanity checks, we accept string length 130 digits.
+        let s = "042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133";
+        assert_eq!(s.len(), 130);
+        assert!(PublicKey::from_str(s).is_ok());
+        // And 66 digits.
+        let s = "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af";
+        assert_eq!(s.len(), 66);
+        assert!(PublicKey::from_str(s).is_ok());
+
+        let s = "aoeusthb";
+        assert_eq!(s.len(), 8);
+        let res = PublicKey::from_str(s);
+        assert!(res.is_err());
+        assert_eq!(res.unwrap_err(), Error::InvalidHexLength(8));
     }
 }
