@@ -1126,7 +1126,7 @@ mod tests {
         // These test vectors were stolen from libbtc, which is Copyright 2014 Jonas Schnelli MIT
         // They were transformed by replacing {...} with run_test_sighash(...), then the ones containing
         // OP_CODESEPARATOR in their pubkeys were removed
-        let data = include_str!("../tests/data/legacy_sighash.json");
+        let data = include_str!("../../tests/data/legacy_sighash.json");
 
         let testdata = serde_json::from_str::<Value>(data).unwrap().as_array().unwrap().clone();
         for t in testdata.iter().skip(1) {
@@ -1494,7 +1494,7 @@ mod tests {
             //script_pubkey: Vec<ScriptPubKey>, // unused
         }
 
-        let json_str = include_str!("../tests/data/bip341_tests.json");
+        let json_str = include_str!("../../tests/data/bip341_tests.json");
         let mut data =
             serde_json::from_str::<TestData>(json_str).expect("JSON was not well-formatted");
 

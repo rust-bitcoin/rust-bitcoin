@@ -9,3 +9,4 @@
 pub mod ecdsa;
 pub mod key;
 pub mod schnorr;
+pub mod sighash;
