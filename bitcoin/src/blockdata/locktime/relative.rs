@@ -215,12 +215,12 @@ impl Height {
     /// The minimum relative block height (0), can be included in any block.
     ///
     /// This is provided for consistency with Rust 1.41.1, newer code should use [`Height::MIN`].
-    pub fn min_value() -> Self { Self::MIN }
+    pub const fn min_value() -> Self { Self::MIN }
 
     /// The maximum relative block height.
     ///
     /// This is provided for consistency with Rust 1.41.1, newer code should use [`Height::MAX`].
-    pub fn max_value() -> Self { Self::MAX }
+    pub const fn max_value() -> Self { Self::MAX }
 
     /// Returns the inner `u16` value.
     #[inline]
@@ -263,12 +263,12 @@ impl Time {
     /// The minimum relative block time.
     ///
     /// This is provided for consistency with Rust 1.41.1, newer code should use [`Time::MIN`].
-    pub fn min_value() -> Self { Self::MIN }
+    pub const fn min_value() -> Self { Self::MIN }
 
     /// The maximum relative block time.
     ///
     /// This is provided for consistency with Rust 1.41.1, newer code should use [`Time::MAX`].
-    pub fn max_value() -> Self { Self::MAX }
+    pub const fn max_value() -> Self { Self::MAX }
 
     /// Create a [`Time`] using time intervals where each interval is equivalent to 512 seconds.
     ///

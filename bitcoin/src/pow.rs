@@ -171,7 +171,7 @@ impl Target {
     /// The maximum possible target (see [`Target::MAX`]).
     ///
     /// This is provided for consistency with Rust 1.41.1, newer code should use [`Target::MAX`].
-    pub fn max_value() -> Self { Target::MAX }
+    pub const fn max_value() -> Self { Target::MAX }
 
     /// Computes the [`Target`] value from a compact representation.
     ///
