@@ -691,6 +691,27 @@ impl core::str::FromStr for ScriptBuf {
     }
 }
 
+impl fmt::Display for ScriptBuf {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Display::fmt(self.as_script(), f)
+    }
+}
+
+impl fmt::LowerHex for ScriptBuf {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::LowerHex::fmt(self.as_script(), f)
+    }
+}
+
+impl fmt::UpperHex for ScriptBuf {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::UpperHex::fmt(self.as_script(), f)
+    }
+}
+
 /// An object which can be used to construct a script piece by piece.
 #[derive(PartialEq, Eq, Clone)]
 pub struct Builder(ScriptBuf, Option<opcodes::All>);
