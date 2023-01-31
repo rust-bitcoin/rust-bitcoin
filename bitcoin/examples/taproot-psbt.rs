@@ -82,17 +82,16 @@ use bitcoin::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKe
 use bitcoin::consensus::encode;
 use bitcoin::constants::COIN_VALUE;
 use bitcoin::hashes::Hash;
-use bitcoin::key::XOnlyPublicKey;
+use bitcoin::key::{TapTweak, XOnlyPublicKey};
 use bitcoin::opcodes::all::{OP_CHECKSIG, OP_CLTV, OP_DROP};
 use bitcoin::psbt::{self, Input, Output, Psbt, PsbtSighashType};
-use bitcoin::schnorr::{self, TapTweak};
 use bitcoin::secp256k1::{Message, Secp256k1};
 use bitcoin::sighash::{self, SchnorrSighashType, SighashCache};
 use bitcoin::taproot::{
     LeafVersion, TapLeafHash, TapSighashHash, TaprootBuilder, TaprootSpendInfo,
 };
 use bitcoin::{
-    absolute, script, Address, Amount, Network, OutPoint, ScriptBuf, Transaction, TxIn, TxOut, Witness,
+    absolute, script, schnorr, Address, Amount, Network, OutPoint, ScriptBuf, Transaction, TxIn, TxOut,  Witness,
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

@@ -13,7 +13,7 @@ use bitcoin_internals::write_err;
 use secp256k1::{self, Scalar, Secp256k1};
 
 use crate::consensus::Encodable;
-use crate::crypto::schnorr::{TapTweak, TweakedPublicKey, UntweakedPublicKey, XOnlyPublicKey};
+use crate::crypto::key::{TapTweak, TweakedPublicKey, UntweakedPublicKey, XOnlyPublicKey};
 use crate::hashes::{sha256t_hash_newtype, Hash, HashEngine};
 use crate::prelude::*;
 use crate::{io, Script, ScriptBuf};
@@ -1145,7 +1145,6 @@ mod test {
     use secp256k1::{VerifyOnly, XOnlyPublicKey};
 
     use super::*;
-    use crate::crypto::schnorr::TapTweak;
     use crate::hashes::hex::FromHex;
     use crate::hashes::sha256t::Tag;
     use crate::hashes::{sha256, Hash, HashEngine};
