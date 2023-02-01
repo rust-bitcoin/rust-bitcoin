@@ -12,10 +12,13 @@
 //! This module provides the structures and functions needed to support transactions.
 //!
 
+use crate::Weight;
 use crate::prelude::*;
 
 use crate::io;
 use crate::string::FromHexStr;
+use crate::weight::ComputeSize;
+use crate::weight::ComputeWeight;
 use core::{cmp, fmt, str, default::Default};
 use core::convert::TryFrom;
 
@@ -94,6 +97,12 @@ impl OutPoint {
 impl Default for OutPoint {
     fn default() -> Self {
         OutPoint::null()
+    }
+}
+
+impl ComputeWeight for OutPoint {
+    fn weight(&self) -> Weight {
+        Weight::from_non_witness_data_size(32 /* bytes encoding previous hash */ + 4 /* bytes encoding u32 output index */)
     }
 }
 
@@ -521,18 +530,16 @@ pub struct TxOut {
     pub script_pubkey: ScriptBuf
 }
 
-impl TxOut {
+impl ComputeWeight for TxOut {
     /// The weight of the txout in witness units
     ///
     /// Keep in mind that when adding a TxOut to a transaction, the total weight of the transaction
     /// might increase more than `TxOut::weight`. This happens when the new output added causes
     /// the output length `VarInt` to increase its encoding length.
-    pub fn weight(&self) -> usize {
-        let script_len = self.script_pubkey.len();
+    fn weight(&self) -> Weight {
         // In vbytes:
         // value (8) + script varint len + script push
-        // Then we multiply by 4 to convert to WU
-        (8 + VarInt(script_len as u64).len() + script_len) * 4
+        Weight::from_non_witness_data_size(8 + self.script_pubkey.encoded_size())
     }
 }
 
@@ -1623,7 +1630,7 @@ mod tests {
             let calculated_size = empty_transaction_size
                 + segwit_marker_size
                 + tx.input.iter().fold(0, |sum, i| sum + txin_weight(i))
-                + tx.output.iter().fold(0, |sum, o| sum + o.weight());
+                + tx.output.iter().fold(0, |sum, o| sum + usize::from(o.weight()));
             assert_eq!(calculated_size, tx.weight());
         }
     }

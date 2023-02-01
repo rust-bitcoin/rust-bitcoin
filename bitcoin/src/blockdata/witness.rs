@@ -10,11 +10,13 @@ use core::ops::Index;
 
 use secp256k1::ecdsa;
 
+use crate::blockdata::weight::Weight;
 use crate::consensus::encode::{Error, MAX_VEC_SIZE};
 use crate::consensus::{Decodable, Encodable, WriteExt};
 use crate::sighash::EcdsaSighashType;
 use crate::io::{self, Read, Write};
 use crate::prelude::*;
+use crate::weight::ComputeWeight;
 use crate::{Script, VarInt};
 use crate::taproot::TAPROOT_ANNEX_PREFIX;
 
@@ -339,6 +341,15 @@ impl Witness {
                 self.nth(len - script_pos_from_last)
             })
             .map(Script::from_bytes)
+    }
+}
+
+impl ComputeWeight for Witness {
+    fn weight(&self) -> Weight {
+        if self.is_empty() {
+            return Weight::ZERO;
+        }
+        Weight::from_witness_data_size(self.serialized_len())
     }
 }
 

@@ -48,7 +48,8 @@
 //! At the time of writing there's only one operation using the cache - `push_verify`, so the cache
 //! is minimal but we may extend it in the future if needed.
 
-use crate::prelude::*;
+use crate::{prelude::*, VarInt};
+use crate::weight::ComputeSize;
 
 use alloc::rc::Rc;
 use alloc::sync::Arc;
@@ -518,6 +519,15 @@ impl Script {
         // layout).
         let inner = unsafe { Box::from_raw(rw) };
         ScriptBuf(Vec::from(inner))
+    }
+}
+
+impl ComputeSize for Script {
+    /// Blocksize of a script.
+    fn encoded_size(&self) -> usize {
+        let script_len = self.len();
+        // script varint len + script push in vbytes
+        VarInt(script_len as u64).len() + script_len
     }
 }
 
