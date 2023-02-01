@@ -673,21 +673,11 @@ impl fmt::UpperHex for Script {
     }
 }
 
-impl hex::FromHex for ScriptBuf {
-    #[inline]
-    fn from_byte_iter<I>(iter: I) -> Result<Self, hex::Error>
-    where
-        I: Iterator<Item=Result<u8, hex::Error>> + ExactSizeIterator + DoubleEndedIterator,
-    {
-        Vec::from_byte_iter(iter).map(ScriptBuf)
-    }
-}
-
 impl core::str::FromStr for ScriptBuf {
     type Err = hex::Error;
     #[inline]
     fn from_str(s: &str) -> Result<Self, hex::Error> {
-        hex::FromHex::from_hex(s)
+        ScriptBuf::from_hex(s)
     }
 }
 
@@ -1198,7 +1188,15 @@ impl ScriptBuf {
             .into_script()
     }
 
-    /// Converts byte vector into script.
+    /// Creates a [`ScriptBuf`] from a hex string.
+    pub fn from_hex(s: &str) -> Result<Self, hex::Error> {
+        use crate::hashes::hex::FromHex;
+
+        let v = Vec::from_hex(s)?;
+        Ok(ScriptBuf::from_bytes(v))
+    }
+
+    /// Creates a [`ScriptBuf`] from a byte vector.
     ///
     /// This method doesn't (re)allocate.
     pub fn from_bytes(bytes: Vec<u8>) -> Self {
@@ -2057,7 +2055,7 @@ mod test {
     use crate::blockdata::opcodes;
     use crate::crypto::key::PublicKey;
     use crate::psbt::serialize::Serialize;
-    use crate::internal_macros::{hex, hex_script};
+    use crate::internal_macros::hex;
 
     #[test]
     fn script() {
@@ -2401,11 +2399,11 @@ mod test {
 
     #[test]
     fn script_hashes() {
-        let script = hex_script!("410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac");
+        let script = ScriptBuf::from_hex("410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac").unwrap();
         assert_eq!(script.script_hash().to_string(), "8292bcfbef1884f73c813dfe9c82fd7e814291ea");
         assert_eq!(script.wscript_hash().to_string(), "3e1525eb183ad4f9b3c5fa3175bdca2a52e947b135bbb90383bf9f6408e2c324");
 	assert_eq!(
-	    hex_script!("20d85a959b0290bf19bb89ed43c916be835475d013da4b362117393e25a48229b8ac").tapscript_leaf_hash().to_string(),
+	    ScriptBuf::from_hex("20d85a959b0290bf19bb89ed43c916be835475d013da4b362117393e25a48229b8ac").unwrap().tapscript_leaf_hash().to_string(),
 	    "5b75adecf53548f3ec6ad7d78383bf84cc57b55a3127c72b9a2481752dd88b21"
 	);
     }
@@ -2413,18 +2411,18 @@ mod test {
     #[test]
     fn provably_unspendable_test() {
         // p2pk
-        assert!(!hex_script!("410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac").is_provably_unspendable());
-        assert!(!hex_script!("4104ea1feff861b51fe3f5f8a3b12d0f4712db80e919548a80839fc47c6a21e66d957e9c5d8cd108c7a2d2324bad71f9904ac0ae7336507d785b17a2c115e427a32fac").is_provably_unspendable());
+        assert!(!ScriptBuf::from_hex("410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac").unwrap().is_provably_unspendable());
+        assert!(!ScriptBuf::from_hex("4104ea1feff861b51fe3f5f8a3b12d0f4712db80e919548a80839fc47c6a21e66d957e9c5d8cd108c7a2d2324bad71f9904ac0ae7336507d785b17a2c115e427a32fac").unwrap().is_provably_unspendable());
         // p2pkhash
-        assert!(!hex_script!("76a914ee61d57ab51b9d212335b1dba62794ac20d2bcf988ac").is_provably_unspendable());
-        assert!(hex_script!("6aa9149eb21980dc9d413d8eac27314938b9da920ee53e87").is_provably_unspendable());
+        assert!(!ScriptBuf::from_hex("76a914ee61d57ab51b9d212335b1dba62794ac20d2bcf988ac").unwrap().is_provably_unspendable());
+        assert!(ScriptBuf::from_hex("6aa9149eb21980dc9d413d8eac27314938b9da920ee53e87").unwrap().is_provably_unspendable());
     }
 
     #[test]
     fn op_return_test() {
-        assert!(hex_script!("6aa9149eb21980dc9d413d8eac27314938b9da920ee53e87").is_op_return());
-        assert!(!hex_script!("76a914ee61d57ab51b9d212335b1dba62794ac20d2bcf988ac").is_op_return());
-        assert!(!hex_script!("").is_op_return());
+        assert!(ScriptBuf::from_hex("6aa9149eb21980dc9d413d8eac27314938b9da920ee53e87").unwrap().is_op_return());
+        assert!(!ScriptBuf::from_hex("76a914ee61d57ab51b9d212335b1dba62794ac20d2bcf988ac").unwrap().is_op_return());
+        assert!(!ScriptBuf::from_hex("").unwrap().is_op_return());
     }
 
     #[test]
@@ -2432,7 +2430,7 @@ mod test {
     fn script_json_serialize() {
         use serde_json;
 
-        let original = hex_script!("827651a0698faaa9a8a7a687");
+        let original = ScriptBuf::from_hex("827651a0698faaa9a8a7a687").unwrap();
         let json = serde_json::to_value(&original).unwrap();
         assert_eq!(json, serde_json::Value::String("827651a0698faaa9a8a7a687".to_owned()));
         let des = serde_json::from_value::<ScriptBuf>(json).unwrap();
@@ -2441,77 +2439,77 @@ mod test {
 
     #[test]
     fn script_asm() {
-        assert_eq!(hex_script!("6363636363686868686800").to_asm_string(),
+        assert_eq!(ScriptBuf::from_hex("6363636363686868686800").unwrap().to_asm_string(),
                    "OP_IF OP_IF OP_IF OP_IF OP_IF OP_ENDIF OP_ENDIF OP_ENDIF OP_ENDIF OP_ENDIF OP_0");
-        assert_eq!(hex_script!("6363636363686868686800").to_asm_string(),
+        assert_eq!(ScriptBuf::from_hex("6363636363686868686800").unwrap().to_asm_string(),
                    "OP_IF OP_IF OP_IF OP_IF OP_IF OP_ENDIF OP_ENDIF OP_ENDIF OP_ENDIF OP_ENDIF OP_0");
-        assert_eq!(hex_script!("2102715e91d37d239dea832f1460e91e368115d8ca6cc23a7da966795abad9e3b699ac").to_asm_string(),
+        assert_eq!(ScriptBuf::from_hex("2102715e91d37d239dea832f1460e91e368115d8ca6cc23a7da966795abad9e3b699ac").unwrap().to_asm_string(),
                    "OP_PUSHBYTES_33 02715e91d37d239dea832f1460e91e368115d8ca6cc23a7da966795abad9e3b699 OP_CHECKSIG");
         // Elements Alpha peg-out transaction with some signatures removed for brevity. Mainly to test PUSHDATA1
-        assert_eq!(hex_script!("0047304402202457e78cc1b7f50d0543863c27de75d07982bde8359b9e3316adec0aec165f2f02200203fd331c4e4a4a02f48cf1c291e2c0d6b2f7078a784b5b3649fca41f8794d401004cf1552103244e602b46755f24327142a0517288cebd159eccb6ccf41ea6edf1f601e9af952103bbbacc302d19d29dbfa62d23f37944ae19853cf260c745c2bea739c95328fcb721039227e83246bd51140fe93538b2301c9048be82ef2fb3c7fc5d78426ed6f609ad210229bf310c379b90033e2ecb07f77ecf9b8d59acb623ab7be25a0caed539e2e6472103703e2ed676936f10b3ce9149fa2d4a32060fb86fa9a70a4efe3f21d7ab90611921031e9b7c6022400a6bb0424bbcde14cff6c016b91ee3803926f3440abf5c146d05210334667f975f55a8455d515a2ef1c94fdfa3315f12319a14515d2a13d82831f62f57ae").to_asm_string(),
+        assert_eq!(ScriptBuf::from_hex("0047304402202457e78cc1b7f50d0543863c27de75d07982bde8359b9e3316adec0aec165f2f02200203fd331c4e4a4a02f48cf1c291e2c0d6b2f7078a784b5b3649fca41f8794d401004cf1552103244e602b46755f24327142a0517288cebd159eccb6ccf41ea6edf1f601e9af952103bbbacc302d19d29dbfa62d23f37944ae19853cf260c745c2bea739c95328fcb721039227e83246bd51140fe93538b2301c9048be82ef2fb3c7fc5d78426ed6f609ad210229bf310c379b90033e2ecb07f77ecf9b8d59acb623ab7be25a0caed539e2e6472103703e2ed676936f10b3ce9149fa2d4a32060fb86fa9a70a4efe3f21d7ab90611921031e9b7c6022400a6bb0424bbcde14cff6c016b91ee3803926f3440abf5c146d05210334667f975f55a8455d515a2ef1c94fdfa3315f12319a14515d2a13d82831f62f57ae").unwrap().to_asm_string(),
                    "OP_0 OP_PUSHBYTES_71 304402202457e78cc1b7f50d0543863c27de75d07982bde8359b9e3316adec0aec165f2f02200203fd331c4e4a4a02f48cf1c291e2c0d6b2f7078a784b5b3649fca41f8794d401 OP_0 OP_PUSHDATA1 552103244e602b46755f24327142a0517288cebd159eccb6ccf41ea6edf1f601e9af952103bbbacc302d19d29dbfa62d23f37944ae19853cf260c745c2bea739c95328fcb721039227e83246bd51140fe93538b2301c9048be82ef2fb3c7fc5d78426ed6f609ad210229bf310c379b90033e2ecb07f77ecf9b8d59acb623ab7be25a0caed539e2e6472103703e2ed676936f10b3ce9149fa2d4a32060fb86fa9a70a4efe3f21d7ab90611921031e9b7c6022400a6bb0424bbcde14cff6c016b91ee3803926f3440abf5c146d05210334667f975f55a8455d515a2ef1c94fdfa3315f12319a14515d2a13d82831f62f57ae");
         // Various weird scripts found in transaction 6d7ed9914625c73c0288694a6819196a27ef6c08f98e1270d975a8e65a3dc09a
         // which triggerred overflow bugs on 32-bit machines in script formatting in the past.
-        assert_eq!(hex_script!("01").to_asm_string(),
+        assert_eq!(ScriptBuf::from_hex("01").unwrap().to_asm_string(),
                    "OP_PUSHBYTES_1 <push past end>");
-        assert_eq!(hex_script!("0201").to_asm_string(),
+        assert_eq!(ScriptBuf::from_hex("0201").unwrap().to_asm_string(),
                    "OP_PUSHBYTES_2 <push past end>");
-        assert_eq!(hex_script!("4c").to_asm_string(),
+        assert_eq!(ScriptBuf::from_hex("4c").unwrap().to_asm_string(),
                    "<unexpected end>");
-        assert_eq!(hex_script!("4c0201").to_asm_string(),
+        assert_eq!(ScriptBuf::from_hex("4c0201").unwrap().to_asm_string(),
                    "OP_PUSHDATA1 <push past end>");
-        assert_eq!(hex_script!("4d").to_asm_string(),
+        assert_eq!(ScriptBuf::from_hex("4d").unwrap().to_asm_string(),
                    "<unexpected end>");
-        assert_eq!(hex_script!("4dffff01").to_asm_string(),
+        assert_eq!(ScriptBuf::from_hex("4dffff01").unwrap().to_asm_string(),
                    "OP_PUSHDATA2 <push past end>");
-        assert_eq!(hex_script!("4effffffff01").to_asm_string(),
+        assert_eq!(ScriptBuf::from_hex("4effffffff01").unwrap().to_asm_string(),
                    "OP_PUSHDATA4 <push past end>");
     }
 
     #[test]
     fn script_buf_collect() {
         assert_eq!(&core::iter::empty::<Instruction<'_>>().collect::<ScriptBuf>(), Script::empty());
-        let script = hex_script!("0047304402202457e78cc1b7f50d0543863c27de75d07982bde8359b9e3316adec0aec165f2f02200203fd331c4e4a4a02f48cf1c291e2c0d6b2f7078a784b5b3649fca41f8794d401004cf1552103244e602b46755f24327142a0517288cebd159eccb6ccf41ea6edf1f601e9af952103bbbacc302d19d29dbfa62d23f37944ae19853cf260c745c2bea739c95328fcb721039227e83246bd51140fe93538b2301c9048be82ef2fb3c7fc5d78426ed6f609ad210229bf310c379b90033e2ecb07f77ecf9b8d59acb623ab7be25a0caed539e2e6472103703e2ed676936f10b3ce9149fa2d4a32060fb86fa9a70a4efe3f21d7ab90611921031e9b7c6022400a6bb0424bbcde14cff6c016b91ee3803926f3440abf5c146d05210334667f975f55a8455d515a2ef1c94fdfa3315f12319a14515d2a13d82831f62f57ae");
+        let script = ScriptBuf::from_hex("0047304402202457e78cc1b7f50d0543863c27de75d07982bde8359b9e3316adec0aec165f2f02200203fd331c4e4a4a02f48cf1c291e2c0d6b2f7078a784b5b3649fca41f8794d401004cf1552103244e602b46755f24327142a0517288cebd159eccb6ccf41ea6edf1f601e9af952103bbbacc302d19d29dbfa62d23f37944ae19853cf260c745c2bea739c95328fcb721039227e83246bd51140fe93538b2301c9048be82ef2fb3c7fc5d78426ed6f609ad210229bf310c379b90033e2ecb07f77ecf9b8d59acb623ab7be25a0caed539e2e6472103703e2ed676936f10b3ce9149fa2d4a32060fb86fa9a70a4efe3f21d7ab90611921031e9b7c6022400a6bb0424bbcde14cff6c016b91ee3803926f3440abf5c146d05210334667f975f55a8455d515a2ef1c94fdfa3315f12319a14515d2a13d82831f62f57ae").unwrap();
         assert_eq!(script.instructions().collect::<Result<ScriptBuf, _>>().unwrap(), script);
     }
 
     #[test]
     fn script_p2sh_p2p2k_template() {
         // random outputs I picked out of the mempool
-        assert!(hex_script!("76a91402306a7c23f3e8010de41e9e591348bb83f11daa88ac").is_p2pkh());
-        assert!(!hex_script!("76a91402306a7c23f3e8010de41e9e591348bb83f11daa88ac").is_p2sh());
-        assert!(!hex_script!("76a91402306a7c23f3e8010de41e9e591348bb83f11daa88ad").is_p2pkh());
-        assert!(!hex_script!("").is_p2pkh());
-        assert!(hex_script!("a914acc91e6fef5c7f24e5c8b3f11a664aa8f1352ffd87").is_p2sh());
-        assert!(!hex_script!("a914acc91e6fef5c7f24e5c8b3f11a664aa8f1352ffd87").is_p2pkh());
-        assert!(!hex_script!("a314acc91e6fef5c7f24e5c8b3f11a664aa8f1352ffd87").is_p2sh());
+        assert!(ScriptBuf::from_hex("76a91402306a7c23f3e8010de41e9e591348bb83f11daa88ac").unwrap().is_p2pkh());
+        assert!(!ScriptBuf::from_hex("76a91402306a7c23f3e8010de41e9e591348bb83f11daa88ac").unwrap().is_p2sh());
+        assert!(!ScriptBuf::from_hex("76a91402306a7c23f3e8010de41e9e591348bb83f11daa88ad").unwrap().is_p2pkh());
+        assert!(!ScriptBuf::from_hex("").unwrap().is_p2pkh());
+        assert!(ScriptBuf::from_hex("a914acc91e6fef5c7f24e5c8b3f11a664aa8f1352ffd87").unwrap().is_p2sh());
+        assert!(!ScriptBuf::from_hex("a914acc91e6fef5c7f24e5c8b3f11a664aa8f1352ffd87").unwrap().is_p2pkh());
+        assert!(!ScriptBuf::from_hex("a314acc91e6fef5c7f24e5c8b3f11a664aa8f1352ffd87").unwrap().is_p2sh());
     }
 
     #[test]
     fn script_p2pk() {
-        assert!(hex_script!("21021aeaf2f8638a129a3156fbe7e5ef635226b0bafd495ff03afe2c843d7e3a4b51ac").is_p2pk());
-        assert!(hex_script!("410496b538e853519c726a2c91e61ec11600ae1390813a627c66fb8be7947be63c52da7589379515d4e0a604f8141781e62294721166bf621e73a82cbf2342c858eeac").is_p2pk());
+        assert!(ScriptBuf::from_hex("21021aeaf2f8638a129a3156fbe7e5ef635226b0bafd495ff03afe2c843d7e3a4b51ac").unwrap().is_p2pk());
+        assert!(ScriptBuf::from_hex("410496b538e853519c726a2c91e61ec11600ae1390813a627c66fb8be7947be63c52da7589379515d4e0a604f8141781e62294721166bf621e73a82cbf2342c858eeac").unwrap().is_p2pk());
     }
 
     #[test]
     fn p2sh_p2wsh_conversion() {
         // Test vectors taken from Core tests/data/script_tests.json
         // bare p2wsh
-        let redeem_script = hex_script!("410479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8ac");
-        let expected_witout = hex_script!("0020b95237b48faaa69eb078e1170be3b5cbb3fddf16d0a991e14ad274f7b33a4f64");
+        let redeem_script = ScriptBuf::from_hex("410479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8ac").unwrap();
+        let expected_witout = ScriptBuf::from_hex("0020b95237b48faaa69eb078e1170be3b5cbb3fddf16d0a991e14ad274f7b33a4f64").unwrap();
         assert!(redeem_script.to_v0_p2wsh().is_v0_p2wsh());
         assert_eq!(redeem_script.to_v0_p2wsh(), expected_witout);
 
         // p2sh
-        let redeem_script = hex_script!("0479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8");
-        let expected_p2shout = hex_script!("a91491b24bf9f5288532960ac687abb035127b1d28a587");
+        let redeem_script = ScriptBuf::from_hex("0479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8").unwrap();
+        let expected_p2shout = ScriptBuf::from_hex("a91491b24bf9f5288532960ac687abb035127b1d28a587").unwrap();
         assert!(redeem_script.to_p2sh().is_p2sh());
         assert_eq!(redeem_script.to_p2sh(), expected_p2shout);
 
         // p2sh-p2wsh
-        let redeem_script = hex_script!("410479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8ac");
-        let expected_witout = hex_script!("0020b95237b48faaa69eb078e1170be3b5cbb3fddf16d0a991e14ad274f7b33a4f64");
-        let expected_out = hex_script!("a914f386c2ba255cc56d20cfa6ea8b062f8b5994551887");
+        let redeem_script = ScriptBuf::from_hex("410479be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8ac").unwrap();
+        let expected_witout = ScriptBuf::from_hex("0020b95237b48faaa69eb078e1170be3b5cbb3fddf16d0a991e14ad274f7b33a4f64").unwrap();
+        let expected_out = ScriptBuf::from_hex("a914f386c2ba255cc56d20cfa6ea8b062f8b5994551887").unwrap();
         assert!(redeem_script.to_p2sh().is_p2sh());
         assert!(redeem_script.to_p2sh().to_v0_p2wsh().is_v0_p2wsh());
         assert_eq!(redeem_script.to_v0_p2wsh(), expected_witout);
@@ -2528,12 +2526,12 @@ mod test {
 
     #[test]
     fn test_iterator() {
-        let zero = hex_script!("00");
-        let zeropush = hex_script!("0100");
+        let zero = ScriptBuf::from_hex("00").unwrap();
+        let zeropush = ScriptBuf::from_hex("0100").unwrap();
 
-        let nonminimal = hex_script!("4c0169b2");      // PUSHDATA1 for no reason
-        let minimal = hex_script!("0169b2");           // minimal
-        let nonminimal_alt = hex_script!("026900b2");  // non-minimal number but minimal push (should be OK)
+        let nonminimal = ScriptBuf::from_hex("4c0169b2").unwrap();      // PUSHDATA1 for no reason
+        let minimal = ScriptBuf::from_hex("0169b2").unwrap();           // minimal
+        let nonminimal_alt = ScriptBuf::from_hex("026900b2").unwrap();  // non-minimal number but minimal push (should be OK)
 
         let v_zero: Result<Vec<_>, Error> = zero.instruction_indices_minimal().collect();
         let v_zeropush: Result<Vec<_>, Error> = zeropush.instruction_indices_minimal().collect();

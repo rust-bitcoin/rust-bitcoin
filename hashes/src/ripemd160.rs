@@ -25,7 +25,7 @@ use core::convert::TryInto;
 use core::ops::Index;
 use core::slice::SliceIndex;
 
-use crate::{Error, HashEngine as _, hex};
+use crate::{Error, HashEngine as _};
 
 crate::internal_macros::hash_type! {
     160,
@@ -408,7 +408,6 @@ mod tests {
     #[cfg(any(feature = "std", feature = "alloc"))]
     fn test() {
         use crate::{Hash, HashEngine, ripemd160};
-        use crate::hex::FromHex;
 
         #[derive(Clone)]
         struct Test {
@@ -470,7 +469,7 @@ mod tests {
         for test in tests {
             // Hash through high-level API, check hex encoding/decoding
             let hash = ripemd160::Hash::hash(test.input.as_bytes());
-            assert_eq!(hash, ripemd160::Hash::from_hex(test.output_str).expect("parse hex"));
+            assert_eq!(hash, test.output_str.parse::<ripemd160::Hash>().expect("parse hex"));
             assert_eq!(&hash[..], &test.output[..]);
             assert_eq!(&hash.to_string(), &test.output_str);
 

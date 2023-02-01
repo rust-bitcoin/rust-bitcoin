@@ -18,26 +18,12 @@
 //!
 
 #[cfg(feature = "std")]
-use std::{error, io};
+use std::io;
 
 #[cfg(not(feature = "std"))]
-use core2::{error, io};
+use core2::io;
 
-use crate::{Error, HashEngine, hex, sha1, sha256, sha512, ripemd160, siphash24, hmac};
-
-impl error::Error for Error {
-    #[cfg(feature = "std")]
-    fn cause(&self) -> Option<&error::Error> { None }
-    #[cfg(feature = "std")]
-    fn description(&self) -> &str { "`std::error::description` is deprecated" }
-}
-
-impl error::Error for hex::Error {
-    #[cfg(feature = "std")]
-    fn cause(&self) -> Option<&error::Error> { None }
-    #[cfg(feature = "std")]
-    fn description(&self) -> &str { "`std::error::description` is deprecated" }
-}
+use crate::{HashEngine, sha1, sha256, sha512, ripemd160, siphash24, hmac};
 
 impl io::Write for sha1::HashEngine {
     fn flush(&mut self) -> io::Result<()> { Ok(()) }

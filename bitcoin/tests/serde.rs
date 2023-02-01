@@ -226,13 +226,10 @@ fn serde_regression_psbt() {
         lock_time: absolute::LockTime::ZERO,
         input: vec![TxIn {
             previous_output: OutPoint {
-                txid: Txid::from_hex(
-                    "e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389",
-                )
-                .unwrap(),
+                txid: "e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389".parse::<Txid>().unwrap(),
                 vout: 1,
             },
-            script_sig: ScriptBuf::from_str("160014be18d152a9b012039daf3da7de4f53349eecb985").unwrap(),
+            script_sig: ScriptBuf::from_hex("160014be18d152a9b012039daf3da7de4f53349eecb985").unwrap(),
             sequence: Sequence::from_consensus(4294967295),
             witness: Witness::from_slice(&[Vec::from_hex(
                 "03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105",
@@ -241,7 +238,7 @@ fn serde_regression_psbt() {
         }],
         output: vec![TxOut {
             value: 190303501938,
-            script_pubkey: ScriptBuf::from_str("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587")
+            script_pubkey: ScriptBuf::from_hex("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587")
                 .unwrap(),
         }],
     };
@@ -286,7 +283,7 @@ fn serde_regression_psbt() {
             non_witness_utxo: Some(tx),
             witness_utxo: Some(TxOut {
                 value: 190303501938,
-                script_pubkey: ScriptBuf::from_str("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587").unwrap(),
+                script_pubkey: ScriptBuf::from_hex("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587").unwrap(),
             }),
             sighash_type: Some(PsbtSighashType::from(EcdsaSighashType::from_str("SIGHASH_SINGLE|SIGHASH_ANYONECANPAY").unwrap())),
             redeem_script: Some(vec![0x51].into()),

@@ -53,7 +53,7 @@ pub(crate) use arr_newtype_fmt_impl;
 /// Arguments:
 ///
 /// * `$bits` - number of bits this hash type has
-/// * `$reversed` - `bool`  - `true` if the hash type should be displayed backwards, `false`
+/// * `$reverse` - `bool`  - `true` if the hash type should be displayed backwards, `false`
 ///    otherwise.
 /// * `$gen: $gent` - generic type(s) and trait bound(s)
 ///
@@ -67,7 +67,7 @@ pub(crate) use arr_newtype_fmt_impl;
 /// `internal_new` is required so that types with more than one field are constructible.
 /// `internal_engine` is required to initialize the engine for given hash type.
 macro_rules! hash_trait_impls {
-    ($bits:expr, $reversed:expr $(, $gen:ident: $gent:ident)*) => {
+    ($bits:expr, $reverse:expr $(, $gen:ident: $gent:ident)*) => {
         impl<$($gen: $gent),*> Hash<$($gen),*> {
             /// Displays hex forwards, regardless of how this type would display it naturally.
             ///
@@ -87,9 +87,17 @@ macro_rules! hash_trait_impls {
         }
 
         impl<$($gen: $gent),*> str::FromStr for Hash<$($gen),*> {
-            type Err = hex::Error;
+            type Err = $crate::hex::Error;
             fn from_str(s: &str) -> Result<Self, Self::Err> {
-                hex::FromHex::from_hex(s)
+                use $crate::hex::{FromHex, HexIterator};
+                use $crate::Hash;
+
+                let inner: [u8; $bits / 8] = if $reverse {
+                    FromHex::from_byte_iter(HexIterator::new(s)?.rev())?
+                } else {
+                    FromHex::from_byte_iter(HexIterator::new(s)?)?
+                };
+                Ok(Self::from_inner(inner))
             }
         }
 
@@ -111,7 +119,7 @@ macro_rules! hash_trait_impls {
             type Inner = [u8; $bits / 8];
 
             const LEN: usize = $bits / 8;
-            const DISPLAY_BACKWARD: bool = $reversed;
+            const DISPLAY_BACKWARD: bool = $reverse;
 
             fn engine() -> Self::Engine {
                 Self::internal_engine()
@@ -159,14 +167,14 @@ pub(crate) use hash_trait_impls;
 /// Arguments:
 ///
 /// * `$bits` - the number of bits of the hash type
-/// * `$reversed` - `true` if the hash should be displayed backwards, `false` otherwise
+/// * `$reverse` - `true` if the hash should be displayed backwards, `false` otherwise
 /// * `$doc` - doc string to put on the type
 /// * `$schemars` - a literal that goes into `schema_with`.
 ///
 /// The `from_engine` free-standing function is still required with this macro. See the doc of
 /// [`hash_trait_impls`].
 macro_rules! hash_type {
-    ($bits:expr, $reversed:expr, $doc:literal, $schemars:literal) => {
+    ($bits:expr, $reverse:expr, $doc:literal, $schemars:literal) => {
         #[doc = $doc]
         #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
         #[cfg_attr(feature = "schemars", derive(crate::schemars::JsonSchema))]
@@ -186,7 +194,7 @@ macro_rules! hash_type {
             }
         }
 
-        crate::internal_macros::hash_trait_impls!($bits, $reversed);
+        crate::internal_macros::hash_trait_impls!($bits, $reverse);
     }
 }
 pub(crate) use hash_type;

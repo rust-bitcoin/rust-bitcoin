@@ -24,7 +24,6 @@ use std::io;
 use core2::io;
 
 use core::{fmt, str};
-use crate::Hash;
 
 /// Hex decoding error.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -47,6 +46,18 @@ impl fmt::Display for Error {
     }
 }
 
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use self::Error::*;
+
+        match self {
+            InvalidChar(_) | OddLengthString(_) | InvalidLength(_, _) => None,
+        }
+    }
+}
+
 /// Trait for objects that can be deserialized from hex strings.
 pub trait FromHex: Sized {
     /// Produces an object from a byte iterator.
@@ -57,20 +68,6 @@ pub trait FromHex: Sized {
     /// Produces an object from a hex string.
     fn from_hex(s: &str) -> Result<Self, Error> {
         Self::from_byte_iter(HexIterator::new(s)?)
-    }
-}
-
-impl<T: Hash> FromHex for T {
-    fn from_byte_iter<I>(iter: I) -> Result<Self, Error>
-    where
-        I: Iterator<Item = Result<u8, Error>> + ExactSizeIterator + DoubleEndedIterator,
-    {
-        let inner = if Self::DISPLAY_BACKWARD {
-            T::Inner::from_byte_iter(iter.rev())?
-        } else {
-            T::Inner::from_byte_iter(iter)?
-        };
-        Ok(Hash::from_inner(inner))
     }
 }
 
@@ -204,13 +201,12 @@ impl_fromhex_array!(384);
 impl_fromhex_array!(512);
 
 #[cfg(test)]
+#[cfg(any(feature = "std", feature = "alloc"))]
 mod tests {
     use super::*;
-    #[cfg(any(feature = "std", feature = "alloc"))]
     use internals::hex::exts::DisplayHex;
 
     #[test]
-    #[cfg(any(feature = "std", feature = "alloc"))]
     fn hex_roundtrip() {
         let expected = "0123456789abcdef";
         let expected_up = "0123456789ABCDEF";
@@ -232,7 +228,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(any(feature = "std", feature = "alloc"))]
     fn hex_error() {
         let oddlen = "0123456789abcdef0";
         let badchar1 = "Z123456789abcdef";

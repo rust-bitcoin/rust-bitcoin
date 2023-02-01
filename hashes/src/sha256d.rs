@@ -19,7 +19,7 @@ use core::str;
 use core::ops::Index;
 use core::slice::SliceIndex;
 
-use crate::{Error, hex, sha256};
+use crate::{Error, sha256};
 
 crate::internal_macros::hash_type! {
     256,
@@ -43,13 +43,10 @@ fn from_engine(e: sha256::HashEngine) -> Hash {
 
 #[cfg(test)]
 mod tests {
-    use crate::sha256;
-
     #[test]
     #[cfg(any(feature = "std", feature = "alloc"))]
     fn test() {
-        use crate::{sha256d, Hash, HashEngine};
-        use crate::hex::FromHex;
+        use crate::{sha256, sha256d, Hash, HashEngine};
 
         #[derive(Clone)]
         struct Test {
@@ -75,7 +72,7 @@ mod tests {
         for test in tests {
             // Hash through high-level API, check hex encoding/decoding
             let hash = sha256d::Hash::hash(test.input.as_bytes());
-            assert_eq!(hash, sha256d::Hash::from_hex(test.output_str).expect("parse hex"));
+            assert_eq!(hash, test.output_str.parse::<sha256d::Hash>().expect("parse hex"));
             assert_eq!(&hash[..], &test.output[..]);
             assert_eq!(&hash.to_string(), &test.output_str);
 

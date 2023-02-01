@@ -25,7 +25,7 @@ use core::convert::TryInto;
 use core::ops::Index;
 use core::slice::SliceIndex;
 
-use crate::{Error, HashEngine as _, hex};
+use crate::{Error, HashEngine as _};
 
 crate::internal_macros::hash_trait_impls!(512, false);
 
@@ -311,7 +311,6 @@ mod tests {
     #[cfg(any(feature = "std", feature = "alloc"))]
     fn test() {
         use crate::{sha512, Hash, HashEngine};
-        use crate::hex::FromHex;
 
         #[derive(Clone)]
         struct Test {
@@ -369,7 +368,7 @@ mod tests {
         for test in tests {
             // Hash through high-level API, check hex encoding/decoding
             let hash = sha512::Hash::hash(test.input.as_bytes());
-            assert_eq!(hash, sha512::Hash::from_hex(test.output_str).expect("parse hex"));
+            assert_eq!(hash, test.output_str.parse::<sha512::Hash>().expect("parse hex"));
             assert_eq!(&hash[..], &test.output[..]);
             assert_eq!(&hash.to_string(), &test.output_str);
 
