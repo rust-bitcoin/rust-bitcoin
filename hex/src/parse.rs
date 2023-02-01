@@ -13,39 +13,6 @@ use core2::io;
 #[cfg(all(feature = "alloc", not(feature = "std")))]
 use crate::alloc::vec::Vec;
 
-/// Hex decoding error.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum Error {
-    /// Non-hexadecimal character.
-    InvalidChar(u8),
-    /// Purported hex string had odd length.
-    OddLengthString(usize),
-    /// Tried to parse fixed-length hash from a string with the wrong type (expected, got).
-    InvalidLength(usize, usize),
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            Error::InvalidChar(ch) => write!(f, "invalid hex character {}", ch),
-            Error::OddLengthString(ell) => write!(f, "odd hex string length {}", ell),
-            Error::InvalidLength(ell, ell2) =>
-                write!(f, "bad hex string length {} (expected {})", ell2, ell),
-        }
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for Error {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use self::Error::*;
-
-        match self {
-            InvalidChar(_) | OddLengthString(_) | InvalidLength(_, _) => None,
-        }
-    }
-}
-
 /// Trait for objects that can be deserialized from hex strings.
 pub trait FromHex: Sized {
     /// Produces an object from a byte iterator.
@@ -179,6 +146,40 @@ impl_fromhex_array!(128);
 impl_fromhex_array!(256);
 impl_fromhex_array!(384);
 impl_fromhex_array!(512);
+
+/// Hex decoding error.
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum Error {
+    /// Non-hexadecimal character.
+    InvalidChar(u8),
+    /// Purported hex string had odd length.
+    OddLengthString(usize),
+    /// Tried to parse fixed-length hash from a string with the wrong type (expected, got).
+    InvalidLength(usize, usize),
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Error::InvalidChar(ch) => write!(f, "invalid hex character {}", ch),
+            Error::OddLengthString(ell) => write!(f, "odd hex string length {}", ell),
+            Error::InvalidLength(ell, ell2) =>
+                write!(f, "bad hex string length {} (expected {})", ell2, ell),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use self::Error::*;
+
+        match self {
+            InvalidChar(_) | OddLengthString(_) | InvalidLength(_, _) => None,
+        }
+    }
+}
 
 #[cfg(test)]
 #[cfg(feature = "alloc")]
