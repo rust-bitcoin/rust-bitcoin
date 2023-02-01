@@ -59,7 +59,7 @@ use core::convert::TryFrom;
 use core::borrow::{Borrow, BorrowMut};
 use core::{fmt, default::Default};
 use core::ops::{Deref, DerefMut, Index, Range, RangeFull, RangeFrom, RangeTo, RangeInclusive, RangeToInclusive};
-#[cfg(feature = "rust_v_1_53")]
+#[cfg(rust_v_1_53)]
 use core::ops::Bound;
 
 #[cfg(feature = "serde")] use serde;
@@ -615,8 +615,8 @@ macro_rules! delegate_index {
 }
 
 delegate_index!(Range<usize>, RangeFrom<usize>, RangeTo<usize>, RangeFull, RangeInclusive<usize>, RangeToInclusive<usize>);
-#[cfg(feature = "rust_v_1_53")]
-#[cfg_attr(docsrs, doc(cfg(feature = "rust_v_1_53")))]
+#[cfg(rust_v_1_53)]
+#[cfg_attr(docsrs, doc(cfg(rust_v_1_53)))]
 delegate_index!((Bound<usize>, Bound<usize>));
 
 impl AsRef<Script> for Script {

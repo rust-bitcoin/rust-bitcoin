@@ -21,7 +21,6 @@ serde = ["actual-serde", "bitcoin_hashes/serde", "secp256k1/serde"]
 secp-lowmemory = ["secp256k1/lowmemory"]
 secp-recovery = ["secp256k1/recovery"]
 bitcoinconsensus-std = ["bitcoinconsensus/std", "std"]
-rust_v_1_53 = []
 
 # At least one of std, no-std must be enabled.
 #
