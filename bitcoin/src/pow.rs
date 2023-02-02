@@ -10,6 +10,7 @@
 use core::fmt::{self, LowerHex, UpperHex};
 use core::ops::{Add, Div, Mul, Not, Rem, Shl, Shr, Sub};
 
+use hex;
 #[cfg(all(test, mutate))]
 use mutagen::mutate;
 
@@ -774,13 +775,13 @@ macro_rules! impl_hex {
     ($hex:ident, $case:expr) => {
         impl $hex for U256 {
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                internals::hex::display::fmt_hex_exact!(f, 32, &self.to_be_bytes(), $case)
+                hex::fmt_hex_exact!(f, 32, &self.to_be_bytes(), $case)
             }
         }
     };
 }
-impl_hex!(LowerHex, internals::hex::Case::Lower);
-impl_hex!(UpperHex, internals::hex::Case::Upper);
+impl_hex!(LowerHex, hex::Case::Lower);
+impl_hex!(UpperHex, hex::Case::Upper);
 
 #[cfg(feature = "serde")]
 impl crate::serde::Serialize for U256 {
@@ -809,7 +810,7 @@ impl<'de> crate::serde::Deserialize<'de> for U256 {
     fn deserialize<D: crate::serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
         use core::convert::TryInto;
 
-        use hashes::hex::FromHex;
+        use hex::FromHex;
 
         use crate::serde::de;
 

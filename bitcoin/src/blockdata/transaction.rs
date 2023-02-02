@@ -97,7 +97,7 @@ impl fmt::Display for OutPoint {
 #[non_exhaustive]
 pub enum ParseOutPointError {
     /// Error in TXID part.
-    Txid(hashes::hex::Error),
+    Txid(hex::Error),
     /// Error in vout part.
     Vout(crate::error::ParseIntError),
     /// Error in general format.
@@ -1427,7 +1427,7 @@ impl InputWeightPrediction {
 mod tests {
     use core::str::FromStr;
 
-    use hashes::hex::FromHex;
+    use hex::FromHex;
 
     use super::*;
     use crate::blockdata::constants::WITNESS_SCALE_FACTOR;

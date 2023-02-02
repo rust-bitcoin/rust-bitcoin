@@ -12,7 +12,7 @@ impl<'a> serde::Serialize for SerializeBytesAsHex<'a> {
     where
         S: serde::Serializer,
     {
-        use internals::hex::display::DisplayHex;
+        use hex::DisplayHex;
 
         serializer.collect_str(&format_args!("{:x}", self.0.as_hex()))
     }
@@ -24,7 +24,7 @@ pub mod btreemap_byte_values {
 
     // NOTE: This module can be exactly copied to use with HashMap.
 
-    use hashes::hex::FromHex;
+    use hex::FromHex;
     use serde;
 
     use crate::prelude::*;
@@ -248,7 +248,7 @@ pub mod hex_bytes {
     //! Module for serialization of byte arrays as hex strings.
     #![allow(missing_docs)]
 
-    use hashes::hex::FromHex;
+    use hex::FromHex;
     use serde;
 
     pub fn serialize<T, S>(bytes: &T, s: S) -> Result<S::Ok, S::Error>

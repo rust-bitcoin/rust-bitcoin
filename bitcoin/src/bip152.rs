@@ -371,7 +371,7 @@ impl BlockTransactions {
 
 #[cfg(test)]
 mod test {
-    use hashes::hex::FromHex;
+    use hex::FromHex;
 
     use super::*;
     use crate::blockdata::locktime::absolute;

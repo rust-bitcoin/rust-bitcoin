@@ -36,7 +36,7 @@ pub mod hex {
     use core::fmt;
     use core::marker::PhantomData;
 
-    use internals::hex::BufEncoder;
+    use hex::buf_encoder::BufEncoder;
 
     /// Marker for upper/lower case type-level flags ("type-level enum").
     ///
@@ -52,15 +52,15 @@ pub mod hex {
     mod sealed {
         pub trait Case {
             /// Internal detail, don't depend on it!!!
-            const INTERNAL_CASE: internals::hex::Case;
+            const INTERNAL_CASE: hex::Case;
         }
 
         impl Case for super::Lower {
-            const INTERNAL_CASE: internals::hex::Case = internals::hex::Case::Lower;
+            const INTERNAL_CASE: hex::Case = hex::Case::Lower;
         }
 
         impl Case for super::Upper {
-            const INTERNAL_CASE: internals::hex::Case = internals::hex::Case::Upper;
+            const INTERNAL_CASE: hex::Case = hex::Case::Upper;
         }
     }
 
@@ -100,18 +100,18 @@ pub mod hex {
 
     /// Error returned when a hex string decoder can't be created.
     #[derive(Debug)]
-    pub struct DecodeInitError(hashes::hex::Error);
+    pub struct DecodeInitError(crate::hex::Error);
 
     /// Error returned when a hex string contains invalid characters.
     #[derive(Debug)]
-    pub struct DecodeError(hashes::hex::Error);
+    pub struct DecodeError(crate::hex::Error);
 
     /// Hex decoder state.
-    pub struct Decoder<'a>(hashes::hex::HexIterator<'a>);
+    pub struct Decoder<'a>(crate::hex::HexIterator<'a>);
 
     impl<'a> Decoder<'a> {
         fn new(s: &'a str) -> Result<Self, DecodeInitError> {
-            match hashes::hex::HexIterator::new(s) {
+            match crate::hex::HexIterator::new(s) {
                 Ok(iter) => Ok(Decoder(iter)),
                 Err(error) => Err(DecodeInitError(error)),
             }
@@ -136,7 +136,7 @@ pub mod hex {
 
     impl super::IntoDeError for DecodeInitError {
         fn into_de_error<E: serde::de::Error>(self) -> E {
-            use hashes::hex::Error;
+            use hex::Error;
 
             match self.0 {
                 Error::OddLengthString(len) =>
@@ -148,7 +148,7 @@ pub mod hex {
 
     impl super::IntoDeError for DecodeError {
         fn into_de_error<E: serde::de::Error>(self) -> E {
-            use hashes::hex::Error;
+            use hex::Error;
             use serde::de::Unexpected;
 
             const EXPECTED_CHAR: &str = "an ASCII-encoded hex digit";

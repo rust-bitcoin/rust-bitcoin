@@ -104,6 +104,8 @@ extern crate serde_test;
 #[cfg(bench)]
 extern crate test;
 
+pub extern crate hex;
+
 #[doc(hidden)]
 pub mod _export {
     /// A re-export of core::*
@@ -123,7 +125,6 @@ pub mod serde_macros;
 pub mod cmp;
 pub mod error;
 pub mod hash160;
-pub mod hex;
 pub mod hmac;
 #[cfg(any(feature = "std", feature = "core2"))]
 mod impls;

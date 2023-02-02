@@ -399,8 +399,8 @@ impl<'de> serde::Deserialize<'de> for Witness {
                 self,
                 mut a: A,
             ) -> Result<Self::Value, A::Error> {
-                use hashes::hex::Error::*;
-                use hashes::hex::FromHex;
+                use hex::Error::*;
+                use hex::FromHex;
                 use serde::de::{self, Unexpected};
 
                 let mut ret = match a.size_hint() {

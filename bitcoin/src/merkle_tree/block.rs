@@ -14,7 +14,7 @@
 //!
 //! ```rust
 //! use bitcoin::hash_types::Txid;
-//! use bitcoin::hashes::hex::FromHex;
+//! use bitcoin::hex::FromHex;
 //! use bitcoin::{Block, MerkleBlock};
 //!
 //! // Get the proof from a bitcoind by running in the terminal:
@@ -224,7 +224,7 @@ impl PartialMerkleTree {
     ///
     /// ```rust
     /// use bitcoin::hash_types::Txid;
-    /// use bitcoin::hashes::hex::FromHex;
+    /// use bitcoin::hex::FromHex;
     /// use bitcoin::merkle_tree::{MerkleBlock, PartialMerkleTree};
     ///
     /// // Block 80000

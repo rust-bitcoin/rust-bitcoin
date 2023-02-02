@@ -1118,8 +1118,8 @@ fn is_invalid_use_of_sighash_single(sighash: u32, input_index: usize, output_len
 mod tests {
     use std::str::FromStr;
 
-    use hashes::hex::FromHex;
     use hashes::HashEngine;
+    use hex::FromHex;
 
     use super::*;
     use crate::address::Address;

@@ -10,8 +10,8 @@ use core::fmt::{self, Write};
 use core::ops;
 use core::str::FromStr;
 
-use hashes::hex::FromHex;
 use hashes::{hash160, hex, Hash};
+use hex::FromHex;
 use internals::write_err;
 pub use secp256k1::{self, constants, KeyPair, Parity, Secp256k1, Verification, XOnlyPublicKey};
 
@@ -711,7 +711,7 @@ impl From<TweakedKeyPair> for TweakedPublicKey {
 mod tests {
     use std::str::FromStr;
 
-    use hashes::hex::FromHex;
+    use hex::FromHex;
     use secp256k1::Secp256k1;
 
     use super::*;

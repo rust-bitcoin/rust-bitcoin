@@ -62,6 +62,7 @@ pub extern crate bech32;
 #[cfg(feature = "bitcoinconsensus")]
 pub extern crate bitcoinconsensus;
 pub extern crate hashes;
+pub extern crate hex;
 pub extern crate secp256k1;
 
 #[cfg(feature = "serde")]
@@ -175,7 +176,7 @@ mod prelude {
     #[cfg(not(feature = "std"))]
     pub use crate::io_extras::sink;
 
-    pub use internals::hex::display::DisplayHex;
+    pub use hex::DisplayHex;
 }
 
 #[cfg(bench)]

@@ -14,8 +14,8 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = ["std"]
-std = ["alloc", "internals/std"]
-alloc = ["internals/alloc"]
+std = ["alloc", "internals/std", "hex/std"]
+alloc = ["internals/alloc", "hex/alloc"]
 serde-std = ["serde/std"]
 
 [package.metadata.docs.rs]
@@ -24,6 +24,7 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
 internals = { path = "../internals", package = "bitcoin-private", version = "0.1.0" }
+hex = { path = "../hex", package = "bitcoin-hex", version = "0.0.1", default-features = false }
 
 core2 = { version = "0.3.0", default_features = false, optional = true }
 schemars = { version = "0.8.3", optional = true }

@@ -34,8 +34,8 @@ pub mod buf_encoder;
 pub mod display;
 pub mod parse;
 
-pub use display::DisplayHex;
-pub use parse::{Error, FromHex};
+pub use display::{DisplayArray, DisplayHex};
+pub use parse::{Error, FromHex, HexIterator};
 
 /// Reexports of extension traits.
 pub mod exts {

@@ -8,8 +8,7 @@
 use core::str::FromStr;
 use core::{fmt, iter};
 
-use hashes::hex::{self, FromHex};
-use internals::hex::display::DisplayHex;
+use hex::FromHex;
 use internals::write_err;
 use secp256k1;
 
