@@ -3,14 +3,14 @@ name = "bitcoin"
 version = "0.29.0"
 authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
 license = "CC0-1.0"
-homepage = "https://github.com/rust-bitcoin/rust-bitcoin/"
 repository = "https://github.com/rust-bitcoin/rust-bitcoin/"
 documentation = "https://docs.rs/bitcoin/"
-description = "General purpose library for using and interoperating with Bitcoin and other cryptocurrencies."
+description = "General purpose library for using and interoperating with Bitcoin."
+categories = ["cryptography::cryptocurrencies"]
 keywords = [ "crypto", "bitcoin" ]
 readme = "README.md"
-exclude = ["tests", "contrib"]
 edition = "2018"
+exclude = ["tests", "contrib"]
 
 # Please don't forget to add relevant features to docs.rs below
 [features]
