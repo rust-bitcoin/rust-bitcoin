@@ -74,7 +74,7 @@ pub enum Error {
     /// global extended public key has inconsistent key sources
     CombineInconsistentKeySources(Box<ExtendedPubKey>),
     /// Serialization error in bitcoin consensus-encoded structures
-    ConsensusEncoding,
+    ConsensusEncoding(encode::Error),
     /// Negative fee
     NegativeFee,
     /// Integer overflow in fee calculation
@@ -129,7 +129,7 @@ impl fmt::Display for Error {
                 write!(f, "Preimage {:?} does not match {:?} hash {:?}", preimage, hash_type, hash )
             },
             Error::CombineInconsistentKeySources(ref s) => { write!(f, "combine conflict: {}", s) },
-            Error::ConsensusEncoding => f.write_str("bitcoin consensus or BIP-174 encoding error"),
+            Error::ConsensusEncoding(ref e) => write_err!(f, "bitcoin consensus encoding error"; e),
             Error::NegativeFee => f.write_str("PSBT has a negative fee which is not allowed"),
             Error::FeeOverflow => f.write_str("integer overflow in fee calculation"),
             Error::InvalidPublicKey(ref e) => write_err!(f, "invalid public key"; e),
@@ -156,6 +156,7 @@ impl std::error::Error for Error {
 
         match self {
             HashParse(e) => Some(e),
+            ConsensusEncoding(e) => Some(e),
             Io(e) => Some(e),
             | InvalidMagic
             | MissingUtxo
@@ -172,7 +173,6 @@ impl std::error::Error for Error {
             | NonStandardSighashType(_)
             | InvalidPreimageHashPair{ .. }
             | CombineInconsistentKeySources(_)
-            | ConsensusEncoding
             | NegativeFee
             | FeeOverflow
             | InvalidPublicKey(_)
@@ -198,8 +198,8 @@ impl From<hashes::Error> for Error {
 }
 
 impl From<encode::Error> for Error {
-    fn from(_: encode::Error) -> Self {
-        Error::ConsensusEncoding
+    fn from(e: encode::Error) -> Self {
+        Error::ConsensusEncoding(e)
     }
 }
 
