@@ -19,6 +19,10 @@ alloc = ["internals/alloc"]
 schemars = ["actual-schemars", "dyn-clone"]
 serde-std = ["serde/std"]
 
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
 [dependencies]
 internals = { path = "../internals", package = "bitcoin-internals" }
 
