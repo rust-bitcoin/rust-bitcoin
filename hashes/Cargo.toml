@@ -10,6 +10,7 @@ documentation = "https://docs.rs/bitcoin_hashes/"
 keywords = [ "crypto", "bitcoin", "hash", "digest" ]
 readme = "README.md"
 edition = "2018"
+exclude = ["tests", "contrib"]
 
 [features]
 default = ["std"]
