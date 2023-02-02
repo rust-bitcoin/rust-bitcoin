@@ -225,7 +225,7 @@ impl Serialize for KeySource {
 impl Deserialize for KeySource {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
         if bytes.len() < 4 {
-            return Err(encode::Error::from(io::Error::from(io::ErrorKind::UnexpectedEof)).into())
+            return Err(io::Error::from(io::ErrorKind::UnexpectedEof).into())
         }
 
         let fprint: Fingerprint = bytes[0..4].try_into().expect("4 is the fingerprint length");
@@ -319,7 +319,7 @@ impl Serialize for (XOnlyPublicKey, TapLeafHash) {
 impl Deserialize for (XOnlyPublicKey, TapLeafHash) {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
         if bytes.len() < 32 {
-            return Err(encode::Error::from(io::Error::from(io::ErrorKind::UnexpectedEof)).into())
+            return Err(io::Error::from(io::ErrorKind::UnexpectedEof).into())
         }
         let a: XOnlyPublicKey = Deserialize::deserialize(&bytes[..32])?;
         let b: TapLeafHash = Deserialize::deserialize(&bytes[32..])?;
@@ -353,7 +353,7 @@ impl Serialize for (ScriptBuf, LeafVersion) {
 impl Deserialize for (ScriptBuf, LeafVersion) {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
         if bytes.is_empty() {
-            return Err(encode::Error::from(io::Error::from(io::ErrorKind::UnexpectedEof)).into())
+            return Err(io::Error::from(io::ErrorKind::UnexpectedEof).into())
         }
         // The last byte is LeafVersion.
         let script = ScriptBuf::deserialize(&bytes[..bytes.len() - 1])?;

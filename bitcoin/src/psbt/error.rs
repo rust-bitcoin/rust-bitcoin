@@ -11,6 +11,7 @@ use crate::consensus::encode;
 use crate::psbt::raw;
 
 use crate::hashes;
+use crate::io;
 use crate::bip32::ExtendedPubKey;
 
 /// Enum for marking psbt hash error.
@@ -22,7 +23,7 @@ pub enum PsbtHash {
     Hash256,
 }
 /// Ways that a Partially Signed Transaction might fail.
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[derive(Debug)]
 #[non_exhaustive]
 pub enum Error {
     /// Magic bytes for a PSBT must be the ASCII for "psbt" serialized in most
@@ -100,6 +101,8 @@ pub enum Error {
     Version(&'static str),
     /// PSBT data is not consumed entirely
     PartialDataConsumption,
+    /// I/O error.
+    Io(io::Error),
 }
 
 impl fmt::Display for Error {
@@ -140,6 +143,7 @@ impl fmt::Display for Error {
             Error::XPubKey(s) => write!(f, "xpub key error -  {}", s),
             Error::Version(s) => write!(f, "version error {}", s),
             Error::PartialDataConsumption => f.write_str("data not consumed entirely when explicitly deserializing"),
+            Error::Io(ref e) => write_err!(f, "I/O error"; e),
         }
     }
 }
@@ -152,6 +156,7 @@ impl std::error::Error for Error {
 
         match self {
             HashParse(e) => Some(e),
+            Io(e) => Some(e),
             | InvalidMagic
             | MissingUtxo
             | InvalidSeparator
@@ -180,7 +185,7 @@ impl std::error::Error for Error {
             | Taproot(_)
             | XPubKey(_)
             | Version(_)
-            | PartialDataConsumption=> None
+            | PartialDataConsumption=> None,
         }
     }
 }
@@ -195,5 +200,11 @@ impl From<hashes::Error> for Error {
 impl From<encode::Error> for Error {
     fn from(_: encode::Error) -> Self {
         Error::ConsensusEncoding
+    }
+}
+
+impl From<io::Error> for Error {
+    fn from(e: io::Error) -> Self {
+        Error::Io(e)
     }
 }
