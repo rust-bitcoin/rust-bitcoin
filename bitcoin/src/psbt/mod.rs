@@ -1732,15 +1732,24 @@ mod tests {
         // no previous output
         let mut t2 = t.clone();
         t2.inputs[0].non_witness_utxo = None;
-        assert_eq!(t2.fee(), Err(Error::MissingUtxo));
+        match t2.fee().unwrap_err() {
+            Error::MissingUtxo => {},
+            e => panic!("unexpected error: {:?}", e)
+        }
         //  negative fee
         let mut t3 = t.clone();
         t3.unsigned_tx.output[0].value = prev_output_val;
-        assert_eq!(t3.fee(), Err(Error::NegativeFee));
+        match t3.fee().unwrap_err() {
+            Error::NegativeFee => {},
+            e => panic!("unexpected error: {:?}", e)
+        }
         // overflow
         t.unsigned_tx.output[0].value = u64::max_value();
         t.unsigned_tx.output[1].value = u64::max_value();
-        assert_eq!(t.fee(), Err(Error::FeeOverflow));
+        match t.fee().unwrap_err() {
+            Error::FeeOverflow => {},
+            e => panic!("unexpected error: {:?}", e)
+        }
     }
 
     #[test]
