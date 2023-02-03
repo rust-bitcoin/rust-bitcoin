@@ -12,12 +12,13 @@ use core::borrow::Borrow;
 use core::ops::{Deref, DerefMut};
 use core::{fmt, str};
 
-use crate::{io, Script, ScriptBuf, Transaction, TxIn, TxOut, Sequence, Sighash};
+use crate::{io, Script, ScriptBuf, Transaction, TxIn, TxOut, Sequence};
 use crate::blockdata::transaction::EncodeSigningDataResult;
 use crate::blockdata::witness::Witness;
 use crate::consensus::{encode, Encodable};
 use crate::error::impl_std_error;
 use crate::hashes::{sha256, sha256d, Hash};
+use crate::hash_types::Sighash;
 use crate::prelude::*;
 use crate::taproot::{LeafVersion, TapLeafHash, TapSighashHash, TAPROOT_ANNEX_PREFIX};
 

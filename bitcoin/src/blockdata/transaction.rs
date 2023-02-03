@@ -568,7 +568,8 @@ impl<E> EncodeSigningDataResult<E> {
     ///
     /// ```rust
     /// # use bitcoin::consensus::deserialize;
-    /// # use bitcoin::{Transaction, Sighash};
+    /// # use bitcoin::Transaction;
+    /// # use bitcoin::hash_types::Sighash;
     /// # use bitcoin_hashes::{Hash, hex::FromHex};
     /// # let mut writer = Sighash::engine();
     /// # let input_index = 0;
