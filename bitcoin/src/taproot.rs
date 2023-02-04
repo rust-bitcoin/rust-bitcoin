@@ -39,7 +39,7 @@ const MIDSTATE_TAPTWEAK: [u8; 32] = [
 ];
 // d129a2f3701c655d6583b6c3b941972795f4e23294fd54f4a2ae8d8547ca590b
 
-/// The SHA-256 midstate value for the [`TapSighashHash`].
+/// The SHA-256 midstate value for the [`TapSighash`].
 const MIDSTATE_TAPSIGHASH: [u8; 32] = [
     245, 4, 164, 37, 215, 248, 120, 59, 19, 99, 134, 138, 227, 229, 86, 88, 110, 238, 148, 93, 188,
     120, 136, 221, 2, 166, 226, 195, 24, 115, 254, 159,
@@ -63,13 +63,13 @@ sha256t_hash_newtype!(TapTweakHash, TapTweakTag, MIDSTATE_TAPTWEAK, 64,
     This hash type is used while computing the tweaked public key", false
 );
 #[rustfmt::skip]
-sha256t_hash_newtype!(TapSighashHash, TapSighashTag, MIDSTATE_TAPSIGHASH, 64,
+sha256t_hash_newtype!(TapSighash, TapSighashTag, MIDSTATE_TAPSIGHASH, 64,
     doc="Taproot-tagged hash with tag \"TapSighash\".
 
 This hash type is used for computing taproot signature hash.", false
 );
 
-impl secp256k1::ThirtyTwoByteHash for TapSighashHash {
+impl secp256k1::ThirtyTwoByteHash for TapSighash {
     fn into_32(self) -> [u8; 32] { self.into_inner() }
 }
 
@@ -1147,7 +1147,7 @@ mod test {
         assert_eq!(empty_hash("TapLeaf"), TapLeafHash::hash(&[]).into_inner());
         assert_eq!(empty_hash("TapBranch"), TapNodeHash::hash(&[]).into_inner());
         assert_eq!(empty_hash("TapTweak"), TapTweakHash::hash(&[]).into_inner());
-        assert_eq!(empty_hash("TapSighash"), TapSighashHash::hash(&[]).into_inner());
+        assert_eq!(empty_hash("TapSighash"), TapSighash::hash(&[]).into_inner());
     }
 
     #[test]
@@ -1170,7 +1170,7 @@ mod test {
             "8aa4229474ab0100b2d6f0687f031d1fc9d8eef92a042ad97d279bff456b15e4"
         );
         assert_eq!(
-            TapSighashHash::from_engine(TapSighashTag::engine()).to_string(),
+            TapSighash::from_engine(TapSighashTag::engine()).to_string(),
             "dabc11914abcd8072900042a2681e52f8dba99ce82e224f97b5fdb7cd4b9c803"
         );
 
@@ -1192,7 +1192,7 @@ mod test {
             "cd8737b5e6047fc3f16f03e8b9959e3440e1bdf6dd02f7bb899c352ad490ea1e"
         );
         assert_eq!(
-            TapSighashHash::hash(&[0]).to_string(),
+            TapSighash::hash(&[0]).to_string(),
             "c2fd0de003889a09c4afcf676656a0d8a1fb706313ff7d509afb00c323c010cd"
         );
     }
