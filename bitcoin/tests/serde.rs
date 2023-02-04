@@ -187,7 +187,7 @@ fn serde_regression_ecdsa_sig() {
 #[test]
 fn serde_regression_control_block() {
     let s = include_str!("data/serde/control_block_hex");
-    let block = ControlBlock::from_slice(&Vec::<u8>::from_hex(s.trim()).unwrap()).unwrap();
+    let block = ControlBlock::decode(&Vec::<u8>::from_hex(s.trim()).unwrap()).unwrap();
     let got = serialize(&block).unwrap();
 
     let want = include_bytes!("data/serde/control_block_bincode") as &[_];

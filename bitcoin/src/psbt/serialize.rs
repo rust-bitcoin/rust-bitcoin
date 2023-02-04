@@ -335,7 +335,7 @@ impl Serialize for ControlBlock {
 
 impl Deserialize for ControlBlock {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
-        Self::from_slice(bytes)
+        Self::decode(bytes)
             .map_err(|_| Error::InvalidControlBlock)
     }
 }
