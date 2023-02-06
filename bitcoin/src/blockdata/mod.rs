@@ -14,3 +14,8 @@ pub mod script;
 pub mod transaction;
 pub mod block;
 pub mod witness;
+pub mod weight;
+pub mod fee_rate;
+
+pub use weight::Weight;
+pub use fee_rate::FeeRate;

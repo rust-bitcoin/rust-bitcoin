@@ -116,7 +116,7 @@ pub(crate) use impl_tryfrom_str_through_int_single;
 /// The `Error` type is `ParseIntError`
 macro_rules! impl_parse_str_through_int {
     ($to:ident $(, $fn:ident)?) => {
-        $crate::parse::impl_tryfrom_str_through_int_single!(&str, $to $(, $fn)?; String, $to $(, $fn)?; Box<str>, $to $(, $fn)?);
+        $crate::parse::impl_tryfrom_str_through_int_single!(&str, $to $(, $fn)?; alloc::string::String, $to $(, $fn)?; alloc::boxed::Box<str>, $to $(, $fn)?);
 
         impl core::str::FromStr for $to {
             type Err = $crate::error::ParseIntError;

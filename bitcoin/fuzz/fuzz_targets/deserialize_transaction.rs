@@ -8,7 +8,7 @@ fn do_test(data: &[u8]) {
             let ser = bitcoin::consensus::encode::serialize(&tx);
             assert_eq!(&ser[..], data);
             let len = ser.len();
-            let calculated_weight = tx.weight();
+            let calculated_weight = tx.weight().to_wu() as usize;
             for input in &mut tx.input {
                 input.witness = bitcoin::blockdata::witness::Witness::default();
             }
