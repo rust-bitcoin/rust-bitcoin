@@ -376,9 +376,9 @@ mod test {
     use crate::blockdata::locktime::absolute;
     use crate::consensus::encode::{deserialize, serialize};
     use crate::hashes::hex::FromHex;
+    use crate::hash_types::TxMerkleNode;
     use crate::{
-        CompactTarget, OutPoint, ScriptBuf, Sequence, Transaction, TxIn, TxMerkleNode, TxOut, Txid,
-        Witness,
+        CompactTarget, OutPoint, ScriptBuf, Sequence, Transaction, TxIn, TxOut, Txid, Witness,
     };
 
     fn dummy_tx(nonce: &[u8]) -> Transaction {
