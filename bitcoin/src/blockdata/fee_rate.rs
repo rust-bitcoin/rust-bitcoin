@@ -2,6 +2,8 @@
 
 use core::fmt;
 use core::ops::{Mul, Div};
+
+use crate::prelude::*;
 use crate::Amount;
 use super::Weight;
 
@@ -133,4 +135,4 @@ impl Div<Weight> for Amount {
     }
 }
 
-crate::parse::impl_parse_str_through_int!(FeeRate);
+crate::parse::impl_parse_str_from_int_infallible!(FeeRate, u64, from_sat_per_kwu);

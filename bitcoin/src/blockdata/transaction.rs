@@ -33,7 +33,7 @@ use crate::consensus::{encode, Decodable, Encodable};
 use crate::hash_types::{Sighash, Txid, Wtxid};
 use crate::VarInt;
 use crate::internal_macros::impl_consensus_encoding;
-use crate::parse::impl_parse_str_through_int;
+use crate::parse::impl_parse_str_from_int_infallible;
 use super::Weight;
 
 #[cfg(doc)]
@@ -499,7 +499,7 @@ impl fmt::UpperHex for Sequence {
     }
 }
 
-impl_parse_str_through_int!(Sequence);
+impl_parse_str_from_int_infallible!(Sequence, u32, from_consensus);
 
 /// Bitcoin transaction output.
 ///
