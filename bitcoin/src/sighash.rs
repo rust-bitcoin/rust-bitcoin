@@ -499,6 +499,16 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         SighashCache { tx, common_cache: None, taproot_cache: None, segwit_cache: None }
     }
 
+    /// Returns the reference to the cached transaction.
+    pub fn transaction(&self) -> &Transaction {
+        self.tx.borrow()
+    }
+
+    /// Destroys the cache and recovers the stored transaction.
+    pub fn into_transaction(self) -> R {
+        self.tx
+    }
+
     /// Encodes the BIP341 signing data for any flag type into a given object implementing a
     /// [`io::Write`] trait.
     pub fn taproot_encode_signing_data_to<Write: io::Write, T: Borrow<TxOut>>(
