@@ -50,7 +50,8 @@ const MIDSTATE_TAPSIGHASH: [u8; 32] = [
 #[rustfmt::skip]
 sha256t_hash_newtype!(TapLeafHash, TapLeafTag, MIDSTATE_TAPLEAF, 64,
     doc="Taproot-tagged hash with tag \"TapLeaf\".
-    This is used for computing tapscript script spend hash.", false
+
+This is used for computing tapscript script spend hash.", false
 );
 #[rustfmt::skip]
 sha256t_hash_newtype!(TapNodeHash, TapBranchTag, MIDSTATE_TAPBRANCH, 64,
@@ -64,7 +65,8 @@ sha256t_hash_newtype!(TapTweakHash, TapTweakTag, MIDSTATE_TAPTWEAK, 64,
 #[rustfmt::skip]
 sha256t_hash_newtype!(TapSighashHash, TapSighashTag, MIDSTATE_TAPSIGHASH, 64,
     doc="Taproot-tagged hash with tag \"TapSighash\".
-    This hash type is used for computing taproot signature hash.", false
+
+This hash type is used for computing taproot signature hash.", false
 );
 
 impl secp256k1::ThirtyTwoByteHash for TapSighashHash {
