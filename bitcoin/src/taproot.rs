@@ -18,6 +18,8 @@ use crate::hashes::{sha256t_hash_newtype, Hash, HashEngine};
 use crate::prelude::*;
 use crate::{io, Script, ScriptBuf};
 
+pub use crate::crypto::sighash::{TapSighash, TapSighashTag};
+
 /// The SHA-256 midstate value for the TapLeaf hash.
 const MIDSTATE_TAPLEAF: [u8; 32] = [
     156, 224, 228, 230, 124, 17, 108, 57, 56, 179, 202, 242, 195, 15, 80, 137, 211, 243, 147, 108,
@@ -39,13 +41,6 @@ const MIDSTATE_TAPTWEAK: [u8; 32] = [
 ];
 // d129a2f3701c655d6583b6c3b941972795f4e23294fd54f4a2ae8d8547ca590b
 
-/// The SHA-256 midstate value for the [`TapSighash`].
-const MIDSTATE_TAPSIGHASH: [u8; 32] = [
-    245, 4, 164, 37, 215, 248, 120, 59, 19, 99, 134, 138, 227, 229, 86, 88, 110, 238, 148, 93, 188,
-    120, 136, 221, 2, 166, 226, 195, 24, 115, 254, 159,
-];
-// f504a425d7f8783b1363868ae3e556586eee945dbc7888dd02a6e2c31873fe9f
-
 // Taproot test vectors from BIP-341 state the hashes without any reversing
 #[rustfmt::skip]
 sha256t_hash_newtype!(TapLeafHash, TapLeafTag, MIDSTATE_TAPLEAF, 64,
@@ -62,16 +57,6 @@ sha256t_hash_newtype!(TapTweakHash, TapTweakTag, MIDSTATE_TAPTWEAK, 64,
     doc="Taproot-tagged hash with tag \"TapTweak\".
     This hash type is used while computing the tweaked public key", false
 );
-#[rustfmt::skip]
-sha256t_hash_newtype!(TapSighash, TapSighashTag, MIDSTATE_TAPSIGHASH, 64,
-    doc="Taproot-tagged hash with tag \"TapSighash\".
-
-This hash type is used for computing taproot signature hash.", false
-);
-
-impl secp256k1::ThirtyTwoByteHash for TapSighash {
-    fn into_32(self) -> [u8; 32] { self.into_inner() }
-}
 
 impl TapTweakHash {
     /// Creates a new BIP341 [`TapTweakHash`] from key and tweak. Produces `H_taptweak(P||R)` where
@@ -1164,6 +1149,8 @@ mod test {
 
     #[test]
     fn test_midstates() {
+        use crate::crypto::sighash::MIDSTATE_TAPSIGHASH;
+
         // check midstate against hard-coded values
         assert_eq!(MIDSTATE_TAPLEAF, tag_engine("TapLeaf").midstate().into_inner());
         assert_eq!(MIDSTATE_TAPBRANCH, tag_engine("TapBranch").midstate().into_inner());

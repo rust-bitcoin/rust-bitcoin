@@ -30,7 +30,8 @@ use crate::blockdata::witness::Witness;
 use crate::blockdata::locktime::absolute::{self, Height, Time};
 use crate::blockdata::locktime::relative;
 use crate::consensus::{encode, Decodable, Encodable};
-use crate::hash_types::{Sighash, Txid, Wtxid};
+use crate::crypto::sighash::LegacySighash;
+use crate::hash_types::{Txid, Wtxid};
 use crate::VarInt;
 use crate::internal_macros::impl_consensus_encoding;
 use crate::parse::impl_parse_str_through_int;
@@ -589,10 +590,9 @@ impl<E> EncodeSigningDataResult<E> {
     /// ```rust
     /// # use bitcoin::consensus::deserialize;
     /// # use bitcoin::Transaction;
-    /// # use bitcoin::crypto::sighash::SighashCache;
+    /// # use bitcoin::crypto::sighash::{LegacySighash, SighashCache};
     /// # use bitcoin_hashes::{Hash, hex::FromHex};
-    /// # use bitcoin::hash_types::Sighash;
-    /// # let mut writer = Sighash::engine();
+    /// # let mut writer = LegacySighash::engine();
     /// # let input_index = 0;
     /// # let script_pubkey = bitcoin::ScriptBuf::new();
     /// # let sighash_u32 = 0u32;
@@ -837,7 +837,7 @@ impl Transaction {
         input_index: usize,
         script_pubkey: &Script,
         sighash_u32: u32
-    ) -> Sighash {
+    ) -> LegacySighash {
         assert!(input_index < self.input.len());  // Panic on OOB, enables expect below.
 
         let cache = crate::sighash::SighashCache::new(self);

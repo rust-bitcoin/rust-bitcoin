@@ -19,10 +19,9 @@ use crate::blockdata::transaction::EncodeSigningDataResult;
 use crate::blockdata::witness::Witness;
 use crate::consensus::{encode, Encodable};
 use crate::error::impl_std_error;
-use crate::hashes::{sha256, sha256d, Hash};
-use crate::hash_types::Sighash;
+use crate::hashes::{hash_newtype, sha256, sha256t_hash_newtype, sha256d, Hash};
 use crate::prelude::*;
-use crate::taproot::{LeafVersion, TapLeafHash, TapSighash, TAPROOT_ANNEX_PREFIX};
+use crate::taproot::{LeafVersion, TapLeafHash, TAPROOT_ANNEX_PREFIX};
 
 /// Used for signature hash for invalid use of SIGHASH_SINGLE.
 #[rustfmt::skip]
@@ -32,6 +31,39 @@ pub(crate) const UINT256_ONE: [u8; 32] = [
     0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0
 ];
+
+/// The SHA-256 midstate value for the [`TapSighash`].
+pub(crate) const MIDSTATE_TAPSIGHASH: [u8; 32] = [
+    245, 4, 164, 37, 215, 248, 120, 59, 19, 99, 134, 138, 227, 229, 86, 88, 110, 238, 148, 93, 188,
+    120, 136, 221, 2, 166, 226, 195, 24, 115, 254, 159,
+];
+// f504a425d7f8783b1363868ae3e556586eee945dbc7888dd02a6e2c31873fe9f
+
+macro_rules! impl_thirty_two_byte_hash {
+    ($ty:ident) => {
+        impl secp256k1::ThirtyTwoByteHash for $ty {
+            fn into_32(self) -> [u8; 32] { self.into_inner() }
+        }
+    }
+}
+
+#[rustfmt::skip]
+hash_newtype!(LegacySighash, sha256d::Hash, 32,
+    doc="Hash of a transaction according to the legacy signature algorithm", false);
+impl_thirty_two_byte_hash!(LegacySighash);
+
+#[rustfmt::skip]
+hash_newtype!(SegwitV0Sighash, sha256d::Hash, 32,
+    doc="Hash of a transaction according to the segwit version 0 signature algorithm", false);
+impl_thirty_two_byte_hash!(SegwitV0Sighash);
+
+#[rustfmt::skip]
+sha256t_hash_newtype!(TapSighash, TapSighashTag, MIDSTATE_TAPSIGHASH, 64,
+    doc="Taproot-tagged hash with tag \"TapSighash\".
+
+This hash type is used for computing taproot signature hash.", false
+);
+impl_thirty_two_byte_hash!(TapSighash);
 
 /// Efficiently calculates signature hash message for legacy, segwit and taproot inputs.
 #[derive(Debug)]
@@ -741,9 +773,9 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         if sighash != EcdsaSighashType::Single && sighash != EcdsaSighashType::None {
             self.segwit_cache().outputs.consensus_encode(&mut writer)?;
         } else if sighash == EcdsaSighashType::Single && input_index < self.tx.borrow().output.len() {
-            let mut single_enc = Sighash::engine();
+            let mut single_enc = LegacySighash::engine();
             self.tx.borrow().output[input_index].consensus_encode(&mut single_enc)?;
-            let hash = Sighash::from_engine(single_enc);
+            let hash = LegacySighash::from_engine(single_enc);
             writer.write_all(&hash[..])?;
         } else {
             writer.write_all(&zero_hash[..])?;
@@ -761,8 +793,8 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         script_code: &Script,
         value: u64,
         sighash_type: EcdsaSighashType,
-    ) -> Result<Sighash, Error> {
-        let mut enc = Sighash::engine();
+    ) -> Result<SegwitV0Sighash, Error> {
+        let mut enc = SegwitV0Sighash::engine();
         self.segwit_encode_signing_data_to(
             &mut enc,
             input_index,
@@ -770,7 +802,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             value,
             sighash_type,
         )?;
-        Ok(Sighash::from_engine(enc))
+        Ok(SegwitV0Sighash::from_engine(enc))
     }
 
     /// Encodes the legacy signing data from which a signature hash for a given input index with a
@@ -930,15 +962,15 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         input_index: usize,
         script_pubkey: &Script,
         sighash_type: u32,
-    ) -> Result<Sighash, Error> {
-        let mut enc = Sighash::engine();
+    ) -> Result<LegacySighash, Error> {
+        let mut enc = LegacySighash::engine();
         if self
             .legacy_encode_signing_data_to(&mut enc, input_index, script_pubkey, sighash_type)
             .is_sighash_single_bug()?
         {
-            Ok(Sighash::from_inner(UINT256_ONE))
+            Ok(LegacySighash::from_inner(UINT256_ONE))
         } else {
-            Ok(Sighash::from_engine(enc))
+            Ok(LegacySighash::from_engine(enc))
         }
     }
 
@@ -1068,12 +1100,12 @@ mod tests {
     use crate::blockdata::locktime::absolute;
     use crate::consensus::deserialize;
     use crate::crypto::key::PublicKey;
-    use crate::hash_types::Sighash;
+    use crate::crypto::sighash::{LegacySighash, TapSighash};
     use crate::hashes::hex::FromHex;
-    use crate::hashes::{Hash, HashEngine};
+    use crate::hashes::HashEngine;
     use crate::internal_macros::hex;
     use crate::network::constants::Network;
-    use crate::taproot::{TapLeafHash, TapSighash};
+    use crate::taproot::TapLeafHash;
 
     extern crate serde_json;
 
@@ -1092,7 +1124,7 @@ mod tests {
         let cache = SighashCache::new(&tx);
 
         let got = cache.legacy_signature_hash(1, &script, SIGHASH_SINGLE).expect("sighash");
-        let want = Sighash::from_slice(&UINT256_ONE).unwrap();
+        let want = LegacySighash::from_slice(&UINT256_ONE).unwrap();
 
         assert_eq!(got, want)
     }
@@ -1115,7 +1147,7 @@ mod tests {
             let script = ScriptBuf::from(Vec::from_hex(script).unwrap());
             let mut raw_expected = Vec::from_hex(expected_result).unwrap();
             raw_expected.reverse();
-            let want = Sighash::from_slice(&raw_expected[..]).unwrap();
+            let want = LegacySighash::from_slice(&raw_expected[..]).unwrap();
 
             let cache = SighashCache::new(&tx);
             let got = cache.legacy_signature_hash(input_index, &script, hash_type as u32).unwrap();
@@ -1635,7 +1667,7 @@ mod tests {
         let mut cache = SighashCache::new(&tx);
         assert_eq!(
             cache.segwit_signature_hash(1, &witness_script, value, EcdsaSighashType::All).unwrap(),
-            "c37af31116d1b27caf68aae9e3ac82f1477929014d5b917657d0eb49478cb670".parse::<Sighash>().unwrap(),
+            "c37af31116d1b27caf68aae9e3ac82f1477929014d5b917657d0eb49478cb670".parse::<SegwitV0Sighash>().unwrap(),
         );
 
         let cache = cache.segwit_cache();
@@ -1671,7 +1703,7 @@ mod tests {
         let mut cache = SighashCache::new(&tx);
         assert_eq!(
             cache.segwit_signature_hash(0, &witness_script, value, EcdsaSighashType::All).unwrap(),
-            "64f3b0f4dd2bb3aa1ce8566d220cc74dda9df97d8490cc81d89d735c92e59fb6".parse::<Sighash>().unwrap(),
+            "64f3b0f4dd2bb3aa1ce8566d220cc74dda9df97d8490cc81d89d735c92e59fb6".parse::<SegwitV0Sighash>().unwrap(),
         );
 
         let cache = cache.segwit_cache();
@@ -1712,7 +1744,7 @@ mod tests {
         let mut cache = SighashCache::new(&tx);
         assert_eq!(
             cache.segwit_signature_hash(0, &witness_script, value, EcdsaSighashType::All).unwrap(),
-            "185c0be5263dce5b4bb50a047973c1b6272bfbd0103a89444597dc40b248ee7c".parse::<Sighash>().unwrap(),
+            "185c0be5263dce5b4bb50a047973c1b6272bfbd0103a89444597dc40b248ee7c".parse::<SegwitV0Sighash>().unwrap(),
         );
 
         let cache = cache.segwit_cache();

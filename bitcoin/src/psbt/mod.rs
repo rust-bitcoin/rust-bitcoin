@@ -326,34 +326,37 @@ impl PartiallySignedTransaction {
         let hash_ty = input.ecdsa_hash_ty()
             .map_err(|_| SignError::InvalidSighashType)?; // Only support standard sighash types.
 
-        let sighash = match self.output_type(input_index)? {
+        match self.output_type(input_index)? {
             Bare => {
-                cache.legacy_signature_hash(input_index, spk, hash_ty.to_u32())?
+                let sighash = cache.legacy_signature_hash(input_index, spk, hash_ty.to_u32())?;
+                Ok((Message::from(sighash), hash_ty))
             },
             Sh => {
                 let script_code = input.redeem_script.as_ref().ok_or(SignError::MissingRedeemScript)?;
-                cache.legacy_signature_hash(input_index, script_code, hash_ty.to_u32())?
+                let sighash = cache.legacy_signature_hash(input_index, script_code, hash_ty.to_u32())?;
+                Ok((Message::from(sighash), hash_ty))
             },
             Wpkh => {
                 let script_code = ScriptBuf::p2wpkh_script_code(spk).ok_or(SignError::NotWpkh)?;
-                cache.segwit_signature_hash(input_index, &script_code, utxo.value, hash_ty)?
-            }
+                let sighash = cache.segwit_signature_hash(input_index, &script_code, utxo.value, hash_ty)?;
+                Ok((Message::from(sighash), hash_ty))
+            },
             ShWpkh => {
                 let script_code = ScriptBuf::p2wpkh_script_code(input.redeem_script.as_ref().expect("checked above"))
                     .ok_or(SignError::NotWpkh)?;
-                cache.segwit_signature_hash(input_index, &script_code, utxo.value, hash_ty)?
+                let sighash = cache.segwit_signature_hash(input_index, &script_code, utxo.value, hash_ty)?;
+                Ok((Message::from(sighash), hash_ty))
             },
             Wsh | ShWsh => {
                 let script_code = input.witness_script.as_ref().ok_or(SignError::MissingWitnessScript)?;
-                cache.segwit_signature_hash(input_index, script_code, utxo.value, hash_ty)?
+                let sighash = cache.segwit_signature_hash(input_index, script_code, utxo.value, hash_ty)?;
+                Ok((Message::from(sighash), hash_ty))
             },
             Tr => {
                 // This PSBT signing API is WIP, taproot to come shortly.
-                return Err(SignError::Unsupported);
+                Err(SignError::Unsupported)
             }
-        };
-
-        Ok((Message::from(sighash), hash_ty))
+        }
     }
 
     /// Returns the spending utxo for this PSBT's input at `input_index`.

@@ -66,13 +66,6 @@ See [`hashes::Hash::DISPLAY_BACKWARD`] for more details.
 ");
     hash_newtype!(Wtxid, sha256d::Hash, 32, doc="A bitcoin witness transaction ID.");
     hash_newtype!(BlockHash, sha256d::Hash, 32, doc="A bitcoin block hash.");
-    hash_newtype!(Sighash, sha256d::Hash, 32, doc="Hash of the transaction according to the signature algorithm", false);
-    impl secp256k1::ThirtyTwoByteHash for Sighash {
-        fn into_32(self) -> [u8; 32] {
-            use hashes::Hash;
-            *self.as_inner()
-        }
-    }
 
     hash_newtype!(PubkeyHash, hash160::Hash, 20, doc="A hash of a public key.");
     hash_newtype!(ScriptHash, hash160::Hash, 20, doc="A hash of Bitcoin Script bytecode.");
