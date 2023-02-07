@@ -35,7 +35,7 @@ use bitcoin::hashes::hex::FromHex;
 use bitcoin::hashes::{hash160, ripemd160, sha256, sha256d, Hash};
 use bitcoin::psbt::raw::{self, Key, Pair, ProprietaryKey};
 use bitcoin::psbt::{Input, Output, Psbt, PsbtSighashType};
-use bitcoin::sighash::{EcdsaSighashType, SchnorrSighashType};
+use bitcoin::sighash::{EcdsaSighashType, TapSighashType};
 use bitcoin::taproot::{ControlBlock, LeafVersion, TaprootBuilder, TaprootSpendInfo};
 use bitcoin::{
     ecdsa, schnorr, Address, Block, Network, OutPoint, PrivateKey, PublicKey, ScriptBuf, Sequence, Target,
@@ -343,7 +343,7 @@ fn serde_regression_schnorr_sig() {
     let s = include_str!("data/serde/schnorr_sig_hex");
     let sig = schnorr::Signature {
         sig: secp256k1::schnorr::Signature::from_str(s.trim()).unwrap(),
-        hash_ty: SchnorrSighashType::All,
+        hash_ty: TapSighashType::All,
     };
 
     let got = serialize(&sig).unwrap();

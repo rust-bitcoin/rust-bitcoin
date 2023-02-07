@@ -86,7 +86,7 @@ use bitcoin::key::{TapTweak, XOnlyPublicKey};
 use bitcoin::opcodes::all::{OP_CHECKSIG, OP_CLTV, OP_DROP};
 use bitcoin::psbt::{self, Input, Output, Psbt, PsbtSighashType};
 use bitcoin::secp256k1::{Message, Secp256k1};
-use bitcoin::sighash::{self, SchnorrSighashType, SighashCache};
+use bitcoin::sighash::{self, TapSighashType, SighashCache};
 use bitcoin::taproot::{
     LeafVersion, TapLeafHash, TapSighash, TaprootBuilder, TaprootSpendInfo,
 };
@@ -283,7 +283,7 @@ fn generate_bip86_key_spend_tx(
             let hash_ty = input
                 .sighash_type
                 .and_then(|psbt_sighash_type| psbt_sighash_type.schnorr_hash_ty().ok())
-                .unwrap_or(SchnorrSighashType::All);
+                .unwrap_or(TapSighashType::All);
             let hash = SighashCache::new(&unsigned_tx).taproot_key_spend_signature_hash(
                 vout,
                 &sighash::Prevouts::All(&[TxOut {
@@ -518,7 +518,7 @@ impl BenefactorWallet {
             let hash_ty = input
                 .sighash_type
                 .and_then(|psbt_sighash_type| psbt_sighash_type.schnorr_hash_ty().ok())
-                .unwrap_or(SchnorrSighashType::All);
+                .unwrap_or(TapSighashType::All);
             let hash = SighashCache::new(&psbt.unsigned_tx).taproot_key_spend_signature_hash(
                 0,
                 &sighash::Prevouts::All(&[TxOut {
@@ -659,7 +659,7 @@ impl BeneficiaryWallet {
             let secret_key =
                 self.master_xpriv.derive_priv(&self.secp, &derivation_path)?.to_priv().inner;
             for lh in leaf_hashes {
-                let hash_ty = SchnorrSighashType::All;
+                let hash_ty = TapSighashType::All;
                 let hash = SighashCache::new(&unsigned_tx).taproot_script_spend_signature_hash(
                     0,
                     &sighash::Prevouts::All(&[TxOut {
@@ -735,7 +735,7 @@ fn sign_psbt_schnorr(
     leaf_hash: Option<TapLeafHash>,
     psbt_input: &mut psbt::Input,
     hash: TapSighash,
-    hash_ty: SchnorrSighashType,
+    hash_ty: TapSighashType,
     secp: &Secp256k1<secp256k1::All>,
 ) {
     let keypair = secp256k1::KeyPair::from_seckey_slice(secp, secret_key.as_ref()).unwrap();

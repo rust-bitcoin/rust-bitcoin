@@ -18,7 +18,7 @@ use crate::bip32::KeySource;
 use crate::psbt::map::Map;
 use crate::psbt::serialize::Deserialize;
 use crate::psbt::{self, error, raw, Error};
-use crate::sighash::{self, NonStandardSighashType, SighashTypeParseError, EcdsaSighashType, SchnorrSighashType};
+use crate::sighash::{self, NonStandardSighashType, SighashTypeParseError, EcdsaSighashType, TapSighashType};
 use crate::taproot::{ControlBlock, LeafVersion, TapLeafHash, TapNodeHash};
 
 /// Type: Non-Witness UTXO PSBT_IN_NON_WITNESS_UTXO = 0x00
@@ -134,7 +134,7 @@ pub struct Input {
 
 
 /// A Signature hash type for the corresponding input. As of taproot upgrade, the signature hash
-/// type can be either [`EcdsaSighashType`] or [`SchnorrSighashType`] but it is not possible to know
+/// type can be either [`EcdsaSighashType`] or [`TapSighashType`] but it is not possible to know
 /// directly which signature hash type the user is dealing with. Therefore, the user is responsible
 /// for converting to/from [`PsbtSighashType`] from/to the desired signature hash type they need.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -163,7 +163,7 @@ impl FromStr for PsbtSighashType {
         // NB: some of Schnorr sighash types are non-standard for pre-taproot
         // inputs. We also do not support SIGHASH_RESERVED in verbatim form
         // ("0xFF" string should be used instead).
-        if let Ok(ty) = SchnorrSighashType::from_str(s) {
+        if let Ok(ty) = TapSighashType::from_str(s) {
             return Ok(ty.into());
         }
 
@@ -181,8 +181,8 @@ impl From<EcdsaSighashType> for PsbtSighashType {
     }
 }
 
-impl From<SchnorrSighashType> for PsbtSighashType {
-    fn from(schnorr_hash_ty: SchnorrSighashType) -> Self {
+impl From<TapSighashType> for PsbtSighashType {
+    fn from(schnorr_hash_ty: TapSighashType) -> Self {
         PsbtSighashType { inner: schnorr_hash_ty as u32 }
     }
 }
@@ -194,20 +194,20 @@ impl PsbtSighashType {
         EcdsaSighashType::from_standard(self.inner)
     }
 
-    /// Returns the [`SchnorrSighashType`] if the [`PsbtSighashType`] can be
+    /// Returns the [`TapSighashType`] if the [`PsbtSighashType`] can be
     /// converted to one.
-    pub fn schnorr_hash_ty(self) -> Result<SchnorrSighashType, sighash::Error> {
+    pub fn schnorr_hash_ty(self) -> Result<TapSighashType, sighash::Error> {
         if self.inner > 0xffu32 {
             Err(sighash::Error::InvalidSighashType(self.inner))
         } else {
-            SchnorrSighashType::from_consensus_u8(self.inner as u8)
+            TapSighashType::from_consensus_u8(self.inner as u8)
         }
     }
 
     /// Creates a [`PsbtSighashType`] from a raw `u32`.
     ///
     /// Allows construction of a non-standard or non-valid sighash flag
-    /// ([`EcdsaSighashType`], [`SchnorrSighashType`] respectively).
+    /// ([`EcdsaSighashType`], [`TapSighashType`] respectively).
     pub fn from_u32(n: u32) -> PsbtSighashType {
         PsbtSighashType { inner: n }
     }
@@ -234,16 +234,16 @@ impl Input {
             .unwrap_or(Ok(EcdsaSighashType::All))
     }
 
-    /// Obtains the [`SchnorrSighashType`] for this input if one is specified. If no sighash type is
-    /// specified, returns [`SchnorrSighashType::Default`].
+    /// Obtains the [`TapSighashType`] for this input if one is specified. If no sighash type is
+    /// specified, returns [`TapSighashType::Default`].
     ///
     /// # Errors
     ///
     /// If the `sighash_type` field is set to a invalid Schnorr sighash value.
-    pub fn schnorr_hash_ty(&self) -> Result<SchnorrSighashType, sighash::Error> {
+    pub fn schnorr_hash_ty(&self) -> Result<TapSighashType, sighash::Error> {
         self.sighash_type
             .map(|sighash_type| sighash_type.schnorr_hash_ty())
-            .unwrap_or(Ok(SchnorrSighashType::Default))
+            .unwrap_or(Ok(TapSighashType::Default))
     }
 
     pub(super) fn insert_pair(&mut self, pair: raw::Pair) -> Result<(), Error> {
@@ -545,13 +545,13 @@ mod test {
     #[test]
     fn psbt_sighash_type_schnorr() {
         for schnorr in &[
-            SchnorrSighashType::Default,
-            SchnorrSighashType::All,
-            SchnorrSighashType::None,
-            SchnorrSighashType::Single,
-            SchnorrSighashType::AllPlusAnyoneCanPay,
-            SchnorrSighashType::NonePlusAnyoneCanPay,
-            SchnorrSighashType::SinglePlusAnyoneCanPay,
+            TapSighashType::Default,
+            TapSighashType::All,
+            TapSighashType::None,
+            TapSighashType::Single,
+            TapSighashType::AllPlusAnyoneCanPay,
+            TapSighashType::NonePlusAnyoneCanPay,
+            TapSighashType::SinglePlusAnyoneCanPay,
         ] {
             let sighash = PsbtSighashType::from(*schnorr);
             let s = format!("{}", sighash);

@@ -38,7 +38,7 @@ use crate::parse::impl_parse_str_through_int;
 use super::Weight;
 
 #[cfg(doc)]
-use crate::sighash::{EcdsaSighashType, SchnorrSighashType};
+use crate::sighash::{EcdsaSighashType, TapSighashType};
 
 /// A reference to a transaction output.
 ///
