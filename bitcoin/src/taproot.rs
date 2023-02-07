@@ -644,8 +644,22 @@ impl TaprootMerkleBranch {
     /// Returns a reference to the inner vector of hashes.
     pub fn as_inner(&self) -> &[TapNodeHash] { &self.0 }
 
-    /// Creates a merkle proof from raw data representing a list of hashes.
+    /// Decodes bytes from control block.
+    #[deprecated(since = "0.30.0", note = "Use decode instead")]
     pub fn from_slice(sl: &[u8]) -> Result<Self, TaprootError> {
+        Self::decode(sl)
+    }
+
+    /// Decodes bytes from control block.
+    ///
+    /// This reads the branch as encoded in the control block: the concatenated 32B byte chunks -
+    /// one for each hash.
+    ///
+    /// # Errors
+    ///
+    /// The function returns an error if the the number of bytes is not an integer multiple of 32 or
+    /// if the number of hashes exceeds 128.
+    pub fn decode(sl: &[u8]) -> Result<Self, TaprootError> {
         if sl.len() % TAPROOT_CONTROL_NODE_SIZE != 0 {
             Err(TaprootError::InvalidMerkleBranchSize(sl.len()))
         } else if sl.len() > TAPROOT_CONTROL_NODE_SIZE * TAPROOT_CONTROL_MAX_NODE_COUNT {
@@ -760,9 +774,17 @@ pub struct ControlBlock {
 }
 
 impl ControlBlock {
-    /// Constructs a `ControlBlock` from slice. This is an extra witness element that provides the
-    /// proof that taproot script pubkey is correctly computed with some specified leaf hash. This
-    /// is the last element in taproot witness when spending a output via script path.
+    /// Constructs a `ControlBlock` from slice.
+    #[deprecated(since = "0.30.0", note = "Use decode instead")]
+    pub fn from_slice(sl: &[u8]) -> Result<ControlBlock, TaprootError> {
+        Self::decode(sl)
+    }
+
+    /// Decodes bytes representing a `ControlBlock`.
+    ///
+    /// This is an extra witness element that provides the proof that taproot script pubkey is
+    /// correctly computed with some specified leaf hash. This is the last element in taproot
+    /// witness when spending a output via script path.
     ///
     /// # Errors
     ///
@@ -771,7 +793,7 @@ impl ControlBlock {
     /// - [`TaprootError::InvalidTaprootLeafVersion`] if first byte of `sl` is not a valid leaf version.
     /// - [`TaprootError::InvalidInternalKey`] if internal key is invalid (first 32 bytes after the parity byte).
     /// - [`TaprootError::InvalidMerkleTreeDepth`] if merkle tree is too deep (more than 128 levels).
-    pub fn from_slice(sl: &[u8]) -> Result<ControlBlock, TaprootError> {
+    pub fn decode(sl: &[u8]) -> Result<ControlBlock, TaprootError> {
         if sl.len() < TAPROOT_CONTROL_BASE_SIZE
             || (sl.len() - TAPROOT_CONTROL_BASE_SIZE) % TAPROOT_CONTROL_NODE_SIZE != 0
         {
@@ -782,7 +804,7 @@ impl ControlBlock {
         let leaf_version = LeafVersion::from_consensus(sl[0] & TAPROOT_LEAF_MASK)?;
         let internal_key = UntweakedPublicKey::from_slice(&sl[1..TAPROOT_CONTROL_BASE_SIZE])
             .map_err(TaprootError::InvalidInternalKey)?;
-        let merkle_branch = TaprootMerkleBranch::from_slice(&sl[TAPROOT_CONTROL_BASE_SIZE..])?;
+        let merkle_branch = TaprootMerkleBranch::decode(&sl[TAPROOT_CONTROL_BASE_SIZE..])?;
         Ok(ControlBlock { leaf_version, output_key_parity, internal_key, merkle_branch })
     }
 
@@ -1224,7 +1246,7 @@ mod test {
         let out_pk = TweakedPublicKey::dangerous_assume_tweaked(out_pk);
         let script = ScriptBuf::from_hex(script_hex).unwrap();
         let control_block =
-            ControlBlock::from_slice(&Vec::<u8>::from_hex(control_block_hex).unwrap()).unwrap();
+            ControlBlock::decode(&Vec::<u8>::from_hex(control_block_hex).unwrap()).unwrap();
         assert_eq!(control_block_hex, control_block.serialize().to_lower_hex_string());
         assert!(control_block.verify_taproot_commitment(secp, out_pk.to_inner(), &script));
     }
@@ -1448,7 +1470,7 @@ mod test {
                 let spend_info = builder.finalize(secp, internal_key).unwrap();
                 for (i, script_ver) in leaves.iter().enumerate() {
                     let expected_leaf_hash = leaf_hashes[i].as_str().unwrap();
-                    let expected_ctrl_blk = ControlBlock::from_slice(
+                    let expected_ctrl_blk = ControlBlock::decode(
                         &Vec::<u8>::from_hex(ctrl_blks[i].as_str().unwrap()).unwrap(),
                     )
                     .unwrap();
