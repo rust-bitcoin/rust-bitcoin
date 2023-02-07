@@ -253,7 +253,7 @@ impl fmt::Display for Error {
             PrevoutIndex => write!(f, "The index requested is greater than available prevouts or different from the provided [Provided::Anyone] index"),
             PrevoutKind => write!(f, "A single prevout has been provided but all prevouts are needed without `ANYONECANPAY`"),
             WrongAnnex => write!(f, "Annex must be at least one byte long and the first bytes must be `0x50`"),
-            InvalidSighashType(hash_ty) => write!(f, "Invalid schnorr Signature hash type : {} ", hash_ty),
+            InvalidSighashType(hash_ty) => write!(f, "Invalid taproot signature hash type : {} ", hash_ty),
         }
     }
 }

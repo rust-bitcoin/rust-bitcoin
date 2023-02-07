@@ -1,10 +1,9 @@
 // Written in 2014 by Andrew Poelstra <apoelstra@wpsoftware.net>
 // SPDX-License-Identifier: CC0-1.0
 
-//! Schnorr Bitcoin keys.
+//! Bitcoin taproot keys.
 //!
-//! This module provides Schnorr keys used in Bitcoin, reexporting Secp256k1
-//! Schnorr key types.
+//! This module provides taproot keys used in Bitcoin (including reexporting secp256k1 keys).
 //!
 
 use core::fmt;
@@ -17,7 +16,7 @@ use crate::prelude::*;
 
 use crate::sighash::TapSighashType;
 
-/// A BIP340-341 serialized schnorr signature with the corresponding hash type.
+/// A BIP340-341 serialized taproot signature with the corresponding hash type.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
@@ -66,7 +65,7 @@ impl Signature {
 
 }
 
-/// A schnorr sig related error.
+/// A taproot sig related error.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 #[non_exhaustive]
 pub enum Error {
@@ -74,7 +73,7 @@ pub enum Error {
     InvalidSighashType(u8),
     /// Signature has valid size but does not parse correctly
     Secp256k1(secp256k1::Error),
-    /// Invalid schnorr signature size
+    /// Invalid taproot signature size
     InvalidSignatureSize(usize),
 }
 
@@ -83,11 +82,11 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Error::InvalidSighashType(hash_ty) =>
-                write!(f, "Invalid signature hash type {}", hash_ty),
+                write!(f, "invalid signature hash type {}", hash_ty),
             Error::Secp256k1(ref e) =>
-                write_err!(f, "Schnorr signature has correct len but is malformed"; e),
+                write_err!(f, "taproot signature has correct len but is malformed"; e),
             Error::InvalidSignatureSize(sz) =>
-                write!(f, "Invalid Schnorr signature size: {}", sz),
+                write!(f, "invalid taproot signature size: {}", sz),
         }
     }
 }

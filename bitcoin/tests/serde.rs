@@ -31,6 +31,7 @@ use bitcoin::blockdata::locktime::{absolute, relative};
 use bitcoin::blockdata::witness::Witness;
 use bitcoin::consensus::encode::deserialize;
 use bitcoin::crypto::key::UntweakedPublicKey;
+use bitcoin::crypto::{ecdsa, taproot};
 use bitcoin::hashes::hex::FromHex;
 use bitcoin::hashes::{hash160, ripemd160, sha256, sha256d, Hash};
 use bitcoin::psbt::raw::{self, Key, Pair, ProprietaryKey};
@@ -38,7 +39,7 @@ use bitcoin::psbt::{Input, Output, Psbt, PsbtSighashType};
 use bitcoin::sighash::{EcdsaSighashType, TapSighashType};
 use bitcoin::taproot::{ControlBlock, LeafVersion, TaprootBuilder, TaprootSpendInfo};
 use bitcoin::{
-    ecdsa, schnorr, Address, Block, Network, OutPoint, PrivateKey, PublicKey, ScriptBuf, Sequence, Target,
+    Address, Block, Network, OutPoint, PrivateKey, PublicKey, ScriptBuf, Sequence, Target,
     Transaction, TxIn, TxOut, Txid, Work,
 };
 use secp256k1::Secp256k1;
@@ -339,15 +340,15 @@ fn serde_regression_proprietary_key() {
 }
 
 #[test]
-fn serde_regression_schnorr_sig() {
-    let s = include_str!("data/serde/schnorr_sig_hex");
-    let sig = schnorr::Signature {
+fn serde_regression_taproot_sig() {
+    let s = include_str!("data/serde/taproot_sig_hex");
+    let sig = taproot::Signature {
         sig: secp256k1::schnorr::Signature::from_str(s.trim()).unwrap(),
         hash_ty: TapSighashType::All,
     };
 
     let got = serialize(&sig).unwrap();
-    let want = include_bytes!("data/serde/schnorr_sig_bincode") as &[_];
+    let want = include_bytes!("data/serde/taproot_sig_bincode") as &[_];
     assert_eq!(got, want)
 }
 

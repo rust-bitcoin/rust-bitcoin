@@ -11,7 +11,7 @@ use secp256k1::XOnlyPublicKey;
 use crate::blockdata::script::ScriptBuf;
 use crate::blockdata::witness::Witness;
 use crate::blockdata::transaction::{Transaction, TxOut};
-use crate::crypto::{ecdsa, schnorr};
+use crate::crypto::{ecdsa, taproot};
 use crate::crypto::key::PublicKey;
 use crate::hashes::{self, hash160, ripemd160, sha256, sha256d};
 use crate::bip32::KeySource;
@@ -47,9 +47,9 @@ const PSBT_IN_SHA256: u8 = 0x0b;
 const PSBT_IN_HASH160: u8 = 0x0c;
 /// Type: HASH256 preimage PSBT_IN_HASH256 = 0x0d
 const PSBT_IN_HASH256: u8 = 0x0d;
-/// Type: Schnorr Signature in Key Spend PSBT_IN_TAP_KEY_SIG = 0x13
+/// Type: Taproot Signature in Key Spend PSBT_IN_TAP_KEY_SIG = 0x13
 const PSBT_IN_TAP_KEY_SIG: u8 = 0x13;
-/// Type: Schnorr Signature in Script Spend PSBT_IN_TAP_SCRIPT_SIG = 0x14
+/// Type: Taproot Signature in Script Spend PSBT_IN_TAP_SCRIPT_SIG = 0x14
 const PSBT_IN_TAP_SCRIPT_SIG: u8 = 0x14;
 /// Type: Taproot Leaf Script PSBT_IN_TAP_LEAF_SCRIPT = 0x14
 const PSBT_IN_TAP_LEAF_SCRIPT: u8 = 0x15;
@@ -109,11 +109,11 @@ pub struct Input {
     /// HAS256 hash to preimage map.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_byte_values"))]
     pub hash256_preimages: BTreeMap<sha256d::Hash, Vec<u8>>,
-    /// Serialized schnorr signature with sighash type for key spend.
-    pub tap_key_sig: Option<schnorr::Signature>,
+    /// Serialized taproot signature with sighash type for key spend.
+    pub tap_key_sig: Option<taproot::Signature>,
     /// Map of `<xonlypubkey>|<leafhash>` with signature.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq"))]
-    pub tap_script_sigs: BTreeMap<(XOnlyPublicKey, TapLeafHash), schnorr::Signature>,
+    pub tap_script_sigs: BTreeMap<(XOnlyPublicKey, TapLeafHash), taproot::Signature>,
     /// Map of Control blocks to Script version pair.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq"))]
     pub tap_scripts: BTreeMap<ControlBlock, (ScriptBuf, LeafVersion)>,
@@ -146,9 +146,9 @@ pub struct PsbtSighashType {
 
 impl fmt::Display for PsbtSighashType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self.schnorr_hash_ty() {
+        match self.taproot_hash_ty() {
             Err(_) => write!(f, "{:#x}", self.inner),
-            Ok(schnorr_hash_ty) => fmt::Display::fmt(&schnorr_hash_ty, f),
+            Ok(taproot_hash_ty) => fmt::Display::fmt(&taproot_hash_ty, f),
         }
     }
 }
@@ -160,7 +160,7 @@ impl FromStr for PsbtSighashType {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         // We accept strings of form: "SIGHASH_ALL" etc.
         //
-        // NB: some of Schnorr sighash types are non-standard for pre-taproot
+        // NB: some of Taproot sighash types are non-standard for pre-taproot
         // inputs. We also do not support SIGHASH_RESERVED in verbatim form
         // ("0xFF" string should be used instead).
         if let Ok(ty) = TapSighashType::from_str(s) {
@@ -182,8 +182,8 @@ impl From<EcdsaSighashType> for PsbtSighashType {
 }
 
 impl From<TapSighashType> for PsbtSighashType {
-    fn from(schnorr_hash_ty: TapSighashType) -> Self {
-        PsbtSighashType { inner: schnorr_hash_ty as u32 }
+    fn from(taproot_hash_ty: TapSighashType) -> Self {
+        PsbtSighashType { inner: taproot_hash_ty as u32 }
     }
 }
 
@@ -196,7 +196,7 @@ impl PsbtSighashType {
 
     /// Returns the [`TapSighashType`] if the [`PsbtSighashType`] can be
     /// converted to one.
-    pub fn schnorr_hash_ty(self) -> Result<TapSighashType, sighash::Error> {
+    pub fn taproot_hash_ty(self) -> Result<TapSighashType, sighash::Error> {
         if self.inner > 0xffu32 {
             Err(sighash::Error::InvalidSighashType(self.inner))
         } else {
@@ -239,10 +239,10 @@ impl Input {
     ///
     /// # Errors
     ///
-    /// If the `sighash_type` field is set to a invalid Schnorr sighash value.
-    pub fn schnorr_hash_ty(&self) -> Result<TapSighashType, sighash::Error> {
+    /// If the `sighash_type` field is set to a invalid Taproot sighash value.
+    pub fn taproot_hash_ty(&self) -> Result<TapSighashType, sighash::Error> {
         self.sighash_type
-            .map(|sighash_type| sighash_type.schnorr_hash_ty())
+            .map(|sighash_type| sighash_type.taproot_hash_ty())
             .unwrap_or(Ok(TapSighashType::Default))
     }
 
@@ -312,12 +312,12 @@ impl Input {
             }
             PSBT_IN_TAP_KEY_SIG => {
                 impl_psbt_insert_pair! {
-                    self.tap_key_sig <= <raw_key: _>|<raw_value: schnorr::Signature>
+                    self.tap_key_sig <= <raw_key: _>|<raw_value: taproot::Signature>
                 }
             }
             PSBT_IN_TAP_SCRIPT_SIG => {
                 impl_psbt_insert_pair! {
-                    self.tap_script_sigs <= <raw_key: (XOnlyPublicKey, TapLeafHash)>|<raw_value: schnorr::Signature>
+                    self.tap_script_sigs <= <raw_key: (XOnlyPublicKey, TapLeafHash)>|<raw_value: taproot::Signature>
                 }
             }
             PSBT_IN_TAP_LEAF_SCRIPT => {
@@ -543,8 +543,8 @@ mod test {
     }
 
     #[test]
-    fn psbt_sighash_type_schnorr() {
-        for schnorr in &[
+    fn psbt_sighash_type_taproot() {
+        for tap in &[
             TapSighashType::Default,
             TapSighashType::All,
             TapSighashType::None,
@@ -553,11 +553,11 @@ mod test {
             TapSighashType::NonePlusAnyoneCanPay,
             TapSighashType::SinglePlusAnyoneCanPay,
         ] {
-            let sighash = PsbtSighashType::from(*schnorr);
+            let sighash = PsbtSighashType::from(*tap);
             let s = format!("{}", sighash);
             let back = PsbtSighashType::from_str(&s).unwrap();
             assert_eq!(back, sighash);
-            assert_eq!(back.schnorr_hash_ty().unwrap(), *schnorr);
+            assert_eq!(back.taproot_hash_ty().unwrap(), *tap);
         }
     }
 
@@ -570,6 +570,6 @@ mod test {
 
         assert_eq!(back, sighash);
         assert_eq!(back.ecdsa_hash_ty(), Err(NonStandardSighashType(nonstd)));
-        assert_eq!(back.schnorr_hash_ty(), Err(sighash::Error::InvalidSighashType(nonstd)));
+        assert_eq!(back.taproot_hash_ty(), Err(sighash::Error::InvalidSighashType(nonstd)));
     }
 }

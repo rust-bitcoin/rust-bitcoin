@@ -127,7 +127,7 @@ pub use crate::blockdata::witness::{self, Witness};
 pub use crate::blockdata::{constants, opcodes};
 pub use crate::consensus::encode::VarInt;
 pub use crate::crypto::key::{self, PrivateKey, PublicKey};
-pub use crate::crypto::{ecdsa, schnorr, sighash};
+pub use crate::crypto::sighash;
 pub use crate::error::Error;
 pub use crate::hash_types::{Txid, Wtxid, BlockHash, PubkeyHash,  ScriptHash, WPubkeyHash, WScriptHash};
 pub use crate::merkle_tree::MerkleBlock;

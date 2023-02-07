@@ -81,6 +81,7 @@ use std::str::FromStr;
 use bitcoin::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint};
 use bitcoin::consensus::encode;
 use bitcoin::constants::COIN_VALUE;
+use bitcoin::crypto::taproot;
 use bitcoin::hashes::Hash;
 use bitcoin::key::{TapTweak, XOnlyPublicKey};
 use bitcoin::opcodes::all::{OP_CHECKSIG, OP_CLTV, OP_DROP};
@@ -91,7 +92,7 @@ use bitcoin::taproot::{
     LeafVersion, TapLeafHash, TapSighash, TaprootBuilder, TaprootSpendInfo,
 };
 use bitcoin::{
-    absolute, script, schnorr, Address, Amount, Network, OutPoint, ScriptBuf, Transaction, TxIn, TxOut,  Witness,
+    absolute, script, Address, Amount, Network, OutPoint, ScriptBuf, Transaction, TxIn, TxOut,  Witness,
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -282,7 +283,7 @@ fn generate_bip86_key_spend_tx(
         |(vout, input)| {
             let hash_ty = input
                 .sighash_type
-                .and_then(|psbt_sighash_type| psbt_sighash_type.schnorr_hash_ty().ok())
+                .and_then(|psbt_sighash_type| psbt_sighash_type.taproot_hash_ty().ok())
                 .unwrap_or(TapSighashType::All);
             let hash = SighashCache::new(&unsigned_tx).taproot_key_spend_signature_hash(
                 vout,
@@ -299,7 +300,7 @@ fn generate_bip86_key_spend_tx(
                 .ok_or("Missing taproot key origin")?;
 
             let secret_key = master_xpriv.derive_priv(secp, &derivation_path)?.to_priv().inner;
-            sign_psbt_schnorr(
+            sign_psbt_taproot(
                 &secret_key,
                 input.tap_internal_key.unwrap(),
                 None,
@@ -517,7 +518,7 @@ impl BenefactorWallet {
 
             let hash_ty = input
                 .sighash_type
-                .and_then(|psbt_sighash_type| psbt_sighash_type.schnorr_hash_ty().ok())
+                .and_then(|psbt_sighash_type| psbt_sighash_type.taproot_hash_ty().ok())
                 .unwrap_or(TapSighashType::All);
             let hash = SighashCache::new(&psbt.unsigned_tx).taproot_key_spend_signature_hash(
                 0,
@@ -535,7 +536,7 @@ impl BenefactorWallet {
                     .ok_or("Missing taproot key origin")?;
                 let secret_key =
                     self.master_xpriv.derive_priv(&self.secp, &derivation_path)?.to_priv().inner;
-                sign_psbt_schnorr(
+                sign_psbt_taproot(
                     &secret_key,
                     spend_info.internal_key(),
                     None,
@@ -669,7 +670,7 @@ impl BeneficiaryWallet {
                     *lh,
                     hash_ty,
                 )?;
-                sign_psbt_schnorr(
+                sign_psbt_taproot(
                     &secret_key,
                     *x_only_pubkey,
                     Some(*lh),
@@ -729,7 +730,7 @@ impl BeneficiaryWallet {
 // licenses.
 
 // Calling this with `leaf_hash` = `None` will sign for key-spend
-fn sign_psbt_schnorr(
+fn sign_psbt_taproot(
     secret_key: &secp256k1::SecretKey,
     pubkey: XOnlyPublicKey,
     leaf_hash: Option<TapLeafHash>,
@@ -746,7 +747,7 @@ fn sign_psbt_schnorr(
 
     let sig = secp.sign_schnorr(&Message::from_slice(&hash.into_inner()[..]).unwrap(), &keypair);
 
-    let final_signature = schnorr::Signature { sig, hash_ty };
+    let final_signature = taproot::Signature { sig, hash_ty };
 
     if let Some(lh) = leaf_hash {
         psbt_input.tap_script_sigs.insert((pubkey, lh), final_signature);
