@@ -57,9 +57,26 @@ fn p2pk_pubkey_bytes_valid_key_and_valid_script_returns_expected_key() {
 }
 
 #[test]
-fn p2pk_pubkey_bytes_no_checksig_returns_none() {
+fn p2pk_pubkey_bytes_valid_compressed_key_and_valid_script_returns_expected_key() {
+    let compressed_key_str = "0311db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5c";
+    let key = PublicKey::from_str(compressed_key_str).unwrap();
+    let p2pk = Script::builder().push_key(&key).push_opcode(OP_CHECKSIG).into_script();
+    let actual = p2pk.p2pk_pubkey_bytes().unwrap();
+    assert_eq!(actual.to_vec(), key.to_bytes());
+}
+
+#[test]
+fn p2pk_pubkey_bytes_valid_key_no_checksig_returns_none() {
     let key_str = "0411db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3";
     let key = PublicKey::from_str(key_str).unwrap();
+    let no_checksig = Script::builder().push_key(&key).into_script();
+    assert_eq!(no_checksig.p2pk_pubkey_bytes(), None);
+}
+
+#[test]
+fn p2pk_pubkey_bytes_valid_compressed_key_no_checksig_returns_none() {
+    let compressed_key_str = "0311db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5c";
+    let key = PublicKey::from_str(compressed_key_str).unwrap();
     let no_checksig = Script::builder().push_key(&key).into_script();
     assert_eq!(no_checksig.p2pk_pubkey_bytes(), None);
 }
@@ -78,9 +95,17 @@ fn p2pk_pubkey_bytes_no_key_returns_none() {
 }
 
 #[test]
-fn p2pk_pubkey_bytes_different_op_code_returns_none() {
+fn p2pk_pubkey_bytes_valid_key_different_op_code_returns_none() {
     let key_str = "0411db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3";
     let key = PublicKey::from_str(key_str).unwrap();
+    let different_op_code = Script::builder().push_key(&key).push_opcode(OP_NOP).into_script();
+    assert!(different_op_code.p2pk_pubkey_bytes().is_none());
+}
+
+#[test]
+fn p2pk_pubkey_bytes_valid_compressed_key_different_op_code_returns_none() {
+    let compressed_key_str = "0311db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5c";
+    let key = PublicKey::from_str(compressed_key_str).unwrap();
     let different_op_code = Script::builder().push_key(&key).push_opcode(OP_NOP).into_script();
     assert!(different_op_code.p2pk_pubkey_bytes().is_none());
 }
@@ -103,18 +128,26 @@ fn p2pk_pubkey_bytes_invalid_key_returns_some() {
 }
 
 #[test]
-fn p2pk_pubkey_bytes_compressed_key_returns_expected_key() {
-    let compressed_key_str = "0311db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5c";
-    let key = PublicKey::from_str(compressed_key_str).unwrap();
-    let p2pk = Script::builder().push_key(&key).push_opcode(OP_CHECKSIG).into_script();
-    let actual = p2pk.p2pk_pubkey_bytes().unwrap();
-    assert_eq!(actual.to_vec(), key.to_bytes());
+fn p2pk_pubkey_bytes_invalid_compressed_key_returns_some() {
+    let malformed_key = b"210311db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a69ab";
+    let invalid_key_script =
+        Script::builder().push_slice(malformed_key).push_opcode(OP_CHECKSIG).into_script();
+    assert!(invalid_key_script.p2pk_pubkey_bytes().is_some());
 }
 
 #[test]
 fn p2pk_public_key_valid_key_and_valid_script_returns_expected_key() {
     let key_str = "0411db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3";
     let key = PublicKey::from_str(key_str).unwrap();
+    let p2pk = Script::builder().push_key(&key).push_opcode(OP_CHECKSIG).into_script();
+    let actual = p2pk.p2pk_public_key().unwrap();
+    assert_eq!(actual, key);
+}
+
+#[test]
+fn p2pk_public_key_valide_compressed_key_and_valid_script_returns_expected_key() {
+    let compressed_key_str = "0311db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5c";
+    let key = PublicKey::from_str(compressed_key_str).unwrap();
     let p2pk = Script::builder().push_key(&key).push_opcode(OP_CHECKSIG).into_script();
     let actual = p2pk.p2pk_public_key().unwrap();
     assert_eq!(actual, key);
@@ -290,11 +323,17 @@ fn scriptint_round_trip() {
         buf[..len].to_vec()
     }
 
+    assert_eq!(build_scriptint(0), Vec::<u8>::new());
+    assert_eq!(build_scriptint(1), vec![0x01]);
     assert_eq!(build_scriptint(-1), vec![0x81]);
     assert_eq!(build_scriptint(255), vec![255, 0]);
     assert_eq!(build_scriptint(256), vec![0, 1]);
     assert_eq!(build_scriptint(257), vec![1, 1]);
+    assert_eq!(build_scriptint(-255), vec![255, 0x80]);
+    assert_eq!(build_scriptint(-256), vec![0, 0x81]);
+    assert_eq!(build_scriptint(-257), vec![1, 0x81]);
     assert_eq!(build_scriptint(511), vec![255, 1]);
+    assert_eq!(build_scriptint(-511), vec![255, 0x81]);
     let test_vectors = [
         10,
         100,
@@ -318,11 +357,18 @@ fn scriptint_round_trip() {
 }
 
 #[test]
-fn non_minimal_scriptints() {
+fn minimal_scriptints() {
+    assert_eq!(read_scriptint(&[]), Ok(0x00)); // Empty is defined as zero.
     assert_eq!(read_scriptint(&[0x80, 0x00]), Ok(0x80));
     assert_eq!(read_scriptint(&[0xff, 0x00]), Ok(0xff));
+    assert_eq!(read_scriptint(&[0x8f, 0x80]), Ok(-0x8f));
+}
+
+#[test]
+fn non_minimal_scriptints() {
     assert_eq!(read_scriptint(&[0x8f, 0x00, 0x00]), Err(Error::NonMinimalPush));
     assert_eq!(read_scriptint(&[0x7f, 0x00]), Err(Error::NonMinimalPush));
+    assert_eq!(read_scriptint(&[0x7f, 0x80]), Err(Error::NonMinimalPush));
 }
 
 #[test]
@@ -683,6 +729,10 @@ fn read_scriptbool_zero_is_false() {
 
     let v: Vec<u8> = vec![0x00, 0x00, 0x00, 0x80]; // With sign bit set.
     assert!(!read_scriptbool(&v));
+
+    // Empty slice is the same as zero.
+    let v = Vec::<u8>::new();
+    assert!(!read_scriptbool(&v));
 }
 
 #[test]
@@ -692,4 +742,29 @@ fn read_scriptbool_non_zero_is_true() {
 
     let v: Vec<u8> = vec![0x01, 0x00, 0x00, 0x80]; // With sign bit set.
     assert!(read_scriptbool(&v));
+}
+
+// This contrived test is mainly to prevent a false positive from mutagen.
+#[test]
+fn read_scriptbool_contrived_non_zero_is_true() {
+    let v: Vec<u8> = vec![0x00, 0x00, 0x00, 0x81]; // With sign bit set.
+    assert!(read_scriptbool(&v));
+}
+
+#[test]
+fn read_uint_iter_int_only() {
+    let v = vec![0x01_u8];
+    let got = read_uint_iter(&mut v.iter(), 1).expect("failed to read single byte int");
+    assert_eq!(got, 1)
+}
+
+#[test]
+fn read_uint_iter_success() {
+    assert_eq!(read_uint_iter(&mut [].iter(), 0).unwrap(), 0x00); // Empty is defined as zero.
+
+    assert_eq!(read_uint_iter(&mut [0x80, 0x00].iter(), 2).unwrap(), 0x80);
+    assert_eq!(read_uint_iter(&mut [0xff, 0x00].iter(), 2).unwrap(), 0xff);
+    assert_eq!(read_uint_iter(&mut [0x01, 0x01].iter(), 2).unwrap(), 0x0101);
+
+    assert_eq!(read_uint_iter(&mut [0x01, 0x02, 0x03, 0x04].iter(), 4).unwrap(), 0x04030201);
 }

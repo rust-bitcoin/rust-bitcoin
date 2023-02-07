@@ -56,6 +56,8 @@ use core::cmp::Ordering;
 use core::fmt;
 use core::ops::{Deref, DerefMut};
 
+#[cfg(all(test, mutate))]
+use mutagen::mutate;
 #[cfg(feature = "serde")]
 use serde;
 
@@ -88,6 +90,11 @@ pub use self::push_bytes::*;
 /// more than 4 bytes, this is in line with Bitcoin Core (see [`CScriptNum::serialize`]).
 ///
 /// [`CScriptNum::serialize`]: <https://github.com/bitcoin/bitcoin/blob/8ae2808a4354e8dcc697f76bacc5e2f2befe9220/src/script/script.h#L345>
+#[cfg_attr(all(test, mutate), mutate)]
+// mutagen false pos write_scriptint: replace `0` with `1` (on line: let neg = n < 0;)
+// mutagen false pos write_scriptint: replace `<` with `<=` (on line: let neg = n < 0;)
+// mutagen false pos write_scriptint: replace `255` with `254` (on line: while abs > 0xFF {)
+// mutagen false pos write_scriptint: replace `>` with `>=` (on line: while abs > 0xFF {)
 pub fn write_scriptint(out: &mut [u8; 8], n: i64) -> usize {
     let mut len = 0;
     if n == 0 {
@@ -136,6 +143,9 @@ pub fn write_scriptint(out: &mut [u8; 8], n: i64) -> usize {
 /// This is basically a ranged type implementation.
 ///
 /// This code is based on the `CScriptNum` constructor in Bitcoin Core (see `script.h`).
+#[cfg_attr(all(test, mutate), mutate)]
+// mutagen false pos read_scriptint: replace `1` with `0`  (on line: if v.len() <= 1 || (v[v.len() - 2] & 0x80) == 0 {)
+// mutagen false pos read_scriptint: replace `<=` with `<` (on line: if v.len() <= 1 || (v[v.len() - 2] & 0x80) == 0 {)
 pub fn read_scriptint(v: &[u8]) -> Result<i64, Error> {
     let len = v.len();
     if len > 4 {
@@ -174,6 +184,7 @@ pub fn read_scriptint(v: &[u8]) -> Result<i64, Error> {
 /// This is like "`read_scriptint` then map 0 to false and everything
 /// else as true", except that the overflow rules don't apply.
 #[inline]
+#[cfg_attr(all(test, mutate), mutate)]
 pub fn read_scriptbool(v: &[u8]) -> bool {
     match v.split_last() {
         Some((last, rest)) => !((last & !0x80 == 0x00) && rest.iter().all(|&b| b == 0)),
@@ -201,24 +212,25 @@ pub fn read_uint(data: &[u8], size: usize) -> Result<usize, Error> {
 
 // We internally use implementation based on iterator so that it automatically advances as needed
 // Errors are same as above, just different type.
+#[cfg_attr(all(test, mutate), mutate)]
 fn read_uint_iter(data: &mut core::slice::Iter<'_, u8>, size: usize) -> Result<usize, UintError> {
+    // `size` represents the number of byes to decode, this will only ever be 4 or less for bitcoin
+    // since integers are 32 bit.
+    assert!(size <= 4);
+
     if data.len() < size {
-        Err(UintError::EarlyEndOfScript)
-    } else if size > usize::from(u16::max_value() / 8) {
-        // Casting to u32 would overflow
-        Err(UintError::NumericOverflow)
-    } else {
-        let mut ret = 0;
-        for (i, item) in data.take(size).enumerate() {
-            ret = usize::from(*item)
-                // Casting is safe because we checked above to not repeat the same check in a loop
-                .checked_shl((i * 8) as u32)
-                .ok_or(UintError::NumericOverflow)?
-                .checked_add(ret)
-                .ok_or(UintError::NumericOverflow)?;
-        }
-        Ok(ret)
+        return Err(UintError::EarlyEndOfScript);
     }
+
+    let mut ret = 0;
+    for (i, item) in data.take(size).enumerate() {
+        ret = usize::from(*item)
+            .overflowing_shl((i * 8) as u32)
+            .0 // Casting (and overflowing) is safe because i <= 3.
+            .checked_add(ret)
+            .ok_or(UintError::NumericOverflow)?;
+    }
+    Ok(ret)
 }
 
 fn opcode_to_verify(opcode: Option<opcodes::All>) -> Option<opcodes::All> {
@@ -772,6 +784,7 @@ impl std::error::Error for Error {
 
 // Our internal error proves that we only return these two cases from `read_uint_iter`.
 // Since it's private we don't bother with trait impls besides From.
+#[derive(Debug)]
 enum UintError {
     EarlyEndOfScript,
     NumericOverflow,
