@@ -88,7 +88,7 @@ use bitcoin::psbt::{self, Input, Output, Psbt, PsbtSighashType};
 use bitcoin::secp256k1::{Message, Secp256k1};
 use bitcoin::sighash::{self, SchnorrSighashType, SighashCache};
 use bitcoin::taproot::{
-    LeafVersion, TapLeafHash, TapSighashHash, TaprootBuilder, TaprootSpendInfo,
+    LeafVersion, TapLeafHash, TapSighash, TaprootBuilder, TaprootSpendInfo,
 };
 use bitcoin::{
     absolute, script, schnorr, Address, Amount, Network, OutPoint, ScriptBuf, Transaction, TxIn, TxOut,  Witness,
@@ -734,7 +734,7 @@ fn sign_psbt_schnorr(
     pubkey: XOnlyPublicKey,
     leaf_hash: Option<TapLeafHash>,
     psbt_input: &mut psbt::Input,
-    hash: TapSighashHash,
+    hash: TapSighash,
     hash_ty: SchnorrSighashType,
     secp: &Secp256k1<secp256k1::All>,
 ) {

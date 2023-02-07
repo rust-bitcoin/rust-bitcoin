@@ -22,7 +22,7 @@ use crate::error::impl_std_error;
 use crate::hashes::{sha256, sha256d, Hash};
 use crate::hash_types::Sighash;
 use crate::prelude::*;
-use crate::taproot::{LeafVersion, TapLeafHash, TapSighashHash, TAPROOT_ANNEX_PREFIX};
+use crate::taproot::{LeafVersion, TapLeafHash, TapSighash, TAPROOT_ANNEX_PREFIX};
 
 /// Used for signature hash for invalid use of SIGHASH_SINGLE.
 #[rustfmt::skip]
@@ -640,8 +640,8 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         annex: Option<Annex>,
         leaf_hash_code_separator: Option<(TapLeafHash, u32)>,
         sighash_type: SchnorrSighashType,
-    ) -> Result<TapSighashHash, Error> {
-        let mut enc = TapSighashHash::engine();
+    ) -> Result<TapSighash, Error> {
+        let mut enc = TapSighash::engine();
         self.taproot_encode_signing_data_to(
             &mut enc,
             input_index,
@@ -650,7 +650,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             leaf_hash_code_separator,
             sighash_type,
         )?;
-        Ok(TapSighashHash::from_engine(enc))
+        Ok(TapSighash::from_engine(enc))
     }
 
     /// Computes the BIP341 sighash for a key spend.
@@ -659,8 +659,8 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         input_index: usize,
         prevouts: &Prevouts<T>,
         sighash_type: SchnorrSighashType,
-    ) -> Result<TapSighashHash, Error> {
-        let mut enc = TapSighashHash::engine();
+    ) -> Result<TapSighash, Error> {
+        let mut enc = TapSighash::engine();
         self.taproot_encode_signing_data_to(
             &mut enc,
             input_index,
@@ -669,7 +669,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             None,
             sighash_type,
         )?;
-        Ok(TapSighashHash::from_engine(enc))
+        Ok(TapSighash::from_engine(enc))
     }
 
     /// Computes the BIP341 sighash for a script spend.
@@ -682,8 +682,8 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         prevouts: &Prevouts<T>,
         leaf_hash: S,
         sighash_type: SchnorrSighashType,
-    ) -> Result<TapSighashHash, Error> {
-        let mut enc = TapSighashHash::engine();
+    ) -> Result<TapSighash, Error> {
+        let mut enc = TapSighash::engine();
         self.taproot_encode_signing_data_to(
             &mut enc,
             input_index,
@@ -692,7 +692,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             Some((leaf_hash.into(), 0xFFFFFFFF)),
             sighash_type,
         )?;
-        Ok(TapSighashHash::from_engine(enc))
+        Ok(TapSighash::from_engine(enc))
     }
 
     /// Encodes the BIP143 signing data for any flag type into a given object implementing a
@@ -1073,7 +1073,7 @@ mod tests {
     use crate::hashes::{Hash, HashEngine};
     use crate::internal_macros::hex;
     use crate::network::constants::Network;
-    use crate::taproot::{TapLeafHash, TapSighashHash};
+    use crate::taproot::{TapLeafHash, TapSighash};
 
     extern crate serde_json;
 
@@ -1144,9 +1144,9 @@ mod tests {
         let bytes = hex!("00011b96877db45ffa23b307e9f0ac87b80ef9a80b4c5f0db3fbe734422453e83cc5576f3d542c5d4898fb2b696c15d43332534a7c1d1255fda38993545882df92c3e353ff6d36fbfadc4d168452afd8467f02fe53d71714fcea5dfe2ea759bd00185c4cb02bc76d42620393ca358a1a713f4997f9fc222911890afb3fe56c6a19b202df7bffdcfad08003821294279043746631b00e2dc5e52a111e213bbfe6ef09a19428d418dab0d50000000000");
         let expected =
             hex!("04e808aad07a40b3767a1442fead79af6ef7e7c9316d82dec409bb31e77699b0");
-        let mut enc = TapSighashHash::engine();
+        let mut enc = TapSighash::engine();
         enc.input(&bytes);
-        let hash = TapSighashHash::from_engine(enc);
+        let hash = TapSighash::from_engine(enc);
         assert_eq!(expected, hash.into_inner());
     }
 
@@ -1456,7 +1456,7 @@ mod tests {
             tweaked_privkey: SecretKey,
             sig_msg: String,
             //precomputed_used: Vec<String>, // unused
-            sig_hash: TapSighashHash,
+            sig_hash: TapSighash,
         }
 
         #[derive(serde::Deserialize)]
