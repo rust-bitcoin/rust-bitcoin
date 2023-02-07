@@ -11,7 +11,6 @@
 use std::collections::{HashMap, HashSet};
 
 use core::{fmt, cmp};
-use core::ops::Deref;
 
 use secp256k1::{Message, Secp256k1, Signing};
 use bitcoin_internals::write_err;
@@ -266,7 +265,7 @@ impl PartiallySignedTransaction {
     ) -> Result<Vec<PublicKey>, SignError>
     where
         C: Signing,
-        T: Deref<Target=Transaction>,
+        T: Borrow<Transaction>,
         K: GetKey,
     {
         let msg_sighash_ty_res = self.sighash_ecdsa(input_index, cache);
@@ -309,7 +308,7 @@ impl PartiallySignedTransaction {
     /// Uses the [`EcdsaSighashType`] from this input if one is specified. If no sighash type is
     /// specified uses [`EcdsaSighashType::All`]. This function does not support scripts that
     /// contain `OP_CODESEPARATOR`.
-    pub fn sighash_ecdsa<T: Deref<Target=Transaction>>(
+    pub fn sighash_ecdsa<T: Borrow<Transaction>>(
         &self,
         input_index: usize,
         cache: &mut SighashCache<T>,
