@@ -163,14 +163,16 @@ crate::serde_utils::serde_string_impl!(SchnorrSighashType, "a SchnorrSighashType
 
 impl fmt::Display for SchnorrSighashType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use SchnorrSighashType::*;
+
         let s = match self {
-            SchnorrSighashType::Default => "SIGHASH_DEFAULT",
-            SchnorrSighashType::All => "SIGHASH_ALL",
-            SchnorrSighashType::None => "SIGHASH_NONE",
-            SchnorrSighashType::Single => "SIGHASH_SINGLE",
-            SchnorrSighashType::AllPlusAnyoneCanPay => "SIGHASH_ALL|SIGHASH_ANYONECANPAY",
-            SchnorrSighashType::NonePlusAnyoneCanPay => "SIGHASH_NONE|SIGHASH_ANYONECANPAY",
-            SchnorrSighashType::SinglePlusAnyoneCanPay => "SIGHASH_SINGLE|SIGHASH_ANYONECANPAY",
+            Default => "SIGHASH_DEFAULT",
+            All => "SIGHASH_ALL",
+            None => "SIGHASH_NONE",
+            Single => "SIGHASH_SINGLE",
+            AllPlusAnyoneCanPay => "SIGHASH_ALL|SIGHASH_ANYONECANPAY",
+            NonePlusAnyoneCanPay => "SIGHASH_NONE|SIGHASH_ANYONECANPAY",
+            SinglePlusAnyoneCanPay => "SIGHASH_SINGLE|SIGHASH_ANYONECANPAY",
         };
         f.write_str(s)
     }
@@ -180,14 +182,16 @@ impl str::FromStr for SchnorrSighashType {
     type Err = SighashTypeParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
+        use SchnorrSighashType::*;
+
         match s {
-            "SIGHASH_DEFAULT" => Ok(SchnorrSighashType::Default),
-            "SIGHASH_ALL" => Ok(SchnorrSighashType::All),
-            "SIGHASH_NONE" => Ok(SchnorrSighashType::None),
-            "SIGHASH_SINGLE" => Ok(SchnorrSighashType::Single),
-            "SIGHASH_ALL|SIGHASH_ANYONECANPAY" => Ok(SchnorrSighashType::AllPlusAnyoneCanPay),
-            "SIGHASH_NONE|SIGHASH_ANYONECANPAY" => Ok(SchnorrSighashType::NonePlusAnyoneCanPay),
-            "SIGHASH_SINGLE|SIGHASH_ANYONECANPAY" => Ok(SchnorrSighashType::SinglePlusAnyoneCanPay),
+            "SIGHASH_DEFAULT" => Ok(Default),
+            "SIGHASH_ALL" => Ok(All),
+            "SIGHASH_NONE" => Ok(None),
+            "SIGHASH_SINGLE" => Ok(Single),
+            "SIGHASH_ALL|SIGHASH_ANYONECANPAY" => Ok(AllPlusAnyoneCanPay),
+            "SIGHASH_NONE|SIGHASH_ANYONECANPAY" => Ok(NonePlusAnyoneCanPay),
+            "SIGHASH_SINGLE|SIGHASH_ANYONECANPAY" => Ok(SinglePlusAnyoneCanPay),
             _ => Err(SighashTypeParseError { unrecognized: s.to_owned() }),
         }
     }
@@ -239,15 +243,17 @@ pub enum Error {
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use Error::*;
+
         match self {
-            Error::Io(error_kind) => write!(f, "writer errored: {:?}", error_kind),
-            Error::IndexOutOfInputsBounds { index, inputs_size } => write!(f, "Requested index ({}) is greater or equal than the number of transaction inputs ({})", index, inputs_size),
-            Error::SingleWithoutCorrespondingOutput { index, outputs_size } => write!(f, "SIGHASH_SINGLE for input ({}) haven't a corresponding output (#outputs:{})", index, outputs_size),
-            Error::PrevoutsSize => write!(f, "Number of supplied prevouts differs from the number of inputs in transaction"),
-            Error::PrevoutIndex => write!(f, "The index requested is greater than available prevouts or different from the provided [Provided::Anyone] index"),
-            Error::PrevoutKind => write!(f, "A single prevout has been provided but all prevouts are needed without `ANYONECANPAY`"),
-            Error::WrongAnnex => write!(f, "Annex must be at least one byte long and the first bytes must be `0x50`"),
-            Error::InvalidSighashType(hash_ty) => write!(f, "Invalid schnorr Signature hash type : {} ", hash_ty),
+            Io(error_kind) => write!(f, "writer errored: {:?}", error_kind),
+            IndexOutOfInputsBounds { index, inputs_size } => write!(f, "Requested index ({}) is greater or equal than the number of transaction inputs ({})", index, inputs_size),
+            SingleWithoutCorrespondingOutput { index, outputs_size } => write!(f, "SIGHASH_SINGLE for input ({}) haven't a corresponding output (#outputs:{})", index, outputs_size),
+            PrevoutsSize => write!(f, "Number of supplied prevouts differs from the number of inputs in transaction"),
+            PrevoutIndex => write!(f, "The index requested is greater than available prevouts or different from the provided [Provided::Anyone] index"),
+            PrevoutKind => write!(f, "A single prevout has been provided but all prevouts are needed without `ANYONECANPAY`"),
+            WrongAnnex => write!(f, "Annex must be at least one byte long and the first bytes must be `0x50`"),
+            InvalidSighashType(hash_ty) => write!(f, "Invalid schnorr Signature hash type : {} ", hash_ty),
         }
     }
 }
@@ -256,7 +262,7 @@ impl fmt::Display for Error {
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use self::Error::*;
+        use Error::*;
 
         match self {
             Io(_)
@@ -357,13 +363,15 @@ crate::serde_utils::serde_string_impl!(EcdsaSighashType, "a EcdsaSighashType dat
 
 impl fmt::Display for EcdsaSighashType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use EcdsaSighashType::*;
+
         let s = match self {
-            EcdsaSighashType::All => "SIGHASH_ALL",
-            EcdsaSighashType::None => "SIGHASH_NONE",
-            EcdsaSighashType::Single => "SIGHASH_SINGLE",
-            EcdsaSighashType::AllPlusAnyoneCanPay => "SIGHASH_ALL|SIGHASH_ANYONECANPAY",
-            EcdsaSighashType::NonePlusAnyoneCanPay => "SIGHASH_NONE|SIGHASH_ANYONECANPAY",
-            EcdsaSighashType::SinglePlusAnyoneCanPay => "SIGHASH_SINGLE|SIGHASH_ANYONECANPAY",
+            All => "SIGHASH_ALL",
+            None => "SIGHASH_NONE",
+            Single => "SIGHASH_SINGLE",
+            AllPlusAnyoneCanPay => "SIGHASH_ALL|SIGHASH_ANYONECANPAY",
+            NonePlusAnyoneCanPay => "SIGHASH_NONE|SIGHASH_ANYONECANPAY",
+            SinglePlusAnyoneCanPay => "SIGHASH_SINGLE|SIGHASH_ANYONECANPAY",
         };
         f.write_str(s)
     }
@@ -373,13 +381,15 @@ impl str::FromStr for EcdsaSighashType {
     type Err = SighashTypeParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
+        use EcdsaSighashType::*;
+
         match s {
-            "SIGHASH_ALL" => Ok(EcdsaSighashType::All),
-            "SIGHASH_NONE" => Ok(EcdsaSighashType::None),
-            "SIGHASH_SINGLE" => Ok(EcdsaSighashType::Single),
-            "SIGHASH_ALL|SIGHASH_ANYONECANPAY" => Ok(EcdsaSighashType::AllPlusAnyoneCanPay),
-            "SIGHASH_NONE|SIGHASH_ANYONECANPAY" => Ok(EcdsaSighashType::NonePlusAnyoneCanPay),
-            "SIGHASH_SINGLE|SIGHASH_ANYONECANPAY" => Ok(EcdsaSighashType::SinglePlusAnyoneCanPay),
+            "SIGHASH_ALL" => Ok(All),
+            "SIGHASH_NONE" => Ok(None),
+            "SIGHASH_SINGLE" => Ok(Single),
+            "SIGHASH_ALL|SIGHASH_ANYONECANPAY" => Ok(AllPlusAnyoneCanPay),
+            "SIGHASH_NONE|SIGHASH_ANYONECANPAY" => Ok(NonePlusAnyoneCanPay),
+            "SIGHASH_SINGLE|SIGHASH_ANYONECANPAY" => Ok(SinglePlusAnyoneCanPay),
             _ => Err(SighashTypeParseError { unrecognized: s.to_owned() }),
         }
     }
@@ -388,13 +398,15 @@ impl str::FromStr for EcdsaSighashType {
 impl EcdsaSighashType {
     /// Splits the sighash flag into the "real" sighash flag and the ANYONECANPAY boolean.
     pub(crate) fn split_anyonecanpay_flag(self) -> (EcdsaSighashType, bool) {
+        use EcdsaSighashType::*;
+
         match self {
-            EcdsaSighashType::All => (EcdsaSighashType::All, false),
-            EcdsaSighashType::None => (EcdsaSighashType::None, false),
-            EcdsaSighashType::Single => (EcdsaSighashType::Single, false),
-            EcdsaSighashType::AllPlusAnyoneCanPay => (EcdsaSighashType::All, true),
-            EcdsaSighashType::NonePlusAnyoneCanPay => (EcdsaSighashType::None, true),
-            EcdsaSighashType::SinglePlusAnyoneCanPay => (EcdsaSighashType::Single, true),
+            All => (All, false),
+            None => (None, false),
+            Single => (Single, false),
+            AllPlusAnyoneCanPay => (All, true),
+            NonePlusAnyoneCanPay => (None, true),
+            SinglePlusAnyoneCanPay => (Single, true),
         }
     }
 
@@ -408,6 +420,8 @@ impl EcdsaSighashType {
     /// verifying signatures, the user should retain the `n` and use it compute the signature hash
     /// message.
     pub fn from_consensus(n: u32) -> EcdsaSighashType {
+        use EcdsaSighashType::*;
+
         // In Bitcoin Core, the SignatureHash function will mask the (int32) value with
         // 0x1f to (apparently) deactivate ACP when checking for SINGLE and NONE bits.
         // We however want to be matching also against on ACP-masked ALL, SINGLE, and NONE.
@@ -415,15 +429,15 @@ impl EcdsaSighashType {
         let mask = 0x1f | 0x80;
         match n & mask {
             // "real" sighashes
-            0x01 => EcdsaSighashType::All,
-            0x02 => EcdsaSighashType::None,
-            0x03 => EcdsaSighashType::Single,
-            0x81 => EcdsaSighashType::AllPlusAnyoneCanPay,
-            0x82 => EcdsaSighashType::NonePlusAnyoneCanPay,
-            0x83 => EcdsaSighashType::SinglePlusAnyoneCanPay,
+            0x01 => All,
+            0x02 => None,
+            0x03 => Single,
+            0x81 => AllPlusAnyoneCanPay,
+            0x82 => NonePlusAnyoneCanPay,
+            0x83 => SinglePlusAnyoneCanPay,
             // catchalls
-            x if x & 0x80 == 0x80 => EcdsaSighashType::AllPlusAnyoneCanPay,
-            _ => EcdsaSighashType::All,
+            x if x & 0x80 == 0x80 => AllPlusAnyoneCanPay,
+            _ => All,
         }
     }
 
@@ -433,14 +447,16 @@ impl EcdsaSighashType {
     ///
     /// If `n` is a non-standard sighash value.
     pub fn from_standard(n: u32) -> Result<EcdsaSighashType, NonStandardSighashType> {
+        use EcdsaSighashType::*;
+
         match n {
             // Standard sighashes, see https://github.com/bitcoin/bitcoin/blob/b805dbb0b9c90dadef0424e5b3bf86ac308e103e/src/script/interpreter.cpp#L189-L198
-            0x01 => Ok(EcdsaSighashType::All),
-            0x02 => Ok(EcdsaSighashType::None),
-            0x03 => Ok(EcdsaSighashType::Single),
-            0x81 => Ok(EcdsaSighashType::AllPlusAnyoneCanPay),
-            0x82 => Ok(EcdsaSighashType::NonePlusAnyoneCanPay),
-            0x83 => Ok(EcdsaSighashType::SinglePlusAnyoneCanPay),
+            0x01 => Ok(All),
+            0x02 => Ok(None),
+            0x03 => Ok(Single),
+            0x81 => Ok(AllPlusAnyoneCanPay),
+            0x82 => Ok(NonePlusAnyoneCanPay),
+            0x83 => Ok(SinglePlusAnyoneCanPay),
             non_standard => Err(NonStandardSighashType(non_standard)),
         }
     }
@@ -453,13 +469,15 @@ impl EcdsaSighashType {
 
 impl From<EcdsaSighashType> for SchnorrSighashType {
     fn from(s: EcdsaSighashType) -> Self {
+        use SchnorrSighashType::*;
+
         match s {
-            EcdsaSighashType::All => SchnorrSighashType::All,
-            EcdsaSighashType::None => SchnorrSighashType::None,
-            EcdsaSighashType::Single => SchnorrSighashType::Single,
-            EcdsaSighashType::AllPlusAnyoneCanPay => SchnorrSighashType::AllPlusAnyoneCanPay,
-            EcdsaSighashType::NonePlusAnyoneCanPay => SchnorrSighashType::NonePlusAnyoneCanPay,
-            EcdsaSighashType::SinglePlusAnyoneCanPay => SchnorrSighashType::SinglePlusAnyoneCanPay,
+            EcdsaSighashType::All => All,
+            EcdsaSighashType::None => None,
+            EcdsaSighashType::Single => Single,
+            EcdsaSighashType::AllPlusAnyoneCanPay => AllPlusAnyoneCanPay,
+            EcdsaSighashType::NonePlusAnyoneCanPay => NonePlusAnyoneCanPay,
+            EcdsaSighashType::SinglePlusAnyoneCanPay => SinglePlusAnyoneCanPay,
         }
     }
 }
@@ -467,14 +485,16 @@ impl From<EcdsaSighashType> for SchnorrSighashType {
 impl SchnorrSighashType {
     /// Breaks the sighash flag into the "real" sighash flag and the `SIGHASH_ANYONECANPAY` boolean.
     pub(crate) fn split_anyonecanpay_flag(self) -> (SchnorrSighashType, bool) {
+        use SchnorrSighashType::*;
+
         match self {
-            SchnorrSighashType::Default => (SchnorrSighashType::Default, false),
-            SchnorrSighashType::All => (SchnorrSighashType::All, false),
-            SchnorrSighashType::None => (SchnorrSighashType::None, false),
-            SchnorrSighashType::Single => (SchnorrSighashType::Single, false),
-            SchnorrSighashType::AllPlusAnyoneCanPay => (SchnorrSighashType::All, true),
-            SchnorrSighashType::NonePlusAnyoneCanPay => (SchnorrSighashType::None, true),
-            SchnorrSighashType::SinglePlusAnyoneCanPay => (SchnorrSighashType::Single, true),
+            Default => (Default, false),
+            All => (All, false),
+            None => (None, false),
+            Single => (Single, false),
+            AllPlusAnyoneCanPay => (All, true),
+            NonePlusAnyoneCanPay => (None, true),
+            SinglePlusAnyoneCanPay => (Single, true),
         }
     }
 
