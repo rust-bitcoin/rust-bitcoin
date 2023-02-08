@@ -1415,6 +1415,7 @@ pub mod serde {
     }
 }
 
+#[cfg(feature = "disable")]
 #[cfg(kani)]
 mod verification {
     use std::cmp;

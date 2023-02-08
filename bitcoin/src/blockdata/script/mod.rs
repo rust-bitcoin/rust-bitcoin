@@ -55,12 +55,14 @@ use crate::OutPoint;
 
 mod builder;
 mod instruction;
+pub mod num;                    // FIXME: Needs to be public because of Error.
 mod types;
 #[cfg(test)]
 mod tests;
 
 pub use self::builder::*;
 pub use self::instruction::*;
+pub use self::num::ScriptNum;
 pub use self::types::*;
 
 /// Encodes an integer in script(minimal CScriptNum) format.
