@@ -8,6 +8,7 @@
 //!
 
 use core::cmp::{Ordering, PartialOrd};
+use core::convert::TryFrom;
 use core::{fmt, mem};
 
 use bitcoin_internals::write_err;
@@ -109,7 +110,7 @@ impl LockTime {
     /// # use bitcoin::absolute::LockTime;
     /// # let n = LockTime::from_consensus(741521); // n OP_CHECKLOCKTIMEVERIFY
     ///
-    /// // `from_consensus` roundtrips as expected with `to_consensus_u32`.
+    /// // Roundtrips with `LockTime::to_consensus_u32()`.
     /// let n_lock_time: u32 = 741521;
     /// let lock_time = LockTime::from_consensus(n_lock_time);
     /// assert_eq!(lock_time.to_consensus_u32(), n_lock_time);
@@ -236,8 +237,10 @@ impl LockTime {
         }
     }
 
-    /// Returns the inner `u32` value. This is the value used when creating this `LockTime`
-    /// i.e., `n OP_CHECKLOCKTIMEVERIFY` or nLockTime.
+    /// Returns the inner `u32` consensus encoded value.
+    ///
+    /// This is the value used when creating this `LockTime` i.e., `n OP_CHECKLOCKTIMEVERIFY` or
+    /// nLockTime.
     ///
     /// # Warning
     ///
@@ -260,6 +263,9 @@ impl LockTime {
     ///
     /// // Or, if you have Rust 1.53 or greater
     /// // let is_satisfied = n.partial_cmp(&lock_time).expect("invalid comparison").is_le();
+    ///
+    /// // Roundtrips with `LockTime::from_consensus()`.
+    /// assert_eq!(LockTime::from_consensus(n.to_consensus_u32()), n)
     /// ```
     #[inline]
     pub fn to_consensus_u32(self) -> u32 {
@@ -268,9 +274,31 @@ impl LockTime {
             LockTime::Seconds(ref t) => t.to_consensus_u32(),
         }
     }
+
+    /// Returns the inner `u32` consensus encoded value.
+    ///
+    /// # Examples
+    /// ```
+    /// # use bitcoin::absolute::LockTime;
+    /// // Equivalent to `Self::to_consensus_u32()` and `u32::from()`.
+    /// let n = LockTime::from_consensus(741521);
+    /// assert_eq!(n.to_u32(), n.to_consensus_u32());
+    /// ```
+    #[inline]
+    pub fn to_u32(self) -> u32 { self.to_consensus_u32() }
 }
 
 impl_parse_str_from_int_infallible!(LockTime, u32, from_consensus);
+
+impl From<u32> for LockTime {
+    #[inline]
+    fn from(t: u32) -> Self { LockTime::from_consensus(t) }
+}
+
+impl From<LockTime> for u32 {
+    #[inline]
+    fn from(t: LockTime) -> Self { t.to_consensus_u32() }
+}
 
 impl From<Height> for LockTime {
     #[inline]
@@ -448,6 +476,12 @@ impl fmt::Display for Height {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
+impl TryFrom<u32> for Height {
+    type Error = Error;
+
+    fn try_from(x: u32) -> Result<Self, Self::Error> { Height::from_consensus(x) }
+}
+
 impl FromHexStr for Height {
     type Error = Error;
 
@@ -526,6 +560,12 @@ impl_parse_str_from_int_fallible!(Time, u32, from_consensus, Error);
 
 impl fmt::Display for Time {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
+}
+
+impl TryFrom<u32> for Time {
+    type Error = Error;
+
+    fn try_from(x: u32) -> Result<Self, Self::Error> { Time::from_consensus(x) }
 }
 
 impl FromHexStr for Time {

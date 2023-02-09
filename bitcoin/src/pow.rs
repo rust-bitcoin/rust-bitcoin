@@ -252,14 +252,48 @@ pub struct CompactTarget(u32);
 
 impl CompactTarget {
     /// Creates a [`CompactTarget`] from a consensus encoded `u32`.
+    ///
+    /// # Examples
+    /// ```
+    /// # use bitcoin::pow::CompactTarget;
+    /// # let bits = 0x1d00ffff;
+    /// // Roundtrips with `CompactTarget::to_consensus_u32()`.
+    /// assert_eq!(CompactTarget::from_consensus(bits).to_consensus_u32(), bits)
+    /// ```
+    #[inline]
     pub fn from_consensus(bits: u32) -> Self { Self(bits) }
 
     /// Returns the consensus encoded `u32` representation of this [`CompactTarget`].
-    pub fn to_consensus(self) -> u32 { self.0 }
+    ///
+    /// # Examples
+    /// ```
+    /// # use bitcoin::pow::CompactTarget;
+    /// // Roundtrips with `CompactTarget::from_consensus()`.
+    /// let c = CompactTarget::from_consensus(0x1d00ffff);
+    /// assert_eq!(CompactTarget::from_consensus(c.to_consensus_u32()), c)
+    /// ```
+    #[inline]
+    pub fn to_consensus_u32(self) -> u32 { self.0 }
+
+    /// Returns the consensus encoded `u32` representation of this [`CompactTarget`].
+    ///
+    /// # Examples
+    /// ```
+    /// # use bitcoin::pow::CompactTarget;
+    /// // Equivalent to `Self::to_consensus_u32()` and `u32::from()`.
+    /// let c = CompactTarget::from_consensus(0x1d00ffff);
+    /// assert_eq!(c.to_u32(), c.to_consensus_u32());
+    /// ```
+    #[inline]
+    pub fn to_u32(self) -> u32 { self.to_consensus_u32() }
 }
 
 impl From<CompactTarget> for Target {
     fn from(c: CompactTarget) -> Self { Target::from_compact(c) }
+}
+
+impl From<CompactTarget> for u32 {
+    fn from(c: CompactTarget) -> Self { c.to_consensus_u32() }
 }
 
 impl FromHexStr for CompactTarget {
@@ -1582,7 +1616,7 @@ mod tests {
         let back = t.to_compact_lossy();
         assert_eq!(back, compact); // From/Into sanity check.
 
-        assert_eq!(back.to_consensus(), consensus);
+        assert_eq!(back.to_consensus_u32(), consensus);
     }
 
     #[test]

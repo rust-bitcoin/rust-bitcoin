@@ -128,12 +128,33 @@ impl Version {
     /// Creates a [`Version`] from a signed 32 bit integer value.
     ///
     /// This is the data type used in consensus code in Bitcoin Core.
+    ///
+    /// # Examples
+    /// ```
+    /// # use bitcoin::block::Version;
+    /// // Roundtrips with `Version::to_consensus_i32()`.
+    /// assert_eq!(Version::from_consensus(1).to_consensus_i32(), 1)
+    /// ```
+    #[inline]
     pub fn from_consensus(v: i32) -> Self { Version(v) }
 
-    /// Returns the inner `i32` value.
+    /// Returns the inner `i32` consensus encoded value.
     ///
-    /// This is the data type used in consensus code in Bitcoin Core.
-    pub fn to_consensus(self) -> i32 { self.0 }
+    /// # Examples
+    /// ```
+    /// # use bitcoin::block::Version;
+    /// // Roundtrips with `Version::from_consensus()`.
+    /// let v = Version::ONE;
+    /// assert_eq!(Version::from_consensus(v.to_consensus_i32()), v)
+    /// ```
+    #[inline]
+    pub fn to_consensus_i32(self) -> i32 { self.0 }
+
+    /// Returns the inner `i32` consensus encoded value.
+    ///
+    /// Equivalent to [`Self::to_consensus_i32`] and `i32::from()`.
+    #[inline]
+    pub fn to_i32(self) -> i32 { self.to_consensus_i32() }
 
     /// Checks whether the version number is signalling a soft fork at the given bit.
     ///
@@ -157,6 +178,11 @@ impl Version {
 
 impl Default for Version {
     fn default() -> Version { Self::NO_SOFT_FORK_SIGNALLING }
+}
+
+impl From<Version> for i32 {
+    #[inline]
+    fn from(v: Version) -> Self { v.to_consensus_i32() }
 }
 
 impl Encodable for Version {

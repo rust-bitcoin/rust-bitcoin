@@ -331,7 +331,7 @@ impl<'s> ScriptPath<'s> {
         let mut enc = TapLeafHash::engine();
 
         self.leaf_version
-            .to_consensus()
+            .to_consensus_u8()
             .consensus_encode(&mut enc)
             .expect("Writing to hash enging should never fail");
         self.script.consensus_encode(&mut enc).expect("Writing to hash enging should never fail");

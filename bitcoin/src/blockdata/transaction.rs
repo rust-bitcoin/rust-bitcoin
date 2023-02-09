@@ -399,13 +399,40 @@ impl Sequence {
         }
     }
 
-    /// Creates a sequence from a u32 value.
+    /// Creates a sequence from a `u32` value.
+    ///
+    /// # Examples
+    /// ```
+    /// # use bitcoin::transaction::Sequence;
+    /// # let bits = 0x40FFFF;
+    /// // Roundtrips with `Sequence::to_consensus()`.
+    /// assert_eq!(Sequence::from_consensus(bits).to_consensus_u32(), bits)
+    /// ```
     #[inline]
     pub fn from_consensus(n: u32) -> Self { Sequence(n) }
 
-    /// Returns the inner 32bit integer value of Sequence.
+    /// Returns the inner `u32` consensus encoded value.
+    ///
+    /// # Examples
+    /// ```
+    /// # use bitcoin::transaction::Sequence;
+    /// // Roundtrips with `Sequence::from_consensus()`.
+    /// let n = Sequence::from(0x40FFFF);
+    /// assert_eq!(Sequence::from_consensus(n.to_consensus_u32()), n)
+    /// ```
     #[inline]
     pub fn to_consensus_u32(self) -> u32 { self.0 }
+
+    /// Returns the inner `u32` consensus encoded value.
+    ///
+    /// # Examples
+    /// ```
+    /// # use bitcoin::transaction::Sequence;
+    /// let n = Sequence::from_consensus(0x40FFFF);
+    /// assert_eq!(n.to_u32(), n.to_consensus_u32());
+    /// ```
+    #[inline]
+    pub fn to_u32(self) -> u32 { self.to_consensus_u32() }
 
     /// Creates a [`relative::LockTime`] from this [`Sequence`] number.
     #[inline]
@@ -445,8 +472,14 @@ impl Default for Sequence {
     fn default() -> Self { Sequence::MAX }
 }
 
+impl From<u32> for Sequence {
+    #[inline]
+    fn from(x: u32) -> Self { Sequence::from_consensus(x) }
+}
+
 impl From<Sequence> for u32 {
-    fn from(sequence: Sequence) -> u32 { sequence.0 }
+    #[inline]
+    fn from(n: Sequence) -> Self { Sequence::to_consensus_u32(n) }
 }
 
 impl fmt::Display for Sequence {

@@ -88,7 +88,7 @@ impl TapLeafHash {
     /// Computes the leaf hash from components.
     pub fn from_script(script: &Script, ver: LeafVersion) -> TapLeafHash {
         let mut eng = TapLeafHash::engine();
-        ver.to_consensus().consensus_encode(&mut eng).expect("engines don't error");
+        ver.to_consensus_u8().consensus_encode(&mut eng).expect("engines don't error");
         script.consensus_encode(&mut eng).expect("engines don't error");
         TapLeafHash::from_engine(eng)
     }
@@ -1255,7 +1255,7 @@ impl ControlBlock {
     /// The number of bytes written to the writer.
     pub fn encode<Write: io::Write>(&self, mut writer: Write) -> io::Result<usize> {
         let first_byte: u8 =
-            i32::from(self.output_key_parity) as u8 | self.leaf_version.to_consensus();
+            i32::from(self.output_key_parity) as u8 | self.leaf_version.to_consensus_u8();
         writer.write_all(&[first_byte])?;
         writer.write_all(&self.internal_key.serialize())?;
         self.merkle_branch.encode(&mut writer)?;
@@ -1318,9 +1318,21 @@ impl FutureLeafVersion {
         }
     }
 
-    /// Returns the consensus representation of this [`FutureLeafVersion`].
+    /// Returns the consensus encoded `u8` representation of this [`FutureLeafVersion`].
     #[inline]
-    pub fn to_consensus(self) -> u8 { self.0 }
+    pub fn to_consensus_u8(self) -> u8 { self.0 }
+
+    /// Returns the consensus representation of this [`FutureLeafVersion`] as a `u32`.
+    #[inline]
+    pub fn to_consensus_u32(self) -> u32 { self.to_consensus_u8().into() }
+
+    /// Returns the consensus encoded `u8` representation of this [`FutureLeafVersion`].
+    #[inline]
+    pub fn to_u8(self) -> u8 { self.to_consensus_u8() }
+
+    /// Returns the consensus representation of this [`FutureLeafVersion`] as a `u32`.
+    #[inline]
+    pub fn to_u32(self) -> u32 { self.to_consensus_u32() }
 }
 
 impl fmt::Display for FutureLeafVersion {
@@ -1336,6 +1348,16 @@ impl fmt::LowerHex for FutureLeafVersion {
 impl fmt::UpperHex for FutureLeafVersion {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::UpperHex::fmt(&self.0, f) }
+}
+
+impl From<FutureLeafVersion> for u8 {
+    #[inline]
+    fn from(v: FutureLeafVersion) -> Self { v.to_consensus_u8() }
+}
+
+impl From<FutureLeafVersion> for u32 {
+    #[inline]
+    fn from(v: FutureLeafVersion) -> Self { v.to_consensus_u32() }
 }
 
 /// The leaf version for tapleafs.
@@ -1355,6 +1377,7 @@ impl LeafVersion {
     ///
     /// - If the last bit of the `version` is odd.
     /// - If the `version` is 0x50 ([`TAPROOT_ANNEX_PREFIX`]).
+    #[inline]
     pub fn from_consensus(version: u8) -> Result<Self, TaprootError> {
         match version {
             TAPROOT_LEAF_TAPSCRIPT => Ok(LeafVersion::TapScript),
@@ -1364,13 +1387,30 @@ impl LeafVersion {
         }
     }
 
-    /// Returns the consensus representation of this [`LeafVersion`].
-    pub fn to_consensus(self) -> u8 {
+    /// Returns the consensus encoded `u8` representation of this [`LeafVersion`].
+    #[inline]
+    pub fn to_consensus_u8(self) -> u8 {
         match self {
             LeafVersion::TapScript => TAPROOT_LEAF_TAPSCRIPT,
-            LeafVersion::Future(version) => version.to_consensus(),
+            LeafVersion::Future(version) => version.to_consensus_u8(),
         }
     }
+
+    /// Returns the consensus representation of this [`LeafVersion`] as a `u32`.
+    #[inline]
+    pub fn to_consensus_u32(self) -> u32 { self.to_consensus_u8().into() }
+
+    /// Returns the consensus encoded `u8` representation of this [`LeafVersion`].
+    ///
+    /// Equivalent to [`Self::to_consensus_u8`] and `u8::from()`.
+    #[inline]
+    pub fn to_u8(self) -> u8 { self.to_consensus_u8() }
+
+    /// Returns the consensus representation of this [`LeafVersion`] as a `u32`.
+    ///
+    /// Equivalent to [`Self::to_consensus_u32`] and `u32::from()`.
+    #[inline]
+    pub fn to_u32(self) -> u32 { self.to_consensus_u32() }
 }
 
 impl fmt::Display for LeafVersion {
@@ -1386,14 +1426,22 @@ impl fmt::Display for LeafVersion {
 
 impl fmt::LowerHex for LeafVersion {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::LowerHex::fmt(&self.to_consensus(), f)
+        fmt::LowerHex::fmt(&self.to_consensus_u8(), f)
     }
 }
 
 impl fmt::UpperHex for LeafVersion {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::UpperHex::fmt(&self.to_consensus(), f)
+        fmt::UpperHex::fmt(&self.to_consensus_u8(), f)
     }
+}
+
+impl From<LeafVersion> for u8 {
+    fn from(lv: LeafVersion) -> Self { lv.to_consensus_u8() }
+}
+
+impl From<LeafVersion> for u32 {
+    fn from(lv: LeafVersion) -> Self { lv.to_consensus_u32() }
 }
 
 /// Serializes [`LeafVersion`] as a `u8` using consensus encoding.
@@ -1404,7 +1452,7 @@ impl serde::Serialize for LeafVersion {
     where
         S: serde::Serializer,
     {
-        serializer.serialize_u8(self.to_consensus())
+        serializer.serialize_u8(self.to_consensus_u8())
     }
 }
 
