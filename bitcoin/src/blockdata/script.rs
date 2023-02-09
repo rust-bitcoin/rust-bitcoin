@@ -79,7 +79,6 @@ use crate::taproot::{LeafVersion, TapNodeHash, TapLeafHash};
 use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
 use crate::schnorr::{TapTweak, TweakedPublicKey, UntweakedPublicKey};
 
-#[allow(unused_imports)]
 #[cfg(not(rust_v_1_51))] use bitcoin_internals::num::IntExt;
 
 /// Bitcoin script slice.
