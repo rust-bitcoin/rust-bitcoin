@@ -79,6 +79,8 @@ use crate::taproot::{LeafVersion, TapNodeHash, TapLeafHash};
 use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
 use crate::schnorr::{TapTweak, TweakedPublicKey, UntweakedPublicKey};
 
+#[cfg(not(rust_v_1_51))] use bitcoin_internals::num::IntExt;
+
 /// Bitcoin script slice.
 ///
 /// *[See also the `bitcoin::blockdata::script` module](crate::blockdata::script).*
@@ -845,7 +847,7 @@ pub fn write_scriptint(out: &mut [u8; 8], n: i64) -> usize {
 
     let neg = n < 0;
 
-    let mut abs = if neg { -n } else { n } as usize;
+    let mut abs = n.unsigned_abs();
     while abs > 0xFF {
         out[len] = (abs & 0xFF) as u8;
         len += 1;
