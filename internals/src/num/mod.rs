@@ -11,13 +11,13 @@ pub trait IntExt {
 }
 
 impl IntExt for i64 {
-    type Unsigned = i64;
+    type Unsigned = u64;
 
     fn unsigned_abs(self) -> Self::Unsigned {
         if self < 0 {
-            -self
+            -self as u64
         } else {
-            self
+            self as u64
         }
     }
 }
