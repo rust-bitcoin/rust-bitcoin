@@ -9,7 +9,7 @@ use core::fmt;
 
 use bitcoin_internals::write_err;
 
-use crate::prelude::String;
+use crate::prelude::*;
 
 /// Trait that allows types to be initialized from hex strings
 pub trait FromHexStr: Sized {
@@ -19,9 +19,9 @@ pub trait FromHexStr: Sized {
     /// Parses provided string as hex requiring 0x prefix.
     ///
     /// This is intended for user-supplied inputs or already-existing protocols in which 0x prefix is used.
-    fn from_hex_str<S: AsRef<str> + Into<String>>(s: S) -> Result<Self, FromHexError<Self::Error>> {
+    fn from_hex_str<S: AsRef<str>>(s: S) -> Result<Self, FromHexError<Self::Error>> {
         if !s.as_ref().starts_with("0x") {
-            Err(FromHexError::MissingPrefix(s.into()))
+            Err(FromHexError::MissingPrefix(s.as_ref().to_owned()))
         } else {
             Ok(Self::from_hex_str_no_prefix(s.as_ref().trim_start_matches("0x"))?)
         }
@@ -31,7 +31,7 @@ pub trait FromHexStr: Sized {
     ///
     /// This is **not** recommended for user-supplied inputs because of possible confusion with decimals.
     /// It should be only used for existing protocols which always encode values as hex without 0x prefix.
-    fn from_hex_str_no_prefix<S: AsRef<str> + Into<String>>(s: S) -> Result<Self, Self::Error>;
+    fn from_hex_str_no_prefix<S: AsRef<str>>(s: S) -> Result<Self, Self::Error>;
 }
 
 /// Hex parsing error

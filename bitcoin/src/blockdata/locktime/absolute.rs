@@ -327,7 +327,7 @@ impl FromHexStr for LockTime {
     type Error = Error;
 
     #[inline]
-    fn from_hex_str_no_prefix<S: AsRef<str> + Into<String>>(s: S) -> Result<Self, Self::Error> {
+    fn from_hex_str_no_prefix<S: AsRef<str>>(s: S) -> Result<Self, Self::Error> {
         let packed_lock_time = crate::parse::hex_u32(s)?;
         Ok(Self::from_consensus(packed_lock_time))
     }
@@ -461,7 +461,7 @@ impl FromHexStr for Height {
     type Error = Error;
 
     #[inline]
-    fn from_hex_str_no_prefix<S: AsRef<str> + Into<String>>(s: S) -> Result<Self, Self::Error> {
+    fn from_hex_str_no_prefix<S: AsRef<str>>(s: S) -> Result<Self, Self::Error> {
         let height = crate::parse::hex_u32(s)?;
         Self::from_consensus(height)
     }
@@ -574,7 +574,7 @@ impl FromHexStr for Time {
     type Error = Error;
 
     #[inline]
-    fn from_hex_str_no_prefix<S: AsRef<str> + Into<String>>(s: S) -> Result<Self, Self::Error> {
+    fn from_hex_str_no_prefix<S: AsRef<str>>(s: S) -> Result<Self, Self::Error> {
         let time = crate::parse::hex_u32(s)?;
         Time::from_consensus(time)
     }

@@ -18,7 +18,6 @@ use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::consensus::Params;
 use crate::hash_types::BlockHash;
 use crate::io::{self, Read, Write};
-use crate::prelude::String;
 use crate::string::FromHexStr;
 
 /// Implements $int * $ty. Requires `u64::from($int)`.
@@ -293,7 +292,7 @@ impl From<CompactTarget> for Target {
 impl FromHexStr for CompactTarget {
     type Error = crate::parse::ParseIntError;
 
-    fn from_hex_str_no_prefix<S: AsRef<str> + Into<String>>(s: S) -> Result<Self, Self::Error> {
+    fn from_hex_str_no_prefix<S: AsRef<str>>(s: S) -> Result<Self, Self::Error> {
         let compact_target = crate::parse::hex_u32(s)?;
         Ok(Self::from_consensus(compact_target))
     }

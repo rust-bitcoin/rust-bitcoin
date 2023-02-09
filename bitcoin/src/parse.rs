@@ -70,10 +70,10 @@ impl_integer!(u8, i8, u16, i16, u32, i32, u64, i64, u128, i128);
 ///
 /// If the caller owns `String` or `Box<str>` which is not used later it's better to pass it as
 /// owned since it avoids allocation in error case.
-pub(crate) fn int<T: Integer, S: AsRef<str> + Into<String>>(s: S) -> Result<T, ParseIntError> {
+pub(crate) fn int<T: Integer, S: AsRef<str>>(s: S) -> Result<T, ParseIntError> {
     s.as_ref().parse().map_err(|error| {
         ParseIntError {
-            input: s.into(),
+            input: s.as_ref().to_owned(),
             bits: u8::try_from(core::mem::size_of::<T>() * 8).expect("max is 128 bits for u128"),
             // We detect if the type is signed by checking if -1 can be represented by it
             // this way we don't have to implement special traits and optimizer will get rid of the
@@ -84,9 +84,9 @@ pub(crate) fn int<T: Integer, S: AsRef<str> + Into<String>>(s: S) -> Result<T, P
     })
 }
 
-pub(crate) fn hex_u32<S: AsRef<str> + Into<String>>(s: S) -> Result<u32, ParseIntError> {
+pub(crate) fn hex_u32<S: AsRef<str>>(s: S) -> Result<u32, ParseIntError> {
     u32::from_str_radix(s.as_ref(), 16).map_err(|error| ParseIntError {
-        input: s.into(),
+        input: s.as_ref().to_owned(),
         bits: u8::try_from(core::mem::size_of::<u32>() * 8).expect("max is 32 bits for u32"),
         is_signed: u32::try_from(-1i8).is_ok(),
         source: error,

@@ -461,7 +461,7 @@ impl Sequence {
 impl FromHexStr for Sequence {
     type Error = crate::parse::ParseIntError;
 
-    fn from_hex_str_no_prefix<S: AsRef<str> + Into<String>>(s: S) -> Result<Self, Self::Error> {
+    fn from_hex_str_no_prefix<S: AsRef<str>>(s: S) -> Result<Self, Self::Error> {
         let sequence = crate::parse::hex_u32(s)?;
         Ok(Self::from_consensus(sequence))
     }
