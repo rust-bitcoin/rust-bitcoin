@@ -318,40 +318,6 @@ fn script_serialize() {
 }
 
 #[test]
-fn scriptint_round_trip() {
-    fn build_scriptint(n: i64) -> Vec<u8> {
-        let mut buf = [0u8; 8];
-        let len = write_scriptint(&mut buf, n);
-        assert!(len <= 8);
-        buf[..len].to_vec()
-    }
-
-    assert_eq!(build_scriptint(-1), vec![0x81]);
-    assert_eq!(build_scriptint(255), vec![255, 0]);
-    assert_eq!(build_scriptint(256), vec![0, 1]);
-    assert_eq!(build_scriptint(257), vec![1, 1]);
-    assert_eq!(build_scriptint(511), vec![255, 1]);
-    let test_vectors = [
-        10, 100, 255, 256, 1000, 10000, 25000, 200000, 5000000, 1000000000,
-        (1 << 31) - 1, -((1 << 31) - 1),
-    ];
-    for &i in test_vectors.iter() {
-        assert_eq!(Ok(i), read_scriptint(&build_scriptint(i)));
-        assert_eq!(Ok(-i), read_scriptint(&build_scriptint(-i)));
-    }
-    assert!(read_scriptint(&build_scriptint(1 << 31)).is_err());
-    assert!(read_scriptint(&build_scriptint(-(1 << 31))).is_err());
-}
-
-#[test]
-fn non_minimal_scriptints() {
-    assert_eq!(read_scriptint(&[0x80, 0x00]), Ok(0x80));
-    assert_eq!(read_scriptint(&[0xff, 0x00]), Ok(0xff));
-    assert_eq!(read_scriptint(&[0x8f, 0x00, 0x00]), Err(Error::NonMinimalPush));
-    assert_eq!(read_scriptint(&[0x7f, 0x00]), Err(Error::NonMinimalPush));
-}
-
-#[test]
 fn script_hashes() {
     let script = ScriptBuf::from_hex("410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac").unwrap();
     assert_eq!(script.script_hash().to_string(), "8292bcfbef1884f73c813dfe9c82fd7e814291ea");

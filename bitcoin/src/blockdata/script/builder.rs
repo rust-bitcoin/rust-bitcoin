@@ -9,7 +9,7 @@ use secp256k1::XOnlyPublicKey;
 
 use crate::blockdata::locktime::absolute;
 use crate::blockdata::opcodes::{self, all::*};
-use crate::blockdata::script::{write_scriptint, opcode_to_verify, Script, ScriptBuf};
+use crate::blockdata::script::{opcode_to_verify, Script, ScriptBuf, ScriptNum};
 use crate::blockdata::transaction::Sequence;
 use crate::key::PublicKey;
 use crate::prelude::*;
@@ -55,7 +55,8 @@ impl Builder {
     /// This uses the explicit encoding regardless of the availability of dedicated opcodes.
     pub(in crate::blockdata) fn push_int_non_minimal(self, data: i64) -> Builder {
         let mut buf = [0u8; 8];
-        let len = write_scriptint(&mut buf, data);
+        let n = ScriptNum(data);
+        let len = n.encode(&mut buf);
         self.push_slice(&buf[..len])
     }
 

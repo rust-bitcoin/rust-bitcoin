@@ -68,6 +68,7 @@ pub use self::types::*;
 /// Encodes an integer in script(minimal CScriptNum) format.
 ///
 /// Writes bytes into the buffer and returns the number of bytes written.
+#[deprecated(since = "0.31.0", note = "Use ScriptNum::encode instead")]
 pub fn write_scriptint(out: &mut [u8; 8], n: i64) -> usize {
     let mut len = 0;
     if n == 0 { return len; }
@@ -112,6 +113,7 @@ pub fn write_scriptint(out: &mut [u8; 8], n: i64) -> usize {
 /// don't fit in 64 bits (for efficiency on modern processors) so we
 /// simply say, anything in excess of 32 bits is no longer a number.
 /// This is basically a ranged type implementation.
+#[deprecated(since = "0.31.0", note = "Use ScriptNum::decode instead")]
 pub fn read_scriptint(v: &[u8]) -> Result<i64, Error> {
     let len = v.len();
     if len > 4 { return Err(Error::NumericOverflow); }
