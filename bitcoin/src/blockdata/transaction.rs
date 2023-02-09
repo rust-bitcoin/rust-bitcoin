@@ -277,7 +277,7 @@ impl Default for TxIn {
 /// - Indicating and encoding [BIP-68] relative lock-times.
 /// - Indicating whether a transcation opts-in to [BIP-125] replace-by-fee.
 ///
-/// Note that transactions spending an output with `OP_CHECKLOCKTIMEVERIFY`MUST NOT use
+/// Note that transactions spending an output with `OP_CHECKLOCKTIMEVERIFY` MUST NOT use
 /// `Sequence::MAX` for the corresponding input. [BIP-65]
 ///
 /// [BIP-65]: <https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki>

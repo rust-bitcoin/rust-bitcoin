@@ -20,7 +20,7 @@ use crate::hash_types::{Wtxid, TxMerkleNode, WitnessMerkleNode, WitnessCommitmen
 use crate::consensus::{encode, Encodable, Decodable};
 use crate::blockdata::transaction::Transaction;
 use crate::blockdata::constants::WITNESS_SCALE_FACTOR;
-use crate::blockdata::script;
+use crate::blockdata::script::{self, ScriptNum};
 use crate::pow::{CompactTarget, Target, Work};
 use crate::VarInt;
 use crate::internal_macros::impl_consensus_encoding;
@@ -334,11 +334,11 @@ impl Block {
         match push.map_err(|_| Bip34Error::NotPresent)? {
             script::Instruction::PushBytes(b) => {
                 // Check that the number is encoded in the minimal way.
-                let h = script::read_scriptint(b).map_err(|_e| Bip34Error::UnexpectedPush(b.to_vec()))?;
-                if h < 0 {
+                let h = ScriptNum::decode(b).map_err(|_e| Bip34Error::UnexpectedPush(b.to_vec()))?;
+                if h.0 < 0 {
                     Err(Bip34Error::NegativeHeight)
                 } else {
-                    Ok(h as u64)
+                    Ok(h.0 as u64)
                 }
             }
             _ => Err(Bip34Error::NotPresent),

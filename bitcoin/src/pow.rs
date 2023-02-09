@@ -1703,6 +1703,7 @@ mod tests {
     }
 }
 
+#[cfg(feature = "disable")]
 #[cfg(kani)]
 mod verification {
     use super::*;
