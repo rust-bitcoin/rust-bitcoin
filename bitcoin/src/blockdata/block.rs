@@ -19,12 +19,12 @@ use crate::hashes::{Hash, HashEngine};
 use crate::hash_types::{Wtxid, TxMerkleNode, WitnessMerkleNode, WitnessCommitment};
 use crate::consensus::{encode, Encodable, Decodable};
 use crate::blockdata::transaction::Transaction;
-use crate::blockdata::constants::WITNESS_SCALE_FACTOR;
 use crate::blockdata::script;
 use crate::pow::{CompactTarget, Target, Work};
 use crate::VarInt;
 use crate::internal_macros::impl_consensus_encoding;
 use crate::io;
+use super::Weight;
 
 pub use crate::hash_types::BlockHash;
 
@@ -302,9 +302,9 @@ impl Block {
     }
 
     /// Returns the weight of the block.
-    pub fn weight(&self) -> usize {
-        let base_weight = WITNESS_SCALE_FACTOR * self.base_size();
-        let txs_weight: usize = self.txdata.iter().map(Transaction::weight).sum();
+    pub fn weight(&self) -> Weight {
+        let base_weight = Weight::from_non_witness_data_size(self.base_size() as u64);
+        let txs_weight: Weight = self.txdata.iter().map(Transaction::weight).sum();
         base_weight + txs_weight
     }
 
@@ -470,7 +470,7 @@ mod tests {
 
         assert_eq!(real_decode.size(), some_block.len());
         assert_eq!(real_decode.strippedsize(), some_block.len());
-        assert_eq!(real_decode.weight(), some_block.len() * 4);
+        assert_eq!(real_decode.weight(), Weight::from_non_witness_data_size(some_block.len() as u64));
 
         // should be also ok for a non-witness block as commitment is optional in that case
         assert!(real_decode.check_witness_commitment());
@@ -505,7 +505,7 @@ mod tests {
 
         assert_eq!(real_decode.size(), segwit_block.len());
         assert_eq!(real_decode.strippedsize(), 4283);
-        assert_eq!(real_decode.weight(), 17168);
+        assert_eq!(real_decode.weight(), Weight::from_wu(17168));
 
         assert!(real_decode.check_witness_commitment());
 
