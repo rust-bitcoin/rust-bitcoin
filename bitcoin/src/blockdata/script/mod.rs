@@ -167,6 +167,7 @@ pub fn read_scriptbool(v: &[u8]) -> bool {
 /// Note that this does **not** return an error for `size` between `core::size_of::<usize>()`
 /// and `u16::max_value / 8` if there's no overflow.
 #[inline]
+#[deprecated(since = "0.30.0", note = "bitcoin integers are signed 32 bits, use read_scriptint")]
 pub fn read_uint(data: &[u8], size: usize) -> Result<usize, Error> {
     read_uint_iter(&mut data.iter(), size).map_err(Into::into)
 }
