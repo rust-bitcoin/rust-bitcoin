@@ -66,6 +66,11 @@ pub use self::types::*;
 /// Encodes an integer in script(minimal CScriptNum) format.
 ///
 /// Writes bytes into the buffer and returns the number of bytes written.
+///
+/// Note that `write_scriptint`/`read_scriptint` do not roundtrip if the value written requires
+/// more than 4 bytes, this is in line with Bitcoin Core (see [`CScriptNum::serialize`]).
+///
+/// [`CScriptNum::serialize`]: <https://github.com/bitcoin/bitcoin/blob/8ae2808a4354e8dcc697f76bacc5e2f2befe9220/src/script/script.h#L345>
 pub fn write_scriptint(out: &mut [u8; 8], n: i64) -> usize {
     let mut len = 0;
     if n == 0 { return len; }
@@ -110,6 +115,8 @@ pub fn write_scriptint(out: &mut [u8; 8], n: i64) -> usize {
 /// don't fit in 64 bits (for efficiency on modern processors) so we
 /// simply say, anything in excess of 32 bits is no longer a number.
 /// This is basically a ranged type implementation.
+///
+/// This code is based on the `CScriptNum` constructor in Bitcoin Core (see `script.h`).
 pub fn read_scriptint(v: &[u8]) -> Result<i64, Error> {
     let len = v.len();
     if len > 4 { return Err(Error::NumericOverflow); }
@@ -167,6 +174,7 @@ pub fn read_scriptbool(v: &[u8]) -> bool {
 /// Note that this does **not** return an error for `size` between `core::size_of::<usize>()`
 /// and `u16::max_value / 8` if there's no overflow.
 #[inline]
+#[deprecated(since = "0.30.0", note = "bitcoin integers are signed 32 bits, use read_scriptint")]
 pub fn read_uint(data: &[u8], size: usize) -> Result<usize, Error> {
     read_uint_iter(&mut data.iter(), size).map_err(Into::into)
 }
@@ -212,7 +220,7 @@ fn opcode_to_verify(opcode: Option<opcodes::All>) -> Option<opcodes::All> {
 #[non_exhaustive]
 pub enum Error {
     /// Something did a non-minimal push; for more information see
-    /// `https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki#Push_operators`
+    /// <https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki#push-operators>
     NonMinimalPush,
     /// Some opcode expected a parameter but it was missing or truncated.
     EarlyEndOfScript,

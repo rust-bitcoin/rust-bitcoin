@@ -44,7 +44,7 @@ impl Builder {
         }
         // We can also special-case zero
         else if data == 0 {
-            self.push_opcode(opcodes::OP_FALSE)
+            self.push_opcode(opcodes::OP_0)
         }
         // Otherwise encode it as data
         else { self.push_int_non_minimal(data) }
