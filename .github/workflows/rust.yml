@@ -20,6 +20,7 @@ jobs:
           DO_LINT: true
           AS_DEPENDENCY: false
           DO_NO_STD: true
+          DO_DOCS: true
           DO_FEATURE_MATRIX: true
           DO_SCHEMARS_TESTS: true # Currently only used in hashes crate.
         run: ./contrib/test.sh
@@ -55,7 +56,7 @@ jobs:
           DO_BENCH: true
           AS_DEPENDENCY: false
           DO_NO_STD: true
-          DO_DOCS: true
+          DO_DOCSRS: true
         run: ./contrib/test.sh
 
   MSRV:
