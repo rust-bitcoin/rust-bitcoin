@@ -51,45 +51,6 @@ use crate::io;
 use crate::prelude::*;
 use self::MerkleBlockError::*;
 
-/// An error when verifying the merkle block.
-#[derive(Clone, PartialEq, Eq, Debug)]
-#[non_exhaustive]
-pub enum MerkleBlockError {
-    /// Merkle root in the header doesn't match to the root calculated from partial merkle tree.
-    MerkleRootMismatch,
-    /// Partial merkle tree contains no transactions.
-    NoTransactions,
-    /// There are too many transactions.
-    TooManyTransactions,
-    /// General format error.
-    BadFormat(String),
-}
-
-impl fmt::Display for MerkleBlockError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use self::MerkleBlockError::*;
-
-        match *self {
-            MerkleRootMismatch => write!(f, "merkle header root doesn't match to the root calculated from the partial merkle tree"),
-            NoTransactions => write!(f, "partial merkle tree contains no transactions"),
-            TooManyTransactions => write!(f, "too many transactions"),
-            BadFormat(ref s) => write!(f, "general format error: {}", s),
-        }
-    }
-}
-
-#[cfg(feature = "std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-impl std::error::Error for MerkleBlockError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use self::MerkleBlockError::*;
-
-        match *self {
-            MerkleRootMismatch | NoTransactions | TooManyTransactions | BadFormat(_) => None,
-        }
-    }
-}
-
 /// Data structure that represents a partial merkle tree.
 ///
 /// It represents a subset of the txid's of a known block, in a way that
@@ -492,6 +453,45 @@ impl Decodable for MerkleBlock {
             header: Decodable::consensus_decode(r)?,
             txn: Decodable::consensus_decode(r)?,
         })
+    }
+}
+
+/// An error when verifying the merkle block.
+#[derive(Clone, PartialEq, Eq, Debug)]
+#[non_exhaustive]
+pub enum MerkleBlockError {
+    /// Merkle root in the header doesn't match to the root calculated from partial merkle tree.
+    MerkleRootMismatch,
+    /// Partial merkle tree contains no transactions.
+    NoTransactions,
+    /// There are too many transactions.
+    TooManyTransactions,
+    /// General format error.
+    BadFormat(String),
+}
+
+impl fmt::Display for MerkleBlockError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use self::MerkleBlockError::*;
+
+        match *self {
+            MerkleRootMismatch => write!(f, "merkle header root doesn't match to the root calculated from the partial merkle tree"),
+            NoTransactions => write!(f, "partial merkle tree contains no transactions"),
+            TooManyTransactions => write!(f, "too many transactions"),
+            BadFormat(ref s) => write!(f, "general format error: {}", s),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+impl std::error::Error for MerkleBlockError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use self::MerkleBlockError::*;
+
+        match *self {
+            MerkleRootMismatch | NoTransactions | TooManyTransactions | BadFormat(_) => None,
+        }
     }
 }
 
