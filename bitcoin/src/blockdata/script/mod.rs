@@ -66,6 +66,11 @@ pub use self::types::*;
 /// Encodes an integer in script(minimal CScriptNum) format.
 ///
 /// Writes bytes into the buffer and returns the number of bytes written.
+///
+/// Note that `write_scriptint`/`read_scriptint` do not roundtrip if the value written requires
+/// more than 4 bytes, this is in line with Bitcoin Core (see [`CScriptNum::serialize`]).
+///
+/// [`CScriptNum::serialize`]: <https://github.com/bitcoin/bitcoin/blob/8ae2808a4354e8dcc697f76bacc5e2f2befe9220/src/script/script.h#L345>
 pub fn write_scriptint(out: &mut [u8; 8], n: i64) -> usize {
     let mut len = 0;
     if n == 0 { return len; }
