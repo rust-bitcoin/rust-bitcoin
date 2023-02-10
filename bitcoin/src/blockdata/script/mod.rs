@@ -213,7 +213,7 @@ fn opcode_to_verify(opcode: Option<opcodes::All>) -> Option<opcodes::All> {
 #[non_exhaustive]
 pub enum Error {
     /// Something did a non-minimal push; for more information see
-    /// `https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki#Push_operators`
+    /// <https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki#push-operators>
     NonMinimalPush,
     /// Some opcode expected a parameter but it was missing or truncated.
     EarlyEndOfScript,
