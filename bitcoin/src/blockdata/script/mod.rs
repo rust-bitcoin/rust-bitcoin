@@ -115,6 +115,8 @@ pub fn write_scriptint(out: &mut [u8; 8], n: i64) -> usize {
 /// don't fit in 64 bits (for efficiency on modern processors) so we
 /// simply say, anything in excess of 32 bits is no longer a number.
 /// This is basically a ranged type implementation.
+///
+/// This code is based on the `CScriptNum` constructor in Bitcoin Core (see `script.h`).
 pub fn read_scriptint(v: &[u8]) -> Result<i64, Error> {
     let len = v.len();
     if len > 4 { return Err(Error::NumericOverflow); }
