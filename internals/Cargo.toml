@@ -10,15 +10,15 @@ categories = ["cryptography::cryptocurrencies"]
 keywords = ["internal"]
 readme = "README.md"
 edition = "2018"
+exclude = ["tests", "contrib"]
 
-# Please don't forget to add relevant features to docs.rs below.
 [features]
 default = []
 std = ["alloc"]
 alloc = []
 
 [package.metadata.docs.rs]
-features = ["std"]
+all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]

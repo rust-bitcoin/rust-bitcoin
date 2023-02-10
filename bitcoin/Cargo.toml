@@ -3,16 +3,15 @@ name = "bitcoin"
 version = "0.29.0"
 authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
 license = "CC0-1.0"
-homepage = "https://github.com/rust-bitcoin/rust-bitcoin/"
 repository = "https://github.com/rust-bitcoin/rust-bitcoin/"
 documentation = "https://docs.rs/bitcoin/"
-description = "General purpose library for using and interoperating with Bitcoin and other cryptocurrencies."
+description = "General purpose library for using and interoperating with Bitcoin."
+categories = ["cryptography::cryptocurrencies"]
 keywords = [ "crypto", "bitcoin" ]
 readme = "README.md"
-exclude = ["tests/"]
 edition = "2018"
+exclude = ["tests", "contrib"]
 
-# Please don't forget to add relevant features to docs.rs below
 [features]
 default = [ "std", "secp-recovery" ]
 rand-std = ["secp256k1/rand-std"]
@@ -28,10 +27,10 @@ bitcoinconsensus-std = ["bitcoinconsensus/std", "std"]
 # Instead no-std enables additional features required for this crate to be usable without std.
 # As a result, both can be enabled without conflict.
 std = ["secp256k1/std", "bitcoin_hashes/std", "bech32/std", "bitcoin-internals/std"]
-no-std = ["core2/alloc", "bitcoin_hashes/alloc", "secp256k1/alloc"]
+no-std = ["core2", "bitcoin_hashes/alloc", "bitcoin_hashes/core2", "secp256k1/alloc"]
 
 [package.metadata.docs.rs]
-features = [ "std", "secp-recovery", "base64", "rand", "serde", "bitcoinconsensus" ]
+all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
@@ -39,10 +38,10 @@ bitcoin-internals = { path = "../internals" }
 bech32 = { version = "0.9.0", default-features = false }
 bitcoin_hashes = { version = "0.11.0", default-features = false }
 secp256k1 = { version = "0.25.0", default-features = false, features = ["bitcoin_hashes"] }
-core2 = { version = "0.3.0", optional = true, default-features = false }
 
 base64 = { version = "0.13.0", optional = true }
 bitcoinconsensus = { version = "0.20.2-0.5.0", optional = true, default-features = false }
+core2 = { version = "0.3.0", default-features = false, features = ["alloc"], optional = true }
 # Do NOT use this as a feature! Use the `serde` feature instead.
 actual-serde = { package = "serde", version = "1.0.103", default-features = false, features = [ "derive", "alloc" ], optional = true }
 
