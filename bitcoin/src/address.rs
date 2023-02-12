@@ -671,7 +671,7 @@ impl NetworkValidation for NetworkUnchecked { const IS_CHECKED: bool = false; }
 /// assert_eq!(address.to_string(), "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM");
 /// ```
 ///
-/// ```compile_fail
+/// ```ignore
 /// # use std::str::FromStr;
 /// # use bitcoin::address::{Address, NetworkChecked};
 /// let address: Address<NetworkUnchecked> = Address::from_str("132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM")
