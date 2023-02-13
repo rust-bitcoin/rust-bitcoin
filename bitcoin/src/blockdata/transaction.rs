@@ -1014,6 +1014,15 @@ impl Transaction {
     pub fn is_lock_time_enabled(&self) -> bool {
         self.input.iter().any(|i| i.enables_lock_time())
     }
+
+    /// Returns an iterator over lengths of `script_pubkey`s in the outputs.
+    ///
+    /// This is useful in combination with [`predict_weight`] if you have the transaction already
+    /// constructed with a dummy value in the fee output which you'll adjust after calculating the
+    /// weight.
+    pub fn script_pubkey_lens(&self) -> impl Iterator<Item = usize> + '_ {
+        self.output.iter().map(|txout| txout.script_pubkey.len())
+    }
 }
 
 impl_consensus_encoding!(TxOut, value, script_pubkey);
@@ -1176,6 +1185,10 @@ impl From<&Transaction> for Wtxid {
 /// Note that lengths of the scripts and witness elements must be non-serialized, IOW *without* the
 /// preceding compact size. The lenght of preceding compact size is computed and added inside the
 /// function for convenience.
+///
+/// If you  have the transaction already constructed (except for signatures) with a dummy value for
+/// fee output you can use the return value of [`Transaction::script_pubkey_lens`] method directly
+/// as the second argument.
 ///
 /// # Usage
 ///
