@@ -102,8 +102,7 @@
 #[cfg(bench)] extern crate test;
 #[cfg(any(test, feature = "std"))] extern crate core;
 #[cfg(feature = "core2")] extern crate core2;
-#[cfg(feature = "alloc")] extern crate alloc;
-#[cfg(all(not(feature = "alloc"), feature = "std"))] use std as alloc;
+#[cfg(all(feature = "alloc", not(feature = "std")))] extern crate alloc;
 #[cfg(feature = "serde")] pub extern crate serde;
 #[cfg(all(test,feature = "serde"))] extern crate serde_test;
 

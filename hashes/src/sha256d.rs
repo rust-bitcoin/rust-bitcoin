@@ -44,7 +44,7 @@ fn from_engine(e: sha256::HashEngine) -> Hash {
 #[cfg(test)]
 mod tests {
     #[test]
-    #[cfg(any(feature = "std", feature = "alloc"))]
+    #[cfg(feature = "alloc")]
     fn test() {
         use crate::{sha256, sha256d, Hash, HashEngine};
 

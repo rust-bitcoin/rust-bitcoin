@@ -86,7 +86,7 @@ fn from_engine(e: HashEngine) -> Hash {
 #[cfg(test)]
 mod tests {
     #[test]
-    #[cfg(any(feature = "std", feature = "alloc"))]
+    #[cfg(feature = "alloc")]
     fn test() {
         use crate::{sha512_256, Hash, HashEngine};
 

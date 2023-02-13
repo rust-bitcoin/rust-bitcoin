@@ -143,7 +143,7 @@ impl HashEngine {
 #[cfg(test)]
 mod tests {
     #[test]
-    #[cfg(any(feature = "std", feature = "alloc"))]
+    #[cfg(feature = "alloc")]
     fn test() {
         use crate::{sha1, Hash, HashEngine};
 
