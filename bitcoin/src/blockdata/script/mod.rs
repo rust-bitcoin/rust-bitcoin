@@ -62,7 +62,6 @@ use serde;
 use crate::blockdata::opcodes::{self, all::*};
 use crate::consensus::{encode, Decodable, Encodable};
 use crate::hash_types::{ScriptHash, WScriptHash};
-use crate::hashes::hex;
 use crate::{io, OutPoint};
 use crate::prelude::*;
 
@@ -341,14 +340,6 @@ impl From<&ScriptBuf> for WScriptHash {
 impl From<&Script> for WScriptHash {
     fn from(script: &Script) -> WScriptHash {
         script.wscript_hash()
-    }
-}
-
-impl core::str::FromStr for ScriptBuf {
-    type Err = hex::Error;
-    #[inline]
-    fn from_str(s: &str) -> Result<Self, hex::Error> {
-        ScriptBuf::from_hex(s)
     }
 }
 
