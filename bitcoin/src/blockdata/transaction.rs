@@ -535,6 +535,25 @@ impl TxOut {
         // Then we multiply by 4 to convert to WU
         (8 + VarInt(script_len as u64).len() + script_len) * 4
     }
+
+    /// Creates a `TxOut` with given script and the smallest possible `value` that is **not** dust
+    /// per current Core policy.
+    ///
+    /// The current dust fee rate is 3 sat/vB.
+    pub fn minimal_non_dust(script_pubkey: ScriptBuf) -> Self {
+        let len = script_pubkey.len() + VarInt(script_pubkey.len() as u64).len() + 8;
+        let len = len + if script_pubkey.is_witness_program() {
+            32 + 4 + 1 + (107 / 4) + 4
+        } else {
+            32 + 4 + 1 + 107 + 4
+        };
+        let dust_amount = (len as u64) * 3;
+
+        TxOut {
+            value: dust_amount + 1, // minimal non-dust amount is one higher than dust amount
+            script_pubkey,
+        }
+    }
 }
 
 // This is used as a "null txout" in consensus signing code.
