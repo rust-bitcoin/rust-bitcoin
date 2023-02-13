@@ -21,20 +21,6 @@ use crate::io::{self, Read, Write};
 use crate::prelude::String;
 use crate::string::FromHexStr;
 
-/// Implements $int * $ty. Requires `u64::from($int)`.
-macro_rules! impl_int_mul {
-    ($ty:ident, $($int:ident),+ $(,)?) => {
-        $(
-            impl Mul<$ty> for $int {
-
-                type Output = $ty;
-                #[inline]
-                fn mul(self, rhs: $ty) -> $ty { $ty(self.mul(rhs.0)) }
-            }
-        )+
-    };
-}
-
 /// Implement traits and methods shared by `Target` and `Work`.
 macro_rules! do_impl {
     ($ty:ident) => {
@@ -69,23 +55,6 @@ macro_rules! do_impl {
         impl fmt::UpperHex for $ty {
             #[inline]
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&self.0, f) }
-        }
-
-        impl<T: Into<u64>> Mul<T> for $ty {
-            type Output = $ty;
-            #[inline]
-            fn mul(self, rhs: T) -> Self { $ty(self.0 * rhs) }
-        }
-
-        impl_int_mul!($ty, u8, u16, u32, u64);
-
-        impl<T: Into<u128>> Div<T> for $ty {
-            type Output = $ty;
-            #[inline]
-            fn div(self, rhs: T) -> Self {
-                let rhs = U256::from(rhs.into());
-                $ty(self.0 / rhs)
-            }
         }
     };
 }
@@ -718,32 +687,6 @@ impl Mul for U256 {
         res
     }
 }
-
-impl<T: Into<u64>> Mul<T> for U256 {
-    type Output = Self;
-    fn mul(self, rhs: T) -> Self {
-        let (res, overflow) = self.mul_u64(rhs.into());
-        debug_assert!(!overflow, "U256 multiplied by integer overflowed");
-        res
-    }
-}
-
-/// Implements mul by unsigned int in both directions. Requires `u64::from($int)`.
-macro_rules! impl_int_mul_u256 {
-    ($($int:ident),+ $(,)?) => {
-        $(
-            impl Mul<U256> for $int {
-                type Output = U256;
-                fn mul(self, rhs: U256) -> U256 {
-                    let (res, overflow) = rhs.mul_u64(u64::from(self));
-                    debug_assert!(!overflow, "Integer multiplied by U256 overflowed");
-                    res
-                }
-            }
-        )+
-    };
-}
-impl_int_mul_u256!(u8, u16, u32, u64);
 
 impl Div for U256 {
     type Output = Self;
@@ -1653,26 +1596,10 @@ mod tests {
     #[should_panic]
     fn u256_overflowing_subtraction_panics() { let _ = U256::ZERO - U256::ONE; }
 
-    // We only test with test case value on the right hand side of the multiplication but that
-    // should be enough coverage since we call the same underlying method to do multiplication with
-    // the sides inverted.
-    macro_rules! test_u256_multiplication_panics {
-        ($($test_name:ident, $x:expr);* $(;)?) => {
-            $(
-                #[test]
-                #[should_panic]
-                fn $test_name() {
-                    let _ = U256::MAX * $x;
-                }
-            )*
-        }
-    }
-    test_u256_multiplication_panics! {
-        u256_multiplication_by_max, U256::MAX;
-        u256_multiplication_by_u8, 2_u8;
-        u256_multiplication_by_u16, 2_u16;
-        u256_multiplication_by_u32, 2_u32;
-        u256_multiplication_by_u64, 2_u64;
+    #[test]
+    #[should_panic]
+    fn u256_multiplication_by_max_panics() {
+        let _ = U256::MAX * U256::MAX;
     }
 
     #[test]
@@ -1682,25 +1609,6 @@ mod tests {
     #[test]
     #[should_panic]
     fn work_overflowing_subtraction_panics() { let _ = Work(U256::ZERO) - Work(U256::ONE); }
-
-    // Just test Work since Target is implemented using the same macro.
-    macro_rules! test_u256_multiplication_panics {
-        ($($test_name:ident, $x:expr);* $(;)?) => {
-            $(
-                #[test]
-                #[should_panic]
-                fn $test_name() {
-                    let _ = Work(U256::MAX) * $x;
-                }
-            )*
-        }
-    }
-    test_u256_multiplication_panics! {
-        work_multiplication_by_u8, 2_u8;
-        work_multiplication_by_u16, 2_u16;
-        work_multiplication_by_u32, 2_u32;
-        work_multiplication_by_u64, 2_u64;
-    }
 }
 
 #[cfg(kani)]
