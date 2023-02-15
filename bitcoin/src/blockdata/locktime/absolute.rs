@@ -62,8 +62,8 @@ pub const LOCK_TIME_THRESHOLD: u32 = 500_000_000;
 /// # Examples
 /// ```
 /// # use bitcoin::absolute::{LockTime, LockTime::*};
-/// # let n = LockTime::from_consensus(100);          // n OP_CHECKLOCKTIMEVERIFY
-/// # let lock_time = LockTime::from_consensus(100);  // nLockTime
+/// # let n = LockTime::from_consensus(741521);          // n OP_CHECKLOCKTIMEVERIFY
+/// # let lock_time = LockTime::from_consensus(741521);  // nLockTime
 /// // To compare absolute lock times there are various `is_satisfied_*` methods, you may also use:
 /// let is_satisfied = match (n, lock_time) {
 ///     (Blocks(n), Blocks(lock_time)) => n <= lock_time,
@@ -226,8 +226,8 @@ impl LockTime {
     ///
     /// ```rust
     /// # use bitcoin::absolute::{LockTime, LockTime::*};
-    /// let lock_time = LockTime::from_consensus(100);
-    /// let check = LockTime::from_consensus(100 + 1);
+    /// let lock_time = LockTime::from_consensus(741521);
+    /// let check = LockTime::from_consensus(741521 + 1);
     /// assert!(lock_time.is_implied_by(check));
     /// ```
     #[inline]
@@ -255,8 +255,8 @@ impl LockTime {
     ///
     /// ```rust
     /// # use bitcoin::absolute::{LockTime, LockTime::*};
-    /// # let n = LockTime::from_consensus(100);          // n OP_CHECKLOCKTIMEVERIFY
-    /// # let lock_time = LockTime::from_consensus(100 + 1);  // nLockTime
+    /// # let n = LockTime::from_consensus(741521);              // n OP_CHECKLOCKTIMEVERIFY
+    /// # let lock_time = LockTime::from_consensus(741521 + 1);  // nLockTime
     ///
     /// let is_satisfied = match (n, lock_time) {
     ///     (Blocks(n), Blocks(lock_time)) => n <= lock_time,
@@ -764,12 +764,12 @@ mod tests {
 
     #[test]
     fn display_and_alternate() {
-        let n = LockTime::from_consensus(100);
+        let n = LockTime::from_consensus(741521);
         let s = format!("{}", n);
-        assert_eq!(&s, "100");
+        assert_eq!(&s, "741521");
 
         let got = format!("{:#}", n);
-        assert_eq!(got, "block-height 100");
+        assert_eq!(got, "block-height 741521");
     }
 
     #[test]
