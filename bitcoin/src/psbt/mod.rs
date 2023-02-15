@@ -646,8 +646,6 @@ pub enum SigningAlgorithm {
 /// Errors encountered while calculating the sighash message.
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
 pub enum SignError {
-    /// An ECDSA key-related error occurred.
-    EcdsaSig(ecdsa::Error),
     /// Input index out of bounds (actual index, maximum index allowed).
     IndexOutOfBounds(usize, usize),
     /// Invalid Sighash type.
@@ -695,7 +693,6 @@ impl fmt::Display for SignError {
             NotEcdsa => write!(f, "attempted to ECDSA sign an non-ECDSA input"),
             NotWpkh => write!(f, "the scriptPubkey is not a P2WPKH script"),
             SighashComputation(e) => write!(f, "sighash: {}", e),
-            EcdsaSig(ref e) => write_err!(f, "ecdsa signature"; e),
             UnknownOutputType => write!(f, "unable to determine the output type"),
             KeyNotFound => write!(f, "unable to find key"),
             WrongSigningAlgorithm => write!(f, "attempt to sign an input with the wrong signing algorithm"),
@@ -724,7 +721,6 @@ impl std::error::Error for SignError {
                 | KeyNotFound
                 | WrongSigningAlgorithm
                 | Unsupported => None,
-            EcdsaSig(ref e) => Some(e),
             SighashComputation(ref e) => Some(e),
         }
     }
@@ -733,12 +729,6 @@ impl std::error::Error for SignError {
 impl From<sighash::Error> for SignError {
     fn from(e: sighash::Error) -> Self {
         SignError::SighashComputation(e)
-    }
-}
-
-impl From<ecdsa::Error> for SignError {
-    fn from(e: ecdsa::Error) -> Self {
-        SignError::EcdsaSig(e)
     }
 }
 
