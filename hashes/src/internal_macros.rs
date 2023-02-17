@@ -105,6 +105,12 @@ macro_rules! hash_trait_impls {
         serde_impl!(Hash, $bits / 8 $(, $gen: $gent)*);
         borrow_slice_impl!(Hash $(, $gen: $gent)*);
 
+        impl<$($gen: $gent),*> $crate::_export::_core::convert::AsRef<[u8; $bits / 8]> for Hash<$($gen),*> {
+            fn as_ref(&self) -> &[u8; $bits / 8] {
+                &self.0
+            }
+        }
+
         impl<I: SliceIndex<[u8]> $(, $gen: $gent)*> Index<I> for Hash<$($gen),*> {
             type Output = I::Output;
 

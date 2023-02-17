@@ -481,7 +481,7 @@ impl Payload {
     pub fn p2wpkh(pk: &PublicKey) -> Result<Payload, Error> {
         let prog = WitnessProgram::new(
             WitnessVersion::V0,
-            pk.wpubkey_hash().ok_or(Error::UncompressedPubkey)?.as_ref().to_vec()
+            pk.wpubkey_hash().ok_or(Error::UncompressedPubkey)?.into_inner().to_vec()
         )?;
         Ok(Payload::WitnessProgram(prog))
     }
@@ -499,7 +499,7 @@ impl Payload {
     pub fn p2wsh(script: &Script) -> Payload {
         let prog = WitnessProgram::new(
             WitnessVersion::V0,
-            script.wscript_hash().as_ref().to_vec()
+            script.wscript_hash().as_inner().to_vec()
         ).expect("wscript_hash has len 32 compatible with segwitv0");
         Payload::WitnessProgram(prog)
     }
@@ -937,9 +937,9 @@ impl Address {
         let payload = self.payload.inner_prog_as_bytes();
         let xonly_pubkey = XOnlyPublicKey::from(pubkey.inner);
 
-        (*pubkey_hash.as_ref() == *payload)
+        (*pubkey_hash.as_inner() == *payload)
             || (xonly_pubkey.serialize() == *payload)
-            || (*segwit_redeem_hash(&pubkey_hash).as_ref() == *payload)
+            || (*segwit_redeem_hash(&pubkey_hash).as_inner() == *payload)
     }
 
     /// Returns true if the supplied xonly public key can be used to derive the address.

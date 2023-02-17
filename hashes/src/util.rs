@@ -208,6 +208,12 @@ macro_rules! hash_newtype {
             }
         }
 
+        impl $crate::_export::_core::convert::AsRef<[u8; $len]> for $newtype {
+            fn as_ref(&self) -> &[u8; $len] {
+                AsRef::<[u8; $len]>::as_ref(&self.0)
+            }
+        }
+
         impl<I: $crate::_export::_core::slice::SliceIndex<[u8]>> $crate::_export::_core::ops::Index<I> for $newtype {
             type Output = I::Output;
 
@@ -248,9 +254,17 @@ mod test {
     use crate::{Hash, sha256};
 
     #[test]
-    fn hash_as_ref() {
+    fn hash_as_ref_array() {
         let hash = sha256::Hash::hash(&[3, 50]);
-        assert_eq!(hash.as_ref(), hash.as_inner());
+        let r = AsRef::<[u8; 32]>::as_ref(&hash);
+        assert_eq!(r, hash.as_inner());
+    }
+
+    #[test]
+    fn hash_as_ref_slice() {
+        let hash = sha256::Hash::hash(&[3, 50]);
+        let r = AsRef::<[u8]>::as_ref(&hash);
+        assert_eq!(r, hash.as_inner());
     }
 
     #[test]
@@ -290,5 +304,19 @@ mod test {
         let want = "0x0000000000000000000000000000000000000000000000000000000000000000";
         let got = format!("{:#x}", TestHash::all_zeros());
         assert_eq!(got, want)
+    }
+
+    #[test]
+    fn inner_hash_as_ref_array() {
+        let hash = TestHash::all_zeros();
+        let r = AsRef::<[u8; 32]>::as_ref(&hash);
+        assert_eq!(r, hash.as_inner());
+    }
+
+    #[test]
+    fn inner_hash_as_ref_slice() {
+        let hash = TestHash::all_zeros();
+        let r = AsRef::<[u8]>::as_ref(&hash);
+        assert_eq!(r, hash.as_inner());
     }
 }
