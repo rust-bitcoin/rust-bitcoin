@@ -78,8 +78,8 @@ impl<'a> Instructions<'a> {
         }
     }
 
-    pub(super) fn next_push_data_len(&mut self, len: usize, min_push_len: usize) -> Option<Result<Instruction<'a>, Error>> {
-        let n = match read_uint_iter(&mut self.data, len) {
+    pub(super) fn next_push_data_len(&mut self, len: PushDataLenLen, min_push_len: usize) -> Option<Result<Instruction<'a>, Error>> {
+        let n = match read_uint_iter(&mut self.data, len as usize) {
             Ok(n) => n,
             // We do exhaustive matching to not forget to handle new variants if we extend
             // `UintError` type.
@@ -96,6 +96,15 @@ impl<'a> Instructions<'a> {
         }
         Some(self.take_slice_or_kill(n).map(Instruction::PushBytes))
     }
+}
+
+/// Allowed length of push data length.
+///
+/// This makes it easier to prove correctness of `next_push_data_len`.
+pub(super) enum PushDataLenLen {
+    One = 1,
+    Two = 2,
+    Four = 4,
 }
 
 impl<'a> Iterator for Instructions<'a> {
@@ -130,13 +139,13 @@ impl<'a> Iterator for Instructions<'a> {
                 }
             }
             opcodes::Class::Ordinary(opcodes::Ordinary::OP_PUSHDATA1) => {
-                self.next_push_data_len(1, 76)
+                self.next_push_data_len(PushDataLenLen::One, 76)
             }
             opcodes::Class::Ordinary(opcodes::Ordinary::OP_PUSHDATA2) => {
-                self.next_push_data_len(2, 0x100)
+                self.next_push_data_len(PushDataLenLen::Two, 0x100)
             }
             opcodes::Class::Ordinary(opcodes::Ordinary::OP_PUSHDATA4) => {
-                self.next_push_data_len(4, 0x10000)
+                self.next_push_data_len(PushDataLenLen::Four, 0x10000)
             }
             // Everything else we can push right through
             _ => {
