@@ -1,14 +1,15 @@
 // Written in 2014 by Andrew Poelstra <apoelstra@wpsoftware.net>
 // SPDX-License-Identifier: CC0-1.0
 
+use core::convert::TryInto;
 use crate::blockdata::opcodes;
-use crate::blockdata::script::{read_uint_iter, Error, Script, ScriptBuf, UintError};
+use crate::blockdata::script::{read_uint_iter, Error, Script, ScriptBuf, UintError, PushBytes};
 
 /// A "parsed opcode" which allows iterating over a [`Script`] in a more sensible way.
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum Instruction<'a> {
     /// Push a bunch of data.
-    PushBytes(&'a [u8]),
+    PushBytes(&'a PushBytes),
     /// Some non-push opcode.
     Op(opcodes::All),
 }
@@ -22,8 +23,8 @@ impl<'a> Instruction<'a> {
         }
     }
 
-    /// Returns the opcode if the instruction is not a data push.
-    pub fn push_bytes(&self) -> Option<&[u8]> {
+    /// Returns the pushed bytes if the instruction is a data push.
+    pub fn push_bytes(&self) -> Option<&PushBytes> {
         match self {
             Instruction::Op(_) => None,
             Instruction::PushBytes(bytes) => Some(bytes),
@@ -64,14 +65,15 @@ impl<'a> Instructions<'a> {
     ///
     /// If the iterator is not long enough [`Error::EarlyEndOfScript`] is returned and the iterator
     /// is killed to avoid returning an infinite stream of errors.
-    pub(super) fn take_slice_or_kill(&mut self, len: usize) -> Result<&'a [u8], Error> {
+    pub(super) fn take_slice_or_kill(&mut self, len: u32) -> Result<&'a PushBytes, Error> {
+        let len = len as usize;
         if self.data.len() >= len {
             let slice = &self.data.as_slice()[..len];
             if len > 0 {
                 self.data.nth(len - 1);
             }
 
-            Ok(slice)
+            Ok(slice.try_into().expect("len was created from u32, so can't happen"))
         } else {
             self.kill();
             Err(Error::EarlyEndOfScript)
@@ -94,7 +96,12 @@ impl<'a> Instructions<'a> {
             self.kill();
             return Some(Err(Error::NonMinimalPush));
         }
-        Some(self.take_slice_or_kill(n).map(Instruction::PushBytes))
+        let result = n
+            .try_into()
+            .map_err(|_| Error::NumericOverflow)
+            .and_then(|n| self.take_slice_or_kill(n))
+            .map(Instruction::PushBytes);
+        Some(result)
     }
 }
 
@@ -119,8 +126,6 @@ impl<'a> Iterator for Instructions<'a> {
             opcodes::Class::PushBytes(n) => {
                 // make sure safety argument holds across refactorings
                 let n: u32 = n;
-                // casting is safe because we don't support 16-bit architectures
-                let n = n as usize;
 
                 let op_byte = self.data.as_slice().first();
                 match (self.enforce_minimal, op_byte, n) {
@@ -131,7 +136,7 @@ impl<'a> Iterator for Instructions<'a> {
                     (_, None, 0) => {
                         // the iterator is already empty, may as well use this information to avoid
                         // whole take_slice_or_kill function
-                        Some(Ok(Instruction::PushBytes(&[])))
+                        Some(Ok(Instruction::PushBytes(PushBytes::empty())))
                     },
                     _ => {
                         Some(self.take_slice_or_kill(n).map(Instruction::PushBytes))

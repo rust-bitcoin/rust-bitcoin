@@ -27,6 +27,27 @@ macro_rules! impl_hashencode {
     };
 }
 
+#[rustfmt::skip]
+macro_rules! impl_asref_push_bytes {
+    ($($hashtype:ident),*) => {
+        $(
+            impl AsRef<$crate::blockdata::script::PushBytes> for $hashtype {
+                fn as_ref(&self) -> &$crate::blockdata::script::PushBytes {
+                    use $crate::hashes::Hash;
+                    self.as_inner().as_ref()
+                }
+            }
+
+            impl From<$hashtype> for $crate::blockdata::script::PushBytesBuf {
+                fn from(hash: $hashtype) -> Self {
+                    use $crate::hashes::Hash;
+                    hash.as_inner().into()
+                }
+            }
+        )*
+    };
+}
+
 // newtypes module is solely here so we can rustfmt::skip.
 pub use newtypes::*;
 
@@ -75,4 +96,6 @@ See [`hashes::Hash::DISPLAY_BACKWARD`] for more details.
 
     impl_hashencode!(FilterHash);
     impl_hashencode!(FilterHeader);
+
+    impl_asref_push_bytes!(PubkeyHash, ScriptHash, WPubkeyHash, WScriptHash);
 }

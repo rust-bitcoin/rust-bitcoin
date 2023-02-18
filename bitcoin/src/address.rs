@@ -27,7 +27,7 @@
 //! bitcoin = { version = "...", features = ["rand-std"] }
 //! ```
 
-use core::convert::TryFrom;
+use core::convert::{TryFrom, TryInto};
 use core::fmt;
 use core::marker::PhantomData;
 use core::str::FromStr;
@@ -43,7 +43,7 @@ use crate::blockdata::constants::{
 };
 use crate::blockdata::opcodes;
 use crate::blockdata::opcodes::all::*;
-use crate::blockdata::script::{self, Instruction, Script, ScriptBuf};
+use crate::blockdata::script::{self, Instruction, Script, ScriptBuf, PushBytes, PushBytesBuf, PushBytesErrorReport};
 use crate::crypto::key::PublicKey;
 use crate::crypto::schnorr::{TapTweak, TweakedPublicKey, UntweakedPublicKey};
 use crate::error::ParseIntError;
@@ -402,12 +402,14 @@ pub struct WitnessProgram {
     /// The witness program version.
     version: WitnessVersion,
     /// The witness program. (Between 2 and 40 bytes)
-    program: Vec<u8>,
+    program: PushBytesBuf,
 }
 
 impl WitnessProgram {
     /// Creates a new witness program.
-    pub fn new(version: WitnessVersion, program: Vec<u8>) -> Result<Self, Error> {
+    pub fn new<P>(version: WitnessVersion, program: P) -> Result<Self, Error> where P: TryInto<PushBytesBuf>, <P as TryInto<PushBytesBuf>>::Error: PushBytesErrorReport {
+        let program = program.try_into()
+            .map_err(|error| Error::InvalidWitnessProgramLength(error.input_len()))?;
         if program.len() < 2 || program.len() > 40 {
             return Err(Error::InvalidWitnessProgramLength(program.len()));
         }
@@ -425,7 +427,7 @@ impl WitnessProgram {
     }
 
     /// Returns the witness program.
-    pub fn program(&self) -> &[u8] {
+    pub fn program(&self) -> &PushBytes {
         &self.program
     }
 }
@@ -444,9 +446,13 @@ impl Payload {
         } else if script.is_witness_program() {
             let opcode = script.first_opcode().expect("witness_version guarantees len() > 4");
 
+            let witness_program = script
+                .as_bytes()[2..]
+                .to_vec();
+
             let witness_program = WitnessProgram::new(
                 WitnessVersion::try_from(opcode)?,
-                script.as_bytes()[2..].to_vec(),
+                witness_program,
             )?;
             Payload::WitnessProgram(witness_program)
         } else {
@@ -481,7 +487,7 @@ impl Payload {
     pub fn p2wpkh(pk: &PublicKey) -> Result<Payload, Error> {
         let prog = WitnessProgram::new(
             WitnessVersion::V0,
-            pk.wpubkey_hash().ok_or(Error::UncompressedPubkey)?.into_inner().to_vec()
+            pk.wpubkey_hash().ok_or(Error::UncompressedPubkey)?
         )?;
         Ok(Payload::WitnessProgram(prog))
     }
@@ -490,7 +496,7 @@ impl Payload {
     pub fn p2shwpkh(pk: &PublicKey) -> Result<Payload, Error> {
         let builder = script::Builder::new()
             .push_int(0)
-            .push_slice(pk.wpubkey_hash().ok_or(Error::UncompressedPubkey)?.as_ref());
+            .push_slice(pk.wpubkey_hash().ok_or(Error::UncompressedPubkey)?);
 
         Ok(Payload::ScriptHash(builder.into_script().script_hash()))
     }
@@ -499,7 +505,7 @@ impl Payload {
     pub fn p2wsh(script: &Script) -> Payload {
         let prog = WitnessProgram::new(
             WitnessVersion::V0,
-            script.wscript_hash().as_inner().to_vec()
+            script.wscript_hash()
         ).expect("wscript_hash has len 32 compatible with segwitv0");
         Payload::WitnessProgram(prog)
     }
@@ -507,7 +513,7 @@ impl Payload {
     /// Create a pay to script payload that embeds a witness pay to script hash address
     pub fn p2shwsh(script: &Script) -> Payload {
         let ws =
-            script::Builder::new().push_int(0).push_slice(script.wscript_hash().as_ref()).into_script();
+            script::Builder::new().push_int(0).push_slice(script.wscript_hash()).into_script();
 
         Payload::ScriptHash(ws.script_hash())
     }
@@ -521,7 +527,7 @@ impl Payload {
         let (output_key, _parity) = internal_key.tap_tweak(secp, merkle_root);
         let prog = WitnessProgram::new(
             WitnessVersion::V1,
-            output_key.to_inner().serialize().to_vec()
+            output_key.to_inner().serialize()
         ).expect("taproot output key has len 32 <= 40");
         Payload::WitnessProgram(prog)
     }
@@ -532,7 +538,7 @@ impl Payload {
     pub fn p2tr_tweaked(output_key: TweakedPublicKey) -> Payload {
         let prog = WitnessProgram::new(
             WitnessVersion::V1,
-            output_key.to_inner().serialize().to_vec()
+            output_key.to_inner().serialize()
         ).expect("taproot output key has len 32 <= 40");
         Payload::WitnessProgram(prog)
     }
@@ -543,7 +549,7 @@ impl Payload {
         match self {
             Payload::ScriptHash(hash) => hash.as_ref(),
             Payload::PubkeyHash(hash) => hash.as_ref(),
-            Payload::WitnessProgram(prog) => prog.program(),
+            Payload::WitnessProgram(prog) => prog.program().as_bytes(),
         }
     }
 }
@@ -588,7 +594,7 @@ impl<'a> fmt::Display for AddressEncoding<'a> {
                 let mut bech32_writer =
                     bech32::Bech32Writer::new(self.bech32_hrp, version.bech32_variant(), writer)?;
                 bech32::WriteBase32::write_u5(&mut bech32_writer, version.into())?;
-                bech32::ToBase32::write_base32(&prog, &mut bech32_writer)
+                bech32::ToBase32::write_base32(&prog.as_bytes(), &mut bech32_writer)
             }
         }
     }

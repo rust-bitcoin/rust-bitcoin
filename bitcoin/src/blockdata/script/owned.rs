@@ -8,7 +8,7 @@ use secp256k1::{Secp256k1, Verification};
 
 use crate::address::{WitnessVersion, WitnessProgram};
 use crate::blockdata::opcodes::{self, all::*};
-use crate::blockdata::script::{opcode_to_verify, Builder, Instruction, Script};
+use crate::blockdata::script::{opcode_to_verify, Builder, Instruction, Script, PushBytes};
 use crate::hashes::hex;
 use crate::hash_types::{PubkeyHash, WPubkeyHash, ScriptHash, WScriptHash};
 use crate::key::PublicKey;
@@ -98,7 +98,7 @@ impl ScriptBuf {
         Builder::new()
             .push_opcode(OP_DUP)
             .push_opcode(OP_HASH160)
-            .push_slice(&pubkey_hash[..])
+            .push_slice(pubkey_hash)
             .push_opcode(OP_EQUALVERIFY)
             .push_opcode(OP_CHECKSIG)
             .into_script()
@@ -108,7 +108,7 @@ impl ScriptBuf {
     pub fn new_p2sh(script_hash: &ScriptHash) -> Self {
         Builder::new()
             .push_opcode(OP_HASH160)
-            .push_slice(&script_hash[..])
+            .push_slice(script_hash)
             .push_opcode(OP_EQUAL)
             .into_script()
     }
@@ -116,13 +116,13 @@ impl ScriptBuf {
     /// Generates P2WPKH-type of scriptPubkey.
     pub fn new_v0_p2wpkh(pubkey_hash: &WPubkeyHash) -> Self {
         // pubkey hash is 20 bytes long, so it's safe to use `new_witness_program_unchecked` (Segwitv0)
-        ScriptBuf::new_witness_program_unchecked(WitnessVersion::V0, &pubkey_hash[..])
+        ScriptBuf::new_witness_program_unchecked(WitnessVersion::V0, pubkey_hash)
     }
 
     /// Generates P2WSH-type of scriptPubkey with a given hash of the redeem script.
     pub fn new_v0_p2wsh(script_hash: &WScriptHash) -> Self {
         // script hash is 32 bytes long, so it's safe to use `new_witness_program_unchecked` (Segwitv0)
-        ScriptBuf::new_witness_program_unchecked(WitnessVersion::V0, &script_hash[..])
+        ScriptBuf::new_witness_program_unchecked(WitnessVersion::V0, script_hash)
     }
 
     /// Generates P2TR for script spending path using an internal public key and some optional
@@ -130,13 +130,13 @@ impl ScriptBuf {
     pub fn new_v1_p2tr<C: Verification>(secp: &Secp256k1<C>, internal_key: UntweakedPublicKey, merkle_root: Option<TapNodeHash>) -> Self {
         let (output_key, _) = internal_key.tap_tweak(secp, merkle_root);
         // output key is 32 bytes long, so it's safe to use `new_witness_program_unchecked` (Segwitv1)
-        ScriptBuf::new_witness_program_unchecked(WitnessVersion::V1, &output_key.serialize())
+        ScriptBuf::new_witness_program_unchecked(WitnessVersion::V1, output_key.serialize())
     }
 
     /// Generates P2TR for key spending path for a known [`TweakedPublicKey`].
     pub fn new_v1_p2tr_tweaked(output_key: TweakedPublicKey) -> Self {
         // output key is 32 bytes long, so it's safe to use `new_witness_program_unchecked` (Segwitv1)
-        ScriptBuf::new_witness_program_unchecked(WitnessVersion::V1, &output_key.serialize())
+        ScriptBuf::new_witness_program_unchecked(WitnessVersion::V1, output_key.serialize())
     }
 
     /// Generates P2WSH-type of scriptPubkey with a given [`WitnessProgram`].
@@ -152,7 +152,8 @@ impl ScriptBuf {
     ///
     /// Convenience method used by `new_v0_p2wpkh`, `new_v0_p2wsh`, `new_v1_p2tr`, and
     /// `new_v1_p2tr_tweaked`.
-    fn new_witness_program_unchecked(version: WitnessVersion, program: &[u8]) -> Self {
+    fn new_witness_program_unchecked<T: AsRef<PushBytes>>(version: WitnessVersion, program: T) -> Self {
+        let program = program.as_ref();
         debug_assert!(program.len() >= 2 && program.len() <= 40);
         // In segwit v0, the program must be 20 or 32 bytes long.
         debug_assert!(version != WitnessVersion::V0 || program.len() == 20 || program.len() == 32);
@@ -163,7 +164,7 @@ impl ScriptBuf {
     }
 
     /// Generates OP_RETURN-type of scriptPubkey for the given data.
-    pub fn new_op_return(data: &[u8]) -> Self {
+    pub fn new_op_return<T: AsRef<PushBytes>>(data: &T) -> Self {
         Builder::new()
             .push_opcode(OP_RETURN)
             .push_slice(data)
@@ -200,18 +201,16 @@ impl ScriptBuf {
     ///
     /// [BIP143]: <https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki>
     pub fn p2wpkh_script_code(&self) -> Option<ScriptBuf> {
-        if !self.is_v0_p2wpkh() {
-            return None
-        }
-        let script = Builder::new()
-            .push_opcode(OP_DUP)
-            .push_opcode(OP_HASH160)
-            .push_slice(&self.as_bytes()[2..]) // The `self` script is 0x00, 0x14, <pubkey_hash>
-            .push_opcode(OP_EQUALVERIFY)
-            .push_opcode(OP_CHECKSIG)
-            .into_script();
-
-        Some(script)
+        self.v0_p2wpkh().map(|wpkh| {
+            Builder::new()
+                .push_opcode(OP_DUP)
+                .push_opcode(OP_HASH160)
+                // The `self` script is 0x00, 0x14, <pubkey_hash>
+                .push_slice(wpkh)
+                .push_opcode(OP_EQUALVERIFY)
+                .push_opcode(OP_CHECKSIG)
+                .into_script()
+        })
     }
 
     /// Adds a single opcode to the script.
@@ -220,17 +219,14 @@ impl ScriptBuf {
     }
 
     /// Adds instructions to push some arbitrary data onto the stack.
-    ///
-    /// ## Panics
-    ///
-    /// The method panics if `data` length is greater or equal to 0x100000000.
-    pub fn push_slice(&mut self, data: &[u8]) {
+    pub fn push_slice<T: AsRef<PushBytes>>(&mut self, data: T) {
+        let data = data.as_ref();
         self.reserve(Self::reserved_len_for_slice(data.len()));
         self.push_slice_no_opt(data);
     }
 
     /// Pushes the slice without reserving
-    fn push_slice_no_opt(&mut self, data: &[u8]) {
+    fn push_slice_no_opt(&mut self, data: &PushBytes) {
         // Start with a PUSH opcode
         match data.len() as u64 {
             n if n < opcodes::Ordinary::OP_PUSHDATA1 as u64 => { self.0.push(n as u8); },
@@ -253,7 +249,7 @@ impl ScriptBuf {
             _ => panic!("tried to put a 4bn+ sized object into a script!")
         }
         // Then push the raw bytes
-        self.0.extend_from_slice(data);
+        self.0.extend_from_slice(data.as_bytes());
     }
 
     /// Computes the sum of `len` and the lenght of an appropriate push opcode.

@@ -15,6 +15,7 @@ use secp256k1;
 use crate::prelude::*;
 use crate::hashes::hex::{self, FromHex};
 use crate::sighash::{EcdsaSighashType, NonStandardSighashType};
+use crate::script::PushBytes;
 
 const MAX_SIG_LEN: usize = 73;
 
@@ -102,6 +103,8 @@ impl FromStr for Signature {
 /// This avoids allocation and allows proving maximum size of the signature (73 bytes).
 /// The type can be used largely as a byte slice. It implements all standard traits one would
 /// expect and has familiar methods.
+/// However, the usual use case is to push it into a script. This can be done directly passing it
+/// into [`push_slice`](crate::script::ScriptBuf::push_slice).
 #[derive(Copy, Clone)]
 pub struct SerializedSignature {
     data: [u8; MAX_SIG_LEN],
@@ -143,6 +146,13 @@ impl AsMut<[u8]> for SerializedSignature {
     #[inline]
     fn as_mut(&mut self) -> &mut [u8] {
         self
+    }
+}
+
+impl AsRef<PushBytes> for SerializedSignature {
+    #[inline]
+    fn as_ref(&self) -> &PushBytes {
+        &<&PushBytes>::from(&self.data)[..self.len()]
     }
 }
 

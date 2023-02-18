@@ -97,9 +97,9 @@ fn p2pk_pubkey_bytes_incorrect_key_size_returns_none() {
 
 #[test]
 fn p2pk_pubkey_bytes_invalid_key_returns_some() {
-    let malformed_key = "21032e58afe51f9ed8ad3cc7897f634d881fdbe49816429ded8156bebd2ffd1ux";
+    let malformed_key = b"21032e58afe51f9ed8ad3cc7897f634d881fdbe49816429ded8156bebd2ffd1ux";
     let invalid_key_script = Script::builder()
-        .push_slice(malformed_key.as_bytes())
+        .push_slice(malformed_key)
         .push_opcode(OP_CHECKSIG)
         .into_script();
     assert!(invalid_key_script.p2pk_pubkey_bytes().is_some());
@@ -197,7 +197,7 @@ fn script_builder() {
     // from txid 3bb5e6434c11fb93f64574af5d116736510717f2c595eb45b52c28e31622dfff which was in my mempool when I wrote the test
     let script = Builder::new().push_opcode(OP_DUP)
         .push_opcode(OP_HASH160)
-        .push_slice(&hex!("16e1ae70ff0fa102905d4af297f6912bda6cce19"))
+        .push_slice(hex!("16e1ae70ff0fa102905d4af297f6912bda6cce19"))
         .push_opcode(OP_EQUALVERIFY)
         .push_opcode(OP_CHECKSIG)
         .into_script();
@@ -298,7 +298,7 @@ fn script_builder_verify() {
     assert_eq!(checkmultisig2.to_hex_string(), "af");
 
     let trick_slice = Builder::new()
-        .push_slice(&[0xae]) // OP_CHECKMULTISIG
+        .push_slice([0xae]) // OP_CHECKMULTISIG
         .push_verify()
         .into_script();
     assert_eq!(trick_slice.to_hex_string(), "01ae69");
@@ -498,19 +498,19 @@ fn test_iterator() {
 
     unwrap_all!(v_zero, v_zeropush, v_min, v_nonmin_alt, slop_v_min, slop_v_nonmin, slop_v_nonmin_alt);
 
-    assert_eq!(v_zero, vec![(0, Instruction::PushBytes(&[]))]);
-    assert_eq!(v_zeropush, vec![(0, Instruction::PushBytes(&[0]))]);
+    assert_eq!(v_zero, vec![(0, Instruction::PushBytes(PushBytes::empty()))]);
+    assert_eq!(v_zeropush, vec![(0, Instruction::PushBytes([0].as_ref()))]);
 
     assert_eq!(
         v_min,
-        vec![(0, Instruction::PushBytes(&[105])), (2, Instruction::Op(opcodes::OP_NOP3))]
+        vec![(0, Instruction::PushBytes([105].as_ref())), (2, Instruction::Op(opcodes::OP_NOP3))]
     );
 
     assert_eq!(v_nonmin.unwrap_err(), Error::NonMinimalPush);
 
     assert_eq!(
         v_nonmin_alt,
-        vec![(0, Instruction::PushBytes(&[105, 0])), (3, Instruction::Op(opcodes::OP_NOP3))]
+        vec![(0, Instruction::PushBytes([105, 0].as_ref())), (3, Instruction::Op(opcodes::OP_NOP3))]
     );
 
     assert_eq!(v_min, slop_v_min);
@@ -525,7 +525,7 @@ fn test_iterator() {
 
 #[test]
 fn script_ord() {
-    let script_1 = Builder::new().push_slice(&[1, 2, 3, 4]).into_script();
+    let script_1 = Builder::new().push_slice([1, 2, 3, 4]).into_script();
     let script_2 = Builder::new().push_int(10).into_script();
     let script_3 = Builder::new().push_int(15).into_script();
     let script_4 = Builder::new().push_opcode(OP_RETURN).into_script();
@@ -556,14 +556,14 @@ fn test_bitcoinconsensus () {
 fn defult_dust_value_tests() {
     // Check that our dust_value() calculator correctly calculates the dust limit on common
     // well-known scriptPubKey types.
-    let script_p2wpkh = Builder::new().push_int(0).push_slice(&[42; 20]).into_script();
+    let script_p2wpkh = Builder::new().push_int(0).push_slice([42; 20]).into_script();
     assert!(script_p2wpkh.is_v0_p2wpkh());
     assert_eq!(script_p2wpkh.dust_value(), crate::Amount::from_sat(294));
 
     let script_p2pkh = Builder::new()
         .push_opcode(OP_DUP)
         .push_opcode(OP_HASH160)
-        .push_slice(&[42; 20])
+        .push_slice([42; 20])
         .push_opcode(OP_EQUALVERIFY)
         .push_opcode(OP_CHECKSIG)
         .into_script();
@@ -611,7 +611,7 @@ fn script_extend() {
     let script_5_items = [
         Instruction::Op(OP_DUP),
         Instruction::Op(OP_HASH160),
-        Instruction::PushBytes(&[42; 20]),
+        Instruction::PushBytes([42; 20].as_ref()),
         Instruction::Op(OP_EQUALVERIFY),
         Instruction::Op(OP_CHECKSIG),
     ];
@@ -621,7 +621,7 @@ fn script_extend() {
     let script_6_items = [
         Instruction::Op(OP_DUP),
         Instruction::Op(OP_HASH160),
-        Instruction::PushBytes(&[42; 20]),
+        Instruction::PushBytes([42; 20].as_ref()),
         Instruction::Op(OP_EQUALVERIFY),
         Instruction::Op(OP_CHECKSIG),
         Instruction::Op(OP_NOP),
@@ -632,7 +632,7 @@ fn script_extend() {
     let script_7_items = [
         Instruction::Op(OP_DUP),
         Instruction::Op(OP_HASH160),
-        Instruction::PushBytes(&[42; 20]),
+        Instruction::PushBytes([42; 20].as_ref()),
         Instruction::Op(OP_EQUALVERIFY),
         Instruction::Op(OP_CHECKSIG),
         Instruction::Op(OP_NOP),

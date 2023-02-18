@@ -71,11 +71,13 @@ mod instruction;
 mod owned;
 #[cfg(test)]
 mod tests;
+mod push_bytes;
 
 pub use self::borrowed::*;
 pub use self::builder::*;
 pub use self::instruction::*;
 pub use self::owned::*;
+pub use self::push_bytes::*;
 
 /// Encodes an integer in script(minimal CScriptNum) format.
 ///
