@@ -1139,7 +1139,7 @@ mod tests {
 
     use super::*;
     use crate::crypto::key::PublicKey;
-    use crate::internal_macros::hex;
+    use hex_lit::hex;
     use crate::network::constants::Network::{Bitcoin, Testnet};
 
     fn roundtrips(addr: &Address) {
@@ -1272,10 +1272,8 @@ mod tests {
     #[test]
     fn test_non_existent_segwit_version() {
         // 40-byte program
-        let program = hex!(
-            "654f6ea368e0acdfd92976b7c2103a1b26313f430654f6ea368e0acdfd92976b7c2103a1b26313f4"
-        );
-        let witness_prog = WitnessProgram::new(WitnessVersion::V13, program).unwrap();
+        let program = hex!("654f6ea368e0acdfd92976b7c2103a1b26313f430654f6ea368e0acdfd92976b7c2103a1b26313f4");
+        let witness_prog = WitnessProgram::new(WitnessVersion::V13, program.to_vec()).unwrap();
         let addr = Address::new(Bitcoin, Payload::WitnessProgram(witness_prog));
         roundtrips(&addr);
     }
