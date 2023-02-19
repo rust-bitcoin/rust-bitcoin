@@ -1641,15 +1641,15 @@ mod tests {
         let cache = cache.segwit_cache();
         // Parse hex into Vec because BIP143 test vector displays forwards but our sha256d::Hash displays backwards.
         assert_eq!(
-            cache.prevouts.into_inner().as_ref(),
+            cache.prevouts.into_inner(),
             &Vec::from_hex("96b827c8483d4e9b96712b6713a7b68d6e8003a781feba36c31143470b4efd37").unwrap()[..],
         );
         assert_eq!(
-            cache.sequences.into_inner().as_ref(),
+            cache.sequences.into_inner(),
             &Vec::from_hex("52b0a642eea2fb7ae638c36f6252b6750293dbe574a806984b8e4d8548339a3b").unwrap()[..],
         );
         assert_eq!(
-            cache.outputs.into_inner().as_ref(),
+            cache.outputs.into_inner(),
             &Vec::from_hex("863ef3e1a92afbfdb97f31ad0fc7683ee943e9abcf2501590ff8f6551f47e5e5").unwrap()[..],
         );
     }
@@ -1677,15 +1677,15 @@ mod tests {
         let cache = cache.segwit_cache();
         // Parse hex into Vec because BIP143 test vector displays forwards but our sha256d::Hash displays backwards.
         assert_eq!(
-            cache.prevouts.into_inner().as_ref(),
+            cache.prevouts.into_inner(),
             &Vec::from_hex("b0287b4a252ac05af83d2dcef00ba313af78a3e9c329afa216eb3aa2a7b4613a").unwrap()[..],
         );
         assert_eq!(
-            cache.sequences.into_inner().as_ref(),
+            cache.sequences.into_inner(),
             &Vec::from_hex("18606b350cd8bf565266bc352f0caddcf01e8fa789dd8a15386327cf8cabe198").unwrap()[..],
         );
         assert_eq!(
-            cache.outputs.into_inner().as_ref(),
+            cache.outputs.into_inner(),
             &Vec::from_hex("de984f44532e2173ca0d64314fcefe6d30da6f8cf27bafa706da61df8a226c83").unwrap()[..],
         );
     }
@@ -1718,15 +1718,15 @@ mod tests {
         let cache = cache.segwit_cache();
         // Parse hex into Vec because BIP143 test vector displays forwards but our sha256d::Hash displays backwards.
         assert_eq!(
-            cache.prevouts.into_inner().as_ref(),
+            cache.prevouts.into_inner(),
             &Vec::from_hex("74afdc312af5183c4198a40ca3c1a275b485496dd3929bca388c4b5e31f7aaa0").unwrap()[..],
         );
         assert_eq!(
-            cache.sequences.into_inner().as_ref(),
+            cache.sequences.into_inner(),
             &Vec::from_hex("3bb13029ce7b1f559ef5e747fcac439f1455a2ec7c5f09b72290795e70665044").unwrap()[..],
         );
         assert_eq!(
-            cache.outputs.into_inner().as_ref(),
+            cache.outputs.into_inner(),
             &Vec::from_hex("bc4d309071414bed932f98832b27b4d76dad7e6c1346f487a8fdbb8eb90307cc").unwrap()[..],
         );
     }

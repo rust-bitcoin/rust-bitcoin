@@ -9,7 +9,7 @@ use secp256k1::XOnlyPublicKey;
 
 use crate::blockdata::locktime::absolute;
 use crate::blockdata::opcodes::{self, all::*};
-use crate::blockdata::script::{write_scriptint, opcode_to_verify, Script, ScriptBuf};
+use crate::blockdata::script::{write_scriptint, opcode_to_verify, Script, ScriptBuf, PushBytes};
 use crate::blockdata::transaction::Sequence;
 use crate::key::PublicKey;
 use crate::prelude::*;
@@ -56,11 +56,11 @@ impl Builder {
     pub(in crate::blockdata) fn push_int_non_minimal(self, data: i64) -> Builder {
         let mut buf = [0u8; 8];
         let len = write_scriptint(&mut buf, data);
-        self.push_slice(&buf[..len])
+        self.push_slice(&<&PushBytes>::from(&buf)[..len])
     }
 
     /// Adds instructions to push some arbitrary data onto the stack.
-    pub fn push_slice(mut self, data: &[u8]) -> Builder {
+    pub fn push_slice<T: AsRef<PushBytes>>(mut self, data: T) -> Builder {
         self.0.push_slice(data);
         self.1 = None;
         self
@@ -69,15 +69,15 @@ impl Builder {
     /// Adds instructions to push a public key onto the stack.
     pub fn push_key(self, key: &PublicKey) -> Builder {
         if key.compressed {
-            self.push_slice(&key.inner.serialize()[..])
+            self.push_slice(key.inner.serialize())
         } else {
-            self.push_slice(&key.inner.serialize_uncompressed()[..])
+            self.push_slice(key.inner.serialize_uncompressed())
         }
     }
 
     /// Adds instructions to push an XOnly public key onto the stack.
     pub fn push_x_only_key(self, x_only_key: &XOnlyPublicKey) -> Builder {
-        self.push_slice(&x_only_key.serialize())
+        self.push_slice(x_only_key.serialize())
     }
 
     /// Adds a single opcode to the script.

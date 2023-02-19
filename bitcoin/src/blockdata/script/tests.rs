@@ -3,13 +3,12 @@ use core::str::FromStr;
 use super::*;
 
 use crate::hashes::Hash;
-use crate::hashes::hex::FromHex;
 use crate::hash_types::{PubkeyHash, WPubkeyHash, ScriptHash, WScriptHash};
 use crate::consensus::encode::{deserialize, serialize};
 use crate::blockdata::opcodes;
 use crate::crypto::key::{PublicKey, XOnlyPublicKey};
 use crate::psbt::serialize::Serialize;
-use crate::internal_macros::hex;
+use hex_lit::hex;
 
 #[test]
 fn script() {
@@ -32,7 +31,7 @@ fn script() {
     script = script.push_int(-10000000); comp.extend([4u8, 128, 150, 152, 128].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
 
     // data
-    script = script.push_slice("NRA4VR".as_bytes()); comp.extend([6u8, 78, 82, 65, 52, 86, 82].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
+    script = script.push_slice(b"NRA4VR"); comp.extend([6u8, 78, 82, 65, 52, 86, 82].iter().cloned()); assert_eq!(script.as_bytes(), &comp[..]);
 
     // keys
     const KEYSTR1: &str = "21032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af";
@@ -88,9 +87,9 @@ fn p2pk_pubkey_bytes_different_op_code_returns_none() {
 #[test]
 fn p2pk_pubkey_bytes_incorrect_key_size_returns_none() {
     // 63 byte key
-    let malformed_key = "21032e58afe51f9ed8ad3cc7897f634d881fdbe49816429ded8156bebd2ffd1";
+    let malformed_key = b"21032e58afe51f9ed8ad3cc7897f634d881fdbe49816429ded8156bebd2ffd1";
     let invalid_p2pk_script = Script::builder()
-        .push_slice(malformed_key.as_bytes())
+        .push_slice(malformed_key)
         .push_opcode(OP_CHECKSIG)
         .into_script();
     assert!(invalid_p2pk_script.p2pk_pubkey_bytes().is_none());
@@ -98,9 +97,9 @@ fn p2pk_pubkey_bytes_incorrect_key_size_returns_none() {
 
 #[test]
 fn p2pk_pubkey_bytes_invalid_key_returns_some() {
-    let malformed_key = "21032e58afe51f9ed8ad3cc7897f634d881fdbe49816429ded8156bebd2ffd1ux";
+    let malformed_key = b"21032e58afe51f9ed8ad3cc7897f634d881fdbe49816429ded8156bebd2ffd1ux";
     let invalid_key_script = Script::builder()
-        .push_slice(malformed_key.as_bytes())
+        .push_slice(malformed_key)
         .push_opcode(OP_CHECKSIG)
         .into_script();
     assert!(invalid_key_script.p2pk_pubkey_bytes().is_some());
@@ -154,9 +153,9 @@ fn p2pk_public_key_different_op_code_returns_none() {
 
 #[test]
 fn p2pk_public_key_incorrect_size_returns_none() {
-    let malformed_key = "21032e58afe51f9ed8ad3cc7897f634d881fdbe49816429ded8156bebd2ffd1";
+    let malformed_key = b"21032e58afe51f9ed8ad3cc7897f634d881fdbe49816429ded8156bebd2ffd1";
     let malformed_key_script = Script::builder()
-        .push_slice(malformed_key.as_bytes())
+        .push_slice(malformed_key)
         .push_opcode(OP_CHECKSIG)
         .into_script();
     assert!(malformed_key_script.p2pk_public_key().is_none());
@@ -165,9 +164,9 @@ fn p2pk_public_key_incorrect_size_returns_none() {
 
 #[test]
 fn p2pk_public_key_invalid_key_returns_none() {
-    let malformed_key = "21032e58afe51f9ed8ad3cc7897f634d881fdbe49816429ded8156bebd2ffd1ux";
+    let malformed_key = b"21032e58afe51f9ed8ad3cc7897f634d881fdbe49816429ded8156bebd2ffd1ux";
     let invalid_key_script = Script::builder()
-        .push_slice(malformed_key.as_bytes())
+        .push_slice(malformed_key)
         .push_opcode(OP_CHECKSIG)
         .into_script();
     assert!(invalid_key_script.p2pk_public_key().is_none());
@@ -190,7 +189,7 @@ fn script_x_only_key() {
     const KEYSTR: &str = "209997a497d964fc1a62885b05a51166a65a90df00492c8d7cf61d6accf54803be";
     let x_only_key = XOnlyPublicKey::from_str(&KEYSTR[2..]).unwrap();
     let script = Builder::new().push_x_only_key(&x_only_key);
-    assert_eq!(script.into_bytes(), hex!(KEYSTR));
+    assert_eq!(script.into_bytes(), &hex!(KEYSTR) as &[u8]);
 }
 
 #[test]
@@ -198,7 +197,7 @@ fn script_builder() {
     // from txid 3bb5e6434c11fb93f64574af5d116736510717f2c595eb45b52c28e31622dfff which was in my mempool when I wrote the test
     let script = Builder::new().push_opcode(OP_DUP)
         .push_opcode(OP_HASH160)
-        .push_slice(&hex!("16e1ae70ff0fa102905d4af297f6912bda6cce19"))
+        .push_slice(hex!("16e1ae70ff0fa102905d4af297f6912bda6cce19"))
         .push_opcode(OP_EQUALVERIFY)
         .push_opcode(OP_CHECKSIG)
         .into_script();
@@ -231,7 +230,7 @@ fn script_generators() {
 
     // Test data are taken from the second output of
     // 2ccb3a1f745eb4eefcf29391460250adda5fab78aaddb902d25d3cd97d9d8e61 transaction
-    let data = Vec::<u8>::from_hex("aa21a9ed20280f53f2d21663cac89e6bd2ad19edbabb048cda08e73ed19e9268d0afea2a").unwrap();
+    let data = hex!("aa21a9ed20280f53f2d21663cac89e6bd2ad19edbabb048cda08e73ed19e9268d0afea2a");
     let op_return = ScriptBuf::new_op_return(&data);
     assert!(op_return.is_op_return());
     assert_eq!(op_return.to_hex_string(), "6a24aa21a9ed20280f53f2d21663cac89e6bd2ad19edbabb048cda08e73ed19e9268d0afea2a");
@@ -299,7 +298,7 @@ fn script_builder_verify() {
     assert_eq!(checkmultisig2.to_hex_string(), "af");
 
     let trick_slice = Builder::new()
-        .push_slice(&[0xae]) // OP_CHECKMULTISIG
+        .push_slice([0xae]) // OP_CHECKMULTISIG
         .push_verify()
         .into_script();
     assert_eq!(trick_slice.to_hex_string(), "01ae69");
@@ -314,7 +313,7 @@ fn script_serialize() {
     let hex_script = hex!("6c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52");
     let script: Result<ScriptBuf, _> = deserialize(&hex_script);
     assert!(script.is_ok());
-    assert_eq!(serialize(&script.unwrap()), hex_script);
+    assert_eq!(serialize(&script.unwrap()), &hex_script as &[u8]);
 }
 
 #[test]
@@ -499,19 +498,19 @@ fn test_iterator() {
 
     unwrap_all!(v_zero, v_zeropush, v_min, v_nonmin_alt, slop_v_min, slop_v_nonmin, slop_v_nonmin_alt);
 
-    assert_eq!(v_zero, vec![(0, Instruction::PushBytes(&[]))]);
-    assert_eq!(v_zeropush, vec![(0, Instruction::PushBytes(&[0]))]);
+    assert_eq!(v_zero, vec![(0, Instruction::PushBytes(PushBytes::empty()))]);
+    assert_eq!(v_zeropush, vec![(0, Instruction::PushBytes([0].as_ref()))]);
 
     assert_eq!(
         v_min,
-        vec![(0, Instruction::PushBytes(&[105])), (2, Instruction::Op(opcodes::OP_NOP3))]
+        vec![(0, Instruction::PushBytes([105].as_ref())), (2, Instruction::Op(opcodes::OP_NOP3))]
     );
 
     assert_eq!(v_nonmin.unwrap_err(), Error::NonMinimalPush);
 
     assert_eq!(
         v_nonmin_alt,
-        vec![(0, Instruction::PushBytes(&[105, 0])), (3, Instruction::Op(opcodes::OP_NOP3))]
+        vec![(0, Instruction::PushBytes([105, 0].as_ref())), (3, Instruction::Op(opcodes::OP_NOP3))]
     );
 
     assert_eq!(v_min, slop_v_min);
@@ -526,7 +525,7 @@ fn test_iterator() {
 
 #[test]
 fn script_ord() {
-    let script_1 = Builder::new().push_slice(&[1, 2, 3, 4]).into_script();
+    let script_1 = Builder::new().push_slice([1, 2, 3, 4]).into_script();
     let script_2 = Builder::new().push_int(10).into_script();
     let script_3 = Builder::new().push_int(15).into_script();
     let script_4 = Builder::new().push_opcode(OP_RETURN).into_script();
@@ -547,23 +546,24 @@ fn script_ord() {
 #[cfg(feature = "bitcoinconsensus")]
 fn test_bitcoinconsensus () {
 	// a random segwit transaction from the blockchain using native segwit
-	let spent = Builder::from(hex!("0020701a8d401c84fb13e6baf169d59684e17abd9fa216c8cc5b9fc63d622ff8c58d")).into_script();
+    let spent_bytes = hex!("0020701a8d401c84fb13e6baf169d59684e17abd9fa216c8cc5b9fc63d622ff8c58d");
+	let spent = Script::from_bytes(&spent_bytes);
 	let spending = hex!("010000000001011f97548fbbe7a0db7588a66e18d803d0089315aa7d4cc28360b6ec50ef36718a0100000000ffffffff02df1776000000000017a9146c002a686959067f4866b8fb493ad7970290ab728757d29f0000000000220020701a8d401c84fb13e6baf169d59684e17abd9fa216c8cc5b9fc63d622ff8c58d04004730440220565d170eed95ff95027a69b313758450ba84a01224e1f7f130dda46e94d13f8602207bdd20e307f062594022f12ed5017bbf4a055a06aea91c10110a0e3bb23117fc014730440220647d2dc5b15f60bc37dc42618a370b2a1490293f9e5c8464f53ec4fe1dfe067302203598773895b4b16d37485cbe21b337f4e4b650739880098c592553add7dd4355016952210375e00eb72e29da82b89367947f29ef34afb75e8654f6ea368e0acdfd92976b7c2103a1b26313f430c4b15bb1fdce663207659d8cac749a0e53d70eff01874496feff2103c96d495bfdd5ba4145e3e046fee45e84a8a48ad05bd8dbb395c011a32cf9f88053ae00000000");
-	spent.verify(0, crate::Amount::from_sat(18393430), spending.as_slice()).unwrap();
+	spent.verify(0, crate::Amount::from_sat(18393430), &spending).unwrap();
 }
 
 #[test]
 fn defult_dust_value_tests() {
     // Check that our dust_value() calculator correctly calculates the dust limit on common
     // well-known scriptPubKey types.
-    let script_p2wpkh = Builder::new().push_int(0).push_slice(&[42; 20]).into_script();
+    let script_p2wpkh = Builder::new().push_int(0).push_slice([42; 20]).into_script();
     assert!(script_p2wpkh.is_v0_p2wpkh());
     assert_eq!(script_p2wpkh.dust_value(), crate::Amount::from_sat(294));
 
     let script_p2pkh = Builder::new()
         .push_opcode(OP_DUP)
         .push_opcode(OP_HASH160)
-        .push_slice(&[42; 20])
+        .push_slice([42; 20])
         .push_opcode(OP_EQUALVERIFY)
         .push_opcode(OP_CHECKSIG)
         .into_script();
@@ -611,7 +611,7 @@ fn script_extend() {
     let script_5_items = [
         Instruction::Op(OP_DUP),
         Instruction::Op(OP_HASH160),
-        Instruction::PushBytes(&[42; 20]),
+        Instruction::PushBytes([42; 20].as_ref()),
         Instruction::Op(OP_EQUALVERIFY),
         Instruction::Op(OP_CHECKSIG),
     ];
@@ -621,7 +621,7 @@ fn script_extend() {
     let script_6_items = [
         Instruction::Op(OP_DUP),
         Instruction::Op(OP_HASH160),
-        Instruction::PushBytes(&[42; 20]),
+        Instruction::PushBytes([42; 20].as_ref()),
         Instruction::Op(OP_EQUALVERIFY),
         Instruction::Op(OP_CHECKSIG),
         Instruction::Op(OP_NOP),
@@ -632,7 +632,7 @@ fn script_extend() {
     let script_7_items = [
         Instruction::Op(OP_DUP),
         Instruction::Op(OP_HASH160),
-        Instruction::PushBytes(&[42; 20]),
+        Instruction::PushBytes([42; 20].as_ref()),
         Instruction::Op(OP_EQUALVERIFY),
         Instruction::Op(OP_CHECKSIG),
         Instruction::Op(OP_NOP),

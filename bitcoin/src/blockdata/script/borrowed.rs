@@ -1,7 +1,7 @@
 // Written in 2014 by Andrew Poelstra <apoelstra@wpsoftware.net>
 // SPDX-License-Identifier: CC0-1.0
 
-use core::convert::TryFrom;
+use core::convert::{TryFrom, TryInto};
 use core::fmt;
 #[cfg(rust_v_1_53)]
 use core::ops::Bound;
@@ -275,6 +275,14 @@ impl Script {
         self.0.len() == 22
             && self.witness_version() == Some(WitnessVersion::V0)
             && self.0[1] == OP_PUSHBYTES_20.to_u8()
+    }
+
+    pub(crate) fn v0_p2wpkh(&self) -> Option<&[u8; 20]> {
+        if self.is_v0_p2wpkh() {
+            Some(self.0[2..].try_into().expect("is_v0_p2wpkh checks the length"))
+        } else {
+            None
+        }
     }
 
     /// Checks whether a script pubkey is a P2TR output.
