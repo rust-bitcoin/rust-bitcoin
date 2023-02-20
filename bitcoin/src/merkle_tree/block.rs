@@ -280,11 +280,11 @@ impl PartialMerkleTree {
         }
         // there can never be more hashes provided than one for every txid
         if self.hashes.len() as u32 > self.num_transactions {
-            return Err(BadFormat("Proof contains more hashes than transactions".to_owned()));
+            return Err(TooManyHashes);
         };
         // there must be at least one bit per node in the partial tree, and at least one node per hash
         if self.bits.len() < self.hashes.len() {
-            return Err(BadFormat("Proof contains less bits than hashes".to_owned()));
+            return Err(NotEnoughBits);
         };
         // calculate height of tree
         let mut height = 0;
@@ -299,11 +299,11 @@ impl PartialMerkleTree {
         // Verify that all bits were consumed (except for the padding caused by
         // serializing it as a byte sequence)
         if (bits_used + 7) / 8 != (self.bits.len() as u32 + 7) / 8 {
-            return Err(BadFormat("Not all bit were consumed".to_owned()));
+            return Err(NotAllBitsConsumed);
         }
         // Verify that all hashes were consumed
         if hash_used != self.hashes.len() as u32 {
-            return Err(BadFormat("Not all hashes were consumed".to_owned()));
+            return Err(NotAllHashesConsumed);
         }
         Ok(TxMerkleNode::from_inner(hash_merkle_root.into_inner()))
     }
@@ -371,14 +371,14 @@ impl PartialMerkleTree {
         indexes: &mut Vec<u32>,
     ) -> Result<TxMerkleNode, MerkleBlockError> {
         if *bits_used as usize >= self.bits.len() {
-            return Err(BadFormat("Overflowed the bits array".to_owned()));
+            return Err(BitsArrayOverflow);
         }
         let parent_of_match = self.bits[*bits_used as usize];
         *bits_used += 1;
         if height == 0 || !parent_of_match {
             // If at height 0, or nothing interesting below, use stored hash and do not descend
             if *hash_used as usize >= self.hashes.len() {
-                return Err(BadFormat("Overflowed the hash array".to_owned()));
+                return Err(HashesArrayOverflow);
             }
             let hash = self.hashes[*hash_used as usize];
             *hash_used += 1;
@@ -411,7 +411,7 @@ impl PartialMerkleTree {
                 if right == left {
                     // The left and right branches should never be identical, as the transaction
                     // hashes covered by them must each be unique.
-                    return Err(BadFormat("Found identical transaction hashes".to_owned()));
+                    return Err(IdenticalHashesFound);
                 }
             } else {
                 right = left;
@@ -466,8 +466,21 @@ pub enum MerkleBlockError {
     NoTransactions,
     /// There are too many transactions.
     TooManyTransactions,
-    /// General format error.
-    BadFormat(String),
+    /// There are too many hashes
+    TooManyHashes,
+    /// There must be at least one bit per node in the partial tree,
+    /// and at least one node per hash
+    NotEnoughBits,
+    /// Not all bits were consumed
+    NotAllBitsConsumed,
+    /// Not all hashes were consumed
+    NotAllHashesConsumed,
+    /// Overflowed the bits array
+    BitsArrayOverflow,
+    /// Overflowed the hashes array
+    HashesArrayOverflow,
+    /// The left and right branches should never be identical
+    IdenticalHashesFound,
 }
 
 impl fmt::Display for MerkleBlockError {
@@ -478,7 +491,13 @@ impl fmt::Display for MerkleBlockError {
             MerkleRootMismatch => write!(f, "merkle header root doesn't match to the root calculated from the partial merkle tree"),
             NoTransactions => write!(f, "partial merkle tree contains no transactions"),
             TooManyTransactions => write!(f, "too many transactions"),
-            BadFormat(ref s) => write!(f, "general format error: {}", s),
+            TooManyHashes => write!(f, "proof contains more hashes than transactions"),
+            NotEnoughBits => write!(f, "proof contains less bits than hashes"),
+            NotAllBitsConsumed => write!(f, "not all bit were consumed"),
+            NotAllHashesConsumed => write!(f, "not all hashes were consumed"),
+            BitsArrayOverflow => write!(f, "overflowed the bits array"),
+            HashesArrayOverflow => write!(f, "overflowed the hashes array"),
+            IdenticalHashesFound => write!(f, "found identical transaction hashes"),
         }
     }
 }
@@ -490,7 +509,8 @@ impl std::error::Error for MerkleBlockError {
         use self::MerkleBlockError::*;
 
         match *self {
-            MerkleRootMismatch | NoTransactions | TooManyTransactions | BadFormat(_) => None,
+            MerkleRootMismatch | NoTransactions | TooManyTransactions | TooManyHashes | NotEnoughBits | NotAllBitsConsumed |
+            NotAllHashesConsumed | BitsArrayOverflow | HashesArrayOverflow | IdenticalHashesFound => None,
         }
     }
 }
