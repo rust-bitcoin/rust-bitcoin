@@ -87,13 +87,13 @@ pub enum Error {
     InvalidXOnlyPublicKey,
     /// Parsing error indicating invalid ECDSA signatures
     InvalidEcdsaSignature(crate::crypto::ecdsa::Error),
-    /// Parsing error indicating invalid Schnorr signatures
-    InvalidSchnorrSignature(crate::crypto::schnorr::Error),
+    /// Parsing error indicating invalid taproot signatures
+    InvalidTaprootSignature(crate::crypto::taproot::Error),
     /// Parsing error indicating invalid control block
     InvalidControlBlock,
     /// Parsing error indicating invalid leaf version
     InvalidLeafVersion,
-    /// Parsing error indicating a Taproot error
+    /// Parsing error indicating a taproot error
     Taproot(&'static str),
     /// Error related to an xpub key
     XPubKey(&'static str),
@@ -136,7 +136,7 @@ impl fmt::Display for Error {
             Error::InvalidSecp256k1PublicKey(ref e) => write_err!(f, "invalid secp256k1 public key"; e),
             Error::InvalidXOnlyPublicKey => f.write_str("invalid xonly public key"),
             Error::InvalidEcdsaSignature(ref e) => write_err!(f, "invalid ECDSA signature"; e),
-            Error::InvalidSchnorrSignature(ref e) => write_err!(f, "invalid Schnorr signature"; e),
+            Error::InvalidTaprootSignature(ref e) => write_err!(f, "invalid taproot signature"; e),
             Error::InvalidControlBlock => f.write_str("invalid control block"),
             Error::InvalidLeafVersion => f.write_str("invalid leaf version"),
             Error::Taproot(s) => write!(f, "taproot error -  {}", s),
@@ -179,7 +179,7 @@ impl std::error::Error for Error {
             | InvalidSecp256k1PublicKey(_)
             | InvalidXOnlyPublicKey
             | InvalidEcdsaSignature(_)
-            | InvalidSchnorrSignature(_)
+            | InvalidTaprootSignature(_)
             | InvalidControlBlock
             | InvalidLeafVersion
             | Taproot(_)

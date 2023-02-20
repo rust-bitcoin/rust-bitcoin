@@ -11,9 +11,8 @@ use crate::blockdata::opcodes::{self, all::*};
 use crate::blockdata::script::{opcode_to_verify, Builder, Instruction, Script, PushBytes};
 use crate::hashes::hex;
 use crate::hash_types::{PubkeyHash, WPubkeyHash, ScriptHash, WScriptHash};
-use crate::key::PublicKey;
+use crate::key::{PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey};
 use crate::prelude::*;
-use crate::schnorr::{TapTweak, TweakedPublicKey, UntweakedPublicKey};
 use crate::taproot::TapNodeHash;
 
 /// An owned, growable script.

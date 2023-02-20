@@ -19,7 +19,7 @@ use crate::consensus::encode::{self, serialize, Decodable, Encodable, deserializ
 use secp256k1::{self, XOnlyPublicKey};
 use crate::bip32::{ChildNumber, Fingerprint, KeySource};
 use crate::hashes::{hash160, ripemd160, sha256, sha256d, Hash};
-use crate::crypto::{ecdsa, schnorr};
+use crate::crypto::{ecdsa, taproot};
 use crate::psbt::{Error, PartiallySignedTransaction};
 use crate::taproot::{TapNodeHash, TapLeafHash, ControlBlock, LeafVersion};
 use crate::crypto::key::PublicKey;
@@ -283,24 +283,24 @@ impl Deserialize for XOnlyPublicKey {
     }
 }
 
-impl Serialize for schnorr::Signature  {
+impl Serialize for taproot::Signature  {
     fn serialize(&self) -> Vec<u8> {
         self.to_vec()
     }
 }
 
-impl Deserialize for schnorr::Signature {
+impl Deserialize for taproot::Signature {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
-        schnorr::Signature::from_slice(bytes)
+        taproot::Signature::from_slice(bytes)
             .map_err(|e| match e {
-                schnorr::Error::InvalidSighashType(flag) => {
+                taproot::Error::InvalidSighashType(flag) => {
                     Error::NonStandardSighashType(flag as u32)
                 }
-                schnorr::Error::InvalidSignatureSize(_) => {
-                    Error::InvalidSchnorrSignature(e)
+                taproot::Error::InvalidSignatureSize(_) => {
+                    Error::InvalidTaprootSignature(e)
                 }
-                schnorr::Error::Secp256k1(..) => {
-                    Error::InvalidSchnorrSignature(e)
+                taproot::Error::Secp256k1(..) => {
+                    Error::InvalidTaprootSignature(e)
                 }
             })
     }

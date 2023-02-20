@@ -17,10 +17,9 @@ use crate::blockdata::script::Error;
 use crate::consensus::Encodable;
 use crate::hash_types::{ScriptHash, WScriptHash};
 use crate::hashes::Hash;
-use crate::key::PublicKey;
+use crate::key::{PublicKey, UntweakedPublicKey};
 use crate::policy::DUST_RELAY_TX_FEE;
 use crate::prelude::*;
-use crate::schnorr::UntweakedPublicKey;
 use crate::taproot::{LeafVersion, TapNodeHash, TapLeafHash};
 
 /// Bitcoin script slice.

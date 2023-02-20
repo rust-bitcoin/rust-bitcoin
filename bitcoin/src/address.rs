@@ -44,8 +44,7 @@ use crate::blockdata::constants::{
 use crate::blockdata::opcodes;
 use crate::blockdata::opcodes::all::*;
 use crate::blockdata::script::{self, Instruction, Script, ScriptBuf, PushBytes, PushBytesBuf, PushBytesErrorReport};
-use crate::crypto::key::PublicKey;
-use crate::crypto::schnorr::{TapTweak, TweakedPublicKey, UntweakedPublicKey};
+use crate::crypto::key::{PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey};
 use crate::error::ParseIntError;
 use crate::hash_types::{PubkeyHash, ScriptHash};
 use crate::hashes::{sha256, Hash, HashEngine};
