@@ -435,6 +435,8 @@ mod error {
     }
 }
 
+// we have 64 bits in mind, but even for esoteric sizes, this code is correct, since it's the
+// conservative one that checks for errors
 #[cfg(not(any(target_pointer_width = "16", target_pointer_width = "32")))]
 mod error {
     use core::fmt;
