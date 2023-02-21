@@ -11,6 +11,7 @@ use crate::psbt::serialize::Serialize;
 use hex_lit::hex;
 
 #[test]
+#[rustfmt::skip]
 fn script() {
     let mut comp = vec![];
     let mut script = Builder::new();
