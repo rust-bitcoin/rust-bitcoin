@@ -1,6 +1,5 @@
 # Eventually this shoud be: ignore = []
 ignore = [
-       "bitcoin/src/util",
        "hashes",
 ]
 
