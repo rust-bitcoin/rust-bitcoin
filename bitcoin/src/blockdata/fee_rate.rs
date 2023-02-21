@@ -1,11 +1,11 @@
 //! Implements `FeeRate` and assoctiated features.
 
 use core::fmt;
-use core::ops::{Mul, Div};
+use core::ops::{Div, Mul};
 
+use super::Weight;
 use crate::prelude::*;
 use crate::Amount;
-use super::Weight;
 
 /// Represents fee rate.
 ///
@@ -40,9 +40,7 @@ impl FeeRate {
     pub const DUST: FeeRate = FeeRate::from_sat_per_vb_unchecked(3);
 
     /// Constructs `FeeRate` from satoshis per 1000 weight units.
-    pub const fn from_sat_per_kwu(sat_kwu: u64) -> Self {
-        FeeRate(sat_kwu)
-    }
+    pub const fn from_sat_per_kwu(sat_kwu: u64) -> Self { FeeRate(sat_kwu) }
 
     /// Constructs `FeeRate` from satoshis per virtual bytes.
     ///
@@ -57,40 +55,28 @@ impl FeeRate {
     }
 
     /// Constructs `FeeRate` from satoshis per virtual bytes without overflow check.
-    pub const fn from_sat_per_vb_unchecked(sat_vb: u64) -> Self {
-        FeeRate(sat_vb * (1000 / 4))
-    }
+    pub const fn from_sat_per_vb_unchecked(sat_vb: u64) -> Self { FeeRate(sat_vb * (1000 / 4)) }
 
     /// Returns raw fee rate.
     ///
     /// Can be used instead of `into()` to avoid inference issues.
-    pub const fn to_sat_per_kwu(self) -> u64 {
-        self.0
-    }
+    pub const fn to_sat_per_kwu(self) -> u64 { self.0 }
 
     /// Converts to sat/vB rounding down.
-    pub const fn to_sat_per_vb_floor(self) -> u64 {
-        self.0 / (1000 / 4)
-    }
+    pub const fn to_sat_per_vb_floor(self) -> u64 { self.0 / (1000 / 4) }
 
     /// Converts to sat/vB rounding up.
-    pub const fn to_sat_per_vb_ceil(self) -> u64 {
-        (self.0 + (1000 / 4 - 1)) / (1000 / 4)
-    }
+    pub const fn to_sat_per_vb_ceil(self) -> u64 { (self.0 + (1000 / 4 - 1)) / (1000 / 4) }
 
     /// Checked multiplication.
     ///
     /// Computes `self * rhs` returning `None` if overflow occurred.
-    pub fn checked_mul(self, rhs: u64) -> Option<Self> {
-        self.0.checked_mul(rhs).map(Self)
-    }
+    pub fn checked_mul(self, rhs: u64) -> Option<Self> { self.0.checked_mul(rhs).map(Self) }
 
     /// Checked division.
     ///
     /// Computes `self / rhs` returning `None` if `rhs == 0`.
-    pub fn checked_div(self, rhs: u64) -> Option<Self> {
-        self.0.checked_div(rhs).map(Self)
-    }
+    pub fn checked_div(self, rhs: u64) -> Option<Self> { self.0.checked_div(rhs).map(Self) }
 }
 
 /// Alternative will display the unit.
@@ -105,9 +91,7 @@ impl fmt::Display for FeeRate {
 }
 
 impl From<FeeRate> for u64 {
-    fn from(value: FeeRate) -> Self {
-        value.to_sat_per_kwu()
-    }
+    fn from(value: FeeRate) -> Self { value.to_sat_per_kwu() }
 }
 
 /// Computes ceiling so that fee computation is conservative.
@@ -122,25 +106,22 @@ impl Mul<FeeRate> for Weight {
 impl Mul<Weight> for FeeRate {
     type Output = Amount;
 
-    fn mul(self, rhs: Weight) -> Self::Output {
-        rhs * self
-    }
+    fn mul(self, rhs: Weight) -> Self::Output { rhs * self }
 }
 
 impl Div<Weight> for Amount {
     type Output = FeeRate;
 
-    fn div(self, rhs: Weight) -> Self::Output {
-        FeeRate(self.to_sat() * 1000 / rhs.to_wu())
-    }
+    fn div(self, rhs: Weight) -> Self::Output { FeeRate(self.to_sat() * 1000 / rhs.to_wu()) }
 }
 
 crate::parse::impl_parse_str_from_int_infallible!(FeeRate, u64, from_sat_per_kwu);
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::u64;
+
+    use super::*;
 
     #[test]
     fn fee_rate_const_test() {
@@ -171,9 +152,7 @@ mod tests {
 
     #[test]
     #[should_panic]
-    fn from_sat_per_vb_unchecked_panic_test() {
-        FeeRate::from_sat_per_vb_unchecked(u64::MAX);
-    }
+    fn from_sat_per_vb_unchecked_panic_test() { FeeRate::from_sat_per_vb_unchecked(u64::MAX); }
 
     #[test]
     fn raw_feerate_test() {

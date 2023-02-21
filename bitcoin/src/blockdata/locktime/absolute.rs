@@ -7,23 +7,21 @@
 //! whether `LockTime < LOCKTIME_THRESHOLD`.
 //!
 
-use core::{mem, fmt};
-use core::cmp::{PartialOrd, Ordering};
+use core::cmp::{Ordering, PartialOrd};
+use core::{fmt, mem};
 
 use bitcoin_internals::write_err;
-
 #[cfg(all(test, mutate))]
 use mutagen::mutate;
 
+#[cfg(doc)]
+use crate::absolute;
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::error::ParseIntError;
 use crate::io::{self, Read, Write};
-use crate::parse::{impl_parse_str_from_int_infallible, impl_parse_str_from_int_fallible};
+use crate::parse::{impl_parse_str_from_int_fallible, impl_parse_str_from_int_infallible};
 use crate::prelude::*;
 use crate::string::FromHexStr;
-
-#[cfg(doc)]
-use crate::absolute;
 
 /// The Threshold for deciding whether a lock time value is a height or a time (see [Bitcoin Core]).
 ///
@@ -173,9 +171,7 @@ impl LockTime {
 
     /// Returns true if this lock time value is a block time (UNIX timestamp).
     #[inline]
-    pub fn is_block_time(&self) -> bool {
-        !self.is_block_height()
-    }
+    pub fn is_block_time(&self) -> bool { !self.is_block_height() }
 
     /// Returns true if this timelock constraint is satisfied by the respective `height`/`time`.
     ///
@@ -278,16 +274,12 @@ impl_parse_str_from_int_infallible!(LockTime, u32, from_consensus);
 
 impl From<Height> for LockTime {
     #[inline]
-    fn from(h: Height) -> Self {
-        LockTime::Blocks(h)
-    }
+    fn from(h: Height) -> Self { LockTime::Blocks(h) }
 }
 
 impl From<Time> for LockTime {
     #[inline]
-    fn from(t: Time) -> Self {
-        LockTime::Seconds(t)
-    }
+    fn from(t: Time) -> Self { LockTime::Seconds(t) }
 }
 
 impl PartialOrd for LockTime {
@@ -371,18 +363,21 @@ impl<'de> serde::Deserialize<'de> for LockTime {
             // other visit_u*s have default implementations that forward to visit_u64.
             fn visit_u64<E: serde::de::Error>(self, v: u64) -> Result<u32, E> {
                 use core::convert::TryInto;
-                v.try_into().map_err(|_| E::invalid_value(serde::de::Unexpected::Unsigned(v), &"a 32-bit number"))
+                v.try_into().map_err(|_| {
+                    E::invalid_value(serde::de::Unexpected::Unsigned(v), &"a 32-bit number")
+                })
             }
             // Also do the signed version, just for good measure.
             fn visit_i64<E: serde::de::Error>(self, v: i64) -> Result<u32, E> {
                 use core::convert::TryInto;
-                v.try_into().map_err(|_| E::invalid_value(serde::de::Unexpected::Signed(v), &"a 32-bit number"))
+                v.try_into().map_err(|_| {
+                    E::invalid_value(serde::de::Unexpected::Signed(v), &"a 32-bit number")
+                })
             }
         }
         deserializer.deserialize_u32(Visitor).map(LockTime::from_consensus)
     }
 }
-
 
 /// An absolute block height, guaranteed to always contain a valid height value.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -444,17 +439,13 @@ impl Height {
     /// assert!(lock_time.is_block_height());
     /// assert_eq!(lock_time.to_consensus_u32(), n_lock_time);
     #[inline]
-    pub fn to_consensus_u32(self) -> u32 {
-        self.0
-    }
+    pub fn to_consensus_u32(self) -> u32 { self.0 }
 }
 
 impl_parse_str_from_int_fallible!(Height, u32, from_consensus, Error);
 
 impl fmt::Display for Height {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::Display::fmt(&self.0, f)
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
 impl FromHexStr for Height {
@@ -528,17 +519,13 @@ impl Time {
     /// assert_eq!(lock_time.to_consensus_u32(), n_lock_time);
     /// ```
     #[inline]
-    pub fn to_consensus_u32(self) -> u32 {
-        self.0
-    }
+    pub fn to_consensus_u32(self) -> u32 { self.0 }
 }
 
 impl_parse_str_from_int_fallible!(Time, u32, from_consensus, Error);
 
 impl fmt::Display for Time {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::Display::fmt(&self.0, f)
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
 impl FromHexStr for Time {
@@ -552,14 +539,10 @@ impl FromHexStr for Time {
 }
 
 /// Returns true if `n` is a block height i.e., less than 500,000,000.
-fn is_block_height(n: u32) -> bool {
-    n < LOCK_TIME_THRESHOLD
-}
+fn is_block_height(n: u32) -> bool { n < LOCK_TIME_THRESHOLD }
 
 /// Returns true if `n` is a UNIX timestamp i.e., greater than or equal to 500,000,000.
-fn is_block_time(n: u32) -> bool {
-    n >= LOCK_TIME_THRESHOLD
-}
+fn is_block_time(n: u32) -> bool { n >= LOCK_TIME_THRESHOLD }
 
 /// Catchall type for errors that relate to time locks.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -601,23 +584,17 @@ impl std::error::Error for Error {
 
 impl From<ConversionError> for Error {
     #[inline]
-    fn from(e: ConversionError) -> Self {
-        Error::Conversion(e)
-    }
+    fn from(e: ConversionError) -> Self { Error::Conversion(e) }
 }
 
 impl From<OperationError> for Error {
     #[inline]
-    fn from(e: OperationError) -> Self {
-        Error::Operation(e)
-    }
+    fn from(e: OperationError) -> Self { Error::Operation(e) }
 }
 
 impl From<ParseIntError> for Error {
     #[inline]
-    fn from(e: ParseIntError) -> Self {
-        Error::Parse(e)
-    }
+    fn from(e: ParseIntError) -> Self { Error::Parse(e) }
 }
 
 /// An error that occurs when converting a `u32` to a lock time variant.
@@ -631,20 +608,10 @@ pub struct ConversionError {
 
 impl ConversionError {
     /// Constructs a `ConversionError` from an invalid `n` when expecting a height value.
-    fn invalid_height(n: u32) -> Self {
-        Self {
-            unit: LockTimeUnit::Blocks,
-            input: n,
-        }
-    }
+    fn invalid_height(n: u32) -> Self { Self { unit: LockTimeUnit::Blocks, input: n } }
 
     /// Constructs a `ConversionError` from an invalid `n` when expecting a time value.
-    fn invalid_time(n: u32) -> Self {
-        Self {
-            unit: LockTimeUnit::Seconds,
-            input: n,
-        }
-    }
+    fn invalid_time(n: u32) -> Self { Self { unit: LockTimeUnit::Seconds, input: n } }
 }
 
 impl fmt::Display for ConversionError {
@@ -690,7 +657,8 @@ impl fmt::Display for OperationError {
         use self::OperationError::*;
 
         match *self {
-            InvalidComparison => f.write_str("cannot compare different lock units (height vs time)"),
+            InvalidComparison =>
+                f.write_str("cannot compare different lock units (height vs time)"),
         }
     }
 }
@@ -841,7 +809,7 @@ mod tests {
         assert!(!lock.is_implied_by(LockTime::from_consensus(750_004)));
         assert!(lock.is_implied_by(LockTime::from_consensus(750_005)));
         assert!(lock.is_implied_by(LockTime::from_consensus(750_006)));
-   }
+    }
 
     #[test]
     fn time_correctly_implies() {
@@ -851,7 +819,7 @@ mod tests {
         assert!(!lock.is_implied_by(LockTime::from_consensus(1700000004)));
         assert!(lock.is_implied_by(LockTime::from_consensus(1700000005)));
         assert!(lock.is_implied_by(LockTime::from_consensus(1700000006)));
-   }
+    }
 
     #[test]
     fn incorrect_units_do_not_imply() {

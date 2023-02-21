@@ -1,15 +1,17 @@
 // Written in 2014 by Andrew Poelstra <apoelstra@wpsoftware.net>
 // SPDX-License-Identifier: CC0-1.0
 
-#[cfg(feature="bitcoinconsensus")] use core::convert::From;
+#[cfg(feature = "bitcoinconsensus")]
+use core::convert::From;
 use core::default::Default;
 use core::fmt;
 
 use secp256k1::XOnlyPublicKey;
 
 use crate::blockdata::locktime::absolute;
-use crate::blockdata::opcodes::{self, all::*};
-use crate::blockdata::script::{write_scriptint, opcode_to_verify, Script, ScriptBuf, PushBytes};
+use crate::blockdata::opcodes::all::*;
+use crate::blockdata::opcodes::{self};
+use crate::blockdata::script::{opcode_to_verify, write_scriptint, PushBytes, Script, ScriptBuf};
 use crate::blockdata::transaction::Sequence;
 use crate::key::PublicKey;
 use crate::prelude::*;
@@ -20,9 +22,7 @@ pub struct Builder(ScriptBuf, Option<opcodes::All>);
 
 impl Builder {
     /// Creates a new empty script.
-    pub fn new() -> Self {
-        Builder(ScriptBuf::new(), None)
-    }
+    pub fn new() -> Self { Builder(ScriptBuf::new(), None) }
 
     /// Returns the length in bytes of the script.
     pub fn len(&self) -> usize { self.0.len() }
@@ -37,9 +37,7 @@ impl Builder {
     pub fn push_int(self, data: i64) -> Builder {
         // We can special-case -1, 1-16
         if data == -1 || (1..=16).contains(&data) {
-            let opcode = opcodes::All::from(
-                (data - 1 + opcodes::OP_TRUE.to_u8() as i64) as u8
-            );
+            let opcode = opcodes::All::from((data - 1 + opcodes::OP_TRUE.to_u8() as i64) as u8);
             self.push_opcode(opcode)
         }
         // We can also special-case zero
@@ -47,7 +45,9 @@ impl Builder {
             self.push_opcode(opcodes::OP_0)
         }
         // Otherwise encode it as data
-        else { self.push_int_non_minimal(data) }
+        else {
+            self.push_int_non_minimal(data)
+        }
     }
 
     /// Adds instructions to push an integer onto the stack without optimization.
@@ -103,7 +103,7 @@ impl Builder {
             Some(opcode) => {
                 (self.0).0.pop();
                 self.push_opcode(opcode)
-            },
+            }
             None => self.push_opcode(OP_VERIFY),
         }
     }
@@ -114,29 +114,21 @@ impl Builder {
     }
 
     /// Adds instructions to push a sequence number onto the stack.
-    pub fn push_sequence(self, sequence: Sequence) -> Builder  {
+    pub fn push_sequence(self, sequence: Sequence) -> Builder {
         self.push_int(sequence.to_consensus_u32().into())
     }
 
     /// Converts the `Builder` into `ScriptBuf`.
-    pub fn into_script(self) -> ScriptBuf {
-        self.0
-    }
+    pub fn into_script(self) -> ScriptBuf { self.0 }
 
     /// Converts the `Builder` into script bytes
-    pub fn into_bytes(self) -> Vec<u8> {
-        self.0.into()
-    }
+    pub fn into_bytes(self) -> Vec<u8> { self.0.into() }
 
     /// Returns the internal script
-    pub fn as_script(&self) -> &Script {
-        &self.0
-    }
+    pub fn as_script(&self) -> &Script { &self.0 }
 
     /// Returns script bytes
-    pub fn as_bytes(&self) -> &[u8] {
-        self.0.as_bytes()
-    }
+    pub fn as_bytes(&self) -> &[u8] { self.0.as_bytes() }
 }
 
 impl Default for Builder {
@@ -153,9 +145,7 @@ impl From<Vec<u8>> for Builder {
 }
 
 impl fmt::Display for Builder {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.0.fmt_asm(f)
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.0.fmt_asm(f) }
 }
 
 bitcoin_internals::debug_from_display!(Builder);

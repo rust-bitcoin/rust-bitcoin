@@ -12,11 +12,11 @@ use secp256k1::ecdsa;
 
 use crate::consensus::encode::{Error, MAX_VEC_SIZE};
 use crate::consensus::{Decodable, Encodable, WriteExt};
-use crate::sighash::EcdsaSighashType;
 use crate::io::{self, Read, Write};
 use crate::prelude::*;
-use crate::{Script, VarInt};
+use crate::sighash::EcdsaSighashType;
 use crate::taproot::TAPROOT_ANNEX_PREFIX;
+use crate::{Script, VarInt};
 
 /// The Witness is the data used to unlock bitcoin since the [segwit upgrade].
 ///
@@ -103,8 +103,9 @@ impl Decodable for Witness {
                 encode_cursor(&mut content, 0, i, cursor - witness_index_space);
 
                 resize_if_needed(&mut content, required_len);
-                element_size_varint
-                    .consensus_encode(&mut &mut content[cursor..cursor + element_size_varint_len])?;
+                element_size_varint.consensus_encode(
+                    &mut &mut content[cursor..cursor + element_size_varint_len],
+                )?;
                 cursor += element_size_varint_len;
                 r.read_exact(&mut content[cursor..cursor + element_size])?;
                 cursor += element_size;
@@ -112,22 +113,18 @@ impl Decodable for Witness {
             content.truncate(cursor);
             // Index space is now at the end of the Vec
             content.rotate_left(witness_index_space);
-            Ok(Witness {
-                content,
-                witness_elements,
-                indices_start: cursor - witness_index_space,
-            })
+            Ok(Witness { content, witness_elements, indices_start: cursor - witness_index_space })
         }
     }
 }
-
 
 /// Correctness Requirements: value must always fit within u32
 #[inline]
 fn encode_cursor(bytes: &mut [u8], start_of_indices: usize, index: usize, value: usize) {
     let start = start_of_indices + index * 4;
     let end = start + 4;
-    bytes[start..end].copy_from_slice(&u32::to_ne_bytes(value.try_into().expect("Larger than u32")));
+    bytes[start..end]
+        .copy_from_slice(&u32::to_ne_bytes(value.try_into().expect("Larger than u32")));
 }
 
 #[inline]
@@ -165,15 +162,11 @@ impl Encodable for Witness {
 
 impl Witness {
     /// Creates a new empty [`Witness`].
-    pub fn new() -> Self {
-        Witness::default()
-    }
+    pub fn new() -> Self { Witness::default() }
 
     /// Creates [`Witness`] object from an array of byte-arrays
-    #[deprecated(since="0.30.0", note="use `Witness::from_slice()` instead")]
-    pub fn from_vec(vec: Vec<Vec<u8>>) -> Self {
-        Witness::from_slice(&vec)
-    }
+    #[deprecated(since = "0.30.0", note = "use `Witness::from_slice()` instead")]
+    pub fn from_vec(vec: Vec<Vec<u8>>) -> Self { Witness::from_slice(&vec) }
 
     /// Creates a [`Witness`] object from a slice of bytes slices where each slice is a witness item.
     pub fn from_slice<T: AsRef<[u8]>>(slice: &[T]) -> Self {
@@ -197,42 +190,26 @@ impl Witness {
             cursor += elem.as_ref().len();
         }
 
-        Witness {
-            witness_elements,
-            content,
-            indices_start: content_size,
-        }
+        Witness { witness_elements, content, indices_start: content_size }
     }
 
     /// Convenience method to create an array of byte-arrays from this witness.
-    pub fn to_vec(&self) -> Vec<Vec<u8>> {
-        self.iter().map(|s| s.to_vec()).collect()
-    }
+    pub fn to_vec(&self) -> Vec<Vec<u8>> { self.iter().map(|s| s.to_vec()).collect() }
 
     /// Returns `true` if the witness contains no element.
-    pub fn is_empty(&self) -> bool {
-        self.witness_elements == 0
-    }
+    pub fn is_empty(&self) -> bool { self.witness_elements == 0 }
 
     /// Returns a struct implementing [`Iterator`].
     pub fn iter(&self) -> Iter {
-        Iter {
-            inner: self.content.as_slice(),
-            indices_start: self.indices_start,
-            current_index: 0,
-        }
+        Iter { inner: self.content.as_slice(), indices_start: self.indices_start, current_index: 0 }
     }
 
     /// Returns the number of elements this witness holds.
-    pub fn len(&self) -> usize {
-        self.witness_elements
-    }
+    pub fn len(&self) -> usize { self.witness_elements }
 
     /// Returns the bytes required when this Witness is consensus encoded.
     pub fn serialized_len(&self) -> usize {
-        self.iter()
-            .map(|el| VarInt(el.len() as u64).len() + el.len())
-            .sum::<usize>()
+        self.iter().map(|el| VarInt(el.len() as u64).len() + el.len()).sum::<usize>()
             + VarInt(self.witness_elements as u64).len()
     }
 
@@ -255,12 +232,16 @@ impl Witness {
         let element_len_varint = VarInt(new_element.len() as u64);
         let current_content_len = self.content.len();
         let new_item_total_len = element_len_varint.len() + new_element.len();
-        self.content
-            .resize(current_content_len + new_item_total_len + 4, 0);
+        self.content.resize(current_content_len + new_item_total_len + 4, 0);
 
         self.content[previous_content_end..].rotate_right(new_item_total_len);
         self.indices_start += new_item_total_len;
-        encode_cursor(&mut self.content, self.indices_start, self.witness_elements - 1, previous_content_end);
+        encode_cursor(
+            &mut self.content,
+            self.indices_start,
+            self.witness_elements - 1,
+            previous_content_end,
+        );
 
         let end_varint = previous_content_end + element_len_varint.len();
         element_len_varint
@@ -271,14 +252,17 @@ impl Witness {
 
     /// Pushes a DER-encoded ECDSA signature with a signature hash type as a new element on the
     /// witness, requires an allocation.
-    pub fn push_bitcoin_signature(&mut self, signature: &ecdsa::SerializedSignature, hash_type: EcdsaSighashType) {
+    pub fn push_bitcoin_signature(
+        &mut self,
+        signature: &ecdsa::SerializedSignature,
+        hash_type: EcdsaSighashType,
+    ) {
         // Note that a maximal length ECDSA signature is 72 bytes, plus the sighash type makes 73
         let mut sig = [0; 73];
         sig[..signature.len()].copy_from_slice(signature);
         sig[signature.len()] = hash_type as u8;
         self.push(&sig[..signature.len() + 1]);
     }
-
 
     fn element_at(&self, index: usize) -> Option<&[u8]> {
         let varint = VarInt::consensus_decode(&mut &self.content[index..]).ok()?;
@@ -319,8 +303,7 @@ impl Witness {
     /// check whether this is actually a Taproot witness.
     pub fn tapscript(&self) -> Option<&Script> {
         let len = self.len();
-        self
-            .last()
+        self.last()
             .map(|last_elem| {
                 // From BIP341:
                 // If there are at least two witness elements, and the first byte of
@@ -335,9 +318,7 @@ impl Witness {
                 }
             })
             .filter(|&script_pos_from_last| len >= script_pos_from_last)
-            .and_then(|script_pos_from_last| {
-                self.nth(len - script_pos_from_last)
-            })
+            .and_then(|script_pos_from_last| self.nth(len - script_pos_from_last))
             .map(Script::from_bytes)
     }
 }
@@ -345,9 +326,7 @@ impl Witness {
 impl Index<usize> for Witness {
     type Output = [u8];
 
-    fn index(&self, index: usize) -> &Self::Output {
-        self.nth(index).expect("Out of Bounds")
-    }
+    fn index(&self, index: usize) -> &Self::Output { self.nth(index).expect("Out of Bounds") }
 }
 
 impl<'a> Iterator for Iter<'a> {
@@ -376,9 +355,7 @@ impl<'a> IntoIterator for &'a Witness {
     type IntoIter = Iter<'a>;
     type Item = &'a [u8];
 
-    fn into_iter(self) -> Self::IntoIter {
-        self.iter()
-    }
+    fn into_iter(self) -> Self::IntoIter { self.iter() }
 }
 
 // Serde keep backward compatibility with old Vec<Vec<u8>> format
@@ -410,20 +387,22 @@ impl<'de> serde::Deserialize<'de> for Witness {
     where
         D: serde::Deserializer<'de>,
     {
-        struct Visitor;         // Human-readable visitor.
-        impl<'de> serde::de::Visitor<'de> for Visitor
-        {
+        struct Visitor; // Human-readable visitor.
+        impl<'de> serde::de::Visitor<'de> for Visitor {
             type Value = Witness;
 
             fn expecting(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
                 write!(f, "a sequence of hex arrays")
             }
 
-            fn visit_seq<A: serde::de::SeqAccess<'de>>(self, mut a: A) -> Result<Self::Value, A::Error>
-            {
-                use crate::hashes::hex::FromHex;
-                use crate::hashes::hex::Error::*;
+            fn visit_seq<A: serde::de::SeqAccess<'de>>(
+                self,
+                mut a: A,
+            ) -> Result<Self::Value, A::Error> {
                 use serde::de::{self, Unexpected};
+
+                use crate::hashes::hex::Error::*;
+                use crate::hashes::hex::FromHex;
 
                 let mut ret = match a.size_hint() {
                     Some(len) => Vec::with_capacity(len),
@@ -431,19 +410,22 @@ impl<'de> serde::Deserialize<'de> for Witness {
                 };
 
                 while let Some(elem) = a.next_element::<String>()? {
-                    let vec = Vec::<u8>::from_hex(&elem).map_err(|e| {
-                        match e {
-                            InvalidChar(b) => {
-                                match core::char::from_u32(b.into()) {
-                                    Some(c) => de::Error::invalid_value(Unexpected::Char(c), &"a valid hex character"),
-                                    None => de::Error::invalid_value(Unexpected::Unsigned(b.into()), &"a valid hex character")
-                                }
-                            }
-                            OddLengthString(len) => de::Error::invalid_length(len, &"an even length string"),
-                            InvalidLength(expected, got) => {
-                                let exp = format!("expected length: {}", expected);
-                                de::Error::invalid_length(got, &exp.as_str())
-                            }
+                    let vec = Vec::<u8>::from_hex(&elem).map_err(|e| match e {
+                        InvalidChar(b) => match core::char::from_u32(b.into()) {
+                            Some(c) => de::Error::invalid_value(
+                                Unexpected::Char(c),
+                                &"a valid hex character",
+                            ),
+                            None => de::Error::invalid_value(
+                                Unexpected::Unsigned(b.into()),
+                                &"a valid hex character",
+                            ),
+                        },
+                        OddLengthString(len) =>
+                            de::Error::invalid_length(len, &"an even length string"),
+                        InvalidLength(expected, got) => {
+                            let exp = format!("expected length: {}", expected);
+                            de::Error::invalid_length(got, &exp.as_str())
                         }
                     })?;
                     ret.push(vec);
@@ -462,37 +444,28 @@ impl<'de> serde::Deserialize<'de> for Witness {
 }
 
 impl From<Vec<Vec<u8>>> for Witness {
-    fn from(vec: Vec<Vec<u8>>) -> Self {
-        Witness::from_slice(&vec)
-    }
+    fn from(vec: Vec<Vec<u8>>) -> Self { Witness::from_slice(&vec) }
 }
 
 impl From<&[&[u8]]> for Witness {
-    fn from(slice: &[&[u8]]) -> Self {
-        Witness::from_slice(slice)
-    }
+    fn from(slice: &[&[u8]]) -> Self { Witness::from_slice(slice) }
 }
 
 impl From<&[Vec<u8>]> for Witness {
-    fn from(slice: &[Vec<u8>]) -> Self {
-        Witness::from_slice(slice)
-    }
+    fn from(slice: &[Vec<u8>]) -> Self { Witness::from_slice(slice) }
 }
 
 impl From<Vec<&[u8]>> for Witness {
-    fn from(vec: Vec<&[u8]>) -> Self {
-        Witness::from_slice(&vec)
-    }
+    fn from(vec: Vec<&[u8]>) -> Self { Witness::from_slice(&vec) }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
-
     use crate::consensus::{deserialize, serialize};
     use crate::internal_macros::hex;
-    use crate::Transaction;
     use crate::secp256k1::ecdsa;
+    use crate::Transaction;
 
     fn append_u32_vec(mut v: Vec<u8>, n: &[u32]) -> Vec<u8> {
         for &num in n {
@@ -557,7 +530,6 @@ mod test {
         assert_eq!(&witness[2], &[4u8, 5u8][..]);
     }
 
-
     #[test]
     fn test_iter_len() {
         let mut witness = Witness::default();
@@ -588,8 +560,7 @@ mod test {
 
     #[test]
     fn test_witness() {
-        let w0 =
-            hex!("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105");
+        let w0 = hex!("03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105");
         let w1 = hex!("000000");
         let witness_vec = vec![w0.clone(), w1.clone()];
         let witness_serialized: Vec<u8> = serialize(&witness_vec);
@@ -655,7 +626,10 @@ mod test {
             assert_eq!(expected_wit[i], wit_el.to_lower_hex_string());
         }
         assert_eq!(expected_wit[1], tx.input[0].witness.last().unwrap().to_lower_hex_string());
-        assert_eq!(expected_wit[0], tx.input[0].witness.second_to_last().unwrap().to_lower_hex_string());
+        assert_eq!(
+            expected_wit[0],
+            tx.input[0].witness.second_to_last().unwrap().to_lower_hex_string()
+        );
         assert_eq!(expected_wit[0], tx.input[0].witness.nth(0).unwrap().to_lower_hex_string());
         assert_eq!(expected_wit[1], tx.input[0].witness.nth(1).unwrap().to_lower_hex_string());
         assert_eq!(None, tx.input[0].witness.nth(2));
@@ -708,10 +682,10 @@ mod test {
     }
 }
 
-
 #[cfg(bench)]
 mod benches {
-    use test::{Bencher, black_box};
+    use test::{black_box, Bencher};
+
     use super::Witness;
 
     #[bench]
@@ -733,5 +707,4 @@ mod benches {
             black_box(witness.to_vec());
         });
     }
-
 }
