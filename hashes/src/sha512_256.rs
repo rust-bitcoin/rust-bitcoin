@@ -40,6 +40,7 @@ use crate::{sha512, sha512::BLOCK_SIZE, Error};
 pub struct HashEngine(sha512::HashEngine);
 
 impl Default for HashEngine {
+    #[rustfmt::skip]
     fn default() -> Self {
         HashEngine(sha512::HashEngine {
             h: [
@@ -97,6 +98,7 @@ mod tests {
             output_str: &'static str,
         }
 
+        #[rustfmt::skip]
         let tests = vec![
             // Examples from go sha512/256 tests.
             Test {

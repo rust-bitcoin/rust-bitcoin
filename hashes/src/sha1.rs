@@ -154,7 +154,7 @@ mod tests {
             output_str: &'static str,
         }
 
-
+        #[rustfmt::skip]
         let tests = vec![
             // Examples from wikipedia
             Test {
@@ -216,6 +216,7 @@ mod tests {
         use serde_test::{Configure, Token, assert_tokens};
         use crate::{sha1, Hash};
 
+        #[rustfmt::skip]
         static HASH_BYTES: [u8; 20] = [
             0x13, 0x20, 0x72, 0xdf,
             0x69, 0x09, 0x33, 0x83,

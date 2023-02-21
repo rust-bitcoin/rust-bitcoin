@@ -1,8 +1,4 @@
-# Eventually this shoud be: ignore = []
-ignore = [
-       "hashes",
-]
-
+ignore = []
 hard_tabs = false
 tab_spaces = 4
 newline_style = "Auto"

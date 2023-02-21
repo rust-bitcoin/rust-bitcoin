@@ -256,6 +256,7 @@ mod tests {
             output: Vec<u8>,
         }
 
+        #[rustfmt::skip]
         let tests = vec![
             // Test vectors copied from libsecp256k1
             // Sadly the RFC2104 test vectors all use MD5 as their underlying hash function,
@@ -375,6 +376,7 @@ mod tests {
         use serde_test::{Configure, Token, assert_tokens};
         use crate::{sha512, Hash, Hmac};
 
+        #[rustfmt::skip]
         static HASH_BYTES: [u8; 64] = [
             0x8b, 0x41, 0xe1, 0xb7, 0x8a, 0xd1, 0x15, 0x21,
             0x11, 0x3c, 0x52, 0xff, 0x18, 0x2a, 0x1b, 0x8e,
