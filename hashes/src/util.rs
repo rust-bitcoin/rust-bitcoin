@@ -107,8 +107,6 @@ macro_rules! engine_input_impl(
     )
 );
 
-
-
 /// Creates a new newtype around a [`Hash`] type.
 ///
 /// The syntax is similar to the usual tuple struct syntax:
@@ -403,8 +401,9 @@ macro_rules! hash_newtype_known_attrs {
 #[cfg(feature = "schemars")]
 #[cfg_attr(docsrs, doc(cfg(feature = "schemars")))]
 pub mod json_hex_string {
+    use schemars::gen::SchemaGenerator;
     use schemars::schema::{Schema, SchemaObject};
-    use schemars::{gen::SchemaGenerator, JsonSchema};
+    use schemars::JsonSchema;
     macro_rules! define_custom_hex {
         ($name:ident, $len:expr) => {
             pub fn $name(gen: &mut SchemaGenerator) -> Schema {
@@ -426,7 +425,7 @@ pub mod json_hex_string {
 
 #[cfg(test)]
 mod test {
-    use crate::{Hash, sha256};
+    use crate::{sha256, Hash};
 
     #[test]
     fn hash_as_ref_array() {

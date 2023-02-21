@@ -15,16 +15,15 @@
 //! Hex encoding and decoding.
 //!
 
-
-#[cfg(all(feature = "alloc", not(feature = "std")))]
-use crate::alloc::vec::Vec;
-
+use core::{fmt, str};
 #[cfg(feature = "std")]
 use std::io;
+
 #[cfg(all(feature = "core2", not(feature = "std")))]
 use core2::io;
 
-use core::{fmt, str};
+#[cfg(all(feature = "alloc", not(feature = "std")))]
+use crate::alloc::vec::Vec;
 
 /// Hex decoding error.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -42,7 +41,8 @@ impl fmt::Display for Error {
         match *self {
             Error::InvalidChar(ch) => write!(f, "invalid hex character {}", ch),
             Error::OddLengthString(ell) => write!(f, "odd hex string length {}", ell),
-            Error::InvalidLength(ell, ell2) => write!(f, "bad hex string length {} (expected {})", ell2, ell),
+            Error::InvalidLength(ell, ell2) =>
+                write!(f, "bad hex string length {} (expected {})", ell2, ell),
         }
     }
 }
@@ -67,9 +67,7 @@ pub trait FromHex: Sized {
         I: Iterator<Item = Result<u8, Error>> + ExactSizeIterator + DoubleEndedIterator;
 
     /// Produces an object from a hex string.
-    fn from_hex(s: &str) -> Result<Self, Error> {
-        Self::from_byte_iter(HexIterator::new(s)?)
-    }
+    fn from_hex(s: &str) -> Result<Self, Error> { Self::from_byte_iter(HexIterator::new(s)?) }
 }
 
 /// Iterator over a hex-encoded string slice which decodes hex and yields bytes.
@@ -95,12 +93,8 @@ impl<'a> HexIterator<'a> {
 }
 
 fn chars_to_hex(hi: u8, lo: u8) -> Result<u8, Error> {
-    let hih = (hi as char)
-        .to_digit(16)
-        .ok_or(Error::InvalidChar(hi))?;
-    let loh = (lo as char)
-        .to_digit(16)
-        .ok_or(Error::InvalidChar(lo))?;
+    let hih = (hi as char).to_digit(16).ok_or(Error::InvalidChar(hi))?;
+    let loh = (lo as char).to_digit(16).ok_or(Error::InvalidChar(lo))?;
 
     let ret = (hih << 4) + loh;
     Ok(ret as u8)
@@ -131,7 +125,7 @@ impl<'a> io::Read for HexIterator<'a> {
                 Some(Ok(src)) => {
                     *dst = src;
                     bytes_read += 1;
-                },
+                }
                 _ => break,
             }
         }
@@ -178,7 +172,7 @@ macro_rules! impl_fromhex_array {
                 }
             }
         }
-    }
+    };
 }
 
 impl_fromhex_array!(2);
@@ -204,8 +198,9 @@ impl_fromhex_array!(512);
 #[cfg(test)]
 #[cfg(feature = "alloc")]
 mod tests {
-    use super::*;
     use internals::hex::exts::DisplayHex;
+
+    use super::*;
 
     #[test]
     fn hex_roundtrip() {
@@ -235,29 +230,11 @@ mod tests {
         let badchar2 = "012Y456789abcdeb";
         let badchar3 = "«23456789abcdef";
 
-        assert_eq!(
-            Vec::<u8>::from_hex(oddlen),
-            Err(Error::OddLengthString(17))
-        );
-        assert_eq!(
-            <[u8; 4]>::from_hex(oddlen),
-            Err(Error::OddLengthString(17))
-        );
-        assert_eq!(
-            <[u8; 8]>::from_hex(oddlen),
-            Err(Error::OddLengthString(17))
-        );
-        assert_eq!(
-            Vec::<u8>::from_hex(badchar1),
-            Err(Error::InvalidChar(b'Z'))
-        );
-        assert_eq!(
-            Vec::<u8>::from_hex(badchar2),
-            Err(Error::InvalidChar(b'Y'))
-        );
-        assert_eq!(
-            Vec::<u8>::from_hex(badchar3),
-            Err(Error::InvalidChar(194))
-        );
+        assert_eq!(Vec::<u8>::from_hex(oddlen), Err(Error::OddLengthString(17)));
+        assert_eq!(<[u8; 4]>::from_hex(oddlen), Err(Error::OddLengthString(17)));
+        assert_eq!(<[u8; 8]>::from_hex(oddlen), Err(Error::OddLengthString(17)));
+        assert_eq!(Vec::<u8>::from_hex(badchar1), Err(Error::InvalidChar(b'Z')));
+        assert_eq!(Vec::<u8>::from_hex(badchar2), Err(Error::InvalidChar(b'Y')));
+        assert_eq!(Vec::<u8>::from_hex(badchar3), Err(Error::InvalidChar(194)));
     }
 }
