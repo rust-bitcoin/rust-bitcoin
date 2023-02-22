@@ -265,7 +265,7 @@ impl WatchOnly {
         &self,
         secp: &Secp256k1<C>,
     ) -> Result<(PublicKey, Address, DerivationPath)> {
-        let path = vec![ChildNumber::from_normal_idx(1)?, ChildNumber::from_normal_idx(0)?];
+        let path = [ChildNumber::from_normal_idx(1)?, ChildNumber::from_normal_idx(0)?];
         let derived = self.account_0_xpub.derive_pub(secp, &path)?;
 
         let pk = derived.to_pub();

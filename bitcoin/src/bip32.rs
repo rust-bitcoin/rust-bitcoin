@@ -683,7 +683,7 @@ impl ExtendedPubKey {
 
     /// Attempts to derive an extended public key from a path.
     ///
-    /// The `path` argument can be both of type `DerivationPath` or `Vec<ChildNumber>`.
+    /// The `path` argument can be any type implementing `AsRef<ChildNumber>`, such as `DerivationPath`, for instance.
     pub fn derive_pub<C: secp256k1::Verification, P: AsRef<[ChildNumber]>>(
         &self,
         secp: &Secp256k1<C>,
