@@ -112,10 +112,10 @@ macro_rules! engine_input_impl(
 /// Creates a new newtype around a [`Hash`] type.
 #[macro_export]
 macro_rules! hash_newtype {
-    ($newtype:ident, $hash:ty, $len:expr, $docs:meta) => {
-        $crate::hash_newtype!($newtype, $hash, $len, $docs, <$hash as $crate::Hash>::DISPLAY_BACKWARD);
+    ($newtype:ident, $hash:ty, $docs:meta) => {
+        $crate::hash_newtype!($newtype, $hash, $docs, <$hash as $crate::Hash>::DISPLAY_BACKWARD);
     };
-    ($newtype:ident, $hash:ty, $len:expr, $docs:meta, $reverse:expr) => {
+    ($newtype:ident, $hash:ty, $docs:meta, $reverse:expr) => {
         #[$docs]
         #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
         #[repr(transparent)]
@@ -276,7 +276,7 @@ mod test {
         assert_eq!(borrowed, hash.as_inner());
     }
 
-    hash_newtype!(TestHash, crate::sha256d::Hash, 32, doc="Test hash.");
+    hash_newtype!(TestHash, crate::sha256d::Hash, doc="Test hash.");
 
     #[test]
     fn display() {

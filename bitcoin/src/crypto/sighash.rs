@@ -48,12 +48,12 @@ macro_rules! impl_thirty_two_byte_hash {
 }
 
 #[rustfmt::skip]
-hash_newtype!(LegacySighash, sha256d::Hash, 32,
+hash_newtype!(LegacySighash, sha256d::Hash,
     doc="Hash of a transaction according to the legacy signature algorithm", false);
 impl_thirty_two_byte_hash!(LegacySighash);
 
 #[rustfmt::skip]
-hash_newtype!(SegwitV0Sighash, sha256d::Hash, 32,
+hash_newtype!(SegwitV0Sighash, sha256d::Hash,
     doc="Hash of a transaction according to the segwit version 0 signature algorithm", false);
 impl_thirty_two_byte_hash!(SegwitV0Sighash);
 
