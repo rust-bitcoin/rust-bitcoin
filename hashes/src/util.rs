@@ -122,7 +122,7 @@ macro_rules! hash_newtype {
         pub struct $newtype($hash);
 
         $crate::hex_fmt_impl!($reverse, $newtype);
-        $crate::serde_impl!($newtype, $len);
+        $crate::serde_impl!($newtype, <$newtype as $crate::Hash>::LEN);
         $crate::borrow_slice_impl!($newtype);
 
         impl $newtype {
@@ -208,9 +208,9 @@ macro_rules! hash_newtype {
             }
         }
 
-        impl $crate::_export::_core::convert::AsRef<[u8; $len]> for $newtype {
-            fn as_ref(&self) -> &[u8; $len] {
-                AsRef::<[u8; $len]>::as_ref(&self.0)
+        impl $crate::_export::_core::convert::AsRef<[u8; <$hash as $crate::Hash>::LEN]> for $newtype {
+            fn as_ref(&self) -> &[u8; <$hash as $crate::Hash>::LEN] {
+                AsRef::<[u8; <$hash as $crate::Hash>::LEN]>::as_ref(&self.0)
             }
         }
 
