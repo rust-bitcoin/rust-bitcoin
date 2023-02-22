@@ -55,30 +55,44 @@ pub use newtypes::*;
 mod newtypes {
     use crate::hashes::{sha256, sha256d, hash160, hash_newtype};
 
-    hash_newtype!(
-        Txid, sha256d::Hash, doc="A bitcoin transaction hash/transaction ID.
+    hash_newtype! {
+        /// A bitcoin transaction hash/transaction ID.
+        ///
+        /// For compatibility with the existing Bitcoin infrastructure and historical
+        /// and current versions of the Bitcoin Core software itself, this and
+        /// other [`sha256d::Hash`] types, are serialized in reverse
+        /// byte order when converted to a hex string via [`std::fmt::Display`] trait operations.
+        /// See [`hashes::Hash::DISPLAY_BACKWARD`] for more details.
+        pub struct Txid(sha256d::Hash); 
 
-For compatibility with the existing Bitcoin infrastructure and historical
-and current versions of the Bitcoin Core software itself, this and
-other [`sha256d::Hash`] types, are serialized in reverse
-byte order when converted to a hex string via [`std::fmt::Display`] trait operations.
-See [`hashes::Hash::DISPLAY_BACKWARD`] for more details.
-");
-    hash_newtype!(Wtxid, sha256d::Hash, doc="A bitcoin witness transaction ID.");
-    hash_newtype!(BlockHash, sha256d::Hash, doc="A bitcoin block hash.");
+        /// A bitcoin witness transaction ID.
+        pub struct Wtxid(sha256d::Hash);
+        /// A bitcoin block hash.
+        pub struct BlockHash(sha256d::Hash);
 
-    hash_newtype!(PubkeyHash, hash160::Hash, doc="A hash of a public key.");
-    hash_newtype!(ScriptHash, hash160::Hash, doc="A hash of Bitcoin Script bytecode.");
-    hash_newtype!(WPubkeyHash, hash160::Hash, doc="SegWit version of a public key hash.");
-    hash_newtype!(WScriptHash, sha256::Hash, doc="SegWit version of a Bitcoin Script bytecode hash.");
+        /// A hash of a public key.
+        pub struct PubkeyHash(hash160::Hash);
+        /// A hash of Bitcoin Script bytecode.
+        pub struct ScriptHash(hash160::Hash);
+        /// SegWit version of a public key hash.
+        pub struct WPubkeyHash(hash160::Hash);
+        /// SegWit version of a Bitcoin Script bytecode hash.
+        pub struct WScriptHash(sha256::Hash);
 
-    hash_newtype!(TxMerkleNode, sha256d::Hash, doc="A hash of the Merkle tree branch or root for transactions");
-    hash_newtype!(WitnessMerkleNode, sha256d::Hash, doc="A hash corresponding to the Merkle tree root for witness data");
-    hash_newtype!(WitnessCommitment, sha256d::Hash, doc="A hash corresponding to the witness structure commitment in the coinbase transaction");
-    hash_newtype!(XpubIdentifier, hash160::Hash, doc="XpubIdentifier as defined in BIP-32.");
+        /// A hash of the Merkle tree branch or root for transactions
+        pub struct TxMerkleNode(sha256d::Hash);
+        /// A hash corresponding to the Merkle tree root for witness data
+        pub struct WitnessMerkleNode(sha256d::Hash);
+        /// A hash corresponding to the witness structure commitment in the coinbase transaction
+        pub struct WitnessCommitment(sha256d::Hash);
+        /// XpubIdentifier as defined in BIP-32.
+        pub struct XpubIdentifier(hash160::Hash);
 
-    hash_newtype!(FilterHash, sha256d::Hash, doc="Filter hash, as defined in BIP-157");
-    hash_newtype!(FilterHeader, sha256d::Hash, doc="Filter header, as defined in BIP-157");
+        /// Filter hash, as defined in BIP-157
+        pub struct FilterHash(sha256d::Hash);
+        /// Filter header, as defined in BIP-157
+        pub struct FilterHeader(sha256d::Hash);
+    }
 
     impl_hashencode!(Txid);
     impl_hashencode!(Wtxid);
