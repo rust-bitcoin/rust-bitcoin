@@ -79,6 +79,9 @@ For more information please see `./CONTRIBUTING.md`.
 This library should always compile with any combination of features (minus
 `no-std`) on **Rust 1.41.1** or **Rust 1.47** with `no-std`.
 
+To build with the MSRV you will need to pin some dependencies, currently this is
+only `syn`, and can be achieved using `cargo update -p syn --precise 1.0.107`.
+
 ## Installing Rust
 
 Rust can be installed using your package manager of choice or
