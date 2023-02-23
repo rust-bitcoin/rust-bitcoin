@@ -469,6 +469,23 @@ impl Payload {
         }
     }
 
+    /// Returns true if the address creates a particular script
+    /// This function doesn't make any allocations.
+    pub fn matches_script_pubkey(&self, script: &Script) -> bool {
+        match *self {
+            Payload::PubkeyHash(ref hash) if script.is_p2pkh() => {
+                &script.as_bytes()[3..23] == <PubkeyHash as AsRef<[u8; 20]>>::as_ref(hash)
+            },
+            Payload::ScriptHash(ref hash) if script.is_p2sh() => {
+                 &script.as_bytes()[2..22] == <ScriptHash as AsRef<[u8; 20]>>::as_ref(hash)
+            },
+            Payload::WitnessProgram(ref prog) if script.is_witness_program() => {
+                &script.as_bytes()[2..] == prog.program.as_bytes()
+            },
+            Payload::PubkeyHash(_) | Payload::ScriptHash(_) | Payload::WitnessProgram(_) => false,
+        }
+    }
+
     /// Creates a pay to (compressed) public key hash payload from a public key
     #[inline]
     pub fn p2pkh(pk: &PublicKey) -> Payload { Payload::PubkeyHash(pk.pubkey_hash()) }
@@ -954,6 +971,12 @@ impl Address {
     pub fn is_related_to_xonly_pubkey(&self, xonly_pubkey: &XOnlyPublicKey) -> bool {
         let payload = self.payload.inner_prog_as_bytes();
         payload == xonly_pubkey.serialize()
+    }
+
+    /// Returns true if the address creates a particular script
+    /// This function doesn't make any allocations.
+    pub fn matches_script_pubkey(&self, script_pubkey: &Script) -> bool {
+        self.payload.matches_script_pubkey(script_pubkey)
     }
 }
 
@@ -1722,5 +1745,32 @@ mod tests {
         let got = AddressType::from_str("invalid");
         let want = Err(Error::UnknownAddressType("invalid".to_string()));
         assert_eq!(got, want);
+    }
+
+    #[test]
+    fn test_matches_script_pubkey() {
+        let addresses = [
+            "1QJVDzdqb1VpbDK7uDeyVXy9mR27CJiyhY",
+            "1J4LVanjHMu3JkXbVrahNuQCTGCRRgfWWx",
+            "33iFwdLuRpW1uK1RTRqsoi8rR4NpDzk66k",
+            "3QBRmWNqqBGme9er7fMkGqtZtp4gjMFxhE",
+            "bc1zw508d6qejxtdg4y5r3zarvaryvaxxpcs",
+            "bc1qvzvkjn4q3nszqxrv3nraga2r822xjty3ykvkuw",
+            "bc1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxqkedrcr",
+            "bc1pgllnmtxs0g058qz7c6qgaqq4qknwrqj9z7rqn9e2dzhmcfmhlu4sfadf5e",
+        ];
+        for addr in &addresses {
+            let addr = Address::from_str(addr)
+                .unwrap()
+                .require_network(Network::Bitcoin)
+                .unwrap();
+            for another in &addresses {
+                let another = Address::from_str(another)
+                .unwrap()
+                .require_network(Network::Bitcoin)
+                .unwrap();
+                assert_eq!(addr.matches_script_pubkey(&another.script_pubkey()), addr == another);
+            }
+        }
     }
 }
