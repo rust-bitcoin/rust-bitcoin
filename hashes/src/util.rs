@@ -304,13 +304,6 @@ macro_rules! hash_newtype_struct {
 
 #[doc(hidden)]
 #[macro_export]
-macro_rules! hash_newtype_our_attrs {
-    (hash_newtype($($attr:tt)*)) => { $($attr)* };
-    ($($ignore:tt)*) => {};
-}
-
-#[doc(hidden)]
-#[macro_export]
 macro_rules! hash_newtype_get_direction {
     ($hash:ty, ) => { <$hash as $crate::Hash>::DISPLAY_BACKWARD };
     ($hash:ty, #[hash_newtype(forward)] $($others:tt)*) => { { $crate::hash_newtype_forbid_direction!(forward, $($others)*); false } };
