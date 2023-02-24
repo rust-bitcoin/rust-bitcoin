@@ -220,8 +220,13 @@ pub trait Hash: Copy + Clone + PartialEq + Eq + PartialOrd + Ord +
 mod tests {
     use crate::{Hash, sha256d};
 
-    hash_newtype!(TestNewtype, sha256d::Hash, 32, doc="A test newtype");
-    hash_newtype!(TestNewtype2, sha256d::Hash, 32, doc="A test newtype");
+    hash_newtype! {
+        /// A test newtype
+        struct TestNewtype(sha256d::Hash);
+
+        /// A test newtype
+        struct TestNewtype2(sha256d::Hash);
+    }
 
     #[test]
     fn convert_newtypes() {

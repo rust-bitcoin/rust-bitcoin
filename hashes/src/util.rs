@@ -110,28 +110,77 @@ macro_rules! engine_input_impl(
 
 
 /// Creates a new newtype around a [`Hash`] type.
+///
+/// The syntax is similar to the usual tuple struct syntax:
+///
+/// ```
+/// # use bitcoin_hashes::{hash_newtype, sha256};
+/// hash_newtype! {
+///     /// Hash of `Foo`.
+///     pub struct MyNewtype(pub sha256::Hash);
+/// }
+/// ```
+///
+/// You can use any valid visibility specifier in place of `pub` or you can leave it out if you
+/// don't want the type or its field to be private.
+///
+/// Whether the hash is reversed or not depends on the inner type. However you can override it like
+/// this:
+///
+/// ```
+/// # use bitcoin_hashes::{hash_newtype, sha256};
+/// hash_newtype! {
+///     #[hash_newtype(backward)]
+///     struct MyNewtype(sha256::Hash);
+/// }
+/// ```
+///
+/// This will display the hash backwards regardless of what the inner type does. Use `forward`
+/// instead of `backward` to force displaying forward.
+///
+/// You can add arbitrary doc comments or other attributes to the struct or it's field. Note that
+/// the macro already derives [`Copy`], [`Clone`], [`Eq`], [`PartialEq`],
+/// [`Hash`](core::hash::Hash), [`Ord`], [`PartialOrd`]. With the `serde` feature on, this also adds
+/// [`Serialize`](serde::Serialize) and [`Deserialize](serde::Deserialize) implementations.
+///
+/// You can also define multiple newtypes within one macro call:
+///
+/// ```
+/// # use bitcoin_hashes::{hash_newtype, sha256, hash160};
+///
+/// hash_newtype! {
+///     /// My custom type 1
+///     pub struct Newtype1(sha256::Hash);
+///
+///     /// My custom type 2
+///     struct Newtype2(hash160::Hash);
+/// }
+/// ```
 #[macro_export]
 macro_rules! hash_newtype {
-    ($newtype:ident, $hash:ty, $len:expr, $docs:meta) => {
-        $crate::hash_newtype!($newtype, $hash, $len, $docs, <$hash as $crate::Hash>::DISPLAY_BACKWARD);
-    };
-    ($newtype:ident, $hash:ty, $len:expr, $docs:meta, $reverse:expr) => {
-        #[$docs]
-        #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-        #[repr(transparent)]
-        pub struct $newtype($hash);
+    ($($(#[$($type_attrs:tt)*])* $type_vis:vis struct $newtype:ident($(#[$field_attrs:tt])* $field_vis:vis $hash:path);)+) => {
+        $(
+        $($crate::hash_newtype_known_attrs!(#[ $($type_attrs)* ]);)*
 
-        $crate::hex_fmt_impl!($reverse, $newtype);
-        $crate::serde_impl!($newtype, $len);
+        $crate::hash_newtype_struct! {
+            $type_vis struct $newtype($(#[$field_attrs])* $field_vis $hash);
+
+            $({ $($type_attrs)* })*
+        }
+
+        $crate::hex_fmt_impl!(<$newtype as $crate::Hash>::DISPLAY_BACKWARD, $newtype);
+        $crate::serde_impl!($newtype, <$newtype as $crate::Hash>::LEN);
         $crate::borrow_slice_impl!($newtype);
 
         impl $newtype {
             /// Creates this type from the inner hash type.
+            #[allow(unused)] // the user of macro may not need this
             pub fn from_hash(inner: $hash) -> $newtype {
                 $newtype(inner)
             }
 
             /// Converts this type into the inner hash type.
+            #[allow(unused)] // the user of macro may not need this
             pub fn as_hash(&self) -> $hash {
                 // Hashes implement Copy so don't need into_hash.
                 self.0
@@ -156,7 +205,7 @@ macro_rules! hash_newtype {
             type Inner = <$hash as $crate::Hash>::Inner;
 
             const LEN: usize = <$hash as $crate::Hash>::LEN;
-            const DISPLAY_BACKWARD: bool = $reverse;
+            const DISPLAY_BACKWARD: bool = $crate::hash_newtype_get_direction!($hash, $(#[$($type_attrs)*])*);
 
             fn engine() -> Self::Engine {
                 <$hash as $crate::Hash>::engine()
@@ -199,7 +248,7 @@ macro_rules! hash_newtype {
                 use $crate::hex::{HexIterator, FromHex};
                 use $crate::Hash;
 
-                let inner: <$hash as Hash>::Inner = if $reverse {
+                let inner: <$hash as Hash>::Inner = if <Self as $crate::Hash>::DISPLAY_BACKWARD {
                     FromHex::from_byte_iter(HexIterator::new(s)?.rev())?
                 } else {
                     FromHex::from_byte_iter(HexIterator::new(s)?)?
@@ -208,9 +257,9 @@ macro_rules! hash_newtype {
             }
         }
 
-        impl $crate::_export::_core::convert::AsRef<[u8; $len]> for $newtype {
-            fn as_ref(&self) -> &[u8; $len] {
-                AsRef::<[u8; $len]>::as_ref(&self.0)
+        impl $crate::_export::_core::convert::AsRef<[u8; <$hash as $crate::Hash>::LEN]> for $newtype {
+            fn as_ref(&self) -> &[u8; <$hash as $crate::Hash>::LEN] {
+                AsRef::<[u8; <$hash as $crate::Hash>::LEN]>::as_ref(&self.0)
             }
         }
 
@@ -222,7 +271,75 @@ macro_rules! hash_newtype {
                 &self.0[index]
             }
         }
+        )+
     };
+}
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! hash_newtype_struct {
+    ($(#[$other_attrs:meta])* $type_vis:vis struct $newtype:ident($(#[$field_attrs:meta])* $field_vis:vis $hash:path);) => {
+        $(#[$other_attrs])*
+        #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+        $type_vis struct $newtype($(#[$field_attrs])* $field_vis $hash);
+    };
+    ($(#[$other_attrs:meta])* $type_vis:vis struct $newtype:ident($(#[$field_attrs:meta])* $field_vis:vis $hash:path); { hash_newtype($($ignore:tt)*) } $($type_attrs:tt)*) => {
+        $crate::hash_newtype_struct! {
+            $(#[$other_attrs])*
+            $type_vis struct $newtype($(#[$field_attrs])* $field_vis $hash);
+
+            $($type_attrs)*
+        }
+    };
+    ($(#[$other_attrs:meta])* $type_vis:vis struct $newtype:ident($(#[$field_attrs:meta])* $field_vis:vis $hash:path); { $other_attr:meta } $($type_attrs:tt)*) => {
+        $crate::hash_newtype_struct! {
+            $(#[$other_attrs])*
+            #[$other_attr]
+            $type_vis struct $newtype($(#[$field_attrs])* $field_vis $hash);
+
+            $($type_attrs)*
+        }
+    };
+}
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! hash_newtype_our_attrs {
+    (hash_newtype($($attr:tt)*)) => { $($attr)* };
+    ($($ignore:tt)*) => {};
+}
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! hash_newtype_get_direction {
+    ($hash:ty, ) => { <$hash as $crate::Hash>::DISPLAY_BACKWARD };
+    ($hash:ty, #[hash_newtype(forward)] $($others:tt)*) => { { $crate::hash_newtype_forbid_direction!(forward, $($others)*); false } };
+    ($hash:ty, #[hash_newtype(backward)] $($others:tt)*) => { { $crate::hash_newtype_forbid_direction!(backward, $($others)*); true } };
+    ($hash:ty, #[$($ignore:tt)*]  $($others:tt)*) => { $crate::hash_newtype_get_direction!($hash, $($others)*) };
+}
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! hash_newtype_forbid_direction {
+    ($direction:ident, ) => {};
+    ($direction:ident, #[hash_newtype(forward)] $(others:tt)*) => {
+        compile_error!(concat!("Cannot set display direction to forward: ", stringify!($direction), " was already specified"));
+    };
+    ($direction:ident, #[hash_newtype(backward)] $(others:tt)*) => {
+        compile_error!(concat!("Cannot set display direction to backward: ", stringify!($direction), " was already specified"));
+    };
+    ($direction:ident, #[$($ignore:tt)*] $(#[$others:tt])*) => {
+        $crate::hash_newtype_forbid_direction!($direction, $(#[$others])*)
+    };
+}
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! hash_newtype_known_attrs {
+    (#[hash_newtype(forward)]) => {};
+    (#[hash_newtype(backward)]) => {};
+    (#[hash_newtype($($unknown:tt)*)]) => { compile_error!(concat!("Unrecognized attribute ", stringify!($($unknown)*))); };
+    ($($ignore:tt)*) => {};
 }
 
 #[cfg(feature = "schemars")]
@@ -276,7 +393,10 @@ mod test {
         assert_eq!(borrowed, hash.as_inner());
     }
 
-    hash_newtype!(TestHash, crate::sha256d::Hash, 32, doc="Test hash.");
+    hash_newtype! {
+        /// Test hash.
+        struct TestHash(crate::sha256d::Hash);
+    }
 
     #[test]
     fn display() {

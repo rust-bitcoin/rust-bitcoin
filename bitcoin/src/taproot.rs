@@ -46,16 +46,16 @@ const MIDSTATE_TAPTWEAK: [u8; 32] = [
 sha256t_hash_newtype!(TapLeafHash, TapLeafTag, MIDSTATE_TAPLEAF, 64,
     doc="Taproot-tagged hash with tag \"TapLeaf\".
 
-This is used for computing tapscript script spend hash.", false
+This is used for computing tapscript script spend hash.", forward
 );
 #[rustfmt::skip]
 sha256t_hash_newtype!(TapNodeHash, TapBranchTag, MIDSTATE_TAPBRANCH, 64,
-    doc="Tagged hash used in taproot trees; see BIP-340 for tagging rules", false
+    doc="Tagged hash used in taproot trees; see BIP-340 for tagging rules", forward
 );
 #[rustfmt::skip]
 sha256t_hash_newtype!(TapTweakHash, TapTweakTag, MIDSTATE_TAPTWEAK, 64,
     doc="Taproot-tagged hash with tag \"TapTweak\".
-    This hash type is used while computing the tweaked public key", false
+    This hash type is used while computing the tweaked public key", forward
 );
 
 impl TapTweakHash {

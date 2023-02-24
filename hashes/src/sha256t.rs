@@ -97,11 +97,11 @@ fn from_engine<T: Tag>(e: sha256::HashEngine) -> Hash<T> {
 /// - a sha256t::Hash type alias.
 #[macro_export]
 macro_rules! sha256t_hash_newtype {
-    ($newtype:ident, $tag:ident, $midstate:ident, $midstate_len:expr, $docs:meta, $reverse: expr) => {
-        sha256t_hash_newtype!($newtype, $tag, $midstate, $midstate_len, $docs, $reverse, stringify!($newtype));
+    ($newtype:ident, $tag:ident, $midstate:ident, $midstate_len:expr, $docs:meta, $direction:tt) => {
+        sha256t_hash_newtype!($newtype, $tag, $midstate, $midstate_len, $docs, $direction, stringify!($newtype));
     };
 
-    ($newtype:ident, $tag:ident, $midstate:ident, $midstate_len:expr, $docs:meta, $reverse: expr, $sname:expr) => {
+    ($newtype:ident, $tag:ident, $midstate:ident, $midstate_len:expr, $docs:meta, $direction:tt, $sname:expr) => {
         #[doc = "The tag used for ["]
         #[doc = $sname]
         #[doc = "]"]
@@ -115,7 +115,11 @@ macro_rules! sha256t_hash_newtype {
             }
         }
 
-        $crate::hash_newtype!($newtype, $crate::sha256t::Hash<$tag>, 32, $docs, $reverse);
+        $crate::hash_newtype! {
+            #[$docs]
+            #[hash_newtype($direction)]
+            pub struct $newtype($crate::sha256t::Hash<$tag>);
+        }
     };
 }
 
@@ -146,7 +150,7 @@ mod tests {
     #[cfg(feature = "alloc")]
     pub type TestHash = sha256t::Hash<TestHashTag>;
 
-    sha256t_hash_newtype!(NewTypeHash, NewTypeTag, TEST_MIDSTATE, 64, doc="test hash", true);
+    sha256t_hash_newtype!(NewTypeHash, NewTypeTag, TEST_MIDSTATE, 64, doc="test hash", backward);
 
     #[test]
     #[cfg(feature = "alloc")]

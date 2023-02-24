@@ -139,7 +139,7 @@ mod tests {
             TEST_MIDSTATE,
             64,
             doc = "test hash",
-            true
+            backward
         );
         static HASH_BYTES: [u8; 32] = [
             0xef, 0x53, 0x7f, 0x25, 0xc8, 0x95, 0xbf, 0xa7, 0x82, 0x52, 0x65, 0x29, 0xa9, 0xb6,

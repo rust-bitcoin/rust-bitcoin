@@ -47,22 +47,25 @@ macro_rules! impl_thirty_two_byte_hash {
     }
 }
 
-#[rustfmt::skip]
-hash_newtype!(LegacySighash, sha256d::Hash, 32,
-    doc="Hash of a transaction according to the legacy signature algorithm", false);
-impl_thirty_two_byte_hash!(LegacySighash);
+hash_newtype! {
+    /// Hash of a transaction according to the legacy signature algorithm.
+    #[hash_newtype(forward)]
+    pub struct LegacySighash(sha256d::Hash);
 
-#[rustfmt::skip]
-hash_newtype!(SegwitV0Sighash, sha256d::Hash, 32,
-    doc="Hash of a transaction according to the segwit version 0 signature algorithm", false);
+    /// Hash of a transaction according to the segwit version 0 signature algorithm.
+    #[hash_newtype(forward)]
+    pub struct SegwitV0Sighash(sha256d::Hash);
+}
+
+impl_thirty_two_byte_hash!(LegacySighash);
 impl_thirty_two_byte_hash!(SegwitV0Sighash);
 
-#[rustfmt::skip]
 sha256t_hash_newtype!(TapSighash, TapSighashTag, MIDSTATE_TAPSIGHASH, 64,
     doc="Taproot-tagged hash with tag \"TapSighash\".
 
-This hash type is used for computing taproot signature hash.", false
+This hash type is used for computing taproot signature hash.", forward
 );
+
 impl_thirty_two_byte_hash!(TapSighash);
 
 /// Efficiently calculates signature hash message for legacy, segwit and taproot inputs.
