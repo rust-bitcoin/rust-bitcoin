@@ -931,8 +931,6 @@ impl TapLeaf {
 
 /// Store information about taproot leaf node.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct ScriptLeaf {
     /// The [`TapLeaf`]
     leaf: TapLeaf,
