@@ -9,6 +9,7 @@
 use core::convert::TryFrom;
 use core::convert::TryInto;
 
+use crate::VarInt;
 use crate::prelude::*;
 
 use crate::io;
@@ -386,20 +387,20 @@ impl Deserialize for (Vec<TapLeafHash>, KeySource) {
 
 impl Serialize for TapTree {
     fn serialize(&self) -> Vec<u8> {
-        let script_leaves_iter = self.script_leaves();
-        let mut buf = Vec::with_capacity(script_leaves_iter.len());
-        for leaf_info in script_leaves_iter {
-            // # Panics:
-            //
-            // TapTree only has script leaves. We will remove this expect in future commit.
-            let (script, ver) = leaf_info.leaf().as_script().expect("TapTree only has script leaves");
+        let capacity = self.script_leaves().map(|l| {
+            l.script().len() + VarInt(l.script().len() as u64).len() // script version
+            + 1 // merkle branch
+            + 1 // leaf version
+        }).sum::<usize>();
+        let mut buf = Vec::with_capacity(capacity);
+        for leaf_info in self.script_leaves() {
             // # Cast Safety:
             //
             // TaprootMerkleBranch can only have len atmost 128(TAPROOT_CONTROL_MAX_NODE_COUNT).
             // safe to cast from usize to u8
             buf.push(leaf_info.merkle_branch().len() as u8);
-            buf.push(ver.to_consensus());
-            script.consensus_encode(&mut buf).expect("Vecs dont err");
+            buf.push(leaf_info.version().to_consensus());
+            leaf_info.script().consensus_encode(&mut buf).expect("Vecs dont err");
         }
         buf
     }

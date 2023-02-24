@@ -8,6 +8,7 @@
 use core::cmp::Reverse;
 use core::convert::TryFrom;
 use core::fmt;
+use core::iter::FusedIterator;
 
 use bitcoin_internals::write_err;
 use secp256k1::{self, Scalar, Secp256k1};
@@ -94,12 +95,12 @@ impl TapLeafHash {
     }
 }
 
-impl From<ScriptLeaf> for TapNodeHash {
-    fn from(leaf: ScriptLeaf) -> TapNodeHash { leaf.node_hash() }
+impl From<LeafNode> for TapNodeHash {
+    fn from(leaf: LeafNode) -> TapNodeHash { leaf.node_hash() }
 }
 
-impl From<&ScriptLeaf> for TapNodeHash {
-    fn from(leaf: &ScriptLeaf) -> TapNodeHash { leaf.node_hash() }
+impl From<&LeafNode> for TapNodeHash {
+    fn from(leaf: &LeafNode) -> TapNodeHash { leaf.node_hash() }
 }
 
 impl TapNodeHash {
@@ -124,7 +125,7 @@ impl TapNodeHash {
 
     /// Assumes the given 32 byte array as hidden [`TapNodeHash`].
     ///
-    /// Similar to [`TapLeafHash::from_inner`], but explicitly conveys that the
+    /// Similar to [`TapLeafHash::from_byte_array`], but explicitly conveys that the
     /// hash is constructed from a hidden node. This also has better ergonomics
     /// because it does not require the caller to import the Hash trait.
     pub fn assume_hidden(hash: [u8; 32]) -> TapNodeHash {
@@ -694,8 +695,8 @@ impl TapTree {
 
     /// Returns [`TapTreeIter<'_>`] iterator for a taproot script tree, operating in DFS order over
     /// tree [`ScriptLeaf`]s.
-    pub fn script_leaves(&self) -> TapTreeIter {
-        TapTreeIter { leaf_iter: self.0.leaves.iter() }
+    pub fn script_leaves(&self) -> ScriptLeaves {
+        ScriptLeaves { leaf_iter: self.0.leaf_nodes() }
     }
 }
 
@@ -731,29 +732,59 @@ impl TryFrom<NodeInfo> for TapTree {
     }
 }
 
-/// Iterator for a taproot script tree, operating in DFS order over leaf depth and
-/// leaf script pairs.
-/// This is guaranteed to not contain any hidden nodes.
-
-// TODO: Enforce this in type system in a later PR. Users should not need to unwrap
-// as script leaf when there are no hidden nodes.
-// An idea can be to have the iterator return a tuple (depth, script, version).
-pub struct TapTreeIter<'tree> {
-    leaf_iter: core::slice::Iter<'tree, ScriptLeaf>,
+/// Iterator for a taproot script tree, operating in DFS order yielding [`ScriptLeaf`].
+///
+/// Returned by [`TapTree::script_leaves`]. [`TapTree`] does not allow hidden nodes,
+/// so this iterator is guaranteed to yield all known leaves.
+pub struct ScriptLeaves<'tree> {
+    leaf_iter: LeafNodes<'tree>,
 }
 
-impl<'tree> Iterator for TapTreeIter<'tree> {
-    type Item = &'tree ScriptLeaf;
+impl<'tree> Iterator for ScriptLeaves<'tree> {
+    type Item = ScriptLeaf<'tree>;
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+            ScriptLeaf::from_leaf_node(self.leaf_iter.next()?)
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) { self.leaf_iter.size_hint() }
+}
+
+impl<'tree> ExactSizeIterator for ScriptLeaves<'tree> { }
+
+impl <'tree> FusedIterator for ScriptLeaves<'tree> { }
+
+impl <'tree> DoubleEndedIterator for ScriptLeaves<'tree> {
+    #[inline]
+    fn next_back(&mut self) -> Option<Self::Item> {
+            ScriptLeaf::from_leaf_node(self.leaf_iter.next_back()?)
+    }
+}
+/// Iterator for a taproot script tree, operating in DFS order yielding [`LeafNode`].
+///
+/// Returned by [`NodeInfo::leaf_nodes`]. This can potentially yield hidden nodes.
+pub struct LeafNodes<'a> {
+    leaf_iter: core::slice::Iter<'a, LeafNode>,
+}
+
+impl<'a> Iterator for LeafNodes<'a> {
+    type Item = &'a LeafNode;
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> { self.leaf_iter.next() }
+
+    fn size_hint(&self) -> (usize, Option<usize>) { self.leaf_iter.size_hint() }
 }
 
-impl<'tree> ExactSizeIterator for TapTreeIter<'tree> {
+impl<'tree> ExactSizeIterator for LeafNodes<'tree> { }
+
+impl <'tree> FusedIterator for LeafNodes<'tree> { }
+
+impl <'tree> DoubleEndedIterator for LeafNodes<'tree> {
     #[inline]
-    fn len(&self) -> usize { self.leaf_iter.len() }
+    fn next_back(&mut self) -> Option<Self::Item> { self.leaf_iter.next_back() }
 }
-
 /// Represents the node information in taproot tree. In contrast to [`TapTree`], this
 /// is allowed to have hidden leaves as children.
 ///
@@ -768,7 +799,7 @@ pub struct NodeInfo {
     /// Merkle hash for this node.
     pub(crate) hash: TapNodeHash,
     /// Information about leaves inside this node.
-    pub(crate) leaves: Vec<ScriptLeaf>,
+    pub(crate) leaves: Vec<LeafNode>,
     /// Tracks information on hidden nodes below this node.
     pub(crate) has_hidden_nodes: bool,
 }
@@ -793,7 +824,7 @@ impl NodeInfo {
     pub fn new_leaf_with_ver(script: ScriptBuf, ver: LeafVersion) -> Self {
         Self {
             hash: TapNodeHash::from_script(&script, ver),
-            leaves: vec![ScriptLeaf::new_script(script, ver)],
+            leaves: vec![LeafNode::new_script(script, ver)],
             has_hidden_nodes: false,
         }
     }
@@ -816,6 +847,11 @@ impl NodeInfo {
             leaves: all_leaves,
             has_hidden_nodes: a.has_hidden_nodes || b.has_hidden_nodes,
         })
+    }
+
+    /// Creates an iterator over all leaves (including hidden leaves) in the tree.
+    pub fn leaf_nodes(&self) -> LeafNodes {
+        LeafNodes { leaf_iter: self.leaves.iter() }
     }
 }
 
@@ -917,7 +953,7 @@ impl TapLeaf {
         }
     }
 
-    /// Obtains the script and version if the leaf is known.
+    /// Obtains a reference to script and version if the leaf is known.
     pub fn as_script(&self) -> Option<(&Script, LeafVersion)> {
         if let Self::Script(script, ver) = self {
             Some((script, *ver))
@@ -929,14 +965,14 @@ impl TapLeaf {
 
 /// Store information about taproot leaf node.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct ScriptLeaf {
+pub struct LeafNode {
     /// The [`TapLeaf`]
     leaf: TapLeaf,
     /// The merkle proof (hashing partners) to get this node.
     merkle_branch: TaprootMerkleBranch,
 }
 
-impl ScriptLeaf {
+impl LeafNode {
     /// Creates an new [`ScriptLeaf`] from `script` and `ver` and no merkle branch.
     pub fn new_script(script: ScriptBuf, ver: LeafVersion) -> Self {
         Self { leaf: TapLeaf::Script(script, ver), merkle_branch: TaprootMerkleBranch(vec![]) }
@@ -955,9 +991,11 @@ impl ScriptLeaf {
     }
 
     /// Computes a leaf hash for this [`ScriptLeaf`] if the leaf is known.
-    /// See [`ScriptLeaf::node_hash`] for computing the [`TapNodeHash`] which returns
-    /// the hidden node hash if the node is hidden.
+    ///
     /// This [`TapLeafHash`] is useful while signing taproot script spends.
+    ///
+    /// See [`LeafNode::node_hash`] for computing the [`TapNodeHash`] which returns the hidden node
+    /// hash if the node is hidden.
     #[inline]
     pub fn leaf_hash(&self) -> Option<TapLeafHash> {
         let (script, ver) = self.leaf.as_script()?;
@@ -967,7 +1005,7 @@ impl ScriptLeaf {
     /// Computes the [`TapNodeHash`] for this [`ScriptLeaf`]. This returns the
     /// leaf hash if the leaf is known and the hidden node hash if the leaf is
     /// hidden.
-    /// See also, [`ScriptLeaf::leaf_hash`].
+    /// See also, [`LeafNode::leaf_hash`].
     #[inline]
     pub fn node_hash(&self) -> TapNodeHash {
         match self.leaf {
@@ -995,6 +1033,46 @@ impl ScriptLeaf {
     #[inline]
     pub fn leaf(&self) -> &TapLeaf {
         &self.leaf
+    }
+}
+
+/// Script leaf node in a taproot tree along with the merkle proof to get this node.
+/// Returned by [`TapTree::script_leaves`]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct ScriptLeaf<'leaf> {
+    /// The version of the script leaf.
+    version: LeafVersion,
+    /// The script.
+    script: &'leaf Script,
+    /// The merkle proof (hashing partners) to get this node.
+    merkle_branch: &'leaf TaprootMerkleBranch,
+}
+
+impl<'leaf> ScriptLeaf<'leaf> {
+
+    /// Obtains the version of the script leaf.
+    pub fn version(&self) -> LeafVersion {
+        self.version
+    }
+
+    /// Obtains a reference to the script inside the leaf.
+    pub fn script(&self) -> &Script {
+        self.script
+    }
+
+    /// Obtains a reference to the merkle proof of the leaf.
+    pub fn merkle_branch(&self) -> &TaprootMerkleBranch {
+        self.merkle_branch
+    }
+
+    /// Obtains a script leaf from the leaf node if the leaf is not hidden.
+    pub fn from_leaf_node(leaf_node: &'leaf LeafNode) -> Option<Self> {
+        let (script, ver) = leaf_node.leaf.as_script()?;
+        Some(Self {
+            version: ver,
+            script,
+            merkle_branch: &leaf_node.merkle_branch,
+        })
     }
 }
 
