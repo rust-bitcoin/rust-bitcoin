@@ -33,16 +33,14 @@ use bitcoin::blockdata::witness::Witness;
 use bitcoin::consensus::encode::deserialize;
 use bitcoin::hashes::hex::FromHex;
 use bitcoin::hashes::{hash160, ripemd160, sha256, sha256d, Hash};
-use bitcoin::key::UntweakedPublicKey;
 use bitcoin::psbt::raw::{self, Key, Pair, ProprietaryKey};
 use bitcoin::psbt::{Input, Output, Psbt, PsbtSighashType};
 use bitcoin::sighash::{EcdsaSighashType, TapSighashType};
-use bitcoin::taproot::{self, ControlBlock, LeafVersion, TaprootBuilder, TaprootSpendInfo, TapTree};
+use bitcoin::taproot::{self, ControlBlock, LeafVersion, TaprootBuilder, TapTree};
 use bitcoin::{
     ecdsa, Address, Block, Network, OutPoint, PrivateKey, PublicKey, ScriptBuf, Sequence, Target,
     Transaction, TxIn, TxOut, Txid, Work,
 };
-use secp256k1::Secp256k1;
 
 /// Implicitly does regression test for `BlockHeader` also.
 #[test]
@@ -362,29 +360,6 @@ fn serde_regression_taptree() {
 
     let got = serialize(&tree).unwrap();
     let want = include_bytes!("data/serde/taptree_bincode") as &[_];
-    assert_eq!(got, want)
-}
-
-#[test]
-fn serde_regression_taproot_spend_info() {
-    let secp = Secp256k1::verification_only();
-    let internal_key = UntweakedPublicKey::from_str(
-        "93c7378d96518a75448821c4f7c8f4bae7ce60f804d03d1f0628dd5dd0f5de51",
-    )
-    .unwrap();
-
-    let script_weights = vec![
-        (10, ScriptBuf::from_hex("51").unwrap()), // semantics of script don't matter for this test
-        (20, ScriptBuf::from_hex("52").unwrap()),
-        (20, ScriptBuf::from_hex("53").unwrap()),
-        (30, ScriptBuf::from_hex("54").unwrap()),
-        (19, ScriptBuf::from_hex("55").unwrap()),
-    ];
-    let tree_info =
-        TaprootSpendInfo::with_huffman_tree(&secp, internal_key, script_weights).unwrap();
-
-    let got = serialize(&tree_info).unwrap();
-    let want = include_bytes!("data/serde/taproot_spend_info_bincode") as &[_];
     assert_eq!(got, want)
 }
 

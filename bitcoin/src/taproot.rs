@@ -186,8 +186,6 @@ type ScriptMerkleProofMap = BTreeMap<(ScriptBuf, LeafVersion), BTreeSet<TaprootM
 /// Note: This library currently does not support
 /// [annex](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki#cite_note-5).
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct TaprootSpendInfo {
     /// The BIP341 internal key.
     internal_key: UntweakedPublicKey,
