@@ -13,6 +13,9 @@ use core::convert::TryFrom;
 #[cfg(all(test, mutate))]
 use mutagen::mutate;
 
+use crate::parse::impl_parse_str_from_int_infallible;
+use crate::prelude::*;
+
 #[cfg(doc)]
 use crate::relative;
 
@@ -236,6 +239,8 @@ impl From<u16> for Height {
     }
 }
 
+impl_parse_str_from_int_infallible!(Height, u16, from);
+
 impl fmt::Display for Height {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::Display::fmt(&self.0, f)
@@ -299,6 +304,8 @@ impl Time {
         self.0
     }
 }
+
+impl_parse_str_from_int_infallible!(Time, u16, from_512_second_intervals);
 
 impl fmt::Display for Time {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

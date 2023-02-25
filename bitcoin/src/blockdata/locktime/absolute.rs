@@ -9,8 +9,6 @@
 
 use core::{mem, fmt};
 use core::cmp::{PartialOrd, Ordering};
-use core::convert::TryFrom;
-use core::str::FromStr;
 
 use bitcoin_internals::write_err;
 
@@ -20,8 +18,8 @@ use mutagen::mutate;
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::error::ParseIntError;
 use crate::io::{self, Read, Write};
+use crate::parse::{impl_parse_str_from_int_infallible, impl_parse_str_from_int_fallible};
 use crate::prelude::*;
-use crate::parse::{self, impl_parse_str_through_int};
 use crate::string::FromHexStr;
 
 #[cfg(doc)]
@@ -276,7 +274,7 @@ impl LockTime {
     }
 }
 
-impl_parse_str_through_int!(LockTime, from_consensus);
+impl_parse_str_from_int_infallible!(LockTime, u32, from_consensus);
 
 impl From<Height> for LockTime {
     #[inline]
@@ -451,6 +449,8 @@ impl Height {
     }
 }
 
+impl_parse_str_from_int_fallible!(Height, u32, from_consensus, Error);
+
 impl fmt::Display for Height {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::Display::fmt(&self.0, f)
@@ -464,37 +464,6 @@ impl FromHexStr for Height {
     fn from_hex_str_no_prefix<S: AsRef<str> + Into<String>>(s: S) -> Result<Self, Self::Error> {
         let height = crate::parse::hex_u32(s)?;
         Self::from_consensus(height)
-    }
-}
-
-
-impl FromStr for Height {
-    type Err = Error;
-
-    #[inline]
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let n = parse::int(s)?;
-        Height::from_consensus(n)
-    }
-}
-
-impl TryFrom<&str> for Height {
-    type Error = Error;
-
-    #[inline]
-    fn try_from(s: &str) -> Result<Self, Self::Error> {
-        let n = parse::int(s)?;
-        Height::from_consensus(n)
-    }
-}
-
-impl TryFrom<String> for Height {
-    type Error = Error;
-
-    #[inline]
-    fn try_from(s: String) -> Result<Self, Self::Error> {
-        let n = parse::int(s)?;
-        Height::from_consensus(n)
     }
 }
 
@@ -564,6 +533,8 @@ impl Time {
     }
 }
 
+impl_parse_str_from_int_fallible!(Time, u32, from_consensus, Error);
+
 impl fmt::Display for Time {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::Display::fmt(&self.0, f)
@@ -577,36 +548,6 @@ impl FromHexStr for Time {
     fn from_hex_str_no_prefix<S: AsRef<str> + Into<String>>(s: S) -> Result<Self, Self::Error> {
         let time = crate::parse::hex_u32(s)?;
         Time::from_consensus(time)
-    }
-}
-
-impl FromStr for Time {
-    type Err = Error;
-
-    #[inline]
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let n = parse::int(s)?;
-        Time::from_consensus(n)
-    }
-}
-
-impl TryFrom<&str> for Time {
-    type Error = Error;
-
-    #[inline]
-    fn try_from(s: &str) -> Result<Self, Self::Error> {
-        let n = parse::int(s)?;
-        Time::from_consensus(n)
-    }
-}
-
-impl TryFrom<String> for Time {
-    type Error = Error;
-
-    #[inline]
-    fn try_from(s: String) -> Result<Self, Self::Error> {
-        let n = parse::int(s)?;
-        Time::from_consensus(n)
     }
 }
 

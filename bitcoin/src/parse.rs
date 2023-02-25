@@ -95,37 +95,78 @@ pub(crate) fn hex_u32<S: AsRef<str> + Into<String>>(s: S) -> Result<u32, ParseIn
 
 impl_std_error!(ParseIntError, source);
 
-/// Implements `TryFrom<$from> for $to` using `parse::int`, mapping the output using `fn`
-macro_rules! impl_tryfrom_str_through_int_single {
-    ($($from:ty, $to:ident $(, $fn:ident)?);*) => {
+/// Implements `TryFrom<$from> for $to` using `parse::int`, mapping the output using infallible
+/// conversion function `fn`.
+macro_rules! impl_tryfrom_str_from_int_infallible {
+    ($($from:ty, $to:ident, $inner:ident, $fn:ident);*) => {
         $(
         impl core::convert::TryFrom<$from> for $to {
             type Error = $crate::error::ParseIntError;
 
             fn try_from(s: $from) -> Result<Self, Self::Error> {
-                $crate::parse::int(s).map($to $(:: $fn)?)
+                $crate::parse::int::<$inner, $from>(s).map($to::$fn)
             }
         }
         )*
     }
 }
-pub(crate) use impl_tryfrom_str_through_int_single;
+pub(crate) use impl_tryfrom_str_from_int_infallible;
 
-/// Implements `FromStr` and `TryFrom<{&str, String, Box<str>}> for $to` using `parse::int`, mapping the output using `fn`
+/// Implements `FromStr` and `TryFrom<{&str, String, Box<str>}> for $to` using `parse::int`, mapping
+/// the output using infallible conversion function `fn`.
 ///
 /// The `Error` type is `ParseIntError`
-macro_rules! impl_parse_str_through_int {
-    ($to:ident $(, $fn:ident)?) => {
-        $crate::parse::impl_tryfrom_str_through_int_single!(&str, $to $(, $fn)?; alloc::string::String, $to $(, $fn)?; alloc::boxed::Box<str>, $to $(, $fn)?);
+macro_rules! impl_parse_str_from_int_infallible {
+    ($to:ident, $inner:ident, $fn:ident) => {
+        $crate::parse::impl_tryfrom_str_from_int_infallible!(&str, $to, $inner, $fn; String, $to, $inner, $fn; Box<str>, $to, $inner, $fn);
 
         impl core::str::FromStr for $to {
             type Err = $crate::error::ParseIntError;
 
             fn from_str(s: &str) -> Result<Self, Self::Err> {
-                $crate::parse::int(s).map($to $(:: $fn)?)
+                $crate::parse::int::<$inner, &str>(s).map($to::$fn)
             }
         }
 
     }
 }
-pub(crate) use impl_parse_str_through_int;
+pub(crate) use impl_parse_str_from_int_infallible;
+
+/// Implements `TryFrom<$from> for $to` using `parse::int`, mapping the output using fallible
+/// conversion function `fn`.
+macro_rules! impl_tryfrom_str_from_int_fallible {
+    ($($from:ty, $to:ident, $inner:ident, $fn:ident, $err:ident);*) => {
+        $(
+        impl core::convert::TryFrom<$from> for $to {
+            type Error = $err;
+
+            fn try_from(s: $from) -> Result<Self, Self::Error> {
+                let u = $crate::parse::int::<$inner, $from>(s)?;
+                $to::$fn(u)
+            }
+        }
+        )*
+    }
+}
+pub(crate) use impl_tryfrom_str_from_int_fallible;
+
+/// Implements `FromStr` and `TryFrom<{&str, String, Box<str>}> for $to` using `parse::int`, mapping
+/// the output using fallible conversion function `fn`.
+///
+/// The `Error` type is `ParseIntError`
+macro_rules! impl_parse_str_from_int_fallible {
+    ($to:ident, $inner:ident, $fn:ident, $err:ident) => {
+        $crate::parse::impl_tryfrom_str_from_int_fallible!(&str, $to, $inner, $fn, $err; String, $to, $inner, $fn, $err; Box<str>, $to, $inner, $fn, $err);
+
+        impl core::str::FromStr for $to {
+            type Err = $err;
+
+            fn from_str(s: &str) -> Result<Self, Self::Err> {
+                let u = $crate::parse::int::<$inner, &str>(s)?;
+                $to::$fn(u)
+            }
+        }
+
+    }
+}
+pub(crate) use impl_parse_str_from_int_fallible;
