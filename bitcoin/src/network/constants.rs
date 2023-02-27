@@ -239,7 +239,7 @@ impl From<Network> for Magic {
     }
 }
 
-/// Error in parsing magic from string.
+/// Error in creating a Network from Magic bytes.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UnknownMagic(Magic);
 
