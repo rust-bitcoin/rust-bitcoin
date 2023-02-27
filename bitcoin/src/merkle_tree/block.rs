@@ -305,7 +305,7 @@ impl PartialMerkleTree {
         if hash_used != self.hashes.len() as u32 {
             return Err(NotAllHashesConsumed);
         }
-        Ok(TxMerkleNode::from_inner(hash_merkle_root.into_inner()))
+        Ok(TxMerkleNode::from_byte_array(hash_merkle_root.to_byte_array()))
     }
 
     /// Helper function to efficiently calculate the number of nodes at given height
@@ -319,7 +319,7 @@ impl PartialMerkleTree {
     fn calc_hash(&self, height: u32, pos: u32, txids: &[Txid]) -> TxMerkleNode {
         if height == 0 {
             // Hash at height 0 is the txid itself
-            TxMerkleNode::from_inner(txids[pos as usize].into_inner())
+            TxMerkleNode::from_byte_array(txids[pos as usize].to_byte_array())
         } else {
             // Calculate left hash
             let left = self.calc_hash(height - 1, pos * 2, txids);
@@ -384,7 +384,7 @@ impl PartialMerkleTree {
             *hash_used += 1;
             if height == 0 && parent_of_match {
                 // in case of height 0, we have a matched txid
-                matches.push(Txid::from_inner(hash.into_inner()));
+                matches.push(Txid::from_byte_array(hash.to_byte_array()));
                 indexes.push(pos);
             }
             Ok(hash)
@@ -573,7 +573,7 @@ mod tests {
             .collect::<Vec<_>>();
 
         // Calculate the merkle root and height
-        let hashes = tx_ids.iter().map(|t| t.as_hash());
+        let hashes = tx_ids.iter().map(|t| t.to_raw_hash());
         let merkle_root_1: TxMerkleNode =
             merkle_tree::calculate_root(hashes).expect("hashes is not empty").into();
         let mut height = 1;
@@ -741,7 +741,7 @@ mod tests {
             let n = rng.gen_range(0..self.hashes.len());
             let bit = rng.gen::<u8>();
             let hashes = &mut self.hashes;
-            let mut hash = hashes[n].into_inner();
+            let mut hash = hashes[n].to_byte_array();
             hash[(bit >> 3) as usize] ^= 1 << (bit & 7);
             hashes[n] = TxMerkleNode::from_slice(&hash).unwrap();
         }

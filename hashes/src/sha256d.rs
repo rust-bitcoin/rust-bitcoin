@@ -89,7 +89,7 @@ mod tests {
             let sha2d_hash = sha2_hash.hash_again();
             assert_eq!(hash, sha2d_hash);
 
-            assert_eq!(hash.into_inner()[..].as_ref(), test.output.as_slice());
+            assert_eq!(hash.to_byte_array()[..].as_ref(), test.output.as_slice());
         }
     }
 

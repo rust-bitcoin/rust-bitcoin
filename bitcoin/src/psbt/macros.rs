@@ -169,7 +169,7 @@ macro_rules! impl_psbt_hash_serialize {
     ($hash_type:ty) => {
         impl $crate::psbt::serialize::Serialize for $hash_type {
             fn serialize(&self) -> $crate::prelude::Vec<u8> {
-                self.into_inner().to_vec()
+                self.as_byte_array().to_vec()
             }
         }
     };

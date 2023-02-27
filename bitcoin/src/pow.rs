@@ -196,7 +196,7 @@ impl Target {
     #[cfg_attr(all(test, mutate), mutate)]
     pub fn is_met_by(&self, hash: BlockHash) -> bool {
         use crate::hashes::Hash;
-        let hash = U256::from_le_bytes(hash.into_inner());
+        let hash = U256::from_le_bytes(hash.to_byte_array());
         hash <= self.0
     }
 
@@ -1492,7 +1492,7 @@ mod tests {
         use crate::hashes::Hash;
 
         let hash = BlockHash::from_str("ef537f25c895bfa782526529a9b63d97aa631564d5d789c2b765448c8635fb6c").expect("failed to parse block hash");
-        let target = Target(U256::from_le_bytes(hash.into_inner()));
+        let target = Target(U256::from_le_bytes(hash.to_byte_array()));
         assert!(target.is_met_by(hash));
     }
 

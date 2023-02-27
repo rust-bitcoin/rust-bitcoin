@@ -173,17 +173,22 @@ macro_rules! hash_newtype {
         $crate::borrow_slice_impl!($newtype);
 
         impl $newtype {
-            /// Creates this type from the inner hash type.
+            /// Creates this wrapper type from the inner hash type.
             #[allow(unused)] // the user of macro may not need this
-            pub fn from_hash(inner: $hash) -> $newtype {
+            pub fn from_raw_hash(inner: $hash) -> $newtype {
                 $newtype(inner)
             }
 
-            /// Converts this type into the inner hash type.
+            /// Returns the inner hash (sha256, sh256d etc.).
             #[allow(unused)] // the user of macro may not need this
-            pub fn as_hash(&self) -> $hash {
-                // Hashes implement Copy so don't need into_hash.
+            pub fn to_raw_hash(self) -> $hash {
                 self.0
+            }
+
+            /// Returns a reference to the inner hash (sha256, sh256d etc.).
+            #[allow(unused)] // the user of macro may not need this
+            pub fn as_raw_hash(&self) -> &$hash {
+                &self.0
             }
         }
 
@@ -202,7 +207,7 @@ macro_rules! hash_newtype {
 
         impl $crate::Hash for $newtype {
             type Engine = <$hash as $crate::Hash>::Engine;
-            type Inner = <$hash as $crate::Hash>::Inner;
+            type Bytes = <$hash as $crate::Hash>::Bytes;
 
             const LEN: usize = <$hash as $crate::Hash>::LEN;
             const DISPLAY_BACKWARD: bool = $crate::hash_newtype_get_direction!($hash, $(#[$($type_attrs)*])*);
@@ -221,18 +226,18 @@ macro_rules! hash_newtype {
             }
 
             #[inline]
-            fn from_inner(inner: Self::Inner) -> Self {
-                $newtype(<$hash as $crate::Hash>::from_inner(inner))
+            fn from_byte_array(bytes: Self::Bytes) -> Self {
+                $newtype(<$hash as $crate::Hash>::from_byte_array(bytes))
             }
 
             #[inline]
-            fn into_inner(self) -> Self::Inner {
-                self.0.into_inner()
+            fn to_byte_array(self) -> Self::Bytes {
+                self.0.to_byte_array()
             }
 
             #[inline]
-            fn as_inner(&self) -> &Self::Inner {
-                self.0.as_inner()
+            fn as_byte_array(&self) -> &Self::Bytes {
+                self.0.as_byte_array()
             }
 
             #[inline]
@@ -248,12 +253,12 @@ macro_rules! hash_newtype {
                 use $crate::hex::{HexIterator, FromHex};
                 use $crate::Hash;
 
-                let inner: <$hash as Hash>::Inner = if <Self as $crate::Hash>::DISPLAY_BACKWARD {
+                let inner: <$hash as Hash>::Bytes = if <Self as $crate::Hash>::DISPLAY_BACKWARD {
                     FromHex::from_byte_iter(HexIterator::new(s)?.rev())?
                 } else {
                     FromHex::from_byte_iter(HexIterator::new(s)?)?
                 };
-                Ok($newtype(<$hash>::from_inner(inner)))
+                Ok($newtype(<$hash>::from_byte_array(inner)))
             }
         }
 
@@ -374,14 +379,14 @@ mod test {
     fn hash_as_ref_array() {
         let hash = sha256::Hash::hash(&[3, 50]);
         let r = AsRef::<[u8; 32]>::as_ref(&hash);
-        assert_eq!(r, hash.as_inner());
+        assert_eq!(r, hash.as_byte_array());
     }
 
     #[test]
     fn hash_as_ref_slice() {
         let hash = sha256::Hash::hash(&[3, 50]);
         let r = AsRef::<[u8]>::as_ref(&hash);
-        assert_eq!(r, hash.as_inner());
+        assert_eq!(r, hash.as_byte_array());
     }
 
     #[test]
@@ -390,7 +395,7 @@ mod test {
 
         let hash = sha256::Hash::hash(&[3, 50]);
         let borrowed: &[u8] = hash.borrow();
-        assert_eq!(borrowed, hash.as_inner());
+        assert_eq!(borrowed, hash.as_byte_array());
     }
 
     hash_newtype! {
@@ -430,13 +435,13 @@ mod test {
     fn inner_hash_as_ref_array() {
         let hash = TestHash::all_zeros();
         let r = AsRef::<[u8; 32]>::as_ref(&hash);
-        assert_eq!(r, hash.as_inner());
+        assert_eq!(r, hash.as_byte_array());
     }
 
     #[test]
     fn inner_hash_as_ref_slice() {
         let hash = TestHash::all_zeros();
         let r = AsRef::<[u8]>::as_ref(&hash);
-        assert_eq!(r, hash.as_inner());
+        assert_eq!(r, hash.as_byte_array());
     }
 }

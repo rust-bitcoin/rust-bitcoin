@@ -435,13 +435,12 @@ impl Payload {
     /// Constructs a [Payload] from an output script (`scriptPubkey`).
     pub fn from_script(script: &Script) -> Result<Payload, Error> {
         Ok(if script.is_p2pkh() {
-            let mut hash_inner = [0u8; 20];
-            hash_inner.copy_from_slice(&script.as_bytes()[3..23]);
-            Payload::PubkeyHash(PubkeyHash::from_inner(hash_inner))
+            let bytes = script.as_bytes()[3..23].try_into().expect("statically 20B long");
+            Payload::PubkeyHash(PubkeyHash::from_byte_array(bytes))
+
         } else if script.is_p2sh() {
-            let mut hash_inner = [0u8; 20];
-            hash_inner.copy_from_slice(&script.as_bytes()[2..22]);
-            Payload::ScriptHash(ScriptHash::from_inner(hash_inner))
+            let bytes = script.as_bytes()[2..22].try_into().expect("statically 20B long");
+            Payload::ScriptHash(ScriptHash::from_byte_array(bytes))
         } else if script.is_witness_program() {
             let opcode = script.first_opcode().expect("witness_version guarantees len() > 4");
 
@@ -959,9 +958,9 @@ impl Address {
         let payload = self.payload.inner_prog_as_bytes();
         let xonly_pubkey = XOnlyPublicKey::from(pubkey.inner);
 
-        (*pubkey_hash.as_inner() == *payload)
+        (*pubkey_hash.as_byte_array() == *payload)
             || (xonly_pubkey.serialize() == *payload)
-            || (*segwit_redeem_hash(&pubkey_hash).as_inner() == *payload)
+            || (*segwit_redeem_hash(&pubkey_hash).as_byte_array() == *payload)
     }
 
     /// Returns true if the supplied xonly public key can be used to derive the address.

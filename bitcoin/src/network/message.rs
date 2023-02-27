@@ -582,7 +582,7 @@ mod test {
                 flags: BloomFlags::All,
             }),
             NetworkMessage::FilterAdd(FilterAdd { data: script.as_bytes().to_vec() }),
-            NetworkMessage::FilterAdd(FilterAdd { data: hash([29u8; 32]).into_inner().to_vec() }),
+            NetworkMessage::FilterAdd(FilterAdd { data: hash([29u8; 32]).as_byte_array().to_vec() }),
             NetworkMessage::FilterClear,
             NetworkMessage::GetCFilters(GetCFilters {
                 filter_type: 2,

@@ -260,7 +260,7 @@ mod test {
         // The genesis block hash is a double-sha256 and it is displayed backwards.
         let genesis_hash = genesis_block(network).block_hash();
         // We abuse the sha256 hash here so we get a LowerHex impl that does not print the hex backwards.
-        let hash = sha256::Hash::from_slice(&genesis_hash.into_inner()).unwrap();
+        let hash = sha256::Hash::from_slice(genesis_hash.as_byte_array()).unwrap();
         let want = format!("{:02x}", hash);
 
         let chain_hash = ChainHash::using_genesis_block(network);

@@ -762,37 +762,37 @@ tuple_encode!(T0, T1, T2, T3, T4, T5, T6, T7);
 
 impl Encodable for sha256d::Hash {
     fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.into_inner().consensus_encode(w)
+        self.as_byte_array().consensus_encode(w)
     }
 }
 
 impl Decodable for sha256d::Hash {
     fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, Error> {
-        Ok(Self::from_inner(<<Self as Hash>::Inner>::consensus_decode(r)?))
+        Ok(Self::from_byte_array(<<Self as Hash>::Bytes>::consensus_decode(r)?))
     }
 }
 
 impl Encodable for sha256::Hash {
     fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.into_inner().consensus_encode(w)
+        self.as_byte_array().consensus_encode(w)
     }
 }
 
 impl Decodable for sha256::Hash {
     fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, Error> {
-        Ok(Self::from_inner(<<Self as Hash>::Inner>::consensus_decode(r)?))
+        Ok(Self::from_byte_array(<<Self as Hash>::Bytes>::consensus_decode(r)?))
     }
 }
 
 impl Encodable for TapLeafHash {
     fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.into_inner().consensus_encode(w)
+        self.as_byte_array().consensus_encode(w)
     }
 }
 
 impl Decodable for TapLeafHash {
     fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, Error> {
-        Ok(Self::from_inner(<<Self as Hash>::Inner>::consensus_decode(r)?))
+        Ok(Self::from_byte_array(<<Self as Hash>::Bytes>::consensus_decode(r)?))
     }
 }
 

@@ -79,7 +79,7 @@ impl TapTweakHash {
     /// Converts a `TapTweakHash` into a `Scalar` ready for use with key tweaking API.
     pub fn to_scalar(self) -> Scalar {
         // This is statistically extremely unlikely to panic.
-        Scalar::from_be_bytes(self.into_inner()).expect("hash value greater than curve order")
+        Scalar::from_be_bytes(self.to_byte_array()).expect("hash value greater than curve order")
     }
 }
 
@@ -122,7 +122,7 @@ impl TapNodeHash {
 }
 
 impl From<TapLeafHash> for TapNodeHash {
-    fn from(leaf: TapLeafHash) -> TapNodeHash { TapNodeHash::from_inner(leaf.into_inner()) }
+    fn from(leaf: TapLeafHash) -> TapNodeHash { TapNodeHash::from_byte_array(leaf.to_byte_array()) }
 }
 
 /// Maximum depth of a taproot tree script spend path.
@@ -690,7 +690,7 @@ impl TaprootMerkleBranch {
 
     /// Serializes `self` as bytes.
     pub fn serialize(&self) -> Vec<u8> {
-        self.0.iter().flat_map(|e| e.as_inner()).copied().collect::<Vec<u8>>()
+        self.0.iter().flat_map(|e| e.as_byte_array()).copied().collect::<Vec<u8>>()
     }
 
     /// Appends elements to proof.
@@ -1152,10 +1152,10 @@ mod test {
         use crate::crypto::sighash::MIDSTATE_TAPSIGHASH;
 
         // check midstate against hard-coded values
-        assert_eq!(MIDSTATE_TAPLEAF, tag_engine("TapLeaf").midstate().into_inner());
-        assert_eq!(MIDSTATE_TAPBRANCH, tag_engine("TapBranch").midstate().into_inner());
-        assert_eq!(MIDSTATE_TAPTWEAK, tag_engine("TapTweak").midstate().into_inner());
-        assert_eq!(MIDSTATE_TAPSIGHASH, tag_engine("TapSighash").midstate().into_inner());
+        assert_eq!(MIDSTATE_TAPLEAF, tag_engine("TapLeaf").midstate().to_byte_array());
+        assert_eq!(MIDSTATE_TAPBRANCH, tag_engine("TapBranch").midstate().to_byte_array());
+        assert_eq!(MIDSTATE_TAPTWEAK, tag_engine("TapTweak").midstate().to_byte_array());
+        assert_eq!(MIDSTATE_TAPSIGHASH, tag_engine("TapSighash").midstate().to_byte_array());
 
         // test that engine creation roundtrips
         assert_eq!(tag_engine("TapLeaf").midstate(), TapLeafTag::engine().midstate());
@@ -1167,12 +1167,12 @@ mod test {
         fn empty_hash(tag_name: &str) -> [u8; 32] {
             let mut e = tag_engine(tag_name);
             e.input(&[]);
-            TapNodeHash::from_engine(e).into_inner()
+            TapNodeHash::from_engine(e).to_byte_array()
         }
-        assert_eq!(empty_hash("TapLeaf"), TapLeafHash::hash(&[]).into_inner());
-        assert_eq!(empty_hash("TapBranch"), TapNodeHash::hash(&[]).into_inner());
-        assert_eq!(empty_hash("TapTweak"), TapTweakHash::hash(&[]).into_inner());
-        assert_eq!(empty_hash("TapSighash"), TapSighash::hash(&[]).into_inner());
+        assert_eq!(empty_hash("TapLeaf"), TapLeafHash::hash(&[]).to_byte_array());
+        assert_eq!(empty_hash("TapBranch"), TapNodeHash::hash(&[]).to_byte_array());
+        assert_eq!(empty_hash("TapTweak"), TapTweakHash::hash(&[]).to_byte_array());
+        assert_eq!(empty_hash("TapSighash"), TapSighash::hash(&[]).to_byte_array());
     }
 
     #[test]

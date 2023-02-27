@@ -88,7 +88,7 @@ crate::internal_macros::hash_trait_impls!(256, true, T: Tag);
 fn from_engine<T: Tag>(e: sha256::HashEngine) -> Hash<T> {
     use crate::Hash as _;
 
-    Hash::from_inner(sha256::Hash::from_engine(e).into_inner())
+    Hash::from_byte_array(sha256::Hash::from_engine(e).to_byte_array())
 }
 
 /// Macro used to define a newtype tagged hash.
@@ -110,7 +110,7 @@ macro_rules! sha256t_hash_newtype {
 
         impl $crate::sha256t::Tag for $tag {
             fn engine() -> $crate::sha256::HashEngine {
-                let midstate = $crate::sha256::Midstate::from_inner($midstate);
+                let midstate = $crate::sha256::Midstate::from_byte_array($midstate);
                 $crate::sha256::HashEngine::from_midstate(midstate, $midstate_len)
             }
         }
@@ -141,7 +141,7 @@ mod tests {
     impl sha256t::Tag for TestHashTag {
         fn engine() -> sha256::HashEngine {
             // The TapRoot TapLeaf midstate.
-            let midstate = sha256::Midstate::from_inner(TEST_MIDSTATE);
+            let midstate = sha256::Midstate::from_byte_array(TEST_MIDSTATE);
             sha256::HashEngine::from_midstate(midstate, 64)
         }
     }
