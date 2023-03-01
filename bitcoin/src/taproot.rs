@@ -13,12 +13,13 @@ use bitcoin_internals::write_err;
 use secp256k1::{self, Scalar, Secp256k1};
 
 use crate::consensus::Encodable;
-use crate::crypto::key::{TapTweak, TweakedPublicKey, UntweakedPublicKey, XOnlyPublicKey};
 use crate::hashes::{sha256t_hash_newtype, Hash, HashEngine};
+use crate::crypto::key::{TapTweak, TweakedPublicKey, UntweakedPublicKey, XOnlyPublicKey};
 use crate::prelude::*;
 use crate::{io, Script, ScriptBuf};
 
-pub use crate::crypto::sighash::{TapSighash, TapSighashTag};
+// Re-export these so downstream only has to use one `taproot` module.
+pub use crate::crypto::taproot::{Signature, Error};
 
 /// The SHA-256 midstate value for the TapLeaf hash.
 const MIDSTATE_TAPLEAF: [u8; 32] = [
@@ -1133,6 +1134,7 @@ mod test {
     use crate::hashes::hex::FromHex;
     use crate::hashes::sha256t::Tag;
     use crate::hashes::{sha256, Hash, HashEngine};
+    use crate::sighash::{TapSighash, TapSighashTag};
     use crate::{Address, Network};
     extern crate serde_json;
 

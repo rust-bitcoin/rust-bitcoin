@@ -30,16 +30,15 @@ use bitcoin::bip32::{ChildNumber, ExtendedPrivKey, ExtendedPubKey, KeySource};
 use bitcoin::blockdata::locktime::{absolute, relative};
 use bitcoin::blockdata::witness::Witness;
 use bitcoin::consensus::encode::deserialize;
-use bitcoin::crypto::key::UntweakedPublicKey;
-use bitcoin::crypto::{ecdsa, taproot};
 use bitcoin::hashes::hex::FromHex;
 use bitcoin::hashes::{hash160, ripemd160, sha256, sha256d, Hash};
+use bitcoin::key::UntweakedPublicKey;
 use bitcoin::psbt::raw::{self, Key, Pair, ProprietaryKey};
 use bitcoin::psbt::{Input, Output, Psbt, PsbtSighashType};
 use bitcoin::sighash::{EcdsaSighashType, TapSighashType};
-use bitcoin::taproot::{ControlBlock, LeafVersion, TaprootBuilder, TaprootSpendInfo};
+use bitcoin::taproot::{self, ControlBlock, LeafVersion, TaprootBuilder, TaprootSpendInfo};
 use bitcoin::{
-    Address, Block, Network, OutPoint, PrivateKey, PublicKey, ScriptBuf, Sequence, Target,
+    ecdsa, Address, Block, Network, OutPoint, PrivateKey, PublicKey, ScriptBuf, Sequence, Target,
     Transaction, TxIn, TxOut, Txid, Work,
 };
 use secp256k1::Secp256k1;
