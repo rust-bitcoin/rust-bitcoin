@@ -9,15 +9,6 @@ then
     export RUSTFLAGS="-C link-dead-code"
 fi
 
-cargo --version
-rustc --version
-
-# Work out if we are using a nightly toolchain.
-NIGHTLY=false
-if cargo --version | grep nightly; then
-    NIGHTLY=true
-fi
-
 # Pin dependencies as required if we are using MSRV toolchain.
 if cargo --version | grep "1\.41"; then
     # 1.0.108 uses `matches!` macro so does not work with Rust 1.41.1, bad `syn` no biscuit.

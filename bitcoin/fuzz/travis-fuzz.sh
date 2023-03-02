@@ -14,9 +14,6 @@ else
 	TARGETS=fuzz_targets/"$1".rs
 fi
 
-cargo --version
-rustc --version
-
 # Testing
 cargo install --force honggfuzz --no-default-features
 for TARGET in $TARGETS; do
