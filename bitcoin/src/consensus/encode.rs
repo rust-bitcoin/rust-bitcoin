@@ -936,10 +936,20 @@ mod tests {
         assert_eq!(serialize(&cd), vec![5, 0, 0, 0, 162, 107, 175, 90, 1, 2, 3, 4, 5]);
     }
 
+    fn prefix_varint_len(data: &Vec<u8>) -> Vec<u8> {
+        // Takes a reference to a Vec<u8> as input and prefixes the length of the vector as a VarInt.
+        let len = VarInt(data.len() as u64);
+        let len_bytes = len.0.to_le_bytes();
+        let mut prefixed_data = Vec::new();
+        prefixed_data.append(&mut len_bytes[0..len.len()].to_vec());
+        prefixed_data.append(&mut data.clone());
+        prefixed_data
+    }    
+
     #[test]
     fn serialize_vector_test() {
         assert_eq!(serialize(&vec![1u8, 2, 3]), vec![3u8, 1, 2, 3]);
-        // TODO: test vectors of more interesting objects
+        assert_eq!(prefix_varint_len(&vec![1u8, 2, 3]), vec![3u8, 1, 2, 3]);
     }
 
     #[test]
