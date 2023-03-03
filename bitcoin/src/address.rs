@@ -92,7 +92,9 @@ pub enum Error {
         /// Network that was required.
         required: Network,
         /// Network on which the address was found to be valid.
-        found: Network
+        found: Network,
+        /// The address itself
+        address: Address<NetworkUnchecked>
     }
 }
 
@@ -112,7 +114,11 @@ impl fmt::Display for Error {
             Error::ExcessiveScriptSize => write!(f, "script size exceed 520 bytes"),
             Error::UnrecognizedScript => write!(f, "script is not a p2pkh, p2sh or witness program"),
             Error::UnknownAddressType(ref s) => write!(f, "unknown address type: '{}' is either invalid or not supported in rust-bitcoin", s),
-	    Error::NetworkValidation { required, found } => write!(f, "address's network {} is different from required {}", found, required),
+            Error::NetworkValidation { required, found, ref address } => {
+                write!(f, "address ")?;
+                address.fmt_internal(f)?; // Using fmt_internal in order to remove the "Address<NetworkUnchecked>(..)" wrapper
+                write!(f, " belongs to network {} which is different from required {}", found, required)
+            }
         }
     }
 }
@@ -1025,7 +1031,7 @@ impl Address<NetworkUnchecked> {
         if self.is_valid_for_network(required) {
             Ok(self.assume_checked())
         } else {
-            Err(Error::NetworkValidation { found: self.network, required })
+            Err(Error::NetworkValidation { found: self.network, required, address: self })
         }
     }
 
