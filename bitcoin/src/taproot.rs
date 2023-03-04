@@ -8,6 +8,7 @@
 use core::cmp::Reverse;
 use core::convert::TryFrom;
 use core::fmt;
+use core::iter::FusedIterator;
 
 use bitcoin_internals::write_err;
 use secp256k1::{self, Scalar, Secp256k1};
@@ -94,17 +95,23 @@ impl TapLeafHash {
     }
 }
 
-impl From<ScriptLeaf> for TapLeafHash {
-    fn from(leaf: ScriptLeaf) -> TapLeafHash { leaf.leaf_hash() }
+impl From<LeafNode> for TapNodeHash {
+    fn from(leaf: LeafNode) -> TapNodeHash { leaf.node_hash() }
 }
 
-impl From<&ScriptLeaf> for TapLeafHash {
-    fn from(leaf: &ScriptLeaf) -> TapLeafHash { leaf.leaf_hash() }
+impl From<&LeafNode> for TapNodeHash {
+    fn from(leaf: &LeafNode) -> TapNodeHash { leaf.node_hash() }
 }
 
 impl TapNodeHash {
     /// Computes branch hash given two hashes of the nodes underneath it.
     pub fn from_node_hashes(a: TapNodeHash, b: TapNodeHash) -> TapNodeHash {
+        Self::combine_node_hashes(a, b).0
+    }
+
+    /// Computes branch hash given two hashes of the nodes underneath it and returns
+    /// whether the left node was the one hashed first.
+    fn combine_node_hashes(a: TapNodeHash, b: TapNodeHash) -> (TapNodeHash, bool) {
         let mut eng = TapNodeHash::engine();
         if a < b {
             eng.input(a.as_ref());
@@ -113,7 +120,16 @@ impl TapNodeHash {
             eng.input(b.as_ref());
             eng.input(a.as_ref());
         };
-        TapNodeHash::from_engine(eng)
+        (TapNodeHash::from_engine(eng), a < b)
+    }
+
+    /// Assumes the given 32 byte array as hidden [`TapNodeHash`].
+    ///
+    /// Similar to [`TapLeafHash::from_byte_array`], but explicitly conveys that the
+    /// hash is constructed from a hidden node. This also has better ergonomics
+    /// because it does not require the caller to import the Hash trait.
+    pub fn assume_hidden(hash: [u8; 32]) -> TapNodeHash {
+        TapNodeHash::from_byte_array(hash)
     }
 
     /// Computes the [`TapNodeHash`] from a script and a leaf version.
@@ -171,8 +187,6 @@ type ScriptMerkleProofMap = BTreeMap<(ScriptBuf, LeafVersion), BTreeSet<TaprootM
 /// Note: This library currently does not support
 /// [annex](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki#cite_note-5).
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct TaprootSpendInfo {
     /// The BIP341 internal key.
     internal_key: UntweakedPublicKey,
@@ -263,16 +277,27 @@ impl TaprootSpendInfo {
         // Create as if it is a key spend path with the given merkle root
         let root_hash = Some(node.hash);
         let mut info = TaprootSpendInfo::new_key_spend(secp, internal_key, root_hash);
+
         for leaves in node.leaves {
-            let key = (leaves.script, leaves.ver);
-            let value = leaves.merkle_branch;
-            if let Some(set) = info.script_map.get_mut(&key) {
-                set.insert(value);
-                continue; // NLL fix
+            match leaves.leaf {
+                TapLeaf::Hidden(_) => {
+                    // We don't store any information about hidden nodes in TaprootSpendInfo.
+                }
+                TapLeaf::Script(script, ver) => {
+                    let key = (script, ver);
+                    let value = leaves.merkle_branch;
+                    match info.script_map.get_mut(&key) {
+                        None => {
+                            let mut set = BTreeSet::new();
+                            set.insert(value);
+                            info.script_map.insert(key, set);
+                        },
+                        Some(set) => {
+                            set.insert(value);
+                        }
+                    }
+                },
             }
-            let mut set = BTreeSet::new();
-            set.insert(value);
-            info.script_map.insert(key, set);
         }
         info
     }
@@ -316,8 +341,6 @@ impl From<&TaprootSpendInfo> for TapTweakHash {
 /// See Wikipedia for more details on [DFS](https://en.wikipedia.org/wiki/Depth-first_search).
 // Similar to Taproot Builder in Bitcoin Core.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct TaprootBuilder {
     // The following doc-comment is from Bitcoin Core, but modified for Rust. It describes the
     // current state of the builder for a given tree.
@@ -358,6 +381,15 @@ impl TaprootBuilder {
     /// Creates a new instance of [`TaprootBuilder`].
     pub fn new() -> Self { TaprootBuilder { branch: vec![] } }
 
+    /// Creates a new instance of [`TaprootBuilder`] with a capacity hint for `size` elements.
+    ///
+    /// The size here should be maximum depth of the tree.
+    pub fn with_capacity(size: usize) -> Self {
+        TaprootBuilder {
+            branch: Vec::with_capacity(size),
+        }
+    }
+
     /// Creates a new [`TaprootSpendInfo`] from a list of scripts (with default script version) and
     /// weights of satisfaction for that script.
     ///
@@ -378,7 +410,7 @@ impl TaprootBuilder {
     /// If the script weight calculations overflow, a sub-optimal tree may be generated. This should
     /// not happen unless you are dealing with billions of branches with weights close to 2^32.
     ///
-    /// [`TapTree`]: crate::psbt::TapTree
+    /// [`TapTree`]: crate::taproot::TapTree
     pub fn with_huffman_tree<I>(script_weights: I) -> Result<Self, TaprootBuilderError>
     where
         I: IntoIterator<Item = (u32, ScriptBuf)>,
@@ -442,6 +474,33 @@ impl TaprootBuilder {
 
     /// Checks if the builder has finalized building a tree.
     pub fn is_finalizable(&self) -> bool { self.branch.len() == 1 && self.branch[0].is_some() }
+
+    /// Converts the builder into a [`NodeInfo`] if the builder is a full tree with possibly
+    /// hidden nodes
+    ///
+    /// # Errors:
+    ///
+    /// [`IncompleteBuilder::NotFinalized`] if the builder is not finalized. The builder
+    /// can be restored by calling [`IncompleteBuilder::into_builder`]
+    pub fn try_into_node_info(mut self) -> Result<NodeInfo, IncompleteBuilder> {
+        if self.branch().len() != 1 {
+            return Err(IncompleteBuilder::NotFinalized(self));
+        }
+        Ok(self.branch.pop()
+           .expect("length checked above")
+           .expect("invariant guarantees node info exists"))
+    }
+
+    /// Converts the builder into a [`TapTree`] if the builder is a full tree and
+    /// does not contain any hidden nodes
+    pub fn try_into_taptree(self) -> Result<TapTree, IncompleteBuilder> {
+        let node = self.try_into_node_info()?;
+        if node.has_hidden_nodes {
+            // Reconstruct the builder as it was if it has hidden nodes
+            return Err(IncompleteBuilder::HiddenParts(TaprootBuilder { branch: vec![Some(node)] }));
+        }
+        Ok(TapTree(node))
+    }
 
     /// Checks if the builder has hidden nodes.
     pub fn has_hidden_nodes(&self) -> bool {
@@ -521,7 +580,213 @@ impl Default for TaprootBuilder {
     fn default() -> Self { Self::new() }
 }
 
-/// Represents the node information in taproot tree.
+/// Error happening when [`TapTree`] is constructed from a [`TaprootBuilder`]
+/// having hidden branches or not being finalized.
+#[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug)]
+#[non_exhaustive]
+pub enum IncompleteBuilder {
+    /// Indicates an attempt to construct a tap tree from a builder containing incomplete branches.
+    NotFinalized(TaprootBuilder),
+    /// Indicates an attempt to construct a tap tree from a builder containing hidden parts.
+    HiddenParts(TaprootBuilder),
+}
+
+impl IncompleteBuilder {
+    /// Converts error into the original incomplete [`TaprootBuilder`] instance.
+    pub fn into_builder(self) -> TaprootBuilder {
+        match self {
+            IncompleteBuilder::NotFinalized(builder) | IncompleteBuilder::HiddenParts(builder) =>
+                builder,
+        }
+    }
+}
+
+impl core::fmt::Display for IncompleteBuilder {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.write_str(match self {
+            IncompleteBuilder::NotFinalized(_) =>
+                "an attempt to construct a tap tree from a builder containing incomplete branches.",
+            IncompleteBuilder::HiddenParts(_) =>
+                "an attempt to construct a tap tree from a builder containing hidden parts.",
+        })
+    }
+}
+
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+impl std::error::Error for IncompleteBuilder {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use self::IncompleteBuilder::*;
+
+        match self {
+            NotFinalized(_) | HiddenParts(_) => None,
+        }
+    }
+}
+
+/// Error happening when [`TapTree`] is constructed from a [`NodeInfo`]
+/// having hidden branches.
+#[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug)]
+#[non_exhaustive]
+pub enum HiddenNodes {
+    /// Indicates an attempt to construct a tap tree from a builder containing hidden parts.
+    HiddenParts(NodeInfo),
+}
+
+impl HiddenNodes {
+    /// Converts error into the original incomplete [`NodeInfo`] instance.
+    pub fn into_node_info(self) -> NodeInfo {
+        match self {
+            HiddenNodes::HiddenParts(node_info) => node_info,
+        }
+    }
+}
+
+impl core::fmt::Display for HiddenNodes {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.write_str(match self {
+            HiddenNodes::HiddenParts(_) =>
+                "an attempt to construct a tap tree from a node_info containing hidden parts.",
+        })
+    }
+}
+
+#[cfg(feature = "std")]
+#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+impl std::error::Error for HiddenNodes {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use self::HiddenNodes::*;
+
+        match self {
+            HiddenParts(_) => None,
+        }
+    }
+}
+
+/// Taproot Tree representing a complete binary tree without any hidden nodes.
+///
+/// This is in contrast to [`NodeInfo`], which allows hidden nodes.
+/// The implementations for Eq, PartialEq and Hash compare the merkle root of the tree
+//
+// This is a bug in BIP370 that does not specify how to share trees with hidden nodes,
+// for which we need a separate type.
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
+#[cfg_attr(feature = "serde", serde(into = "NodeInfo"))]
+#[cfg_attr(feature = "serde", serde(try_from = "NodeInfo"))]
+pub struct TapTree(NodeInfo);
+
+impl From<TapTree> for NodeInfo {
+    #[inline]
+    fn from(tree: TapTree) -> Self { tree.into_node_info() }
+}
+
+impl TapTree {
+    /// Gets the reference to inner [`NodeInfo`] of this tree root.
+    pub fn node_info(&self) -> &NodeInfo {
+        &self.0
+    }
+
+    /// Gets the inner [`NodeInfo`] of this tree root.
+    pub fn into_node_info(self) -> NodeInfo {
+        self.0
+    }
+
+    /// Returns [`TapTreeIter<'_>`] iterator for a taproot script tree, operating in DFS order over
+    /// tree [`ScriptLeaf`]s.
+    pub fn script_leaves(&self) -> ScriptLeaves {
+        ScriptLeaves { leaf_iter: self.0.leaf_nodes() }
+    }
+}
+
+impl TryFrom<TaprootBuilder> for TapTree {
+    type Error = IncompleteBuilder;
+
+    /// Constructs [`TapTree`] from a [`TaprootBuilder`] if it is complete binary tree.
+    ///
+    /// # Returns
+    ///
+    /// A [`TapTree`] iff the `builder` is complete, otherwise return [`IncompleteBuilder`]
+    /// error with the content of incomplete `builder` instance.
+    fn try_from(builder: TaprootBuilder) -> Result<Self, Self::Error> {
+        builder.try_into_taptree()
+    }
+}
+
+impl TryFrom<NodeInfo> for TapTree {
+    type Error = HiddenNodes;
+
+    /// Constructs [`TapTree`] from a [`NodeInfo`] if it is complete binary tree.
+    ///
+    /// # Returns
+    ///
+    /// A [`TapTree`] iff the [`NodeInfo`] has no hidden nodes, otherwise return [`HiddenNodes`]
+    /// error with the content of incomplete [`NodeInfo`] instance.
+    fn try_from(node_info: NodeInfo) -> Result<Self, Self::Error> {
+        if node_info.has_hidden_nodes {
+            Err(HiddenNodes::HiddenParts(node_info))
+        } else {
+            Ok(TapTree(node_info))
+        }
+    }
+}
+
+/// Iterator for a taproot script tree, operating in DFS order yielding [`ScriptLeaf`].
+///
+/// Returned by [`TapTree::script_leaves`]. [`TapTree`] does not allow hidden nodes,
+/// so this iterator is guaranteed to yield all known leaves.
+pub struct ScriptLeaves<'tree> {
+    leaf_iter: LeafNodes<'tree>,
+}
+
+impl<'tree> Iterator for ScriptLeaves<'tree> {
+    type Item = ScriptLeaf<'tree>;
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+            ScriptLeaf::from_leaf_node(self.leaf_iter.next()?)
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) { self.leaf_iter.size_hint() }
+}
+
+impl<'tree> ExactSizeIterator for ScriptLeaves<'tree> { }
+
+impl <'tree> FusedIterator for ScriptLeaves<'tree> { }
+
+impl <'tree> DoubleEndedIterator for ScriptLeaves<'tree> {
+    #[inline]
+    fn next_back(&mut self) -> Option<Self::Item> {
+            ScriptLeaf::from_leaf_node(self.leaf_iter.next_back()?)
+    }
+}
+/// Iterator for a taproot script tree, operating in DFS order yielding [`LeafNode`].
+///
+/// Returned by [`NodeInfo::leaf_nodes`]. This can potentially yield hidden nodes.
+pub struct LeafNodes<'a> {
+    leaf_iter: core::slice::Iter<'a, LeafNode>,
+}
+
+impl<'a> Iterator for LeafNodes<'a> {
+    type Item = &'a LeafNode;
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> { self.leaf_iter.next() }
+
+    fn size_hint(&self) -> (usize, Option<usize>) { self.leaf_iter.size_hint() }
+}
+
+impl<'tree> ExactSizeIterator for LeafNodes<'tree> { }
+
+impl <'tree> FusedIterator for LeafNodes<'tree> { }
+
+impl <'tree> DoubleEndedIterator for LeafNodes<'tree> {
+    #[inline]
+    fn next_back(&mut self) -> Option<Self::Item> { self.leaf_iter.next_back() }
+}
+/// Represents the node information in taproot tree. In contrast to [`TapTree`], this
+/// is allowed to have hidden leaves as children.
 ///
 /// Helper type used in merkle tree construction allowing one to build sparse merkle trees. The node
 /// represents part of the tree that has information about all of its descendants.
@@ -529,17 +794,25 @@ impl Default for TaprootBuilder {
 ///
 /// You can use [`TaprootSpendInfo::from_node_info`] to a get a [`TaprootSpendInfo`] from the merkle
 /// root [`NodeInfo`].
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
+#[derive(Debug, Clone, PartialOrd, Ord)]
 pub struct NodeInfo {
     /// Merkle hash for this node.
     pub(crate) hash: TapNodeHash,
     /// Information about leaves inside this node.
-    pub(crate) leaves: Vec<ScriptLeaf>,
+    pub(crate) leaves: Vec<LeafNode>,
     /// Tracks information on hidden nodes below this node.
     pub(crate) has_hidden_nodes: bool,
 }
+
+impl PartialEq for NodeInfo {
+    fn eq(&self, other: &Self) -> bool { self.hash.eq(&other.hash) }
+}
+
+impl core::hash::Hash for NodeInfo {
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) { self.hash.hash(state) }
+}
+
+impl Eq for NodeInfo {}
 
 impl NodeInfo {
     /// Creates a new [`NodeInfo`] with omitted/hidden info.
@@ -551,7 +824,7 @@ impl NodeInfo {
     pub fn new_leaf_with_ver(script: ScriptBuf, ver: LeafVersion) -> Self {
         Self {
             hash: TapNodeHash::from_script(&script, ver),
-            leaves: vec![ScriptLeaf::new(script, ver)],
+            leaves: vec![LeafNode::new_script(script, ver)],
             has_hidden_nodes: false,
         }
     }
@@ -559,6 +832,8 @@ impl NodeInfo {
     /// Combines two [`NodeInfo`] to create a new parent.
     pub fn combine(a: Self, b: Self) -> Result<Self, TaprootBuilderError> {
         let mut all_leaves = Vec::with_capacity(a.leaves.len() + b.leaves.len());
+        let (hash, left_first) = TapNodeHash::combine_node_hashes(a.hash, b.hash);
+        let (a, b) = if left_first { (a, b) } else { (b, a) };
         for mut a_leaf in a.leaves {
             a_leaf.merkle_branch.push(b.hash)?; // add hashing partner
             all_leaves.push(a_leaf);
@@ -567,68 +842,257 @@ impl NodeInfo {
             b_leaf.merkle_branch.push(a.hash)?; // add hashing partner
             all_leaves.push(b_leaf);
         }
-        let hash = TapNodeHash::from_node_hashes(a.hash, b.hash);
         Ok(Self {
             hash,
             leaves: all_leaves,
             has_hidden_nodes: a.has_hidden_nodes || b.has_hidden_nodes,
         })
     }
+
+    /// Creates an iterator over all leaves (including hidden leaves) in the tree.
+    pub fn leaf_nodes(&self) -> LeafNodes {
+        LeafNodes { leaf_iter: self.leaves.iter() }
+    }
+}
+
+impl TryFrom<TaprootBuilder> for NodeInfo {
+    type Error = IncompleteBuilder;
+
+    fn try_from(builder: TaprootBuilder) -> Result<Self, Self::Error> {
+        builder.try_into_node_info()
+    }
+}
+
+#[cfg(feature = "serde")]
+#[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
+impl serde::Serialize for NodeInfo {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::ser::SerializeSeq;
+        let mut seq = serializer.serialize_seq(Some(self.leaves.len() * 2))?;
+        for tap_leaf in self.leaves.iter() {
+            seq.serialize_element(&tap_leaf.merkle_branch().len())?;
+            seq.serialize_element(&tap_leaf.leaf)?;
+        }
+        seq.end()
+    }
+}
+
+#[cfg(feature = "serde")]
+#[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
+impl<'de> serde::Deserialize<'de> for NodeInfo {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        struct SeqVisitor;
+        impl<'de> serde::de::Visitor<'de> for SeqVisitor {
+            type Value = NodeInfo;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("Taproot tree in DFS walk order")
+            }
+
+            fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+            where
+                A: serde::de::SeqAccess<'de>,
+            {
+                let size = seq.size_hint()
+                    .map(|x| core::mem::size_of::<usize>()*8 - x.leading_zeros() as usize)
+                    .map(|x| x / 2) // Each leaf is serialized as two elements.
+                    .unwrap_or(0)
+                    .min(TAPROOT_CONTROL_MAX_NODE_COUNT); // no more than 128 nodes
+                let mut builder = TaprootBuilder::with_capacity(size);
+                while let Some(depth) = seq.next_element()? {
+                    let tap_leaf : TapLeaf = seq
+                        .next_element()?
+                        .ok_or_else(|| serde::de::Error::custom("Missing tap_leaf"))?;
+                    match tap_leaf {
+                        TapLeaf::Script(script, ver) => {
+                            builder = builder.add_leaf_with_ver(depth, script, ver).map_err(|e| {
+                                serde::de::Error::custom(format!("Leaf insertion error: {}", e))
+                            })?;
+                        },
+                        TapLeaf::Hidden(h) => {
+                            builder = builder.add_hidden_node(depth, h).map_err(|e| {
+                                serde::de::Error::custom(format!("Hidden node insertion error: {}", e))
+                            })?;
+                        },
+                    }
+                }
+                NodeInfo::try_from(builder).map_err(|e| {
+                    serde::de::Error::custom(format!("Incomplete taproot tree: {}", e))
+                })
+            }
+        }
+
+        deserializer.deserialize_seq(SeqVisitor)
+    }
+}
+
+/// Leaf node in a taproot tree. Can be either hidden or known.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
+pub enum TapLeaf {
+    /// A known script
+    Script(ScriptBuf, LeafVersion),
+    /// Hidden Node with the given leaf hash
+    Hidden(TapNodeHash),
+}
+
+impl TapLeaf {
+    /// Obtains the hidden leaf hash if the leaf is hidden.
+    pub fn as_hidden(&self) -> Option<&TapNodeHash> {
+        if let Self::Hidden(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    /// Obtains a reference to script and version if the leaf is known.
+    pub fn as_script(&self) -> Option<(&Script, LeafVersion)> {
+        if let Self::Script(script, ver) = self {
+            Some((script, *ver))
+        } else {
+            None
+        }
+    }
 }
 
 /// Store information about taproot leaf node.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
-pub struct ScriptLeaf {
-    /// The underlying script.
-    script: ScriptBuf,
-    /// The leaf version.
-    ver: LeafVersion,
+pub struct LeafNode {
+    /// The [`TapLeaf`]
+    leaf: TapLeaf,
     /// The merkle proof (hashing partners) to get this node.
     merkle_branch: TaprootMerkleBranch,
 }
 
-impl ScriptLeaf {
+impl LeafNode {
     /// Creates an new [`ScriptLeaf`] from `script` and `ver` and no merkle branch.
-    fn new(script: ScriptBuf, ver: LeafVersion) -> Self {
-        Self { script, ver, merkle_branch: TaprootMerkleBranch(vec![]) }
+    pub fn new_script(script: ScriptBuf, ver: LeafVersion) -> Self {
+        Self { leaf: TapLeaf::Script(script, ver), merkle_branch: TaprootMerkleBranch(vec![]) }
+    }
+
+    /// Creates an new [`ScriptLeaf`] from `hash` and no merkle branch.
+    pub fn new_hidden(hash: TapNodeHash) -> Self {
+        Self { leaf: TapLeaf::Hidden(hash), merkle_branch: TaprootMerkleBranch(vec![]) }
     }
 
     /// Returns the depth of this script leaf in the tap tree.
     #[inline]
     pub fn depth(&self) -> u8 {
         // Depth is guarded by TAPROOT_CONTROL_MAX_NODE_COUNT.
-        u8::try_from(self.merkle_branch.0.len()).expect("depth is guaranteed to fit in a u8")
+        u8::try_from(self.merkle_branch().0.len()).expect("depth is guaranteed to fit in a u8")
     }
 
-    /// Computes a leaf hash for this [`ScriptLeaf`].
+    /// Computes a leaf hash for this [`ScriptLeaf`] if the leaf is known.
+    ///
+    /// This [`TapLeafHash`] is useful while signing taproot script spends.
+    ///
+    /// See [`LeafNode::node_hash`] for computing the [`TapNodeHash`] which returns the hidden node
+    /// hash if the node is hidden.
     #[inline]
-    pub fn leaf_hash(&self) -> TapLeafHash { TapLeafHash::from_script(&self.script, self.ver) }
+    pub fn leaf_hash(&self) -> Option<TapLeafHash> {
+        let (script, ver) = self.leaf.as_script()?;
+        Some(TapLeafHash::from_script(script, ver))
+    }
 
-    /// Returns reference to the leaf script.
+    /// Computes the [`TapNodeHash`] for this [`ScriptLeaf`]. This returns the
+    /// leaf hash if the leaf is known and the hidden node hash if the leaf is
+    /// hidden.
+    /// See also, [`LeafNode::leaf_hash`].
     #[inline]
-    pub fn script(&self) -> &Script { &self.script }
+    pub fn node_hash(&self) -> TapNodeHash {
+        match self.leaf {
+            TapLeaf::Script(ref script, ver) => {
+                TapLeafHash::from_script(script, ver).into()
+            }
+            TapLeaf::Hidden(ref hash) => *hash,
+        }
+    }
 
-    /// Returns leaf version of the script.
+    /// Returns reference to the leaf script if the leaf is known.
     #[inline]
-    pub fn leaf_version(&self) -> LeafVersion { self.ver }
+    pub fn script(&self) -> Option<&Script> { self.leaf.as_script().map(|x| x.0) }
+
+    /// Returns leaf version of the script if the leaf is known.
+    #[inline]
+    pub fn leaf_version(&self) -> Option<LeafVersion> { self.leaf.as_script().map(|x| x.1) }
 
     /// Returns reference to the merkle proof (hashing partners) to get this
     /// node in form of [`TaprootMerkleBranch`].
     #[inline]
     pub fn merkle_branch(&self) -> &TaprootMerkleBranch { &self.merkle_branch }
+
+    /// Returns a reference to the leaf of this [`ScriptLeaf`].
+    #[inline]
+    pub fn leaf(&self) -> &TapLeaf {
+        &self.leaf
+    }
+}
+
+/// Script leaf node in a taproot tree along with the merkle proof to get this node.
+/// Returned by [`TapTree::script_leaves`]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct ScriptLeaf<'leaf> {
+    /// The version of the script leaf.
+    version: LeafVersion,
+    /// The script.
+    script: &'leaf Script,
+    /// The merkle proof (hashing partners) to get this node.
+    merkle_branch: &'leaf TaprootMerkleBranch,
+}
+
+impl<'leaf> ScriptLeaf<'leaf> {
+
+    /// Obtains the version of the script leaf.
+    pub fn version(&self) -> LeafVersion {
+        self.version
+    }
+
+    /// Obtains a reference to the script inside the leaf.
+    pub fn script(&self) -> &Script {
+        self.script
+    }
+
+    /// Obtains a reference to the merkle proof of the leaf.
+    pub fn merkle_branch(&self) -> &TaprootMerkleBranch {
+        self.merkle_branch
+    }
+
+    /// Obtains a script leaf from the leaf node if the leaf is not hidden.
+    pub fn from_leaf_node(leaf_node: &'leaf LeafNode) -> Option<Self> {
+        let (script, ver) = leaf_node.leaf.as_script()?;
+        Some(Self {
+            version: ver,
+            script,
+            merkle_branch: &leaf_node.merkle_branch,
+        })
+    }
 }
 
 /// The merkle proof for inclusion of a tree in a taptree hash.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
+#[cfg_attr(feature = "serde", serde(into = "Vec<TapNodeHash>"))]
+#[cfg_attr(feature = "serde", serde(try_from = "Vec<TapNodeHash>"))]
 pub struct TaprootMerkleBranch(Vec<TapNodeHash>);
 
 impl TaprootMerkleBranch {
     /// Returns a reference to the inner vector of hashes.
     pub fn as_inner(&self) -> &[TapNodeHash] { &self.0 }
+
+    /// Returns the number of nodes in this merkle proof.
+    pub fn len(&self) -> usize { self.0.len() }
+
+    /// Checks if this merkle proof is empty.
+    pub fn is_empty(&self) -> bool { self.0.is_empty() }
 
     /// Decodes bytes from control block.
     #[deprecated(since = "0.30.0", note = "Use decode instead")]
@@ -743,6 +1207,10 @@ macro_rules! impl_try_from_array {
 // The reason zero is included is that `TaprootMerkleBranch` doesn't contain the hash of the node
 // that's being proven - it's not needed because the script is already right before control block.
 impl_try_from_array!(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128);
+
+impl From<TaprootMerkleBranch> for Vec<TapNodeHash> {
+    fn from(branch: TaprootMerkleBranch) -> Self { branch.0 }
+}
 
 /// Control block data structure used in Tapscript satisfaction.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -1139,7 +1607,11 @@ mod test {
     extern crate serde_json;
 
     #[cfg(feature = "serde")]
-    use serde_test::{assert_tokens, Token};
+    use {
+        crate::internal_macros::hex,
+        serde_test::Configure,
+        serde_test::{assert_tokens, Token},
+    };
 
     fn tag_engine(tag_name: &str) -> sha256::HashEngine {
         let mut engine = sha256::Hash::engine();
@@ -1382,6 +1854,35 @@ mod test {
         let builder = builder.finalize(&secp, internal_key).unwrap_err();
         let builder = builder.add_leaf(3, e.clone()).unwrap();
 
+        #[cfg(feature = "serde")]
+        {
+            let tree = TapTree::try_from(builder.clone()).unwrap();
+            // test roundtrip serialization with serde_test
+            #[rustfmt::skip]
+            assert_tokens(&tree.readable(), &[
+                Token::Seq { len: Some(10) },
+                Token::U64(2), Token::TupleVariant { name: "TapLeaf", variant: "Script", len: 2}, Token::Str("51"), Token::U8(192), Token::TupleVariantEnd,
+                Token::U64(2), Token::TupleVariant { name: "TapLeaf", variant: "Script", len: 2}, Token::Str("52"), Token::U8(192), Token::TupleVariantEnd,
+                Token::U64(3), Token::TupleVariant { name: "TapLeaf", variant: "Script", len: 2}, Token::Str("55"), Token::U8(192), Token::TupleVariantEnd,
+                Token::U64(3), Token::TupleVariant { name: "TapLeaf", variant: "Script", len: 2}, Token::Str("54"), Token::U8(192), Token::TupleVariantEnd,
+                Token::U64(2), Token::TupleVariant { name: "TapLeaf", variant: "Script", len: 2}, Token::Str("53"), Token::U8(192), Token::TupleVariantEnd,
+                Token::SeqEnd,
+            ],);
+
+            let node_info = TapTree::try_from(builder.clone()).unwrap().into_node_info();
+            // test roundtrip serialization with serde_test
+            #[rustfmt::skip]
+            assert_tokens(&node_info.readable(), &[
+                Token::Seq { len: Some(10) },
+                Token::U64(2), Token::TupleVariant { name: "TapLeaf", variant: "Script", len: 2}, Token::Str("51"), Token::U8(192), Token::TupleVariantEnd,
+                Token::U64(2), Token::TupleVariant { name: "TapLeaf", variant: "Script", len: 2}, Token::Str("52"), Token::U8(192), Token::TupleVariantEnd,
+                Token::U64(3), Token::TupleVariant { name: "TapLeaf", variant: "Script", len: 2}, Token::Str("55"), Token::U8(192), Token::TupleVariantEnd,
+                Token::U64(3), Token::TupleVariant { name: "TapLeaf", variant: "Script", len: 2}, Token::Str("54"), Token::U8(192), Token::TupleVariantEnd,
+                Token::U64(2), Token::TupleVariant { name: "TapLeaf", variant: "Script", len: 2}, Token::Str("53"), Token::U8(192), Token::TupleVariantEnd,
+                Token::SeqEnd,
+            ],);
+        }
+
         let tree_info = builder.finalize(&secp, internal_key).unwrap();
         let output_key = tree_info.output_key();
 
@@ -1406,6 +1907,26 @@ mod test {
         let json = serde_json::to_string(&leaf_version).unwrap();
         let leaf_version2 = serde_json::from_str(&json).unwrap();
         assert_eq!(leaf_version, leaf_version2);
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn test_merkle_branch_serde() {
+        let dummy_hash = hex!("03ba2a4dcd914fed29a1c630c7e811271b081a0e2f2f52cf1c197583dfd46c1b");
+        let hash1 = TapNodeHash::from_slice(&dummy_hash).unwrap();
+        let dummy_hash = hex!("8d79dedc2fa0b55167b5d28c61dbad9ce1191a433f3a1a6c8ee291631b2c94c9");
+        let hash2 = TapNodeHash::from_slice(&dummy_hash).unwrap();
+        let merkle_branch = TaprootMerkleBranch::from_collection(vec![hash1, hash2]).unwrap();
+        // use serde_test to test serialization and deserialization
+        serde_test::assert_tokens(
+            &merkle_branch.readable(),
+            &[
+                Token::Seq { len: Some(2) },
+                Token::Str("03ba2a4dcd914fed29a1c630c7e811271b081a0e2f2f52cf1c197583dfd46c1b"),
+                Token::Str("8d79dedc2fa0b55167b5d28c61dbad9ce1191a433f3a1a6c8ee291631b2c94c9"),
+                Token::SeqEnd,
+            ],
+        );
     }
 
     #[test]

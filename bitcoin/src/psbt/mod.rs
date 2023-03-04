@@ -35,7 +35,7 @@ mod error;
 pub use self::error::Error;
 
 mod map;
-pub use self::map::{Input, Output, TapTree, PsbtSighashType, IncompleteTapTree};
+pub use self::map::{Input, Output, PsbtSighashType};
 
 /// Partially signed transaction, commonly referred to as a PSBT.
 pub type Psbt = PartiallySignedTransaction;

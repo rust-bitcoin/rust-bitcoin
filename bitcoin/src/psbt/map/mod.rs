@@ -9,7 +9,7 @@ mod input;
 mod output;
 
 pub use self::input::{Input, PsbtSighashType};
-pub use self::output::{Output, TapTree, IncompleteTapTree};
+pub use self::output::Output;
 
 use super::serialize::Serialize;
 

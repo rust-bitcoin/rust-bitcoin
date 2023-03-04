@@ -95,6 +95,8 @@ pub enum Error {
     InvalidLeafVersion,
     /// Parsing error indicating a taproot error
     Taproot(&'static str),
+    /// Taproot tree deserilaization error
+    TapTree(crate::taproot::IncompleteBuilder),
     /// Error related to an xpub key
     XPubKey(&'static str),
     /// Error related to PSBT version
@@ -140,6 +142,7 @@ impl fmt::Display for Error {
             Error::InvalidControlBlock => f.write_str("invalid control block"),
             Error::InvalidLeafVersion => f.write_str("invalid leaf version"),
             Error::Taproot(s) => write!(f, "taproot error -  {}", s),
+            Error::TapTree(ref e) => write_err!(f, "taproot tree error"; e),
             Error::XPubKey(s) => write!(f, "xpub key error -  {}", s),
             Error::Version(s) => write!(f, "version error {}", s),
             Error::PartialDataConsumption => f.write_str("data not consumed entirely when explicitly deserializing"),
@@ -183,6 +186,7 @@ impl std::error::Error for Error {
             | InvalidControlBlock
             | InvalidLeafVersion
             | Taproot(_)
+            | TapTree(_)
             | XPubKey(_)
             | Version(_)
             | PartialDataConsumption=> None,
