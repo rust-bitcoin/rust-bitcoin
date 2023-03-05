@@ -1,8 +1,22 @@
-# Unreleased (0.12.0)
+# 0.12.0 - 2023-03-05
 
-Move crate from [original repo](https://github.com/rust-bitcoin/bitcoin_hashes) to the
+0.12 is a significant release. We pulled the repository into the rust-bitcoin
+repo to improve our integration testing and to get more eyes on this crate. We
+began the process of replacing the hex functionality in this crate with a more
+performant, dedicated crate, and otherwise cleaning up the API as we look forward
+to 1.0.
+
+* Move crate from [original repo](https://github.com/rust-bitcoin/bitcoin_hashes) to the
 `rust-bitcoin` repository. Commit history was lost during move, for commit history see the original
 repository. Tip of bitcoin_hashes:master at time of import: 54c16249e06cc6b7870c7fc07d90f489d82647c7
+* [Remove `Deref` impls for all hashes](https://github.com/rust-bitcoin/rust-bitcoin/pull/1450)
+* [Add `AsRef` impls for all hashes from fixed-size arrays](https://github.com/rust-bitcoin/rust-bitcoin/pull/1593)
+* [Add the `sha512_256` hash](https://github.com/rust-bitcoin/rust-bitcoin/pull/1413)
+* [Remove the `ToHex` trait in favor of `DisplayHex` and `fmt::Display`](https://github.com/rust-bitcoin/rust-bitcoin/pull/1531)
+* [Remove the now-unused `HexWriter` object](https://github.com/rust-bitcoin/rust-bitcoin/pull/1572)
+* [nostd: `alloc` feature no longer enables `core2`](https://github.com/rust-bitcoin/rust-bitcoin/pull/1612)
+* [Rewrite `hash_newtype` macro with new syntax](https://github.com/rust-bitcoin/rust-bitcoin/pull/1659)
+* [Rename `Hash::Inner` to `Hash::Bytes`, 'Hash::*_inner` and several related conversion methods](https://github.com/rust-bitcoin/rust-bitcoin/pull/1577)
 
 
 # 0.11.0 - 2022-06-25
