@@ -2,6 +2,13 @@
 
 set -ex
 
+# Work out if we are using a nightly toolchain.
+if cargo +nightly --version >/dev/null 2>&1; then
+  NIGHTLY=true
+else
+  NIGHTLY=false
+fi
+
 # Print the versions of Rust and Cargo
 echo "Rust version:"
 if $NIGHTLY; then
@@ -11,18 +18,10 @@ else
 fi
 
 echo "Cargo version:"
-if cargo +nightly --version >/dev/null 2>&1; then
-  NIGHTLY=true
+if $NIGHTLY; then
+  cargo +nightly --version --verbose
 else
-  NIGHTLY=false
-fi
-
-
-# Work out if we are using a nightly toolchain.
-if cargo +nightly --version >/dev/null 2>&1; then
-  NIGHTLY=true
-else
-  NIGHTLY=false
+  cargo --version --verbose
 fi
 
 # Print clippy version if available
