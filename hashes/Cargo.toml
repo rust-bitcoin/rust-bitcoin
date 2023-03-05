@@ -1,6 +1,6 @@
 [package]
 name = "bitcoin_hashes"
-version = "0.11.0"
+version = "0.12.0"
 authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
 license = "CC0-1.0"
 repository = "https://github.com/rust-bitcoin/bitcoin_hashes/"
