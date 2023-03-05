@@ -27,3 +27,12 @@ macro_rules! write_err {
         }
     }
 }
+macro_rules! error_from_infallible {
+    ($error_type:ty) => {
+        impl From<core::convert::Infallible> for $error_type {
+            fn from(never: core::convert::Infallible) -> Self {
+                match never {}
+            }
+        }
+    };
+}
