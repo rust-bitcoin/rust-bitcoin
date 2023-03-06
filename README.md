@@ -77,11 +77,15 @@ For more information please see `./CONTRIBUTING.md`.
 
 This library should always compile with any combination of features on **Rust 1.48.0**.
 
-To build with the MSRV you will need to pin some dependencies:
+To build with the MSRV you will need to pin `serde` (if you have the feature enabled)
+
 ```
+# serde 1.0.157 uses syn 2.0 which requires edition 2021
 cargo update -p serde --precise 1.0.156
-cargo update -p syn --precise 1.0.107
 ```
+
+before building. (And if your code is a library, your downstream users will need to run these
+commands, and so on.)
 
 ## Installing Rust
 
