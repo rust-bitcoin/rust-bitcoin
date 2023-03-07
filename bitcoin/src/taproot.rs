@@ -567,7 +567,7 @@ impl TaprootBuilder {
         if self.branch.len() < depth as usize + 1 {
             // add enough nodes so that we can insert node at depth `depth`
             let num_extra_nodes = depth as usize + 1 - self.branch.len();
-            self.branch.extend((0..num_extra_nodes).into_iter().map(|_| None));
+            self.branch.extend((0..num_extra_nodes).map(|_| None));
         }
         // Push the last node to the branch
         self.branch[depth as usize] = Some(node);
