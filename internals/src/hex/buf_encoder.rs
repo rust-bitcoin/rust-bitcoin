@@ -4,9 +4,10 @@
 //! faster than the usual `write!(f, "{02x}", b)?` in a for loop because it reduces dynamic
 //! dispatch and decreases the number of allocations if a `String` is being created.
 
+use core::borrow::Borrow;
+
 pub use out_bytes::OutBytes;
 
-use core::borrow::Borrow;
 use super::Case;
 
 /// Trait for types that can be soundly converted to `OutBytes`.
@@ -205,13 +206,21 @@ impl<T: AsOutBytes> BufEncoder<T> {
     /// The method panics if the bytes wouldn't fit the buffer.
     #[inline]
     #[cfg_attr(rust_v_1_46, track_caller)]
-    pub fn put_bytes<I>(&mut self, bytes: I, case: Case) where I: IntoIterator, I::Item: Borrow<u8> {
+    pub fn put_bytes<I>(&mut self, bytes: I, case: Case)
+    where
+        I: IntoIterator,
+        I::Item: Borrow<u8>,
+    {
         self.put_bytes_inner(bytes.into_iter(), case)
     }
 
     #[inline]
     #[cfg_attr(rust_v_1_46, track_caller)]
-    fn put_bytes_inner<I>(&mut self, bytes: I, case: Case) where I: Iterator, I::Item: Borrow<u8> {
+    fn put_bytes_inner<I>(&mut self, bytes: I, case: Case)
+    where
+        I: Iterator,
+        I::Item: Borrow<u8>,
+    {
         // May give the compiler better optimization opportunity
         if let Some(max) = bytes.size_hint().1 {
             assert!(max <= self.space_remaining());

@@ -28,9 +28,9 @@
 
 use core::borrow::{Borrow, BorrowMut};
 use core::convert::TryFrom;
+use core::fmt::Display;
 use core::str::FromStr;
 use core::{fmt, ops};
-use core::fmt::Display;
 
 use bitcoin_internals::{debug_from_display, write_err};
 #[cfg(feature = "serde")]
@@ -155,9 +155,7 @@ impl Network {
     /// let network = Network::Bitcoin;
     /// assert_eq!(network.chain_hash(), ChainHash::BITCOIN);
     /// ```
-    pub fn chain_hash(self) -> ChainHash {
-        ChainHash::using_genesis_block(self)
-    }
+    pub fn chain_hash(self) -> ChainHash { ChainHash::using_genesis_block(self) }
 
     /// Creates a `Network` from the chain hash (genesis block hash).
     ///
@@ -170,7 +168,9 @@ impl Network {
     ///
     /// assert_eq!(Ok(Network::Bitcoin), Network::try_from(ChainHash::BITCOIN));
     /// ```
-    pub fn from_chain_hash(chain_hash: ChainHash) -> Option<Network> { Network::try_from(chain_hash).ok() }
+    pub fn from_chain_hash(chain_hash: ChainHash) -> Option<Network> {
+        Network::try_from(chain_hash).ok()
+    }
 }
 
 /// An error in parsing network string.

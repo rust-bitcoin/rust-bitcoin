@@ -89,6 +89,16 @@ if [ "$DO_ASAN" = true ]; then
     cargo test --lib --no-default-features --features="$FEATURES" -Zbuild-std --target x86_64-unknown-linux-gnu
 fi
 
+# Run formatter if told to.
+if [ "$DO_FMT" = true ]; then
+    if [ "$NIGHTLY" = false ]; then
+        echo "DO_FMT requires a nightly toolchain (consider using RUSTUP_TOOLCHAIN)"
+        exit 1
+    fi
+    rustup component add rustfmt
+    cargo fmt --check
+fi
+
 # Bench if told to, only works with non-stable toolchain (nightly, beta).
 if [ "$DO_BENCH" = true ]
 then

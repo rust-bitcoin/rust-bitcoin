@@ -183,7 +183,8 @@ mod tests {
         assert_eq!(RejectReason::Duplicate, conflict.ccode);
         assert_eq!("txn-mempool-conflict", conflict.reason);
         assert_eq!(
-            "0470f4f2dc4191221b59884bcffaaf00932748ab46356a80413c0b86d354df05".parse::<sha256d::Hash>()
+            "0470f4f2dc4191221b59884bcffaaf00932748ab46356a80413c0b86d354df05"
+                .parse::<sha256d::Hash>()
                 .unwrap(),
             conflict.hash
         );
@@ -193,7 +194,8 @@ mod tests {
         assert_eq!(RejectReason::NonStandard, nonfinal.ccode);
         assert_eq!("non-final", nonfinal.reason);
         assert_eq!(
-            "0b46a539138b5fde4e341b37f2d945c23d41193b30caa7fcbd8bdb836cbe9b25".parse::<sha256d::Hash>()
+            "0b46a539138b5fde4e341b37f2d945c23d41193b30caa7fcbd8bdb836cbe9b25"
+                .parse::<sha256d::Hash>()
                 .unwrap(),
             nonfinal.hash
         );

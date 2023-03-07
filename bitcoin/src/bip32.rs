@@ -475,7 +475,8 @@ impl fmt::Display for Error {
                 write!(f, "encoded extended key data has wrong length {}", len),
             Error::Base58(ref e) => write_err!(f, "base58 encoding error"; e),
             Error::Hex(ref e) => write_err!(f, "Hexadecimal decoding error"; e),
-            Error::InvalidPublicKeyHexLength(got) => write!(f, "PublicKey hex should be 66 or 130 digits long, got: {}", got),
+            Error::InvalidPublicKeyHexLength(got) =>
+                write!(f, "PublicKey hex should be 66 or 130 digits long, got: {}", got),
         }
     }
 }
@@ -622,9 +623,13 @@ impl ExtendedPrivKey {
         Ok(ExtendedPrivKey {
             network,
             depth: data[4],
-            parent_fingerprint: data[5..9].try_into().expect("9 - 5 == 4, which is the Fingerprint length"),
+            parent_fingerprint: data[5..9]
+                .try_into()
+                .expect("9 - 5 == 4, which is the Fingerprint length"),
             child_number: u32::from_be_bytes(data[9..13].try_into().expect("4 byte slice")).into(),
-            chain_code: data[13..45].try_into().expect("45 - 13 == 32, which is the ChainCode length"),
+            chain_code: data[13..45]
+                .try_into()
+                .expect("45 - 13 == 32, which is the ChainCode length"),
             private_key: secp256k1::SecretKey::from_slice(&data[46..78])?,
         })
     }
@@ -754,9 +759,13 @@ impl ExtendedPubKey {
                 return Err(Error::UnknownVersion(ver));
             },
             depth: data[4],
-            parent_fingerprint: data[5..9].try_into().expect("9 - 5 == 4, which is the Fingerprint length"),
+            parent_fingerprint: data[5..9]
+                .try_into()
+                .expect("9 - 5 == 4, which is the Fingerprint length"),
             child_number: u32::from_be_bytes(data[9..13].try_into().expect("4 byte slice")).into(),
-            chain_code: data[13..45].try_into().expect("45 - 13 == 32, which is the ChainCode length"),
+            chain_code: data[13..45]
+                .try_into()
+                .expect("45 - 13 == 32, which is the ChainCode length"),
             public_key: secp256k1::PublicKey::from_slice(&data[45..78])?,
         })
     }
@@ -786,7 +795,9 @@ impl ExtendedPubKey {
     }
 
     /// Returns the first four bytes of the identifier
-    pub fn fingerprint(&self) -> Fingerprint { self.identifier()[0..4].try_into().expect("4 is the fingerprint length") }
+    pub fn fingerprint(&self) -> Fingerprint {
+        self.identifier()[0..4].try_into().expect("4 is the fingerprint length")
+    }
 }
 
 impl fmt::Display for ExtendedPrivKey {

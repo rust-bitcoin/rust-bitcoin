@@ -36,7 +36,7 @@ use bitcoin::hashes::{hash160, ripemd160, sha256, sha256d, Hash};
 use bitcoin::psbt::raw::{self, Key, Pair, ProprietaryKey};
 use bitcoin::psbt::{Input, Output, Psbt, PsbtSighashType};
 use bitcoin::sighash::{EcdsaSighashType, TapSighashType};
-use bitcoin::taproot::{self, ControlBlock, LeafVersion, TaprootBuilder, TapTree};
+use bitcoin::taproot::{self, ControlBlock, LeafVersion, TapTree, TaprootBuilder};
 use bitcoin::{
     ecdsa, Address, Block, Network, OutPoint, PrivateKey, PublicKey, ScriptBuf, Sequence, Target,
     Transaction, TxIn, TxOut, Txid, Work,
@@ -225,10 +225,13 @@ fn serde_regression_psbt() {
         lock_time: absolute::LockTime::ZERO,
         input: vec![TxIn {
             previous_output: OutPoint {
-                txid: "e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389".parse::<Txid>().unwrap(),
+                txid: "e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389"
+                    .parse::<Txid>()
+                    .unwrap(),
                 vout: 1,
             },
-            script_sig: ScriptBuf::from_hex("160014be18d152a9b012039daf3da7de4f53349eecb985").unwrap(),
+            script_sig: ScriptBuf::from_hex("160014be18d152a9b012039daf3da7de4f53349eecb985")
+                .unwrap(),
             sequence: Sequence::from_consensus(4294967295),
             witness: Witness::from_slice(&[Vec::from_hex(
                 "03d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f2105",

@@ -307,13 +307,13 @@ fn parse_signed_to_satoshi(
 }
 
 fn split_amount_and_denomination(s: &str) -> Result<(&str, Denomination), ParseAmountError> {
-  let (i, j) = if let Some(i) = s.find(' ') {
-    (i, i + 1)
-  } else {
-    let i = s.find(|c: char| c.is_alphabetic()).ok_or(ParseAmountError::InvalidFormat)?;
-    (i, i)
-  };
-  Ok((&s[..i], s[j..].parse()?))
+    let (i, j) = if let Some(i) = s.find(' ') {
+        (i, i + 1)
+    } else {
+        let i = s.find(|c: char| c.is_alphabetic()).ok_or(ParseAmountError::InvalidFormat)?;
+        (i, i)
+    };
+    Ok((&s[..i], s[j..].parse()?))
 }
 
 /// Options given by `fmt::Formatter`
@@ -1945,14 +1945,14 @@ mod tests {
 
         #[cfg_attr(rust_v_1_46, track_caller)]
         fn case(s: &str, expected: Result<Amount, ParseAmountError>) {
-          assert_eq!(Amount::from_str(s), expected);
-          assert_eq!(Amount::from_str(&s.replace(' ', "")), expected);
+            assert_eq!(Amount::from_str(s), expected);
+            assert_eq!(Amount::from_str(&s.replace(' ', "")), expected);
         }
 
         #[cfg_attr(rust_v_1_46, track_caller)]
         fn scase(s: &str, expected: Result<SignedAmount, ParseAmountError>) {
-          assert_eq!(SignedAmount::from_str(s), expected);
-          assert_eq!(SignedAmount::from_str(&s.replace(' ', "")), expected);
+            assert_eq!(SignedAmount::from_str(s), expected);
+            assert_eq!(SignedAmount::from_str(&s.replace(' ', "")), expected);
         }
 
         case("5 BCH", Err(E::UnknownDenomination("BCH".to_owned())));
@@ -2078,12 +2078,12 @@ mod tests {
         assert_eq!(Amount::from_str(&denom(amt, D::PicoBitcoin)), Ok(amt));
 
         assert_eq!(
-          Amount::from_str("42 satoshi BTC"),
-          Err(ParseAmountError::UnknownDenomination("satoshi BTC".into())),
+            Amount::from_str("42 satoshi BTC"),
+            Err(ParseAmountError::UnknownDenomination("satoshi BTC".into())),
         );
         assert_eq!(
-          SignedAmount::from_str("-42 satoshi BTC"),
-          Err(ParseAmountError::UnknownDenomination("satoshi BTC".into())),
+            SignedAmount::from_str("-42 satoshi BTC"),
+            Err(ParseAmountError::UnknownDenomination("satoshi BTC".into())),
         );
     }
 

@@ -454,8 +454,7 @@ mod test {
         assert!(deserialize::<AddrV2>(&hex!("01fd010201020304")).is_err());
 
         // Valid IPv6.
-        let ip: AddrV2 =
-            deserialize(&hex!("02100102030405060708090a0b0c0d0e0f10")).unwrap();
+        let ip: AddrV2 = deserialize(&hex!("02100102030405060708090a0b0c0d0e0f10")).unwrap();
         assert_eq!(
             ip,
             AddrV2::Ipv6(Ipv6Addr::from_str("102:304:506:708:90a:b0c:d0e:f10").unwrap())
@@ -465,16 +464,10 @@ mod test {
         assert!(deserialize::<AddrV2>(&hex!("020400")).is_err());
 
         // Invalid IPv6, contains embedded IPv4.
-        assert!(deserialize::<AddrV2>(
-            &hex!("021000000000000000000000ffff01020304")
-        )
-        .is_err());
+        assert!(deserialize::<AddrV2>(&hex!("021000000000000000000000ffff01020304")).is_err());
 
         // Invalid IPv6, contains embedded TORv2.
-        assert!(deserialize::<AddrV2>(
-            &hex!("0210fd87d87eeb430102030405060708090a")
-        )
-        .is_err());
+        assert!(deserialize::<AddrV2>(&hex!("0210fd87d87eeb430102030405060708090a")).is_err());
 
         // Valid TORv2.
         let ip: AddrV2 = deserialize(&hex!("030af1f2f3f4f5f6f7f8f9fa")).unwrap();
@@ -484,10 +477,9 @@ mod test {
         assert!(deserialize::<AddrV2>(&hex!("030700")).is_err());
 
         // Valid TORv3.
-        let ip: AddrV2 = deserialize(
-            &hex!("042079bcc625184b05194975c28b66b66b0469f7f6556fb1ac3189a79b40dda32f1f")
-                ,
-        )
+        let ip: AddrV2 = deserialize(&hex!(
+            "042079bcc625184b05194975c28b66b66b0469f7f6556fb1ac3189a79b40dda32f1f"
+        ))
         .unwrap();
         assert_eq!(
             ip,
@@ -503,10 +495,9 @@ mod test {
         assert!(deserialize::<AddrV2>(&hex!("040000")).is_err());
 
         // Valid I2P.
-        let ip: AddrV2 = deserialize(
-            &hex!("0520a2894dabaec08c0051a481a6dac88b64f98232ae42d4b6fd2fa81952dfe36a87")
-                ,
-        )
+        let ip: AddrV2 = deserialize(&hex!(
+            "0520a2894dabaec08c0051a481a6dac88b64f98232ae42d4b6fd2fa81952dfe36a87"
+        ))
         .unwrap();
         assert_eq!(
             ip,
@@ -522,23 +513,17 @@ mod test {
         assert!(deserialize::<AddrV2>(&hex!("050300")).is_err());
 
         // Valid CJDNS.
-        let ip: AddrV2 =
-            deserialize(&hex!("0610fc000001000200030004000500060007")).unwrap();
+        let ip: AddrV2 = deserialize(&hex!("0610fc000001000200030004000500060007")).unwrap();
         assert_eq!(ip, AddrV2::Cjdns(Ipv6Addr::from_str("fc00:1:2:3:4:5:6:7").unwrap()));
 
         // Invalid CJDNS, incorrect marker
-        assert!(deserialize::<AddrV2>(
-            &hex!("0610fd000001000200030004000500060007")
-        )
-        .is_err());
+        assert!(deserialize::<AddrV2>(&hex!("0610fd000001000200030004000500060007")).is_err());
 
         // Invalid CJDNS, with bogus length.
         assert!(deserialize::<AddrV2>(&hex!("060100")).is_err());
 
         // Unknown, with extreme length.
-        assert!(
-            deserialize::<AddrV2>(&hex!("aafe0000000201020304050607")).is_err()
-        );
+        assert!(deserialize::<AddrV2>(&hex!("aafe0000000201020304050607")).is_err());
 
         // Unknown, with reasonable length.
         let ip: AddrV2 = deserialize(&hex!("aa0401020304")).unwrap();

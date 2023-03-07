@@ -18,7 +18,6 @@ impl<'a> serde::Serialize for SerializeBytesAsHex<'a> {
     }
 }
 
-
 pub mod btreemap_byte_values {
     //! Module for serialization of BTreeMaps with hex byte values.
     #![allow(missing_docs)]
@@ -310,7 +309,7 @@ pub mod hex_bytes {
 
 macro_rules! serde_string_serialize_impl {
     ($name:ty, $expecting:literal) => {
-	impl $crate::serde::Serialize for $name {
+        impl $crate::serde::Serialize for $name {
             fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
             where
                 S: $crate::serde::Serializer,
@@ -342,7 +341,7 @@ macro_rules! serde_string_deserialize_impl {
                     where
                         E: $crate::serde::de::Error,
                     {
-			v.parse::<$name>().map_err(E::custom)
+                        v.parse::<$name>().map_err(E::custom)
                     }
                 }
 
@@ -354,13 +353,11 @@ macro_rules! serde_string_deserialize_impl {
 
 macro_rules! serde_string_impl {
     ($name:ty, $expecting:literal) => {
-	$crate::serde_utils::serde_string_deserialize_impl!($name, $expecting);
-	$crate::serde_utils::serde_string_serialize_impl!($name, $expecting);
+        $crate::serde_utils::serde_string_deserialize_impl!($name, $expecting);
+        $crate::serde_utils::serde_string_serialize_impl!($name, $expecting);
     };
 }
-pub(crate) use serde_string_impl;
-pub(crate) use serde_string_serialize_impl;
-pub(crate) use serde_string_deserialize_impl;
+pub(crate) use {serde_string_deserialize_impl, serde_string_impl, serde_string_serialize_impl};
 
 /// A combination macro where the human-readable serialization is done like
 /// serde_string_impl and the non-human-readable impl is done as a struct.
