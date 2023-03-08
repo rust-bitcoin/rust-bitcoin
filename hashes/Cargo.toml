@@ -24,7 +24,7 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
-internals = { path = "../internals", package = "bitcoin-internals" }
+internals = { path = "../internals", package = "bitcoin-internals", version = "0.1.0" }
 
 core2 = { version = "0.3.0", default_features = false, optional = true }
 # Only enable this if you explicitly do not want to use "std", otherwise enable "serde-std".
