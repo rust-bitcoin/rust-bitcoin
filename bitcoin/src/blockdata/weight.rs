@@ -86,7 +86,7 @@ impl Weight {
     ///
     /// Computes `self - rhs` returning `None` if overflow occurred.
     pub fn checked_sub(self, rhs: Self) -> Option<Self> {
-        self.0.checked_add(rhs.0).map(Self)
+        self.0.checked_sub(rhs.0).map(Self)
     }
 
     /// Checked multiplication.
@@ -112,6 +112,20 @@ impl fmt::Display for Weight {
         } else {
             fmt::Display::fmt(&self.0, f)
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn checked_sub_test(){
+        let result = Weight(1).checked_sub(Weight(1)).expect("expected weight unit");
+        assert_eq!(Weight::ZERO, result);
+
+        let result = Weight::MIN.checked_sub(Weight(1));
+        assert_eq!(None, result);
     }
 }
 
