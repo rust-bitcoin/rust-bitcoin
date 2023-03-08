@@ -136,3 +136,68 @@ impl Div<Weight> for Amount {
 }
 
 crate::parse::impl_parse_str_from_int_infallible!(FeeRate, u64, from_sat_per_kwu);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::u64;
+
+    #[test]
+    fn fee_rate_const_test() {
+        assert_eq!(0, FeeRate::ZERO.to_sat_per_kwu());
+        assert_eq!(u64::min_value(), FeeRate::MIN.to_sat_per_kwu());
+        assert_eq!(u64::max_value(), FeeRate::MAX.to_sat_per_kwu());
+        assert_eq!(250, FeeRate::BROADCAST_MIN.to_sat_per_kwu());
+        assert_eq!(750, FeeRate::DUST.to_sat_per_kwu());
+    }
+
+    #[test]
+    fn fee_rate_from_sat_per_vb_test() {
+        let fee_rate = FeeRate::from_sat_per_vb(10).expect("expected feerate in sat/kwu");
+        assert_eq!(FeeRate(2500), fee_rate);
+    }
+
+    #[test]
+    fn fee_rate_from_sat_per_vb_overflow_test() {
+        let fee_rate = FeeRate::from_sat_per_vb(u64::MAX);
+        assert!(fee_rate.is_none());
+    }
+
+    #[test]
+    fn from_sat_per_vb_unchecked_test() {
+        let fee_rate = FeeRate::from_sat_per_vb_unchecked(10);
+        assert_eq!(FeeRate(2500), fee_rate);
+    }
+
+    #[test]
+    #[should_panic]
+    fn from_sat_per_vb_unchecked_panic_test() {
+        FeeRate::from_sat_per_vb_unchecked(u64::MAX);
+    }
+
+    #[test]
+    fn raw_feerate_test() {
+        let fee_rate = FeeRate(333);
+        assert_eq!(333, fee_rate.to_sat_per_kwu());
+        assert_eq!(1, fee_rate.to_sat_per_vb_floor());
+        assert_eq!(2, fee_rate.to_sat_per_vb_ceil());
+    }
+
+    #[test]
+    fn checked_mul_test() {
+        let fee_rate = FeeRate(10).checked_mul(10).expect("expected feerate in sat/kwu");
+        assert_eq!(FeeRate(100), fee_rate);
+
+        let fee_rate = FeeRate(10).checked_mul(u64::MAX);
+        assert!(fee_rate.is_none());
+    }
+
+    #[test]
+    fn checked_div_test() {
+        let fee_rate = FeeRate(10).checked_div(10).expect("expected feerate in sat/kwu");
+        assert_eq!(FeeRate(1), fee_rate);
+
+        let fee_rate = FeeRate(10).checked_div(0);
+        assert!(fee_rate.is_none());
+    }
+}
