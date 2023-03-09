@@ -49,6 +49,7 @@
 //! is minimal but we may extend it in the future if needed.
 
 use alloc::rc::Rc;
+#[cfg(any(not(rust_v_1_60), target_has_atomic = "ptr"))]
 use alloc::sync::Arc;
 
 use core::cmp::Ordering;
@@ -279,6 +280,9 @@ impl<'a> From<&'a Script> for Cow<'a, Script> {
     }
 }
 
+/// Note: This will fail to compile on old Rust for targets that don't support atomics
+#[cfg(any(not(rust_v_1_60), target_has_atomic = "ptr"))]
+#[cfg_attr(docsrs, doc(cfg(target_has_atomic = "ptr")))]
 impl<'a> From<&'a Script> for Arc<Script> {
     fn from(value: &'a Script) -> Self {
         let rw: *const [u8] = Arc::into_raw(Arc::from(&value.0));
