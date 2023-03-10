@@ -232,6 +232,14 @@ impl Target {
         let d = Target::MAX.0 / self.0;
         d.saturating_to_u128()
     }
+
+    /// Computes the popular "difficulty" measure for mining and returns a float value of f64.
+    ///
+    /// See [`difficulty`] for details.
+    ///
+    /// [`difficulty`]: Target::difficulty
+    #[cfg_attr(all(test, mutate), mutate)]
+    pub fn difficulty_float(&self) -> f64 { TARGET_MAX_F64 / self.0.to_f64() }
 }
 do_impl!(Target);
 
@@ -642,7 +650,47 @@ impl U256 {
         let s = core::str::from_utf8(&buf[i..]).expect("digits 0-9 are valid UTF8");
         f.pad_integral(true, "", s)
     }
+
+    /// Convert self to f64.
+    #[inline]
+    fn to_f64(self) -> f64 {
+        // Reference: https://blog.m-ou.se/floats/
+        // Step 1: Get leading zeroes
+        let leading_zeroes = 256 - self.bits();
+        // Step 2: Get msb to be farthest left bit
+        let left_aligned = self.wrapping_shl(leading_zeroes);
+        // Step 3: Shift msb to fit in lower 53 bits (128-53=75) to get the mantissa
+        // * Shifting the border of the 2 u128s to line up with mantissa and dropped bits
+        let middle_aligned = left_aligned >> 75;
+        // * This is the 53 most significant bits as u128
+        let mantissa = middle_aligned.0;
+        // Step 4: Dropped bits (except for last 75 bits) are all in the second u128.
+        // Bitwise OR the rest of the bits into it, preserving the highest bit,
+        // so we take the lower 75 bits of middle_aligned.1 and mix it in. (See blog for explanation)
+        let dropped_bits = middle_aligned.1 | (left_aligned.1 & 0x7FF_FFFF_FFFF_FFFF_FFFF);
+        // Step 5: The msb of the dropped bits has been preserved, and all other bits
+        // if any were set, would be set somewhere in the other 127 bits.
+        // If msb of dropped bits is 0, it is mantissa + 0
+        // If msb of dropped bits is 1, it is mantissa + 0 only if mantissa lowest bit is 0
+        // and other bits of the dropped bits are all 0.
+        // (This is why we only care if the other non-msb dropped bits are all 0 or not,
+        // so we can just OR them to make sure any bits show up somewhere.)
+        let mantissa =
+            (mantissa + ((dropped_bits - (dropped_bits >> 127 & !mantissa)) >> 127)) as u64;
+        // Step 6: Calculate the exponent
+        // If self is 0, exponent should be 0 (special meaning) and mantissa will end up 0 too
+        // Otherwise, (255 - n) + 1022 so it simplifies to 1277 - n
+        // 1023 and 1022 are the cutoffs for the exponent having the msb next to the decimal point
+        let exponent = if self == Self::ZERO { 0 } else { 1277 - leading_zeroes as u64 };
+        // Step 7: sign bit is always 0, exponent is shifted into place
+        // Use addition instead of bitwise OR to saturate the exponent if mantissa overflows
+        f64::from_bits((exponent << 52) + mantissa)
+    }
 }
+
+// Target::MAX as a float value. Calculated with U256::to_f64.
+// This is validated in the unit tests as well.
+const TARGET_MAX_F64: f64 = 2.695953529101131e67;
 
 impl<T: Into<u128>> From<T> for U256 {
     fn from(x: T) -> Self { U256(0, x.into()) }
@@ -1513,6 +1561,23 @@ mod tests {
     }
 
     #[test]
+    fn target_difficulty_float() {
+        assert_eq!(Target::MAX.difficulty_float(), 1.0_f64);
+        assert_eq!(
+            Target::from_compact(CompactTarget::from_consensus(0x1c00ffff_u32)).difficulty_float(),
+            256.0_f64
+        );
+        assert_eq!(
+            Target::from_compact(CompactTarget::from_consensus(0x1b00ffff_u32)).difficulty_float(),
+            65536.0_f64
+        );
+        assert_eq!(
+            Target::from_compact(CompactTarget::from_consensus(0x1a00f3a2_u32)).difficulty_float(),
+            17628585.065897066_f64
+        );
+    }
+
+    #[test]
     fn roundtrip_compact_target() {
         let consensus = 0x1d00_ffff;
         let compact = CompactTarget::from_consensus(consensus);
@@ -1614,6 +1679,23 @@ mod tests {
     #[test]
     #[should_panic]
     fn work_overflowing_subtraction_panics() { let _ = Work(U256::ZERO) - Work(U256::ONE); }
+
+    #[test]
+    fn u256_to_f64() {
+        // Validate that the Target::MAX value matches the constant also used in difficulty calculation.
+        assert_eq!(Target::MAX.0.to_f64(), TARGET_MAX_F64);
+        assert_eq!(U256::ZERO.to_f64(), 0.0_f64);
+        assert_eq!(U256::ONE.to_f64(), 1.0_f64);
+        assert_eq!(U256::MAX.to_f64(), 1.157920892373162e77_f64);
+        assert_eq!((U256::MAX >> 1).to_f64(), 5.78960446186581e76_f64);
+        assert_eq!((U256::MAX >> 128).to_f64(), 3.402823669209385e38_f64);
+        assert_eq!((U256::MAX >> (256 - 54)).to_f64(), 1.8014398509481984e16_f64);
+        // 53 bits and below should not use exponents
+        assert_eq!((U256::MAX >> (256 - 53)).to_f64(), 9007199254740991.0_f64);
+        assert_eq!((U256::MAX >> (256 - 32)).to_f64(), 4294967295.0_f64);
+        assert_eq!((U256::MAX >> (256 - 16)).to_f64(), 65535.0_f64);
+        assert_eq!((U256::MAX >> (256 - 8)).to_f64(), 255.0_f64);
+    }
 }
 
 #[cfg(kani)]
