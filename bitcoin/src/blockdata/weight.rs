@@ -120,11 +120,87 @@ mod tests {
     use super::*;
 
     #[test]
-    fn checked_sub_test(){
+    fn weight_constructor_test() {
+        assert_eq!(Weight::ZERO, Weight::from_wu(0));
+    }
+
+    #[test]
+    fn from_vb_test() {
+        let vb = Weight::from_vb(1).expect("expected weight unit");
+        assert_eq!(Weight(4), vb);
+
+        let vb = Weight::from_vb(u64::max_value());
+        assert_eq!(None, vb);
+    }
+
+    #[test]
+    fn from_vb_unchecked_test() {
+        let vb = Weight::from_vb_unchecked(1);
+        assert_eq!(Weight(4), vb);
+    }
+
+    #[test]
+    #[should_panic]
+    fn from_vb_unchecked_panic_test() {
+        Weight::from_vb_unchecked(u64::max_value());
+    }
+
+    #[test]
+    fn from_witness_data_size_test() {
+        let witness_data_size = 1;
+        assert_eq!(Weight(witness_data_size), Weight::from_witness_data_size(witness_data_size));
+    }
+
+    #[test]
+    fn from_non_witness_data_size_test() {
+        assert_eq!(Weight(4), Weight::from_non_witness_data_size(1));
+    }
+
+    #[test]
+    fn to_vb_floor_test() {
+        assert_eq!(1, Weight(4).to_vbytes_floor());
+        assert_eq!(1, Weight(5).to_vbytes_floor());
+    }
+
+    #[test]
+    fn to_vb_ceil_test() {
+        assert_eq!(1, Weight(4).to_vbytes_ceil());
+        assert_eq!(2, Weight(5).to_vbytes_ceil());
+    }
+
+    #[test]
+    fn checked_add_test() {
+        let result = Weight(1).checked_add(Weight(1)).expect("expected weight unit");
+        assert_eq!(Weight(2), result);
+
+        let result = Weight::MAX.checked_add(Weight(1));
+        assert_eq!(None, result);
+    }
+
+    #[test]
+    fn checked_sub_test() {
         let result = Weight(1).checked_sub(Weight(1)).expect("expected weight unit");
         assert_eq!(Weight::ZERO, result);
 
         let result = Weight::MIN.checked_sub(Weight(1));
+        assert_eq!(None, result);
+    }
+
+    #[test]
+    fn checked_mul_test() {
+        let result = Weight(2).checked_mul(2).expect("expected weight unit");
+        assert_eq!(Weight(4), result);
+
+        let result = Weight::MAX.checked_mul(2);
+        assert_eq!(None, result);
+    }
+
+    #[test]
+    fn checked_div_test() {
+        let result = Weight(2).checked_div(2).expect("expected weight unit");
+        assert_eq!(Weight(1), result);
+
+        let result = Weight(2).checked_div(0);
         assert_eq!(None, result);
     }
 }
