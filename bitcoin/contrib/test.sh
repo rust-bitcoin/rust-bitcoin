@@ -73,7 +73,7 @@ then
     # Build specific features
     for feature in ${FEATURES}
     do
-        cargo build --verbose --features="no-std $feature"
+        cargo build --verbose --features="no-std $feature" --no-default-features
     done
 
     cargo run --example bip32 7934c09359b234e076b9fa5a1abfd38e3dc2a9939745b7cc3c22a48d831d14bd
