@@ -34,7 +34,7 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
-bitcoin-internals = { path = "../internals", version = "0.1.0" }
+bitcoin-internals = { path = "../internals", package = "bitcoin-private", version = "0.1.0" }
 bech32 = { version = "0.9.0", default-features = false }
 bitcoin_hashes = { version = "0.12.0", default-features = false }
 secp256k1 = { git = "https://github.com/rust-bitcoin/rust-secp256k1", tag = "2023-03-05--fix-hashes", default-features = false, features = ["bitcoin_hashes"] }
