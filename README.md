@@ -93,6 +93,10 @@ versions than the current stable one (see MSRV section).
 
 ## Building
 
+The cargo feature `std` is enabled by default. At least one of the features `std` or `no-std` or both must be enabled.
+
+Enabling the `no-std` feature does not disable `std`. To disable the `std` feature you must disable default features. The `no-std` feature only enables additional features required for this crate to be usable without `std`. Both can be enabled without conflict.
+
 The library can be built and tested using [`cargo`](https://github.com/rust-lang/cargo/):
 
 ```
