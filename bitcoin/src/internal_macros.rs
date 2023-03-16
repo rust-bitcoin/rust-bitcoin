@@ -45,6 +45,20 @@ macro_rules! impl_consensus_encoding {
     );
 }
 pub(crate) use impl_consensus_encoding;
+
+/// Marks the function const in Rust 1.46.0
+macro_rules! maybe_const_fn {
+    ($(#[$attr:meta])* $vis:vis fn $name:ident($($args:tt)*) -> $ret:ty $body:block) => {
+        #[cfg(rust_v_1_46)]
+        $(#[$attr])*
+        $vis const fn $name($($args)*) -> $ret $body
+
+        #[cfg(not(rust_v_1_46))]
+        $(#[$attr])*
+        $vis fn $name($($args)*) -> $ret $body
+    }
+}
+pub(crate) use maybe_const_fn;
 // We use test_macros module to keep things organised, re-export everything for ease of use.
 #[cfg(test)]
 pub(crate) use test_macros::*;
