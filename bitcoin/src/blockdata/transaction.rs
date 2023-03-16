@@ -1251,25 +1251,25 @@ pub fn predict_weight<I, O>(inputs: I, output_script_lens: O) -> Weight
 }
 
 crate::internal_macros::maybe_const_fn! {
-fn predict_weight_internal(input_count: usize, partial_input_weight: usize, inputs_with_witnesses: usize, output_count: usize, output_scripts_size: usize) -> Weight {
-    let input_weight = partial_input_weight + input_count * 4 * (32 + 4 + 4);
-    let output_size = 8 * output_count + output_scripts_size;
-    let non_input_size =
-        // version:
-        4 +
-        // count varints:
-        VarInt(input_count as u64).len() +
-        VarInt(output_count as u64).len() +
-        output_size +
-        // lock_time
-        4;
-    let weight = if inputs_with_witnesses == 0 {
-        non_input_size * 4 + input_weight
-    } else {
-        non_input_size * 4 + input_weight + input_count - inputs_with_witnesses + 2
-    };
-    Weight::from_wu(weight as u64)
-}
+    fn predict_weight_internal(input_count: usize, partial_input_weight: usize, inputs_with_witnesses: usize, output_count: usize, output_scripts_size: usize) -> Weight {
+        let input_weight = partial_input_weight + input_count * 4 * (32 + 4 + 4);
+        let output_size = 8 * output_count + output_scripts_size;
+        let non_input_size =
+            // version:
+            4 +
+            // count varints:
+            VarInt(input_count as u64).len() +
+            VarInt(output_count as u64).len() +
+            output_size +
+            // lock_time
+            4;
+        let weight = if inputs_with_witnesses == 0 {
+            non_input_size * 4 + input_weight
+        } else {
+            non_input_size * 4 + input_weight + input_count - inputs_with_witnesses + 2
+        };
+        Weight::from_wu(weight as u64)
+    }
 }
 
 /// Predicts the weight of a to-be-constructed transaction in const context.
