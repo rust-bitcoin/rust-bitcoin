@@ -92,12 +92,7 @@ impl Work {
     /// `log2_work` output in its logs.
     #[cfg(feature = "std")]
     #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-    pub fn log2(self) -> f64 {
-        let U256(high, low) = self.0;
-        // 2^128 * high + low
-        let double = (3402823669209385e23_f64 * high as f64) + (low as f64);
-        double.log2()
-    }
+    pub fn log2(self) -> f64 { self.0.to_f64().log2() }
 }
 do_impl!(Work);
 
