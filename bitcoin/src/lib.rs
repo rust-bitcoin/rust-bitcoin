@@ -160,7 +160,10 @@ mod io_extras {
 #[rustfmt::skip]
 mod prelude {
     #[cfg(all(not(feature = "std"), not(test)))]
-    pub use alloc::{string::{String, ToString}, vec::Vec, boxed::Box, borrow::{Borrow, Cow, ToOwned}, slice, rc, sync};
+    pub use alloc::{string::{String, ToString}, vec::Vec, boxed::Box, borrow::{Borrow, Cow, ToOwned}, slice, rc};
+
+    #[cfg(all(not(feature = "std"), not(test), any(not(rust_v_1_60), target_has_atomic = "ptr")))]
+    pub use alloc::sync;
 
     #[cfg(any(feature = "std", test))]
     pub use std::{string::{String, ToString}, vec::Vec, boxed::Box, borrow::{Borrow, Cow, ToOwned}, slice, rc, sync};
