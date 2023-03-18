@@ -31,7 +31,14 @@ fi
 
 # We should not have any duplicate dependencies. This catches mistakes made upgrading dependencies
 # in one crate and not in another (e.g. upgrade bitcoin_hashes in bitcoin but not in secp).
-duplicate_dependencies=$(cargo tree  --target=all --all-features --duplicates | wc -l)
+duplicate_dependencies=$(
+    # Only show the actual duplicated deps, not their reverse tree, then
+    # whitelist the 'syn' crate which is duplicated but it's not our fault.
+    cargo tree  --target=all --all-features --duplicates \
+        | grep '^[0-9A-Za-z]' \
+        | grep -v 'syn' \
+        | wc -l
+)
 if [ "$duplicate_dependencies" -ne 0 ]; then
     echo "Dependency tree is broken, contains duplicates"
     cargo tree  --target=all --all-features --duplicates
