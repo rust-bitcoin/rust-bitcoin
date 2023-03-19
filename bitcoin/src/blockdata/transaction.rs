@@ -1247,23 +1247,64 @@ pub fn predict_weight<I, O>(inputs: I, output_script_lens: O) -> Weight
                 let script_size = script_len + VarInt(script_len as u64).len();
                 (output_count + 1, total_scripts_size + script_size)
         });
-    let input_weight = partial_input_weight + input_count * 4 * (32 + 4 + 4);
-    let output_size = 8 * output_count + output_scripts_size;
-    let non_input_size =
-        // version:
-        4 +
-        // count varints:
-        VarInt(input_count as u64).len() +
-        VarInt(output_count as u64).len() +
-        output_size +
-        // lock_time
-        4;
-    let weight = if inputs_with_witnesses == 0 {
-        non_input_size * 4 + input_weight
-    } else {
-        non_input_size * 4 + input_weight + input_count - inputs_with_witnesses + 2
-    };
-    Weight::from_wu(weight as u64)
+    predict_weight_internal(input_count, partial_input_weight, inputs_with_witnesses, output_count, output_scripts_size)
+}
+
+crate::internal_macros::maybe_const_fn! {
+    fn predict_weight_internal(input_count: usize, partial_input_weight: usize, inputs_with_witnesses: usize, output_count: usize, output_scripts_size: usize) -> Weight {
+        let input_weight = partial_input_weight + input_count * 4 * (32 + 4 + 4);
+        let output_size = 8 * output_count + output_scripts_size;
+        let non_input_size =
+            // version:
+            4 +
+            // count varints:
+            VarInt(input_count as u64).len() +
+            VarInt(output_count as u64).len() +
+            output_size +
+            // lock_time
+            4;
+        let weight = if inputs_with_witnesses == 0 {
+            non_input_size * 4 + input_weight
+        } else {
+            non_input_size * 4 + input_weight + input_count - inputs_with_witnesses + 2
+        };
+        Weight::from_wu(weight as u64)
+    }
+}
+
+/// Predicts the weight of a to-be-constructed transaction in const context.
+///
+/// *Important: only available in Rust 1.46+*
+///
+/// This is a `const` version of [`predict_weight`] which only allows slices due to current Rust
+/// limitations around `const fn`. Because of these limitations it may be less efficient than
+/// `predict_weight` and thus is intended to be only used in `const` context.
+///
+/// Please see the documentation of `predict_weight` to learn more about this function.
+#[cfg(rust_v_1_46)]
+pub const fn predict_weight_from_slices(inputs: &[InputWeightPrediction], output_script_lens: &[usize]) -> Weight {
+    let mut partial_input_weight = 0;
+    let mut inputs_with_witnesses = 0;
+
+    // for loops not supported in const fn
+    let mut i = 0;
+    while i < inputs.len() {
+        let prediction = inputs[i];
+        partial_input_weight += prediction.script_size * 4 + prediction.witness_size;
+        inputs_with_witnesses += (prediction.witness_size > 0) as usize;
+        i += 1;
+    }
+
+    let mut output_scripts_size = 0;
+
+    i = 0;
+    while i < output_script_lens.len() {
+        let script_len = output_script_lens[i];
+        output_scripts_size += script_len + VarInt(script_len as u64).len();
+        i += 1;
+    }
+
+    predict_weight_internal(inputs.len(), partial_input_weight, inputs_with_witnesses, output_script_lens.len(), output_scripts_size)
 }
 
 /// Weight prediction of an individual input.
@@ -1341,6 +1382,37 @@ impl InputWeightPrediction {
             });
         let witness_size = if count > 0 {
             total_size + VarInt(count as u64).len()
+        } else {
+            0
+        };
+        let script_size = input_script_len + VarInt(input_script_len as u64).len();
+
+        InputWeightPrediction {
+            script_size,
+            witness_size,
+        }
+    }
+
+    /// Computes the prediction for a single input in `const` context.
+    ///
+    /// *Important: only available in Rust 1.46+*
+    ///
+    /// This is a `const` version of [`new`](Self::new) which only allows slices due to current Rust
+    /// limitations around `const fn`. Because of these limitations it may be less efficient than
+    /// `new` and thus is intended to be only used in `const` context.
+    #[cfg(rust_v_1_46)]
+    pub const fn from_slice(input_script_len: usize, witness_element_lengths: &[usize]) -> Self {
+        let mut i = 0;
+        let mut total_size = 0;
+        // for loops not supported in const fn
+        while i < witness_element_lengths.len() {
+            let elem_len = witness_element_lengths[i];
+            let elem_size = elem_len + VarInt(elem_len as u64).len();
+            total_size += elem_size;
+            i += 1;
+        }
+        let witness_size = if !witness_element_lengths.is_empty() {
+            total_size + VarInt(witness_element_lengths.len() as u64).len()
         } else {
             0
         };
