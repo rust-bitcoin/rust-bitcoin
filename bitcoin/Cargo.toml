@@ -14,20 +14,13 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = [ "std", "secp-recovery" ]
+std = ["secp256k1/std", "core2/std", "bitcoin_hashes/std", "bech32/std", "bitcoin-internals/std"]
 rand-std = ["secp256k1/rand-std"]
 rand = ["secp256k1/rand"]
 serde = ["actual-serde", "bitcoin_hashes/serde", "secp256k1/serde"]
 secp-lowmemory = ["secp256k1/lowmemory"]
 secp-recovery = ["secp256k1/recovery"]
 bitcoinconsensus-std = ["bitcoinconsensus/std", "std"]
-
-# At least one of std, no-std must be enabled.
-#
-# The no-std feature doesn't disable std - you need to turn off the std feature for that by disabling default.
-# Instead no-std enables additional features required for this crate to be usable without std.
-# As a result, both can be enabled without conflict.
-std = ["secp256k1/std", "bitcoin_hashes/std", "bech32/std", "bitcoin-internals/std"]
-no-std = ["core2", "bitcoin_hashes/alloc", "bitcoin_hashes/core2", "secp256k1/alloc"]
 
 [package.metadata.docs.rs]
 all-features = true
@@ -36,13 +29,13 @@ rustdoc-args = ["--cfg", "docsrs"]
 [dependencies]
 bitcoin-internals = { path = "../internals", package = "bitcoin-private", version = "0.1.0" }
 bech32 = { version = "0.9.0", default-features = false }
-bitcoin_hashes = { version = "0.12.0", default-features = false }
-secp256k1 = { version = "0.27.0", default-features = false, features = ["bitcoin_hashes"] }
+bitcoin_hashes = { version = "0.12.0", default-features = false, features = ["alloc", "core2"] }
+core2 = { version = "0.3.0", default-features = false, features = ["alloc"] }
+secp256k1 = { version = "0.27.0", default-features = false, features = ["alloc", "bitcoin_hashes"] }
 hex_lit = "0.1.1"
 
 base64 = { version = "0.13.0", optional = true }
 bitcoinconsensus = { version = "0.20.2-0.5.0", default-features = false, optional = true }
-core2 = { version = "0.3.0", default-features = false, features = ["alloc"], optional = true }
 # Do NOT use this as a feature! Use the `serde` feature instead.
 actual-serde = { package = "serde", version = "1.0.103", default-features = false, features = [ "derive", "alloc" ], optional = true }
 
