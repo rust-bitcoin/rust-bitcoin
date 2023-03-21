@@ -207,10 +207,8 @@ seriously. Due to the modular nature of the project, writing new test cases is
 easy and good test coverage of the codebase is an important goal. Refactoring
 the project to enable fine-grained unit testing is also an ongoing effort.
 
-Fuzzing is heavily encouraged: feel free to add related material under `fuzz/`
-
-Mutation testing is planned; any contributions helping with that are highly
-welcome!
+Various methods of testing are in use (e.g. fuzzing, mutation), please see
+the [readme](./REAME.md) for more information.
 
 
 ## Going further
