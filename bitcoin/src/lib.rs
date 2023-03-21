@@ -64,9 +64,6 @@ pub extern crate bitcoin_hashes as hashes;
 #[cfg(feature = "bitcoinconsensus")]
 #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
 pub extern crate bitcoinconsensus;
-#[cfg(feature = "hashbrown")]
-#[cfg_attr(docsrs, doc(cfg(feature = "hashbrown")))]
-pub extern crate hashbrown;
 pub extern crate secp256k1;
 
 #[cfg(feature = "serde")]
