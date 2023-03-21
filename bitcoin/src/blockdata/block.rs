@@ -76,6 +76,11 @@ impl Header {
         self.target().difficulty()
     }
 
+    /// Computes the popular "difficulty" measure for mining and returns a float value of f64.
+    pub fn difficulty_float(&self) -> f64 {
+        self.target().difficulty_float()
+    }
+
     /// Checks that the proof-of-work for the block is valid, returning the block hash.
     pub fn validate_pow(&self, required_target: Target) -> Result<BlockHash, Error> {
         let target = self.target();
@@ -466,6 +471,7 @@ mod tests {
         assert_eq!(real_decode.header.work(), work);
         assert_eq!(real_decode.header.validate_pow(real_decode.header.target()).unwrap(), real_decode.block_hash());
         assert_eq!(real_decode.header.difficulty(), 1);
+        assert_eq!(real_decode.header.difficulty_float(), 1.0);
         // [test] TODO: check the transaction data
 
         assert_eq!(real_decode.size(), some_block.len());
@@ -501,6 +507,7 @@ mod tests {
         assert_eq!(real_decode.header.work(), work);
         assert_eq!(real_decode.header.validate_pow(real_decode.header.target()).unwrap(), real_decode.block_hash());
         assert_eq!(real_decode.header.difficulty(), 2456598);
+        assert_eq!(real_decode.header.difficulty_float(), 2456598.4399242126);
         // [test] TODO: check the transaction data
 
         assert_eq!(real_decode.size(), segwit_block.len());
