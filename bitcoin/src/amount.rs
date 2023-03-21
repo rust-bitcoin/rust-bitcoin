@@ -21,6 +21,7 @@ use crate::prelude::*;
 /// # use bitcoin::Amount;
 ///
 /// assert_eq!(Amount::from_str("1 BTC").unwrap(), Amount::from_sat(100_000_000));
+/// assert_eq!(Amount::from_str("1 cBTC").unwrap(), Amount::from_sat(1_000_000));
 /// assert_eq!(Amount::from_str("1 mBTC").unwrap(), Amount::from_sat(100_000));
 /// assert_eq!(Amount::from_str("1 uBTC").unwrap(), Amount::from_sat(100));
 /// assert_eq!(Amount::from_str("10 nBTC").unwrap(), Amount::from_sat(1));
@@ -33,6 +34,8 @@ use crate::prelude::*;
 pub enum Denomination {
     /// BTC
     Bitcoin,
+    /// cBTC
+    CentiBitcoin,
     /// mBTC
     MilliBitcoin,
     /// uBTC
@@ -54,6 +57,7 @@ impl Denomination {
     fn precision(self) -> i8 {
         match self {
             Denomination::Bitcoin => -8,
+            Denomination::CentiBitcoin => -6,
             Denomination::MilliBitcoin => -5,
             Denomination::MicroBitcoin => -2,
             Denomination::NanoBitcoin => 1,
@@ -68,6 +72,7 @@ impl Denomination {
     fn as_str(self) -> &'static str {
         match self {
             Denomination::Bitcoin => "BTC",
+            Denomination::CentiBitcoin => "cBTC",
             Denomination::MilliBitcoin => "mBTC",
             Denomination::MicroBitcoin => "uBTC",
             Denomination::NanoBitcoin => "nBTC",
@@ -113,6 +118,10 @@ impl FromStr for Denomination {
 fn denomination_from_str(mut s: &str) -> Option<Denomination> {
     if s.eq_ignore_ascii_case("BTC") {
         return Some(Denomination::Bitcoin);
+    }
+
+    if s.eq_ignore_ascii_case("cBTC") {
+        return Some(Denomination::CentiBitcoin);
     }
 
     if s.eq_ignore_ascii_case("mBTC") {
