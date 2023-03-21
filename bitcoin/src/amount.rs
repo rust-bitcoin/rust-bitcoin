@@ -31,6 +31,7 @@ use crate::prelude::*;
 /// assert_eq!(Amount::from_str("1000 msats").unwrap(), Amount::from_sat(1));
 /// ```
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+#[non_exhaustive]
 pub enum Denomination {
     /// BTC
     Bitcoin,
