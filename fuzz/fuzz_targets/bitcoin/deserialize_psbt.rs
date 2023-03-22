@@ -1,10 +1,10 @@
-
 use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {
-    let psbt: Result<bitcoin::psbt::PartiallySignedTransaction, _> = bitcoin::psbt::Psbt::deserialize(data);
+    let psbt: Result<bitcoin::psbt::PartiallySignedTransaction, _> =
+        bitcoin::psbt::Psbt::deserialize(data);
     match psbt {
-        Err(_) => {},
+        Err(_) => {}
         Ok(psbt) => {
             let ser = bitcoin::psbt::Psbt::serialize(&psbt);
             let deser = bitcoin::psbt::Psbt::deserialize(&ser).unwrap();

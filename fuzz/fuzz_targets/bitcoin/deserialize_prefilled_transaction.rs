@@ -1,12 +1,12 @@
-
 use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {
     // We already fuzz Transactions in `./deserialize_transaction.rs`.
-    let tx_result: Result<bitcoin::bip152::PrefilledTransaction, _> = bitcoin::consensus::encode::deserialize(data);
+    let tx_result: Result<bitcoin::bip152::PrefilledTransaction, _> =
+        bitcoin::consensus::encode::deserialize(data);
 
     match tx_result {
-        Err(_) => {},
+        Err(_) => {}
         Ok(tx) => {
             let ser = bitcoin::consensus::encode::serialize(&tx);
             assert_eq!(&ser[..], data);

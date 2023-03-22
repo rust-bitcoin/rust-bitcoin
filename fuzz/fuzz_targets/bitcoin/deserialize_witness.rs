@@ -1,8 +1,6 @@
-
-use honggfuzz::fuzz;
-
-use bitcoin::consensus::{serialize, deserialize};
 use bitcoin::blockdata::witness::Witness;
+use bitcoin::consensus::{deserialize, serialize};
+use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {
     let w: Result<Witness, _> = deserialize(data);

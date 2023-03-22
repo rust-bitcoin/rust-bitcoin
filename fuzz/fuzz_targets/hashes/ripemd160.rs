@@ -1,6 +1,4 @@
-
-use bitcoin::hashes::Hash;
-use bitcoin::hashes::ripemd160;
+use bitcoin::hashes::{ripemd160, Hash};
 use crypto::digest::Digest;
 use crypto::ripemd160::Ripemd160;
 use honggfuzz::fuzz;

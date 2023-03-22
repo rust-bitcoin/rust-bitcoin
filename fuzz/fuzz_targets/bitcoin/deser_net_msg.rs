@@ -1,8 +1,8 @@
-
 use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {
-    let _: Result<bitcoin::network::message::RawNetworkMessage, _> = bitcoin::consensus::encode::deserialize(data);
+    let _: Result<bitcoin::network::message::RawNetworkMessage, _> =
+        bitcoin::consensus::encode::deserialize(data);
 }
 
 fn main() {

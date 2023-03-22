@@ -1,21 +1,22 @@
-
-use honggfuzz::fuzz;
+use std::str::FromStr;
 
 use bitcoin::blockdata::transaction::OutPoint;
 use bitcoin::consensus::encode;
-
-use std::str::FromStr;
+use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {
-    let lowercase: Vec<u8> = data.iter().map(|c| match *c {
-        b'A' => b'a',
-        b'B' => b'b',
-        b'C' => b'c',
-        b'D' => b'd',
-        b'E' => b'e',
-        b'F' => b'f',
-        x => x
-    }).collect();
+    let lowercase: Vec<u8> = data
+        .iter()
+        .map(|c| match *c {
+            b'A' => b'a',
+            b'B' => b'b',
+            b'C' => b'c',
+            b'D' => b'd',
+            b'E' => b'e',
+            b'F' => b'f',
+            x => x,
+        })
+        .collect();
     let data_str = match String::from_utf8(lowercase) {
         Err(_) => return,
         Ok(s) => s,
@@ -33,7 +34,7 @@ fn do_test(data: &[u8]) {
                 let string = deser.to_string();
                 match OutPoint::from_str(&string) {
                     Ok(destring) => assert_eq!(destring, deser),
-                    Err(_) => panic!()
+                    Err(_) => panic!(),
                 }
             }
         }

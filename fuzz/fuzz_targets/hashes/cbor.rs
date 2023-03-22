@@ -1,6 +1,4 @@
-
-use bitcoin::hashes::Hmac;
-use bitcoin::hashes::{sha1, sha512, ripemd160, sha256d};
+use bitcoin::hashes::{ripemd160, sha1, sha256d, sha512, Hmac};
 use honggfuzz::fuzz;
 use serde::{Deserialize, Serialize};
 

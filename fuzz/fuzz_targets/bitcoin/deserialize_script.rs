@@ -1,10 +1,8 @@
-
-use honggfuzz::fuzz;
-
 use bitcoin::address::Address;
-use bitcoin::network::constants::Network;
 use bitcoin::blockdata::script;
 use bitcoin::consensus::encode;
+use bitcoin::network::constants::Network;
+use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {
     let s: Result<script::ScriptBuf, _> = encode::deserialize(data);
@@ -17,7 +15,9 @@ fn do_test(data: &[u8]) {
                 return;
             }
             match ins.ok().unwrap() {
-                script::Instruction::Op(op) => { b = b.push_opcode(op); }
+                script::Instruction::Op(op) => {
+                    b = b.push_opcode(op);
+                }
                 script::Instruction::PushBytes(bytes) => {
                     // Any one-byte pushes, except -0, which can be interpreted as numbers, should be
                     // reserialized as numbers. (For -1 through 16, this will use special ops; for

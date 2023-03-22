@@ -1,10 +1,10 @@
-
 use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {
-    let tx_result: Result<bitcoin::blockdata::transaction::Transaction, _> = bitcoin::consensus::encode::deserialize(data);
+    let tx_result: Result<bitcoin::blockdata::transaction::Transaction, _> =
+        bitcoin::consensus::encode::deserialize(data);
     match tx_result {
-        Err(_) => {},
+        Err(_) => {}
         Ok(mut tx) => {
             let ser = bitcoin::consensus::encode::serialize(&tx);
             assert_eq!(&ser[..], data);
@@ -22,7 +22,7 @@ fn do_test(data: &[u8]) {
             } else {
                 assert_eq!(no_witness_len * 3 + len, calculated_weight);
             }
-        },
+        }
     }
 }
 

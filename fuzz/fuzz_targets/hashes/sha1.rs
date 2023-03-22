@@ -1,6 +1,4 @@
-
-use bitcoin::hashes::Hash;
-use bitcoin::hashes::sha1;
+use bitcoin::hashes::{sha1, Hash};
 use crypto::digest::Digest;
 use crypto::sha1::Sha1;
 use honggfuzz::fuzz;

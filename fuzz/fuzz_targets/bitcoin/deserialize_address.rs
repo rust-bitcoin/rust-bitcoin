@@ -1,6 +1,6 @@
+use std::str::FromStr;
 
 use honggfuzz::fuzz;
-use std::str::FromStr;
 
 fn do_test(data: &[u8]) {
     let data_str = String::from_utf8_lossy(data);

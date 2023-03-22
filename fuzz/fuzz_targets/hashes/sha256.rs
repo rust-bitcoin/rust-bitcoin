@@ -1,6 +1,4 @@
-
-use bitcoin::hashes::Hash;
-use bitcoin::hashes::sha256;
+use bitcoin::hashes::{sha256, Hash};
 use crypto::digest::Digest;
 use crypto::sha2::Sha256;
 use honggfuzz::fuzz;
