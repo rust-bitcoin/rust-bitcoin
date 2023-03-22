@@ -32,6 +32,9 @@ impl Weight {
     /// Directly constructs `Weight` from weight units.
     pub const fn from_wu(wu: u64) -> Self { Weight(wu) }
 
+    /// Constructs `Weight` from kilo weight units returning `None` if overflow occurred.
+    pub fn from_kwu(wu: u64) -> Option<Self> { wu.checked_mul(1000).map(Weight) }
+
     /// Constructs `Weight` from virtual bytes.
     ///
     /// # Errors
@@ -54,6 +57,9 @@ impl Weight {
     ///
     /// Can be used instead of `into()` to avoid inference issues.
     pub const fn to_wu(self) -> u64 { self.0 }
+
+    /// Converts to kilo weight units rounding down.
+    pub const fn to_kwu_floor(self) -> u64 { self.0 / 1000 }
 
     /// Converts to vB rounding down.
     pub const fn to_vbytes_floor(self) -> u64 { self.0 / 4 }
@@ -103,6 +109,17 @@ mod tests {
     }
 
     #[test]
+    fn kilo_weight_constructor_test() {
+        assert_eq!(Weight(1_000), Weight::from_kwu(1).expect("expected weight unit"));
+    }
+
+    #[test]
+    #[should_panic]
+    fn kilo_weight_constructor_panic_test() {
+        Weight::from_kwu(u64::max_value()).expect("expected weight unit");
+    }
+
+    #[test]
     fn from_vb_test() {
         let vb = Weight::from_vb(1).expect("expected weight unit");
         assert_eq!(Weight(4), vb);
@@ -130,6 +147,11 @@ mod tests {
     #[test]
     fn from_non_witness_data_size_test() {
         assert_eq!(Weight(4), Weight::from_non_witness_data_size(1));
+    }
+
+    #[test]
+    fn to_kwu_floor_test() {
+        assert_eq!(1, Weight(1_000).to_kwu_floor());
     }
 
     #[test]
