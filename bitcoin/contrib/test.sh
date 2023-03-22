@@ -108,16 +108,6 @@ if [ "$DO_DOCS" = true ]; then
     RUSTDOCFLAGS="-D warnings" cargo +stable doc --all-features
 fi
 
-# Fuzz if told to
-if [ "$DO_FUZZ" = true ]
-then
-    (
-        cd fuzz
-        cargo test --verbose
-        ./travis-fuzz.sh
-    )
-fi
-
 # Run formatter if told to.
 if [ "$DO_FMT" = true ]; then
     if [ "$NIGHTLY" = false ]; then

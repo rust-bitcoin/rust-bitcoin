@@ -34,7 +34,7 @@ jobs:
           override: true
           profile: minimal
       - name: fuzz
-        run: cd bitcoin/fuzz && ./travis-fuzz.sh "${{ matrix.fuzz_target }}"
+        run: cd fuzz && ./fuzz.sh "${{ matrix.fuzz_target }}"
       - run: echo "${{ matrix.fuzz_target }}.rs" >executed_${{ matrix.fuzz_target }}
       - uses: actions/upload-artifact@v2
         with:
@@ -51,5 +51,5 @@ jobs:
       - name: Display structure of downloaded files
         run: ls -R
       - run: find executed_* -type f -exec cat {} + | sort > executed
-      - run: ls bitcoin/fuzz/fuzz_targets | sort > expected
+      - run: ls fuzz/fuzz_targets | sort > expected
       - run: diff expected executed
