@@ -1,6 +1,11 @@
 name: Fuzz
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+      - 'test-ci/**'
+  pull_request:
 
 jobs:
 
