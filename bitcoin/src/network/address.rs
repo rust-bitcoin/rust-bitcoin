@@ -307,9 +307,10 @@ mod test {
     use core::str::FromStr;
     use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 
+    use hashes::hex::FromHex;
+
     use super::{AddrV2, AddrV2Message, Address};
     use crate::consensus::encode::{deserialize, serialize};
-    use crate::hashes::hex::FromHex;
     use crate::internal_macros::hex;
     use crate::network::constants::ServiceFlags;
 

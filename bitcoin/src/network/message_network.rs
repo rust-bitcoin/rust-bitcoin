@@ -7,8 +7,9 @@
 //! capabilities.
 //!
 
+use hashes::sha256d;
+
 use crate::consensus::{encode, Decodable, Encodable, ReadExt};
-use crate::hashes::sha256d;
 use crate::internal_macros::impl_consensus_encoding;
 use crate::io;
 use crate::network::address::Address;
@@ -141,9 +142,10 @@ impl_consensus_encoding!(Reject, message, ccode, reason, hash);
 
 #[cfg(test)]
 mod tests {
+    use hashes::sha256d;
+
     use super::{Reject, RejectReason, VersionMessage};
     use crate::consensus::encode::{deserialize, serialize};
-    use crate::hashes::sha256d;
     use crate::internal_macros::hex;
     use crate::network::constants::ServiceFlags;
 

@@ -11,11 +11,11 @@ use core::ops;
 use core::str::FromStr;
 
 use bitcoin_internals::write_err;
+use hashes::hex::FromHex;
+use hashes::{hash160, hex, Hash};
 pub use secp256k1::{self, constants, KeyPair, Parity, Secp256k1, Verification, XOnlyPublicKey};
 
 use crate::hash_types::{PubkeyHash, WPubkeyHash};
-use crate::hashes::hex::FromHex;
-use crate::hashes::{hash160, hex, Hash};
 use crate::network::constants::Network;
 use crate::prelude::*;
 use crate::taproot::{TapNodeHash, TapTweakHash};
@@ -716,11 +716,11 @@ impl From<TweakedKeyPair> for TweakedPublicKey {
 mod tests {
     use std::str::FromStr;
 
+    use hashes::hex::FromHex;
     use secp256k1::Secp256k1;
 
     use super::*;
     use crate::address::Address;
-    use crate::hashes::hex::FromHex;
     use crate::io;
     use crate::network::constants::Network::{Bitcoin, Testnet};
 
@@ -1032,7 +1032,7 @@ mod tests {
     #[test]
     #[cfg(feature = "rand-std")]
     fn public_key_constructors() {
-        use crate::secp256k1::rand;
+        use secp256k1::rand;
 
         let secp = Secp256k1::new();
         let kp = KeyPair::new(&secp, &mut rand::thread_rng());

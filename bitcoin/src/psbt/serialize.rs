@@ -8,6 +8,7 @@
 
 use core::convert::{TryFrom, TryInto};
 
+use hashes::{hash160, ripemd160, sha256, sha256d, Hash};
 use secp256k1::{self, XOnlyPublicKey};
 
 use super::map::{Input, Map, Output, PsbtSighashType};
@@ -19,7 +20,6 @@ use crate::blockdata::witness::Witness;
 use crate::consensus::encode::{self, deserialize_partial, serialize, Decodable, Encodable};
 use crate::crypto::key::PublicKey;
 use crate::crypto::{ecdsa, taproot};
-use crate::hashes::{hash160, ripemd160, sha256, sha256d, Hash};
 use crate::prelude::*;
 use crate::psbt::{Error, PartiallySignedTransaction};
 use crate::taproot::{

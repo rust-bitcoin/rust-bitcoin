@@ -20,9 +20,9 @@ use core::cmp::min;
 use core::iter;
 
 pub use block::{MerkleBlock, MerkleBlockError, PartialMerkleTree};
+use hashes::Hash;
 
 use crate::consensus::encode::Encodable;
-use crate::hashes::Hash;
 use crate::io;
 use crate::prelude::*;
 
@@ -110,10 +110,11 @@ where
 
 #[cfg(test)]
 mod tests {
+    use hashes::sha256d;
+
     use super::*;
     use crate::blockdata::block::Block;
     use crate::consensus::encode::deserialize;
-    use crate::hashes::sha256d;
 
     #[test]
     fn both_merkle_root_functions_return_the_same_result() {

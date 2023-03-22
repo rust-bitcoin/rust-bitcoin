@@ -20,11 +20,11 @@ use core::convert::From;
 use core::{fmt, mem, u32};
 
 use bitcoin_internals::write_err;
+use hashes::{sha256, sha256d, Hash};
 
 use crate::bip152::{PrefilledTransaction, ShortId};
 use crate::blockdata::transaction::{Transaction, TxIn, TxOut};
 use crate::hash_types::{BlockHash, FilterHash, FilterHeader, TxMerkleNode};
-use crate::hashes::{sha256, sha256d, Hash};
 use crate::io::{self, Cursor, Read};
 #[cfg(feature = "std")]
 use crate::network::{

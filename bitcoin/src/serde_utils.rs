@@ -24,9 +24,9 @@ pub mod btreemap_byte_values {
 
     // NOTE: This module can be exactly copied to use with HashMap.
 
+    use hashes::hex::FromHex;
     use serde;
 
-    use crate::hashes::hex::FromHex;
     use crate::prelude::*;
 
     pub fn serialize<S, T>(v: &BTreeMap<T, Vec<u8>>, s: S) -> Result<S::Ok, S::Error>
@@ -248,9 +248,8 @@ pub mod hex_bytes {
     //! Module for serialization of byte arrays as hex strings.
     #![allow(missing_docs)]
 
+    use hashes::hex::FromHex;
     use serde;
-
-    use crate::hashes::hex::FromHex;
 
     pub fn serialize<T, S>(bytes: &T, s: S) -> Result<S::Ok, S::Error>
     where

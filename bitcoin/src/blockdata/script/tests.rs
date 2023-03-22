@@ -1,5 +1,6 @@
 use core::str::FromStr;
 
+use hashes::Hash;
 use hex_lit::hex;
 
 use super::*;
@@ -7,7 +8,6 @@ use crate::blockdata::opcodes;
 use crate::consensus::encode::{deserialize, serialize};
 use crate::crypto::key::{PublicKey, XOnlyPublicKey};
 use crate::hash_types::{PubkeyHash, ScriptHash, WPubkeyHash, WScriptHash};
-use crate::hashes::Hash;
 use crate::psbt::serialize::Serialize;
 
 #[test]

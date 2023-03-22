@@ -41,13 +41,14 @@
 
 use core::fmt;
 
+use hashes::Hash;
+
 use self::MerkleBlockError::*;
 use crate::blockdata::block::{self, Block};
 use crate::blockdata::constants::{MAX_BLOCK_WEIGHT, MIN_TRANSACTION_WEIGHT};
 use crate::blockdata::transaction::Transaction;
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::hash_types::{TxMerkleNode, Txid};
-use crate::hashes::Hash;
 use crate::io;
 use crate::prelude::*;
 
@@ -519,14 +520,14 @@ impl std::error::Error for MerkleBlockError {
 #[cfg(test)]
 mod tests {
     #[cfg(feature = "rand-std")]
+    use hashes::Hash;
+    #[cfg(feature = "rand-std")]
     use secp256k1::rand::prelude::*;
 
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
     #[cfg(feature = "rand-std")]
     use crate::hash_types::TxMerkleNode;
-    #[cfg(feature = "rand-std")]
-    use crate::hashes::Hash;
     use crate::internal_macros::hex;
     use crate::{Block, Txid};
 
@@ -752,7 +753,7 @@ mod tests {
     /// Returns a real block (0000000000013b8ab2cd513b0261a14096412195a72a0c4827d229dcc7e0f7af)
     /// with 9 txs.
     fn get_block_13b8a() -> Block {
-        use crate::hashes::hex::FromHex;
+        use hashes::hex::FromHex;
         let block_hex = include_str!("../../tests/data/block_13b8a.hex");
         deserialize(&Vec::from_hex(block_hex).unwrap()).unwrap()
     }

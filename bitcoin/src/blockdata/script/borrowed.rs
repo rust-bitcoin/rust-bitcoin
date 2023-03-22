@@ -7,6 +7,7 @@ use core::fmt;
 use core::ops::Bound;
 use core::ops::{Index, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive};
 
+use hashes::Hash;
 use secp256k1::{Secp256k1, Verification};
 
 use crate::address::WitnessVersion;
@@ -19,7 +20,6 @@ use crate::blockdata::script::{
 };
 use crate::consensus::Encodable;
 use crate::hash_types::{ScriptHash, WScriptHash};
-use crate::hashes::Hash;
 use crate::key::{PublicKey, UntweakedPublicKey};
 use crate::policy::DUST_RELAY_TX_FEE;
 use crate::prelude::*;

@@ -4,6 +4,7 @@
 #[cfg(doc)]
 use core::ops::Deref;
 
+use hashes::hex;
 use secp256k1::{Secp256k1, Verification};
 
 use crate::address::{WitnessProgram, WitnessVersion};
@@ -11,7 +12,6 @@ use crate::blockdata::opcodes::all::*;
 use crate::blockdata::opcodes::{self};
 use crate::blockdata::script::{opcode_to_verify, Builder, Instruction, PushBytes, Script};
 use crate::hash_types::{PubkeyHash, ScriptHash, WPubkeyHash, WScriptHash};
-use crate::hashes::hex;
 use crate::key::{PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey};
 use crate::prelude::*;
 use crate::taproot::TapNodeHash;
@@ -157,7 +157,7 @@ impl ScriptBuf {
 
     /// Creates a [`ScriptBuf`] from a hex string.
     pub fn from_hex(s: &str) -> Result<Self, hex::Error> {
-        use crate::hashes::hex::FromHex;
+        use hashes::hex::FromHex;
 
         let v = Vec::from_hex(s)?;
         Ok(ScriptBuf::from_bytes(v))

@@ -7,9 +7,10 @@
 //! Bitcoin data (blocks and transactions) around.
 //!
 
+use hashes::{sha256d, Hash as _};
+
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::hash_types::{BlockHash, Txid, Wtxid};
-use crate::hashes::{sha256d, Hash as _};
 use crate::internal_macros::impl_consensus_encoding;
 use crate::io;
 use crate::network::constants;
@@ -127,9 +128,10 @@ impl_consensus_encoding!(GetHeadersMessage, version, locator_hashes, stop_hash);
 
 #[cfg(test)]
 mod tests {
+    use hashes::Hash;
+
     use super::{GetBlocksMessage, GetHeadersMessage, Vec};
     use crate::consensus::encode::{deserialize, serialize};
-    use crate::hashes::Hash;
     use crate::internal_macros::hex;
 
     #[test]

@@ -10,9 +10,9 @@ use core::{fmt, iter};
 
 use bitcoin_internals::hex::display::DisplayHex;
 use bitcoin_internals::write_err;
+use hashes::hex::{self, FromHex};
 use secp256k1;
 
-use crate::hashes::hex::{self, FromHex};
 use crate::prelude::*;
 use crate::script::PushBytes;
 use crate::sighash::{EcdsaSighashType, NonStandardSighashType};

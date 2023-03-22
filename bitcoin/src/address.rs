@@ -34,6 +34,7 @@ use core::str::FromStr;
 
 use bech32;
 use bitcoin_internals::write_err;
+use hashes::{sha256, Hash, HashEngine};
 use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
 
 use crate::base58;
@@ -49,7 +50,6 @@ use crate::blockdata::script::{
 use crate::crypto::key::{PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey};
 use crate::error::ParseIntError;
 use crate::hash_types::{PubkeyHash, ScriptHash};
-use crate::hashes::{sha256, Hash, HashEngine};
 use crate::network::constants::Network;
 use crate::prelude::*;
 use crate::taproot::TapNodeHash;

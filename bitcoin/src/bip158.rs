@@ -44,6 +44,7 @@ use core::convert::TryInto;
 use core::fmt::{self, Display, Formatter};
 
 use bitcoin_internals::write_err;
+use hashes::{siphash24, Hash};
 
 use crate::blockdata::block::Block;
 use crate::blockdata::script::Script;
@@ -51,7 +52,6 @@ use crate::blockdata::transaction::OutPoint;
 use crate::consensus::encode::VarInt;
 use crate::consensus::{Decodable, Encodable};
 use crate::hash_types::{BlockHash, FilterHash, FilterHeader};
-use crate::hashes::{siphash24, Hash};
 use crate::io;
 use crate::prelude::*;
 
