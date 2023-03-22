@@ -20,6 +20,7 @@ publish = false
 cargo-fuzz = true
 
 [features]
+default = ["honggfuzz_fuzz"]
 afl_fuzz = ["afl"]
 honggfuzz_fuzz = ["honggfuzz"]
 
