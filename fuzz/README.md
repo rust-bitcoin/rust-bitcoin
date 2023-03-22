@@ -65,4 +65,29 @@ If it is working, you will see a rapid stream of data for many seconds
 (you can hit Ctrl+C to stop it early). If not, you should quickly see
 an error.
 
+# Reproducing Failures
+
+If a fuzztest fails, it will exit with a summary which looks something like
+
+```
+...
+ fuzzTarget      : hfuzz_target/x86_64-unknown-linux-gnu/release/hashes_sha256 
+CRASH:
+DESCRIPTION: 
+ORIG_FNAME: 00000000000000000000000000000000.00000000.honggfuzz.cov
+FUZZ_FNAME: hfuzz_workspace/hashes_sha256/SIGABRT.PC.7ffff7c8abc7.STACK.18826d9b64.CODE.-6.ADDR.0.INSTR.mov____%eax,%ebp.fuzz
+...
+=====================================================================
+fff400610004
+```
+
+The final line is a hex-encoded version of the input that caused the crash. You
+can test this directly by editing the `duplicate_crash` test to copy/paste the
+hex output into the call to `extend_vec_from_hex`. Then run the test with
+
+    RUSTFLAGS=--cfg=fuzzing cargo test
+
+It is important to add the `cfg=fuzzing` flag, which tells rustc to compile the
+library as though it were running a fuzztest. In particular, this will disable
+or weaken all the cryptography.
 
