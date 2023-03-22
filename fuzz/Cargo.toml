@@ -18,47 +18,47 @@ bitcoin = { version = "0.30.0" }
 
 [[bin]]
 name = "deserialize_block"
-path = "fuzz_targets/deserialize_block.rs"
+path = "fuzz_targets/bitcoin/deserialize_block.rs"
 
 [[bin]]
 name = "deserialize_script"
-path = "fuzz_targets/deserialize_script.rs"
+path = "fuzz_targets/bitcoin/deserialize_script.rs"
 
 [[bin]]
 name = "deserialize_transaction"
-path = "fuzz_targets/deserialize_transaction.rs"
+path = "fuzz_targets/bitcoin/deserialize_transaction.rs"
 
 [[bin]]
 name = "deserialize_prefilled_transaction"
-path = "fuzz_targets/deserialize_prefilled_transaction.rs"
+path = "fuzz_targets/bitcoin/deserialize_prefilled_transaction.rs"
 
 [[bin]]
 name = "deserialize_address"
-path = "fuzz_targets/deserialize_address.rs"
+path = "fuzz_targets/bitcoin/deserialize_address.rs"
 
 [[bin]]
 name = "deserialize_amount"
-path = "fuzz_targets/deserialize_amount.rs"
+path = "fuzz_targets/bitcoin/deserialize_amount.rs"
 
 [[bin]]
 name = "outpoint_string"
-path = "fuzz_targets/outpoint_string.rs"
+path = "fuzz_targets/bitcoin/outpoint_string.rs"
 
 [[bin]]
 name = "deserialize_psbt"
-path = "fuzz_targets/deserialize_psbt.rs"
+path = "fuzz_targets/bitcoin/deserialize_psbt.rs"
 
 [[bin]]
 name = "deser_net_msg"
-path = "fuzz_targets/deser_net_msg.rs"
+path = "fuzz_targets/bitcoin/deser_net_msg.rs"
 
 [[bin]]
 name = "script_bytes_to_asm_fmt"
-path = "fuzz_targets/script_bytes_to_asm_fmt.rs"
+path = "fuzz_targets/bitcoin/script_bytes_to_asm_fmt.rs"
 
 [[bin]]
 name = "deserialize_witness"
-path = "fuzz_targets/deserialize_witness.rs"
+path = "fuzz_targets/bitcoin/deserialize_witness.rs"
 
 [patch.crates-io.bitcoin_hashes]
 path = "../../hashes"
