@@ -8,7 +8,7 @@ documentation = "https://docs.rs/bitcoin/"
 description = "General purpose library for using and interoperating with Bitcoin."
 categories = ["cryptography::cryptocurrencies"]
 keywords = [ "crypto", "bitcoin" ]
-readme = "README.md"
+readme = "../README.md"
 edition = "2018"
 exclude = ["tests", "contrib"]
 
