@@ -1,11 +1,70 @@
-# 0.30 - 2023-XX-XX "The First Crate-Smashing Release"
+# 0.30 - 2023-03-21 "The First Crate-Smashing Release"
 
-* Drop `PackedLockTime`, [replace with richer `LockTime` everywhere](https://github.com/rust-bitcoin/rust-bitcoin/pull/1330)
-  Be aware that `LockTime` does not have an `Ord` implementation, so users who need a
-  total ordering on locktimes will be forced to wrap this type. In `Transaction`, which
-  contains a `LockTime` but is `Ord`, we have manually sorted the locktimes based on
-  their consensus encoding. This ordering is somewhat arbitrary -- there is no total
-  ordering on locktimes since they may be measured in either blocks or seconds.
+We now have a website for crates that live under the `rust-bitcoin` GitHub organization: https://rust-bitcoin.org/
+
+This release is big, to help users upgrade we wrote a blog post, please see https://rust-bitcoin.org/blog/release-0.30.0/
+
+- [Import `bitcoin_hashes`](https://github.com/rust-bitcoin/rust-bitcoin/pull/1284) into this repository.
+
+- Update dependencies we control
+  - Depend on the new private crate `bitcoin-private`
+  - Depend on the new `bitcoin_hashes` v0.12
+  - Depend on the new `secp256k1` v0.27
+
+- We moved a lot of modules around, specifically we move basically everything out of `util`.
+
+- API improvements:
+  - [Use marker type to enforce validation of `Address`'s network](https://github.com/rust-bitcoin/rust-bitcoin/pull/1489)
+  - [New `Witness` features](https://github.com/rust-bitcoin/rust-bitcoin/pull/1323)
+  - [`Witness` API improvements](https://github.com/rust-bitcoin/rust-bitcoin/pull/1380)
+  - Renamed `Script` to `ScriptBuf` and [added a new unsized type](https://github.com/rust-bitcoin/rust-bitcoin/pull/1155) `Script`
+  - [Add `tapscript_leaf_hash()` to `Script`](https://github.com/rust-bitcoin/rust-bitcoin/pull/1485)
+  - [Unify `TapLeafHash` and `TapBranchHash` into `TapNodeHash` while tree construction](https://github.com/rust-bitcoin/rust-bitcoin/pull/1479)
+  - [Add `Script::builder` convenience function](https://github.com/rust-bitcoin/rust-bitcoin/pull/1312)
+  - [Implement `PartiallySignedTransaction::fee`](https://github.com/rust-bitcoin/rust-bitcoin/pull/1338)
+  - [Implement `Script::p2pk_public_key(&self) -> Option<PublicKey>`](https://github.com/rust-bitcoin/rust-bitcoin/pull/1412)
+  - [Add `log2` to `Work`](https://github.com/rust-bitcoin/rust-bitcoin/pull/1437)
+  - [Add weight utilities to `TxIn` and `TxOut`](https://github.com/rust-bitcoin/rust-bitcoin/pull/1467)
+  - [Add conversions for `TweakedKeyPair` -> `TweakedPublicKey`](https://github.com/rust-bitcoin/rust-bitcoin/pull/1583)
+  - [Add `From<Address>` for `ScriptBuf`](https://github.com/rust-bitcoin/rust-bitcoin/pull/1592)
+  - [Rename `from_slice` methods to `decode`](https://github.com/rust-bitcoin/rust-bitcoin/pull/1621)
+  - [Add methods for pushing locktimes to scripts](https://github.com/rust-bitcoin/rust-bitcoin/pull/1629)
+  - [Create Address::matches_script_pubkey method](https://github.com/rust-bitcoin/rust-bitcoin/pull/1663)
+  - [Add API method `absolute::LockTime::is_satisfied_by_lock`](https://github.com/rust-bitcoin/rust-bitcoin/pull/1258)
+  - [Add `FromHexStr`](https://github.com/rust-bitcoin/rust-bitcoin/pull/1400) for parsing strings with and without `0x` prefix
+  - [Add CentiBitcoin to denominations](https://github.com/rust-bitcoin/rust-bitcoin/pull/1715)
+  - [Add `difficulty_float` method for `block::Header`](https://github.com/rust-bitcoin/rust-bitcoin/pull/1720)
+
+- Various sighash code moves, and type improvements:
+  - [Improve `SighashCache` API](https://github.com/rust-bitcoin/rust-bitcoin/pull/1625)
+  - [Do not export unusual hash types at crate root](https://github.com/rust-bitcoin/rust-bitcoin/pull/1617)
+  - [Move sighash types around](https://github.com/rust-bitcoin/rust-bitcoin/pull/1597)
+  - [Try to fix up sighash export mess](https://github.com/rust-bitcoin/rust-bitcoin/pull/1277)
+
+- New types:
+  - `ScriptBuf` ([Implement unsized `Script`](https://github.com/rust-bitcoin/rust-bitcoin/pull/1155).
+  - [Network `Magic`](https://github.com/rust-bitcoin/rust-bitcoin/pull/1288)
+  - [Add `Weight` and `FeeRate` newtypes](https://github.com/rust-bitcoin/rust-bitcoin/pull/1627)
+  - [Add `Target` and `Work` types](https://github.com/rust-bitcoin/rust-bitcoin/pull/1197)
+  - [Add `relative::LockTime` type](https://github.com/rust-bitcoin/rust-bitcoin/pull/1196)
+
+- Removed types/traits:
+  - [Remove `ToHex`](https://github.com/rust-bitcoin/rust-bitcoin/pull/1531)
+  - [Remove code deprecated in v0.28](https://github.com/rust-bitcoin/rust-bitcoin/pull/1276)
+  - Remove `PackedLockTime`, [replace with richer `LockTime` everywhere](https://github.com/rust-bitcoin/rust-bitcoin/pull/1330)
+     Be aware that `LockTime` does not have an `Ord` implementation, so users who need a
+     total ordering on locktimes will be forced to wrap this type. In `Transaction`, which
+     contains a `LockTime` but is `Ord`, we have manually sorted the locktimes based on
+     their consensus encoding. This ordering is somewhat arbitrary -- there is no total
+     ordering on locktimes since they may be measured in either blocks or seconds.
+
+- Performance improvements:
+  - [Remove needless allocation from BIP-158 encoding](https://github.com/rust-bitcoin/rust-bitcoin/pull/1146)
+  - [Implement fast hex encoding](https://github.com/rust-bitcoin/rust-bitcoin/pull/1268) (usage added in a [later PR](https://github.com/rust-bitcoin/rust-bitcoin/pull/1476))
+
+- Testing improvements:
+  - Started using [kani](https://github.com/model-checking/kani)
+  - Started using [mutagen](https://github.com/llogiq/mutagen)
 
 # 0.29 - 2022-07-20 "Edition 2018 Release"
 
