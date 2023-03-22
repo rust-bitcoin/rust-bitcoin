@@ -1,21 +1,26 @@
 
-extern crate bitcoin_hashes;
-extern crate crypto;
+use bitcoin::hashes::Hmac;
+use bitcoin::hashes::{sha1, sha512, ripemd160, sha256d};
+use serde::{Deserialize, Serialize};
 
-use bitcoin_hashes::Hash;
-use bitcoin_hashes::sha512;
-use crypto::digest::Digest;
-use crypto::sha2::Sha512;
+#[derive(Deserialize, Serialize)]
+struct Hmacs {
+    sha1: Hmac<sha1::Hash>,
+    sha512: Hmac<sha512::Hash>,
+}
+
+#[derive(Deserialize, Serialize)]
+struct Main {
+    hmacs: Hmacs,
+    ripemd: ripemd160::Hash,
+    sha2d: sha256d::Hash,
+}
 
 fn do_test(data: &[u8]) {
-    let our_hash = sha512::Hash::hash(data);
-
-    let mut rc_hash = [0u8; 64];
-    let mut rc_engine = Sha512::new();
-    rc_engine.input(data);
-    rc_engine.result(&mut rc_hash);
-
-    assert_eq!(&our_hash[..], &rc_hash[..]);
+    if let Ok(m) = serde_json::from_slice::<Main>(data) {
+        let vec = serde_json::to_vec(&m).unwrap();
+        assert_eq!(data, &vec[..]);
+    }
 }
 
 #[cfg(feature = "honggfuzz")]

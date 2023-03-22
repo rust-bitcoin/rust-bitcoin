@@ -1,17 +1,14 @@
 
-extern crate bitcoin_hashes;
-extern crate crypto;
-
-use bitcoin_hashes::Hash;
-use bitcoin_hashes::sha512_256;
+use bitcoin::hashes::Hash;
+use bitcoin::hashes::sha256;
 use crypto::digest::Digest;
-use crypto::sha2::Sha512Trunc256;
+use crypto::sha2::Sha256;
 
 fn do_test(data: &[u8]) {
-    let our_hash = sha512_256::Hash::hash(data);
+    let our_hash = sha256::Hash::hash(data);
 
     let mut rc_hash = [0u8; 32];
-    let mut rc_engine = Sha512Trunc256::new();
+    let mut rc_engine = Sha256::new();
     rc_engine.input(data);
     rc_engine.result(&mut rc_hash);
 

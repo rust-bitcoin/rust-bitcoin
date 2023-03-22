@@ -1,11 +1,7 @@
 
-extern crate serde;
-#[macro_use] extern crate serde_derive;
-extern crate bitcoin_hashes;
-extern crate serde_json;
-
-use bitcoin_hashes::Hmac;
-use bitcoin_hashes::{sha1, sha512, ripemd160, sha256d};
+use bitcoin::hashes::Hmac;
+use bitcoin::hashes::{sha1, sha512, ripemd160, sha256d};
+use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
 struct Hmacs {
@@ -21,8 +17,8 @@ struct Main {
 }
 
 fn do_test(data: &[u8]) {
-    if let Ok(m) = serde_json::from_slice::<Main>(data) {
-        let vec = serde_json::to_vec(&m).unwrap();
+    if let Ok(m) = serde_cbor::from_slice::<Main>(data) {
+        let vec = serde_cbor::to_vec(&m).unwrap();
         assert_eq!(data, &vec[..]);
     }
 }

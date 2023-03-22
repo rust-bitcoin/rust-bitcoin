@@ -1,5 +1,6 @@
 [package]
 name = "bitcoin-fuzz"
+edition = "2018"
 version = "0.0.1"
 authors = ["Automatically generated"]
 publish = false
@@ -14,7 +15,12 @@ honggfuzz_fuzz = ["honggfuzz"]
 [dependencies]
 honggfuzz = { version = "0.5", optional = true, default-features = false }
 afl = { version = "0.4", optional = true }
-bitcoin = { version = "0.30.0" }
+bitcoin = { version = "0.30.0", features = [ "serde" ] }
+
+rust-crypto = "0.2"
+serde = { version = "1.0.103", features = [ "derive" ] }
+serde_json = "1.0"
+serde_cbor = "0.9"
 
 [[bin]]
 name = "deserialize_block"
@@ -60,5 +66,31 @@ path = "fuzz_targets/bitcoin/script_bytes_to_asm_fmt.rs"
 name = "deserialize_witness"
 path = "fuzz_targets/bitcoin/deserialize_witness.rs"
 
-[patch.crates-io.bitcoin_hashes]
-path = "../../hashes"
+
+[[bin]]
+name = "sha1"
+path = "fuzz_targets/hashes/sha1.rs"
+
+[[bin]]
+name = "ripemd160"
+path = "fuzz_targets/hashes/ripemd160.rs"
+
+[[bin]]
+name = "sha256"
+path = "fuzz_targets/hashes/sha256.rs"
+
+[[bin]]
+name = "sha512"
+path = "fuzz_targets/hashes/sha512.rs"
+
+[[bin]]
+name = "sha512_256"
+path = "fuzz_targets/hashes/sha512_256.rs"
+
+[[bin]]
+name = "cbor"
+path = "fuzz_targets/hashes/cbor.rs"
+
+[[bin]]
+name = "json"
+path = "fuzz_targets/hashes/json.rs"
