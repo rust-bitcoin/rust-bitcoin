@@ -1,5 +1,7 @@
-extern crate bitcoin;
+
+use honggfuzz::fuzz;
 use std::str::FromStr;
+
 fn do_test(data: &[u8]) {
     let data_str = String::from_utf8_lossy(data);
 
@@ -26,18 +28,6 @@ fn do_test(data: &[u8]) {
     assert_eq!(amt, amt_roundtrip);
 }
 
-#[cfg(feature = "afl")]
-#[macro_use] extern crate afl;
-#[cfg(feature = "afl")]
-fn main() {
-    fuzz!(|data| {
-        do_test(&data);
-    });
-}
-
-#[cfg(feature = "honggfuzz")]
-#[macro_use] extern crate honggfuzz;
-#[cfg(feature = "honggfuzz")]
 fn main() {
     loop {
         fuzz!(|data| {

@@ -3,6 +3,7 @@ use bitcoin::hashes::Hash;
 use bitcoin::hashes::ripemd160;
 use crypto::digest::Digest;
 use crypto::ripemd160::Ripemd160;
+use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {
     let our_hash = ripemd160::Hash::hash(data);
@@ -15,11 +16,6 @@ fn do_test(data: &[u8]) {
     assert_eq!(&our_hash[..], &rc_hash[..]);
 }
 
-#[cfg(feature = "honggfuzz")]
-#[macro_use]
-extern crate honggfuzz;
-
-#[cfg(feature = "honggfuzz")]
 fn main() {
     loop {
         fuzz!(|d| { do_test(d) });

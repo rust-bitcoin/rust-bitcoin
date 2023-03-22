@@ -1,6 +1,7 @@
 
 use bitcoin::hashes::Hmac;
 use bitcoin::hashes::{sha1, sha512, ripemd160, sha256d};
+use honggfuzz::fuzz;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
@@ -23,11 +24,6 @@ fn do_test(data: &[u8]) {
     }
 }
 
-#[cfg(feature = "honggfuzz")]
-#[macro_use]
-extern crate honggfuzz;
-
-#[cfg(feature = "honggfuzz")]
 fn main() {
     loop {
         fuzz!(|d| { do_test(d) });

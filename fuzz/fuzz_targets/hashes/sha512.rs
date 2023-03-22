@@ -3,6 +3,7 @@ use bitcoin::hashes::Hash;
 use bitcoin::hashes::sha512;
 use crypto::digest::Digest;
 use crypto::sha2::Sha512;
+use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {
     let our_hash = sha512::Hash::hash(data);
@@ -15,11 +16,6 @@ fn do_test(data: &[u8]) {
     assert_eq!(&our_hash[..], &rc_hash[..]);
 }
 
-#[cfg(feature = "honggfuzz")]
-#[macro_use]
-extern crate honggfuzz;
-
-#[cfg(feature = "honggfuzz")]
 fn main() {
     loop {
         fuzz!(|d| { do_test(d) });
