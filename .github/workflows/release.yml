@@ -1,0 +1,42 @@
+on:
+  push:
+    branches:
+      - master
+      - 0.28.x
+      - 0.29.x
+      - 'test-ci/**'
+  pull_request:
+
+name: Release
+
+jobs:
+  bitcoin:
+    name: Release - bitcoin
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Crate
+        uses: actions/checkout@v3
+      - name: Checkout Toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: run cargo
+        run: cargo publish -p bitcoin --dry-run
+  private:
+    name: Release - private
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Crate
+        uses: actions/checkout@v3
+      - name: Checkout Toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: run cargo
+        run: cargo publish -p bitcoin-private --dry-run
+  hashes:
+    name: Release - bitcoin_hashes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Crate
+        uses: actions/checkout@v3
+      - name: Checkout Toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: run cargo
+        run: cargo publish -p bitcoin_hashes --dry-run
