@@ -1,5 +1,8 @@
 [workspace]
-members = ["bitcoin", "hashes", "internals"]
+members = ["bitcoin", "hashes", "internals", "fuzz"]
+
+[patch.crates-io.bitcoin]
+path = "bitcoin"
 
 [patch.crates-io.bitcoin_hashes]
 path = "hashes"
