@@ -69,9 +69,7 @@ impl Header {
     pub fn difficulty(&self) -> u128 { self.target().difficulty() }
 
     /// Computes the popular "difficulty" measure for mining and returns a float value of f64.
-    pub fn difficulty_float(&self) -> f64 {
-        self.target().difficulty_float()
-    }
+    pub fn difficulty_float(&self) -> f64 { self.target().difficulty_float() }
 
     /// Checks that the proof-of-work for the block is valid, returning the block hash.
     pub fn validate_pow(&self, required_target: Target) -> Result<BlockHash, Error> {
