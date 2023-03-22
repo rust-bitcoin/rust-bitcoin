@@ -68,7 +68,7 @@ mod out_bytes {
         /// ## Panics
         ///
         /// The method panics if `len` is out of bounds.
-        #[cfg_attr(rust_v_1_46, track_caller)]
+        #[track_caller]
         pub(crate) fn assume_init(&self, len: usize) -> &[u8] { &self.0[..len] }
 
         /// Writes given bytes into the buffer.
@@ -76,7 +76,7 @@ mod out_bytes {
         /// ## Panics
         ///
         /// The method panics if pos is out of bounds or `bytes` don't fit into the buffer.
-        #[cfg_attr(rust_v_1_46, track_caller)]
+        #[track_caller]
         pub(crate) fn write(&mut self, pos: usize, bytes: &[u8]) {
             self.0[pos..(pos + bytes.len())].copy_from_slice(bytes);
         }
@@ -193,7 +193,7 @@ impl<T: AsOutBytes> BufEncoder<T> {
     ///
     /// The method panics if the buffer is full.
     #[inline]
-    #[cfg_attr(rust_v_1_46, track_caller)]
+    #[track_caller]
     pub fn put_byte(&mut self, byte: u8, case: Case) {
         self.buf.as_mut_out_bytes().write(self.pos, &super::byte_to_hex(byte, case.table()));
         self.pos += 2;
@@ -205,7 +205,7 @@ impl<T: AsOutBytes> BufEncoder<T> {
     ///
     /// The method panics if the bytes wouldn't fit the buffer.
     #[inline]
-    #[cfg_attr(rust_v_1_46, track_caller)]
+    #[track_caller]
     pub fn put_bytes<I>(&mut self, bytes: I, case: Case)
     where
         I: IntoIterator,
@@ -215,7 +215,7 @@ impl<T: AsOutBytes> BufEncoder<T> {
     }
 
     #[inline]
-    #[cfg_attr(rust_v_1_46, track_caller)]
+    #[track_caller]
     fn put_bytes_inner<I>(&mut self, bytes: I, case: Case)
     where
         I: Iterator,
@@ -236,7 +236,7 @@ impl<T: AsOutBytes> BufEncoder<T> {
     /// bytes. The method returns an empty slice if all bytes were written
     #[must_use = "this may write only part of the input buffer"]
     #[inline]
-    #[cfg_attr(rust_v_1_46, track_caller)]
+    #[track_caller]
     pub fn put_bytes_min<'a>(&mut self, bytes: &'a [u8], case: Case) -> &'a [u8] {
         let to_write = self.space_remaining().min(bytes.len());
         self.put_bytes(&bytes[..to_write], case);

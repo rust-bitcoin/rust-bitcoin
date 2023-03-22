@@ -1245,26 +1245,30 @@ where
     )
 }
 
-crate::internal_macros::maybe_const_fn! {
-    fn predict_weight_internal(input_count: usize, partial_input_weight: usize, inputs_with_witnesses: usize, output_count: usize, output_scripts_size: usize) -> Weight {
-        let input_weight = partial_input_weight + input_count * 4 * (32 + 4 + 4);
-        let output_size = 8 * output_count + output_scripts_size;
-        let non_input_size =
-            // version:
-            4 +
-            // count varints:
-            VarInt(input_count as u64).len() +
-            VarInt(output_count as u64).len() +
-            output_size +
-            // lock_time
-            4;
-        let weight = if inputs_with_witnesses == 0 {
-            non_input_size * 4 + input_weight
-        } else {
-            non_input_size * 4 + input_weight + input_count - inputs_with_witnesses + 2
-        };
-        Weight::from_wu(weight as u64)
-    }
+const fn predict_weight_internal(
+    input_count: usize,
+    partial_input_weight: usize,
+    inputs_with_witnesses: usize,
+    output_count: usize,
+    output_scripts_size: usize,
+) -> Weight {
+    let input_weight = partial_input_weight + input_count * 4 * (32 + 4 + 4);
+    let output_size = 8 * output_count + output_scripts_size;
+    let non_input_size =
+    // version:
+        4 +
+    // count varints:
+        VarInt(input_count as u64).len() +
+        VarInt(output_count as u64).len() +
+        output_size +
+    // lock_time
+        4;
+    let weight = if inputs_with_witnesses == 0 {
+        non_input_size * 4 + input_weight
+    } else {
+        non_input_size * 4 + input_weight + input_count - inputs_with_witnesses + 2
+    };
+    Weight::from_wu(weight as u64)
 }
 
 /// Predicts the weight of a to-be-constructed transaction in const context.
@@ -1276,7 +1280,6 @@ crate::internal_macros::maybe_const_fn! {
 /// `predict_weight` and thus is intended to be only used in `const` context.
 ///
 /// Please see the documentation of `predict_weight` to learn more about this function.
-#[cfg(rust_v_1_46)]
 pub const fn predict_weight_from_slices(
     inputs: &[InputWeightPrediction],
     output_script_lens: &[usize],
@@ -1402,7 +1405,6 @@ impl InputWeightPrediction {
     /// This is a `const` version of [`new`](Self::new) which only allows slices due to current Rust
     /// limitations around `const fn`. Because of these limitations it may be less efficient than
     /// `new` and thus is intended to be only used in `const` context.
-    #[cfg(rust_v_1_46)]
     pub const fn from_slice(input_script_len: usize, witness_element_lengths: &[usize]) -> Self {
         let mut i = 0;
         let mut total_size = 0;

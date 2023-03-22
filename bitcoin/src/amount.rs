@@ -1953,13 +1953,13 @@ mod tests {
         assert_eq!(Amount::from_str("5BTC BTC"), Err(E::InvalidCharacter('B')));
         assert_eq!(Amount::from_str("5 5 BTC"), Err(E::UnknownDenomination("5 BTC".into())));
 
-        #[cfg_attr(rust_v_1_46, track_caller)]
+        #[track_caller]
         fn case(s: &str, expected: Result<Amount, ParseAmountError>) {
             assert_eq!(Amount::from_str(s), expected);
             assert_eq!(Amount::from_str(&s.replace(' ', "")), expected);
         }
 
-        #[cfg_attr(rust_v_1_46, track_caller)]
+        #[track_caller]
         fn scase(s: &str, expected: Result<SignedAmount, ParseAmountError>) {
             assert_eq!(SignedAmount::from_str(s), expected);
             assert_eq!(SignedAmount::from_str(&s.replace(' ', "")), expected);
