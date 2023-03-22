@@ -1,13 +1,11 @@
 #!/usr/bin/env bash
 
-set -e
-
 REPO_DIR=$(git rev-parse --show-toplevel)
 
 listTargetFiles() {
-  pushd "$REPO_DIR/fuzz" > /dev/null
+  pushd "$REPO_DIR/fuzz" > /dev/null || exit 1
   find fuzz_targets/ -type f -name "*.rs"
-  popd > /dev/null
+  popd > /dev/null || exit 1
 }
 
 targetFileToName() {
