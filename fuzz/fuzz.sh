@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -ex
 
 REPO_DIR=$(git rev-parse --show-toplevel)
 

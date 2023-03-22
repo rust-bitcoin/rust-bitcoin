@@ -1,17 +1,13 @@
-use bitcoin::hashes::{sha256, Hash};
-use crypto::digest::Digest;
-use crypto::sha2::Sha256;
+use bitcoin::hashes::{sha256, Hash, HashEngine};
 use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {
-    let our_hash = sha256::Hash::hash(data);
+    let mut engine = sha256::Hash::engine();
+    engine.input(data);
+    let eng_hash = sha256::Hash::from_engine(engine);
 
-    let mut rc_hash = [0u8; 32];
-    let mut rc_engine = Sha256::new();
-    rc_engine.input(data);
-    rc_engine.result(&mut rc_hash);
-
-    assert_eq!(&our_hash[..], &rc_hash[..]);
+    let hash = sha256::Hash::hash(data);
+    assert_eq!(&hash[..], &eng_hash[..]);
 }
 
 fn main() {

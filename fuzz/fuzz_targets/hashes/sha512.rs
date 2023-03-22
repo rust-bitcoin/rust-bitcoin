@@ -1,17 +1,13 @@
-use bitcoin::hashes::{sha512, Hash};
-use crypto::digest::Digest;
-use crypto::sha2::Sha512;
+use bitcoin::hashes::{sha512, Hash, HashEngine};
 use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {
-    let our_hash = sha512::Hash::hash(data);
+    let mut engine = sha512::Hash::engine();
+    engine.input(data);
+    let eng_hash = sha512::Hash::from_engine(engine);
 
-    let mut rc_hash = [0u8; 64];
-    let mut rc_engine = Sha512::new();
-    rc_engine.input(data);
-    rc_engine.result(&mut rc_hash);
-
-    assert_eq!(&our_hash[..], &rc_hash[..]);
+    let hash = sha512::Hash::hash(data);
+    assert_eq!(&hash[..], &eng_hash[..]);
 }
 
 fn main() {

@@ -33,6 +33,7 @@ listTargetNames() {
 checkWindowsFiles() {
   incorrectFilenames=$(find . -type f -name "*,*" -o -name "*:*" -o -name "*<*" -o -name "*>*" -o -name "*|*" -o -name "*\?*" -o -name "*\**" -o -name "*\"*" | wc -l)
   if [ "$incorrectFilenames" -gt 0 ]; then
+    echo "Bailing early because there is a Windows-incompatible filename in the tree."
     exit 2
   fi
 }
