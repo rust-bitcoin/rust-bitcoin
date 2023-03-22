@@ -7,15 +7,14 @@
 //! whether bit 22 of the `u32` consensus value is set.
 //!
 
-use core::fmt;
 use core::convert::TryFrom;
+use core::fmt;
 
 #[cfg(all(test, mutate))]
 use mutagen::mutate;
 
 use crate::parse::impl_parse_str_from_int_infallible;
 use crate::prelude::*;
-
 #[cfg(doc)]
 use crate::relative;
 
@@ -169,16 +168,12 @@ impl LockTime {
 
 impl From<Height> for LockTime {
     #[inline]
-    fn from(h: Height) -> Self {
-        LockTime::Blocks(h)
-    }
+    fn from(h: Height) -> Self { LockTime::Blocks(h) }
 }
 
 impl From<Time> for LockTime {
     #[inline]
-    fn from(t: Time) -> Self {
-        LockTime::Time(t)
-    }
+    fn from(t: Time) -> Self { LockTime::Time(t) }
 }
 
 impl fmt::Display for LockTime {
@@ -227,24 +222,18 @@ impl Height {
 
     /// Returns the inner `u16` value.
     #[inline]
-    pub fn value(self) -> u16 {
-        self.0
-    }
+    pub fn value(self) -> u16 { self.0 }
 }
 
 impl From<u16> for Height {
     #[inline]
-    fn from(value: u16) -> Self {
-        Height(value)
-    }
+    fn from(value: u16) -> Self { Height(value) }
 }
 
 impl_parse_str_from_int_infallible!(Height, u16, from);
 
 impl fmt::Display for Height {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::Display::fmt(&self.0, f)
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
 /// A relative lock time lock-by-blocktime value.
@@ -279,9 +268,7 @@ impl Time {
     ///
     /// Encoding finer granularity of time for relative lock-times is not supported in Bitcoin.
     #[inline]
-    pub fn from_512_second_intervals(intervals: u16) -> Self {
-        Time(intervals)
-    }
+    pub fn from_512_second_intervals(intervals: u16) -> Self { Time(intervals) }
 
     /// Create a [`Time`] from seconds, converting the seconds into 512 second interval with ceiling
     /// division.
@@ -300,17 +287,13 @@ impl Time {
 
     /// Returns the inner `u16` value.
     #[inline]
-    pub fn value(self) -> u16 {
-        self.0
-    }
+    pub fn value(self) -> u16 { self.0 }
 }
 
 impl_parse_str_from_int_infallible!(Time, u16, from_512_second_intervals);
 
 impl fmt::Display for Time {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::Display::fmt(&self.0, f)
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
 }
 
 /// Errors related to relative lock times.
@@ -328,9 +311,15 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Self::IntegerOverflow(val) => write!(f, "{} seconds is too large to be encoded to a 16 bit 512 second interval", val),
-            Self::IncompatibleHeight(lock, height) => write!(f, "tried to satisfy lock {} with height: {}", lock, height),
-            Self::IncompatibleTime(lock, time) => write!(f, "tried to satisfy lock {} with time: {}", lock, time),
+            Self::IntegerOverflow(val) => write!(
+                f,
+                "{} seconds is too large to be encoded to a 16 bit 512 second interval",
+                val
+            ),
+            Self::IncompatibleHeight(lock, height) =>
+                write!(f, "tried to satisfy lock {} with height: {}", lock, height),
+            Self::IncompatibleTime(lock, time) =>
+                write!(f, "tried to satisfy lock {} with time: {}", lock, time),
         }
     }
 }
@@ -383,7 +372,7 @@ mod tests {
         assert!(!lock.is_implied_by(LockTime::from(Height::from(9))));
         assert!(lock.is_implied_by(LockTime::from(Height::from(10))));
         assert!(lock.is_implied_by(LockTime::from(Height::from(11))));
-   }
+    }
 
     #[test]
     fn time_correctly_implies() {

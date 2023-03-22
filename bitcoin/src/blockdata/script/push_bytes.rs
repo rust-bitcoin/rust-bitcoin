@@ -1,28 +1,29 @@
 //! Contains `PushBytes` & co
 
-use core::ops::{Deref, DerefMut};
 use core::borrow::{Borrow, BorrowMut};
-#[allow(unused)]
-use crate::prelude::*;
+use core::ops::{Deref, DerefMut};
 
 pub use primitive::*;
+
+#[allow(unused)]
+use crate::prelude::*;
 
 /// This module only contains required operations so that outside functions wouldn't accidentally
 /// break invariants. Therefore auditing this module should be sufficient.
 mod primitive {
+    use core::convert::{TryFrom, TryInto};
+    #[cfg(feature = "rust_v_1_53")]
+    use core::ops::Bound;
+    use core::ops::{
+        Index, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
+    };
+
+    use super::PushBytesError;
     #[allow(unused)]
     use crate::prelude::*;
 
-    use super::PushBytesError;
-    use core::convert::{TryFrom, TryInto};
-    use core::ops::{Index, Range, RangeFull, RangeFrom, RangeTo, RangeInclusive, RangeToInclusive};
-    #[cfg(feature = "rust_v_1_53")]
-    use core::ops::Bound;
-
     #[cfg(any(target_pointer_width = "16", target_pointer_width = "32"))]
-    fn check_limit(len: usize) -> Result<(), PushBytesError> {
-        Ok(())
-    }
+    fn check_limit(len: usize) -> Result<(), PushBytesError> { Ok(()) }
 
     #[cfg(not(any(target_pointer_width = "16", target_pointer_width = "32")))]
     fn check_limit(len: usize) -> Result<(), PushBytesError> {
@@ -68,14 +69,10 @@ mod primitive {
         }
 
         /// Returns the underlying bytes.
-        pub fn as_bytes(&self) -> &[u8] {
-            &self.0
-        }
+        pub fn as_bytes(&self) -> &[u8] { &self.0 }
 
         /// Returns the underlying mutbale bytes.
-        pub fn as_mut_bytes(&mut self) -> &mut [u8] {
-            &mut self.0
-        }
+        pub fn as_mut_bytes(&mut self) -> &mut [u8] { &mut self.0 }
     }
 
     macro_rules! delegate_index {
@@ -98,7 +95,14 @@ mod primitive {
         }
     }
 
-    delegate_index!(Range<usize>, RangeFrom<usize>, RangeTo<usize>, RangeFull, RangeInclusive<usize>, RangeToInclusive<usize>);
+    delegate_index!(
+        Range<usize>,
+        RangeFrom<usize>,
+        RangeTo<usize>,
+        RangeFull,
+        RangeInclusive<usize>,
+        RangeToInclusive<usize>
+    );
     #[cfg(feature = "rust_v_1_53")]
     #[cfg_attr(docsrs, doc(cfg(feature = "rust_v_1_53")))]
     delegate_index!((Bound<usize>, Bound<usize>));
@@ -108,9 +112,7 @@ mod primitive {
 
         #[inline]
         #[cfg_attr(rust_v_1_46, track_caller)]
-        fn index(&self, index: usize) -> &Self::Output {
-            &self.0[index]
-        }
+        fn index(&self, index: usize) -> &Self::Output { &self.0[index] }
     }
 
     impl<'a> TryFrom<&'a [u8]> for &'a PushBytes {
@@ -194,14 +196,10 @@ mod primitive {
 
     impl PushBytesBuf {
         /// Creates a new empty `PushBytesBuf`.
-        pub fn new() -> Self {
-            PushBytesBuf(Vec::new())
-        }
+        pub fn new() -> Self { PushBytesBuf(Vec::new()) }
 
         /// Creates a new empty `PushBytesBuf` with reserved capacity.
-        pub fn with_capacity(capacity: usize) -> Self {
-            PushBytesBuf(Vec::with_capacity(capacity))
-        }
+        pub fn with_capacity(capacity: usize) -> Self { PushBytesBuf(Vec::with_capacity(capacity)) }
 
         /// Reserve capacity for `additional_capacity` bytes.
         pub fn reserve(&mut self, additional_capacity: usize) {
@@ -234,9 +232,7 @@ mod primitive {
         }
 
         /// Remove the last byte from buffer if any.
-        pub fn pop(&mut self) -> Option<u8> {
-            self.0.pop()
-        }
+        pub fn pop(&mut self) -> Option<u8> { self.0.pop() }
 
         /// Remove the byte at `index` and return it.
         ///
@@ -244,19 +240,13 @@ mod primitive {
         ///
         /// This method panics if `index` is out of bounds.
         #[cfg_attr(rust_v_1_46, track_caller)]
-        pub fn remove(&mut self, index: usize) -> u8 {
-            self.0.remove(index)
-        }
+        pub fn remove(&mut self, index: usize) -> u8 { self.0.remove(index) }
 
         /// Remove all bytes from buffer without affecting capacity.
-        pub fn clear(&mut self) {
-            self.0.clear()
-        }
+        pub fn clear(&mut self) { self.0.clear() }
 
         /// Remove bytes from buffer past `len`.
-        pub fn truncate(&mut self, len: usize) {
-            self.0.truncate(len)
-        }
+        pub fn truncate(&mut self, len: usize) { self.0.truncate(len) }
 
         /// Extracts `PushBytes` slice
         pub fn as_push_bytes(&self) -> &PushBytes {
@@ -271,15 +261,11 @@ mod primitive {
         }
 
         /// Accesses inner `Vec` - provided for `super` to impl other methods.
-        pub(super) fn inner(&self) -> &Vec<u8> {
-            &self.0
-        }
+        pub(super) fn inner(&self) -> &Vec<u8> { &self.0 }
     }
 
     impl From<PushBytesBuf> for Vec<u8> {
-        fn from(value: PushBytesBuf) -> Self {
-            value.0
-        }
+        fn from(value: PushBytesBuf) -> Self { value.0 }
     }
 
     impl TryFrom<Vec<u8>> for PushBytesBuf {
@@ -295,101 +281,69 @@ mod primitive {
     impl ToOwned for PushBytes {
         type Owned = PushBytesBuf;
 
-        fn to_owned(&self) -> Self::Owned {
-            PushBytesBuf(self.0.to_owned())
-        }
+        fn to_owned(&self) -> Self::Owned { PushBytesBuf(self.0.to_owned()) }
     }
 }
 
 impl PushBytes {
     /// Returns the number of bytes in buffer.
-    pub fn len(&self) -> usize {
-        self.as_bytes().len()
-    }
+    pub fn len(&self) -> usize { self.as_bytes().len() }
 
     /// Returns true if the buffer contains zero bytes.
-    pub fn is_empty(&self) -> bool {
-        self.as_bytes().is_empty()
-    }
+    pub fn is_empty(&self) -> bool { self.as_bytes().is_empty() }
 }
 
 impl PushBytesBuf {
     /// Returns the number of bytes in buffer.
-    pub fn len(&self) -> usize {
-        self.inner().len()
-    }
+    pub fn len(&self) -> usize { self.inner().len() }
 
     /// Returns the number of bytes the buffer can contain without reallocating.
-    pub fn capacity(&self) -> usize {
-        self.inner().capacity()
-    }
+    pub fn capacity(&self) -> usize { self.inner().capacity() }
 
     /// Returns true if the buffer contains zero bytes.
-    pub fn is_empty(&self) -> bool {
-        self.inner().is_empty()
-    }
+    pub fn is_empty(&self) -> bool { self.inner().is_empty() }
 }
 
 impl AsRef<[u8]> for PushBytes {
-    fn as_ref(&self) -> &[u8] {
-        self.as_bytes()
-    }
+    fn as_ref(&self) -> &[u8] { self.as_bytes() }
 }
 
 impl AsMut<[u8]> for PushBytes {
-    fn as_mut(&mut self) -> &mut [u8] {
-        self.as_mut_bytes()
-    }
+    fn as_mut(&mut self) -> &mut [u8] { self.as_mut_bytes() }
 }
 
 impl Deref for PushBytesBuf {
     type Target = PushBytes;
 
-    fn deref(&self) -> &Self::Target {
-        self.as_push_bytes()
-    }
+    fn deref(&self) -> &Self::Target { self.as_push_bytes() }
 }
 
 impl DerefMut for PushBytesBuf {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        self.as_mut_push_bytes()
-    }
+    fn deref_mut(&mut self) -> &mut Self::Target { self.as_mut_push_bytes() }
 }
 
 impl AsRef<PushBytes> for PushBytes {
-    fn as_ref(&self) -> &PushBytes {
-        self
-    }
+    fn as_ref(&self) -> &PushBytes { self }
 }
 
 impl AsMut<PushBytes> for PushBytes {
-    fn as_mut(&mut self) -> &mut PushBytes {
-        self
-    }
+    fn as_mut(&mut self) -> &mut PushBytes { self }
 }
 
 impl AsRef<PushBytes> for PushBytesBuf {
-    fn as_ref(&self) -> &PushBytes {
-        self.as_push_bytes()
-    }
+    fn as_ref(&self) -> &PushBytes { self.as_push_bytes() }
 }
 
 impl AsMut<PushBytes> for PushBytesBuf {
-    fn as_mut(&mut self) -> &mut PushBytes {
-        self.as_mut_push_bytes()
-    }
+    fn as_mut(&mut self) -> &mut PushBytes { self.as_mut_push_bytes() }
 }
 
 impl Borrow<PushBytes> for PushBytesBuf {
-    fn borrow(&self) -> &PushBytes {
-        self.as_push_bytes()
-    }
+    fn borrow(&self) -> &PushBytes { self.as_push_bytes() }
 }
 
 impl BorrowMut<PushBytes> for PushBytesBuf {
-    fn borrow_mut(&mut self) -> &mut PushBytes {
-        self.as_mut_push_bytes()
-    }
+    fn borrow_mut(&mut self) -> &mut PushBytes { self.as_mut_push_bytes() }
 }
 
 /// Reports information about failed conversion into `PushBytes`.
@@ -403,9 +357,7 @@ pub trait PushBytesErrorReport {
 
 impl PushBytesErrorReport for core::convert::Infallible {
     #[inline]
-    fn input_len(&self) -> usize {
-        match *self {}
-    }
+    fn input_len(&self) -> usize { match *self {} }
 }
 
 pub use error::*;
@@ -423,15 +375,11 @@ mod error {
 
     impl super::PushBytesErrorReport for PushBytesError {
         #[inline]
-        fn input_len(&self) -> usize {
-            match self.never {}
-        }
+        fn input_len(&self) -> usize { match self.never {} }
     }
 
     impl fmt::Display for PushBytesError {
-        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            match self.never {}
-        }
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { match self.never {} }
     }
 }
 
@@ -445,19 +393,21 @@ mod error {
     #[derive(Debug, Clone)]
     pub struct PushBytesError {
         /// How long the input was.
-        pub(super) len: usize
+        pub(super) len: usize,
     }
 
     impl super::PushBytesErrorReport for PushBytesError {
         #[inline]
-        fn input_len(&self) -> usize {
-            self.len
-        }
+        fn input_len(&self) -> usize { self.len }
     }
 
     impl fmt::Display for PushBytesError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            write!(f, "attempt to prepare {} bytes to be pushed into script but the limit is 2^32-1", self.len)
+            write!(
+                f,
+                "attempt to prepare {} bytes to be pushed into script but the limit is 2^32-1",
+                self.len
+            )
         }
     }
 }

@@ -79,28 +79,30 @@
 
 // Coding conventions
 #![warn(missing_docs)]
-
 // Experimental features we need.
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![cfg_attr(bench, feature(test))]
-
 // In general, rust is absolutely horrid at supporting users doing things like,
 // for example, compiling Rust code for real environments. Disable useless lints
 // that don't do anything but annoy us and cant actually ever be resolved.
 #![allow(bare_trait_objects)]
 #![allow(ellipsis_inclusive_range_patterns)]
-
 #![cfg_attr(all(not(test), not(feature = "std")), no_std)]
-
 // Instead of littering the codebase for non-fuzzing code just globally allow.
 #![cfg_attr(fuzzing, allow(dead_code, unused_imports))]
 
-#[cfg(bench)] extern crate test;
-#[cfg(any(test, feature = "std"))] extern crate core;
-#[cfg(feature = "core2")] extern crate core2;
-#[cfg(all(feature = "alloc", not(feature = "std")))] extern crate alloc;
-#[cfg(feature = "serde")] pub extern crate serde;
-#[cfg(all(test,feature = "serde"))] extern crate serde_test;
+#[cfg(all(feature = "alloc", not(feature = "std")))]
+extern crate alloc;
+#[cfg(any(test, feature = "std"))]
+extern crate core;
+#[cfg(feature = "core2")]
+extern crate core2;
+#[cfg(feature = "serde")]
+pub extern crate serde;
+#[cfg(all(test, feature = "serde"))]
+extern crate serde_test;
+#[cfg(bench)]
+extern crate test;
 
 #[doc(hidden)]
 pub mod _export {
@@ -114,27 +116,30 @@ pub mod _export {
 extern crate actual_schemars as schemars;
 
 mod internal_macros;
-#[macro_use] mod util;
-#[macro_use] pub mod serde_macros;
-#[cfg(any(feature = "std", feature = "core2"))] mod impls;
+#[macro_use]
+mod util;
+#[macro_use]
+pub mod serde_macros;
+pub mod cmp;
 pub mod error;
-pub mod hex;
 pub mod hash160;
+pub mod hex;
 pub mod hmac;
+#[cfg(any(feature = "std", feature = "core2"))]
+mod impls;
 pub mod ripemd160;
 pub mod sha1;
 pub mod sha256;
 pub mod sha256d;
 pub mod sha256t;
-pub mod siphash24;
 pub mod sha512;
 pub mod sha512_256;
-pub mod cmp;
+pub mod siphash24;
 
 use core::{borrow, fmt, hash, ops};
 
-pub use hmac::{Hmac, HmacEngine};
 pub use error::Error;
+pub use hmac::{Hmac, HmacEngine};
 
 /// A hashing engine which bytes can be serialized into.
 pub trait HashEngine: Clone + Default {
@@ -156,14 +161,23 @@ pub trait HashEngine: Clone + Default {
 }
 
 /// Trait which applies to hashes of all types.
-pub trait Hash: Copy + Clone + PartialEq + Eq + PartialOrd + Ord +
-    hash::Hash + fmt::Debug + fmt::Display + fmt::LowerHex +
-    ops::Index<ops::RangeFull, Output = [u8]> +
-    ops::Index<ops::RangeFrom<usize>, Output = [u8]> +
-    ops::Index<ops::RangeTo<usize>, Output = [u8]> +
-    ops::Index<ops::Range<usize>, Output = [u8]> +
-    ops::Index<usize, Output = u8> +
-    borrow::Borrow<[u8]>
+pub trait Hash:
+    Copy
+    + Clone
+    + PartialEq
+    + Eq
+    + PartialOrd
+    + Ord
+    + hash::Hash
+    + fmt::Debug
+    + fmt::Display
+    + fmt::LowerHex
+    + ops::Index<ops::RangeFull, Output = [u8]>
+    + ops::Index<ops::RangeFrom<usize>, Output = [u8]>
+    + ops::Index<ops::RangeTo<usize>, Output = [u8]>
+    + ops::Index<ops::Range<usize>, Output = [u8]>
+    + ops::Index<usize, Output = u8>
+    + borrow::Borrow<[u8]>
 {
     /// A hashing engine which bytes can be serialized into. It is expected
     /// to implement the `io::Write` trait, and to never return errors under
@@ -174,9 +188,7 @@ pub trait Hash: Copy + Clone + PartialEq + Eq + PartialOrd + Ord +
     type Bytes: hex::FromHex + Copy;
 
     /// Constructs a new engine.
-    fn engine() -> Self::Engine {
-        Self::Engine::default()
-    }
+    fn engine() -> Self::Engine { Self::Engine::default() }
 
     /// Produces a hash from the current state of a given engine.
     fn from_engine(e: Self::Engine) -> Self;
@@ -218,7 +230,7 @@ pub trait Hash: Copy + Clone + PartialEq + Eq + PartialOrd + Ord +
 
 #[cfg(test)]
 mod tests {
-    use crate::{Hash, sha256d};
+    use crate::{sha256d, Hash};
 
     hash_newtype! {
         /// A test newtype

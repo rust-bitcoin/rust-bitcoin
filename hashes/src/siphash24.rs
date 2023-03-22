@@ -20,9 +20,9 @@
 //! SipHash 2-4 implementation.
 //!
 
-use core::{cmp, mem, ptr, str};
 use core::ops::Index;
 use core::slice::SliceIndex;
+use core::{cmp, mem, ptr, str};
 
 use crate::{Error, Hash as _, HashEngine as _};
 
@@ -34,16 +34,13 @@ crate::internal_macros::hash_type! {
 }
 
 #[cfg(not(fuzzing))]
-fn from_engine(e: HashEngine) -> Hash {
-    Hash::from_u64(Hash::from_engine_to_u64(e))
-}
+fn from_engine(e: HashEngine) -> Hash { Hash::from_u64(Hash::from_engine_to_u64(e)) }
 
 #[cfg(fuzzing)]
 fn from_engine(e: HashEngine) -> Hash {
     let state = e.midstate();
     Hash::from_u64(state.v0 ^ state.v1 ^ state.v2 ^ state.v3)
 }
-
 
 macro_rules! compress {
     ($state:expr) => {{
@@ -128,14 +125,10 @@ impl HashEngine {
     }
 
     /// Creates a new SipHash24 engine.
-    pub fn new() -> HashEngine {
-        HashEngine::with_keys(0, 0)
-    }
+    pub fn new() -> HashEngine { HashEngine::with_keys(0, 0) }
 
     /// Retrieves the keys of this engine.
-    pub fn keys(&self) -> (u64, u64) {
-        (self.k0, self.k1)
-    }
+    pub fn keys(&self) -> (u64, u64) { (self.k0, self.k1) }
 
     #[inline]
     fn c_rounds(state: &mut State) {
@@ -153,17 +146,13 @@ impl HashEngine {
 }
 
 impl Default for HashEngine {
-    fn default() -> Self {
-        HashEngine::new()
-    }
+    fn default() -> Self { HashEngine::new() }
 }
 
 impl crate::HashEngine for HashEngine {
     type MidState = State;
 
-    fn midstate(&self) -> State {
-        self.state.clone()
-    }
+    fn midstate(&self) -> State { self.state.clone() }
 
     const BLOCK_SIZE: usize = 8;
 
@@ -207,10 +196,7 @@ impl crate::HashEngine for HashEngine {
         self.ntail = left;
     }
 
-    fn n_bytes_hashed(&self) -> usize {
-        self.length
-    }
-
+    fn n_bytes_hashed(&self) -> usize { self.length }
 }
 
 impl Hash {
@@ -246,14 +232,10 @@ impl Hash {
     }
 
     /// Returns the (little endian) 64-bit integer representation of the hash value.
-    pub fn as_u64(&self) -> u64 {
-        u64::from_le_bytes(self.0)
-    }
+    pub fn as_u64(&self) -> u64 { u64::from_le_bytes(self.0) }
 
     /// Creates a hash from its (little endian) 64-bit integer representation.
-    pub fn from_u64(hash: u64) -> Hash {
-        Hash(hash.to_le_bytes())
-    }
+    pub fn from_u64(hash: u64) -> Hash { Hash(hash.to_le_bytes()) }
 }
 
 /// Load an u64 using up to 7 bytes of a byte slice.
@@ -286,6 +268,7 @@ mod tests {
 
     #[test]
     fn test_siphash_2_4() {
+        #[rustfmt::skip]
         let vecs: [[u8; 8]; 64] = [
             [0x31, 0x0e, 0x0e, 0xdd, 0x47, 0xdb, 0x6f, 0x72],
             [0xfd, 0x67, 0xdc, 0x93, 0xc5, 0x39, 0xf8, 0x74],
@@ -375,7 +358,7 @@ mod tests {
 mod benches {
     use test::Bencher;
 
-    use crate::{Hash, HashEngine, siphash24};
+    use crate::{siphash24, Hash, HashEngine};
 
     #[bench]
     pub fn siphash24_1ki(bh: &mut Bencher) {

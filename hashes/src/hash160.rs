@@ -20,11 +20,11 @@
 //! HASH160 (SHA256 then RIPEMD160) implementation.
 //!
 
-use core::str;
 use core::ops::Index;
 use core::slice::SliceIndex;
+use core::str;
 
-use crate::{Error, ripemd160, sha256};
+use crate::{ripemd160, sha256, Error};
 
 crate::internal_macros::hash_type! {
     160,
@@ -61,6 +61,7 @@ mod tests {
             output_str: &'static str,
         }
 
+        #[rustfmt::skip]
         let tests = vec![
             // Uncompressed pubkey obtained from Bitcoin key; data from validateaddress
             Test {
@@ -104,9 +105,11 @@ mod tests {
     #[cfg(feature = "serde")]
     #[test]
     fn ripemd_serde() {
-        use serde_test::{Configure, Token, assert_tokens};
+        use serde_test::{assert_tokens, Configure, Token};
+
         use crate::{hash160, Hash};
 
+        #[rustfmt::skip]
         static HASH_BYTES: [u8; 20] = [
             0x13, 0x20, 0x72, 0xdf,
             0x69, 0x09, 0x33, 0x83,
@@ -125,13 +128,13 @@ mod tests {
 mod benches {
     use test::Bencher;
 
-    use crate::{Hash, HashEngine, hash160};
+    use crate::{hash160, Hash, HashEngine};
 
     #[bench]
     pub fn hash160_10(bh: &mut Bencher) {
         let mut engine = hash160::Hash::engine();
         let bytes = [1u8; 10];
-        bh.iter( || {
+        bh.iter(|| {
             engine.input(&bytes);
         });
         bh.bytes = bytes.len() as u64;
@@ -141,7 +144,7 @@ mod benches {
     pub fn hash160_1k(bh: &mut Bencher) {
         let mut engine = hash160::Hash::engine();
         let bytes = [1u8; 1024];
-        bh.iter( || {
+        bh.iter(|| {
             engine.input(&bytes);
         });
         bh.bytes = bytes.len() as u64;
@@ -151,7 +154,7 @@ mod benches {
     pub fn hash160_64k(bh: &mut Bencher) {
         let mut engine = hash160::Hash::engine();
         let bytes = [1u8; 65536];
-        bh.iter( || {
+        bh.iter(|| {
             engine.input(&bytes);
         });
         bh.bytes = bytes.len() as u64;

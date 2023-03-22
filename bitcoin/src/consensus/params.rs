@@ -83,7 +83,7 @@ impl Params {
             },
             Network::Signet => Params {
                 network: Network::Signet,
-                bip16_time: 1333238400,                 // Apr 1 2012
+                bip16_time: 1333238400, // Apr 1 2012
                 bip34_height: 1,
                 bip65_height: 1,
                 bip66_height: 1,

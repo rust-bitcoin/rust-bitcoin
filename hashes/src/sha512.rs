@@ -20,10 +20,10 @@
 //! SHA512 implementation.
 //!
 
-use core::{cmp, hash, str};
 use core::convert::TryInto;
 use core::ops::Index;
 use core::slice::SliceIndex;
+use core::{cmp, hash, str};
 
 use crate::{Error, HashEngine as _};
 
@@ -40,6 +40,7 @@ pub struct HashEngine {
 }
 
 impl Default for HashEngine {
+    #[rustfmt::skip]
     fn default() -> Self {
         HashEngine {
             h: [
@@ -73,9 +74,7 @@ impl crate::HashEngine for HashEngine {
 
     const BLOCK_SIZE: usize = 128;
 
-    fn n_bytes_hashed(&self) -> usize {
-        self.length
-    }
+    fn n_bytes_hashed(&self) -> usize { self.length }
 
     engine_input_impl!();
 }
@@ -84,18 +83,17 @@ impl crate::HashEngine for HashEngine {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(transparent)]
 pub struct Hash(
-    #[cfg_attr(feature = "schemars", schemars(schema_with = "crate::util::json_hex_string::len_64"))]
-    [u8; 64]
+    #[cfg_attr(
+        feature = "schemars",
+        schemars(schema_with = "crate::util::json_hex_string::len_64")
+    )]
+    [u8; 64],
 );
 
 impl Hash {
-    fn internal_new(arr: [u8; 64]) -> Self {
-        Hash(arr)
-    }
+    fn internal_new(arr: [u8; 64]) -> Self { Hash(arr) }
 
-    fn internal_engine() -> HashEngine {
-        Default::default()
-    }
+    fn internal_engine() -> HashEngine { Default::default() }
 }
 
 impl Copy for Hash {}
@@ -109,35 +107,25 @@ impl Clone for Hash {
 }
 
 impl PartialEq for Hash {
-    fn eq(&self, other: &Hash) -> bool {
-        self.0[..] == other.0[..]
-    }
+    fn eq(&self, other: &Hash) -> bool { self.0[..] == other.0[..] }
 }
 
 impl Eq for Hash {}
 
 impl Default for Hash {
-    fn default() -> Hash {
-        Hash([0; 64])
-    }
+    fn default() -> Hash { Hash([0; 64]) }
 }
 
 impl PartialOrd for Hash {
-    fn partial_cmp(&self, other: &Hash) -> Option<cmp::Ordering> {
-        self.0.partial_cmp(&other.0)
-    }
+    fn partial_cmp(&self, other: &Hash) -> Option<cmp::Ordering> { self.0.partial_cmp(&other.0) }
 }
 
 impl Ord for Hash {
-    fn cmp(&self, other: &Hash) -> cmp::Ordering {
-        self.0.cmp(&other.0)
-    }
+    fn cmp(&self, other: &Hash) -> cmp::Ordering { self.0.cmp(&other.0) }
 }
 
 impl hash::Hash for Hash {
-    fn hash<H: hash::Hasher>(&self, state: &mut H) {
-        self.0.hash(state)
-    }
+    fn hash<H: hash::Hasher>(&self, state: &mut H) { self.0.hash(state) }
 }
 
 #[cfg(not(fuzzing))]
@@ -319,6 +307,7 @@ mod tests {
             output_str: &'static str,
         }
 
+        #[rustfmt::skip]
         let tests = vec![
             // Test vectors computed with `sha512sum`
             Test {
@@ -386,9 +375,11 @@ mod tests {
     #[cfg(feature = "serde")]
     #[test]
     fn sha512_serde() {
-        use serde_test::{Configure, Token, assert_tokens};
+        use serde_test::{assert_tokens, Configure, Token};
+
         use crate::{sha512, Hash};
 
+        #[rustfmt::skip]
         static HASH_BYTES: [u8; 64] = [
             0x8b, 0x41, 0xe1, 0xb7, 0x8a, 0xd1, 0x15, 0x21,
             0x11, 0x3c, 0x52, 0xff, 0x18, 0x2a, 0x1b, 0x8e,
@@ -406,7 +397,7 @@ mod tests {
             &hash.readable(),
             &[Token::Str(
                 "8b41e1b78ad11521113c52ff182a1b8e0a195754aa527fcd00a411620b46f20f\
-                 fffb8088ccf85497121ad4499e0845b876f6dd6640088a2f0b2d8a600bdf4c0c"
+                 fffb8088ccf85497121ad4499e0845b876f6dd6640088a2f0b2d8a600bdf4c0c",
             )],
         );
     }
@@ -416,13 +407,13 @@ mod tests {
 mod benches {
     use test::Bencher;
 
-    use crate::{Hash, HashEngine, sha512};
+    use crate::{sha512, Hash, HashEngine};
 
     #[bench]
     pub fn sha512_10(bh: &mut Bencher) {
         let mut engine = sha512::Hash::engine();
         let bytes = [1u8; 10];
-        bh.iter( || {
+        bh.iter(|| {
             engine.input(&bytes);
         });
         bh.bytes = bytes.len() as u64;
@@ -432,7 +423,7 @@ mod benches {
     pub fn sha512_1k(bh: &mut Bencher) {
         let mut engine = sha512::Hash::engine();
         let bytes = [1u8; 1024];
-        bh.iter( || {
+        bh.iter(|| {
             engine.input(&bytes);
         });
         bh.bytes = bytes.len() as u64;
@@ -442,10 +433,9 @@ mod benches {
     pub fn sha512_64k(bh: &mut Bencher) {
         let mut engine = sha512::Hash::engine();
         let bytes = [1u8; 65536];
-        bh.iter( || {
+        bh.iter(|| {
             engine.input(&bytes);
         });
         bh.bytes = bytes.len() as u64;
     }
-
 }

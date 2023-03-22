@@ -24,11 +24,12 @@
 //! produces an entirely different hash compared to sha512. More information at
 //! <https://eprint.iacr.org/2010/548.pdf>.
 
-use core::str;
 use core::ops::Index;
 use core::slice::SliceIndex;
+use core::str;
 
-use crate::{sha512, sha512::BLOCK_SIZE, Error};
+use crate::sha512::BLOCK_SIZE;
+use crate::{sha512, Error};
 
 /// Engine to compute SHA512/256 hash function.
 ///
@@ -40,6 +41,7 @@ use crate::{sha512, sha512::BLOCK_SIZE, Error};
 pub struct HashEngine(sha512::HashEngine);
 
 impl Default for HashEngine {
+    #[rustfmt::skip]
     fn default() -> Self {
         HashEngine(sha512::HashEngine {
             h: [
@@ -55,19 +57,13 @@ impl Default for HashEngine {
 impl crate::HashEngine for HashEngine {
     type MidState = [u8; 64];
 
-    fn midstate(&self) -> [u8; 64] {
-        self.0.midstate()
-    }
+    fn midstate(&self) -> [u8; 64] { self.0.midstate() }
 
     const BLOCK_SIZE: usize = sha512::BLOCK_SIZE;
 
-    fn n_bytes_hashed(&self) -> usize {
-        self.0.length
-    }
+    fn n_bytes_hashed(&self) -> usize { self.0.length }
 
-    fn input(&mut self, inp: &[u8]) {
-        self.0.input(inp);
-    }
+    fn input(&mut self, inp: &[u8]) { self.0.input(inp); }
 }
 
 crate::internal_macros::hash_type! {
@@ -97,6 +93,7 @@ mod tests {
             output_str: &'static str,
         }
 
+        #[rustfmt::skip]
         let tests = vec![
             // Examples from go sha512/256 tests.
             Test {
@@ -174,13 +171,13 @@ mod tests {
 mod benches {
     use test::Bencher;
 
-    use crate::{Hash, HashEngine, sha512_256};
+    use crate::{sha512_256, Hash, HashEngine};
 
     #[bench]
     pub fn sha512_256_10(bh: &mut Bencher) {
         let mut engine = sha512_256::Hash::engine();
         let bytes = [1u8; 10];
-        bh.iter( || {
+        bh.iter(|| {
             engine.input(&bytes);
         });
         bh.bytes = bytes.len() as u64;
@@ -190,7 +187,7 @@ mod benches {
     pub fn sha512_256_1k(bh: &mut Bencher) {
         let mut engine = sha512_256::Hash::engine();
         let bytes = [1u8; 1024];
-        bh.iter( || {
+        bh.iter(|| {
             engine.input(&bytes);
         });
         bh.bytes = bytes.len() as u64;
@@ -200,10 +197,9 @@ mod benches {
     pub fn sha512_256_64k(bh: &mut Bencher) {
         let mut engine = sha512_256::Hash::engine();
         let bytes = [1u8; 65536];
-        bh.iter( || {
+        bh.iter(|| {
             engine.input(&bytes);
         });
         bh.bytes = bytes.len() as u64;
     }
-
 }

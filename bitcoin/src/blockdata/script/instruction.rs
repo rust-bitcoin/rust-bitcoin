@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: CC0-1.0
 
 use core::convert::TryInto;
+
 use crate::blockdata::opcodes;
-use crate::blockdata::script::{read_uint_iter, Error, Script, ScriptBuf, UintError, PushBytes};
+use crate::blockdata::script::{read_uint_iter, Error, PushBytes, Script, ScriptBuf, UintError};
 
 /// A "parsed opcode" which allows iterating over a [`Script`] in a more sensible way.
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
@@ -51,9 +52,7 @@ impl<'a> Instructions<'a> {
     /// Views the remaining script as a slice.
     ///
     /// This is analogous to what [`core::str::Chars::as_str`] does.
-    pub fn as_script(&self) -> &'a Script {
-        Script::from_bytes(self.data.as_slice())
-    }
+    pub fn as_script(&self) -> &'a Script { Script::from_bytes(self.data.as_slice()) }
 
     /// Sets the iterator to end so that it won't iterate any longer.
     pub(super) fn kill(&mut self) {
@@ -80,7 +79,11 @@ impl<'a> Instructions<'a> {
         }
     }
 
-    pub(super) fn next_push_data_len(&mut self, len: PushDataLenLen, min_push_len: usize) -> Option<Result<Instruction<'a>, Error>> {
+    pub(super) fn next_push_data_len(
+        &mut self,
+        len: PushDataLenLen,
+        min_push_len: usize,
+    ) -> Option<Result<Instruction<'a>, Error>> {
         let n = match read_uint_iter(&mut self.data, len as usize) {
             Ok(n) => n,
             // We do exhaustive matching to not forget to handle new variants if we extend
@@ -90,7 +93,7 @@ impl<'a> Instructions<'a> {
             Err(UintError::EarlyEndOfScript) | Err(UintError::NumericOverflow) => {
                 self.kill();
                 return Some(Err(Error::EarlyEndOfScript));
-            },
+            }
         };
         if self.enforce_minimal && n < min_push_len {
             self.kill();
@@ -129,33 +132,28 @@ impl<'a> Iterator for Instructions<'a> {
 
                 let op_byte = self.data.as_slice().first();
                 match (self.enforce_minimal, op_byte, n) {
-                    (true, Some(&op_byte), 1) if op_byte == 0x81 || (op_byte > 0 && op_byte <= 16) => {
+                    (true, Some(&op_byte), 1)
+                        if op_byte == 0x81 || (op_byte > 0 && op_byte <= 16) =>
+                    {
                         self.kill();
                         Some(Err(Error::NonMinimalPush))
-                    },
+                    }
                     (_, None, 0) => {
                         // the iterator is already empty, may as well use this information to avoid
                         // whole take_slice_or_kill function
                         Some(Ok(Instruction::PushBytes(PushBytes::empty())))
-                    },
-                    _ => {
-                        Some(self.take_slice_or_kill(n).map(Instruction::PushBytes))
                     }
+                    _ => Some(self.take_slice_or_kill(n).map(Instruction::PushBytes)),
                 }
             }
-            opcodes::Class::Ordinary(opcodes::Ordinary::OP_PUSHDATA1) => {
-                self.next_push_data_len(PushDataLenLen::One, 76)
-            }
-            opcodes::Class::Ordinary(opcodes::Ordinary::OP_PUSHDATA2) => {
-                self.next_push_data_len(PushDataLenLen::Two, 0x100)
-            }
-            opcodes::Class::Ordinary(opcodes::Ordinary::OP_PUSHDATA4) => {
-                self.next_push_data_len(PushDataLenLen::Four, 0x10000)
-            }
+            opcodes::Class::Ordinary(opcodes::Ordinary::OP_PUSHDATA1) =>
+                self.next_push_data_len(PushDataLenLen::One, 76),
+            opcodes::Class::Ordinary(opcodes::Ordinary::OP_PUSHDATA2) =>
+                self.next_push_data_len(PushDataLenLen::Two, 0x100),
+            opcodes::Class::Ordinary(opcodes::Ordinary::OP_PUSHDATA4) =>
+                self.next_push_data_len(PushDataLenLen::Four, 0x10000),
             // Everything else we can push right through
-            _ => {
-                Some(Ok(Instruction::Op(opcodes::All::from(byte))))
-            }
+            _ => Some(Ok(Instruction::Op(opcodes::All::from(byte)))),
         }
     }
 
@@ -188,27 +186,23 @@ impl<'a> InstructionIndices<'a> {
     ///
     /// This is analogous to what [`core::str::Chars::as_str`] does.
     #[inline]
-    pub fn as_script(&self) -> &'a Script {
-        self.instructions.as_script()
-    }
+    pub fn as_script(&self) -> &'a Script { self.instructions.as_script() }
 
     /// Creates `Self` setting `pos` to 0.
     pub(super) fn from_instructions(instructions: Instructions<'a>) -> Self {
-        InstructionIndices {
-            instructions,
-            pos: 0,
-        }
+        InstructionIndices { instructions, pos: 0 }
     }
 
-    pub(super) fn remaining_bytes(&self) -> usize {
-        self.instructions.as_script().len()
-    }
+    pub(super) fn remaining_bytes(&self) -> usize { self.instructions.as_script().len() }
 
     /// Modifies the iterator using `next_fn` returning the next item.
     ///
     /// This generically computes the new position and maps the value to be returned from iterator
     /// method.
-    pub(super) fn next_with<F: FnOnce(&mut Self) -> Option<Result<Instruction<'a>, Error>>>(&mut self, next_fn: F) -> Option<<Self as Iterator>::Item> {
+    pub(super) fn next_with<F: FnOnce(&mut Self) -> Option<Result<Instruction<'a>, Error>>>(
+        &mut self,
+        next_fn: F,
+    ) -> Option<<Self as Iterator>::Item> {
         let prev_remaining = self.remaining_bytes();
         let prev_pos = self.pos;
         let instruction = next_fn(self)?;
@@ -224,14 +218,10 @@ impl<'a> Iterator for InstructionIndices<'a> {
     /// The `usize` in the tuple represents index at which the returned `Instruction` is located.
     type Item = Result<(usize, Instruction<'a>), Error>;
 
-    fn next(&mut self) -> Option<Self::Item> {
-        self.next_with(|this| this.instructions.next())
-    }
+    fn next(&mut self) -> Option<Self::Item> { self.next_with(|this| this.instructions.next()) }
 
     #[inline]
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        self.instructions.size_hint()
-    }
+    fn size_hint(&self) -> (usize, Option<usize>) { self.instructions.size_hint() }
 
     // the override avoids computing pos multiple times
     fn nth(&mut self, n: usize) -> Option<Self::Item> {

@@ -9,12 +9,15 @@
 
 #![allow(non_camel_case_types)]
 
-#[cfg(feature = "serde")] use serde;
+use core::convert::From;
+use core::fmt;
 
-#[cfg(feature = "serde")] use crate::prelude::*;
-
-use core::{fmt, convert::From};
 use bitcoin_internals::debug_from_display;
+#[cfg(feature = "serde")]
+use serde;
+
+#[cfg(feature = "serde")]
+use crate::prelude::*;
 
 /// A script Opcode.
 ///
@@ -351,6 +354,7 @@ impl All {
             (OP_VERIF, _) | (OP_VERNOTIF, _) | (OP_INVALIDOPCODE, _) => Class::IllegalOp,
 
             // 15 opcodes illegal in Legacy context
+            #[rustfmt::skip]
             (OP_CAT, ctx) | (OP_SUBSTR, ctx)
             | (OP_LEFT, ctx) | (OP_RIGHT, ctx)
             | (OP_INVERT, ctx)
@@ -361,13 +365,15 @@ impl All {
 
             // 87 opcodes of SuccessOp class only in TapScript context
             (op, ClassifyContext::TapScript)
-            if op.code == 80 || op.code == 98 ||
-                (op.code >= 126 && op.code <= 129) ||
-                (op.code >= 131 && op.code <= 134) ||
-                (op.code >= 137 && op.code <= 138) ||
-                (op.code >= 141 && op.code <= 142) ||
-                (op.code >= 149 && op.code <= 153) ||
-                (op.code >= 187 && op.code <= 254) => Class::SuccessOp,
+                if op.code == 80
+                    || op.code == 98
+                    || (op.code >= 126 && op.code <= 129)
+                    || (op.code >= 131 && op.code <= 134)
+                    || (op.code >= 137 && op.code <= 138)
+                    || (op.code >= 141 && op.code <= 142)
+                    || (op.code >= 149 && op.code <= 153)
+                    || (op.code >= 187 && op.code <= 254) =>
+                Class::SuccessOp,
 
             // 11 opcodes of NoOp class
             (OP_NOP, _) => Class::NoOp,
@@ -377,9 +383,9 @@ impl All {
             (OP_RETURN, _) => Class::ReturnOp,
 
             // 4 opcodes operating equally to `OP_RETURN` only in Legacy context
-            (OP_RESERVED, ctx)
-            | (OP_RESERVED1, ctx) | (OP_RESERVED2, ctx)
-            | (OP_VER, ctx) if ctx == ClassifyContext::Legacy => Class::ReturnOp,
+            (OP_RESERVED, ctx) | (OP_RESERVED1, ctx) | (OP_RESERVED2, ctx) | (OP_VER, ctx)
+                if ctx == ClassifyContext::Legacy =>
+                Class::ReturnOp,
 
             // 71 opcodes operating equally to `OP_RETURN` only in Legacy context
             (op, ClassifyContext::Legacy) if op.code >= OP_CHECKSIGADD.code => Class::ReturnOp,
@@ -392,9 +398,8 @@ impl All {
             (OP_PUSHNUM_NEG1, _) => Class::PushNum(-1),
 
             // 16 opcodes of PushNum class
-            (op, _) if op.code >= OP_PUSHNUM_1.code && op.code <= OP_PUSHNUM_16.code => {
-                Class::PushNum(1 + self.code as i32 - OP_PUSHNUM_1.code as i32)
-            },
+            (op, _) if op.code >= OP_PUSHNUM_1.code && op.code <= OP_PUSHNUM_16.code =>
+                Class::PushNum(1 + self.code as i32 - OP_PUSHNUM_1.code as i32),
 
             // 76 opcodes of PushBytes class
             (op, _) if op.code <= OP_PUSHBYTES_75.code => Class::PushBytes(self.code as u32),
@@ -406,16 +411,12 @@ impl All {
 
     /// Encodes [`All`] as a byte.
     #[inline]
-    pub const fn to_u8(self) -> u8 {
-        self.code
-    }
+    pub const fn to_u8(self) -> u8 { self.code }
 }
 
 impl From<u8> for All {
     #[inline]
-    fn from(b: u8) -> All {
-        All {code: b}
-    }
+    fn from(b: u8) -> All { All { code: b } }
 }
 
 debug_from_display!(All);
@@ -458,7 +459,7 @@ pub enum Class {
     /// Does nothing.
     NoOp,
     /// Any opcode not covered above.
-    Ordinary(Ordinary)
+    Ordinary(Ordinary),
 }
 
 macro_rules! ordinary_opcode {
@@ -526,9 +527,7 @@ ordinary_opcode! {
 impl Ordinary {
     /// Encodes [`All`] as a byte.
     #[inline]
-    pub fn to_u8(self) -> u8 {
-        self as u8
-    }
+    pub fn to_u8(self) -> u8 { self as u8 }
 }
 
 #[cfg(test)]
@@ -546,29 +545,38 @@ mod tests {
             assert_eq!(s1, s2);
             assert_eq!(s1, stringify!($op));
             assert!($unique.insert(s1));
-        }
+        };
     }
 
     #[test]
     fn formatting_works() {
-            let op = all::OP_NOP;
-            let s = format!("{:>10}", op);
-            assert_eq!(s, "    OP_NOP");
+        let op = all::OP_NOP;
+        let s = format!("{:>10}", op);
+        assert_eq!(s, "    OP_NOP");
     }
 
     #[test]
     fn classify_test() {
         let op174 = OP_CHECKMULTISIG;
-        assert_eq!(op174.classify(ClassifyContext::Legacy), Class::Ordinary(Ordinary::OP_CHECKMULTISIG));
+        assert_eq!(
+            op174.classify(ClassifyContext::Legacy),
+            Class::Ordinary(Ordinary::OP_CHECKMULTISIG)
+        );
         assert_eq!(op174.classify(ClassifyContext::TapScript), Class::ReturnOp);
 
         let op175 = OP_CHECKMULTISIGVERIFY;
-        assert_eq!(op175.classify(ClassifyContext::Legacy),  Class::Ordinary(Ordinary::OP_CHECKMULTISIGVERIFY));
+        assert_eq!(
+            op175.classify(ClassifyContext::Legacy),
+            Class::Ordinary(Ordinary::OP_CHECKMULTISIGVERIFY)
+        );
         assert_eq!(op175.classify(ClassifyContext::TapScript), Class::ReturnOp);
 
         let op186 = OP_CHECKSIGADD;
         assert_eq!(op186.classify(ClassifyContext::Legacy), Class::ReturnOp);
-        assert_eq!(op186.classify(ClassifyContext::TapScript), Class::Ordinary(Ordinary::OP_CHECKSIGADD));
+        assert_eq!(
+            op186.classify(ClassifyContext::TapScript),
+            Class::Ordinary(Ordinary::OP_CHECKSIGADD)
+        );
 
         let op187 = OP_RETURN_187;
         assert_eq!(op187.classify(ClassifyContext::Legacy), Class::ReturnOp);

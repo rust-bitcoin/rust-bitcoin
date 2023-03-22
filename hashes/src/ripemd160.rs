@@ -20,10 +20,10 @@
 //! RIPEMD160 implementation.
 //!
 
-use core::{cmp, str};
 use core::convert::TryInto;
 use core::ops::Index;
 use core::slice::SliceIndex;
+use core::{cmp, str};
 
 use crate::{Error, HashEngine as _};
 
@@ -102,9 +102,7 @@ impl crate::HashEngine for HashEngine {
 
     const BLOCK_SIZE: usize = 64;
 
-    fn n_bytes_hashed(&self) -> usize {
-        self.length
-    }
+    fn n_bytes_hashed(&self) -> usize { self.length }
 
     engine_input_impl!();
 }
@@ -407,7 +405,7 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn test() {
-        use crate::{Hash, HashEngine, ripemd160};
+        use crate::{ripemd160, Hash, HashEngine};
 
         #[derive(Clone)]
         struct Test {
@@ -416,6 +414,7 @@ mod tests {
             output_str: &'static str,
         }
 
+        #[rustfmt::skip]
         let tests = vec![
             // Test messages from FIPS 180-1
             Test {
@@ -487,9 +486,11 @@ mod tests {
     #[cfg(feature = "serde")]
     #[test]
     fn ripemd_serde() {
-        use serde_test::{Configure, Token, assert_tokens};
+        use serde_test::{assert_tokens, Configure, Token};
+
         use crate::{ripemd160, Hash};
 
+        #[rustfmt::skip]
         static HASH_BYTES: [u8; 20] = [
             0x13, 0x20, 0x72, 0xdf,
             0x69, 0x09, 0x33, 0x83,
@@ -508,13 +509,13 @@ mod tests {
 mod benches {
     use test::Bencher;
 
-    use crate::{Hash, HashEngine, ripemd160};
+    use crate::{ripemd160, Hash, HashEngine};
 
     #[bench]
     pub fn ripemd160_10(bh: &mut Bencher) {
         let mut engine = ripemd160::Hash::engine();
         let bytes = [1u8; 10];
-        bh.iter( || {
+        bh.iter(|| {
             engine.input(&bytes);
         });
         bh.bytes = bytes.len() as u64;
@@ -524,7 +525,7 @@ mod benches {
     pub fn ripemd160_1k(bh: &mut Bencher) {
         let mut engine = ripemd160::Hash::engine();
         let bytes = [1u8; 1024];
-        bh.iter( || {
+        bh.iter(|| {
             engine.input(&bytes);
         });
         bh.bytes = bytes.len() as u64;
@@ -534,10 +535,9 @@ mod benches {
     pub fn ripemd160_64k(bh: &mut Bencher) {
         let mut engine = ripemd160::Hash::engine();
         let bytes = [1u8; 65536];
-        bh.iter( || {
+        bh.iter(|| {
             engine.input(&bytes);
         });
         bh.bytes = bytes.len() as u64;
     }
-
 }

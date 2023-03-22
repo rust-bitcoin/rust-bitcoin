@@ -6,11 +6,12 @@ use core::ops::Deref;
 
 use secp256k1::{Secp256k1, Verification};
 
-use crate::address::{WitnessVersion, WitnessProgram};
-use crate::blockdata::opcodes::{self, all::*};
-use crate::blockdata::script::{opcode_to_verify, Builder, Instruction, Script, PushBytes};
+use crate::address::{WitnessProgram, WitnessVersion};
+use crate::blockdata::opcodes::all::*;
+use crate::blockdata::opcodes::{self};
+use crate::blockdata::script::{opcode_to_verify, Builder, Instruction, PushBytes, Script};
+use crate::hash_types::{PubkeyHash, ScriptHash, WPubkeyHash, WScriptHash};
 use crate::hashes::hex;
-use crate::hash_types::{PubkeyHash, WPubkeyHash, ScriptHash, WScriptHash};
 use crate::key::{PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey};
 use crate::prelude::*;
 use crate::taproot::TapNodeHash;
@@ -29,14 +30,10 @@ pub struct ScriptBuf(pub(in crate::blockdata::script) Vec<u8>);
 
 impl ScriptBuf {
     /// Creates a new empty script.
-    pub fn new() -> Self {
-        ScriptBuf(Vec::new())
-    }
+    pub fn new() -> Self { ScriptBuf(Vec::new()) }
 
     /// Creates a new empty script with pre-allocated capacity.
-    pub fn with_capacity(capacity: usize) -> Self {
-        ScriptBuf(Vec::with_capacity(capacity))
-    }
+    pub fn with_capacity(capacity: usize) -> Self { ScriptBuf(Vec::with_capacity(capacity)) }
 
     /// Pre-allocates at least `additional_len` bytes if needed.
     ///
@@ -48,9 +45,7 @@ impl ScriptBuf {
     /// # Panics
     ///
     /// Panics if the new capacity exceeds `isize::MAX bytes`.
-    pub fn reserve(&mut self, additional_len: usize) {
-        self.0.reserve(additional_len);
-    }
+    pub fn reserve(&mut self, additional_len: usize) { self.0.reserve(additional_len); }
 
     /// Pre-allocates exactly `additional_len` bytes if needed.
     ///
@@ -65,31 +60,20 @@ impl ScriptBuf {
     /// # Panics
     ///
     /// Panics if the new capacity exceeds `isize::MAX bytes`.
-    pub fn reserve_exact(&mut self, additional_len: usize) {
-        self.0.reserve_exact(additional_len);
-    }
+    pub fn reserve_exact(&mut self, additional_len: usize) { self.0.reserve_exact(additional_len); }
 
     /// Returns a reference to unsized script.
-    pub fn as_script(&self) -> &Script {
-        Script::from_bytes(&self.0)
-    }
+    pub fn as_script(&self) -> &Script { Script::from_bytes(&self.0) }
 
     /// Returns a mutable reference to unsized script.
-    pub fn as_mut_script(&mut self) -> &mut Script {
-        Script::from_bytes_mut(&mut self.0)
-    }
+    pub fn as_mut_script(&mut self) -> &mut Script { Script::from_bytes_mut(&mut self.0) }
 
     /// Creates a new script builder
-    pub fn builder() -> Builder {
-      Builder::new()
-    }
+    pub fn builder() -> Builder { Builder::new() }
 
     /// Generates P2PK-type of scriptPubkey.
     pub fn new_p2pk(pubkey: &PublicKey) -> Self {
-        Builder::new()
-            .push_key(pubkey)
-            .push_opcode(OP_CHECKSIG)
-            .into_script()
+        Builder::new().push_key(pubkey).push_opcode(OP_CHECKSIG).into_script()
     }
 
     /// Generates P2PKH-type of scriptPubkey.
@@ -126,7 +110,11 @@ impl ScriptBuf {
 
     /// Generates P2TR for script spending path using an internal public key and some optional
     /// script tree merkle root.
-    pub fn new_v1_p2tr<C: Verification>(secp: &Secp256k1<C>, internal_key: UntweakedPublicKey, merkle_root: Option<TapNodeHash>) -> Self {
+    pub fn new_v1_p2tr<C: Verification>(
+        secp: &Secp256k1<C>,
+        internal_key: UntweakedPublicKey,
+        merkle_root: Option<TapNodeHash>,
+    ) -> Self {
         let (output_key, _) = internal_key.tap_tweak(secp, merkle_root);
         // output key is 32 bytes long, so it's safe to use `new_witness_program_unchecked` (Segwitv1)
         ScriptBuf::new_witness_program_unchecked(WitnessVersion::V1, output_key.serialize())
@@ -151,23 +139,20 @@ impl ScriptBuf {
     ///
     /// Convenience method used by `new_v0_p2wpkh`, `new_v0_p2wsh`, `new_v1_p2tr`, and
     /// `new_v1_p2tr_tweaked`.
-    fn new_witness_program_unchecked<T: AsRef<PushBytes>>(version: WitnessVersion, program: T) -> Self {
+    fn new_witness_program_unchecked<T: AsRef<PushBytes>>(
+        version: WitnessVersion,
+        program: T,
+    ) -> Self {
         let program = program.as_ref();
         debug_assert!(program.len() >= 2 && program.len() <= 40);
         // In segwit v0, the program must be 20 or 32 bytes long.
         debug_assert!(version != WitnessVersion::V0 || program.len() == 20 || program.len() == 32);
-        Builder::new()
-            .push_opcode(version.into())
-            .push_slice(program)
-            .into_script()
+        Builder::new().push_opcode(version.into()).push_slice(program).into_script()
     }
 
     /// Generates OP_RETURN-type of scriptPubkey for the given data.
     pub fn new_op_return<T: AsRef<PushBytes>>(data: &T) -> Self {
-        Builder::new()
-            .push_opcode(OP_RETURN)
-            .push_slice(data)
-            .into_script()
+        Builder::new().push_opcode(OP_RETURN).push_slice(data).into_script()
     }
 
     /// Creates a [`ScriptBuf`] from a hex string.
@@ -181,9 +166,7 @@ impl ScriptBuf {
     /// Converts byte vector into script.
     ///
     /// This method doesn't (re)allocate.
-    pub fn from_bytes(bytes: Vec<u8>) -> Self {
-        ScriptBuf(bytes)
-    }
+    pub fn from_bytes(bytes: Vec<u8>) -> Self { ScriptBuf(bytes) }
 
     /// Converts the script into a byte vector.
     ///
@@ -191,9 +174,7 @@ impl ScriptBuf {
     pub fn into_bytes(self) -> Vec<u8> { self.0 }
 
     /// Computes the P2SH output corresponding to this redeem script.
-    pub fn to_p2sh(&self) -> ScriptBuf {
-        ScriptBuf::new_p2sh(&self.script_hash())
-    }
+    pub fn to_p2sh(&self) -> ScriptBuf { ScriptBuf::new_p2sh(&self.script_hash()) }
 
     /// Returns the script code used for spending a P2WPKH output if this script is a script pubkey
     /// for a P2WPKH output. The `scriptCode` is described in [BIP143].
@@ -213,9 +194,7 @@ impl ScriptBuf {
     }
 
     /// Adds a single opcode to the script.
-    pub fn push_opcode(&mut self, data: opcodes::All) {
-        self.0.push(data.to_u8());
-    }
+    pub fn push_opcode(&mut self, data: opcodes::All) { self.0.push(data.to_u8()); }
 
     /// Adds instructions to push some arbitrary data onto the stack.
     pub fn push_slice<T: AsRef<PushBytes>>(&mut self, data: T) {
@@ -228,16 +207,18 @@ impl ScriptBuf {
     fn push_slice_no_opt(&mut self, data: &PushBytes) {
         // Start with a PUSH opcode
         match data.len() as u64 {
-            n if n < opcodes::Ordinary::OP_PUSHDATA1 as u64 => { self.0.push(n as u8); },
+            n if n < opcodes::Ordinary::OP_PUSHDATA1 as u64 => {
+                self.0.push(n as u8);
+            }
             n if n < 0x100 => {
                 self.0.push(opcodes::Ordinary::OP_PUSHDATA1.to_u8());
                 self.0.push(n as u8);
-            },
+            }
             n if n < 0x10000 => {
                 self.0.push(opcodes::Ordinary::OP_PUSHDATA2.to_u8());
                 self.0.push((n % 0x100) as u8);
                 self.0.push((n / 0x100) as u8);
-            },
+            }
             n if n < 0x100000000 => {
                 self.0.push(opcodes::Ordinary::OP_PUSHDATA4.to_u8());
                 self.0.push((n % 0x100) as u8);
@@ -245,7 +226,7 @@ impl ScriptBuf {
                 self.0.push(((n / 0x10000) % 0x100) as u8);
                 self.0.push((n / 0x1000000) as u8);
             }
-            _ => panic!("tried to put a 4bn+ sized object into a script!")
+            _ => panic!("tried to put a 4bn+ sized object into a script!"),
         }
         // Then push the raw bytes
         self.0.extend_from_slice(data.as_bytes());
@@ -297,9 +278,7 @@ impl ScriptBuf {
     /// This function needs to iterate over the script to find the last instruction. Prefer
     /// `Builder` if you're creating the script from scratch or if you want to push `OP_VERIFY`
     /// multiple times.
-    pub fn scan_and_push_verify(&mut self) {
-        self.push_verify(self.last_opcode());
-    }
+    pub fn scan_and_push_verify(&mut self) { self.push_verify(self.last_opcode()); }
 
     /// Adds an `OP_VERIFY` to the script or changes the most-recently-added opcode to `VERIFY`
     /// alternative.
@@ -310,7 +289,7 @@ impl ScriptBuf {
             Some(opcode) => {
                 self.0.pop();
                 self.push_opcode(opcode);
-            },
+            }
             None => self.push_opcode(OP_VERIFY),
         }
     }
@@ -331,7 +310,10 @@ impl ScriptBuf {
 }
 
 impl<'a> core::iter::FromIterator<Instruction<'a>> for ScriptBuf {
-    fn from_iter<T>(iter: T) -> Self where T: IntoIterator<Item = Instruction<'a>> {
+    fn from_iter<T>(iter: T) -> Self
+    where
+        T: IntoIterator<Item = Instruction<'a>>,
+    {
         let mut script = ScriptBuf::new();
         script.extend(iter);
         script
@@ -339,7 +321,10 @@ impl<'a> core::iter::FromIterator<Instruction<'a>> for ScriptBuf {
 }
 
 impl<'a> Extend<Instruction<'a>> for ScriptBuf {
-    fn extend<T>(&mut self, iter: T) where T: IntoIterator<Item = Instruction<'a>> {
+    fn extend<T>(&mut self, iter: T)
+    where
+        T: IntoIterator<Item = Instruction<'a>>,
+    {
         let iter = iter.into_iter();
         // Most of Bitcoin scripts have only a few opcodes, so we can avoid reallocations in many
         // cases.
@@ -354,7 +339,11 @@ impl<'a> Extend<Instruction<'a>> for ScriptBuf {
                 *head = Some(instr);
             }
             // Incorrect impl of `size_hint` breaks `Iterator` contract so we're free to panic.
-            assert!(iter.next().is_none(), "Buggy implementation of `Iterator` on {} returns invalid upper bound", core::any::type_name::<T::IntoIter>());
+            assert!(
+                iter.next().is_none(),
+                "Buggy implementation of `Iterator` on {} returns invalid upper bound",
+                core::any::type_name::<T::IntoIter>()
+            );
             self.reserve(total_size);
             for instr in head.iter().cloned().flatten() {
                 self.push_instruction_no_opt(instr);
