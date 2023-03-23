@@ -37,6 +37,8 @@ pub enum Error {
     /// `PublicKey` hex should be 66 or 130 digits long.
     InvalidHexLength(usize),
 }
+#[cfg(check_traits)]
+internals::check_pub_error!(Error);
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

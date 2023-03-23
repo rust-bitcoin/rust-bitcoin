@@ -132,6 +132,8 @@ impl Decodable for CommandString {
 pub struct CommandStringError {
     cow: Cow<'static, str>,
 }
+#[cfg(check_traits)]
+internals::check_pub_error!(CommandStringError);
 
 impl fmt::Display for CommandStringError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

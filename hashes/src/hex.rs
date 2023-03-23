@@ -23,6 +23,8 @@ pub enum Error {
     /// Tried to parse fixed-length hash from a string with the wrong type (expected, got).
     InvalidLength(usize, usize),
 }
+#[cfg(check_traits)]
+internals::check_pub_error!(Error);
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

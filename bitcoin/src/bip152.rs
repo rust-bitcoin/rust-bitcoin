@@ -27,6 +27,8 @@ pub enum Error {
     /// The prefill slice provided was invalid.
     InvalidPrefill,
 }
+#[cfg(check_traits)]
+internals::check_pub_error!(Error);
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -320,6 +322,8 @@ impl Decodable for BlockTransactionsRequest {
 /// corresponding block.
 #[derive(Clone, PartialEq, Eq, Debug, Copy, PartialOrd, Ord, Hash)]
 pub struct TxIndexOutOfRangeError(u64);
+#[cfg(check_traits)]
+internals::check_pub_error!(TxIndexOutOfRangeError);
 
 impl fmt::Display for TxIndexOutOfRangeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

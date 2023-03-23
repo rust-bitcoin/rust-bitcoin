@@ -241,6 +241,8 @@ pub enum Error {
     /// Invalid Sighash type.
     InvalidSighashType(u32),
 }
+#[cfg(check_traits)]
+internals::check_pub_error!(Error);
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -536,6 +538,8 @@ pub struct SighashTypeParseError {
     /// The unrecognized string we attempted to parse.
     pub unrecognized: String,
 }
+#[cfg(check_traits)]
+internals::check_pub_error!(SighashTypeParseError);
 
 impl fmt::Display for SighashTypeParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

@@ -105,6 +105,9 @@ pub mod hex {
     #[derive(Debug)]
     pub struct DecodeInitError(hashes::hex::Error);
 
+    #[cfg(check_traits)]
+    internals::check_pub_error!(DecodeInitError);
+
     impl fmt::Display for DecodeInitError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             write_err!(f, "creation of decoder from hex failed"; self.0)
@@ -119,6 +122,9 @@ pub mod hex {
     /// Error returned when a hex string contains invalid characters.
     #[derive(Debug)]
     pub struct DecodeError(hashes::hex::Error);
+
+    #[cfg(check_traits)]
+    internals::check_pub_error!(DecodeError);
 
     impl fmt::Display for DecodeError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

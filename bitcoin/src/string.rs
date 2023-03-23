@@ -42,6 +42,8 @@ pub enum FromHexError<E> {
     /// The input is missing `0x` prefix, contains the invalid input.
     MissingPrefix(String),
 }
+#[cfg(check_traits)]
+internals::check_pub_error!(FromHexError, E);
 
 impl<E> From<E> for FromHexError<E> {
     fn from(e: E) -> Self { FromHexError::ParseHex(e) }

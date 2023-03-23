@@ -70,6 +70,8 @@ pub enum SigFromSliceError {
     /// Invalid taproot signature size
     InvalidSignatureSize(usize),
 }
+#[cfg(check_traits)]
+internals::check_pub_error!(SigFromSliceError);
 
 impl fmt::Display for SigFromSliceError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

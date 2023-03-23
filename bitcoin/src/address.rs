@@ -98,6 +98,8 @@ pub enum Error {
         address: Address<NetworkUnchecked>,
     },
 }
+#[cfg(check_traits)]
+internals::check_pub_error!(Error);
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

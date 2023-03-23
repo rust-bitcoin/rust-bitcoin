@@ -586,6 +586,8 @@ pub enum GetKeyError {
     /// The GetKey operation is not supported for this key request.
     NotSupported,
 }
+#[cfg(check_traits)]
+internals::check_pub_error!(GetKeyError);
 
 impl fmt::Display for GetKeyError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -692,6 +694,8 @@ pub enum SignError {
     /// Signing request currently unsupported.
     Unsupported,
 }
+#[cfg(check_traits)]
+internals::check_pub_error!(SignError);
 
 impl fmt::Display for SignError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -766,6 +770,8 @@ mod display_from_str {
         /// Error in PSBT Base64 encoding.
         Base64Encoding(::base64::DecodeError),
     }
+    #[cfg(check_traits)]
+    internals::check_pub_error!(PsbtParseError);
 
     impl Display for PsbtParseError {
         fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {

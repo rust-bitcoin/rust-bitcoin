@@ -77,6 +77,9 @@ then
     # Build all features
     cargo build --locked --verbose --features="no-std $FEATURES" --no-default-features
 
+    # Build all features and check traits as well
+    RUSTFLAGS="--cfg=check_traits" cargo build --locked --verbose --features="no-std $FEATURES" --no-default-features
+
     # Build specific features
     for feature in ${FEATURES}
     do
@@ -96,6 +99,8 @@ done
 
 cargo run --locked --example ecdsa-psbt --features=bitcoinconsensus
 cargo run --locked --example taproot-psbt --features=rand-std,bitcoinconsensus
+
+RUSTFLAGS="--cfg=check_traits" cargo build --locked --all-features
 
 # Build the docs if told to (this only works with the nightly toolchain)
 if [ "$DO_DOCSRS" = true ]; then

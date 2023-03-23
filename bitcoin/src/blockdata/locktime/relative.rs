@@ -308,6 +308,8 @@ pub enum Error {
     /// Tried to satisfy a lock-by-blockheight lock using a time value.
     IncompatibleTime(LockTime, Time),
 }
+#[cfg(check_traits)]
+internals::check_pub_error!(Error);
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

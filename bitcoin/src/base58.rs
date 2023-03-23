@@ -236,6 +236,8 @@ pub enum Error {
     /// Checked data was less than 4 bytes.
     TooShort(usize),
 }
+#[cfg(check_traits)]
+internals::check_pub_error!(Error);
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

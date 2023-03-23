@@ -42,6 +42,8 @@ mod message_signing {
         /// Unsupported Address Type
         UnsupportedAddressType(AddressType),
     }
+    #[cfg(check_traits)]
+    internals::check_pub_error!(MessageSignatureError);
 
     impl fmt::Display for MessageSignatureError {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

@@ -686,6 +686,8 @@ pub enum Error {
     /// Can not serialize the spending transaction.
     Serialization,
 }
+#[cfg(check_traits)]
+internals::check_pub_error!(Error);
 
 // If bitcoinonsensus-std is off but bitcoinconsensus is present we patch the error type to
 // implement `std::error::Error`.
@@ -695,6 +697,8 @@ mod bitcoinconsensus_hack {
 
     #[repr(transparent)]
     pub(crate) struct Error(bitcoinconsensus::Error);
+    #[cfg(check_traits)]
+    internals::check_pub_error!(Error);
 
     impl fmt::Debug for Error {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Debug::fmt(&self.0, f) }

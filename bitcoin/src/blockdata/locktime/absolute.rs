@@ -558,6 +558,8 @@ pub enum Error {
     /// An error occurred while parsing a string into an `u32`.
     Parse(ParseIntError),
 }
+#[cfg(check_traits)]
+internals::check_pub_error!(Error);
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -607,6 +609,8 @@ pub struct ConversionError {
     /// The invalid input value.
     input: u32,
 }
+#[cfg(check_traits)]
+internals::check_pub_error!(ConversionError);
 
 impl ConversionError {
     /// Constructs a `ConversionError` from an invalid `n` when expecting a height value.
@@ -652,6 +656,8 @@ pub enum OperationError {
     /// Cannot compare different lock time units (height vs time).
     InvalidComparison,
 }
+#[cfg(check_traits)]
+internals::check_pub_error!(OperationError);
 
 impl fmt::Display for OperationError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

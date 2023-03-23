@@ -67,6 +67,8 @@ pub enum Error {
     /// IO error reading or writing binary serialization of the filter.
     Io(io::Error),
 }
+#[cfg(check_traits)]
+internals::check_pub_error!(Error);
 
 impl Display for Error {
     fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {

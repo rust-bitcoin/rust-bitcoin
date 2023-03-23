@@ -106,6 +106,8 @@ pub enum ParseOutPointError {
     /// Vout part is not strictly numeric without leading zeroes.
     VoutNotCanonical,
 }
+#[cfg(check_traits)]
+internals::check_pub_error!(ParseOutPointError);
 
 impl fmt::Display for ParseOutPointError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

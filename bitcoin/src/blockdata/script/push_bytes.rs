@@ -373,6 +373,8 @@ mod error {
     pub struct PushBytesError {
         never: core::convert::Infallible,
     }
+    #[cfg(check_traits)]
+    internals::check_pub_error!(PushBytesError);
 
     impl super::PushBytesErrorReport for PushBytesError {
         #[inline]
@@ -396,6 +398,8 @@ mod error {
         /// How long the input was.
         pub(super) len: usize,
     }
+    #[cfg(check_traits)]
+    internals::check_pub_error!(PushBytesError);
 
     impl super::PushBytesErrorReport for PushBytesError {
         #[inline]

@@ -482,6 +482,8 @@ pub enum MerkleBlockError {
     /// The left and right branches should never be identical
     IdenticalHashesFound,
 }
+#[cfg(check_traits)]
+internals::check_pub_error!(MerkleBlockError);
 
 impl fmt::Display for MerkleBlockError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

@@ -365,6 +365,8 @@ pub enum Bip34Error {
     /// The BIP34 push was negative.
     NegativeHeight,
 }
+#[cfg(check_traits)]
+internals::check_pub_error!(Bip34Error);
 
 impl fmt::Display for Bip34Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -398,6 +400,8 @@ pub enum ValidationError {
     /// The `target` field of a block header did not match the expected difficulty.
     BadTarget,
 }
+#[cfg(check_traits)]
+internals::check_pub_error!(ValidationError);
 
 impl fmt::Display for ValidationError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

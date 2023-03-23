@@ -221,6 +221,8 @@ pub mod as_core_arg {
 /// An error in parsing network string.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ParseNetworkError(String);
+#[cfg(check_traits)]
+internals::check_pub_error!(ParseNetworkError);
 
 impl fmt::Display for ParseNetworkError {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
@@ -317,6 +319,8 @@ pub struct ParseMagicError {
     /// The byte string that failed to parse.
     magic: String,
 }
+#[cfg(check_traits)]
+internals::check_pub_error!(ParseMagicError);
 
 impl FromStr for Magic {
     type Err = ParseMagicError;

@@ -157,6 +157,8 @@ pub enum ParseAmountError {
     /// The denomination has multiple possible interpretations.
     PossiblyConfusingDenomination(String),
 }
+#[cfg(check_traits)]
+internals::check_pub_error!(ParseAmountError);
 
 impl fmt::Display for ParseAmountError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

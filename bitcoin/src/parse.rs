@@ -29,6 +29,8 @@ pub struct ParseIntError {
     is_signed: bool,
     source: core::num::ParseIntError,
 }
+#[cfg(check_traits)]
+internals::check_pub_error!(ParseIntError);
 
 impl ParseIntError {
     /// Returns the input that was attempted to be parsed.

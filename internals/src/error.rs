@@ -26,3 +26,34 @@ macro_rules! write_err {
         }
     }
 }
+
+/// This module is used internally to check that error types implement certain traits.
+#[cfg(check_traits)]
+pub mod check_traits {
+    /// Internal trait to assert that type implements `Send` and `Sync`.
+    pub trait AssertSendSync: Send + Sync {}
+
+    /// Internal trait to assert that type implements `Debug` and `Display`.
+    pub trait AssertDebugDisplay: core::fmt::Debug + core::fmt::Display {}
+
+    /// Internal trait to assert that type implements `std::error::Error`.
+    #[cfg(feature = "std")]
+    pub trait AssertError: std::error::Error {}
+
+    /// Checks at compile time that type `$t` implements the traits we require for error types.
+    #[macro_export]
+    macro_rules! check_pub_error {
+        ($ty:ident) => {
+            $crate::check_pub_error!($ty, );
+        };
+        ($ty:ident, $($gen:ident),*) => {
+            use internals::error::check_traits::*;
+
+            impl<$($gen),*> AssertSendSync for $ty<$($gen),*> where $($gen: Send + Sync ),* {}
+            impl<$($gen),*> AssertDebugDisplay for $ty<$($gen),*> where $($gen: core::fmt::Debug + core::fmt::Display ),* {}
+
+            #[cfg(feature = "std")]
+            impl<$($gen),*> AssertError for $ty<$($gen),*> where $($gen: std::error::Error + 'static),* {}
+        };
+    }
+}
