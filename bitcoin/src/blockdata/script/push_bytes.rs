@@ -83,7 +83,7 @@ mod primitive {
                     type Output = Self;
 
                     #[inline]
-                    #[cfg_attr(rust_v_1_46, track_caller)]
+                    #[track_caller]
                     fn index(&self, index: $type) -> &Self::Output {
                         // Slicing can not make slices longer
                         unsafe {
@@ -111,7 +111,7 @@ mod primitive {
         type Output = u8;
 
         #[inline]
-        #[cfg_attr(rust_v_1_46, track_caller)]
+        #[track_caller]
         fn index(&self, index: usize) -> &Self::Output { &self.0[index] }
     }
 
@@ -239,7 +239,7 @@ mod primitive {
         /// ## Panics
         ///
         /// This method panics if `index` is out of bounds.
-        #[cfg_attr(rust_v_1_46, track_caller)]
+        #[track_caller]
         pub fn remove(&mut self, index: usize) -> u8 { self.0.remove(index) }
 
         /// Remove all bytes from buffer without affecting capacity.

@@ -213,7 +213,7 @@ impl<W: fmt::Write> ErrorTrackingWriter<W> {
         }
     }
 
-    #[cfg_attr(rust_v_1_46, track_caller)]
+    #[track_caller]
     fn assert_no_error(&self, fun: &str) {
         #[cfg(debug_assertions)]
         {

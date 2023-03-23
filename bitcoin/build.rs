@@ -23,7 +23,7 @@ fn main() {
         .parse::<u64>()
         .expect("invalid Rust minor version");
 
-    for activate_version in &[46, 53, 60] {
+    for activate_version in &[53, 60] {
         if minor >= *activate_version {
             println!("cargo:rustc-cfg=rust_v_1_{}", activate_version);
         }

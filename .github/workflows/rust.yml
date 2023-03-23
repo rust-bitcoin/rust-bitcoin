@@ -66,7 +66,7 @@ jobs:
         run: ./contrib/test.sh
 
   MSRV:
-    name: Test - 1.41.1 toolchain
+    name: Test - 1.48.0 toolchain
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -74,24 +74,10 @@ jobs:
       - name: Checkout Crate
         uses: actions/checkout@v3
       - name: Checkout Toolchain
-        uses: dtolnay/rust-toolchain@1.41.1
+        uses: dtolnay/rust-toolchain@1.48.0
       - name: Running test script
         env:
           DO_FEATURE_MATRIX: true
-        run: ./contrib/test.sh
-
-  NoStd:
-    name: Test - 1.47 toolchain
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-    steps:
-      - name: Checkout Crate
-        uses: actions/checkout@v3
-      - name: Checkout Toolchain
-        uses: dtolnay/rust-toolchain@1.47
-      - name: Running test script
-        env:
           DO_NO_STD: true
         run: ./contrib/test.sh
 
