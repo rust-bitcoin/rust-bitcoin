@@ -173,7 +173,6 @@ pub fn read_scriptint(v: &[u8]) -> Result<i64, Error> {
 ///
 /// This is like "`read_scriptint` then map 0 to false and everything
 /// else as true", except that the overflow rules don't apply.
-#[inline]
 pub fn read_scriptbool(v: &[u8]) -> bool {
     match v.split_last() {
         Some((last, rest)) => !((last & !0x80 == 0x00) && rest.iter().all(|&b| b == 0)),

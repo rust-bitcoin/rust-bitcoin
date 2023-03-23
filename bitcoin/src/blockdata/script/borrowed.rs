@@ -210,7 +210,6 @@ impl Script {
     }
 
     /// Returns the bytes of the (possibly invalid) public key if this script is P2PK.
-    #[inline]
     pub(in crate::blockdata::script) fn p2pk_pubkey_bytes(&self) -> Option<&[u8]> {
         match self.len() {
             67 if self.0[0] == OP_PUSHBYTES_65.to_u8() && self.0[66] == OP_CHECKSIG.to_u8() =>
@@ -274,7 +273,6 @@ impl Script {
     }
 
     /// Check if this is an OP_RETURN output.
-    #[inline]
     pub fn is_op_return(&self) -> bool {
         match self.0.first() {
             Some(b) => *b == OP_RETURN.to_u8(),
@@ -283,7 +281,6 @@ impl Script {
     }
 
     /// Checks whether a script can be proven to have no satisfying input.
-    #[inline]
     pub fn is_provably_unspendable(&self) -> bool {
         use crate::blockdata::opcodes::Class::{IllegalOp, ReturnOp};
 
