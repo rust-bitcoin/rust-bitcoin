@@ -119,15 +119,12 @@ impl Script {
     pub fn builder() -> Builder { Builder::new() }
 
     /// Returns 160-bit hash of the script.
-    #[inline]
     pub fn script_hash(&self) -> ScriptHash { ScriptHash::hash(self.as_bytes()) }
 
     /// Returns 256-bit hash of the script for P2WSH outputs.
-    #[inline]
     pub fn wscript_hash(&self) -> WScriptHash { WScriptHash::hash(self.as_bytes()) }
 
     /// Computes leaf hash of tapscript.
-    #[inline]
     pub fn tapscript_leaf_hash(&self) -> TapLeafHash {
         TapLeafHash::from_script(self, LeafVersion::TapScript)
     }
@@ -150,12 +147,10 @@ impl Script {
 
     /// Computes the P2WSH output corresponding to this witnessScript (aka the "witness redeem
     /// script").
-    #[inline]
     pub fn to_v0_p2wsh(&self) -> ScriptBuf { ScriptBuf::new_v0_p2wsh(&self.wscript_hash()) }
 
     /// Computes P2TR output with a given internal key and a single script spending path equal to
     /// the current script, assuming that the script is a Tapscript.
-    #[inline]
     pub fn to_v1_p2tr<C: Verification>(
         &self,
         secp: &Secp256k1<C>,
@@ -167,7 +162,6 @@ impl Script {
     }
 
     /// Returns witness version of the script, if any, assuming the script is a `scriptPubkey`.
-    #[inline]
     pub fn witness_version(&self) -> Option<WitnessVersion> {
         self.0.first().and_then(|opcode| WitnessVersion::try_from(opcodes::All::from(*opcode)).ok())
     }
@@ -196,7 +190,6 @@ impl Script {
     ///
     /// You can obtain the public key, if its valid,
     /// by calling [`p2pk_public_key()`](Self::p2pk_public_key)
-    #[inline]
     pub fn is_p2pk(&self) -> bool { self.p2pk_pubkey_bytes().is_some() }
 
     /// Returns the public key if this script is P2PK with a **valid** public key.
@@ -204,7 +197,6 @@ impl Script {
     /// This may return `None` even when [`is_p2pk()`](Self::is_p2pk) returns true.
     /// This happens when the public key is invalid (e.g. the point not being on the curve).
     /// It also implies the script is unspendable.
-    #[inline]
     pub fn p2pk_public_key(&self) -> Option<PublicKey> {
         PublicKey::from_slice(self.p2pk_pubkey_bytes()?).ok()
     }
@@ -221,7 +213,6 @@ impl Script {
     }
 
     /// Checks whether a script pubkey is a Segregated Witness (segwit) program.
-    #[inline]
     pub fn is_witness_program(&self) -> bool {
         // A scriptPubKey (or redeemScript as defined in BIP16/P2SH) that consists of a 1-byte
         // push opcode (for 0 to 16) followed by a data push between 2 and 40 bytes gets a new
@@ -241,7 +232,6 @@ impl Script {
     }
 
     /// Checks whether a script pubkey is a P2WSH output.
-    #[inline]
     pub fn is_v0_p2wsh(&self) -> bool {
         self.0.len() == 34
             && self.witness_version() == Some(WitnessVersion::V0)
@@ -249,7 +239,6 @@ impl Script {
     }
 
     /// Checks whether a script pubkey is a P2WPKH output.
-    #[inline]
     pub fn is_v0_p2wpkh(&self) -> bool {
         self.0.len() == 22
             && self.witness_version() == Some(WitnessVersion::V0)
@@ -265,7 +254,6 @@ impl Script {
     }
 
     /// Checks whether a script pubkey is a P2TR output.
-    #[inline]
     pub fn is_v1_p2tr(&self) -> bool {
         self.0.len() == 34
             && self.witness_version() == Some(WitnessVersion::V1)

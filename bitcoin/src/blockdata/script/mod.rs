@@ -192,7 +192,6 @@ pub fn read_scriptbool(v: &[u8]) -> bool {
 ///
 /// Note that this does **not** return an error for `size` between `core::size_of::<usize>()`
 /// and `u16::max_value / 8` if there's no overflow.
-#[inline]
 #[deprecated(since = "0.30.0", note = "bitcoin integers are signed 32 bits, use read_scriptint")]
 pub fn read_uint(data: &[u8], size: usize) -> Result<usize, Error> {
     read_uint_iter(&mut data.iter(), size).map_err(Into::into)
@@ -296,10 +295,12 @@ impl<'a> From<&'a Script> for Rc<Script> {
 }
 
 impl From<Vec<u8>> for ScriptBuf {
+    #[inline]
     fn from(v: Vec<u8>) -> Self { ScriptBuf(v) }
 }
 
 impl From<ScriptBuf> for Vec<u8> {
+    #[inline]
     fn from(v: ScriptBuf) -> Self { v.0 }
 }
 
@@ -333,6 +334,7 @@ impl AsRef<Script> for Script {
 }
 
 impl AsRef<Script> for ScriptBuf {
+    #[inline]
     fn as_ref(&self) -> &Script { self }
 }
 
@@ -342,14 +344,17 @@ impl AsRef<[u8]> for Script {
 }
 
 impl AsRef<[u8]> for ScriptBuf {
+    #[inline]
     fn as_ref(&self) -> &[u8] { self.as_bytes() }
 }
 
 impl AsMut<Script> for Script {
+    #[inline]
     fn as_mut(&mut self) -> &mut Script { self }
 }
 
 impl AsMut<Script> for ScriptBuf {
+    #[inline]
     fn as_mut(&mut self) -> &mut Script { self }
 }
 
@@ -359,6 +364,7 @@ impl AsMut<[u8]> for Script {
 }
 
 impl AsMut<[u8]> for ScriptBuf {
+    #[inline]
     fn as_mut(&mut self) -> &mut [u8] { self.as_mut_bytes() }
 }
 
@@ -375,12 +381,10 @@ impl fmt::Debug for ScriptBuf {
 }
 
 impl fmt::Display for Script {
-    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.fmt_asm(f) }
 }
 
 impl fmt::Display for ScriptBuf {
-    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(self.as_script(), f) }
 }
 
@@ -391,7 +395,6 @@ impl fmt::LowerHex for Script {
 }
 
 impl fmt::LowerHex for ScriptBuf {
-    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(self.as_script(), f) }
 }
 
@@ -402,43 +405,50 @@ impl fmt::UpperHex for Script {
 }
 
 impl fmt::UpperHex for ScriptBuf {
-    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(self.as_script(), f) }
 }
 
 impl Deref for ScriptBuf {
     type Target = Script;
 
+    #[inline]
     fn deref(&self) -> &Self::Target { Script::from_bytes(&self.0) }
 }
 
 impl DerefMut for ScriptBuf {
+    #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target { Script::from_bytes_mut(&mut self.0) }
 }
 
 impl Borrow<Script> for ScriptBuf {
+    #[inline]
     fn borrow(&self) -> &Script { self }
 }
 
 impl BorrowMut<Script> for ScriptBuf {
+    #[inline]
     fn borrow_mut(&mut self) -> &mut Script { self }
 }
 
 impl PartialEq<ScriptBuf> for Script {
+    #[inline]
     fn eq(&self, other: &ScriptBuf) -> bool { self.eq(other.as_script()) }
 }
 
 impl PartialEq<Script> for ScriptBuf {
+    #[inline]
     fn eq(&self, other: &Script) -> bool { self.as_script().eq(other) }
 }
 
 impl PartialOrd<Script> for ScriptBuf {
+    #[inline]
     fn partial_cmp(&self, other: &Script) -> Option<Ordering> {
         self.as_script().partial_cmp(other)
     }
 }
 
 impl PartialOrd<ScriptBuf> for Script {
+    #[inline]
     fn partial_cmp(&self, other: &ScriptBuf) -> Option<Ordering> {
         self.partial_cmp(other.as_script())
     }
@@ -566,21 +576,18 @@ impl<'de> serde::Deserialize<'de> for ScriptBuf {
 }
 
 impl Encodable for Script {
-    #[inline]
     fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         crate::consensus::encode::consensus_encode_with_size(&self.0, w)
     }
 }
 
 impl Encodable for ScriptBuf {
-    #[inline]
     fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         self.0.consensus_encode(w)
     }
 }
 
 impl Decodable for ScriptBuf {
-    #[inline]
     fn consensus_decode_from_finite_reader<R: io::Read + ?Sized>(
         r: &mut R,
     ) -> Result<Self, encode::Error> {
@@ -713,6 +720,7 @@ mod bitcoinconsensus_hack {
     // bitcoinconsensus::Error has no sources at this time
     impl std::error::Error for Error {}
 
+    #[inline]
     pub(crate) fn wrap_error(error: &bitcoinconsensus::Error) -> &Error {
         // Unfortunately, we cannot have the reference inside `Error` struct because of the 'static
         // bound on `source` return type, so we have to use unsafe to overcome the limitation.

@@ -49,6 +49,7 @@ mod primitive {
         /// ## Safety
         ///
         /// The caller is responsible for checking that the length is less than the [`LIMIT`].
+        #[inline]
         unsafe fn from_slice_unchecked(bytes: &[u8]) -> &Self {
             &*(bytes as *const [u8] as *const PushBytes)
         }
@@ -58,20 +59,24 @@ mod primitive {
         /// ## Safety
         ///
         /// The caller is responsible for checking that the length is less than the [`LIMIT`].
+        #[inline]
         unsafe fn from_mut_slice_unchecked(bytes: &mut [u8]) -> &mut Self {
             &mut *(bytes as *mut [u8] as *mut PushBytes)
         }
 
         /// Creates an empty `PushBytes`.
+        #[inline]
         pub fn empty() -> &'static Self {
             // 0 < LIMIT
             unsafe { Self::from_slice_unchecked(&[]) }
         }
 
         /// Returns the underlying bytes.
+        #[inline]
         pub fn as_bytes(&self) -> &[u8] { &self.0 }
 
         /// Returns the underlying mutbale bytes.
+        #[inline]
         pub fn as_mut_bytes(&mut self) -> &mut [u8] { &mut self.0 }
     }
 
@@ -232,6 +237,7 @@ mod primitive {
         }
 
         /// Remove the last byte from buffer if any.
+        #[inline]
         pub fn pop(&mut self) -> Option<u8> { self.0.pop() }
 
         /// Remove the byte at `index` and return it.
@@ -243,9 +249,11 @@ mod primitive {
         pub fn remove(&mut self, index: usize) -> u8 { self.0.remove(index) }
 
         /// Remove all bytes from buffer without affecting capacity.
+        #[inline]
         pub fn clear(&mut self) { self.0.clear() }
 
         /// Remove bytes from buffer past `len`.
+        #[inline]
         pub fn truncate(&mut self, len: usize) { self.0.truncate(len) }
 
         /// Extracts `PushBytes` slice
@@ -261,16 +269,19 @@ mod primitive {
         }
 
         /// Accesses inner `Vec` - provided for `super` to impl other methods.
+        #[inline]
         pub(super) fn inner(&self) -> &Vec<u8> { &self.0 }
     }
 
     impl From<PushBytesBuf> for Vec<u8> {
+        #[inline]
         fn from(value: PushBytesBuf) -> Self { value.0 }
     }
 
     impl TryFrom<Vec<u8>> for PushBytesBuf {
         type Error = PushBytesError;
 
+        #[inline]
         fn try_from(vec: Vec<u8>) -> Result<Self, Self::Error> {
             // check len
             let _: &PushBytes = vec.as_slice().try_into()?;
@@ -281,34 +292,42 @@ mod primitive {
     impl ToOwned for PushBytes {
         type Owned = PushBytesBuf;
 
+        #[inline]
         fn to_owned(&self) -> Self::Owned { PushBytesBuf(self.0.to_owned()) }
     }
 }
 
 impl PushBytes {
     /// Returns the number of bytes in buffer.
+    #[inline]
     pub fn len(&self) -> usize { self.as_bytes().len() }
 
     /// Returns true if the buffer contains zero bytes.
+    #[inline]
     pub fn is_empty(&self) -> bool { self.as_bytes().is_empty() }
 }
 
 impl PushBytesBuf {
     /// Returns the number of bytes in buffer.
+    #[inline]
     pub fn len(&self) -> usize { self.inner().len() }
 
     /// Returns the number of bytes the buffer can contain without reallocating.
+    #[inline]
     pub fn capacity(&self) -> usize { self.inner().capacity() }
 
     /// Returns true if the buffer contains zero bytes.
+    #[inline]
     pub fn is_empty(&self) -> bool { self.inner().is_empty() }
 }
 
 impl AsRef<[u8]> for PushBytes {
+    #[inline]
     fn as_ref(&self) -> &[u8] { self.as_bytes() }
 }
 
 impl AsMut<[u8]> for PushBytes {
+    #[inline]
     fn as_mut(&mut self) -> &mut [u8] { self.as_mut_bytes() }
 }
 
@@ -323,10 +342,12 @@ impl DerefMut for PushBytesBuf {
 }
 
 impl AsRef<PushBytes> for PushBytes {
+    #[inline]
     fn as_ref(&self) -> &PushBytes { self }
 }
 
 impl AsMut<PushBytes> for PushBytes {
+    #[inline]
     fn as_mut(&mut self) -> &mut PushBytes { self }
 }
 
