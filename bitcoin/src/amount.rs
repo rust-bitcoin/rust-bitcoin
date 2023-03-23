@@ -83,7 +83,29 @@ impl Denomination {
             Denomination::MilliSatoshi => "msat",
         }
     }
+
+    /// The different str forms of denominations that are recognized.
+    fn forms(s: &str) -> Option<Self> {
+        match s {
+            "BTC" | "btc" => Some(Denomination::Bitcoin),
+            "cBTC" | "cbtc" => Some(Denomination::CentiBitcoin),
+            "mBTC" | "mbtc" => Some(Denomination::MilliBitcoin),
+            "uBTC" | "ubtc" => Some(Denomination::MicroBitcoin),
+            "nBTC" | "nbtc" => Some(Denomination::NanoBitcoin),
+            "pBTC" | "pbtc" => Some(Denomination::PicoBitcoin),
+            "bit" | "bits" | "BIT" | "BITS" => Some(Denomination::Bit),
+            "SATOSHI" | "satoshi" | "SATOSHIS" | "satoshis" | "SAT" | "sat" | "SATS" | "sats" =>
+                Some(Denomination::Satoshi),
+            "mSAT" | "msat" | "mSATs" | "msats" => Some(Denomination::MilliSatoshi),
+            _ => None,
+        }
+    }
 }
+
+/// These form are ambigous and could have many meanings.  For example, M could denote Mega or Milli.
+/// If any of these forms are used, an error type PossiblyConfusingDenomination is returned.
+const CONFUSING_FORMS: [&str; 9] =
+    ["Msat", "Msats", "MSAT", "MSATS", "MSat", "MSats", "MBTC", "Mbtc", "PBTC"];
 
 impl fmt::Display for Denomination {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { f.write_str(self.as_str()) }
@@ -100,66 +122,16 @@ impl FromStr for Denomination {
     ///
     /// Due to ambiguity between mega and milli, pico and peta we prohibit usage of leading capital 'M', 'P'.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use self::Denomination as D;
         use self::ParseAmountError::*;
 
-        let starts_with_uppercase = || s.starts_with(char::is_uppercase);
-        match denomination_from_str(s) {
-            None => Err(UnknownDenomination(s.to_owned())),
-            Some(D::MilliBitcoin) | Some(D::PicoBitcoin) | Some(D::MilliSatoshi)
-                if starts_with_uppercase() =>
-                Err(PossiblyConfusingDenomination(s.to_owned())),
-            Some(D::NanoBitcoin) | Some(D::MicroBitcoin) if starts_with_uppercase() =>
-                Err(UnknownDenomination(s.to_owned())),
-            Some(d) => Ok(d),
-        }
-    }
-}
+        if CONFUSING_FORMS.contains(&s) {
+            return Err(PossiblyConfusingDenomination(s.to_owned()));
+        };
 
-fn denomination_from_str(mut s: &str) -> Option<Denomination> {
-    if s.eq_ignore_ascii_case("BTC") {
-        return Some(Denomination::Bitcoin);
-    }
+        let form = self::Denomination::forms(s);
 
-    if s.eq_ignore_ascii_case("cBTC") {
-        return Some(Denomination::CentiBitcoin);
+        form.ok_or_else(|| UnknownDenomination(s.to_owned()))
     }
-
-    if s.eq_ignore_ascii_case("mBTC") {
-        return Some(Denomination::MilliBitcoin);
-    }
-
-    if s.eq_ignore_ascii_case("uBTC") {
-        return Some(Denomination::MicroBitcoin);
-    }
-
-    if s.eq_ignore_ascii_case("nBTC") {
-        return Some(Denomination::NanoBitcoin);
-    }
-
-    if s.eq_ignore_ascii_case("pBTC") {
-        return Some(Denomination::PicoBitcoin);
-    }
-
-    if s.ends_with('s') || s.ends_with('S') {
-        s = &s[..(s.len() - 1)];
-    }
-
-    if s.eq_ignore_ascii_case("bit") {
-        return Some(Denomination::Bit);
-    }
-    if s.eq_ignore_ascii_case("satoshi") {
-        return Some(Denomination::Satoshi);
-    }
-    if s.eq_ignore_ascii_case("sat") {
-        return Some(Denomination::Satoshi);
-    }
-
-    if s.eq_ignore_ascii_case("msat") {
-        return Some(Denomination::MilliSatoshi);
-    }
-
-    None
 }
 
 /// An error during amount parsing.
@@ -2303,8 +2275,8 @@ mod tests {
     fn denomination_string_acceptable_forms() {
         // Non-exhaustive list of valid forms.
         let valid = vec![
-            "BTC", "btc", "mBTC", "mbtc", "uBTC", "ubtc", "SATOSHI", "Satoshi", "Satoshis",
-            "satoshis", "SAT", "Sat", "sats", "bit", "bits", "nBTC", "pBTC",
+            "BTC", "btc", "mBTC", "mbtc", "uBTC", "ubtc", "SATOSHI", "satoshi", "SATOSHIS",
+            "satoshis", "SAT", "sat", "SATS", "sats", "bit", "bits", "nBTC", "pBTC",
         ];
         for denom in valid.iter() {
             assert!(Denomination::from_str(denom).is_ok());
@@ -2313,7 +2285,6 @@ mod tests {
 
     #[test]
     fn disallow_confusing_forms() {
-        // Non-exhaustive list of confusing forms.
         let confusing =
             vec!["Msat", "Msats", "MSAT", "MSATS", "MSat", "MSats", "MBTC", "Mbtc", "PBTC"];
         for denom in confusing.iter() {
@@ -2328,7 +2299,7 @@ mod tests {
     #[test]
     fn disallow_unknown_denomination() {
         // Non-exhaustive list of unknown forms.
-        let unknown = vec!["NBTC", "UBTC", "ABC", "abc"];
+        let unknown = vec!["NBTC", "UBTC", "ABC", "abc", "cBtC", "Sat", "Sats"];
         for denom in unknown.iter() {
             match Denomination::from_str(denom) {
                 Ok(_) => panic!("from_str should error for {}", denom),
