@@ -4,6 +4,7 @@ use core::convert::TryFrom;
 use core::fmt;
 use core::str::FromStr;
 
+use hashes::{self, hash160, ripemd160, sha256, sha256d};
 use secp256k1::XOnlyPublicKey;
 
 use crate::bip32::KeySource;
@@ -12,7 +13,6 @@ use crate::blockdata::transaction::{Transaction, TxOut};
 use crate::blockdata::witness::Witness;
 use crate::crypto::key::PublicKey;
 use crate::crypto::{ecdsa, taproot};
-use crate::hashes::{self, hash160, ripemd160, sha256, sha256d};
 use crate::prelude::*;
 use crate::psbt::map::Map;
 use crate::psbt::serialize::Deserialize;

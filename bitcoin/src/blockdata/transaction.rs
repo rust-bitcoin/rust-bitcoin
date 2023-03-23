@@ -17,6 +17,7 @@ use core::default::Default;
 use core::{cmp, fmt, str};
 
 use bitcoin_internals::write_err;
+use hashes::{self, sha256d, Hash};
 
 use super::Weight;
 use crate::blockdata::constants::WITNESS_SCALE_FACTOR;
@@ -29,7 +30,6 @@ use crate::blockdata::witness::Witness;
 use crate::consensus::{encode, Decodable, Encodable};
 use crate::crypto::sighash::LegacySighash;
 use crate::hash_types::{Txid, Wtxid};
-use crate::hashes::{self, sha256d, Hash};
 use crate::internal_macros::impl_consensus_encoding;
 use crate::parse::impl_parse_str_from_int_infallible;
 use crate::prelude::*;
@@ -1430,12 +1430,13 @@ impl InputWeightPrediction {
 mod tests {
     use core::str::FromStr;
 
+    use hashes::hex::FromHex;
+
     use super::*;
     use crate::blockdata::constants::WITNESS_SCALE_FACTOR;
     use crate::blockdata::locktime::absolute;
     use crate::blockdata::script::ScriptBuf;
     use crate::consensus::encode::{deserialize, serialize};
-    use crate::hashes::hex::FromHex;
     use crate::internal_macros::hex;
     use crate::sighash::EcdsaSighashType;
 

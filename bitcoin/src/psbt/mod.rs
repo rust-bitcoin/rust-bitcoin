@@ -820,6 +820,7 @@ pub use self::display_from_str::PsbtParseError;
 mod tests {
     use std::collections::BTreeMap;
 
+    use hashes::{hash160, ripemd160, sha256, Hash};
     use secp256k1::{self, Secp256k1};
     #[cfg(feature = "rand-std")]
     use secp256k1::{All, SecretKey};
@@ -830,7 +831,6 @@ mod tests {
     use crate::blockdata::script::ScriptBuf;
     use crate::blockdata::transaction::{OutPoint, Sequence, Transaction, TxIn, TxOut};
     use crate::blockdata::witness::Witness;
-    use crate::hashes::{hash160, ripemd160, sha256, Hash};
     use crate::internal_macros::hex;
     use crate::network::constants::Network::Bitcoin;
     use crate::psbt::map::{Input, Output};
@@ -979,7 +979,8 @@ mod tests {
     #[test]
     fn test_serde_psbt() {
         //! Create a full PSBT value with various fields filled and make sure it can be JSONized.
-        use crate::hashes::sha256d;
+        use hashes::sha256d;
+
         use crate::psbt::map::Input;
 
         // create some values to use in the PSBT

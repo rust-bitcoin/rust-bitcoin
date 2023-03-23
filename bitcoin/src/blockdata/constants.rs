@@ -11,6 +11,7 @@
 use core::default::Default;
 
 use bitcoin_internals::impl_array_newtype;
+use hashes::{sha256d, Hash};
 use hex_lit::hex;
 
 use crate::blockdata::block::{self, Block};
@@ -19,7 +20,6 @@ use crate::blockdata::opcodes::all::*;
 use crate::blockdata::script;
 use crate::blockdata::transaction::{OutPoint, Sequence, Transaction, TxIn, TxOut};
 use crate::blockdata::witness::Witness;
-use crate::hashes::{sha256d, Hash};
 use crate::internal_macros::impl_bytes_newtype;
 use crate::network::constants::Network;
 use crate::pow::CompactTarget;
@@ -278,7 +278,7 @@ mod test {
     // The *_chain_hash tests are sanity/regression tests, they verify that the const byte array
     // representing the genesis block is the same as that created by hashing the genesis block.
     fn chain_hash_and_genesis_block(network: Network) {
-        use crate::hashes::sha256;
+        use hashes::sha256;
 
         // The genesis block hash is a double-sha256 and it is displayed backwards.
         let genesis_hash = genesis_block(network).block_hash();

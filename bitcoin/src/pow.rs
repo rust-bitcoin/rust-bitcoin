@@ -190,7 +190,7 @@ impl Target {
     /// to the target.
     #[cfg_attr(all(test, mutate), mutate)]
     pub fn is_met_by(&self, hash: BlockHash) -> bool {
-        use crate::hashes::Hash;
+        use hashes::Hash;
         let hash = U256::from_le_bytes(hash.to_byte_array());
         hash <= self.0
     }
@@ -813,7 +813,8 @@ impl<'de> crate::serde::Deserialize<'de> for U256 {
     fn deserialize<D: crate::serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
         use core::convert::TryInto;
 
-        use crate::hashes::hex::FromHex;
+        use hashes::hex::FromHex;
+
         use crate::serde::de;
 
         if d.is_human_readable() {
@@ -1537,7 +1538,7 @@ mod tests {
     fn target_is_met_by_for_target_equals_hash() {
         use std::str::FromStr;
 
-        use crate::hashes::Hash;
+        use hashes::Hash;
 
         let hash =
             BlockHash::from_str("ef537f25c895bfa782526529a9b63d97aa631564d5d789c2b765448c8635fb6c")

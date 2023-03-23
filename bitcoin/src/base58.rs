@@ -10,7 +10,8 @@
 use core::convert::TryInto;
 use core::{fmt, iter, slice, str};
 
-use crate::hashes::{sha256d, Hash};
+use hashes::{sha256d, Hash};
+
 use crate::prelude::*;
 
 static BASE58_CHARS: &[u8] = b"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";

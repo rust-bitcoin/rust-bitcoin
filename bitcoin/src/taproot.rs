@@ -11,13 +11,13 @@ use core::fmt;
 use core::iter::FusedIterator;
 
 use bitcoin_internals::write_err;
+use hashes::{sha256t_hash_newtype, Hash, HashEngine};
 use secp256k1::{self, Scalar, Secp256k1};
 
 use crate::consensus::Encodable;
 use crate::crypto::key::{TapTweak, TweakedPublicKey, UntweakedPublicKey, XOnlyPublicKey};
 // Re-export these so downstream only has to use one `taproot` module.
 pub use crate::crypto::taproot::{Error, Signature};
-use crate::hashes::{sha256t_hash_newtype, Hash, HashEngine};
 use crate::prelude::*;
 use crate::{io, Script, ScriptBuf};
 
@@ -1576,12 +1576,12 @@ impl std::error::Error for TaprootError {
 mod test {
     use core::str::FromStr;
 
+    use hashes::hex::FromHex;
+    use hashes::sha256t::Tag;
+    use hashes::{sha256, Hash, HashEngine};
     use secp256k1::{VerifyOnly, XOnlyPublicKey};
 
     use super::*;
-    use crate::hashes::hex::FromHex;
-    use crate::hashes::sha256t::Tag;
-    use crate::hashes::{sha256, Hash, HashEngine};
     use crate::sighash::{TapSighash, TapSighashTag};
     use crate::{Address, Network};
     extern crate serde_json;

@@ -14,11 +14,12 @@
 use core::borrow::{Borrow, BorrowMut};
 use core::{fmt, str};
 
+use hashes::{hash_newtype, sha256, sha256d, sha256t_hash_newtype, Hash};
+
 use crate::blockdata::transaction::EncodeSigningDataResult;
 use crate::blockdata::witness::Witness;
 use crate::consensus::{encode, Encodable};
 use crate::error::impl_std_error;
-use crate::hashes::{hash_newtype, sha256, sha256d, sha256t_hash_newtype, Hash};
 use crate::prelude::*;
 use crate::taproot::{LeafVersion, TapLeafHash, TAPROOT_ANNEX_PREFIX};
 use crate::{io, Script, ScriptBuf, Sequence, Transaction, TxIn, TxOut};
@@ -1126,14 +1127,15 @@ fn is_invalid_use_of_sighash_single(sighash: u32, input_index: usize, output_len
 mod tests {
     use std::str::FromStr;
 
+    use hashes::hex::FromHex;
+    use hashes::HashEngine;
+
     use super::*;
     use crate::address::Address;
     use crate::blockdata::locktime::absolute;
     use crate::consensus::deserialize;
     use crate::crypto::key::PublicKey;
     use crate::crypto::sighash::{LegacySighash, TapSighash};
-    use crate::hashes::hex::FromHex;
-    use crate::hashes::HashEngine;
     use crate::internal_macros::hex;
     use crate::network::constants::Network;
     use crate::taproot::TapLeafHash;

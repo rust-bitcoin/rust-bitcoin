@@ -11,6 +11,8 @@
 
 use core::fmt;
 
+use hashes::{Hash, HashEngine};
+
 use super::Weight;
 use crate::blockdata::script;
 use crate::blockdata::transaction::Transaction;
@@ -18,7 +20,6 @@ use crate::consensus::{encode, Decodable, Encodable};
 use crate::error::Error::{self, BlockBadProofOfWork, BlockBadTarget};
 pub use crate::hash_types::BlockHash;
 use crate::hash_types::{TxMerkleNode, WitnessCommitment, WitnessMerkleNode, Wtxid};
-use crate::hashes::{Hash, HashEngine};
 use crate::internal_macros::impl_consensus_encoding;
 use crate::pow::{CompactTarget, Target, Work};
 use crate::prelude::*;
@@ -394,9 +395,10 @@ impl From<&Block> for BlockHash {
 
 #[cfg(test)]
 mod tests {
+    use hashes::hex::FromHex;
+
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
-    use crate::hashes::hex::FromHex;
     use crate::internal_macros::hex;
 
     #[test]

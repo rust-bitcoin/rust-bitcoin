@@ -53,7 +53,7 @@ pub use newtypes::*;
 
 #[rustfmt::skip]
 mod newtypes {
-    use crate::hashes::{sha256, sha256d, hash160, hash_newtype};
+    use hashes::{sha256, sha256d, hash160, hash_newtype};
 
     hash_newtype! {
         /// A bitcoin transaction hash/transaction ID.

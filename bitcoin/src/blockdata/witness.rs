@@ -399,10 +399,9 @@ impl<'de> serde::Deserialize<'de> for Witness {
                 self,
                 mut a: A,
             ) -> Result<Self::Value, A::Error> {
+                use hashes::hex::Error::*;
+                use hashes::hex::FromHex;
                 use serde::de::{self, Unexpected};
-
-                use crate::hashes::hex::Error::*;
-                use crate::hashes::hex::FromHex;
 
                 let mut ret = match a.size_hint() {
                     Some(len) => Vec::with_capacity(len),
@@ -461,10 +460,11 @@ impl From<Vec<&[u8]>> for Witness {
 
 #[cfg(test)]
 mod test {
+    use secp256k1::ecdsa;
+
     use super::*;
     use crate::consensus::{deserialize, serialize};
     use crate::internal_macros::hex;
-    use crate::secp256k1::ecdsa;
     use crate::Transaction;
 
     fn append_u32_vec(mut v: Vec<u8>, n: &[u32]) -> Vec<u8> {

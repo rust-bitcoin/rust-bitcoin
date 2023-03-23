@@ -11,9 +11,9 @@ use core::{convert, fmt, mem};
 use std::error;
 
 use bitcoin_internals::impl_array_newtype;
+use hashes::{sha256, siphash24, Hash};
 
 use crate::consensus::encode::{self, Decodable, Encodable, VarInt};
-use crate::hashes::{sha256, siphash24, Hash};
 use crate::internal_macros::{impl_bytes_newtype, impl_consensus_encoding};
 use crate::prelude::*;
 use crate::{block, io, Block, BlockHash, Transaction};
@@ -372,11 +372,12 @@ impl BlockTransactions {
 
 #[cfg(test)]
 mod test {
+    use hashes::hex::FromHex;
+
     use super::*;
     use crate::blockdata::locktime::absolute;
     use crate::consensus::encode::{deserialize, serialize};
     use crate::hash_types::TxMerkleNode;
-    use crate::hashes::hex::FromHex;
     use crate::{
         CompactTarget, OutPoint, ScriptBuf, Sequence, Transaction, TxIn, TxOut, Txid, Witness,
     };
