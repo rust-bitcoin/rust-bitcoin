@@ -5,7 +5,7 @@
 //!
 //! Support for ordinary base58 Bitcoin addresses and private keys.
 //!
-//! # Example: creating a new address from a randomly-generated key pair
+//! # Example creating a new address from a randomly-generated key pair
 //!
 //! ```rust
 //! # #[cfg(feature = "rand-std")] {
