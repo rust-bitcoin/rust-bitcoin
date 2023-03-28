@@ -13,8 +13,8 @@ use core::fmt;
 use core::ops::Index;
 use core::str::FromStr;
 
-use bitcoin_internals::{impl_array_newtype, write_err};
 use hashes::{hex, sha512, Hash, HashEngine, Hmac, HmacEngine};
+use internals::{impl_array_newtype, write_err};
 use secp256k1::{self, Secp256k1, XOnlyPublicKey};
 #[cfg(feature = "serde")]
 use serde;

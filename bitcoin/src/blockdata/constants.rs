@@ -10,9 +10,9 @@
 
 use core::default::Default;
 
-use bitcoin_internals::impl_array_newtype;
 use hashes::{sha256d, Hash};
 use hex_lit::hex;
+use internals::impl_array_newtype;
 
 use crate::blockdata::block::{self, Block};
 use crate::blockdata::locktime::absolute;

@@ -16,7 +16,7 @@ exclude = ["tests", "contrib"]
 default = [ "std", "secp-recovery" ]
 rand-std = ["secp256k1/rand-std"]
 rand = ["secp256k1/rand"]
-serde = ["actual-serde", "bitcoin_hashes/serde", "secp256k1/serde"]
+serde = ["actual-serde", "hashes/serde", "secp256k1/serde"]
 secp-lowmemory = ["secp256k1/lowmemory"]
 secp-recovery = ["secp256k1/recovery"]
 bitcoinconsensus-std = ["bitcoinconsensus/std", "std"]
@@ -26,17 +26,17 @@ bitcoinconsensus-std = ["bitcoinconsensus/std", "std"]
 # The no-std feature doesn't disable std - you need to turn off the std feature for that by disabling default.
 # Instead no-std enables additional features required for this crate to be usable without std.
 # As a result, both can be enabled without conflict.
-std = ["secp256k1/std", "bitcoin_hashes/std", "bech32/std", "bitcoin-internals/std"]
-no-std = ["core2", "bitcoin_hashes/alloc", "bitcoin_hashes/core2", "secp256k1/alloc"]
+std = ["secp256k1/std", "hashes/std", "bech32/std", "internals/std"]
+no-std = ["core2", "hashes/alloc", "hashes/core2", "secp256k1/alloc"]
 
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
-bitcoin-internals = { path = "../internals", package = "bitcoin-private", version = "0.1.0" }
+internals = { package = "bitcoin-private", version = "0.1.0", path = "../internals" }
 bech32 = { version = "0.9.0", default-features = false }
-bitcoin_hashes = { version = "0.12.0", default-features = false }
+hashes = { package = "bitcoin_hashes", version = "0.12.0", default-features = false }
 secp256k1 = { version = "0.27.0", default-features = false, features = ["bitcoin_hashes"] }
 hex_lit = "0.1.1"
 

@@ -8,9 +8,9 @@
 use core::str::FromStr;
 use core::{fmt, iter};
 
-use bitcoin_internals::hex::display::DisplayHex;
-use bitcoin_internals::write_err;
 use hashes::hex::{self, FromHex};
+use internals::hex::display::DisplayHex;
+use internals::write_err;
 use secp256k1;
 
 use crate::prelude::*;

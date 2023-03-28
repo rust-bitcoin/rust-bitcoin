@@ -12,7 +12,7 @@ impl<'a> serde::Serialize for SerializeBytesAsHex<'a> {
     where
         S: serde::Serializer,
     {
-        use bitcoin_internals::hex::display::DisplayHex;
+        use internals::hex::display::DisplayHex;
 
         serializer.collect_str(&format_args!("{:x}", self.0.as_hex()))
     }

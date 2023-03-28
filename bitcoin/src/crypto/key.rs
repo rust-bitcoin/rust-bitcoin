@@ -10,9 +10,9 @@ use core::fmt::{self, Write};
 use core::ops;
 use core::str::FromStr;
 
-use bitcoin_internals::write_err;
 use hashes::hex::FromHex;
 use hashes::{hash160, hex, Hash};
+use internals::write_err;
 pub use secp256k1::{self, constants, KeyPair, Parity, Secp256k1, Verification, XOnlyPublicKey};
 
 use crate::hash_types::{PubkeyHash, WPubkeyHash};

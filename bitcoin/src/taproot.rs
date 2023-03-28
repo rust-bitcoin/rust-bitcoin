@@ -10,8 +10,8 @@ use core::convert::TryFrom;
 use core::fmt;
 use core::iter::FusedIterator;
 
-use bitcoin_internals::write_err;
 use hashes::{sha256t_hash_newtype, Hash, HashEngine};
+use internals::write_err;
 use secp256k1::{self, Scalar, Secp256k1};
 
 use crate::consensus::Encodable;

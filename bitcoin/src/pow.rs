@@ -776,13 +776,13 @@ macro_rules! impl_hex {
     ($hex:ident, $case:expr) => {
         impl $hex for U256 {
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                bitcoin_internals::hex::display::fmt_hex_exact!(f, 32, &self.to_be_bytes(), $case)
+                internals::hex::display::fmt_hex_exact!(f, 32, &self.to_be_bytes(), $case)
             }
         }
     };
 }
-impl_hex!(LowerHex, bitcoin_internals::hex::Case::Lower);
-impl_hex!(UpperHex, bitcoin_internals::hex::Case::Upper);
+impl_hex!(LowerHex, internals::hex::Case::Lower);
+impl_hex!(UpperHex, internals::hex::Case::Upper);
 
 #[cfg(feature = "serde")]
 #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
