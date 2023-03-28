@@ -1057,6 +1057,17 @@ impl Address<NetworkUnchecked> {
     pub fn assume_checked(self) -> Address { Address::new(self.network, self.payload) }
 }
 
+// For NetworkUnchecked , it compare Addresses and if network and payload matches then return true.
+impl PartialEq<Address<NetworkUnchecked>> for Address {
+    fn eq(&self, other: &Address<NetworkUnchecked>) -> bool {
+        self.network == other.network && self.payload == other.payload
+    }
+}
+
+impl PartialEq<Address> for Address<NetworkUnchecked> {
+    fn eq(&self, other: &Address) -> bool { other == self }
+}
+
 impl From<Address> for script::ScriptBuf {
     fn from(a: Address) -> Self { a.script_pubkey() }
 }
