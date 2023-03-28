@@ -185,6 +185,11 @@ impl ChainHash {
         let hashes = [Self::BITCOIN, Self::TESTNET, Self::SIGNET, Self::REGTEST];
         hashes[network as usize]
     }
+
+    /// Converts genesis block hash into `ChainHash`.
+    pub fn from_genesis_block_hash(block_hash: crate::BlockHash) -> Self {
+        ChainHash(block_hash.to_byte_array())
+    }
 }
 
 #[cfg(test)]
