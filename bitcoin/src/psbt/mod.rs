@@ -341,8 +341,12 @@ impl PartiallySignedTransaction {
             }
             Wpkh => {
                 let script_code = ScriptBuf::p2wpkh_script_code(spk).ok_or(SignError::NotWpkh)?;
-                let sighash =
-                    cache.segwit_signature_hash(input_index, &script_code, utxo.value, hash_ty)?;
+                let sighash = cache.segwit_signature_hash(
+                    input_index,
+                    &script_code,
+                    utxo.value,
+                    hash_ty.into(),
+                )?;
                 Ok((Message::from(sighash), hash_ty))
             }
             ShWpkh => {
@@ -350,15 +354,23 @@ impl PartiallySignedTransaction {
                     input.redeem_script.as_ref().expect("checked above"),
                 )
                 .ok_or(SignError::NotWpkh)?;
-                let sighash =
-                    cache.segwit_signature_hash(input_index, &script_code, utxo.value, hash_ty)?;
+                let sighash = cache.segwit_signature_hash(
+                    input_index,
+                    &script_code,
+                    utxo.value,
+                    hash_ty.into(),
+                )?;
                 Ok((Message::from(sighash), hash_ty))
             }
             Wsh | ShWsh => {
                 let script_code =
                     input.witness_script.as_ref().ok_or(SignError::MissingWitnessScript)?;
-                let sighash =
-                    cache.segwit_signature_hash(input_index, script_code, utxo.value, hash_ty)?;
+                let sighash = cache.segwit_signature_hash(
+                    input_index,
+                    script_code,
+                    utxo.value,
+                    hash_ty.into(),
+                )?;
                 Ok((Message::from(sighash), hash_ty))
             }
             Tr => {

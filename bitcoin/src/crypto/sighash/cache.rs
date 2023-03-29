@@ -9,8 +9,8 @@ use core::borrow::{Borrow, BorrowMut};
 use hashes::{sha256, sha256d, Hash};
 
 use super::{
-    EcdsaSighashType, Error, LegacySighash, SegwitV0Sighash, TapSighash, TapSighashType,
-    UINT256_ONE,
+    Error, LegacySighash, LegacySighashType, SegwitV0Sighash, SegwitV0SighashType, TapSighash,
+    TapSighashType, UINT256_ONE,
 };
 use crate::blockdata::transaction::EncodeSigningDataResult;
 use crate::blockdata::witness::Witness;
@@ -272,7 +272,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         input_index: usize,
         script_code: &Script,
         value: u64,
-        sighash_type: EcdsaSighashType,
+        sighash_type: SegwitV0SighashType,
     ) -> Result<(), Error> {
         let zero_hash = sha256d::Hash::all_zeros();
 
@@ -287,8 +287,8 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         }
 
         if !anyone_can_pay
-            && sighash != EcdsaSighashType::Single
-            && sighash != EcdsaSighashType::None
+            && sighash != SegwitV0SighashType::Single
+            && sighash != SegwitV0SighashType::None
         {
             self.segwit_cache().sequences.consensus_encode(&mut writer)?;
         } else {
@@ -308,10 +308,12 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             txin.sequence.consensus_encode(&mut writer)?;
         }
 
-        if sighash != EcdsaSighashType::Single && sighash != EcdsaSighashType::None {
+        if sighash != SegwitV0SighashType::Single && sighash != SegwitV0SighashType::None {
             self.segwit_cache().outputs.consensus_encode(&mut writer)?;
-        } else if sighash == EcdsaSighashType::Single && input_index < self.tx.borrow().output.len()
+        } else if sighash == SegwitV0SighashType::Single
+            && input_index < self.tx.borrow().output.len()
         {
+            // FIXME: Why is this LegacySighash and not SegwitV0Sighash?
             let mut single_enc = LegacySighash::engine();
             self.tx.borrow().output[input_index].consensus_encode(&mut single_enc)?;
             let hash = LegacySighash::from_engine(single_enc);
@@ -331,7 +333,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         input_index: usize,
         script_code: &Script,
         value: u64,
-        sighash_type: EcdsaSighashType,
+        sighash_type: SegwitV0SighashType,
     ) -> Result<SegwitV0Sighash, Error> {
         let mut enc = SegwitV0Sighash::engine();
         self.segwit_encode_signing_data_to(
@@ -348,10 +350,10 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     /// given sighash flag can be computed.
     ///
     /// To actually produce a scriptSig, this hash needs to be run through an ECDSA signer, the
-    /// [`EcdsaSighashType`] appended to the resulting sig, and a script written around this, but
+    /// [`SegwitV0SighashType`] appended to the resulting sig, and a script written around this, but
     /// this is the general (and hard) part.
     ///
-    /// The `sighash_type` supports an arbitrary `u32` value, instead of just [`EcdsaSighashType`],
+    /// The `sighash_type` supports an arbitrary `u32` value, instead of just [`SegwitV0SighashType`],
     /// because internally 4 bytes are being hashed, even though only the lowest byte is appended to
     /// signature in a transaction.
     ///
@@ -401,7 +403,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             sighash_type: u32,
         ) -> Result<(), io::Error> {
             let (sighash, anyone_can_pay) =
-                EcdsaSighashType::from_consensus(sighash_type).split_anyonecanpay_flag();
+                LegacySighashType::from_consensus(sighash_type).split_anyonecanpay_flag();
 
             // Build tx to sign
             let mut tx = Transaction {
@@ -429,8 +431,8 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
                             ScriptBuf::new()
                         },
                         sequence: if n != input_index
-                            && (sighash == EcdsaSighashType::Single
-                                || sighash == EcdsaSighashType::None)
+                            && (sighash == LegacySighashType::Single
+                                || sighash == LegacySighashType::None)
                         {
                             Sequence::ZERO
                         } else {
@@ -442,8 +444,8 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
             }
             // ..then all outputs
             tx.output = match sighash {
-                EcdsaSighashType::All => self_.output.clone(),
-                EcdsaSighashType::Single => {
+                LegacySighashType::All => self_.output.clone(),
+                LegacySighashType::Single => {
                     let output_iter = self_
                         .output
                         .iter()
@@ -460,7 +462,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
                         );
                     output_iter.collect()
                 }
-                EcdsaSighashType::None => vec![],
+                LegacySighashType::None => vec![],
                 _ => unreachable!(),
             };
             // hash the result
@@ -484,10 +486,10 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     /// Computes a legacy signature hash for a given input index with a given sighash flag.
     ///
     /// To actually produce a scriptSig, this hash needs to be run through an ECDSA signer, the
-    /// [`EcdsaSighashType`] appended to the resulting sig, and a script written around this, but
+    /// [`LegacySighashType`] appended to the resulting sig, and a script written around this, but
     /// this is the general (and hard) part.
     ///
-    /// The `sighash_type` supports an arbitrary `u32` value, instead of just [`EcdsaSighashType`],
+    /// The `sighash_type` supports an arbitrary `u32` value, instead of just [`LegacySighashType`],
     /// because internally 4 bytes are being hashed, even though only the lowest byte is appended to
     /// signature in a transaction.
     ///
@@ -583,7 +585,7 @@ impl<R: BorrowMut<Transaction>> SighashCache<R> {
     /// This allows in-line signing such as
     /// ```
     /// use bitcoin::{absolute, Transaction, Script};
-    /// use bitcoin::sighash::{EcdsaSighashType, SighashCache};
+    /// use bitcoin::sighash::{SegwitV0SighashType, SighashCache};
     ///
     /// let mut tx_to_sign = Transaction { version: 2, lock_time: absolute::LockTime::ZERO, input: Vec::new(), output: Vec::new() };
     /// let input_count = tx_to_sign.input.len();
@@ -591,7 +593,7 @@ impl<R: BorrowMut<Transaction>> SighashCache<R> {
     /// let mut sig_hasher = SighashCache::new(&mut tx_to_sign);
     /// for inp in 0..input_count {
     ///     let prevout_script = Script::empty();
-    ///     let _sighash = sig_hasher.segwit_signature_hash(inp, prevout_script, 42, EcdsaSighashType::All);
+    ///     let _sighash = sig_hasher.segwit_signature_hash(inp, prevout_script, 42, SegwitV0SighashType::All);
     ///     // ... sign the sighash
     ///     sig_hasher.witness_mut(inp).unwrap().push(&Vec::new());
     /// }
@@ -710,8 +712,8 @@ impl<'a> Encodable for Annex<'a> {
 }
 
 fn is_invalid_use_of_sighash_single(sighash: u32, input_index: usize, output_len: usize) -> bool {
-    let ty = EcdsaSighashType::from_consensus(sighash);
-    ty == EcdsaSighashType::Single && input_index >= output_len
+    let ty = LegacySighashType::from_consensus(sighash);
+    ty == LegacySighashType::Single && input_index >= output_len
 }
 
 #[cfg(test)]
@@ -1291,7 +1293,9 @@ mod tests {
 
         let mut cache = SighashCache::new(&tx);
         assert_eq!(
-            cache.segwit_signature_hash(1, &witness_script, value, EcdsaSighashType::All).unwrap(),
+            cache
+                .segwit_signature_hash(1, &witness_script, value, SegwitV0SighashType::All)
+                .unwrap(),
             "c37af31116d1b27caf68aae9e3ac82f1477929014d5b917657d0eb49478cb670"
                 .parse::<SegwitV0Sighash>()
                 .unwrap(),
@@ -1332,7 +1336,9 @@ mod tests {
 
         let mut cache = SighashCache::new(&tx);
         assert_eq!(
-            cache.segwit_signature_hash(0, &witness_script, value, EcdsaSighashType::All).unwrap(),
+            cache
+                .segwit_signature_hash(0, &witness_script, value, SegwitV0SighashType::All)
+                .unwrap(),
             "64f3b0f4dd2bb3aa1ce8566d220cc74dda9df97d8490cc81d89d735c92e59fb6"
                 .parse::<SegwitV0Sighash>()
                 .unwrap(),
@@ -1379,7 +1385,9 @@ mod tests {
 
         let mut cache = SighashCache::new(&tx);
         assert_eq!(
-            cache.segwit_signature_hash(0, &witness_script, value, EcdsaSighashType::All).unwrap(),
+            cache
+                .segwit_signature_hash(0, &witness_script, value, SegwitV0SighashType::All)
+                .unwrap(),
             "185c0be5263dce5b4bb50a047973c1b6272bfbd0103a89444597dc40b248ee7c"
                 .parse::<SegwitV0Sighash>()
                 .unwrap(),

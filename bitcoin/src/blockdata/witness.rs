@@ -14,7 +14,7 @@ use crate::consensus::encode::{Error, MAX_VEC_SIZE};
 use crate::consensus::{Decodable, Encodable, WriteExt};
 use crate::io::{self, Read, Write};
 use crate::prelude::*;
-use crate::sighash::EcdsaSighashType;
+use crate::sighash::SegwitV0SighashType;
 use crate::taproot::TAPROOT_ANNEX_PREFIX;
 use crate::{Script, VarInt};
 
@@ -255,7 +255,7 @@ impl Witness {
     pub fn push_bitcoin_signature(
         &mut self,
         signature: &ecdsa::SerializedSignature,
-        hash_type: EcdsaSighashType,
+        hash_type: SegwitV0SighashType,
     ) {
         // Note that a maximal length ECDSA signature is 72 bytes, plus the sighash type makes 73
         let mut sig = [0; 73];
@@ -551,7 +551,7 @@ mod test {
             hex!("304402207c800d698f4b0298c5aac830b822f011bb02df41eb114ade9a6702f364d5e39c0220366900d2a60cab903e77ef7dd415d46509b1f78ac78906e3296f495aa1b1b541");
         let sig = ecdsa::Signature::from_der(&sig_bytes).unwrap();
         let mut witness = Witness::default();
-        witness.push_bitcoin_signature(&sig.serialize_der(), EcdsaSighashType::All);
+        witness.push_bitcoin_signature(&sig.serialize_der(), SegwitV0SighashType::All);
         let expected_witness = vec![hex!(
             "304402207c800d698f4b0298c5aac830b822f011bb02df41eb114ade9a6702f364d5e39c0220366900d2a60cab903e77ef7dd415d46509b1f78ac78906e3296f495aa1b1b54101")
             ];

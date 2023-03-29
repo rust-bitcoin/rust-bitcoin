@@ -1,18 +1,20 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Sighash type for ECDSA (legacy and segwit v0) signatures.
+//! Sighash type for Segwit version 0 ECDSA signatures.
+//!
+//! We use the identifier "native" (and "nat") to distinguish segwit v0 transactions from legacy and
+//! segwit v1 (taproot).
 
 use core::{fmt, str};
 
 use super::{NonStandardSighashType, SighashTypeParseError};
-use crate::prelude::*;
 
 /// Hashtype of an input's signature, encoded in the last byte of the signature.
 ///
 /// Fixed values so they can be cast as integer types for encoding (see also
 /// [`TapSighashType`]).
 #[derive(PartialEq, Eq, Debug, Copy, Clone, Hash)]
-pub enum EcdsaSighashType {
+pub enum SegwitV0SighashType {
     /// 0x1: Sign all outputs.
     All = 0x01,
     /// 0x2: Sign no outputs --- anyone can choose the destination.
@@ -30,20 +32,34 @@ pub enum EcdsaSighashType {
     SinglePlusAnyoneCanPay = 0x83,
 }
 #[cfg(feature = "serde")]
-crate::serde_utils::serde_string_impl!(EcdsaSighashType, "a EcdsaSighashType data");
+crate::serde_utils::serde_string_impl!(SegwitV0SighashType, "a SegwitV0SighashType data");
 
-impl EcdsaSighashType {
-    /// Creates a [`EcdsaSighashType`] from a raw `u32`.
+impl SegwitV0SighashType {
+    /// Splits the sighash flag into the "real" sighash flag and the ANYONECANPAY boolean.
+    pub(crate) fn split_anyonecanpay_flag(self) -> (SegwitV0SighashType, bool) {
+        use SegwitV0SighashType::*;
+
+        match self {
+            All => (All, false),
+            None => (None, false),
+            Single => (Single, false),
+            AllPlusAnyoneCanPay => (All, true),
+            NonePlusAnyoneCanPay => (None, true),
+            SinglePlusAnyoneCanPay => (Single, true),
+        }
+    }
+
+    /// Creates a [`SegwitV0SighashType`] from a raw `u32`.
     ///
     /// **Note**: this replicates consensus behaviour, for current standardness rules correctness
     /// you probably want [`Self::from_standard`].
     ///
     /// This might cause unexpected behavior because it does not roundtrip. That is,
-    /// `EcdsaSighashType::from_consensus(n) as u32 != n` for non-standard values of `n`. While
+    /// `SegwitV0SighashType::from_consensus(n) as u32 != n` for non-standard values of `n`. While
     /// verifying signatures, the user should retain the `n` and use it compute the signature hash
     /// message.
-    pub fn from_consensus(n: u32) -> EcdsaSighashType {
-        use EcdsaSighashType::*;
+    pub fn from_consensus(n: u32) -> SegwitV0SighashType {
+        use SegwitV0SighashType::*;
 
         // In Bitcoin Core, the SignatureHash function will mask the (int32) value with
         // 0x1f to (apparently) deactivate ACP when checking for SINGLE and NONE bits.
@@ -64,13 +80,13 @@ impl EcdsaSighashType {
         }
     }
 
-    /// Creates a [`EcdsaSighashType`] from a raw `u32`.
+    /// Creates a [`SegwitV0SighashType`] from a raw `u32`.
     ///
     /// # Errors
     ///
     /// If `n` is a non-standard sighash value.
-    pub fn from_standard(n: u32) -> Result<EcdsaSighashType, NonStandardSighashType> {
-        use EcdsaSighashType::*;
+    pub fn from_standard(n: u32) -> Result<SegwitV0SighashType, NonStandardSighashType> {
+        use SegwitV0SighashType::*;
 
         match n {
             // Standard sighashes, see https://github.com/bitcoin/bitcoin/blob/b805dbb0b9c90dadef0424e5b3bf86ac308e103e/src/script/interpreter.cpp#L189-L198
@@ -84,15 +100,15 @@ impl EcdsaSighashType {
         }
     }
 
-    /// Converts [`EcdsaSighashType`] to a `u32` sighash flag.
+    /// Converts [`SegwitV0SighashType`] to a `u32` sighash flag.
     ///
     /// The returned value is guaranteed to be a valid according to standardness rules.
     pub fn to_u32(self) -> u32 { self as u32 }
 }
 
-impl fmt::Display for EcdsaSighashType {
+impl fmt::Display for SegwitV0SighashType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use EcdsaSighashType::*;
+        use SegwitV0SighashType::*;
 
         let s = match self {
             All => "SIGHASH_ALL",
@@ -106,11 +122,11 @@ impl fmt::Display for EcdsaSighashType {
     }
 }
 
-impl str::FromStr for EcdsaSighashType {
+impl str::FromStr for SegwitV0SighashType {
     type Err = SighashTypeParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        use EcdsaSighashType::*;
+        use SegwitV0SighashType::*;
 
         match s {
             "SIGHASH_ALL" => Ok(All),

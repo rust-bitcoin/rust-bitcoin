@@ -21,11 +21,15 @@ use crate::prelude::*;
 
 mod cache;
 mod ecdsa;
+mod legacy;
+mod segwit_v0;
 mod taproot;
 
 pub use self::cache::{Annex, Prevouts, ScriptPath, SighashCache};
-pub use self::ecdsa::EcdsaSighashType;
-pub use self::taproot::TapSighashType;
+pub use self::ecdsa::EcdsaSighashType; // Should only be used by the PSBT code.
+pub use self::legacy::LegacySighashType;
+pub use self::segwit_v0::SegwitV0SighashType;
+pub use self::taproot::TapSighashType; // FIXME: Should this be TaprootSighashType?
 
 /// Used for signature hash for invalid use of SIGHASH_SINGLE.
 #[rustfmt::skip]
@@ -77,9 +81,84 @@ This hash type is used for computing taproot signature hash.",
 
 impl_thirty_two_byte_hash!(TapSighash);
 
-impl From<EcdsaSighashType> for TapSighashType {
-    fn from(s: EcdsaSighashType) -> Self {
+impl From<SegwitV0SighashType> for TapSighashType {
+    fn from(s: SegwitV0SighashType) -> Self {
         use TapSighashType::*;
+
+        match s {
+            SegwitV0SighashType::All => All,
+            SegwitV0SighashType::None => None,
+            SegwitV0SighashType::Single => Single,
+            SegwitV0SighashType::AllPlusAnyoneCanPay => AllPlusAnyoneCanPay,
+            SegwitV0SighashType::NonePlusAnyoneCanPay => NonePlusAnyoneCanPay,
+            SegwitV0SighashType::SinglePlusAnyoneCanPay => SinglePlusAnyoneCanPay,
+        }
+    }
+}
+
+impl From<LegacySighashType> for TapSighashType {
+    fn from(s: LegacySighashType) -> Self {
+        use TapSighashType::*;
+
+        match s {
+            LegacySighashType::All => All,
+            LegacySighashType::None => None,
+            LegacySighashType::Single => Single,
+            LegacySighashType::AllPlusAnyoneCanPay => AllPlusAnyoneCanPay,
+            LegacySighashType::NonePlusAnyoneCanPay => NonePlusAnyoneCanPay,
+            LegacySighashType::SinglePlusAnyoneCanPay => SinglePlusAnyoneCanPay,
+        }
+    }
+}
+
+impl From<LegacySighashType> for EcdsaSighashType {
+    fn from(s: LegacySighashType) -> Self {
+        use EcdsaSighashType::*;
+
+        match s {
+            LegacySighashType::All => All,
+            LegacySighashType::None => None,
+            LegacySighashType::Single => Single,
+            LegacySighashType::AllPlusAnyoneCanPay => AllPlusAnyoneCanPay,
+            LegacySighashType::NonePlusAnyoneCanPay => NonePlusAnyoneCanPay,
+            LegacySighashType::SinglePlusAnyoneCanPay => SinglePlusAnyoneCanPay,
+        }
+    }
+}
+
+impl From<SegwitV0SighashType> for EcdsaSighashType {
+    fn from(s: SegwitV0SighashType) -> Self {
+        use EcdsaSighashType::*;
+
+        match s {
+            SegwitV0SighashType::All => All,
+            SegwitV0SighashType::None => None,
+            SegwitV0SighashType::Single => Single,
+            SegwitV0SighashType::AllPlusAnyoneCanPay => AllPlusAnyoneCanPay,
+            SegwitV0SighashType::NonePlusAnyoneCanPay => NonePlusAnyoneCanPay,
+            SegwitV0SighashType::SinglePlusAnyoneCanPay => SinglePlusAnyoneCanPay,
+        }
+    }
+}
+
+impl From<EcdsaSighashType> for LegacySighashType {
+    fn from(s: EcdsaSighashType) -> Self {
+        use LegacySighashType::*;
+
+        match s {
+            EcdsaSighashType::All => All,
+            EcdsaSighashType::None => None,
+            EcdsaSighashType::Single => Single,
+            EcdsaSighashType::AllPlusAnyoneCanPay => AllPlusAnyoneCanPay,
+            EcdsaSighashType::NonePlusAnyoneCanPay => NonePlusAnyoneCanPay,
+            EcdsaSighashType::SinglePlusAnyoneCanPay => SinglePlusAnyoneCanPay,
+        }
+    }
+}
+
+impl From<EcdsaSighashType> for SegwitV0SighashType {
+    fn from(s: EcdsaSighashType) -> Self {
+        use SegwitV0SighashType::*;
 
         match s {
             EcdsaSighashType::All => All,
