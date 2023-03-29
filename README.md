@@ -200,7 +200,7 @@ support only a single blockchain.
 
 ## Release Notes
 
-See [CHANGELOG.md](CHANGELOG.md).
+See [CHANGELOG.md](bitcoin/CHANGELOG.md).
 
 
 ## Licensing
