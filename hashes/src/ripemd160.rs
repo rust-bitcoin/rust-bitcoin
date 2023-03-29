@@ -405,6 +405,8 @@ mod tests {
     #[test]
     #[cfg(feature = "alloc")]
     fn test() {
+        use std::convert::TryFrom;
+
         use crate::{ripemd160, Hash, HashEngine};
 
         #[derive(Clone)]
@@ -465,12 +467,24 @@ mod tests {
             },
         ];
 
-        for test in tests {
+        for mut test in tests {
             // Hash through high-level API, check hex encoding/decoding
             let hash = ripemd160::Hash::hash(test.input.as_bytes());
             assert_eq!(hash, test.output_str.parse::<ripemd160::Hash>().expect("parse hex"));
             assert_eq!(&hash[..], &test.output[..]);
             assert_eq!(&hash.to_string(), &test.output_str);
+            assert_eq!(
+                ripemd160::Hash::from_bytes_ref(
+                    <&[u8; 20]>::try_from(&*test.output).expect("known length")
+                ),
+                &hash
+            );
+            assert_eq!(
+                ripemd160::Hash::from_bytes_mut(
+                    <&mut [u8; 20]>::try_from(&mut *test.output).expect("known length")
+                ),
+                &hash
+            );
 
             // Hash through engine, checking that we can input byte by byte
             let mut engine = ripemd160::Hash::engine();
