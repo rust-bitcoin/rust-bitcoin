@@ -187,15 +187,12 @@ Alternatively add symlinks in your `.git/hooks` directory to any of the githooks
 
 ## Policy on Altcoins/Altchains
 
-Patches which add support for non-Bitcoin cryptocurrencies by adding constants to existing enums
-(e.g. to set the network message magic-byte sequence) are welcome. Anything more involved will be
-considered on a case-by-case basis, as the altcoin landscape includes projects which [frequently
-appear and disappear, and are poorly designed
-anyway](https://download.wpsoftware.net/bitcoin/alts.pdf) and keeping the codebase maintainable is a
-large priority.
+Since the altcoin landscape includes projects which [frequently appear and disappear, and are poorly
+designed anyway](https://download.wpsoftware.net/bitcoin/alts.pdf) we do not support any altcoins.
+Supporting Bitcoin properly is already difficult enough and we do not want to increase the
+maintenance burden and decrease API stability by adding support for other coins.
 
-In general, things that improve cross-chain compatibility (e.g. support for cross-chain atomic
-swaps) are more likely to be accepted than things which support only a single blockchain.
+Our code is public domain so by all means fork it and go wild :)
 
 
 ## Release Notes
