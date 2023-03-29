@@ -17,7 +17,6 @@
 
 /// Functions used by serde impls of all hashes.
 #[cfg(feature = "serde")]
-#[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 pub mod serde_details {
     use core::marker::PhantomData;
     use core::str::FromStr;
@@ -121,7 +120,6 @@ pub mod serde_details {
 /// represents a newtype over a byte-slice over length `$len`.
 #[macro_export]
 #[cfg(feature = "serde")]
-#[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 macro_rules! serde_impl(
     ($t:ident, $len:expr $(, $gen:ident: $gent:ident)*) => (
         impl<$($gen: $gent),*> $crate::serde_macros::serde_details::SerdeHash for $t<$($gen),*> {

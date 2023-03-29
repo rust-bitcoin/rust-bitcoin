@@ -601,7 +601,6 @@ impl fmt::Display for GetKeyError {
 }
 
 #[cfg(feature = "std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl std::error::Error for GetKeyError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         use GetKeyError::*;
@@ -722,7 +721,6 @@ impl fmt::Display for SignError {
 }
 
 #[cfg(feature = "std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl std::error::Error for SignError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         use self::SignError::*;
@@ -762,7 +760,6 @@ mod display_from_str {
 
     /// Error encountered during PSBT decoding from Base64 string.
     #[derive(Debug)]
-    #[cfg_attr(docsrs, doc(cfg(feature = "base64")))]
     #[non_exhaustive]
     pub enum PsbtParseError {
         /// Error in internal PSBT data structure.
@@ -783,7 +780,6 @@ mod display_from_str {
     }
 
     #[cfg(feature = "std")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
     impl std::error::Error for PsbtParseError {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             use self::PsbtParseError::*;
@@ -795,14 +791,12 @@ mod display_from_str {
         }
     }
 
-    #[cfg_attr(docsrs, doc(cfg(feature = "base64")))]
     impl Display for PartiallySignedTransaction {
         fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
             write!(f, "{}", Base64Display::with_config(&self.serialize(), base64::STANDARD))
         }
     }
 
-    #[cfg_attr(docsrs, doc(cfg(feature = "base64")))]
     impl FromStr for PartiallySignedTransaction {
         type Err = PsbtParseError;
 
@@ -813,7 +807,6 @@ mod display_from_str {
     }
 }
 #[cfg(feature = "base64")]
-#[cfg_attr(docsrs, doc(cfg(feature = "base64")))]
 pub use self::display_from_str::PsbtParseError;
 
 #[cfg(test)]

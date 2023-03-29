@@ -15,5 +15,4 @@ pub use self::encode::{
 pub use self::params::Params;
 
 #[cfg(feature = "serde")]
-#[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 pub mod serde;

@@ -612,7 +612,6 @@ impl core::fmt::Display for IncompleteBuilder {
 }
 
 #[cfg(feature = "std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl std::error::Error for IncompleteBuilder {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         use self::IncompleteBuilder::*;
@@ -651,7 +650,6 @@ impl core::fmt::Display for HiddenNodes {
 }
 
 #[cfg(feature = "std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl std::error::Error for HiddenNodes {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         use self::HiddenNodes::*;
@@ -851,7 +849,6 @@ impl TryFrom<TaprootBuilder> for NodeInfo {
 }
 
 #[cfg(feature = "serde")]
-#[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 impl serde::Serialize for NodeInfo {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -868,7 +865,6 @@ impl serde::Serialize for NodeInfo {
 }
 
 #[cfg(feature = "serde")]
-#[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 impl<'de> serde::Deserialize<'de> for NodeInfo {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -1398,7 +1394,6 @@ impl fmt::UpperHex for LeafVersion {
 
 /// Serializes [`LeafVersion`] as a `u8` using consensus encoding.
 #[cfg(feature = "serde")]
-#[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 impl serde::Serialize for LeafVersion {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -1410,7 +1405,6 @@ impl serde::Serialize for LeafVersion {
 
 /// Deserializes [`LeafVersion`] as a `u8` using consensus encoding.
 #[cfg(feature = "serde")]
-#[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 impl<'de> serde::Deserialize<'de> for LeafVersion {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -1492,7 +1486,6 @@ impl fmt::Display for TaprootBuilderError {
 }
 
 #[cfg(feature = "std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl std::error::Error for TaprootBuilderError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         use self::TaprootBuilderError::*;
@@ -1555,7 +1548,6 @@ impl fmt::Display for TaprootError {
 }
 
 #[cfg(feature = "std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl std::error::Error for TaprootError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         use self::TaprootError::*;
