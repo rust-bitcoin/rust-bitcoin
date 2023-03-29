@@ -8,6 +8,7 @@ use super::{Error, SighashTypeParseError};
 use crate::prelude::*;
 
 /// Hashtype of an input's signature, encoded in the last byte of the signature.
+///
 /// Fixed values so they can be cast as integer types for encoding.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum TapSighashType {
