@@ -84,6 +84,20 @@ macro_rules! hash_trait_impls {
             pub fn backward_hex(&self) -> impl '_ + core::fmt::LowerHex + core::fmt::UpperHex {
                 internals::hex::display::DisplayArray::<_, [u8; $bits / 8 * 2]>::new(self.0.iter().rev())
             }
+
+            /// Zero cost conversion between a fixed length byte array shared reference and
+            /// a shared reference to this Hash type.
+            pub fn from_bytes_ref(bytes: &[u8; $bits / 8]) -> &Self {
+                // Safety: Sound because Self is #[repr(transparent)] containing [u8; $bits / 8]
+                unsafe { &*(bytes as *const _ as *const Self) }
+            }
+
+            /// Zero cost conversion between a fixed length byte array exclusive reference and
+            /// an exclusive reference to this Hash type.
+            pub fn from_bytes_mut(bytes: &mut [u8; $bits / 8]) -> &mut Self {
+                // Safety: Sound because Self is #[repr(transparent)] containing [u8; $bits / 8]
+                unsafe { &mut *(bytes as *mut _ as *mut Self) }
+            }
         }
 
         impl<$($gen: $gent),*> str::FromStr for Hash<$($gen),*> {
