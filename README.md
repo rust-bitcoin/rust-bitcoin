@@ -200,7 +200,11 @@ support only a single blockchain.
 
 ## Release Notes
 
-See [CHANGELOG.md](bitcoin/CHANGELOG.md).
+Release notes are done per crate, see:
+
+- [bitcoin CHANGELOG](bitcoin/CHANGELOG.md)
+- [hashes CHANGELOG](hashes/CHANGELOG.md)
+- [internals CHANGELOG](internals/CHANGELOG.md)
 
 
 ## Licensing
