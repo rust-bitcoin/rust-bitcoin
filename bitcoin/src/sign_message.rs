@@ -155,7 +155,7 @@ mod message_signing {
             match address.address_type() {
                 Some(AddressType::P2pkh) => {
                     let pubkey = self.recover_pubkey(secp_ctx, msg_hash)?;
-                    Ok(*address == Address::p2pkh(&pubkey, address.network))
+                    Ok(*address == Address::p2pkh(&pubkey, *address.network()))
                 }
                 Some(address_type) =>
                     Err(MessageSignatureError::UnsupportedAddressType(address_type)),

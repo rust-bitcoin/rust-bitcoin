@@ -639,6 +639,17 @@ impl NetworkValidation for NetworkUnchecked {
     const IS_CHECKED: bool = false;
 }
 
+/// The inner representation of an address, without the network validation tag.
+///
+/// An `Address` is composed of a payload and a network. This struct represents the inner
+/// representation of an address without the network validation tag, which is used to ensure that
+/// addresses are used only on the appropriate network.
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+struct AddressInner {
+    payload: Payload,
+    network: Network,
+}
+
 /// A Bitcoin address.
 ///
 /// ### Parsing addresses
@@ -727,17 +738,15 @@ impl NetworkValidation for NetworkUnchecked {
 /// * [BIP341 - Taproot: SegWit version 1 spending rules](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki)
 /// * [BIP350 - Bech32m format for v1+ witness addresses](https://github.com/bitcoin/bips/blob/master/bip-0350.mediawiki)
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Address<V = NetworkChecked>
+///
+/// The `#[repr(transparent)]` attribute is used to guarantee that the layout of the
+/// `Address` struct is the same as the layout of the `AddressInner` struct. This attribute is
+/// an implementation detail and users should not rely on it in their code.
+///
+#[repr(transparent)]
+pub struct Address<V = NetworkChecked>(AddressInner, PhantomData<V>)
 where
-    V: NetworkValidation,
-{
-    /// The type of the address.
-    pub payload: Payload,
-    /// The network on which this address is usable.
-    pub network: Network,
-    /// Marker of the status of network validation.
-    _validation: PhantomData<V>,
-}
+    V: NetworkValidation;
 
 #[cfg(feature = "serde")]
 struct DisplayUnchecked<'a>(&'a Address<NetworkUnchecked>);
@@ -766,6 +775,24 @@ impl serde::Serialize for Address<NetworkUnchecked> {
 /// Methods on [`Address`] that can be called on both `Address<NetworkChecked>` and
 /// `Address<NetworkUnchecked>`.
 impl<V: NetworkValidation> Address<V> {
+    /// Returns a reference to the payload of this address.
+    pub fn payload(&self) -> &Payload { &self.0.payload }
+
+    /// Returns a reference to the network of this address.
+    pub fn network(&self) -> &Network { &self.0.network }
+
+    /// Returns a reference to the unchecked address, which is dangerous to use if the address
+    /// is invalid in the context of `NetworkUnchecked`.
+    pub fn as_unchecked(&self) -> &Address<NetworkUnchecked> {
+        unsafe { &*(self as *const Address<V> as *const Address<NetworkUnchecked>) }
+    }
+
+    /// Extracts and returns the network and payload components of the `Address`.
+    pub fn into_parts(self) -> (Network, Payload) {
+        let AddressInner { payload, network } = self.0;
+        (network, payload)
+    }
+
     /// Gets the address type of the address.
     ///
     /// This method is publicly available as [`address_type`](Address<NetworkChecked>::address_type)
@@ -775,7 +802,7 @@ impl<V: NetworkValidation> Address<V> {
     /// # Returns
     /// None if unknown, non-standard or related to the future witness version.
     fn address_type_internal(&self) -> Option<AddressType> {
-        match self.payload {
+        match self.payload() {
             Payload::PubkeyHash(_) => Some(AddressType::P2pkh),
             Payload::ScriptHash(_) => Some(AddressType::P2sh),
             Payload::WitnessProgram(ref prog) => {
@@ -797,21 +824,21 @@ impl<V: NetworkValidation> Address<V> {
 
     /// Format the address for the usage by `Debug` and `Display` implementations.
     fn fmt_internal(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        let p2pkh_prefix = match self.network {
+        let p2pkh_prefix = match self.network() {
             Network::Bitcoin => PUBKEY_ADDRESS_PREFIX_MAIN,
             Network::Testnet | Network::Signet | Network::Regtest => PUBKEY_ADDRESS_PREFIX_TEST,
         };
-        let p2sh_prefix = match self.network {
+        let p2sh_prefix = match self.network() {
             Network::Bitcoin => SCRIPT_ADDRESS_PREFIX_MAIN,
             Network::Testnet | Network::Signet | Network::Regtest => SCRIPT_ADDRESS_PREFIX_TEST,
         };
-        let bech32_hrp = match self.network {
+        let bech32_hrp = match self.network() {
             Network::Bitcoin => "bc",
             Network::Testnet | Network::Signet => "tb",
             Network::Regtest => "bcrt",
         };
         let encoding =
-            AddressEncoding { payload: &self.payload, p2pkh_prefix, p2sh_prefix, bech32_hrp };
+            AddressEncoding { payload: self.payload(), p2pkh_prefix, p2sh_prefix, bech32_hrp };
 
         use fmt::Display;
 
@@ -821,8 +848,8 @@ impl<V: NetworkValidation> Address<V> {
     /// Create new address from given components, infering the network validation
     /// marker type of the address.
     #[inline]
-    pub fn new(network: Network, payload: Payload) -> Address<V> {
-        Address { network, payload, _validation: PhantomData }
+    pub fn new(network: Network, payload: Payload) -> Self {
+        Self(AddressInner { network, payload }, PhantomData)
     }
 }
 
@@ -929,7 +956,7 @@ impl Address {
     }
 
     /// Generates a script pubkey spending to this address.
-    pub fn script_pubkey(&self) -> ScriptBuf { self.payload.script_pubkey() }
+    pub fn script_pubkey(&self) -> ScriptBuf { self.payload().script_pubkey() }
 
     /// Creates a URI string *bitcoin:address* optimized to be encoded in QR codes.
     ///
@@ -959,7 +986,7 @@ impl Address {
     /// # assert_eq!(writer, ADDRESS);
     /// ```
     pub fn to_qr_uri(&self) -> String {
-        let schema = match self.payload {
+        let schema = match self.payload() {
             Payload::WitnessProgram { .. } => "BITCOIN",
             _ => "bitcoin",
         };
@@ -973,7 +1000,7 @@ impl Address {
     /// given key. For taproot addresses, the supplied key is assumed to be tweaked
     pub fn is_related_to_pubkey(&self, pubkey: &PublicKey) -> bool {
         let pubkey_hash = pubkey.pubkey_hash();
-        let payload = self.payload.inner_prog_as_bytes();
+        let payload = self.payload().inner_prog_as_bytes();
         let xonly_pubkey = XOnlyPublicKey::from(pubkey.inner);
 
         (*pubkey_hash.as_byte_array() == *payload)
@@ -986,19 +1013,24 @@ impl Address {
     /// This will only work for Taproot addresses. The Public Key is
     /// assumed to have already been tweaked.
     pub fn is_related_to_xonly_pubkey(&self, xonly_pubkey: &XOnlyPublicKey) -> bool {
-        let payload = self.payload.inner_prog_as_bytes();
+        let payload = self.payload().inner_prog_as_bytes();
         payload == xonly_pubkey.serialize()
     }
 
     /// Returns true if the address creates a particular script
     /// This function doesn't make any allocations.
     pub fn matches_script_pubkey(&self, script_pubkey: &Script) -> bool {
-        self.payload.matches_script_pubkey(script_pubkey)
+        self.payload().matches_script_pubkey(script_pubkey)
     }
 }
 
 /// Methods that can be called only on `Address<NetworkUnchecked>`.
 impl Address<NetworkUnchecked> {
+    /// Returns a reference to the checked address.
+    /// This function is dangerous in case the address is not a valid checked address.
+    pub fn assume_checked_ref(&self) -> &Address {
+        unsafe { &*(self as *const Address<NetworkUnchecked> as *const Address) }
+    }
     /// Parsed addresses do not always have *one* network. The problem is that legacy testnet,
     /// regtest and signet addresse use the same prefix instead of multiple different ones. When
     /// parsing, such addresses are always assumed to be testnet addresses (the same is true for
@@ -1026,8 +1058,8 @@ impl Address<NetworkUnchecked> {
             _ => false,
         };
 
-        match (self.network, network) {
-            (a, b) if a == b => true,
+        match (self.network(), network) {
+            (a, b) if *a == b => true,
             (Network::Bitcoin, _) | (_, Network::Bitcoin) => false,
             (Network::Regtest, _) | (_, Network::Regtest) if !is_legacy => false,
             (Network::Testnet, _) | (Network::Regtest, _) | (Network::Signet, _) => true,
@@ -1043,7 +1075,7 @@ impl Address<NetworkUnchecked> {
         if self.is_valid_for_network(required) {
             Ok(self.assume_checked())
         } else {
-            Err(Error::NetworkValidation { found: self.network, required, address: self })
+            Err(Error::NetworkValidation { found: *self.network(), required, address: self })
         }
     }
 
@@ -1054,13 +1086,16 @@ impl Address<NetworkUnchecked> {
     /// For details about this mechanism, see section [*Parsing addresses*](Address#parsing-addresses)
     /// on [`Address`].
     #[inline]
-    pub fn assume_checked(self) -> Address { Address::new(self.network, self.payload) }
+    pub fn assume_checked(self) -> Address {
+        let (network, payload) = self.into_parts();
+        Address::new(network, payload)
+    }
 }
 
 // For NetworkUnchecked , it compare Addresses and if network and payload matches then return true.
 impl PartialEq<Address<NetworkUnchecked>> for Address {
     fn eq(&self, other: &Address<NetworkUnchecked>) -> bool {
-        self.network == other.network && self.payload == other.payload
+        self.network() == other.network() && self.payload() == other.payload()
     }
 }
 
@@ -1202,7 +1237,7 @@ mod tests {
             addr,
         );
         assert_eq!(
-            Address::from_script(&addr.script_pubkey(), addr.network).as_ref(),
+            Address::from_script(&addr.script_pubkey(), *addr.network()).as_ref(),
             Ok(addr),
             "script round-trip failed for {}",
             addr,
