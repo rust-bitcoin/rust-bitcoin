@@ -10,7 +10,6 @@
 use hashes::{sha256d, Hash, HashEngine};
 
 #[cfg(feature = "secp-recovery")]
-#[cfg_attr(docsrs, doc(cfg(feature = "secp-recovery")))]
 pub use self::message_signing::{MessageSignature, MessageSignatureError};
 use crate::consensus::{encode, Encodable};
 
@@ -32,7 +31,6 @@ mod message_signing {
     use crate::prelude::*;
 
     /// An error used for dealing with Bitcoin Signed Messages.
-    #[cfg_attr(docsrs, doc(cfg(feature = "secp-recovery")))]
     #[derive(Debug, PartialEq, Eq)]
     #[non_exhaustive]
     pub enum MessageSignatureError {
@@ -60,7 +58,6 @@ mod message_signing {
     }
 
     #[cfg(feature = "std")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
     impl std::error::Error for MessageSignatureError {
         fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
             use self::MessageSignatureError::*;
@@ -85,7 +82,6 @@ mod message_signing {
     /// `fmt::Display` and `str::FromStr` implementations, the `base64` feature
     /// must be enabled.
     #[derive(Copy, Clone, PartialEq, Eq, Debug)]
-    #[cfg_attr(docsrs, doc(cfg(feature = "secp-recovery")))]
     pub struct MessageSignature {
         /// The inner recoverable signature.
         pub signature: RecoverableSignature,
@@ -165,7 +161,6 @@ mod message_signing {
 
         /// Convert a signature from base64 encoding.
         #[cfg(feature = "base64")]
-        #[cfg_attr(docsrs, doc(cfg(feature = "base64")))]
         pub fn from_base64(s: &str) -> Result<MessageSignature, MessageSignatureError> {
             let bytes = base64::decode(s).map_err(|_| MessageSignatureError::InvalidBase64)?;
             MessageSignature::from_slice(&bytes)
@@ -173,12 +168,10 @@ mod message_signing {
 
         /// Convert to base64 encoding.
         #[cfg(feature = "base64")]
-        #[cfg_attr(docsrs, doc(cfg(feature = "base64")))]
         pub fn to_base64(self) -> String { base64::encode(&self.serialize()[..]) }
     }
 
     #[cfg(feature = "base64")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "base64")))]
     impl fmt::Display for MessageSignature {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             let bytes = self.serialize();
@@ -192,7 +185,6 @@ mod message_signing {
     }
 
     #[cfg(feature = "base64")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "base64")))]
     impl core::str::FromStr for MessageSignature {
         type Err = MessageSignatureError;
         fn from_str(s: &str) -> Result<MessageSignature, MessageSignatureError> {

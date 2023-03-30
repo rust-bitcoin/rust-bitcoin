@@ -80,7 +80,7 @@
 // Coding conventions
 #![warn(missing_docs)]
 // Experimental features we need.
-#![cfg_attr(docsrs, feature(doc_cfg))]
+#![cfg_attr(docsrs, feature(doc_auto_cfg))]
 #![cfg_attr(bench, feature(test))]
 // In general, rust is absolutely horrid at supporting users doing things like,
 // for example, compiling Rust code for real environments. Disable useless lints

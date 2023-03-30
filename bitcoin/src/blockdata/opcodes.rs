@@ -422,7 +422,6 @@ impl From<u8> for All {
 debug_from_display!(All);
 
 #[cfg(feature = "serde")]
-#[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 impl serde::Serialize for All {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where

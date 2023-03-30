@@ -60,7 +60,6 @@ impl<E: fmt::Display> fmt::Display for FromHexError<E> {
 }
 
 #[cfg(feature = "std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl<E> std::error::Error for FromHexError<E>
 where
     E: std::error::Error + 'static,

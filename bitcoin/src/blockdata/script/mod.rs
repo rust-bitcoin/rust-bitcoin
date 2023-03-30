@@ -273,7 +273,6 @@ impl<'a> From<&'a Script> for Cow<'a, Script> {
 
 /// Note: This will fail to compile on old Rust for targets that don't support atomics
 #[cfg(any(not(rust_v_1_60), target_has_atomic = "ptr"))]
-#[cfg_attr(docsrs, doc(cfg(target_has_atomic = "ptr")))]
 impl<'a> From<&'a Script> for Arc<Script> {
     fn from(value: &'a Script) -> Self {
         let rw: *const [u8] = Arc::into_raw(Arc::from(&value.0));
@@ -446,7 +445,6 @@ impl PartialOrd<ScriptBuf> for Script {
 }
 
 #[cfg(feature = "serde")]
-#[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 impl serde::Serialize for Script {
     /// User-facing serialization for `Script`.
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -463,7 +461,6 @@ impl serde::Serialize for Script {
 
 /// Can only deserialize borrowed bytes.
 #[cfg(feature = "serde")]
-#[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 impl<'de> serde::Deserialize<'de> for &'de Script {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -497,7 +494,6 @@ impl<'de> serde::Deserialize<'de> for &'de Script {
 }
 
 #[cfg(feature = "serde")]
-#[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 impl serde::Serialize for ScriptBuf {
     /// User-facing serialization for `Script`.
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -509,7 +505,6 @@ impl serde::Serialize for ScriptBuf {
 }
 
 #[cfg(feature = "serde")]
-#[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
 impl<'de> serde::Deserialize<'de> for ScriptBuf {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -686,7 +681,6 @@ pub enum Error {
     NumericOverflow,
     /// Error validating the script with bitcoinconsensus library.
     #[cfg(feature = "bitcoinconsensus")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
     BitcoinConsensus(bitcoinconsensus::Error),
     /// Can not find the spent output.
     UnknownSpentOutput(OutPoint),
@@ -753,7 +747,6 @@ impl fmt::Display for Error {
 }
 
 #[cfg(feature = "std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         use self::Error::*;

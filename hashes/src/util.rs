@@ -399,7 +399,6 @@ macro_rules! hash_newtype_known_attrs {
 }
 
 #[cfg(feature = "schemars")]
-#[cfg_attr(docsrs, doc(cfg(feature = "schemars")))]
 pub mod json_hex_string {
     use schemars::gen::SchemaGenerator;
     use schemars::schema::{Schema, SchemaObject};

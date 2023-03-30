@@ -122,7 +122,6 @@ impl fmt::Display for ParseOutPointError {
 }
 
 #[cfg(feature = "std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl std::error::Error for ParseOutPointError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         use self::ParseOutPointError::*;
@@ -943,7 +942,6 @@ impl Transaction {
 
     /// Shorthand for [`Self::verify_with_flags`] with flag [`bitcoinconsensus::VERIFY_ALL`].
     #[cfg(feature = "bitcoinconsensus")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
     pub fn verify<S>(&self, spent: S) -> Result<(), script::Error>
     where
         S: FnMut(&OutPoint) -> Option<TxOut>,
@@ -955,7 +953,6 @@ impl Transaction {
     ///
     /// The `spent` closure should not return the same [`TxOut`] twice!
     #[cfg(feature = "bitcoinconsensus")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "bitcoinconsensus")))]
     pub fn verify_with_flags<S, F>(&self, mut spent: S, flags: F) -> Result<(), script::Error>
     where
         S: FnMut(&OutPoint) -> Option<TxOut>,
