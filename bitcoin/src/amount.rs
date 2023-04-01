@@ -1642,6 +1642,7 @@ mod tests {
         use super::ParseAmountError as E;
         let btc = Denomination::Bitcoin;
         let sat = Denomination::Satoshi;
+        let msat = Denomination::MilliSatoshi;
         let p = Amount::from_str_in;
         let sp = SignedAmount::from_str_in;
 
@@ -1654,6 +1655,15 @@ mod tests {
         let more_than_max = format!("1{}", Amount::max_value());
         assert_eq!(p(&more_than_max, btc), Err(E::TooBig));
         assert_eq!(p("0.000000042", btc), Err(E::TooPrecise));
+        assert_eq!(p("999.0000000", msat), Err(E::TooPrecise));
+        assert_eq!(p("1.0000000", msat), Err(E::TooPrecise));
+        assert_eq!(p("1.1", msat), Err(E::TooPrecise));
+        assert_eq!(p("1000.1", msat), Err(E::TooPrecise));
+        assert_eq!(p("1001.0000000", msat), Err(E::TooPrecise));
+        assert_eq!(p("1000.0000001", msat), Err(E::TooPrecise));
+        assert_eq!(p("1000.1000000", msat), Err(E::TooPrecise));
+        assert_eq!(p("1100.0000000", msat), Err(E::TooPrecise));
+        assert_eq!(p("10001.0000000", msat), Err(E::TooPrecise));
 
         assert_eq!(p("1", btc), Ok(Amount::from_sat(1_000_000_00)));
         assert_eq!(sp("-.5", btc), Ok(SignedAmount::from_sat(-500_000_00)));
