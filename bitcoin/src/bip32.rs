@@ -607,14 +607,11 @@ impl ExtendedPrivKey {
             return Err(Error::WrongExtendedKeyLength(data.len()));
         }
 
-        let network = if data[0..4] == [0x04u8, 0x88, 0xAD, 0xE4] {
-            Network::Bitcoin
-        } else if data[0..4] == [0x04u8, 0x35, 0x83, 0x94] {
-            Network::Testnet
-        } else {
-            let mut ver = [0u8; 4];
-            ver.copy_from_slice(&data[0..4]);
-            return Err(Error::UnknownVersion(ver));
+        let network = match data {
+            [0x04u8, 0x88, 0xAD, 0xE4, ..] => Network::Bitcoin,
+            [0x04u8, 0x35, 0x83, 0x94, ..] => Network::Testnet,
+            [b0, b1, b2, b3, ..] => return Err(Error::UnknownVersion([*b0, *b1, *b2, *b3])),
+            _ => unreachable!("length checked above"),
         };
 
         Ok(ExtendedPrivKey {
@@ -745,16 +742,15 @@ impl ExtendedPubKey {
             return Err(Error::WrongExtendedKeyLength(data.len()));
         }
 
+        let network = match data {
+            [0x04u8, 0x88, 0xB2, 0x1E, ..] => Network::Bitcoin,
+            [0x04u8, 0x35, 0x87, 0xCF, ..] => Network::Testnet,
+            [b0, b1, b2, b3, ..] => return Err(Error::UnknownVersion([*b0, *b1, *b2, *b3])),
+            _ => unreachable!("length checked above"),
+        };
+
         Ok(ExtendedPubKey {
-            network: if data[0..4] == [0x04u8, 0x88, 0xB2, 0x1E] {
-                Network::Bitcoin
-            } else if data[0..4] == [0x04u8, 0x35, 0x87, 0xCF] {
-                Network::Testnet
-            } else {
-                let mut ver = [0u8; 4];
-                ver.copy_from_slice(&data[0..4]);
-                return Err(Error::UnknownVersion(ver));
-            },
+            network,
             depth: data[4],
             parent_fingerprint: data[5..9]
                 .try_into()
