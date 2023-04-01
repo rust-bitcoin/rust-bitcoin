@@ -114,6 +114,11 @@ impl Hash {
     pub fn hash_again(&self) -> sha256d::Hash {
         crate::Hash::from_byte_array(<Self as crate::Hash>::hash(&self.0).0)
     }
+
+    /// Computes hash from `bytes` in `const` context.
+    ///
+    /// Warning: this function is inefficient. It should be only used in `const` context.
+    pub const fn const_hash(bytes: &[u8]) -> Self { Hash(Midstate::const_hash(bytes, true).0) }
 }
 
 /// Output of the SHA256 hash function.
@@ -161,6 +166,23 @@ impl Midstate {
 
     /// Unwraps the [`Midstate`] and returns the underlying byte array.
     pub fn to_byte_array(self) -> [u8; 32] { self.0 }
+
+    /// Creates midstate for tagged hashes.
+    ///
+    /// Warning: this function is inefficient. It should be only used in `const` context.
+    ///
+    /// Computes non-finalized hash of `sha256(tag) || sha256(tag)` for use in
+    /// [`sha256t`](super::sha256t). It's provided for use with [`sha256t`](crate::sha256t).
+    pub const fn hash_tag(tag: &[u8]) -> Self {
+        let hash = Hash::const_hash(tag);
+        let mut buf = [0u8; 64];
+        let mut i = 0usize;
+        while i < buf.len() {
+            buf[i] = hash.0[i % hash.0.len()];
+            i += 1;
+        }
+        Self::const_hash(&buf, false)
+    }
 }
 
 impl hex::FromHex for Midstate {
@@ -194,6 +216,174 @@ macro_rules! round(
         round!($a, $b, $c, $d, $e, $f, $g, $h, $k, $w);
     )
 );
+
+impl Midstate {
+    #[allow(clippy::identity_op)] // more readble
+    const fn read_u32(bytes: &[u8], index: usize) -> u32 {
+        ((bytes[index + 0] as u32) << 24)
+            | ((bytes[index + 1] as u32) << 16)
+            | ((bytes[index + 2] as u32) << 8)
+            | ((bytes[index + 3] as u32) << 0)
+    }
+
+    const fn copy_w(bytes: &[u8], index: usize) -> [u32; 16] {
+        let mut w = [0u32; 16];
+        let mut i = 0;
+        while i < 16 {
+            w[i] = Self::read_u32(bytes, index + i * 4);
+            i += 1;
+        }
+        w
+    }
+
+    const fn const_hash(bytes: &[u8], finalize: bool) -> Self {
+        let mut state = [
+            0x6a09e667u32,
+            0xbb67ae85,
+            0x3c6ef372,
+            0xa54ff53a,
+            0x510e527f,
+            0x9b05688c,
+            0x1f83d9ab,
+            0x5be0cd19,
+        ];
+
+        let num_chunks = (bytes.len() + 9 + 63) / 64;
+        let mut chunk = 0;
+        #[allow(clippy::precedence)]
+        while chunk < num_chunks {
+            if !finalize && chunk + 1 == num_chunks {
+                break;
+            }
+            let mut w = if chunk * 64 + 64 <= bytes.len() {
+                Self::copy_w(bytes, chunk * 64)
+            } else {
+                let mut buf = [0; 64];
+                let mut i = 0;
+                let offset = chunk * 64;
+                while offset + i < bytes.len() {
+                    buf[i] = bytes[offset + i];
+                    i += 1;
+                }
+                if (bytes.len() % 64 <= 64 - 9) || (chunk + 2 == num_chunks) {
+                    buf[i] = 0x80;
+                }
+                #[allow(clippy::identity_op)] // more readble
+                #[allow(clippy::erasing_op)]
+                if chunk + 1 == num_chunks {
+                    let bit_len = bytes.len() as u64 * 8;
+                    buf[64 - 8] = ((bit_len >> 8 * 7) & 0xFF) as u8;
+                    buf[64 - 7] = ((bit_len >> 8 * 6) & 0xFF) as u8;
+                    buf[64 - 6] = ((bit_len >> 8 * 5) & 0xFF) as u8;
+                    buf[64 - 5] = ((bit_len >> 8 * 4) & 0xFF) as u8;
+                    buf[64 - 4] = ((bit_len >> 8 * 3) & 0xFF) as u8;
+                    buf[64 - 3] = ((bit_len >> 8 * 2) & 0xFF) as u8;
+                    buf[64 - 2] = ((bit_len >> 8 * 1) & 0xFF) as u8;
+                    buf[64 - 1] = ((bit_len >> 8 * 0) & 0xFF) as u8;
+                }
+                Self::copy_w(&buf, 0)
+            };
+            chunk += 1;
+
+            let mut a = state[0];
+            let mut b = state[1];
+            let mut c = state[2];
+            let mut d = state[3];
+            let mut e = state[4];
+            let mut f = state[5];
+            let mut g = state[6];
+            let mut h = state[7];
+
+            round!(a, b, c, d, e, f, g, h, 0x428a2f98, w[0]);
+            round!(h, a, b, c, d, e, f, g, 0x71374491, w[1]);
+            round!(g, h, a, b, c, d, e, f, 0xb5c0fbcf, w[2]);
+            round!(f, g, h, a, b, c, d, e, 0xe9b5dba5, w[3]);
+            round!(e, f, g, h, a, b, c, d, 0x3956c25b, w[4]);
+            round!(d, e, f, g, h, a, b, c, 0x59f111f1, w[5]);
+            round!(c, d, e, f, g, h, a, b, 0x923f82a4, w[6]);
+            round!(b, c, d, e, f, g, h, a, 0xab1c5ed5, w[7]);
+            round!(a, b, c, d, e, f, g, h, 0xd807aa98, w[8]);
+            round!(h, a, b, c, d, e, f, g, 0x12835b01, w[9]);
+            round!(g, h, a, b, c, d, e, f, 0x243185be, w[10]);
+            round!(f, g, h, a, b, c, d, e, 0x550c7dc3, w[11]);
+            round!(e, f, g, h, a, b, c, d, 0x72be5d74, w[12]);
+            round!(d, e, f, g, h, a, b, c, 0x80deb1fe, w[13]);
+            round!(c, d, e, f, g, h, a, b, 0x9bdc06a7, w[14]);
+            round!(b, c, d, e, f, g, h, a, 0xc19bf174, w[15]);
+
+            round!(a, b, c, d, e, f, g, h, 0xe49b69c1, w[0], w[14], w[9], w[1]);
+            round!(h, a, b, c, d, e, f, g, 0xefbe4786, w[1], w[15], w[10], w[2]);
+            round!(g, h, a, b, c, d, e, f, 0x0fc19dc6, w[2], w[0], w[11], w[3]);
+            round!(f, g, h, a, b, c, d, e, 0x240ca1cc, w[3], w[1], w[12], w[4]);
+            round!(e, f, g, h, a, b, c, d, 0x2de92c6f, w[4], w[2], w[13], w[5]);
+            round!(d, e, f, g, h, a, b, c, 0x4a7484aa, w[5], w[3], w[14], w[6]);
+            round!(c, d, e, f, g, h, a, b, 0x5cb0a9dc, w[6], w[4], w[15], w[7]);
+            round!(b, c, d, e, f, g, h, a, 0x76f988da, w[7], w[5], w[0], w[8]);
+            round!(a, b, c, d, e, f, g, h, 0x983e5152, w[8], w[6], w[1], w[9]);
+            round!(h, a, b, c, d, e, f, g, 0xa831c66d, w[9], w[7], w[2], w[10]);
+            round!(g, h, a, b, c, d, e, f, 0xb00327c8, w[10], w[8], w[3], w[11]);
+            round!(f, g, h, a, b, c, d, e, 0xbf597fc7, w[11], w[9], w[4], w[12]);
+            round!(e, f, g, h, a, b, c, d, 0xc6e00bf3, w[12], w[10], w[5], w[13]);
+            round!(d, e, f, g, h, a, b, c, 0xd5a79147, w[13], w[11], w[6], w[14]);
+            round!(c, d, e, f, g, h, a, b, 0x06ca6351, w[14], w[12], w[7], w[15]);
+            round!(b, c, d, e, f, g, h, a, 0x14292967, w[15], w[13], w[8], w[0]);
+
+            round!(a, b, c, d, e, f, g, h, 0x27b70a85, w[0], w[14], w[9], w[1]);
+            round!(h, a, b, c, d, e, f, g, 0x2e1b2138, w[1], w[15], w[10], w[2]);
+            round!(g, h, a, b, c, d, e, f, 0x4d2c6dfc, w[2], w[0], w[11], w[3]);
+            round!(f, g, h, a, b, c, d, e, 0x53380d13, w[3], w[1], w[12], w[4]);
+            round!(e, f, g, h, a, b, c, d, 0x650a7354, w[4], w[2], w[13], w[5]);
+            round!(d, e, f, g, h, a, b, c, 0x766a0abb, w[5], w[3], w[14], w[6]);
+            round!(c, d, e, f, g, h, a, b, 0x81c2c92e, w[6], w[4], w[15], w[7]);
+            round!(b, c, d, e, f, g, h, a, 0x92722c85, w[7], w[5], w[0], w[8]);
+            round!(a, b, c, d, e, f, g, h, 0xa2bfe8a1, w[8], w[6], w[1], w[9]);
+            round!(h, a, b, c, d, e, f, g, 0xa81a664b, w[9], w[7], w[2], w[10]);
+            round!(g, h, a, b, c, d, e, f, 0xc24b8b70, w[10], w[8], w[3], w[11]);
+            round!(f, g, h, a, b, c, d, e, 0xc76c51a3, w[11], w[9], w[4], w[12]);
+            round!(e, f, g, h, a, b, c, d, 0xd192e819, w[12], w[10], w[5], w[13]);
+            round!(d, e, f, g, h, a, b, c, 0xd6990624, w[13], w[11], w[6], w[14]);
+            round!(c, d, e, f, g, h, a, b, 0xf40e3585, w[14], w[12], w[7], w[15]);
+            round!(b, c, d, e, f, g, h, a, 0x106aa070, w[15], w[13], w[8], w[0]);
+
+            round!(a, b, c, d, e, f, g, h, 0x19a4c116, w[0], w[14], w[9], w[1]);
+            round!(h, a, b, c, d, e, f, g, 0x1e376c08, w[1], w[15], w[10], w[2]);
+            round!(g, h, a, b, c, d, e, f, 0x2748774c, w[2], w[0], w[11], w[3]);
+            round!(f, g, h, a, b, c, d, e, 0x34b0bcb5, w[3], w[1], w[12], w[4]);
+            round!(e, f, g, h, a, b, c, d, 0x391c0cb3, w[4], w[2], w[13], w[5]);
+            round!(d, e, f, g, h, a, b, c, 0x4ed8aa4a, w[5], w[3], w[14], w[6]);
+            round!(c, d, e, f, g, h, a, b, 0x5b9cca4f, w[6], w[4], w[15], w[7]);
+            round!(b, c, d, e, f, g, h, a, 0x682e6ff3, w[7], w[5], w[0], w[8]);
+            round!(a, b, c, d, e, f, g, h, 0x748f82ee, w[8], w[6], w[1], w[9]);
+            round!(h, a, b, c, d, e, f, g, 0x78a5636f, w[9], w[7], w[2], w[10]);
+            round!(g, h, a, b, c, d, e, f, 0x84c87814, w[10], w[8], w[3], w[11]);
+            round!(f, g, h, a, b, c, d, e, 0x8cc70208, w[11], w[9], w[4], w[12]);
+            round!(e, f, g, h, a, b, c, d, 0x90befffa, w[12], w[10], w[5], w[13]);
+            round!(d, e, f, g, h, a, b, c, 0xa4506ceb, w[13], w[11], w[6], w[14]);
+            round!(c, d, e, f, g, h, a, b, 0xbef9a3f7, w[14], w[12], w[7], w[15]);
+            round!(b, c, d, e, f, g, h, a, 0xc67178f2, w[15], w[13], w[8], w[0]);
+
+            state[0] = state[0].wrapping_add(a);
+            state[1] = state[1].wrapping_add(b);
+            state[2] = state[2].wrapping_add(c);
+            state[3] = state[3].wrapping_add(d);
+            state[4] = state[4].wrapping_add(e);
+            state[5] = state[5].wrapping_add(f);
+            state[6] = state[6].wrapping_add(g);
+            state[7] = state[7].wrapping_add(h);
+        }
+        let mut output = [0u8; 32];
+        let mut i = 0;
+        #[allow(clippy::identity_op)] // more readble
+        while i < 8 {
+            output[i * 4 + 0] = (state[i + 0] >> 24) as u8;
+            output[i * 4 + 1] = (state[i + 0] >> 16) as u8;
+            output[i * 4 + 2] = (state[i + 0] >> 8) as u8;
+            output[i * 4 + 3] = (state[i + 0] >> 0) as u8;
+            i += 1;
+        }
+        Midstate(output)
+    }
+}
 
 impl HashEngine {
     /// Create a new [`HashEngine`] from a [`Midstate`].
@@ -454,6 +644,35 @@ mod tests {
             sha256::HashEngine::from_midstate(sha256::Midstate::from_byte_array(MIDSTATE), 64);
         let hash = sha256::Hash::from_engine(midstate_engine);
         assert_eq!(hash, sha256::Hash(HASH_EXPECTED));
+    }
+
+    #[test]
+    fn const_hash() {
+        assert_eq!(super::Hash::hash(&[]), super::Hash::const_hash(&[]));
+
+        let mut bytes = Vec::new();
+        for i in 0..256 {
+            bytes.push(i as u8);
+            assert_eq!(
+                super::Hash::hash(&bytes),
+                super::Hash::const_hash(&bytes),
+                "hashes don't match for length {}",
+                i + 1
+            );
+        }
+    }
+
+    #[test]
+    fn const_midstate() {
+        use super::Midstate;
+
+        assert_eq!(
+            Midstate::hash_tag(b"TapLeaf"),
+            Midstate([
+                156, 224, 228, 230, 124, 17, 108, 57, 56, 179, 202, 242, 195, 15, 80, 137, 211,
+                243, 147, 108, 71, 99, 110, 96, 125, 179, 62, 234, 221, 198, 240, 201,
+            ])
+        )
     }
 
     #[cfg(feature = "serde")]
