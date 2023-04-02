@@ -61,16 +61,15 @@ hash_newtype! {
 impl_thirty_two_byte_hash!(LegacySighash);
 impl_thirty_two_byte_hash!(SegwitV0Sighash);
 
-sha256t_hash_newtype!(
-    TapSighash,
-    TapSighashTag,
-    MIDSTATE_TAPSIGHASH,
-    64,
-    doc = "Taproot-tagged hash with tag \"TapSighash\".
+sha256t_hash_newtype! {
+    pub struct TapSighashTag = raw(MIDSTATE_TAPSIGHASH, 64);
 
-This hash type is used for computing taproot signature hash.",
-    forward
-);
+    /// Taproot-tagged hash with tag \"TapSighash\".
+    ///
+    /// This hash type is used for computing taproot signature hash."
+    #[hash_newtype(forward)]
+    pub struct TapSighash(_);
+}
 
 impl_thirty_two_byte_hash!(TapSighash);
 

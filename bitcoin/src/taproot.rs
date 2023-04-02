@@ -43,21 +43,31 @@ const MIDSTATE_TAPTWEAK: [u8; 32] = [
 // d129a2f3701c655d6583b6c3b941972795f4e23294fd54f4a2ae8d8547ca590b
 
 // Taproot test vectors from BIP-341 state the hashes without any reversing
-#[rustfmt::skip]
-sha256t_hash_newtype!(TapLeafHash, TapLeafTag, MIDSTATE_TAPLEAF, 64,
-    doc="Taproot-tagged hash with tag \"TapLeaf\".
+sha256t_hash_newtype! {
+    pub struct TapLeafTag = raw(MIDSTATE_TAPLEAF, 64);
 
-This is used for computing tapscript script spend hash.", forward
-);
-#[rustfmt::skip]
-sha256t_hash_newtype!(TapNodeHash, TapBranchTag, MIDSTATE_TAPBRANCH, 64,
-    doc="Tagged hash used in taproot trees; see BIP-340 for tagging rules", forward
-);
-#[rustfmt::skip]
-sha256t_hash_newtype!(TapTweakHash, TapTweakTag, MIDSTATE_TAPTWEAK, 64,
-    doc="Taproot-tagged hash with tag \"TapTweak\".
-    This hash type is used while computing the tweaked public key", forward
-);
+    /// Taproot-tagged hash with tag \"TapLeaf\".
+    ///
+    /// This is used for computing tapscript script spend hash.
+    #[hash_newtype(forward)]
+    pub struct TapLeafHash(_);
+
+    pub struct TapBranchTag = raw(MIDSTATE_TAPBRANCH, 64);
+
+    /// Tagged hash used in taproot trees.
+    ///
+    /// See BIP-340 for tagging rules.
+    #[hash_newtype(forward)]
+    pub struct TapNodeHash(_);
+
+    pub struct TapTweakTag = raw(MIDSTATE_TAPTWEAK, 64);
+
+    /// Taproot-tagged hash with tag \"TapTweak\".
+    ///
+    /// This hash type is used while computing the tweaked public key.
+    #[hash_newtype(forward)]
+    pub struct TapTweakHash(_);
+}
 
 impl TapTweakHash {
     /// Creates a new BIP341 [`TapTweakHash`] from key and tweak. Produces `H_taptweak(P||R)` where
