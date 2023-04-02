@@ -1020,10 +1020,10 @@ impl Address<NetworkUnchecked> {
     /// assert_eq!(address.is_valid_for_network(Network::Testnet), false);
     /// ```
     pub fn is_valid_for_network(&self, network: Network) -> bool {
-        let is_legacy = match self.address_type_internal() {
-            Some(AddressType::P2pkh) | Some(AddressType::P2sh) => true,
-            _ => false,
-        };
+        let is_legacy = matches!(
+            self.address_type_internal(),
+            Some(AddressType::P2pkh) | Some(AddressType::P2sh)
+        );
 
         match (self.network, network) {
             (a, b) if a == b => true,

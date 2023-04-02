@@ -62,10 +62,8 @@ impl LockTime {
     pub fn is_satisfied_by(&self, h: Height, t: Time) -> bool {
         if let Ok(true) = self.is_satisfied_by_height(h) {
             true
-        } else if let Ok(true) = self.is_satisfied_by_time(t) {
-            true
         } else {
-            false
+            matches!(self.is_satisfied_by_time(t), Ok(true))
         }
     }
 
