@@ -151,7 +151,7 @@ impl Midstate {
     const DISPLAY_BACKWARD: bool = true;
 
     /// Construct a new [`Midstate`] from the inner value.
-    pub fn from_byte_array(inner: [u8; 32]) -> Self { Midstate(inner) }
+    pub const fn from_byte_array(inner: [u8; 32]) -> Self { Midstate(inner) }
 
     /// Copies a byte slice into the [`Midstate`] object.
     pub fn from_slice(sl: &[u8]) -> Result<Midstate, Error> {

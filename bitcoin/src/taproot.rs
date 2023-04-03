@@ -21,43 +21,32 @@ pub use crate::crypto::taproot::{Error, Signature};
 use crate::prelude::*;
 use crate::{io, Script, ScriptBuf};
 
-/// The SHA-256 midstate value for the TapLeaf hash.
-const MIDSTATE_TAPLEAF: [u8; 32] = [
-    156, 224, 228, 230, 124, 17, 108, 57, 56, 179, 202, 242, 195, 15, 80, 137, 211, 243, 147, 108,
-    71, 99, 110, 96, 125, 179, 62, 234, 221, 198, 240, 201,
-];
-// 9ce0e4e67c116c3938b3caf2c30f5089d3f3936c47636e607db33eeaddc6f0c9
-
-/// The SHA-256 midstate value for the TapBranch hash.
-const MIDSTATE_TAPBRANCH: [u8; 32] = [
-    35, 168, 101, 169, 184, 164, 13, 167, 151, 124, 30, 4, 196, 158, 36, 111, 181, 190, 19, 118,
-    157, 36, 201, 183, 181, 131, 181, 212, 168, 210, 38, 210,
-];
-// 23a865a9b8a40da7977c1e04c49e246fb5be13769d24c9b7b583b5d4a8d226d2
-
-/// The SHA-256 midstate value for the TapTweak hash.
-const MIDSTATE_TAPTWEAK: [u8; 32] = [
-    209, 41, 162, 243, 112, 28, 101, 93, 101, 131, 182, 195, 185, 65, 151, 39, 149, 244, 226, 50,
-    148, 253, 84, 244, 162, 174, 141, 133, 71, 202, 89, 11,
-];
-// d129a2f3701c655d6583b6c3b941972795f4e23294fd54f4a2ae8d8547ca590b
-
 // Taproot test vectors from BIP-341 state the hashes without any reversing
-#[rustfmt::skip]
-sha256t_hash_newtype!(TapLeafHash, TapLeafTag, MIDSTATE_TAPLEAF, 64,
-    doc="Taproot-tagged hash with tag \"TapLeaf\".
+sha256t_hash_newtype! {
+    pub struct TapLeafTag = hash_str("TapLeaf");
 
-This is used for computing tapscript script spend hash.", forward
-);
-#[rustfmt::skip]
-sha256t_hash_newtype!(TapNodeHash, TapBranchTag, MIDSTATE_TAPBRANCH, 64,
-    doc="Tagged hash used in taproot trees; see BIP-340 for tagging rules", forward
-);
-#[rustfmt::skip]
-sha256t_hash_newtype!(TapTweakHash, TapTweakTag, MIDSTATE_TAPTWEAK, 64,
-    doc="Taproot-tagged hash with tag \"TapTweak\".
-    This hash type is used while computing the tweaked public key", forward
-);
+    /// Taproot-tagged hash with tag \"TapLeaf\".
+    ///
+    /// This is used for computing tapscript script spend hash.
+    #[hash_newtype(forward)]
+    pub struct TapLeafHash(_);
+
+    pub struct TapBranchTag = hash_str("TapBranch");
+
+    /// Tagged hash used in taproot trees.
+    ///
+    /// See BIP-340 for tagging rules.
+    #[hash_newtype(forward)]
+    pub struct TapNodeHash(_);
+
+    pub struct TapTweakTag = hash_str("TapTweak");
+
+    /// Taproot-tagged hash with tag \"TapTweak\".
+    ///
+    /// This hash type is used while computing the tweaked public key.
+    #[hash_newtype(forward)]
+    pub struct TapTweakHash(_);
+}
 
 impl TapTweakHash {
     /// Creates a new BIP341 [`TapTweakHash`] from key and tweak. Produces `H_taptweak(P||R)` where
@@ -1595,14 +1584,6 @@ mod test {
 
     #[test]
     fn test_midstates() {
-        use crate::crypto::sighash::MIDSTATE_TAPSIGHASH;
-
-        // check midstate against hard-coded values
-        assert_eq!(MIDSTATE_TAPLEAF, tag_engine("TapLeaf").midstate().to_byte_array());
-        assert_eq!(MIDSTATE_TAPBRANCH, tag_engine("TapBranch").midstate().to_byte_array());
-        assert_eq!(MIDSTATE_TAPTWEAK, tag_engine("TapTweak").midstate().to_byte_array());
-        assert_eq!(MIDSTATE_TAPSIGHASH, tag_engine("TapSighash").midstate().to_byte_array());
-
         // test that engine creation roundtrips
         assert_eq!(tag_engine("TapLeaf").midstate(), TapLeafTag::engine().midstate());
         assert_eq!(tag_engine("TapBranch").midstate(), TapBranchTag::engine().midstate());

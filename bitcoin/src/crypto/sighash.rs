@@ -33,13 +33,6 @@ pub(crate) const UINT256_ONE: [u8; 32] = [
     0, 0, 0, 0, 0, 0, 0, 0
 ];
 
-/// The SHA-256 midstate value for the [`TapSighash`].
-pub(crate) const MIDSTATE_TAPSIGHASH: [u8; 32] = [
-    245, 4, 164, 37, 215, 248, 120, 59, 19, 99, 134, 138, 227, 229, 86, 88, 110, 238, 148, 93, 188,
-    120, 136, 221, 2, 166, 226, 195, 24, 115, 254, 159,
-];
-// f504a425d7f8783b1363868ae3e556586eee945dbc7888dd02a6e2c31873fe9f
-
 macro_rules! impl_thirty_two_byte_hash {
     ($ty:ident) => {
         impl secp256k1::ThirtyTwoByteHash for $ty {
@@ -61,16 +54,15 @@ hash_newtype! {
 impl_thirty_two_byte_hash!(LegacySighash);
 impl_thirty_two_byte_hash!(SegwitV0Sighash);
 
-sha256t_hash_newtype!(
-    TapSighash,
-    TapSighashTag,
-    MIDSTATE_TAPSIGHASH,
-    64,
-    doc = "Taproot-tagged hash with tag \"TapSighash\".
+sha256t_hash_newtype! {
+    pub struct TapSighashTag = hash_str("TapSighash");
 
-This hash type is used for computing taproot signature hash.",
-    forward
-);
+    /// Taproot-tagged hash with tag \"TapSighash\".
+    ///
+    /// This hash type is used for computing taproot signature hash."
+    #[hash_newtype(forward)]
+    pub struct TapSighash(_);
+}
 
 impl_thirty_two_byte_hash!(TapSighash);
 

@@ -133,14 +133,12 @@ mod tests {
         /// A hash tagged with `$name`.
         pub type TestHash = sha256t::Hash<TestHashTag>;
 
-        sha256t_hash_newtype!(
-            NewTypeHash,
-            NewTypeTag,
-            TEST_MIDSTATE,
-            64,
-            doc = "test hash",
-            backward
-        );
+        sha256t_hash_newtype! {
+            struct NewTypeTag = raw(TEST_MIDSTATE, 64);
+
+            #[hash_newtype(backward)]
+            struct NewTypeHash(_);
+        }
         static HASH_BYTES: [u8; 32] = [
             0xef, 0x53, 0x7f, 0x25, 0xc8, 0x95, 0xbf, 0xa7, 0x82, 0x52, 0x65, 0x29, 0xa9, 0xb6,
             0x3d, 0x97, 0xaa, 0x63, 0x15, 0x64, 0xd5, 0xd7, 0x89, 0xc2, 0xb7, 0x65, 0x44, 0x8c,
