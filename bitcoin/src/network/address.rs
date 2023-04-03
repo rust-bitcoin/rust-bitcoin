@@ -359,10 +359,7 @@ mod test {
         ]);
         assert!(addr.is_ok());
         let full = addr.unwrap();
-        assert!(match full.socket_addr().unwrap() {
-            SocketAddr::V4(_) => true,
-            _ => false,
-        });
+        assert!(matches!(full.socket_addr().unwrap(), SocketAddr::V4(_)));
         assert_eq!(full.services, ServiceFlags::NETWORK);
         assert_eq!(full.address, [0, 0, 0, 0, 0, 0xffff, 0x0a00, 0x0001]);
         assert_eq!(full.port, 8333);

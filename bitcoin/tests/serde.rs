@@ -50,9 +50,7 @@ fn serde_regression_block() {
     );
     let block: Block = deserialize(segwit).unwrap();
     let got = serialize(&block).unwrap();
-    // The cast is required because Rust 1.41.1 throws the following error without it:
-    // the trait `std::array::LengthAtMost32` is not implemented for `[u8; 5123]`
-    let want = include_bytes!("data/serde/block_bincode") as &[_];
+    let want = include_bytes!("data/serde/block_bincode");
     assert_eq!(got, want)
 }
 
