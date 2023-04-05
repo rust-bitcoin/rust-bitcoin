@@ -62,11 +62,10 @@ impl FeeRate {
     /// Can be used instead of `into()` to avoid inference issues.
     pub const fn to_sat_per_kwu(self) -> u64 { self.0 }
 
-    /// Converts to sat/vB rounding down.
-    pub const fn to_sat_per_vb_floor(self) -> u64 { self.0 / (1000 / 4) }
-
     /// Converts to sat/vB rounding up.
-    pub const fn to_sat_per_vb_ceil(self) -> u64 { (self.0 + (1000 / 4 - 1)) / (1000 / 4) }
+    // 1 kwu = 1,000 wu
+    // 1,000 wu = 250 vb
+    pub const fn to_sat_per_vb(self) -> u64 { self.0 * 250 }
 
     /// Checked multiplication.
     ///
@@ -156,10 +155,9 @@ mod tests {
 
     #[test]
     fn raw_feerate_test() {
-        let fee_rate = FeeRate(333);
-        assert_eq!(333, fee_rate.to_sat_per_kwu());
-        assert_eq!(1, fee_rate.to_sat_per_vb_floor());
-        assert_eq!(2, fee_rate.to_sat_per_vb_ceil());
+        let fee_rate = FeeRate(1);
+        assert_eq!(1, fee_rate.to_sat_per_kwu());
+        assert_eq!(250, fee_rate.to_sat_per_vb());
     }
 
     #[test]
