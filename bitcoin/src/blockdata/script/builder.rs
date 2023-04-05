@@ -148,4 +148,4 @@ impl fmt::Display for Builder {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { self.0.fmt_asm(f) }
 }
 
-bitcoin_internals::debug_from_display!(Builder);
+internals::debug_from_display!(Builder);

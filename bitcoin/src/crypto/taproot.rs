@@ -8,7 +8,7 @@
 
 use core::fmt;
 
-use bitcoin_internals::write_err;
+use internals::write_err;
 pub use secp256k1::{self, constants, KeyPair, Parity, Secp256k1, Verification, XOnlyPublicKey};
 
 use crate::prelude::*;

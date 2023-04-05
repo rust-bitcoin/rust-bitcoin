@@ -12,7 +12,7 @@
 use core::convert::From;
 use core::fmt;
 
-use bitcoin_internals::debug_from_display;
+use internals::debug_from_display;
 #[cfg(feature = "serde")]
 use serde;
 

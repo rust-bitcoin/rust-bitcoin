@@ -729,7 +729,7 @@ mod bitcoinconsensus_hack {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         #[cfg(feature = "bitcoinconsensus")]
-        use bitcoin_internals::write_err;
+        use internals::write_err;
 
         match *self {
             Error::NonMinimalPush => f.write_str("non-minimal datapush"),

@@ -16,8 +16,8 @@ use core::convert::TryFrom;
 use core::default::Default;
 use core::{cmp, fmt, str};
 
-use bitcoin_internals::write_err;
 use hashes::{self, sha256d, Hash};
+use internals::write_err;
 
 use super::Weight;
 use crate::blockdata::constants::WITNESS_SCALE_FACTOR;
@@ -548,9 +548,9 @@ impl<E> EncodeSigningDataResult<E> {
     ///
     /// ```rust
     /// # use bitcoin::consensus::deserialize;
+    /// # use bitcoin::hashes::{Hash, hex::FromHex};
     /// # use bitcoin::sighash::{LegacySighash, SighashCache};
     /// # use bitcoin::Transaction;
-    /// # use bitcoin_hashes::{Hash, hex::FromHex};
     /// # let mut writer = LegacySighash::engine();
     /// # let input_index = 0;
     /// # let script_pubkey = bitcoin::ScriptBuf::new();

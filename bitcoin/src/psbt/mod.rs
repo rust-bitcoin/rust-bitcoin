@@ -11,7 +11,7 @@ use core::{cmp, fmt};
 #[cfg(feature = "std")]
 use std::collections::{HashMap, HashSet};
 
-use bitcoin_internals::write_err;
+use internals::write_err;
 use secp256k1::{Message, Secp256k1, Signing};
 
 use crate::bip32::{self, ExtendedPrivKey, ExtendedPubKey, KeySource};
@@ -754,7 +754,7 @@ mod display_from_str {
     use core::str::FromStr;
 
     use base64::display::Base64Display;
-    use bitcoin_internals::write_err;
+    use internals::write_err;
 
     use super::{Error, PartiallySignedTransaction};
 

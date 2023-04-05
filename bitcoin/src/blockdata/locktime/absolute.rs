@@ -10,7 +10,7 @@
 use core::cmp::{Ordering, PartialOrd};
 use core::{fmt, mem};
 
-use bitcoin_internals::write_err;
+use internals::write_err;
 #[cfg(all(test, mutate))]
 use mutagen::mutate;
 
