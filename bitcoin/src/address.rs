@@ -748,21 +748,18 @@ where
     V: NetworkValidation;
 
 #[cfg(feature = "serde")]
-struct DisplayUnchecked<'a>(&'a Address<NetworkUnchecked>);
+struct DisplayUnchecked<'a, N: NetworkValidation>(&'a Address<N>);
 
 #[cfg(feature = "serde")]
-impl fmt::Display for DisplayUnchecked<'_> {
+impl<N: NetworkValidation> fmt::Display for DisplayUnchecked<'_, N> {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result { self.0.fmt_internal(fmt) }
 }
-
-#[cfg(feature = "serde")]
-crate::serde_utils::serde_string_serialize_impl!(Address, "a Bitcoin address");
 
 #[cfg(feature = "serde")]
 crate::serde_utils::serde_string_deserialize_impl!(Address<NetworkUnchecked>, "a Bitcoin address");
 
 #[cfg(feature = "serde")]
-impl serde::Serialize for Address<NetworkUnchecked> {
+impl<N: NetworkValidation> serde::Serialize for Address<N> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
