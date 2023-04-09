@@ -1,3 +1,8 @@
+# 0.12.1 - 2023-04-09
+- Removed `FromHex` trait from all hashes.
+
+Note: Parsing from strings is now done using the corresponding `FromStr` implementations.
+
 # 0.12.0 - 2023-03-05
 
 0.12 is a significant release. We pulled the repository into the rust-bitcoin
