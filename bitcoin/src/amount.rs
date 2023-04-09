@@ -517,7 +517,7 @@ impl Amount {
     pub const fn from_sat(satoshi: u64) -> Amount { Amount(satoshi) }
 
     /// Gets the number of satoshis in this [`Amount`].
-    pub fn to_sat(self) -> u64 { self.0 }
+    pub const fn to_sat(self) -> u64 { self.0 }
 
     /// The maximum value of an [Amount].
     #[deprecated(since = "0.31.0", note = "Use Self::MAX instead")]
@@ -662,19 +662,30 @@ impl Amount {
 
     /// Checked addition.
     /// Returns [None] if overflow occurred.
-    pub fn checked_add(self, rhs: Amount) -> Option<Amount> {
-        self.0.checked_add(rhs.0).map(Amount)
+    pub const fn checked_add(self, rhs: Amount) -> Option<Amount> {
+        match self.0.checked_add(rhs.0) {
+            Some(v) => Some(Amount(v)),
+            None => None,
+        }
     }
 
     /// Checked subtraction.
     /// Returns [None] if overflow occurred.
-    pub fn checked_sub(self, rhs: Amount) -> Option<Amount> {
-        self.0.checked_sub(rhs.0).map(Amount)
+    pub const fn checked_sub(self, rhs: Amount) -> Option<Amount> {
+        match self.0.checked_sub(rhs.0) {
+            Some(v) => Some(Amount(v)),
+            None => None,
+        }
     }
 
     /// Checked multiplication.
     /// Returns [None] if overflow occurred.
-    pub fn checked_mul(self, rhs: u64) -> Option<Amount> { self.0.checked_mul(rhs).map(Amount) }
+    pub const fn checked_mul(self, rhs: u64) -> Option<Amount> {
+        match self.0.checked_mul(rhs) {
+            Some(v) => Some(Amount(v)),
+            None => None,
+        }
+    }
 
     /// Checked integer division.
     /// Be aware that integer division loses the remainder if no exact division
