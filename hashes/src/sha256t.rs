@@ -43,7 +43,7 @@ pub struct Hash<T: Tag>(
 );
 
 impl<T: Tag> Hash<T> {
-    fn internal_new(arr: [u8; 32]) -> Self { Hash(arr, Default::default()) }
+    fn internal_new(arr: [u8; 32]) -> Self { Hash(arr, PhantomData::default()) }
 
     fn internal_engine() -> HashEngine { T::engine() }
 }

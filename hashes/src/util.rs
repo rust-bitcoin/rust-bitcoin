@@ -139,7 +139,7 @@ macro_rules! engine_input_impl(
 /// You can add arbitrary doc comments or other attributes to the struct or it's field. Note that
 /// the macro already derives [`Copy`], [`Clone`], [`Eq`], [`PartialEq`],
 /// [`Hash`](core::hash::Hash), [`Ord`], [`PartialOrd`]. With the `serde` feature on, this also adds
-/// [`Serialize`](serde::Serialize) and [`Deserialize](serde::Deserialize) implementations.
+/// [`Serialize`](serde::Serialize) and [`Deserialize`](serde::Deserialize) implementations.
 ///
 /// You can also define multiple newtypes within one macro call:
 ///
@@ -458,28 +458,28 @@ mod test {
     fn display() {
         let want = "0000000000000000000000000000000000000000000000000000000000000000";
         let got = format!("{}", TestHash::all_zeros());
-        assert_eq!(got, want)
+        assert_eq!(got, want);
     }
 
     #[test]
     fn display_alternate() {
         let want = "0x0000000000000000000000000000000000000000000000000000000000000000";
         let got = format!("{:#}", TestHash::all_zeros());
-        assert_eq!(got, want)
+        assert_eq!(got, want);
     }
 
     #[test]
     fn lower_hex() {
         let want = "0000000000000000000000000000000000000000000000000000000000000000";
         let got = format!("{:x}", TestHash::all_zeros());
-        assert_eq!(got, want)
+        assert_eq!(got, want);
     }
 
     #[test]
     fn lower_hex_alternate() {
         let want = "0x0000000000000000000000000000000000000000000000000000000000000000";
         let got = format!("{:#x}", TestHash::all_zeros());
-        assert_eq!(got, want)
+        assert_eq!(got, want);
     }
 
     #[test]

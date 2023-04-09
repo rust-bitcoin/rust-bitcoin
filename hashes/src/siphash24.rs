@@ -17,7 +17,7 @@
 // was written entirely by Steven Roose, who is re-licensing its
 // contents here as CC0.
 
-//! SipHash 2-4 implementation.
+//! SipHash-2-4 implementation.
 //!
 
 use core::ops::Index;
@@ -29,7 +29,7 @@ use crate::{Error, Hash as _, HashEngine as _};
 crate::internal_macros::hash_type! {
     64,
     false,
-    "Output of the SipHash24 hash function.",
+    "Output of the SipHash-2-4 hash function.",
     "crate::util::json_hex_string::len_8"
 }
 
@@ -95,7 +95,7 @@ pub struct State {
     v3: u64,
 }
 
-/// Engine to compute the SipHash24 hash function.
+/// Engine to compute the SipHash-2-4 hash function.
 #[derive(Debug, Clone)]
 pub struct HashEngine {
     k0: u64,
@@ -107,7 +107,8 @@ pub struct HashEngine {
 }
 
 impl HashEngine {
-    /// Creates a new SipHash24 engine with keys.
+    /// Creates a new SipHash-2-4 engine with keys.
+    #[must_use = "returns the constructed type"]
     pub fn with_keys(k0: u64, k1: u64) -> HashEngine {
         HashEngine {
             k0,
@@ -124,10 +125,12 @@ impl HashEngine {
         }
     }
 
-    /// Creates a new SipHash24 engine.
+    /// Creates a new SipHash-2-4 engine.
+    #[must_use = "returns the constructed type"]
     pub fn new() -> HashEngine { HashEngine::with_keys(0, 0) }
 
     /// Retrieves the keys of this engine.
+    #[must_use = "returns the keys"]
     pub fn keys(&self) -> (u64, u64) { (self.k0, self.k1) }
 
     #[inline]
@@ -201,6 +204,7 @@ impl crate::HashEngine for HashEngine {
 
 impl Hash {
     /// Hashes the given data with an engine with the provided keys.
+    #[must_use = "use the returned hash"]
     pub fn hash_with_keys(k0: u64, k1: u64, data: &[u8]) -> Hash {
         let mut engine = HashEngine::with_keys(k0, k1);
         engine.input(data);
@@ -208,6 +212,7 @@ impl Hash {
     }
 
     /// Hashes the given data directly to u64 with an engine with the provided keys.
+    #[must_use = "use the returned u64"]
     pub fn hash_to_u64_with_keys(k0: u64, k1: u64, data: &[u8]) -> u64 {
         let mut engine = HashEngine::with_keys(k0, k1);
         engine.input(data);
@@ -216,6 +221,7 @@ impl Hash {
 
     /// Produces a hash as `u64` from the current state of a given engine.
     #[inline]
+    #[must_use = "use the returned u64"]
     pub fn from_engine_to_u64(e: HashEngine) -> u64 {
         let mut state = e.state;
 
@@ -232,9 +238,11 @@ impl Hash {
     }
 
     /// Returns the (little endian) 64-bit integer representation of the hash value.
+    #[must_use = "use the returned u64"]
     pub fn as_u64(&self) -> u64 { u64::from_le_bytes(self.0) }
 
     /// Creates a hash from its (little endian) 64-bit integer representation.
+    #[must_use = "use the returned hash"]
     pub fn from_u64(hash: u64) -> Hash { Hash(hash.to_le_bytes()) }
 }
 
@@ -252,7 +260,7 @@ unsafe fn u8to64_le(buf: &[u8], start: usize, len: usize) -> u64 {
     }
     if i + 1 < len {
         out |= u64::from(load_int_le!(buf, start + i, u16)) << (i * 8);
-        i += 2
+        i += 2;
     }
     if i < len {
         out |= u64::from(*buf.get_unchecked(start + i)) << (i * 8);

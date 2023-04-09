@@ -53,7 +53,7 @@
 //! ```
 //!
 //!
-//! Hashing content by [`std::io::Write`] on HashEngine:
+//! Hashing content by [`std::io::Write`] on `HashEngine`:
 //!
 //! ```rust
 //! use bitcoin_hashes::sha256;
@@ -106,7 +106,7 @@ extern crate test;
 
 #[doc(hidden)]
 pub mod _export {
-    /// A re-export of core::*
+    /// A re-export of `core::*`.
     pub mod _core {
         pub use core::*;
     }
@@ -153,10 +153,10 @@ pub trait HashEngine: Clone + Default {
     /// Length of the hash's internal block size, in bytes.
     const BLOCK_SIZE: usize;
 
-    /// Add data to the hash engine.
+    /// Adds data to the hash engine.
     fn input(&mut self, data: &[u8]);
 
-    /// Return the number of bytes already n_bytes_hashed(inputted).
+    /// Returns the number of bytes already inputted.
     fn n_bytes_hashed(&self) -> usize;
 }
 
@@ -188,6 +188,7 @@ pub trait Hash:
     type Bytes: hex::FromHex + Copy;
 
     /// Constructs a new engine.
+    #[must_use = "returns the new engine"]
     fn engine() -> Self::Engine { Self::Engine::default() }
 
     /// Produces a hash from the current state of a given engine.
@@ -197,9 +198,11 @@ pub trait Hash:
     const LEN: usize;
 
     /// Copies a byte slice into a hash object.
+    #[must_use = "returns the hash type"]
     fn from_slice(sl: &[u8]) -> Result<Self, Error>;
 
     /// Hashes some bytes.
+    #[must_use = "returns the hash type"]
     fn hash(data: &[u8]) -> Self {
         let mut engine = Self::engine();
         engine.input(data);

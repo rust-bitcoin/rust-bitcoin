@@ -155,16 +155,17 @@ impl Midstate {
 
     /// Copies a byte slice into the [`Midstate`] object.
     pub fn from_slice(sl: &[u8]) -> Result<Midstate, Error> {
-        if sl.len() != Self::LEN {
-            Err(Error::InvalidLength(Self::LEN, sl.len()))
-        } else {
+        if sl.len() == Self::LEN {
             let mut ret = [0; 32];
             ret.copy_from_slice(sl);
             Ok(Midstate(ret))
+        } else {
+            Err(Error::InvalidLength(Self::LEN, sl.len()))
         }
     }
 
     /// Unwraps the [`Midstate`] and returns the underlying byte array.
+    #[must_use = "returns inner type without modifying self"]
     pub fn to_byte_array(self) -> [u8; 32] { self.0 }
 
     /// Creates midstate for tagged hashes.
@@ -173,6 +174,7 @@ impl Midstate {
     ///
     /// Computes non-finalized hash of `sha256(tag) || sha256(tag)` for use in
     /// [`sha256t`](super::sha256t). It's provided for use with [`sha256t`](crate::sha256t).
+    #[must_use]
     pub const fn hash_tag(tag: &[u8]) -> Self {
         let hash = Hash::const_hash(tag);
         let mut buf = [0u8; 64];
@@ -391,6 +393,7 @@ impl HashEngine {
     /// # Panics
     ///
     /// If `length` is not a multiple of the block size.
+    #[must_use = "returns the constructed type"]
     pub fn from_midstate(midstate: Midstate, length: usize) -> HashEngine {
         assert!(length % BLOCK_SIZE == 0, "length is no multiple of the block size");
 
@@ -672,7 +675,7 @@ mod tests {
                 156, 224, 228, 230, 124, 17, 108, 57, 56, 179, 202, 242, 195, 15, 80, 137, 211,
                 243, 147, 108, 71, 99, 110, 96, 125, 179, 62, 234, 221, 198, 240, 201,
             ])
-        )
+        );
     }
 
     #[cfg(feature = "serde")]

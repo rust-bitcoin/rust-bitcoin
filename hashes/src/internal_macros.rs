@@ -73,6 +73,7 @@ macro_rules! hash_trait_impls {
             ///
             /// This is mainly intended as an internal method and you shouldn't need it unless
             /// you're doing something special.
+            #[must_use = "use the returned object to display hex forwards eg., {:x}"]
             pub fn forward_hex(&self) -> impl '_ + core::fmt::LowerHex + core::fmt::UpperHex {
                 internals::hex::display::DisplayHex::as_hex(&self.0)
             }
@@ -81,12 +82,14 @@ macro_rules! hash_trait_impls {
             ///
             /// This is mainly intended as an internal method and you shouldn't need it unless
             /// you're doing something special.
+            #[must_use = "use the returned object to display hex backwards eg., {:x}"]
             pub fn backward_hex(&self) -> impl '_ + core::fmt::LowerHex + core::fmt::UpperHex {
                 internals::hex::display::DisplayArray::<_, [u8; $bits / 8 * 2]>::new(self.0.iter().rev())
             }
 
             /// Zero cost conversion between a fixed length byte array shared reference and
             /// a shared reference to this Hash type.
+            #[must_use = "returns the reference to converted type"]
             pub fn from_bytes_ref(bytes: &[u8; $bits / 8]) -> &Self {
                 // Safety: Sound because Self is #[repr(transparent)] containing [u8; $bits / 8]
                 unsafe { &*(bytes as *const _ as *const Self) }
@@ -94,6 +97,7 @@ macro_rules! hash_trait_impls {
 
             /// Zero cost conversion between a fixed length byte array exclusive reference and
             /// an exclusive reference to this Hash type.
+            #[must_use = "returns the reference to converted type"]
             pub fn from_bytes_mut(bytes: &mut [u8; $bits / 8]) -> &mut Self {
                 // Safety: Sound because Self is #[repr(transparent)] containing [u8; $bits / 8]
                 unsafe { &mut *(bytes as *mut _ as *mut Self) }

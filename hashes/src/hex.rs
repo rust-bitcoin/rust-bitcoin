@@ -95,8 +95,11 @@ fn chars_to_hex(hi: u8, lo: u8) -> Result<u8, Error> {
     let hih = (hi as char).to_digit(16).ok_or(Error::InvalidChar(hi))?;
     let loh = (lo as char).to_digit(16).ok_or(Error::InvalidChar(lo))?;
 
+    assert!(hih < 16); // 4 bits
+    assert!(loh < 16);
+
     let ret = (hih << 4) + loh;
-    Ok(ret as u8)
+    Ok(ret as u8) // Cast is ok because two hex digits fit into a byte.
 }
 
 impl<'a> Iterator for HexIterator<'a> {
