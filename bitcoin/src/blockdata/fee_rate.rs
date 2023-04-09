@@ -13,9 +13,6 @@ use crate::Amount;
 /// This is an integer newtype representing fee rate in `sat/kwu`. It provides protection against mixing
 /// up the types as well as basic formatting features.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
-#[cfg_attr(feature = "serde", serde(transparent))]
 pub struct FeeRate {
     per_kwu: Amount,
 }
@@ -214,6 +211,81 @@ impl Div<Weight> for Amount {
     }
 }
 
+#[cfg(feature = "serde")]
+pub mod serde {
+    #![allow(missing_docs)]
+    //! A module for serde-serializing fee rates in various units.
+
+    use serde::de::{Deserialize, Deserializer, Error};
+    use serde::ser::Serializer;
+
+    use super::{Amount, FeeRate};
+    use crate::amount::Denomination;
+
+    pub mod btc_per_kvb {
+        //! Serialize fee rates as bitcoin per kilo-virtual bytes.
+        use super::*;
+
+        pub fn serialize<S: Serializer>(r: &FeeRate, s: S) -> Result<S::Ok, S::Error> {
+            s.serialize_f64((r.to_per_vb_ceil() * 1000).to_btc())
+        }
+
+        pub fn deserialize<'de, D: Deserializer<'de>>(d: D) -> Result<FeeRate, D::Error> {
+            let btc_per_kvb = f64::deserialize(d)?;
+            let per_kwu = Amount::from_btc(btc_per_kvb / 4.0).map_err(D::Error::custom)?;
+            Ok(FeeRate::from_per_kwu(per_kwu))
+        }
+
+        pub mod opt {
+            use super::*;
+
+            pub fn serialize<S: Serializer>(r: &Option<FeeRate>, s: S) -> Result<S::Ok, S::Error> {
+                match r {
+                    Some(r) => s.serialize_f64((r.to_per_vb_ceil() * 1000).to_btc()),
+                    None => s.serialize_none(),
+                }
+            }
+
+            pub fn deserialize<'de, D: Deserializer<'de>>(d: D) -> Result<Option<FeeRate>, D::Error> {
+                let btc_per_kvb = f64::deserialize(d)?;
+                let per_kwu = Amount::from_btc(btc_per_kvb / 4.0).map_err(D::Error::custom)?;
+                Ok(Some(FeeRate::from_per_kwu(per_kwu)))
+            }
+        }
+    }
+
+    pub mod sat_per_vb {
+        use super::*;
+
+        pub fn serialize<S: Serializer>(r: &FeeRate, s: S) -> Result<S::Ok, S::Error> {
+            s.serialize_f64(r.to_per_vb_ceil().to_float_in(Denomination::Satoshi))
+        }
+
+        pub fn deserialize<'de, D: Deserializer<'de>>(d: D) -> Result<FeeRate, D::Error> {
+            let sat_per_vb = Amount::from_float_in(f64::deserialize(d)?, Denomination::Satoshi)
+                .map_err(D::Error::custom)?;
+            FeeRate::from_per_vb(sat_per_vb).ok_or(D::Error::custom("fee rate overflow"))
+        }
+
+        pub mod opt {
+            use super::*;
+
+            pub fn serialize<S: Serializer>(r: &Option<FeeRate>, s: S) -> Result<S::Ok, S::Error> {
+                match r {
+                    Some(r) => s.serialize_f64(r.to_per_vb_ceil().to_float_in(Denomination::Satoshi)),
+                    None => s.serialize_none(),
+                }
+            }
+
+            pub fn deserialize<'de, D: Deserializer<'de>>(d: D) -> Result<Option<FeeRate>, D::Error> {
+                let sat_per_vb = Amount::from_float_in(f64::deserialize(d)?, Denomination::Satoshi)
+                    .map_err(D::Error::custom)?;
+                Ok(Some(FeeRate::from_per_vb(sat_per_vb)
+                    .ok_or(D::Error::custom("fee rate overflow"))?))
+            }
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {
