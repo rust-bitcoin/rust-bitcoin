@@ -5,6 +5,114 @@
 //! This module is for special serde serializations.
 //!
 
+/// A serde Visitor for Option<T> by wrapping a Visitor for T.
+///
+/// It implements [visit_some] and [visit_none] to be used with
+/// [deserialize_option], but it also delegates all other visitor methods so
+/// that it can also be used directly with [deserialize_any].
+pub struct DelegatingOptionVisitor<V>(pub V);
+
+impl<'de, V, T> serde::de::Visitor<'de> for DelegatingOptionVisitor<V>
+where
+    V: serde::de::Visitor<'de, Value = T>,
+{
+    type Value = Option<T>;
+
+    fn expecting(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "an optional '")?;
+        <V as serde::de::Visitor>::expecting(&self.0, f)?;
+        write!(f, "'")
+    }
+
+    fn visit_none<E>(self) -> Result<Self::Value, E> {
+        Ok(None)
+    }
+
+    fn visit_some<D: serde::de::Deserializer<'de>>(self, d: D) -> Result<Self::Value, D::Error> {
+        Ok(Some(d.deserialize_any(self.0)?))
+    }
+
+    // all other impls are just delegations with a Some wrapper
+
+    fn visit_bool<E: serde::de::Error>(self, v: bool) -> Result<Self::Value, E> {
+        Ok(Some(V::visit_bool(self.0, v)?))
+    }
+    fn visit_i8<E: serde::de::Error>(self, v: i8) -> Result<Self::Value, E> {
+        Ok(Some(V::visit_i8(self.0, v)?))
+    }
+    fn visit_i16<E: serde::de::Error>(self, v: i16) -> Result<Self::Value, E> {
+        Ok(Some(V::visit_i16(self.0, v)?))
+    }
+    fn visit_i32<E: serde::de::Error>(self, v: i32) -> Result<Self::Value, E> {
+        Ok(Some(V::visit_i32(self.0, v)?))
+    }
+    fn visit_i64<E: serde::de::Error>(self, v: i64) -> Result<Self::Value, E> {
+        Ok(Some(V::visit_i64(self.0, v)?))
+    }
+    fn visit_i128<E: serde::de::Error>(self, v: i128) -> Result<Self::Value, E> {
+        Ok(Some(V::visit_i128(self.0, v)?))
+    }
+    fn visit_u8<E: serde::de::Error>(self, v: u8) -> Result<Self::Value, E> {
+        Ok(Some(V::visit_u8(self.0, v)?))
+    }
+    fn visit_u16<E: serde::de::Error>(self, v: u16) -> Result<Self::Value, E> {
+        Ok(Some(V::visit_u16(self.0, v)?))
+    }
+    fn visit_u32<E: serde::de::Error>(self, v: u32) -> Result<Self::Value, E> {
+        Ok(Some(V::visit_u32(self.0, v)?))
+    }
+    fn visit_u64<E: serde::de::Error>(self, v: u64) -> Result<Self::Value, E> {
+        Ok(Some(V::visit_u64(self.0, v)?))
+    }
+    fn visit_u128<E: serde::de::Error>(self, v: u128) -> Result<Self::Value, E> {
+        Ok(Some(V::visit_u128(self.0, v)?))
+    }
+    fn visit_f32<E: serde::de::Error>(self, v: f32) -> Result<Self::Value, E> {
+        Ok(Some(V::visit_f32(self.0, v)?))
+    }
+    fn visit_f64<E: serde::de::Error>(self, v: f64) -> Result<Self::Value, E> {
+        Ok(Some(V::visit_f64(self.0, v)?))
+    }
+    fn visit_char<E: serde::de::Error>(self, v: char) -> Result<Self::Value, E> {
+        Ok(Some(V::visit_char(self.0, v)?))
+    }
+    fn visit_str<E: serde::de::Error>(self, v: &str) -> Result<Self::Value, E> {
+        Ok(Some(V::visit_str(self.0, v)?))
+    }
+    fn visit_borrowed_str<E: serde::de::Error>(self, v: &'de str) -> Result<Self::Value, E> {
+        Ok(Some(V::visit_borrowed_str(self.0, v)?))
+    }
+    #[cfg(feature = "alloc")]
+    fn visit_string<E: serde::de::Error>(self, v: String) -> Result<Self::Value, E> {
+        Ok(Some(V::visit_string(self.0, v)?))
+    }
+    fn visit_bytes<E: serde::de::Error>(self, v: &[u8]) -> Result<Self::Value, E> {
+        Ok(Some(V::visit_bytes(self.0, v)?))
+    }
+    fn visit_borrowed_bytes<E: serde::de::Error>(self, v: &'de [u8]) -> Result<Self::Value, E> {
+        Ok(Some(V::visit_borrowed_bytes(self.0, v)?))
+    }
+    #[cfg(feature = "alloc")]
+    fn visit_byte_buf<E: serde::de::Error>(self, v: Vec<u8>) -> Result<Self::Value, E> {
+        Ok(Some(V::visit_byte_buf(self.0, v)?))
+    }
+    fn visit_unit<E: serde::de::Error>(self) -> Result<Self::Value, E> {
+        Ok(Some(V::visit_unit(self.0)?))
+    }
+    fn visit_newtype_struct<D: serde::de::Deserializer<'de>>(self, d: D) -> Result<Self::Value, D::Error> {
+        Ok(Some(V::visit_newtype_struct(self.0, d)?))
+    }
+    fn visit_seq<A: serde::de::SeqAccess<'de>>(self, seq: A) -> Result<Self::Value, A::Error> {
+        Ok(Some(V::visit_seq(self.0, seq)?))
+    }
+    fn visit_map<A: serde::de::MapAccess<'de>>(self, map: A) -> Result<Self::Value, A::Error> {
+        Ok(Some(V::visit_map(self.0, map)?))
+    }
+    fn visit_enum<A: serde::de::EnumAccess<'de>>(self, data: A) -> Result<Self::Value, A::Error> {
+        Ok(Some(V::visit_enum(self.0, data)?))
+    }
+}
+
 pub struct SerializeBytesAsHex<'a>(pub &'a [u8]);
 
 impl<'a> serde::Serialize for SerializeBytesAsHex<'a> {
