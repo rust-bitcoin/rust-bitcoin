@@ -1253,17 +1253,212 @@ pub mod serde {
     //! }
     //! ```
 
-    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+    use core::convert::TryFrom;
+
+    use serde::{Deserializer, Serialize, Serializer};
 
     use crate::amount::{Amount, Denomination, SignedAmount};
+    use crate::serde_utils::DelegatingOptionVisitor;
 
-    /// This trait is used only to avoid code duplication and naming collisions
-    /// of the different serde serialization crates.
-    pub trait SerdeAmount: Copy + Sized + private::Sealed {
-        fn ser_sat<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error>;
-        fn des_sat<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error>;
-        fn ser_btc<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error>;
-        fn des_btc<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error>;
+    use super::ParseAmountError;
+
+    /// A serde Visitor for visiting amounts expressed in satoshi.
+    pub struct SatVisitor;
+
+    impl<'de> serde::de::Visitor<'de> for SatVisitor {
+        type Value = Amount;
+        fn expecting(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+            write!(f, "a Bitcoin amount in satoshi")
+        }
+        fn visit_i8<E: serde::de::Error>(self, v: i8) -> Result<Self::Value, E> {
+            let pos = TryFrom::try_from(v).map_err(|_| E::custom(ParseAmountError::Negative))?;
+            Ok(Amount::from_sat(pos))
+        }
+        fn visit_i16<E: serde::de::Error>(self, v: i16) -> Result<Self::Value, E> {
+            let pos = TryFrom::try_from(v).map_err(|_| E::custom(ParseAmountError::Negative))?;
+            Ok(Amount::from_sat(pos))
+        }
+        fn visit_i32<E: serde::de::Error>(self, v: i32) -> Result<Self::Value, E> {
+            let pos = TryFrom::try_from(v).map_err(|_| E::custom(ParseAmountError::Negative))?;
+            Ok(Amount::from_sat(pos))
+        }
+        fn visit_i64<E: serde::de::Error>(self, v: i64) -> Result<Self::Value, E> {
+            let pos = TryFrom::try_from(v).map_err(|_| E::custom(ParseAmountError::Negative))?;
+            Ok(Amount::from_sat(pos))
+        }
+        fn visit_u8<E: serde::de::Error>(self, v: u8) -> Result<Self::Value, E> {
+            Ok(Amount::from_sat(v as u64))
+        }
+        fn visit_u16<E: serde::de::Error>(self, v: u16) -> Result<Self::Value, E> {
+            Ok(Amount::from_sat(v as u64))
+        }
+        fn visit_u32<E: serde::de::Error>(self, v: u32) -> Result<Self::Value, E> {
+            Ok(Amount::from_sat(v as u64))
+        }
+        fn visit_u64<E: serde::de::Error>(self, v: u64) -> Result<Self::Value, E> {
+            Ok(Amount::from_sat(v))
+        }
+        fn visit_f32<E: serde::de::Error>(self, v: f32) -> Result<Self::Value, E> {
+            Amount::from_float_in(v as f64, Denomination::Satoshi).map_err(E::custom)
+        }
+        fn visit_f64<E: serde::de::Error>(self, v: f64) -> Result<Self::Value, E> {
+            Amount::from_float_in(v, Denomination::Satoshi).map_err(E::custom)
+        }
+    }
+
+    /// A serde Visitor for visiting signed amounts expressed in satoshi.
+    pub struct SignedSatVisitor;
+
+    impl<'de> serde::de::Visitor<'de> for SignedSatVisitor {
+        type Value = SignedAmount;
+        fn expecting(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+            write!(f, "a signed Bitcoin amount in satoshi")
+        }
+        fn visit_i8<E: serde::de::Error>(self, v: i8) -> Result<Self::Value, E> {
+            Ok(SignedAmount::from_sat(v as i64))
+        }
+        fn visit_i16<E: serde::de::Error>(self, v: i16) -> Result<Self::Value, E> {
+            Ok(SignedAmount::from_sat(v as i64))
+        }
+        fn visit_i32<E: serde::de::Error>(self, v: i32) -> Result<Self::Value, E> {
+            Ok(SignedAmount::from_sat(v as i64))
+        }
+        fn visit_i64<E: serde::de::Error>(self, v: i64) -> Result<Self::Value, E> {
+            Ok(SignedAmount::from_sat(v))
+        }
+        fn visit_u8<E: serde::de::Error>(self, v: u8) -> Result<Self::Value, E> {
+            Ok(SignedAmount::from_sat(v as i64))
+        }
+        fn visit_u16<E: serde::de::Error>(self, v: u16) -> Result<Self::Value, E> {
+            Ok(SignedAmount::from_sat(v as i64))
+        }
+        fn visit_u32<E: serde::de::Error>(self, v: u32) -> Result<Self::Value, E> {
+            Ok(SignedAmount::from_sat(v as i64))
+        }
+        fn visit_u64<E: serde::de::Error>(self, v: u64) -> Result<Self::Value, E> {
+            let sats = TryFrom::try_from(v)
+                .map_err(|_| E::custom(ParseAmountError::TooBig))?;
+            Ok(SignedAmount::from_sat(sats))
+        }
+        fn visit_f32<E: serde::de::Error>(self, v: f32) -> Result<Self::Value, E> {
+            SignedAmount::from_float_in(v as f64, Denomination::Satoshi).map_err(E::custom)
+        }
+        fn visit_f64<E: serde::de::Error>(self, v: f64) -> Result<Self::Value, E> {
+            SignedAmount::from_float_in(v, Denomination::Satoshi).map_err(E::custom)
+        }
+    }
+
+    /// A serde Visitor for visiting amounts expressed in Bitcoin.
+    pub struct BtcVisitor;
+
+    impl<'de> serde::de::Visitor<'de> for BtcVisitor {
+        type Value = Amount;
+        fn expecting(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+            write!(f, "a Bitcoin amount in Bitcoin")
+        }
+        fn visit_i8<E: serde::de::Error>(self, v: i8) -> Result<Self::Value, E> {
+            let pos = u64::try_from(v).map_err(|_| E::custom(ParseAmountError::Negative))?;
+            let sats = pos.checked_mul(100_000_000).ok_or_else(|| E::custom(ParseAmountError::TooBig))?;
+            Ok(Amount::from_sat(sats))
+        }
+        fn visit_i16<E: serde::de::Error>(self, v: i16) -> Result<Self::Value, E> {
+            let pos = u64::try_from(v).map_err(|_| E::custom(ParseAmountError::Negative))?;
+            let sats = pos.checked_mul(100_000_000).ok_or_else(|| E::custom(ParseAmountError::TooBig))?;
+            Ok(Amount::from_sat(sats))
+        }
+        fn visit_i32<E: serde::de::Error>(self, v: i32) -> Result<Self::Value, E> {
+            let pos = u64::try_from(v).map_err(|_| E::custom(ParseAmountError::Negative))?;
+            let sats = pos.checked_mul(100_000_000).ok_or_else(|| E::custom(ParseAmountError::TooBig))?;
+            Ok(Amount::from_sat(sats))
+        }
+        fn visit_i64<E: serde::de::Error>(self, v: i64) -> Result<Self::Value, E> {
+            let pos = u64::try_from(v).map_err(|_| E::custom(ParseAmountError::Negative))?;
+            let sats = pos.checked_mul(100_000_000).ok_or_else(|| E::custom(ParseAmountError::TooBig))?;
+            Ok(Amount::from_sat(sats))
+        }
+        fn visit_u8<E: serde::de::Error>(self, v: u8) -> Result<Self::Value, E> {
+            let sats = (v as u64).checked_mul(100_000_000)
+                .ok_or_else(|| E::custom(ParseAmountError::TooBig))?;
+            Ok(Amount::from_sat(sats))
+        }
+        fn visit_u16<E: serde::de::Error>(self, v: u16) -> Result<Self::Value, E> {
+            let sats = (v as u64).checked_mul(100_000_000)
+                .ok_or_else(|| E::custom(ParseAmountError::TooBig))?;
+            Ok(Amount::from_sat(sats))
+        }
+        fn visit_u32<E: serde::de::Error>(self, v: u32) -> Result<Self::Value, E> {
+            let sats = (v as u64).checked_mul(100_000_000)
+                .ok_or_else(|| E::custom(ParseAmountError::TooBig))?;
+            Ok(Amount::from_sat(sats))
+        }
+        fn visit_u64<E: serde::de::Error>(self, v: u64) -> Result<Self::Value, E> {
+            let sats = v.checked_mul(100_000_000).ok_or_else(|| E::custom(ParseAmountError::TooBig))?;
+            Ok(Amount::from_sat(sats))
+        }
+        fn visit_f32<E: serde::de::Error>(self, v: f32) -> Result<Self::Value, E> {
+            Amount::from_float_in(v as f64, Denomination::Bitcoin).map_err(E::custom)
+        }
+        fn visit_f64<E: serde::de::Error>(self, v: f64) -> Result<Self::Value, E> {
+            Amount::from_float_in(v, Denomination::Bitcoin).map_err(E::custom)
+        }
+    }
+
+    /// A serde Visitor for visiting amounts expressed in Bitcoin.
+    pub struct SignedBtcVisitor;
+
+    impl<'de> serde::de::Visitor<'de> for SignedBtcVisitor {
+        type Value = SignedAmount;
+        fn expecting(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+            write!(f, "a signed Bitcoin amount in Bitcoin")
+        }
+        fn visit_i8<E: serde::de::Error>(self, v: i8) -> Result<Self::Value, E> {
+            let sats = (v as i64).checked_mul(100_000_000)
+                .ok_or_else(|| E::custom(ParseAmountError::TooBig))?;
+            Ok(SignedAmount::from_sat(sats))
+        }
+        fn visit_i16<E: serde::de::Error>(self, v: i16) -> Result<Self::Value, E> {
+            let sats = (v as i64).checked_mul(100_000_000)
+                .ok_or_else(|| E::custom(ParseAmountError::TooBig))?;
+            Ok(SignedAmount::from_sat(sats))
+        }
+        fn visit_i32<E: serde::de::Error>(self, v: i32) -> Result<Self::Value, E> {
+            let sats = (v as i64).checked_mul(100_000_000)
+                .ok_or_else(|| E::custom(ParseAmountError::TooBig))?;
+            Ok(SignedAmount::from_sat(sats))
+        }
+        fn visit_i64<E: serde::de::Error>(self, v: i64) -> Result<Self::Value, E> {
+            let sats = v.checked_mul(100_000_000)
+                .ok_or_else(|| E::custom(ParseAmountError::TooBig))?;
+            Ok(SignedAmount::from_sat(sats))
+        }
+        fn visit_u8<E: serde::de::Error>(self, v: u8) -> Result<Self::Value, E> {
+            let sats = (v as i64).checked_mul(100_000_000)
+                .ok_or_else(|| E::custom(ParseAmountError::TooBig))?;
+            Ok(SignedAmount::from_sat(sats))
+        }
+        fn visit_u16<E: serde::de::Error>(self, v: u16) -> Result<Self::Value, E> {
+            let sats = (v as i64).checked_mul(100_000_000)
+                .ok_or_else(|| E::custom(ParseAmountError::TooBig))?;
+            Ok(SignedAmount::from_sat(sats))
+        }
+        fn visit_u32<E: serde::de::Error>(self, v: u32) -> Result<Self::Value, E> {
+            let sats = (v as i64).checked_mul(100_000_000)
+                .ok_or_else(|| E::custom(ParseAmountError::TooBig))?;
+            Ok(SignedAmount::from_sat(sats))
+        }
+        fn visit_u64<E: serde::de::Error>(self, v: u64) -> Result<Self::Value, E> {
+            let sats = i64::try_from(v)
+                .map_err(|_| E::custom(ParseAmountError::TooBig))?
+                .checked_mul(100_000_000)
+                .ok_or_else(|| E::custom(ParseAmountError::TooBig))?;
+            Ok(SignedAmount::from_sat(sats))
+        }
+        fn visit_f32<E: serde::de::Error>(self, v: f32) -> Result<Self::Value, E> {
+            SignedAmount::from_float_in(v as f64, Denomination::Bitcoin).map_err(E::custom)
+        }
+        fn visit_f64<E: serde::de::Error>(self, v: f64) -> Result<Self::Value, E> {
+            SignedAmount::from_float_in(v, Denomination::Bitcoin).map_err(E::custom)
+        }
     }
 
     mod private {
@@ -1274,26 +1469,36 @@ pub mod serde {
         impl Sealed for super::SignedAmount {}
     }
 
+    /// This trait is used only to avoid code duplication and naming collisions
+    /// of the different serde serialization crates.
+    pub trait SerdeAmount: Copy + Sized + private::Sealed {
+        fn ser_sat<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error>;
+        fn des_sat<'de, D: Deserializer<'de>>(d: D) -> Result<Self, D::Error>;
+        fn ser_btc<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error>;
+        fn des_btc<'de, D: Deserializer<'de>>(d: D) -> Result<Self, D::Error>;
+    }
+
     /// This trait is only for internal Amount type serialization/deserialization
     pub trait SerdeAmountForOpt: Copy + Sized + SerdeAmount + private::Sealed {
         fn type_prefix() -> &'static str;
         fn ser_sat_opt<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error>;
+        fn des_sat_opt<'de, D: Deserializer<'de>>(d: D) -> Result<Option<Self>, D::Error>;
         fn ser_btc_opt<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error>;
+        fn des_btc_opt<'de, D: Deserializer<'de>>(d: D) -> Result<Option<Self>, D::Error>;
     }
 
     impl SerdeAmount for Amount {
         fn ser_sat<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
             u64::serialize(&self.to_sat(), s)
         }
-        fn des_sat<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error> {
-            Ok(Amount::from_sat(u64::deserialize(d)?))
+        fn des_sat<'de, D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+            d.deserialize_any(SatVisitor)
         }
         fn ser_btc<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
             f64::serialize(&self.to_float_in(Denomination::Bitcoin), s)
         }
-        fn des_btc<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error> {
-            use serde::de::Error;
-            Amount::from_btc(f64::deserialize(d)?).map_err(D::Error::custom)
+        fn des_btc<'de, D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+            d.deserialize_any(BtcVisitor)
         }
     }
 
@@ -1302,8 +1507,14 @@ pub mod serde {
         fn ser_sat_opt<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
             s.serialize_some(&self.to_sat())
         }
+        fn des_sat_opt<'de, D: Deserializer<'de>>(d: D) -> Result<Option<Self>, D::Error> {
+            d.deserialize_option(DelegatingOptionVisitor(SatVisitor))
+        }
         fn ser_btc_opt<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
             s.serialize_some(&self.to_btc())
+        }
+        fn des_btc_opt<'de, D: Deserializer<'de>>(d: D) -> Result<Option<Self>, D::Error> {
+            d.deserialize_option(DelegatingOptionVisitor(BtcVisitor))
         }
     }
 
@@ -1311,15 +1522,14 @@ pub mod serde {
         fn ser_sat<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
             i64::serialize(&self.to_sat(), s)
         }
-        fn des_sat<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error> {
-            Ok(SignedAmount::from_sat(i64::deserialize(d)?))
+        fn des_sat<'de, D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+            d.deserialize_any(SignedSatVisitor)
         }
         fn ser_btc<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
             f64::serialize(&self.to_float_in(Denomination::Bitcoin), s)
         }
-        fn des_btc<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error> {
-            use serde::de::Error;
-            SignedAmount::from_btc(f64::deserialize(d)?).map_err(D::Error::custom)
+        fn des_btc<'de, D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+            d.deserialize_any(SignedBtcVisitor)
         }
     }
 
@@ -1328,8 +1538,14 @@ pub mod serde {
         fn ser_sat_opt<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
             s.serialize_some(&self.to_sat())
         }
+        fn des_sat_opt<'de, D: Deserializer<'de>>(d: D) -> Result<Option<Self>, D::Error> {
+            d.deserialize_option(DelegatingOptionVisitor(SignedSatVisitor))
+        }
         fn ser_btc_opt<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
             s.serialize_some(&self.to_btc())
+        }
+        fn des_btc_opt<'de, D: Deserializer<'de>>(d: D) -> Result<Option<Self>, D::Error> {
+            d.deserialize_option(DelegatingOptionVisitor(SignedBtcVisitor))
         }
     }
 
@@ -1337,9 +1553,7 @@ pub mod serde {
         //! Serialize and deserialize [`Amount`](crate::Amount) as real numbers denominated in satoshi.
         //! Use with `#[serde(with = "amount::serde::as_sat")]`.
 
-        use serde::{Deserializer, Serializer};
-
-        use crate::amount::serde::SerdeAmount;
+        use super::*;
 
         pub fn serialize<A: SerdeAmount, S: Serializer>(a: &A, s: S) -> Result<S::Ok, S::Error> {
             a.ser_sat(s)
@@ -1353,12 +1567,7 @@ pub mod serde {
             //! Serialize and deserialize [`Option<Amount>`](crate::Amount) as real numbers denominated in satoshi.
             //! Use with `#[serde(default, with = "amount::serde::as_sat::opt")]`.
 
-            use core::fmt;
-            use core::marker::PhantomData;
-
-            use serde::{de, Deserializer, Serializer};
-
-            use crate::amount::serde::SerdeAmountForOpt;
+            use super::*;
 
             pub fn serialize<A: SerdeAmountForOpt, S: Serializer>(
                 a: &Option<A>,
@@ -1373,29 +1582,7 @@ pub mod serde {
             pub fn deserialize<'d, A: SerdeAmountForOpt, D: Deserializer<'d>>(
                 d: D,
             ) -> Result<Option<A>, D::Error> {
-                struct VisitOptAmt<X>(PhantomData<X>);
-
-                impl<'de, X: SerdeAmountForOpt> de::Visitor<'de> for VisitOptAmt<X> {
-                    type Value = Option<X>;
-
-                    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                        write!(formatter, "An Option<{}64>", X::type_prefix())
-                    }
-
-                    fn visit_none<E>(self) -> Result<Self::Value, E>
-                    where
-                        E: de::Error,
-                    {
-                        Ok(None)
-                    }
-                    fn visit_some<D>(self, d: D) -> Result<Self::Value, D::Error>
-                    where
-                        D: Deserializer<'de>,
-                    {
-                        Ok(Some(X::des_sat(d)?))
-                    }
-                }
-                d.deserialize_option(VisitOptAmt::<A>(PhantomData))
+                A::des_sat_opt(d)
             }
         }
     }
@@ -1404,9 +1591,7 @@ pub mod serde {
         //! Serialize and deserialize [`Amount`](crate::Amount) as JSON numbers denominated in BTC.
         //! Use with `#[serde(with = "amount::serde::as_btc")]`.
 
-        use serde::{Deserializer, Serializer};
-
-        use crate::amount::serde::SerdeAmount;
+        use super::*;
 
         pub fn serialize<A: SerdeAmount, S: Serializer>(a: &A, s: S) -> Result<S::Ok, S::Error> {
             a.ser_btc(s)
@@ -1420,12 +1605,7 @@ pub mod serde {
             //! Serialize and deserialize `Option<Amount>` as JSON numbers denominated in BTC.
             //! Use with `#[serde(default, with = "amount::serde::as_btc::opt")]`.
 
-            use core::fmt;
-            use core::marker::PhantomData;
-
-            use serde::{de, Deserializer, Serializer};
-
-            use crate::amount::serde::SerdeAmountForOpt;
+            use super::*;
 
             pub fn serialize<A: SerdeAmountForOpt, S: Serializer>(
                 a: &Option<A>,
@@ -1440,29 +1620,7 @@ pub mod serde {
             pub fn deserialize<'d, A: SerdeAmountForOpt, D: Deserializer<'d>>(
                 d: D,
             ) -> Result<Option<A>, D::Error> {
-                struct VisitOptAmt<X>(PhantomData<X>);
-
-                impl<'de, X: SerdeAmountForOpt> de::Visitor<'de> for VisitOptAmt<X> {
-                    type Value = Option<X>;
-
-                    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                        write!(formatter, "An Option<f64>")
-                    }
-
-                    fn visit_none<E>(self) -> Result<Self::Value, E>
-                    where
-                        E: de::Error,
-                    {
-                        Ok(None)
-                    }
-                    fn visit_some<D>(self, d: D) -> Result<Self::Value, D::Error>
-                    where
-                        D: Deserializer<'de>,
-                    {
-                        Ok(Some(X::des_btc(d)?))
-                    }
-                }
-                d.deserialize_option(VisitOptAmt::<A>(PhantomData))
+                A::des_btc_opt(d)
             }
         }
     }
