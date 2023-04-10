@@ -5,7 +5,7 @@
 //! This module is for special serde serializations.
 //!
 
-pub(crate) struct SerializeBytesAsHex<'a>(pub(crate) &'a [u8]);
+pub struct SerializeBytesAsHex<'a>(pub &'a [u8]);
 
 impl<'a> serde::Serialize for SerializeBytesAsHex<'a> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
