@@ -216,11 +216,13 @@ pub mod serde {
     #![allow(missing_docs)]
     //! A module for serde-serializing fee rates in various units.
 
-    use serde::de::{Deserialize, Deserializer, Error};
+    use serde::de::{Deserializer, Error};
     use serde::ser::Serializer;
 
-    use super::{Amount, FeeRate};
+    use super::FeeRate;
     use crate::amount::Denomination;
+    use crate::amount::serde::{BtcVisitor, SatVisitor};
+    use crate::serde_utils::DelegatingOptionVisitor;
 
     pub mod btc_per_kvb {
         //! Serialize fee rates as bitcoin per kilo-virtual bytes.
@@ -231,9 +233,8 @@ pub mod serde {
         }
 
         pub fn deserialize<'de, D: Deserializer<'de>>(d: D) -> Result<FeeRate, D::Error> {
-            let btc_per_kvb = f64::deserialize(d)?;
-            let per_kwu = Amount::from_btc(btc_per_kvb / 4.0).map_err(D::Error::custom)?;
-            Ok(FeeRate::from_per_kwu(per_kwu))
+            let per_kvb = d.deserialize_any(BtcVisitor)?;
+            Ok(FeeRate::from_per_kwu(per_kvb / 4))
         }
 
         pub mod opt {
@@ -247,9 +248,11 @@ pub mod serde {
             }
 
             pub fn deserialize<'de, D: Deserializer<'de>>(d: D) -> Result<Option<FeeRate>, D::Error> {
-                let btc_per_kvb = f64::deserialize(d)?;
-                let per_kwu = Amount::from_btc(btc_per_kvb / 4.0).map_err(D::Error::custom)?;
-                Ok(Some(FeeRate::from_per_kwu(per_kwu)))
+                if let Some(per_kvb) = d.deserialize_any(DelegatingOptionVisitor(BtcVisitor))? {
+                    Ok(Some(FeeRate::from_per_kwu(per_kvb / 4)))
+                } else {
+                    Ok(None)
+                }
             }
         }
     }
@@ -262,9 +265,8 @@ pub mod serde {
         }
 
         pub fn deserialize<'de, D: Deserializer<'de>>(d: D) -> Result<FeeRate, D::Error> {
-            let sat_per_vb = Amount::from_float_in(f64::deserialize(d)?, Denomination::Satoshi)
-                .map_err(D::Error::custom)?;
-            FeeRate::from_per_vb(sat_per_vb).ok_or(D::Error::custom("fee rate overflow"))
+            let per_vb = d.deserialize_any(SatVisitor)?;
+            FeeRate::from_per_vb(per_vb).ok_or(D::Error::custom("fee rate overflow"))
         }
 
         pub mod opt {
@@ -278,10 +280,12 @@ pub mod serde {
             }
 
             pub fn deserialize<'de, D: Deserializer<'de>>(d: D) -> Result<Option<FeeRate>, D::Error> {
-                let sat_per_vb = Amount::from_float_in(f64::deserialize(d)?, Denomination::Satoshi)
-                    .map_err(D::Error::custom)?;
-                Ok(Some(FeeRate::from_per_vb(sat_per_vb)
-                    .ok_or(D::Error::custom("fee rate overflow"))?))
+                if let Some(per_vb) = d.deserialize_any(DelegatingOptionVisitor(SatVisitor))? {
+                    Ok(Some(FeeRate::from_per_vb(per_vb)
+                        .ok_or(D::Error::custom("fee rate overflow"))?))
+                } else {
+                    Ok(None)
+                }
             }
         }
     }
