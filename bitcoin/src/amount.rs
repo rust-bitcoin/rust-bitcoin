@@ -1257,10 +1257,9 @@ pub mod serde {
 
     use serde::{Deserializer, Serialize, Serializer};
 
+    use super::ParseAmountError;
     use crate::amount::{Amount, Denomination, SignedAmount};
     use crate::serde_utils::DelegatingOptionVisitor;
-
-    use super::ParseAmountError;
 
     /// A serde Visitor for visiting amounts expressed in satoshi.
     pub struct SatVisitor;
@@ -1336,8 +1335,7 @@ pub mod serde {
             Ok(SignedAmount::from_sat(v as i64))
         }
         fn visit_u64<E: serde::de::Error>(self, v: u64) -> Result<Self::Value, E> {
-            let sats = TryFrom::try_from(v)
-                .map_err(|_| E::custom(ParseAmountError::TooBig))?;
+            let sats = TryFrom::try_from(v).map_err(|_| E::custom(ParseAmountError::TooBig))?;
             Ok(SignedAmount::from_sat(sats))
         }
         fn visit_f32<E: serde::de::Error>(self, v: f32) -> Result<Self::Value, E> {
@@ -1358,41 +1356,49 @@ pub mod serde {
         }
         fn visit_i8<E: serde::de::Error>(self, v: i8) -> Result<Self::Value, E> {
             let pos = u64::try_from(v).map_err(|_| E::custom(ParseAmountError::Negative))?;
-            let sats = pos.checked_mul(100_000_000).ok_or_else(|| E::custom(ParseAmountError::TooBig))?;
+            let sats =
+                pos.checked_mul(100_000_000).ok_or_else(|| E::custom(ParseAmountError::TooBig))?;
             Ok(Amount::from_sat(sats))
         }
         fn visit_i16<E: serde::de::Error>(self, v: i16) -> Result<Self::Value, E> {
             let pos = u64::try_from(v).map_err(|_| E::custom(ParseAmountError::Negative))?;
-            let sats = pos.checked_mul(100_000_000).ok_or_else(|| E::custom(ParseAmountError::TooBig))?;
+            let sats =
+                pos.checked_mul(100_000_000).ok_or_else(|| E::custom(ParseAmountError::TooBig))?;
             Ok(Amount::from_sat(sats))
         }
         fn visit_i32<E: serde::de::Error>(self, v: i32) -> Result<Self::Value, E> {
             let pos = u64::try_from(v).map_err(|_| E::custom(ParseAmountError::Negative))?;
-            let sats = pos.checked_mul(100_000_000).ok_or_else(|| E::custom(ParseAmountError::TooBig))?;
+            let sats =
+                pos.checked_mul(100_000_000).ok_or_else(|| E::custom(ParseAmountError::TooBig))?;
             Ok(Amount::from_sat(sats))
         }
         fn visit_i64<E: serde::de::Error>(self, v: i64) -> Result<Self::Value, E> {
             let pos = u64::try_from(v).map_err(|_| E::custom(ParseAmountError::Negative))?;
-            let sats = pos.checked_mul(100_000_000).ok_or_else(|| E::custom(ParseAmountError::TooBig))?;
+            let sats =
+                pos.checked_mul(100_000_000).ok_or_else(|| E::custom(ParseAmountError::TooBig))?;
             Ok(Amount::from_sat(sats))
         }
         fn visit_u8<E: serde::de::Error>(self, v: u8) -> Result<Self::Value, E> {
-            let sats = (v as u64).checked_mul(100_000_000)
+            let sats = (v as u64)
+                .checked_mul(100_000_000)
                 .ok_or_else(|| E::custom(ParseAmountError::TooBig))?;
             Ok(Amount::from_sat(sats))
         }
         fn visit_u16<E: serde::de::Error>(self, v: u16) -> Result<Self::Value, E> {
-            let sats = (v as u64).checked_mul(100_000_000)
+            let sats = (v as u64)
+                .checked_mul(100_000_000)
                 .ok_or_else(|| E::custom(ParseAmountError::TooBig))?;
             Ok(Amount::from_sat(sats))
         }
         fn visit_u32<E: serde::de::Error>(self, v: u32) -> Result<Self::Value, E> {
-            let sats = (v as u64).checked_mul(100_000_000)
+            let sats = (v as u64)
+                .checked_mul(100_000_000)
                 .ok_or_else(|| E::custom(ParseAmountError::TooBig))?;
             Ok(Amount::from_sat(sats))
         }
         fn visit_u64<E: serde::de::Error>(self, v: u64) -> Result<Self::Value, E> {
-            let sats = v.checked_mul(100_000_000).ok_or_else(|| E::custom(ParseAmountError::TooBig))?;
+            let sats =
+                v.checked_mul(100_000_000).ok_or_else(|| E::custom(ParseAmountError::TooBig))?;
             Ok(Amount::from_sat(sats))
         }
         fn visit_f32<E: serde::de::Error>(self, v: f32) -> Result<Self::Value, E> {
@@ -1412,37 +1418,43 @@ pub mod serde {
             write!(f, "a signed Bitcoin amount in Bitcoin")
         }
         fn visit_i8<E: serde::de::Error>(self, v: i8) -> Result<Self::Value, E> {
-            let sats = (v as i64).checked_mul(100_000_000)
+            let sats = (v as i64)
+                .checked_mul(100_000_000)
                 .ok_or_else(|| E::custom(ParseAmountError::TooBig))?;
             Ok(SignedAmount::from_sat(sats))
         }
         fn visit_i16<E: serde::de::Error>(self, v: i16) -> Result<Self::Value, E> {
-            let sats = (v as i64).checked_mul(100_000_000)
+            let sats = (v as i64)
+                .checked_mul(100_000_000)
                 .ok_or_else(|| E::custom(ParseAmountError::TooBig))?;
             Ok(SignedAmount::from_sat(sats))
         }
         fn visit_i32<E: serde::de::Error>(self, v: i32) -> Result<Self::Value, E> {
-            let sats = (v as i64).checked_mul(100_000_000)
+            let sats = (v as i64)
+                .checked_mul(100_000_000)
                 .ok_or_else(|| E::custom(ParseAmountError::TooBig))?;
             Ok(SignedAmount::from_sat(sats))
         }
         fn visit_i64<E: serde::de::Error>(self, v: i64) -> Result<Self::Value, E> {
-            let sats = v.checked_mul(100_000_000)
-                .ok_or_else(|| E::custom(ParseAmountError::TooBig))?;
+            let sats =
+                v.checked_mul(100_000_000).ok_or_else(|| E::custom(ParseAmountError::TooBig))?;
             Ok(SignedAmount::from_sat(sats))
         }
         fn visit_u8<E: serde::de::Error>(self, v: u8) -> Result<Self::Value, E> {
-            let sats = (v as i64).checked_mul(100_000_000)
+            let sats = (v as i64)
+                .checked_mul(100_000_000)
                 .ok_or_else(|| E::custom(ParseAmountError::TooBig))?;
             Ok(SignedAmount::from_sat(sats))
         }
         fn visit_u16<E: serde::de::Error>(self, v: u16) -> Result<Self::Value, E> {
-            let sats = (v as i64).checked_mul(100_000_000)
+            let sats = (v as i64)
+                .checked_mul(100_000_000)
                 .ok_or_else(|| E::custom(ParseAmountError::TooBig))?;
             Ok(SignedAmount::from_sat(sats))
         }
         fn visit_u32<E: serde::de::Error>(self, v: u32) -> Result<Self::Value, E> {
-            let sats = (v as i64).checked_mul(100_000_000)
+            let sats = (v as i64)
+                .checked_mul(100_000_000)
                 .ok_or_else(|| E::custom(ParseAmountError::TooBig))?;
             Ok(SignedAmount::from_sat(sats))
         }

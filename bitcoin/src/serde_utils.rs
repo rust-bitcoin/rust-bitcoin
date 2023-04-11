@@ -24,9 +24,7 @@ where
         write!(f, "'")
     }
 
-    fn visit_none<E>(self) -> Result<Self::Value, E> {
-        Ok(None)
-    }
+    fn visit_none<E>(self) -> Result<Self::Value, E> { Ok(None) }
 
     fn visit_some<D: serde::de::Deserializer<'de>>(self, d: D) -> Result<Self::Value, D::Error> {
         Ok(Some(d.deserialize_any(self.0)?))
@@ -99,7 +97,10 @@ where
     fn visit_unit<E: serde::de::Error>(self) -> Result<Self::Value, E> {
         Ok(Some(V::visit_unit(self.0)?))
     }
-    fn visit_newtype_struct<D: serde::de::Deserializer<'de>>(self, d: D) -> Result<Self::Value, D::Error> {
+    fn visit_newtype_struct<D: serde::de::Deserializer<'de>>(
+        self,
+        d: D,
+    ) -> Result<Self::Value, D::Error> {
         Ok(Some(V::visit_newtype_struct(self.0, d)?))
     }
     fn visit_seq<A: serde::de::SeqAccess<'de>>(self, seq: A) -> Result<Self::Value, A::Error> {

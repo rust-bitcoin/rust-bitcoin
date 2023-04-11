@@ -179,8 +179,11 @@ impl FeeRate {
 impl fmt::Display for FeeRate {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if f.alternate() {
-            write!(f, "{} sat/kwu (~{} sat/vb)",
-                self.per_kwu.to_sat(), self.to_per_vb_ceil().to_sat(),
+            write!(
+                f,
+                "{} sat/kwu (~{} sat/vb)",
+                self.per_kwu.to_sat(),
+                self.to_per_vb_ceil().to_sat(),
             )
         } else {
             fmt::Display::fmt(&self.per_kwu, f)
@@ -206,9 +209,7 @@ impl Mul<Weight> for FeeRate {
 impl Div<Weight> for Amount {
     type Output = FeeRate;
 
-    fn div(self, rhs: Weight) -> Self::Output {
-        FeeRate { per_kwu: self * 1000 / rhs.to_wu() }
-    }
+    fn div(self, rhs: Weight) -> Self::Output { FeeRate { per_kwu: self * 1000 / rhs.to_wu() } }
 }
 
 #[cfg(feature = "serde")]
@@ -220,8 +221,8 @@ pub mod serde {
     use serde::ser::Serializer;
 
     use super::FeeRate;
-    use crate::amount::Denomination;
     use crate::amount::serde::{BtcVisitor, SatVisitor};
+    use crate::amount::Denomination;
     use crate::serde_utils::DelegatingOptionVisitor;
 
     pub mod btc_per_kvb {
@@ -247,7 +248,9 @@ pub mod serde {
                 }
             }
 
-            pub fn deserialize<'de, D: Deserializer<'de>>(d: D) -> Result<Option<FeeRate>, D::Error> {
+            pub fn deserialize<'de, D: Deserializer<'de>>(
+                d: D,
+            ) -> Result<Option<FeeRate>, D::Error> {
                 if let Some(per_kvb) = d.deserialize_any(DelegatingOptionVisitor(BtcVisitor))? {
                     Ok(Some(FeeRate::from_per_kwu(per_kvb / 4)))
                 } else {
@@ -274,15 +277,20 @@ pub mod serde {
 
             pub fn serialize<S: Serializer>(r: &Option<FeeRate>, s: S) -> Result<S::Ok, S::Error> {
                 match r {
-                    Some(r) => s.serialize_f64(r.to_per_vb_ceil().to_float_in(Denomination::Satoshi)),
+                    Some(r) =>
+                        s.serialize_f64(r.to_per_vb_ceil().to_float_in(Denomination::Satoshi)),
                     None => s.serialize_none(),
                 }
             }
 
-            pub fn deserialize<'de, D: Deserializer<'de>>(d: D) -> Result<Option<FeeRate>, D::Error> {
+            pub fn deserialize<'de, D: Deserializer<'de>>(
+                d: D,
+            ) -> Result<Option<FeeRate>, D::Error> {
                 if let Some(per_vb) = d.deserialize_any(DelegatingOptionVisitor(SatVisitor))? {
-                    Ok(Some(FeeRate::from_per_vb(per_vb)
-                        .ok_or(D::Error::custom("fee rate overflow"))?))
+                    Ok(Some(
+                        FeeRate::from_per_vb(per_vb)
+                            .ok_or(D::Error::custom("fee rate overflow"))?,
+                    ))
                 } else {
                     Ok(None)
                 }
@@ -332,9 +340,7 @@ mod tests {
 
     #[test]
     #[should_panic]
-    fn from_sat_per_vb_unchecked_panic_test() {
-        FeeRate::from_per_vb_unchecked(Amount::MAX);
-    }
+    fn from_sat_per_vb_unchecked_panic_test() { FeeRate::from_per_vb_unchecked(Amount::MAX); }
 
     #[test]
     fn raw_feerate_test() {
@@ -351,8 +357,8 @@ mod tests {
     fn checked_mul_test() {
         let sat = Amount::from_sat;
 
-        let fee_rate = FeeRate::from_per_kwu(sat(10)).checked_mul(10)
-            .expect("expected feerate in sat/kwu");
+        let fee_rate =
+            FeeRate::from_per_kwu(sat(10)).checked_mul(10).expect("expected feerate in sat/kwu");
         assert_eq!(FeeRate::from_per_kwu(sat(100)), fee_rate);
 
         let fee_rate = FeeRate::from_per_kwu(sat(10)).checked_mul(u64::MAX);
@@ -363,11 +369,12 @@ mod tests {
     fn checked_weight_mul_test() {
         let weight = Weight::from_wu(10);
         let fee = FeeRate::from_per_kwu(Amount::from_sat(10_000))
-            .checked_mul_by_weight(weight).expect("expected Amount");
+            .checked_mul_by_weight(weight)
+            .expect("expected Amount");
         assert_eq!(Amount::from_sat(100), fee);
 
-        let fee = FeeRate::from_per_kwu(Amount::from_sat(10_000))
-            .checked_mul_by_weight(Weight::MAX);
+        let fee =
+            FeeRate::from_per_kwu(Amount::from_sat(10_000)).checked_mul_by_weight(Weight::MAX);
         assert!(fee.is_none());
     }
 
@@ -375,8 +382,8 @@ mod tests {
     fn checked_div_test() {
         let sat = Amount::from_sat;
 
-        let fee_rate = FeeRate::from_per_kwu(sat(10)).checked_div(10)
-            .expect("expected feerate in sat/kwu");
+        let fee_rate =
+            FeeRate::from_per_kwu(sat(10)).checked_div(10).expect("expected feerate in sat/kwu");
         assert_eq!(FeeRate::from_per_kwu(sat(1)), fee_rate);
 
         let fee_rate = FeeRate::from_per_kwu(sat(10)).checked_div(0);
