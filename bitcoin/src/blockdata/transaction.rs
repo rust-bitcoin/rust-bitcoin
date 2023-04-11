@@ -1216,6 +1216,13 @@ where
     I: IntoIterator<Item = InputWeightPrediction>,
     O: IntoIterator<Item = usize>,
 {
+    // This fold() does three things:
+    // 1) Counts the inputs and returns the sum as `input_count`.
+    // 2) Sums all of the input weights and returns the sum as `partial_input_weight`
+    //    For every input: script_size * 4 + witness_size
+    //    Since script_size is non-witness data, it gets a 4x multiplier.
+    // 3) Counts the number of inputs that have a witness data and returns the count as
+    //    `num_inputs_with_witnesses`.
     let (input_count, partial_input_weight, inputs_with_witnesses) = inputs.into_iter().fold(
         (0, 0, 0),
         |(count, partial_input_weight, inputs_with_witnesses), prediction| {
@@ -1226,6 +1233,11 @@ where
             )
         },
     );
+
+    // This fold() does two things:
+    // 1) Counts the outputs and returns the sum as `output_count`.
+    // 2) Sums the output script sizes and returns the sum as `output_scripts_size`.
+    //    script_len + the length of a VarInt struct that stores the value of script_len
     let (output_count, output_scripts_size) = output_script_lens.into_iter().fold(
         (0, 0),
         |(output_count, total_scripts_size), script_len| {
@@ -1249,7 +1261,11 @@ const fn predict_weight_internal(
     output_count: usize,
     output_scripts_size: usize,
 ) -> Weight {
+    // Lengths of txid, index and sequence: (32, 4, 4).
+    // Multiply the lengths by 4 since the fields are all non-witness fields.
     let input_weight = partial_input_weight + input_count * 4 * (32 + 4 + 4);
+
+    // The value field of a TxOut is 8 bytes.
     let output_size = 8 * output_count + output_scripts_size;
     let non_input_size =
     // version:
