@@ -9,6 +9,16 @@ main () {
     for crate in "internals" "hashes" "bitcoin"; do
         if release_changes $crate; then
             echo "$crate has changes implying this is a release PR, checking if we can publish ..."
+
+            # Check if there is any mention of NEXT_RELEASE which means the
+            # next version number should be filled in.
+            if grep -qr NEXT_RELEASE ./$crate; then
+                echo Version number needs to be filled in following places:
+                grep -r NEXT_RELEASE ./$crate
+                exit 1
+            fi
+
+            # Then try to dry-run cargo publish
             publish_dry_run $crate
         fi
     done
