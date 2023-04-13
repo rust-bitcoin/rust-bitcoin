@@ -981,6 +981,7 @@ impl Transaction {
     /// transaction. It is impossible to check if the transaction is first in the block, so this
     /// function checks the structure of the transaction instead - the previous output must be
     /// all-zeros (creates satoshis "out of thin air").
+    #[doc(alias = "is_coinbase")]
     pub fn is_coin_base(&self) -> bool {
         self.input.len() == 1 && self.input[0].previous_output.is_null()
     }
