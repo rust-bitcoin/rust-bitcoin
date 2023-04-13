@@ -220,7 +220,7 @@ impl Block {
         }
 
         let coinbase = &self.txdata[0];
-        if !coinbase.is_coin_base() {
+        if !coinbase.is_coinbase() {
             return false;
         }
 

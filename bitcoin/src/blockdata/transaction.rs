@@ -981,8 +981,15 @@ impl Transaction {
     /// transaction. It is impossible to check if the transaction is first in the block, so this
     /// function checks the structure of the transaction instead - the previous output must be
     /// all-zeros (creates satoshis "out of thin air").
-    pub fn is_coin_base(&self) -> bool {
+    #[doc(alias = "is_coin_base")] // method previously had this name
+    pub fn is_coinbase(&self) -> bool {
         self.input.len() == 1 && self.input[0].previous_output.is_null()
+    }
+
+    /// Checks if this is a coinbase transaction.
+    #[deprecated(since = "0.0.0-NEXT_RELEASE", note = "use is_coinbase instead")]
+    pub fn is_coin_base(&self) -> bool {
+        self.is_coinbase()
     }
 
     /// Returns `true` if the transaction itself opted in to be BIP-125-replaceable (RBF).
@@ -1548,10 +1555,10 @@ mod tests {
         use crate::network::constants::Network;
 
         let genesis = constants::genesis_block(Network::Bitcoin);
-        assert!(genesis.txdata[0].is_coin_base());
+        assert!(genesis.txdata[0].is_coinbase());
         let tx_bytes = hex!("0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000");
         let tx: Transaction = deserialize(&tx_bytes).unwrap();
-        assert!(!tx.is_coin_base());
+        assert!(!tx.is_coinbase());
     }
 
     #[test]
