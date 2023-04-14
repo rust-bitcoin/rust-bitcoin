@@ -1451,6 +1451,36 @@ mod tests {
     }
 
     #[test]
+    fn predict_weight_all_witness_size() {
+        // 109
+        let p2wpkh = InputWeightPrediction::P2WPKH_MAX;
+
+        // 66
+        let p2tr_default = InputWeightPrediction::P2TR_KEY_DEFAULT_SIGHASH;
+
+        // 67
+        let p2tr_non_default = InputWeightPrediction::P2TR_KEY_NON_DEFAULT_SIGHASH;
+
+        // 109 + 66 + 67 = 242
+        let p = vec![p2wpkh, p2tr_default, p2tr_non_default];
+        let output_script_lens = vec![1];
+        let w = predict_weight(p, output_script_lens);
+
+        // input_weight = partial_input_weight + input_count * 4 * (32 + 4 + 4)
+        // input_weight = 242 + 3 * 4 * (32 + 4 + 4)
+        // input_weight = 722
+
+        // output_size = 8 * output_count + output_scripts_size
+        // output_size = 8 * 1 + 2
+        // output_size = 10
+
+        // weight = non_input_size * 4 + input_weight + input_count - inputs_with_witnesses + 2
+        // weight = 20 * 4 + 722 + 3 - 3 + 2
+        // weight = 804
+        assert_eq!(w, Weight::from_wu(804));
+    }
+
+    #[test]
     fn test_outpoint() {
         assert_eq!(OutPoint::from_str("i don't care"), Err(ParseOutPointError::Format));
         assert_eq!(
