@@ -850,14 +850,14 @@ impl Transaction {
     #[cfg(test)]
     fn check_weight(&self) -> Weight {
         let weight1 = self.weight();
-        let inputs = self.input.iter().map(|txin| {
+        let mut inputs = self.input.iter().map(|txin| {
             InputWeightPrediction::new(
                 txin.script_sig.len(),
                 txin.witness.iter().map(|elem| elem.len()),
             )
         });
-        let outputs = self.output.iter().map(|txout| txout.script_pubkey.len());
-        let weight2 = predict_weight(inputs, outputs);
+        let mut outputs = self.output.iter().map(|txout| txout.script_pubkey.len());
+        let weight2 = predict_weight(&mut inputs, &mut outputs);
         assert_eq!(weight1, weight2);
         weight1
     }
@@ -1211,28 +1211,23 @@ impl From<&Transaction> for Wtxid {
 /// * The values fed into this function are inconsistent with the actual lengths the transaction
 ///   will have - the code is already broken and checking overflows doesn't help. Unfortunately
 ///   this probably cannot be avoided.
-pub fn predict_weight<I, O>(inputs: I, output_script_lens: O) -> Weight
+pub fn predict_weight<I, O>(inputs: &mut I, output_script_lens: &mut O) -> Weight
 where
-    I: IntoIterator<Item = InputWeightPrediction>,
-    O: IntoIterator<Item = usize>,
+    I: Iterator<Item = InputWeightPrediction> + Clone,
+    O: Iterator<Item = usize> + Clone,
+    I::Item: Borrow<InputWeightPrediction>,
+    O::Item: Borrow<usize>,
 {
-    let (input_count, partial_input_weight, inputs_with_witnesses) = inputs.into_iter().fold(
-        (0, 0, 0),
-        |(count, partial_input_weight, inputs_with_witnesses), prediction| {
-            (
-                count + 1,
-                partial_input_weight + prediction.script_size * 4 + prediction.witness_size,
-                inputs_with_witnesses + (prediction.witness_size > 0) as usize,
-            )
-        },
-    );
-    let (output_count, output_scripts_size) = output_script_lens.into_iter().fold(
-        (0, 0),
-        |(output_count, total_scripts_size), script_len| {
-            let script_size = script_len + VarInt(script_len as u64).len();
-            (output_count + 1, total_scripts_size + script_size)
-        },
-    );
+    let input_count = inputs.clone().count();
+    let output_count = output_script_lens.clone().count();
+
+    // Since script_size is non-witness data, it gets a 4x multiplier when summed
+    let partial_input_weight: usize =
+        inputs.clone().map(|p| p.script_size * 4 + p.witness_size).sum();
+
+    let inputs_with_witnesses: usize = inputs.filter(|p| p.witness_size > 0).count();
+    let output_scripts_size: usize = output_script_lens.map(|s| s + VarInt(s as u64).len()).sum();
+
     predict_weight_internal(
         input_count,
         partial_input_weight,
@@ -1464,7 +1459,7 @@ mod tests {
         // 109 + 66 + 67 = 242
         let p = vec![p2wpkh, p2tr_default, p2tr_non_default];
         let output_script_lens = vec![1];
-        let w = predict_weight(p, output_script_lens);
+        let w = predict_weight(&mut p.into_iter(), &mut output_script_lens.into_iter());
 
         // input_weight = partial_input_weight + input_count * 4 * (32 + 4 + 4)
         // input_weight = 242 + 3 * 4 * (32 + 4 + 4)
