@@ -16,7 +16,6 @@ exclude = ["tests", "contrib"]
 default = ["std"]
 std = ["alloc", "internals/std"]
 alloc = ["internals/alloc"]
-schemars = ["actual-schemars", "dyn-clone"]
 serde-std = ["serde/std"]
 
 [package.metadata.docs.rs]
@@ -27,13 +26,9 @@ rustdoc-args = ["--cfg", "docsrs"]
 internals = { path = "../internals", package = "bitcoin-private", version = "0.1.0" }
 
 core2 = { version = "0.3.0", default_features = false, optional = true }
+schemars = { version = "0.8.3", optional = true }
 # Only enable this if you explicitly do not want to use "std", otherwise enable "serde-std".
 serde = { version = "1.0", default-features = false, optional = true }
-# Do NOT use this as a feature! Use the `schemars` feature instead. Can only be used with "std" enabled.
-actual-schemars = { package = "schemars", version = "<=0.8.3", optional = true }
-# Do NOT enable this dependency, this is just to pin dyn-clone (transitive dep from schemars)
-# because 1.0.8 does not build with Rust 1.41.1 (because of useage of `Arc::as_ptr`).
-dyn-clone = { version = "<=1.0.7", default_features = false, optional = true }
 
 [dev-dependencies]
 serde_test = "1.0"

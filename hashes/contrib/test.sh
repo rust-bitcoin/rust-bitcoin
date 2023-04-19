@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 set -ex
 
@@ -15,6 +15,12 @@ rustc --version
 NIGHTLY=false
 if cargo --version | grep nightly >/dev/null; then
     NIGHTLY=true
+fi
+
+# Pin dependencies as required if we are using MSRV toolchain.
+if cargo --version | grep "1\.48"; then
+    # 1.0.157 uses syn 2.0 which requires edition 2021
+    cargo update -p serde --precise 1.0.156
 fi
 
 # Make all cargo invocations verbose
@@ -52,8 +58,12 @@ if [ "$DO_FEATURE_MATRIX" = true ]; then
     cargo test --no-default-features --features="std,schemars"
 fi
 
+REPO_DIR=$(git rev-parse --show-toplevel)
+
 if [ "$DO_SCHEMARS_TESTS" = true ]; then
-    (cd extended_tests/schemars && cargo test)
+    pushd "$REPO_DIR/hashes/extended_tests/schemars" > /dev/null
+    cargo test
+    popd > /dev/null
 fi
 
 # Build the docs if told to (this only works with the nightly toolchain)

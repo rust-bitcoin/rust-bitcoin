@@ -13,8 +13,8 @@ path = "../.."
 features = ['schemars', 'serde']
 
 [dependencies]
-jsonschema-valid = "^0.4.0"
+jsonschema-valid = "0.4.0"
 serde = { version = "1.0", default-features = false}
-schemars = { version = "<=0.8.3"}
+schemars = "0.8.3"
 serde_test = "1.0"
 serde_json = "1.0"

@@ -13,6 +13,18 @@ since these are needed to display hashes anway.
 
 This library should always compile with any combination of features on **Rust 1.48.0**.
 
+
+To build with the MSRV you will need to pin `serde` (if you have either the `serde` or the
+`schemars` feature enabled)
+
+```
+# serde 1.0.157 uses syn 2.0 which requires edition 2021
+cargo update -p serde --precise 1.0.156
+```
+
+before building. (And if your code is a library, your downstream users will need to run these
+commands, and so on.)
+
 ## Contributions
 
 Contributions are welcome, including additional hash function implementations.

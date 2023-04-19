@@ -31,16 +31,17 @@ pub trait Tag {
 }
 
 /// Output of the SHA256t hash function.
-#[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[repr(transparent)]
-pub struct Hash<T: Tag>(
-    #[cfg_attr(
-        feature = "schemars",
-        schemars(schema_with = "crate::util::json_hex_string::len_32")
-    )]
-    [u8; 32],
-    #[cfg_attr(feature = "schemars", schemars(skip))] PhantomData<T>,
-);
+pub struct Hash<T: Tag>([u8; 32], PhantomData<T>);
+
+#[cfg(feature = "schemars")]
+impl<T: Tag> schemars::JsonSchema for Hash<T> {
+    fn schema_name() -> String { "Hash".to_owned() }
+
+    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+        crate::util::json_hex_string::len_32(gen)
+    }
+}
 
 impl<T: Tag> Hash<T> {
     fn internal_new(arr: [u8; 32]) -> Self { Hash(arr, Default::default()) }
