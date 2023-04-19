@@ -987,7 +987,7 @@ impl Transaction {
     }
 
     /// Checks if this is a coinbase transaction.
-    #[deprecated(since = "0.0.0-NEXT_RELEASE", note = "use is_coinbase instead")]
+    #[deprecated(since = "0.0.0-NEXT-RELEASE", note = "use is_coinbase instead")]
     pub fn is_coin_base(&self) -> bool {
         self.is_coinbase()
     }
