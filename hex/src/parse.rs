@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
 //! Hex encoding and decoding.
-//!
 
 use core::{fmt, str};
 #[cfg(feature = "std")]
