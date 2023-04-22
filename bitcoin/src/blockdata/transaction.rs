@@ -858,7 +858,9 @@ impl Transaction {
         });
         let outputs = self.output.iter().map(|txout| txout.script_pubkey.len());
         let weight2 = predict_weight(inputs, outputs);
+        let weight3 = predict_weight_with_inputs_outputs(&self.input, &self.output);
         assert_eq!(weight1, weight2);
+        assert_eq!(weight2, weight3);
         weight1
     }
 
@@ -1171,6 +1173,69 @@ impl From<&Transaction> for Wtxid {
 /// Predicts the weight of a to-be-constructed transaction.
 ///
 /// This function computes the weight of a transaction which is not fully known. All that is needed
+/// is an arbitrary set of TxIn and TxOut.
+///
+/// # Arguments
+///
+/// * `inputs` - a vector of inputs (TxIn).
+/// * `outputs` - a vector of outputs (TxOut).
+///
+/// # Usage
+///
+/// Determine the weight of a set of OutPoints (Utxos) before they are included in a transaction.
+/// For example, if we wish to calculate the possible fee for including a set of UTXOs in a
+/// transaction, this function can be used to predict the weight of a set of UTXOs prior to inclusion.
+///
+/// # Notes
+///
+/// This function uses the same internals as predict_weight, so the same caveats and assumptions
+/// apply to this function.
+pub fn predict_weight_with_inputs_outputs(inputs: &Vec<TxIn>, outputs: &Vec<TxOut>) -> Weight {
+    let input_count = inputs.len();
+    let output_count = outputs.len();
+
+    let mut partial_input_weight = 0;
+    let mut inputs_with_witnesses = 0;
+    let mut outputs_script_size = 0;
+
+    if input_count > 0 {
+        let p = inputs.iter().map(|txin| {
+            InputWeightPrediction::new(
+                txin.script_sig.len(),
+                txin.witness.iter().map(|elem| elem.len()),
+            )
+        });
+
+        // Since script_size is non-witness data, it gets a 4x multiplier when summed
+        partial_input_weight = p.clone().map(|p| p.script_size * 4 + p.witness_size).sum();
+        inputs_with_witnesses = p.filter(|p| p.witness_size > 0).count();
+    }
+
+    if output_count > 0 {
+        outputs_script_size = outputs
+            .iter()
+            .map(|txout| txout.script_pubkey.len())
+            .map(|s| s + VarInt(s as u64).len())
+            .sum();
+    }
+
+    predict_weight_internal(
+        input_count,
+        partial_input_weight,
+        inputs_with_witnesses,
+        output_count,
+        outputs_script_size,
+    )
+}
+
+/// See predict_weight_with_inputs_outputs
+pub fn predict_weight_with_outputs(outputs: &Vec<TxOut>) -> Weight {
+    predict_weight_with_inputs_outputs(&vec![], outputs)
+}
+
+/// Predicts the weight of a to-be-constructed transaction.
+///
+/// This function computes the weight of a transaction which is not fully known. All that is needed
 /// is the lengths of scripts and witness elements.
 ///
 /// # Arguments
@@ -1448,6 +1513,30 @@ mod tests {
         let size = tx.consensus_encode(&mut &mut buf[..]).unwrap();
         assert_eq!(size, SOME_TX.len() / 2);
         assert_eq!(raw_tx, &buf[..size]);
+    }
+
+    #[test]
+    fn predict_weight_with_inputs_outputs_test() {
+        // input without witnesses
+        let inputs = vec![TxIn::default()];
+        let outputs = vec![TxOut::default()];
+        let weight = predict_weight_with_inputs_outputs(&inputs, &outputs);
+        // input_weight = partial_input_weight + input_count * 4 * (32 + 4 + 4)
+        // input_weight = 4 + 1 * 4 * (32 + 4 + 4)
+        // input_weight = 164
+        //
+        // output_size = 8 * output_count + output_scripts_size
+        // output_size = 8 * 1 + 1
+        // output_size = 9
+        //
+        // non_input_size = 4 input_count_size + output_count_size + output_size + 4
+        // non_input_size = 4 + 1 + 1 + 9 + 4
+        // non_input_size = 19
+        //
+        // weight = non_input_size * 4 + input_weight
+        // weight = 19 * 4 + 164
+        // weight = 240
+        assert_eq!(weight, Weight::from_wu(240));
     }
 
     #[test]
