@@ -192,11 +192,8 @@ impl WatchOnly {
                 witness: Witness::default(),
             }],
             output: vec![
-                TxOut { value: to_amount.to_sat(), script_pubkey: to_address.script_pubkey() },
-                TxOut {
-                    value: change_amount.to_sat(),
-                    script_pubkey: change_address.script_pubkey(),
-                },
+                TxOut { value: to_amount, script_pubkey: to_address.script_pubkey() },
+                TxOut { value: change_amount, script_pubkey: change_address.script_pubkey() },
             ],
         };
 
@@ -282,7 +279,7 @@ fn previous_output() -> TxOut {
         .expect("failed to parse input utxo scriptPubkey");
     let amount = Amount::from_str(INPUT_UTXO_VALUE).expect("failed to parse input utxo value");
 
-    TxOut { value: amount.to_sat(), script_pubkey }
+    TxOut { value: amount, script_pubkey }
 }
 
 struct Error(Box<dyn std::error::Error>);

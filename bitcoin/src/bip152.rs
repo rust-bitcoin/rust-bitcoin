@@ -378,7 +378,8 @@ mod test {
     use crate::consensus::encode::{deserialize, serialize};
     use crate::hash_types::TxMerkleNode;
     use crate::{
-        CompactTarget, OutPoint, ScriptBuf, Sequence, Transaction, TxIn, TxOut, Txid, Witness,
+        Amount, CompactTarget, OutPoint, ScriptBuf, Sequence, Transaction, TxIn, TxOut, Txid,
+        Witness,
     };
 
     fn dummy_tx(nonce: &[u8]) -> Transaction {
@@ -391,7 +392,7 @@ mod test {
                 sequence: Sequence(1),
                 witness: Witness::new(),
             }],
-            output: vec![TxOut { value: 1, script_pubkey: ScriptBuf::new() }],
+            output: vec![TxOut { value: Amount::ONE_SAT, script_pubkey: ScriptBuf::new() }],
         }
     }
 
