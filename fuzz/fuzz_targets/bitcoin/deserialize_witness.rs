@@ -8,7 +8,7 @@ fn do_test(data: &[u8]) {
     let w: Result<Witness, _> = deserialize(data);
     if let Ok(witness) = w {
         let serialized = serialize(&witness);
-        assert_eq!(data, serialized);
+        assert_eq!(data, &serialized[..]);
     }
 }
 

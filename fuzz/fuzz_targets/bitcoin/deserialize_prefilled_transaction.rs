@@ -7,7 +7,7 @@ fn do_test(data: &[u8]) {
 
     match tx_result {
         Err(_) => {},
-        Ok(mut tx) => {
+        Ok(tx) => {
             let ser = bitcoin::consensus::encode::serialize(&tx);
             assert_eq!(&ser[..], data);
         }

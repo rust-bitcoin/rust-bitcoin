@@ -82,6 +82,7 @@ To build with the MSRV you will need to pin `serde` (if you have the feature ena
 ```
 # serde 1.0.157 uses syn 2.0 which requires edition 2021
 cargo update -p serde --precise 1.0.156
+cargo update -p half --precise 1.7.1
 ```
 
 before building. (And if your code is a library, your downstream users will need to run these
