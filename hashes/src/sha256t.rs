@@ -32,7 +32,7 @@ pub trait Tag {
 
 /// Output of the SHA256t hash function.
 #[repr(transparent)]
-pub struct Hash<T: Tag>([u8; 32], PhantomData<T>);
+pub struct Hash<T>([u8; 32], PhantomData<T>);
 
 #[cfg(feature = "schemars")]
 impl<T: Tag> schemars::JsonSchema for Hash<T> {
@@ -47,6 +47,26 @@ impl<T: Tag> Hash<T> {
     fn internal_new(arr: [u8; 32]) -> Self { Hash(arr, Default::default()) }
 
     fn internal_engine() -> HashEngine { T::engine() }
+}
+
+impl<T> Hash<T> {
+    /// Construts this wrapper type from an array.
+    ///
+    /// Note: this function works the same as the one in the `Hash` trait but is `const`.
+    #[inline]
+    pub const fn from_byte_array(bytes: [u8; 32]) -> Self { Hash(bytes, PhantomData) }
+
+    /// Returns the raw hash bytes.
+    ///
+    /// Note: this function works the same as the one in the `Hash` trait but is `const`.
+    #[inline]
+    pub const fn to_byte_array(self) -> [u8; 32] { self.0 }
+
+    /// Returns the reference to raw hash bytes.
+    ///
+    /// Note: this function works the same as the one in the `Hash` trait but is `const`.
+    #[inline]
+    pub const fn as_byte_array(&self) -> &[u8; 32] { &self.0 }
 }
 
 impl<T: Tag> Copy for Hash<T> {}

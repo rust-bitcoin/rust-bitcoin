@@ -95,6 +95,24 @@ impl Hash {
     fn internal_new(arr: [u8; 64]) -> Self { Hash(arr) }
 
     fn internal_engine() -> HashEngine { Default::default() }
+
+    /// Construts this wrapper type from an array.
+    ///
+    /// Note: this function works the same as the one in the `Hash` trait but is `const`.
+    #[inline]
+    pub const fn from_byte_array(bytes: [u8; 64]) -> Self { Hash(bytes) }
+
+    /// Returns the raw hash bytes.
+    ///
+    /// Note: this function works the same as the one in the `Hash` trait but is `const`.
+    #[inline]
+    pub const fn to_byte_array(self) -> [u8; 64] { self.0 }
+
+    /// Returns the reference to raw hash bytes.
+    ///
+    /// Note: this function works the same as the one in the `Hash` trait but is `const`.
+    #[inline]
+    pub const fn as_byte_array(&self) -> &[u8; 64] { &self.0 }
 }
 
 #[cfg(not(fuzzing))]

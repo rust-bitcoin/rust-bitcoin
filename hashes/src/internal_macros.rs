@@ -104,7 +104,6 @@ macro_rules! hash_trait_impls {
             type Err = $crate::hex::Error;
             fn from_str(s: &str) -> Result<Self, Self::Err> {
                 use $crate::hex::{FromHex, HexIterator};
-                use $crate::Hash;
 
                 let inner: [u8; $bits / 8] = if $reverse {
                     FromHex::from_byte_iter(HexIterator::new(s)?.rev())?
@@ -207,6 +206,24 @@ macro_rules! hash_type {
             fn internal_new(arr: [u8; $bits / 8]) -> Self { Hash(arr) }
 
             fn internal_engine() -> HashEngine { Default::default() }
+
+            /// Construts this wrapper type from an array.
+            ///
+            /// Note: this function works the same as the one in the `Hash` trait but is `const`.
+            #[inline]
+            pub const fn from_byte_array(bytes: [u8; $bits / 8]) -> Self { Hash(bytes) }
+
+            /// Returns the raw hash bytes.
+            ///
+            /// Note: this function works the same as the one in the `Hash` trait but is `const`.
+            #[inline]
+            pub const fn to_byte_array(self) -> [u8; $bits / 8] { self.0 }
+
+            /// Returns the reference to raw hash bytes.
+            ///
+            /// Note: this function works the same as the one in the `Hash` trait but is `const`.
+            #[inline]
+            pub const fn as_byte_array(&self) -> &[u8; $bits / 8] { &self.0 }
         }
 
         crate::internal_macros::hash_trait_impls!($bits, $reverse);

@@ -227,6 +227,33 @@ macro_rules! hash_newtype {
             pub const fn as_raw_hash(&self) -> &$hash {
                 &self.0
             }
+
+            /// Construts this wrapper type from an array.
+            ///
+            /// Note: this function works the same as the one in the `Hash` trait but is `const`.
+            #[inline]
+            #[allow(unused)] // the user of macro may not need this
+            pub const fn from_byte_array(bytes: <Self as $crate::Hash>::Bytes) -> Self {
+                $newtype(<$hash>::from_byte_array(bytes))
+            }
+
+            /// Returns the raw hash bytes.
+            ///
+            /// Note: this function works the same as the one in the `Hash` trait but is `const`.
+            #[inline]
+            #[allow(unused)] // the user of macro may not need this
+            pub const fn to_byte_array(self) -> <Self as $crate::Hash>::Bytes {
+                self.0.to_byte_array()
+            }
+
+            /// Returns the reference to raw hash bytes.
+            ///
+            /// Note: this function works the same as the one in the `Hash` trait but is `const`.
+            #[inline]
+            #[allow(unused)] // the user of macro may not need this
+            pub const fn as_byte_array(&self) -> &<Self as $crate::Hash>::Bytes {
+                self.0.as_byte_array()
+            }
         }
 
         impl $crate::_export::_core::convert::From<$hash> for $newtype {
