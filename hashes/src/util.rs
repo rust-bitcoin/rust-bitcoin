@@ -210,14 +210,14 @@ macro_rules! hash_newtype {
             /// Creates this wrapper type from the inner hash type.
             #[allow(unused)] // the user of macro may not need this
             #[inline]
-            pub fn from_raw_hash(inner: $hash) -> $newtype {
+            pub const fn from_raw_hash(inner: $hash) -> $newtype {
                 $newtype(inner)
             }
 
             /// Returns the inner hash (sha256, sh256d etc.).
             #[inline]
             #[allow(unused)] // the user of macro may not need this
-            pub fn to_raw_hash(self) -> $hash {
+            pub const fn to_raw_hash(self) -> $hash {
                 self.0
             }
 
