@@ -33,14 +33,24 @@ impl Weight {
     pub const fn from_wu(wu: u64) -> Self { Weight(wu) }
 
     /// Constructs `Weight` from kilo weight units returning `None` if overflow occurred.
-    pub fn from_kwu(wu: u64) -> Option<Self> { wu.checked_mul(1000).map(Weight) }
+    pub const fn from_kwu(kwu: u64) -> Option<Self> {
+        match kwu.checked_mul(1000) {
+            Some(weight) => Some(Weight(weight)),
+            None => None,
+        }
+    }
 
     /// Constructs `Weight` from virtual bytes.
     ///
     /// # Errors
     ///
     /// Returns `None` on overflow.
-    pub fn from_vb(vb: u64) -> Option<Self> { vb.checked_mul(4).map(Weight::from_wu) }
+    pub const fn from_vb(vb: u64) -> Option<Self> {
+        match vb.checked_mul(4) {
+            Some(weight) => Some(Weight(weight)),
+            None => None,
+        }
+    }
 
     /// Constructs `Weight` from virtual bytes without overflow check.
     pub const fn from_vb_unchecked(vb: u64) -> Self { Weight::from_wu(vb * 4) }
@@ -70,22 +80,43 @@ impl Weight {
     /// Checked addition.
     ///
     /// Computes `self + rhs` returning `None` if overflow occurred.
-    pub fn checked_add(self, rhs: Self) -> Option<Self> { self.0.checked_add(rhs.0).map(Self) }
+    pub const fn checked_add(self, rhs: Self) -> Option<Self> {
+        match self.0.checked_add(rhs.0) {
+            Some(weight) => Some(Self(weight)),
+            None => None,
+        }
+    }
 
     /// Checked subtraction.
     ///
     /// Computes `self - rhs` returning `None` if overflow occurred.
-    pub fn checked_sub(self, rhs: Self) -> Option<Self> { self.0.checked_sub(rhs.0).map(Self) }
+    pub const fn checked_sub(self, rhs: Self) -> Option<Self> {
+        match self.0.checked_sub(rhs.0) {
+            Some(weight) => Some(Self(weight)),
+            None => None,
+        }
+    }
 
     /// Checked multiplication.
     ///
     /// Computes `self * rhs` returning `None` if overflow occurred.
-    pub fn checked_mul(self, rhs: u64) -> Option<Self> { self.0.checked_mul(rhs).map(Self) }
+    pub const fn checked_mul(self, rhs: u64) -> Option<Self> {
+        match self.0.checked_mul(rhs) {
+            Some(weight) => Some(Self(weight)),
+            None => None,
+        }
+    }
 
     /// Checked division.
     ///
     /// Computes `self / rhs` returning `None` if `rhs == 0`.
-    pub fn checked_div(self, rhs: u64) -> Option<Self> { self.0.checked_div(rhs).map(Self) }
+    pub const fn checked_div(self, rhs: u64) -> Option<Self> {
+        if rhs != 0 {
+            Some(Weight(self.0 / rhs))
+        } else {
+            None
+        }
+    }
 }
 
 /// Alternative will display the unit.
