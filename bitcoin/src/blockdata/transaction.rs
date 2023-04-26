@@ -183,7 +183,7 @@ impl core::str::FromStr for OutPoint {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct TxIn {
-    /// The reference to the previous output that is being used an an input.
+    /// The reference to the previous output that is being used as an input.
     pub previous_output: OutPoint,
     /// The script which pushes values on the stack which will cause
     /// the referenced output's script to be accepted.
@@ -191,7 +191,7 @@ pub struct TxIn {
     /// The sequence number, which suggests to miners which of two
     /// conflicting transactions should be preferred, or 0xFFFFFFFF
     /// to ignore this feature. This is generally never used since
-    /// the miner behaviour cannot be enforced.
+    /// the miner behavior cannot be enforced.
     pub sequence: Sequence,
     /// Witness data: an array of byte-arrays.
     /// Note that this field is *not* (de)serialized with the rest of the TxIn in
@@ -230,7 +230,7 @@ impl TxIn {
         (36 + VarInt(script_sig_size as u64).len() + script_sig_size + 4) * 4
     }
 
-    /// The weight of the TxIn when it's included in a segwit transaction (i.e., a transcation
+    /// The weight of the TxIn when it's included in a segwit transaction (i.e., a transaction
     /// having at least one segwit input).
     ///
     /// This always takes into account the witness, even when empty, in which
@@ -261,7 +261,7 @@ impl Default for TxIn {
 /// - Indicating whether absolute lock-time (specified in `lock_time` field of [`Transaction`])
 ///   is enabled.
 /// - Indicating and encoding [BIP-68] relative lock-times.
-/// - Indicating whether a transcation opts-in to [BIP-125] replace-by-fee.
+/// - Indicating whether a transaction opts-in to [BIP-125] replace-by-fee.
 ///
 /// Note that transactions spending an output with `OP_CHECKLOCKTIMEVERIFY`MUST NOT use
 /// `Sequence::MAX` for the corresponding input. [BIP-65]
@@ -353,7 +353,7 @@ impl Sequence {
         self.is_relative_lock_time() & (self.0 & Sequence::LOCK_TYPE_MASK == 0)
     }
 
-    /// Returns `true` if the sequene number encodes a time interval based relative lock-time.
+    /// Returns `true` if the sequence number encodes a time interval based relative lock-time.
     #[inline]
     pub fn is_time_locked(&self) -> bool {
         self.is_relative_lock_time() & (self.0 & Sequence::LOCK_TYPE_MASK > 0)

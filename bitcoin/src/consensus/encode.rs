@@ -276,7 +276,7 @@ pub trait Decodable: Sized {
     /// Like `consensus_decode` but relies on the reader being limited in the amount of data it
     /// returns, e.g. by being wrapped in [`std::io::Take`].
     ///
-    /// Failling to obide to this requirement might lead to memory exhaustion caused by malicious
+    /// Failing to abide to this requirement might lead to memory exhaustion caused by malicious
     /// inputs.
     ///
     /// Users should default to `consensus_decode`, but when data to be decoded is already in a byte
@@ -572,7 +572,7 @@ macro_rules! impl_vec {
                 r: &mut R,
             ) -> Result<Self, Error> {
                 let len = VarInt::consensus_decode_from_finite_reader(r)?.0;
-                // Do not allocate upfront more items than if the sequnce of type
+                // Do not allocate upfront more items than if the sequence of type
                 // occupied roughly quarter a block. This should never be the case
                 // for normal data, but even if that's not true - `push` will just
                 // reallocate.
