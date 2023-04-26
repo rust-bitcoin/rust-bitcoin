@@ -870,7 +870,7 @@ impl Transaction {
     /// [`policy`] module.
     ///
     /// [`BIP141`]: https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki
-    /// [`policy`]: ../policy/mod.rs.html
+    /// [`policy`]: ../../policy/index.html
     #[inline]
     pub fn vsize(&self) -> usize {
         // No overflow because it's computed from data in memory
