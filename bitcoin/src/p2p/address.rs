@@ -82,6 +82,12 @@ impl Decodable for Address {
     }
 }
 
+// Triggers the blanket impl of Encodable/Decodable for Vec<T>.
+impl primitives::consensus::encode::Trigger for Address {}
+
+// Triggers the blanket impl of Encodable/Decodable for Vec<(u32, T)>.
+impl primitives::consensus::encode::TriggerU32 for Address {}
+
 /// Read a big-endian address from reader.
 fn read_be_address<R: Read + ?Sized>(r: &mut R) -> Result<[u16; 8], encode::Error> {
     let mut address = [0u16; 8];
@@ -241,6 +247,9 @@ impl Decodable for AddrV2 {
         })
     }
 }
+
+// Triggers the blanket impl of Encodable/Decodable for Vec<T>.
+impl primitives::consensus::encode::Trigger for AddrV2Message {}
 
 /// Address received from BIP155 addrv2 message
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]

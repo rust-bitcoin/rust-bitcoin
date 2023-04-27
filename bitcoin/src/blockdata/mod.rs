@@ -5,10 +5,7 @@
 //! This module defines structures and functions for storing the blocks and
 //! transactions which make up the Bitcoin system.
 
-pub mod block;
 pub mod constants;
-pub mod locktime;
-pub mod opcodes;
 pub mod script;
 pub mod transaction;
 pub mod witness;
@@ -19,6 +16,45 @@ pub use self::{
     fee_rate::FeeRate,
     weight::Weight
 };
+
+pub mod block {
+    //! Bitcoin blocks.
+    //!
+    //! A block is a bundle of transactions with a proof-of-work attached,
+    //! which commits to an earlier block to form the blockchain. This
+    //! module describes structures and functions needed to describe
+    //! these blocks and the blockchain.
+
+    /// Re-export everything from the [`primitives::block`] module.
+    #[doc(inline)]
+    pub use crate::primitives::block::*;
+}
+
+pub mod locktime {
+    //! Provides absolute and relative locktimes.
+
+    pub mod absolute {
+        //! Provides type [`LockTime`] that implements the logic around nLockTime/OP_CHECKLOCKTIMEVERIFY.
+        //!
+        //! There are two types of lock time: lock-by-blockheight and lock-by-blocktime, distinguished by
+        //! whether `LockTime < LOCKTIME_THRESHOLD`.
+
+        /// Re-export everything from the [`primitives::locktime::absolute`] module.
+        #[doc(inline)]
+        pub use primitives::locktime::absolute::*;
+    }
+
+    pub mod relative {
+        //! Provides type [`LockTime`] that implements the logic around nSequence/OP_CHECKSEQUENCEVERIFY.
+        //!
+        //! There are two types of lock time: lock-by-blockheight and lock-by-blocktime, distinguished by
+        //! whether bit 22 of the `u32` consensus value is set.
+
+        /// Re-export everything from the [`primitives::locktime::relative`] module.
+        #[doc(inline)]
+        pub use crate::primitives::locktime::relative::*;
+    }
+}
 
 /// Implements `FeeRate` and assoctiated features.
 pub mod fee_rate {
@@ -46,6 +82,17 @@ pub mod fee_rate {
             assert_eq!(rate.fee_vb(tx.vsize() as u64), rate.fee_wu(tx.weight()));
         }
     }
+}
+
+pub mod opcodes {
+    //! Bitcoin script opcodes.
+    //!
+    //! Bitcoin's script uses a stack-based assembly language. This module defines
+    //! all of the opcodes for that language.
+
+    /// Re-export everything from the [`primitives::opcodes`] module.
+    #[doc(inline)]
+    pub use crate::primitives::opcodes::*;
 }
 
 /// Implements `Weight` and associated features.

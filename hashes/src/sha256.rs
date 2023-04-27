@@ -116,7 +116,7 @@ pub struct Midstate(pub [u8; 32]);
 
 crate::internal_macros::arr_newtype_fmt_impl!(Midstate, 32);
 serde_impl!(Midstate, 32);
-borrow_slice_impl!(Midstate);
+as_ref_impl!(Midstate);
 
 impl<I: SliceIndex<[u8]>> Index<I> for Midstate {
     type Output = I::Output;

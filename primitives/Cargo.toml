@@ -1,0 +1,60 @@
+[package]
+name = "bitcoin-primitives"
+version = "0.1.0"
+authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
+license = "CC0-1.0"
+repository = "https://github.com/rust-bitcoin/rust-bitcoin"
+description = "Primitive types used by the rust-bitcoin eccosystem"
+categories = ["cryptography::cryptocurrencies"]
+keywords = ["bitcoin", "types"]
+readme = "README.md"
+edition = "2021"
+rust-version = "1.56.1"
+exclude = ["tests", "contrib"]
+
+[features]
+default = ["std"]
+std = ["alloc", "base58/std", "bech32/std", "hashes/std", "hex/std", "internals/std", "io/std", "units/std"]
+alloc = ["bech32/alloc", "hashes/alloc", "hex/alloc", "internals/alloc", "io/alloc", "units/alloc"]
+serde = ["actual-serde", "hashes/serde", "internals/serde", "units/serde"] # Remember to enable serde in secp256k1 if you enable "crypto".
+bitcoinconsensus-std = ["std", "bitcoinconsensus/std"]
+
+# The "crypto" feature is a bit grarly because `secp256k1` has various features that may or may not be needed.
+#
+# `std` users may find one of these features useful (use "crypto-std-serde" if you need serde).
+crypto-std = ["crypto", "std", "secp256k1/hashes-std", "secp256k1/rand-std", "secp256k1/global-context"]
+crypto-std-serde = ["crypto-std", "serde", "secp256k1/serde"]
+# If you need a different set of features from `secp256k1` please depend on it directly as well as enabling this feature.
+crypto = ["secp256k1"]
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[dependencies]
+base58 = { package = "base58ck", version = "0.1.0", default-features = false }
+bech32 = { version = "0.11.0", default-features = false, features = [] }
+hashes = { package = "bitcoin_hashes", version = "0.14.0", default-features = false, features = ["io"] }
+hex = { package = "hex-conservative", version = "0.2.0", default-features = false, features = [] }
+hex_lit = "0.1.1"
+internals = { package = "bitcoin-internals", version = "0.3.0", features = [] }
+io = { package = "bitcoin-io", version = "0.1.1", default-features = false, features = [] }
+units = { package = "bitcoin-units", version = "0.1.0", default-features = false, features = [] }
+
+ordered = { version = "0.2.0", optional = true }
+
+# You likely only want to use this dependency directly in `no-std` builds, otherwise use `bitocinconsensus-std`.
+bitcoinconsensus = { package = "bitcoinconsensus", version = "0.105.0+25.1", default-features = false, optional = true }
+
+# Do NOT use this feature directly, use one of the "crypto" features.
+secp256k1 = { version = "0.29.0", default-features = false, features = ["hashes"], optional = true }
+# Do NOT use this as a feature! Use the `serde` feature instead.
+actual-serde = { package = "serde", version = "1.0.103", default-features = false, features = [ "derive", "alloc" ], optional = true }
+
+[dev-dependencies]
+serde_json = "1.0.0"
+serde_test = "1.0.19"
+bincode = "1.3.1"
+
+[lints.rust]
+unexpected_cfgs = { level = "deny", check-cfg = ['cfg(bench)', 'cfg(fuzzing)', 'cfg(kani)', 'cfg(mutate)', 'cfg(rust_v_1_60)'] }

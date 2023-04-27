@@ -14,8 +14,8 @@ use crate::blockdata::script::ScriptBuf;
 use crate::blockdata::transaction::{Transaction, TxOut};
 use crate::blockdata::witness::Witness;
 use crate::consensus::encode::{self, deserialize_partial, serialize, Decodable, Encodable};
-use crate::crypto::key::PublicKey;
 use crate::crypto::{ecdsa, taproot};
+use crate::key::PublicKey;
 use crate::prelude::*;
 use crate::psbt::{Error, Psbt};
 use crate::taproot::{
@@ -176,6 +176,7 @@ impl Deserialize for ecdsa::Signature {
             ecdsa::Error::SighashType(err) => Error::NonStandardSighashType(err.0),
             ecdsa::Error::Secp256k1(..) => Error::InvalidEcdsaSignature(e),
             ecdsa::Error::Hex(..) => unreachable!("Decoding from slice, not hex"),
+            _ => panic!("TODO: Handle non_exhaustive"),
         })
     }
 }
@@ -258,6 +259,7 @@ impl Deserialize for taproot::Signature {
             SighashType(err) => Error::NonStandardSighashType(err.0),
             InvalidSignatureSize(_) => Error::InvalidTaprootSignature(e),
             Secp256k1(..) => Error::InvalidTaprootSignature(e),
+            _ => panic!("TODO: Handle non_exhaustive"),
         })
     }
 }

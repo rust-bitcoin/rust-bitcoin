@@ -22,9 +22,8 @@ use secp256k1::{Keypair, Message, Secp256k1, Signing, Verification};
 
 use crate::bip32::{self, KeySource, Xpriv, Xpub};
 use crate::blockdata::transaction::{self, Transaction, TxOut};
-use crate::crypto::key::{PrivateKey, PublicKey};
 use crate::crypto::{ecdsa, taproot};
-use crate::key::{TapTweak, XOnlyPublicKey};
+use crate::key::{PrivateKey, PublicKey, TapTweak, XOnlyPublicKey};
 use crate::prelude::*;
 use crate::sighash::{self, EcdsaSighashType, Prevouts, SighashCache};
 use crate::{Amount, FeeRate, TapLeafHash, TapSighashType};

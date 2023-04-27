@@ -40,9 +40,9 @@ use crate::blockdata::constants::{
     MAX_SCRIPT_ELEMENT_SIZE, PUBKEY_ADDRESS_PREFIX_MAIN, PUBKEY_ADDRESS_PREFIX_TEST,
     SCRIPT_ADDRESS_PREFIX_MAIN, SCRIPT_ADDRESS_PREFIX_TEST,
 };
-use crate::blockdata::script::witness_program::WitnessProgram;
-use crate::blockdata::script::witness_version::WitnessVersion;
-use crate::blockdata::script::{self, Script, ScriptBuf, ScriptHash};
+use crate::blockdata::script::{
+    self, Script, ScriptBuf, ScriptHash, WitnessProgram, WitnessVersion,
+};
 use crate::consensus::Params;
 use crate::crypto::key::{
     CompressedPublicKey, PubkeyHash, PublicKey, TweakedPublicKey, UntweakedPublicKey,
@@ -205,6 +205,7 @@ impl KnownHrp {
             Bitcoin => Self::Mainnet,
             Testnet | Signet => Self::Testnets,
             Regtest => Self::Regtest,
+            _ => panic!("TODO: Handle this"),
         }
     }
 

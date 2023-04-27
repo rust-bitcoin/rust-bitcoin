@@ -90,6 +90,9 @@ impl Decodable for PrefilledTransaction {
     }
 }
 
+// Triggers the blanket impl of Encodable/Decodable for Vec<T>.
+impl primitives::consensus::encode::Trigger for PrefilledTransaction {}
+
 /// Short transaction IDs are used to represent a transaction without sending a full 256-bit hash.
 #[derive(PartialEq, Eq, Clone, Copy, Hash, Default, PartialOrd, Ord)]
 pub struct ShortId([u8; 6]);
@@ -141,6 +144,9 @@ impl Decodable for ShortId {
         Ok(ShortId(Decodable::consensus_decode(r)?))
     }
 }
+
+// Triggers the blanket impl of Encodable/Decodable for Vec<T>.
+impl primitives::consensus::encode::Trigger for ShortId {}
 
 /// A [HeaderAndShortIds] structure is used to relay a block header, the short
 /// transactions IDs used for matching already-available transactions, and a

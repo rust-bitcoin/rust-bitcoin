@@ -101,7 +101,7 @@ macro_rules! hash_trait_impls {
 
         $crate::internal_macros::arr_newtype_fmt_impl!(Hash, $bits / 8 $(, $gen: $gent)*);
         serde_impl!(Hash, $bits / 8 $(, $gen: $gent)*);
-        borrow_slice_impl!(Hash $(, $gen: $gent)*);
+        as_ref_impl!(Hash $(, $gen: $gent)*);
 
         impl<$($gen: $gent),*> $crate::_export::_core::convert::AsRef<[u8; $bits / 8]> for Hash<$($gen),*> {
             fn as_ref(&self) -> &[u8; $bits / 8] {

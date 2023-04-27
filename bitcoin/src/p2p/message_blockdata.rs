@@ -96,6 +96,9 @@ impl Decodable for Inventory {
     }
 }
 
+// Triggers the blanket impl of Encodable/Decodable for Vec<T>.
+impl primitives::consensus::encode::Trigger for Inventory {}
+
 // Some simple messages
 
 /// The `getblocks` message

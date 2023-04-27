@@ -251,6 +251,7 @@ impl From<Network> for Magic {
             Network::Testnet => Magic::TESTNET,
             Network::Signet => Magic::SIGNET,
             Network::Regtest => Magic::REGTEST,
+            _ => panic!("TODO: Handle non_exhaustive"),
         }
     }
 }

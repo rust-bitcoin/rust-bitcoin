@@ -55,6 +55,7 @@ dependencies = [
  "bincode",
  "bitcoin-internals",
  "bitcoin-io",
+ "bitcoin-primitives",
  "bitcoin-units",
  "bitcoin_hashes",
  "bitcoinconsensus",
@@ -88,6 +89,27 @@ dependencies = [
 [[package]]
 name = "bitcoin-io"
 version = "0.1.2"
+
+[[package]]
+name = "bitcoin-primitives"
+version = "0.1.0"
+dependencies = [
+ "base58ck",
+ "bech32",
+ "bincode",
+ "bitcoin-internals",
+ "bitcoin-io",
+ "bitcoin-units",
+ "bitcoin_hashes",
+ "bitcoinconsensus",
+ "hex-conservative",
+ "hex_lit",
+ "ordered",
+ "secp256k1",
+ "serde",
+ "serde_json",
+ "serde_test",
+]
 
 [[package]]
 name = "bitcoin-units"

@@ -181,7 +181,7 @@ impl FromStr for PsbtSighashType {
             return Ok(PsbtSighashType { inner });
         }
 
-        Err(SighashTypeParseError { unrecognized: s.to_owned() })
+        Err(SighashTypeParseError::new(s.to_owned()))
     }
 }
 impl From<EcdsaSighashType> for PsbtSighashType {
@@ -512,7 +512,7 @@ fn psbt_insert_hash_pair<H>(
     hash_type: error::PsbtHash,
 ) -> Result<(), Error>
 where
-    H: hashes::Hash + Deserialize,
+    H: hashes::Hash + Deserialize + AsRef<[u8]>,
 {
     if raw_key.key.is_empty() {
         return Err(psbt::Error::InvalidKey(raw_key));

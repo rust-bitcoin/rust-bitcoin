@@ -47,17 +47,11 @@ macro_rules! hex_fmt_impl(
 
 /// Adds slicing traits implementations to a given type `$ty`
 #[macro_export]
-macro_rules! borrow_slice_impl(
+macro_rules! as_ref_impl(
     ($ty:ident) => (
-        $crate::borrow_slice_impl!($ty, );
+        $crate::as_ref_impl!($ty, );
     );
     ($ty:ident, $($gen:ident: $gent:ident),*) => (
-        impl<$($gen: $gent),*> $crate::_export::_core::borrow::Borrow<[u8]> for $ty<$($gen),*>  {
-            fn borrow(&self) -> &[u8] {
-                &self[..]
-            }
-        }
-
         impl<$($gen: $gent),*> $crate::_export::_core::convert::AsRef<[u8]> for $ty<$($gen),*>  {
             fn as_ref(&self) -> &[u8] {
                 &self[..]
@@ -190,7 +184,7 @@ macro_rules! hash_newtype {
 
         $crate::hex_fmt_impl!(<$newtype as $crate::Hash>::DISPLAY_BACKWARD, <$newtype as $crate::Hash>::LEN, $newtype);
         $crate::serde_impl!($newtype, <$newtype as $crate::Hash>::LEN);
-        $crate::borrow_slice_impl!($newtype);
+        $crate::as_ref_impl!($newtype);
 
         impl $newtype {
             /// Creates this wrapper type from the inner hash type.
@@ -400,15 +394,6 @@ mod test {
         let hash = sha256::Hash::hash(&[3, 50]);
         let r = AsRef::<[u8]>::as_ref(&hash);
         assert_eq!(r, hash.as_byte_array());
-    }
-
-    #[test]
-    fn hash_borrow() {
-        use core::borrow::Borrow;
-
-        let hash = sha256::Hash::hash(&[3, 50]);
-        let borrowed: &[u8] = hash.borrow();
-        assert_eq!(borrowed, hash.as_byte_array());
     }
 
     hash_newtype! {

@@ -75,6 +75,9 @@ pub extern crate io;
 #[cfg(feature = "ordered")]
 pub extern crate ordered;
 
+/// Re-export the `primitives` crate.
+pub extern crate primitives;
+
 /// Rust wrapper library for Pieter Wuille's libsecp256k1.  Implements ECDSA and BIP 340 signatures
 /// for the SECG elliptic curve group secp256k1 and related utilities.
 pub extern crate secp256k1;
@@ -87,8 +90,6 @@ extern crate actual_serde as serde;
 #[macro_use]
 mod test_macros;
 mod internal_macros;
-#[cfg(feature = "serde")]
-mod serde_utils;
 
 #[macro_use]
 pub mod p2p;
@@ -101,11 +102,10 @@ pub mod consensus;
 // Private until we either make this a crate or flatten it - still to be decided.
 pub(crate) mod crypto;
 pub mod hash_types;
-pub mod merkle_tree;
 pub mod network;
-pub mod policy;
-pub mod pow;
 pub mod psbt;
+#[cfg(feature = "serde")]
+pub mod serde_utils;
 pub mod sign_message;
 pub mod taproot;
 
@@ -139,6 +139,50 @@ pub use crate::{
     sighash::{EcdsaSighashType, TapSighashType},
     taproot::{TapBranchTag, TapLeafHash, TapLeafTag, TapNodeHash, TapTweakHash, TapTweakTag},
 };
+/// Re-export all the extension traits.
+pub use crate::network::NetworkExt;
+
+pub mod merkle_tree {
+    //! Bitcoin merkle tree functions.
+
+    pub use primitives::merkle_tree::*;
+}
+
+pub mod pow {
+    //! Proof-of-work related integer types.
+    //!
+    //! Provides the [`Work`] and [`Target`] types that are used in proof-of-work calculations. The
+    //! functions here are designed to be fast, by that we mean it is safe to use them to check headers.
+
+    pub use primitives::pow::*;
+
+    #[cfg(test)]
+    mod tests {
+        use hashes::Hash;
+
+        use crate::consensus::Params;
+        use crate::{block, constants, BlockHash, CompactTarget, Network, TxMerkleNode};
+
+        #[test]
+        fn compact_target_from_upwards_difficulty_adjustment_using_headers() {
+            let params = Params::new(Network::Signet);
+            let epoch_start = constants::genesis_block(&params).header;
+            // Block 2015, the only information used are `bits` and `time`
+            let current = block::Header {
+                version: block::Version::ONE,
+                prev_blockhash: BlockHash::all_zeros(),
+                merkle_root: TxMerkleNode::all_zeros(),
+                time: 1599332177,
+                bits: epoch_start.bits,
+                nonce: epoch_start.nonce,
+            };
+            let adjustment =
+                CompactTarget::from_header_difficulty_adjustment(epoch_start, current, params);
+            let adjustment_bits = CompactTarget::from_consensus(503394215); // Block 2016 compact target
+            assert_eq!(adjustment, adjustment_bits);
+        }
+    }
+}
 
 #[rustfmt::skip]
 #[allow(unused_imports)]
@@ -169,9 +213,6 @@ pub mod amount {
     //! This module mainly introduces the [Amount] and [SignedAmount] types.
     //! We refer to the documentation on the types for more information.
 
-    use crate::consensus::{encode, Decodable, Encodable};
-    use crate::io::{BufRead, Write};
-
     #[rustfmt::skip]            // Keep public re-exports separate.
     #[doc(inline)]
     pub use units::amount::{
@@ -179,20 +220,6 @@ pub mod amount {
     };
     #[cfg(feature = "serde")]
     pub use units::amount::serde;
-
-    impl Decodable for Amount {
-        #[inline]
-        fn consensus_decode<R: BufRead + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-            Ok(Amount::from_sat(Decodable::consensus_decode(r)?))
-        }
-    }
-
-    impl Encodable for Amount {
-        #[inline]
-        fn consensus_encode<W: Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-            self.to_sat().consensus_encode(w)
-        }
-    }
 }
 
 /// Unit parsing utilities.

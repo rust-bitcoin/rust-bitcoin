@@ -15,13 +15,18 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = [ "std", "secp-recovery" ]
-std = ["base58/std", "bech32/std", "hashes/std", "hex/std", "internals/std", "io/std", "secp256k1/std", "units/std"]
-rand-std = ["secp256k1/rand-std", "std"]
-rand = ["secp256k1/rand"]
-serde = ["actual-serde", "hashes/serde", "secp256k1/serde", "internals/serde", "units/serde"]
+std = ["base58/std", "bech32/std", "hashes/std", "hex/std", "internals/std", "io/std", "secp256k1/std", "units/std", "primitives/std"]
+serde = ["actual-serde", "hashes/serde", "secp256k1/serde", "internals/serde", "units/serde", "primitives/serde"]
 secp-lowmemory = ["secp256k1/lowmemory"]
 secp-recovery = ["secp256k1/recovery"]
-bitcoinconsensus-std = ["bitcoinconsensus/std", "std"]
+
+# These features are additive but in typical usage you just want to pick one, ether std or no-std.
+rand-std = ["std", "secp256k1/rand-std"]
+rand = ["secp256k1/rand"]
+
+# These features are additive but in typical usage you just want to pick one, ether std or no-std.
+bitcoinconsensus-std = ["std", "actual-bitcoinconsensus/std", "primitives/bitcoinconsensus-std"]
+bitcoinconsensus = ["actual-bitcoinconsensus", "primitives/bitcoinconsensus"]
 
 [package.metadata.docs.rs]
 all-features = true
@@ -35,13 +40,14 @@ hex = { package = "hex-conservative", version = "0.2.0", default-features = fals
 internals = { package = "bitcoin-internals", version = "0.3.0", features = ["alloc"] }
 io = { package = "bitcoin-io", version = "0.1.1", default-features = false, features = ["alloc"] }
 secp256k1 = { version = "0.29.0", default-features = false, features = ["hashes", "alloc"] }
+primitives = { package = "bitcoin-primitives", version = "0.1.0", default-features = false, features = ["alloc", "crypto"] }
 units = { package = "bitcoin-units", version = "0.1.0", default-features = false, features = ["alloc"] }
 
 base64 = { version = "0.22.0", optional = true }
 ordered = { version = "0.2.0", optional = true }
-# Only use this feature for no-std builds, otherwise use bitcoinconsensus-std.
-bitcoinconsensus = { version = "0.105.0+25.1", default-features = false, optional = true }
 
+# Do NOT use this dependency as a feature! Use the appropriate `bitcoinconsensus` feature instead.
+actual-bitcoinconsensus = { package = "bitcoinconsensus", version = "0.105.0+25.1", default-features = false, optional = true }
 # Do NOT use this as a feature! Use the `serde` feature instead.
 actual-serde = { package = "serde", version = "1.0.103", default-features = false, features = [ "derive", "alloc" ], optional = true }
 
@@ -59,23 +65,23 @@ name = "bip32"
 
 [[example]]
 name = "handshake"
-required-features = ["std", "rand-std"]
+required-features = ["rand-std"]
 
 [[example]]
 name = "ecdsa-psbt"
-required-features = ["std", "bitcoinconsensus"]
+required-features = ["bitcoinconsensus-std"]
 
 [[example]]
 name = "sign-tx-segwit-v0"
-required-features = ["std", "rand-std"]
+required-features = ["rand-std"]
 
 [[example]]
 name = "sign-tx-taproot"
-required-features = ["std", "rand-std"]
+required-features = ["rand-std"]
 
 [[example]]
 name = "taproot-psbt"
-required-features = ["std", "rand-std", "bitcoinconsensus"]
+required-features = ["rand-std", "bitcoinconsensus-std"]
 
 [[example]]
 name = "sighash"

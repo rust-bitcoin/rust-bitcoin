@@ -66,6 +66,10 @@ hashes::hash_newtype! {
 impl_hashencode!(FilterHash);
 impl_hashencode!(FilterHeader);
 
+// Triggers the blanket impl of Encodable/Decodable for Vec<T>.
+impl primitives::consensus::encode::Trigger for FilterHash {}
+impl primitives::consensus::encode::Trigger for FilterHeader {}
+
 /// Errors for blockfilter.
 #[derive(Debug)]
 #[non_exhaustive]
