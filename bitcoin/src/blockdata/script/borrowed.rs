@@ -8,6 +8,8 @@ use core::ops::Bound;
 use core::ops::{Index, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive};
 
 use hashes::Hash;
+#[cfg(all(test, mutate))]
+use mutagen::mutate;
 use secp256k1::{Secp256k1, Verification};
 
 use crate::address::WitnessVersion;
@@ -211,6 +213,7 @@ impl Script {
 
     /// Returns the bytes of the (possibly invalid) public key if this script is P2PK.
     #[inline]
+    #[cfg_attr(all(test, mutate), mutate)]
     pub(in crate::blockdata::script) fn p2pk_pubkey_bytes(&self) -> Option<&[u8]> {
         match self.len() {
             67 if self.0[0] == OP_PUSHBYTES_65.to_u8() && self.0[66] == OP_CHECKSIG.to_u8() =>
