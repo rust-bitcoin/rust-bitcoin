@@ -25,9 +25,11 @@ impl Builder {
     pub fn new() -> Self { Builder(ScriptBuf::new(), None) }
 
     /// Returns the length in bytes of the script.
+    #[inline]
     pub fn len(&self) -> usize { self.0.len() }
 
     /// Checks whether the script is the empty script.
+    #[inline]
     pub fn is_empty(&self) -> bool { self.0.is_empty() }
 
     /// Adds instructions to push an integer onto the stack.
@@ -119,15 +121,19 @@ impl Builder {
     }
 
     /// Converts the `Builder` into `ScriptBuf`.
+    #[inline]
     pub fn into_script(self) -> ScriptBuf { self.0 }
 
     /// Converts the `Builder` into script bytes
+    #[inline]
     pub fn into_bytes(self) -> Vec<u8> { self.0.into() }
 
     /// Returns the internal script
+    #[inline]
     pub fn as_script(&self) -> &Script { &self.0 }
 
     /// Returns script bytes
+    #[inline]
     pub fn as_bytes(&self) -> &[u8] { self.0.as_bytes() }
 }
 

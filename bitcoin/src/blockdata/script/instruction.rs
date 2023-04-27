@@ -185,10 +185,10 @@ impl<'a> InstructionIndices<'a> {
     /// Views the remaining script as a slice.
     ///
     /// This is analogous to what [`core::str::Chars::as_str`] does.
-    #[inline]
     pub fn as_script(&self) -> &'a Script { self.instructions.as_script() }
 
     /// Creates `Self` setting `pos` to 0.
+    #[inline]
     pub(super) fn from_instructions(instructions: Instructions<'a>) -> Self {
         InstructionIndices { instructions, pos: 0 }
     }

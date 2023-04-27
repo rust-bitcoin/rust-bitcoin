@@ -63,9 +63,11 @@ impl ScriptBuf {
     pub fn reserve_exact(&mut self, additional_len: usize) { self.0.reserve_exact(additional_len); }
 
     /// Returns a reference to unsized script.
+    #[inline]
     pub fn as_script(&self) -> &Script { Script::from_bytes(&self.0) }
 
     /// Returns a mutable reference to unsized script.
+    #[inline]
     pub fn as_mut_script(&mut self) -> &mut Script { Script::from_bytes_mut(&mut self.0) }
 
     /// Creates a new script builder
@@ -166,11 +168,13 @@ impl ScriptBuf {
     /// Converts byte vector into script.
     ///
     /// This method doesn't (re)allocate.
+    #[inline]
     pub fn from_bytes(bytes: Vec<u8>) -> Self { ScriptBuf(bytes) }
 
     /// Converts the script into a byte vector.
     ///
     /// This method doesn't (re)allocate.
+    #[inline]
     pub fn into_bytes(self) -> Vec<u8> { self.0 }
 
     /// Computes the P2SH output corresponding to this redeem script.
