@@ -1,30 +1,10 @@
-extern crate bitcoin;
+use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {
-    let psbt: Result<bitcoin::psbt::PartiallySignedTransaction, _> = bitcoin::psbt::Psbt::deserialize(data);
-    match psbt {
-        Err(_) => {},
-        Ok(psbt) => {
-            let ser = bitcoin::psbt::Psbt::serialize(&psbt);
-            let deser = bitcoin::psbt::Psbt::deserialize(&ser).unwrap();
-            // Since the fuzz data could order psbt fields differently, we compare to our deser/ser instead of data
-            assert_eq!(ser, bitcoin::psbt::Psbt::serialize(&deser));
-        }
-    }
+    let _: Result<bitcoin::network::message::RawNetworkMessage, _> =
+        bitcoin::consensus::encode::deserialize(data);
 }
 
-#[cfg(feature = "afl")]
-#[macro_use] extern crate afl;
-#[cfg(feature = "afl")]
-fn main() {
-    fuzz!(|data| {
-        do_test(&data);
-    });
-}
-
-#[cfg(feature = "honggfuzz")]
-#[macro_use] extern crate honggfuzz;
-#[cfg(feature = "honggfuzz")]
 fn main() {
     loop {
         fuzz!(|data| {
@@ -33,7 +13,7 @@ fn main() {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, fuzzing))]
 mod tests {
     fn extend_vec_from_hex(hex: &str, out: &mut Vec<u8>) {
         let mut b = 0;

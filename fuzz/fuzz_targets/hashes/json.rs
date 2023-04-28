@@ -1,30 +1,34 @@
-extern crate bitcoin;
+use bitcoin::hashes::{ripemd160, sha1, sha256d, sha512, Hmac};
+use honggfuzz::fuzz;
+use serde::{Deserialize, Serialize};
+
+#[derive(Deserialize, Serialize)]
+struct Hmacs {
+    sha1: Hmac<sha1::Hash>,
+    sha512: Hmac<sha512::Hash>,
+}
+
+#[derive(Deserialize, Serialize)]
+struct Main {
+    hmacs: Hmacs,
+    ripemd: ripemd160::Hash,
+    sha2d: sha256d::Hash,
+}
 
 fn do_test(data: &[u8]) {
-    let _: Result<bitcoin::network::message::RawNetworkMessage, _> = bitcoin::consensus::encode::deserialize(data);
-}
-
-#[cfg(feature = "afl")]
-#[macro_use] extern crate afl;
-#[cfg(feature = "afl")]
-fn main() {
-    fuzz!(|data| {
-        do_test(&data);
-    });
-}
-
-#[cfg(feature = "honggfuzz")]
-#[macro_use] extern crate honggfuzz;
-#[cfg(feature = "honggfuzz")]
-fn main() {
-    loop {
-        fuzz!(|data| {
-            do_test(data);
-        });
+    if let Ok(m) = serde_json::from_slice::<Main>(data) {
+        let vec = serde_json::to_vec(&m).unwrap();
+        assert_eq!(data, &vec[..]);
     }
 }
 
-#[cfg(test)]
+fn main() {
+    loop {
+        fuzz!(|d| { do_test(d) });
+    }
+}
+
+#[cfg(all(test, fuzzing))]
 mod tests {
     fn extend_vec_from_hex(hex: &str, out: &mut Vec<u8>) {
         let mut b = 0;
@@ -46,7 +50,7 @@ mod tests {
     #[test]
     fn duplicate_crash() {
         let mut a = Vec::new();
-        extend_vec_from_hex("00", &mut a);
+        extend_vec_from_hex("00000", &mut a);
         super::do_test(&a);
     }
 }

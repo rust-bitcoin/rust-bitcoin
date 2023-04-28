@@ -16,7 +16,5 @@ hashes/target
 bitcoin/dep_test
 
 # Fuzz artifacts
-bitcoin/fuzz/hfuzz_target
-bitcoin/fuzz/hfuzz_workspace
-hashes/fuzz/hfuzz_target
-hashes/fuzz/hfuzz_workspace
+hfuzz_target
+hfuzz_workspace
