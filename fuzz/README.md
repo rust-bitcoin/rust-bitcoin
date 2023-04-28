@@ -20,6 +20,29 @@ On Nix, you can obtain these libraries by running
 
 and then run fuzz.sh as above.
 
+# Fuzzing with weak cryptography
+
+You may wish to replace the hashing and signing code with broken crypto,
+which will be faster and enable the fuzzer to do otherwise impossible
+things such as forging signatures or finding preimages to hashes.
+
+Doing so may result in spurious bug reports since the broken crypto does
+not respect the encoding or algebraic invariants upheld by the real crypto. We
+would like to improve this but it's a nontrivial problem -- though not
+beyond the abilities of a motivated student with a few months of time.
+Please let us know if you are interested in taking this on!
+
+Meanwhile, to use the broken crypto, simply compile (and run the fuzzing
+scripts) with
+
+    RUSTFLAGS="--cfg=hashes_fuzz --cfg=secp256k1_fuzz"
+
+which will replace the hashing library with broken hashes, and the
+secp256k1 library with broken cryptography.
+
+Needless to say, NEVER COMPILE REAL CODE WITH THESE FLAGS because if a
+fuzzer can break your crypto, so can anybody.
+
 # Long-term fuzzing
 
 To see the full list of targets, the most straightforward way is to run
@@ -85,9 +108,8 @@ The final line is a hex-encoded version of the input that caused the crash. You
 can test this directly by editing the `duplicate_crash` test to copy/paste the
 hex output into the call to `extend_vec_from_hex`. Then run the test with
 
-    RUSTFLAGS=--cfg=fuzzing cargo test
+    cargo test
 
-It is important to add the `cfg=fuzzing` flag, which tells rustc to compile the
-library as though it were running a fuzztest. In particular, this will disable
-or weaken all the cryptography.
+Note that if you set your `RUSTFLAGS` while fuzzing (see above) you must make
+sure they are set the same way when running `cargo test`.
 
