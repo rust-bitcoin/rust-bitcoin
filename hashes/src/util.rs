@@ -68,7 +68,7 @@ macro_rules! borrow_slice_impl(
 
 macro_rules! engine_input_impl(
     () => (
-        #[cfg(not(fuzzing))]
+        #[cfg(not(hashes_fuzz))]
         fn input(&mut self, mut inp: &[u8]) {
             while !inp.is_empty() {
                 let buf_idx = self.length % <Self as crate::HashEngine>::BLOCK_SIZE;
@@ -85,7 +85,7 @@ macro_rules! engine_input_impl(
             }
         }
 
-        #[cfg(fuzzing)]
+        #[cfg(hashes_fuzz)]
         fn input(&mut self, inp: &[u8]) {
             for c in inp {
                 self.buffer[0] ^= *c;

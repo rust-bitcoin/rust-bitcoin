@@ -17,7 +17,7 @@ crate::internal_macros::hash_type! {
     "crate::util::json_hex_string::len_20"
 }
 
-#[cfg(not(fuzzing))]
+#[cfg(not(hashes_fuzz))]
 fn from_engine(mut e: HashEngine) -> Hash {
     // pad buffer with a single 1-bit then all 0s, until there are exactly 8 bytes remaining
     let data_len = e.length as u64;
@@ -37,7 +37,7 @@ fn from_engine(mut e: HashEngine) -> Hash {
     Hash(e.midstate())
 }
 
-#[cfg(fuzzing)]
+#[cfg(hashes_fuzz)]
 fn from_engine(e: HashEngine) -> Hash {
     let mut res = e.midstate();
     res[0] ^= (e.length & 0xff) as u8;
@@ -67,7 +67,7 @@ impl Default for HashEngine {
 impl crate::HashEngine for HashEngine {
     type MidState = [u8; 20];
 
-    #[cfg(not(fuzzing))]
+    #[cfg(not(hashes_fuzz))]
     fn midstate(&self) -> [u8; 20] {
         let mut ret = [0; 20];
         for (val, ret_bytes) in self.h.iter().zip(ret.chunks_exact_mut(4)) {
@@ -76,7 +76,7 @@ impl crate::HashEngine for HashEngine {
         ret
     }
 
-    #[cfg(fuzzing)]
+    #[cfg(hashes_fuzz)]
     fn midstate(&self) -> [u8; 20] {
         let mut ret = [0; 20];
         ret.copy_from_slice(&self.buffer[..20]);
