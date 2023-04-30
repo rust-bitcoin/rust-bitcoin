@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: CC0-1.0
+
 //! Useful comparison functions.
 
 /// Compare two slices for equality in fixed time. Panics if the slices are of non-equal length.
