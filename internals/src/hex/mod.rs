@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: CC0-1.0
+
 //! Helpers for encoding bytes as hex strings.
 
 pub mod buf_encoder;

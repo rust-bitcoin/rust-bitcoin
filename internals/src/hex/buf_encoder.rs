@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: CC0-1.0
+
 //! Implements a buffered encoder.
 //!
 //! The main type of this module is [`BufEncoder`] which provides buffered hex encoding. Such is
