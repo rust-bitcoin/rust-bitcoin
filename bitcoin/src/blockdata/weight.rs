@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: CC0-1.0
+
 //! Implements `Weight` and associated features.
 
 use core::fmt;

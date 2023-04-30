@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: CC0-1.0
+
 //! Implements `FeeRate` and assoctiated features.
 
 use core::fmt;
