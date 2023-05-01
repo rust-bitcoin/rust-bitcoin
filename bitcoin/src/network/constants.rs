@@ -172,6 +172,52 @@ impl Network {
     }
 }
 
+#[cfg(feature = "serde")]
+pub mod as_core_arg {
+    //! Module for serialization/deserialization of network variants into/from Bitcoin Core values
+    #![allow(missing_docs)]
+
+    use serde;
+
+    use crate::Network;
+
+    pub fn serialize<S>(network: &Network, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(network.to_core_arg())
+    }
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Network, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        struct NetworkVisitor;
+
+        impl<'de> serde::de::Visitor<'de> for NetworkVisitor {
+            type Value = Network;
+
+            fn visit_str<E: serde::de::Error>(self, s: &str) -> Result<Self::Value, E> {
+                Network::from_core_arg(s).map_err(|_| {
+                    E::invalid_value(
+                        serde::de::Unexpected::Str(s),
+                        &"bitcoin network encoded as a string (either main, test, signet or regtest)",
+                    )
+                })
+            }
+
+            fn expecting(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
+                write!(
+                    formatter,
+                    "bitcoin network encoded as a string (either main, test, signet or regtest)"
+                )
+            }
+        }
+
+        deserializer.deserialize_str(NetworkVisitor)
+    }
+}
+
 /// An error in parsing network string.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ParseNetworkError(String);
@@ -669,5 +715,26 @@ mod tests {
             assert_eq!(Network::from_core_arg(core_arg), Ok(*net));
             assert_eq!(net.to_core_arg(), *core_arg);
         }
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn serde_as_core_arg() {
+        #[derive(Serialize, Deserialize, PartialEq, Debug)]
+        #[serde(crate = "actual_serde")]
+        struct T {
+            #[serde(with = "crate::network::constants::as_core_arg")]
+            pub network: Network,
+        }
+
+        serde_test::assert_tokens(
+            &T { network: Network::Bitcoin },
+            &[
+                serde_test::Token::Struct { name: "T", len: 1 },
+                serde_test::Token::Str("network"),
+                serde_test::Token::Str("main"),
+                serde_test::Token::StructEnd,
+            ],
+        );
     }
 }
