@@ -29,6 +29,12 @@ impl Weight {
     /// Maximum possible value.
     pub const MAX: Weight = Weight(u64::max_value());
 
+    /// The maximum allowed weight for a block, see BIP 141 (network rule).
+    pub const MAX_BLOCK: Weight = Weight(4_000_000);
+
+    /// The minimum transaction weight for a valid serialized transaction.
+    pub const MIN_TRANSACTION: Weight = Weight(4 * 60);
+
     /// Directly constructs `Weight` from weight units.
     pub const fn from_wu(wu: u64) -> Self { Weight(wu) }
 
@@ -247,6 +253,12 @@ impl Div<u64> for Weight {
     type Output = Weight;
 
     fn div(self, rhs: u64) -> Self::Output { Weight(self.0 / rhs) }
+}
+
+impl Div<Weight> for Weight {
+    type Output = u64;
+
+    fn div(self, rhs: Weight) -> Self::Output { self.to_wu() / rhs.to_wu() }
 }
 
 impl DivAssign<u64> for Weight {

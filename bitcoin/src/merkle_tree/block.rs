@@ -45,8 +45,8 @@ use hashes::Hash;
 
 use self::MerkleBlockError::*;
 use crate::blockdata::block::{self, Block};
-use crate::blockdata::constants::{MAX_BLOCK_WEIGHT, MIN_TRANSACTION_WEIGHT};
 use crate::blockdata::transaction::Transaction;
+use crate::blockdata::weight::Weight;
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::hash_types::{TxMerkleNode, Txid};
 use crate::io;
@@ -276,7 +276,7 @@ impl PartialMerkleTree {
             return Err(NoTransactions);
         };
         // check for excessively high numbers of transactions
-        if self.num_transactions > MAX_BLOCK_WEIGHT / MIN_TRANSACTION_WEIGHT {
+        if self.num_transactions as u64 > Weight::MAX_BLOCK / Weight::MIN_TRANSACTION {
             return Err(TooManyTransactions);
         }
         // there can never be more hashes provided than one for every txid
