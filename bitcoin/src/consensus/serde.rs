@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: CC0-1.0
+
 //! Serde serialization via consensus encoding
 //!
 //! This provides functions for (de)serializing any type as consensus-encoded bytes.

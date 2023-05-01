@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: CC0-1.0
+
 //! Helpers for displaying bytes as hex strings.
 //!
 //! This module provides a trait for displaying things as hex as well as an implementation for

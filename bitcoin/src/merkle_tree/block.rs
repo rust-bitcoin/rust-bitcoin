@@ -1,4 +1,3 @@
-// Written by John L. Jegutanis
 // SPDX-License-Identifier: CC0-1.0
 //
 // This code was translated from merkleblock.h, merkleblock.cpp and pmt_tests.cpp

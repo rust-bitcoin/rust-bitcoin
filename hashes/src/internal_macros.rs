@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: CC0-1.0
+
 //! Non-public macros
 
 macro_rules! arr_newtype_fmt_impl {

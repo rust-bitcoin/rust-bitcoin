@@ -1,4 +1,3 @@
-// Rust Bitcoin Library - Written by the rust-bitcoin developers.
 // SPDX-License-Identifier: CC0-1.0
 
 //! Provides type [`LockTime`] that implements the logic around nSequence/OP_CHECKSEQUENCEVERIFY.

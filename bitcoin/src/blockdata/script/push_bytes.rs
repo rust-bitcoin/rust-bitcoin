@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: CC0-1.0
+
 //! Contains `PushBytes` & co
 
 use core::borrow::{Borrow, BorrowMut};

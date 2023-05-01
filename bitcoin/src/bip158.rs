@@ -1,4 +1,3 @@
-// Written in 2019 by Tammas Blummer.
 // SPDX-License-Identifier: CC0-1.0
 
 // This module was largely copied from https://github.com/rust-bitcoin/murmel/blob/master/src/blockfilter.rs
