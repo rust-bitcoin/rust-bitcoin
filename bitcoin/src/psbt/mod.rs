@@ -1769,8 +1769,8 @@ mod tests {
             e => panic!("unexpected error: {:?}", e),
         }
         // overflow
-        t.unsigned_tx.output[0].value = u64::max_value();
-        t.unsigned_tx.output[1].value = u64::max_value();
+        t.unsigned_tx.output[0].value = u64::MAX;
+        t.unsigned_tx.output[1].value = u64::MAX;
         match t.fee().unwrap_err() {
             Error::FeeOverflow => {}
             e => panic!("unexpected error: {:?}", e),

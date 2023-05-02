@@ -525,7 +525,7 @@ impl Amount {
         if negative {
             return Err(ParseAmountError::Negative);
         }
-        if satoshi > i64::max_value() as u64 {
+        if satoshi > i64::MAX as u64 {
             return Err(ParseAmountError::TooBig);
         }
         Ok(Amount::from_sat(satoshi))
@@ -650,7 +650,7 @@ impl Amount {
 
     /// Convert to a signed amount.
     pub fn to_signed(self) -> Result<SignedAmount, ParseAmountError> {
-        if self.to_sat() > SignedAmount::max_value().to_sat() as u64 {
+        if self.to_sat() > SignedAmount::MAX.to_sat() as u64 {
             Err(ParseAmountError::TooBig)
         } else {
             Ok(SignedAmount::from_sat(self.to_sat() as i64))
@@ -861,7 +861,7 @@ impl SignedAmount {
     /// with denomination, use [FromStr].
     pub fn from_str_in(s: &str, denom: Denomination) -> Result<SignedAmount, ParseAmountError> {
         let (negative, satoshi) = parse_signed_to_satoshi(s, denom)?;
-        if satoshi > i64::max_value() as u64 {
+        if satoshi > i64::MAX as u64 {
             return Err(ParseAmountError::TooBig);
         }
         Ok(match negative {
@@ -980,7 +980,7 @@ impl SignedAmount {
     pub fn is_negative(self) -> bool { self.0.is_negative() }
 
     /// Get the absolute value of this [SignedAmount].
-    /// Returns [None] if overflow occurred. (`self == min_value()`)
+    /// Returns [None] if overflow occurred. (`self == MIN`)
     pub fn checked_abs(self) -> Option<SignedAmount> { self.0.checked_abs().map(SignedAmount) }
 
     /// Checked addition.
@@ -1583,7 +1583,7 @@ mod tests {
     #[test]
     fn test_overflows() {
         // panic on overflow
-        let result = panic::catch_unwind(|| Amount::max_value() + Amount::from_sat(1));
+        let result = panic::catch_unwind(|| Amount::MAX + Amount::from_sat(1));
         assert!(result.is_err());
         let result = panic::catch_unwind(|| Amount::from_sat(8446744073709551615) * 3);
         assert!(result.is_err());
@@ -1594,10 +1594,10 @@ mod tests {
         let sat = Amount::from_sat;
         let ssat = SignedAmount::from_sat;
 
-        assert_eq!(SignedAmount::max_value().checked_add(ssat(1)), None);
-        assert_eq!(SignedAmount::min_value().checked_sub(ssat(1)), None);
-        assert_eq!(Amount::max_value().checked_add(sat(1)), None);
-        assert_eq!(Amount::min_value().checked_sub(sat(1)), None);
+        assert_eq!(SignedAmount::MAX.checked_add(ssat(1)), None);
+        assert_eq!(SignedAmount::MIN.checked_sub(ssat(1)), None);
+        assert_eq!(Amount::MAX.checked_add(sat(1)), None);
+        assert_eq!(Amount::MIN.checked_sub(sat(1)), None);
 
         assert_eq!(sat(5).checked_div(2), Some(sat(2))); // integer division
         assert_eq!(ssat(-6).checked_div(2), Some(ssat(-3)));
@@ -1626,11 +1626,11 @@ mod tests {
         assert_eq!(sf(-184467440738.0, D::Bitcoin), Err(ParseAmountError::TooBig));
         assert_eq!(f(18446744073709551617.0, D::Satoshi), Err(ParseAmountError::TooBig));
         assert_eq!(
-            f(SignedAmount::max_value().to_float_in(D::Satoshi) + 1.0, D::Satoshi),
+            f(SignedAmount::MAX.to_float_in(D::Satoshi) + 1.0, D::Satoshi),
             Err(ParseAmountError::TooBig)
         );
         assert_eq!(
-            f(Amount::max_value().to_float_in(D::Satoshi) + 1.0, D::Satoshi),
+            f(Amount::MAX.to_float_in(D::Satoshi) + 1.0, D::Satoshi),
             Err(ParseAmountError::TooBig)
         );
 
@@ -1659,7 +1659,7 @@ mod tests {
         assert_eq!(p("-1.0x", btc), Err(E::InvalidCharacter('x')));
         assert_eq!(p("0.0 ", btc), Err(ParseAmountError::InvalidCharacter(' ')));
         assert_eq!(p("0.000.000", btc), Err(E::InvalidFormat));
-        let more_than_max = format!("1{}", Amount::max_value());
+        let more_than_max = format!("1{}", Amount::MAX);
         assert_eq!(p(&more_than_max, btc), Err(E::TooBig));
         assert_eq!(p("0.000000042", btc), Err(E::TooPrecise));
 
@@ -1676,8 +1676,8 @@ mod tests {
             Ok(Amount::from_sat(12_345_678_901__123_456_78))
         );
 
-        // make sure satoshi > i64::max_value() is checked.
-        let amount = Amount::from_sat(i64::max_value() as u64);
+        // make sure satoshi > i64::MAX is checked.
+        let amount = Amount::from_sat(i64::MAX as u64);
         assert_eq!(Amount::from_str_in(&amount.to_string_in(sat), sat), Ok(amount));
         assert_eq!(
             Amount::from_str_in(&(amount + Amount(1)).to_string_in(sat), sat),
@@ -1908,16 +1908,13 @@ mod tests {
         let sa = SignedAmount::from_sat;
         let ua = Amount::from_sat;
 
-        assert_eq!(Amount::max_value().to_signed(), Err(E::TooBig));
-        assert_eq!(ua(i64::max_value() as u64).to_signed(), Ok(sa(i64::max_value())));
-        assert_eq!(ua(i64::max_value() as u64 + 1).to_signed(), Err(E::TooBig));
+        assert_eq!(Amount::MAX.to_signed(), Err(E::TooBig));
+        assert_eq!(ua(i64::MAX as u64).to_signed(), Ok(sa(i64::MAX)));
+        assert_eq!(ua(i64::MAX as u64 + 1).to_signed(), Err(E::TooBig));
 
-        assert_eq!(sa(i64::max_value()).to_unsigned(), Ok(ua(i64::max_value() as u64)));
+        assert_eq!(sa(i64::MAX).to_unsigned(), Ok(ua(i64::MAX as u64)));
 
-        assert_eq!(
-            sa(i64::max_value()).to_unsigned().unwrap().to_signed(),
-            Ok(sa(i64::max_value()))
-        );
+        assert_eq!(sa(i64::MAX).to_unsigned().unwrap().to_signed(), Ok(sa(i64::MAX)));
     }
 
     #[test]
@@ -2005,7 +2002,7 @@ mod tests {
             Ok(ua_sat(1_000_000_000_000))
         );
         assert_eq!(
-            ua_str(&ua_sat(u64::max_value()).to_string_in(D::MilliBitcoin), D::MilliBitcoin),
+            ua_str(&ua_sat(u64::MAX).to_string_in(D::MilliBitcoin), D::MilliBitcoin),
             Err(ParseAmountError::TooBig)
         );
 
@@ -2015,12 +2012,12 @@ mod tests {
         );
 
         assert_eq!(
-            sa_str(&sa_sat(i64::max_value()).to_string_in(D::Satoshi), D::MicroBitcoin),
+            sa_str(&sa_sat(i64::MAX).to_string_in(D::Satoshi), D::MicroBitcoin),
             Err(ParseAmountError::TooBig)
         );
         // Test an overflow bug in `abs()`
         assert_eq!(
-            sa_str(&sa_sat(i64::min_value()).to_string_in(D::Satoshi), D::MicroBitcoin),
+            sa_str(&sa_sat(i64::MIN).to_string_in(D::Satoshi), D::MicroBitcoin),
             Err(ParseAmountError::TooBig)
         );
 
@@ -2029,11 +2026,11 @@ mod tests {
             Ok(sa_sat(-1))
         );
         assert_eq!(
-            sa_str(&sa_sat(i64::max_value()).to_string_in(D::Satoshi), D::NanoBitcoin),
+            sa_str(&sa_sat(i64::MAX).to_string_in(D::Satoshi), D::NanoBitcoin),
             Err(ParseAmountError::TooPrecise)
         );
         assert_eq!(
-            sa_str(&sa_sat(i64::min_value()).to_string_in(D::Satoshi), D::NanoBitcoin),
+            sa_str(&sa_sat(i64::MIN).to_string_in(D::Satoshi), D::NanoBitcoin),
             Err(ParseAmountError::TooPrecise)
         );
 
@@ -2042,11 +2039,11 @@ mod tests {
             Ok(sa_sat(-1))
         );
         assert_eq!(
-            sa_str(&sa_sat(i64::max_value()).to_string_in(D::Satoshi), D::PicoBitcoin),
+            sa_str(&sa_sat(i64::MAX).to_string_in(D::Satoshi), D::PicoBitcoin),
             Err(ParseAmountError::TooPrecise)
         );
         assert_eq!(
-            sa_str(&sa_sat(i64::min_value()).to_string_in(D::Satoshi), D::PicoBitcoin),
+            sa_str(&sa_sat(i64::MIN).to_string_in(D::Satoshi), D::PicoBitcoin),
             Err(ParseAmountError::TooPrecise)
         );
     }
@@ -2248,12 +2245,12 @@ mod tests {
         assert_eq!(Some(Amount::from_sat(1400)), sum);
 
         let amounts =
-            vec![Amount::from_sat(u64::max_value()), Amount::from_sat(1337), Amount::from_sat(21)];
+            vec![Amount::from_sat(u64::MAX), Amount::from_sat(1337), Amount::from_sat(21)];
         let sum = amounts.into_iter().checked_sum();
         assert_eq!(None, sum);
 
         let amounts = vec![
-            SignedAmount::from_sat(i64::min_value()),
+            SignedAmount::from_sat(i64::MIN),
             SignedAmount::from_sat(-1),
             SignedAmount::from_sat(21),
         ];
@@ -2261,7 +2258,7 @@ mod tests {
         assert_eq!(None, sum);
 
         let amounts = vec![
-            SignedAmount::from_sat(i64::max_value()),
+            SignedAmount::from_sat(i64::MAX),
             SignedAmount::from_sat(1),
             SignedAmount::from_sat(21),
         ];

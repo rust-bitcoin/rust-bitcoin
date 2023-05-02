@@ -895,7 +895,7 @@ mod tests {
         test_varint_len(VarInt(0x10000), 5);
         test_varint_len(VarInt(0xFFFFFFFF), 5);
         test_varint_len(VarInt(0xFFFFFFFF + 1), 9);
-        test_varint_len(VarInt(u64::max_value()), 9);
+        test_varint_len(VarInt(u64::MAX), 9);
     }
 
     fn test_varint_len(varint: VarInt, expected: usize) {

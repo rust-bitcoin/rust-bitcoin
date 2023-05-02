@@ -26,10 +26,10 @@ impl Weight {
     /// Minimum possible value (0 wu).
     ///
     /// Equivalent to [`ZERO`](Self::ZERO), may better express intent in some contexts.
-    pub const MIN: Weight = Weight(u64::min_value());
+    pub const MIN: Weight = Weight(u64::MIN);
 
     /// Maximum possible value.
-    pub const MAX: Weight = Weight(u64::max_value());
+    pub const MAX: Weight = Weight(u64::MAX);
 
     /// The maximum allowed weight for a block, see BIP 141 (network rule).
     pub const MAX_BLOCK: Weight = Weight(4_000_000);
@@ -124,7 +124,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn kilo_weight_constructor_panic_test() {
-        Weight::from_kwu(u64::max_value()).expect("expected weight unit");
+        Weight::from_kwu(u64::MAX).expect("expected weight unit");
     }
 
     #[test]
@@ -132,7 +132,7 @@ mod tests {
         let vb = Weight::from_vb(1).expect("expected weight unit");
         assert_eq!(Weight(4), vb);
 
-        let vb = Weight::from_vb(u64::max_value());
+        let vb = Weight::from_vb(u64::MAX);
         assert_eq!(None, vb);
     }
 
@@ -144,7 +144,7 @@ mod tests {
 
     #[test]
     #[should_panic]
-    fn from_vb_unchecked_panic_test() { Weight::from_vb_unchecked(u64::max_value()); }
+    fn from_vb_unchecked_panic_test() { Weight::from_vb_unchecked(u64::MAX); }
 
     #[test]
     fn from_witness_data_size_test() {

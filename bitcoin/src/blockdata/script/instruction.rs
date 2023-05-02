@@ -88,7 +88,7 @@ impl<'a> Instructions<'a> {
             // We do exhaustive matching to not forget to handle new variants if we extend
             // `UintError` type.
             // Overflow actually means early end of script (script is definitely shorter
-            // than `usize::max_value()`)
+            // than `usize::MAX`)
             Err(UintError::EarlyEndOfScript) | Err(UintError::NumericOverflow) => {
                 self.kill();
                 return Some(Err(Error::EarlyEndOfScript));
