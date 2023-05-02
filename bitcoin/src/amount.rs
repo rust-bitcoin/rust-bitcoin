@@ -494,6 +494,10 @@ impl Amount {
     pub const ONE_BTC: Amount = Amount(100_000_000);
     /// The maximum value allowed as an amount. Useful for sanity checking.
     pub const MAX_MONEY: Amount = Amount(21_000_000 * 100_000_000);
+    /// The minimum value of an amount.
+    pub const MIN: Amount = Amount::ZERO;
+    /// The maximum value of an amount.
+    pub const MAX: Amount = Amount(u64::MAX);
 
     /// Create an [Amount] with satoshi precision and the given number of satoshis.
     pub const fn from_sat(satoshi: u64) -> Amount { Amount(satoshi) }
@@ -829,6 +833,10 @@ impl SignedAmount {
     pub const ONE_BTC: SignedAmount = SignedAmount(100_000_000);
     /// The maximum value allowed as an amount. Useful for sanity checking.
     pub const MAX_MONEY: SignedAmount = SignedAmount(21_000_000 * 100_000_000);
+    /// The minimum value of an amount.
+    pub const MIN: SignedAmount = SignedAmount(i64::MIN);
+    /// The maximum value of an amount.
+    pub const MAX: SignedAmount = SignedAmount(i64::MAX);
 
     /// Create an [SignedAmount] with satoshi precision and the given number of satoshis.
     pub const fn from_sat(satoshi: i64) -> SignedAmount { SignedAmount(satoshi) }
