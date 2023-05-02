@@ -305,6 +305,7 @@ impl Sequence {
     /// The maximum allowable sequence number.
     ///
     /// This is provided for consistency with Rust 1.41.1, newer code should use [`Sequence::MAX`].
+    #[deprecated(since = "0.31.0", note = "Use Self::MAX instead")]
     pub const fn max_value() -> Self { Self::MAX }
 
     /// Returns `true` if the sequence number enables absolute lock-time ([`Transaction::lock_time`]).

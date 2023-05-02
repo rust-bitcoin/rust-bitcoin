@@ -506,9 +506,11 @@ impl Amount {
     pub fn to_sat(self) -> u64 { self.0 }
 
     /// The maximum value of an [Amount].
+    #[deprecated(since = "0.31.0", note = "Use Self::MAX instead")]
     pub const fn max_value() -> Amount { Amount(u64::max_value()) }
 
     /// The minimum value of an [Amount].
+    #[deprecated(since = "0.31.0", note = "Use Self::MIN instead")]
     pub const fn min_value() -> Amount { Amount(u64::min_value()) }
 
     /// Convert from a value expressing bitcoins to an [Amount].
@@ -845,9 +847,11 @@ impl SignedAmount {
     pub fn to_sat(self) -> i64 { self.0 }
 
     /// The maximum value of an [SignedAmount].
+    #[deprecated(since = "0.31.0", note = "Use Self::MAX instead")]
     pub const fn max_value() -> SignedAmount { SignedAmount(i64::max_value()) }
 
     /// The minimum value of an [SignedAmount].
+    #[deprecated(since = "0.31.0", note = "Use Self::MIN instead")]
     pub const fn min_value() -> SignedAmount { SignedAmount(i64::min_value()) }
 
     /// Convert from a value expressing bitcoins to an [SignedAmount].
