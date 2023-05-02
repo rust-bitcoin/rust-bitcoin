@@ -20,7 +20,7 @@ publish = false
 cargo-fuzz = true
 
 [dependencies]
-honggfuzz = { version = "0.5", default-features = false }
+honggfuzz = { version = "0.5.55", default-features = false }
 bitcoin = { version = "0.30.0", features = [ "serde" ] }
 
 serde = { version = "1.0.103", features = [ "derive" ] }
@@ -78,6 +78,7 @@ $(for name in $(listTargetNames); do echo "$name,"; done)
           override: true
           profile: minimal
       - name: fuzz
+        run: if [[ "\${{ matrix.fuzz_target }}" =~ ^bitcoin ]]; then export RUSTFLAGS='--cfg=hashes_fuzz --cfg=secp256k1_fuzz'; fi
         run: cd fuzz && ./fuzz.sh "\${{ matrix.fuzz_target }}"
       - run: echo "\${{ matrix.fuzz_target }}" >executed_\${{ matrix.fuzz_target }}
       - uses: actions/upload-artifact@v2

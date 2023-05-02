@@ -77,7 +77,7 @@
 #![allow(ellipsis_inclusive_range_patterns)]
 #![cfg_attr(all(not(test), not(feature = "std")), no_std)]
 // Instead of littering the codebase for non-fuzzing code just globally allow.
-#![cfg_attr(fuzzing, allow(dead_code, unused_imports))]
+#![cfg_attr(hashes_fuzz, allow(dead_code, unused_imports))]
 
 #[cfg(all(feature = "alloc", not(feature = "std")))]
 extern crate alloc;
