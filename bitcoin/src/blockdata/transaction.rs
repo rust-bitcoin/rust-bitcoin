@@ -221,12 +221,12 @@ impl TxIn {
     /// Keep in mind that when adding a TxIn to a transaction, the total weight of the transaction
     /// might increase more than `TxIn::legacy_weight`. This happens when the new input added causes
     /// the input length `VarInt` to increase its encoding length.
-    pub fn legacy_weight(&self) -> usize {
+    pub fn legacy_weight(&self) -> Weight {
         let script_sig_size = self.script_sig.len();
         // Size in vbytes:
         // previous_output (36) + script_sig varint len + script_sig push + sequence (4)
-        // We then multiply by 4 to convert to WU
-        (36 + VarInt(script_sig_size as u64).len() + script_sig_size + 4) * 4
+        let weight = 36 + VarInt(script_sig_size as u64).len() + script_sig_size + 4;
+        Weight::from_vb(weight as u64).unwrap()
     }
 
     /// The weight of the TxIn when it's included in a segwit transaction (i.e., a transaction
@@ -240,7 +240,9 @@ impl TxIn {
     /// - the new input added causes the input length `VarInt` to increase its encoding length
     /// - the new input is the first segwit input added - this will add an additional 2WU to the
     ///   transaction weight to take into account the segwit marker
-    pub fn segwit_weight(&self) -> usize { self.legacy_weight() + self.witness.serialized_len() }
+    pub fn segwit_weight(&self) -> Weight {
+        self.legacy_weight() + self.witness.serialized_len() as u64
+    }
 }
 
 impl Default for TxIn {
@@ -488,12 +490,13 @@ impl TxOut {
     /// Keep in mind that when adding a TxOut to a transaction, the total weight of the transaction
     /// might increase more than `TxOut::weight`. This happens when the new output added causes
     /// the output length `VarInt` to increase its encoding length.
-    pub fn weight(&self) -> usize {
+    pub fn weight(&self) -> Weight {
         let script_len = self.script_pubkey.len();
         // In vbytes:
         // value (8) + script varint len + script push
         // Then we multiply by 4 to convert to WU
-        (8 + VarInt(script_len as u64).len() + script_len) * 4
+        let weight = (8 + VarInt(script_len as u64).len() + script_len) * 4;
+        Weight::from_wu(weight as u64)
     }
 
     /// Creates a `TxOut` with given script and the smallest possible `value` that is **not** dust
@@ -2010,14 +2013,15 @@ mod tests {
         for (is_segwit, tx, expected_wu) in &txs {
             let txin_weight = if *is_segwit { TxIn::segwit_weight } else { TxIn::legacy_weight };
             let tx: Transaction = deserialize(Vec::from_hex(tx).unwrap().as_slice()).unwrap();
+
             // The empty tx size doesn't include the segwit marker (`0001`), so, in case of segwit txs,
             // we have to manually add it ourselves
-            let segwit_marker_weight = if *is_segwit { 2 } else { 0 };
-            let calculated_size = empty_transaction_weight.to_wu() as usize
+            let segwit_marker_weight = if *is_segwit { Weight::from_wu(2) } else { Weight::ZERO };
+            let calculated_size = empty_transaction_weight
                 + segwit_marker_weight
-                + tx.input.iter().fold(0, |sum, i| sum + txin_weight(i))
-                + tx.output.iter().fold(0, |sum, o| sum + o.weight());
-            assert_eq!(calculated_size, tx.check_weight().to_wu() as usize);
+                + tx.input.iter().fold(Weight::ZERO, |sum, i| txin_weight(i) + sum)
+                + tx.output.iter().fold(Weight::ZERO, |sum, o| o.weight() + sum);
+            assert_eq!(calculated_size, tx.check_weight());
 
             assert_eq!(tx.weight().to_wu(), *expected_wu);
         }

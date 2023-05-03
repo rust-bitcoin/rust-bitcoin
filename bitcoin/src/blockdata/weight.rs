@@ -215,6 +215,12 @@ impl From<Weight> for u64 {
     fn from(value: Weight) -> Self { value.to_wu() }
 }
 
+impl Add<u64> for Weight {
+    type Output = Weight;
+
+    fn add(self, rhs: u64) -> Self::Output { Weight(self.0 + rhs) }
+}
+
 impl Add for Weight {
     type Output = Weight;
 
