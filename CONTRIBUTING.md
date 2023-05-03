@@ -21,6 +21,7 @@ changes to this document in a pull request.
   * [Formatting](#formatting)
   * [MSRV](#msrv)
   * [Naming conventions](#naming-conventions)
+  * [Upgrading dependencies](#upgrading-dependencies)
   * [Unsafe code](#unsafe-code)
 - [Security](#security)
 - [Testing](#testing)
@@ -181,6 +182,18 @@ in Bitcoin Core, with the following exceptions:
 - the case should follow Rust standards (i.e. PascalCase for types and
   snake_case for fields and variants);
 - omit `C`-prefixes.
+
+### Upgrading dependencies
+
+If your change requires a dependency to be upgraded you must do the following:
+
+1. Modify `Cargo.toml`
+2. Copy `Cargo-minimal.lock` to `Cargo.lock`
+3. Trigger cargo to update the required entries in the lock file - use `--precise` using the minimum version number that works
+4. Test your change
+5. Copy `Cargo.lock` to `Cargo-minimal.lock`
+6. Update `Cargo-recent.lock` if it is also behind
+7. Commit both lock files together with `Cargo.toml` and your code changes
 
 ### Unsafe code
 

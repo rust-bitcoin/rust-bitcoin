@@ -32,30 +32,30 @@ cargo test
 
 if [ "$DO_LINT" = true ]
 then
-    cargo clippy --all-features --all-targets -- -D warnings
+    cargo clippy --locked --all-features --all-targets -- -D warnings
 fi
 
 if [ "$DO_FEATURE_MATRIX" = true ]; then
-    cargo build --no-default-features
-    cargo test --no-default-features
+    cargo build --locked --no-default-features
+    cargo test --locked --no-default-features
 
     # All features
-    cargo build --no-default-features --features="$FEATURES"
-    cargo test --no-default-features --features="$FEATURES"
+    cargo build --locked --no-default-features --features="$FEATURES"
+    cargo test --locked --no-default-features --features="$FEATURES"
     # Single features
     for feature in ${FEATURES}
     do
-        cargo build --no-default-features --features="$feature"
-        cargo test --no-default-features --features="$feature"
+        cargo build --locked --no-default-features --features="$feature"
+        cargo test --locked --no-default-features --features="$feature"
 		# All combos of two features
 		for featuretwo in ${FEATURES}; do
-			cargo build --no-default-features --features="$feature $featuretwo"
-			cargo test --no-default-features --features="$feature $featuretwo"
+			cargo build --locked --no-default-features --features="$feature $featuretwo"
+			cargo test --locked --no-default-features --features="$feature $featuretwo"
 		done
     done
 
     # Other combos
-    cargo test --no-default-features --features="std,schemars"
+    cargo test --locked --no-default-features --features="std,schemars"
 fi
 
 REPO_DIR=$(git rev-parse --show-toplevel)
