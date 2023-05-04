@@ -1329,7 +1329,8 @@ pub const fn predict_weight_from_slices(
 /// Weight prediction of an individual input.
 ///
 /// This helper type collects information about an input to be used in [`predict_weight`] function.
-/// It can only be created using the [`new`](InputWeightPrediction::new) function.
+/// It can only be created using the [`new`](InputWeightPrediction::new) function or using other
+/// associated constants/methods.
 #[derive(Copy, Clone, Debug)]
 pub struct InputWeightPrediction {
     script_size: usize,
