@@ -140,7 +140,7 @@ impl ScriptBuf {
     /// Does not do any checks on version or program length.
     ///
     /// Convenience method used by `new_p2wpkh`, `new_p2wsh`, `new_p2tr`, and `new_p2tr_tweaked`.
-    fn new_witness_program_unchecked<T: AsRef<PushBytes>>(
+    pub(crate) fn new_witness_program_unchecked<T: AsRef<PushBytes>>(
         version: WitnessVersion,
         program: T,
     ) -> Self {

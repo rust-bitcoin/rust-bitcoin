@@ -151,7 +151,7 @@ mod message_signing {
             match address.address_type() {
                 Some(AddressType::P2pkh) => {
                     let pubkey = self.recover_pubkey(secp_ctx, msg_hash)?;
-                    Ok(*address == Address::p2pkh(&pubkey, *address.network()))
+                    Ok(address.pubkey_hash().unwrap() == pubkey.pubkey_hash())
                 }
                 Some(address_type) =>
                     Err(MessageSignatureError::UnsupportedAddressType(address_type)),
@@ -247,12 +247,12 @@ mod tests {
         let p2wpkh = Address::p2wpkh(&pubkey, Network::Bitcoin).unwrap();
         assert_eq!(
             signature2.is_signed_by_address(&secp, &p2wpkh, msg_hash),
-            Err(MessageSignatureError::UnsupportedAddressType(AddressType::P2wpkh))
+            Err(MessageSignatureError::UnsupportedAddressType(AddressType::P2wpkh)),
         );
         let p2shwpkh = Address::p2shwpkh(&pubkey, Network::Bitcoin).unwrap();
         assert_eq!(
             signature2.is_signed_by_address(&secp, &p2shwpkh, msg_hash),
-            Err(MessageSignatureError::UnsupportedAddressType(AddressType::P2sh))
+            Err(MessageSignatureError::UnsupportedAddressType(AddressType::P2sh)),
         );
     }
 
