@@ -31,43 +31,37 @@ Supports (or should support)
 For JSONRPC interaction with Bitcoin Core, it is recommended to use
 [rust-bitcoincore-rpc](https://github.com/rust-bitcoin/rust-bitcoincore-rpc).
 
-It is recommended to always use [cargo-crev](https://github.com/crev-dev/cargo-crev)
-to verify the trustworthiness of each of your dependencies, including this one.
+It is recommended to always use [cargo-crev](https://github.com/crev-dev/cargo-crev) to verify the
+trustworthiness of each of your dependencies, including this one.
 
 ## Known limitations
 
 ### Consensus
 
-This library **must not** be used for consensus code (i.e. fully validating
-blockchain data). It technically supports doing this, but doing so is very
-ill-advised because there are many deviations, known and unknown, between
-this library and the Bitcoin Core reference implementation. In a consensus
-based cryptocurrency such as Bitcoin it is critical that all parties are
-using the same rules to validate data, and this library is simply unable
-to implement the same rules as Core.
+This library **must not** be used for consensus code (i.e. fully validating blockchain data). It
+technically supports doing this, but doing so is very ill-advised because there are many deviations,
+known and unknown, between this library and the Bitcoin Core reference implementation. In a
+consensus based cryptocurrency such as Bitcoin it is critical that all parties are using the same
+rules to validate data, and this library is simply unable to implement the same rules as Core.
 
-Given the complexity of both C++ and Rust, it is unlikely that this will
-ever be fixed, and there are no plans to do so. Of course, patches to
-fix specific consensus incompatibilities are welcome.
+Given the complexity of both C++ and Rust, it is unlikely that this will ever be fixed, and there
+are no plans to do so. Of course, patches to fix specific consensus incompatibilities are welcome.
 
 ### Support for 16-bit pointer sizes
 
-16-bit pointer sizes are not supported and we can't promise they will be.
-If you care about them please let us know, so we can know how large the interest
-is and possibly decide to support them.
+16-bit pointer sizes are not supported and we can't promise they will be. If you care about them
+please let us know, so we can know how large the interest is and possibly decide to support them.
 
 ## Documentation
 
-Currently can be found on [docs.rs/bitcoin](https://docs.rs/bitcoin/).
-Patches to add usage examples and to expand on existing docs would be extremely
-appreciated.
+Currently can be found on [docs.rs/bitcoin](https://docs.rs/bitcoin/). Patches to add usage examples
+and to expand on existing docs would be extremely appreciated.
 
 ## Contributing
 
-Contributions are generally welcome. If you intend to make larger changes please
-discuss them in an issue before PRing them to avoid duplicate work and
-architectural mismatches. If you have any questions or ideas you want to discuss
-please join us in
+Contributions are generally welcome. If you intend to make larger changes please discuss them in an
+issue before PRing them to avoid duplicate work and architectural mismatches. If you have any
+questions or ideas you want to discuss please join us in
 [#bitcoin-rust](https://web.libera.chat/?channel=#bitcoin-rust) on
 [libera.chat](https://libera.chat).
 
@@ -100,18 +94,20 @@ review them.
 
 ## Installing Rust
 
-Rust can be installed using your package manager of choice or
-[rustup.rs](https://rustup.rs). The former way is considered more secure since
-it typically doesn't involve trust in the CA system. But you should be aware
-that the version of Rust shipped by your distribution might be out of date.
-Generally this isn't a problem for `rust-bitcoin` since we support much older
-versions than the current stable one (see MSRV section).
+Rust can be installed using your package manager of choice or [rustup.rs](https://rustup.rs). The
+former way is considered more secure since it typically doesn't involve trust in the CA system. But
+you should be aware that the version of Rust shipped by your distribution might be out of date.
+Generally this isn't a problem for `rust-bitcoin` since we support much older versions than the
+current stable one (see MSRV section).
 
 ## Building
 
-The cargo feature `std` is enabled by default. At least one of the features `std` or `no-std` or both must be enabled.
+The cargo feature `std` is enabled by default. At least one of the features `std` or `no-std` or
+both must be enabled.
 
-Enabling the `no-std` feature does not disable `std`. To disable the `std` feature you must disable default features. The `no-std` feature only enables additional features required for this crate to be usable without `std`. Both can be enabled without conflict.
+Enabling the `no-std` feature does not disable `std`. To disable the `std` feature you must disable
+default features. The `no-std` feature only enables additional features required for this crate to
+be usable without `std`. Both can be enabled without conflict.
 
 The library can be built and tested using [`cargo`](https://github.com/rust-lang/cargo/):
 
@@ -127,12 +123,13 @@ You can run tests with:
 cargo test
 ```
 
-Please refer to the [`cargo` documentation](https://doc.rust-lang.org/stable/cargo/) for more detailed instructions.
+Please refer to the [`cargo` documentation](https://doc.rust-lang.org/stable/cargo/) for more
+detailed instructions.
 
 ### Building the docs
 
-We build docs with the nightly toolchain, you may wish to use the following
-shell alias to check your documentation changes build correctly.
+We build docs with the nightly toolchain, you may wish to use the following shell alias to check
+your documentation changes build correctly.
 
 ```
 alias build-docs='RUSTDOCFLAGS="--cfg docsrs" cargo +nightly rustdoc --features="$FEATURES" -- -D rustdoc::broken-intra-doc-links'
@@ -168,25 +165,24 @@ then run with `RUSTFLAGS='--cfg=mutate' cargo +nightly mutagen`.
 
 ### Code verification
 
-We have started using [kani](https://github.com/model-checking/kani), install with `cargo install
---locked kani-verifier` (no need to run `cargo kani setup`). Run the tests with `cargo kani`.
+We have started using [kani](https://github.com/model-checking/kani), install with `cargo install --locked kani-verifier`
+ (no need to run `cargo kani setup`). Run the tests with `cargo kani`.
 
 ## Pull Requests
 
-Every PR needs at least two reviews to get merged. During the review phase
-maintainers and contributors are likely to leave comments and request changes.
-Please try to address them, otherwise your PR might get closed without merging
-after a longer time of inactivity. If your PR isn't ready for review yet please
-mark it by prefixing the title with `WIP: `.
+Every PR needs at least two reviews to get merged. During the review phase maintainers and
+contributors are likely to leave comments and request changes. Please try to address them, otherwise
+your PR might get closed without merging after a longer time of inactivity. If your PR isn't ready
+for review yet please mark it by prefixing the title with `WIP: `.
 
 ### CI Pipeline
 
 The CI pipeline requires approval before being run on each MR.
 
 In order to speed up the review process the CI pipeline can be run locally using
-[act](https://github.com/nektos/act). The `fuzz` and `Cross` jobs will be
-skipped when using `act` due to caching being unsupported at this time. We do
-not *actively* support `act` but will merge PRs fixing `act` issues.
+[act](https://github.com/nektos/act). The `fuzz` and `Cross` jobs will be skipped when using `act`
+due to caching being unsupported at this time. We do not *actively* support `act` but will merge PRs
+fixing `act` issues.
 
 ### Githooks
 
@@ -201,16 +197,12 @@ Alternatively add symlinks in your `.git/hooks` directory to any of the githooks
 
 ## Policy on Altcoins/Altchains
 
-Patches which add support for non-Bitcoin cryptocurrencies by adding constants
-to existing enums (e.g. to set the network message magic-byte sequence) are
-welcome. Anything more involved will be considered on a case-by-case basis,
-as the altcoin landscape includes projects which [frequently appear and
-disappear, and are poorly designed anyway](https://download.wpsoftware.net/bitcoin/alts.pdf)
-and keeping the codebase maintainable is a large priority.
+Since the altcoin landscape includes projects which [frequently appear and disappear, and are poorly
+designed anyway](https://download.wpsoftware.net/bitcoin/alts.pdf) we do not support any altcoins.
+Supporting Bitcoin properly is already difficult enough and we do not want to increase the
+maintenance burden and decrease API stability by adding support for other coins.
 
-In general, things that improve cross-chain compatibility (e.g. support for
-cross-chain atomic swaps) are more likely to be accepted than things which
-support only a single blockchain.
+Our code is public domain so by all means fork it and go wild :)
 
 
 ## Release Notes
@@ -224,6 +216,5 @@ Release notes are done per crate, see:
 
 ## Licensing
 
-The code in this project is licensed under the [Creative Commons CC0 1.0
-Universal license](LICENSE). We use the [SPDX license list](https://spdx.org/licenses/) and [SPDX
-IDs](https://spdx.dev/ids/).
+The code in this project is licensed under the [Creative Commons CC0 1.0 Universal license](LICENSE).
+We use the [SPDX license list](https://spdx.org/licenses/) and [SPDX IDs](https://spdx.dev/ids/).
