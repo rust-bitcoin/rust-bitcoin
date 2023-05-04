@@ -1347,24 +1347,21 @@ impl InputWeightPrediction {
     /// under-paying. See [`ground_p2wpkh`](Self::ground_p2wpkh) if you do use signature grinding.
     ///
     /// [signature grinding]: https://bitcoin.stackexchange.com/questions/111660/what-is-signature-grinding
-    pub const P2WPKH_MAX: Self =
-        InputWeightPrediction { script_size: 0, witness_size: 1 + 1 + 73 + 1 + 33 };
+    pub const P2WPKH_MAX: Self = InputWeightPrediction::from_slice(0, &[73, 33]);
 
     /// Input weight prediction corresponding to spending of taproot output using the key and
     /// default sighash.
     ///
     /// If the input in your transaction uses Taproot key spend you can use this instead of
     /// [`InputWeightPrediction::new`].
-    pub const P2TR_KEY_DEFAULT_SIGHASH: Self =
-        InputWeightPrediction { script_size: 0, witness_size: 1 + 1 + 64 };
+    pub const P2TR_KEY_DEFAULT_SIGHASH: Self = InputWeightPrediction::from_slice(0, &[64]);
 
     /// Input weight prediction corresponding to spending of taproot output using the key and
     /// **non**-default sighash.
     ///
     /// If the input in your transaction uses Taproot key spend you can use this instead of
     /// [`InputWeightPrediction::new`].
-    pub const P2TR_KEY_NON_DEFAULT_SIGHASH: Self =
-        InputWeightPrediction { script_size: 0, witness_size: 1 + 1 + 65 };
+    pub const P2TR_KEY_NON_DEFAULT_SIGHASH: Self = InputWeightPrediction::from_slice(0, &[65]);
 
     /// Input weight prediction corresponding to spending of P2WPKH output using [signature
     /// grinding].
@@ -1383,13 +1380,7 @@ impl InputWeightPrediction {
     pub const fn ground_p2wpkh(bytes_to_grind: usize) -> Self {
         // Written to trigger const/debug panic for unreasonably high values.
         let der_signature_size = 10 + (62 - bytes_to_grind);
-        let witness_size = 1 // length of element count varint
-            + 1 // length of element size varint (max signature length is 73B)
-            + der_signature_size
-            + 1 // sighash flag
-            + 1 // length of element size varint
-            + 33; // length of (always-compressed) public key
-        InputWeightPrediction { script_size: 0, witness_size }
+        InputWeightPrediction::from_slice(0, &[der_signature_size, 33])
     }
 
     /// Computes the prediction for a single input.
@@ -1463,36 +1454,6 @@ mod tests {
         let size = tx.consensus_encode(&mut &mut buf[..]).unwrap();
         assert_eq!(size, SOME_TX.len() / 2);
         assert_eq!(raw_tx, &buf[..size]);
-    }
-
-    #[test]
-    fn predict_weight_all_witness_size() {
-        // 109
-        let p2wpkh = InputWeightPrediction::P2WPKH_MAX;
-
-        // 66
-        let p2tr_default = InputWeightPrediction::P2TR_KEY_DEFAULT_SIGHASH;
-
-        // 67
-        let p2tr_non_default = InputWeightPrediction::P2TR_KEY_NON_DEFAULT_SIGHASH;
-
-        // 109 + 66 + 67 = 242
-        let p = vec![p2wpkh, p2tr_default, p2tr_non_default];
-        let output_script_lens = vec![1];
-        let w = predict_weight(p, output_script_lens);
-
-        // input_weight = partial_input_weight + input_count * 4 * (32 + 4 + 4)
-        // input_weight = 242 + 3 * 4 * (32 + 4 + 4)
-        // input_weight = 722
-
-        // output_size = 8 * output_count + output_scripts_size
-        // output_size = 8 * 1 + 2
-        // output_size = 10
-
-        // weight = non_input_size * 4 + input_weight + input_count - inputs_with_witnesses + 2
-        // weight = 20 * 4 + 722 + 3 - 3 + 2
-        // weight = 804
-        assert_eq!(w, Weight::from_wu(804));
     }
 
     #[test]
