@@ -133,6 +133,7 @@ impl Target {
     /// The maximum possible target (see [`Target::MAX`]).
     ///
     /// This is provided for consistency with Rust 1.41.1, newer code should use [`Target::MAX`].
+    #[deprecated(since = "0.31.0", note = "Use Self::MAX instead")]
     pub const fn max_value() -> Self { Target::MAX }
 
     /// Computes the [`Target`] value from a compact representation.
@@ -363,7 +364,7 @@ impl U256 {
     fn is_one(&self) -> bool { self.0 == 0 && self.1 == 1 }
 
     #[cfg_attr(all(test, mutate), mutate)]
-    fn is_max(&self) -> bool { self.0 == u128::max_value() && self.1 == u128::max_value() }
+    fn is_max(&self) -> bool { self.0 == u128::MAX && self.1 == u128::MAX }
 
     /// Returns the low 32 bits.
     fn low_u32(&self) -> u32 { self.low_u128() as u32 }
@@ -377,8 +378,8 @@ impl U256 {
     /// Returns `self` as a `u128` saturating to `u128::MAX` if `self` is too big.
     // Matagen gives false positive because >= and > both return u128::MAX
     fn saturating_to_u128(&self) -> u128 {
-        if *self > U256::from(u128::max_value()) {
-            u128::max_value()
+        if *self > U256::from(u128::MAX) {
+            u128::MAX
         } else {
             self.low_u128()
         }
@@ -937,7 +938,7 @@ mod tests {
         assert_eq!(U256::from(60000_u64).bits(), 16);
         assert_eq!(U256::from(70000_u64).bits(), 17);
 
-        let u = U256::from(u128::max_value()) << 1;
+        let u = U256::from(u128::MAX) << 1;
         assert_eq!(u.bits(), 129);
 
         // Try to read the following lines out loud quickly
@@ -1009,7 +1010,7 @@ mod tests {
     fn u256_display() {
         assert_eq!(format!("{}", U256::from(100_u32)), "100",);
         assert_eq!(format!("{}", U256::ZERO), "0",);
-        assert_eq!(format!("{}", U256::from(u64::max_value())), format!("{}", u64::max_value()),);
+        assert_eq!(format!("{}", U256::from(u64::MAX)), format!("{}", u64::MAX),);
         assert_eq!(
             format!("{}", U256::MAX),
             "115792089237316195423570985008687907853269984665640564039457584007913129639935",
@@ -1324,7 +1325,7 @@ mod tests {
 
     #[test]
     fn u256_addition() {
-        let x = U256::from(u128::max_value());
+        let x = U256::from(u128::MAX);
         let (add, overflow) = x.overflowing_add(U256::ONE);
         assert!(!overflow);
         assert_eq!(add, U256(1, 0));
@@ -1342,7 +1343,7 @@ mod tests {
         let x = U256(1, 0);
         let (sub, overflow) = x.overflowing_sub(U256::ONE);
         assert!(!overflow);
-        assert_eq!(sub, U256::from(u128::max_value()));
+        assert_eq!(sub, U256::from(u128::MAX));
     }
 
     #[test]
@@ -1475,7 +1476,7 @@ mod tests {
 
     #[test]
     fn u256_is_max_correct_negative() {
-        let tc = vec![U256::ZERO, U256::ONE, U256::from(u128::max_value())];
+        let tc = vec![U256::ZERO, U256::ONE, U256::from(u128::MAX)];
         for t in tc {
             assert!(!t.is_max())
         }
@@ -1485,7 +1486,7 @@ mod tests {
     fn u256_is_max_correct_positive() {
         assert!(U256::MAX.is_max());
 
-        let u = u128::max_value();
+        let u = u128::MAX;
         assert!(((U256::from(u) << 128) + U256::from(u)).is_max());
     }
 

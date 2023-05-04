@@ -187,11 +187,11 @@ pub fn read_scriptbool(v: &[u8]) -> bool {
 /// This function returns an error in these cases:
 ///
 /// * `data` is shorter than `size` => `EarlyEndOfScript`
-/// * `size` is greater than `u16::max_value / 8` (8191) => `NumericOverflow`
+/// * `size` is greater than `u16::MAX / 8` (8191) => `NumericOverflow`
 /// * The number being read overflows `usize` => `NumericOverflow`
 ///
 /// Note that this does **not** return an error for `size` between `core::size_of::<usize>()`
-/// and `u16::max_value / 8` if there's no overflow.
+/// and `u16::MAX / 8` if there's no overflow.
 #[inline]
 #[deprecated(since = "0.30.0", note = "bitcoin integers are signed 32 bits, use read_scriptint")]
 pub fn read_uint(data: &[u8], size: usize) -> Result<usize, Error> {
@@ -203,7 +203,7 @@ pub fn read_uint(data: &[u8], size: usize) -> Result<usize, Error> {
 fn read_uint_iter(data: &mut core::slice::Iter<'_, u8>, size: usize) -> Result<usize, UintError> {
     if data.len() < size {
         Err(UintError::EarlyEndOfScript)
-    } else if size > usize::from(u16::max_value() / 8) {
+    } else if size > usize::from(u16::MAX / 8) {
         // Casting to u32 would overflow
         Err(UintError::NumericOverflow)
     } else {
@@ -596,7 +596,7 @@ pub(super) fn bytes_to_asm_fmt(script: &[u8], f: &mut dyn fmt::Write) -> fmt::Re
                     $formatter.write_str("<unexpected end>")?;
                     break;
                 }
-                // We got the data in a slice which implies it being shorter than `usize::max_value()`
+                // We got the data in a slice which implies it being shorter than `usize::MAX`
                 // So if we got overflow, we can confidently say the number is higher than length of
                 // the slice even though we don't know the exact number. This implies attempt to push
                 // past end.

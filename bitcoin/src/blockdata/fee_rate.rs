@@ -28,10 +28,10 @@ impl FeeRate {
     /// Minimum possible value (0 sat/kwu).
     ///
     /// Equivalent to [`ZERO`](Self::ZERO), may better express intent in some contexts.
-    pub const MIN: FeeRate = FeeRate(u64::min_value());
+    pub const MIN: FeeRate = FeeRate::ZERO;
 
     /// Maximum possible value.
-    pub const MAX: FeeRate = FeeRate(u64::max_value());
+    pub const MAX: FeeRate = FeeRate(u64::MAX);
 
     /// Minimum fee rate required to broadcast a transaction.
     ///
@@ -128,8 +128,8 @@ mod tests {
     #[test]
     fn fee_rate_const_test() {
         assert_eq!(0, FeeRate::ZERO.to_sat_per_kwu());
-        assert_eq!(u64::min_value(), FeeRate::MIN.to_sat_per_kwu());
-        assert_eq!(u64::max_value(), FeeRate::MAX.to_sat_per_kwu());
+        assert_eq!(u64::MIN, FeeRate::MIN.to_sat_per_kwu());
+        assert_eq!(u64::MAX, FeeRate::MAX.to_sat_per_kwu());
         assert_eq!(250, FeeRate::BROADCAST_MIN.to_sat_per_kwu());
         assert_eq!(750, FeeRate::DUST.to_sat_per_kwu());
     }

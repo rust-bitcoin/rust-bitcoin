@@ -61,7 +61,7 @@ impl OutPoint {
     ///
     /// This value is used for coinbase transactions because they don't have any previous outputs.
     #[inline]
-    pub fn null() -> OutPoint { OutPoint { txid: Hash::all_zeros(), vout: u32::max_value() } }
+    pub fn null() -> OutPoint { OutPoint { txid: Hash::all_zeros(), vout: u32::MAX } }
 
     /// Checks if an `OutPoint` is "null".
     ///
@@ -305,6 +305,7 @@ impl Sequence {
     /// The maximum allowable sequence number.
     ///
     /// This is provided for consistency with Rust 1.41.1, newer code should use [`Sequence::MAX`].
+    #[deprecated(since = "0.31.0", note = "Use Self::MAX instead")]
     pub const fn max_value() -> Self { Self::MAX }
 
     /// Returns `true` if the sequence number enables absolute lock-time ([`Transaction::lock_time`]).
