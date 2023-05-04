@@ -49,11 +49,14 @@ impl FeeRate {
     /// # Errors
     ///
     /// Returns `None` on arithmetic overflow.
-    pub fn from_sat_per_vb(sat_vb: u64) -> Option<Self> {
+    pub const fn from_sat_per_vb(sat_vb: u64) -> Option<Self> {
         // 1 vb == 4 wu
         // 1 sat/vb == 1/4 sat/wu
         // sat_vb sat/vb * 1000 / 4 == sat/kwu
-        Some(FeeRate(sat_vb.checked_mul(1000 / 4)?))
+        match sat_vb.checked_mul(1000 / 4) {
+            Some(fee_rate) => Some(FeeRate(fee_rate)),
+            None => None,
+        }
     }
 
     /// Constructs `FeeRate` from satoshis per virtual bytes without overflow check.
@@ -73,12 +76,23 @@ impl FeeRate {
     /// Checked multiplication.
     ///
     /// Computes `self * rhs` returning `None` if overflow occurred.
-    pub fn checked_mul(self, rhs: u64) -> Option<Self> { self.0.checked_mul(rhs).map(Self) }
+    pub const fn checked_mul(self, rhs: u64) -> Option<Self> {
+        match self.0.checked_mul(rhs) {
+            Some(fee_rate) => Some(Self(fee_rate)),
+            None => None,
+        }
+    }
 
     /// Checked division.
     ///
     /// Computes `self / rhs` returning `None` if `rhs == 0`.
-    pub fn checked_div(self, rhs: u64) -> Option<Self> { self.0.checked_div(rhs).map(Self) }
+    pub const fn checked_div(self, rhs: u64) -> Option<Self> {
+        if rhs == 0 {
+            None
+        } else {
+            Some(Self(self.0 / rhs))
+        }
+    }
 }
 
 /// Alternative will display the unit.

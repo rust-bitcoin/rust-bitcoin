@@ -53,12 +53,14 @@ macro_rules! borrow_slice_impl(
     );
     ($ty:ident, $($gen:ident: $gent:ident),*) => (
         impl<$($gen: $gent),*> $crate::_export::_core::borrow::Borrow<[u8]> for $ty<$($gen),*>  {
+            #[inline]
             fn borrow(&self) -> &[u8] {
                 &self[..]
             }
         }
 
         impl<$($gen: $gent),*> $crate::_export::_core::convert::AsRef<[u8]> for $ty<$($gen),*>  {
+            #[inline]
             fn as_ref(&self) -> &[u8] {
                 &self[..]
             }
@@ -195,24 +197,55 @@ macro_rules! hash_newtype {
         impl $newtype {
             /// Creates this wrapper type from the inner hash type.
             #[allow(unused)] // the user of macro may not need this
-            pub fn from_raw_hash(inner: $hash) -> $newtype {
+            #[inline]
+            pub const fn from_raw_hash(inner: $hash) -> $newtype {
                 $newtype(inner)
             }
 
             /// Returns the inner hash (sha256, sh256d etc.).
+            #[inline]
             #[allow(unused)] // the user of macro may not need this
-            pub fn to_raw_hash(self) -> $hash {
+            pub const fn to_raw_hash(self) -> $hash {
                 self.0
             }
 
             /// Returns a reference to the inner hash (sha256, sh256d etc.).
+            #[inline]
             #[allow(unused)] // the user of macro may not need this
-            pub fn as_raw_hash(&self) -> &$hash {
+            pub const fn as_raw_hash(&self) -> &$hash {
                 &self.0
+            }
+
+            /// Construts this wrapper type from an array.
+            ///
+            /// Note: this function works the same as the one in the `Hash` trait but is `const`.
+            #[inline]
+            #[allow(unused)] // the user of macro may not need this
+            pub const fn from_byte_array(bytes: <Self as $crate::Hash>::Bytes) -> Self {
+                $newtype(<$hash>::from_byte_array(bytes))
+            }
+
+            /// Returns the raw hash bytes.
+            ///
+            /// Note: this function works the same as the one in the `Hash` trait but is `const`.
+            #[inline]
+            #[allow(unused)] // the user of macro may not need this
+            pub const fn to_byte_array(self) -> <Self as $crate::Hash>::Bytes {
+                self.0.to_byte_array()
+            }
+
+            /// Returns the reference to raw hash bytes.
+            ///
+            /// Note: this function works the same as the one in the `Hash` trait but is `const`.
+            #[inline]
+            #[allow(unused)] // the user of macro may not need this
+            pub const fn as_byte_array(&self) -> &<Self as $crate::Hash>::Bytes {
+                self.0.as_byte_array()
             }
         }
 
         impl $crate::_export::_core::convert::From<$hash> for $newtype {
+            #[inline]
             fn from(inner: $hash) -> $newtype {
                 // Due to rust 1.22 we have to use this instead of simple `Self(inner)`
                 Self { 0: inner }
@@ -220,6 +253,7 @@ macro_rules! hash_newtype {
         }
 
         impl $crate::_export::_core::convert::From<$newtype> for $hash {
+            #[inline]
             fn from(hashtype: $newtype) -> $hash {
                 hashtype.0
             }
@@ -232,10 +266,12 @@ macro_rules! hash_newtype {
             const LEN: usize = <$hash as $crate::Hash>::LEN;
             const DISPLAY_BACKWARD: bool = $crate::hash_newtype_get_direction!($hash, $(#[$($type_attrs)*])*);
 
+            #[inline]
             fn engine() -> Self::Engine {
                 <$hash as $crate::Hash>::engine()
             }
 
+            #[inline]
             fn from_engine(e: Self::Engine) -> Self {
                 Self::from(<$hash as $crate::Hash>::from_engine(e))
             }
@@ -283,6 +319,7 @@ macro_rules! hash_newtype {
         }
 
         impl $crate::_export::_core::convert::AsRef<[u8; <$hash as $crate::Hash>::LEN]> for $newtype {
+            #[inline]
             fn as_ref(&self) -> &[u8; <$hash as $crate::Hash>::LEN] {
                 AsRef::<[u8; <$hash as $crate::Hash>::LEN]>::as_ref(&self.0)
             }

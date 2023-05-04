@@ -153,7 +153,7 @@ impl Midstate {
     }
 
     /// Unwraps the [`Midstate`] and returns the underlying byte array.
-    pub fn to_byte_array(self) -> [u8; 32] { self.0 }
+    pub const fn to_byte_array(self) -> [u8; 32] { self.0 }
 
     /// Creates midstate for tagged hashes.
     ///

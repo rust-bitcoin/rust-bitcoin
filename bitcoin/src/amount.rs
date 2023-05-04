@@ -499,7 +499,7 @@ impl Amount {
     pub const fn from_sat(satoshi: u64) -> Amount { Amount(satoshi) }
 
     /// Gets the number of satoshis in this [`Amount`].
-    pub fn to_sat(self) -> u64 { self.0 }
+    pub const fn to_sat(self) -> u64 { self.0 }
 
     /// The maximum value of an [Amount].
     pub const fn max_value() -> Amount { Amount(u64::max_value()) }
@@ -645,7 +645,7 @@ impl Amount {
     pub fn checked_rem(self, rhs: u64) -> Option<Amount> { self.0.checked_rem(rhs).map(Amount) }
 
     /// Convert to a signed amount.
-    pub fn to_signed(self) -> Result<SignedAmount, ParseAmountError> {
+    pub const fn to_signed(self) -> Result<SignedAmount, ParseAmountError> {
         if self.to_sat() > SignedAmount::max_value().to_sat() as u64 {
             Err(ParseAmountError::TooBig)
         } else {
@@ -834,7 +834,7 @@ impl SignedAmount {
     pub const fn from_sat(satoshi: i64) -> SignedAmount { SignedAmount(satoshi) }
 
     /// Gets the number of satoshis in this [`SignedAmount`].
-    pub fn to_sat(self) -> i64 { self.0 }
+    pub const fn to_sat(self) -> i64 { self.0 }
 
     /// The maximum value of an [SignedAmount].
     pub const fn max_value() -> SignedAmount { SignedAmount(i64::max_value()) }
@@ -954,22 +954,22 @@ impl SignedAmount {
     // Some arithmetic that doesn't fit in `core::ops` traits.
 
     /// Get the absolute value of this [SignedAmount].
-    pub fn abs(self) -> SignedAmount { SignedAmount(self.0.abs()) }
+    pub const fn abs(self) -> SignedAmount { SignedAmount(self.0.abs()) }
 
     /// Returns a number representing sign of this [SignedAmount].
     ///
     /// - `0` if the amount is zero
     /// - `1` if the amount is positive
     /// - `-1` if the amount is negative
-    pub fn signum(self) -> i64 { self.0.signum() }
+    pub const fn signum(self) -> i64 { self.0.signum() }
 
     /// Returns `true` if this [SignedAmount] is positive and `false` if
     /// this [SignedAmount] is zero or negative.
-    pub fn is_positive(self) -> bool { self.0.is_positive() }
+    pub const fn is_positive(self) -> bool { self.0.is_positive() }
 
     /// Returns `true` if this [SignedAmount] is negative and `false` if
     /// this [SignedAmount] is zero or positive.
-    pub fn is_negative(self) -> bool { self.0.is_negative() }
+    pub const fn is_negative(self) -> bool { self.0.is_negative() }
 
     /// Get the absolute value of this [SignedAmount].
     /// Returns [None] if overflow occurred. (`self == min_value()`)
@@ -1018,7 +1018,7 @@ impl SignedAmount {
     }
 
     /// Convert to an unsigned amount.
-    pub fn to_unsigned(self) -> Result<Amount, ParseAmountError> {
+    pub const fn to_unsigned(self) -> Result<Amount, ParseAmountError> {
         if self.is_negative() {
             Err(ParseAmountError::Negative)
         } else {
