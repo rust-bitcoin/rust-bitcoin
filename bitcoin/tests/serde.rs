@@ -145,7 +145,7 @@ fn serde_regression_witness() {
 fn serde_regression_address() {
     let s = include_str!("data/serde/public_key_hex");
     let pk = PublicKey::from_str(s.trim()).unwrap();
-    let addr = Address::p2pkh(&pk, Network::Bitcoin);
+    let addr = Address::p2pkh(pk, Network::Bitcoin);
 
     let got = serialize(&addr).unwrap();
     let want = include_bytes!("data/serde/address_bincode") as &[_];
