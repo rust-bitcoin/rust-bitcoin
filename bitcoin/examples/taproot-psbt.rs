@@ -40,7 +40,7 @@ const UTXO_SCRIPT_PUBKEY: &str =
     "5120be27fa8b1f5278faf82cab8da23e8761f8f9bd5d5ebebbb37e0e12a70d92dd16";
 const UTXO_PUBKEY: &str = "a6ac32163539c16b6b5dbbca01b725b8e8acaa5f821ba42c80e7940062140d19";
 const UTXO_MASTER_FINGERPRINT: &str = "e61b318f";
-const ABSOLUTE_FEES_IN_SATS: u64 = 1000;
+const ABSOLUTE_FEES_IN_SATS: Amount = Amount::from_sat(1_000);
 
 // UTXO_1 will be used for spending example 1
 const UTXO_1: P2trUtxo = P2trUtxo {
@@ -49,7 +49,7 @@ const UTXO_1: P2trUtxo = P2trUtxo {
     script_pubkey: UTXO_SCRIPT_PUBKEY,
     pubkey: UTXO_PUBKEY,
     master_fingerprint: UTXO_MASTER_FINGERPRINT,
-    amount_in_sats: 50 * COIN_VALUE, // 50 BTC
+    amount_in_sats: Amount::from_sat(50 * 100_000_000), // 50 BTC
     derivation_path: BIP86_DERIVATION_PATH,
 };
 
@@ -60,7 +60,7 @@ const UTXO_2: P2trUtxo = P2trUtxo {
     script_pubkey: UTXO_SCRIPT_PUBKEY,
     pubkey: UTXO_PUBKEY,
     master_fingerprint: UTXO_MASTER_FINGERPRINT,
-    amount_in_sats: 50 * COIN_VALUE,
+    amount_in_sats: Amount::from_sat(50 * 100_000_000), // 50 BTC
     derivation_path: BIP86_DERIVATION_PATH,
 };
 
@@ -71,7 +71,7 @@ const UTXO_3: P2trUtxo = P2trUtxo {
     script_pubkey: UTXO_SCRIPT_PUBKEY,
     pubkey: UTXO_PUBKEY,
     master_fingerprint: UTXO_MASTER_FINGERPRINT,
-    amount_in_sats: 50 * COIN_VALUE,
+    amount_in_sats: Amount::from_sat(50 * 100_000_000), // 50 BTC
     derivation_path: BIP86_DERIVATION_PATH,
 };
 
@@ -80,7 +80,6 @@ use std::str::FromStr;
 
 use bitcoin::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint};
 use bitcoin::consensus::encode;
-use bitcoin::constants::COIN_VALUE;
 use bitcoin::key::{TapTweak, XOnlyPublicKey};
 use bitcoin::opcodes::all::{OP_CHECKSIG, OP_CLTV, OP_DROP};
 use bitcoin::psbt::{self, Input, Output, Psbt, PsbtSighashType};
@@ -105,7 +104,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let change_address =
         Address::from_str("bcrt1pz449kexzydh2kaypatup5ultru3ej284t6eguhnkn6wkhswt0l7q3a7j76")?
             .require_network(Network::Regtest)?;
-    let amount_to_send_in_sats = COIN_VALUE;
+    let amount_to_send_in_sats = Amount::ONE_BTC;
     let change_amount = UTXO_1
         .amount_in_sats
         .checked_sub(amount_to_send_in_sats)
@@ -216,7 +215,7 @@ struct P2trUtxo<'a> {
     script_pubkey: &'a str,
     pubkey: &'a str,
     master_fingerprint: &'a str,
-    amount_in_sats: u64,
+    amount_in_sats: Amount,
     derivation_path: &'a str,
 }
 
@@ -259,9 +258,7 @@ fn generate_bip86_key_spend_tx(
         witness_utxo: {
             let script_pubkey = ScriptBuf::from_hex(input_utxo.script_pubkey)
                 .expect("failed to parse input utxo scriptPubkey");
-            let amount = Amount::from_sat(from_amount);
-
-            Some(TxOut { value: amount.to_sat(), script_pubkey })
+            Some(TxOut { value: from_amount, script_pubkey })
         },
         tap_key_origins: origins,
         ..Default::default()
@@ -448,9 +445,7 @@ impl BenefactorWallet {
         let input = Input {
             witness_utxo: {
                 let script_pubkey = script_pubkey;
-                let amount = Amount::from_sat(value);
-
-                Some(TxOut { value: amount.to_sat(), script_pubkey })
+                Some(TxOut { value, script_pubkey })
             },
             tap_key_origins: origins,
             tap_merkle_root: taproot_spend_info.merkle_root(),
@@ -594,9 +589,9 @@ impl BenefactorWallet {
             let input = Input {
                 witness_utxo: {
                     let script_pubkey = output_script_pubkey;
-                    let amount = Amount::from_sat(output_value);
+                    let amount = output_value;
 
-                    Some(TxOut { value: amount.to_sat(), script_pubkey })
+                    Some(TxOut { value: amount, script_pubkey })
                 },
                 tap_key_origins: origins,
                 tap_merkle_root: taproot_spend_info.merkle_root(),

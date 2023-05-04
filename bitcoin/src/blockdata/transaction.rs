@@ -35,7 +35,7 @@ use crate::prelude::*;
 #[cfg(doc)]
 use crate::sighash::{EcdsaSighashType, TapSighashType};
 use crate::string::FromHexStr;
-use crate::{io, VarInt};
+use crate::{io, Amount, VarInt};
 
 /// A reference to a transaction output.
 ///
@@ -478,7 +478,7 @@ impl_parse_str_from_int_infallible!(Sequence, u32, from_consensus);
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct TxOut {
     /// The value of the output, in satoshis.
-    pub value: u64,
+    pub value: Amount,
     /// The script which must be satisfied for the output to be spent.
     pub script_pubkey: ScriptBuf,
 }
@@ -512,7 +512,7 @@ impl TxOut {
         let dust_amount = (len as u64) * 3;
 
         TxOut {
-            value: dust_amount + 1, // minimal non-dust amount is one higher than dust amount
+            value: Amount::from_sat(dust_amount + 1), // minimal non-dust amount is one higher than dust amount
             script_pubkey,
         }
     }
@@ -520,7 +520,9 @@ impl TxOut {
 
 // This is used as a "null txout" in consensus signing code.
 impl Default for TxOut {
-    fn default() -> TxOut { TxOut { value: 0xffffffffffffffff, script_pubkey: ScriptBuf::new() } }
+    fn default() -> TxOut {
+        TxOut { value: Amount::from_sat(0xffffffffffffffff), script_pubkey: ScriptBuf::new() }
+    }
 }
 
 /// Result of [`Transaction::encode_signing_data_to`].
@@ -962,12 +964,7 @@ impl Transaction {
         let flags: u32 = flags.into();
         for (idx, input) in self.input.iter().enumerate() {
             if let Some(output) = spent(&input.previous_output) {
-                output.script_pubkey.verify_with_flags(
-                    idx,
-                    crate::Amount::from_sat(output.value),
-                    tx.as_slice(),
-                    flags,
-                )?;
+                output.script_pubkey.verify_with_flags(idx, output.value, tx.as_slice(), flags)?;
             } else {
                 return Err(script::Error::UnknownSpentOutput(input.previous_output));
             }

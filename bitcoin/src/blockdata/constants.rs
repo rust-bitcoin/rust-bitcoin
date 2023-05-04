@@ -22,9 +22,8 @@ use crate::blockdata::witness::Witness;
 use crate::internal_macros::impl_bytes_newtype;
 use crate::network::constants::Network;
 use crate::pow::CompactTarget;
+use crate::Amount;
 
-/// How many satoshis are in "one bitcoin".
-pub const COIN_VALUE: u64 = 100_000_000;
 /// How many seconds between blocks we expect on average.
 pub const TARGET_BLOCK_SPACING: u32 = 600;
 /// How many blocks between diffchanges.
@@ -61,11 +60,6 @@ pub const MAX_SCRIPTNUM_VALUE: u32 = 0x80000000; // 2^31
 /// Number of blocks needed for an output from a coinbase transaction to be spendable.
 pub const COINBASE_MATURITY: u32 = 100;
 
-/// The maximum value allowed in an output (useful for sanity checking,
-/// since keeping everything below this value should prevent overflows
-/// if you are doing anything remotely sane with monetary values).
-pub const MAX_MONEY: u64 = 21_000_000 * COIN_VALUE;
-
 /// Constructs and returns the coinbase (and only) transaction of the Bitcoin genesis block.
 fn bitcoin_genesis_tx() -> Transaction {
     // Base
@@ -93,7 +87,7 @@ fn bitcoin_genesis_tx() -> Transaction {
     let script_bytes = hex!("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f");
     let out_script =
         script::Builder::new().push_slice(script_bytes).push_opcode(OP_CHECKSIG).into_script();
-    ret.output.push(TxOut { value: 50 * COIN_VALUE, script_pubkey: out_script });
+    ret.output.push(TxOut { value: Amount::from_sat(50 * 100_000_000), script_pubkey: out_script });
 
     // end
     ret
@@ -198,6 +192,8 @@ impl ChainHash {
 
 #[cfg(test)]
 mod test {
+    use core::str::FromStr;
+
     use super::*;
     use crate::blockdata::locktime::absolute;
     use crate::consensus::encode::serialize;
@@ -219,7 +215,7 @@ mod test {
         assert_eq!(gen.output.len(), 1);
         assert_eq!(serialize(&gen.output[0].script_pubkey),
                    hex!("434104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac"));
-        assert_eq!(gen.output[0].value, 50 * COIN_VALUE);
+        assert_eq!(gen.output[0].value, Amount::from_str("50 BTC").unwrap());
         assert_eq!(gen.lock_time, absolute::LockTime::ZERO);
 
         assert_eq!(

@@ -11,6 +11,8 @@ use core::fmt::{self, Write};
 use core::str::FromStr;
 use core::{default, ops};
 
+use crate::consensus::encode::{self, Decodable, Encodable};
+use crate::io;
 use crate::prelude::*;
 
 /// A set of denominations in which amounts can be expressed.
@@ -483,6 +485,8 @@ fn fmt_satoshi_in(
 /// the checked arithmetic methods.
 ///
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct Amount(u64);
 
 impl Amount {
@@ -657,6 +661,20 @@ impl Amount {
         } else {
             Ok(SignedAmount::from_sat(self.to_sat() as i64))
         }
+    }
+}
+
+impl Decodable for Amount {
+    #[inline]
+    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        Ok(Amount(Decodable::consensus_decode(r)?))
+    }
+}
+
+impl Encodable for Amount {
+    #[inline]
+    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        self.0.consensus_encode(w)
     }
 }
 
