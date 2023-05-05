@@ -1691,11 +1691,11 @@ mod tests {
                 output: vec![
                     TxOut {
                         value: output_0_val,
-                        ..Default::default()
+                        script_pubkey:  ScriptBuf::new()
                     },
                     TxOut {
                         value: output_1_val,
-                        ..Default::default()
+                        script_pubkey:  ScriptBuf::new()
                     },
                 ],
             },
@@ -1730,11 +1730,11 @@ mod tests {
                         output: vec![
                             TxOut {
                                 value: prev_output_val,
-                                ..Default::default()
+                                script_pubkey:  ScriptBuf::new()
                             },
                             TxOut {
                                 value: Amount::from_sat(190_303_501_938),
-                                ..Default::default()
+                                script_pubkey:  ScriptBuf::new()
                             },
                         ],
                     }),
@@ -1788,7 +1788,7 @@ mod tests {
             version: 2,
             lock_time: absolute::LockTime::ZERO,
             input: vec![TxIn::default(), TxIn::default()],
-            output: vec![TxOut::default()],
+            output: vec![TxOut::NULL],
         };
         let mut psbt = PartiallySignedTransaction::from_unsigned_tx(unsigned_tx).unwrap();
 
