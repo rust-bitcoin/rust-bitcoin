@@ -234,6 +234,20 @@ impl Target {
     /// [`difficulty`]: Target::difficulty
     #[cfg_attr(all(test, mutate), mutate)]
     pub fn difficulty_float(&self) -> f64 { TARGET_MAX_F64 / self.0.to_f64() }
+
+    /// Computes the minimum valid [`Target`] threshold allowed for a block in which a difficulty
+    /// adjustment occurs.
+    ///
+    /// The difficulty can only decrease or increase by a factor of 4 max on each difficulty
+    /// adjustment period.
+    pub fn min_difficulty_transition_threshold(&self) -> Self { Self(self.0 >> 2) }
+
+    /// Computes the maximum valid [`Target`] threshold allowed for a block in which a difficulty
+    /// adjustment occurs.
+    ///
+    /// The difficulty can only decrease or increase by a factor of 4 max on each difficulty
+    /// adjustment period.
+    pub fn max_difficulty_transition_threshold(&self) -> Self { Self(self.0 << 2) }
 }
 do_impl!(Target);
 
