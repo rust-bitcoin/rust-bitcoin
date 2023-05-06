@@ -16,3 +16,10 @@ pub use self::params::Params;
 
 #[cfg(feature = "serde")]
 pub mod serde;
+
+#[cfg(feature = "bitcoinconsensus")]
+mod transaction_verifier;
+
+#[cfg(feature = "bitcoinconsensus")]
+pub use transaction_verifier::{TransactionVerifier, VerificationError, InputCountMismatch, MissingUtxo};
+pub use transaction_verifier::Error as TransactionError;
