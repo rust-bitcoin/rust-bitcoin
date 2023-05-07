@@ -1684,6 +1684,8 @@ mod tests {
             p("12345678901.12345678", btc),
             Ok(Amount::from_sat(12_345_678_901__123_456_78))
         );
+        assert_eq!(p("1000.0", msat), Ok(Amount::from_sat(1)));
+        assert_eq!(p("1000.000000000000000000000000000", msat), Ok(Amount::from_sat(1)));
 
         // make sure satoshi > i64::max_value() is checked.
         let amount = Amount::from_sat(i64::max_value() as u64);
