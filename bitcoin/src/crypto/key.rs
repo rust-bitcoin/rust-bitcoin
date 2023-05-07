@@ -12,6 +12,8 @@ use core::str::FromStr;
 use hashes::hex::FromHex;
 use hashes::{hash160, hex, Hash};
 use internals::write_err;
+#[cfg(feature = "rand-std")]
+pub use secp256k1::rand;
 pub use secp256k1::{self, constants, KeyPair, Parity, Secp256k1, Verification, XOnlyPublicKey};
 
 use crate::hash_types::{PubkeyHash, WPubkeyHash};
@@ -298,6 +300,13 @@ pub struct PrivateKey {
 }
 
 impl PrivateKey {
+    /// Constructs new compressed ECDSA private key using the secp256k1 algorithm and
+    /// a secure random number generator.
+    #[cfg(feature = "rand-std")]
+    pub fn generate(network: Network) -> PrivateKey {
+        let secret_key = secp256k1::SecretKey::new(&mut rand::thread_rng());
+        PrivateKey::new(secret_key, network)
+    }
     /// Constructs compressed ECDSA private key from the provided generic Secp256k1 private key
     /// and the specified network
     pub fn new(key: secp256k1::SecretKey, network: Network) -> PrivateKey {
