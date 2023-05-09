@@ -56,11 +56,21 @@ extern crate test;
 extern crate alloc;
 
 #[cfg(feature = "base64")]
+/// Encodes and decodes base64 as bytes or utf8.
 pub extern crate base64;
+
+/// Encodes and decodes the Bech32 forrmat.
 pub extern crate bech32;
+
 #[cfg(feature = "bitcoinconsensus")]
+/// Bitcoin's libbitcoinconsensus with Rust binding.
 pub extern crate bitcoinconsensus;
+
+/// Rust implementation of cryptographic hash function algorithems.
 pub extern crate hashes;
+
+/// Rust wrapper library for Pieter Wuille's libsecp256k1.  Implements ECDSA and BIP 340 signatures
+/// for the SECG elliptic curve group secp256k1 and related utilities.
 pub extern crate secp256k1;
 
 #[cfg(feature = "serde")]
