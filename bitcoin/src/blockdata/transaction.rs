@@ -484,6 +484,10 @@ pub struct TxOut {
 }
 
 impl TxOut {
+    /// This is used as a "null txout" in consensus signing code.
+    pub const NULL: Self =
+        TxOut { value: Amount::from_sat(0xffffffffffffffff), script_pubkey: ScriptBuf::new() };
+
     /// The weight of the txout in witness units
     ///
     /// Keep in mind that when adding a TxOut to a transaction, the total weight of the transaction
@@ -515,13 +519,6 @@ impl TxOut {
             value: Amount::from_sat(dust_amount + 1), // minimal non-dust amount is one higher than dust amount
             script_pubkey,
         }
-    }
-}
-
-// This is used as a "null txout" in consensus signing code.
-impl Default for TxOut {
-    fn default() -> TxOut {
-        TxOut { value: Amount::from_sat(0xffffffffffffffff), script_pubkey: ScriptBuf::new() }
     }
 }
 

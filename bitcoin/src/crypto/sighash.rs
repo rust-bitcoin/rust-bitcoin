@@ -929,15 +929,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
                         .iter()
                         .take(input_index + 1) // sign all outputs up to and including this one, but erase
                         .enumerate() // all of them except for this one
-                        .map(
-                            |(n, out)| {
-                                if n == input_index {
-                                    out.clone()
-                                } else {
-                                    TxOut::default()
-                                }
-                            },
-                        );
+                        .map(|(n, out)| if n == input_index { out.clone() } else { TxOut::NULL });
                     output_iter.collect()
                 }
                 EcdsaSighashType::None => vec![],
@@ -1142,7 +1134,7 @@ mod tests {
             version: 1,
             lock_time: absolute::LockTime::ZERO,
             input: vec![TxIn::default(), TxIn::default()],
-            output: vec![TxOut::default()],
+            output: vec![TxOut::NULL],
         };
         let script = ScriptBuf::new();
         let cache = SighashCache::new(&tx);
@@ -1340,13 +1332,13 @@ mod tests {
             c.taproot_signature_hash(0, &empty_prevouts, None, None, TapSighashType::All),
             Err(Error::PrevoutsSize)
         );
-        let two = vec![TxOut::default(), TxOut::default()];
+        let two = vec![TxOut::NULL, TxOut::NULL];
         let too_many_prevouts = Prevouts::All(&two);
         assert_eq!(
             c.taproot_signature_hash(0, &too_many_prevouts, None, None, TapSighashType::All),
             Err(Error::PrevoutsSize)
         );
-        let tx_out = TxOut::default();
+        let tx_out = TxOut::NULL;
         let prevout = Prevouts::One(1, &tx_out);
         assert_eq!(
             c.taproot_signature_hash(0, &prevout, None, None, TapSighashType::All),
