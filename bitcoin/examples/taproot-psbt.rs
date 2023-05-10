@@ -49,7 +49,7 @@ const UTXO_1: P2trUtxo = P2trUtxo {
     script_pubkey: UTXO_SCRIPT_PUBKEY,
     pubkey: UTXO_PUBKEY,
     master_fingerprint: UTXO_MASTER_FINGERPRINT,
-    amount_in_sats: Amount::from_sat(50 * 100_000_000), // 50 BTC
+    amount_in_sats: Amount::from_int_btc(50),
     derivation_path: BIP86_DERIVATION_PATH,
 };
 
@@ -60,7 +60,7 @@ const UTXO_2: P2trUtxo = P2trUtxo {
     script_pubkey: UTXO_SCRIPT_PUBKEY,
     pubkey: UTXO_PUBKEY,
     master_fingerprint: UTXO_MASTER_FINGERPRINT,
-    amount_in_sats: Amount::from_sat(50 * 100_000_000), // 50 BTC
+    amount_in_sats: Amount::from_int_btc(50),
     derivation_path: BIP86_DERIVATION_PATH,
 };
 
@@ -71,7 +71,7 @@ const UTXO_3: P2trUtxo = P2trUtxo {
     script_pubkey: UTXO_SCRIPT_PUBKEY,
     pubkey: UTXO_PUBKEY,
     master_fingerprint: UTXO_MASTER_FINGERPRINT,
-    amount_in_sats: Amount::from_sat(50 * 100_000_000), // 50 BTC
+    amount_in_sats: Amount::from_int_btc(50),
     derivation_path: BIP86_DERIVATION_PATH,
 };
 

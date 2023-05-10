@@ -21,6 +21,7 @@ secp-lowmemory = ["secp256k1/lowmemory"]
 secp-recovery = ["secp256k1/recovery"]
 bitcoinconsensus-std = ["bitcoinconsensus/std", "std"]
 
+
 # At least one of std, no-std must be enabled.
 #
 # The no-std feature doesn't disable std - you need to turn off the std feature for that by disabling default.
@@ -68,4 +69,4 @@ required-features = ["std", "bitcoinconsensus"]
 
 [[example]]
 name = "taproot-psbt"
-required-features = ["std", "rand-std", "bitcoinconsensus"]
+required-features = ["std", "rand-std", "bitcoinconsensus", "rust_v_1_57"]

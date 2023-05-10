@@ -517,6 +517,20 @@ impl Amount {
     #[deprecated(since = "0.31.0", note = "Use Self::MIN instead")]
     pub const fn min_value() -> Amount { Amount(u64::min_value()) }
 
+    /// Convert from a value expressing integer values of bitcoins to an [Amount].
+    #[cfg(feature = "rust_v_1_57")]
+    pub const fn from_int_btc(btc: u64) -> Amount {
+        // unwrap() is not yet available for const fn, so we include this workaround.
+        // TODO replace whith unwrap() when available in const context.
+        match btc.checked_mul(100_000_000 * btc) {
+            Some(amount) => Amount::from_sat(amount),
+            None => {
+                // panic!() in const context requires rust 1.57+
+                panic!("Integer overflow converting btc to sats");
+            }
+        }
+    }
+
     /// Convert from a value expressing bitcoins to an [Amount].
     pub fn from_btc(btc: f64) -> Result<Amount, ParseAmountError> {
         Amount::from_float_in(btc, Denomination::Bitcoin)
