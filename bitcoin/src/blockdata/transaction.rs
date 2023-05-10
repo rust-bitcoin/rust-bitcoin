@@ -19,6 +19,7 @@ use hashes::{self, sha256d, Hash};
 use internals::write_err;
 
 use super::Weight;
+use crate::FeeRate;
 use crate::blockdata::constants::WITNESS_SCALE_FACTOR;
 use crate::blockdata::locktime::absolute::{self, Height, Time};
 use crate::blockdata::locktime::relative;
@@ -36,6 +37,7 @@ use crate::prelude::*;
 use crate::sighash::{EcdsaSighashType, TapSighashType};
 use crate::string::FromHexStr;
 use crate::{io, Amount, VarInt};
+
 
 /// A reference to a transaction output.
 ///
@@ -784,6 +786,13 @@ impl Transaction {
                 },
             },
         }
+    }
+
+    /// Computes the Transaction fee.
+    ///
+    /// fee_rate * size.
+    pub fn fee(self, f: FeeRate) -> Amount {
+        f * self.weight()
     }
 
     /// Computes a signature hash for a given input index with a given sighash flag.
