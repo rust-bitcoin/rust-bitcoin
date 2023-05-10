@@ -201,7 +201,13 @@ impl std::error::Error for ParseAmountError {
 }
 
 fn is_too_precise(s: &str, precision: usize) -> bool {
-    s.contains('.') || precision >= s.len() || s.chars().rev().take(precision).any(|d| d != '0')
+    match s.find('.') {
+        Some(pos) =>
+            s[(pos + 1)..].chars().any(|d| d != '0')
+                || precision >= pos
+                || s[..pos].chars().rev().take(precision).any(|d| d != '0'),
+        None => precision >= s.len() || s.chars().rev().take(precision).any(|d| d != '0'),
+    }
 }
 
 /// Parse decimal string in the given denomination into a satoshi value and a
@@ -229,7 +235,7 @@ fn parse_signed_to_satoshi(
         // The difference in precision between native (satoshi)
         // and desired denomination.
         let precision_diff = -denom.precision();
-        if precision_diff < 0 {
+        if precision_diff <= 0 {
             // If precision diff is negative, this means we are parsing
             // into a less precise amount. That is not allowed unless
             // there are no decimals and the last digits are zeroes as
@@ -241,7 +247,7 @@ fn parse_signed_to_satoshi(
                     _ => return Err(ParseAmountError::TooPrecise),
                 }
             }
-            s = &s[0..s.len() - last_n];
+            s = &s[0..s.find('.').unwrap_or(s.len()) - last_n];
             0
         } else {
             precision_diff
@@ -269,6 +275,7 @@ fn parse_signed_to_satoshi(
                 };
             }
             '.' => match decimals {
+                None if max_decimals <= 0 => break,
                 None => decimals = Some(0),
                 // Double decimal dot.
                 _ => return Err(ParseAmountError::InvalidFormat),
@@ -1672,6 +1679,7 @@ mod tests {
         use super::ParseAmountError as E;
         let btc = Denomination::Bitcoin;
         let sat = Denomination::Satoshi;
+        let msat = Denomination::MilliSatoshi;
         let p = Amount::from_str_in;
         let sp = SignedAmount::from_str_in;
 
@@ -1684,6 +1692,15 @@ mod tests {
         let more_than_max = format!("1{}", Amount::MAX);
         assert_eq!(p(&more_than_max, btc), Err(E::TooBig));
         assert_eq!(p("0.000000042", btc), Err(E::TooPrecise));
+        assert_eq!(p("999.0000000", msat), Err(E::TooPrecise));
+        assert_eq!(p("1.0000000", msat), Err(E::TooPrecise));
+        assert_eq!(p("1.1", msat), Err(E::TooPrecise));
+        assert_eq!(p("1000.1", msat), Err(E::TooPrecise));
+        assert_eq!(p("1001.0000000", msat), Err(E::TooPrecise));
+        assert_eq!(p("1000.0000001", msat), Err(E::TooPrecise));
+        assert_eq!(p("1000.1000000", msat), Err(E::TooPrecise));
+        assert_eq!(p("1100.0000000", msat), Err(E::TooPrecise));
+        assert_eq!(p("10001.0000000", msat), Err(E::TooPrecise));
 
         assert_eq!(p("1", btc), Ok(Amount::from_sat(1_000_000_00)));
         assert_eq!(sp("-.5", btc), Ok(SignedAmount::from_sat(-500_000_00)));
@@ -1697,6 +1714,8 @@ mod tests {
             p("12345678901.12345678", btc),
             Ok(Amount::from_sat(12_345_678_901__123_456_78))
         );
+        assert_eq!(p("1000.0", msat), Ok(Amount::from_sat(1)));
+        assert_eq!(p("1000.000000000000000000000000000", msat), Ok(Amount::from_sat(1)));
 
         // make sure satoshi > i64::MAX is checked.
         let amount = Amount::from_sat(i64::MAX as u64);
