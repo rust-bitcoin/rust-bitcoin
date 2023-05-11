@@ -105,12 +105,6 @@ impl Mul<FeeRate> for Weight {
     }
 }
 
-impl Mul<Weight> for FeeRate {
-    type Output = Amount;
-
-    fn mul(self, rhs: Weight) -> Self::Output { rhs * self }
-}
-
 impl Div<Weight> for Amount {
     type Output = Option<FeeRate>;
 
