@@ -980,9 +980,7 @@ impl Address {
     /// # })().unwrap();
     /// # assert_eq!(writer, ADDRESS);
     /// ```
-    pub fn to_qr_uri(&self) -> String {
-        format!("bitcoin:{:#}", self)
-    }
+    pub fn to_qr_uri(&self) -> String { format!("bitcoin:{:#}", self) }
 
     /// Returns true if the given pubkey is directly related to the address payload.
     ///
