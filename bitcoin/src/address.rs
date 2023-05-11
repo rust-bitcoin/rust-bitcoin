@@ -767,6 +767,34 @@ impl<N: NetworkValidation> serde::Serialize for Address<N> {
     }
 }
 
+/// A helper usable with [`serde`] API to deserialize [`Address`] with network check.
+///
+/// Since fully validating `Address` needs network check the usual [`serde::Deserialize`] trait can
+/// not be used. `serde` provides [`DeserializeSeed`](serde::de::DeserializeSeed) trait for these
+/// situations. This helper types implements it.
+#[cfg(feature = "serde")]
+#[derive(Debug, Copy, Clone)]
+pub struct DeserializeSeed(Network);
+
+#[cfg(feature = "serde")]
+impl DeserializeSeed {
+    /// Creates a seed that will check whether an address is usable on this network.
+    pub fn new(network: Network) -> Self { DeserializeSeed(network) }
+}
+
+/// The implementation checks whether the address is usable on given network.
+#[cfg(feature = "serde")]
+impl<'de> serde::de::DeserializeSeed<'de> for DeserializeSeed {
+    type Value = Address;
+
+    fn deserialize<D>(self, deserializer: D) -> Result<Self::Value, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        Address::deserialize_checked(deserializer, self.0)
+    }
+}
+
 /// Methods on [`Address`] that can be called on both `Address<NetworkChecked>` and
 /// `Address<NetworkUnchecked>`.
 impl<V: NetworkValidation> Address<V> {
@@ -1010,6 +1038,43 @@ impl Address {
     /// This function doesn't make any allocations.
     pub fn matches_script_pubkey(&self, script_pubkey: &Script) -> bool {
         self.payload().matches_script_pubkey(script_pubkey)
+    }
+
+    /// Deserialize an address using serde and performing network check.
+    ///
+    /// This can be used in [`DeserializeSeed`](serde::de::DeserializeSeed) implementations to
+    /// deserialize an address with network check. Apart from being shorter than rolling your own, this
+    /// also provides much nicer error messages.
+    #[cfg(feature = "serde")]
+    pub fn deserialize_checked<'de, D>(
+        deserializer: D,
+        network: Network,
+    ) -> Result<Address, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::de::{Deserialize, Error};
+
+        let address = Address::<NetworkUnchecked>::deserialize(deserializer)?;
+        // don't use require_network to bypass the complexity of error handling
+        if address.is_valid_for_network(network) {
+            Ok(address.assume_checked())
+        } else {
+            let unexpected_message = match address.network() {
+                Network::Bitcoin => "bitcoin address intended for mainnet",
+                Network::Testnet => "bitcoin address intended for testnet",
+                Network::Regtest => "bitcoin address intended for regtest",
+                Network::Signet => "bitcoin address intended for signet",
+            };
+            let expected_message = match network {
+                Network::Bitcoin => "a bitcoin address usable on mainnet",
+                Network::Testnet => "a bitcoin address usable on testnet",
+                Network::Regtest => "a bitcoin address usable on regtest",
+                Network::Signet => "a bitcoin address usable on signet",
+            };
+            let unexpected = serde::de::Unexpected::Other(unexpected_message);
+            Err(D::Error::invalid_value(unexpected, &expected_message))
+        }
     }
 }
 
