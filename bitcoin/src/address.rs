@@ -41,13 +41,10 @@ use crate::blockdata::constants::{
     MAX_SCRIPT_ELEMENT_SIZE, PUBKEY_ADDRESS_PREFIX_MAIN, PUBKEY_ADDRESS_PREFIX_TEST,
     SCRIPT_ADDRESS_PREFIX_MAIN, SCRIPT_ADDRESS_PREFIX_TEST,
 };
-use crate::blockdata::opcodes;
-use crate::blockdata::opcodes::all::*;
-use crate::blockdata::script::{
-    self, Instruction, PushBytes, PushBytesBuf, PushBytesErrorReport, Script, ScriptBuf,
-};
+use crate::blockdata::script::witness_program::{self, WitnessProgram};
+use crate::blockdata::script::witness_version::{self, WitnessVersion};
+use crate::blockdata::script::{self, Script, ScriptBuf};
 use crate::crypto::key::{PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey};
-use crate::error::ParseIntError;
 use crate::hash_types::{PubkeyHash, ScriptHash};
 use crate::network::constants::Network;
 use crate::prelude::*;
@@ -70,16 +67,10 @@ pub enum Error {
         /// The actual Bech32 variant encoded in the address representation.
         found: bech32::Variant,
     },
-    /// Script version must be 0 to 16 inclusive.
-    InvalidWitnessVersion(u8),
-    /// Unable to parse witness version from string.
-    UnparsableWitnessVersion(ParseIntError),
-    /// Bitcoin script opcode does not match any known witness version, the script is malformed.
-    MalformedWitnessVersion,
-    /// The witness program must be between 2 and 40 bytes in length.
-    InvalidWitnessProgramLength(usize),
-    /// A v0 witness program must be either of length 20 or 32.
-    InvalidSegwitV0ProgramLength(usize),
+    /// A witness version conversion/parsing error.
+    WitnessVersion(witness_version::Error),
+    /// A witness program error.
+    WitnessProgram(witness_program::Error),
     /// An uncompressed pubkey was used where it is not allowed.
     UncompressedPubkey,
     /// Address size more than 520 bytes is not allowed.
@@ -105,20 +96,32 @@ impl fmt::Display for Error {
             Error::Base58(ref e) => write_err!(f, "base58 address encoding error"; e),
             Error::Bech32(ref e) => write_err!(f, "bech32 address encoding error"; e),
             Error::EmptyBech32Payload => write!(f, "the bech32 payload was empty"),
-            Error::InvalidBech32Variant { expected, found } => write!(f, "invalid bech32 checksum variant found {:?} when {:?} was expected", found, expected),
-            Error::InvalidWitnessVersion(v) => write!(f, "invalid witness script version: {}", v),
-            Error::UnparsableWitnessVersion(ref e) => write_err!(f, "incorrect format of a witness version byte"; e),
-            Error::MalformedWitnessVersion => f.write_str("bitcoin script opcode does not match any known witness version, the script is malformed"),
-            Error::InvalidWitnessProgramLength(l) => write!(f, "the witness program must be between 2 and 40 bytes in length: length={}", l),
-            Error::InvalidSegwitV0ProgramLength(l) => write!(f, "a v0 witness program must be either of length 20 or 32 bytes: length={}", l),
-            Error::UncompressedPubkey => write!(f, "an uncompressed pubkey was used where it is not allowed"),
+            Error::InvalidBech32Variant { expected, found } => write!(
+                f,
+                "invalid bech32 checksum variant found {:?} when {:?} was expected",
+                found, expected
+            ),
+            Error::WitnessVersion(ref e) =>
+                write_err!(f, "witness version conversion/parsing error"; e),
+            Error::WitnessProgram(ref e) => write_err!(f, "witness program error"; e),
+            Error::UncompressedPubkey =>
+                write!(f, "an uncompressed pubkey was used where it is not allowed"),
             Error::ExcessiveScriptSize => write!(f, "script size exceed 520 bytes"),
-            Error::UnrecognizedScript => write!(f, "script is not a p2pkh, p2sh or witness program"),
-            Error::UnknownAddressType(ref s) => write!(f, "unknown address type: '{}' is either invalid or not supported in rust-bitcoin", s),
+            Error::UnrecognizedScript =>
+                write!(f, "script is not a p2pkh, p2sh or witness program"),
+            Error::UnknownAddressType(ref s) => write!(
+                f,
+                "unknown address type: '{}' is either invalid or not supported in rust-bitcoin",
+                s
+            ),
             Error::NetworkValidation { required, found, ref address } => {
                 write!(f, "address ")?;
                 address.fmt_internal(f)?; // Using fmt_internal in order to remove the "Address<NetworkUnchecked>(..)" wrapper
-                write!(f, " belongs to network {} which is different from required {}", found, required)
+                write!(
+                    f,
+                    " belongs to network {} which is different from required {}",
+                    found, required
+                )
             }
         }
     }
@@ -132,13 +135,10 @@ impl std::error::Error for Error {
         match self {
             Base58(e) => Some(e),
             Bech32(e) => Some(e),
-            UnparsableWitnessVersion(e) => Some(e),
+            WitnessVersion(e) => Some(e),
+            WitnessProgram(e) => Some(e),
             EmptyBech32Payload
             | InvalidBech32Variant { .. }
-            | InvalidWitnessVersion(_)
-            | MalformedWitnessVersion
-            | InvalidWitnessProgramLength(_)
-            | InvalidSegwitV0ProgramLength(_)
             | UncompressedPubkey
             | ExcessiveScriptSize
             | UnrecognizedScript
@@ -154,6 +154,14 @@ impl From<base58::Error> for Error {
 
 impl From<bech32::Error> for Error {
     fn from(e: bech32::Error) -> Error { Error::Bech32(e) }
+}
+
+impl From<witness_version::Error> for Error {
+    fn from(e: witness_version::Error) -> Error { Error::WitnessVersion(e) }
+}
+
+impl From<witness_program::Error> for Error {
+    fn from(e: witness_program::Error) -> Error { Error::WitnessProgram(e) }
 }
 
 /// The different types of addresses.
@@ -198,195 +206,6 @@ impl FromStr for AddressType {
     }
 }
 
-/// Version of the witness program.
-///
-/// Helps limit possible versions of the witness according to the specification. If a plain `u8`
-/// type was used instead it would mean that the version may be > 16, which would be incorrect.
-///
-/// First byte of `scriptPubkey` in transaction output for transactions starting with opcodes
-/// ranging from 0 to 16 (inclusive).
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
-#[repr(u8)]
-pub enum WitnessVersion {
-    /// Initial version of witness program. Used for P2WPKH and P2WPK outputs
-    V0 = 0,
-    /// Version of witness program used for Taproot P2TR outputs.
-    V1 = 1,
-    /// Future (unsupported) version of witness program.
-    V2 = 2,
-    /// Future (unsupported) version of witness program.
-    V3 = 3,
-    /// Future (unsupported) version of witness program.
-    V4 = 4,
-    /// Future (unsupported) version of witness program.
-    V5 = 5,
-    /// Future (unsupported) version of witness program.
-    V6 = 6,
-    /// Future (unsupported) version of witness program.
-    V7 = 7,
-    /// Future (unsupported) version of witness program.
-    V8 = 8,
-    /// Future (unsupported) version of witness program.
-    V9 = 9,
-    /// Future (unsupported) version of witness program.
-    V10 = 10,
-    /// Future (unsupported) version of witness program.
-    V11 = 11,
-    /// Future (unsupported) version of witness program.
-    V12 = 12,
-    /// Future (unsupported) version of witness program.
-    V13 = 13,
-    /// Future (unsupported) version of witness program.
-    V14 = 14,
-    /// Future (unsupported) version of witness program.
-    V15 = 15,
-    /// Future (unsupported) version of witness program.
-    V16 = 16,
-}
-
-/// Prints [`WitnessVersion`] number (from 0 to 16) as integer, without
-/// any prefix or suffix.
-impl fmt::Display for WitnessVersion {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { write!(f, "{}", *self as u8) }
-}
-
-impl FromStr for WitnessVersion {
-    type Err = Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let version: u8 = crate::parse::int(s).map_err(Error::UnparsableWitnessVersion)?;
-        WitnessVersion::try_from(version)
-    }
-}
-
-impl WitnessVersion {
-    /// Returns integer version number representation for a given [`WitnessVersion`] value.
-    ///
-    /// NB: this is not the same as an integer representation of the opcode signifying witness
-    /// version in bitcoin script. Thus, there is no function to directly convert witness version
-    /// into a byte since the conversion requires context (bitcoin script or just a version number).
-    pub fn to_num(self) -> u8 { self as u8 }
-
-    /// Determines the checksum variant. See BIP-0350 for specification.
-    pub fn bech32_variant(&self) -> bech32::Variant {
-        match self {
-            WitnessVersion::V0 => bech32::Variant::Bech32,
-            _ => bech32::Variant::Bech32m,
-        }
-    }
-}
-
-impl TryFrom<bech32::u5> for WitnessVersion {
-    type Error = Error;
-
-    /// Converts 5-bit unsigned integer value matching single symbol from Bech32(m) address encoding
-    /// ([`bech32::u5`]) into [`WitnessVersion`] variant.
-    ///
-    /// # Returns
-    /// Version of the Witness program.
-    ///
-    /// # Errors
-    /// If the integer does not correspond to any witness version, errors with
-    /// [`Error::InvalidWitnessVersion`].
-    fn try_from(value: bech32::u5) -> Result<Self, Self::Error> { Self::try_from(value.to_u8()) }
-}
-
-impl TryFrom<u8> for WitnessVersion {
-    type Error = Error;
-
-    /// Converts an 8-bit unsigned integer value into [`WitnessVersion`] variant.
-    ///
-    /// # Returns
-    /// Version of the Witness program.
-    ///
-    /// # Errors
-    /// If the integer does not correspond to any witness version, errors with
-    /// [`Error::InvalidWitnessVersion`].
-    fn try_from(no: u8) -> Result<Self, Self::Error> {
-        use WitnessVersion::*;
-
-        Ok(match no {
-            0 => V0,
-            1 => V1,
-            2 => V2,
-            3 => V3,
-            4 => V4,
-            5 => V5,
-            6 => V6,
-            7 => V7,
-            8 => V8,
-            9 => V9,
-            10 => V10,
-            11 => V11,
-            12 => V12,
-            13 => V13,
-            14 => V14,
-            15 => V15,
-            16 => V16,
-            wrong => return Err(Error::InvalidWitnessVersion(wrong)),
-        })
-    }
-}
-
-impl TryFrom<opcodes::All> for WitnessVersion {
-    type Error = Error;
-
-    /// Converts bitcoin script opcode into [`WitnessVersion`] variant.
-    ///
-    /// # Returns
-    /// Version of the Witness program (for opcodes in range of `OP_0`..`OP_16`).
-    ///
-    /// # Errors
-    /// If the opcode does not correspond to any witness version, errors with
-    /// [`Error::MalformedWitnessVersion`].
-    fn try_from(opcode: opcodes::All) -> Result<Self, Self::Error> {
-        match opcode.to_u8() {
-            0 => Ok(WitnessVersion::V0),
-            version if version >= OP_PUSHNUM_1.to_u8() && version <= OP_PUSHNUM_16.to_u8() =>
-                WitnessVersion::try_from(version - OP_PUSHNUM_1.to_u8() + 1),
-            _ => Err(Error::MalformedWitnessVersion),
-        }
-    }
-}
-
-impl<'a> TryFrom<Instruction<'a>> for WitnessVersion {
-    type Error = Error;
-
-    /// Converts bitcoin script [`Instruction`] (parsed opcode) into [`WitnessVersion`] variant.
-    ///
-    /// # Returns
-    /// Version of the Witness program for [`Instruction::Op`] and [`Instruction::PushBytes`] with
-    /// byte value within `1..=16` range.
-    ///
-    /// # Errors
-    /// If the opcode does not correspond to any witness version, errors with
-    /// [`Error::MalformedWitnessVersion`] for the rest of opcodes.
-    fn try_from(instruction: Instruction) -> Result<Self, Self::Error> {
-        match instruction {
-            Instruction::Op(op) => WitnessVersion::try_from(op),
-            Instruction::PushBytes(bytes) if bytes.is_empty() => Ok(WitnessVersion::V0),
-            Instruction::PushBytes(_) => Err(Error::MalformedWitnessVersion),
-        }
-    }
-}
-
-impl From<WitnessVersion> for bech32::u5 {
-    /// Converts [`WitnessVersion`] instance into corresponding Bech32(m) u5-value ([`bech32::u5`]).
-    fn from(version: WitnessVersion) -> Self {
-        bech32::u5::try_from_u8(version.to_num()).expect("WitnessVersion must be 0..=16")
-    }
-}
-
-impl From<WitnessVersion> for opcodes::All {
-    /// Converts [`WitnessVersion`] instance into corresponding Bitcoin scriptopcode (`OP_0`..`OP_16`).
-    fn from(version: WitnessVersion) -> opcodes::All {
-        match version {
-            WitnessVersion::V0 => OP_PUSHBYTES_0,
-            no => opcodes::All::from(OP_PUSHNUM_1.to_u8() + no.to_num() - 1),
-        }
-    }
-}
-
 /// The method used to produce an address.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[non_exhaustive]
@@ -397,43 +216,6 @@ pub enum Payload {
     ScriptHash(ScriptHash),
     /// Segwit address.
     WitnessProgram(WitnessProgram),
-}
-
-/// Witness program as defined in BIP141.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct WitnessProgram {
-    /// The witness program version.
-    version: WitnessVersion,
-    /// The witness program. (Between 2 and 40 bytes)
-    program: PushBytesBuf,
-}
-
-impl WitnessProgram {
-    /// Creates a new witness program.
-    pub fn new<P>(version: WitnessVersion, program: P) -> Result<Self, Error>
-    where
-        P: TryInto<PushBytesBuf>,
-        <P as TryInto<PushBytesBuf>>::Error: PushBytesErrorReport,
-    {
-        let program = program
-            .try_into()
-            .map_err(|error| Error::InvalidWitnessProgramLength(error.input_len()))?;
-        if program.len() < 2 || program.len() > 40 {
-            return Err(Error::InvalidWitnessProgramLength(program.len()));
-        }
-
-        // Specific segwit v0 check. These addresses can never spend funds sent to them.
-        if version == WitnessVersion::V0 && (program.len() != 20 && program.len() != 32) {
-            return Err(Error::InvalidSegwitV0ProgramLength(program.len()));
-        }
-        Ok(WitnessProgram { version, program })
-    }
-
-    /// Returns the witness program version.
-    pub fn version(&self) -> WitnessVersion { self.version }
-
-    /// Returns the witness program.
-    pub fn program(&self) -> &PushBytes { &self.program }
 }
 
 impl Payload {
@@ -476,7 +258,7 @@ impl Payload {
             Payload::ScriptHash(ref hash) if script.is_p2sh() =>
                 &script.as_bytes()[2..22] == <ScriptHash as AsRef<[u8; 20]>>::as_ref(hash),
             Payload::WitnessProgram(ref prog) if script.is_witness_program() =>
-                &script.as_bytes()[2..] == prog.program.as_bytes(),
+                &script.as_bytes()[2..] == prog.program().as_bytes(),
             Payload::PubkeyHash(_) | Payload::ScriptHash(_) | Payload::WitnessProgram(_) => false,
         }
     }
@@ -1800,6 +1582,8 @@ mod tests {
 
     #[test]
     fn test_fail_address_from_script() {
+        use crate::witness_program;
+
         let bad_p2wpkh = ScriptBuf::from_hex("0014dbc5b0a8f9d4353b4b54c3db48846bb15abfec").unwrap();
         let bad_p2wsh = ScriptBuf::from_hex(
             "00202d4fa2eb233d008cc83206fa2f4f2e60199000f5b857a835e3172323385623",
@@ -1813,7 +1597,7 @@ mod tests {
         assert_eq!(Address::from_script(&bad_p2wsh, Network::Bitcoin), expected);
         assert_eq!(
             Address::from_script(&invalid_segwitv0_script, Network::Bitcoin),
-            Err(Error::InvalidSegwitV0ProgramLength(17))
+            Err(Error::WitnessProgram(witness_program::Error::InvalidSegwitV0Length(17)))
         );
     }
 
