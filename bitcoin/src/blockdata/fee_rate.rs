@@ -112,9 +112,11 @@ impl Mul<Weight> for FeeRate {
 }
 
 impl Div<Weight> for Amount {
-    type Output = FeeRate;
+    type Output = Option<FeeRate>;
 
-    fn div(self, rhs: Weight) -> Self::Output { FeeRate(self.to_sat() * 1000 / rhs.to_wu()) }
+    fn div(self, rhs: Weight) -> Self::Output {
+        self.to_sat().checked_mul(1_000).map(|s| FeeRate(s / rhs.to_wu()))
+    }
 }
 
 crate::parse::impl_parse_str_from_int_infallible!(FeeRate, u64, from_sat_per_kwu);
@@ -198,5 +200,23 @@ mod tests {
 
         let product: Option<Amount> = weight * fee_rate;
         assert_eq!(None, product);
+    }
+
+    #[test]
+    fn weight_div_amount_trait_test() {
+        let weight = Weight::from_wu(1_000);
+        let amount = Amount::from_sat(10);
+
+        let quotient: FeeRate = (amount / weight).unwrap();
+        assert_eq!(FeeRate(10), quotient);
+    }
+
+    #[test]
+    fn weight_div_amount_trait_overflow_test() {
+        let weight = Weight::from_wu(1_000);
+        let amount = Amount::from_sat(u64::MAX);
+
+        let quotient = amount / weight;
+        assert_eq!(None, quotient);
     }
 }
