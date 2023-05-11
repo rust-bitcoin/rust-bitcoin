@@ -98,10 +98,10 @@ impl From<FeeRate> for u64 {
 
 /// Computes ceiling so that fee computation is conservative.
 impl Mul<FeeRate> for Weight {
-    type Output = Amount;
+    type Output = Option<Amount>;
 
     fn mul(self, rhs: FeeRate) -> Self::Output {
-        Amount::from_sat((rhs.to_sat_per_kwu() * self.to_wu() + 999) / 1000)
+        rhs.to_sat_per_kwu().checked_mul(self.to_wu()).map(|s| Amount::from_sat((s + 999) / 1_000))
     }
 }
 
@@ -180,5 +180,23 @@ mod tests {
 
         let fee_rate = FeeRate(10).checked_div(0);
         assert!(fee_rate.is_none());
+    }
+
+    #[test]
+    fn weight_mul_feerate_trait_test() {
+        let fee_rate = FeeRate(10);
+        let weight = Weight::from_wu(1_000);
+
+        let product: Option<Amount> = weight * fee_rate;
+        assert_eq!(Amount::from_sat(10), product.unwrap());
+    }
+
+    #[test]
+    fn weight_mul_feerate_trait_overflow_test() {
+        let fee_rate = FeeRate(u64::MAX);
+        let weight = Weight::from_wu(1_000);
+
+        let product: Option<Amount> = weight * fee_rate;
+        assert_eq!(None, product);
     }
 }
