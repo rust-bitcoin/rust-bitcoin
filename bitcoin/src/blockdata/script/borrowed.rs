@@ -9,9 +9,9 @@ use core::ops::{Index, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, Ran
 use hashes::Hash;
 use secp256k1::{Secp256k1, Verification};
 
-use crate::address::WitnessVersion;
 use crate::blockdata::opcodes::all::*;
 use crate::blockdata::opcodes::{self};
+use crate::blockdata::script::witness_version::WitnessVersion;
 #[cfg(feature = "bitcoinconsensus")]
 use crate::blockdata::script::Error;
 use crate::blockdata::script::{

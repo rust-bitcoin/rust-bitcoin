@@ -72,6 +72,8 @@ mod owned;
 mod push_bytes;
 #[cfg(test)]
 mod tests;
+pub mod witness_program;
+pub mod witness_version;
 
 pub use self::borrowed::*;
 pub use self::builder::*;
