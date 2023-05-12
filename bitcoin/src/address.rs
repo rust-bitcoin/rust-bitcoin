@@ -769,9 +769,9 @@ impl<N: NetworkValidation> serde::Serialize for Address<N> {
 
 /// A helper usable with [`serde`] API to deserialize [`Address`] with network check.
 ///
-/// Since fully validating `Address` needs network check the usual [`serde::Deserialize`] trait can
-/// not be used. `serde` provides [`DeserializeSeed`](serde::de::DeserializeSeed) trait for these
-/// situations. This helper types implements it.
+/// Fully validating an `Address` needs a network check so the usual [`serde::Deserialize`] trait
+/// can not be used. `serde` provides the [`DeserializeSeed`](serde::de::DeserializeSeed) trait for
+/// such situations. This helper type implements it.
 #[cfg(feature = "serde")]
 #[derive(Debug, Copy, Clone)]
 pub struct DeserializeSeed(Network);
