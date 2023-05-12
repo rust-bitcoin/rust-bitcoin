@@ -13,15 +13,11 @@ use core::fmt;
 use crate::blockdata::script::witness_version::WitnessVersion;
 use crate::blockdata::script::{PushBytes, PushBytesBuf, PushBytesErrorReport};
 
-/// The segregated witness program.
+/// The segregated witness program (between 2 and 40 bytes).
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct WitnessProgram {
-    /// The witness program version number.
-    version: WitnessVersion,
-    /// The witness program (between 2 and 40 bytes).
-    program: PushBytesBuf,
-}
+pub struct WitnessProgram(PushBytesBuf);
 
+#[allow(clippy::len_without_is_empty)] // `is_empty` is always false.
 impl WitnessProgram {
     /// Creates a new witness program.
     pub fn new<P>(version: WitnessVersion, program: P) -> Result<Self, Error>
@@ -40,14 +36,17 @@ impl WitnessProgram {
         if version == WitnessVersion::V0 && (program.len() != 20 && program.len() != 32) {
             return Err(InvalidSegwitV0Length(program.len()));
         }
-        Ok(WitnessProgram { version, program })
+        Ok(WitnessProgram(program))
     }
 
-    /// Returns the witness program version.
-    pub fn version(&self) -> WitnessVersion { self.version }
+    /// Returns the witness program as a [`PushBytes`] reference.
+    pub fn as_push_bytes(&self) -> &PushBytes { &self.0 }
 
-    /// Returns the witness program.
-    pub fn program(&self) -> &PushBytes { &self.program }
+    /// Returns the witness program as a slice reference.
+    pub fn as_bytes(&self) -> &[u8] { self.as_push_bytes().as_bytes() }
+
+    /// The length of the witness program.
+    pub fn len(&self) -> usize { self.as_bytes().len() }
 }
 
 /// Witness program error.

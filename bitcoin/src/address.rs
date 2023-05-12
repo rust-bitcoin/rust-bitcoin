@@ -215,7 +215,12 @@ pub enum Payload {
     /// P2SH address.
     ScriptHash(ScriptHash),
     /// Segwit address.
-    WitnessProgram(WitnessProgram),
+    Segwit {
+        /// Witness version (version byte of the scriptPubkey).
+        version: WitnessVersion,
+        /// Witness program (as defined by BIP141).
+        program: WitnessProgram,
+    },
 }
 
 impl Payload {
@@ -227,14 +232,14 @@ impl Payload {
         } else if script.is_p2sh() {
             let bytes = script.as_bytes()[2..22].try_into().expect("statically 20B long");
             Payload::ScriptHash(ScriptHash::from_byte_array(bytes))
-        } else if script.is_witness_program() {
+        } else if script.is_segwit_script_pubkey() {
             let opcode = script.first_opcode().expect("witness_version guarantees len() > 4");
 
-            let witness_program = script.as_bytes()[2..].to_vec();
+            let version = WitnessVersion::try_from(opcode)?;
+            let program = script.as_bytes()[2..].to_vec();
+            let program = WitnessProgram::new(version, program)?;
 
-            let witness_program =
-                WitnessProgram::new(WitnessVersion::try_from(opcode)?, witness_program)?;
-            Payload::WitnessProgram(witness_program)
+            Payload::Segwit { version, program }
         } else {
             return Err(Error::UnrecognizedScript);
         })
@@ -245,7 +250,8 @@ impl Payload {
         match *self {
             Payload::PubkeyHash(ref hash) => ScriptBuf::new_p2pkh(hash),
             Payload::ScriptHash(ref hash) => ScriptBuf::new_p2sh(hash),
-            Payload::WitnessProgram(ref prog) => ScriptBuf::new_witness_program(prog),
+            Payload::Segwit { ref version, ref program } =>
+                ScriptBuf::new_segwit_script_pubkey(*version, program),
         }
     }
 
@@ -257,9 +263,9 @@ impl Payload {
                 &script.as_bytes()[3..23] == <PubkeyHash as AsRef<[u8; 20]>>::as_ref(hash),
             Payload::ScriptHash(ref hash) if script.is_p2sh() =>
                 &script.as_bytes()[2..22] == <ScriptHash as AsRef<[u8; 20]>>::as_ref(hash),
-            Payload::WitnessProgram(ref prog) if script.is_witness_program() =>
-                &script.as_bytes()[2..] == prog.program().as_bytes(),
-            Payload::PubkeyHash(_) | Payload::ScriptHash(_) | Payload::WitnessProgram(_) => false,
+            Payload::Segwit { version: _, ref program } if script.is_segwit_script_pubkey() =>
+                &script.as_bytes()[2..] == program.as_bytes(),
+            Payload::PubkeyHash(_) | Payload::ScriptHash(_) | Payload::Segwit { .. } => false,
         }
     }
 
@@ -278,11 +284,10 @@ impl Payload {
 
     /// Create a witness pay to public key payload from a public key
     pub fn p2wpkh(pk: &PublicKey) -> Result<Payload, Error> {
-        let prog = WitnessProgram::new(
-            WitnessVersion::V0,
-            pk.wpubkey_hash().ok_or(Error::UncompressedPubkey)?,
-        )?;
-        Ok(Payload::WitnessProgram(prog))
+        let version = WitnessVersion::V0;
+        let program = pk.wpubkey_hash().ok_or(Error::UncompressedPubkey)?;
+        let program = WitnessProgram::new(version, program)?;
+        Ok(Payload::Segwit { version, program })
     }
 
     /// Create a pay to script payload that embeds a witness pay to public key
@@ -296,9 +301,10 @@ impl Payload {
 
     /// Create a witness pay to script hash payload.
     pub fn p2wsh(script: &Script) -> Payload {
-        let prog = WitnessProgram::new(WitnessVersion::V0, script.wscript_hash())
+        let version = WitnessVersion::V0;
+        let program = WitnessProgram::new(version, script.wscript_hash())
             .expect("wscript_hash has len 32 compatible with segwitv0");
-        Payload::WitnessProgram(prog)
+        Payload::Segwit { version, program }
     }
 
     /// Create a pay to script payload that embeds a witness pay to script hash address
@@ -314,28 +320,30 @@ impl Payload {
         internal_key: UntweakedPublicKey,
         merkle_root: Option<TapNodeHash>,
     ) -> Payload {
+        let version = WitnessVersion::V1;
         let (output_key, _parity) = internal_key.tap_tweak(secp, merkle_root);
-        let prog = WitnessProgram::new(WitnessVersion::V1, output_key.to_inner().serialize())
+        let program = WitnessProgram::new(version, output_key.to_inner().serialize())
             .expect("taproot output key has len 32 <= 40");
-        Payload::WitnessProgram(prog)
+        Payload::Segwit { version, program }
     }
 
     /// Create a pay to taproot payload from a pre-tweaked output key.
     ///
     /// This method is not recommended for use and [Payload::p2tr()] should be used where possible.
     pub fn p2tr_tweaked(output_key: TweakedPublicKey) -> Payload {
-        let prog = WitnessProgram::new(WitnessVersion::V1, output_key.to_inner().serialize())
+        let version = WitnessVersion::V1;
+        let program = WitnessProgram::new(version, output_key.to_inner().serialize())
             .expect("taproot output key has len 32 <= 40");
-        Payload::WitnessProgram(prog)
+        Payload::Segwit { version, program }
     }
 
     /// Returns a byte slice of the inner program of the payload. If the payload
     /// is a script hash or pubkey hash, a reference to the hash is returned.
     fn inner_prog_as_bytes(&self) -> &[u8] {
-        match self {
-            Payload::ScriptHash(hash) => hash.as_ref(),
-            Payload::PubkeyHash(hash) => hash.as_ref(),
-            Payload::WitnessProgram(prog) => prog.program().as_bytes(),
+        match *self {
+            Payload::ScriptHash(ref hash) => hash.as_ref(),
+            Payload::PubkeyHash(ref hash) => hash.as_ref(),
+            Payload::Segwit { version: _, ref program } => program.as_bytes(),
         }
     }
 }
@@ -369,8 +377,7 @@ impl<'a> fmt::Display for AddressEncoding<'a> {
                 prefixed[1..].copy_from_slice(&hash[..]);
                 base58::encode_check_to_fmt(fmt, &prefixed[..])
             }
-            Payload::WitnessProgram(witness_prog) => {
-                let (version, prog) = (witness_prog.version(), witness_prog.program());
+            Payload::Segwit { version, program } => {
                 let mut upper_writer;
                 let writer = if fmt.alternate() {
                     upper_writer = UpperWriter(fmt);
@@ -380,8 +387,8 @@ impl<'a> fmt::Display for AddressEncoding<'a> {
                 };
                 let mut bech32_writer =
                     bech32::Bech32Writer::new(self.bech32_hrp, version.bech32_variant(), writer)?;
-                bech32::WriteBase32::write_u5(&mut bech32_writer, version.into())?;
-                bech32::ToBase32::write_base32(&prog.as_bytes(), &mut bech32_writer)
+                bech32::WriteBase32::write_u5(&mut bech32_writer, (*version).into())?;
+                bech32::ToBase32::write_base32(&program.as_bytes(), &mut bech32_writer)
             }
         }
     }
@@ -580,17 +587,17 @@ impl<V: NetworkValidation> Address<V> {
         match self.payload() {
             Payload::PubkeyHash(_) => Some(AddressType::P2pkh),
             Payload::ScriptHash(_) => Some(AddressType::P2sh),
-            Payload::WitnessProgram(ref prog) => {
+            Payload::Segwit { ref version, ref program } => {
                 // BIP-141 p2wpkh or p2wsh addresses.
-                match prog.version() {
-                    WitnessVersion::V0 => match prog.program().len() {
+                match version {
+                    WitnessVersion::V0 => match program.len() {
                         20 => Some(AddressType::P2wpkh),
                         32 => Some(AddressType::P2wsh),
                         _ => unreachable!(
                             "Address creation invariant violation: invalid program length"
                         ),
                     },
-                    WitnessVersion::V1 if prog.program().len() == 32 => Some(AddressType::P2tr),
+                    WitnessVersion::V1 if program.len() == 32 => Some(AddressType::P2tr),
                     _ => None,
                 }
             }
@@ -942,8 +949,7 @@ impl FromStr for Address<NetworkUnchecked> {
                 let (v, p5) = payload.split_at(1);
                 (WitnessVersion::try_from(v[0])?, bech32::FromBase32::from_base32(p5)?)
             };
-
-            let witness_program = WitnessProgram::new(version, program)?;
+            let program = WitnessProgram::new(version, program)?;
 
             // Encoding check
             let expected = version.bech32_variant();
@@ -951,7 +957,7 @@ impl FromStr for Address<NetworkUnchecked> {
                 return Err(Error::InvalidBech32Variant { expected, found: variant });
             }
 
-            return Ok(Address::new(network, Payload::WitnessProgram(witness_program)));
+            return Ok(Address::new(network, Payload::Segwit { version, program }));
         }
 
         // Base58
@@ -1140,12 +1146,13 @@ mod tests {
 
     #[test]
     fn test_non_existent_segwit_version() {
+        let version = WitnessVersion::V13;
         // 40-byte program
         let program = hex!(
             "654f6ea368e0acdfd92976b7c2103a1b26313f430654f6ea368e0acdfd92976b7c2103a1b26313f4"
         );
-        let witness_prog = WitnessProgram::new(WitnessVersion::V13, program.to_vec()).unwrap();
-        let addr = Address::new(Bitcoin, Payload::WitnessProgram(witness_prog));
+        let program = WitnessProgram::new(version, program.to_vec()).unwrap();
+        let addr = Address::new(Bitcoin, Payload::Segwit { version, program });
         roundtrips(&addr);
     }
 
@@ -1390,13 +1397,10 @@ mod tests {
         ];
         let segwit_payload = (0..=16)
             .map(|version| {
-                Payload::WitnessProgram(
-                    WitnessProgram::new(
-                        WitnessVersion::try_from(version).unwrap(),
-                        vec![0xab; 32], // Choose 32 to make test case valid for all witness versions(including v0)
-                    )
-                    .unwrap(),
-                )
+                let version = WitnessVersion::try_from(version).unwrap();
+                // Choose 32 to make test case valid for all witness versions(including v0)
+                let program = WitnessProgram::new(version, vec![0xab; 32]).unwrap();
+                Payload::Segwit { version, program }
             })
             .collect::<Vec<_>>();
 

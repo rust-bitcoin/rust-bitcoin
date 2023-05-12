@@ -414,7 +414,7 @@ impl PartiallySignedTransaction {
         let spk = utxo.script_pubkey.clone();
 
         // Anything that is not segwit and is not p2sh is `Bare`.
-        if !(spk.is_witness_program() || spk.is_p2sh()) {
+        if !(spk.is_segwit_script_pubkey() || spk.is_p2sh()) {
             return Ok(OutputType::Bare);
         }
 
@@ -1810,10 +1810,11 @@ mod tests {
         psbt.inputs[0].bip32_derivation = map;
 
         // Second input is unspendable by us e.g., from another wallet that supports future upgrades.
-        let unknown_prog = WitnessProgram::new(WitnessVersion::V4, vec![0xaa; 34]).unwrap();
+        let version = WitnessVersion::V4;
+        let unknown_prog = WitnessProgram::new(version, vec![0xaa; 34]).unwrap();
         let txout_unknown_future = TxOut {
             value: Amount::from_sat(10),
-            script_pubkey: ScriptBuf::new_witness_program(&unknown_prog),
+            script_pubkey: ScriptBuf::new_segwit_script_pubkey(version, &unknown_prog),
         };
         psbt.inputs[1].witness_utxo = Some(txout_unknown_future);
 

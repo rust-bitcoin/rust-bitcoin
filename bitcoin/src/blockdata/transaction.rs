@@ -507,7 +507,7 @@ impl TxOut {
     pub fn minimal_non_dust(script_pubkey: ScriptBuf) -> Self {
         let len = script_pubkey.len() + VarInt(script_pubkey.len() as u64).len() + 8;
         let len = len
-            + if script_pubkey.is_witness_program() {
+            + if script_pubkey.is_segwit_script_pubkey() {
                 32 + 4 + 1 + (107 / 4) + 4
             } else {
                 32 + 4 + 1 + 107 + 4
