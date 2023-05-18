@@ -277,6 +277,10 @@ impl std::error::Error for Error {
     }
 }
 
+impl From<io::Error> for Error {
+    fn from(e: io::Error) -> Self { Error::Io(e.kind()) }
+}
+
 impl<'u, T> Prevouts<'u, T>
 where
     T: Borrow<TxOut>,
@@ -1083,10 +1087,6 @@ impl<R: BorrowMut<Transaction>> SighashCache<R> {
     pub fn witness_mut(&mut self, input_index: usize) -> Option<&mut Witness> {
         self.tx.borrow_mut().input.get_mut(input_index).map(|i| &mut i.witness)
     }
-}
-
-impl From<io::Error> for Error {
-    fn from(e: io::Error) -> Self { Error::Io(e.kind()) }
 }
 
 /// The `Annex` struct is a slice wrapper enforcing first byte is `0x50`.
