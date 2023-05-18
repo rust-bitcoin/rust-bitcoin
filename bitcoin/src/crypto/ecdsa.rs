@@ -182,7 +182,7 @@ impl<'a> IntoIterator for &'a SerializedSignature {
     fn into_iter(self) -> Self::IntoIter { (*self).iter() }
 }
 
-/// A key-related error.
+/// An ECDSA signature-related error.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Error {
