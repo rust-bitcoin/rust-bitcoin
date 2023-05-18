@@ -1285,8 +1285,6 @@ const fn predict_weight_internal(
 
 /// Predicts the weight of a to-be-constructed transaction in const context.
 ///
-/// *Important: only available in Rust 1.46+*
-///
 /// This is a `const` version of [`predict_weight`] which only allows slices due to current Rust
 /// limitations around `const fn`. Because of these limitations it may be less efficient than
 /// `predict_weight` and thus is intended to be only used in `const` context.
@@ -1403,8 +1401,6 @@ impl InputWeightPrediction {
     }
 
     /// Computes the prediction for a single input in `const` context.
-    ///
-    /// *Important: only available in Rust 1.46+*
     ///
     /// This is a `const` version of [`new`](Self::new) which only allows slices due to current Rust
     /// limitations around `const fn`. Because of these limitations it may be less efficient than
