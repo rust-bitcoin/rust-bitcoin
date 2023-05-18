@@ -176,7 +176,7 @@ impl Deserialize for ecdsa::Signature {
         // would use check the signature assuming sighash_u32 as `0x01`.
         ecdsa::Signature::from_slice(bytes).map_err(|e| match e {
             ecdsa::Error::EmptySignature => Error::InvalidEcdsaSignature(e),
-            ecdsa::Error::NonStandardSighashType(flag) => Error::NonStandardSighashType(flag),
+            ecdsa::Error::SighashType(err) => Error::NonStandardSighashType(err.0),
             ecdsa::Error::Secp256k1(..) => Error::InvalidEcdsaSignature(e),
             ecdsa::Error::Hex(..) => unreachable!("Decoding from slice, not hex"),
         })

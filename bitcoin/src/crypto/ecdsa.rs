@@ -37,8 +37,7 @@ impl Signature {
     /// Deserializes from slice following the standardness rules for [`EcdsaSighashType`].
     pub fn from_slice(sl: &[u8]) -> Result<Self, Error> {
         let (hash_ty, sig) = sl.split_last().ok_or(Error::EmptySignature)?;
-        let hash_ty = EcdsaSighashType::from_standard(*hash_ty as u32)
-            .map_err(|_| Error::NonStandardSighashType(*hash_ty as u32))?;
+        let hash_ty = EcdsaSighashType::from_standard(*hash_ty as u32)?;
         let sig = secp256k1::ecdsa::Signature::from_der(sig).map_err(Error::Secp256k1)?;
         Ok(Signature { sig, hash_ty })
     }
@@ -189,8 +188,8 @@ impl<'a> IntoIterator for &'a SerializedSignature {
 pub enum Error {
     /// Hex decoding error
     Hex(hex::HexToBytesError),
-    /// Base58 encoding error
-    NonStandardSighashType(u32),
+    /// Non-standard sighash type
+    SighashType(NonStandardSighashTypeError),
     /// Empty Signature
     EmptySignature,
     /// secp256k1-related error
@@ -203,8 +202,7 @@ impl fmt::Display for Error {
 
         match *self {
             Hex(ref e) => write_err!(f, "signature hex decoding error"; e),
-            NonStandardSighashType(hash_ty) =>
-                write!(f, "non-standard signature hash type {}", hash_ty),
+            SighashType(ref e) => write_err!(f, "non-standard signature hash type"; e),
             EmptySignature => write!(f, "empty ECDSA signature"),
             Secp256k1(ref e) => write_err!(f, "invalid ECDSA signature"; e),
         }
@@ -219,7 +217,8 @@ impl std::error::Error for Error {
         match self {
             Hex(e) => Some(e),
             Secp256k1(e) => Some(e),
-            NonStandardSighashType(_) | EmptySignature => None,
+            SighashType(e) => Some(e),
+            EmptySignature => None,
         }
     }
 }
@@ -229,7 +228,7 @@ impl From<secp256k1::Error> for Error {
 }
 
 impl From<NonStandardSighashTypeError> for Error {
-    fn from(err: NonStandardSighashTypeError) -> Self { Error::NonStandardSighashType(err.0) }
+    fn from(err: NonStandardSighashTypeError) -> Self { Error::SighashType(err) }
 }
 
 impl From<hex::HexToBytesError> for Error {
