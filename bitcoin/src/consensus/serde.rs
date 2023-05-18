@@ -39,6 +39,7 @@ pub mod hex {
     use core::marker::PhantomData;
 
     use internals::hex::BufEncoder;
+    use internals::write_err;
 
     /// Marker for upper/lower case type-level flags ("type-level enum").
     ///
@@ -104,9 +105,31 @@ pub mod hex {
     #[derive(Debug)]
     pub struct DecodeInitError(hashes::hex::Error);
 
+    impl fmt::Display for DecodeInitError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write_err!(f, "creation of decoder from hex failed"; self.0)
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for DecodeInitError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+    }
+
     /// Error returned when a hex string contains invalid characters.
     #[derive(Debug)]
     pub struct DecodeError(hashes::hex::Error);
+
+    impl fmt::Display for DecodeError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write_err!(f, "decoding hex failed"; self.0)
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl std::error::Error for DecodeError {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { Some(&self.0) }
+    }
 
     /// Hex decoder state.
     pub struct Decoder<'a>(hashes::hex::HexIterator<'a>);
