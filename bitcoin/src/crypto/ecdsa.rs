@@ -13,7 +13,7 @@ use secp256k1;
 
 use crate::prelude::*;
 use crate::script::PushBytes;
-use crate::sighash::{EcdsaSighashType, NonStandardSighashType};
+use crate::sighash::{EcdsaSighashType, NonStandardSighashTypeError};
 
 const MAX_SIG_LEN: usize = 73;
 
@@ -226,8 +226,8 @@ impl From<secp256k1::Error> for Error {
     fn from(e: secp256k1::Error) -> Error { Error::Secp256k1(e) }
 }
 
-impl From<NonStandardSighashType> for Error {
-    fn from(err: NonStandardSighashType) -> Self { Error::NonStandardSighashType(err.0) }
+impl From<NonStandardSighashTypeError> for Error {
+    fn from(err: NonStandardSighashTypeError) -> Self { Error::NonStandardSighashType(err.0) }
 }
 
 impl From<hex::HexToBytesError> for Error {

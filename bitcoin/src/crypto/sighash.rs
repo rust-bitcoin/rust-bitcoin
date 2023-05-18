@@ -446,7 +446,7 @@ impl EcdsaSighashType {
     /// # Errors
     ///
     /// If `n` is a non-standard sighash value.
-    pub fn from_standard(n: u32) -> Result<EcdsaSighashType, NonStandardSighashType> {
+    pub fn from_standard(n: u32) -> Result<EcdsaSighashType, NonStandardSighashTypeError> {
         use EcdsaSighashType::*;
 
         match n {
@@ -457,7 +457,7 @@ impl EcdsaSighashType {
             0x81 => Ok(AllPlusAnyoneCanPay),
             0x82 => Ok(NonePlusAnyoneCanPay),
             0x83 => Ok(SinglePlusAnyoneCanPay),
-            non_standard => Err(NonStandardSighashType(non_standard)),
+            non_standard => Err(NonStandardSighashTypeError(non_standard)),
         }
     }
 
@@ -518,15 +518,15 @@ impl TapSighashType {
 /// This type is consensus valid but an input including it would prevent the transaction from
 /// being relayed on today's Bitcoin network.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct NonStandardSighashType(pub u32);
+pub struct NonStandardSighashTypeError(pub u32);
 
-impl fmt::Display for NonStandardSighashType {
+impl fmt::Display for NonStandardSighashTypeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Non standard sighash type {}", self.0)
     }
 }
 
-impl_std_error!(NonStandardSighashType);
+impl_std_error!(NonStandardSighashTypeError);
 
 /// Error returned for failure during parsing one of the sighash types.
 ///
