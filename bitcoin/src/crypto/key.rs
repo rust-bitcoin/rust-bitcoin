@@ -49,7 +49,7 @@ impl fmt::Display for Error {
             InvalidKeyPrefix(ref b) => write!(f, "key prefix invalid: {}", b),
             Hex(ref e) => write_err!(f, "key hex decoding error"; e),
             InvalidHexLength(got) =>
-                write!(f, "PublicKey hex should be 66 or 130 digits long, got: {}", got),
+                write!(f, "pubkey hex should be 66 or 130 digits long, got: {}", got),
         }
     }
 }

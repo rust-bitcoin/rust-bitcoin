@@ -248,12 +248,12 @@ impl fmt::Display for Error {
 
         match self {
             Io(error_kind) => write!(f, "writer errored: {:?}", error_kind),
-            IndexOutOfInputsBounds { index, inputs_size } => write!(f, "Requested index ({}) is greater or equal than the number of transaction inputs ({})", index, inputs_size),
+            IndexOutOfInputsBounds { index, inputs_size } => write!(f, "requested index ({}) is greater or equal than the number of transaction inputs ({})", index, inputs_size),
             SingleWithoutCorrespondingOutput { index, outputs_size } => write!(f, "SIGHASH_SINGLE for input ({}) haven't a corresponding output (#outputs:{})", index, outputs_size),
-            PrevoutsSize => write!(f, "Number of supplied prevouts differs from the number of inputs in transaction"),
-            PrevoutIndex => write!(f, "The index requested is greater than available prevouts or different from the provided [Provided::Anyone] index"),
-            PrevoutKind => write!(f, "A single prevout has been provided but all prevouts are needed without `ANYONECANPAY`"),
-            WrongAnnex => write!(f, "Annex must be at least one byte long and the first bytes must be `0x50`"),
+            PrevoutsSize => write!(f, "number of supplied prevouts differs from the number of inputs in transaction"),
+            PrevoutIndex => write!(f, "the index requested is greater than available prevouts or different from the provided [Provided::Anyone] index"),
+            PrevoutKind => write!(f, "a single prevout has been provided but all prevouts are needed without `ANYONECANPAY`"),
+            WrongAnnex => write!(f, "annex must be at least one byte long and the first bytes must be `0x50`"),
             InvalidSighashType(hash_ty) => write!(f, "Invalid taproot signature hash type : {} ", hash_ty),
         }
     }
@@ -325,8 +325,8 @@ impl<'s> ScriptPath<'s> {
         self.leaf_version
             .to_consensus()
             .consensus_encode(&mut enc)
-            .expect("Writing to hash enging should never fail");
-        self.script.consensus_encode(&mut enc).expect("Writing to hash enging should never fail");
+            .expect("writing to hash enging should never fail");
+        self.script.consensus_encode(&mut enc).expect("writing to hash enging should never fail");
 
         TapLeafHash::from_engine(enc)
     }
@@ -534,7 +534,7 @@ pub struct NonStandardSighashTypeError(pub u32);
 
 impl fmt::Display for NonStandardSighashTypeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Non standard sighash type {}", self.0)
+        write!(f, "non-standard sighash type {}", self.0)
     }
 }
 
@@ -551,7 +551,7 @@ pub struct SighashTypeParseError {
 
 impl fmt::Display for SighashTypeParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Unrecognized SIGHASH string '{}'", self.unrecognized)
+        write!(f, "unrecognized SIGHASH string '{}'", self.unrecognized)
     }
 }
 
@@ -1666,7 +1666,7 @@ mod tests {
         for s in sht_mistakes {
             assert_eq!(
                 TapSighashType::from_str(s).unwrap_err().to_string(),
-                format!("Unrecognized SIGHASH string '{}'", s)
+                format!("unrecognized SIGHASH string '{}'", s)
             );
         }
     }
