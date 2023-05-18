@@ -192,7 +192,7 @@ pub enum Error {
     SighashType(NonStandardSighashTypeError),
     /// Empty Signature
     EmptySignature,
-    /// secp256k1-related error
+    /// A secp256k1 error
     Secp256k1(secp256k1::Error),
 }
 
@@ -204,7 +204,7 @@ impl fmt::Display for Error {
             Hex(ref e) => write_err!(f, "signature hex decoding error"; e),
             SighashType(ref e) => write_err!(f, "non-standard signature hash type"; e),
             EmptySignature => write!(f, "empty ECDSA signature"),
-            Secp256k1(ref e) => write_err!(f, "invalid ECDSA signature"; e),
+            Secp256k1(ref e) => write_err!(f, "secp256k1"; e),
         }
     }
 }

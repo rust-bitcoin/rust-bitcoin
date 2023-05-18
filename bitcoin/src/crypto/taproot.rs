@@ -64,7 +64,7 @@ impl Signature {
 pub enum SigFromSliceError {
     /// Invalid signature hash type.
     SighashType(InvalidSighashTypeError),
-    /// Signature has valid size but does not parse correctly
+    /// A secp256k1 error.
     Secp256k1(secp256k1::Error),
     /// Invalid taproot signature size
     InvalidSignatureSize(usize),
@@ -75,9 +75,8 @@ impl fmt::Display for SigFromSliceError {
         use SigFromSliceError::*;
 
         match *self {
-            SighashType(ref e) => write_err!(f, "invalid signature hash type"; e),
-            Secp256k1(ref e) =>
-                write_err!(f, "taproot signature has correct len but is malformed"; e),
+            SighashType(ref e) => write_err!(f, "sighash"; e),
+            Secp256k1(ref e) => write_err!(f, "secp256k1"; e),
             InvalidSignatureSize(sz) => write!(f, "invalid taproot signature size: {}", sz),
         }
     }

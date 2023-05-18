@@ -679,9 +679,9 @@ impl From<TweakedKeyPair> for TweakedPublicKey {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Error {
-    /// Base58 encoding error
+    /// A base58 error.
     Base58(base58::Error),
-    /// secp256k1-related error
+    /// A secp256k1 error.
     Secp256k1(secp256k1::Error),
     /// Invalid key prefix error
     InvalidKeyPrefix(u8),
@@ -696,10 +696,10 @@ impl fmt::Display for Error {
         use Error::*;
 
         match *self {
-            Base58(ref e) => write_err!(f, "key base58 error"; e),
-            Secp256k1(ref e) => write_err!(f, "key secp256k1 error"; e),
+            Base58(ref e) => write_err!(f, "base58"; e),
+            Secp256k1(ref e) => write_err!(f, "secp256k1"; e),
             InvalidKeyPrefix(ref b) => write!(f, "key prefix invalid: {}", b),
-            Hex(ref e) => write_err!(f, "key hex decoding error"; e),
+            Hex(ref e) => write_err!(f, "hex"; e),
             InvalidHexLength(got) =>
                 write!(f, "pubkey hex should be 66 or 130 digits long, got: {}", got),
         }
