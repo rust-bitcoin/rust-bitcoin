@@ -199,12 +199,14 @@ pub enum Error {
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use Error::*;
+
         match *self {
-            Error::Hex(ref e) => write_err!(f, "Signature hex decoding error"; e),
-            Error::NonStandardSighashType(hash_ty) =>
-                write!(f, "Non standard signature hash type {}", hash_ty),
-            Error::EmptySignature => write!(f, "Empty ECDSA signature"),
-            Error::Secp256k1(ref e) => write_err!(f, "invalid ECDSA signature"; e),
+            Hex(ref e) => write_err!(f, "signature hex decoding error"; e),
+            NonStandardSighashType(hash_ty) =>
+                write!(f, "non-standard signature hash type {}", hash_ty),
+            EmptySignature => write!(f, "empty ECDSA signature"),
+            Secp256k1(ref e) => write_err!(f, "invalid ECDSA signature"; e),
         }
     }
 }

@@ -41,12 +41,14 @@ pub enum Error {
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use Error::*;
+
         match *self {
-            Error::Base58(ref e) => write_err!(f, "key base58 error"; e),
-            Error::Secp256k1(ref e) => write_err!(f, "key secp256k1 error"; e),
-            Error::InvalidKeyPrefix(ref b) => write!(f, "key prefix invalid: {}", b),
-            Error::Hex(ref e) => write_err!(f, "key hex decoding error"; e),
-            Error::InvalidHexLength(got) =>
+            Base58(ref e) => write_err!(f, "key base58 error"; e),
+            Secp256k1(ref e) => write_err!(f, "key secp256k1 error"; e),
+            InvalidKeyPrefix(ref b) => write!(f, "key prefix invalid: {}", b),
+            Hex(ref e) => write_err!(f, "key hex decoding error"; e),
+            InvalidHexLength(got) =>
                 write!(f, "PublicKey hex should be 66 or 130 digits long, got: {}", got),
         }
     }
