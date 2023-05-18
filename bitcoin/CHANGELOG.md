@@ -57,6 +57,8 @@ This release is big, to help users upgrade we wrote a blog post, please see http
      contains a `LockTime` but is `Ord`, we have manually sorted the locktimes based on
      their consensus encoding. This ordering is somewhat arbitrary -- there is no total
      ordering on locktimes since they may be measured in either blocks or seconds.
+  - [Removed `FromHex` implementation](https://github.com/rust-bitcoin/rust-bitcoin/pull/1565) from
+    all types except `Vec` and arrays, replace where appropriate with `FromStr`.
 
 - Performance improvements:
   - [Remove needless allocation from BIP-158 encoding](https://github.com/rust-bitcoin/rust-bitcoin/pull/1146)
