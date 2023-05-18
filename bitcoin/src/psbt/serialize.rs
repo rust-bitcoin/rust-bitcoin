@@ -258,7 +258,7 @@ impl Deserialize for taproot::Signature {
         use taproot::SigFromSliceError::*;
 
         taproot::Signature::from_slice(bytes).map_err(|e| match e {
-            InvalidSighashType(flag) => Error::NonStandardSighashType(flag as u32),
+            SighashType(err) => Error::NonStandardSighashType(err.0),
             InvalidSignatureSize(_) => Error::InvalidTaprootSignature(e),
             Secp256k1(..) => Error::InvalidTaprootSignature(e),
         })
