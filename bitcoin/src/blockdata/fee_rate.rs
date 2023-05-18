@@ -79,6 +79,14 @@ impl FeeRate {
     ///
     /// Computes `self / rhs` returning `None` if `rhs == 0`.
     pub fn checked_div(self, rhs: u64) -> Option<Self> { self.0.checked_div(rhs).map(Self) }
+
+    /// Checked weight multiplication.
+    ///
+    /// Computes `self * rhs` where rhs is of type Weight.  `None` is returned if an overflow
+    /// occured.
+    pub fn checked_mul_by_weight(self, rhs: Weight) -> Option<Amount> {
+        self.0.checked_mul(rhs.to_wu()).map(Amount::from_sat)
+    }
 }
 
 /// Alternative will display the unit.
@@ -171,6 +179,16 @@ mod tests {
 
         let fee_rate = FeeRate(10).checked_mul(u64::MAX);
         assert!(fee_rate.is_none());
+    }
+
+    #[test]
+    fn checked_weight_mul_test() {
+        let weight = Weight::from_wu(10);
+        let fee: Amount = FeeRate(10).checked_mul_by_weight(weight).expect("expected Amount");
+        assert_eq!(Amount::from_sat(100), fee);
+
+        let fee = FeeRate(10).checked_mul_by_weight(Weight::MAX);
+        assert!(fee.is_none());
     }
 
     #[test]
