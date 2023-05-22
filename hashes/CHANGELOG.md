@@ -6,6 +6,8 @@ began the process of replacing the hex functionality in this crate with a more
 performant, dedicated crate, and otherwise cleaning up the API as we look forward
 to 1.0.
 
+* [Remove `FromHex` implementation](https://github.com/rust-bitcoin/rust-bitcoin/pull/1565/commits/a308e1e2ea5c6ae419d961b8da71cc8a35a92715)
+from all hashes and implement `FromStr` instead.
 * Move crate from [original repo](https://github.com/rust-bitcoin/bitcoin_hashes) to the
 `rust-bitcoin` repository. Commit history was lost during move, for commit history see the original
 repository. Tip of bitcoin_hashes:master at time of import: 54c16249e06cc6b7870c7fc07d90f489d82647c7
