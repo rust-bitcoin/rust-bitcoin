@@ -241,7 +241,7 @@ macro_rules! hash_newtype {
             }
 
             #[inline]
-            fn from_slice(sl: &[u8]) -> Result<$newtype, $crate::Error> {
+            fn from_slice(sl: &[u8]) -> Result<$newtype, $crate::FromSliceError> {
                 Ok($newtype(<$hash as $crate::Hash>::from_slice(sl)?))
             }
 

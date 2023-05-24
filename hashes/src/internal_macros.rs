@@ -151,9 +151,9 @@ macro_rules! hash_trait_impls {
                 from_engine(e)
             }
 
-            fn from_slice(sl: &[u8]) -> Result<Hash<$($gen),*>, Error> {
+            fn from_slice(sl: &[u8]) -> Result<Hash<$($gen),*>, FromSliceError> {
                 if sl.len() != $bits / 8 {
-                    Err(Error::InvalidLength(Self::LEN, sl.len()))
+                    Err(FromSliceError{expected: Self::LEN, got: sl.len()})
                 } else {
                     let mut ret = [0; $bits / 8];
                     ret.copy_from_slice(sl);

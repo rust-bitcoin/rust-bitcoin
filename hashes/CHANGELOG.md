@@ -1,3 +1,7 @@
+# Unreleased
+
+* Convert enum `crate::Error` to struct `crate::FromSliceError`.
+
 # 0.12.0 - 2023-03-05
 
 0.12 is a significant release. We pulled the repository into the rust-bitcoin

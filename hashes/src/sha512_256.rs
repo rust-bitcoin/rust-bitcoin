@@ -12,7 +12,7 @@ use core::slice::SliceIndex;
 use core::str;
 
 use crate::sha512::BLOCK_SIZE;
-use crate::{sha512, Error};
+use crate::{sha512, FromSliceError};
 
 /// Engine to compute SHA512/256 hash function.
 ///
