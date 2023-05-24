@@ -337,6 +337,22 @@ impl Block {
     }
 }
 
+impl From<Header> for BlockHash {
+    fn from(header: Header) -> BlockHash { header.block_hash() }
+}
+
+impl From<&Header> for BlockHash {
+    fn from(header: &Header) -> BlockHash { header.block_hash() }
+}
+
+impl From<Block> for BlockHash {
+    fn from(block: Block) -> BlockHash { block.block_hash() }
+}
+
+impl From<&Block> for BlockHash {
+    fn from(block: &Block) -> BlockHash { block.block_hash() }
+}
+
 /// An error when looking up a BIP34 block height.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
@@ -373,22 +389,6 @@ impl std::error::Error for Bip34Error {
             Unsupported | NotPresent | UnexpectedPush(_) | NegativeHeight => None,
         }
     }
-}
-
-impl From<Header> for BlockHash {
-    fn from(header: Header) -> BlockHash { header.block_hash() }
-}
-
-impl From<&Header> for BlockHash {
-    fn from(header: &Header) -> BlockHash { header.block_hash() }
-}
-
-impl From<Block> for BlockHash {
-    fn from(block: Block) -> BlockHash { block.block_hash() }
-}
-
-impl From<&Block> for BlockHash {
-    fn from(block: &Block) -> BlockHash { block.block_hash() }
 }
 
 #[cfg(test)]
