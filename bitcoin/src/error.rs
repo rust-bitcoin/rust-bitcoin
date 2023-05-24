@@ -16,18 +16,12 @@ pub use crate::parse::ParseIntError;
 pub enum Error {
     /// Encoding error
     Encode(encode::Error),
-    /// The header hash is not below the target
-    BlockBadProofOfWork,
-    /// The `target` field of a block header did not match the expected difficulty
-    BlockBadTarget,
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Error::Encode(ref e) => write_err!(f, "encoding error"; e),
-            Error::BlockBadProofOfWork => f.write_str("block target correct but not attained"),
-            Error::BlockBadTarget => f.write_str("block target incorrect"),
         }
     }
 }
@@ -39,7 +33,6 @@ impl std::error::Error for Error {
 
         match self {
             Encode(e) => Some(e),
-            BlockBadProofOfWork | BlockBadTarget => None,
         }
     }
 }
