@@ -106,7 +106,6 @@ mod primitive {
         RangeToInclusive<usize>
     );
     #[cfg(feature = "rust_v_1_53")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "rust_v_1_53")))]
     delegate_index!((Bound<usize>, Bound<usize>));
 
     impl Index<usize> for PushBytes {
