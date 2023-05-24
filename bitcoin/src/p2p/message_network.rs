@@ -11,8 +11,8 @@ use hashes::sha256d;
 use crate::consensus::{encode, Decodable, Encodable, ReadExt};
 use crate::internal_macros::impl_consensus_encoding;
 use crate::io;
-use crate::network::address::Address;
-use crate::network::constants::{self, ServiceFlags};
+use crate::p2p::address::Address;
+use crate::p2p::constants::{self, ServiceFlags};
 use crate::prelude::*;
 
 /// Some simple messages
@@ -146,7 +146,7 @@ mod tests {
     use super::{Reject, RejectReason, VersionMessage};
     use crate::consensus::encode::{deserialize, serialize};
     use crate::internal_macros::hex;
-    use crate::network::constants::ServiceFlags;
+    use crate::p2p::constants::ServiceFlags;
 
     #[test]
     fn version_message_test() {

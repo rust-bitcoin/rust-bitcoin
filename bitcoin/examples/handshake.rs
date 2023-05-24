@@ -6,7 +6,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use std::{env, process};
 
 use bitcoin::consensus::{encode, Decodable};
-use bitcoin::network::{address, constants, message, message_network};
+use bitcoin::p2p::{address, constants, message, message_network};
 use bitcoin::secp256k1;
 use bitcoin::secp256k1::rand::Rng;
 

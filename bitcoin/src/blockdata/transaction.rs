@@ -68,7 +68,7 @@ impl OutPoint {
     ///
     /// ```rust
     /// use bitcoin::constants::genesis_block;
-    /// use bitcoin::network::constants::Network;
+    /// use bitcoin::p2p::constants::Network;
     ///
     /// let block = genesis_block(Network::Bitcoin);
     /// let tx = &block.txdata[0];
@@ -1508,7 +1508,7 @@ mod tests {
     #[test]
     fn test_is_coinbase() {
         use crate::blockdata::constants;
-        use crate::network::constants::Network;
+        use crate::p2p::constants::Network;
 
         let genesis = constants::genesis_block(Network::Bitcoin);
         assert!(genesis.txdata[0].is_coinbase());

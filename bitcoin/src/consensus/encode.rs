@@ -26,7 +26,7 @@ use crate::blockdata::transaction::{Transaction, TxIn, TxOut};
 use crate::hash_types::{BlockHash, FilterHash, FilterHeader, TxMerkleNode};
 use crate::io::{self, Cursor, Read};
 #[cfg(feature = "std")]
-use crate::network::{
+use crate::p2p::{
     address::{AddrV2Message, Address},
     message_blockdata::Inventory,
 };
@@ -836,7 +836,7 @@ mod tests {
     use super::*;
     use crate::consensus::{deserialize_partial, Decodable, Encodable};
     #[cfg(feature = "std")]
-    use crate::network::{message_blockdata::Inventory, Address};
+    use crate::p2p::{message_blockdata::Inventory, Address};
 
     #[test]
     fn serialize_int_test() {

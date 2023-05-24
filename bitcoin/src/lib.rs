@@ -92,7 +92,7 @@ mod parse;
 mod serde_utils;
 
 #[macro_use]
-pub mod network;
+pub mod p2p;
 pub mod address;
 pub mod amount;
 pub mod base58;
@@ -146,7 +146,7 @@ pub use crate::hash_types::{
     BlockHash, PubkeyHash, ScriptHash, Txid, WPubkeyHash, WScriptHash, Wtxid,
 };
 pub use crate::merkle_tree::MerkleBlock;
-pub use crate::network::constants::Network;
+pub use crate::p2p::constants::Network;
 pub use crate::pow::{CompactTarget, Target, Work};
 pub use crate::psbt::Psbt;
 

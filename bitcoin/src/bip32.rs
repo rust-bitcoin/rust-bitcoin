@@ -23,7 +23,7 @@ use crate::crypto::key::{self, KeyPair, PrivateKey, PublicKey};
 use crate::hash_types::XpubIdentifier;
 use crate::internal_macros::impl_bytes_newtype;
 use crate::io::Write;
-use crate::network::constants::Network;
+use crate::p2p::constants::Network;
 use crate::prelude::*;
 
 /// A chain code
@@ -866,7 +866,7 @@ mod tests {
     use super::ChildNumber::{Hardened, Normal};
     use super::*;
     use crate::internal_macros::hex;
-    use crate::network::constants::Network::{self, Bitcoin};
+    use crate::p2p::constants::Network::{self, Bitcoin};
 
     #[test]
     fn test_parse_derivation_path() {

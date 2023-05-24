@@ -11,7 +11,7 @@ use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6, ToSoc
 
 use crate::consensus::encode::{self, Decodable, Encodable, ReadExt, VarInt, WriteExt};
 use crate::io;
-use crate::network::constants::ServiceFlags;
+use crate::p2p::constants::ServiceFlags;
 use crate::prelude::*;
 
 /// A message which can be sent on the Bitcoin network
@@ -311,7 +311,7 @@ mod test {
     use super::{AddrV2, AddrV2Message, Address};
     use crate::consensus::encode::{deserialize, serialize};
     use crate::internal_macros::hex;
-    use crate::network::constants::ServiceFlags;
+    use crate::p2p::constants::ServiceFlags;
 
     #[test]
     fn serialize_address_test() {

@@ -16,7 +16,7 @@
 //! # Example: encoding a network's magic bytes
 //!
 //! ```rust
-//! use bitcoin::network::constants::Network;
+//! use bitcoin::p2p::constants::Network;
 //! use bitcoin::consensus::encode::serialize;
 //!
 //! let network = Network::Bitcoin;
@@ -82,7 +82,7 @@ impl Network {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin::network::constants::{Network, Magic};
+    /// use bitcoin::p2p::constants::{Network, Magic};
     /// use std::convert::TryFrom;
     ///
     /// assert_eq!(Ok(Network::Bitcoin), Network::try_from(Magic::from_bytes([0xF9, 0xBE, 0xB4, 0xD9])));
@@ -96,7 +96,7 @@ impl Network {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin::network::constants::{Network, Magic};
+    /// use bitcoin::p2p::constants::{Network, Magic};
     ///
     /// let network = Network::Bitcoin;
     /// assert_eq!(network.magic(), Magic::from_bytes([0xF9, 0xBE, 0xB4, 0xD9]));
@@ -148,7 +148,7 @@ impl Network {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin::network::constants::Network;
+    /// use bitcoin::p2p::constants::Network;
     /// use bitcoin::blockdata::constants::ChainHash;
     ///
     /// let network = Network::Bitcoin;
@@ -161,7 +161,7 @@ impl Network {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin::network::constants::Network;
+    /// use bitcoin::p2p::constants::Network;
     /// use bitcoin::blockdata::constants::ChainHash;
     /// use std::convert::TryFrom;
     ///
@@ -723,7 +723,7 @@ mod tests {
         #[derive(Serialize, Deserialize, PartialEq, Debug)]
         #[serde(crate = "actual_serde")]
         struct T {
-            #[serde(with = "crate::network::constants::as_core_arg")]
+            #[serde(with = "crate::p2p::constants::as_core_arg")]
             pub network: Network,
         }
 

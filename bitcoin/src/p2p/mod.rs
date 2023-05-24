@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Bitcoin network support.
+//! Bitcoin p2p network types.
 //!
 //! This module defines support for (de)serialization and network transport
-//! of Bitcoin data and network messages.
-//!
+//! of Bitcoin data and Bitcoin p2p network messages.
 
 pub mod constants;
 

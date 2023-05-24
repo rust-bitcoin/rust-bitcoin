@@ -6,7 +6,7 @@
 //! chains (such as mainnet, testnet).
 //!
 
-use crate::network::constants::Network;
+use crate::p2p::constants::Network;
 use crate::pow::Work;
 
 /// Parameters that influence chain consensus.

@@ -12,7 +12,7 @@ use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::hash_types::{BlockHash, Txid, Wtxid};
 use crate::internal_macros::impl_consensus_encoding;
 use crate::io;
-use crate::network::constants;
+use crate::p2p::constants;
 use crate::prelude::*;
 
 /// An inventory item.
