@@ -174,3 +174,18 @@ jobs:
         uses: model-checking/kani-github-action@v1.1
         with:
           args: '--only-codegen'
+
+  API:
+    name: Check for changes to the public API
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Checkout Crate
+        uses: actions/checkout@v3
+      - name: Checkout Toolchain
+        uses: dtolnay/rust-toolchain@nightly
+      - name: Install cargo-public-api
+        run: cargo install --locked cargo-public-api
+      - name: Running API checker script
+        run: ./contrib/check-for-api-changes.sh
