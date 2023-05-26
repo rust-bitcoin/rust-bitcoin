@@ -166,3 +166,18 @@ jobs:
         env:
           DO_WASM: true
         run: cd hashes && ./contrib/test.sh
+
+  API:
+    name: Check for changes to the public API
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Checkout Crate
+        uses: actions/checkout@v3
+      - name: Checkout Toolchain
+        uses: dtolnay/rust-toolchain@nightly
+      - name: Install cargo-public-api
+        run: cargo install --locked cargo-public-api
+      - name: Running API checker script
+        run: ./contrib/check-for-api-changes.sh
