@@ -1,0 +1,114 @@
+#[non_exhaustive] pub enum bitcoin_io::ErrorKind
+impl !core::panic::unwind_safe::RefUnwindSafe for bitcoin_io::Error
+impl !core::panic::unwind_safe::UnwindSafe for bitcoin_io::Error
+impl bitcoin_io::BufRead for &[u8]
+impl bitcoin_io::Error
+impl bitcoin_io::Read for &[u8]
+impl bitcoin_io::Write for alloc::vec::Vec<u8>
+impl bitcoin_io::Write for bitcoin_io::Sink
+impl core::clone::Clone for bitcoin_io::ErrorKind
+impl core::cmp::Eq for bitcoin_io::ErrorKind
+impl core::cmp::PartialEq for bitcoin_io::ErrorKind
+impl core::convert::From<bitcoin_io::ErrorKind> for bitcoin_io::Error
+impl core::fmt::Debug for bitcoin_io::Error
+impl core::fmt::Debug for bitcoin_io::ErrorKind
+impl core::fmt::Display for bitcoin_io::Error
+impl core::hash::Hash for bitcoin_io::ErrorKind
+impl core::marker::Copy for bitcoin_io::ErrorKind
+impl core::marker::Send for bitcoin_io::Error
+impl core::marker::Send for bitcoin_io::ErrorKind
+impl core::marker::Send for bitcoin_io::Sink
+impl core::marker::StructuralPartialEq for bitcoin_io::ErrorKind
+impl core::marker::Sync for bitcoin_io::Error
+impl core::marker::Sync for bitcoin_io::ErrorKind
+impl core::marker::Sync for bitcoin_io::Sink
+impl core::marker::Unpin for bitcoin_io::Error
+impl core::marker::Unpin for bitcoin_io::ErrorKind
+impl core::marker::Unpin for bitcoin_io::Sink
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_io::ErrorKind
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_io::Sink
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_io::ErrorKind
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_io::Sink
+impl<'a, R: bitcoin_io::BufRead + core::marker::Sized> bitcoin_io::BufRead for bitcoin_io::Take<'a, R>
+impl<'a, R: bitcoin_io::Read + core::marker::Sized> bitcoin_io::Read for bitcoin_io::Take<'a, R>
+impl<'a, R: core::marker::Sized> core::marker::Send for bitcoin_io::Take<'a, R> where R: core::marker::Send
+impl<'a, R: core::marker::Sized> core::marker::Sync for bitcoin_io::Take<'a, R> where R: core::marker::Sync
+impl<'a, R: core::marker::Sized> core::marker::Unpin for bitcoin_io::Take<'a, R>
+impl<'a, R: core::marker::Sized> core::panic::unwind_safe::RefUnwindSafe for bitcoin_io::Take<'a, R> where R: core::panic::unwind_safe::RefUnwindSafe
+impl<'a, R> !core::panic::unwind_safe::UnwindSafe for bitcoin_io::Take<'a, R>
+impl<'a> bitcoin_io::Write for &'a mut [u8]
+impl<T: core::convert::AsRef<[u8]>> bitcoin_io::BufRead for bitcoin_io::Cursor<T>
+impl<T: core::convert::AsRef<[u8]>> bitcoin_io::Cursor<T>
+impl<T: core::convert::AsRef<[u8]>> bitcoin_io::Read for bitcoin_io::Cursor<T>
+impl<T> core::marker::Send for bitcoin_io::Cursor<T> where T: core::marker::Send
+impl<T> core::marker::Sync for bitcoin_io::Cursor<T> where T: core::marker::Sync
+impl<T> core::marker::Unpin for bitcoin_io::Cursor<T> where T: core::marker::Unpin
+impl<T> core::panic::unwind_safe::RefUnwindSafe for bitcoin_io::Cursor<T> where T: core::panic::unwind_safe::RefUnwindSafe
+impl<T> core::panic::unwind_safe::UnwindSafe for bitcoin_io::Cursor<T> where T: core::panic::unwind_safe::UnwindSafe
+pub bitcoin_io::ErrorKind::AddrInUse
+pub bitcoin_io::ErrorKind::AddrNotAvailable
+pub bitcoin_io::ErrorKind::AlreadyExists
+pub bitcoin_io::ErrorKind::BrokenPipe
+pub bitcoin_io::ErrorKind::ConnectionAborted
+pub bitcoin_io::ErrorKind::ConnectionRefused
+pub bitcoin_io::ErrorKind::ConnectionReset
+pub bitcoin_io::ErrorKind::Interrupted
+pub bitcoin_io::ErrorKind::InvalidData
+pub bitcoin_io::ErrorKind::InvalidInput
+pub bitcoin_io::ErrorKind::NotConnected
+pub bitcoin_io::ErrorKind::NotFound
+pub bitcoin_io::ErrorKind::Other
+pub bitcoin_io::ErrorKind::PermissionDenied
+pub bitcoin_io::ErrorKind::TimedOut
+pub bitcoin_io::ErrorKind::UnexpectedEof
+pub bitcoin_io::ErrorKind::WouldBlock
+pub bitcoin_io::ErrorKind::WriteZero
+pub fn &'a mut [u8]::flush(&mut self) -> bitcoin_io::Result<()>
+pub fn &'a mut [u8]::write(&mut self, buf: &[u8]) -> bitcoin_io::Result<usize>
+pub fn &[u8]::consume(&mut self, amount: usize)
+pub fn &[u8]::fill_buf(&mut self) -> bitcoin_io::Result<&[u8]>
+pub fn &[u8]::read(&mut self, buf: &mut [u8]) -> bitcoin_io::Result<usize>
+pub fn alloc::vec::Vec<u8>::flush(&mut self) -> bitcoin_io::Result<()>
+pub fn alloc::vec::Vec<u8>::write(&mut self, buf: &[u8]) -> bitcoin_io::Result<usize>
+pub fn bitcoin_io::BufRead::consume(&mut self, amount: usize)
+pub fn bitcoin_io::BufRead::fill_buf(&mut self) -> bitcoin_io::Result<&[u8]>
+pub fn bitcoin_io::Cursor<T>::consume(&mut self, amount: usize)
+pub fn bitcoin_io::Cursor<T>::fill_buf(&mut self) -> bitcoin_io::Result<&[u8]>
+pub fn bitcoin_io::Cursor<T>::into_inner(self) -> T
+pub fn bitcoin_io::Cursor<T>::new(inner: T) -> Self
+pub fn bitcoin_io::Cursor<T>::position(&self) -> u64
+pub fn bitcoin_io::Cursor<T>::read(&mut self, buf: &mut [u8]) -> bitcoin_io::Result<usize>
+pub fn bitcoin_io::Error::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_io::Error::fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::result::Result<(), core::fmt::Error>
+pub fn bitcoin_io::Error::from(kind: bitcoin_io::ErrorKind) -> bitcoin_io::Error
+pub fn bitcoin_io::Error::get_ref(&self) -> core::option::Option<&(dyn core::fmt::Debug + core::marker::Send + core::marker::Sync + 'static)>
+pub fn bitcoin_io::Error::kind(&self) -> bitcoin_io::ErrorKind
+pub fn bitcoin_io::Error::new<E: sealed::IntoBoxDynDebug>(kind: bitcoin_io::ErrorKind, error: E) -> bitcoin_io::Error
+pub fn bitcoin_io::ErrorKind::clone(&self) -> bitcoin_io::ErrorKind
+pub fn bitcoin_io::ErrorKind::eq(&self, other: &bitcoin_io::ErrorKind) -> bool
+pub fn bitcoin_io::ErrorKind::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_io::ErrorKind::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_io::Read::read(&mut self, buf: &mut [u8]) -> bitcoin_io::Result<usize>
+pub fn bitcoin_io::Read::read_exact(&mut self, buf: &mut [u8]) -> bitcoin_io::Result<()>
+pub fn bitcoin_io::Read::read_to_limit(&mut self, buf: &mut alloc::vec::Vec<u8>, limit: u64) -> bitcoin_io::Result<usize>
+pub fn bitcoin_io::Read::take(&mut self, limit: u64) -> bitcoin_io::Take<'_, Self>
+pub fn bitcoin_io::Sink::flush(&mut self) -> bitcoin_io::Result<()>
+pub fn bitcoin_io::Sink::write(&mut self, buf: &[u8]) -> bitcoin_io::Result<usize>
+pub fn bitcoin_io::Sink::write_all(&mut self, &[u8]) -> bitcoin_io::Result<()>
+pub fn bitcoin_io::Take<'a, R>::consume(&mut self, amount: usize)
+pub fn bitcoin_io::Take<'a, R>::fill_buf(&mut self) -> bitcoin_io::Result<&[u8]>
+pub fn bitcoin_io::Take<'a, R>::read(&mut self, buf: &mut [u8]) -> bitcoin_io::Result<usize>
+pub fn bitcoin_io::Write::flush(&mut self) -> bitcoin_io::Result<()>
+pub fn bitcoin_io::Write::write(&mut self, buf: &[u8]) -> bitcoin_io::Result<usize>
+pub fn bitcoin_io::Write::write_all(&mut self, buf: &[u8]) -> bitcoin_io::Result<()>
+pub fn bitcoin_io::sink() -> bitcoin_io::Sink
+pub macro bitcoin_io::impl_write!
+pub mod bitcoin_io
+pub struct bitcoin_io::Cursor<T>
+pub struct bitcoin_io::Error
+pub struct bitcoin_io::Sink
+pub struct bitcoin_io::Take<'a, R: bitcoin_io::Read + core::marker::Sized>
+pub trait bitcoin_io::BufRead: bitcoin_io::Read
+pub trait bitcoin_io::Read
+pub trait bitcoin_io::Write
+pub type bitcoin_io::Result<T> = core::result::Result<T, bitcoin_io::Error>

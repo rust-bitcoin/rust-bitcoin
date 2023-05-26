@@ -1,0 +1,323 @@
+#[non_exhaustive] pub enum bitcoin_units::ParseAmountError
+#[non_exhaustive] pub enum bitcoin_units::amount::Denomination
+#[non_exhaustive] pub enum bitcoin_units::amount::ParseAmountError
+#[non_exhaustive] pub enum bitcoin_units::amount::ParseDenominationError
+#[non_exhaustive] pub enum bitcoin_units::amount::ParseError
+#[non_exhaustive] pub struct bitcoin_units::amount::PossiblyConfusingDenominationError(_)
+#[non_exhaustive] pub struct bitcoin_units::amount::UnknownDenominationError(_)
+impl bitcoin_units::amount::Amount
+impl bitcoin_units::amount::Denomination
+impl bitcoin_units::amount::Display
+impl bitcoin_units::amount::OutOfRangeError
+impl bitcoin_units::amount::SignedAmount
+impl core::clone::Clone for bitcoin_units::amount::Amount
+impl core::clone::Clone for bitcoin_units::amount::Denomination
+impl core::clone::Clone for bitcoin_units::amount::Display
+impl core::clone::Clone for bitcoin_units::amount::OutOfRangeError
+impl core::clone::Clone for bitcoin_units::amount::ParseAmountError
+impl core::clone::Clone for bitcoin_units::amount::ParseDenominationError
+impl core::clone::Clone for bitcoin_units::amount::ParseError
+impl core::clone::Clone for bitcoin_units::amount::PossiblyConfusingDenominationError
+impl core::clone::Clone for bitcoin_units::amount::SignedAmount
+impl core::clone::Clone for bitcoin_units::amount::UnknownDenominationError
+impl core::cmp::Eq for bitcoin_units::amount::Amount
+impl core::cmp::Eq for bitcoin_units::amount::Denomination
+impl core::cmp::Eq for bitcoin_units::amount::OutOfRangeError
+impl core::cmp::Eq for bitcoin_units::amount::ParseAmountError
+impl core::cmp::Eq for bitcoin_units::amount::ParseDenominationError
+impl core::cmp::Eq for bitcoin_units::amount::ParseError
+impl core::cmp::Eq for bitcoin_units::amount::PossiblyConfusingDenominationError
+impl core::cmp::Eq for bitcoin_units::amount::SignedAmount
+impl core::cmp::Eq for bitcoin_units::amount::UnknownDenominationError
+impl core::cmp::Ord for bitcoin_units::amount::Amount
+impl core::cmp::Ord for bitcoin_units::amount::SignedAmount
+impl core::cmp::PartialEq for bitcoin_units::amount::Amount
+impl core::cmp::PartialEq for bitcoin_units::amount::Denomination
+impl core::cmp::PartialEq for bitcoin_units::amount::OutOfRangeError
+impl core::cmp::PartialEq for bitcoin_units::amount::ParseAmountError
+impl core::cmp::PartialEq for bitcoin_units::amount::ParseDenominationError
+impl core::cmp::PartialEq for bitcoin_units::amount::ParseError
+impl core::cmp::PartialEq for bitcoin_units::amount::PossiblyConfusingDenominationError
+impl core::cmp::PartialEq for bitcoin_units::amount::SignedAmount
+impl core::cmp::PartialEq for bitcoin_units::amount::UnknownDenominationError
+impl core::cmp::PartialOrd for bitcoin_units::amount::Amount
+impl core::cmp::PartialOrd for bitcoin_units::amount::SignedAmount
+impl core::convert::From<bitcoin_units::amount::OutOfRangeError> for bitcoin_units::amount::ParseAmountError
+impl core::convert::From<bitcoin_units::amount::OutOfRangeError> for bitcoin_units::amount::ParseError
+impl core::convert::From<bitcoin_units::amount::ParseAmountError> for bitcoin_units::amount::ParseError
+impl core::convert::From<bitcoin_units::amount::ParseDenominationError> for bitcoin_units::amount::ParseError
+impl core::default::Default for bitcoin_units::amount::Amount
+impl core::default::Default for bitcoin_units::amount::SignedAmount
+impl core::fmt::Debug for bitcoin_units::amount::Amount
+impl core::fmt::Debug for bitcoin_units::amount::Denomination
+impl core::fmt::Debug for bitcoin_units::amount::Display
+impl core::fmt::Debug for bitcoin_units::amount::OutOfRangeError
+impl core::fmt::Debug for bitcoin_units::amount::ParseAmountError
+impl core::fmt::Debug for bitcoin_units::amount::ParseDenominationError
+impl core::fmt::Debug for bitcoin_units::amount::ParseError
+impl core::fmt::Debug for bitcoin_units::amount::PossiblyConfusingDenominationError
+impl core::fmt::Debug for bitcoin_units::amount::SignedAmount
+impl core::fmt::Debug for bitcoin_units::amount::UnknownDenominationError
+impl core::fmt::Display for bitcoin_units::amount::Amount
+impl core::fmt::Display for bitcoin_units::amount::Denomination
+impl core::fmt::Display for bitcoin_units::amount::Display
+impl core::fmt::Display for bitcoin_units::amount::OutOfRangeError
+impl core::fmt::Display for bitcoin_units::amount::ParseAmountError
+impl core::fmt::Display for bitcoin_units::amount::ParseDenominationError
+impl core::fmt::Display for bitcoin_units::amount::ParseError
+impl core::fmt::Display for bitcoin_units::amount::PossiblyConfusingDenominationError
+impl core::fmt::Display for bitcoin_units::amount::SignedAmount
+impl core::fmt::Display for bitcoin_units::amount::UnknownDenominationError
+impl core::hash::Hash for bitcoin_units::amount::Amount
+impl core::hash::Hash for bitcoin_units::amount::Denomination
+impl core::hash::Hash for bitcoin_units::amount::SignedAmount
+impl core::iter::traits::accum::Sum for bitcoin_units::amount::Amount
+impl core::iter::traits::accum::Sum for bitcoin_units::amount::SignedAmount
+impl core::marker::Copy for bitcoin_units::amount::Amount
+impl core::marker::Copy for bitcoin_units::amount::Denomination
+impl core::marker::Copy for bitcoin_units::amount::OutOfRangeError
+impl core::marker::Copy for bitcoin_units::amount::SignedAmount
+impl core::marker::Send for bitcoin_units::amount::Amount
+impl core::marker::Send for bitcoin_units::amount::Denomination
+impl core::marker::Send for bitcoin_units::amount::Display
+impl core::marker::Send for bitcoin_units::amount::OutOfRangeError
+impl core::marker::Send for bitcoin_units::amount::ParseAmountError
+impl core::marker::Send for bitcoin_units::amount::ParseDenominationError
+impl core::marker::Send for bitcoin_units::amount::ParseError
+impl core::marker::Send for bitcoin_units::amount::PossiblyConfusingDenominationError
+impl core::marker::Send for bitcoin_units::amount::SignedAmount
+impl core::marker::Send for bitcoin_units::amount::UnknownDenominationError
+impl core::marker::StructuralPartialEq for bitcoin_units::amount::Amount
+impl core::marker::StructuralPartialEq for bitcoin_units::amount::Denomination
+impl core::marker::StructuralPartialEq for bitcoin_units::amount::OutOfRangeError
+impl core::marker::StructuralPartialEq for bitcoin_units::amount::ParseAmountError
+impl core::marker::StructuralPartialEq for bitcoin_units::amount::ParseDenominationError
+impl core::marker::StructuralPartialEq for bitcoin_units::amount::ParseError
+impl core::marker::StructuralPartialEq for bitcoin_units::amount::PossiblyConfusingDenominationError
+impl core::marker::StructuralPartialEq for bitcoin_units::amount::SignedAmount
+impl core::marker::StructuralPartialEq for bitcoin_units::amount::UnknownDenominationError
+impl core::marker::Sync for bitcoin_units::amount::Amount
+impl core::marker::Sync for bitcoin_units::amount::Denomination
+impl core::marker::Sync for bitcoin_units::amount::Display
+impl core::marker::Sync for bitcoin_units::amount::OutOfRangeError
+impl core::marker::Sync for bitcoin_units::amount::ParseAmountError
+impl core::marker::Sync for bitcoin_units::amount::ParseDenominationError
+impl core::marker::Sync for bitcoin_units::amount::ParseError
+impl core::marker::Sync for bitcoin_units::amount::PossiblyConfusingDenominationError
+impl core::marker::Sync for bitcoin_units::amount::SignedAmount
+impl core::marker::Sync for bitcoin_units::amount::UnknownDenominationError
+impl core::marker::Unpin for bitcoin_units::amount::Amount
+impl core::marker::Unpin for bitcoin_units::amount::Denomination
+impl core::marker::Unpin for bitcoin_units::amount::Display
+impl core::marker::Unpin for bitcoin_units::amount::OutOfRangeError
+impl core::marker::Unpin for bitcoin_units::amount::ParseAmountError
+impl core::marker::Unpin for bitcoin_units::amount::ParseDenominationError
+impl core::marker::Unpin for bitcoin_units::amount::ParseError
+impl core::marker::Unpin for bitcoin_units::amount::PossiblyConfusingDenominationError
+impl core::marker::Unpin for bitcoin_units::amount::SignedAmount
+impl core::marker::Unpin for bitcoin_units::amount::UnknownDenominationError
+impl core::ops::arith::Add for bitcoin_units::amount::Amount
+impl core::ops::arith::Add for bitcoin_units::amount::SignedAmount
+impl core::ops::arith::AddAssign for bitcoin_units::amount::Amount
+impl core::ops::arith::AddAssign for bitcoin_units::amount::SignedAmount
+impl core::ops::arith::Div<i64> for bitcoin_units::amount::SignedAmount
+impl core::ops::arith::Div<u64> for bitcoin_units::amount::Amount
+impl core::ops::arith::DivAssign<i64> for bitcoin_units::amount::SignedAmount
+impl core::ops::arith::DivAssign<u64> for bitcoin_units::amount::Amount
+impl core::ops::arith::Mul<i64> for bitcoin_units::amount::SignedAmount
+impl core::ops::arith::Mul<u64> for bitcoin_units::amount::Amount
+impl core::ops::arith::MulAssign<i64> for bitcoin_units::amount::SignedAmount
+impl core::ops::arith::MulAssign<u64> for bitcoin_units::amount::Amount
+impl core::ops::arith::Rem<i64> for bitcoin_units::amount::SignedAmount
+impl core::ops::arith::Rem<u64> for bitcoin_units::amount::Amount
+impl core::ops::arith::RemAssign<i64> for bitcoin_units::amount::SignedAmount
+impl core::ops::arith::RemAssign<u64> for bitcoin_units::amount::Amount
+impl core::ops::arith::Sub for bitcoin_units::amount::Amount
+impl core::ops::arith::Sub for bitcoin_units::amount::SignedAmount
+impl core::ops::arith::SubAssign for bitcoin_units::amount::Amount
+impl core::ops::arith::SubAssign for bitcoin_units::amount::SignedAmount
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::Amount
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::Denomination
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::Display
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::OutOfRangeError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::ParseAmountError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::ParseDenominationError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::ParseError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::PossiblyConfusingDenominationError
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::SignedAmount
+impl core::panic::unwind_safe::RefUnwindSafe for bitcoin_units::amount::UnknownDenominationError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::Amount
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::Denomination
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::Display
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::OutOfRangeError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::ParseAmountError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::ParseDenominationError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::ParseError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::PossiblyConfusingDenominationError
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::SignedAmount
+impl core::panic::unwind_safe::UnwindSafe for bitcoin_units::amount::UnknownDenominationError
+impl core::str::traits::FromStr for bitcoin_units::amount::Amount
+impl core::str::traits::FromStr for bitcoin_units::amount::Denomination
+impl core::str::traits::FromStr for bitcoin_units::amount::SignedAmount
+impl<T> bitcoin_units::amount::CheckedSum<bitcoin_units::amount::Amount> for T where T: core::iter::traits::iterator::Iterator<Item = bitcoin_units::amount::Amount>
+impl<T> bitcoin_units::amount::CheckedSum<bitcoin_units::amount::SignedAmount> for T where T: core::iter::traits::iterator::Iterator<Item = bitcoin_units::amount::SignedAmount>
+pub bitcoin_units::ParseAmountError::InputTooLarge
+pub bitcoin_units::ParseAmountError::InvalidCharacter(char)
+pub bitcoin_units::ParseAmountError::InvalidFormat
+pub bitcoin_units::ParseAmountError::OutOfRange(bitcoin_units::amount::OutOfRangeError)
+pub bitcoin_units::ParseAmountError::TooPrecise
+pub bitcoin_units::amount::Denomination::Bit
+pub bitcoin_units::amount::Denomination::Bitcoin
+pub bitcoin_units::amount::Denomination::CentiBitcoin
+pub bitcoin_units::amount::Denomination::MicroBitcoin
+pub bitcoin_units::amount::Denomination::MilliBitcoin
+pub bitcoin_units::amount::Denomination::MilliSatoshi
+pub bitcoin_units::amount::Denomination::NanoBitcoin
+pub bitcoin_units::amount::Denomination::PicoBitcoin
+pub bitcoin_units::amount::Denomination::Satoshi
+pub bitcoin_units::amount::ParseAmountError::InputTooLarge
+pub bitcoin_units::amount::ParseAmountError::InvalidCharacter(char)
+pub bitcoin_units::amount::ParseAmountError::InvalidFormat
+pub bitcoin_units::amount::ParseAmountError::OutOfRange(bitcoin_units::amount::OutOfRangeError)
+pub bitcoin_units::amount::ParseAmountError::TooPrecise
+pub bitcoin_units::amount::ParseDenominationError::PossiblyConfusing(bitcoin_units::amount::PossiblyConfusingDenominationError)
+pub bitcoin_units::amount::ParseDenominationError::Unknown(bitcoin_units::amount::UnknownDenominationError)
+pub bitcoin_units::amount::ParseError::Amount(bitcoin_units::amount::ParseAmountError)
+pub bitcoin_units::amount::ParseError::Denomination(bitcoin_units::amount::ParseDenominationError)
+pub const bitcoin_units::amount::Amount::MAX: bitcoin_units::amount::Amount
+pub const bitcoin_units::amount::Amount::MAX_MONEY: bitcoin_units::amount::Amount
+pub const bitcoin_units::amount::Amount::MIN: bitcoin_units::amount::Amount
+pub const bitcoin_units::amount::Amount::ONE_BTC: bitcoin_units::amount::Amount
+pub const bitcoin_units::amount::Amount::ONE_SAT: bitcoin_units::amount::Amount
+pub const bitcoin_units::amount::Amount::SIZE: usize
+pub const bitcoin_units::amount::Amount::ZERO: bitcoin_units::amount::Amount
+pub const bitcoin_units::amount::Denomination::BTC: Self
+pub const bitcoin_units::amount::Denomination::SAT: Self
+pub const bitcoin_units::amount::SignedAmount::MAX: bitcoin_units::amount::SignedAmount
+pub const bitcoin_units::amount::SignedAmount::MAX_MONEY: bitcoin_units::amount::SignedAmount
+pub const bitcoin_units::amount::SignedAmount::MIN: bitcoin_units::amount::SignedAmount
+pub const bitcoin_units::amount::SignedAmount::ONE_BTC: bitcoin_units::amount::SignedAmount
+pub const bitcoin_units::amount::SignedAmount::ONE_SAT: bitcoin_units::amount::SignedAmount
+pub const bitcoin_units::amount::SignedAmount::ZERO: bitcoin_units::amount::SignedAmount
+pub const fn bitcoin_units::amount::Amount::from_int_btc(btc: u64) -> bitcoin_units::amount::Amount
+pub const fn bitcoin_units::amount::Amount::from_sat(satoshi: u64) -> bitcoin_units::amount::Amount
+pub const fn bitcoin_units::amount::SignedAmount::from_sat(satoshi: i64) -> bitcoin_units::amount::SignedAmount
+pub fn T::checked_sum(self) -> core::option::Option<bitcoin_units::amount::Amount>
+pub fn T::checked_sum(self) -> core::option::Option<bitcoin_units::amount::SignedAmount>
+pub fn bitcoin_units::amount::Amount::add(self, rhs: bitcoin_units::amount::Amount) -> Self::Output
+pub fn bitcoin_units::amount::Amount::add_assign(&mut self, other: bitcoin_units::amount::Amount)
+pub fn bitcoin_units::amount::Amount::checked_add(self, rhs: bitcoin_units::amount::Amount) -> core::option::Option<bitcoin_units::amount::Amount>
+pub fn bitcoin_units::amount::Amount::checked_div(self, rhs: u64) -> core::option::Option<bitcoin_units::amount::Amount>
+pub fn bitcoin_units::amount::Amount::checked_mul(self, rhs: u64) -> core::option::Option<bitcoin_units::amount::Amount>
+pub fn bitcoin_units::amount::Amount::checked_rem(self, rhs: u64) -> core::option::Option<bitcoin_units::amount::Amount>
+pub fn bitcoin_units::amount::Amount::checked_sub(self, rhs: bitcoin_units::amount::Amount) -> core::option::Option<bitcoin_units::amount::Amount>
+pub fn bitcoin_units::amount::Amount::clone(&self) -> bitcoin_units::amount::Amount
+pub fn bitcoin_units::amount::Amount::cmp(&self, other: &bitcoin_units::amount::Amount) -> core::cmp::Ordering
+pub fn bitcoin_units::amount::Amount::default() -> Self
+pub fn bitcoin_units::amount::Amount::display_dynamic(self) -> bitcoin_units::amount::Display
+pub fn bitcoin_units::amount::Amount::display_in(self, denomination: bitcoin_units::amount::Denomination) -> bitcoin_units::amount::Display
+pub fn bitcoin_units::amount::Amount::div(self, rhs: u64) -> Self::Output
+pub fn bitcoin_units::amount::Amount::div_assign(&mut self, rhs: u64)
+pub fn bitcoin_units::amount::Amount::eq(&self, other: &bitcoin_units::amount::Amount) -> bool
+pub fn bitcoin_units::amount::Amount::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::amount::Amount::fmt_value_in(self, f: &mut dyn core::fmt::Write, denom: bitcoin_units::amount::Denomination) -> core::fmt::Result
+pub fn bitcoin_units::amount::Amount::from_str(s: &str) -> core::result::Result<Self, Self::Err>
+pub fn bitcoin_units::amount::Amount::from_str_in(s: &str, denom: bitcoin_units::amount::Denomination) -> core::result::Result<bitcoin_units::amount::Amount, bitcoin_units::amount::ParseAmountError>
+pub fn bitcoin_units::amount::Amount::from_str_with_denomination(s: &str) -> core::result::Result<bitcoin_units::amount::Amount, bitcoin_units::amount::ParseError>
+pub fn bitcoin_units::amount::Amount::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_units::amount::Amount::mul(self, rhs: u64) -> Self::Output
+pub fn bitcoin_units::amount::Amount::mul_assign(&mut self, rhs: u64)
+pub fn bitcoin_units::amount::Amount::partial_cmp(&self, other: &bitcoin_units::amount::Amount) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin_units::amount::Amount::rem(self, modulus: u64) -> Self
+pub fn bitcoin_units::amount::Amount::rem_assign(&mut self, modulus: u64)
+pub fn bitcoin_units::amount::Amount::sub(self, rhs: bitcoin_units::amount::Amount) -> Self::Output
+pub fn bitcoin_units::amount::Amount::sub_assign(&mut self, other: bitcoin_units::amount::Amount)
+pub fn bitcoin_units::amount::Amount::sum<I: core::iter::traits::iterator::Iterator<Item = Self>>(iter: I) -> Self
+pub fn bitcoin_units::amount::Amount::to_sat(self) -> u64
+pub fn bitcoin_units::amount::Amount::to_signed(self) -> core::result::Result<bitcoin_units::amount::SignedAmount, bitcoin_units::amount::ParseAmountError>
+pub fn bitcoin_units::amount::CheckedSum::checked_sum(self) -> core::option::Option<R>
+pub fn bitcoin_units::amount::Denomination::clone(&self) -> bitcoin_units::amount::Denomination
+pub fn bitcoin_units::amount::Denomination::eq(&self, other: &bitcoin_units::amount::Denomination) -> bool
+pub fn bitcoin_units::amount::Denomination::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::amount::Denomination::from_str(s: &str) -> core::result::Result<Self, Self::Err>
+pub fn bitcoin_units::amount::Denomination::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_units::amount::Display::clone(&self) -> bitcoin_units::amount::Display
+pub fn bitcoin_units::amount::Display::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::amount::Display::show_denomination(self) -> Self
+pub fn bitcoin_units::amount::OutOfRangeError::clone(&self) -> bitcoin_units::amount::OutOfRangeError
+pub fn bitcoin_units::amount::OutOfRangeError::eq(&self, other: &bitcoin_units::amount::OutOfRangeError) -> bool
+pub fn bitcoin_units::amount::OutOfRangeError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::amount::OutOfRangeError::is_above_max(&self) -> bool
+pub fn bitcoin_units::amount::OutOfRangeError::is_below_min(&self) -> bool
+pub fn bitcoin_units::amount::OutOfRangeError::valid_range(&self) -> (i64, u64)
+pub fn bitcoin_units::amount::ParseAmountError::clone(&self) -> bitcoin_units::amount::ParseAmountError
+pub fn bitcoin_units::amount::ParseAmountError::eq(&self, other: &bitcoin_units::amount::ParseAmountError) -> bool
+pub fn bitcoin_units::amount::ParseAmountError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::amount::ParseAmountError::from(value: bitcoin_units::amount::OutOfRangeError) -> Self
+pub fn bitcoin_units::amount::ParseDenominationError::clone(&self) -> bitcoin_units::amount::ParseDenominationError
+pub fn bitcoin_units::amount::ParseDenominationError::eq(&self, other: &bitcoin_units::amount::ParseDenominationError) -> bool
+pub fn bitcoin_units::amount::ParseDenominationError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::amount::ParseError::clone(&self) -> bitcoin_units::amount::ParseError
+pub fn bitcoin_units::amount::ParseError::eq(&self, other: &bitcoin_units::amount::ParseError) -> bool
+pub fn bitcoin_units::amount::ParseError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::amount::ParseError::from(e: bitcoin_units::amount::OutOfRangeError) -> Self
+pub fn bitcoin_units::amount::ParseError::from(e: bitcoin_units::amount::ParseAmountError) -> Self
+pub fn bitcoin_units::amount::ParseError::from(e: bitcoin_units::amount::ParseDenominationError) -> Self
+pub fn bitcoin_units::amount::PossiblyConfusingDenominationError::clone(&self) -> bitcoin_units::amount::PossiblyConfusingDenominationError
+pub fn bitcoin_units::amount::PossiblyConfusingDenominationError::eq(&self, other: &bitcoin_units::amount::PossiblyConfusingDenominationError) -> bool
+pub fn bitcoin_units::amount::PossiblyConfusingDenominationError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::amount::SignedAmount::abs(self) -> bitcoin_units::amount::SignedAmount
+pub fn bitcoin_units::amount::SignedAmount::add(self, rhs: bitcoin_units::amount::SignedAmount) -> Self::Output
+pub fn bitcoin_units::amount::SignedAmount::add_assign(&mut self, other: bitcoin_units::amount::SignedAmount)
+pub fn bitcoin_units::amount::SignedAmount::checked_abs(self) -> core::option::Option<bitcoin_units::amount::SignedAmount>
+pub fn bitcoin_units::amount::SignedAmount::checked_add(self, rhs: bitcoin_units::amount::SignedAmount) -> core::option::Option<bitcoin_units::amount::SignedAmount>
+pub fn bitcoin_units::amount::SignedAmount::checked_div(self, rhs: i64) -> core::option::Option<bitcoin_units::amount::SignedAmount>
+pub fn bitcoin_units::amount::SignedAmount::checked_mul(self, rhs: i64) -> core::option::Option<bitcoin_units::amount::SignedAmount>
+pub fn bitcoin_units::amount::SignedAmount::checked_rem(self, rhs: i64) -> core::option::Option<bitcoin_units::amount::SignedAmount>
+pub fn bitcoin_units::amount::SignedAmount::checked_sub(self, rhs: bitcoin_units::amount::SignedAmount) -> core::option::Option<bitcoin_units::amount::SignedAmount>
+pub fn bitcoin_units::amount::SignedAmount::clone(&self) -> bitcoin_units::amount::SignedAmount
+pub fn bitcoin_units::amount::SignedAmount::cmp(&self, other: &bitcoin_units::amount::SignedAmount) -> core::cmp::Ordering
+pub fn bitcoin_units::amount::SignedAmount::default() -> Self
+pub fn bitcoin_units::amount::SignedAmount::display_dynamic(self) -> bitcoin_units::amount::Display
+pub fn bitcoin_units::amount::SignedAmount::display_in(self, denomination: bitcoin_units::amount::Denomination) -> bitcoin_units::amount::Display
+pub fn bitcoin_units::amount::SignedAmount::div(self, rhs: i64) -> Self::Output
+pub fn bitcoin_units::amount::SignedAmount::div_assign(&mut self, rhs: i64)
+pub fn bitcoin_units::amount::SignedAmount::eq(&self, other: &bitcoin_units::amount::SignedAmount) -> bool
+pub fn bitcoin_units::amount::SignedAmount::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn bitcoin_units::amount::SignedAmount::fmt_value_in(self, f: &mut dyn core::fmt::Write, denom: bitcoin_units::amount::Denomination) -> core::fmt::Result
+pub fn bitcoin_units::amount::SignedAmount::from_str(s: &str) -> core::result::Result<Self, Self::Err>
+pub fn bitcoin_units::amount::SignedAmount::from_str_in(s: &str, denom: bitcoin_units::amount::Denomination) -> core::result::Result<bitcoin_units::amount::SignedAmount, bitcoin_units::amount::ParseAmountError>
+pub fn bitcoin_units::amount::SignedAmount::from_str_with_denomination(s: &str) -> core::result::Result<bitcoin_units::amount::SignedAmount, bitcoin_units::amount::ParseError>
+pub fn bitcoin_units::amount::SignedAmount::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn bitcoin_units::amount::SignedAmount::is_negative(self) -> bool
+pub fn bitcoin_units::amount::SignedAmount::is_positive(self) -> bool
+pub fn bitcoin_units::amount::SignedAmount::mul(self, rhs: i64) -> Self::Output
+pub fn bitcoin_units::amount::SignedAmount::mul_assign(&mut self, rhs: i64)
+pub fn bitcoin_units::amount::SignedAmount::partial_cmp(&self, other: &bitcoin_units::amount::SignedAmount) -> core::option::Option<core::cmp::Ordering>
+pub fn bitcoin_units::amount::SignedAmount::positive_sub(self, rhs: bitcoin_units::amount::SignedAmount) -> core::option::Option<bitcoin_units::amount::SignedAmount>
+pub fn bitcoin_units::amount::SignedAmount::rem(self, modulus: i64) -> Self
+pub fn bitcoin_units::amount::SignedAmount::rem_assign(&mut self, modulus: i64)
+pub fn bitcoin_units::amount::SignedAmount::signum(self) -> i64
+pub fn bitcoin_units::amount::SignedAmount::sub(self, rhs: bitcoin_units::amount::SignedAmount) -> Self::Output
+pub fn bitcoin_units::amount::SignedAmount::sub_assign(&mut self, other: bitcoin_units::amount::SignedAmount)
+pub fn bitcoin_units::amount::SignedAmount::sum<I: core::iter::traits::iterator::Iterator<Item = Self>>(iter: I) -> Self
+pub fn bitcoin_units::amount::SignedAmount::to_sat(self) -> i64
+pub fn bitcoin_units::amount::SignedAmount::to_unsigned(self) -> core::result::Result<bitcoin_units::amount::Amount, bitcoin_units::amount::OutOfRangeError>
+pub fn bitcoin_units::amount::SignedAmount::unsigned_abs(self) -> bitcoin_units::amount::Amount
+pub fn bitcoin_units::amount::UnknownDenominationError::clone(&self) -> bitcoin_units::amount::UnknownDenominationError
+pub fn bitcoin_units::amount::UnknownDenominationError::eq(&self, other: &bitcoin_units::amount::UnknownDenominationError) -> bool
+pub fn bitcoin_units::amount::UnknownDenominationError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub mod bitcoin_units
+pub mod bitcoin_units::amount
+pub struct bitcoin_units::Amount(_)
+pub struct bitcoin_units::SignedAmount(_)
+pub struct bitcoin_units::amount::Amount(_)
+pub struct bitcoin_units::amount::Display
+pub struct bitcoin_units::amount::OutOfRangeError
+pub struct bitcoin_units::amount::SignedAmount(_)
+pub trait bitcoin_units::amount::CheckedSum<R>: private::SumSeal<R>
+pub type bitcoin_units::amount::Amount::Err = bitcoin_units::amount::ParseError
+pub type bitcoin_units::amount::Amount::Output = bitcoin_units::amount::Amount
+pub type bitcoin_units::amount::Denomination::Err = bitcoin_units::amount::ParseDenominationError
+pub type bitcoin_units::amount::SignedAmount::Err = bitcoin_units::amount::ParseError
+pub type bitcoin_units::amount::SignedAmount::Output = bitcoin_units::amount::SignedAmount
