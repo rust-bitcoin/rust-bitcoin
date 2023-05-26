@@ -73,6 +73,7 @@ check_for_changes() {
 
         echo
         echo "You have introduced changes to the public API, commit the changes to api/ currently in your working directory" >&2
+        exit 1
     else
         echo "No changes to the current public API"
     fi
