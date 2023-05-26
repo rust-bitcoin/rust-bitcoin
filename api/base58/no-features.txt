@@ -1,0 +1,95 @@
+#[non_exhaustive] pub enum base58ck::Error
+#[non_exhaustive] pub enum base58ck::error::Error
+impl base58ck::error::IncorrectChecksumError
+impl base58ck::error::InvalidCharacterError
+impl base58ck::error::TooShortError
+impl core::clone::Clone for base58ck::error::Error
+impl core::clone::Clone for base58ck::error::IncorrectChecksumError
+impl core::clone::Clone for base58ck::error::InvalidCharacterError
+impl core::clone::Clone for base58ck::error::TooShortError
+impl core::cmp::Eq for base58ck::error::Error
+impl core::cmp::Eq for base58ck::error::IncorrectChecksumError
+impl core::cmp::Eq for base58ck::error::InvalidCharacterError
+impl core::cmp::Eq for base58ck::error::TooShortError
+impl core::cmp::PartialEq for base58ck::error::Error
+impl core::cmp::PartialEq for base58ck::error::IncorrectChecksumError
+impl core::cmp::PartialEq for base58ck::error::InvalidCharacterError
+impl core::cmp::PartialEq for base58ck::error::TooShortError
+impl core::convert::From<base58ck::error::IncorrectChecksumError> for base58ck::error::Error
+impl core::convert::From<base58ck::error::InvalidCharacterError> for base58ck::error::Error
+impl core::convert::From<base58ck::error::TooShortError> for base58ck::error::Error
+impl core::convert::From<core::convert::Infallible> for base58ck::error::Error
+impl core::fmt::Debug for base58ck::error::Error
+impl core::fmt::Debug for base58ck::error::IncorrectChecksumError
+impl core::fmt::Debug for base58ck::error::InvalidCharacterError
+impl core::fmt::Debug for base58ck::error::TooShortError
+impl core::fmt::Display for base58ck::error::Error
+impl core::fmt::Display for base58ck::error::IncorrectChecksumError
+impl core::fmt::Display for base58ck::error::InvalidCharacterError
+impl core::fmt::Display for base58ck::error::TooShortError
+impl core::marker::Freeze for base58ck::error::Error
+impl core::marker::Freeze for base58ck::error::IncorrectChecksumError
+impl core::marker::Freeze for base58ck::error::InvalidCharacterError
+impl core::marker::Freeze for base58ck::error::TooShortError
+impl core::marker::Send for base58ck::error::Error
+impl core::marker::Send for base58ck::error::IncorrectChecksumError
+impl core::marker::Send for base58ck::error::InvalidCharacterError
+impl core::marker::Send for base58ck::error::TooShortError
+impl core::marker::StructuralPartialEq for base58ck::error::Error
+impl core::marker::StructuralPartialEq for base58ck::error::IncorrectChecksumError
+impl core::marker::StructuralPartialEq for base58ck::error::InvalidCharacterError
+impl core::marker::StructuralPartialEq for base58ck::error::TooShortError
+impl core::marker::Sync for base58ck::error::Error
+impl core::marker::Sync for base58ck::error::IncorrectChecksumError
+impl core::marker::Sync for base58ck::error::InvalidCharacterError
+impl core::marker::Sync for base58ck::error::TooShortError
+impl core::marker::Unpin for base58ck::error::Error
+impl core::marker::Unpin for base58ck::error::IncorrectChecksumError
+impl core::marker::Unpin for base58ck::error::InvalidCharacterError
+impl core::marker::Unpin for base58ck::error::TooShortError
+impl core::panic::unwind_safe::RefUnwindSafe for base58ck::error::Error
+impl core::panic::unwind_safe::RefUnwindSafe for base58ck::error::IncorrectChecksumError
+impl core::panic::unwind_safe::RefUnwindSafe for base58ck::error::InvalidCharacterError
+impl core::panic::unwind_safe::RefUnwindSafe for base58ck::error::TooShortError
+impl core::panic::unwind_safe::UnwindSafe for base58ck::error::Error
+impl core::panic::unwind_safe::UnwindSafe for base58ck::error::IncorrectChecksumError
+impl core::panic::unwind_safe::UnwindSafe for base58ck::error::InvalidCharacterError
+impl core::panic::unwind_safe::UnwindSafe for base58ck::error::TooShortError
+pub base58ck::Error::Decode(base58ck::error::InvalidCharacterError)
+pub base58ck::Error::IncorrectChecksum(base58ck::error::IncorrectChecksumError)
+pub base58ck::Error::TooShort(base58ck::error::TooShortError)
+pub base58ck::error::Error::Decode(base58ck::error::InvalidCharacterError)
+pub base58ck::error::Error::IncorrectChecksum(base58ck::error::IncorrectChecksumError)
+pub base58ck::error::Error::TooShort(base58ck::error::TooShortError)
+pub fn base58ck::decode(data: &str) -> core::result::Result<alloc::vec::Vec<u8>, base58ck::error::InvalidCharacterError>
+pub fn base58ck::decode_check(data: &str) -> core::result::Result<alloc::vec::Vec<u8>, base58ck::error::Error>
+pub fn base58ck::encode(data: &[u8]) -> alloc::string::String
+pub fn base58ck::encode_check(data: &[u8]) -> alloc::string::String
+pub fn base58ck::encode_check_to_fmt(fmt: &mut core::fmt::Formatter<'_>, data: &[u8]) -> core::fmt::Result
+pub fn base58ck::error::Error::clone(&self) -> base58ck::error::Error
+pub fn base58ck::error::Error::eq(&self, other: &base58ck::error::Error) -> bool
+pub fn base58ck::error::Error::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn base58ck::error::Error::from(e: base58ck::error::IncorrectChecksumError) -> Self
+pub fn base58ck::error::Error::from(e: base58ck::error::InvalidCharacterError) -> Self
+pub fn base58ck::error::Error::from(e: base58ck::error::TooShortError) -> Self
+pub fn base58ck::error::Error::from(never: core::convert::Infallible) -> Self
+pub fn base58ck::error::IncorrectChecksumError::clone(&self) -> base58ck::error::IncorrectChecksumError
+pub fn base58ck::error::IncorrectChecksumError::eq(&self, other: &base58ck::error::IncorrectChecksumError) -> bool
+pub fn base58ck::error::IncorrectChecksumError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn base58ck::error::IncorrectChecksumError::incorrect_checksum(&self) -> (u32, u32)
+pub fn base58ck::error::InvalidCharacterError::clone(&self) -> base58ck::error::InvalidCharacterError
+pub fn base58ck::error::InvalidCharacterError::eq(&self, other: &base58ck::error::InvalidCharacterError) -> bool
+pub fn base58ck::error::InvalidCharacterError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn base58ck::error::InvalidCharacterError::invalid_base58_character(&self) -> u8
+pub fn base58ck::error::TooShortError::clone(&self) -> base58ck::error::TooShortError
+pub fn base58ck::error::TooShortError::eq(&self, other: &base58ck::error::TooShortError) -> bool
+pub fn base58ck::error::TooShortError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn base58ck::error::TooShortError::invalid_base58_length(&self) -> usize
+pub mod base58ck
+pub mod base58ck::error
+pub struct base58ck::InvalidCharacterError
+pub struct base58ck::error::IncorrectChecksumError
+pub struct base58ck::error::InvalidCharacterError
+pub struct base58ck::error::TooShortError
+pub use base58ck::String
+pub use base58ck::Vec
