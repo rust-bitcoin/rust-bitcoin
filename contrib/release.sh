@@ -38,7 +38,7 @@ publish_dry_run() {
     if [ "$crate" == "hashes" ]; then
         cargo publish -p "bitcoin_hashes" --dry-run
     elif [ "$crate" == "internals" ]; then
-        cargo publish -p "bitcoin-private" --dry-run
+        cargo publish -p "bitcoin-internals" --dry-run
     elif [ "$crate" == "bitcoin" ]; then
         cargo publish -p "bitcoin" --dry-run
     fi

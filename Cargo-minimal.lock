@@ -37,7 +37,7 @@ dependencies = [
  "base64",
  "bech32",
  "bincode",
- "bitcoin-private",
+ "bitcoin-internals",
  "bitcoin_hashes",
  "bitcoinconsensus",
  "core2",
@@ -62,14 +62,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "bitcoin-private"
+name = "bitcoin-internals"
 version = "0.1.0"
 
 [[package]]
 name = "bitcoin_hashes"
 version = "0.12.0"
 dependencies = [
- "bitcoin-private",
+ "bitcoin-internals",
  "core2",
  "schemars",
  "serde",
