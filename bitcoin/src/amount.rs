@@ -517,19 +517,15 @@ impl Amount {
     #[deprecated(since = "0.31.0", note = "Use Self::MIN instead")]
     pub const fn min_value() -> Amount { Amount(u64::min_value()) }
 
-    /// Convert from a value expressing integer values of bitcoins to an [Amount].
-    #[cfg(feature = "rust_v_1_57")]
-    pub const fn from_int_btc(btc: u64) -> Amount {
-        // unwrap() is not yet available for const fn, so we include this workaround.
-        // TODO replace whith unwrap() when available in const context.
-        match btc.checked_mul(100_000_000 * btc) {
-            Some(amount) => Amount::from_sat(amount),
-            None => {
-                // panic!() in const context requires rust 1.57+
-                panic!("Integer overflow converting btc to sats");
-            }
-        }
-    }
+    /// Creates an [`Amount`] from a value representing a whole number of bitcoin.
+    ///
+    /// This function handles an input arg that would overflow the inner type in the following ways:
+    ///
+    /// * In release mode non-const context: silently overflows
+    /// * In release mode const context: silently overflows
+    /// * In debug mode non-const context: panics
+    /// * In debug mode const context: fails to build
+    pub const fn from_int_btc(btc: u64) -> Amount { Amount::from_sat(btc * 100_000_000) }
 
     /// Convert from a value expressing bitcoins to an [Amount].
     pub fn from_btc(btc: f64) -> Result<Amount, ParseAmountError> {
@@ -2346,5 +2342,34 @@ mod tests {
                 Err(e) => panic!("unexpected error: {}", e),
             }
         }
+    }
+
+    #[test]
+    #[cfg(debug_assertions)]
+    #[should_panic]
+    fn from_int_btc_panic_in_debug_mode() { let _ = Amount::from_int_btc(u64::MAX); }
+
+    #[test]
+    #[cfg(not(debug_assertions))]
+    fn from_int_btc_overflow_in_release_mode() {
+        let (overflowed_value, overflow) = u64::MAX.overflowing_mul(100_000_000);
+        assert!(overflow); // sanity check
+
+        let got = Amount::from_int_btc(u64::MAX);
+        let want = Amount::from_sat(overflowed_value);
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    #[cfg(not(debug_assertions))]
+    fn from_int_btc_overflow_in_release_mode_const_context() {
+        const AMOUNT: Amount = Amount::from_int_btc(u64::MAX);
+    }
+
+    #[test]
+    #[cfg(debug_assertions)]
+    fn from_int_btc_overflow_in_debug_mode_const_context() {
+        const _: Amount = Amount::from_int_btc(u64::MAX);
+        println!("The line above should not compile")
     }
 }
