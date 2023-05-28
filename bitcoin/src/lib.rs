@@ -134,7 +134,6 @@ pub use crate::blockdata::{constants, opcodes};
 pub use crate::consensus::encode::VarInt;
 pub use crate::crypto::key::{self, PrivateKey, PublicKey};
 pub use crate::crypto::{ecdsa, sighash};
-pub use crate::error::Error;
 pub use crate::hash_types::{
     BlockHash, PubkeyHash, ScriptHash, Txid, WPubkeyHash, WScriptHash, Wtxid,
 };

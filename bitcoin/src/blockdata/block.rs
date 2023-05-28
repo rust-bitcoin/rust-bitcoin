@@ -16,7 +16,6 @@ use super::Weight;
 use crate::blockdata::script;
 use crate::blockdata::transaction::Transaction;
 use crate::consensus::{encode, Decodable, Encodable};
-use crate::error::Error::{self, BlockBadProofOfWork, BlockBadTarget};
 pub use crate::hash_types::BlockHash;
 use crate::hash_types::{TxMerkleNode, WitnessCommitment, WitnessMerkleNode, Wtxid};
 use crate::internal_macros::impl_consensus_encoding;
@@ -72,16 +71,16 @@ impl Header {
     pub fn difficulty_float(&self) -> f64 { self.target().difficulty_float() }
 
     /// Checks that the proof-of-work for the block is valid, returning the block hash.
-    pub fn validate_pow(&self, required_target: Target) -> Result<BlockHash, Error> {
+    pub fn validate_pow(&self, required_target: Target) -> Result<BlockHash, ValidationError> {
         let target = self.target();
         if target != required_target {
-            return Err(BlockBadTarget);
+            return Err(ValidationError::BadTarget);
         }
         let block_hash = self.block_hash();
         if target.is_met_by(block_hash) {
             Ok(block_hash)
         } else {
-            Err(BlockBadProofOfWork)
+            Err(ValidationError::BadProofOfWork)
         }
     }
 
@@ -337,6 +336,22 @@ impl Block {
     }
 }
 
+impl From<Header> for BlockHash {
+    fn from(header: Header) -> BlockHash { header.block_hash() }
+}
+
+impl From<&Header> for BlockHash {
+    fn from(header: &Header) -> BlockHash { header.block_hash() }
+}
+
+impl From<Block> for BlockHash {
+    fn from(block: Block) -> BlockHash { block.block_hash() }
+}
+
+impl From<&Block> for BlockHash {
+    fn from(block: &Block) -> BlockHash { block.block_hash() }
+}
+
 /// An error when looking up a BIP34 block height.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
@@ -375,20 +390,35 @@ impl std::error::Error for Bip34Error {
     }
 }
 
-impl From<Header> for BlockHash {
-    fn from(header: Header) -> BlockHash { header.block_hash() }
+/// A block validation error.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ValidationError {
+    /// The header hash is not below the target.
+    BadProofOfWork,
+    /// The `target` field of a block header did not match the expected difficulty.
+    BadTarget,
 }
 
-impl From<&Header> for BlockHash {
-    fn from(header: &Header) -> BlockHash { header.block_hash() }
+impl fmt::Display for ValidationError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use ValidationError::*;
+
+        match *self {
+            BadProofOfWork => f.write_str("block target correct but not attained"),
+            BadTarget => f.write_str("block target incorrect"),
+        }
+    }
 }
 
-impl From<Block> for BlockHash {
-    fn from(block: Block) -> BlockHash { block.block_hash() }
-}
+#[cfg(feature = "std")]
+impl std::error::Error for ValidationError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use self::ValidationError::*;
 
-impl From<&Block> for BlockHash {
-    fn from(block: &Block) -> BlockHash { block.block_hash() }
+        match *self {
+            BadProofOfWork | BadTarget => None,
+        }
+    }
 }
 
 #[cfg(test)]
@@ -528,7 +558,7 @@ mod tests {
 
         // test with zero target
         match some_header.validate_pow(Target::ZERO) {
-            Err(BlockBadTarget) => (),
+            Err(ValidationError::BadTarget) => (),
             _ => panic!("unexpected result from validate_pow"),
         }
 
@@ -536,7 +566,7 @@ mod tests {
         let mut invalid_header: Header = some_header;
         invalid_header.version.0 += 1;
         match invalid_header.validate_pow(invalid_header.target()) {
-            Err(BlockBadProofOfWork) => (),
+            Err(ValidationError::BadProofOfWork) => (),
             _ => panic!("unexpected result from validate_pow"),
         }
     }
