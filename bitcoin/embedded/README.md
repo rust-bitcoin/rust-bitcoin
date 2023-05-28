@@ -23,3 +23,12 @@ Address: bc1qpx9t9pzzl4qsydmhyt6ctrxxjd4ep549np9993
 ```
 
 Note that this heap size is required because of the amount of stack used by libsecp256k1 when initializing a context.
+
+## Cleanup
+
+After sourcing `scripts/env.sh` and _before_ building again using another target
+you'll want to unset `RUSTFLAGS` otherwise you'll get linker errors.
+
+```shell
+unset RUSTFLAGS
+```
