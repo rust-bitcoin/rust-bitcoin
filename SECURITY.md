@@ -1,7 +1,7 @@
 # Security Policy
 
 This security policy applies to the "core" crates in the rust-bitcoin ecosystem, which are
-`bitcoin`, `secp256k1`, `bitcoin_hashes` and `bitcoin-private`. These crates deal with
+`bitcoin`, `secp256k1`, `bitcoin_hashes` and `bitcoin-internals`. These crates deal with
 cryptography and cryptographic algorithms, and as such, are likely locations for security
 vulnerabilities to crop up.
 
