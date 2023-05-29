@@ -8,9 +8,9 @@
 
 use core::convert::TryInto;
 use core::default::Default;
-use core::fmt;
 use core::ops::Index;
 use core::str::FromStr;
+use core::{fmt, slice};
 
 use hashes::{hex, sha512, Hash, HashEngine, Hmac, HmacEngine};
 use internals::{impl_array_newtype, write_err};
@@ -207,6 +207,10 @@ impl FromStr for ChildNumber {
             ChildNumber::from_normal_idx(inp.parse().map_err(|_| Error::InvalidChildNumberFormat)?)?
         })
     }
+}
+
+impl AsRef<[ChildNumber]> for ChildNumber {
+    fn as_ref(&self) -> &[ChildNumber] { slice::from_ref(self) }
 }
 
 #[cfg(feature = "serde")]
@@ -563,7 +567,7 @@ impl ExtendedPrivKey {
     }
 
     /// Private->Private child key derivation
-    pub fn ckd_priv<C: secp256k1::Signing>(
+    fn ckd_priv<C: secp256k1::Signing>(
         &self,
         secp: &Secp256k1<C>,
         i: ChildNumber,
