@@ -10,7 +10,7 @@ pub mod serde_details {
     use core::str::FromStr;
     use core::{fmt, ops, str};
 
-    use crate::Error;
+    use crate::FromSliceError;
     struct HexVisitor<ValueT>(PhantomData<ValueT>);
     use serde::{de, Deserializer, Serializer};
 
@@ -82,7 +82,7 @@ pub mod serde_details {
         const N: usize;
 
         /// Helper function to turn a deserialized slice into the correct hash type.
-        fn from_slice_delegated(sl: &[u8]) -> Result<Self, Error>;
+        fn from_slice_delegated(sl: &[u8]) -> Result<Self, FromSliceError>;
 
         /// Do serde serialization.
         fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
@@ -112,7 +112,7 @@ macro_rules! serde_impl(
     ($t:ident, $len:expr $(, $gen:ident: $gent:ident)*) => (
         impl<$($gen: $gent),*> $crate::serde_macros::serde_details::SerdeHash for $t<$($gen),*> {
             const N : usize = $len;
-            fn from_slice_delegated(sl: &[u8]) -> Result<Self, $crate::Error> {
+            fn from_slice_delegated(sl: &[u8]) -> Result<Self, $crate::FromSliceError> {
                 #[allow(unused_imports)]
                 use $crate::Hash as _;
                 $t::from_slice(sl)

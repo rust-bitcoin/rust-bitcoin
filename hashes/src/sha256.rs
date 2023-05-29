@@ -8,7 +8,7 @@ use core::ops::Index;
 use core::slice::SliceIndex;
 use core::{cmp, str};
 
-use crate::{hex, sha256d, Error, HashEngine as _};
+use crate::{hex, sha256d, FromSliceError, HashEngine as _};
 
 crate::internal_macros::hash_type! {
     256,
@@ -142,9 +142,9 @@ impl Midstate {
     pub const fn from_byte_array(inner: [u8; 32]) -> Self { Midstate(inner) }
 
     /// Copies a byte slice into the [`Midstate`] object.
-    pub fn from_slice(sl: &[u8]) -> Result<Midstate, Error> {
+    pub fn from_slice(sl: &[u8]) -> Result<Midstate, FromSliceError> {
         if sl.len() != Self::LEN {
-            Err(Error::InvalidLength(Self::LEN, sl.len()))
+            Err(FromSliceError { expected: Self::LEN, got: sl.len() })
         } else {
             let mut ret = [0; 32];
             ret.copy_from_slice(sl);

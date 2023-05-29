@@ -7,7 +7,7 @@ use core::ops::Index;
 use core::slice::SliceIndex;
 use core::str;
 
-use crate::{sha256, Error};
+use crate::{sha256, FromSliceError};
 
 crate::internal_macros::hash_type! {
     256,
