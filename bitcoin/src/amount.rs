@@ -2364,12 +2364,18 @@ mod tests {
     #[cfg(not(debug_assertions))]
     fn from_int_btc_overflow_in_release_mode_const_context() {
         const AMOUNT: Amount = Amount::from_int_btc(u64::MAX);
+
+        let (overflowed_value, overflow) = u64::MAX.overflowing_mul(100_000_000);
+        assert!(overflow); // sanity check
+
+        let want = Amount::from_sat(overflowed_value);
+        assert_eq!(AMOUNT, want);
     }
 
-    #[test]
-    #[cfg(debug_assertions)]
-    fn from_int_btc_overflow_in_debug_mode_const_context() {
-        const _: Amount = Amount::from_int_btc(u64::MAX);
-        println!("The line above should not compile")
-    }
+    // #[test]
+    // #[cfg(debug_assertions)]
+    // fn from_int_btc_overflow_in_debug_mode_const_context() {
+    //     const _: Amount = Amount::from_int_btc(u64::MAX);
+    //     println!("The line above should not compile")
+    // }
 }
