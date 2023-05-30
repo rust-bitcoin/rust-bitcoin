@@ -148,12 +148,10 @@ impl std::error::Error for Error {
     }
 }
 
-#[doc(hidden)]
 impl From<base58::Error> for Error {
     fn from(e: base58::Error) -> Error { Error::Base58(e) }
 }
 
-#[doc(hidden)]
 impl From<bech32::Error> for Error {
     fn from(e: bech32::Error) -> Error { Error::Bech32(e) }
 }

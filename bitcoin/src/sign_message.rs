@@ -68,7 +68,6 @@ mod message_signing {
         }
     }
 
-    #[doc(hidden)]
     impl From<secp256k1::Error> for MessageSignatureError {
         fn from(e: secp256k1::Error) -> MessageSignatureError {
             MessageSignatureError::InvalidEncoding(e)

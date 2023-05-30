@@ -779,7 +779,6 @@ impl From<UintError> for Error {
 }
 
 #[cfg(feature = "bitcoinconsensus")]
-#[doc(hidden)]
 impl From<bitcoinconsensus::Error> for Error {
     fn from(err: bitcoinconsensus::Error) -> Error { Error::BitcoinConsensus(err) }
 }

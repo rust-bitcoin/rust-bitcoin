@@ -203,7 +203,6 @@ impl std::error::Error for Error {
     }
 }
 
-#[doc(hidden)]
 impl From<hashes::FromSliceError> for Error {
     fn from(e: hashes::FromSliceError) -> Error { Error::HashParse(e) }
 }
