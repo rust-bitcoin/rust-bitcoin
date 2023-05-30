@@ -65,17 +65,14 @@ impl std::error::Error for Error {
     }
 }
 
-#[doc(hidden)]
 impl From<base58::Error> for Error {
     fn from(e: base58::Error) -> Error { Error::Base58(e) }
 }
 
-#[doc(hidden)]
 impl From<secp256k1::Error> for Error {
     fn from(e: secp256k1::Error) -> Error { Error::Secp256k1(e) }
 }
 
-#[doc(hidden)]
 impl From<hex::Error> for Error {
     fn from(e: hex::Error) -> Self { Error::Hex(e) }
 }
