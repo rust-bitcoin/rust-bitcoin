@@ -20,7 +20,6 @@ use crate::blockdata::transaction::{Transaction, TxOut};
 use crate::crypto::ecdsa;
 use crate::crypto::key::{PrivateKey, PublicKey};
 use crate::prelude::*;
-pub use crate::sighash::Prevouts;
 use crate::sighash::{self, EcdsaSighashType, SighashCache};
 use crate::Amount;
 
