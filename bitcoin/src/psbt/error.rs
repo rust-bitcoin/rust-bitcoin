@@ -56,8 +56,8 @@ pub enum Error {
     },
     /// Unable to parse as a standard sighash type.
     NonStandardSighashType(u32),
-    /// Parsing errors from bitcoin_hashes
-    HashParse(hashes::FromSliceError),
+    /// Invalid hash when parsing slice.
+    InvalidHash(hashes::FromSliceError),
     /// The pre-image must hash to the correponding psbt hash
     InvalidPreimageHashPair {
         /// Hash-type
@@ -131,7 +131,7 @@ impl fmt::Display for Error {
             ),
             Error::NonStandardSighashType(ref sht) =>
                 write!(f, "non-standard sighash type: {}", sht),
-            Error::HashParse(ref e) => write_err!(f, "hash parse error"; e),
+            Error::InvalidHash(ref e) => write_err!(f, "invalid hash when parsing slice"; e),
             Error::InvalidPreimageHashPair { ref preimage, ref hash, ref hash_type } => {
                 // directly using debug forms of psbthash enums
                 write!(f, "Preimage {:?} does not match {:?} hash {:?}", preimage, hash_type, hash)
@@ -167,7 +167,7 @@ impl std::error::Error for Error {
         use self::Error::*;
 
         match self {
-            HashParse(e) => Some(e),
+            InvalidHash(e) => Some(e),
             ConsensusEncoding(e) => Some(e),
             Io(e) => Some(e),
             InvalidMagic
@@ -204,7 +204,7 @@ impl std::error::Error for Error {
 }
 
 impl From<hashes::FromSliceError> for Error {
-    fn from(e: hashes::FromSliceError) -> Error { Error::HashParse(e) }
+    fn from(e: hashes::FromSliceError) -> Error { Error::InvalidHash(e) }
 }
 
 impl From<encode::Error> for Error {
