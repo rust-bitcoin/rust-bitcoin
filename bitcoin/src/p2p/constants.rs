@@ -27,9 +27,9 @@
 
 use core::borrow::{Borrow, BorrowMut};
 use core::convert::TryFrom;
+use core::fmt;
 use core::fmt::Display;
 use core::str::FromStr;
-use core::{fmt, ops};
 
 use hex::FromHex;
 use internals::{debug_from_display, write_err};
@@ -423,161 +423,14 @@ impl fmt::Display for UnknownMagic {
 }
 impl_std_error!(UnknownMagic);
 
-/// Flags to indicate which network services a node supports.
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct ServiceFlags(u64);
-
-impl ServiceFlags {
-    /// NONE means no services supported.
-    pub const NONE: ServiceFlags = ServiceFlags(0);
-
-    /// NETWORK means that the node is capable of serving the complete block chain. It is currently
-    /// set by all Bitcoin Core non pruned nodes, and is unset by SPV clients or other light
-    /// clients.
-    pub const NETWORK: ServiceFlags = ServiceFlags(1 << 0);
-
-    /// GETUTXO means the node is capable of responding to the getutxo protocol request.  Bitcoin
-    /// Core does not support this but a patch set called Bitcoin XT does.
-    /// See BIP 64 for details on how this is implemented.
-    pub const GETUTXO: ServiceFlags = ServiceFlags(1 << 1);
-
-    /// BLOOM means the node is capable and willing to handle bloom-filtered connections.  Bitcoin
-    /// Core nodes used to support this by default, without advertising this bit, but no longer do
-    /// as of protocol version 70011 (= NO_BLOOM_VERSION)
-    pub const BLOOM: ServiceFlags = ServiceFlags(1 << 2);
-
-    /// WITNESS indicates that a node can be asked for blocks and transactions including witness
-    /// data.
-    pub const WITNESS: ServiceFlags = ServiceFlags(1 << 3);
-
-    /// COMPACT_FILTERS means the node will service basic block filter requests.
-    /// See BIP157 and BIP158 for details on how this is implemented.
-    pub const COMPACT_FILTERS: ServiceFlags = ServiceFlags(1 << 6);
-
-    /// NETWORK_LIMITED means the same as NODE_NETWORK with the limitation of only serving the last
-    /// 288 (2 day) blocks.
-    /// See BIP159 for details on how this is implemented.
-    pub const NETWORK_LIMITED: ServiceFlags = ServiceFlags(1 << 10);
-
-    // NOTE: When adding new flags, remember to update the Display impl accordingly.
-
-    /// Add [ServiceFlags] together.
-    ///
-    /// Returns itself.
-    pub fn add(&mut self, other: ServiceFlags) -> ServiceFlags {
-        self.0 |= other.0;
-        *self
-    }
-
-    /// Remove [ServiceFlags] from this.
-    ///
-    /// Returns itself.
-    pub fn remove(&mut self, other: ServiceFlags) -> ServiceFlags {
-        self.0 ^= other.0;
-        *self
-    }
-
-    /// Check whether [ServiceFlags] are included in this one.
-    pub fn has(self, flags: ServiceFlags) -> bool { (self.0 | flags.0) == self.0 }
-
-    /// Gets the integer representation of this [`ServiceFlags`].
-    pub fn to_u64(self) -> u64 { self.0 }
-}
-
-impl fmt::LowerHex for ServiceFlags {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::LowerHex::fmt(&self.0, f) }
-}
-
-impl fmt::UpperHex for ServiceFlags {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::UpperHex::fmt(&self.0, f) }
-}
-
-impl fmt::Display for ServiceFlags {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut flags = *self;
-        if flags == ServiceFlags::NONE {
-            return write!(f, "ServiceFlags(NONE)");
-        }
-        let mut first = true;
-        macro_rules! write_flag {
-            ($f:ident) => {
-                if flags.has(ServiceFlags::$f) {
-                    if !first {
-                        write!(f, "|")?;
-                    }
-                    first = false;
-                    write!(f, stringify!($f))?;
-                    flags.remove(ServiceFlags::$f);
-                }
-            };
-        }
-        write!(f, "ServiceFlags(")?;
-        write_flag!(NETWORK);
-        write_flag!(GETUTXO);
-        write_flag!(BLOOM);
-        write_flag!(WITNESS);
-        write_flag!(COMPACT_FILTERS);
-        write_flag!(NETWORK_LIMITED);
-        // If there are unknown flags left, we append them in hex.
-        if flags != ServiceFlags::NONE {
-            if !first {
-                write!(f, "|")?;
-            }
-            write!(f, "0x{:x}", flags)?;
-        }
-        write!(f, ")")
-    }
-}
-
-impl From<u64> for ServiceFlags {
-    fn from(f: u64) -> Self { ServiceFlags(f) }
-}
-
-impl From<ServiceFlags> for u64 {
-    fn from(flags: ServiceFlags) -> Self { flags.0 }
-}
-
-impl ops::BitOr for ServiceFlags {
-    type Output = Self;
-
-    fn bitor(mut self, rhs: Self) -> Self { self.add(rhs) }
-}
-
-impl ops::BitOrAssign for ServiceFlags {
-    fn bitor_assign(&mut self, rhs: Self) { self.add(rhs); }
-}
-
-impl ops::BitXor for ServiceFlags {
-    type Output = Self;
-
-    fn bitxor(mut self, rhs: Self) -> Self { self.remove(rhs) }
-}
-
-impl ops::BitXorAssign for ServiceFlags {
-    fn bitxor_assign(&mut self, rhs: Self) { self.remove(rhs); }
-}
-
-impl Encodable for ServiceFlags {
-    #[inline]
-    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        self.0.consensus_encode(w)
-    }
-}
-
-impl Decodable for ServiceFlags {
-    #[inline]
-    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
-        Ok(ServiceFlags(Decodable::consensus_decode(r)?))
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use std::convert::TryFrom;
     use std::str::FromStr;
 
-    use super::{Magic, Network, ServiceFlags};
+    use super::{Magic, Network};
     use crate::consensus::encode::{deserialize, serialize};
+    use crate::p2p::ServiceFlags;
 
     #[test]
     fn serialize_test() {

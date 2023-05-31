@@ -550,13 +550,14 @@ mod test {
     use crate::consensus::encode::{deserialize, deserialize_partial, serialize};
     use crate::internal_macros::hex;
     use crate::p2p::address::{AddrV2, AddrV2Message, Address};
-    use crate::p2p::constants::{Magic, Network, ServiceFlags};
+    use crate::p2p::constants::{Magic, Network};
     use crate::p2p::message_blockdata::{GetBlocksMessage, GetHeadersMessage, Inventory};
     use crate::p2p::message_bloom::{BloomFlags, FilterAdd, FilterLoad};
     use crate::p2p::message_compact_blocks::{GetBlockTxn, SendCmpct};
     use crate::p2p::message_filter::{
         CFCheckpt, CFHeaders, CFilter, GetCFCheckpt, GetCFHeaders, GetCFilters,
     };
+    use crate::p2p::ServiceFlags;
 
     fn hash(slice: [u8; 32]) -> Hash { Hash::from_slice(&slice).unwrap() }
 
