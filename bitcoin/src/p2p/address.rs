@@ -141,7 +141,7 @@ pub enum AddrV2 {
 }
 
 impl Encodable for AddrV2 {
-    fn consensus_encode<W: io::Write + ?Sized>(&self, e: &mut W) -> Result<usize, io::Error> {
+    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         fn encode_addr<W: io::Write + ?Sized>(
             w: &mut W,
             network: u8,
@@ -154,13 +154,13 @@ impl Encodable for AddrV2 {
             Ok(len)
         }
         Ok(match *self {
-            AddrV2::Ipv4(ref addr) => encode_addr(e, 1, &addr.octets())?,
-            AddrV2::Ipv6(ref addr) => encode_addr(e, 2, &addr.octets())?,
-            AddrV2::TorV2(ref bytes) => encode_addr(e, 3, bytes)?,
-            AddrV2::TorV3(ref bytes) => encode_addr(e, 4, bytes)?,
-            AddrV2::I2p(ref bytes) => encode_addr(e, 5, bytes)?,
-            AddrV2::Cjdns(ref addr) => encode_addr(e, 6, &addr.octets())?,
-            AddrV2::Unknown(network, ref bytes) => encode_addr(e, network, bytes)?,
+            AddrV2::Ipv4(ref addr) => encode_addr(w, 1, &addr.octets())?,
+            AddrV2::Ipv6(ref addr) => encode_addr(w, 2, &addr.octets())?,
+            AddrV2::TorV2(ref bytes) => encode_addr(w, 3, bytes)?,
+            AddrV2::TorV3(ref bytes) => encode_addr(w, 4, bytes)?,
+            AddrV2::I2p(ref bytes) => encode_addr(w, 5, bytes)?,
+            AddrV2::Cjdns(ref addr) => encode_addr(w, 6, &addr.octets())?,
+            AddrV2::Unknown(network, ref bytes) => encode_addr(w, network, bytes)?,
         })
     }
 }
