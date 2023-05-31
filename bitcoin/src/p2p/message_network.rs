@@ -10,10 +10,10 @@ use hashes::sha256d;
 
 use crate::consensus::{encode, Decodable, Encodable, ReadExt};
 use crate::internal_macros::impl_consensus_encoding;
-use crate::io;
 use crate::p2p::address::Address;
-use crate::p2p::constants::{self, ServiceFlags};
+use crate::p2p::constants::ServiceFlags;
 use crate::prelude::*;
+use crate::{io, p2p};
 
 /// Some simple messages
 
@@ -54,7 +54,7 @@ impl VersionMessage {
         start_height: i32,
     ) -> VersionMessage {
         VersionMessage {
-            version: constants::PROTOCOL_VERSION,
+            version: p2p::PROTOCOL_VERSION,
             services,
             timestamp,
             receiver,

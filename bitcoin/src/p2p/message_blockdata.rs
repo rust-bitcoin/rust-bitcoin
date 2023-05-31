@@ -11,9 +11,8 @@ use hashes::{sha256d, Hash as _};
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::hash_types::{BlockHash, Txid, Wtxid};
 use crate::internal_macros::impl_consensus_encoding;
-use crate::io;
-use crate::p2p::constants;
 use crate::prelude::*;
+use crate::{io, p2p};
 
 /// An inventory item.
 #[derive(PartialEq, Eq, Clone, Debug, Copy, Hash, PartialOrd, Ord)]
@@ -128,7 +127,7 @@ pub struct GetHeadersMessage {
 impl GetBlocksMessage {
     /// Construct a new `getblocks` message
     pub fn new(locator_hashes: Vec<BlockHash>, stop_hash: BlockHash) -> GetBlocksMessage {
-        GetBlocksMessage { version: constants::PROTOCOL_VERSION, locator_hashes, stop_hash }
+        GetBlocksMessage { version: p2p::PROTOCOL_VERSION, locator_hashes, stop_hash }
     }
 }
 
@@ -137,7 +136,7 @@ impl_consensus_encoding!(GetBlocksMessage, version, locator_hashes, stop_hash);
 impl GetHeadersMessage {
     /// Construct a new `getheaders` message
     pub fn new(locator_hashes: Vec<BlockHash>, stop_hash: BlockHash) -> GetHeadersMessage {
-        GetHeadersMessage { version: constants::PROTOCOL_VERSION, locator_hashes, stop_hash }
+        GetHeadersMessage { version: p2p::PROTOCOL_VERSION, locator_hashes, stop_hash }
     }
 }
 
