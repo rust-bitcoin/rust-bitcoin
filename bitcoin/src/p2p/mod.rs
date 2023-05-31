@@ -26,10 +26,12 @@ pub mod message_network;
 
 pub use self::constants::Magic;
 
-/// Version of the protocol as appearing in network message headers
-/// This constant is used to signal to other peers which features you support.
-/// Increasing it implies that your software also supports every feature prior to this version.
-/// Doing so without support may lead to you incorrectly banning other peers or other peers banning you.
+/// Version of the protocol as appearing in network message headers.
+///
+/// This constant is used to signal to other peers which features you support. Increasing it implies
+/// that your software also supports every feature prior to this version. Doing so without support
+/// may lead to you incorrectly banning other peers or other peers banning you.
+///
 /// These are the features required for each version:
 /// 70016 - Support receiving `wtxidrelay` message between `version` and `verack` message
 /// 70015 - Support receiving invalid compact blocks from a peer without banning them
