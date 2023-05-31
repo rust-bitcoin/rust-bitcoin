@@ -73,20 +73,18 @@ impl convert::AsRef<Transaction> for PrefilledTransaction {
 
 impl Encodable for PrefilledTransaction {
     #[inline]
-    fn consensus_encode<S: io::Write + ?Sized>(&self, mut s: &mut S) -> Result<usize, io::Error> {
-        Ok(VarInt::from(self.idx).consensus_encode(&mut s)? + self.tx.consensus_encode(&mut s)?)
+    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        Ok(VarInt::from(self.idx).consensus_encode(w)? + self.tx.consensus_encode(w)?)
     }
 }
 
 impl Decodable for PrefilledTransaction {
     #[inline]
-    fn consensus_decode<D: io::Read + ?Sized>(
-        mut d: &mut D,
-    ) -> Result<PrefilledTransaction, encode::Error> {
-        let idx = VarInt::consensus_decode(&mut d)?.0;
+    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        let idx = VarInt::consensus_decode(r)?.0;
         let idx = u16::try_from(idx)
             .map_err(|_| encode::Error::ParseFailed("BIP152 prefilled tx index out of bounds"))?;
-        let tx = Transaction::consensus_decode(&mut d)?;
+        let tx = Transaction::consensus_decode(r)?;
         Ok(PrefilledTransaction { idx, tx })
     }
 }
@@ -131,15 +129,15 @@ impl ShortId {
 
 impl Encodable for ShortId {
     #[inline]
-    fn consensus_encode<S: io::Write + ?Sized>(&self, s: &mut S) -> Result<usize, io::Error> {
-        self.0.consensus_encode(s)
+    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        self.0.consensus_encode(w)
     }
 }
 
 impl Decodable for ShortId {
     #[inline]
-    fn consensus_decode<D: io::Read + ?Sized>(d: &mut D) -> Result<ShortId, encode::Error> {
-        Ok(ShortId(Decodable::consensus_decode(d)?))
+    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<ShortId, encode::Error> {
+        Ok(ShortId(Decodable::consensus_decode(r)?))
     }
 }
 
@@ -260,13 +258,13 @@ impl Encodable for BlockTransactionsRequest {
     ///
     /// Panics if the index overflows [`u64::MAX`]. This happens when [`BlockTransactionsRequest::indexes`]
     /// contains an entry with the value [`u64::MAX`] as `u64` overflows during differential encoding.
-    fn consensus_encode<S: io::Write + ?Sized>(&self, mut s: &mut S) -> Result<usize, io::Error> {
-        let mut len = self.block_hash.consensus_encode(&mut s)?;
+    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        let mut len = self.block_hash.consensus_encode(w)?;
         // Manually encode indexes because they are differentially encoded VarInts.
-        len += VarInt(self.indexes.len() as u64).consensus_encode(&mut s)?;
+        len += VarInt(self.indexes.len() as u64).consensus_encode(w)?;
         let mut last_idx = 0;
         for idx in &self.indexes {
-            len += VarInt(*idx - last_idx).consensus_encode(&mut s)?;
+            len += VarInt(*idx - last_idx).consensus_encode(w)?;
             last_idx = *idx + 1; // can panic here
         }
         Ok(len)
@@ -274,14 +272,12 @@ impl Encodable for BlockTransactionsRequest {
 }
 
 impl Decodable for BlockTransactionsRequest {
-    fn consensus_decode<D: io::Read + ?Sized>(
-        mut d: &mut D,
-    ) -> Result<BlockTransactionsRequest, encode::Error> {
+    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Ok(BlockTransactionsRequest {
-            block_hash: BlockHash::consensus_decode(&mut d)?,
+            block_hash: BlockHash::consensus_decode(r)?,
             indexes: {
                 // Manually decode indexes because they are differentially encoded VarInts.
-                let nb_indexes = VarInt::consensus_decode(&mut d)?.0 as usize;
+                let nb_indexes = VarInt::consensus_decode(r)?.0 as usize;
 
                 // Since the number of indices ultimately represent transactions,
                 // we can limit the number of indices to the maximum number of
@@ -299,14 +295,14 @@ impl Decodable for BlockTransactionsRequest {
                 let mut indexes = Vec::with_capacity(nb_indexes);
                 let mut last_index: u64 = 0;
                 for _ in 0..nb_indexes {
-                    let differential: VarInt = Decodable::consensus_decode(&mut d)?;
+                    let differential: VarInt = Decodable::consensus_decode(r)?;
                     last_index = match last_index.checked_add(differential.0) {
-                        Some(r) => r,
+                        Some(i) => i,
                         None => return Err(encode::Error::ParseFailed("block index overflow")),
                     };
                     indexes.push(last_index);
                     last_index = match last_index.checked_add(1) {
-                        Some(r) => r,
+                        Some(i) => i,
                         None => return Err(encode::Error::ParseFailed("block index overflow")),
                     };
                 }
