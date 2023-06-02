@@ -73,12 +73,13 @@ pub enum Error {
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use Error::*;
+
         match *self {
-            Error::InvalidSighashType(hash_ty) =>
-                write!(f, "invalid signature hash type {}", hash_ty),
-            Error::Secp256k1(ref e) =>
+            InvalidSighashType(hash_ty) => write!(f, "invalid signature hash type {}", hash_ty),
+            Secp256k1(ref e) =>
                 write_err!(f, "taproot signature has correct len but is malformed"; e),
-            Error::InvalidSignatureSize(sz) => write!(f, "invalid taproot signature size: {}", sz),
+            InvalidSignatureSize(sz) => write!(f, "invalid taproot signature size: {}", sz),
         }
     }
 }
@@ -86,7 +87,7 @@ impl fmt::Display for Error {
 #[cfg(feature = "std")]
 impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use self::Error::*;
+        use Error::*;
 
         match self {
             Secp256k1(e) => Some(e),
