@@ -31,7 +31,7 @@ impl Signature {
             64 => {
                 // default type
                 let sig =
-                    secp256k1::schnorr::Signature::from_slice(sl).map_err(Error::Secp256k1)?;
+                    secp256k1::schnorr::Signature::from_slice(sl)?;
                 Ok(Signature { sig, hash_ty: TapSighashType::Default })
             }
             65 => {
@@ -39,7 +39,7 @@ impl Signature {
                 let hash_ty = TapSighashType::from_consensus_u8(*hash_ty)
                     .map_err(|_| Error::InvalidSighashType(*hash_ty))?;
                 let sig =
-                    secp256k1::schnorr::Signature::from_slice(sig).map_err(Error::Secp256k1)?;
+                    secp256k1::schnorr::Signature::from_slice(sig)?;
                 Ok(Signature { sig, hash_ty })
             }
             len => Err(Error::InvalidSignatureSize(len)),
