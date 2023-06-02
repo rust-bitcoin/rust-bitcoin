@@ -411,6 +411,30 @@ impl All {
     /// Encodes [`All`] as a byte.
     #[inline]
     pub const fn to_u8(self) -> u8 { self.code }
+
+    /// Encodes PUSHNUM [`All`] as a `u8` representing its number (1-16).
+    ///
+    /// Does not convert `OP_FALSE` to 0. Only `1` to `OP_PUSHNUM_16` are covered.
+    ///
+    /// # Returns
+    ///
+    /// Returns `None` if `self` is not a PUSHNUM.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bitcoin::opcodes::all::*;
+    /// assert_eq!(OP_PUSHNUM_5.decode_pushnum().expect("pushnum"), 5)
+    /// ```
+    #[inline]
+    pub const fn decode_pushnum(self) -> Option<u8> {
+        const START: u8 = OP_PUSHNUM_1.code;
+        const END: u8 = OP_PUSHNUM_16.code;
+        match self.code {
+            START..=END => Some(self.code - START + 1),
+            _ => None,
+        }
+    }
 }
 
 impl From<u8> for All {

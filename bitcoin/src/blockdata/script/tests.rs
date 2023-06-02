@@ -608,6 +608,82 @@ fn defult_dust_value_tests() {
 }
 
 #[test]
+fn test_script_get_sigop_count() {
+    assert_eq!(
+        Builder::new()
+            .push_opcode(OP_DUP)
+            .push_opcode(OP_HASH160)
+            .push_slice([42; 20])
+            .push_opcode(OP_EQUAL)
+            .into_script()
+            .count_sigops(),
+        Ok(0)
+    );
+    assert_eq!(
+        Builder::new()
+            .push_opcode(OP_DUP)
+            .push_opcode(OP_HASH160)
+            .push_slice([42; 20])
+            .push_opcode(OP_EQUALVERIFY)
+            .push_opcode(OP_CHECKSIG)
+            .into_script()
+            .count_sigops(),
+        Ok(1)
+    );
+    assert_eq!(
+        Builder::new()
+            .push_opcode(OP_DUP)
+            .push_opcode(OP_HASH160)
+            .push_slice([42; 20])
+            .push_opcode(OP_EQUALVERIFY)
+            .push_opcode(OP_CHECKSIGVERIFY)
+            .push_opcode(OP_PUSHNUM_1)
+            .into_script()
+            .count_sigops(),
+        Ok(1)
+    );
+    let multi = Builder::new()
+        .push_opcode(OP_PUSHNUM_1)
+        .push_slice([3; 33])
+        .push_slice([3; 33])
+        .push_slice([3; 33])
+        .push_opcode(OP_PUSHNUM_3)
+        .push_opcode(OP_CHECKMULTISIG)
+        .into_script();
+    assert_eq!(multi.count_sigops(), Ok(3));
+    assert_eq!(multi.count_sigops_legacy(), Ok(20));
+    let multi_verify = Builder::new()
+        .push_opcode(OP_PUSHNUM_1)
+        .push_slice([3; 33])
+        .push_slice([3; 33])
+        .push_slice([3; 33])
+        .push_opcode(OP_PUSHNUM_3)
+        .push_opcode(OP_CHECKMULTISIGVERIFY)
+        .push_opcode(OP_PUSHNUM_1)
+        .into_script();
+    assert_eq!(multi_verify.count_sigops(), Ok(3));
+    assert_eq!(multi_verify.count_sigops_legacy(), Ok(20));
+    let multi_nopushnum_pushdata = Builder::new()
+        .push_opcode(OP_PUSHNUM_1)
+        .push_slice([3; 33])
+        .push_slice([3; 33])
+        .push_slice([3; 33])
+        .push_opcode(OP_CHECKMULTISIG)
+        .into_script();
+    assert_eq!(multi_nopushnum_pushdata.count_sigops(), Ok(20));
+    assert_eq!(multi_nopushnum_pushdata.count_sigops_legacy(), Ok(20));
+    let multi_nopushnum_op = Builder::new()
+        .push_opcode(OP_PUSHNUM_1)
+        .push_slice([3; 33])
+        .push_slice([3; 33])
+        .push_opcode(OP_DROP)
+        .push_opcode(OP_CHECKMULTISIG)
+        .into_script();
+    assert_eq!(multi_nopushnum_op.count_sigops(), Ok(20));
+    assert_eq!(multi_nopushnum_op.count_sigops_legacy(), Ok(20));
+}
+
+#[test]
 #[cfg(feature = "serde")]
 fn test_script_serde_human_and_not() {
     let script = ScriptBuf::from(vec![0u8, 1u8, 2u8]);

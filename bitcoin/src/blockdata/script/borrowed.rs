@@ -318,6 +318,75 @@ impl Script {
         crate::Amount::from_sat(sats)
     }
 
+    /// Count the sigops for this Script using accurate counting.
+    ///
+    /// In Bitcoin Core, there are two ways to count sigops, "accurate" and "legacy".
+    /// This method uses "accurate" counting. This means that OP_CHECKMULTISIG and its
+    /// verify variant count for N sigops where N is the number of pubkeys used in the
+    /// multisig. However, it will count for 20 sigops if CHECKMULTISIG is not preceeded by an
+    /// OP_PUSHNUM from 1 - 16 (this would be an invalid script)
+    ///
+    /// Bitcoin Core uses accurate counting for sigops contained within redeemScripts (P2SH)
+    /// and witnessScripts (P2WSH) only. It uses legacy for sigops in scriptSigs and scriptPubkeys.
+    ///
+    /// (Note: taproot scripts don't count toward the sigop count of the block,
+    /// nor do they have CHECKMULTISIG operations. This function does not count OP_CHECKSIGADD,
+    /// so do not use this to try and estimate if a taproot script goes over the sigop budget.)
+    pub fn count_sigops(&self) -> Result<usize, super::Error> { self.count_sigops_internal(true) }
+
+    /// Count the sigops for this Script using legacy counting.
+    ///
+    /// In Bitcoin Core, there are two ways to count sigops, "accurate" and "legacy".
+    /// This method uses "legacy" counting. This means that OP_CHECKMULTISIG and its
+    /// verify variant count for 20 sigops.
+    ///
+    /// Bitcoin Core uses legacy counting for sigops contained within scriptSigs and
+    /// scriptPubkeys. It uses accurate for redeemScripts (P2SH) and witnessScripts (P2WSH).
+    ///
+    /// (Note: taproot scripts don't count toward the sigop count of the block,
+    /// nor do they have CHECKMULTISIG operations. This function does not count OP_CHECKSIGADD,
+    /// so do not use this to try and estimate if a taproot script goes over the sigop budget.)
+    pub fn count_sigops_legacy(&self) -> Result<usize, super::Error> {
+        self.count_sigops_internal(false)
+    }
+
+    fn count_sigops_internal(&self, accurate: bool) -> Result<usize, super::Error> {
+        let mut n = 0;
+        let mut pushnum_cache = None;
+        for inst in self.instructions() {
+            match inst? {
+                Instruction::Op(opcode) => {
+                    match opcode {
+                        OP_CHECKSIG | OP_CHECKSIGVERIFY => {
+                            n += 1;
+                        }
+                        OP_CHECKMULTISIG | OP_CHECKMULTISIGVERIFY => {
+                            match (accurate, pushnum_cache) {
+                                (true, Some(pushnum)) => {
+                                    // Add the number of pubkeys in the multisig as sigop count
+                                    n += pushnum as usize;
+                                }
+                                _ => {
+                                    // MAX_PUBKEYS_PER_MULTISIG from Bitcoin Core
+                                    // https://github.com/bitcoin/bitcoin/blob/v25.0/src/script/script.h#L29-L30
+                                    n += 20;
+                                }
+                            }
+                        }
+                        _ => {
+                            pushnum_cache = opcode.decode_pushnum();
+                        }
+                    }
+                }
+                Instruction::PushBytes(_) => {
+                    pushnum_cache = None;
+                }
+            }
+        }
+
+        Ok(n)
+    }
+
     /// Iterates over the script instructions.
     ///
     /// Each returned item is a nested enum covering opcodes, datapushes and errors.
