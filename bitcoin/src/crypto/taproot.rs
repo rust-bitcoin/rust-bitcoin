@@ -26,23 +26,21 @@ pub struct Signature {
 
 impl Signature {
     /// Deserialize from slice
-    pub fn from_slice(sl: &[u8]) -> Result<Self, Error> {
+    pub fn from_slice(sl: &[u8]) -> Result<Self, SigFromSliceError> {
         match sl.len() {
             64 => {
                 // default type
-                let sig =
-                    secp256k1::schnorr::Signature::from_slice(sl)?;
+                let sig = secp256k1::schnorr::Signature::from_slice(sl)?;
                 Ok(Signature { sig, hash_ty: TapSighashType::Default })
             }
             65 => {
                 let (hash_ty, sig) = sl.split_last().expect("Slice len checked == 65");
                 let hash_ty = TapSighashType::from_consensus_u8(*hash_ty)
-                    .map_err(|_| Error::InvalidSighashType(*hash_ty))?;
-                let sig =
-                    secp256k1::schnorr::Signature::from_slice(sig)?;
+                    .map_err(|_| SigFromSliceError::InvalidSighashType(*hash_ty))?;
+                let sig = secp256k1::schnorr::Signature::from_slice(sig)?;
                 Ok(Signature { sig, hash_ty })
             }
-            len => Err(Error::InvalidSignatureSize(len)),
+            len => Err(SigFromSliceError::InvalidSignatureSize(len)),
         }
     }
 
@@ -59,10 +57,12 @@ impl Signature {
     }
 }
 
-/// A taproot sig related error.
+/// An error constructing a [`taproot::Signature`] from a byte slice.
+///
+/// [`taproot::Signature`]: crate::crypto::taproot::Signature
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 #[non_exhaustive]
-pub enum Error {
+pub enum SigFromSliceError {
     /// Invalid signature hash type.
     InvalidSighashType(u8),
     /// Signature has valid size but does not parse correctly
@@ -71,9 +71,9 @@ pub enum Error {
     InvalidSignatureSize(usize),
 }
 
-impl fmt::Display for Error {
+impl fmt::Display for SigFromSliceError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use Error::*;
+        use SigFromSliceError::*;
 
         match *self {
             InvalidSighashType(hash_ty) => write!(f, "invalid signature hash type {}", hash_ty),
@@ -85,9 +85,9 @@ impl fmt::Display for Error {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for Error {
+impl std::error::Error for SigFromSliceError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        use Error::*;
+        use SigFromSliceError::*;
 
         match self {
             Secp256k1(e) => Some(e),
@@ -96,6 +96,6 @@ impl std::error::Error for Error {
     }
 }
 
-impl From<secp256k1::Error> for Error {
-    fn from(e: secp256k1::Error) -> Error { Error::Secp256k1(e) }
+impl From<secp256k1::Error> for SigFromSliceError {
+    fn from(e: secp256k1::Error) -> Self { SigFromSliceError::Secp256k1(e) }
 }
