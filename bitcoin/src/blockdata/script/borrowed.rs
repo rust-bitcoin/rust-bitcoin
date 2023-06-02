@@ -318,7 +318,7 @@ impl Script {
         crate::Amount::from_sat(sats)
     }
 
-    /// Count the sigops for this Script using accurate counting.
+    /// Counts the sigops for this Script using accurate counting.
     ///
     /// In Bitcoin Core, there are two ways to count sigops, "accurate" and "legacy".
     /// This method uses "accurate" counting. This means that OP_CHECKMULTISIG and its
@@ -332,9 +332,13 @@ impl Script {
     /// (Note: taproot scripts don't count toward the sigop count of the block,
     /// nor do they have CHECKMULTISIG operations. This function does not count OP_CHECKSIGADD,
     /// so do not use this to try and estimate if a taproot script goes over the sigop budget.)
+    ///
+    /// # Errors
+    ///
+    /// If the Script is not able to be parsed to completion.
     pub fn count_sigops(&self) -> Result<usize, super::Error> { self.count_sigops_internal(true) }
 
-    /// Count the sigops for this Script using legacy counting.
+    /// Counts the sigops for this Script using legacy counting.
     ///
     /// In Bitcoin Core, there are two ways to count sigops, "accurate" and "legacy".
     /// This method uses "legacy" counting. This means that OP_CHECKMULTISIG and its
@@ -346,6 +350,10 @@ impl Script {
     /// (Note: taproot scripts don't count toward the sigop count of the block,
     /// nor do they have CHECKMULTISIG operations. This function does not count OP_CHECKSIGADD,
     /// so do not use this to try and estimate if a taproot script goes over the sigop budget.)
+    ///
+    /// # Errors
+    ///
+    /// If the Script is not able to be parsed to completion.
     pub fn count_sigops_legacy(&self) -> Result<usize, super::Error> {
         self.count_sigops_internal(false)
     }
@@ -364,7 +372,7 @@ impl Script {
                             match (accurate, pushnum_cache) {
                                 (true, Some(pushnum)) => {
                                     // Add the number of pubkeys in the multisig as sigop count
-                                    n += pushnum as usize;
+                                    n += usize::from(pushnum);
                                 }
                                 _ => {
                                     // MAX_PUBKEYS_PER_MULTISIG from Bitcoin Core
