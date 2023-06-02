@@ -63,7 +63,7 @@ impl Signature {
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 #[non_exhaustive]
 pub enum Error {
-    /// Base58 encoding error
+    /// Invalid signature hash type.
     InvalidSighashType(u8),
     /// Signature has valid size but does not parse correctly
     Secp256k1(secp256k1::Error),
