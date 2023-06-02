@@ -251,6 +251,9 @@ impl TaprootSpendInfo {
     /// Returns the parity of the output key. See also [`TaprootSpendInfo::output_key`].
     pub fn output_key_parity(&self) -> secp256k1::Parity { self.output_key_parity }
 
+    /// Returns a reference to the internal script map.
+    pub fn script_map(&self) -> &ScriptMerkleProofMap { &self.script_map }
+
     /// Computes the [`TaprootSpendInfo`] from `internal_key` and `node`.
     ///
     /// This is useful when you want to manually build a taproot tree without using
@@ -289,7 +292,8 @@ impl TaprootSpendInfo {
     }
 
     /// Returns the internal script map.
-    pub fn as_script_map(&self) -> &ScriptMerkleProofMap { &self.script_map }
+    #[deprecated(since = "0.31.0", note = "use Self::script_map instead")]
+    pub fn as_script_map(&self) -> &ScriptMerkleProofMap { self.script_map() }
 
     /// Constructs a [`ControlBlock`] for particular script with the given version.
     ///
