@@ -85,7 +85,7 @@ pub enum Error {
     /// Parsing error indicating invalid ECDSA signatures
     InvalidEcdsaSignature(crate::crypto::ecdsa::Error),
     /// Parsing error indicating invalid taproot signatures
-    InvalidTaprootSignature(crate::crypto::taproot::Error),
+    InvalidTaprootSignature(crate::crypto::taproot::SigFromSliceError),
     /// Parsing error indicating invalid control block
     InvalidControlBlock,
     /// Parsing error indicating invalid leaf version
