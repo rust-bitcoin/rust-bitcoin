@@ -153,7 +153,7 @@ all_opcodes! {
     OP_PUSHNUM_NEG1 => 0x4f, "Push the array `0x81` onto the stack.";
     OP_RESERVED => 0x50, "Synonym for OP_RETURN.";
     OP_PUSHNUM_1 => 0x51, "Push the array `0x01` onto the stack.";
-    OP_PUSHNUM_2 => 0x52, "the array `0x02` onto the stack.";
+    OP_PUSHNUM_2 => 0x52, "Push the array `0x02` onto the stack.";
     OP_PUSHNUM_3 => 0x53, "Push the array `0x03` onto the stack.";
     OP_PUSHNUM_4 => 0x54, "Push the array `0x04` onto the stack.";
     OP_PUSHNUM_5 => 0x55, "Push the array `0x05` onto the stack.";
@@ -419,15 +419,8 @@ impl All {
     /// # Returns
     ///
     /// Returns `None` if `self` is not a PUSHNUM.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use bitcoin::opcodes::all::*;
-    /// assert_eq!(OP_PUSHNUM_5.decode_pushnum().expect("pushnum"), 5)
-    /// ```
     #[inline]
-    pub const fn decode_pushnum(self) -> Option<u8> {
+    pub(crate) const fn decode_pushnum(self) -> Option<u8> {
         const START: u8 = OP_PUSHNUM_1.code;
         const END: u8 = OP_PUSHNUM_16.code;
         match self.code {
@@ -575,6 +568,44 @@ mod tests {
         let op = all::OP_NOP;
         let s = format!("{:>10}", op);
         assert_eq!(s, "    OP_NOP");
+    }
+
+    #[test]
+    fn decode_pushnum() {
+        // Test all possible opcodes
+        // - Sanity check
+        assert_eq!(OP_PUSHNUM_1.code, 0x51_u8);
+        assert_eq!(OP_PUSHNUM_16.code, 0x60_u8);
+        for i in 0x00..=0xff_u8 {
+            let expected = match i {
+                // OP_PUSHNUM_1 ..= OP_PUSHNUM_16
+                0x51..=0x60 => Some(i - 0x50),
+                _ => None,
+            };
+            assert_eq!(All::from(i).decode_pushnum(), expected);
+        }
+
+        // Test the named opcode constants
+        // - This is the OP right before PUSHNUMs start
+        assert!(OP_RESERVED.decode_pushnum().is_none());
+        assert_eq!(OP_PUSHNUM_1.decode_pushnum().expect("pushnum"), 1);
+        assert_eq!(OP_PUSHNUM_2.decode_pushnum().expect("pushnum"), 2);
+        assert_eq!(OP_PUSHNUM_3.decode_pushnum().expect("pushnum"), 3);
+        assert_eq!(OP_PUSHNUM_4.decode_pushnum().expect("pushnum"), 4);
+        assert_eq!(OP_PUSHNUM_5.decode_pushnum().expect("pushnum"), 5);
+        assert_eq!(OP_PUSHNUM_6.decode_pushnum().expect("pushnum"), 6);
+        assert_eq!(OP_PUSHNUM_7.decode_pushnum().expect("pushnum"), 7);
+        assert_eq!(OP_PUSHNUM_8.decode_pushnum().expect("pushnum"), 8);
+        assert_eq!(OP_PUSHNUM_9.decode_pushnum().expect("pushnum"), 9);
+        assert_eq!(OP_PUSHNUM_10.decode_pushnum().expect("pushnum"), 10);
+        assert_eq!(OP_PUSHNUM_11.decode_pushnum().expect("pushnum"), 11);
+        assert_eq!(OP_PUSHNUM_12.decode_pushnum().expect("pushnum"), 12);
+        assert_eq!(OP_PUSHNUM_13.decode_pushnum().expect("pushnum"), 13);
+        assert_eq!(OP_PUSHNUM_14.decode_pushnum().expect("pushnum"), 14);
+        assert_eq!(OP_PUSHNUM_15.decode_pushnum().expect("pushnum"), 15);
+        assert_eq!(OP_PUSHNUM_16.decode_pushnum().expect("pushnum"), 16);
+        // - This is the OP right after PUSHNUMs end
+        assert!(OP_NOP.decode_pushnum().is_none());
     }
 
     #[test]
