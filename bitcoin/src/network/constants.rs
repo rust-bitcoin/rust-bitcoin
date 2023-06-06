@@ -441,7 +441,7 @@ impl fmt::Display for UnknownMagic {
 impl_std_error!(UnknownMagic);
 
 /// Flags to indicate which network services a node supports.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ServiceFlags(u64);
 
 impl ServiceFlags {
