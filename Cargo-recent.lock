@@ -63,6 +63,9 @@ dependencies = [
 [[package]]
 name = "bitcoin-internals"
 version = "0.1.0"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "bitcoin_hashes"
