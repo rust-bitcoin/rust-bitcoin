@@ -6,9 +6,9 @@
 //! primitives. It is designed for Rust programs built to work with the Bitcoin
 //! network.
 //!
-//! It is also written entirely in Rust to illustrate the benefits of strong type
-//! safety, including ownership and lifetime, for financial and/or cryptographic
-//! software.
+//! Except for its dependency on libsecp256k1 (and optionally libbitcoinconsensus),
+//! this library is written entirely in Rust. It illustrates the benefits of
+//! strong type safety, including ownership and lifetime, for financial and/or cryptographic software.
 //!
 //! See README.md for detailed documentation about development and supported
 //! environments.
