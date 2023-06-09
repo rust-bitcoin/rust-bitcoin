@@ -25,21 +25,18 @@
 //! assert_eq!(&bytes[..], &[0xF9, 0xBE, 0xB4, 0xD9]);
 //! ```
 
-use core::borrow::{Borrow, BorrowMut};
 use core::convert::TryFrom;
 use core::fmt;
 use core::fmt::Display;
 use core::str::FromStr;
 
-use hex::FromHex;
-use internals::{debug_from_display, write_err};
+use internals::write_err;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::constants::ChainHash;
 use crate::error::impl_std_error;
-use crate::io;
+use crate::p2p::Magic;
 use crate::prelude::{String, ToOwned};
 
 /// The cryptocurrency network to act on.
@@ -65,7 +62,8 @@ impl Network {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin::p2p::constants::{Network, Magic};
+    /// use bitcoin::p2p::Magic;
+    /// use bitcoin::Network;
     /// use std::convert::TryFrom;
     ///
     /// assert_eq!(Ok(Network::Bitcoin), Network::try_from(Magic::from_bytes([0xF9, 0xBE, 0xB4, 0xD9])));
@@ -79,7 +77,8 @@ impl Network {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin::p2p::constants::{Network, Magic};
+    /// use bitcoin::p2p::Magic;
+    /// use bitcoin::Network;
     ///
     /// let network = Network::Bitcoin;
     /// assert_eq!(network.magic(), Magic::from_bytes([0xF9, 0xBE, 0xB4, 0xD9]));
@@ -271,164 +270,9 @@ impl TryFrom<ChainHash> for Network {
     }
 }
 
-/// Network magic bytes to identify the cryptocurrency network the message was intended for.
-#[derive(Copy, PartialEq, Eq, PartialOrd, Ord, Clone, Hash)]
-pub struct Magic([u8; 4]);
-
-impl Magic {
-    /// Bitcoin mainnet network magic bytes.
-    pub const BITCOIN: Self = Self([0xF9, 0xBE, 0xB4, 0xD9]);
-    /// Bitcoin testnet network magic bytes.
-    pub const TESTNET: Self = Self([0x0B, 0x11, 0x09, 0x07]);
-    /// Bitcoin signet network magic bytes.
-    pub const SIGNET: Self = Self([0x0A, 0x03, 0xCF, 0x40]);
-    /// Bitcoin regtest network magic bytes.
-    pub const REGTEST: Self = Self([0xFA, 0xBF, 0xB5, 0xDA]);
-
-    /// Create network magic from bytes.
-    pub fn from_bytes(bytes: [u8; 4]) -> Magic { Magic(bytes) }
-
-    /// Get network magic bytes.
-    pub fn to_bytes(self) -> [u8; 4] { self.0 }
-}
-
-/// An error in parsing magic bytes.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ParseMagicError {
-    /// The error that occurred when parsing the string.
-    error: hex::HexToArrayError,
-    /// The byte string that failed to parse.
-    magic: String,
-}
-
-impl FromStr for Magic {
-    type Err = ParseMagicError;
-
-    fn from_str(s: &str) -> Result<Magic, Self::Err> {
-        match <[u8; 4]>::from_hex(s) {
-            Ok(magic) => Ok(Magic::from_bytes(magic)),
-            Err(e) => Err(ParseMagicError { error: e, magic: s.to_owned() }),
-        }
-    }
-}
-
-impl From<Network> for Magic {
-    fn from(network: Network) -> Magic {
-        match network {
-            // Note: new network entries must explicitly be matched in `try_from` below.
-            Network::Bitcoin => Magic::BITCOIN,
-            Network::Testnet => Magic::TESTNET,
-            Network::Signet => Magic::SIGNET,
-            Network::Regtest => Magic::REGTEST,
-        }
-    }
-}
-
-/// Error in creating a Network from Magic bytes.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct UnknownMagic(Magic);
-
-impl TryFrom<Magic> for Network {
-    type Error = UnknownMagic;
-
-    fn try_from(magic: Magic) -> Result<Self, Self::Error> {
-        match magic {
-            // Note: any new network entries must be matched against here.
-            Magic::BITCOIN => Ok(Network::Bitcoin),
-            Magic::TESTNET => Ok(Network::Testnet),
-            Magic::SIGNET => Ok(Network::Signet),
-            Magic::REGTEST => Ok(Network::Regtest),
-            _ => Err(UnknownMagic(magic)),
-        }
-    }
-}
-
-impl fmt::Display for Magic {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        hex::fmt_hex_exact!(f, 4, &self.0, hex::Case::Lower)?;
-        Ok(())
-    }
-}
-debug_from_display!(Magic);
-
-impl fmt::LowerHex for Magic {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        hex::fmt_hex_exact!(f, 4, &self.0, hex::Case::Lower)?;
-        Ok(())
-    }
-}
-
-impl fmt::UpperHex for Magic {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        hex::fmt_hex_exact!(f, 4, &self.0, hex::Case::Upper)?;
-        Ok(())
-    }
-}
-
-impl Encodable for Magic {
-    fn consensus_encode<W: io::Write + ?Sized>(&self, writer: &mut W) -> Result<usize, io::Error> {
-        self.0.consensus_encode(writer)
-    }
-}
-
-impl Decodable for Magic {
-    fn consensus_decode<R: io::Read + ?Sized>(reader: &mut R) -> Result<Self, encode::Error> {
-        Ok(Magic(Decodable::consensus_decode(reader)?))
-    }
-}
-
-impl AsRef<[u8]> for Magic {
-    fn as_ref(&self) -> &[u8] { &self.0 }
-}
-
-impl AsRef<[u8; 4]> for Magic {
-    fn as_ref(&self) -> &[u8; 4] { &self.0 }
-}
-
-impl AsMut<[u8]> for Magic {
-    fn as_mut(&mut self) -> &mut [u8] { &mut self.0 }
-}
-
-impl AsMut<[u8; 4]> for Magic {
-    fn as_mut(&mut self) -> &mut [u8; 4] { &mut self.0 }
-}
-
-impl Borrow<[u8]> for Magic {
-    fn borrow(&self) -> &[u8] { &self.0 }
-}
-
-impl Borrow<[u8; 4]> for Magic {
-    fn borrow(&self) -> &[u8; 4] { &self.0 }
-}
-
-impl BorrowMut<[u8]> for Magic {
-    fn borrow_mut(&mut self) -> &mut [u8] { &mut self.0 }
-}
-
-impl BorrowMut<[u8; 4]> for Magic {
-    fn borrow_mut(&mut self) -> &mut [u8; 4] { &mut self.0 }
-}
-
-impl fmt::Display for ParseMagicError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        write_err!(f, "failed to parse {} as network magic", self.magic; self.error)
-    }
-}
-impl_std_error!(ParseMagicError, error);
-
-impl fmt::Display for UnknownMagic {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        write!(f, "unknown network magic {}", self.0)
-    }
-}
-impl_std_error!(UnknownMagic);
-
 #[cfg(test)]
 mod tests {
-    use std::convert::TryFrom;
-    use std::str::FromStr;
-
-    use super::{Magic, Network};
+    use super::Network;
     use crate::consensus::encode::{deserialize, serialize};
     use crate::p2p::ServiceFlags;
 
@@ -519,22 +363,6 @@ mod tests {
 
             let back: Network = serde_json::from_str(&got).expect("failed to deserialize network");
             assert_eq!(back, network);
-        }
-    }
-
-    #[test]
-    fn magic_from_str() {
-        let known_network_magic_strs = [
-            ("f9beb4d9", Network::Bitcoin),
-            ("0b110907", Network::Testnet),
-            ("fabfb5da", Network::Regtest),
-            ("0a03cf40", Network::Signet),
-        ];
-
-        for (magic_str, network) in &known_network_magic_strs {
-            let magic: Magic = Magic::from_str(magic_str).unwrap();
-            assert_eq!(Network::try_from(magic).unwrap(), *network);
-            assert_eq!(&magic.to_string(), magic_str);
         }
     }
 
