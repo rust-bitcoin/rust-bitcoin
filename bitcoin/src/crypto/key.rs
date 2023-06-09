@@ -18,7 +18,7 @@ pub use secp256k1::{self, constants, KeyPair, Parity, Secp256k1, Verification, X
 
 use crate::crypto::ecdsa;
 use crate::hash_types::{PubkeyHash, WPubkeyHash};
-use crate::p2p::constants::Network;
+use crate::network::Network;
 use crate::prelude::*;
 use crate::taproot::{TapNodeHash, TapTweakHash};
 use crate::{base58, io};
@@ -741,7 +741,7 @@ mod tests {
     use super::*;
     use crate::address::Address;
     use crate::io;
-    use crate::p2p::constants::Network::{Bitcoin, Testnet};
+    use crate::network::Network::{Bitcoin, Testnet};
 
     #[test]
     fn test_key_derivation() {

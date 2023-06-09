@@ -549,8 +549,8 @@ mod test {
     use crate::blockdata::transaction::Transaction;
     use crate::consensus::encode::{deserialize, deserialize_partial, serialize};
     use crate::internal_macros::hex;
+    use crate::network::Network;
     use crate::p2p::address::{AddrV2, AddrV2Message, Address};
-    use crate::p2p::constants::Network;
     use crate::p2p::message_blockdata::{GetBlocksMessage, GetHeadersMessage, Inventory};
     use crate::p2p::message_bloom::{BloomFlags, FilterAdd, FilterLoad};
     use crate::p2p::message_compact_blocks::{GetBlockTxn, SendCmpct};

@@ -5,8 +5,6 @@
 //! This module defines support for (de)serialization and network transport
 //! of Bitcoin data and Bitcoin p2p network messages.
 
-pub mod constants;
-
 #[cfg(feature = "std")]
 pub mod address;
 #[cfg(feature = "std")]
@@ -33,9 +31,8 @@ use internals::{debug_from_display, write_err};
 
 use crate::consensus::encode::{self, Decodable, Encodable};
 use crate::error::impl_std_error;
-use crate::io;
-use crate::p2p::constants::Network;
 use crate::prelude::{Borrow, BorrowMut, String, ToOwned};
+use crate::{io, Network};
 
 /// Version of the protocol as appearing in network message headers.
 ///

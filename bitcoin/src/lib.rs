@@ -106,6 +106,7 @@ pub(crate) mod crypto;
 pub mod error;
 pub mod hash_types;
 pub mod merkle_tree;
+pub mod network;
 pub mod policy;
 pub mod pow;
 pub mod psbt;
@@ -146,7 +147,7 @@ pub use crate::hash_types::{
     BlockHash, PubkeyHash, ScriptHash, Txid, WPubkeyHash, WScriptHash, Wtxid,
 };
 pub use crate::merkle_tree::MerkleBlock;
-pub use crate::p2p::constants::Network;
+pub use crate::network::Network;
 pub use crate::pow::{CompactTarget, Target, Work};
 pub use crate::psbt::Psbt;
 

@@ -1,22 +1,15 @@
 // SPDX-License-Identifier: CC0-1.0
 
-//! Bitcoin network constants.
+//! Bitcoin network.
 //!
-//! This module provides various constants relating to the Bitcoin network
-//! protocol, such as protocol versioning and magic header bytes.
-//!
-//! The [`Network`][1] type implements the [`Decodable`][2] and
-//! [`Encodable`][3] traits and encodes the magic bytes of the given
-//! network.
-//!
-//! [1]: enum.Network.html
-//! [2]: ../../consensus/encode/trait.Decodable.html
-//! [3]: ../../consensus/encode/trait.Encodable.html
+//! The term "network" is overloaded, here [`Network`] refers to the specific
+//! Bitcoin network we are operating on e.g., signet, regtest. The terms
+//! "network" and "chain" are often used interchangeably for this concept.
 //!
 //! # Example: encoding a network's magic bytes
 //!
 //! ```rust
-//! use bitcoin::p2p::constants::Network;
+//! use bitcoin::Network;
 //! use bitcoin::consensus::encode::serialize;
 //!
 //! let network = Network::Bitcoin;
@@ -130,7 +123,7 @@ impl Network {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin::p2p::constants::Network;
+    /// use bitcoin::Network;
     /// use bitcoin::blockdata::constants::ChainHash;
     ///
     /// let network = Network::Bitcoin;
@@ -143,7 +136,7 @@ impl Network {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin::p2p::constants::Network;
+    /// use bitcoin::Network;
     /// use bitcoin::blockdata::constants::ChainHash;
     /// use std::convert::TryFrom;
     ///
@@ -387,7 +380,7 @@ mod tests {
         #[derive(Serialize, Deserialize, PartialEq, Debug)]
         #[serde(crate = "actual_serde")]
         struct T {
-            #[serde(with = "crate::p2p::constants::as_core_arg")]
+            #[serde(with = "crate::network::as_core_arg")]
             pub network: Network,
         }
 
