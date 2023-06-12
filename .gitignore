@@ -1,5 +1,5 @@
 target
-Cargo.lock
+dash/Cargo.lock
 
 #fuzz
 fuzz/hfuzz_target

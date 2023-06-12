@@ -1,0 +1,26 @@
+[package]
+name = "dashcore-private"
+version = "0.1.0"
+authors = ["Samuel Westrich <sam@dash.org>", "The Rust Dash developers"]
+license = "CC0-1.0"
+repository = "https://github.com/rust-dashcore/rust-dashcore/"
+documentation = "https://docs.rs/dash-private"
+description = "Internal types and macros used by rust-dash ecosystem"
+categories = ["cryptography::cryptocurrencies"]
+keywords = ["internal"]
+readme = "README.md"
+edition = "2018"
+exclude = ["tests", "contrib"]
+
+[features]
+default = []
+std = ["alloc"]
+alloc = []
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[dependencies]
+
+[dev-dependencies]
