@@ -254,9 +254,7 @@ impl PublicKey {
 }
 
 impl From<PublicKey> for XOnlyPublicKey {
-    fn from(pk: PublicKey) -> XOnlyPublicKey {
-        pk.inner.into()
-    }
+    fn from(pk: PublicKey) -> XOnlyPublicKey { pk.inner.into() }
 }
 
 /// An opaque return type for PublicKey::to_sort_key
