@@ -253,6 +253,10 @@ impl PublicKey {
     }
 }
 
+impl From<PublicKey> for XOnlyPublicKey {
+    fn from(pk: PublicKey) -> XOnlyPublicKey { pk.inner.into() }
+}
+
 /// An opaque return type for PublicKey::to_sort_key
 #[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub struct SortKey(u8, [u8; 32], [u8; 32]);
