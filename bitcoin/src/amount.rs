@@ -502,9 +502,9 @@ impl Amount {
     /// Exactly one satoshi.
     pub const ONE_SAT: Amount = Amount(1);
     /// Exactly one bitcoin.
-    pub const ONE_BTC: Amount = Amount(100_000_000);
+    pub const ONE_BTC: Amount = Self::from_int_btc(1);
     /// The maximum value allowed as an amount. Useful for sanity checking.
-    pub const MAX_MONEY: Amount = Amount(21_000_000 * 100_000_000);
+    pub const MAX_MONEY: Amount = Self::from_int_btc(21_000_000);
     /// The minimum value of an amount.
     pub const MIN: Amount = Amount::ZERO;
     /// The maximum value of an amount.
