@@ -502,9 +502,9 @@ impl Amount {
     /// Exactly one satoshi.
     pub const ONE_SAT: Amount = Amount(1);
     /// Exactly one bitcoin.
-    pub const ONE_BTC: Amount = Amount(100_000_000);
+    pub const ONE_BTC: Amount = Self::from_int_btc(1);
     /// The maximum value allowed as an amount. Useful for sanity checking.
-    pub const MAX_MONEY: Amount = Amount(21_000_000 * 100_000_000);
+    pub const MAX_MONEY: Amount = Self::from_int_btc(21_000_000);
     /// The minimum value of an amount.
     pub const MIN: Amount = Amount::ZERO;
     /// The maximum value of an amount.
@@ -527,6 +527,28 @@ impl Amount {
     /// Convert from a value expressing bitcoins to an [Amount].
     pub fn from_btc(btc: f64) -> Result<Amount, ParseAmountError> {
         Amount::from_float_in(btc, Denomination::Bitcoin)
+    }
+
+    /// Convert from a value expressing integer values of bitcoins to an [Amount]
+    /// in const context.
+    ///
+    /// ## Panics
+    ///
+    /// The function panics if the argument multiplied by the number of sats
+    /// per bitcoin overflows a u64 type.
+    pub const fn from_int_btc(btc: u64) -> Amount {
+        // TODO replace whith unwrap() when available in const context.
+        match btc.checked_mul(100_000_000) {
+            Some(amount) => Amount::from_sat(amount),
+            None => {
+                // TODO replace with panic!() when MSRV = 1.57+
+                #[allow(unconditional_panic)]
+                // disabling this lint until panic!() can be used.
+                #[allow(clippy::let_unit_value)]
+                let _int_overflow_converting_btc_to_sats = [(); 0][1];
+                Amount(0)
+            }
+        }
     }
 
     /// Parse a decimal string as a value in the given denomination.
@@ -1588,6 +1610,16 @@ mod tests {
             }
         }
     }
+
+    #[test]
+    fn from_int_btc() {
+        let amt = Amount::from_int_btc(2);
+        assert_eq!(Amount::from_sat(200_000_000), amt);
+    }
+
+    #[should_panic]
+    #[test]
+    fn from_int_btc_panic() { Amount::from_int_btc(u64::MAX); }
 
     #[test]
     fn mul_div() {
