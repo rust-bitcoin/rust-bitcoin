@@ -1,5 +1,3 @@
-[![Status](https://travis-ci.org/rust-bitcoin/bitcoin_hashes.png?branch=master)](https://travis-ci.org/rust-bitcoin/bitcoin_hashes)
-
 # Bitcoin Hashes Library
 
 This is a simple, no-dependency library which implements the hash functions
