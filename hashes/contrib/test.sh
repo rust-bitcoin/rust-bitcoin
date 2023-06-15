@@ -2,11 +2,7 @@
 
 set -ex
 
-FEATURES="serde serde-std std core2"
-
-if [ "$DO_ALLOC_TESTS" = true ]; then
-	FEATURES="$FEATURES alloc"
-fi
+FEATURES="serde serde-std std core2 alloc"
 
 cargo --version
 rustc --version
