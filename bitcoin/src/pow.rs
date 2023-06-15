@@ -415,7 +415,9 @@ impl U256 {
     ///
     /// The multiplication result along with a boolean indicating whether an arithmetic overflow
     /// occurred. If an overflow occurred then the wrapped value is returned.
-    // mutagen false positive: binop_bit, replace `|` with `^`
+    // mutagen false pos mul_u64: replace `|` with `^` (XOR is same as OR when combined with <<)
+    // mutagen false pos mul_u64: replace `|` with `^`
+    #[cfg_attr(all(test, mutate), mutate)]
     fn mul_u64(self, rhs: u64) -> (U256, bool) {
         let mut carry: u128 = 0;
         let mut split_le =
