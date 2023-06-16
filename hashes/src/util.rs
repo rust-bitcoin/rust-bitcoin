@@ -308,6 +308,10 @@ macro_rules! hash_newtype {
                 &self.0[index]
             }
         }
+
+        impl Into<[u8; <$hash as $crate::Hash>::LEN]> for $newtype {
+            fn into(self) -> [u8; <$hash as $crate::Hash>::LEN] { self.0.into() }
+        }
         )+
     };
 }

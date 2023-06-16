@@ -72,7 +72,7 @@ mod newtypes {
     use crate::alloc::string::ToString;
 
     use core::str::FromStr;
-    use hashes::{sha256, sha256d, hash160, hash_x11, hash_newtype, Hash};
+    use hashes::{sha256, sha256d, hash160, hash_x11, hash_newtype};
     use hashes::hex::Error;
     use crate::prelude::String;
 

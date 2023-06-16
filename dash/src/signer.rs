@@ -1,7 +1,7 @@
 //! Module contains helper functions for signing and verification the ECDSA signatures
 
 use anyhow::{bail, anyhow};
-use hashes::{Hash, ripemd160, sha256d};
+use hashes::{Hash, ripemd160, sha256, sha256d};
 use crate::prelude::Vec;
 use core::{convert::TryInto};
 
@@ -139,7 +139,8 @@ pub fn double_sha(payload: impl AsRef<[u8]>) -> Vec<u8> {
 
 /// calculates the RIPEMD169(SHA256(data))
 pub fn ripemd160_sha256(data: &[u8]) -> Vec<u8> {
-    ripemd160::Hash::hash(data.as_ref()).as_byte_array().to_vec()
+    let hash = sha256::Hash::hash(data).to_byte_array();
+    ripemd160::Hash::hash(&hash).to_byte_array().to_vec()
 }
 
 #[cfg(test)]

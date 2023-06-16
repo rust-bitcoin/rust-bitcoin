@@ -26,7 +26,7 @@ use hashes::{self, Hash};
 use std::error;
 use core::fmt;
 use crate::io;
-use crate::consensus::{Decodable, Encodable, encode};
+use crate::consensus::{Decodable, deserialize, Encodable, encode};
 use crate::hash_types::Txid;
 
 /// A reference to a transaction output.
@@ -39,6 +39,17 @@ pub struct OutPoint {
 }
 #[cfg(feature = "serde")]
 crate::serde_utils::serde_struct_human_string_impl!(OutPoint, "an OutPoint", txid, vout);
+
+impl From<[u8; 36]> for OutPoint {
+    fn from(buffer: [u8; 36]) -> Self {
+        let (mut left, right) = buffer.split_at(32);
+        let index: [u8; 4] = right.try_into().expect("OutPoint vout is not 4 bytes");
+        Self {
+            txid: deserialize(left).expect("OutPoint txid is not 32 bytes"),
+            vout: u32::from_le_bytes(index),
+        }
+    }
+}
 
 impl OutPoint {
     /// Creates a new [`OutPoint`].

@@ -37,6 +37,18 @@ pub struct InstantLock {
 
 impl_consensus_encoding!(InstantLock, version, inputs, txid, cyclehash, signature);
 
+impl Default for InstantLock {
+    fn default() -> Self {
+        Self {
+            version: 1,
+            inputs: Vec::new(),
+            txid: Txid::all_zeros(),
+            cyclehash: CycleHash::all_zeros(),
+            signature: BLSSignature::from([0; 96]),
+        }
+    }
+}
+
 impl InstantLock {
     /// Returns quorum signing request ID
     pub fn request_id(&self) -> Result<QuorumSigningRequestId, io::Error> {

@@ -70,6 +70,7 @@ impl Decodable for AssetLockPayload {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use crate::consensus::Encodable;
     use crate::{ScriptBuf, TxOut};

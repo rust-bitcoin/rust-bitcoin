@@ -18,10 +18,9 @@
 //!
 
 use crate::core::fmt;
-use hex::FromHexError;
+use hex::{FromHexError, ToHex};
 use crate::internal_macros::{impl_bytes_newtype};
 use internals::{impl_array_newtype};
-use internals::hex::display::DisplayHex;
 use crate::prelude::String;
 
 /// A BLS Public key is 48 bytes in the scheme used for Dash Core
@@ -40,11 +39,6 @@ impl BLSPublicKey {
             Self(payload)
         })
     }
-
-    /// Convert the BLS Public Key to a hex string
-    pub fn to_hex(&self) -> String {
-        self.0.to_lower_hex_string()
-    }
 }
 
 #[cfg(feature = "serde")]
@@ -60,7 +54,7 @@ impl core::str::FromStr for BLSPublicKey {
 
 impl fmt::Display for BLSPublicKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_hex())
+        write!(f, "{}", self.encode_hex::<String>())
     }
 }
 
@@ -134,7 +128,6 @@ macro_rules! impl_eq_ord_hash {
 
     }
 }
-
 
 #[rustversion::before(1.48)]
 impl_eq_ord_hash!(BLSPublicKey, 48);

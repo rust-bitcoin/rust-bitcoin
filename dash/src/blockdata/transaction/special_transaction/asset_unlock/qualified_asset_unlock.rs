@@ -100,6 +100,7 @@ impl Decodable for AssetUnlockPayload {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use hashes::Hash;
     use crate::bls_sig_utils::BLSSignature;

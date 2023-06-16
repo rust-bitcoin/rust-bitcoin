@@ -2,3 +2,4 @@
 //! is important for Dash consensus to function, such as instant send locks, for example
 
 pub mod instant_lock;
+pub mod chain_lock;

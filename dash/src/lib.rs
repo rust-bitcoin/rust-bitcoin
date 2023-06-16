@@ -112,8 +112,8 @@ pub mod string;
 pub mod taproot;
 pub mod util;
 pub mod bls_sig_utils;
-mod signer;
-mod ephemerealdata;
+pub mod signer;
+pub mod ephemerealdata;
 
 // May depend on crate features and we don't want to bother with it
 #[allow(unused)]
@@ -130,11 +130,13 @@ use core2::io;
 
 pub use crate::address::{Address, AddressType};
 pub use crate::amount::{Amount, Denomination, SignedAmount};
-pub use crate::blockdata::block::{self, Block};
+pub use crate::blockdata::block::{self, Block, Header};
 pub use crate::blockdata::fee_rate::FeeRate;
 pub use crate::blockdata::locktime::{self, absolute, relative};
 pub use crate::blockdata::script::{self, Script, ScriptBuf};
 pub use crate::blockdata::transaction::{self, Transaction, hash_type::EcdsaSighashType};
+pub use crate::ephemerealdata::instant_lock::{InstantLock};
+pub use crate::ephemerealdata::chain_lock::{ChainLock};
 pub use crate::transaction::{txin::TxIn, txout::TxOut, outpoint::OutPoint};
 pub use crate::blockdata::weight::Weight;
 pub use crate::blockdata::witness::{self, Witness};
@@ -145,7 +147,7 @@ pub use crate::crypto::{ecdsa, sighash};
 pub use crate::error::Error;
 pub use crate::hash_types::{
     BlockHash, PubkeyHash, ScriptHash, Txid, WPubkeyHash, WScriptHash, Wtxid, ProTxHash, QuorumHash,
-    TxMerkleNode, FilterHash
+    TxMerkleNode, FilterHash, QuorumSigningRequestId,
 };
 pub use crate::merkle_tree::MerkleBlock;
 pub use crate::network::constants::Network;

@@ -134,6 +134,10 @@ macro_rules! hash_trait_impls {
             }
         }
 
+        impl<$($gen: $gent),*> Into<[u8; $bits / 8]> for Hash<$($gen),*> {
+            fn into(self) -> [u8; $bits / 8] { self.0 }
+        }
+
         impl<$($gen: $gent),*> crate::Hash for Hash<$($gen),*> {
             type Engine = HashEngine;
             type Bytes = [u8; $bits / 8];

@@ -121,6 +121,7 @@ impl Decodable for ProviderUpdateRegistrarPayload {
 #[cfg(test)]
 mod tests {
     use core::str::FromStr;
+    use hex::ToHex;
     use hashes::Hash;
     use crate::consensus::{deserialize, Encodable};
     use crate::{Network, ScriptBuf, Transaction, Txid};
@@ -154,10 +155,10 @@ mod tests {
         assert_eq!(provider_mode, expected_provider_update_registrar_payload.provider_mode);
 
         let operator_key_hex = "139b654f0b1c031e1cf2b934c2d895178875cfe7c6a4f6758f02bc66eea7fc292d0040701acbe31f5e14a911cb061a2f";
-        assert_eq!(operator_key_hex, expected_provider_update_registrar_payload.operator_public_key.to_hex());
+        assert_eq!(operator_key_hex, hex::encode(expected_provider_update_registrar_payload.operator_public_key));
 
         let voting_key_hash_hex = "6cc4a7bb877a80c11ae06b988d98305773f93b98";
-        assert_eq!(voting_key_hash_hex, expected_provider_update_registrar_payload.voting_key_hash.to_hex());
+        assert_eq!(voting_key_hash_hex, hex::encode(expected_provider_update_registrar_payload.voting_key_hash));
 
         let inputs_hash_hex = "cf2b940faa8c46c7981f5bd082e5409bf08cffe3bccfa04093eb152f7a857f2d";
         assert_eq!(expected_provider_update_registrar_payload.inputs_hash.to_hex(), inputs_hash_hex, "inputs hash calculation has issues");
