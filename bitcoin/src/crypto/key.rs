@@ -16,6 +16,7 @@ use internals::write_err;
 pub use secp256k1::rand;
 pub use secp256k1::{self, constants, KeyPair, Parity, Secp256k1, Verification, XOnlyPublicKey};
 
+use crate::crypto::ecdsa;
 use crate::hash_types::{PubkeyHash, WPubkeyHash};
 use crate::network::constants::Network;
 use crate::prelude::*;
@@ -250,6 +251,16 @@ impl PublicKey {
         sk: &PrivateKey,
     ) -> PublicKey {
         sk.public_key(secp)
+    }
+
+    /// Checks that `sig` is a valid ECDSA signature for `msg` using this public key.
+    pub fn verify<C: secp256k1::Verification>(
+        &self,
+        secp: &Secp256k1<C>,
+        msg: &secp256k1::Message,
+        sig: &ecdsa::Signature,
+    ) -> Result<(), Error> {
+        Ok(secp.verify_ecdsa(msg, &sig.sig, &self.inner)?)
     }
 }
 
