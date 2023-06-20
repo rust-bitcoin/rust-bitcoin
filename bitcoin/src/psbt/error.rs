@@ -214,3 +214,47 @@ impl From<encode::Error> for Error {
 impl From<io::Error> for Error {
     fn from(e: io::Error) -> Self { Error::Io(e) }
 }
+
+impl PartialEq for Error {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Error::InvalidMagic, Error::InvalidMagic) => true,
+            (Error::MissingUtxo, Error::MissingUtxo) => true,
+            (Error::InvalidSeparator, Error::InvalidSeparator) => true,
+            (Error::PsbtUtxoOutOfbounds, Error::PsbtUtxoOutOfbounds) => true,
+            (Error::InvalidKey(ref key1), Error::InvalidKey(ref key2)) => key1 == key2,
+            (Error::InvalidProprietaryKey, Error::InvalidProprietaryKey) => true,
+            (Error::DuplicateKey(ref k1), Error::DuplicateKey (ref k2)) => k1 == k2,
+            (Error::UnsignedTxHasScriptSigs, Error::UnsignedTxHasScriptSigs) => true,
+            (Error::UnsignedTxHasScriptWitnesses, Error::UnsignedTxHasScriptWitnesses) => true,
+            (Error::MustHaveUnsignedTx, Error::MustHaveUnsignedTx) => true,
+            (Error::NoMorePairs, Error::NoMorePairs) => true,
+            (Error::UnexpectedUnsignedTx { expected: e1, actual: a1 },
+             Error::UnexpectedUnsignedTx { expected: e2, actual: a2 }) => e1.txid() == e2.txid() && a1.txid() == a2.txid(),
+            (Error::NonStandardSighashType(s1), Error::NonStandardSighashType(s2)) => s1 == s2,
+            (Error::HashParse(e1), Error::HashParse(e2)) => e1 == e2,
+            (Error::InvalidPreimageHashPair { hash_type: h1, preimage: p1, hash: hval1 },
+             Error::InvalidPreimageHashPair { hash_type: h2, preimage: p2, hash: hval2 }) => h1 == h2 && p1 == p2 && hval1 == hval2,
+            (Error::CombineInconsistentKeySources(s1), Error::CombineInconsistentKeySources(s2)) => s1 == s2,
+            (Error::ConsensusEncoding(ref e1), Error::ConsensusEncoding(ref e2)) => {
+                format!("{:?}", e1) == format!("{:?}", e2)
+            }
+            (Error::NegativeFee, Error::NegativeFee) => true,
+            (Error::FeeOverflow, Error::FeeOverflow) => true,
+            (Error::InvalidPublicKey(e1), Error::InvalidPublicKey(e2)) => e1 == e2,
+            (Error::InvalidSecp256k1PublicKey(e1), Error::InvalidSecp256k1PublicKey(e2)) => e1 == e2,
+            (Error::InvalidXOnlyPublicKey, Error::InvalidXOnlyPublicKey) => true,
+            (Error::InvalidEcdsaSignature(e1), Error::InvalidEcdsaSignature(e2)) => e1 == e2,
+            (Error::InvalidTaprootSignature(e1), Error::InvalidTaprootSignature(e2)) => e1 == e2,
+            (Error::InvalidControlBlock, Error::InvalidControlBlock) => true,
+            (Error::InvalidLeafVersion, Error::InvalidLeafVersion) => true,
+            (Error::Taproot(s1), Error::Taproot(s2)) => s1 == s2,
+            (Error::TapTree(e1), Error::TapTree(e2)) => e1 == e2,
+            (Error::XPubKey(s1), Error::XPubKey(s2)) => s1 == s2,
+            (Error::Version(s1), Error::Version(s2)) => s1 == s2,
+            (Error::PartialDataConsumption, Error::PartialDataConsumption) => true,
+            (Error::Io(ref e1), Error::Io(ref e2)) => e1.kind() == e2.kind(),
+            _ => false,
+        }
+    }
+}
