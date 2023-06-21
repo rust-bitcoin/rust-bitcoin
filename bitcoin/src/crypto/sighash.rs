@@ -15,13 +15,15 @@ use core::borrow::{Borrow, BorrowMut};
 use core::{fmt, str};
 
 use hashes::{hash_newtype, sha256, sha256d, sha256t_hash_newtype, Hash};
+use secp256k1::{Signing, Verification, schnorr};
 
 use crate::blockdata::transaction::EncodeSigningDataResult;
 use crate::blockdata::witness::Witness;
 use crate::consensus::{encode, Encodable};
 use crate::error::impl_std_error;
+use crate::key::{UntweakedKeyPair, TweakedKeyPair, KeyPair, Secp256k1, TapTweak};
 use crate::prelude::*;
-use crate::taproot::{LeafVersion, TapLeafHash, TAPROOT_ANNEX_PREFIX};
+use crate::taproot::{LeafVersion, TapLeafHash, TAPROOT_ANNEX_PREFIX, TapNodeHash};
 use crate::{io, Amount, Script, ScriptBuf, Sequence, Transaction, TxIn, TxOut};
 
 /// Used for signature hash for invalid use of SIGHASH_SINGLE.
@@ -512,6 +514,27 @@ impl TapSighashType {
             0x83 => SinglePlusAnyoneCanPay,
             x => return Err(Error::InvalidSighashType(x as u32)),
         })
+    }
+}
+
+impl TapSighash {
+    /// Signs the sighash for a P2TR key-path spending transaction with a
+    /// `KeyPair` and generates a Schnorr signature.
+    pub fn sign_v1_p2tr_key_path<C: Signing + Verification>(&self, secp: &Secp256k1<C>, keypair: &KeyPair) -> schnorr::Signature {
+        // Tweak keypair with zeroed merkle root.
+        self.sign_v1_p2tr(secp, keypair, None)
+    }
+    /// Signs the sighash with by tweaking the `KeyPair` with a some optional
+    /// script tree merkle root and generates a Schnorr signature.
+    pub fn sign_v1_p2tr<C: Signing + Verification>(&self, secp: &Secp256k1<C>, keypair: &UntweakedKeyPair, merkle_root: Option<TapNodeHash>) -> schnorr::Signature {
+        let tweaked: TweakedKeyPair = keypair.tap_tweak(secp, merkle_root);
+        self.sign_v1_p2tr_tweaked(secp, &tweaked)
+    }
+    /// Signs the sighash with a known `TweakedKeyPair` and generates a Schnorr signature.
+    pub fn sign_v1_p2tr_tweaked<C: Signing>(&self, secp: &Secp256k1<C>, keypair: &TweakedKeyPair) -> schnorr::Signature {
+        // Prepare secp256k1 message. This unwrap never panics since the sighash is always 256 bits.
+        let msg = secp256k1::Message::from_slice(self.as_ref()).unwrap();
+        secp.sign_schnorr(&msg, &keypair.to_inner())
     }
 }
 
