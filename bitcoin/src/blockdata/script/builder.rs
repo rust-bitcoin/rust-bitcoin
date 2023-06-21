@@ -10,7 +10,7 @@ use secp256k1::XOnlyPublicKey;
 use crate::blockdata::locktime::absolute;
 use crate::blockdata::opcodes::all::*;
 use crate::blockdata::opcodes::{self};
-use crate::blockdata::script::{opcode_to_verify, write_scriptint, PushBytes, Script, ScriptBuf};
+use crate::blockdata::script::{opcode_to_verify, write_scriptint, PushBytes, Script, ScriptBuf, P2wpkhScriptCode};
 use crate::blockdata::transaction::Sequence;
 use crate::key::PublicKey;
 use crate::prelude::*;

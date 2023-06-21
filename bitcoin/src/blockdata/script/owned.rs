@@ -179,7 +179,16 @@ impl ScriptBuf {
     /// for a P2WPKH output. The `scriptCode` is described in [BIP143].
     ///
     /// [BIP143]: <https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki>
+    #[deprecated(note = "use `p2wpkh_script_code_typed` instead")]
     pub fn p2wpkh_script_code(&self) -> Option<ScriptBuf> {
+        self.p2wpkh_script_code_typed().map(|script_code| script_code.0)
+    }
+
+    /// Returns the script code used for spending a P2WPKH output if this script is a script pubkey
+    /// for a P2WPKH output. The `scriptCode` is described in [BIP143].
+    ///
+    /// [BIP143]: <https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki>
+    pub fn p2wpkh_script_code_typed(&self) -> Option<P2wpkhScriptCode> {
         self.v0_p2wpkh().map(|wpkh| {
             Builder::new()
                 .push_opcode(OP_DUP)
@@ -190,6 +199,8 @@ impl ScriptBuf {
                 .push_opcode(OP_CHECKSIG)
                 .into_script()
         })
+        // Wrap ScriptBuf in P2wpkhScriptCode
+        .map(P2wpkhScriptCode)
     }
 
     /// Adds a single opcode to the script.
@@ -351,6 +362,18 @@ impl<'a> Extend<Instruction<'a>> for ScriptBuf {
             for instr in iter {
                 self.push_instruction(instr);
             }
+        }
+    }
+}
+
+pub struct P2wpkhScriptCode(ScriptBuf);
+
+impl P2wpkhScriptCode {
+    pub fn from_script_buf_checked(script: ScriptBuf) -> Option<Self> {
+        if script.as_script().is_v0_p2wpkh_script_code() {
+            Some(P2wpkhScriptCode(script))
+        } else {
+            None
         }
     }
 }
