@@ -184,10 +184,8 @@ impl ScriptBuf {
         self.p2wpkh_spending_script_code().map(|script_code| script_code.0)
     }
 
-    /// Returns the script code used for spending a P2WPKH output if this script is a script pubkey
-    /// for a P2WPKH output. The `scriptCode` is described in [BIP143].
-    ///
-    /// [BIP143]: <https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki>
+    /// Returns a [`P2wpkhScriptCode`] for spending a P2WPKH output if this
+    /// script is a script pubkey for a P2WPKH output.
     pub fn p2wpkh_spending_script_code(&self) -> Option<P2wpkhScriptCode> {
         self.v0_p2wpkh().map(|wpkh| {
             Builder::new()
@@ -366,14 +364,26 @@ impl<'a> Extend<Instruction<'a>> for ScriptBuf {
     }
 }
 
+
+/// A P2WPKH spending `scriptCode`as defined in
+/// [BIP143](https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki).
 pub struct P2wpkhScriptCode(ScriptBuf);
 
 impl P2wpkhScriptCode {
+    /// Wraps a [`ScriptBuf`] as a P2WPKH script code and conducts a sanity check.
     pub fn from_script_buf_checked(script: ScriptBuf) -> Option<Self> {
         if script.as_script().is_v0_p2wpkh_spending_script_code() {
             Some(P2wpkhScriptCode(script))
         } else {
             None
         }
+    }
+    /// Returns a reference to the unsized script.
+    pub fn as_script(&self) -> &Script {
+        self.0.as_script()
+    }
+    /// Converts this type into [`ScriptBuf`].
+    pub fn into_script_buf(self) -> ScriptBuf {
+        self.0
     }
 }

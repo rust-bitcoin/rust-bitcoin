@@ -264,8 +264,7 @@ impl Script {
         }
     }
 
-    /// Checks whether a script is a P2WPKH spending `scriptCode`as defined in
-    /// [BIP143](https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki).
+    /// Checks whether a script pubkey is a [`P2wpkhScriptCode`].
     #[inline]
     pub fn is_v0_p2wpkh_spending_script_code(&self) -> bool {
         self.0.len() == 26
