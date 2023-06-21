@@ -369,6 +369,7 @@ impl<'a> Extend<Instruction<'a>> for ScriptBuf {
 /// [BIP143](https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki).
 /// This spending script should be created with
 /// [`p2wpkh_spending_script_code`](ScriptBuf::p2wpkh_spending_script_code).
+#[derive(Default, Clone, Debug, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub struct P2wpkhScriptCode(ScriptBuf);
 
 impl P2wpkhScriptCode {
@@ -433,10 +434,15 @@ mod tests {
 
         // Check spending script for P2WPKH (succeeds).
         let script_code = script.p2wpkh_spending_script_code().unwrap();
-        assert!(P2wpkhScriptCode::from_script_buf_checked(script_code.into_script_buf()).is_some());
+        let script_buf = script_code.into_script_buf();
+        let wrapped = P2wpkhScriptCode::from_script_buf_checked(script_buf).unwrap();
 
         // Check with deprecated method (succeeds).
         let script_code_depr = script.p2wpkh_script_code().unwrap();
-        assert!(P2wpkhScriptCode::from_script_buf_checked(script_code_depr).is_some());
+        let wrapped_depr = P2wpkhScriptCode::from_script_buf_checked(script_code_depr).unwrap();
+
+        // Check script from deprecated and new method directly.
+        assert_eq!(wrapped, wrapped_depr);
+        assert_eq!(wrapped.as_script(), wrapped_depr.as_script());
     }
 }
