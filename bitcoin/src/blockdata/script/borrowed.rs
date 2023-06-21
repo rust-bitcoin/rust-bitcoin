@@ -267,14 +267,13 @@ impl Script {
     /// Checks whether a script pubkey is a [`P2wpkhScriptCode`].
     #[inline]
     pub fn is_v0_p2wpkh_script_code(&self) -> bool {
-        self.0.len() == 26
-            && self.witness_version() == Some(WitnessVersion::V0)
-            && self.0[1] == OP_PUSHBYTES_32.to_u8()
-            && self.0[2] == OP_DUP.to_u8()
-            && self.0[3] == OP_HASH160.to_u8()
+        self.0.len() == 25
+            && self.0[0] == OP_DUP.to_u8()
+            && self.0[1] == OP_HASH160.to_u8()
+            && self.0[2] == OP_PUSHBYTES_20.to_u8()
             // Skip next 20 bytes containing the pubkey hash.
-            && self.0[24] == OP_EQUALVERIFY.to_u8()
-            && self.0[25] == OP_CHECKSIG.to_u8()
+            && self.0[23] == OP_EQUALVERIFY.to_u8()
+            && self.0[24] == OP_CHECKSIG.to_u8()
     }
 
     /// Checks whether a script pubkey is a P2TR output.

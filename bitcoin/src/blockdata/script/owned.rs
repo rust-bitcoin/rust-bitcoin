@@ -184,7 +184,7 @@ impl ScriptBuf {
         self.p2wpkh_spending_script_code().map(|script_code| script_code.0)
     }
 
-    /// Returns a [`P2wpkhScriptCode`] for spending a P2WPKH output if this
+    /// Returns a [`P2wpkhScriptCode`] used for spending a P2WPKH output if this
     /// script is a script pubkey for a P2WPKH output.
     pub fn p2wpkh_spending_script_code(&self) -> Option<P2wpkhScriptCode> {
         self.v0_p2wpkh().map(|wpkh| {
@@ -374,7 +374,7 @@ pub struct P2wpkhScriptCode(ScriptBuf);
 impl P2wpkhScriptCode {
     /// Converts a [`ScriptBuf`] into a P2WPKH script code and conducts a sanity check.
     pub fn from_script_buf_checked(script: ScriptBuf) -> Option<Self> {
-        if script.as_script().is_v0_p2wpkh_script_code() {
+        if script.is_v0_p2wpkh_script_code() {
             Some(P2wpkhScriptCode(script))
         } else {
             None
@@ -387,5 +387,56 @@ impl P2wpkhScriptCode {
     /// Converts this type into [`ScriptBuf`].
     pub fn into_script_buf(self) -> ScriptBuf {
         self.0
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::P2wpkhScriptCode;
+    use crate::{ScriptBuf, PublicKey};
+    use std::str::FromStr;
+
+    #[test]
+    fn bip143_p2wpkh_spending_script_code() {
+        let pubkey = PublicKey::from_str("025476c2e83188368da1ff3e292e7acafcdb3566bb0ad253f62fc70f07aeee6357").unwrap();
+        let whash = pubkey.wpubkey_hash().unwrap();
+
+        // Check regular P2WPKH.
+        let script = ScriptBuf::new_v0_p2wpkh(&whash);
+        assert!(script.is_v0_p2wpkh());
+        assert!(!script.is_v0_p2wpkh_script_code());
+
+        // Check spending script for P2WPKH
+        let script_code = script.p2wpkh_spending_script_code().unwrap();
+        assert!(!script_code.as_script().is_v0_p2wpkh());
+        assert!(script_code.as_script().is_v0_p2wpkh_script_code());
+
+        // Check spending script for P2WPKH with deprecated method.
+        let script_code_depr = script.p2wpkh_script_code().unwrap();
+        assert!(!script_code_depr.is_v0_p2wpkh());
+        assert!(script_code_depr.is_v0_p2wpkh_script_code());
+
+        // Check script from deprecated and new method directly.
+        assert_eq!(script_code.as_script(), script_code_depr.as_script());
+    }
+
+    #[test]
+    fn bip143_p2wpkh_spending_script_code_from_checked() {
+        let pubkey = PublicKey::from_str("025476c2e83188368da1ff3e292e7acafcdb3566bb0ad253f62fc70f07aeee6357").unwrap();
+        let whash = pubkey.wpubkey_hash().unwrap();
+
+        // Check regular P2WPKH (fails).
+        let script = ScriptBuf::new_v0_p2wpkh(&whash);
+        assert!(script.is_v0_p2wpkh());
+        assert!(!script.is_v0_p2wpkh_script_code());
+        assert!(P2wpkhScriptCode::from_script_buf_checked(script.clone()).is_none());
+
+        // Check spending script for P2WPKH (succeeds).
+        let script_code = script.p2wpkh_spending_script_code().unwrap();
+        assert!(P2wpkhScriptCode::from_script_buf_checked(script_code.into_script_buf()).is_some());
+
+        // Check with deprecated method (succeeds).
+        let script_code_depr = script.p2wpkh_script_code().unwrap();
+        assert!(P2wpkhScriptCode::from_script_buf_checked(script_code_depr).is_some());
     }
 }
