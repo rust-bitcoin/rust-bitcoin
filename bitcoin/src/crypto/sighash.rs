@@ -520,18 +520,18 @@ impl TapSighashType {
 impl TapSighash {
     /// Signs the sighash for a P2TR key-path spending transaction with a
     /// `KeyPair` and generates a Schnorr signature.
-    pub fn sign_v1_p2tr_key_path<C: Signing + Verification>(&self, secp: &Secp256k1<C>, keypair: &KeyPair) -> schnorr::Signature {
+    pub fn sign_schnorr_key_spend<C: Signing + Verification>(&self, secp: &Secp256k1<C>, keypair: &KeyPair) -> schnorr::Signature {
         // Tweak keypair with zeroed merkle root.
-        self.sign_v1_p2tr(secp, keypair, None)
+        self.sign_schnorr(secp, keypair, None)
     }
     /// Signs the sighash with by tweaking the `KeyPair` with a some optional
     /// script tree merkle root and generates a Schnorr signature.
-    pub fn sign_v1_p2tr<C: Signing + Verification>(&self, secp: &Secp256k1<C>, keypair: &UntweakedKeyPair, merkle_root: Option<TapNodeHash>) -> schnorr::Signature {
+    pub fn sign_schnorr<C: Signing + Verification>(&self, secp: &Secp256k1<C>, keypair: &UntweakedKeyPair, merkle_root: Option<TapNodeHash>) -> schnorr::Signature {
         let tweaked: TweakedKeyPair = keypair.tap_tweak(secp, merkle_root);
-        self.sign_v1_p2tr_tweaked(secp, &tweaked)
+        self.sign_schnorr_tweaked(secp, &tweaked)
     }
     /// Signs the sighash with a known `TweakedKeyPair` and generates a Schnorr signature.
-    pub fn sign_v1_p2tr_tweaked<C: Signing>(&self, secp: &Secp256k1<C>, keypair: &TweakedKeyPair) -> schnorr::Signature {
+    pub fn sign_schnorr_tweaked<C: Signing>(&self, secp: &Secp256k1<C>, keypair: &TweakedKeyPair) -> schnorr::Signature {
         // Prepare secp256k1 message. This unwrap never panics since the sighash is always 256 bits.
         let msg = secp256k1::Message::from_slice(self.as_ref()).unwrap();
         secp.sign_schnorr(&msg, &keypair.to_inner())
