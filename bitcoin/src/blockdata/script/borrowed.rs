@@ -268,14 +268,14 @@ impl Script {
     /// [BIP143](https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki).
     #[inline]
     pub fn is_v0_p2wpkh_script_code(&self) -> bool {
-        self.0.len() == 28
+        self.0.len() == 26
             && self.witness_version() == Some(WitnessVersion::V0)
             && self.0[1] == OP_PUSHBYTES_32.to_u8()
             && self.0[2] == OP_DUP.to_u8()
             && self.0[3] == OP_HASH160.to_u8()
-            // Skip next 22 bytes including the P2WPKH scriptPubkey.
-            && self.0[26] == OP_EQUALVERIFY.to_u8()
-            && self.0[27] == OP_CHECKSIG.to_u8()
+            // Skip next 20 bytes containing the pubkey hash.
+            && self.0[24] == OP_EQUALVERIFY.to_u8()
+            && self.0[25] == OP_CHECKSIG.to_u8()
     }
 
     /// Checks whether a script pubkey is a P2TR output.
