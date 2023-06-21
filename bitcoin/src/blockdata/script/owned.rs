@@ -372,7 +372,7 @@ pub struct P2wpkhScriptCode(ScriptBuf);
 impl P2wpkhScriptCode {
     /// Wraps a [`ScriptBuf`] as a P2WPKH script code and conducts a sanity check.
     pub fn from_script_buf_checked(script: ScriptBuf) -> Option<Self> {
-        if script.as_script().is_v0_p2wpkh_spending_script_code() {
+        if script.as_script().is_v0_p2wpkh_script_code() {
             Some(P2wpkhScriptCode(script))
         } else {
             None

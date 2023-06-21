@@ -266,7 +266,7 @@ impl Script {
 
     /// Checks whether a script pubkey is a [`P2wpkhScriptCode`].
     #[inline]
-    pub fn is_v0_p2wpkh_spending_script_code(&self) -> bool {
+    pub fn is_v0_p2wpkh_script_code(&self) -> bool {
         self.0.len() == 26
             && self.witness_version() == Some(WitnessVersion::V0)
             && self.0[1] == OP_PUSHBYTES_32.to_u8()
