@@ -367,10 +367,12 @@ impl<'a> Extend<Instruction<'a>> for ScriptBuf {
 
 /// A P2WPKH spending `scriptCode`as defined in
 /// [BIP143](https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki).
+/// This spending script should be created with
+/// [`p2wpkh_spending_script_code`](ScriptBuf::p2wpkh_spending_script_code).
 pub struct P2wpkhScriptCode(ScriptBuf);
 
 impl P2wpkhScriptCode {
-    /// Wraps a [`ScriptBuf`] as a P2WPKH script code and conducts a sanity check.
+    /// Converts a [`ScriptBuf`] into a P2WPKH script code and conducts a sanity check.
     pub fn from_script_buf_checked(script: ScriptBuf) -> Option<Self> {
         if script.as_script().is_v0_p2wpkh_script_code() {
             Some(P2wpkhScriptCode(script))
