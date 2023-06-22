@@ -23,7 +23,7 @@ use crate::consensus::{encode, Encodable};
 use crate::error::impl_std_error;
 use crate::key::{UntweakedKeyPair, TweakedKeyPair, KeyPair, Secp256k1, TapTweak};
 use crate::prelude::*;
-use crate::script::P2wpkhScriptCode;
+use crate::script::SegwitScriptCode;
 use crate::taproot::{LeafVersion, TapLeafHash, TAPROOT_ANNEX_PREFIX, TapNodeHash};
 use crate::{io, Amount, Script, ScriptBuf, Sequence, Transaction, TxIn, TxOut};
 
@@ -835,7 +835,7 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     }
 
     /// Computes the BIP143 sighash for any flag type.
-    #[deprecated(note = "use `segwit_spending_signature_hash` instead")]
+    #[deprecated(note = "use `segwit_script_code_signature_hash` instead")]
     pub fn segwit_signature_hash(
         &mut self,
         input_index: usize,
@@ -855,10 +855,10 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
     }
 
     /// Computes the BIP143 sighash for any flag type.
-    pub fn segwit_spending_signature_hash(
+    pub fn segwit_script_code_signature_hash(
         &mut self,
         input_index: usize,
-        script_code: &P2wpkhScriptCode,
+        script_code: &SegwitScriptCode,
         value: Amount,
         sighash_type: EcdsaSighashType,
     ) -> Result<SegwitV0Sighash, Error> {

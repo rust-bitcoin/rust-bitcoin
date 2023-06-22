@@ -184,9 +184,9 @@ impl ScriptBuf {
         self.p2wpkh_spending_script_code().map(|script_code| script_code.0)
     }
 
-    /// Returns a [`P2wpkhScriptCode`] used for spending a P2WPKH output if this
+    /// Returns a [`SegwitScriptCode`] used for spending a P2WPKH output if this
     /// script is a script pubkey for a P2WPKH output.
-    pub fn p2wpkh_spending_script_code(&self) -> Option<P2wpkhScriptCode> {
+    pub fn p2wpkh_spending_script_code(&self) -> Option<SegwitScriptCode> {
         self.v0_p2wpkh().map(|wpkh| {
             Builder::new()
                 .push_opcode(OP_DUP)
@@ -197,8 +197,8 @@ impl ScriptBuf {
                 .push_opcode(OP_CHECKSIG)
                 .into_script()
         })
-        // Wrap ScriptBuf in P2wpkhScriptCode
-        .map(P2wpkhScriptCode)
+        // Wrap ScriptBuf in SegwitScriptCode
+        .map(SegwitScriptCode)
     }
 
     /// Adds a single opcode to the script.
@@ -367,17 +367,17 @@ impl<'a> Extend<Instruction<'a>> for ScriptBuf {
 
 /// A P2WPKH spending `scriptCode`as defined in
 /// [BIP143](https://github.com/bitcoin/bips/blob/99701f68a88ce33b2d0838eb84e115cef505b4c2/bip-0143.mediawiki).
-/// This spending script should be created with
-/// [`p2wpkh_spending_script_code`](ScriptBuf::p2wpkh_spending_script_code).
+/// This spending script is passed on to
+/// [`segwit_script_code_signature_hash`](crate::sighash::SighashCache::segwit_script_code_signature_hash).
 #[derive(Default, Clone, Debug, PartialOrd, Ord, PartialEq, Eq, Hash)]
-pub struct P2wpkhScriptCode(ScriptBuf);
+pub struct SegwitScriptCode(ScriptBuf);
 
-impl P2wpkhScriptCode {
-    /// Converts a [`ScriptBuf`] into a P2WPKH script code and conducts a sanity check.
+impl SegwitScriptCode {
+    /// Converts a P2WPKH into Segwit spending script.
     pub fn from_p2wpkh_checked(script: ScriptBuf) -> Option<Self> {
         // Check whether the script already is a Segwit spending script code.
         if script.is_v0_p2wpkh_script_code() {
-            Some(P2wpkhScriptCode(script))
+            Some(SegwitScriptCode(script))
         }
         else if script.is_v0_p2wpkh() {
             script.p2wpkh_spending_script_code()
@@ -385,14 +385,17 @@ impl P2wpkhScriptCode {
             None
         }
     }
-    pub fn from_script_hash_checked(spk: &ScriptBuf, redeem_script: ScriptBuf) -> Option<Self> {
+    /// Converts a P2WSH or a P2SH wrapped P2WSH redeeam script into Segwit
+    /// spending script. This method checks whether the redeem script
+    /// corresponds to the provided scriptPubKey.
+    pub fn from_redeem_script(spk: &ScriptBuf, redeem_script: ScriptBuf) -> Option<Self> {
         if
             // Check whether P2WSH corresponds to the scriptPubKey
             (spk.is_v0_p2wsh() && spk == &redeem_script.to_v0_p2wsh()) ||
             // Check whether P2WSH wrapped in P2SH corresponds to the scriptPubKey
             (spk.is_p2sh() && spk == &redeem_script.to_v0_p2wsh().to_p2sh())
         {
-            Some(P2wpkhScriptCode(redeem_script))
+            Some(SegwitScriptCode(redeem_script))
         } else {
             None
         }
@@ -409,7 +412,7 @@ impl P2wpkhScriptCode {
 
 #[cfg(test)]
 mod tests {
-    use super::P2wpkhScriptCode;
+    use super::SegwitScriptCode;
     use crate::{ScriptBuf, PublicKey};
     use std::str::FromStr;
 
@@ -446,16 +449,16 @@ mod tests {
         let script = ScriptBuf::new_v0_p2wpkh(&whash);
         assert!(script.is_v0_p2wpkh());
         assert!(!script.is_v0_p2wpkh_script_code());
-        assert!(P2wpkhScriptCode::from_p2wpkh_checked(script.clone()).is_some());
+        assert!(SegwitScriptCode::from_p2wpkh_checked(script.clone()).is_some());
 
         // Check spending script for P2WPKH.
         let script_code = script.p2wpkh_spending_script_code().unwrap();
         let script_buf = script_code.into_script_buf();
-        let wrapped = P2wpkhScriptCode::from_p2wpkh_checked(script_buf).unwrap();
+        let wrapped = SegwitScriptCode::from_p2wpkh_checked(script_buf).unwrap();
 
         // Check with deprecated method (succeeds).
         let script_code_depr = script.p2wpkh_script_code().unwrap();
-        let wrapped_depr = P2wpkhScriptCode::from_p2wpkh_checked(script_code_depr).unwrap();
+        let wrapped_depr = SegwitScriptCode::from_p2wpkh_checked(script_code_depr).unwrap();
 
         // Check script from deprecated and new method directly.
         assert_eq!(wrapped, wrapped_depr);

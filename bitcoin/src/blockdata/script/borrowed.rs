@@ -15,7 +15,7 @@ use crate::blockdata::opcodes::{self};
 #[cfg(feature = "bitcoinconsensus")]
 use crate::blockdata::script::Error;
 use crate::blockdata::script::{
-    bytes_to_asm_fmt, Builder, Instruction, InstructionIndices, Instructions, ScriptBuf, P2wpkhScriptCode
+    bytes_to_asm_fmt, Builder, Instruction, InstructionIndices, Instructions, ScriptBuf, SegwitScriptCode
 };
 use crate::consensus::Encodable;
 use crate::hash_types::{ScriptHash, WScriptHash};
@@ -264,7 +264,7 @@ impl Script {
         }
     }
 
-    /// Checks whether a script pubkey is a [`P2wpkhScriptCode`].
+    /// Checks whether a script pubkey is a [`SegwitScriptCode`].
     #[inline]
     pub fn is_v0_p2wpkh_script_code(&self) -> bool {
         self.0.len() == 25
