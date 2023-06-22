@@ -20,6 +20,7 @@ use crate::blockdata::transaction::{Transaction, TxOut};
 use crate::crypto::ecdsa;
 use crate::crypto::key::{PrivateKey, PublicKey};
 use crate::prelude::*;
+use crate::script::P2wpkhScriptCode;
 use crate::sighash::{self, EcdsaSighashType, SighashCache};
 use crate::Amount;
 
@@ -345,19 +346,26 @@ impl PartiallySignedTransaction {
                 Ok((Message::from(sighash), hash_ty))
             }
             ShWpkh => {
-                let script_code = ScriptBuf::p2wpkh_script_code(
+                let script_code = ScriptBuf::p2wpkh_spending_script_code(
                     input.redeem_script.as_ref().expect("checked above"),
                 )
                 .ok_or(SignError::NotWpkh)?;
+
                 let sighash =
-                    cache.segwit_signature_hash(input_index, &script_code, utxo.value, hash_ty)?;
+                    cache.segwit_spending_signature_hash(input_index, &script_code, utxo.value, hash_ty)?;
                 Ok((Message::from(sighash), hash_ty))
             }
             Wsh | ShWsh => {
-                let script_code =
+                let script_buf =
                     input.witness_script.as_ref().ok_or(SignError::MissingWitnessScript)?;
+
+                let script_code = P2wpkhScriptCode::from_script_hash_checked(
+                    spk,
+                    script_buf.clone())
+                    .unwrap();
+
                 let sighash =
-                    cache.segwit_signature_hash(input_index, script_code, utxo.value, hash_ty)?;
+                    cache.segwit_spending_signature_hash(input_index, &script_code, utxo.value, hash_ty)?;
                 Ok((Message::from(sighash), hash_ty))
             }
             Tr => {
