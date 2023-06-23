@@ -14,6 +14,7 @@
 use core::convert::TryFrom;
 use core::default::Default;
 use core::{cmp, fmt, str};
+use std::mem::size_of;
 
 use hashes::{self, sha256d, Hash};
 use internals::write_err;
@@ -880,9 +881,10 @@ impl Transaction {
     pub fn strippedsize(&self) -> usize {
         let mut input_size = 0;
         for input in &self.input {
-            input_size += 32 + 4 + 4 + // outpoint (32+4) + nSequence
-                VarInt(input.script_sig.len() as u64).len() +
-                input.script_sig.len();
+            input_size += size_of::<OutPoint>()
+                + size_of::<Sequence>()
+                + VarInt(input.script_sig.len() as u64).len()
+                + input.script_sig.len();
         }
         let mut output_size = 0;
         for output in &self.output {
@@ -908,9 +910,10 @@ impl Transaction {
         let mut inputs_with_witnesses = 0;
         for input in &self.input {
             input_weight += scale_factor
-                * (32 + 4 + 4 + // outpoint (32+4) + nSequence
-                VarInt(input.script_sig.len() as u64).len() +
-                input.script_sig.len());
+                * (size_of::<OutPoint>()
+                    + size_of::<Sequence>()
+                    + VarInt(input.script_sig.len() as u64).len()
+                    + input.script_sig.len());
             if !input.witness.is_empty() {
                 inputs_with_witnesses += 1;
                 input_weight += input.witness.serialized_len();
@@ -1260,9 +1263,9 @@ const fn predict_weight_internal(
     output_count: usize,
     output_scripts_size: usize,
 ) -> Weight {
-    // Lengths of txid, index and sequence: (32, 4, 4).
     // Multiply the lengths by 4 since the fields are all non-witness fields.
-    let input_weight = partial_input_weight + input_count * 4 * (32 + 4 + 4);
+    let input_weight = partial_input_weight
+        + input_count * 4 * (size_of::<OutPoint>() + size_of::<Sequence>());
 
     // The value field of a TxOut is 8 bytes.
     let output_size = 8 * output_count + output_scripts_size;
