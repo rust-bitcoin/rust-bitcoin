@@ -11,7 +11,6 @@ use core::ops::Index;
 use core::slice::SliceIndex;
 use core::str;
 
-use crate::sha512::BLOCK_SIZE;
 use crate::{sha512, FromSliceError};
 
 /// Engine to compute SHA512/256 hash function.
@@ -26,14 +25,7 @@ pub struct HashEngine(sha512::HashEngine);
 impl Default for HashEngine {
     #[rustfmt::skip]
     fn default() -> Self {
-        HashEngine(sha512::HashEngine {
-            h: [
-                0x22312194fc2bf72c, 0x9f555fa3c84c64c2, 0x2393b86b6f53b151, 0x963877195940eabd,
-                0x96283ee2a88effe3, 0xbe5e1e2553863992, 0x2b0199fc2c85b8aa, 0x0eb72ddc81c52ca2,
-            ],
-            length: 0,
-            buffer: [0; BLOCK_SIZE],
-        })
+        HashEngine(sha512::HashEngine::sha512_256())
     }
 }
 
@@ -44,7 +36,7 @@ impl crate::HashEngine for HashEngine {
 
     const BLOCK_SIZE: usize = sha512::BLOCK_SIZE;
 
-    fn n_bytes_hashed(&self) -> usize { self.0.length }
+    fn n_bytes_hashed(&self) -> usize { self.0.n_bytes_hashed() }
 
     fn input(&mut self, inp: &[u8]) { self.0.input(inp); }
 }

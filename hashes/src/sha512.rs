@@ -17,9 +17,9 @@ pub(crate) const BLOCK_SIZE: usize = 128;
 /// Engine to compute SHA512 hash function.
 #[derive(Clone)]
 pub struct HashEngine {
-    pub(crate) h: [u64; 8],
-    pub(crate) length: usize,
-    pub(crate) buffer: [u8; BLOCK_SIZE],
+    h: [u64; 8],
+    length: usize,
+    buffer: [u8; BLOCK_SIZE],
 }
 
 impl Default for HashEngine {
@@ -29,6 +29,21 @@ impl Default for HashEngine {
             h: [
                 0x6a09e667f3bcc908, 0xbb67ae8584caa73b, 0x3c6ef372fe94f82b, 0xa54ff53a5f1d36f1,
                 0x510e527fade682d1, 0x9b05688c2b3e6c1f, 0x1f83d9abfb41bd6b, 0x5be0cd19137e2179,
+            ],
+            length: 0,
+            buffer: [0; BLOCK_SIZE],
+        }
+    }
+}
+
+impl HashEngine {
+    /// Constructs a hash engine suitable for use inside the default `sha512_256::HashEngine`.
+    #[rustfmt::skip]
+    pub(crate) fn sha512_256() -> Self {
+        HashEngine {
+            h: [
+                0x22312194fc2bf72c, 0x9f555fa3c84c64c2, 0x2393b86b6f53b151, 0x963877195940eabd,
+                0x96283ee2a88effe3, 0xbe5e1e2553863992, 0x2b0199fc2c85b8aa, 0x0eb72ddc81c52ca2,
             ],
             length: 0,
             buffer: [0; BLOCK_SIZE],
