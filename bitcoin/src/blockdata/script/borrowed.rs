@@ -435,46 +435,6 @@ impl Script {
         InstructionIndices::from_instructions(self.instructions_minimal())
     }
 
-    /// Shorthand for [`Self::verify_with_flags`] with flag [bitcoinconsensus::VERIFY_ALL].
-    ///
-    /// # Parameters
-    ///  * `index` - The input index in spending which is spending this transaction.
-    ///  * `amount` - The amount this script guards.
-    ///  * `spending_tx` - The transaction that attempts to spend the output holding this script.
-    #[cfg(feature = "bitcoinconsensus")]
-    pub fn verify(
-        &self,
-        index: usize,
-        amount: crate::Amount,
-        spending_tx: &[u8],
-    ) -> Result<(), bitcoinconsensus::Error> {
-        self.verify_with_flags(index, amount, spending_tx, bitcoinconsensus::VERIFY_ALL)
-    }
-
-    /// Verifies spend of an input script.
-    ///
-    /// # Parameters
-    ///  * `index` - The input index in spending which is spending this transaction.
-    ///  * `amount` - The amount this script guards.
-    ///  * `spending_tx` - The transaction that attempts to spend the output holding this script.
-    ///  * `flags` - Verification flags, see [`bitcoinconsensus::VERIFY_ALL`] and similar.
-    #[cfg(feature = "bitcoinconsensus")]
-    pub fn verify_with_flags<F: Into<u32>>(
-        &self,
-        index: usize,
-        amount: crate::Amount,
-        spending_tx: &[u8],
-        flags: F,
-    ) -> Result<(), bitcoinconsensus::Error> {
-        bitcoinconsensus::verify_with_flags(
-            &self.0[..],
-            amount.to_sat(),
-            spending_tx,
-            index,
-            flags.into(),
-        )
-    }
-
     /// Writes the assembly decoding of the script to the formatter.
     pub fn fmt_asm(&self, f: &mut dyn fmt::Write) -> fmt::Result {
         bytes_to_asm_fmt(self.as_ref(), f)
