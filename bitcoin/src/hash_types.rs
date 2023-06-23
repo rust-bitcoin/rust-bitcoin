@@ -52,7 +52,7 @@ pub use newtypes::*;
 
 #[rustfmt::skip]
 mod newtypes {
-    use hashes::{sha256, sha256d, hash160, hash_newtype};
+    use hashes::{sha256d, hash160, hash_newtype};
 
     hash_newtype! {
         /// A bitcoin transaction hash/transaction ID.
@@ -68,11 +68,6 @@ mod newtypes {
         pub struct Wtxid(sha256d::Hash);
         /// A bitcoin block hash.
         pub struct BlockHash(sha256d::Hash);
-
-        /// A hash of Bitcoin Script bytecode.
-        pub struct ScriptHash(hash160::Hash);
-        /// SegWit version of a Bitcoin Script bytecode hash.
-        pub struct WScriptHash(sha256::Hash);
 
         /// A hash of the Merkle tree branch or root for transactions
         pub struct TxMerkleNode(sha256d::Hash);
@@ -98,6 +93,4 @@ mod newtypes {
 
     impl_hashencode!(FilterHash);
     impl_hashencode!(FilterHeader);
-
-    impl_asref_push_bytes!(ScriptHash, WScriptHash);
 }

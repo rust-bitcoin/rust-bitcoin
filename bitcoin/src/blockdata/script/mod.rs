@@ -55,13 +55,13 @@ use core::cmp::Ordering;
 use core::fmt;
 use core::ops::{Deref, DerefMut};
 
+use hashes::{hash160, sha256};
 #[cfg(feature = "serde")]
 use serde;
 
 use crate::blockdata::opcodes::all::*;
 use crate::blockdata::opcodes::{self};
 use crate::consensus::{encode, Decodable, Encodable};
-use crate::hash_types::{ScriptHash, WScriptHash};
 use crate::prelude::*;
 use crate::{io, OutPoint};
 
@@ -80,6 +80,38 @@ pub use self::builder::*;
 pub use self::instruction::*;
 pub use self::owned::*;
 pub use self::push_bytes::*;
+
+hashes::hash_newtype! {
+    /// A hash of Bitcoin Script bytecode.
+    pub struct ScriptHash(hash160::Hash);
+    /// SegWit version of a Bitcoin Script bytecode hash.
+    pub struct WScriptHash(sha256::Hash);
+}
+crate::hash_types::impl_asref_push_bytes!(ScriptHash, WScriptHash);
+
+impl From<ScriptBuf> for ScriptHash {
+    fn from(script: ScriptBuf) -> ScriptHash { script.script_hash() }
+}
+
+impl From<&ScriptBuf> for ScriptHash {
+    fn from(script: &ScriptBuf) -> ScriptHash { script.script_hash() }
+}
+
+impl From<&Script> for ScriptHash {
+    fn from(script: &Script) -> ScriptHash { script.script_hash() }
+}
+
+impl From<ScriptBuf> for WScriptHash {
+    fn from(script: ScriptBuf) -> WScriptHash { script.wscript_hash() }
+}
+
+impl From<&ScriptBuf> for WScriptHash {
+    fn from(script: &ScriptBuf) -> WScriptHash { script.wscript_hash() }
+}
+
+impl From<&Script> for WScriptHash {
+    fn from(script: &Script) -> WScriptHash { script.wscript_hash() }
+}
 
 /// Encodes an integer in script(minimal CScriptNum) format.
 ///
@@ -302,30 +334,6 @@ impl From<Vec<u8>> for ScriptBuf {
 
 impl From<ScriptBuf> for Vec<u8> {
     fn from(v: ScriptBuf) -> Self { v.0 }
-}
-
-impl From<ScriptBuf> for ScriptHash {
-    fn from(script: ScriptBuf) -> ScriptHash { script.script_hash() }
-}
-
-impl From<&ScriptBuf> for ScriptHash {
-    fn from(script: &ScriptBuf) -> ScriptHash { script.script_hash() }
-}
-
-impl From<&Script> for ScriptHash {
-    fn from(script: &Script) -> ScriptHash { script.script_hash() }
-}
-
-impl From<ScriptBuf> for WScriptHash {
-    fn from(script: ScriptBuf) -> WScriptHash { script.wscript_hash() }
-}
-
-impl From<&ScriptBuf> for WScriptHash {
-    fn from(script: &ScriptBuf) -> WScriptHash { script.wscript_hash() }
-}
-
-impl From<&Script> for WScriptHash {
-    fn from(script: &Script) -> WScriptHash { script.wscript_hash() }
 }
 
 impl AsRef<Script> for Script {
