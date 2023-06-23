@@ -141,11 +141,9 @@ pub use crate::blockdata::weight::Weight;
 pub use crate::blockdata::witness::{self, Witness};
 pub use crate::blockdata::{constants, opcodes};
 pub use crate::consensus::encode::VarInt;
-pub use crate::crypto::key::{self, PrivateKey, PublicKey};
+pub use crate::crypto::key::{self, PrivateKey, PubkeyHash, PublicKey, WPubkeyHash};
 pub use crate::crypto::{ecdsa, sighash};
-pub use crate::hash_types::{
-    BlockHash, PubkeyHash, ScriptHash, Txid, WPubkeyHash, WScriptHash, Wtxid,
-};
+pub use crate::hash_types::{BlockHash, ScriptHash, Txid, WScriptHash, Wtxid};
 pub use crate::merkle_tree::MerkleBlock;
 pub use crate::network::Network;
 pub use crate::pow::{CompactTarget, Target, Work};

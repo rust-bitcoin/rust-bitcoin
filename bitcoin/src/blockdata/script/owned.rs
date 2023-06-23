@@ -10,8 +10,10 @@ use crate::blockdata::opcodes::{self};
 use crate::blockdata::script::witness_program::WitnessProgram;
 use crate::blockdata::script::witness_version::WitnessVersion;
 use crate::blockdata::script::{opcode_to_verify, Builder, Instruction, PushBytes, Script};
-use crate::hash_types::{PubkeyHash, ScriptHash, WPubkeyHash, WScriptHash};
-use crate::key::{PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey};
+use crate::hash_types::{ScriptHash, WScriptHash};
+use crate::key::{
+    PubkeyHash, PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey, WPubkeyHash,
+};
 use crate::prelude::*;
 use crate::taproot::TapNodeHash;
 
