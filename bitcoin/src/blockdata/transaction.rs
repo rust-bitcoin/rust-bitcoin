@@ -21,8 +21,6 @@ use internals::write_err;
 use super::Weight;
 use crate::blockdata::locktime::absolute::{self, Height, Time};
 use crate::blockdata::locktime::relative;
-#[cfg(feature = "bitcoinconsensus")]
-use crate::blockdata::script;
 use crate::blockdata::script::{Script, ScriptBuf};
 use crate::blockdata::witness::Witness;
 use crate::consensus::{encode, Decodable, Encodable};
@@ -931,7 +929,7 @@ impl Transaction {
 
     /// Shorthand for [`Self::verify_with_flags`] with flag [`bitcoinconsensus::VERIFY_ALL`].
     #[cfg(feature = "bitcoinconsensus")]
-    pub fn verify<S>(&self, spent: S) -> Result<(), script::Error>
+    pub fn verify<S>(&self, spent: S) -> Result<(), TxVerifyError>
     where
         S: FnMut(&OutPoint) -> Option<TxOut>,
     {
@@ -942,7 +940,7 @@ impl Transaction {
     ///
     /// The `spent` closure should not return the same [`TxOut`] twice!
     #[cfg(feature = "bitcoinconsensus")]
-    pub fn verify_with_flags<S, F>(&self, mut spent: S, flags: F) -> Result<(), script::Error>
+    pub fn verify_with_flags<S, F>(&self, mut spent: S, flags: F) -> Result<(), TxVerifyError>
     where
         S: FnMut(&OutPoint) -> Option<TxOut>,
         F: Into<u32>,
@@ -953,7 +951,7 @@ impl Transaction {
             if let Some(output) = spent(&input.previous_output) {
                 output.script_pubkey.verify_with_flags(idx, output.value, tx.as_slice(), flags)?;
             } else {
-                return Err(script::Error::UnknownSpentOutput(input.previous_output));
+                return Err(TxVerifyError::UnknownSpentOutput(input.previous_output));
             }
         }
         Ok(())
@@ -1416,6 +1414,85 @@ impl InputWeightPrediction {
     }
 }
 
+/// An error during transaction validation.
+#[cfg(feature = "bitcoinconsensus")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum TxVerifyError {
+    /// Error validating the script with bitcoinconsensus library.
+    ScriptVerification(bitcoinconsensus::Error),
+    /// Can not find the spent output.
+    UnknownSpentOutput(OutPoint),
+}
+
+#[cfg(feature = "bitcoinconsensus")]
+impl fmt::Display for TxVerifyError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use TxVerifyError::*;
+
+        match *self {
+            ScriptVerification(ref e) => {
+                write_err!(f, "bitcoinconsensus verification failed"; bitcoinconsensus_hack::wrap_error(e))
+            }
+            UnknownSpentOutput(ref p) => write!(f, "unknown spent output: {}", p),
+        }
+    }
+}
+
+#[cfg(all(feature = "std", feature = "bitcoinconsensus"))]
+impl std::error::Error for TxVerifyError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use TxVerifyError::*;
+
+        match *self {
+            ScriptVerification(ref e) => Some(bitcoinconsensus_hack::wrap_error(e)),
+            UnknownSpentOutput(_) => None,
+        }
+    }
+}
+
+#[cfg(feature = "bitcoinconsensus")]
+impl From<bitcoinconsensus::Error> for TxVerifyError {
+    fn from(e: bitcoinconsensus::Error) -> Self { TxVerifyError::ScriptVerification(e) }
+}
+
+// If bitcoinonsensus-std is off but bitcoinconsensus is present we patch the error type to
+// implement `std::error::Error`.
+#[cfg(all(feature = "std", feature = "bitcoinconsensus", not(feature = "bitcoinconsensus-std")))]
+mod bitcoinconsensus_hack {
+    use core::fmt;
+
+    #[repr(transparent)]
+    pub(crate) struct Error(bitcoinconsensus::Error);
+
+    impl fmt::Debug for Error {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Debug::fmt(&self.0, f) }
+    }
+
+    impl fmt::Display for Error {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { fmt::Display::fmt(&self.0, f) }
+    }
+
+    // bitcoinconsensus::Error has no sources at this time
+    impl std::error::Error for Error {}
+
+    pub(crate) fn wrap_error(error: &bitcoinconsensus::Error) -> &Error {
+        // Unfortunately, we cannot have the reference inside `Error` struct because of the 'static
+        // bound on `source` return type, so we have to use unsafe to overcome the limitation.
+        // SAFETY: the type is repr(transparent) and the lifetimes match
+        unsafe { &*(error as *const _ as *const Error) }
+    }
+}
+
+#[cfg(not(all(
+    feature = "std",
+    feature = "bitcoinconsensus",
+    not(feature = "bitcoinconsensus-std")
+)))]
+mod bitcoinconsensus_hack {
+    #[allow(unused_imports)] // conditionally used
+    pub(crate) use core::convert::identity as wrap_error;
+}
+
 #[cfg(test)]
 mod tests {
     use core::str::FromStr;
@@ -1838,7 +1915,6 @@ mod tests {
     fn test_transaction_verify() {
         use std::collections::HashMap;
 
-        use crate::blockdata::script;
         use crate::blockdata::witness::Witness;
 
         // a random recent segwit transaction from blockchain using both old and segwit inputs
@@ -1895,7 +1971,7 @@ mod tests {
             .err()
             .unwrap()
         {
-            script::Error::BitcoinConsensus(_) => {}
+            TxVerifyError::ScriptVerification(_) => {}
             _ => panic!("Wrong error type"),
         }
     }
