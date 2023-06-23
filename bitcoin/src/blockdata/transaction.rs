@@ -1263,9 +1263,8 @@ const fn predict_weight_internal(
     output_count: usize,
     output_scripts_size: usize,
 ) -> Weight {
-    // Multiply the lengths by 4 since the fields are all non-witness fields.
     let input_weight = partial_input_weight
-        + input_count * 4 * (size_of::<OutPoint>() + size_of::<Sequence>());
+        + input_count * WITNESS_SCALE_FACTOR * (size_of::<OutPoint>() + size_of::<Sequence>());
 
     // The value field of a TxOut is 8 bytes.
     let output_size = 8 * output_count + output_scripts_size;
