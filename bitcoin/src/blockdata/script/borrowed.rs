@@ -12,8 +12,6 @@ use secp256k1::{Secp256k1, Verification};
 use crate::blockdata::opcodes::all::*;
 use crate::blockdata::opcodes::{self};
 use crate::blockdata::script::witness_version::WitnessVersion;
-#[cfg(feature = "bitcoinconsensus")]
-use crate::blockdata::script::Error;
 use crate::blockdata::script::{
     bytes_to_asm_fmt, Builder, Instruction, InstructionIndices, Instructions, ScriptBuf,
 };
@@ -449,7 +447,7 @@ impl Script {
         index: usize,
         amount: crate::Amount,
         spending_tx: &[u8],
-    ) -> Result<(), Error> {
+    ) -> Result<(), bitcoinconsensus::Error> {
         self.verify_with_flags(index, amount, spending_tx, bitcoinconsensus::VERIFY_ALL)
     }
 
@@ -467,14 +465,14 @@ impl Script {
         amount: crate::Amount,
         spending_tx: &[u8],
         flags: F,
-    ) -> Result<(), Error> {
-        Ok(bitcoinconsensus::verify_with_flags(
+    ) -> Result<(), bitcoinconsensus::Error> {
+        bitcoinconsensus::verify_with_flags(
             &self.0[..],
             amount.to_sat(),
             spending_tx,
             index,
             flags.into(),
-        )?)
+        )
     }
 
     /// Writes the assembly decoding of the script to the formatter.
