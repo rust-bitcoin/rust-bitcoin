@@ -19,7 +19,6 @@ use hashes::{self, sha256d, Hash};
 use internals::write_err;
 
 use super::Weight;
-use crate::blockdata::constants::WITNESS_SCALE_FACTOR;
 use crate::blockdata::locktime::absolute::{self, Height, Time};
 use crate::blockdata::locktime::relative;
 #[cfg(feature = "bitcoinconsensus")]
@@ -838,7 +837,14 @@ impl Transaction {
     /// and can therefore avoid this ambiguity.
     #[inline]
     pub fn weight(&self) -> Weight {
-        Weight::from_wu(self.scaled_size(WITNESS_SCALE_FACTOR) as u64)
+        let inputs = self.input.iter().map(|txin| {
+            InputWeightPrediction::new(
+                txin.script_sig.len(),
+                txin.witness.iter().map(|elem| elem.len()),
+            )
+        });
+        let outputs = self.output.iter().map(|txout| txout.script_pubkey.len());
+        predict_weight(inputs, outputs)
     }
 
     /// Returns the regular byte-wise consensus-serialized size of this transaction.
