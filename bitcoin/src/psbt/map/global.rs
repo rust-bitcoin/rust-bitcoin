@@ -9,7 +9,7 @@ use crate::consensus::{encode, Decodable};
 use crate::io::{self, Cursor, Read};
 use crate::prelude::*;
 use crate::psbt::map::Map;
-use crate::psbt::{raw, Error, Psbt, Version};
+use crate::psbt::{raw, Error, Psbt, PsbtInner, Version};
 
 /// Type: Unsigned Transaction PSBT_GLOBAL_UNSIGNED_TX = 0x00
 const PSBT_GLOBAL_UNSIGNED_TX: u8 = 0x00;
@@ -24,21 +24,24 @@ impl Map for Psbt {
     fn get_pairs(&self) -> Vec<raw::Pair> {
         let mut rv: Vec<raw::Pair> = Default::default();
 
-        rv.push(raw::Pair {
-            key: raw::Key { type_value: PSBT_GLOBAL_UNSIGNED_TX, key: vec![] },
-            value: {
-                // Manually serialized to ensure 0-input txs are serialized
-                // without witnesses.
-                let mut ret = Vec::new();
-                ret.extend(encode::serialize(&self.unsigned_tx.version));
-                ret.extend(encode::serialize(&self.unsigned_tx.input));
-                ret.extend(encode::serialize(&self.unsigned_tx.output));
-                ret.extend(encode::serialize(&self.unsigned_tx.lock_time));
-                ret
-            },
-        });
+        if self.inner.version == Version::PsbtV0 {
+            rv.push(raw::Pair {
+                key: raw::Key { type_value: PSBT_GLOBAL_UNSIGNED_TX, key: vec![] },
+                value: {
+                    // Manually serialized to ensure 0-input txs are serialized
+                    // without witnesses.
+                    let mut ret = Vec::new();
+                    let unsigned_tx = self.inner.unsigned_tx.as_ref().unwrap();
+                    ret.extend(encode::serialize(&unsigned_tx.version));
+                    ret.extend(encode::serialize(&unsigned_tx.input));
+                    ret.extend(encode::serialize(&unsigned_tx.output));
+                    ret.extend(encode::serialize(&unsigned_tx.lock_time));
+                    ret
+                },
+            });
+        }
 
-        for (xpub, (fingerprint, derivation)) in &self.xpub {
+        for (xpub, (fingerprint, derivation)) in &self.inner.xpub {
             rv.push(raw::Pair {
                 key: raw::Key { type_value: PSBT_GLOBAL_XPUB, key: xpub.encode().to_vec() },
                 value: {
@@ -51,18 +54,18 @@ impl Map for Psbt {
         }
 
         // Serializing version only for non-default value; otherwise test vectors fail
-        if self.version > Version::PsbtV0 {
+        if self.inner.version > Version::PsbtV0 {
             rv.push(raw::Pair {
                 key: raw::Key { type_value: PSBT_GLOBAL_VERSION, key: vec![] },
-                value: self.version.to_raw().to_le_bytes().to_vec(),
+                value: self.inner.version.to_raw().to_le_bytes().to_vec(),
             });
         }
 
-        for (key, value) in self.proprietary.iter() {
+        for (key, value) in self.inner.proprietary.iter() {
             rv.push(raw::Pair { key: key.to_key(), value: value.clone() });
         }
 
-        for (key, value) in self.unknown.iter() {
+        for (key, value) in self.inner.unknown.iter() {
             rv.push(raw::Pair { key: key.clone(), value: value.clone() });
         }
 
@@ -71,6 +74,7 @@ impl Map for Psbt {
 }
 
 impl Psbt {
+    // TODO
     pub(crate) fn decode_global<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, Error> {
         let mut r = r.take(MAX_VEC_SIZE as u64);
         let mut tx: Option<Transaction> = None;
@@ -199,8 +203,8 @@ impl Psbt {
         }
 
         if let Some(tx) = tx {
-            Ok(Psbt {
-                unsigned_tx: tx,
+            let inner = PsbtInner {
+                unsigned_tx: Some(tx),
                 version: match version {
                     Some(v) => Version::from_raw(v).map_err(Error::from)?,
                     None => Version::PsbtV0,
@@ -210,7 +214,13 @@ impl Psbt {
                 unknown: unknowns,
                 inputs: vec![],
                 outputs: vec![],
-            })
+
+                tx_modifiable: None,
+                fallback_locktime: None,
+                tx_version: None,
+            };
+
+            Psbt::new(inner)
         } else {
             Err(Error::MustHaveUnsignedTx)
         }

@@ -11,6 +11,7 @@ use crate::prelude::*;
 use crate::psbt::map::Map;
 use crate::psbt::{raw, Error};
 use crate::taproot::{TapLeafHash, TapTree};
+use crate::Amount;
 
 /// Type: Redeem ScriptBuf PSBT_OUT_REDEEM_SCRIPT = 0x00
 const PSBT_OUT_REDEEM_SCRIPT: u8 = 0x00;
@@ -54,6 +55,11 @@ pub struct Output {
     /// Unknown key-value pairs for this output.
     #[cfg_attr(feature = "serde", serde(with = "crate::serde_utils::btreemap_as_seq_byte_values"))]
     pub unknown: BTreeMap<raw::Key, Vec<u8>>,
+
+    /// The output's amount. Required in PSBTv2. Must be excluded in PSBTV0.
+    pub amount: Option<Amount>,
+    /// The script for this output. Required in PSBTv2. Must be excluded in PSBTV0.
+    pub script: Option<ScriptBuf>,
 }
 
 impl Output {

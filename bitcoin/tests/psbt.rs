@@ -10,7 +10,7 @@ use bitcoin::blockdata::opcodes::OP_0;
 use bitcoin::blockdata::script;
 use bitcoin::consensus::encode::{deserialize, serialize_hex};
 use bitcoin::hex::FromHex;
-use bitcoin::psbt::{Psbt, PsbtSighashType};
+use bitcoin::psbt::{Psbt, PsbtInner, PsbtSighashType};
 use bitcoin::script::PushBytes;
 use bitcoin::secp256k1::{self, Secp256k1};
 use bitcoin::{
@@ -208,14 +208,15 @@ fn create_psbt(tx: Transaction) -> Psbt {
     let expected_psbt_hex = include_str!("data/create_psbt_hex");
     let expected_psbt = hex_psbt!(expected_psbt_hex).unwrap();
 
-    let psbt = Psbt::from_unsigned_tx(tx).unwrap();
+    let psbt = PsbtInner::from_unsigned_tx(tx).unwrap();
+    let psbt = Psbt::new(psbt).unwrap();
 
     assert_eq!(psbt, expected_psbt);
     psbt
 }
 
 /// Updates `psbt` according to the BIP, returns the newly updated PSBT. Verifies against BIP 174 test vector.
-fn update_psbt(mut psbt: Psbt, fingerprint: Fingerprint) -> Psbt {
+fn update_psbt(psbt: Psbt, fingerprint: Fingerprint) -> Psbt {
     // Strings from BIP 174 test vector.
     let previous_tx_0 = include_str!("data/previous_tx_0_hex");
     let previous_tx_1 = include_str!("data/previous_tx_1_hex");
@@ -237,6 +238,7 @@ fn update_psbt(mut psbt: Psbt, fingerprint: Fingerprint) -> Psbt {
 
     let expected_psbt_hex = include_str!("data/update_1_psbt_hex");
     let expected_psbt = hex_psbt!(expected_psbt_hex).unwrap();
+    let mut psbt = psbt.into_inner();
 
     let mut input_0 = psbt.inputs[0].clone();
 
@@ -265,6 +267,7 @@ fn update_psbt(mut psbt: Psbt, fingerprint: Fingerprint) -> Psbt {
     output_1.bip32_derivation = bip32_derivation(fingerprint, &pk_path, vec![5]);
 
     psbt.outputs = vec![output_0, output_1];
+    let psbt = Psbt::new(psbt).unwrap();
 
     assert_eq!(psbt, expected_psbt);
     psbt
@@ -291,9 +294,10 @@ fn bip32_derivation(
 }
 
 /// Does the second update according to the BIP, returns the newly updated PSBT. Verifies against BIP 174 test vector.
-fn update_psbt_with_sighash_all(mut psbt: Psbt) -> Psbt {
+fn update_psbt_with_sighash_all(psbt: Psbt) -> Psbt {
     let expected_psbt_hex = include_str!("data/update_2_psbt_hex");
     let expected_psbt = hex_psbt!(expected_psbt_hex).unwrap();
+    let mut psbt = psbt.into_inner();
 
     let ty = PsbtSighashType::from_str("SIGHASH_ALL").unwrap();
 
@@ -303,6 +307,7 @@ fn update_psbt_with_sighash_all(mut psbt: Psbt) -> Psbt {
     input_1.sighash_type = Some(ty);
 
     psbt.inputs = vec![input_0, input_1];
+    let psbt = Psbt::new(psbt).unwrap();
 
     assert_eq!(psbt, expected_psbt);
     psbt
@@ -416,8 +421,9 @@ fn sign(mut psbt: Psbt, keys: BTreeMap<bitcoin::PublicKey, PrivateKey>) -> Psbt 
 
 /// Finalizes a PSBT accord to the Input Finalizer role described in BIP 174.
 /// This is just a test. For a production-ready PSBT Finalizer, use [rust-miniscript](https://docs.rs/miniscript/latest/miniscript/psbt/trait.PsbtExt.html#tymethod.finalize)
-fn finalize_psbt(mut psbt: Psbt) -> Psbt {
+fn finalize_psbt(psbt: Psbt) -> Psbt {
     // Input 0: legacy UTXO
+    let mut psbt = psbt.into_inner();
 
     let sigs: Vec<_> = psbt.inputs[0].partial_sigs.values().collect();
     let script_sig = script::Builder::new()
@@ -467,5 +473,5 @@ fn finalize_psbt(mut psbt: Psbt) -> Psbt {
     psbt.inputs[1].witness_script = None;
     psbt.inputs[1].bip32_derivation = BTreeMap::new();
 
-    psbt
+    Psbt::new(psbt).unwrap()
 }

@@ -34,7 +34,7 @@ use bitcoin::consensus::encode::deserialize;
 use bitcoin::hashes::{hash160, ripemd160, sha256, sha256d, Hash};
 use bitcoin::hex::FromHex;
 use bitcoin::psbt::raw::{self, Key, Pair, ProprietaryKey};
-use bitcoin::psbt::{Input, Output, Psbt, PsbtSighashType, Version};
+use bitcoin::psbt::{Input, Output, Psbt, PsbtInner, PsbtSighashType, Version};
 use bitcoin::sighash::{EcdsaSighashType, TapSighashType};
 use bitcoin::taproot::{self, ControlBlock, LeafVersion, TapTree, TaprootBuilder};
 use bitcoin::{
@@ -265,7 +265,7 @@ fn serde_regression_psbt() {
     .into_iter()
     .collect();
 
-    let psbt = Psbt {
+    let psbt = PsbtInner {
         version: Version::PsbtV0,
         xpub: {
             let s = include_str!("data/serde/extended_pub_key");
@@ -276,7 +276,7 @@ fn serde_regression_psbt() {
             let mut unsigned = tx.clone();
             unsigned.input[0].script_sig = ScriptBuf::new();
             unsigned.input[0].witness = Witness::default();
-            unsigned
+            Some(unsigned)
         },
         proprietary: proprietary.clone(),
         unknown: unknown.clone(),
@@ -310,14 +310,23 @@ fn serde_regression_psbt() {
             unknown,
             ..Default::default()
         }],
+
+        tx_modifiable: None,
+        tx_version: None,
+        fallback_locktime: None
     };
+    let psbt = Psbt::new(psbt).unwrap();
+
+    // Sanity, check we can roundtrip BIP-174 serialize.
+    let serialized = psbt.serialize();
+    Psbt::deserialize(&serialized).unwrap();
 
     // Sanity, check we can roundtrip BIP-174 serialize.
     let serialized = psbt.serialize();
     Psbt::deserialize(&serialized).unwrap();
 
     let got = serialize(&psbt).unwrap();
-    let want = include_bytes!("data/serde/psbt_bincode") as &[_];
+    let want = include_bytes!("data/serde/psbtv0_bincode") as &[_];
     assert_eq!(got, want)
 }
 

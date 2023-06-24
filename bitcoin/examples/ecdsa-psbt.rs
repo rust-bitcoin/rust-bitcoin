@@ -36,7 +36,7 @@ use std::str::FromStr;
 use bitcoin::bip32::{ChildNumber, DerivationPath, Fingerprint, IntoDerivationPath, Xpriv, Xpub};
 use bitcoin::consensus::encode;
 use bitcoin::locktime::absolute;
-use bitcoin::psbt::{self, Input, Psbt, PsbtSighashType};
+use bitcoin::psbt::{self, Input, Psbt, PsbtInner, PsbtSighashType};
 use bitcoin::secp256k1::{Secp256k1, Signing, Verification};
 use bitcoin::{
     Address, Amount, Network, OutPoint, PublicKey, ScriptBuf, Sequence, Transaction, TxIn, TxOut,
@@ -191,13 +191,13 @@ impl WatchOnly {
             ],
         };
 
-        let psbt = Psbt::from_unsigned_tx(tx)?;
+        let psbt = PsbtInner::from_unsigned_tx(tx)?;
 
-        Ok(psbt)
+        Ok(Psbt::new(psbt)?)
     }
 
     /// Updates the PSBT, in BIP174 parlance this is the 'Updater'.
-    fn update_psbt(&self, mut psbt: Psbt) -> Result<Psbt> {
+    fn update_psbt(&self, psbt: Psbt) -> Result<Psbt> {
         let mut input = Input { witness_utxo: Some(previous_output()), ..Default::default() };
 
         let pk = self.input_xpub.to_pub();
@@ -215,14 +215,16 @@ impl WatchOnly {
         let ty = PsbtSighashType::from_str("SIGHASH_ALL")?;
         input.sighash_type = Some(ty);
 
+        let mut psbt = psbt.into_inner();
         psbt.inputs = vec![input];
 
-        Ok(psbt)
+        Ok(Psbt::new(psbt)?)
     }
 
     /// Finalizes the PSBT, in BIP174 parlance this is the 'Finalizer'.
     /// This is just an example. For a production-ready PSBT Finalizer, use [rust-miniscript](https://docs.rs/miniscript/latest/miniscript/psbt/trait.PsbtExt.html#tymethod.finalize)
-    fn finalize_psbt(&self, mut psbt: Psbt) -> Result<Psbt> {
+    fn finalize_psbt(&self, psbt: Psbt) -> Result<Psbt> {
+        let mut psbt = psbt.into_inner();
         if psbt.inputs.is_empty() {
             return Err(psbt::SignError::MissingInputUtxo.into());
         }
@@ -241,7 +243,7 @@ impl WatchOnly {
         psbt.inputs[0].witness_script = None;
         psbt.inputs[0].bip32_derivation = BTreeMap::new();
 
-        Ok(psbt)
+        Ok(Psbt::new(psbt)?)
     }
 
     /// Returns data for the first change address (standard BIP84 derivation path

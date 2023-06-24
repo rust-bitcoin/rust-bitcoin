@@ -7,7 +7,8 @@
 //! except we define PSBTs containing non-standard sighash types as invalid.
 //!
 
-use core::{cmp, fmt};
+use core::convert::TryFrom;
+use core::fmt;
 #[cfg(feature = "std")]
 use std::collections::{HashMap, HashSet};
 
@@ -16,7 +17,8 @@ use internals::write_err;
 use secp256k1::{Message, Secp256k1, Signing};
 
 use crate::bip32::{self, KeySource, Xpriv, Xpub};
-use crate::blockdata::transaction::{Transaction, TxOut};
+use crate::blockdata::locktime::absolute;
+use crate::blockdata::transaction::{OutPoint, Transaction, TxIn, TxOut};
 use crate::crypto::ecdsa;
 use crate::crypto::key::{PrivateKey, PublicKey};
 use crate::prelude::*;
@@ -71,14 +73,31 @@ impl Version {
     }
 }
 
-/// A Partially Signed Transaction.
+/// Transaction Modification flags used in PsbtV2 as described in BIP-370
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
+pub struct TxModifiable {
+    /// Indicates whether inputs can be added or removed
+    pub input_modifiable: bool,
+    /// Indicates whether outputs can be added or removed
+    pub output_modifiable: bool,
+    /// Indicates whether the transaction has a SIGHASH_SINGLE signature
+    /// who's input and output pairing must be preserved. It essentially indicates
+    /// that the Constructor must iterate the inputs to determine whether
+    /// and how to add or remove an input
+    pub has_sighash_single: bool,
+    // More flags
+}
+
+/// A Partially Signed Transaction Inner used by [`Psbt`].
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
-pub struct Psbt {
+pub struct PsbtInner {
     /// The unsigned transaction, scriptSigs and witnesses for each input must be empty.
-    pub unsigned_tx: Transaction,
-    /// The version number of this PSBT. If missing when serialized, the version number is 0.
+    pub unsigned_tx: Option<Transaction>,
+    /// The version number of this PSBT. If omitted, the version number is PsbtV0.
     pub version: Version,
     /// A global map from extended public keys to the used key fingerprint and
     /// derivation path as defined by BIP 32.
@@ -94,9 +113,125 @@ pub struct Psbt {
     pub inputs: Vec<Input>,
     /// The corresponding key-value map for each output in the unsigned transaction.
     pub outputs: Vec<Output>,
+
+    /// The transaction version number. Required in Psbtv2.
+    pub tx_version: Option<i32>,
+    /// Optional Psbtv2 field to use if no inputs specify a required locktime.
+    pub fallback_locktime: Option<absolute::LockTime>,
+    /// PSBTv2 field for various transaction modification flags.
+    pub tx_modifiable: Option<TxModifiable>,
+}
+
+impl PsbtInner {
+    /// Validates this [`PsbtInner`] according to its version
+    pub fn validate(&self) -> Result<(), Error> {
+        match self.version {
+            Version::PsbtV0 => {
+                if self.unsigned_tx.is_none() {
+                    return Err(Error::MustHaveUnsignedTx);
+                }
+
+                if self.tx_version.is_some() {
+                    return Err(Error::TxVersionPresent);
+                }
+
+                if self.fallback_locktime.is_some() {
+                    return Err(Error::FallbackLocktimePresent);
+                }
+
+                if self.tx_modifiable.is_some() {
+                    return Err(Error::TxModifiablePresent);
+                }
+            }
+            _ => {
+                if self.unsigned_tx.is_some() {
+                    return Err(Error::UnsignedTxPresent);
+                }
+
+                if self.tx_version.is_none() {
+                    return Err(Error::MissingTxVersion);
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Checks that unsigned transaction does not have scriptSig's or witness data.
+    fn unsigned_tx_checks(&self) -> Result<(), Error> {
+        match self.unsigned_tx.as_ref() {
+            Some(unsigned_tx) => {
+                for txin in &unsigned_tx.input {
+                    if !txin.script_sig.is_empty() {
+                        return Err(Error::UnsignedTxHasScriptSigs);
+                    }
+
+                    if !txin.witness.is_empty() {
+                        return Err(Error::UnsignedTxHasScriptWitnesses);
+                    }
+                }
+
+                Ok(())
+            }
+            None => Err(Error::MustHaveUnsignedTx),
+        }
+    }
+
+    /// Creates a PsbtV0 from an unsigned transaction.
+    ///
+    /// # Errors
+    ///
+    /// If transactions is not unsigned.
+    pub fn from_unsigned_tx(tx: Transaction) -> Result<Self, Error> {
+        let psbt = PsbtInner {
+            inputs: vec![Default::default(); tx.input.len()],
+            outputs: vec![Default::default(); tx.output.len()],
+
+            unsigned_tx: Some(tx),
+            xpub: Default::default(),
+            version: Version::PsbtV0,
+            proprietary: Default::default(),
+            unknown: Default::default(),
+
+            tx_version: None,
+            fallback_locktime: None,
+            tx_modifiable: None,
+        };
+        psbt.unsigned_tx_checks()?;
+        Ok(psbt)
+    }
+}
+
+/// Partially signed transaction, commonly referred to as a PSBT.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
+pub struct Psbt {
+    inner: PsbtInner,
+}
+
+impl TryFrom<PsbtInner> for Psbt {
+    type Error = Error;
+
+    /// Constructs a [`Psbt`] from a [`PsbtInner`].
+    fn try_from(psbt: PsbtInner) -> Result<Self, Self::Error> { Psbt::new(psbt) }
 }
 
 impl Psbt {
+    /// Creates a [`Psbt`] after validating `psbt` according to its version.
+    pub fn new(psbt: PsbtInner) -> Result<Psbt, Error> {
+        match psbt.validate() {
+            Ok(()) => Ok(Psbt { inner: psbt }),
+            Err(err) => Err(err),
+        }
+    }
+
+    /// Returns the underlying [`PsbtInner`]
+    pub fn into_inner(self) -> PsbtInner { self.inner }
+
+    /// Returns an immutable reference to the underlying [`PsbtInner`]
+    pub fn as_inner(&self) -> &PsbtInner { &self.inner }
+
     /// Returns an iterator for the funding UTXOs of the psbt
     ///
     /// For each PSBT input that contains UTXO information `Ok` is returned containing that information.
@@ -109,131 +244,250 @@ impl Psbt {
     /// ## Panics
     ///
     /// The function panics if the length of transaction inputs is not equal to the length of PSBT inputs.
-    pub fn iter_funding_utxos(&self) -> impl Iterator<Item = Result<&TxOut, Error>> {
-        assert_eq!(self.inputs.len(), self.unsigned_tx.input.len());
-        self.unsigned_tx.input.iter().zip(&self.inputs).map(|(tx_input, psbt_input)| {
-            match (&psbt_input.witness_utxo, &psbt_input.non_witness_utxo) {
-                (Some(witness_utxo), _) => Ok(witness_utxo),
-                (None, Some(non_witness_utxo)) => {
-                    let vout = tx_input.previous_output.vout as usize;
-                    non_witness_utxo.output.get(vout).ok_or(Error::PsbtUtxoOutOfbounds)
-                }
-                (None, None) => Err(Error::MissingUtxo),
+    pub fn iter_funding_utxos(&self) -> Box<dyn Iterator<Item = Result<&TxOut, Error>> + '_> {
+        let inner = &self.inner;
+        match inner.version {
+            Version::PsbtV0 => {
+                let unsigned_tx = inner.unsigned_tx.as_ref().unwrap();
+                assert_eq!(inner.inputs.len(), unsigned_tx.input.len());
+                Box::new(unsigned_tx.input.iter().zip(&inner.inputs).map(
+                    |(tx_input, psbt_input)| match (
+                        &psbt_input.witness_utxo,
+                        &psbt_input.non_witness_utxo,
+                    ) {
+                        (Some(witness_utxo), _) => Ok(witness_utxo),
+                        (None, Some(non_witness_utxo)) => {
+                            let vout = tx_input.previous_output.vout as usize;
+                            non_witness_utxo.output.get(vout).ok_or(Error::PsbtUtxoOutOfbounds)
+                        }
+                        (None, None) => Err(Error::MissingUtxo),
+                    },
+                )) as Box<dyn Iterator<Item = Result<&TxOut, Error>>>
             }
-        })
-    }
-
-    /// Checks that unsigned transaction does not have scriptSig's or witness data.
-    fn unsigned_tx_checks(&self) -> Result<(), Error> {
-        for txin in &self.unsigned_tx.input {
-            if !txin.script_sig.is_empty() {
-                return Err(Error::UnsignedTxHasScriptSigs);
-            }
-
-            if !txin.witness.is_empty() {
-                return Err(Error::UnsignedTxHasScriptWitnesses);
+            Version::PsbtV2 => {
+                // In PsbtV2, Input contains all the details, no need of unsigned_tx
+                Box::new(inner.inputs.iter().map(|input| {
+                    match (&input.witness_utxo, &input.non_witness_utxo) {
+                        (Some(witness_utxo), _) => Ok(witness_utxo),
+                        (None, Some(non_witness_utxo)) => {
+                            let output_index = input.output_index.unwrap() as usize;
+                            non_witness_utxo
+                                .output
+                                .get(output_index)
+                                .ok_or(Error::PsbtUtxoOutOfbounds)
+                        }
+                        (None, None) => Err(Error::MissingUtxo),
+                    }
+                })) as Box<dyn Iterator<Item = Result<&TxOut, Error>>>
             }
         }
-
-        Ok(())
-    }
-
-    /// Creates a PSBT from an unsigned transaction.
-    ///
-    /// # Errors
-    ///
-    /// If transactions is not unsigned.
-    pub fn from_unsigned_tx(tx: Transaction) -> Result<Self, Error> {
-        let psbt = Psbt {
-            inputs: vec![Default::default(); tx.input.len()],
-            outputs: vec![Default::default(); tx.output.len()],
-
-            unsigned_tx: tx,
-            xpub: Default::default(),
-            version: Version::PsbtV0,
-            proprietary: Default::default(),
-            unknown: Default::default(),
-        };
-        psbt.unsigned_tx_checks()?;
-        Ok(psbt)
     }
 
     /// Extracts the `Transaction` from a PSBT by filling in the available signature information.
     pub fn extract_tx(self) -> Transaction {
-        let mut tx: Transaction = self.unsigned_tx;
+        let psbt_inner = self.inner;
 
-        for (vin, psbtin) in tx.input.iter_mut().zip(self.inputs.into_iter()) {
-            vin.script_sig = psbtin.final_script_sig.unwrap_or_default();
-            vin.witness = psbtin.final_script_witness.unwrap_or_default();
+        match psbt_inner.version {
+            Version::PsbtV0 => {
+                let mut tx: Transaction = psbt_inner.unsigned_tx.unwrap();
+
+                for (vin, psbtin) in tx.input.iter_mut().zip(psbt_inner.inputs.into_iter()) {
+                    vin.script_sig = psbtin.final_script_sig.unwrap_or_default();
+                    vin.witness = psbtin.final_script_witness.unwrap_or_default();
+                }
+
+                tx
+            }
+            _ => {
+                let mut tx = Transaction {
+                    version: psbt_inner.tx_version.unwrap(),
+                    lock_time: psbt_inner.fallback_locktime.unwrap_or(absolute::LockTime::ZERO),
+                    input: vec![],
+                    output: vec![],
+                };
+                let mut time_locktime: Option<absolute::LockTime> = None;
+                let mut height_locktime: Option<absolute::LockTime> = None;
+                let (mut time_flag, mut height_flag) = (true, true);
+
+                /// Calculates the max lock time and assigns it to the given locktime variable.
+                fn max_locktime(
+                    locktime: &mut Option<absolute::LockTime>,
+                    new_lock: absolute::LockTime,
+                ) {
+                    match *locktime {
+                        None => {
+                            *locktime = Some(new_lock);
+                        }
+                        Some(lock) =>
+                            if lock >= new_lock {
+                                *locktime = Some(lock);
+                            } else {
+                                *locktime = Some(new_lock);
+                            },
+                    }
+                }
+
+                for psbtin in psbt_inner.inputs.into_iter() {
+                    // See https://bips.xyz/370#determining-lock-time
+                    match (psbtin.required_time_locktime, psbtin.required_height_locktime) {
+                        (Some(lock), None) => {
+                            // Not Time, but Height lock time was supposed to be present
+                            if !time_flag {
+                                // TODO: What to do? panic?
+                                panic!("Height locktime needs to be supported by all inputs");
+                            }
+                            // Transaction can no longer contain height locktime
+                            height_flag = false;
+                            height_locktime = None;
+
+                            max_locktime(&mut time_locktime, lock);
+                        }
+                        (None, Some(lock)) => {
+                            // Not Height, but Time lock time was supposed to be present
+                            if !height_flag {
+                                // TODO: What to do? panic?
+                                panic!("Time locktime needs to be supported by all inputs");
+                            }
+                            // Transaction can no longer contain time locktime
+                            time_flag = false;
+                            time_locktime = None;
+
+                            max_locktime(&mut height_locktime, lock);
+                        }
+                        (Some(time_lock), Some(height_lock)) => {
+                            if time_flag {
+                                max_locktime(&mut time_locktime, time_lock);
+                            }
+
+                            if height_flag {
+                                max_locktime(&mut height_locktime, height_lock);
+                            }
+                        }
+                        _ => {}
+                    }
+
+                    tx.input.push(TxIn {
+                        previous_output: OutPoint {
+                            txid: psbtin.previous_tx_id.unwrap(),
+                            vout: psbtin.output_index.unwrap(),
+                        },
+                        script_sig: psbtin.final_script_sig.unwrap_or_default(),
+                        sequence: psbtin.sequence.unwrap_or_default(),
+                        witness: psbtin.final_script_witness.unwrap_or_default(),
+                    });
+                }
+
+                match (time_locktime, height_locktime) {
+                    (Some(locktime), None) => {
+                        tx.lock_time = locktime;
+                    }
+                    (None, Some(locktime)) => {
+                        tx.lock_time = locktime;
+                    }
+                    // If both the lock times are present, height_lock_time must be chosen
+                    (Some(_), Some(locktime)) => {
+                        tx.lock_time = locktime;
+                    }
+                    _ => {}
+                }
+
+                for psbtout in psbt_inner.outputs.into_iter() {
+                    tx.output.push(TxOut {
+                        value: psbtout.amount.unwrap(),
+                        script_pubkey: psbtout.script.unwrap(),
+                    });
+                }
+
+                tx
+            }
         }
-
-        tx
     }
 
     /// Combines this [`Psbt`] with `other` PSBT as described by BIP 174.
     ///
     /// In accordance with BIP 174 this function is commutative i.e., `A.combine(B) == B.combine(A)`
     pub fn combine(&mut self, other: Self) -> Result<(), Error> {
-        if self.unsigned_tx != other.unsigned_tx {
-            return Err(Error::UnexpectedUnsignedTx {
-                expected: Box::new(self.unsigned_tx.clone()),
-                actual: Box::new(other.unsigned_tx),
-            });
-        }
-
-        // BIP 174: The Combiner must remove any duplicate key-value pairs, in accordance with
-        //          the specification. It can pick arbitrarily when conflicts occur.
-
-        // Keeping the highest version
-        self.version = cmp::max(self.version, other.version);
-
-        // Merging xpubs
-        for (xpub, (fingerprint1, derivation1)) in other.xpub {
-            match self.xpub.entry(xpub) {
-                btree_map::Entry::Vacant(entry) => {
-                    entry.insert((fingerprint1, derivation1));
+        let self_inner = &mut self.inner;
+        let other_inner = other.inner;
+        match (self_inner.version, other_inner.version) {
+            (Version::PsbtV0, Version::PsbtV0) => {
+                let other_unsigned_tx = other_inner.unsigned_tx.unwrap();
+                let self_unsigned_tx = self_inner.unsigned_tx.as_ref().unwrap();
+                if self_unsigned_tx != &other_unsigned_tx {
+                    return Err(Error::UnexpectedUnsignedTx {
+                        expected: Box::new(self_unsigned_tx.clone()),
+                        actual: Box::new(other_unsigned_tx),
+                    });
                 }
-                btree_map::Entry::Occupied(mut entry) => {
-                    // Here in case of the conflict we select the version with algorithm:
-                    // 1) if everything is equal we do nothing
-                    // 2) report an error if
-                    //    - derivation paths are equal and fingerprints are not
-                    //    - derivation paths are of the same length, but not equal
-                    //    - derivation paths has different length, but the shorter one
-                    //      is not the strict suffix of the longer one
-                    // 3) choose longest derivation otherwise
 
-                    let (fingerprint2, derivation2) = entry.get().clone();
+                // BIP 174: The Combiner must remove any duplicate key-value pairs, in accordance with
+                //          the specification. It can pick arbitrarily when conflicts occur.
 
-                    if (derivation1 == derivation2 && fingerprint1 == fingerprint2)
-                        || (derivation1.len() < derivation2.len()
-                            && derivation1[..]
-                                == derivation2[derivation2.len() - derivation1.len()..])
-                    {
-                        continue;
-                    } else if derivation2[..]
-                        == derivation1[derivation1.len() - derivation2.len()..]
-                    {
-                        entry.insert((fingerprint1, derivation1));
-                        continue;
+                // Merging xpubs
+                for (xpub, (fingerprint1, derivation1)) in other_inner.xpub {
+                    match self_inner.xpub.entry(xpub) {
+                        btree_map::Entry::Vacant(entry) => {
+                            entry.insert((fingerprint1, derivation1));
+                        }
+                        btree_map::Entry::Occupied(mut entry) => {
+                            // Here in case of the conflict we select the version with algorithm:
+                            // 1) if everything is equal we do nothing
+                            // 2) report an error if
+                            //    - derivation paths are equal and fingerprints are not
+                            //    - derivation paths are of the same length, but not equal
+                            //    - derivation paths has different length, but the shorter one
+                            //      is not the strict suffix of the longer one
+                            // 3) choose longest derivation otherwise
+
+                            let (fingerprint2, derivation2) = entry.get().clone();
+
+                            if (derivation1 == derivation2 && fingerprint1 == fingerprint2)
+                                || (derivation1.len() < derivation2.len()
+                                    && derivation1[..]
+                                        == derivation2[derivation2.len() - derivation1.len()..])
+                            {
+                                continue;
+                            } else if derivation2[..]
+                                == derivation1[derivation1.len() - derivation2.len()..]
+                            {
+                                entry.insert((fingerprint1, derivation1));
+                                continue;
+                            }
+                            return Err(Error::CombineInconsistentKeySources(Box::new(xpub)));
+                        }
                     }
-                    return Err(Error::CombineInconsistentKeySources(Box::new(xpub)));
                 }
+
+                self_inner.proprietary.extend(other_inner.proprietary);
+                self_inner.unknown.extend(other_inner.unknown);
+
+                for (self_input, other_input) in
+                    self_inner.inputs.iter_mut().zip(other_inner.inputs.into_iter())
+                {
+                    self_input.combine(other_input);
+                }
+
+                for (self_output, other_output) in
+                    self_inner.outputs.iter_mut().zip(other_inner.outputs.into_iter())
+                {
+                    self_output.combine(other_output);
+                }
+
+                Ok(())
+            }
+            (Version::PsbtV2, Version::PsbtV2) => {
+                // TODO
+                Ok(())
+            }
+            (Version::PsbtV0, Version::PsbtV2) => {
+                // TODO
+                Ok(())
+            }
+            (Version::PsbtV2, Version::PsbtV0) => {
+                // TODO
+                Ok(())
             }
         }
-
-        self.proprietary.extend(other.proprietary);
-        self.unknown.extend(other.unknown);
-
-        for (self_input, other_input) in self.inputs.iter_mut().zip(other.inputs.into_iter()) {
-            self_input.combine(other_input);
-        }
-
-        for (self_output, other_output) in self.outputs.iter_mut().zip(other.outputs.into_iter()) {
-            self_output.combine(other_output);
-        }
-
-        Ok(())
     }
 
     /// Attempts to create _all_ the required signatures for this PSBT using `k`.
@@ -261,28 +515,36 @@ impl Psbt {
         C: Signing,
         K: GetKey,
     {
-        let tx = self.unsigned_tx.clone(); // clone because we need to mutably borrow when signing.
-        let mut cache = SighashCache::new(&tx);
+        match self.inner.version {
+            Version::PsbtV0 => {
+                let tx = self.inner.unsigned_tx.as_ref().unwrap().clone(); // clone because we need to mutably borrow when signing.
+                let mut cache = SighashCache::new(&tx);
 
-        let mut used = BTreeMap::new();
-        let mut errors = BTreeMap::new();
+                let mut used = BTreeMap::new();
+                let mut errors = BTreeMap::new();
 
-        for i in 0..self.inputs.len() {
-            if let Ok(SigningAlgorithm::Ecdsa) = self.signing_algorithm(i) {
-                match self.bip32_sign_ecdsa(k, i, &mut cache, secp) {
-                    Ok(v) => {
-                        used.insert(i, v);
-                    }
-                    Err(e) => {
-                        errors.insert(i, e);
-                    }
+                for i in 0..self.inner.inputs.len() {
+                    if let Ok(SigningAlgorithm::Ecdsa) = self.signing_algorithm(i) {
+                        match self.bip32_sign_ecdsa(k, i, &mut cache, secp) {
+                            Ok(v) => {
+                                used.insert(i, v);
+                            }
+                            Err(e) => {
+                                errors.insert(i, e);
+                            }
+                        }
+                    };
                 }
-            };
-        }
-        if errors.is_empty() {
-            Ok(used)
-        } else {
-            Err((used, errors))
+                if errors.is_empty() {
+                    Ok(used)
+                } else {
+                    Err((used, errors))
+                }
+            }
+            _ => {
+                // TODO
+                Ok(BTreeMap::new())
+            }
         }
     }
 
@@ -305,37 +567,51 @@ impl Psbt {
         T: Borrow<Transaction>,
         K: GetKey,
     {
-        let msg_sighash_ty_res = self.sighash_ecdsa(input_index, cache);
+        match self.inner.version {
+            Version::PsbtV0 => {
+                let msg_sighash_ty_res = self.sighash_ecdsa(input_index, cache);
 
-        let input = &mut self.inputs[input_index]; // Index checked in call to `sighash_ecdsa`.
+                let input = &mut self.inner.inputs[input_index]; // Index checked in call to `sighash_ecdsa`.
 
-        let mut used = vec![]; // List of pubkeys used to sign the input.
+                let mut used = vec![]; // List of pubkeys used to sign the input.
 
-        for (pk, key_source) in input.bip32_derivation.iter() {
-            let sk = if let Ok(Some(sk)) = k.get_key(KeyRequest::Bip32(key_source.clone()), secp) {
-                sk
-            } else if let Ok(Some(sk)) = k.get_key(KeyRequest::Pubkey(PublicKey::new(*pk)), secp) {
-                sk
-            } else {
-                continue;
-            };
+                for (pk, key_source) in input.bip32_derivation.iter() {
+                    let sk = if let Ok(Some(sk)) =
+                        k.get_key(KeyRequest::Bip32(key_source.clone()), secp)
+                    {
+                        sk
+                    } else if let Ok(Some(sk)) =
+                        k.get_key(KeyRequest::Pubkey(PublicKey::new(*pk)), secp)
+                    {
+                        sk
+                    } else {
+                        continue;
+                    };
 
-            // Only return the error if we have a secret key to sign this input.
-            let (msg, sighash_ty) = match msg_sighash_ty_res {
-                Err(e) => return Err(e),
-                Ok((msg, sighash_ty)) => (msg, sighash_ty),
-            };
+                    // Only return the error if we have a secret key to sign this input.
+                    let (msg, sighash_ty) = match msg_sighash_ty_res {
+                        Err(e) => return Err(e),
+                        Ok((msg, sighash_ty)) => (msg, sighash_ty),
+                    };
 
-            let sig =
-                ecdsa::Signature { sig: secp.sign_ecdsa(&msg, &sk.inner), hash_ty: sighash_ty };
+                    let sig = ecdsa::Signature {
+                        sig: secp.sign_ecdsa(&msg, &sk.inner),
+                        hash_ty: sighash_ty,
+                    };
 
-            let pk = sk.public_key(secp);
+                    let pk = sk.public_key(secp);
 
-            input.partial_sigs.insert(pk, sig);
-            used.push(pk);
+                    input.partial_sigs.insert(pk, sig);
+                    used.push(pk);
+                }
+
+                Ok(used)
+            }
+            Version::PsbtV2 => {
+                // TODO
+                Ok(vec![])
+            }
         }
-
-        Ok(used)
     }
 
     /// Returns the sighash message to sign an ECDSA input along with the sighash type.
@@ -422,7 +698,11 @@ impl Psbt {
         let utxo = if let Some(witness_utxo) = &input.witness_utxo {
             witness_utxo
         } else if let Some(non_witness_utxo) = &input.non_witness_utxo {
-            let vout = self.unsigned_tx.input[input_index].previous_output.vout;
+            let vout = match self.inner.version {
+                Version::PsbtV0 =>
+                    self.inner.unsigned_tx.as_ref().unwrap().input[input_index].previous_output.vout,
+                _ => self.inner.inputs[input_index].output_index.unwrap(),
+            };
             &non_witness_utxo.output[vout as usize]
         } else {
             return Err(SignError::MissingSpendUtxo);
@@ -433,26 +713,28 @@ impl Psbt {
     /// Gets the input at `input_index` after checking that it is a valid index.
     fn checked_input(&self, input_index: usize) -> Result<&Input, IndexOutOfBoundsError> {
         self.check_index_is_within_bounds(input_index)?;
-        Ok(&self.inputs[input_index])
+        Ok(&self.inner.inputs[input_index])
     }
 
     /// Checks `input_index` is within bounds for the PSBT `inputs` array and
-    /// for the PSBT `unsigned_tx` `input` array.
+    /// for the `unsigned_tx` `input` array in case of PSBTV0.
     fn check_index_is_within_bounds(
         &self,
         input_index: usize,
     ) -> Result<(), IndexOutOfBoundsError> {
-        if input_index >= self.inputs.len() {
+        if input_index >= self.inner.inputs.len() {
             return Err(IndexOutOfBoundsError::Inputs {
                 index: input_index,
-                length: self.inputs.len(),
+                length: self.inner.inputs.len(),
             });
         }
 
-        if input_index >= self.unsigned_tx.input.len() {
+        if self.inner.version == Version::PsbtV0
+            && input_index >= self.inner.unsigned_tx.as_ref().unwrap().input.len()
+        {
             return Err(IndexOutOfBoundsError::TxInput {
                 index: input_index,
-                length: self.unsigned_tx.input.len(),
+                length: self.inner.unsigned_tx.as_ref().unwrap().input.len(),
             });
         }
 
@@ -519,8 +801,18 @@ impl Psbt {
             inputs = inputs.checked_add(utxo?.value.to_sat()).ok_or(Error::FeeOverflow)?;
         }
         let mut outputs: u64 = 0;
-        for out in &self.unsigned_tx.output {
-            outputs = outputs.checked_add(out.value.to_sat()).ok_or(Error::FeeOverflow)?;
+        let inner = &self.inner;
+        match inner.version {
+            Version::PsbtV0 =>
+                for out in &inner.unsigned_tx.as_ref().unwrap().output {
+                    outputs = outputs.checked_add(out.value.to_sat()).ok_or(Error::FeeOverflow)?;
+                },
+            _ =>
+                for out in &inner.outputs {
+                    outputs = outputs
+                        .checked_add(out.amount.unwrap().to_sat())
+                        .ok_or(Error::FeeOverflow)?;
+                },
         }
         inputs.checked_sub(outputs).map(Amount::from_sat).ok_or(Error::NegativeFee)
     }
@@ -940,13 +1232,13 @@ mod tests {
 
     #[test]
     fn trivial_psbt() {
-        let psbt = Psbt {
-            unsigned_tx: Transaction {
+        let psbt = PsbtInner {
+            unsigned_tx: Some(Transaction {
                 version: 2,
                 lock_time: absolute::LockTime::ZERO,
                 input: vec![],
                 output: vec![],
-            },
+            }),
             xpub: Default::default(),
             version: Version::PsbtV0,
             proprietary: BTreeMap::new(),
@@ -954,7 +1246,12 @@ mod tests {
 
             inputs: vec![],
             outputs: vec![],
+
+            tx_modifiable: None,
+            tx_version: None,
+            fallback_locktime: None,
         };
+        let psbt = Psbt::new(psbt).unwrap();
         assert_eq!(psbt.serialize_hex(), "70736274ff01000a0200000000000000000000");
     }
 
@@ -962,8 +1259,8 @@ mod tests {
     fn psbt_uncompressed_key() {
         let psbt: Psbt = hex_psbt!("70736274ff01003302000000010000000000000000000000000000000000000000000000000000000000000000ffffffff00ffffffff000000000000420204bb0d5d0cca36e7b9c80f63bc04c1240babb83bcd2803ef7ac8b6e2af594291daec281e856c98d210c5ab14dfd5828761f8ee7d5f45ca21ad3e4c4b41b747a3a047304402204f67e2afb76142d44fae58a2495d33a3419daa26cd0db8d04f3452b63289ac0f022010762a9fb67e94cc5cad9026f6dc99ff7f070f4278d30fbc7d0c869dd38c7fe70100").unwrap();
 
-        assert!(psbt.inputs[0].partial_sigs.len() == 1);
-        let pk = psbt.inputs[0].partial_sigs.iter().next().unwrap().0;
+        assert!(psbt.inner.inputs[0].partial_sigs.len() == 1);
+        let pk = psbt.inner.inputs[0].partial_sigs.iter().next().unwrap().0;
         assert!(!pk.compressed);
     }
 
@@ -1013,8 +1310,8 @@ mod tests {
 
     #[test]
     fn serialize_then_deserialize_global() {
-        let expected = Psbt {
-            unsigned_tx: Transaction {
+        let expected = PsbtInner {
+            unsigned_tx: Some(Transaction {
                 version: 2,
                 lock_time: absolute::LockTime::from_consensus(1257139),
                 input: vec![TxIn {
@@ -1044,14 +1341,19 @@ mod tests {
                         .unwrap(),
                     },
                 ],
-            },
+            }),
             xpub: Default::default(),
             version: Version::PsbtV0,
             proprietary: Default::default(),
             unknown: Default::default(),
             inputs: vec![Input::default()],
             outputs: vec![Output::default(), Output::default()],
+
+            tx_modifiable: None,
+            tx_version: None,
+            fallback_locktime: None,
         };
+        let expected = Psbt::new(expected).unwrap();
 
         let actual: Psbt = Psbt::deserialize(&expected.serialize()).unwrap();
         assert_eq!(expected, actual);
@@ -1133,7 +1435,7 @@ mod tests {
         .into_iter()
         .collect();
 
-        let psbt = Psbt {
+        let psbt = PsbtInner {
             version: Version::PsbtV0,
             xpub: {
                 let xpub: Xpub =
@@ -1141,12 +1443,12 @@ mod tests {
                     QfrDb27gigC1VS1dBXi5jGpxmMeBXEkKkcXUTg4".parse().unwrap();
                 vec![(xpub, key_source)].into_iter().collect()
             },
-            unsigned_tx: {
+            unsigned_tx: Some({
                 let mut unsigned = tx.clone();
                 unsigned.input[0].script_sig = ScriptBuf::new();
                 unsigned.input[0].witness = Witness::default();
                 unsigned
-            },
+            }),
             proprietary: proprietary.clone(),
             unknown: unknown.clone(),
 
@@ -1183,7 +1485,12 @@ mod tests {
                     ..Default::default()
                 }
             ],
+
+            tx_modifiable: None,
+            tx_version: None,
+            fallback_locktime: None,
         };
+        let psbt = Psbt::new(psbt).unwrap();
         let encoded = serde_json::to_string(&psbt).unwrap();
         let decoded: Psbt = serde_json::from_str(&encoded).unwrap();
         assert_eq!(psbt, decoded);
@@ -1282,8 +1589,8 @@ mod tests {
 
         #[test]
         fn valid_vector_1() {
-            let unserialized = Psbt {
-                unsigned_tx: Transaction {
+            let unserialized = PsbtInner {
+                unsigned_tx: Some(Transaction {
                     version: 2,
                     lock_time: absolute::LockTime::from_consensus(1257139),
                     input: vec![
@@ -1307,7 +1614,7 @@ mod tests {
                             script_pubkey: ScriptBuf::from_hex("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787").unwrap(),
                         },
                     ],
-                },
+                }),
                 xpub: Default::default(),
                 version: Version::PsbtV0,
                 proprietary: BTreeMap::new(),
@@ -1366,7 +1673,12 @@ mod tests {
                         ..Default::default()
                     },
                 ],
+
+                tx_modifiable: None,
+                tx_version: None,
+                fallback_locktime: None,
             };
+            let unserialized = Psbt::new(unserialized).unwrap();
 
             let base16str = "70736274ff0100750200000001268171371edff285e937adeea4b37b78000c0566cbb3ad64641713ca42171bf60000000000feffffff02d3dff505000000001976a914d0c59903c5bac2868760e90fd521a4665aa7652088ac00e1f5050000000017a9143545e6e33b832c47050f24d3eeb93c9c03948bc787b32e1300000100fda5010100000000010289a3c71eab4d20e0371bbba4cc698fa295c9463afa2e397f8533ccb62f9567e50100000017160014be18d152a9b012039daf3da7de4f53349eecb985ffffffff86f8aa43a71dff1448893a530a7237ef6b4608bbb2dd2d0171e63aec6a4890b40100000017160014fe3e9ef1a745e974d902c4355943abcb34bd5353ffffffff0200c2eb0b000000001976a91485cff1097fd9e008bb34af709c62197b38978a4888ac72fef84e2c00000017a914339725ba21efd62ac753a9bcd067d6c7a6a39d05870247304402202712be22e0270f394f568311dc7ca9a68970b8025fdd3b240229f07f8a5f3a240220018b38d7dcd314e734c9276bd6fb40f673325bc4baa144c800d2f2f02db2765c012103d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f210502483045022100d12b852d85dcd961d2f5f4ab660654df6eedcc794c0c33ce5cc309ffb5fce58d022067338a8e0e1725c197fb1a88af59f51e44e4255b20167c8684031c05d1f2592a01210223b72beef0965d10be0778efecd61fcac6f79a4ea169393380734464f84f2ab300000000000000";
 
@@ -1386,23 +1698,23 @@ mod tests {
         fn valid_vector_2() {
             let psbt: Psbt = hex_psbt!("70736274ff0100a00200000002ab0949a08c5af7c49b8212f417e2f15ab3f5c33dcf153821a8139f877a5b7be40000000000feffffffab0949a08c5af7c49b8212f417e2f15ab3f5c33dcf153821a8139f877a5b7be40100000000feffffff02603bea0b000000001976a914768a40bbd740cbe81d988e71de2a4d5c71396b1d88ac8e240000000000001976a9146f4620b553fa095e721b9ee0efe9fa039cca459788ac000000000001076a47304402204759661797c01b036b25928948686218347d89864b719e1f7fcf57d1e511658702205309eabf56aa4d8891ffd111fdf1336f3a29da866d7f8486d75546ceedaf93190121035cdc61fc7ba971c0b501a646a2a83b102cb43881217ca682dc86e2d73fa882920001012000e1f5050000000017a9143545e6e33b832c47050f24d3eeb93c9c03948bc787010416001485d13537f2e265405a34dbafa9e3dda01fb82308000000").unwrap();
 
-            assert_eq!(psbt.inputs.len(), 2);
-            assert_eq!(psbt.outputs.len(), 2);
+            assert_eq!(psbt.inner.inputs.len(), 2);
+            assert_eq!(psbt.inner.outputs.len(), 2);
 
-            assert!(&psbt.inputs[0].final_script_sig.is_some());
+            assert!(&psbt.inner.inputs[0].final_script_sig.is_some());
 
-            let redeem_script = psbt.inputs[1].redeem_script.as_ref().unwrap();
+            let redeem_script = psbt.inner.inputs[1].redeem_script.as_ref().unwrap();
             let expected_out =
                 ScriptBuf::from_hex("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787").unwrap();
 
             assert!(redeem_script.is_p2wpkh());
             assert_eq!(
                 redeem_script.to_p2sh(),
-                psbt.inputs[1].witness_utxo.as_ref().unwrap().script_pubkey
+                psbt.inner.inputs[1].witness_utxo.as_ref().unwrap().script_pubkey
             );
             assert_eq!(redeem_script.to_p2sh(), expected_out);
 
-            for output in psbt.outputs {
+            for output in psbt.inner.outputs {
                 assert_eq!(output.get_pairs().len(), 0)
             }
         }
@@ -1411,18 +1723,18 @@ mod tests {
         fn valid_vector_3() {
             let psbt: Psbt = hex_psbt!("70736274ff0100750200000001268171371edff285e937adeea4b37b78000c0566cbb3ad64641713ca42171bf60000000000feffffff02d3dff505000000001976a914d0c59903c5bac2868760e90fd521a4665aa7652088ac00e1f5050000000017a9143545e6e33b832c47050f24d3eeb93c9c03948bc787b32e1300000100fda5010100000000010289a3c71eab4d20e0371bbba4cc698fa295c9463afa2e397f8533ccb62f9567e50100000017160014be18d152a9b012039daf3da7de4f53349eecb985ffffffff86f8aa43a71dff1448893a530a7237ef6b4608bbb2dd2d0171e63aec6a4890b40100000017160014fe3e9ef1a745e974d902c4355943abcb34bd5353ffffffff0200c2eb0b000000001976a91485cff1097fd9e008bb34af709c62197b38978a4888ac72fef84e2c00000017a914339725ba21efd62ac753a9bcd067d6c7a6a39d05870247304402202712be22e0270f394f568311dc7ca9a68970b8025fdd3b240229f07f8a5f3a240220018b38d7dcd314e734c9276bd6fb40f673325bc4baa144c800d2f2f02db2765c012103d2e15674941bad4a996372cb87e1856d3652606d98562fe39c5e9e7e413f210502483045022100d12b852d85dcd961d2f5f4ab660654df6eedcc794c0c33ce5cc309ffb5fce58d022067338a8e0e1725c197fb1a88af59f51e44e4255b20167c8684031c05d1f2592a01210223b72beef0965d10be0778efecd61fcac6f79a4ea169393380734464f84f2ab30000000001030401000000000000").unwrap();
 
-            assert_eq!(psbt.inputs.len(), 1);
-            assert_eq!(psbt.outputs.len(), 2);
+            assert_eq!(psbt.inner.inputs.len(), 1);
+            assert_eq!(psbt.inner.outputs.len(), 2);
 
-            let tx_input = &psbt.unsigned_tx.input[0];
-            let psbt_non_witness_utxo = psbt.inputs[0].non_witness_utxo.as_ref().unwrap();
+            let tx_input = &psbt.inner.unsigned_tx.as_ref().unwrap().input[0];
+            let psbt_non_witness_utxo = psbt.inner.inputs[0].non_witness_utxo.as_ref().unwrap();
 
             assert_eq!(tx_input.previous_output.txid, psbt_non_witness_utxo.txid());
             assert!(psbt_non_witness_utxo.output[tx_input.previous_output.vout as usize]
                 .script_pubkey
                 .is_p2pkh());
             assert_eq!(
-                psbt.inputs[0].sighash_type.as_ref().unwrap().ecdsa_hash_ty().unwrap(),
+                psbt.inner.inputs[0].sighash_type.as_ref().unwrap().ecdsa_hash_ty().unwrap(),
                 EcdsaSighashType::All
             );
         }
@@ -1431,24 +1743,24 @@ mod tests {
         fn valid_vector_4() {
             let psbt: Psbt = hex_psbt!("70736274ff0100a00200000002ab0949a08c5af7c49b8212f417e2f15ab3f5c33dcf153821a8139f877a5b7be40000000000feffffffab0949a08c5af7c49b8212f417e2f15ab3f5c33dcf153821a8139f877a5b7be40100000000feffffff02603bea0b000000001976a914768a40bbd740cbe81d988e71de2a4d5c71396b1d88ac8e240000000000001976a9146f4620b553fa095e721b9ee0efe9fa039cca459788ac00000000000100df0200000001268171371edff285e937adeea4b37b78000c0566cbb3ad64641713ca42171bf6000000006a473044022070b2245123e6bf474d60c5b50c043d4c691a5d2435f09a34a7662a9dc251790a022001329ca9dacf280bdf30740ec0390422422c81cb45839457aeb76fc12edd95b3012102657d118d3357b8e0f4c2cd46db7b39f6d9c38d9a70abcb9b2de5dc8dbfe4ce31feffffff02d3dff505000000001976a914d0c59903c5bac2868760e90fd521a4665aa7652088ac00e1f5050000000017a9143545e6e33b832c47050f24d3eeb93c9c03948bc787b32e13000001012000e1f5050000000017a9143545e6e33b832c47050f24d3eeb93c9c03948bc787010416001485d13537f2e265405a34dbafa9e3dda01fb8230800220202ead596687ca806043edc3de116cdf29d5e9257c196cd055cf698c8d02bf24e9910b4a6ba670000008000000080020000800022020394f62be9df19952c5587768aeb7698061ad2c4a25c894f47d8c162b4d7213d0510b4a6ba6700000080010000800200008000").unwrap();
 
-            assert_eq!(psbt.inputs.len(), 2);
-            assert_eq!(psbt.outputs.len(), 2);
+            assert_eq!(psbt.inner.inputs.len(), 2);
+            assert_eq!(psbt.inner.outputs.len(), 2);
 
-            assert!(&psbt.inputs[0].final_script_sig.is_none());
-            assert!(&psbt.inputs[1].final_script_sig.is_none());
+            assert!(&psbt.inner.inputs[0].final_script_sig.is_none());
+            assert!(&psbt.inner.inputs[1].final_script_sig.is_none());
 
-            let redeem_script = psbt.inputs[1].redeem_script.as_ref().unwrap();
+            let redeem_script = psbt.inner.inputs[1].redeem_script.as_ref().unwrap();
             let expected_out =
                 ScriptBuf::from_hex("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787").unwrap();
 
             assert!(redeem_script.is_p2wpkh());
             assert_eq!(
                 redeem_script.to_p2sh(),
-                psbt.inputs[1].witness_utxo.as_ref().unwrap().script_pubkey
+                psbt.inner.inputs[1].witness_utxo.as_ref().unwrap().script_pubkey
             );
             assert_eq!(redeem_script.to_p2sh(), expected_out);
 
-            for output in psbt.outputs {
+            for output in psbt.inner.outputs {
                 assert!(!output.get_pairs().is_empty())
             }
         }
@@ -1457,19 +1769,19 @@ mod tests {
         fn valid_vector_5() {
             let psbt: Psbt = hex_psbt!("70736274ff0100550200000001279a2323a5dfb51fc45f220fa58b0fc13e1e3342792a85d7e36cd6333b5cbc390000000000ffffffff01a05aea0b000000001976a914ffe9c0061097cc3b636f2cb0460fa4fc427d2b4588ac0000000000010120955eea0b0000000017a9146345200f68d189e1adc0df1c4d16ea8f14c0dbeb87220203b1341ccba7683b6af4f1238cd6e97e7167d569fac47f1e48d47541844355bd4646304302200424b58effaaa694e1559ea5c93bbfd4a89064224055cdf070b6771469442d07021f5c8eb0fea6516d60b8acb33ad64ede60e8785bfb3aa94b99bdf86151db9a9a010104220020771fd18ad459666dd49f3d564e3dbc42f4c84774e360ada16816a8ed488d5681010547522103b1341ccba7683b6af4f1238cd6e97e7167d569fac47f1e48d47541844355bd462103de55d1e1dac805e3f8a58c1fbf9b94c02f3dbaafe127fefca4995f26f82083bd52ae220603b1341ccba7683b6af4f1238cd6e97e7167d569fac47f1e48d47541844355bd4610b4a6ba67000000800000008004000080220603de55d1e1dac805e3f8a58c1fbf9b94c02f3dbaafe127fefca4995f26f82083bd10b4a6ba670000008000000080050000800000").unwrap();
 
-            assert_eq!(psbt.inputs.len(), 1);
-            assert_eq!(psbt.outputs.len(), 1);
+            assert_eq!(psbt.inner.inputs.len(), 1);
+            assert_eq!(psbt.inner.outputs.len(), 1);
 
-            assert!(&psbt.inputs[0].final_script_sig.is_none());
+            assert!(&psbt.inner.inputs[0].final_script_sig.is_none());
 
-            let redeem_script = psbt.inputs[0].redeem_script.as_ref().unwrap();
+            let redeem_script = psbt.inner.inputs[0].redeem_script.as_ref().unwrap();
             let expected_out =
                 ScriptBuf::from_hex("a9146345200f68d189e1adc0df1c4d16ea8f14c0dbeb87").unwrap();
 
             assert!(redeem_script.is_p2wsh());
             assert_eq!(
                 redeem_script.to_p2sh(),
-                psbt.inputs[0].witness_utxo.as_ref().unwrap().script_pubkey
+                psbt.inner.inputs[0].witness_utxo.as_ref().unwrap().script_pubkey
             );
 
             assert_eq!(redeem_script.to_p2sh(), expected_out);
@@ -1479,10 +1791,10 @@ mod tests {
         fn valid_vector_6() {
             let psbt: Psbt = hex_psbt!("70736274ff01003f0200000001ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000ffffffff010000000000000000036a010000000000000a0f0102030405060708090f0102030405060708090a0b0c0d0e0f0000").unwrap();
 
-            assert_eq!(psbt.inputs.len(), 1);
-            assert_eq!(psbt.outputs.len(), 1);
+            assert_eq!(psbt.inner.inputs.len(), 1);
+            assert_eq!(psbt.inner.outputs.len(), 1);
 
-            let tx = &psbt.unsigned_tx;
+            let tx = psbt.inner.unsigned_tx.as_ref().unwrap();
             assert_eq!(
                 tx.txid(),
                 "75c5c9665a570569ad77dd1279e6fd4628a093c4dcbf8d41532614044c14c115".parse().unwrap(),
@@ -1494,7 +1806,7 @@ mod tests {
 
             unknown.insert(key, value);
 
-            assert_eq!(psbt.inputs[0].unknown, unknown)
+            assert_eq!(psbt.inner.inputs[0].unknown, unknown)
         }
     }
 
@@ -1558,45 +1870,45 @@ mod tests {
         #[test]
         fn valid_psbt_vectors() {
             let psbt = hex_psbt!("70736274ff010052020000000127744ababf3027fe0d6cf23a96eee2efb188ef52301954585883e69b6624b2420000000000ffffffff0148e6052a01000000160014768e1eeb4cf420866033f80aceff0f9720744969000000000001012b00f2052a010000002251205a2c2cf5b52cf31f83ad2e8da63ff03183ecd8f609c7510ae8a48e03910a07572116fe349064c98d6e2a853fa3c9b12bd8b304a19c195c60efa7ee2393046d3fa2321900772b2da75600008001000080000000800100000000000000011720fe349064c98d6e2a853fa3c9b12bd8b304a19c195c60efa7ee2393046d3fa232002202036b772a6db74d8753c98a827958de6c78ab3312109f37d3e0304484242ece73d818772b2da7540000800100008000000080000000000000000000").unwrap();
-            let internal_key = psbt.inputs[0].tap_internal_key.unwrap();
-            assert!(psbt.inputs[0].tap_key_origins.contains_key(&internal_key));
+            let internal_key = psbt.inner.inputs[0].tap_internal_key.unwrap();
+            assert!(psbt.inner.inputs[0].tap_key_origins.contains_key(&internal_key));
             rtt_psbt(psbt);
 
             // vector 2
             let psbt = hex_psbt!("70736274ff010052020000000127744ababf3027fe0d6cf23a96eee2efb188ef52301954585883e69b6624b2420000000000ffffffff0148e6052a01000000160014768e1eeb4cf420866033f80aceff0f9720744969000000000001012b00f2052a010000002251205a2c2cf5b52cf31f83ad2e8da63ff03183ecd8f609c7510ae8a48e03910a0757011340bb53ec917bad9d906af1ba87181c48b86ace5aae2b53605a725ca74625631476fc6f5baedaf4f2ee0f477f36f58f3970d5b8273b7e497b97af2e3f125c97af342116fe349064c98d6e2a853fa3c9b12bd8b304a19c195c60efa7ee2393046d3fa2321900772b2da75600008001000080000000800100000000000000011720fe349064c98d6e2a853fa3c9b12bd8b304a19c195c60efa7ee2393046d3fa232002202036b772a6db74d8753c98a827958de6c78ab3312109f37d3e0304484242ece73d818772b2da7540000800100008000000080000000000000000000").unwrap();
-            let internal_key = psbt.inputs[0].tap_internal_key.unwrap();
-            assert!(psbt.inputs[0].tap_key_origins.contains_key(&internal_key));
-            assert!(psbt.inputs[0].tap_key_sig.is_some());
+            let internal_key = psbt.inner.inputs[0].tap_internal_key.unwrap();
+            assert!(psbt.inner.inputs[0].tap_key_origins.contains_key(&internal_key));
+            assert!(psbt.inner.inputs[0].tap_key_sig.is_some());
             rtt_psbt(psbt);
 
             // vector 3
             let psbt = hex_psbt!("70736274ff01005e020000000127744ababf3027fe0d6cf23a96eee2efb188ef52301954585883e69b6624b2420000000000ffffffff0148e6052a0100000022512083698e458c6664e1595d75da2597de1e22ee97d798e706c4c0a4b5a9823cd743000000000001012b00f2052a010000002251205a2c2cf5b52cf31f83ad2e8da63ff03183ecd8f609c7510ae8a48e03910a07572116fe349064c98d6e2a853fa3c9b12bd8b304a19c195c60efa7ee2393046d3fa2321900772b2da75600008001000080000000800100000000000000011720fe349064c98d6e2a853fa3c9b12bd8b304a19c195c60efa7ee2393046d3fa232000105201124da7aec92ccd06c954562647f437b138b95721a84be2bf2276bbddab3e67121071124da7aec92ccd06c954562647f437b138b95721a84be2bf2276bbddab3e6711900772b2da7560000800100008000000080000000000500000000").unwrap();
-            let internal_key = psbt.outputs[0].tap_internal_key.unwrap();
-            assert!(psbt.outputs[0].tap_key_origins.contains_key(&internal_key));
+            let internal_key = psbt.inner.outputs[0].tap_internal_key.unwrap();
+            assert!(psbt.inner.outputs[0].tap_key_origins.contains_key(&internal_key));
             rtt_psbt(psbt);
 
             // vector 4
             let psbt = hex_psbt!("70736274ff01005e02000000019bd48765230bf9a72e662001f972556e54f0c6f97feb56bcb5600d817f6995260100000000ffffffff0148e6052a0100000022512083698e458c6664e1595d75da2597de1e22ee97d798e706c4c0a4b5a9823cd743000000000001012b00f2052a01000000225120c2247efbfd92ac47f6f40b8d42d169175a19fa9fa10e4a25d7f35eb4dd85b6926215c150929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac06f7d62059e9497a1a4a267569d9876da60101aff38e3529b9b939ce7f91ae970115f2e490af7cc45c4f78511f36057ce5c5a5c56325a29fb44dfc203f356e1f823202cb13ac68248de806aa6a3659cf3c03eb6821d09c8114a4e868febde865bb6d2acc04215c150929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac097c6e6fea5ff714ff5724499990810e406e98aa10f5bf7e5f6784bc1d0a9a6ce23204320b0bf16f011b53ea7be615924aa7f27e5d29ad20ea1155d848676c3bad1b2acc06215c150929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac0cd970e15f53fc0c82f950fd560ffa919b76172be017368a89913af074f400b09115f2e490af7cc45c4f78511f36057ce5c5a5c56325a29fb44dfc203f356e1f82320fa0f7a3cef3b1d0c0a6ce7d26e17ada0b2e5c92d19efad48b41859cb8a451ca9acc021162cb13ac68248de806aa6a3659cf3c03eb6821d09c8114a4e868febde865bb6d23901cd970e15f53fc0c82f950fd560ffa919b76172be017368a89913af074f400b09772b2da7560000800100008002000080000000000000000021164320b0bf16f011b53ea7be615924aa7f27e5d29ad20ea1155d848676c3bad1b23901115f2e490af7cc45c4f78511f36057ce5c5a5c56325a29fb44dfc203f356e1f8772b2da75600008001000080010000800000000000000000211650929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac005007c461e5d2116fa0f7a3cef3b1d0c0a6ce7d26e17ada0b2e5c92d19efad48b41859cb8a451ca939016f7d62059e9497a1a4a267569d9876da60101aff38e3529b9b939ce7f91ae970772b2da7560000800100008003000080000000000000000001172050929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac0011820f0362e2f75a6f420a5bde3eb221d96ae6720cf25f81890c95b1d775acb515e65000105201124da7aec92ccd06c954562647f437b138b95721a84be2bf2276bbddab3e67121071124da7aec92ccd06c954562647f437b138b95721a84be2bf2276bbddab3e6711900772b2da7560000800100008000000080000000000500000000").unwrap();
-            assert!(psbt.inputs[0].tap_internal_key.is_some());
-            assert!(psbt.inputs[0].tap_merkle_root.is_some());
-            assert!(!psbt.inputs[0].tap_key_origins.is_empty());
-            assert!(!psbt.inputs[0].tap_scripts.is_empty());
+            assert!(psbt.inner.inputs[0].tap_internal_key.is_some());
+            assert!(psbt.inner.inputs[0].tap_merkle_root.is_some());
+            assert!(!psbt.inner.inputs[0].tap_key_origins.is_empty());
+            assert!(!psbt.inner.inputs[0].tap_scripts.is_empty());
             rtt_psbt(psbt);
 
             // vector 5
             let psbt = hex_psbt!("70736274ff01005e020000000127744ababf3027fe0d6cf23a96eee2efb188ef52301954585883e69b6624b2420000000000ffffffff0148e6052a010000002251200a8cbdc86de1ce1c0f9caeb22d6df7ced3683fe423e05d1e402a879341d6f6f5000000000001012b00f2052a010000002251205a2c2cf5b52cf31f83ad2e8da63ff03183ecd8f609c7510ae8a48e03910a07572116fe349064c98d6e2a853fa3c9b12bd8b304a19c195c60efa7ee2393046d3fa2321900772b2da75600008001000080000000800100000000000000011720fe349064c98d6e2a853fa3c9b12bd8b304a19c195c60efa7ee2393046d3fa2320001052050929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac001066f02c02220736e572900fe1252589a2143c8f3c79f71a0412d2353af755e9701c782694a02ac02c02220631c5f3b5832b8fbdebfb19704ceeb323c21f40f7a24f43d68ef0cc26b125969ac01c0222044faa49a0338de488c8dfffecdfb6f329f380bd566ef20c8df6d813eab1c4273ac210744faa49a0338de488c8dfffecdfb6f329f380bd566ef20c8df6d813eab1c42733901f06b798b92a10ed9a9d0bbfd3af173a53b1617da3a4159ca008216cd856b2e0e772b2da75600008001000080010000800000000003000000210750929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac005007c461e5d2107631c5f3b5832b8fbdebfb19704ceeb323c21f40f7a24f43d68ef0cc26b125969390118ace409889785e0ea70ceebb8e1ca892a7a78eaede0f2e296cf435961a8f4ca772b2da756000080010000800200008000000000030000002107736e572900fe1252589a2143c8f3c79f71a0412d2353af755e9701c782694a02390129a5b4915090162d759afd3fe0f93fa3326056d0b4088cb933cae7826cb8d82c772b2da7560000800100008003000080000000000300000000").unwrap();
-            assert!(psbt.outputs[0].tap_internal_key.is_some());
-            assert!(!psbt.outputs[0].tap_key_origins.is_empty());
-            assert!(psbt.outputs[0].tap_tree.is_some());
+            assert!(psbt.inner.outputs[0].tap_internal_key.is_some());
+            assert!(!psbt.inner.outputs[0].tap_key_origins.is_empty());
+            assert!(psbt.inner.outputs[0].tap_tree.is_some());
             rtt_psbt(psbt);
 
             // vector 6
             let psbt = hex_psbt!("70736274ff01005e02000000019bd48765230bf9a72e662001f972556e54f0c6f97feb56bcb5600d817f6995260100000000ffffffff0148e6052a0100000022512083698e458c6664e1595d75da2597de1e22ee97d798e706c4c0a4b5a9823cd743000000000001012b00f2052a01000000225120c2247efbfd92ac47f6f40b8d42d169175a19fa9fa10e4a25d7f35eb4dd85b69241142cb13ac68248de806aa6a3659cf3c03eb6821d09c8114a4e868febde865bb6d2cd970e15f53fc0c82f950fd560ffa919b76172be017368a89913af074f400b0940bf818d9757d6ffeb538ba057fb4c1fc4e0f5ef186e765beb564791e02af5fd3d5e2551d4e34e33d86f276b82c99c79aed3f0395a081efcd2cc2c65dd7e693d7941144320b0bf16f011b53ea7be615924aa7f27e5d29ad20ea1155d848676c3bad1b2115f2e490af7cc45c4f78511f36057ce5c5a5c56325a29fb44dfc203f356e1f840e1f1ab6fabfa26b236f21833719dc1d428ab768d80f91f9988d8abef47bfb863bb1f2a529f768c15f00ce34ec283cdc07e88f8428be28f6ef64043c32911811a4114fa0f7a3cef3b1d0c0a6ce7d26e17ada0b2e5c92d19efad48b41859cb8a451ca96f7d62059e9497a1a4a267569d9876da60101aff38e3529b9b939ce7f91ae97040ec1f0379206461c83342285423326708ab031f0da4a253ee45aafa5b8c92034d8b605490f8cd13e00f989989b97e215faa36f12dee3693d2daccf3781c1757f66215c150929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac06f7d62059e9497a1a4a267569d9876da60101aff38e3529b9b939ce7f91ae970115f2e490af7cc45c4f78511f36057ce5c5a5c56325a29fb44dfc203f356e1f823202cb13ac68248de806aa6a3659cf3c03eb6821d09c8114a4e868febde865bb6d2acc04215c150929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac097c6e6fea5ff714ff5724499990810e406e98aa10f5bf7e5f6784bc1d0a9a6ce23204320b0bf16f011b53ea7be615924aa7f27e5d29ad20ea1155d848676c3bad1b2acc06215c150929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac0cd970e15f53fc0c82f950fd560ffa919b76172be017368a89913af074f400b09115f2e490af7cc45c4f78511f36057ce5c5a5c56325a29fb44dfc203f356e1f82320fa0f7a3cef3b1d0c0a6ce7d26e17ada0b2e5c92d19efad48b41859cb8a451ca9acc021162cb13ac68248de806aa6a3659cf3c03eb6821d09c8114a4e868febde865bb6d23901cd970e15f53fc0c82f950fd560ffa919b76172be017368a89913af074f400b09772b2da7560000800100008002000080000000000000000021164320b0bf16f011b53ea7be615924aa7f27e5d29ad20ea1155d848676c3bad1b23901115f2e490af7cc45c4f78511f36057ce5c5a5c56325a29fb44dfc203f356e1f8772b2da75600008001000080010000800000000000000000211650929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac005007c461e5d2116fa0f7a3cef3b1d0c0a6ce7d26e17ada0b2e5c92d19efad48b41859cb8a451ca939016f7d62059e9497a1a4a267569d9876da60101aff38e3529b9b939ce7f91ae970772b2da7560000800100008003000080000000000000000001172050929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac0011820f0362e2f75a6f420a5bde3eb221d96ae6720cf25f81890c95b1d775acb515e65000105201124da7aec92ccd06c954562647f437b138b95721a84be2bf2276bbddab3e67121071124da7aec92ccd06c954562647f437b138b95721a84be2bf2276bbddab3e6711900772b2da7560000800100008000000080000000000500000000").unwrap();
-            assert!(psbt.inputs[0].tap_internal_key.is_some());
-            assert!(psbt.inputs[0].tap_merkle_root.is_some());
-            assert!(!psbt.inputs[0].tap_scripts.is_empty());
-            assert!(!psbt.inputs[0].tap_script_sigs.is_empty());
-            assert!(!psbt.inputs[0].tap_key_origins.is_empty());
+            assert!(psbt.inner.inputs[0].tap_internal_key.is_some());
+            assert!(psbt.inner.inputs[0].tap_merkle_root.is_some());
+            assert!(!psbt.inner.inputs[0].tap_scripts.is_empty());
+            assert!(!psbt.inner.inputs[0].tap_script_sigs.is_empty());
+            assert!(!psbt.inner.inputs[0].tap_key_origins.is_empty());
             rtt_psbt(psbt);
         }
     }
@@ -1614,8 +1926,8 @@ mod tests {
         hash160_preimages.insert(hash160::Hash::hash(&[1u8]), vec![1u8]);
 
         // same vector as valid_vector_1 from BIPs with added
-        let mut unserialized = Psbt {
-            unsigned_tx: Transaction {
+        let mut unserialized = PsbtInner {
+            unsigned_tx: Some(Transaction {
                 version: 2,
                 lock_time: absolute::LockTime::from_consensus(1257139),
                 input: vec![
@@ -1639,7 +1951,7 @@ mod tests {
                         script_pubkey: ScriptBuf::from_hex("a9143545e6e33b832c47050f24d3eeb93c9c03948bc787").unwrap(),
                     },
                 ],
-            },
+            }),
             version: Version::PsbtV0,
             xpub: Default::default(),
             proprietary: Default::default(),
@@ -1698,9 +2010,14 @@ mod tests {
                     ..Default::default()
                 },
             ],
+
+            tx_modifiable: None,
+            tx_version: None,
+            fallback_locktime: None,
         };
         unserialized.inputs[0].hash160_preimages = hash160_preimages;
         unserialized.inputs[0].sha256_preimages = sha256_preimages;
+        let mut unserialized = Psbt::new(unserialized).unwrap();
 
         let rtt: Psbt = hex_psbt!(&unserialized.serialize_hex()).unwrap();
         assert_eq!(rtt, unserialized);
@@ -1708,7 +2025,7 @@ mod tests {
         // Now add an ripemd160 with incorrect preimage
         let mut ripemd160_preimages = BTreeMap::new();
         ripemd160_preimages.insert(ripemd160::Hash::hash(&[17u8]), vec![18u8]);
-        unserialized.inputs[0].ripemd160_preimages = ripemd160_preimages;
+        unserialized.inner.inputs[0].ripemd160_preimages = ripemd160_preimages;
 
         // Now the roundtrip should fail as the preimage is incorrect.
         let rtt: Result<Psbt, _> = hex_psbt!(&unserialized.serialize_hex());
@@ -1718,13 +2035,13 @@ mod tests {
     #[test]
     fn serialize_and_deserialize_proprietary() {
         let mut psbt: Psbt = hex_psbt!("70736274ff0100a00200000002ab0949a08c5af7c49b8212f417e2f15ab3f5c33dcf153821a8139f877a5b7be40000000000feffffffab0949a08c5af7c49b8212f417e2f15ab3f5c33dcf153821a8139f877a5b7be40100000000feffffff02603bea0b000000001976a914768a40bbd740cbe81d988e71de2a4d5c71396b1d88ac8e240000000000001976a9146f4620b553fa095e721b9ee0efe9fa039cca459788ac000000000001076a47304402204759661797c01b036b25928948686218347d89864b719e1f7fcf57d1e511658702205309eabf56aa4d8891ffd111fdf1336f3a29da866d7f8486d75546ceedaf93190121035cdc61fc7ba971c0b501a646a2a83b102cb43881217ca682dc86e2d73fa882920001012000e1f5050000000017a9143545e6e33b832c47050f24d3eeb93c9c03948bc787010416001485d13537f2e265405a34dbafa9e3dda01fb82308000000").unwrap();
-        psbt.proprietary.insert(
+        psbt.inner.proprietary.insert(
             raw::ProprietaryKey { prefix: b"test".to_vec(), subtype: 0u8, key: b"test".to_vec() },
             b"test".to_vec(),
         );
-        assert!(!psbt.proprietary.is_empty());
+        assert!(!psbt.inner.proprietary.is_empty());
         let rtt: Psbt = hex_psbt!(&psbt.serialize_hex()).unwrap();
-        assert!(!rtt.proprietary.is_empty());
+        assert!(!rtt.inner.proprietary.is_empty());
     }
 
     // PSBTs taken from BIP 174 test vectors.
@@ -1783,8 +2100,8 @@ mod tests {
         let output_1_val = Amount::from_sat(100_000_000);
         let prev_output_val = Amount::from_sat(200_000_000);
 
-        let mut t = Psbt {
-            unsigned_tx: Transaction {
+        let t = PsbtInner {
+            unsigned_tx: Some(Transaction {
                 version: 2,
                 lock_time: absolute::LockTime::from_consensus(1257139),
                 input: vec![
@@ -1807,7 +2124,7 @@ mod tests {
                         script_pubkey:  ScriptBuf::new()
                     },
                 ],
-            },
+            }),
             xpub: Default::default(),
             version: Version::PsbtV0,
             proprietary: BTreeMap::new(),
@@ -1858,28 +2175,34 @@ mod tests {
                     ..Default::default()
                 },
             ],
+
+            tx_modifiable: None,
+            tx_version: None,
+            fallback_locktime: None,
         };
+        let mut t = Psbt::new(t).unwrap();
         assert_eq!(
             t.fee().expect("fee calculation"),
             prev_output_val - (output_0_val + output_1_val)
         );
         // no previous output
         let mut t2 = t.clone();
-        t2.inputs[0].non_witness_utxo = None;
+        t2.inner.inputs[0].non_witness_utxo = None;
         match t2.fee().unwrap_err() {
             Error::MissingUtxo => {}
             e => panic!("unexpected error: {:?}", e),
         }
         //  negative fee
         let mut t3 = t.clone();
-        t3.unsigned_tx.output[0].value = prev_output_val;
+        t3.inner.unsigned_tx.as_mut().unwrap().output[0].value = prev_output_val;
         match t3.fee().unwrap_err() {
             Error::NegativeFee => {}
             e => panic!("unexpected error: {:?}", e),
         }
         // overflow
-        t.unsigned_tx.output[0].value = Amount::MAX;
-        t.unsigned_tx.output[1].value = Amount::MAX;
+        let unsigned_tx = t.inner.unsigned_tx.as_mut().unwrap();
+        unsigned_tx.output[0].value = Amount::MAX;
+        unsigned_tx.output[1].value = Amount::MAX;
         match t.fee().unwrap_err() {
             Error::FeeOverflow => {}
             e => panic!("unexpected error: {:?}", e),
@@ -1899,7 +2222,8 @@ mod tests {
             input: vec![TxIn::default(), TxIn::default()],
             output: vec![TxOut::NULL],
         };
-        let mut psbt = Psbt::from_unsigned_tx(unsigned_tx).unwrap();
+        let psbt = PsbtInner::from_unsigned_tx(unsigned_tx).unwrap();
+        let mut psbt = Psbt::new(psbt).unwrap();
 
         let (priv_key, pk, secp) = gen_keys();
 
@@ -1913,11 +2237,11 @@ mod tests {
             value: Amount::from_sat(10),
             script_pubkey: ScriptBuf::new_p2wpkh(&WPubkeyHash::hash(&pk.to_bytes())),
         };
-        psbt.inputs[0].witness_utxo = Some(txout_wpkh);
+        psbt.inner.inputs[0].witness_utxo = Some(txout_wpkh);
 
         let mut map = BTreeMap::new();
         map.insert(pk.inner, (Fingerprint::default(), DerivationPath::default()));
-        psbt.inputs[0].bip32_derivation = map;
+        psbt.inner.inputs[0].bip32_derivation = map;
 
         // Second input is unspendable by us e.g., from another wallet that supports future upgrades.
         let unknown_prog = WitnessProgram::new(WitnessVersion::V4, vec![0xaa; 34]).unwrap();
@@ -1925,7 +2249,7 @@ mod tests {
             value: Amount::from_sat(10),
             script_pubkey: ScriptBuf::new_witness_program(&unknown_prog),
         };
-        psbt.inputs[1].witness_utxo = Some(txout_unknown_future);
+        psbt.inner.inputs[1].witness_utxo = Some(txout_unknown_future);
 
         let sigs = psbt.sign(&key_map, &secp).unwrap();
 

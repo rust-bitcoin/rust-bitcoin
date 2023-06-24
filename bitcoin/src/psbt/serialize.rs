@@ -53,11 +53,11 @@ impl Psbt {
 
         buf.extend(self.serialize_map());
 
-        for i in &self.inputs {
+        for i in &self.inner.inputs {
             buf.extend(i.serialize_map());
         }
 
-        for i in &self.outputs {
+        for i in &self.inner.outputs {
             buf.extend(i.serialize_map());
         }
 
@@ -79,10 +79,10 @@ impl Psbt {
         let mut d = bytes.get(5..).ok_or(Error::NoMorePairs)?;
 
         let mut global = Psbt::decode_global(&mut d)?;
-        global.unsigned_tx_checks()?;
+        global.inner.unsigned_tx_checks()?;
 
         let inputs: Vec<Input> = {
-            let inputs_len: usize = (global.unsigned_tx.input).len();
+            let inputs_len: usize = (global.inner.unsigned_tx.as_ref().unwrap().input).len();
 
             let mut inputs: Vec<Input> = Vec::with_capacity(inputs_len);
 
@@ -94,7 +94,7 @@ impl Psbt {
         };
 
         let outputs: Vec<Output> = {
-            let outputs_len: usize = (global.unsigned_tx.output).len();
+            let outputs_len: usize = (global.inner.unsigned_tx.as_ref().unwrap().output).len();
 
             let mut outputs: Vec<Output> = Vec::with_capacity(outputs_len);
 
@@ -105,8 +105,8 @@ impl Psbt {
             outputs
         };
 
-        global.inputs = inputs;
-        global.outputs = outputs;
+        global.inner.inputs = inputs;
+        global.inner.outputs = outputs;
         Ok(global)
     }
 }
