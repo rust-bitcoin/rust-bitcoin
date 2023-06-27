@@ -844,7 +844,7 @@ impl Transaction {
             )
         });
         let outputs = self.output.iter().map(|txout| txout.script_pubkey.len());
-        predict_weight(inputs, outputs)
+        predict_weight(Some(inputs), Some(outputs))
     }
 
     /// Returns the regular byte-wise consensus-serialized size of this transaction.
@@ -1170,40 +1170,51 @@ impl From<&Transaction> for Wtxid {
 /// * The values fed into this function are inconsistent with the actual lengths the transaction
 ///   will have - the code is already broken and checking overflows doesn't help. Unfortunately
 ///   this probably cannot be avoided.
-pub fn predict_weight<I, O>(inputs: I, output_script_lens: O) -> Weight
+pub fn predict_weight<I, O>(inputs: Option<I>, output_script_lens: Option<O>) -> Weight
 where
     I: IntoIterator<Item = InputWeightPrediction>,
     O: IntoIterator<Item = usize>,
 {
+    let mut input_count = 0;
+    let mut partial_input_weight = 0;
+    let mut inputs_with_witnesses = 0;
+    let mut output_count = 0;
+    let mut output_scripts_size = 0;
+
     // This fold() does three things:
     // 1) Counts the inputs and returns the sum as `input_count`.
     // 2) Sums all of the input weights and returns the sum as `partial_input_weight`
     //    For every input: script_size * 4 + witness_size
     //    Since script_size is non-witness data, it gets a 4x multiplier.
     // 3) Counts the number of inputs that have a witness data and returns the count as
-    //    `num_inputs_with_witnesses`.
-    let (input_count, partial_input_weight, inputs_with_witnesses) = inputs.into_iter().fold(
-        (0, 0, 0),
-        |(count, partial_input_weight, inputs_with_witnesses), prediction| {
-            (
-                count + 1,
-                partial_input_weight + prediction.script_size * 4 + prediction.witness_size,
-                inputs_with_witnesses + (prediction.witness_size > 0) as usize,
-            )
-        },
-    );
+    //    `num_inputs_with_witnesses`
+    if let Some(i) = inputs {
+        (input_count, partial_input_weight, inputs_with_witnesses) = i.into_iter().fold(
+            (0, 0, 0),
+            |(count, partial_input_weight, inputs_with_witnesses), prediction| {
+                (
+                    count + 1,
+                    partial_input_weight + prediction.script_size * 4 + prediction.witness_size,
+                    inputs_with_witnesses + (prediction.witness_size > 0) as usize,
+                )
+            },
+        );
+    };
 
     // This fold() does two things:
     // 1) Counts the outputs and returns the sum as `output_count`.
     // 2) Sums the output script sizes and returns the sum as `output_scripts_size`.
     //    script_len + the length of a VarInt struct that stores the value of script_len
-    let (output_count, output_scripts_size) = output_script_lens.into_iter().fold(
-        (0, 0),
-        |(output_count, total_scripts_size), script_len| {
-            let script_size = script_len + VarInt(script_len as u64).len();
-            (output_count + 1, total_scripts_size + script_size)
-        },
-    );
+    if let Some(o) = output_script_lens {
+        (output_count, output_scripts_size) = o.into_iter().fold(
+            (0, 0),
+            |(output_count, total_scripts_size), script_len| {
+                let script_size = script_len + VarInt(script_len as u64).len();
+                (output_count + 1, total_scripts_size + script_size)
+            },
+        );
+    };
+
     predict_weight_internal(
         input_count,
         partial_input_weight,
