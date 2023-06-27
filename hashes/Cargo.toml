@@ -23,7 +23,7 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
-internals = { path = "../internals", package = "bitcoin-internals", version = "0.2.0" }
+internals = { package = "bitcoin-internals", version = "0.2.0" }
 
 core2 = { version = "0.3.0", default_features = false, optional = true }
 schemars = { version = "0.8.3", optional = true }
