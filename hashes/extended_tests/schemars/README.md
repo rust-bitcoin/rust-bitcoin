@@ -7,3 +7,5 @@ Run as usual with `cargo test`.
 To run the tests with the MSRV you will need to pin `serde`:
 
 - `cargo update -p serde --precise 1.0.156`
+- `cargo update -p regex --precise 1.7.3`
+- `cargo update -p chrono --precise 0.4.24`
