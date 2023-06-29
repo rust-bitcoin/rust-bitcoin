@@ -19,7 +19,6 @@ use hashes::{self, sha256d, Hash};
 use internals::write_err;
 
 use super::Weight;
-use crate::blockdata::constants::WITNESS_SCALE_FACTOR;
 use crate::blockdata::locktime::absolute::{self, Height, Time};
 use crate::blockdata::locktime::relative;
 #[cfg(feature = "bitcoinconsensus")]
@@ -838,17 +837,6 @@ impl Transaction {
     /// and can therefore avoid this ambiguity.
     #[inline]
     pub fn weight(&self) -> Weight {
-        Weight::from_wu(self.scaled_size(WITNESS_SCALE_FACTOR) as u64)
-    }
-
-    /// Returns the regular byte-wise consensus-serialized size of this transaction.
-    #[inline]
-    pub fn size(&self) -> usize { self.scaled_size(1) }
-
-    /// Computes the weight and checks that it matches the output of `predict_weight`.
-    #[cfg(test)]
-    fn check_weight(&self) -> Weight {
-        let weight1 = self.weight();
         let inputs = self.input.iter().map(|txin| {
             InputWeightPrediction::new(
                 txin.script_sig.len(),
@@ -856,10 +844,12 @@ impl Transaction {
             )
         });
         let outputs = self.output.iter().map(|txout| txout.script_pubkey.len());
-        let weight2 = predict_weight(inputs, outputs);
-        assert_eq!(weight1, weight2);
-        weight1
+        predict_weight(inputs, outputs)
     }
+
+    /// Returns the regular byte-wise consensus-serialized size of this transaction.
+    #[inline]
+    pub fn size(&self) -> usize { self.scaled_size(1) }
 
     /// Returns the "virtual size" (vsize) of this transaction.
     ///
@@ -1585,7 +1575,7 @@ mod tests {
             format!("{:x}", realtx.wtxid()),
             "a6eab3c14ab5272a58a5ba91505ba1a4b6d7a3a9fcbd187b6cd99a7b6d548cb7".to_string()
         );
-        assert_eq!(realtx.check_weight().to_wu() as usize, tx_bytes.len() * WITNESS_SCALE_FACTOR);
+        assert_eq!(realtx.weight().to_wu() as usize, tx_bytes.len() * WITNESS_SCALE_FACTOR);
         assert_eq!(realtx.size(), tx_bytes.len());
         assert_eq!(realtx.vsize(), tx_bytes.len());
         assert_eq!(realtx.strippedsize(), tx_bytes.len());
@@ -1626,7 +1616,7 @@ mod tests {
             "80b7d8a82d5d5bf92905b06f2014dd699e03837ca172e3a59d51426ebbe3e7f5".to_string()
         );
         const EXPECTED_WEIGHT: Weight = Weight::from_wu(442);
-        assert_eq!(realtx.check_weight(), EXPECTED_WEIGHT);
+        assert_eq!(realtx.weight(), EXPECTED_WEIGHT);
         assert_eq!(realtx.size(), tx_bytes.len());
         assert_eq!(realtx.vsize(), 111);
         // Since
@@ -1641,7 +1631,7 @@ mod tests {
         let mut tx_without_witness = realtx;
         tx_without_witness.input.iter_mut().for_each(|input| input.witness.clear());
         assert_eq!(
-            tx_without_witness.check_weight().to_wu() as usize,
+            tx_without_witness.weight().to_wu() as usize,
             expected_strippedsize * WITNESS_SCALE_FACTOR
         );
         assert_eq!(tx_without_witness.size(), expected_strippedsize);
@@ -1758,7 +1748,7 @@ mod tests {
             format!("{:x}", tx.txid()),
             "9652aa62b0e748caeec40c4cb7bc17c6792435cc3dfe447dd1ca24f912a1c6ec"
         );
-        assert_eq!(tx.check_weight(), Weight::from_wu(2718));
+        assert_eq!(tx.weight(), Weight::from_wu(2718));
 
         // non-segwit tx from my mempool
         let tx_bytes = hex!(
@@ -1796,7 +1786,7 @@ mod tests {
     fn test_segwit_tx_decode() {
         let tx_bytes = hex!("010000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff3603da1b0e00045503bd5704c7dd8a0d0ced13bb5785010800000000000a636b706f6f6c122f4e696e6a61506f6f6c2f5345475749542fffffffff02b4e5a212000000001976a914876fbb82ec05caa6af7a3b5e5a983aae6c6cc6d688ac0000000000000000266a24aa21a9edf91c46b49eb8a29089980f02ee6b57e7d63d33b18b4fddac2bcd7db2a39837040120000000000000000000000000000000000000000000000000000000000000000000000000");
         let tx: Transaction = deserialize(&tx_bytes).unwrap();
-        assert_eq!(tx.check_weight(), Weight::from_wu(780));
+        assert_eq!(tx.weight(), Weight::from_wu(780));
         serde_round_trip!(tx);
 
         let consensus_encoded = serialize(&tx);
@@ -1974,7 +1964,7 @@ mod tests {
             input: vec![],
             output: vec![],
         }
-        .check_weight();
+        .weight();
 
         for (is_segwit, tx, expected_wu) in &txs {
             let txin_weight = if *is_segwit { TxIn::segwit_weight } else { TxIn::legacy_weight };
@@ -1986,7 +1976,7 @@ mod tests {
                 + segwit_marker_weight
                 + tx.input.iter().fold(0, |sum, i| sum + txin_weight(i))
                 + tx.output.iter().fold(0, |sum, o| sum + o.weight());
-            assert_eq!(calculated_size, tx.check_weight().to_wu() as usize);
+            assert_eq!(calculated_size, tx.weight().to_wu() as usize);
 
             assert_eq!(tx.weight().to_wu(), *expected_wu);
         }
