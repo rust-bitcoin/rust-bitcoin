@@ -31,7 +31,7 @@ use core::fmt;
 use core::marker::PhantomData;
 use core::str::FromStr;
 
-use bech32;
+use bech32::{Bech32, Bech32m, ByteIterExt, Fe32IterExt, Hrp, Parsed};
 use hashes::{sha256, Hash, HashEngine};
 use internals::write_err;
 use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
@@ -43,7 +43,7 @@ use crate::blockdata::constants::{
 };
 use crate::blockdata::script::witness_program::{self, WitnessProgram};
 use crate::blockdata::script::witness_version::{self, WitnessVersion};
-use crate::blockdata::script::{self, Script, ScriptBuf};
+use crate::blockdata::script::{self, PushBytesBuf, Script, ScriptBuf};
 use crate::crypto::key::{PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey};
 use crate::hash_types::{PubkeyHash, ScriptHash};
 use crate::network::constants::Network;
@@ -58,8 +58,10 @@ pub enum Error {
     Base58(base58::Error),
     /// Bech32 encoding error.
     Bech32(bech32::Error),
-    /// The bech32 payload was empty.
-    EmptyBech32Payload,
+    /// The bech32 HRP is not a valid known HRP.
+    UnknownBech32Hrp,
+    /// Bech32 witness program invalid length.
+    InvalidBech32ProgramLength,
     /// The wrong checksum algorithm was used. See BIP-0350.
     InvalidBech32Variant {
         /// Bech32 variant that is required by the used Witness version.
@@ -95,7 +97,9 @@ impl fmt::Display for Error {
         match *self {
             Error::Base58(ref e) => write_err!(f, "base58 address encoding error"; e),
             Error::Bech32(ref e) => write_err!(f, "bech32 address encoding error"; e),
-            Error::EmptyBech32Payload => write!(f, "the bech32 payload was empty"),
+            Error::UnknownBech32Hrp => write!(f, "the bech32 HRP is not a valid known HRP"),
+            Error::InvalidBech32ProgramLength =>
+                write!(f, "the bech32 witness program length is invalid"),
             Error::InvalidBech32Variant { expected, found } => write!(
                 f,
                 "invalid bech32 checksum variant found {:?} when {:?} was expected",
@@ -137,7 +141,8 @@ impl std::error::Error for Error {
             Bech32(e) => Some(e),
             WitnessVersion(e) => Some(e),
             WitnessProgram(e) => Some(e),
-            EmptyBech32Payload
+            UnknownBech32Hrp
+            | InvalidBech32ProgramLength
             | InvalidBech32Variant { .. }
             | UncompressedPubkey
             | ExcessiveScriptSize
@@ -385,10 +390,35 @@ impl<'a> fmt::Display for AddressEncoding<'a> {
                 } else {
                     fmt as &mut dyn fmt::Write
                 };
-                let mut bech32_writer =
-                    bech32::Bech32Writer::new(self.bech32_hrp, version.bech32_variant(), writer)?;
-                bech32::WriteBase32::write_u5(&mut bech32_writer, (*version).into())?;
-                bech32::ToBase32::write_base32(&program.as_bytes(), &mut bech32_writer)
+                // TODO: Check this someplace or use Hrp in AddressEncoding.
+                let hrp = Hrp::parse_unchecked(self.bech32_hrp);
+                match version {
+                    WitnessVersion::V0 => {
+                        for c in program
+                            .as_bytes()
+                            .iter()
+                            .copied()
+                            .bytes_to_fes()
+                            .hrp_checksummed::<Bech32>(&hrp, version.to_fe32())
+                            .hrpstring_chars()
+                        {
+                            writer.write_char(c)?;
+                        }
+                    }
+                    _ => {
+                        for c in program
+                            .as_bytes()
+                            .iter()
+                            .copied()
+                            .bytes_to_fes()
+                            .hrp_checksummed::<Bech32m>(&hrp, version.to_fe32())
+                            .hrpstring_chars()
+                        {
+                            writer.write_char(c)?;
+                        }
+                    }
+                }
+                Ok(())
             }
         }
     }
@@ -912,52 +942,20 @@ impl<W: fmt::Write> fmt::Write for UpperWriter<W> {
     }
 }
 
-/// Extracts the bech32 prefix.
-///
-/// # Returns
-/// The input slice if no prefix is found.
-fn find_bech32_prefix(bech32: &str) -> &str {
-    // Split at the last occurrence of the separator character '1'.
-    match bech32.rfind('1') {
-        None => bech32,
-        Some(sep) => bech32.split_at(sep).0,
-    }
-}
-
 /// Address can be parsed only with `NetworkUnchecked`.
 impl FromStr for Address<NetworkUnchecked> {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Address<NetworkUnchecked>, Error> {
         // try bech32
-        let bech32_network = match find_bech32_prefix(s) {
-            // note that upper or lowercase is allowed but NOT mixed case
-            "bc" | "BC" => Some(Network::Bitcoin),
-            "tb" | "TB" => Some(Network::Testnet), // this may also be signet
-            "bcrt" | "BCRT" => Some(Network::Regtest),
-            _ => None,
-        };
-        if let Some(network) = bech32_network {
-            // decode as bech32
-            let (_, payload, variant) = bech32::decode(s)?;
-            if payload.is_empty() {
-                return Err(Error::EmptyBech32Payload);
+        if let Ok((parsed, version)) = Parsed::new_with_witness_version::<Bech32>(s) {
+            if let Ok(address) = Self::from_parsed(parsed, version) {
+                return Ok(address);
             }
-
-            // Get the script version and program (converted from 5-bit to 8-bit)
-            let (version, program): (WitnessVersion, Vec<u8>) = {
-                let (v, p5) = payload.split_at(1);
-                (WitnessVersion::try_from(v[0])?, bech32::FromBase32::from_base32(p5)?)
-            };
-            let program = WitnessProgram::new(version, program)?;
-
-            // Encoding check
-            let expected = version.bech32_variant();
-            if expected != variant {
-                return Err(Error::InvalidBech32Variant { expected, found: variant });
+        } else if let Ok((parsed, version)) = Parsed::new_with_witness_version::<Bech32m>(s) {
+            if let Ok(address) = Self::from_parsed(parsed, version) {
+                return Ok(address);
             }
-
-            return Ok(Address::new(network, Payload::Segwit { version, program }));
         }
 
         // Base58
@@ -982,6 +980,29 @@ impl FromStr for Address<NetworkUnchecked> {
         };
 
         Ok(Address::new(network, payload))
+    }
+}
+
+impl Address<NetworkUnchecked> {
+    fn from_parsed(parsed: Parsed, version: u8) -> Result<Self, Error> {
+        let hrp = parsed.hrp();
+        let version = WitnessVersion::try_from(version)?;
+
+        // This unnecessarily allocates a new string.
+        let s = hrp.to_lowercase();
+
+        let network = match s.as_ref() {
+            "bc" => Network::Bitcoin,
+            "tb" => Network::Testnet, // this may also be signet
+            "bcrt" => Network::Regtest,
+            _ => return Err(Error::UnknownBech32Hrp),
+        };
+        let program = parsed.byte_iter().collect::<Vec<u8>>();
+        let program =
+            PushBytesBuf::try_from(program).map_err(|_| Error::InvalidBech32ProgramLength)?;
+        let program = WitnessProgram::new(version, program)?;
+
+        Ok(Address::new(network, Payload::Segwit { version, program }))
     }
 }
 

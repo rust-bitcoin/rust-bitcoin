@@ -11,6 +11,7 @@ use core::convert::TryFrom;
 use core::fmt;
 use core::str::FromStr;
 
+use bech32::primitives::gf32::Fe32;
 use internals::write_err;
 
 use crate::blockdata::opcodes;
@@ -71,6 +72,11 @@ impl WitnessVersion {
     /// version in bitcoin script. Thus, there is no function to directly convert witness version
     /// into a byte since the conversion requires context (bitcoin script or just a version number).
     pub fn to_num(self) -> u8 { self as u8 }
+
+    /// Returns the GF32 field element representation for a given [`WitnessVersion`] value.
+    pub fn to_fe32(self) -> Fe32 {
+        Fe32::try_from(self.to_num()).expect("0-16 are all valid fe32s")
+    }
 
     /// Determines the checksum variant. See BIP-0350 for specification.
     pub fn bech32_variant(&self) -> bech32::Variant {
@@ -195,11 +201,8 @@ impl<'a> TryFrom<Instruction<'a>> for WitnessVersion {
     }
 }
 
-impl From<WitnessVersion> for bech32::u5 {
-    /// Converts [`WitnessVersion`] instance into corresponding Bech32(m) u5-value ([`bech32::u5`]).
-    fn from(version: WitnessVersion) -> Self {
-        bech32::u5::try_from_u8(version.to_num()).expect("WitnessVersion must be 0..=16")
-    }
+impl From<WitnessVersion> for bech32::Fe32 {
+    fn from(version: WitnessVersion) -> Self { version.to_fe32() }
 }
 
 impl From<WitnessVersion> for opcodes::All {

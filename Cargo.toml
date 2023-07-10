@@ -6,3 +6,7 @@ path = "bitcoin"
 
 [patch.crates-io.bitcoin_hashes]
 path = "hashes"
+
+[patch.crates-io.bech32]
+git = "https://github.com/tcharding/rust-bech32"
+branch = "06-27-iter-rewrite"
