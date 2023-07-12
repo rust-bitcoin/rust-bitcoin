@@ -14,9 +14,13 @@ use crate::blockdata::script::witness_version::WitnessVersion;
 use crate::blockdata::script::{PushBytes, PushBytesBuf, PushBytesErrorReport};
 
 /// The segregated witness program.
+///
+/// The segregated witness program is technically only the program bytes _excluding_ the witness
+/// version, however we maintain length invariants on the `program` that are governed by the version
+/// number, therefore we carry the version number around along with the program bytes.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct WitnessProgram {
-    /// The witness program version number.
+    /// The segwit version associated with this witness program.
     version: WitnessVersion,
     /// The witness program (between 2 and 40 bytes).
     program: PushBytesBuf,
