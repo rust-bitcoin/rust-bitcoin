@@ -45,10 +45,10 @@ macro_rules! impl_consensus_encoding {
 }
 pub(crate) use impl_consensus_encoding;
 // We use test_macros module to keep things organised, re-export everything for ease of use.
-#[cfg(test)]
+#[cfg(any(bench, test))]
 pub(crate) use test_macros::*;
 
-#[cfg(test)]
+#[cfg(any(bench, test))]
 mod test_macros {
 
     macro_rules! hex (($hex:expr) => (<Vec<u8> as hashes::hex::FromHex>::from_hex($hex).unwrap()));
