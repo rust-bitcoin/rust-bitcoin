@@ -140,6 +140,7 @@ pub use crate::hash_types::{
 pub use crate::merkle_tree::MerkleBlock;
 pub use crate::network::constants::Network;
 pub use crate::pow::{CompactTarget, Target, Work};
+pub use crate::psbt::Psbt;
 
 #[cfg(not(feature = "std"))]
 mod io_extras {
