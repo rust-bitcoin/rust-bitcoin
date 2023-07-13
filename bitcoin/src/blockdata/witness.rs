@@ -6,6 +6,7 @@
 //!
 
 use core::convert::TryInto;
+use core::fmt;
 use core::ops::Index;
 
 use secp256k1::ecdsa;
@@ -28,7 +29,7 @@ use crate::{Script, VarInt};
 /// saving some allocations.
 ///
 /// [segwit upgrade]: <https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki>
-#[derive(Clone, Default, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
+#[derive(Clone, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Witness {
     /// Contains the witness `Vec<Vec<u8>>` serialization without the initial varint indicating the
     /// number of elements (which is stored in `witness_elements`).
@@ -43,6 +44,108 @@ pub struct Witness {
     /// This is the valid index pointing to the beginning of the index area. This area is 4 *
     /// stack_size bytes at the end of the content vector which stores the indices of each item.
     indices_start: usize,
+}
+
+impl fmt::Debug for Witness {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
+        if f.alternate() {
+            fmt_debug_pretty(self, f)
+        } else {
+            fmt_debug(self, f)
+        }
+    }
+}
+
+fn fmt_debug(w: &Witness, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
+    #[rustfmt::skip]
+    let comma_or_close = |current_index, last_index| {
+        if current_index == last_index { "]" } else { ", " }
+    };
+
+    f.write_str("Witness: { ")?;
+
+    f.write_str(&indices_str(w))?;
+    f.write_str(&indices_start_str(w))?;
+
+    f.write_str("witnesses: [")?;
+
+    let instructions = w.iter();
+    let last_instruction = instructions.len() - 1;
+
+    for (i, instruction) in instructions.enumerate() {
+        let bytes = instruction.iter();
+        let last_byte = bytes.len() - 1;
+
+        f.write_str("[")?;
+
+        for (j, byte) in bytes.enumerate() {
+            f.write_str(&byte_str(*byte))?;
+            f.write_str(comma_or_close(j, last_byte))?;
+        }
+
+        f.write_str(comma_or_close(i, last_instruction))?;
+    }
+
+    f.write_str(" }")?;
+
+    Ok(())
+}
+
+fn fmt_debug_pretty(w: &Witness, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
+    let mut indent = 0;
+
+    writeln(f, indent, "Witness: { ")?;
+    indent += 1;
+
+    writeln(f, indent, &indices_str(w))?;
+    writeln(f, indent, &indices_start_str(w))?;
+
+    writeln(f, indent, "witnesses: [ ")?;
+    indent += 1;
+
+    let instructions = w.iter();
+
+    for instruction in instructions {
+        let bytes = instruction.iter();
+        let last_byte = bytes.len() - 1;
+
+        write(f, indent, "[")?;
+
+        for (j, byte) in bytes.enumerate() {
+            f.write_str(&byte_str(*byte))?;
+            if j == last_byte {
+                f.write_str("],\n")?;
+            } else {
+                f.write_str(", ")?;
+            }
+        }
+    }
+
+    indent -= 1;
+    writeln(f, indent, "],")?;
+
+    indent -= 1;
+    write(f, indent, "}")?;
+
+    Ok(())
+}
+
+fn indices_str(w: &Witness) -> String { format!("indices: {}, ", w.witness_elements) }
+
+fn indices_start_str(w: &Witness) -> String { format!("indices_start: {}, ", w.indices_start) }
+
+fn byte_str(byte: u8) -> String { format!("{:#04x}", byte) }
+
+fn writeln(f: &mut fmt::Formatter<'_>, indent: usize, s: &str) -> Result<(), fmt::Error> {
+    write(f, indent, s)?;
+    f.write_str("\n")
+}
+
+fn write(f: &mut fmt::Formatter<'_>, indent: usize, s: &str) -> Result<(), fmt::Error> {
+    for _ in 0..indent {
+        f.write_str("    ")?;
+    }
+    f.write_str(s)
 }
 
 /// An iterator returning individual witness elements.
