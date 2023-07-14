@@ -1,6 +1,18 @@
-# Unreleased
+# 0.13.0 - 2023-06-29
 
+The main improvement in this version is removal of the `hex` module in favour of the new
+[`hex-conservative`](https://crates.io/crates/hex-conservative) crate (which we wrote). We also
+bumped the Minimum Supported Rust Version across the `rust-bitcoin` ecosystem to v1.48
+
+* Bump MSRV to 1.48.0 [#1729](https://github.com/rust-bitcoin/rust-bitcoin/pull/1729).
+* Depend on new `hex-conservative` crate and remove `hex` module [#1883](https://github.com/rust-bitcoin/rust-bitcoin/pull/1833).
 * Convert enum `crate::Error` to struct `crate::FromSliceError`.
+* Make `sha256t_hash_newtype!` evocative of the output [#1773](https://github.com/rust-bitcoin/rust-bitcoin/pull/1773).
+* Implement computing SHA256 in const context [#1769](https://github.com/rust-bitcoin/rust-bitcoin/pull/1769).
+* Add `from_bytes_ref` and `from_bytes_mut` to all hash types [#1761](https://github.com/rust-bitcoin/rust-bitcoin/pull/1761).
+* Rename `crate::Error` to `crate::FromSliceError` [#1873](https://github.com/rust-bitcoin/rust-bitcoin/pull/1873).
+* Add simd sha256 intrinsics for x86 machines [#1962](https://github.com/rust-bitcoin/rust-bitcoin/pull/1962).
+* Introduce the "small-hash" feature for `bitcoin_hashes` [#1990](https://github.com/rust-bitcoin/rust-bitcoin/pull/1990).
 
 # 0.12.0 - 2023-03-05
 
