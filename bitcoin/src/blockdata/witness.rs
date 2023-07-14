@@ -63,10 +63,8 @@ fn fmt_debug(w: &Witness, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> 
     };
 
     f.write_str("Witness: { ")?;
-
-    f.write_str(&indices_str(w))?;
-    f.write_str(&indices_start_str(w))?;
-
+    write!(f, "indices: {}, ", w.witness_elements)?;
+    write!(f, "indices_start: {}, ", w.indices_start)?;
     f.write_str("witnesses: [")?;
 
     let instructions = w.iter();
@@ -79,73 +77,35 @@ fn fmt_debug(w: &Witness, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> 
         f.write_str("[")?;
 
         for (j, byte) in bytes.enumerate() {
-            f.write_str(&byte_str(*byte))?;
+            write!(f, "{:#04x}", byte)?;
             f.write_str(comma_or_close(j, last_byte))?;
         }
 
         f.write_str(comma_or_close(i, last_instruction))?;
     }
 
-    f.write_str(" }")?;
-
-    Ok(())
+    f.write_str(" }")
 }
 
 fn fmt_debug_pretty(w: &Witness, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
-    let mut indent = 0;
+    f.write_str("Witness: {\n")?;
+    writeln!(f, "    indices: {},", w.witness_elements)?;
+    writeln!(f, "    indices_start: {},", w.indices_start)?;
+    f.write_str("    witnesses: [\n")?;
 
-    writeln(f, indent, "Witness: { ")?;
-    indent += 1;
-
-    writeln(f, indent, &indices_str(w))?;
-    writeln(f, indent, &indices_start_str(w))?;
-
-    writeln(f, indent, "witnesses: [ ")?;
-    indent += 1;
-
-    let instructions = w.iter();
-
-    for instruction in instructions {
-        let bytes = instruction.iter();
-        let last_byte = bytes.len() - 1;
-
-        write(f, indent, "[")?;
-
-        for (j, byte) in bytes.enumerate() {
-            f.write_str(&byte_str(*byte))?;
-            if j == last_byte {
-                f.write_str("],\n")?;
-            } else {
+    for instruction in w.iter() {
+        f.write_str("        [")?;
+        for (j, byte) in instruction.iter().enumerate() {
+            if j > 0 {
                 f.write_str(", ")?;
             }
+            write!(f, "{:#04x}", byte)?;
         }
+        f.write_str("],\n")?;
     }
 
-    indent -= 1;
-    writeln(f, indent, "],")?;
-
-    indent -= 1;
-    write(f, indent, "}")?;
-
-    Ok(())
-}
-
-fn indices_str(w: &Witness) -> String { format!("indices: {}, ", w.witness_elements) }
-
-fn indices_start_str(w: &Witness) -> String { format!("indices_start: {}, ", w.indices_start) }
-
-fn byte_str(byte: u8) -> String { format!("{:#04x}", byte) }
-
-fn writeln(f: &mut fmt::Formatter<'_>, indent: usize, s: &str) -> Result<(), fmt::Error> {
-    write(f, indent, s)?;
-    f.write_str("\n")
-}
-
-fn write(f: &mut fmt::Formatter<'_>, indent: usize, s: &str) -> Result<(), fmt::Error> {
-    for _ in 0..indent {
-        f.write_str("    ")?;
-    }
-    f.write_str(s)
+    writeln!(f, "    ],")?;
+    writeln!(f, "}}")
 }
 
 /// An iterator returning individual witness elements.
