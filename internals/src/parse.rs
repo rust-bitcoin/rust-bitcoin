@@ -4,7 +4,7 @@
 #[doc(hidden)]
 #[macro_export]
 macro_rules! impl_try_from_stringly {
-    ($from:ty, $to:ty, $error:ty, $func:expr $(, $attr:meta)?) => {
+    ($from:ty, $to:ty, $error:ty, $func:expr) => {
         $(#[$attr])?
         impl core::convert::TryFrom<$from> for $to {
             type Error = $error;
@@ -44,11 +44,11 @@ macro_rules! impl_parse {
         impl_try_from_stringly!(&str);
 
         #[cfg(feature = "alloc")]
-        impl_try_from_stringly!(alloc::string::String, $type, $error, $func, cfg_attr(docsrs, doc(feature = "alloc")));
+        impl_try_from_stringly!(alloc::string::String, $type, $error, $func);
         #[cfg(feature = "alloc")]
-        impl_try_from_stringly!(alloc::borrow::Cow<'_, str>, $type, $error, $func, cfg_attr(docsrs, doc(feature = "alloc")));
+        impl_try_from_stringly!(alloc::borrow::Cow<'_, str>, $type, $error, $func);
         #[cfg(feature = "alloc")]
-        impl_try_from_stringly!(alloc::boxed::Box<str>, $type, $error, $func, cfg_attr(docsrs, doc(feature = "alloc")));
+        impl_try_from_stringly!(alloc::boxed::Box<str>, $type, $error, $func);
     }
 }
 
@@ -63,7 +63,6 @@ macro_rules! impl_parse_and_serde {
 
         // We don't use `serde_string_impl` because we want to avoid allocating input.
         #[cfg(feature = "serde")]
-        #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
         impl<'de> $crate::serde::Deserialize<'de> for $type {
             fn deserialize<D>(deserializer: D) -> Result<$name, D::Error>
             where
@@ -96,7 +95,6 @@ macro_rules! impl_parse_and_serde {
         }
 
         #[cfg(feature = "serde")]
-        #[cfg_attr(docsrs, doc(cfg(feature = "serde")))]
         impl $crate::serde::Serialize for $name {
             fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
             where

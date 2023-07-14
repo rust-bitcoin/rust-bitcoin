@@ -65,7 +65,6 @@ pub struct ExtendedPrivKey {
 crate::serde_utils::serde_string_impl!(ExtendedPrivKey, "a BIP-32 extended private key");
 
 #[cfg(not(feature = "std"))]
-#[cfg_attr(docsrs, doc(cfg(not(feature = "std"))))]
 impl fmt::Debug for ExtendedPrivKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("ExtendedPrivKey")
