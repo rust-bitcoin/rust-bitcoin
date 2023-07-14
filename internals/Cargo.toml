@@ -1,6 +1,6 @@
 [package]
 name = "bitcoin-internals"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>", "The Rust Bitcoin developers"]
 license = "CC0-1.0"
 repository = "https://github.com/rust-bitcoin/rust-bitcoin/"
