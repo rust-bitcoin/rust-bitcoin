@@ -51,6 +51,16 @@ const PSBT_IN_SHA256: u8 = 0x0b;
 const PSBT_IN_HASH160: u8 = 0x0c;
 /// Type: HASH256 preimage PSBT_IN_HASH256 = 0x0d
 const PSBT_IN_HASH256: u8 = 0x0d;
+/// Type: Previous TXID PSBT_IN_PREVIOUS_TXID = 0x0e
+const PSBT_IN_PREVIOUS_TXID: u8 = 0x0e;
+/// Type: Spent output index PSBT_IN_OUTPUT_INDEX = 0x0f
+const PSBT_IN_OUTPUT_INDEX: u8 = 0x0f;
+/// Type: Sequence number PSBT_IN_SEQUENCE = 0x10
+const PSBT_IN_SEQUENCE: u8 = 0x10;
+/// Type: Required time-based locktime PSBT_IN_REQUIRED_TIME_LOCKTIME = 0x11
+const PSBT_IN_REQUIRED_TIME_LOCKTIME: u8 = 0x11;
+/// Type: Required height-based locktime PSBT_IN_REQUIRED_HEIGHT_LOCKTIME = 0x12
+const PSBT_IN_REQUIRED_HEIGHT_LOCKTIME: u8 = 0x12;
 /// Type: Taproot Signature in Key Spend PSBT_IN_TAP_KEY_SIG = 0x13
 const PSBT_IN_TAP_KEY_SIG: u8 = 0x13;
 /// Type: Taproot Signature in Script Spend PSBT_IN_TAP_SCRIPT_SIG = 0x14
@@ -476,6 +486,26 @@ impl Map for Input {
 
         impl_psbt_get_pair! {
             rv.push_map(self.hash256_preimages, PSBT_IN_HASH256)
+        }
+
+        impl_psbt_get_pair! {
+            rv.push(self.previous_tx_id, PSBT_IN_PREVIOUS_TXID)
+        }
+
+        impl_psbt_get_pair! {
+            rv.push(self.output_index, PSBT_IN_OUTPUT_INDEX)
+        }
+
+        impl_psbt_get_pair! {
+            rv.push(self.sequence, PSBT_IN_SEQUENCE)
+        }
+
+        impl_psbt_get_pair! {
+            rv.push(self.required_time_locktime, PSBT_IN_REQUIRED_TIME_LOCKTIME)
+        }
+
+        impl_psbt_get_pair! {
+            rv.push(self.required_height_locktime, PSBT_IN_REQUIRED_HEIGHT_LOCKTIME)
         }
 
         impl_psbt_get_pair! {

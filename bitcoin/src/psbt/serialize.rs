@@ -12,19 +12,21 @@ use hashes::{hash160, ripemd160, sha256, sha256d, Hash};
 use secp256k1::{self, XOnlyPublicKey};
 
 use super::map::{Input, Map, Output, PsbtSighashType};
+use crate::absolute::LockTime;
 use crate::bip32::{ChildNumber, Fingerprint, KeySource};
 use crate::blockdata::script::ScriptBuf;
-use crate::blockdata::transaction::{Transaction, TxOut};
+use crate::blockdata::transaction::{Sequence, Transaction, TxOut};
 use crate::blockdata::witness::Witness;
 use crate::consensus::encode::{self, deserialize_partial, serialize, Decodable, Encodable};
 use crate::crypto::key::PublicKey;
 use crate::crypto::{ecdsa, taproot};
+use crate::hash_types::Txid;
 use crate::prelude::*;
 use crate::psbt::{Error, Psbt};
 use crate::taproot::{
     ControlBlock, LeafVersion, TapLeafHash, TapNodeHash, TapTree, TaprootBuilder,
 };
-use crate::{io, VarInt};
+use crate::{io, Amount, VarInt};
 /// A trait for serializing a value as raw data for insertion into PSBT
 /// key-value maps.
 pub(crate) trait Serialize {
@@ -80,9 +82,10 @@ impl Psbt {
 
         let mut global = Psbt::decode_global(&mut d)?;
         global.inner.unsigned_tx_checks()?;
+        let unsigned_tx = global.inner.unsigned_tx.as_ref().unwrap();
 
         let inputs: Vec<Input> = {
-            let inputs_len: usize = (global.inner.unsigned_tx.as_ref().unwrap().input).len();
+            let inputs_len: usize = (unsigned_tx.input).len();
 
             let mut inputs: Vec<Input> = Vec::with_capacity(inputs_len);
 
@@ -94,7 +97,7 @@ impl Psbt {
         };
 
         let outputs: Vec<Output> = {
-            let outputs_len: usize = (global.inner.unsigned_tx.as_ref().unwrap().output).len();
+            let outputs_len: usize = (unsigned_tx.output).len();
 
             let mut outputs: Vec<Output> = Vec::with_capacity(outputs_len);
 
@@ -112,7 +115,12 @@ impl Psbt {
 }
 impl_psbt_de_serialize!(Transaction);
 impl_psbt_de_serialize!(TxOut);
+impl_psbt_de_serialize!(Sequence);
 impl_psbt_de_serialize!(Witness);
+impl_psbt_de_serialize!(u32);
+impl_psbt_de_serialize!(LockTime);
+impl_psbt_de_serialize!(Amount);
+impl_psbt_hash_de_serialize!(Txid);
 impl_psbt_hash_de_serialize!(ripemd160::Hash);
 impl_psbt_hash_de_serialize!(sha256::Hash);
 impl_psbt_hash_de_serialize!(TapLeafHash);

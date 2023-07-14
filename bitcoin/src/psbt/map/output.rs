@@ -19,6 +19,10 @@ const PSBT_OUT_REDEEM_SCRIPT: u8 = 0x00;
 const PSBT_OUT_WITNESS_SCRIPT: u8 = 0x01;
 /// Type: BIP 32 Derivation Path PSBT_OUT_BIP32_DERIVATION = 0x02
 const PSBT_OUT_BIP32_DERIVATION: u8 = 0x02;
+/// Type: Output amount PSBT_OUT_AMOUNT = 0x03
+const PSBT_OUT_AMOUNT: u8 = 0x03;
+/// Type: Output script PSBT_OUT_SCRIPT = 0x04
+const PSBT_OUT_SCRIPT: u8 = 0x04;
 /// Type: Taproot Internal Key PSBT_OUT_TAP_INTERNAL_KEY = 0x05
 const PSBT_OUT_TAP_INTERNAL_KEY: u8 = 0x05;
 /// Type: Taproot Tree PSBT_OUT_TAP_TREE = 0x06
@@ -145,6 +149,14 @@ impl Map for Output {
 
         impl_psbt_get_pair! {
             rv.push_map(self.bip32_derivation, PSBT_OUT_BIP32_DERIVATION)
+        }
+
+        impl_psbt_get_pair! {
+            rv.push(self.amount, PSBT_OUT_AMOUNT)
+        }
+
+        impl_psbt_get_pair! {
+            rv.push(self.script, PSBT_OUT_SCRIPT)
         }
 
         impl_psbt_get_pair! {

@@ -90,6 +90,16 @@ pub struct TxModifiable {
     // More flags
 }
 
+impl TxModifiable {
+    fn to_raw(self) -> u8 {
+        let mut byte: u8 = 0x00;
+        byte |= self.input_modifiable as u8;
+        byte |= (self.output_modifiable as u8) << 1;
+        byte |= (self.has_sighash_single as u8) << 2;
+        byte
+    }
+}
+
 /// A Partially Signed Transaction Inner used by [`Psbt`].
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]

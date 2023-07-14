@@ -10,11 +10,22 @@ use crate::io::{self, Cursor, Read};
 use crate::prelude::*;
 use crate::psbt::map::Map;
 use crate::psbt::{raw, Error, Psbt, PsbtInner, Version};
+use crate::VarInt;
 
 /// Type: Unsigned Transaction PSBT_GLOBAL_UNSIGNED_TX = 0x00
 const PSBT_GLOBAL_UNSIGNED_TX: u8 = 0x00;
 /// Type: Extended Public Key PSBT_GLOBAL_XPUB = 0x01
 const PSBT_GLOBAL_XPUB: u8 = 0x01;
+/// Type: Global Transaction Version PSBT_GLOBAL_TX_VERSION = 0x02
+const PSBT_GLOBAL_TX_VERSION: u8 = 0x02;
+/// Type: Fallback Locktime PSBT_GLOBAL_FALLBACK_LOCKTIME = 0x03
+const PSBT_GLOBAL_FALLBACK_LOCKTIME: u8 = 0x03;
+/// Type: Input Count PSBT_GLOBAL_INPUT_COUNT = 0x04
+const PSBT_GLOBAL_INPUT_COUNT: u8 = 0x04;
+/// Type: Output Count PSBT_GLOBAL_OUTPUT_COUNT = 0x05
+const PSBT_GLOBAL_OUTPUT_COUNT: u8 = 0x05;
+/// Type: Transaction Modification flags PSBT_GLOBAL_TX_MODIFIABLE = 0x06
+const PSBT_GLOBAL_TX_MODIFIABLE: u8 = 0x06;
 /// Type: Version Number PSBT_GLOBAL_VERSION = 0xFB
 const PSBT_GLOBAL_VERSION: u8 = 0xFB;
 /// Type: Proprietary Use Type PSBT_GLOBAL_PROPRIETARY = 0xFC
@@ -23,15 +34,16 @@ const PSBT_GLOBAL_PROPRIETARY: u8 = 0xFC;
 impl Map for Psbt {
     fn get_pairs(&self) -> Vec<raw::Pair> {
         let mut rv: Vec<raw::Pair> = Default::default();
+        let inner = &self.inner;
 
-        if self.inner.version == Version::PsbtV0 {
+        if inner.version == Version::PsbtV0 {
+            let unsigned_tx = inner.unsigned_tx.as_ref().unwrap();
             rv.push(raw::Pair {
                 key: raw::Key { type_value: PSBT_GLOBAL_UNSIGNED_TX, key: vec![] },
                 value: {
                     // Manually serialized to ensure 0-input txs are serialized
                     // without witnesses.
                     let mut ret = Vec::new();
-                    let unsigned_tx = self.inner.unsigned_tx.as_ref().unwrap();
                     ret.extend(encode::serialize(&unsigned_tx.version));
                     ret.extend(encode::serialize(&unsigned_tx.input));
                     ret.extend(encode::serialize(&unsigned_tx.output));
@@ -41,7 +53,7 @@ impl Map for Psbt {
             });
         }
 
-        for (xpub, (fingerprint, derivation)) in &self.inner.xpub {
+        for (xpub, (fingerprint, derivation)) in &inner.xpub {
             rv.push(raw::Pair {
                 key: raw::Key { type_value: PSBT_GLOBAL_XPUB, key: xpub.encode().to_vec() },
                 value: {
@@ -54,18 +66,51 @@ impl Map for Psbt {
         }
 
         // Serializing version only for non-default value; otherwise test vectors fail
-        if self.inner.version > Version::PsbtV0 {
+        if inner.version > Version::PsbtV0 {
+            // BIP 370 introduced breaking changes to the existing PsbtV0 standard (BIP 174).
+            // It is assumed here that the next versions contain the following new fields.
+            rv.push(raw::Pair {
+                key: raw::Key { type_value: PSBT_GLOBAL_TX_VERSION, key: vec![] },
+                value: inner.tx_version.unwrap().to_le_bytes().to_vec(),
+            });
+
+            rv.push(raw::Pair {
+                key: raw::Key { type_value: PSBT_GLOBAL_FALLBACK_LOCKTIME, key: vec![] },
+                value: inner
+                    .fallback_locktime
+                    .as_ref()
+                    .unwrap()
+                    .to_consensus_u32()
+                    .to_be_bytes()
+                    .to_vec(),
+            });
+
+            rv.push(raw::Pair {
+                key: raw::Key { type_value: PSBT_GLOBAL_INPUT_COUNT, key: vec![] },
+                value: encode::serialize(&VarInt(inner.inputs.len() as u64)),
+            });
+
+            rv.push(raw::Pair {
+                key: raw::Key { type_value: PSBT_GLOBAL_OUTPUT_COUNT, key: vec![] },
+                value: encode::serialize(&VarInt(inner.outputs.len() as u64)),
+            });
+
+            rv.push(raw::Pair {
+                key: raw::Key { type_value: PSBT_GLOBAL_TX_MODIFIABLE, key: vec![] },
+                value: vec![inner.tx_modifiable.as_ref().unwrap().to_raw()],
+            });
+
             rv.push(raw::Pair {
                 key: raw::Key { type_value: PSBT_GLOBAL_VERSION, key: vec![] },
-                value: self.inner.version.to_raw().to_le_bytes().to_vec(),
+                value: inner.version.to_raw().to_le_bytes().to_vec(),
             });
         }
 
-        for (key, value) in self.inner.proprietary.iter() {
+        for (key, value) in inner.proprietary.iter() {
             rv.push(raw::Pair { key: key.to_key(), value: value.clone() });
         }
 
-        for (key, value) in self.inner.unknown.iter() {
+        for (key, value) in inner.unknown.iter() {
             rv.push(raw::Pair { key: key.clone(), value: value.clone() });
         }
 
