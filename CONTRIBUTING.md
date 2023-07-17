@@ -150,7 +150,7 @@ grammar fixes.
 
 Pull request merge requirements:
 - all CI test should pass,
-- at least two "accepts"/ACKs from the repository maintainers
+- at least two "accepts"/ACKs from the repository maintainers (see "refactor carve out").
 - no reasonable "rejects"/NACKs from anybody who reviewed the code.
 
 Current list of the project maintainers:
@@ -164,6 +164,15 @@ Current list of the project maintainers:
 - [Riccardo Casatta](https://github.com/RCasatta)
 - [Tobin Harding](https://github.com/tcharding)
 
+#### Refactor carve output
+
+The repository is going through heavy refactoring and "trivial" API redesign
+(eg, rename `Foo::empty` to `Foo::new`) as we push towards API stabilization. As
+such reviewers are either bored or overloaded with notifications, hence we have
+created a carve out to the 2-ACK rule.
+
+A PR may be considered for merge if it has a single ACK and has sat open for at
+least two weeks with no comments, questions, or NACKs.
 
 ## Coding conventions
 
