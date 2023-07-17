@@ -112,14 +112,19 @@ pub enum Error {
     FallbackLocktimePresent,
     /// Transaction Modifiable flags are not allowed in PsbtV0
     TxModifiablePresent,
-
+    /// Invalid Input
+    InvalidInput,
+    /// Invalid Output
+    InvalidOutput,
     // PsbtV2 field Errors
-    /// Transaction Version not present in PsbtV2
-    MissingTxVersion,
+    /// Transaction Version not present in PsbtV2 or invallid if present
+    InvalidTxVersion,
     /// Unsigned Transaction is not allowed in PsbtV2
     UnsignedTxPresent,
-    /// Output Index not present in Input
-    OutputIndexNotPresent,
+    /// In a serialized psbtv2, input and output counts are required
+    /// to be present in the global types section. On the other hand,
+    /// they must be omitted in PsbtV0.
+    InvalidInputOutputCounts,
 }
 
 impl fmt::Display for Error {
@@ -131,8 +136,9 @@ impl fmt::Display for Error {
             Error::PsbtUtxoOutOfbounds =>
                 f.write_str("output index is out of bounds of non witness script output array"),
             Error::InvalidKey(ref rkey) => write!(f, "invalid key: {}", rkey),
-            Error::InvalidProprietaryKey =>
-                write!(f, "non-proprietary key type found when proprietary key was expected"),
+            Error::InvalidProprietaryKey => {
+                write!(f, "non-proprietary key type found when proprietary key was expected")
+            }
             Error::DuplicateKey(ref rkey) => write!(f, "duplicate key: {}", rkey),
             Error::FutureVersion(ref e) => write_err!(f, "unrecognized PSBT version"; e),
             Error::UnsignedTxHasScriptSigs =>
@@ -148,8 +154,9 @@ impl fmt::Display for Error {
                 e.txid(),
                 a.txid()
             ),
-            Error::NonStandardSighashType(ref sht) =>
-                write!(f, "non-standard sighash type: {}", sht),
+            Error::NonStandardSighashType(ref sht) => {
+                write!(f, "non-standard sighash type: {}", sht)
+            }
             Error::InvalidHash(ref e) => write_err!(f, "invalid hash when parsing slice"; e),
             Error::InvalidPreimageHashPair { ref preimage, ref hash, ref hash_type } => {
                 // directly using debug forms of psbthash enums
@@ -162,8 +169,9 @@ impl fmt::Display for Error {
             Error::NegativeFee => f.write_str("PSBT has a negative fee which is not allowed"),
             Error::FeeOverflow => f.write_str("integer overflow in fee calculation"),
             Error::InvalidPublicKey(ref e) => write_err!(f, "invalid public key"; e),
-            Error::InvalidSecp256k1PublicKey(ref e) =>
-                write_err!(f, "invalid secp256k1 public key"; e),
+            Error::InvalidSecp256k1PublicKey(ref e) => {
+                write_err!(f, "invalid secp256k1 public key"; e)
+            }
             Error::InvalidXOnlyPublicKey => f.write_str("invalid xonly public key"),
             Error::InvalidEcdsaSignature(ref e) => write_err!(f, "invalid ECDSA signature"; e),
             Error::InvalidTaprootSignature(ref e) => write_err!(f, "invalid taproot signature"; e),
@@ -180,10 +188,11 @@ impl fmt::Display for Error {
             Error::FallbackLocktimePresent =>
                 f.write_str("fallback locktime not allowed in PsbtV0"),
             Error::TxModifiablePresent => f.write_str("TxModifiable not allowed in PsbtV0"),
-            Error::MissingTxVersion => f.write_str("transaction version is required in PsbtV2"),
+            Error::InvalidTxVersion => f.write_str("transaction version is required in PsbtV2"),
             Error::UnsignedTxPresent => f.write_str("unsigned transaction not allowed in PsbtV2"),
-            Error::OutputIndexNotPresent =>
-                f.write_str("output index not present in the PsbtV2 input"),
+            Error::InvalidInputOutputCounts => f.write_str("input and output counts are not valid"),
+            Error::InvalidInput => f.write_str("input not valid"),
+            Error::InvalidOutput => f.write_str("output not valid"),
         }
     }
 }
@@ -230,9 +239,11 @@ impl std::error::Error for Error {
             | TxVersionPresent
             | FallbackLocktimePresent
             | TxModifiablePresent
-            | MissingTxVersion
+            | InvalidTxVersion
             | UnsignedTxPresent
-            | OutputIndexNotPresent => None,
+            | InvalidInputOutputCounts
+            | InvalidInput
+            | InvalidOutput => None,
         }
     }
 }

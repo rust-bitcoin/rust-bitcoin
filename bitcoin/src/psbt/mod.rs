@@ -98,6 +98,18 @@ impl TxModifiable {
         byte |= (self.has_sighash_single as u8) << 2;
         byte
     }
+
+    // For now, there seems to be no reason to return an Error here.
+    // But since the structure is not complete yet and more flags
+    // can be introduced in future (which may or may not come with
+    // various rules for coexistence), a Result is returned here.
+    fn from_raw(tx_modifiable: u8) -> Result<Self, Error> {
+        Ok(TxModifiable {
+            input_modifiable: tx_modifiable & 0x01 != 0,
+            output_modifiable: tx_modifiable & 0x02 != 0,
+            has_sighash_single: tx_modifiable & 0x04 != 0,
+        })
+    }
 }
 
 /// A Partially Signed Transaction Inner used by [`Psbt`].
@@ -133,13 +145,11 @@ pub struct PsbtInner {
 }
 
 impl PsbtInner {
-    /// Validates this [`PsbtInner`] according to its version
+    /// Validates the given `PsbtInner` according to its version
     pub fn validate(&self) -> Result<(), Error> {
         match self.version {
             Version::PsbtV0 => {
-                if self.unsigned_tx.is_none() {
-                    return Err(Error::MustHaveUnsignedTx);
-                }
+                self.unsigned_tx_checks()?;
 
                 if self.tx_version.is_some() {
                     return Err(Error::TxVersionPresent);
@@ -158,12 +168,29 @@ impl PsbtInner {
                     return Err(Error::UnsignedTxPresent);
                 }
 
-                if self.tx_version.is_none() {
-                    return Err(Error::MissingTxVersion);
+                match self.tx_version {
+                    None => return Err(Error::InvalidTxVersion),
+                    Some(tx_version) => {
+                        // According to BIP 370, tx_version must be atleast 2
+                        if tx_version < 2 {
+                            return Err(Error::InvalidTxVersion);
+                        }
+                        return Ok(());
+                    }
                 }
             }
         }
 
+        if !self.inputs.is_empty() {
+            for input in &self.inputs {
+                input.validate_version(self.version)?;
+            }
+        }
+        if !self.outputs.is_empty() {
+            for output in &self.outputs {
+                output.validate_version(self.version)?;
+            }
+        }
         Ok(())
     }
 
@@ -274,7 +301,7 @@ impl Psbt {
                     },
                 )) as Box<dyn Iterator<Item = Result<&TxOut, Error>>>
             }
-            Version::PsbtV2 => {
+            _ => {
                 // In PsbtV2, Input contains all the details, no need of unsigned_tx
                 Box::new(inner.inputs.iter().map(|input| {
                     match (&input.witness_utxo, &input.non_witness_utxo) {
@@ -1799,7 +1826,7 @@ mod tests {
 
         #[test]
         fn valid_vector_6() {
-            let psbt: Psbt = hex_psbt!("70736274ff01003f0200000001ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000ffffffff010000000000000000036a010000000000000a0f0102030405060708090f0102030405060708090a0b0c0d0e0f0000").unwrap();
+            let psbt: Psbt = hex_psbt!("70736274ff01003f0200000001ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000ffffffff010000000000000000036a010000000000000af00102030405060708090f0102030405060708090a0b0c0d0e0f0000").unwrap();
 
             assert_eq!(psbt.inner.inputs.len(), 1);
             assert_eq!(psbt.inner.outputs.len(), 1);
@@ -1811,7 +1838,7 @@ mod tests {
             );
 
             let mut unknown: BTreeMap<raw::Key, Vec<u8>> = BTreeMap::new();
-            let key: raw::Key = raw::Key { type_value: 0x0fu8, key: hex!("010203040506070809") };
+            let key: raw::Key = raw::Key { type_value: 0xf0u8, key: hex!("010203040506070809") };
             let value: Vec<u8> = hex!("0102030405060708090a0b0c0d0e0f");
 
             unknown.insert(key, value);

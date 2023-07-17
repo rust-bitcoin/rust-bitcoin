@@ -22,7 +22,7 @@ use crate::crypto::key::PublicKey;
 use crate::crypto::{ecdsa, taproot};
 use crate::hash_types::Txid;
 use crate::prelude::*;
-use crate::psbt::{Error, Psbt};
+use crate::psbt::{Error, Psbt, Version};
 use crate::taproot::{
     ControlBlock, LeafVersion, TapLeafHash, TapNodeHash, TapTree, TaprootBuilder,
 };
@@ -73,43 +73,41 @@ impl Psbt {
             return Err(Error::InvalidMagic);
         }
 
-        const PSBT_SERPARATOR: u8 = 0xff_u8;
-        if bytes.get(MAGIC_BYTES.len()) != Some(&PSBT_SERPARATOR) {
+        const PSBT_SEPARATOR: u8 = 0xff_u8;
+        if bytes.get(MAGIC_BYTES.len()) != Some(&PSBT_SEPARATOR) {
             return Err(Error::InvalidSeparator);
         }
 
         let mut d = bytes.get(5..).ok_or(Error::NoMorePairs)?;
 
         let mut global = Psbt::decode_global(&mut d)?;
-        global.inner.unsigned_tx_checks()?;
-        let unsigned_tx = global.inner.unsigned_tx.as_ref().unwrap();
+        let inputs = &mut global.inner.inputs;
+        let outputs = &mut global.inner.outputs;
 
-        let inputs: Vec<Input> = {
-            let inputs_len: usize = (unsigned_tx.input).len();
-
-            let mut inputs: Vec<Input> = Vec::with_capacity(inputs_len);
-
-            for _ in 0..inputs_len {
-                inputs.push(Input::decode(&mut d)?);
+        let inputs_len: usize = {
+            match global.inner.version {
+                Version::PsbtV0 => global.inner.unsigned_tx.as_ref().unwrap().input.len(),
+                _ => inputs.capacity(),
             }
-
-            inputs
         };
+        for _ in 0..inputs_len {
+            let input = Input::decode(&mut d)?;
+            input.validate_version(global.inner.version)?;
+            inputs.push(input);
+        }
 
-        let outputs: Vec<Output> = {
-            let outputs_len: usize = (unsigned_tx.output).len();
-
-            let mut outputs: Vec<Output> = Vec::with_capacity(outputs_len);
-
-            for _ in 0..outputs_len {
-                outputs.push(Output::decode(&mut d)?);
+        let outputs_len: usize = {
+            match global.inner.version {
+                Version::PsbtV0 => global.inner.unsigned_tx.as_ref().unwrap().output.len(),
+                _ => outputs.capacity(),
             }
-
-            outputs
         };
+        for _ in 0..outputs_len {
+            let output = Output::decode(&mut d)?;
+            output.validate_version(global.inner.version)?;
+            outputs.push(output);
+        }
 
-        global.inner.inputs = inputs;
-        global.inner.outputs = outputs;
         Ok(global)
     }
 }

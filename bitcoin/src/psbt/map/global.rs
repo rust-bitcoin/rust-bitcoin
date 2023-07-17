@@ -2,6 +2,7 @@
 
 use core::convert::TryFrom;
 
+use crate::absolute::LockTime;
 use crate::bip32::{ChildNumber, DerivationPath, Fingerprint, Xpub};
 use crate::blockdata::transaction::Transaction;
 use crate::consensus::encode::MAX_VEC_SIZE;
@@ -9,7 +10,7 @@ use crate::consensus::{encode, Decodable};
 use crate::io::{self, Cursor, Read};
 use crate::prelude::*;
 use crate::psbt::map::Map;
-use crate::psbt::{raw, Error, Psbt, PsbtInner, Version};
+use crate::psbt::{raw, Error, Input, Output, Psbt, PsbtInner, TxModifiable, Version};
 use crate::VarInt;
 
 /// Type: Unsigned Transaction PSBT_GLOBAL_UNSIGNED_TX = 0x00
@@ -74,16 +75,13 @@ impl Map for Psbt {
                 value: inner.tx_version.unwrap().to_le_bytes().to_vec(),
             });
 
-            rv.push(raw::Pair {
-                key: raw::Key { type_value: PSBT_GLOBAL_FALLBACK_LOCKTIME, key: vec![] },
-                value: inner
-                    .fallback_locktime
-                    .as_ref()
-                    .unwrap()
-                    .to_consensus_u32()
-                    .to_be_bytes()
-                    .to_vec(),
-            });
+            // Optional in PsbtV2
+            if let Some(fallback_locktime) = inner.fallback_locktime.as_ref() {
+                rv.push(raw::Pair {
+                    key: raw::Key { type_value: PSBT_GLOBAL_FALLBACK_LOCKTIME, key: vec![] },
+                    value: fallback_locktime.to_consensus_u32().to_be_bytes().to_vec(),
+                });
+            }
 
             rv.push(raw::Pair {
                 key: raw::Key { type_value: PSBT_GLOBAL_INPUT_COUNT, key: vec![] },
@@ -95,10 +93,13 @@ impl Map for Psbt {
                 value: encode::serialize(&VarInt(inner.outputs.len() as u64)),
             });
 
-            rv.push(raw::Pair {
-                key: raw::Key { type_value: PSBT_GLOBAL_TX_MODIFIABLE, key: vec![] },
-                value: vec![inner.tx_modifiable.as_ref().unwrap().to_raw()],
-            });
+            // Optional in PsbtV2
+            if let Some(tx_modifiable) = inner.tx_modifiable.as_ref() {
+                rv.push(raw::Pair {
+                    key: raw::Key { type_value: PSBT_GLOBAL_TX_MODIFIABLE, key: vec![] },
+                    value: vec![tx_modifiable.to_raw()],
+                });
+            }
 
             rv.push(raw::Pair {
                 key: raw::Key { type_value: PSBT_GLOBAL_VERSION, key: vec![] },
@@ -119,11 +120,15 @@ impl Map for Psbt {
 }
 
 impl Psbt {
-    // TODO
     pub(crate) fn decode_global<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, Error> {
         let mut r = r.take(MAX_VEC_SIZE as u64);
         let mut tx: Option<Transaction> = None;
         let mut version: Option<u32> = None;
+        let mut tx_version: Option<i32> = None;
+        let mut fallback_locktime: Option<LockTime> = None;
+        let mut input_count: Option<VarInt> = None;
+        let mut output_count: Option<VarInt> = None;
+        let mut tx_modifiable: Option<TxModifiable> = None;
         let mut unknowns: BTreeMap<raw::Key, Vec<u8>> = Default::default();
         let mut xpub_map: BTreeMap<Xpub, (Fingerprint, DerivationPath)> = Default::default();
         let mut proprietary: BTreeMap<raw::ProprietaryKey, Vec<u8>> = Default::default();
@@ -197,6 +202,85 @@ impl Psbt {
                                 ));
                             }
                         }
+                        PSBT_GLOBAL_TX_VERSION => {
+                            // key has to be empty
+                            if pair.key.key.is_empty() {
+                                // there can only be one tx_version
+                                if tx_version.is_none() {
+                                    let mut decoder = Cursor::new(pair.value);
+                                    tx_version = Some(Decodable::consensus_decode(&mut decoder)?);
+                                } else {
+                                    return Err(Error::DuplicateKey(pair.key));
+                                }
+                            } else {
+                                return Err(Error::InvalidKey(pair.key));
+                            }
+                        }
+                        PSBT_GLOBAL_FALLBACK_LOCKTIME => {
+                            // key has to be empty
+                            if pair.key.key.is_empty() {
+                                // there can only be one fallback locktime
+                                if fallback_locktime.is_none() {
+                                    let mut decoder = Cursor::new(pair.value);
+                                    fallback_locktime =
+                                        Some(Decodable::consensus_decode(&mut decoder)?);
+                                } else {
+                                    return Err(Error::DuplicateKey(pair.key));
+                                }
+                            } else {
+                                return Err(Error::InvalidKey(pair.key));
+                            }
+                        }
+                        PSBT_GLOBAL_INPUT_COUNT => {
+                            // key has to be empty
+                            if pair.key.key.is_empty() {
+                                // there can only be one input count
+                                if input_count.is_none() {
+                                    let mut decoder = Cursor::new(pair.value);
+                                    input_count = Some(Decodable::consensus_decode(&mut decoder)?);
+                                } else {
+                                    return Err(Error::DuplicateKey(pair.key));
+                                }
+                            } else {
+                                return Err(Error::InvalidKey(pair.key));
+                            }
+                        }
+                        PSBT_GLOBAL_OUTPUT_COUNT => {
+                            // key has to be empty
+                            if pair.key.key.is_empty() {
+                                // there can only be one output count
+                                if output_count.is_none() {
+                                    let mut decoder = Cursor::new(pair.value);
+                                    output_count = Some(Decodable::consensus_decode(&mut decoder)?);
+                                } else {
+                                    return Err(Error::DuplicateKey(pair.key));
+                                }
+                            } else {
+                                return Err(Error::InvalidKey(pair.key));
+                            }
+                        }
+                        PSBT_GLOBAL_TX_MODIFIABLE => {
+                            // key has to be empty
+                            if pair.key.key.is_empty() {
+                                // there can only be one transaction modifiable flag
+                                if tx_modifiable.is_none() {
+                                    let mut decoder = Cursor::new(pair.value);
+                                    let flags: u8 = Decodable::consensus_decode(&mut decoder)?;
+                                    match TxModifiable::from_raw(flags) {
+                                        Ok(modifiable) => {
+                                            tx_modifiable = Some(modifiable);
+                                        }
+                                        Err(err) => {
+                                            return Err(err);
+                                        }
+                                    }
+                                } else {
+                                    return Err(Error::DuplicateKey(pair.key));
+                                }
+                            } else {
+                                return Err(Error::InvalidKey(pair.key));
+                            }
+                        }
                         PSBT_GLOBAL_VERSION => {
                             // key has to be empty
                             if pair.key.key.is_empty() {
@@ -210,11 +294,11 @@ impl Psbt {
                                         ));
                                     }
                                     version = Some(Decodable::consensus_decode(&mut decoder)?);
-                                    // We only understand version 0 PSBTs. According to BIP-174 we
-                                    // should throw an error if we see anything other than version 0.
-                                    if version != Some(0) {
+                                    // We only understand version 0 and 2 PSBTs. According to BIP-174 we
+                                    // should throw an error if we see anything other than version 0 and 2.
+                                    if version != Some(0) && version != Some(2) {
                                         return Err(Error::Version(
-                                            "PSBT versions greater than 0 are not supported",
+                                            "PSBT versions other than 0 and 2 are not supported",
                                         ));
                                     }
                                 } else {
@@ -247,27 +331,45 @@ impl Psbt {
             }
         }
 
-        if let Some(tx) = tx {
-            let inner = PsbtInner {
-                unsigned_tx: Some(tx),
-                version: match version {
-                    Some(v) => Version::from_raw(v).map_err(Error::from)?,
-                    None => Version::PsbtV0,
-                },
-                xpub: xpub_map,
-                proprietary,
-                unknown: unknowns,
-                inputs: vec![],
-                outputs: vec![],
+        let inputs: Vec<Input>;
+        let outputs: Vec<Output>;
+        let version = match version {
+            Some(v) => Version::from_raw(v).map_err(Error::from)?,
+            None => Version::PsbtV0,
+        };
 
-                tx_modifiable: None,
-                fallback_locktime: None,
-                tx_version: None,
-            };
-
-            Psbt::new(inner)
+        // According to BIP-370, PSBT_GLOBAL_INPUT_COUNT and PSBT_GLOBAL_OUTPUT_COUNT
+        // are required in PsbtV2
+        if version != Version::PsbtV0 {
+            match (input_count, output_count) {
+                (Some(input_count), Some(output_count)) => {
+                    inputs = Vec::with_capacity(input_count.0 as usize);
+                    outputs = Vec::with_capacity(output_count.0 as usize);
+                }
+                _ => return Err(Error::InvalidInputOutputCounts),
+            }
         } else {
-            Err(Error::MustHaveUnsignedTx)
+            // A PsbtV0 can not contain input and output counts
+            if input_count.is_some() || output_count.is_some() {
+                return Err(Error::InvalidInputOutputCounts);
+            }
+            inputs = vec![];
+            outputs = vec![];
         }
+
+        let psbt_inner = PsbtInner {
+            unsigned_tx: tx,
+            version,
+            xpub: xpub_map,
+            proprietary,
+            unknown: unknowns,
+            inputs,
+            outputs,
+            tx_modifiable,
+            tx_version,
+            fallback_locktime,
+        };
+
+        Psbt::new(psbt_inner)
     }
 }
