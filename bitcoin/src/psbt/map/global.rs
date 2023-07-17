@@ -9,7 +9,7 @@ use crate::consensus::{encode, Decodable};
 use crate::io::{self, Cursor, Read};
 use crate::prelude::*;
 use crate::psbt::map::Map;
-use crate::psbt::{raw, Error, PartiallySignedTransaction};
+use crate::psbt::{raw, Error, Psbt};
 
 /// Type: Unsigned Transaction PSBT_GLOBAL_UNSIGNED_TX = 0x00
 const PSBT_GLOBAL_UNSIGNED_TX: u8 = 0x00;
@@ -20,7 +20,7 @@ const PSBT_GLOBAL_VERSION: u8 = 0xFB;
 /// Type: Proprietary Use Type PSBT_GLOBAL_PROPRIETARY = 0xFC
 const PSBT_GLOBAL_PROPRIETARY: u8 = 0xFC;
 
-impl Map for PartiallySignedTransaction {
+impl Map for Psbt {
     fn get_pairs(&self) -> Vec<raw::Pair> {
         let mut rv: Vec<raw::Pair> = Default::default();
 
@@ -70,7 +70,7 @@ impl Map for PartiallySignedTransaction {
     }
 }
 
-impl PartiallySignedTransaction {
+impl Psbt {
     pub(crate) fn decode_global<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, Error> {
         let mut r = r.take(MAX_VEC_SIZE as u64);
         let mut tx: Option<Transaction> = None;
@@ -200,7 +200,7 @@ impl PartiallySignedTransaction {
         }
 
         if let Some(tx) = tx {
-            Ok(PartiallySignedTransaction {
+            Ok(Psbt {
                 unsigned_tx: tx,
                 version: version.unwrap_or(0),
                 xpub: xpub_map,
