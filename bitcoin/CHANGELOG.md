@@ -1,3 +1,7 @@
+# 0.30.1 - 2023-07-16
+
+- Fix compilation when [`RUSTFLAGS=--cfg=bench` is set](https://github.com/rust-bitcoin/rust-bitcoin/pull/1943)
+
 # 0.30 - 2023-03-21 "The First Crate-Smashing Release"
 
 We now have a website for crates that live under the `rust-bitcoin` GitHub organization: https://rust-bitcoin.org/
