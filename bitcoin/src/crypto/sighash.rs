@@ -1062,7 +1062,7 @@ impl<R: BorrowMut<Transaction>> SighashCache<R> {
     ///
     /// let mut sig_hasher = SighashCache::new(&mut tx_to_sign);
     /// for inp in 0..input_count {
-    ///     let prevout_script = Script::empty();
+    ///     let prevout_script = Script::new();
     ///     let _sighash = sig_hasher.segwit_signature_hash(inp, prevout_script, Amount::ONE_SAT, EcdsaSighashType::All);
     ///     // ... sign the sighash
     ///     sig_hasher.witness_mut(inp).unwrap().push(&Vec::new());
@@ -1364,7 +1364,7 @@ mod tests {
             })
         );
         assert_eq!(
-            c.legacy_signature_hash(10, Script::empty(), 0u32),
+            c.legacy_signature_hash(10, Script::new(), 0u32),
             Err(Error::IndexOutOfInputsBounds {
                 index: 10,
                 inputs_size: 1

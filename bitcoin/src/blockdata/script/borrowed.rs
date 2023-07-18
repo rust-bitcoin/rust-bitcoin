@@ -80,6 +80,10 @@ impl ToOwned for Script {
 }
 
 impl Script {
+    /// Creates a new empty script.
+    #[inline]
+    pub fn new() -> &'static Script { Script::from_bytes(&[]) }
+
     /// Treat byte slice as `Script`
     #[inline]
     pub fn from_bytes(bytes: &[u8]) -> &Script {
@@ -109,10 +113,6 @@ impl Script {
     /// Returns the script data as a mutable byte slice.
     #[inline]
     pub fn as_mut_bytes(&mut self) -> &mut [u8] { &mut self.0 }
-
-    /// Creates a new empty script.
-    #[inline]
-    pub fn empty() -> &'static Script { Script::from_bytes(&[]) }
 
     /// Creates a new script builder
     pub fn builder() -> Builder { Builder::new() }
