@@ -30,3 +30,6 @@ lto = true # better optimizations
 
 [patch.crates-io.bitcoin_hashes]
 path = "../../hashes"
+
+[patch.crates-io.bitcoin-internals]
+path = "../../internals"
