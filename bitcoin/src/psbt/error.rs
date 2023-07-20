@@ -116,6 +116,7 @@ pub enum Error {
     InvalidInput,
     /// Invalid Output
     InvalidOutput,
+
     // PsbtV2 field Errors
     /// Transaction Version not present in PsbtV2 or invallid if present
     InvalidTxVersion,
