@@ -423,7 +423,7 @@ impl std::error::Error for ValidationError {
 
 #[cfg(test)]
 mod tests {
-    use hashes::hex::FromHex;
+    use hex::FromHex;
 
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};

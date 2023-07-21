@@ -3,7 +3,6 @@
 #[cfg(doc)]
 use core::ops::Deref;
 
-use hashes::hex;
 use secp256k1::{Secp256k1, Verification};
 
 use crate::blockdata::opcodes::all::*;
@@ -156,8 +155,8 @@ impl ScriptBuf {
     }
 
     /// Creates a [`ScriptBuf`] from a hex string.
-    pub fn from_hex(s: &str) -> Result<Self, hex::Error> {
-        use hashes::hex::FromHex;
+    pub fn from_hex(s: &str) -> Result<Self, hex::HexToBytesError> {
+        use hex::FromHex;
 
         let v = Vec::from_hex(s)?;
         Ok(ScriptBuf::from_bytes(v))

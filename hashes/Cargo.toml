@@ -14,9 +14,11 @@ exclude = ["tests", "contrib"]
 
 [features]
 default = ["std"]
-std = ["alloc", "internals/std"]
-alloc = ["internals/alloc"]
+std = ["alloc", "internals/std", "hex/std"]
+alloc = ["internals/alloc", "hex/alloc"]
 serde-std = ["serde/std"]
+# If you want I/O you must enable either "std" or "core2".
+core2 = ["actual-core2", "hex/core2"]
 
 [package.metadata.docs.rs]
 all-features = true
@@ -24,11 +26,14 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
 internals = { package = "bitcoin-internals", version = "0.2.0" }
+hex = { package = "hex-conservative", version = "0.1.1", default-features = false }
 
-core2 = { version = "0.3.0", default_features = false, optional = true }
 schemars = { version = "0.8.3", optional = true }
 # Only enable this if you explicitly do not want to use "std", otherwise enable "serde-std".
 serde = { version = "1.0", default-features = false, optional = true }
+
+# Do NOT use this feature! Use the "core2" feature instead.
+actual-core2 = { package = "core2", version = "0.3.2", default-features = false, optional = true }
 
 [dev-dependencies]
 serde_test = "1.0"

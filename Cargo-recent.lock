@@ -40,6 +40,7 @@ dependencies = [
  "bitcoin_hashes",
  "bitcoinconsensus",
  "core2",
+ "hex-conservative",
  "hex_lit",
  "mutagen",
  "secp256k1",
@@ -73,6 +74,7 @@ version = "0.12.0"
 dependencies = [
  "bitcoin-internals",
  "core2",
+ "hex-conservative",
  "schemars",
  "serde",
  "serde_json",
@@ -155,6 +157,15 @@ name = "half"
 version = "1.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "62aca2aba2d62b4a7f5b33f3712cb1b0692779a56fb510499d5c0aa594daeaf3"
+
+[[package]]
+name = "hex-conservative"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "30ed443af458ccb6d81c1e7e661545f94d3176752fb1df2f543b902a1e0f51e2"
+dependencies = [
+ "core2",
+]
 
 [[package]]
 name = "hex_lit"

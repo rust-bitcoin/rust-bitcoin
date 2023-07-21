@@ -7,8 +7,7 @@
 use core::str::FromStr;
 use core::{fmt, iter};
 
-use hashes::hex::{self, FromHex};
-use internals::hex::display::DisplayHex;
+use hex::FromHex;
 use internals::write_err;
 use secp256k1;
 
@@ -188,8 +187,8 @@ impl<'a> IntoIterator for &'a SerializedSignature {
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 #[non_exhaustive]
 pub enum Error {
-    /// Hex encoding error
-    HexEncoding(hex::Error),
+    /// Hex decoding error
+    Hex(hex::HexToBytesError),
     /// Base58 encoding error
     NonStandardSighashType(u32),
     /// Empty Signature
@@ -201,7 +200,7 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Error::HexEncoding(ref e) => write_err!(f, "Signature hex encoding error"; e),
+            Error::Hex(ref e) => write_err!(f, "Signature hex decoding error"; e),
             Error::NonStandardSighashType(hash_ty) =>
                 write!(f, "Non standard signature hash type {}", hash_ty),
             Error::EmptySignature => write!(f, "Empty ECDSA signature"),
@@ -216,7 +215,7 @@ impl std::error::Error for Error {
         use self::Error::*;
 
         match self {
-            HexEncoding(e) => Some(e),
+            Hex(e) => Some(e),
             Secp256k1(e) => Some(e),
             NonStandardSighashType(_) | EmptySignature => None,
         }
@@ -231,6 +230,6 @@ impl From<NonStandardSighashType> for Error {
     fn from(err: NonStandardSighashType) -> Self { Error::NonStandardSighashType(err.0) }
 }
 
-impl From<hex::Error> for Error {
-    fn from(err: hex::Error) -> Self { Error::HexEncoding(err) }
+impl From<hex::HexToBytesError> for Error {
+    fn from(err: hex::HexToBytesError) -> Self { Error::Hex(err) }
 }
