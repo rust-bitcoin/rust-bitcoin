@@ -264,6 +264,10 @@ impl PublicKey {
     }
 }
 
+impl From<secp256k1::PublicKey> for PublicKey {
+    fn from(pk: secp256k1::PublicKey) -> PublicKey { PublicKey::new(pk) }
+}
+
 impl From<PublicKey> for XOnlyPublicKey {
     fn from(pk: PublicKey) -> XOnlyPublicKey { pk.inner.into() }
 }
