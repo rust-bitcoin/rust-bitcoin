@@ -81,7 +81,7 @@ impl fmt::Display for AddressType {
 }
 
 impl FromStr for AddressType {
-    type Err = Error;
+    type Err = UnknownAddressTypeError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "p2pkh" => Ok(AddressType::P2pkh),
@@ -89,10 +89,22 @@ impl FromStr for AddressType {
             "p2wpkh" => Ok(AddressType::P2wpkh),
             "p2wsh" => Ok(AddressType::P2wsh),
             "p2tr" => Ok(AddressType::P2tr),
-            _ => Err(Error::UnknownAddressType(s.to_owned())),
+            _ => Err(UnknownAddressTypeError(s.to_owned())),
         }
     }
 }
+
+/// Address type is either invalid or not supported in rust-bitcoin.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct UnknownAddressTypeError(String);
+
+impl fmt::Display for UnknownAddressTypeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "unknown address type: '{}' is either invalid or not supported", self.0)
+    }
+}
+
+crate::error::impl_std_error!(UnknownAddressTypeError);
 
 /// The method used to produce an address.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -108,7 +120,7 @@ pub enum Payload {
 
 impl Payload {
     /// Constructs a [Payload] from an output script (`scriptPubkey`).
-    pub fn from_script(script: &Script) -> Result<Payload, Error> {
+    pub fn from_script(script: &Script) -> Result<Payload, PayloadError> {
         Ok(if script.is_p2pkh() {
             let bytes = script.as_bytes()[3..23].try_into().expect("statically 20B long");
             Payload::PubkeyHash(PubkeyHash::from_byte_array(bytes))
@@ -124,7 +136,7 @@ impl Payload {
                 WitnessProgram::new(WitnessVersion::try_from(opcode)?, witness_program)?;
             Payload::WitnessProgram(witness_program)
         } else {
-            return Err(Error::UnrecognizedScript);
+            return Err(PayloadError::UnrecognizedScript);
         })
     }
 
@@ -157,27 +169,27 @@ impl Payload {
 
     /// Creates a pay to script hash P2SH payload from a script
     #[inline]
-    pub fn p2sh(script: &Script) -> Result<Payload, Error> {
+    pub fn p2sh(script: &Script) -> Result<Payload, PayloadError> {
         if script.len() > MAX_SCRIPT_ELEMENT_SIZE {
-            return Err(Error::ExcessiveScriptSize);
+            return Err(PayloadError::ExcessiveScriptSize);
         }
         Ok(Payload::ScriptHash(script.script_hash()))
     }
 
     /// Create a witness pay to public key payload from a public key
-    pub fn p2wpkh(pk: &PublicKey) -> Result<Payload, Error> {
+    pub fn p2wpkh(pk: &PublicKey) -> Result<Payload, PayloadError> {
         let prog = WitnessProgram::new(
             WitnessVersion::V0,
-            pk.wpubkey_hash().ok_or(Error::UncompressedPubkey)?,
+            pk.wpubkey_hash().ok_or(PayloadError::UncompressedPubkey)?,
         )?;
         Ok(Payload::WitnessProgram(prog))
     }
 
     /// Create a pay to script payload that embeds a witness pay to public key
-    pub fn p2shwpkh(pk: &PublicKey) -> Result<Payload, Error> {
+    pub fn p2shwpkh(pk: &PublicKey) -> Result<Payload, PayloadError> {
         let builder = script::Builder::new()
             .push_int(0)
-            .push_slice(pk.wpubkey_hash().ok_or(Error::UncompressedPubkey)?);
+            .push_slice(pk.wpubkey_hash().ok_or(PayloadError::UncompressedPubkey)?);
 
         Ok(Payload::ScriptHash(builder.into_script().script_hash()))
     }
@@ -531,7 +543,7 @@ impl Address {
     /// This address type was introduced with BIP16 and is the popular type to implement multi-sig
     /// these days.
     #[inline]
-    pub fn p2sh(script: &Script, network: Network) -> Result<Address, Error> {
+    pub fn p2sh(script: &Script, network: Network) -> Result<Address, PayloadError> {
         Ok(Address::new(network, Payload::p2sh(script)?))
     }
 
@@ -541,7 +553,7 @@ impl Address {
     ///
     /// # Errors
     /// Will only return an error if an uncompressed public key is provided.
-    pub fn p2wpkh(pk: &PublicKey, network: Network) -> Result<Address, Error> {
+    pub fn p2wpkh(pk: &PublicKey, network: Network) -> Result<Address, PayloadError> {
         Ok(Address::new(network, Payload::p2wpkh(pk)?))
     }
 
@@ -551,7 +563,7 @@ impl Address {
     ///
     /// # Errors
     /// Will only return an Error if an uncompressed public key is provided.
-    pub fn p2shwpkh(pk: &PublicKey, network: Network) -> Result<Address, Error> {
+    pub fn p2shwpkh(pk: &PublicKey, network: Network) -> Result<Address, PayloadError> {
         Ok(Address::new(network, Payload::p2shwpkh(pk)?))
     }
 
@@ -614,7 +626,7 @@ impl Address {
     pub fn is_standard(&self) -> bool { self.address_type().is_some() }
 
     /// Constructs an [`Address`] from an output script (`scriptPubkey`).
-    pub fn from_script(script: &Script, network: Network) -> Result<Address, Error> {
+    pub fn from_script(script: &Script, network: Network) -> Result<Address, PayloadError> {
         Ok(Address::new(network, Payload::from_script(script)?))
     }
 
@@ -728,11 +740,11 @@ impl Address<NetworkUnchecked> {
     /// For details about this mechanism, see section [*Parsing addresses*](Address#parsing-addresses)
     /// on [`Address`].
     #[inline]
-    pub fn require_network(self, required: Network) -> Result<Address, Error> {
+    pub fn require_network(self, required: Network) -> Result<Address, RequireNetworkError> {
         if self.is_valid_for_network(required) {
             Ok(self.assume_checked())
         } else {
-            Err(Error::NetworkValidation { found: *self.network(), required, address: self })
+            Err(RequireNetworkError(required))
         }
     }
 
@@ -807,9 +819,9 @@ fn find_bech32_prefix(bech32: &str) -> &str {
 
 /// Address can be parsed only with `NetworkUnchecked`.
 impl FromStr for Address<NetworkUnchecked> {
-    type Err = Error;
+    type Err = ParseError;
 
-    fn from_str(s: &str) -> Result<Address<NetworkUnchecked>, Error> {
+    fn from_str(s: &str) -> Result<Address<NetworkUnchecked>, Self::Err> {
         // try bech32
         let bech32_network = match find_bech32_prefix(s) {
             // note that upper or lowercase is allowed but NOT mixed case
@@ -822,7 +834,7 @@ impl FromStr for Address<NetworkUnchecked> {
             // decode as bech32
             let (_, payload, variant) = bech32::decode(s)?;
             if payload.is_empty() {
-                return Err(Error::EmptyBech32Payload);
+                return Err(ParseError::EmptyBech32Payload);
             }
 
             // Get the script version and program (converted from 5-bit to 8-bit)
@@ -836,7 +848,7 @@ impl FromStr for Address<NetworkUnchecked> {
             // Encoding check
             let expected = version.bech32_variant();
             if expected != variant {
-                return Err(Error::InvalidBech32Variant { expected, found: variant });
+                return Err(ParseError::InvalidBech32Variant { expected, found: variant });
             }
 
             return Ok(Address::new(network, Payload::WitnessProgram(witness_program)));
@@ -844,11 +856,11 @@ impl FromStr for Address<NetworkUnchecked> {
 
         // Base58
         if s.len() > 50 {
-            return Err(Error::Base58(base58::Error::InvalidLength(s.len() * 11 / 15)));
+            return Err(ParseError::Base58(base58::Error::InvalidLength(s.len() * 11 / 15)));
         }
         let data = base58::decode_check(s)?;
         if data.len() != 21 {
-            return Err(Error::Base58(base58::Error::InvalidLength(data.len())));
+            return Err(ParseError::Base58(base58::Error::InvalidLength(data.len())));
         }
 
         let (network, payload) = match data[0] {
@@ -860,7 +872,7 @@ impl FromStr for Address<NetworkUnchecked> {
                 (Network::Testnet, Payload::PubkeyHash(PubkeyHash::from_slice(&data[1..]).unwrap())),
             SCRIPT_ADDRESS_PREFIX_TEST =>
                 (Network::Testnet, Payload::ScriptHash(ScriptHash::from_slice(&data[1..]).unwrap())),
-            x => return Err(Error::Base58(base58::Error::InvalidAddressVersion(x))),
+            x => return Err(ParseError::Base58(base58::Error::InvalidAddressVersion(x))),
         };
 
         Ok(Address::new(network, payload))
@@ -968,7 +980,7 @@ mod tests {
     #[test]
     fn test_p2sh_parse_for_large_script() {
         let script = ScriptBuf::from_hex("552103a765fc35b3f210b95223846b36ef62a4e53e34e2925270c2c7906b92c9f718eb2103c327511374246759ec8d0b89fa6c6b23b33e11f92c5bc155409d86de0c79180121038cae7406af1f12f4786d820a1466eec7bc5785a1b5e4a387eca6d797753ef6db2103252bfb9dcaab0cd00353f2ac328954d791270203d66c2be8b430f115f451b8a12103e79412d42372c55dd336f2eb6eb639ef9d74a22041ba79382c74da2338fe58ad21035049459a4ebc00e876a9eef02e72a3e70202d3d1f591fc0dd542f93f642021f82102016f682920d9723c61b27f562eb530c926c00106004798b6471e8c52c60ee02057ae12123122313123123ac1231231231231313123131231231231313212313213123123552103a765fc35b3f210b95223846b36ef62a4e53e34e2925270c2c7906b92c9f718eb2103c327511374246759ec8d0b89fa6c6b23b33e11f92c5bc155409d86de0c79180121038cae7406af1f12f4786d820a1466eec7bc5785a1b5e4a387eca6d797753ef6db2103252bfb9dcaab0cd00353f2ac328954d791270203d66c2be8b430f115f451b8a12103e79412d42372c55dd336f2eb6eb639ef9d74a22041ba79382c74da2338fe58ad21035049459a4ebc00e876a9eef02e72a3e70202d3d1f591fc0dd542f93f642021f82102016f682920d9723c61b27f562eb530c926c00106004798b6471e8c52c60ee02057ae12123122313123123ac1231231231231313123131231231231313212313213123123552103a765fc35b3f210b95223846b36ef62a4e53e34e2925270c2c7906b92c9f718eb2103c327511374246759ec8d0b89fa6c6b23b33e11f92c5bc155409d86de0c79180121038cae7406af1f12f4786d820a1466eec7bc5785a1b5e4a387eca6d797753ef6db2103252bfb9dcaab0cd00353f2ac328954d791270203d66c2be8b430f115f451b8a12103e79412d42372c55dd336f2eb6eb639ef9d74a22041ba79382c74da2338fe58ad21035049459a4ebc00e876a9eef02e72a3e70202d3d1f591fc0dd542f93f642021f82102016f682920d9723c61b27f562eb530c926c00106004798b6471e8c52c60ee02057ae12123122313123123ac1231231231231313123131231231231313212313213123123").unwrap();
-        assert_eq!(Address::p2sh(&script, Testnet), Err(Error::ExcessiveScriptSize));
+        assert_eq!(Address::p2sh(&script, Testnet), Err(PayloadError::ExcessiveScriptSize));
     }
 
     #[test]
@@ -984,7 +996,7 @@ mod tests {
 
         // Test uncompressed pubkey
         key.compressed = false;
-        assert_eq!(Address::p2wpkh(&key, Bitcoin), Err(Error::UncompressedPubkey));
+        assert_eq!(Address::p2wpkh(&key, Bitcoin), Err(PayloadError::UncompressedPubkey));
     }
 
     #[test]
@@ -1013,7 +1025,7 @@ mod tests {
 
         // Test uncompressed pubkey
         key.compressed = false;
-        assert_eq!(Address::p2wpkh(&key, Bitcoin), Err(Error::UncompressedPubkey));
+        assert_eq!(Address::p2wpkh(&key, Bitcoin), Err(PayloadError::UncompressedPubkey));
     }
 
     #[test]
@@ -1479,13 +1491,13 @@ mod tests {
         .unwrap();
         let invalid_segwitv0_script =
             ScriptBuf::from_hex("001161458e330389cd0437ee9fe3641d70cc18").unwrap();
-        let expected = Err(Error::UnrecognizedScript);
+        let expected = Err(PayloadError::UnrecognizedScript);
 
         assert_eq!(Address::from_script(&bad_p2wpkh, Network::Bitcoin), expected);
         assert_eq!(Address::from_script(&bad_p2wsh, Network::Bitcoin), expected);
         assert_eq!(
             Address::from_script(&invalid_segwitv0_script, Network::Bitcoin),
-            Err(Error::WitnessProgram(witness_program::Error::InvalidSegwitV0Length(17)))
+            Err(PayloadError::WitnessProgram(witness_program::Error::InvalidSegwitV0Length(17)))
         );
     }
 
@@ -1498,7 +1510,7 @@ mod tests {
     #[test]
     fn invalid_address_parses_error() {
         let got = AddressType::from_str("invalid");
-        let want = Err(Error::UnknownAddressType("invalid".to_string()));
+        let want = Err(UnknownAddressTypeError("invalid".to_string()));
         assert_eq!(got, want);
     }
 
