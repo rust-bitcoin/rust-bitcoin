@@ -92,11 +92,11 @@ impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         use self::Error::*;
 
-        match self {
-            Base58(e) => Some(e),
-            Bech32(e) => Some(e),
-            WitnessVersion(e) => Some(e),
-            WitnessProgram(e) => Some(e),
+        match *self {
+            Base58(ref e) => Some(e),
+            Bech32(ref e) => Some(e),
+            WitnessVersion(ref e) => Some(e),
+            WitnessProgram(ref e) => Some(e),
             EmptyBech32Payload
             | InvalidBech32Variant { .. }
             | UncompressedPubkey
