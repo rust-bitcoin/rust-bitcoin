@@ -52,29 +52,29 @@ pub enum Error {
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use Error::*;
+
         match *self {
-            Error::Base58(ref e) => write_err!(f, "base58 address encoding error"; e),
-            Error::Bech32(ref e) => write_err!(f, "bech32 address encoding error"; e),
-            Error::EmptyBech32Payload => write!(f, "the bech32 payload was empty"),
-            Error::InvalidBech32Variant { expected, found } => write!(
+            Base58(ref e) => write_err!(f, "base58 address encoding error"; e),
+            Bech32(ref e) => write_err!(f, "bech32 address encoding error"; e),
+            EmptyBech32Payload => write!(f, "the bech32 payload was empty"),
+            InvalidBech32Variant { expected, found } => write!(
                 f,
                 "invalid bech32 checksum variant found {:?} when {:?} was expected",
                 found, expected
             ),
-            Error::WitnessVersion(ref e) =>
-                write_err!(f, "witness version conversion/parsing error"; e),
-            Error::WitnessProgram(ref e) => write_err!(f, "witness program error"; e),
-            Error::UncompressedPubkey =>
+            WitnessVersion(ref e) => write_err!(f, "witness version conversion/parsing error"; e),
+            WitnessProgram(ref e) => write_err!(f, "witness program error"; e),
+            UncompressedPubkey =>
                 write!(f, "an uncompressed pubkey was used where it is not allowed"),
-            Error::ExcessiveScriptSize => write!(f, "script size exceed 520 bytes"),
-            Error::UnrecognizedScript =>
-                write!(f, "script is not a p2pkh, p2sh or witness program"),
-            Error::UnknownAddressType(ref s) => write!(
+            ExcessiveScriptSize => write!(f, "script size exceed 520 bytes"),
+            UnrecognizedScript => write!(f, "script is not a p2pkh, p2sh or witness program"),
+            UnknownAddressType(ref s) => write!(
                 f,
                 "unknown address type: '{}' is either invalid or not supported in rust-bitcoin",
                 s
             ),
-            Error::NetworkValidation { required, found, ref address } => {
+            NetworkValidation { required, found, ref address } => {
                 write!(f, "address ")?;
                 address.fmt_internal(f)?; // Using fmt_internal in order to remove the "Address<NetworkUnchecked>(..)" wrapper
                 write!(
