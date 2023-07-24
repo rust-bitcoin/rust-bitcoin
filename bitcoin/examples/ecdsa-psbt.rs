@@ -235,7 +235,7 @@ impl WatchOnly {
 
         let sigs: Vec<_> = psbt.inputs[0].partial_sigs.values().collect();
         let mut script_witness: Witness = Witness::new();
-        script_witness.push(&sigs[0].to_vec());
+        script_witness.push(sigs[0]);
         script_witness.push(self.input_xpub.to_pub().to_bytes());
 
         psbt.inputs[0].final_script_witness = Some(script_witness);

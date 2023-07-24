@@ -294,7 +294,7 @@ impl Psbt {
 
             let pk = sk.public_key(secp);
 
-            input.partial_sigs.insert(pk, sig);
+            input.partial_sigs.insert(pk, sig.to_vec());
             used.push(pk);
         }
 
@@ -1059,7 +1059,7 @@ mod tests {
                     "0339880dc92394b7355e3d0439fa283c31de7590812ea011c4245c0674a685e883"
                         .parse()
                         .unwrap(),
-                    sig,
+                    sig.to_vec(),
                 )]
                 .into_iter()
                 .collect(),

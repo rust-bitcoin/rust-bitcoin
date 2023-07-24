@@ -422,8 +422,8 @@ fn finalize_psbt(mut psbt: Psbt) -> Psbt {
     let sigs: Vec<_> = psbt.inputs[0].partial_sigs.values().collect();
     let script_sig = script::Builder::new()
         .push_opcode(OP_0) // OP_CHECKMULTISIG bug pops +1 value when evaluating so push OP_0.
-        .push_slice(sigs[0].serialize())
-        .push_slice(sigs[1].serialize())
+        .push_slice(bitcoin::ecdsa::Signature::from_slice(sigs[0]).unwrap().serialize())
+        .push_slice(bitcoin::ecdsa::Signature::from_slice(sigs[1]).unwrap().serialize())
         .push_slice(
             <&PushBytes>::try_from(psbt.inputs[0].redeem_script.as_ref().unwrap().as_bytes())
                 .unwrap(),
@@ -452,8 +452,8 @@ fn finalize_psbt(mut psbt: Psbt) -> Psbt {
         let sigs: Vec<_> = psbt.inputs[1].partial_sigs.values().collect();
         let mut script_witness = Witness::new();
         script_witness.push([]); // Push 0x00 to the stack.
-        script_witness.push(&sigs[1].to_vec());
-        script_witness.push(&sigs[0].to_vec());
+        script_witness.push(sigs[1]);
+        script_witness.push(sigs[0]);
         script_witness.push(psbt.inputs[1].witness_script.clone().unwrap().as_bytes());
 
         script_witness

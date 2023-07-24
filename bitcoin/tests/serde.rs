@@ -300,7 +300,7 @@ fn serde_regression_psbt() {
                 "0339880dc92394b7355e3d0439fa283c31de7590812ea011c4245c0674a685e883"
                     .parse()
                     .unwrap(),
-                sig,
+                sig.to_vec(),
             )]
             .into_iter()
             .collect(),
