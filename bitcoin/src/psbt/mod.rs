@@ -1021,12 +1021,15 @@ mod tests {
         .into_iter()
         .collect();
 
+        let sig = "304402204f67e2afb76142d44fae58a2495d33a3419daa26cd0db8d04f3452b63289ac0f022010762a9fb67e94cc5cad9026f6dc99ff7f070f4278d30fbc7d0c869dd38c7fe701".parse::<ecdsa::Signature>().unwrap();
         let psbt = Psbt {
             version: 0,
             xpub: {
                 let xpub: ExtendedPubKey =
                     "xpub661MyMwAqRbcGoRVtwfvzZsq2VBJR1LAHfQstHUoxqDorV89vRoMxUZ27kLrraAj6MPi\
-                    QfrDb27gigC1VS1dBXi5jGpxmMeBXEkKkcXUTg4".parse().unwrap();
+                    QfrDb27gigC1VS1dBXi5jGpxmMeBXEkKkcXUTg4"
+                        .parse()
+                        .unwrap();
                 vec![(xpub, key_source)].into_iter().collect()
             },
             unsigned_tx: {
@@ -1038,39 +1041,50 @@ mod tests {
             proprietary: proprietary.clone(),
             unknown: unknown.clone(),
 
-            inputs: vec![
-                Input {
-                    non_witness_utxo: Some(tx),
-                    witness_utxo: Some(TxOut {
-                        value: Amount::from_sat(190_303_501_938),
-                        script_pubkey: ScriptBuf::from_hex("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587").unwrap(),
-                    }),
-                    sighash_type: Some("SIGHASH_SINGLE|SIGHASH_ANYONECANPAY".parse::<PsbtSighashType>().unwrap()),
-                    redeem_script: Some(vec![0x51].into()),
-                    witness_script: None,
-                    partial_sigs: vec![(
-                        "0339880dc92394b7355e3d0439fa283c31de7590812ea011c4245c0674a685e883".parse().unwrap(),
-                        "304402204f67e2afb76142d44fae58a2495d33a3419daa26cd0db8d04f3452b63289ac0f022010762a9fb67e94cc5cad9026f6dc99ff7f070f4278d30fbc7d0c869dd38c7fe701".parse().unwrap(),
-                    )].into_iter().collect(),
-                    bip32_derivation: keypaths.clone(),
-                    final_script_witness: Some(Witness::from_slice(&[vec![1, 3], vec![5]])),
-                    ripemd160_preimages: vec![(ripemd160::Hash::hash(&[]), vec![1, 2])].into_iter().collect(),
-                    sha256_preimages: vec![(sha256::Hash::hash(&[]), vec![1, 2])].into_iter().collect(),
-                    hash160_preimages: vec![(hash160::Hash::hash(&[]), vec![1, 2])].into_iter().collect(),
-                    hash256_preimages: vec![(sha256d::Hash::hash(&[]), vec![1, 2])].into_iter().collect(),
-                    proprietary: proprietary.clone(),
-                    unknown: unknown.clone(),
-                    ..Default::default()
-                }
-            ],
-            outputs: vec![
-                Output {
-                    bip32_derivation: keypaths,
-                    proprietary,
-                    unknown,
-                    ..Default::default()
-                }
-            ],
+            inputs: vec![Input {
+                non_witness_utxo: Some(tx),
+                witness_utxo: Some(TxOut {
+                    value: Amount::from_sat(190_303_501_938),
+                    script_pubkey: ScriptBuf::from_hex(
+                        "a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587",
+                    )
+                    .unwrap(),
+                }),
+                sighash_type: Some(
+                    "SIGHASH_SINGLE|SIGHASH_ANYONECANPAY".parse::<PsbtSighashType>().unwrap(),
+                ),
+                redeem_script: Some(vec![0x51].into()),
+                witness_script: None,
+                partial_sigs: vec![(
+                    "0339880dc92394b7355e3d0439fa283c31de7590812ea011c4245c0674a685e883"
+                        .parse()
+                        .unwrap(),
+                    sig,
+                )]
+                .into_iter()
+                .collect(),
+                bip32_derivation: keypaths.clone(),
+                final_script_witness: Some(Witness::from_slice(&[vec![1, 3], vec![5]])),
+                ripemd160_preimages: vec![(ripemd160::Hash::hash(&[]), vec![1, 2])]
+                    .into_iter()
+                    .collect(),
+                sha256_preimages: vec![(sha256::Hash::hash(&[]), vec![1, 2])].into_iter().collect(),
+                hash160_preimages: vec![(hash160::Hash::hash(&[]), vec![1, 2])]
+                    .into_iter()
+                    .collect(),
+                hash256_preimages: vec![(sha256d::Hash::hash(&[]), vec![1, 2])]
+                    .into_iter()
+                    .collect(),
+                proprietary: proprietary.clone(),
+                unknown: unknown.clone(),
+                ..Default::default()
+            }],
+            outputs: vec![Output {
+                bip32_derivation: keypaths,
+                proprietary,
+                unknown,
+                ..Default::default()
+            }],
         };
         let encoded = serde_json::to_string(&psbt).unwrap();
         let decoded: Psbt = serde_json::from_str(&encoded).unwrap();
