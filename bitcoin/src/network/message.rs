@@ -149,10 +149,8 @@ crate::error::impl_std_error!(CommandStringError);
 /// A Network message
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct RawNetworkMessage {
-    /// Magic bytes to identify the network these messages are meant for
-    pub magic: Magic,
-    /// The actual message data
-    pub payload: NetworkMessage,
+    magic: Magic,
+    payload: NetworkMessage,
 }
 
 /// A Network message payload. Proper documentation is available on at
@@ -302,6 +300,22 @@ impl NetworkMessage {
 }
 
 impl RawNetworkMessage {
+
+    /// Creates a [RawNetworkMessage]
+    pub fn new(magic: Magic, payload: NetworkMessage) -> Self {
+        Self { magic, payload }
+    }
+
+    /// The actual message data
+    pub fn payload(&self) -> &NetworkMessage {
+        &self.payload
+    }
+
+    /// Magic bytes to identify the network these messages are meant for
+    pub fn magic(&self) -> &Magic {
+        &self.magic
+    }
+
     /// Return the message command as a static string reference.
     ///
     /// This returns `"unknown"` for [NetworkMessage::Unknown],
