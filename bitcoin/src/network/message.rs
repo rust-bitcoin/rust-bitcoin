@@ -342,51 +342,56 @@ impl<'a> Encodable for HeaderSerializationWrapper<'a> {
     }
 }
 
-impl Encodable for RawNetworkMessage {
-    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        let mut len = 0;
-        len += self.magic.consensus_encode(w)?;
-        len += self.command().consensus_encode(w)?;
-        len += CheckedData(match self.payload {
-            NetworkMessage::Version(ref dat) => serialize(dat),
-            NetworkMessage::Addr(ref dat) => serialize(dat),
-            NetworkMessage::Inv(ref dat) => serialize(dat),
-            NetworkMessage::GetData(ref dat) => serialize(dat),
-            NetworkMessage::NotFound(ref dat) => serialize(dat),
-            NetworkMessage::GetBlocks(ref dat) => serialize(dat),
-            NetworkMessage::GetHeaders(ref dat) => serialize(dat),
-            NetworkMessage::Tx(ref dat) => serialize(dat),
-            NetworkMessage::Block(ref dat) => serialize(dat),
-            NetworkMessage::Headers(ref dat) => serialize(&HeaderSerializationWrapper(dat)),
-            NetworkMessage::Ping(ref dat) => serialize(dat),
-            NetworkMessage::Pong(ref dat) => serialize(dat),
-            NetworkMessage::MerkleBlock(ref dat) => serialize(dat),
-            NetworkMessage::FilterLoad(ref dat) => serialize(dat),
-            NetworkMessage::FilterAdd(ref dat) => serialize(dat),
-            NetworkMessage::GetCFilters(ref dat) => serialize(dat),
-            NetworkMessage::CFilter(ref dat) => serialize(dat),
-            NetworkMessage::GetCFHeaders(ref dat) => serialize(dat),
-            NetworkMessage::CFHeaders(ref dat) => serialize(dat),
-            NetworkMessage::GetCFCheckpt(ref dat) => serialize(dat),
-            NetworkMessage::CFCheckpt(ref dat) => serialize(dat),
-            NetworkMessage::SendCmpct(ref dat) => serialize(dat),
-            NetworkMessage::CmpctBlock(ref dat) => serialize(dat),
-            NetworkMessage::GetBlockTxn(ref dat) => serialize(dat),
-            NetworkMessage::BlockTxn(ref dat) => serialize(dat),
-            NetworkMessage::Alert(ref dat) => serialize(dat),
-            NetworkMessage::Reject(ref dat) => serialize(dat),
-            NetworkMessage::FeeFilter(ref data) => serialize(data),
-            NetworkMessage::AddrV2(ref dat) => serialize(dat),
+impl Encodable for NetworkMessage {
+    fn consensus_encode<W: io::Write + ?Sized>(&self, writer: &mut W) -> Result<usize, io::Error> {
+        match self {
+            NetworkMessage::Version(ref dat) => dat.consensus_encode(writer),
+            NetworkMessage::Addr(ref dat) => dat.consensus_encode(writer),
+            NetworkMessage::Inv(ref dat) => dat.consensus_encode(writer),
+            NetworkMessage::GetData(ref dat) => dat.consensus_encode(writer),
+            NetworkMessage::NotFound(ref dat) => dat.consensus_encode(writer),
+            NetworkMessage::GetBlocks(ref dat) => dat.consensus_encode(writer),
+            NetworkMessage::GetHeaders(ref dat) => dat.consensus_encode(writer),
+            NetworkMessage::Tx(ref dat) => dat.consensus_encode(writer),
+            NetworkMessage::Block(ref dat) => dat.consensus_encode(writer),
+            NetworkMessage::Headers(ref dat) => HeaderSerializationWrapper(dat).consensus_encode(writer),
+            NetworkMessage::Ping(ref dat) => dat.consensus_encode(writer),
+            NetworkMessage::Pong(ref dat) => dat.consensus_encode(writer),
+            NetworkMessage::MerkleBlock(ref dat) => dat.consensus_encode(writer),
+            NetworkMessage::FilterLoad(ref dat) => dat.consensus_encode(writer),
+            NetworkMessage::FilterAdd(ref dat) => dat.consensus_encode(writer),
+            NetworkMessage::GetCFilters(ref dat) => dat.consensus_encode(writer),
+            NetworkMessage::CFilter(ref dat) => dat.consensus_encode(writer),
+            NetworkMessage::GetCFHeaders(ref dat) => dat.consensus_encode(writer),
+            NetworkMessage::CFHeaders(ref dat) => dat.consensus_encode(writer),
+            NetworkMessage::GetCFCheckpt(ref dat) => dat.consensus_encode(writer),
+            NetworkMessage::CFCheckpt(ref dat) => dat.consensus_encode(writer),
+            NetworkMessage::SendCmpct(ref dat) => dat.consensus_encode(writer),
+            NetworkMessage::CmpctBlock(ref dat) => dat.consensus_encode(writer),
+            NetworkMessage::GetBlockTxn(ref dat) => dat.consensus_encode(writer),
+            NetworkMessage::BlockTxn(ref dat) => dat.consensus_encode(writer),
+            NetworkMessage::Alert(ref dat) => dat.consensus_encode(writer),
+            NetworkMessage::Reject(ref dat) => dat.consensus_encode(writer),
+            NetworkMessage::FeeFilter(ref dat) => dat.consensus_encode(writer),
+            NetworkMessage::AddrV2(ref dat) => dat.consensus_encode(writer),
             NetworkMessage::Verack
             | NetworkMessage::SendHeaders
             | NetworkMessage::MemPool
             | NetworkMessage::GetAddr
             | NetworkMessage::WtxidRelay
             | NetworkMessage::FilterClear
-            | NetworkMessage::SendAddrV2 => vec![],
-            NetworkMessage::Unknown { payload: ref data, .. } => serialize(data),
-        })
-        .consensus_encode(w)?;
+            | NetworkMessage::SendAddrV2 => Ok(0),
+            NetworkMessage::Unknown { payload: ref data, .. } => data.consensus_encode(writer),
+        }
+    }
+}
+
+impl Encodable for RawNetworkMessage {
+    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        let mut len = 0;
+        len += self.magic.consensus_encode(w)?;
+        len += self.command().consensus_encode(w)?;
+        len += CheckedData(serialize(self.payload())).consensus_encode(w)?;
         Ok(len)
     }
 }
