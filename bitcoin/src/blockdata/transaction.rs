@@ -941,7 +941,7 @@ impl Transaction {
     }
 
     /// Checks if this is a coinbase transaction.
-    #[deprecated(since = "0.0.0-NEXT-RELEASE", note = "use is_coinbase instead")]
+    #[deprecated(since = "0.31.0", note = "use is_coinbase instead")]
     pub fn is_coin_base(&self) -> bool { self.is_coinbase() }
 
     /// Returns `true` if the transaction itself opted in to be BIP-125-replaceable (RBF).
