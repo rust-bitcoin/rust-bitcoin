@@ -10,7 +10,7 @@ use hashes::Hash;
 use secp256k1::{Secp256k1, Verification};
 
 use crate::blockdata::opcodes::all::*;
-use crate::blockdata::opcodes::{self, Opcode};
+use crate::blockdata::opcodes::Opcode;
 use crate::blockdata::script::witness_version::WitnessVersion;
 use crate::blockdata::script::{
     bytes_to_asm_fmt, Builder, Instruction, InstructionIndices, Instructions, ScriptBuf,
@@ -281,15 +281,26 @@ impl Script {
 
     /// Checks whether a script can be proven to have no satisfying input.
     #[inline]
+    #[rustfmt::skip]
     pub fn is_provably_unspendable(&self) -> bool {
-        use crate::blockdata::opcodes::Class::{IllegalOp, ReturnOp};
-
         match self.0.first() {
             Some(b) => {
                 let first = Opcode::from(*b);
-                let class = first.classify(opcodes::ClassifyContext::Legacy);
 
-                class == ReturnOp || class == IllegalOp
+                match first {
+                    // 3 opcodes illegal in all contexts.
+                    OP_VERIF | OP_VERNOTIF | OP_INVALIDOPCODE
+                    // 15 opcodes illegal in Legacy context
+                    | OP_CAT | OP_SUBSTR | OP_LEFT | OP_RIGHT | OP_INVERT
+                    | OP_AND | OP_OR | OP_XOR | OP_2MUL | OP_2DIV
+                    | OP_MUL | OP_DIV | OP_MOD | OP_LSHIFT | OP_RSHIFT
+                    // 1 opcode for `OP_RETURN`
+                    | OP_RETURN
+                    // 4 opcodes operating equally to `OP_RETURN` only in Legacy context
+                    | OP_RESERVED | OP_RESERVED1 | OP_RESERVED2 | OP_VER => true,
+
+                    _ => false,
+                }
             }
             None => false,
         }
