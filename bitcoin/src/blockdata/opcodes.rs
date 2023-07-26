@@ -40,8 +40,6 @@ use self::all::*;
 
 macro_rules! all_opcodes {
     ($($op:ident => $val:expr, $doc:expr);*) => {
-        // private import so we don't have to use `all::OP_FOO` in this file.
-
         /// Enables wildcard imports to bring into scope all opcodes and nothing else.
         ///
         /// The `all` module is provided so one can use a wildcard import `use bitcoin::opcodes::all::*` to
