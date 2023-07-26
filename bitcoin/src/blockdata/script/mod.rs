@@ -59,7 +59,7 @@ use core::ops::{Deref, DerefMut};
 use serde;
 
 use crate::blockdata::opcodes::all::*;
-use crate::blockdata::opcodes::{self};
+use crate::blockdata::opcodes::{self, Opcode};
 use crate::consensus::{encode, Decodable, Encodable};
 use crate::hash_types::{ScriptHash, WScriptHash};
 use crate::prelude::*;
@@ -204,7 +204,7 @@ fn read_uint_iter(data: &mut core::slice::Iter<'_, u8>, size: usize) -> Result<u
     }
 }
 
-fn opcode_to_verify(opcode: Option<opcodes::All>) -> Option<opcodes::All> {
+fn opcode_to_verify(opcode: Option<Opcode>) -> Option<Opcode> {
     opcode.and_then(|opcode| match opcode {
         OP_EQUAL => Some(OP_EQUALVERIFY),
         OP_NUMEQUAL => Some(OP_NUMEQUALVERIFY),
@@ -598,7 +598,7 @@ pub(super) fn bytes_to_asm_fmt(script: &[u8], f: &mut dyn fmt::Write) -> fmt::Re
     // `iter` needs to be borrowed in `read_push_data_len`, so we have to use `while let` instead
     // of `for`.
     while let Some(byte) = iter.next() {
-        let opcode = opcodes::All::from(*byte);
+        let opcode = Opcode::from(*byte);
 
         let data_len = if let opcodes::Class::PushBytes(n) =
             opcode.classify(opcodes::ClassifyContext::Legacy)
