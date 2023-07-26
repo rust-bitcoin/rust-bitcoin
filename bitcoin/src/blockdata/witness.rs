@@ -227,10 +227,6 @@ impl Witness {
     /// Creates a new empty [`Witness`].
     pub fn new() -> Self { Witness::default() }
 
-    /// Creates [`Witness`] object from an array of byte-arrays
-    #[deprecated(since = "0.30.0", note = "use `Witness::from_slice()` instead")]
-    pub fn from_vec(vec: Vec<Vec<u8>>) -> Self { Witness::from_slice(&vec) }
-
     /// Creates a [`Witness`] object from a slice of bytes slices where each slice is a witness item.
     pub fn from_slice<T: AsRef<[u8]>>(slice: &[T]) -> Self {
         let witness_elements = slice.len();

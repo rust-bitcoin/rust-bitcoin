@@ -1061,10 +1061,6 @@ impl TaprootMerkleBranch {
     pub fn is_empty(&self) -> bool { self.0.is_empty() }
 
     /// Decodes bytes from control block.
-    #[deprecated(since = "0.30.0", note = "Use decode instead")]
-    pub fn from_slice(sl: &[u8]) -> Result<Self, TaprootError> { Self::decode(sl) }
-
-    /// Decodes bytes from control block.
     ///
     /// This reads the branch as encoded in the control block: the concatenated 32B byte chunks -
     /// one for each hash.
@@ -1199,10 +1195,6 @@ pub struct ControlBlock {
 }
 
 impl ControlBlock {
-    /// Constructs a `ControlBlock` from slice.
-    #[deprecated(since = "0.30.0", note = "Use decode instead")]
-    pub fn from_slice(sl: &[u8]) -> Result<ControlBlock, TaprootError> { Self::decode(sl) }
-
     /// Decodes bytes representing a `ControlBlock`.
     ///
     /// This is an extra witness element that provides the proof that taproot script pubkey is

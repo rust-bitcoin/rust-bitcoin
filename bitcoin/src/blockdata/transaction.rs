@@ -21,12 +21,11 @@ use internals::write_err;
 use super::Weight;
 use crate::blockdata::locktime::absolute::{self, Height, Time};
 use crate::blockdata::locktime::relative;
-use crate::blockdata::script::{Script, ScriptBuf};
+use crate::blockdata::script::ScriptBuf;
 use crate::blockdata::witness::Witness;
 #[cfg(feature = "bitcoinconsensus")]
 pub use crate::consensus::validation::TxVerifyError;
 use crate::consensus::{encode, Decodable, Encodable};
-use crate::crypto::sighash::LegacySighash;
 use crate::hash_types::{Txid, Wtxid};
 use crate::internal_macros::impl_consensus_encoding;
 use crate::parse::impl_parse_str_from_int_infallible;
@@ -521,7 +520,7 @@ impl TxOut {
     }
 }
 
-/// Result of [`Transaction::encode_signing_data_to`].
+/// Result of [`crate::sighash::SighashCache::legacy_encode_signing_data_to`].
 ///
 /// This type forces the caller to handle SIGHASH_SINGLE bug case.
 ///
@@ -723,101 +722,6 @@ impl Transaction {
         let mut enc = Wtxid::engine();
         self.consensus_encode(&mut enc).expect("engines don't error");
         Wtxid::from_engine(enc)
-    }
-
-    /// Encodes the signing data from which a signature hash for a given input index with a given
-    /// sighash flag can be computed.
-    ///
-    /// To actually produce a scriptSig, this hash needs to be run through an ECDSA signer, the
-    /// [`EcdsaSighashType`] appended to the resulting sig, and a script written around this, but
-    /// this is the general (and hard) part.
-    ///
-    /// The `sighash_type` supports an arbitrary `u32` value, instead of just [`EcdsaSighashType`],
-    /// because internally 4 bytes are being hashed, even though only the lowest byte is appended to
-    /// signature in a transaction.
-    ///
-    /// # Warning
-    ///
-    /// - Does NOT attempt to support OP_CODESEPARATOR. In general this would require evaluating
-    /// `script_pubkey` to determine which separators get evaluated and which don't, which we don't
-    /// have the information to determine.
-    /// - Does NOT handle the sighash single bug (see "Returns" section)
-    ///
-    /// # Returns
-    ///
-    /// This function can't handle the SIGHASH_SINGLE bug internally, so it returns [`EncodeSigningDataResult`]
-    /// that must be handled by the caller (see [`EncodeSigningDataResult::is_sighash_single_bug`]).
-    ///
-    /// # Panics
-    ///
-    /// If `input_index` is out of bounds (greater than or equal to `self.input.len()`).
-    #[deprecated(
-        since = "0.30.0",
-        note = "Use SighashCache::legacy_encode_signing_data_to instead"
-    )]
-    pub fn encode_signing_data_to<Write: io::Write, U: Into<u32>>(
-        &self,
-        writer: Write,
-        input_index: usize,
-        script_pubkey: &Script,
-        sighash_type: U,
-    ) -> EncodeSigningDataResult<io::Error> {
-        use EncodeSigningDataResult::*;
-
-        use crate::sighash::{self, SighashCache};
-
-        assert!(input_index < self.input.len()); // Panic on OOB
-
-        let cache = SighashCache::new(self);
-        match cache.legacy_encode_signing_data_to(writer, input_index, script_pubkey, sighash_type)
-        {
-            SighashSingleBug => SighashSingleBug,
-            WriteResult(res) => match res {
-                Ok(()) => WriteResult(Ok(())),
-                Err(e) => match e {
-                    sighash::Error::Io(e) => WriteResult(Err(e.into())),
-                    _ => unreachable!("we check input_index above"),
-                },
-            },
-        }
-    }
-
-    /// Computes a signature hash for a given input index with a given sighash flag.
-    ///
-    /// To actually produce a scriptSig, this hash needs to be run through an ECDSA signer, the
-    /// [`EcdsaSighashType`] appended to the resulting sig, and a script written around this, but
-    /// this is the general (and hard) part.
-    ///
-    /// The `sighash_type` supports an arbitrary `u32` value, instead of just [`EcdsaSighashType`],
-    /// because internally 4 bytes are being hashed, even though only the lowest byte is appended to
-    /// signature in a transaction.
-    ///
-    /// This function correctly handles the sighash single bug by returning the 'one array'. The
-    /// sighash single bug becomes exploitable when one tries to sign a transaction with
-    /// `SIGHASH_SINGLE` and there is not a corresponding output with the same index as the input.
-    ///
-    /// # Warning
-    ///
-    /// Does NOT attempt to support OP_CODESEPARATOR. In general this would require evaluating
-    /// `script_pubkey` to determine which separators get evaluated and which don't, which we don't
-    /// have the information to determine.
-    ///
-    /// # Panics
-    ///
-    /// If `input_index` is out of bounds (greater than or equal to `self.input.len()`).
-    #[deprecated(since = "0.30.0", note = "Use SighashCache::legacy_signature_hash instead")]
-    pub fn signature_hash(
-        &self,
-        input_index: usize,
-        script_pubkey: &Script,
-        sighash_u32: u32,
-    ) -> LegacySighash {
-        assert!(input_index < self.input.len()); // Panic on OOB, enables expect below.
-
-        let cache = crate::sighash::SighashCache::new(self);
-        cache
-            .legacy_signature_hash(input_index, script_pubkey, sighash_u32)
-            .expect("cache method doesn't error")
     }
 
     /// Returns the "weight" of this transaction, as defined by BIP141.

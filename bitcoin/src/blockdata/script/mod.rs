@@ -182,24 +182,6 @@ pub fn read_scriptbool(v: &[u8]) -> bool {
     }
 }
 
-/// Decodes a script-encoded unsigned integer.
-///
-/// ## Errors
-///
-/// This function returns an error in these cases:
-///
-/// * `data` is shorter than `size` => `EarlyEndOfScript`
-/// * `size` is greater than `u16::MAX / 8` (8191) => `NumericOverflow`
-/// * The number being read overflows `usize` => `NumericOverflow`
-///
-/// Note that this does **not** return an error for `size` between `core::size_of::<usize>()`
-/// and `u16::MAX / 8` if there's no overflow.
-#[inline]
-#[deprecated(since = "0.30.0", note = "bitcoin integers are signed 32 bits, use read_scriptint")]
-pub fn read_uint(data: &[u8], size: usize) -> Result<usize, Error> {
-    read_uint_iter(&mut data.iter(), size).map_err(Into::into)
-}
-
 // We internally use implementation based on iterator so that it automatically advances as needed
 // Errors are same as above, just different type.
 fn read_uint_iter(data: &mut core::slice::Iter<'_, u8>, size: usize) -> Result<usize, UintError> {
