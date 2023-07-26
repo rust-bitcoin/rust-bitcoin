@@ -9,3 +9,7 @@ path = "hashes"
 
 [patch.crates-io.bitcoin-internals]
 path = "internals"
+
+[patch.crates-io.secp256k1]
+git = "https://github.com/tcharding/rust-secp256k1"
+branch = "07-26-new-error-handling-convention"

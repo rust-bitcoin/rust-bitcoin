@@ -515,20 +515,18 @@ impl std::error::Error for Error {
     }
 }
 
+secp256k1::impl_from_for_all_crate_errors_for!(Error);
+
 impl From<key::Error> for Error {
     fn from(err: key::Error) -> Self {
         match err {
             key::Error::Base58(e) => Error::Base58(e),
             key::Error::Secp256k1(e) => Error::Secp256k1(e),
-            key::Error::InvalidKeyPrefix(_) => Error::Secp256k1(secp256k1::Error::InvalidPublicKey),
+            key::Error::InvalidKeyPrefix(_) => secp256k1::PublicKeyError.into(),
             key::Error::Hex(e) => Error::Hex(e),
             key::Error::InvalidHexLength(got) => Error::InvalidPublicKeyHexLength(got),
         }
     }
-}
-
-impl From<secp256k1::Error> for Error {
-    fn from(e: secp256k1::Error) -> Error { Error::Secp256k1(e) }
 }
 
 impl From<base58::Error> for Error {
@@ -1171,7 +1169,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Secp256k1(InvalidSecretKey)")]
+    #[should_panic(expected = "Secp256k1(SecretKey(SecretKeyError))")]
     fn schnorr_broken_privkey_zeros() {
         /* this is how we generate key:
         let mut sk = secp256k1::key::ONE_KEY;
@@ -1199,7 +1197,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Secp256k1(InvalidSecretKey)")]
+    #[should_panic(expected = "Secp256k1(SecretKey(SecretKeyError))")]
     fn schnorr_broken_privkey_ffs() {
         // Xpriv having secret key set to all 0xFF's
         let xpriv_str = "xprv9s21ZrQH143K24Mfq5zL5MhWK9hUhhGbd45hLXo2Pq2oqzMMo63oStZzFAzHGBP2UuGCqWLTAPLcMtD9y5gkZ6Eq3Rjuahrv17fENZ3QzxW";

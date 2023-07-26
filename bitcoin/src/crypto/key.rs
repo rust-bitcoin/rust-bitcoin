@@ -66,12 +66,10 @@ impl std::error::Error for Error {
     }
 }
 
+secp256k1::impl_from_for_all_crate_errors_for!(Error);
+
 impl From<base58::Error> for Error {
     fn from(e: base58::Error) -> Error { Error::Base58(e) }
-}
-
-impl From<secp256k1::Error> for Error {
-    fn from(e: secp256k1::Error) -> Error { Error::Secp256k1(e) }
 }
 
 impl From<hex::HexToArrayError> for Error {

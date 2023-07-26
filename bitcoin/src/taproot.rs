@@ -1225,8 +1225,7 @@ impl ControlBlock {
         let output_key_parity =
             secp256k1::Parity::from_i32((sl[0] & 1) as i32).map_err(TaprootError::InvalidParity)?;
         let leaf_version = LeafVersion::from_consensus(sl[0] & TAPROOT_LEAF_MASK)?;
-        let internal_key = UntweakedPublicKey::from_slice(&sl[1..TAPROOT_CONTROL_BASE_SIZE])
-            .map_err(TaprootError::InvalidInternalKey)?;
+        let internal_key = UntweakedPublicKey::from_slice(&sl[1..TAPROOT_CONTROL_BASE_SIZE])?;
         let merkle_branch = TaprootMerkleBranch::decode(&sl[TAPROOT_CONTROL_BASE_SIZE..])?;
         Ok(ControlBlock { leaf_version, output_key_parity, internal_key, merkle_branch })
     }
@@ -1445,7 +1444,7 @@ pub enum TaprootBuilderError {
     /// Two nodes at depth 0 are not allowed.
     OverCompleteTree,
     /// Invalid taproot internal key.
-    InvalidInternalKey(secp256k1::Error),
+    InvalidInternalKey(secp256k1::PublicKeyError),
     /// Called finalize on a empty tree.
     EmptyTree,
 }
@@ -1503,9 +1502,9 @@ pub enum TaprootError {
     /// Invalid control block size.
     InvalidControlBlockSize(usize),
     /// Invalid taproot internal key.
-    InvalidInternalKey(secp256k1::Error),
+    InvalidInternalKey(secp256k1::PublicKeyError),
     /// Invalid parity for internal key.
-    InvalidParity(secp256k1::InvalidParityValue),
+    InvalidParity(secp256k1::ParityValueError),
     /// Empty tap tree.
     EmptyTree,
 }
@@ -1555,6 +1554,13 @@ impl std::error::Error for TaprootError {
             | EmptyTree => None,
         }
     }
+}
+
+impl From<secp256k1::PublicKeyError> for TaprootError {
+    fn from(e: secp256k1::PublicKeyError) -> Self { Self::InvalidInternalKey(e) }
+}
+impl From<secp256k1::ParityValueError> for TaprootError {
+    fn from(e: secp256k1::ParityValueError) -> Self { Self::InvalidParity(e) }
 }
 
 #[cfg(test)]

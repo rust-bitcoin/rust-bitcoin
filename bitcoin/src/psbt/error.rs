@@ -79,7 +79,7 @@ pub enum Error {
     /// Parsing error indicating invalid public keys
     InvalidPublicKey(crate::crypto::key::Error),
     /// Parsing error indicating invalid secp256k1 public keys
-    InvalidSecp256k1PublicKey(secp256k1::Error),
+    InvalidSecp256k1PublicKey(secp256k1::PublicKeyError),
     /// Parsing error indicating invalid xonly public keys
     InvalidXOnlyPublicKey,
     /// Parsing error indicating invalid ECDSA signatures
@@ -213,4 +213,7 @@ impl From<encode::Error> for Error {
 
 impl From<io::Error> for Error {
     fn from(e: io::Error) -> Self { Error::Io(e) }
+}
+impl From<secp256k1::PublicKeyError> for Error {
+    fn from(e: secp256k1::PublicKeyError) -> Error { Error::InvalidSecp256k1PublicKey(e) }
 }

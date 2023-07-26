@@ -151,7 +151,7 @@ impl Serialize for secp256k1::PublicKey {
 
 impl Deserialize for secp256k1::PublicKey {
     fn deserialize(bytes: &[u8]) -> Result<Self, Error> {
-        secp256k1::PublicKey::from_slice(bytes).map_err(Error::InvalidSecp256k1PublicKey)
+        Ok(secp256k1::PublicKey::from_slice(bytes)?)
     }
 }
 

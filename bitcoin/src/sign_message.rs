@@ -68,11 +68,7 @@ mod message_signing {
         }
     }
 
-    impl From<secp256k1::Error> for MessageSignatureError {
-        fn from(e: secp256k1::Error) -> MessageSignatureError {
-            MessageSignatureError::InvalidEncoding(e)
-        }
-    }
+    secp256k1::impl_from_for_all_crate_errors_for!(MessageSignatureError, InvalidEncoding);
 
     /// A signature on a Bitcoin Signed Message.
     ///
@@ -113,9 +109,7 @@ mod message_signing {
             }
             // We just check this here so we can safely subtract further.
             if bytes[0] < 27 {
-                return Err(MessageSignatureError::InvalidEncoding(
-                    secp256k1::Error::InvalidRecoveryId,
-                ));
+                return Err(secp256k1::RecoveryIdError.into());
             };
             let recid = RecoveryId::from_i32(((bytes[0] - 27) & 0x03) as i32)?;
             Ok(MessageSignature {
