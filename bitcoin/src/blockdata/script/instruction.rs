@@ -2,7 +2,8 @@
 
 use core::convert::TryInto;
 
-use crate::blockdata::opcodes::{self, Opcode};
+use crate::blockdata::opcodes::all::*;
+use crate::blockdata::opcodes::Opcode;
 use crate::blockdata::script::{read_uint_iter, Error, PushBytes, Script, ScriptBuf, UintError};
 
 /// A "parsed opcode" which allows iterating over a [`Script`] in a more sensible way.
@@ -122,37 +123,34 @@ impl<'a> Iterator for Instructions<'a> {
     fn next(&mut self) -> Option<Result<Instruction<'a>, Error>> {
         let &byte = self.data.next()?;
 
-        // classify parameter does not really matter here since we are only using
-        // it for pushes and nums
-        match Opcode::from(byte).classify(opcodes::ClassifyContext::Legacy) {
-            opcodes::Class::PushBytes(n) => {
-                // make sure safety argument holds across refactorings
-                let n: u32 = n;
+        let opcode = Opcode::from(byte);
 
-                let op_byte = self.data.as_slice().first();
-                match (self.enforce_minimal, op_byte, n) {
-                    (true, Some(&op_byte), 1)
-                        if op_byte == 0x81 || (op_byte > 0 && op_byte <= 16) =>
-                    {
-                        self.kill();
-                        Some(Err(Error::NonMinimalPush))
-                    }
-                    (_, None, 0) => {
-                        // the iterator is already empty, may as well use this information to avoid
-                        // whole take_slice_or_kill function
-                        Some(Ok(Instruction::PushBytes(PushBytes::empty())))
-                    }
-                    _ => Some(self.take_slice_or_kill(n).map(Instruction::PushBytes)),
+        if let Some(n) = opcode.push_bytes() {
+            // QUESTION: I don't understand this comment, does it hold still?
+            // make sure safety argument holds across refactorings
+            let n: u32 = n;
+
+            let op_byte = self.data.as_slice().first();
+            match (self.enforce_minimal, op_byte, n) {
+                (true, Some(&op_byte), 1) if op_byte == 0x81 || (op_byte > 0 && op_byte <= 16) => {
+                    self.kill();
+                    Some(Err(Error::NonMinimalPush))
                 }
+                (_, None, 0) => {
+                    // the iterator is already empty, may as well use this information to avoid
+                    // whole take_slice_or_kill function
+                    Some(Ok(Instruction::PushBytes(PushBytes::empty())))
+                }
+                _ => Some(self.take_slice_or_kill(n).map(Instruction::PushBytes)),
             }
-            opcodes::Class::Ordinary(opcodes::Ordinary::OP_PUSHDATA1) =>
-                self.next_push_data_len(PushDataLenLen::One, 76),
-            opcodes::Class::Ordinary(opcodes::Ordinary::OP_PUSHDATA2) =>
-                self.next_push_data_len(PushDataLenLen::Two, 0x100),
-            opcodes::Class::Ordinary(opcodes::Ordinary::OP_PUSHDATA4) =>
-                self.next_push_data_len(PushDataLenLen::Four, 0x10000),
-            // Everything else we can push right through
-            _ => Some(Ok(Instruction::Op(Opcode::from(byte)))),
+        } else if opcode == OP_PUSHDATA1 {
+            self.next_push_data_len(PushDataLenLen::One, 76)
+        } else if opcode == OP_PUSHDATA2 {
+            self.next_push_data_len(PushDataLenLen::Two, 0x100)
+        } else if opcode == OP_PUSHDATA4 {
+            self.next_push_data_len(PushDataLenLen::Four, 0x10000)
+        } else {
+            Some(Ok(Instruction::Op(opcode)))
         }
     }
 

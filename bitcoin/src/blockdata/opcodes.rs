@@ -351,6 +351,17 @@ pub enum ClassifyContext {
 }
 
 impl Opcode {
+    /// Returns the number of bytes to push if this opcode is a push.
+    // QUESTION: Do we want to return a u8 here instead?
+    pub fn push_bytes(&self) -> Option<u32> {
+        // 76 opcodes of PushBytes class.
+        if self.code <= OP_PUSHBYTES_75.code {
+            Some(self.code.into())
+        } else {
+            None
+        }
+    }
+
     /// Classifies an Opcode into a broad class.
     #[inline]
     pub fn classify(self, ctx: ClassifyContext) -> Class {
