@@ -22,7 +22,7 @@ use crate::prelude::*;
 ///
 /// We do not implement Ord on this type because there is no natural ordering on opcodes, but there
 /// may appear to be one (e.g. because all the push opcodes appear in a consecutive block) and we
-/// don't want to encourage subtly buggy code. Please use [`All::classify`] to distinguish different
+/// don't want to encourage subtly buggy code. Please use [`Opcode::classify`] to distinguish different
 /// types of opcodes.
 ///
 /// <details>
@@ -32,7 +32,7 @@ use crate::prelude::*;
 ///   in contexts where only pushes are supposed to be allowed.
 /// </details>
 #[derive(Copy, Clone, PartialEq, Eq)]
-pub struct All {
+pub struct Opcode {
     code: u8,
 }
 
@@ -43,30 +43,30 @@ macro_rules! all_opcodes {
         /// Enables wildcard imports to bring into scope all opcodes and nothing else.
         ///
         /// The `all` module is provided so one can use a wildcard import `use bitcoin::opcodes::all::*` to
-        /// get all the `OP_FOO` opcodes without getting other types defined in `opcodes` (e.g. `All`, `Class`).
+        /// get all the `OP_FOO` opcodes without getting other types defined in `opcodes` (e.g. `Opcode`, `Class`).
         ///
         /// This module is guaranteed to never contain anything except opcode constants and all opcode
         /// constants are guaranteed to begin with OP_.
         pub mod all {
-            use super::All;
+            use super::Opcode;
             $(
                 #[doc = $doc]
-                pub const $op: All = All { code: $val};
+                pub const $op: Opcode = Opcode { code: $val};
             )*
         }
 
         /// Push an empty array onto the stack.
-        pub static OP_0: All = OP_PUSHBYTES_0;
+        pub static OP_0: Opcode = OP_PUSHBYTES_0;
         /// Empty stack is also FALSE.
-        pub static OP_FALSE: All = OP_PUSHBYTES_0;
+        pub static OP_FALSE: Opcode = OP_PUSHBYTES_0;
         /// Number 1 is also TRUE.
-        pub static OP_TRUE: All = OP_PUSHNUM_1;
+        pub static OP_TRUE: Opcode = OP_PUSHNUM_1;
         /// Previously called OP_NOP2.
-        pub static OP_NOP2: All = OP_CLTV;
+        pub static OP_NOP2: Opcode = OP_CLTV;
         /// Previously called OP_NOP3.
-        pub static OP_NOP3: All = OP_CSV;
+        pub static OP_NOP3: Opcode = OP_CSV;
 
-        impl fmt::Display for All {
+        impl fmt::Display for Opcode {
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
                  match *self {
                    $(
@@ -352,7 +352,7 @@ pub enum ClassifyContext {
     Legacy,
 }
 
-impl All {
+impl Opcode {
     /// Classifies an Opcode into a broad class.
     #[inline]
     pub fn classify(self, ctx: ClassifyContext) -> Class {
@@ -416,11 +416,11 @@ impl All {
         }
     }
 
-    /// Encodes [`All`] as a byte.
+    /// Encodes [`Opcode`] as a byte.
     #[inline]
     pub const fn to_u8(self) -> u8 { self.code }
 
-    /// Encodes PUSHNUM [`All`] as a `u8` representing its number (1-16).
+    /// Encodes PUSHNUM [`Opcode`] as a `u8` representing its number (1-16).
     ///
     /// Does not convert `OP_FALSE` to 0. Only `1` to `OP_PUSHNUM_16` are covered.
     ///
@@ -438,15 +438,15 @@ impl All {
     }
 }
 
-impl From<u8> for All {
+impl From<u8> for Opcode {
     #[inline]
-    fn from(b: u8) -> All { All { code: b } }
+    fn from(b: u8) -> Opcode { Opcode { code: b } }
 }
 
-debug_from_display!(All);
+debug_from_display!(Opcode);
 
 #[cfg(feature = "serde")]
-impl serde::Serialize for All {
+impl serde::Serialize for Opcode {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
@@ -492,15 +492,15 @@ macro_rules! ordinary_opcode {
         }
 
         impl Ordinary {
-            fn with(b: All) -> Self {
+            fn with(b: Opcode) -> Self {
                 match b {
                     $( $op => { Ordinary::$op } ),*
                     _ => unreachable!("construction of `Ordinary` type from non-ordinary opcode {}", b),
                 }
             }
 
-            /// Try to create from an All
-            pub fn try_from_all(b: All) -> Option<Self> {
+            /// Try to create a [`Ordinary`] from an [`Opcode`].
+            pub fn from_opcode(b: Opcode) -> Option<Self> {
                 match b {
                     $( $op => { Some(Ordinary::$op) } ),*
                     _ => None,
@@ -537,7 +537,7 @@ ordinary_opcode! {
 }
 
 impl Ordinary {
-    /// Encodes [`All`] as a byte.
+    /// Encodes [`Opcode`] as a byte.
     #[inline]
     pub fn to_u8(self) -> u8 { self as u8 }
 }
@@ -550,7 +550,7 @@ mod tests {
 
     macro_rules! roundtrip {
         ($unique:expr, $op:ident) => {
-            assert_eq!($op, All::from($op.to_u8()));
+            assert_eq!($op, Opcode::from($op.to_u8()));
 
             let s1 = format!("{}", $op);
             let s2 = format!("{:?}", $op);
@@ -579,7 +579,7 @@ mod tests {
                 0x51..=0x60 => Some(i - 0x50),
                 _ => None,
             };
-            assert_eq!(All::from(i).decode_pushnum(), expected);
+            assert_eq!(Opcode::from(i).decode_pushnum(), expected);
         }
 
         // Test the named opcode constants

@@ -13,8 +13,8 @@ use core::str::FromStr;
 
 use internals::write_err;
 
-use crate::blockdata::opcodes;
 use crate::blockdata::opcodes::all::*;
+use crate::blockdata::opcodes::Opcode;
 use crate::blockdata::script::Instruction;
 use crate::error::ParseIntError;
 
@@ -149,7 +149,7 @@ impl TryFrom<u8> for WitnessVersion {
     }
 }
 
-impl TryFrom<opcodes::All> for WitnessVersion {
+impl TryFrom<Opcode> for WitnessVersion {
     type Error = Error;
 
     /// Converts bitcoin script opcode into [`WitnessVersion`] variant.
@@ -162,7 +162,7 @@ impl TryFrom<opcodes::All> for WitnessVersion {
     ///
     /// If the opcode does not correspond to any witness version, errors with
     /// [`Error::Malformed`].
-    fn try_from(opcode: opcodes::All) -> Result<Self, Self::Error> {
+    fn try_from(opcode: Opcode) -> Result<Self, Self::Error> {
         match opcode.to_u8() {
             0 => Ok(WitnessVersion::V0),
             version if version >= OP_PUSHNUM_1.to_u8() && version <= OP_PUSHNUM_16.to_u8() =>
@@ -202,12 +202,12 @@ impl From<WitnessVersion> for bech32::u5 {
     }
 }
 
-impl From<WitnessVersion> for opcodes::All {
+impl From<WitnessVersion> for Opcode {
     /// Converts [`WitnessVersion`] instance into corresponding Bitcoin scriptopcode (`OP_0`..`OP_16`).
-    fn from(version: WitnessVersion) -> opcodes::All {
+    fn from(version: WitnessVersion) -> Opcode {
         match version {
             WitnessVersion::V0 => OP_PUSHBYTES_0,
-            no => opcodes::All::from(OP_PUSHNUM_1.to_u8() + no.to_num() - 1),
+            no => Opcode::from(OP_PUSHNUM_1.to_u8() + no.to_num() - 1),
         }
     }
 }

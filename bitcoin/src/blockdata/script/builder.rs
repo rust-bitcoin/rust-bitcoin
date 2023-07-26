@@ -7,7 +7,7 @@ use secp256k1::XOnlyPublicKey;
 
 use crate::blockdata::locktime::absolute;
 use crate::blockdata::opcodes::all::*;
-use crate::blockdata::opcodes::{self};
+use crate::blockdata::opcodes::{self, Opcode};
 use crate::blockdata::script::{opcode_to_verify, write_scriptint, PushBytes, Script, ScriptBuf};
 use crate::blockdata::transaction::Sequence;
 use crate::key::PublicKey;
@@ -15,7 +15,7 @@ use crate::prelude::*;
 
 /// An Object which can be used to construct a script piece by piece.
 #[derive(PartialEq, Eq, Clone)]
-pub struct Builder(ScriptBuf, Option<opcodes::All>);
+pub struct Builder(ScriptBuf, Option<Opcode>);
 
 impl Builder {
     /// Creates a new empty script.
@@ -34,7 +34,7 @@ impl Builder {
     pub fn push_int(self, data: i64) -> Builder {
         // We can special-case -1, 1-16
         if data == -1 || (1..=16).contains(&data) {
-            let opcode = opcodes::All::from((data - 1 + opcodes::OP_TRUE.to_u8() as i64) as u8);
+            let opcode = Opcode::from((data - 1 + opcodes::OP_TRUE.to_u8() as i64) as u8);
             self.push_opcode(opcode)
         }
         // We can also special-case zero
@@ -78,7 +78,7 @@ impl Builder {
     }
 
     /// Adds a single opcode to the script.
-    pub fn push_opcode(mut self, data: opcodes::All) -> Builder {
+    pub fn push_opcode(mut self, data: Opcode) -> Builder {
         self.0.push_opcode(data);
         self.1 = Some(data);
         self
