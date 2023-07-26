@@ -16,7 +16,6 @@ use core::{fmt, str};
 
 use hashes::{hash_newtype, sha256, sha256d, sha256t_hash_newtype, Hash};
 
-use crate::blockdata::transaction::EncodeSigningDataResult;
 use crate::blockdata::witness::Witness;
 use crate::consensus::{encode, Encodable};
 use crate::error::impl_std_error;
@@ -1104,6 +1103,75 @@ impl<'a> Encodable for Annex<'a> {
 fn is_invalid_use_of_sighash_single(sighash: u32, input_index: usize, output_len: usize) -> bool {
     let ty = EcdsaSighashType::from_consensus(sighash);
     ty == EcdsaSighashType::Single && input_index >= output_len
+}
+
+/// Result of [`SighashCache::legacy_encode_signing_data_to`].
+///
+/// This type forces the caller to handle SIGHASH_SINGLE bug case.
+///
+/// This corner case can't be expressed using standard `Result`,
+/// in a way that is both convenient and not-prone to accidental
+/// mistakes (like calling `.expect("writer never fails")`).
+#[must_use]
+pub enum EncodeSigningDataResult<E> {
+    /// Input data is an instance of `SIGHASH_SINGLE` bug
+    SighashSingleBug,
+    /// Operation performed normally.
+    WriteResult(Result<(), E>),
+}
+
+impl<E> EncodeSigningDataResult<E> {
+    /// Checks for SIGHASH_SINGLE bug returning error if the writer failed.
+    ///
+    /// This method is provided for easy and correct handling of the result because
+    /// SIGHASH_SINGLE bug is a special case that must not be ignored nor cause panicking.
+    /// Since the data is usually written directly into a hasher which never fails,
+    /// the recommended pattern to handle this is:
+    ///
+    /// ```rust
+    /// # use bitcoin::consensus::deserialize;
+    /// # use bitcoin::hashes::{Hash, hex::FromHex};
+    /// # use bitcoin::sighash::{LegacySighash, SighashCache};
+    /// # use bitcoin::Transaction;
+    /// # let mut writer = LegacySighash::engine();
+    /// # let input_index = 0;
+    /// # let script_pubkey = bitcoin::ScriptBuf::new();
+    /// # let sighash_u32 = 0u32;
+    /// # const SOME_TX: &'static str = "0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000";
+    /// # let raw_tx = Vec::from_hex(SOME_TX).unwrap();
+    /// # let tx: Transaction = deserialize(&raw_tx).unwrap();
+    /// let cache = SighashCache::new(&tx);
+    /// if cache.legacy_encode_signing_data_to(&mut writer, input_index, &script_pubkey, sighash_u32)
+    ///         .is_sighash_single_bug()
+    ///         .expect("writer can't fail") {
+    ///     // use a hash value of "1", instead of computing the actual hash due to SIGHASH_SINGLE bug
+    /// }
+    /// ```
+    #[allow(clippy::wrong_self_convention)] // E is not Copy so we consume self.
+    pub fn is_sighash_single_bug(self) -> Result<bool, E> {
+        match self {
+            EncodeSigningDataResult::SighashSingleBug => Ok(true),
+            EncodeSigningDataResult::WriteResult(Ok(())) => Ok(false),
+            EncodeSigningDataResult::WriteResult(Err(e)) => Err(e),
+        }
+    }
+
+    /// Maps a `Result<T, E>` to `Result<T, F>` by applying a function to a
+    /// contained [`Err`] value, leaving an [`Ok`] value untouched.
+    ///
+    /// Like [`Result::map_err`].
+    pub fn map_err<E2, F>(self, f: F) -> EncodeSigningDataResult<E2>
+    where
+        F: FnOnce(E) -> E2,
+    {
+        match self {
+            EncodeSigningDataResult::SighashSingleBug => EncodeSigningDataResult::SighashSingleBug,
+            EncodeSigningDataResult::WriteResult(Err(e)) =>
+                EncodeSigningDataResult::WriteResult(Err(f(e))),
+            EncodeSigningDataResult::WriteResult(Ok(o)) =>
+                EncodeSigningDataResult::WriteResult(Ok(o)),
+        }
+    }
 }
 
 #[cfg(test)]
