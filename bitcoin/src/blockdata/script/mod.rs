@@ -59,7 +59,7 @@ use core::ops::{Deref, DerefMut};
 use serde;
 
 use crate::blockdata::opcodes::all::*;
-use crate::blockdata::opcodes::{self, Opcode};
+use crate::blockdata::opcodes::Opcode;
 use crate::consensus::{encode, Decodable, Encodable};
 use crate::hash_types::{ScriptHash, WScriptHash};
 use crate::prelude::*;
@@ -600,9 +600,7 @@ pub(super) fn bytes_to_asm_fmt(script: &[u8], f: &mut dyn fmt::Write) -> fmt::Re
     while let Some(byte) = iter.next() {
         let opcode = Opcode::from(*byte);
 
-        let data_len = if let opcodes::Class::PushBytes(n) =
-            opcode.classify(opcodes::ClassifyContext::Legacy)
-        {
+        let data_len = if let Some(n) = opcode.push_bytes() {
             n as usize
         } else {
             match opcode {
