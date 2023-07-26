@@ -7,7 +7,7 @@ use hashes::hex;
 use secp256k1::{Secp256k1, Verification};
 
 use crate::blockdata::opcodes::all::*;
-use crate::blockdata::opcodes::{self, Opcode};
+use crate::blockdata::opcodes::Opcode;
 use crate::blockdata::script::witness_program::WitnessProgram;
 use crate::blockdata::script::witness_version::WitnessVersion;
 use crate::blockdata::script::{opcode_to_verify, Builder, Instruction, PushBytes, Script};
@@ -207,20 +207,20 @@ impl ScriptBuf {
     fn push_slice_no_opt(&mut self, data: &PushBytes) {
         // Start with a PUSH opcode
         match data.len() as u64 {
-            n if n < opcodes::Ordinary::OP_PUSHDATA1 as u64 => {
+            n if n < OP_PUSHDATA1.to_u8() as u64 => {
                 self.0.push(n as u8);
             }
             n if n < 0x100 => {
-                self.0.push(opcodes::Ordinary::OP_PUSHDATA1.to_u8());
+                self.0.push(OP_PUSHDATA1.to_u8());
                 self.0.push(n as u8);
             }
             n if n < 0x10000 => {
-                self.0.push(opcodes::Ordinary::OP_PUSHDATA2.to_u8());
+                self.0.push(OP_PUSHDATA2.to_u8());
                 self.0.push((n % 0x100) as u8);
                 self.0.push((n / 0x100) as u8);
             }
             n if n < 0x100000000 => {
-                self.0.push(opcodes::Ordinary::OP_PUSHDATA4.to_u8());
+                self.0.push(OP_PUSHDATA4.to_u8());
                 self.0.push((n % 0x100) as u8);
                 self.0.push(((n / 0x100) % 0x100) as u8);
                 self.0.push(((n / 0x10000) % 0x100) as u8);
