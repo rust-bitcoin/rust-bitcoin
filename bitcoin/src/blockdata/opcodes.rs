@@ -51,10 +51,10 @@ macro_rules! all_opcodes {
         /// constants are guaranteed to begin with OP_.
         pub mod all {
             use super::All;
-                $(
-                    #[doc = $doc]
-                    pub const $op: All = All { code: $val};
-                )*
+            $(
+                #[doc = $doc]
+                pub const $op: All = All { code: $val};
+            )*
         }
 
         impl fmt::Display for All {
@@ -66,7 +66,6 @@ macro_rules! all_opcodes {
                 }
             }
         }
-
     }
 }
 
