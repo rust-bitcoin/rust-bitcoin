@@ -20,8 +20,7 @@ use crate::prelude::*;
 ///
 /// We do not implement Ord on this type because there is no natural ordering on opcodes, but there
 /// may appear to be one (e.g. because all the push opcodes appear in a consecutive block) and we
-/// don't want to encourage subtly buggy code. Please use [`Opcode::classify`] to distinguish different
-/// types of opcodes.
+/// don't want to encourage subtly buggy code.
 ///
 /// <details>
 ///   <summary>Example of Core bug caused by assuming ordering</summary>
@@ -41,7 +40,7 @@ macro_rules! all_opcodes {
         /// Enables wildcard imports to bring into scope all opcodes and nothing else.
         ///
         /// The `all` module is provided so one can use a wildcard import `use bitcoin::opcodes::all::*` to
-        /// get all the `OP_FOO` opcodes without getting other types defined in `opcodes` (e.g. `Opcode`, `Class`).
+        /// get all the `OP_FOO` opcodes without getting other types defined in `opcodes`.
         ///
         /// This module is guaranteed to never contain anything except opcode constants and all opcode
         /// constants are guaranteed to begin with OP_.
@@ -338,18 +337,6 @@ all_opcodes! {
     OP_INVALIDOPCODE => 0xff, "Synonym for OP_RETURN."
 }
 
-/// Classification context for the opcode.
-///
-/// Some opcodes like [`OP_RESERVED`] abort the script in `ClassifyContext::Legacy` context,
-/// but will act as `OP_SUCCESSx` in `ClassifyContext::TapScript` (see BIP342 for full list).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum ClassifyContext {
-    /// Opcode used in tapscript context.
-    TapScript,
-    /// Opcode used in legacy context.
-    Legacy,
-}
-
 impl Opcode {
     /// Returns the number of bytes to push if this opcode is a push.
     // QUESTION: Do we want to return a u8 here instead?
@@ -359,69 +346,6 @@ impl Opcode {
             Some(self.code.into())
         } else {
             None
-        }
-    }
-
-    /// Classifies an Opcode into a broad class.
-    #[inline]
-    pub fn classify(self, ctx: ClassifyContext) -> Class {
-        match (self, ctx) {
-            // 3 opcodes illegal in all contexts
-            (OP_VERIF, _) | (OP_VERNOTIF, _) | (OP_INVALIDOPCODE, _) => Class::IllegalOp,
-
-            // 15 opcodes illegal in Legacy context
-            #[rustfmt::skip]
-            (OP_CAT, ctx) | (OP_SUBSTR, ctx)
-            | (OP_LEFT, ctx) | (OP_RIGHT, ctx)
-            | (OP_INVERT, ctx)
-            | (OP_AND, ctx) | (OP_OR, ctx) | (OP_XOR, ctx)
-            | (OP_2MUL, ctx) | (OP_2DIV, ctx)
-            | (OP_MUL, ctx) | (OP_DIV, ctx) | (OP_MOD, ctx)
-            | (OP_LSHIFT, ctx) | (OP_RSHIFT, ctx) if ctx == ClassifyContext::Legacy => Class::IllegalOp,
-
-            // 87 opcodes of SuccessOp class only in TapScript context
-            (op, ClassifyContext::TapScript)
-                if op.code == 80
-                    || op.code == 98
-                    || (op.code >= 126 && op.code <= 129)
-                    || (op.code >= 131 && op.code <= 134)
-                    || (op.code >= 137 && op.code <= 138)
-                    || (op.code >= 141 && op.code <= 142)
-                    || (op.code >= 149 && op.code <= 153)
-                    || (op.code >= 187 && op.code <= 254) =>
-                Class::SuccessOp,
-
-            // 11 opcodes of NoOp class
-            (OP_NOP, _) => Class::NoOp,
-            (op, _) if op.code >= OP_NOP1.code && op.code <= OP_NOP10.code => Class::NoOp,
-
-            // 1 opcode for `OP_RETURN`
-            (OP_RETURN, _) => Class::ReturnOp,
-
-            // 4 opcodes operating equally to `OP_RETURN` only in Legacy context
-            (OP_RESERVED, ctx) | (OP_RESERVED1, ctx) | (OP_RESERVED2, ctx) | (OP_VER, ctx)
-                if ctx == ClassifyContext::Legacy =>
-                Class::ReturnOp,
-
-            // 71 opcodes operating equally to `OP_RETURN` only in Legacy context
-            (op, ClassifyContext::Legacy) if op.code >= OP_CHECKSIGADD.code => Class::ReturnOp,
-
-            // 2 opcodes operating equally to `OP_RETURN` only in TapScript context
-            (OP_CHECKMULTISIG, ClassifyContext::TapScript)
-            | (OP_CHECKMULTISIGVERIFY, ClassifyContext::TapScript) => Class::ReturnOp,
-
-            // 1 opcode of PushNum class
-            (OP_PUSHNUM_NEG1, _) => Class::PushNum(-1),
-
-            // 16 opcodes of PushNum class
-            (op, _) if op.code >= OP_PUSHNUM_1.code && op.code <= OP_PUSHNUM_16.code =>
-                Class::PushNum(1 + self.code as i32 - OP_PUSHNUM_1.code as i32),
-
-            // 76 opcodes of PushBytes class
-            (op, _) if op.code <= OP_PUSHBYTES_75.code => Class::PushBytes(self.code as u32),
-
-            // opcodes of Ordinary class: 61 for Legacy and 60 for TapScript context
-            (_, _) => Class::Ordinary(Ordinary::with(self)),
         }
     }
 
@@ -462,93 +386,6 @@ impl serde::Serialize for Opcode {
     {
         serializer.serialize_str(&self.to_string())
     }
-}
-
-/// Broad categories of opcodes with similar behavior.
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
-pub enum Class {
-    /// Pushes the given number onto the stack.
-    PushNum(i32),
-    /// Pushes the given number of bytes onto the stack.
-    PushBytes(u32),
-    /// Fails the script if executed.
-    ReturnOp,
-    /// Succeeds the script even if not executed.
-    SuccessOp,
-    /// Fails the script even if not executed.
-    IllegalOp,
-    /// Does nothing.
-    NoOp,
-    /// Any opcode not covered above.
-    Ordinary(Ordinary),
-}
-
-macro_rules! ordinary_opcode {
-    ($($op:ident),*) => (
-        #[repr(u8)]
-        #[doc(hidden)]
-        #[derive(Copy, Clone, PartialEq, Eq, Debug)]
-        pub enum Ordinary {
-            $( $op = $op.code ),*
-        }
-
-        impl fmt::Display for Ordinary {
-            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                match *self {
-                   $(Ordinary::$op => { f.pad(stringify!($op)) }),*
-                }
-            }
-        }
-
-        impl Ordinary {
-            fn with(b: Opcode) -> Self {
-                match b {
-                    $( $op => { Ordinary::$op } ),*
-                    _ => unreachable!("construction of `Ordinary` type from non-ordinary opcode {}", b),
-                }
-            }
-
-            /// Try to create a [`Ordinary`] from an [`Opcode`].
-            pub fn from_opcode(b: Opcode) -> Option<Self> {
-                match b {
-                    $( $op => { Some(Ordinary::$op) } ),*
-                    _ => None,
-                }
-            }
-        }
-    );
-}
-
-// "Ordinary" opcodes -- should be 61 of these
-ordinary_opcode! {
-    // pushdata
-    OP_PUSHDATA1, OP_PUSHDATA2, OP_PUSHDATA4,
-    // control flow
-    OP_IF, OP_NOTIF, OP_ELSE, OP_ENDIF, OP_VERIFY,
-    // stack
-    OP_TOALTSTACK, OP_FROMALTSTACK,
-    OP_2DROP, OP_2DUP, OP_3DUP, OP_2OVER, OP_2ROT, OP_2SWAP,
-    OP_DROP, OP_DUP, OP_NIP, OP_OVER, OP_PICK, OP_ROLL, OP_ROT, OP_SWAP, OP_TUCK,
-    OP_IFDUP, OP_DEPTH, OP_SIZE,
-    // equality
-    OP_EQUAL, OP_EQUALVERIFY,
-    // arithmetic
-    OP_1ADD, OP_1SUB, OP_NEGATE, OP_ABS, OP_NOT, OP_0NOTEQUAL,
-    OP_ADD, OP_SUB, OP_BOOLAND, OP_BOOLOR,
-    OP_NUMEQUAL, OP_NUMEQUALVERIFY, OP_NUMNOTEQUAL, OP_LESSTHAN,
-    OP_GREATERTHAN, OP_LESSTHANOREQUAL, OP_GREATERTHANOREQUAL,
-    OP_MIN, OP_MAX, OP_WITHIN,
-    // crypto
-    OP_RIPEMD160, OP_SHA1, OP_SHA256, OP_HASH160, OP_HASH256,
-    OP_CODESEPARATOR, OP_CHECKSIG, OP_CHECKSIGVERIFY,
-    OP_CHECKMULTISIG, OP_CHECKMULTISIGVERIFY,
-    OP_CHECKSIGADD
-}
-
-impl Ordinary {
-    /// Encodes [`Opcode`] as a byte.
-    #[inline]
-    pub fn to_u8(self) -> u8 { self as u8 }
 }
 
 #[cfg(test)]
@@ -612,34 +449,6 @@ mod tests {
         assert_eq!(OP_PUSHNUM_16.decode_pushnum().expect("pushnum"), 16);
         // - This is the OP right after PUSHNUMs end
         assert!(OP_NOP.decode_pushnum().is_none());
-    }
-
-    #[test]
-    fn classify_test() {
-        let op174 = OP_CHECKMULTISIG;
-        assert_eq!(
-            op174.classify(ClassifyContext::Legacy),
-            Class::Ordinary(Ordinary::OP_CHECKMULTISIG)
-        );
-        assert_eq!(op174.classify(ClassifyContext::TapScript), Class::ReturnOp);
-
-        let op175 = OP_CHECKMULTISIGVERIFY;
-        assert_eq!(
-            op175.classify(ClassifyContext::Legacy),
-            Class::Ordinary(Ordinary::OP_CHECKMULTISIGVERIFY)
-        );
-        assert_eq!(op175.classify(ClassifyContext::TapScript), Class::ReturnOp);
-
-        let op186 = OP_CHECKSIGADD;
-        assert_eq!(op186.classify(ClassifyContext::Legacy), Class::ReturnOp);
-        assert_eq!(
-            op186.classify(ClassifyContext::TapScript),
-            Class::Ordinary(Ordinary::OP_CHECKSIGADD)
-        );
-
-        let op187 = OP_RETURN_187;
-        assert_eq!(op187.classify(ClassifyContext::Legacy), Class::ReturnOp);
-        assert_eq!(op187.classify(ClassifyContext::TapScript), Class::SuccessOp);
     }
 
     #[test]
