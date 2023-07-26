@@ -55,6 +55,17 @@ macro_rules! all_opcodes {
             )*
         }
 
+        /// Push an empty array onto the stack.
+        pub static OP_0: All = OP_PUSHBYTES_0;
+        /// Empty stack is also FALSE.
+        pub static OP_FALSE: All = OP_PUSHBYTES_0;
+        /// Number 1 is also TRUE.
+        pub static OP_TRUE: All = OP_PUSHNUM_1;
+        /// Previously called OP_NOP2.
+        pub static OP_NOP2: All = OP_CLTV;
+        /// Previously called OP_NOP3.
+        pub static OP_NOP3: All = OP_CSV;
+
         impl fmt::Display for All {
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
                  match *self {
@@ -443,17 +454,6 @@ impl serde::Serialize for All {
         serializer.serialize_str(&self.to_string())
     }
 }
-
-/// Push an empty array onto the stack.
-pub static OP_0: All = OP_PUSHBYTES_0;
-/// Empty stack is also FALSE.
-pub static OP_FALSE: All = OP_PUSHBYTES_0;
-/// Number 1 is also TRUE.
-pub static OP_TRUE: All = OP_PUSHNUM_1;
-/// Previously called OP_NOP2.
-pub static OP_NOP2: All = OP_CLTV;
-/// Previously called OP_NOP3.
-pub static OP_NOP3: All = OP_CSV;
 
 /// Broad categories of opcodes with similar behavior.
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
