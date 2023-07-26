@@ -5,6 +5,8 @@ set -ex
 CRATES="bitcoin hashes internals fuzz"
 DEPS="recent minimal"
 
+rustc --print cfg -C target-cpu=native
+
 for dep in $DEPS
 do
 	cp "Cargo-$dep.lock" Cargo.lock
