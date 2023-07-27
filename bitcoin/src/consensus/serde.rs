@@ -429,8 +429,6 @@ impl<E: fmt::Debug, I: Iterator<Item = Result<u8, E>>> IterReader<E, I> {
     fn new(iterator: I) -> Self { IterReader { iterator: iterator.fuse(), error: None } }
 
     fn decode<T: Decodable>(mut self) -> Result<T, DecodeError<E>> {
-        use crate::StdError;
-
         let result = T::consensus_decode(&mut self);
         match (result, self.error) {
             (Ok(_), None) if self.iterator.next().is_some() => {
@@ -438,7 +436,7 @@ impl<E: fmt::Debug, I: Iterator<Item = Result<u8, E>>> IterReader<E, I> {
             },
             (Ok(value), None) => Ok(value),
             (Ok(_), Some(error)) => panic!("{} silently ate the error: {:?}", core::any::type_name::<T>(), error),
-            (Err(ConsensusError::Io(io_error)), Some(de_error)) if io_error.kind() == io::ErrorKind::Other && io_error.source().is_none() => Err(DecodeError::Other(de_error)),
+            (Err(ConsensusError::Io(kind)), Some(de_error)) if kind == io::ErrorKind::Other => Err(DecodeError::Other(de_error)),
             (Err(consensus_error), None) => Err(DecodeError::Consensus(consensus_error)),
             (Err(ConsensusError::Io(io_error)), de_error) => panic!("Unexpected IO error {:?} returned from {}::consensus_decode(), deserialization error: {:?}", io_error, core::any::type_name::<T>(), de_error),
             (Err(consensus_error), Some(de_error)) => panic!("{} should've returned `Other` IO error because of deserialization error {:?} but it returned consensus error {:?} instead", core::any::type_name::<T>(), de_error, consensus_error),

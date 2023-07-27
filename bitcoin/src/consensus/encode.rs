@@ -19,7 +19,6 @@ use core::convert::From;
 use core::{fmt, mem, u32};
 
 use hashes::{sha256, sha256d, Hash};
-use internals::write_err;
 
 use crate::bip152::{PrefilledTransaction, ShortId};
 use crate::blockdata::transaction::{Transaction, TxIn, TxOut};
@@ -38,7 +37,7 @@ use crate::taproot::TapLeafHash;
 #[non_exhaustive]
 pub enum Error {
     /// And I/O error.
-    Io(io::Error),
+    Io(io::ErrorKind),
     /// Tried to allocate an oversized vector.
     OversizedVectorAllocation {
         /// The capacity requested.
@@ -64,7 +63,7 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Error::Io(ref e) => write_err!(f, "IO error"; e),
+            Error::Io(ref kind) => write!(f, "IO error kind: {:?}", kind),
             Error::OversizedVectorAllocation { requested: ref r, max: ref m } =>
                 write!(f, "allocation of oversized vector: requested {}, maximum {}", r, m),
             Error::InvalidChecksum { expected: ref e, actual: ref a } =>
@@ -83,8 +82,8 @@ impl std::error::Error for Error {
         use self::Error::*;
 
         match self {
-            Io(e) => Some(e),
-            OversizedVectorAllocation { .. }
+            Io(_)
+            | OversizedVectorAllocation { .. }
             | InvalidChecksum { .. }
             | NonMinimalVarInt
             | ParseFailed(_)
@@ -94,7 +93,7 @@ impl std::error::Error for Error {
 }
 
 impl From<io::Error> for Error {
-    fn from(error: io::Error) -> Self { Error::Io(error) }
+    fn from(error: io::Error) -> Self { Error::Io(error.kind()) }
 }
 
 /// Encodes an object into a vector.
@@ -201,7 +200,7 @@ macro_rules! decoder_fn {
         #[inline]
         fn $name(&mut self) -> Result<$val_type, Error> {
             let mut val = [0; $byte_len];
-            self.read_exact(&mut val[..]).map_err(Error::Io)?;
+            self.read_exact(&mut val[..])?;
             Ok(<$val_type>::from_le_bytes(val))
         }
     };
@@ -248,9 +247,7 @@ impl<R: Read + ?Sized> ReadExt for R {
     #[inline]
     fn read_bool(&mut self) -> Result<bool, Error> { ReadExt::read_i8(self).map(|bit| bit != 0) }
     #[inline]
-    fn read_slice(&mut self, slice: &mut [u8]) -> Result<(), Error> {
-        self.read_exact(slice).map_err(Error::Io)
-    }
+    fn read_slice(&mut self, slice: &mut [u8]) -> Result<(), Error> { Ok(self.read_exact(slice)?) }
 }
 
 /// Maximum size, in bytes, of a vector we are allowed to decode.
@@ -1087,7 +1084,7 @@ mod tests {
         ])
         .is_err());
 
-        let rand_io_err = Error::Io(io::Error::new(io::ErrorKind::Other, ""));
+        let rand_io_err = Error::Io(io::ErrorKind::Other);
 
         // Check serialization that `if len > MAX_VEC_SIZE {return err}` isn't inclusive,
         // by making sure it fails with IO Error and not an `OversizedVectorAllocation` Error.
@@ -1115,7 +1112,7 @@ mod tests {
         Vec<T>: Decodable,
         T: fmt::Debug,
     {
-        let rand_io_err = Error::Io(io::Error::new(io::ErrorKind::Other, ""));
+        let rand_io_err = Error::Io(io::ErrorKind::Other);
         let varint = VarInt((super::MAX_VEC_SIZE / mem::size_of::<T>()) as u64);
         let err = deserialize::<Vec<T>>(&serialize(&varint)).unwrap_err();
         assert_eq!(discriminant(&err), discriminant(&rand_io_err));
