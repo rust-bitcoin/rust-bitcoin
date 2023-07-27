@@ -100,8 +100,8 @@ pub enum Error {
     Version(&'static str),
     /// PSBT data is not consumed entirely
     PartialDataConsumption,
-    /// I/O error.
-    Io(io::Error),
+    /// I/O error kind.
+    Io(io::ErrorKind),
 }
 
 impl fmt::Display for Error {
@@ -156,7 +156,7 @@ impl fmt::Display for Error {
             Error::Version(s) => write!(f, "version error {}", s),
             Error::PartialDataConsumption =>
                 f.write_str("data not consumed entirely when explicitly deserializing"),
-            Error::Io(ref e) => write_err!(f, "I/O error"; e),
+            Error::Io(ref kind) => write!(f, "I/O error kind: {:?}", kind),
         }
     }
 }
@@ -169,7 +169,6 @@ impl std::error::Error for Error {
         match self {
             InvalidHash(e) => Some(e),
             ConsensusEncoding(e) => Some(e),
-            Io(e) => Some(e),
             InvalidMagic
             | MissingUtxo
             | InvalidSeparator
@@ -198,7 +197,8 @@ impl std::error::Error for Error {
             | TapTree(_)
             | XPubKey(_)
             | Version(_)
-            | PartialDataConsumption => None,
+            | PartialDataConsumption
+            | Io(_) => None,
         }
     }
 }
@@ -212,5 +212,5 @@ impl From<encode::Error> for Error {
 }
 
 impl From<io::Error> for Error {
-    fn from(e: io::Error) -> Self { Error::Io(e) }
+    fn from(e: io::Error) -> Self { Error::Io(e.kind()) }
 }
