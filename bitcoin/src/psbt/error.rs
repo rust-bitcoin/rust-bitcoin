@@ -5,8 +5,8 @@ use core::fmt;
 use internals::write_err;
 
 use crate::bip32::Xpub;
-use crate::blockdata::transaction::Transaction;
 use crate::consensus::encode;
+use crate::hash_types::Txid;
 use crate::prelude::*;
 use crate::psbt::{raw, FutureVersionError};
 use crate::{hashes, io};
@@ -48,13 +48,12 @@ pub enum Error {
     MustHaveUnsignedTx,
     /// Signals that there are no more key-value pairs in a key-value map.
     NoMorePairs,
-    /// Attempting to combine with a PSBT describing a different unsigned
-    /// transaction.
-    UnexpectedUnsignedTx {
+    /// Attempting to combine with a PSBT describing a different unique identification.
+    UnexpectedUniqueId {
         /// Expected
-        expected: Box<Transaction>,
+        expected: Box<Txid>,
         /// Actual
-        actual: Box<Transaction>,
+        actual: Box<Txid>,
     },
     /// Unable to parse as a standard sighash type.
     NonStandardSighashType(u32),
@@ -126,6 +125,9 @@ pub enum Error {
     /// to be present in the global types section. On the other hand,
     /// they must be omitted in PsbtV0.
     InvalidInputOutputCounts,
+    /// Computing Locktime error for Non-PsbtV0 indicating the
+    /// required Locktime not present in the input.
+    RequiredLocktimeNotPresent,
 }
 
 impl fmt::Display for Error {
@@ -149,12 +151,8 @@ impl fmt::Display for Error {
             Error::MustHaveUnsignedTx =>
                 f.write_str("partially signed transactions must have an unsigned transaction"),
             Error::NoMorePairs => f.write_str("no more key-value pairs for this psbt map"),
-            Error::UnexpectedUnsignedTx { expected: ref e, actual: ref a } => write!(
-                f,
-                "different unsigned transaction: expected {}, actual {}",
-                e.txid(),
-                a.txid()
-            ),
+            Error::UnexpectedUniqueId { expected: ref e, actual: ref a } =>
+                write!(f, "different unsigned transaction: expected {}, actual {}", e, a),
             Error::NonStandardSighashType(ref sht) => {
                 write!(f, "non-standard sighash type: {}", sht)
             }
@@ -194,6 +192,8 @@ impl fmt::Display for Error {
             Error::InvalidInputOutputCounts => f.write_str("input and output counts are not valid"),
             Error::InvalidInput => f.write_str("input not valid"),
             Error::InvalidOutput => f.write_str("output not valid"),
+            Error::RequiredLocktimeNotPresent =>
+                f.write_str("required locktime not present in this Psbt input"),
         }
     }
 }
@@ -219,7 +219,7 @@ impl std::error::Error for Error {
             | UnsignedTxHasScriptWitnesses
             | MustHaveUnsignedTx
             | NoMorePairs
-            | UnexpectedUnsignedTx { .. }
+            | &UnexpectedUniqueId { .. }
             | NonStandardSighashType(_)
             | InvalidPreimageHashPair { .. }
             | CombineInconsistentKeySources(_)
@@ -244,7 +244,8 @@ impl std::error::Error for Error {
             | UnsignedTxPresent
             | InvalidInputOutputCounts
             | InvalidInput
-            | InvalidOutput => None,
+            | InvalidOutput
+            | RequiredLocktimeNotPresent => None,
         }
     }
 }

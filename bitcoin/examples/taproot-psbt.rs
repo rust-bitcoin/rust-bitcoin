@@ -320,7 +320,7 @@ fn generate_bip86_key_spend_tx(
 
     // EXTRACTOR
     let psbt = Psbt::new(psbt).unwrap();
-    let tx = psbt.extract_tx();
+    let tx = psbt.extract_tx()?;
     tx.verify(|_| {
         Some(TxOut {
             value: from_amount,
@@ -559,7 +559,7 @@ impl BenefactorWallet {
 
             // EXTRACTOR
             let psbt = Psbt::new(psbt).unwrap();
-            let tx = psbt.extract_tx();
+            let tx = psbt.extract_tx()?;
             tx.verify(|_| {
                 Some(TxOut { value: input_value, script_pubkey: output_script_pubkey.clone() })
             })
@@ -705,7 +705,7 @@ impl BeneficiaryWallet {
 
         // EXTRACTOR
         let psbt = Psbt::new(psbt).unwrap();
-        let tx = psbt.extract_tx();
+        let tx = psbt.extract_tx()?;
         tx.verify(|_| {
             Some(TxOut { value: input_value, script_pubkey: input_script_pubkey.clone() })
         })

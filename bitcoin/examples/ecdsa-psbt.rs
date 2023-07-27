@@ -82,7 +82,7 @@ fn main() -> Result<()> {
     let finalized = online.finalize_psbt(signed)?;
 
     // You can use `bt sendrawtransaction` to broadcast the extracted transaction.
-    let tx = finalized.extract_tx();
+    let tx = finalized.extract_tx()?;
     tx.verify(|_| Some(previous_output())).expect("failed to verify transaction");
 
     let hex = encode::serialize_hex(&tx);

@@ -138,6 +138,14 @@ impl Output {
         self.unknown.extend(other.unknown);
         self.tap_key_origins.extend(other.tap_key_origins);
 
+        if let (&None, Some(amount)) = (&self.amount, other.amount) {
+            self.amount = Some(amount);
+        }
+
+        if let (&None, Some(script)) = (&self.script, other.script) {
+            self.script = Some(script);
+        }
+
         combine!(redeem_script, self, other);
         combine!(witness_script, self, other);
         combine!(tap_internal_key, self, other);
