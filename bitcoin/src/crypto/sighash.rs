@@ -199,7 +199,7 @@ impl str::FromStr for TapSighashType {
 }
 
 /// Possible errors in computing the signature message.
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Error {
     /// Could happen only by using `*_encode_signing_*` methods with custom writers, engines writers
@@ -531,7 +531,7 @@ impl_std_error!(NonStandardSighashType);
 /// Error returned for failure during parsing one of the sighash types.
 ///
 /// This is currently returned for unrecognized sighash strings.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SighashTypeParseError {
     /// The unrecognized string we attempted to parse.
     pub unrecognized: String,

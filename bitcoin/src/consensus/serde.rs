@@ -101,11 +101,11 @@ pub mod hex {
     // TODO: statically prove impossible cases
 
     /// Error returned when a hex string decoder can't be created.
-    #[derive(Debug)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub struct DecodeInitError(hashes::hex::Error);
 
     /// Error returned when a hex string contains invalid characters.
-    #[derive(Debug)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub struct DecodeError(hashes::hex::Error);
 
     /// Hex decoder state.

@@ -30,7 +30,7 @@ mod message_signing {
     use crate::prelude::*;
 
     /// An error used for dealing with Bitcoin Signed Messages.
-    #[derive(Debug, PartialEq, Eq)]
+    #[derive(Debug, Clone, PartialEq, Eq)]
     #[non_exhaustive]
     pub enum MessageSignatureError {
         /// Signature is expected to be 65 bytes.

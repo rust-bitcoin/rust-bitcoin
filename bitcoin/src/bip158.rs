@@ -58,7 +58,7 @@ const P: u8 = 19;
 const M: u64 = 784931;
 
 /// Errors for blockfilter.
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Error {
     /// Missing UTXO, cannot calculate script filter.

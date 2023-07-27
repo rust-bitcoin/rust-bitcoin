@@ -185,7 +185,7 @@ impl<'a> IntoIterator for &'a SerializedSignature {
 }
 
 /// A key-related error.
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Error {
     /// Hex encoding error

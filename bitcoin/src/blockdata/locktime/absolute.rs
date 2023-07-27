@@ -600,7 +600,7 @@ impl From<ParseIntError> for Error {
 }
 
 /// An error that occurs when converting a `u32` to a lock time variant.
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ConversionError {
     /// The expected timelock unit, height (blocks) or time (seconds).
     unit: LockTimeUnit,
@@ -646,7 +646,7 @@ impl fmt::Display for LockTimeUnit {
 }
 
 /// Errors than occur when operating on lock times.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum OperationError {
     /// Cannot compare different lock time units (height vs time).

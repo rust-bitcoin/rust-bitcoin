@@ -33,7 +33,7 @@ use crate::prelude::*;
 use crate::taproot::TapLeafHash;
 
 /// Encoding error.
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Error {
     /// And I/O error.
