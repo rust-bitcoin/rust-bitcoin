@@ -369,7 +369,7 @@ mod error {
 
     /// Error returned on attempt to create too large `PushBytes`.
     #[allow(unused)]
-    #[derive(Debug, Clone)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub struct PushBytesError {
         never: core::convert::Infallible,
     }
@@ -391,7 +391,7 @@ mod error {
     use core::fmt;
 
     /// Error returned on attempt to create too large `PushBytes`.
-    #[derive(Debug, Clone)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub struct PushBytesError {
         /// How long the input was.
         pub(super) len: usize,

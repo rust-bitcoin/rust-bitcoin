@@ -457,7 +457,7 @@ impl Decodable for PartialMerkleTree {
 }
 
 /// An error when verifying the merkle block.
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum MerkleBlockError {
     /// Merkle root in the header doesn't match to the root calculated from partial merkle tree.

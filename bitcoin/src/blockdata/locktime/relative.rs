@@ -298,7 +298,7 @@ impl fmt::Display for Time {
 }
 
 /// Errors related to relative lock times.
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Error {
     /// Input time in seconds was too large to be encoded to a 16 bit 512 second interval.

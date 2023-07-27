@@ -217,7 +217,7 @@ impl<T: Default + Copy> SmallVec<T> {
 }
 
 /// An error that might occur during base58 decoding.
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Error {
     /// Invalid character encountered.

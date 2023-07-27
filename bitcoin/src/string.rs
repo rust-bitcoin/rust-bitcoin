@@ -35,7 +35,7 @@ pub trait FromHexStr: Sized {
 }
 
 /// Hex parsing error
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum FromHexError<E> {
     /// The input was not a valid hex string, contains the error that occurred while parsing.
     ParseHex(E),

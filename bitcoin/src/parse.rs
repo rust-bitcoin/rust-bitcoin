@@ -18,7 +18,7 @@ use crate::prelude::*;
 /// Note that this is larger than the type from `core` so if it's passed through a deep call stack
 /// in a performance-critical application you may want to box it or throw away the context by
 /// converting to `core` type.
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ParseIntError {
     input: String,
     // for displaying - see Display impl with nice error message below
