@@ -659,6 +659,7 @@ pub enum SigningAlgorithm {
 
 /// Errors encountered while calculating the sighash message.
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
+#[non_exhaustive]
 pub enum SignError {
     /// Input index out of bounds (actual index, maximum index allowed).
     IndexOutOfBounds(usize, usize),
