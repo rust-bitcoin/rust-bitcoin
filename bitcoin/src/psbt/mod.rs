@@ -15,7 +15,6 @@ use internals::write_err;
 use secp256k1::{Message, Secp256k1, Signing};
 
 use crate::bip32::{self, ExtendedPrivKey, ExtendedPubKey, KeySource};
-use crate::blockdata::script::ScriptBuf;
 use crate::blockdata::transaction::{Transaction, TxOut};
 use crate::crypto::ecdsa;
 use crate::crypto::key::{PrivateKey, PublicKey};
@@ -336,16 +335,15 @@ impl Psbt {
                 Ok((Message::from(sighash), hash_ty))
             }
             Wpkh => {
-                let script_code = ScriptBuf::p2wpkh_script_code(spk).ok_or(SignError::NotWpkh)?;
+                let script_code = spk.p2wpkh_script_code().ok_or(SignError::NotWpkh)?;
                 let sighash =
                     cache.segwit_signature_hash(input_index, &script_code, utxo.value, hash_ty)?;
                 Ok((Message::from(sighash), hash_ty))
             }
             ShWpkh => {
-                let script_code = ScriptBuf::p2wpkh_script_code(
-                    input.redeem_script.as_ref().expect("checked above"),
-                )
-                .ok_or(SignError::NotWpkh)?;
+                let script_code = input.redeem_script.as_ref().expect("checked above")
+                    .p2wpkh_script_code()
+                    .ok_or(SignError::NotWpkh)?;
                 let sighash =
                     cache.segwit_signature_hash(input_index, &script_code, utxo.value, hash_ty)?;
                 Ok((Message::from(sighash), hash_ty))
