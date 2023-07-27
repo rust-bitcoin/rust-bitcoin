@@ -15,7 +15,7 @@
 //! typically big-endian decimals, etc.)
 //!
 
-use core::convert::From;
+use core::convert::{From, TryFrom};
 use core::{fmt, mem, u32};
 
 use hashes::{sha256, sha256d, Hash};
@@ -325,9 +325,29 @@ pub trait Decodable: Sized {
 #[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]
 pub struct VarInt(pub u64);
 
-/// Data which must be preceded by a 4-byte checksum.
+/// Data and a 4-byte checksum.
 #[derive(PartialEq, Eq, Clone, Debug)]
-pub struct CheckedData(pub Vec<u8>);
+pub struct CheckedData {
+    data: Vec<u8>,
+    checksum: [u8; 4],
+}
+
+impl CheckedData {
+    /// Creates a new `CheckedData` computing the checksum of given data.
+    pub fn new(data: Vec<u8>) -> Self {
+        let checksum = sha2_checksum(&data);
+        Self { data, checksum }
+    }
+
+    /// Returns a reference to the raw data without the checksum.
+    pub fn data(&self) -> &[u8] { &self.data }
+
+    /// Returns the raw data without the checksum.
+    pub fn into_data(self) -> Vec<u8> { self.data }
+
+    /// Returns the checksum of the data.
+    pub fn checksum(&self) -> [u8; 4] { self.checksum }
+}
 
 // Primitive types
 macro_rules! impl_int_encodable {
@@ -686,10 +706,12 @@ fn sha2_checksum(data: &[u8]) -> [u8; 4] {
 impl Encodable for CheckedData {
     #[inline]
     fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        (self.0.len() as u32).consensus_encode(w)?;
-        sha2_checksum(&self.0).consensus_encode(w)?;
-        w.emit_slice(&self.0)?;
-        Ok(8 + self.0.len())
+        u32::try_from(self.data.len())
+            .expect("network message use u32 as length")
+            .consensus_encode(w)?;
+        self.checksum().consensus_encode(w)?;
+        w.emit_slice(&self.data)?;
+        Ok(8 + self.data.len())
     }
 }
 
@@ -700,12 +722,12 @@ impl Decodable for CheckedData {
 
         let checksum = <[u8; 4]>::consensus_decode_from_finite_reader(r)?;
         let opts = ReadBytesFromFiniteReaderOpts { len, chunk_size: MAX_VEC_SIZE };
-        let ret = read_bytes_from_finite_reader(r, opts)?;
-        let expected_checksum = sha2_checksum(&ret);
+        let data = read_bytes_from_finite_reader(r, opts)?;
+        let expected_checksum = sha2_checksum(&data);
         if expected_checksum != checksum {
             Err(self::Error::InvalidChecksum { expected: expected_checksum, actual: checksum })
         } else {
-            Ok(CheckedData(ret))
+            Ok(CheckedData { data, checksum })
         }
     }
 }
@@ -978,7 +1000,7 @@ mod tests {
 
     #[test]
     fn serialize_checkeddata_test() {
-        let cd = CheckedData(vec![1u8, 2, 3, 4, 5]);
+        let cd = CheckedData::new(vec![1u8, 2, 3, 4, 5]);
         assert_eq!(serialize(&cd), vec![5, 0, 0, 0, 162, 107, 175, 90, 1, 2, 3, 4, 5]);
     }
 
@@ -1137,7 +1159,7 @@ mod tests {
     fn deserialize_checkeddata_test() {
         let cd: Result<CheckedData, _> =
             deserialize(&[5u8, 0, 0, 0, 162, 107, 175, 90, 1, 2, 3, 4, 5]);
-        assert_eq!(cd.ok(), Some(CheckedData(vec![1u8, 2, 3, 4, 5])));
+        assert_eq!(cd.ok(), Some(CheckedData::new(vec![1u8, 2, 3, 4, 5])));
     }
 
     #[test]

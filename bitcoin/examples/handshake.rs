@@ -28,10 +28,8 @@ fn main() {
 
     let version_message = build_version_message(address);
 
-    let first_message = message::RawNetworkMessage {
-        magic: constants::Network::Bitcoin.magic(),
-        payload: version_message,
-    };
+    let first_message =
+        message::RawNetworkMessage::new(constants::Network::Bitcoin.magic(), version_message);
 
     if let Ok(mut stream) = TcpStream::connect(address) {
         // Send the message
@@ -44,24 +42,24 @@ fn main() {
         loop {
             // Loop an retrieve new messages
             let reply = message::RawNetworkMessage::consensus_decode(&mut stream_reader).unwrap();
-            match reply.payload {
+            match reply.payload() {
                 message::NetworkMessage::Version(_) => {
-                    println!("Received version message: {:?}", reply.payload);
+                    println!("Received version message: {:?}", reply.payload());
 
-                    let second_message = message::RawNetworkMessage {
-                        magic: constants::Network::Bitcoin.magic(),
-                        payload: message::NetworkMessage::Verack,
-                    };
+                    let second_message = message::RawNetworkMessage::new(
+                        constants::Network::Bitcoin.magic(),
+                        message::NetworkMessage::Verack,
+                    );
 
                     let _ = stream.write_all(encode::serialize(&second_message).as_slice());
                     println!("Sent verack message");
                 }
                 message::NetworkMessage::Verack => {
-                    println!("Received verack message: {:?}", reply.payload);
+                    println!("Received verack message: {:?}", reply.payload());
                     break;
                 }
                 _ => {
-                    println!("Received unknown message: {:?}", reply.payload);
+                    println!("Received unknown message: {:?}", reply.payload());
                     break;
                 }
             }
