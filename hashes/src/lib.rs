@@ -79,12 +79,12 @@
 // Instead of littering the codebase for non-fuzzing code just globally allow.
 #![cfg_attr(hashes_fuzz, allow(dead_code, unused_imports))]
 
+#[cfg(all(not(test), not(feature = "std"), feature = "core2"))]
+extern crate actual_core2 as core2;
 #[cfg(all(feature = "alloc", not(feature = "std")))]
 extern crate alloc;
 #[cfg(any(test, feature = "std"))]
 extern crate core;
-#[cfg(feature = "core2")]
-extern crate core2;
 
 #[cfg(feature = "serde")]
 /// A generic serialization/deserialization framework.
@@ -94,6 +94,9 @@ pub extern crate serde;
 extern crate serde_test;
 #[cfg(bench)]
 extern crate test;
+
+/// Re-export the `hex-conservative` crate.
+pub extern crate hex;
 
 #[doc(hidden)]
 pub mod _export {
@@ -113,9 +116,8 @@ mod util;
 pub mod serde_macros;
 pub mod cmp;
 pub mod hash160;
-pub mod hex;
 pub mod hmac;
-#[cfg(any(feature = "std", feature = "core2"))]
+#[cfg(any(test, feature = "std", feature = "core2"))]
 mod impls;
 pub mod ripemd160;
 pub mod sha1;
@@ -127,7 +129,12 @@ pub mod sha512_256;
 pub mod siphash24;
 
 use core::{borrow, fmt, hash, ops};
+// You get I/O if you enable "std" or "core2" (as well as during testing).
+#[cfg(any(test, feature = "std"))]
+use std::io;
 
+#[cfg(all(not(test), not(feature = "std"), feature = "core2"))]
+use core2::io;
 pub use hmac::{Hmac, HmacEngine};
 
 /// A hashing engine which bytes can be serialized into.

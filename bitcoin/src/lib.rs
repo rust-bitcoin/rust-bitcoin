@@ -66,8 +66,14 @@ pub extern crate bech32;
 /// Bitcoin's libbitcoinconsensus with Rust binding.
 pub extern crate bitcoinconsensus;
 
+#[cfg(not(feature = "std"))]
+extern crate core2;
+
 /// Rust implementation of cryptographic hash function algorithems.
 pub extern crate hashes;
+
+/// Re-export the `hex-conservative` crate.
+pub extern crate hex;
 
 /// Rust wrapper library for Pieter Wuille's libsecp256k1.  Implements ECDSA and BIP 340 signatures
 /// for the SECG elliptic curve group secp256k1 and related utilities.
@@ -186,7 +192,7 @@ mod prelude {
     #[cfg(not(feature = "std"))]
     pub use crate::io_extras::sink;
 
-    pub use internals::hex::display::DisplayHex;
+    pub use hex::DisplayHex;
 }
 
 #[cfg(bench)]

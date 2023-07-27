@@ -13,7 +13,7 @@
 //!
 //! ```rust
 //! use bitcoin::hash_types::Txid;
-//! use bitcoin::hashes::hex::FromHex;
+//! use bitcoin::hex::FromHex;
 //! use bitcoin::{Block, MerkleBlock};
 //!
 //! // Get the proof from a bitcoind by running in the terminal:
@@ -73,7 +73,7 @@ impl MerkleBlock {
     ///
     /// ```rust
     /// use bitcoin::hash_types::Txid;
-    /// use bitcoin::hashes::hex::FromHex;
+    /// use bitcoin::hex::FromHex;
     /// use bitcoin::{Block, MerkleBlock};
     ///
     /// // Block 80000
@@ -223,7 +223,7 @@ impl PartialMerkleTree {
     ///
     /// ```rust
     /// use bitcoin::hash_types::Txid;
-    /// use bitcoin::hashes::hex::FromHex;
+    /// use bitcoin::hex::FromHex;
     /// use bitcoin::merkle_tree::{MerkleBlock, PartialMerkleTree};
     ///
     /// // Block 80000
@@ -751,7 +751,7 @@ mod tests {
     /// Returns a real block (0000000000013b8ab2cd513b0261a14096412195a72a0c4827d229dcc7e0f7af)
     /// with 9 txs.
     fn get_block_13b8a() -> Block {
-        use hashes::hex::FromHex;
+        use hex::FromHex;
         let block_hex = include_str!("../../tests/data/block_13b8a.hex");
         deserialize(&Vec::from_hex(block_hex).unwrap()).unwrap()
     }

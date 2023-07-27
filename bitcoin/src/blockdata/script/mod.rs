@@ -513,7 +513,7 @@ impl<'de> serde::Deserialize<'de> for ScriptBuf {
     {
         use core::fmt::Formatter;
 
-        use hashes::hex::FromHex;
+        use hex::FromHex;
 
         if deserializer.is_human_readable() {
             struct Visitor;

@@ -462,8 +462,8 @@ impl<'de> serde::Deserialize<'de> for Witness {
                 self,
                 mut a: A,
             ) -> Result<Self::Value, A::Error> {
-                use hashes::hex::Error::*;
-                use hashes::hex::FromHex;
+                use hex::FromHex;
+                use hex::HexToBytesError::*;
                 use serde::de::{self, Unexpected};
 
                 let mut ret = match a.size_hint() {
@@ -485,10 +485,6 @@ impl<'de> serde::Deserialize<'de> for Witness {
                         },
                         OddLengthString(len) =>
                             de::Error::invalid_length(len, &"an even length string"),
-                        InvalidLength(expected, got) => {
-                            let exp = format!("expected length: {}", expected);
-                            de::Error::invalid_length(got, &exp.as_str())
-                        }
                     })?;
                     ret.push(vec);
                 }

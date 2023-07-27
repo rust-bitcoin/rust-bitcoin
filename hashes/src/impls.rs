@@ -5,13 +5,7 @@
 //! Implementations of traits defined in `std` / `core2` and not in `core`.
 //!
 
-#[cfg(feature = "std")]
-use std::io;
-
-#[cfg(not(feature = "std"))]
-use core2::io;
-
-use crate::{hmac, ripemd160, sha1, sha256, sha512, siphash24, HashEngine};
+use crate::{hmac, io, ripemd160, sha1, sha256, sha512, siphash24, HashEngine};
 
 impl io::Write for sha1::HashEngine {
     fn flush(&mut self) -> io::Result<()> { Ok(()) }

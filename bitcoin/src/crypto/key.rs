@@ -9,8 +9,8 @@ use core::fmt::{self, Write};
 use core::ops;
 use core::str::FromStr;
 
-use hashes::hex::FromHex;
-use hashes::{hash160, hex, Hash};
+use hashes::{hash160, Hash};
+use hex::FromHex;
 use internals::write_err;
 #[cfg(feature = "rand-std")]
 pub use secp256k1::rand;
@@ -34,7 +34,7 @@ pub enum Error {
     /// Invalid key prefix error
     InvalidKeyPrefix(u8),
     /// Hex decoding error
-    Hex(hex::Error),
+    Hex(hex::HexToArrayError),
     /// `PublicKey` hex should be 66 or 130 digits long.
     InvalidHexLength(usize),
 }
@@ -74,8 +74,8 @@ impl From<secp256k1::Error> for Error {
     fn from(e: secp256k1::Error) -> Error { Error::Secp256k1(e) }
 }
 
-impl From<hex::Error> for Error {
-    fn from(e: hex::Error) -> Self { Error::Hex(e) }
+impl From<hex::HexToArrayError> for Error {
+    fn from(e: hex::HexToArrayError) -> Self { Error::Hex(e) }
 }
 
 /// A Bitcoin ECDSA public key
@@ -735,7 +735,7 @@ impl From<TweakedKeyPair> for TweakedPublicKey {
 mod tests {
     use std::str::FromStr;
 
-    use hashes::hex::FromHex;
+    use hex::FromHex;
     use secp256k1::Secp256k1;
 
     use super::*;

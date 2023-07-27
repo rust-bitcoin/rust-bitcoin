@@ -19,13 +19,6 @@ extern crate alloc;
 extern crate std;
 
 pub mod error;
-pub mod hex;
 pub mod macros;
 mod parse;
 pub mod serde;
-
-/// Mainly reexports based on features.
-pub(crate) mod prelude {
-    #[cfg(feature = "alloc")]
-    pub(crate) use alloc::string::String;
-}

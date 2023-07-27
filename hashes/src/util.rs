@@ -268,15 +268,15 @@ macro_rules! hash_newtype {
         }
 
         impl $crate::_export::_core::str::FromStr for $newtype {
-            type Err = $crate::hex::Error;
+            type Err = $crate::hex::HexToArrayError;
             fn from_str(s: &str) -> $crate::_export::_core::result::Result<$newtype, Self::Err> {
-                use $crate::hex::{HexIterator, FromHex};
+                use $crate::hex::{FromHex, HexToBytesIter};
                 use $crate::Hash;
 
                 let inner: <$hash as Hash>::Bytes = if <Self as $crate::Hash>::DISPLAY_BACKWARD {
-                    FromHex::from_byte_iter(HexIterator::new(s)?.rev())?
+                    FromHex::from_byte_iter(HexToBytesIter::new(s)?.rev())?
                 } else {
-                    FromHex::from_byte_iter(HexIterator::new(s)?)?
+                    FromHex::from_byte_iter(HexToBytesIter::new(s)?)?
                 };
                 Ok($newtype(<$hash>::from_byte_array(inner)))
             }

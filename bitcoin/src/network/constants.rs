@@ -31,7 +31,7 @@ use core::fmt::Display;
 use core::str::FromStr;
 use core::{fmt, ops};
 
-use hashes::hex::{Error, FromHex};
+use hex::FromHex;
 use internals::{debug_from_display, write_err};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -313,7 +313,7 @@ impl Magic {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct ParseMagicError {
     /// The error that occurred when parsing the string.
-    error: Error,
+    error: hex::HexToArrayError,
     /// The byte string that failed to parse.
     magic: String,
 }
@@ -362,7 +362,7 @@ impl TryFrom<Magic> for Network {
 
 impl fmt::Display for Magic {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        internals::fmt_hex_exact!(f, 4, &self.0, internals::hex::Case::Lower)?;
+        hex::fmt_hex_exact!(f, 4, &self.0, hex::Case::Lower)?;
         Ok(())
     }
 }
@@ -370,14 +370,14 @@ debug_from_display!(Magic);
 
 impl fmt::LowerHex for Magic {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        internals::fmt_hex_exact!(f, 4, &self.0, internals::hex::Case::Lower)?;
+        hex::fmt_hex_exact!(f, 4, &self.0, hex::Case::Lower)?;
         Ok(())
     }
 }
 
 impl fmt::UpperHex for Magic {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        internals::fmt_hex_exact!(f, 4, &self.0, internals::hex::Case::Upper)?;
+        hex::fmt_hex_exact!(f, 4, &self.0, hex::Case::Upper)?;
         Ok(())
     }
 }

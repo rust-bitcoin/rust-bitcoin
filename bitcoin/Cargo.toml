@@ -26,8 +26,8 @@ bitcoinconsensus-std = ["bitcoinconsensus/std", "std"]
 # The no-std feature doesn't disable std - you need to turn off the std feature for that by disabling default.
 # Instead no-std enables additional features required for this crate to be usable without std.
 # As a result, both can be enabled without conflict.
-std = ["secp256k1/std", "hashes/std", "bech32/std", "internals/std"]
-no-std = ["core2", "hashes/alloc", "hashes/core2", "secp256k1/alloc"]
+std = ["secp256k1/std", "hashes/std", "bech32/std", "internals/std", "hex/std"]
+no-std = ["core2", "hashes/alloc", "hashes/core2", "secp256k1/alloc", "hex/alloc", "hex/core2"]
 
 [package.metadata.docs.rs]
 all-features = true
@@ -35,6 +35,7 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
 internals = { package = "bitcoin-internals", version = "0.2.0" }
+hex = { package = "hex-conservative", version = "0.1.1", default-features = false }
 bech32 = { version = "0.9.0", default-features = false }
 hashes = { package = "bitcoin_hashes", version = "0.12.0", default-features = false }
 secp256k1 = { version = "0.27.0", default-features = false, features = ["bitcoin_hashes"] }
@@ -43,6 +44,8 @@ hex_lit = "0.1.1"
 base64 = { version = "0.13.0", optional = true }
 # Only use this feature for no-std builds, otherwise use bitcoinconsensus-std.
 bitcoinconsensus = { version = "0.20.2-0.5.0", default-features = false, optional = true }
+
+# There is no reason to use this dependency directly, it is activated by the "no-std" feature.
 core2 = { version = "0.3.2", default-features = false, features = ["alloc"], optional = true }
 # Do NOT use this as a feature! Use the `serde` feature instead.
 actual-serde = { package = "serde", version = "1.0.103", default-features = false, features = [ "derive", "alloc" ], optional = true }

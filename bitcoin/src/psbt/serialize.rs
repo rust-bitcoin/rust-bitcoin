@@ -178,9 +178,7 @@ impl Deserialize for ecdsa::Signature {
             ecdsa::Error::EmptySignature => Error::InvalidEcdsaSignature(e),
             ecdsa::Error::NonStandardSighashType(flag) => Error::NonStandardSighashType(flag),
             ecdsa::Error::Secp256k1(..) => Error::InvalidEcdsaSignature(e),
-            ecdsa::Error::HexEncoding(..) => {
-                unreachable!("Decoding from slice, not hex")
-            }
+            ecdsa::Error::Hex(..) => unreachable!("Decoding from slice, not hex"),
         })
     }
 }

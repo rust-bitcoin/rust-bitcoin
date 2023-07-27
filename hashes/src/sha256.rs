@@ -125,7 +125,7 @@ impl<I: SliceIndex<[u8]>> Index<I> for Midstate {
 }
 
 impl str::FromStr for Midstate {
-    type Err = hex::Error;
+    type Err = hex::HexToArrayError;
     fn from_str(s: &str) -> Result<Self, Self::Err> { hex::FromHex::from_hex(s) }
 }
 
@@ -174,9 +174,12 @@ impl Midstate {
 }
 
 impl hex::FromHex for Midstate {
-    fn from_byte_iter<I>(iter: I) -> Result<Self, hex::Error>
+    type Err = hex::HexToArrayError;
+    fn from_byte_iter<I>(iter: I) -> Result<Self, Self::Err>
     where
-        I: Iterator<Item = Result<u8, hex::Error>> + ExactSizeIterator + DoubleEndedIterator,
+        I: Iterator<Item = Result<u8, hex::HexToBytesError>>
+            + ExactSizeIterator
+            + DoubleEndedIterator,
     {
         // DISPLAY_BACKWARD is true
         Ok(Midstate::from_byte_array(hex::FromHex::from_byte_iter(iter.rev())?))
