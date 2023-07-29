@@ -341,7 +341,10 @@ impl Psbt {
                 Ok((Message::from(sighash), hash_ty))
             }
             ShWpkh => {
-                let script_code = input.redeem_script.as_ref().expect("checked above")
+                let script_code = input
+                    .redeem_script
+                    .as_ref()
+                    .expect("checked above")
                     .p2wpkh_script_code()
                     .ok_or(SignError::NotWpkh)?;
                 let sighash =
