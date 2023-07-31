@@ -793,7 +793,10 @@ impl<R: Borrow<Transaction>> SighashCache<R> {
         } else if sighash == EcdsaSighashType::Single && input_index < self.tx.borrow().output.len()
         {
             let mut single_enc = LegacySighash::engine();
-            self.tx.borrow().output.get(input_index)
+            self.tx
+                .borrow()
+                .output
+                .get(input_index)
                 .ok_or(Error::SingleWithoutCorrespondingOutput {
                     index: input_index,
                     outputs_size: self.tx.borrow().output.len(),
