@@ -468,6 +468,77 @@ impl Psbt {
         Ok(tx)
     }
 
+    /// Converts this Psbt into a PsbtV0
+    pub fn get_v0(self) -> Result<Self, Error> {
+        match self.inner.version {
+            Version::PsbtV0 => Ok(self),
+            Version::PsbtV2 => {
+                let tx = self.construct_unsigned_tx()?;
+                let mut psbt_inner = PsbtInner {
+                    unsigned_tx: Some(tx),
+                    version: Version::PsbtV0,
+                    tx_modifiable: None,
+                    tx_version: None,
+                    fallback_locktime: None,
+                    ..self.inner
+                };
+
+                for input in psbt_inner.inputs.iter_mut() {
+                    input.previous_tx_id = None;
+                    input.output_index = None;
+                    input.sequence = None;
+                    input.required_time_locktime = None;
+                    input.required_height_locktime = None;
+                }
+
+                for output in psbt_inner.outputs.iter_mut() {
+                    output.script = None;
+                    output.amount = None;
+                }
+
+                Psbt::new(psbt_inner)
+            }
+        }
+    }
+
+    /// Converts this Psbt into a PsbtV2
+    pub fn get_v2(self) -> Result<Self, Error> {
+        match self.inner.version {
+            Version::PsbtV2 => Ok(self),
+            Version::PsbtV0 => {
+                let unsigned_tx = self.inner.unsigned_tx.unwrap();
+                let mut psbt_inner = PsbtInner {
+                    unsigned_tx: None,
+                    version: Version::PsbtV2,
+                    tx_version: Some(unsigned_tx.version),
+                    fallback_locktime: Some(unsigned_tx.lock_time),
+                    // No information about TxModifiable flags is available in PsbtV0
+                    ..self.inner
+                };
+
+                for (input, txin) in psbt_inner.inputs.iter_mut().zip(unsigned_tx.input.into_iter())
+                {
+                    input.previous_tx_id = Some(txin.previous_output.txid);
+                    input.output_index = Some(txin.previous_output.vout);
+                    input.sequence = Some(txin.sequence);
+
+                    // The following information is not available in PsbtV0
+                    input.required_time_locktime = None;
+                    input.required_height_locktime = None;
+                }
+
+                for (output, txout) in
+                    psbt_inner.outputs.iter_mut().zip(unsigned_tx.output.into_iter())
+                {
+                    output.script = Some(txout.script_pubkey);
+                    output.amount = Some(txout.value);
+                }
+
+                Psbt::new(psbt_inner)
+            }
+        }
+    }
+
     /// Extracts the [`Transaction`] from a PSBT by filling in the available signature information.
     pub fn extract_tx(self) -> Result<Transaction, Error> {
         let mut tx = match self.inner.version {
