@@ -128,7 +128,7 @@ impl Decodable for CommandString {
 /// Error returned when a command string is invalid.
 ///
 /// This is currently returned for command strings longer than 12.
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CommandStringError {
     cow: Cow<'static, str>,
 }

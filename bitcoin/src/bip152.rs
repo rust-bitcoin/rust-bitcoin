@@ -19,7 +19,7 @@ use crate::prelude::*;
 use crate::{block, io, Block, BlockHash, Transaction};
 
 /// A BIP-152 error
-#[derive(Clone, PartialEq, Eq, Debug, Copy, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Error {
     /// An unknown version number was used.
@@ -318,7 +318,7 @@ impl Decodable for BlockTransactionsRequest {
 
 /// A transaction index is requested that is out of range from the
 /// corresponding block.
-#[derive(Clone, PartialEq, Eq, Debug, Copy, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct TxIndexOutOfRangeError(u64);
 
 impl fmt::Display for TxIndexOutOfRangeError {

@@ -60,7 +60,7 @@ impl Signature {
 /// An error constructing a [`taproot::Signature`] from a byte slice.
 ///
 /// [`taproot::Signature`]: crate::crypto::taproot::Signature
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum SigFromSliceError {
     /// Invalid signature hash type.

@@ -310,7 +310,7 @@ impl Magic {
 }
 
 /// An error in parsing magic bytes.
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ParseMagicError {
     /// The error that occurred when parsing the string.
     error: hex::HexToArrayError,

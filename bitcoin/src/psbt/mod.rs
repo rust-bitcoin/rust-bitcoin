@@ -575,7 +575,7 @@ impl_get_key_for_map!(BTreeMap);
 impl_get_key_for_map!(HashMap);
 
 /// Errors when getting a key.
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum GetKeyError {
     /// A bip32 error.
@@ -658,7 +658,8 @@ pub enum SigningAlgorithm {
 }
 
 /// Errors encountered while calculating the sighash message.
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum SignError {
     /// Input index out of bounds (actual index, maximum index allowed).
     IndexOutOfBounds(usize, usize),
@@ -695,7 +696,7 @@ impl fmt::Display for SignError {
         use self::SignError::*;
 
         match *self {
-            IndexOutOfBounds(ind, len) => {
+            IndexOutOfBounds(ref ind, ref len) => {
                 write!(f, "index {}, psbt input len: {}", ind, len)
             }
             InvalidSighashType => write!(f, "invalid sighash type"),
@@ -706,7 +707,7 @@ impl fmt::Display for SignError {
             MismatchedAlgoKey => write!(f, "signing algorithm and key type does not match"),
             NotEcdsa => write!(f, "attempted to ECDSA sign an non-ECDSA input"),
             NotWpkh => write!(f, "the scriptPubkey is not a P2WPKH script"),
-            SighashComputation(e) => write!(f, "sighash: {}", e),
+            SighashComputation(ref e) => write!(f, "sighash: {}", e),
             UnknownOutputType => write!(f, "unable to determine the output type"),
             KeyNotFound => write!(f, "unable to find key"),
             WrongSigningAlgorithm =>

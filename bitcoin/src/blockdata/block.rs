@@ -391,7 +391,7 @@ impl std::error::Error for Bip34Error {
 }
 
 /// A block validation error.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ValidationError {
     /// The header hash is not below the target.
     BadProofOfWork,

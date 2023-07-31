@@ -24,7 +24,7 @@ use crate::taproot::{TapNodeHash, TapTweakHash};
 use crate::{base58, io};
 
 /// A key-related error.
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Error {
     /// Base58 encoding error
