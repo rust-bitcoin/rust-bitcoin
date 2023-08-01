@@ -6,7 +6,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use std::{env, process};
 
 use bitcoin::consensus::{encode, Decodable};
-use bitcoin::network::{address, constants, message, message_network};
+use bitcoin::p2p::{self, address, message, message_network};
 use bitcoin::secp256k1;
 use bitcoin::secp256k1::rand::Rng;
 
@@ -29,7 +29,7 @@ fn main() {
     let version_message = build_version_message(address);
 
     let first_message =
-        message::RawNetworkMessage::new(constants::Network::Bitcoin.magic(), version_message);
+        message::RawNetworkMessage::new(bitcoin::Network::Bitcoin.magic(), version_message);
 
     if let Ok(mut stream) = TcpStream::connect(address) {
         // Send the message
@@ -47,7 +47,7 @@ fn main() {
                     println!("Received version message: {:?}", reply.payload());
 
                     let second_message = message::RawNetworkMessage::new(
-                        constants::Network::Bitcoin.magic(),
+                        bitcoin::Network::Bitcoin.magic(),
                         message::NetworkMessage::Verack,
                     );
 
@@ -75,16 +75,16 @@ fn build_version_message(address: SocketAddr) -> message::NetworkMessage {
     let my_address = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), 0);
 
     // "bitfield of features to be enabled for this connection"
-    let services = constants::ServiceFlags::NONE;
+    let services = p2p::ServiceFlags::NONE;
 
     // "standard UNIX timestamp in seconds"
     let timestamp = SystemTime::now().duration_since(UNIX_EPOCH).expect("Time error").as_secs();
 
     // "The network address of the node receiving this message"
-    let addr_recv = address::Address::new(&address, constants::ServiceFlags::NONE);
+    let addr_recv = address::Address::new(&address, p2p::ServiceFlags::NONE);
 
     // "The network address of the node emitting this message"
-    let addr_from = address::Address::new(&my_address, constants::ServiceFlags::NONE);
+    let addr_from = address::Address::new(&my_address, p2p::ServiceFlags::NONE);
 
     // "Node random nonce, randomly generated every time a version packet is sent. This nonce is used to detect connections to self."
     let nonce: u64 = secp256k1::rand::thread_rng().gen();

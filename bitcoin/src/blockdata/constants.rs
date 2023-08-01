@@ -20,7 +20,7 @@ use crate::blockdata::script;
 use crate::blockdata::transaction::{OutPoint, Sequence, Transaction, TxIn, TxOut};
 use crate::blockdata::witness::Witness;
 use crate::internal_macros::impl_bytes_newtype;
-use crate::network::constants::Network;
+use crate::network::Network;
 use crate::pow::CompactTarget;
 use crate::Amount;
 
@@ -198,7 +198,7 @@ mod test {
     use crate::blockdata::locktime::absolute;
     use crate::consensus::encode::serialize;
     use crate::internal_macros::hex;
-    use crate::network::constants::Network;
+    use crate::network::Network;
 
     #[test]
     fn bitcoin_genesis_first_transaction() {

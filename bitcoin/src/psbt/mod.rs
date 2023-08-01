@@ -823,7 +823,7 @@ mod tests {
     use crate::blockdata::transaction::{OutPoint, Sequence, Transaction, TxIn, TxOut};
     use crate::blockdata::witness::Witness;
     use crate::internal_macros::hex;
-    use crate::network::constants::Network::Bitcoin;
+    use crate::network::Network::Bitcoin;
     use crate::psbt::map::{Input, Output};
     use crate::psbt::raw;
     use crate::psbt::serialize::{Deserialize, Serialize};

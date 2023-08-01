@@ -46,7 +46,7 @@ use crate::blockdata::script::witness_version::{self, WitnessVersion};
 use crate::blockdata::script::{self, Script, ScriptBuf};
 use crate::crypto::key::{PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey};
 use crate::hash_types::{PubkeyHash, ScriptHash};
-use crate::network::constants::Network;
+use crate::network::Network;
 use crate::prelude::*;
 use crate::taproot::TapNodeHash;
 
@@ -996,7 +996,7 @@ mod tests {
 
     use super::*;
     use crate::crypto::key::PublicKey;
-    use crate::network::constants::Network::{Bitcoin, Testnet};
+    use crate::network::Network::{Bitcoin, Testnet};
 
     fn roundtrips(addr: &Address) {
         assert_eq!(

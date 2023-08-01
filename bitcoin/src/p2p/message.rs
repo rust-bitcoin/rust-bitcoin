@@ -16,10 +16,10 @@ use crate::blockdata::{block, transaction};
 use crate::consensus::encode::{self, CheckedData, Decodable, Encodable, VarInt};
 use crate::io;
 use crate::merkle_tree::MerkleBlock;
-use crate::network::address::{AddrV2Message, Address};
-use crate::network::constants::Magic;
-use crate::network::{
+use crate::p2p::address::{AddrV2Message, Address};
+use crate::p2p::{
     message_blockdata, message_bloom, message_compact_blocks, message_filter, message_network,
+    Magic,
 };
 use crate::prelude::*;
 
@@ -549,14 +549,15 @@ mod test {
     use crate::blockdata::transaction::Transaction;
     use crate::consensus::encode::{deserialize, deserialize_partial, serialize};
     use crate::internal_macros::hex;
-    use crate::network::address::{AddrV2, AddrV2Message, Address};
-    use crate::network::constants::{Magic, Network, ServiceFlags};
-    use crate::network::message_blockdata::{GetBlocksMessage, GetHeadersMessage, Inventory};
-    use crate::network::message_bloom::{BloomFlags, FilterAdd, FilterLoad};
-    use crate::network::message_compact_blocks::{GetBlockTxn, SendCmpct};
-    use crate::network::message_filter::{
+    use crate::network::Network;
+    use crate::p2p::address::{AddrV2, AddrV2Message, Address};
+    use crate::p2p::message_blockdata::{GetBlocksMessage, GetHeadersMessage, Inventory};
+    use crate::p2p::message_bloom::{BloomFlags, FilterAdd, FilterLoad};
+    use crate::p2p::message_compact_blocks::{GetBlockTxn, SendCmpct};
+    use crate::p2p::message_filter::{
         CFCheckpt, CFHeaders, CFilter, GetCFCheckpt, GetCFHeaders, GetCFilters,
     };
+    use crate::p2p::{Magic, ServiceFlags};
 
     fn hash(slice: [u8; 32]) -> Hash { Hash::from_slice(&slice).unwrap() }
 
