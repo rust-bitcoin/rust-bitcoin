@@ -248,12 +248,12 @@ impl fmt::Display for Error {
 
         match self {
             Io(error_kind) => write!(f, "writer errored: {:?}", error_kind),
-            IndexOutOfInputsBounds { index, inputs_size } => write!(f, "Requested index ({}) is greater or equal than the number of transaction inputs ({})", index, inputs_size),
+            IndexOutOfInputsBounds { index, inputs_size } => write!(f, "requested index ({}) is greater or equal than the number of transaction inputs ({})", index, inputs_size),
             SingleWithoutCorrespondingOutput { index, outputs_size } => write!(f, "SIGHASH_SINGLE for input ({}) haven't a corresponding output (#outputs:{})", index, outputs_size),
-            PrevoutsSize => write!(f, "Number of supplied prevouts differs from the number of inputs in transaction"),
-            PrevoutIndex => write!(f, "The index requested is greater than available prevouts or different from the provided [Provided::Anyone] index"),
-            PrevoutKind => write!(f, "A single prevout has been provided but all prevouts are needed without `ANYONECANPAY`"),
-            WrongAnnex => write!(f, "Annex must be at least one byte long and the first bytes must be `0x50`"),
+            PrevoutsSize => write!(f, "number of supplied prevouts differs from the number of inputs in transaction"),
+            PrevoutIndex => write!(f, "the index requested is greater than available prevouts or different from the provided [Provided::Anyone] index"),
+            PrevoutKind => write!(f, "a single prevout has been provided but all prevouts are needed without `ANYONECANPAY`"),
+            WrongAnnex => write!(f, "annex must be at least one byte long and the first bytes must be `0x50`"),
             InvalidSighashType(hash_ty) => write!(f, "Invalid taproot signature hash type : {} ", hash_ty),
         }
     }
@@ -275,6 +275,10 @@ impl std::error::Error for Error {
             | InvalidSighashType(_) => None,
         }
     }
+}
+
+impl From<io::Error> for Error {
+    fn from(e: io::Error) -> Self { Error::Io(e.kind()) }
 }
 
 impl<'u, T> Prevouts<'u, T>
@@ -325,8 +329,8 @@ impl<'s> ScriptPath<'s> {
         self.leaf_version
             .to_consensus()
             .consensus_encode(&mut enc)
-            .expect("Writing to hash enging should never fail");
-        self.script.consensus_encode(&mut enc).expect("Writing to hash enging should never fail");
+            .expect("writing to hash enging should never fail");
+        self.script.consensus_encode(&mut enc).expect("writing to hash enging should never fail");
 
         TapLeafHash::from_engine(enc)
     }
@@ -446,7 +450,7 @@ impl EcdsaSighashType {
     /// # Errors
     ///
     /// If `n` is a non-standard sighash value.
-    pub fn from_standard(n: u32) -> Result<EcdsaSighashType, NonStandardSighashType> {
+    pub fn from_standard(n: u32) -> Result<EcdsaSighashType, NonStandardSighashTypeError> {
         use EcdsaSighashType::*;
 
         match n {
@@ -457,7 +461,7 @@ impl EcdsaSighashType {
             0x81 => Ok(AllPlusAnyoneCanPay),
             0x82 => Ok(NonePlusAnyoneCanPay),
             0x83 => Ok(SinglePlusAnyoneCanPay),
-            non_standard => Err(NonStandardSighashType(non_standard)),
+            non_standard => Err(NonStandardSighashTypeError(non_standard)),
         }
     }
 
@@ -499,7 +503,7 @@ impl TapSighashType {
     }
 
     /// Constructs a [`TapSighashType`] from a raw `u8`.
-    pub fn from_consensus_u8(hash_ty: u8) -> Result<Self, Error> {
+    pub fn from_consensus_u8(hash_ty: u8) -> Result<Self, InvalidSighashTypeError> {
         use TapSighashType::*;
 
         Ok(match hash_ty {
@@ -510,23 +514,35 @@ impl TapSighashType {
             0x81 => AllPlusAnyoneCanPay,
             0x82 => NonePlusAnyoneCanPay,
             0x83 => SinglePlusAnyoneCanPay,
-            x => return Err(Error::InvalidSighashType(x as u32)),
+            x => return Err(InvalidSighashTypeError(x.into())),
         })
     }
 }
 
-/// This type is consensus valid but an input including it would prevent the transaction from
-/// being relayed on today's Bitcoin network.
+/// Integer is not a consensus valid sighash type.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct NonStandardSighashType(pub u32);
+pub struct InvalidSighashTypeError(pub u32);
 
-impl fmt::Display for NonStandardSighashType {
+impl fmt::Display for InvalidSighashTypeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Non standard sighash type {}", self.0)
+        write!(f, "invalid sighash type {}", self.0)
     }
 }
 
-impl_std_error!(NonStandardSighashType);
+impl_std_error!(InvalidSighashTypeError);
+
+/// This type is consensus valid but an input including it would prevent the transaction from
+/// being relayed on today's Bitcoin network.
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct NonStandardSighashTypeError(pub u32);
+
+impl fmt::Display for NonStandardSighashTypeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "non-standard sighash type {}", self.0)
+    }
+}
+
+impl_std_error!(NonStandardSighashTypeError);
 
 /// Error returned for failure during parsing one of the sighash types.
 ///
@@ -539,7 +555,7 @@ pub struct SighashTypeParseError {
 
 impl fmt::Display for SighashTypeParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Unrecognized SIGHASH string '{}'", self.unrecognized)
+        write!(f, "unrecognized SIGHASH string '{}'", self.unrecognized)
     }
 }
 
@@ -1071,10 +1087,6 @@ impl<R: BorrowMut<Transaction>> SighashCache<R> {
     pub fn witness_mut(&mut self, input_index: usize) -> Option<&mut Witness> {
         self.tx.borrow_mut().input.get_mut(input_index).map(|i| &mut i.witness)
     }
-}
-
-impl From<io::Error> for Error {
-    fn from(e: io::Error) -> Self { Error::Io(e.kind()) }
 }
 
 /// The `Annex` struct is a slice wrapper enforcing first byte is `0x50`.
@@ -1654,7 +1666,7 @@ mod tests {
         for s in sht_mistakes {
             assert_eq!(
                 TapSighashType::from_str(s).unwrap_err().to_string(),
-                format!("Unrecognized SIGHASH string '{}'", s)
+                format!("unrecognized SIGHASH string '{}'", s)
             );
         }
     }

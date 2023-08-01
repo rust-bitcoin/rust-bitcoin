@@ -1792,7 +1792,7 @@ mod tests {
         for s in sht_mistakes {
             assert_eq!(
                 EcdsaSighashType::from_str(s).unwrap_err().to_string(),
-                format!("Unrecognized SIGHASH string '{}'", s)
+                format!("unrecognized SIGHASH string '{}'", s)
             );
         }
     }

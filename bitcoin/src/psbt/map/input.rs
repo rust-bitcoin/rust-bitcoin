@@ -18,7 +18,8 @@ use crate::psbt::map::Map;
 use crate::psbt::serialize::Deserialize;
 use crate::psbt::{self, error, raw, Error};
 use crate::sighash::{
-    self, EcdsaSighashType, NonStandardSighashType, SighashTypeParseError, TapSighashType,
+    EcdsaSighashType, InvalidSighashTypeError, NonStandardSighashTypeError, SighashTypeParseError,
+    TapSighashType,
 };
 use crate::taproot::{ControlBlock, LeafVersion, TapLeafHash, TapNodeHash};
 
@@ -190,15 +191,15 @@ impl From<TapSighashType> for PsbtSighashType {
 impl PsbtSighashType {
     /// Returns the [`EcdsaSighashType`] if the [`PsbtSighashType`] can be
     /// converted to one.
-    pub fn ecdsa_hash_ty(self) -> Result<EcdsaSighashType, NonStandardSighashType> {
+    pub fn ecdsa_hash_ty(self) -> Result<EcdsaSighashType, NonStandardSighashTypeError> {
         EcdsaSighashType::from_standard(self.inner)
     }
 
     /// Returns the [`TapSighashType`] if the [`PsbtSighashType`] can be
     /// converted to one.
-    pub fn taproot_hash_ty(self) -> Result<TapSighashType, sighash::Error> {
+    pub fn taproot_hash_ty(self) -> Result<TapSighashType, InvalidSighashTypeError> {
         if self.inner > 0xffu32 {
-            Err(sighash::Error::InvalidSighashType(self.inner))
+            Err(InvalidSighashTypeError(self.inner))
         } else {
             TapSighashType::from_consensus_u8(self.inner as u8)
         }
@@ -223,7 +224,7 @@ impl Input {
     /// # Errors
     ///
     /// If the `sighash_type` field is set to a non-standard ECDSA sighash value.
-    pub fn ecdsa_hash_ty(&self) -> Result<EcdsaSighashType, NonStandardSighashType> {
+    pub fn ecdsa_hash_ty(&self) -> Result<EcdsaSighashType, NonStandardSighashTypeError> {
         self.sighash_type
             .map(|sighash_type| sighash_type.ecdsa_hash_ty())
             .unwrap_or(Ok(EcdsaSighashType::All))
@@ -235,7 +236,7 @@ impl Input {
     /// # Errors
     ///
     /// If the `sighash_type` field is set to a invalid Taproot sighash value.
-    pub fn taproot_hash_ty(&self) -> Result<TapSighashType, sighash::Error> {
+    pub fn taproot_hash_ty(&self) -> Result<TapSighashType, InvalidSighashTypeError> {
         self.sighash_type
             .map(|sighash_type| sighash_type.taproot_hash_ty())
             .unwrap_or(Ok(TapSighashType::Default))
@@ -575,7 +576,7 @@ mod test {
         let back = PsbtSighashType::from_str(&s).unwrap();
 
         assert_eq!(back, sighash);
-        assert_eq!(back.ecdsa_hash_ty(), Err(NonStandardSighashType(nonstd)));
-        assert_eq!(back.taproot_hash_ty(), Err(sighash::Error::InvalidSighashType(nonstd)));
+        assert_eq!(back.ecdsa_hash_ty(), Err(NonStandardSighashTypeError(nonstd)));
+        assert_eq!(back.taproot_hash_ty(), Err(InvalidSighashTypeError(nonstd)));
     }
 }

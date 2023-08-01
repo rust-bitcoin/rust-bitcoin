@@ -13,7 +13,7 @@ use secp256k1;
 
 use crate::prelude::*;
 use crate::script::PushBytes;
-use crate::sighash::{EcdsaSighashType, NonStandardSighashType};
+use crate::sighash::{EcdsaSighashType, NonStandardSighashTypeError};
 
 const MAX_SIG_LEN: usize = 73;
 
@@ -37,8 +37,7 @@ impl Signature {
     /// Deserializes from slice following the standardness rules for [`EcdsaSighashType`].
     pub fn from_slice(sl: &[u8]) -> Result<Self, Error> {
         let (hash_ty, sig) = sl.split_last().ok_or(Error::EmptySignature)?;
-        let hash_ty = EcdsaSighashType::from_standard(*hash_ty as u32)
-            .map_err(|_| Error::NonStandardSighashType(*hash_ty as u32))?;
+        let hash_ty = EcdsaSighashType::from_standard(*hash_ty as u32)?;
         let sig = secp256k1::ecdsa::Signature::from_der(sig).map_err(Error::Secp256k1)?;
         Ok(Signature { sig, hash_ty })
     }
@@ -183,28 +182,29 @@ impl<'a> IntoIterator for &'a SerializedSignature {
     fn into_iter(self) -> Self::IntoIter { (*self).iter() }
 }
 
-/// A key-related error.
+/// An ECDSA signature-related error.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Error {
-    /// Hex decoding error
+    /// Hex decoding error.
     Hex(hex::HexToBytesError),
-    /// Base58 encoding error
-    NonStandardSighashType(u32),
-    /// Empty Signature
+    /// Non-standard sighash type.
+    SighashType(NonStandardSighashTypeError),
+    /// Signature was empty.
     EmptySignature,
-    /// secp256k1-related error
+    /// A secp256k1 error.
     Secp256k1(secp256k1::Error),
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use Error::*;
+
         match *self {
-            Error::Hex(ref e) => write_err!(f, "Signature hex decoding error"; e),
-            Error::NonStandardSighashType(hash_ty) =>
-                write!(f, "Non standard signature hash type {}", hash_ty),
-            Error::EmptySignature => write!(f, "Empty ECDSA signature"),
-            Error::Secp256k1(ref e) => write_err!(f, "invalid ECDSA signature"; e),
+            Hex(ref e) => write_err!(f, "signature hex decoding error"; e),
+            SighashType(ref e) => write_err!(f, "non-standard signature hash type"; e),
+            EmptySignature => write!(f, "empty ECDSA signature"),
+            Secp256k1(ref e) => write_err!(f, "secp256k1"; e),
         }
     }
 }
@@ -217,7 +217,8 @@ impl std::error::Error for Error {
         match self {
             Hex(e) => Some(e),
             Secp256k1(e) => Some(e),
-            NonStandardSighashType(_) | EmptySignature => None,
+            SighashType(e) => Some(e),
+            EmptySignature => None,
         }
     }
 }
@@ -226,8 +227,8 @@ impl From<secp256k1::Error> for Error {
     fn from(e: secp256k1::Error) -> Error { Error::Secp256k1(e) }
 }
 
-impl From<NonStandardSighashType> for Error {
-    fn from(err: NonStandardSighashType) -> Self { Error::NonStandardSighashType(err.0) }
+impl From<NonStandardSighashTypeError> for Error {
+    fn from(err: NonStandardSighashTypeError) -> Self { Error::SighashType(err) }
 }
 
 impl From<hex::HexToBytesError> for Error {

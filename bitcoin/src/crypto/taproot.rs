@@ -11,7 +11,7 @@ use internals::write_err;
 pub use secp256k1::{self, constants, KeyPair, Parity, Secp256k1, Verification, XOnlyPublicKey};
 
 use crate::prelude::*;
-use crate::sighash::TapSighashType;
+use crate::sighash::{InvalidSighashTypeError, TapSighashType};
 
 /// A BIP340-341 serialized taproot signature with the corresponding hash type.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -35,8 +35,7 @@ impl Signature {
             }
             65 => {
                 let (hash_ty, sig) = sl.split_last().expect("Slice len checked == 65");
-                let hash_ty = TapSighashType::from_consensus_u8(*hash_ty)
-                    .map_err(|_| SigFromSliceError::InvalidSighashType(*hash_ty))?;
+                let hash_ty = TapSighashType::from_consensus_u8(*hash_ty)?;
                 let sig = secp256k1::schnorr::Signature::from_slice(sig)?;
                 Ok(Signature { sig, hash_ty })
             }
@@ -64,8 +63,8 @@ impl Signature {
 #[non_exhaustive]
 pub enum SigFromSliceError {
     /// Invalid signature hash type.
-    InvalidSighashType(u8),
-    /// Signature has valid size but does not parse correctly
+    SighashType(InvalidSighashTypeError),
+    /// A secp256k1 error.
     Secp256k1(secp256k1::Error),
     /// Invalid taproot signature size
     InvalidSignatureSize(usize),
@@ -76,9 +75,8 @@ impl fmt::Display for SigFromSliceError {
         use SigFromSliceError::*;
 
         match *self {
-            InvalidSighashType(hash_ty) => write!(f, "invalid signature hash type {}", hash_ty),
-            Secp256k1(ref e) =>
-                write_err!(f, "taproot signature has correct len but is malformed"; e),
+            SighashType(ref e) => write_err!(f, "sighash"; e),
+            Secp256k1(ref e) => write_err!(f, "secp256k1"; e),
             InvalidSignatureSize(sz) => write!(f, "invalid taproot signature size: {}", sz),
         }
     }
@@ -91,11 +89,16 @@ impl std::error::Error for SigFromSliceError {
 
         match self {
             Secp256k1(e) => Some(e),
-            InvalidSighashType(_) | InvalidSignatureSize(_) => None,
+            SighashType(e) => Some(e),
+            InvalidSignatureSize(_) => None,
         }
     }
 }
 
 impl From<secp256k1::Error> for SigFromSliceError {
-    fn from(e: secp256k1::Error) -> Self { SigFromSliceError::Secp256k1(e) }
+    fn from(e: secp256k1::Error) -> Self { Self::Secp256k1(e) }
+}
+
+impl From<InvalidSighashTypeError> for SigFromSliceError {
+    fn from(err: InvalidSighashTypeError) -> Self { Self::SighashType(err) }
 }
