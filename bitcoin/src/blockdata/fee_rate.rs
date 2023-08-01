@@ -82,8 +82,8 @@ impl FeeRate {
 
     /// Checked weight multiplication.
     ///
-    /// Computes `self * rhs` where rhs is of type Weight.  `None` is returned if an overflow
-    /// occured.
+    /// Computes `self * rhs` where rhs is of type Weight. `None` is returned if an overflow
+    /// occurred.
     pub fn checked_mul_by_weight(self, rhs: Weight) -> Option<Amount> {
         self.0.checked_mul(rhs.to_wu()).map(Amount::from_sat)
     }
