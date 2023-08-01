@@ -176,7 +176,7 @@ impl PublicKey {
     }
 
     /// Deserialize a public key from a slice
-    pub fn from_slice(data: &[u8]) -> Result<PublicKey, Error> {
+    pub fn from_slice(data: &[u8]) -> Result<PublicKey, self::error::pubkey::Error> {
         let compressed = match data.len() {
             33 => true,
             65 => false,
