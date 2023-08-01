@@ -683,9 +683,9 @@ pub enum Error {
     Base58(base58::Error),
     /// A secp256k1 error.
     Secp256k1(secp256k1::Error),
-    /// Invalid key prefix error
+    /// Invalid key prefix error.
     InvalidKeyPrefix(u8),
-    /// Hex decoding error
+    /// Hex decoding error.
     Hex(hex::HexToArrayError),
     /// `PublicKey` hex should be 66 or 130 digits long.
     InvalidHexLength(usize),

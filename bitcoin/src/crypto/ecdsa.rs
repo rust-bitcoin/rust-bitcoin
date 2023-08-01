@@ -186,13 +186,13 @@ impl<'a> IntoIterator for &'a SerializedSignature {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Error {
-    /// Hex decoding error
+    /// Hex decoding error.
     Hex(hex::HexToBytesError),
-    /// Non-standard sighash type
+    /// Non-standard sighash type.
     SighashType(NonStandardSighashTypeError),
-    /// Empty Signature
+    /// Signature was empty.
     EmptySignature,
-    /// A secp256k1 error
+    /// A secp256k1 error.
     Secp256k1(secp256k1::Error),
 }
 
