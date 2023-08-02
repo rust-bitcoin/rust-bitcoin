@@ -123,6 +123,15 @@ You can run tests with:
 cargo test
 ```
 
+To build the MSRV:
+
+```
+cp Cargo-recent.lock ./Cargo.lock
+cargo +1.48 build
+```
+
+See `contrib/test.sh` for more details about build instructions.
+
 Please refer to the [`cargo` documentation](https://doc.rust-lang.org/stable/cargo/) for more
 detailed instructions.
 
