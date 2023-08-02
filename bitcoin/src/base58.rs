@@ -36,10 +36,6 @@ static BASE58_DIGITS: [Option<u8>; 128] = [
 ];
 
 /// Decodes a base58-encoded string into a byte vector.
-#[deprecated(since = "0.30.0", note = "Use base58::decode() instead")]
-pub fn from(data: &str) -> Result<Vec<u8>, Error> { decode(data) }
-
-/// Decodes a base58-encoded string into a byte vector.
 pub fn decode(data: &str) -> Result<Vec<u8>, Error> {
     // 11/15 is just over log_256(58)
     let mut scratch = vec![0u8; 1 + data.len() * 11 / 15];
@@ -71,10 +67,6 @@ pub fn decode(data: &str) -> Result<Vec<u8>, Error> {
 }
 
 /// Decodes a base58check-encoded string into a byte vector verifying the checksum.
-#[deprecated(since = "0.30.0", note = "Use base58::decode_check() instead")]
-pub fn from_check(data: &str) -> Result<Vec<u8>, Error> { decode_check(data) }
-
-/// Decodes a base58check-encoded string into a byte vector verifying the checksum.
 pub fn decode_check(data: &str) -> Result<Vec<u8>, Error> {
     let mut ret: Vec<u8> = decode(data)?;
     if ret.len() < 4 {
@@ -97,18 +89,8 @@ pub fn decode_check(data: &str) -> Result<Vec<u8>, Error> {
     Ok(ret)
 }
 
-/// Encodes `data` as a base58 string.
-#[deprecated(since = "0.30.0", note = "Use base58::encode() instead")]
-pub fn encode_slice(data: &[u8]) -> String { encode(data) }
-
 /// Encodes `data` as a base58 string (see also `base58::encode_check()`).
 pub fn encode(data: &[u8]) -> String { encode_iter(data.iter().cloned()) }
-
-/// Encodes `data` as a base58 string including the checksum.
-///
-/// The checksum is the first four bytes of the sha256d of the data, concatenated onto the end.
-#[deprecated(since = "0.30.0", note = "Use base58::encode_check() instead")]
-pub fn check_encode_slice(data: &[u8]) -> String { encode_check(data) }
 
 /// Encodes `data` as a base58 string including the checksum.
 ///
@@ -116,14 +98,6 @@ pub fn check_encode_slice(data: &[u8]) -> String { encode_check(data) }
 pub fn encode_check(data: &[u8]) -> String {
     let checksum = sha256d::Hash::hash(data);
     encode_iter(data.iter().cloned().chain(checksum[0..4].iter().cloned()))
-}
-
-/// Encodes `data` as base58, including the checksum, into a formatter.
-///
-/// The checksum is the first four bytes of the sha256d of the data, concatenated onto the end.
-#[deprecated(since = "0.30.0", note = "Use base58::encode_check_to_fmt() instead")]
-pub fn check_encode_slice_to_fmt(fmt: &mut fmt::Formatter, data: &[u8]) -> fmt::Result {
-    encode_check_to_fmt(fmt, data)
 }
 
 /// Encodes a slice as base58, including the checksum, into a formatter.

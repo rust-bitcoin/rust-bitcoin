@@ -113,7 +113,6 @@ pub mod psbt;
 pub mod sign_message;
 pub mod string;
 pub mod taproot;
-pub mod util;
 
 // May depend on crate features and we don't want to bother with it
 #[allow(unused)]
