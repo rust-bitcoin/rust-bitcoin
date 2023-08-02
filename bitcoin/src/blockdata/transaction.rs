@@ -612,6 +612,10 @@ impl cmp::Ord for Transaction {
 }
 
 impl Transaction {
+    /// Maximum transaction weight for Bitcoin Core 25.0.
+    // https://github.com/bitcoin/bitcoin/blob/44b05bf3fef2468783dcebf651654fdd30717e7e/src/policy/policy.h#L27
+    pub const MAX_STANDARD_WEIGHT: Weight = Weight::from_wu(400_000);
+
     /// Computes a "normalized TXID" which does not include any signatures.
     ///
     /// This gives a way to identify a transaction that is "the same" as
