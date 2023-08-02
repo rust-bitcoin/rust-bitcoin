@@ -43,9 +43,8 @@ use crate::blockdata::constants::{
 };
 use crate::blockdata::script::witness_program::{self, WitnessProgram};
 use crate::blockdata::script::witness_version::{self, WitnessVersion};
-use crate::blockdata::script::{self, Script, ScriptBuf};
-use crate::crypto::key::{PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey};
-use crate::hash_types::{PubkeyHash, ScriptHash};
+use crate::blockdata::script::{self, Script, ScriptBuf, ScriptHash};
+use crate::crypto::key::{PubkeyHash, PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey};
 use crate::network::Network;
 use crate::prelude::*;
 use crate::taproot::TapNodeHash;

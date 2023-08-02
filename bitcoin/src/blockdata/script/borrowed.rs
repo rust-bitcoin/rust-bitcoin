@@ -14,9 +14,9 @@ use crate::blockdata::opcodes::{self};
 use crate::blockdata::script::witness_version::WitnessVersion;
 use crate::blockdata::script::{
     bytes_to_asm_fmt, Builder, Instruction, InstructionIndices, Instructions, ScriptBuf,
+    ScriptHash, WScriptHash,
 };
 use crate::consensus::Encodable;
-use crate::hash_types::{ScriptHash, WScriptHash};
 use crate::key::{PublicKey, UntweakedPublicKey};
 use crate::policy::DUST_RELAY_TX_FEE;
 use crate::prelude::*;
