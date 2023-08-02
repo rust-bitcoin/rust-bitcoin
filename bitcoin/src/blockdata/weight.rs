@@ -43,11 +43,7 @@ impl Weight {
     /// Constructs `Weight` from kilo weight units returning `None` if overflow occurred.
     pub fn from_kwu(wu: u64) -> Option<Self> { wu.checked_mul(1000).map(Weight) }
 
-    /// Constructs `Weight` from virtual bytes.
-    ///
-    /// # Errors
-    ///
-    /// Returns `None` on overflow.
+    /// Constructs `Weight` from virtual bytes, returning `None` on overflow.
     pub fn from_vb(vb: u64) -> Option<Self> { vb.checked_mul(4).map(Weight::from_wu) }
 
     /// Constructs `Weight` from virtual bytes without overflow check.

@@ -82,10 +82,36 @@ impl FeeRate {
 
     /// Checked weight multiplication.
     ///
-    /// Computes `self * rhs` where rhs is of type Weight.  `None` is returned if an overflow
-    /// occured.
+    /// Computes `self * rhs` where rhs is of type Weight. `None` is returned if an overflow
+    /// occurred.
     pub fn checked_mul_by_weight(self, rhs: Weight) -> Option<Amount> {
         self.0.checked_mul(rhs.to_wu()).map(Amount::from_sat)
+    }
+
+    /// Calculates fee by multiplying this fee rate by weight, in weight units, returning `None`
+    /// if overflow occurred.
+    ///
+    /// This is equivalent to `Self::checked_mul_by_weight()`.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use bitcoin::{absolute, FeeRate, Transaction};
+    /// # // Dummy transaction.
+    /// # let tx = Transaction { version: 1, lock_time: absolute::LockTime::ZERO, input: vec![], output: vec![] };
+    ///
+    /// let rate = FeeRate::from_sat_per_vb(1).expect("1 sat/vbyte is valid");
+    /// let fee = rate.fee_wu(tx.weight());
+    /// ```
+    pub fn fee_wu(self, weight: Weight) -> Option<Amount> { self.checked_mul_by_weight(weight) }
+
+    /// Calculates fee by multiplying this fee rate by weight, in virtual bytes, returning `None`
+    /// if overflow occurred.
+    ///
+    /// This is equivalent to converting `vb` to `weight` using `Weight::from_vb` and then calling
+    /// `Self::fee_wu(weight)`.
+    pub fn fee_vb(self, vb: u64) -> Option<Amount> {
+        Weight::from_vb(vb).and_then(|w| self.fee_wu(w))
     }
 }
 
@@ -198,5 +224,21 @@ mod tests {
 
         let fee_rate = FeeRate(10).checked_div(0);
         assert!(fee_rate.is_none());
+    }
+
+    #[test]
+    fn fee_convenience_functions_agree() {
+        use crate::blockdata::transaction::Transaction;
+        use crate::consensus::Decodable;
+        use crate::internal_macros::hex;
+
+        const SOME_TX: &str = "0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000";
+
+        let raw_tx = hex!(SOME_TX);
+        let tx: Transaction = Decodable::consensus_decode(&mut raw_tx.as_slice()).unwrap();
+
+        let rate = FeeRate::from_sat_per_vb(1).expect("1 sat/byte is valid");
+
+        assert_eq!(rate.fee_vb(tx.vsize() as u64), rate.fee_wu(tx.weight()));
     }
 }
