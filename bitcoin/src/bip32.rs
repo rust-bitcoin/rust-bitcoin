@@ -471,6 +471,8 @@ pub enum Error {
     Hex(hex::HexToArrayError),
     /// `PublicKey` hex should be 66 or 130 digits long.
     InvalidPublicKeyHexLength(usize),
+    /// `PublicKey` prefix invalid.
+    InvalidPublicKeyPrefix(u8),
 }
 
 impl fmt::Display for Error {
@@ -491,6 +493,7 @@ impl fmt::Display for Error {
             Error::Hex(ref e) => write_err!(f, "Hexadecimal decoding error"; e),
             Error::InvalidPublicKeyHexLength(got) =>
                 write!(f, "PublicKey hex should be 66 or 130 digits long, got: {}", got),
+            Error::InvalidPublicKeyPrefix(got) => write!(f, "PublicKey prefix invalid: {}", got),
         }
     }
 }
@@ -510,7 +513,8 @@ impl std::error::Error for Error {
             | InvalidDerivationPathFormat
             | UnknownVersion(_)
             | WrongExtendedKeyLength(_)
-            | InvalidPublicKeyHexLength(_) => None,
+            | InvalidPublicKeyHexLength(_)
+            | InvalidPublicKeyPrefix(_) => None,
         }
     }
 }
@@ -520,16 +524,14 @@ impl From<key::Error> for Error {
         match err {
             key::Error::Base58(e) => Error::Base58(e),
             key::Error::Secp256k1(e) => Error::Secp256k1(e),
-            key::Error::InvalidKeyPrefix(_) => Error::Secp256k1(secp256k1::Error::InvalidPublicKey),
+            key::Error::InvalidKeyPrefix(byte) => Error::InvalidPublicKeyPrefix(byte),
             key::Error::Hex(e) => Error::Hex(e),
-            key::Error::InvalidHexLength(got) => Error::InvalidPublicKeyHexLength(got),
+            key::Error::InvalidHexLength(len) => Error::InvalidPublicKeyHexLength(len),
         }
     }
 }
 
-impl From<secp256k1::Error> for Error {
-    fn from(e: secp256k1::Error) -> Error { Error::Secp256k1(e) }
-}
+secp256k1::impl_from_for_all_crate_errors_for!(Error);
 
 impl From<base58::Error> for Error {
     fn from(err: base58::Error) -> Self { Error::Base58(err) }
@@ -1171,7 +1173,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Secp256k1(InvalidSecretKey)")]
+    #[should_panic(expected = "Secp256k1(SecretKey(SecretKeyError))")]
     fn schnorr_broken_privkey_zeros() {
         /* this is how we generate key:
         let mut sk = secp256k1::key::ONE_KEY;
@@ -1199,7 +1201,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Secp256k1(InvalidSecretKey)")]
+    #[should_panic(expected = "Secp256k1(SecretKey(SecretKeyError))")]
     fn schnorr_broken_privkey_ffs() {
         // Xpriv having secret key set to all 0xFF's
         let xpriv_str = "xprv9s21ZrQH143K24Mfq5zL5MhWK9hUhhGbd45hLXo2Pq2oqzMMo63oStZzFAzHGBP2UuGCqWLTAPLcMtD9y5gkZ6Eq3Rjuahrv17fENZ3QzxW";

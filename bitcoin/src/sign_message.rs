@@ -21,8 +21,7 @@ mod message_signing {
 
     use hashes::sha256d;
     use internals::write_err;
-    use secp256k1;
-    use secp256k1::ecdsa::{RecoverableSignature, RecoveryId};
+    use secp256k1::ecdsa::{self, RecoverableSignature, RecoveryId};
 
     use crate::address::{Address, AddressType};
     use crate::crypto::key::PublicKey;
@@ -36,7 +35,9 @@ mod message_signing {
         /// Signature is expected to be 65 bytes.
         InvalidLength,
         /// The signature is invalidly constructed.
-        InvalidEncoding(secp256k1::Error),
+        InvalidEncoding(ecdsa::SignatureError),
+        /// The signature has an invalid recovery ID.
+        InvalidRecoveryId(ecdsa::InvalidRecoveryIdError),
         /// Invalid base64 encoding.
         InvalidBase64,
         /// Unsupported Address Type
@@ -49,6 +50,8 @@ mod message_signing {
                 MessageSignatureError::InvalidLength => write!(f, "length not 65 bytes"),
                 MessageSignatureError::InvalidEncoding(ref e) =>
                     write_err!(f, "invalid encoding"; e),
+                MessageSignatureError::InvalidRecoveryId(ref e) =>
+                    write_err!(f, "invalid recovery ID"; e),
                 MessageSignatureError::InvalidBase64 => write!(f, "invalid base64"),
                 MessageSignatureError::UnsupportedAddressType(ref address_type) =>
                     write!(f, "unsupported address type: {}", address_type),
@@ -63,15 +66,18 @@ mod message_signing {
 
             match self {
                 InvalidEncoding(e) => Some(e),
+                InvalidRecoveryId(e) => Some(e),
                 InvalidLength | InvalidBase64 | UnsupportedAddressType(_) => None,
             }
         }
     }
 
-    impl From<secp256k1::Error> for MessageSignatureError {
-        fn from(e: secp256k1::Error) -> MessageSignatureError {
-            MessageSignatureError::InvalidEncoding(e)
-        }
+    impl From<ecdsa::InvalidRecoveryIdError> for MessageSignatureError {
+        fn from(e: ecdsa::InvalidRecoveryIdError) -> Self { Self::InvalidRecoveryId(e) }
+    }
+
+    impl From<ecdsa::SignatureError> for MessageSignatureError {
+        fn from(e: ecdsa::SignatureError) -> Self { Self::InvalidEncoding(e) }
     }
 
     /// A signature on a Bitcoin Signed Message.
@@ -113,8 +119,8 @@ mod message_signing {
             }
             // We just check this here so we can safely subtract further.
             if bytes[0] < 27 {
-                return Err(MessageSignatureError::InvalidEncoding(
-                    secp256k1::Error::InvalidRecoveryId,
+                return Err(MessageSignatureError::InvalidRecoveryId(
+                    ecdsa::InvalidRecoveryIdError(bytes[0] as i32),
                 ));
             };
             let recid = RecoveryId::from_i32(((bytes[0] - 27) & 0x03) as i32)?;

@@ -1495,9 +1495,9 @@ pub enum TaprootError {
     /// Invalid control block size.
     InvalidControlBlockSize(usize),
     /// Invalid taproot internal key.
-    InvalidInternalKey(secp256k1::Error),
+    InvalidInternalKey(secp256k1::PublicKeyError),
     /// Invalid parity for internal key.
-    InvalidParity(secp256k1::InvalidParityValue),
+    InvalidParity(secp256k1::ParityValueError),
     /// Empty tap tree.
     EmptyTree,
 }
