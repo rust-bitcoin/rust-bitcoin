@@ -50,7 +50,7 @@ use crate::taproot::TapNodeHash;
 
 /// Error code for the address module.
 pub mod error;
-pub use self::error::{Error, UnknownAddressTypeError};
+pub use self::error::{Error, ParseError, UnknownAddressTypeError};
 
 /// The different types of addresses.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -800,9 +800,9 @@ fn find_bech32_prefix(bech32: &str) -> &str {
 
 /// Address can be parsed only with `NetworkUnchecked`.
 impl FromStr for Address<NetworkUnchecked> {
-    type Err = Error;
+    type Err = ParseError;
 
-    fn from_str(s: &str) -> Result<Address<NetworkUnchecked>, Error> {
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         // try bech32
         let bech32_network = match find_bech32_prefix(s) {
             // note that upper or lowercase is allowed but NOT mixed case
@@ -815,7 +815,7 @@ impl FromStr for Address<NetworkUnchecked> {
             // decode as bech32
             let (_, payload, variant) = bech32::decode(s)?;
             if payload.is_empty() {
-                return Err(Error::EmptyBech32Payload);
+                return Err(ParseError::EmptyBech32Payload);
             }
 
             // Get the script version and program (converted from 5-bit to 8-bit)
@@ -829,7 +829,7 @@ impl FromStr for Address<NetworkUnchecked> {
             // Encoding check
             let expected = version.bech32_variant();
             if expected != variant {
-                return Err(Error::InvalidBech32Variant { expected, found: variant });
+                return Err(ParseError::InvalidBech32Variant { expected, found: variant });
             }
 
             return Ok(Address::new(network, Payload::WitnessProgram(witness_program)));
@@ -837,11 +837,11 @@ impl FromStr for Address<NetworkUnchecked> {
 
         // Base58
         if s.len() > 50 {
-            return Err(Error::Base58(base58::Error::InvalidLength(s.len() * 11 / 15)));
+            return Err(ParseError::Base58(base58::Error::InvalidLength(s.len() * 11 / 15)));
         }
         let data = base58::decode_check(s)?;
         if data.len() != 21 {
-            return Err(Error::Base58(base58::Error::InvalidLength(data.len())));
+            return Err(ParseError::Base58(base58::Error::InvalidLength(data.len())));
         }
 
         let (network, payload) = match data[0] {
@@ -853,7 +853,7 @@ impl FromStr for Address<NetworkUnchecked> {
                 (Network::Testnet, Payload::PubkeyHash(PubkeyHash::from_slice(&data[1..]).unwrap())),
             SCRIPT_ADDRESS_PREFIX_TEST =>
                 (Network::Testnet, Payload::ScriptHash(ScriptHash::from_slice(&data[1..]).unwrap())),
-            x => return Err(Error::Base58(base58::Error::InvalidAddressVersion(x))),
+            x => return Err(ParseError::Base58(base58::Error::InvalidAddressVersion(x))),
         };
 
         Ok(Address::new(network, payload))
