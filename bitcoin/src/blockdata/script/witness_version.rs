@@ -156,14 +156,12 @@ impl<'a> TryFrom<Instruction<'a>> for WitnessVersion {
 }
 
 impl From<WitnessVersion> for bech32::u5 {
-    /// Converts [`WitnessVersion`] instance into corresponding Bech32(m) u5-value ([`bech32::u5`]).
     fn from(version: WitnessVersion) -> Self {
         bech32::u5::try_from_u8(version.to_num()).expect("WitnessVersion must be 0..=16")
     }
 }
 
 impl From<WitnessVersion> for Opcode {
-    /// Converts [`WitnessVersion`] instance into corresponding Bitcoin scriptopcode (`OP_0`..`OP_16`).
     fn from(version: WitnessVersion) -> Opcode {
         match version {
             WitnessVersion::V0 => OP_PUSHBYTES_0,
