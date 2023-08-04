@@ -18,7 +18,7 @@
   </p>
 </div>
 
-[Documentation](https://docs.rs/bitcoin/)
+[Documentation](https://docs.rs/bitcoin/bc1qgryhvj79wx6nv683zm03ltyjralu794r7l4q62/and
 
 Supports (or should support)
 
