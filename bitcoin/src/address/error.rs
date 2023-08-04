@@ -4,6 +4,7 @@ use internals::write_err;
 
 use crate::address::{Address, NetworkUnchecked};
 use crate::blockdata::script::{witness_program, witness_version};
+use crate::error::impl_std_error;
 use crate::prelude::String;
 use crate::{base58, Network};
 
@@ -34,8 +35,6 @@ pub enum Error {
     ExcessiveScriptSize,
     /// Script is not a p2pkh, p2sh or witness program.
     UnrecognizedScript,
-    /// Address type is either invalid or not supported in rust-bitcoin.
-    UnknownAddressType(String),
     /// Address's network differs from required one.
     NetworkValidation {
         /// Network that was required.
@@ -66,11 +65,6 @@ impl fmt::Display for Error {
                 write!(f, "an uncompressed pubkey was used where it is not allowed"),
             ExcessiveScriptSize => write!(f, "script size exceed 520 bytes"),
             UnrecognizedScript => write!(f, "script is not a p2pkh, p2sh or witness program"),
-            UnknownAddressType(ref s) => write!(
-                f,
-                "unknown address type: '{}' is either invalid or not supported in rust-bitcoin",
-                s
-            ),
             NetworkValidation { required, found, ref address } => {
                 write!(f, "address ")?;
                 address.fmt_internal(f)?; // Using fmt_internal in order to remove the "Address<NetworkUnchecked>(..)" wrapper
@@ -99,7 +93,6 @@ impl std::error::Error for Error {
             | UncompressedPubkey
             | ExcessiveScriptSize
             | UnrecognizedScript
-            | UnknownAddressType(_)
             | NetworkValidation { .. } => None,
         }
     }
@@ -120,3 +113,15 @@ impl From<witness_version::TryFromError> for Error {
 impl From<witness_program::Error> for Error {
     fn from(e: witness_program::Error) -> Error { Error::WitnessProgram(e) }
 }
+
+/// Address type is either invalid or not supported in rust-bitcoin.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UnknownAddressTypeError(pub String);
+
+impl fmt::Display for UnknownAddressTypeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write_err!(f, "failed to parse {} as address type", self.0; self)
+    }
+}
+
+impl_std_error!(UnknownAddressTypeError);

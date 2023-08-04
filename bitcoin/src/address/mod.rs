@@ -50,7 +50,7 @@ use crate::taproot::TapNodeHash;
 
 /// Error code for the address module.
 pub mod error;
-pub use self::error::Error;
+pub use self::error::{Error, UnknownAddressTypeError};
 
 /// The different types of addresses.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -81,7 +81,7 @@ impl fmt::Display for AddressType {
 }
 
 impl FromStr for AddressType {
-    type Err = Error;
+    type Err = UnknownAddressTypeError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "p2pkh" => Ok(AddressType::P2pkh),
@@ -89,7 +89,7 @@ impl FromStr for AddressType {
             "p2wpkh" => Ok(AddressType::P2wpkh),
             "p2wsh" => Ok(AddressType::P2wsh),
             "p2tr" => Ok(AddressType::P2tr),
-            _ => Err(Error::UnknownAddressType(s.to_owned())),
+            _ => Err(UnknownAddressTypeError(s.to_owned())),
         }
     }
 }
@@ -1491,7 +1491,7 @@ mod tests {
     #[test]
     fn invalid_address_parses_error() {
         let got = AddressType::from_str("invalid");
-        let want = Err(Error::UnknownAddressType("invalid".to_string()));
+        let want = Err(UnknownAddressTypeError("invalid".to_string()));
         assert_eq!(got, want);
     }
 
