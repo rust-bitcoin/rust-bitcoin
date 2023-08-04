@@ -31,7 +31,7 @@ use core::fmt;
 use core::marker::PhantomData;
 use core::str::FromStr;
 
-use bech32;
+use bech32::primitives::hrp::{self, Hrp};
 use hashes::{sha256, Hash, HashEngine};
 use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
 
@@ -46,6 +46,7 @@ use crate::blockdata::script::{self, Script, ScriptBuf, ScriptHash};
 use crate::crypto::key::{PubkeyHash, PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey};
 use crate::network::Network;
 use crate::prelude::*;
+use crate::script::PushBytesBuf;
 use crate::taproot::TapNodeHash;
 
 /// Error code for the address module.
@@ -237,8 +238,8 @@ pub struct AddressEncoding<'a> {
     pub p2pkh_prefix: u8,
     /// base58 version byte for p2sh payloads (e.g. 0x05 for "3..." addresses).
     pub p2sh_prefix: u8,
-    /// hrp used in bech32 addresss (e.g. "bc" for "bc1..." addresses).
-    pub bech32_hrp: &'a str,
+    /// The bech32 human-readable part.
+    pub hrp: Hrp,
 }
 
 /// Formats bech32 as upper case if alternate formatting is chosen (`{:#}`).
@@ -257,19 +258,16 @@ impl<'a> fmt::Display for AddressEncoding<'a> {
                 prefixed[1..].copy_from_slice(&hash[..]);
                 base58::encode_check_to_fmt(fmt, &prefixed[..])
             }
-            Payload::WitnessProgram(witness_prog) => {
-                let (version, prog) = (witness_prog.version(), witness_prog.program());
-                let mut upper_writer;
-                let writer = if fmt.alternate() {
-                    upper_writer = UpperWriter(fmt);
-                    &mut upper_writer as &mut dyn fmt::Write
+            Payload::WitnessProgram(witness_program) => {
+                let hrp = &self.hrp;
+                let version = witness_program.version().to_fe();
+                let program = witness_program.program().as_bytes();
+
+                if fmt.alternate() {
+                    bech32::segwit::encode_to_fmt_unchecked_uppercase(fmt, hrp, version, program)
                 } else {
-                    fmt as &mut dyn fmt::Write
-                };
-                let mut bech32_writer =
-                    bech32::Bech32Writer::new(self.bech32_hrp, version.bech32_variant(), writer)?;
-                bech32::WriteBase32::write_u5(&mut bech32_writer, version.into())?;
-                bech32::ToBase32::write_base32(&prog.as_bytes(), &mut bech32_writer)
+                    bech32::segwit::encode_to_fmt_unchecked(fmt, hrp, version, program)
+                }
             }
         }
     }
@@ -495,13 +493,12 @@ impl<V: NetworkValidation> Address<V> {
             Network::Bitcoin => SCRIPT_ADDRESS_PREFIX_MAIN,
             Network::Testnet | Network::Signet | Network::Regtest => SCRIPT_ADDRESS_PREFIX_TEST,
         };
-        let bech32_hrp = match self.network() {
-            Network::Bitcoin => "bc",
-            Network::Testnet | Network::Signet => "tb",
-            Network::Regtest => "bcrt",
+        let hrp = match self.network() {
+            Network::Bitcoin => hrp::BC,
+            Network::Testnet | Network::Signet => hrp::TB,
+            Network::Regtest => hrp::BCRT,
         };
-        let encoding =
-            AddressEncoding { payload: self.payload(), p2pkh_prefix, p2sh_prefix, bech32_hrp };
+        let encoding = AddressEncoding { payload: self.payload(), p2pkh_prefix, p2sh_prefix, hrp };
 
         use fmt::Display;
 
@@ -775,17 +772,6 @@ impl<V: NetworkValidation> fmt::Debug for Address<V> {
     }
 }
 
-struct UpperWriter<W: fmt::Write>(W);
-
-impl<W: fmt::Write> fmt::Write for UpperWriter<W> {
-    fn write_str(&mut self, s: &str) -> fmt::Result {
-        for c in s.chars() {
-            self.0.write_char(c.to_ascii_uppercase())?;
-        }
-        Ok(())
-    }
-}
-
 /// Extracts the bech32 prefix.
 ///
 /// # Returns
@@ -812,25 +798,10 @@ impl FromStr for Address<NetworkUnchecked> {
             _ => None,
         };
         if let Some(network) = bech32_network {
-            // decode as bech32
-            let (_, payload, variant) = bech32::decode(s)?;
-            if payload.is_empty() {
-                return Err(ParseError::EmptyBech32Payload);
-            }
-
-            // Get the script version and program (converted from 5-bit to 8-bit)
-            let (version, program): (WitnessVersion, Vec<u8>) = {
-                let (v, p5) = payload.split_at(1);
-                (WitnessVersion::try_from(v[0])?, bech32::FromBase32::from_base32(p5)?)
-            };
-
+            let (_hrp, version, data) = bech32::segwit::decode(s)?;
+            let version = WitnessVersion::try_from(version).expect("we know this is in range 0-16");
+            let program = PushBytesBuf::try_from(data).expect("decode() guarantees valid length");
             let witness_program = WitnessProgram::new(version, program)?;
-
-            // Encoding check
-            let expected = version.bech32_variant();
-            if expected != variant {
-                return Err(ParseError::InvalidBech32Variant { expected, found: variant });
-            }
 
             return Ok(Address::new(network, Payload::WitnessProgram(witness_program)));
         }
