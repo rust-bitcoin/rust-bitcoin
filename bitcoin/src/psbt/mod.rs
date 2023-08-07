@@ -672,36 +672,33 @@ impl Psbt {
         C: Signing,
         K: GetKey,
     {
-        match self.inner.version {
-            Version::PsbtV0 => {
-                let tx = self.inner.unsigned_tx.as_ref().unwrap().clone(); // clone because we need to mutably borrow when signing.
-                let mut cache = SighashCache::new(&tx);
+        // Clone because we need to mutably borrow when signing.
+        let tx = match self.inner.version {
+            Version::PsbtV0 => self.inner.unsigned_tx.as_ref().unwrap().clone(),
+            _ => self.construct_unsigned_tx().unwrap(),
+        };
+        let inner = &mut self.inner;
+        let mut cache = SighashCache::new(&tx);
 
-                let mut used = BTreeMap::new();
-                let mut errors = BTreeMap::new();
+        let mut used = BTreeMap::new();
+        let mut errors = BTreeMap::new();
 
-                for i in 0..self.inner.inputs.len() {
-                    if let Ok(SigningAlgorithm::Ecdsa) = self.signing_algorithm(i) {
-                        match self.bip32_sign_ecdsa(k, i, &mut cache, secp) {
-                            Ok(v) => {
-                                used.insert(i, v);
-                            }
-                            Err(e) => {
-                                errors.insert(i, e);
-                            }
-                        }
-                    };
+        for i in 0..inner.inputs.len() {
+            if let Ok(SigningAlgorithm::Ecdsa) = self.signing_algorithm(i) {
+                match self.bip32_sign_ecdsa(k, i, &mut cache, secp) {
+                    Ok(v) => {
+                        used.insert(i, v);
+                    }
+                    Err(e) => {
+                        errors.insert(i, e);
+                    }
                 }
-                if errors.is_empty() {
-                    Ok(used)
-                } else {
-                    Err((used, errors))
-                }
-            }
-            _ => {
-                // TODO
-                Ok(BTreeMap::new())
-            }
+            };
+        }
+        if errors.is_empty() {
+            Ok(used)
+        } else {
+            Err((used, errors))
         }
     }
 
@@ -724,51 +721,72 @@ impl Psbt {
         T: Borrow<Transaction>,
         K: GetKey,
     {
-        match self.inner.version {
-            Version::PsbtV0 => {
-                let msg_sighash_ty_res = self.sighash_ecdsa(input_index, cache);
+        let msg_sighash_ty_res = self.sighash_ecdsa(input_index, cache);
 
-                let input = &mut self.inner.inputs[input_index]; // Index checked in call to `sighash_ecdsa`.
+        let input = &mut self.inner.inputs[input_index]; // Index checked in call to `sighash_ecdsa`.
 
-                let mut used = vec![]; // List of pubkeys used to sign the input.
+        let mut used = vec![]; // List of pubkeys used to sign the input.
 
-                for (pk, key_source) in input.bip32_derivation.iter() {
-                    let sk = if let Ok(Some(sk)) =
-                        k.get_key(KeyRequest::Bip32(key_source.clone()), secp)
-                    {
-                        sk
-                    } else if let Ok(Some(sk)) =
-                        k.get_key(KeyRequest::Pubkey(PublicKey::new(*pk)), secp)
-                    {
-                        sk
-                    } else {
-                        continue;
-                    };
+        for (pk, key_source) in input.bip32_derivation.iter() {
+            let sk = if let Ok(Some(sk)) = k.get_key(KeyRequest::Bip32(key_source.clone()), secp) {
+                sk
+            } else if let Ok(Some(sk)) = k.get_key(KeyRequest::Pubkey(PublicKey::new(*pk)), secp) {
+                sk
+            } else {
+                continue;
+            };
 
-                    // Only return the error if we have a secret key to sign this input.
-                    let (msg, sighash_ty) = match msg_sighash_ty_res {
-                        Err(e) => return Err(e),
-                        Ok((msg, sighash_ty)) => (msg, sighash_ty),
-                    };
+            // Only return the error if we have a secret key to sign this input.
+            let (msg, sighash_ty) = match msg_sighash_ty_res {
+                Err(e) => return Err(e),
+                Ok((msg, sighash_ty)) => {
+                    if self.inner.version > Version::PsbtV0 {
+                        let tx_modifiable = self.inner.tx_modifiable.as_mut().unwrap();
+                        if tx_modifiable.input_modifiable {
+                            match sighash_ty {
+                                EcdsaSighashType::AllPlusAnyoneCanPay
+                                | EcdsaSighashType::NonePlusAnyoneCanPay
+                                | EcdsaSighashType::SinglePlusAnyoneCanPay => {}
+                                _ => {
+                                    tx_modifiable.input_modifiable = false;
+                                }
+                            }
+                        }
 
-                    let sig = ecdsa::Signature {
-                        sig: secp.sign_ecdsa(&msg, &sk.inner),
-                        hash_ty: sighash_ty,
-                    };
+                        if tx_modifiable.output_modifiable {
+                            match sighash_ty {
+                                EcdsaSighashType::None | EcdsaSighashType::NonePlusAnyoneCanPay => {
+                                }
+                                _ => {
+                                    tx_modifiable.output_modifiable = false;
+                                }
+                            }
+                        }
 
-                    let pk = sk.public_key(secp);
-
-                    input.partial_sigs.insert(pk, sig);
-                    used.push(pk);
+                        if !tx_modifiable.has_sighash_single {
+                            match sighash_ty {
+                                EcdsaSighashType::Single
+                                | EcdsaSighashType::SinglePlusAnyoneCanPay => {
+                                    tx_modifiable.has_sighash_single = true;
+                                }
+                                _ => {}
+                            }
+                        }
+                    }
+                    (msg, sighash_ty)
                 }
+            };
 
-                Ok(used)
-            }
-            Version::PsbtV2 => {
-                // TODO
-                Ok(vec![])
-            }
+            let sig =
+                ecdsa::Signature { sig: secp.sign_ecdsa(&msg, &sk.inner), hash_ty: sighash_ty };
+
+            let pk = sk.public_key(secp);
+
+            input.partial_sigs.insert(pk, sig);
+            used.push(pk);
         }
+
+        Ok(used)
     }
 
     /// Returns the sighash message to sign an ECDSA input along with the sighash type.
