@@ -329,6 +329,165 @@ impl Psbt {
         }
     }
 
+    /// Calculates the max lock time.
+    ///
+    /// Note: In case `locktime` is `None`, `new_lock` is returned. Otherwise, if `locktime`
+    /// and `new_lock` are of different units, the value of `locktime` is returned.
+    fn max_locktime(
+        locktime: Option<absolute::LockTime>,
+        new_lock: absolute::LockTime,
+    ) -> absolute::LockTime {
+        match locktime {
+            None => new_lock,
+            Some(lock) =>
+                if lock.is_same_unit(new_lock) && lock < new_lock {
+                    new_lock
+                } else {
+                    lock
+                },
+        }
+    }
+
+    /// Adds a new [`Input`] to this Non-PsbtV0.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::Version`] - This is a PsbtV0.
+    /// - [`Error::InvalidInput`] - `input` is a PsbtV0 input.
+    /// - [`Error::InputNotAddable`] when -
+    ///     - Input Modification flag is `false`.
+    ///     - `input` is a duplicate of an existing input.
+    ///     - The given `input` does not have a compatible locktime type.
+    ///     - The existing inputs don't have a compatible locktime type.
+    ///     - Any of the existing inputs has a signature and the new given
+    ///     `input` changes the final computed locktime.
+    pub fn add_input(&mut self, input: Input) -> Result<(), Error> {
+        if self.inner.version == Version::PsbtV0 {
+            return Err(Error::Version("new inputs can not be added to PsbtV0"));
+        }
+
+        if self.inner.tx_modifiable.is_none()
+            || !self.inner.tx_modifiable.as_ref().unwrap().input_modifiable
+        {
+            return Err(Error::InputNotAddable("input modifiable flag is false"));
+        }
+        input.validate_version(self.inner.version)?;
+
+        let mut has_sig = false;
+        let (mut max_time_locktime, mut max_height_locktime) =
+            (input.required_time_locktime, input.required_height_locktime);
+
+        for self_input in self.inner.inputs.iter() {
+            // Check if this input is a duplicate of any of the existing inputs
+            if self_input.previous_tx_id == input.previous_tx_id
+                && self_input.output_index == input.output_index
+            {
+                return Err(Error::InputNotAddable("duplicate input"));
+            }
+
+            // BIP 370: If an input being added specifies a required time lock, then the
+            //          Constructor must iterate through all of the existing inputs and ensure that
+            //          the time lock types are compatible. Additionally, if during this iteration,
+            //          it finds that any inputs have signatures, it must ensure that
+            //          the newly added input does not change the transaction's locktime.
+            //          If the newly added input has an incompatible time lock, then it must not be added.
+            //          If it changes the transaction's locktime when there are existing signatures,
+            //          it must not be added.
+
+            // Note: At this point, it is not guaranteed that the existing inputs have compatible locktime types.
+            // In case they don't, it still returns the `InputNotAddable("incompatible locktime type")` error.
+
+            match (self_input.required_time_locktime, self_input.required_height_locktime) {
+                (Some(locktime), None) => {
+                    // Since this existing input doesn't support height locktime,
+                    // All the other existing inputs as well as the given new input are expected
+                    // to have either atleast the `required_time_locktime` specified or no locktime
+                    // specified at all.
+                    if max_time_locktime.is_none() && max_height_locktime.is_some() {
+                        return Err(Error::InputNotAddable("incompatible locktime type"));
+                    }
+
+                    max_height_locktime = None;
+                    max_time_locktime = Some(Psbt::max_locktime(max_time_locktime, locktime));
+                }
+                (None, Some(locktime)) => {
+                    // Since this existing input doesn't support time locktime,
+                    // All the other existing inputs as well as the given new input are expected
+                    // to have either atleast the `required_height_locktime` specified or no locktime
+                    // specified at all.
+                    if max_height_locktime.is_none() && max_time_locktime.is_some() {
+                        return Err(Error::InputNotAddable("incompatible locktime type"));
+                    }
+
+                    max_time_locktime = None;
+                    max_height_locktime = Some(Psbt::max_locktime(max_height_locktime, locktime));
+                }
+                (Some(time_lock), Some(height_lock)) => {
+                    if max_time_locktime.is_some() {
+                        max_time_locktime = Some(Psbt::max_locktime(max_time_locktime, time_lock));
+                    }
+
+                    if max_height_locktime.is_some() {
+                        max_height_locktime =
+                            Some(Psbt::max_locktime(max_height_locktime, height_lock));
+                    }
+
+                    if max_time_locktime.is_none() && max_height_locktime.is_none() {
+                        max_time_locktime = Some(time_lock);
+                        max_height_locktime = Some(height_lock);
+                    }
+                }
+                _ => {}
+            }
+
+            if !self_input.partial_sigs.is_empty() {
+                has_sig = true;
+            }
+        }
+
+        if has_sig {
+            let new_locktime = match (max_time_locktime, max_height_locktime) {
+                (Some(locktime), None) => locktime,
+                (None, Some(locktime)) => locktime,
+                // If both the lock times are present, height_lock_time must be chosen
+                (Some(_), Some(locktime)) => locktime,
+                _ =>
+                    if let Some(locktime) = self.inner.fallback_locktime {
+                        locktime
+                    } else {
+                        absolute::LockTime::ZERO
+                    },
+            };
+            if self.compute_locktime()? != new_locktime {
+                return Err(Error::InputNotAddable("computed locktime can not be changed"));
+            }
+        }
+
+        self.inner.inputs.push(input);
+        Ok(())
+    }
+
+    /// Adds a new [`Output`] to this PsbtV2.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::Version`] - This is a PsbtV0.
+    /// - [`Error::OutputNotAddable`] - Output modification flag is `false`.
+    /// - [`Error::InvalidOutput`] - `output` is a PsbtV0 output.
+    pub fn add_output(&mut self, output: Output) -> Result<(), Error> {
+        if self.inner.version == Version::PsbtV0 {
+            return Err(Error::Version("New outputs can not be added to PsbtV0"));
+        }
+        if self.inner.tx_modifiable.is_none()
+            || !self.inner.tx_modifiable.as_ref().unwrap().output_modifiable
+        {
+            return Err(Error::OutputNotAddable);
+        }
+        output.validate_version(self.inner.version)?;
+        self.inner.outputs.push(output);
+        Ok(())
+    }
+
     /// Computes the locktime for a Non-PsbtV0
     ///
     /// # Errors
@@ -339,22 +498,6 @@ impl Psbt {
         let mut max_time_locktime: Option<absolute::LockTime> = None;
         let mut max_height_locktime: Option<absolute::LockTime> = None;
         let (mut time_flag, mut height_flag) = (true, true);
-
-        /// Calculates the max lock time.
-        fn max_locktime(
-            locktime: Option<absolute::LockTime>,
-            new_lock: absolute::LockTime,
-        ) -> absolute::LockTime {
-            match locktime {
-                None => new_lock,
-                Some(lock) =>
-                    if lock >= new_lock {
-                        lock
-                    } else {
-                        new_lock
-                    },
-            }
-        }
 
         for psbtin in inner.inputs.iter() {
             // See https://bips.xyz/370#determining-lock-time
@@ -368,7 +511,7 @@ impl Psbt {
                     height_flag = false;
                     max_height_locktime = None;
 
-                    max_time_locktime = Some(max_locktime(max_time_locktime, lock));
+                    max_time_locktime = Some(Psbt::max_locktime(max_time_locktime, lock));
                 }
                 (None, Some(lock)) => {
                     // Not Height, but Time lock time was supposed to be present
@@ -379,15 +522,16 @@ impl Psbt {
                     time_flag = false;
                     max_time_locktime = None;
 
-                    max_height_locktime = Some(max_locktime(max_height_locktime, lock));
+                    max_height_locktime = Some(Psbt::max_locktime(max_height_locktime, lock));
                 }
                 (Some(time_lock), Some(height_lock)) => {
                     if time_flag {
-                        max_time_locktime = Some(max_locktime(max_time_locktime, time_lock));
+                        max_time_locktime = Some(Psbt::max_locktime(max_time_locktime, time_lock));
                     }
 
                     if height_flag {
-                        max_height_locktime = Some(max_locktime(max_height_locktime, height_lock));
+                        max_height_locktime =
+                            Some(Psbt::max_locktime(max_height_locktime, height_lock));
                     }
                 }
                 _ => {}
